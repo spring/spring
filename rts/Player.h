@@ -65,3 +65,4 @@ public:
 };
 
 #endif // !defined(AFX_PLAYER_H__BB0F0501_9236_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

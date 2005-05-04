@@ -21,3 +21,4 @@ public:
 	bool scriptReady;
 	int lastCall;
 };
+

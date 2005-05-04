@@ -1,4 +1,11 @@
-#pragma once
+// AirCAI.h: Air movement type definition
+///////////////////////////////////////////////////////////////////////////
+
+#ifndef __AIR_MOVE_TYPE_H__
+#define __AIR_MOVE_TYPE_H__
+
+#include "archdef.h"
+
 #include "movetype.h"
 
 class CPropeller;
@@ -104,3 +111,5 @@ public:
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
 };
+
+#endif // __AIR_MOVE_TYPE_H__

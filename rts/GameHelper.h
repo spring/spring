@@ -2,25 +2,21 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GAMEHELPER_H__E2547961_C62A_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_GAMEHELPER_H__E2547961_C62A_11D4_AD55_0080ADA84DE3__INCLUDED_
+#ifndef __GAME_HELPER_H__
+#define __GAME_HELPER_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+#include "archdef.h"
 
 #include <list>
 #include <map>
-	// Added by ClassView
-#include "object.h"
+#include "Object.h"
 class CGame;
 class CUnit;
 class CWeapon;
 class CSolidObject;
 class CFeature;
 #include <vector>
-#include "damagearray.h"
+#include "DamageArray.h"
 
 using namespace std;
 
@@ -54,4 +50,4 @@ public:
 
 extern CGameHelper* helper;
 
-#endif // !defined(AFX_GAMEHELPER_H__E2547961_C62A_11D4_AD55_0080ADA84DE3__INCLUDED_)
+#endif // __GAME_HELPER_H__

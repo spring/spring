@@ -2,15 +2,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_BITMAP_H__BBA7EEE5_879F_4ABE_A878_51FE098C3A0D__INCLUDED_)
-#define AFX_BITMAP_H__BBA7EEE5_879F_4ABE_A878_51FE098C3A0D__INCLUDED_
+#ifndef __BITMAP_H__
+#define __BITMAP_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
 #include <string>
-
 
 using std::string;
 
@@ -51,4 +48,4 @@ public:
 	void ReverseYAxis(void);
 };
 
-#endif // !defined(AFX_BITMAP_H__BBA7EEE5_879F_4ABE_A878_51FE098C3A0D__INCLUDED_)
+#endif // __BITMAP_H__

@@ -135,3 +135,4 @@ protected:
 };
 
 extern CWeaponDefHandler* weaponDefHandler;
+

@@ -17,3 +17,4 @@ public:
 protected:
 	S3DOModel *model;
 };
+

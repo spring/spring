@@ -1,5 +1,9 @@
-#pragma once
-#include "weaponprojectile.h"
+#ifndef __FIRE_BALL_PROJECTILE_H__
+#define __FIRE_BALL_PROJECTILE_H__
+
+#include "archdef.h"
+
+#include "WeaponProjectile.h"
 #include <deque>
 
 class CFireBallProjectile :
@@ -26,3 +30,5 @@ private:
 
 	void EmitSpark();
 };
+
+#endif // __FIRE_BALL_PROJECTILE_H__

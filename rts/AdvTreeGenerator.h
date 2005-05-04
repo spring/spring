@@ -2,13 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_DRAWTREE_H__AFE1477E_8E34_4705_9E9D_FC36356E7048__INCLUDED_)
-#define AFX_DRAWTREE_H__AFE1477E_8E34_4705_9E9D_FC36356E7048__INCLUDED_
+#if __ADV_TREE_GENERATOR_H__
+#define __ADV_TREE_GENERATOR_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+#include "archdef.h"
 
 class CVertexArray;
 
@@ -59,3 +56,4 @@ private:
 extern CAdvTreeGenerator* treeGen;
 
 #endif // !defined(AFX_DRAWTREE_H__AFE1477E_8E34_4705_9E9D_FC36356E7048__INCLUDED_)
+

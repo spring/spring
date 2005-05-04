@@ -247,3 +247,4 @@ This call does the equivalent of:
   HPIPackArchive(Pack, LZ77_COMPRESSION);
 */
 LRESULT WINAPI HPIPackFile(void *Pack);
+

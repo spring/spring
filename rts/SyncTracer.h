@@ -41,3 +41,4 @@ extern CSyncTracer tracefile;
 #endif
 
 #endif // !defined(AFX_SYNCTRACER_H__D2843FC4_B49B_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

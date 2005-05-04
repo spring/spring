@@ -58,3 +58,4 @@ public:
 	void RemoveGrass(int x, int z);
 	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 };
+

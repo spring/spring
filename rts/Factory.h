@@ -2,14 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_FACTORY_H__446AA0A0_DDDA_4C90_BF21_D437FAA93F68__INCLUDED_)
-#define AFX_FACTORY_H__446AA0A0_DDDA_4C90_BF21_D437FAA93F68__INCLUDED_
+#ifndef __FACTORY_H__
+#define __FACTORY_H__
 
-#pragma warning(disable:4786)
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
 #include "Building.h"
 #include <string>
@@ -40,4 +36,4 @@ public:
 	void ChangeTeam(int newTeam,ChangeType type);
 };
 
-#endif // !defined(AFX_FACTORY_H__446AA0A0_DDDA_4C90_BF21_D437FAA93F68__INCLUDED_)
+#endif // __FACTORY_H__

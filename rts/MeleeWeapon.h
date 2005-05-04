@@ -22,3 +22,4 @@ public:
 };
 
 #endif // !defined(AFX_MELEEWEAPON_H__9E3B7980_BB91_4634_9CD6_4141621D7BA3__INCLUDED_)
+

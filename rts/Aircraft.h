@@ -100,3 +100,4 @@ public:
 	void UpdateManeuver(void);
 	void KillUnit(bool SelfDestruct);
 };
+

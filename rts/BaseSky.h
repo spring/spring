@@ -1,4 +1,10 @@
-#pragma once
+// BaseSky.h
+///////////////////////////////////////////////////////////////////////////
+
+#ifndef __BASE_SKY_H__
+#define __BASE_SKY_H__
+
+#include "archdef.h"
 
 class CBaseSky
 {
@@ -17,3 +23,5 @@ public:
 };
 
 extern CBaseSky* sky;
+
+#endif // __BASE_SKY_H__

@@ -1,6 +1,9 @@
-#pragma once
+#ifndef __EXPLOSION_GRAPHICS_H__
+#define __EXPLOSION_GRAPHICS_H__
 
-#include "damagearray.h"
+#include "archdef.h"
+
+#include "DamageArray.h"
 
 class CUnit;
 
@@ -21,3 +24,5 @@ public:
 
 	void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod);
 };
+
+#endif // __EXPLOSION_GRAPHICS_H__

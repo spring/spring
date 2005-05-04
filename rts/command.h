@@ -97,3 +97,4 @@ struct Command {
 
 
 #endif // !defined(AFX_COMMAND_H__B3513CA2_FB87_11D5_AD55_B771F8FC7D53__INCLUDED_)
+

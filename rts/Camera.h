@@ -2,14 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_CAMERA_H__3AC5F701_8EEE_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_CAMERA_H__3AC5F701_8EEE_11D4_AD55_0080ADA84DE3__INCLUDED_
+#ifndef __CAMERA_H__
+#define __CAMERA_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
-
+#include "archdef.h"
 
 class CCamera  
 {
@@ -37,4 +33,5 @@ public:
 
 extern CCamera* camera;
 extern CCamera* cam2;
-#endif // !defined(AFX_CAMERA_H__3AC5F701_8EEE_11D4_AD55_0080ADA84DE3__INCLUDED_)
+
+#endif // __CAMERA_H__

@@ -99,3 +99,4 @@ inline float3 SquareToFloat3(int xSquare, int zSquare) {return float3(((xSquare)
 
 
 #endif // !defined(AFX_READMAP_H__3064C121_428C_11D4_9677_0050DADC9708__INCLUDED_)
+

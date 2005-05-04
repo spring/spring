@@ -79,3 +79,4 @@ public:
 extern CMouseHandler* mouse;
 
 #endif // !defined(AFX_MOUSEHANDLER_H__E6FA621D_050F_430D_B49B_A1E7FA1C1BDF__INCLUDED_)
+

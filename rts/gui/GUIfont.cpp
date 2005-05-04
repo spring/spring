@@ -131,14 +131,23 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 void GUIfont::Print(float x, float y, const char* fmt,...)
 {
 	char		text[512];								// Holds Our String
+
 	va_list		ap;										// Pointer To List Of Arguments
 
+
+
 	if (fmt == NULL)									// If There's No Text
+
 		return;											// Do Nothing
 
+
+
 	va_start(ap, fmt);									// Parses The String For Variables
+
 	vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
+
 	va_end(ap);											// Results Are Stored In Text
+
 
 	glPushMatrix();
 

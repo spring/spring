@@ -9,3 +9,4 @@ public:
 	~CYehaTestScript(void);
 	void Update(void);
 };
+

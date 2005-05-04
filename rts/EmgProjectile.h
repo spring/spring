@@ -1,6 +1,10 @@
-#pragma once
-#include "weaponprojectile.h"
-#include "damagearray.h"
+#ifndef __EMG_PROJECTILE_H__
+#define __EMG_PROJECTILE_H__
+
+#include "archdef.h"
+
+#include "WeaponProjectile.h"
+#include "DamageArray.h"
 
 class CEmgProjectile :
 	public CWeaponProjectile
@@ -18,3 +22,5 @@ public:
 	void Collision(CUnit* unit);
 	void Draw(void);
 };
+
+#endif // __EMG_PROJECTILE_H__

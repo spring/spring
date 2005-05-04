@@ -57,3 +57,4 @@ private:
 extern CHpiHandler* hpiHandler;
 
 #endif // !defined(AFX_HPIHANDLER_H__68DF4969_8792_4893_98F7_8092C36479D7__INCLUDED_)
+

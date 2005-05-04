@@ -2,16 +2,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_SKY_H__9A754BA1_AB87_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_SKY_H__9A754BA1_AB87_11D4_AD55_0080ADA84DE3__INCLUDED_
+#ifndef __BASIC_SKY_H__
+#define __BASIC_SKY_H__
 
-	// Added by ClassView
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
-
-#include "basesky.h"
+#include "archdef.h"
+#include "BaseSky.h"
 
 class CBasicSky : public CBaseSky
 {
@@ -74,4 +69,5 @@ public:
 	float fogStart;
 };
 
-#endif // !defined(AFX_SKY_H__9A754BA1_AB87_11D4_AD55_0080ADA84DE3__INCLUDED_)
+#endif // __BASIC_SKY_H__
+

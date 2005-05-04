@@ -42,3 +42,4 @@ public:
 };
 
 #endif // !defined(AFX_GLLIST_H__87AE2821_660E_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

@@ -62,3 +62,4 @@ public:
 };
 
 extern CMapDamage* mapDamage;
+

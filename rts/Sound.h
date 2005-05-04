@@ -82,3 +82,4 @@ protected:
 
 extern CSound* sound;
 #endif // !defined(AFX_SOUND_H__D6141CC1_8294_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

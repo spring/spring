@@ -24,3 +24,4 @@ public:
 	void setBitmapTransparency(CBitmap &bm, int r, int g, int b);
 	void Draw(int x, int y);
 };
+

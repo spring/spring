@@ -401,3 +401,4 @@ int InitExtension(const char* extension)
     return TRUE;
 }
 #endif
+

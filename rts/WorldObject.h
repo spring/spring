@@ -27,3 +27,4 @@ public:
 };
 
 #endif // !defined(AFX_WORLDOBJECT_H__DEAEAA2F_0C26_42AE_9298_712B63F8E888__INCLUDED_)
+

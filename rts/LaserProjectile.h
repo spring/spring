@@ -22,3 +22,4 @@ public:
 	void Collision(CUnit* unit);
 	void Draw(void);
 };
+

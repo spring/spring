@@ -1,5 +1,12 @@
-#pragma once
-#include "readmap.h"
+// BFReadMap.h
+///////////////////////////////////////////////////////////////////////////
+
+#ifndef __BF_READ_MAP_H__
+#define __BF_READ_MAP_H__
+
+#include "archdef.h"
+
+#include "ReadMap.h"
 #include <string>
 
 class CBFReadmap :
@@ -23,3 +30,5 @@ protected:
 	float3 GetLightValue(int x, int y);
 	void ParseSMD(std::string filename);
 };
+
+#endif __BF_READ_MAP_H__

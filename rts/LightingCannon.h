@@ -17,3 +17,4 @@ public:
 	float3 color;
 	void SlowUpdate(void);
 };
+

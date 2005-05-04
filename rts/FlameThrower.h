@@ -1,5 +1,9 @@
-#pragma once
-#include "weapon.h"
+#ifndef __FLAME_THROWER_H__
+#define __FLAME_THROWER_H__
+
+#include "archdef.h"
+
+#include "Weapon.h"
 
 class CFlameThrower :
 	public CWeapon
@@ -11,3 +15,5 @@ public:
 	bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
 	void Update(void);
 };
+
+#endif // __FLAME_THROWER_H__

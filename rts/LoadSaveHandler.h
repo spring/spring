@@ -16,3 +16,4 @@ public:
 	std::ifstream* ifs;
 	CLoadInterface* load;
 };
+

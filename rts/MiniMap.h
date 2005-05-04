@@ -53,3 +53,4 @@ public:
 extern CMiniMap* minimap;
 
 #endif // !defined(AFX_MINIMAP_H__031E512D_66AB_4071_8769_EBAFAB24BBEA__INCLUDED_)
+

@@ -55,3 +55,4 @@ public:
 };
 
 #endif // !defined(AFX_PROJECTILE_H__C7B284A9_3578_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

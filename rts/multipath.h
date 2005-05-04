@@ -65,3 +65,4 @@ public:
 extern CMultiPath* pathfinder;
 
 #endif // !defined(AFX_PATHFINDER_H__EF1D75A1_1924_11D5_AD55_0080ADA84DE3__INCLUDED_)
+

@@ -53,3 +53,4 @@ private:
 };
 
 #endif // !defined(AFX_S3OPARSER_H__7A309C20_721E_4FF9_82EA_13F5CDFECCA3__INCLUDED_)
+

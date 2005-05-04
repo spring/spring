@@ -1,7 +1,13 @@
-#pragma once
-#include "script.h"
-#include <deque>
+// AirScript.h: Air scripting support
+///////////////////////////////////////////////////////////////////////////
 
+#ifndef __AIR_SCRIPT_H__
+#define __AIR_SCRIPT_H__
+
+#include "archdef.h"
+
+#include <deque>
+#include "script.h"
 
 class CAirScript :
 	public CScript
@@ -24,3 +30,5 @@ public:
 	int timeOut;
 	void SetCamera(void);
 };
+
+#endif // __AIR_SCRIPT_H__

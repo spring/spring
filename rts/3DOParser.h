@@ -1,23 +1,19 @@
 // 3DOParser.h: interface for the C3DOParser class.
 //
 //////////////////////////////////////////////////////////////////////
-#pragma warning(disable:4786)
+#ifndef __3DOPARSER_H__
+#define __3DOPARSER_H__
 
-#if !defined(AFX_3DOPARSER_H__C67F6602_9466_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_3DOPARSER_H__C67F6602_9466_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
 #include <vector>
 #include <string>
-#include "float3.h"
-#include <iostream>
-#include <fstream>
-#include "texturehandler.h"
 #include <map>
 #include <set>
+#include <iostream>
+#include <fstream>
+#include "float3.h"
+#include "TextureHandler.h"
 
 using namespace std;
 class CMatrix44f;
@@ -168,4 +164,5 @@ private:
 
 extern C3DOParser* unit3doparser;
 
-#endif // !defined(AFX_3DOPARSER_H__C67F6602_9466_11D4_AD55_0080ADA84DE3__INCLUDED_)
+#endif // __3DOPARSER_H__
+

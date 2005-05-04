@@ -36,3 +36,4 @@ protected:
 public:
 	void DependentDied(CObject* o);
 };
+

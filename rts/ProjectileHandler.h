@@ -85,3 +85,4 @@ public:
 extern CProjectileHandler* ph;
 
 #endif // !defined(AFX_PROJECTILEHANDLER_H__C7B284AB_3578_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

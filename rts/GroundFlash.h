@@ -28,3 +28,4 @@ public:
 	static unsigned int texture;
 	static CVertexArray* va;
 };
+

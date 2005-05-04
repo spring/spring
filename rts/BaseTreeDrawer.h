@@ -1,5 +1,7 @@
-#pragma once
+#ifndef __BASE_TREE_DRAWER_H__
+#define __BASE_TREE_DRAWER_H__
 
+#include "archdef.h"
 #include "float3.h"
 
 #define TREE_SQUARE_SIZE 64
@@ -26,3 +28,5 @@ public:
 };
 
 extern CBaseTreeDrawer* treeDrawer;
+
+#endif // __BASE_TREE_DRAWER__

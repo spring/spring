@@ -16,3 +16,4 @@ public:
 
 	float3 color;
 };
+

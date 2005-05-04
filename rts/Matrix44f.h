@@ -26,3 +26,4 @@ public:
 	void SetUpVector(float3 up);
 	void Translate(const float3& pos);
 };
+

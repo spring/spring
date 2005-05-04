@@ -2,16 +2,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_TREEDRAWER_H__9E1F499C_815E_4F58_AD8B_0D3B04C73C4A__INCLUDED_)
-#define AFX_TREEDRAWER_H__9E1F499C_815E_4F58_AD8B_0D3B04C73C4A__INCLUDED_
+#ifndef __BASIC_TREE_DRAWER_H__
+#define __BASIC_TREE_DRAWER_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
-
-#include "basetreedrawer.h"
 #include <map>
+#include "BaseTreeDrawer.h"
 
 #define MAX_TREE_HEIGHT 60
 
@@ -51,4 +48,4 @@ public:
 	void ResetPos(const float3& pos);
 };
 
-#endif // !defined(AFX_TREEDRAWER_H__9E1F499C_815E_4F58_AD8B_0D3B04C73C4A__INCLUDED_)
+#endif // __BASIC_TREE_DRAWER_H__

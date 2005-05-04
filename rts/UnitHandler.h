@@ -105,3 +105,4 @@ public:
 extern CUnitHandler* uh;
 
 #endif // !defined(AFX_UNITHANDLER_H__F18EB58F_9B37_4366_839D_9ED34468C72B__INCLUDED_)
+

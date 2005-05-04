@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __BASE_WATER_H__
+#define __BASE_WATER_H__
+
+#include "archdef.h"
 
 class CGame;
 
@@ -18,3 +21,4 @@ public:
 
 extern CBaseWater* water;
 
+#endif // __BASE_WATER_H__

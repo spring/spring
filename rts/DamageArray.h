@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __DAMAGE_ARRAY_H__
+#define __DAMAGE_ARRAY_H__
+
+#include "archdef.h"
 
 struct DamageArray
 {
@@ -23,3 +26,5 @@ struct DamageArray
 		return da;
 	}
 };
+
+#endif // __DAMAGE_ARRAY_H__

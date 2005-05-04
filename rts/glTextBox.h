@@ -19,3 +19,4 @@ public:
 
 	ContainerBox box,okButton;
 };
+

@@ -1,6 +1,10 @@
-#pragma once
-#include "mobilecai.h"
+#ifndef __BUILDER_CAI_H__
+#define __BUILDER_CAI_H__
+
+#include "archdef.h"
+
 #include <map>
+#include "mobilecai.h"
 
 class CBuilderCAI :
 	public CMobileCAI
@@ -29,3 +33,5 @@ public:
 
 	int buildRetries;
 };
+
+#endif // __BUILDER_CAI_H__

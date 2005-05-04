@@ -1,5 +1,12 @@
-#pragma once
-#include "basegrounddrawer.h"
+// BFGroundDrawer.h
+///////////////////////////////////////////////////////////////////////////
+
+#ifndef __BF_GROUND_DRAWER_H__
+#define __BF_GROUND_DRAWER_H__
+
+#include "archdef.h"
+
+#include "BaseGroundDrawer.h"
 
 class CVertexArray;
 
@@ -52,3 +59,5 @@ protected:
 public:
 	void DrawShadowPass(void);
 };
+
+#endif // __BF_GROUND_DRAWER_H__

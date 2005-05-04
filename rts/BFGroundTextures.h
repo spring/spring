@@ -1,4 +1,11 @@
-#pragma once
+// BFGroundTextures.h
+///////////////////////////////////////////////////////////////////////////
+
+#ifndef __BF_GROUND_TEXTURES_H__
+#define __BF_GROUND_TEXTURES_H__
+
+#include "archdef.h"
+
 #include "jpeglib.h"
 
 class CFileHandler;
@@ -53,3 +60,5 @@ public:
 };
 
 extern CBFGroundTextures* groundTextures;
+
+#endif // __BF_GROUND_TEXTURES_H__

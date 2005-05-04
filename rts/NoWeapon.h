@@ -16,3 +16,4 @@ public:
 	void Init(void);
 	void Fire(void);
 };
+

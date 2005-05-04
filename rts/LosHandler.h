@@ -139,3 +139,4 @@ public:
 extern CLosHandler* loshandler;
 
 #endif // !defined(AFX_LOSHANDLER_H__99DB739D_46CA_4AAF_A69C_C975AA1E8566__INCLUDED_)
+

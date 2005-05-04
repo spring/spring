@@ -1,5 +1,7 @@
-#ifndef EXTRACTOR_BUILDING_H
-#define EXTRACTOR_BUILDING_H
+#ifndef __EXTRACTOR_BUILDING_H__
+#define __EXTRACTOR_BUILDING_H__
+
+#include "archdef.h"
 
 #include "Building.h"
 
@@ -27,4 +29,4 @@ protected:
 	std::list<CExtractorBuilding*> neighboors;
 };
 
-#endif
+#endif // __EXTRACTOR_BUILDING_H__

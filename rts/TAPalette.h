@@ -29,3 +29,4 @@ public:
 };
 extern CTAPalette palette;
 #endif // !defined(AFX_TAPALETTE_H__54041764_94B6_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

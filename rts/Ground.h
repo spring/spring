@@ -46,3 +46,4 @@ private:
 extern CGround* ground;
 
 #endif // !defined(AFX_GROUND_H__EB512761_1B68_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

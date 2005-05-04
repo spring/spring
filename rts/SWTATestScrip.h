@@ -9,3 +9,4 @@ public:
 	~CSWTATestScrip(void);
 	void Update(void);
 };
+

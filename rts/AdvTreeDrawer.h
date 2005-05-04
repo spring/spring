@@ -2,16 +2,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ADVTREEDRAWER_H__9E1F499C_815E_4F58_AD8B_0D3B04C73C4A__INCLUDED_)
-#define AFX_ADVTREEDRAWER_H__9E1F499C_815E_4F58_AD8B_0D3B04C73C4A__INCLUDED_
+#ifndef __ADV_TREE_DRAWER_H__
+#define __ADV_TREE_DRAWER_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
-
-#include "basetreedrawer.h"
 #include <map>
+#include "BaseTreeDrawer.h"
 
 class CVertexArray;
 class CGrassDrawer;
@@ -67,4 +64,5 @@ public:
 	std::list<FallingTree> fallingTrees;
 };
 
-#endif // !defined(AFX_TREEDRAWER_H__9E1F499C_815E_4F58_AD8B_0D3B04C73C4A__INCLUDED_)
+#endif // __ADV_TREE_DRAWER_H__
+

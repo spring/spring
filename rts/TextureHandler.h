@@ -43,3 +43,4 @@ public:
 extern CTextureHandler* texturehandler;
 
 #endif // !defined(AFX_TEXTUREHANDLER_H__C6D286E1_997B_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

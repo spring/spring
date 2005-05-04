@@ -1,5 +1,9 @@
-#pragma once
-#include "object.h"
+#ifndef __FEATURE_HANDLER_H__
+#define __FEATURE_HANDLER_H__
+
+#include "archdef.h"
+
+#include "Object.h"
 #include <map>
 #include <string>
 #include <list>
@@ -113,3 +117,5 @@ public:
 };
 
 extern CFeatureHandler* featureHandler;
+
+#endif // __FEATURE_HANDLER_H__

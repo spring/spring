@@ -2,12 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_EMPTYSCRIPT_H__2CEA4F0A_87E8_11D5_AA64_CEDE6FBAB037__INCLUDED_)
-#define AFX_EMPTYSCRIPT_H__2CEA4F0A_87E8_11D5_AA64_CEDE6FBAB037__INCLUDED_
+#ifndef __EMPTY_SCRIPT_H__
+#define __EMPTY_SCRIPT_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
 #include "Script.h"
 
@@ -19,4 +17,4 @@ public:
 
 };
 
-#endif // !defined(AFX_EMPTYSCRIPT_H__2CEA4F0A_87E8_11D5_AA64_CEDE6FBAB037__INCLUDED_)
+#endif // __EMPTY_SCRIPT_H__

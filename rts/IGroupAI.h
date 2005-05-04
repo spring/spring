@@ -31,3 +31,4 @@ public:
 };
 
 #endif // !defined(AFX_IGROUPAI_H__7A933264_A3D8_4969_9003_3122E2512161__INCLUDED_)
+

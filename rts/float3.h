@@ -152,3 +152,4 @@ public:
 };
 
 #endif // !defined(AFX_FLOAT3_H__026451C1_6B7D_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

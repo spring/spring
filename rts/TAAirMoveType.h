@@ -97,3 +97,4 @@ public:
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
 };
+

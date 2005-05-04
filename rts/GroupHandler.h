@@ -43,3 +43,4 @@ protected:
 extern CGroupHandler* grouphandler;
 
 #endif // !defined(AFX_GROUPHANDLER_H__A41773E8_DB6A_4AF5_AE4C_E8380F7C7D04__INCLUDED_)
+

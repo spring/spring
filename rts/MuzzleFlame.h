@@ -19,3 +19,4 @@ public:
 
 	float3* randSmokeDir;
 };
+

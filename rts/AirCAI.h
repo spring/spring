@@ -1,4 +1,11 @@
-#pragma once
+// AirCAI.h: Air command AI
+///////////////////////////////////////////////////////////////////////////
+
+#ifndef __AIR_CAI_H__
+#define __AIR_CAI_H__
+
+#include "archdef.h"
+
 #include "commandai.h"
 
 class CAirCAI :
@@ -27,3 +34,5 @@ public:
 	int targetAge;
 	unsigned int patrolTime;
 };
+
+#endif // __AIR_CAI_H__

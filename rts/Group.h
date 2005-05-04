@@ -63,3 +63,4 @@ public:
 };
 
 #endif // !defined(AFX_GROUP_H__5CCDFEDA_0AB1_425F_B8D1_5B7BC794EB93__INCLUDED_)
+

@@ -1,5 +1,9 @@
-#pragma once
-#include "weapon.h"
+#ifndef __EMG_CANNON_H__
+#define __EMG_CANNON_H__
+
+#include "archdef.h"
+
+#include "Weapon.h"
 
 class CEmgCannon :
 	public CWeapon
@@ -14,3 +18,5 @@ public:
 	void Init(void);
 	void Fire(void);
 };
+
+#endif // __EMG_CANNON_H__

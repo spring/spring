@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __CAMERA_CONTROLLER_H__
+#define __CAMERA_CONTROLLER_H__
+
+#include "archdef.h"
 
 class CCameraController
 {
@@ -83,3 +86,5 @@ public:
 
 	float3 pos;
 };
+
+#endif // __CAMERA_CONTROLLER_H__

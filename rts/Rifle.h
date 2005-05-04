@@ -23,3 +23,4 @@ public:
 };
 
 #endif // !defined(AFX_RIFLE_H__3D0EEF61_FBE1_11D5_AD55_B771F8FC7D53__INCLUDED_)
+

@@ -1,5 +1,9 @@
-#pragma once
-#include "projectile.h"
+#ifndef __FIRE_PROJECTILE_H__
+#define __FIRE_PROJECTILE_H__
+
+#include "archdef.h"
+
+#include "Projectile.h"
 #include <list>
 
 class CFireProjectile :
@@ -33,3 +37,5 @@ public:
 	std::list<SubParticle> subParticles;
 	std::list<SubParticle> subParticles2;
 };
+
+#endif // __FIRE_PROJECTILE_H__

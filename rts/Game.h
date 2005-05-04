@@ -2,22 +2,23 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GAME_H__10D2D641_3483_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_GAME_H__10D2D641_3483_11D4_AD55_0080ADA84DE3__INCLUDED_
+#ifndef __GAME_H__
+#define __GAME_H__
 
-	// Added by ClassView
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
-#include <winsock2.h>
-#include <windows.h>		// Header File For Windows
+
+// TODO (Dave#1#): Remove dependancy on windows code
+#ifdef ARCHDEF_PLATFORM_WIN32
+    #include <winsock2.h>
+    #include <windows.h>		// Header File For Windows
+#endif
 #include <time.h>
 #include <string>
 
 #include "ProjectileHandler.h"
-#include "player.h"
-#include "gamecontroller.h"
+#include "Player.h"
+#include "GameController.h"
 
 class CglList;
 class CNet;
@@ -102,4 +103,4 @@ public:
 
 extern CGame* game;
 
-#endif // !defined(AFX_GAME_H__10D2D641_3483_11D4_AD55_0080ADA84DE3__INCLUDED_)
+#endif // __GAME_H__

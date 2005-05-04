@@ -13,3 +13,4 @@ public:
 	void Draw(void);
 	void Update(void);
 };
+

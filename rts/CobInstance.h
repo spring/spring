@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __COB_INSTANCE_H__
+#define __COB_INSTANCE_H__
+
+#include "archdef.h"
 
 #include <string>
 #include <vector>
@@ -94,3 +97,5 @@ public:
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime);
 	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime);
 };
+
+#endif // __COB_INSTANCE_H__

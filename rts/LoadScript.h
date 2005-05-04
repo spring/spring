@@ -15,3 +15,4 @@ public:
 	CLoadSaveHandler loader;
 	std::string file;
 };
+

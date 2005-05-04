@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __COB_FILE_H__
+#define __COB_FILE_H__
+
+#include "archdef.h"
 
 #include <iostream>
 #include <vector>
@@ -64,3 +67,5 @@ public:
 	~CCobFile(void);
 	int getFunctionId(const string &name);
 };
+
+#endif // __COB_FILE_H__

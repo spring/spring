@@ -2,15 +2,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_BUILDER_H__FC524CB8_F2F2_4CCA_A05B_A8F37AB87874__INCLUDED_)
-#define AFX_BUILDER_H__FC524CB8_F2F2_4CCA_A05B_A8F37AB87874__INCLUDED_
+#ifndef __BUILDER_H__
+#define __BUILDER_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
 #include <string>
-#include "unit.h"
+#include "Unit.h"
 
 using namespace std;
 
@@ -55,4 +53,4 @@ public:
 	void CreateNanoParticle(float3 goal, float radius, bool inverse);
 };
 
-#endif // !defined(AFX_BUILDER_H__FC524CB8_F2F2_4CCA_A05B_A8F37AB87874__INCLUDED_)
+#endif // __BUILDER_H__

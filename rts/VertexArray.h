@@ -46,3 +46,4 @@ public:
 };
 
 #endif // !defined(AFX_VERTEXARRAY_H__20C3F7EB_96DF_11D5_AA72_9A847018DE3E__INCLUDED_)
+

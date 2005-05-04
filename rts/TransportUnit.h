@@ -21,3 +21,4 @@ public:
 	void AttachUnit(CUnit* unit, int piece);
 	void DetachUnit(CUnit* unit);
 };
+

@@ -1,8 +1,17 @@
-#pragma once
+// BackgroundReader.h
+///////////////////////////////////////////////////////////////////////////
+
+#ifndef __BACKGROUND_READER_H__
+#define __BACKGROUND_READER_H__
+
+#include "archdef.h"
 
 #include <deque>
 #include <string>
-#include <windows.h>
+/* TODO (Dave#1#): Remove dependancy on windows.h */
+#ifdef ARCHDEF_PLATFORM_WINDOWS
+    #include <windows.h>
+#endif
 
 class CBackgroundReader
 {
@@ -27,3 +36,5 @@ public:
 };
 
 extern CBackgroundReader backgroundReader;
+
+#endif __BACKGROUND_READER_H__

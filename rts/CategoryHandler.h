@@ -1,4 +1,8 @@
-#pragma once
+#ifndef __CATEGORY_HANDLER_H__
+#define __CATEGORY_HANDLER_H__
+
+#include "archdef.h"
+
 #include <string>
 #include <map>
 
@@ -33,3 +37,5 @@ protected:
 	CCategoryHandler(void);
 	static CCategoryHandler* instance;
 };
+
+#endif // __CATEGORY_HANDLER_H__

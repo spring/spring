@@ -1,5 +1,9 @@
-#pragma once
-#include "projectile.h"
+#ifndef __BUBBLE_PROJECTILE_H__
+#define __BUBBLE_PROJECTILE_H__
+
+#include "archdef.h"
+
+#include "Projectile.h"
 
 class CBubbleProjectile :
 	public CProjectile
@@ -16,3 +20,5 @@ public:
 	float startSize;
 	float sizeExpansion;
 };
+
+#endif // __BUBBLE_PROJECTILE_H__

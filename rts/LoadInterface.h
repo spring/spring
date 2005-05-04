@@ -21,3 +21,4 @@ public:
 
 	std::ifstream* ifs;
 };
+

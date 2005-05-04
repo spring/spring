@@ -114,3 +114,4 @@ extern CGlobalSyncedStuff* gs;
 extern CGlobalUnsyncedStuff* gu;
 
 #endif // !defined(AFX_GLOBALSTUFF1_H__2B3603E2_4EBE_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

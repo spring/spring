@@ -22,3 +22,4 @@ public:
 	void Draw(void);
 	void DependentDied(CObject* o);
 };
+

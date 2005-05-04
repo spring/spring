@@ -18,3 +18,4 @@ public:
 	virtual void lsDouble(double& v)=0;
 	virtual void lsString(std::string& v)=0;
 };
+

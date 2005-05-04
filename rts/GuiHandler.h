@@ -74,3 +74,4 @@ public:
 extern CGuiHandler* guihandler;
 
 #endif // !defined(AFX_GUIHANDLER_H__E513A229_42ED_4319_85F2_898CECF847A5__INCLUDED_)
+

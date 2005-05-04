@@ -10,3 +10,4 @@ public:
 	void Update(void);
 	std::string GetMapName(void);
 };
+

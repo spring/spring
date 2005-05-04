@@ -1,5 +1,9 @@
-#pragma once
-#include "solidobject.h"
+#ifndef __FEATURE_H__
+#define __FEATURE_H__
+
+#include "archdef.h"
+
+#include "SolidObject.h"
 #include "matrix44f.h"
 #include <vector>
 #include <list>
@@ -46,3 +50,5 @@ public:
 //	float3 addPos;
 //	float addRadius;
 };
+
+#endif // __FEATURE_H__

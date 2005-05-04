@@ -46,3 +46,4 @@ private:
 extern CUnitParser* parser;
 
 #endif // !defined(AFX_UNITPARSER_H__B436C3C7_876B_44F9_945E_7E66405696F0__INCLUDED_)
+

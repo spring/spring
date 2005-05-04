@@ -1,6 +1,9 @@
-#pragma once
+#ifndef __COB_THREAD_H__
+#define __COB_THREAD_H__
 
-#include "object.h"
+#include "archdef.h"
+
+#include "Object.h"
 #include "CobInstance.h"
 #include <vector>
 #include "InfoConsole.h"
@@ -60,3 +63,5 @@ public:
 	void ForceCommitAnim(int type, int piece, int axis);
 	void CommitAnims(int deltaTime);
 };
+
+#endif // __COB_THREAD_H__

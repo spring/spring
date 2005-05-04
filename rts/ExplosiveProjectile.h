@@ -2,15 +2,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_EXPLOSIVEPROJECTILE_H__37A8B922_F94D_11D5_AD55_B82BBF40786C__INCLUDED_)
-#define AFX_EXPLOSIVEPROJECTILE_H__37A8B922_F94D_11D5_AD55_B82BBF40786C__INCLUDED_
+#ifndef __EXPLOSIVE_PROJECTILE_H__
+#define __EXPLOSIVE_PROJECTILE_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
 #include "WeaponProjectile.h"
-#include "damagearray.h"
+#include "DamageArray.h"
 
 class CExplosiveProjectile : public CWeaponProjectile  
 {
@@ -27,4 +25,4 @@ public:
 	void Draw(void);
 };
 
-#endif // !defined(AFX_EXPLOSIVEPROJECTILE_H__37A8B922_F94D_11D5_AD55_B82BBF40786C__INCLUDED_)
+#endif // __EXPLOSIVE_PROJECTILE_H__

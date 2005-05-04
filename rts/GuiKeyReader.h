@@ -32,3 +32,4 @@ protected:
 };
 
 #endif // !defined(AFX_GUIKEYREADER_H__AB32CA41_370E_11D5_AD55_0080ADA84DE3__INCLUDED_)
+

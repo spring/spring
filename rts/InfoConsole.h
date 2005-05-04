@@ -50,3 +50,4 @@ private:
 extern CInfoConsole* info;
 
 #endif // !defined(AFX_INFOCONSOLE_H__E9B2D6A1_80B3_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

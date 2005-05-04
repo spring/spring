@@ -28,3 +28,4 @@ public:
 };
 
 #endif // !defined(AFX_SCRIPT_H__101D5001_6D52_11D5_AD55_0080ADA84DE3__INCLUDED_)
+

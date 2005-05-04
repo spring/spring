@@ -24,3 +24,4 @@ public:
 };
 
 #endif // !defined(AFX_CANNON_H__37A8B921_F94D_11D5_AD55_B82BBF40786C__INCLUDED_)
+

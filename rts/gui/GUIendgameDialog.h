@@ -39,9 +39,13 @@ protected:
 	bool showDif;
 	int lastSelection[2];
 public:
+
 	void PrivateDraw(void);
+
 	void ShowPlayerStats(void);
+
 	void ShowGraph(void);
+
 };
 
 #endif	// GUIENDGAMEDIALOG_H

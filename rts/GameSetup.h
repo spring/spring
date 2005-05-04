@@ -1,4 +1,8 @@
-#pragma once
+#ifndef __GAME_SETUP_H__
+#define __GAME_SETUP_H__
+
+#include "archdef.h"
+
 #include <string>
 
 class CSunParser;
@@ -31,3 +35,5 @@ public:
 };
 
 extern CGameSetup* gameSetup;
+
+#endif // __GAME_SETUP_H__

@@ -1,6 +1,10 @@
-#pragma once
-#include "weaponprojectile.h"
-#include "damagearray.h"
+#ifndef __FLAME_PROJECTILE_H__
+#define __FLAME_PROJECTILE_H__
+
+#include "archdef.h"
+
+#include "WeaponProjectile.h"
+#include "DamageArray.h"
 
 class CFlameProjectile :
 	public CWeaponProjectile
@@ -18,3 +22,5 @@ public:
 	void Collision(CUnit* unit);
 	void Collision(void);
 };
+
+#endif // __FLAME_PROJECTILE_H__

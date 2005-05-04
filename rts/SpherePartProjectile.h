@@ -24,3 +24,4 @@ public:
 	void Update(void);
 	static void CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner);
 };
+

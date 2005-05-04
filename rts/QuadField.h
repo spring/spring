@@ -58,3 +58,4 @@ public:
 extern CQuadField* qf;
 
 #endif // !defined(AFX_QUADFIELD_H__4898F721_F864_11D5_AD55_E2927DE7ED6F__INCLUDED_)
+

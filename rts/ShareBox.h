@@ -38,3 +38,4 @@ public:
 	bool metalMove;
 	bool moveBox;
 };
+

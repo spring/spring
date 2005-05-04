@@ -68,3 +68,4 @@ extern CTimeProfiler profiler;
 #endif
 
 #endif // !defined(AFX_TIMEPROFILER_H__3C2D635C_014C_4725_8254_32D218832C95__INCLUDED_)
+

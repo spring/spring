@@ -30,3 +30,4 @@ public:
 extern RegHandler regHandler;
 
 #endif // !defined(AFX_REGHANDLER_H__508F534F_9F3D_11D6_AD55_DE4DC0775D55__INCLUDED_)
+

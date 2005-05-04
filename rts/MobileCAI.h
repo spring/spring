@@ -35,3 +35,4 @@ public:
 	float buggerOffRadius;
 	void IdleCheck(void);
 };
+

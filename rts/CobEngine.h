@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __COB_ENGINE_H__
+#define __COB_ENGINE_H__
+
+#include "archdef.h"
 
 /*
  * The cob engine is responsible for "scheduling" and running threads that are running in 
@@ -46,3 +49,5 @@ public:
 
 extern CCobEngine GCobEngine;
 extern int GCurrentTime;
+
+#endif // __COB_ENGINE_H__

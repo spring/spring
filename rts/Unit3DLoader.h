@@ -136,3 +136,4 @@ public:
 
 extern CUnit3DLoader* unitModelLoader;
 #endif // !defined(AFX_UNIT3DLOADER_H__124A4FFE_7946_4E48_8823_CD79C234E677__INCLUDED_)
+

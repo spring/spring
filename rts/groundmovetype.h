@@ -116,3 +116,4 @@ protected:
 	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
 };
 
+

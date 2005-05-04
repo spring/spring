@@ -1,8 +1,14 @@
-#pragma once
+#ifndef __GAME_SERVER_H__
+#define __GAME_SERVER_H__
 
-#include <winsock2.h>
-#include <windows.h>
-#include <time.h>
+#include "archdef.h"
+
+// TODO (Dave#1#): Remove dependancy on windows-specific code
+#ifdef ARCHDEF_PLATFORM_WIN32
+    #include <winsock2.h>
+    #include <windows.h>
+#endif
+#include <ctime>
 #include <string>
 
 class CGameServer
@@ -44,3 +50,5 @@ public:
 };
 
 extern CGameServer* gameServer;
+
+#endif // __GAME_SERVER_H__

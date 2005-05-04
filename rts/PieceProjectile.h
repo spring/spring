@@ -41,3 +41,4 @@ public:
 	void DrawUnitPart(void);
 	void DrawCallback(void);
 };
+

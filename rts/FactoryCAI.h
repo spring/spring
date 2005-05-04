@@ -1,5 +1,9 @@
-#pragma once
-#include "commandai.h"
+#ifndef __FACTORY_AI_H__
+#define __FACTORY_AI_H__
+
+#include "archdef.h"
+
+#include "CommandAI.h"
 #include <string>
 #include <map>
 
@@ -29,3 +33,5 @@ public:
 
 	bool building;
 };
+
+#endif // __FACTORY_AI_H__

@@ -2,14 +2,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ADVWATER_H__B59D3FE0_03FC_4A16_AEE4_6384895BD3AE__INCLUDED_)
-#define AFX_ADVWATER_H__B59D3FE0_03FC_4A16_AEE4_6384895BD3AE__INCLUDED_
+#ifndef __ADV_WATER_H__
+#define __ADV_WATER_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
-#include "basewater.h"
+#include "BaseWater.h"
 
 class CAdvWater : public CBaseWater
 {
@@ -26,4 +24,5 @@ public:
 	unsigned int waterFP;
 };
 
-#endif // !defined(AFX_DRAWWATER_H__B59D3FE0_03FC_4A16_AEE4_6384895BD3AE__INCLUDED_)
+#endif // __ADV_WATER_H__
+

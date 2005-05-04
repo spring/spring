@@ -23,3 +23,4 @@ protected:
 	int sizez;
 	float metalscale;
 };
+

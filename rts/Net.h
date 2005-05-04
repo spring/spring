@@ -147,3 +147,4 @@ extern CNet* serverNet;
 extern CNet* net;
 
 #endif // !defined(AFX_NET_H__A0712941_2020_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

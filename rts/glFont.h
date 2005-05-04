@@ -34,3 +34,4 @@ private:
 extern CglFont* font;
 
 #endif // !defined(AFX_GLFONT_H__E6EEC624_801A_11D4_AD55_0080ADA84DE3__INCLUDED_)
+

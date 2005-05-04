@@ -9,3 +9,4 @@ public:
 	virtual ~CNewAirTestScript(void);
 	void Update(void);
 };
+

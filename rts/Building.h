@@ -2,12 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_BUILDING_H__4F3B5E65_9A35_44F1_B79E_38045D6CE26E__INCLUDED_)
-#define AFX_BUILDING_H__4F3B5E65_9A35_44F1_B79E_38045D6CE26E__INCLUDED_
+#ifndef __BUILDING_H__
+#define __BUILDING_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "archdef.h"
 
 #include "Unit.h"
 
@@ -20,4 +18,4 @@ public:
 	void Init(void);
 };
 
-#endif // !defined(AFX_BUILDING_H__4F3B5E65_9A35_44F1_B79E_38045D6CE26E__INCLUDED_)
+#endif // __BUILDING_H__
