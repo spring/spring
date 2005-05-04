@@ -1,0 +1,762 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE>TA Spring - README</TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 1.1.4  (Win32)">
+	<META NAME="CREATED" CONTENT="20050419;16135784">
+	<META NAME="CHANGEDBY" CONTENT="Stefan Johansson">
+	<META NAME="CHANGED" CONTENT="20050426;1070320">
+	<STYLE>
+	<!--
+		TD P { font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-size: 10pt }
+		H1 { font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-size: 14pt }
+		P { font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-size: 10pt }
+		H2 { font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-size: 12pt }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="sv-SE" DIR="LTR">
+<TABLE WIDTH=800 BORDER=0 CELLPADDING=0 CELLSPACING=0 STYLE="page-break-before: always">
+	<COL WIDTH=5>
+	<COL WIDTH=162>
+	<COL WIDTH=72>
+	<COL WIDTH=72>
+	<COL WIDTH=483>
+	<COL WIDTH=5>
+	<TR>
+		<TD COLSPAN=6 WIDTH=800>
+			<H1>TA Spring 0.40b2 readme</H1>
+			<P>For up-to-date information about this project, visit the
+			project home page at <A HREF="http://taspring.clan-sy.com/">http://taspring.clan-sy.com</A>.
+						</P>
+			<H1>About</H1>
+			<P>TA Spring is a project aiming to create a new RTS.</P>
+			<H1>System requirements</H1>
+			<P>About 1ghz cpu and a GeForce3 or better graphics card. For
+			larger battles the requirements increases. Some graphics effects
+			require a graphics card which supports
+			ARB_vertex_program/ARB_fragment_program. This is the same as
+			having a graphics card that supports DX8/DX9. 
+			</P>
+			<H1>Quick start</H1>
+			<H2>Multiplayer</H2>
+			<OL>
+				<LI><P STYLE="margin-bottom: 0cm">Run the TA Spring battleroom
+				and create an account 
+				</P>
+				<LI><P>Login to the master server and find a game to join 
+				</P>
+			</OL>
+			<H2>Singleplayer</H2>
+			<P>Spring does not include any AI for singleplayer yet. If you
+			start the spring.exe application directly, you will get to choose
+			between a few different scripts that show off some different parts
+			of Spring. 
+			</P>
+			<H1>Multiplayer lobby</H1>
+			<H2>Name registration</H2>
+			<P>Before you can log into the master server, you must register a
+			handle. Click File-&gt;Register to open up the registration
+			dialog. Names must be no more than 16 alphanumeric characters, and
+			is not case sensitive. However, you may format your name with
+			capitalization.</P>
+			<H2>Options</H2>
+			<P>If you are behind a proxy server, or you are having trouble
+			hosting, you might want to consider overriding the IP the server
+			sees you as having so that people joining your battle room know
+			where to find you</P>
+			<H2>Chat</H2>
+			<P>The lobby supports basic chat functions. There is a permanent
+			chatroom called Main, which you can join by double clicking it
+			from the list, as well as any others that may have been created.
+			You can create a chatroom from the menu, but this room is deleted
+			when it becomes empty.</P>
+			<H2>Battle room</H2>
+			<P>You can host a battle by selecting it from the menu. To choose
+			a map, simply click the minimap and pick one from the popup
+			window. Once in the battle room, the host may boot anyone by right
+			clicking and selecting boot. The alliance system is a little
+			complicated and needs a little explaining... Any number of players
+			can join a Team, which is the equivalent of one player in OTA.
+			Everyone on a Team shares resources, units, and LOS. The first
+			player to join a team is the team leader, and can pick an Ally
+			Team to join. An Ally Team is a permanent alliance. You'll notice
+			a strange shape with two triangles to the right of the Ally Team
+			combo box. This functions the same way as it did in OTA. If you
+			click it, you create a one-way alliance with another ally team
+			moving the triangle on the left to the middle. If the other Ally
+			Team reciprocates, the triangle on the right will move to the
+			middle. The host can then start Spring once all non-spectators
+			have clicked ready.</P>
+			<H2>Features to come</H2>
+			<UL>
+				<LI><P STYLE="margin-bottom: 0cm">Clan support 
+				</P>
+				<LI><P STYLE="margin-bottom: 0cm">Map sharing 
+				</P>
+				<LI><P STYLE="margin-bottom: 0cm">Unit sharing 
+				</P>
+				<LI><P STYLE="margin-bottom: 0cm">Private messaging 
+				</P>
+				<LI><P STYLE="margin-bottom: 0cm">Private chatrooms 
+				</P>
+				<LI><P>New, slicker looking battle room 
+				</P>
+			</UL>
+			<H1>Game controls</H1>
+			<H2>Camera controls</H2>
+			<P>Move the camera with the arrow keys or by placing the mouse
+			curser at the screen borders. Holding shift makes the camera move
+			faster, and holding ctrl makes it slower. Turn on mouselook with
+			mouse button 3 (or backspace). Use ctrl+mouse3 to toggle between
+			the camera modes available. 
+			</P>
+			<H2>Key assignments</H2>
+			<P>You can configure the assignment of keys by editing the file
+			uikeys.txt, and by running the Selectionkeys editor. These are the
+			default key bindings:</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD ROWSPAN=58 WIDTH=5 VALIGN=TOP></TD>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><STRONG>Camera controls </STRONG>
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><STRONG>Function</STRONG></P>
+		</TD>
+		<TD ROWSPAN=58 WIDTH=5 VALIGN=TOP></TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=4 WIDTH=790>
+			<HR>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Mouse 1</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Selects units. Drag to select a group, double click to select
+			units of the same type. Gives order if a specific order has been
+			selected. 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Mouse 2 
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Gives the default order for the unit 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Mouse 3 
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Toggles mouse look 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Ctrl + Mouse 3</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Toggles camera mode 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Arrow keys 
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Moves the camera 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Ctrl/shift</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Increases/decreases camera movement speed 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Mousewheel</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Moves the camera up/down 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>T&nbsp;</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>&nbsp;Track a selected unit</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>C</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Take direct control of a selected unit</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>F3</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Jump to last message location</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><BR>
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><STRONG>General</STRONG></P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><STRONG>Function</STRONG></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=4 WIDTH=790>
+			<HR>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>F1</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Toggles color coding of the map according to terrain elevation 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>F4</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Toggles color coding of the map according to the metal density</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>F12</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Screenshot</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>+/-</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Increases/decreases game speed 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Pause</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Pauses the game 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Enter</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Used to send chat messages 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>B</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Toggles the display of debug information 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>&sect;/`&nbsp;</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Draw stuff in map that you and allies can see (mouse1=lines,
+			mouse2=erase, mouse3=marker,doubleclick=named marker)</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>H</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Share Interface</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>L</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Show los and radar info in map</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><BR>
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><STRONG>Unit groups</STRONG></P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><STRONG>Function</STRONG></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=4 WIDTH=790>
+			<HR>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>0-9</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Select AI group 0-9 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Ctrl + 0-9</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Add current units to AI group 0-9 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Q</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Selects an unnamed group from which at least one unit is
+			selected 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Ctrl + Q 
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Creates an unnamed AI group or selects an AI for an existing
+			one 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Shift + Q 
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Deletes the current AI group 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><BR>
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><STRONG>Building buildings</STRONG></P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><STRONG>Function</STRONG></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<HR>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<HR>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Shift+Drag mouse</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Create a line of buildings</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Shift+Ctrl+Drag</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Create an axis aligned line of buildings</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Shift+Ctrl+Click unit</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Build a ring of buildings around existing unit</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Shift+Alt+Drag</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Build a box of buildings</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Shift+Alt+Ctrl+Drag</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Build a hollow box of buildings</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><BR>
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><STRONG>Unit commands</STRONG></P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><STRONG>Function</STRONG></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<HR>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<HR>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>M</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Move (Ctrl=keep relative distances among selected)</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>P</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Patrol</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>A</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Attack</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>S</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Stop</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>X</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Toggle on/off</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>Ctrl-D</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Self destruct</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>G</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Guard</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>K</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Cloak</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>D</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>DGun</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>E</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Reclaim (Can take an area)</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>R</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Repair (Can take an area)</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>L</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Load (Can take an area)</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P>U</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P>Unload (Can take an area)</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=2 WIDTH=234>
+			<P><BR>
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=556>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=6 WIDTH=800>
+			<H1>Tips</H1>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=6 WIDTH=800>
+			<P>The repeat order option can be very usefull. For example if you
+			want to make a factory output an unlimited amount of units or if
+			you want transport units to ferry units from one area to another
+			indefinitly.</P>
+			<P>Ballistic weapons(maybe also other later on) can now be set to
+			fire in a high trajectory which can be usefull to shot over
+			mountains etc but they will lose some accuracy. (we are not
+			entirely sure if we will keep this option or not)</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=6 WIDTH=800>
+			<H1>External code/programs used by Spring</H1>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD ROWSPAN=8 WIDTH=5></TD>
+		<TD WIDTH=162>
+			<P>Nehe tutorial 
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://nehe.gamedev.net/">nehe.gamedev.net</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>Window creation and main message pump. Spring is really only an
+			overgrown lesson 02. (Lesson 200 &quot;Your first RTS&quot;
+			perhaps ?)</P>
+		</TD>
+		<TD ROWSPAN=8 WIDTH=5></TD>
+	</TR>
+	<TR>
+		<TD WIDTH=162>
+			<P>GLEW</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://glew.sourceforge.net/">glew.sourceforge.net</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>OpenGL extension loading 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=162>
+			<P>HPIUtil</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://www.tauniverse.com/joed/">www.tauniverse.com/joed/</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>Opening HPI files 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=162>
+			<P>JPEGLib</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://www.ijg.org/">www.ijg.org</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>Loading JPEG files 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=162>
+			<P>TCLAP</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://tclap.sourceforge.net/">tclap.sourceforge.net</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>Command line parsing in mapconv 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=162>
+			<P>FreeType</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://www.freetype.org/">www.freetype.org</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>Font handling in the new GUI 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=162>
+			<P>CrashRpt</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://www3.sympatico.ca/grant.mcdorman/">www3.sympatico.ca/grant.mcdorman/</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>Generating and sending crashdumps 
+			</P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=162>
+			<P>Rice Video 
+			</P>
+		</TD>
+		<TD COLSPAN=2 WIDTH=144>
+			<P><A HREF="http://www.emutalk.net/showthread.php?t=26229">www.emutalk.net/showthread.php?t=26229</A></P>
+		</TD>
+		<TD WIDTH=483>
+			<P>Creating higher resolution unit textures from the standard TA
+			ones 
+			</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=6 WIDTH=800>
+			<H1>Legal</H1>
+			<P>This program is released under the <A HREF="LICENSE.html">GNU
+			General Public License</A>.</P>
+			<P>The download may also have included content from the game Total
+			Annihilation which is Copyright &copy; 1997 Humongous
+			Entertainment. To use this, you would have to own a copy of the
+			game Total Annihilation. However, since it (the TA mod XTA) has
+			been available for download from www.clan-sy.com for many years,
+			and since TA itself can be freely downloaded from abandonware
+			sites, we have decided to include this content in some of the TA
+			Spring packages as a convenience. It is possible that this will
+			change in the future though.</P>
+			<P>&nbsp; 
+			</P>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+</BODY>
+</HTML>

@@ -1,0 +1,86 @@
+
+spring changes:
+
+ * When mapi resolve fails, populate the to structure manually
+ * removed from-email field
+
+-----------
+
+04/08/2003 Grant McDorman
+  Version ID: 3.0.2.3
+  Major Changes:
+    * A new header file, CrashRptDL.h, is available. It declares all the
+      functions with a 'DL' suffix, plus GetInstanceDL() and ReleaseInstanceDL().
+      All of these versions are inline functions for run-time binding to
+      CrashRpt; by using these, your application can run without CrashRpt
+      available. See the header file for more details.
+    * A 'Debug' button is available. It is normally invisible, but will
+      become visible by setting 
+        HKEY_CURRENT_USER\Software\Carruth\CrashRpt\EnableDebug
+      to a DWORD value of 1. Pressing this button will discard the
+      crash report and drop into the debugger. (On an explicit
+      GenerateErrorReport call, DebugBreak() is called).
+    * When running under a debugger, the handler will always drop into
+      the debugger after handling a crash (even if the crash is saved, mailed,
+      or the Exit button pressed). Note that this is NOT the case
+      for explicit calls to GenerateErrorReport.
+    * The dialog now includes a 'Save' button to allow the user to
+      explicitly save the crash report
+    * The 'Send' button is hidden if the handler is installed without
+      an e-mail address
+    * APIs introduced with previous release renamed with Ex suffix
+    * New API: GetInstance, returns CrashRpt instance for current
+      process
+    * APIs from January 12th release reintroduced; minor changes to
+      Install() call, however
+    * Initialize can be called multiple times; it will return
+      the same instance each time
+    * An API to get the instance for the current process was added
+    * APIs callable from Visual Basic added (suffix VB)
+    * API to add event logs to saved report (where the system supports event logs)
+    * API to add registry hives, in REGEDIT4 save format, to saved report
+    * API allowing removal of files added to report
+    * User-supplied e-mail and comments saved (as separate file) in
+      crash report if Initialize called without e-mail address
+    * Crash report XML includes stack walkback and, if possible,
+      file, function, and line number information for all addresses
+    * Dialog is in a separate thread, so crashing application freezes
+    * Application can include a message when calling GenerateErrorReport
+    * New API to generate stack trace (independant of crashes and crash
+      handling)
+    * User e-mail field now initialized with name of signed-on user
+      (no domain, unfortunately)
+  Minor Changes:
+    * Working files deleted after report mailed, saved, or cancelled
+    * XSL style sheet provided that will transform crash report XML to
+      HTML
+    * Minor internal design changes
+    * Package now includes Zlib 1.1.4 and dbghelp.dll 6.1.17.2.
+  Bugs Fixed:
+    * MAPI mailing fixed to work on Win2K with Outlook 98 and Exchange 2000 
+    * User cancelling MAPI e-mail will no longer cause CMC e-mailing to be
+      attempted
+    * Did not properly check for file existence when adding to report
+    * Did not display files properly in file list when a relative path
+      was used
+    * Did not uninstall if InstallExceptionHandler returned NULL
+    * Contents of file list grew each time GenerateErrorReport was called
+    * Under some circumstances, file types (and icons) were not properly
+    * displayed in the detail dialog
+03/13/2003
+  Major Changes:
+    * Replaced MFC with WTL
+	* Changed install() API
+	* Major refactoring
+  Minor Chages:
+    * Details dialog preview window now uses system
+	  defined window color instead of white.
+	* Directory structure not saved in zip.
+  Bugs Fixed:
+    * Support for use by multiple apps
+	* Buffer overrun error when previewing files > 32k
+	* Main dialog now displays app icon
+
+01/12/2003
+  New:
+    * Initial release
