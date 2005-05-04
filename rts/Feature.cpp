@@ -1,0 +1,190 @@
+#include "stdafx.h"
+#include ".\feature.h"
+#include "featurehandler.h"
+#include "3doparser.h"
+#include "ground.h"
+#include "quadfield.h"
+#include "damagearray.h"
+#include "readmap.h"
+#include "infoconsole.h"
+#include "unit.h"
+#include "basetreedrawer.h"
+#include "fireprojectile.h"
+#include "smokeprojectile.h"
+#include "projectilehandler.h"
+//#include "mmgr.h"
+
+CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyteam)
+: CSolidObject(pos),
+	def(def),
+	inUpdateQue(false),
+	reclaimLeft(1),
+	fireTime(0),
+	myFire(0),
+	drawQueType(0),
+	drawQuad(0),
+	allyteam(allyteam),
+	tempNum(0),
+	emitSmokeTime(0)
+{
+	this->pos.CheckInBounds();
+	this->heading=heading;
+	health=def->maxHealth;
+	SetRadius(def->radius);
+	blocking=def->blocking;
+	xsize=def->xsize;
+	ysize=def->ysize;
+	mass=def->mass;
+	immobile=true;
+	physicalState = OnGround;
+
+	if(def->drawType==DRAWTYPE_3DO){
+		if(def->model==0){
+			def->model=unit3doparser->Load3DO(def->modelname.c_str());
+			height=def->model->height;
+			def->radius=def->model->radius;
+			SetRadius(def->radius);
+		}
+		midPos=pos+def->model->rootobject->relMidPos;
+	} else if(def->drawType==DRAWTYPE_TREE){
+		midPos=pos+UpVector*def->radius;
+		height = 2*def->radius;
+	} else {
+		midPos=pos;
+	}
+	id=featureHandler->AddFeature(this);
+	qf->AddFeature(this);
+
+//	this->pos.y=ground->GetHeight(pos.x,pos.z);
+	transMatrix.Translate(pos.x,pos.y,pos.z);
+	transMatrix.RotateY(-heading*PI/0x7fff);
+	transMatrix.SetUpVector(ground->GetNormal(pos.x,pos.z));
+
+	if(blocking){
+		Block();
+		readmap->typemap[ground->GetSquare(pos)]|=32;
+	}
+	finalHeight=ground->GetHeight2(pos.x,pos.z);
+
+	if(def->drawType==DRAWTYPE_TREE)
+		treeDrawer->AddTree(def->modelType,pos,1);
+}
+
+CFeature::~CFeature(void)
+{
+	if(blocking){
+		UnBlock();
+		readmap->typemap[ground->GetSquare(pos)]&=255-32;
+	}
+	qf->RemoveFeature(this);
+	if(def->drawType==DRAWTYPE_TREE)
+		treeDrawer->DeleteTree(pos);
+
+	if(myFire){
+		myFire->StopFire();
+		myFire=0;
+	}
+}
+
+bool CFeature::AddBuildPower(float amount, CUnit* builder)
+{
+	if(amount>0){
+		return false;		//cant repair a feature
+	} else {
+		if(reclaimLeft<0)	//avoid multisuck :)
+			return false;
+		float part=(100-amount)*0.05/max(10.0f,(def->metal+def->energy));
+		reclaimLeft-=part;
+		if(reclaimLeft<0){
+			builder->AddMetal(def->metal);
+			builder->AddEnergy(def->energy);
+			featureHandler->DeleteFeature(this);
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3& impulse)
+{
+	residualImpulse=impulse;
+	health-=damages[0];
+	if(health<=0 && def->destructable){
+		featureHandler->CreateWreckage(pos,def->deathFeature,heading,1,-1,false);
+		featureHandler->DeleteFeature(this);
+
+		if(def->drawType==DRAWTYPE_TREE){
+			if(impulse.Length2D()>0.5){
+				treeDrawer->AddFallingTree(pos,impulse,def->modelType);
+			}
+		}
+	}
+}
+
+void CFeature::Kill(float3& impulse) {
+	DamageArray damage;
+	DoDamage(damage*(health+1), 0, impulse);
+}
+
+bool CFeature::Update(void)
+{
+	bool retValue=false;
+
+	if(pos.y>finalHeight){
+		pos.y-=0.5;
+		midPos.y-=0.5;
+		transMatrix[13]-=0.5;
+		if(drawQueType==1){
+			featureHandler->ResetDrawQuad(drawQuad);
+			featureHandler->drawQuads[drawQuad].staticFeatures.erase(this);
+			featureHandler->drawQuads[drawQuad].nonStaticFeatures.insert(this);
+			drawQueType=2;
+		}
+//		info->AddLine("feature sinking");
+		retValue=true;
+	}
+	if(emitSmokeTime!=0){
+		--emitSmokeTime;
+		PUSH_CODE_MODE;
+		ENTER_MIXED;
+		if(!(gs->frameNum+id & 3) && ph->particleSaturation<0.7){
+			new CSmokeProjectile(midPos+gu->usRandVector()*radius*0.3,gu->usRandVector()*0.3+UpVector,emitSmokeTime/6+20,6,0.4,0,0.5);
+		}
+		POP_CODE_MODE;
+		retValue=true;
+	}
+
+	if(fireTime>0){
+		fireTime--;
+		if(fireTime==1)
+			featureHandler->DeleteFeature(this);
+		retValue=true;
+	}
+
+	if(def->geoThermal){
+		PUSH_CODE_MODE;
+		ENTER_MIXED;
+		if((ph->particleSaturation<0.7 && !(gs->frameNum&1)) || (ph->particleSaturation<1 && !(gs->frameNum&3))){
+			float3 speed=gu->usRandVector()*0.1;
+			speed.y+=1;
+			new CSmokeProjectile(pos,speed,70+gu->usRandFloat()*20,3,0.15,0,0.8);
+		}
+		POP_CODE_MODE;
+		retValue=true;
+	}
+
+
+	return retValue;
+}
+
+void CFeature::StartFire(void)
+{
+	if(fireTime || !def->burnable)
+		return;
+
+	fireTime=200+gs->randFloat()*30;
+	featureHandler->SetFeatureUpdateable(this);
+
+	myFire=new CFireProjectile(midPos,UpVector,0,300,radius*0.8,70,20);
+}

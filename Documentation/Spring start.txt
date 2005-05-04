@@ -1,0 +1,60 @@
+//Send a file formated like this as the only command line argument to spring.exe
+//All players must get the exact same file except MyPlayerNum (and possibly hostip)
+[GAME]
+{
+	Mapname=xxx;		//with .sm2 extension
+	StartMetal=xxx;
+	StartEnergy=xxx;
+	MaxUnits=xxx;
+	StartPosType=x;		//0 fixed,1 random,2 select in map
+
+	hostip=xxx.xxx.xxx.xxx
+	hostport=xxxx
+	//some more stuff like this here
+
+	MyPlayerNum=x;		//only variable that should vary between different players
+	
+	NumPlayers=x;
+	NumTeams=y;
+	NumAllyTeams=z;
+
+	[PLAYER0]		//a player (player 0 is the host)
+	{
+		name=name;
+		Spectator=0/1;
+		team=number;
+		//more player specific info
+	}
+	//more players
+
+	[TEAM0]		//players in this will share the same units (start with one cmd etc)
+	{
+		TeamLeader=x;			// player number that is the "leader"
+		AllyTeam=number;
+		Color=number;
+		Side=Arm/Core;			//other sides possible with user mods i suppose
+		Handicap=0-100;			//Percent bonus on all resources collected ?		
+	}
+	//more teams
+
+	[ALLYTEAM0]			//teams in ally team share los etc and cant break alliance, every team must be in exactly one ally team
+	{
+		int NumAllies;
+		Ally0=(AllyTeam number);		//means that this team is allied with the other, not necesarily the reverse
+		//...
+	}
+	//more ally teams
+	
+	//something for selecting which unit files to disable or restrict
+
+	NumRestrictions=xx;
+
+	[RESTRICT]
+	{
+		Unit0=armah
+		Limit0=0		//use 0 for all units that should be completely disabled
+		Unit1=corvp
+		Limit1=50		//>0 can be used for limiting, like build restrictions in TA
+		//...
+	}
+}

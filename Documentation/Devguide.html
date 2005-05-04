@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>TA Spring - README</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style type="text/css">
+<!--
+p {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+}
+h1 {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 14pt;
+}
+h2 {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+}
+td {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+}
+hr {
+	height: 1px;
+	color: #000000;
+}
+-->
+</style>
+</head>
+
+<body>
+<table width="800" border="0" cellspacing="4" cellpadding="0">
+  <tr>
+    <td><h1>TA Spring development guidelines </h1>
+      <p>This document describes important things to think about when developing code for Spring. </p>
+      <h2>Spring runs synchronized on all computers</h2>
+      <p>Spring's networking is built upon the assumption that all player's simulations are in sync and only send their (or their AI's) input over the network. This mean that you will have to be very careful to keep the simulation deterministic. Here is a few pointers to think about. </p>
+      <ul>
+        <li>There are essentially two sorts of code in spring, synced and unsynced. Which code is what is not as clear as one could wish but essentially the synced code is anything that is reached through CGame::Simframe or handlers of some network msgs, unsynced is everything else (graphic, input, sound etc). Synced code can write anything but should only read synced data. Unsynced code can read anything but must not write synced data. The rest of the points here is essentially about synced code.</li>
+        <li>Always make sure to initialize variables. Even if the value doesnt seem to matter it might unsync the simulation.</li>
+        <li>Be paranoid about array boundaries, reading one byte beyond an array might not crash but it will probably cause sync problems at some point.</li>
+        <li>For random numbers use the CGlobalStuff::RandFloat etc functions (but never use these from unsynced code)</li>
+        <li>Never compare memory block locations other than for equality. This mean for example that you shouldn't create a std::set or std::map with a pointer as index if the order might matter.</li>
+      </ul>      
+      <h2>Adding your own stuff</h2>
+      <p>We welcome anyone to make changes to Spring but in order to get them accepted into our distribution the following can be worth thinking about.</p>
+      <ul>
+        <li>Spring is a game and different people might want different things from it. So if your changes change gameplay it might be a good idea to make it optional.</li>
+        <li>Resources (esp. CPU time) is always in short supply for spring so make sure that you dont waste them needlessly and that your resource usage is in proportion to the impact of your changes.</li>
+        <li>Ask around before starting on a change. Not only might you get tips about how to implement it in the best way but also if anyone else is working on something similar.</li>
+      </ul>      
+      <h1>Some example projects</h1>
+      <p>Here is some stuff that we know needs improving in Spring. Of course there is about a million other things that also need improving. If you are interested in something and want to help out with the development, you can talk to the responsible person to get more information. </p>
+      <h2>Make Spring platform independent (SJ) </h2>
+      <p>To begin with make it run on linux x86 (making it sync with exes running on other CPUs might be hard, even different compiler options can cause problems with floating point stuff it seems). Will probably involve lots of changes in different parts of Spring, although hopefully not that big. </p>
+      <h2>Improve the lobby (Jouninkomiko)</h2>
+      <p>The current lobby is very sparse and need more features. </p>
+      <h2>Game GUI (SJ)</h2>
+      <p>The current GUI in Spring isnt that good however there exist a new gui that is almost finished. Unfortunally Pius that was working on it disapeared some months ago so we need someone else to finish it and generally improve the GUI.</p>
+      <h2>Game networking (SJ)</h2>
+      <p>Its probably possible to crash the game or worse by sending malformed data to the network at the moment. Fix this and also see if you can reduce bandwith usage and/or improve the handling of packet loss.</p>
+      <h2>Add console (Fnordia)</h2>
+      <p>Add a game console to the game, preferably tied to some scripting language (below).</p>
+      <h2>Add scripting language to game (Fnordia) </h2>
+      <p>Add some sort of general scripting language to the game to run non performance critical game code in and allow easy modability through some sort of plugin system.</p>
+      <h2>Improve groupai interface (SJ, Fnordia)</h2>
+      <p>Make it possible to write groupais in a scripting language(above) in addition to as DLLs. Also add some more functions to the interface to allow communications between AIs.</p>
+      <h2>Add a global ai interface (SJ) </h2>
+      <p>Add an interface similar to the groupai one but with an extended interface (possibly allowing some amount of cheating) in order to allow the writing of skirmish AIs. If the cheating part could be disabled it might also be good to create a global helper AI for the player.</p>
+      <h2>Create a map editor (SJ) </h2>
+      <p>The current mapconv program is very limited and only allow compiling maps from already created data. Create a real mapeditor to allow editing of spring maps.</p>
+      <h2>Write more Group-AIs (SJ) </h2>
+      <p>Spring is designed to allow each player to run their own groupais. So the more the merrier. The license doesnt in any way force you to release these to others but it would be greatly appreciated.</p>
+      <h2>Improve explosion grapics (SJ) </h2>
+      <p>The explosion interface has some support for adding different types of explosion graphics although there currently only exist one. Add some new types and bind certain explosions to them. This is for all you mushroom nukers out there.</p>
+      <h2>Create an anticheat program (SJ)</h2>
+      <p>Since Spring is opensource it will be very easy to create information cheats for it (the networking protocoll should prevent outright manipulation of data). Therefore create some sort of PunkBuster like program that only allow playing with known good exes. Either dont use any Spring code in it to go around the GPL or we will make an exception for it in order to allow it to be closed source. Sadly security through obscurity is the only thing that will work (and it only works to a degree) in this kind of situation (except calculating everything on the server and sending ready made screenshots to the clients), at least until Paladium arrives. </p>
+      <p>&nbsp; </p></td>
+  </tr>
+</table>
+</body>
+</html>
