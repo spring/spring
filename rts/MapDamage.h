@@ -52,6 +52,8 @@ public:
 	int neededLosUpdate;
 	std::deque<int> relosUnits;
 
+	float mapHardness;
+
 	float craterTable[10000];
 
 	void Explosion(const float3& pos, float strength,float radius);

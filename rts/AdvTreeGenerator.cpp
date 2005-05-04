@@ -6,7 +6,6 @@
 #include "AdvTreeGenerator.h"
 #include <windows.h>		// Header File For Windows
 #include "mygl.h"
-//#include <gl\glaux.h>		// Header File For The Glaux Library
 #include "vertexarray.h"
 #include "camera.h"
 #include "bitmap.h"

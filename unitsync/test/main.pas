@@ -92,7 +92,8 @@ begin
   ChDir('c:\projekt\projekt\taspring\rts\bagge');
   //showmessage(GetCurrentDir);
 
-  lib := Loadlibrary('..\..\unitsync\Release\unitsync.dll');
+//  lib := Loadlibrary('..\..\unitsync\Release\unitsync.dll');
+  lib := LoadLibrary('unitsync.dll');
   //lib := Loadlibrary('c:\projekt\projekt\taspring\unitsync\Release\unitsync.dll');
 
   Init := GetProcAddress(lib, 'Init');

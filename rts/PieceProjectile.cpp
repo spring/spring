@@ -131,7 +131,7 @@ void CPieceProjectile::Update()
 	spinPos+=spinSpeed;
 
 	*numCallback=0;
-	if ((flags & PP_Fire)/* && (gs->frameNum & 1)*/) {
+	if ((flags & PP_Fire && !piece->vertices.empty())/* && (gs->frameNum & 1)*/) {
 		ENTER_MIXED;
 		OldInfo* tempOldInfo=oldInfos[7];
 		for(int a=6;a>=0;--a){
@@ -140,7 +140,7 @@ void CPieceProjectile::Update()
 		CMatrix44f m;
 		m.Translate(pos.x,pos.y,pos.z);
 		m.Rotate(spinPos*PI/180,spinVec);
-		int vertexNum=gu->usRandInt()*piece->vertices.size()/(RANDINT_MAX+1);
+		int vertexNum=gu->usRandFloat()*0.99*piece->vertices.size();
 		float3 pos=piece->vertices[vertexNum].pos;
 		m.Translate(pos.x,pos.y,pos.z);
 

@@ -101,6 +101,9 @@ CLosHandler::~CLosHandler()
 void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 {
 START_TIME_PROFILE;
+	float3 losPos=unit->pos;
+	losPos.CheckInBounds();
+
 	int allyteam=unit->allyteam;
 	unit->lastLosUpdate=gs->frameNum;
 
@@ -119,7 +122,7 @@ START_TIME_PROFILE;
 		CleanupInstance(instance);
 		instance->losSquares.clear();
 	} else {
-		int baseSquare=max(0,min(gs->hmapy-1,((int)unit->pos.z/(SQUARE_SIZE*2))))*gs->hmapx+max(0,min(gs->hmapx-1,(int)unit->pos.x/(SQUARE_SIZE*2)));
+		int baseSquare=max(0,min(gs->hmapy-1,((int)losPos.z/(SQUARE_SIZE*2))))*gs->hmapx+max(0,min(gs->hmapx-1,(int)losPos.x/(SQUARE_SIZE*2)));
 		if(unit->los && unit->los->baseSquare==baseSquare){
 			END_TIME_PROFILE("Los");
 			return;
@@ -139,8 +142,8 @@ START_TIME_PROFILE;
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}
-	int xmap=unit->pos.x/(SQUARE_SIZE*2);
-	int ymap=unit->pos.z/(SQUARE_SIZE*2);
+	int xmap=losPos.x/(SQUARE_SIZE*2);
+	int ymap=losPos.z/(SQUARE_SIZE*2);
 
 	if(xmap-unit->losRadius<0 || xmap+unit->losRadius>=gs->hmapx || ymap-unit->losRadius<0 || ymap+unit->losRadius>=gs->hmapy)
 		SafeLosAdd(instance,xmap,ymap);

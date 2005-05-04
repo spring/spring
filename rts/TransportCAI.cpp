@@ -58,7 +58,7 @@ void CTransportCAI::SlowUpdate(void)
 	switch(c.id){
 	case CMD_LOAD_UNITS:
 		if(c.params.size()==1){		//load single unit
-			if(((CTransportUnit*)owner)->transported.size() >= owner->unitDef->transportCapacity){
+			if(((CTransportUnit*)owner)->transportCapacityUsed >= owner->unitDef->transportCapacity){
 				FinishCommand();
 				return;
 			}
@@ -117,7 +117,7 @@ void CTransportCAI::SlowUpdate(void)
 			float3 pos(c.params[0],c.params[1],c.params[2]);
 			float radius=c.params[3];
 			CUnit* unit=FindUnitToTransport(pos,radius);
-			if(unit && ((CTransportUnit*)owner)->transported.size() < owner->unitDef->transportCapacity){
+			if(unit && ((CTransportUnit*)owner)->transportCapacityUsed < owner->unitDef->transportCapacity){
 				Command c2;
 				c2.id=CMD_LOAD_UNITS;
 				c2.params.push_back(unit->id);

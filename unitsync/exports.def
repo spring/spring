@@ -1,15 +1,16 @@
 LIBRARY	unitsync
 EXPORTS
 	Init						@1
-	GetCurrentList				@2
-	ProcessUnits				@3
-	AddClient					@4
-	RemoveClient				@5
-	GetClientDiff				@6
-	InstallClientDiff			@7
+	UnInit						@2
+	GetCurrentList				@3
+	ProcessUnits				@4
+	AddClient					@5
+	RemoveClient				@6
+	GetClientDiff				@7
+	InstallClientDiff			@8
 	
-	GetUnitCount				@8
-	GetUnitName					@9
-	IsUnitDisabled				@10
-	IsUnitDisabledByClient		@11
-	GetFullUnitName				@12
+	GetUnitCount				@9
+	GetUnitName					@10
+	IsUnitDisabled				@11
+	IsUnitDisabledByClient		@12
+	GetFullUnitName				@13

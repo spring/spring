@@ -1,0 +1,38 @@
+TASpring change log
+
+0.41b1
+
+-Removed log spam with Use of GetPieceDir..
+-Fixed "Error looking up server from ip" errors when trying to connect
+-Fixed zero size units bug
+-Can no longer overflow network buffer with large build orders
+-Non square maps no longer crash
+-Fixed some random crash bugs
+-Added more filtering to the server and clients to filter out invalid net msgs
+
+-Host can now force start the game with ctrl+return if not everyone show up
+-Fixed repeat order for factories
+-Units can no longer move onto terrain they cant move off (boats on land etc)
+-Units can no longer die due to getting outside map
+-Changed the alignment on buildings, fixes two buildings qued beside each other ending up blocking each other
+-Buildings no longer decay when builder has slow animation
+-Radar/jammer units now correctly updated when changing team
+
+-New .smd value, MAP/AutoShowMetal. Set it to 0 if you dont want players to switch to metalmap view when selecting an extractor. (because you have created visible metal deposits on the map)
+-New .smd value, MAP/MapHardness. Set how hard it is to create craters in map, default 100.
+-Made it slightly easier to build buildings on slopes
+-Made it somewhat harder to dig deep holes
+
+-- Lobby changes
+
+-Added extended ascii support in chatrooms.  Can now use accent characters
+-Added test button to battle host menu. It will tell the server to try and conncet to you on the port you specified, letting you know if others will be able to as well.
+-Now can tell which battles are in progress, and which are still open
+-Fixed bug that allowed more than the max number of players into a room
+-Added ability to launch a browser when links are sent in a chatroom
+-Added unit syncing.  Now if users have different units, the differences are disabled
+-Fixed a bug that allowed invalid log in names to be submitted
+
+0.40b2
+
+First public release

@@ -96,7 +96,7 @@ CGuiHandler::CGuiHandler()
 {
 //	LoadCMDBitmap(CMD_STOP, "bitmaps\\ocean.bmp");
 	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps\\armsilo1.bmp");
-	
+	readmap->mapDefParser.GetDef(autoShowMetal,"1","MAP\\autoShowMetal");
 
 }
 
@@ -519,7 +519,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 			case CMDTYPE_ICON_BUILDING:{
 				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[icon].id);
-				if(ud->extractsMetal>0){
+				if(ud->extractsMetal>0 && !groundDrawer->drawMetalMap && autoShowMetal){
 					groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
 					showingMetal=true;
 				}
@@ -739,31 +739,45 @@ void CGuiHandler::DrawMapStuff(void)
 							glVertexf3(wpos);
 						}
 						glEnd();
-
-
 					}
 				}
 			}
 		}
 	}
 
-	CUnit* unit=0;
-	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,false);
-	if(unit && unit->maxRange>0 && keys[VK_SHIFT] && (loshandler->InLos(unit,gu->myAllyTeam) || gu->spectating)){
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(1,0.3,0.3,0.7);
-		glBegin(GL_LINE_STRIP);
-		float h=unit->pos.y;
-		for(int a=0;a<=40;++a){
-			float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
-			pos+=unit->pos;
-			float dh=ground->GetHeight(pos.x,pos.z)-h;
-			pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
-			pos+=unit->pos;
-			pos.y=ground->GetHeight(pos.x,pos.z)+8;
-			glVertexf3(pos);
+	if(keys[VK_SHIFT]){
+		CUnit* unit=0;
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,false);
+		if(unit && (loshandler->InLos(unit,gu->myAllyTeam) || gu->spectating)){
+			if(unit->maxRange>0){
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(1,0.3,0.3,0.7);
+				glBegin(GL_LINE_STRIP);
+				float h=unit->pos.y;
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
+					pos+=unit->pos;
+					float dh=ground->GetHeight(pos.x,pos.z)-h;
+					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			if(unit->unitDef->decloakDistance>0){
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(0.3,0.3,1,0.7);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
 		}
-		glEnd();
 	}
 }
 
@@ -1068,7 +1082,9 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				buildPos=GetBuildPos(pos,pos,unitdef);
 			}
 
-			for(std::vector<float3>::iterator bpi=buildPos.begin();bpi!=--buildPos.end();++bpi){
+			int a=0;		//limit the number of max commands possible to send to avoid overflowing the network buffer
+			for(std::vector<float3>::iterator bpi=buildPos.begin();bpi!=--buildPos.end() && a<200;++bpi){
+				++a;
 				float3 pos=*bpi;
 				Command c;
 				c.id=commands[tempInCommand].id;
@@ -1328,8 +1344,8 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 
 void CGuiHandler::MakeBuildPos(float3& pos,UnitDef* unitdef)
 {
-	pos.x=floor(pos.x/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-	pos.z=floor(pos.z/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+	pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
+	pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 	pos.y=uh->GetBuildHeight(pos,unitdef);
 	if(unitdef->floater)
 		pos.y = max(pos.y,0);

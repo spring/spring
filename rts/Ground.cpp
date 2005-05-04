@@ -174,11 +174,14 @@ float CGround::LineGroundSquareCol(const float3 &from,const float3 &to,int xs,in
 	double side2=(to-tri).dot(norm);
 
 	if(side2<=0){				//linjen passerar triangelns plan?
-		double frontpart=side1/(side1-side2);
-		float3 col=from+(dir*frontpart);
+		double dif=side1-side2;
+		if(dif!=0){
+			double frontpart=side1/dif;
+			float3 col=from+(dir*frontpart);
 
-		if((col.x>=tri.x) && (col.z>=tri.z) && (col.x+col.z<=tri.x+tri.z+SQUARE_SIZE)){	//kollision inuti triangeln (utnyttja trianglarnas "2d aktighet")
-			return col.distance(from);
+			if((col.x>=tri.x) && (col.z>=tri.z) && (col.x+col.z<=tri.x+tri.z+SQUARE_SIZE)){	//kollision inuti triangeln (utnyttja trianglarnas "2d aktighet")
+				return col.distance(from);
+			}
 		}
 	}
 	//triangel 2
@@ -191,11 +194,14 @@ float CGround::LineGroundSquareCol(const float3 &from,const float3 &to,int xs,in
 	side2=(to-tri).dot(norm);
 
 	if(side2<=0){				//linjen passerar triangelns plan?
-		double frontpart=side1/(side1-side2);
-		float3 col=from+(dir*frontpart);
+		double dif=side1-side2;
+		if(dif!=0){
+			double frontpart=side1/dif;
+			float3 col=from+(dir*frontpart);
 
-		if((col.x<=tri.x) && (col.z<=tri.z) && (col.x+col.z>=tri.x+tri.z-SQUARE_SIZE)){	//kollision inuti triangeln (utntri.ytja trianglarnas "2d aktighet")
-			return col.distance(from);
+			if((col.x<=tri.x) && (col.z<=tri.z) && (col.x+col.z>=tri.x+tri.z-SQUARE_SIZE)){	//kollision inuti triangeln (utntri.ytja trianglarnas "2d aktighet")
+				return col.distance(from);
+			}
 		}
 	}
 	return -2;

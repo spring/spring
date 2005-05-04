@@ -1022,7 +1022,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
-		SetTexGen(1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,0);
+		SetTexGen(1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -1116,7 +1116,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		}
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, groundVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 1.0/1024,1.0/1024,0,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, -floor(camera->pos.x*0.02),-floor(camera->pos.z*0.02),0,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, 0.02,0.02,0,1);
@@ -1127,7 +1127,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
-		SetTexGen(1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,0);
+		SetTexGen(1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);

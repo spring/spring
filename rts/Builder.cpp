@@ -140,13 +140,17 @@ void CBuilder::Update()
 			helpTerraform=0;
 			StopBuild(true);
 		}
-	} else if(curBuild && curBuild->pos.distance2D(pos)<buildDistance+curBuild->radius && inBuildStance){
-		if(curBuild->AddBuildPower(buildSpeed,this)){
-			CreateNanoParticle(curBuild->midPos,curBuild->radius*0.5,false);
-		} else {
-			if(!curBuild->beingBuilt && curBuild->health>=curBuild->maxHealth){
-				StopBuild();
+	} else if(curBuild && curBuild->pos.distance2D(pos)<buildDistance+curBuild->radius){
+		if(inBuildStance){
+			if(curBuild->AddBuildPower(buildSpeed,this)){
+				CreateNanoParticle(curBuild->midPos,curBuild->radius*0.5,false);
+			} else {
+				if(!curBuild->beingBuilt && curBuild->health>=curBuild->maxHealth){
+					StopBuild();
+				}
 			}
+		} else {
+			curBuild->AddBuildPower(0.00001,this);	//prevent building timing out
 		}
 	} else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
 		if(curReclaim->AddBuildPower(-buildSpeed,this)){

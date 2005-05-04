@@ -29,15 +29,15 @@ protected:
 	map<string, DisabledUnit> disabledUnits;
 	vector<string> unitIds;
 	void RemoveClient(int id);
-	crc_t CalculateCRC(string fileName);
-	void ParseUnit(string fileName);
+	crc_t CalculateCRC(const string& fileName);
+	void ParseUnit(const string& fileName);
 	int localId;
 	void MapUnitIds();
 public:
 	CSyncer(int id);
 	~CSyncer(void);
 	string GetCurrentList();
-	void InstallClientDiff(string diff);
+	void InstallClientDiff(const string& diff);
 	virtual int ProcessUnits();
 	
 	int GetUnitCount();

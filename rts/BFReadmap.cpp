@@ -26,6 +26,12 @@ CBFReadmap::CBFReadmap(std::string mapname)
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	ifs=new CFileHandler(mapname);
+	if(!ifs->FileExists()){
+		char t[500];
+		sprintf(t,"Error couldnt find map file %s",mapname.c_str());
+		MessageBox(0,t,"Error when reading map",0);
+		exit(0);
+	}
 	POP_CODE_MODE;
 	ifs->Read(&header,sizeof(SM2Header));
 
@@ -119,7 +125,6 @@ CBFReadmap::CBFReadmap(std::string mapname)
 			n.Normalize();
 
 			facenormals[(y*gs->mapx+x)*2+1]=n;
-
 		}
 	}
 
@@ -216,8 +221,8 @@ CBFReadmap::CBFReadmap(std::string mapname)
 
 	glGenTextures(1, &shadowTex);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-	unsigned char* tempMem=new unsigned char[gs->mapx*gs->mapy*4];
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,gs->mapx, gs->mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempMem);
+	unsigned char* tempMem=new unsigned char[1024*1024*4];
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempMem);
 	delete [] tempMem;
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);

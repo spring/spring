@@ -668,6 +668,8 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 	quads.clear();
 	loshandler->FreeInstance(los);
 	los=0;
+	if(radarRadius || jammerRadius || sonarRadius)
+		radarhandler->RemoveUnit(this);
 
 	if(type==ChangeGiven){
 		gs->teams[team]->RemoveUnit(this,CTeam::RemoveGiven);
@@ -692,14 +694,16 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 
 	loshandler->MoveUnit(this,false);
 	qf->MovedUnit(this);
+	if(radarRadius || jammerRadius || sonarRadius)
+		radarhandler->MoveUnit(this);
 
 	//model=unitModelLoader->GetModel(model->name,newteam);
-	model = unit3doparser->Load3DO(model->name.c_str(),newteam);
+	model = unit3doparser->Load3DO(model->name.c_str(),1,newteam);
 	delete localmodel;
 	localmodel = unit3doparser->CreateLocalModel(model, &cob->pieces);
 
 	if(type==ChangeGiven && unitDef->energyUpkeep>25){//deactivate to prevent the old give metal maker trick
-		Command c;			
+		Command c;
 		c.id=CMD_ONOFF;
 		c.params.push_back(0);
 		commandAI->GiveCommand(c);

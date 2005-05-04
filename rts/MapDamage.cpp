@@ -47,7 +47,7 @@ CMapDamage::CMapDamage(void)
 	for(int a=201;a<10000;++a){
 		craterTable[a]=0;
 	}
-
+	mapHardness=atof(readmap->mapDefParser.SGetValueDef("100","MAP\\MapHardness").c_str());
 }
 
 CMapDamage::~CMapDamage(void)
@@ -79,7 +79,7 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 	e->y1=max((int)(pos.z-radius)/SQUARE_SIZE,2);
 	e->y2=min((int)(pos.z+radius)/SQUARE_SIZE,gs->mapy-3);
 
-	float baseStrength=-pow(strength,0.6f)*0.03;
+	float baseStrength=-pow(strength,0.6f)*3/mapHardness;
 	float invRadius=1.0/radius;
 	for(int y=e->y1;y<=e->y2;++y){
 		for(int x=e->x1;x<=e->x2;++x){
@@ -95,8 +95,8 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 
 //			prevDif+=dif*5;
 
-			if(prevDif<0)
-				dif/=-prevDif*0.05+1;
+			if(prevDif*dif>0)
+				dif/=fabs(prevDif)*0.1+1;
 			e->squares.push_back(dif);
 			if(dif<-0.3 && strength>200)
 				treeDrawer->RemoveGrass(x,y);

@@ -210,11 +210,12 @@ bool CGameServer::ServerReadNet()
 				break;
 
 			case NETMSG_PAUSE:
-				if(inbuf[inbufpos+2]!=a)
+				if(inbuf[inbufpos+2]!=a){
 					info->AddLine("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
-
-				timeLeft=0;
-				serverNet->SendData(&inbuf[inbufpos],3);
+				} else {
+					timeLeft=0;
+					serverNet->SendData(&inbuf[inbufpos],3);
+				}
 				inbufpos+=3;
 				break;
 
@@ -262,95 +263,111 @@ bool CGameServer::ServerReadNet()
 				break;
 
 			case NETMSG_PLAYERNAME:
-				if(inbuf[inbufpos+2]!=a && a!=0)
-					info->AddLine("Server: Warning got playername msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
+				if(inbuf[inbufpos+2]!=a && a!=0){
+					SendSystemMsg("Server: Warning got playername msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
+				} else {
+					ENTER_MIXED;
+					gs->players[inbuf[inbufpos+2]]->playerName=(char*)(&inbuf[inbufpos+3]);
+					gs->players[inbuf[inbufpos+2]]->readyToStart=true;
+					gs->players[inbuf[inbufpos+2]]->active=true;
+					ENTER_UNSYNCED;
 
-				ENTER_MIXED;
-				gs->players[inbuf[inbufpos+2]]->playerName=(char*)(&inbuf[inbufpos+3]);
-				gs->players[inbuf[inbufpos+2]]->readyToStart=true;
-				gs->players[inbuf[inbufpos+2]]->active=true;
-				ENTER_UNSYNCED;
-
-				SendSystemMsg("Player %s joined as %i",&inbuf[inbufpos+3],inbuf[inbufpos+2]);
-				serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
+					SendSystemMsg("Player %s joined as %i",&inbuf[inbufpos+3],inbuf[inbufpos+2]);
+					serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
+				}
 				inbufpos+=inbuf[inbufpos+1];
 				break;
 
 			case NETMSG_CHAT:
-				if(inbuf[inbufpos+2]!=a)
-					info->AddLine("Server: Warning got chat msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
-
-				serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
+				if(inbuf[inbufpos+2]!=a){
+					SendSystemMsg("Server: Warning got chat msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
+				}
 				inbufpos+=inbuf[inbufpos+1];	
 				break;
 
 			case NETMSG_SYSTEMMSG:
-				if(inbuf[inbufpos+2]!=a)
+				if(inbuf[inbufpos+2]!=a){
 					info->AddLine("Server: Warning got system msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
-
-				serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
+				}
 				inbufpos+=inbuf[inbufpos+1];	
 				break;
 
 			case NETMSG_STARTPOS:
-				if(inbuf[inbufpos+1]!=gs->players[a]->team && a!=0)
-					info->AddLine("Server: Warning got select msg from %i claiming to be from team %i",a,inbuf[inbufpos+1]);
-
-				serverNet->SendData(&inbuf[inbufpos],15);
+				if(inbuf[inbufpos+1]!=gs->players[a]->team && a!=0){
+					SendSystemMsg("Server: Warning got select msg from %i claiming to be from team %i",a,inbuf[inbufpos+1]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],15);
+				}
 				inbufpos+=15;
 				break;
 
 			case NETMSG_COMMAND:
-				if(inbuf[inbufpos+3]!=a)
-					info->AddLine("Server: Warning got command msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-
-				serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+				if(inbuf[inbufpos+3]!=a){
+					SendSystemMsg("Server: Warning got command msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+				}
 				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
 			case NETMSG_SELECT:
-				if(inbuf[inbufpos+3]!=a)
-					info->AddLine("Server: Warning got select msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-
-				serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+				if(inbuf[inbufpos+3]!=a){
+					SendSystemMsg("Server: Warning got select msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+				}
 				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
 			case NETMSG_AICOMMAND:
-				if(inbuf[inbufpos+3]!=a)
-					info->AddLine("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-				serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+				if(inbuf[inbufpos+3]!=a){
+					SendSystemMsg("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+				}
 				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
 			case NETMSG_SYNCRESPONSE:{
-				if(inbuf[inbufpos+1]!=a)
-					info->AddLine("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				if(outstandingSyncFrame==*(int*)&inbuf[inbufpos+6])
-					syncResponses[inbuf[inbufpos+1]]=*(int*)&inbuf[inbufpos+2];
-				else
-					info->AddLine("Delayed sync respone from %s",gs->players[inbuf[inbufpos+1]]->playerName.c_str());
+				if(inbuf[inbufpos+1]!=a){
+					SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
+				} else {
+					if(outstandingSyncFrame==*(int*)&inbuf[inbufpos+6])
+						syncResponses[inbuf[inbufpos+1]]=*(int*)&inbuf[inbufpos+2];
+					else
+						info->AddLine("Delayed sync respone from %s",gs->players[inbuf[inbufpos+1]]->playerName.c_str());
+				}
 				inbufpos+=10;}
 				break;
 
 			case NETMSG_SHARE:
-				if(inbuf[inbufpos+1]!=a)
-					info->AddLine("Server: Warning got share msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				serverNet->SendData(&inbuf[inbufpos],12);
+				if(inbuf[inbufpos+1]!=a){
+					SendSystemMsg("Server: Warning got share msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],12);
+				}
 				inbufpos+=12;
 				break;
 
 			case NETMSG_SETSHARE:
-				if(inbuf[inbufpos+1]!=gs->players[a]->team)
-					info->AddLine("Server: Warning got setshare msg from player %i claiming to be from team %i",a,inbuf[inbufpos+1]);
-				serverNet->SendData(&inbuf[inbufpos],10);
+				if(inbuf[inbufpos+1]!=gs->players[a]->team){
+					SendSystemMsg("Server: Warning got setshare msg from player %i claiming to be from team %i",a,inbuf[inbufpos+1]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],10);
+				}
 				inbufpos+=10;
 				break;
 
 			case NETMSG_PLAYERSTAT:
-				if(inbuf[inbufpos+1]!=a)
-					info->AddLine("Server: Warning got stat msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				serverNet->SendData(&inbuf[inbufpos],sizeof(CPlayer::Statistics)+2);
+				if(inbuf[inbufpos+1]!=a){
+					SendSystemMsg("Server: Warning got stat msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],sizeof(CPlayer::Statistics)+2);
+				}
 				inbufpos+=sizeof(CPlayer::Statistics)+2;
 				break;
 
@@ -361,18 +378,20 @@ bool CGameServer::ServerReadNet()
 
 #ifdef DIRECT_CONTROL_ALLOWED
 			case NETMSG_DIRECT_CONTROL:
-				if(inbuf[inbufpos+1]!=a)
-					info->AddLine("Server: Warning got direct control msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-
-				serverNet->SendData(&inbuf[inbufpos],2);
+				if(inbuf[inbufpos+1]!=a){
+					SendSystemMsg("Server: Warning got direct control msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],2);
+				}
 				inbufpos+=2;
 				break;
 
 			case NETMSG_DC_UPDATE:
-				if(inbuf[inbufpos+1]!=a)
-					info->AddLine("Server: Warning got dc update msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-
-				serverNet->SendData(&inbuf[inbufpos],7);
+				if(inbuf[inbufpos+1]!=a){
+					SendSystemMsg("Server: Warning got dc update msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
+				} else {
+					serverNet->SendData(&inbuf[inbufpos],7);
+				}
 				inbufpos+=7;
 				break;
 #endif

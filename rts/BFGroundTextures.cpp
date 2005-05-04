@@ -37,6 +37,7 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 	ifs->Seek(header.tilesPtr);
 	ifs->Read(tiles, header.numtiles*SMALL_TILE_SIZE);
 	
+	tileMapXSize = header.xsize/4;
 	tileMapYSize = header.ysize/4;
 
 	squares=new GroundSquare[numBigTexX*numBigTexY];
@@ -170,16 +171,16 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	{
 		for(int x1=0; x1<32; x1++)
 		{
-			char *tile = &tiles[tileMap[(x1+x*32)+(y1+y*32)*tileMapYSize]*SMALL_TILE_SIZE + tileoffset[level]];
+			char *tile = &tiles[tileMap[(x1+x*32)+(y1+y*32)*tileMapXSize]*SMALL_TILE_SIZE + tileoffset[level]];
 			for(int yt=0; yt<numblocks; yt++)
 			{
 				for(int xt=0; xt<numblocks; xt++)
 				{
-                    char *sbuf = &tile[(xt+yt*numblocks)*8];
+					char *sbuf = &tile[(xt+yt*numblocks)*8];
 					char *dbuf = &buf[(x1*numblocks+xt + (y1*numblocks+yt)*(numblocks*32))*8];
 					for(int i=0; i<8; i++)
 					{
-                        dbuf[i] = sbuf[i];
+						dbuf[i] = sbuf[i];
 					}
 				}
 			}

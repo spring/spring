@@ -73,6 +73,8 @@ public:
 
 	bool floatOnWater;
 
+	int moveSquareX;
+	int moveSquareY;
 protected:
 	int nextDeltaSpeedUpdate;
 	int nextObstacleAvoidanceUpdate;

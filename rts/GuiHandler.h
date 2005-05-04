@@ -45,6 +45,7 @@ public:
 	int inCommand;
 	bool needShift;
 	bool showingMetal;
+	bool autoShowMetal;
 	bool activeMousePress;
 	int activePage;
 	int maxPages;

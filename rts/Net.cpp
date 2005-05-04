@@ -138,7 +138,6 @@ void CNet::StopListening()
 int CNet::InitClient(const char *server, int portnum,bool localConnect)
 {
   LPHOSTENT lpHostEntry;
-	unsigned long ul;
 
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
@@ -156,14 +155,14 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 		CreateDemoFile("test.sdf");
 	}
 
+	SOCKADDR_IN saOther;
+
+	saOther.sin_family = AF_INET;
+	saOther.sin_port = htons(portnum);
+
+	unsigned long ul;
 	if((ul=inet_addr(server))!=INADDR_NONE){
-		lpHostEntry = gethostbyaddr((char*)&ul,sizeof(ul),AF_INET); 
-		if (lpHostEntry == NULL)
-		{
-			MessageBox(NULL,"Error looking up server from ip.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
-			exit(0);
-			return -1;
-		}
+		saOther.sin_addr.S_un.S_addr = 	ul;
 	} else {
 		lpHostEntry = gethostbyname(server);
 		if (lpHostEntry == NULL)
@@ -172,18 +171,15 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 			exit(0);
 			return -1;
 		}
+		saOther.sin_addr = 	*((LPIN_ADDR)*lpHostEntry->h_addr_list);	
 	}
+
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
 		MessageBox(NULL,"Error initializing socket.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 		return -1;
 	}
 
-	SOCKADDR_IN saOther;
-
-	saOther.sin_family = AF_INET;
-	saOther.sin_port = htons(portnum);
-	saOther.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
 
 	u_long u=1;
 	ioctlsocket(mySocket,FIONBIO,&u);
@@ -339,7 +335,7 @@ void CNet::Update(void)
 			netbuf[0]=NETMSG_HELLO;
 			SendData(netbuf,1);
 		}
-		if(c->lastReceiveTime < curTime-20 && !c->localConnection){		//other side has timed out
+		if(c->lastReceiveTime < curTime-(inInitialConnect ? 40 : 30) && !c->localConnection){		//other side has timed out
 			c->active=false;
 		}
 

@@ -48,6 +48,7 @@ protected:
 	int *tileMap;
 	int tileSize;
 	char *tiles;
+	int tileMapXSize;
 	int tileMapYSize;
 public:
 	void ReadJpeg(int bufnum, unsigned char* buffer, int xstep);

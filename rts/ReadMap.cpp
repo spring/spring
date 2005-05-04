@@ -6,7 +6,6 @@
 #include "windows.h"
 #include "mygl.h"
 #include <gl\glu.h>			// Header file for the gLu32 library
-#include <gl\glaux.h>		// Header File For The Glaux Library
 #include "ReadMap.h"
 #include <stdlib.h>
 #include <math.h>

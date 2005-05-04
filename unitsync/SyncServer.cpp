@@ -11,7 +11,7 @@ CSyncServer::~CSyncServer(void)
 {
 }
 
-void CSyncServer::AddClient(int id, string unitList)
+void CSyncServer::AddClient(int id, const string& unitList)
 {
 	istringstream s(unitList);
 	Unit u;
@@ -55,6 +55,7 @@ void CSyncServer::AddClient(int id, string unitList)
 				//No need to say anything about this unit
 			}
 			else {
+				// If a unit has a bad crc, that client is added to the differing list
 				map<string, MissingList>::iterator mli = curDiff.find(i->first);
 				if (mli != curDiff.end()) {
 					curDiff[i->first].clients.insert(clientId->first);
@@ -97,6 +98,10 @@ void CSyncServer::AddClient(int id, string unitList)
 
 	//Alright, now we have a map that for each unit contains id's of clients that need to know that
 	//this unit should now be disabled
+
+	// Since we are the server, we should install the diff for ourselves automatically
+	string diff = GetClientDiff(localId);
+	InstallClientDiff(diff);
 }
 
 void CSyncServer::RemoveClient(int id)
@@ -106,29 +111,78 @@ void CSyncServer::RemoveClient(int id)
 
 	lastDiffClient = id;
 	lastWasRemove = true;
+
+	// Remove it from our list of units
+	clientLists.erase(id);
+
+	// We are the server (but also a client) so we will do it for ourselves automatically
+	string diff = GetClientDiff(localId);
+	InstallClientDiff(diff);
 }
 
 const string CSyncServer::GetClientDiff(int id)
 {
 	ostringstream s("");
 
-	//Always say who is guilty
-	s << lastDiffClient << " ";
-
-	//and of what they are guilt
-	s << lastWasRemove << " ";
-
-	//If remove, we are done now
-	if (lastWasRemove)
-		return s.str();
-
-	for (map<string, MissingList>::iterator i = curDiff.begin(); i != curDiff.end(); ++i) {
-		set<int>::iterator client = i->second.clients.find(id);
-
-		//If found, add the name of the disabled unit
-		if (client != i->second.clients.end()) {
-			s << i->first << " ";
+	if (id == lastDiffClient) {
+		// For us, we need to know which other clients caused our units to be disabled
+		
+		// This should not need to be called, but still..
+		if (lastWasRemove) {
+			s << id << " " << lastWasRemove << " ";
 		}
+		else {
+			// Go through the difflist for each client
+			for (map<int, unitlist_t>::iterator client = clientLists.begin(); client != clientLists.end(); ++client) {
+				int count = 0;
+				ostringstream us("");
+
+				for (map<string, MissingList>::iterator i = curDiff.begin(); i != curDiff.end(); ++i) {
+					set<int>::iterator clientId = i->second.clients.find(client->first);
+
+					//If found, add the name of the disabled unit
+					if (clientId != i->second.clients.end()) {
+						us << i->first << " ";
+						count++;
+					}
+				}
+
+				// Only generate the list if needed
+				if (count > 0) {
+					s << client->first << " " << lastWasRemove << " " << count << " ";
+					s << us.str();
+				}
+			}
+		}
+
+	}
+	else {
+
+		// For the others, it is always the new guy's fault
+		s << lastDiffClient << " ";
+
+		//and of what they are guilt
+		s << lastWasRemove << " ";
+
+		//If remove, we are done now
+		if (lastWasRemove)
+			return s.str();
+
+		ostringstream us("");
+		int count = 0;
+
+		for (map<string, MissingList>::iterator i = curDiff.begin(); i != curDiff.end(); ++i) {
+			set<int>::iterator client = i->second.clients.find(id);
+
+			//If found, add the name of the disabled unit
+			if (client != i->second.clients.end()) {
+				us << i->first << " ";
+				count++;
+			}
+		}
+
+		s << count << " ";
+		s << us.str();
 	}
 
 	return s.str();

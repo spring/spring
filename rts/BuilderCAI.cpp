@@ -430,7 +430,7 @@ void CBuilderCAI::DrawCommands(void)
 						pos=featureHandler->features[id-MAX_UNITS]->midPos;
 				} else {
 					if(uh->units[id]!=0)
-						pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+						pos=helper->GetUnitErrorPos(uh->units[id],owner->allyteam);
 				}
 			}
 			draw=true;
@@ -501,8 +501,8 @@ void CBuilderCAI::DrawCommands(void)
 			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
 			UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);
 
-			pos.x=floor(pos.x/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-			pos.z=floor(pos.z/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+			pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
+			pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 			pos.y=uh->GetBuildHeight(pos,unitdef);
 			if(unitdef->floater && pos.y<0)
 				pos.y = -unitdef->waterline;
@@ -547,8 +547,8 @@ void CBuilderCAI::GiveCommand(Command& c)
 			return;
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);
-		pos.x=floor(pos.x/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-		pos.z=floor(pos.z/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+		pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
+		pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 		pos.y=uh->GetBuildHeight(pos,unitdef);
 		CFeature* feature;
 		if(!uh->TestUnitBuildSquare(pos,unitdef,feature)){
@@ -568,8 +568,8 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 			float3 pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
 			UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);
 
-			pos.x=floor(pos.x/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-			pos.z=floor(pos.z/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+			pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
+			pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 			pos.y=ground->GetHeight2(pos.x,pos.z);
 			if(unitdef->floater && pos.y<0)
 				pos.y = -unitdef->waterline;

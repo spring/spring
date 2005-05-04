@@ -81,6 +81,7 @@ CMiniMap::CMiniMap()
 	float hw=sqrt(float(gs->mapx)/gs->mapy);
 	width*=hw;
 	height/=hw;
+	ypos=gu->screeny-height-10;
 }
 
 CMiniMap::~CMiniMap()
@@ -142,7 +143,7 @@ void CMiniMap::Draw()
 	float isy=gs->hmapy/512.0;
 
 	glBegin(GL_QUADS);
-		glTexCoord2f(0,1);
+		glTexCoord2f(0,isy);
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,1);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,isy);
 		glVertex2f(0,0);
@@ -150,11 +151,11 @@ void CMiniMap::Draw()
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,0);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,0);
 		glVertex2f(0,1);
-		glTexCoord2f(1,0);
+		glTexCoord2f(isx,0);
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,0);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,0);
 		glVertex2f(1,1);
-		glTexCoord2f(1,1);
+		glTexCoord2f(isx,isy);
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,1);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,isy);
 		glVertex2f(1,0);
@@ -229,7 +230,7 @@ void CMiniMap::Draw()
 	glEnd();
 
 	for(set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
-		if((*si)->radarRadius && !(*si)->beingBuilt){
+		if((*si)->radarRadius && !(*si)->beingBuilt && (*si)->activated){
 			glColor3f(0.3f,1,0.3f);
 			glBegin(GL_LINE_STRIP);
 			int numSegments=sqrtf(height)*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000+8;
@@ -238,7 +239,7 @@ void CMiniMap::Draw()
 			}
 			glEnd();
 		}
-		if((*si)->sonarRadius && !(*si)->beingBuilt){
+		if((*si)->sonarRadius && !(*si)->beingBuilt && (*si)->activated){
 			glColor3f(0.3f,1,0.3f);
 			glBegin(GL_LINE_STRIP);
 			int numSegments=sqrtf(height)*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000+8;
@@ -247,7 +248,7 @@ void CMiniMap::Draw()
 			}
 			glEnd();
 		}
-		if((*si)->jammerRadius && !(*si)->beingBuilt){
+		if((*si)->jammerRadius && !(*si)->beingBuilt && (*si)->activated){
 			glColor3f(1.0f,0.2f,0.2f);
 			glBegin(GL_LINE_STRIP);
 			int numSegments=sqrtf(height)*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE)/2000+8;

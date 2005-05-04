@@ -143,7 +143,8 @@ void CFactoryCAI::SlowUpdate()
 					building=false;
 					if(owner->group)
 						owner->group->CommandFinished(owner->id,commandQue.front().id);
-					boi->second.numQued--;
+					if(!repeatOrders)
+						boi->second.numQued--;
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();
 				}

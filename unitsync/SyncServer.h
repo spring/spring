@@ -22,7 +22,7 @@ protected:
 public:
 	CSyncServer(int id);
 	~CSyncServer(void);
-	void AddClient(int id, string unitList);
+	void AddClient(int id, const string& unitList);
 	void RemoveClient(int id);
 	const string GetClientDiff(int id);
 	virtual int ProcessUnits();

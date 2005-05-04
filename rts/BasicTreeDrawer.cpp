@@ -12,7 +12,6 @@
 #include <windows.h>		// Header File For Windows
 #include "mygl.h"
 #include <gl\glu.h>			// Header File For The GLu32 Library
-#include <gl\glaux.h>		// Header File For The Glaux Library
 #include "bitmap.h"
 //#include "mmgr.h"
 

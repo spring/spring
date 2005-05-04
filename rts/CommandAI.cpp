@@ -308,7 +308,7 @@ void CCommandAI::GiveCommand(Command& c)
 		std::deque<Command>::iterator ci=commandQue.end();
 		for(--ci;ci!=commandQue.begin();--ci){							//iterate from the end and dont check the current order
 			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
-				if(c.params.size()==1){
+				if(c.params.size()==1){			//we assume the param is a unit of feature id
 					if(ci->params[0]==c.params[0]){
 						commandQue.erase(ci);
 						return;
@@ -317,7 +317,7 @@ void CCommandAI::GiveCommand(Command& c)
 					float3 cpos(c.params[0],c.params[1],c.params[2]);
 					float3 cipos(ci->params[0],ci->params[1],ci->params[2]);
 
-					if((cpos-cipos).SqLength2D()<100){
+					if((cpos-cipos).SqLength2D()<17*17){
 						commandQue.erase(ci);
 						return;				
 					}

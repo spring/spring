@@ -14,6 +14,7 @@
 #include "damagearrayhandler.h"
 #include "unitdef.h"
 #include "readmap.h"
+#include "GameSetup.h"
 //#include "mmgr.h"
 
 
@@ -43,19 +44,35 @@ CUnitDefHandler::CUnitDefHandler(void)
 	soundcategory.LoadFile("gamedata\\sound.tdf");
 	
 	numUnits = tafiles.size();
+
+	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = new UnitDef[numUnits+1];
 	
-	for(unsigned int i=1; i<=tafiles.size(); i++)		//dont want a 0 id
+	unsigned int i = 1;		// Start at unit id 1
+	for(unsigned int a = 0; a < tafiles.size(); ++a)	
 	{
+		// Determine the name (in lowercase) first
+		int len = tafiles[a].find_last_of("\\")+1;
+		std::string unitname = tafiles[a].substr(len, tafiles[a].size()-4-len);
+		std::transform(unitname.begin(), unitname.end(), unitname.begin(), (int (*)(int))std::tolower);
+
+		// Restrictions may tell us not to use this unit at all
+		if (gameSetup)
+			if (gameSetup->restrictedUnits.find(unitname) != gameSetup->restrictedUnits.end()) {
+				//info->AddLine("Not using unit %s", unitname.c_str());
+				continue;
+			}
+
+		// Seems ok, load it
 		unitDefs[i].loaded = false;
-		unitDefs[i].filename = tafiles[i-1];
+		unitDefs[i].filename = tafiles[a];
 		unitDefs[i].id = i;			
 		unitDefs[i].yardmap = 0;
-		int len = tafiles[i-1].find_last_of("\\")+1;
-		std::string unitname = tafiles[i-1].substr(len, tafiles[i-1].size()-4-len);
-		std::transform(unitname.begin(), unitname.end(), unitname.begin(), (int (*)(int))std::tolower);
 		unitDefs[i].name = unitname;
 		unitID[unitname] = i;
+
+		// Increase index for next unit
+		i++;
 	}
 
 	FindTABuildOpt();
@@ -184,7 +201,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	sunparser.GetDef(ud.onoffable, "0", "UNITINFO\\onoffable");
 
 	sunparser.GetDef(ud.maxSlope, "0", "UNITINFO\\MaxSlope");
-	ud.maxHeightDif=30*tan(ud.maxSlope*(PI/180));
+	ud.maxHeightDif=40*tan(ud.maxSlope*(PI/180));
 	ud.maxSlope = cos(ud.maxSlope*(PI/180));
 	sunparser.GetDef(ud.minWaterDepth, "-10e6", "UNITINFO\\MinWaterDepth");
 	sunparser.GetDef(ud.maxWaterDepth, "10e6", "UNITINFO\\MaxWaterDepth");

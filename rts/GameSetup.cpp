@@ -17,6 +17,7 @@
 CGameSetup* gameSetup=0;
 
 using namespace std;
+extern bool keys[256];
 
 extern string stupidGlobalMapname;
 
@@ -26,6 +27,7 @@ CGameSetup::CGameSetup(void)
 	readyTime=0;
 	gameSetupText=0;
 	startPosType=0;
+	forceReady=false;
 }
 
 CGameSetup::~CGameSetup(void)
@@ -161,6 +163,22 @@ bool CGameSetup::Init(char* buf, int size)
 		gs->teams[a]->energy=energy;
 		gs->teams[a]->energyStorage=energy;
 	}
+
+	// Read the unit restrictions
+	int numRestrictions;
+	file->GetDef(numRestrictions, "0", "GAME\\NumRestrictions");
+
+	for (int i = 0; i < numRestrictions; ++i) {
+		char key[100];
+		sprintf(key, "GAME\\RESTRICT\\Unit%d", i);
+		string resName = file->SGetValueDef("", key);
+		sprintf(key, "GAME\\RESTRICT\\Limit%d", i);
+		int resLimit;
+		file->GetDef(resLimit, "0", key);
+
+		restrictedUnits[resName] = resLimit;
+	}
+
 	return true;
 }
 
@@ -172,17 +190,20 @@ bool CGameSetup::Draw(void)
 	glTranslatef(0.3f,0.7f,0.0f);
 	glScalef(0.03f,0.04f,0.1f);
 	if(!serverNet && net->inInitialConnect){
-		font->glPrint("Connecting to server %i",20-(int)(net->curTime-net->connections[0].lastReceiveTime));
+		font->glPrint("Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastReceiveTime));
 		return false;
 	}else if(readyTime>0)
 		font->glPrint("Starting in %i",3-(int)readyTime);
 	else if(!readyTeams[gu->myTeam])
 		font->glPrint("Choose start pos");
-	else
+	else if(gu->myPlayerNum==0){
+		glTranslatef(-8,0.0f,0.0f);
+		font->glPrint("Waiting for players, Ctrl+Return to force start");
+	}else
 		font->glPrint("Waiting for players");
 
 	glPopMatrix();
-
+	glPushMatrix();
 	bool allReady=true;
 	for(int a=0;a<numPlayers;a++){
 		if(!gs->players[a]->readyToStart){
@@ -200,9 +221,15 @@ bool CGameSetup::Draw(void)
 		font->glPrint("%s",gs->players[a]->playerName.c_str());
 		glPopMatrix();
 	}
+	if(gu->myPlayerNum==0 && keys[VK_RETURN] && keys[VK_CONTROL]){
+		forceReady=true;
+	}
+	if(forceReady)
+		allReady=true;
 	if(allReady){
 		if(readyTime==0 && !net->playbackDemo){
 			mouse->currentCamController=mouse->camControllers[1];
+			mouse->currentCamControllerNum=1;
 			mouse->currentCamController->SetPos(gs->teams[gu->myTeam]->startPos);
 			mouse->inStateTransit=true;
 			mouse->transitSpeed=1;
@@ -211,6 +238,7 @@ bool CGameSetup::Draw(void)
 	} else {
 		readyTime=0;
 	}
+	glPopMatrix();
 	return readyTime>3;
 }
 

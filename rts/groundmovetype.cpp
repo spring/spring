@@ -88,6 +88,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	nextObstacleAvoidanceUpdate(0),
 	oldPhysState(CSolidObject::OnGround)
 {
+	moveSquareX=(int)owner->pos.x/SQUARE_SIZE;
+	moveSquareY=(int)owner->pos.z/SQUARE_SIZE;
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -262,10 +264,11 @@ void CGroundMoveType::SlowUpdate()
 		StartEngine();
 	}
 
-	if(owner->pos.z<0 || owner->pos.z>(gs->mapy+1)*SQUARE_SIZE || owner->pos.x<0 || owner->pos.x>(gs->mapx+1)*SQUARE_SIZE){
+	owner->pos.CheckInBounds();		//just kindly move it into the map again instead of deleteing
+/*	if(owner->pos.z<0 || owner->pos.z>(gs->mapy+1)*SQUARE_SIZE || owner->pos.x<0 || owner->pos.x>(gs->mapx+1)*SQUARE_SIZE){
 		info->AddLine("Deleting unit due to bad coord %i %f %f %f %s",owner->id,owner->pos.x,owner->pos.y,owner->pos.z,owner->unitDef->humanName.c_str());
 		uh->DeleteUnit(owner);
-	}
+	}*/
 
 	if(!(owner->pos==oldSlowUpdatePos)){
 		oldSlowUpdatePos=owner->pos;
@@ -1079,8 +1082,42 @@ void CGroundMoveType::Fail()
 
 void CGroundMoveType::CheckCollision(void)
 {
+	int newMoveSquareX=(int)owner->pos.x / SQUARE_SIZE;		//first make sure we dont go into any terrain we cant get out of
+	int newMoveSquareY=(int)owner->pos.z / SQUARE_SIZE;
+	if(newMoveSquareX!=moveSquareX || newMoveSquareY!=moveSquareY){
+		float cmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX,moveSquareY);
+		if(newMoveSquareX>moveSquareX){
+			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
+			if(cmod>0.01 && nmod<=0.01){
+				owner->pos.x=moveSquareX*SQUARE_SIZE+(SQUARE_SIZE-0.01);
+				newMoveSquareX=moveSquareX;
+			}
+		} else if(newMoveSquareX<moveSquareX){
+			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
+			if(cmod>0.01 && nmod<=0.01){
+				owner->pos.x=moveSquareX*SQUARE_SIZE+0.01;
+				newMoveSquareX=moveSquareX;
+			}
+
+		}
+		if(newMoveSquareY>moveSquareY){
+			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
+			if(cmod>0.01 && nmod<=0.01){
+				owner->pos.z=moveSquareY*SQUARE_SIZE+(SQUARE_SIZE-0.01);
+				newMoveSquareY=moveSquareY;
+			}
+		} else if(newMoveSquareY<moveSquareY){
+			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
+			if(cmod>0.01 && nmod<=0.01){
+				owner->pos.z=moveSquareY*SQUARE_SIZE+0.01;
+				newMoveSquareY=moveSquareY;
+			}
+		}
+		moveSquareX=newMoveSquareX;
+		moveSquareY=newMoveSquareY;
+	}
 	int2 newmp=owner->GetMapPos();
-	if(newmp.x!=owner->mapPos.x || newmp.y!=owner->mapPos.y){
+	if(newmp.x!=owner->mapPos.x || newmp.y!=owner->mapPos.y){		//now make sure we dont overrun any other units
 		bool haveCollided=true;
 		int retest=0;
 		while(haveCollided && retest<2){

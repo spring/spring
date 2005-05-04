@@ -10,7 +10,6 @@
 #include "SyncTracer.h"
 #include "mygl.h"
 #include <gl\glu.h>			// Header File For The GLu32 Library
-#include <gl\glaux.h>		// Header File For The Glaux Library
 #include <time.h>
 #include <stdlib.h>
 #include "glList.h"
@@ -235,7 +234,7 @@ CGame::CGame(bool server,std::string mapname)
 	userInput="";
 	showList=0;
 
-	info->AddLine("TA Spring 0.40b2");
+	info->AddLine("TA Spring 0.41b1");
 
 	if(server){
 		gameServer=new CGameServer;
@@ -1346,28 +1345,39 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_PLAYERSTAT:{
 			int player=inbuf[inbufpos+1];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in playerstat msg",player);
+				inbufpos+=sizeof(CPlayer::Statistics)+2;
+				break;
+			}
 			*gs->players[player]->currentStats=*(CPlayer::Statistics*)&inbuf[inbufpos+2];
 			inbufpos+=sizeof(CPlayer::Statistics)+2;
 			break;}
 
-		case NETMSG_PAUSE:
+		case NETMSG_PAUSE:{
+			int player=inbuf[inbufpos+2];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in pause msg",player);
+				inbufpos+=3;
+				break;
+			}
 			gs->paused=!!inbuf[inbufpos+1];
 			if(gs->paused){
-				info->AddLine("%s paused the game",gs->players[inbuf[inbufpos+2]]->playerName.c_str());
+				info->AddLine("%s paused the game",gs->players[player]->playerName.c_str());
 			} else {
-				info->AddLine("%s unpaused the game",gs->players[inbuf[inbufpos+2]]->playerName.c_str());
+				info->AddLine("%s unpaused the game",gs->players[player]->playerName.c_str());
 			}
 			QueryPerformanceCounter(&lastframe);
 			timeLeft=0;
 			inbufpos+=3;
-			break;
+			break;}
 
-		case NETMSG_INTERNAL_SPEED:
+		case NETMSG_INTERNAL_SPEED:{
 			if(!net->playbackDemo)
 				gs->speedFactor=*((float*)&inbuf[inbufpos+1]);
 			inbufpos+=5;
 //			info->AddLine("Internal speed set to %.2f",gs->speedFactor);
-			break;
+			break;}
 
 		case NETMSG_USER_SPEED:
 			gs->userSpeedFactor=*((float*)&inbuf[inbufpos+1]);
@@ -1389,12 +1399,18 @@ bool CGame::ClientReadNet()
 			inbufpos+=inbuf[inbufpos+1];				
 			break;
 
-		case NETMSG_PLAYERNAME:
-			gs->players[inbuf[inbufpos+2]]->playerName=(char*)(&inbuf[inbufpos+3]);
-			gs->players[inbuf[inbufpos+2]]->readyToStart=true;
-			gs->players[inbuf[inbufpos+2]]->active=true;
+		case NETMSG_PLAYERNAME:{
+			int player=inbuf[inbufpos+2];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in playername msg",player);
+				inbufpos+=inbuf[inbufpos+1];
+				break;
+			}
+			gs->players[player]->playerName=(char*)(&inbuf[inbufpos+3]);
+			gs->players[player]->readyToStart=true;
+			gs->players[player]->active=true;
 			inbufpos+=inbuf[inbufpos+1];				
-			break;
+			break;}
 						
 		case NETMSG_SCRIPT:
 			CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
@@ -1405,13 +1421,17 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_CHAT:{
 			int player=inbuf[inbufpos+2];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in chat msg",player);
+				inbufpos+=inbuf[inbufpos+1];
+				break;
+			}
 			string s=(char*)(&inbuf[inbufpos+3]);
 			HandleChatMsg(s,player);
 			inbufpos+=inbuf[inbufpos+1];	
 			break;}
 			
 		case NETMSG_SYSTEMMSG:{
-			int player=inbuf[inbufpos+2];
 			string s=(char*)(&inbuf[inbufpos+3]);
 			info->AddLine(s);
 			inbufpos+=inbuf[inbufpos+1];	
@@ -1419,6 +1439,11 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_STARTPOS:{
 			int team=inbuf[inbufpos+1];
+			if(team>=gs->activeTeams || team<0){
+				info->AddLine("Got invalid team num %i in startpos msg",team);
+				inbufpos+=15;
+				break;
+			}
 			gameSetup->readyTeams[team]=!!inbuf[inbufpos+2];
 			gs->teams[team]->startPos.x=*(float*)&inbuf[inbufpos+3];
 			gs->teams[team]->startPos.y=*(float*)&inbuf[inbufpos+7];
@@ -1447,32 +1472,60 @@ bool CGame::ClientReadNet()
 			break;
 			
 		case NETMSG_COMMAND:{
+			int player=inbuf[inbufpos+3];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in command msg",player);
+				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+				break;
+			}
 			Command c;
 			c.id=*((int*)&inbuf[inbufpos+4]);
+			c.options=inbuf[inbufpos+8];
 			for(int a=0;a<((*((short int*)&inbuf[inbufpos+1])-9)/4);++a)
 				c.params.push_back(*((float*)&inbuf[inbufpos+9+a*4]));
-			c.options=inbuf[inbufpos+8];
-			selectedUnits.NetOrder(c,inbuf[inbufpos+3]);
+			selectedUnits.NetOrder(c,player);
 			inbufpos+=*((short int*)&inbuf[inbufpos+1]);
 			break;}
 
 		case NETMSG_SELECT:{
+			int player=inbuf[inbufpos+3];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in netselect msg",player);
+				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+				break;
+			}
+
 			vector<int> selected;
 			for(int a=0;a<((*((short int*)&inbuf[inbufpos+1])-4)/2);++a){
-				int id=*((short int*)&inbuf[inbufpos+4+a*2]);
-				if(uh->units[id] && uh->units[id]->team!=gs->players[inbuf[inbufpos+3]]->team)
-					info->AddLine("Warning player %i of team %i tried to select unit from team %i",a,gs->players[inbuf[inbufpos+3]]->team,uh->units[id]->team);
-				selected.push_back(id);
+				int unitid=*((short int*)&inbuf[inbufpos+4+a*2]);
+				if(unitid>=MAX_UNITS || unitid<0){
+					info->AddLine("Got invalid unitid %i in netselect msg",unitid);
+					inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+					break;
+				}
+				if(uh->units[unitid] && uh->units[unitid]->team==gs->players[player]->team)
+					selected.push_back(unitid);
 			}
-			selectedUnits.NetSelect(selected,inbuf[inbufpos+3]);
+			selectedUnits.NetSelect(selected,player);
 			inbufpos+=*((short int*)&inbuf[inbufpos+1]);
 			break;}
 
 		case NETMSG_AICOMMAND:{
 			Command c;
+			int player=inbuf[inbufpos+3];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in aicommand msg",player);
+				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+				break;
+			}
 			int unitid=*((short int*)&inbuf[inbufpos+4]);
-			if(uh->units[unitid] && uh->units[unitid]->team!=gs->players[inbuf[inbufpos+3]]->team)
-				info->AddLine("Warning player %i of team %i tried to send aiorder to unit from team %i",a,gs->players[inbuf[inbufpos+3]]->team,uh->units[unitid]->team);
+			if(unitid>=MAX_UNITS || unitid<0){
+				info->AddLine("Got invalid unitid %i in aicommand msg",unitid);
+				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+				break;
+			}
+			if(uh->units[unitid] && uh->units[unitid]->team!=gs->players[player]->team)
+				info->AddLine("Warning player %i of team %i tried to send aiorder to unit from team %i",a,gs->players[player]->team,uh->units[unitid]->team);
 			c.id=*((int*)&inbuf[inbufpos+6]);
 			c.options=inbuf[inbufpos+10];
 			for(int a=0;a<((*((short int*)&inbuf[inbufpos+1])-11)/4);++a)
@@ -1509,6 +1562,11 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_SHARE:{
 			int player=inbuf[inbufpos+1];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in share msg",player);
+				inbufpos+=12;
+				break;
+			}
 			int team1=gs->players[player]->team;
 			int team2=inbuf[inbufpos+2];
 			bool shareUnits=!!inbuf[inbufpos+3];
@@ -1533,6 +1591,11 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_SETSHARE:{
 			int team=inbuf[inbufpos+1];
+			if(team>=gs->activeTeams || team<0){
+				info->AddLine("Got invalid team num %i in setshare msg",team);
+				inbufpos+=10;
+				break;
+			}
 			float metalShare=*(float*)&inbuf[inbufpos+2];
 			float energyShare=*(float*)&inbuf[inbufpos+6];
 			
@@ -1550,6 +1613,12 @@ bool CGame::ClientReadNet()
 #ifdef DIRECT_CONTROL_ALLOWED
 		case NETMSG_DIRECT_CONTROL:{
 			int player=inbuf[inbufpos+1];
+
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in direct control msg",player);
+				inbufpos+=2;
+				break;
+			}
 
 			if(gs->players[player]->playerControlledUnit){
 				CUnit* unit=gs->players[player]->playerControlledUnit;
@@ -1595,6 +1664,11 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_DC_UPDATE:{
 			int player=inbuf[inbufpos+1];
+			if(player>=MAX_PLAYERS || player<0){
+				info->AddLine("Got invalid player num %i in dc update msg",player);
+				inbufpos+=7;
+				break;
+			}
 			DirectControlStruct* dc=&gs->players[player]->myControl;
 			CUnit* unit=gs->players[player]->playerControlledUnit;
 
@@ -1704,14 +1778,16 @@ void CGame::UpdateUI()
 	}
 
 	if(chatting && !userWriting){
+		if(userInput.size()>0){
+			netbuf[0]=NETMSG_CHAT;
+			netbuf[1]=userInput.size()+4;
+			netbuf[2]=gu->myPlayerNum;
+			for(unsigned int a=0;a<userInput.size();a++)
+				netbuf[a+3]=userInput.at(a);
+			netbuf[userInput.size()+3]=0;
+			net->SendData(netbuf,netbuf[1]);
+		}
 		chatting=false;
-		netbuf[0]=NETMSG_CHAT;
-		netbuf[1]=userInput.size()+4;
-		netbuf[2]=gu->myPlayerNum;
-		for(unsigned int a=0;a<userInput.size();a++)
-			netbuf[a+3]=userInput.at(a);
-		netbuf[userInput.size()+3]=0;
-		net->SendData(netbuf,netbuf[1]);
 		userInput="";
 	}
 	if(inMapDrawer->wantLabel && !userWriting){
@@ -1910,6 +1986,10 @@ void CGame::DrawDirectControlHud(void)
 
 	for(int a=0;a<unit->weapons.size();++a){
 		CWeapon* w=unit->weapons[a];
+		if(!w){
+			info->AddLine("Null weapon in vector?");
+			return;
+		}
 		switch(a){
 		case 0:
 			glColor4d(0,1,0,0.7);

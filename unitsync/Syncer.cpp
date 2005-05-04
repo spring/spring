@@ -18,7 +18,7 @@ CSyncer::~CSyncer(void)
 {
 }
 
-crc_t CSyncer::CalculateCRC(string fileName)
+crc_t CSyncer::CalculateCRC(const string& fileName)
 {
 	//return 1;
 
@@ -41,7 +41,7 @@ crc_t CSyncer::CalculateCRC(string fileName)
 	return cur;
 }
 
-void CSyncer::ParseUnit(string fileName)
+void CSyncer::ParseUnit(const string& fileName)
 {
 	CSunParser *p = new CSunParser();
 
@@ -112,31 +112,37 @@ string CSyncer::GetCurrentList()
 	return s.str();
 }
 
-void CSyncer::InstallClientDiff(string diff) 
+void CSyncer::InstallClientDiff(const string& diff) 
 {
 	istringstream i(diff);
 
 	int client;
 	string name;
 	bool wasRemove;
-	i >> client;
-	i >> wasRemove;
+	int count;	
 
-	//Handle remove if so
-	if (wasRemove) {
-		RemoveClient(client);
-		return;
-	}
+	while (i >> client) {
+		i >> wasRemove;
 
-	while (i >> name) {
-		map<string, DisabledUnit>::iterator found = disabledUnits.find(name);
-		if (found != disabledUnits.end()) {
-			disabledUnits[name].clients.insert(client);
+		//Handle remove if so
+		if (wasRemove) {
+			RemoveClient(client);
+			return;
 		}
-		else {
-			DisabledUnit mu;
-			mu.clients.insert(client);
-			disabledUnits[name] = mu;
+
+		// Alas, it was not..
+		i >> count;
+		for (int a = 0; a < count; ++a) {
+			i >> name;
+			map<string, DisabledUnit>::iterator found = disabledUnits.find(name);
+			if (found != disabledUnits.end()) {
+				disabledUnits[name].clients.insert(client);
+			}
+			else {
+				DisabledUnit mu;
+				mu.clients.insert(client);
+				disabledUnits[name] = mu;
+			}
 		}
 	}
 }

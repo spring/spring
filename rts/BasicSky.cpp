@@ -10,7 +10,6 @@
 #include <windows.h>		// Header File For Windows
 #include "mygl.h"
 #include <gl\glu.h>			// Header File For The GLu32 Library
-#include <gl\glaux.h>		// Header file for the glaux library
 #include "camera.h"
 #include "readmap.h"
 #include "bitmap.h"

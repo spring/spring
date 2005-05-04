@@ -1119,8 +1119,8 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 
 void GUIgame::MakeBuildPos(float3& pos,UnitDef* unitdef)
 {
-	pos.x=floor(pos.x/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-	pos.z=floor(pos.z/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+	pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
+	pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 	pos.y=uh->GetBuildHeight(pos,unitdef);
 	if(unitdef->floater)
 		pos.y = max(pos.y,0);

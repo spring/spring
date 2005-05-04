@@ -15,6 +15,8 @@ public:
 	};
 
 	std::list<TransportedUnit> transported;
+	int transportCapacityUsed;
+
 	void Update(void);
 	void DependentDied(CObject* object);
 	void KillUnit(bool selfDestruct,bool reclaimed);

@@ -154,7 +154,7 @@ void CGrassDrawer::Draw(void)
 	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, grassVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, 1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,1);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -244,7 +244,7 @@ void CGrassDrawer::Draw(void)
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
-		SetTexGen(1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,0);
+		SetTexGen(1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
 

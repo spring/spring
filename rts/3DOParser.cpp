@@ -11,7 +11,6 @@
 //#include <windows.h>
 #include "mygl.h"
 //#include <gl\glu.h>			// Header File For The GLu32 Library
-//#include <gl\glaux.h>		// Header File For The Glaux Library
 #include "globalstuff.h"
 #include "infoconsole.h"
 #include <vector>
@@ -28,6 +27,7 @@
 #include <cctype>
 #include ".\3doparser.h"
 #include "team.h"
+#include "player.h"
 //#include "mmgr.h"
 
 using namespace std;
@@ -107,6 +107,9 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 		return ui->second;
 	}
 
+//	if(sideName.find("armstump.3do")!=std::string.npos){
+//		info->AddLine("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),gs->players[gs->teams[team]->leader]->playerName.c_str());
+//	}
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 //	ifstream ifs(name, ios::in|ios::binary);
@@ -688,9 +691,12 @@ float3 LocalS3DOModel::GetPieceDirection(int piecenum)
 		return float3(1,1,1);
 	
 	S3DO &orig = *pieces[p].original;
-	if (orig.vertices.size() != 2) {
-		info->AddLine("Use of GetPieceDir on strange piece (%d vertices)", orig.vertices.size());
+	if (orig.vertices.size() < 2) {
+		//info->AddLine("Use of GetPieceDir on strange piece (%d vertices)", orig.vertices.size());
 		return float3(1,1,1);
+	}
+	else if (orig.vertices.size() > 2) {
+		//this is strange too, but probably caused by an incorrect 3rd party unit
 	}
 	
 	//info->AddLine("Vertexes %f %f %f", orig.vertices[0].pos.x, orig.vertices[0].pos.y, orig.vertices[0].pos.z);

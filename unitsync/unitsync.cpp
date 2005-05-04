@@ -15,6 +15,18 @@ static CSyncer *syncer = NULL;
 //The SunParswer wants this
 HWND hWnd = 0;
 
+// And the following makes the hpihandler happy
+class CInfoConsole {
+public:
+	void AddLine(const char *, ...);
+};
+
+void CInfoConsole::AddLine(const char *, ...)
+{
+}
+
+class CInfoConsole *info;
+
 BOOL __stdcall DllMain(HINSTANCE hInst,
                        DWORD dwReason,
                        LPVOID lpReserved) {
@@ -39,6 +51,21 @@ extern "C" int __stdcall Init(bool isServer, int id)
 	}
 
 	return 1;
+}
+
+extern "C" void __stdcall UnInit()
+{
+	if ( hpiHandler )
+	{
+		delete hpiHandler;
+		hpiHandler = 0;
+	}
+
+	if ( syncer )
+	{
+		delete syncer;
+		syncer = 0;
+	}
 }
 
 extern "C" int __stdcall ProcessUnits(void)

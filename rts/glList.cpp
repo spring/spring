@@ -5,7 +5,6 @@
 
 #include "glList.h"
 #include "mygl.h"
-#include <gl\glaux.h>		// Header File For The Glaux Library
 
 #include "glfont.h"
 #include "reghandler.h"

@@ -9,7 +9,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "TA Spring"
-!define PRODUCT_VERSION "0.40pre1"
+!define PRODUCT_VERSION "0.41b1"
 !define PRODUCT_PUBLISHER "The TA Spring team"
 !define PRODUCT_WEB_SITE "http://taspring.clan-sy.com"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
@@ -26,7 +26,7 @@
 
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
-; License page
+; Licensepage
 !insertmacro MUI_PAGE_LICENSE "gpl.txt"
 ; Components page
 !insertmacro MUI_PAGE_COMPONENTS
@@ -219,6 +219,8 @@ Section "Multiplayer battleroom" SEC_BATTLEROOM
   ; The battleroom
   File "..\rts\bagge\ClientControls.dll"
   File "..\rts\bagge\SpringClient.exe"
+;  File "..\rts\bagge\SpringClient.pdb"
+  Delete "$INSTDIR\SpringClient.pdb"
   File "..\rts\bagge\Utility.dll"
   File "..\rts\bagge\Unitsync.dll"
 SectionEnd
@@ -300,6 +302,7 @@ Section -Documentation
   
   File "..\readme.html"
   File "..\license.html"
+  File "..\text\changelog.txt"
   
 SectionEnd
 
@@ -385,6 +388,7 @@ Section Uninstall
   Delete "$INSTDIR\aidll\centralbuild.dll"
   Delete "$INSTDIR\aidll\mmhandler.dll"
   Delete "$INSTDIR\aidll\simpleform.dll"
+  RMDir "$INSTDIR\aidll"
 
   ; The battleroom
   Delete "$INSTDIR\ClientControls.dll"

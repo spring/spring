@@ -654,8 +654,8 @@ void CUnitHandler::DrawCloakedUnits(void)
 			float3 pos=ti->second.pos;
 			UnitDef *unitdef = ti->second.unitdef;
 
-			pos.x=floor(pos.x/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-			pos.z=floor(pos.z/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+			pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
+			pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 			pos.y=ground->GetHeight2(pos.x,pos.z);
 			if(unitdef->floater && pos.y<0)
 				pos.y = -unitdef->waterline;

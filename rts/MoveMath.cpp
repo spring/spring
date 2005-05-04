@@ -34,8 +34,8 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) {
 }
 
 float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos,const float3& moveDir) {
-	int x = pos.x / SQUARE_SIZE;
-	int z = pos.z / SQUARE_SIZE;
+	int x = (int)pos.x / SQUARE_SIZE;
+	int z = (int)pos.z / SQUARE_SIZE;
 	return SpeedMod(moveData, x, z,moveDir);
 }
 

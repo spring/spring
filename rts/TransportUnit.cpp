@@ -6,7 +6,8 @@
 //#include "mmgr.h"
 
 CTransportUnit::CTransportUnit(const float3 &pos,int team,UnitDef* unitDef)
-: CUnit(pos,team,unitDef)
+: CUnit(pos,team,unitDef),
+	transportCapacityUsed(0)
 {
 }
 
@@ -42,6 +43,7 @@ void CTransportUnit::DependentDied(CObject* o)
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
 		if(ti->unit==o){
 			transported.erase(ti);
+			transportCapacityUsed-=ti->unit->xsize/2;
 			break;
 		}
 	}
@@ -74,6 +76,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	tu.unit=unit;
 	tu.piece=piece;
 	transported.push_back(tu);
+	transportCapacityUsed+=unit->xsize/2;
 }
 
 void CTransportUnit::DetachUnit(CUnit* unit)
@@ -93,6 +96,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			unit->commandAI->GiveCommand(c);
 			unit->Block();
 			transported.erase(ti);
+			transportCapacityUsed-=unit->xsize/2;
 			break;
 		}
 	}
