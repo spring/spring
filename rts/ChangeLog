@@ -1,0 +1,8 @@
+2005-05-06    <gnibu>
+	* all #includes have now correct case
+	* replaced all itoa by snprintf
+	* using system jpeglib.h with linux (moved header to include/windows)
+	* balanced types in max and min functions
+	* shadows are not implemented yet under linux (disabled by compile option)
+	* a lot of code fix
+
