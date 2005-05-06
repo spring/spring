@@ -11,7 +11,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "igroupaicallback.h"
+#include "IGroupAiCallback.h"
 class CGroup;
 
 class CGroupAiCallback : public IGroupAiCallback

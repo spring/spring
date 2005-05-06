@@ -6,7 +6,7 @@
 
 #include "archdef.h"
 
-#include "commandai.h"
+#include "CommandAI.h"
 
 class CAirCAI :
 	public CCommandAI

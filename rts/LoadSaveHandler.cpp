@@ -1,13 +1,13 @@
-#include "stdafx.h"
-#include ".\loadsavehandler.h"
+#include "StdAfx.h"
+#include "LoadSaveHandler.h"
 #include <windows.h>
-#include "mygl.h"
+#include "myGL.h"
 #include <fstream>
-#include "saveinterface.h"
-#include "loadinterface.h"
-#include "readmap.h"
-#include "featurehandler.h"
-#include "unithandler.h"
+#include "SaveInterface.h"
+#include "LoadInterface.h"
+#include "ReadMap.h"
+#include "FeatureHandler.h"
+#include "UnitHandler.h"
 
 extern std::string stupidGlobalMapname;
 

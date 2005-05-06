@@ -1,26 +1,28 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // Builder.cpp: implementation of the CBuilder class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "Builder.h"
-#include "building.h"
-#include "unitloader.h"
-#include "gfxprojectile.h"
-#include "gamehelper.h"
-#include "unithandler.h"
-#include "3doparser.h"
-#include "cobinstance.h"
-#include ".\builder.h"
-#include "mymath.h"
-#include "infoconsole.h"
-#include "ground.h"
-#include "sound.h"
-#include "mapdamage.h"
-#include "unitdefhandler.h"
-#include "feature.h"
-#include "featurehandler.h"
+#include "Building.h"
+#include "UnitLoader.h"
+#include "GfxProjectile.h"
+#include "GameHelper.h"
+#include "UnitHandler.h"
+#include "3DOParser.h"
+#include "CobInstance.h"
+#include "Builder.h"
+#include "myMath.h"
+#include "InfoConsole.h"
+#include "Ground.h"
+#include "Sound.h"
+#include "MapDamage.h"
+#include "UnitDefHandler.h"
+#include "Feature.h"
+#include "FeatureHandler.h"
 //#include "mmgr.h"
+#include <algorithm>
+using namespace std;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -208,10 +210,10 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	terraformCenter=centerPos;
 	terraformRadius=radius;
 
-	tx1 = max(0,(centerPos.x-radius)/SQUARE_SIZE);
-	tx2 = min(gs->mapx,(centerPos.x+radius)/SQUARE_SIZE);
-	tz1 = max(0,(centerPos.z-radius)/SQUARE_SIZE);
-	tz2 = min(gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
+	tx1 = max((float)0,(centerPos.x-radius)/SQUARE_SIZE);
+	tx2 = min((float)gs->mapx,(centerPos.x+radius)/SQUARE_SIZE);
+	tz1 = max((float)0,(centerPos.z-radius)/SQUARE_SIZE);
+	tz2 = min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
 
 	float tcost=0;
 	for(int z=tz1; z<=tz2; z++){
@@ -270,9 +272,9 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 	if(feature)
 		return false;
 
-	tx1 = max(0,(buildPos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	tx1 = max((float)0,(buildPos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	tx2 = min(gs->mapx,tx1+unitdef->xsize);
-	tz1 = max(0,(buildPos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	tz1 = max((float)0,(buildPos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	tz2 = min(gs->mapy,tz1+unitdef->ysize);
 
 	float tcost=0;
@@ -281,9 +283,9 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 			float delta=buildPos.y-readmap->heightmap[z*(gs->mapx+1)+x];
 			float cost;
 			if(delta>0){
-				cost=max(3,readmap->heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x]+delta*0.5);
+				cost=max(3.,readmap->heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x]+delta*0.5);
 			} else {
-				cost=max(3,readmap->orgheightmap[z*(gs->mapx+1)+x]-readmap->heightmap[z*(gs->mapx+1)+x]-delta*0.5);
+				cost=max(3.,readmap->orgheightmap[z*(gs->mapx+1)+x]-readmap->heightmap[z*(gs->mapx+1)+x]-delta*0.5);
 			}
 			tcost+=fabs(delta)*cost;			
 		}
@@ -337,11 +339,13 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 	short int h=GetHeadingFromVector(wantedDir.x,wantedDir.z);
 
 	std::vector<long> args;
-	args.push_back(short int(h-heading));
+	args.push_back(short(h-heading));
 	cob->Call("StartBuilding",args);
 
+#ifndef NO_SOUND
 	if(unitDef->sounds.build.id)
 		sound->PlaySound(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
+#endif	
 }
 
 void CBuilder::HelpTerraform(CBuilder* unit)

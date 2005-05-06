@@ -11,7 +11,7 @@
 
 #include <map>
 #include <vector>
-#include "moveinfo.h"
+#include "MoveInfo.h"
 
 class CTerrainReader;
 class CPathFinder;

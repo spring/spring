@@ -1,7 +1,7 @@
-#include "stdafx.h"
-#include ".\loadscript.h"
-#include "loadsavehandler.h"
-#include "filehandler.h"
+#include "StdAfx.h"
+#include "LoadScript.h"
+#include "LoadSaveHandler.h"
+#include "FileHandler.h"
 #include <vector>
 
 extern std::string stupidGlobalMapname;

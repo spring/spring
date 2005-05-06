@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include ".\loadinterface.h"
+#include "StdAfx.h"
+#include "LoadInterface.h"
 
 CLoadInterface::CLoadInterface(std::ifstream* ifs)
 : ifs(ifs)

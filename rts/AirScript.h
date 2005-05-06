@@ -7,7 +7,7 @@
 #include "archdef.h"
 
 #include <deque>
-#include "script.h"
+#include "Script.h"
 
 class CAirScript :
 	public CScript

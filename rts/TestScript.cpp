@@ -2,18 +2,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "TestScript.h"
-#include "unitloader.h"
-#include "unit.h"
-#include "weapon.h"
-#include "readmap.h"
-#include "ground.h"
-#include "featurehandler.h"
-#include "sunparser.h"
-#include "team.h"
-#include "selectedunits.h"
-#include "unithandler.h"
+#include "UnitLoader.h"
+#include "Unit.h"
+#include "Weapon.h"
+#include "ReadMap.h"
+#include "Ground.h"
+#include "FeatureHandler.h"
+#include "SunParser.h"
+#include "Team.h"
+#include "SelectedUnits.h"
+#include "UnitHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

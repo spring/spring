@@ -1,18 +1,18 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 
-#include ".\lightingcannon.h"
+#include "LightingCannon.h"
 
-#include "unit.h"
+#include "Unit.h"
 
-#include "tracerprojectile.h"
+#include "TracerProjectile.h"
 
-#include "sound.h"
+#include "Sound.h"
 
-#include "gamehelper.h"
+#include "GameHelper.h"
 
-#include "lightingprojectile.h"
+#include "LightingProjectile.h"
 
-#include "ground.h"
+#include "Ground.h"
 
 //#include "mmgr.h"
 

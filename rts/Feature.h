@@ -4,7 +4,7 @@
 #include "archdef.h"
 
 #include "SolidObject.h"
-#include "matrix44f.h"
+#include "Matrix44f.h"
 #include <vector>
 #include <list>
 

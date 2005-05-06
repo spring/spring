@@ -1,7 +1,7 @@
 #pragma once
 
-#include "matrix44f.h"
-#include "mygl.h"
+#include "Matrix44f.h"
+#include "myGL.h"
 #include <vector>
 
 class CShadowHandler
@@ -28,10 +28,11 @@ public:
 	float x1,x2,y1,y2;
 
 	CMatrix44f shadowMatrix;
-
+#ifndef NO_SHADOWS
 	HPBUFFERARB hPBuffer; // Handle to a p-buffer.
 	HDC         hDCPBuffer;      // Handle to a device context.
 	HGLRC       hRCPBuffer;      // Handle to a GL rendering context.
+#endif	
 	void CreatePBuffer(void);
 	void DrawShadowTex(void);
 	void CalcMinMaxView(void);

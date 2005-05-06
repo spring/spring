@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\geometricobjects.h"
-#include "projectilehandler.h"
-#include "geosquareprojectile.h"
-#include "infoconsole.h"
+#include "StdAfx.h"
+#include "GeometricObjects.h"
+#include "ProjectileHandler.h"
+#include "GeoSquareProjectile.h"
+#include "InfoConsole.h"
 #include "ReadMap.h"
 //#include "mmgr.h"
 

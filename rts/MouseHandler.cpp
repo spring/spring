@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // MouseHandler.cpp: implementation of the CMouseHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,35 +6,35 @@
 #include "MouseHandler.h"
 #include <winsock2.h>
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"
-#include "ground.h"
-#include "game.h"
-#include "camera.h"
-#include "guihandler.h"
-#include "gamehelper.h"
-#include "selectedunits.h"
-#include "unit.h"
-#include "team.h"
-#include "infoconsole.h"
-#include "minimap.h"
-#include "inputreceiver.h"
-#include "bitmap.h"
-#include "glfont.h"
-#include "unithandler.h"
+#include "myGL.h"
+#include "Ground.h"
+#include "Game.h"
+#include "Camera.h"
+#include "GuiHandler.h"
+#include "GameHelper.h"
+#include "SelectedUnits.h"
+#include "Unit.h"
+#include "Team.h"
+#include "InfoConsole.h"
+#include "MiniMap.h"
+#include "InputReceiver.h"
+#include "Bitmap.h"
+#include "glFont.h"
+#include "UnitHandler.h"
 #include "MouseCursor.h"
-#include "sound.h"
-#include "unitdef.h"
-#include "group.h"
-#include "reghandler.h"
-#include "inmapdraw.h"
-#include "cameracontroller.h"
+#include "Sound.h"
+#include "UnitDef.h"
+#include "Group.h"
+#include "RegHandler.h"
+#include "InMapDraw.h"
+#include "CameraController.h"
 //#include "mmgr.h"
 
-#include "newguidefine.h"
+#include "NewGuiDefine.h"
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"
-#include ".\mousehandler.h"
+#include "MouseHandler.h"
 #endif
 
 //////////////////////////////////////////////////////////////////////

@@ -1,5 +1,5 @@
 #pragma once
-#include "inputreceiver.h"
+#include "InputReceiver.h"
 
 class CResourceBar :
 	public CInputReceiver

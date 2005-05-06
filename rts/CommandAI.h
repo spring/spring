@@ -4,7 +4,7 @@
 #include "archdef.h"
 
 #include "Object.h"
-#include "Command.h"
+#include "command.h"
 #include <vector>
 #include <deque>
 #include <set>

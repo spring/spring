@@ -1,5 +1,5 @@
 #pragma once
-#include "commandai.h"
+#include "CommandAI.h"
 
 class CMobileCAI :
 	public CCommandAI

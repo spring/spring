@@ -1,10 +1,10 @@
 #include "StdAfx.h"
-#include ".\flamethrower.h"
-#include "unit.h"
-#include "sound.h"
-#include "ground.h"
-#include "gamehelper.h"
-#include "flameprojectile.h"
+#include "FlameThrower.h"
+#include "Unit.h"
+#include "Sound.h"
+#include "Ground.h"
+#include "GameHelper.h"
+#include "FlameProjectile.h"
 //#include "mmgr.h"
 
 CFlameThrower::CFlameThrower(CUnit* owner)

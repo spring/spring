@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include ".\movetype.h"
+#include "StdAfx.h"
+#include "MoveType.h"
 //#include "mmgr.h"
 
 CMoveType::CMoveType(CUnit* owner)

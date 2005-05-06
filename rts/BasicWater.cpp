@@ -1,16 +1,16 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // DrawWater.cpp: implementation of the CBasicWater class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "BasicWater.h"
 #include <windows.h>
-#include "mygl.h"
-#include <GL\glu.h>
+#include "myGL.h"
+#include <GL/glu.h>
 #include <math.h>
 
-#include "bitmap.h"
-#include "readmap.h"
+#include "Bitmap.h"
+#include "ReadMap.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

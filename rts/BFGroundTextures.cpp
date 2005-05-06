@@ -1,12 +1,14 @@
-#include "stdafx.h"
-#include ".\bfgroundtextures.h"
-#include "filehandler.h"
-#include "mygl.h"
+#include "StdAfx.h"
+#include "BFGroundTextures.h"
+#include "FileHandler.h"
+#include "myGL.h"
 #include "jpeglib.h"
-#include "camera.h"
-#include "infoconsole.h"
-#include <gl\glu.h>
+#include "Camera.h"
+#include "InfoConsole.h"
+#include <GL/glu.h>
 #include "sm2header.h"
+#include <algorithm>
+using namespace std;
 //#include "mmgr.h"
 
 CBFGroundTextures* groundTextures=0;
@@ -90,12 +92,12 @@ void CBFGroundTextures::DrawUpdate(void)
 
 	for(int y=0;y<numBigTexY;++y){
 		float dy=cam2->pos.z - y*128*SQUARE_SIZE-64*SQUARE_SIZE;
-		dy=max(0,fabs(dy)-64*SQUARE_SIZE);
+		dy=max(0.,fabs(dy)-64*SQUARE_SIZE);
 		for(int x=0;x<numBigTexX;++x){
 			GroundSquare* square=&squares[y*numBigTexX+x];
 
 			float dx=cam2->pos.x - x*128*SQUARE_SIZE-64*SQUARE_SIZE;
-			dx=max(0,fabs(dx)-64*SQUARE_SIZE);
+			dx=max(0.,fabs(dx)-64*SQUARE_SIZE);
 			float dist=sqrt(dx*dx+dy*dy);
 
 			if(square->lastUsed<gs->frameNum-60)
@@ -292,7 +294,11 @@ void CBFGroundTextures::ReadJpeg(int bufnum, unsigned char* buffer, int xstep)
 
 static void InitSource (j_decompress_ptr cinfo)
 {
+#ifndef linux
   cinfo->src->start_of_file = TRUE;
+#else
+#warning cinfo->src->start_of_file = TRUE disabled, should be OK without
+#endif
 }
 
 static void* JpegBufferMem;

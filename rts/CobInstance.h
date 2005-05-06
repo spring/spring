@@ -10,7 +10,7 @@
 #define TAANG2RAD 10430.219207445624753419256949178f
 #define RAD2TAANG 9.587526207370107576104371709781e-5f
 
-#include "object.h"
+#include "Object.h"
 
 class CCobThread;
 class CCobFile;

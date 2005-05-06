@@ -1,10 +1,10 @@
-#include "stdafx.h"
-#include "basegrounddrawer.h"
-#include "reghandler.h"
+#include "StdAfx.h"
+#include "BaseGroundDrawer.h"
+#include "RegHandler.h"
 #include <windows.h>
-#include "mygl.h"
-#include "camera.h"
-#include ".\basegrounddrawer.h"
+#include "myGL.h"
+#include "Camera.h"
+#include "BaseGroundDrawer.h"
 //#include "mmgr.h"
 
 CBaseGroundDrawer* groundDrawer;

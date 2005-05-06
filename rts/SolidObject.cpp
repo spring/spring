@@ -1,13 +1,13 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "SolidObject.h"
 #include "ReadMap.h"
 //#include "PhysicsEngine.h"
-#include "mygl.h"
+#include "myGL.h"
 #include "InfoConsole.h"
 #include "Ground.h"
-#include "mymath.h"
+#include "myMath.h"
 #include "glExtra.h"
-#include ".\solidobject.h"
+#include "SolidObject.h"
 
 CSolidObject::CSolidObject(const float3& pos) 
 : CWorldObject(pos),

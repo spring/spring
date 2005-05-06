@@ -2,11 +2,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Team.h"
-#include ".\team.h"
-#include "infoconsole.h"
-#include "player.h"
+#include "Team.h"
+#include "InfoConsole.h"
+#include "Player.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

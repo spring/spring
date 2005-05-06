@@ -10,7 +10,7 @@
 #endif // _MSC_VER > 1000
 
 #include "VertexArray.h"
-#include "mygl.h"
+#include "myGL.h"
 
 class CVertexArrayRange : public CVertexArray  
 {

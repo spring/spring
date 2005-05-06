@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include ".\loadsaveinterface.h"
+#include "StdAfx.h"
+#include "LoadSaveInterface.h"
 
 CLoadSaveInterface::CLoadSaveInterface(void)
 {

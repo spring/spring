@@ -1,18 +1,18 @@
-#include "stdafx.h"
-#include ".\gamesetup.h"
-#include "sunparser.h"
-#include "player.h"
-#include "team.h"
-#include "mygl.h"
-#include "glfont.h"
+#include "StdAfx.h"
+#include "GameSetup.h"
+#include "SunParser.h"
+#include "Player.h"
+#include "Team.h"
+#include "myGL.h"
+#include "glFont.h"
 #include <algorithm>
 #include <cctype>
-#include "mousehandler.h"
-#include "cameracontroller.h"
-#include "tapalette.h"
-#include "net.h"
-#include "filehandler.h"
-#include "startposselecter.h"
+#include "MouseHandler.h"
+#include "CameraController.h"
+#include "TAPalette.h"
+#include "Net.h"
+#include "FileHandler.h"
+#include "StartPosSelecter.h"
 
 CGameSetup* gameSetup=0;
 

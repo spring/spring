@@ -1,5 +1,5 @@
 #pragma once
-#include "projectile.h"
+#include "Projectile.h"
 
 class CWeapon;
 

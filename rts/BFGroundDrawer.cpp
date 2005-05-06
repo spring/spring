@@ -1,16 +1,16 @@
-#include "stdafx.h"
-#include ".\bfgrounddrawer.h"
-#include "bfgroundtextures.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "readmap.h"
-#include "projectilehandler.h"
-#include "infoconsole.h"
-#include "bfreadmap.h"
-#include "loshandler.h"
-#include "radarhandler.h"
-#include "shadowhandler.h"
+#include "StdAfx.h"
+#include "BFGroundDrawer.h"
+#include "BFGroundTextures.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "ReadMap.h"
+#include "ProjectileHandler.h"
+#include "InfoConsole.h"
+#include "BFReadmap.h"
+#include "LosHandler.h"
+#include "RadarHandler.h"
+#include "ShadowHandler.h"
 //#include "mmgr.h"
 
 CBFGroundDrawer::CBFGroundDrawer(void)
@@ -891,7 +891,7 @@ bool CBFGroundDrawer::UpdateTextures()
 				for(int x=0;x<gs->mapx;++x){
 					int a=y*512+x;
 					if(myAirLos[(y/2)*gs->hmapx/2+x/2])
-						infoTexMem[a*4]=min(255,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
+						infoTexMem[a*4]=min(255.f,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
 					else
 						infoTexMem[a*4]=0;
 					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);

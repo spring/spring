@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include "inputreceiver.h"
-#include "mygl.h"
+#include "StdAfx.h"
+#include "InputReceiver.h"
+#include "myGL.h"
 //#include "mmgr.h"
 
 std::deque<CInputReceiver*> inputReceivers;

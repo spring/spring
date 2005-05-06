@@ -4,21 +4,22 @@
 
 #pragma warning(disable:4258)
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "AdvSky.h"
 
 #include <math.h>
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"
-#include <gl\glu.h>			// Header File For The GLu32 Library
-#include "camera.h"
-#include "readmap.h"
-#include "bitmap.h"
-#include "vertexarray.h"
-#include "infoconsole.h"
-#include "timeprofiler.h"
-#include "matrix44f.h"
-#include ".\advsky.h"
+#include "myGL.h"
+#include <GL/glu.h>			// Header File For The GLu32 Library
+#include <GL/glut.h>
+#include "Camera.h"
+#include "ReadMap.h"
+#include "Bitmap.h"
+#include "VertexArray.h"
+#include "InfoConsole.h"
+#include "TimeProfiler.h"
+#include "Matrix44f.h"
+#include "AdvSky.h"
 //#include "mmgr.h"
 
 extern GLfloat FogBlack[]; 
@@ -725,6 +726,7 @@ void CAdvSky::CreateCover(int baseX, int baseY, float *buf)
 		buf[l+24]=cover4/total;
 	}
 }
+
 extern HDC		hDC;
 
 void CAdvSky::CreateDetailTex(void)
@@ -769,7 +771,7 @@ void CAdvSky::CreateDetailTex(void)
 
 		}
 		float tSize=max(1,8>>a);
-		float c=pow(2,a)*6/255.0;
+		float c=pow(2.,a)*6/255.0;
 //		info->AddLine("%f",c);
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();

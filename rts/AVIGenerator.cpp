@@ -2,9 +2,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "AVIGenerator.h"
-#include "mygl.h"
+#include "myGL.h"
 //#include "mmgr.h"
 
 #ifdef _DEBUG

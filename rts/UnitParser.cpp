@@ -3,11 +3,11 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "UnitParser.h"
 #include <map>
-#include "infoconsole.h"
-#include "filehandler.h"
+#include "InfoConsole.h"
+#include "FileHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

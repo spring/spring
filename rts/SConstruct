@@ -1,0 +1,84 @@
+#architecture specific files
+windows_files=[]
+windows_include_path=['include/windows']
+linux_files=[]
+linux_include_path=['include/linux']
+
+#########
+# options
+#########
+
+platform = ARGUMENTS.get('OS', Platform())
+sound = ARGUMENTS.get('SOUND', Platform())
+avi = ARGUMENTS.get('AVI', Platform())
+shadows = ARGUMENTS.get('SHADOWS', Platform())
+
+if platform != 'windows':
+	if platform != 'linux':
+		print "No platform specified. Assuming linux platform."
+		print "Please specify the target platform using OS=platform command line option"
+		platform='linux'
+
+#disable features under linux until they work
+if platform == 'linux':
+	sound='no'
+	avi='no'
+	shadows='no'
+
+############################################################ 
+# common files list all cpp files in rts dir
+############################################################
+import os
+import re
+tmp=os.listdir('.')
+
+exclude_list = []
+if avi == 'no' or avi == 'disabled':
+	exclude_list.append("AVIGenerator.cpp")
+if sound == 'no' or sound == 'disabled':
+	exclude_list.append("wavread.cpp")
+
+#linux disable unused code
+if platform == 'linux':	
+	exclude_list = exclude_list + Split(""""
+			ARB_vertex_program_extension.cpp
+			mmgr.cpp
+			""")
+			
+common_include_path = ['.','include']
+common_files = []
+nbObjects=0
+nbBuiltObjects=0
+for f in tmp:
+	if os.path.isfile(f) and re.compile("cpp$").search(f) and not f in exclude_list:
+		common_files.append(f)
+		nbObjects+=1
+	if re.compile("o$").search(f):
+		nbBuiltObjects+=1
+		
+if platform == 'windows':
+	files = windows_files + common_files 
+	common_include_path = common_include_path + windows_include_path
+else:
+	if platform == 'linux':
+		files = linux_files + common_files
+		common_include_path = common_include_path + linux_include_path	
+	else:
+		print "Unknown platform ", platform
+		Exit(1)	
+	
+print nbObjects, " objects have to be produced"
+print nbBuiltObjects, " objects are allready produced from a previous build\n"
+		
+	
+commonenv = Environment(CC = 'gcc')
+optim = commonenv.Copy(CCFLAGS = '-O2')
+env = optim
+if sound == 'no' or sound == 'disabled':
+	env.Append(CCFLAGS = ' -DNO_SOUND')
+if avi == 'no' or avi == 'disabled':
+	env.Append(CCFLAGS = ' -DNO_AVI')
+if shadows == 'no' or shadows == 'disabled':
+	env.Append(CCFLAGS = ' -DNO_SHADOWS')
+print "CCFLAGS : ", env['CCFLAGS'],"\n"
+env.Program('ta', files, CPPPATH = common_include_path) 

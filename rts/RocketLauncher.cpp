@@ -2,16 +2,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "RocketLauncher.h"
-#include "rocketprojectile.h"
-#include "unit.h"
-#include "sound.h"
-#include "ground.h"
-#include "gamehelper.h"
-#include "synctracer.h"
-#include "mymath.h"
-#include ".\rocketlauncher.h"
+#include "RocketProjectile.h"
+#include "Unit.h"
+#include "Sound.h"
+#include "Ground.h"
+#include "GameHelper.h"
+#include "SyncTracer.h"
+#include "myMath.h"
+#include "RocketLauncher.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

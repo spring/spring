@@ -1,9 +1,9 @@
-#include "stdafx.h"
-#include ".\intercepthandler.h"
-#include "weapon.h"
-#include "weaponprojectile.h"
-#include "unit.h"
-#include "weapondefhandler.h"
+#include "StdAfx.h"
+#include "InterceptHandler.h"
+#include "Weapon.h"
+#include "WeaponProjectile.h"
+#include "Unit.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CInterceptHandler interceptHandler;

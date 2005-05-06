@@ -1,4 +1,4 @@
-#include ".\syncify.h"
+#include "Syncify.h"
 
 #ifdef SYNCIFY
 #include <windows.h>

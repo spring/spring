@@ -1,12 +1,12 @@
-#include "stdafx.h"
-#include ".\commanderscript.h"
-#include "unitloader.h"
-#include "sunparser.h"
+#include "StdAfx.h"
+#include "CommanderScript.h"
+#include "UnitLoader.h"
+#include "SunParser.h"
 static CCommanderScript ts;
 #include <algorithm>
 #include <cctype>
-#include "team.h"
-#include "gamesetup.h"
+#include "Team.h"
+#include "GameSetup.h"
 //#include "mmgr.h"
 
 extern std::string stupidGlobalMapname;

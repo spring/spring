@@ -2,9 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Sound.h"
 
+#ifndef NO_SOUND
 #ifdef USE_DSOUND
 	#include "WavRead.h"
 #else
@@ -18,11 +19,11 @@
 #endif
 
 #include <math.h>
-#include "infoconsole.h"
-#include "reghandler.h"
-#include "camera.h"
-#include "worldobject.h"
-#include "infoconsole.h"
+#include "InfoConsole.h"
+#include "RegHandler.h"
+#include "Camera.h"
+#include "WorldObject.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 CSound* sound;
@@ -30,6 +31,8 @@ extern HWND	hWnd;			// Holds Our Window Handle
 
 #define SAFE_DELETE(p)  { if(p) { delete (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }
+
+#endif //NO_SOUND
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -41,6 +44,7 @@ extern HWND	hWnd;			// Holds Our Window Handle
 */
 CSound::CSound()
 {
+#ifndef NO_SOUND
 //	noSound=true;
 	maxSounds=regHandler.GetInt("MaxSounds",16);
 	curThreshhold=0.1;
@@ -110,6 +114,7 @@ CSound::CSound()
 	SoundInfo* si=new SoundInfo;
 	loadedSounds.push_back(si);
 #endif
+#endif //NO_SOUND
 }
 
 CSound::~CSound()
@@ -288,8 +293,8 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 }
 #else
 void CSound::PlaySound(int id){};
-void CSound::PlaySound(int id,CWorldObject* p,float volume=1){};
-void CSound::PlaySound(int id,const float3& p,float volume=1){};
+void CSound::PlaySound(int id,CWorldObject* p,float volume){};
+void CSound::PlaySound(int id,const float3& p,float volume){};
 #endif
 
 #ifdef USE_DSOUND
@@ -419,6 +424,7 @@ HRESULT CSound::RestoreBuffers(int num)
 
 void CSound::Update()
 {
+#ifndef NO_SOUND
 	float total=wantedSounds*0.5;
 	for(std::list<PlayingSound>::iterator pi=playingSounds.begin();pi!=playingSounds.end();){
 		int num=pi->num;
@@ -435,6 +441,7 @@ void CSound::Update()
 	total/=wantedSounds;
 	curThreshhold=(curThreshhold+total)*0.5;
 //	info->AddLine("curt %.2f",curThreshhold);
+#endif //NO_SOUND
 }
 
 

@@ -1,21 +1,21 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // Cannon.cpp: implementation of the CCannon class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "Cannon.h"
-#include "unit.h"
-#include "explosiveprojectile.h"
-#include "heatcloudprojectile.h"
-#include "infoconsole.h"
-#include "smokeprojectile.h"
-#include "synctracer.h"
-#include "sound.h"
-#include "ground.h"
-#include "gamehelper.h"
-#include "mymath.h"
-#include ".\cannon.h"
-#include "weaponprojectile.h"
+#include "Unit.h"
+#include "ExplosiveProjectile.h"
+#include "HeatCloudProjectile.h"
+#include "InfoConsole.h"
+#include "SmokeProjectile.h"
+#include "SyncTracer.h"
+#include "Sound.h"
+#include "Ground.h"
+#include "GameHelper.h"
+#include "myMath.h"
+#include "Cannon.h"
+#include "WeaponProjectile.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

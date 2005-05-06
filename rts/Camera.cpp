@@ -1,13 +1,13 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // camera->cpp: implementation of the CCamera class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "camera.h"
+#include "Camera.h"
 
 #include "math.h"
-#include "mygl.h"
-#include "infoconsole.h"
+#include "myGL.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

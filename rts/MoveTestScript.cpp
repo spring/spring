@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\movetestscript.h"
-#include "unitloader.h"
-#include "sunparser.h"
-#include "team.h"
+#include "StdAfx.h"
+#include "MoveTestScript.h"
+#include "UnitLoader.h"
+#include "SunParser.h"
+#include "Team.h"
 
 static CMoveTestScript ts;
 //#include "mmgr.h"

@@ -1,18 +1,18 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // TreeDrawer.cpp: implementation of the CBasicTreeDrawer class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "BasicTreeDrawer.h"
-#include "basegrounddrawer.h"
-#include "ground.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "readmap.h"
+#include "BaseGroundDrawer.h"
+#include "Ground.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "ReadMap.h"
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"
+#include "myGL.h"
 #include <gl\glu.h>			// Header File For The GLu32 Library
-#include "bitmap.h"
+#include "Bitmap.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

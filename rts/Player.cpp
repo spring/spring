@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // Player.cpp: implementation of the CPlayer class.
 //
 //////////////////////////////////////////////////////////////////////

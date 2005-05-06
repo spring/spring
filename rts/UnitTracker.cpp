@@ -1,14 +1,14 @@
-#include "stdafx.h"
-#include ".\unittracker.h"
-#include "selectedunits.h"
-#include "camera.h"
+#include "StdAfx.h"
+#include "UnitTracker.h"
+#include "SelectedUnits.h"
+#include "Camera.h"
 #include "math.h"
-#include "unit.h"
-#include "mousehandler.h"
-#include "unithandler.h"
-#include "regHandler.h"
-#include "ground.h"
-#include "cameracontroller.h"
+#include "Unit.h"
+#include "MouseHandler.h"
+#include "UnitHandler.h"
+#include "RegHandler.h"
+#include "Ground.h"
+#include "CameraController.h"
 //#include "mmgr.h"
 
 CUnitTracker unitTracker;
@@ -37,7 +37,7 @@ void CUnitTracker::SetCam(void)
 {
 	if(firstUpdate){
 		firstUpdate=false;
-		doRoll=!regHandler.GetInt("ReflectiveWater",1);
+		doRoll=!(regHandler.GetInt("ReflectiveWater",1));
 	}
 	if(lastFollowUnit!=0 && uh->units[lastFollowUnit]==0){
 		timeOut=1;

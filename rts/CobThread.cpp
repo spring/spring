@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include ".\cobthread.h"
+#include "CobThread.h"
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "CobEngine.h"
@@ -89,76 +89,76 @@ int CCobThread::GetWakeTime() const
 //And some information from basm0.8 source (basm ops.txt)
 
 //Model interaction
-const MOVE = 0x10001000;
-const TURN = 0x10002000;
-const SPIN = 0x10003000;
-const STOP_SPIN = 0x10004000;
-const SHOW = 0x10005000;
-const HIDE = 0x10006000;
-const CACHE = 0x10007000;
-const DONT_CACHE = 0x10008000;
-const MOVE_NOW = 0x1000B000;
-const TURN_NOW = 0x1000C000;
-const SHADE = 0x1000D000;
-const DONT_SHADE = 0x1000E000;
-const EMIT_SFX = 0x1000F000;
+const long int MOVE = 0x10001000;
+const long int TURN = 0x10002000;
+const long int SPIN = 0x10003000;
+const long int STOP_SPIN = 0x10004000;
+const long int SHOW = 0x10005000;
+const long int HIDE = 0x10006000;
+const long int CACHE = 0x10007000;
+const long int DONT_CACHE = 0x10008000;
+const long int MOVE_NOW = 0x1000B000;
+const long int TURN_NOW = 0x1000C000;
+const long int SHADE = 0x1000D000;
+const long int DONT_SHADE = 0x1000E000;
+const long int EMIT_SFX = 0x1000F000;
 
 //Blocking operations
-const WAIT_TURN = 0x10011000;
-const WAIT_MOVE = 0x10012000;
-const SLEEP = 0x10013000;
+const long int WAIT_TURN = 0x10011000;
+const long int WAIT_MOVE = 0x10012000;
+const long int SLEEP = 0x10013000;
 
 //Stack manipulation
-const PUSH_CONSTANT = 0x10021001;
-const PUSH_LOCAL_VAR = 0x10021002;
-const PUSH_STATIC = 0x10021004;
-const CREATE_LOCAL_VAR = 0x10022000;
-const POP_LOCAL_VAR = 0x10023002;
-const POP_STATIC = 0x10023004;
+const long int PUSH_CONSTANT = 0x10021001;
+const long int PUSH_LOCAL_VAR = 0x10021002;
+const long int PUSH_STATIC = 0x10021004;
+const long int CREATE_LOCAL_VAR = 0x10022000;
+const long int POP_LOCAL_VAR = 0x10023002;
+const long int POP_STATIC = 0x10023004;
 
 //Arithmetic operations
-const ADD = 0x10031000;
-const SUB = 0x10032000;
-const MUL = 0x10033000;
-const DIV = 0x10034000;
-const BITWISE_AND = 0x10035000;
-const BITWISE_OR = 0x10036000;
-const BITWISE_XOR = 0x10037000;
-const BITWISE_NOT = 0x10038000;
+const long int ADD = 0x10031000;
+const long int SUB = 0x10032000;
+const long int MUL = 0x10033000;
+const long int DIV = 0x10034000;
+const long int BITWISE_AND = 0x10035000;
+const long int BITWISE_OR = 0x10036000;
+const long int BITWISE_XOR = 0x10037000;
+const long int BITWISE_NOT = 0x10038000;
 
 //Native function calls
-const RAND = 0x10041000;
-const GET_UNIT_VALUE = 0x10042000;
-const GET = 0x10043000;
+const long int RAND = 0x10041000;
+const long int GET_UNIT_VALUE = 0x10042000;
+const long int GET = 0x10043000;
 
 //Comparison
-const SET_LESS = 0x10051000;
-const SET_LESS_OR_EQUAL = 0x10052000;
-const SET_GREATER = 0x10053000;
-const SET_GREATER_OR_EQUAL = 0x10054000;
-const SET_EQUAL = 0x10055000;
-const SET_NOT_EQUAL = 0x10056000;
-const LOGICAL_AND = 0x10057000;
-const LOGICAL_OR = 0x10058000;
-const LOGICAL_XOR = 0x10059000;
-const LOGICAL_NOT = 0x1005A000;
+const long int SET_LESS = 0x10051000;
+const long int SET_LESS_OR_EQUAL = 0x10052000;
+const long int SET_GREATER = 0x10053000;
+const long int SET_GREATER_OR_EQUAL = 0x10054000;
+const long int SET_EQUAL = 0x10055000;
+const long int SET_NOT_EQUAL = 0x10056000;
+const long int LOGICAL_AND = 0x10057000;
+const long int LOGICAL_OR = 0x10058000;
+const long int LOGICAL_XOR = 0x10059000;
+const long int LOGICAL_NOT = 0x1005A000;
 
 //Flow control
-const START = 0x10061000;
-const CALL = 0x10062000;
-const JUMP = 0x10064000;
-const RETURN = 0x10065000;
-const JUMP_NOT_EQUAL = 0x10066000;
-const SIGNAL = 0x10067000;
-const SET_SIGNAL_MASK = 0x10068000;
+const long int START = 0x10061000;
+const long int CALL = 0x10062000;
+const long int JUMP = 0x10064000;
+const long int RETURN = 0x10065000;
+const long int JUMP_NOT_EQUAL = 0x10066000;
+const long int SIGNAL = 0x10067000;
+const long int SET_SIGNAL_MASK = 0x10068000;
 
 //Piece destruction
-const EXPLODE = 0x10071000;
+const long int EXPLODE = 0x10071000;
 
 //Special functions
-const SET = 0x10082000;
-const ATTACH = 0x10083000;
-const DROP = 0x10084000;
+const long int SET = 0x10082000;
+const long int ATTACH = 0x10083000;
+const long int DROP = 0x10084000;
 
 //Handy macros
 #define GET_LONG_PC() (script.code[PC++])

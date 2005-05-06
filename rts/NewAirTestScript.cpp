@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include ".\newairtestscript.h"
-#include "unitloader.h"
+#include "StdAfx.h"
+#include "NewAirTestScript.h"
+#include "UnitLoader.h"
 //#include "mmgr.h"
 
 static CNewAirTestScript ats;

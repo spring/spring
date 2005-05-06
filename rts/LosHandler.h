@@ -14,11 +14,11 @@
 #include <vector>
 #include <list>
 #include <deque>
-#include "mempool.h"
-#include "ground.h"
-#include "worldobject.h"
-#include "unit.h"
-#include "radarhandler.h"
+#include "MemPool.h"
+#include "Ground.h"
+#include "WorldObject.h"
+#include "Unit.h"
+#include "RadarHandler.h"
 //#include <windows.h>
 
 struct LosInstance{
@@ -78,7 +78,7 @@ public:
 
 	friend class CRadarHandler;
 private:
-	friend CRadarHandler;
+	friend class CRadarHandler;
 
 	void SafeLosAdd(LosInstance* instance,int xm,int ym);
 	void LosAdd(LosInstance* instance);

@@ -1,23 +1,23 @@
-#include "stdafx.h"
-#include ".\grassdrawer.h"
-#include "ground.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "readmap.h"
+#include "StdAfx.h"
+#include "GrassDrawer.h"
+#include "Ground.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "ReadMap.h"
 #include <windows.h>
-#include "basegrounddrawer.h"
-#include "mygl.h"
-#include <gl\glu.h>	
-#include "advtreedrawer.h"
-#include "bitmap.h"
-#include "infoconsole.h"
-#include "mymath.h"
-#include "reghandler.h"
+#include "BaseGroundDrawer.h"
+#include "myGL.h"
+#include <GL/glu.h>	
+#include "AdvTreeDrawer.h"
+#include "Bitmap.h"
+#include "InfoConsole.h"
+#include "myMath.h"
+#include "RegHandler.h"
 #include <math.h>
 #include <algorithm>
-#include "bfreadmap.h"
-#include "shadowhandler.h"
-//#include "timeprofiler.h"
+#include "BFReadmap.h"
+#include "ShadowHandler.h"
+//#include "TimeProfiler.h"
 //#include "mmgr.h"
 
 static const float turfSize=20;				//single turf size
@@ -468,7 +468,7 @@ void CGrassDrawer::Draw(void)
 		float3 up(side.cross(v));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
 		float ang=acosf(v.y);
-		int texPart=min(15,max(0,(ang+PI/16-PI/2)/PI*30));
+		int texPart=min(15,(int)max(0,(int)((ang+PI/16-PI/2)/PI*30)));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0,0,0,0.0f);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
 		grass[(*gi)->num].va->DrawArrayTN(GL_QUADS);
@@ -490,7 +490,7 @@ void CGrassDrawer::Draw(void)
 			float3 up(side.cross(v));
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
 			float ang=acosf(v.y);
-			int texPart=min(15,max(0,(ang+PI/16-PI/2)/PI*30));
+			int texPart=min(15,int(max(0,int((ang+PI/16-PI/2)/PI*30))));
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0,0,0,0.0f);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
 
@@ -742,7 +742,7 @@ void CGrassDrawer::CreateFarTex(void)
 					buf[((y)*1024*sizeMod+x+dx)*4+0]=r/a;
 					buf[((y)*1024*sizeMod+x+dx)*4+1]=g/a;
 					buf[((y)*1024*sizeMod+x+dx)*4+2]=b/a;
-					buf[((y)*1024*sizeMod+x+dx)*4+3]=min(255,a*16);
+					buf[((y)*1024*sizeMod+x+dx)*4+3]=min((float)255,a*16);
 				}
 			}
 		}

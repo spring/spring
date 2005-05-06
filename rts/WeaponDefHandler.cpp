@@ -1,15 +1,15 @@
-#include "stdafx.h"
-#include "weapondefhandler.h"
+#include "StdAfx.h"
+#include "WeaponDefHandler.h"
 #include "myGL.h"
-#include "sunparser.h"
-#include "filehandler.h"
-#include "tapalette.h"
-#include "infoconsole.h"
+#include "SunParser.h"
+#include "FileHandler.h"
+#include "TAPalette.h"
+#include "InfoConsole.h"
 #include <algorithm>
 #include <cctype>
-#include "sound.h"
-#include "damagearrayhandler.h"
-#include "categoryhandler.h"
+#include "Sound.h"
+#include "DamageArrayHandler.h"
+#include "CategoryHandler.h"
 //#include "mmgr.h"
 
 CWeaponDefHandler* weaponDefHandler;
@@ -230,11 +230,11 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 
 	if(weaponDefs[id].type=="AircraftBomb"){
 		if(weaponDefs[id].reload<0.5){
-			weaponDefs[id].salvodelay=min(0.2,weaponDefs[id].reload);
+			weaponDefs[id].salvodelay=min(0.2f,weaponDefs[id].reload);
 			weaponDefs[id].salvosize=1/weaponDefs[id].salvodelay+1;
 			weaponDefs[id].reload=5;
 		} else {
-			weaponDefs[id].salvodelay=min(0.4,weaponDefs[id].reload);
+			weaponDefs[id].salvodelay=min(0.4f,weaponDefs[id].reload);
 			weaponDefs[id].salvosize=2;			
 		}
 	}

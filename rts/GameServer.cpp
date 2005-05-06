@@ -1,12 +1,12 @@
-#include "stdafx.h"
-#include ".\gameserver.h"
-#include "net.h"
-#include "player.h"
-#include "team.h"
-#include "infoconsole.h"
-#include "game.h"
-#include "gamesetup.h"
-#include "scripthandler.h"
+#include "StdAfx.h"
+#include "GameServer.h"
+#include "Net.h"
+#include "Player.h"
+#include "Team.h"
+#include "InfoConsole.h"
+#include "Game.h"
+#include "GameSetup.h"
+#include "ScriptHandler.h"
 
 CGameServer* gameServer=0;
 

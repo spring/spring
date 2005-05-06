@@ -2,15 +2,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "SmokeTrailProjectile.h"
-#include "projectilehandler.h"
-#include "camera.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "ground.h"
-#include "mymath.h"
-#include "wind.h"
+#include "ProjectileHandler.h"
+#include "Camera.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Ground.h"
+#include "myMath.h"
+#include "Wind.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -80,7 +80,7 @@ void CSmokeTrailProjectile::Draw()
 		if(lastSegment)
 			a1=0;
 		a1*=0.7+fabs(dif.dot(dir1));
-		float alpha=min(255,max(0,a1));
+		float alpha=min(255.f,max(0.f,a1));
 		col[0]=color*alpha;
 		col[1]=color*alpha;
 		col[2]=color*alpha;
@@ -91,7 +91,7 @@ void CSmokeTrailProjectile::Draw()
 		if(firstSegment)
 			a2=0;
 		a2*=0.7+fabs(dif2.dot(dir2));
-		alpha=min(255,max(0,a2));
+		alpha=min(255.f,max(0.f,a2));
 		col2[0]=color*alpha;
 		col2[1]=color*alpha;
 		col2[2]=color*alpha;
@@ -112,7 +112,7 @@ void CSmokeTrailProjectile::Draw()
 			unsigned char col3[4];
 			float a2=(1-float(age+4)/(lifeTime))*255;
 			a2*=0.7+fabs(dif3.dot(middir));
-			alpha=min(255,max(0,a2));
+			alpha=min(255.f,max(0.f,a2));
 			col3[0]=color*alpha;
 			col3[1]=color*alpha;
 			col3[2]=color*alpha;
@@ -137,7 +137,7 @@ void CSmokeTrailProjectile::Draw()
 		unsigned char col[4];
 		for(int a=0;a<8;++a){
 			float a1=1-float(age+a)/lifeTime;
-			float alpha=min(255,max(0,a1*255));
+			float alpha=min(255.f,max(0.f,a1*255));
 			col[0]=color*alpha;
 			col[1]=color*alpha;
 			col[2]=color*alpha;

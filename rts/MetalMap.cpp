@@ -1,7 +1,7 @@
-#include "stdafx.h"
-#include ".\metalmap.h"
-#include "globalstuff.h"
-#include "readmap.h"
+#include "StdAfx.h"
+#include "MetalMap.h"
+#include "GlobalStuff.h"
+#include "ReadMap.h"
 //#include "mmgr.h"
 
 

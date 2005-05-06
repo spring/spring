@@ -1,7 +1,7 @@
 #pragma once
 
-#include "stdafx.h"
-#include "movetype.h"
+#include "StdAfx.h"
+#include "MoveType.h"
 
 class CTAAirMoveType :
 	public CMoveType

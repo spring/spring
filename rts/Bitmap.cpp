@@ -1,14 +1,14 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // Bitmap.cpp: implementation of the CBitmap class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "Bitmap.h"
-#include "mygl.h"
+#include "myGL.h"
 #include <ostream>
 #include <fstream>
 #include "jpeglib.h"
-#include "filehandler.h"
+#include "FileHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

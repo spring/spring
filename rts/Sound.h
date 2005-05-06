@@ -5,6 +5,8 @@
 #if !defined(AFX_SOUND_H__D6141CC1_8294_11D4_AD55_0080ADA84DE3__INCLUDED_)
 #define AFX_SOUND_H__D6141CC1_8294_11D4_AD55_0080ADA84DE3__INCLUDED_
 
+#ifndef NO_SOUND
+
 #pragma warning(disable:4786)
 
 #define USE_DSOUND
@@ -22,6 +24,11 @@
 		#include <dsound.h>
 	#endif
 #endif
+
+
+#endif //NO_SOUND
+
+
 #include <string>
 #include <vector>
 #include <map>
@@ -82,4 +89,3 @@ protected:
 
 extern CSound* sound;
 #endif // !defined(AFX_SOUND_H__D6141CC1_8294_11D4_AD55_0080ADA84DE3__INCLUDED_)
-

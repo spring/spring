@@ -1,16 +1,16 @@
-#include "stdafx.h"
-#include ".\starburstprojectile.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "unit.h"
-#include "smoketrailprojectile.h"
-#include "ground.h"
-#include "gamehelper.h"
-#include "mymath.h"
-#include "weapondefhandler.h"
-#include "3doparser.h"
-#include "matrix44f.h"
+#include "StdAfx.h"
+#include "StarburstProjectile.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "Unit.h"
+#include "SmokeTrailProjectile.h"
+#include "Ground.h"
+#include "GameHelper.h"
+#include "myMath.h"
+#include "WeaponDefHandler.h"
+#include "3DOParser.h"
+#include "Matrix44f.h"
 //#include "mmgr.h"
 
 static const float Smoke_Time=70;
@@ -228,7 +228,7 @@ void CStarburstProjectile::Draw(void)
 
 		float a1=(1-float(0)/(Smoke_Time))*255;
 		a1*=0.7+fabs(dif.dot(dir));
-		int alpha=min(255,max(0,a1));
+		int alpha=min(255,(int)max(0.f,a1));
 		col[0]=color*alpha;
 		col[1]=color*alpha;
 		col[2]=color*alpha;
@@ -238,7 +238,7 @@ void CStarburstProjectile::Draw(void)
 		a2*=0.7+fabs(dif2.dot(oldSmokeDir));
 		if(age<8)
 			a2=0;
-		alpha=min(255,max(0,a2));
+		alpha=min(255,(int)max(0.f,a2));
 		col2[0]=color*alpha;
 		col2[1]=color*alpha;
 		col2[2]=color*alpha;
@@ -311,12 +311,12 @@ void CStarburstProjectile::DrawCallback(void)
 			float drawsize;
 			col[3]=1;
 			if(missileAge<20){
-				float alpha=max(0,((1-age2)*(1-age2)));
+				float alpha=max(0.f,((1-age2)*(1-age2)));
 				col[0]=255*alpha;
 				col[1]=200*alpha;
 				col[2]=150*alpha;
 			} else {
-				float alpha=max(0,((1-age2)*max(0,(1-age2))));
+				float alpha=max(0.f,((1-age2)*max(0.f,(1-age2))));
 				col[0]=255*alpha;
 				col[1]=200*alpha;
 				col[2]=150*alpha;

@@ -1,11 +1,11 @@
 #pragma once
-#include "projectile.h"
-#include "damagearray.h"
+#include "Projectile.h"
+#include "DamageArray.h"
 
-const PP_Fall = 1;
-const PP_Smoke = 2;		//smoke and fire is turned off when there is to many projectiles so make sure they are unsycned
-const PP_Fire = 4;
-const PP_Explode = 8;
+const int PP_Fall = 1;
+const int PP_Smoke = 2;		//smoke and fire is turned off when there is to many projectiles so make sure they are unsycned
+const int PP_Fire = 4;
+const int PP_Explode = 8;
 class CSmokeTrailProjectile;
 struct S3DO;
 

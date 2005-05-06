@@ -2,16 +2,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "AdvTreeGenerator.h"
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "bitmap.h"
-#include "readmap.h"
-#include ".\advtreegenerator.h"
-#include "shadowhandler.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "Bitmap.h"
+#include "ReadMap.h"
+#include "AdvTreeGenerator.h"
+#include "ShadowHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

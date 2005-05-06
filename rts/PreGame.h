@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gamecontroller.h"
+#include "GameController.h"
 
 #include <string>
 

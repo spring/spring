@@ -2,12 +2,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "TracerProjectile.h"
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"			// Header File For The OpenGL32 Library
+#include "myGL.h"			// Header File For The OpenGL32 Library
 #include <math.h>
-#include "projectilehandler.h"
+#include "ProjectileHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

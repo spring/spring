@@ -21,7 +21,7 @@ struct S3DO;
 
 #include <set>
 #include <stack>
-#include "mempool.h"
+#include "MemPool.h"
 
 typedef std::list<CProjectile*> Projectile_List;
 

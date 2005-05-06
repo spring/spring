@@ -2,19 +2,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "RocketProjectile.h"
-#include "smokeprojectile.h"
-#include "smoketrailprojectile.h"
-#include "gamehelper.h"
-#include "unit.h"
-#include "synctracer.h"
-#include "vertexarray.h"
-#include "mygl.h"
-#include "camera.h"
-#include "infoconsole.h"
-#include "ground.h"
-#include "synctracer.h"
+#include "SmokeProjectile.h"
+#include "SmokeTrailProjectile.h"
+#include "GameHelper.h"
+#include "Unit.h"
+#include "SyncTracer.h"
+#include "VertexArray.h"
+#include "myGL.h"
+#include "Camera.h"
+#include "InfoConsole.h"
+#include "Ground.h"
+#include "SyncTracer.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ void CRocketProjectile::Draw()
 	unsigned char col[4];
 	float a1=(1-float(0)/(90))*255;
 	a1*=0.7+fabs(dif.dot(dir));
-	float alpha=min(255,max(0,a1));
+	float alpha=min(255.f,max(0.f,a1));
 	col[0]=color*alpha;
 	col[1]=color*alpha;
 	col[2]=color*alpha;
@@ -150,7 +150,7 @@ void CRocketProjectile::Draw()
 	unsigned char col2[4];
 	float a2=(1-float(age2)/(90))*255;
 	a2*=0.7+fabs(dif2.dot(oldDir));
-	alpha=min(255,max(0,a2));
+	alpha=min(255.f,max(0.f,a2));
 	col2[0]=color*alpha;
 	col2[1]=color*alpha;
 	col2[2]=color*alpha;

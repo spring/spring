@@ -1,17 +1,17 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // InfoConsole.cpp: implementation of the CInfoConsole class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "InfoConsole.h"
-#include "mygl.h"
+#include "myGL.h"
 #include <iostream>
 #include <fstream>
 #include "glFont.h"
 
 #include "SyncTracer.h"
-#include "reghandler.h"
-#include ".\infoconsole.h"
+#include "RegHandler.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

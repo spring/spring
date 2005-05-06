@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include ".\cobfile.h"
+#include "CobFile.h"
 #include "FileHandler.h"
 #include "InfoConsole.h"
 #include <algorithm>

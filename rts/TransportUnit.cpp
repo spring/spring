@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\transportunit.h"
-#include "3doparser.h"
-#include "taairmovetype.h"
-#include "commandai.h"
+#include "StdAfx.h"
+#include "TransportUnit.h"
+#include "3DOParser.h"
+#include "TAAirMoveType.h"
+#include "CommandAI.h"
 //#include "mmgr.h"
 
 CTransportUnit::CTransportUnit(const float3 &pos,int team,UnitDef* unitDef)

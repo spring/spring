@@ -2,13 +2,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "TimeProfiler.h"
-#include "mygl.h"
-#include "glfont.h"
-#include "infoconsole.h"
+#include "myGL.h"
+#include "glFont.h"
+#include "InfoConsole.h"
 
-#include "vertexarray.h"
+#include "VertexArray.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

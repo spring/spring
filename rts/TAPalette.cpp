@@ -1,7 +1,7 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "TAPalette.h"
-#include "filehandler.h"
-#include ".\tapalette.h"
+#include "FileHandler.h"
+#include "TAPalette.h"
 //#include <iostream>
 //#include <fstream>
 //#include "mmgr.h"

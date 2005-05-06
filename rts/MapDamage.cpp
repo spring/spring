@@ -1,19 +1,19 @@
-#include "stdafx.h"
-#include "mapdamage.h"
-#include "readmap.h"
-#include "basegrounddrawer.h"
-#include "basetreedrawer.h"
-#include "timeprofiler.h"
-#include "quadfield.h"
-#include "unit.h"
-#include "loshandler.h"
-#include "unithandler.h"
-#include "infoconsole.h"
+#include "StdAfx.h"
+#include "MapDamage.h"
+#include "ReadMap.h"
+#include "BaseGroundDrawer.h"
+#include "BaseTreeDrawer.h"
+#include "TimeProfiler.h"
+#include "QuadField.h"
+#include "Unit.h"
+#include "LosHandler.h"
+#include "UnitHandler.h"
+#include "InfoConsole.h"
 #include "math.h"
 #include "PathManager.h"
-#include "featurehandler.h"
-#include "building.h"
-#include "unitdef.h"
+#include "FeatureHandler.h"
+#include "Building.h"
+#include "UnitDef.h"
 //#include "mmgr.h"
 
 CMapDamage* mapDamage;
@@ -41,7 +41,7 @@ CMapDamage::CMapDamage(void)
 
 	for(int a=0;a<=200;++a){
 		float r=a/200.0;
-		float d=cos((r-0.1)*(PI+0.3))*(1-r)*(0.5+0.5*cos(max(0,r*3-2)*PI));
+		float d=cos((r-0.1)*(PI+0.3))*(1-r)*(0.5+0.5*cos(max(0.f,r*3-2)*PI));
 		craterTable[a]=d;
 	}
 	for(int a=201;a<10000;++a){
@@ -108,9 +108,9 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 			float3& upos=(*ui)->pos;
 			UnitDef* unitDef=(*ui)->unitDef;
 
-			int tx1 = max(0,(upos.x-(unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+			int tx1 = max(0.f,(upos.x-(unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 			int tx2 = min(gs->mapx,tx1+unitDef->xsize);
-			int tz1 = max(0,(upos.z-(unitDef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+			int tz1 = max(0.f,(upos.z-(unitDef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 			int tz2 = min(gs->mapy,tz1+unitDef->ysize);
 
 			float totalDif=0;

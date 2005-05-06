@@ -2,22 +2,22 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "AdvWater.h"
-#include "game.h"
+#include "Game.h"
 #include <windows.h>
-#include "mygl.h"
+#include "myGL.h"
 #include <math.h>
 
-#include "camera.h"
-#include "vertexarray.h"
-#include "readmap.h"
-#include "infoconsole.h"
-#include "basegrounddrawer.h"
-#include "basesky.h"
-#include "unithandler.h"
-#include "projectilehandler.h"
-#include "featurehandler.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "ReadMap.h"
+#include "InfoConsole.h"
+#include "BaseGroundDrawer.h"
+#include "BaseSky.h"
+#include "UnitHandler.h"
+#include "ProjectileHandler.h"
+#include "FeatureHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

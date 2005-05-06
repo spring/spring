@@ -5,9 +5,9 @@
 //	Downloaded from: users.ox.ac.uk/~univ1234
 //	Created:	2nd October 2002
 //////////////////////////////////////////////////////////////////////////////////////////	
-#include "stdafx.h"
+#include "StdAfx.h"
 #include <windows.h>
-#include <GL\gl.h>
+#include <GL/gl.h>
 //#include <GL\glext.h>
 //#include <GL\wglext.h>
 //#include "../LOG.h"

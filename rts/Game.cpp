@@ -5,89 +5,89 @@
 #pragma warning(disable:4786)
 
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Game.h"
 #include "SyncTracer.h"
-#include "mygl.h"
-#include <gl\glu.h>			// Header File For The GLu32 Library
+#include "myGL.h"
+#include <GL/glu.h>			// Header File For The GLu32 Library
 #include <time.h>
 #include <stdlib.h>
 #include "glList.h"
 #include <io.h>
 #include "winerror.h"
 #include "float.h"
-#include "glfont.h"
-#include "infoconsole.h"
-#include "sound.h"
-#include "camera.h"
-#include "basesky.h"
-#include "net.h"
-#include "ground.h"
-#include "basegrounddrawer.h"
-#include "gamehelper.h"
-#include "guikeyreader.h"
-#include "script.h"
-#include "smokeprojectile.h"
-#include "scripthandler.h"
-#include "mousehandler.h"
-#include "basewater.h"
-#include "unithandler.h"
-#include "quadfield.h"
-#include "readmap.h"
-#include "guihandler.h"
+#include "glFont.h"
+#include "InfoConsole.h"
+#include "Sound.h"
+#include "Camera.h"
+#include "BaseSky.h"
+#include "Net.h"
+#include "Ground.h"
+#include "BaseGroundDrawer.h"
+#include "GameHelper.h"
+#include "GuiKeyReader.h"
+#include "Script.h"
+#include "SmokeProjectile.h"
+#include "ScriptHandler.h"
+#include "MouseHandler.h"
+#include "BaseWater.h"
+#include "UnitHandler.h"
+#include "QuadField.h"
+#include "ReadMap.h"
+#include "GuiHandler.h"
 #include "selectedUnits.h"
-#include "team.h"
-#include "loshandler.h"
-#include "timeprofiler.h"
-#include "bitmap.h"
-#include "minimap.h"
-#include "grouphandler.h"
-#include "mapdamage.h"
-#include "unitparser.h"
-#include "basetreedrawer.h"
-#include "reghandler.h"
-#include "unitdefhandler.h"
-#include "unit.h"
-#include "tooltipconsole.h"
-#include "geometricobjects.h"
-#include "filehandler.h"
-#include "hpihandler.h"
-#include "resourcebar.h"
-#include "3doparser.h"
-#include "fartexturehandler.h"
+#include "Team.h"
+#include "LosHandler.h"
+#include "TimeProfiler.h"
+#include "Bitmap.h"
+#include "MiniMap.h"
+#include "GroupHandler.h"
+#include "MapDamage.h"
+#include "UnitParser.h"
+#include "BaseTreeDrawer.h"
+#include "RegHandler.h"
+#include "UnitDefHandler.h"
+#include "Unit.h"
+#include "TooltipConsole.h"
+#include "GeometricObjects.h"
+#include "FileHandler.h"
+#include "HpiHandler.h"
+#include "ResourceBar.h"
+#include "3DOParser.h"
+#include "FartextureHandler.h"
 #include "CobEngine.h"
-#include "featurehandler.h"
-#ifndef MWCC
-#include "avigenerator.h"
+#include "FeatureHandler.h"
+#ifndef NO_AVI
+#include "AVIGenerator.h"
 #endif
-#include "unittracker.h"
-#include "wind.h"
-#include "metalmap.h"
-#include "radarhandler.h"
-#include "moveinfo.h"
+#include "UnitTracker.h"
+#include "Wind.h"
+#include "MetalMap.h"
+#include "RadarHandler.h"
+#include "MoveInfo.h"
 #include "PathManager.h"
-#include "damagearrayhandler.h"
-#include "categoryhandler.h"
-#include "shadowhandler.h"
+#include "DamageArrayHandler.h"
+#include "CategoryHandler.h"
+#include "ShadowHandler.h"
 #ifdef DIRECT_CONTROL_ALLOWED
-#include "cobfile.h"
-#include "mymath.h"
-#include "weapon.h"
-#include "movetype.h"
+#include "CobFile.h"
+#include "myMath.h"
+#include "Weapon.h"
+#include "MoveType.h"
 #endif
 //#include "PhysicsEngine.h"
-#include "loadsavehandler.h"
-#include "newguidefine.h"
-#include "gamesetup.h"
-#include "sharebox.h"
-#include "gameserver.h"
-#include "endgamebox.h"
-#include "inmapdraw.h"
-#include "cameracontroller.h"
+#include "LoadSaveHandler.h"
+#include "NewGuiDefine.h"
+#include "GameSetup.h"
+#include "ShareBox.h"
+#include "GameServer.h"
+#include "EndGameBox.h"
+#include "InMapDraw.h"
+#include "CameraController.h"
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"
-#include ".\game.h"
+#include "Game.h"
 #endif
 
 GLfloat LightDiffuseLand[]=	{ 0.8f, 0.8f, 0.8f, 1.0f };
@@ -286,7 +286,7 @@ CGame::CGame(bool server,std::string mapname)
 CGame::~CGame()
 {
 	ENTER_MIXED;
-#ifndef MWCC
+#ifndef NO_AVI
 	if(creatingVideo){
 		creatingVideo=false;
 		aviGenerator->ReleaseEngine();
@@ -437,7 +437,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 		ls.SaveGame("Test.ssf");
 	}
 
-#ifndef MWCC
+#ifndef NO_AVI
 	if (s=="createvideo"){
 		if(creatingVideo){
 			creatingVideo=false;
@@ -449,8 +449,8 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 			creatingVideo=true;
 			string name;
 			for(int a=0;a<99;++a){
-				char t[50];
-				itoa(a,t,10);
+				char t[10];
+				snprintf(t, 10, "%d", a);
 				name=string("video")+t+".avi";
 				CFileHandler ifs(name);
 				if(!ifs.FileExists())
@@ -660,8 +660,8 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 		b.ReverseYAxis();
 		string name;
 		for(int a=0;a<99;++a){
-			char t[50];
-			itoa(a,t,10);
+			char t[10];
+			snprintf(t, 10, "%d", a);
 			name=string("screen")+t+".jpg";
 			CFileHandler ifs(name);
 			if(!ifs.FileExists())
@@ -1017,7 +1017,7 @@ bool CGame::Draw()
 	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
 	lastMoveUpdate=start;
 
-#ifndef MWCC
+#ifndef NO_AVI
 	if(creatingVideo){
 		gu->lastFrameTime=1.0/GAME_SPEED;
 		LPBITMAPINFOHEADER ih;
@@ -1570,8 +1570,8 @@ bool CGame::ClientReadNet()
 			int team1=gs->players[player]->team;
 			int team2=inbuf[inbufpos+2];
 			bool shareUnits=!!inbuf[inbufpos+3];
-			float metalShare=min(*(float*)&inbuf[inbufpos+4],gs->teams[team1]->metal);
-			float energyShare=min(*(float*)&inbuf[inbufpos+8],gs->teams[team1]->energy);
+			float metalShare=min(*(float*)&inbuf[inbufpos+4],(float)gs->teams[team1]->metal);
+			float energyShare=min(*(float*)&inbuf[inbufpos+8],(float)gs->teams[team1]->energy);
 			
 			gs->teams[team1]->metal-=metalShare;
 			gs->teams[team2]->metal+=metalShare;
@@ -2123,7 +2123,7 @@ unsigned  int CGame::CreateExeChecksum(void)
 
 	for(int a=0;a<l;++a){
 		ret+=buf[a];
-		ret*=max(1,buf[a]);
+		ret*=max((unsigned char)1,(unsigned char)buf[a]);
 	}
 
 	delete[] buf;

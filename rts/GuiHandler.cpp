@@ -1,34 +1,34 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // GuiHandler.cpp: implementation of the CGuiHandler class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "GuiHandler.h"
-#include "selectedunits.h"
-#include "mygl.h"
-#include "mousehandler.h"
+#include "SelectedUnits.h"
+#include "myGL.h"
+#include "MouseHandler.h"
 #include "glFont.h"
-#include "ground.h"
-#include "camera.h"
-#include "infoconsole.h"
+#include "Ground.h"
+#include "Camera.h"
+#include "InfoConsole.h"
 #include <map>
 #include "Unit.h"
-#include "gamehelper.h"
-#include "game.h"
-#include "gllist.h"
-#include "weapon.h"
-#include "loshandler.h"
-#include "bitmap.h"
-#include "unitloader.h"
-//#include "unit3dloader.h"
-#include "unithandler.h"
-#include "texturehandler.h"
-#include ".\guihandler.h"
-#include "3doparser.h"
-#include "unitdefhandler.h"
-#include "feature.h"
-#include "basegrounddrawer.h"
-#include "weapondefhandler.h"
+#include "GameHelper.h"
+#include "Game.h"
+#include "glList.h"
+#include "Weapon.h"
+#include "LosHandler.h"
+#include "Bitmap.h"
+#include "UnitLoader.h"
+//#include "Unit3DLoader.h"
+#include "UnitHandler.h"
+#include "TextureHandler.h"
+#include "GuiHandler.h"
+#include "3DOParser.h"
+#include "UnitDefHandler.h"
+#include "Feature.h"
+#include "BaseGroundDrawer.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -255,7 +255,7 @@ void CGuiHandler::LayoutIcons()
 	}
 
 	total_active_icons = nr;
-	maxPages=max(0,(total_active_icons-1)/NUMICOPAGE);
+	maxPages=max(0,(int)((total_active_icons-1)/NUMICOPAGE));
 	activePage=min(maxPages,activePage);
 
 	for(cdi=hidden.begin();cdi!=hidden.end();++cdi){
@@ -304,8 +304,8 @@ void CGuiHandler::DrawButtons()
 	}
 	
 	// För varje knapp (rita den)
-	int buttonStart=max(0,min(activePage*NUMICOPAGE,total_active_icons));
-	int buttonEnd=max(0,min((activePage+1)*NUMICOPAGE,total_active_icons));
+	int buttonStart=max(0,(int)(min(activePage*NUMICOPAGE,total_active_icons)));
+	int buttonEnd=max(0,int(min((activePage+1)*NUMICOPAGE,total_active_icons)));
 
 	for(unsigned int nr=buttonStart;nr<buttonEnd;nr++) {
 
@@ -497,7 +497,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 					newMode=0;
 
 				char t[10];
-				itoa(newMode,t,10);
+				snprintf(t, 10, "%d", newMode);
 				commands[icon].params[0]=t;
 
 				Command c;
@@ -832,7 +832,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 
 	if(sizeDiv!=0){
 		char c[40];
-		itoa(pos1.distance2D(pos2)/sizeDiv,c,10);
+		snprintf(c, 40, "%d",pos1.distance2D(pos2)/sizeDiv );
 		mouse->cursorTextRight=c;
 	}
 	glEnable(GL_FOG);
@@ -882,7 +882,7 @@ bool CGuiHandler::KeyPressed(unsigned char key)
 					newMode=0;
 
 				char t[10];
-				itoa(newMode,t,10);
+				snprintf(t, 10, "%d", newMode);
 				commands[a].params[0]=t;
 
 				Command c;
@@ -1348,5 +1348,5 @@ void CGuiHandler::MakeBuildPos(float3& pos,UnitDef* unitdef)
 	pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 	pos.y=uh->GetBuildHeight(pos,unitdef);
 	if(unitdef->floater)
-		pos.y = max(pos.y,0);
+		pos.y = max(pos.y,0.f);
 }

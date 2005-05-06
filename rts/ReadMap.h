@@ -15,7 +15,7 @@
 #include "float3.h"
 #include "MetalMap.h"
 #include "sm2header.h"
-#include "sunparser.h"
+#include "SunParser.h"
 
 class CFileHandler;
 class CUnit;

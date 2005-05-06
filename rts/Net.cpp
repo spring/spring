@@ -1,15 +1,15 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // Net.cpp: implementation of the CNet class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "Net.h"
 #include "stdio.h"
-#include "filehandler.h"
-#include "infoconsole.h"
-#include "game.h"
-#include "scripthandler.h"
-#include "gamesetup.h"
+#include "FileHandler.h"
+#include "InfoConsole.h"
+#include "Game.h"
+#include "ScriptHandler.h"
+#include "GameSetup.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

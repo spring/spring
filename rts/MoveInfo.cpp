@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\moveinfo.h"
-#include "filehandler.h"
-#include "sunparser.h"
-#include "infoconsole.h"
+#include "StdAfx.h"
+#include "MoveInfo.h"
+#include "FileHandler.h"
+#include "SunParser.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 CMoveInfo* moveinfo;

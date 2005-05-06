@@ -1,6 +1,6 @@
 #pragma once
-#include "projectile.h"
-#include "damagearray.h"
+#include "Projectile.h"
+#include "DamageArray.h"
 
 struct WeaponDef;
 

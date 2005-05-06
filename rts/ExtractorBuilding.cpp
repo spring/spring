@@ -5,16 +5,16 @@
 //////////////////////////////////////
 
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "ExtractorBuilding.h"
 #include "UnitHandler.h"
 #include "ReadMap.h"
 #include "CobInstance.h"
 #include "CobFile.h"
 #include "InfoConsole.h"
-#include "unitdef.h"
-#include "metalmap.h"
-#include "quadfield.h"
+#include "UnitDef.h"
+#include "MetalMap.h"
+#include "QuadField.h"
 //#include "mmgr.h"
 /*
 Constructor

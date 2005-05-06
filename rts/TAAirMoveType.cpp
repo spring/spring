@@ -1,4 +1,4 @@
-#include ".\taairmovetype.h"
+#include "TAAirMoveType.h"
 #include "QuadField.h"
 #include "Ground.h"
 #include "LosHandler.h"
@@ -8,12 +8,12 @@
 #include "InfoConsole.h"
 #include "myMath.h"
 #include "Matrix44f.h"
-#include "3doparser.h"
-#include "player.h"
-#include "unitdef.h"
-#include "geometricobjects.h"
+#include "3DOParser.h"
+#include "Player.h"
+#include "UnitDef.h"
+#include "GeometricObjects.h"
 #include "Mobility.h"
-#include "transportunit.h"
+#include "TransportUnit.h"
 
 CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	CMoveType(owner),

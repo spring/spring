@@ -3,21 +3,21 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4258)
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "BasicSky.h"
 
 #include <math.h>
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"
+#include "myGL.h"
 #include <gl\glu.h>			// Header File For The GLu32 Library
-#include "camera.h"
-#include "readmap.h"
-#include "bitmap.h"
-#include "timeprofiler.h"
-#include "reghandler.h"
-#include "readmap.h"
-#include "matrix44f.h"
-#include "infoconsole.h"
+#include "Camera.h"
+#include "ReadMap.h"
+#include "Bitmap.h"
+#include "TimeProfiler.h"
+#include "RegHandler.h"
+#include "ReadMap.h"
+#include "Matrix44f.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\radarhandler.h"
-#include "timeprofiler.h"
-#include "loshandler.h"
-#include "3doparser.h"
+#include "StdAfx.h"
+#include "RadarHandler.h"
+#include "TimeProfiler.h"
+#include "LosHandler.h"
+#include "3DOParser.h"
 //#include "mmgr.h"
 
 CRadarHandler* radarhandler=0;

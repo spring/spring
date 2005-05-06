@@ -1,6 +1,6 @@
 #pragma once
-#include "movetype.h"
-#include "solidobject.h"
+#include "MoveType.h"
+#include "SolidObject.h"
 
 struct MoveData;
 

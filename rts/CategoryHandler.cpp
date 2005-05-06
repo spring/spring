@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include ".\categoryhandler.h"
-#include "infoconsole.h"
+#include "StdAfx.h"
+#include "CategoryHandler.h"
+#include "InfoConsole.h"
 #include <algorithm>
 #include <cctype>
 //#include "mmgr.h"

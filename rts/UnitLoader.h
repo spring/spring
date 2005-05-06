@@ -14,7 +14,7 @@ class CUnit;
 class CWeapon;
 #include <string>
 
-#include "unitdef.h"
+#include "UnitDef.h"
 
 using namespace std;
 struct GuiSound;

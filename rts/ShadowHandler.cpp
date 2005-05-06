@@ -1,25 +1,28 @@
-#include "stdafx.h"
-#include ".\shadowhandler.h"
-#include "mygl.h"
-#include "reghandler.h"
-#include "camera.h"
-#include "unithandler.h"
-#include "basegrounddrawer.h"
-#include "matrix44f.h"
-#include "ground.h"
-#include "projectilehandler.h"
-#include "minimap.h"
-#include "infoconsole.h"
-#include "featurehandler.h"
+#include "StdAfx.h"
+#include "ShadowHandler.h"
+#include "myGL.h"
+#include "RegHandler.h"
+#include "Camera.h"
+#include "UnitHandler.h"
+#include "BaseGroundDrawer.h"
+#include "Matrix44f.h"
+#include "Ground.h"
+#include "ProjectileHandler.h"
+#include "MiniMap.h"
+#include "InfoConsole.h"
+#include "FeatureHandler.h"
 
 CShadowHandler* shadowHandler=0;
 
+#ifndef NO_SHADOWS
 extern HDC hDC;
 extern HGLRC hRC;
 extern HWND hWnd;
+#endif //NO_SHADOWS
 
 CShadowHandler::CShadowHandler(void)
 {
+#ifndef NO_SHADOWS
 	hPBuffer=0;
 	hDCPBuffer=0;
 	hRCPBuffer=0;
@@ -30,7 +33,7 @@ CShadowHandler::CShadowHandler(void)
 	firstDraw=true;
 	useFPShadows=false;
 	copyDepthTexture=true;
-
+	
 	if(!regHandler.GetInt("Shadows",0))
 		return;
 	
@@ -215,6 +218,7 @@ void CShadowHandler::CreateShadows(void)
 			exit(-1);
 		}
 	}
+#endif //NO_SHADOWS
 }
 
 void CShadowHandler::DrawShadowTex(void)
@@ -256,6 +260,7 @@ void CShadowHandler::DrawShadowTex(void)
 extern GLuint		PixelFormat;
 void CShadowHandler::CreatePBuffer(void)
 {
+#ifndef NO_SHADOWS
 	//
 	// Define the minimum pixel format requirements we will need for our 
 	// p-buffer. A p-buffer is just like a frame buffer, it can have a depth 
@@ -320,8 +325,10 @@ void CShadowHandler::CreatePBuffer(void)
 			"ERROR",MB_OK|MB_ICONEXCLAMATION);
 		exit(-1);
 	}
+#endif //NO_SHADOWS
 }
 
+#ifndef NO_SHADOWS
 void CShadowHandler::CalcMinMaxView(void)
 {
 	left.clear();
@@ -399,6 +406,7 @@ void CShadowHandler::CalcMinMaxView(void)
 		y2=5000;
 	}
 }
+#endif //NO_SHADOWS
 
 //maybe standardize all these things in one place sometime (and maybe one day i should try to understand how i made them work)
 void CShadowHandler::GetFrustumSide(float3& side,bool upside)

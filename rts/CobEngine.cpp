@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include ".\cobengine.h"
+#include "CobEngine.h"
 #include "CobThread.h"
 #include "CobInstance.h"
 #include "CobFile.h"
@@ -10,7 +10,7 @@
 #include <windows.h>
 
 #ifndef _CONSOLE
-#include "timeprofiler.h"
+#include "TimeProfiler.h"
 #endif
 #ifdef _CONSOLE
 #define START_TIME_PROFILE {}

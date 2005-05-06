@@ -1,5 +1,5 @@
 #pragma once
-#include "mobilecai.h"
+#include "MobileCAI.h"
 
 class CTransportCAI :
 	public CMobileCAI

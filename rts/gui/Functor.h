@@ -318,7 +318,7 @@ public:
 
 	typedef void (FunctorBase::*PMemFunc)();
 	typedef void (*PFunc)();
-	#ifdef MWCC
+	#if defined MWCC || defined GCC
 	enum {MEM_FUNC_SIZE = sizeof(PMemFunc)};
 	#else
 	enum {MEM_FUNC_SIZE = 8};

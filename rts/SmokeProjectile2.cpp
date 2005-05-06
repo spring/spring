@@ -2,16 +2,17 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "SmokeProjectile2.h"
-#include "mygl.h"	
+#include "myGL.h"	
 
-#include "projectilehandler.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "ground.h"
-#include "wind.h"
+#include "ProjectileHandler.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "Ground.h"
+#include "Wind.h"
 //#include "mmgr.h"
+#include "Syncify.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -66,12 +67,12 @@ void CSmokeProjectile2::Draw()
 {
 	inArray=true;
 	unsigned char col[4];
-	unsigned char alpha=(1-age)*127;
-	float rglow=max(0,(1-age*glowFalloff)*127);
-	float gglow=max(0,(1-age*glowFalloff*2.5)*127);
+	unsigned char alpha=(unsigned char)(1-age)*127;
+	float rglow=max((float)0,(1-age*glowFalloff)*127);
+	float gglow=max((float)0,(1-age*glowFalloff*(float)2.5)*127);
 	col[0]=color*alpha+rglow;
 	col[1]=color*alpha+gglow;
-	col[2]=max(0,color*alpha-gglow*0.5);
+	col[2]=max(0.,color*alpha-gglow*0.5);
 	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
 	int frame=textureNum;
 	float xmod=0.125+(float(int(frame%6)))/16.0;

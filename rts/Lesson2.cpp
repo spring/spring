@@ -6,28 +6,28 @@
  *		Visit My Site At nehe.gamedev.net
  */
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include <winsock2.h>
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"
+#include "myGL.h"
 #include <gl\glu.h>			// Header File For The GLu32 Library
 #include <time.h>
 #include <string>
 #include <math.h>
-#include "pregame.h"
-#include "game.h"
+#include "PreGame.h"
+#include "Game.h"
 #include "winreg.h"
 #include "float.h"
-#include "glfont.h"
-#include "mousehandler.h"
-#include "reghandler.h"
-#include "infoconsole.h"
-#include "gamesetup.h"
-#include "cameracontroller.h"
-#include "net.h"
+#include "glFont.h"
+#include "MouseHandler.h"
+#include "RegHandler.h"
+#include "InfoConsole.h"
+#include "GameSetup.h"
+#include "CameraController.h"
+#include "Net.h"
 //#include "mmgr.h"
 
-#include "newguidefine.h"
+#include "NewGuiDefine.h"
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"

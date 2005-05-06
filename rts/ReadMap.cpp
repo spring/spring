@@ -1,35 +1,39 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // ReadMap.cpp: implementation of the CReadMap class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "windows.h"
-#include "mygl.h"
-#include <gl\glu.h>			// Header file for the gLu32 library
+#include "myGL.h"
+#include <GL/glu.h>			// Header file for the gLu32 library
 #include "ReadMap.h"
 #include <stdlib.h>
 #include <math.h>
 //#include <ostream>
-#include "bitmap.h"
-#include "ground.h"
-#include "readmap.h"
-#include "reghandler.h"
+#include "Bitmap.h"
+#include "Ground.h"
+#include "ReadMap.h"
+#include "RegHandler.h"
+#ifndef linux
 #include <process.h>
-#include "filehandler.h"
-#include "BFreadmap.h"
+#endif
+#include "FileHandler.h"
+#include "ReadMap.h"
 #include "BFGroundDrawer.h"
-#include ".\readmap.h"
-#include "unit.h"
-#include "unitdef.h"
-#include "infoconsole.h"
+#include "ReadMap.h"
+#include "Unit.h"
+#include "UnitDef.h"
+#include "InfoConsole.h"
 #include "MetalMap.h"
 //#include "multipath.h"
 #include "PathManager.h"
-#include "wind.h"
-#include "sunparser.h"
+#include "Wind.h"
+#include "SunParser.h"
 #include "GeometricObjects.h"
-#include "loadsaveinterface.h"
-#include "mapdamage.h"
+#include "LoadSaveInterface.h"
+#include "MapDamage.h"
+#include <string>
+#include <BFReadmap.h>
 //#include "mmgr.h"
 
 using namespace std;

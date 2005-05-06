@@ -1,5 +1,5 @@
 #pragma once
-#include "loadsaveinterface.h"
+#include "LoadSaveInterface.h"
 #include <fstream>
 
 class CLoadInterface :

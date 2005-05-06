@@ -1,7 +1,7 @@
 #ifndef MOVE_TEST_SCRIPT_H
 #define MOVE_TEST_SCRIPT_H
 
-#include "script.h"
+#include "Script.h"
 
 class CMoveTestScript :
 	public CScript

@@ -2,40 +2,40 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "UnitHandler.h"
-#include "unit.h"
-#include "mygl.h"
-#include "team.h"
-#include "camera.h"
-#include "timeprofiler.h"
-#include "texturehandler.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "loshandler.h"
-#include "mymath.h"
-#include "ground.h"
-#include "readmap.h"
-#include "gamehelper.h"
-#include "reghandler.h"
-#include "3doparser.h"
-#include "fartexturehandler.h"
-#include "unitdefhandler.h"
-#include "quadfield.h"
-#include "bitmap.h"
-#include "buildercai.h"
-#include "selectedunits.h"
-#include "filehandler.h"
-#include "radarhandler.h"
-#include "infoconsole.h"
-#include ".\unithandler.h"
-#include "feature.h"
-#include "featurehandler.h"
-#include "shadowhandler.h"
-#include "basewater.h"
-#include "loadsaveinterface.h"
-#include "unitloader.h"
-#include "synctracer.h"
+#include "Unit.h"
+#include "myGL.h"
+#include "Team.h"
+#include "Camera.h"
+#include "TimeProfiler.h"
+#include "TextureHandler.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "LosHandler.h"
+#include "myMath.h"
+#include "Ground.h"
+#include "ReadMap.h"
+#include "GameHelper.h"
+#include "RegHandler.h"
+#include "3DOParser.h"
+#include "FartextureHandler.h"
+#include "UnitDefHandler.h"
+#include "QuadField.h"
+#include "Bitmap.h"
+#include "BuilderCAI.h"
+#include "SelectedUnits.h"
+#include "FileHandler.h"
+#include "RadarHandler.h"
+#include "InfoConsole.h"
+#include "UnitHandler.h"
+#include "Feature.h"
+#include "FeatureHandler.h"
+#include "ShadowHandler.h"
+#include "BaseWater.h"
+#include "LoadSaveInterface.h"
+#include "UnitLoader.h"
+#include "SyncTracer.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -401,9 +401,9 @@ float CUnitHandler::GetBuildHeight(float3 pos, UnitDef* unitdef)
 	float borderh=0;
 
 	float maxDif=unitdef->maxHeightDif;
-	int x1 = max(0,(pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	int x1 = max(0.f,(pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	int x2 = min(gs->mapx,x1+unitdef->xsize);
-	int z1 = max(0,(pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	int z1 = max(0.f,(pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	int z2 = min(gs->mapy,z1+unitdef->ysize);
 
 	for(int x=x1; x<=x2; x++){

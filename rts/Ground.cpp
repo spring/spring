@@ -1,18 +1,18 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // Ground.cpp: implementation of the CGround class.
 //
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Ground.h"
-#include "readmap.h"
-#include "camera.h"
+#include "ReadMap.h"
+#include "Camera.h"
 #include "projectileHandler.h"
-#include "readmap.h"
-#include "projectile.h"
-#include "infoconsole.h"
-#include "heatcloudprojectile.h"
+#include "ReadMap.h"
+#include "Projectile.h"
+#include "InfoConsole.h"
+#include "HeatCloudProjectile.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

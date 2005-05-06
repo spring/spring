@@ -1,10 +1,10 @@
-#include "stdafx.h"
-#include ".\geosquareprojectile.h"
-#include "projectilehandler.h"
-#include "geosquareprojectile.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
+#include "StdAfx.h"
+#include "GeoSquareProjectile.h"
+#include "ProjectileHandler.h"
+#include "GeoSquareProjectile.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
 //#include "mmgr.h"
 
 CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2)

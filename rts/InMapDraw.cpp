@@ -1,32 +1,32 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 
-#include ".\inmapdraw.h"
+#include "InMapDraw.h"
 
-#include "net.h"
+#include "Net.h"
 
-#include "ground.h"
+#include "Ground.h"
 
-#include "camera.h"
+#include "Camera.h"
 
-#include "mousehandler.h"
+#include "MouseHandler.h"
 
-#include "team.h"
+#include "Team.h"
 
-#include "player.h"
+#include "Player.h"
 
-#include "mygl.h"
+#include "myGL.h"
 
-#include "vertexarray.h"
+#include "VertexArray.h"
 
-#include "glfont.h"
+#include "glFont.h"
 
-#include "basegrounddrawer.h"
+#include "BaseGroundDrawer.h"
 
-#include "game.h"
+#include "Game.h"
 
-#include "infoconsole.h"
+#include "InfoConsole.h"
 
-#include "sound.h"
+#include "Sound.h"
 
 
 
@@ -562,9 +562,10 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 
 		float3 pos(*(short*)&msg[4],0,*(short*)&msg[6]);
 
-		for(int y=max(0,(pos.z-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);y<=min(drawQuadsY-1,(pos.z+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++y){
+		for(int y=max(.0f,(pos.z-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);
+		y<=min(drawQuadsY-1.f,(pos.z+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++y){
 
-			for(int x=max(0,(pos.x-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);x<=min(drawQuadsX-1,(pos.x+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++x){
+			for(int x=max(0.f,(pos.x-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);x<=min(drawQuadsX-1.f,(pos.x+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++x){
 
 				DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
 

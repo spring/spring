@@ -4,7 +4,7 @@
 #include "InfoConsole.h"
 #include "glExtra.h"
 #include <ostream>
-#include "moveinfo.h"
+#include "MoveInfo.h"
 
 #define PATHDEBUG false
 

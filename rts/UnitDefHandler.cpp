@@ -1,19 +1,19 @@
-#include "stdafx.h"
-#include "unitdefhandler.h"
+#include "StdAfx.h"
+#include "UnitDefHandler.h"
 #include "myGL.h"
-#include "sunparser.h"
+#include "SunParser.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
-#include "filehandler.h"
-#include "bitmap.h"
-#include "infoconsole.h"
-#include "categoryhandler.h"
-#include "sound.h"
-#include "weapondefhandler.h"
-#include "damagearrayhandler.h"
-#include "unitdef.h"
-#include "readmap.h"
+#include "FileHandler.h"
+#include "Bitmap.h"
+#include "InfoConsole.h"
+#include "CategoryHandler.h"
+#include "Sound.h"
+#include "WeaponDefHandler.h"
+#include "DamageArrayHandler.h"
+#include "UnitDef.h"
+#include "ReadMap.h"
 #include "GameSetup.h"
 //#include "mmgr.h"
 
@@ -217,7 +217,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.turnRate=atof(sunparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
 	ud.buildSpeed=atof(sunparser.SGetValueDef("0", "UNITINFO\\WorkerTime").c_str());
 	ud.buildDistance=atof(sunparser.SGetValueDef("64", "UNITINFO\\Builddistance").c_str());
-	ud.buildDistance=max(128,ud.buildDistance);
+	ud.buildDistance=max(128.f,ud.buildDistance);
 	ud.armoredMultiple=atof(sunparser.SGetValueDef("0.0001", "UNITINFO\\DamageModifier").c_str());
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
 //	info->AddLine("unit %s has armor %i",ud.name.c_str(),ud.armorType);

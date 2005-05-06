@@ -1,5 +1,5 @@
 #pragma once
-#include "weaponprojectile.h"
+#include "WeaponProjectile.h"
 
 struct S3DOModel;
 

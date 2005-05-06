@@ -16,7 +16,7 @@ class CVertexArray
 public:
 	CVertexArray();
 	virtual ~CVertexArray();
-	virtual Initialize();
+	virtual void Initialize();
 
 	void AddVertexTC(const float3 &pos,float tx,float ty,unsigned char* color);
 	virtual void DrawArrayTC(int drawType,int stride=24);

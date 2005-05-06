@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // ProjectileHandler.cpp: implementation of the CProjectileHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,24 +6,26 @@
 #include "ProjectileHandler.h"
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <windows.h>		// Header File For Windows
-#include "mygl.h"
-#include <gl\glu.h>			// Header File For The GLu32 Library
-#include "projectile.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "quadfield.h"
-#include "unit.h"
-#include "timeprofiler.h"
-#include "bitmap.h"
-#include "groundflash.h"
-#include "loshandler.h"
-#include "ground.h"
-#include "texturehandler.h"
-#include "feature.h"
-#include "reghandler.h"
-#include "shadowhandler.h"
-#include "unithandler.h"
-#include "3doparser.h"
+#include "myGL.h"
+#include <GL/glu.h>			// Header File For The GLu32 Library
+#include "Projectile.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "QuadField.h"
+#include "Unit.h"
+#include "TimeProfiler.h"
+#include "Bitmap.h"
+#include "GroundFlash.h"
+#include "LosHandler.h"
+#include "Ground.h"
+#include "TextureHandler.h"
+#include "Feature.h"
+#ifndef linux
+#include "RegHandler.h"
+#endif
+#include "ShadowHandler.h"
+#include "UnitHandler.h"
+#include "3DOParser.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -39,7 +41,11 @@ CProjectileHandler::CProjectileHandler()
 {
 	PrintLoadMsg("Creating projectile texture");
 
+#ifndef linux
 	maxParticles=regHandler.GetInt("MaxParticles",4000);
+#else
+	maxParticles=4000;
+#endif	
 	currentParticles=0;
 	particleSaturation=0;
 
@@ -270,7 +276,7 @@ CProjectileHandler::CProjectileHandler()
 				float alpha=255-dist*20;
 				float alpha2=tex[by+y][bx+x][3];
 				alpha=1-((1-alpha/255)*(1-alpha2/255));
-				tex[by+y][bx+x][3]=max(0,min(255,alpha*255));
+				tex[by+y][bx+x][3]=max((float)0,min((float)255,alpha*255));
 			}
 		}
 	}

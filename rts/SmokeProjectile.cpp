@@ -2,14 +2,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "SmokeProjectile.h"
-#include "mygl.h"	
-#include "projectilehandler.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "ground.h"
-#include "wind.h"
+#include "myGL.h"	
+#include "ProjectileHandler.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "Ground.h"
+#include "Wind.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

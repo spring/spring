@@ -1,22 +1,22 @@
-#include "stdafx.h"
-#include ".\airmovetype.h"
-#include "quadfield.h"
-#include "ground.h"
-#include "sound.h"
-#include "loshandler.h"
-#include "smokeprojectile.h"
-#include "gamehelper.h"
-//#include "weapon.h"
-#include "3doparser.h"
-#include "radarhandler.h"
+#include "StdAfx.h"
+#include "AirMoveType.h"
+#include "QuadField.h"
+#include "Ground.h"
+#include "Sound.h"
+#include "LosHandler.h"
+#include "SmokeProjectile.h"
+#include "GameHelper.h"
+//#include "Weapon.h"
+#include "3DOParser.h"
+#include "RadarHandler.h"
 #include "CobFile.h"
 #include "CobInstance.h"
-#include "infoconsole.h"
-#include "unitdef.h"
-#include "player.h"
-#include "geometricobjects.h"
+#include "InfoConsole.h"
+#include "UnitDef.h"
+#include "Player.h"
+#include "GeometricObjects.h"
 #include "Mobility.h"
-#include "mymath.h"
+#include "myMath.h"
 
 CAirMoveType::CAirMoveType(CUnit* owner):
 	CMoveType(owner),
@@ -124,7 +124,7 @@ void CAirMoveType::Update(void)
 	}
 #endif
 		if(owner->userTarget || owner->userAttackGround){
-			inefficientAttackTime=min(inefficientAttackTime,gs->frameNum-owner->lastFireWeapon);
+			inefficientAttackTime=min(inefficientAttackTime,(float)gs->frameNum-owner->lastFireWeapon);
 			if(owner->userTarget){
 				goalPos=owner->userTarget->pos;
 			} else {
@@ -157,7 +157,7 @@ void CAirMoveType::Update(void)
 		owner->crashing=true;
 		UpdateAirPhysics(crashRudder,crashAileron,crashElevator,0,owner->frontdir);
 		new CSmokeProjectile(owner->midPos,gs->randVector()*0.08,100+gs->randFloat()*50,5,0.2,owner,0.4);
-		if(!(gs->frameNum&3) && max(0,ground->GetApproximateHeight(pos.x,pos.z))+5+owner->radius>pos.y)
+		if(!(gs->frameNum&3) && max(0.f,ground->GetApproximateHeight(pos.x,pos.z))+5+owner->radius>pos.y)
 			owner->KillUnit(true,false);
 		break;
 	case AIRCRAFT_TAKEOFF:
@@ -354,7 +354,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	}
 
 	//roll
-	if(speedf>0.45 && pos.y+owner->speed.y*60*fabs(frontdir.y)+min(0,updir.y)*150>gHeight+60+fabs(rightdir.y)*150){
+	if(speedf>0.45 && pos.y+owner->speed.y*60*fabs(frontdir.y)+min(0.f,updir.y)*150>gHeight+60+fabs(rightdir.y)*150){
 		float goalBankDif=goalDot+rightdir.y*0.2;
 		if(goalBankDif>maxAileron*speedf*4){
 			aileron=1;
@@ -448,7 +448,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	if(groundTarget)
 		engine=1;
 	else
-		engine=min(1,goalLength/owner->maxRange+1-goalDir.dot(frontdir)*0.7);
+		engine=min(1.f,(float)(goalLength/owner->maxRange+1-goalDir.dot(frontdir)*0.7));
 
 	UpdateAirPhysics(rudder,aileron,elevator,engine,owner->frontdir);
 /*
@@ -511,7 +511,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 		float3 otherDif=lastColWarning->pos-pos;
 		float otherLength=otherDif.Length();
 		otherDir=otherDif/otherLength;
-		otherThreat=max(1200,goalLength)/otherLength*0.036;
+		otherThreat=max(1200.f,goalLength)/otherLength*0.036;
 	}
 
 	float goalDot=rightdir.dot(goalDir);
@@ -685,7 +685,7 @@ void CAirMoveType::UpdateLanding(void)
 	float dist=dif.Length();
 	dif/=dist;
 	
-	float wsf=min(owner->unitDef->speed,dist/speedf*1.8*maxAcc);
+	float wsf=min(owner->unitDef->speed,dist/speedf*1.8f*maxAcc);
 	float3 wantedSpeed=dif*wsf;
 
 	float3 delta = wantedSpeed - speed;

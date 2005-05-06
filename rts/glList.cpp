@@ -1,13 +1,13 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // glList.cpp: implementation of the CglList class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "glList.h"
-#include "mygl.h"
+#include "myGL.h"
 
-#include "glfont.h"
-#include "reghandler.h"
+#include "glFont.h"
+#include "RegHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

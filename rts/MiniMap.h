@@ -11,7 +11,7 @@
 
 #include <vector>
 
-#include "inputreceiver.h"
+#include "InputReceiver.h"
 class CUnit;
 
 class CMiniMap : public CInputReceiver

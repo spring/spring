@@ -1,9 +1,9 @@
-#include "stdafx.h"
-#include ".\mousecursor.h"
+#include "StdAfx.h"
+#include "MouseCursor.h"
 #include "FileHandler.h"
 #include "Bitmap.h"
 #include "InfoConsole.h"
-#include "mygl.h"
+#include "myGL.h"
 //#include "mmgr.h"
 
 //Would be nice if these were read from a gaf-file instead.

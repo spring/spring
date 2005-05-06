@@ -1,9 +1,9 @@
-#include "stdafx.h"
-#include "basewater.h"
-#include "basicwater.h"
-#include "advwater.h"
-#include "mygl.h"
-#include "reghandler.h"
+#include "StdAfx.h"
+#include "BaseWater.h"
+#include "BasicWater.h"
+#include "AdvWater.h"
+#include "myGL.h"
+#include "RegHandler.h"
 //#include "mmgr.h"
 
 CBaseWater* water=0;

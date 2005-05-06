@@ -1,25 +1,25 @@
-#include "stdafx.h"
-#include "aircraft.h"
-#include "commandai.h"
-#include "mygl.h"
-#include <gl/glu.h>
-#include "unithandler.h"
-#include "gamehelper.h"
-#include "ground.h"
-#include "loshandler.h"
-#include "quadfield.h"
-#include "team.h"
-#include "infoconsole.h"
-#include "smokeprojectile.h"
-#include "weapon.h"
-#include "readmap.h"
-#include "projectilehandler.h"
-#include "3doparser.h"
-#include ".\aircraft.h"
-#include "cobinstance.h"
-#include "cobfile.h"
-#include "selectedunits.h"
-//#include "unit3dloader.h"
+#include "StdAfx.h"
+#include "Aircraft.h"
+#include "CommandAI.h"
+#include "myGL.h"
+#include <GL/glu.h>
+#include "UnitHandler.h"
+#include "GameHelper.h"
+#include "Ground.h"
+#include "LosHandler.h"
+#include "QuadField.h"
+#include "Team.h"
+#include "InfoConsole.h"
+#include "SmokeProjectile.h"
+#include "Weapon.h"
+#include "ReadMap.h"
+#include "ProjectileHandler.h"
+#include "3DOParser.h"
+#include "Aircraft.h"
+#include "CobInstance.h"
+#include "CobFile.h"
+#include "SelectedUnits.h"
+//#include "Unit3DLoader.h"
 
 //#include "mmgr.h"
 
@@ -133,7 +133,7 @@ void CAircraft::Update(void)
 		crashing=true;
 		UpdateAirPhysics(crashRudder,crashAileron,crashElevator,0);
 		new CSmokeProjectile(midPos,g.randVector()*0.08,100+g.randFloat()*50,5,0.2,this,0.4);
-		if(!(g.frameNum&3) && max(0,ground->GetApproximateHeight(pos.x,pos.z))+5+radius>pos.y)
+		if(!(g.frameNum&3) && max(0.f,ground->GetApproximateHeight(pos.x,pos.z))+5+radius>pos.y)
 			KillUnit(true);
 		break;
 	default:
@@ -380,7 +380,7 @@ void CAircraft::UpdateFlying(float wantedHeight,float engine)
 		float3 otherDif=other->pos-pos;
 		float otherLength=otherDif.Length();
 		otherDir=otherDif/otherLength;
-		otherThreat=max(1200,goalLength)/otherLength*0.036;
+		otherThreat=max(1200.f,goalLength)/otherLength*0.036;
 	}
 
 	float goalDot=rightdir.dot(goalDir);
@@ -506,7 +506,7 @@ void CAircraft::UpdateLanding(void)
 		ac2tc.y=0;
 		ac2tc.Normalize();
 		goalPos=turnCenter+ac2tc.cross(float3(0,mySide,0))*turnRadius;
-		UpdateFlying(min(wantedHeight,initPoint.distance2D(pos)*0.15+50),1);
+		UpdateFlying(min(wantedHeight,(float)(initPoint.distance2D(pos)*0.15+50)),1);
 		float3 fd=frontdir;
 		fd.y=0;
 		fd.Normalize();
@@ -530,7 +530,7 @@ void CAircraft::UpdateLanding(void)
 	lines.push_back(dl);*/
 		break;}
 	case 2:
-		UpdateFlying(min(wantedHeight,initPoint.distance2D(pos)*0.15+50),1);
+		UpdateFlying(min(wantedHeight,float(initPoint.distance2D(pos)*0.15+50)),1.);
 		if(goalPos.distance2D(pos)<60)
 			subState++;{
 /*	DrawLine dl;
@@ -559,7 +559,7 @@ void CAircraft::UpdateLanding(void)
 		goalVec.Normalize();
 
 		goalPos=turnCenter+goalVec*turnRadius;
-		UpdateFlying(min(wantedHeight,initPoint.distance2D(pos)*0.15+50),speed.Length()<1);
+		UpdateFlying(min(wantedHeight,initPoint.distance2D(pos)*0.15f+50.f),speed.Length()<1);
 		if(initPoint.distance2D(pos)<38)
 			subState++;
 /*	DrawLine dl;
@@ -593,7 +593,7 @@ void CAircraft::UpdateLanding(void)
 		float3 rspeed=speed.cross(float3(0,1,0));
 		float rdot=rspeed.dot(bd);
 		speed+=rightdir*rdot*0.01;
-		UpdateFlying(max(20,min(50,-30*goalDist*0.2)),engine);
+		UpdateFlying(max(20.,min(50,-30*goalDist*0.2)),engine);
 		if(speed.Length()<0.3){
 			speed=float3(0,0,0);
 			SetState(AIRCRAFT_LANDED);
@@ -718,7 +718,7 @@ void CAircraft::UpdateFighterAttack(void)
 	}
 
 	//roll
-	if(speedf>0.45 && pos.y+speed.y*60*fabs(frontdir.y)+min(0,updir.y)*150>gHeight+60+fabs(rightdir.y)*150){
+	if(speedf>0.45 && pos.y+speed.y*60*fabs(frontdir.y)+min(0.f,updir.y)*150>gHeight+60+fabs(rightdir.y)*150){
 		float goalBankDif=goalDot+rightdir.y*0.2;
 		if(goalBankDif>maxAileron*speedf*4){
 			aileron=1;
@@ -759,7 +759,7 @@ void CAircraft::UpdateFighterAttack(void)
 		} else if(frontdir.y>0.0){
 			elevator=-1;
 		}
-	} else if(pos.y+min(0,speed.y)*70*fabs(frontdir.y)+min(0,updir.y)*50<gHeight+50){
+	} else if(pos.y+min(0.f,speed.y)*70*fabs(frontdir.y)+min(0.f,updir.y)*50<gHeight+50){
 		float upside=1;
 		if(updir.y<-0.3)
 			upside=-1;
@@ -795,7 +795,7 @@ void CAircraft::UpdateFighterAttack(void)
 #endif
 
 	
-	UpdateAirPhysics(rudder,aileron,elevator,min(1,goalLength/maxRange+1-goalDir.dot(frontdir)*0.7));
+	UpdateAirPhysics(rudder,aileron,elevator,min(1.,goalLength/maxRange+1-goalDir.dot(frontdir)*0.7));
 
 	std::vector<CWeapon*>::iterator wi;
 	for(wi=weapons.begin();wi!=weapons.end();++wi){

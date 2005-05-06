@@ -1,10 +1,12 @@
 #include "PathEstimator.h"
 #include "InfoConsole.h"
 #include "myGL.h"
-#include "filehandler.h"
+#include "FileHandler.h"
 #include <math.h>
 #include <fstream>
-
+#ifdef linux
+#include <stdlib.h>
+#endif
 
 #define PATHDEBUG false
 
@@ -102,7 +104,7 @@ moveMathOptions(mmOpt)
 		//Generate text-message.
 		char calcMsg[1000], buffer[10];
 		strcpy(calcMsg, "Analyzing map accessability \"");
-		itoa(BLOCK_SIZE, buffer, 10);
+		snprintf(buffer, 10, "%d", BLOCK_SIZE);
 		strcat(calcMsg, buffer);
 		strcat(calcMsg, "\"");
 		PrintLoadMsg(calcMsg);
@@ -122,13 +124,13 @@ moveMathOptions(mmOpt)
 			//Generate text-message.
 			char calcMsg[10000], buffer[100];
 			strcpy(calcMsg, "Calculating estimate path costs \"");
-			itoa(BLOCK_SIZE, buffer, 10);
+			snprintf(buffer, 100, "%d", BLOCK_SIZE);
 			strcat(calcMsg, buffer);
 			strcat(calcMsg, "\" ");
-			itoa((*mi)->pathType, buffer, 10);
+			snprintf(buffer, 10, "%d", (*mi)->pathType);
 			strcat(calcMsg, buffer);
 			strcat(calcMsg, "/");
-			itoa(moveinfo->moveData.size(), buffer, 10);
+			snprintf(buffer, 10, "%d", moveinfo->moveData.size());
 			strcat(calcMsg, buffer);
 			PrintLoadMsg(calcMsg);
 			//Calculate

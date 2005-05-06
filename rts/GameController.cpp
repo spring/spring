@@ -1,6 +1,6 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 
-#include ".\gamecontroller.h"
+#include "GameController.h"
 
 //#include "mmgr.h"
 

@@ -1,7 +1,7 @@
-#include "stdafx.h"
-#include ".\wind.h"
-#include "unithandler.h"
-#include "readmap.h"
+#include "StdAfx.h"
+#include "Wind.h"
+#include "UnitHandler.h"
+#include "ReadMap.h"
 //#include "mmgr.h"
 
 CWind wind;

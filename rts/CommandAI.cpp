@@ -1,17 +1,17 @@
-#include "stdafx.h"
-#include ".\commandai.h"
-#include "unithandler.h"
-#include "unit.h"
-#include "weapon.h"
-#include "group.h"
-#include "mygl.h"
-#include "unitdef.h"
-#include "infoconsole.h"
-#include "gamehelper.h"
-#include "weapon.h"
-#include "weapondefhandler.h"
-#include "selectedunits.h"
-#include "loadsaveinterface.h"
+#include "StdAfx.h"
+#include "CommandAI.h"
+#include "UnitHandler.h"
+#include "Unit.h"
+#include "Weapon.h"
+#include "Group.h"
+#include "myGL.h"
+#include "UnitDef.h"
+#include "InfoConsole.h"
+#include "GameHelper.h"
+#include "Weapon.h"
+#include "WeaponDefHandler.h"
+#include "SelectedUnits.h"
+#include "LoadSaveInterface.h"
 //#include "mmgr.h"
 
 CCommandAI::CCommandAI(CUnit* owner)
@@ -180,7 +180,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_FIRE_STATE){
 					char t[10];
-					itoa(c.params[0],t,10);
+					snprintf(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -195,7 +195,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_MOVE_STATE){
 					char t[10];
-					itoa(c.params[0],t,10);
+					snprintf(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -210,7 +210,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_REPEAT){
 					char t[10];
-					itoa(c.params[0],t,10);
+					snprintf(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -225,7 +225,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_TRAJECTORY){
 					char t[10];
-					itoa(c.params[0],t,10);
+					snprintf(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -243,7 +243,7 @@ void CCommandAI::GiveCommand(Command& c)
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 			if(cdi->id==CMD_ONOFF){
 				char t[10];
-				itoa(c.params[0],t,10);
+				snprintf(t, 10, "%d", c.params[0]);
 				cdi->params[0]=t;
 				break;
 			}
@@ -261,7 +261,7 @@ void CCommandAI::GiveCommand(Command& c)
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 			if(cdi->id==CMD_CLOAK){
 				char t[10];
-				itoa(c.params[0],t,10);
+				snprintf(t, 10, "%d", c.params[0]);
 				cdi->params[0]=t;
 				break;
 			}

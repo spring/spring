@@ -1,20 +1,20 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // MultiPath.cpp: implementation of the CMultiPath class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "multipath.h"
 #include <ostream>
-#include "pathestimater.h"
-#include "pathestimater2.h"
-#include "pathfinder.h"
-#include "mygl.h"
-#include "ground.h"
-#include "timeprofiler.h"
-#include "infoconsole.h"
-#include ".\multipath.h"
-#include "unit.h"
-#include "unitdefhandler.h"
+#include "PathEstimator.h"
+//#include "PathEstimater2.h"
+#include "PathFinder.h"
+#include "myGL.h"
+#include "Ground.h"
+#include "TimeProfiler.h"
+#include "InfoConsole.h"
+#include "multipath.h"
+#include "Unit.h"
+#include "UnitDefHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

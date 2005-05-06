@@ -2,8 +2,8 @@
 
 #include <string>
 #include <map>
-#include "damagearray.h"
-#include "unitdef.h"
+#include "DamageArray.h"
+#include "UnitDef.h"
 
 #define WEAPONTYPE_ROCKET 1
 #define WEAPONTYPE_CANNON 2

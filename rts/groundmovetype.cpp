@@ -1,26 +1,26 @@
-#include "stdafx.h"
-#include ".\groundmovetype.h"
-#include "ground.h"
-#include "quadfield.h"
-#include "readmap.h"
-#include "loshandler.h"
-#include "gamehelper.h"
-#include "mymath.h"
-#include "infoconsole.h"
-#include "unithandler.h"
-#include "synctracer.h"
-#include "3doparser.h"
-#include "cobinstance.h"
+#include "StdAfx.h"
+#include "groundmovetype.h"
+#include "Ground.h"
+#include "QuadField.h"
+#include "ReadMap.h"
+#include "LosHandler.h"
+#include "GameHelper.h"
+#include "myMath.h"
+#include "InfoConsole.h"
+#include "UnitHandler.h"
+#include "SyncTracer.h"
+#include "3DOParser.h"
+#include "CobInstance.h"
 #include "CobFile.h"
-#include "feature.h"
-#include "featurehandler.h"
-#include "unitdef.h"
-#include "sound.h"
-#include "radarhandler.h"
+#include "Feature.h"
+#include "FeatureHandler.h"
+#include "UnitDef.h"
+#include "Sound.h"
+#include "RadarHandler.h"
 #include "PathManager.h"
-#include "player.h"
-#include "camera.h"
-#include "commandai.h"
+#include "Player.h"
+#include "Camera.h"
+#include "CommandAI.h"
 #include "Mobility.h"
 //#include "mmgr.h"
 
@@ -196,7 +196,7 @@ void CGroundMoveType::Update()
 			if(currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
 				wantedSpeed = min(wantedSpeed, (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
 			}
-			wantedSpeed*=max(0,min(1,desiredVelocity.dot(owner->frontdir)+0.1));
+			wantedSpeed*=max(0.,min(1.,desiredVelocity.dot(owner->frontdir)+0.1));
 			SetDeltaSpeed();
 		}
 	}
@@ -392,7 +392,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 			nextDeltaSpeedUpdate=gs->frameNum;
 		} else {
 			deltaSpeed=accRate;
-			nextDeltaSpeedUpdate=gs->frameNum+min(8,dif/accRate);
+			nextDeltaSpeedUpdate=gs->frameNum+min((float)8,dif/accRate);
 		}
 	}else {		//break, Breakrate = -3*accRate
 		if(dif > -3*accRate){
@@ -400,7 +400,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 			nextDeltaSpeedUpdate=gs->frameNum+1;
 		} else {
 			deltaSpeed = -3*accRate;
-			nextDeltaSpeedUpdate=gs->frameNum+min(8,dif/(-3*accRate));
+			nextDeltaSpeedUpdate=gs->frameNum+min((float)8,dif/(-3*accRate));
 		}
 	}
 	//float3 temp=UpVector*wSpeed;
@@ -422,9 +422,9 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	deltaHeading = wantedHeading - heading;
 
 	if(deltaHeading>0){
-		heading += min(deltaHeading,turnRate);
+		heading += min(deltaHeading,(short)turnRate);
 	} else {
-		heading += max(-turnRate,deltaHeading);
+		heading += max((short)-turnRate,deltaHeading);
 	}
 
 	owner->frontdir = GetVectorFromHeading(heading);
@@ -733,7 +733,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 					//Calculating force-field-effect.
 					//strength = F * ((D - d)/D)^2
-					float distanceBetweenObject = max(distanceToObject - radiusSum, 0.0);
+					float distanceBetweenObject = max(distanceToObject - radiusSum, (float)0.0);
 					if(distanceBetweenObject < forceFieldDistance) {
 						float relativeDistance = (forceFieldDistance - distanceBetweenObject) / forceFieldDistance;
 						float strength = FORCE_FIELD_STRENGTH * relativeDistance * relativeDistance;
@@ -1186,7 +1186,8 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 			}
 			MoveData  *m=owner->mobility->moveData;		//if other part can be overrun then overrun it
 			if (!m->moveMath->IsBlocking(*m,c)) {
-				c->Kill(owner->frontdir*currentSpeed*200);
+				float3 tmp=owner->frontdir*currentSpeed*200;
+				c->Kill(tmp);
 			}
 			if(readmap->groundBlockingObjectMap[y1*gs->mapx+x]==0)		//hack to make them find openings easier till the pathfinder can do it itself
 				owner->pos.z-=fabs(owner->pos.x-xmove)*0.5;
@@ -1228,7 +1229,8 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 			}
 			MoveData  *m=owner->mobility->moveData;		//if other part can be overrun then overrun it
 			if (!m->moveMath->IsBlocking(*m,c)) {
-				c->Kill(owner->frontdir*currentSpeed*200);
+				float3 tmp=owner->frontdir*currentSpeed*200;
+				c->Kill(tmp);
 			}
 			if(readmap->groundBlockingObjectMap[y*gs->mapx+x1]==0)		//hack to make them find openings easier till the pathfinder can do it itself
 				owner->pos.x-=fabs(owner->pos.z-zmove)*0.5;

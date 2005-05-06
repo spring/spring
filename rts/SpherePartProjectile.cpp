@@ -1,7 +1,9 @@
-#include "stdafx.h"
-#include ".\spherepartprojectile.h"
-#include "mygl.h"
-#include "vertexarray.h"
+#include "StdAfx.h"
+#include "SpherePartProjectile.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include <algorithm>
+using namespace std;
 //#include "mmgr.h"
 
 CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner)
@@ -50,7 +52,7 @@ void CSpherePartProjectile::Draw(void)
 	float interSize=sphereSize+expansionSpeed*gu->timeOffset;
 	for(int y=0;y<4;++y){
 		for(int x=0;x<4;++x){
-			float alpha=baseAlpha*(1.0-min(1.0,float(age+gu->timeOffset)/ttl))*(1-fabs(y+ybase-8.0f)/8.0*1.0);
+			float alpha=baseAlpha*((float)1.0-min(float(1.0),float(age+gu->timeOffset)/ttl))*(1-fabs(y+ybase-8.0f)/8.0*1.0);
 
 			col[0]=200*alpha;
 			col[1]=200*alpha;
@@ -58,7 +60,7 @@ void CSpherePartProjectile::Draw(void)
 			col[3]=40*alpha;
 			va->AddVertexTC(centerPos+vectors[y*5+x]*interSize,1.0/16,1.0/16,col);
 			va->AddVertexTC(centerPos+vectors[y*5+x+1]*interSize,1.0/16,1.0/16,col);
-			alpha=baseAlpha*(1.0-min(1.0,float(age+gu->timeOffset)/ttl))*(1-fabs(y+1+ybase-8.0f)/8.0*1.0);
+			alpha=baseAlpha*(1.0-min(float(1.0),float(age+gu->timeOffset)/ttl))*(1-fabs(y+1+ybase-8.0f)/8.0*1.0);
 
 			col[0]=200*alpha;
 			col[1]=200*alpha;

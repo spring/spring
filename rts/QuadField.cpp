@@ -1,15 +1,15 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // QuadField.cpp: implementation of the CQuadField class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "QuadField.h"
 
-#include "unit.h"
-#include "unithandler.h"
-#include "infoconsole.h"
-#include ".\quadfield.h"
-#include "feature.h"
+#include "Unit.h"
+#include "UnitHandler.h"
+#include "InfoConsole.h"
+#include "QuadField.h"
+#include "Feature.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\commanderscript2.h"
-#include "unitloader.h"
-#include "sunparser.h"
-#include "team.h"
+#include "StdAfx.h"
+#include "CommanderScript2.h"
+#include "UnitLoader.h"
+#include "SunParser.h"
+#include "Team.h"
 
 static CCommanderScript2 ts;
 //#include "mmgr.h"

@@ -2,17 +2,17 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "BombDropper.h"
-#include "unit.h"
-#include "explosiveprojectile.h"
-#include "infoconsole.h"
-#include "sound.h"
-#include "gamehelper.h"
-#include "unit.h"
-#include "team.h"
-#include ".\bombdropper.h"
-#include "weaponprojectile.h"
+#include "Unit.h"
+#include "ExplosiveProjectile.h"
+#include "InfoConsole.h"
+#include "Sound.h"
+#include "GameHelper.h"
+#include "Unit.h"
+#include "Team.h"
+#include "bombdropper.h"
+#include "WeaponProjectile.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

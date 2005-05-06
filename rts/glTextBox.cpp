@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\gltextbox.h"
-#include "mygl.h"
-#include "glfont.h"
-#include "mousehandler.h"
+#include "StdAfx.h"
+#include "glTextBox.h"
+#include "myGL.h"
+#include "glFont.h"
+#include "MouseHandler.h"
 //#include "mmgr.h"
 
 

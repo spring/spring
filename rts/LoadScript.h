@@ -1,7 +1,7 @@
 #pragma once
-#include "script.h"
+#include "Script.h"
 #include <string>
-#include "loadsavehandler.h"
+#include "LoadSaveHandler.h"
 
 class CLoadScript :
 	public CScript

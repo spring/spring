@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include ".\saveinterface.h"
+#include "StdAfx.h"
+#include "SaveInterface.h"
 
 CSaveInterface::CSaveInterface(std::ofstream* ofs)
 : ofs(ofs)

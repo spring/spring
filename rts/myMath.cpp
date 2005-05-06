@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "mymath.h"
+#include "StdAfx.h"
+#include "myMath.h"
 #include "math.h"
 //#include "mmgr.h"
 

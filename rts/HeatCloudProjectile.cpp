@@ -1,14 +1,14 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // HeatCloudProjectile.cpp: implementation of the CHeatCloudCloudProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "HeatCloudProjectile.h"
-#include "mygl.h"
-#include "projectilehandler.h"
-#include "camera.h"
+#include "myGL.h"
+#include "ProjectileHandler.h"
+#include "Camera.h"
 #include "SyncTracer.h"
-#include "vertexarray.h"
+#include "VertexArray.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

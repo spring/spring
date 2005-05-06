@@ -1,10 +1,10 @@
-#include "stdafx.h"
-#include "basetreedrawer.h"
-#include "basictreedrawer.h"
-#include "advtreedrawer.h"
-#include "mygl.h"
-#include "reghandler.h"
-#include ".\basetreedrawer.h"
+#include "StdAfx.h"
+#include "BaseTreeDrawer.h"
+#include "BasicTreeDrawer.h"
+#include "AdvTreeDrawer.h"
+#include "myGL.h"
+#include "RegHandler.h"
+#include "BaseTreeDrawer.h"
 //#include "mmgr.h"
 
 CBaseTreeDrawer* treeDrawer=0;

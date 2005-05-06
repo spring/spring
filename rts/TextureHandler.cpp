@@ -2,20 +2,20 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "TextureHandler.h"
-#include "mygl.h"
-#include <gl\glu.h>			// Header file for the gLu32 library
+#include "myGL.h"
+#include <GL/glu.h>			// Header file for the gLu32 library
 #include <math.h>
-#include "infoconsole.h"
+#include "InfoConsole.h"
 #include <vector>
-#include "bitmap.h"
-#include "tapalette.h"
-#include "filehandler.h"
+#include "Bitmap.h"
+#include "TAPalette.h"
+#include "FileHandler.h"
 #include <algorithm>
 #include <cctype>
 //#include "mmgr.h"
-#include "reghandler.h"
+#include "RegHandler.h"
 #include "TextureFilters.h"
 
 //////////////////////////////////////////////////////////////////////

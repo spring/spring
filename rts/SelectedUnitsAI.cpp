@@ -12,7 +12,7 @@
 
 
 
-#include "stdafx.h"
+#include "StdAfx.h"
 
 #include "SelectedUnitsAI.h"
 
@@ -26,9 +26,9 @@
 
 #include "MoveType.h"
 
-#include "unithandler.h"
+#include "UnitHandler.h"
 
-#include "commandai.h"
+#include "CommandAI.h"
 
 //#include "GroundMoveType.h"
 

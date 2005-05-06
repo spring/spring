@@ -1,14 +1,14 @@
-#include "stdafx.h"
-#include ".\torpedoprojectile.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "unit.h"
-#include "smoketrailprojectile.h"
-#include "ground.h"
-#include "gamehelper.h"
-#include "mymath.h"
-#include "bubbleprojectile.h"
+#include "StdAfx.h"
+#include "TorpedoProjectile.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "Unit.h"
+#include "SmokeTrailProjectile.h"
+#include "Ground.h"
+#include "GameHelper.h"
+#include "myMath.h"
+#include "BubbleProjectile.h"
 //#include "mmgr.h"
 
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)
@@ -71,7 +71,7 @@ void CTorpedoProjectile::Update(void)
 		ttl--;
 		if(ttl>0){
 			if(curSpeed<maxSpeed)
-				curSpeed+=max(0.2,tracking);
+				curSpeed+=max((float)0.2,tracking);
 			if(target){
 				float3 targPos;
 				if((target->midPos-pos).SqLength()<150*150 || !owner)

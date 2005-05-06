@@ -1,14 +1,14 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // GfxProjectile.cpp: implementation of the CGfxProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "GfxProjectile.h"
-#include "mygl.h"	
+#include "myGL.h"	
 
-#include "projectilehandler.h"
-#include "camera.h"
-#include "vertexarray.h"
+#include "ProjectileHandler.h"
+#include "Camera.h"
+#include "VertexArray.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

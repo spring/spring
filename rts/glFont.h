@@ -9,7 +9,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "mygl.h"
+#include "myGL.h"
 
 class CglFont  
 {

@@ -1,10 +1,10 @@
-#include "stdafx.h"
-#include ".\cameracontroller.h"
-#include "camera.h"
-#include "ground.h"
+#include "StdAfx.h"
+#include "CameraController.h"
+#include "Camera.h"
+#include "Ground.h"
 #include <windows.h>
-#include "infoconsole.h"
-#include "mousehandler.h"
+#include "InfoConsole.h"
+#include "MouseHandler.h"
 
 extern bool keys[256];
 

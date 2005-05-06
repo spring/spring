@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __MAPFILE_H
+#define __MAPFILE_H
 
 struct MapHeader {
 	char magic[16]; //"spring map file"
@@ -21,3 +22,4 @@ struct MapHeader {
 	int vegOffset;	//file offset to vegetation data (unsigned char[mapy*mapx]) note that this data is unsynced
 	int previewOffset; //file offset to a picture of the map (unsigned char[256*256*3])
 };
+#endif //ndef __MAPFILE_H

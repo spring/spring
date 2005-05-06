@@ -1,16 +1,16 @@
-#include "stdafx.h"
-#include ".\mobilecai.h"
-#include "ground.h"
-#include "gamehelper.h"
-#include "unithandler.h"
-#include "group.h"
-#include "mygl.h"
-#include "unit.h"
-#include "movetype.h"
+#include "StdAfx.h"
+#include "MobileCAI.h"
+#include "Ground.h"
+#include "GameHelper.h"
+#include "UnitHandler.h"
+#include "Group.h"
+#include "myGL.h"
+#include "Unit.h"
+#include "MoveType.h"
 #include "InfoConsole.h"
-#include "unitdef.h"
-#include "weapon.h"
-#include "taairmovetype.h"
+#include "UnitDef.h"
+#include "Weapon.h"
+#include "TAAirMoveType.h"
 //#include "mmgr.h"
 
 CMobileCAI::CMobileCAI(CUnit* owner)
@@ -192,7 +192,7 @@ void CMobileCAI::SlowUpdate()
 			if(((owner->AttackUnit(orderTarget, c.id==CMD_DGUN) || dynamic_cast<CTAAirMoveType*>(owner->moveType)) && (owner->pos-orderTarget->pos).Length2D()<owner->maxRange*0.9) || (owner->pos-orderTarget->pos).SqLength2D()<1024){
 				//					if(owner->isMoving) {
 				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget->pos, min(owner->losRadius*SQUARE_SIZE*2,owner->maxRange*0.9), true);
+				owner->moveType->KeepPointingTo(orderTarget->pos, min((double)(owner->losRadius*SQUARE_SIZE*2),owner->maxRange*0.9), true);
 				//					}
 			} else {
 				if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos)>10+orderTarget->pos.distance2D(owner->pos)*0.2)

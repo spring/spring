@@ -1,11 +1,11 @@
-#include "stdafx.h"
-#include ".\muzzleflame.h"
-#include "camera.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "projectilehandler.h"
-#include "globalstuff.h"
-#include "synctracer.h"
+#include "StdAfx.h"
+#include "MuzzleFlame.h"
+#include "Camera.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "ProjectileHandler.h"
+#include "GlobalStuff.h"
+#include "SyncTracer.h"
 //#include "mmgr.h"
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size)
@@ -52,7 +52,7 @@ void CMuzzleFlame::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	float alpha=max(0,1-age/(4+size*30));
+	float alpha=max(0.f,1-age/(4+size*30));
 	col[0]=200*alpha;
 	col[1]=200*alpha;
 	col[2]=200*alpha;
@@ -85,7 +85,7 @@ void CMuzzleFlame::Draw(void)
 		float curAge=age/(6.0+size*2.0);
 		for(int a=0;a<numFlame;++a){
 			float drawsize=(age+10)/4.0;
-			drawsize+=max(0,(0.25-fabs(curAge-(a/float(numFlame))))*0.5);
+			drawsize+=max(0.,(0.25-fabs(curAge-(a/float(numFlame))))*0.5);
 			float3 interPos(pos+dir*(a+2)*age/4);
 			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,0.25,0.25,col);
 			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,0.5,0.25,col);

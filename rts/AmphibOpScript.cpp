@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include ".\amphibopscript.h"
-#include "unitloader.h"
+#include "StdAfx.h"
+#include "AmphibOpScript.h"
+#include "UnitLoader.h"
 //#include "mmgr.h"
 
 static CAmphibOpScript aos;

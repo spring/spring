@@ -1,13 +1,13 @@
-#include "stdafx.h"
-#include ".\factorycai.h"
+#include "StdAfx.h"
+#include "FactoryCAI.h"
 #include "Factory.h"
-#include "group.h"
-#include "selectedunits.h"
-#include "mygl.h"
-#include "unithandler.h"
-#include "unitloader.h"
-#include "unitdefhandler.h"
-#include "team.h"
+#include "Group.h"
+#include "SelectedUnits.h"
+#include "myGL.h"
+#include "UnitHandler.h"
+#include "UnitLoader.h"
+#include "UnitDefHandler.h"
+#include "Team.h"
 //#include "mmgr.h"
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
@@ -183,7 +183,7 @@ void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
 		if(pci->id==id){
 			if(unitLoader.CanBuildUnit(bo.fullName,owner->team)){
 				char t[32];
-				itoa(bo.numQued,t,10);
+				snprintf(t, 32, "%d", bo.numQued);
 				pci->name=bo.name;
 				pci->params.clear();
 				if(bo.numQued)

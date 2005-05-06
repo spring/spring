@@ -1,13 +1,13 @@
-#include "stdafx.h"
-#include ".\missileprojectile.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "unit.h"
-#include "smoketrailprojectile.h"
-#include "ground.h"
-#include "gamehelper.h"
-#include "mymath.h"
+#include "StdAfx.h"
+#include "MissileProjectile.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "Unit.h"
+#include "SmokeTrailProjectile.h"
+#include "Ground.h"
+#include "GameHelper.h"
+#include "myMath.h"
 //#include "mmgr.h"
 
 static const float Smoke_Time=60;
@@ -61,7 +61,7 @@ void CMissileProjectile::Collision()
 {
 	float h=ground->GetHeight2(pos.x,pos.z);
 	if(h>pos.y)
-		pos-=speed*min(1,(h-pos.y)/fabs(speed.y));
+		pos-=speed*min((float)1,(h-pos.y)/fabs(speed.y));
 	CSmokeTrailProjectile* tp=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,false,true,7,Smoke_Time,0.6f,drawTrail);
 	//helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();
@@ -83,7 +83,7 @@ void CMissileProjectile::Update(void)
 	ttl--;
 	if(ttl>0){
 		if(curSpeed<maxSpeed)
-			curSpeed+=max(0.4,tracking);
+			curSpeed+=max((float)0.4,tracking);
 		if(target){
 			float3 targPos;
 			if((target->midPos-pos).SqLength()<150*150 || !owner)
@@ -155,7 +155,7 @@ void CMissileProjectile::Draw(void)
 
 		float a1=(1-float(0)/(Smoke_Time))*255;
 		a1*=0.7+fabs(dif.dot(dir));
-		float alpha=min(255,max(0,a1));
+		float alpha=min((float)255,max(float(0),a1));
 		col[0]=color*alpha;
 		col[1]=color*alpha;
 		col[2]=color*alpha;
@@ -166,7 +166,7 @@ void CMissileProjectile::Draw(void)
 		if(age<8)
 			a2=0;
 		a2*=0.7+fabs(dif2.dot(oldDir));
-		alpha=min(255,max(0,a2));
+		alpha=min((float)255,max((float)0,a2));
 		col2[0]=color*alpha;
 		col2[1]=color*alpha;
 		col2[2]=color*alpha;

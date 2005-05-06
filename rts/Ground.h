@@ -16,7 +16,7 @@ class CGround;
 
 #include <vector>
 	// Added by ClassView
-#include "readmap.h"
+#include "ReadMap.h"
 class CProjectileHandler;
 class CProjectile;
 

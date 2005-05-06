@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "MemPool.h"
 #include <assert.h>
 ////#include "mmgr.h"

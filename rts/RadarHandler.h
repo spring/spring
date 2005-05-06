@@ -1,6 +1,6 @@
 #pragma once
-#include "object.h"
-#include "unit.h"
+#include "Object.h"
+#include "Unit.h"
 
 #define RADAR_SIZE 8
 

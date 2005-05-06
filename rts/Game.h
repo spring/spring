@@ -8,11 +8,8 @@
 #include "archdef.h"
 
 
-// TODO (Dave#1#): Remove dependancy on windows code
-#ifdef ARCHDEF_PLATFORM_WIN32
-    #include <winsock2.h>
-    #include <windows.h>		// Header File For Windows
-#endif
+#include <winsock2.h>
+#include <windows.h>		// Header File For Windows
 #include <time.h>
 #include <string>
 

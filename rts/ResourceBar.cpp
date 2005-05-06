@@ -1,10 +1,10 @@
 #include "StdAfx.h"
-#include ".\resourcebar.h"
-#include "mousehandler.h"
-#include "mygl.h"
-#include "team.h"
-#include "glfont.h"
-#include "net.h"
+#include "ResourceBar.h"
+#include "MouseHandler.h"
+#include "myGL.h"
+#include "Team.h"
+#include "glFont.h"
+#include "Net.h"
 //#include "mmgr.h"
 
 extern CResourceBar* resourceBar=0;
@@ -211,7 +211,7 @@ bool CResourceBar::MousePress(int x, int y, int button)
 		moveBox=true;
 		if(InBox(mx,my,box+metalBox)){
 			moveBox=false;
-			float metalShare=max(0,min(1,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
+			float metalShare=max(0.f,min(1.f,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
 			netbuf[0]=NETMSG_SETSHARE;
 			netbuf[1]=gu->myTeam;
 			*(float*)&netbuf[2]=metalShare;
@@ -220,7 +220,7 @@ bool CResourceBar::MousePress(int x, int y, int button)
 		}
 		if(InBox(mx,my,box+energyBox)){
 			moveBox=false;
-			float energyShare=max(0,min(1,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
+			float energyShare=max(0.f,min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
 			netbuf[0]=NETMSG_SETSHARE;
 			netbuf[1]=gu->myTeam;
 			*(float*)&netbuf[2]=gs->teams[gu->myTeam]->metalShare;

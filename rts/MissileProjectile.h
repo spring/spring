@@ -1,6 +1,6 @@
 #pragma once
-#include "weaponprojectile.h"
-#include "damagearray.h"
+#include "WeaponProjectile.h"
+#include "DamageArray.h"
 
 class CUnit;
 

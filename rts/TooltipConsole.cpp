@@ -1,9 +1,9 @@
-#include "stdafx.h"
-#include "tooltipconsole.h"
-#include "mousehandler.h"
-#include "mygl.h"
-#include "glfont.h"
-#include "tooltipconsole.h"
+#include "StdAfx.h"
+#include "TooltipConsole.h"
+#include "MouseHandler.h"
+#include "myGL.h"
+#include "glFont.h"
+#include "TooltipConsole.h"
 
 //#include "mmgr.h"
 

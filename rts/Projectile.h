@@ -16,8 +16,8 @@ class CFace;
 class CEdge;
 class CBuilding;
 
-#include "mempool.h"
-#include "worldobject.h"
+#include "MemPool.h"
+#include "WorldObject.h"
 class CUnit;
 class CFeature;
 class CVertexArray;

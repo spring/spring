@@ -1,5 +1,5 @@
 #pragma once
-#include "script.h"
+#include "Script.h"
 
 class CYehaTestScript :
 	public CScript

@@ -4,7 +4,7 @@
 #include "archdef.h"
 
 #include <map>
-#include "mobilecai.h"
+#include "MobileCAI.h"
 
 class CBuilderCAI :
 	public CMobileCAI

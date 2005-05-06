@@ -3,14 +3,14 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "stdafx.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
+#include "StdAfx.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
 #include "WreckProjectile.h"
-#include "smokeprojectile.h"
-#include "projectilehandler.h"
-#include "ground.h"
+#include "SmokeProjectile.h"
+#include "ProjectileHandler.h"
+#include "Ground.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

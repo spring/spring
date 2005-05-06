@@ -1,13 +1,13 @@
-#include "stdafx.h"
-#include "mygl.h"
+#include "StdAfx.h"
+#include "myGL.h"
 #include "gl\glu.h"
-#include "glfont.h"
+#include "glFont.h"
 #include <ostream>
 #include <fstream>
 #include <math.h>
-#include "vertexarray.h"
-#include "vertexarrayrange.h"
-#include "filehandler.h"
+#include "VertexArray.h"
+#include "VertexArrayRange.h"
+#include "FileHandler.h"
 //#include "mmgr.h"
 
 using namespace std;

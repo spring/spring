@@ -3,14 +3,14 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "HpiHandler.h"
 #include <windows.h>
 #include <io.h>
-#include "hpiutil.h"
-#include "mygl.h"
-#include "reghandler.h"
-#include "infoconsole.h"
+#include "HPIUtil.h"
+#include "myGL.h"
+#include "RegHandler.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

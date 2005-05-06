@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // Object.cpp: implementation of the CObject class.
 //
 //////////////////////////////////////////////////////////////////////

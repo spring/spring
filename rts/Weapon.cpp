@@ -2,26 +2,26 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Weapon.h"
-#include "unit.h"
-#include "gamehelper.h"
-#include "team.h"
-#include ".\weapon.h"
-#include "cobinstance.h"
+#include "Unit.h"
+#include "GameHelper.h"
+#include "Team.h"
+#include "Weapon.h"
+#include "CobInstance.h"
 #include "CobFile.h"
-#include "mymath.h"
-#include "infoconsole.h"
-#include "3doparser.h"
-#include "synctracer.h"
-#include "weapondefhandler.h"
-#include "weaponprojectile.h"
-#include "intercepthandler.h"
-#include "commandai.h"
-#include "ground.h"
-#include "camera.h"
-#include "player.h"
-#include "loshandler.h"
+#include "myMath.h"
+#include "InfoConsole.h"
+#include "3DOParser.h"
+#include "SyncTracer.h"
+#include "WeaponDefHandler.h"
+#include "WeaponProjectile.h"
+#include "InterceptHandler.h"
+#include "CommandAI.h"
+#include "Ground.h"
+#include "Camera.h"
+#include "Player.h"
+#include "LosHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ void CWeapon::Update()
 			short int heading=GetHeadingFromVector(wantedDir.x,wantedDir.z);
 			short int pitch=asin(wantedDir.dot(owner->updir))*(32768/PI);
 			std::vector<long> args;
-			args.push_back(short int(heading-owner->heading));
+			args.push_back(short(heading-owner->heading));
 			args.push_back(pitch);
 			owner->cob->Call(COBFN_AimPrimary+weaponNum,args,ScriptCallback,this,0);
 		}

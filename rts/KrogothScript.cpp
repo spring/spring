@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include ".\krogothscript.h"
-#include "unitloader.h"
+#include "StdAfx.h"
+#include "KrogothScript.h"
+#include "UnitLoader.h"
 //#include "mmgr.h"
 
 static CKrogothScript ks;

@@ -1,16 +1,16 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // GlobalStuff.cpp: implementation of the CGlobalStuff class.
 //
 //////////////////////////////////////////////////////////////////////
 
 
-#include "projectilehandler.h"
-#include "gamehelper.h"
+#include "ProjectileHandler.h"
+#include "GameHelper.h"
 #include "SyncTracer.h"
-#include "team.h"
+#include "Team.h"
 #include <windows.h>
-#include "player.h"
-#include "tapalette.h"
+#include "Player.h"
+#include "TAPalette.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

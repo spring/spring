@@ -7,7 +7,7 @@
 #include "archdef.h"
 
 #include <vector>
-#include "basetreedrawer.h"
+#include "BaseTreeDrawer.h"
 #include "float3.h"
 
 class CBaseGroundDrawer

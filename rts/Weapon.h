@@ -9,8 +9,8 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "object.h"
-#include "damagearray.h"
+#include "Object.h"
+#include "DamageArray.h"
 #include <list>
 
 class CUnit;

@@ -2,19 +2,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Rifle.h"
-#include "tracerprojectile.h"
-#include "unit.h"
-#include "gamehelper.h"
-#include "smokeprojectile.h"
-#include "synctracer.h"
-#include "sound.h"
-#include "ground.h"
-#include "infoconsole.h"
-#include "heatcloudprojectile.h"
-#include "mymath.h"
-#include ".\rifle.h"
+#include "TracerProjectile.h"
+#include "Unit.h"
+#include "GameHelper.h"
+#include "SmokeProjectile.h"
+#include "SyncTracer.h"
+#include "Sound.h"
+#include "Ground.h"
+#include "InfoConsole.h"
+#include "HeatCloudProjectile.h"
+#include "myMath.h"
+#include "Rifle.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

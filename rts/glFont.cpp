@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 
 // glFont.cpp: implementation of the CglFont class.
 
@@ -14,11 +14,11 @@
 
 
 
-#include "camera.h"
+#include "Camera.h"
 
 #include <fstream>
 
-#include "filehandler.h"
+#include "FileHandler.h"
 
 //#include <ostream.h>
 

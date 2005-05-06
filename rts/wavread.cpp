@@ -14,13 +14,13 @@
 
 //-----------------------------------------------------------------------------
 
-#include "stdafx.h"
+#include "StdAfx.h"
 
 #include <windows.h>
 
 #include "WavRead.h"
 
-#include "filehandler.h"
+#include "FileHandler.h"
 
 
 

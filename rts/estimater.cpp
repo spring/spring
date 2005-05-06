@@ -1,9 +1,9 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "estimater.h"
-#include "mygl.h"
+#include "myGL.h"
 #include <fstream>
-#include "readmap.h"
-#include "filehandler.h"
+#include "ReadMap.h"
+#include "FileHandler.h"
 //#include "mmgr.h"
 
 using namespace std;
@@ -106,7 +106,7 @@ void CPathEstimater::CalculateSquareCosts()
 		for(y=0;y<g.mapy/BLOCK_SIZE;++y){
 			char tmp[500]="Precalculating path costs ";
 			char tmp2[50];
-			itoa(y,tmp2,10);
+			snprintf(tmp2, 10, "%d", y);
 			strcat(tmp,tmp2);
 			PrintLoadMsg(tmp);
 			for(int x=0;x<g.mapx/BLOCK_SIZE;++x){

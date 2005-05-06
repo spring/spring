@@ -1,10 +1,10 @@
-#include "stdafx.h"
-#include "groundflash.h"
-#include "projectilehandler.h"
-#include "ground.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "infoconsole.h"
+#include "StdAfx.h"
+#include "GroundFlash.h"
+#include "ProjectileHandler.h"
+#include "Ground.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 unsigned int CGroundFlash::texture=0;

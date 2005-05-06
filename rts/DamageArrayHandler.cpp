@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\damagearrayhandler.h"
-#include "damagearray.h"
-#include "sunparser.h"
-#include "infoconsole.h"
+#include "StdAfx.h"
+#include "DamageArrayHandler.h"
+#include "DamageArray.h"
+#include "SunParser.h"
+#include "InfoConsole.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>

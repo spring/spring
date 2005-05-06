@@ -6,7 +6,7 @@
 
 #include "archdef.h"
 
-#include "movetype.h"
+#include "MoveType.h"
 
 class CPropeller;
 

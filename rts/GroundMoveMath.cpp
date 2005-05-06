@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "GroundMoveMath.h"
 #include "ReadMap.h"
 #include "SolidObject.h"

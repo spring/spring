@@ -13,9 +13,9 @@
 
 #include <vector>
 #include "command.h"
-#include "mygl.h"
+#include "myGL.h"
 #include <map>
-#include "inputreceiver.h"
+#include "InputReceiver.h"
 
 using namespace std;
 class CglList;

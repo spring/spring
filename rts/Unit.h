@@ -15,8 +15,8 @@
 #include <vector>
 #include <string>
 #include <deque>
-//#include "unit3dloader.h"
-#include "damagearray.h"
+//#include "Unit3DLoader.h"
+#include "DamageArray.h"
 #include "GlobalStuff.h"
 
 class CWeapon;

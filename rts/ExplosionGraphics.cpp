@@ -1,17 +1,17 @@
-#include "stdafx.h"
-#include ".\explosiongraphics.h"
-#include "mygl.h"
-#include "heatcloudprojectile.h"
-#include "smokeprojectile2.h"
-#include "wreckprojectile.h"
-#include "groundflash.h"
-#include "spherepartprojectile.h"
-#include "bubbleprojectile.h"
-#include "wakeprojectile.h"
-#include "camera.h"
-#include "projectilehandler.h"
-#include "ground.h"
-#include "dirtprojectile.h"
+#include "StdAfx.h"
+#include "ExplosionGraphics.h"
+#include "myGL.h"
+#include "HeatCloudProjectile.h"
+#include "SmokeProjectile2.h"
+#include "WreckProjectile.h"
+#include "GroundFlash.h"
+#include "SpherePartProjectile.h"
+#include "BubbleProjectile.h"
+#include "WakeProjectile.h"
+#include "Camera.h"
+#include "ProjectileHandler.h"
+#include "Ground.h"
+#include "DirtProjectile.h"
 
 CExplosionGraphics::CExplosionGraphics(void)
 {
@@ -41,7 +41,7 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 
 	bool waterExplosion=h2<-3;
 	bool uwExplosion=pos.y<-15;
-	bool airExplosion=pos.y-max(0,h2)>20;
+	bool airExplosion=pos.y-max((float)0,h2)>20;
 
 	float damage=damages[0]/20;
 	if(damage>radius*1.5) //limit the visual effects based on the radius
@@ -78,13 +78,13 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 			new CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4,owner,0.6);
 		}
 		if(!airExplosion && !uwExplosion){
-			int numDirt=min(20,damage*0.8);
+			int numDirt=min(20.,damage*0.8);
 			float3 color(0.15,0.1,0.05);
 			if(waterExplosion)
 				color=float3(1,1,1);
 			for(int a=0;a<numDirt;++a){
 				float3 speed((0.5-gu->usRandFloat())*1.5,1.7f+gu->usRandFloat()*1.6,(0.5-gu->usRandFloat())*1.5);
-				speed*=0.7+min(30,damage)/30;
+				speed*=0.7+min((float)30,damage)/30;
 				float3 npos(pos.x-(0.5-gu->usRandFloat())*(radius*0.6),pos.y-2.0-damage*0.2,pos.z-(0.5-gu->usRandFloat())*(radius*0.6));
 				if(waterExplosion)
 					npos=float3(pos.x-(0.5-gu->usRandFloat())*(radius*0.3),pos.y-2.0-damage*0.2,pos.z-(0.5-gu->usRandFloat())*(radius*0.3));
@@ -101,7 +101,7 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 					speed=float3((0.5f-gu->usRandFloat())*2.0,1.8f+gu->usRandFloat()*1.8,(0.5f-gu->usRandFloat())*2.0);
 				else
 					speed=float3(gu->usRandVector()*2);
-				speed*=0.7+min(30,damage)/23;
+				speed*=0.7+min((float)30,damage)/23;
 				float3 npos(pos.x-(0.5-gu->usRandFloat())*(radius*1),pos.y,pos.z-(0.5-gu->usRandFloat())*(radius*1));
 				new CWreckProjectile(npos,speed,90+damage*2,owner);
 			}

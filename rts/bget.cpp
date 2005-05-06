@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 /*
 
 			       B G E T

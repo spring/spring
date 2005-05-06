@@ -1,11 +1,11 @@
 #include "StdAfx.h"
-#include ".\laserprojectile.h"
-#include "projectilehandler.h"
-#include "unit.h"
-#include "mygl.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "synctracer.h"
+#include "LaserProjectile.h"
+#include "ProjectileHandler.h"
+#include "Unit.h"
+#include "myGL.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "SyncTracer.h"
 //#include "mmgr.h"
 
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color,float intensity, WeaponDef *weaponDef, int ttl)

@@ -1,10 +1,10 @@
-#include "stdafx.h"
-#include "basesky.h"
-#include "basicsky.h"
-#include "advsky.h"
-#include "mygl.h"
-#include "reghandler.h"
-#include ".\basesky.h"
+#include "StdAfx.h"
+#include "BaseSky.h"
+#include "BasicSky.h"
+#include "AdvSky.h"
+#include "myGL.h"
+#include "RegHandler.h"
+#include "BaseSky.h"
 //#include "mmgr.h"
 
 CBaseSky* sky=0;

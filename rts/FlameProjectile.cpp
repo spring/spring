@@ -1,11 +1,11 @@
 #include "StdAfx.h"
-#include ".\flameprojectile.h"
-#include "unit.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "projectilehandler.h"
-#include "camera.h"
-#include "ground.h"
+#include "FlameProjectile.h"
+#include "Unit.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "ProjectileHandler.h"
+#include "Camera.h"
+#include "Ground.h"
 //#include "mmgr.h"
 
 CFlameProjectile::CFlameProjectile(const float3& pos,const float3& speed,const float3& spread,CUnit* owner,const DamageArray& damages, WeaponDef *weaponDef, int ttl)

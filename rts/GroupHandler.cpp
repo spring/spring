@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // GroupHandler.cpp: implementation of the CGroupHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,13 +6,13 @@
 #include "GroupHandler.h"
 #include <windows.h>
 #include <io.h>
-#include "group.h"
-#include "igroupai.h"
-#include "infoconsole.h"
-#include "selectedunits.h"
-#include "timeprofiler.h"
-#include "unit.h"
-#include ".\grouphandler.h"
+#include "Group.h"
+#include "IGroupAI.h"
+#include "InfoConsole.h"
+#include "SelectedUnits.h"
+#include "TimeProfiler.h"
+#include "Unit.h"
+#include "GroupHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

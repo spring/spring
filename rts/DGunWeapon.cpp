@@ -1,8 +1,8 @@
-#include "stdafx.h"
-#include ".\dgunweapon.h"
-#include "fireballprojectile.h"
-#include "unit.h"
-#include "sound.h"
+#include "StdAfx.h"
+#include "DGunWeapon.h"
+#include "FireBallProjectile.h"
+#include "Unit.h"
+#include "Sound.h"
 //#include "mmgr.h"
 
 CDGunWeapon::CDGunWeapon(CUnit* owner)

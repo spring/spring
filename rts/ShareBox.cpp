@@ -1,12 +1,12 @@
-#include "stdafx.h"
-#include ".\sharebox.h"
-#include "mousehandler.h"
-#include "mygl.h"
-#include "team.h"
-#include "player.h"
-#include "glfont.h"
-#include "net.h"
-#include "selectedunits.h"
+#include "StdAfx.h"
+#include "ShareBox.h"
+#include "MouseHandler.h"
+#include "myGL.h"
+#include "Team.h"
+#include "Player.h"
+#include "glFont.h"
+#include "Net.h"
+#include "SelectedUnits.h"
 
 int CShareBox::lastShareTeam=0;
 
@@ -225,11 +225,11 @@ bool CShareBox::MousePress(int x, int y, int button)
 			moveBox=false;
 		if(InBox(mx,my,box+metalBox)){
 			metalMove=true;
-			metalShare=max(0,min(1,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
+			metalShare=max(0.f,min(1.f,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
 		}
 		if(InBox(mx,my,box+energyBox)){
 			energyMove=true;
-			energyShare=max(0,min(1,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
+			energyShare=max(0.f,min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
 		}
 		if(InBox(mx,my,box+teamBox)){
 			int team=(box.y1+teamBox.y2-my)/0.025;
@@ -288,10 +288,10 @@ void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
 		box.y2-=float(dy)/gu->screeny;
 	}
 	if(metalMove){
-		metalShare=max(0,min(1,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
+		metalShare=max(0.f,min(1.f,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
 	}
 	if(energyMove){
-		energyShare=max(0,min(1,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
+		energyShare=max(0.f,min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
 	}
 	if(InBox(mx,my,box+teamBox)){
 		int team=(box.y1+teamBox.y2-my)/0.025;

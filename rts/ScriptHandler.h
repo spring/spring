@@ -13,8 +13,8 @@
 
 #include <string>
 #include <map>
-#include "script.h"
-#include "gllist.h"
+#include "Script.h"
+#include "glList.h"
 
 using namespace std;
 

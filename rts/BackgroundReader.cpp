@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "backgroundreader.h"
+#include "StdAfx.h"
+#include "BackgroundReader.h"
 //#include "mmgr.h"
 
 CBackgroundReader backgroundReader;

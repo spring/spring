@@ -1,8 +1,8 @@
-#include ".\fireballprojectile.h"
-#include "globalstuff.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "weapondefhandler.h"
+#include "FireBallProjectile.h"
+#include "GlobalStuff.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CFireBallProjectile::CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)

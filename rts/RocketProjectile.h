@@ -10,7 +10,7 @@
 #endif // _MSC_VER > 1000
 
 #include "WeaponProjectile.h"
-#include "damagearray.h"
+#include "DamageArray.h"
 
 class CRocketProjectile : public CWeaponProjectile  
 {

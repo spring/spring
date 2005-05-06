@@ -9,7 +9,7 @@
 
 #include <vector>
 #include <list>
-#include "pathfinder.h"
+#include "PathFinder.h"
 #include "estimater.h"
 
 #define BLOCK_SIZE 32

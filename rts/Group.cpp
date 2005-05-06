@@ -2,15 +2,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Group.h"
-#include "igroupai.h"
-#include "unit.h"
-#include "groupaicallback.h"
-#include "grouphandler.h"
-#include "selectedunits.h"
-#include "infoconsole.h"
-#include ".\group.h"
+#include "IGroupAI.h"
+#include "Unit.h"
+#include "GroupAiCallback.h"
+#include "GroupHandler.h"
+#include "SelectedUnits.h"
+#include "InfoConsole.h"
+#include "Group.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

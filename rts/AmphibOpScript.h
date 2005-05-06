@@ -6,7 +6,7 @@
 
 #include "archdef.h"
 
-#include "script.h"
+#include "Script.h"
 
 class CAmphibOpScript :
 	public CScript

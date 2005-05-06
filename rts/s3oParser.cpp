@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 //#include "StdAfx.h"
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "s3oParser.h"
 #include <fstream>
 #include "windows.h"

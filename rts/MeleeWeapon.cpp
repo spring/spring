@@ -1,12 +1,12 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // MeleeWeapon.cpp: implementation of the CMeleeWeapon class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "MeleeWeapon.h"
-#include "unit.h"
-#include "sound.h"
-#include ".\meleeweapon.h"
+#include "Unit.h"
+#include "Sound.h"
+#include "MeleeWeapon.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

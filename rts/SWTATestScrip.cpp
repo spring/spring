@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include ".\swtatestscrip.h"
-#include "unitloader.h"
+#include "StdAfx.h"
+#include "SWTATestScrip.h"
+#include "UnitLoader.h"
 //#include "mmgr.h"
 
 static CSWTATestScrip swtasTest;

@@ -2,18 +2,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Unit3DLoader.h"
 #include <fstream>
-#include "infoconsole.h"
-#include "mygl.h"
-#include <gl\glu.h>
-#include "texturehandler.h"
-#include "vertexarray.h"
-#include "filehandler.h"
-#include "bitmap.h"
-#include ".\unit3dloader.h"
-#include "unithandler.h"
+#include "InfoConsole.h"
+#include "myGL.h"
+#include <GL/glu.h>
+#include "TextureHandler.h"
+#include "VertexArray.h"
+#include "FileHandler.h"
+#include "Bitmap.h"
+#include "Unit3DLoader.h"
+#include "UnitHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

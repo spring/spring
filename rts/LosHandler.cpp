@@ -1,17 +1,17 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 // LosHandler.cpp: implementation of the CLosHandler class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "LosHandler.h"
 
-#include "unit.h"
+#include "Unit.h"
 #include <list>
 #include <math.h>
-#include "readmap.h"
-#include "timeprofiler.h"
-#include "infoconsole.h"
-#include ".\loshandler.h"
+#include "ReadMap.h"
+#include "TimeProfiler.h"
+#include "InfoConsole.h"
+#include "LosHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -142,8 +142,8 @@ START_TIME_PROFILE;
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}
-	int xmap=losPos.x/(SQUARE_SIZE*2);
-	int ymap=losPos.z/(SQUARE_SIZE*2);
+	int xmap=(int)losPos.x/(SQUARE_SIZE*2);
+	int ymap=(int)losPos.z/(SQUARE_SIZE*2);
 
 	if(xmap-unit->losRadius<0 || xmap+unit->losRadius>=gs->hmapx || ymap-unit->losRadius<0 || ymap+unit->losRadius>=gs->hmapy)
 		SafeLosAdd(instance,xmap,ymap);

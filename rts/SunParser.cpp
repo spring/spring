@@ -6,7 +6,7 @@
 
 
 
-#include "stdafx.h"
+#include "StdAfx.h"
 
 #include "SunParser.h"
 
@@ -16,13 +16,13 @@
 
 #include <stdarg.h>
 
-#include "filehandler.h"
+#include "FileHandler.h"
 
 #include <algorithm>
 
 #include <cctype>
 
-#include ".\sunparser.h"
+#include "SunParser.h"
 
 
 

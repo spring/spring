@@ -2,22 +2,22 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "AdvTreeDrawer.h"
-#include "basegrounddrawer.h"
-#include "ground.h"
-#include "camera.h"
-#include "vertexarray.h"
-#include "readmap.h"
+#include "BaseGroundDrawer.h"
+#include "Ground.h"
+#include "Camera.h"
+#include "VertexArray.h"
+#include "ReadMap.h"
 #include <windows.h>
-#include "mygl.h"
-#include "advtreegenerator.h"
-#include "bitmap.h"
-#include "infoconsole.h"
+#include "myGL.h"
+#include "AdvTreeGenerator.h"
+#include "Bitmap.h"
+#include "InfoConsole.h"
 #include "GrassDrawer.h"
-#include "matrix44f.h"
-#include ".\advtreedrawer.h"
-#include "shadowhandler.h"
+#include "Matrix44f.h"
+#include "AdvTreeDrawer.h"
+#include "ShadowHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

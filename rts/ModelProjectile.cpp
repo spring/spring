@@ -1,9 +1,9 @@
-#include ".\modelprojectile.h"
-#include "3doparser.h"
-#include "weapondefhandler.h"
-#include "mygl.h"
-#include "globalstuff.h"
-#include "matrix44f.h"
+#include "ModelProjectile.h"
+#include "3DOParser.h"
+#include "WeaponDefHandler.h"
+#include "myGL.h"
+#include "GlobalStuff.h"
+#include "Matrix44f.h"
 //#include "mmgr.h"
 
 CModelProjectile::CModelProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)

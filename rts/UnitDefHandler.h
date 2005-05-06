@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "moveinfo.h"
-#include "sunparser.h"
-#include "unitdef.h"
+#include "MoveInfo.h"
+#include "SunParser.h"
+#include "UnitDef.h"
 
 class CUnitDefHandler;
 struct WeaponDef;

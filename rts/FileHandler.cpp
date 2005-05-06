@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include ".\filehandler.h"
+#include "StdAfx.h"
+#include "FileHandler.h"
 #include <fstream>
 #include <io.h>
 #include "hpiHandler.h"

@@ -1,21 +1,21 @@
-#include "stdafx.h"
-#include ".\pieceprojectile.h"
+#include "StdAfx.h"
+#include "PieceProjectile.h"
 #include "GlobalStuff.h"
 #include "SmokeProjectile.h"
 #include "Ground.h"
 #include "ProjectileHandler.h"
 #include "HeatCloudProjectile.h"
 #include "InfoConsole.h"
-#include "gamehelper.h"
-#include "unit.h"
-#include "mymath.h"
-#include "mygl.h"
-#include "vertexarray.h"
-#include "camera.h"
-#include "smoketrailprojectile.h"
-#include "synctracer.h"
-#include "3doparser.h"
-#include "matrix44f.h"
+#include "GameHelper.h"
+#include "Unit.h"
+#include "myMath.h"
+#include "myGL.h"
+#include "VertexArray.h"
+#include "Camera.h"
+#include "SmokeTrailProjectile.h"
+#include "SyncTracer.h"
+#include "3DOParser.h"
+#include "Matrix44f.h"
 //#include "mmgr.h"
 
 static const float Smoke_Time=40;
@@ -196,7 +196,7 @@ void CPieceProjectile::Draw()
 
 			float a1=(1-float(0)/(Smoke_Time))*255;
 			a1*=0.7+fabs(dif.dot(dir));
-			float alpha=min(255,max(0,a1));
+			float alpha=min(255.f,max(0.f,a1));
 			col[0]=color*alpha;
 			col[1]=color*alpha;
 			col[2]=color*alpha;
@@ -207,7 +207,7 @@ void CPieceProjectile::Draw()
 			a2*=0.7+fabs(dif2.dot(oldSmokeDir));
 			if(age<8)
 				a2=0;
-			alpha=min(255,max(0,a2));
+			alpha=min(255.f,max(0.f,a2));
 			col2[0]=color*alpha;
 			col2[1]=color*alpha;
 			col2[2]=color*alpha;
