@@ -11,7 +11,7 @@
 #include "ReadMap.h"
 #include <windows.h>		// Header File For Windows
 #include "myGL.h"
-#include <gl\glu.h>			// Header File For The GLu32 Library
+#include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Bitmap.h"
 //#include "mmgr.h"
 

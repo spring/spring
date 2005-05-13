@@ -38,6 +38,8 @@ void pfDealloc(void *p,size_t n)
 	delete[] p;
 }
 
+const unsigned int CPathFinder::MAX_SEARCHED_SQARES;
+
 /*
 Constructor.
 Building tables and precalculating data.

@@ -23,11 +23,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <math.h>
 
+#ifdef NO_WINSTUFF
+#include <windows.h>
+#define uint8 unsigned char
+#define uint16 unsigned short
+#define uint32 unsigned int
+#else
 #define uint8 unsigned __int8
 #define WORD unsigned __int16
 #define uint16 unsigned __int16
 #define DWORD unsigned __int32
 #define uint32 unsigned __int32
+#endif
 
 #define DWORD_MAKE(r, g, b, a)   ((DWORD) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)))
 #define WORD_MAKE(r, g, b, a)   ((WORD) (((a) << 12) | ((r) << 8) | ((g) << 4) | (b)))

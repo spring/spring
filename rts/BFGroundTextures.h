@@ -6,7 +6,7 @@
 
 #include "archdef.h"
 
-#include "jpeglib.h"
+#include <jpeglib.h>
 
 class CFileHandler;
 

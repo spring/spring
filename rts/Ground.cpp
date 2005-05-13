@@ -8,7 +8,7 @@
 #include "Ground.h"
 #include "ReadMap.h"
 #include "Camera.h"
-#include "projectileHandler.h"
+#include "ProjectileHandler.h"
 #include "ReadMap.h"
 #include "Projectile.h"
 #include "InfoConsole.h"

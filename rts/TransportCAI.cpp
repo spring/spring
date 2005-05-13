@@ -184,7 +184,8 @@ void CTransportCAI::SlowUpdate(void)
 						am->dontLand=false;
 						owner->cob->Call("EndTransport");
 						((CTransportUnit*)owner)->DetachUnit(unit);
-						SetGoal(owner->pos+owner->frontdir*20,owner->pos);		//move the transport away slightly
+						float3 dummy = owner->pos+owner->frontdir*20;
+						SetGoal(dummy, owner->pos);		//move the transport away slightly
 						FinishCommand();
 					}
 				} else {

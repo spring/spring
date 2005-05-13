@@ -18,6 +18,7 @@
 #include "Matrix44f.h"
 //#include "mmgr.h"
 
+
 static const float Smoke_Time=40;
 
 CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, S3DO* piece, int flags,CUnit* owner,float radius)

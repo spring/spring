@@ -1,11 +1,17 @@
 #include "StdAfx.h"
 #include "BackgroundReader.h"
+#include <windows.h>
 //#include "mmgr.h"
 
 CBackgroundReader backgroundReader;
 
+#ifdef NO_IO
+typedef void * LPOVERLAPPED;
+#endif
+
 VOID CALLBACK FileIOComplete(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
 {
+#ifndef NO_IO
 	CloseHandle(backgroundReader.curHandle);
 	backgroundReader.curHandle=0;
 	backgroundReader.curFile.reportReady++;
@@ -13,18 +19,23 @@ VOID CALLBACK FileIOComplete(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered,
 //	MessageBox(0,"Read complete","rc",0);
 
 	backgroundReader.Update();
+#endif //NO_IO
 }
 
 CBackgroundReader::CBackgroundReader(void)
 {
+#ifndef NO_IO
 	curFile.length=0;
 	curHandle=0;
+#endif
 }
 
 CBackgroundReader::~CBackgroundReader(void) 
 {
+#ifndef NO_IO
 	while(curHandle)
 		SleepEx(10,true);
+#endif
 }
 
 void CBackgroundReader::ReadFile(const char* filename, unsigned char* buffer, int length, int priority, int* reportReady)
@@ -41,6 +52,7 @@ void CBackgroundReader::ReadFile(const char* filename, unsigned char* buffer, in
 
 void CBackgroundReader::Update(void)
 {
+#ifndef NO_IO
 	if(curHandle==0){
 		if(quedFiles.empty()){
 			return;
@@ -68,4 +80,5 @@ void CBackgroundReader::Update(void)
 			return;
 		}
 	}
+#endif //NO_IO
 }

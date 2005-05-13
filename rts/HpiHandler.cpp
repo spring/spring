@@ -6,7 +6,9 @@
 #include "StdAfx.h"
 #include "HpiHandler.h"
 #include <windows.h>
+#ifndef NO_IO
 #include <io.h>
+#endif
 #include "HPIUtil.h"
 #include "myGL.h"
 #include "RegHandler.h"
@@ -20,7 +22,7 @@ CHpiHandler* hpiHandler=0;
 
 CHpiHandler::CHpiHandler()
 {
-
+#ifndef NO_DLL
 	if((m_hDLL=LoadLibrary("hpiutil.dll"))==0)
 		MessageBox(0,"Failed to find hpiutil.dll","",0);
 
@@ -31,7 +33,7 @@ CHpiHandler::CHpiHandler()
 	HPIGet=(void (WINAPI *)(void *Dest, void *, int, int))GetProcAddress(m_hDLL,"HPIGet");
 	HPICloseFile=(LRESULT (WINAPI *)(LPSTR))GetProcAddress(m_hDLL,"HPICloseFile");
 	HPIDir=(LRESULT (WINAPI*)(void *hpi, int Next, LPSTR DirName, LPSTR Name, LPINT Type, LPINT Size))GetProcAddress(m_hDLL,"HPIDir");
-
+#endif
 	string taDir;
 
 //	if(taDir[taDir.size()-1]!='\\')
@@ -78,8 +80,11 @@ int CHpiHandler::LoadFile(string name, void *buffer)
 	if(files.find(name)==files.end())
 		return 0;
 	void* hpi=HPIOpen(files[name].hpiname.c_str());
-
+#ifndef NO_WINSTUFF
 	char* file=HPIOpenFile(hpi, name.c_str());
+#else
+	char* file= const_cast<char*> (HPIOpenFile(hpi, name.c_str()).c_str());
+#endif
 	if (file)
 	{	// avoid crash if file is missing.
 		HPIGet(buffer,file,0,files[name].size);
@@ -92,6 +97,7 @@ int CHpiHandler::LoadFile(string name, void *buffer)
 
 void CHpiHandler::FindHpiFiles(string pattern,string path)
 {
+#ifndef NO_IO
 	struct _finddata_t files;    
 	long hFile;
 	int morefiles=0;
@@ -107,6 +113,7 @@ void CHpiHandler::FindHpiFiles(string pattern,string path)
 		
 		morefiles=_findnext( hFile, &files ); 
 	}
+#endif
 }
 
 void CHpiHandler::SearchHpiFile(char* name)
@@ -178,6 +185,7 @@ std::vector<std::string> CHpiHandler::GetFilesInDir(std::string dir)
 
 void CHpiHandler::FindHpiFilesForDir(string pattern,string path,string subPath,std::vector<std::string>& found)
 {
+#ifndef NO_IO
 	struct _finddata_t files;    
 	long hFile;
 	int morefiles=0;
@@ -193,6 +201,7 @@ void CHpiHandler::FindHpiFilesForDir(string pattern,string path,string subPath,s
 		
 		morefiles=_findnext( hFile, &files ); 
 	}
+#endif
 }
 
 void CHpiHandler::SearchHpiFileInDir(char* name,string subPath,std::vector<std::string>& found)

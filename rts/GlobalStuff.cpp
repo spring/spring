@@ -78,7 +78,9 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
 	LARGE_INTEGER randnum;
 	QueryPerformanceCounter(&randnum);
+#ifndef NO_WINSTUFF	
 	usRandSeed=randnum.LowPart;
+#endif	
 	modGameTime=0;
 	gameTime=0;
 	lastFrameTime=0;

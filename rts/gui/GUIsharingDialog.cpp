@@ -4,10 +4,10 @@
 #include "GUIslider.h"
 #include "GUIstateButton.h"
 
-#include "team.h"
-#include "player.h"
-#include "selectedunits.h"
-#include "net.h"
+#include "Team.h"
+#include "Player.h"
+#include "SelectedUnits.h"
+#include "Net.h"
 
 
 GUIsharingDialog::GUIsharingDialog(): GUIdialogController()
@@ -35,9 +35,9 @@ void GUIsharingDialog::ButtonPressed(GUIbutton* b)
 		netbuf[1]=gu->myPlayerNum;
 		netbuf[2]=table->GetSelected();
 		netbuf[3]=giveUnits->State();
-		*(float*)&netbuf[4]=min(gs->teams[gu->myTeam]->metal, giveMetal->Position());
+		*(float*)&netbuf[4]=min(gs->teams[gu->myTeam]->metal, (double)giveMetal->Position());
 
-		*(float*)&netbuf[8]=min(gs->teams[gu->myTeam]->energy, giveEnergy->Position());
+		*(float*)&netbuf[8]=min(gs->teams[gu->myTeam]->energy, (double)giveEnergy->Position());
 		net->SendData(netbuf,12);
 
 		if(giveUnits->State())

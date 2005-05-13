@@ -7,7 +7,7 @@
 #include "myGL.h"
 #include <ostream>
 #include <fstream>
-#include "jpeglib.h"
+#include <jpeglib.h>
 #include "FileHandler.h"
 //#include "mmgr.h"
 
@@ -104,6 +104,7 @@ void CBitmap::Save(string filename)
 
 void CBitmap::LoadBMP(string filename)
 {
+#ifndef NO_BITMAP
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER bmih;
 
@@ -173,6 +174,7 @@ void CBitmap::LoadBMP(string filename)
 	}
 
 	delete[] row;
+#endif //NO_BITMAP
 }
 
 void CBitmap::LoadJPG(string filename)
@@ -223,6 +225,7 @@ void CBitmap::LoadJPG(string filename)
 
 void CBitmap::LoadPCX(string filename)
 {
+#ifndef NO_BITMAP
 	short num_bytes, i;
 	long count;
 	BYTE data;
@@ -310,6 +313,7 @@ void CBitmap::LoadPCX(string filename)
 	}
 	delete[] svtmpbuf;
 	delete[] lpBuffer;
+#endif //NO_BITMAP
 }
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
@@ -358,9 +362,9 @@ void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char bl
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
 			if(mem[(y*xsize+x)*4+0]==red && mem[(y*xsize+x)*4+1]==green && mem[(y*xsize+x)*4+2]==blue){
-				mem[(y*xsize+x)*4+0]=unsigned char (aCol.x*255);
-				mem[(y*xsize+x)*4+1]=unsigned char (aCol.y*255);
-				mem[(y*xsize+x)*4+2]=unsigned char (aCol.z*255);
+				mem[(y*xsize+x)*4+0]= (unsigned char) (aCol.x*255);
+				mem[(y*xsize+x)*4+1]= (unsigned char) (aCol.y*255);
+				mem[(y*xsize+x)*4+2]= (unsigned char) (aCol.z*255);
 				mem[(y*xsize+x)*4+3]=0;
 			}
 		}
@@ -406,7 +410,7 @@ void CBitmap::Renormalize(float3 newCol)
 			for(int x=0;x<xsize;++x){
 				float nc=float(mem[(y*xsize+x)*4+a])/255.0f+colorDif.xyz[a];
 /*				float r=newCol.xyz[a]+(nc-newCol.xyz[a])*spreadMul.xyz[a];*/
-				mem[(y*xsize+x)*4+a]=unsigned char(min(255,max(0,nc*255)));
+				mem[(y*xsize+x)*4+a]=(unsigned char)(min(255.f,max(0.f,nc*255)));
 			}
 		}
 	}
@@ -414,6 +418,7 @@ void CBitmap::Renormalize(float3 newCol)
 
 void CBitmap::SaveBMP(string filename)
 {
+#ifndef NO_BITMAP
 	char* buf=new char[xsize*ysize*3];
 	for(int y=0;y<ysize;y++){
 		for(int x=0;x<xsize;x++){
@@ -447,6 +452,7 @@ void CBitmap::SaveBMP(string filename)
 	ofs.write((char*)&bmih,sizeof(bmih));
 	ofs.write((char*)buf,xsize*ysize*3);
 	delete[] buf;
+#endif
 }
 
 void CBitmap::SaveJPG(string filename,int quality)
@@ -536,10 +542,10 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 					a+=mem[((y*2+y2)*xsize+x*2+x2)*4+3];
 				}
 			}
-			bm.mem[(y*bm.xsize+x)*4]=unsigned char(r/4);
-			bm.mem[(y*bm.xsize+x)*4+1]=unsigned char(g/4);
-			bm.mem[(y*bm.xsize+x)*4+2]=unsigned char(b/4);
-			bm.mem[(y*bm.xsize+x)*4+3]=unsigned char(a/4);
+			bm.mem[(y*bm.xsize+x)*4]=(unsigned char)(r/4);
+			bm.mem[(y*bm.xsize+x)*4+1]=(unsigned char)(g/4);
+			bm.mem[(y*bm.xsize+x)*4+2]=(unsigned char)(b/4);
+			bm.mem[(y*bm.xsize+x)*4+3]=(unsigned char)(a/4);
 		}
 	}
 

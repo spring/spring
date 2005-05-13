@@ -10,7 +10,7 @@
 
 #include <string>
 #include <vector>
-#include "guibuildmenu.h"
+#include "GUIbuildMenu.h"
 class GUIlabel;
 class GUIbutton;
 struct UnitDef;

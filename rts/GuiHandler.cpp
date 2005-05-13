@@ -304,8 +304,8 @@ void CGuiHandler::DrawButtons()
 	}
 	
 	// För varje knapp (rita den)
-	int buttonStart=max(0,(int)(min(activePage*NUMICOPAGE,total_active_icons)));
-	int buttonEnd=max(0,int(min((activePage+1)*NUMICOPAGE,total_active_icons)));
+	int buttonStart=max(0,(int)(min(activePage*NUMICOPAGE,(int)total_active_icons)));
+	int buttonEnd=max(0,int(min((activePage+1)*NUMICOPAGE,(int)total_active_icons)));
 
 	for(unsigned int nr=buttonStart;nr<buttonEnd;nr++) {
 
@@ -576,8 +576,8 @@ int CGuiHandler::IconAtPos(int x, int y)
 	if(fx>buttonBox.x2 || fx<buttonBox.x1 || fy>buttonBox.y2 || fy<buttonBox.y1)
 		return -1;
 
-	int buttonStart=max(0,min(activePage*NUMICOPAGE,total_active_icons));
-	int buttonEnd=max(0,min((activePage+1)*NUMICOPAGE,total_active_icons));
+	int buttonStart=max(0,min(activePage*NUMICOPAGE,(int)total_active_icons));
+	int buttonEnd=max(0,min((activePage+1)*NUMICOPAGE,(int)total_active_icons));
 	for (int a=buttonStart;a<buttonEnd;a++) {
 		if (fx>curricon[a].x1 && fy<curricon[a].y1 && fx<curricon[a].x2 && fy>curricon[a].y2) 
 			return a;

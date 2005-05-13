@@ -63,7 +63,7 @@ public:
 	static const unsigned int PATH_RESOLUTION = 2*SQUARE_SIZE;
 
 private:  
-	const static unsigned int MAX_SEARCHED_SQARES = 10000;
+	static const unsigned int MAX_SEARCHED_SQARES = 10000;
 
 	class OpenSquare {
 	public:

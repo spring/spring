@@ -9,7 +9,7 @@
 #include <math.h>
 #include <windows.h>		// Header File For Windows
 #include "myGL.h"
-#include <gl\glu.h>			// Header File For The GLu32 Library
+#include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Camera.h"
 #include "ReadMap.h"
 #include "Bitmap.h"

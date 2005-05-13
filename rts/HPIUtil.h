@@ -6,6 +6,12 @@
 #define LZ77_COMPRESSION 1
 #define ZLIB_COMPRESSION 2
 
+#ifdef NO_IO
+typedef void *HPICALLBACK; 
+//typedef void *LPSTR;
+#include <windows.h>
+#endif
+
 /*
  GetTADirectory - Get the directory that TA is installed in
  Arguments:
@@ -153,10 +159,12 @@ LRESULT WINAPI HPIExtractFile(void *hpi, LPSTR FileName, LPSTR ExtractName);
    so that the program can display progress information.
    It's defined thusly:
 */
+#ifndef NO_IO
 typedef int (__stdcall *HPICALLBACK)(LPSTR FileName, LPSTR HPIName, 
                            int FileCount, int FileCountTotal,
                            int FileBytes, int FileBytesTotal,
                            int TotalBytes, int TotalBytesTotal);
+#endif
 /*
    Arguments:
      FileName - the file name being packed.

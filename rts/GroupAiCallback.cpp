@@ -22,7 +22,7 @@
 #include "UnitDefHandler.h"
 #include "GuiHandler.h"		//todo: fix some switch for new gui
 #include "NewGuiDefine.h"
-#include "guicontroller.h"
+#include "GUIcontroller.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

@@ -9,6 +9,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#include <windows.h>
 #include <winsock2.h>
 
 #include <iostream>
@@ -122,12 +123,13 @@ public:
 	};
 	Connection connections[MAX_PLAYERS];
 
-	SOCKET mySocket;
-	HANDLE netMutex;
 
-	void ProcessRawPacket(unsigned char* data, int length, int conn);
+	HANDLE netMutex;
+	SOCKET mySocket;
 	int InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber);
 	int ResolveConnection(sockaddr_in* from);
+
+	void ProcessRawPacket(unsigned char* data, int length, int conn);	
 	void FlushNet(void);
 	void FlushConnection(int conn);
 	void SendRawPacket(int conn, unsigned char* data, int length, int packetNum);

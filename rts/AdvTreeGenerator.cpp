@@ -102,7 +102,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	treeNSVP=LoadVertexProgram("treeNS.vp");
 
 	leafDL=glGenLists(8);
-	srand(15);
+	srand((unsigned int)15);
 	for(int a=0;a<8;++a){
 		va=GetVertexArray();
 		va->Initialize();
@@ -119,7 +119,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	}
 
 	pineDL=glGenLists(8);
-	srand(15);
+	srand((unsigned int)15);
 	for(int a=0;a<8;++a){
 		va=GetVertexArray();
 		va->Initialize();

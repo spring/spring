@@ -3,11 +3,9 @@
 
 #include "archdef.h"
 
-// TODO (Dave#1#): Remove dependancy on windows-specific code
-#ifdef ARCHDEF_PLATFORM_WIN32
-    #include <winsock2.h>
-    #include <windows.h>
-#endif
+#include <winsock2.h>
+#include <windows.h>
+
 #include <ctime>
 #include <string>
 
@@ -43,6 +41,7 @@ public:
 
 	HANDLE gameServerMutex;
 	HANDLE thisThread;
+
 	bool quitServer;
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
 	float maxTimeLeft;

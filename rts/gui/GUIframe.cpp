@@ -4,7 +4,7 @@
 
 #include "GUIframe.h"
 #include <algorithm>
-#include "infoconsole.h"
+#include "InfoConsole.h"
 
 GUIframe *mainFrame=NULL;
 

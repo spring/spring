@@ -76,7 +76,7 @@ CTextureHandler::CTextureHandler()
 		texfiles[numfiles++]=tex;
 		totalSize+=tex->tex.xsize*tex->tex.ysize;
 	}
-	totalSize*=1.2;		//pessimistic guess about how much space will be wasted
+	totalSize*=1.2f;		//pessimistic guess about how much space will be wasted
 
 	if(totalSize<1024*1024){
 		bigTexX=1024;
@@ -153,11 +153,15 @@ CTextureHandler::CTextureHandler()
 		bigTexX*= mul;
 		bigTexY*= mul;
 		unsigned char* temptex=new unsigned char[bigTexX*bigTexY*4];
-
+#ifndef NO_TEXTURES
 		switch (TQ)
 		{
 		case 1:		// 2xSaI
+#ifndef NO_WINSTUFF
 			Super2xSaI_32( (uint32 *)tex, (uint32 *)temptex, oldTexX, oldTexY, oldTexX);
+#else 
+			Super2xSaI_32( (DWORD*)tex, (DWORD*)temptex, oldTexX, oldTexY, oldTexX);
+#endif
 			break;
 		case 3:		// 4xHQ
 			hq4x_init();
@@ -168,7 +172,7 @@ CTextureHandler::CTextureHandler()
 			hq2x_32( tex, oldTexX*4, temptex, bigTexX*4, oldTexX, oldTexY);
 			break;
 		}
-
+#endif
 		delete[] tex;
 		tex = temptex;
 	}

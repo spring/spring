@@ -2,7 +2,7 @@
 #include "BFGroundTextures.h"
 #include "FileHandler.h"
 #include "myGL.h"
-#include "jpeglib.h"
+#include <jpeglib.h>
 #include "Camera.h"
 #include "InfoConsole.h"
 #include <GL/glu.h>

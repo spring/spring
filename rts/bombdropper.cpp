@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "BombDropper.h"
+#include "bombdropper.h"
 #include "Unit.h"
 #include "ExplosiveProjectile.h"
 #include "InfoConsole.h"

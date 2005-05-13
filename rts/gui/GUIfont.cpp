@@ -3,11 +3,14 @@
 
 
 // FreeType Headers
+#ifdef _HAVE_FT2BUILD_H
+#include <ft2build.h>
+#endif
 #include <freetype/freetype.h>
 #include <freetype/ftglyph.h>
 #include <freetype/ftoutln.h>
 
-#include "mygl.h"
+#include "myGL.h"
 
 #include <string>
 #include <stdexcept>
@@ -20,11 +23,12 @@ GUIfont *guifont=NULL;
 
 GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 {
-	FT_Face face;
-	FT_Library library;
-
 	int tex_x=0,tex_y=0;
 	int tex[TEXSIZE*TEXSIZE];
+
+#ifndef NO_FONT
+	FT_Face face;
+	FT_Library library;
 
 	memset(tex,0,TEXSIZE*TEXSIZE*4);
 	charHeight=0;
@@ -115,7 +119,7 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 		// discard glyph
 		FT_Done_Glyph(glyph);
 	}
-
+#endif //NO_FONT
 	// create texture
 	glGenTextures(1, &texture);
 
@@ -124,7 +128,9 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, 4, TEXSIZE, TEXSIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
 
+#ifndef NO_FONT
 	FT_Done_FreeType(library);
+#endif 
 }
 
 

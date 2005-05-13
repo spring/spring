@@ -18,7 +18,7 @@ public:
 	CVertexArrayRange(float* mem,int size);
 	virtual ~CVertexArrayRange();
 
-	virtual Initialize();
+	virtual void Initialize();
 
 	virtual void DrawArrayTC(int drawType,int stride=24);
 	virtual void DrawArrayTN(int drawType,int stride=32);

@@ -78,7 +78,6 @@ public:
 
 	friend class CRadarHandler;
 private:
-	friend class CRadarHandler;
 
 	void SafeLosAdd(LosInstance* instance,int xm,int ym);
 	void LosAdd(LosInstance* instance);

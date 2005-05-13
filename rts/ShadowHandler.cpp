@@ -72,10 +72,12 @@ CShadowHandler::CShadowHandler(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	CreatePBuffer();
+#endif //NO_SHADOWS
 }
 
 CShadowHandler::~CShadowHandler(void)
 {
+#ifndef NO_SHADOWS
 	if(drawShadows)
 		glDeleteTextures(1,&shadowTexture);
 
@@ -90,10 +92,12 @@ CShadowHandler::~CShadowHandler(void)
 		hDCPBuffer = NULL;
 	}
 	wglMakeCurrent( hDC, hRC );
+#endif
 }
 
 void CShadowHandler::CreateShadows(void)
 {
+#ifndef NO_SHADOWS
 	if(!copyDepthTexture && !firstDraw){
 		glBindTexture(GL_TEXTURE_2D, shadowTexture);
 		if( wglReleaseTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
@@ -220,6 +224,7 @@ void CShadowHandler::CreateShadows(void)
 	}
 #endif //NO_SHADOWS
 }
+
 
 void CShadowHandler::DrawShadowTex(void)
 {

@@ -10,7 +10,7 @@
 #include <winsock2.h>
 #include <windows.h>		// Header File For Windows
 #include "myGL.h"
-#include <gl\glu.h>			// Header File For The GLu32 Library
+#include <GL/glu.h>			// Header File For The GLu32 Library
 #include <time.h>
 #include <string>
 #include <math.h>
@@ -34,13 +34,18 @@
 #endif
 
 // Use the crashrpt library 
+#ifndef unix
 #include "../crashrpt/include/crashrpt.h"
+#endif
+
+#ifndef NO_WINSTUFF
 #pragma comment(lib, "../crashrpt/lib/crashrpt")
 
 HDC		hDC=NULL;			// Private GDI Device Context
 HGLRC	hRC=NULL;			// Permanent Rendering Context
 HWND	hWnd=NULL;			// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
+#endif 
 
 bool	keys[256];			// Array Used For The Keyboard Routine
 bool	active=TRUE;		// Window Active Flag Set To TRUE By Default
@@ -49,7 +54,9 @@ bool	globalQuit=false;
 //time_t   fpstimer,starttime;
 CGameController* activeController=0;
 
+#ifndef NO_WINSTUFF
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
+#endif
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
 {
@@ -96,6 +103,7 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 
 GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 {
+#ifndef NO_WINDOWS
 	if (fullscreen)										// Are We In Fullscreen Mode?
 	{
 		ChangeDisplaySettings(NULL,0);					// If So Switch Back To The Desktop
@@ -127,6 +135,7 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 		MessageBox(NULL,"Could Not Release hWnd.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		hWnd=NULL;										// Set hWnd To NULL
 	}
+#endif
 }
 
 /*	This Code Creates Our OpenGL Window.  Parameters Are:					*
@@ -140,6 +149,7 @@ GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 
 BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
 {
+#ifndef NO_WINDOWS
 	WNDCLASS	wc;						// Windows Class Structure
 	DWORD		dwExStyle;				// Window Extended Style
 	DWORD		dwStyle;				// Window Style
@@ -297,15 +307,17 @@ BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		MessageBox(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
-	
+#endif
 	return TRUE;									// Success
 }
+
 
 LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 							UINT	uMsg,			// Message For This Window
 							WPARAM	wParam,			// Additional Message Information
 							LPARAM	lParam)			// Additional Message Information
 {
+#ifndef NO_WINDOWS
 	switch (uMsg)									// Check For Windows Messages
 	{
 		case WM_ACTIVATE:							// Watch For Window Activate Message
@@ -458,10 +470,13 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 //		info->AddLine("msg %i",uMsg);
 	// Pass All Unhandled Messages To DefWindowProc
 	return DefWindowProc(hWnd,uMsg,wParam,lParam);
+#endif
 }
 
+
 BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
-{     
+{
+#ifndef NO_WINDOWS
 	switch (message)
 	{          // Place message cases here.  
 	case WM_INITDIALOG:
@@ -469,6 +484,7 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	default:             
 		return FALSE; 
     } 
+#endif
 } 
 
 // Called when spring crashes
@@ -481,29 +497,34 @@ BOOL CALLBACK crashCallback(LPVOID crState)
 	if (net->recordDemo)
 		delete net->recordDemo;
 
+#ifndef NO_IO
 	AddFile("infolog.txt", "Spring information log");
 	AddFile("test.sdf", "Spring game demo");
-
+#endif
 	return true;
 }
 
+#ifndef NO_WINSTUFF
 int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 									 HINSTANCE	hPrevInstance,		// Previous Instance
 									 LPSTR		lpCmdLine,			// Command Line Parameters
 									 int			nCmdShow)			// Window Show State
+#else
+  int main(void)
+#endif
 {
 	INIT_SYNCIFY;
-
+#ifndef NO_WINSTUFF
 	MSG		msg;									// Windows Message Structure
-	BOOL	done=FALSE;								// Bool Variable To Exit Loop
 	hInstance=hInstanceIn;
-
+#endif
+	BOOL	done=FALSE;								// Bool Variable To Exit Loop
 	for(int b=0;b<256;b++)
 		keys[b]=false;
-
+#ifndef NO_WINSTUFF
 	// Initialize crash reporting
 	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
-
+#endif
 	ENTER_SYNCED;
 	gs=new CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
@@ -511,23 +532,32 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 
 	ENTER_SYNCED;
 	gameSetup=new CGameSetup();
+#ifndef NO_WINSTUFF
 	if(!gameSetup->Init(lpCmdLine)){
 		delete gameSetup;
 		gameSetup=0;
 	}
+#endif
+
 	ENTER_MIXED;
 
 	bool server;
+#ifdef NO_WINDOWS
+	server=true;
+	fullscreen=true;
+#else
 	if(gameSetup)
 		server=gameSetup->myPlayer==0;
 	else
 		server=MessageBox(NULL,"Do you want to be server?", "Be server?",MB_YESNO|MB_ICONQUESTION)==IDYES;
+
 
 	/*	// Ask The User Which Screen Mode They Prefer
 	if (MessageBox(NULL,"Would You Like To Run In Fullscreen Mode?", "Start FullScreen?",MB_YESNO|MB_ICONQUESTION)==IDNO)
 	{
 	fullscreen=FALSE;							// Windowed Mode
 	}*/
+#endif
 	fullscreen=regHandler.GetInt("Fullscreen",1)!=0;
 	
 #ifdef _DEBUG
@@ -545,17 +575,23 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 	{
 		return 0;									// Quit If Window Was Not Created
 	}
-
+#ifndef NO_FONT
 	font=new CglFont(hDC,32,223);
+#endif
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
+#ifndef NO_WINSTUFF
 	SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
+#else
+#warning replace SwapBuffers by glut equivalent
+#endif
 	pregame=new CPreGame(server);
 
 	while(!done)									// Loop That Runs While done=FALSE
 	{
 		ENTER_UNSYNCED;
+#ifndef NO_WINSTUFF
 		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))	// Is There A Message Waiting?
 		{
 			if (msg.message==WM_QUIT)				// Have We Received A Quit Message?
@@ -570,6 +606,7 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 		}
 		else										// If There Are No Messages
 		{
+#endif
 			// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
 			if ((active && !DrawGLScene()) || globalQuit)	// Active?  Was There A Quit Received?
 			{
@@ -577,10 +614,15 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 			}
 			else									// Not Time To Quit, Update Screen
 			{
+#ifndef NO_WINSTUFF
 				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
 				SleepEx(0,true);
+#endif
 			}
+#ifndef NO_WINSTUFF
 		}
+#endif
+
 	}
 	ENTER_MIXED;
 
@@ -592,5 +634,9 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 	KillGLWindow();									// Kill The Window
 	END_SYNCIFY;
 	//m_dumpMemoryReport();
+#ifndef NO_WINSTUFF
 	return (msg.wParam);							// Exit The Program
+#else
+	return 0;
+#endif
 }

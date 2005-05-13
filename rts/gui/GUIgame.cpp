@@ -1,11 +1,11 @@
 #include "GUIgame.h"
 #include "GUIcontroller.h"
-#include "camera.h"
+#include "Camera.h"
 #include "Ground.h"
-#include "mousehandler.h"
+#include "MouseHandler.h"
 #include "GameHelper.h"
 #include "UnitHandler.h"
-#include "unitdefhandler.h"
+#include "UnitDefHandler.h"
 #include "SelectedUnits.h"
 #include "command.h"
 #include "float3.h"
@@ -14,7 +14,7 @@
 #include "TextureHandler.h"
 #include "3DOParser.h"
 #include "Team.h"
-#include "basegrounddrawer.h"
+#include "BaseGroundDrawer.h"
 
 extern map<string, string> bindings;
 
@@ -230,7 +230,11 @@ void Selector::DrawFront(float maxSize, float sizeDiv)
 
 	if(sizeDiv!=0){
 		char c[40];
-		itoa(pos1.distance2D(pos2)/sizeDiv,c,10);
+#ifndef NO_WINSTUFF
+ 		itoa(pos1.distance2D(pos2)/sizeDiv,c,10);
+#else
+ 		snprintf(c,39,"%d",pos1.distance2D(pos2)/sizeDiv);
+#endif
 		mouse->cursorTextRight=c;
 	}
 	glEnable(GL_FOG);
@@ -1123,7 +1127,7 @@ void GUIgame::MakeBuildPos(float3& pos,UnitDef* unitdef)
 	pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
 	pos.y=uh->GetBuildHeight(pos,unitdef);
 	if(unitdef->floater)
-		pos.y = max(pos.y,0);
+		pos.y = max(pos.y,0.f);
 }
 
 bool GUIgame::IsDragCommand(CommandDescription *cmd)

@@ -26,13 +26,14 @@
 #include "InfoConsole.h"
 //#include "mmgr.h"
 
-CSound* sound;
 extern HWND	hWnd;			// Holds Our Window Handle
 
 #define SAFE_DELETE(p)  { if(p) { delete (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }
 
 #endif //NO_SOUND
+
+CSound* sound;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -165,9 +166,11 @@ int CSound::InitFile(const string& name)
 
 	return buffers.size()-1;
 }
+#endif //NO_SOUND
 
 int CSound::GetWaveId(const string &name)
 {
+#ifndef NO_SOUND
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	if(noSound){
@@ -182,8 +185,10 @@ int CSound::GetWaveId(const string &name)
 	int ret=si->second;
 	POP_CODE_MODE;
 	return ret;
+#endif //NO_SOUND
 }
 
+#ifndef NO_SOUND
 int CSound::GetBuf(int id,float volume)
 {
 	SoundInfo* s=loadedSounds[id];

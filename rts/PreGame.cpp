@@ -2,7 +2,7 @@
 #include "PreGame.h"
 #include "MouseHandler.h"
 #include "myGL.h"
-#include <gl\glu.h>			// Header File For The GLu32 Library
+#include <GL/glu.h>			// Header File For The GLu32 Library
 #include "glFont.h"
 #include "glList.h"
 #include "Game.h"
@@ -101,6 +101,7 @@ int CPreGame::KeyPressed(unsigned char k,bool isRepeat)
 
 	if (userWriting){
 		keys[k] = TRUE;
+#ifndef NO_CLIPBOARD
 		if ((k=='V') && keys[VK_CONTROL]){
 			OpenClipboard(0);
 			void* p;
@@ -110,6 +111,7 @@ int CPreGame::KeyPressed(unsigned char k,bool isRepeat)
 			CloseClipboard();
 			return 0;
 		}
+#endif
 		if(k==8){ //backspace
 			if(userInput.size()!=0)
 				userInput.erase(userInput.size()-1,1);
@@ -156,7 +158,9 @@ bool CPreGame::Draw(void)
 
 	if(net->inInitialConnect){
 		char text[400];
+#ifndef NO_NET
 		sprintf(text,"Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastSendTime));
+#endif
 		glColor4f(1,1,1,1);
 		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
@@ -230,8 +234,10 @@ void CPreGame::UpdateClientNet(void)
 			allReady=true;
 			inbufpos+=inbuf[inbufpos+1];
 			if(inbufpos!=inbuflength){
+#ifndef NO_NET
 				net->connections[0].readyLength=inbuflength-inbufpos;
 				memcpy(net->connections[0].readyData,&inbuf[inbufpos],inbuflength-inbufpos);
+#endif
 			}
 			break;
 
@@ -288,15 +294,13 @@ void CPreGame::SelectMap(std::string s)
 void CPreGame::ShowMapList(void)
 {
 	CglList* list=new CglList("Select map",SelectMap);
-
+#ifndef NO_IO
 	WIN32_FIND_DATA findFileData;
 	HANDLE findHandle = FindFirstFile( "maps\\*.sm2" , &findFileData);
-
 	if(findHandle == INVALID_HANDLE_VALUE){
 		MessageBox(0,"Couldnt find any map files","PreGame error",0);
 		return;
 	}
-
 	list->AddItem(findFileData.cFileName,findFileData.cFileName);
 
 	while(FindNextFile(findHandle , &findFileData)){
@@ -306,4 +310,5 @@ void CPreGame::ShowMapList(void)
 	FindClose(findHandle);
 
 	showList=list;
+#endif
 }

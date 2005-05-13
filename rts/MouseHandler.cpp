@@ -41,7 +41,14 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+#ifndef NO_WINSTUFF
 extern HWND	hWnd;
+#endif 
+
+#ifdef NO_INPUT
+#define ShowCursor(a) while(0){}
+#endif
+
 extern bool	fullscreen;
 extern bool keys[256];
 
@@ -75,7 +82,7 @@ CMouseHandler::CMouseHandler()
 	cursors["Load units"] = new CMouseCursor("cursorpickup", CMouseCursor::Center);
 	cursors["Unload units"] = new CMouseCursor("cursorunload", CMouseCursor::Center);	
 	cursors["Reclaim"] = new CMouseCursor("cursorreclamate", CMouseCursor::Center);
-	
+
 	ShowCursor(FALSE);
 
 	soundMultiselID = sound->GetWaveId("button9.wav");
@@ -437,6 +444,7 @@ void CMouseHandler::ShowMouse()
 
 void CMouseHandler::HideMouse()
 {
+#ifndef NO_INPUT
 	if(!hide){
 		ShowCursor(FALSE);
 		hide=true;
@@ -447,6 +455,7 @@ void CMouseHandler::HideMouse()
 			MessageBox(0,"mouse error","",0);
 		SetCursorPos(gu->screenx/2+cr.left+4*!fullscreen,gu->screeny/2+cr.top+23*!fullscreen);
 	}
+#endif
 }
 
 void CMouseHandler::ToggleState(bool shift)
@@ -554,6 +563,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
+#ifndef NO_INPUT
 	if(hide && mouseMovedFromCenter){
 		RECT cr;
 		if(GetWindowRect(hWnd,&cr)==0)
@@ -562,4 +572,5 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 		internalMouseMove=true;				//this only works if the msg que is empty of mouse moves, so someone should figure out something better
 		mouseMovedFromCenter=false;
 	}
+#endif
 }

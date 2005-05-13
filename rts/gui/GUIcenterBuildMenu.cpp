@@ -5,10 +5,10 @@
 #include "GUIpane.h"
 #include "UnitDefHandler.h"
 #include "command.h"
-#include "guibuildmenu.h"
-#include "infoconsole.h"
-#include "mousehandler.h"
-#include "selectedunits.h"
+#include "GUIbuildMenu.h"
+#include "InfoConsole.h"
+#include "MouseHandler.h"
+#include "SelectedUnits.h"
 
 #include <set>
 using namespace std;

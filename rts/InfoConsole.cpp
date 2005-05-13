@@ -12,6 +12,8 @@
 #include "SyncTracer.h"
 #include "RegHandler.h"
 #include "InfoConsole.h"
+#include <stdarg.h>
+
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -35,21 +37,26 @@ CInfoConsole::CInfoConsole()
 	numLines = 7;
 
 	filelog=new ofstream("infolog.txt", ios::out);
+#ifndef NO_MUTEXTHREADS
 	infoConsoleMutex=CreateMutex(0,false,"SpringInfoConsoleMutex");
-
+#endif
 }
 
 CInfoConsole::~CInfoConsole()
 {
 	delete filelog;
+#ifndef NO_IO
 	CloseHandle(infoConsoleMutex);
+#endif
 }
 
 void CInfoConsole::AddLine(const char *fmt, ...)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
+#ifndef NO_MUTEXTHREADS
 	WaitForSingleObject(infoConsoleMutex,INFINITE);
+#endif
 	char text[500];
 	va_list		ap;										// Pointer To List Of Arguments
 
@@ -84,7 +91,9 @@ void CInfoConsole::AddLine(const char *fmt, ...)
 	if(strlen(text)>42){
 		AddLine("%s",&text[42]);
 	}
+#ifndef NO_MUTEXTHREADS
 	ReleaseMutex(infoConsoleMutex);
+#endif
 	POP_CODE_MODE;
 }
 
@@ -95,7 +104,9 @@ void CInfoConsole::AddLine(std::string text)
 
 void CInfoConsole::Draw()
 {
+#ifndef NO_MUTEXTHREADS
 	WaitForSingleObject(infoConsoleMutex,INFINITE);
+#endif
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(0,0,0.5f,0.5f);
@@ -119,12 +130,16 @@ void CInfoConsole::Draw()
 		glTranslatef(0,-1.2f,0);
 	}
 	glPopMatrix();
+#ifndef NO_MUTEXTHREADS
 	ReleaseMutex(infoConsoleMutex);
+#endif
 }
 
 void CInfoConsole::Update()
 {
+#ifndef NO_MUTEXTHREADS
 	WaitForSingleObject(infoConsoleMutex,INFINITE);
+#endif
 	if(lastTime>0)
 		lastTime--;
 	if(!data.empty()){
@@ -132,32 +147,44 @@ void CInfoConsole::Update()
 		if(data[0].time<=0)
 			data.pop_front();
 	}
+#ifndef NO_MUTEXTHREADS
 	ReleaseMutex(infoConsoleMutex);
+#endif
 }
 
 CInfoConsole& CInfoConsole::operator<< (int i)
 {
+#ifndef NO_MUTEXTHREADS
 	WaitForSingleObject(infoConsoleMutex,INFINITE);
+#endif
 	char t[50];
 	sprintf(t,"%d ",i);
 	tempstring+=t;
+#ifndef NO_MUTEXTHREADS
 	ReleaseMutex(infoConsoleMutex);
+#endif
 	return *this;
 }
 
 CInfoConsole& CInfoConsole::operator<< (float f)
 {
+#ifndef NO_MUTEXTHREADS
 	WaitForSingleObject(infoConsoleMutex,INFINITE);
+#endif
 	char t[50];
 	sprintf(t,"%f ",f);
 	tempstring+=t;
+#ifndef NO_MUTEXTHREADS
 	ReleaseMutex(infoConsoleMutex);
+#endif
 	return *this;
 }
 
 CInfoConsole& CInfoConsole::operator<< (const char* c)
 {
+#ifndef NO_MUTEXTHREADS
 	WaitForSingleObject(infoConsoleMutex,INFINITE);
+#endif
 	for(unsigned int a=0;a<strlen(c);a++){
 		if(c[a]!='\n'){
 			tempstring+=c[a];
@@ -167,7 +194,9 @@ CInfoConsole& CInfoConsole::operator<< (const char* c)
 			break;
 		}
 	}
+#ifndef NO_MUTEXTHREADS
 	ReleaseMutex(infoConsoleMutex);
+#endif
 	return *this;
 }
 

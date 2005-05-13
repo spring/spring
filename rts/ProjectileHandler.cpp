@@ -20,9 +20,7 @@
 #include "Ground.h"
 #include "TextureHandler.h"
 #include "Feature.h"
-#ifndef linux
 #include "RegHandler.h"
-#endif
 #include "ShadowHandler.h"
 #include "UnitHandler.h"
 #include "3DOParser.h"
@@ -41,11 +39,8 @@ CProjectileHandler::CProjectileHandler()
 {
 	PrintLoadMsg("Creating projectile texture");
 
-#ifndef linux
 	maxParticles=regHandler.GetInt("MaxParticles",4000);
-#else
-	maxParticles=4000;
-#endif	
+
 	currentParticles=0;
 	particleSaturation=0;
 

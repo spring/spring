@@ -29,12 +29,13 @@ public:
 
 	std::deque<FileToRead> quedFiles;
 	FileToRead curFile;
-
+#ifndef NO_WINSTUFF
 	OVERLAPPED curReadInfo;
 	HANDLE curHandle;
+#endif
 	void Update(void);
 };
 
 extern CBackgroundReader backgroundReader;
 
-#endif __BACKGROUND_READER_H__
+#endif //__BACKGROUND_READER_H__

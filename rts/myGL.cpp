@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "myGL.h"
-#include "gl\glu.h"
+#include "GL/glu.h"
 #include "glFont.h"
 #include <ostream>
 #include <fstream>
@@ -13,7 +13,9 @@
 using namespace std;
 
 extern HDC hDC;
+#ifndef NO_WINSTUFF
 extern HWND	hWnd;
+#endif
 
 static CVertexArray* vertexArray1=0;
 static CVertexArray* vertexArray2=0;
@@ -83,7 +85,9 @@ void PrintLoadMsg(const char* text)
 	glPopMatrix();
 	font->glPrintAt(0.40,0.06,1.0,"TA Spring 0.41b1");
 	font->glPrintAt(0.20,0.02,0.5,"This program is distributed under the GNU General Public License, see license.html for more info");
+#ifndef NO_WINSTUFF
 	SwapBuffers(hDC);
+#endif
 }
 
 bool ProgramStringIsNative(GLenum target, const char* filename)

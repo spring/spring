@@ -167,7 +167,8 @@ void CMobileCAI::SlowUpdate()
 		if(!inCommand){
 			if(c.params.size()==1){
 				if(uh->units[int(c.params[0])]!=0){
-					SetGoal(uh->units[int(c.params[0])]->pos+owner->posErrorVector*128,curPos);
+					float3 fix=uh->units[int(c.params[0])]->pos+owner->posErrorVector*128;
+					SetGoal(fix,curPos);
 					orderTarget=uh->units[int(c.params[0])];
 					AddDeathDependence(orderTarget);
 					inCommand=true;
@@ -196,7 +197,10 @@ void CMobileCAI::SlowUpdate()
 				//					}
 			} else {
 				if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos)>10+orderTarget->pos.distance2D(owner->pos)*0.2)
-					SetGoal(orderTarget->pos+owner->posErrorVector*128,curPos);
+				{
+					float3 fix=orderTarget->pos+owner->posErrorVector*128;
+					SetGoal(fix,curPos);
+				}
 			}
 		} else {
 			float3 pos(c.params[0],c.params[1],c.params[2]);

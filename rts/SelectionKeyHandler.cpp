@@ -160,10 +160,10 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		s=ReadToken(selectString);
 
-		bool not=false;
+		bool _not=false;
 
 		if(s=="Not"){
-			not=true;
+			_not=true;
 			ReadDelimiter(selectString);
 			s=ReadToken(selectString);
 		}
@@ -175,7 +175,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->unitDef->buildSpeed>0){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -189,7 +189,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(dynamic_cast<CBuilding*>(*ui)){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -205,7 +205,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->category & comCat){	//fix with better test for commander
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -219,7 +219,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->unitDef->transportCapacity>0){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -235,7 +235,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->category & acCat){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -249,7 +249,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(!(*ui)->weapons.empty()){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -266,7 +266,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->maxRange>minRange){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -283,7 +283,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->health>minHealth){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -300,7 +300,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->health/(*ui)->maxHealth > minHealth){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -319,7 +319,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(prevTypes.find((*ui)->aihint)!=prevTypes.end()){		//should move away from aihint
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -336,7 +336,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->unitDef->humanName.find(name)!=string::npos){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -350,7 +350,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->commandAI->commandQue.empty()){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -364,7 +364,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->radarRadius || (*ui)->sonarRadius || (*ui)->jammerRadius){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;
@@ -382,7 +382,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if((*ui)->category==cat){
 					filterTrue=true;
 				}
-				if(filterTrue ^ not){
+				if(filterTrue ^ _not){
 					++ui;
 				} else {
 					list<CUnit*>::iterator prev=ui++;

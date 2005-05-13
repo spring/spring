@@ -13,8 +13,10 @@
 #include <time.h>
 #include <stdlib.h>
 #include "glList.h"
+#ifndef NO_IO
 #include <io.h>
 #include "winerror.h"
+#endif
 #include "float.h"
 #include "glFont.h"
 #include "InfoConsole.h"
@@ -35,7 +37,7 @@
 #include "QuadField.h"
 #include "ReadMap.h"
 #include "GuiHandler.h"
-#include "selectedUnits.h"
+#include "SelectedUnits.h"
 #include "Team.h"
 #include "LosHandler.h"
 #include "TimeProfiler.h"
@@ -367,6 +369,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 		return 0;
 	}
 	if (userWriting){
+#ifndef NO_WINSTUFF
 		if ((k=='V') && keys[VK_CONTROL]){
 			OpenClipboard(0);
 			void* p;
@@ -376,6 +379,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 			CloseClipboard();
 			return 0;
 		}
+#endif
 		if(k==8){ //backspace
 			if(userInput.size()!=0)
 				userInput.erase(userInput.size()-1,1);
@@ -764,8 +768,13 @@ bool CGame::Update()
 	LARGE_INTEGER timeNow;
 	QueryPerformanceCounter(&timeNow);
 	LARGE_INTEGER difTime;
+#ifndef NO_WINSTUFF
 	difTime.QuadPart=timeNow.QuadPart-lastModGameTimeMeasure.QuadPart;
 	double dif=double(difTime.QuadPart)/double(timeSpeed.QuadPart);
+#else
+	difTime=timeNow-lastModGameTimeMeasure;
+	double dif=double(difTime)/double(timeSpeed);
+#endif
 	gu->modGameTime+=dif*gs->speedFactor;
 	gu->gameTime+=dif;
 	if(playing && !gameOver)
@@ -829,7 +838,11 @@ bool CGame::Draw()
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		LARGE_INTEGER startDraw;
 		QueryPerformanceCounter(&startDraw);
+#ifndef NO_WINSTUFF
 		gu->timeOffset = ((double)(startDraw.QuadPart - lastUpdate.QuadPart))/timeSpeed.QuadPart*GAME_SPEED*gs->speedFactor;
+#else
+		gu->timeOffset = ((double)(startDraw - lastUpdate))/timeSpeed*GAME_SPEED*gs->speedFactor;
+#endif
 	} else  {
 		gu->timeOffset=0;
 		QueryPerformanceCounter(&lastUpdate);
@@ -1014,7 +1027,11 @@ bool CGame::Draw()
 
 	LARGE_INTEGER start;
 	QueryPerformanceCounter(&start);
+#ifndef NO_WINSTUFF
 	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
+#else
+	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
+#endif
 	lastMoveUpdate=start;
 
 #ifndef NO_AVI
@@ -1050,10 +1067,11 @@ void CGame::SimFrame()
 {
 	ASSERT_SYNCED_MODE;
 //	info->AddLine("New frame %i %i %i",gs->frameNum,gs->randInt(),uh->CreateChecksum());
+#ifndef NO_WINFPSTUFF
 	_clearfp();
 	_control87(0,_EM_ZERODIVIDE);	//make sure any fpu errors generate an exception immidiatly instead of creating nans (easier to debug)
 	_control87(0,_EM_INVALID);
-
+#endif
 #ifdef TRACE_SYNC
 	uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
@@ -1176,10 +1194,11 @@ END_TIME_PROFILE("Sim time")
 	}
 
 #endif
-
+#ifndef NO_WINFPSTUFF
 	_clearfp();
 	_control87(_MCW_EM ,_EM_ZERODIVIDE);
 	_control87(_MCW_EM ,_EM_INVALID);
+#endif
 }
 
 bool CGame::ClientReadNet()
@@ -1215,7 +1234,11 @@ bool CGame::ClientReadNet()
 		
 		if(timeLeft>1)
 			timeLeft--;
+#ifndef NO_WINSTUFF
 		timeLeft+=consumeSpeed*((float)(currentFrame.QuadPart - lastframe.QuadPart)/timeSpeed.QuadPart);
+#else
+		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/timeSpeed);
+#endif
 		lastframe=currentFrame;
 		
 		que=0;

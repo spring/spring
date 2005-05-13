@@ -39,9 +39,9 @@
 //////////////////////////////////////////////////////////////////////
 
 
-
+#ifndef NO_WINSTUFF
 extern HWND hWnd;
-
+#endif
 
 
 CSunParser::CSunParser()

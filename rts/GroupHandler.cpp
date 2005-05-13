@@ -5,7 +5,9 @@
 
 #include "GroupHandler.h"
 #include <windows.h>
+#ifndef NO_IO
 #include <io.h>
+#endif
 #include "Group.h"
 #include "IGroupAI.h"
 #include "InfoConsole.h"
@@ -106,6 +108,7 @@ void CGroupHandler::GroupCommand(int num)
 
 void CGroupHandler::FindDlls(void)
 {
+#ifndef NO_DLL
 	struct _finddata_t files;    
 	long hFile;
 	int morefiles=0;
@@ -126,6 +129,7 @@ void CGroupHandler::FindDlls(void)
 		MessageBox(0,"Fatal error","Need at least one valid ai dll in ./aidll",0);
 		exit(0);
 	}
+#endif //NO_DLL
 }
 
 CGroup* CGroupHandler::CreateNewGroup(string ainame)

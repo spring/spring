@@ -694,15 +694,22 @@ void CCobInstance::ShowFlare(int piece)
 	float3 dir=unit->lastMuzzleFlameDir;
 
 	float size=unit->lastMuzzleFlameSize;
-	
+#ifndef NO_WINSTUFF
 	new CMuzzleFlame(pos, unit->speed,dir, LOWORD(size));
+#endif //NO_WINSTUFF
 #endif
 }
 
+#ifndef ENABLE_SMALLFIXES
 #define UNPACKX(xz) ((signed short)((DWORD_PTR)(xz) >> 16))
 #define UNPACKZ(xz) ((signed short)((DWORD_PTR)(xz) & 0xffff))
+#else
+#define UNPACKX(xz) ((signed short)((xz) >> 16))
+#define UNPACKZ(xz) ((signed short)((xz) & 0xffff))
+#endif
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
 #define SCALE 65536
+
 
 int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
@@ -728,14 +735,18 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return 0;
 		break;
-	case PIECE_XZ:{
+	case PIECE_XZ:
+	  {
 		float3 relPos = unit->localmodel->GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return PACKXZ(pos.x, pos.z);}
-	case PIECE_Y:{
+		return PACKXZ(pos.x, pos.z);
+	  }
+	case PIECE_Y:
+	  {
 		float3 relPos = unit->localmodel->GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return (int)(pos.y * SCALE);}
+		return (int)(pos.y * SCALE);
+	  }
 	case UNIT_XZ: {
 		if (p1 == 0)	
 			return PACKXZ(unit->pos.x, unit->pos.z);
@@ -761,11 +772,15 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case XZ_ATAN:
 		return TAANG2RAD*atan2f(UNPACKX(p1), UNPACKZ(p1)) + 32768 - unit->heading;
 	case XZ_HYPOT:
+#ifndef NO_WINSTUFF
 		return _hypot(UNPACKX(p1), UNPACKZ(p1)) * SCALE;
+#endif
 	case ATAN:
 		return TAANG2RAD*atan2f(p1, p2);
 	case HYPOT:
+#ifndef NO_WINSTUFF
 		return _hypot(p1, p2);
+#endif
 	case GROUND_HEIGHT:
 		return ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE;
 	case BUILD_PERCENT_LEFT:

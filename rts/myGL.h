@@ -12,7 +12,9 @@
 #define GLEW_STATIC
 
 #include "glew.h"
+#ifndef unix
 #include "wglew.h"
+#endif
 #include "float3.h"
 
 inline void glVertexf3(const float3 &v)

@@ -64,11 +64,11 @@ public:
 		vector<AnimFrame> frames;
 	};
 
-	static struct ArrayVertexSub {
+	struct ArrayVertexSub {
 		float texCoord[2];
 		int num;
 	};
-	static struct ArrayVertex {
+	struct ArrayVertex {
 		vector<ArrayVertexSub> sub;
 	};
 

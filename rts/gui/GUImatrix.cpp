@@ -1,6 +1,6 @@
-#include ".\guimatrix.h"
+#include "GUImatrix.h"
 
-#include "guifont.h"
+#include "GUIfont.h"
 
 
 

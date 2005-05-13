@@ -4,7 +4,7 @@
 #include "FileHandler.h"
 #include <math.h>
 #include <fstream>
-#ifdef linux
+#ifdef unix
 #include <stdlib.h>
 #endif
 
@@ -171,6 +171,7 @@ CPathEstimator::~CPathEstimator() {
 	delete[] vertex;
 }
 
+const unsigned int CPathEstimator::MAX_SEARCHED_BLOCKS;
 
 /*
 Finds a square accessable by the given movedata within the given block.

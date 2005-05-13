@@ -174,9 +174,9 @@ void GUItable::PrivateDraw()
 
 		glBegin(GL_LINES);
 
-			glVertex3f(max(4, inSet/2.0), 10+rowHeight, 0);
+			glVertex3f(max(4., inSet/2.0), 10+rowHeight, 0);
 
-			glVertex3f(width-max(4, inSet/2.0), 10+rowHeight, 0);		
+			glVertex3f(width-max(4., inSet/2.0), 10+rowHeight, 0);		
 
 		glEnd();
 

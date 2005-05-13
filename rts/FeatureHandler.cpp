@@ -189,7 +189,11 @@ START_TIME_PROFILE
 		bool remove=!feature->Update();
 		if(remove){
 			feature->inUpdateQue=false;
+#ifndef ENABLE_CPPFIX
 			fi=updateFeatures.erase(fi);
+#else
+			updateFeatures.erase(++fi); //TODO check that
+#endif
 		} else {
 			++fi;
 		}
@@ -468,7 +472,12 @@ void CFeatureHandler::DrawRaw(int extraSize)
 							glCallList(def->model->rootobject->displist);
 							glPopMatrix();
 						} else {		//we have become static
+						        
+#ifndef ENABLE_CPPFIX							
 							fi=dq->nonStaticFeatures.erase(fi);
+#else			
+							dq->nonStaticFeatures.erase(++fi); //check this
+#endif
 							dq->staticFeatures.insert(f);
 							f->drawQueType=1;
 							if(dq->displist){
@@ -534,7 +543,12 @@ void CFeatureHandler::DrawFarQuads(void)
 					if(f->inUpdateQue || f->allyteam!=-1){
 						DrawFar(f,va);
 					} else {		//we have become static
+
+#ifndef ENABLE_CPPFIX
 						fi=dq->nonStaticFeatures.erase(fi);
+#else
+						dq->nonStaticFeatures.erase(++fi);
+#endif
 						dq->staticFeatures.insert(f);
 						f->drawQueType=1;
 						if(dq->displist){

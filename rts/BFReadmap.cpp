@@ -2,7 +2,7 @@
 #include "BFReadmap.h"
 #include "sm2header.h"
 #include "myGL.h"
-#include <gl\glu.h>
+#include <GL/glu.h>
 #include "FileHandler.h"
 #include "RegHandler.h"
 #include "Bitmap.h"

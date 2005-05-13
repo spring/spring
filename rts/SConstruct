@@ -2,7 +2,7 @@
 windows_files=[]
 windows_include_path=['include/windows']
 linux_files=[]
-linux_include_path=['include/linux']
+linux_include_path=['include/linux','/usr/include','/usr/include/freetype2','/usr/include/GL']
 
 #########
 # options
@@ -12,6 +12,12 @@ platform = ARGUMENTS.get('OS', Platform())
 sound = ARGUMENTS.get('SOUND', Platform())
 avi = ARGUMENTS.get('AVI', Platform())
 shadows = ARGUMENTS.get('SHADOWS', Platform())
+net = ARGUMENTS.get('NET', Platform())
+input = ARGUMENTS.get('INPUT', Platform())
+smallfixes = ARGUMENTS.get('SMALLFIXES', Platform())
+textures_filtering = ARGUMENTS.get('TEXTURESFILTERING', Platform())
+io = ARGUMENTS.get('IO', Platform())
+bitmap = ARGUMENTS.get('BITMAP', Platform())
 
 if platform != 'windows':
 	if platform != 'linux':
@@ -24,6 +30,18 @@ if platform == 'linux':
 	sound='no'
 	avi='no'
 	shadows='no'
+	net='no'
+	input='no'
+	winstuff='no' #windows stuff that MUST be ported
+	smallfixes='yes' #disable and clean code
+	textures_filtering='no'
+	nice_trees='no'
+	io='no'
+	bitmap='no'
+	cppfix='yes'
+	font='no'
+	mutexthreads='no'
+	enab3DO='no' #weird corrupted C3DOParser.cpp file???
 
 ############################################################ 
 # common files list all cpp files in rts dir
@@ -31,21 +49,34 @@ if platform == 'linux':
 import os
 import re
 tmp=os.listdir('.')
+guif=os.listdir('gui')
+for f in guif:
+	tmp.append("./gui/"+f)
 
 exclude_list = []
 if avi == 'no' or avi == 'disabled':
 	exclude_list.append("AVIGenerator.cpp")
 if sound == 'no' or sound == 'disabled':
 	exclude_list.append("wavread.cpp")
+if  textures_filtering=='no' or textures_filtering=='disabled':
+	exclude_list+=Split("""	TextureFilters_hq2x.cpp
+				TextureFilters_2xsai.cpp
+				TextureFilters_hq4x.cpp""")
+if nice_trees=='no':
+	exclude_list+=Split("""AdvTreeGenerator.cpp AdvTreeDrawer.cpp""")
 
 #linux disable unused code
 if platform == 'linux':	
 	exclude_list = exclude_list + Split(""""
 			ARB_vertex_program_extension.cpp
 			mmgr.cpp
+			multipath.cpp
+			estimater.cpp
 			""")
+	#dead code?
+	exclude_list.append("Aircraft.cpp")
 			
-common_include_path = ['.','include']
+common_include_path = ['.','gui','include']
 common_files = []
 nbObjects=0
 nbBuiltObjects=0
@@ -68,7 +99,7 @@ else:
 		Exit(1)	
 	
 print nbObjects, " objects have to be produced"
-print nbBuiltObjects, " objects are allready produced from a previous build\n"
+print nbBuiltObjects, " objects are already produced from a previous build (", nbBuiltObjects*1./(nbObjects*1.)*100.,"%)\n"
 		
 	
 commonenv = Environment(CC = 'gcc')
@@ -80,5 +111,58 @@ if avi == 'no' or avi == 'disabled':
 	env.Append(CCFLAGS = ' -DNO_AVI')
 if shadows == 'no' or shadows == 'disabled':
 	env.Append(CCFLAGS = ' -DNO_SHADOWS')
-print "CCFLAGS : ", env['CCFLAGS'],"\n"
-env.Program('ta', files, CPPPATH = common_include_path) 
+if net == 'no' or net == 'disabled':
+	env.Append(CCFLAGS = ' -DNO_NET')
+if input == 'no' or input == 'disabled':
+        env.Append(CCFLAGS = ' -DNO_INPUT')
+if winstuff =='no' or winstuff== 'disabled':
+	env.Append(CCFLAGS = ' -DNO_WINSTUFF -DNO_DLL -DNO_WINFPSTUFF -DNO_CLIPBOARD -DNO_WINDOWS')
+if mutexthreads=='no' or mutexthreads== 'disabled':
+	env.Append(CCFLAGS = ' -DNO_MUTEXTHREADS')
+if smallfixes=='yes' or smallfixes=='enabled':
+	env.Append(CCFLAGS = " -DENABLE_SMALLFIXES")
+if font=='no' or font=='disabled':
+	env.Append(CCFLAGS = " -DNO_FONT")
+if nice_trees=='no':
+	env.Append(CCFLAGS = " -DNO_NICETREES")
+if io=='no':
+	env.Append(CCFLAGS = " -DNO_IO") #NO IO/file/HPI
+if bitmap=='no':
+	env.Append(CCFLAGS = " -DNO_BITMAP")
+if enab3DO=='no':
+	env.Append(CCFLAGS = " -DNO_3DO")
+if cppfix=='yes':
+	env.Append(CCFLAGS = " -DENABLE_CPPFIX")
+if textures_filtering=='no':
+	env.Append(CCFLAGS = " -DNO_TEXTURES")
+
+env.Append(CCFLAGS = " -DEDISABLE_PATH")
+
+#check main headers
+print "\nCheck some header files"
+conf = Configure(env)
+if not conf.CheckCHeader('freetype/freetype.h'):
+	print ' dev freetype V1 must be installed!'
+	Exit(1)
+if not conf.CheckCHeader('GL/glut.h'):
+	print ' a dev implementation of GLUT must be installed!'
+	Exit(1)
+if not conf.CheckCHeader('GL/glew.h'):
+	print ' Cannot find GLEW http://glew.sourceforge.net'
+	Exit(1)
+#FIXME why is it not working
+#if not conf.CheckCHeader('jpeglib.h'):
+#	print ' jpeglib dev files  must be installed!'
+#	Exit(1)
+#if conf.CheckCHeader('ft2build.h'):
+#	print 'Freetype 2 detected'
+conf.env.Append(CCFLAGS = " -D_HAVE_FT2BUILD_H")
+if not conf.CheckLib('libc'):
+	print "You need libc to compile this program"
+	Exit(1)
+if not conf.CheckLib('GLEW'):
+	print "You need GLEW to compile this program"
+	Exit(1)
+env = conf.Finish()
+print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
+env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype'],CPPPATH = common_include_path) 

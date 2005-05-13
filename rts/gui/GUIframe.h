@@ -12,8 +12,8 @@
 #include <list>
 #include <string>
 
-#include "globalstuff.h"
-#include "mygl.h"
+#include "GlobalStuff.h"
+#include "myGL.h"
 
 using namespace std;
 

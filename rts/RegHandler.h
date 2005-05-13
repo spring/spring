@@ -18,11 +18,9 @@ public:
 	void SetString(string name,string value);
 	string GetString(string name,string def);
 	unsigned int GetInt(string name,unsigned int def);
-#ifndef linux
 	RegHandler(string keyname,HKEY key=HKEY_CURRENT_USER);
 	virtual ~RegHandler();
 	HKEY regkey;
-#endif
 };
 extern RegHandler regHandler;
 #endif // !defined(AFX_REGHANDLER_H__508F534F_9F3D_11D6_AD55_DE4DC0775D55__INCLUDED_)

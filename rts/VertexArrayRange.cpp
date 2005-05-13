@@ -26,7 +26,7 @@ CVertexArrayRange::~CVertexArrayRange()
 	glDeleteFencesNV(1,&fence);
 }
 
-CVertexArrayRange::Initialize()
+void CVertexArrayRange::Initialize()
 {
 	stripIndex=0;
 	drawIndex=0;

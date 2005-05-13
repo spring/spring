@@ -1,8 +1,10 @@
 #include "StdAfx.h"
 #include "FileHandler.h"
 #include <fstream>
+#ifndef NO_IO
 #include <io.h>
-#include "hpiHandler.h"
+#endif
+#include "HpiHandler.h"
 #include <algorithm>
 #include <cctype>
 //#include "mmgr.h"
@@ -115,6 +117,7 @@ bool CFileHandler::Eof()
 
 std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 {
+#ifndef NO_IO
 	std::vector<std::string> found;
 
 	struct _finddata_t files;    
@@ -164,6 +167,7 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 	}
 
 	return found;
+#endif //NO_IO
 }
 
 int CFileHandler::FileSize()

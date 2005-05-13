@@ -54,7 +54,12 @@ void CTimeProfiler::Draw()
 
 	glPushMatrix();
 	for(pi=profile.begin();pi!=profile.end();++pi){
+#ifdef NO_WINSTUFF
+		font->glPrint("%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total)/timeSpeed,pi->second.percent*100);
+#else
 		font->glPrint("%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total.QuadPart)/timeSpeed.QuadPart,pi->second.percent*100);
+#endif
+
 		glTranslatef(0,-1.2f,0);
 
 	}
@@ -88,7 +93,11 @@ void CTimeProfiler::Draw()
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 		for(int a=0;a<128;++a){
+#ifdef NO_WINSTUFF
+			float p=((double)pi->second.frames[a])/timeSpeed*30;
+#else
 			float p=((double)pi->second.frames[a].QuadPart)/timeSpeed.QuadPart*30;
+#endif
 			va->AddVertexT(float3(0.6+a*0.003,0.02+p*0.4,0),0,0);
 		}
 		glColor3f(pi->second.color.x,pi->second.color.y,pi->second.color.z);
@@ -101,15 +110,25 @@ void CTimeProfiler::Update()
 {
 	map<string,TimeRecord>::iterator pi;
 	for(pi=profile.begin();pi!=profile.end();++pi){
-		pi->second.frames[(gs->frameNum+1)&127].QuadPart=0;
+#ifdef NO_WINSTUFF
+	  pi->second.frames[(gs->frameNum+1)&127]=0;
+#else
+	  pi->second.frames[(gs->frameNum+1)&127].QuadPart=0;
+#endif
 	}
 
 	if(lastBigUpdate<gu->gameTime-1){
 		lastBigUpdate=gu->gameTime;
 		map<string,TimeRecord>::iterator pi;
 		for(pi=profile.begin();pi!=profile.end();++pi){
+#ifndef NO_WINSTUFF
 			pi->second.percent=((double)pi->second.current.QuadPart)/timeSpeed.QuadPart;
 			pi->second.current.QuadPart=0;
+#else 
+			pi->second.percent=((double)pi->second.current)/timeSpeed;
+			pi->second.current=0;
+#endif
+
 		}
 	}
 }
@@ -118,17 +137,32 @@ void CTimeProfiler::AddTime(string name, __int64 time)
 {
 	map<string,TimeRecord>::iterator pi;
 	if((pi=profile.find(name))!=profile.end()){
+#ifndef NO_WINSTUFF
 		pi->second.total.QuadPart+=time;
 		pi->second.current.QuadPart+=time;
 		pi->second.frames[gs->frameNum&127].QuadPart+=time;
+#else
+		pi->second.total+=time;
+		pi->second.current+=time;
+		pi->second.frames[gs->frameNum&127]+=time;
+#endif
 	} else {
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
+#ifndef NO_WINSTUFF
 		profile[name].total.QuadPart=time;
 		profile[name].current.QuadPart=time;
+#else
+		profile[name].total=time;
+		profile[name].current=time;
+#endif
 		profile[name].percent=0;
 		for(int a=0;a<128;++a)
-			profile[name].frames[a].QuadPart=0;
+#ifndef  NO_WINSTUFF
+		  profile[name].frames[a].QuadPart=0;
+#else
+		  profile[name].frames[a]=0;
+#endif
 		profile[name].color.x=gu->usRandFloat();
 		profile[name].color.y=gu->usRandFloat();
 		profile[name].color.z=gu->usRandFloat();
@@ -144,9 +178,10 @@ void CTimeProfiler::StartTimer()
 		return;
 	}
 	LARGE_INTEGER starttime;
+#ifndef NO_WINSTUFF
 	QueryPerformanceCounter(&starttime);
-
 	startTimes[startTimeNum++]=(starttime.QuadPart);
+#endif
 }
 
 void CTimeProfiler::EndTimer(char* name)
@@ -155,8 +190,12 @@ void CTimeProfiler::EndTimer(char* name)
 		return;
 
 	LARGE_INTEGER stop;
+#ifndef NO_WINSTUFF
 	QueryPerformanceCounter(&stop);
 	AddTime(name,stop.QuadPart - startTimes[--startTimeNum]);
+#else
+	AddTime(name,stop - startTimes[--startTimeNum]);
+#endif
 }
 
 bool CTimeProfiler::IsAbove(int x, int y)

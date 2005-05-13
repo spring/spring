@@ -26,7 +26,7 @@ CVertexArray::~CVertexArray()
 	delete[] stripArray;
 }
 
-CVertexArray::Initialize()
+void CVertexArray::Initialize()
 {
 	stripIndex=0;
 	drawIndex=0;
@@ -34,7 +34,7 @@ CVertexArray::Initialize()
 
 bool CVertexArray::IsReady()
 {
-	return true;
+	return true; 
 }
 
 void CVertexArray::EndStrip()

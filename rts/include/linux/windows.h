@@ -10,20 +10,119 @@ appears in the common code
 #ifndef __WINDOWS_H__
 #define __WINDOWS_H__
 
-#warning TODO abstract code from windows code => remove windows.h
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef NO_WINSTUFF 
 
+//following lines are perfectly wrong and must be removed
+typedef void *HANDLE;
+#define CALLBACK
+#define FreeLibrary(a) (0)
+#define LoadLibrary(a) (0)
+#define GetProcAddress(a,b) (0)
+#define QueryPerformanceCounter(a) while(0){}
+typedef void* HINSTANCE ;
+typedef void *HDC; 
+#define  WINAPI
+
+//following might stay like as is in a first time
+typedef unsigned char BYTE;
+typedef int WORD;
+typedef bool BOOL;
+typedef void *LPVOID;
+typedef long int DWORD;
+typedef unsigned int UINT;
+typedef void VOID;
+typedef long int DWORD;
+typedef DWORD *DWORD_PTR;
+typedef int LRESULT;
+#include <string>
+using namespace std;
+typedef string LPSTR;
+typedef int* LPINT;
+#else
+#error please check the above types and maybe remove them from the code cf. http://www.jniwrapper.com/wintypes.jsp
+#endif
+
+#ifdef NO_WINDOWS
+typedef void* HWND;
+typedef void* WPARAM;
+typedef void* LPARAM;
+#endif
+
+#define MAKEWORD(a, b)      ((WORD)(((BYTE)((DWORD_PTR)(a) & 0xff)) |\\
+			((WORD)((BYTE)((DWORD_PTR)(b) & 0xff))) << 8))
+#define MAKELONG(a, b)      ((LONG)(((WORD)((DWORD_PTR)(a) & 0xffff)) |\\
+			((DWORD)((WORD)((DWORD_PTR)(b) & 0xffff))) << 16))
+#define LOWORD(l)           ((WORD)((DWORD_PTR)(l) & 0xffff))
+#define HIWORD(l)           ((WORD)((DWORD_PTR)(l) >> 16))
+#define LOBYTE(w)           ((BYTE)((DWORD_PTR)(w) & 0xff))
+#define HIBYTE(w)           ((BYTE)((DWORD_PTR)(w) >> 8))
+
+
+#ifdef NO_INPUT
+#define VK_SHIFT 1
+#define VK_RETURN 1 
+#define VK_UP 1
+#define VK_DOWN 1
+#define VK_LEFT 1
+#define VK_RIGHT 1
+#define VK_CONTROL 1
+#define VK_MENU 1
+#define VK_NUMPAD0 1
+#define VK_NUMPAD1 1
+#define VK_NUMPAD2 1
+#define VK_NUMPAD3 1
+#define VK_NUMPAD4 1
+#define VK_NUMPAD5 1
+#define VK_NUMPAD6 1
+#define VK_NUMPAD7 1
+#define VK_NUMPAD8 1
+#define VK_NUMPAD9 1
+#define VK_SPACE 1
+#define VK_PAUSE 1
+#define VK_RMENU 1
+#define VK_LMENU 1
+#define VK_ESCAPE 1
+#define VK_RWIN 1
+#define VK_LWIN 1
+#define VK_BACK 1
+#else
+#error fake VK_XXXX : port input to GLUT
+#endif //NO_INPUT
+
+#ifdef ENABLE_SMALLFIXES
+#define Sleep(a) sleep(a)
+#define FALSE false
+#define TRUE true
+#define MessageBox(hWnd, lpText, lpCaption, uType) fprintf(stderr,lpText)
+#define ShowCursor(a) while(0){}
+
+/* TODO check if replacing
+ 	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
+
+by 
+	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
+
+is KO for LARGE_INTEGER
+
+Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed', 
+   which is of non-class type `long int'
+*/
 #define LARGE_INTEGER long int
 #define __int64 long int
+#else
+#error unix : small fixes to replace by cleaner code or dev
+#endif
 
-typedef void *HDC; //FIXME ugly glich to remove
-
-#define MessageBox(hWnd, lpText, lpCaption, uType) fprintf(stderr,lpText)
-
+#ifdef NO_MUTEXTHREADS
+#define CreateMutex(a,b,c) (0)
+#define ReleaseMutex(a) (0)
+#define	CloseHandle(netMutex) while(0){}
+#define WaitForSingleObject(a,b)  while(0){}
+#endif
 
 //FIXME read cpuinfo only one time for many calls (store value in static var)
 #define NOMFICH_CPUINFO "/proc/cpuinfo" 
@@ -35,20 +134,15 @@ inline bool QueryPerformanceFrequency(LARGE_INTEGER* frequence)
   char *pos;
   int ok=0;
 
-  // Ouvre le fichier
   F = fopen(NOMFICH_CPUINFO, "r");
   if (!F) return false;
 
-  // Lit une ligne apres l'autre
   while (!feof(F))
   {
-    // Lit une ligne de texte
     fgets (ligne, sizeof(ligne), F);
 
-    // C'est la ligne contenant la frequence?
     if (!strncmp(ligne, prefixe_cpu_mhz, strlen(prefixe_cpu_mhz)))
     {
-      // Oui, alors lit la frequence
       pos = strrchr (ligne, ':') +2;
       if (!pos) break;
       if (pos[strlen(pos)-1] == '\n') pos[strlen(pos)-1] = '\0';

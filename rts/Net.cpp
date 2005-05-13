@@ -30,10 +30,16 @@ CNet::CNet()
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
+#ifndef NO_WINSTUFF
 	curTime=double(t.QuadPart)/double(f.QuadPart);
-
+#else
+	curTime=double(t)/double(f);
+#endif
 	WORD wVersionRequested;
-	WSADATA wsaData;int err; 
+#ifndef NO_NET
+	WSADATA wsaData;
+	int err; 
+
 	wVersionRequested = MAKEWORD( 2, 2 ); 
 	err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
 		MessageBox(NULL,"Couldnt initialize winsock.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
@@ -64,12 +70,14 @@ CNet::CNet()
 	recordDemo=0;
 	playbackDemo=0;
 	mySocket=0;
+#endif
 
 	netMutex=CreateMutex(0,false,"SpringNetLocalBufferMutex");
 }
 
 CNet::~CNet()
 {
+#ifndef NO_NET
 	if(connected && (imServer || !connections[0].localConnection)){
 		unsigned char t=NETMSG_QUIT;
 		SendData(&t,1);
@@ -94,11 +102,13 @@ CNet::~CNet()
 		for(pi2=c->waitingPackets.begin();pi2!=c->waitingPackets.end();++pi2)
 			delete (pi2->second);
 	}
+#endif NO_NET
 	CloseHandle(netMutex);
 }
 
 int CNet::InitServer(int portnum)
 {
+#ifndef NO_NET
 	connected=true;
 	waitOnCon=true;
 	imServer=true;
@@ -126,7 +136,7 @@ int CNet::InitServer(int portnum)
 
 	u_long u=1;
 	ioctlsocket(mySocket,FIONBIO,&u);
-
+#endif //NO_NET
 	return 0;
 }
 
@@ -137,6 +147,7 @@ void CNet::StopListening()
 
 int CNet::InitClient(const char *server, int portnum,bool localConnect)
 {
+#ifndef NO_NET
   LPHOSTENT lpHostEntry;
 
 	LARGE_INTEGER t,f;
@@ -200,6 +211,7 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 		inInitialConnect=true;
 	}
 	return 1;
+#endif
 }
 
 int CNet::SendData(unsigned char *data, int length)
@@ -277,8 +289,9 @@ void CNet::Update(void)
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-	curTime=double(t.QuadPart)/double(f.QuadPart);
-
+#ifndef NO_WINSTUFF
+	curTime=double(t)/double(f);
+#endif
 	if(onlyLocal){
 		if(playbackDemo)
 			ReadDemoFile();
@@ -290,6 +303,7 @@ void CNet::Update(void)
 	unsigned char inbuf[16000];
 	if(connected)
 	while(true){
+#ifndef NO_NET
 		if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR){
 			if(WSAGetLastError()==WSAEWOULDBLOCK || WSAGetLastError()==WSAECONNRESET) 
 				break;
@@ -298,6 +312,7 @@ void CNet::Update(void)
 			MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 			exit(0);
 		}
+#endif
 		int conn=ResolveConnection(&from);
 		if(conn==-1){
 			if(waitOnCon && r>=12 && (*(int*)inbuf)==0 && (*(int*)&inbuf[4])==-1 && inbuf[8]==0 && inbuf[9]==NETMSG_ATTEMPTCONNECT && inbuf[11]==NETWORK_VERSION){
@@ -383,6 +398,7 @@ void CNet::ProcessRawPacket(unsigned char* data, int length, int conn)
 
 int CNet::ResolveConnection(sockaddr_in* from)
 {
+#ifndef NO_NET
 	unsigned int addr=from->sin_addr.S_un.S_addr;
 	for(int a=0;a<MAX_PLAYERS;++a){
 		if(connections[a].active){
@@ -392,6 +408,7 @@ int CNet::ResolveConnection(sockaddr_in* from)
 		}
 	}
 	return -1;
+#endif
 }
 
 int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
@@ -507,6 +524,7 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 
 	memcpy(&netbuf[hsize],data,length);
 //	if(rand()&7)
+#ifndef NO_NET
 	if(sendto(mySocket,(char*)netbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
 		if(WSAGetLastError()==WSAEWOULDBLOCK)
 			return;
@@ -515,6 +533,7 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 		MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 	}
+#endif
 }
 
 void CNet::CreateDemoFile(char* name)

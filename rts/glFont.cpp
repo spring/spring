@@ -11,6 +11,7 @@
 #include "glFont.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 
 
 
@@ -41,6 +42,8 @@ using namespace std;
 CglFont* font;
 
 
+#define DRAW_SIZE 1
+
 
 CglFont::CglFont(HDC hDC, int start, int num)
 
@@ -50,10 +53,9 @@ CglFont::CglFont(HDC hDC, int start, int num)
 
 	startchar=start;
 
-
-
+#ifndef NO_FONT
 	HFONT	font;										// Windows Font ID
-
+#endif
 	base = glGenLists(num);			
 
 	unsigned char tex[1024][4];
@@ -87,7 +89,7 @@ CglFont::CglFont(HDC hDC, int start, int num)
 
 
 	int size=64;
-
+#ifndef NO_FONT
 	for(int sizenum=0;size!=0;sizenum++){
 
 		size/=2;
@@ -123,7 +125,6 @@ CglFont::CglFont(HDC hDC, int start, int num)
 
 
 		SelectObject(hDC, font);							// Selects The Font We Want
-
 
 
 		if(sizenum==0){
@@ -217,7 +218,6 @@ CglFont::CglFont(HDC hDC, int start, int num)
 
 
 		}
-
 	}
 
 
@@ -226,7 +226,6 @@ CglFont::CglFont(HDC hDC, int start, int num)
 
 		int ch=a+start;
 
-#define DRAW_SIZE 1
 
 		float charpart=(charWidths[ch])/32.0f;
 
@@ -255,19 +254,18 @@ CglFont::CglFont(HDC hDC, int start, int num)
 	if(ofs)
 
 		delete ofs;
-
+#endif
 }
 
 
 
 CglFont::~CglFont()
-
 {
-
+#ifndef NO_FONT
 	glDeleteLists(base, numchars);
 
 	glDeleteTextures (numchars, ttextures);
-
+#endif
 }
 
 //#define GL_TEXTURE_FILTER_CONTROL_EXT          0x8500
@@ -279,7 +277,7 @@ CglFont::~CglFont()
 void CglFont::glPrint(const char *fmt, ...)
 
 {
-
+#ifndef NO_FONT
 	char		text[256];								// Holds Our String
 
 	va_list		ap;										// Pointer To List Of Arguments
@@ -313,7 +311,7 @@ void CglFont::glPrint(const char *fmt, ...)
 	glPopMatrix();
 
 	glPopAttrib();										// Pops The Display List Bits
-
+#endif
 }
 
 

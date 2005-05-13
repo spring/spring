@@ -7,6 +7,8 @@
 #include "Game.h"
 #include "GameSetup.h"
 #include "ScriptHandler.h"
+#include <stdarg.h>
+
 
 CGameServer* gameServer=0;
 
@@ -41,11 +43,12 @@ CGameServer::CGameServer(void)
 	serverNet=new CNet();
 	serverNet->InitServer(port);
 	net->InitClient("localhost",port,true);
+#ifndef NO_NET
 	serverNet->InitNewConn(&net->connections[0].addr,true,0);
 	serverNet->connections[0].localConnection=&net->connections[0];
 	net->connections[0].localConnection=&serverNet->connections[0];
 	net->onlyLocal=true;
-
+#endif
 	netbuf[0]=NETMSG_SCRIPT;
 	netbuf[1]=CScriptHandler::Instance()->chosenName.size()+3;
 	for(unsigned int b=0;b<CScriptHandler::Instance()->chosenName.size();b++)
@@ -66,15 +69,20 @@ CGameServer::CGameServer(void)
 
 	exeChecksum=game->CreateExeChecksum();
 
+#ifndef NO_MUTEXTHREADS
 	gameServerMutex=CreateMutex(0,false,"SpringGameServerMutex");
+
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
 	thisThread=CreateThread(0,0,GameServerThreadProc,this,0,0);
+#endif
 #endif
 }
 
 CGameServer::~CGameServer(void)
 {
+#ifndef NO_MUTEXTHREADS
 	CloseHandle(gameServerMutex);
+#endif
 	delete serverNet;
 	serverNet=0;
 }
@@ -143,8 +151,11 @@ bool CGameServer::Update(void)
 	if (game->playing){
 		LARGE_INTEGER currentFrame;
 		QueryPerformanceCounter(&currentFrame);
-		
+#ifndef NO_WINSTUFF		
 		double timeElapsed=((double)(currentFrame.QuadPart - lastframe.QuadPart))/timeSpeed.QuadPart;
+#else
+		double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;
+#endif
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		info->AddLine("float value is %f",timeElapsed);
@@ -257,7 +268,9 @@ bool CGameServer::ServerReadNet()
 				ENTER_MIXED;
 				gs->players[a]->active=false;
 				ENTER_UNSYNCED;
+#ifndef NO_NET
 				serverNet->connections[a].active=false;
+#endif
 				inbufpos++;
 				SendSystemMsg("Player %s quit",gs->players[a]->playerName.c_str());
 				break;
@@ -417,7 +430,9 @@ bool CGameServer::ServerReadNet()
 
 void CGameServer::StartGame(void)
 {
+#ifndef NO_MUTEXTHREADS
 	WaitForSingleObject(gameServerMutex,INFINITE);
+#endif
 	serverNet->StopListening();
 	for(int a=0;a<MAX_PLAYERS;a++){
 		if(!gs->players[a]->active)
@@ -444,7 +459,9 @@ void CGameServer::StartGame(void)
 	outbuf[0]=NETMSG_STARTPLAYING;
 	serverNet->SendData(outbuf,1);
 	timeLeft=0;
+#ifndef NO_MUTEXTHREADS
 	ReleaseMutex(gameServerMutex);
+#endif
 }
 
 void CGameServer::CheckForGameEnd(void)
@@ -483,8 +500,10 @@ void CGameServer::CheckForGameEnd(void)
 
 void CGameServer::CreateNewFrame(bool fromServerThread)
 {
+#ifndef NO_MUTEXTHREADS
 	if(!fromServerThread)
 		WaitForSingleObject(gameServerMutex,INFINITE);
+#endif
 	serverframenum++;
 	outbuf[0]=NETMSG_NEWFRAME;
 	(*((int*)&outbuf[1]))=serverframenum;
@@ -492,21 +511,30 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 		info->AddLine("Server net couldnt send new frame");
 		globalQuit=true;
 	}
+#ifndef NO_MUTEXTHREADS
 	if(!fromServerThread)
 		ReleaseMutex(gameServerMutex);
+#endif
 }
 
 void CGameServer::UpdateLoop(void)
 {
 	Sleep(500);		//we might crash if game hasnt finished initializing within this time
+#ifndef NO_MUTEXTHREADS
 	SetThreadPriority(thisThread,THREAD_PRIORITY_ABOVE_NORMAL);		//we want the server to continue running smoothly even if the game client is struggling
-	while(!quitServer){
+#endif
+	while(!quitServer)
+	{
+#ifndef NO_MUTEXTHREADS
 		WaitForSingleObject(gameServerMutex,INFINITE);
+#endif
 		if(!Update()){
 			info->AddLine("Game server experienced an error in update");
 			globalQuit=true;
 		}
+#ifndef NO_MUTEXTHREADS
 		ReleaseMutex(gameServerMutex);
+#endif
 		Sleep(10);
 	}
 	delete this;

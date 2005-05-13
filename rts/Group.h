@@ -43,9 +43,8 @@ public:
 	set<CUnit*> units;
 
 	vector<CommandDescription> myCommands;
-
+#ifndef NO_WINSTUFF
 	HINSTANCE m_hDLL;
-
 	typedef int (WINAPI* GETGROUPAIVERSION)();
 	typedef IGroupAI* (WINAPI* GETNEWAI)();
 	typedef void (WINAPI* RELEASEAI)(IGroupAI* i);
@@ -53,11 +52,22 @@ public:
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;
-
+	IGroupAI* ai;
+#else
+#warning this file is full of garbage just to make it compile, please port
+	//FIXME AWFULL COMPILATION FIX -> port me
+        void * m_hDLL;
+        typedef int (* GETGROUPAIVERSION)();
+        typedef IGroupAI* (* GETNEWAI)();
+        typedef void (* RELEASEAI)(IGroupAI* i);
+        GETGROUPAIVERSION GetGroupAiVersion;
+        GETNEWAI GetNewAI;
+        RELEASEAI ReleaseAI;
+        IGroupAI* ai;								
+#endif
 	int lastCommandPage;
 	int currentAiNum;
 
-	IGroupAI* ai;
 	CGroupAiCallback* callback;
 
 };
