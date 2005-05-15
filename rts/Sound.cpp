@@ -7,7 +7,7 @@
 
 #ifndef NO_SOUND
 #ifdef USE_DSOUND
-	#include "WavRead.h"
+ 	#include "WavRead.h"
 #else
 	#ifndef _WINSOCKAPI_
 		#define _WINSOCKAPI_
@@ -32,6 +32,7 @@ extern HWND	hWnd;			// Holds Our Window Handle
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }
 
 #endif //NO_SOUND
+
 
 CSound* sound;
 

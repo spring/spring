@@ -15,6 +15,7 @@
 
 static CAirScript ts;
 
+
 CAirScript::CAirScript(void)
 : CScript(std::string("Air combat test")),
 	tcp(500,100,500),
