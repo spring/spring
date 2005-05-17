@@ -13,20 +13,23 @@ appears in the common code
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <glib.h>
 
-#ifdef NO_WINSTUFF 
+#define  WINAPI
 
-//following lines are perfectly wrong and must be removed
-typedef void *HANDLE;
-#define CALLBACK
+#ifdef NO_DLL
 #define FreeLibrary(a) (0)
 #define LoadLibrary(a) (0)
 #define GetProcAddress(a,b) (0)
-#define QueryPerformanceCounter(a) while(0){}
+#endif
+
+
+#ifdef EMULE_WINTYPES
+//FIXME check following lines
+typedef void *HANDLE;
+#define CALLBACK
 typedef void* HINSTANCE ;
 typedef void *HDC; 
-#define  WINAPI
-
 //following might stay like as is in a first time
 typedef unsigned char BYTE;
 typedef int WORD;
@@ -42,9 +45,20 @@ typedef int LRESULT;
 using namespace std;
 typedef string LPSTR;
 typedef int* LPINT;
+/* TODO check if replacing
+ 	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
+
+by 
+	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
+is OK for LARGE_INTEGER
+Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed', 
+   which is of non-class type `long int'
+*/
+#define LARGE_INTEGER long int
+#define __int64 gint64
 #else
 #error please check the above types and maybe remove them from the code cf. http://www.jniwrapper.com/wintypes.jsp
-#endif
+#endif //EMULE_WINTYPES
 
 #ifdef NO_WINDOWS
 typedef void* HWND;
@@ -56,10 +70,10 @@ typedef void* LPARAM;
 			((WORD)((BYTE)((DWORD_PTR)(b) & 0xff))) << 8))
 #define MAKELONG(a, b)      ((LONG)(((WORD)((DWORD_PTR)(a) & 0xffff)) |\\
 			((DWORD)((WORD)((DWORD_PTR)(b) & 0xffff))) << 16))
-#define LOWORD(l)           ((WORD)((DWORD_PTR)(l) & 0xffff))
-#define HIWORD(l)           ((WORD)((DWORD_PTR)(l) >> 16))
-#define LOBYTE(w)           ((BYTE)((DWORD_PTR)(w) & 0xff))
-#define HIBYTE(w)           ((BYTE)((DWORD_PTR)(w) >> 8))
+#define LOWORD(l)           ((WORD)((DWORD)(l) & 0xffff))
+#define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
+#define LOBYTE(w)           ((BYTE)((DWORD)(w) & 0xff))
+#define HIBYTE(w)           ((BYTE)((DWORD)(w) >> 8))
 
 
 #ifdef NO_INPUT
@@ -94,25 +108,8 @@ typedef void* LPARAM;
 #endif //NO_INPUT
 
 #ifdef ENABLE_SMALLFIXES
-#define Sleep(a) sleep(a)
-#define FALSE false
-#define TRUE true
 #define MessageBox(hWnd, lpText, lpCaption, uType) fprintf(stderr,lpText)
 #define ShowCursor(a) while(0){}
-
-/* TODO check if replacing
- 	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
-
-by 
-	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
-
-is KO for LARGE_INTEGER
-
-Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed', 
-   which is of non-class type `long int'
-*/
-#define LARGE_INTEGER long int
-#define __int64 long int
 #else
 #error unix : small fixes to replace by cleaner code or dev
 #endif
@@ -122,6 +119,14 @@ Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed',
 #define ReleaseMutex(a) (0)
 #define	CloseHandle(netMutex) while(0){}
 #define WaitForSingleObject(a,b)  while(0){}
+#endif
+
+#define Sleep(a) sleep(a)
+
+
+#ifdef NO_WINSTUFF
+#define QueryPerformanceCounter(a) while(0){}
+#define _hypot(a,b) 0
 #endif
 
 //FIXME read cpuinfo only one time for many calls (store value in static var)
@@ -156,8 +161,5 @@ inline bool QueryPerformanceFrequency(LARGE_INTEGER* frequence)
   fclose (F);
   return true;
 }
-
-
-
 
 #endif //__WINDOWS_H__

@@ -8,7 +8,7 @@
 #include <windows.h>
 #ifndef NO_IO
 #include <io.h>
-#endif
+#endif //NO_IO
 #include "HPIUtil.h"
 #include "myGL.h"
 #include "RegHandler.h"
@@ -22,7 +22,8 @@ CHpiHandler* hpiHandler=0;
 
 CHpiHandler::CHpiHandler()
 {
-#ifndef NO_DLL
+
+
 	if((m_hDLL=LoadLibrary("hpiutil.dll"))==0)
 		MessageBox(0,"Failed to find hpiutil.dll","",0);
 
@@ -33,6 +34,8 @@ CHpiHandler::CHpiHandler()
 	HPIGet=(void (WINAPI *)(void *Dest, void *, int, int))GetProcAddress(m_hDLL,"HPIGet");
 	HPICloseFile=(LRESULT (WINAPI *)(LPSTR))GetProcAddress(m_hDLL,"HPICloseFile");
 	HPIDir=(LRESULT (WINAPI*)(void *hpi, int Next, LPSTR DirName, LPSTR Name, LPINT Type, LPINT Size))GetProcAddress(m_hDLL,"HPIDir");
+#ifndef NO_HPI
+#error Implement : HPIOpen HPIGetFiles HPIClose HPIOpenFile HPIGet HPICloseFile HPIDir in a separated lib
 #endif
 	string taDir;
 
@@ -80,7 +83,7 @@ int CHpiHandler::LoadFile(string name, void *buffer)
 	if(files.find(name)==files.end())
 		return 0;
 	void* hpi=HPIOpen(files[name].hpiname.c_str());
-#ifndef NO_WINSTUFF
+#ifndef NO_HPI
 	char* file=HPIOpenFile(hpi, name.c_str());
 #else
 	char* file= const_cast<char*> (HPIOpenFile(hpi, name.c_str()).c_str());

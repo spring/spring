@@ -23,11 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <math.h>
 
-#ifdef NO_WINSTUFF
+#ifdef EMULE_WINTYPES
 #include <windows.h>
-#define uint8 unsigned char
-#define uint16 unsigned short
-#define uint32 unsigned int
+#include <glib.h>
+#define uint8 guint8
+#define uint16 guint16
+#define uint32 guint32
 #else
 #define uint8 unsigned __int8
 #define WORD unsigned __int16

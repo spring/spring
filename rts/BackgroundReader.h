@@ -29,7 +29,7 @@ public:
 
 	std::deque<FileToRead> quedFiles;
 	FileToRead curFile;
-#ifndef NO_WINSTUFF
+#ifndef NO_IO
 	OVERLAPPED curReadInfo;
 	HANDLE curHandle;
 #endif

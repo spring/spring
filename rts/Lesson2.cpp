@@ -38,7 +38,7 @@
 #include "../crashrpt/include/crashrpt.h"
 #endif
 
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 #pragma comment(lib, "../crashrpt/lib/crashrpt")
 
 HDC		hDC=NULL;			// Private GDI Device Context
@@ -54,7 +54,7 @@ bool	globalQuit=false;
 //time_t   fpstimer,starttime;
 CGameController* activeController=0;
 
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 #endif
 
@@ -514,7 +514,7 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 #endif
 {
 	INIT_SYNCIFY;
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 	MSG		msg;									// Windows Message Structure
 	hInstance=hInstanceIn;
 #endif
@@ -581,7 +581,7 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 	SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
 #else
 #warning replace SwapBuffers by glut equivalent
@@ -591,7 +591,7 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 	while(!done)									// Loop That Runs While done=FALSE
 	{
 		ENTER_UNSYNCED;
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))	// Is There A Message Waiting?
 		{
 			if (msg.message==WM_QUIT)				// Have We Received A Quit Message?
@@ -614,12 +614,12 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 			}
 			else									// Not Time To Quit, Update Screen
 			{
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
 				SleepEx(0,true);
 #endif
 			}
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 		}
 #endif
 
@@ -634,7 +634,7 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 	KillGLWindow();									// Kill The Window
 	END_SYNCIFY;
 	//m_dumpMemoryReport();
-#ifndef NO_WINSTUFF
+#ifndef NO_WINDOWS
 	return (msg.wParam);							// Exit The Program
 #else
 	return 0;

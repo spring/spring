@@ -2,7 +2,8 @@
 #architecture specific files / include pathes
 import sys
 windows_include_path=['include/windows']
-linux_include_path=['include/linux','/usr/include','/usr/include/freetype2','/usr/include/GL']
+linux_include_path=['include/linux','/usr/include','/usr/include/freetype2','/usr/include/GL',\
+			'/usr/include/glib-2.0/', '/usr/lib/glib-2.0/include']
 common_include_path = ['.','gui','include']
 common_files=[]
 windows_files=[]
@@ -20,22 +21,37 @@ exclude_list = []
 # build options
 
 opts = Options('SCustomize')
+
+#permanent options
 opts.Add('platform', 'Set to linux or windows', detected_platform)
 opts.Add('debug', 'Set to yes to produce a binary with debug informations', 1)
-opts.Add('disable_sound', 'Set to no to turn on sound support (directSound)', 1)
-opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
-opts.Add('disable_shadows', 'Set to no to turn on shadows rendering', 1)
+
+#porting options mandatory
+opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', 1)
 opts.Add('disable_net', 'Set to no to turn on networking code', 1)
 opts.Add('disable_texture_filtering', 'Set to no to turn on texture filtering code', 1)
-opts.Add('disable_advtreedrawer', 'Set to no to turn on advanced tree drawing', 1)
-opts.Add('disable_winstuff', 'Set to no to turn on various windows dependant code', 1)
+opts.Add('disable_winstuff', 'Set to no to turn on various MSwindows dependant code', 1)
 opts.Add('disable_font', 'Set to no to turn on font handling code', 1)
 opts.Add('disable_bitmap', 'Set to no to turn on bitmap handling code', 1)
-opts.Add('disable_inputs', 'Set to no to enable inout handling code', 1)
+opts.Add('disable_inputs', 'Set to no to enable input handling code (port using glut))', 1)
 opts.Add('disable_3DO', 'Set to no to enable 3DO code (then merge with upstream and it should be fixed)', 1)
-opts.Add('disable_threads', 'Set to no to enable mutexes and threads codes', 1)
-opts.Add('disable_io', 'Set to no to enable input/output code (files/HPI...)', 1)
+opts.Add('disable_threads', 'Set to no to enable mutexes and threads codes (port using glib)', 1)
+opts.Add('disable_io', 'Set to no to enable input/output code', 1)
+opts.Add('disable_fp', 'Set to no to enable MSwindows fp calls', 1)
+opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1)
+opts.Add('disable_windows', 'Set to no to enable windows code and MSwindows messages (port using glut)', 1)
+
+#porting options optionnal in a first phase
+opts.Add('disable_sound', 'Set to no to turn on sound support (directSound) (port using openal)', 1)
+opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
+opts.Add('disable_shadows', 'Set to no to turn on shadows rendering', 1)
+opts.Add('disable_advtreedrawer', 'Set to no to turn on advanced tree drawing', 1)
+opts.Add('disable_winreg', 'Set to no to turn on windows registry', 1)
+opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
+
+#ported parts
 opts.Add('enable_smallfixes', 'Set to yes to enable small fixes that have to be checked/cleaned', 1)
+opts.Add('emule_wintypes', 'Ported/TobeChecked Set to no to turn off windows type emulation (replace by glib types))', 1)
 
 env = Environment(options = opts)
 Help(opts.GenerateHelpText(env))
@@ -47,10 +63,24 @@ if env.get('disable_sound'):
 	defines+=['NO_SOUND']
 if env.get('disable_shadows'):
 	defines+=['NO_SHADOWS']
+if env.get('disable_hpi'):
+	defines+=['NO_HPI']
 if env.get('disable_net'):
 	defines+=['NO_NET']
+if env.get('disable_winreg'):
+	defines+=['NO_WINREG']
 if env.get('disable_winstuff'):
-	defines+=['NO_WINSTUFF','NO_WINFPSTUFF','NO_DLL','NO_CLIPBOARD','NO_WINDOWS']
+	defines+=['NO_WINSTUFF']
+if env.get('disable_clipboard'):
+	defines+=['NO_CLIPBOARD']
+if env.get('disable_windows'):
+	defines+=['NO_WINDOWS']
+if env.get('disable_fp'):
+	defines+=['NO_WINFPSTUFF']
+if env.get('disable_dll'):
+	defines+=['NO_DLL']
+if env.get('emule_wintypes'):
+	defines+=['EMULE_WINTYPES']
 if env.get('disable_font'):
 	defines+=['NO_FONT']
 if env.get('disable_3DO'):
@@ -105,7 +135,7 @@ for f in tmp:
 	if os.path.isfile(f) and re.compile("cpp$").search(f) and not f in exclude_list:
 		common_files.append(f)
 		nbObjects+=1
-	if re.compile("o$").search(f):
+	if re.compile("\.o$").search(f):
 		nbBuiltObjects+=1
 if platform == 'windows':
 	files = windows_files + common_files 
@@ -119,12 +149,11 @@ else:
 		Exit(1)	
 print nbObjects, " objects have to be produced"
 print nbBuiltObjects, " objects are already produced from a previous build (", nbBuiltObjects*1./(nbObjects*1.)*100.,"%)\n"
-		
 
 #################################################
 # other FLAGS
 if debug:
-        env.Append(CPPFLAGS = ['-g'])
+        env.Append(CPPFLAGS = ['-g -D_DEBUG -DDEBUG'])
 else:
         env.Append(CPPFLAGS = ['-O3'])
 
@@ -133,24 +162,29 @@ else:
 
 print "\nCheck some header files"
 conf = Configure(env)
-if not conf.CheckCHeader('freetype/freetype.h'):
-	print ' dev freetype V1 must be installed!'
+conf.env.Append(CPPPATH=common_include_path)
+if not conf.CheckCHeader(['ft2build.h','freetype/freetype.h']):
+	print ' dev freetype must be installed!'
 	Exit(1)
+else:
+	conf.env.Append(CCFLAGS = " -D_HAVE_FT2BUILD_H")
 if not conf.CheckCHeader('GL/glut.h'):
 	print ' a dev implementation of GLUT must be installed!'
+	Exit(1)
+if not conf.CheckCHeader('glib.h'):
+	print ' a dev implementation of glib must be installed!'
 	Exit(1)
 if not conf.CheckCHeader('GL/glew.h'):
 	print ' Cannot find GLEW http://glew.sourceforge.net'
 	Exit(1)
-#fixme this line should work
-#if conf.CheckCHeader('ft2build.h'):
-#	print 'Freetype 2 detected'
-conf.env.Append(CCFLAGS = " -D_HAVE_FT2BUILD_H")
 if not conf.CheckLib('libc'):
 	print "You need libc to compile this program"
 	Exit(1)
 if not conf.CheckLib('GLEW'):
 	print "You need GLEW to compile this program"
+	Exit(1)
+if not conf.CheckLib('glib'):
+	print "You need glib to link this program"
 	Exit(1)
 if not conf.CheckLib('jpeg'):
 	print "You need libjpeg to compile this program"
@@ -161,4 +195,4 @@ env = conf.Finish()
 # let's build
 
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
-env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype'],CPPPATH = common_include_path)
+env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib'], CPPPATH=common_include_path)

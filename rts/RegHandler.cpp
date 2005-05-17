@@ -16,7 +16,7 @@ RegHandler regHandler("Software\\SJ\\spring");
 
 RegHandler::RegHandler(string keyname,HKEY key)
 {
-#ifndef NO_WINSTUFF
+#ifndef NO_WINREG
 	if(RegCreateKey(key,keyname.c_str(),&regkey)!=ERROR_SUCCESS)
 		MessageBox(0,"Failed to crete registry key","Registry error",0);
 #endif
@@ -24,7 +24,7 @@ RegHandler::RegHandler(string keyname,HKEY key)
 
 RegHandler::~RegHandler()
 {
-#ifndef NO_WINSTUFF
+#ifndef NO_WINREG
 	RegCloseKey(regkey);
 #endif
 }
@@ -32,7 +32,7 @@ RegHandler::~RegHandler()
 
 unsigned int RegHandler::GetInt(string name, unsigned int def)
 {
-#ifndef  NO_WINSTUFF
+#ifndef  NO_WINREG
 	unsigned char regbuf[100];
 	DWORD regLength=100;
 	DWORD regType=REG_DWORD;
@@ -45,7 +45,7 @@ unsigned int RegHandler::GetInt(string name, unsigned int def)
 
 string RegHandler::GetString(string name, string def)
 {
-#ifndef NO_WINSTUFF
+#ifndef NO_WINREG
 	unsigned char regbuf[100];
 	DWORD regLength=100;
 	DWORD regType=REG_SZ;
@@ -58,14 +58,14 @@ string RegHandler::GetString(string name, string def)
 
 void RegHandler::SetString(string name, string value)
 {
-#ifndef NO_WINSTUFF
+#ifndef NO_WINREG
 	RegSetValueEx(regkey,name.c_str(),0,REG_SZ,(unsigned char*)value.c_str(),value.size()+1);
 #endif
 }
 
 void RegHandler::SetInt(string name, unsigned int value)
 {
-#ifndef NO_WINSTUFF
+#ifndef NO_WINREG
 	RegSetValueEx(regkey,name.c_str(),0,REG_DWORD,(unsigned char*)&value,sizeof(int));
 #endif	
 }

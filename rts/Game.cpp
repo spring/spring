@@ -369,7 +369,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 		return 0;
 	}
 	if (userWriting){
-#ifndef NO_WINSTUFF
+#ifndef NO_CLIPBOARD
 		if ((k=='V') && keys[VK_CONTROL]){
 			OpenClipboard(0);
 			void* p;

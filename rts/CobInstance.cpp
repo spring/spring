@@ -694,9 +694,13 @@ void CCobInstance::ShowFlare(int piece)
 	float3 dir=unit->lastMuzzleFlameDir;
 
 	float size=unit->lastMuzzleFlameSize;
-#ifndef NO_WINSTUFF
+
+#ifndef unix
+	//FIXME PORTING why this LOWORD?
 	new CMuzzleFlame(pos, unit->speed,dir, LOWORD(size));
-#endif //NO_WINSTUFF
+#else
+	new CMuzzleFlame(pos, unit->speed,dir, size);
+#endif 
 #endif
 }
 
@@ -772,15 +776,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case XZ_ATAN:
 		return TAANG2RAD*atan2f(UNPACKX(p1), UNPACKZ(p1)) + 32768 - unit->heading;
 	case XZ_HYPOT:
-#ifndef NO_WINSTUFF
 		return _hypot(UNPACKX(p1), UNPACKZ(p1)) * SCALE;
-#endif
 	case ATAN:
 		return TAANG2RAD*atan2f(p1, p2);
 	case HYPOT:
-#ifndef NO_WINSTUFF
 		return _hypot(p1, p2);
-#endif
 	case GROUND_HEIGHT:
 		return ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE;
 	case BUILD_PERCENT_LEFT:
