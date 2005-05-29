@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GUIMATRIX_H
+#define GUIMATRIX_H
+/*pragma once removed*/
 
 
 
@@ -47,3 +49,5 @@ public:
 
 };
 
+
+#endif /* GUIMATRIX_H */

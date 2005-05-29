@@ -1,3 +1,5 @@
+#ifndef GUISCROLLBAR_H
+#define GUISCROLLBAR_H
 // GUIscrollbar.h: interface for the GUIscrollbar class.
 
 //
@@ -14,7 +16,7 @@
 
 #if _MSC_VER >= 1000
 
-#pragma once
+/*pragma once removed*/
 
 #endif // _MSC_VER >= 1000
 
@@ -70,3 +72,5 @@ protected:
 
 #endif // !defined(AFX_GUISCROLLBAR_H__A9702A2C_FB58_4A2F_9FFE_C3D19696DA16__INCLUDED_)
 
+
+#endif /* GUISCROLLBAR_H */

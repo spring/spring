@@ -1,3 +1,5 @@
+#ifndef GUITABLE_H
+#define GUITABLE_H
 // GUItable.h: interface for the GUItable class.
 
 //
@@ -14,7 +16,7 @@
 
 #if _MSC_VER >= 1000
 
-#pragma once
+/*pragma once removed*/
 
 #endif // _MSC_VER >= 1000
 
@@ -128,3 +130,5 @@ protected:
 
 #endif // !defined(AFX_GUITABLE_H__92C6772E_12A6_4416_9C70_5DB3473154B6__INCLUDED_)
 
+
+#endif /* GUITABLE_H */

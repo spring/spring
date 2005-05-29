@@ -1,8 +1,10 @@
+#ifndef GUIBUILDMENU_H
+#define GUIBUILDMENU_H
 #if !defined(GUIBUILDMENU_H)
 #define GUIBUILDMENU_H
 
 #if _MSC_VER >= 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -53,3 +55,5 @@ protected:
 };
 
 #endif // !defined(GUIBUILDMENU_H)
+
+#endif /* GUIBUILDMENU_H */

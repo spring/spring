@@ -1,3 +1,5 @@
+#ifndef GUIMINIMAP_H
+#define GUIMINIMAP_H
 // GUIminimap.h: interface for the GUIminimap class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define GUIMINIMAP_H
 
 #if _MSC_VER >= 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -52,3 +54,5 @@ protected:
 };
 
 #endif // !defined(GUIMINIMAP_H)
+
+#endif /* GUIMINIMAP_H */

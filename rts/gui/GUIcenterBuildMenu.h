@@ -1,8 +1,10 @@
+#ifndef GUICENTERBUILDMENU_H
+#define GUICENTERBUILDMENU_H
 #if !defined(GUICENTERBUILDMENU_H)
 #define GUICENTERBUILDMENU_H
 
 #if _MSC_VER >= 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -40,3 +42,5 @@ protected:
 };
 
 #endif // !defined(GUIBUILDMENU_H)
+
+#endif /* GUICENTERBUILDMENU_H */

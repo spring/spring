@@ -1,3 +1,5 @@
+#ifndef GUISLIDER_H
+#define GUISLIDER_H
 // GUIslider.h: interface for the GUIslider class.
 
 //
@@ -14,7 +16,7 @@
 
 #if _MSC_VER >= 1000
 
-#pragma once
+/*pragma once removed*/
 
 #endif // _MSC_VER >= 1000
 
@@ -74,3 +76,5 @@ protected:
 
 #endif // !defined(GUISLIDER_H)
 
+
+#endif /* GUISLIDER_H */
