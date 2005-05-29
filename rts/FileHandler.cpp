@@ -3,7 +3,10 @@
 #include <fstream>
 #ifndef NO_IO
 #include <io.h>
-#endif
+#else //NO_IO
+#include <glob.h>
+#include <iostream>
+#endif //NO_IO
 #include "HpiHandler.h"
 #include <algorithm>
 #include <cctype>
@@ -117,8 +120,8 @@ bool CFileHandler::Eof()
 
 std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 {
-#ifndef NO_IO
 	std::vector<std::string> found;
+#ifndef NO_IO
 
 	struct _finddata_t files;    
 	long hFile;
@@ -166,8 +169,24 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 		}
 	}
 
-	return found;
+#else //NO_IO
+	glob_t *pglob = (glob_t*) malloc(sizeof(glob_t));
+	int a,globret;
+        if( !(globret=glob( pattern.c_str(), 0, NULL, pglob )) )
+        {
+                for( a=0; a < pglob->gl_pathc; a++)
+                         found.push_back( pglob->gl_pathv[a] );
+        }
+	else
+	{
+	  if( globret == GLOB_NOMATCH )
+	    std::cerr << "Error finding files of type: " << pattern << std::endl;
+	  else
+	    std::cerr << "Other glob error\n";
+	}
+	globfree(pglob);
 #endif //NO_IO
+	return found;
 }
 
 int CFileHandler::FileSize()

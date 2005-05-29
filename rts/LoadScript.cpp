@@ -3,6 +3,7 @@
 #include "LoadSaveHandler.h"
 #include "FileHandler.h"
 #include <vector>
+#include <iostream>
 
 extern std::string stupidGlobalMapname;
 
@@ -14,6 +15,9 @@ public:
 	CLoadScriptHandler()
 	{
 		std::vector<std::string> f=CFileHandler::FindFiles("*.ssf");
+
+		if(f.size()==0)
+		  std::cerr << "No .ssf files found\n";
 		for(std::vector<std::string>::iterator fi=f.begin();fi!=f.end();++fi){
 			scripts.push_back(new CLoadScript(*fi));
 		}
