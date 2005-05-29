@@ -1,4 +1,6 @@
-#pragma once
+#ifndef TRANSPORTUNIT_H
+#define TRANSPORTUNIT_H
+/*pragma once removed*/
 #include "Unit.h"
 #include <list>
 
@@ -24,3 +26,5 @@ public:
 	void DetachUnit(CUnit* unit);
 };
 
+
+#endif /* TRANSPORTUNIT_H */

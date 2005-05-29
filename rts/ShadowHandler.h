@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SHADOWHANDLER_H
+#define SHADOWHANDLER_H
+/*pragma once removed*/
 
 #include "Matrix44f.h"
 #include "myGL.h"
@@ -50,3 +52,5 @@ protected:
 };
 
 extern CShadowHandler* shadowHandler;
+
+#endif /* SHADOWHANDLER_H */

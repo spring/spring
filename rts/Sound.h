@@ -1,3 +1,5 @@
+#ifndef SOUND_H
+#define SOUND_H
 // Sound.h: interface for the CSound class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -12,7 +14,7 @@
 #define USE_DSOUND
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #ifdef USE_DSOUND
@@ -89,3 +91,5 @@ protected:
 
 extern CSound* sound;
 #endif // !defined(AFX_SOUND_H__D6141CC1_8294_11D4_AD55_0080ADA84DE3__INCLUDED_)
+
+#endif /* SOUND_H */

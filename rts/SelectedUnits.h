@@ -1,3 +1,5 @@
+#ifndef SELECTEDUNITS_H
+#define SELECTEDUNITS_H
 // SelectedUnits.h: interface for the CSelectedUnits class.
 
 //
@@ -18,7 +20,7 @@
 
 #if _MSC_VER > 1000
 
-#pragma once
+/*pragma once removed*/
 
 #endif // _MSC_VER > 1000
 
@@ -129,3 +131,5 @@ extern CSelectedUnits selectedUnits;
 #endif // !defined(AFX_SELECTEDUNITS_H__B3513CA2_FB87_11D5_AD55_B771F8FC7D53__INCLUDED_)
 
 
+
+#endif /* SELECTEDUNITS_H */

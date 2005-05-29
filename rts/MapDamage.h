@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MAPDAMAGE_H
+#define MAPDAMAGE_H
+/*pragma once removed*/
 
 #include <deque>
 #include <vector>
@@ -65,3 +67,5 @@ public:
 
 extern CMapDamage* mapDamage;
 
+
+#endif /* MAPDAMAGE_H */

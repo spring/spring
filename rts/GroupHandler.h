@@ -1,3 +1,5 @@
+#ifndef GROUPHANDLER_H
+#define GROUPHANDLER_H
 // GroupHandler.h: interface for the CGroupHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <map>
@@ -44,3 +46,5 @@ extern CGroupHandler* grouphandler;
 
 #endif // !defined(AFX_GROUPHANDLER_H__A41773E8_DB6A_4AF5_AE4C_E8380F7C7D04__INCLUDED_)
 
+
+#endif /* GROUPHANDLER_H */

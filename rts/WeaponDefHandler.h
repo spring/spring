@@ -1,4 +1,6 @@
-#pragma once
+#ifndef WEAPONDEFHANDLER_H
+#define WEAPONDEFHANDLER_H
+/*pragma once removed*/
 
 #include <string>
 #include <map>
@@ -136,3 +138,5 @@ protected:
 
 extern CWeaponDefHandler* weaponDefHandler;
 
+
+#endif /* WEAPONDEFHANDLER_H */

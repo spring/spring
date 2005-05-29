@@ -1,3 +1,5 @@
+#ifndef UNIT3DLOADER_H
+#define UNIT3DLOADER_H
 // Unit3DLoader.h: interface for the CUnit3DLoader class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <map>
@@ -137,3 +139,5 @@ public:
 extern CUnit3DLoader* unitModelLoader;
 #endif // !defined(AFX_UNIT3DLOADER_H__124A4FFE_7946_4E48_8823_CD79C234E677__INCLUDED_)
 
+
+#endif /* UNIT3DLOADER_H */

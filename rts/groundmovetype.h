@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GROUNDMOVETYPE_H
+#define GROUNDMOVETYPE_H
+/*pragma once removed*/
 #include "MoveType.h"
 #include "SolidObject.h"
 
@@ -119,3 +121,5 @@ protected:
 };
 
 
+
+#endif /* GROUNDMOVETYPE_H */

@@ -1,3 +1,5 @@
+#ifndef GROUP_H
+#define GROUP_H
 // Group.h: interface for the CGroup class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_GROUP_H__5CCDFEDA_0AB1_425F_B8D1_5B7BC794EB93__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <windows.h>
@@ -74,3 +76,5 @@ public:
 
 #endif // !defined(AFX_GROUP_H__5CCDFEDA_0AB1_425F_B8D1_5B7BC794EB93__INCLUDED_)
 
+
+#endif /* GROUP_H */

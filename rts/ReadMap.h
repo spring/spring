@@ -1,3 +1,5 @@
+#ifndef READMAP_H
+#define READMAP_H
 // ReadMap.h: interface for the CReadMap class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_READMAP_H__3064C121_428C_11D4_9677_0050DADC9708__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <string>
@@ -100,3 +102,5 @@ inline float3 SquareToFloat3(int xSquare, int zSquare) {return float3(((xSquare)
 
 #endif // !defined(AFX_READMAP_H__3064C121_428C_11D4_9677_0050DADC9708__INCLUDED_)
 
+
+#endif /* READMAP_H */

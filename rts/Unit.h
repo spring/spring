@@ -1,3 +1,5 @@
+#ifndef UNIT_H
+#define UNIT_H
 // Unit.h: interface for the CUnit class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "SolidObject.h"
@@ -242,3 +244,5 @@ public:
 
 #endif // !defined(AFX_UNIT_H__9B50A8F9_1B01_41E6_B06C_9FE7AB9A6227__INCLUDED_)
 
+
+#endif /* UNIT_H */

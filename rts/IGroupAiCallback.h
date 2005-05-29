@@ -1,3 +1,5 @@
+#ifndef IGROUPAICALLBACK_H
+#define IGROUPAICALLBACK_H
 // IGroupAiCallback.h: interface for the IGroupAiCallback class.
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <vector>
@@ -113,3 +115,5 @@ public:
 
 #endif // !defined(AFX_IGROUPAICALLBACK_H__9C32D568_4691_49B6_B9F8_3DEF35A7C8F5__INCLUDED_)
 
+
+#endif /* IGROUPAICALLBACK_H */

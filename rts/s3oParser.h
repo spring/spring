@@ -1,3 +1,5 @@
+#ifndef S3OPARSER_H
+#define S3OPARSER_H
 // s3oParser.h: interface for the Cs3oParser class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_S3OPARSER_H__7A309C20_721E_4FF9_82EA_13F5CDFECCA3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <vector>
@@ -54,3 +56,5 @@ private:
 
 #endif // !defined(AFX_S3OPARSER_H__7A309C20_721E_4FF9_82EA_13F5CDFECCA3__INCLUDED_)
 
+
+#endif /* S3OPARSER_H */

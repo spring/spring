@@ -1,3 +1,5 @@
+#ifndef PROJECTILEHANDLER_H
+#define PROJECTILEHANDLER_H
 // ProjectileHandler.h: interface for the CProjectileHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 class CProjectileHandler;
@@ -86,3 +88,5 @@ extern CProjectileHandler* ph;
 
 #endif // !defined(AFX_PROJECTILEHANDLER_H__C7B284AB_3578_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* PROJECTILEHANDLER_H */

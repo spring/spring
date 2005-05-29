@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GLTEXTBOX_H
+#define GLTEXTBOX_H
+/*pragma once removed*/
 #include "InputReceiver.h"
 #include <string>
 #include <vector>
@@ -20,3 +22,5 @@ public:
 	ContainerBox box,okButton;
 };
 
+
+#endif /* GLTEXTBOX_H */

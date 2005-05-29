@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LOADINTERFACE_H
+#define LOADINTERFACE_H
+/*pragma once removed*/
 #include "LoadSaveInterface.h"
 #include <fstream>
 
@@ -22,3 +24,5 @@ public:
 	std::ifstream* ifs;
 };
 
+
+#endif /* LOADINTERFACE_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef NEWAIRTESTSCRIPT_H
+#define NEWAIRTESTSCRIPT_H
+/*pragma once removed*/
 #include "Script.h"
 
 class CNewAirTestScript :
@@ -10,3 +12,5 @@ public:
 	void Update(void);
 };
 
+
+#endif /* NEWAIRTESTSCRIPT_H */

@@ -1,3 +1,5 @@
+#ifndef ROCKETPROJECTILE_H
+#define ROCKETPROJECTILE_H
 // RocketProjectile.h: interface for the CRocketProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_ROCKETPROJECTILE_H__DDA2ECE1_F7D3_11D5_AD55_A6010A7FC06C__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "WeaponProjectile.h"
@@ -40,3 +42,5 @@ public:
 
 #endif // !defined(AFX_ROCKETPROJECTILE_H__DDA2ECE1_F7D3_11D5_AD55_A6010A7FC06C__INCLUDED_)
 
+
+#endif /* ROCKETPROJECTILE_H */

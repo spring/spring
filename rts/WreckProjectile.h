@@ -1,3 +1,5 @@
+#ifndef WRECKPROJECTILE_H
+#define WRECKPROJECTILE_H
 // WreckProjectile.h: interface for the CWreckProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_WRECKPROJECTILE_H__1A3049E1_6CCF_11D5_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Projectile.h"
@@ -23,3 +25,5 @@ public:
 
 #endif // !defined(AFX_WRECKPROJECTILE_H__1A3049E1_6CCF_11D5_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* WRECKPROJECTILE_H */

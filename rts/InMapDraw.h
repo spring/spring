@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INMAPDRAW_H
+#define INMAPDRAW_H
+/*pragma once removed*/
 
 #include <string>
 
@@ -61,3 +63,5 @@ public:
 };
 
 extern CInMapDraw* inMapDrawer;
+
+#endif /* INMAPDRAW_H */

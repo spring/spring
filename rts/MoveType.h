@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MOVETYPE_H
+#define MOVETYPE_H
+/*pragma once removed*/
 #include "Object.h"
 #include "Unit.h"
 
@@ -46,3 +48,5 @@ public:
 	ProgressState progressState;
 };
 
+
+#endif /* MOVETYPE_H */

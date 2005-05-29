@@ -1,3 +1,5 @@
+#ifndef TIMEPROFILER_H
+#define TIMEPROFILER_H
 // TimeProfiler.h: interface for the CTimeProfiler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -18,7 +20,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #ifdef PROFILE_TIME
@@ -70,3 +72,5 @@ extern CTimeProfiler profiler;
 
 #endif // !defined(AFX_TIMEPROFILER_H__3C2D635C_014C_4725_8254_32D218832C95__INCLUDED_)
 
+
+#endif /* TIMEPROFILER_H */

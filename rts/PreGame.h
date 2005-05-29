@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PREGAME_H
+#define PREGAME_H
+/*pragma once removed*/
 
 #include "GameController.h"
 
@@ -69,3 +71,5 @@ public:
 
 
 extern CPreGame* pregame;
+
+#endif /* PREGAME_H */

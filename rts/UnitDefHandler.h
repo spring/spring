@@ -1,4 +1,6 @@
-#pragma once
+#ifndef UNITDEFHANDLER_H
+#define UNITDEFHANDLER_H
+/*pragma once removed*/
 
 #include <string>
 #include <vector>
@@ -51,3 +53,5 @@ private:
 };
 
 extern CUnitDefHandler* unitDefHandler;
+
+#endif /* UNITDEFHANDLER_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LASERCANNON_H
+#define LASERCANNON_H
+/*pragma once removed*/
 #include "Weapon.h"
 
 class CLaserCannon :
@@ -17,3 +19,5 @@ public:
 	float3 color;
 };
 
+
+#endif /* LASERCANNON_H */

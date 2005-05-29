@@ -1,3 +1,5 @@
+#ifndef HPIHANDLER_H
+#define HPIHANDLER_H
 // HpiHandler.h: interface for the CHpiHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -7,7 +9,7 @@
 #define AFX_HPIHANDLER_H__68DF4969_8792_4893_98F7_8092C36479D7__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <windows.h>
@@ -58,3 +60,5 @@ extern CHpiHandler* hpiHandler;
 
 #endif // !defined(AFX_HPIHANDLER_H__68DF4969_8792_4893_98F7_8092C36479D7__INCLUDED_)
 
+
+#endif /* HPIHANDLER_H */

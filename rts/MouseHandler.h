@@ -1,3 +1,5 @@
+#ifndef MOUSEHANDLER_H
+#define MOUSEHANDLER_H
 // MouseHandler.h: interface for the CMouseHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_MOUSEHANDLER_H__E6FA621D_050F_430D_B49B_A1E7FA1C1BDF__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 
@@ -80,3 +82,5 @@ extern CMouseHandler* mouse;
 
 #endif // !defined(AFX_MOUSEHANDLER_H__E6FA621D_050F_430D_B49B_A1E7FA1C1BDF__INCLUDED_)
 
+
+#endif /* MOUSEHANDLER_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef NOWEAPON_H
+#define NOWEAPON_H
+/*pragma once removed*/
 #include "Weapon.h"
 
 class CNoWeapon :
@@ -17,3 +19,5 @@ public:
 	void Fire(void);
 };
 
+
+#endif /* NOWEAPON_H */

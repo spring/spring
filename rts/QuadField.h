@@ -1,3 +1,5 @@
+#ifndef QUADFIELD_H
+#define QUADFIELD_H
 // QuadField.h: interface for the CQuadField class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <set>
@@ -59,3 +61,5 @@ extern CQuadField* qf;
 
 #endif // !defined(AFX_QUADFIELD_H__4898F721_F864_11D5_AD55_E2927DE7ED6F__INCLUDED_)
 
+
+#endif /* QUADFIELD_H */

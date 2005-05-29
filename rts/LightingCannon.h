@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LIGHTINGCANNON_H
+#define LIGHTINGCANNON_H
+/*pragma once removed*/
 #include "Weapon.h"
 
 class CLightingCannon :
@@ -18,3 +20,5 @@ public:
 	void SlowUpdate(void);
 };
 
+
+#endif /* LIGHTINGCANNON_H */

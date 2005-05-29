@@ -1,4 +1,6 @@
-#pragma once
+#ifndef TOOLTIPCONSOLE_H
+#define TOOLTIPCONSOLE_H
+/*pragma once removed*/
 #include "InputReceiver.h"
 
 class CTooltipConsole :
@@ -12,3 +14,5 @@ public:
 };
 
 extern CTooltipConsole* tooltip;
+
+#endif /* TOOLTIPCONSOLE_H */

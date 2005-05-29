@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LOADSAVEINTERFACE_H
+#define LOADSAVEINTERFACE_H
+/*pragma once removed*/
 
 #include <string>
 
@@ -19,3 +21,5 @@ public:
 	virtual void lsString(std::string& v)=0;
 };
 
+
+#endif /* LOADSAVEINTERFACE_H */

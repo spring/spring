@@ -1,3 +1,5 @@
+#ifndef PLAYER_H
+#define PLAYER_H
 // Player.h: interface for the CPlayer class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_PLAYER_H__BB0F0501_9236_11D4_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 class CCraft;
@@ -66,3 +68,5 @@ public:
 
 #endif // !defined(AFX_PLAYER_H__BB0F0501_9236_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* PLAYER_H */

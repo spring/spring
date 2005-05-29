@@ -1,4 +1,6 @@
-#pragma once
+#ifndef AIRCRAFT_H
+#define AIRCRAFT_H
+/*pragma once removed*/
 #include "Unit.h"
 
 class CPropeller;
@@ -101,3 +103,5 @@ public:
 	void KillUnit(bool SelfDestruct);
 };
 
+
+#endif /* AIRCRAFT_H */

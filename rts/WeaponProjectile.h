@@ -1,4 +1,6 @@
-#pragma once
+#ifndef WEAPONPROJECTILE_H
+#define WEAPONPROJECTILE_H
+/*pragma once removed*/
 #include "Projectile.h"
 #include "DamageArray.h"
 
@@ -37,3 +39,5 @@ public:
 	void DependentDied(CObject* o);
 };
 
+
+#endif /* WEAPONPROJECTILE_H */

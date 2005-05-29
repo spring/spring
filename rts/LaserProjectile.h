@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LASERPROJECTILE_H
+#define LASERPROJECTILE_H
+/*pragma once removed*/
 #include "WeaponProjectile.h"
 #include "DamageArray.h"
 
@@ -23,3 +25,5 @@ public:
 	void Draw(void);
 };
 
+
+#endif /* LASERPROJECTILE_H */

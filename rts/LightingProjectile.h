@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LIGHTINGPROJECTILE_H
+#define LIGHTINGPROJECTILE_H
+/*pragma once removed*/
 #include "Projectile.h"
 
 class CWeapon;
@@ -23,3 +25,5 @@ public:
 	void DependentDied(CObject* o);
 };
 
+
+#endif /* LIGHTINGPROJECTILE_H */

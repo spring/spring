@@ -1,3 +1,5 @@
+#ifndef GROUND_H
+#define GROUND_H
 // Ground.h: interface for the CGround class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_GROUND_H__EB512761_1B68_11D4_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #pragma warning(disable:4786)
@@ -47,3 +49,5 @@ extern CGround* ground;
 
 #endif // !defined(AFX_GROUND_H__EB512761_1B68_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* GROUND_H */

@@ -1,7 +1,9 @@
+#ifndef UNITDEF_H
+#define UNITDEF_H
 #ifndef UNIT_DEF_STRUCT
 #define UNIT_DEF_STRUCT
 
-#pragma once
+/*pragma once removed*/
 
 #include <string>
 #include <vector>
@@ -171,3 +173,5 @@ struct UnitDef
 
 
 #endif
+
+#endif /* UNITDEF_H */

@@ -1,3 +1,5 @@
+#ifndef SCRIPT_H
+#define SCRIPT_H
 // Script.h: interface for the CScript class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_SCRIPT_H__101D5001_6D52_11D5_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Object.h"
@@ -29,3 +31,5 @@ public:
 
 #endif // !defined(AFX_SCRIPT_H__101D5001_6D52_11D5_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* SCRIPT_H */

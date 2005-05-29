@@ -1,3 +1,5 @@
+#ifndef TEXTUREHANDLER_H
+#define TEXTUREHANDLER_H
 // TextureHandler.h: interface for the CTextureHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <map>
@@ -44,3 +46,5 @@ extern CTextureHandler* texturehandler;
 
 #endif // !defined(AFX_TEXTUREHANDLER_H__C6D286E1_997B_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* TEXTUREHANDLER_H */

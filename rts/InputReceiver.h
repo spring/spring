@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INPUTRECEIVER_H
+#define INPUTRECEIVER_H
+/*pragma once removed*/
 #include "Object.h"
 #include <deque>
 #include <string>
@@ -36,3 +38,5 @@ public:
 };
 
 extern std::deque<CInputReceiver*> inputReceivers;
+
+#endif /* INPUTRECEIVER_H */

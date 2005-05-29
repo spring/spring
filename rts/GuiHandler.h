@@ -1,3 +1,5 @@
+#ifndef GUIHANDLER_H
+#define GUIHANDLER_H
 // GuiHandler.h: interface for the CGuiHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <vector>
@@ -76,3 +78,5 @@ extern CGuiHandler* guihandler;
 
 #endif // !defined(AFX_GUIHANDLER_H__E513A229_42ED_4319_85F2_898CECF847A5__INCLUDED_)
 
+
+#endif /* GUIHANDLER_H */

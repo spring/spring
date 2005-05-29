@@ -1,3 +1,5 @@
+#ifndef IGROUPAI_H
+#define IGROUPAI_H
 // IGroupAI.h: interface for the IGroupAI class.
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_IGROUPAI_H__7A933264_A3D8_4969_9003_3122E2512161__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "command.h"
@@ -32,3 +34,5 @@ public:
 
 #endif // !defined(AFX_IGROUPAI_H__7A933264_A3D8_4969_9003_3122E2512161__INCLUDED_)
 
+
+#endif /* IGROUPAI_H */

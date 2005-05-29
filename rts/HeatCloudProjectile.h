@@ -1,3 +1,5 @@
+#ifndef HEATCLOUDPROJECTILE_H
+#define HEATCLOUDPROJECTILE_H
 // HeatCloudProjectile.h: interface for the CHeatCloudProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_HEATCLOUDPROJECTILE_H__23CBBD23_8FBE_11D4_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Projectile.h"
@@ -29,3 +31,5 @@ public:
 
 #endif // !defined(AFX_HEATCLOUDPROJECTILE_H__23CBBD23_8FBE_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* HEATCLOUDPROJECTILE_H */

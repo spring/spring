@@ -1,3 +1,5 @@
+#ifndef OBJECT_H
+#define OBJECT_H
 // Object.h: interface for the CObject class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <set>
@@ -27,3 +29,5 @@ public:
 
 #endif // !defined(AFX_OBJECT_H__64BC40C1_A468_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* OBJECT_H */

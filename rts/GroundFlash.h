@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GROUNDFLASH_H
+#define GROUNDFLASH_H
+/*pragma once removed*/
 
 
 
@@ -29,3 +31,5 @@ public:
 	static CVertexArray* va;
 };
 
+
+#endif /* GROUNDFLASH_H */

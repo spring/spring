@@ -1,4 +1,6 @@
-#pragma once
+#ifndef WAKEPROJECTILE_H
+#define WAKEPROJECTILE_H
+/*pragma once removed*/
 #include "Projectile.h"
 
 class CWakeProjectile :
@@ -20,3 +22,5 @@ public:
 	float rotSpeed;
 };
 
+
+#endif /* WAKEPROJECTILE_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GRASSDRAWER_H
+#define GRASSDRAWER_H
+/*pragma once removed*/
 
 
 
@@ -59,3 +61,5 @@ public:
 	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 };
 
+
+#endif /* GRASSDRAWER_H */

@@ -1,3 +1,5 @@
+#ifndef VERTEXARRAY_H
+#define VERTEXARRAY_H
 // VertexArray.h: interface for the CVertexArray class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_VERTEXARRAY_H__20C3F7EB_96DF_11D5_AA72_9A847018DE3E__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 
@@ -47,3 +49,5 @@ public:
 
 #endif // !defined(AFX_VERTEXARRAY_H__20C3F7EB_96DF_11D5_AA72_9A847018DE3E__INCLUDED_)
 
+
+#endif /* VERTEXARRAY_H */

@@ -1,3 +1,5 @@
+#ifndef WEAPON_H
+#define WEAPON_H
 // Weapon.h: interface for the CWeapon class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Object.h"
@@ -114,3 +116,5 @@ public:
 
 #endif // !defined(AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_)
 
+
+#endif /* WEAPON_H */

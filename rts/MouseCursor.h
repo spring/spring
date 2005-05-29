@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MOUSECURSOR_H
+#define MOUSECURSOR_H
+/*pragma once removed*/
 
 #include <string>
 #include <vector>
@@ -25,3 +27,5 @@ public:
 	void Draw(int x, int y);
 };
 
+
+#endif /* MOUSECURSOR_H */

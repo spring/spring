@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RESOURCEBAR_H
+#define RESOURCEBAR_H
+/*pragma once removed*/
 #include "InputReceiver.h"
 
 class CResourceBar :
@@ -23,3 +25,5 @@ public:
 };
 
 extern CResourceBar* resourceBar;
+
+#endif /* RESOURCEBAR_H */

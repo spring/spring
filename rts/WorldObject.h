@@ -1,3 +1,5 @@
+#ifndef WORLDOBJECT_H
+#define WORLDOBJECT_H
 // WorldObject.h: interface for the CWorldObject class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_WORLDOBJECT_H__DEAEAA2F_0C26_42AE_9298_712B63F8E888__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Object.h"
@@ -28,3 +30,5 @@ public:
 
 #endif // !defined(AFX_WORLDOBJECT_H__DEAEAA2F_0C26_42AE_9298_712B63F8E888__INCLUDED_)
 
+
+#endif /* WORLDOBJECT_H */

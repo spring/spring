@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SPHEREPARTPROJECTILE_H
+#define SPHEREPARTPROJECTILE_H
+/*pragma once removed*/
 #include "Projectile.h"
 
 class CSpherePartProjectile :
@@ -25,3 +27,5 @@ public:
 	static void CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner);
 };
 
+
+#endif /* SPHEREPARTPROJECTILE_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef KROGOTHSCRIPT_H
+#define KROGOTHSCRIPT_H
+/*pragma once removed*/
 #include "Script.h"
 
 class CKrogothScript :
@@ -11,3 +13,5 @@ public:
 	std::string GetMapName(void);
 };
 
+
+#endif /* KROGOTHSCRIPT_H */

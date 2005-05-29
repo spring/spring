@@ -1,3 +1,5 @@
+#ifndef UNITHANDLER_H
+#define UNITHANDLER_H
 // UnitHandler.h: interface for the CUnitHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 class CUnit;
@@ -106,3 +108,5 @@ extern CUnitHandler* uh;
 
 #endif // !defined(AFX_UNITHANDLER_H__F18EB58F_9B37_4366_839D_9ED34468C72B__INCLUDED_)
 
+
+#endif /* UNITHANDLER_H */

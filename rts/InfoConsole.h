@@ -1,3 +1,5 @@
+#ifndef INFOCONSOLE_H
+#define INFOCONSOLE_H
 // InfoConsole.h: interface for the CInfoConsole class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_INFOCONSOLE_H__E9B2D6A1_80B3_11D4_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <deque>
@@ -51,3 +53,5 @@ extern CInfoConsole* info;
 
 #endif // !defined(AFX_INFOCONSOLE_H__E9B2D6A1_80B3_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* INFOCONSOLE_H */

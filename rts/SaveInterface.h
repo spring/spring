@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SAVEINTERFACE_H
+#define SAVEINTERFACE_H
+/*pragma once removed*/
 #include "LoadSaveInterface.h"
 #include <fstream>
 
@@ -22,3 +24,5 @@ public:
 	std::ofstream* ofs;
 };
 
+
+#endif /* SAVEINTERFACE_H */

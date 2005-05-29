@@ -1,4 +1,6 @@
-#pragma once
+#ifndef STARBURSTLAUNCHER_H
+#define STARBURSTLAUNCHER_H
+/*pragma once removed*/
 #include "Weapon.h"
 
 class CStarburstLauncher :
@@ -16,3 +18,5 @@ public:
 	float uptime;
 };
 
+
+#endif /* STARBURSTLAUNCHER_H */

@@ -1,3 +1,5 @@
+#ifndef SMOKETRAILPROJECTILE_H
+#define SMOKETRAILPROJECTILE_H
 // SmokeTrailProjectile.h: interface for the CSmokeTrailProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_SMOKETRAILPROJECTILE_H__940A4391_5E16_429E_B3E6_285CEAD102C2__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Projectile.h"
@@ -40,3 +42,5 @@ public:
 
 #endif // !defined(AFX_SMOKETRAILPROJECTILE_H__940A4391_5E16_429E_B3E6_285CEAD102C2__INCLUDED_)
 
+
+#endif /* SMOKETRAILPROJECTILE_H */

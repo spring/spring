@@ -1,3 +1,5 @@
+#ifndef AVIGENERATOR_H
+#define AVIGENERATOR_H
 // AVIGenerator.h: interface for the CAVIGenerator class.
 //
 // A class to easily create AVI
@@ -11,7 +13,7 @@
 #define AFX_AVIGENERATOR_H__6BAF2E9D_3866_4779_A43B_D1B21E7E4F39__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 // needed headers
@@ -142,3 +144,5 @@ private:
 
 #endif // !defined(AFX_AVIGENERATOR_H__6BAF2E9D_3866_4779_A43B_D1B21E7E4F39__INCLUDED_)
 
+
+#endif /* AVIGENERATOR_H */

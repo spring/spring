@@ -1,3 +1,5 @@
+#ifndef GLOBALSTUFF_H
+#define GLOBALSTUFF_H
 // GlobalStuff1.h: interface for the CGlobalStuff class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_GLOBALSTUFF1_H__2B3603E2_4EBE_11D4_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 
@@ -115,3 +117,5 @@ extern CGlobalUnsyncedStuff* gu;
 
 #endif // !defined(AFX_GLOBALSTUFF1_H__2B3603E2_4EBE_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* GLOBALSTUFF_H */

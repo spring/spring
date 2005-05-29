@@ -1,8 +1,10 @@
+#ifndef MULTIPATH_H
+#define MULTIPATH_H
 #if !defined(AFX_MULTIPATHFINDER_H__EF1D75A1_1924_11D5_AD55_0080ADA84DE3__INCLUDED_)
 #define AFX_MULTIPATHFINDER_H__EF1D75A1_1924_11D5_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #pragma warning(disable:4786)
@@ -66,3 +68,5 @@ extern CMultiPath* pathfinder;
 
 #endif // !defined(AFX_PATHFINDER_H__EF1D75A1_1924_11D5_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* MULTIPATH_H */

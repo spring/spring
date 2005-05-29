@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PIECEPROJECTILE_H
+#define PIECEPROJECTILE_H
+/*pragma once removed*/
 #include "Projectile.h"
 #include "DamageArray.h"
 
@@ -42,3 +44,5 @@ public:
 	void DrawCallback(void);
 };
 
+
+#endif /* PIECEPROJECTILE_H */

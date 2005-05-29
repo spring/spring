@@ -1,4 +1,6 @@
-#pragma once
+#ifndef TRANSPORTCAI_H
+#define TRANSPORTCAI_H
+/*pragma once removed*/
 #include "MobileCAI.h"
 
 class CTransportCAI :
@@ -22,3 +24,5 @@ public:
 	int lastCall;
 };
 
+
+#endif /* TRANSPORTCAI_H */

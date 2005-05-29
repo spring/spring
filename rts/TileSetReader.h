@@ -1,4 +1,6 @@
-#pragma once
+#ifndef TILESETREADER_H
+#define TILESETREADER_H
+/*pragma once removed*/
 
 #include "ReadMap.h"
 
@@ -27,3 +29,5 @@ public:
 	TexPart *tilesetTexCoords;*/
 protected:
 };
+
+#endif /* TILESETREADER_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LOADSCRIPT_H
+#define LOADSCRIPT_H
+/*pragma once removed*/
 #include "Script.h"
 #include <string>
 #include "LoadSaveHandler.h"
@@ -16,3 +18,5 @@ public:
 	std::string file;
 };
 
+
+#endif /* LOADSCRIPT_H */

@@ -1,3 +1,5 @@
+#ifndef UNITLOADER_H
+#define UNITLOADER_H
 // UnitLoader.h: interface for the CUnitLoader class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_UNITLOADER_H__91B355AB_7C1B_4DFB_AB74_F6AED112DED7__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 class CUnitParser;
@@ -39,3 +41,5 @@ extern CUnitLoader unitLoader;
 
 #endif // !defined(AFX_UNITLOADER_H__91B355AB_7C1B_4DFB_AB74_F6AED112DED7__INCLUDED_)
 
+
+#endif /* UNITLOADER_H */

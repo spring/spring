@@ -1,4 +1,6 @@
-#pragma once
+#ifndef STARBURSTPROJECTILE_H
+#define STARBURSTPROJECTILE_H
+/*pragma once removed*/
 #include "WeaponProjectile.h"
 #include "DamageArray.h"
 #include <vector>
@@ -50,3 +52,5 @@ public:
 	unsigned int modelDispList;
 };
 
+
+#endif /* STARBURSTPROJECTILE_H */

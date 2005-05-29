@@ -1,4 +1,6 @@
-#pragma once
+#ifndef TAAIRMOVETYPE_H
+#define TAAIRMOVETYPE_H
+/*pragma once removed*/
 
 #include "StdAfx.h"
 #include "MoveType.h"
@@ -98,3 +100,5 @@ public:
 	void DependentDied(CObject* o);
 };
 
+
+#endif /* TAAIRMOVETYPE_H */

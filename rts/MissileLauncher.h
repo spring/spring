@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MISSILELAUNCHER_H
+#define MISSILELAUNCHER_H
+/*pragma once removed*/
 #include "Weapon.h"
 
 class CMissileLauncher :
@@ -15,3 +17,5 @@ public:
 	float tracking;
 };
 
+
+#endif /* MISSILELAUNCHER_H */

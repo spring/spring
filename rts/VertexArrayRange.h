@@ -1,3 +1,5 @@
+#ifndef VERTEXARRAYRANGE_H
+#define VERTEXARRAYRANGE_H
 // VertexArrayRange.h: interface for the CVertexArrayRange class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_VERTEXARRAYRANGE_H__F600894E_153A_4A05_9C29_7650EC565F55__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "VertexArray.h"
@@ -33,3 +35,5 @@ public:
 
 #endif // !defined(AFX_VERTEXARRAYRANGE_H__F600894E_153A_4A05_9C29_7650EC565F55__INCLUDED_)
 
+
+#endif /* VERTEXARRAYRANGE_H */

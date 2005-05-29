@@ -1,4 +1,6 @@
-#pragma once
+#ifndef STARTPOSSELECTER_H
+#define STARTPOSSELECTER_H
+/*pragma once removed*/
 #include "InputReceiver.h"
 
 class CStartPosSelecter :
@@ -14,3 +16,5 @@ public:
 	ContainerBox readyBox;
 };
 
+
+#endif /* STARTPOSSELECTER_H */

@@ -1,3 +1,5 @@
+#ifndef MELEEWEAPON_H
+#define MELEEWEAPON_H
 // MeleeWeapon.h: interface for the CMeleeWeapon class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_MELEEWEAPON_H__9E3B7980_BB91_4634_9CD6_4141621D7BA3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Weapon.h"
@@ -23,3 +25,5 @@ public:
 
 #endif // !defined(AFX_MELEEWEAPON_H__9E3B7980_BB91_4634_9CD6_4141621D7BA3__INCLUDED_)
 
+
+#endif /* MELEEWEAPON_H */

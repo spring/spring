@@ -1,4 +1,6 @@
-#pragma once
+#ifndef UNITTRACKER_H
+#define UNITTRACKER_H
+/*pragma once removed*/
 
 class CUnitTracker
 {
@@ -23,3 +25,5 @@ public:
 };
 
 extern CUnitTracker unitTracker;
+
+#endif /* UNITTRACKER_H */

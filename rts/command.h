@@ -1,10 +1,12 @@
+#ifndef COMMAND_H
+#define COMMAND_H
 #if !defined(AFX_COMMAND_H__B3513CA2_FB87_11D5_AD55_B771F8FC7D53__INCLUDED_)
 #define AFX_COMMAND_H__B3513CA2_FB87_11D5_AD55_B771F8FC7D53__INCLUDED_
 
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <string>
@@ -98,3 +100,5 @@ struct Command {
 
 #endif // !defined(AFX_COMMAND_H__B3513CA2_FB87_11D5_AD55_B771F8FC7D53__INCLUDED_)
 
+
+#endif /* COMMAND_H */

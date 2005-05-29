@@ -1,4 +1,6 @@
-#pragma once
+#ifndef WIND_H
+#define WIND_H
+/*pragma once removed*/
 
 #include "float3.h"
 
@@ -24,3 +26,5 @@ protected:
 };
 
 extern CWind wind;
+
+#endif /* WIND_H */

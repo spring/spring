@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RADARHANDLER_H
+#define RADARHANDLER_H
+/*pragma once removed*/
 #include "Object.h"
 #include "Unit.h"
 
@@ -48,3 +50,5 @@ protected:
 };
 
 extern CRadarHandler* radarhandler;
+
+#endif /* RADARHANDLER_H */

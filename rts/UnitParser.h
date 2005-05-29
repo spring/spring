@@ -1,3 +1,5 @@
+#ifndef UNITPARSER_H
+#define UNITPARSER_H
 // UnitParser.h: interface for the CUnitParser class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_UNITPARSER_H__B436C3C7_876B_44F9_945E_7E66405696F0__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <string>
@@ -47,3 +49,5 @@ extern CUnitParser* parser;
 
 #endif // !defined(AFX_UNITPARSER_H__B436C3C7_876B_44F9_945E_7E66405696F0__INCLUDED_)
 
+
+#endif /* UNITPARSER_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef TORPEDOLAUNCHER_H
+#define TORPEDOLAUNCHER_H
+/*pragma once removed*/
 #include "Weapon.h"
 
 class CTorpedoLauncher :
@@ -15,3 +17,5 @@ public:
 	float tracking;
 };
 
+
+#endif /* TORPEDOLAUNCHER_H */

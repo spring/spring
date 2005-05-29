@@ -1,3 +1,5 @@
+#ifndef ROCKETLAUNCHER_H
+#define ROCKETLAUNCHER_H
 // RocketLauncher.h: interface for the CRocketLauncher class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_ROCKETLAUNCHER_H__4898F724_F864_11D5_AD55_E2927DE7ED6F__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "Weapon.h"
@@ -24,3 +26,5 @@ public:
 
 #endif // !defined(AFX_ROCKETLAUNCHER_H__4898F724_F864_11D5_AD55_E2927DE7ED6F__INCLUDED_)
 
+
+#endif /* ROCKETLAUNCHER_H */

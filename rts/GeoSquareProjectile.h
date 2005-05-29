@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GEOSQUAREPROJECTILE_H
+#define GEOSQUAREPROJECTILE_H
+/*pragma once removed*/
 #include "Projectile.h"
 
 class CGeoSquareProjectile : public CProjectile
@@ -14,3 +16,5 @@ public:
 	void Update(void);
 };
 
+
+#endif /* GEOSQUAREPROJECTILE_H */

@@ -1,3 +1,5 @@
+#ifndef MINIMAP_H
+#define MINIMAP_H
 // MiniMap.h: interface for the CMiniMap class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_MINIMAP_H__031E512D_66AB_4071_8769_EBAFAB24BBEA__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include <vector>
@@ -54,3 +56,5 @@ extern CMiniMap* minimap;
 
 #endif // !defined(AFX_MINIMAP_H__031E512D_66AB_4071_8769_EBAFAB24BBEA__INCLUDED_)
 
+
+#endif /* MINIMAP_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MYMATH_H
+#define MYMATH_H
+/*pragma once removed*/
 
 #include "GlobalStuff.h"
 
@@ -102,3 +104,5 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 Gives the number of 1:s in a given bitmask.
 */
 int CountBits(register unsigned int bitmask);
+
+#endif /* MYMATH_H */

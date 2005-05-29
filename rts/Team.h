@@ -1,3 +1,5 @@
+#ifndef TEAM_H
+#define TEAM_H
 // Team.h: interface for the CTeam class.
 
 //
@@ -18,7 +20,7 @@
 
 #if _MSC_VER > 1000
 
-#pragma once
+/*pragma once removed*/
 
 #endif // _MSC_VER > 1000
 
@@ -203,3 +205,5 @@ public:
 #endif // !defined(AFX_TEAM_H__B3513CA1_FB87_11D5_AD55_B771F8FC7D53__INCLUDED_)
 
 
+
+#endif /* TEAM_H */

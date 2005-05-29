@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INTERCEPTHANDLER_H
+#define INTERCEPTHANDLER_H
+/*pragma once removed*/
 #include "Object.h"
 
 #include <list>
@@ -20,3 +22,5 @@ public:
 };
 
 extern CInterceptHandler interceptHandler;
+
+#endif /* INTERCEPTHANDLER_H */

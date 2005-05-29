@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MUZZLEFLAME_H
+#define MUZZLEFLAME_H
+/*pragma once removed*/
 #include "Projectile.h"
 
 class CMuzzleFlame :
@@ -20,3 +22,5 @@ public:
 	float3* randSmokeDir;
 };
 
+
+#endif /* MUZZLEFLAME_H */

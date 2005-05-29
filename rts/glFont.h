@@ -1,3 +1,5 @@
+#ifndef GLFONT_H
+#define GLFONT_H
 // glFont.h: interface for the CglFont class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +8,7 @@
 #define AFX_GLFONT_H__E6EEC624_801A_11D4_AD55_0080ADA84DE3__INCLUDED_
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "myGL.h"
@@ -35,3 +37,5 @@ extern CglFont* font;
 
 #endif // !defined(AFX_GLFONT_H__E6EEC624_801A_11D4_AD55_0080ADA84DE3__INCLUDED_)
 
+
+#endif /* GLFONT_H */

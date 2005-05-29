@@ -1,3 +1,5 @@
+#ifndef GROUPAICALLBACK_H
+#define GROUPAICALLBACK_H
 // GroupAiCallback.h: interface for the CGroupAiCallback class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +10,7 @@
 #pragma warning(disable:4786)
 
 #if _MSC_VER > 1000
-#pragma once
+/*pragma once removed*/
 #endif // _MSC_VER > 1000
 
 #include "IGroupAiCallback.h"
@@ -89,3 +91,5 @@ public:
 
 #endif // !defined(AFX_GROUPAICALLBACK_H__D3CCA6DA_BB40_40E0_A08F_211F4410E6E3__INCLUDED_)
 
+
+#endif /* GROUPAICALLBACK_H */
