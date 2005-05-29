@@ -1,7 +1,5 @@
 #ifndef GUICENTERBUILDMENU_H
 #define GUICENTERBUILDMENU_H
-#if !defined(GUICENTERBUILDMENU_H)
-#define GUICENTERBUILDMENU_H
 
 #if _MSC_VER >= 1000
 /*pragma once removed*/
@@ -40,7 +38,5 @@ protected:
 
 	bool rehideMouse;
 };
-
-#endif // !defined(GUIBUILDMENU_H)
 
 #endif /* GUICENTERBUILDMENU_H */
