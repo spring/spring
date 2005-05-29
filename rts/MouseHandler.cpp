@@ -217,7 +217,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 #ifndef NEW_GUI
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
 		if((*ri)->MousePress(x,y,button)){
 			activeReceiver=*ri;
 			return;
@@ -528,7 +528,7 @@ void CMouseHandler::DrawCursor(void)
 std::string CMouseHandler::GetCurrentTooltip(void)
 {
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
 		if((*ri)->IsAbove(lastx,lasty)){
 			std::string s=(*ri)->GetTooltip(lastx,lasty);
 			if(s!="")

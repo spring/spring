@@ -400,7 +400,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 	}
 
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
 		if((*ri)->KeyPressed(k))
 			return 0;
 	}
@@ -623,7 +623,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 		mouse->ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
 	}
 	if (s=="sharedialog"){
-		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0)
+		if(!inputReceivers->empty() && dynamic_cast<CShareBox*>(inputReceivers->front())==0)
 			new CShareBox();
 	}
 	if (s=="quit"){
@@ -718,7 +718,7 @@ int CGame::KeyReleased(unsigned char k)
 	}
 
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
 		if((*ri)->KeyReleased(k))
 			return 0;
 	}
@@ -943,9 +943,9 @@ bool CGame::Draw()
 	glEnable(GL_TEXTURE_2D);
 
 #ifndef NEW_GUI
-	if(!hideInterface && !inputReceivers.empty()){
+	if(!hideInterface && !inputReceivers->empty()){
 		std::deque<CInputReceiver*>::iterator ri;
-		for(ri=--inputReceivers.end();ri!=inputReceivers.begin();--ri){
+		for(ri=--inputReceivers->end();ri!=inputReceivers->begin();--ri){
 			(*ri)->Draw();
 		}
 		(*ri)->Draw();
