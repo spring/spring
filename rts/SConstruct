@@ -195,4 +195,4 @@ env = conf.Finish()
 # let's build
 
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
-env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib'], CPPPATH=common_include_path)
+env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib','GLU'], CPPPATH=common_include_path)
