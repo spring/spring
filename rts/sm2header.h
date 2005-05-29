@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SM2HEADER_H
+#define SM2HEADER_H
 
 struct SM2Header
 {
@@ -36,3 +37,5 @@ struct FeatureFileStruct
 	float rotation;
 	float relativeSize;
 };
+
+#endif /* SM2HEADER_H */

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef METALMAP_H
+#define METALMAP_H
 
 #include "GlobalStuff.h"
 
@@ -24,3 +25,4 @@ protected:
 	float metalscale;
 };
 
+#endif /* METALMAP_H */

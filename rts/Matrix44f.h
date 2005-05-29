@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MATRIX44F_H
+#define MATRIX44F_H
 
 #include "float3.h"
 
@@ -27,3 +28,4 @@ public:
 	void Translate(const float3& pos);
 };
 
+#endif /* MATRIX44F_H */
