@@ -210,10 +210,10 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	terraformCenter=centerPos;
 	terraformRadius=radius;
 
-	tx1 = max((float)0,(centerPos.x-radius)/SQUARE_SIZE);
-	tx2 = min((float)gs->mapx,(centerPos.x+radius)/SQUARE_SIZE);
-	tz1 = max((float)0,(centerPos.z-radius)/SQUARE_SIZE);
-	tz2 = min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
+	tx1 = (int)max((float)0,(centerPos.x-radius)/SQUARE_SIZE);
+	tx2 = (int)min((float)gs->mapx,(centerPos.x+radius)/SQUARE_SIZE);
+	tz1 = (int)max((float)0,(centerPos.z-radius)/SQUARE_SIZE);
+	tz2 = (int)min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
 
 	float tcost=0;
 	for(int z=tz1; z<=tz2; z++){
@@ -272,9 +272,9 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 	if(feature)
 		return false;
 
-	tx1 = max((float)0,(buildPos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	tx1 = (int)max((float)0,(buildPos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	tx2 = min(gs->mapx,tx1+unitdef->xsize);
-	tz1 = max((float)0,(buildPos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	tz1 = (int)max((float)0,(buildPos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	tz2 = min(gs->mapy,tz1+unitdef->ysize);
 
 	float tcost=0;
@@ -373,7 +373,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	float3 error=gs->randVector()*(radius/l);
 
 	if(inverse)
-		new CGfxProjectile(weaponPos+(dif+error)*l,-(dif+error)*3,l/3,float3(0.2f,0.7f,0.2f));
+		new CGfxProjectile(weaponPos+(dif+error)*l,-(dif+error)*3,(int)(l/3),float3(0.2f,0.7f,0.2f));
 	else
-		new CGfxProjectile(weaponPos,(dif+error)*3,l/3,float3(0.2f,0.7f,0.2f));
+		new CGfxProjectile(weaponPos,(dif+error)*3,(int)(l/3),float3(0.2f,0.7f,0.2f));
 }

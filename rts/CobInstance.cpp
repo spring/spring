@@ -727,7 +727,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case STANDINGFIREORDERS:
 		break;
 	case HEALTH:
-		return ((unit->health/unit->maxHealth)*100.0f);
+		return (int) ((unit->health/unit->maxHealth)*100.0f);
 	case INBUILDSTANCE:
 		if (unit->inBuildStance)
 			return 1;
@@ -774,17 +774,17 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		CUnit *u = uh->units[p1];
 		return (int)(u->radius * SCALE);}
 	case XZ_ATAN:
-		return TAANG2RAD*atan2f(UNPACKX(p1), UNPACKZ(p1)) + 32768 - unit->heading;
+		return (int)(TAANG2RAD*atan2f(UNPACKX(p1), UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:
-		return _hypot(UNPACKX(p1), UNPACKZ(p1)) * SCALE;
+		return (int)(_hypot(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
 	case ATAN:
-		return TAANG2RAD*atan2f(p1, p2);
+		return (int)(TAANG2RAD*atan2f(p1, p2));
 	case HYPOT:
 		return _hypot(p1, p2);
 	case GROUND_HEIGHT:
-		return ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE;
+		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
 	case BUILD_PERCENT_LEFT:
-		return (1 - unit->buildProgress) * 100;
+		return (int)((1 - unit->buildProgress) * 100);
 	case YARD_OPEN:
 		if (yardOpen)
 			return 1;

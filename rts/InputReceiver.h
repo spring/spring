@@ -40,3 +40,4 @@ public:
 extern std::deque<CInputReceiver*> inputReceivers;
 
 #endif /* INPUTRECEIVER_H */
+

@@ -176,7 +176,7 @@ void CCommandAI::GiveCommand(Command& c)
 		{
 			if(c.params.empty())
 				return;
-			owner->fireState=c.params[0];
+			owner->fireState=(int)c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_FIRE_STATE){
 					char t[10];
@@ -191,7 +191,7 @@ void CCommandAI::GiveCommand(Command& c)
 		{
 			if(c.params.empty())
 				return;
-			owner->moveState=c.params[0];
+			owner->moveState=(int)c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_MOVE_STATE){
 					char t[10];

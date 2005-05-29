@@ -214,7 +214,7 @@ void GUIscrollbar::PrivateDraw()
 
 	glDisable(GL_TEXTURE_2D);
 
-	int knobY=((h-(KNOB_SIZE*2)-KNOB_SIZE)/(float)maximum)*position+KNOB_SIZE;
+	int knobY=(int)(((h-(KNOB_SIZE*2)-KNOB_SIZE)/(float)maximum)*position)+KNOB_SIZE;
 
 
 
@@ -280,7 +280,7 @@ bool GUIscrollbar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int butto
 
 		{
 
-			position=((float)(y1-KNOB_SIZE)/(h-(KNOB_SIZE*2)))*maximum+0.5;
+			position=(int)(((float)(y1-KNOB_SIZE)/(h-(KNOB_SIZE*2)))*maximum+0.5);
 
 		}
 

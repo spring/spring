@@ -126,3 +126,4 @@ int CCobFile::getFunctionId(const string &name)
 
 	return -1;
 }
+

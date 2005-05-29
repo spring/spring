@@ -461,7 +461,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 	} else if(s=="SelectPart"){
 		ReadDelimiter(selectString);
 		float part=atof(ReadToken(selectString).c_str())*0.01;//convert from percent
-		int num=selection.size()*part;
+		int num=(int)(selection.size()*part);
 
 		if(selection.empty())
 			return;

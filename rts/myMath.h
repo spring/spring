@@ -32,7 +32,7 @@ inline short int GetHeadingFromVector(float dx,float dz)
 	}
 
 	h*=32768/PI;
-	return h;
+	return (short int) h;
 /*
 	float wantedHeading;
 
@@ -77,9 +77,9 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 
 //	h+=PI;
 	h*=32768/PI;
-	ret.x=h;
+	ret.x=(short int) h;
 
-	ret.y=asin(vec.y)*(32768/PI);
+	ret.y=(short int) (asin(vec.y)*(32768/PI));
 
 	return ret;
 }

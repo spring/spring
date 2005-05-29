@@ -115,9 +115,9 @@ void CFireProjectile::Draw(void)
 
 		float3 interPos=pi->pos;
 
-		col[0]=(1-age)*255;
-		col[1]=(1-age)*255;
-		col[2]=(1-age)*255;
+		col[0]=(unsigned char)((1-age)*255);
+		col[1]=(unsigned char)((1-age)*255);
+		col[2]=(unsigned char)((1-age)*255);
 
 		va->AddVertexTC(interPos-dir1-dir2,0.25f,0.25f,col);
 		va->AddVertexTC(interPos+dir1-dir2,0.5f ,0.25f,col);
@@ -137,9 +137,9 @@ void CFireProjectile::Draw(void)
 		float3 interPos=pi->pos;
 
 		if(age < 1/1.31f){
-			col[0]=(1-age*1.3)*255;
-			col[1]=(1-age*1.3)*255;
-			col[2]=(1-age*1.3)*255;
+			col[0]=(unsigned char)((1-age*1.3)*255);
+			col[1]=(unsigned char)((1-age*1.3)*255);
+			col[2]=(unsigned char)((1-age*1.3)*255);
 
 			va->AddVertexTC(interPos-dir1-dir2,0.25f,0.25f,col);
 			va->AddVertexTC(interPos+dir1-dir2,0.5f ,0.25f,col);
@@ -149,13 +149,13 @@ void CFireProjectile::Draw(void)
 
 		unsigned char c;
 		if(age<0.5){
-			c=age*510;
+			c=(unsigned char)(age*510);
 		} else {
-			c=510-age*510;
+			c=(unsigned char)(510-age*510);
 		}
-		col2[0]=c*0.6;
-		col2[1]=c*0.6;
-		col2[2]=c*0.6;
+		col2[0]=(unsigned char)(c*0.6);
+		col2[1]=(unsigned char)(c*0.6);
+		col2[2]=(unsigned char)(c*0.6);
 		col2[3]=c;
 		float xmod=0.125+(float(int(pi->smokeType%6)))/16;
 		float ymod=(int(pi->smokeType/6))/16.0;

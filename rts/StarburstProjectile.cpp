@@ -35,7 +35,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	areaOfEffect(areaOfEffect)
 {
 	this->uptime=uptime;
-	ttl=uptime+weaponDef->range/maxSpeed+100;
+	ttl=uptime+(int)(weaponDef->range/maxSpeed)+100;
 
 	if(!weaponDef->visuals.modelName.empty()){
 		S3DOModel* model = unit3doparser->Load3DO(string("objects3d\\")+weaponDef->visuals.modelName+".3do",1,0);
@@ -229,20 +229,20 @@ void CStarburstProjectile::Draw(void)
 		float a1=(1-float(0)/(Smoke_Time))*255;
 		a1*=0.7+fabs(dif.dot(dir));
 		int alpha=min(255,(int)max(0.f,a1));
-		col[0]=color*alpha;
-		col[1]=color*alpha;
-		col[2]=color*alpha;
-		col[3]=alpha;
+		col[0]=(unsigned char) (color*alpha);
+		col[1]=(unsigned char) (color*alpha);
+		col[2]=(unsigned char) (color*alpha);
+		col[3]=(unsigned char)alpha;
 
 		float a2=(1-float(age2)/(Smoke_Time))*255;
 		a2*=0.7+fabs(dif2.dot(oldSmokeDir));
 		if(age<8)
 			a2=0;
 		alpha=min(255,(int)max(0.f,a2));
-		col2[0]=color*alpha;
-		col2[1]=color*alpha;
-		col2[2]=color*alpha;
-		col2[3]=alpha;
+		col2[0]=(unsigned char) (color*alpha);
+		col2[1]=(unsigned char) (color*alpha);
+		col2[2]=(unsigned char) (color*alpha);
+		col2[3]=(unsigned char)alpha;
 
 		float xmod=0;
 		float ymod=0.25;
@@ -261,9 +261,9 @@ void CStarburstProjectile::Draw(void)
 
 		for(int a=0;a<numParts;++a){
 			float a1=1-float(a)/Smoke_Time;
-			col[0]=color*255;
-			col[1]=color*255;
-			col[2]=color*255;
+			col[0]=(unsigned char) (color*255);
+			col[1]=(unsigned char) (color*255);
+			col[2]=(unsigned char) (color*255);
 			col[3]=255;//min(255,max(0,a1*255));
 			float size=(1+(a)*(1/Smoke_Time)*7);
 
@@ -312,14 +312,14 @@ void CStarburstProjectile::DrawCallback(void)
 			col[3]=1;
 			if(missileAge<20){
 				float alpha=max(0.f,((1-age2)*(1-age2)));
-				col[0]=255*alpha;
-				col[1]=200*alpha;
-				col[2]=150*alpha;
+				col[0]=(unsigned char) (255*alpha);
+				col[1]=(unsigned char) (200*alpha);
+				col[2]=(unsigned char) (150*alpha);
 			} else {
 				float alpha=max(0.f,((1-age2)*max(0.f,(1-age2))));
-				col[0]=255*alpha;
-				col[1]=200*alpha;
-				col[2]=150*alpha;
+				col[0]=(unsigned char) (255*alpha);
+				col[1]=(unsigned char) (200*alpha);
+				col[2]=(unsigned char) (150*alpha);
 			}
 			drawsize=1+age2*0.8*ageMod*7;
 			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,0.25,0.25,col);
@@ -334,7 +334,7 @@ void CStarburstProjectile::DrawCallback(void)
 	col[1]=180;
 	col[2]=180;
 	col[3]=1;
-	int fsize = 25.0f;
+	int fsize = 25;
 	va->AddVertexTC(pos-camera->right*fsize-camera->up*fsize,0.51,0.13,col);
 	va->AddVertexTC(pos+camera->right*fsize-camera->up*fsize,0.99,0.13,col);
 	va->AddVertexTC(pos+camera->right*fsize+camera->up*fsize,0.99,0.36,col);

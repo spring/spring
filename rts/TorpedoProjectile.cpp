@@ -107,7 +107,7 @@ void CTorpedoProjectile::Update(void)
 	if(pos.y<-2){
 		--nextBubble;
 		if(nextBubble==0){
-			nextBubble=1+gs->randFloat()*1.5;
+			nextBubble=1+(int)(gs->randFloat()*1.5);
 
 			float3 pspeed=gs->randVector()*0.1;
 			pspeed.y+=0.2;

@@ -345,9 +345,8 @@ void CLosHandler::OutputTable(int Table)
 //  DrawLine(0, Radius, Radius);
   for(float i=Radius; i>=1; i-=0.5)
 	{
-    r2 = i * i;
+    r2 = (int)(i * i);
 		
-    y = i;
     x = 1;
     y = (int) (sqrt((float)r2 - 1) + 0.5);
     while (x < y) {

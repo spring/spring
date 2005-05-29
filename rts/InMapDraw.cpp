@@ -98,7 +98,7 @@ CInMapDraw::CInMapDraw(void)
 
 			tex[y][x][2]=255;
 
-			tex[y][x][3]=255-dist*8;
+			tex[y][x][3]=(unsigned char) (255-dist*8);
 
 		}
 
@@ -120,7 +120,7 @@ CInMapDraw::CInMapDraw(void)
 
 			tex[y][x+64][2]=255;
 
-			tex[y][x+64][3]=255-dist*8;
+			tex[y][x+64][3]=(unsigned char) (255-dist*8);
 
 		}
 
@@ -234,7 +234,7 @@ void CInMapDraw::Draw(void)
 
 			if(xtest>sx)
 
-				sx=xtest;
+				sx=(int)xtest;
 
 		}
 
@@ -252,7 +252,7 @@ void CInMapDraw::Draw(void)
 
 			if(xtest<ex)
 
-				ex=xtest;
+				ex=(int)xtest;
 
 		}
 
@@ -562,10 +562,10 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 
 		float3 pos(*(short*)&msg[4],0,*(short*)&msg[6]);
 
-		for(int y=max(.0f,(pos.z-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);
+		for(int y=(int)max(.0f,(pos.z-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);
 		y<=min(drawQuadsY-1.f,(pos.z+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++y){
 
-			for(int x=max(0.f,(pos.x-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);x<=min(drawQuadsX-1.f,(pos.x+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++x){
+			for(int x=(int)max(0.f,(pos.x-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);x<=min(drawQuadsX-1.f,(pos.x+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++x){
 
 				DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
 
@@ -643,9 +643,9 @@ void CInMapDraw::ErasePos(float3 pos)
 
 	netbuf[3]=NET_ERASE;
 
-	*(short*)&netbuf[4]=pos.x;
+	*(short*)&netbuf[4]=(short int)pos.x;
 
-	*(short*)&netbuf[6]=pos.z;
+	*(short*)&netbuf[6]=(short int)pos.z;
 
 	net->SendData(netbuf,netbuf[1]);	
 
@@ -665,9 +665,9 @@ void CInMapDraw::CreatePoint(float3 pos, std::string label)
 
 	netbuf[3]=NET_POINT;
 
-	*(short*)&netbuf[4]=pos.x;
+	*(short*)&netbuf[4]=(short int)pos.x;
 
-	*(short*)&netbuf[6]=pos.z;
+	*(short*)&netbuf[6]=(short int)pos.z;
 
 	for(int a=0;a<label.size();++a)
 
@@ -693,13 +693,13 @@ void CInMapDraw::AddLine(float3 pos, float3 pos2)
 
 	netbuf[3]=NET_LINE;
 
-	*(short*)&netbuf[4]=pos.x;
+	*(short*)&netbuf[4]=(short int)pos.x;
 
-	*(short*)&netbuf[6]=pos.z;
+	*(short*)&netbuf[6]=(short int)pos.z;
 
-	*(short*)&netbuf[8]=pos2.x;
+	*(short*)&netbuf[8]=(short int)pos2.x;
 
-	*(short*)&netbuf[10]=pos2.z;
+	*(short*)&netbuf[10]=(short int)pos2.z;
 
 	net->SendData(netbuf,netbuf[1]);	
 

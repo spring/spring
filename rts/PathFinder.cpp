@@ -437,3 +437,4 @@ void CRangedGoalPFD::Draw() const {
 	glColor4f(0, 1, 1, 1);
 	glSurfaceCircle(goal, goalRadius);
 }
+

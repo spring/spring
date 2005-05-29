@@ -102,7 +102,7 @@ void GUImatrix::SetValues(std::vector<std::vector<std::string> > values,std::vec
 
 			if(guifont->GetWidth(values[b][a])>max)
 
-				max=guifont->GetWidth(values[b][a]);
+				max=(int)guifont->GetWidth(values[b][a]);
 
 		}
 

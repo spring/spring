@@ -108,3 +108,4 @@ void CFireBallProjectile::Collision()
 	CWeaponProjectile::Collision();
 	deleteMe = false;
 }
+

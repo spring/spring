@@ -768,3 +768,4 @@ void CCobThread::ForceCommitAnim(int type, int piece, int axis)
 		}
 	}
 }
+

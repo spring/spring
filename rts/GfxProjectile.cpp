@@ -21,9 +21,9 @@ CGfxProjectile::CGfxProjectile(const float3& pos,const float3& speed,int lifeTim
 	creationTime(gs->frameNum)
 {
 	checkCol=false;
-	this->color[0]=color[0]*255;
-	this->color[1]=color[1]*255;
-	this->color[2]=color[2]*255;
+	this->color[0]=(unsigned char) (color[0]*255);
+	this->color[1]=(unsigned char) (color[1]*255);
+	this->color[2]=(unsigned char) (color[2]*255);
 	this->color[3]=20;
 	drawRadius=3;
 }

@@ -237,3 +237,4 @@ void CSelectedUnitsAI::CalculateGroupData(int player) {
 		centerCoor = sumCoor / selectedUnits.netSelected[player].size();
 
 }
+

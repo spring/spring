@@ -45,7 +45,7 @@ void CTorpedoLauncher::Fire(void)
 	float3 startSpeed=dir*0.01;
 //	if(onlyForward)
 //		startSpeed+=owner->speed;
-	new CTorpedoProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,range/projectileSpeed+15,targetUnit, weaponDef);
+	new CTorpedoProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed)+15,targetUnit, weaponDef);
 	if(fireSoundId)
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }

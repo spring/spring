@@ -107,7 +107,7 @@ void CFactory::Update()
 			dif/=l;
 			dif+=gs->randVector()*0.15f;
 
-			new CGfxProjectile(weaponPos,dif,l,float3(0.2f,0.7f,0.2f));
+			new CGfxProjectile(weaponPos,dif,(int)l,float3(0.2f,0.7f,0.2f));
 		} else {
 			if(!curBuild->beingBuilt){
 				if(group)

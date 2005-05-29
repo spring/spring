@@ -51,10 +51,10 @@ void CBubbleProjectile::Draw()
 {
 	inArray=true;
 	unsigned char col[4];
-	col[0]=255*alpha;
-	col[1]=255*alpha;
-	col[2]=255*alpha;
-	col[3]=255*alpha;
+	col[0]=(unsigned char)(255*alpha);
+	col[1]=(unsigned char)(255*alpha);
+	col[2]=(unsigned char)(255*alpha);
+	col[3]=(unsigned char)(255*alpha);
 
 	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+sizeExpansion*gu->timeOffset;

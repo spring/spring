@@ -114,7 +114,7 @@ void CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name,
 		CreateWreckage(pos,fi->second->deathFeature,rot,iter-1,allyteam,emitSmoke);
 	} else {
 		if(!fi->second->modelname.empty()){
-			CFeature* f=new CFeature(pos,fi->second,rot,allyteam);
+			CFeature* f=new CFeature(pos,fi->second,(short int)rot,allyteam);
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
 		}
@@ -324,7 +324,7 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 		if(name.find("GrassType")!=string::npos)		//grass isnt handled as real features
 			treeDrawer->AddGrass(float3(ffs.xpos,0,ffs.zpos));
 		else if(!onlyCreateDefs)
-			new CFeature(float3(ffs.xpos,ffs.ypos,ffs.zpos),featureDefs[name],ffs.rotation,-1);
+			new CFeature(float3(ffs.xpos,ffs.ypos,ffs.zpos),featureDefs[name],(short int)ffs.rotation,-1);
 	}
 
 	delete[] mapids;
@@ -433,7 +433,7 @@ void CFeatureHandler::DrawRaw(int extraSize)
 				xtest=xtest2;
 			xtest=xtest/DRAW_QUAD_SIZE;
 			if(xtest-extraSize>sx)
-				sx=xtest-extraSize;
+				sx=((int)xtest)-extraSize;
 		}
 		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
 			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*DRAW_QUAD_SIZE)));
@@ -442,7 +442,7 @@ void CFeatureHandler::DrawRaw(int extraSize)
 				xtest=xtest2;
 			xtest=xtest/DRAW_QUAD_SIZE;
 			if(xtest+extraSize<ex)
-				ex=xtest+extraSize;
+				ex=((int)xtest)+extraSize;
 		}
 		for(int x=sx;x<=ex;x++){/**/
 

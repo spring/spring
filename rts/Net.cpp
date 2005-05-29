@@ -56,6 +56,7 @@ CNet::CNet()
 		WSACleanup( );
 		return; 
 	}
+#endif
 	connected=false;
 
 	for(int a=0;a<MAX_PLAYERS;a++){
@@ -70,7 +71,6 @@ CNet::CNet()
 	recordDemo=0;
 	playbackDemo=0;
 	mySocket=0;
-#endif
 
 	netMutex=CreateMutex(0,false,"SpringNetLocalBufferMutex");
 }
@@ -102,7 +102,7 @@ CNet::~CNet()
 		for(pi2=c->waitingPackets.begin();pi2!=c->waitingPackets.end();++pi2)
 			delete (pi2->second);
 	}
-#endif NO_NET
+#endif //NO_NET
 	CloseHandle(netMutex);
 }
 
@@ -608,3 +608,4 @@ void CNet::ReadDemoFile(void)
 //		info->AddLine("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
 	}
 }
+

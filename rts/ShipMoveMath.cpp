@@ -85,3 +85,4 @@ Ships are always in water level.
 float CShipMoveMath::yLevel(int xSquare, int zSquare) {
 	return 0.0f;
 }
+

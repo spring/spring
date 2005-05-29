@@ -54,18 +54,18 @@ void CSpherePartProjectile::Draw(void)
 		for(int x=0;x<4;++x){
 			float alpha=baseAlpha*((float)1.0-min(float(1.0),float(age+gu->timeOffset)/ttl))*(1-fabs(y+ybase-8.0f)/8.0*1.0);
 
-			col[0]=200*alpha;
-			col[1]=200*alpha;
-			col[2]=150*alpha;
-			col[3]=40*alpha;
+			col[0]=(unsigned char) (200*alpha);
+			col[1]=(unsigned char) (200*alpha);
+			col[2]=(unsigned char) (150*alpha);
+			col[3]=(unsigned char) (40*alpha);
 			va->AddVertexTC(centerPos+vectors[y*5+x]*interSize,1.0/16,1.0/16,col);
 			va->AddVertexTC(centerPos+vectors[y*5+x+1]*interSize,1.0/16,1.0/16,col);
 			alpha=baseAlpha*(1.0-min(float(1.0),float(age+gu->timeOffset)/ttl))*(1-fabs(y+1+ybase-8.0f)/8.0*1.0);
 
-			col[0]=200*alpha;
-			col[1]=200*alpha;
-			col[2]=150*alpha;
-			col[3]=40*alpha;
+			col[0]=(unsigned char) (200*alpha);
+			col[1]=(unsigned char) (200*alpha);
+			col[2]=(unsigned char) (150*alpha);
+			col[3]=(unsigned char) (40*alpha);
 			va->AddVertexTC(centerPos+vectors[(y+1)*5+x+1]*interSize,1.0/16,1.0/16,col);
 			va->AddVertexTC(centerPos+vectors[(y+1)*5+x]*interSize,1.0/16,1.0/16,col);
 		}

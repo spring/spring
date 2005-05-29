@@ -58,10 +58,10 @@ CProjectileHandler::CProjectileHandler()
 			float dist=sqrt((float)(x-32)*(x-32)+(y-32)*(y-32));
 			if(dist>31.875)
 				dist=31.875;
-			tex[y][x][0]=255-dist*8;
-			tex[y][x][1]=255-dist*8;
-			tex[y][x][2]=255-dist*8;
-			tex[y][x][3]=255-dist*8;
+			tex[y][x][0]=255-(unsigned char) (dist*8);
+			tex[y][x][1]=255-(unsigned char) (dist*8);
+			tex[y][x][2]=255-(unsigned char) (dist*8);
+			tex[y][x][3]=255-(unsigned char) (dist*8);
 		}
 	}
 
@@ -70,9 +70,9 @@ CProjectileHandler::CProjectileHandler()
 			float dist=abs(y-32);
 			if(dist>31.5)
 				dist=31.5;
-			tex[y][x+320][0]=255-dist*8;
-			tex[y][x+320][1]=255-dist*8;
-			tex[y][x+320][2]=255-dist*8;
+			tex[y][x+320][0]=255-(unsigned char) (dist*8);
+			tex[y][x+320][1]=255-(unsigned char) (dist*8);
+			tex[y][x+320][2]=255-(unsigned char) (dist*8);
 			tex[y][x+320][3]=255;
 		}
 	}
@@ -81,9 +81,9 @@ CProjectileHandler::CProjectileHandler()
 			float dist=sqrt((float)(x-32)*(x-32)+(y-32)*(y-32));
 			if(dist>31.875)
 				dist=31.875;
-			tex[y][x+448][0]=255-dist*8;
-			tex[y][x+448][1]=255-dist*8;
-			tex[y][x+448][2]=255-dist*8;
+			tex[y][x+448][0]=255-(unsigned char) (dist*8);
+			tex[y][x+448][1]=255-(unsigned char) (dist*8);
+			tex[y][x+448][2]=255-(unsigned char) (dist*8);
 			if(tex[y][x+448][0]!=0)
 				tex[y][x+448][3]=255;
 		}
@@ -134,9 +134,9 @@ CProjectileHandler::CProjectileHandler()
 					continue;
 				int totalAlpha=tex[y][x+16][3]+tex[by+ynum][bx+xnum+64][3];
 				float alpha=(tex[by+ynum][bx+xnum+64][3]/255.0)/(totalAlpha/255.0);
-				tex[y][x+16][0]=tex[y][x+16][0]*(1-alpha)+tex[by+ynum][bx+xnum+64][0]*alpha;
-				tex[y][x+16][1]=tex[y][x+16][1]*(1-alpha)+tex[by+ynum][bx+xnum+64][1]*alpha;
-				tex[y][x+16][2]=tex[y][x+16][2]*(1-alpha)+tex[by+ynum][bx+xnum+64][2]*alpha;
+				tex[y][x+16][0]=(unsigned char) (tex[y][x+16][0]*(1-alpha)+tex[by+ynum][bx+xnum+64][0]*alpha);
+				tex[y][x+16][1]=(unsigned char) (tex[y][x+16][1]*(1-alpha)+tex[by+ynum][bx+xnum+64][1]*alpha);
+				tex[y][x+16][2]=(unsigned char) (tex[y][x+16][2]*(1-alpha)+tex[by+ynum][bx+xnum+64][2]*alpha);
 				tex[y][x+16][3]=min(255,totalAlpha);
 			}
 		}
@@ -153,7 +153,7 @@ CProjectileHandler::CProjectileHandler()
 		float dist=1-fabs(float(y-16))/16.0;
 		float amod=sqrt(dist);
 		for(int x=0;x<160;x++){
-			tex[y+64][x][3]=tex[y+64][x][3]*amod;
+			tex[y+64][x][3]=(unsigned char) (tex[y+64][x][3]*amod);
 		}
 	}
 	for(int y2=0;y2<2;++y2){		//make alpha fall of a bit radially for the smoke
@@ -165,7 +165,7 @@ CProjectileHandler::CProjectileHandler()
 					float xd=(x-16)/16.0;
 					float yd=(y-16)/16.0;
 					float dist=xd*xd+yd*yd;
-					tex[yoffs+y][xoffs+x][3]*=max(0.0,(1-dist*0.7));
+					tex[yoffs+y][xoffs+x][3]*=(unsigned char)max(0.0,(1-dist*0.7));
 				}
 			}
 		}
@@ -207,9 +207,9 @@ CProjectileHandler::CProjectileHandler()
 	float dotAlpha[256][256];
 	for(int y=0;y<256;y++){//random dots
 		for(int x=0;x<256;x++){
-			tex[y+256][x][0]=205+gs->randFloat()*50;
-			tex[y+256][x][1]=205+gs->randFloat()*50;
-			tex[y+256][x][2]=205+gs->randFloat()*50;
+			tex[y+256][x][0]=205+(unsigned char) (gs->randFloat()*50);
+			tex[y+256][x][1]=205+(unsigned char) (gs->randFloat()*50);
+			tex[y+256][x][2]=205+(unsigned char) (gs->randFloat()*50);
 			tex[y+256][x][3]=0;
 			dotAlpha[y][x]=gs->randFloat()*30;
 		}
@@ -217,12 +217,12 @@ CProjectileHandler::CProjectileHandler()
 	for(int a=0;a<3;++a){//random dots
 		float mag=(60<<a);
 		float size=(2<<a);
-		for(int y=size;y<255-size;y+=size){
-			for(int x=size;x<255-size;x+=size){
+		for(int y=(int)size;y<255-(int)size;y+=(int)size){
+			for(int x=(int)size;x<255-(int)size;x+=(int)size){
 				float p=gs->randFloat()*mag;
-				for(int y2=y-size;y2<=y+size;y2++){
+				for(int y2=y-(int)size;y2<=y+(int)size;y2++){
 					float ym=float(size-abs(y2-y))/size;
-					for(int x2=x-size;x2<=x+size;x2++){
+					for(int x2=x-(int)size;x2<=x+(int)size;x2++){
 						float xm=float(size-abs(x2-x))/size;
 						dotAlpha[y2][x2]+=p*xm*ym;
 					}
@@ -232,14 +232,14 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 	for(int a=0;a<20;++a){//random dots
-		int bx=gs->randFloat()*228;
-		int by=gs->randFloat()*228+256;
+		int bx=(int) (gs->randFloat()*228);
+		int by=(int) (gs->randFloat()*228)+256;
 		for(int y=0;y<16;y++){
 			for(int x=0;x<16;x++){
 				float dist=sqrt((float)(x-8)*(x-8)+(y-8)*(y-8));
 				if(dist>8)
 					continue;
-				int alpha=60-dist*35+dotAlpha[by-256+y][bx+x];
+				int alpha=60-(int)(dist*35+dotAlpha[by-256+y][bx+x]);
 				if(tex[by+y][bx+x][3]<alpha){
 					tex[by+y][bx+x][3]=max(0,min(255,alpha));
 				}
@@ -261,8 +261,8 @@ CProjectileHandler::CProjectileHandler()
 			r.x=(gs->randFloat()-0.5)*2;
 			r.y=(gs->randFloat()-0.5)*2;
 		} while(r.Length()>1);
-		int bx=r.x*52+256+64-12;
-		int by=r.y*52+256+64-12;
+		int bx=(int)(r.x*52)+256+64-12;
+		int by=(int)(r.y*52)+256+64-12;
 		for(int y=0;y<24;y++){
 			for(int x=0;x<24;x++){
 				float dist=sqrt((float)(x-12)*(x-12)+(y-12)*(y-12));
@@ -271,7 +271,7 @@ CProjectileHandler::CProjectileHandler()
 				float alpha=255-dist*20;
 				float alpha2=tex[by+y][bx+x][3];
 				alpha=1-((1-alpha/255)*(1-alpha2/255));
-				tex[by+y][bx+x][3]=max((float)0,min((float)255,alpha*255));
+				tex[by+y][bx+x][3]=(unsigned char) max((float)0,min((float)255,alpha*255));
 			}
 		}
 	}
@@ -299,11 +299,11 @@ CProjectileHandler::CProjectileHandler()
 				if(alpha<0)
 					alpha=0;
 			}
-			tex2[y*256+x]=alpha*255;
+			tex2[y*256+x]=(unsigned char)(alpha*255);
 			alpha=1-dist;
 			if(alpha<0)
 				alpha=0;
-			tex2[(y+256)*256+x]=alpha*255;
+			tex2[(y+256)*256+x]=(unsigned char)(alpha*255);
 		}
 	}
 
@@ -463,8 +463,8 @@ void CProjectileHandler::Draw(bool drawReflection)
 	}
 	uh->CleanUpUnitDrawing();
 
-	float sortSize=a;
-	qsort(distlist,sortSize,8,CompareProjDist);
+	unsigned int sortSize=a;
+	qsort(distlist, sortSize,8,CompareProjDist);
 
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
@@ -488,8 +488,8 @@ void CProjectileHandler::Draw(bool drawReflection)
 		CProjectile::DrawArray();
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
-	currentParticles=ps.size()*0.8+currentParticles*0.2;
-	currentParticles+=0.2*drawnPieces+0.3*flyingPieces.size();
+	currentParticles=(int)(ps.size()*0.8+currentParticles*0.2);
+	currentParticles+=(int)(0.2*drawnPieces+0.3*flyingPieces.size());
 	particleSaturation=(float)currentParticles/(float)maxParticles;
 //	glFogfv(GL_FOG_COLOR,FogLand);
 }
@@ -649,7 +649,7 @@ void CProjectileHandler::ConvertTex(unsigned char tex[512][512][4], int startx, 
 	for(int y=starty;y<endy;++y){
 		for(int x=startx;x<endx;++x){
 			float alpha=tex[y][x][3];
-			float mul=alpha/255.0;
+			unsigned char mul=(unsigned char) (alpha/255.0);
 			tex[y][x][0]*=mul;
 			tex[y][x][1]*=mul;
 			tex[y][x][2]*=mul;

@@ -24,9 +24,9 @@ static long CurrentTime()
 
 GUIconsole::GUIconsole(const int x1, const int y1, const int w1, const int h1):GUIframe(x1,y1,0,0)
 {
-	numLines=h/guifont->GetHeight();
+	numLines=(int)(h/guifont->GetHeight());
 
-	lifetime=regHandler.GetInt("InfoMessageTime",400)/100.0;
+	lifetime=(long int)(regHandler.GetInt("InfoMessageTime",400)/100.0);
 }
 
 GUIconsole::~GUIconsole()
@@ -96,7 +96,7 @@ void GUIconsole::AddText(const std::string& text)
 
 void GUIconsole::SizeChanged()
 {
-	numLines=h/guifont->GetHeight();
+	numLines=(int)(h/guifont->GetHeight());
 	while(lines.size()>numLines)
 		lines.pop_front();
 }

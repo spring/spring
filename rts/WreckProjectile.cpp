@@ -50,9 +50,9 @@ void CWreckProjectile::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	col[0]=0.15*200;
-	col[1]=0.1*200;
-	col[2]=0.05*200;
+	col[0]=(unsigned char) (0.15*200);
+	col[1]=(unsigned char) (0.1*200);
+	col[2]=(unsigned char) (0.05*200);
 	col[3]=200;
 
 	float3 interPos=pos+speed*gu->timeOffset;

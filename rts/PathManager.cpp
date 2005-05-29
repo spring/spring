@@ -346,7 +346,7 @@ void CPathManager::DeletePath(unsigned int pathId) {
 Convert a 2xfloat3-defined rectangle into a square-based rectangle.
 */
 void CPathManager::TerrainChange(float3 upperCorner, float3 lowerCorner) {
-	TerrainChange(upperCorner.x / SQUARE_SIZE, upperCorner.z / SQUARE_SIZE, lowerCorner.x / SQUARE_SIZE, lowerCorner.z / SQUARE_SIZE);
+	TerrainChange((unsigned int) (upperCorner.x / SQUARE_SIZE), (unsigned int) (upperCorner.z / SQUARE_SIZE), (unsigned int) (lowerCorner.x / SQUARE_SIZE), (unsigned int) (lowerCorner.z / SQUARE_SIZE));
 }
 
 

@@ -37,7 +37,7 @@ void GUIbutton::SetSize(int w1, int h1)
 	
 	if(autosizing)
 	{
-		w=guifont->GetWidth(caption.c_str())+14;
+		w=(int)(guifont->GetWidth(caption.c_str()))+14;
 	}
 	else
 		w=w1;
@@ -50,7 +50,7 @@ void GUIbutton::SetCaption(const string& capt)
 	
 	if(autosizing)
 	{
-		w=guifont->GetWidth(caption.c_str())+14;
+		w=(int)(guifont->GetWidth(caption.c_str()))+14;
 	}
 	
 	BuildList();
@@ -127,3 +127,4 @@ void GUIbutton::BuildList()
 
 	glEndList();
 }
+

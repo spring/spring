@@ -72,14 +72,14 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		for(int y=0;y<256;y++){
 			for(int x=0;x<128;x++){
 				if(TexImage.mem[(y*128+x)*4]==72 && TexImage.mem[(y*128+x)*4+1]==72){
-					gran[y+256][x][0]=125*0.6f;;
-					gran[y+256][x][1]=146*0.7f;;
-					gran[y+256][x][2]=82*0.6f;;
-					gran[y+256][x][3]=0;
+					gran[y+256][x][0]=(unsigned char)(125*0.6f);
+					gran[y+256][x][1]=(unsigned char)(146*0.7f);
+					gran[y+256][x][2]=(unsigned char)(82*0.6f);
+					gran[y+256][x][3]=(unsigned char)(0);
 				} else {
-					gran[y+256][x][0]=TexImage.mem[(y*128+x)*4]*0.6f;;
-					gran[y+256][x][1]=TexImage.mem[(y*128+x)*4+1]*0.7f;;
-					gran[y+256][x][2]=TexImage.mem[(y*128+x)*4+2]*0.6f;;
+					gran[y+256][x][0]=(unsigned char)(TexImage.mem[(y*128+x)*4]*0.6f);
+					gran[y+256][x][1]=(unsigned char)(TexImage.mem[(y*128+x)*4+1]*0.7f);
+					gran[y+256][x][2]=(unsigned char)(TexImage.mem[(y*128+x)*4+2]*0.6f);
 					gran[y+256][x][3]=255;
 				}
 			}
@@ -92,14 +92,14 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		for(int y=0;y<256;y++){
 			for(int x=0;x<128;x++){
 				if(TexImage.mem[(y*128+x)*4]==72 && TexImage.mem[(y*128+x)*4+1]==72){
-					gran[y+256][x+128][0]=125*0.6f;;
-					gran[y+256][x+128][1]=146*0.7f;;
-					gran[y+256][x+128][2]=82*0.6f;;
+					gran[y+256][x+128][0]=(unsigned char)(125*0.6f);
+					gran[y+256][x+128][1]=(unsigned char)(146*0.7f);
+					gran[y+256][x+128][2]=(unsigned char)(82*0.6f);
 					gran[y+256][x+128][3]=0;
 				} else {
-					gran[y+256][x+128][0]=TexImage.mem[(y*128+x)*4]*0.6f;;
-					gran[y+256][x+128][1]=TexImage.mem[(y*128+x)*4+1]*0.7f;;
-					gran[y+256][x+128][2]=TexImage.mem[(y*128+x)*4+2]*0.6f;;
+					gran[y+256][x+128][0]=(unsigned char)(TexImage.mem[(y*128+x)*4]*0.6f);
+					gran[y+256][x+128][1]=(unsigned char)(TexImage.mem[(y*128+x)*4+1]*0.7f);
+					gran[y+256][x+128][2]=(unsigned char)(TexImage.mem[(y*128+x)*4+2]*0.6f);
 					gran[y+256][x+128][3]=255;
 				}
 			}
@@ -112,14 +112,14 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		for(int y=0;y<256;y++){
 			for(int x=0;x<256;x++){
 				if(TexImage.mem[(y*256+x)*4]==72 && TexImage.mem[(y*256+x)*4+1]==72){
-					gran[y+256][x+256][0]=125*0.6f;;
-					gran[y+256][x+256][1]=146*0.7f;
-					gran[y+256][x+256][2]=82*0.6f;;
+					gran[y+256][x+256][0]=(unsigned char)(125*0.6f);
+					gran[y+256][x+256][1]=(unsigned char)(146*0.7f);
+					gran[y+256][x+256][2]=(unsigned char)(82*0.6f);
 					gran[y+256][x+256][3]=0;
 				} else {
-					gran[y+256][x+256][0]=TexImage.mem[(y*256+x)*4]*0.6f;;
-					gran[y+256][x+256][1]=TexImage.mem[(y*256+x)*4+1]*0.7f;;
-					gran[y+256][x+256][2]=TexImage.mem[(y*256+x)*4+2]*0.6f;;
+					gran[y+256][x+256][0]=(unsigned char)(TexImage.mem[(y*256+x)*4]*0.6f);
+					gran[y+256][x+256][1]=(unsigned char)(TexImage.mem[(y*256+x)*4+1]*0.7f);
+					gran[y+256][x+256][2]=(unsigned char)(TexImage.mem[(y*256+x)*4+2]*0.6f);
 					gran[y+256][x+256][3]=255;
 				}
 			}
@@ -195,7 +195,7 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 				xtest=xtest2;
 			xtest=xtest/TREE_SQUARE_SIZE;
 			if(xtest>sx)
-				sx=xtest;
+				sx=(int)xtest;
 		}
 		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
 			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*TREE_SQUARE_SIZE)));
@@ -204,7 +204,7 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 				xtest=xtest2;
 			xtest=xtest/TREE_SQUARE_SIZE;
 			if(xtest<ex)
-				ex=xtest;
+				ex=(int)xtest;
 		}
 		for(int x=sx;x<=ex;x++){/**/
 			TreeSquareStruct* tss=&trees[y*treesX+x];
@@ -430,8 +430,8 @@ void CBasicTreeDrawer::CreateTreeTex(unsigned int& texnum, unsigned char *data, 
 
 void CBasicTreeDrawer::ResetPos(const float3& pos)
 {
-	int x=pos.x/TREE_SQUARE_SIZE/SQUARE_SIZE;
-	int y=pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE;
+	int x=(int)(pos.x/TREE_SQUARE_SIZE/SQUARE_SIZE);
+	int y=(int)(pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE);
 	int a=y*treesX+x;
 	if(trees[a].displist){
 		glDeleteLists(trees[a].displist,1);

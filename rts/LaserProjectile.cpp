@@ -68,9 +68,9 @@ void CLaserProjectile::Draw(void)
 	float3 dir2(dif.cross(dir1));
 
 	unsigned char col[4];
-	col[0]=color.x*intensity*255;
-	col[1]=color.y*intensity*255;
-	col[2]=color.z*intensity*255;
+	col[0]=(unsigned char) (color.x*intensity*255);
+	col[1]=(unsigned char) (color.y*intensity*255);
+	col[2]=(unsigned char) (color.z*intensity*255);
 	col[3]=1;//intensity*255;
 
 	float size=2;

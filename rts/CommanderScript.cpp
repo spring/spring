@@ -65,3 +65,4 @@ void CCommanderScript::Update(void)
 		break;
 	}
 }
+

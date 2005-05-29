@@ -278,9 +278,9 @@ void CAdvSky::CreateClouds()
 				green=1;
 			if(blue>1)
 				blue=1;
-			skytex[y][x][0]=red*255;
-			skytex[y][x][1]=green*255;
-			skytex[y][x][2]=blue*255;
+			skytex[y][x][0]=(unsigned char) red*255;
+			skytex[y][x][1]=(unsigned char) green*255;
+			skytex[y][x][2]=(unsigned char) blue*255;
 			skytex[y][x][3]=255;
 		}
 	}
@@ -299,9 +299,9 @@ void CAdvSky::CreateClouds()
 			float sunMod=0.3/sqrt(sunDist)+3.0/(1+sunDist);
 			float green=min(1.0f,(0.55f+sunMod));
 			float blue=203-(40.0/(3+sunDist));
-			skytex2[y][x][0]=255-y/2;				//sun on borders
-			skytex2[y][x][1]=green*255;			//sun light through
-			skytex2[y][x][2]=blue;						//ambient
+			skytex2[y][x][0]=(unsigned char) 255-y/2;				//sun on borders
+			skytex2[y][x][1]=(unsigned char) green*255;			//sun light through
+			skytex2[y][x][2]=(unsigned char) blue;						//ambient
 			skytex2[y][x][3]=255;
 		}
 	}
@@ -359,7 +359,7 @@ START_TIME_PROFILE
 					CreateRandMatrix(randMatrix[a],1-a*0.03);
 				}
 			}
-			int ifade=(3*fade*fade-2*fade*fade*fade)*256;
+			int ifade=(int) ((3*fade*fade-2*fade*fade*fade)*256);
 
 			for(int y=0;y<32;y++){
 				for(int x=0;x<32;x++){
@@ -387,7 +387,7 @@ START_TIME_PROFILE
 					xdist=3*xdist*xdist-2*xdist*xdist*xdist;
 
 					float contrib=(1-xdist)*(1-ydist);
-					kernel[y*CLOUD_SIZE/4+x]=contrib*((4<<CLOUD_DETAIL)>>a);
+					kernel[y*CLOUD_SIZE/4+x]=(int) (contrib*((4<<CLOUD_DETAIL)>>a));
 				}
 			}
 			unsigned int by=0,bx=0;
@@ -516,7 +516,7 @@ START_TIME_PROFILE
 			cloudTexMem[a*4+2]=255;
 		}
 
-		int modDensity=(1-cloudDensity)*256;
+		int modDensity=(int) ((1-cloudDensity)*256);
 		for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++){
 			int f=(rawClouds[0][a]>>8)-modDensity;
 			if(f<0)
@@ -558,12 +558,12 @@ void CAdvSky::CreateTransformVectors()
 		float alpha=pow(f*2,3);
 		if(alpha>1)
 			alpha=1;
-		alphaTransform[a]=alpha*255;
+		alphaTransform[a]=(int) (alpha*255);
 
 		float d=f*2;
 		if(d>1)
 			d=1;
-		thicknessTransform[a]=128+d*64+alphaTransform[a]*255/(4*255);
+		thicknessTransform[a]=(unsigned char) (128+d*64+alphaTransform[a]*255/(4*255));
 	}
 }
 
@@ -605,7 +605,7 @@ void CAdvSky::DrawSun()
 		if(cover>127.5)
 			cover=127.5;
 
-		buf[x]=255-cover*2;
+		buf[x]=(unsigned char)(255-cover*2);
 	}
 	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
 	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,32,1,GL_LUMINANCE,GL_UNSIGNED_BYTE,buf);

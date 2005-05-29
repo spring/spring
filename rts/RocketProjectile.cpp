@@ -142,19 +142,19 @@ void CRocketProjectile::Draw()
 	float a1=(1-float(0)/(90))*255;
 	a1*=0.7+fabs(dif.dot(dir));
 	float alpha=min(255.f,max(0.f,a1));
-	col[0]=color*alpha;
-	col[1]=color*alpha;
-	col[2]=color*alpha;
-	col[3]=alpha;
+	col[0]=(unsigned char) (color*alpha);
+	col[1]=(unsigned char) (color*alpha);
+	col[2]=(unsigned char) (color*alpha);
+	col[3]=(unsigned char)alpha;
 
 	unsigned char col2[4];
 	float a2=(1-float(age2)/(90))*255;
 	a2*=0.7+fabs(dif2.dot(oldDir));
 	alpha=min(255.f,max(0.f,a2));
-	col2[0]=color*alpha;
-	col2[1]=color*alpha;
-	col2[2]=color*alpha;
-	col2[3]=alpha;
+	col2[0]=(unsigned char) (color*alpha);
+	col2[1]=(unsigned char) (color*alpha);
+	col2[2]=(unsigned char) (color*alpha);
+	col2[3]=(unsigned char)alpha;
 
 	float xmod=0;
 	float ymod=0.25;

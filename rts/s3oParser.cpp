@@ -169,3 +169,4 @@ void CS3OParser::ReadName(LObject &s3o, FILE *pStream, int fileOffset)
 	s3o.name = Name;
 
 }
+

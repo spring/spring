@@ -129,3 +129,4 @@ void CGeometricObjects::MarkSquare(int mapSquare) {
 	endPos.x -= SQUARE_SIZE;
 	AddLine(startPos, endPos, 3, 0, 1000);
 }
+

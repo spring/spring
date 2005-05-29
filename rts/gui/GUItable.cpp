@@ -32,7 +32,7 @@ GUItable::GUItable(int x1, int y1, int w1, int h1, const vector<string>* content
 
 {
 
-	rowHeight=guifont->GetHeight();
+	rowHeight=(int)guifont->GetHeight();
 
 	length=data.size()*rowHeight;
 

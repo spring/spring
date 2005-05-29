@@ -52,8 +52,8 @@ CRadarHandler::~CRadarHandler(void)
 void CRadarHandler::MoveUnit(CUnit* unit)
 {
 	int2 newPos;
-	newPos.x=unit->pos.x/(SQUARE_SIZE*RADAR_SIZE);
-	newPos.y=unit->pos.z/(SQUARE_SIZE*RADAR_SIZE);
+	newPos.x=(int) (unit->pos.x/(SQUARE_SIZE*RADAR_SIZE));
+	newPos.y=(int) (unit->pos.z/(SQUARE_SIZE*RADAR_SIZE));
 
 	if(newPos.x!=unit->oldRadarPos.x || newPos.y!=unit->oldRadarPos.y){
 		RemoveUnit(unit);
@@ -122,10 +122,10 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 {
 	float3 pos=unit->pos;
 	pos.CheckInBounds();
-	int xradar=pos.x/(SQUARE_SIZE*RADAR_SIZE);
-	int yradar=pos.z/(SQUARE_SIZE*RADAR_SIZE);
-	int xmap=pos.x/(SQUARE_SIZE*2);
-	int ymap=pos.z/(SQUARE_SIZE*2);
+	int xradar=(int) (pos.x/(SQUARE_SIZE*RADAR_SIZE));
+	int yradar=(int) (pos.z/(SQUARE_SIZE*RADAR_SIZE));
+	int xmap=(int) (pos.x/(SQUARE_SIZE*2));
+	int ymap=(int) (pos.z/(SQUARE_SIZE*2));
 	int allyteam=unit->allyteam;
 
 	int tablenum=unit->radarRadius;

@@ -97,3 +97,4 @@ Gives a position slightly over ground and water level.
 float CHoverMoveMath::yLevel(int xSquare, int zSquare) {
 	return ground->GetHeight(xSquare*SQUARE_SIZE, zSquare*SQUARE_SIZE) + 10;
 }
+

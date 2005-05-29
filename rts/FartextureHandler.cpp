@@ -132,3 +132,4 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	usedFarTextures++;
 	POP_CODE_MODE;
 }
+

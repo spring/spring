@@ -108,9 +108,9 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 			float3& upos=(*ui)->pos;
 			UnitDef* unitDef=(*ui)->unitDef;
 
-			int tx1 = max(0.f,(upos.x-(unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+			int tx1 = (int)max(0.f,(upos.x-(unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 			int tx2 = min(gs->mapx,tx1+unitDef->xsize);
-			int tz1 = max(0.f,(upos.z-(unitDef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+			int tz1 = (int)max(0.f,(upos.z-(unitDef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 			int tz2 = min(gs->mapy,tz1+unitDef->ysize);
 
 			float totalDif=0;
@@ -319,7 +319,7 @@ END_TIME_PROFILE("Map damage");
 
 void CMapDamage::UpdateLos(void)
 {
-	int updateSpeed=relosSize*0.01+1;
+	int updateSpeed=(int)(relosSize*0.01)+1;
 
 	if(relosUnits.empty()){
 		if(relosQue.empty())

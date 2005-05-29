@@ -297,7 +297,7 @@ void CAirCAI::SlowUpdate()
 					attackPos.y=ground->GetHeight(attackPos.x,attackPos.z);
 					owner->AttackGround(attackPos,false);
 				} else {
-					int num=gs->randFloat()*eu.size();
+					int num=(int) (gs->randFloat()*eu.size());
 					orderTarget=uh->units[eu[num]];
 					owner->AttackUnit(orderTarget,false);
 					AddDeathDependence(orderTarget);

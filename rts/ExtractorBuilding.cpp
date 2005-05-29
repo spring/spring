@@ -146,7 +146,7 @@ void CExtractorBuilding::FinishedBuilding() {
 #ifdef TRACE_SYNC
 		tracefile << "Metal extractor finished: ";
 		tracefile << metalExtract << " ";
-#endif*/
+#endif
 
 	cob->Call(COBFN_SetSpeed, (long)(metalExtract*100.0f));
 	CBuilding::FinishedBuilding();

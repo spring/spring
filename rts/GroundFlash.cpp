@@ -58,7 +58,7 @@ void CGroundFlash::Draw(void)
 	col[0]=255;
 	col[1]=255;
 	col[2]=128;
-	col[3]=iAlpha*255;
+	col[3]=(unsigned char) (iAlpha*255);
 
 	float iSize=circleSize+circleGrowth*gu->timeOffset;
 	iSize*=1.0-(moveLength/(camLength));
@@ -70,7 +70,7 @@ void CGroundFlash::Draw(void)
 		va->AddVertexTC(modPos-side1*iSize+side2*iSize,0,0.5,col);
 	}
 	iAlpha=flashAlpha-flashAlphaDec*gu->timeOffset;
-	col[3]=iAlpha*255;
+	col[3]=(unsigned char) (iAlpha*255);
 	iSize=flashSize*(1.0-(moveLength/(camLength)));
 
 	if(iAlpha>0){

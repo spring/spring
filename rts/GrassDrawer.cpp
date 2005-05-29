@@ -43,9 +43,9 @@ CGrassDrawer::CGrassDrawer()
 	}
 	maxGrassDist=800+sqrtf(detail)*240;
 	maxDetailedDist=146+detail*24;
-	detailedBlocks=(maxDetailedDist-24)/(SQUARE_SIZE*grassSquareSize*grassBlockSize)+1;
-	numTurfs=3+detail*0.5;
-	strawPerTurf=50+sqrtf(detail)*10;
+	detailedBlocks=(int) ((maxDetailedDist-24)/(SQUARE_SIZE*grassSquareSize*grassBlockSize))+1;
+	numTurfs=3+(int) (detail*0.5);
+	strawPerTurf=50+(int) (sqrtf(detail)*10);
 
 //	info->AddLine("%f %f %i %i %i",maxGrassDist,maxDetailedDist,detailedBlocks,numTurfs,strawPerTurf);
 
@@ -165,7 +165,7 @@ void CGrassDrawer::Draw(void)
 		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB_ARB,GL_SRC_COLOR);
 		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_RGB_ARB,GL_SRC_COLOR);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2.0);
+		glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2);
 
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
@@ -251,7 +251,7 @@ void CGrassDrawer::Draw(void)
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2.0);
+		glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2);
 
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
@@ -298,7 +298,7 @@ void CGrassDrawer::Draw(void)
 				xtest=xtest2;
 			xtest=xtest/blockMapSize;
 			if(xtest>sx)
-				sx=xtest;
+				sx=(int)xtest;
 		}
 		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
 			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*blockMapSize)));
@@ -307,7 +307,7 @@ void CGrassDrawer::Draw(void)
 				xtest=xtest2;
 			xtest=xtest/blockMapSize;
 			if(xtest<ex)
-				ex=xtest;
+				ex=(int)xtest;
 		}
 		for(int x=sx;x<=ex;x++){
 			if(abs(x-cx)<=detailedBlocks && abs(y-cy)<=detailedBlocks){	//blocks close to the camera
@@ -525,7 +525,7 @@ void CGrassDrawer::Draw(void)
 
 	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1.0);
+		glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
@@ -547,7 +547,7 @@ void CGrassDrawer::Draw(void)
 	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glDisable(GL_TEXTURE_2D);
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1.0);
+	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
@@ -609,9 +609,9 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 		float length=4+fRand(4);
 
-		int tex=fRand(15.9999);
+		int tex=(int)fRand(15.9999);
 		float xtexBase=tex*(1/16.0);
-		int numSections=1+maxAng*5;
+		int numSections=1+(int)(maxAng*5);
 		for(int b=0;b<numSections;++b){
 			float h=b*(1.0/numSections);
 			float ang=maxAng*h;
@@ -637,28 +637,28 @@ void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 	float3 col(0.59f+fRand(0.11),0.81f+fRand(0.08),0.57f+fRand(0.11));
 	for(int y=0;y<64;++y){
 		for(int x=0;x<16;++x){
-			buf[(y*256+x)*4+0]=(col.x+y*0.0005+fRand(0.05))*255;
-			buf[(y*256+x)*4+1]=(col.y+y*0.0006+fRand(0.05))*255;
-			buf[(y*256+x)*4+2]=(col.z+y*0.0004+fRand(0.05))*255;
+			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05))*255);
+			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05))*255);
+			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05))*255);
 			buf[(y*256+x)*4+3]=1;
 		}
 	}
 	for(int y=0;y<64;++y){
 		for(int x=7;x<9;++x){
-			buf[(y*256+x)*4+0]=(col.x+y*0.0005+fRand(0.05)-0.03)*255;
-			buf[(y*256+x)*4+1]=(col.y+y*0.0006+fRand(0.05)-0.03)*255;
-			buf[(y*256+x)*4+2]=(col.z+y*0.0004+fRand(0.05)-0.03)*255;
+			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05)-0.03)*255);
+			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05)-0.03)*255);
+			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05)-0.03)*255);
 		}
 	}
-	for(int y=4;y<64;y+=4+fRand(3)){
+	for(int y=4;y<64;y+=4+(int)fRand(3)){
 		for(int a=0;a<7 && a+y<64;++a){
-			buf[((a+y)*256+a+9)*4+0]=(col.x+y*0.0005+fRand(0.05)-0.03)*255;
-			buf[((a+y)*256+a+9)*4+1]=(col.y+y*0.0006+fRand(0.05)-0.03)*255;
-			buf[((a+y)*256+a+9)*4+2]=(col.z+y*0.0004+fRand(0.05)-0.03)*255;
+			buf[((a+y)*256+a+9)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05)-0.03)*255);
+			buf[((a+y)*256+a+9)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05)-0.03)*255);
+			buf[((a+y)*256+a+9)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05)-0.03)*255);
 
-			buf[((a+y)*256+6-a)*4+0]=(col.x+y*0.0005+fRand(0.05)-0.03)*255;
-			buf[((a+y)*256+6-a)*4+1]=(col.y+y*0.0006+fRand(0.05)-0.03)*255;
-			buf[((a+y)*256+6-a)*4+2]=(col.z+y*0.0004+fRand(0.05)-0.03)*255;
+			buf[((a+y)*256+6-a)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05)-0.03)*255);
+			buf[((a+y)*256+6-a)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05)-0.03)*255);
+			buf[((a+y)*256+6-a)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05)-0.03)*255);
 		}
 	}
 
@@ -739,10 +739,10 @@ void CGrassDrawer::CreateFarTex(void)
 					buf[((y)*1024*sizeMod+x+dx)*4+2]=190;
 					buf[((y)*1024*sizeMod+x+dx)*4+3]=0;
 				} else {
-					buf[((y)*1024*sizeMod+x+dx)*4+0]=r/a;
-					buf[((y)*1024*sizeMod+x+dx)*4+1]=g/a;
-					buf[((y)*1024*sizeMod+x+dx)*4+2]=b/a;
-					buf[((y)*1024*sizeMod+x+dx)*4+3]=min((float)255,a*16);
+					buf[((y)*1024*sizeMod+x+dx)*4+0]=(unsigned char) (r/a);
+					buf[((y)*1024*sizeMod+x+dx)*4+1]=(unsigned char) (g/a);
+					buf[((y)*1024*sizeMod+x+dx)*4+2]=(unsigned char) (b/a);
+					buf[((y)*1024*sizeMod+x+dx)*4+3]=(unsigned char) (min((float)255,a*16));
 				}
 			}
 		}

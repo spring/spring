@@ -55,8 +55,8 @@ void GUIcenterBuildMenu::PrivateDraw()
 	while(numx*numy<unitDefs.size()){
 		numy+=1;
 	}
-	x=(0.5*gu->screenx-numx*0.5*buildPicSize);
-	y=(0.5*gu->screeny-numy*0.5*buildPicSize);
+	x=(int)(0.5*gu->screenx-numx*0.5*buildPicSize);
+	y=(int)(0.5*gu->screeny-numy*0.5*buildPicSize);
 	w=numx*buildPicSize;
 	h=numy*buildPicSize+left->h+10;
 
@@ -98,8 +98,8 @@ void GUIcenterBuildMenu::PrivateDraw()
 		{
 			string queued="+ "+commands[i]->params[0];
 
-			x+=(buildPicSize-guifont->GetWidth(queued))/2.0;
-			y+=buildPicSize-guifont->GetHeight();
+			x+=(int)((buildPicSize-guifont->GetWidth(queued))/2.0);
+			y+=(int)(buildPicSize-guifont->GetHeight());
 			guifont->Print(x, y, queued);
 		}
 	}

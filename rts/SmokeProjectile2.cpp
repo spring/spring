@@ -35,7 +35,7 @@ CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,fl
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	glowFalloff=4.5+gu->usRandFloat()*6;
-	textureNum=gu->usRandFloat()*12;
+	textureNum=(int)(gu->usRandFloat()*12);
 	POP_CODE_MODE;
 }
 
@@ -70,10 +70,10 @@ void CSmokeProjectile2::Draw()
 	unsigned char alpha=(unsigned char)(1-age)*127;
 	float rglow=max((float)0,(1-age*glowFalloff)*127);
 	float gglow=max((float)0,(1-age*glowFalloff*(float)2.5)*127);
-	col[0]=color*alpha+rglow;
-	col[1]=color*alpha+gglow;
-	col[2]=max(0.,color*alpha-gglow*0.5);
-	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
+	col[0]=(unsigned char) (color*alpha+rglow);
+	col[1]=(unsigned char) (color*alpha+gglow);
+	col[2]=(unsigned char)max(0.,color*alpha-gglow*0.5);
+	col[3]=(unsigned char)alpha/*-alphaFalloff*gu->timeOffset*/;
 	int frame=textureNum;
 	float xmod=0.125+(float(int(frame%6)))/16.0;
 	float ymod=(int(frame/6))/16.0;

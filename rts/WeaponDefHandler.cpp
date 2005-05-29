@@ -231,7 +231,7 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 	if(weaponDefs[id].type=="AircraftBomb"){
 		if(weaponDefs[id].reload<0.5){
 			weaponDefs[id].salvodelay=min(0.2f,weaponDefs[id].reload);
-			weaponDefs[id].salvosize=1/weaponDefs[id].salvodelay+1;
+			weaponDefs[id].salvosize=(int)(1/weaponDefs[id].salvodelay)+1;
 			weaponDefs[id].reload=5;
 		} else {
 			weaponDefs[id].salvodelay=min(0.4f,weaponDefs[id].reload);
@@ -316,3 +316,4 @@ float3 CWeaponDefHandler::hs2rgb(float h, float s)
 	}
 	return col;
 }
+

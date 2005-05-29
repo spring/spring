@@ -81,9 +81,9 @@ CUnitHandler::CUnitHandler()
 				rt[(y*128+x)*4+2]=0;
 				rt[(y*128+x)*4+3]=0;
 			} else {
-				rt[(y*128+x)*4+0]=255-r*r*r*255;
-				rt[(y*128+x)*4+1]=255-r*r*r*255;
-				rt[(y*128+x)*4+2]=255-r*r*r*255;
+				rt[(y*128+x)*4+0]=255-(unsigned char) (r*r*r*255);
+				rt[(y*128+x)*4+1]=255-(unsigned char) (r*r*r*255);
+				rt[(y*128+x)*4+2]=255-(unsigned char) (r*r*r*255);
 				rt[(y*128+x)*4+3]=255;
 			}
 		}
@@ -122,7 +122,7 @@ CUnitHandler::~CUnitHandler()
 int CUnitHandler::AddUnit(CUnit *unit)
 {
 	ASSERT_SYNCED_MODE;
-	int num=gs->randFloat()*((int)activeUnits.size()-1);
+	int num=(int)(gs->randFloat())*((int)activeUnits.size()-1);
 	std::list<CUnit*>::iterator ui=activeUnits.begin();
 	for(int a=0;a<num;++a){
 		++ui;
@@ -363,7 +363,7 @@ int CUnitHandler::CreateChecksum()
 #ifdef TRACE_SYNC
 		tracefile << "Checksum: ";
 		tracefile << checksum << " ";
-#endif*/
+#endif
 
 	for(int a=0;a<gs->activeTeams;++a){
 		checksum^=*((int*)&(gs->teams[a]->metal));
@@ -371,7 +371,7 @@ int CUnitHandler::CreateChecksum()
 	}
 #ifdef TRACE_SYNC
 		tracefile << checksum << "\n";
-#endif*/
+#endif
 	return checksum;
 }
 
@@ -401,9 +401,9 @@ float CUnitHandler::GetBuildHeight(float3 pos, UnitDef* unitdef)
 	float borderh=0;
 
 	float maxDif=unitdef->maxHeightDif;
-	int x1 = max(0.f,(pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	int x1 = (int)max(0.f,(pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	int x2 = min(gs->mapx,x1+unitdef->xsize);
-	int z1 = max(0.f,(pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	int z1 = (int)max(0.f,(pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	int z2 = min(gs->mapy,z1+unitdef->ysize);
 
 	for(int x=x1; x<=x2; x++){
@@ -440,9 +440,9 @@ int CUnitHandler::TestUnitBuildSquare(const float3& pos, UnitDef *unitdef,CFeatu
 {
 	feature=0;
 
-	int x1 = pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE);
+	int x1 = (int) (pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE));
 	int x2 = x1+unitdef->xsize*SQUARE_SIZE;
-	int z1 = pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE);
+	int z1 = (int) (pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE));
 	int z2 = z1+unitdef->ysize*SQUARE_SIZE;
 	float h=GetBuildHeight(pos,unitdef);
 
@@ -499,8 +499,8 @@ int CUnitHandler::TestBuildSquare(const float3& pos, UnitDef *unitdef,CFeature *
 	int square=ground->GetSquare(pos);
 
 	if(!unitdef->floater){
-		int x=pos.x/SQUARE_SIZE;
-		int z=pos.z/SQUARE_SIZE;
+		int x=(int) (pos.x/SQUARE_SIZE);
+		int z=(int) (pos.z/SQUARE_SIZE);
 		float orgh=readmap->orgheightmap[z*(gs->mapx+1)+x];
 		float h=readmap->heightmap[z*(gs->mapx+1)+x];
 		float hdif=unitdef->maxHeightDif;
@@ -527,9 +527,9 @@ int CUnitHandler::ShowUnitBuildSquare(const float3& pos, UnitDef *unitdef)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBegin(GL_QUADS);
 
-	int x1 = pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE);
+	int x1 = (int) (pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE));
 	int x2 = x1+unitdef->xsize*SQUARE_SIZE;
-	int z1 = pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE);
+	int z1 = (int) (pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE));
 	int z2 = z1+unitdef->ysize*SQUARE_SIZE;
 	float h=GetBuildHeight(pos,unitdef);
 

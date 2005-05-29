@@ -141,7 +141,7 @@ void CPieceProjectile::Update()
 		CMatrix44f m;
 		m.Translate(pos.x,pos.y,pos.z);
 		m.Rotate(spinPos*PI/180,spinVec);
-		int vertexNum=gu->usRandFloat()*0.99*piece->vertices.size();
+		int vertexNum=(int) (gu->usRandFloat()*0.99*piece->vertices.size());
 		float3 pos=piece->vertices[vertexNum].pos;
 		m.Translate(pos.x,pos.y,pos.z);
 
@@ -198,10 +198,10 @@ void CPieceProjectile::Draw()
 			float a1=(1-float(0)/(Smoke_Time))*255;
 			a1*=0.7+fabs(dif.dot(dir));
 			float alpha=min(255.f,max(0.f,a1));
-			col[0]=color*alpha;
-			col[1]=color*alpha;
-			col[2]=color*alpha;
-			col[3]=alpha;
+			col[0]=(unsigned char) (color*alpha);
+			col[1]=(unsigned char) (color*alpha);
+			col[2]=(unsigned char) (color*alpha);
+			col[3]=(unsigned char) (alpha);
 
 			unsigned char col2[4];
 			float a2=(1-float(age2)/(Smoke_Time))*255;
@@ -209,10 +209,10 @@ void CPieceProjectile::Draw()
 			if(age<8)
 				a2=0;
 			alpha=min(255.f,max(0.f,a2));
-			col2[0]=color*alpha;
-			col2[1]=color*alpha;
-			col2[2]=color*alpha;
-			col2[3]=alpha;
+			col2[0]=(unsigned char) (color*alpha);
+			col2[1]=(unsigned char) (color*alpha);
+			col2[2]=(unsigned char) (color*alpha);
+			col2[3]=(unsigned char) (alpha);
 
 			float xmod=0;
 			float ymod=0.25;
@@ -233,10 +233,10 @@ void CPieceProjectile::Draw()
 			for(int a=0;a<numParts;++a){
 				float a1=1-float(a)/Smoke_Time;
 				float alpha=255;
-				col[0]=color*alpha;
-				col[1]=color*alpha;
-				col[2]=color*alpha;
-				col[3]=alpha;//min(255,max(0,a1*255));
+				col[0]=(unsigned char) (color*alpha);
+				col[1]=(unsigned char) (color*alpha);
+				col[2]=(unsigned char) (color*alpha);
+				col[3]=(unsigned char) (alpha);//min(255,max(0,a1*255));
 				float size=1+((a)*(1/Smoke_Time))*14;
 
 				float3 pos1=CalcBeizer(float(a)/(numParts),pos,dirpos1,dirpos2,oldSmoke);
@@ -282,10 +282,10 @@ void CPieceProjectile::DrawCallback(void)
 
 			float alpha=(7.5-modage)*(1.0/8);
 //			alpha*=alpha;
-			col[0]=255*alpha;
-			col[1]=200*alpha;
-			col[2]=150*alpha;
-			col[3]=alpha*50;
+			col[0]=(unsigned char) (255*alpha);
+			col[1]=(unsigned char) (200*alpha);
+			col[2]=(unsigned char) (150*alpha);
+			col[3]=(unsigned char) (alpha*50);
 			float drawsize=(0.5+modage)*size;
 			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,0.0,0.25,col);
 			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,0.25,0.25,col);

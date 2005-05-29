@@ -15,3 +15,4 @@ void glSurfaceCircle(const float3& center, float radius, unsigned int resolution
 	}
 	glEnd();
 }
+

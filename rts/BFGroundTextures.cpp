@@ -121,15 +121,15 @@ void CBFGroundTextures::DrawUpdate(void)
 					maxDif=dif;
 					maxX=x;
 					maxY=y;
-					wantedNew=wantedLevel;
+					wantedNew=(int) wantedLevel;
 				}
 			}
 			if(inRead && x==readX && y==readY){
-					currentReadWantedLevel=wantedLevel;
+					currentReadWantedLevel=(int) wantedLevel;
 			}
 			if(square->texLevel!=(int)wantedLevel){
 				glDeleteTextures(1,&square->texture);
-				LoadSquare(x,y,wantedLevel);
+				LoadSquare(x,y,(int)wantedLevel);
 			}
 		}
 	}

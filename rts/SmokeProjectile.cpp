@@ -30,7 +30,7 @@ CSmokeProjectile::CSmokeProjectile(float3 pos,float3 speed,float ttl,float start
 
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	textureNum=gu->usRandFloat()*12;
+	textureNum=(int)(gu->usRandFloat()*12);
 	POP_CODE_MODE;
 
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
@@ -65,11 +65,11 @@ void CSmokeProjectile::Draw()
 {
 	inArray=true;
 	unsigned char col[4];
-	unsigned char alpha=(1-age)*255;
-	col[0]=color*alpha;
-	col[1]=color*alpha;
-	col[2]=color*alpha;
-	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
+	unsigned char alpha=(unsigned char) ((1-age)*255);
+	col[0]=(unsigned char) (color*alpha);
+	col[1]=(unsigned char) (color*alpha);
+	col[2]=(unsigned char) (color*alpha);
+	col[3]=(unsigned char)alpha/*-alphaFalloff*gu->timeOffset*/;
 	int frame=textureNum;
 	float xmod=0.125+(float(int(frame%6)))/16;
 	float ymod=(int(frame/6))/16.0;

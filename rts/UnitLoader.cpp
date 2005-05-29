@@ -110,7 +110,7 @@ START_TIME_PROFILE;
 	unit->health=ud->health;
 	//unit->metalUpkeep=ud->metalUpkeep*16.0f/GAME_SPEED;
 	//unit->energyUpkeep=ud->energyUpkeep*16.0f/GAME_SPEED;
-	unit->controlRadius=ud->controlRadius/SQUARE_SIZE;
+	unit->controlRadius=(int)(ud->controlRadius/SQUARE_SIZE);
 	unit->losHeight=ud->losHeight;
 	unit->metalCost=ud->metalCost;
 	unit->energyCost=ud->energyCost;
@@ -119,8 +119,8 @@ START_TIME_PROFILE;
 	unit->tooltip=ud->humanName + " " + ud->tooltip;
 	unit->armoredMultiple=max(0.0001f,ud->armoredMultiple);		//armored multiple of 0 will crash spring
 	unit->wreckName=ud->wreckName;
-	unit->realLosRadius=ud->losRadius/(SQUARE_SIZE*2);
-	unit->realAirLosRadius=ud->airLosRadius/(SQUARE_SIZE*4);
+	unit->realLosRadius=(int) (ud->losRadius/(SQUARE_SIZE*2));
+	unit->realAirLosRadius=(int) (ud->airLosRadius/(SQUARE_SIZE*4));
 	unit->upright=ud->upright;
 	unit->xsize=ud->xsize;
 	unit->ysize=ud->ysize;
@@ -135,7 +135,7 @@ START_TIME_PROFILE;
 		unit->ChangeLos(1,1);
 		unit->health=0.1;
 	} else {
-		unit->ChangeLos(ud->losRadius/SQUARE_SIZE,ud->airLosRadius/(SQUARE_SIZE*2));
+		unit->ChangeLos((int)(ud->losRadius/SQUARE_SIZE),(int)(ud->airLosRadius/(SQUARE_SIZE*2)));
 	}
 
 	if(type=="GroundUnit"){
@@ -180,7 +180,7 @@ START_TIME_PROFILE;
 		unit->mobility->maxAcceleration = ud->maxAcc;
 		unit->mobility->maxBreaking = -3*ud->maxAcc;
 		unit->mobility->maxSpeed = ud->speed / GAME_SPEED;
-		unit->mobility->maxTurnRate = ud->turnRate;
+		unit->mobility->maxTurnRate = (short int) ud->turnRate;
 		unit->mobility->moveData = ud->movedata;
 
 		//Unit parameters
@@ -200,7 +200,7 @@ START_TIME_PROFILE;
 		unit->mobility->maxAcceleration = ud->maxAcc;
 		unit->mobility->maxBreaking = -3*ud->maxAcc;	//Correct?
 		unit->mobility->maxSpeed = ud->speed / GAME_SPEED;
-		unit->mobility->maxTurnRate = ud->turnRate;
+		unit->mobility->maxTurnRate = (short int) ud->turnRate;
 		unit->mobility->moveData = ud->movedata;
 
 		unit->mass=ud->mass;
@@ -330,7 +330,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 	}
 	weapon->weaponDef = weapondef;
 
-	weapon->reloadTime=weapondef->reload*GAME_SPEED;
+	weapon->reloadTime= (int) (weapondef->reload*GAME_SPEED);
 	weapon->range=weapondef->range;
 //	weapon->baseRange=weapondef->range;
 	weapon->heightMod=weapondef->heightmod;
@@ -344,7 +344,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 	weapon->sprayangle=weapondef->sprayangle;
 
 	weapon->salvoSize=weapondef->salvosize;
-	weapon->salvoDelay=weapondef->salvodelay*GAME_SPEED;
+	weapon->salvoDelay=(int) (weapondef->salvodelay*GAME_SPEED);
 
 	weapon->metalFireCost=weapondef->metalcost;
 	weapon->energyFireCost=weapondef->energycost;

@@ -97,7 +97,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 
 	int baseViewRadius=viewRadius;
 	float zoom=45/camera->fov;
-	viewRadius=viewRadius*sqrt(zoom);
+	viewRadius=(int)(viewRadius*sqrt(zoom));
 	viewRadius+=viewRadius%2;
 
 	va=GetVertexArray();
@@ -142,7 +142,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 				xtest=xtest2;
 			xtest=xtest/bigSquareSize;
 			if(xtest>sx)
-				sx=xtest;
+				sx=(int) xtest;
 		}
 		for(fli=right.begin();fli!=right.end();fli++){
 			xtest=((fli->base/SQUARE_SIZE+fli->dir*(bty*bigSquareSize)))+bigSquareSize;
@@ -151,7 +151,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 				xtest=xtest2;
 			xtest=xtest/bigSquareSize;
 			if(xtest<ex)
-				ex=xtest;
+				ex=(int) xtest;
 		}
 //		info->AddLine("%i %i",sx,ex);
 		for(int btx=sx;btx<ex;++btx){
@@ -891,7 +891,7 @@ bool CBFGroundDrawer::UpdateTextures()
 				for(int x=0;x<gs->mapx;++x){
 					int a=y*512+x;
 					if(myAirLos[(y/2)*gs->hmapx/2+x/2])
-						infoTexMem[a*4]=min(255.f,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
+						infoTexMem[a*4]= (unsigned char) min(255.f,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
 					else
 						infoTexMem[a*4]=0;
 					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);

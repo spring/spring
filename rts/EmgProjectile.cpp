@@ -52,9 +52,9 @@ void CEmgProjectile::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	col[0]=color.x*intensity*255;
-	col[1]=color.y*intensity*255;
-	col[2]=color.z*intensity*255;
+	col[0]=(unsigned char) (color.x*intensity*255);
+	col[1]=(unsigned char) (color.y*intensity*255);
+	col[2]=(unsigned char) (color.z*intensity*255);
 	col[3]=5;//intensity*255;
 	float3 interPos=pos+speed*gu->timeOffset;
 	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,0,0,col);

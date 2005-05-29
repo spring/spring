@@ -1288,14 +1288,14 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		}
 	} else if(keys[VK_MENU]){			//build a rectangle
 		float xsize=unitdef->xsize*8;
-		int xnum=(fabs(end.x-start.x)+xsize*1.4)/xsize;
-		int xstep=xsize;
+		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
+		int xstep=(int)xsize;
 		if(start.x>end.x)
 			xstep*=-1;
 
 		float zsize=unitdef->ysize*8;
-		int znum=(fabs(end.z-start.z)+zsize*1.4)/zsize;
-		int zstep=zsize;
+		int znum=(int)((fabs(end.z-start.z)+zsize*1.4)/zsize);
+		int zstep=(int)zsize;
 		if(start.z>end.z)
 			zstep*=-1;
 

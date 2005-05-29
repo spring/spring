@@ -47,10 +47,11 @@ void GUIlabel::BuildList()
 	{
 		guifont->PrintColor(0, y, temp.substr(0, lf));
 
-		y+=guifont->GetHeight();
+		y+=(int)guifont->GetHeight();
 		temp=temp.substr(lf+1, string::npos);		
 	}
 	guifont->PrintColor(0, y, temp);
 
 	glEndList();
 }
+

@@ -34,3 +34,4 @@ void CNoWeapon::SlowUpdate(void)
 {
 
 }
+

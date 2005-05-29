@@ -425,9 +425,9 @@ void CTAAirMoveType::UpdateHeading()
 		deltaHeading= forceHeadingTo - heading;
 
 	if(deltaHeading > 0){
-		heading += deltaHeading > turnRate ? turnRate : deltaHeading;		//min(deltaHeading, turnRate);
+		heading += deltaHeading > turnRate ? (short int)turnRate : deltaHeading;		//min(deltaHeading, turnRate);
 	} else {
-		heading += deltaHeading > (-turnRate) ? deltaHeading : (-turnRate);  //max(-turnRate, deltaHeading);
+		heading += deltaHeading > (-turnRate) ? deltaHeading : (-(short int)turnRate);  //max(-turnRate, deltaHeading);
 	}	
 }
 

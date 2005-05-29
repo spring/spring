@@ -77,7 +77,7 @@ CBFReadmap::CBFReadmap(std::string mapname)
 			minheight=heightmap[y];
 		if(heightmap[y]>maxheight)
 			maxheight=heightmap[y];
-		mapChecksum+=heightmap[y]*100;
+		mapChecksum+=(int)(heightmap[y]*100);
 		mapChecksum^=*(unsigned int*)&heightmap[y];
 	}
 
@@ -272,7 +272,7 @@ void CBFReadmap::ParseSMD(std::string filename)
 	for(int a=0;a<1024;++a){
 		for(int b=0;b<3;++b){
 			float c=max(waterMinColor[b],waterBaseColor[b]-waterAbsorb[b]*a);
-			waterHeightColors[a*4+b]=c*210;
+			waterHeightColors[a*4+b]=(unsigned char) (c*210);
 		}
 		waterHeightColors[a*4+3]=1;
 	}
@@ -330,15 +330,15 @@ void CBFReadmap::RecalcTexture(int x1, int x2, int y1, int y2)
 			float height = centerheightmap[(x+x1)+(y+y1)*gs->mapx];
 
 			if(height<0){
-				int h=-height;
+				int h=-((int)height);
 
 				if(height>-10){
 					float3 light = GetLightValue(x+x1,y+y1)*210.0f;
 					float wc=-height*0.1;
-					tempMem[(y*xsize+x)*4+0] = waterHeightColors[h*4+0]*wc+light.x*(1-wc);
-					tempMem[(y*xsize+x)*4+1] = waterHeightColors[h*4+1]*wc+light.y*(1-wc);
-					tempMem[(y*xsize+x)*4+2] = waterHeightColors[h*4+2]*wc+light.z*(1-wc);
-					tempMem[(y*xsize+x)*4+3] = (1-wc)*255;
+					tempMem[(y*xsize+x)*4+0] = (unsigned char)(waterHeightColors[h*4+0]*wc+light.x*(1-wc));
+					tempMem[(y*xsize+x)*4+1] = (unsigned char)(waterHeightColors[h*4+1]*wc+light.y*(1-wc));
+					tempMem[(y*xsize+x)*4+2] = (unsigned char)(waterHeightColors[h*4+2]*wc+light.z*(1-wc));
+					tempMem[(y*xsize+x)*4+3] = (unsigned char)((1-wc)*255);
 					
 				} else {
 					tempMem[(y*xsize+x)*4+0] = waterHeightColors[h*4+0];
@@ -349,9 +349,9 @@ void CBFReadmap::RecalcTexture(int x1, int x2, int y1, int y2)
 				;//waterHeightColors[h*4+3];
 			} else {
 				float3 light = GetLightValue(x+x1,y+y1)*210.0f;
-				tempMem[(y*xsize+x)*4] = light.x;
-				tempMem[(y*xsize+x)*4+1] = light.y;
-				tempMem[(y*xsize+x)*4+2] = light.z;
+				tempMem[(y*xsize+x)*4] = (unsigned char)light.x;
+				tempMem[(y*xsize+x)*4+1] = (unsigned char)light.y;
+				tempMem[(y*xsize+x)*4+2] = (unsigned char)light.z;
 				tempMem[(y*xsize+x)*4+3] = 255;
 			}
 		}

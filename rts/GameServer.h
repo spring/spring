@@ -1,8 +1,6 @@
 #ifndef __GAME_SERVER_H__
 #define __GAME_SERVER_H__
 
-#include "archdef.h"
-
 #include <winsock2.h>
 #include <windows.h>
 

@@ -42,7 +42,7 @@ void CTestScript::Update()
 			float3 pos((gs->randFloat()+gs->randFloat())*2000,0,(gs->randFloat()+gs->randFloat())*2000);
 			pos.y=ground->GetHeight(pos.x,pos.z);
 			int num=featureHandler->wreckParser->GetSectionList("").size();
-			string feature=featureHandler->wreckParser->GetSectionList("")[gs->randFloat()*num];
+			string feature=featureHandler->wreckParser->GetSectionList("")[(unsigned int)(gs->randFloat()*num)];
 			featureHandler->CreateWreckage(pos,feature,0,1,-1,false);
 		}
 		for(int a=0;a<30;++a){

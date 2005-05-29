@@ -33,10 +33,10 @@ void CGeoSquareProjectile::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	col[0]=r*a*255;
-	col[1]=g*a*255;
-	col[2]=b*a*255;
-	col[3]=a*255;
+	col[0]=(unsigned char) (r*a*255);
+	col[1]=(unsigned char) (g*a*255);
+	col[2]=(unsigned char) (b*a*255);
+	col[3]=(unsigned char) (a*255);
 
 	float3 dif(p1-camera->pos);
 	dif.Normalize();

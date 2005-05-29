@@ -75,3 +75,4 @@ void GUIallyResourceBar::SizeChanged()
 {
 	h=23;
 }
+

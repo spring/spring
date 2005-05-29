@@ -58,10 +58,10 @@ void CDirtProjectile::Draw()
 
 	inArray=true;
 	unsigned char col[4];
-	col[0]=color.x*alpha;
-	col[1]=color.y*alpha;
-	col[2]=color.z*alpha;
-	col[3]=alpha/*-gu->timeOffset*alphaFalloff*/;
+	col[0]=(unsigned char) (color.x*alpha);
+	col[1]=(unsigned char) (color.y*alpha);
+	col[2]=(unsigned char) (color.z*alpha);
+	col[3]=(unsigned char) (alpha)/*-gu->timeOffset*alphaFalloff*/;
 
 	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+gu->timeOffset*sizeExpansion;

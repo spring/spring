@@ -88,3 +88,4 @@ CSyncTracer& CSyncTracer::operator<<(const float f)
 	(*info) << f;
 	return *this;
 }
+

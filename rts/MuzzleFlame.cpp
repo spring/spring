@@ -17,8 +17,8 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& d
 	this->pos-=dir*size*0.2;
 	checkCol=false;
 	castShadow=true;
-	numFlame=1+size*3;
-	numSmoke=1+size*5;
+	numFlame=1+(int)(size*3);
+	numSmoke=1+(int)(size*5);
 	randSmokeDir=new float3[numSmoke];
 
 	PUSH_CODE_MODE;
@@ -53,10 +53,10 @@ void CMuzzleFlame::Draw(void)
 	inArray=true;
 	unsigned char col[4];
 	float alpha=max(0.f,1-age/(4+size*30));
-	col[0]=200*alpha;
-	col[1]=200*alpha;
-	col[2]=200*alpha;
-	col[3]=alpha*255;
+	col[0]=(unsigned char) (200*alpha);
+	col[1]=(unsigned char) (200*alpha);
+	col[2]=(unsigned char) (200*alpha);
+	col[3]=(unsigned char) (alpha*255);
 
 	for(int a=0;a<numSmoke;++a){
 		int tex=a%12;
@@ -77,9 +77,9 @@ void CMuzzleFlame::Draw(void)
 		inArray=true;
 		unsigned char col[4];
 		float alpha=(1-age/(6+size*2))*(1-age/(6+size*2));
-		col[0]=255*alpha;
-		col[1]=255*alpha;
-		col[2]=255*alpha;
+		col[0]=(unsigned char) (255*alpha);
+		col[1]=(unsigned char) (255*alpha);
+		col[2]=(unsigned char) (255*alpha);
 		col[3]=1;
 
 		float curAge=age/(6.0+size*2.0);

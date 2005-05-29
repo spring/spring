@@ -181,3 +181,4 @@ void CMouseCursor::Draw(int x, int y)
 
 	glViewport(0,0,gu->screenx,gu->screeny);
 }
+

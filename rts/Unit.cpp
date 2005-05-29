@@ -410,8 +410,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	hitDir.y = 0;
 	hitDir = -hitDir.Normalize();
 	std::vector<long> hitAngles;
-	hitAngles.push_back(500 * hitDir.z);
-	hitAngles.push_back(500 * hitDir.x);
+	hitAngles.push_back((long)(500 * hitDir.z));
+	hitAngles.push_back((long)(500 * hitDir.x));
 	cob->Call(COBFN_HitByWeapon, hitAngles);	
 
 	damage*=curArmorMultiple;
@@ -1012,7 +1012,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed)
 			recentDamage+=maxHealth*2;
 
 		vector<long> args;
-		args.push_back(recentDamage/maxHealth*100);
+		args.push_back((long)(recentDamage/maxHealth*100));
 		args.push_back(0);
 		cob->Call(COBFN_Killed, args);
 
@@ -1156,3 +1156,4 @@ void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
 	file->lsBool(wantCloak);
 	commandAI->LoadSave(file,loading);
 }
+

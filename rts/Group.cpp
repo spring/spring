@@ -159,7 +159,7 @@ void CGroup::GiveCommand(Command c)
 		for(aai=grouphandler->availableAI.begin();aai!=grouphandler->availableAI.end() && a<c.params[0];++aai){
 			a++;
 		}
-		currentAiNum=c.params[0];
+		currentAiNum=(int)c.params[0];
 		SetNewAI(aai->first);
 		selectedUnits.PossibleCommandChange(0);
 	} else {

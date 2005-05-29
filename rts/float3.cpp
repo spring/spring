@@ -69,3 +69,4 @@ bool float3::CheckInBounds()
 	return in;
 
 }
+

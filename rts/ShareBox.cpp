@@ -232,7 +232,7 @@ bool CShareBox::MousePress(int x, int y, int button)
 			energyShare=max(0.f,min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
 		}
 		if(InBox(mx,my,box+teamBox)){
-			int team=(box.y1+teamBox.y2-my)/0.025;
+			int team=(int)((box.y1+teamBox.y2-my)/0.025);
 			if(team>=gu->myTeam)
 				team++;
 			if(team<gs->activeTeams && !gs->teams[team]->isDead)
@@ -294,7 +294,7 @@ void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
 		energyShare=max(0.f,min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
 	}
 	if(InBox(mx,my,box+teamBox)){
-		int team=(box.y1+teamBox.y2-my)/0.025;
+		int team=(int)((box.y1+teamBox.y2-my)/0.025);
 		if(team>=gu->myTeam)
 			team++;
 		if(team<gs->activeTeams && !gs->teams[team]->isDead)

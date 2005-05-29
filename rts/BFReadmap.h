@@ -31,4 +31,4 @@ protected:
 	void ParseSMD(std::string filename);
 };
 
-#endif __BF_READ_MAP_H__
+#endif // __BF_READ_MAP_H__

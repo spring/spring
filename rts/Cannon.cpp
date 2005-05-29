@@ -143,7 +143,7 @@ void CCannon::Fire(void)
 #endif
 	int ttl=10000;
 	if(selfExplode)
-		ttl=predict+gs->randFloat()*3.5-1;
+		ttl=((int) (predict+gs->randFloat()*3.5))-1;
 	new CExplosiveProjectile(weaponPos,dir*projectileSpeed,owner,damages,weaponDef, ttl,areaOfEffect);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,owner->speed,owner, NULL, float3(0,0,0), weaponDef);
 

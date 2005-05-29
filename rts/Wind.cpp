@@ -52,3 +52,4 @@ void CWind::Update()
 		status++;
 	}
 }
+

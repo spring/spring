@@ -156,10 +156,10 @@ void CMissileProjectile::Draw(void)
 		float a1=(1-float(0)/(Smoke_Time))*255;
 		a1*=0.7+fabs(dif.dot(dir));
 		float alpha=min((float)255,max(float(0),a1));
-		col[0]=color*alpha;
-		col[1]=color*alpha;
-		col[2]=color*alpha;
-		col[3]=alpha;
+		col[0]=(unsigned char) (color*alpha);
+		col[1]=(unsigned char) (color*alpha);
+		col[2]=(unsigned char) (color*alpha);
+		col[3]=(unsigned char) alpha;
 
 		unsigned char col2[4];
 		float a2=(1-float(age2)/(Smoke_Time))*255;
@@ -167,10 +167,10 @@ void CMissileProjectile::Draw(void)
 			a2=0;
 		a2*=0.7+fabs(dif2.dot(oldDir));
 		alpha=min((float)255,max((float)0,a2));
-		col2[0]=color*alpha;
-		col2[1]=color*alpha;
-		col2[2]=color*alpha;
-		col2[3]=alpha;
+		col2[0]=(unsigned char) (color*alpha);
+		col2[1]=(unsigned char) (color*alpha);
+		col2[2]=(unsigned char) (color*alpha);
+		col2[3]=(unsigned char) alpha;
 
 		float xmod=0;
 		float ymod=0.25;
@@ -190,10 +190,10 @@ void CMissileProjectile::Draw(void)
 		for(int a=0;a<numParts;++a){
 			float a1=1-float(a)/Smoke_Time;
 			float alpha=255;
-			col[0]=color*alpha;
-			col[1]=color*alpha;
-			col[2]=color*alpha;
-			col[3]=alpha;//min(255,max(0,a1*255));
+			col[0]=(unsigned char) (color*alpha);
+			col[1]=(unsigned char) (color*alpha);
+			col[2]=(unsigned char) (color*alpha);
+			col[3]=(unsigned char)alpha;//min(255,max(0,a1*255));
 			float size=(1+(a*(1/Smoke_Time))*7);
 
 			float3 pos1=CalcBeizer(float(a)/(numParts),pos,dirpos1,dirpos2,oldSmoke);

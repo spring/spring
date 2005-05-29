@@ -183,7 +183,7 @@ void CFeature::StartFire(void)
 	if(fireTime || !def->burnable)
 		return;
 
-	fireTime=200+gs->randFloat()*30;
+	fireTime=200+(int)(gs->randFloat()*30);
 	featureHandler->SetFeatureUpdateable(this);
 
 	myFire=new CFireProjectile(midPos,UpVector,0,300,radius*0.8,70,20);

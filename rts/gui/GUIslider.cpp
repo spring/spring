@@ -138,7 +138,7 @@ bool GUIslider::MouseMoveAction(int x1, int y1, int xrel, int yrel, int button)
 
 	{
 
-		SetPosition((x1/(float)w)*maximum);
+		SetPosition((int)((x1/(float)w)*maximum));
 
 		return true;
 

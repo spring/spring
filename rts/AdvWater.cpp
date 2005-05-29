@@ -49,7 +49,7 @@ CAdvWater::CAdvWater()
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
 			scrap[(y*64+x)*4+0]=128;
-			scrap[(y*64+x)*4+1]=(sin(y*PI*2.0/64.0))*128+128;
+			scrap[(y*64+x)*4+1]=(unsigned char) ((sin(y*PI*2.0/64.0))*128)+128;
 			scrap[(y*64+x)*4+2]=0;
 			scrap[(y*64+x)*4+3]=255;
 		}
@@ -77,8 +77,8 @@ CAdvWater::CAdvWater()
 		for(int x=0;x<64;++x){
 			float ang=26.5*PI/180.0;
 			float pos=y*2+x;
-			scrap[(y*64+x)*4+0]=(sin(pos*PI*2.0/64.0))*128*sin(ang)+128;
-			scrap[(y*64+x)*4+1]=(sin(pos*PI*2.0/64.0))*128*cos(ang)+128;
+			scrap[(y*64+x)*4+0]=(unsigned char)((sin(pos*PI*2.0/64.0))*128*sin(ang))+128;
+			scrap[(y*64+x)*4+1]=(unsigned char)((sin(pos*PI*2.0/64.0))*128*cos(ang))+128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
@@ -90,8 +90,8 @@ CAdvWater::CAdvWater()
 		for(int x=0;x<64;++x){
 			float ang=-19*PI/180.0;
 			float pos=3*y-x;
-			scrap[(y*64+x)*4+0]=(sin(pos*PI*2.0/64.0))*128*sin(ang)+128;
-			scrap[(y*64+x)*4+1]=(sin(pos*PI*2.0/64.0))*128*cos(ang)+128;
+			scrap[(y*64+x)*4+0]=(unsigned char)((sin(pos*PI*2.0/64.0))*128*sin(ang))+128;
+			scrap[(y*64+x)*4+1]=(unsigned char)((sin(pos*PI*2.0/64.0))*128*cos(ang))+128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
@@ -130,9 +130,9 @@ void CAdvWater::Draw()
 	float screenY=1;
 
 	unsigned char col[4];
-	col[0]=0.75f*255;
-	col[1]=0.8f*255;
-	col[2]=0.85f*255;
+	col[0]=(unsigned char)(0.75f*255);
+	col[1]=(unsigned char)(0.8f*255);
+	col[2]=(unsigned char)(0.85f*255);
 
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
@@ -180,14 +180,14 @@ void CAdvWater::Draw()
 				dir.Normalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1+gs->frameNum*0.06)*0.06+0.05;
-				col[3]=(0.8+0.7*(dir.y))*255;
+				col[3]=(unsigned char)((0.8+0.7*(dir.y))*255);
 				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY-yInc,col);
 
 				dir=xbase;
 				dir.Normalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1+gs->frameNum*0.06)*0.06+0.05;
-				col[3]=(0.8+0.7*(dir.y))*255;
+				col[3]=(unsigned char)((0.8+0.7*(dir.y))*255);
 				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY,col);
 
 				xbase+=dh;

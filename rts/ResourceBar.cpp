@@ -7,7 +7,7 @@
 #include "Net.h"
 //#include "mmgr.h"
 
-extern CResourceBar* resourceBar=0;
+CResourceBar* resourceBar=0;
 
 CResourceBar::CResourceBar(void)
 {

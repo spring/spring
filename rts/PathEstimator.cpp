@@ -349,8 +349,8 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 
 	//Initial calculations.
 	maxBlocksToBeSearched = min(maxSearchedBlocks, MAX_SEARCHED_BLOCKS);
-	startBlock.x = start.x / BLOCK_PIXEL_SIZE;
-	startBlock.y = start.z / BLOCK_PIXEL_SIZE;
+	startBlock.x = (int) (start.x / BLOCK_PIXEL_SIZE);
+	startBlock.y = (int) (start.z / BLOCK_PIXEL_SIZE);
 	startBlocknr = startBlock.y * nbrOfBlocksX + startBlock.x;
 
 	//Search

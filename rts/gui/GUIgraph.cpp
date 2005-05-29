@@ -146,9 +146,9 @@ void GUIgraph::BuildList()
 
 
 
-	int sideBar=guifont->GetWidth(buf)+10;
+	int sideBar=(int)(guifont->GetWidth(buf))+10;
 
-	int bottomBar=guifont->GetHeight()+10;
+	int bottomBar=(int)(guifont->GetHeight())+10;
 
 	w-=sideBar;
 
@@ -156,7 +156,7 @@ void GUIgraph::BuildList()
 
 	
 
-	int numTicks=h/(guifont->GetHeight()+40);
+	int numTicks=(int)(h/(guifont->GetHeight()+40));
 
 	
 
@@ -382,7 +382,7 @@ void GUIgraph::BuildList()
 
 	{
 
-		int tick=maximum-(i*maximum/numTicks);
+		int tick=(int)(maximum-i*maximum/numTicks);
 
 		if(showDif)
 

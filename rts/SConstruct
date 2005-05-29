@@ -155,7 +155,7 @@ print nbBuiltObjects, " objects are already produced from a previous build (", n
 if debug:
         env.Append(CPPFLAGS = ['-g -D_DEBUG -DDEBUG'])
 else:
-        env.Append(CPPFLAGS = ['-O3'])
+        env.Append(CPPFLAGS = ['-O2'])
 
 #################################################
 # Check requirements

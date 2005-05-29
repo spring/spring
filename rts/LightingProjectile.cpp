@@ -61,9 +61,9 @@ void CLightingProjectile::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	col[0]=color.x*255;
-	col[1]=color.y*255;
-	col[2]=color.z*255;
+	col[0]=(unsigned char) (color.x*255);
+	col[1]=(unsigned char) (color.y*255);
+	col[2]=(unsigned char) (color.z*255);
 	col[3]=1;//intensity*255;
 
 	float3 dir=(endPos-pos).Normalize();

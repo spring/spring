@@ -70,3 +70,4 @@ void CModelProjectile::DrawUnitPart()
 
 	glPopMatrix();
 }
+

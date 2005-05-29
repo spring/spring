@@ -105,3 +105,4 @@ void GUIswitchBar::SwitchClicked(GUIbutton* button)
 
 	f->Raise();
 }
+

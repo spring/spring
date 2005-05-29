@@ -79,8 +79,8 @@ CMiniMap::CMiniMap()
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,16, 16, GL_RGBA, GL_UNSIGNED_BYTE, tex);
 
 	float hw=sqrt(float(gs->mapx)/gs->mapy);
-	width*=hw;
-	height/=hw;
+	width = (int) (width*hw);
+	height = (int) (height/hw);
 	ypos=gu->screeny-height-10;
 }
 
@@ -121,7 +121,7 @@ void CMiniMap::Draw()
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2.0);
+	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -161,7 +161,7 @@ void CMiniMap::Draw()
 		glVertex2f(1,0);
 	glEnd();
 
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1.0);
+	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glDisable(GL_TEXTURE_2D);
@@ -233,7 +233,7 @@ void CMiniMap::Draw()
 		if((*si)->radarRadius && !(*si)->beingBuilt && (*si)->activated){
 			glColor3f(0.3f,1,0.3f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=sqrtf(height)*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000+8;
+			int numSegments=(int)(sqrtf(height)*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE));
 			}
@@ -242,7 +242,7 @@ void CMiniMap::Draw()
 		if((*si)->sonarRadius && !(*si)->beingBuilt && (*si)->activated){
 			glColor3f(0.3f,1,0.3f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=sqrtf(height)*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000+8;
+			int numSegments=(int)(sqrtf(height)*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE));
 			}
@@ -251,7 +251,7 @@ void CMiniMap::Draw()
 		if((*si)->jammerRadius && !(*si)->beingBuilt && (*si)->activated){
 			glColor3f(1.0f,0.2f,0.2f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=sqrtf(height)*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE)/2000+8;
+			int numSegments=(int)(sqrtf(height)*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE));
 			}
@@ -264,7 +264,7 @@ void CMiniMap::Draw()
 			else
 				glColor4f(0.0f,0.0f,0.0f,0.6f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=sqrtf(height)*w->weaponDef->coverageRange/2000+8;
+			int numSegments=(int)(sqrtf(height)*w->weaponDef->coverageRange/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*w->weaponDef->coverageRange);
 			}

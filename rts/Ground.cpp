@@ -235,8 +235,8 @@ float CGround::GetHeight(float x, float y)
 		y=float3::maxzpos;
 
 	float r;
-	int sx=x/SQUARE_SIZE;
-	int sy=y/SQUARE_SIZE;
+	int sx=(int) (x/SQUARE_SIZE);
+	int sy=(int) (y/SQUARE_SIZE);
 	float dx=(x-sx*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	float dy=(y-sy*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	int hs=sx+sy*(gs->mapx+1);
@@ -267,8 +267,8 @@ float CGround::GetHeight2(float x, float y)
 		y=float3::maxzpos;
 
 	float r;
-	int sx=x/SQUARE_SIZE;
-	int sy=y/SQUARE_SIZE;
+	int sx=(int) (x/SQUARE_SIZE);
+	int sy=(int) (y/SQUARE_SIZE);
 	float dx=(x-sx*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	float dy=(y-sy*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	int hs=sx+sy*(gs->mapx+1);
@@ -324,8 +324,8 @@ float CGround::GetSlope(float x, float y)
 
 float3 CGround::GetSmoothNormal(float x, float y)
 {
-	int sx=floor(x/SQUARE_SIZE);
-	int sy=floor(y/SQUARE_SIZE);
+	int sx=(int)floor(x/SQUARE_SIZE);
+	int sy=(int)floor(y/SQUARE_SIZE);
 
 	if(sy<1)
 		sy=1;

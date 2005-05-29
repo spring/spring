@@ -321,9 +321,9 @@ void CBasicSky::CreateClouds()
 				green=1;
 			if(blue>1)
 				blue=1;
-			skytex[y][x][0]=red*255;
-			skytex[y][x][1]=green*255;
-			skytex[y][x][2]=blue*255;
+			skytex[y][x][0]=(unsigned char)(red*255);
+			skytex[y][x][1]=(unsigned char)(green*255);
+			skytex[y][x][2]=(unsigned char)(blue*255);
 			skytex[y][x][3]=255;
 		}
 	}
@@ -344,7 +344,7 @@ void CBasicSky::CreateClouds()
 			if(green>1)
 				green=1;
 			skytex2[y][x][0]=255-y/2;
-			skytex2[y][x][1]=green*255;
+			skytex2[y][x][1]=(unsigned char)(green*255);
 			skytex2[y][x][2]=203;
 			skytex2[y][x][3]=255;
 		}
@@ -397,7 +397,7 @@ START_TIME_PROFILE
 			}
 
 		}
-		int ifade=(3*fade*fade-2*fade*fade*fade)*256;
+		int ifade=(int)((3*fade*fade-2*fade*fade*fade)*256);
 
 		for(int y=0;y<32;y++){
 			for(int x=0;x<32;x++){
@@ -423,7 +423,7 @@ START_TIME_PROFILE
 				xdist=3*xdist*xdist-2*xdist*xdist*xdist;
 				
 				float contrib=(1-xdist)*(1-ydist);
-				kernel[y*CLOUD_SIZE/4+x]=contrib*((4<<CLOUD_DETAIL)>>a);
+				kernel[y*CLOUD_SIZE/4+x]=(int)(contrib*((4<<CLOUD_DETAIL)>>a));
 			}
 		}
 		unsigned int by=0,bx=0;
@@ -582,12 +582,12 @@ void CBasicSky::CreateTransformVectors()
 		float alpha=pow(f*2,3);
 		if(alpha>1)
 			alpha=1;
-		alphaTransform[a]=alpha*255;
+		alphaTransform[a]=(unsigned char)(alpha*255);
 
 		float d=f*2;
 		if(d>1)
 			d=1;
-		thicknessTransform[a]=128+d*64+alphaTransform[a]*255/(4*255);
+		thicknessTransform[a]=(unsigned char)(128+d*64+alphaTransform[a]*255/(4*255));
 	}
 }
 
@@ -630,7 +630,7 @@ void CBasicSky::DrawSun()
 		if(cover>127.5)
 			cover=127.5;
 
-		buf[x]=255-cover*2;
+		buf[x]=(unsigned char)(255-cover*2);
 	}
 	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
 	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,32,1,GL_LUMINANCE,GL_UNSIGNED_BYTE,buf);

@@ -14,7 +14,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	viewRadius=regHandler.GetInt("GroundDetail",40);
 	viewRadius+=viewRadius%2;
 
-	baseTreeDistance=regHandler.GetInt("TreeRadius",5.5f*256)/256.0;
+	baseTreeDistance=regHandler.GetInt("TreeRadius",(unsigned int) (5.5f*256))/256.0;
 
 	updateFov=true;
 
@@ -33,7 +33,7 @@ CBaseGroundDrawer::~CBaseGroundDrawer(void)
 	if(infoTex!=0)
 		glDeleteTextures (1, &infoTex);
 	regHandler.SetInt("GroundDetail",viewRadius);
-	regHandler.SetInt("TreeRadius",baseTreeDistance*256);
+	regHandler.SetInt("TreeRadius",(unsigned int)(baseTreeDistance*256));
 }
 
 void CBaseGroundDrawer::AddFrustumRestraint(float3 side)

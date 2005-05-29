@@ -57,15 +57,15 @@ void CFlameProjectile::Draw(void)
 	inArray=true;
 	unsigned char col[4];
 	if(curTime<0.33333){
-		col[0]=(1-curTime)*255;
-		col[1]=(1-curTime)*255;
-		col[2]=(1-curTime*3)*(1-curTime)*255;
+		col[0]=(unsigned char) ((1-curTime)*255);
+		col[1]=(unsigned char) ((1-curTime)*255);
+		col[2]=(unsigned char) ((1-curTime*3)*(1-curTime)*255);
 	} else if(curTime<0.66666){
-		col[0]=(1-curTime)*255;
-		col[1]=(1-(curTime-0.3333)*3)*(1-curTime)*255;
+		col[0]=(unsigned char) ((1-curTime)*255);
+		col[1]=(unsigned char) ((1-(curTime-0.3333)*3)*(1-curTime)*255);
 		col[2]=0;
 	} else {
-		col[0]=(1-(curTime-0.66666)*3)*(1-curTime)*255;
+		col[0]=(unsigned char) ((1-(curTime-0.66666)*3)*(1-curTime)*255);
 		col[1]=0;
 		col[2]=0;
 	}

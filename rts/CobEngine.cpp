@@ -165,3 +165,4 @@ CCobFile &CCobEngine::GetCobFile(string name)
 	cobFiles[name] = cf;
 	return *cf;
 }
+

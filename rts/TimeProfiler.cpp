@@ -217,7 +217,7 @@ bool CTimeProfiler::MousePress(int x, int y, int button)
 	if(!gu->drawdebug || mx<0.65 || mx>0.99 || my<0.99f-profile.size()*0.024-0.01 || my>0.99)
 		return false;
 
-	int num=(0.99-my)/0.024;
+	int num=(int) ((0.99-my)/0.024);
 
 	int a=0;
 	map<string,TimeRecord>::iterator pi;

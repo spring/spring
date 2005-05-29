@@ -8,8 +8,8 @@
 Converts a point-request into a square-positional request.
 */
 float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos) {
-	int x = pos.x / SQUARE_SIZE;
-	int z = pos.z / SQUARE_SIZE;
+	int x = (int) (pos.x / SQUARE_SIZE);
+	int z = (int) (pos.z / SQUARE_SIZE);
 	return SpeedMod(moveData, x, z);
 }
 
@@ -67,8 +67,8 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare,con
 Converts a point-request into a square-positional request.
 */
 bool CMoveMath::IsBlocked(const MoveData& moveData, int blockOpt, float3 pos) {
-	int x = pos.x / SQUARE_SIZE;
-	int z = pos.z / SQUARE_SIZE;
+	int x = (int) (pos.x / SQUARE_SIZE);
+	int z = (int) (pos.z / SQUARE_SIZE);
 	return IsBlocked(moveData, blockOpt, x, z);
 }
 
@@ -85,7 +85,8 @@ bool CMoveMath::IsBlocking(const MoveData& moveData, const CSolidObject* object)
 Converts a point-request into a square-positional request.
 */
 float CMoveMath::yLevel(const float3 pos) {
-	int x = pos.x / SQUARE_SIZE;
-	int z = pos.z / SQUARE_SIZE;
+	int x = (int) (pos.x / SQUARE_SIZE);
+	int z = (int) (pos.z / SQUARE_SIZE);
 	return yLevel(x, z);
 }
+

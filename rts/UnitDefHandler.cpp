@@ -604,3 +604,4 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 
 	delete[] originalMap;
 }
+

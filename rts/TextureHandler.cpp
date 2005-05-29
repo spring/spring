@@ -76,7 +76,7 @@ CTextureHandler::CTextureHandler()
 		texfiles[numfiles++]=tex;
 		totalSize+=tex->tex.xsize*tex->tex.ysize;
 	}
-	totalSize*=1.2f;		//pessimistic guess about how much space will be wasted
+	totalSize=(int)(totalSize * 1.2f);		//pessimistic guess about how much space will be wasted
 
 	if(totalSize<1024*1024){
 		bigTexX=1024;

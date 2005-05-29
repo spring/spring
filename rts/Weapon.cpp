@@ -104,7 +104,7 @@ void CWeapon::Update()
 			lastRequest=gs->frameNum;
 
 			short int heading=GetHeadingFromVector(wantedDir.x,wantedDir.z);
-			short int pitch=asin(wantedDir.dot(owner->updir))*(32768/PI);
+			short int pitch=(short int) (asin(wantedDir.dot(owner->updir))*(32768/PI));
 			std::vector<long> args;
 			args.push_back(short(heading-owner->heading));
 			args.push_back(pitch);
@@ -193,8 +193,8 @@ void CWeapon::Update()
 		rockDir.y = 0;
 		rockDir = -rockDir.Normalize();
 		std::vector<long> rockAngles;
-		rockAngles.push_back(500 * rockDir.z);
-		rockAngles.push_back(500 * rockDir.x);
+		rockAngles.push_back((long)(500 * rockDir.z));
+		rockAngles.push_back((long)(500 * rockDir.x));
 		owner->cob->Call(COBFN_RockUnit,  rockAngles);		
 
 		owner->commandAI->WeaponFired(this);

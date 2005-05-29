@@ -81,10 +81,10 @@ void CSmokeTrailProjectile::Draw()
 			a1=0;
 		a1*=0.7+fabs(dif.dot(dir1));
 		float alpha=min(255.f,max(0.f,a1));
-		col[0]=color*alpha;
-		col[1]=color*alpha;
-		col[2]=color*alpha;
-		col[3]=alpha;
+		col[0]=(unsigned char) (color*alpha);
+		col[1]=(unsigned char) (color*alpha);
+		col[2]=(unsigned char) (color*alpha);
+		col[3]=(unsigned char)alpha;
 
 		unsigned char col2[4];
 		float a2=(1-float(age+8)/(lifeTime))*255;
@@ -92,10 +92,10 @@ void CSmokeTrailProjectile::Draw()
 			a2=0;
 		a2*=0.7+fabs(dif2.dot(dir2));
 		alpha=min(255.f,max(0.f,a2));
-		col2[0]=color*alpha;
-		col2[1]=color*alpha;
-		col2[2]=color*alpha;
-		col2[3]=alpha;
+		col2[0]=(unsigned char) (color*alpha);
+		col2[1]=(unsigned char) (color*alpha);
+		col2[2]=(unsigned char) (color*alpha);
+		col2[3]=(unsigned char)alpha;
 
 		float xmod=0;
 		float ymod=0.25;
@@ -113,10 +113,10 @@ void CSmokeTrailProjectile::Draw()
 			float a2=(1-float(age+4)/(lifeTime))*255;
 			a2*=0.7+fabs(dif3.dot(middir));
 			alpha=min(255.f,max(0.f,a2));
-			col3[0]=color*alpha;
-			col3[1]=color*alpha;
-			col3[2]=color*alpha;
-			col3[3]=alpha;
+			col3[0]=(unsigned char) (color*alpha);
+			col3[1]=(unsigned char) (color*alpha);
+			col3[2]=(unsigned char) (color*alpha);
+			col3[3]=(unsigned char)alpha;
 
 			va->AddVertexTC(pos1-odir1*size,0+1.0/32,1.0/8,col);
 			va->AddVertexTC(pos1+odir1*size,0+1.0/32,3.0/16,col);
@@ -138,10 +138,10 @@ void CSmokeTrailProjectile::Draw()
 		for(int a=0;a<8;++a){
 			float a1=1-float(age+a)/lifeTime;
 			float alpha=min(255.f,max(0.f,a1*255));
-			col[0]=color*alpha;
-			col[1]=color*alpha;
-			col[2]=color*alpha;
-			col[3]=alpha;
+			col[0]=(unsigned char) (color*alpha);
+			col[1]=(unsigned char) (color*alpha);
+			col[2]=(unsigned char) (color*alpha);
+			col[3]=(unsigned char)alpha;
 			float size=((0.2+(age+a)*(1.0/lifeTime))*orgSize)*1.2;
 
 			float3 pos=CalcBeizer(a/8.0,pos1,dirpos1,dirpos2,pos2);

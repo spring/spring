@@ -42,7 +42,7 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 		return new CModelProjectile(pos,speed,owner,target,targetPos,weaponDef);
 		break;
 	case WEAPON_RENDERTYPE_LASER:
-		return new CLaserProjectile(pos, speed, owner, weaponDef->damages, 30, weaponDef->visuals.color, 0.8, weaponDef, weaponDef->range/weaponDef->movement.projectilespeed);
+		return new CLaserProjectile(pos, speed, owner, weaponDef->damages, 30, weaponDef->visuals.color, 0.8, weaponDef, (int)(weaponDef->range/weaponDef->movement.projectilespeed));
 		break;
 	case WEAPON_RENDERTYPE_PLASMA:
 		break;

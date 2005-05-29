@@ -77,19 +77,19 @@ void GUIsharingDialog::DialogEvent(const std::string& event)
 
 
 		if(giveEnergy)
-			giveEnergy->SetMaximum(gs->teams[gu->myTeam]->energy);
+			giveEnergy->SetMaximum((int)gs->teams[gu->myTeam]->energy);
 		if(giveMetal)
-			giveMetal->SetMaximum(gs->teams[gu->myTeam]->metal);
+			giveMetal->SetMaximum((int)gs->teams[gu->myTeam]->metal);
 
 		if(shareEnergy)
 		{
-			shareEnergy->SetMaximum(gs->teams[gu->myTeam]->energyStorage);
-			shareEnergy->SetPosition(gs->teams[gu->myTeam]->energyShare);
+			shareEnergy->SetMaximum((int)gs->teams[gu->myTeam]->energyStorage);
+			shareEnergy->SetPosition((int)gs->teams[gu->myTeam]->energyShare);
 		}
 		if(shareMetal)
 		{
-			shareMetal->SetMaximum(gs->teams[gu->myTeam]->metalStorage);
-			shareMetal->SetPosition(gs->teams[gu->myTeam]->metalShare);
+			shareMetal->SetMaximum((int)gs->teams[gu->myTeam]->metalStorage);
+			shareMetal->SetPosition((int)gs->teams[gu->myTeam]->metalShare);
 		}
 
 		UpdatePlayerList();

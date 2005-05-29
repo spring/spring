@@ -7,6 +7,7 @@
  */
 
 #include "StdAfx.h"
+#include "archdef.h"
 #include <winsock2.h>
 #include <windows.h>		// Header File For Windows
 #include "myGL.h"
@@ -562,7 +563,7 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 	
 #ifdef _DEBUG
 	fullscreen=false;
-#endif;
+#endif
 
 	int xres=1024;
 	int yres=768;

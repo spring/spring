@@ -77,3 +77,4 @@ void CMoveTestScript::Update(void)
 		break;
 	}
 }
+

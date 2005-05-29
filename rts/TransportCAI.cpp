@@ -87,11 +87,11 @@ void CTransportCAI::SlowUpdate(void)
 							am->dontCheckCol=false;
 							am->dontLand=true;
 							std::vector<long> args;
-							args.push_back(unit->model->height*65536);
+							args.push_back((long)(unit->model->height*65536));
 							owner->cob->Call("BeginTransport",args);
 							std::vector<long> args2;
 							args2.push_back(0);
-							args2.push_back(unit->model->height*65536);
+							args2.push_back((long)(unit->model->height*65536));
 							owner->cob->Call("QueryTransport",args2);
 							((CTransportUnit*)owner)->AttachUnit(unit,args2[0]);
 							am->SetWantedAltitude(0);
@@ -356,7 +356,7 @@ void CTransportCAI::DrawCommands(void)
 				glEnd();
 				glBegin(GL_LINE_STRIP);
 			} else {
-				int id=ci->params[0];
+				int id=(int)(ci->params[0]);
 				if(uh->units[id]!=0)
 					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
 			}

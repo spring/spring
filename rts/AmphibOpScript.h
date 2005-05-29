@@ -18,4 +18,4 @@ public:
 	std::string GetMapName(void);
 };
 
-#endif __AMPHI_OP_SCRIPT_H__
+#endif // __AMPHI_OP_SCRIPT_H__

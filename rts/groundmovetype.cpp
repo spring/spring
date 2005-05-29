@@ -392,7 +392,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 			nextDeltaSpeedUpdate=gs->frameNum;
 		} else {
 			deltaSpeed=accRate;
-			nextDeltaSpeedUpdate=gs->frameNum+min((float)8,dif/accRate);
+			nextDeltaSpeedUpdate=(int)(gs->frameNum+min((float)8,dif/accRate));
 		}
 	}else {		//break, Breakrate = -3*accRate
 		if(dif > -3*accRate){
@@ -400,7 +400,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 			nextDeltaSpeedUpdate=gs->frameNum+1;
 		} else {
 			deltaSpeed = -3*accRate;
-			nextDeltaSpeedUpdate=gs->frameNum+min((float)8,dif/(-3*accRate));
+			nextDeltaSpeedUpdate=(int)(gs->frameNum+min((float)8,dif/(-3*accRate)));
 		}
 	}
 	//float3 temp=UpVector*wSpeed;
@@ -628,7 +628,7 @@ float CGroundMoveType::GetFlyTime(float3 pos, float3 speed)
 
 void CGroundMoveType::CalcSkidRot(void)
 {
-	owner->heading+=skidRotSpeed;
+	owner->heading+=(short int)skidRotSpeed;
 
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->frontdir.Normalize();

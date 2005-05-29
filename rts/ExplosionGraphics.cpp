@@ -78,7 +78,7 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 			new CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4,owner,0.6);
 		}
 		if(!airExplosion && !uwExplosion){
-			int numDirt=min(20.,damage*0.8);
+			int numDirt=(int)min(20.,damage*0.8);
 			float3 color(0.15,0.1,0.05);
 			if(waterExplosion)
 				color=float3(1,1,1);
@@ -94,7 +94,7 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 		if(damage>=20 && !uwExplosion && !airExplosion){
 			int numDebris=gu->usRandInt()%6;
 			if(numDebris>0)
-				numDebris+=3+damage*0.04;
+				numDebris+=3+(int)(damage*0.04);
 			for(int a=0;a<numDebris;++a){
 				float3 speed;
 				if(height<4)
@@ -107,13 +107,13 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 			}
 		}
 		if(uwExplosion){
-			int numBubbles=damage*0.7;
+			int numBubbles=(int)(damage*0.7);
 			for(int a=0;a<numBubbles;++a){
 				new CBubbleProjectile(pos+gu->usRandVector()*radius*0.5,gu->usRandVector()*0.2+float3(0,0.2,0),damage*2+gu->usRandFloat()*damage,1+gu->usRandFloat()*2,0.02,owner,0.5+gu->usRandFloat()*0.3);
 			}
 		}
 		if(waterExplosion && !uwExplosion && !airExplosion){
-			int numWake=damage*0.5;
+			int numWake=(int)(damage*0.5);
 			for(int a=0;a<numWake;++a){
 				new CWakeProjectile(pos+gu->usRandVector()*radius*0.2,gu->usRandVector()*radius*0.003,sqrt(damage)*4,damage*0.03,owner,0.3+gu->usRandFloat()*0.2,0.8/(sqrt(damage)*3+50+gu->usRandFloat()*90),1);
 			}
@@ -134,7 +134,7 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 	}
 
 	if(radius>40 && damage>12){
-		CSpherePartProjectile::CreateSphere(pos,min(0.7,damage*0.02),5+sqrt(damage)*0.7,(8+damage*3.0)/(9+sqrt(damage)*0.7)*0.5,owner);	
+		CSpherePartProjectile::CreateSphere(pos,min(0.7,damage*0.02),5+(int)(sqrt(damage)*0.7),(8+damage*3.0)/(9+sqrt(damage)*0.7)*0.5,owner);	
 	}
 	POP_CODE_MODE;
 }

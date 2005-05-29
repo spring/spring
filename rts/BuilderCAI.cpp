@@ -251,7 +251,7 @@ void CBuilderCAI::SlowUpdate()
 		return;}
 	case CMD_RECLAIM:{
 		if(c.params.size()==1){
-			int id=c.params[0];
+			int id=(int) c.params[0];
 			if(id>=MAX_UNITS){		//reclaim feature
 				CFeature* feature=featureHandler->features[id-MAX_UNITS];
 				if(feature){
@@ -424,7 +424,7 @@ void CBuilderCAI::DrawCommands(void)
 				glEnd();
 				glBegin(GL_LINE_STRIP);
 			} else {
-				int id=ci->params[0];
+				int id=(int) ci->params[0];
 				if(id>MAX_UNITS){
 					if(featureHandler->features[id-MAX_UNITS])
 						pos=featureHandler->features[id-MAX_UNITS]->midPos;
@@ -456,7 +456,7 @@ void CBuilderCAI::DrawCommands(void)
 				glEnd();
 				glBegin(GL_LINE_STRIP);
 			} else {
-				int id=ci->params[0];
+				int id=(int) ci->params[0];
 				if(uh->units[id]!=0)
 					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
 			}

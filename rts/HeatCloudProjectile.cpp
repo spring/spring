@@ -51,9 +51,9 @@ void CHeatCloudProjectile::Draw()
 	if(dheat<0)
 		dheat=0;
 	float alpha=(dheat/maxheat)*255.0f;
-	col[0]=alpha;
-	col[1]=alpha;
-	col[2]=alpha;
+	col[0]=(unsigned char)alpha;
+	col[1]=(unsigned char)alpha;
+	col[2]=(unsigned char)alpha;
 	col[3]=1;//(dheat/maxheat)*255.0f;
 	float drawsize=size+sizeGrowth*gu->timeOffset;
 	float3 interPos=pos+speed*gu->timeOffset;

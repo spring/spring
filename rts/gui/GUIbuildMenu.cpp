@@ -97,8 +97,8 @@ void GUIbuildMenu::PrivateDraw()
 		{
 			string queued="+ "+commands[i]->params[0];
 
-			x+=(buildPicSize-guifont->GetWidth(queued))/2.0;
-			y+=buildPicSize-guifont->GetHeight();
+			x+=(int)((buildPicSize-guifont->GetWidth(queued))/2.0);
+			y+=(int)(buildPicSize-guifont->GetHeight());
 			guifont->Print(x, y, queued);
 		}
 	}

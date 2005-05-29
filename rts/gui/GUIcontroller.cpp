@@ -544,12 +544,12 @@ void GUIcontroller::Draw()
 			// find out number of lines and width of tooltip
 			while((lf=temp.find("\n"))!=string::npos)
 			{
-				tempWidth=guifont->GetWidth(temp.substr(0, lf));
+				tempWidth=(int)guifont->GetWidth(temp.substr(0, lf));
 				if(tempWidth>width) width=tempWidth;
 				temp=temp.substr(lf+1, string::npos);
 				numLines++;
 			}
-			tempWidth=guifont->GetWidth(temp.substr(0, lf));
+			tempWidth=(int)guifont->GetWidth(temp.substr(0, lf));
 			if(tempWidth>width) width=tempWidth;
 			if(tempWidth) numLines++;
 
@@ -565,7 +565,7 @@ void GUIcontroller::Draw()
 			// draw bkgnd pane for tooltip
 			glPushMatrix();
 			glTranslatef(x, y, 0);
-			DrawThemeRect(20, 128, width+20, guifont->GetHeight()*numLines+10);
+			DrawThemeRect(20, 128, width+20, (int)guifont->GetHeight()*numLines+10);
 			glPopMatrix();
 
 			x+=10;
@@ -580,7 +580,7 @@ void GUIcontroller::Draw()
 			{
 				guifont->PrintColor(x, y, temp.substr(0, lf));
 
-				y+=guifont->GetHeight();
+				y+=(int)guifont->GetHeight();
 				temp=temp.substr(lf+1, string::npos);		
 			}
 			guifont->PrintColor(x, y, temp);		
@@ -745,23 +745,23 @@ void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, 
 	}
 	else if(type=="buildmenu")
 	{
-		GUIbuildMenu *bm=new GUIbuildMenu(x, y, w, h, makeFunctor((Functor1<UnitDef*>*)0, *this, &GUIdialogController::BuildMenuClicked));
+		GUIbuildMenu *bm=new GUIbuildMenu((int)x, (int)y, (int)w, (int)h, makeFunctor((Functor1<UnitDef*>*)0, *this, &GUIdialogController::BuildMenuClicked));
 		float num=atof(parser.SGetValueDef("64", path+"\\buildpicsize").c_str());
 		ScaleX(num);
-		bm->SetBuildPicSize(num);
+		bm->SetBuildPicSize((int)num);
 		frame=bm;
 	}
 	else if(type=="centerbuildmenu")
 	{
-		GUIbuildMenu *bm=new GUIcenterBuildMenu(x, y, w, h, makeFunctor((Functor1<UnitDef*>*)0, *this, &GUIdialogController::BuildMenuClicked));
+		GUIbuildMenu *bm=new GUIcenterBuildMenu((int)x, (int)y, (int)w, (int)h, makeFunctor((Functor1<UnitDef*>*)0, *this, &GUIdialogController::BuildMenuClicked));
 		float num=atof(parser.SGetValueDef("64", path+"\\buildpicsize").c_str());
 		ScaleX(num);
-		bm->SetBuildPicSize(num);
+		bm->SetBuildPicSize((int)num);
 		frame=bm;
 	}
 	else if(type=="frame")
 	{
-		frame=new GUIframe(x, y, w, h);
+		frame=new GUIframe((int)x, (int)y, (int)w, (int)h);
 	}
 	else if(type=="minimap")
 	{
@@ -769,17 +769,17 @@ void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, 
 	}
 	else if(type=="tab")
 	{
-		frame=new GUItab(x, y, w, h);
+		frame=new GUItab((int)x, (int)y, (int)w, (int)h);
 	}
 	else if(type=="table")
 	{
-		GUItable *table=new GUItable(x, y, w, h, NULL, makeFunctor((Functor3<GUItable*, int, int>*)0, *this, &GUIdialogController::TableSelection));
+		GUItable *table=new GUItable((int)x, (int)y, (int)w, (int)h, NULL, makeFunctor((Functor3<GUItable*, int, int>*)0, *this, &GUIdialogController::TableSelection));
 
 		frame=table;
 	}
 	else if(type=="pane")
 	{
-		GUIpane *pane=new GUIpane(x, y, w, h);
+		GUIpane *pane=new GUIpane((int)x, (int)y, (int)w, (int)h);
 		pane->SetDraggable(parser.SGetValueDef("no", path+"\\draggable")=="yes");
 		pane->SetFrame(parser.SGetValueDef("yes", path+"\\frame")=="yes");
 		pane->SetResizeable(parser.SGetValueDef("no", path+"\\resizeable")=="yes");
@@ -787,8 +787,8 @@ void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, 
 	}
 	else if(type=="button")
 	{
-		GUIbutton* b=new GUIbutton(x, y, caption, makeFunctor((Functor1<GUIbutton*>*)0, *this, &GUIdialogController::ButtonPressed));	
-		b->SetSize(w, h);
+		GUIbutton* b=new GUIbutton((int)x, (int)y, caption, makeFunctor((Functor1<GUIbutton*>*)0, *this, &GUIdialogController::ButtonPressed));	
+		b->SetSize((int)w, (int)h);
 		frame=b;
 	}
 	else if(type=="switchbar")
@@ -797,11 +797,11 @@ void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, 
 	}
 	else if(type=="image")
 	{
-		frame=new GUIimage(x, y, w, h, caption);
+		frame=new GUIimage((int)x, (int)y, (int)w, (int)h, caption);
 	}
 	else if(type=="label")
 	{
-		frame=new GUIlabel(x, y, w, h, caption);
+		frame=new GUIlabel((int)x, (int)y, (int)w, (int)h, caption);
 	}
 	else if(type=="state")
 	{
@@ -812,17 +812,17 @@ void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, 
 		for(; i!=e; i++)
 			options.push_back(i->second);
 
-		frame = new GUIstateButton(x, y, w, options, makeFunctor((Functor2<GUIstateButton*, int>*)0, *this, &GUIdialogController::StateChanged));
+		frame = new GUIstateButton((int)x, (int)y, (int)w, options, makeFunctor((Functor2<GUIstateButton*, int>*)0, *this, &GUIdialogController::StateChanged));
 	}
 	else if(type=="input")
 	{
-		GUIinput *input=new GUIinput(x, y, w, h,  makeFunctor((Functor1<const string&>*)0, *this, &GUIdialogController::ConsoleInput));
+		GUIinput *input=new GUIinput((int)x, (int)y, (int)w, (int)h,  makeFunctor((Functor1<const string&>*)0, *this, &GUIdialogController::ConsoleInput));
 		input->SetCaption(caption);		
 		frame=input;
 	}
 	else if(type=="resourcebar")
 	{
-		GUIpane *pane=new GUIresourceBar(x, y, w, h);
+		GUIpane *pane=new GUIresourceBar((int)x, (int)y, (int)w, (int)h);
 		pane->SetDraggable(parser.SGetValueDef("no", path+"\\draggable")=="yes");
 		pane->SetFrame(parser.SGetValueDef("yes", path+"\\frame")=="yes");
 		pane->SetResizeable(parser.SGetValueDef("no", path+"\\resizeable")=="yes");
@@ -830,14 +830,14 @@ void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, 
 	}
 	else if(type=="allyresourcebar")
 	{
-		GUIpane *pane=new GUIallyResourceBar(x, y, w, h);
+		GUIpane *pane=new GUIallyResourceBar((int)x, (int)y, (int)w, (int)h);
 		pane->SetDraggable(parser.SGetValueDef("no", path+"\\draggable")=="yes");
 		pane->SetFrame(parser.SGetValueDef("yes", path+"\\frame")=="yes");
 		frame=pane;
 	}
 
 	if(!frame)
-		frame=CreateControl(type, x, y, w, h, parser);
+		frame=CreateControl(type, (int)x, (int)y, (int)w, (int)h, parser);
 
 	if(!frame)
 	{
