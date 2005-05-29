@@ -1,10 +1,8 @@
-#ifndef GUIGAME_H
-#define GUIGAME_H
 #if !defined(GUIGAME_H)
 #define GUIGAME_H
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIpane.h"
@@ -124,5 +122,3 @@ protected:
 extern GUIgame *guiGameControl;
 
 #endif // !defined(GUIGAME_H)
-
-#endif /* GUIGAME_H */

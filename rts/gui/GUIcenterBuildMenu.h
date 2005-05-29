@@ -1,8 +1,8 @@
-#ifndef GUICENTERBUILDMENU_H
+#if !defined(GUICENTERBUILDMENU_H)
 #define GUICENTERBUILDMENU_H
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -39,4 +39,4 @@ protected:
 	bool rehideMouse;
 };
 
-#endif /* GUICENTERBUILDMENU_H */
+#endif // !defined(GUIBUILDMENU_H)

@@ -1,5 +1,3 @@
-#ifndef GUIBUTTON_H
-#define GUIBUTTON_H
 // GUIbutton.h: interface for the GUIbutton class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +6,7 @@
 #define AFX_GUIBUTTON_H__4BE3DE92_730E_4CCF_B1C6_4E879920FE8F__INCLUDED_
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -56,5 +54,3 @@ private:
 };
 
 #endif // !defined(AFX_GUIBUTTON_H__4BE3DE92_730E_4CCF_B1C6_4E879920FE8F__INCLUDED_)
-
-#endif /* GUIBUTTON_H */

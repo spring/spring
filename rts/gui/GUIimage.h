@@ -1,5 +1,3 @@
-#ifndef GUIIMAGE_H
-#define GUIIMAGE_H
    // GUIimage.h: interface for the GUIimage class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +6,7 @@
 #define AFX_GUIIMAGE_H__9C3E486C_3635_47CC_9697_51644E0207A7__INCLUDED_
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -27,5 +25,3 @@ protected:
 };
 
 #endif // !defined(AFX_GUIIMAGE_H__9C3E486C_3635_47CC_9697_51644E0207A7__INCLUDED_)
-
-#endif /* GUIIMAGE_H */

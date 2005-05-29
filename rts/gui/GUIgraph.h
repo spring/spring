@@ -1,5 +1,3 @@
-#ifndef GUIGRAPH_H
-#define GUIGRAPH_H
 // GUIgraph.h: interface for the GUIgraph class.
 
 //
@@ -16,7 +14,7 @@
 
 #if _MSC_VER >= 1000
 
-/*pragma once removed*/
+#pragma once
 
 #endif // _MSC_VER >= 1000
 
@@ -106,5 +104,3 @@ protected:
 
 #endif // !defined(GUIGRAPH_H)
 
-
-#endif /* GUIGRAPH_H */

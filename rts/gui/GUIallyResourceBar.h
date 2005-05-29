@@ -1,5 +1,3 @@
-#ifndef GUIALLYRESOURCEBAR_H
-#define GUIALLYRESOURCEBAR_H
 #if !defined(GUIALLYRESOURCEBAR_H)
 
 #define GUIALLYRESOURCEBAR_H
@@ -8,7 +6,7 @@
 
 #if _MSC_VER >= 1000
 
-/*pragma once removed*/
+#pragma once
 
 #endif // _MSC_VER >= 1000
 
@@ -46,5 +44,3 @@ protected:
 
 #endif // !defined(GUIRESOURCEBAR_H)
 
-
-#endif /* GUIALLYRESOURCEBAR_H */

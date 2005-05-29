@@ -1,10 +1,8 @@
-#ifndef GUITAB_H
-#define GUITAB_H
 #if !defined(GUITAB_H)
 #define GUITAB_H
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -33,5 +31,3 @@ protected:
 };
 
 #endif // !defined(GUITAB_H)
-
-#endif /* GUITAB_H */

@@ -1,5 +1,3 @@
-#ifndef GUIRESOURCEBAR_H
-#define GUIRESOURCEBAR_H
 // GUIresourceBar.h: interface for the GUIresourceBar class.
 
 //
@@ -16,7 +14,7 @@
 
 #if _MSC_VER >= 1000
 
-/*pragma once removed*/
+#pragma once
 
 #endif // _MSC_VER >= 1000
 
@@ -62,5 +60,3 @@ protected:
 
 #endif // !defined(GUIRESOURCEBAR_H)
 
-
-#endif /* GUIRESOURCEBAR_H */

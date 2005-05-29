@@ -1,10 +1,8 @@
-#ifndef GUISWITCHBAR_H
-#define GUISWITCHBAR_H
 #if !defined(GUISWITCHBAR_H)
 #define GUISWITCHBAR_H
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -36,5 +34,3 @@ protected:
 };
 
 #endif // !defined(GUISWITCHBAR_H)
-
-#endif /* GUISWITCHBAR_H */

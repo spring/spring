@@ -1,10 +1,8 @@
-#ifndef GUILABEL_H
-#define GUILABEL_H
 #if !defined(GUILABEL_H)
 #define GUILABEL_H
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -28,5 +26,3 @@ protected:
 };
 
 #endif // !defined(GUILABEL_H)
-
-#endif /* GUILABEL_H */

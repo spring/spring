@@ -1,5 +1,3 @@
-#ifndef GUICONSOLE_H
-#define GUICONSOLE_H
 // GUItextField.h: interface for the GUItextField class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +6,7 @@
 #define GUI_CONSOLE_H
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIpane.h"
@@ -43,5 +41,3 @@ protected:
 };
 
 #endif // !defined(GUI_CONSOLE_H)
-
-#endif /* GUICONSOLE_H */

@@ -1,5 +1,3 @@
-#ifndef GUIPANE_H
-#define GUIPANE_H
 // GUIpane.h: interface for the GUIpane class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +6,7 @@
 #define AFX_GUIPANE_H__C4F238EC_3007_4684_B81B_A89330F3F9B6__INCLUDED_
 
 #if _MSC_VER >= 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER >= 1000
 
 #include "GUIframe.h"
@@ -46,5 +44,3 @@ protected:
 };
 
 #endif // !defined(AFX_GUIPANE_H__C4F238EC_3007_4684_B81B_A89330F3F9B6__INCLUDED_)
-
-#endif /* GUIPANE_H */
