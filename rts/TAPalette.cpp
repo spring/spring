@@ -2,7 +2,7 @@
 #include "TAPalette.h"
 #include "FileHandler.h"
 #include "TAPalette.h"
-//#include <iostream>
+#include <iostream>
 //#include <fstream>
 //#include "mmgr.h"
 
@@ -27,7 +27,8 @@ void CTAPalette::Init(void)
 	CFileHandler pal("palette.pal");
 
 	if(!pal.FileExists()){
-		
+	  std::cerr << "Error loading \"palette.pal\"" << std::endl;
+	  exit(1);
 	}
 	for(int c=0;c<256;c++){
 		for(int c2=0;c2<4;c2++){
