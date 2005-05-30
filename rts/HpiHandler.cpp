@@ -23,6 +23,7 @@ CHpiHandler* hpiHandler=0;
 CHpiHandler::CHpiHandler()
 {
 
+#ifndef NO_HPI
 
 	if((m_hDLL=LoadLibrary("hpiutil.dll"))==0)
 		MessageBox(0,"Failed to find hpiutil.dll","",0);
@@ -34,8 +35,8 @@ CHpiHandler::CHpiHandler()
 	HPIGet=(void (WINAPI *)(void *Dest, void *, int, int))GetProcAddress(m_hDLL,"HPIGet");
 	HPICloseFile=(LRESULT (WINAPI *)(LPSTR))GetProcAddress(m_hDLL,"HPICloseFile");
 	HPIDir=(LRESULT (WINAPI*)(void *hpi, int Next, LPSTR DirName, LPSTR Name, LPINT Type, LPINT Size))GetProcAddress(m_hDLL,"HPIDir");
-#ifndef NO_HPI
-#error Implement : HPIOpen HPIGetFiles HPIClose HPIOpenFile HPIGet HPICloseFile HPIDir in a separated lib
+#else
+#warning Implement : HPIOpen HPIGetFiles HPIClose HPIOpenFile HPIGet HPICloseFile HPIDir in a separated lib
 #endif
 	string taDir;
 

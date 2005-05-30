@@ -34,16 +34,24 @@ CVertexArray* GetVertexArray()
 void LoadExtensions()
 {
 	glewInit();
-
-	if(!GLEW_ARB_multitexture || !GLEW_ARB_texture_env_combine){
+	/*
+	if (glewGetExtension("GL_ARB_texture_env_combine")==GL_FALSE)
+	{
 		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
-		exit(0);
-	}
+		exit(1);	  	
+	}	
 
-	if(!GLEW_ARB_texture_compression){
-		MessageBox(0,"Needed extension GL_ARB_texture_compression not found","Update drivers",0);
-		exit(0);
-	}
+	if (glewGetExtension("GL_ARB_multitexture")==GL_FALSE)
+	{
+		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
+		exit(1);	  	
+	}	
+
+	if (glewGetExtension("GL_ARB_texture_compression")==GL_FALSE)
+	{
+		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
+		exit(1);	  	
+	}		*/
 	
 	vertexArray1=new CVertexArray;
 	vertexArray2=new CVertexArray;
