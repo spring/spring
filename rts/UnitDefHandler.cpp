@@ -26,7 +26,11 @@ CUnitDefHandler* unitDefHandler;
 CUnitDefHandler::CUnitDefHandler(void)
 {
 	noCost=false;
-	std::string dir = "units\\";
+#ifndef NO_WINSTUFF
+      	std::string dir = "units\\";
+#else
+      	std::string dir = "UNITS/";
+#endif
 
 	PrintLoadMsg("Loading units and weapons");
 
@@ -34,14 +38,23 @@ CUnitDefHandler::CUnitDefHandler(void)
 
 	numUnits = 0;
 	
+#ifndef NO_WINSTUFF
 	std::vector<std::string> tafiles = CFileHandler::FindFiles("units\\*.fbi");
 	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units\\*.swu");
+#else
+	std::vector<std::string> tafiles = CFileHandler::FindFiles("UNITS/*.fbi");
+	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("UNITS/*.swu");
+#endif
 	while(!tafiles2.empty()){
 		tafiles.push_back(tafiles2.back());
 		tafiles2.pop_back();
 	}
 
-	soundcategory.LoadFile("gamedata\\sound.tdf");
+#ifndef NO_WINSTUFF
+      	soundcategory.LoadFile("gamedata\\sound.tdf");
+#else
+      	soundcategory.LoadFile("gamedata/SOUND.TDF");
+#endif
 	
 	numUnits = tafiles.size();
 
@@ -95,7 +108,11 @@ CUnitDefHandler::~CUnitDefHandler(void)
 void CUnitDefHandler::FindTABuildOpt()
 {
 	CSunParser sunparser;
-	sunparser.LoadFile("gamedata\\sidedata.tdf");
+#ifndef NO_WINSTUFF
+      	sunparser.LoadFile("gamedata\\sidedata.tdf");
+#else
+      	sunparser.LoadFile("gamedata/SIDEDATA.TDF");
+#endif
 
 	std::vector<std::string> sideunits = sunparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)
@@ -124,7 +141,11 @@ void CUnitDefHandler::FindTABuildOpt()
 		}
 	}
 
+#ifndef NO_WINSTUFF
 	std::vector<std::string> files = CFileHandler::FindFiles("download\\*.tdf");
+#else
+	std::vector<std::string> files = CFileHandler::FindFiles("download/*.tdf");
+#endif
 	for(unsigned int i=0; i<files.size(); i++)
 	{
 		CSunParser dparser;

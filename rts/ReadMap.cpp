@@ -65,7 +65,11 @@ CReadMap* CReadMap::Instance()
 			groundDrawer=new CAdvGroundDrawer;
 		}*/
 
-		_instance=new CBFReadmap(string("maps\\")+stupidGlobalMapname/*/"maps\\map2.sm2"/**/);
+#ifndef NO_WINSTUFF
+      		_instance=new CBFReadmap(string("maps\\")+stupidGlobalMapname/*/"maps\\map2.sm2"/**/);
+#else
+      		_instance=new CBFReadmap(string("maps/")+stupidGlobalMapname);
+#endif
 		readmap=_instance;
 		PUSH_CODE_MODE;
 		ENTER_UNSYNCED;

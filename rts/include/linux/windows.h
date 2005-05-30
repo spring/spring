@@ -108,7 +108,7 @@ typedef void* LPARAM;
 #endif //NO_INPUT
 
 #ifdef ENABLE_SMALLFIXES
-#define MessageBox(hWnd, lpText, lpCaption, uType) fprintf(stderr,lpText)
+#define MessageBox(hWnd, lpText, lpCaption, uType) {fprintf(stderr,lpText);fprintf(stderr,"\n");}
 #define ShowCursor(a) while(0){}
 #else
 #error unix : small fixes to replace by cleaner code or dev

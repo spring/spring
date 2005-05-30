@@ -20,7 +20,11 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	int maxysize = 0;
 
 	for (int frameNum = 0; ; ++frameNum) {
+#ifndef NO_WINSTUFF
 		sprintf(namebuf, "anims\\%s_%d.bmp", name.c_str(), frameNum);
+#else
+                sprintf(namebuf, "anims/%s_%d.bmp", name.c_str(), frameNum);
+#endif
 		CFileHandler f(namebuf);
 		
 		if (f.FileExists()) {

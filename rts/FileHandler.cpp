@@ -32,7 +32,7 @@ CFileHandler::CFileHandler(std::string filename)
 
 void CFileHandler::Init(const char* filename)
 {
-	ifs=new std::ifstream(filename, ios::in|ios::binary);
+        ifs=new std::ifstream(filename, ios::in|ios::binary);
 	if(ifs->is_open())
 	{
 		ifs->seekg(0, ios_base::end);
@@ -180,11 +180,12 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 	else
 	{
 	  if( globret == GLOB_NOMATCH )
-	    std::cerr << "Error finding files of type: " << pattern << std::endl;
+	    std::cerr << "No file matchs : " << pattern << std::endl;
 	  else
 	    std::cerr << "Other glob error\n";
 	}
 	globfree(pglob);
+        free(pglob);
 #endif //NO_IO
 	return found;
 }

@@ -26,8 +26,11 @@ void CCommanderScript::Update(void)
 	case 0:
 		if(gameSetup){
 			CSunParser p;
+#ifndef NO_WINSTUFF
 			p.LoadFile("gamedata\\sidedata.tdf");
-
+#else
+                        p.LoadFile("gamedata/SIDEDATA.TDF");
+#endif
 			for(int a=0;a<gs->activeTeams;++a){		
 				for(int b=0;b<8;++b){					//loop over all sides
 					char sideText[50];
@@ -46,7 +49,11 @@ void CCommanderScript::Update(void)
 			}
 		} else {
 			CSunParser p;
+#ifndef NO_WINSTUFF
 			p.LoadFile("gamedata\\sidedata.tdf");
+#else
+                        p.LoadFile("gamedata/SIDEDATA.TDF");
+#endif
 			string s0=p.SGetValueDef("armcom","side0\\commander");
 			string s1=p.SGetValueDef("corcom","side1\\commander");
 

@@ -46,6 +46,14 @@ HDC		hDC=NULL;			// Private GDI Device Context
 HGLRC	hRC=NULL;			// Permanent Rendering Context
 HWND	hWnd=NULL;			// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
+#else
+#include <X11/Xlib.h>
+/*#include <X11/keysym.h>*/
+#include <GL/gl.h>
+#include <GL/glx.h>
+Display *dpy;
+Window win;
+GLXContext ctx;
 #endif 
 
 bool	keys[256];			// Array Used For The Keyboard Routine
@@ -136,6 +144,10 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 		MessageBox(NULL,"Could Not Release hWnd.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		hWnd=NULL;										// Set hWnd To NULL
 	}
+#else
+        glXDestroyContext(dpy, ctx);
+        XDestroyWindow(dpy, win);
+        XCloseDisplay(dpy);
 #endif
 }
 
@@ -308,6 +320,60 @@ BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		MessageBox(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
+#else
+#warning No color depth handling for now
+        int attrib[] = { GLX_RGBA,
+		         GLX_RED_SIZE, 1,
+		         GLX_GREEN_SIZE, 1,
+		         GLX_BLUE_SIZE, 1,
+		         GLX_DOUBLEBUFFER,
+		         GLX_DEPTH_SIZE, 1,
+		         None };
+        int scrnum,x=0,y=0;
+        XSetWindowAttributes attr;
+        unsigned long mask;
+        Window root;
+        XVisualInfo *visinfo;
+        XSizeHints sizehints;
+
+        dpy = XOpenDisplay(/*dpyName*/NULL);
+        if (!dpy)
+        {
+//                printf("Error: couldn't open display %s\n", dpyName);
+                return FALSE;
+        }
+        scrnum = DefaultScreen( dpy );
+        root = RootWindow( dpy, scrnum );
+        visinfo = glXChooseVisual( dpy, scrnum, attrib );
+        if (!visinfo) {
+//                printf("Error: couldn't get an RGB, Double-buffered visual\n");
+                exit(1);
+        }
+        /* window attributes */
+        attr.background_pixel = 0;
+        attr.border_pixel = 0;
+        attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
+        attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
+        mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
+#warning No fullscreen handling for now
+        win = XCreateWindow( dpy, root, 0, 0, width, height, 0, visinfo->depth, InputOutput, visinfo->visual, mask, &attr );
+        /* set hints and properties */
+        sizehints.x = x;
+        sizehints.y = y;
+        sizehints.width  = width;
+        sizehints.height = height;
+        sizehints.flags = USSize | USPosition;
+        XSetNormalHints(dpy, win, &sizehints);
+        XSetStandardProperties(dpy, win, "TASpring", "TASpring",None, (char **)NULL, 0, &sizehints);
+        ctx = glXCreateContext( dpy, visinfo, NULL, True );
+        if (!ctx) {
+//                printf("Error: glXCreateContext failed\n");
+                exit(1);
+        }
+        XFree(visinfo);
+        XMapWindow(dpy, win);
+        glXMakeCurrent(dpy, win, ctx);
+        ReSizeGLScene(width, height);
 #endif
 	return TRUE;									// Success
 }

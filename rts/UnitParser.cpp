@@ -47,7 +47,11 @@ CUnitParser::UnitInfo* CUnitParser::ParseUnit(const string& filename)
 	unitinfo->info["power"]="100";
 	unitinfo->info["mass"]="1";
 
+#ifndef NO_WINSTUFF
 	string dir="units\\";
+#else
+	string dir="UNITS/";
+#endif
 	Parse(dir+filename,unitinfo->info);
 
 	unitInfos[filename]=unitinfo;
@@ -71,8 +75,11 @@ CUnitParser::WeaponInfo* CUnitParser::ParseWeapon(const string& filename)
 	weaponinfo->info["salvoSize"]="1";
 	weaponinfo->info["firesoundvolume"]="1";
 	weaponinfo->info["maxAngle"]="180";
-
+#ifndef NO_WINSTUFF
 	string dir="weapons\\";
+#else
+	string dir="Weapons/";
+#endif
 	Parse(dir+filename,weaponinfo->info);
 
 	weaponInfos[filename]=weaponinfo;

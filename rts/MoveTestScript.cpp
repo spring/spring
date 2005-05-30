@@ -33,12 +33,20 @@ void CMoveTestScript::Update(void)
 		gs->teams[2]->metalStorage=100000;
 
 		CSunParser p;
-		p.LoadFile("gamedata\\sidedata.tdf");
+#ifndef NO_WINSTUFF
+                p.LoadFile("gamedata\\sidedata.tdf");
+#else
+                p.LoadFile("gamedata/SIDEDATA.TDF");
+#endif
 		string s0=p.SGetValueDef("armcom","side0\\commander");
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 
 		CSunParser p2;
+//#ifndef NO_WINSTUFF
 		p2.LoadFile(string("maps\\")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'))+".smd");
+/*#else
+		p2.LoadFile(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'))+".smd");
+#endif*/
 
 		float x0,x1,z0,z1;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");

@@ -16,7 +16,11 @@ CWeaponDefHandler* weaponDefHandler;
 
 CWeaponDefHandler::CWeaponDefHandler(void)
 {
-	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons\\*.tdf");
+#ifndef NO_WINSTUFF
+      	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons\\*.tdf");
+#else
+      	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");
+#endif
 
 	CSunParser tasunparser;
 
