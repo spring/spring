@@ -13,8 +13,10 @@
 using namespace std;
 
 extern HDC hDC;
-#ifndef NO_WINSTUFF
+#ifndef USE_GLUT
 extern HWND	hWnd;
+#else
+#include <GL/glut.h>
 #endif
 
 static CVertexArray* vertexArray1=0;
@@ -103,8 +105,10 @@ void PrintLoadMsg(const char* text)
 	glPopMatrix();
 	font->glPrintAt(0.40,0.06,1.0,"TA Spring 0.41b1");
 	font->glPrintAt(0.20,0.02,0.5,"This program is distributed under the GNU General Public License, see license.html for more info");
-#ifndef NO_WINDOWS
+#ifndef USE_GLUT
 	SwapBuffers(hDC);
+#else
+	glutSwapBuffers();
 #endif
 }
 

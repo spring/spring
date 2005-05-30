@@ -1,6 +1,5 @@
 #ifndef SYNCIFY_H
 #define SYNCIFY_H
-/*pragma once removed*/
 
 //#define SYNCIFY
 
@@ -51,5 +50,4 @@
 	#define ASSERT_UNSYNCED_MODE
 	#define ASSERT_MIXED_MODE
 #endif
-
 #endif /* SYNCIFY_H */

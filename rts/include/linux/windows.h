@@ -60,12 +60,6 @@ Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed',
 #error please check the above types and maybe remove them from the code cf. http://www.jniwrapper.com/wintypes.jsp
 #endif //EMULE_WINTYPES
 
-#ifdef NO_WINDOWS
-typedef void* HWND;
-typedef void* WPARAM;
-typedef void* LPARAM;
-#endif
-
 #define MAKEWORD(a, b)      ((WORD)(((BYTE)((DWORD_PTR)(a) & 0xff)) |\\
 			((WORD)((BYTE)((DWORD_PTR)(b) & 0xff))) << 8))
 #define MAKELONG(a, b)      ((LONG)(((WORD)((DWORD_PTR)(a) & 0xffff)) |\\
@@ -75,14 +69,20 @@ typedef void* LPARAM;
 #define LOBYTE(w)           ((BYTE)((DWORD)(w) & 0xff))
 #define HIBYTE(w)           ((BYTE)((DWORD)(w) >> 8))
 
+#ifndef NO_INPUT
+#warning keys bellow are not correct
+#endif
 
-#ifdef NO_INPUT
-#define VK_SHIFT 1
-#define VK_RETURN 1 
-#define VK_UP 1
-#define VK_DOWN 1
-#define VK_LEFT 1
-#define VK_RIGHT 1
+#include <GL/glew.h>
+#include <GL/glut.h>
+#define VK_RETURN                   10
+#define VK_UP GLUT_KEY_UP
+#define VK_DOWN GLUT_KEY_DOWN	
+#define VK_LEFT  GLUT_KEY_LEFT
+#define VK_RIGHT GLUT_KEY_RIGHT
+#define VK_ESCAPE 27
+#define VK_END                      26
+#define VK_SHIFT                    17
 #define VK_CONTROL 1
 #define VK_MENU 1
 #define VK_NUMPAD0 1
@@ -99,13 +99,9 @@ typedef void* LPARAM;
 #define VK_PAUSE 1
 #define VK_RMENU 1
 #define VK_LMENU 1
-#define VK_ESCAPE 1
 #define VK_RWIN 1
 #define VK_LWIN 1
 #define VK_BACK 1
-#else
-#error fake VK_XXXX : port input to GLUT
-#endif //NO_INPUT
 
 #ifdef ENABLE_SMALLFIXES
 #define MessageBox(hWnd, lpText, lpCaption, uType) {fprintf(stderr,lpText);fprintf(stderr,"\n");}

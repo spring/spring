@@ -1,6 +1,4 @@
 #build options scons -h for available options
 #option=value
 debug=0
-#disable_winstuff=0
-#disable_hpi=0
-#disable_font=0
+disable_windows=0

@@ -11,7 +11,11 @@
 #include <winsock2.h>
 #include <windows.h>		// Header File For Windows
 #include "myGL.h"
+#ifdef USE_GLUT
+#include <glut.h>
+#else
 #include <GL/glu.h>			// Header File For The GLu32 Library
+#endif
 #include <time.h>
 #include <string>
 #include <math.h>
@@ -39,21 +43,14 @@
 #include "../crashrpt/include/crashrpt.h"
 #endif
 
-#ifndef NO_WINDOWS
+#ifndef USE_GLUT
 #pragma comment(lib, "../crashrpt/lib/crashrpt")
-
-HDC		hDC=NULL;			// Private GDI Device Context
+HDC	hDC=NULL;			// Private GDI Device Context
 HGLRC	hRC=NULL;			// Permanent Rendering Context
 HWND	hWnd=NULL;			// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
 #else
-#include <X11/Xlib.h>
-/*#include <X11/keysym.h>*/
-#include <GL/gl.h>
-#include <GL/glx.h>
-Display *dpy;
-Window win;
-GLXContext ctx;
+int windows;
 #endif 
 
 bool	keys[256];			// Array Used For The Keyboard Routine
@@ -63,7 +60,7 @@ bool	globalQuit=false;
 //time_t   fpstimer,starttime;
 CGameController* activeController=0;
 
-#ifndef NO_WINDOWS
+#ifndef USE_GLUT
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 #endif
 
@@ -105,14 +102,22 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	if(activeController){
 		if(activeController->Update()==0)
 			return 0;
-		return activeController->Draw();										// Keep Going
+		return activeController->Draw();						   // Keep Going
 	}
 	return true;
 }
 
-GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
+#ifdef USE_GLUT
+inline void Draw()	
 {
-#ifndef NO_WINDOWS
+  DrawGLScene();
+}
+#endif
+
+void KillGLWindow(GLvoid)								// Properly Kill The Window
+{
+
+#ifndef USE_GLUT
 	if (fullscreen)										// Are We In Fullscreen Mode?
 	{
 		ChangeDisplaySettings(NULL,0);					// If So Switch Back To The Desktop
@@ -144,11 +149,9 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 		MessageBox(NULL,"Could Not Release hWnd.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		hWnd=NULL;										// Set hWnd To NULL
 	}
-#else
-        glXDestroyContext(dpy, ctx);
-        XDestroyWindow(dpy, win);
-        XCloseDisplay(dpy);
-#endif
+#else //USE_GLUT
+	glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
+#endif //USE_GLUT
 }
 
 /*	This Code Creates Our OpenGL Window.  Parameters Are:					*
@@ -160,9 +163,13 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 
 GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 
+#ifndef USE_GLUT
 BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
+#else
+BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency, int* pargc, char** pargv)
+#endif
 {
-#ifndef NO_WINDOWS
+#ifndef USE_GLUT
 	WNDCLASS	wc;						// Windows Class Structure
 	DWORD		dwExStyle;				// Window Extended Style
 	DWORD		dwStyle;				// Window Style
@@ -312,7 +319,31 @@ BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	ShowWindow(hWnd,SW_SHOW);						// Show The Window
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
+
+#else
+	unsigned int options=0;
+	if(bits==32)
+	  options |= GLUT_RGBA;
+	else
+	  options |= GLUT_INDEX;
+	  
+	//GLUT code
+	glutInit(pargc,pargv);
+	glutInitWindowSize(width, height);
+	glutInitDisplayMode(options | GLUT_DOUBLE | GLUT_DEPTH);
+
+	windows = glutCreateWindow(title);
+
+	InitGL();
+	glutReshapeFunc(ReSizeGLScene);
+#endif //USE_GLUT
 	ReSizeGLScene(width, height);					// Set Up Our Perspective GL Screen
+#ifdef USE_GLUT
+	if(fullscreen)
+		glutFullScreen();
+        glutDisplayFunc(Draw);
+#endif
+
 
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
@@ -320,71 +351,16 @@ BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		MessageBox(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
-#else
-#warning No color depth handling for now
-        int attrib[] = { GLX_RGBA,
-		         GLX_RED_SIZE, 1,
-		         GLX_GREEN_SIZE, 1,
-		         GLX_BLUE_SIZE, 1,
-		         GLX_DOUBLEBUFFER,
-		         GLX_DEPTH_SIZE, 1,
-		         None };
-        int scrnum,x=0,y=0;
-        XSetWindowAttributes attr;
-        unsigned long mask;
-        Window root;
-        XVisualInfo *visinfo;
-        XSizeHints sizehints;
 
-        dpy = XOpenDisplay(/*dpyName*/NULL);
-        if (!dpy)
-        {
-//                printf("Error: couldn't open display %s\n", dpyName);
-                return FALSE;
-        }
-        scrnum = DefaultScreen( dpy );
-        root = RootWindow( dpy, scrnum );
-        visinfo = glXChooseVisual( dpy, scrnum, attrib );
-        if (!visinfo) {
-//                printf("Error: couldn't get an RGB, Double-buffered visual\n");
-                exit(1);
-        }
-        /* window attributes */
-        attr.background_pixel = 0;
-        attr.border_pixel = 0;
-        attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
-        attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
-        mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
-#warning No fullscreen handling for now
-        win = XCreateWindow( dpy, root, 0, 0, width, height, 0, visinfo->depth, InputOutput, visinfo->visual, mask, &attr );
-        /* set hints and properties */
-        sizehints.x = x;
-        sizehints.y = y;
-        sizehints.width  = width;
-        sizehints.height = height;
-        sizehints.flags = USSize | USPosition;
-        XSetNormalHints(dpy, win, &sizehints);
-        XSetStandardProperties(dpy, win, "TASpring", "TASpring",None, (char **)NULL, 0, &sizehints);
-        ctx = glXCreateContext( dpy, visinfo, NULL, True );
-        if (!ctx) {
-//                printf("Error: glXCreateContext failed\n");
-                exit(1);
-        }
-        XFree(visinfo);
-        XMapWindow(dpy, win);
-        glXMakeCurrent(dpy, win, ctx);
-        ReSizeGLScene(width, height);
-#endif
 	return TRUE;									// Success
 }
 
-
+#ifndef USE_GLUT
 LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 							UINT	uMsg,			// Message For This Window
 							WPARAM	wParam,			// Additional Message Information
 							LPARAM	lParam)			// Additional Message Information
 {
-#ifndef NO_WINDOWS
 	switch (uMsg)									// Check For Windows Messages
 	{
 		case WM_ACTIVATE:							// Watch For Window Activate Message
@@ -537,13 +513,12 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 //		info->AddLine("msg %i",uMsg);
 	// Pass All Unhandled Messages To DefWindowProc
 	return DefWindowProc(hWnd,uMsg,wParam,lParam);
-#endif
-}
 
+}
 
 BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
 {
-#ifndef NO_WINDOWS
+
 	switch (message)
 	{          // Place message cases here.  
 	case WM_INITDIALOG:
@@ -551,8 +526,12 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	default:             
 		return FALSE; 
     } 
-#endif
 } 
+#else
+#ifndef NO_INPUT
+#error insert glut input handling
+#endif
+#endif //USE_GLUT
 
 // Called when spring crashes
 BOOL CALLBACK crashCallback(LPVOID crState)
@@ -577,11 +556,11 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 									 LPSTR		lpCmdLine,			// Command Line Parameters
 									 int			nCmdShow)			// Window Show State
 #else
-  int main(void)
+int main( int argc, char *argv[ ], char *envp[ ] )
 #endif
 {
 	INIT_SYNCIFY;
-#ifndef NO_WINDOWS
+#ifndef USE_GLUT
 	MSG		msg;									// Windows Message Structure
 	hInstance=hInstanceIn;
 #endif
@@ -604,12 +583,14 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 		delete gameSetup;
 		gameSetup=0;
 	}
+#else	
+	gameSetup=0;
 #endif
 
 	ENTER_MIXED;
 
 	bool server;
-#ifdef NO_WINDOWS
+#ifdef NO_WINSTUFF
 	server=true;
 	fullscreen=true;
 #else
@@ -638,27 +619,38 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 
 	int frequency=regHandler.GetInt("DisplayFrequency",0);
 	// Create Our OpenGL Window
+#ifndef USE_GLUT
 	if (!CreateGLWindow("RtsSpring",xres,yres,32,fullscreen,frequency))
+#else
+	if (!CreateGLWindow("RtsSpring",xres,yres,32,fullscreen,frequency,&argc,argv))
+#endif
 	{
 		return 0;									// Quit If Window Was Not Created
 	}
+
+
+
 #ifndef NO_FONT
 	font=new CglFont(hDC,32,223);
 #endif
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
-#ifndef NO_WINDOWS
+#ifndef USE_GLUT
 	SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
 #else
-#warning replace SwapBuffers by glut equivalent
+	glutSwapBuffers();
 #endif
 	pregame=new CPreGame(server);
+
+#ifdef USE_GLUT
+	ENTER_UNSYNCED;
+        glutMainLoop();
+#else
 
 	while(!done)									// Loop That Runs While done=FALSE
 	{
 		ENTER_UNSYNCED;
-#ifndef NO_WINDOWS
 		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))	// Is There A Message Waiting?
 		{
 			if (msg.message==WM_QUIT)				// Have We Received A Quit Message?
@@ -673,7 +665,6 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 		}
 		else										// If There Are No Messages
 		{
-#endif
 			// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
 			if ((active && !DrawGLScene()) || globalQuit)	// Active?  Was There A Quit Received?
 			{
@@ -681,16 +672,13 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 			}
 			else									// Not Time To Quit, Update Screen
 			{
-#ifndef NO_WINDOWS
 				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
 				SleepEx(0,true);
-#endif
 			}
-#ifndef NO_WINDOWS
 		}
-#endif
 
 	}
+#endif //USE_GLUT
 	ENTER_MIXED;
 
 	// Shutdown
@@ -701,7 +689,7 @@ int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 	KillGLWindow();									// Kill The Window
 	END_SYNCIFY;
 	//m_dumpMemoryReport();
-#ifndef NO_WINDOWS
+#ifndef USE_GLUT
 	return (msg.wParam);							// Exit The Program
 #else
 	return 0;

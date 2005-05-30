@@ -26,7 +26,7 @@ opts = Options('SCustomize')
 opts.Add('platform', 'Set to linux or windows', detected_platform)
 opts.Add('debug', 'Set to yes to produce a binary with debug informations', 1)
 
-#porting options mandatory
+#porting options - mandatory
 opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', 1)
 opts.Add('disable_net', 'Set to no to turn on networking code', 1)
 opts.Add('disable_texture_filtering', 'Set to no to turn on texture filtering code', 1)
@@ -39,9 +39,8 @@ opts.Add('disable_threads', 'Set to no to enable mutexes and threads codes (port
 opts.Add('disable_io', 'Set to no to enable input/output code', 1)
 opts.Add('disable_fp', 'Set to no to enable MSwindows fp calls', 1)
 opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1)
-opts.Add('disable_windows', 'Set to no to enable windows code and MSwindows messages (port using glut)', 1)
 
-#porting options optionnal in a first phase
+#porting options - optionnal in a first phase
 opts.Add('disable_sound', 'Set to no to turn on sound support (directSound) (port using openal)', 1)
 opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
 opts.Add('disable_shadows', 'Set to no to turn on shadows rendering', 1)
@@ -49,9 +48,11 @@ opts.Add('disable_advtreedrawer', 'Set to no to turn on advanced tree drawing', 
 opts.Add('disable_winreg', 'Set to no to turn on windows registry', 1)
 opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
 
-#ported parts
+#ported parts or option used while porting
 opts.Add('enable_smallfixes', 'Set to yes to enable small fixes that have to be checked/cleaned', 1)
-opts.Add('emule_wintypes', 'Ported/TobeChecked Set to no to turn off windows type emulation (replace by glib types))', 1)
+opts.Add('emule_wintypes', '(Ported/TobeChecked) Set to no to turn off windows type emulation (replace by glib types))', 1)
+opts.Add('use_glut', 'Set to yes to replace MSwindows windows handling code by GLUT', 1)
+opts.Add('disable_windows', '(Notused) Set to no to enable windows code and MSwindows messages (port using glut)', 1)
 
 env = Environment(options = opts)
 Help(opts.GenerateHelpText(env))
@@ -71,6 +72,8 @@ if env.get('disable_winreg'):
 	defines+=['NO_WINREG']
 if env.get('disable_winstuff'):
 	defines+=['NO_WINSTUFF']
+if env.get('use_glut'):
+	defines+=['USE_GLUT']
 if env.get('disable_clipboard'):
 	defines+=['NO_CLIPBOARD']
 if env.get('disable_windows'):
@@ -152,10 +155,11 @@ print nbBuiltObjects, " objects are already produced from a previous build (", n
 
 #################################################
 # other FLAGS
-if 1: #debug:
+if debug: #to use debug, please use SCustomize file
         env.Append(CPPFLAGS = ['-ggdb3','-D_DEBUG','-DDEBUG'])
 else:
-        env.Append(CPPFLAGS = ['-O2'])
+	env.Append(CPPFLAGS = ['-O2'])
+
 
 #################################################
 # Check requirements
