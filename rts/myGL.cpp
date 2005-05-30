@@ -33,6 +33,7 @@ CVertexArray* GetVertexArray()
 
 void LoadExtensions()
 {
+#error OpenGL is not being initialized!
 	glewInit();
 	/*
 	if (glewGetExtension("GL_ARB_texture_env_combine")==GL_FALSE)
@@ -56,12 +57,12 @@ void LoadExtensions()
 	vertexArray1=new CVertexArray;
 	vertexArray2=new CVertexArray;
 
-	std::string s= (char*)glGetString(GL_EXTENSIONS);
+	/*std::string s= (char*)glGetString(GL_EXTENSIONS);
 	for (unsigned int i=0; i<s.length(); i++) 
 		if (s[i]==' ') s[i]='\n';
 
 	ofstream ofs("ext.txt",ios::out);
-	ofs.write(s.c_str(),s.length());
+	ofs.write(s.c_str(),s.length());*/
 }
 
 void UnloadExtensions()
