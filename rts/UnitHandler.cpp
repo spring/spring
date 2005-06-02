@@ -310,7 +310,7 @@ void CUnitHandler::Draw(bool drawReflection)
 			(*usi)->DrawStats();
 		}
 
-		if(keys[VK_SHIFT] && !selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->buildSpeed>0){
+		if( keyShift() && !selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->buildSpeed>0){
 			for(set<CBuilderCAI*>::iterator bi=builderCAIs.begin();bi!=builderCAIs.end();++bi){
 				if((*bi)->owner->team==gu->myTeam){
 					(*bi)->DrawQuedBuildingSquares();

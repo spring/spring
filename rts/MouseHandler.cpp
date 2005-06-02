@@ -41,14 +41,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#ifndef NO_WINSTUFF
-extern HWND	hWnd;
-#endif 
-
-#ifdef NO_INPUT
-#define ShowCursor(a) while(0){}
-#endif
-
 extern bool	fullscreen;
 extern bool keys[256];
 
@@ -155,10 +147,23 @@ void CMouseHandler::MouseMove(int x, int y)
 
 	if(buttons[2].pressed){
 		float cameraSpeed=1;
-		if (keys[VK_SHIFT]){
+#ifdef USE_GLUT
+		
+		if(glutGetModifiers()&GLUT_ACTIVE_SHIFT)
+#else
+		if(keys[VK_SHIFT])
+#endif
+	        {
 			cameraSpeed*=0.1f;
 		}
-		if (keys[VK_CONTROL]){
+#ifdef USE_GLUT
+		
+		if(glutGetModifiers()&GLUT_ACTIVE_CTRL)
+#else
+		if(keys[VK_CONTROL])
+#endif
+
+		{
 			cameraSpeed*=10;
 		}
 		currentCamController->MouseMove(float3(dx,dy,invertMouse?-1:1));
@@ -245,7 +250,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 	if(button==2){
 		if(buttons[2].time>gu->gameTime-0.3)
-			ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
+			ToggleState(keyShift()|keyCtrl());
 		return;		
 	}
 
@@ -263,7 +268,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 #endif
 
 	if(button==0 && mouseHandlerMayDoSelection){
-		if(!keys[VK_SHIFT] && !keys[VK_CONTROL])
+		if(!keyShift() && !keyCtrl())
 			selectedUnits.ClearSelected();
 
 		if(buttons[0].movement>4){		//select box
@@ -335,7 +340,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			for(ui=gs->teams[gu->myTeam]->units.begin();ui!=gs->teams[gu->myTeam]->units.end();++ui){
 				float3 vec=(*ui)->midPos-camera->pos;
 				if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
-					if(keys[VK_CONTROL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
+					if(keyCtrl() && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(*ui);
 					} else {
 						selectedUnits.AddUnit(*ui);
@@ -356,7 +361,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			float dist=helper->GuiTraceRay(camera->pos,dir,9000,unit,20,false);
 			if(unit && unit->team==gu->myTeam){
 				if(buttons[button].lastRelease<gu->gameTime-0.2){
-					if(keys[VK_CONTROL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
+					if(keyCtrl() && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(unit);
 					} else {
 						selectedUnits.AddUnit(unit);
@@ -444,18 +449,21 @@ void CMouseHandler::ShowMouse()
 
 void CMouseHandler::HideMouse()
 {
-#ifndef NO_INPUT
 	if(!hide){
-		ShowCursor(FALSE);
-		hide=true;
 		lastx = gu->screenx/2;  
 		lasty = gu->screeny/2;  
+#ifdef USE_GLUT
+		glutSetCursor(GLUT_CURSOR_NONE);
+#warning add a way to set cursor pos
+#else
+	        ShowCursor(FALSE);
+		hide=true;
 		RECT cr;
 		if(GetWindowRect(hWnd,&cr)==0)
 			MessageBox(0,"mouse error","",0);
 		SetCursorPos(gu->screenx/2+cr.left+4*!fullscreen,gu->screeny/2+cr.top+23*!fullscreen);
+#endif //GLUT
 	}
-#endif
 }
 
 void CMouseHandler::ToggleState(bool shift)
@@ -563,7 +571,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
-#ifndef NO_INPUT
+#ifndef USE_GLUT
 	if(hide && mouseMovedFromCenter){
 		RECT cr;
 		if(GetWindowRect(hWnd,&cr)==0)
@@ -572,5 +580,7 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 		internalMouseMove=true;				//this only works if the msg que is empty of mouse moves, so someone should figure out something better
 		mouseMovedFromCenter=false;
 	}
+#else
+#warning add a way to set cursor pos
 #endif
 }

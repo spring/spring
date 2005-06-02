@@ -249,15 +249,22 @@ const string GUIcontroller::Modifiers()
 {
 	string keyname("");
 
-	if(keys[VK_SHIFT])
+	if(keyShift())
 		keyname.append("shift_");
-	if(keys[VK_CONTROL])
+	if(keyCtrl())
 		keyname.append("ctrl_");
+#ifndef USE_GLUT		
 	if(keys[VK_RMENU]||keys[VK_LMENU])
+#else
+	if(keyMenu())
+#endif
 		keyname.append("alt_");
+#ifndef USE_GLUT
 	if(keys[VK_RWIN]||keys[VK_LWIN])
 		keyname.append("meta_");
-
+#else
+#warning win key not handled
+#endif
 	return keyname;
 }
 

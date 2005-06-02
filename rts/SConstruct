@@ -33,7 +33,6 @@ opts.Add('disable_texture_filtering', 'Set to no to turn on texture filtering co
 opts.Add('disable_winstuff', 'Set to no to turn on various MSwindows dependant code', 1)
 opts.Add('disable_font', 'Set to no to turn on font handling code', 1)
 opts.Add('disable_bitmap', 'Set to no to turn on bitmap handling code', 1)
-opts.Add('disable_inputs', 'Set to no to enable input handling code (port using glut))', 1)
 opts.Add('disable_3DO', 'Set to no to enable 3DO code (then merge with upstream and it should be fixed)', 1)
 opts.Add('disable_threads', 'Set to no to enable mutexes and threads codes (port using glib)', 1)
 opts.Add('disable_io', 'Set to no to enable input/output code', 1)
@@ -52,7 +51,10 @@ opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
 opts.Add('enable_smallfixes', 'Set to yes to enable small fixes that have to be checked/cleaned', 1)
 opts.Add('emule_wintypes', '(Ported/TobeChecked) Set to no to turn off windows type emulation (replace by glib types))', 1)
 opts.Add('use_glut', 'Set to yes to replace MSwindows windows handling code by GLUT', 1)
+opts.Add('force_glextensions', 'Skip gl extensions test for porting purpose', 0)
 opts.Add('disable_windows', '(Notused) Set to no to enable windows code and MSwindows messages (port using glut)', 1)
+opts.Add('disable_inputs', '(Notused) Set to no to enable input handling code (port using glut))', 0)
+
 
 env = Environment(options = opts)
 Help(opts.GenerateHelpText(env))
@@ -109,6 +111,9 @@ if env.get('disable_avi'):
 if env.get('disable_advtreedrawer'):
 	exclude_list+=Split("""AdvTreeGenerator.cpp AdvTreeDrawer.cpp""")
 	defines+=['NO_NICETREES']
+if env.get('force_glextensions'):
+	defines+=['FORCE_GL_EXTENSIONS']
+
 env.Append(CPPDEFINES = defines)
 
 

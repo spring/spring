@@ -111,6 +111,7 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 inline void Draw()	
 {
   DrawGLScene();
+  glutSwapBuffers();
 }
 #endif
 
@@ -339,8 +340,11 @@ BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 #endif //USE_GLUT
 	ReSizeGLScene(width, height);					// Set Up Our Perspective GL Screen
 #ifdef USE_GLUT
+	//disable fullscreen while porting
+#if 0
 	if(fullscreen)
 		glutFullScreen();
+#endif
         glutDisplayFunc(Draw);
 #endif
 
@@ -528,9 +532,87 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
     } 
 } 
 #else
-#ifndef NO_INPUT
-#error insert glut input handling
+
+#warning complete glut input handling
+#warning add mouse wheel handling
+
+void processNormalKeys(unsigned char key, int x, int y) {
+  keys[key]=true;
+  if(activeController){
+    activeController->KeyPressed(key,1);
+  }
+#ifdef NEW_GUI
+  GUIcontroller::Character(char(key));
+  return 0;
 #endif
+  if(activeController){
+    if(activeController->userWriting && (key>31))
+      if(activeController->ignoreNextChar || activeController->ignoreChar==char(key))
+	activeController->ignoreNextChar=false;
+      else
+	activeController->userInput+=char(key);
+  }
+}
+
+void processNormalKeysUP(unsigned char key, int x, int y) {
+  if(key==27)
+    exit(0);
+  if(activeController){
+    activeController->KeyReleased(key);
+  }
+  keys[key]=false;
+}
+
+
+void processSpecialKeys(int key, int x, int y) {
+  /* catches :
+    * GLUT_KEY_F1
+    * GLUT_KEY_F2
+    * GLUT_KEY_F3
+    * GLUT_KEY_F4
+    * GLUT_KEY_F5
+    * GLUT_KEY_F6
+    * GLUT_KEY_F7
+    * GLUT_KEY_F8
+    * GLUT_KEY_F9
+    * GLUT_KEY_F10
+    * GLUT_KEY_F11
+    * GLUT_KEY_F12
+    * GLUT_KEY_LEFT
+    * GLUT_KEY_UP
+    * GLUT_KEY_RIGHT
+    * GLUT_KEY_DOWN
+    * GLUT_KEY_PAGE_UP
+    * GLUT_KEY_PAGE_DOWN
+    * GLUT_KEY_HOME
+    * GLUT_KEY_END
+    * GLUT_KEY_INSERT 
+    */
+  keys[key]=true;
+  if(activeController){
+    activeController->KeyPressed(key,1);
+  }
+}
+
+void processMousePassiveMotion(int x, int y) {
+  if(mouse)
+    mouse->MouseMove(x,y);
+}
+
+void processMouseActiveMotion(int x, int y) {
+  if(mouse)
+    mouse->MouseMove(x,y);
+}
+
+void processMouse(int button, int state, int x, int y) {
+  if(mouse)
+    {
+      if(state==GLUT_DOWN)
+	mouse->MousePress(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
+      else
+	mouse->MouseRelease(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
+    }
+}
 #endif //USE_GLUT
 
 // Called when spring crashes
@@ -644,6 +726,14 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	pregame=new CPreGame(server);
 
 #ifdef USE_GLUT
+
+	glutKeyboardUpFunc(processNormalKeysUP);
+	glutKeyboardFunc(processNormalKeys);
+	glutSpecialFunc(processSpecialKeys);
+	glutMouseFunc(processMouse);
+	glutMotionFunc(processMouseActiveMotion);
+	glutPassiveMotionFunc(processMousePassiveMotion);
+
 	ENTER_UNSYNCED;
         glutMainLoop();
 #else

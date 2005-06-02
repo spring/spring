@@ -15,6 +15,9 @@ appears in the common code
 #include <stdlib.h>
 #include <glib.h>
 
+//FIXME remove following line and include everywhere required
+#include <inputs.h>
+
 #define  WINAPI
 
 #ifdef NO_DLL
@@ -68,40 +71,6 @@ Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed',
 #define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
 #define LOBYTE(w)           ((BYTE)((DWORD)(w) & 0xff))
 #define HIBYTE(w)           ((BYTE)((DWORD)(w) >> 8))
-
-#ifndef NO_INPUT
-#warning keys bellow are not correct
-#endif
-
-#include <GL/glew.h>
-#include <GL/glut.h>
-#define VK_RETURN                   10
-#define VK_UP GLUT_KEY_UP
-#define VK_DOWN GLUT_KEY_DOWN	
-#define VK_LEFT  GLUT_KEY_LEFT
-#define VK_RIGHT GLUT_KEY_RIGHT
-#define VK_ESCAPE 27
-#define VK_END                      26
-#define VK_SHIFT                    17
-#define VK_CONTROL 1
-#define VK_MENU 1
-#define VK_NUMPAD0 1
-#define VK_NUMPAD1 1
-#define VK_NUMPAD2 1
-#define VK_NUMPAD3 1
-#define VK_NUMPAD4 1
-#define VK_NUMPAD5 1
-#define VK_NUMPAD6 1
-#define VK_NUMPAD7 1
-#define VK_NUMPAD8 1
-#define VK_NUMPAD9 1
-#define VK_SPACE 1
-#define VK_PAUSE 1
-#define VK_RMENU 1
-#define VK_LMENU 1
-#define VK_RWIN 1
-#define VK_LWIN 1
-#define VK_BACK 1
 
 #ifdef ENABLE_SMALLFIXES
 #define MessageBox(hWnd, lpText, lpCaption, uType) {fprintf(stderr,lpText);fprintf(stderr,"\n");}

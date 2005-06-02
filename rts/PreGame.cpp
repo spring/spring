@@ -81,7 +81,13 @@ CPreGame::~CPreGame(void)
 int CPreGame::KeyPressed(unsigned char k,bool isRepeat)
 {
 	if (k==27){
-		if(keys[VK_SHIFT]){
+#ifdef USE_GLUT
+		
+		if(!(glutGetModifiers()&GLUT_ACTIVE_SHIFT))
+#else
+		if(!keys[VK_SHIFT])
+#endif
+		{
 			info->AddLine("User exited");
 			globalQuit=true;
 		} else

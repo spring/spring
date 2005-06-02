@@ -777,11 +777,11 @@ extern bool keys[256];
 void GUIgame::InitCommand(Command& c)
 {
 	c.options=0;
-	if(keys[VK_SHIFT])
+	if(keyShift())
 		c.options|=SHIFT_KEY;
-	if(keys[VK_CONTROL])
+	if(keyCtrl())
 		c.options|=CONTROL_KEY;
-	if(keys[VK_MENU])
+	if(keyMenu())
 		c.options|=ALT_KEY;
 }
 
@@ -1020,7 +1020,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 	CUnit* unit=0;
 	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,true);
 
-	if(unit && keys[VK_SHIFT] && keys[VK_CONTROL]){		//circle build around building
+	if(unit && keyShift() && keyCtrl()){		//circle build around building
 		UnitDef* unitdef2=unit->unitDef;
 		float3 pos2=unit->pos;
 		MakeBuildPos(pos2,unitdef2);
@@ -1065,7 +1065,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			MakeBuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
-	} else if(keys[VK_MENU]){			//build a rectangle
+	} else if(keyMenu()){			//build a rectangle
 		float xsize=unitdef->xsize*8;
 		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
 		int xstep=(int)xsize;
@@ -1082,7 +1082,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 		for(float z=start.z;zn<znum;++zn){
 			int xn=0;
 			for(float x=start.x;xn<xnum;++xn){
-				if(!keys[VK_CONTROL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
+				if(!keyCtrl() || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
 					float3 pos(x,0,z);
 					MakeBuildPos(pos,unitdef);
 					ret.push_back(pos);
@@ -1100,7 +1100,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 				return ret;
 			}
 			dir/=fabs(dir.x);
-			if(keys[VK_CONTROL])
+			if(keyCtrl())
 				dir.z=0;
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
 				ret.push_back(p);
@@ -1112,7 +1112,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 				return ret;
 			}
 			dir/=fabs(dir.z);
-			if(keys[VK_CONTROL])
+			if(keyCtrl())
 				dir.x=0;
 			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step)
 				ret.push_back(p);

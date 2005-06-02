@@ -52,7 +52,8 @@ void LoadExtensions()
         
         //#error OpenGL is not being initialized!
 	glewInit();
-	
+
+#ifndef FORCE_GL_EXTENSIONS	
 	if (glewGetExtension("GL_ARB_texture_env_combine")==GL_FALSE)
 	{
 		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
@@ -70,6 +71,7 @@ void LoadExtensions()
 		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
 		exit(1);	  	
 	}
+#endif
 	
 	vertexArray1=new CVertexArray;
 	vertexArray2=new CVertexArray;

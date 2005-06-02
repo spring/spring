@@ -119,8 +119,14 @@ void COverheadController::KeyMove(float3 move)
 void COverheadController::MouseMove(float3 move)
 {
 	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
+#ifdef USE_GLUT
+	int dep = (int)(pixelsize*(1+((glutGetModifiers()==GLUT_ACTIVE_SHIFT)?3:0)));
+	pos.x+=move.x*dep;	
+	pos.z+=move.y*dep;
+#else
 	pos.x+=move.x*pixelsize*(1+keys[VK_SHIFT]*3);	
 	pos.z+=move.y*pixelsize*(1+keys[VK_SHIFT]*3);
+#endif
 }
 
 void COverheadController::ScreenEdgeMove(float3 move)
@@ -198,8 +204,11 @@ void CTWController::MouseMove(float3 move)
 {
 	float dist=-camera->rot.x*1500;
 	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*dist*2;
+#ifdef USE_GLUT
+	move*=pixelsize*(1+((glutGetModifiers()==GLUT_ACTIVE_SHIFT)?3:0));
+#else
 	move*=(1+keys[VK_SHIFT]*3)*pixelsize;
-
+#endif
 	float3 flatForward=camera->forward;
 	flatForward.y=0;
 	flatForward.Normalize();

@@ -410,7 +410,12 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		ypos-=dy;
 		height+=dy;
 		width+=dx;
-		if(keys[VK_SHIFT])
+#ifdef USE_GLUT
+		
+         if(glutGetModifiers()&GLUT_ACTIVE_SHIFT)
+#else
+	 if(keys[VK_SHIFT])
+#endif
 		{
 			width = height * gs->mapx/gs->mapy;
 		}
@@ -465,8 +470,13 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 //		info->AddLine("r %f",size);
 		CUnit* unit=helper->GetClosestFriendlyUnit(pos,size,gu->myAllyTeam);
 		if(unit){
-			if(!keys[VK_SHIFT])
-				selectedUnits.ClearSelected();
+#ifdef USE_GLUT
+		
+		if(!(glutGetModifiers()&GLUT_ACTIVE_SHIFT))
+#else
+		if(!keys[VK_SHIFT])
+#endif
+		        selectedUnits.ClearSelected();
 			selectedUnits.AddUnit(unit);
 			return;
 		}

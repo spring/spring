@@ -77,7 +77,7 @@ CSelectionKeyHandler::~CSelectionKeyHandler(void)
 bool CSelectionKeyHandler::KeyPressed(unsigned char key)
 {
 	for(vector<HotKey>::iterator hi=hotkeys.begin();hi!=hotkeys.end();++hi){
-		if(key==hi->key && hi->shift==keys[VK_SHIFT] && hi->control==keys[VK_CONTROL] && hi->alt==keys[VK_MENU]){
+		if(key==hi->key && hi->shift==keyShift() && hi->control==keyCtrl() && hi->alt==keyMenu()) {
 			DoSelection(hi->select);
 			return true;
 		}

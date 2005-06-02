@@ -619,15 +619,27 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 	if (s=="togglelos"){
 		groundDrawer->ToggleLosTexture();
 	}
+#ifdef USE_GLUT
 	if(s=="mousestate"){
-		mouse->ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
+	  int mod = glutGetModifiers();
+	  mouse->ToggleState((mod==GLUT_ACTIVE_SHIFT)||(mod==GLUT_ACTIVE_CTRL));
 	}
+#else
+	if(s=="mousestate"){
+	  mouse->ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
+	}
+#endif
+
 	if (s=="sharedialog"){
 		if(!inputReceivers->empty() && dynamic_cast<CShareBox*>(inputReceivers->front())==0)
 			new CShareBox();
 	}
 	if (s=="quit"){
+#ifdef USE_GLUT
+		if(glutGetModifiers()==GLUT_ACTIVE_SHIFT){
+#else
 		if(keys[VK_SHIFT]){
+#endif
 			info->AddLine("User exited");
 			globalQuit=true;
 		} else
@@ -897,7 +909,11 @@ bool CGame::Draw()
 		uh->DrawCloakedUnits();
 		ph->Draw(false);
 		sky->DrawSun();
+#ifndef USE_GLUT
 		if(keys[VK_SHIFT])
+#else
+		if(glutGetModifiers()&GLUT_ACTIVE_SHIFT)
+#endif
 			selectedUnits.DrawCommands();
 
 		mouse->Draw();

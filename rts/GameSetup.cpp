@@ -223,7 +223,12 @@ bool CGameSetup::Draw(void)
 		font->glPrint("%s",gs->players[a]->playerName.c_str());
 		glPopMatrix();
 	}
-	if(gu->myPlayerNum==0 && keys[VK_RETURN] && keys[VK_CONTROL]){
+#ifndef USE_GLUT
+	if(gu->myPlayerNum==0 && keys[VK_RETURN] && keys[VK_CTRL]){
+#else
+	if(gu->myPlayerNum==0 && keys[VK_RETURN] && (glutGetModifiers()&GLUT_ACTIVE_SHIFT)){
+#endif
+
 		forceReady=true;
 	}
 	if(forceReady)

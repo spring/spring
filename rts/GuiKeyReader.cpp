@@ -177,12 +177,17 @@ void CGuiKeyReader::CreateKeyNames()
 	keynames["numpad-"]=109;
 	keynames["numpad*"]=106;
 	keynames["numpad/"]=111;
+#ifndef USE_GLUT
 	keynames["ctrl"]=VK_CONTROL;
+#endif
 	keynames["up"]=VK_UP;
 	keynames["down"]=VK_DOWN;
 	keynames["left"]=VK_LEFT;
 	keynames["right"]=VK_RIGHT;
+#ifndef USE_GLUT
+#warning pause disabled
 	keynames["pause"]=	VK_PAUSE;
+#endif
 	keynames["joyx"]=400;
 	keynames["joyy"]=401;
 	keynames["joyz"]=402;
