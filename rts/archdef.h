@@ -6,6 +6,8 @@
 #ifndef __ARCHDEF_H__
 #define __ARCHDEF_H__
 
+#warning Please use standard defines (_WIN32,_MSC_VER,__GNUG__,etc)
+/*
 //
 // Attempt to detect the current compiler based on macros they export
 //
@@ -39,5 +41,5 @@
 #define ARCHDEF_COMPILER_GCC
 #define ARCHDEF_PLATFORM_LINUX
 #endif
-
+*/
 #endif // __ARCHDEF_H__
