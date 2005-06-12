@@ -157,7 +157,7 @@ CTextureHandler::CTextureHandler()
 		switch (TQ)
 		{
 		case 1:		// 2xSaI
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 			Super2xSaI_32( (uint32 *)tex, (uint32 *)temptex, oldTexX, oldTexY, oldTexX);
 #else 
 			Super2xSaI_32( (DWORD*)tex, (DWORD*)temptex, oldTexX, oldTexY, oldTexX);

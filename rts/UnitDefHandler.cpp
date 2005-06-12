@@ -26,7 +26,7 @@ CUnitDefHandler* unitDefHandler;
 CUnitDefHandler::CUnitDefHandler(void)
 {
 	noCost=false;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
       	std::string dir = "units\\";
 #else
       	std::string dir = "UNITS/";
@@ -38,7 +38,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 
 	numUnits = 0;
 	
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	std::vector<std::string> tafiles = CFileHandler::FindFiles("units\\*.fbi");
 	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units\\*.swu");
 #else
@@ -50,7 +50,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 		tafiles2.pop_back();
 	}
 
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
       	soundcategory.LoadFile("gamedata\\sound.tdf");
 #else
       	soundcategory.LoadFile("gamedata/SOUND.TDF");
@@ -108,7 +108,7 @@ CUnitDefHandler::~CUnitDefHandler(void)
 void CUnitDefHandler::FindTABuildOpt()
 {
 	CSunParser sunparser;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
       	sunparser.LoadFile("gamedata\\sidedata.tdf");
 #else
       	sunparser.LoadFile("gamedata/SIDEDATA.TDF");
@@ -141,7 +141,7 @@ void CUnitDefHandler::FindTABuildOpt()
 		}
 	}
 
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	std::vector<std::string> files = CFileHandler::FindFiles("download\\*.tdf");
 #else
 	std::vector<std::string> files = CFileHandler::FindFiles("download/*.tdf");

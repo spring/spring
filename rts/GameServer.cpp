@@ -151,7 +151,7 @@ bool CGameServer::Update(void)
 	if (game->playing){
 		LARGE_INTEGER currentFrame;
 		QueryPerformanceCounter(&currentFrame);
-#ifndef NO_WINSTUFF		
+#ifdef _WIN32		
 		double timeElapsed=((double)(currentFrame.QuadPart - lastframe.QuadPart))/timeSpeed.QuadPart;
 #else
 		double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;

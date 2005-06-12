@@ -16,7 +16,7 @@ CWeaponDefHandler* weaponDefHandler;
 
 CWeaponDefHandler::CWeaponDefHandler(void)
 {
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
       	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons\\*.tdf");
 #else
       	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");

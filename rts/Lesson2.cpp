@@ -632,7 +632,7 @@ BOOL CALLBACK crashCallback(LPVOID crState)
 	return true;
 }
 
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
 									 HINSTANCE	hPrevInstance,		// Previous Instance
 									 LPSTR		lpCmdLine,			// Command Line Parameters
@@ -649,7 +649,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	BOOL	done=FALSE;								// Bool Variable To Exit Loop
 	for(int b=0;b<256;b++)
 		keys[b]=false;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	// Initialize crash reporting
 	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
@@ -660,7 +660,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	ENTER_SYNCED;
 	gameSetup=new CGameSetup();
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	if(!gameSetup->Init(lpCmdLine)){
 		delete gameSetup;
 		gameSetup=0;
@@ -672,7 +672,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ENTER_MIXED;
 
 	bool server;
-#ifdef NO_WINSTUFF
+#ifndef _WIN32
 	server=true;
 	fullscreen=true;
 #else

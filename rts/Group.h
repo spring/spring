@@ -45,7 +45,7 @@ public:
 	set<CUnit*> units;
 
 	vector<CommandDescription> myCommands;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	HINSTANCE m_hDLL;
 	typedef int (WINAPI* GETGROUPAIVERSION)();
 	typedef IGroupAI* (WINAPI* GETNEWAI)();

@@ -19,7 +19,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 extern HWND hWnd;
 #endif
 

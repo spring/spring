@@ -11,7 +11,7 @@ using namespace std;
 CMoveInfo::CMoveInfo(void)
 {
 	sunparser=new CSunParser;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	sunparser->LoadFile("gamedata\\moveinfo.tdf");
 #else
         sunparser->LoadFile("gamedata/MOVIEINFO.TDF");

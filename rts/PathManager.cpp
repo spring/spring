@@ -311,7 +311,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 	#ifdef PROFILE_TIME
 		LARGE_INTEGER stop;
 		QueryPerformanceCounter(&stop);
-#ifndef NO_WINSTUFF		
+#ifdef _WIN32		
 		profiler.AddTime("AI:PFS",stop.QuadPart - starttime.QuadPart);
 #else
 		profiler.AddTime("AI:PFS",stop - starttime);

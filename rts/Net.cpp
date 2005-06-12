@@ -30,7 +30,7 @@ CNet::CNet()
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	curTime=double(t.QuadPart)/double(f.QuadPart);
 #else
 	curTime=double(t)/double(f);
@@ -289,7 +289,7 @@ void CNet::Update(void)
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	curTime=double(t)/double(f);
 #endif
 	if(onlyLocal){

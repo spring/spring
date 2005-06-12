@@ -26,7 +26,7 @@ void CCommanderScript::Update(void)
 	case 0:
 		if(gameSetup){
 			CSunParser p;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 			p.LoadFile("gamedata\\sidedata.tdf");
 #else
                         p.LoadFile("gamedata/SIDEDATA.TDF");
@@ -49,7 +49,7 @@ void CCommanderScript::Update(void)
 			}
 		} else {
 			CSunParser p;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 			p.LoadFile("gamedata\\sidedata.tdf");
 #else
                         p.LoadFile("gamedata/SIDEDATA.TDF");

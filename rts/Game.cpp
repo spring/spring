@@ -780,7 +780,7 @@ bool CGame::Update()
 	LARGE_INTEGER timeNow;
 	QueryPerformanceCounter(&timeNow);
 	LARGE_INTEGER difTime;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	difTime.QuadPart=timeNow.QuadPart-lastModGameTimeMeasure.QuadPart;
 	double dif=double(difTime.QuadPart)/double(timeSpeed.QuadPart);
 #else
@@ -850,7 +850,7 @@ bool CGame::Draw()
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		LARGE_INTEGER startDraw;
 		QueryPerformanceCounter(&startDraw);
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 		gu->timeOffset = ((double)(startDraw.QuadPart - lastUpdate.QuadPart))/timeSpeed.QuadPart*GAME_SPEED*gs->speedFactor;
 #else
 		gu->timeOffset = ((double)(startDraw - lastUpdate))/timeSpeed*GAME_SPEED*gs->speedFactor;
@@ -1043,7 +1043,7 @@ bool CGame::Draw()
 
 	LARGE_INTEGER start;
 	QueryPerformanceCounter(&start);
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
 #else
 	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
@@ -1250,7 +1250,7 @@ bool CGame::ClientReadNet()
 		
 		if(timeLeft>1)
 			timeLeft--;
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 		timeLeft+=consumeSpeed*((float)(currentFrame.QuadPart - lastframe.QuadPart)/timeSpeed.QuadPart);
 #else
 		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/timeSpeed);
