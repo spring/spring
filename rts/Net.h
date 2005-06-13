@@ -126,7 +126,11 @@ public:
 
 
 	HANDLE netMutex;
+#ifdef _WIN32
 	SOCKET mySocket;
+#else
+	int mySocket;
+#endif
 	int InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber);
 	int ResolveConnection(sockaddr_in* from);
 

@@ -11,6 +11,10 @@
 #include "ScriptHandler.h"
 #include "GameSetup.h"
 //#include "mmgr.h"
+#ifndef _WIN32
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -36,7 +40,7 @@ CNet::CNet()
 	curTime=double(t)/double(f);
 #endif
 	WORD wVersionRequested;
-#ifndef NO_NET
+#ifdef _WIN32
 	WSADATA wsaData;
 	int err; 
 
@@ -84,9 +88,13 @@ CNet::~CNet()
 		FlushNet();
 	}
 	if(mySocket)
+#ifdef _WIN32
 		closesocket(mySocket);
-
 	WSACleanup( );
+#else
+		close(mySocket);
+#endif
+
 
 	delete recordDemo;
 	delete playbackDemo;
@@ -120,22 +128,30 @@ int CNet::InitServer(int portnum)
 		return -1;
 	}
 
-	SOCKADDR_IN saMe;
+	sockaddr_in saMe;
 
 	saMe.sin_family = AF_INET;
 	saMe.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
 	saMe.sin_port = htons(portnum);	   // Use port passed from user
 
 	if (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
+#ifdef _WIN32
 		closesocket(mySocket);
+#else
+		close(mySocket);
+#endif
 		MessageBox(NULL,"Error binding socket.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		connected=false;
 		exit(0);
 		return -1;
 	}
 
+#ifdef _WIN32
 	u_long u=1;
 	ioctlsocket(mySocket,FIONBIO,&u);
+#else
+	fcntl(mySocket, F_SETFL, O_NONBLOCK);
+#endif
 #endif //NO_NET
 	return 0;
 }
@@ -153,7 +169,11 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
+#ifndef NO_WINSTUFF
 	curTime=double(t.QuadPart)/f.QuadPart;
+#else
+	curTime = double(t)/double(f);
+#endif
 
 	if(FindDemoFile(server)){
 		onlyLocal=true;
@@ -166,15 +186,19 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 		CreateDemoFile("test.sdf");
 	}
 
-	SOCKADDR_IN saOther;
+	sockaddr_in saOther;
 
 	saOther.sin_family = AF_INET;
 	saOther.sin_port = htons(portnum);
 
+#ifdef _WIN32
 	unsigned long ul;
 	if((ul=inet_addr(server))!=INADDR_NONE){
 		saOther.sin_addr.S_un.S_addr = 	ul;
 	} else {
+#else /* } */
+	if(inet_aton(server,&(saOther.sin_addr))==0) {
+#endif
 		lpHostEntry = gethostbyname(server);
 		if (lpHostEntry == NULL)
 		{
@@ -193,7 +217,11 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 
 
 	u_long u=1;
+#ifdef _WIN32
 	ioctlsocket(mySocket,FIONBIO,&u);
+#else
+	fcntl(mySocket, F_SETFL, O_NONBLOCK);
+#endif
 
 	waitOnCon=false;
 	imServer=false;
@@ -290,6 +318,8 @@ void CNet::Update(void)
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
 #ifdef _WIN32
+	curTime=double(t.QuadPart)/double(f.QuadPart);
+#else
 	curTime=double(t)/double(f);
 #endif
 	if(onlyLocal){
@@ -298,17 +328,30 @@ void CNet::Update(void)
 		return;
 	}
 	sockaddr_in from;
-	int fromsize=sizeof(from);
+#ifdef _WIN32
+	int fromsize;
+#else
+	socklen_t fromsize;
+#endif
+	fromsize=sizeof(from);
 	int r;
 	unsigned char inbuf[16000];
 	if(connected)
 	while(true){
 #ifndef NO_NET
 		if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR){
+#ifdef _WIN32
 			if(WSAGetLastError()==WSAEWOULDBLOCK || WSAGetLastError()==WSAECONNRESET) 
+#else
+			if(errno==EWOULDBLOCK||errno==ECONNRESET)
+#endif
 				break;
 			char test[500];
+#ifdef _WIN32
 			sprintf(test,"Error receiving data. %i %d",(int)imServer,WSAGetLastError());
+#else
+			sprintf(test,"Error receiving data. %i %d",(int)imServer,errno);
+#endif
 			MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 			exit(0);
 		}
@@ -399,10 +442,21 @@ void CNet::ProcessRawPacket(unsigned char* data, int length, int conn)
 int CNet::ResolveConnection(sockaddr_in* from)
 {
 #ifndef NO_NET
-	unsigned int addr=from->sin_addr.S_un.S_addr;
+	unsigned int addr;
+#ifdef _WIN32
+	addr = from->sin_addr.S_un.S_addr;
+#else
+	addr = from->sin_addr.s_addr;
+#endif
 	for(int a=0;a<MAX_PLAYERS;++a){
 		if(connections[a].active){
-			if(connections[a].addr.sin_addr.S_un.S_addr==addr && connections[a].addr.sin_port==from->sin_port){
+			if(
+#ifdef _WIN32
+			    connections[a].addr.sin_addr.S_un.S_addr==addr 
+#else
+			    connections[a].addr.sin_addr.s_addr==addr 
+#endif
+			    && connections[a].addr.sin_port==from->sin_port){
 				return a;
 			}
 		}
@@ -526,10 +580,18 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 //	if(rand()&7)
 #ifndef NO_NET
 	if(sendto(mySocket,(char*)netbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
+#ifdef _WIN32
 		if(WSAGetLastError()==WSAEWOULDBLOCK)
+#else
+		if(errno==EWOULDBLOCK)
+#endif
 			return;
 		char test[100];
+#ifdef _WIN32
 		sprintf(test,"Error sending data. %d",WSAGetLastError());
+#else
+		sprintf(test,"Error sending data. %d",errno);
+#endif
 		MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 	}
