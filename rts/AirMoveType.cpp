@@ -724,7 +724,7 @@ void CAirMoveType::UpdateLanding(void)
 	//see if we are at the landing spot
 	if(dist<1){
 		float h=ground->GetHeight(pos.x,pos.z);
-		if(abs(reservedLandingPos.y-h)>1)
+		if(fabs(reservedLandingPos.y-h)>1)
 			reservedLandingPos.y=h;
 		else{
 			SetState(AIRCRAFT_LANDED);

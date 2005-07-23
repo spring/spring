@@ -891,7 +891,7 @@ bool CBFGroundDrawer::UpdateTextures()
 				for(int x=0;x<gs->mapx;++x){
 					int a=y*512+x;
 					if(myAirLos[(y/2)*gs->hmapx/2+x/2])
-						infoTexMem[a*4]= (unsigned char) min(255.f,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
+						infoTexMem[a*4]= (unsigned char) fmin(255.f,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
 					else
 						infoTexMem[a*4]=0;
 					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);

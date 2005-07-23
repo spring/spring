@@ -194,7 +194,7 @@ void CGroundMoveType::Update()
 			wantedSpeed = pathId ? requestedSpeed : 0;
 			//If arriving at waypoint, then need to slow down, or may pass it.
 			if(currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
-				wantedSpeed = min(wantedSpeed, (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
+				wantedSpeed = fmin(wantedSpeed, (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
 			}
 			wantedSpeed*=max(0.,min(1.,desiredVelocity.dot(owner->frontdir)+0.1));
 			SetDeltaSpeed();
@@ -712,7 +712,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						//If object and unit in relative motion are closing in to each other (or not yet fully apart),
 						//the object are in path of the unit and they are not collided.
 						if(objectToUnit.dot(avoidanceDir) < radiusSum
-						&& abs(objectDistToAvoidDirCenter) < radiusSum
+						&& fabs(objectDistToAvoidDirCenter) < radiusSum
 						&& Distance2D(owner, object) >= 0) {
 							//Avoid collision by turning the heading to left or right.
 							//Using the one who need most adjustment.
@@ -722,7 +722,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0,1,0));
 							} else {
-								avoidLeft += (radiusSum - abs(objectDistToAvoidDirCenter)) * AVOIDANCE_STRENGTH / distanceToObject;
+								avoidLeft += (radiusSum - fabs(objectDistToAvoidDirCenter)) * AVOIDANCE_STRENGTH / distanceToObject;
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0,1,0));
@@ -751,7 +751,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			//If there are conteracting objects standing on the path,
 			//then the situation has to be solved in a diffrent way.
 			//This is solved by creating a super-objects.
-			if(abs(avoidRight) > 0.0 && abs(avoidLeft) > 0.0) {
+			if(fabs(avoidRight) > 0.0 && fabs(avoidLeft) > 0.0) {
 				//Reset avoidance-factors.
 				avoidanceDir = desiredDir;
 				rightOfPath = desiredDir.cross(float3(0,1,0));
@@ -796,7 +796,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					if(superObjectDistToPathCenter > 0) {
 						avoidRight = (superRadiusSum - superObjectDistToPathCenter) * AVOIDANCE_STRENGTH / distanceToSuperObject;
 					} else {
-						avoidLeft = (superRadiusSum - abs(superObjectDistToPathCenter)) * AVOIDANCE_STRENGTH / distanceToSuperObject;
+						avoidLeft = (superRadiusSum - fabs(superObjectDistToPathCenter)) * AVOIDANCE_STRENGTH / distanceToSuperObject;
 					}
 				}
 			}
@@ -834,8 +834,8 @@ float CGroundMoveType::Distance2D(CSolidObject *object1, CSolidObject *object2, 
 	} else {
 		//Pytagorean sum of the x and z distance.
 		float3 distVec;
-		distVec.x = abs(object1->midPos.x - object2->midPos.x) - (object1->xsize + object2->xsize)*SQUARE_SIZE/2 + 2*marginal;
-		distVec.z = abs(object1->midPos.z - object2->midPos.z) - (object1->ysize + object2->ysize)*SQUARE_SIZE/2 + 2*marginal;
+		distVec.x = fabs(object1->midPos.x - object2->midPos.x) - (object1->xsize + object2->xsize)*SQUARE_SIZE/2 + 2*marginal;
+		distVec.z = fabs(object1->midPos.z - object2->midPos.z) - (object1->ysize + object2->ysize)*SQUARE_SIZE/2 + 2*marginal;
 		if(distVec.x > 0.0 && distVec.z > 0.0)
 			dist2D = distVec.Length2D();
 		else if(distVec.x < 0.0 && distVec.z < 0.0)
@@ -928,7 +928,7 @@ starting from given speed.
 */
 float CGroundMoveType::BreakingDistance(float speed) 
 {
-	return abs(speed * speed / owner->mobility->maxBreaking);
+	return fabs(speed * speed / owner->mobility->maxBreaking);
 }
 
 

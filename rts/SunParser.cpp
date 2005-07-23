@@ -19,7 +19,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
+#ifndef USE_GLUT
 extern HWND hWnd;
 #endif
 
