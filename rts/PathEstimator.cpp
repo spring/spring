@@ -362,7 +362,7 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 		if(PATHDEBUG) {
 			*info << "PE: Search completed.\n";
 			*info << "Tested blocks: " << testedBlocks << "\n";
-			*info << "Open blocks: " << (openBlockBufferPointer - openBlockBuffer) << "\n";
+			*info << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
 			*info << "Path length: " << (int)(path.path.size()) << "\n";
 			*info << "Path cost: " << path.pathCost << "\n";
 		}
@@ -370,7 +370,7 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 		if(PATHDEBUG) {
 			*info << "PE: Search failed!\n";
 			*info << "Tested blocks: " << testedBlocks << "\n";
-			*info << "Open blocks: " << (openBlockBufferPointer - openBlockBuffer) << "\n";
+			*info << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
 		}
 	}
 	return result;

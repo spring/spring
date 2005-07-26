@@ -143,7 +143,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 		if(PATHDEBUG) {
 			*info << "Path found.\n";
 			*info << "Nodes tested: " << (int)testedNodes << "\n";
-			*info << "Open squares: " << (openSquareBufferPointer - openSquareBuffer) << "\n";
+			*info << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
 			*info << "Path steps: " << (int)(path.path.size()) << "\n";
 			*info << "Path cost: " << path.pathCost << "\n";
 		}
@@ -151,7 +151,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 		if(PATHDEBUG) {
 			*info << "Path not found!\n";
 			*info << "Nodes tested: " << (int)testedNodes << "\n";
-			*info << "Open squares: " << (openSquareBufferPointer - openSquareBuffer) << "\n";
+			*info << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
 		}
 	}
 	return result;
