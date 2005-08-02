@@ -104,7 +104,6 @@ void CBitmap::Save(string filename)
 
 void CBitmap::LoadBMP(string filename)
 {
-#ifndef NO_BITMAP
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER bmih;
 
@@ -174,7 +173,6 @@ void CBitmap::LoadBMP(string filename)
 	}
 
 	delete[] row;
-#endif //NO_BITMAP
 }
 
 void CBitmap::LoadJPG(string filename)
@@ -225,7 +223,6 @@ void CBitmap::LoadJPG(string filename)
 
 void CBitmap::LoadPCX(string filename)
 {
-#ifndef NO_BITMAP
 	short num_bytes, i;
 	long count;
 	BYTE data;
@@ -313,7 +310,6 @@ void CBitmap::LoadPCX(string filename)
 	}
 	delete[] svtmpbuf;
 	delete[] lpBuffer;
-#endif //NO_BITMAP
 }
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
@@ -418,7 +414,6 @@ void CBitmap::Renormalize(float3 newCol)
 
 void CBitmap::SaveBMP(string filename)
 {
-#ifndef NO_BITMAP
 	char* buf=new char[xsize*ysize*3];
 	for(int y=0;y<ysize;y++){
 		for(int x=0;x<xsize;x++){
@@ -452,7 +447,6 @@ void CBitmap::SaveBMP(string filename)
 	ofs.write((char*)&bmih,sizeof(bmih));
 	ofs.write((char*)buf,xsize*ysize*3);
 	delete[] buf;
-#endif
 }
 
 void CBitmap::SaveJPG(string filename,int quality)

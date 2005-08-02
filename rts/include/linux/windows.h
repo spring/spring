@@ -13,7 +13,9 @@ appears in the common code
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fenv.h>
 #include <glib.h>
+#include <iostream>
 
 //FIXME remove following line and include everywhere required
 #include <inputs.h>
@@ -73,10 +75,7 @@ Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed',
 #define HIBYTE(w)           ((BYTE)((DWORD)(w) >> 8))
 
 #ifdef ENABLE_SMALLFIXES
-#define MessageBox(hWnd, lpText, lpCaption, uType) {fprintf(stderr,lpText);fprintf(stderr,"\n");}
 #define ShowCursor(a) while(0){}
-#else
-#error unix : small fixes to replace by cleaner code or dev
 #endif
 
 #ifdef NO_MUTEXTHREADS
@@ -88,43 +87,216 @@ Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed',
 
 #define Sleep(a) sleep(a)
 
+#define _hypot(x,y) hypot(x,y)
 
-#ifdef NO_WINSTUFF
-#define QueryPerformanceCounter(a) while(0){}
-#define _hypot(a,b) 0
-#endif
+/*
+ * Error handling
+ */
+#define MB_OK 			0x00000001
+#define MB_ICONINFORMATION	0x00000002
+#define MB_ICONEXCLAMATION	0x00000004
 
-//FIXME read cpuinfo only one time for many calls (store value in static var)
-#define NOMFICH_CPUINFO "/proc/cpuinfo" 
-inline bool QueryPerformanceFrequency(LARGE_INTEGER* frequence)
+#define MessageBox(o, m, c, f)				\
+do {							\
+	if (f & MB_ICONINFORMATION)			\
+	    std::cerr << "Info: ";			\
+	else if (f & MB_ICONEXCLAMATION)		\
+	    std::cerr << "Warning: ";			\
+	else						\
+	    std::cerr << "ERROR: ";			\
+	std::cerr << c << std::endl;			\
+	std::cerr << "  " << m << std::endl;		\
+} while (0)
+
+/*
+ * Bitmap handling
+ */
+struct bitmapfileheader_s {
+	WORD bfType;
+	DWORD bfSize;
+	WORD bfReserved1;
+	WORD bfReserved2;
+	DWORD bfOffBits;
+};
+struct bitmapinfoheader_s {
+	DWORD  biSize; 
+	long   biWidth; 
+	long   biHeight; 
+	DWORD  biPlanes; 
+	WORD   biBitCount; 
+	DWORD  biCompression; 
+	DWORD  biSizeImage; 
+	long   biXPelsPerMeter; 
+	long   biYPelsPerMeter; 
+	DWORD  biClrUsed; 
+	DWORD  biClrImportant; 
+};
+struct paletteentry_s {
+	BYTE peRed;
+	BYTE peGreen;
+	BYTE peBlue;
+	BYTE peFlags;
+};
+typedef struct bitmapfileheader_s BITMAPFILEHEADER;
+typedef struct bitmapinfoheader_s BITMAPINFOHEADER;
+typedef struct paletteentry_s PALETTEENTRY;
+
+#define BI_RGB 0
+
+/*
+ * Floating point
+ */
+#define FPE_INVALID FE_INVALID
+#define FPE_DENORMAL __FE_DENORM
+#define FPE_ZERODIVIDE FE_DIVBYZERO
+#define FPE_OVERFLOW FE_OVERFLOW
+#define FPE_UNDERFLOW FE_UNDERFLOW
+#define FPE_INEXACT FE_INEXACT
+#define FPE_ALL FE_ALL_EXCEPT
+#define _EM_INVALID FE_INVALID
+#define _EM_DENORMAL __FE_DENORM
+#define _EM_ZERODIVIDE FE_DIVBYZERO
+#define _EM_OVERFLOW FE_OVERFLOW
+#define _EM_UNDERFLOW FE_UNDERFLOW
+#define _EM_INEXACT FE_INEXACT
+#define _MCW_EM FE_ALL_EXCEPT
+
+static inline unsigned int _control87(unsigned int newflags, unsigned int mask)
 {
-  const char* prefixe_cpu_mhz = "cpu MHz";
-  FILE* F;
-  char ligne[300+1];
-  char *pos;
-  int ok=0;
-
-  F = fopen(NOMFICH_CPUINFO, "r");
-  if (!F) return false;
-
-  while (!feof(F))
-  {
-    fgets (ligne, sizeof(ligne), F);
-
-    if (!strncmp(ligne, prefixe_cpu_mhz, strlen(prefixe_cpu_mhz)))
-    {
-      pos = strrchr (ligne, ':') +2;
-      if (!pos) break;
-      if (pos[strlen(pos)-1] == '\n') pos[strlen(pos)-1] = '\0';
-      strcpy (ligne, pos);
-      strcat (ligne,"e6");
-      *frequence = (long int)(atof (ligne)*1000000);
-      ok = 1;
-      break;
-    }
-  }
-  fclose (F);
-  return true;
+	fenv_t *cur;
+	fegetenv(cur);
+	if (mask) {
+		cur->__control_word = ((cur->__control_word & ~mask)|(newflags & mask));
+		fesetenv(cur);
+	}
+	return (unsigned int)(cur->__control_word);
 }
+
+static inline unsigned int _clearfp(void)
+{
+	fenv_t *cur;
+	fegetenv(cur);
+#if 0	/* Windows control word default */
+	cur.__control_word &= ~FE_ALL_EXCEPT;
+	fesetenv(cur);
+#else	/* Posix control word default */
+	fesetenv(FE_DFL_ENV);
+#endif
+	return (unsigned int)(cur->__status_word);
+}
+
+/*
+ * Performance testing
+ */
+#include <sys/time.h>
+static inline bool QueryPerformanceCounter(long int *count)
+{
+#if defined(__GNUC__) && ( defined(__i386__) || defined(__x86_64__) )
+	/*
+	 * Reading from the tsc is only available on
+	 * pentium class chips (x86 compatible and x86_64)
+	 */
+	unsigned long long val;
+	__asm__ __volatile__("rdtsc" : "=A" (val));
+	*count = (long int)val;
+#elif defined(__GNUC__) && defined(__ia64__)
+	/*
+	 * Reading from the itc is only available on
+	 * ia64
+	 */
+	unsigned long val;
+	__asm__ __volatile__("mov %0=ar.itc" : "=r" (val));
+	*count = (long int)val;
+#else
+	/*
+	 * Have to go generic
+	 */
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	*count = (long int)tv.tv_usec;
+#endif
+	return true;
+}
+
+
+/*
+ * Avoid repeated recalculations
+ */
+static long int _cpufreq;
+
+/*
+ * Generic solution
+ */
+static inline bool _freqfallback(long int *frequence)
+{
+	if (!_cpufreq) {
+		uint64_t tscstart,tscend, mhz;
+		struct timeval tvstart,tvend;
+		long usec;
+		long int tmp;
+		QueryPerformanceCounter(&tmp);
+		tscstart = (uint64_t)tmp;
+		gettimeofday(&tvstart,NULL);
+		usleep(100000);
+		QueryPerformanceCounter(&tmp);
+		tscend = (uint64_t)tmp;
+		gettimeofday(&tvend,NULL);
+		usec = 1000000 * (tvend.tv_sec - tvstart.tv_sec) + (tvend.tv_usec - tvstart.tv_usec);
+		mhz = (tscend - tscstart) / usec;
+		_cpufreq = mhz;
+		*frequence = mhz;
+	} else
+		*frequence = _cpufreq;
+	return !!_cpufreq;
+}
+
+#define CPUINFO "/proc/cpuinfo"
+static inline bool QueryPerformanceFrequency(long int *frequence)
+{
+#if defined(__linux__)  /* /proc/cpuinfo on linux */
+	if (!_cpufreq) {
+		FILE *f = fopen(CPUINFO,"r");
+		if (!f) {
+			char err[50];
+			sprintf(err,"Can't read from %s",CPUINFO);
+			MessageBox(0,err,"System error",0);
+			return _freqfallback(frequence);
+		}
+		for (;;) {
+			unsigned long mhz;
+			int r;
+			char buf[1000],tmp[24];
+			if (fgets(buf, sizeof(buf), f) == NULL) {
+				char err[50];
+				sprintf(err,"Can't locate cpu MHz in %s",CPUINFO);
+				MessageBox(0,err,"System error",0);
+				return _freqfallback(frequence);
+			}
+#if defined(__powerpc__)
+			r = sscanf(buf, "clock\t: %s", &tmp);
+#elif defined( __i386__ ) || defined (__hppa__)  || defined (__ia64__) || defined(__x86_64__)
+			r = sscanf(buf, "cpu MHz         : %s", &tmp);
+#elif defined( __sparc__ )
+			r = sscanf(buf, "Cpu0Bogo        : %s", &tmp);
+#elif defined( __mc68000__ )
+			r = sscanf(buf, "Clocking:       %s", &tmp);
+#elif defined( __s390__  )
+			r = sscanf(buf, "bogomips per cpu: %s", &tmp);
+#else /* MIPS, ARM, and alpha */
+			r = sscanf(buf, "BogoMIPS        : %s", &tmp);
+#endif 
+			if (r == 1) {
+				mhz = atoi(tmp);
+				fclose(f);
+				_cpufreq = (long int)mhz;
+				*frequence = _cpufreq;
+				return !!_cpufreq;
+			}
+		}
+	}
+#endif /* __linux__ */
+	return _freqfallback(frequence);
+}
+
 
 #endif //__WINDOWS_H__
