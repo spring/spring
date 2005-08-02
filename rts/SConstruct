@@ -116,7 +116,10 @@ if env.get('force_glextensions'):
 
 env.Append(CPPDEFINES = defines)
 
-
+if detected_platform == 'linux':
+	exclude_list.append("RegHandler.cpp")
+else:
+	exclude_list.append("dotfileHandler.cpp")
 ############################################################
 # files used for build
 

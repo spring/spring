@@ -14,7 +14,6 @@ appears in the common code
 #include <string.h>
 #include <stdlib.h>
 #include <fenv.h>
-#include <glib.h>
 #include <iostream>
 
 //FIXME remove following line and include everywhere required
@@ -36,15 +35,26 @@ typedef void *HANDLE;
 typedef void* HINSTANCE ;
 typedef void *HDC; 
 //following might stay like as is in a first time
-typedef unsigned char BYTE;
-typedef int WORD;
-typedef bool BOOL;
+#define VOID void
+#define BYTE unsigned char
+#define WORD int
+#define DWORD long int
+#define DWORD_PTR unsigned long
+#define BOOL bool
+#define UCHAR unsigned char
+#define UINT16 uint16_t
+#define UINT32 uint32_t
+#define UINT64 uint64_t
+#define LARGE_INTEGER int64_t
+#define __int64 int64_t
+#ifndef TRUE
+#define TRUE true
+#endif
+#ifndef FALSE
+#define FALSE false
+#endif
 typedef void *LPVOID;
-typedef long int DWORD;
-typedef unsigned int UINT;
-typedef void VOID;
-typedef long int DWORD;
-typedef DWORD *DWORD_PTR;
+//typedef unsigned int UINT;
 typedef int LRESULT;
 #include <string>
 using namespace std;
@@ -59,8 +69,6 @@ is OK for LARGE_INTEGER
 Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed', 
    which is of non-class type `long int'
 */
-#define LARGE_INTEGER long int
-#define __int64 gint64
 #else
 #error please check the above types and maybe remove them from the code cf. http://www.jniwrapper.com/wintypes.jsp
 #endif //EMULE_WINTYPES
