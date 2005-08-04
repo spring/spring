@@ -712,9 +712,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 
 
-#ifndef NO_FONT
-	font=new CglFont(hDC,32,223);
-#endif
+	font=new CglFont(32,223);
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
