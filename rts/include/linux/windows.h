@@ -197,24 +197,24 @@ static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 	 * Reading from the tsc is only available on
 	 * pentium class chips (x86 compatible and x86_64)
 	 */
-	unsigned long long val;
+	LARGE_INTEGER val;
 	__asm__ __volatile__("rdtsc" : "=A" (val));
-	*count = (long int)val;
+	*count = val;
 #elif defined(__GNUC__) && defined(__ia64__)
 	/*
 	 * Reading from the itc is only available on
 	 * ia64
 	 */
-	unsigned long val;
+	LARGE_INTEGER val;
 	__asm__ __volatile__("mov %0=ar.itc" : "=r" (val));
-	*count = (long int)val;
+	*count = val;
 #else
 	/*
 	 * Have to go generic
 	 */
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
-	*count = (long int)tv.tv_usec;
+	*count = (LARGE_INTEGER)tv.tv_usec;
 #endif
 	return true;
 }
@@ -223,7 +223,7 @@ static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 /*
  * Avoid repeated recalculations
  */
-static long int _cpufreq;
+static LARGE_INTEGER _cpufreq;
 
 /*
  * Generic solution
@@ -231,23 +231,21 @@ static long int _cpufreq;
 static inline bool _freqfallback(LARGE_INTEGER *frequence)
 {
 	if (!_cpufreq) {
-		uint64_t tscstart,tscend, mhz;
+		LARGE_INTEGER tscstart,tscend, mhz;
 		struct timeval tvstart,tvend;
 		long usec;
 		LARGE_INTEGER tmp;
 		QueryPerformanceCounter(&tmp);
-		tscstart = (uint64_t)tmp;
+		tscstart = tmp;
 		gettimeofday(&tvstart,NULL);
 		usleep(100000);
 		QueryPerformanceCounter(&tmp);
-		tscend = (uint64_t)tmp;
+		tscend = tmp;
 		gettimeofday(&tvend,NULL);
 		usec = 1000000 * (tvend.tv_sec - tvstart.tv_sec) + (tvend.tv_usec - tvstart.tv_usec);
-		mhz = (tscend - tscstart) / usec;
-		_cpufreq = mhz;
-		*frequence = mhz;
-	} else
-		*frequence = _cpufreq;
+		_cpufreq = (tscend - tscstart) / usec;
+	}
+	*frequence = _cpufreq;
 	return !!_cpufreq;
 }
 
@@ -264,7 +262,6 @@ static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 			return _freqfallback(frequence);
 		}
 		for (;;) {
-			unsigned long mhz;
 			int r;
 			char buf[1000],tmp[24];
 			if (fgets(buf, sizeof(buf), f) == NULL) {
@@ -287,9 +284,8 @@ static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 			r = sscanf(buf, "BogoMIPS        : %s", &tmp);
 #endif 
 			if (r == 1) {
-				mhz = atoi(tmp);
 				fclose(f);
-				_cpufreq = (long int)mhz;
+				_cpufreq = (LARGE_INTEGER)atoi(tmp);
 				*frequence = _cpufreq;
 				return !!_cpufreq;
 			}
