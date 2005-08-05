@@ -190,7 +190,7 @@ static inline unsigned int _clearfp(void)
  * Performance testing
  */
 #include <sys/time.h>
-static inline bool QueryPerformanceCounter(long int *count)
+static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 {
 #if defined(__GNUC__) && ( defined(__i386__) || defined(__x86_64__) )
 	/*
@@ -228,13 +228,13 @@ static long int _cpufreq;
 /*
  * Generic solution
  */
-static inline bool _freqfallback(long int *frequence)
+static inline bool _freqfallback(LARGE_INTEGER *frequence)
 {
 	if (!_cpufreq) {
 		uint64_t tscstart,tscend, mhz;
 		struct timeval tvstart,tvend;
 		long usec;
-		long int tmp;
+		LARGE_INTEGER tmp;
 		QueryPerformanceCounter(&tmp);
 		tscstart = (uint64_t)tmp;
 		gettimeofday(&tvstart,NULL);
@@ -252,7 +252,7 @@ static inline bool _freqfallback(long int *frequence)
 }
 
 #define CPUINFO "/proc/cpuinfo"
-static inline bool QueryPerformanceFrequency(long int *frequence)
+static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 {
 #if defined(__linux__)  /* /proc/cpuinfo on linux */
 	if (!_cpufreq) {
