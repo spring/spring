@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if __ADV_TREE_GENERATOR_H__
+#ifndef __ADV_TREE_GENERATOR_H__
 #define __ADV_TREE_GENERATOR_H__
 
 #include "archdef.h"
