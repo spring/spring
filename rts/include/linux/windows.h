@@ -82,8 +82,16 @@ Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed',
 #define LOBYTE(w)           ((BYTE)((DWORD)(w) & 0xff))
 #define HIBYTE(w)           ((BYTE)((DWORD)(w) >> 8))
 
-#ifdef ENABLE_SMALLFIXES
-#define ShowCursor(a) while(0){}
+#ifdef USE_GLUT
+#define ShowCursor(a)					\
+do {							\
+	if (a)						\
+		glutSetCursor(GLUT_CURSOR_INHERIT);	\
+	else						\
+		glutSetCursor(GLUT_CURSOR_NONE);	\
+} while (0)
+#else
+#define ShowCursor(a) do{}while(0)
 #endif
 
 #ifdef NO_MUTEXTHREADS
