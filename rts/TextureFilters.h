@@ -21,24 +21,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __FILTERS_H__
 #define __FILTERS_H__
 
-#include <math.h>
-
-#ifdef EMULE_WINTYPES
 #include <windows.h>
-#include <glib.h>
-#define uint8 guint8
-#define uint16 guint16
-#define uint32 guint32
-#else
-#define uint8 unsigned __int8
-#define WORD unsigned __int16
-#define uint16 unsigned __int16
-#define DWORD unsigned __int32
-#define uint32 unsigned __int32
-#endif
+#include <math.h>
 
 #define DWORD_MAKE(r, g, b, a)   ((DWORD) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)))
 #define WORD_MAKE(r, g, b, a)   ((WORD) (((a) << 12) | ((r) << 8) | ((g) << 4) | (b)))
+
+typedef uint32_t uint32;
+typedef uint16_t uint16;
+typedef uint8_t uint8;
 
 void Super2xSaI_32( DWORD *srcPtr, DWORD *destPtr, DWORD width, DWORD height, DWORD pitch);
 void Super2xSaI_16( WORD *srcPtr, WORD *destPtr, DWORD width, DWORD height, DWORD pitch);

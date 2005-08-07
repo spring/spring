@@ -153,7 +153,6 @@ CTextureHandler::CTextureHandler()
 		bigTexX*= mul;
 		bigTexY*= mul;
 		unsigned char* temptex=new unsigned char[bigTexX*bigTexY*4];
-#ifndef NO_TEXTURES
 		switch (TQ)
 		{
 		case 1:		// 2xSaI
@@ -172,7 +171,6 @@ CTextureHandler::CTextureHandler()
 			hq2x_32( tex, oldTexX*4, temptex, bigTexX*4, oldTexX, oldTexY);
 			break;
 		}
-#endif
 		delete[] tex;
 		tex = temptex;
 	}
