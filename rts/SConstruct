@@ -102,14 +102,14 @@ if env.get('enable_smallfixes'):
 	defines+=['ENABLE_SMALLFIXES','ENABLE_CPPFIX']	
 if env.get('disable_texture_filtering'):
 	defines+=['NO_TEXTURES']
-	exclude_list+=Split("""	TextureFilters_hq2x.cpp
-				TextureFilters_2xsai.cpp
-				TextureFilters_hq4x.cpp""")
+#	exclude_list+=Split("""	TextureFilters_hq2x.cpp
+#				TextureFilters_2xsai.cpp
+#				TextureFilters_hq4x.cpp""")
 if env.get('disable_avi'):
 	exclude_list.append("AVIGenerator.cpp")
 	defines+=['NO_AVI']
 if env.get('disable_advtreedrawer'):
-	exclude_list+=Split("""AdvTreeGenerator.cpp AdvTreeDrawer.cpp""")
+#	exclude_list+=Split("""AdvTreeGenerator.cpp AdvTreeDrawer.cpp""")
 	defines+=['NO_NICETREES']
 if env.get('force_glextensions'):
 	defines+=['FORCE_GL_EXTENSIONS']
