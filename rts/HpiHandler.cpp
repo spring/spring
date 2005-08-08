@@ -22,22 +22,6 @@ CHpiHandler* hpiHandler=0;
 
 CHpiHandler::CHpiHandler()
 {
-
-#ifndef NO_HPI
-
-	if((m_hDLL=LoadLibrary("hpiutil.dll"))==0)
-		MessageBox(0,"Failed to find hpiutil.dll","",0);
-
-	HPIOpen=	(LPVOID (WINAPI *)(const char*))GetProcAddress(m_hDLL,"HPIOpen");
-	HPIGetFiles=(LRESULT (WINAPI *)(void *, int, LPSTR, LPINT, LPINT))GetProcAddress(m_hDLL,"HPIGetFiles");
-	HPIClose=(LRESULT (WINAPI *)(void *))GetProcAddress(m_hDLL,"HPIClose");
-	HPIOpenFile=(LPSTR (WINAPI *)(void *hpi, const char*))GetProcAddress(m_hDLL,"HPIOpenFile");
-	HPIGet=(void (WINAPI *)(void *Dest, void *, int, int))GetProcAddress(m_hDLL,"HPIGet");
-	HPICloseFile=(LRESULT (WINAPI *)(LPSTR))GetProcAddress(m_hDLL,"HPICloseFile");
-	HPIDir=(LRESULT (WINAPI*)(void *hpi, int Next, LPSTR DirName, LPSTR Name, LPINT Type, LPINT Size))GetProcAddress(m_hDLL,"HPIDir");
-#else
-#warning Implement : HPIOpen HPIGetFiles HPIClose HPIOpenFile HPIGet HPICloseFile HPIDir in a separated lib
-#endif
 	string taDir;
 
 //	if(taDir[taDir.size()-1]!='\\')
@@ -67,7 +51,6 @@ CHpiHandler::CHpiHandler()
 
 CHpiHandler::~CHpiHandler()
 {
-	FreeLibrary(m_hDLL);
 }
 
 int CHpiHandler::GetFileSize(string name)
@@ -83,15 +66,12 @@ int CHpiHandler::LoadFile(string name, void *buffer)
 	MakeLower(name);
 	if(files.find(name)==files.end())
 		return 0;
-	void* hpi=HPIOpen(files[name].hpiname.c_str());
-#ifndef NO_HPI
-	char* file=HPIOpenFile(hpi, name.c_str());
-#else
-	char* file= const_cast<char*> (HPIOpenFile(hpi, name.c_str()).c_str());
-#endif
+	_HPIFILE* hpi=(_HPIFILE*)HPIOpen((char*)files[name].hpiname.c_str());
+	char* file=HPIOpenFile(hpi, (char*)name.c_str());
+//	char* file= const_cast<char*> (HPIOpenFile(hpi, name.c_str()).c_str());
 	if (file)
 	{	// avoid crash if file is missing.
-		HPIGet(buffer,file,0,files[name].size);
+		HPIGet((char*)buffer,file,0,files[name].size);
 		HPICloseFile(file);
 	}
 
@@ -122,7 +102,7 @@ void CHpiHandler::FindHpiFiles(string pattern,string path)
 
 void CHpiHandler::SearchHpiFile(char* name)
 {
-	void* hpi=HPIOpen(name);
+	_HPIFILE* hpi=(_HPIFILE*)HPIOpen(name);
 	if(hpi==0)
 		return;
 	char file[512];
@@ -130,7 +110,7 @@ void CHpiHandler::SearchHpiFile(char* name)
 	int size;
 
 //	MessageBox(0,name,"Test",0);
-	LRESULT nextFile=HPIGetFiles(hpi, 0, file, &type, &size);
+	bool nextFile=HPIGetFiles(hpi, 0, file, &type, &size);
 
 	while(nextFile!=0){
 		if(type==0){
@@ -210,7 +190,7 @@ void CHpiHandler::FindHpiFilesForDir(string pattern,string path,string subPath,s
 
 void CHpiHandler::SearchHpiFileInDir(char* name,string subPath,std::vector<std::string>& found)
 {
-	void* hpi=HPIOpen(name);
+	_HPIFILE* hpi=(_HPIFILE*)HPIOpen(name);
 	if(hpi==0)
 		return;
 	char file[512];
@@ -221,7 +201,7 @@ void CHpiHandler::SearchHpiFileInDir(char* name,string subPath,std::vector<std::
 	char path[500];
 	subPath.erase(subPath.length()-1);
 	strcpy(path,subPath.c_str());
-	LRESULT nextFile=HPIDir(hpi, 0, path, file, &type, &size);
+	bool nextFile=HPIDir(hpi, 0, path, file, &type, &size);
 
 	while(nextFile!=0){
 		if(type==0)

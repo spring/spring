@@ -46,14 +46,6 @@ private:
 
 	HINSTANCE m_hDLL;
 	bool useBackupUnit;
-
-	LPVOID (WINAPI *HPIOpen)(const char* FileName);
-	LRESULT (WINAPI *HPIGetFiles)(void *hpi, int Next, LPSTR Name, LPINT Type, LPINT Size);
-	LRESULT (WINAPI *HPIClose)(void *hpi);
-	LPSTR (WINAPI *HPIOpenFile)(void *hpi, const char* FileName);
-	void (WINAPI *HPIGet)(void *Dest, void *FileHandle, int offset, int bytecount);
-	LRESULT (WINAPI *HPICloseFile)(LPSTR FileHandle);
-	LRESULT (WINAPI *HPIDir)(void *hpi, int Next, LPSTR DirName, LPSTR Name, LPINT Type, LPINT Size);
 };
 
 extern CHpiHandler* hpiHandler;
