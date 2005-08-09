@@ -1,6 +1,8 @@
 #ifndef _GLFONT_H
 #define _GLFONT_H
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include "myGL.h"
 
 class CglFont
@@ -12,10 +14,16 @@ public:
 	void glPrintAt(GLfloat x, GLfloat y, float s, const char* fmt, ...);
 	CglFont(int start, int num);
 	~CglFont();
-	int charWidths[256];
+	int *charWidths;
 private:
-	void printstring(const char *str);
+	void printstring(const char *text);
+	void init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase);
 	void WorldChar(char c);
+	int chars;
+	int charstart;
+	int charheight;
+	GLuint *textures;
+	GLuint listbase;
 };
 extern CglFont* font;
 
