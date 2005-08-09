@@ -24,7 +24,6 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 
 	FT_Face face;
 	FT_Library library;
-	FT_GlyphSlot slot = face->glyph;
 
 	memset(tex,0,TEXSIZE*TEXSIZE*4);
 	charHeight=0;
@@ -39,6 +38,7 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 
 	displaylist=glGenLists(256);
 
+	FT_GlyphSlot slot = face->glyph;
 	for (unsigned int c=0; c<256; c++) 
 	{
 		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
@@ -115,6 +115,7 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, 4, TEXSIZE, TEXSIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
 
+	FT_Done_Face(face);
 	FT_Done_FreeType(library);
 }
 
