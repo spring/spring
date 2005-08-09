@@ -24,6 +24,8 @@ private:
 	int charheight;
 	GLuint *textures;
 	GLuint listbase;
+	FT_Face face;
+	FT_Library library;
 };
 extern CglFont* font;
 

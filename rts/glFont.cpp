@@ -20,7 +20,7 @@ CglFont* font;
 
 #define DRAW_SIZE 1
 #define FONTSIZE 20
-#define FONTFILE "cour.ttf"
+#define FONTFILE "Vera.ttf"
 
 /*
  * Bit twiddle to round up to
@@ -45,10 +45,8 @@ CglFont::CglFont(int start, int num)
 	charstart = start;
 	charWidths = new int[chars];
 	textures = new GLuint[chars];
-	FT_Library library;
 	if (FT_Init_FreeType(&library))
 		throw std::runtime_error("FT_Init_FreeType failed");
-	FT_Face face;
 	if (FT_New_Face(library,FONTFILE,0,&face))
 		throw std::runtime_error("FT_New_Face failed");
 	FT_Set_Char_Size(face, FONTSIZE << 6, FONTSIZE << 6, 96,96);
@@ -56,12 +54,12 @@ CglFont::CglFont(int start, int num)
 	glGenTextures(chars,textures);
 	for (unsigned char i = start; i < num; i++)
 		init_chartex(face,i,listbase,textures);
-	FT_Done_Face(face);
-	FT_Done_FreeType(library);
 }
 
 CglFont::~CglFont()
 {
+	FT_Done_Face(face);
+	FT_Done_FreeType(library);
 	glDeleteLists(listbase,chars);
 	glDeleteTextures(chars,textures);
 	delete [] textures;
@@ -79,8 +77,9 @@ void CglFont::init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase)
 	charheight = height;
 	GLubyte* expdata = new GLubyte[2*width*height];
 	for(int j=0; j <height;j++) {
-		for(int i=0; i < width; i++)
-			expdata[2*(i+j*width)]= expdata[2*(i+j*width)+1] = (i>=slot->bitmap.width || j>=slot->bitmap.rows) ? 0 : slot->bitmap.buffer[i + slot->bitmap.width*j];
+		for(int i=0; i < width; i++) {
+			expdata[2*(i+j*width)] = expdata[2*(i+j*width)+1] = (i>=slot->bitmap.width || j>=slot->bitmap.rows || !slot->bitmap.buffer[i+slot->bitmap.width*j]) ? 0 : slot->bitmap.buffer[i+slot->bitmap.width*j];
+		}
 	}
 	glBindTexture(GL_TEXTURE_2D,texbase[ch]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -115,12 +114,18 @@ void CglFont::printstring(const char *text)
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	
-	glListBase(listbase);
 	float modelviewmatrix[16];	
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelviewmatrix);
 	glPushMatrix();
 	glMultMatrixf(modelviewmatrix);
-	glCallLists(strlen(text),GL_UNSIGNED_BYTE,text);
+	int previous = 0;
+	for (int i = 0; i < strlen(text); i++) {
+		FT_Vector delta;
+		FT_Get_Kerning(face,FT_Get_Char_Index(face,previous),FT_Get_Char_Index(face,text[i]),FT_KERNING_UNSCALED,&delta);
+		glTranslatef(delta.x>>6,0,0);
+		glCallList(text[i]+listbase);
+		previous = text[i];
+	}
 	glPopMatrix();
 	glPopAttrib();		
 }
