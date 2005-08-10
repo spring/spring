@@ -14,6 +14,7 @@
 #include "Team.h"
 #include "TAPalette.h"
 //#include "mmgr.h"
+#include "filefunctions.h"
 
 CPreGame* pregame=0;
 extern bool keys[256];
@@ -300,21 +301,13 @@ void CPreGame::SelectMap(std::string s)
 void CPreGame::ShowMapList(void)
 {
 	CglList* list=new CglList("Select map",SelectMap);
-#ifndef NO_IO
-	WIN32_FIND_DATA findFileData;
-	HANDLE findHandle = FindFirstFile( "maps\\*.sm2" , &findFileData);
-	if(findHandle == INVALID_HANDLE_VALUE){
+	std::vector<std::string> found = find_files("*.sm2","maps/");
+	if (found.begin() == found.end()) {
 		MessageBox(0,"Couldnt find any map files","PreGame error",0);
 		return;
 	}
-	list->AddItem(findFileData.cFileName,findFileData.cFileName);
-
-	while(FindNextFile(findHandle , &findFileData)){
-		list->AddItem(findFileData.cFileName,findFileData.cFileName);
-	}
-
-	FindClose(findHandle);
+	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++)
+		list->AddItem(it->c_str(),it->c_str());
 
 	showList=list;
-#endif
 }

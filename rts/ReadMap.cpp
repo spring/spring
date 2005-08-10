@@ -68,7 +68,7 @@ CReadMap* CReadMap::Instance()
 #ifdef _WIN32
       		_instance=new CBFReadmap(string("maps\\")+stupidGlobalMapname/*/"maps\\map2.sm2"/**/);
 #else
-      		_instance=new CBFReadmap(string("maps/")+stupidGlobalMapname);
+      		_instance=new CBFReadmap(stupidGlobalMapname);
 #endif
 		readmap=_instance;
 		PUSH_CODE_MODE;

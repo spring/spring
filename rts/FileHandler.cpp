@@ -1,16 +1,11 @@
 #include "StdAfx.h"
 #include "FileHandler.h"
 #include <fstream>
-#ifndef NO_IO
-#include <io.h>
-#else //NO_IO
-#include <glob.h>
-#include <iostream>
-#endif //NO_IO
 #include "HpiHandler.h"
 #include <algorithm>
 #include <cctype>
 //#include "mmgr.h"
+#include "filefunctions.h"
 
 using namespace std;
 
@@ -121,16 +116,6 @@ bool CFileHandler::Eof()
 std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 {
 	std::vector<std::string> found;
-#ifndef NO_IO
-
-	struct _finddata_t files;    
-	long hFile;
-	int morefiles=0;
-
-	if( (hFile = _findfirst( pattern.c_str(), &files )) == -1L ){
-		morefiles=-1;
-	}
-
 	std::string patternPath=pattern;
 	if(patternPath.find_last_of('\\')!=string::npos){
 		patternPath.erase(patternPath.find_last_of('\\')+1);
@@ -141,12 +126,7 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 	if(pattern.find('\\')==string::npos && pattern.find('/')==string::npos)
 		patternPath.clear();
 
-	int numfiles=0;
-	while(morefiles==0){
-		
-		found.push_back(patternPath+files.name);
-		morefiles=_findnext( hFile, &files ); 
-	}
+	found = find_files(pattern,patternPath);
 
 	//todo: get a real regex handler
 	std::string filter=pattern;
@@ -169,24 +149,6 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 		}
 	}
 
-#else //NO_IO
-	glob_t *pglob = (glob_t*) malloc(sizeof(glob_t));
-	int a,globret;
-        if( !(globret=glob( pattern.c_str(), 0, NULL, pglob )) )
-        {
-                for( a=0; a < pglob->gl_pathc; a++)
-                         found.push_back( pglob->gl_pathv[a] );
-        }
-	else
-	{
-	  if( globret == GLOB_NOMATCH )
-	    std::cerr << "No file matchs : " << pattern << std::endl;
-	  else
-	    std::cerr << "Other glob error\n";
-	}
-	globfree(pglob);
-        free(pglob);
-#endif //NO_IO
 	return found;
 }
 

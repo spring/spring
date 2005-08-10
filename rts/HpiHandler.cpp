@@ -6,13 +6,11 @@
 #include "StdAfx.h"
 #include "HpiHandler.h"
 #include <windows.h>
-#ifndef NO_IO
-#include <io.h>
-#endif //NO_IO
 #include "HPIUtil.h"
 #include "myGL.h"
 #include "RegHandler.h"
 #include "InfoConsole.h"
+#include "filefunctions.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -27,24 +25,24 @@ CHpiHandler::CHpiHandler()
 //	if(taDir[taDir.size()-1]!='\\')
 //		taDir+="\\";
 
-	taDir=".\\";
+	taDir="./";
 	char t[500];
 	sprintf(t,"Mapping hpi files in %s",taDir.c_str());
 	PrintLoadMsg(t);
 
-	FindHpiFiles(taDir+"*.gp4",taDir);
-	FindHpiFiles(taDir+"*.swx",taDir);
-	FindHpiFiles(taDir+"*.gp3",taDir);
-	FindHpiFiles(taDir+"*.ufo",taDir);
-	FindHpiFiles(taDir+"*.ccx",taDir);
-	FindHpiFiles(taDir+"*.hpi",taDir);
+	FindHpiFiles("*.gp4",taDir);
+	FindHpiFiles("*.swx",taDir);
+	FindHpiFiles("*.gp3",taDir);
+	FindHpiFiles("*.ufo",taDir);
+	FindHpiFiles("*.ccx",taDir);
+	FindHpiFiles("*.hpi",taDir);
 
 	// If no hpi files are found, spring is probably running without any ta content
 	// In that case, enable the spanktower!
 	useBackupUnit = false;
 	if (files.size() == 0) {
 		info->AddLine("No hpi files found, enabling backup unit");
-		FindHpiFiles(taDir+"*.sdu",taDir);
+		FindHpiFiles("*.sdu",taDir);
 		useBackupUnit = true;
 	}
 }
@@ -81,23 +79,9 @@ int CHpiHandler::LoadFile(string name, void *buffer)
 
 void CHpiHandler::FindHpiFiles(string pattern,string path)
 {
-#ifndef NO_IO
-	struct _finddata_t files;    
-	long hFile;
-	int morefiles=0;
-
-//	MessageBox(0,pattern.c_str(),path.c_str(),0);
-
-	if( (hFile = _findfirst( pattern.c_str(), &files )) == -1L ){
-		morefiles=-1;
-	}
-
-	while(morefiles==0){
-		SearchHpiFile((char*)(path+files.name).c_str());
-		
-		morefiles=_findnext( hFile, &files ); 
-	}
-#endif
+	std::vector<std::string> found = find_files(pattern,path);
+	for (std::vector<std::string>::iterator it = found.begin(); it!=found.end(); it++)
+		SearchHpiFile((char*)it->c_str());
 }
 
 void CHpiHandler::SearchHpiFile(char* name)
@@ -153,39 +137,25 @@ std::vector<std::string> CHpiHandler::GetFilesInDir(std::string dir)
 {
 	std::vector<std::string> found;
 
-	string taDir=".\\";
-	FindHpiFilesForDir(taDir+"*.gp4",taDir,dir,found);
-	FindHpiFilesForDir(taDir+"*.swx",taDir,dir,found);
-	FindHpiFilesForDir(taDir+"*.gp3",taDir,dir,found);
-	FindHpiFilesForDir(taDir+"*.ufo",taDir,dir,found);
-	FindHpiFilesForDir(taDir+"*.ccx",taDir,dir,found);
-	FindHpiFilesForDir(taDir+"*.hpi",taDir,dir,found);
+	string taDir="./";
+	FindHpiFilesForDir("*.gp4",taDir,dir,found);
+	FindHpiFilesForDir("*.swx",taDir,dir,found);
+	FindHpiFilesForDir("*.gp3",taDir,dir,found);
+	FindHpiFilesForDir("*.ufo",taDir,dir,found);
+	FindHpiFilesForDir("*.ccx",taDir,dir,found);
+	FindHpiFilesForDir("*.hpi",taDir,dir,found);
 
 	if (useBackupUnit) 
-		FindHpiFilesForDir(taDir+"*.sdu",taDir,dir,found);
+		FindHpiFilesForDir("*.sdu",taDir,dir,found);
 
 	return found;
 }
 
 void CHpiHandler::FindHpiFilesForDir(string pattern,string path,string subPath,std::vector<std::string>& found)
 {
-#ifndef NO_IO
-	struct _finddata_t files;    
-	long hFile;
-	int morefiles=0;
-
-//	MessageBox(0,pattern.c_str(),path.c_str(),0);
-
-	if( (hFile = _findfirst( pattern.c_str(), &files )) == -1L ){
-		morefiles=-1;
-	}
-
-	while(morefiles==0){
-		SearchHpiFileInDir((char*)(path+files.name).c_str(),subPath,found);
-		
-		morefiles=_findnext( hFile, &files ); 
-	}
-#endif
+	std::vector<std::string> result = find_files(pattern,path);
+	for (std::vector<std::string>::iterator it = result.begin(); it != result.end(); it++)
+		SearchHpiFileInDir((char*)it->c_str(),subPath,found);
 }
 
 void CHpiHandler::SearchHpiFileInDir(char* name,string subPath,std::vector<std::string>& found)
