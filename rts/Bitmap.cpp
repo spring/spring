@@ -118,11 +118,43 @@ void CBitmap::LoadBMP(string filename)
 	}
 
 	// Load bitmap fileheader & infoheader
-	bmpfile.Read(&bmfh,sizeof (BITMAPFILEHEADER));
-	bmpfile.Read(&bmih,sizeof (BITMAPINFOHEADER));
+	unsigned short tmpw;
+	unsigned int tmpdw;
+	bmpfile.Read(&tmpw,sizeof(unsigned short));
+	bmfh.bfType = swabword(tmpw);
+	bmpfile.Read(&tmpdw,sizeof(unsigned int));
+	bmfh.bfSize = swabdword(tmpdw);
+	bmpfile.Read(&tmpw,sizeof(unsigned short));
+	bmfh.bfReserved1 = swabword(tmpw);
+	bmpfile.Read(&tmpw,sizeof(unsigned short));
+	bmfh.bfReserved2 = swabword(tmpw);
+	bmpfile.Read(&tmpdw,sizeof(unsigned int));
+	bmfh.bfOffBits = swabword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(unsigned int));
+	bmih.biSize = swabdword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(int));
+	bmih.biWidth = swabdword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(int));
+	bmih.biHeight = swabdword(tmpdw);
+	bmpfile.Read(&tmpw,sizeof(unsigned short));
+	bmih.biPlanes = swabword(tmpw);
+	bmpfile.Read(&tmpw,sizeof(unsigned short));
+	bmih.biBitCount = swabword(tmpw);
+	bmpfile.Read(&tmpdw,sizeof(unsigned int));
+	bmih.biCompression = swabdword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(unsigned int));
+	bmih.biSizeImage = swabdword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(int));
+	bmih.biXPelsPerMeter = swabdword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(int));
+	bmih.biYPelsPerMeter = swabdword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(unsigned int));
+	bmih.biClrUsed = swabdword(tmpdw);
+	bmpfile.Read(&tmpdw,sizeof(unsigned int));
+	bmih.biClrImportant = swabdword(tmpdw);
 
 	// Check filetype signature
-	if (bmfh.bfType!=19778/*'MB'*/){
+	if (bmfh.bfType!=BITMAP_MAGIC){
 		MessageBox(0, "Unable to load BMP File", filename.c_str(), MB_OK);
 		xsize=1;
 		ysize=1;
@@ -270,7 +302,7 @@ void CBitmap::LoadPCX(string filename)
 	while(count < lSize)
 	{
 		data = *tmpbuf++;
-		if((data >= 192) && (data <= 255))
+		if((data >= 192)/* && (data <= 255)*/)
 		{
 			num_bytes = data - 192;
 			data  = *tmpbuf++;

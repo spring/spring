@@ -15,6 +15,7 @@ appears in the common code
 #include <stdlib.h>
 #include <fenv.h>
 #include <iostream>
+#include <byteswap.h>
 
 //FIXME remove following line and include everywhere required
 #include <inputs.h>
@@ -138,32 +139,45 @@ do {								\
 
 /*
  * Bitmap handling
+ *
+ * The swabbing stuff looks backwards, but the bitmaps
+ * are _originally_ little endian (win32 x86).
+ * So in this case little endian is the standard while
+ * big endian is the exception.
  */
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define swabword(w)	(bswap_16(w))
+#define swabdword(w)	(bswap_32(w))
+#else
+#define swabword(w)	(w)
+#define swabdword(w)	(w)
+#endif
+#define BITMAP_MAGIC 0x4d42
 struct bitmapfileheader_s {
-	WORD bfType;
-	DWORD bfSize;
-	WORD bfReserved1;
-	WORD bfReserved2;
-	DWORD bfOffBits;
+	unsigned short bfType;
+	unsigned int bfSize;
+	unsigned short bfReserved1;
+	unsigned short bfReserved2;
+	unsigned int bfOffBits;
 };
 struct bitmapinfoheader_s {
-	DWORD  biSize; 
-	long   biWidth; 
-	long   biHeight; 
-	DWORD  biPlanes; 
-	WORD   biBitCount; 
-	DWORD  biCompression; 
-	DWORD  biSizeImage; 
-	long   biXPelsPerMeter; 
-	long   biYPelsPerMeter; 
-	DWORD  biClrUsed; 
-	DWORD  biClrImportant; 
+	unsigned int biSize; 
+	int biWidth; 
+	int biHeight; 
+	unsigned short biPlanes; 
+	unsigned short biBitCount; 
+	unsigned int  biCompression; 
+	unsigned int  biSizeImage; 
+	int biXPelsPerMeter; 
+	int biYPelsPerMeter; 
+	unsigned int biClrUsed; 
+	unsigned int biClrImportant; 
 };
 struct paletteentry_s {
-	BYTE peRed;
-	BYTE peGreen;
-	BYTE peBlue;
-	BYTE peFlags;
+	unsigned char peRed;
+	unsigned char peGreen;
+	unsigned char peBlue;
+	unsigned char peFlags;
 };
 typedef struct bitmapfileheader_s BITMAPFILEHEADER;
 typedef struct bitmapinfoheader_s BITMAPINFOHEADER;
