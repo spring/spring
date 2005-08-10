@@ -600,13 +600,11 @@ void processSpecialKeys(int key, int x, int y) {
 void processMousePassiveMotion(int x, int y) {
   if(mouse)
     mouse->MouseMove(x,y);
-  glutPostRedisplay();
 }
 
 void processMouseActiveMotion(int x, int y) {
   if(mouse)
     mouse->MouseMove(x,y);
-  glutPostRedisplay();
 }
 
 void processMouse(int button, int state, int x, int y) {
