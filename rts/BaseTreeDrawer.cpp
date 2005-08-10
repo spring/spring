@@ -21,7 +21,7 @@ CBaseTreeDrawer::~CBaseTreeDrawer(void)
 CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
 {
 	CBaseTreeDrawer* td;
-	if(GLEW_ARB_vertex_program && regHandler.GetInt("3DTrees",1))
+	if(GLEW_ARB_vertex_program && regHandler.GetInt("3DTrees",1) && 0)
 		td=new CAdvTreeDrawer;
 	else
 		td=new CBasicTreeDrawer;
