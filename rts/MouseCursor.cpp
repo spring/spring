@@ -138,6 +138,8 @@ void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 
 void CMouseCursor::Draw(int x, int y)
 {
+	if (frames.size()==0)
+		return;
 	//Advance a frame in animated cursors
 	if (gu->gameTime - lastFrameTime > 0.1) {
 		lastFrameTime = gu->gameTime;
