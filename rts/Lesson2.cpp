@@ -543,7 +543,7 @@ void processNormalKeys(unsigned char key, int x, int y) {
   }
 #ifdef NEW_GUI
   GUIcontroller::Character(char(key));
-  return 0;
+  return;
 #endif
   if(activeController){
     if(activeController->userWriting && (key>31))
@@ -552,6 +552,7 @@ void processNormalKeys(unsigned char key, int x, int y) {
       else
 	activeController->userInput+=char(key);
   }
+  glutPostRedisplay();
 }
 
 void processNormalKeysUP(unsigned char key, int x, int y) {
@@ -561,6 +562,7 @@ void processNormalKeysUP(unsigned char key, int x, int y) {
     activeController->KeyReleased(key);
   }
   keys[key]=false;
+  glutPostRedisplay();
 }
 
 
@@ -592,16 +594,19 @@ void processSpecialKeys(int key, int x, int y) {
   if(activeController){
     activeController->KeyPressed(key,1);
   }
+  glutPostRedisplay();
 }
 
 void processMousePassiveMotion(int x, int y) {
   if(mouse)
     mouse->MouseMove(x,y);
+  glutPostRedisplay();
 }
 
 void processMouseActiveMotion(int x, int y) {
   if(mouse)
     mouse->MouseMove(x,y);
+  glutPostRedisplay();
 }
 
 void processMouse(int button, int state, int x, int y) {
@@ -612,6 +617,7 @@ void processMouse(int button, int state, int x, int y) {
       else
 	mouse->MouseRelease(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
     }
+  glutPostRedisplay();
 }
 #endif //USE_GLUT
 
