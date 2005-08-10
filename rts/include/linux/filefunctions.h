@@ -7,15 +7,26 @@
 
 #include <vector>
 #include <glob.h>
+#include <ctype.h>
 #include <iostream>
 
 static inline std::vector<std::string> find_files(std::string pattern, std::string patternpath)
 {
 	std::string fullpattern(patternpath+pattern);
+	std::string regpattern;
+	for (int i = 0; i < fullpattern.length(); i++) {
+		char ch = fullpattern.at(i);
+		if (isalpha(ch)) {
+			char tmpstr[4];
+			sprintf(tmpstr,"[%c%c]",toupper(ch),tolower(ch));
+			regpattern.append(tmpstr);
+		} else
+			regpattern.append(1,ch);
+	}
 	std::vector<std::string> found;
 	glob_t *pglob = (glob_t*) malloc(sizeof(glob_t));
 	int a,globret;
-        if( !(globret=glob( fullpattern.c_str(), 0, NULL, pglob )) ) {
+        if( !(globret=glob( regpattern.c_str(), 0, NULL, pglob )) ) {
                 for( a=0; a < pglob->gl_pathc; a++)
                          found.push_back( pglob->gl_pathv[a] );
         } else {

@@ -126,11 +126,11 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 	if(pattern.find('\\')==string::npos && pattern.find('/')==string::npos)
 		patternPath.clear();
 
-	found = find_files(pattern,patternPath);
-
-	//todo: get a real regex handler
 	std::string filter=pattern;
 	filter.erase(0,patternPath.length());
+	found = find_files(filter,patternPath);
+
+	//todo: get a real regex handler
 	while(filter.find_last_of('*')!=string::npos)
 		filter.erase(filter.find_last_of('*'),1);
 //	while(filter.find_last_of('.')!=string::npos)
