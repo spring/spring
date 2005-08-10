@@ -44,7 +44,7 @@ CTextureHandler::CTextureHandler()
 	int numfiles=0;
 	int totalSize=0;
 
-	std::vector<std::string> files=CFileHandler::FindFiles("unittextures\\tatex\\*.BMP");
+	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/*.BMP");
 
 	for(vector<string>::iterator fi=files.begin();fi!=files.end();++fi){
 		string s=std::string(*fi);
@@ -52,7 +52,7 @@ CTextureHandler::CTextureHandler()
 		TexFile* tex=new TexFile;
 		tex->tex.Load(s);
 
-		s.erase(0,s.find_last_of('\\')+1);
+		s.erase(0,s.find_last_of('/')+1);
 		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
 
 		tex->name=s;

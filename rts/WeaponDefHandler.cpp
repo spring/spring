@@ -16,11 +16,7 @@ CWeaponDefHandler* weaponDefHandler;
 
 CWeaponDefHandler::CWeaponDefHandler(void)
 {
-#ifdef _WIN32
-      	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons\\*.tdf");
-#else
       	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");
-#endif
 
 	CSunParser tasunparser;
 
@@ -261,7 +257,7 @@ void CWeaponDefHandler::LoadSound(GuiSound &gsound)
 	if(gsound.name.find(".wav") == -1)
 		gsound.name = gsound.name + ".wav";
 
-	CFileHandler sfile("sounds\\" + gsound.name);
+	CFileHandler sfile("sounds/" + gsound.name);
 	if(!sfile.FileExists())
 	{
 		gsound.id = 0;

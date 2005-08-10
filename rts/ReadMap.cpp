@@ -53,9 +53,9 @@ CReadMap* CReadMap::Instance()
 			readmap=_instance;
 			groundDrawer=new CBasicGroundDrawer;
 		} else {
-			string texPath("TerrainChunks\\");
+			string texPath("TerrainChunks/");
 			texPath+=stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'));
-			texPath+="\\texff.raw";
+			texPath+="/texff.raw";
 			CFileHandler ifs(texPath);
 			if(!ifs.FileExists()){
 				_spawnl(_P_WAIT,"texgen.exe","texgen.exe",stupidGlobalMapname.c_str(),NULL);
@@ -65,11 +65,7 @@ CReadMap* CReadMap::Instance()
 			groundDrawer=new CAdvGroundDrawer;
 		}*/
 
-#ifdef _WIN32
-      		_instance=new CBFReadmap(string("maps\\")+stupidGlobalMapname/*/"maps\\map2.sm2"/**/);
-#else
       		_instance=new CBFReadmap(stupidGlobalMapname);
-#endif
 		readmap=_instance;
 		PUSH_CODE_MODE;
 		ENTER_UNSYNCED;

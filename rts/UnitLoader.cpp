@@ -264,7 +264,7 @@ START_TIME_PROFILE;
 		unit->pos.y=ground->GetHeight2(unit->pos.x,unit->pos.z);
 	//unit->pos.y=ground->GetHeight(unit->pos.x,unit->pos.z);
 
-	unit->cob = new CCobInstance(GCobEngine.GetCobFile("scripts\\" + ud->model.modelname+".cob"), unit);
+	unit->cob = new CCobInstance(GCobEngine.GetCobFile("scripts/" + ud->model.modelname+".cob"), unit);
 	unit->cob->Call(COBFN_Create);
 
 	unit->localmodel = unit3doparser->CreateLocalModel(unit->model, &unit->cob->pieces);
@@ -349,7 +349,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 	weapon->metalFireCost=weapondef->metalcost;
 	weapon->energyFireCost=weapondef->energycost;
 
-	/*CFileHandler ffile("sounds\\"+weapondef->sfiresound);
+	/*CFileHandler ffile("sounds/"+weapondef->sfiresound);
 	if(ffile.FileExists())
 	{
 		weapondef->firesound = sound->GetWaveId(weapondef->sfiresound);

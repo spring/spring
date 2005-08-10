@@ -14,7 +14,7 @@
 #define COB_DEBUG	0
 
 // Should return true for scripts that should have debug output. 
-#define COB_DEBUG_FILTER (script.name == "scripts\\ARMJETH.cob")
+#define COB_DEBUG_FILTER (script.name == "scripts/ARMJETH.cob")
 
 using namespace std;
 

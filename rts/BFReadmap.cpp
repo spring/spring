@@ -60,7 +60,7 @@ CBFReadmap::CBFReadmap(std::string mapname)
 	for(y=0;y<1024*1024;++y)
 		damagemap[y]=0;
 
-	//CFileHandler ifs((string("maps\\")+stupidGlobalMapname).c_str());
+	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
 
 
 	ifs->Read(heightmap,mapx*mapy*4);
@@ -175,7 +175,7 @@ CBFReadmap::CBFReadmap(std::string mapname)
 
 	PrintLoadMsg("Loading detail textures");
 
-	CBitmap bm("bitmaps\\detailtex2.bmp");
+	CBitmap bm("bitmaps/detailtex2.bmp");
 	glGenTextures(1, &detailtex2);
 	glBindTexture(GL_TEXTURE_2D, detailtex2);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);

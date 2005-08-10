@@ -26,11 +26,7 @@ CUnitDefHandler* unitDefHandler;
 CUnitDefHandler::CUnitDefHandler(void)
 {
 	noCost=false;
-#ifdef _WIN32
-      	std::string dir = "units\\";
-#else
-      	std::string dir = "UNITS/";
-#endif
+      	std::string dir = "units/";
 
 	PrintLoadMsg("Loading units and weapons");
 
@@ -38,23 +34,14 @@ CUnitDefHandler::CUnitDefHandler(void)
 
 	numUnits = 0;
 	
-#ifdef _WIN32
-	std::vector<std::string> tafiles = CFileHandler::FindFiles("units\\*.fbi");
-	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units\\*.swu");
-#else
-	std::vector<std::string> tafiles = CFileHandler::FindFiles("UNITS/*.fbi");
-	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("UNITS/*.swu");
-#endif
+	std::vector<std::string> tafiles = CFileHandler::FindFiles("units/*.fbi");
+	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units/*.swu");
 	while(!tafiles2.empty()){
 		tafiles.push_back(tafiles2.back());
 		tafiles2.pop_back();
 	}
 
-#ifdef _WIN32
-      	soundcategory.LoadFile("gamedata\\sound.tdf");
-#else
-      	soundcategory.LoadFile("gamedata/SOUND.TDF");
-#endif
+      	soundcategory.LoadFile("gamedata/sound.tdf");
 	
 	numUnits = tafiles.size();
 
@@ -65,7 +52,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 	for(unsigned int a = 0; a < tafiles.size(); ++a)	
 	{
 		// Determine the name (in lowercase) first
-		int len = tafiles[a].find_last_of("\\")+1;
+		int len = tafiles[a].find_last_of("/")+1;
 		std::string unitname = tafiles[a].substr(len, tafiles[a].size()-4-len);
 		std::transform(unitname.begin(), unitname.end(), unitname.begin(), (int (*)(int))std::tolower);
 
@@ -108,11 +95,7 @@ CUnitDefHandler::~CUnitDefHandler(void)
 void CUnitDefHandler::FindTABuildOpt()
 {
 	CSunParser sunparser;
-#ifdef _WIN32
-      	sunparser.LoadFile("gamedata\\sidedata.tdf");
-#else
-      	sunparser.LoadFile("gamedata/SIDEDATA.TDF");
-#endif
+      	sunparser.LoadFile("gamedata/sidedata.tdf");
 
 	std::vector<std::string> sideunits = sunparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)
@@ -141,11 +124,7 @@ void CUnitDefHandler::FindTABuildOpt()
 		}
 	}
 
-#ifdef _WIN32
-	std::vector<std::string> files = CFileHandler::FindFiles("download\\*.tdf");
-#else
 	std::vector<std::string> files = CFileHandler::FindFiles("download/*.tdf");
-#endif
 	for(unsigned int i=0; i<files.size(); i++)
 	{
 		CSunParser dparser;
@@ -432,14 +411,14 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	std::string objectname;
 	sunparser.GetDef(objectname, "", "UNITINFO\\Objectname");
-	ud.model.modelpath = "objects3d\\" + objectname + ".3do";
+	ud.model.modelpath = "objects3d/" + objectname + ".3do";
 	ud.model.modelname = objectname;
 
 	sunparser.GetDef(ud.wreckName, "", "UNITINFO\\Corpse");
 	sunparser.GetDef(ud.deathExplosion, "", "UNITINFO\\ExplodeAs");
 	sunparser.GetDef(ud.selfDExplosion, "", "UNITINFO\\SelfDestructAs");
 
-	CBitmap bitmap("unitpics\\" + ud.name + ".pcx");
+	CBitmap bitmap("unitpics/" + ud.name + ".pcx");
 	ud.unitimage = bitmap.CreateTexture(false);
 
 	ud.power = (ud.metalCost + ud.energyCost/60.0f);
@@ -474,7 +453,7 @@ void CUnitDefHandler::LoadSound(CSunParser &sunparser, GuiSound &gsound, std::st
 		gsound.id = 0;
 	else
 	{
-		CFileHandler file("sounds\\"+gsound.name+".wav");
+		CFileHandler file("sounds/"+gsound.name+".wav");
 		if(file.FileExists())
 			gsound.id = sound->GetWaveId(gsound.name+".wav");
 		else

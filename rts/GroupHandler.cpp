@@ -117,14 +117,14 @@ void CGroupHandler::FindDlls(void)
 	long hFile;
 	int morefiles=0;
 
-	if( (hFile = _findfirst( "aidll\\*.dll", &files )) == -1L ){
+	if( (hFile = _findfirst( "aidll/*.dll", &files )) == -1L ){
 		morefiles=-1;
 	}
 
 	int numfiles=0;
 	while(morefiles==0){
 //		info->AddLine("Testing %s",files.name);
-		TestDll(string("aidll\\")+files.name);
+		TestDll(string("aidll/")+files.name);
 		
 		morefiles=_findnext( hFile, &files ); 
 	}

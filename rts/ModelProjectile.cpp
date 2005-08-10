@@ -12,7 +12,7 @@ CModelProjectile::CModelProjectile(const float3& pos,const float3& speed, CUnit*
 	//dir=speed;
 	//dir.Normalize();
 
-	model = unit3doparser->Load3DO(("objects3d\\"+weaponDef->visuals.modelName+".3do").c_str(),1,0);
+	model = unit3doparser->Load3DO(("objects3d/"+weaponDef->visuals.modelName+".3do").c_str(),1,0);
 	isUnitPart = true;
 }
 

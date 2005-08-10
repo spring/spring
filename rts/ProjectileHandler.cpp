@@ -89,19 +89,19 @@ CProjectileHandler::CProjectileHandler()
 		}
 	}
 
-	LoadSmoke(tex,64,0,"bitmaps\\smoke\\smoke0000.bmp","bitmaps\\smoke\\smoke_alpha0000.bmp");
-	LoadSmoke(tex,96,0,"bitmaps\\smoke\\smoke0001.bmp","bitmaps\\smoke\\smoke_alpha0001.bmp");
-	LoadSmoke(tex,128,0,"bitmaps\\smoke\\smoke0002.bmp","bitmaps\\smoke\\smoke_alpha0002.bmp");
-	LoadSmoke(tex,160,0,"bitmaps\\smoke\\smoke0003.bmp","bitmaps\\smoke\\smoke_alpha0003.bmp");
-	LoadSmoke(tex,192,0,"bitmaps\\smoke\\smoke0004.bmp","bitmaps\\smoke\\smoke_alpha0004.bmp");
-	LoadSmoke(tex,224,0,"bitmaps\\smoke\\smoke0005.bmp","bitmaps\\smoke\\smoke_alpha0005.bmp");
+	LoadSmoke(tex,64,0,"bitmaps/smoke/smoke0000.bmp","bitmaps/smoke/smoke_alpha0000.bmp");
+	LoadSmoke(tex,96,0,"bitmaps/smoke/smoke0001.bmp","bitmaps/smoke/smoke_alpha0001.bmp");
+	LoadSmoke(tex,128,0,"bitmaps/smoke/smoke0002.bmp","bitmaps/smoke/smoke_alpha0002.bmp");
+	LoadSmoke(tex,160,0,"bitmaps/smoke/smoke0003.bmp","bitmaps/smoke/smoke_alpha0003.bmp");
+	LoadSmoke(tex,192,0,"bitmaps/smoke/smoke0004.bmp","bitmaps/smoke/smoke_alpha0004.bmp");
+	LoadSmoke(tex,224,0,"bitmaps/smoke/smoke0005.bmp","bitmaps/smoke/smoke_alpha0005.bmp");
 
-	LoadSmoke(tex,64,32,"bitmaps\\smoke\\smoke0006.bmp","bitmaps\\smoke\\smoke_alpha0006.bmp");
-	LoadSmoke(tex,96,32,"bitmaps\\smoke\\smoke0007.bmp","bitmaps\\smoke\\smoke_alpha0007.bmp");
-	LoadSmoke(tex,128,32,"bitmaps\\smoke\\smoke0008.bmp","bitmaps\\smoke\\smoke_alpha0008.bmp");
-	LoadSmoke(tex,160,32,"bitmaps\\smoke\\smoke0009.bmp","bitmaps\\smoke\\smoke_alpha0009.bmp");
-	LoadSmoke(tex,192,32,"bitmaps\\smoke\\smoke0010.bmp","bitmaps\\smoke\\smoke_alpha0010.bmp");
-	LoadSmoke(tex,224,32,"bitmaps\\smoke\\smoke0011.bmp","bitmaps\\smoke\\smoke_alpha0011.bmp");
+	LoadSmoke(tex,64,32,"bitmaps/smoke/smoke0006.bmp","bitmaps/smoke/smoke_alpha0006.bmp");
+	LoadSmoke(tex,96,32,"bitmaps/smoke/smoke0007.bmp","bitmaps/smoke/smoke_alpha0007.bmp");
+	LoadSmoke(tex,128,32,"bitmaps/smoke/smoke0008.bmp","bitmaps/smoke/smoke_alpha0008.bmp");
+	LoadSmoke(tex,160,32,"bitmaps/smoke/smoke0009.bmp","bitmaps/smoke/smoke_alpha0009.bmp");
+	LoadSmoke(tex,192,32,"bitmaps/smoke/smoke0010.bmp","bitmaps/smoke/smoke_alpha0010.bmp");
+	LoadSmoke(tex,224,32,"bitmaps/smoke/smoke0011.bmp","bitmaps/smoke/smoke_alpha0011.bmp");
 
 	for(int y=0;y<64;y++){		//fix smoke
 		for(int x=64;x<256;x++){
@@ -173,7 +173,7 @@ CProjectileHandler::CProjectileHandler()
 	ConvertTex(tex,64,0,256,64,1);
 	ConvertTex(tex,0,64,256,128,1);
 
-	CBitmap explo("bitmaps\\explo.bmp");
+	CBitmap explo("bitmaps/explo.bmp");
 	for(int y=0;y<128;y++){
 		for(int x=0;x<128;x++){
 			tex[y+128][x+128][0]=explo.mem[(y*128+x)*4];
@@ -192,7 +192,7 @@ CProjectileHandler::CProjectileHandler()
 		}
 	}
 
-	CBitmap flare("bitmaps\\flare.bmp");
+	CBitmap flare("bitmaps/flare.bmp");
 	for(int y=0;y<128;y++){
 		for(int x=0;x<256;x++){
 			tex[y+64][x+256][0]=flare.mem[(y*256+x)*4+0];

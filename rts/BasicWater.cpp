@@ -20,7 +20,7 @@
 CBasicWater::CBasicWater()
 {
 	glGenTextures(1, &texture);
-	CBitmap pic("bitmaps\\ocean.jpg");
+	CBitmap pic("bitmaps/ocean.jpg");
 
 	// create mipmapped texture
 	glBindTexture(GL_TEXTURE_2D, texture);

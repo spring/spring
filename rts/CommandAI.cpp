@@ -449,7 +449,7 @@ void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
 	c.id=CMD_STOCKPILE;
 	c.type=CMDTYPE_ICON;
 	c.name="0/0";
-	c.iconname="bitmaps\\flare.bmp";
+	c.iconname="bitmaps/flare.bmp";
 	c.tooltip="Stockpile: Que up ammunition for later use";
 	possibleCommands.push_back(c);
 }

@@ -236,7 +236,7 @@ void CAdvSky::CreateClouds()
 	unsigned char (* skytex)[512][4]=new unsigned char[512][512][4];
 
 	glGenTextures(1, &cdtex);
-//	CBitmap pic("bitmaps\\clouddetail.bmp");
+//	CBitmap pic("bitmaps/clouddetail.bmp");
 	unsigned char mem[256*256];
 //	for(int a=0;a<256*256;++a){
 //		mem[a]=pic.mem[a*4];

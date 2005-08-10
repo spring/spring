@@ -124,7 +124,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 	if(target==GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program)
 		return false;
 
-	CFileHandler VPFile(std::string("shaders\\")+filename);
+	CFileHandler VPFile(std::string("shaders/")+filename);
 	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
@@ -165,7 +165,7 @@ unsigned int LoadVertexProgram(const char* filename)
 {
 	unsigned int ret;
 
-	CFileHandler VPFile(std::string("shaders\\")+filename);
+	CFileHandler VPFile(std::string("shaders/")+filename);
 	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
@@ -195,7 +195,7 @@ unsigned int LoadFragmentProgram(const char* filename)
 {
 	unsigned int ret;
 
-	CFileHandler VPFile(std::string("shaders\\")+filename);
+	CFileHandler VPFile(std::string("shaders/")+filename);
 	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 

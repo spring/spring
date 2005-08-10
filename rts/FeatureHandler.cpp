@@ -98,7 +98,7 @@ void CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name,
 		fd->model=0;
 		fd->modelname=wreckParser->SGetValueDef("",name+"\\object");
 		if(fd->modelname.find(".3do")==string::npos && !fd->modelname.empty())
-			fd->modelname=string("objects3d\\")+fd->modelname+".3do";
+			fd->modelname=string("objects3d/")+fd->modelname+".3do";
 		fd->radius=0;
 		fd->xsize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
 		fd->ysize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
@@ -203,8 +203,8 @@ END_TIME_PROFILE("Feature::Update");
 
 void CFeatureHandler::LoadWreckFeatures(void)
 {
-	std::vector<string> files=CFileHandler::FindFiles("features\\corpses\\*.tdf");
-	std::vector<string> files2=CFileHandler::FindFiles("features\\All Worlds\\*.tdf");
+	std::vector<string> files=CFileHandler::FindFiles("features/corpses/*.tdf");
+	std::vector<string> files2=CFileHandler::FindFiles("features/All Worlds/*.tdf");
 	wreckParser=new CSunParser();
 
 	for(vector<string>::iterator fi=files.begin();fi!=files.end();++fi){

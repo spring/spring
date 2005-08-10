@@ -25,7 +25,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 
 	lastListClean=0;
 
-	CBitmap TexImage("bitmaps\\gran.bmp");
+	CBitmap TexImage("bitmaps/gran.bmp");
 	TexImage.ReverseYAxis();
 	unsigned char gran[1024][512][4];//=new unsigned char[1024][512][4]; 
 	if (TexImage.xsize>1){
@@ -46,7 +46,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps\\gran2.bmp");
+	TexImage.Load("bitmaps/gran2.bmp");
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
@@ -66,7 +66,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps\\birch1.bmp");
+	TexImage.Load("bitmaps/birch1.bmp");
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
@@ -86,7 +86,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps\\birch2.bmp");
+	TexImage.Load("bitmaps/birch2.bmp");
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
@@ -106,7 +106,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps\\birch3.bmp");
+	TexImage.Load("bitmaps/birch3.bmp");
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){

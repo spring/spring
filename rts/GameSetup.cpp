@@ -109,7 +109,7 @@ bool CGameSetup::Init(char* buf, int size)
 	gu->spectating=gs->players[myPlayer]->spectator;
 
 	CSunParser p2;
-	p2.LoadFile(string("maps\\")+mapname.substr(0,mapname.find('.'))+".smd");
+	p2.LoadFile(string("maps/")+mapname.substr(0,mapname.find('.'))+".smd");
 
 	for(int a=0;a<gs->activeTeams;++a){
 		char section[50];

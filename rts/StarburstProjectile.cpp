@@ -38,7 +38,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	ttl=uptime+(int)(weaponDef->range/maxSpeed)+100;
 
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = unit3doparser->Load3DO(string("objects3d\\")+weaponDef->visuals.modelName+".3do",1,0);
+		S3DOModel* model = unit3doparser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName+".3do",1,0);
 		if(model){
 			modelDispList= model->rootobject->displist;
 			isUnitPart=true;

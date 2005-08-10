@@ -142,7 +142,7 @@ void CUnit3DLoader::CreateNormals(UnitModel &model)
 
 int CUnit3DLoader::Parse(const string& filename, UnitModel &model)
 {
-	string dir="unitmodels\\";
+	string dir="unitmodels/";
 	CFileHandler ifs(dir+filename);
 	return ParseSub(ifs,model,filename,float3(0,0,0),model.name);
 }

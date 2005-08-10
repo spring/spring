@@ -94,8 +94,8 @@ CGuiHandler::CGuiHandler()
 	maxPages(0),
 	showingMetal(false)
 {
-//	LoadCMDBitmap(CMD_STOP, "bitmaps\\ocean.bmp");
-	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps\\armsilo1.bmp");
+//	LoadCMDBitmap(CMD_STOP, "bitmaps/ocean.bmp");
+	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps/armsilo1.bmp");
 	readmap->mapDefParser.GetDef(autoShowMetal,"1","MAP\\autoShowMetal");
 
 }
