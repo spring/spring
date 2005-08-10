@@ -108,20 +108,32 @@ do {							\
 /*
  * Error handling
  */
+#ifdef DEBUG
+#ifdef __GNUC__
+#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
+#else
+#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << __LINE__ << std::endl;
+#endif
+#else
+#define DEBUGSTRING
+#endif
+
 #define MB_OK 			0x00000001
 #define MB_ICONINFORMATION	0x00000002
 #define MB_ICONEXCLAMATION	0x00000004
 
-#define MessageBox(o, m, c, f)				\
-do {							\
-	if (f & MB_ICONINFORMATION)			\
-	    std::cerr << "Info: ";			\
-	else if (f & MB_ICONEXCLAMATION)		\
-	    std::cerr << "Warning: ";			\
-	else						\
-	    std::cerr << "ERROR: ";			\
-	std::cerr << c << std::endl;			\
-	std::cerr << "  " << m << std::endl;		\
+#define MessageBox(o, m, c, f)					\
+do {								\
+	if (f & MB_ICONINFORMATION)				\
+	    std::cerr << "Info: ";				\
+	else if (f & MB_ICONEXCLAMATION)			\
+	    std::cerr << "Warning: ";				\
+	else							\
+	    std::cerr << "ERROR: ";				\
+	std::cerr << c << std::endl;				\
+	std::cerr << "  " << m << std::endl;			\
+	if (!(f&(MB_ICONINFORMATION|MB_ICONEXCLAMATION)))	\
+		do {DEBUGSTRING} while (0);			\
 } while (0)
 
 /*
@@ -239,7 +251,7 @@ static LARGE_INTEGER _cpufreq;
 static inline bool _freqfallback(LARGE_INTEGER *frequence)
 {
 	if (!_cpufreq) {
-		LARGE_INTEGER tscstart,tscend, mhz;
+		LARGE_INTEGER tscstart,tscend;
 		struct timeval tvstart,tvend;
 		long usec;
 		LARGE_INTEGER tmp;
@@ -302,6 +314,5 @@ static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 #endif /* __linux__ */
 	return _freqfallback(frequence);
 }
-
 
 #endif //__WINDOWS_H__
