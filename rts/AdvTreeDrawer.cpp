@@ -186,7 +186,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 				xtest=xtest2;
 			xtest=xtest/TREE_SQUARE_SIZE;
 			if(xtest>sx)
-				sx=xtest;
+				sx=(int)xtest;
 		}
 		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
 			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*TREE_SQUARE_SIZE)));
@@ -195,7 +195,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 				xtest=xtest2;
 			xtest=xtest/TREE_SQUARE_SIZE;
 			if(xtest<ex)
-				ex=xtest;
+				ex=(int)xtest;
 		}
 		for(int x=sx;x<=ex;x++){/**/
 			TreeSquareStruct* tss=&trees[y*treesX+x];
@@ -574,7 +574,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 				xtest=xtest2;
 			xtest=xtest/TREE_SQUARE_SIZE;
 			if(xtest-1>sx)//increse visible trees somewhat
-				sx=xtest-1;
+				sx=(int)xtest-1;
 		}
 		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
 			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*TREE_SQUARE_SIZE)));
@@ -583,7 +583,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 				xtest=xtest2;
 			xtest=xtest/TREE_SQUARE_SIZE;
 			if(xtest+1<ex)//increse visible trees somewhat
-				ex=xtest+1;
+				ex=(int)xtest+1;
 		}
 		for(int x=sx;x<=ex;x++){
 			TreeSquareStruct* tss=&trees[y*treesX+x];
@@ -853,8 +853,8 @@ void CAdvTreeDrawer::DrawGrass(void)
 
 void CAdvTreeDrawer::ResetPos(const float3& pos)
 {
-	int x=pos.x/TREE_SQUARE_SIZE/SQUARE_SIZE;
-	int y=pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE;
+	int x=(int)pos.x/TREE_SQUARE_SIZE/SQUARE_SIZE;
+	int y=(int)pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE;
 	int a=y*treesX+x;
 	if(trees[a].displist){
 		glDeleteLists(trees[a].displist,1);

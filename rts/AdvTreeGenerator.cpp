@@ -78,9 +78,9 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	bm.Load("bitmaps\\bark.bmp");
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
-			tree[y][x+1024][0]=bm.mem[(y*256+x)*4]*0.6f;
-			tree[y][x+1024][1]=bm.mem[(y*256+x)*4+1]*0.6f;
-			tree[y][x+1024][2]=bm.mem[(y*256+x)*4+2]*0.6f;
+			tree[y][x+1024][0]=(unsigned char)(bm.mem[(y*256+x)*4]*0.6f);
+			tree[y][x+1024][1]=(unsigned char)(bm.mem[(y*256+x)*4+1]*0.6f);
+			tree[y][x+1024][2]=(unsigned char)(bm.mem[(y*256+x)*4+2]*0.6f);
 			tree[y][x+1024][3]=255;
 		}
 	}
@@ -126,7 +126,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 
 		glNewList(pineDL+a,GL_COMPILE);
 		float size=0.7+fRand(0.2);
-		PineTree(20+fRand(10),MAX_TREE_HEIGHT*size);
+		PineTree((int)(20+fRand(10)),MAX_TREE_HEIGHT*size);
 		va->DrawArrayTN(GL_TRIANGLES);
 
 		glEndList();
@@ -172,7 +172,7 @@ void CAdvTreeGenerator::DrawTrunk(const float3 &start, const float3 &end,const f
 	float3 flatSun=gs->sunVector;
 	flatSun.y=0;
 
-	int numIter=max(3.0f,size*10);
+	int numIter=(int)max(3.0f,size*10);
 	for(int a=0;a<=numIter;a++){
 		float angle=a/(float)numIter*2*PI;
 		float col=0.4+(((orto1*sin(angle)+orto2*cos(angle)).dot(flatSun)))*0.3;
@@ -231,7 +231,7 @@ void CAdvTreeGenerator::TrunkIterator(float3 &start, float3 &dir, float length, 
 	
 	float baseRot=fRand(2*PI);
 	float dirDif=fRand(0.8f)+1.0;
-	int numTrunks=length*5/MAX_TREE_HEIGHT;
+	int numTrunks=(int)length*5/MAX_TREE_HEIGHT;
 	for(int a=0;a<numTrunks;a++){
 		float angle=PI+float(a)*PI+fRand(0.3f);
 		float3 newbase=start+dir*length*(float(a+1)/(numTrunks+1));
@@ -245,7 +245,7 @@ void CAdvTreeGenerator::TrunkIterator(float3 &start, float3 &dir, float length, 
 void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,float3& orto1,float3& orto2)
 {
 	float baseRot=fRand(2*PI);
-	int numLeaves=length*10/MAX_TREE_HEIGHT;
+	int numLeaves=(int)length*10/MAX_TREE_HEIGHT;
 
 	float3 flatSun=gs->sunVector;
 	flatSun.y=0;
@@ -506,15 +506,15 @@ void CAdvTreeGenerator::CreateTex(unsigned char* data, unsigned int tex,int xsiz
 					}
 				}
 				if(a!=0){
-					mipmaps[mipnum][((y)*xsize+x)*4+0]=(r+a*0.5)/a;
-					mipmaps[mipnum][((y)*xsize+x)*4+1]=(g+a*0.5)/a;
-					mipmaps[mipnum][((y)*xsize+x)*4+2]=(b+a*0.5)/a;
+					mipmaps[mipnum][((y)*xsize+x)*4+0]=(unsigned char)(r+a*0.5)/a;
+					mipmaps[mipnum][((y)*xsize+x)*4+1]=(unsigned char)(g+a*0.5)/a;
+					mipmaps[mipnum][((y)*xsize+x)*4+2]=(unsigned char)(b+a*0.5)/a;
 				} else {
 					mipmaps[mipnum][((y)*xsize+x)*4+0]=40;
 					mipmaps[mipnum][((y)*xsize+x)*4+1]=80;
 					mipmaps[mipnum][((y)*xsize+x)*4+2]=20;
 				}
-				mipmaps[mipnum][((y)*xsize+x)*4+3]=(a+2.0)/4;
+				mipmaps[mipnum][((y)*xsize+x)*4+3]=(unsigned char)(a+2.0)/4;
 			}
 		}
 	}
@@ -554,7 +554,7 @@ void CAdvTreeGenerator::CreateTex(unsigned char* data, unsigned int tex,int xsiz
 								}
 							}
 							if(alpha!=0)
-								mipmaps[mipnum][(y*xsize+x)*4+c]=(col+alpha*0.5)/alpha;
+								mipmaps[mipnum][(y*xsize+x)*4+c]=(unsigned char)(col+alpha*0.5)/alpha;
 						}
 					}
 				}
@@ -821,9 +821,9 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 				buf[y+ypos][x+xpos][2]=buf2[(y*256+x)*4+2];
 				buf[y+ypos][x+xpos][3]=255;
 			} else {
-				buf[y+ypos][x+xpos][0]=0.24f*1.2*255;
-				buf[y+ypos][x+xpos][1]=0.40f*1.2*255;;
-				buf[y+ypos][x+xpos][2]=0.23f*1.2*255;;
+				buf[y+ypos][x+xpos][0]=(unsigned char)(0.24f*1.2*255);
+				buf[y+ypos][x+xpos][1]=(unsigned char)(0.40f*1.2*255);
+				buf[y+ypos][x+xpos][2]=(unsigned char)(0.23f*1.2*255);
 				buf[y+ypos][x+xpos][3]=0;
 			}
 		}
