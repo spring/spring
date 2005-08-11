@@ -49,35 +49,30 @@
 #define INBLOCKSIZE (65536+17)
 
 typedef struct _HPIHEADER {
-	long HPIMarker;              /* 'HAPI' */
-	long SaveMarker;             /* 'BANK' if savegame */
-	long DirectorySize;          /* Directory size */
-	long Key;                    /* decode key */
-	long Start;                  /* offset of directory */
+	unsigned int HPIMarker;              /* 'HAPI' */
+	unsigned int SaveMarker;             /* 'BANK' if savegame */
+	unsigned int DirectorySize;          /* Directory size */
+	unsigned int Key;                    /* decode key */
+	unsigned int Start;                  /* offset of directory */
 } HPIHEADER;
 
 typedef struct _HPIENTRY {
-	int NameOffset;
-	int CountOffset;
-	char Flag;
+	unsigned int NameOffset;
+	unsigned int CountOffset;
+	unsigned char Flag;
 } HPIENTRY;
 
 typedef struct _HPICHUNK {
-	long Marker;            /* always 0x48535153 (SQSH) */
-	char Unknown1;          /* I have no idea what these mean */
-	char CompMethod;				/* 1=lz77 2=zlib */
-	char Encrypt;           /* Is the chunk encrypted? */
-	long CompressedSize;    /* the length of the compressed data */
-	long DecompressedSize;  /* the length of the decompressed data */
-	long Checksum;          /* check sum */
+	unsigned int Marker;            /* always 0x48535153 (SQSH) */
+	unsigned char Unknown1;          /* I have no idea what these mean */
+	unsigned char CompMethod;				/* 1=lz77 2=zlib */
+	unsigned char Encrypt;           /* Is the chunk encrypted? */
+	unsigned int CompressedSize;    /* the length of the compressed data */
+	unsigned int DecompressedSize;  /* the length of the decompressed data */
+	unsigned int Checksum;          /* check sum */
 } HPICHUNK;
 
-typedef struct _HPIFILE {
-	FILE *f;   // handle to open file
-	char* d;    // pointer to decrypted directory
-	int Key;	  // Key
-	int Start;  // Start of directory
-} HPIFILE;
+typedef struct _HPIFILE HPIFILE;
 
 typedef struct _DIRENTRY {
 	struct _DIRENTRY *Next;
@@ -653,6 +648,7 @@ static char* DecodeFileToMem(HPIFILE *hpi, const HPIENTRY *Entry)
 
 void* HPIOpen(const char* FileName)
 {
+	return NULL;
 	HPIHEADER Header;
 
 	FILE *f = fopen(FileName, "r+");

@@ -64,7 +64,7 @@ int CHpiHandler::LoadFile(string name, void *buffer)
 	MakeLower(name);
 	if(files.find(name)==files.end())
 		return 0;
-	_HPIFILE* hpi=(_HPIFILE*)HPIOpen((char*)files[name].hpiname.c_str());
+	struct _HPIFILE* hpi=(struct _HPIFILE*)HPIOpen((char*)files[name].hpiname.c_str());
 	char* file=HPIOpenFile(hpi, (char*)name.c_str());
 //	char* file= const_cast<char*> (HPIOpenFile(hpi, name.c_str()).c_str());
 	if (file)
@@ -86,7 +86,7 @@ void CHpiHandler::FindHpiFiles(string pattern,string path)
 
 void CHpiHandler::SearchHpiFile(char* name)
 {
-	_HPIFILE* hpi=(_HPIFILE*)HPIOpen(name);
+	struct _HPIFILE* hpi=(struct _HPIFILE*)HPIOpen(name);
 	if(hpi==0)
 		return;
 	char file[512];
@@ -160,7 +160,7 @@ void CHpiHandler::FindHpiFilesForDir(string pattern,string path,string subPath,s
 
 void CHpiHandler::SearchHpiFileInDir(char* name,string subPath,std::vector<std::string>& found)
 {
-	_HPIFILE* hpi=(_HPIFILE*)HPIOpen(name);
+	struct _HPIFILE* hpi=(struct _HPIFILE*)HPIOpen(name);
 	if(hpi==0)
 		return;
 	char file[512];

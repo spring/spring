@@ -6,7 +6,12 @@
 #define LZ77_COMPRESSION 1
 #define ZLIB_COMPRESSION 2
 
-struct _HPIFILE;
+struct _HPIFILE {
+	FILE *f;   // handle to open file
+	char* d;    // pointer to decrypted directory
+	unsigned int Key;	  // Key
+	unsigned int Start;  // Start of directory
+};
 typedef int (*HPICALLBACK)(char* FileName, char* HPIName, int FileCount, int FileCountTotal, int FileBytes, int FileBytesTotal, int TotalBytes, int TotalBytesTotal);
 void* HPIOpen(const char* FileName);
 char* HPIOpenFile(struct _HPIFILE *hpi, const char *FileName);
