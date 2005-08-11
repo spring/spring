@@ -1,0 +1,52 @@
+//This file contains the different armor types that exist in the game
+//The units listed under an armor type will belong to that category
+//All unlisted ones will belong to the default category (not listed in the file)
+
+//Weapons work in much the same way
+//They do the default damage against all categories except if they have a special damage against one of the units in a category
+
+//In the future its of course meant that the units should have a ArmorType tag in the fbi file
+//And that weapons should list damage against armor categories instead of against units
+//This will make it easier to add new units without having to change all the old weapons
+
+//The numbers after the names doesnt mean anything its just that i think the parser likes them
+[LandAir]
+	{
+	ARMTHUND=99;
+	ARMBRAWL=99;
+	ARMPEEP=99;
+	ARMFIG=99;
+	ARMCA=99;
+	ARMACA=99;
+	ARMATLAS=99;
+	ARMPNIX=99;
+	ARMHAWK=99;
+	ARMLANCE=99;
+	CORFINK=99;
+	CORVENG=99;
+	CORVAMP=99;
+	CORHURC=99;
+	CORTITAN=99;
+	CORACA=99;
+	CORSHAD=99;
+	CORAPE=99;
+	CORCA=99;
+	CORVALK=99; 
+}
+
+//Sea air have to be different than land air due to them getting different hp scales in the old system
+//This should be fixed sometime
+
+[SeaAir]
+	{
+	CORCSA=50;
+	CORSFIG=50;
+	CORHUNT=50;
+	CORSEAP=50;
+	
+	ARMCSA=50;
+	ARMSEHAK=50;
+	ARMSFIG=50;
+	ARMSEAP=50;
+}
+
