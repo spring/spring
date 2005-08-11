@@ -9,10 +9,10 @@ common_files=[]
 windows_files=[]
 linux_files=[]
 if sys.platform == 'linux2' or sys.platform == 'linux-i386':
-	print "Detected plateform : linux"
+	print "Detected platform : linux"
 	detected_platform='linux'
 else:
-	print "Plateform not supported yet, please edit SConstruct file"
+	print "Platform not supported yet, please edit SConstruct file"
 	detected_platform='unknown'
 defines = []
 exclude_list = []
