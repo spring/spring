@@ -538,6 +538,10 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void processNormalKeys(unsigned char key, int x, int y) {
   keys[key]=true;
+  int mod = glutGetModifiers();
+  keys[VK_SHIFT] = mod&GLUT_ACTIVE_SHIFT;
+  keys[VK_CONTROL] = mod&GLUT_ACTIVE_CTRL;
+  keys[VK_MENU] = mod&GLUT_ACTIVE_ALT;
   if(activeController){
     activeController->KeyPressed(key,1);
   }
@@ -558,6 +562,10 @@ void processNormalKeys(unsigned char key, int x, int y) {
 void processNormalKeysUP(unsigned char key, int x, int y) {
   if(key==27)
     exit(0);
+  int mod = glutGetModifiers();
+  keys[VK_SHIFT] = mod&GLUT_ACTIVE_SHIFT;
+  keys[VK_CONTROL] = mod&GLUT_ACTIVE_CTRL;
+  keys[VK_MENU] = mod&GLUT_ACTIVE_ALT;
   if(activeController){
     activeController->KeyReleased(key);
   }

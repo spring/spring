@@ -147,22 +147,11 @@ void CMouseHandler::MouseMove(int x, int y)
 
 	if(buttons[2].pressed){
 		float cameraSpeed=1;
-#ifdef USE_GLUT
-		
-		if(glutGetModifiers()&GLUT_ACTIVE_SHIFT)
-#else
 		if(keys[VK_SHIFT])
-#endif
 	        {
 			cameraSpeed*=0.1f;
 		}
-#ifdef USE_GLUT
-		
-		if(glutGetModifiers()&GLUT_ACTIVE_CTRL)
-#else
 		if(keys[VK_CONTROL])
-#endif
-
 		{
 			cameraSpeed*=10;
 		}

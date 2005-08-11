@@ -13,9 +13,9 @@
 #define VK_END     GLUT_KEY_END
 //FIXME if you don't like SIGSEGV
 #define VK_PAUSE   666
-//#define VK_SHIFT                    17
-//#define VK_CONTROL 1
-//#define VK_MENU 1
+#define VK_SHIFT                    0x10
+#define VK_CONTROL 		0x11
+#define VK_MENU 		0x12
 #define VK_NUMPAD0 GLUT_KEY_INSERT
 #define VK_NUMPAD1 GLUT_KEY_END
 #define VK_NUMPAD2 GLUT_KEY_DOWN
@@ -39,29 +39,17 @@ extern bool keys[256];
 
 inline bool keyShift()
 {
-#ifdef USE_GLUT
-	return (glutGetModifiers()&GLUT_ACTIVE_SHIFT);
-#else
 	return keys[VK_SHIFT];
-#endif
 }
 
 inline bool keyCtrl()
 {
-#ifdef USE_GLUT
-	return (glutGetModifiers()&GLUT_ACTIVE_CTRL);
-#else
 	return keys[VK_CONTROL];
-#endif
 }
 
 inline bool  keyMenu()
 {
-#ifdef USE_GLUT
-	return (glutGetModifiers()&GLUT_ACTIVE_ALT);
-#else
 	return keys[VK_MENU];
-#endif
 }
 
 #endif //_INPUTS_H

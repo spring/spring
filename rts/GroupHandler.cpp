@@ -95,12 +95,8 @@ void CGroupHandler::TestDll(string name)
 
 void CGroupHandler::GroupCommand(int num)
 {
-#ifndef USE_GLUT
 	if(keys[VK_CONTROL]){
 		if(!keys[VK_SHIFT])
-#else
-	if(glutGetModifiers()==GLUT_ACTIVE_CTRL){	  
-#endif
 			armies[num]->ClearUnits();
 		set<CUnit*>::iterator ui;
 		for(ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui){

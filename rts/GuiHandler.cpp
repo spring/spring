@@ -465,11 +465,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 	else 
 		return;
 
-#ifdef USE_GLUT
-	if(needShift && !(glutGetModifiers()&GLUT_ACTIVE_SHIFT)){
-#else
 	if(needShift && !keys[VK_SHIFT]){
-#endif
 		if(showingMetal){
 			showingMetal=false;
 			groundDrawer->SetExtraTexture(0,0,false);
