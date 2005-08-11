@@ -30,10 +30,12 @@ static inline std::vector<std::string> find_files(std::string pattern, std::stri
                 for( a=0; a < pglob->gl_pathc; a++)
                          found.push_back( pglob->gl_pathv[a] );
         } else {
+#ifdef DEBUG
 		if( globret == GLOB_NOMATCH )
 			MessageBox(0,"No file matches : " + fullpattern,"find_files glob",MB_ICONEXCLAMATION);
 		else
 			MessageBox(0,"Other glob error","find_files glob",0);
+#endif
 	}
 	globfree(pglob);
         free(pglob);
