@@ -2151,6 +2151,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 unsigned  int CGame::CreateExeChecksum(void)
 {
 	unsigned int ret=0;
+#ifdef _WIN32
 	CFileHandler f("spring.exe");
 	int l=f.FileSize();
 	unsigned char* buf=new unsigned char[l];
@@ -2162,5 +2163,6 @@ unsigned  int CGame::CreateExeChecksum(void)
 	}
 
 	delete[] buf;
+#endif
 	return ret;
 }
