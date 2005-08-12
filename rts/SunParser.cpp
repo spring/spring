@@ -391,13 +391,12 @@ std::vector<std::string> CSunParser::GetLocationVector(std::string location)
 	std::vector<std::string> loclist;
 	int start = 0;
 	int next = 0;
-	static const std::basic_string <char>::size_type npos = -1;
-	while((next = location.find_first_of("\\", start)) != npos)
+	while((next = location.find_first_of("\\", start)) != std::basic_string<char>::npos)
 	{
 		loclist.push_back(location.substr(start, next-start));
 		start = next+1;
 	}
-	loclist.push_back(location.substr(start, -1));
+	loclist.push_back(location.substr(start, location.length()-start));
     return loclist;
 }
 
