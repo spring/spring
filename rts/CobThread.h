@@ -1,8 +1,6 @@
 #ifndef __COB_THREAD_H__
 #define __COB_THREAD_H__
 
-#include "archdef.h"
-
 #include "Object.h"
 #include "CobInstance.h"
 #include <vector>

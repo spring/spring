@@ -1,8 +1,6 @@
 #ifndef __GAME_SETUP_H__
 #define __GAME_SETUP_H__
 
-#include "archdef.h"
-
 #include <string>
 #include <map>
 

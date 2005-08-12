@@ -5,8 +5,6 @@
 #ifndef __DIRT_PROJECTILE_H__
 #define __DIRT_PROJECTILE_H__
 
-#include "archdef.h"
-
 #include "Projectile.h"
 
 class CDirtProjectile : public CProjectile  

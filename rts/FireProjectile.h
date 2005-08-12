@@ -1,8 +1,6 @@
 #ifndef __FIRE_PROJECTILE_H__
 #define __FIRE_PROJECTILE_H__
 
-#include "archdef.h"
-
 #include "Projectile.h"
 #include <list>
 

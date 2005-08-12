@@ -4,8 +4,6 @@
 #ifndef __BASE_SKY_H__
 #define __BASE_SKY_H__
 
-#include "archdef.h"
-
 class CBaseSky
 {
 public:

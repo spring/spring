@@ -5,8 +5,6 @@
 #ifndef __GAME_HELPER_H__
 #define __GAME_HELPER_H__
 
-#include "archdef.h"
-
 #include <list>
 #include <map>
 #include "Object.h"

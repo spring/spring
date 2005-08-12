@@ -1,8 +1,6 @@
 #ifndef __FLAME_THROWER_H__
 #define __FLAME_THROWER_H__
 
-#include "archdef.h"
-
 #include "Weapon.h"
 
 class CFlameThrower :

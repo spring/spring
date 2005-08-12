@@ -5,8 +5,6 @@
 #ifndef __BITMAP_H__
 #define __BITMAP_H__
 
-#include "archdef.h"
-
 #include <string>
 
 using std::string;

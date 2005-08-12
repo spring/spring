@@ -1,8 +1,6 @@
 #ifndef __FEATURE_H__
 #define __FEATURE_H__
 
-#include "archdef.h"
-
 #include "SolidObject.h"
 #include "Matrix44f.h"
 #include <vector>

@@ -5,9 +5,6 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 
-#include "archdef.h"
-
-
 //#include <winsock2.h>
 #include <windows.h>		// Header File For Windows
 #include <time.h>

@@ -4,8 +4,6 @@
 #ifndef __BF_READ_MAP_H__
 #define __BF_READ_MAP_H__
 
-#include "archdef.h"
-
 #include "ReadMap.h"
 #include <string>
 

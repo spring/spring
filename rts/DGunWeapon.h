@@ -1,8 +1,6 @@
 #ifndef __DGUN_WEAPON_H__
 #define __DGUN_WEAPON_H__
 
-#include "archdef.h"
-
 #include "Weapon.h"
 
 class CDGunWeapon :

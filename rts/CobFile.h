@@ -1,8 +1,6 @@
 #ifndef __COB_FILE_H__
 #define __COB_FILE_H__
 
-#include "archdef.h"
-
 #include <iostream>
 #include <vector>
 #include <string>

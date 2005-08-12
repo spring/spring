@@ -1,8 +1,6 @@
 #ifndef __EMG_PROJECTILE_H__
 #define __EMG_PROJECTILE_H__
 
-#include "archdef.h"
-
 #include "WeaponProjectile.h"
 #include "DamageArray.h"
 

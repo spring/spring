@@ -1,8 +1,6 @@
 #ifndef __CAMERA_CONTROLLER_H__
 #define __CAMERA_CONTROLLER_H__
 
-#include "archdef.h"
-
 class CCameraController
 {
 public:

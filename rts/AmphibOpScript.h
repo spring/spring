@@ -4,8 +4,6 @@
 #ifndef __AMPHI_OP_SCRIPT_H__
 #define __AMPHI_OP_SCRIPT_H__
 
-#include "archdef.h"
-
 #include "Script.h"
 
 class CAmphibOpScript :

@@ -4,8 +4,6 @@
 #ifndef __BACKGROUND_READER_H__
 #define __BACKGROUND_READER_H__
 
-#include "archdef.h"
-
 #include <deque>
 #include <string>
 /* TODO (Dave#1#): Remove dependancy on windows.h */

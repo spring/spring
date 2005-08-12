@@ -1,8 +1,6 @@
 #ifndef __END_GAME_BOX_H__
 #define __END_GAME_BOX_H__
 
-#include "archdef.h"
-
 #include "InputReceiver.h"
 
 class CEndGameBox :

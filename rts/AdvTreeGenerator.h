@@ -5,8 +5,6 @@
 #ifndef __ADV_TREE_GENERATOR_H__
 #define __ADV_TREE_GENERATOR_H__
 
-#include "archdef.h"
-
 class CVertexArray;
 
 #define MAX_TREE_HEIGHT 60

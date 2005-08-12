@@ -1,8 +1,6 @@
 #ifndef __BASE_WATER_H__
 #define __BASE_WATER_H__
 
-#include "archdef.h"
-
 class CGame;
 
 class CBaseWater

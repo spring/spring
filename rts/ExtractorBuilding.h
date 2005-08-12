@@ -1,8 +1,6 @@
 #ifndef __EXTRACTOR_BUILDING_H__
 #define __EXTRACTOR_BUILDING_H__
 
-#include "archdef.h"
-
 #include "Building.h"
 
 class CExtractorBuilding : public CBuilding {

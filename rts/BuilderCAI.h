@@ -1,8 +1,6 @@
 #ifndef __BUILDER_CAI_H__
 #define __BUILDER_CAI_H__
 
-#include "archdef.h"
-
 #include <map>
 #include "MobileCAI.h"
 

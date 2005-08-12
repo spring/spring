@@ -1,8 +1,6 @@
 #ifndef __FIRE_BALL_PROJECTILE_H__
 #define __FIRE_BALL_PROJECTILE_H__
 
-#include "archdef.h"
-
 #include "WeaponProjectile.h"
 #include <deque>
 

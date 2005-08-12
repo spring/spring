@@ -4,8 +4,6 @@
 #ifndef __3DOPARSER_H__
 #define __3DOPARSER_H__
 
-#include "archdef.h"
-
 #include <vector>
 #include <string>
 #include <map>

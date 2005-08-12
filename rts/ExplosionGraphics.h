@@ -1,8 +1,6 @@
 #ifndef __EXPLOSION_GRAPHICS_H__
 #define __EXPLOSION_GRAPHICS_H__
 
-#include "archdef.h"
-
 #include "DamageArray.h"
 
 class CUnit;

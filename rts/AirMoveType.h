@@ -4,8 +4,6 @@
 #ifndef __AIR_MOVE_TYPE_H__
 #define __AIR_MOVE_TYPE_H__
 
-#include "archdef.h"
-
 #include "MoveType.h"
 
 class CPropeller;

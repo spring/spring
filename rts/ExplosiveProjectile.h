@@ -5,8 +5,6 @@
 #ifndef __EXPLOSIVE_PROJECTILE_H__
 #define __EXPLOSIVE_PROJECTILE_H__
 
-#include "archdef.h"
-
 #include "WeaponProjectile.h"
 #include "DamageArray.h"
 

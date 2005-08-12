@@ -1,8 +1,6 @@
 #ifndef __FACTORY_AI_H__
 #define __FACTORY_AI_H__
 
-#include "archdef.h"
-
 #include "CommandAI.h"
 #include <string>
 #include <map>

@@ -1,8 +1,6 @@
 #ifndef __DAMAGE_ARRAY_H__
 #define __DAMAGE_ARRAY_H__
 
-//#include "archdef.h" FIXME remove
-
 struct DamageArray
 {
 	static int numTypes;

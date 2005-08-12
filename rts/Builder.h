@@ -5,8 +5,6 @@
 #ifndef __BUILDER_H__
 #define __BUILDER_H__
 
-#include "archdef.h"
-
 #include <string>
 #include "Unit.h"
 

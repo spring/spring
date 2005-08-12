@@ -5,8 +5,6 @@
 #ifndef __CANNON_H__
 #define __CANNON_H__
 
-#include "archdef.h"
-
 #include "Weapon.h"
 
 class CCannon : public CWeapon  

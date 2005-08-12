@@ -1,8 +1,6 @@
 #ifndef __CATEGORY_HANDLER_H__
 #define __CATEGORY_HANDLER_H__
 
-#include "archdef.h"
-
 #include <string>
 #include <map>
 

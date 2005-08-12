@@ -1,8 +1,6 @@
 #ifndef __DAMAGE_ARRAY_HANDLER_H__
 #define __DAMAGE_ARRAY_HANDLER_H__
 
-#include "archdef.h"
-
 #include <string>
 #include <map>
 

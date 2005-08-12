@@ -4,8 +4,6 @@
 #ifndef __BASE_GROUND_DRAWER_H__
 #define __BASE_GROUND_DRAWER_H__
 
-#include "archdef.h"
-
 #include <vector>
 #include "BaseTreeDrawer.h"
 #include "float3.h"

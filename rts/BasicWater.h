@@ -5,8 +5,6 @@
 #ifndef __BASIC_WATER_H__
 #define __BASIC_WATER_H__
 
-#include "archdef.h"
-
 #include "BaseWater.h"
 
 class CBasicWater : public CBaseWater  

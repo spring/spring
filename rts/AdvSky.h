@@ -5,8 +5,6 @@
 #ifndef __ADV_SKY_H__
 #define __ADV_SKY_H__
 
-#include "archdef.h"
-
 #include "BaseSky.h"
 
 class CAdvSky : public CBaseSky

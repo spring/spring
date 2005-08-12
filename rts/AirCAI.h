@@ -4,8 +4,6 @@
 #ifndef __AIR_CAI_H__
 #define __AIR_CAI_H__
 
-#include "archdef.h"
-
 #include "CommandAI.h"
 
 class CAirCAI :

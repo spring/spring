@@ -1,8 +1,6 @@
 #ifndef __COMMAND_AI_H__
 #define __COMMAND_AI_H__
 
-#include "archdef.h"
-
 #include "Object.h"
 #include "command.h"
 #include <vector>

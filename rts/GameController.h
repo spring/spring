@@ -1,8 +1,6 @@
 #ifndef __GAME_CONTROLLER_H__
 #define __GAME_CONTROLLER_H__
 
-#include "archdef.h"
-
 #include <string>
 
 class CGameController

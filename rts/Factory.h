@@ -5,8 +5,6 @@
 #ifndef __FACTORY_H__
 #define __FACTORY_H__
 
-#include "archdef.h"
-
 #include "Building.h"
 #include <string>
 

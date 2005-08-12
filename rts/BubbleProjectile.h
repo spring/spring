@@ -1,8 +1,6 @@
 #ifndef __BUBBLE_PROJECTILE_H__
 #define __BUBBLE_PROJECTILE_H__
 
-#include "archdef.h"
-
 #include "Projectile.h"
 
 class CBubbleProjectile :

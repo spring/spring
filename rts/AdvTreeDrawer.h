@@ -5,8 +5,6 @@
 #ifndef __ADV_TREE_DRAWER_H__
 #define __ADV_TREE_DRAWER_H__
 
-#include "archdef.h"
-
 #include <map>
 #include "BaseTreeDrawer.h"
 

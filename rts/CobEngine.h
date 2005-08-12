@@ -1,8 +1,6 @@
 #ifndef __COB_ENGINE_H__
 #define __COB_ENGINE_H__
 
-#include "archdef.h"
-
 /*
  * The cob engine is responsible for "scheduling" and running threads that are running in 
  * infinite loops.

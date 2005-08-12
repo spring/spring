@@ -1,8 +1,6 @@
 #ifndef __COB_INSTANCE_H__
 #define __COB_INSTANCE_H__
 
-#include "archdef.h"
-
 #include <string>
 #include <vector>
 #include <list>

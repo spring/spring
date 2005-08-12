@@ -4,8 +4,6 @@
 #ifndef __AIR_SCRIPT_H__
 #define __AIR_SCRIPT_H__
 
-#include "archdef.h"
-
 #include <deque>
 #include "Script.h"
 

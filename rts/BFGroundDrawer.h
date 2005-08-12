@@ -4,8 +4,6 @@
 #ifndef __BF_GROUND_DRAWER_H__
 #define __BF_GROUND_DRAWER_H__
 
-#include "archdef.h"
-
 #include "BaseGroundDrawer.h"
 
 class CVertexArray;

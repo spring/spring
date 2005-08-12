@@ -1,8 +1,6 @@
 #ifndef __COMMANDER_SCRIPT_H__
 #define __COMMANDER_SCRIPT_H__
 
-#include "archdef.h"
-
 #include "Script.h"
 
 class CCommanderScript :

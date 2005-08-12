@@ -4,8 +4,6 @@
 #ifndef __BF_GROUND_TEXTURES_H__
 #define __BF_GROUND_TEXTURES_H__
 
-#include "archdef.h"
-
 #include <jpeglib.h>
 
 class CFileHandler;
