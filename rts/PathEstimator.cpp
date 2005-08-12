@@ -611,7 +611,7 @@ TODO: Read-error-check.
 */
 bool CPathEstimator::ReadFile(string name) {
 	//Open file.
-	string filename = string("maps/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + name;
+	string filename = stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + name;
 	CFileHandler file(filename.c_str());
 	if(file.FileExists()) {
 		//Check hash.
@@ -644,7 +644,7 @@ Trying to write offset and vertices data to file.
 */
 void CPathEstimator::WriteFile(string name) {
 	//Open file.
-	string filename = string("maps/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + name;
+	string filename = stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + name;
 	ofstream file(filename.c_str(), ios::out | ios::binary);
 	if(file.good()) {
 		//Write hash.

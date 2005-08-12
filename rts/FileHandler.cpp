@@ -141,11 +141,11 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 	if(hpiHandler)
 		f=hpiHandler->GetFilesInDir(patternPath);
 
-	for(std::vector<std::string>::iterator fi=f.begin();fi!=f.end();++fi){
+	for(std::vector<std::string>::iterator fi=f.begin();fi!=f.end();fi++){
 		std::transform(fi->begin(), fi->end(), fi->begin(), (int (*)(int))std::tolower);
 		int a=fi->find(filter);
 		if(filter.empty() || a==fi->length()-filter.length()){
-			found.push_back(patternPath+*fi);
+			found.push_back(*fi);
 		}
 	}
 
