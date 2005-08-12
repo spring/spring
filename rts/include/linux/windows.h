@@ -152,7 +152,6 @@ do {								\
 #define swabword(w)	(w)
 #define swabdword(w)	(w)
 #endif
-#define BITMAP_MAGIC 0x4d42
 struct bitmapfileheader_s {
 	unsigned short bfType;
 	unsigned int bfSize;
