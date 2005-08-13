@@ -13,8 +13,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include "glList.h"
-#ifndef NO_IO
-#include <io.h>
+#ifdef _WIN32
 #include "winerror.h"
 #endif
 #include "float.h"
