@@ -111,9 +111,9 @@ do {							\
  */
 #ifdef DEBUG
 #ifdef __GNUC__
-#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
+#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << std::dec << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
 #else
-#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << __LINE__ << std::endl;
+#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << std::dec << __LINE__ << std::endl;
 #endif
 #else
 #define DEBUGSTRING
