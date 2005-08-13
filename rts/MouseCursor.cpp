@@ -83,6 +83,7 @@ CMouseCursor::~CMouseCursor(void)
 
 int CMouseCursor::getNextPo2(int val)
 {
+#if 0
 	if (val <= 2)
 		return 2;
 	if (val <= 4)
@@ -99,6 +100,19 @@ int CMouseCursor::getNextPo2(int val)
 		return 128;
 	info->AddLine("rewrite getNextPo2 ffs!");
 	return 256;
+#else
+	/*
+	 * Rewrite for fuck's sake?  You mean like this?
+	 */
+	val--;
+	val |= val >> 1;
+	val |= val >> 2;
+	val |= val >> 4;
+	val |= val >> 8;
+	val |= val >> 16;
+	val++;
+	return val < 256 ? val : 256;
+#endif
 }
 
 CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
