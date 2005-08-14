@@ -24,6 +24,7 @@ dotfileHandler::dotfileHandler(const string filename)
 	file.open(filename.c_str());
 	if (!file)
 		MessageBox(0,"Could not write to config file","dotfileHandler",0);
+	flushfile();
 }
 
 dotfileHandler::~dotfileHandler()
