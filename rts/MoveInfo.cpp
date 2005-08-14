@@ -11,7 +11,7 @@ using namespace std;
 CMoveInfo::CMoveInfo(void)
 {
 	sunparser=new CSunParser;
-	sunparser->LoadFile("gamedata/moveinfo.tdf");
+	sunparser->LoadFile("gamedata/MOVEINFO.TDF");
 
 	moveInfoChecksum=0;
 

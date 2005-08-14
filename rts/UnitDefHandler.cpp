@@ -41,7 +41,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 		tafiles2.pop_back();
 	}
 
-      	soundcategory.LoadFile("gamedata/sound.tdf");
+      	soundcategory.LoadFile("gamedata/SOUND.TDF");
 	
 	numUnits = tafiles.size();
 
@@ -95,7 +95,7 @@ CUnitDefHandler::~CUnitDefHandler(void)
 void CUnitDefHandler::FindTABuildOpt()
 {
 	CSunParser sunparser;
-      	sunparser.LoadFile("gamedata/sidedata.tdf");
+      	sunparser.LoadFile("gamedata/SIDEDATA.TDF");
 
 	std::vector<std::string> sideunits = sunparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)

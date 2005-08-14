@@ -33,7 +33,7 @@ void CCommanderScript2::Update(void)
 		gs->teams[1]->metalStorage=1000;
 
 		CSunParser p;
-		p.LoadFile("gamedata/sidedata.tdf");
+		p.LoadFile("gamedata/SIDEDATA.TDF");
 		string s0=p.SGetValueDef("armcom","side0\\commander");
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 

@@ -48,7 +48,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	memset(tree[0][0],128,256*2048*4);
 
 	CBitmap bm;
-	bm.Load("bitmaps/bark.bmp");
+	bm.Load("bitmaps/Bark.bmp");
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
 			tree[y][x][0]=bm.mem[(y*256+x)*4];
@@ -75,7 +75,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 
 	glDeleteTextures (1, &leafTex);
 
-	bm.Load("bitmaps/bark.bmp");
+	bm.Load("bitmaps/Bark.bmp");
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
 			tree[y][x+1024][0]=(unsigned char)(bm.mem[(y*256+x)*4]*0.6f);
