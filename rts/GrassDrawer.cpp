@@ -75,7 +75,7 @@ CGrassDrawer::CGrassDrawer()
 		}
 	}
 
-	grassFarNSVP=LoadVertexProgram("grassfarns.vp");
+	grassFarNSVP=LoadVertexProgram("grassFarNS.vp");
 
 	grassDL=glGenLists(8);
 	srand(15);
@@ -96,7 +96,7 @@ CGrassDrawer::CGrassDrawer()
 
 	if(shadowHandler->drawShadows){
 		grassVP=LoadVertexProgram("grass.vp");
-		grassFarVP=LoadVertexProgram("grassfar.vp");
+		grassFarVP=LoadVertexProgram("grassFar.vp");
 	}
 
 }

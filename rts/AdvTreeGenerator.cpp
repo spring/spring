@@ -135,9 +135,9 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 
 	if(shadowHandler->drawShadows){
 		treeVP=LoadVertexProgram("tree.vp");
-		treeFarVP=LoadVertexProgram("treefar.vp");
-		treeShadowVP=LoadVertexProgram("treeshadow.vp");
-		treeFarShadowVP=LoadVertexProgram("treefarshadow.vp");
+		treeFarVP=LoadVertexProgram("treeFar.vp");
+		treeShadowVP=LoadVertexProgram("treeShadow.vp");
+		treeFarShadowVP=LoadVertexProgram("treeFarShadow.vp");
 		if(shadowHandler->useFPShadows){
 			treeFPShadow=LoadFragmentProgram("treeFPshadow.fp");
 		}
