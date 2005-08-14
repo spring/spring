@@ -201,8 +201,8 @@ void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 	vsprintf(text, fmt, ap);
 	va_end(ap);
 	glPushMatrix();
-	glTranslatef(x,y,0.0f);
-	glScalef(.02f*s, .03f*s, .01f);
+	glTranslatef(0.985f*x,0.982f*y,0.0f);
+	glScalef(.025f*s, .035f*s, .015f);
 	printstring(text);
 	glPopMatrix();
 	glLoadIdentity();
