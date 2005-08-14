@@ -201,10 +201,11 @@ void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 	vsprintf(text, fmt, ap);
 	va_end(ap);
 	glPushMatrix();
-	glTranslatef(x,y+charheight*0.8f,0);
+	glTranslatef(x,y,0.0f);
 	glScalef(.02f*s, .03f*s, .01f);
 	printstring(text);
 	glPopMatrix();
+	glLoadIdentity();
 }
 
 void CglFont::WorldChar(char c)
