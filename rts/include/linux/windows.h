@@ -86,7 +86,7 @@ Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed',
 #ifdef USE_GLUT
 #define ShowCursor(a)					\
 do {							\
-	if (a)						\
+	if (a || 1)					\
 		glutSetCursor(GLUT_CURSOR_INHERIT);	\
 	else						\
 		glutSetCursor(GLUT_CURSOR_NONE);	\
