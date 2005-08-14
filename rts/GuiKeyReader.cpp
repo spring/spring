@@ -134,6 +134,20 @@ void CGuiKeyReader::CreateKeyNames()
 	keynames["enter"]=13;
 	keynames["backspace"]=8;
 	keynames["esc"]=27;
+#ifdef USE_GLUT
+	keynames["f1"]=GLUT_KEY_F1;
+	keynames["f2"]=GLUT_KEY_F2;
+	keynames["f3"]=GLUT_KEY_F3;
+	keynames["f4"]=GLUT_KEY_F4;
+	keynames["f5"]=GLUT_KEY_F5;
+	keynames["f6"]=GLUT_KEY_F6;
+	keynames["f7"]=GLUT_KEY_F7;
+	keynames["f8"]=GLUT_KEY_F8;
+	keynames["f9"]=GLUT_KEY_F9;
+	keynames["f10"]=GLUT_KEY_F10;
+	keynames["f11"]=GLUT_KEY_F11;
+	keynames["f12"]=GLUT_KEY_F12;
+#else
 	keynames["f1"]=112;
 	keynames["f2"]=113;
 	keynames["f3"]=114;
@@ -146,6 +160,7 @@ void CGuiKeyReader::CreateKeyNames()
 	keynames["f10"]=121;
 	keynames["f11"]=122;
 	keynames["f12"]=123;
+#endif
 	keynames["printscreen"]=124;
 	keynames["§"]=220;
 	keynames["`"]=192;
@@ -177,9 +192,7 @@ void CGuiKeyReader::CreateKeyNames()
 	keynames["numpad-"]=109;
 	keynames["numpad*"]=106;
 	keynames["numpad/"]=111;
-#ifndef USE_GLUT
 	keynames["ctrl"]=VK_CONTROL;
-#endif
 	keynames["up"]=VK_UP;
 	keynames["down"]=VK_DOWN;
 	keynames["left"]=VK_LEFT;
