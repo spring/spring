@@ -443,7 +443,7 @@ void CMouseHandler::HideMouse()
 		lasty = gu->screeny/2;  
 #ifdef USE_GLUT
 		glutSetCursor(GLUT_CURSOR_NONE);
-#warning add a way to set cursor pos
+		glutWarpPointer(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
 #else
 	        ShowCursor(FALSE);
 		hide=true;
@@ -560,16 +560,16 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
-#ifndef USE_GLUT
 	if(hide && mouseMovedFromCenter){
+#ifndef USE_GLUT
 		RECT cr;
 		if(GetWindowRect(hWnd,&cr)==0)
 			MessageBox(0,"mouse error","",0);
 		SetCursorPos(gu->screenx/2+cr.left+4*!fullscreen,gu->screeny/2+cr.top+23*!fullscreen);
+#else
+		glutWarpPointer(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
+#endif
 		internalMouseMove=true;				//this only works if the msg que is empty of mouse moves, so someone should figure out something better
 		mouseMovedFromCenter=false;
 	}
-#else
-#warning add a way to set cursor pos
-#endif
 }
