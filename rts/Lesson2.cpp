@@ -615,7 +615,11 @@ void processMouseActiveMotion(int x, int y) {
 void processMouse(int button, int state, int x, int y) {
   if(mouse)
     {
-      if(state==GLUT_DOWN)
+      if (button == 3)		/* Mouse wheel up */
+	      mouse->currentCamController->MouseWheelMove(1.0);
+      else if (button == 4)	/* Mouse wheel down */
+	      mouse->currentCamController->MouseWheelMove(-1.0);
+      else if(state==GLUT_DOWN)
 	mouse->MousePress(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
       else
 	mouse->MouseRelease(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
