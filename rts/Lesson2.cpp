@@ -662,9 +662,9 @@ void processMouse(int button, int state, int x, int y) {
   if(mouse)
     {
       if (button == 3)		/* Mouse wheel up */
-	      mouse->currentCamController->MouseWheelMove(1.0);
+	      mouse->currentCamController->MouseWheelMove(y);
       else if (button == 4)	/* Mouse wheel down */
-	      mouse->currentCamController->MouseWheelMove(-1.0);
+	      mouse->currentCamController->MouseWheelMove(y);
       else if(state==GLUT_DOWN)
 	mouse->MousePress(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
       else
