@@ -539,9 +539,9 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 void processNormalKeys(unsigned char key, int x, int y) {
   keys[key]=true;
   int mod = glutGetModifiers();
-  keys[VK_SHIFT] = mod&GLUT_ACTIVE_SHIFT;
-  keys[VK_CONTROL] = mod&GLUT_ACTIVE_CTRL;
-  keys[VK_MENU] = mod&GLUT_ACTIVE_ALT;
+  keys[VK_SHIFT] = (mod&GLUT_ACTIVE_SHIFT==GLUT_ACTIVE_SHIFT);
+  keys[VK_CONTROL] = (mod&GLUT_ACTIVE_CTRL==GLUT_ACTIVE_CTRL);
+  keys[VK_MENU] = (mod&GLUT_ACTIVE_ALT==GLUT_ACTIVE_ALT);
   if(activeController){
     activeController->KeyPressed(key,1);
   }
@@ -562,9 +562,9 @@ void processNormalKeysUP(unsigned char key, int x, int y) {
   if(key==27)
     exit(0);
   int mod = glutGetModifiers();
-  keys[VK_SHIFT] = mod&GLUT_ACTIVE_SHIFT;
-  keys[VK_CONTROL] = mod&GLUT_ACTIVE_CTRL;
-  keys[VK_MENU] = mod&GLUT_ACTIVE_ALT;
+  keys[VK_SHIFT] = (mod&GLUT_ACTIVE_SHIFT==GLUT_ACTIVE_SHIFT);
+  keys[VK_CONTROL] = (mod&GLUT_ACTIVE_CTRL==GLUT_ACTIVE_CTRL);
+  keys[VK_MENU] = (mod&GLUT_ACTIVE_ALT==GLUT_ACTIVE_ALT);
   if(activeController){
     activeController->KeyReleased(key);
   }
@@ -573,32 +573,78 @@ void processNormalKeysUP(unsigned char key, int x, int y) {
 
 
 void processSpecialKeys(int key, int x, int y) {
-  /* catches :
-    * GLUT_KEY_F1
-    * GLUT_KEY_F2
-    * GLUT_KEY_F3
-    * GLUT_KEY_F4
-    * GLUT_KEY_F5
-    * GLUT_KEY_F6
-    * GLUT_KEY_F7
-    * GLUT_KEY_F8
-    * GLUT_KEY_F9
-    * GLUT_KEY_F10
-    * GLUT_KEY_F11
-    * GLUT_KEY_F12
-    * GLUT_KEY_LEFT
-    * GLUT_KEY_UP
-    * GLUT_KEY_RIGHT
-    * GLUT_KEY_DOWN
-    * GLUT_KEY_PAGE_UP
-    * GLUT_KEY_PAGE_DOWN
-    * GLUT_KEY_HOME
-    * GLUT_KEY_END
-    * GLUT_KEY_INSERT 
-    */
-  keys[key]=true;
+	int k;
+  switch (key) {
+	  case GLUT_KEY_F1:
+		  k = VK_F1;
+		  break;
+	  case GLUT_KEY_F2:
+		  k = VK_F2;
+		  break;
+	  case GLUT_KEY_F3:
+		  k = VK_F3;
+		  break;
+	  case GLUT_KEY_F4:
+		  k = VK_F4;
+		  break;
+	  case GLUT_KEY_F5:
+		  k = VK_F5;
+		  break;
+	  case GLUT_KEY_F6:
+		  k = VK_F6;
+		  break;
+	  case GLUT_KEY_F7:
+		  k = VK_F7;
+		  break;
+	  case GLUT_KEY_F8:
+		  k = VK_F8;
+		  break;
+	  case GLUT_KEY_F9:
+		  k = VK_F9;
+		  break;
+	  case GLUT_KEY_F10:
+		  k = VK_F10;
+		  break;
+	  case GLUT_KEY_F11:
+		  k = VK_F11;
+		  break;
+	  case GLUT_KEY_F12:
+		  k = VK_F11;
+		  break;
+	  case GLUT_KEY_INSERT:
+		  k = VK_INSERT;
+		  break;
+	  case GLUT_KEY_END:
+		  k = VK_END;
+		  break;
+	  case GLUT_KEY_HOME:
+		  k = VK_HOME;
+		  break;
+	  case GLUT_KEY_PAGE_UP:
+		  k = VK_PRIOR;
+		  break;
+	  case GLUT_KEY_PAGE_DOWN:
+		  k = VK_NEXT;
+		  break;
+	  case GLUT_KEY_LEFT:
+		  k = VK_LEFT;
+		  break;
+	  case GLUT_KEY_RIGHT:
+		  k = VK_RIGHT;
+		  break;
+	  case GLUT_KEY_UP:
+		  k = VK_UP;
+		  break;
+	  case GLUT_KEY_DOWN:
+		  k = VK_DOWN;
+		  break;
+	default:
+		  k = key;
+		  break;
+  }
+  keys[k]=true;
   if(activeController){
-    activeController->KeyPressed(key,1);
+    activeController->KeyPressed(k,1);
   }
 }
 

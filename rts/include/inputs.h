@@ -5,12 +5,7 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #define VK_RETURN  13
-#define VK_UP      GLUT_KEY_UP
-#define VK_DOWN    GLUT_KEY_DOWN	
-#define VK_LEFT    GLUT_KEY_LEFT
-#define VK_RIGHT   GLUT_KEY_RIGHT
 #define VK_ESCAPE  27
-#define VK_END     GLUT_KEY_END
 //FIXME if you don't like SIGSEGV
 #define VK_PAUSE   666
 #define VK_SHIFT                    0x10
@@ -33,6 +28,28 @@
 //#define VK_RWIN 1
 //#define VK_LWIN 1
 #define VK_BACK 92
+#define VK_F1 0x70
+#define VK_F2 0x71
+#define VK_F3 0x72
+#define VK_F4 0x73
+#define VK_F5 0x74
+#define VK_F6 0x75
+#define VK_F7 0x76
+#define VK_F8 0x77
+#define VK_F9 0x78
+#define VK_F10 0x79
+#define VK_F11 0x7a
+#define VK_F12 0x7b
+
+#define VK_END              0x23
+#define VK_HOME             0x24
+#define VK_LEFT             0x25
+#define VK_UP               0x26
+#define VK_RIGHT            0x27
+#define VK_DOWN             0x28
+#define VK_INSERT           0x2D
+#define VK_PRIOR            0x21
+#define VK_NEXT             0x22
 #endif
 
 extern bool keys[256];
