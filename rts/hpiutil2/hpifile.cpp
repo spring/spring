@@ -68,11 +68,13 @@ void hpifile::validate(const char *n)
 		return;
 	}
 	header_bankmagic = file->readint();
-	if (header_bankmagic == BANK_MAGIC) {
-		std::cerr << "File " << n << ": Bank subtype signature looks like a saved game: 0x" << std::hex << header_bankmagic << std::endl;
-		return;
-	} else if (header_bankmagic != MARKER_MAGIC) {
-		std::cerr << "File " << n << ": Invalid bank subtype signature: 0x" << std::hex << header_bankmagic << std::endl;
+	if (header_bankmagic != HAPI_VERSION_MAGIC) {
+		if (header_bankmagic == BANK_MAGIC)
+			std::cerr << "File " << n << ": Bank subtype signature looks like a saved game: 0x" << std::hex << header_bankmagic << std::endl;
+		else if (header_bankmagic == HAPI2_VERSION_MAGIC)
+			std::cerr << "File " << n << ": HAPIv2 files not supported yet" << std::endl;
+		else
+			std::cerr << "File " << n << ": Invalid bank subtype signature: 0x" << std::hex << header_bankmagic << std::endl;
 		return;
 	}
 	header_offset = file->readint();
@@ -163,10 +165,11 @@ uint32_t hpifile::getdata(hpientry const &he, uint8_t *data)
 		return 0;
 	}
 	uint32_t sz = sizeof(data);
+	memset(data,0,sz);
 	uint32_t chunknum = (he.size / 65536);
 	if (he.size % 65536)
 		chunknum++;
-	uint32_t *chunksizes = new uint32_t[chunknum];
+	uint32_t *chunksizes = (uint32_t*)calloc(chunknum,sizeof(uint32_t));
 	file->seek(he.offset);
 	for (int i = 0; i < chunknum; i++)
 		chunksizes[i] = file->readint();
@@ -174,16 +177,20 @@ uint32_t hpifile::getdata(hpientry const &he, uint8_t *data)
 	int j = 0;
 	for (int i = 0; i < chunknum; i++) {
 		uint32_t chunksize = chunksizes[i];
-		substream *ss = new substream(*file,chunkoffset,chunksize);
+		printf("Chunkoffset: 0x%x\n",chunkoffset+j);
+		printf("Chunksize: 0x%x\n",chunksize);
+		substream *ss = new substream(*file,(chunkoffset + j),chunksize);
 		sqshstream *sqsh = new sqshstream(*ss);
-		uint8_t *tmp = new uint8_t[chunksize];
-		sqsh->read(&data[j],0,chunksize);
-		//memcpy(&data[j],tmp,chunksize*sizeof(uint8_t));
-		j += chunksize;
-		delete [] tmp;
-		delete sqsh;
-		delete ss;
-		chunkoffset += chunksize;
+		if (sqsh->valid) {
+			j += sqsh->read(&data[j],0,chunksize);
+			delete sqsh;
+			delete ss;
+		} else {
+			delete sqsh;
+			delete ss;
+			free(chunksizes);
+			return 0;
+		}
 	}
 	delete [] chunksizes;
 	return j;

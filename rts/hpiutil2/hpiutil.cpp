@@ -62,7 +62,7 @@ hpientry* HPIReadFlatList(hpifile const &hpi, const char *name, const bool dir)
 	/*
 	 * Make an alternate name in case of platform differences
 	 */
-	char *altname = new char[len+1];
+	char *altname = (char*)calloc(len+1,sizeof(char));
 	for (int i = 0; i < len; i++) {
 		if (name[i] == PATHSEPARATOR)
 			altname[i] = OTHERPATHSEPARATOR;
@@ -73,11 +73,11 @@ hpientry* HPIReadFlatList(hpifile const &hpi, const char *name, const bool dir)
 
 	for (std::vector<hpientry*>::iterator it = tmp.begin(); it != tmp.end(); it++) {
 		if ((!strcasecmp((*it)->path().c_str(),name) || !strcasecmp((*it)->path().c_str(),altname)) && ((*it)->directory == dir)) {
-			delete [] altname;
+			free(altname);
 			return *it;
 		}
 	}
-	delete [] altname;
+	free(altname);
 	return NULL;
 }
 

@@ -43,8 +43,15 @@ sqshstream::sqshstream(substream &ss)
 	compressedsize = readint();
 	fullsize = readint();
 	checksum = readint();
+#ifdef DEBUG
+	printf("sqshstream::compress: 0x%x\n",compress);
+	printf("sqshstream::encrypt: 0x%x\n",encrypt);
+	printf("sqshstream::compressedsize: %d\n",compressedsize);
+	printf("sqshstream::fullsize: %d\n",fullsize);
+	printf("sqshstream::checksum: 0x%x\n",checksum);
+#endif
 	uint32_t newcheck = stream->checksum(SQSH_HEADER);
-	if (newcheck != checksum) {
+	if (checksum && (newcheck != checksum)) {
 		std::cerr << "Chunk checksum " << std::hex << newcheck << " does not match stored checksum " << std::hex << checksum << std::endl;
 		return;
 	}
