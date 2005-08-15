@@ -15,7 +15,7 @@
 using std::string;
 
 #define DOTCONFIGFILE ".springrc"
-#define DOTCONFIGPATH string(getenv("HOME")).append("/").append(DOTCONFIGFILE)
+#define DOTCONFIGPATH (string(getenv("HOME")).append("/").append(DOTCONFIGFILE))
 
 class dotfileHandler
 {

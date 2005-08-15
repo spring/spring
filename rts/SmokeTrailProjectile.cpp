@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& pos2,const float3& dir1,const float3& dir2, CUnit* owner,bool firstSegment,bool lastSegment,float size,float time,float color,bool drawTrail,CProjectile* drawCallback)
-: CProjectile((pos1+pos2)*0.5,ZeroVector,owner),
+: CProjectile((pos1+pos2)*0.5f,ZeroVector,owner),
 	pos1(pos1),
 	pos2(pos2),
 	creationTime(gs->frameNum),

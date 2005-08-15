@@ -7,6 +7,8 @@
 #include "dotfileHandler.h"
 #include <sstream>
 
+//dotfileHandler regHandler=dotfileHandler(DOTCONFIGPATH);
+
 dotfileHandler regHandler(DOTCONFIGPATH);
 
 dotfileHandler::dotfileHandler(const string filename)

@@ -235,7 +235,7 @@ CGame::CGame(bool server,std::string mapname)
 	userInput="";
 	showList=0;
 
-	info->AddLine("TA Spring 0.41b1");
+	info->AddLine("TA Spring linux 0.41b1");
 
 	if(server){
 		gameServer=new CGameServer;

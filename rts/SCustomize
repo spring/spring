@@ -1,6 +1,4 @@
 #build options scons -h for available options
 #option=value
 debug=0
-disable_windows=0
 force_glextensions=1
-disable_inputs=0

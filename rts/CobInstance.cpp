@@ -780,7 +780,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case ATAN:
 		return (int)(TAANG2RAD*atan2f(p1, p2));
 	case HYPOT:
-		return _hypot(p1, p2);
+		return (int)_hypot(p1, p2);
 	case GROUND_HEIGHT:
 		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
 	case BUILD_PERCENT_LEFT:

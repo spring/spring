@@ -170,7 +170,7 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-#ifndef NO_WINSTUFF
+#ifdef _WIN32
 	curTime=double(t.QuadPart)/f.QuadPart;
 #else
 	curTime = double(t)/double(f);

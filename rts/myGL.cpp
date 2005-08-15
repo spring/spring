@@ -105,7 +105,7 @@ void PrintLoadMsg(const char* text)
 	glColor3f(1,1,1);
 	font->glPrint("%s",text);
 	glPopMatrix();
-	font->glPrintAt(0.40,0.06,1.0,"TA Spring 0.41b1");
+	font->glPrintAt(0.40,0.06,1.0,"TA Spring linux 0.41b1");
 	font->glPrintAt(0.20,0.02,0.5,"This program is distributed under the GNU General Public License, see license.html for more info");
 #ifndef USE_GLUT
 	SwapBuffers(hDC);

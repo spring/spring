@@ -13,9 +13,12 @@ appears in the common code
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include <fenv.h>
 #include <iostream>
 #include <byteswap.h>
+#include <boost/cstdint.hpp>
 
 //FIXME remove following line and include everywhere required
 #include <inputs.h>
@@ -42,7 +45,7 @@ typedef void *HDC;
 #define DWORD long int
 #define DWORD_PTR unsigned long
 #define BOOL bool
-#define UCHAR unsigned char
+#define UCHAR unsigned char#define uint8_t uint8
 #define UINT16 uint16_t
 #define UINT32 uint32_t
 #define UINT64 uint64_t
