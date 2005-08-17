@@ -120,6 +120,9 @@ tmp=os.listdir('.')
 guif=os.listdir('gui')
 for f in guif:
 	tmp.append("./gui/"+f)
+hpiutilf=os.listdir('hpiutil2')
+for f in hpiutilf:
+	tmp.append("./hpiutil2/"+f)
 	
 #linux disable unused code
 if platform == 'linux':	

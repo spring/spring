@@ -6,7 +6,6 @@
 #include "StdAfx.h"
 #include "HpiHandler.h"
 #include <windows.h>
-#include "HPIUtil.h"
 #include "myGL.h"
 #include "RegHandler.h"
 #include "InfoConsole.h"
@@ -49,6 +48,9 @@ CHpiHandler::CHpiHandler()
 
 CHpiHandler::~CHpiHandler()
 {
+	for (map<string,hpifile*>::iterator it = datafiles.begin(); it != datafiles.end(); it++) {
+		HPIClose(*it->second);
+	}
 }
 
 int CHpiHandler::GetFileSize(string name)
@@ -64,16 +66,17 @@ int CHpiHandler::LoadFile(string name, void *buffer)
 	MakeLower(name);
 	if(files.find(name)==files.end())
 		return 0;
-	struct _HPIFILE* hpi=(struct _HPIFILE*)HPIOpen((char*)files[name].hpiname.c_str());
-	char* file=HPIOpenFile(hpi, (char*)name.c_str());
+	hpifile *hpi = locatehpi(files[name].hpiname.c_str());
+	if (!hpi)
+		return 0;
+	hpientry *file=HPIOpenFile(*hpi, (char*)name.c_str());
 //	char* file= const_cast<char*> (HPIOpenFile(hpi, name.c_str()).c_str());
 	if (file)
 	{	// avoid crash if file is missing.
-		HPIGet((char*)buffer,file,0,files[name].size);
-		HPICloseFile(file);
+		HPIGet((char*)buffer,*file,0,files[name].size);
+		HPICloseFile(*file);
 	}
 
-	HPIClose(hpi);
 	return files[name].size;
 }
 
@@ -84,26 +87,27 @@ void CHpiHandler::FindHpiFiles(string pattern,string path)
 		SearchHpiFile((char*)it->c_str());
 }
 
+hpifile *CHpiHandler::locatehpi(const char *name)
+{
+	map<string,hpifile*>::iterator pos = datafiles.find(name);
+	if (pos == datafiles.end()) {
+		hpifile *hpi = HPIOpen(name);
+		if (!hpi)
+			return NULL;
+		datafiles[name] = hpi;
+	}
+	return datafiles[name];
+}
+
 void CHpiHandler::SearchHpiFile(char* name)
 {
-	struct _HPIFILE* hpi=(struct _HPIFILE*)HPIOpen(name);
-	if(hpi==0)
-		return;
-	char file[512];
-	int type;
-	int size;
-
-//	MessageBox(0,name,"Test",0);
-	bool nextFile=HPIGetFiles(hpi, 0, file, &type, &size);
-
-	while(nextFile!=0){
-		if(type==0){
-			RegisterFile(name,file,size);
-//			info->AddLine(file);
+	hpifile *hpi = locatehpi(name);
+	std::vector<hpientry*> ret = HPIGetFiles(*hpi);
+	for (std::vector<hpientry*>::iterator it = ret.begin(); it != ret.end(); it++) {
+		if (!(*it)->directory) {
+			RegisterFile(name,(char*)(*it)->path().c_str(),(*it)->size);
 		}
-		nextFile=HPIGetFiles(hpi, nextFile, file, &type, &size);
 	}
-	HPIClose(hpi);
 }
 
 void CHpiHandler::RegisterFile(char *hpi, char *name, int size)
@@ -160,24 +164,17 @@ void CHpiHandler::FindHpiFilesForDir(string pattern,string path,string subPath,s
 
 void CHpiHandler::SearchHpiFileInDir(char* name,string subPath,std::vector<std::string>& found)
 {
-	struct _HPIFILE* hpi=(struct _HPIFILE*)HPIOpen(name);
-	if(hpi==0)
+	hpifile *hpi = locatehpi(name);
+	if (!hpi)
 		return;
-	char file[512];
-	int type;
-	int size;
-
-//	MessageBox(0,name,"Test",0);
 	char path[500];
 	subPath.erase(subPath.length()-1);
 	strcpy(path,subPath.c_str());
-	bool nextFile=HPIDir(hpi, 0, path, file, &type, &size);
-
-	while(nextFile!=0){
-		if(type==0)
-			found.push_back(file);
-		nextFile=HPIDir(hpi, nextFile, path, file, &type, &size);
+	std::vector<hpientry*> ret = HPIDir(*hpi, path);
+	for (std::vector<hpientry*>::iterator it = ret.begin(); it != ret.end(); it++) {
+		if (!(*it)->directory) {
+			found.push_back((*it)->path());
+		}
 	}
-	HPIClose(hpi);
 }
 

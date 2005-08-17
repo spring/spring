@@ -16,6 +16,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "hpiutil2/hpiutil.h"
 
 using std::string;
 using std::map;
@@ -35,6 +36,8 @@ public:
 		int size;
 	};
 	map<string,FileData> files;
+	map<string,hpifile*> datafiles;
+	hpifile *locatehpi(const char *name);
 	std::vector<std::string> GetFilesInDir(std::string dir);
 private:
 	void FindHpiFiles(string pattern,string path);
