@@ -25,9 +25,9 @@
 #include <iostream>
 #include "hpifile.h"
 
-/*
+/**
  * Constructor
- * fname - path to target hpi file as a c string
+ * @param fname path to target hpi file as a c string
  */
 hpifile::hpifile(const char *fname)
 {
@@ -35,9 +35,9 @@ hpifile::hpifile(const char *fname)
 	validate(fname);
 }
 
-/*
+/**
  * Constructor
- * fname - path to target hpi file as a c++ string
+ * @param fname path to target hpi file as a c++ string
  */
 hpifile::hpifile(std::string const &fname)
 {
@@ -45,7 +45,7 @@ hpifile::hpifile(std::string const &fname)
 	validate(fname.c_str());
 }
 
-/*
+/**
  * Destructor
  */
 hpifile::~hpifile()
@@ -53,11 +53,11 @@ hpifile::~hpifile()
 	delete file;
 }
 
-/*
+/**
  * validate()
  * Reads the file's headers and ensures it is a legitimate hpi file
  * also sets decryption key if present
- * n - path to target hpi
+ * @param n path to target hpi
  */
 void hpifile::validate(const char *n)
 {
@@ -85,12 +85,13 @@ void hpifile::validate(const char *n)
 	flatlist.push_back(&dirinfo("","",header_diroffset));
 }
 
-/*
+/**
  * dirinfo()
- * returns an hpientry object representing a given directory
- * parentname - name of this object's parent (if applicable)
- * dirname - name of this directory
- * offset - offset in hpi file
+ * creates an hpientry object representing a given directory
+ * @return hpientry object for the directory
+ * @param parentname name of this object's parent (if applicable)
+ * @param dirname name of this directory
+ * @param offset offset in hpi file
  */
 hpientry& hpifile::dirinfo(std::string const &parentname, std::string const &dirname, const uint32_t offset)
 {
@@ -131,12 +132,13 @@ hpientry& hpifile::dirinfo(std::string const &parentname, std::string const &dir
 	return *ret;
 }
 
-/*
+/**
  * fileinfo()
- * returns an hpientry object representing a given file
- * parentname - name of this object's parent (if applicable)
- * name - name of the file
- * offset - offset in hpi file
+ * creates an hpientry object representing a given file
+ * @return hpientry object for the file
+ * @param parentname name of this object's parent (if applicable)
+ * @param name name of the file
+ * @param offset offset in hpi file
  */
 hpientry& hpifile::fileinfo(std::string const &parentname, std::string const &name, const uint32_t offset)
 {
@@ -147,12 +149,12 @@ hpientry& hpifile::fileinfo(std::string const &parentname, std::string const &na
 	return *ret;
 }
 
-/*
+/**
  * getdata()
  * load a file's data into a buffer.
- * returns the number of bytes read
- * he - hpientry for the target file
- * data - buffer to read data into
+ * @return the number of bytes read
+ * @param he hpientry for the target file
+ * @param data buffer to read data into
  */
 uint32_t hpifile::getdata(hpientry const &he, uint8_t *data)
 {
@@ -164,11 +166,7 @@ uint32_t hpifile::getdata(hpientry const &he, uint8_t *data)
 		std::cerr << "HPIentry is a directory, not a file" << std::endl;
 		return 0;
 	}
-	uint32_t sz = sizeof(data);
-	memset(data,0,sz);
-	uint32_t chunknum = (he.size / 65536);
-	if (he.size % 65536)
-		chunknum++;
+	uint32_t chunknum = bitdiv(he.size,16) + (bitmod(he.size,16)?1:0);
 	uint32_t *chunksizes = (uint32_t*)calloc(chunknum,sizeof(uint32_t));
 	file->seek(he.offset);
 	for (int i = 0; i < chunknum; i++)
@@ -177,12 +175,10 @@ uint32_t hpifile::getdata(hpientry const &he, uint8_t *data)
 	int j = 0;
 	for (int i = 0; i < chunknum; i++) {
 		uint32_t chunksize = chunksizes[i];
-		printf("Chunkoffset: 0x%x\n",chunkoffset+j);
-		printf("Chunksize: 0x%x\n",chunksize);
 		substream *ss = new substream(*file,(chunkoffset + j),chunksize);
 		sqshstream *sqsh = new sqshstream(*ss);
 		if (sqsh->valid) {
-			j += sqsh->read(&data[j],0,chunksize);
+			j += sqsh->readall(&data[j]);
 			delete sqsh;
 			delete ss;
 		} else {
@@ -192,6 +188,6 @@ uint32_t hpifile::getdata(hpientry const &he, uint8_t *data)
 			return 0;
 		}
 	}
-	delete [] chunksizes;
+	free(chunksizes);
 	return j;
 }

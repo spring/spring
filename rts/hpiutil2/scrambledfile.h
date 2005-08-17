@@ -30,14 +30,18 @@
  * Bitwise is generally faster, but disable
  * if you're having problems
  */
-//#define MODS
+#define MODS
 
 #ifdef MODS
 #define bitmin(x,y)	((y)+(((x)-(y))&-((x)<(y))))
 #define bitmax(x,y)	((x)-(((x)-(y))&-((x)<(y))))
+#define bitdiv(n,d)	((n)>>(d))
+#define bitmod(n,d)	((n)&((1<<(d))-1))
 #else
 #define bitmin(x,y)	(x<y?x:y)
 #define bitmax(x,y)	(x>y?x:y)
+#define bitdiv(n,d)	((n)/(1<<(d)))
+#define bitmod(n,d)	((n)%(1<<(d)))
 #endif
 
 class scrambledfile

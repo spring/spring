@@ -45,6 +45,7 @@ public:
 	uint8_t read();
 	uint32_t read(uint8_t *buf);
 	uint32_t read(uint8_t *buf, const uint32_t off, const uint32_t len);
+	uint32_t readall(uint8_t *buf);
 	uint32_t readint();
 private:
 	bool decompress();

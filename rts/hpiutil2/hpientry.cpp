@@ -22,13 +22,13 @@
 #include "hpientry.h"
 #include "hpifile.h"
 
-/*
+/**
  * Constructor
- * f - hpifile that this entry comes from
- * pname - name of the object's parent (if applicable)
- * n - name of the object
- * o - offset of this object in the hpi file
- * s - size of the object
+ * @param f hpifile that this entry comes from
+ * @param pname name of the object's parent (if applicable)
+ * @param n name of the object
+ * @param o offset of this object in the hpi file
+ * @param s size of the object
  */
 hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, const uint32_t o, const uint32_t s)
 {
@@ -40,16 +40,16 @@ hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, c
 	file = &f;
 }
 
-/*
+/**
  * destructor
  */
 hpientry::~hpientry()
 {
 }
 
-/*
+/**
  * path()
- * returns the full path of the object this entry represents
+ * @return the full path of the object this entry represents
  */
 std::string hpientry::path()
 {

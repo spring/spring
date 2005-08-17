@@ -24,9 +24,9 @@
 #include <iostream>
 #include <zlib.h>
 
-/*
+/**
  * Constructor
- * ss - substream to read from
+ * @param ss substream to read from
  */
 sqshstream::sqshstream(substream &ss)
 {
@@ -43,13 +43,6 @@ sqshstream::sqshstream(substream &ss)
 	compressedsize = readint();
 	fullsize = readint();
 	checksum = readint();
-#ifdef DEBUG
-	printf("sqshstream::compress: 0x%x\n",compress);
-	printf("sqshstream::encrypt: 0x%x\n",encrypt);
-	printf("sqshstream::compressedsize: %d\n",compressedsize);
-	printf("sqshstream::fullsize: %d\n",fullsize);
-	printf("sqshstream::checksum: 0x%x\n",checksum);
-#endif
 	uint32_t newcheck = stream->checksum(SQSH_HEADER);
 	if (checksum && (newcheck != checksum)) {
 		std::cerr << "Chunk checksum " << std::hex << newcheck << " does not match stored checksum " << std::hex << checksum << std::endl;
@@ -61,7 +54,7 @@ sqshstream::sqshstream(substream &ss)
 		free((void*)data);
 }
 
-/*
+/**
  * Destructor
  */
 sqshstream::~sqshstream()
@@ -70,9 +63,10 @@ sqshstream::~sqshstream()
 		free((void*)data);
 }
 
-/*
+/**
  * decompress
  * decompresses the substream data if necessary
+ * @return whether the decompression was successful
  */
 bool sqshstream::decompress()
 {
@@ -80,7 +74,7 @@ bool sqshstream::decompress()
 	stream->read(compstring,SQSH_HEADER,compressedsize);
 	if (encrypt) {
 		for (int i = 0; i < compressedsize; i++)
-			compstring[i] = (compstring[i] - i) ^ i;
+			compstring[i] = compstring[i] - i ^ i;
 	}
 	position = 0;
 	uint32_t ret;
@@ -99,9 +93,10 @@ bool sqshstream::decompress()
 	return ret==fullsize;
 }
 
-/*
+/**
  * read
- * reads and returns a single byte
+ * reads a single byte
+ * @return byte read
  */
 uint8_t sqshstream::read()
 {
@@ -113,11 +108,11 @@ uint8_t sqshstream::read()
 		return (uint8_t)stream->read();
 }
 
-/*
+/**
  * read
  * reads data into a buffer
- * returns number of bytes read
- * buf - buffer to read into
+ * @return number of bytes read
+ * @param buf buffer to read into
  */
 uint32_t sqshstream::read(uint8_t *buf)
 {
@@ -130,13 +125,13 @@ uint32_t sqshstream::read(uint8_t *buf)
 	return position - oldpos;
 }
 
-/*
+/**
  * read
  * reads data into a buffer
- * returns number of bytes read
- * buf - buffer to read into
- * off - offset to start reading from
- * len - number of bytes to read
+ * @return number of bytes read
+ * @param buf buffer to read into
+ * @param off offset to start reading from
+ * @param len number of bytes to read
  */
 uint32_t sqshstream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 {
@@ -149,10 +144,29 @@ uint32_t sqshstream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 	return position - off;
 }
 
-/*
+/**
+ * readall
+ * reads all data into a buffer
+ * caller's responsibility to make sure enough
+ * space is allocated
+ * @return number of bytes read
+ * @param buf buffer to read into
+ */
+uint32_t sqshstream::readall(uint8_t *buf)
+{
+	if (!valid)
+		return 0;
+	int i;
+	for (i = 0; i < fullsize; i++)
+		buf[i] = data[i];
+	return i;
+}
+
+/**
  * readint
- * reads and returns a 32-bit integer,
+ * reads a 32-bit integer,
  * byte swabbing if necessary
+ * @return swabbed integer
  */
 uint32_t sqshstream::readint()
 {
@@ -163,14 +177,14 @@ uint32_t sqshstream::readint()
 	return (d<<24)|(c<<16)|(b<<8)|a;
 }
 
-/*
+/**
  * decompresszlib
  * decompresses zlib-compressed data from one buffer to another
- * returns the number of bytes decompressed
- * src - buffer with source compressed data
- * dest - buffer to put destination uncompressed data
- * srcsize - size of source data
- * destsize - size of destination data
+ * @return the number of bytes decompressed
+ * @param src buffer with source compressed data
+ * @param dest buffer to put destination uncompressed data
+ * @param srcsize size of source data
+ * @param destsize expected size of destination data
  */
 uint32_t sqshstream::decompresszlib(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
 {
@@ -205,14 +219,14 @@ uint32_t sqshstream::decompresszlib(uint8_t *src, uint8_t *dest, const uint32_t 
 	return zs.total_out;
 }
 
-/*
+/**
  * decompresslz77
  * decompresses lz77-compressed data from one buffer to another
- * returns the number of bytes decompressed
- * src - buffer with source compressed data
- * dest - buffer to put destination uncompressed data
- * srcsize - size of source data
- * destsize - size of destination data
+ * @return the number of bytes decompressed
+ * @param src buffer with source compressed data
+ * @param dest buffer to put destination uncompressed data
+ * @param srcsize size of source data
+ * @param destsize expected size of destination data
  */
 uint32_t sqshstream::decompresslz77(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
 {

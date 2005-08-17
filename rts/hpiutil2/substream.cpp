@@ -22,11 +22,11 @@
 
 #include "substream.h"
 
-/*
+/**
  * Constructor
- * sf - scrambledfile to read from
- * off - offset in scrambledfile to start from
- * len - length of substream data
+ * @param sf scrambledfile to read from
+ * @param off offset in scrambledfile to start from
+ * @param len length of substream data
  */
 substream::substream(scrambledfile &sf, const uint32_t off, const uint32_t len)
 {
@@ -36,7 +36,7 @@ substream::substream(scrambledfile &sf, const uint32_t off, const uint32_t len)
 	length = len;
 }
 
-/*
+/**
  * Destructor
  */
 substream::~substream()
@@ -44,9 +44,10 @@ substream::~substream()
 	free((void*)data);
 }
 
-/*
+/**
  * read
- * reads and returns a single byte
+ * reads a single byte
+ * @param byte read
  */
 uint8_t substream::read()
 {
@@ -55,11 +56,11 @@ uint8_t substream::read()
 	return data[position++];
 }
 
-/*
+/**
  * read
  * reads data into a buffer
- * returns the number of bytes read
- * buf - buffer to read into
+ * @return the number of bytes read
+ * @param buf buffer to read into
  */
 uint32_t substream::read(uint8_t *buf)
 {
@@ -72,13 +73,13 @@ uint32_t substream::read(uint8_t *buf)
 	return position - oldpos;
 }
 
-/*
+/**
  * read
  * reads data into a buffer
- * returns the number of bytes read
- * buf - buffer to read into
- * off - offset in substream to start reading from
- * len - size of data to read
+ * @return the number of bytes read
+ * @param buf buffer to read into
+ * @param off offset in substream to start reading from
+ * @param len size of data to read
  */
 uint32_t substream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 {
@@ -91,12 +92,12 @@ uint32_t substream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 	return position-off;
 }
 
-/*
+/**
  * checksum
  * performs a checksum on the substream data by
  * adding up all bytes.
- * returns the sum
- * start - byte to start with
+ * @return checksum
+ * @param start byte to start with
  */
 uint32_t substream::checksum(const uint32_t start)
 {

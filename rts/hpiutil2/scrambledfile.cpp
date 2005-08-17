@@ -22,9 +22,9 @@
 
 #include "scrambledfile.h"
 
-/*
+/**
  * Constructor
- * file - name of scrambled file to open as a c string
+ * @param file name of scrambled file to open as a c string
  */
 scrambledfile::scrambledfile(const char *fname)
 {
@@ -32,9 +32,9 @@ scrambledfile::scrambledfile(const char *fname)
 	scrambled = false;
 }
 
-/*
+/**
  * Constructor
- * file - name of scrambled file to open as a c++ string
+ * @param file name of scrambled file to open as a c++ string
  */
 scrambledfile::scrambledfile(std::string const &fname)
 {
@@ -42,7 +42,7 @@ scrambledfile::scrambledfile(std::string const &fname)
 	scrambled = false;
 }
 
-/*
+/**
  * Destructor
  */
 scrambledfile::~scrambledfile()
@@ -50,9 +50,10 @@ scrambledfile::~scrambledfile()
 	file.close();
 }
 
-/*
+/**
  * read
- * returns a single byte from the file
+ * reads a single byte from the file
+ * @return byte read
  */
 uint8_t scrambledfile::read()
 {
@@ -63,10 +64,11 @@ uint8_t scrambledfile::read()
 	return (uint8_t)ret;
 }
 
-/*
+/**
  * read
  * reads data from the file into a buffer
- * buf - buffer to read into
+ * @return number of bytes read
+ * @param buf buffer to read into
  */
 uint32_t scrambledfile::read(uint8_t *buf)
 {
@@ -80,12 +82,13 @@ uint32_t scrambledfile::read(uint8_t *buf)
 	return read;
 }
 
-/*
+/**
  * read
  * reads data from the file into a buffer
- * buf - buffer to read into
- * off - offset in file to start reading from
- * len - number of bytes to read
+ * @return number of bytes read
+ * @param buf buffer to read into
+ * @param off offset in file to start reading from
+ * @param len number of bytes to read
  */
 uint32_t scrambledfile::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 {
@@ -98,10 +101,11 @@ uint32_t scrambledfile::read(uint8_t *buf, const uint32_t off, const uint32_t le
 	return ((uint32_t)file.tellg()-off);
 }
 
-/*
+/**
  * readint
- * reads and returns a 32-bit integer from the file,
+ * reads a 32-bit integer from the file,
  * byte swabbing if necessary
+ * @return swabbed integer
  */
 uint32_t scrambledfile::readint()
 {
@@ -112,20 +116,20 @@ uint32_t scrambledfile::readint()
 	return (d<<24)|(c<<16)|(b<<8)|a;
 }
 
-/*
+/**
  * seek
  * seek to an offset in the file
- * pos - offset to seek to
+ * @param pos offset to seek to
  */
 void scrambledfile::seek(const uint32_t pos)
 {
 	file.seekg(pos,std::ios::beg);
 }
 
-/*
+/**
  * setkey
  * set or unset decryption key to use to unscramble
- * k - key to use (use 0 to disable)
+ * @param k key to use (use 0 to disable)
  */
 void scrambledfile::setkey(const uint32_t k)
 {
@@ -138,10 +142,11 @@ void scrambledfile::setkey(const uint32_t k)
 	}
 }
 
-/*
+/**
  * readstring
- * reads and returns a string of data from the file,
+ * reads a string of data from the file,
  * terminated by \0 or EOF
+ * @return string read
  */
 std::string scrambledfile::readstring()
 {
