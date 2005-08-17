@@ -82,6 +82,7 @@ void CSunParser::LoadBuffer(char* buf, int size)
 
 void CSunParser::Parse(char *buf, int size)
 {
+#ifdef SUCKY_CODE
 	std::string thissection;
 	SSection *section = NULL;
 	//std::vector<std::map<std::string,SSection*>*> sectionlist;
@@ -128,10 +129,12 @@ void CSunParser::Parse(char *buf, int size)
 		}
 		buf++;
 	}
+#endif
 }
 
 char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 {
+#ifdef SUCKY_CODE
 	std::string thissection;
 	int se = 0; //for section start/end errorchecking
 	char *endptr = buf+size;
@@ -200,6 +203,7 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 		buf++;
 	}
 	return buf;
+#endif
 }
 
 //find value, display messagebox if no such value found
