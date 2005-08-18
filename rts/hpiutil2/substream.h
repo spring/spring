@@ -25,19 +25,24 @@
 
 #include "scrambledfile.h"
 
-class substream
+namespace hpiutil
 {
-public:
-	substream(scrambledfile &sf, const uint32_t off, const uint32_t len);
-	~substream();
-	uint8_t read();
-	uint32_t read(uint8_t *buf);
-	uint32_t read(uint8_t *buf, const uint32_t off, const uint32_t len);
-	uint32_t readint();
-	uint32_t checksum(const uint32_t start);
-	uint8_t *data;
-	uint32_t position;
-	uint32_t length;
-};
+	
+	class substream
+	{
+	public:
+		substream(scrambledfile &sf, const uint32_t off, const uint32_t len);
+		~substream();
+		uint8_t read();
+		uint32_t read(uint8_t *buf);
+		uint32_t read(uint8_t *buf, const uint32_t off, const uint32_t len);
+		uint32_t readint();
+		uint32_t checksum(const uint32_t start);
+		uint8_t *data;
+		uint32_t position;
+		uint32_t length;
+	};
+
+}
 
 #endif /* HPIUTIL2_SUBSTREAM_H */

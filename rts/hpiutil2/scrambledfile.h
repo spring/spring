@@ -44,22 +44,27 @@
 #define bitmod(n,d)	((n)%(1<<(d)))
 #endif
 
-class scrambledfile
+namespace hpiutil
 {
-public:
-	bool scrambled;
-	uint32_t key;
-	scrambledfile(const char *fname);
-	scrambledfile(std::string const &fname);
-	~scrambledfile();
-	uint8_t read();
-	uint32_t read(uint8_t *buf);
-	uint32_t read(uint8_t *buf,const uint32_t off, const uint32_t len);
-	uint32_t readint();
-	std::string readstring();
-	void seek(const uint32_t pos);
-	void setkey(const uint32_t k);
-	std::fstream file;
-};
+	
+	class scrambledfile
+	{
+	public:
+		bool scrambled;
+		uint32_t key;
+		scrambledfile(const char *fname);
+		scrambledfile(std::string const &fname);
+		~scrambledfile();
+		uint8_t read();
+		uint32_t read(uint8_t *buf);
+		uint32_t read(uint8_t *buf,const uint32_t off, const uint32_t len);
+		uint32_t readint();
+		std::string readstring();
+		void seek(const uint32_t pos);
+		void setkey(const uint32_t k);
+		std::fstream file;
+	};
+
+}
 
 #endif /* HPIUTIL2_SCRAMBLEDFILE_H */

@@ -34,21 +34,26 @@
 #include <vector>
 #include <string>
 
-class hpifile;
-class hpientry
+namespace hpiutil
 {
-public:
-	std::string name;
-	std::string parentname;
-	uint32_t length;
-	bool directory;
-	uint32_t offset;
-	uint32_t size;
-	std::vector<hpientry*> subdir;
-	hpientry(hpifile &f, std::string const &pname, std::string const &n, const uint32_t offset, const uint32_t size);
-	~hpientry();
-	std::string path();
-	hpifile *file;
-};
+	
+	class hpifile;
+	class hpientry
+	{
+	public:
+		std::string name;
+		std::string parentname;
+		uint32_t length;
+		bool directory;
+		uint32_t offset;
+		uint32_t size;
+		std::vector<hpientry*> subdir;
+		hpientry(hpifile &f, std::string const &pname, std::string const &n, const uint32_t offset, const uint32_t size);
+		~hpientry();
+		std::string path();
+		hpifile *file;
+	};
+
+}
 
 #endif /* HPIUTIL2_HPIENTRY_H */

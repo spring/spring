@@ -27,7 +27,7 @@
  * Opens a given hpi file and returns a pointer to its hpifile object
  * filename - path to hpi file
  */
-hpifile* HPIOpen(const char *filename)
+hpiutil::hpifile* hpiutil::HPIOpen(const char *filename)
 {
 	hpifile *hpi = new hpifile(filename);
 	if (hpi->valid)
@@ -41,7 +41,7 @@ hpifile* HPIOpen(const char *filename)
  * Closes an hpi file
  * hpi - hpifile object to close
  */
-void HPIClose(hpifile &hpi)
+void hpiutil::HPIClose(hpifile &hpi)
 {
 	delete &hpi;
 }
@@ -54,7 +54,7 @@ void HPIClose(hpifile &hpi)
  * name - path of file to search for
  * dir - whether to search directories or files
  */
-hpientry* HPIReadFlatList(hpifile const &hpi, const char *name, const bool dir)
+hpiutil::hpientry* hpiutil::HPIReadFlatList(hpifile const &hpi, const char *name, const bool dir)
 {
 	std::vector<hpientry*> tmp = hpi.flatlist;
 	int len = strlen(name);
@@ -88,7 +88,7 @@ hpientry* HPIReadFlatList(hpifile const &hpi, const char *name, const bool dir)
  * hpi - hpi file to search
  * filename - name of file to find
  */
-hpientry* HPIOpenFile(hpifile const &hpi, const char *filename)
+hpiutil::hpientry* hpiutil::HPIOpenFile(hpifile const &hpi, const char *filename)
 {
 	return HPIReadFlatList(hpi,filename,false);
 }
@@ -98,7 +98,7 @@ hpientry* HPIOpenFile(hpifile const &hpi, const char *filename)
  * closes an hpientry
  * he - hpientry to close
  */
-void HPICloseFile(hpientry &he)
+void hpiutil::HPICloseFile(hpientry &he)
 {
 	/*
 	 * Should really only be deleted if you never intend
@@ -116,7 +116,7 @@ void HPICloseFile(hpientry &he)
  * offset - offset in hpi file (unused, for compatibility only)
  * bytecount - length of file to load (unused, for compatibility only)
  */
-uint32_t HPIGet(char *dest, hpientry const &he, const int offset, const int bytecount)
+uint32_t hpiutil::HPIGet(char *dest, hpientry const &he, const int offset, const int bytecount)
 {
 	return he.file->getdata(he,(uint8_t*)dest);
 }
@@ -127,7 +127,7 @@ uint32_t HPIGet(char *dest, hpientry const &he, const int offset, const int byte
  * as a vector of hpientry pointers
  * hpi - hpi file to list
  */
-std::vector<hpientry*> HPIGetFiles(hpifile const &hpi)
+std::vector<hpiutil::hpientry*> hpiutil::HPIGetFiles(hpifile const &hpi)
 {
 	return hpi.flatlist;
 }
@@ -139,7 +139,7 @@ std::vector<hpientry*> HPIGetFiles(hpifile const &hpi)
  * hpi - hpi file to use
  * dirname - name of directory to list
  */
-std::vector<hpientry*> HPIDir(hpifile const &hpi,const char *dirname)
+std::vector<hpiutil::hpientry*> hpiutil::HPIDir(hpifile const &hpi,const char *dirname)
 {
 	hpientry *dir = HPIReadFlatList(hpi,dirname,true);
 	if (dir)

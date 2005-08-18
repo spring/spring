@@ -29,7 +29,7 @@
  * Constructor
  * @param fname path to target hpi file as a c string
  */
-hpifile::hpifile(const char *fname)
+hpiutil::hpifile::hpifile(const char *fname)
 {
 	file = new scrambledfile(fname);
 	validate(fname);
@@ -39,7 +39,7 @@ hpifile::hpifile(const char *fname)
  * Constructor
  * @param fname path to target hpi file as a c++ string
  */
-hpifile::hpifile(std::string const &fname)
+hpiutil::hpifile::hpifile(std::string const &fname)
 {
 	file = new scrambledfile(fname);
 	validate(fname.c_str());
@@ -48,7 +48,7 @@ hpifile::hpifile(std::string const &fname)
 /**
  * Destructor
  */
-hpifile::~hpifile()
+hpiutil::hpifile::~hpifile()
 {
 	delete file;
 }
@@ -59,7 +59,7 @@ hpifile::~hpifile()
  * also sets decryption key if present
  * @param n path to target hpi
  */
-void hpifile::validate(const char *n)
+void hpiutil::hpifile::validate(const char *n)
 {
 	valid = false;
 	header_hapimagic = file->readint();
@@ -93,7 +93,7 @@ void hpifile::validate(const char *n)
  * @param dirname name of this directory
  * @param offset offset in hpi file
  */
-hpientry& hpifile::dirinfo(std::string const &parentname, std::string const &dirname, const uint32_t offset)
+hpiutil::hpientry& hpiutil::hpifile::dirinfo(std::string const &parentname, std::string const &dirname, const uint32_t offset)
 {
 	std::vector<hpientry*> listing;
 	std::string newparent;
@@ -140,7 +140,7 @@ hpientry& hpifile::dirinfo(std::string const &parentname, std::string const &dir
  * @param name name of the file
  * @param offset offset in hpi file
  */
-hpientry& hpifile::fileinfo(std::string const &parentname, std::string const &name, const uint32_t offset)
+hpiutil::hpientry& hpiutil::hpifile::fileinfo(std::string const &parentname, std::string const &name, const uint32_t offset)
 {
 	uint32_t doff = file->readint();
 	uint32_t dsize = file->readint();
@@ -156,7 +156,7 @@ hpientry& hpifile::fileinfo(std::string const &parentname, std::string const &na
  * @param he hpientry for the target file
  * @param data buffer to read data into
  */
-uint32_t hpifile::getdata(hpientry const &he, uint8_t *data)
+uint32_t hpiutil::hpifile::getdata(hpientry const &he, uint8_t *data)
 {
 	if (he.file != this) {
 		std::cerr << "HPIentry does not match this HPIfile" << std::endl;

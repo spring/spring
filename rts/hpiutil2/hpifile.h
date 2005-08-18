@@ -32,25 +32,30 @@
 #define HAPI_VERSION_MAGIC 0x00010000
 #define HAPI2_VERSION_MAGIC 0x00020000
 
-class hpifile
+namespace hpiutil
 {
-public:
-	bool valid;
-	hpifile(const char *fname);
-	hpifile(std::string const &fname);
-	~hpifile();
-	std::vector<hpientry*> flatlist;
-	hpientry& dirinfo(std::string const &parentname, std::string const &dirname, const uint32_t offset);
-	hpientry& fileinfo(std::string const &parentname, std::string const &name, const uint32_t offset);
-	uint32_t getdata(hpientry const &he, uint8_t *data);
-private:
-	scrambledfile *file;
-	void validate(const char *n);
-	uint32_t header_hapimagic;
-	uint32_t header_bankmagic;
-	uint32_t header_offset;
-	uint32_t header_key;
-	uint32_t header_diroffset;
-};
+
+	class hpifile
+	{
+	public:
+		bool valid;
+		hpifile(const char *fname);
+		hpifile(std::string const &fname);
+		~hpifile();
+		std::vector<hpientry*> flatlist;
+		hpientry& dirinfo(std::string const &parentname, std::string const &dirname, const uint32_t offset);
+		hpientry& fileinfo(std::string const &parentname, std::string const &name, const uint32_t offset);
+		uint32_t getdata(hpientry const &he, uint8_t *data);
+	private:
+		scrambledfile *file;
+		void validate(const char *n);
+		uint32_t header_hapimagic;
+		uint32_t header_bankmagic;
+		uint32_t header_offset;
+		uint32_t header_key;
+		uint32_t header_diroffset;
+	};
+
+}
 
 #endif /* HPIUTIL2_HPIFILE_H */

@@ -28,7 +28,7 @@
  * Constructor
  * @param ss substream to read from
  */
-sqshstream::sqshstream(substream &ss)
+hpiutil::sqshstream::sqshstream(substream &ss)
 {
 	valid = false;
 	stream = &ss;
@@ -57,7 +57,7 @@ sqshstream::sqshstream(substream &ss)
 /**
  * Destructor
  */
-sqshstream::~sqshstream()
+hpiutil::sqshstream::~sqshstream()
 {
 	if (valid)
 		free((void*)data);
@@ -68,7 +68,7 @@ sqshstream::~sqshstream()
  * decompresses the substream data if necessary
  * @return whether the decompression was successful
  */
-bool sqshstream::decompress()
+bool hpiutil::sqshstream::decompress()
 {
 	uint8_t *compstring = (uint8_t*)calloc(compressedsize,sizeof(uint8_t));
 	stream->read(compstring,SQSH_HEADER,compressedsize);
@@ -98,7 +98,7 @@ bool sqshstream::decompress()
  * reads a single byte
  * @return byte read
  */
-uint8_t sqshstream::read()
+uint8_t hpiutil::sqshstream::read()
 {
 	if (position >= fullsize)
 		return 0;
@@ -114,7 +114,7 @@ uint8_t sqshstream::read()
  * @return number of bytes read
  * @param buf buffer to read into
  */
-uint32_t sqshstream::read(uint8_t *buf)
+uint32_t hpiutil::sqshstream::read(uint8_t *buf)
 {
 	if ((position >= fullsize)||!valid)
 		return 0;
@@ -133,7 +133,7 @@ uint32_t sqshstream::read(uint8_t *buf)
  * @param off offset to start reading from
  * @param len number of bytes to read
  */
-uint32_t sqshstream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
+uint32_t hpiutil::sqshstream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 {
 	position = bitmin(off,fullsize);
 	if ((position >= fullsize)||!valid)
@@ -152,7 +152,7 @@ uint32_t sqshstream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
  * @return number of bytes read
  * @param buf buffer to read into
  */
-uint32_t sqshstream::readall(uint8_t *buf)
+uint32_t hpiutil::sqshstream::readall(uint8_t *buf)
 {
 	if (!valid)
 		return 0;
@@ -168,7 +168,7 @@ uint32_t sqshstream::readall(uint8_t *buf)
  * byte swabbing if necessary
  * @return swabbed integer
  */
-uint32_t sqshstream::readint()
+uint32_t hpiutil::sqshstream::readint()
 {
 	uint32_t a = read();
 	uint32_t b = read();
@@ -186,7 +186,7 @@ uint32_t sqshstream::readint()
  * @param srcsize size of source data
  * @param destsize expected size of destination data
  */
-uint32_t sqshstream::decompresszlib(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
+uint32_t hpiutil::sqshstream::decompresszlib(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
 {
 	z_stream zs;
 	zs.next_in = (Bytef*)src;
@@ -228,7 +228,7 @@ uint32_t sqshstream::decompresszlib(uint8_t *src, uint8_t *dest, const uint32_t 
  * @param srcsize size of source data
  * @param destsize expected size of destination data
  */
-uint32_t sqshstream::decompresslz77(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
+uint32_t hpiutil::sqshstream::decompresslz77(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
 {
 	int w1 = 1, w2 = 1;
 	int in = 0, out = 0;

@@ -36,8 +36,8 @@ public:
 		int size;
 	};
 	map<string,FileData> files;
-	map<string,hpifile*> datafiles;
-	hpifile *locatehpi(const char *name);
+	map<string,hpiutil::hpifile*> datafiles;
+	hpiutil::hpifile *locatehpi(const char *name);
 	std::vector<std::string> GetFilesInDir(std::string dir);
 private:
 	void FindHpiFiles(string pattern,string path);

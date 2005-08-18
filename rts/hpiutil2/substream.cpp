@@ -28,7 +28,7 @@
  * @param off offset in scrambledfile to start from
  * @param len length of substream data
  */
-substream::substream(scrambledfile &sf, const uint32_t off, const uint32_t len)
+hpiutil::substream::substream(scrambledfile &sf, const uint32_t off, const uint32_t len)
 {
 	data = (uint8_t*)calloc(len,sizeof(uint8_t));
 	sf.read(data,off,len);
@@ -39,7 +39,7 @@ substream::substream(scrambledfile &sf, const uint32_t off, const uint32_t len)
 /**
  * Destructor
  */
-substream::~substream()
+hpiutil::substream::~substream()
 {
 	free((void*)data);
 }
@@ -47,9 +47,9 @@ substream::~substream()
 /**
  * read
  * reads a single byte
- * @param byte read
+ * @return byte read
  */
-uint8_t substream::read()
+uint8_t hpiutil::substream::read()
 {
 	if (position >= length)
 		return 0;
@@ -62,7 +62,7 @@ uint8_t substream::read()
  * @return the number of bytes read
  * @param buf buffer to read into
  */
-uint32_t substream::read(uint8_t *buf)
+uint32_t hpiutil::substream::read(uint8_t *buf)
 {
 	if (position >= length)
 		return 0;
@@ -81,7 +81,7 @@ uint32_t substream::read(uint8_t *buf)
  * @param off offset in substream to start reading from
  * @param len size of data to read
  */
-uint32_t substream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
+uint32_t hpiutil::substream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 {
 	position = bitmin(off,length);
 	if (position >= length)
@@ -99,7 +99,7 @@ uint32_t substream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
  * @return checksum
  * @param start byte to start with
  */
-uint32_t substream::checksum(const uint32_t start)
+uint32_t hpiutil::substream::checksum(const uint32_t start)
 {
 	uint32_t check = 0;
 	for (int i = start; i < length; i++)

@@ -25,12 +25,18 @@
 
 #include "hpifile.h"
 
-hpifile* HPIOpen(const char *filename);
-void HPIClose(hpifile &hpi);
-hpientry* HPIOpenFile(hpifile const &hpi, const char *filename);
-void HPICloseFile(hpientry &he);
-uint32_t HPIGet(char *dest, hpientry const &he, const int offset, const int bytecount);
-std::vector<hpientry*> HPIGetFiles(hpifile const &hpi);
-std::vector<hpientry*> HPIDir(hpifile const &hpi, const char *dirname);
+namespace hpiutil
+{
+	
+	hpifile* HPIOpen(const char *filename);
+	void HPIClose(hpifile &hpi);
+	hpientry* HPIOpenFile(hpifile const &hpi, const char *filename);
+	void HPICloseFile(hpientry &he);
+	uint32_t HPIGet(char *dest, hpientry const &he, const int offset, const int bytecount);
+	std::vector<hpientry*> HPIGetFiles(hpifile const &hpi);
+	std::vector<hpientry*> HPIDir(hpifile const &hpi, const char *dirname);
+	hpientry* HPIReadFlatList(hpifile const &hpi, const char *name, const bool dir);
+
+}
 
 #endif /* HPIUTIL2_H */

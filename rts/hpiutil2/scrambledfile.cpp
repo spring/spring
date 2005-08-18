@@ -24,9 +24,9 @@
 
 /**
  * Constructor
- * @param file name of scrambled file to open as a c string
+ * @param fname name of scrambled file to open as a c string
  */
-scrambledfile::scrambledfile(const char *fname)
+hpiutil::scrambledfile::scrambledfile(const char *fname)
 {
 	file.open(fname,std::ios::in|std::ios::binary);
 	scrambled = false;
@@ -34,9 +34,9 @@ scrambledfile::scrambledfile(const char *fname)
 
 /**
  * Constructor
- * @param file name of scrambled file to open as a c++ string
+ * @param fname name of scrambled file to open as a c++ string
  */
-scrambledfile::scrambledfile(std::string const &fname)
+hpiutil::scrambledfile::scrambledfile(std::string const &fname)
 {
 	file.open(fname.c_str(),std::ios::in|std::ios::binary);
 	scrambled = false;
@@ -45,7 +45,7 @@ scrambledfile::scrambledfile(std::string const &fname)
 /**
  * Destructor
  */
-scrambledfile::~scrambledfile()
+hpiutil::scrambledfile::~scrambledfile()
 {
 	file.close();
 }
@@ -55,7 +55,7 @@ scrambledfile::~scrambledfile()
  * reads a single byte from the file
  * @return byte read
  */
-uint8_t scrambledfile::read()
+uint8_t hpiutil::scrambledfile::read()
 {
 	uint32_t oldpos = file.tellg();
 	char ret = file.get();
@@ -70,7 +70,7 @@ uint8_t scrambledfile::read()
  * @return number of bytes read
  * @param buf buffer to read into
  */
-uint32_t scrambledfile::read(uint8_t *buf)
+uint32_t hpiutil::scrambledfile::read(uint8_t *buf)
 {
 	uint32_t oldpos = (uint32_t)file.tellg();
 	file.read((char*)buf,sizeof(buf));
@@ -90,7 +90,7 @@ uint32_t scrambledfile::read(uint8_t *buf)
  * @param off offset in file to start reading from
  * @param len number of bytes to read
  */
-uint32_t scrambledfile::read(uint8_t *buf, const uint32_t off, const uint32_t len)
+uint32_t hpiutil::scrambledfile::read(uint8_t *buf, const uint32_t off, const uint32_t len)
 {
 	file.seekg(off);
 	file.read((char*)buf,len);
@@ -107,7 +107,7 @@ uint32_t scrambledfile::read(uint8_t *buf, const uint32_t off, const uint32_t le
  * byte swabbing if necessary
  * @return swabbed integer
  */
-uint32_t scrambledfile::readint()
+uint32_t hpiutil::scrambledfile::readint()
 {
 	uint32_t a = (uint32_t)read();
 	uint32_t b = (uint32_t)read();
@@ -121,7 +121,7 @@ uint32_t scrambledfile::readint()
  * seek to an offset in the file
  * @param pos offset to seek to
  */
-void scrambledfile::seek(const uint32_t pos)
+void hpiutil::scrambledfile::seek(const uint32_t pos)
 {
 	file.seekg(pos,std::ios::beg);
 }
@@ -131,7 +131,7 @@ void scrambledfile::seek(const uint32_t pos)
  * set or unset decryption key to use to unscramble
  * @param k key to use (use 0 to disable)
  */
-void scrambledfile::setkey(const uint32_t k)
+void hpiutil::scrambledfile::setkey(const uint32_t k)
 {
 	if (k) {
 		key = ~((k<<2)|(k>>6));
@@ -144,11 +144,10 @@ void scrambledfile::setkey(const uint32_t k)
 
 /**
  * readstring
- * reads a string of data from the file,
- * terminated by \0 or EOF
+ * reads a string of data from the file terminated by NULL or EOF
  * @return string read
  */
-std::string scrambledfile::readstring()
+std::string hpiutil::scrambledfile::readstring()
 {
 	std::string data;
 	while (1) {

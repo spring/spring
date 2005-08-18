@@ -30,7 +30,7 @@
  * @param o offset of this object in the hpi file
  * @param s size of the object
  */
-hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, const uint32_t o, const uint32_t s)
+hpiutil::hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, const uint32_t o, const uint32_t s)
 {
 	parentname = "";
 	parentname = pname;
@@ -43,7 +43,7 @@ hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, c
 /**
  * destructor
  */
-hpientry::~hpientry()
+hpiutil::hpientry::~hpientry()
 {
 }
 
@@ -51,7 +51,7 @@ hpientry::~hpientry()
  * path()
  * @return the full path of the object this entry represents
  */
-std::string hpientry::path()
+std::string hpiutil::hpientry::path()
 {
 	if (parentname == "")
 		return name;
