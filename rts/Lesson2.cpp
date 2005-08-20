@@ -683,7 +683,7 @@ BOOL CALLBACK crashCallback(LPVOID crState)
 	if (net->recordDemo)
 		delete net->recordDemo;
 
-#ifndef NO_IO
+#ifdef CRASHRPT
 	AddFile("infolog.txt", "Spring information log");
 	AddFile("test.sdf", "Spring game demo");
 #endif
