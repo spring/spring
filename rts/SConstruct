@@ -109,7 +109,8 @@ if env.get('disable_7zip'):
 	defines+=['NO_7ZIP']
 	exclude_list.append("Archive7ZipDll.cpp")
 else:
-	lzmafiles+=["./7zip/7zip/Common/FileStreams.cpp","./7zip/Common/C_FileIO.cpp","./7zip/Common/StringConvert.cpp","./7zip/Windows/PropVariant.cpp","./7zip/Windows/PropVariantConversions.cpp","./7zip/Common/MyWindows.cpp","./7zip/Windows/wine_date_and_time.cpp","./7zip/Common/IntToString.cpp"]
+	defines+=['_SZ_ONE_DIRECTORY']
+	lzmafiles+=["./7zip/7zCrc.c","./7zip/7zExtract.c","./7zip/7zIn.c","./7zip/7zAlloc.c","./7zip/7zBuffer.c","./7zip/7zItem.c","./7zip/7zDecode.c","./7zip/7zHeader.c","./7zip/LzmaDecode.c","./7zip/7zMethodID.c"]
 
 if detected_platform == 'linux':
 	exclude_list.append("RegHandler.cpp")

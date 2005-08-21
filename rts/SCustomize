@@ -2,3 +2,4 @@
 #option=value
 debug=0
 force_glextensions=1
+disable_7zip=0
