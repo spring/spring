@@ -162,11 +162,11 @@ bool GUIcenterBuildMenu::MouseUpAction(int x, int y, int button)
 				c.id=commands[hiliteNum]->id;
 				c.options=0;
 
-				if(keyShift())
+				if(keys[VK_SHIFT])
 					c.options|=SHIFT_KEY;
-				if(keyCtrl())
+				if(keys[VK_CONTROL])
 					c.options|=CONTROL_KEY;
-				if(keyMenu())
+				if(keys[VK_MENU])
 					c.options|=ALT_KEY;
 				if(button!=1)
 					c.options|=RIGHT_MOUSE_KEY;

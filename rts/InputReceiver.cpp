@@ -3,35 +3,28 @@
 #include "myGL.h"
 //#include "mmgr.h"
 
-std::deque<CInputReceiver*> *inputReceivers;
+std::deque<CInputReceiver*> inputReceivers;
 
 CInputReceiver::CInputReceiver(void)
 {
-	if (inputReceivers == NULL) {
-		inputReceivers = new std::deque<CInputReceiver*>();
-	}
-		inputReceivers->push_front(this);
+	inputReceivers.push_front(this);
 }
 
 CInputReceiver::~CInputReceiver(void)
 {
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
+	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if(*ri==this){
-			inputReceivers->erase(ri);
+			inputReceivers.erase(ri);
 			break;
 		}
-	}
-	if (inputReceivers->empty()) {
-		delete inputReceivers;
-		inputReceivers = NULL;
 	}
 }
 
 CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 {
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
+	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->IsAbove(x,y))
 			return *ri;
 	}

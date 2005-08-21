@@ -15,7 +15,8 @@
 #include "RegHandler.h"
 #include <math.h>
 #include <algorithm>
-#include "BFReadmap.h"
+#include "FileHandler.h"
+#include "SmfReadMap.h"
 #include "ShadowHandler.h"
 //#include "TimeProfiler.h"
 //#include "mmgr.h"
@@ -43,9 +44,9 @@ CGrassDrawer::CGrassDrawer()
 	}
 	maxGrassDist=800+sqrtf(detail)*240;
 	maxDetailedDist=146+detail*24;
-	detailedBlocks=(int) ((maxDetailedDist-24)/(SQUARE_SIZE*grassSquareSize*grassBlockSize))+1;
-	numTurfs=3+(int) (detail*0.5);
-	strawPerTurf=50+(int) (sqrtf(detail)*10);
+	detailedBlocks=(int)((maxDetailedDist-24)/(SQUARE_SIZE*grassSquareSize*grassBlockSize))+1;
+	numTurfs=3+(int)(detail*0.5);
+	strawPerTurf=50+(int)sqrtf(detail)*10;
 
 //	info->AddLine("%f %f %i %i %i",maxGrassDist,maxDetailedDist,detailedBlocks,numTurfs,strawPerTurf);
 
@@ -97,6 +98,26 @@ CGrassDrawer::CGrassDrawer()
 	if(shadowHandler->drawShadows){
 		grassVP=LoadVertexProgram("grass.vp");
 		grassFarVP=LoadVertexProgram("grassFar.vp");
+	}
+
+	CFileHandler* fh=readmap->ifs;
+	fh->Seek(sizeof(MapHeader));
+
+	for(int a=0;a<readmap->header.numExtraHeaders;++a){
+		int size;
+		fh->Read(&size,4);
+		int type;
+		fh->Read(&type,4);
+		if(type==MEH_Vegetation){
+			int pos;
+			fh->Read(&pos,4);
+			fh->Seek(pos);
+			fh->Read(grassMap,gs->mapx*gs->mapy/16);
+			break;	//we arent interested in other extensions anyway
+		} else {
+			unsigned char buf[100];	//todo: fix this if we create larger extensions
+			fh->Read(buf,size-8);
+		}
 	}
 
 }
@@ -154,12 +175,12 @@ void CGrassDrawer::Draw(void)
 	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, grassVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, 1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,1);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
+		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB_ARB,GL_SRC_COLOR);
@@ -228,7 +249,7 @@ void CGrassDrawer::Draw(void)
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
-			SetTexGen(1.0/8192,1.0/8192,0,0);
+			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapx*SQUARE_SIZE),0,0);
 
 			glBindTexture(GL_TEXTURE_2D, groundDrawer->infoTex);
 			glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -244,9 +265,9 @@ void CGrassDrawer::Draw(void)
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
-		SetTexGen(1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,0);
+		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-		glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
+		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
 
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
@@ -334,10 +355,10 @@ void CGrassDrawer::Draw(void)
 											glPushMatrix();
 											glTranslatef3(pos);
 											NearGrassStruct* ng=&nearGrass[((y*grassBlockSize+y2)&31)*32+((x*grassBlockSize+x2)&31)];
-											if(ng->square!=(y*grassBlockSize+y2)*1024+(x*grassBlockSize+x2)){
+											if(ng->square!=(y*grassBlockSize+y2)*2048+(x*grassBlockSize+x2)){
 												float3 v=squarePos-camera->pos;
 												ng->rotation=GetHeadingFromVector(v.x,v.z)*180.0/32768+180;
-												ng->square=(y*grassBlockSize+y2)*1024+(x*grassBlockSize+x2);
+												ng->square=(y*grassBlockSize+y2)*2048+(x*grassBlockSize+x2);
 											}
 											glRotatef(ng->rotation,0,1,0);
 											glCallList(grassDL);
@@ -436,7 +457,7 @@ void CGrassDrawer::Draw(void)
 	} else {
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, grassFarNSVP );
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12,  1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,1);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  1.0/8192,1.0/8192,0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
 		glBindTexture(GL_TEXTURE_2D, farTex);
 
 		if((groundDrawer->drawLos || groundDrawer->drawExtraTex)){

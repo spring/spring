@@ -63,6 +63,11 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 
 void CStartPosSelecter::Draw()
 {
+	if(gu->spectating){
+		delete this;
+		return;
+	}
+
 	float mx=float(mouse->lastx)/gu->screenx;
 	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
 

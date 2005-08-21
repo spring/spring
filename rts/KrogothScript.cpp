@@ -24,7 +24,7 @@ void CKrogothScript::Update(void)
 		unitLoader.LoadUnit("ARMFLASH",float3(2592,100,2500),0,false);
 
 		unitLoader.LoadUnit("CORKROG",float3(3965,100,2550),1,false);
-		unitLoader.LoadUnit("CORCOM",float3(3065,100,2900),1,false);
+		unitLoader.LoadUnit("CORCOM",float3(3065,100,2900),0,false);
 
 /*		unitLoader.LoadUnit("CORGOL",float3(3565,100,2900),1,false);
 		unitLoader.LoadUnit("CORSENT",float3(3465,100,3150),1,false);
@@ -50,5 +50,5 @@ void CKrogothScript::Update(void)
 
 std::string CKrogothScript::GetMapName(void)
 {
-	return "map4.sm2";
+	return "map4.smf";
 }

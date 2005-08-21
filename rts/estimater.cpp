@@ -113,7 +113,7 @@ void CPathEstimater::CalculateSquareCosts()
 		for(y=0;y<g.mapy/BLOCK_SIZE;++y){
 			char tmp[500]="Precalculating path costs ";
 			char tmp2[50];
-			snprintf(tmp2, 10, "%d", y);
+			itoa(y,tmp2,10);
 			strcat(tmp,tmp2);
 			PrintLoadMsg(tmp);
 			for(int x=0;x<g.mapx/BLOCK_SIZE;++x){

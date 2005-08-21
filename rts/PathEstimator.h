@@ -8,10 +8,12 @@
 #include <string>
 #include <queue>
 #include <list>
+#include "PathCache.h"
 using namespace std;
 
 class CPathEstimatorDef;
 
+class CPathFinderDef;
 
 class CPathEstimator : public IPath {
 public:
@@ -67,7 +69,7 @@ public:
 			The maximum number of nodes/blocks the search are allowed to analyze.
 			This restriction could be used in cases where CPU-consumption are critical.
 	*/
-	SearchResult GetPath(const MoveData& moveData, float3 start, const CPathEstimatorDef& peDef, Path& path, unsigned int maxSearchedBlocks = 10000);
+	SearchResult GetPath(const MoveData& moveData, float3 start, const CPathFinderDef& peDef, Path& path, unsigned int maxSearchedBlocks = 10000);
 
 
 	/*
@@ -82,6 +84,9 @@ public:
 	This function shall be called every 1/30sec during game runtime.
 	*/
 	void Update();
+
+	//find the best block to use for this pos
+	float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
 
 private:
 	static const unsigned int MAX_SEARCHED_BLOCKS=10000;
@@ -108,7 +113,7 @@ private:
 	};
 
 	struct BlockInfo {
-		int2* sqrOffset;
+		int2* sqrCenter;
 		float cost;
 		int2 parentBlock;
 		unsigned int options;
@@ -124,10 +129,10 @@ private:
 	void CalculateVertices(const MoveData& moveData, int blockX, int blockZ);
 	void CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction);
 	
-	SearchResult InitSearch(const MoveData& moveData, const CPathEstimatorDef& peDef);
-	SearchResult StartSearch(const MoveData& moveData, const CPathEstimatorDef& peDef);
-	SearchResult DoSearch(const MoveData& moveData, const CPathEstimatorDef& peDef);
-	void TestBlock(const MoveData& moveData, const CPathEstimatorDef& peDef, OpenBlock& parentOpenBlock, unsigned int direction);
+	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& peDef);
+	SearchResult StartSearch(const MoveData& moveData, const CPathFinderDef& peDef);
+	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& peDef);
+	void TestBlock(const MoveData& moveData, const CPathFinderDef& peDef, OpenBlock& parentOpenBlock, unsigned int direction);
 	void FinishSearch(const MoveData& moveData, Path& path);
 	void ResetSearch();
 
@@ -162,51 +167,10 @@ private:
 	int2 goalSqrOffset;
 
 	int testedBlocks;
-};
 
-
-/*
-While CPathEstimator is generic, CPathEstimatorDef is used to
-define the target and restrictions of the search.
-CPathEstimatorDef is abstract and need to be inherited.
-*/
-class CPathEstimatorDef : public CPathFinderDef {
+	CPathCache* pathCache;
 public:
-	virtual int2 GoalSquareOffset(int blockSize) const=0;
+	void Draw(void);
 };
-
-
-/*
-CRangedGoalPED is simply a extended estimator-version of the
-CRangedGoalPFD, using the same idea (and code).
-*/
-class CRangedGoalPED : public CPathEstimatorDef, public CRangedGoalPFD {
-public:
-	CRangedGoalPED(float3 goalCenter, float goalRadius) : CRangedGoalPFD(goalCenter, goalRadius) {}
-	virtual bool IsGoal(int xSquare, int zSquare) const {return CRangedGoalPFD::IsGoal(xSquare, zSquare);}
-	virtual float Heuristic(int xSquare, int zSquare) const {return CRangedGoalPFD::Heuristic(xSquare, zSquare);}
-	virtual bool WithinConstraints(int xSquare, int zSquare) const {return CRangedGoalPFD::WithinConstraints(xSquare, zSquare);}
-	virtual bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const {return CRangedGoalPFD::GoalIsBlocked(moveData, moveMathOptions);}
-	virtual void Draw() const {CRangedGoalPFD::Draw();}
-	virtual int2 GoalSquareOffset(int blockSize) const;
-};
-
-
-/*
-Using a ranged goal, but are also limiting the search area into a circular
-area with it's center in the middle point between start and goal location
-and with a minimum radius still including both start and goal location.
-Note: This is a strong restriction, that probits the search to go "backwards".
-*/
-class CRangedGoalWithCircularConstraintPFD : public CRangedGoalPFD {
-public:
-	CRangedGoalWithCircularConstraintPFD(float3 start, float3 goal, float goalRadius);
-	virtual bool WithinConstraints(int xSquare, int zSquare) const;
-
-private:
-	float3 start, halfWay;
-	float searchRadius;
-};
-
 
 #endif

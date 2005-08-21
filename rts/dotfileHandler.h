@@ -17,21 +17,26 @@ using std::string;
 #define DOTCONFIGFILE ".springrc"
 #define DOTCONFIGPATH (string(getenv("HOME")).append("/").append(DOTCONFIGFILE))
 
+#define regHandler (dotfileHandler::GetInstance())
+
 class dotfileHandler
 {
 public:
-	dotfileHandler(string filename);
-	~dotfileHandler();
 	unsigned int GetInt(string name, unsigned int def);
 	string GetString(string name, string def);
 	void SetInt(string name, unsigned int value);
 	void SetString(string name, string value);
-private:
+	static dotfileHandler& GetInstance();
+	static void Deallocate();
+protected:
+	dotfileHandler(string filename);
+	~dotfileHandler();
 	std::ofstream file;
 	std::map<string,string> data;
 	void flushfile(void);
+	static dotfileHandler* instance;
 };
 
-extern dotfileHandler regHandler;
+//extern dotfileHandler regHandler;
 
 #endif /* _DOTFILEHANDLER_H */

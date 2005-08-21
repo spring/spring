@@ -12,6 +12,8 @@
 
 using std::string;
 
+#define regHandler (RegHandler::GetInstance())
+
 class RegHandler  
 {
 public:
@@ -19,11 +21,17 @@ public:
 	void SetString(string name,string value);
 	string GetString(string name,string def);
 	unsigned int GetInt(string name,unsigned int def);
+
+	static RegHandler& GetInstance();
+	static void Deallocate();
+protected:
 	RegHandler(string keyname,HKEY key=HKEY_CURRENT_USER);
 	virtual ~RegHandler();
+
 	HKEY regkey;
+	static RegHandler* instance;
 };
-extern RegHandler regHandler;
+//extern RegHandler regHandler;
 
 #else
 /*

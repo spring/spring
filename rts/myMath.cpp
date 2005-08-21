@@ -53,3 +53,14 @@ int CountBits(register unsigned int w)  {
 	w += w >> 16;
 	return w & 0xff;
 }
+
+unsigned int NextPwr2(unsigned int x)
+{
+	x-=1;
+	x |= (x >> 1);
+	x |= (x >> 2);
+	x |= (x >> 4);
+	x |= (x >> 8);
+	x |= (x >> 16);
+	return(x+1);
+}

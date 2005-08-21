@@ -33,24 +33,14 @@ appears in the common code
 
 
 #ifdef EMULE_WINTYPES
-//FIXME check following lines
-typedef void *HANDLE;
-#define CALLBACK
+#include "wintypes.h"
 typedef void* HINSTANCE ;
 typedef void *HDC; 
-//following might stay like as is in a first time
-#define VOID void
-#define BYTE unsigned char
-#define WORD int
-#define DWORD long int
-#define DWORD_PTR unsigned long
-#define BOOL bool
-#define UCHAR unsigned char#define uint8_t uint8
-#define UINT16 uint16_t
-#define UINT32 uint32_t
-#define UINT64 uint64_t
-#define LARGE_INTEGER int64_t
+typedef void *HANDLE;
 #define __int64 int64_t
+#define BOOL bool
+#define VOID void
+#define CALLBACK
 #ifndef TRUE
 #define TRUE true
 #endif
@@ -58,23 +48,34 @@ typedef void *HDC;
 #define FALSE false
 #endif
 typedef void *LPVOID;
+BOOL WINAPI DosDateTimeToFileTime(WORD,WORD,FILETIME *);
+BOOL WINAPI FileTimeToDosDateTime(const FILETIME *,WORD *, WORD *);
+BOOL WINAPI FileTimeToLocalFileTime(const FILETIME *,FILETIME *);
+BOOL WINAPI FileTimeToSystemTime(const FILETIME *,LPSYSTEMTIME);
+BOOL WINAPI LocalFileTimeToFileTime(const FILETIME *,FILETIME *);
+VOID WINAPI GetSystemTime(LPSYSTEMTIME);
+BOOL WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
+
+#else
+//FIXME check following lines
+//following might stay like as is in a first time
+#ifndef WORD
+#define WORD int
+#endif
+#define DWORD long int
+#define DWORD_PTR unsigned long
+#define UCHAR unsigned char
+#define UINT8 uint8_t
+#define UINT16 uint16_t
+#define UINT32 uint32_t
+#define UINT64 uint64_t
+#define LARGE_INTEGER int64_t
 //typedef unsigned int UINT;
 typedef int LRESULT;
 #include <string>
 using namespace std;
 typedef string LPSTR;
 typedef int* LPINT;
-/* TODO check if replacing
- 	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
-
-by 
-	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
-is OK for LARGE_INTEGER
-Game.cpp:768: error: request for member `QuadPart' in `this->CGame::timeSpeed', 
-   which is of non-class type `long int'
-*/
-#else
-#error please check the above types and maybe remove them from the code cf. http://www.jniwrapper.com/wintypes.jsp
 #endif //EMULE_WINTYPES
 
 #define MAKEWORD(a, b)      ((WORD)(((BYTE)((DWORD_PTR)(a) & 0xff)) |\\
@@ -233,24 +234,24 @@ static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 	 * Reading from the tsc is only available on
 	 * pentium class chips (x86 compatible and x86_64)
 	 */
-	LARGE_INTEGER val;
+	int64_t val;
 	__asm__ __volatile__("rdtsc" : "=A" (val));
-	*count = val;
+	count->QuadPart = val;
 #elif defined(__GNUC__) && defined(__ia64__)
 	/*
 	 * Reading from the itc is only available on
 	 * ia64
 	 */
-	LARGE_INTEGER val;
+	int64_t val;
 	__asm__ __volatile__("mov %0=ar.itc" : "=r" (val));
-	*count = val;
+	count->QuadPart = val;
 #else
 	/*
 	 * Have to go generic
 	 */
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
-	*count = (LARGE_INTEGER)tv.tv_usec;
+	count->QuadPart = (int64_t)tv.tv_usec;
 #endif
 	return true;
 }
@@ -259,7 +260,7 @@ static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 /*
  * Avoid repeated recalculations
  */
-static LARGE_INTEGER _cpufreq;
+static int64_t _cpufreq;
 
 /*
  * Generic solution
@@ -267,21 +268,21 @@ static LARGE_INTEGER _cpufreq;
 static inline bool _freqfallback(LARGE_INTEGER *frequence)
 {
 	if (!_cpufreq) {
-		LARGE_INTEGER tscstart,tscend;
+		int64_t tscstart,tscend;
 		struct timeval tvstart,tvend;
 		long usec;
 		LARGE_INTEGER tmp;
 		QueryPerformanceCounter(&tmp);
-		tscstart = tmp;
+		tscstart = tmp.QuadPart;
 		gettimeofday(&tvstart,NULL);
 		usleep(100000);
 		QueryPerformanceCounter(&tmp);
-		tscend = tmp;
+		tscend = tmp.QuadPart;
 		gettimeofday(&tvend,NULL);
 		usec = 1000000 * (tvend.tv_sec - tvstart.tv_sec) + (tvend.tv_usec - tvstart.tv_usec);
 		_cpufreq = (tscend - tscstart) / usec;
 	}
-	*frequence = _cpufreq;
+	frequence->QuadPart = _cpufreq;
 	return !!_cpufreq;
 }
 
@@ -321,8 +322,8 @@ static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 #endif 
 			if (r == 1) {
 				fclose(f);
-				_cpufreq = (LARGE_INTEGER)atoi(tmp);
-				*frequence = _cpufreq;
+				_cpufreq = (int64_t)atoi(tmp);
+				frequence->QuadPart = _cpufreq;
 				return !!_cpufreq;
 			}
 		}

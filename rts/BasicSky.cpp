@@ -423,7 +423,7 @@ START_TIME_PROFILE
 				xdist=3*xdist*xdist-2*xdist*xdist*xdist;
 				
 				float contrib=(1-xdist)*(1-ydist);
-				kernel[y*CLOUD_SIZE/4+x]=(int)(contrib*((4<<CLOUD_DETAIL)>>a));
+				kernel[y*CLOUD_SIZE/4+x]=(int)contrib*((4<<CLOUD_DETAIL)>>a);
 			}
 		}
 		unsigned int by=0,bx=0;

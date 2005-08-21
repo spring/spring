@@ -7,9 +7,22 @@
 #include "dotfileHandler.h"
 #include <sstream>
 
-//dotfileHandler regHandler=dotfileHandler(DOTCONFIGPATH);
+//dotfileHandler regHandler(DOTCONFIGPATH);
+dotfileHandler* dotfileHandler::instance=0;
 
-dotfileHandler regHandler(DOTCONFIGPATH);
+dotfileHandler& dotfileHandler::GetInstance()
+{
+	if (!instance)
+		instance = new dotfileHandler(DOTCONFIGPATH);
+
+	return *instance;
+}
+
+void dotfileHandler::Deallocate()
+{
+	delete instance;
+	instance = 0;
+}
 
 dotfileHandler::dotfileHandler(const string filename)
 {
@@ -56,7 +69,7 @@ string dotfileHandler::GetString(const string name, const string def)
  */
 void dotfileHandler::flushfile(void)
 {
-	file.seekp(ios::beg);
+	file.seekp(std::ios::beg);
 	for(std::map<string,string>::iterator iter = data.begin(); iter != data.end(); iter++)
 		file << iter->first << "=" << iter->second << std::endl;
 	file.flush();

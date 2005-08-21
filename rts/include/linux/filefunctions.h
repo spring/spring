@@ -9,6 +9,7 @@
 #include <glob.h>
 #include <ctype.h>
 #include <iostream>
+#include <windows.h>
 
 static inline std::vector<std::string> find_files(std::string pattern, std::string patternpath)
 {

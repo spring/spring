@@ -15,6 +15,8 @@
 #include "TimeProfiler.h"
 #include "Unit.h"
 #include "GroupHandler.h"
+#include "MouseHandler.h"
+#include "CameraController.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -24,28 +26,28 @@
 CGroupHandler* grouphandler;
 extern bool	keys[256];
 
-CGroupHandler::CGroupHandler()
-: firstUnusedGroup(10)
+CGroupHandler::CGroupHandler(int team)
+: firstUnusedGroup(10),
+	team(team)
 {
 	availableAI["default"]="default";
 	FindDlls();
 
-	grouphandler=this;		//grouphandler is used in group constructors
 	for(int a=0;a<10;++a){
-		armies.push_back(new CGroup("default",a));
+		groups.push_back(new CGroup("default",a,this));
 	}
 }
 
 CGroupHandler::~CGroupHandler()
 {
-	for(int a=0;a<10;++a)
-		delete armies[a];
+	for(int a=0;a<firstUnusedGroup;++a)
+		delete groups[a];
 }
 
 void CGroupHandler::Update()
 {
 START_TIME_PROFILE;
-	for(std::vector<CGroup*>::iterator ai=armies.begin();ai!=armies.end();++ai)
+	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
 		if((*ai)!=0)
 			(*ai)->Update();
 END_TIME_PROFILE("Group AI");
@@ -97,11 +99,19 @@ void CGroupHandler::GroupCommand(int num)
 {
 	if(keys[VK_CONTROL]){
 		if(!keys[VK_SHIFT])
-			armies[num]->ClearUnits();
+			groups[num]->ClearUnits();
 		set<CUnit*>::iterator ui;
 		for(ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui){
-			(*ui)->SetGroup(armies[num]);
+			(*ui)->SetGroup(groups[num]);
 		}
+	}
+	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
+		float3 p(0,0,0);
+		for(std::set<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
+			p+=(*gi)->pos;
+		}
+		p/=groups[num]->units.size();
+		mouse->currentCamController->SetPos(p);
 	}
 	selectedUnits.SelectGroup(num);
 }
@@ -134,18 +144,18 @@ void CGroupHandler::FindDlls(void)
 
 CGroup* CGroupHandler::CreateNewGroup(string ainame)
 {
-	if(freeArmies.empty()){
-		CGroup* group=new CGroup(ainame,firstUnusedGroup++);
-		armies.push_back(group);
-		if(group!=armies[group->id]){
+	if(freeGroups.empty()){
+		CGroup* group=new CGroup(ainame,firstUnusedGroup++,this);
+		groups.push_back(group);
+		if(group!=groups[group->id]){
 			MessageBox(0,"Id error when creating group","Error",0);
 		}
 		return group;
 	} else {
-		int id=freeArmies.back();
-		freeArmies.pop_back();
-		CGroup* group=new CGroup(ainame,id);
-		armies[id]=group;
+		int id=freeGroups.back();
+		freeGroups.pop_back();
+		CGroup* group=new CGroup(ainame,id,this);
+		groups[id]=group;
 		return group;
 	}
 }
@@ -158,7 +168,7 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	}
 	if(selectedUnits.selectedGroup==group->id)
 		selectedUnits.ClearSelected();
-	armies[group->id]=0;
-	freeArmies.push_back(group->id);
+	groups[group->id]=0;
+	freeGroups.push_back(group->id);
 	delete group;
 }

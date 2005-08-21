@@ -17,7 +17,7 @@ class CFileHandler;
 class CLoadSaveInterface;
 class CVertexArray;
 
-#define MAX_FEATURES 100000
+#define MAX_FEATURES 400000
 #define DRAW_QUAD_SIZE 32
 
 #define DRAWTYPE_3DO 0
@@ -26,7 +26,7 @@ class CVertexArray;
 
 struct FeatureDef
 {
-	FeatureDef():geoThermal(0){};
+	FeatureDef():geoThermal(0),floating(false){};
 
 	std::string myName;
 
@@ -45,6 +45,7 @@ struct FeatureDef
 	bool destructable;
 	bool blocking;
 	bool burnable;
+	bool floating;
 
 	bool geoThermal;
 
@@ -60,7 +61,7 @@ class CFeatureHandler :
 public:
 	CFeatureHandler(void);
 	~CFeatureHandler(void);
-	void CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke);
+	CFeature* CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke,std::string fromUnit);
 
 	void Update(void);
 
@@ -112,6 +113,7 @@ public:
 	int overrideId;		//used when loading from savefile
 	void DrawFar(CFeature* feature,CVertexArray* va);
 	void DrawFarQuads(void);
+	FeatureDef* GetFeatureDef(const std::string name);
 };
 
 extern CFeatureHandler* featureHandler;

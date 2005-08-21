@@ -17,6 +17,7 @@ public:
 	void Draw(bool drawWaterReflection=false);
 	void SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes);
 	void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes);
+	void SetPathMapTexture();
 
 	bool UpdateTextures();
 	void ToggleLosTexture();
@@ -33,9 +34,6 @@ protected:
 	unsigned char* extraTexPal;
 	float* extractDepthMap;
 
-	float infoTexSizeX;
-	float infoTexSizeY;
-	
 	float* heightData;
 	int heightDataX;
 

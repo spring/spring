@@ -13,6 +13,7 @@
 #include "Projectile.h"
 #include "InfoConsole.h"
 #include "HeatCloudProjectile.h"
+#include "GeometricObjects.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -370,4 +371,22 @@ float3 CGround::GetSmoothNormal(float x, float y)
 	norm1.Normalize();
 
 	return norm1;
+}
+
+float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic)
+{
+	from.CheckInBounds();
+
+	float3 dir(flatdir.x,linear,flatdir.z);
+//	float3 oldpos=from;
+	for(float l=0;l<length;l+=8){
+		float3 pos(from+dir*l);
+		pos.y+=quadratic*l*l;
+		if(GetApproximateHeight(pos.x,pos.z)>pos.y){
+			return l;
+		}
+//		geometricObjects->AddLine(pos,oldpos,3,0,16);
+//		oldpos=pos;
+	}	
+	return -1;
 }

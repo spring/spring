@@ -13,12 +13,16 @@
 #include "GameSetup.h"
 #include "Team.h"
 #include "TAPalette.h"
+#include "VFSHandler.h"
+#include "FileHandler.h"
+#include "ArchiveScanner.h"
 //#include "mmgr.h"
 #include "filefunctions.h"
 
 CPreGame* pregame=0;
 extern bool keys[256];
 extern bool globalQuit;
+string stupidGlobalModName;
 
 CPreGame::CPreGame(bool server)
 : server(server),
@@ -31,6 +35,8 @@ CPreGame::CPreGame(bool server)
 
 	info=new CInfoConsole();
 	net=new CNet();
+
+	//hpiHandler=new CHpiHandler();
 
 	activeController=this;
 	allReady=false;
@@ -82,8 +88,7 @@ CPreGame::~CPreGame(void)
 int CPreGame::KeyPressed(unsigned char k,bool isRepeat)
 {
 	if (k==27){
-		if(!keys[VK_SHIFT])
-		{
+		if(keys[VK_SHIFT]){
 			info->AddLine("User exited");
 			globalQuit=true;
 		} else
@@ -205,9 +210,32 @@ bool CPreGame::Update(void)
 
 	if(allReady){
 		ENTER_MIXED;
+
+		// Map all required archives depending on selected mod(s)
+		stupidGlobalModName = "xta_se_v061.sdz";
+		if (gameSetup)
+			stupidGlobalModName = gameSetup->baseMod;
+		vector<string> ars = archiveScanner->GetArchives(stupidGlobalModName);
+		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+			hpiHandler->AddArchive(*i, false);
+		}
+
+		// Determine if the map is inside an archive, and possibly map needed archives
+		CFileHandler* f = new CFileHandler("maps/" + mapName);
+		if (!f->FileExists()) {
+			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+				hpiHandler->AddArchive(*i, false);
+			}
+		}
+		delete f;
+
+		LoadStartPicture();
+
 		game=new CGame(server,mapName);
 		ENTER_UNSYNCED;
 		game->Update();
+		pregame=0;
 		delete this;
 		return true;
 	}
@@ -243,11 +271,20 @@ void CPreGame::UpdateClientNet(void)
 			}
 			break;
 
-		case NETMSG_SYSTEMMSG:{
+		case NETMSG_MAPDRAW:
+			inbufpos+=inbuf[inbufpos+1];	
+			break;
+
+		case NETMSG_SYSTEMMSG:
+		case NETMSG_CHAT:{
 			int player=inbuf[inbufpos+2];
 			string s=(char*)(&inbuf[inbufpos+3]);
 			info->AddLine(s);
 			inbufpos+=inbuf[inbufpos+1];	
+			break;}
+
+		case NETMSG_STARTPOS:{
+			inbufpos+=15;
 			break;}
 
 		case NETMSG_SCRIPT:
@@ -296,13 +333,17 @@ void CPreGame::SelectMap(std::string s)
 void CPreGame::ShowMapList(void)
 {
 	CglList* list=new CglList("Select map",SelectMap);
-	std::vector<std::string> found = find_files("*.sm2","maps/");
-	if (found.begin() == found.end()) {
+	std::vector<std::string> found = find_files("*.smf","maps/");
+	std::vector<std::string> arFound = archiveScanner->GetMaps();
+	if (found.begin() == found.end() && arFound.begin() == arFound.end()
+			) {
 		MessageBox(0,"Couldnt find any map files","PreGame error",0);
 		return;
 	}
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++)
-		list->AddItem(it->c_str(),it->c_str());
+		list->AddItem(it->substr(it->find_last_of('/')+1).c_str(),it->substr(it->find_last_of('/')+1).c_str());
+	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++)
+		list->AddItem((*it).c_str(), (*it).c_str());
 
 	showList=list;
 }

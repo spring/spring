@@ -15,7 +15,7 @@ public:
 	float alpha;
 	float alphaFalloff;
 	float alphaAdd;
-	float alphaAddTime;
+	int alphaAddTime;
 	float size;
 	float sizeExpansion;
 	float rotation;

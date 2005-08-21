@@ -24,13 +24,16 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 {
 	hmapx=256;
 	hmapy=256;
-	randSeed=246;
+	LARGE_INTEGER li;
+	QueryPerformanceCounter(&li);
+	randSeed=18655;//li.LowPart;
 	frameNum=0;
 	speedFactor=1;
 	userSpeedFactor=1;
 	paused=false;
 	cheatEnabled=false;
 	tempNum=2;
+	gameMode=0;
 	
 	sunVector=float3(0,0,1);
 	sunVector4[0]=0;
@@ -74,6 +77,32 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 		delete players[a];
 }
 
+int CGlobalSyncedStuff::randInt()
+{
+	randSeed = (randSeed * 214013L + 2531011L);
+	return randSeed & 0x7FFF;
+}
+
+float CGlobalSyncedStuff::randFloat()
+{
+	randSeed = (randSeed * 214013L + 2531011L);
+	return float(randSeed & 0x7FFF)/RANDINT_MAX;
+}
+
+float3 CGlobalSyncedStuff::randVector()
+{
+	float3 ret;
+	do{
+		ret.x=randFloat()*2-1;
+		ret.y=randFloat()*2-1;
+		ret.z=randFloat()*2-1;
+	} while(ret.SqLength()>1);
+
+	return ret;
+}
+
+
+
 CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
 	LARGE_INTEGER randnum;
@@ -101,30 +130,6 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 
 CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
 {
-}
-
-int CGlobalSyncedStuff::randInt()
-{
-	randSeed = (randSeed * 214013L + 2531011L);
-	return randSeed & 0x7FFF;
-}
-
-float CGlobalSyncedStuff::randFloat()
-{
-	randSeed = (randSeed * 214013L + 2531011L);
-	return float(randSeed & 0x7FFF)/RANDINT_MAX;
-}
-
-float3 CGlobalSyncedStuff::randVector()
-{
-	float3 ret;
-	do{
-		ret.x=randFloat()*2-1;
-		ret.y=randFloat()*2-1;
-		ret.z=randFloat()*2-1;
-	} while(ret.SqLength()>1);
-
-	return ret;
 }
 
 int CGlobalUnsyncedStuff::usRandInt()

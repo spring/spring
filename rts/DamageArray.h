@@ -5,12 +5,14 @@ struct DamageArray
 {
 	static int numTypes;
 	float* damages;
+	bool paralyzeDamage;
 
 	DamageArray();
 	DamageArray(const DamageArray& other);
 	~DamageArray();
 
 	inline void operator=(const DamageArray& other){
+		paralyzeDamage=other.paralyzeDamage;
 		for(int a=0;a<numTypes;++a)
 			damages[a]=other.damages[a];
 	};

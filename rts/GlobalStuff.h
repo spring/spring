@@ -21,12 +21,16 @@
 #define MAX_TEAMS 10
 #define MAX_PLAYERS 16
 
+#define NEAR_PLANE 2.8f
+
 void SendChat(char* c);
 
 #include <list>
 #include "float3.h"
 
 struct int2 {
+	int2(){};
+	int2(int x,int y):x(x),y(y){};
 	int x;
 	int y;
 };
@@ -62,11 +66,14 @@ public:
 	int mapSquares;			//Total number of squares on map.
 	int hmapx;						//half the number of squares
 	int hmapy;
+	int pwr2mapx;					//sizes rounded up to next pwr2
+	int pwr2mapy;
 	int tempNum;					//used to get a temporary unique number (increase after use)
 	bool drawdebug;
 	bool cheatEnabled;
 	float viewRange;
 
+	int gameMode;					//0=cmd cont,1=cmd ends
 	float gravity;				//note that this is a negative number and in units/frame^2 not a positive number in units/second^2 as in the mapfile
 
 	CTeam* teams[MAX_TEAMS];			//the teams (note that neutrals are team zero and not counted as active)

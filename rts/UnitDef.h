@@ -99,6 +99,9 @@ struct UnitDef
 	std::string deathExplosion;
 	std::string selfDExplosion;
 
+	std::string TEDClassString;	//these might be changed later for something better
+	std::string categoryString;
+
 	int selfDCountdown;
 
 	bool canfly;
@@ -153,11 +156,16 @@ struct UnitDef
 	bool canDGun;
 	bool needGeo;
 	bool isFeature;
+	bool hideDamage;
+	bool isCommander;
+
+	bool canResurrect;
+	bool canCapture;
+	int highTrajectoryType;			//0(default)=only low,1=only high,2=choose
 
 	unsigned int noChaseCategory;
 
-	struct
-	{
+	struct SoundStruct {
 		GuiSound select;
 		GuiSound ok;
 		GuiSound arrived;
@@ -168,7 +176,26 @@ struct UnitDef
 		GuiSound cant;
 		GuiSound activate;
 		GuiSound deactivate;
-	}sounds;
+	};
+	SoundStruct sounds;
+
+	bool leaveTracks;
+	float trackWidth;
+	float trackOffset;
+	float trackStrength;
+	float trackStretch;
+	int trackType;
+
+	bool canDropFlare;
+	float flareReloadTime;
+	float flareEfficieny;
+	float flareDelay;
+	float3 flareDropVector;
+	int flareTime;
+	int flareSalvoSize;
+	int flareSalvoDelay;
+
+	bool smoothAnim;			// True if the unit should use interpolated animation
 };
 
 

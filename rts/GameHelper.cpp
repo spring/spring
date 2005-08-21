@@ -26,6 +26,8 @@
 #include "WeaponDefHandler.h"
 #include "ExplosionGraphics.h"
 #include "CommandAI.h"
+#include "UnitDef.h"
+#include "GroundDecalHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -54,7 +56,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -66,17 +68,23 @@ void CGameHelper::Explosion(const float3 &pos, const DamageArray& damages, float
 	}
 */
 //	info->AddLine("Explosion %i",damageGround);
+	if(radius<1)
+		radius=1;
+
 	float h2=ground->GetHeight2(pos.x,pos.z);
+	if(pos.y<h2)
+		pos.y=h2;
 
 	float height=pos.y-h2;
 	if(height<0)
 		height=0;
 
 	vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
-	vector<CUnit*>::iterator ui;
-	if(ignoreOwner){
-		for(ui=units.begin();ui!=units.end();++ui){
-			if((*ui)==owner)
+	float gd=max(20.f,damages[0]/20);
+	float explosionSpeed=(8+gd*2.5)/(9+sqrt(gd)*0.7)*0.5;	//this is taken from the explosion graphics and could probably be simplified a lot
+
+	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
+		if(ignoreOwner && (*ui)==owner)
 				continue;
 			float3 dif=(*ui)->midPos-pos;
 			float dist=dif.Length();
@@ -89,22 +97,15 @@ void CGameHelper::Explosion(const float3 &pos, const DamageArray& damages, float
 				mod=0;
 			dif/=dist+0.0001;
 			dif.y+=0.1;
+		if(dist2<explosionSpeed*2){	//damage directly
 			(*ui)->DoDamage(damages*mod2,owner,dif*(mod*damages[0]*3));
-		}
-	} else {
-		for(ui=units.begin();ui!=units.end();++ui){
-			float3 dif=(*ui)->midPos-pos;
-			float dist=dif.Length();
-			if(dist<(*ui)->radius+0.1)
-				dist=(*ui)->radius+0.1;
-			float dist2=dist - (*ui)->radius;
-			float mod=(radius-dist)/radius;
-			float mod2=(radius-dist2)/radius;
-			if(mod<0)
-				mod=0;			
-			dif/=dist+0.0001;
-			dif.y+=0.1;
-			(*ui)->DoDamage(damages*mod2,owner,dif*(mod*damages[0]*3));
+		}else {	//damage later
+			WaitingDamage wd;
+			wd.attacker=owner?owner->id:-1;
+			wd.target=(*ui)->id;
+			wd.impulse=dif*(mod*damages[0]*3);
+			wd.damage=damages*mod2;
+			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed))&63].push_back(wd);
 		}
 	}
 
@@ -131,6 +132,7 @@ void CGameHelper::Explosion(const float3 &pos, const DamageArray& damages, float
 	}
 
 	explosionGraphics[graphicType]->Explosion(pos,damages,radius,owner,gfxMod);
+	groundDecals->AddExplosion(pos,damages[0],radius);
 	//sound->PlaySound(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
 }
 
@@ -176,10 +178,17 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 			if(closeLength>length)
 				closeLength=length;
 			float3 closeVect=dif-dir*closeLength;
-			if(closeVect.SqLength() < (*ui)->sqRadius){
-				length=closeLength;
+
+			float rad=(*ui)->radius;
+			float tmp = rad * rad - closeVect.SqLength();
+			if(tmp > 0 && length>closeLength+sqrt(tmp)){
+				length=closeLength-sqrt(tmp)*0.5;
 				hit=*ui;
 			}
+/*			if(closeVect.SqLength() < (*ui)->sqRadius){
+				length=closeLength;
+				hit=*ui;
+			}*/
 		}
 	}
 	return length;
@@ -204,7 +213,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
 			if((*ui)==exclude)
 				continue;
-			if((*ui)->allyteam==gu->myAllyTeam || loshandler->InLos((*ui),gu->myAllyTeam) || gu->spectating){
+			if((*ui)->allyteam==gu->myAllyTeam || ((*ui)->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) || gu->spectating){
 				float3 dif=(*ui)->midPos-start;
 				float closeLength=dif.dot(dir);
 				if(closeLength<0)
@@ -263,7 +272,7 @@ float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float leng
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
 			if((*ui)==exclude)
 				continue;
-			if(gs->allies[(*ui)->allyteam][allyteam] || loshandler->InLos((*ui),allyteam)){
+			if(gs->allies[(*ui)->allyteam][allyteam] || ((*ui)->losStatus[allyteam] & LOS_INLOS)){
 				float3 dif=(*ui)->midPos-start;
 				float closeLength=dif.dot(dir);
 				if(closeLength<0)
@@ -300,6 +309,9 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 	float3 pos=attacker->pos;
 	float heightMod=weapon->heightMod;
 	float aHeight=pos.y;
+	float secDamage=weapon->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
+	bool paralyzer=weapon->weaponDef->damages.paralyzeDamage;
+
 	vector<int> quads=qf->GetQuads(pos,radius+aHeight*heightMod);
 
 	int tempNum=gs->tempNum++;
@@ -311,27 +323,29 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 				continue;
 			for(ui=qf->baseQuads[*qi].teamUnits[t].begin();ui!=qf->baseQuads[*qi].teamUnits[t].end();++ui){
 				if((*ui)->tempNum!=tempNum && ((*ui)->category&weapon->onlyTargetCategory)){
+					(*ui)->tempNum=tempNum;
 					if((*ui)->isUnderWater && !weapon->weaponDef->waterweapon)
 						continue;
 					float3 targPos;
 					float value=1;
-					if(loshandler->InLos(*ui,attacker->allyteam)){
+					if(((*ui)->losStatus[attacker->allyteam] & LOS_INLOS)){
 						targPos=(*ui)->midPos;
-					} else if(radarhandler->InRadar(*ui,attacker->allyteam)){
+					} else if(((*ui)->losStatus[attacker->allyteam] & LOS_INRADAR)){
 						targPos=(*ui)->midPos+(*ui)->posErrorVector*radarhandler->radarErrorSize[attacker->allyteam];
 						value*=10;		
 					} else {
 						continue;
 					}
-					(*ui)->tempNum=tempNum;
 					float modRange=radius+(aHeight-targPos.y)*heightMod;
 					if((pos-targPos).SqLength2D() <= modRange*modRange){
 						float dist2d=(pos-targPos).Length2D();
-						value*=(*ui)->health*(dist2d+modRange*0.4)*(0.1+(*ui)->crashing)/(weapon->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7+gs->randFloat()*0.6));
+						value*=(secDamage+(*ui)->health)*(dist2d+modRange*0.4+100)*(0.01+(*ui)->crashing)/(weapon->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7+gs->randFloat()*0.6));
 						if((*ui)==lastTarget)
-							value*=0.5;
+							value*=0.4;
 						if((*ui)->category & weapon->badTargetCategory)
 							value*=100;
+						if(paralyzer && (*ui)->health-(*ui)->paralyzeDamage<(*ui)->maxHealth*0.09)
+							value*=4;
 						targets.insert(pair<float,CUnit*>(value,*ui));
 					}
 				}
@@ -374,7 +388,31 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3 &pos, float radius,int sear
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && (loshandler->InLos(*ui,searchAllyteam) || radarhandler->InRadar(*ui,searchAllyteam))){
+			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
+				(*ui)->tempNum=tempNum;
+				float sqDist=(pos-(*ui)->midPos).SqLength2D();
+				if(sqDist <= closeDist){
+					closeDist=sqDist;
+					closeUnit=*ui;
+				}
+			}
+		}
+	}
+	return closeUnit;
+}
+
+CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,int searchAllyteam)
+{
+	float closeDist=radius*radius;
+	CUnit* closeUnit=0;
+	vector<int> quads=qf->GetQuads(pos,radius);
+
+	int tempNum=gs->tempNum++;
+	vector<int>::iterator qi;
+	for(qi=quads.begin();qi!=quads.end();++qi){
+		list<CUnit*>::iterator ui;
+		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
+			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam]){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -422,7 +460,7 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && !(*ui)->crashing && (loshandler->InLos(*ui,searchAllyteam) || radarhandler->InRadar(*ui,searchAllyteam))){
+			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && !(*ui)->crashing && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -445,7 +483,7 @@ void CGameHelper::GetEnemyUnits(float3 &pos, float radius, int searchAllyteam, v
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && (loshandler->InLos(*ui,searchAllyteam) || radarhandler->InRadar(*ui,searchAllyteam))){
+			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
 				if((pos-(*ui)->midPos).SqLength2D() <= sqRadius){
 					found.push_back((*ui)->id);
@@ -466,14 +504,14 @@ bool CGameHelper::TestCone(const float3 &from, const float3 &dir,float length, f
 			if((*ui)==owner)
 				continue;
 			CUnit* u=*ui;
-			float3 dif=(*ui)->midPos-from;
+			float3 dif=u->midPos-from;
 			float closeLength=dif.dot(dir);
-			if(closeLength<0)
+			if(closeLength<=0)
 				continue;//closeLength=0;
 			if(closeLength>length)
 				closeLength=length;
 			float3 closeVect=dif-dir*closeLength;
-			float r=(*ui)->radius+spread*closeLength+1;
+			float r=u->radius+spread*closeLength+1;
 			if(closeVect.SqLength() < r*r){
 				return true;
 			}
@@ -533,8 +571,8 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 float3 CGameHelper::GetUnitErrorPos(CUnit* unit, int allyteam)
 {
 	float3 pos=unit->midPos;
-	if(gs->allies[allyteam][unit->allyteam] || loshandler->InLos(unit,allyteam)){
-	} else if(radarhandler->InRadar(unit,allyteam)){
+	if(gs->allies[allyteam][unit->allyteam] || (unit->losStatus[allyteam] & LOS_INLOS)){
+	} else if((unit->losStatus[allyteam] & LOS_INRADAR)){
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[allyteam];
 	} else {
 		pos+=unit->posErrorVector*radarhandler->baseRadarErrorSize*2;
@@ -548,5 +586,35 @@ void CGameHelper::BuggerOff(float3 pos, float radius,CUnit* exclude)
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		if((*ui)!=exclude)
 			(*ui)->commandAI->BuggerOff(pos,radius+8);
+	}
+}
+
+float3 CGameHelper::Pos2BuildPos(float3 pos, const UnitDef* ud)
+{
+	if(ud->xsize&2)
+		pos.x=floor((pos.x)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
+	else
+		pos.x=floor((pos.x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
+
+	if(ud->ysize&2)
+		pos.z=floor((pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
+	else
+		pos.z=floor((pos.z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
+
+	pos.y=uh->GetBuildHeight(pos,ud);
+	if(ud->floater && pos.y<0)
+		pos.y = -ud->waterline;
+
+	return pos;
+}
+
+void CGameHelper::Update(void)
+{
+	std::list<WaitingDamage>* wd=&waitingDamages[gs->frameNum&63];
+	while(!wd->empty()){
+		WaitingDamage* w=&wd->back();
+		if(uh->units[w->target])
+			uh->units[w->target]->DoDamage(w->damage,w->attacker==-1?0:uh->units[w->attacker],w->impulse);
+		wd->pop_back();
 	}
 }

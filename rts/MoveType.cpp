@@ -1,5 +1,7 @@
 #include "StdAfx.h"
 #include "MoveType.h"
+#include "Ground.h"
+#include "UnitDef.h"
 //#include "mmgr.h"
 
 CMoveType::CMoveType(CUnit* owner)
@@ -28,5 +30,17 @@ void CMoveType::SetWantedMaxSpeed(float speed) {
 }
 
 void CMoveType::ImpulseAdded(void)
+{
+}
+
+void CMoveType::SlowUpdate()
+{
+	owner->pos.y=ground->GetHeight2(owner->pos.x,owner->pos.z);
+	if(owner->floatOnWater && owner->pos.y<0)
+		owner->pos.y = -owner->unitDef->waterline;
+	owner->midPos.y=owner->pos.y+owner->relMidPos.y;
+};
+
+void CMoveType::LeaveTransport(void)
 {
 }

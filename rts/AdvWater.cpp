@@ -18,6 +18,7 @@
 #include "UnitHandler.h"
 #include "ProjectileHandler.h"
 #include "FeatureHandler.h"
+#include "SmfReadMap.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -99,9 +100,11 @@ CAdvWater::CAdvWater()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,64, 64, 0,GL_RGBA, GL_UNSIGNED_BYTE, scrap);
 /**/
-	delete scrap;
+	delete[] scrap;
 
 	waterFP=LoadFragmentProgram("water.fp");
+
+	waterSurfaceColor = ((CSmfReadMap*)readmap)->waterSurfaceColor;
 }
 
 CAdvWater::~CAdvWater()
@@ -130,9 +133,9 @@ void CAdvWater::Draw()
 	float screenY=1;
 
 	unsigned char col[4];
-	col[0]=(unsigned char)(0.75f*255);
-	col[1]=(unsigned char)(0.8f*255);
-	col[2]=(unsigned char)(0.85f*255);
+	col[0]=(unsigned char)waterSurfaceColor.x*255;
+	col[1]=(unsigned char)waterSurfaceColor.y*255;
+	col[2]=(unsigned char)waterSurfaceColor.z*255;
 
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);

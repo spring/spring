@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "VertexArray.h"
 #include "SyncTracer.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color,float intensity, WeaponDef *weaponDef, int ttl)
@@ -42,7 +43,7 @@ void CLaserProjectile::Update(void)
 	ttl--;
 
 	if(ttl<0){
-		intensity-=0.08;
+		intensity-=0.09;
 		if(intensity<=0){
 			deleteMe=true;
 			intensity=0;
@@ -73,7 +74,7 @@ void CLaserProjectile::Draw(void)
 	col[2]=(unsigned char) (color.z*intensity*255);
 	col[3]=1;//intensity*255;
 
-	float size=2;
+	float size=weaponDef->thickness;
 
 	if(camDist<1000){
 		float3 pos1=pos+speed*gu->timeOffset;

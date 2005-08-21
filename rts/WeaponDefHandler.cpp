@@ -52,6 +52,7 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 	//bool vlaunch;
 	int rendertype;
 	int color;
+	int beamlaser;
 	//bool tracking;
 	//bool selfprop;
 	//bool turret;
@@ -67,6 +68,7 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 	sunparser->GetDef(weaponDefs[id].movement.tracking, "0", weaponname + "\\tracks");
 	sunparser->GetDef(rendertype, "0", weaponname + "\\rendertype");
 	sunparser->GetDef(color, "0", weaponname + "\\color");
+	sunparser->GetDef(beamlaser, "0", weaponname + "\\beamlaser");
 	sunparser->GetDef(weaponDefs[id].movement.vlaunch, "0", weaponname + "\\vlaunch");
 	sunparser->GetDef(weaponDefs[id].movement.selfprop, "0", weaponname + "\\selfprop");
 	sunparser->GetDef(weaponDefs[id].turret, "0", weaponname + "\\turret");
@@ -76,6 +78,10 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 	sunparser->GetDef(weaponDefs[id].tracks, "0", weaponname + "\\tracks");
 	sunparser->GetDef(weaponDefs[id].movement.noExplode, "0", weaponname + "\\NoExplode");
 	sunparser->GetDef(weaponDefs[id].movement.maxvelocity, "0", weaponname + "\\weaponvelocity");
+	sunparser->GetDef(weaponDefs[id].isPlasmaRepulser, "0", weaponname + "\\PlasmaRepulser");
+	sunparser->GetDef(weaponDefs[id].beamtime, "1", weaponname + "\\beamtime");
+	sunparser->GetDef(weaponDefs[id].thickness, "2", weaponname + "\\thickness");
+	sunparser->GetDef(weaponDefs[id].intensity, "0.9", weaponname + "\\intensity");
 
 	if(weaponDefs[id].name.find("disintegrator")!=string::npos){	//fulhack
 		weaponDefs[id].visuals.renderType = WEAPON_RENDERTYPE_FIREBALL;}
@@ -97,6 +103,12 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 
 	}	else if(weaponDefs[id].movement.vlaunch){
 		weaponDefs[id].type = "StarburstLauncher";
+
+	}	else if(beamlaser){
+		weaponDefs[id].type = "BeamLaser";
+
+	}	else if(weaponDefs[id].isPlasmaRepulser){
+		weaponDefs[id].type = "PlasmaRepulser";
 
 	} else if(weaponDefs[id].waterweapon) {
 		weaponDefs[id].type = "TorpedoLauncher";
@@ -138,12 +150,18 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 	//weaponDefs[id].firesoundVolume = 5.0f;
 	//weaponDefs[id].soundhitVolume = 5.0f;
 
-	weaponDefs[id].range = atof(sunparser->SGetValueDef("0", weaponname + "\\range").c_str());
-	float accuracy,sprayangle;
+	weaponDefs[id].range = atof(sunparser->SGetValueDef("10", weaponname + "\\range").c_str());
+	float accuracy,sprayangle,movingAccuracy;
 	sunparser->GetDef(accuracy, "0", weaponname + "\\accuracy");
 	sunparser->GetDef(sprayangle, "0", weaponname + "\\sprayangle");
+	sunparser->GetDef(movingAccuracy, "-1", weaponname + "\\movingaccuracy");
+	if(movingAccuracy==-1)
+		movingAccuracy=accuracy;
 	weaponDefs[id].accuracy=sin((accuracy) * PI / 0xafff);		//should really be tan but TA seem to cap it somehow
 	weaponDefs[id].sprayangle=sin((sprayangle) * PI / 0xafff);		//should also be 7fff or ffff theoretically but neither seems good
+	weaponDefs[id].movingAccuracy=sin((movingAccuracy) * PI / 0xafff);
+
+	sunparser->GetDef(weaponDefs[id].targetMoveError, "0", weaponname + "\\targetMoveError");
 
 	for(int a=0;a<damageArrayHandler->numTypes;++a)
 	{
@@ -176,16 +194,22 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 	sunparser->GetDef(weaponDefs[id].energycost, "0", weaponname + "\\energypershot");
 	sunparser->GetDef(weaponDefs[id].movement.selfExplode, "0", weaponname + "\\burnblow");
 	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01;
+	weaponDefs[id].paralyzer=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\paralyzer").c_str());
+	weaponDefs[id].damages.paralyzeDamage=weaponDefs[id].paralyzer;
+
 	//sunparser->GetDef(weaponDefs[id].highTrajectory, "0", weaponname + "\\minbarrelangle");
-	weaponDefs[id].highTrajectory = 0;
 	sunparser->GetDef(weaponDefs[id].stockpile, "0", weaponname + "\\stockpile");
 	sunparser->GetDef(weaponDefs[id].interceptor, "0", weaponname + "\\interceptor");
 	sunparser->GetDef(weaponDefs[id].targetable, "0", weaponname + "\\targetable");
 	sunparser->GetDef(weaponDefs[id].manualfire, "0", weaponname + "\\commandfire");
 	sunparser->GetDef(weaponDefs[id].coverageRange, "0", weaponname + "\\coverage");
 
+	sunparser->GetDef(weaponDefs[id].repulseEnergy, "0", weaponname + "\\repulseenergy");
+	sunparser->GetDef(weaponDefs[id].repulseForce, "0", weaponname + "\\repulseforce");
+	sunparser->GetDef(weaponDefs[id].repulseRange, "0", weaponname + "\\repulserange");
+	sunparser->GetDef(weaponDefs[id].repulseSpeed, "0", weaponname + "\\repulsespeed");
 
-	weaponDefs[id].noAutoTarget= (weaponDefs[id].manualfire || weaponDefs[id].interceptor);
+	weaponDefs[id].noAutoTarget= (weaponDefs[id].manualfire || weaponDefs[id].interceptor || weaponDefs[id].isPlasmaRepulser);
 
 	weaponDefs[id].onlyTargetCategory=0xffffffff;
 	if(atoi(sunparser->SGetValueDef("0", weaponname + "\\toairweapon").c_str())){
@@ -195,6 +219,9 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 
 
 	weaponDefs[id].heightmod = 0.2f;
+	if(weaponDefs[id].type == "Cannon")
+		weaponDefs[id].heightmod = 0.8f;
+
 	weaponDefs[id].supplycost = 0.0f;
 
 	weaponDefs[id].onlyForward=!weaponDefs[id].turret && weaponDefs[id].type != "StarburstLauncher";

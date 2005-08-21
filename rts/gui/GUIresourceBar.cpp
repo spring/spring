@@ -57,14 +57,26 @@ void GUIresourceBar::PrivateDraw()
 	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->oldEnergyExpense);
 	guifont->Print((w+offset)/2.0+eWidth, middle+5, 0.8, buf);
 
+	glColor3f(0, 1, 0);
+	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->metal);
+	guifont->Print(offset+mWidth + 30, middle, 0.8, buf);
+	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->energy);
+	guifont->Print((w+offset)/2.0+eWidth + 30, middle, 0.8, buf);
+
+	glColor3f(1, 0.2, 0.2);
+	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->metalStorage);
+	guifont->Print(w/2-90, middle, 0.8, buf);
+	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->energyStorage);
+	guifont->Print(w-90, middle, 0.8, buf);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glColor4f(1, 1, 1, 0.2);
 	float barHeight=guifont->GetHeight()/2.0;
 	middle=(h-barHeight)/2.0;
 
-	float barStart=mWidth+offset+45;
-	float barLength=w/2.0-barStart-10;
+	float barStart=mWidth+offset+95;
+	float barLength=w/2.0-barStart-100;
 	
 	float metal=gs->teams[gu->myTeam]->metal;
 	float maxMetal=gs->teams[gu->myTeam]->metalStorage;
@@ -83,8 +95,8 @@ void GUIresourceBar::PrivateDraw()
 	Quad(barStart, middle+barHeight, barLength*metalShared/maxMetal, 2);
 
 	glColor4f(1, 1, 1, 0.2);
-	barStart=w/2.0+eWidth+offset+45;
-	barLength=w-barStart-10;
+	barStart=w/2.0+eWidth+offset+95;
+	barLength=w-barStart-100;
 	
 	Quad(barStart, middle, barLength, barHeight);
 	
@@ -113,8 +125,8 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 		float mWidth=guifont->GetWidth("Metal")+5;
 		float eWidth=guifont->GetWidth("Energy")+5;
 
-		float barStart=mWidth+offset+45;
-		float barEnd=w/2.0-10;
+		float barStart=mWidth+offset+95;
+		float barEnd=w/2.0-100;
 
 		if(x1>barStart-20&&x1<barEnd+20)
 		{
@@ -129,8 +141,8 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 			net->SendData(netbuf,10);
 		}
 		
-		barStart=w/2.0+eWidth+offset+45;
-		barEnd=w-10;
+		barStart=w/2.0+eWidth+offset+95;
+		barEnd=w-100;
 		if(x1>barStart-20&&x1<barEnd+20)
 		{
 			float rel=(x1-barStart)/(barEnd-barStart);

@@ -18,7 +18,7 @@
 #include <process.h>
 #endif
 #include "FileHandler.h"
-#include "ReadMap.h"
+#include "SmfReadMap.h"
 #include "BFGroundDrawer.h"
 #include "ReadMap.h"
 #include "Unit.h"
@@ -33,7 +33,6 @@
 #include "LoadSaveInterface.h"
 #include "MapDamage.h"
 #include <string>
-#include <BFReadmap.h>
 //#include "mmgr.h"
 
 using namespace std;
@@ -48,24 +47,7 @@ int stupidGlobalMapId=0;
 CReadMap* CReadMap::Instance()
 {
 	if(_instance==0){
-	/*	if(!regHandler.GetInt("HighResGround",0) || numTextureUnits<4){
-			_instance=new CBasicReadMap();
-			readmap=_instance;
-			groundDrawer=new CBasicGroundDrawer;
-		} else {
-			string texPath("TerrainChunks/");
-			texPath+=stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'));
-			texPath+="/texff.raw";
-			CFileHandler ifs(texPath);
-			if(!ifs.FileExists()){
-				_spawnl(_P_WAIT,"texgen.exe","texgen.exe",stupidGlobalMapname.c_str(),NULL);
-			}
-			_instance=new CAdvReadMap();
-			readmap=_instance;
-			groundDrawer=new CAdvGroundDrawer;
-		}*/
-
-      		_instance=new CBFReadmap(stupidGlobalMapname);
+		_instance=new CSmfReadMap(stupidGlobalMapname/*/"maps\\map2.smf"/**/);
 		readmap=_instance;
 		PUSH_CODE_MODE;
 		ENTER_UNSYNCED;
@@ -116,6 +98,10 @@ CReadMap::~CReadMap()
 
 void CReadMap::AddGroundBlockingObject(CSolidObject *object) {
 	object->mapPos=object->GetMapPos();
+	if(object->immobile){
+		object->mapPos.x&=0xfffffe;
+		object->mapPos.y&=0xfffffe;
+	}
 	int bx=object->mapPos.x;
 	int bz=object->mapPos.y;
 
@@ -126,13 +112,18 @@ void CReadMap::AddGroundBlockingObject(CSolidObject *object) {
 
 	for(int zSqr = minZSqr; zSqr < maxZSqr; zSqr++)
 		for(int xSqr = minXSqr; xSqr < maxXSqr; xSqr++)
-			groundBlockingObjectMap[xSqr + zSqr*gs->mapx] = object;
-	if(!object->mobility)
+			if(!groundBlockingObjectMap[xSqr + zSqr*gs->mapx])
+				groundBlockingObjectMap[xSqr + zSqr*gs->mapx] = object;
+	if(!object->mobility && pathManager)
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 }
 
 void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yardMap) {
 	object->mapPos=object->GetMapPos();
+	if(object->immobile){
+		object->mapPos.x&=0xfffffe;
+		object->mapPos.y&=0xfffffe;
+	}
 	int bx=object->mapPos.x;
 	int bz=object->mapPos.y;
 
@@ -150,7 +141,7 @@ void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yard
 			}
 		}
 	}
-	if(!object->mobility)
+	if(!object->mobility && pathManager)
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 }
 
@@ -236,6 +227,9 @@ void CReadMap::CleanBlockingMap(CSolidObject* object) {
 
 	if(counter > 0) {
 		*info << "Dead references: " << counter << "\n";
+		if(dynamic_cast<CUnit*>(object)){
+			info->AddLine("From %s",((CUnit*)object)->unitDef->humanName.c_str());
+		}
 	}
 }
 

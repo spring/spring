@@ -87,6 +87,7 @@ CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 
 	yardOpen = false;
 	busy = false;
+	smoothAnim = unit->unitDef->smoothAnim;
 }
 
 CCobInstance::~CCobInstance(void)
@@ -99,10 +100,8 @@ CCobInstance::~CCobInstance(void)
 		(*i)->SetCallback(NULL, NULL, NULL);
 	}
 
-	//If this is true we have scheduled ourselves for animation ticking. Needs to be removed
-	if (anims.size() > 0) {
-		GCobEngine.RemoveInstance(this);
-	}
+	// Remove us from possible animation ticking (should only be needed when anims.size() > 0
+	GCobEngine.RemoveInstance(this);
 
 	for (list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 
@@ -376,6 +375,11 @@ void CCobInstance::RemoveAnim(AnimType type, int piece, int axis)
 
 			delete *i;
 			anims.erase(i);
+
+			// If this was the last animation, remove from currently animating list
+			if (anims.size() == 0) {
+				GCobEngine.RemoveInstance(this);
+			}
 			return;
 		}
 	}
@@ -387,7 +391,6 @@ void CCobInstance::RemoveAnim(AnimType type, int piece, int axis)
 void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated)
 {
 	struct AnimInfo *ai;
-	bool isAnimating = anims.size() > 0;
 
 	//Turns override spins.. Not sure about the other way around? If so the system should probably be redesigned
 	//to only have two types of anims.. turns and moves, with spin as a bool
@@ -405,7 +408,7 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 		anims.push_back(ai);
 
 		//If we were not animating before, inform the engine of this so it can schedule us
-		if (!isAnimating) {
+		if (anims.size() == 1) {
 			GCobEngine.AddInstance(this);
 		}
 
@@ -462,8 +465,9 @@ void CCobInstance::StopSpin(int piece, int axis, int decel)
 	if (!ai)
 		return;
 
-	if (decel == 0)
+	if (decel == 0) {
 		RemoveAnim(ASpin, piece, axis);
+	}
 	else
 		AddAnim(ASpin, piece, axis, ai->speed, 0, -decel);
 }
@@ -721,6 +725,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	switch(val)
 	{
 	case ACTIVATION:
+		if (unit->activated)
+			return 1;
+		else
+			return 0;
 		break;
 	case STANDINGMOVEORDERS:
 		break;
@@ -739,18 +747,14 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return 0;
 		break;
-	case PIECE_XZ:
-	  {
+	case PIECE_XZ:{
 		float3 relPos = unit->localmodel->GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return PACKXZ(pos.x, pos.z);
-	  }
-	case PIECE_Y:
-	  {
+		return PACKXZ(pos.x, pos.z);}
+	case PIECE_Y:{
 		float3 relPos = unit->localmodel->GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return (int)(pos.y * SCALE);
-	  }
+		return (int)(pos.y * SCALE);}
 	case UNIT_XZ: {
 		if (p1 == 0)	
 			return PACKXZ(unit->pos.x, unit->pos.z);
@@ -811,6 +815,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 	switch(val)
 	{
 	case ACTIVATION:
+		if (param == 0)
+			unit->Deactivate();
+		else
+			unit->Activate();
 		break;
 	case STANDINGMOVEORDERS:
 		break;

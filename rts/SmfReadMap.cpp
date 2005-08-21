@@ -1,6 +1,6 @@
 #include "StdAfx.h"
-#include "BFReadmap.h"
-#include "sm2header.h"
+#include "SmfReadMap.h"
+#include "mapfile.h"
 #include "myGL.h"
 #include <GL/glu.h>
 #include "FileHandler.h"
@@ -11,21 +11,24 @@
 #include "MetalMap.h"
 #include "SunParser.h"
 #include "FeatureHandler.h"
+#include "myMath.h"
 //#include "mmgr.h"
 
 using namespace std;
 
-CBFReadmap::CBFReadmap(std::string mapname)
+CSmfReadMap::CSmfReadMap(std::string mapname)
 {
+	readmap=this;//not entirely legal probably
+
 	PrintLoadMsg("Opening map file");
 
-	ParseSMD(mapname.substr(0,mapname.find('.'))+".smd");
+	ParseSMD(string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd");
 	
 	mapChecksum=0;
 
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	ifs=new CFileHandler(mapname);
+	ifs=new CFileHandler(string("maps/")+mapname);
 	if(!ifs->FileExists()){
 		char t[500];
 		sprintf(t,"Error couldnt find map file %s",mapname.c_str());
@@ -33,16 +36,26 @@ CBFReadmap::CBFReadmap(std::string mapname)
 		exit(0);
 	}
 	POP_CODE_MODE;
-	ifs->Read(&header,sizeof(SM2Header));
+	ifs->Read(&header,sizeof(MapHeader));
 
-	gs->mapx=header.xsize;
-	gs->mapy=header.ysize;
+	if(strcmp(header.magic,"spring map file")!=0 || header.version!=1 || header.tilesize!=32 || header.texelPerSquare!=8 || header.squareSize!=8){
+		char t[500];
+		sprintf(t,"Error couldnt open map file %s",mapname.c_str());
+		MessageBox(0,t,"Error when reading map",0);
+		exit(0);
+	}
+
+	gs->mapx=header.mapx;
+	gs->mapy=header.mapy;
 	gs->mapSquares = gs->mapx*gs->mapy;
 	gs->hmapx=gs->mapx/2;
 	gs->hmapy=gs->mapy/2;
 	int mapx=gs->mapx+1;
 	int mapy=gs->mapy+1;
+	gs->pwr2mapx=NextPwr2(gs->mapx);
+	gs->pwr2mapy=NextPwr2(gs->mapy);
 
+//	info->AddLine("%i %i",gs->mapx,gs->mapy);
 	float3::maxxpos=gs->mapx*SQUARE_SIZE-1;
 	float3::maxzpos=gs->mapy*SQUARE_SIZE-1;
 
@@ -52,22 +65,25 @@ CBFReadmap::CBFReadmap(std::string mapname)
 	facenormals=new float3[gs->mapx*gs->mapy*2];
 	centerheightmap=new float[gs->mapx*gs->mapy];
 	halfHeightmap=new float[gs->hmapx*gs->hmapy];
-	typemap=new unsigned char[gs->mapx*gs->mapy];
-	teammap=new unsigned char[gs->mapx*(gs->mapy+20)];
-	damagemap=new unsigned char[1024*1024];
-	vegFilter=new unsigned char[gs->mapx*gs->mapy];
-	int y;
-	for(y=0;y<1024*1024;++y)
-		damagemap[y]=0;
+	slopemap=new float[gs->hmapx*gs->hmapy];
+	typemap=new unsigned char[gs->mapx/2*gs->mapy/2];
+	groundBlockingObjectMap = new CSolidObject*[gs->mapSquares];
+	memset(groundBlockingObjectMap, 0, gs->mapSquares*sizeof(CSolidObject*));
 
-	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
+	//CFileHandler ifs((string("maps\\")+stupidGlobalMapname).c_str());
 
+	float base=header.minHeight;
+	float mod=(header.maxHeight-header.minHeight)/65536.0f;
 
-	ifs->Read(heightmap,mapx*mapy*4);
-//	for(int y=0;y<(gs->mapy+1)*(gs->mapx+1);++y){
-//		heightmap[y]-=21;
-//		heightmap[y]*=0.9;
-//	}
+	unsigned short* temphm=new unsigned short[mapx*mapy];
+	ifs->Seek(header.heightmapPtr);
+	ifs->Read(temphm,mapx*mapy*2);
+
+	for(int y=0;y<mapx*mapy;++y){
+		heightmap[y]=base+temphm[y]*mod;
+	}
+
+	delete[] temphm;
 
 	minheight=1000;
 	maxheight=-1000;
@@ -77,7 +93,7 @@ CBFReadmap::CBFReadmap(std::string mapname)
 			minheight=heightmap[y];
 		if(heightmap[y]>maxheight)
 			maxheight=heightmap[y];
-		mapChecksum+=(int)(heightmap[y]*100);
+		mapChecksum+=(unsigned int)(heightmap[y]*100);
 		mapChecksum^=*(unsigned int*)&heightmap[y];
 	}
 
@@ -97,14 +113,22 @@ CBFReadmap::CBFReadmap(std::string mapname)
 		}
 	}
 
-	for(int y=0;y<(gs->mapy);y++){
-		for(int x=0;x<(gs->mapx);x++){
-			typemap[y*gs->mapx+x]=0;
-			teammap[y*gs->mapx+x]=0;
-			vegFilter[y*gs->mapx+x]=0;
-		}
-	}
+	ifs->Seek(header.typeMapPtr);
+	ifs->Read(typemap,gs->mapx*gs->mapy/4);
 
+	for(int a=0;a<256;++a){
+		char tname[200];
+		sprintf(tname,"TerrainType%i\\",a);
+		string section="map\\";
+		section+=tname;
+		mapDefParser.GetDef(terrainTypes[a].name,"Default",section+"name");
+		mapDefParser.GetDef(terrainTypes[a].hardness,"1",section+"hardness");
+		mapDefParser.GetDef(terrainTypes[a].tankSpeed,"1",section+"tankmovespeed");
+		mapDefParser.GetDef(terrainTypes[a].kbotSpeed,"1",section+"kbotmovespeed");
+		mapDefParser.GetDef(terrainTypes[a].hoverSpeed,"1",section+"hovermovespeed");
+		mapDefParser.GetDef(terrainTypes[a].shipSpeed,"1",section+"shipmovespeed");
+		mapDefParser.GetDef(terrainTypes[a].receiveTracks,"1",section+"receivetracks");
+	}
 	PrintLoadMsg("Creating surface normals");
 
 	for(int y=0;y<gs->mapy;y++){
@@ -125,6 +149,30 @@ CBFReadmap::CBFReadmap(std::string mapname)
 			n.Normalize();
 
 			facenormals[(y*gs->mapx+x)*2+1]=n;
+		}
+	}
+
+	for(int y=0;y<gs->hmapy;y++){
+		for(int x=0;x<gs->hmapx;x++){
+			slopemap[y*gs->hmapx+x]=1;
+		}
+	}
+
+	for(int y=2;y<gs->mapy-2;y+=2){
+		for(int x=2;x<gs->mapx-2;x+=2){
+			float3 e1(-SQUARE_SIZE*4,heightmap[(y-1)*(gs->mapx+1)+(x-1)]-heightmap[(y-1)*(gs->mapx+1)+x+3],0);
+			float3 e2( 0,heightmap[(y-1)*(gs->mapx+1)+(x-1)]-heightmap[(y+3)*(gs->mapx+1)+(x-1)],-SQUARE_SIZE*4);
+			
+			float3 n=e2.cross(e1);
+			n.Normalize();
+
+			e1=float3( SQUARE_SIZE*4,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y+3)*(gs->mapx+1)+x-1],0);
+			e2=float3( 0,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
+			
+			float3 n2=e2.cross(e1);
+			n2.Normalize();
+
+			slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5;
 		}
 	}
 
@@ -185,6 +233,7 @@ CBFReadmap::CBFReadmap(std::string mapname)
 	PrintLoadMsg("Creating overhead texture");
 
 	unsigned char* buf=new unsigned char[MINIMAP_SIZE];
+	ifs->Seek(header.minimapPtr);
 	ifs->Read(buf,MINIMAP_SIZE);
 	glGenTextures(1, &minimapTex);
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
@@ -221,9 +270,9 @@ CBFReadmap::CBFReadmap(std::string mapname)
 
 	glGenTextures(1, &shadowTex);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-	unsigned char* tempMem=new unsigned char[1024*1024*4];
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempMem);
-	delete [] tempMem;
+//	unsigned char* tempMem=new unsigned char[1024*1024*4];
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+//	delete [] tempMem;
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -240,12 +289,10 @@ CBFReadmap::CBFReadmap(std::string mapname)
 	yardmapPal[2]=0;
 	yardmapPal[5]=0;
 
-	groundBlockingObjectMap = new CSolidObject*[gs->mapSquares];
-	memset(groundBlockingObjectMap, 0, gs->mapSquares*sizeof(CSolidObject*));
 }
 extern GLfloat FogLand[];
 
-void CBFReadmap::ParseSMD(std::string filename)
+void CSmfReadMap::ParseSMD(std::string filename)
 {
 	mapDefParser.LoadFile(filename);
 	
@@ -263,16 +310,33 @@ void CBFReadmap::ParseSMD(std::string filename)
 	FogLand[1]=fogColor[1];
 	FogLand[2]=fogColor[2];
 
+	mapDefParser.GetDef(skyBox, "", "MAP\\ATMOSPHERE\\SkyBox");
+	std::string tmp;
+	mapDefParser.GetDef(tmp, "", "MAP\\WATER\\WaterPlaneColor");
+	if(tmp.empty())
+		hasWaterPlane=0;
+	else
+	{
+		hasWaterPlane = 1;
+		waterPlaneColor = mapDefParser.GetFloat3(float3(0.0,0.4,0.0),"MAP\\WATER\\WaterPlaneColor");
+	}
 	mapDefParser.GetDef(tidalStrength, "0", "MAP\\TidalStrength");
 
+
+	waterSurfaceColor=mapDefParser.GetFloat3(float3(0.75,0.8,0.85),"MAP\\WATER\\WaterSurfaceColor");
 	waterAbsorb=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterAbsorb");
 	waterBaseColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterBaseColor");
 	waterMinColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterMinColor");
+	mapDefParser.GetDef(waterTexture, "", "MAP\\WATER\\WaterTexture");
+	if(waterTexture.empty())	//default water is ocean.jpg in bitmaps, map specific water textures is saved in the map dir
+		waterTexture = "bitmaps/ocean.jpg";
+	else
+		waterTexture = "maps/" + waterTexture;
 
 	for(int a=0;a<1024;++a){
 		for(int b=0;b<3;++b){
 			float c=max(waterMinColor[b],waterBaseColor[b]-waterAbsorb[b]*a);
-			waterHeightColors[a*4+b]=(unsigned char) (c*210);
+			waterHeightColors[a*4+b]=(unsigned char)(c*210);
 		}
 		waterHeightColors[a*4+3]=1;
 	}
@@ -285,7 +349,7 @@ void CBFReadmap::ParseSMD(std::string filename)
 	mapDefParser.GetDef(extractorRadius,"500","MAP\\ExtractorRadius");
 }
 
-CBFReadmap::~CBFReadmap(void)
+CSmfReadMap::~CSmfReadMap(void)
 {
 	delete ifs;
 	glDeleteTextures (1, &detailtex);
@@ -300,19 +364,17 @@ CBFReadmap::~CBFReadmap(void)
 //	delete[] normals;
 	delete[] facenormals;
 	delete[] typemap;
+	delete[] slopemap;
 	//myDelete(teammap);
-	delete[] teammap;
 	delete[] centerheightmap;
 	delete[] halfHeightmap;
-	delete[] damagemap;
 	delete[] orgheightmap;
-	delete[] vegFilter;
 	delete[] heightLineMap;
 	delete[] heightLinePal;
 	delete[] groundBlockingObjectMap;
 }
 
-void CBFReadmap::RecalcTexture(int x1, int x2, int y1, int y2)
+void CSmfReadMap::RecalcTexture(int x1, int x2, int y1, int y2)
 {
 	x1-=x1&3;
 	x2+=(20004-x2)&3;
@@ -330,7 +392,7 @@ void CBFReadmap::RecalcTexture(int x1, int x2, int y1, int y2)
 			float height = centerheightmap[(x+x1)+(y+y1)*gs->mapx];
 
 			if(height<0){
-				int h=-((int)height);
+				int h=(int)-height;
 
 				if(height>-10){
 					float3 light = GetLightValue(x+x1,y+y1)*210.0f;
@@ -340,10 +402,15 @@ void CBFReadmap::RecalcTexture(int x1, int x2, int y1, int y2)
 					tempMem[(y*xsize+x)*4+2] = (unsigned char)(waterHeightColors[h*4+2]*wc+light.z*(1-wc));
 					tempMem[(y*xsize+x)*4+3] = (unsigned char)((1-wc)*255);
 					
-				} else {
+				} else if(h<1024){
 					tempMem[(y*xsize+x)*4+0] = waterHeightColors[h*4+0];
 					tempMem[(y*xsize+x)*4+1] = waterHeightColors[h*4+1];
 					tempMem[(y*xsize+x)*4+2] = waterHeightColors[h*4+2];
+					tempMem[(y*xsize+x)*4+3] = 0;
+				} else {
+					tempMem[(y*xsize+x)*4+0] = waterHeightColors[1023*4+0];
+					tempMem[(y*xsize+x)*4+1] = waterHeightColors[1023*4+1];
+					tempMem[(y*xsize+x)*4+2] = waterHeightColors[1023*4+2];
 					tempMem[(y*xsize+x)*4+3] = 0;
 				}
 				;//waterHeightColors[h*4+3];
@@ -363,7 +430,7 @@ void CBFReadmap::RecalcTexture(int x1, int x2, int y1, int y2)
 
 }
 
-float3 CBFReadmap::GetLightValue(int x, int y)
+float3 CSmfReadMap::GetLightValue(int x, int y)
 {
 	float3 n1=facenormals[(y*gs->mapx+x)*2]+facenormals[(y*gs->mapx+x)*2+1];
 	n1.Normalize();

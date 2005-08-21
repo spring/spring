@@ -7,6 +7,9 @@
 #include "Team.h"
 #include "InfoConsole.h"
 #include "Player.h"
+#include "Unit.h"
+#include "UnitHandler.h"
+#include "UnitDef.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -40,7 +43,8 @@ CTeam::CTeam()
 	handicap(1),
 	leader(0),
 	isDead(false),
-	lastStatSave(0)
+	lastStatSave(0),
+	numCommanders(0)
 {
 	memset(&currentStats,0,sizeof(currentStats));
 }
@@ -136,7 +140,7 @@ void CTeam::Update()
 
 	float eShare=0,mShare=0;
 	for(int a=0;a<gs->activeTeams;++a){
-		if(a!=teamNum && gs->allies[gs->team2allyteam[teamNum]]){
+		if(a!=teamNum && gs->allies[gs->team2allyteam[teamNum]][gs->team2allyteam[a]]){
 			eShare+=max(0.0,gs->teams[a]->energyStorage*0.9-gs->teams[a]->energy);
 			mShare+=max(0.0,gs->teams[a]->metalStorage*0.9-gs->teams[a]->metal);
 		}
@@ -151,7 +155,7 @@ void CTeam::Update()
 		dm=min(1.0f,mExcess/mShare);
 
 	for(int a=0;a<gs->activeTeams;++a){
-		if(a!=teamNum && gs->allies[gs->team2allyteam[teamNum]]){
+		if(a!=teamNum && gs->allies[gs->team2allyteam[teamNum]][gs->team2allyteam[a]]){
 			float edif=max(0.0,gs->teams[a]->energyStorage*0.9-gs->teams[a]->energy)*de;
 			gs->teams[a]->energy+=edif;
 			energy-=edif;
@@ -181,6 +185,8 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 		currentStats.unitsCaptured++;
 		break;
 	}
+	if(unit->unitDef->isCommander)
+		numCommanders++;
 }
 
 void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
@@ -201,5 +207,23 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 	if(units.empty()){
 		info->AddLine("Team%i(%s) is no more",teamNum,gs->players[leader]->playerName.c_str());
 		isDead=true;
+		for(int a=0;a<MAX_PLAYERS;++a){
+			if(gs->players[a]->active && gs->players[a]->team==teamNum){
+				gs->players[a]->spectator=true;
+				if(a==gu->myPlayerNum)
+					gu->spectating=true;
+			}
+		} 
+	}
+}
+
+void CTeam::CommanderDied(CUnit* commander)
+{
+	numCommanders--;
+	if(gs->gameMode==1 && numCommanders<=0){
+		for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
+			if((*ui)->team==teamNum)
+				(*ui)->KillUnit(true,false);
+		}
 	}
 }

@@ -23,7 +23,8 @@ public:
 	float circleGrowth;
 	float circleAlpha;
 	float flashAlpha;
-	float flashAlphaDec;
+	float flashAge;
+	float flashAgeSpeed;
 	float circleAlphaDec;
 	int ttl;
 

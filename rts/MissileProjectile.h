@@ -16,6 +16,10 @@ public:
 	void Collision(CUnit* unit);
 	void Collision();
 
+	void Update(void);
+	void Draw(void);
+	void DrawUnitPart(void);
+
 	float tracking;
 	float3 dir;
 	float maxSpeed;
@@ -26,11 +30,11 @@ public:
 	int age;
 	float3 oldSmoke,oldDir;
 	CUnit* target;
+	CProjectile* decoyTarget;
 	bool drawTrail;
 	int numParts;
 
-	void Update(void);
-	void Draw(void);
+	unsigned int modelDispList;
 };
 
 

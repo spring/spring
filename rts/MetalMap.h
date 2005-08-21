@@ -19,10 +19,10 @@ public:
 	unsigned char *metalMap;
 	unsigned char metalPal[768];
 	float *extractionMap;
+	float metalscale;
 protected:
 	int sizex;
 	int sizez;
-	float metalscale;
 };
 
 #endif /* METALMAP_H */

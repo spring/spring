@@ -91,7 +91,7 @@ void CCamera::Update(bool freeze)
 	oldFov=fov;
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
 	glLoadIdentity();									// Reset The Projection Matrix
-	gluPerspective(fov,(GLfloat)gu->screenx/(GLfloat)gu->screeny,2.8f,gu->viewRange);
+	gluPerspective(fov,(GLfloat)gu->screenx/(GLfloat)gu->screeny,NEAR_PLANE,gu->viewRange);
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 
 	glLoadIdentity();

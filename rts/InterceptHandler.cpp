@@ -4,6 +4,8 @@
 #include "WeaponProjectile.h"
 #include "Unit.h"
 #include "WeaponDefHandler.h"
+#include "PlasmaRepulser.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 CInterceptHandler interceptHandler;
@@ -39,4 +41,20 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 dest
 			w->AddDeathDependence(target);
 		}
 	}
+}
+
+void CInterceptHandler::AddPlasma(CProjectile* p)
+{
+	for(std::list<CPlasmaRepulser*>::iterator wi=plasmaRepulsors.begin();wi!=plasmaRepulsors.end();++wi)
+		(*wi)->NewPlasmaProjectile(p);
+}
+
+void CInterceptHandler::AddPlasmaRepulser(CPlasmaRepulser* r)
+{
+	plasmaRepulsors.push_back(r);
+}
+
+void CInterceptHandler::RemovePlasmaRepulser(CPlasmaRepulser* r)
+{
+	plasmaRepulsors.remove(r);
 }

@@ -46,6 +46,7 @@ public:
 	bool readyToStart;
 
 	float cpuUsage;
+	int ping;
 
 	struct Statistics{
 		int mousePixels;			//how many pixels the mouse has traversed in total

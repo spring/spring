@@ -42,14 +42,17 @@ void CTestScript::Update()
 			float3 pos((gs->randFloat()+gs->randFloat())*2000,0,(gs->randFloat()+gs->randFloat())*2000);
 			pos.y=ground->GetHeight(pos.x,pos.z);
 			int num=featureHandler->wreckParser->GetSectionList("").size();
-			string feature=featureHandler->wreckParser->GetSectionList("")[(unsigned int)(gs->randFloat()*num)];
-			featureHandler->CreateWreckage(pos,feature,0,1,-1,false);
+			string feature=featureHandler->wreckParser->GetSectionList("")[(int)(gs->randFloat()*num)];
+			featureHandler->CreateWreckage(pos,feature,0,1,-1,false,"");
 		}
 		for(int a=0;a<30;++a){
-			unitLoader.LoadUnit("ARMFLASH",float3(2000+a*80,10,2900),0,false);
+/*			unitLoader.LoadUnit("ARMSPID",float3(2000+a*80,10,2900),0,false);
+			unitLoader.LoadUnit("ARMSPID",float3(2000+a*80,10,2855),0,false);
+			unitLoader.LoadUnit("ARMSPID",float3(2000+a*80,10,2800),0,false);
+/*/			unitLoader.LoadUnit("ARMFLASH",float3(2000+a*80,10,2900),0,false);
 			unitLoader.LoadUnit("ARMZEUS",float3(2000+a*80,10,2855),0,false);
 			unitLoader.LoadUnit("ARMMAV",float3(2000+a*80,10,2800),0,false);
-			unitLoader.LoadUnit("CORAK",float3(2000+a*80,10,4560),1,false);
+	/**/		unitLoader.LoadUnit("CORAK",float3(2000+a*80,10,4560),1,false);
 			unitLoader.LoadUnit("CORCAN",float3(2000+a*80,10,4595),1,false);
 			unitLoader.LoadUnit("CORFAST",float3(2000+a*80,10,4640),1,false);
 		}
@@ -121,6 +124,9 @@ void CTestScript::Update()
 		unitLoader.LoadUnit("armsilo",float3(2650,10,2600),0,false);
 		unitLoader.LoadUnit("armscab",float3(2250,10,4800),1,false);
 
+		unitLoader.LoadUnit("ARMANNI",float3(2075,10,5765),1,false);
+		unitLoader.LoadUnit("ARMANNI",float3(2275,10,5765),1,false);
+		unitLoader.LoadUnit("ARMANNI",float3(2475,10,5765),1,false);
 //		unitLoader.LoadUnit("ARMROCK",float3(18,10,29),0,false);
 		break;
 	}

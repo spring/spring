@@ -12,7 +12,6 @@
 #include "Ground.h"
 #include "Wind.h"
 //#include "mmgr.h"
-#include "Syncify.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -66,22 +65,29 @@ void CSmokeProjectile2::Update()
 void CSmokeProjectile2::Draw()
 {
 	inArray=true;
+	float interAge=min(1.0f,age+ageSpeed*gu->timeOffset);
 	unsigned char col[4];
-	unsigned char alpha=(unsigned char)(1-age)*127;
-	float rglow=max((float)0,(1-age*glowFalloff)*127);
-	float gglow=max((float)0,(1-age*glowFalloff*(float)2.5)*127);
-	col[0]=(unsigned char) (color*alpha+rglow);
-	col[1]=(unsigned char) (color*alpha+gglow);
+	unsigned char alpha;
+	if(interAge<0.05)
+		alpha=(unsigned char)(interAge*19*127);
+	else
+		alpha=(unsigned char)((1-interAge)*127);
+	float rglow=max(0.f,(1-interAge*glowFalloff)*127);
+	float gglow=max(0.,(1-interAge*glowFalloff*2.5)*127);
+	col[0]=(unsigned char)(color*alpha+rglow);
+	col[1]=(unsigned char)(color*alpha+gglow);
 	col[2]=(unsigned char)max(0.,color*alpha-gglow*0.5);
-	col[3]=(unsigned char)alpha/*-alphaFalloff*gu->timeOffset*/;
+	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
 	int frame=textureNum;
 	float xmod=0.125+(float(int(frame%6)))/16.0;
 	float ymod=(int(frame/6))/16.0;
 
 	float3 interPos=pos+(wantedPos+speed*gu->timeOffset-pos)*0.1*gu->timeOffset;
-	float dsize=size+sizeExpansion*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*dsize-camera->up*dsize,xmod,ymod,col);
-	va->AddVertexTC(interPos+camera->right*dsize-camera->up*dsize,xmod+1.0/16,ymod,col);
-	va->AddVertexTC(interPos+camera->right*dsize+camera->up*dsize,xmod+1.0/16,ymod+1.0/16,col);
-	va->AddVertexTC(interPos-camera->right*dsize+camera->up*dsize,xmod,ymod+1.0/16,col);
+	const float interSize=size+sizeExpansion*gu->timeOffset;
+	const float3 pos1 ((camera->right - camera->up) * interSize);
+	const float3 pos2 ((camera->right + camera->up) * interSize);
+	va->AddVertexTC(interPos-pos2,xmod,ymod,col);
+	va->AddVertexTC(interPos+pos1,xmod+1.0/16,ymod,col);
+	va->AddVertexTC(interPos+pos2,xmod+1.0/16,ymod+1.0/16,col);
+	va->AddVertexTC(interPos-pos1,xmod,ymod+1.0/16,col);
 }

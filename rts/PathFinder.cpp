@@ -5,6 +5,8 @@
 #include "glExtra.h"
 #include <ostream>
 #include "MoveInfo.h"
+#include "PathFinder.h"
+#include "Ground.h"
 
 #define PATHDEBUG false
 
@@ -22,7 +24,7 @@ const unsigned int PATHOPT_FORBIDDEN = 128;
 const unsigned int PATHOPT_BLOCKED = 256;
 
 //Cost constants.
-const float PATHCOST_INFINITY = 1e9;
+const float PATHCOST_INFINITY = 10000000;
 
 void* pfAlloc(size_t n)
 {
@@ -35,7 +37,7 @@ void* pfAlloc(size_t n)
 
 void pfDealloc(void *p,size_t n)
 {
-	delete[] p;
+	free(p);
 }
 
 const unsigned int CPathFinder::MAX_SEARCHED_SQARES;
@@ -61,7 +63,7 @@ CPathFinder::CPathFinder()
 		openSquareBuffer[a].square.y=0;
 	}
 
-	//Create border-constraints all around the map.
+/*	//Create border-constraints all around the map.
 	//Need to be 2 squares thick.
 	for(int x = 0; x < gs->mapx; ++x) {
 		for(int y = 0; y < 2; ++y)
@@ -75,7 +77,7 @@ CPathFinder::CPathFinder()
 		for(int x = gs->mapx-2; x < gs->mapx; ++x)
 			squareState[y*gs->mapx+x].status |= PATHOPT_FORBIDDEN;
 	}
-
+*/
 	//Precalculated vectors.
 	directionVector[PATHOPT_RIGHT].x = -2;
 	directionVector[PATHOPT_LEFT].x = 2;
@@ -118,20 +120,92 @@ CPathFinder::~CPathFinder()
 
 
 /*
+Search with several start positions
+*/
+IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, std::vector<float3> startPos, const CPathFinderDef& pfDef, Path& path) {
+	//Clear the given path.
+	path.path.clear();
+	path.pathCost = PATHCOST_INFINITY;
+
+	//Store som basic data.
+	maxNodesToBeSearched = MAX_SEARCHED_SQARES;
+	testMobile=false;
+	exactPath = true;
+	needPath=true;
+
+	//If exact path is reqired and the goal is blocked, then no search is needed.
+	if(exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
+		return CantGetCloser;
+	
+	//If the starting position is a goal position, then no search need to be performed.
+	if(pfDef.IsGoal(startxSqr, startzSqr))
+		return CantGetCloser;
+	
+	//Clearing the system from last search.
+	ResetSearch();
+
+	openSquareBufferPointer = &openSquareBuffer[0];
+
+	for(std::vector<float3>::iterator si=startPos.begin();si!=startPos.end();++si){
+		start = *si;
+		startxSqr = (int(start.x) / SQUARE_SIZE)|1;
+		startzSqr = (int(start.z) / SQUARE_SIZE)|1;
+		startSquare = startxSqr + startzSqr * gs->mapx;
+
+		squareState[startSquare].status = (PATHOPT_START | PATHOPT_OPEN);
+		squareState[startSquare].cost = 0;
+		dirtySquares.push_back(startSquare);
+
+		goalSquare = startSquare;
+
+		OpenSquare *os = ++openSquareBufferPointer;	//Taking first OpenSquare in buffer.
+		os->currentCost = 0;
+		os->cost = 0;
+		os->square.x = startxSqr;
+		os->square.y = startzSqr;
+		os->sqr = startSquare;
+		openSquares.push(os);
+	}
+
+	//Performs the search.
+	SearchResult result = DoSearch(moveData, pfDef);
+	
+	//Respond to the success of the search.
+	if(result == Ok) {
+		FinishSearch(moveData, path);
+		if(PATHDEBUG) {
+			*info << "Path found.\n";
+			*info << "Nodes tested: " << (int)testedNodes << "\n";
+			*info << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
+			*info << "Path steps: " << (int)(path.path.size()) << "\n";
+			*info << "Path cost: " << path.pathCost << "\n";
+		}
+	} else {
+		if(PATHDEBUG) {
+			*info << "Path not found!\n";
+			*info << "Nodes tested: " << (int)testedNodes << "\n";
+			*info << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
+		}
+	}
+	return result;
+}
+
+/*
 Store som data and doing some basic top-administration.
 */
-IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, unsigned int moveMathOpt, bool exactPath, unsigned int maxNodes) {
+IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, bool testMobile, bool exactPath, unsigned int maxNodes,bool needPath) {
 	//Clear the given path.
 	path.path.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
 	//Store som basic data.
 	maxNodesToBeSearched = min(MAX_SEARCHED_SQARES, maxNodes);
-	blockOpt = moveMathOpt;
+	this->testMobile=testMobile;
 	this->exactPath = exactPath;
+	this->needPath=needPath;
 	start = startPos;
-	startxSqr = int(start.x+SQUARE_SIZE/2) / SQUARE_SIZE;
-	startzSqr = int(start.z+SQUARE_SIZE/2) / SQUARE_SIZE;
+	startxSqr = (int(start.x) / SQUARE_SIZE)|1;
+	startzSqr = (int(start.z) / SQUARE_SIZE)|1;
 	startSquare = startxSqr + startzSqr * gs->mapx;
 
 	//Start up the search.
@@ -163,7 +237,7 @@ Setting up the starting point of the search.
 */
 IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
 	//If exact path is reqired and the goal is blocked, then no search is needed.
-	if(exactPath && pfDef.GoalIsBlocked(moveData, blockOpt))
+	if(exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
 		return CantGetCloser;
 	
 	//If the starting position is a goal position, then no search need to be performed.
@@ -208,16 +282,10 @@ Performs the actual search.
 */
 IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
 	bool foundGoal = false;
-	while(!openSquares.empty()
-	&& openSquareBufferPointer - openSquareBuffer < (maxNodesToBeSearched - 8)){
+	while(!openSquares.empty() && openSquareBufferPointer - openSquareBuffer < (maxNodesToBeSearched - 8)){
 		//Gets the open square with lowest expected path-cost.
-		OpenSquare* os = openSquares.top();
+		OpenSquare* os = (OpenSquare*)openSquares.top();
 		openSquares.pop();
-
-		//Check if the square have been marked not to be used during it's time in que.
-		if(squareState[os->sqr].status & (PATHOPT_FORBIDDEN | PATHOPT_CLOSED | PATHOPT_BLOCKED)) {
-			continue;
-		}
 
 		//Check if this OpenSquare-holder have become obsolete.
 		if(squareState[os->sqr].cost != os->cost)
@@ -232,14 +300,22 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 		}
 
 		//Testing the 8 surrounding squares.
-		TestSquare(moveData, pfDef, os, PATHOPT_RIGHT);
-		TestSquare(moveData, pfDef, os, PATHOPT_LEFT);
-		TestSquare(moveData, pfDef, os, PATHOPT_UP);
-		TestSquare(moveData, pfDef, os, PATHOPT_DOWN);
-		TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_UP));
-		TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_UP));
-		TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_DOWN));
-		TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_DOWN));
+		bool right=TestSquare(moveData, pfDef, os, PATHOPT_RIGHT);
+		bool left=TestSquare(moveData, pfDef, os, PATHOPT_LEFT);
+		bool up=TestSquare(moveData, pfDef, os, PATHOPT_UP);
+		bool down=TestSquare(moveData, pfDef, os, PATHOPT_DOWN);
+		if(up){		//we dont want to search diagonally if there is a blocking object (not blocking terrain) in one of the two side squares
+			if(right)
+				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_UP));
+			if(left)
+				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_UP));
+		}
+		if(down){
+			if(right)
+				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_DOWN));
+			if(left)
+				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_DOWN));
+		}
 
 		//Mark this square as closed.
 		squareState[os->sqr].status |= PATHOPT_CLOSED;
@@ -267,7 +343,7 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 Test the availability and value of a square,
 and possibly add it to the queue of open squares.
 */
-void CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection) {
+bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection) {
 	testedNodes++;
 	
 	//Calculate the new square.
@@ -276,32 +352,45 @@ void CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 	square.y = parentOpenSquare->square.y + directionVector[enterDirection].y;
 	
 	//Inside map?
-	if(square.x < 0 || square.y < 0
-	|| square.x >= gs->mapx || square.y >= gs->mapy)
-		return;
+	if(square.x < 0 || square.y < 0	|| square.x >= gs->mapx || square.y >= gs->mapy)
+		return false;
 	int sqr = square.x + square.y * gs->mapx;
 
 	//Check if the square is unaccessable or used.
-	if(squareState[sqr].status & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED))
-		return;
+	if(squareState[sqr].status & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED)){
+		if(squareState[sqr].status & PATHOPT_BLOCKED)
+			return false;
+		else
+			return false;
+	}
 
+	int blockStatus=moveData.moveMath->IsBlocked2(moveData, square.x, square.y);
 	//Check if square are out of constraints or blocked by something.
 	//Don't need to be done on open squares, as whose are already tested.
-	if(!(squareState[sqr].status & PATHOPT_OPEN) &&
-	(!pfDef.WithinConstraints(square.x, square.y) || moveData.moveMath->IsBlocked(moveData, blockOpt, square.x, square.y))) {
+	if(!(squareState[sqr].status & PATHOPT_OPEN) && (!pfDef.WithinConstraints(square.x, square.y) || (blockStatus & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))){
 		squareState[sqr].status |= PATHOPT_BLOCKED;
 		dirtySquares.push_back(sqr);
-		return;
+		return false;
 	}
 
 	//Evaluate this node.
 	float squareSpeedMod = moveData.moveMath->SpeedMod(moveData, square.x, square.y);
-	float squareCost = (float)moveCost[enterDirection] / squareSpeedMod;
-	float heuristicCost = pfDef.Heuristic(square.x, square.y);
 
-	//Adds a punishment for turning.
-	if(enterDirection != (squareState[parentOpenSquare->sqr].status & PATHOPT_DIRECTION))
-		squareCost *= 1.4f;
+	if(squareSpeedMod==0){
+		squareState[sqr].status |= PATHOPT_FORBIDDEN;
+		dirtySquares.push_back(sqr);
+		return false;
+	}
+	if(testMobile && (blockStatus & (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY))){
+		if(blockStatus & CMoveMath::BLOCK_MOVING)
+			squareSpeedMod*=0.65;
+		else if(blockStatus & CMoveMath::BLOCK_MOBILE)
+			squareSpeedMod*=0.35;
+		else
+			squareSpeedMod*=0.10;
+	}
+	float squareCost = moveCost[enterDirection] / squareSpeedMod;
+	float heuristicCost = pfDef.Heuristic(square.x, square.y);
 
 	//Summarize cost.
 	float currentCost = parentOpenSquare->currentCost + squareCost;
@@ -311,13 +400,12 @@ void CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 	//If the old one is better then keep it, else change it.
 	if(squareState[sqr].status & PATHOPT_OPEN) {
 		if(squareState[sqr].cost <= cost)
-			return;
+			return true;
 		squareState[sqr].status &= ~PATHOPT_DIRECTION;
 	}
 
 	//Looking for improvements.
-	if(!exactPath
-	&& heuristicCost + moveCost[enterDirection]/2 < goalHeuristic) {
+	if(!exactPath	&& heuristicCost < goalHeuristic) {
 		goalSquare = sqr;
 		goalHeuristic = heuristicCost;
 	}
@@ -334,6 +422,7 @@ void CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 	squareState[sqr].cost = os->cost;
 	squareState[sqr].status |= (PATHOPT_OPEN | enterDirection);
 	dirtySquares.push_back(sqr);
+	return true;
 }
 
 
@@ -343,28 +432,29 @@ Starting at goalSquare and tracking backwards.
 */
 void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 	//Backtracking the path.
-	int2 square;
-	square.x = goalSquare % gs->mapx;
-	square.y = goalSquare / gs->mapx;
-	do {
-		int sqr = square.x + square.y * gs->mapx;
-		if(squareState[sqr].status & PATHOPT_START)
-			break;
-		float3 cs;
-		cs.x = (square.x/* + 0.5*/) * SQUARE_SIZE;
-		cs.z = (square.y/* + 0.5*/) * SQUARE_SIZE;
-		cs.y = moveData.moveMath->yLevel(square.x, square.y);
-		foundPath.path.push_back(cs);
-		int2 oldSquare;
-		oldSquare.x = square.x;
-		oldSquare.y = square.y;
-		square.x -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].x;
-		square.y -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].y;
-	} while(true);
-	
+	if(needPath){
+		int2 square;
+		square.x = goalSquare % gs->mapx;
+		square.y = goalSquare / gs->mapx;
+		do {
+			int sqr = square.x + square.y * gs->mapx;
+			if(squareState[sqr].status & PATHOPT_START)
+				break;
+			float3 cs;
+				cs.x = (square.x/2/* + 0.5*/) * SQUARE_SIZE*2+SQUARE_SIZE;
+				cs.z = (square.y/2/* + 0.5*/) * SQUARE_SIZE*2+SQUARE_SIZE;
+			cs.y = moveData.moveMath->yLevel(square.x, square.y);
+			foundPath.path.push_back(cs);
+			int2 oldSquare;
+			oldSquare.x = square.x;
+			oldSquare.y = square.y;
+			square.x -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].x;
+			square.y -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].y;
+		} while(true);
+		foundPath.pathGoal = foundPath.path.front();
+	}
 	//Adds the cost of the path.
-	foundPath.pathCost = squareState[goalSquare].cost - goalHeuristic;
-	foundPath.pathGoal = foundPath.path.front();
+	foundPath.pathCost = squareState[goalSquare].cost;
 }
 
 
@@ -372,8 +462,9 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 Clear things up from last search.
 */
 void CPathFinder::ResetSearch() {
-	while(!openSquares.empty())
-		openSquares.pop();
+	openSquares.DeleteAll();
+//	while(!openSquares.empty())
+//		openSquares.pop();
 	while(!dirtySquares.empty()){
 		squareState[dirtySquares.back()].status = 0;
 		squareState[dirtySquares.back()].cost = PATHCOST_INFINITY;
@@ -385,35 +476,45 @@ void CPathFinder::ResetSearch() {
 
 
 ////////////////////
-// CRangedGoalPFD //
+// CPathFinderDef //
 ////////////////////
 
 /*
 Constructor.
 */
-CRangedGoalPFD::CRangedGoalPFD(float3 goalCenter, float goalRadius) :
+CPathFinderDef::CPathFinderDef(float3 goalCenter, float goalRadius) :
 goal(goalCenter),
-goalRadius(goalRadius)
+sqGoalRadius(goalRadius)
 {
 	//Makes sure that the goal could be reached with 2-square resolution.
-	if(this->goalRadius < SQUARE_SIZE)
-		this->goalRadius = SQUARE_SIZE;
+	if(sqGoalRadius < SQUARE_SIZE*SQUARE_SIZE*2)
+		sqGoalRadius = SQUARE_SIZE*SQUARE_SIZE*2;
+	goalSquareX=(int)(goalCenter.x/SQUARE_SIZE);
+	goalSquareZ=(int)(goalCenter.z/SQUARE_SIZE);
 }
 
 
 /*
 Tells whenever the goal is in range.
 */
-bool CRangedGoalPFD::IsGoal(int xSquare, int zSquare) const {
-	 return (SquareToFloat3(xSquare, zSquare).distance2D(goal) <= goalRadius);
+bool CPathFinderDef::IsGoal(int xSquare, int zSquare) const {
+	return ((SquareToFloat3(xSquare, zSquare)-goal).SqLength2D() <= sqGoalRadius);
 }
 
 
 /*
 Distance to goal center in mapsquares.
 */
-float CRangedGoalPFD::Heuristic(int xSquare, int zSquare) const {
-	return (SquareToFloat3(xSquare, zSquare).distance2D(goal) / SQUARE_SIZE);
+float CPathFinderDef::Heuristic(int xSquare, int zSquare) const 
+{
+	int min=abs(xSquare-goalSquareX);
+	int max=abs(zSquare-goalSquareZ);
+	if(min>max){
+		int temp=min;
+		min=max;
+		max=temp;
+	}
+	return max*0.5+min*0.2;
 }
 
 
@@ -421,20 +522,103 @@ float CRangedGoalPFD::Heuristic(int xSquare, int zSquare) const {
 Tells if the goal are is unaccessable.
 If the goal area is small and blocked then it's considered blocked, else not.
 */
-bool CRangedGoalPFD::GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const {
-	if((goalRadius < SQUARE_SIZE*4 || goalRadius <= (moveData.size/2)*1.5*SQUARE_SIZE)
-	&& moveData.moveMath->IsBlocked(moveData, moveMathOptions, goal))
+bool CPathFinderDef::GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const {
+	if((sqGoalRadius < SQUARE_SIZE*SQUARE_SIZE*4 || sqGoalRadius <= (moveData.size/2)*(moveData.size/2)*1.5*SQUARE_SIZE*SQUARE_SIZE)
+	&& (moveData.moveMath->IsBlocked(moveData, goal) & moveMathOptions))
 		return true;
 	else
 		return false;
 }
 
+int2 CPathFinderDef::GoalSquareOffset(int blockSize) const {
+	int blockPixelSize = blockSize * SQUARE_SIZE;
+	int2 offset;
+	offset.x = ((int)goal.x % blockPixelSize) / SQUARE_SIZE;
+	offset.y = ((int)goal.z % blockPixelSize) / SQUARE_SIZE;
+	return offset;
+}
 
 /*
 Draw a circle around the goal, indicating the goal area.
 */
-void CRangedGoalPFD::Draw() const {
+void CPathFinderDef::Draw() const {
 	glColor4f(0, 1, 1, 1);
-	glSurfaceCircle(goal, goalRadius);
+	glSurfaceCircle(goal, sqrt(sqGoalRadius));
 }
 
+void CPathFinder::Draw(void)
+{
+	glColor3f(0.7,0.2,0.2);
+	glDisable(GL_TEXTURE_2D);
+	glBegin(GL_LINES);
+	for(OpenSquare* os=openSquareBuffer;os!=openSquareBufferPointer;++os){
+		int2 sqr=os->square;
+		int square = os->sqr;
+		if(squareState[square].status & PATHOPT_START)
+			continue;
+		float3 p1;
+		p1.x=sqr.x*SQUARE_SIZE;
+		p1.z=sqr.y*SQUARE_SIZE;
+		p1.y=ground->GetHeight(p1.x,p1.z)+15;
+		float3 p2;
+		int obx=sqr.x-directionVector[squareState[square].status & PATHOPT_DIRECTION].x;
+		int obz=sqr.y-directionVector[squareState[square].status & PATHOPT_DIRECTION].y;
+		int obsquare =  obz * gs->mapx + obx;
+
+		if(obsquare>=0){
+			p2.x=obx*SQUARE_SIZE;
+			p2.z=obz*SQUARE_SIZE;
+			p2.y=ground->GetHeight(p2.x,p2.z)+15;
+
+			glVertexf3(p1);
+			glVertexf3(p2);
+		}
+	}
+	glEnd();
+}
+
+//////////////////////////////////////////
+// CRangedGoalWithCircularConstraintPFD //
+//////////////////////////////////////////
+
+/*
+Constructor
+Calculating the center and radius of the constrainted area.
+*/
+CRangedGoalWithCircularConstraint::CRangedGoalWithCircularConstraint(float3 start, float3 goal, float goalRadius,float searchSize,int extraSize) :
+CPathFinderDef(goal, goalRadius)
+{
+	int startX=(int)(start.x/SQUARE_SIZE);
+	int startZ=(int)(start.z/SQUARE_SIZE);
+	float3 halfWay = (start + goal) / 2;
+
+	halfWayX = (int)(halfWay.x/SQUARE_SIZE);
+	halfWayZ = (int)(halfWay.z/SQUARE_SIZE);
+
+	int dx=startX-halfWayX;
+	int dz=startZ-halfWayZ;
+
+	searchRadiusSq=dx*dx+dz*dz;
+	searchRadiusSq*=(int)(searchSize*searchSize);
+	searchRadiusSq+=extraSize;
+}
+
+
+/*
+Tests if a square is inside is the circular constrainted area.
+*/
+bool CRangedGoalWithCircularConstraint::WithinConstraints(int xSquare, int zSquare) const 
+{
+	int dx=halfWayX-xSquare;
+	int dz=halfWayZ-zSquare;
+
+	return (dx*dx+dz*dz <= searchRadiusSq);
+}
+
+void CPathFinder::myPQ::DeleteAll()
+{
+//	while(!c.empty())
+//		c.pop_back();
+	c.clear();
+//	c.reserve(1000);
+}

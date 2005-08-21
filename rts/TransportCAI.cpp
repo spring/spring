@@ -43,6 +43,11 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 
 CTransportCAI::~CTransportCAI(void)
 {
+	if(toBeTransportedUnitId!=-1){
+		if(uh->units[toBeTransportedUnitId])
+			uh->units[toBeTransportedUnitId]->toBeTransported=false;
+		toBeTransportedUnitId=-1;
+	}
 }
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
@@ -68,11 +73,12 @@ void CTransportCAI::SlowUpdate(void)
 				return;
 			}
 			CUnit* unit=uh->units[(int)c.params[0]];
-			toBeTransportedUnitId=unit->id;
-			unit->toBeTransported=true;
 			if(unit && CanTransport(unit)){
+				toBeTransportedUnitId=unit->id;
+				unit->toBeTransported=true;
 				if(goalPos.distance2D(unit->pos)>10){
-					SetGoal(unit->pos,owner->pos,64);
+					float3 fix = unit->pos;
+					SetGoal(fix,owner->pos,64);
 				}
 				if(unit->pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9){
 					if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
@@ -184,8 +190,8 @@ void CTransportCAI::SlowUpdate(void)
 						am->dontLand=false;
 						owner->cob->Call("EndTransport");
 						((CTransportUnit*)owner)->DetachUnit(unit);
-						float3 dummy = owner->pos+owner->frontdir*20;
-						SetGoal(dummy, owner->pos);		//move the transport away slightly
+						float3 fix = owner->pos+owner->frontdir*20;
+						SetGoal(fix,owner->pos);		//move the transport away slightly
 						FinishCommand();
 					}
 				} else {
@@ -213,7 +219,7 @@ void CTransportCAI::ScriptReady(void)
 
 bool CTransportCAI::CanTransport(CUnit* unit)
 {
-	if(unit->mass>=100000)
+	if(unit->mass>=100000 || unit->beingBuilt)
 		return false;
 	if(unit->unitDef->canhover || unit->unitDef->floater || unit->unitDef->canfly)
 		return false;
@@ -315,12 +321,12 @@ void CTransportCAI::DrawCommands(void)
 		bool draw=false;
 		switch(ci->id){
 		case CMD_MOVE:
-			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,1,0.5,0.4);
 			draw=true;
 			break;
 		case CMD_PATROL:
-			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);
 			draw=true;
 			break;
@@ -329,7 +335,7 @@ void CTransportCAI::DrawCommands(void)
 				if(uh->units[int(ci->params[0])]!=0)
 					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
 			} else {
-				pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			}
 			glColor4f(1,0.5,0.5,0.4);
 			draw=true;
@@ -343,14 +349,14 @@ void CTransportCAI::DrawCommands(void)
 		case CMD_LOAD_UNITS:
 			glColor4f(0.3,1,1,0.4);
 			if(ci->params.size()==4){
-				pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 				float radius=ci->params[3];
 				glVertexf3(pos);
 				glEnd();
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=20;++a){
 					float3 pos2=float3(pos.x+sin(a*PI*2/20)*radius,0,pos.z+cos(a*PI*2/20)*radius);
-					pos2.y=ground->GetHeight(pos2.x,pos2.z)+5;
+					pos2.y=ground->GetHeight(pos2.x,pos2.z);
 					glVertexf3(pos2);
 				}
 				glEnd();
@@ -365,14 +371,14 @@ void CTransportCAI::DrawCommands(void)
 		case CMD_UNLOAD_UNITS:
 			glColor4f(1,1,0,0.4);
 			if(ci->params.size()==4){
-				pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 				float radius=ci->params[3];
 				glVertexf3(pos);
 				glEnd();
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=20;++a){
 					float3 pos2=float3(pos.x+sin(a*PI*2/20)*radius,0,pos.z+cos(a*PI*2/20)*radius);
-					pos2.y=ground->GetHeight(pos2.x,pos2.z)+5;
+					pos2.y=ground->GetHeight(pos2.x,pos2.z);
 					glVertexf3(pos2);
 				}
 				glEnd();
@@ -382,7 +388,7 @@ void CTransportCAI::DrawCommands(void)
 			break;
 		case CMD_UNLOAD_UNIT:
 			glColor4f(1,1,0,0.4);
-			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			draw=true;
 			break;
 		}

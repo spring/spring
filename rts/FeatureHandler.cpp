@@ -10,7 +10,7 @@
 #include "Ground.h"
 #include "Camera.h"
 #include "BaseGroundDrawer.h"
-#include "sm2header.h"
+#include "mapfile.h"
 #include "QuadField.h"
 #include "UnitHandler.h"
 #include "LoadSaveInterface.h"
@@ -74,51 +74,27 @@ CFeatureHandler::~CFeatureHandler(void)
 	delete wreckParser;
 }
 
-void CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke)
+CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke,std::string fromUnit)
 {
 	ASSERT_SYNCED_MODE;
 	if(name.empty())
-		return;
-	std::map<std::string,FeatureDef*>::iterator fi=featureDefs.find(name);
+		return 0;
+	FeatureDef* fd=GetFeatureDef(name);
 
-	if(fi==featureDefs.end()){
-		if(!wreckParser->SectionExist(name)){
-			info->AddLine("Couldnt find wreckage info %s",name.c_str());
-			return;
-		}
-		FeatureDef* fd=new FeatureDef;
-		fd->blocking=!!atoi(wreckParser->SGetValueDef("1",name+"\\blocking").c_str());
-		fd->destructable=true;
-		fd->burnable=false;
-		fd->deathFeature=wreckParser->SGetValueDef("",name+"\\featuredead");
-		fd->drawType=DRAWTYPE_3DO;
-		fd->energy=atof(wreckParser->SGetValueDef("0",name+"\\energy").c_str());
-		fd->maxHealth=atof(wreckParser->SGetValueDef("0",name+"\\damage").c_str());
-		fd->metal=atof(wreckParser->SGetValueDef("0",name+"\\metal").c_str());
-		fd->model=0;
-		fd->modelname=wreckParser->SGetValueDef("",name+"\\object");
-		if(fd->modelname.find(".3do")==string::npos && !fd->modelname.empty())
-			fd->modelname=string("objects3d/")+fd->modelname+".3do";
-		fd->radius=0;
-		fd->xsize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
-		fd->ysize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
-		fd->mass=fd->metal*0.4+fd->maxHealth*0.1;
-
-		fd->myName=name;
-		featureDefs[name]=fd;
-
-		fi=featureDefs.find(name);
-	}
+	if(!fd)
+		return 0;
 
 	if(iter>1){
-		CreateWreckage(pos,fi->second->deathFeature,rot,iter-1,allyteam,emitSmoke);
+		return CreateWreckage(pos,fd->deathFeature,rot,iter-1,allyteam,emitSmoke,"");
 	} else {
-		if(!fi->second->modelname.empty()){
-			CFeature* f=new CFeature(pos,fi->second,(short int)rot,allyteam);
+		if(!fd->modelname.empty()){
+			CFeature* f=new CFeature(pos,fd,(short int)rot,allyteam,fromUnit);
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
+			return f;
 		}
 	}
+	return 0;
 }
 
 void CFeatureHandler::Draw(void)
@@ -258,7 +234,7 @@ void CFeatureHandler::ResetDrawQuad(int quad)
 void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs)
 {
 	file->Seek(readmap->header.featurePtr);
-	FeatureHeader fh;
+	MapFeatureHeader fh;
 	file->Read(&fh,sizeof(fh));
 	if(file->Eof()){
 		info->AddLine("No features in map file?");
@@ -285,13 +261,11 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 			fd->metal=0;
 			fd->maxHealth=5;
 			fd->radius=20;
-			fd->xsize=4;
-			fd->ysize=4;
+			fd->xsize=2;
+			fd->ysize=2;
 			fd->myName=name;
 			fd->mass=20;
 			featureDefs[name]=fd;
-		} else if(name.find("GrassType")!=string::npos){	//grass isnt treated as real features
-			//info->AddLine("Grass not supported yet %s",name.c_str());
 		} else if(name.find("GeoVent")!=string::npos){
 			FeatureDef* fd=new FeatureDef;
 			fd->blocking=0;
@@ -309,22 +283,23 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 			fd->myName=name;
 			fd->mass=100000;
 			featureDefs[name]=fd;
+		} else if(wreckParser->SectionExist(name)){
+			GetFeatureDef(name);
 		} else {
 			info->AddLine("Unknown feature type %s",name.c_str());
 		}
 	}
 
-	for(int a=0;a<fh.numFeatures;++a){
-		FeatureFileStruct ffs;
-		file->Read(&ffs,sizeof(ffs));
+	if(!onlyCreateDefs){
+		for(int a=0;a<fh.numFeatures;++a){
+			MapFeatureStruct ffs;
+			file->Read(&ffs,sizeof(ffs));
 
-		string name=mapids[ffs.featureType];
+			string name=mapids[ffs.featureType];
 
-		ffs.ypos=ground->GetHeight2(ffs.xpos,ffs.zpos);
-		if(name.find("GrassType")!=string::npos)		//grass isnt handled as real features
-			treeDrawer->AddGrass(float3(ffs.xpos,0,ffs.zpos));
-		else if(!onlyCreateDefs)
-			new CFeature(float3(ffs.xpos,ffs.ypos,ffs.zpos),featureDefs[name],(short int)ffs.rotation,-1);
+			ffs.ypos=ground->GetHeight2(ffs.xpos,ffs.zpos);
+			new CFeature(float3(ffs.xpos,ffs.ypos,ffs.zpos),featureDefs[name],(short int)ffs.rotation,-1,"");
+		}
 	}
 
 	delete[] mapids;
@@ -352,7 +327,11 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 //				info->AddLine("Updating feature pos %f %f %i",(*fi)->pos.y,ground->GetHeight((*fi)->pos.x,(*fi)->pos.z),(*fi)->id);
 				SetFeatureUpdateable(*fi);
 			
-				(*fi)->finalHeight=ground->GetHeight2((*fi)->pos.x,(*fi)->pos.z);
+				if((*fi)->def->floating){
+					(*fi)->finalHeight=ground->GetHeight((*fi)->pos.x,(*fi)->pos.z);
+				} else {
+					(*fi)->finalHeight=ground->GetHeight2((*fi)->pos.x,(*fi)->pos.z);
+				}
 
 				(*fi)->transMatrix=CMatrix44f();
 				(*fi)->transMatrix.Translate((*fi)->pos.x,(*fi)->pos.y,(*fi)->pos.z);
@@ -376,15 +355,22 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 				overrideId=a;
 				float3 pos;
 				file->lsFloat3(pos);
+
 				string def;
 				file->lsString(def);
+				if(featureDefs.find(def)==featureDefs.end())
+					GetFeatureDef(def);
+
 				short rotation;
 				file->lsShort(rotation);
-				new CFeature(pos,featureDefs[def],rotation,-1);
+				string fromUnit;
+				file->lsString(fromUnit);
+				new CFeature(pos,featureDefs[def],rotation,-1,fromUnit);
 			} else {
 				file->lsFloat3(features[a]->pos);
 				file->lsString(features[a]->def->myName);
 				file->lsShort(features[a]->heading);
+				file->lsString(features[a]->createdFromUnit);
 			}
 			CFeature* f=features[a];
 			file->lsFloat(f->health);
@@ -464,7 +450,7 @@ void CFeatureHandler::DrawRaw(int extraSize)
 				for(set<CFeature*>::iterator fi=dq->nonStaticFeatures.begin();fi!=dq->nonStaticFeatures.end();){
 					CFeature* f=(*fi);
 					FeatureDef* def=f->def;
-					if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam)) && def->drawType==DRAWTYPE_3DO){
+					if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectating) && def->drawType==DRAWTYPE_3DO){
 						if(f->inUpdateQue || f->allyteam!=-1){
 							glPushMatrix();
 							glMultMatrixf(f->transMatrix.m);
@@ -610,3 +596,43 @@ void CFeatureHandler::DrawFar(CFeature* feature,CVertexArray* va)
 	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)-camera->right*feature->radius,tx+(1.0/64.0),ty+(1.0/64.0),uh->camNorm);
 	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)-camera->right*feature->radius,tx+(1.0/64.0),ty,uh->camNorm);
 }
+
+FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
+{
+	std::map<std::string,FeatureDef*>::iterator fi=featureDefs.find(name);
+
+	if(fi==featureDefs.end()){
+		if(!wreckParser->SectionExist(name)){
+			info->AddLine("Couldnt find wreckage info %s",name.c_str());
+			return 0;
+		}
+		FeatureDef* fd=new FeatureDef;
+		fd->blocking=!!atoi(wreckParser->SGetValueDef("1",name+"\\blocking").c_str());
+		fd->destructable=true;
+		fd->burnable=false;
+		fd->floating=!!atoi(wreckParser->SGetValueDef("1",name+"\\nodrawundergray").c_str());		//this seem to be the closest thing to floating that ta wreckage contains
+		if(fd->floating && !fd->blocking)
+			fd->floating=false;
+
+		fd->deathFeature=wreckParser->SGetValueDef("",name+"\\featuredead");
+		fd->drawType=DRAWTYPE_3DO;
+		fd->energy=atof(wreckParser->SGetValueDef("0",name+"\\energy").c_str());
+		fd->maxHealth=atof(wreckParser->SGetValueDef("0",name+"\\damage").c_str());
+		fd->metal=atof(wreckParser->SGetValueDef("0",name+"\\metal").c_str());
+		fd->model=0;
+		fd->modelname=wreckParser->SGetValueDef("",name+"\\object");
+		if(fd->modelname.find(".3do")==string::npos && !fd->modelname.empty())
+			fd->modelname=string("objects3d\\")+fd->modelname+".3do";
+		fd->radius=0;
+		fd->xsize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
+		fd->ysize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
+		fd->mass=fd->metal*0.4+fd->maxHealth*0.1;
+
+		fd->myName=name;
+		featureDefs[name]=fd;
+
+		fi=featureDefs.find(name);
+	}
+	return fi->second;
+}
+

@@ -51,12 +51,14 @@ int CDamageArrayHandler::GetTypeFromName(std::string name)
 }
 
 DamageArray::DamageArray() {
+	paralyzeDamage=false;
 	damages=new float[numTypes];
 	for(int a=0;a<numTypes;++a)
 		damages[a]=1;
 }
 
 DamageArray::DamageArray(const DamageArray& other){
+	paralyzeDamage=other.paralyzeDamage;
 	damages=new float[numTypes];
 	for(int a=0;a<numTypes;++a)
 		damages[a]=other.damages[a];

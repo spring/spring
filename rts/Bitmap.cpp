@@ -39,16 +39,20 @@ CBitmap::CBitmap()
 	ysize(1)
 {
 	mem=new unsigned char[4];
+	ddsimage = 0;
 }
 
 CBitmap::~CBitmap()
 {
 	if(mem!=0)
 		delete[] mem;
+	if(ddsimage)
+		delete ddsimage;
 }
 
 CBitmap::CBitmap(const CBitmap& old)
 {
+	ddsimage = 0;
 	xsize=old.xsize;
 	ysize=old.ysize;
 	mem=new unsigned char[xsize*ysize*4];
@@ -59,6 +63,7 @@ CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
 : xsize(xsize),
 	ysize(ysize)
 {
+	ddsimage = 0;
 	mem=new unsigned char[xsize*ysize*4];	
 	memcpy(mem,data,xsize*ysize*4);
 }
@@ -68,6 +73,7 @@ CBitmap::CBitmap(string filename)
 	xsize(0),
 	ysize(0)
 {
+	ddsimage = 0;
 	Load(filename);
 }
 
@@ -84,14 +90,32 @@ void CBitmap::operator=(const CBitmap& bm)
 void CBitmap::Load(string filename)
 {
 	if(mem!=0)
+	{
 		delete[] mem;
+		mem = NULL;
+	}
 
 	if(filename.find(".jpg")!=string::npos)
+	{
 		LoadJPG(filename);
+		type = BitmapTypeStandar;
+	}
 	else if(filename.find(".pcx")!=string::npos)
+	{
 		LoadPCX(filename);
+		type = BitmapTypeStandar;
+	}
+	else if(filename.find(".dds")!=string::npos)
+	{
+		ddsimage = new nv_dds::CDDSImage();
+		ddsimage->load(filename);
+		type = BitmapTypeDDS;
+	}
 	else
+	{
 		LoadBMP(filename);
+		type = BitmapTypeStandar;
+	}
 }
 
 
@@ -208,25 +232,83 @@ void CBitmap::LoadBMP(string filename)
 	delete[] row;
 }
 
+
+//these global functions are helper to load jpegs from the virtual file system instead of standard files
+static void* JpegBufferMem;
+static int JpegBufferLength;
+
+static void InitSource (j_decompress_ptr cinfo)
+{
+#ifndef linux
+  cinfo->src->start_of_file = TRUE;
+#else
+#warning cinfo->src->start_of_file = TRUE disabled, should be OK without
+#endif
+}
+
+static boolean FillInputBuffer (j_decompress_ptr cinfo)
+{
+	cinfo->src->bytes_in_buffer=JpegBufferLength;
+	cinfo->src->next_input_byte=(JOCTET*)JpegBufferMem;
+
+	return true;
+}
+
+static void SkipInputData (j_decompress_ptr cinfo, long num_bytes)
+{
+//	MessageBox(0,"error skipping in ground jpeg","",0);
+	cinfo->src->next_input_byte += (size_t) num_bytes;
+	cinfo->src->bytes_in_buffer -= (size_t) num_bytes;
+	//	exit(0);
+}
+
+static void TermSource (j_decompress_ptr cinfo)
+{
+}
+
+static boolean ResyncToRestart(j_decompress_ptr cinfo, int desired)
+{
+	MessageBox(0,"resync to restart","unsupported jpg function",0);
+	return true;
+}
+
+static bool firstJpgLoad=true;
 void CBitmap::LoadJPG(string filename)
 {
-	struct jpeg_decompress_struct cinfo;
-	jpeg_error_mgr jerr;
-	FILE *pFile;
-
-	if((pFile = fopen(filename.c_str(), "rb")) == NULL) 
-	{
+	CFileHandler file(filename);
+	if(!file.FileExists()) {
 		// Display an error message saying the file was not found, then return NULL
-		MessageBox(0, "Unable to load JPG File!", "Error", MB_OK);
+		MessageBox(0, "Unable to load JPG File", filename.c_str(), MB_OK);
 		xsize=1;
 		ysize=1;
 		mem=new unsigned char[xsize*ysize*4];
 		return;
 	}
 
-	cinfo.err = jpeg_std_error(&jerr);
-	jpeg_create_decompress(&cinfo);
-	jpeg_stdio_src(&cinfo, pFile);
+	static struct jpeg_decompress_struct cinfo;
+	static jpeg_error_mgr jerr;
+
+//	MessageBox(0, "Load jpg1", filename.c_str(), MB_OK);
+
+	if(firstJpgLoad){
+		firstJpgLoad=false;
+		cinfo.err = jpeg_std_error(&jerr);
+		jpeg_create_decompress(&cinfo);
+		jpeg_stdio_src(&cinfo, (FILE*)1);
+
+		struct jpeg_source_mgr* memsrc=cinfo.src;
+		memsrc->init_source = InitSource;
+		memsrc->fill_input_buffer = FillInputBuffer;
+		memsrc->skip_input_data = SkipInputData;
+		memsrc->resync_to_restart = ResyncToRestart; 
+		memsrc->term_source = TermSource;
+	}
+	struct jpeg_source_mgr* memsrc=cinfo.src;
+	memsrc->bytes_in_buffer=0;
+
+	JpegBufferLength=file.FileSize();
+	JpegBufferMem=new unsigned char[JpegBufferLength];
+	file.Read(JpegBufferMem,JpegBufferLength);
 
 	jpeg_read_header(&cinfo, TRUE);
 	jpeg_start_decompress(&cinfo);
@@ -250,8 +332,7 @@ void CBitmap::LoadJPG(string filename)
 
 	delete[] tempLine;
 	jpeg_finish_decompress(&cinfo);
-	jpeg_destroy_decompress(&cinfo);
-	fclose(pFile);
+//	jpeg_destroy_decompress(&cinfo);
 }
 
 void CBitmap::LoadPCX(string filename)
@@ -303,7 +384,7 @@ void CBitmap::LoadPCX(string filename)
 	while(count < lSize)
 	{
 		data = *tmpbuf++;
-		if((data >= 192)/* && (data <= 255)*/)
+		if((data >= 192) && (data <= 255))
 		{
 			num_bytes = data - 192;
 			data  = *tmpbuf++;
@@ -347,6 +428,11 @@ void CBitmap::LoadPCX(string filename)
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
 {
+	if(type == BitmapTypeDDS)
+	{
+        return CreateDDSTexture();
+	}
+
 	if(mem==NULL)
 		return 0;
 
@@ -370,6 +456,52 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 	}
 
 	return texture;
+}
+
+unsigned int CBitmap::CreateDDSTexture()
+{
+	GLuint texobj;
+	glPushAttrib(GL_TEXTURE_BIT);
+
+	glGenTextures(1, &texobj);
+
+	switch(ddsimage->get_type())
+	{
+	case nv_dds::TextureNone:
+		glDeleteTextures(1, &texobj);
+		texobj = 0;
+		break;
+	case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, texobj);
+		if(!ddsimage->upload_texture2D())
+		{
+			glDeleteTextures(1, &texobj);
+			texobj = 0;
+		}
+		break;
+	case nv_dds::Texture3D:
+		glEnable(GL_TEXTURE_3D);
+		glBindTexture(GL_TEXTURE_3D, texobj);
+		if(!ddsimage->upload_texture2D())
+		{
+			glDeleteTextures(1, &texobj);
+			texobj = 0;
+		}
+		break;
+	case nv_dds::TextureCubemap:
+		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texobj);
+		if(!ddsimage->upload_textureCubemap())
+		{
+			glDeleteTextures(1, &texobj);
+			texobj = 0;
+		}
+		break;
+	}
+
+	glPopAttrib();
+	return texobj;
 }
 
 void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char blue)
@@ -439,7 +571,7 @@ void CBitmap::Renormalize(float3 newCol)
 			for(int x=0;x<xsize;++x){
 				float nc=float(mem[(y*xsize+x)*4+a])/255.0f+colorDif.xyz[a];
 /*				float r=newCol.xyz[a]+(nc-newCol.xyz[a])*spreadMul.xyz[a];*/
-				mem[(y*xsize+x)*4+a]=(unsigned char)(min(255.f,max(0.f,nc*255)));
+				mem[(y*xsize+x)*4+a]=(unsigned char)(std::min(255.f,std::max(0.f,nc*255)));
 			}
 		}
 	}

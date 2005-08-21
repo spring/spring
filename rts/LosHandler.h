@@ -23,6 +23,8 @@
 #include "RadarHandler.h"
 //#include <windows.h>
 
+#define MAX_LOS_TABLE 80
+
 struct LosInstance{
 	inline void* operator new(size_t size){return mempool.Alloc(size);};
 	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};

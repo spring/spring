@@ -16,6 +16,7 @@ public:
 
 	virtual void SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes)=0;
 	virtual void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes){};
+	virtual void SetPathMapTexture(){};
 	virtual void ToggleLosTexture()=0;
 	virtual void Draw(bool drawWaterReflection=false)=0;
 	virtual bool UpdateTextures()=0;
@@ -32,6 +33,7 @@ public:
 	bool drawLos;
 	bool drawExtraTex;
 	bool drawMetalMap;
+	bool drawPathMap;
 
 	unsigned int infoTex;
 

@@ -18,8 +18,10 @@ public:
 	void DrawQuedBuildingSquares(void);
 
 	bool FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsigned char options);
+	bool FindResurrectableFeatureAndResurrect(float3 pos, float radius,unsigned char options);
 	void FinishCommand(void);
 	bool FindRepairTargetAndRepair(float3 pos, float radius,unsigned char options,bool attackEnemy);
+	bool FindCaptureTargetAndCapture(float3 pos, float radius,unsigned char options);
 
 	bool commandFromPatrol;
 	map<int,string> buildOptions;

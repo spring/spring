@@ -162,7 +162,18 @@ const long int DROP = 0x10084000;
 
 //Handy macros
 #define GET_LONG_PC() (script.code[PC++])
-#define POP() stack.back(); stack.pop_back();
+//#define POP() (stack.size() > 0) ? stack.back(), stack.pop_back(); : 0
+
+int CCobThread::POP(void)
+{
+	if (stack.size() > 0) {
+		int r = stack.back();
+		stack.pop_back();
+		return r;
+	}
+	else
+		return 0;
+}
 
 //Returns -1 if this thread is dead and needs to be killed
 int CCobThread::Tick(int deltaTime)
@@ -338,6 +349,7 @@ int CCobThread::Tick(int deltaTime)
 				break;
 			case GET_UNIT_VALUE:
 				r1 = POP();
+				ForceCommitAllAnims();			// getunitval could possibly read piece locations
 				r1 = owner->GetUnitVal(r1, 0, 0, 0, 0);
 				stack.push_back(r1);
 				break; 
@@ -444,7 +456,7 @@ int CCobThread::Tick(int deltaTime)
 			case RAND:
 				r2 = POP();
 				r1 = POP();
-				r3 = gs->randInt() % (r2 - r1) + r1;
+				r3 = gs->randInt() % (r2 - r1 + 1) + r1;
 				stack.push_back(r3);
 				break;
 			case EMIT_SFX:
@@ -480,6 +492,7 @@ int CCobThread::Tick(int deltaTime)
 				r3 = POP();
 				r2 = POP();
 				r1 = POP();
+				ForceCommitAllAnims();
 				r6 = owner->GetUnitVal(r1, r2, r3, r4, r5);
 				stack.push_back(r6);
 				break;
@@ -517,30 +530,38 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();
-				//owner->MoveNow(r1, r2, r3);
 
-				DelayedAnim a;
-				a.type = 2;
-				a.piece = r1;
-				a.axis = r2;
-				a.dest = r3;
-				delayedAnims.push_back(a);
+				if (owner->smoothAnim) {
+					DelayedAnim a;
+					a.type = 2;
+					a.piece = r1;
+					a.axis = r2;
+					a.dest = r3;
+					delayedAnims.push_back(a);
 
-				//info->AddLine("Delayed move %s %d %d", owner->pieces[r1].name.c_str(), r2, r3);
+					//info->AddLine("Delayed move %s %d %d", owner->pieces[r1].name.c_str(), r2, r3);
+				}
+				else {
+					owner->MoveNow(r1, r2, r3);
+				}
 
 				break;}
 			case TURN_NOW:{
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();
-				//owner->TurnNow(r1, r2, r3);
 				
-				DelayedAnim a;
-				a.type = 1;
-				a.piece = r1;
-				a.axis = r2;
-				a.dest = r3;
-				delayedAnims.push_back(a);
+				if (owner->smoothAnim) {
+					DelayedAnim a;
+					a.type = 1;
+					a.piece = r1;
+					a.axis = r2;
+					a.dest = r3;
+					delayedAnims.push_back(a);
+				}
+				else {
+					owner->TurnNow(r1, r2, r3);
+				}
 
 				break;}
 			case WAIT_TURN:
@@ -767,5 +788,20 @@ void CCobThread::ForceCommitAnim(int type, int piece, int axis)
 			return;
 		}
 	}
+}
+
+void CCobThread::ForceCommitAllAnims() 
+{
+	for (vector<DelayedAnim>::iterator anim = delayedAnims.begin(); anim != delayedAnims.end(); ++anim) {
+		switch (anim->type) {
+			case 1:
+				owner->TurnNow(anim->piece, anim->axis, anim->dest);
+				break;
+			case 2:
+				owner->MoveNow(anim->piece, anim->axis, anim->dest);
+				break;
+		}
+	}
+	delayedAnims.clear();
 }
 

@@ -1,25 +1,124 @@
 #ifndef __MAPFILE_H
 #define __MAPFILE_H
 
+#define SMALL_TILE_SIZE 680
+#define MINIMAP_SIZE 699048
+#define MINIMAP_NUM_MIPMAP 9
+
+/*
+map file (.smf) layout is like this
+
+MapHeader
+
+ExtraHeader
+ExtraHeader
+.
+.
+.
+
+Chunk of data pointed to by header or extra headers
+Chunk of data pointed to by header or extra headers
+.
+.
+.
+*/
+
 struct MapHeader {
-	char magic[16]; //"spring map file"
-	int version;		//1
+	char magic[16]; //"spring map file\0"
+	int version;		//must be 1 for now
 	int mapid;			//sort of a checksum of the file
 
-	int mapx;				//must be 512
-	int mapy;				//must be 512
-	int squareSize;	//must be 8
+	int mapx;				//must be divisible by 128
+	int mapy;				//must be divisible by 128
+	int squareSize;	//distance between vertices. must be 8
+	int texelPerSquare;		//number of texels per square, must be 8 for now
+	int tilesize;		//number of texels in a tile, must be 32 for now
+	float minHeight;		//height value that 0 in the heightmap corresponds to	
+	float maxHeight;		//height value that 0xffff in the heightmap corresponds to
 
-	int numCities;
-	int numNeutrals;//how many cities is neutral at start of game
-	float incomeMul;//all income  are multiplied by this
-	float supplyMul;//modify how easily supply can flow over the map
+	int heightmapPtr;		//file offset to elevation data (short int[(mapy+1)*(mapx+1)])
+	int typeMapPtr;			//file offset to typedata (unsigned char[mapy/2 * mapx/2])
+	int tilesPtr;				//file offset to tile data (see MapTileHeader)
+	int minimapPtr;			//file offset to minimap (always 1024*1024 dxt1 compresed data with 9 mipmap sublevels)
+	int metalmapPtr;		//file offset to metalmap (unsigned char[mapx/2 * mapy/2])
+	int featurePtr;			//file offset to feature data	(see MapFeatureHeader)
 
-	int elevOffset;	//file offset to elevation data (short int[(mapy+1)*(mapx+1)])
-	int tileOffset;	//file offset to tile data (unsigned char[mapy*mapx])
-	int cityInfoOffset;	//file offset to city info data (int+int+int[numCities])
-	int cityOffset;	//file offset to city data (unsigned char[mapy*mapx])
-	int vegOffset;	//file offset to vegetation data (unsigned char[mapy*mapx]) note that this data is unsynced
-	int previewOffset; //file offset to a picture of the map (unsigned char[256*256*3])
+	int numExtraHeaders;		//numbers of extra headers following main header
 };
+
+//start of every extra header must look like this, then comes data specific for header type
+struct ExtraHeader {
+	int size;			//size of extra header
+	int type;
+};
+
+
+//defined types for extra headers
+
+#define MEH_None 0
+//not sure why this one should be used
+
+#define MEH_Vegetation 1
+//this extension contains a offset to an unsigned char[mapx/4 * mapy/4] array that defines ground vegetation, if its missing there is no ground vegetation
+//0=none
+//1=grass
+//rest undefined so far
+
+
+//some structures used in the chunks of data later in the file
+
+struct MapTileHeader
+{
+	int numTileFiles;
+	int numTiles;
+};
+//this is followed by numTileFiles file definition where each file definition is an int followed by a zero terminated file name
+//each file defines as many tiles the int indicates with the following files starting where the last one ended
+//so if there is 2 files with 100 tiles each the first defines 0-99 and the second 100-199
+//after this followes an int[mapx*texelPerSquare/tileSize * mapy*texelPerSquare/tileSize] which is indexes to the defined tiles
+
+
+struct MapFeatureHeader 
+{
+	int numFeatureType;
+	int numFeatures;
+};
+//this is followed by numFeatureType zero terminated strings indicating the names of the features in the map
+//then follow numFeatures MapFeatureStructs
+
+struct MapFeatureStruct
+{
+	int featureType;	//index to one of the strings above
+	float xpos;
+	float ypos;
+	float zpos;
+
+	float rotation;
+	float relativeSize;		//not used at the moment keep 1
+};
+
+
+
+/*
+map texture tile file (.smt) layout is like this
+
+TileFileHeader
+
+Tiles
+.
+.
+.
+*/
+
+struct TileFileHeader
+{
+	char magic[16];  //"spring tilefile\0"
+	int version;		//must be 1 for now
+
+	int numTiles;			//total number of tiles in this file
+	int tileSize;			//must be 32 for now
+	int compressionType;	//must be 1=dxt1 for now
+};
+//this is followed by the raw data for the tiles
+//
 #endif //ndef __MAPFILE_H

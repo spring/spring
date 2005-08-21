@@ -12,6 +12,7 @@
 #include "WeaponDefHandler.h"
 #include "SelectedUnits.h"
 #include "LoadSaveInterface.h"
+#include "GlobalAIHandler.h"
 //#include "mmgr.h"
 
 CCommandAI::CCommandAI(CUnit* owner)
@@ -66,16 +67,18 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.switchKeys=0;
 	nonQueingCommands.insert(CMD_SELFD);
 
-	c.id=CMD_FIRE_STATE;
-	c.type=CMDTYPE_ICON_MODE;
-	c.name="Fire state";
-	c.params.push_back("2");
-	c.params.push_back("Hold fire");
-	c.params.push_back("Return fire");
-	c.params.push_back("Fire at will");
-	c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
-	possibleCommands.push_back(c);	
-	nonQueingCommands.insert(CMD_FIRE_STATE);
+	if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory" || owner->unitDef->canKamikaze){
+		c.id=CMD_FIRE_STATE;
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Fire state";
+		c.params.push_back("2");
+		c.params.push_back("Hold fire");
+		c.params.push_back("Return fire");
+		c.params.push_back("Fire at will");
+		c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
+		possibleCommands.push_back(c);	
+		nonQueingCommands.insert(CMD_FIRE_STATE);
+	}
 
 	c.params.clear();
 	c.id=CMD_MOVE_STATE;
@@ -93,7 +96,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.params.clear();
 	c.id=CMD_REPEAT;
 	c.type=CMDTYPE_ICON_MODE;
-	c.name="Move state";
+	c.name="Repeat";
 	c.params.push_back("0");
 	c.params.push_back("Repeat off");
 	c.params.push_back("Repeat on");
@@ -101,16 +104,18 @@ CCommandAI::CCommandAI(CUnit* owner)
 	possibleCommands.push_back(c);
 	nonQueingCommands.insert(CMD_REPEAT);
 
-	c.params.clear();
-	c.id=CMD_TRAJECTORY;
-	c.type=CMDTYPE_ICON_MODE;
-	c.name="Move state";
-	c.params.push_back("0");
-	c.params.push_back("Low traj");
-	c.params.push_back("High traj");
-	c.tooltip="Trajectory: If set to high, weapons that\n support it will try to fire in a higher\n trajectory than usual (experimental)";
-	possibleCommands.push_back(c);
-	nonQueingCommands.insert(CMD_TRAJECTORY);
+	if(owner->unitDef->highTrajectoryType>1){
+		c.params.clear();
+		c.id=CMD_TRAJECTORY;
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Move state";
+		c.params.push_back("0");
+		c.params.push_back("Low traj");
+		c.params.push_back("High traj");
+		c.tooltip="Trajectory: If set to high, weapons that\n support it will try to fire in a higher\n trajectory than usual (experimental)";
+		possibleCommands.push_back(c);
+		nonQueingCommands.insert(CMD_TRAJECTORY);
+	}
 
 	if(owner->unitDef->onoffable)
 	{
@@ -219,7 +224,7 @@ void CCommandAI::GiveCommand(Command& c)
 		}
 	case CMD_TRAJECTORY:
 		{
-			if(c.params.empty())
+			if(c.params.empty() || owner->unitDef->highTrajectoryType<2)
 				return;
 			owner->useHighTrajectory=!!c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
@@ -325,8 +330,11 @@ void CCommandAI::GiveCommand(Command& c)
 			}
 		}
 	}
+	if(c.id==CMD_ATTACK && owner->weapons.empty() && owner->unitDef->canKamikaze==false)		//avoid weaponless units moving to 0 distance when given attack order
+		c.id=CMD_STOP;
+
 	commandQue.push_back(c);
-	if(commandQue.size()==1)
+	if(commandQue.size()==1 && !owner->beingBuilt)
 		SlowUpdate();
 }
 
@@ -353,7 +361,7 @@ void CCommandAI::SlowUpdate()
 			}
 		} else {
 			if(c.params.size()==1){
-				if(uh->units[int(c.params[0])]!=0){
+				if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
 					owner->AttackUnit(uh->units[int(c.params[0])], c.id==CMD_DGUN);
 					if(orderTarget)
 						DeleteDeathDependence(orderTarget);
@@ -433,9 +441,13 @@ void CCommandAI::FinishCommand(void)
 	inCommand=false;
 	targetDied=false;
 	unimportantMove=false;
+	orderTarget=0;
 	if(owner->group)
 		owner->group->CommandFinished(owner->id,type);
 	
+	if(!owner->group && commandQue.empty())
+		globalAI->UnitIdle(owner);
+
 	if(lastFinishCommand!=gs->frameNum){	//avoid infinite loops
 		lastFinishCommand=gs->frameNum;
 		SlowUpdate();			

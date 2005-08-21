@@ -23,7 +23,7 @@ using namespace std;
 class CGroupHandler  
 {
 public:
-	CGroupHandler();
+	CGroupHandler(int team);
 	virtual ~CGroupHandler();
 
 	void Update();
@@ -31,14 +31,15 @@ public:
 	CGroup* CreateNewGroup(string ainame);
 	void RemoveGroup(CGroup* group);
 
-	vector<CGroup*> armies;
+	vector<CGroup*> groups;
 	map<string,string> availableAI;
 
+	int team;
 protected:
 	void FindDlls(void);
 	void TestDll(string name);
 
-	vector<int> freeArmies;
+	vector<int> freeGroups;
 	int firstUnusedGroup;
 };
 

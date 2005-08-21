@@ -1,18 +1,15 @@
-// BFReadMap.h
-///////////////////////////////////////////////////////////////////////////
-
-#ifndef __BF_READ_MAP_H__
-#define __BF_READ_MAP_H__
+#ifndef SMFREADMAP_H
+#define SMFREADMAP_H
 
 #include "ReadMap.h"
 #include <string>
 
-class CBFReadmap :
+class CSmfReadMap :
 	public CReadMap
 {
 public:
-	CBFReadmap(std::string mapname);
-	~CBFReadmap(void);
+	CSmfReadMap(std::string mapname);
+	~CSmfReadMap(void);
 
 	void RecalcTexture(int x1, int x2, int y1, int y2);
 
@@ -21,7 +18,12 @@ public:
 	float3 waterAbsorb;
 	float3 waterBaseColor;
 	float3 waterMinColor;
+	float3 waterSurfaceColor;
 	float maxMetal;
+
+	float3 waterPlaneColor;
+	bool hasWaterPlane;
+	std::string waterTexture;
 
 	unsigned char waterHeightColors[1024*4];
 protected:
@@ -29,4 +31,4 @@ protected:
 	void ParseSMD(std::string filename);
 };
 
-#endif // __BF_READ_MAP_H__
+#endif

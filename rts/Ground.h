@@ -37,6 +37,7 @@ public:
 	float3 GetSmoothNormal(float x,float y);
 	float LineGroundCol(float3 from,float3 to);
 	void CheckCol(CProjectileHandler* ph);
+	float TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic);
 
 	inline int GetSquare(const float3& pos){return max(0,min(gs->mapx-1,(int(pos.x)/SQUARE_SIZE)))+max(0,min(gs->mapy-1,(int(pos.z)/SQUARE_SIZE)))*gs->mapx;};
 private:

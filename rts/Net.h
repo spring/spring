@@ -28,7 +28,7 @@ using namespace std;
 #define NETMSG_SETPLAYERNUM		5
 #define NETMSG_PLAYERNAME			6
 #define NETMSG_CHAT						7
-#define NETMSG_RANDBASE				8
+#define NETMSG_RANDSEED				8
 //#define NETMSG_COMPARE				9
 //#define NETMSG_PROJCOMPARE		10
 #define NETMSG_COMMAND				11
@@ -58,6 +58,8 @@ using namespace std;
 #define NETMSG_SYSTEMMSG			35
 #define NETMSG_STARTPOS				36
 #define NETMSG_EXECHECKSUM		37
+#define NETMSG_PLAYERINFO			38
+#define NETMSG_PLAYERLEFT			39
 
 
 #define NETWORK_BUFFER_SIZE 40000
@@ -139,15 +141,19 @@ public:
 	void FlushConnection(int conn);
 	void SendRawPacket(int conn, unsigned char* data, int length, int packetNum);
 
-	void CreateDemoFile(char* name);
+	void CreateDemoFile();
 	void SaveToDemo(unsigned char* buf,int length);
 	bool FindDemoFile(const char* name);
 
+	std::string demoName;
 	ofstream* recordDemo;
 	CFileHandler* playbackDemo;
 
 	double demoTimeOffset;
 	double nextDemoRead;
+
+	unsigned char tempbuf[NETWORK_BUFFER_SIZE];
+
 	void ReadDemoFile(void);
 };
 

@@ -23,9 +23,9 @@ public:
 			return !!sonarMaps[allyteam][square];
 		}
 		if(unit->useAirLos){
-			return airRadarMaps[allyteam][square] && !jammerMaps[unit->allyteam][square];
+			return airRadarMaps[allyteam][square] && !commonJammerMap[square];
 		} else {
-			return (radarMaps[allyteam][square] || (unit->pos.y<=1 && sonarMaps[allyteam][square])) && !jammerMaps[unit->allyteam][square];
+			return (radarMaps[allyteam][square] || (unit->pos.y<=1 && sonarMaps[allyteam][square])) && !commonJammerMap[square];
 		}
 	}
 
@@ -35,6 +35,7 @@ public:
 	unsigned short* airRadarMaps[MAX_TEAMS];
 	unsigned short* sonarMaps[MAX_TEAMS];
 	unsigned short* jammerMaps[MAX_TEAMS];
+	unsigned short* commonJammerMap;
 	float radarErrorSize[MAX_TEAMS];
 	float baseRadarErrorSize;
 

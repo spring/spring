@@ -74,7 +74,8 @@ public:
 		return float3(x/f.x,y/f.y,z/f.z);
 	}
 	inline float3 operator/ (const float f) const{
-		return float3(x/f,y/f,z/f);
+		const float inv = (float) 1. / f;
+		return float3(x*inv, y*inv, z*inv);
 	}
 	inline void operator/= (const float3 &f){
 		x/=f.x;
@@ -82,13 +83,14 @@ public:
 		z/=f.z;
 	}
 	inline void operator/= (const float f){
-		x/=f;
-		y/=f;
-		z/=f;
+		const float inv = (float) 1. / f;
+		x *= inv;
+		y *= inv;
+		z *= inv;
 	}
 
 	inline bool operator== (const float3 &f) const {
-		return ((x==f.x) && (y==f.y) && (z==f.z));
+		return !(fabs(x-f.x) > 1.0E-34 || fabs(y-f.y) > 1.0E-34 || fabs(z-f.z) > 1.0E-34) ;
 	}
 	inline bool operator!= (const float3 &f) const {
 		return ((x!=f.x) || (y!=f.y) || (z!=f.z));
@@ -104,17 +106,20 @@ public:
 		return x*f.x + y*f.y + z*f.z;
 	}
 	inline float3 cross(const float3 &f) const{
-		float3 ut;
-		ut.x=y*f.z-z*f.y;
-		ut.y=z*f.x-x*f.z;
-		ut.z=x*f.y-y*f.x;
-		return ut;
+		return float3(	y*f.z - z*f.y,
+						z*f.x - x*f.z,
+						x*f.y - y*f.x  );
 	}
 	inline float distance(const float3 &f) const{
-		return (float)sqrt((x-f.x)*(x-f.x)+(y-f.y)*(y-f.y)+(z-f.z)*(z-f.z));
+		const float dx = x - f.x;
+		const float dy = y - f.y;
+		const float dz = z - f.z;
+		return (float) sqrt(dx*dx + dy*dy + dz*dz);
 	}
 	inline float distance2D(const float3 &f) const{
-		return (float)sqrt((x-f.x)*(x-f.x)+(z-f.z)*(z-f.z));
+		const float dx = x - f.x;
+		const float dz = z - f.z;
+		return (float)sqrt(dx*dx + dz*dz);
 	}
 	inline float Length() const{
 		return (float)sqrt(x*x+y*y+z*z);
@@ -124,11 +129,12 @@ public:
 	}
 	inline float3& Normalize()
 	{
-		float l=(float)sqrt(x*x+y*y+z*z);
-		if(l!=0){
-			x=x/l;
-			y=y/l;
-			z=z/l;
+		const float L = sqrt(x*x + y*y + z*z);
+		if(L != 0.){
+			const float invL = (float) 1. / L;
+			x *= invL;
+			y *= invL;
+			z *= invL;
 		}
 		return *this;
 	}

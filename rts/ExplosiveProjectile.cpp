@@ -13,6 +13,7 @@
 #include "Camera.h"
 #include "VertexArray.h"
 #include "WeaponDefHandler.h"
+#include "InterceptHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -30,6 +31,7 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed
 	SetRadius(0.05f);
 	drawRadius=2+min(damages[0]*0.0025,weaponDef->areaOfEffect*0.1);
 
+	interceptHandler.AddPlasma(this);
 #ifdef TRACE_SYNC
 	tracefile << "New explosive: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";

@@ -37,6 +37,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CGuiHandler* guihandler;
+extern bool keys[256];
 unsigned int total_active_icons;
 
 //unsigned int icon_texture[256];
@@ -88,13 +89,13 @@ static void MenuSelection(std::string s)
 CGuiHandler::CGuiHandler()
 : inCommand(-1),
 	activeMousePress(false),
-	defaultCmdMemory(CMD_STOP),
+	defaultCmdMemory(0),
 	needShift(false),
 	activePage(0),
 	maxPages(0),
 	showingMetal(false)
 {
-//	LoadCMDBitmap(CMD_STOP, "bitmaps/ocean.bmp");
+//	LoadCMDBitmap(CMD_STOP, "bitmaps\\ocean.bmp");
 	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps/armsilo1.bmp");
 	readmap->mapDefParser.GetDef(autoShowMetal,"1","MAP\\autoShowMetal");
 
@@ -129,6 +130,7 @@ CGuiHandler::~CGuiHandler()
 // Ikonpositioner
 void CGuiHandler::LayoutIcons() 
 {
+	defaultCmdMemory=0;
 	unsigned int nr=0;
 	unsigned int xpos=0, ypos=0;
 	GLfloat texticon_width = .06f;
@@ -268,11 +270,8 @@ void CGuiHandler::LayoutIcons()
 
 void CGuiHandler::DrawButtons()
 {
-#ifdef USE_GLUT
-	if(needShift && !(keyShift())){
-#else
+	glDisable(GL_DEPTH_TEST);
 	if(needShift && !keys[VK_SHIFT]){
-#endif
 		if(showingMetal){
 			showingMetal=false;
 			groundDrawer->SetExtraTexture(0,0,false);
@@ -480,6 +479,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 	if (button == 1 && icon==-1) { // right click -> default cmd
 		inCommand=defaultCmdMemory;//GetDefaultCommand(x,y);
+		defaultCmdMemory=0;
 	} 
 
 	if(icon>=0 && icon<commands.size()){
@@ -568,6 +568,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 	Command c=GetCommand(x,y,button,false);
 
+	if(c.id!=CMD_STOP)	//if cmd_stop is returned it indicates that no good command could be found
 	selectedUnits.GiveCommand(c);
 	FinishCommand(button);
 }
@@ -607,11 +608,11 @@ void CGuiHandler::CreateOptions(Command& c,bool rmb)
 	c.options=0;
 	if(rmb)
 		c.options|=RIGHT_MOUSE_KEY;
-	if(keyShift())
+	if(keys[VK_SHIFT])
 		c.options|=SHIFT_KEY;
-	if(keyCtrl())
+	if(keys[VK_CONTROL])
 		c.options|=CONTROL_KEY;
-	if(keyMenu())
+	if(keys[VK_MENU])
 		c.options|=ALT_KEY;
 	//(*info) << (int)c.options << "\n";
 }
@@ -693,6 +694,7 @@ void CGuiHandler::DrawMapStuff(void)
 			}
 		}
 	}
+	//draw buildings we are about to build
 	if(inCommand>=0 && inCommand<commands.size() && commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
 		if(dist>0){
@@ -702,7 +704,7 @@ void CGuiHandler::DrawMapStuff(void)
 			if(unitdef){
 				float3 pos=camera->pos+mouse->dir*dist;
 				std::vector<float3> buildPos;
-				if(keyShift() && mouse->buttons[0].pressed){
+				if(keys[VK_SHIFT] && mouse->buttons[0].pressed){
 					float dist=ground->LineGroundCol(mouse->buttons[0].camPos,mouse->buttons[0].camPos+mouse->buttons[0].dir*9000);
 					float3 pos2=mouse->buttons[0].camPos+mouse->buttons[0].dir*dist;
 					buildPos=GetBuildPos(pos2,pos,unitdef);
@@ -728,7 +730,7 @@ void CGuiHandler::DrawMapStuff(void)
 					glDisable(GL_TEXTURE_2D);
 					glDepthMask(1);
 					glPopMatrix();
-					if(unitdef->weapons.size()>0){
+					if(unitdef->weapons.size()>0){	//draw range
 						glDisable(GL_TEXTURE_2D);
 						glColor4f(1,0.3,0.3,0.7);
 						glBegin(GL_LINE_STRIP);
@@ -744,15 +746,27 @@ void CGuiHandler::DrawMapStuff(void)
 						}
 						glEnd();
 					}
+					if(unitdef->extractRange>0){	//draw range
+						glDisable(GL_TEXTURE_2D);
+						glColor4f(1,0.3,0.3,0.7);
+						glBegin(GL_LINE_STRIP);
+						for(int a=0;a<=40;++a){
+							float3 wpos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
+							wpos+=pos;
+							wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
+							glVertexf3(wpos);
+						}
+						glEnd();
+					}
 				}
 			}
 		}
 	}
 
-	if(keyShift()){
+	if(keys[VK_SHIFT]){
 		CUnit* unit=0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,false);
-		if(unit && (loshandler->InLos(unit,gu->myAllyTeam) || gu->spectating)){
+		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
 			if(unit->maxRange>0){
 				glDisable(GL_TEXTURE_2D);
 				glColor4f(1,0.3,0.3,0.7);
@@ -769,12 +783,47 @@ void CGuiHandler::DrawMapStuff(void)
 				}
 				glEnd();
 			}
-			if(unit->unitDef->decloakDistance>0){
+			if(unit->unitDef->decloakDistance>0){			//draw decloak distance
 				glDisable(GL_TEXTURE_2D);
 				glColor4f(0.3,0.3,1,0.7);
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=40;++a){
 					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			if(unit->unitDef->kamikazeDist>0){			//draw self destruct distance
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(0.8,0.8,0.1,0.7);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+		}
+	}
+	//draw range circles if attack orders are imminent
+	int defcmd=GetDefaultCommand(mouse->lastx,mouse->lasty);
+	if((inCommand>0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) || (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
+			CUnit* unit=*si;
+			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(1,0.3,0.3,0.7);
+				glBegin(GL_LINE_STRIP);
+				float h=unit->pos.y;
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
+					pos+=unit->pos;
+					float dh=ground->GetHeight(pos.x,pos.z)-h;
+					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
 					pos+=unit->pos;
 					pos.y=ground->GetHeight(pos.x,pos.z)+8;
 					glVertexf3(pos);
@@ -862,11 +911,11 @@ bool CGuiHandler::KeyPressed(unsigned char key)
 		return true;
 	}
 	unsigned char keyOptions=0;
-	if(keyShift())
+	if(keys[VK_SHIFT])
 		keyOptions|=SHIFT_KEY;
-	if(keyCtrl())
+	if(keys[VK_CONTROL])
 		keyOptions|=CONTROL_KEY;
-	if(keyMenu())
+	if(keys[VK_MENU])
 		keyOptions|=ALT_KEY;
 
 	int a;
@@ -950,7 +999,7 @@ void CGuiHandler::MenuChoice(string s)
 
 void CGuiHandler::FinishCommand(int button)
 {
-	if( keyShift() && button==0){
+	if(keys[VK_SHIFT] && button==0){
 		needShift=true;
 	} else {
 		if(showingMetal){
@@ -1078,7 +1127,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			}
 			float3 pos=camera->pos+mouse->dir*dist;
 			std::vector<float3> buildPos;
-			if( keyShift() && button==0){
+			if(keys[VK_SHIFT] && button==0){
 				float dist=ground->LineGroundCol(mouse->buttons[0].camPos,mouse->buttons[0].camPos+mouse->buttons[0].dir*9000);
 				float3 pos2=mouse->buttons[0].camPos+mouse->buttons[0].dir*dist;
 				buildPos=GetBuildPos(pos2,pos,unitdef);
@@ -1238,17 +1287,17 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 {
 	std::vector<float3> ret;
 
-	MakeBuildPos(start,unitdef);
-	MakeBuildPos(end,unitdef);
+	start=helper->Pos2BuildPos(start,unitdef);
+	end=helper->Pos2BuildPos(end,unitdef);
 
 	
 	CUnit* unit=0;
 	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,true);
 
-	if(unit && keyShift() && keyCtrl()){		//circle build around building
+	if(unit && keys[VK_SHIFT] && keys[VK_CONTROL]){		//circle build around building
 		UnitDef* unitdef2=unit->unitDef;
 		float3 pos2=unit->pos;
-		MakeBuildPos(pos2,unitdef2);
+		pos2=helper->Pos2BuildPos(pos2,unitdef2);
 		start=pos2;
 		end=pos2;
 		start.x-=(unitdef2->xsize/2)*SQUARE_SIZE;
@@ -1261,7 +1310,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			float3 p2=pos;
 			p2.x+=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z-=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
 		pos=start;
@@ -1270,7 +1319,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			float3 p2=pos;
 			p2.x+=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z+=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
 		pos=end;
@@ -1278,7 +1327,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			float3 p2=pos;
 			p2.x-=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z+=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
 		pos=end;
@@ -1287,17 +1336,17 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			float3 p2=pos;
 			p2.x-=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z-=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
-	} else if(keyMenu()){			//build a rectangle
-		float xsize=unitdef->xsize*8;
+	} else if(keys[VK_MENU]){			//build a rectangle
+		float xsize=unitdef->xsize*8+mouse->xButtonCounter*16;
 		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
 		int xstep=(int)xsize;
 		if(start.x>end.x)
 			xstep*=-1;
 
-		float zsize=unitdef->ysize*8;
+		float zsize=unitdef->ysize*8+mouse->xButtonCounter*16;
 		int znum=(int)((fabs(end.z-start.z)+zsize*1.4)/zsize);
 		int zstep=(int)zsize;
 		if(start.z>end.z)
@@ -1307,9 +1356,9 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		for(float z=start.z;zn<znum;++zn){
 			int xn=0;
 			for(float x=start.x;xn<xnum;++xn){
-				if(!keyCtrl() || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
+				if(!keys[VK_CONTROL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
 					float3 pos(x,0,z);
-					MakeBuildPos(pos,unitdef);
+					pos=helper->Pos2BuildPos(pos,unitdef);
 					ret.push_back(pos);
 				}
 				x+=xstep;
@@ -1318,39 +1367,30 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		}
 	} else {			//build a line
 		if(fabs(start.x-end.x)>fabs(start.z-end.z)){
-			float step=unitdef->xsize*8;
+			float step=unitdef->xsize*8+mouse->xButtonCounter*16;
 			float3 dir=end-start;
 			if(dir.x==0){
 				ret.push_back(start);
 				return ret;
 			}
 			dir/=fabs(dir.x);
-			if(keyCtrl())
+			if(keys[VK_CONTROL])
 				dir.z=0;
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
 				ret.push_back(p);
 		} else {
-			float step=unitdef->ysize*8;
+			float step=unitdef->ysize*8+mouse->xButtonCounter*16;
 			float3 dir=end-start;
 			if(dir.z==0){
 				ret.push_back(start);
 				return ret;
 			}
 			dir/=fabs(dir.z);
-			if(keyCtrl())
+			if(keys[VK_CONTROL])
 				dir.x=0;
 			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step)
 				ret.push_back(p);
 		}
 	}
 	return ret;
-}
-
-void CGuiHandler::MakeBuildPos(float3& pos,UnitDef* unitdef)
-{
-	pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
-	pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
-	pos.y=uh->GetBuildHeight(pos,unitdef);
-	if(unitdef->floater)
-		pos.y = max(pos.y,0.f);
 }

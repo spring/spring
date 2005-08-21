@@ -20,6 +20,7 @@ class IGroupAI;
 class CUnit;
 class CFeature;
 class CGroupAiCallback;
+class CGroupHandler;
 
 using namespace std;
 
@@ -27,13 +28,13 @@ class CGroup : public CObject
 {
 public:
 	void CommandFinished(int unit,int type);
-	CGroup(string dllName,int id);
+	CGroup(string dllName,int id,CGroupHandler* grouphandler);
 	virtual ~CGroup();
 
 	void Update();
 	void SetNewAI(string dllName);
 
-	void RemoveUnit(CUnit* unit);
+	void RemoveUnit(CUnit* unit);	//call setgroup(0) instead of calling this directly
 	bool AddUnit(CUnit* unit);		//dont call this directly call unit.SetGroup and let that call this
 	const vector<CommandDescription>& GetPossibleCommands();
 	int GetDefaultCmd(CUnit* unit,CFeature* feature);
@@ -54,7 +55,6 @@ public:
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;
-	IGroupAI* ai;
 #else
 #warning this file is full of garbage just to make it compile, please port
 	//FIXME AWFULL COMPILATION FIX -> port me
@@ -65,13 +65,14 @@ public:
         GETGROUPAIVERSION GetGroupAiVersion;
         GETNEWAI GetNewAI;
         RELEASEAI ReleaseAI;
-        IGroupAI* ai;								
 #endif
 	int lastCommandPage;
 	int currentAiNum;
 
+	IGroupAI* ai;
 	CGroupAiCallback* callback;
 
+	CGroupHandler* handler;
 };
 
 #endif // !defined(AFX_GROUP_H__5CCDFEDA_0AB1_425F_B8D1_5B7BC794EB93__INCLUDED_)

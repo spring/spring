@@ -38,13 +38,17 @@
 #include "Sound.h"
 #include "RadarHandler.h"
 #include "AirMoveType.h"
-#include "Aircraft.h"
 #include "Building.h"
 #include "ShadowHandler.h"
 #include "Player.h"
 //#include "mmgr.h"
 #include "LoadSaveInterface.h"
 #include "BaseWater.h"
+#include "GlobalAIHandler.h"
+#include "Feature.h"
+#include "MissileProjectile.h"
+#include "FlareProjectile.h"
+#include "MiniMap.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -145,7 +149,14 @@ CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 	curTerrainType(0),
 	relMidPos(0,0,0),
 	selfDCountdown(0),
-	useHighTrajectory(false)
+	useHighTrajectory(false),
+	deathCountdown(0),
+	delayedWreckLevel(-1),
+	paralyzeDamage(0),
+	captureProgress(0),
+	myTrack(0),
+	lastFlareDrop(0),
+	dontFire(false)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -160,6 +171,11 @@ CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 	mapSquare=ground->GetSquare(pos);
 	oldRadarPos.x=-1;
 
+	for(int a=0;a<MAX_TEAMS;++a){
+		losStatus[a]=0;
+	}
+	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+
 	posErrorVector=gs->randVector();
 	posErrorVector.y*=0.2;
 #ifdef TRACE_SYNC
@@ -170,6 +186,10 @@ CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 
 CUnit::~CUnit()
 {
+	if(delayedWreckLevel>=0){
+		featureHandler->CreateWreckage(pos,wreckName, heading, delayedWreckLevel,-1,true,unitDef->name);
+	}
+
 #ifdef TRACE_SYNC
 	tracefile << "Unit died: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
@@ -185,6 +205,13 @@ CUnit::~CUnit()
 		directControl=0;
 	}
 #endif
+
+	if(!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectating){
+		CUnitHandler::GhostBuilding gb;
+		gb.pos=pos;
+		gb.model=model;
+		uh->ghostBuildings.push_back(gb);
+	}
 
 	if(activated && unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam]*=radarhandler->targFacEffect;
@@ -213,14 +240,6 @@ CUnit::~CUnit()
 	if(radarRadius || jammerRadius || sonarRadius)
 		radarhandler->RemoveUnit(this);
 
-	if(!isDead && dynamic_cast<CBuilding*>(this)){
-		for(int z=mapPos.y; z<mapPos.y+ysize; z++){
-			for(int x=mapPos.x; x<mapPos.x+xsize; x++){
-				readmap->typemap[z*gs->mapx+x]&=127;
-			}
-		}
-	}
-
 	delete cob;
 	delete localmodel;
 }
@@ -228,13 +247,26 @@ CUnit::~CUnit()
 void CUnit::Update()
 {
 	posErrorVector+=posErrorDelta;
-	if(beingBuilt || stunned)
+
+	if(deathCountdown){
+		--deathCountdown;
+		if(!deathCountdown)
+			uh->DeleteUnit(this);
 		return;
-	restTime++;
+	}
+
+	if(beingBuilt)
+		return;
+
+	moveType->Update();
+
 	recentDamage*=0.9;
 	bonusShieldSaved+=0.005;
 
-	moveType->Update();
+	if(stunned)
+		return;
+
+	restTime++;
 
 	std::vector<CWeapon*>::iterator wi;
 	for(wi=weapons.begin();wi!=weapons.end();++wi)
@@ -253,6 +285,69 @@ void CUnit::SlowUpdate()
 		nextPosErrorUpdate=16;
 	}
 
+	for(int a=0;a<gs->activeAllyTeams;++a){
+		if(losStatus[a] & LOS_INTEAM){
+		} else if(loshandler->InLos(this,a)){
+			if(!(losStatus[a]&LOS_INLOS)){
+				if(!(losStatus[a]&LOS_INRADAR)){
+					globalAI->UnitEnteredRadar(this,a);
+				}
+				globalAI->UnitEnteredLos(this,a);
+
+				if(mobility || beingBuilt){
+					losStatus[a]|=(LOS_INLOS | LOS_INRADAR);
+				} else {
+					losStatus[a]|=(LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);	
+				}
+			}
+		} else if(radarhandler->InRadar(this,a)){
+			if((losStatus[a] & LOS_INLOS)){
+				globalAI->UnitLeftLos(this,a);
+				losStatus[a]&= ~LOS_INLOS;
+			} else if(!(losStatus[a] & LOS_INRADAR)){
+				globalAI->UnitEnteredRadar(this,a);
+				losStatus[a]|= LOS_INRADAR;
+			}
+		} else {
+			if((losStatus[a]&LOS_INRADAR)){
+				if((losStatus[a]&LOS_INLOS)){
+					globalAI->UnitLeftLos(this,a);
+					globalAI->UnitLeftRadar(this,a);
+				}else{
+					globalAI->UnitLeftRadar(this,a);
+				}
+				losStatus[a]&= ~(LOS_INLOS | LOS_INRADAR | LOS_CONTRADAR);
+			}
+		}
+	}
+	if(paralyzeDamage>0){
+		paralyzeDamage-=maxHealth*0.005;
+		if(paralyzeDamage<0)
+			paralyzeDamage=0;
+		if(paralyzeDamage<health)
+			stunned=false;
+	}
+	if(stunned){
+		isCloaked=false;
+		return;
+	}
+
+	if(selfDCountdown && !stunned){
+		selfDCountdown--;
+		if(selfDCountdown<=1){
+			if(!beingBuilt)
+				KillUnit(true,false);
+			else
+				KillUnit(false,true);	//avoid unfinished buildings making an explosion
+			selfDCountdown=0;
+			return;
+		}
+		ENTER_MIXED;
+		if(selfDCountdown&1 && team==gu->myTeam)
+			info->AddLine("%s: Self destruct in %i s",unitDef->humanName.c_str(),selfDCountdown/2);
+		ENTER_SYNCED;
+	}
+
 	if(beingBuilt){
 		if(lastNanoAdd<gs->frameNum-200){
 			health-=maxHealth/(buildTime*0.03);
@@ -263,20 +358,7 @@ void CUnit::SlowUpdate()
 		}
 		return;
 	}
-	if(selfDCountdown){
-		selfDCountdown--;
-		if(selfDCountdown<=1){
-			KillUnit(true,false);
-			selfDCountdown=0;
-			return;
-		}
-		ENTER_MIXED;
-		if(selfDCountdown&1 && team==gu->myTeam)
-			info->AddLine("%s: Self destruct in %i s",unitDef->humanName.c_str(),selfDCountdown/2);
-		ENTER_SYNCED;
-	}
-	if(stunned)
-		return;
+	//below is stuff that shouldnt be run while being built
 
 	lastSlowUpdate=gs->frameNum;
 
@@ -321,14 +403,18 @@ void CUnit::SlowUpdate()
 
 	if(health<maxHealth && restTime>600){
 		health+=10;
+		if(health>maxHealth)
+			health=maxHealth;
 	}
 
 	bonusShieldSaved+=0.05f;
 	residualImpulse*=0.6;
 
 	if(wantCloak){
-		if(helper->GetClosestEnemyUnit(pos,unitDef->decloakDistance,allyteam))
+		if(helper->GetClosestEnemyUnit(pos,unitDef->decloakDistance,allyteam)){
 			curCloakTimeout=gs->frameNum+cloakTimeout;
+			isCloaked=false;
+		}
 		if(isCloaked || gs->frameNum>=curCloakTimeout){
 			float cloakCost=unitDef->cloakCost;
 			if(speed.SqLength()>0.2)
@@ -345,9 +431,19 @@ void CUnit::SlowUpdate()
 		isCloaked=false;
 	}
 
-	if(unitDef->canKamikaze && fireState==2){
-		CUnit* u=helper->GetClosestEnemyUnit(pos,unitDef->kamikazeDist,allyteam);
-		if(u && u->speed.dot(pos - u->pos)<0)		//self destruct when unit start moving away from mine, should maximize damage
+	if(uh->waterDamage && (physicalState==CSolidObject::Floating || (physicalState==CSolidObject::OnGround && pos.y<=-3 && readmap->halfHeightmap[int((pos.z/(SQUARE_SIZE*2))*gs->hmapx+(pos.x/(SQUARE_SIZE*2)))]<-1))){
+		DoDamage(DamageArray()*uh->waterDamage,0,ZeroVector);
+	}
+
+	if(unitDef->canKamikaze){
+		if(fireState==2){
+			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam);
+			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<0)		//self destruct when unit start moving away from mine, should maximize damage
+				KillUnit(true,false);
+		}
+		if(userTarget && userTarget->pos.distance(pos)<unitDef->kamikazeDist)
+			KillUnit(true,false);
+		if(userAttackGround && userAttackPos.distance(pos)<unitDef->kamikazeDist)
 			KillUnit(true,false);
 	}
 
@@ -369,17 +465,19 @@ void CUnit::SlowUpdate()
 			}
 		}
 
-		for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi){
-			CWeapon* w=*wi;
-			if(userTarget && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-				w->AttackUnit(userTarget,true);
-			else if(userAttackGround && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-				w->AttackGround(userAttackPos,true);
-			
-			w->SlowUpdate();
+		if(!dontFire){
+			for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi){
+				CWeapon* w=*wi;
+				if(userTarget && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
+					w->AttackUnit(userTarget,true);
+				else if(userAttackGround && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
+					w->AttackGround(userAttackPos,true);
+				
+				w->SlowUpdate();
 
-			if(w->targetType==Target_None && fireState>0 && lastAttacker && lastAttack+200>gs->frameNum)
-				w->AttackUnit(lastAttacker,false);
+				if(w->targetType==Target_None && fireState>0 && lastAttacker && lastAttack+200>gs->frameNum)
+					w->AttackUnit(lastAttacker,false);
+			}
 		}
 	}
 
@@ -404,7 +502,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		bonusShieldDir.Normalize();
 //		info->AddLine("shield mult %f %f %i %i", 2-adir.dot(bonusShieldDir),bonusShieldSaved,id,attacker->id);
 		bonusShieldSaved=0;
-		damage*=1.5-adir.dot(bonusShieldDir)*0.5;
+		damage*=1.4-adir.dot(bonusShieldDir)*0.5;
 	}
 	float3 hitDir = impulse;
 	hitDir.y = 0;
@@ -416,8 +514,20 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	damage*=curArmorMultiple;
 
+	globalAI->UnitDamaged(this,attacker,damage);
+
 	restTime=0;
-	health-=damage;
+
+	if(damages.paralyzeDamage){
+		paralyzeDamage+=damage;
+		if(health-paralyzeDamage<0){
+			stunned=true;
+			if(health-paralyzeDamage<-maxHealth*0.1)
+				paralyzeDamage=health+maxHealth*0.1;
+		}
+	} else {
+		health-=damage;
+	}
 	recentDamage+=damage;
 	if(health<=0){
 		KillUnit(false,false);
@@ -432,10 +542,16 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		attacker->experience+=0.1*power/attacker->power*damage/maxHealth;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
-		if(uh->lastDamageWarning+100<gs->frameNum && team==gu->myTeam && !camera->InView(midPos,radius+50)){
+		if((uh->lastDamageWarning+100<gs->frameNum || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))&& team==gu->myTeam && !camera->InView(midPos,radius+50)){
 			info->AddLine("%s is being attacked",unitDef->humanName.c_str());
 			info->SetLastMsgPos(pos);
+			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
+				sound->PlaySound(unitDef->sounds.underattack.id,unitDef->isCommander?1:0.4);
+			minimap->AddNotification(pos,float3(1,0.3,0.3),unitDef->isCommander?1:0.5);	//todo: make compatible with new gui
+			
 			uh->lastDamageWarning=gs->frameNum;
+			if(unitDef->isCommander)
+				uh->lastCmdDamageWarning=gs->frameNum;
 		}
 		ENTER_SYNCED;
 	}
@@ -567,6 +683,10 @@ void CUnit::Draw()
 
 void CUnit::DrawStats()
 {
+	if(gu->myAllyTeam!=allyteam && !gu->spectating && unitDef->hideDamage){
+		return;
+	}
+
 	float3 interPos=pos+speed*gu->timeOffset;
 	interPos.y+=model->height+5;
 
@@ -582,11 +702,14 @@ void CUnit::DrawStats()
 	glVertexf3(interPos+(camera->up*4+camera->right*5));
 	glVertexf3(interPos+(camera->up*4-camera->right*end));
 
-	if(hpp>0.5f)
-		glColor3f(1.0f-((hpp-0.5f)*2.0f),1.0f,0.0);
-	else
-		glColor3f(1.0f,hpp*2.0f,0.0);
-
+	if(stunned){
+		glColor3f(0,0,1.0);
+	} else {
+		if(hpp>0.5f)
+			glColor3f(1.0f-((hpp-0.5f)*2.0f),1.0f,0.0);
+		else
+			glColor3f(1.0f,hpp*2.0f,0.0);
+	}
 	//healthbar
 	glVertexf3(interPos+(camera->up*6-camera->right*5));
 	glVertexf3(interPos+(camera->up*6-camera->right*end));
@@ -645,11 +768,11 @@ void CUnit::ExperienceChange()
 	logExperience=log(experience+1);
 	limExperience=1-(1/(experience+1));
 
-	power=unitDef->power*(1+logExperience);
+	power=unitDef->power*(1+limExperience);
 	reloadSpeed=(1+limExperience*0.7);	
 
 	float oldMaxHealth=maxHealth;
-	maxHealth=unitDef->health*(1+logExperience*0.7);
+	maxHealth=unitDef->health*(1+limExperience*0.7);
 	health+=(maxHealth-oldMaxHealth)*(health/oldMaxHealth);
 }
 
@@ -668,6 +791,7 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 	quads.clear();
 	loshandler->FreeInstance(los);
 	los=0;
+	losStatus[allyteam]=0;
 	if(radarRadius || jammerRadius || sonarRadius)
 		radarhandler->RemoveUnit(this);
 
@@ -693,6 +817,7 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 	allyteam=gs->team2allyteam[team];
 
 	loshandler->MoveUnit(this,false);
+	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 	qf->MovedUnit(this);
 	if(radarRadius || jammerRadius || sonarRadius)
 		radarhandler->MoveUnit(this);
@@ -717,10 +842,12 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 	userAttackGround=false;
 	SetUserTarget(unit);
 	std::vector<CWeapon*>::iterator wi;
-	for(wi=weapons.begin();wi!=weapons.end();++wi)
+	for(wi=weapons.begin();wi!=weapons.end();++wi){
+		(*wi)->haveUserTarget=false;
 		if(dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
 			if((*wi)->AttackUnit(unit,true))
 				r=true;
+	}
 	return r;
 }
 
@@ -732,10 +859,12 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 	userAttackPos=pos;
 	userAttackGround=true;
 	std::vector<CWeapon*>::iterator wi;
-	for(wi=weapons.begin();wi!=weapons.end();++wi)
+	for(wi=weapons.begin();wi!=weapons.end();++wi){
+		(*wi)->haveUserTarget=false;
 		if(dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
 			if((*wi)->AttackGround(pos,true))
 				r=true;
+	}
 	return r;
 }
 
@@ -758,6 +887,10 @@ void CUnit::DependentDied(CObject* o)
 	}
 	if(o==userTarget)
 		userTarget=0;
+
+	incomingMissiles.remove((CMissileProjectile*)o);
+
+	CSolidObject::DependentDied(o);
 }
 
 void CUnit::SetUserTarget(CUnit* target)
@@ -766,6 +899,9 @@ void CUnit::SetUserTarget(CUnit* target)
 		DeleteDeathDependence(userTarget);
 
 	userTarget=target;
+	for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi)
+		(*wi)->haveUserTarget=false;
+
 	if(target){
 		AddDeathDependence(target);
 	}
@@ -781,7 +917,9 @@ void CUnit::Init(void)
 
 	//All ships starts on water, all other on ground.
 	//TODO: Improve this. There might be cases when this is not correct.
-	if(unitDef->movedata && unitDef->movedata->moveType == MoveData::Ship_Move) {
+	if(unitDef->movedata && unitDef->movedata->moveType==MoveData::Hover_Move){
+		physicalState = Hovering;		
+	} else if(floatOnWater) {
 		physicalState = Floating;
 	} else {
 		physicalState = OnGround;
@@ -794,20 +932,14 @@ void CUnit::Init(void)
 		info->AddLine("Unit %s is really cheap? %f",unitDef->humanName.c_str(),power);
 		power=10;
 	}
-//	if(pos.y+model->height<0)	//NOTE: Should not be needed.
-//		isUnderWater=true;
+	if(pos.y+model->height<0)
+		isUnderWater=true;
 
 	Block();
 
-	if(dynamic_cast<CBuilding*>(this)){
-		for(int z=mapPos.y; z<mapPos.y+ysize; z++){
-			for(int x=mapPos.x; x<mapPos.x+xsize; x++){
-				readmap->typemap[z*gs->mapx+x]|=128;
-			}
-		}
-	}
-
 	UpdateTerrainType();
+
+	globalAI->UnitCreated(this);
 }
 
 void CUnit::UpdateTerrainType()
@@ -849,7 +981,7 @@ void CUnit::CalculateTerrainType()
 	}
 }
 
-void CUnit::SetGroup(CGroup* newGroup)
+bool CUnit::SetGroup(CGroup* newGroup)
 {
 	if(group!=0){
 		group->RemoveUnit(this);
@@ -857,9 +989,12 @@ void CUnit::SetGroup(CGroup* newGroup)
 	group=newGroup;
 
 	if(group){
-		if(!group->AddUnit(this))
+		if(!group->AddUnit(this)){
 			group=0;									//group ai didnt accept us
+			return false;
+		}
 	}
+	return true;
 }
 
 bool CUnit::AddBuildPower(float amount,CUnit* builder)
@@ -875,8 +1010,6 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 			float metalUse=metalCost*part;
 			float energyUse=energyCost*part;
 			if(gs->teams[builder->team]->metal>metalUse && gs->teams[builder->team]->energy>energyUse){
-				//gs->teams[builder->team]->UseMetal(metalUse);
-				//gs->teams[builder->team]->UseEnergy(energyUse);
 				builder->UseMetal(metalUse);
 				builder->UseEnergy(energyUse);
 				health+=maxHealth*part;
@@ -892,6 +1025,8 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 		}	else {
 			if(health<maxHealth){
 				health+=maxHealth*part;
+				if(health>maxHealth)
+					health=maxHealth;
 				return true;
 			}
 			return false;
@@ -921,10 +1056,6 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 	return false;
 }
 
-/*void CUnit::SetGoal(float3 pos)
-{
-
-}*/
 void CUnit::FinishedBuilding(void)
 {
 	beingBuilt=false;
@@ -945,7 +1076,7 @@ void CUnit::FinishedBuilding(void)
 		{
 			cob->Call(COBFN_SetSpeed, (long)(wind.curStrength*3000.0f));
 		}
-		cob->Call(COBFN_SetDirection, (long)GetHeadingFromVector(wind.curDir.x, wind.curDir.z));
+		cob->Call(COBFN_SetDirection, (long)GetHeadingFromVector(-wind.curDir.x, -wind.curDir.z));
 	}
 
 	if(unitDef->activateWhenBuilt)
@@ -959,9 +1090,14 @@ void CUnit::FinishedBuilding(void)
 	//Sets the frontdir in sync with heading.
 	frontdir = GetVectorFromHeading(heading) + float3(0,frontdir.y,0);
 
+	globalAI->UnitFinished(this);
+
 	if(unitDef->isFeature){
 		UnBlock();
-		featureHandler->CreateWreckage(pos,wreckName, heading, 0,allyteam,false);
+		CFeature* f=featureHandler->CreateWreckage(pos,wreckName, heading, 0,allyteam,false,"");
+		if(f){
+			f->blockHeightChanges=true;
+		}
 		KillUnit(false,true);
 	}
 }
@@ -979,13 +1115,11 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed)
 	}
 	isDead=true;
 
-	if(dynamic_cast<CBuilding*>(this)){
-		for(int z=mapPos.y; z<mapPos.y+ysize; z++){
-			for(int x=mapPos.x; x<mapPos.x+xsize; x++){
-				readmap->typemap[z*gs->mapx+x]&=127;
-			}
-		}
-	}
+	globalAI->UnitDestroyed(this);
+
+	blockHeightChanges=false;
+	if(unitDef->isCommander)
+		gs->teams[team]->CommanderDied(this);
 
 	if(!reclaimed && !beingBuilt){
 		string exp;
@@ -997,7 +1131,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed)
 		if(!exp.empty()){
 			WeaponDef* wd=weaponDefHandler->GetWeapon(exp);
 			if(wd){
-				helper->Explosion(pos,wd->damages,wd->areaOfEffect,this);
+				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,this,true,wd->damages[0]>500?1:2);
 
 				// Play explosion sound
 				CWeaponDefHandler::LoadSound(wd->soundhit);
@@ -1017,9 +1151,19 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed)
 		cob->Call(COBFN_Killed, args);
 
 		UnBlock();
-		featureHandler->CreateWreckage(pos,wreckName, heading, args[1],-1,true);
+		delayedWreckLevel=args[1];
+//		featureHandler->CreateWreckage(pos,wreckName, heading, args[1],-1,true);
 	}
-	uh->DeleteUnit(this);
+	if(beingBuilt || dynamic_cast<CAirMoveType*>(moveType) || reclaimed)
+		uh->DeleteUnit(this);
+	else{
+		speed=ZeroVector;
+		deathCountdown=5;
+		stunned=true;
+		paralyzeDamage=1000000;
+		if(health<0)
+			health=0;
+	}
 }
 
 bool CUnit::UseMetal(float metal)
@@ -1028,20 +1172,9 @@ bool CUnit::UseMetal(float metal)
 		AddMetal(-metal);
 		return true;
 	}
-/*#ifdef TRACE_SYNC
-	if(metal!=0){
-		tracefile << "Use metal unit: ";
-		tracefile << id << " " << metal << " " << unitDef->humanName.c_str() << " " << (float)gs->teams[team]->metal << " ";
-	}
-#endif*/
 	bool canUse=gs->teams[team]->UseMetal(metal);
 	if(canUse)
 		metalUseI += metal;
-/*#ifdef TRACE_SYNC
-	if(metal!=0){
-		tracefile << (float)gs->teams[team]->metal << "\n";
-	}
-#endif*/
 	return canUse;
 }
 
@@ -1051,20 +1184,8 @@ void CUnit::AddMetal(float metal)
 		UseMetal(-metal);
 		return;
 	}
-/*#ifdef TRACE_SYNC
-	if(metal!=0){
-		tracefile << "Add metal unit: ";
-		tracefile << id << " " << metal << " " << unitDef->humanName.c_str() << " " << (float)gs->teams[team]->metal << " ";
-	}
-#endif
-*/
 	metalMakeI += metal;
 	gs->teams[team]->AddMetal(metal);
-/*#ifdef TRACE_SYNC
-	if(metal!=0){
-		tracefile << (float)gs->teams[team]->metal << "\n";
-	}
-#endif*/
 }
 
 bool CUnit::UseEnergy(float energy)
@@ -1096,9 +1217,9 @@ void CUnit::Activate()
 
 	if(activated)
 		return;
+	activated = true;
 
 	cob->Call(COBFN_Activate);
-	activated = true;
 
 	if(unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam]/=radarhandler->targFacEffect;
@@ -1114,9 +1235,9 @@ void CUnit::Deactivate()
 {
 	if(!activated)
 		return;
+	activated = false;
 
 	cob->Call(COBFN_Deactivate);
-	activated = false;
 
 	if(unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam]*=radarhandler->targFacEffect;
@@ -1132,14 +1253,14 @@ void CUnit::PushWind(float x, float z, float strength)
 {
 	if(strength > unitDef->windGenerator)
 	{
-		cob->Call(COBFN_SetSpeed, (long)(unitDef->windGenerator));
+		cob->Call(COBFN_SetSpeed, (long)(unitDef->windGenerator*3000.0f));
 	}
 	else
 	{
 		cob->Call(COBFN_SetSpeed, (long)(strength*3000.0f));
 	}
 
-	cob->Call(COBFN_SetDirection, (long)GetHeadingFromVector(x, z));
+	cob->Call(COBFN_SetDirection, (long)GetHeadingFromVector(-x, -z));
 }
 
 void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
@@ -1155,5 +1276,29 @@ void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
 	file->lsBool(isCloaked);
 	file->lsBool(wantCloak);
 	commandAI->LoadSave(file,loading);
+}
+
+void CUnit::IncomingMissile(CMissileProjectile* missile)
+{
+	if(unitDef->canDropFlare){
+		incomingMissiles.push_back(missile);
+		AddDeathDependence(missile);
+
+		if(lastFlareDrop < gs->frameNum - unitDef->flareReloadTime*30){
+			new CFlareProjectile(pos,speed,this,(int)(gs->frameNum+unitDef->flareDelay*(1+gs->randFloat())*15));
+			lastFlareDrop=gs->frameNum;
+		}
+	}
+}
+
+void CUnit::TempHoldFire(void)
+{
+	dontFire=true;
+	AttackUnit(0,true);
+}
+
+void CUnit::ReleaseTempHoldFire(void)
+{
+	dontFire=false;
 }
 

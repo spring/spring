@@ -42,8 +42,8 @@ void CTransportUnit::DependentDied(CObject* o)
 {
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
 		if(ti->unit==o){
+			transportCapacityUsed-=ti->size;
 			transported.erase(ti);
-			transportCapacityUsed-=ti->unit->xsize/2;
 			break;
 		}
 	}
@@ -69,14 +69,16 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		return;
 	AddDeathDependence(unit);
 	unit->inTransport=true;
+	unit->stunned=true;	//make sure unit doesnt fire etc in transport
 	unit->UnBlock();
 	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
 		unit->moveType->useHeading=false;	
 	TransportedUnit tu;
 	tu.unit=unit;
 	tu.piece=piece;
+	tu.size=unit->xsize/2;
+	transportCapacityUsed+=tu.size;
 	transported.push_back(tu);
-	transportCapacityUsed+=unit->xsize/2;
 }
 
 void CTransportUnit::DetachUnit(CUnit* unit)
@@ -93,10 +95,12 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			Command c;
 			c.id=CMD_STOP;
 			c.options=0;
+			unit->stunned=false;
 			unit->commandAI->GiveCommand(c);
 			unit->Block();
+			unit->moveType->LeaveTransport();
+			transportCapacityUsed-=ti->size;
 			transported.erase(ti);
-			transportCapacityUsed-=unit->xsize/2;
 			break;
 		}
 	}

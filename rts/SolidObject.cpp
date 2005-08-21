@@ -13,6 +13,7 @@ CSolidObject::CSolidObject(const float3& pos)
 : CWorldObject(pos),
 	mass(100000),
 	blocking(false),
+	blockHeightChanges(false),
 	floatOnWater(false),
 	xsize(1),
 	ysize(1),
@@ -37,10 +38,11 @@ CSolidObject::CSolidObject(const float3& pos)
 	isMarkedOnBlockingMap(false),
 
 	speed(0,0,0),
-	isUnderWater(0)
+	isUnderWater(false)
 {
-	mapPos.x=0;
-	mapPos.y=0;
+	mapPos=GetMapPos();
+//	mapPos.x=0;
+//	mapPos.y=0;
 }
 
 

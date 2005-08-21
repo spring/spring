@@ -44,10 +44,10 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 {
 	possibleCommandsChanged=false;
 
-	if(selectedGroup!=-1 && grouphandler->armies[selectedGroup]->ai){
+	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
 		AvailableCommandsStruct ac;
-		ac.commandPage=grouphandler->armies[selectedGroup]->lastCommandPage;
-		ac.commands=grouphandler->armies[selectedGroup]->GetPossibleCommands();
+		ac.commandPage=grouphandler->groups[selectedGroup]->lastCommandPage;
+		ac.commands=grouphandler->groups[selectedGroup]->GetPossibleCommands();
 
 		CommandDescription c;			//make sure we can clear the group even when selected
 		c.id=CMD_GROUPCLEAR;
@@ -138,7 +138,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		commands.push_back(c);
 	}
 
-	if(foundGroup2!=-2){				//remove all selected units from any armies they belong to
+	if(foundGroup2!=-2){				//remove all selected units from any groups they belong to
 		CommandDescription c;
 
 		c.id=CMD_GROUPCLEAR;
@@ -159,13 +159,13 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 {
 //	info->AddLine("Command given %i",c.id);
-	if(gu->spectating)
+	if(gu->spectating || selectedUnits.empty())
 		return;
 
 	if(fromUser){		//add some statistics
 		gs->players[gu->myPlayerNum]->currentStats->numCommands++;
 		if(selectedGroup!=-1){
-			gs->players[gu->myPlayerNum]->currentStats->unitCommands+=grouphandler->armies[selectedGroup]->units.size();
+			gs->players[gu->myPlayerNum]->currentStats->unitCommands+=grouphandler->groups[selectedGroup]->units.size();
 		} else {
 			gs->players[gu->myPlayerNum]->currentStats->unitCommands+=selectedUnits.size();
 		}
@@ -179,8 +179,8 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 		return;
 	}
 
-	if(selectedGroup!=-1 && (grouphandler->armies[selectedGroup]->ai || c.id==CMD_AISELECT)){
-		grouphandler->armies[selectedGroup]->GiveCommand(c);
+	if(selectedGroup!=-1 && (grouphandler->groups[selectedGroup]->ai || c.id==CMD_AISELECT)){
+		grouphandler->groups[selectedGroup]->GiveCommand(c);
 		return;
 	}
 
@@ -280,7 +280,7 @@ void CSelectedUnits::SelectGroup(int num)
 {
 	ClearSelected();
 	selectedGroup=num;
-	CGroup* group=grouphandler->armies[num];
+	CGroup* group=grouphandler->groups[num];
 
 	set<CUnit*>::iterator ui;
 	ENTER_MIXED;
@@ -305,7 +305,7 @@ void CSelectedUnits::Draw()
 	set<CUnit*>::iterator ui;
 	glBegin(GL_QUADS);
 	if(selectedGroup!=-1){
-		for(ui=grouphandler->armies[selectedGroup]->units.begin();ui!=grouphandler->armies[selectedGroup]->units.end();++ui){
+		for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
 			float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
 			glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
 			glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
@@ -378,8 +378,8 @@ bool CSelectedUnits::CommandsChanged()
 
 int CSelectedUnits::GetDefaultCmd(CUnit *unit,CFeature* feature)
 {
-	if(selectedGroup!=-1 && grouphandler->armies[selectedGroup]->ai){
-		return grouphandler->armies[selectedGroup]->GetDefaultCmd(unit,feature);
+	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
+		return grouphandler->groups[selectedGroup]->GetDefaultCmd(unit,feature);
 	}
 	int cmd=CMD_STOP;
 	int lowestHint=10000;//find better way to decide
@@ -412,9 +412,10 @@ void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 void CSelectedUnits::DrawCommands(void)
 {
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
 	set<CUnit*>::iterator ui;
 	if(selectedGroup!=-1){
-		for(ui=grouphandler->armies[selectedGroup]->units.begin();ui!=grouphandler->armies[selectedGroup]->units.end();++ui){
+		for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
 			(*ui)->commandAI->DrawCommands();
 		}
 	} else {
@@ -422,12 +423,13 @@ void CSelectedUnits::DrawCommands(void)
 			(*ui)->commandAI->DrawCommands();
 		}
 	}
+	glEnable(GL_DEPTH_TEST);
 }
 
 std::string CSelectedUnits::GetTooltip(void)
 {
 	std::string s;
-	if(selectedGroup!=-1 && grouphandler->armies[selectedGroup]->ai){
+	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
 		s="Group selected";
 	} else if(!selectedUnits.empty()){
 		s=(*selectedUnits.begin())->tooltip;
@@ -459,8 +461,8 @@ std::string CSelectedUnits::GetTooltip(void)
 
 void CSelectedUnits::SetCommandPage(int page)
 {
-	if(selectedGroup!=-1 && grouphandler->armies[selectedGroup]->ai){
-		grouphandler->armies[selectedGroup]->lastCommandPage=page;
+	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
+		grouphandler->groups[selectedGroup]->lastCommandPage=page;
 	}
 	if(!selectedUnits.empty())
 		(*selectedUnits.begin())->commandAI->lastSelectedCommandPage=page;

@@ -52,6 +52,7 @@ public:
 	vector<long> staticVars;
 	list<CCobThread *> threads;
 	vector<struct PieceInfo> pieces;	
+	bool smoothAnim;
 public:
 	CCobInstance(CCobFile &script, CUnit *unit);
 	~CCobInstance(void);

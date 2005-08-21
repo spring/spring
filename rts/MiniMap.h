@@ -51,6 +51,18 @@ public:
 	void FakeMousePress(float3 pos, int button);
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
+
+	void AddNotification(float3 pos, float3 color, float alpha);
+
+	struct Notification {
+		double creationTime;
+		float3 pos;
+		float3 color;
+		float alpha;
+	};
+
+	std::list<Notification> notes;
+	void DrawNotes(void);
 };
 extern CMiniMap* minimap;
 

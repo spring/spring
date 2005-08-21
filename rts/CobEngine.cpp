@@ -35,8 +35,10 @@ CCobEngine::~CCobEngine(void)
 		delete *i;
 	}
 	while (sleeping.size() > 0) {
-		delete sleeping.top();
+		CCobThread *tmp;
+		tmp = sleeping.top();
 		sleeping.pop();
+		delete tmp;
 	}
 
 	//Free all cobfiles
@@ -63,11 +65,31 @@ void CCobEngine::AddThread(CCobThread *thread)
 
 void CCobEngine::AddInstance(CCobInstance *instance)
 {
+	// Error checking
+/*	int found = 0;
+	for (list<CCobInstance *>::iterator i = animating.begin(); i != animating.end(); ++i) {
+		if (*i == instance)
+			found++;		
+	}
+
+	if (found > 0)
+		info->AddLine("Warning: Addinstance already found %d", found); */
+
 	animating.push_front(instance);
 }
 
 void CCobEngine::RemoveInstance(CCobInstance *instance)
 {
+	// Error checking
+/*	int found = 0;
+	for (list<CCobInstance *>::iterator i = animating.begin(); i != animating.end(); ++i) {
+		if (*i == instance)
+			found++;
+	} 
+
+	if (found > 1)
+		info->AddLine("Warning: Removeinstance found duplicates %d", found); */
+
 	//This is slow. would be better if instance was a hashlist perhaps
 	animating.remove(instance);
 }
@@ -111,6 +133,10 @@ START_TIME_PROFILE
 	if (sleeping.size() > 0) {
 		CCobThread *cur = sleeping.top();
 		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {	
+
+			// Start with removing the executing thread from the queue
+			sleeping.pop();
+
 			//Run forward again. This can quite possibly readd the thread to the sleeping array again
 			//But it will not interfere since it is guaranteed to sleep > 0 ms
 			//info->AddLine("Now 2running %d: %s", GCurrentTime, cur->GetName().c_str());
@@ -128,7 +154,6 @@ START_TIME_PROFILE
 			} else {
 				info->AddLine("CobError: Sleeping thread strange state %d", cur->state);
 			}
-			sleeping.pop();
 			if (sleeping.size() > 0) 
 				cur = sleeping.top();
 			else

@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include "command.h"
+#include "float3.h"
 
 class CSunParser;
 class GUIframe;
@@ -71,6 +72,15 @@ public:
 	
 	Command GetOrderPreview();
 
+	void AddText(const char* fmt, ...);
+	void AddText(const std::string& text);
+	void SetLastMsgPos(float3 pos);
+	float3 lastMsgPos;
+	GUIcontroller& GUIcontroller::operator<< (const char* c);
+	GUIcontroller& GUIcontroller::operator<< (int i);
+	GUIcontroller& GUIcontroller::operator<< (float f);
+
+
 protected:
 	void ButtonPressed(GUIbutton* b);
 	void StateChanged(GUIstateButton*, int);
@@ -85,6 +95,7 @@ protected:
 	virtual bool EventAction(const std::string& event);
 	
 	GUIconsole *console;
+	std::string tempstring;
 };
 
 extern GUIcontroller* guicontroller;

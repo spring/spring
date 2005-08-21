@@ -43,6 +43,8 @@ protected:
 		int dest;
 	};
 	vector<DelayedAnim> delayedAnims;
+
+	inline int POP(void);
 public:
 	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
 	State state;
@@ -59,6 +61,7 @@ public:
 	const string &GetName();
 	int GetWakeTime() const;
 	void ForceCommitAnim(int type, int piece, int axis);
+	void ForceCommitAllAnims();
 	void CommitAnims(int deltaTime);
 };
 

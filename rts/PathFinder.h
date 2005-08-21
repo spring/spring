@@ -56,14 +56,15 @@ public:
 			The maximum number of nodes/squares the search are allowed to analyze.
 			This restriction could be used in cases where CPU-consumption are critical.
 	*/
-	SearchResult GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, unsigned int moveMathOpt = (CMoveMath::CHECK_STRUCTURES | CMoveMath::CHECK_MOBILE), bool exactPath = false, unsigned int maxSearchedNodes = 10000);
+	SearchResult GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, bool testMobile, bool exactPath = false, unsigned int maxSearchedNodes = 10000,bool needPath=true);
 
+	SearchResult GetPath(const MoveData& moveData, std::vector<float3> startPos, const CPathFinderDef& pfDef, Path& path);
 	
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION = 2*SQUARE_SIZE;
 
 private:  
-	static const unsigned int MAX_SEARCHED_SQARES = 10000;
+	const static unsigned int MAX_SEARCHED_SQARES = 10000;
 
 	class OpenSquare {
 	public:
@@ -86,17 +87,44 @@ private:
 		unsigned int status;
 		float cost;
 	};
+	class myVector{
+	public:
+		typedef OpenSquare* value_type;
+		typedef int size_type;
+		typedef OpenSquare* reference;
+		typedef const OpenSquare* const_reference;
 
+		int bufPos;
+		OpenSquare* buf[MAX_SEARCHED_SQARES];
+
+		myVector() {bufPos=-1;}
+
+		inline void push_back(OpenSquare* os)			{buf[++bufPos]=os;}
+		inline void pop_back()										{--bufPos;}
+		inline OpenSquare* back() const						{return buf[bufPos];}
+		inline const value_type& front() const		{return buf[0];}
+		inline value_type& front()								{return buf[0];}
+		inline bool empty() const									{return (bufPos<0);}
+		inline size_type size()										{return bufPos+1;}
+		inline OpenSquare** begin()								{return &buf[0];}
+		inline OpenSquare** end()									{return &buf[bufPos+1];}
+		inline void clear()												{bufPos=-1;}
+	};
+
+  class myPQ : public std::priority_queue<OpenSquare*,myVector,lessCost>{
+	public:
+		void DeleteAll();
+  };
 	void ResetSearch();
 	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef);
 	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef);
-	void TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection);
+	bool TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection);
 	void FinishSearch(const MoveData& moveData, Path& path);
 
 	unsigned int maxNodesToBeSearched;
 	OpenSquare openSquareBuffer[MAX_SEARCHED_SQARES];
 	OpenSquare *openSquareBufferPointer;
-	priority_queue<OpenSquare*, vector<OpenSquare*>, lessCost> openSquares;
+	myPQ openSquares;
 
 	SquareState* squareState;		//Map of all squares on map.
 	list<int> dirtySquares;			//Squares tested by search.
@@ -112,45 +140,40 @@ private:
 	float goalHeuristic;			//The heuristic value of goalSquare.
 
 	bool exactPath;
-	unsigned int blockOpt;			//Used in calls of MoveMath::IsBlocked().
+	bool testMobile;
+	bool needPath;
 
 	//Statistic
 	unsigned int testedNodes;
+public:
+	void Draw(void);
 };
 
-
-/*
-While CPathFinder are a generic searcher, CPathFinderDef are used to define the
-actual goal and restrictions of the search. CPathFinderDef itself are abstract
-and need to be inherited.
-*/
 class CPathFinderDef {
 public:
-	virtual bool IsGoal(int xSquare, int zSquare) const = 0;
-	virtual float Heuristic(int xSquare, int zSquare) const = 0;	//Number of mapsquares to goal.
-	virtual bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const = 0;
-	virtual bool WithinConstraints(int xSquare, int zSquare) const = 0;
-	virtual void Draw() const = 0;
+	CPathFinderDef(float3 goalCenter, float goalRadius);
+	bool IsGoal(int xSquare, int zSquare) const;
+	float Heuristic(int xSquare, int zSquare) const;
+	bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
+	virtual bool WithinConstraints(int xSquare, int Square) const {return true;}
+	void Draw() const;
+	int2 GoalSquareOffset(int blockSize) const;
+
+	float3 goal;
+	float sqGoalRadius;
+	int goalSquareX;
+	int goalSquareZ;
 };
 
-
-/*
-CRangedGoalPFD are using a circular area defining the goal of the search.
-With a heuristic pointing to the center of this area.
-Note: A singularity-goal could be created by setting goalRadius = 0.
-*/
-class CRangedGoalPFD : public CPathFinderDef {
+class CRangedGoalWithCircularConstraint : public CPathFinderDef {
 public:
-	CRangedGoalPFD(float3 goalCenter, float goalRadius);
-	virtual bool IsGoal(int xSquare, int zSquare) const;
-	virtual float Heuristic(int xSquare, int zSquare) const;
-	virtual bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
-	virtual bool WithinConstraints(int xSquare, int Square) const {return true;}
-	virtual void Draw() const;
+	CRangedGoalWithCircularConstraint(float3 start, float3 goal, float goalRadius,float searchSize,int extraSize);
+	virtual bool WithinConstraints(int xSquare, int zSquare) const;
 
-protected:
-	float3 goal;
-	float goalRadius;
+private:
+	int halfWayX;
+	int halfWayZ;
+	int searchRadiusSq;
 };
 
 

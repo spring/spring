@@ -65,8 +65,8 @@ float3 CFPSController::GetPos()
 		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
 	if(pos.y<ground->GetHeight(pos.x,pos.z)+5)
 		pos.y=ground->GetHeight(pos.x,pos.z)+5;
-	if(pos.y>2500)
-		pos.y=2500;
+	if(pos.y>3000)
+		pos.y=3000;
 
 	oldHeight=pos.y-ground->GetHeight(pos.x,pos.z);
 	return pos;
@@ -145,8 +145,8 @@ float3 COverheadController::GetPos()
 		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
 	if(height<60)
 		height=60;
-	if(height>2500)
-		height=2500;
+	if(height>3000)
+		height=3000;
 
 	pos.y=ground->GetHeight(pos.x,pos.z);
 	
@@ -276,5 +276,98 @@ float3 CTWController::SwitchFrom()
 void CTWController::SwitchTo()
 {
 	info->AddLine("Switching to Total War style camera");
+}
+
+/////////////////////
+//Rotating Overhead Controller
+/////////////////////
+
+CRotOverheadController::CRotOverheadController()
+: pos(2000,70,1800),
+	oldHeight(500)
+{
+
+}
+
+void CRotOverheadController::KeyMove(float3 move)
+{
+	move*=sqrt(move.z)*400;
+
+	float3 flatForward=camera->forward;
+	if(camera->forward.y<-0.9)
+		flatForward+=camera->up;
+	flatForward.y=0;
+	flatForward.Normalize();
+
+	pos+=flatForward*move.y+camera->right*move.x;
+}
+
+void CRotOverheadController::MouseMove(float3 move)
+{
+	camera->rot.y -= 0.01*move.x;
+	camera->rot.x -= 0.01*move.y*move.z;  
+
+	if(camera->rot.x>PI*0.4999)
+		camera->rot.x=PI*0.4999;
+	if(camera->rot.x<-PI*0.4999)
+		camera->rot.x=-PI*0.4999;
+}
+
+void CRotOverheadController::ScreenEdgeMove(float3 move)
+{
+	KeyMove(move);
+}
+
+void CRotOverheadController::MouseWheelMove(float move)
+{
+	float gheight=ground->GetHeight(pos.x,pos.z);
+	float height=pos.y-gheight;
+	height*=1+move*0.001;
+	pos.y=height+gheight;
+}
+
+float3 CRotOverheadController::GetPos()
+{
+	if(pos.x<0.01f)
+		pos.x=0.01f;
+	if(pos.z<0.01f)
+		pos.z=0.01f;
+	if(pos.x>(gs->mapx)*SQUARE_SIZE-0.01f)
+		pos.x=(gs->mapx)*SQUARE_SIZE-0.01f;
+	if(pos.z>(gs->mapy)*SQUARE_SIZE-0.01f)
+		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
+	if(pos.y<ground->GetHeight(pos.x,pos.z)+5)
+		pos.y=ground->GetHeight(pos.x,pos.z)+5;
+	if(pos.y>3000)
+		pos.y=3000;
+
+	oldHeight=pos.y-ground->GetHeight(pos.x,pos.z);
+
+	return pos;
+}
+
+float3 CRotOverheadController::GetDir()
+{
+	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
+	dir.y=(float)(sin(camera->rot.x));
+	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
+	dir.Normalize();
+	return dir;
+}
+
+void CRotOverheadController::SetPos(float3 newPos)
+{
+	pos=newPos;
+	pos.y=ground->GetHeight(pos.x,pos.z)+oldHeight;
+}
+
+float3 CRotOverheadController::SwitchFrom()
+{
+	return pos;
+}
+
+void CRotOverheadController::SwitchTo()
+{
+	info->AddLine("Switching to rotatable overhead camera");
 }
 

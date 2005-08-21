@@ -56,7 +56,6 @@ public:
 	int leastQue;
 
 	int lastTick;
-	int lastLength;
 	float timeLeft;
 	float consumeSpeed;
 	int chatSound;
@@ -69,6 +68,8 @@ public:
 	bool hideInterface;
 	bool gameOver;
 	bool showClock;
+	bool showPlayerInfo;
+	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
 
 	LARGE_INTEGER lastModGameTimeMeasure;
 
@@ -76,6 +77,10 @@ public:
 	LARGE_INTEGER lastframe;
 	LARGE_INTEGER timeSpeed;
 	double totalGameTime;			//time in seconds, stops at game end
+
+	float maxUserSpeed;
+	float minUserSpeed;
+	bool gamePausable;
 
 	CGuiKeyReader* guikeys;
 	CScript* script;

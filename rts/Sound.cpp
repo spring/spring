@@ -218,7 +218,7 @@ int CSound::GetBuf(int id,float volume)
 #endif
 
 #ifdef USE_DSOUND
-void CSound::PlaySound(int id)
+void CSound::PlaySound(int id, float volume)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
@@ -227,7 +227,8 @@ void CSound::PlaySound(int id)
 		return;
 	}
 
-	float v=0;
+	float v=0.2-volume*0.2;
+		
 	HRESULT hr;
 	int num=GetBuf(id,v);
 
@@ -298,7 +299,7 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	POP_CODE_MODE;
 }
 #else
-void CSound::PlaySound(int id){};
+void CSound::PlaySound(int id,float volume){};
 void CSound::PlaySound(int id,CWorldObject* p,float volume){};
 void CSound::PlaySound(int id,const float3& p,float volume){};
 #endif

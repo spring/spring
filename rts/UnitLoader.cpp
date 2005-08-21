@@ -45,6 +45,8 @@
 #include "WeaponDefHandler.h"
 #include "DGunWeapon.h"
 #include "TimeProfiler.h"
+#include "PlasmaRepulser.h"
+#include "BeamLaser.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -56,6 +58,8 @@ CUnitLoader unitLoader;
 CUnitLoader::CUnitLoader()
 {
 	parser=new CUnitParser;
+
+	CGroundMoveType::CreateLineTable();
 }
 
 CUnitLoader::~CUnitLoader()
@@ -69,6 +73,12 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side, bool buil
 START_TIME_PROFILE;
 
 	UnitDef* ud= unitDefHandler->GetUnitByName(name);
+	if(!ud){
+		char t[500];
+		sprintf(t,"Couldnt find unittype %s",name.c_str());
+		MessageBox(0,t,"Error loading unit",0);
+		exit(0);
+	}
 	string type = ud->type;
 
 	if(!build){
@@ -130,6 +140,10 @@ START_TIME_PROFILE;
 	unit->stealth=ud->stealth;
 	unit->category=ud->category;
 	unit->armorType=ud->armorType;
+	unit->floatOnWater = ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) || (ud->movedata->moveType == MoveData::Ship_Move)));
+	
+	if(ud->highTrajectoryType==1)
+		unit->useHighTrajectory=true;
 
 	if(build){
 		unit->ChangeLos(1,1);
@@ -184,7 +198,6 @@ START_TIME_PROFILE;
 		unit->mobility->moveData = ud->movedata;
 
 		//Unit parameters
-		unit->floatOnWater = (ud->movedata->moveType == MoveData::Hover_Move) || (ud->movedata->moveType == MoveData::Ship_Move);
 		unit->mass = ud->mass;	//Should this not be done for all units?!  //buildings have mass 100000 to show they are immobile
 //		unit->moveType = new CDummyMoveType(unit);	//Disable old movetype-system.
 
@@ -264,7 +277,7 @@ START_TIME_PROFILE;
 		unit->pos.y=ground->GetHeight2(unit->pos.x,unit->pos.z);
 	//unit->pos.y=ground->GetHeight(unit->pos.x,unit->pos.z);
 
-	unit->cob = new CCobInstance(GCobEngine.GetCobFile("scripts/" + ud->model.modelname+".cob"), unit);
+	unit->cob = new CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
 	unit->cob->Call(COBFN_Create);
 
 	unit->localmodel = unit3doparser->CreateLocalModel(unit->model, &unit->cob->pieces);
@@ -272,6 +285,23 @@ START_TIME_PROFILE;
 	for(unsigned int i=0; i< /*(ud->type=="Bomber" ? 1:*/ud->weapons.size(); i++)
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i],unit));
 	
+	// Calculate the max() of the available weapon reloadtimes
+	int relMax = 0;
+	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
+		if ((*i)->reloadTime > relMax)
+			relMax = (*i)->reloadTime;
+		if(dynamic_cast<CBeamLaser*>(*i))
+			relMax=150;
+	}
+	relMax *= 30;		// convert ticks to milliseconds
+
+	// TA does some special handling depending on weapon count
+	if (unit->weapons.size() > 1)
+		relMax = max(relMax, 3000);
+
+	//info->AddLine("Setting maxrel to %d", relMax);
+	unit->cob->Call("SetMaxReloadTime", relMax);
+
 	unit->Init();
 
 	if(!build)
@@ -294,7 +324,6 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 		weapon=new CRocketLauncher(owner);
 	} else if(weapondef->type=="Cannon"){
 		weapon=new CCannon(owner);
-		((CCannon*)weapon)->highTrajectory=weapondef->highTrajectory;
 		((CCannon*)weapon)->selfExplode=weapondef->movement.selfExplode;
 	} else if(weapondef->type=="Rifle"){
 		weapon=new CRifle(owner);
@@ -302,6 +331,8 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 		weapon=new CMeleeWeapon(owner);
 	} else if(weapondef->type=="AircraftBomb"){
 		weapon=new CBombDropper(owner);
+	} else if(weapondef->type=="PlasmaRepulser"){
+		weapon=new CPlasmaRepulser(owner);
 	} else if(weapondef->type=="flame"){
 		weapon=new CFlameThrower(owner);
 	} else if(weapondef->type=="MissileLauncher"){
@@ -313,6 +344,9 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 	} else if(weapondef->type=="LaserCannon"){
 		weapon=new CLaserCannon(owner);
 		((CLaserCannon*)weapon)->color=weapondef->visuals.color;
+	} else if(weapondef->type=="BeamLaser"){
+		weapon=new CBeamLaser(owner);
+		((CBeamLaser*)weapon)->color=weapondef->visuals.color;
 	} else if(weapondef->type=="LightingCannon"){
 		weapon=new CLightingCannon(owner);
 		((CLightingCannon*)weapon)->color=weapondef->visuals.color;
@@ -331,6 +365,8 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 	weapon->weaponDef = weapondef;
 
 	weapon->reloadTime= (int) (weapondef->reload*GAME_SPEED);
+	if(weapon->reloadTime==0)
+		weapon->reloadTime=1;
 	weapon->range=weapondef->range;
 //	weapon->baseRange=weapondef->range;
 	weapon->heightMod=weapondef->heightmod;
@@ -378,6 +414,8 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 		weapondef->firesound.volume=soundVolume;
 		if(weapon->areaOfEffect>8)
 			soundVolume*=2;
+		if(weapondef->type=="DGun")
+			soundVolume*=0.15;
 		weapondef->soundhit.volume=soundVolume;
 	}
 	weapon->fireSoundId = weapondef->firesound.id;

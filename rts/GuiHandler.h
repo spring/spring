@@ -72,7 +72,6 @@ public:
 	Command GetOrderPreview(void);
 	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);
 	std::vector<float3> GetBuildPos(float3 start, float3 end,UnitDef* unitdef);
-	void MakeBuildPos(float3& pos,UnitDef* unitdef);
 };
 extern CGuiHandler* guihandler;
 

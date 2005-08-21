@@ -7,15 +7,18 @@
 #include "myGL.h"
 #include "TimeProfiler.h"
 #include <vector>
+#include "PathFinder.h"
+#include "PathEstimator.h"
+//#include "mmgr.h"
 
-const float ESTIMATE_DISTANCE = 90;
-const float MIN_ESTIMATE_DISTANCE = 65;
-const float DETAILED_DISTANCE = 60;
-const float MIN_DETAILED_DISTANCE = 40;
+const float ESTIMATE_DISTANCE = 55;
+const float MIN_ESTIMATE_DISTANCE = 40;
+const float DETAILED_DISTANCE = 25;
+const float MIN_DETAILED_DISTANCE = 12;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
-const int FRAMES_TO_KEEP_PATH = 9000;	//9000frames == 5min
+const unsigned int CPathManager::PATH_RESOLUTION = CPathFinder::PATH_RESOLUTION;
 
-CPathManager* pathManager;
+CPathManager* pathManager=0;
 
 
 /*
@@ -28,6 +31,14 @@ CPathManager::CPathManager() {
 	ground = new CGroundMoveMath();
 	hover = new CHoverMoveMath();
 	sea = new CShipMoveMath();
+
+	float waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str());
+	if(waterDamage>=1000)
+		CGroundMoveMath::waterCost=0;
+	else
+		CGroundMoveMath::waterCost=1/(1.0+waterDamage*0.1);
+
+	CHoverMoveMath::noWaterMove=waterDamage>=10000;
 
 	//Address movemath and pathtype to movedata.
 	int counter = 0;
@@ -52,8 +63,8 @@ CPathManager::CPathManager() {
 
 	//Create pathfinder and estimators.
 	pf = new CPathFinder();
-	pe = new CPathEstimator(pf, 8, CMoveMath::CHECK_STRUCTURES, "pe");
-	pe2 = new CPathEstimator(pf, 32, CMoveMath::CHECK_STRUCTURES, "pe2");
+	pe = new CPathEstimator(pf, 8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe");
+	pe2 = new CPathEstimator(pf, 32, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2");
 
 	//Reset id-counter.
 	nextPathId = 0;
@@ -82,13 +93,13 @@ Turns a start->goal-request into a will defined request.
 unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos, float goalRadius,CSolidObject* caller) {
 	startPos.CheckInBounds();
 	goalPos.CheckInBounds();
-	if(startPos.z>gs->mapx*SQUARE_SIZE-5)
-		startPos.z=gs->mapx*SQUARE_SIZE-5;
-	if(goalPos.z>gs->mapx*SQUARE_SIZE-5)
-		goalPos.z=gs->mapx*SQUARE_SIZE-5;
+	if(startPos.x>gs->mapx*SQUARE_SIZE-5)
+		startPos.x=gs->mapx*SQUARE_SIZE-5;
+	if(goalPos.z>gs->mapy*SQUARE_SIZE-5)
+		goalPos.z=gs->mapy*SQUARE_SIZE-5;
 
 	//Create a estimator definition.
-	CRangedGoalPED* rangedGoalPED = new CRangedGoalPED(goalPos, goalRadius);
+	CRangedGoalWithCircularConstraint * rangedGoalPED = new CRangedGoalWithCircularConstraint(startPos,goalPos, goalRadius,3,2000);
 
 	//Make request.
 	return RequestPath(moveData, startPos, rangedGoalPED,goalPos,caller);
@@ -98,7 +109,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 /*
 Request a new multipath, store the result and return an handle-id to it.
 */
-unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, CPathEstimatorDef* peDef,float3 goalPos,CSolidObject* caller) {
+unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, CPathFinderDef* peDef,float3 goalPos,CSolidObject* caller) {
 //	static int calls = 0;
 //	*info << "RequestPath() called: " << (++calls) << "\n";	//Debug
 
@@ -117,7 +128,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 	float distanceToGoal = peDef->Heuristic(int(startPos.x / SQUARE_SIZE), int(startPos.z / SQUARE_SIZE));
 	if(distanceToGoal < DETAILED_DISTANCE) {
 		//Get a detailed path.
-		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath);
+		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath,true);
 		if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			retValue=Store(newPath);
 		} else {
@@ -131,8 +142,19 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 			EstimateToDetailed(*newPath, startPos);
 			//Store the path.
 			retValue=Store(newPath);
-		} else {
-			delete newPath;
+		} else {	//if we fail see if it can work find a better block to start from
+			float3 sp=pe->FindBestBlockCenter(moveData,startPos);
+			if(sp.x!=0 && (((int)sp.x)/(SQUARE_SIZE*8)!=((int)startPos.x)/(SQUARE_SIZE*8) || ((int)sp.z)/(SQUARE_SIZE*8)!=((int)startPos.z)/(SQUARE_SIZE*8))){
+				IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath);
+				if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
+					EstimateToDetailed(*newPath, startPos);
+					retValue=Store(newPath);
+				} else {
+					delete newPath;
+				}
+			} else {
+				delete newPath;
+			}
 		}
 	} else {
 		//Get a low-res. estimate path.
@@ -144,8 +166,25 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 			EstimateToDetailed(*newPath, startPos);
 			//Store the path.
 			retValue=Store(newPath);
-		} else {
-			delete newPath;
+		} else {	//sometimes the 32*32 squares can be wrong so if it fail to get a path also try with 8*8 squares
+			IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath);
+			if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
+				EstimateToDetailed(*newPath, startPos);
+				retValue=Store(newPath);
+			} else { //8*8 can also fail rarely, so see if we can find a better 8*8 to start from
+				float3 sp=pe->FindBestBlockCenter(moveData,startPos);
+				if(sp.x!=0 && (((int)sp.x)/(SQUARE_SIZE*8)!=((int)startPos.x)/(SQUARE_SIZE*8) || ((int)sp.z)/(SQUARE_SIZE*8)!=((int)startPos.z)/(SQUARE_SIZE*8))){
+					IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath);
+					if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
+						EstimateToDetailed(*newPath, startPos);
+						retValue=Store(newPath);
+					} else {
+						delete newPath;
+					}
+				} else {
+					delete newPath;
+				}
+			}
 		}
 	}
 	if(caller)
@@ -158,18 +197,8 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 /*
 Store a new multipath into the pathmap.
 */
-unsigned int CPathManager::Store(MultiPath* path) {
-	//Store the end of the path as the final goal.
-/*	if(path->estimatedPath2.path.size() > 0)
-		path->finalGoal = path->estimatedPath2.path.front();
-	else if(path->estimatedPath.path.size() > 0)
-		path->finalGoal = path->estimatedPath.path.front();
-	else
-		path->finalGoal = path->detailedPath.path.front();
-*/
-	//Set time to live.
-	path->timeToLive = gs->frameNum + FRAMES_TO_KEEP_PATH;
-
+unsigned int CPathManager::Store(MultiPath* path) 
+{
 	//Store the path.
 	pathMap[++nextPathId] = path;
 	return nextPathId;
@@ -184,6 +213,7 @@ void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) {
 	if(path.estimatedPath.path.empty())
 		return;
 
+	path.estimatedPath.path.pop_back();
 	//Remove estimate waypoints until
 	//the next one is far enought.
 	while(!path.estimatedPath.path.empty()
@@ -198,15 +228,15 @@ void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) {
 		goalPos = path.estimatedPath.path.back();
 
 	//Define the search.
-	CRangedGoalPFD rangedGoalPFD(goalPos, 0);
+	CRangedGoalWithCircularConstraint rangedGoalPFD(startPos,goalPos, 0,2,1000);
 
 	//Perform the search.
 	//If this is the final improvement of the path, then use the original goal.
 	IPath::SearchResult result;
 	if(path.estimatedPath.path.empty() && path.estimatedPath2.path.empty())
-		result = pf->GetPath(*path.moveData, startPos, *path.peDef, path.detailedPath, CMoveMath::CHECK_STRUCTURES | CMoveMath::CHECK_MOBILE, false, MAX_SEARCHED_NODES_ON_REFINE);
+		result = pf->GetPath(*path.moveData, startPos, *path.peDef, path.detailedPath, true);
 	else
-		result = pf->GetPath(*path.moveData, startPos, rangedGoalPFD, path.detailedPath, CMoveMath::CHECK_STRUCTURES | CMoveMath::CHECK_MOBILE, false, MAX_SEARCHED_NODES_ON_REFINE);
+		result = pf->GetPath(*path.moveData, startPos, rangedGoalPFD, path.detailedPath, true);
 
 	//If no refined path could be found, set goal as desired goal.
 	if(result == IPath::CantGetCloser || result == IPath::Error) {
@@ -223,6 +253,7 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
 	if(path.estimatedPath2.path.empty())
 		return;
 
+	path.estimatedPath2.path.pop_back();
 	//Remove estimate2 waypoints until
 	//the next one is far enought.
 	while(!path.estimatedPath2.path.empty()
@@ -237,7 +268,7 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
 		goalPos = path.estimatedPath2.path.back();
 
 	//Define the search.
-	CRangedGoalPED rangedGoalPED(goalPos, 0);
+	CRangedGoalWithCircularConstraint rangedGoal(startPos,goalPos, 0,2,20);
 
 	//Perform the search.
 	//If there is no estimate2 path left, use original goal.
@@ -245,7 +276,7 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
 	if(path.estimatedPath2.path.empty())
 		result = pe->GetPath(*path.moveData, startPos, *path.peDef, path.estimatedPath, MAX_SEARCHED_NODES_ON_REFINE);
 	else {
-		result = pe->GetPath(*path.moveData, startPos, rangedGoalPED, path.estimatedPath, MAX_SEARCHED_NODES_ON_REFINE);
+		result = pe->GetPath(*path.moveData, startPos, rangedGoal, path.estimatedPath, MAX_SEARCHED_NODES_ON_REFINE);
 	}
 
 	//If no refined path could be found, set goal as desired goal.
@@ -274,14 +305,22 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		return float3(-1,-1,-1);
 	MultiPath* multiPath = pi->second;
 	
-	//Check if increased resolution is needed.
-	if(!multiPath->estimatedPath2.path.empty()
-	&& (multiPath->estimatedPath2.path.back().distance2D(callerPos) < MIN_ESTIMATE_DISTANCE * SQUARE_SIZE
-	|| multiPath->estimatedPath.path.size() <= 2))
-		Estimate2ToEstimate(*multiPath, callerPos);
+	if(callerPos==ZeroVector){
+		if(!multiPath->detailedPath.path.empty())
+			callerPos=multiPath->detailedPath.path.back();
+	}
+
+	//check if detailed path need bettering
 	if(!multiPath->estimatedPath.path.empty()
 	&& (multiPath->estimatedPath.path.back().distance2D(callerPos) < MIN_DETAILED_DISTANCE * SQUARE_SIZE
 	|| multiPath->detailedPath.path.size() <= 2)){
+
+		if(!multiPath->estimatedPath2.path.empty()		//if so check if estimated path also need bettering
+			&& (multiPath->estimatedPath2.path.back().distance2D(callerPos) < MIN_ESTIMATE_DISTANCE * SQUARE_SIZE
+			|| multiPath->estimatedPath.path.size() <= 2)){
+				Estimate2ToEstimate(*multiPath, callerPos);
+		}
+
 		if(multiPath->caller)
 			multiPath->caller->UnBlock();
 		EstimateToDetailed(*multiPath, callerPos);
@@ -304,18 +343,11 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		}
 	} while(callerPos.distance2D(waypoint) < minDistance && waypoint != multiPath->detailedPath.pathGoal);
 
-	//Keep path alive.
-	multiPath->timeToLive = gs->frameNum + FRAMES_TO_KEEP_PATH;
-
 	//Return the result.
 	#ifdef PROFILE_TIME
 		LARGE_INTEGER stop;
 		QueryPerformanceCounter(&stop);
-#ifdef _WIN32		
 		profiler.AddTime("AI:PFS",stop.QuadPart - starttime.QuadPart);
-#else
-		profiler.AddTime("AI:PFS",stop - starttime);
-#endif
 	
 	#endif
 	return waypoint;
@@ -346,7 +378,7 @@ void CPathManager::DeletePath(unsigned int pathId) {
 Convert a 2xfloat3-defined rectangle into a square-based rectangle.
 */
 void CPathManager::TerrainChange(float3 upperCorner, float3 lowerCorner) {
-	TerrainChange((unsigned int) (upperCorner.x / SQUARE_SIZE), (unsigned int) (upperCorner.z / SQUARE_SIZE), (unsigned int) (lowerCorner.x / SQUARE_SIZE), (unsigned int) (lowerCorner.z / SQUARE_SIZE));
+	TerrainChange((unsigned int)(upperCorner.x / SQUARE_SIZE), (unsigned int)(upperCorner.z / SQUARE_SIZE), (unsigned int)(lowerCorner.x / SQUARE_SIZE), (int)(lowerCorner.z / SQUARE_SIZE));
 }
 
 
@@ -368,20 +400,6 @@ START_TIME_PROFILE;
 	pe->Update();
 	pe2->Update();
 
-	//Check for timed out paths.
-	list<unsigned int> toBeDeleted;
-	if(gs->frameNum % 30 == 0) {
-		map<unsigned int, MultiPath*>::iterator mi;
-		for(mi = pathMap.begin(); mi != pathMap.end(); mi++)
-			if(mi->second->timeToLive <= gs->frameNum) {
-				toBeDeleted.push_back(mi->first);
-			}
-	}
-	//Delete timed out paths.
-	list<unsigned int>::iterator li;
-	for(li = toBeDeleted.begin(); li != toBeDeleted.end(); li++)
-		DeletePath(*li);
-
 END_TIME_PROFILE("AI:PFS:Update");
 }
 
@@ -392,6 +410,7 @@ Draw path-lines for each path in pathmap.
 void CPathManager::Draw() {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
+	glLineWidth(3);
 	map<unsigned int, MultiPath*>::iterator pi;
 	for(pi = pathMap.begin(); pi != pathMap.end(); pi++) {
 		MultiPath* path = pi->second;
@@ -430,4 +449,20 @@ void CPathManager::Draw() {
 		//Tell the CPathFinderDef to visualise it self.
 		path->peDef->Draw();
 	}
+	glLineWidth(1);
+	pf->Draw();
+	pe->Draw();
+	pe2->Draw();
+}
+
+CPathManager::MultiPath::MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData) :
+	start(start),
+	peDef(peDef),
+	moveData(moveData) 
+{
+}
+
+CPathManager::MultiPath::~MultiPath()
+{
+	delete peDef;
 }

@@ -211,7 +211,7 @@ CProjectileHandler::CProjectileHandler()
 			tex[y+256][x][1]=205+(unsigned char) (gs->randFloat()*50);
 			tex[y+256][x][2]=205+(unsigned char) (gs->randFloat()*50);
 			tex[y+256][x][3]=0;
-			dotAlpha[y][x]=gs->randFloat()*30;
+			dotAlpha[y][x]=gu->usRandFloat()*30;
 		}
 	}
 	for(int a=0;a<3;++a){//random dots
@@ -219,7 +219,7 @@ CProjectileHandler::CProjectileHandler()
 		float size=(2<<a);
 		for(int y=(int)size;y<255-(int)size;y+=(int)size){
 			for(int x=(int)size;x<255-(int)size;x+=(int)size){
-				float p=gs->randFloat()*mag;
+				float p=gu->usRandFloat()*mag;
 				for(int y2=y-(int)size;y2<=y+(int)size;y2++){
 					float ym=float(size-abs(y2-y))/size;
 					for(int x2=x-(int)size;x2<=x+(int)size;x2++){
@@ -232,8 +232,8 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 	for(int a=0;a<20;++a){//random dots
-		int bx=(int) (gs->randFloat()*228);
-		int by=(int) (gs->randFloat()*228)+256;
+		int bx=(int) (gu->usRandFloat()*228);
+		int by=(int) (gu->usRandFloat()*228)+256;
 		for(int y=0;y<16;y++){
 			for(int x=0;x<16;x++){
 				float dist=sqrt((float)(x-8)*(x-8)+(y-8)*(y-8));
@@ -258,8 +258,8 @@ CProjectileHandler::CProjectileHandler()
 	for(int a=0;a<40;++a){//wake
 		float3 r(0,0,0);
 		do{
-			r.x=(gs->randFloat()-0.5)*2;
-			r.y=(gs->randFloat()-0.5)*2;
+			r.x=(gu->usRandFloat()-0.5)*2;
+			r.y=(gu->usRandFloat()-0.5)*2;
 		} while(r.Length()>1);
 		int bx=(int)(r.x*52)+256+64-12;
 		int by=(int)(r.y*52)+256+64-12;
@@ -463,8 +463,8 @@ void CProjectileHandler::Draw(bool drawReflection)
 	}
 	uh->CleanUpUnitDrawing();
 
-	unsigned int sortSize=a;
-	qsort(distlist, sortSize,8,CompareProjDist);
+	float sortSize=a;
+	qsort(distlist, (size_t)sortSize,8,CompareProjDist);
 
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
@@ -627,6 +627,8 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	glBindTexture(GL_TEXTURE_2D, CGroundFlash::texture);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(0);
+	glPolygonOffset(-20,-1000);
+	glEnable(GL_POLYGON_OFFSET_FILL);
 	glFogfv(GL_FOG_COLOR,FogBlack);
 
 	CGroundFlash::va=GetVertexArray();
@@ -640,6 +642,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 	glFogfv(GL_FOG_COLOR,FogLand);
 	glDepthMask(1);
+	glDisable(GL_POLYGON_OFFSET_FILL);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 }
@@ -649,10 +652,10 @@ void CProjectileHandler::ConvertTex(unsigned char tex[512][512][4], int startx, 
 	for(int y=starty;y<endy;++y){
 		for(int x=startx;x<endx;++x){
 			float alpha=tex[y][x][3];
-			unsigned char mul=(unsigned char) (alpha/255.0);
-			tex[y][x][0]*=mul;
-			tex[y][x][1]*=mul;
-			tex[y][x][2]*=mul;
+			float mul=alpha/255.0;
+			tex[y][x][0]*=(unsigned char)mul;
+			tex[y][x][1]*=(unsigned char)mul;
+			tex[y][x][2]*=(unsigned char)mul;
 		}
 	}
 }

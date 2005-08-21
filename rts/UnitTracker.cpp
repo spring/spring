@@ -37,7 +37,7 @@ void CUnitTracker::SetCam(void)
 {
 	if(firstUpdate){
 		firstUpdate=false;
-		doRoll=!(regHandler.GetInt("ReflectiveWater",1));
+		doRoll=!regHandler.GetInt("ReflectiveWater",1);
 	}
 	if(lastFollowUnit!=0 && uh->units[lastFollowUnit]==0){
 		timeOut=1;

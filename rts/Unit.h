@@ -32,12 +32,20 @@ struct UnitDef;
 class CMoveType;
 class CUnitAI;
 class CLoadSaveInterface;
+struct UnitTrackStruct;
+class CMissileProjectile;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	struct DirectControlStruct;
 #endif
 
 using namespace std;
+
+#define LOS_INLOS 1				//the unit is currently in the los of the allyteam
+#define LOS_INRADAR 2			//the unit is currently in radar from the allyteam
+#define LOS_PREVLOS 4			//the unit has previously been in los from the allyteam
+#define LOS_CONTRADAR 8		//the unit has continously been in radar since it was last inlos by the allyteam
+#define LOS_INTEAM 16			//the unit is part of this allyteam
 
 class CUnit : public CSolidObject  
 {
@@ -67,7 +75,7 @@ public:
 	void DependentDied(CObject* o);
 	void SetUserTarget(CUnit* target);
 	virtual void Init(void);
-	void SetGroup(CGroup* group);
+	bool SetGroup(CGroup* group);
 
 	bool UseMetal(float metal);
 	void AddMetal(float metal);
@@ -103,6 +111,8 @@ public:
 
 	float maxHealth;
 	float health;
+	float paralyzeDamage;		//if health-this is negative the unit is stunned
+	float captureProgress;	//how close this unit is to being captured
 	float experience;
 	float limExperience;		//goes ->1 as experience go -> infinite
 	float logExperience;		//logharitm of experience
@@ -114,9 +124,13 @@ public:
 	float buildProgress;			//0.0-1.0
 	int realLosRadius;				//set los to this when finished building
 	int realAirLosRadius;
+	int losStatus[MAX_TEAMS];	//indicate the los/radar status the allyteam has on this unit
 	bool inBuildStance;				//used by constructing unigs
 	bool stunned;							//if we are stunned by a weapon or for other reason
 	bool useHighTrajectory;		//tells weapons that support it to try to use a high trajectory
+
+	int deathCountdown;
+	int delayedWreckLevel;
 
 	int restTime;							//how long the unit has been inactive
 
@@ -193,6 +207,7 @@ public:
 	bool userAttackGround;
 
 	int fireState;							//0=hold fire,1=return,2=fire at will
+	bool dontFire;							//temp variable that can be set when building etc to stop units to turn away to fire
 	int moveState;							//0=hold pos,1=maneuvre,2=roam
 
 	bool activated;					//if the unit is in it's 'on'-state
@@ -235,11 +250,19 @@ public:
 	DirectControlStruct* directControl;
 #endif
 
+	UnitTrackStruct* myTrack;
+
+	std::list<CMissileProjectile*> incomingMissiles;
+	int lastFlareDrop;
+
 protected:
 	void ExperienceChange();
 public:
 	virtual void KillUnit(bool SelfDestruct,bool reclaimed);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
+	virtual void IncomingMissile(CMissileProjectile* missile);
+	void TempHoldFire(void);
+	void ReleaseTempHoldFire(void);
 };
 
 #endif // !defined(AFX_UNIT_H__9B50A8F9_1B01_41E6_B06C_9FE7AB9A6227__INCLUDED_)

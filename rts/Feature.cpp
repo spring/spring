@@ -14,7 +14,7 @@
 #include "ProjectileHandler.h"
 //#include "mmgr.h"
 
-CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyteam)
+CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyteam,std::string fromUnit)
 : CSolidObject(pos),
 	def(def),
 	inUpdateQue(false),
@@ -25,7 +25,10 @@ CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyt
 	drawQuad(0),
 	allyteam(allyteam),
 	tempNum(0),
-	emitSmokeTime(0)
+	emitSmokeTime(0),
+	lastReclaim(0),
+	createdFromUnit(fromUnit),
+	resurrectProgress(0)
 {
 	this->pos.CheckInBounds();
 	this->heading=heading;
@@ -62,9 +65,12 @@ CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyt
 
 	if(blocking){
 		Block();
-		readmap->typemap[ground->GetSquare(pos)]|=32;
 	}
-	finalHeight=ground->GetHeight2(pos.x,pos.z);
+	if(def->floating){
+		finalHeight=ground->GetHeight(pos.x,pos.z);
+	} else {
+		finalHeight=ground->GetHeight2(pos.x,pos.z);
+	}
 
 	if(def->drawType==DRAWTYPE_TREE)
 		treeDrawer->AddTree(def->modelType,pos,1);
@@ -74,7 +80,6 @@ CFeature::~CFeature(void)
 {
 	if(blocking){
 		UnBlock();
-		readmap->typemap[ground->GetSquare(pos)]&=255-32;
 	}
 	qf->RemoveFeature(this);
 	if(def->drawType==DRAWTYPE_TREE)
@@ -93,8 +98,11 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 	} else {
 		if(reclaimLeft<0)	//avoid multisuck :)
 			return false;
-		float part=(100-amount)*0.05/max(10.0f,(def->metal+def->energy));
+		if(lastReclaim==gs->frameNum)	//make sure several units cant reclaim at once on a single feature
+			return true;
+		float part=(100-amount)*0.04/max(10.0f,(def->metal+def->energy));
 		reclaimLeft-=part;
+		lastReclaim=gs->frameNum;
 		if(reclaimLeft<0){
 			builder->AddMetal(def->metal);
 			builder->AddEnergy(def->energy);
@@ -111,8 +119,9 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 	residualImpulse=impulse;
 	health-=damages[0];
 	if(health<=0 && def->destructable){
-		featureHandler->CreateWreckage(pos,def->deathFeature,heading,1,-1,false);
+		featureHandler->CreateWreckage(pos,def->deathFeature,heading,1,-1,false,"");
 		featureHandler->DeleteFeature(this);
+		blockHeightChanges=false;
 
 		if(def->drawType==DRAWTYPE_TREE){
 			if(impulse.Length2D()>0.5){
@@ -132,9 +141,15 @@ bool CFeature::Update(void)
 	bool retValue=false;
 
 	if(pos.y>finalHeight){
-		pos.y-=0.5;
-		midPos.y-=0.5;
-		transMatrix[13]-=0.5;
+		if(pos.y>0){	//fall faster when above water
+			pos.y-=0.8;
+			midPos.y-=0.8;
+			transMatrix[13]-=0.8;
+		} else {
+			pos.y-=0.4;
+			midPos.y-=0.4;
+			transMatrix[13]-=0.4;
+		}
 		if(drawQueType==1){
 			featureHandler->ResetDrawQuad(drawQuad);
 			featureHandler->drawQuads[drawQuad].staticFeatures.erase(this);

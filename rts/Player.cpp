@@ -24,6 +24,7 @@ CPlayer::CPlayer()
 	team=0;
 	readyToStart=false;
 	cpuUsage=0;
+	ping=0;
 
 
 #ifdef DIRECT_CONTROL_ALLOWED

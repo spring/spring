@@ -62,7 +62,7 @@ CLosHandler::CLosHandler()
 		}
 	}
 	
-	for(int a=1;a<=50;++a)
+	for(int a=1;a<=MAX_LOS_TABLE;++a)
 		OutputTable(a);	
 
 	for(int a=0;a<256;++a)
@@ -111,6 +111,9 @@ START_TIME_PROFILE;
 		END_TIME_PROFILE("Los");
 		return;
 	}
+	int xmap=(int)(losPos.x/(SQUARE_SIZE*2));
+	int ymap=(int)(losPos.z/(SQUARE_SIZE*2));
+	int baseSquare=max(0,min(gs->hmapy-1,(ymap)))*gs->hmapx + max(0,min(gs->hmapx-1,xmap));
 
 	LosInstance* instance;
 	if(redoCurrent){
@@ -121,8 +124,8 @@ START_TIME_PROFILE;
 		instance=unit->los;
 		CleanupInstance(instance);
 		instance->losSquares.clear();
+		instance->baseSquare=baseSquare;	//this could be a problem if several units are sharing the same instance
 	} else {
-		int baseSquare=max(0,min(gs->hmapy-1,((int)losPos.z/(SQUARE_SIZE*2))))*gs->hmapx+max(0,min(gs->hmapx-1,(int)losPos.x/(SQUARE_SIZE*2)));
 		if(unit->los && unit->los->baseSquare==baseSquare){
 			END_TIME_PROFILE("Los");
 			return;
@@ -142,9 +145,6 @@ START_TIME_PROFILE;
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}
-	int xmap=(int)losPos.x/(SQUARE_SIZE*2);
-	int ymap=(int)losPos.z/(SQUARE_SIZE*2);
-
 	if(xmap-unit->losRadius<0 || xmap+unit->losRadius>=gs->hmapx || ymap-unit->losRadius<0 || ymap+unit->losRadius>=gs->hmapy)
 		SafeLosAdd(instance,xmap,ymap);
 	else
@@ -160,8 +160,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	LosAddAir(instance);
 
 	int tablenum=instance->losSize;
-	if(tablenum>50){
-		tablenum=50;
+	if(tablenum>MAX_LOS_TABLE){
+		tablenum=MAX_LOS_TABLE;
 	}
 	LosTable& table=lostables[tablenum-1];
 
@@ -187,7 +187,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 				instance->losSquares.push_back(square);
 				losMap[allyteam][square]++;
 			}
-			dh+=terrainHeight[readmap->typemap[square]];
+			dh+=terrainHeight[0];
 			ang=dh*invR;
 			if(ang>maxAng1){
 				maxAng1=ang;
@@ -200,7 +200,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 				instance->losSquares.push_back(square);
 				losMap[allyteam][square]++;
 			}
-			dh+=terrainHeight[readmap->typemap[square]];
+			dh+=terrainHeight[0];
 			ang=dh*invR;
 			if(ang>maxAng2){
 				maxAng2=ang;
@@ -213,7 +213,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 				instance->losSquares.push_back(square);
 				losMap[allyteam][square]++;
 			}
-			dh+=terrainHeight[readmap->typemap[square]];
+			dh+=terrainHeight[0];
 			ang=dh*invR;
 			if(ang>maxAng3){
 				maxAng3=ang;
@@ -226,7 +226,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 				instance->losSquares.push_back(square);
 				losMap[allyteam][square]++;
 			}
-			dh+=terrainHeight[readmap->typemap[square]];
+			dh+=terrainHeight[0];
 			ang=dh*invR;
 			if(ang>maxAng4){
 				maxAng4=ang;
@@ -247,8 +247,8 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 	LosAddAir(instance);
 
 	int tablenum=instance->losSize;
-	if(tablenum>50){
-		tablenum=50;
+	if(tablenum>MAX_LOS_TABLE){
+		tablenum=MAX_LOS_TABLE;
 	}
 	LosTable& table=lostables[tablenum-1];
 
@@ -274,7 +274,7 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 					instance->losSquares.push_back(square);
 					losMap[allyteam][square]++;
 				}
-				dh+=terrainHeight[readmap->typemap[square]];
+				dh+=terrainHeight[0];
 				ang=dh/r;
 				if(ang>maxAng1){
 					maxAng1=ang;
@@ -288,7 +288,7 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 					instance->losSquares.push_back(square);
 					losMap[allyteam][square]++;
 				}
-				dh+=terrainHeight[readmap->typemap[square]];
+				dh+=terrainHeight[0];
 				ang=dh/r;
 				if(ang>maxAng2){
 					maxAng2=ang;
@@ -302,7 +302,7 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 					instance->losSquares.push_back(square);
 					losMap[allyteam][square]++;
 				}
-				dh+=terrainHeight[readmap->typemap[square]];
+				dh+=terrainHeight[0];
 				ang=dh/r;
 				if(ang>maxAng3){
 					maxAng3=ang;
@@ -316,7 +316,7 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 					instance->losSquares.push_back(square);
 					losMap[allyteam][square]++;
 				}
-				dh+=terrainHeight[readmap->typemap[square]];
+				dh+=terrainHeight[0];
 				ang=dh/r;
 				if(ang>maxAng4){
 					maxAng4=ang;
@@ -347,6 +347,7 @@ void CLosHandler::OutputTable(int Table)
 	{
     r2 = (int)(i * i);
 		
+    y = (int)i;
     x = 1;
     y = (int) (sqrt((float)r2 - 1) + 0.5);
     while (x < y) {

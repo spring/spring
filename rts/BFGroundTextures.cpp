@@ -6,9 +6,8 @@
 #include "Camera.h"
 #include "InfoConsole.h"
 #include <GL/glu.h>
-#include "sm2header.h"
-#include <algorithm>
-using namespace std;
+#include "mapfile.h"
+#include "ReadMap.h"
 //#include "mmgr.h"
 
 CBFGroundTextures* groundTextures=0;
@@ -25,22 +24,60 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 
 	//jpegBuffer=new unsigned char[textureOffsets[numBigTexX*numBigTexY*4*3]];
 	//ifs->Read(jpegBuffer,textureOffsets[numBigTexX*numBigTexY*4*3]);
-	ifs->Seek(0);
-	SM2Header header;
 
-	ifs->Read(&header, sizeof(SM2Header));
+	MapHeader* header=&readmap->header;
+	ifs->Seek(header->tilesPtr);
 
-	tileSize = header.tilesize;
-	tileMap = new int[(header.xsize*header.ysize)/16];
-	ifs->Seek(header.tilemapPtr);
-	ifs->Read(tileMap, ((header.xsize*header.ysize)/16)*sizeof(int));
-
-	tiles = new char[header.numtiles*SMALL_TILE_SIZE];
-	ifs->Seek(header.tilesPtr);
-	ifs->Read(tiles, header.numtiles*SMALL_TILE_SIZE);
+	tileSize = header->tilesize;
 	
-	tileMapXSize = header.xsize/4;
-	tileMapYSize = header.ysize/4;
+	MapTileHeader tileHeader;
+	ifs->Read(&tileHeader,sizeof(MapTileHeader));
+
+	tileMap = new int[(header->mapx*header->mapy)/16];
+	tiles = new char[tileHeader.numTiles*SMALL_TILE_SIZE];
+	int curTile=0;
+
+	for(int a=0;a<tileHeader.numTileFiles;++a){
+		int size;
+		ifs->Read(&size,4);
+		string name;
+
+		while(true){
+			char ch;
+			ifs->Read(&ch,1);
+			if(ch==0)
+				break;
+			name+=ch;
+		}
+		name=string("maps/")+name;
+
+		CFileHandler tileFile(name);
+		if(!tileFile.FileExists()){
+			info->AddLine("Couldnt find tile file %s",name.c_str());
+			memset(&tiles[curTile*SMALL_TILE_SIZE],0xaa,size*SMALL_TILE_SIZE);
+			curTile+=size;
+			continue;
+		}
+		TileFileHeader tfh;
+		tileFile.Read(&tfh,sizeof(TileFileHeader));
+
+		if(strcmp(tfh.magic,"spring tilefile")!=0 || tfh.version!=1 || tfh.tileSize!=32 || tfh.compressionType!=1){
+			char t[500];
+			sprintf(t,"Error couldnt open tile file %s",name.c_str());
+			MessageBox(0,t,"Error when reading tile file",0);
+			exit(0);
+		}
+
+		for(int b=0;b<size;++b){
+			tileFile.Read(&tiles[curTile*SMALL_TILE_SIZE],SMALL_TILE_SIZE);
+			curTile++;
+		}
+	}
+
+	ifs->Read(tileMap, ((header->mapx*header->mapy)/16)*sizeof(int));
+
+	tileMapXSize = header->mapx/4;
+	tileMapYSize = header->mapy/4;
 
 	squares=new GroundSquare[numBigTexX*numBigTexY];
 

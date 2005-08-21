@@ -28,6 +28,7 @@
 #include "RegHandler.h"
 #include "InMapDraw.h"
 #include "CameraController.h"
+#include "MapDamage.h"
 //#include "mmgr.h"
 
 #include "NewGuiDefine.h"
@@ -41,6 +42,9 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _WIN32
+extern HWND	hWnd;
+#endif
 extern bool	fullscreen;
 extern bool keys[256];
 
@@ -52,7 +56,9 @@ CMouseHandler::CMouseHandler()
 : locked(false),
 	activeReceiver(0),
 	transitSpeed(0),
-	inStateTransit(false)
+	inStateTransit(false),
+	xButtonCounter(0)
+
 {
 	lastx=300;
 	lasty=200;
@@ -74,6 +80,8 @@ CMouseHandler::CMouseHandler()
 	cursors["Load units"] = new CMouseCursor("cursorpickup", CMouseCursor::Center);
 	cursors["Unload units"] = new CMouseCursor("cursorunload", CMouseCursor::Center);	
 	cursors["Reclaim"] = new CMouseCursor("cursorreclamate", CMouseCursor::Center);
+	cursors["Resurrect"] = new CMouseCursor("cursorrevive", CMouseCursor::Center);
+	cursors["Capture"] = new CMouseCursor("cursorcapture", CMouseCursor::Center);
 
 	ShowCursor(FALSE);
 
@@ -84,6 +92,7 @@ CMouseHandler::CMouseHandler()
 	camControllers.push_back(new CFPSController);				//fps camera must always be the first one in the list
 	camControllers.push_back(new COverheadController);
 	camControllers.push_back(new CTWController);
+	camControllers.push_back(new CRotOverheadController);
 
 	currentCamController=camControllers[0];
 	currentCamControllerNum=0;
@@ -141,18 +150,16 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 #endif
 
-	if(inMapDrawer->keyPressed){
+	if(inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseMove(x,y,dx,dy,activeButton);
 	}
 
 	if(buttons[2].pressed){
 		float cameraSpeed=1;
-		if(keys[VK_SHIFT])
-	        {
+		if (keys[VK_SHIFT]){
 			cameraSpeed*=0.1f;
 		}
-		if(keys[VK_CONTROL])
-		{
+		if (keys[VK_CONTROL]){
 			cameraSpeed*=10;
 		}
 		currentCamController->MouseMove(float3(dx,dy,invertMouse?-1:1));
@@ -183,6 +190,9 @@ void CMouseHandler::MousePress(int x, int y, int button)
 #endif
 	
 	if(button==4){
+		xButtonCounter--;
+		if(xButtonCounter<0)
+			xButtonCounter=0;
 /*		CUnit* u;
 		float dist=helper->GuiTraceRay(camera->pos,hide ? camera->forward : camera->CalcPixelDir(x,y),9000,u,20,false);
 		if(dist<8900 && gs->cheatEnabled){
@@ -191,6 +201,11 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		}/**/			//make network compatible before enabling
 		return;
 	}
+	if(button==5){
+		xButtonCounter++;
+		return;
+	}
+
 	buttons[button].pressed=true;
 	buttons[button].time=gu->gameTime;
 	buttons[button].x=x;
@@ -200,7 +215,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	buttons[button].movement=0;
 	activeButton=button;
 
-	if(inMapDrawer->keyPressed){
+	if(inMapDrawer &&  inMapDrawer->keyPressed){
 		inMapDrawer->MousePress(x,y,button);
 		return;
 	}
@@ -211,7 +226,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 #ifndef NEW_GUI
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
+	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->MousePress(x,y,button)){
 			activeReceiver=*ri;
 			return;
@@ -232,14 +247,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if(GUIcontroller::MouseUp(x, y, button))
 		return;
 #endif
-	if(inMapDrawer->keyPressed){
+	if(inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseRelease(x,y,button);
 		return;
 	}
 
 	if(button==2){
 		if(buttons[2].time>gu->gameTime-0.3)
-			ToggleState(keyShift()|keyCtrl());
+			ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
 		return;		
 	}
 
@@ -257,7 +272,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 #endif
 
 	if(button==0 && mouseHandlerMayDoSelection){
-		if(!keyShift() && !keyCtrl())
+		if(!keys[VK_SHIFT] && !keys[VK_CONTROL])
 			selectedUnits.ClearSelected();
 
 		if(buttons[0].movement>4){		//select box
@@ -329,7 +344,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			for(ui=gs->teams[gu->myTeam]->units.begin();ui!=gs->teams[gu->myTeam]->units.end();++ui){
 				float3 vec=(*ui)->midPos-camera->pos;
 				if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
-					if(keyCtrl() && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
+					if(keys[VK_CONTROL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(*ui);
 					} else {
 						selectedUnits.AddUnit(*ui);
@@ -350,7 +365,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			float dist=helper->GuiTraceRay(camera->pos,dir,9000,unit,20,false);
 			if(unit && unit->team==gu->myTeam){
 				if(buttons[button].lastRelease<gu->gameTime-0.2){
-					if(keyCtrl() && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
+					if(keys[VK_CONTROL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(unit);
 					} else {
 						selectedUnits.AddUnit(unit);
@@ -525,7 +540,7 @@ void CMouseHandler::DrawCursor(void)
 std::string CMouseHandler::GetCurrentTooltip(void)
 {
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers->begin();ri!=inputReceivers->end();++ri){
+	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->IsAbove(lastx,lasty)){
 			std::string s=(*ri)->GetTooltip(lastx,lasty);
 			if(s!="")
@@ -550,7 +565,9 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		if(dist<8900){
 			float3 pos=camera->pos+dir*dist;
 			char tmp[500];
-			sprintf(tmp,"Pos %.0f %.0f Elevation %.0f",pos.x,pos.z,pos.y);
+			CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
+			string ttype=tt->name;
+			sprintf(tmp,"Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\nSpeeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",pos.x,pos.z,pos.y,ttype.c_str(),tt->tankSpeed,tt->kbotSpeed,tt->hoverSpeed,tt->shipSpeed,tt->hardness*mapDamage->mapHardness,readmap->metalMap->getMetalAmount((int)(pos.x/16),(int)(pos.z/16)));
 			return tmp;
 		} else {
 			return "";

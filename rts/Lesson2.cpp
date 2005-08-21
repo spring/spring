@@ -29,6 +29,8 @@
 #include "GameSetup.h"
 #include "CameraController.h"
 #include "Net.h"
+#include "ArchiveScanner.h"
+#include "VFSHandler.h"
 //#include "mmgr.h"
 
 #include "NewGuiDefine.h"
@@ -509,15 +511,14 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 		case 523: //Mouse key4?:
 		{
 			if(mouse)
-				mouse->MousePress(mouse->lastx,mouse->lasty,4);
+				mouse->MousePress(mouse->lastx,mouse->lasty,3+HIWORD(wParam));
 			return 0;
 		}
 	}
 //	if(info)
-//		info->AddLine("msg %i",uMsg);
+//		info->AddLine("msg %i %i",uMsg,HIWORD(wParam));
 	// Pass All Unhandled Messages To DefWindowProc
 	return DefWindowProc(hWnd,uMsg,wParam,lParam);
-
 }
 
 BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -680,13 +681,20 @@ BOOL CALLBACK crashCallback(LPVOID crState)
 
 	// Since we are going down, it's ok to delete the info console (it can't be mailed otherwise)
 	delete info;
-	if (net->recordDemo)
+	bool wasRecording = false;
+	if (net->recordDemo) {
 		delete net->recordDemo;
+		wasRecording = true;
+	}
 
 #ifdef CRASHRPT
 	AddFile("infolog.txt", "Spring information log");
 	AddFile("test.sdf", "Spring game demo");
+
+	if (wasRecording)
+		AddFile(net->demoName.c_str(), "Spring game demo");
 #endif
+
 	return true;
 }
 
@@ -715,6 +723,15 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	gs=new CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
+
+	// Create the archive scanner and vfs handler
+	archiveScanner = new CArchiveScanner();
+	archiveScanner->ReadCacheData();
+	archiveScanner->Scan("./maps");
+	archiveScanner->Scan("./base");
+	archiveScanner->Scan("./mods");
+	archiveScanner->WriteCacheData();
+	hpiHandler = new CVFSHandler();
 
 	ENTER_SYNCED;
 	gameSetup=new CGameSetup();
@@ -781,6 +798,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #endif
 	pregame=new CPreGame(server);
 
+	#ifdef NEW_GUI
+	guicontroller = new GUIcontroller();
+	#endif
 #ifdef USE_GLUT
 
 	glutKeyboardUpFunc(processNormalKeysUP);
@@ -829,10 +849,18 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	// Shutdown
 	delete gameSetup;
+	delete pregame;								//in case we exit during init
 	delete game;
 	delete font;
+#ifdef _WIN32
+	RegHandler::Deallocate();
+#else
+	dotfileHandler::Deallocate();
+#endif
 	UnloadExtensions();
 	KillGLWindow();									// Kill The Window
+	delete gs;
+	delete gu;
 	END_SYNCIFY;
 	//m_dumpMemoryReport();
 #ifndef USE_GLUT

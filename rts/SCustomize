@@ -1,4 +1,4 @@
 #build options scons -h for available options
 #option=value
-debug=0
+debug=1
 force_glextensions=1

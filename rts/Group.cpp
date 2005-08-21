@@ -17,18 +17,19 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGroup::CGroup(string dllName,int id)
+CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 : lastCommandPage(0),
 	id(id),
 	ai(0),
 	m_hDLL(0),
-	currentAiNum(0)
+	currentAiNum(0),
+	handler(grouphandler)
 {
 	callback=new CGroupAiCallback(this);
 	SetNewAI(dllName);
 
 	int a=0;
-	for(map<string,string>::iterator aai=grouphandler->availableAI.begin();aai!=grouphandler->availableAI.end() && dllName!=aai->first;++aai){
+	for(map<string,string>::iterator aai=handler->availableAI.begin();aai!=handler->availableAI.end() && dllName!=aai->first;++aai){
 		a++;
 	}
 	currentAiNum=a;
@@ -105,7 +106,8 @@ void CGroup::SetNewAI(string dllName)
 
 void CGroup::Update()
 {
-	if(units.empty() && id>=10){
+	if(units.empty() && id>=10 && handler==grouphandler){		//last check is a hack so globalai groups dont get erased
+		handler->RemoveGroup(this);
 		grouphandler->RemoveGroup(this);
 		return;
 	}
@@ -134,7 +136,7 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	sprintf(t,"%i",currentAiNum);
 	c.params.push_back(t);
 	map<string,string>::iterator aai;
-	for(aai=grouphandler->availableAI.begin();aai!=grouphandler->availableAI.end();++aai){
+	for(aai=handler->availableAI.begin();aai!=handler->availableAI.end();++aai){
 		c.params.push_back(aai->second.c_str());
 	}
 	myCommands.push_back(c);
@@ -156,7 +158,7 @@ void CGroup::GiveCommand(Command c)
 	if(c.id==CMD_AISELECT){
 		map<string,string>::iterator aai;
 		int a=0;
-		for(aai=grouphandler->availableAI.begin();aai!=grouphandler->availableAI.end() && a<c.params[0];++aai){
+		for(aai=handler->availableAI.begin();aai!=handler->availableAI.end() && a<c.params[0];++aai){
 			a++;
 		}
 		currentAiNum=(int)c.params[0];

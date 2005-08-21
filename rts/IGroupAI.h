@@ -14,7 +14,7 @@
 #include "command.h"
 class IGroupAiCallback;
 
-#define AI_INTERFACE_VERSION 1
+#define AI_INTERFACE_VERSION 2
 
 class IGroupAI  
 {

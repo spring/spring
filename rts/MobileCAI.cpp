@@ -126,12 +126,16 @@ void CMobileCAI::SlowUpdate()
 			patrolTime=1;
 		}
 		Command& c=commandQue[activeCommand];
+		if(c.params.size()<3){		//this shouldnt happen but anyway ...
+			info->AddLine("Error: got patrol cmd with less than 3 params on %s in mobilecai",owner->unitDef->humanName.c_str());
+			return;
+		}
 		patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
 		patrolTime++;
 
 		if(!(patrolTime&1) && owner->fireState==2){
 			CUnit* enemy=helper->GetClosestEnemyUnit(curPos,owner->maxRange+100*owner->moveState*owner->moveState,owner->allyteam);
-			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater) && !(owner->unitDef->noChaseCategory & enemy->category)){			//todo: make sure they dont stray to far from path
+			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater) && !(owner->unitDef->noChaseCategory & enemy->category) && !owner->weapons.empty()){			//todo: make sure they dont stray to far from path
 				Command c2;
 				c2.id=CMD_ATTACK;
 				c2.options=c.options;
@@ -143,7 +147,7 @@ void CMobileCAI::SlowUpdate()
 				return;
 			}
 		}
-		if((curPos-patrolGoal).SqLength2D()<1024 || owner->moveType->progressState==CMoveType::Failed){
+		if((curPos-patrolGoal).SqLength2D()<4096 || owner->moveType->progressState==CMoveType::Failed){
 			if(owner->group)
 				owner->group->CommandFinished(owner->id,CMD_PATROL);
 
@@ -166,7 +170,7 @@ void CMobileCAI::SlowUpdate()
 	case CMD_DGUN:
 		if(!inCommand){
 			if(c.params.size()==1){
-				if(uh->units[int(c.params[0])]!=0){
+				if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
 					float3 fix=uh->units[int(c.params[0])]->pos+owner->posErrorVector*128;
 					SetGoal(fix,curPos);
 					orderTarget=uh->units[int(c.params[0])];
@@ -264,29 +268,12 @@ void CMobileCAI::SetGoal(float3 &pos,float3& curPos, float goalRadius)
 		return;
 	goalPos=pos;
 	owner->moveType->StartMoving(pos, goalRadius);
-/*
-	//Creates a MOVE-command and sends it to the new unit AI-system.
-	if(owner->ai) {
-		CCommand* com = new CCommand();
-		com->SetMove(pos, goalRadius, maxWantedSpeed);
-		com->prioritized = true;
-		com->clearQueue = true;
-		owner->ai->GiveCommand(com);
-	}*/
 }
 
 void CMobileCAI::StopMove()
 {
 	owner->moveType->StopMoving();
 	goalPos=owner->pos;
-/*
-	//Creates a STOP-command and sends it to the new unit AI-system.
-	if(owner->ai) {
-		CCommand* com = new CCommand();
-		com->prioritized=true;
-		com->clearQueue=true;
-		owner->ai->GiveCommand(com);
-	}*/
 }
 
 void CMobileCAI::DrawCommands(void)
@@ -300,12 +287,12 @@ void CMobileCAI::DrawCommands(void)
 		bool draw=false;
 		switch(ci->id){
 		case CMD_MOVE:
-			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,1,0.5,0.4);
 			draw=true;
 			break;
 		case CMD_PATROL:
-			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);
 			draw=true;
 			break;
@@ -315,7 +302,7 @@ void CMobileCAI::DrawCommands(void)
 				if(uh->units[int(ci->params[0])]!=0)
 					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
 			} else {
-				pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			}
 			glColor4f(1,0.5,0.5,0.4);
 			draw=true;
@@ -402,7 +389,7 @@ void CMobileCAI::IdleCheck(void)
 		}
 	}
 	lastIdleCheck=gs->frameNum;
-	if((owner->pos-lastUserGoal).SqLength2D()>10000 && !owner->haveTarget){
+	if((owner->pos-lastUserGoal).SqLength2D()>10000 && !owner->haveTarget && !dynamic_cast<CTAAirMoveType*>(owner->moveType)){
 		Command c;
 		c.id=CMD_MOVE;
 		c.options=0;		//note that this is not internal order so that we dont keep generating new orders if we cant get to that pos

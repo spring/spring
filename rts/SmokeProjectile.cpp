@@ -16,7 +16,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmokeProjectile::CSmokeProjectile(float3 pos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color)
+CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color)
 : CProjectile(pos,speed,owner),
 	color(color),
 	age(0),
@@ -74,10 +74,12 @@ void CSmokeProjectile::Draw()
 	float xmod=0.125+(float(int(frame%6)))/16;
 	float ymod=(int(frame/6))/16.0;
 
-	float3 interPos=pos+speed*gu->timeOffset;
-	float interSize=size+sizeExpansion*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize,xmod,ymod,col);
-	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize,xmod+1.0/16,ymod,col);
-	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,xmod+1.0/16,ymod+1.0/16,col);
-	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,xmod,ymod+1.0/16,col);
+	const float3 interPos(pos+speed*gu->timeOffset);
+	const float interSize=size+sizeExpansion*gu->timeOffset;
+	const float3 pos1 ((camera->right - camera->up) * interSize);
+	const float3 pos2 ((camera->right + camera->up) * interSize);
+	va->AddVertexTC(interPos-pos2,xmod,ymod,col);
+	va->AddVertexTC(interPos+pos1,xmod+1.0/16,ymod,col);
+	va->AddVertexTC(interPos+pos2,xmod+1.0/16,ymod+1.0/16,col);
+	va->AddVertexTC(interPos-pos1,xmod,ymod+1.0/16,col);
 }

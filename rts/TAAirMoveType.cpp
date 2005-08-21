@@ -51,15 +51,28 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 CTAAirMoveType::~CTAAirMoveType(void)
 {
 }
+/*
+float globalForce=15;
+extern float globalArf;
+float3 marfmurf(1,2,1);
+void arfurf()
+{
+	float3 murf=UpVector*globalForce;
+	globalForce=globalForce+23*globalForce+murf.y;
+	globalForce=globalArf;
+}
 
+void TestDenormal(float f)
+{
+	if(f>globalArf)
+		globalForce=globalArf;
+	arfurf();
+}
+*/
 void CTAAirMoveType::SetGoal(float3 newPos, float distance)
 {
-	//Calculate a position on the circle to start on
-	maxDrift=distance;
-/*	float3 wantedPos = owner->pos - newPos;
-	wantedPos.y = 0;
-	wantedPos = wantedPos.Normalize() * distance;
-*/
+	maxDrift=max(16.0f,distance);	//aircrafts need some marginals to avoid uber stacking when lots of them are ordered to one place
+
 	goalPos = newPos;
 	forceHeading=false;
 	wantedHeight=orgWantedHeight;
@@ -270,7 +283,10 @@ void CTAAirMoveType::UpdateFlying()
 				if (waitCounter > 100) {
 					//info->AddLine("moving circlepos");
 					float3 relPos = pos - circlingPos;
+					if(relPos.x<0.0001 && relPos.x>-0.0001)
+						relPos.x=0.0001;
 					relPos.y = 0;
+					relPos.Normalize();
 					CMatrix44f rot;
 					rot.RotateY(1.0f);
 					float3 newPos = rot.Mul(relPos);
@@ -286,7 +302,10 @@ void CTAAirMoveType::UpdateFlying()
 			case FLY_ATTACKING:{
 				//info->AddLine("wait is %d", waitCounter);
 				float3 relPos = pos - circlingPos;
+				if(relPos.x<0.0001 && relPos.x>-0.0001)
+					relPos.x=0.0001;
 				relPos.y = 0;
+				relPos.Normalize();
 				CMatrix44f rot;
 				if (gs->randFloat()>0.5)
 					rot.RotateY(0.6f+gs->randFloat()*0.6);
@@ -333,20 +352,20 @@ void CTAAirMoveType::UpdateFlying()
 		}
 	}
 	//no, so go there!
-	else {
-		dir.y = 0;
-		float realMax = maxSpeed;
-		float dist=dir.Length2D();
+	
+	dir.y = 0;
+	float realMax = maxSpeed;
+	float dist=dir.Length2D();
 
-		//If we are close to our goal, we should go slow enough to be able to break in time
-		if (dir.SqLength2D() < breakDistance * breakDistance) {
-			realMax = sqrt(dir.Length2D() * decRate);
-			//info->AddLine("Break! %f %f %f", maxSpeed, dir.Length2D(), realMax);
-		}
-
-		wantedSpeed = dir.Normalize() * realMax;
-
+	//If we are close to our goal, we should go slow enough to be able to break in time
+	//if in attack mode dont slow down
+	if (flyState!=FLY_ATTACKING && dist < breakDistance) {
+		realMax = dist/(speed.Length2D()+0.01) * decRate;
+		//info->AddLine("Break! %f %f %f", maxSpeed, dir.Length2D(), realMax);
 	}
+
+	wantedSpeed = dir.Normalize() * realMax;
+
 	UpdateAirPhysics();
 
 
@@ -391,6 +410,7 @@ void CTAAirMoveType::UpdateLanding()
 		} else {
 			if(goalPos.distance2D(pos)<30){
 				goalPos=goalPos+gs->randVector()*300;
+				goalPos.CheckInBounds();
 			}
 			flyState = FLY_LANDING;
 			UpdateFlying();
@@ -425,9 +445,9 @@ void CTAAirMoveType::UpdateHeading()
 		deltaHeading= forceHeadingTo - heading;
 
 	if(deltaHeading > 0){
-		heading += deltaHeading > turnRate ? (short int)turnRate : deltaHeading;		//min(deltaHeading, turnRate);
+		heading += deltaHeading > (short int)turnRate ? (short int)turnRate : deltaHeading;		//min(deltaHeading, turnRate);
 	} else {
-		heading += deltaHeading > (-turnRate) ? deltaHeading : (-(short int)turnRate);  //max(-turnRate, deltaHeading);
+		heading += deltaHeading > (short int)(-turnRate) ? deltaHeading : (short int)(-turnRate);  //max(-turnRate, deltaHeading);
 	}	
 }
 
@@ -565,50 +585,55 @@ void CTAAirMoveType::Update()
 		ExecuteStop();
 
 	float3 lastSpeed = speed;
-#ifdef DIRECT_CONTROL_ALLOWED
-	if(owner->directControl){
-		DirectControlStruct* dc=owner->directControl;
-		aircraftState=AIRCRAFT_FLYING;
 
-		float3 forward=dc->viewDir;
-		float3 flatForward=forward;
-		flatForward.y=0;
-		flatForward.Normalize();
-		float3 right=forward.cross(UpVector);
-
+	if(owner->stunned){
 		wantedSpeed=ZeroVector;
-		if(dc->forward)
-			wantedSpeed+=flatForward;
-		if(dc->back)
-			wantedSpeed-=flatForward;
-		if(dc->right)
-			wantedSpeed+=right;
-		if(dc->left)
-			wantedSpeed-=right;
-		wantedSpeed.Normalize();
-		wantedSpeed*=maxSpeed;
 		UpdateAirPhysics();
-		wantedHeading=GetHeadingFromVector(flatForward.x,flatForward.z);
+	} else {
+#ifdef DIRECT_CONTROL_ALLOWED
+		if(owner->directControl){
+			DirectControlStruct* dc=owner->directControl;
+			aircraftState=AIRCRAFT_FLYING;
 
-	} else 
+			float3 forward=dc->viewDir;
+			float3 flatForward=forward;
+			flatForward.y=0;
+			flatForward.Normalize();
+			float3 right=forward.cross(UpVector);
+
+			wantedSpeed=ZeroVector;
+			if(dc->forward)
+				wantedSpeed+=flatForward;
+			if(dc->back)
+				wantedSpeed-=flatForward;
+			if(dc->right)
+				wantedSpeed+=right;
+			if(dc->left)
+				wantedSpeed-=right;
+			wantedSpeed.Normalize();
+			wantedSpeed*=maxSpeed;
+			UpdateAirPhysics();
+			wantedHeading=GetHeadingFromVector(flatForward.x,flatForward.z);
+
+		} else 
 #endif
-	{
-	//Main state handling
-	switch (aircraftState) {
-		case AIRCRAFT_LANDED:
-			UpdateLanded();
-			break;
-		case AIRCRAFT_TAKEOFF:
-			UpdateTakeoff();
-			break;
-		case AIRCRAFT_FLYING:
-			UpdateFlying();
-			break;
-		case AIRCRAFT_LANDING:
-			UpdateLanding();
-			break;
-	}
-
+		{
+			//Main state handling
+			switch (aircraftState) {
+				case AIRCRAFT_LANDED:
+					UpdateLanded();
+					break;
+				case AIRCRAFT_TAKEOFF:
+					UpdateTakeoff();
+					break;
+				case AIRCRAFT_FLYING:
+					UpdateFlying();
+					break;
+				case AIRCRAFT_LANDING:
+					UpdateLanding();
+					break;
+			}
+		}
 	}
 	deltaSpeed = speed - lastSpeed;
 	deltaSpeed.y = 0;					//Banking requires this
@@ -704,6 +729,9 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 {
 	//Sometimes we can never land
 	if (dontLand)
+		return false;
+
+	if(pos.x<0 || pos.z<0 || pos.x>float3::maxxpos || pos.z>float3::maxzpos)
 		return false;
 
 	float h = ground->GetApproximateHeight(pos.x, pos.z);

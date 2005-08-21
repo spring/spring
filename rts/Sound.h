@@ -48,7 +48,7 @@ public:
 	virtual ~CSound();
 	void Update();
 	int GetWaveId(const string& name);
-	void PlaySound(int id);
+	void PlaySound(int id,float volume=1);
 	void PlaySound(int id,CWorldObject* p,float volume=1);
 	void PlaySound(int id,const float3& p,float volume=1);
 

@@ -35,7 +35,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	areaOfEffect(areaOfEffect)
 {
 	this->uptime=uptime;
-	ttl=uptime+(int)(weaponDef->range/maxSpeed)+100;
+	ttl=(int)min(3000.f,uptime+weaponDef->range/maxSpeed+100);
 
 	if(!weaponDef->visuals.modelName.empty()){
 		S3DOModel* model = unit3doparser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName+".3do",1,0);
@@ -136,7 +136,7 @@ void CStarburstProjectile::Update(void)
 			curSpeed+=0.1;
 		dir=UpVector;
 		speed=dir*curSpeed;
-	} else if(doturn){
+	} else if(doturn && ttl>0){
 		float3 dif(targetPos-pos);
 		dif.Normalize();
 		if(dif.dot(dir)>0.99){
@@ -282,6 +282,8 @@ void CStarburstProjectile::Draw(void)
 
 void CStarburstProjectile::DrawCallback(void)
 {
+	float3 interPos=pos+speed*gu->timeOffset;
+
 	(*numCallback)++;
 	if(*numCallback<2)
 		return;
@@ -334,21 +336,23 @@ void CStarburstProjectile::DrawCallback(void)
 	col[1]=180;
 	col[2]=180;
 	col[3]=1;
-	int fsize = 25;
-	va->AddVertexTC(pos-camera->right*fsize-camera->up*fsize,0.51,0.13,col);
-	va->AddVertexTC(pos+camera->right*fsize-camera->up*fsize,0.99,0.13,col);
-	va->AddVertexTC(pos+camera->right*fsize+camera->up*fsize,0.99,0.36,col);
-	va->AddVertexTC(pos-camera->right*fsize+camera->up*fsize,0.51,0.36,col);
+	float fsize = 25.0f;
+	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,0.51,0.13,col);
+	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,0.99,0.13,col);
+	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,0.99,0.36,col);
+	va->AddVertexTC(interPos-camera->right*fsize+camera->up*fsize,0.51,0.36,col);
 }
 
 void CStarburstProjectile::DrawUnitPart(void)
 {
+	float3 interPos=pos+speed*gu->timeOffset;
 	glPushMatrix();
 	float3 rightdir;
 	if(dir.y!=1)
 		rightdir=dir.cross(UpVector);
 	else
 		rightdir=float3(1,0,0);
+	rightdir.Normalize();
 	float3 updir=rightdir.cross(dir);
 
 	CMatrix44f transMatrix;
@@ -361,9 +365,9 @@ void CStarburstProjectile::DrawUnitPart(void)
 	transMatrix[8]=dir.x;
 	transMatrix[9]=dir.y;
 	transMatrix[10]=dir.z;
-	transMatrix[12]=pos.x;
-	transMatrix[13]=pos.y;
-	transMatrix[14]=pos.z;
+	transMatrix[12]=interPos.x;
+	transMatrix[13]=interPos.y;
+	transMatrix[14]=interPos.z;
 	glMultMatrixf(&transMatrix[0]);		
 
 	glCallList(modelDispList);

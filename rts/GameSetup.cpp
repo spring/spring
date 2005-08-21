@@ -13,6 +13,8 @@
 #include "Net.h"
 #include "FileHandler.h"
 #include "StartPosSelecter.h"
+#include "ArchiveScanner.h"
+#include "VFSHandler.h"
 
 CGameSetup* gameSetup=0;
 
@@ -64,8 +66,21 @@ bool CGameSetup::Init(char* buf, int size)
 		return false;
 
 	mapname=file->SGetValueDef("","GAME\\mapname");
+	baseMod=file->SGetValueDef("xta_se_060.sdz","GAME\\Gametype");
 	file->GetDef(hostip,"0","GAME\\HostIP");
 	file->GetDef(hostport,"0","GAME\\HostPort");
+	file->GetDef(maxUnits,"500","GAME\\MaxUnits");
+	file->GetDef(gs->gameMode,"0","GAME\\GameMode");
+
+	// Determine if the map is inside an archive, and possibly map needed archives
+	CFileHandler* f = new CFileHandler("maps/" + mapname);
+	if (!f->FileExists()) {
+		vector<string> ars = archiveScanner->GetArchivesForMap(mapname);
+		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+			hpiHandler->AddArchive(*i, false);
+		}
+	}
+	delete f;
 
 	file->GetDef(myPlayer,"0","GAME\\MyPlayerNum");
 	gu->myPlayerNum=myPlayer;
@@ -89,7 +104,7 @@ bool CGameSetup::Init(char* buf, int size)
 		} else {								//random order
 			std::multimap<int,int> startNums;
 			for(int a=0;a<gs->activeTeams;++a)
-				startNums.insert(pair<int,int>(gs->randInt(),a));
+				startNums.insert(pair<int,int>(gu->usRandInt(),a));	//server syncs these later
 			int b=0;
 			for(std::multimap<int,int>::iterator si=startNums.begin();si!=startNums.end();++si){
 				teamStartNum[si->second]=b;
@@ -109,7 +124,7 @@ bool CGameSetup::Init(char* buf, int size)
 	gu->spectating=gs->players[myPlayer]->spectator;
 
 	CSunParser p2;
-	p2.LoadFile(mapname.substr(0,mapname.find('.'))+".smd");
+	p2.LoadFile(string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd");
 
 	for(int a=0;a<gs->activeTeams;++a){
 		char section[50];
@@ -125,6 +140,7 @@ bool CGameSetup::Init(char* buf, int size)
 		gs->teams[a]->side=file->SGetValueDef("arm",s+"side").c_str();
 		std::transform(gs->teams[a]->side.begin(), gs->teams[a]->side.end(), gs->teams[a]->side.begin(), (int (*)(int))std::tolower);
 		gs->team2allyteam[a]=atoi(file->SGetValueDef("0",s+"allyteam").c_str());
+		aiDlls[a]=file->SGetValueDef("",s+"aidll");
 
 		float x,z;
 		char teamName[50];

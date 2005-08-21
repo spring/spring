@@ -22,10 +22,13 @@
 #include "Camera.h"
 #include "CommandAI.h"
 #include "Mobility.h"
+#include "MoveMath.h"
+#include "GeometricObjects.h"
+#include "SelectedUnits.h"
+#include "GroundDecalHandler.h"
 //#include "mmgr.h"
 
 const unsigned int MAX_REPATH_FREQUENCY = 30;		//The minimum of frames between two full path-requests.
-const unsigned int FAILURE_RETRIALS = 5;			//The number of retrials a unit will make before failing it's action.
 
 const float ETA_ESTIMATION = 1.5;					//How much time the unit are given to reach the waypoint.
 const float MAX_WAYPOINT_DISTANCE_FACTOR = 2.0;		//Used to tune how often new waypoints are requested. Multiplied with MinDistanceToWaypoint().
@@ -34,6 +37,7 @@ const float MAX_OFF_PATH_FACTOR = 20;				//How far away from a waypoint a unit c
 const float MINIMUM_SPEED = 0.01;					//Minimum speed a unit may move in.
 
 static const bool DEBUG_CONTROLLER=false;
+std::vector<int2> CGroundMoveType::lineTable[11][11];
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -64,9 +68,11 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	goal(0,0,0),
 	goalRadius(0),
 	waypoint(0,0,0),
+	nextWaypoint(0,0,0),
 	etaWaypoint(0),
-	atWaypoint(false),
-	waypointIsBlocked(false),
+	etaWaypoint2(0),
+	terrainSpeed(1),
+	atGoal(false),
 	haveFinalWaypoint(false),
 	requestedSpeed(0),
 	requestedTurnRate(0),
@@ -76,26 +82,26 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	restartDelay(0),
 	lastGetPathPos(0,0,0),
 
-	getPathFailures(0),
 	pathFailures(0),
-	speedFailures(0),
 	etaFailures(0),
 	nonMovingFailures(0),
-	obstacleFailures(0),
-	blockingFailures(0),
 
 	nextDeltaSpeedUpdate(0),
 	nextObstacleAvoidanceUpdate(0),
-	oldPhysState(CSolidObject::OnGround)
+	oldPhysState(CSolidObject::OnGround),
+	lastTrackUpdate(0)
 {
-	moveSquareX=(int)owner->pos.x/SQUARE_SIZE;
-	moveSquareY=(int)owner->pos.z/SQUARE_SIZE;
+	moveSquareX=(int)owner->pos.x/(SQUARE_SIZE*2);
+	moveSquareY=(int)owner->pos.z/(SQUARE_SIZE*2);
 }
 
 CGroundMoveType::~CGroundMoveType()
 {
 	if(pathId)
 		pathManager->DeletePath(pathId);
+
+	if(owner->myTrack)
+		groundDecals->RemoveUnit(owner);
 }
 
 void CGroundMoveType::Update()
@@ -112,10 +118,18 @@ void CGroundMoveType::Update()
 		return;
 	}
 
+	if(owner->stunned){
+		owner->cob->Call(COBFN_StopMoving);
+		owner->speed=ZeroVector;
+		return;
+	}
+
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl){
+		waypoint=owner->pos+owner->frontdir*100;
+		waypoint.CheckInBounds();
 		if(owner->directControl->forward){
-			wantedSpeed=maxSpeed;
+			wantedSpeed=maxSpeed*2;
 			SetDeltaSpeed();
 			owner->isMoving = true;
 			owner->cob->Call(COBFN_StartMoving);
@@ -142,34 +156,24 @@ void CGroundMoveType::Update()
 	} else
 #endif
 	{
-	//The system should only be runned if there is a need for it.
 	if(pathId || currentSpeed > 0.0) {	//TODO: Stop the unit from moving as a reaction on collision/explosion physics.
 		//Initial calculations.
 		currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
 
-		//-- Waypoint --//
-		//If close to waypoint, waypoint blocked or ETA has passed, then get next one in path.
-		if(pathId && !atWaypoint &&
-		(waypointIsBlocked || currentDistanceToWaypoint < MinDistanceToWaypoint() || gs->frameNum > etaWaypoint)) {
-			if(gs->frameNum > etaWaypoint)
-				etaFailures++;
-			else
-				etaFailures=0;
-			if(waypointIsBlocked){
-				blockingFailures++;
-				if(DEBUG_CONTROLLER)
-					info->AddLine("Blocking failure %i %i %i %i %i %i",owner->id,pathId, !atWaypoint,waypointIsBlocked, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
-				if(blockingFailures>5+owner->pos.distance2D(goal)*0.5){
-					Fail();
-					blockingFailures=0;
-				}
-			} else {
-				blockingFailures=0;
-			}
+		if(pathId && !atGoal && gs->frameNum > etaWaypoint) {
+			etaFailures+=10;
+			etaWaypoint= INT_MAX;
 			if(DEBUG_CONTROLLER)
-				info->AddLine("new waypoint %i %i %i %i %i %i",owner->id,pathId, !atWaypoint,waypointIsBlocked, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
-			GetNextWaypoint();
-			currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
+				info->AddLine("eta failure %i %i %i %i %i",owner->id,pathId, !atGoal,currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
+		}
+		if(pathId && !atGoal && gs->frameNum > etaWaypoint2) {
+			if(owner->pos.distance2D(goal)>200 || CheckGoalFeasability()){
+				etaWaypoint2+=100;
+			} else {
+				if(DEBUG_CONTROLLER)
+					info->AddLine("Goal clogged up2 %i",owner->id);
+				Fail();
+			}
 		}
 
 		//Set direction to waypoint.
@@ -179,13 +183,13 @@ void CGroundMoveType::Update()
 
 
 		//Has reached the waypoint? (=> arrived at goal)
-		if(pathId && !atWaypoint && haveFinalWaypoint && (owner->pos - waypoint).SqLength2D() < SQUARE_SIZE*SQUARE_SIZE)
+		if(pathId && !atGoal && haveFinalWaypoint && (owner->pos - waypoint).SqLength2D() < SQUARE_SIZE*SQUARE_SIZE*2)
 			Arrived();
 
 
 		//-- Steering --//
 		//Apply obstacle avoidance.
-		float3 desiredVelocity = ObstacleAvoidance(waypointDir);
+		float3 desiredVelocity = /*waypointDir/*/ObstacleAvoidance(waypointDir)/**/;
 
 		if(desiredVelocity != ZeroVector)
 			ChangeHeading(GetHeadingFromVector(desiredVelocity.x, desiredVelocity.z));
@@ -221,6 +225,7 @@ void CGroundMoveType::Update()
 	}
 
 	if(owner->pos!=oldPos){
+		TestNewTerrainSquare();
 		CheckCollision();
 		float wh;
 		if(floatOnWater){
@@ -235,6 +240,11 @@ void CGroundMoveType::Update()
 		owner->speed=owner->pos-oldPos;
 		owner->midPos = owner->pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
 		oldPos=owner->pos;
+
+		if(groundDecals && owner->unitDef->leaveTracks && lastTrackUpdate<gs->frameNum-7 && (owner->losStatus[gu->myAllyTeam] & LOS_INLOS)){
+			lastTrackUpdate=gs->frameNum;
+			groundDecals->UnitMoved(owner);
+		}
 	} else {
 		owner->speed=ZeroVector;
 	}
@@ -249,11 +259,17 @@ void CGroundMoveType::SlowUpdate()
 	}
 
 	//If got too far away from path, then need to reconsider.
-	if(progressState == Active && owner->midPos.distance2D(waypoint) > MaxDistanceToWaypoint() || etaFailures>2) {
-		if(DEBUG_CONTROLLER)
-			info->AddLine("Unit drifted %i",owner->id);
-		StopEngine();
-		StartEngine();
+	if(progressState == Active && etaFailures>8) {
+		if(owner->pos.distance2D(goal)>200 || CheckGoalFeasability()){
+			if(DEBUG_CONTROLLER)
+				info->AddLine("Unit eta failure %i",owner->id);
+			StopEngine();
+			StartEngine();
+		} else {
+			if(DEBUG_CONTROLLER)
+				info->AddLine("Goal clogged up %i",owner->id);
+			Fail();
+		}
 	}
 
 	//If the action is active, but not the engine and the
@@ -269,6 +285,16 @@ void CGroundMoveType::SlowUpdate()
 		info->AddLine("Deleting unit due to bad coord %i %f %f %f %s",owner->id,owner->pos.x,owner->pos.y,owner->pos.z,owner->unitDef->humanName.c_str());
 		uh->DeleteUnit(owner);
 	}*/
+
+	float wh;		//need the following if the ground change height when unit stand still
+	if(floatOnWater){
+		wh = ground->GetHeight(owner->pos.x, owner->pos.z);
+		if(wh==0)
+			wh=-owner->unitDef->waterline;
+	} else {
+		wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
+	}
+	owner->pos.y=wh;
 
 	if(!(owner->pos==oldSlowUpdatePos)){
 		oldSlowUpdatePos=owner->pos;
@@ -294,7 +320,7 @@ void CGroundMoveType::SlowUpdate()
 Sets unit to start moving against given position with max speed.
 */
 void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
-	StartMoving(pos, goalRadius, maxSpeed);
+	StartMoving(pos, goalRadius, maxSpeed*2);
 }
 
 
@@ -314,10 +340,9 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	//Sets the new goal.
 	goal = moveGoalPos;
 	this->goalRadius = goalRadius;
-	requestedSpeed = min(speed, owner->mobility->maxSpeed);
+	requestedSpeed = min(speed, maxSpeed*2);
 	requestedTurnRate = owner->mobility->maxTurnRate;
-	atWaypoint = false;
-	getPathFailures = 0;
+	atGoal = false;
 
 	progressState = Active;
 
@@ -339,12 +364,12 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 	if(DEBUG_CONTROLLER)
-		*info << "SMove: Action stopped.\n";
+		*info << "SMove: Action stopped." << " " << owner->id << "\n";
 
 	StopEngine();
 
 	if(progressState != Done)
-		progressState = Failed;
+		progressState = Done;
 }
 
 void CGroundMoveType::SetDeltaSpeed(void)
@@ -361,24 +386,24 @@ void CGroundMoveType::SetDeltaSpeed(void)
 	float wSpeed = maxSpeed;
 
 	//Limiting speed and acceleration.
-	if(wSpeed > 0) {
+	if(wantedSpeed > 0) {
 		float groundMod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, owner->pos,flatFrontDir);
-		if(groundMod < 0.01){
-			if(DEBUG_CONTROLLER)
-				info->AddLine("Speed failure %i",speedFailures);
-			if(speedFailures>4){
-				speedFailures=0;
-	//			Fail();
-				StopMoving();
-			} else {
-				speedFailures++;
-			}
-		}
 		wSpeed *= groundMod;
+
+		float3 goalDif=waypoint-owner->pos;
+		short turn=owner->heading-GetHeadingFromVector(goalDif.x,goalDif.z);
+		if(turn!=0){
+			float goalLength=goalDif.Length();
+
+			float turnSpeed=(goalLength+8)/(abs(turn)/turnRate)*0.5;
+			if(turnSpeed<wSpeed)		//make sure we can turn fast enought to get hit the goal
+				wSpeed=turnSpeed;
 	}
 	if(wSpeed>wantedSpeed)
 		wSpeed=wantedSpeed;
-
+	} else {
+		wSpeed=0;
+	}
 	//Limit change according to acceleration.
 	float dif = wSpeed - currentSpeed;
 
@@ -683,17 +708,34 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 		//Speed-optimizer. Reduces the times this system is runned.
 		if(gs->frameNum>=nextObstacleAvoidanceUpdate) {
 			nextObstacleAvoidanceUpdate=gs->frameNum+4;
-			float currentDistanceToGoal = owner->midPos.distance2D(goal);
+
+			//first check if the current waypoint is reachable
+			int wsx=(int)waypoint.x / (SQUARE_SIZE*2);
+			int wsy=(int)waypoint.z / (SQUARE_SIZE*2);
+			int ltx=wsx-moveSquareX+5;
+			int lty=wsy-moveSquareY+5;
+			if(ltx>=0 && ltx<11 && lty>=0 && lty<11){
+				for(std::vector<int2>::iterator li=lineTable[lty][ltx].begin();li!=lineTable[lty][ltx].end();++li){
+					int x=(moveSquareX+li->x)*2;
+					int y=(moveSquareY+li->y)*2;
+					if((owner->unitDef->movedata->moveMath->IsBlocked(*owner->unitDef->movedata, x, y) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN | CMoveMath::BLOCK_MOBILE_BUSY)) || owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, x,y)<=0.01){
+						++etaFailures;		//not reachable, force a new path to be calculated next slowupdate
+						if(DEBUG_CONTROLLER)
+							info->AddLine("Waypoint path blocked %i",owner->id);
+						break;
+					}
+				}
+			}
+			//now we do the obstacle avoidance proper
+			float currentDistanceToGoal = owner->pos.distance2D(goal);
 			float3 rightOfPath = desiredDir.cross(float3(0,1,0));
 			float3 rightOfAvoid = rightOfPath;
+			float speedf=owner->speed.Length2D();
 
 			float avoidLeft = 0;
 			float avoidRight = 0;
 			
-			float forceFieldDistance = currentSpeed * FORCE_FIELD_DISTANCE;
-			float3 forceField;
-
-			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->midPos, max(forceFieldDistance + owner->xsize * SQUARE_SIZE/2, currentDistanceToWaypoint));
+			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf*35 + 30 + owner->xsize/2);
 			vector<CSolidObject*> objectsOnPath;
 
 			vector<CSolidObject*>::iterator oi;
@@ -701,21 +743,23 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				CSolidObject* object = *oi;
 				//Basic blocking-check.
 				MoveData* moveData = owner->mobility->moveData;
-				if(object != owner && moveData->moveMath->IsBlocking(*moveData, object)) {
-					float3 objectToUnit = (owner->midPos - object->midPos);
+				if(object != owner && moveData->moveMath->IsBlocking(*moveData, object) && desiredDir.dot(object->pos-owner->pos)>0) {
+					float3 objectToUnit = (owner->pos - object->pos-object->speed*30);
 					float distanceToObject = objectToUnit.Length();
 					float radiusSum = (owner->xsize + object->xsize) * SQUARE_SIZE/2;
 					//If object is close enought.
-					if(distanceToObject < (AVOIDANCE_DISTANCE * currentDistanceToWaypoint) + object->xsize * SQUARE_SIZE/2
+					if(distanceToObject < speedf*35 + 10 + radiusSum
 					&& distanceToObject < currentDistanceToGoal) {
 						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);	//Positive value means "to right".
 						//If object and unit in relative motion are closing in to each other (or not yet fully apart),
 						//the object are in path of the unit and they are not collided.
 						if(objectToUnit.dot(avoidanceDir) < radiusSum
 						&& fabs(objectDistToAvoidDirCenter) < radiusSum
-						&& Distance2D(owner, object) >= 0) {
+						&& (object->mobility || Distance2D(owner, object) >= 0)) {
 							//Avoid collision by turning the heading to left or right.
 							//Using the one who need most adjustment.
+							if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner)!=selectedUnits.selectedUnits.end())
+								geometricObjects->AddLine(owner->pos+UpVector*20,object->pos+UpVector*20,3,1,4);
 							if(objectDistToAvoidDirCenter > 0) {
 								avoidRight += (radiusSum - objectDistToAvoidDirCenter) * AVOIDANCE_STRENGTH / distanceToObject;
 								avoidanceDir += (rightOfAvoid * avoidRight);
@@ -731,79 +775,18 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						}
 					}
 
-					//Calculating force-field-effect.
-					//strength = F * ((D - d)/D)^2
-					float distanceBetweenObject = max(distanceToObject - radiusSum, (float)0.0);
-					if(distanceBetweenObject < forceFieldDistance) {
-						float relativeDistance = (forceFieldDistance - distanceBetweenObject) / forceFieldDistance;
-						float strength = FORCE_FIELD_STRENGTH * relativeDistance * relativeDistance;
-						objectToUnit.Normalize();	//Could destroy the length of it, as it's not used after this.
-						forceField += (objectToUnit * strength);
-					}
-
-					//Standing on top of waypoint?
-					if(object->midPos.distance2D(waypoint) < object->xsize * SQUARE_SIZE/2) {
-						waypointIsBlocked = true;
-					}
-				}
-			}
-
-			//If there are conteracting objects standing on the path,
-			//then the situation has to be solved in a diffrent way.
-			//This is solved by creating a super-objects.
-			if(fabs(avoidRight) > 0.0 && fabs(avoidLeft) > 0.0) {
-				//Reset avoidance-factors.
-				avoidanceDir = desiredDir;
-				rightOfPath = desiredDir.cross(float3(0,1,0));
-				avoidRight = 0.0;
-				avoidLeft = 0.0;
-
-				//Creates a super-mass-point.
-				float3 superMidPos;
-				for(oi = objectsOnPath.begin(); oi != objectsOnPath.end(); oi++) {
-					superMidPos += (*oi)->midPos;
-				}
-				superMidPos /= (objectsOnPath.size());
-
-				//Gets the smallest super-radius including all objects
-				//in the super-object.
-				float superRadius = 0;
-				for(oi = objectsOnPath.begin(); oi != objectsOnPath.end(); oi++) {
-					float distance = (superMidPos - (*oi)->midPos).Length2D();
-					superRadius = max(superRadius, (distance + (*oi)->xsize * SQUARE_SIZE/2));
-				}
-
-				//If the unit are deeply collided with the super-object,
-				//then the situation might be unsolveable and the unit
-				//has to stop and wait for a new path.
-				float3 superObjectToUnit = (owner->midPos - superMidPos);
-				float distanceToSuperObject = superObjectToUnit.Length2D();
-				float superRadiusSum = superRadius + owner->xsize * SQUARE_SIZE/2;
-				if(distanceToSuperObject < owner->radius) {		//TODO: radius or xsize*SQUARE_SIZE/2 ?
-					avoidanceDir = ZeroVector;
-					obstacleFailures++;
-					if(obstacleFailures>8){
-						if(DEBUG_CONTROLLER)
-							info->AddLine("Obstacle failure %i %i",owner->id,obstacleFailures);
-						StopEngine();
-						obstacleFailures=0;
-					}
-				}
-				//Otherwise the super-object has to be avoided.
-				else {
-					obstacleFailures=0;
-					float superObjectDistToPathCenter = superObjectToUnit.dot(rightOfPath);
-					if(superObjectDistToPathCenter > 0) {
-						avoidRight = (superRadiusSum - superObjectDistToPathCenter) * AVOIDANCE_STRENGTH / distanceToSuperObject;
-					} else {
-						avoidLeft = (superRadiusSum - fabs(superObjectDistToPathCenter)) * AVOIDANCE_STRENGTH / distanceToSuperObject;
-					}
 				}
 			}
 
 			//Sum up avoidance.
 			avoidanceVec = (desiredDir.cross(float3(0,1,0)) * (avoidRight - avoidLeft));
-			avoidanceVec += forceField;
+			if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner)!=selectedUnits.selectedUnits.end()){
+				int a=geometricObjects->AddLine(owner->pos+UpVector*20,owner->pos+UpVector*20+avoidanceVec*40,7,1,4);
+				geometricObjects->SetColor(a,1,0.3,0.3,0.6);
+
+				a=geometricObjects->AddLine(owner->pos+UpVector*20,owner->pos+UpVector*20+desiredDir*40,7,1,4);
+				geometricObjects->SetColor(a,0.3,0.3,1,0.6);
+			}
 		}
 
 		//Return the resulting recommended velocity.
@@ -857,7 +840,7 @@ void CGroundMoveType::GetNewPath()
 		if(DEBUG_CONTROLLER)
 			info->AddLine("Non moving failure %i %i",owner->id,nonMovingFailures);
 		nonMovingFailures++;
-		if(nonMovingFailures>4){
+		if(nonMovingFailures>10){
 			nonMovingFailures=0;
 			Fail();
 			pathId=0;
@@ -872,10 +855,15 @@ void CGroundMoveType::GetNewPath()
 
 	pathId = pathManager->RequestPath(owner->mobility->moveData, owner->pos, goal, goalRadius,owner);
 
+	nextWaypoint=owner->pos;
 	//With new path recived, can't be at waypoint.
 	if(pathId){
-		atWaypoint = false;
+		atGoal = false;
 		haveFinalWaypoint=false;
+		GetNextWaypoint();
+		GetNextWaypoint();
+	} else {
+
 	}
 
 	//Sets the limit for when next path-request could be done.
@@ -889,29 +877,24 @@ Sets waypoint to next in path.
 void CGroundMoveType::GetNextWaypoint() 
 {
 	if(pathId) {
-		float3 lastWaypoint, newWaypoint(0,0,0);
-		float wantedDistanceToWaypoint = MinDistanceToWaypoint() * MAX_WAYPOINT_DISTANCE_FACTOR;
-		//Get new waypoints until get one distant enought, or they start repeating (=> last waypoint in path).
-		do {
-			lastWaypoint = newWaypoint;
-			newWaypoint = pathManager->NextWaypoint(pathId, owner->midPos, wantedDistanceToWaypoint);
-		} while(newWaypoint != float3(-1,-1,-1) && lastWaypoint != newWaypoint && owner->pos.distance2D(newWaypoint) < wantedDistanceToWaypoint);
-		//If a correct waypoint was recived, then use it.
-		if(newWaypoint != float3(-1,-1,-1)) {
+		waypoint=nextWaypoint;
+		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 2);
+
+		if(nextWaypoint.x != -1) {
 //			info->AddLine("New waypoint %i %f %f",owner->id,owner->pos.distance2D(newWaypoint),wantedDistanceToWaypoint);
-			waypoint = newWaypoint;
-			etaWaypoint = int((owner->midPos.distance2D(waypoint) / requestedSpeed) * ETA_ESTIMATION + gs->frameNum+3);
-			atWaypoint = false;
-			waypointIsBlocked = false;
+			etaWaypoint = int(30.0 / (requestedSpeed*terrainSpeed+0.001)) + gs->frameNum+50;
+			etaWaypoint2 = int(25.0 / (requestedSpeed*terrainSpeed+0.001)) + gs->frameNum+10;
+			atGoal = false;
 		} else {
 			if(DEBUG_CONTROLLER)
 				info->AddLine("Path failure %i %i",owner->id,pathFailures);
 			pathFailures++;
-			if(pathFailures>8){
+			if(pathFailures>6){
 				pathFailures=0;
 				Fail();
 			}
 			etaWaypoint = INT_MAX;
+			etaWaypoint2 =INT_MAX;
 		}
 		//If the waypoint is very close to the goal, then correct it into the goal.
 		if(waypoint.distance2D(goal) < CPathManager::PATH_RESOLUTION){
@@ -973,28 +956,22 @@ Initializes motion.
 void CGroundMoveType::StartEngine() {
 	//Will be runned only if engine is no path
 	//and the unit is not already at the goal.
-	if(!pathId && !atWaypoint) {
+	if(!pathId && !atGoal) {
 		GetNewPath();
 		//Engine will be activated only if a path could be found.
 		if(pathId) {
-			getPathFailures = 0;
 			pathFailures=0;
 			etaFailures=0;
 			owner->isMoving=true;
-			GetNextWaypoint();
 			owner->cob->Call(COBFN_StartMoving);
 		
 			if(DEBUG_CONTROLLER)
-				*info << "Engine started.\n";
+				*info << "Engine started" << " " << owner->id << "\n";
 		} else {
-			getPathFailures++;
-
-			//If no path could be found, this action has failed.
-			if(getPathFailures >= FAILURE_RETRIALS)
-				Fail();
-
 			if(DEBUG_CONTROLLER)
-				*info << "Engine start failed: " << int(getPathFailures) << "\n";
+				*info << "Engine start failed: " << owner->id << "\n";
+
+			Fail();
 		}
 	}
 	nextObstacleAvoidanceUpdate=gs->frameNum;
@@ -1010,14 +987,14 @@ void CGroundMoveType::StopEngine() {
 		//Deactivating engine.
 		pathManager->DeletePath(pathId);
 		pathId = 0;
-		if(!atWaypoint)
+		if(!atGoal)
 			waypoint = Here();
 
 		//Stop animation.
 		owner->cob->Call(COBFN_StopMoving);
 
 		if(DEBUG_CONTROLLER)
-			*info << "Engine stopped.\n";
+			*info << "Engine stopped." << " " << owner->id << "\n";
 	}
 	owner->isMoving=false;
 	wantedSpeed=0;
@@ -1033,7 +1010,7 @@ void CGroundMoveType::Arrived()
 	//Can only "arrive" if the engine is active.
 	if(progressState == Active) {
 		//Have reached waypoint.
-		atWaypoint = true;
+		atGoal = true;
 
 		StopEngine();
 
@@ -1059,6 +1036,9 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail() 
 {
+	if(DEBUG_CONTROLLER)
+		info->AddLine("Unit failed! %i",owner->id);
+
 	StopEngine();
 
 	//Failure of finding a path means that this action
@@ -1082,40 +1062,6 @@ void CGroundMoveType::Fail()
 
 void CGroundMoveType::CheckCollision(void)
 {
-	int newMoveSquareX=(int)owner->pos.x / SQUARE_SIZE;		//first make sure we dont go into any terrain we cant get out of
-	int newMoveSquareY=(int)owner->pos.z / SQUARE_SIZE;
-	if(newMoveSquareX!=moveSquareX || newMoveSquareY!=moveSquareY){
-		float cmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX,moveSquareY);
-		if(newMoveSquareX>moveSquareX){
-			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
-			if(cmod>0.01 && nmod<=0.01){
-				owner->pos.x=moveSquareX*SQUARE_SIZE+(SQUARE_SIZE-0.01);
-				newMoveSquareX=moveSquareX;
-			}
-		} else if(newMoveSquareX<moveSquareX){
-			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
-			if(cmod>0.01 && nmod<=0.01){
-				owner->pos.x=moveSquareX*SQUARE_SIZE+0.01;
-				newMoveSquareX=moveSquareX;
-			}
-
-		}
-		if(newMoveSquareY>moveSquareY){
-			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
-			if(cmod>0.01 && nmod<=0.01){
-				owner->pos.z=moveSquareY*SQUARE_SIZE+(SQUARE_SIZE-0.01);
-				newMoveSquareY=moveSquareY;
-			}
-		} else if(newMoveSquareY<moveSquareY){
-			float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX,newMoveSquareY);
-			if(cmod>0.01 && nmod<=0.01){
-				owner->pos.z=moveSquareY*SQUARE_SIZE+0.01;
-				newMoveSquareY=moveSquareY;
-			}
-		}
-		moveSquareX=newMoveSquareX;
-		moveSquareY=newMoveSquareY;
-	}
 	int2 newmp=owner->GetMapPos();
 	if(newmp.x!=owner->mapPos.x || newmp.y!=owner->mapPos.y){		//now make sure we dont overrun any other units
 		bool haveCollided=true;
@@ -1186,8 +1132,8 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 			}
 			MoveData  *m=owner->mobility->moveData;		//if other part can be overrun then overrun it
 			if (!m->moveMath->IsBlocking(*m,c)) {
-				float3 tmp=owner->frontdir*currentSpeed*200;
-				c->Kill(tmp);
+				float3 fix = owner->frontdir*currentSpeed*200;
+				c->Kill(fix);
 			}
 			if(readmap->groundBlockingObjectMap[y1*gs->mapx+x]==0)		//hack to make them find openings easier till the pathfinder can do it itself
 				owner->pos.z-=fabs(owner->pos.x-xmove)*0.5;
@@ -1229,8 +1175,8 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 			}
 			MoveData  *m=owner->mobility->moveData;		//if other part can be overrun then overrun it
 			if (!m->moveMath->IsBlocking(*m,c)) {
-				float3 tmp=owner->frontdir*currentSpeed*200;
-				c->Kill(tmp);
+				float3 fix = owner->frontdir*currentSpeed*200;
+				c->Kill(fix);
 			}
 			if(readmap->groundBlockingObjectMap[y*gs->mapx+x1]==0)		//hack to make them find openings easier till the pathfinder can do it itself
 				owner->pos.x-=fabs(owner->pos.z-zmove)*0.5;
@@ -1244,4 +1190,207 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 	}
 
 	return false;
+}
+
+//creates the tables used to see if we should advance to next pathfinding waypoint
+void CGroundMoveType::CreateLineTable(void)
+{
+	for(int yt=0;yt<11;++yt){
+		for(int xt=0;xt<11;++xt){
+			float3 start(0.5,0,0.5);
+			float3 to((xt-5)+0.5,0,(yt-5)+0.5);
+
+			double dx=to.x-start.x;
+			double dz=to.z-start.z;
+			double xp=start.x;
+			double zp=start.z;
+			double xn,zn;
+
+			if(floor(start.x)==floor(to.x)){
+				if(dz>0)
+					for(int a=1;a<floor(to.z);++a)
+						lineTable[yt][xt].push_back(int2(0,a));
+				else
+					for(int a=-1;a>floor(to.z);--a)
+						lineTable[yt][xt].push_back(int2(0,a));
+			} else if(floor(start.z)==floor(to.z)){
+				if(dx>0)
+					for(int a=1;a<floor(to.x);++a)
+						lineTable[yt][xt].push_back(int2(a,0));
+				else
+					for(int a=-1;a>floor(to.x);--a)
+						lineTable[yt][xt].push_back(int2(a,0));
+			} else {
+				bool keepgoing=true;
+				while(keepgoing){
+					if(dx>0){
+						xn=(floor(xp)+1-xp)/dx;
+					} else {
+						xn=(floor(xp)-xp)/dx;
+					}
+					if(dz>0){
+						zn=(floor(zp)+1-zp)/dz;
+					} else {
+						zn=(floor(zp)-zp)/dz;
+					}
+
+					if(xn<zn){
+						xp+=(xn+0.0001)*dx;
+						zp+=(xn+0.0001)*dz;
+					} else {
+						xp+=(zn+0.0001)*dx;
+						zp+=(zn+0.0001)*dz;
+					}
+					keepgoing=fabs(xp-start.x)<fabs(to.x-start.x) && fabs(zp-start.z)<fabs(to.z-start.z);
+
+					lineTable[yt][xt].push_back(int2((int)(floor(xp)),(int)(floor(zp))));
+				}
+				lineTable[yt][xt].pop_back();
+				lineTable[yt][xt].pop_back();
+			}
+		}
+	}
+}
+
+void CGroundMoveType::TestNewTerrainSquare(void)
+{
+	int newMoveSquareX=(int)owner->pos.x / (SQUARE_SIZE*2);		//first make sure we dont go into any terrain we cant get out of
+	int newMoveSquareY=(int)owner->pos.z / (SQUARE_SIZE*2);
+
+	if(newMoveSquareX!=moveSquareX || newMoveSquareY!=moveSquareY){
+		float cmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX*2,moveSquareY*2);
+		if(fabs(owner->frontdir.x)<fabs(owner->frontdir.z)){
+			if(newMoveSquareX>moveSquareX){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.x=moveSquareX*SQUARE_SIZE*2+(SQUARE_SIZE*2-0.01);
+					newMoveSquareX=moveSquareX;
+				}
+			} else if(newMoveSquareX<moveSquareX){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.x=moveSquareX*SQUARE_SIZE*2+0.01;
+					newMoveSquareX=moveSquareX;
+				}
+			}
+			if(newMoveSquareY>moveSquareY){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.z=moveSquareY*SQUARE_SIZE*2+(SQUARE_SIZE*2-0.01);
+					newMoveSquareY=moveSquareY;
+				}
+			} else if(newMoveSquareY<moveSquareY){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.z=moveSquareY*SQUARE_SIZE*2+0.01;
+					newMoveSquareY=moveSquareY;
+				}
+			}
+		} else {
+			if(newMoveSquareY>moveSquareY){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.z=moveSquareY*SQUARE_SIZE*2+(SQUARE_SIZE*2-0.01);
+					newMoveSquareY=moveSquareY;
+				}
+			} else if(newMoveSquareY<moveSquareY){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.z=moveSquareY*SQUARE_SIZE*2+0.01;
+					newMoveSquareY=moveSquareY;
+				}
+			}
+			if(newMoveSquareX>moveSquareX){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.x=moveSquareX*SQUARE_SIZE*2+(SQUARE_SIZE*2-0.01);
+					newMoveSquareX=moveSquareX;
+				}
+			} else if(newMoveSquareX<moveSquareX){
+				float nmod=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				if(cmod>0.01 && nmod<=0.01){
+					owner->pos.x=moveSquareX*SQUARE_SIZE*2+0.01;
+					newMoveSquareX=moveSquareX;
+				}
+			}
+		}
+		if(newMoveSquareX!=moveSquareX || newMoveSquareY!=moveSquareY){
+			moveSquareX=newMoveSquareX;
+			moveSquareY=newMoveSquareY;
+			terrainSpeed=owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, (moveSquareX)*2,(moveSquareY)*2);
+			etaWaypoint = int(30.0 / (requestedSpeed*terrainSpeed+0.001)) + gs->frameNum+50;
+			etaWaypoint2 = int(25.0 / (requestedSpeed*terrainSpeed+0.001)) + gs->frameNum+10;
+
+			int nwsx=(int)nextWaypoint.x / (SQUARE_SIZE*2);		//if we have moved check if we can get a new waypoint
+			int nwsy=(int)nextWaypoint.z / (SQUARE_SIZE*2);
+
+			int numIter=0;
+			while(abs(nwsx-moveSquareX)<6 && abs(nwsy-moveSquareY)<6 && !haveFinalWaypoint && pathId){
+				int ltx=nwsx-moveSquareX+5;
+				int lty=nwsy-moveSquareY+5;
+				bool wpOk=true;
+				for(std::vector<int2>::iterator li=lineTable[lty][ltx].begin();li!=lineTable[lty][ltx].end();++li){
+					int x=(moveSquareX+li->x)*2;
+					int y=(moveSquareY+li->y)*2;
+					if((owner->unitDef->movedata->moveMath->IsBlocked(*owner->unitDef->movedata, x, y) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN | CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY)) || owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, x,y)<=0.01){
+						wpOk=false;
+						break;
+					}
+				}
+				if(!wpOk || numIter>6)
+					break;
+				GetNextWaypoint();
+				nwsx=(int)nextWaypoint.x / (SQUARE_SIZE*2);
+				nwsy=(int)nextWaypoint.z / (SQUARE_SIZE*2);
+				++numIter;
+			}
+		}
+	}
+}
+
+bool CGroundMoveType::CheckGoalFeasability(void)
+{
+	float goalDist=goal.distance2D(owner->pos);
+
+	int minx=(int)max(0.f,(goal.x-goalDist)/(SQUARE_SIZE*2));
+	int minz=(int)max(0.f,(goal.z-goalDist)/(SQUARE_SIZE*2));
+
+	int maxx=(int)min(float(gs->hmapx-1),(goal.x+goalDist)/(SQUARE_SIZE*2));
+	int maxz=(int)min(float(gs->hmapy-1),(goal.z+goalDist)/(SQUARE_SIZE*2));
+
+	MoveData* md=owner->unitDef->movedata;
+	CMoveMath* mm=md->moveMath;
+
+	float numBlocked=0;
+	float numSquares=0;
+
+	for(int z=minz;z<=maxz;++z){
+		for(int x=minx;x<=maxx;++x){
+			float3 pos(x*SQUARE_SIZE*2,0,z*SQUARE_SIZE*2);
+			if((pos-goal).SqLength2D()<goalDist*goalDist){
+				int blockingType=mm->SquareIsBlocked(*md,x*2,z*2);
+				if((blockingType & CMoveMath::BLOCK_STRUCTURE) || mm->SpeedMod(*md,x*2,z*2)<0.01f){
+					numBlocked+=0.3f;
+					numSquares+=0.3f;
+				} else {
+					numSquares+=1.0f;
+					if(blockingType) 
+						numBlocked+=1.0f;
+				}
+			}
+		}
+	}
+	if(numSquares>0){
+		float partBlocked=numBlocked/numSquares;
+		if(DEBUG_CONTROLLER)
+			info->AddLine("Part blocked %i %.0f%% %.0f",owner->id,partBlocked*100,goalDist);
+		if(partBlocked>0.4)
+			return false;
+	}
+	return true;
+}
+
+void CGroundMoveType::LeaveTransport(void)
+{
+	oldPos=owner->pos+UpVector*0.001;
 }

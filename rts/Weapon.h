@@ -112,6 +112,10 @@ public:
 	int numStockpiled;								//how many missiles we have stockpiled
 	int numStockpileQued;							//how many weapons the user have added to our que
 	void CheckIntercept(void);
+
+	float3 errorVector;
+	float3 errorVectorAdd;
+	int lastErrorVectorUpdate;
 };
 
 #endif // !defined(AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_)

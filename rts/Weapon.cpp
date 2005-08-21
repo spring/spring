@@ -73,7 +73,10 @@ CWeapon::CWeapon(CUnit* owner)
 	interceptTarget(0),
 	salvoError(0,0,0),
 	sprayangle(0),
-	useWeaponPosForAim(0)
+	useWeaponPosForAim(0),
+	errorVector(ZeroVector),
+	errorVectorAdd(ZeroVector),
+	lastErrorVectorUpdate(0)
 {
 }
 
@@ -86,7 +89,18 @@ CWeapon::~CWeapon()
 void CWeapon::Update()
 {
 	if(targetType==Target_Unit){
-		targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*predictSpeedMod*predict;
+		if(lastErrorVectorUpdate<gs->frameNum-16){
+			float3 newErrorVector(gs->randVector());
+			errorVectorAdd=(newErrorVector-errorVector)*(1.0f/16.0f);
+			lastErrorVectorUpdate=gs->frameNum;
+		}
+		errorVector+=errorVectorAdd;
+		if(weaponDef->movement.selfExplode){	//assumes that only flakker like units that need to hit aircrafts has this,change to a separate tag later
+			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*(0.5+predictSpeedMod*0.5)*predict;
+		} else {
+			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*predictSpeedMod*predict;
+		}
+		targetPos+=errorVector*(weaponDef->targetMoveError*targetUnit->speed.Length()*(1.0-owner->limExperience));
 		if(!weaponDef->waterweapon && targetPos.y<1)
 			targetPos.y=1;
 	}
@@ -143,7 +157,7 @@ void CWeapon::Update()
 		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
 		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		useWeaponPosForAim=6;
+		useWeaponPosForAim=reloadTime/16+8;
 
 		if(TryTarget(targetPos,haveUserTarget,targetUnit)){
 			if(weaponDef->stockpile){
@@ -160,8 +174,8 @@ void CWeapon::Update()
 
 			salvoLeft=salvoSize;
 			nextSalvo=gs->frameNum;
-			salvoError=gs->randVector()*accuracy;
-			if(targetType==Target_Pos || (targetType==Target_Unit && !loshandler->InLos(targetUnit,owner->allyteam)))		//area firing stuff is to effective at radar firing...
+			salvoError=gs->randVector()*(owner->isMoving?weaponDef->movingAccuracy:accuracy);
+			if(targetType==Target_Pos || (targetType==Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS)))		//area firing stuff is to effective at radar firing...
 				salvoError*=1.3;
 
 			owner->lastMuzzleFlameSize=muzzleFlareSize;
@@ -247,7 +261,9 @@ bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 		haveUserTarget=false;
 		return false;
 	}
-	if(!TryTarget(unit->midPos,userTarget,unit))
+	float3 targetPos(unit->midPos);
+	targetPos+=errorVector*(weaponDef->targetMoveError*unit->speed.Length()*(1.0-owner->limExperience));
+	if(!TryTarget(targetPos,userTarget,unit))
 		return false;
 
 	if(targetUnit){
@@ -284,7 +300,8 @@ void CWeapon::SlowUpdate()
 //	owner->cob->Call("AimFromPrimary",args);
 	if(useWeaponPosForAim){
 		owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);
-		useWeaponPosForAim--;
+		if(useWeaponPosForAim>1)
+			useWeaponPosForAim--;
 	} else {
 		owner->cob->Call(COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);
 	}
@@ -298,18 +315,26 @@ void CWeapon::SlowUpdate()
 	if(targetType!=Target_None && !TryTarget(targetPos,haveUserTarget,targetUnit)){
 		HoldFire();
 	}
+	if(targetType==Target_Unit && targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
+		HoldFire();
+
 	if(!weaponDef->noAutoTarget){
-		if(owner->fireState==2 && (targetType==Target_None || (!haveUserTarget && gs->frameNum>lastTargetRetry+65))){
+		if(owner->fireState==2 && !haveUserTarget && (targetType==Target_None || (targetType==Target_Unit && (targetUnit->category & badTargetCategory)) || gs->frameNum>lastTargetRetry+65)){
 			std::map<float,CUnit*> targets;
 			helper->GenerateTargets(this,targetUnit,targets);
 
 			for(std::map<float,CUnit*>::iterator ti=targets.begin();ti!=targets.end();++ti){
-				if(TryTarget(ti->second->midPos,false,ti->second)){
-					if(targetUnit)
+				if(targetUnit && (ti->second->category & badTargetCategory))
+					continue;
+				float3 tp(ti->second->midPos);
+				tp+=errorVector*(weaponDef->targetMoveError*ti->second->speed.Length()*(1.0-owner->limExperience));
+				if(TryTarget(tp,false,ti->second)){
+					if(targetUnit){
 						DeleteDeathDependence(targetUnit);
+					}
 					targetType=Target_Unit;
 					targetUnit=ti->second;
-					targetPos=targetUnit->midPos;
+					targetPos=tp;
 					AddDeathDependence(targetUnit);
 					break;
 				}
@@ -320,6 +345,12 @@ void CWeapon::SlowUpdate()
 		owner->haveTarget=true;
 		if(haveUserTarget)
 			owner->haveUserTarget=true;
+	} else {	//if we cant target anything try switching aim point
+		if(useWeaponPosForAim && useWeaponPosForAim==1){
+			useWeaponPosForAim--;
+		} else {
+			useWeaponPosForAim=1;
+		}
 	}
 }
 
@@ -327,8 +358,10 @@ void CWeapon::DependentDied(CObject *o)
 {
 	if(o==targetUnit){
 		targetUnit=0;
-		if(targetType==Target_Unit)
+		if(targetType==Target_Unit){
 			targetType=Target_None;
+			haveUserTarget=false;
+		}
 	}
 	if(weaponDef->interceptor){
 		incoming.remove((CWeaponProjectile*)o);
@@ -357,8 +390,11 @@ void CWeapon::Init(void)
 
 	muzzleFlareSize=min(areaOfEffect*0.2,damages[0]*0.003);
 
-	if(weaponDef->interceptor)
+	if(weaponDef->interceptor){
 		interceptHandler.AddInterceptorWeapon(this);
+		if(weaponNum==0)	//only do this if its primary weapon
+			owner->unitDef->noChaseCategory=0xffffffff;		//prevent anti nuke type units from chasing enemies, might have to change if one has a unit with both interceptors and other weapons
+	}
 
 	if(weaponDef->stockpile){
 		owner->stockpileWeapon=this;

@@ -8,6 +8,9 @@
 #include "Ground.h"
 #include "GameHelper.h"
 #include "myMath.h"
+#include "3DOParser.h"
+#include "Matrix44f.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 static const float Smoke_Time=60;
@@ -24,7 +27,8 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	age(0),
 	drawTrail(true),
 	numParts(0),
-	areaOfEffect(areaOfEffect)
+	areaOfEffect(areaOfEffect),
+	decoyTarget(0)
 {
 	curSpeed=speed.Length();
 	dir.Normalize();
@@ -33,7 +37,16 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 		AddDeathDependence(target);
 
 	SetRadius(0.0);
-	drawRadius=maxSpeed*8;
+	if(!weaponDef->visuals.modelName.empty()){
+		S3DOModel* model = unit3doparser->Load3DO(string("objects3d\\")+weaponDef->visuals.modelName+".3do",1,0);
+		if(model){
+			SetRadius(model->radius);
+			modelDispList= model->rootobject->displist;
+			isUnitPart=true;
+		}
+	}
+
+	drawRadius=radius+maxSpeed*8;
 	ENTER_MIXED;
 	float3 camDir=(pos-camera->pos).Normalize();
 	if(camera->pos.distance(pos)*0.2+(1-fabs(camDir.dot(dir)))*3000 < 200)
@@ -44,6 +57,8 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	tracefile << "New missile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
+	if(target)
+		target->IncomingMissile(this);
 }
 
 CMissileProjectile::~CMissileProjectile(void)
@@ -54,6 +69,8 @@ void CMissileProjectile::DependentDied(CObject* o)
 {
 	if(o==target)
 		target=0;
+	if(o==decoyTarget)
+		decoyTarget=0;
 	CWeaponProjectile::DependentDied(o);
 }
 
@@ -84,15 +101,22 @@ void CMissileProjectile::Update(void)
 	if(ttl>0){
 		if(curSpeed<maxSpeed)
 			curSpeed+=max((float)0.4,tracking);
-		if(target){
+		if(decoyTarget || target){
 			float3 targPos;
-			if((target->midPos-pos).SqLength()<150*150 || !owner)
-				targPos=target->midPos;
-			else
-				targPos=helper->GetUnitErrorPos(target,owner->allyteam);
+			float3 targSpeed;
+			if(decoyTarget){
+				targPos=decoyTarget->pos;
+				targSpeed=decoyTarget->speed;
+			} else {
+				targSpeed=target->speed;
+				if((target->midPos-pos).SqLength()<150*150 || !owner)
+					targPos=target->midPos;
+				else
+					targPos=helper->GetUnitErrorPos(target,owner->allyteam);
+			}
 
 			float dist=targPos.distance(pos);
-			float3 dif(targPos + target->speed*(dist/maxSpeed)*0.7 - pos);
+			float3 dif(targPos + targSpeed*(dist/maxSpeed)*0.7 - pos);
 			dif.Normalize();
 			float3 dif2=dif-dir;
 			if(dif2.Length()<tracking){
@@ -204,7 +228,18 @@ void CMissileProjectile::Draw(void)
 		}
 
 	}
-	col[0]=200;
+	//rita flaren
+	col[0]=255;
+	col[1]=210;
+	col[2]=180;
+	col[3]=1;
+	float fsize = radius*0.4;
+	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,0.51,0.13,col);
+	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,0.99,0.13,col);
+	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,0.99,0.36,col);
+	va->AddVertexTC(interPos-camera->right*fsize+camera->up*fsize,0.51,0.36,col);
+
+/*	col[0]=200;
 	col[1]=200;
 	col[2]=200;
 	col[3]=255;
@@ -219,5 +254,36 @@ void CMissileProjectile::Draw(void)
 	va->AddVertexTC(interPos+u*1.0f,1.0/16,1.0/16,col);
 	va->AddVertexTC(interPos-u*1.0f,1.0/16,1.0/16,col);
 	va->AddVertexTC(interPos+dir*9,1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos+dir*9,1.0/16,1.0/16,col);*/
+}
+
+void CMissileProjectile::DrawUnitPart(void)
+{
+	float3 interPos=pos+speed*gu->timeOffset;
+	glPushMatrix();
+	float3 rightdir;
+	if(dir.y!=1)
+		rightdir=dir.cross(UpVector);
+	else
+		rightdir=float3(1,0,0);
+	rightdir.Normalize();
+	float3 updir=rightdir.cross(dir);
+
+	CMatrix44f transMatrix;
+	transMatrix[0]=-rightdir.x;
+	transMatrix[1]=-rightdir.y;
+	transMatrix[2]=-rightdir.z;
+	transMatrix[4]=updir.x;
+	transMatrix[5]=updir.y;
+	transMatrix[6]=updir.z;
+	transMatrix[8]=dir.x;
+	transMatrix[9]=dir.y;
+	transMatrix[10]=dir.z;
+	transMatrix[12]=interPos.x+dir.x*radius*0.9;
+	transMatrix[13]=interPos.y+dir.y*radius*0.9;
+	transMatrix[14]=interPos.z+dir.z*radius*0.9;
+	glMultMatrixf(&transMatrix[0]);
+
+	glCallList(modelDispList);
+	glPopMatrix();
 }

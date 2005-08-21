@@ -14,6 +14,7 @@ public:
 	struct TransportedUnit{
 		CUnit* unit;
 		int piece;
+		int size;
 	};
 
 	std::list<TransportedUnit> transported;

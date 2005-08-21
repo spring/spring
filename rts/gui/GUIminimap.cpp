@@ -6,7 +6,6 @@
 #include "CobInstance.h"
 #include "UnitDef.h"
 #include "BaseGroundDrawer.h"
-#include "BFReadmap.h"
 #include "UnitHandler.h"
 #include "Camera.h"
 #include "ProjectileHandler.h"
@@ -23,6 +22,7 @@
 #include "RadarHandler.h"
 #include "Weapon.h"
 #include "WeaponDefHandler.h"
+#include "SmfReadMap.h"
 
 
 GUIminimap::GUIminimap():GUIframe(0, 0, 128, 128)
@@ -112,7 +112,7 @@ void GUIminimap::PrivateDraw()
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
+	glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
@@ -134,8 +134,8 @@ void GUIminimap::PrivateDraw()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	float isx=gs->hmapx/512.0;
-	float isy=gs->hmapy/512.0;
+	float isx=gs->hmapx/256.0;
+	float isy=gs->hmapy/256.0;
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0,1);
@@ -316,11 +316,11 @@ if(unit->lastDamage>gs->frameNum-90 && gs->frameNum&8)
 		return;
 	float3 pos=unit->pos;
 /*	if(pos.z<0 || pos.z>gs->mapy*SQUARE_SIZE){
-		info->AddLine("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
+		guicontroller->AddText("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
 		return;
 	}*/
-	if(unit->allyteam==gu->myAllyTeam || loshandler->InLos(unit,gu->myAllyTeam) || gu->spectating){
-	}else if(radarhandler->InRadar(unit,gu->myAllyTeam)){
+	if(unit->allyteam==gu->myAllyTeam || (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating){
+	}else if((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
 	}else{
 		return;

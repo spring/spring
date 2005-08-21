@@ -7,10 +7,15 @@
 #include "ReadMap.h"
 #include "ProjectileHandler.h"
 #include "InfoConsole.h"
-#include "BFReadmap.h"
+#include "SmfReadMap.h"
 #include "LosHandler.h"
 #include "RadarHandler.h"
 #include "ShadowHandler.h"
+#include "MoveInfo.h"
+#include "MoveMath.h"
+#include "SelectedUnits.h"
+#include "UnitDef.h"
+#include "GroundDecalHandler.h"
 //#include "mmgr.h"
 
 CBFGroundDrawer::CBFGroundDrawer(void)
@@ -21,14 +26,12 @@ CBFGroundDrawer::CBFGroundDrawer(void)
 	heightData=readmap->heightmap;
 	heightDataX=gs->mapx+1;
 
-	infoTexMem=new unsigned char[1024*1024*4];
-	for(int a=0;a<1024*1024*4;++a)
+	infoTexMem=new unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
+	for(int a=0;a<gs->pwr2mapx*gs->pwr2mapy*4;++a)
 		infoTexMem[a]=255;
 
-	infoTexSizeX=gs->mapx/1024.0;
-	infoTexSizeY=gs->mapy/1024.0;
-
 	drawMetalMap=false;
+	drawPathMap=false;
 	highResInfoTexWanted=false;
 	extraTex=0;
 
@@ -475,41 +478,27 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 
 	glDisable(GL_CULL_FACE);
 
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(0.05f,0.05f,0.3f);
-	glBegin(GL_QUADS);//water color edge of map <0
+	if(((CSmfReadMap*)readmap)->hasWaterPlane)
+	{
+		glDisable(GL_TEXTURE_2D);
+		glColor3f(((CSmfReadMap*)readmap)->waterPlaneColor.x, ((CSmfReadMap*)readmap)->waterPlaneColor.y, ((CSmfReadMap*)readmap)->waterPlaneColor.z);
+		glBegin(GL_QUADS);//water color edge of map <0
 		float xsize=gs->mapx*SQUARE_SIZE;
 		float ysize=gs->mapy*SQUARE_SIZE;
 		if(!drawWaterReflection){
-			glVertex3f(0,-5,0);
-			glVertex3f(0,-190,0);
-			glVertex3f(xsize,-190,0);
-			glVertex3f(xsize,-5,0);
-			glVertex3f(0,-5,0);
-			glVertex3f(0,-190,0);
-			glVertex3f(0,-190,ysize);
-			glVertex3f(0,-5,ysize);
-			glVertex3f(xsize,0,ysize);
-			glVertex3f(xsize,-190,ysize);
-			glVertex3f(xsize,-190,0);
-			glVertex3f(xsize,-5,0);
-			glVertex3f(xsize,-5,ysize);
-			glVertex3f(xsize,-190,ysize);
-			glVertex3f(0,-190,ysize);
-			glVertex3f(0,-5,ysize);
-
 			float xsize=gs->mapx*SQUARE_SIZE/4;
 			float ysize=gs->mapy*SQUARE_SIZE/4;
 			for(y=-4;y<8;++y)
 				for(int x=-4;x<8;++x)
 					if(x>3 || x<0 || y>3 || y<0 || camera->pos.x<0 || camera->pos.z<0 || camera->pos.x>float3::maxxpos || camera->pos.z>float3::maxzpos){
-						glVertex3f(x*xsize,-6,y*ysize);
-						glVertex3f((x+1)*xsize,-6,y*ysize);
-						glVertex3f((x+1)*xsize,-6,(y+1)*ysize);
-						glVertex3f(x*xsize,-6,(y+1)*ysize);
+							glVertex3f(x*xsize,-200,y*ysize);
+							glVertex3f((x+1)*xsize,-200,y*ysize);
+							glVertex3f((x+1)*xsize,-200,(y+1)*ysize);
+							glVertex3f(x*xsize,-200,(y+1)*ysize);
 					}
 		}
-	glEnd();
+		glEnd();
+	}
 
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -523,6 +512,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 	if(treeDistance>MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE))
 		treeDistance=MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE);
 
+	if(groundDecals && !drawWaterReflection)
+		groundDecals->Draw();
 	ph->DrawGroundFlashes();
 	if(treeDrawer->drawTrees){
 		if((drawLos || drawExtraTex)){
@@ -536,7 +527,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 			glBindTexture(GL_TEXTURE_2D, infoTex);
-			SetTexGen(1.0/8192.0,1.0/8192.0,0,0);
+			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		  glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 		treeDrawer->Draw(treeDistance,drawWaterReflection);
@@ -831,6 +822,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 void CBFGroundDrawer::SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes)
 {
 	drawMetalMap=false;
+	drawPathMap=false;
 	if(tex!=extraTex && tex!=0){
 		extraTex=tex;
 		extraTexPal=pal;
@@ -852,11 +844,28 @@ void CBFGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,unsig
 		drawExtraTex=false;
 	} else {
 		drawMetalMap=true;
+		drawPathMap=false;
 		drawExtraTex=true;
 		highResInfoTexWanted=false;
 		extraTex=tex;
 		extraTexPal=pal;
 		extractDepthMap=extractMap;
+	}
+	updateTextureState=0;
+	while(!UpdateTextures());
+}
+
+void CBFGroundDrawer::SetPathMapTexture()
+{
+	if(drawPathMap){
+		drawPathMap=false;
+		drawExtraTex=false;
+	} else {
+		drawPathMap=true;
+		drawMetalMap=false;
+		drawExtraTex=true;
+		extraTex=0;
+		highResInfoTexWanted=false;
 	}
 	updateTextureState=0;
 	while(!UpdateTextures());
@@ -886,12 +895,31 @@ bool CBFGroundDrawer::UpdateTextures()
 			starty=updateTextureState*gs->hmapy/50;
 			endy=(updateTextureState+1)*gs->hmapy/50;
 		}
-		if(drawMetalMap){
+		if(drawPathMap){
+			MoveData* md=moveinfo->GetMoveDataFromName("TANKSH2");
+			if(!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata)
+				md=(*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+
 			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->mapx;++x){
-					int a=y*512+x;
+				for(int x=0;x<gs->hmapx;++x){
+					int a=y*(gs->pwr2mapx>>1)+x;
+
+					float m=md->moveMath->SpeedMod(*md, x*2,y*2);
+					if(md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
+						m=0;
+					m=min(1.,sqrt(m));
+
+					infoTexMem[a*4+0]=255-int(m)*255;
+					infoTexMem[a*4+1]=int(m)*255;
+					infoTexMem[a*4+2]=0;
+				}
+			}
+		} else if(drawMetalMap){
+			for(int y=starty;y<endy;++y){
+				for(int x=0;x<gs->hmapx;++x){
+					int a=y*(gs->pwr2mapx>>1)+x;
 					if(myAirLos[(y/2)*gs->hmapx/2+x/2])
-						infoTexMem[a*4]= (unsigned char) fmin(255.f,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
+						infoTexMem[a*4]=(unsigned char)min(255.,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
 					else
 						infoTexMem[a*4]=0;
 					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);
@@ -901,7 +929,7 @@ bool CBFGroundDrawer::UpdateTextures()
 		} else if(drawLos && !drawExtraTex){
 			for(int y=starty;y<endy;++y){
 				for(int x=0;x<gs->hmapx;++x){
-					int a=y*512+x;
+					int a=y*(gs->pwr2mapx>>1)+x;
 					int inRadar=0;
 					if(radarhandler->radarMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
 						inRadar=50;
@@ -927,9 +955,9 @@ bool CBFGroundDrawer::UpdateTextures()
 			if(highResInfoTexWanted){
 				for(int y=starty;y<endy;++y){
 					for(int x=0;x<gs->mapx;++x){
-						int a=y*1024+x;
+						int a=y*gs->pwr2mapx+x;
 						int value=extraTex[y*gs->mapx+x];
-						//value=readmap->groundBlockingObjectMap[y*gs->mapx+x] ? 128:0;
+						//value=readmap->groundBlockingObjectMap[y*gs->mapx+x] ? 0:128;
 						infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
 						infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
 						infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
@@ -938,7 +966,7 @@ bool CBFGroundDrawer::UpdateTextures()
 			} else {
 				for(int y=starty;y<endy;++y){
 					for(int x=0;x<gs->mapx;++x){
-						int a=y*512+x;
+						int a=y*(gs->pwr2mapx>>1)+x;
 						infoTexMem[a*4]=64+(extraTexPal[extraTex[y*gs->hmapx+x]*3]>>1);
 						infoTexMem[a*4+1]=64+(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]>>1);
 						infoTexMem[a*4+2]=64+(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]>>1);
@@ -949,7 +977,7 @@ bool CBFGroundDrawer::UpdateTextures()
 			if(highResInfoTexWanted){
 				for(int y=starty;y<endy;++y){
 					for(int x=0;x<gs->mapx;++x){
-						int a=y*1024+x;
+						int a=y*gs->pwr2mapx+x;
 						if(myLos[(y/2)*gs->hmapx+x/2]!=0){
 							infoTexMem[a*4]=100+(extraTexPal[extraTex[y*gs->mapx+x]*3]>>1);
 							infoTexMem[a*4+1]=100+(extraTexPal[extraTex[y*gs->mapx+x]*3+1]>>1);
@@ -964,7 +992,7 @@ bool CBFGroundDrawer::UpdateTextures()
 			} else {
 				for(int y=starty;y<endy;++y){
 					for(int x=0;x<gs->hmapx;++x){
-						int a=y*512+x;
+						int a=y*(gs->pwr2mapx>>1)+x;
 						if(myLos[(y)*gs->hmapx+x]!=0){
 							infoTexMem[a*4]=100+(extraTexPal[extraTex[y*gs->hmapx+x]*3]>>1);
 							infoTexMem[a*4+1]=100+(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]>>1);
@@ -988,12 +1016,15 @@ bool CBFGroundDrawer::UpdateTextures()
 		if(infoTex==0){
 			glGenTextures(1,&infoTex);
 			glBindTexture(GL_TEXTURE_2D, infoTex);
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+			if(drawPathMap)
+				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+			else
+				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 			if(highResInfoTexWanted)
-				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, 1024, 1024,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
+				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
 			else
-				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, 512, 512,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
+				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, gs->pwr2mapx>>1, gs->pwr2mapy>>1,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
 			highResInfoTex=highResInfoTexWanted;
 			updateTextureState=0;
 			return true;
@@ -1003,9 +1034,9 @@ bool CBFGroundDrawer::UpdateTextures()
 	if(updateTextureState>=50){
 		glBindTexture(GL_TEXTURE_2D, infoTex);
 		if(highResInfoTexWanted)
-			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*128,1024, 128,GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*128*1024*4]);
+			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*(gs->pwr2mapy/8),gs->pwr2mapx, (gs->pwr2mapy/8),GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*(gs->pwr2mapy/8)*gs->pwr2mapx*4]);
 		else
-			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*64,512, 64,GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*64*512*4]);
+			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*(gs->pwr2mapy/16),gs->pwr2mapx>>1, (gs->pwr2mapy/16),GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*(gs->pwr2mapy/16)*(gs->pwr2mapx>>1)*4]);
 		if(updateTextureState==57){
 			updateTextureState=0;
 			return true;
@@ -1021,8 +1052,8 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 	if((groundDrawer->drawLos || groundDrawer->drawExtraTex)){
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
-		SetTexGen(1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,0);
+		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -1037,7 +1068,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glBindTexture(GL_TEXTURE_2D,  groundDrawer->infoTex);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		SetTexGen(1.0/8192.0,1.0/8192.0,0,0);
+		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 	} else if(shadowHandler->drawShadows){
 		if(shadowHandler->useFPShadows){
 			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, groundFPShadow );
@@ -1052,7 +1083,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
+			glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
 			glActiveTextureARB(GL_TEXTURE2_ARB);
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 			glBindTexture(GL_TEXTURE_2D,  readmap->detailtex2);
@@ -1085,7 +1116,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
 			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
+			glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
 			glEnable(GL_TEXTURE_2D);
 			
 			float3 ac=readmap->ambientColor*(210.0/255.0);
@@ -1116,7 +1147,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		}
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, groundVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 1.0/1024,1.0/1024,0,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, -floor(camera->pos.x*0.02),-floor(camera->pos.z*0.02),0,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, 0.02,0.02,0,1);
@@ -1126,8 +1157,8 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 	} else {
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
-		SetTexGen(1.0/(1024*SQUARE_SIZE),1.0/(1024*SQUARE_SIZE),0,0);
+		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);

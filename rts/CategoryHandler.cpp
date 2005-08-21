@@ -26,10 +26,21 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 	if(name.empty())
 		return 0;
 	if(categories.find(name)==categories.end()){
-		if(name.find("ctrl")!=string::npos || name.find("arm")!=string::npos || name.find("core")!=string::npos || name.find("level")!=string::npos)		//remove some categories that we dont think we need since we have to few of them
+		if(name.find("ctrl")!=string::npos
+		|| name.find("arm")!=string::npos 
+		|| name.find("core")!=string::npos 
+		|| name.find("level")!=string::npos 
+		|| name.find("energy")!=string::npos 
+		|| name.find("storage")!=string::npos 
+		|| name.find("defensive")!=string::npos 
+		|| name.find("extractor")!=string::npos 
+		|| name.find("metal")!=string::npos 
+		|| name.find("torp")!=string::npos)		//remove some categories that we dont think we need since we have too few of them
 			return 0;
-		if(firstUnused>31)
-			info->AddLine("Warning to many unit categories %i",firstUnused+1);
+		if(firstUnused>31){
+			info->AddLine("Warning to many unit categories %i missed %s",firstUnused+1,name.c_str());
+			return 0;
+		}
 		categories[name]=(1<<(firstUnused++));
 //		info->AddLine("New cat %s #%i",name.c_str(),firstUnused);
 	}

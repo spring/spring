@@ -12,6 +12,7 @@
 #include "ProjectileHandler.h"
 #include "Ground.h"
 #include "DirtProjectile.h"
+#include "ExploSpikeProjectile.h"
 
 CExplosionGraphics::CExplosionGraphics(void)
 {
@@ -57,7 +58,9 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 		if(camLength<moveLength+2)
 			moveLength=camLength-2;
 		float3 npos=pos+camVect*moveLength;
-		CHeatCloudProjectile* p=new CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5,7+damage*2.8,owner);
+		float heatcloudsize = 7+damage*2.8;
+		float heatcloudtemperature = 8+sqrt(damage)*0.5;
+		CHeatCloudProjectile* p=new CHeatCloudProjectile(npos,speed,heatcloudtemperature,heatcloudsize,(-heatcloudsize/heatcloudtemperature)*0.5,owner);
 		//p->Update();
 		//p->maxheat=p->heat;
 	}
@@ -118,6 +121,17 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 				new CWakeProjectile(pos+gu->usRandVector()*radius*0.2,gu->usRandVector()*radius*0.003,sqrt(damage)*4,damage*0.03,owner,0.3+gu->usRandFloat()*0.2,0.8/(sqrt(damage)*3+50+gu->usRandFloat()*90),1);
 			}
 		}
+		if(radius>10 && damage>4){
+			int numSpike=(int)sqrt(damage)+8;
+			for(int a=0;a<numSpike;++a){
+				float3 speed=gu->usRandVector();
+				speed.Normalize();
+				speed*=(8+damage*3.0)/(9+sqrt(damage)*0.7)*0.35;
+				if(!airExplosion && !waterExplosion && speed.y<0)
+					speed.y=-speed.y;
+				new CExploSpikeProjectile(pos+speed,speed*(0.9f+gu->usRandFloat()*0.4f),radius*0.1,radius*0.1,0.6f,0.8/(8+sqrt(damage)),owner);
+			}
+		}
 	}
 	if(radius>20 && damage>6 && height<radius*0.7){
 		float modSize=max(radius,damage*2);
@@ -126,7 +140,7 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 		float ttl=8+sqrt(damage)*0.8;
 		if(radius>40 && damage>12){
 			circleAlpha=min(0.5,damage*0.01);
-			circleGrowth=(8+damage*3.0)/(9+sqrt(damage)*0.7)*0.55;
+			circleGrowth=(8+damage*2.5)/(9+sqrt(damage)*0.7)*0.55;
 		}
 		float flashSize=modSize;
 		float flashAlpha=min(0.8,damage*0.01);
@@ -134,7 +148,7 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 	}
 
 	if(radius>40 && damage>12){
-		CSpherePartProjectile::CreateSphere(pos,min(0.7,damage*0.02),5+(int)(sqrt(damage)*0.7),(8+damage*3.0)/(9+sqrt(damage)*0.7)*0.5,owner);	
+		CSpherePartProjectile::CreateSphere(pos,min(0.7,damage*0.02),5+(int)(sqrt(damage)*0.7),(8+damage*2.5)/(9+sqrt(damage)*0.7)*0.5,owner);	
 	}
 	POP_CODE_MODE;
 }

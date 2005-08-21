@@ -48,10 +48,12 @@ public:
 	float goalRadius;
 
 	float3 waypoint;
-	int etaWaypoint;
-	bool atWaypoint;
-	bool waypointIsBlocked;
+	float3 nextWaypoint;
+	int etaWaypoint;			//by this time it really should have gotten there genereate new path otherwise
+	int etaWaypoint2;			//by this time we get suspicious, check if goal is clogged if we are close
+	bool atGoal;
 	bool haveFinalWaypoint;
+	float terrainSpeed;
 
 	float requestedSpeed;
 	short requestedTurnRate;
@@ -63,13 +65,9 @@ public:
 	unsigned int restartDelay;
 	float3 lastGetPathPos;
 
-	unsigned int getPathFailures;		//how many times the pathfinder has said it cant find a path
 	unsigned int pathFailures;
-	unsigned int speedFailures;			//how many times the terrain has slowed us down to much
 	unsigned int etaFailures;				//how many times we havent gotten to a waypoint in time
 	unsigned int nonMovingFailures;	//how many times we have requested a path from the same place
-	unsigned int obstacleFailures;
-	unsigned int blockingFailures;
 
 	int moveType;
 
@@ -80,6 +78,8 @@ public:
 protected:
 	int nextDeltaSpeedUpdate;
 	int nextObstacleAvoidanceUpdate;
+
+	int lastTrackUpdate;
 
 	float3 ObstacleAvoidance(float3 desiredDir);
 	float Distance2D(CSolidObject *object1, CSolidObject *object2, float marginal = 0.0l);
@@ -118,6 +118,13 @@ protected:
 
 	bool CheckColH(int x, int y1, int y2, float xmove, int squareTestX);
 	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
+
+	static std::vector<int2> lineTable[11][11];
+public:
+	static void CreateLineTable(void);
+	void TestNewTerrainSquare(void);
+	bool CheckGoalFeasability(void);
+	virtual void LeaveTransport(void);
 };
 
 

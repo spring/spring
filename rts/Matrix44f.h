@@ -17,14 +17,14 @@ public:
 	void RotateX(float rad);
 	void RotateY(float rad);
 	void RotateZ(float rad);
-	void Rotate(float rad, float3 axis);	//axis assumed normalized
+	void Rotate(float rad, float3& axis);	//axis assumed normalized
 	void Translate(float x, float y, float z);
 	CMatrix44f Mul(const CMatrix44f& other) const;
 	float3 Mul(const float3& vect) const;
-	float3 GetPos(void);
+	inline float3 GetPos(void){ return float3(m[12],m[13],m[14]); }
 
 	float m[16];		//opengl ordered
-	void SetUpVector(float3 up);
+	void SetUpVector(float3& up);
 	void Translate(const float3& pos);
 };
 

@@ -55,19 +55,68 @@ void CglList::Draw()
 	font->glPrint(name.c_str());
 
 	std::vector<std::string>::iterator ii;
-	int a=0;
-	for(ii=items.begin();ii!=items.end();ii++){
-		if(a==place)
+
+	/****************************************
+	* Insert Robert Diamond's section here *
+	* <deadram@gmail.com> *
+	****************************************/
+
+	/****************************************
+	* TODO: *
+	* *
+	* This part of the code will need some *
+	* math, and it's been a while since I *
+	* did any 3D coding... the idea is to *
+	* keep the selected item in the middle *
+	* 60% of the screen, but don't scroll *
+	* till we reach one end, or the other *
+	* of that boundary. We'd also need the *
+	* "oldPlace" variable to do this *
+	* properly. *
+	* *
+	****************************************
+	// Get screen res, so that the selected item is always within the middle 60% of screen
+	int iResX = regHandler.GetInt("XResolution", 1024);
+	int iResY = regHandler.GetInt("YResolution", 768);
+
+	// Keep tabs on the last place. change this ONLY AFTER a scroll
+	static int siOldPlace = place;
+
+	if (we're scrolling up) siOldPlace = place;
+	if (we're scrolling down) siOldPlace = place;
+	if (we're not scrolling) siOldPlace = siOldPlace;
+
+	**************************************
+	* Hey remove me when TODO is done XD *
+	**************************************/
+
+	int nCurIndex = 0; // The item we're on
+	int nDrawOffset = 0; // The offset to the first draw item
+
+	// Get list started up here
+	ii = items.begin();
+	// Skip to current selection - 3; ie: scroll
+	while ((nCurIndex + 7) <= place && nCurIndex+14 <= items.size()) { ii++; nCurIndex++; }
+
+	for (/*ii = items.begin()*/; ii != items.end(); ii++)
+	{
+		if (nCurIndex == place) {
 			glColor4f(1,1,1.0f,1.0f);
-		else
+		} else {
 			glColor4f(1,1,0.0f,0.3f);
+		}
 
 		glLoadIdentity();
-		glTranslatef(0.31f,0.79f-a*0.06f,0.0f);
+		glTranslatef(0.31f, 0.79f - (nDrawOffset * 0.06f), 0.0f);
 		glScalef(0.035f,0.05f,0.1f);
 		font->glPrint(ii->c_str());
-		a++;
+
+		// Up our index's
+		nCurIndex++; nDrawOffset++;
 	}	
+	/**************
+	* End insert *
+	**************/
 }
 
 void CglList::UpOne()

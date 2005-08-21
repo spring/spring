@@ -46,7 +46,10 @@ CBuilder::CBuilder(const float3 &pos,int team,UnitDef* unitDef)
 	nextBuildPos(0,0,0),
 	nextBuildType(""),
 	terraformHelp(0),
-	helpTerraform(0)
+	helpTerraform(0),
+	curResurrect(0),
+	lastResurrected(0),
+	curCapture(0)
 {
 	buildSpeed=unitDef->buildSpeed/32.0f;
 	buildDistance=unitDef->buildDistance;
@@ -144,6 +147,8 @@ void CBuilder::Update()
 		}
 	} else if(curBuild && curBuild->pos.distance2D(pos)<buildDistance+curBuild->radius){
 		if(inBuildStance){
+			isCloaked=false;
+			curCloakTimeout=gs->frameNum+cloakTimeout;
 			if(curBuild->AddBuildPower(buildSpeed,this)){
 				CreateNanoParticle(curBuild->midPos,curBuild->radius*0.5,false);
 			} else {
@@ -155,8 +160,38 @@ void CBuilder::Update()
 			curBuild->AddBuildPower(0.00001,this);	//prevent building timing out
 		}
 	} else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
+		isCloaked=false;
+		curCloakTimeout=gs->frameNum+cloakTimeout;
 		if(curReclaim->AddBuildPower(-buildSpeed,this)){
 			CreateNanoParticle(curReclaim->midPos,curReclaim->radius*0.7,true);
+		}
+	} else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
+		UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
+		if(ud){
+			curResurrect->resurrectProgress+=buildSpeed/ud->buildTime;
+			CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7,gs->randInt()&1);
+			if(curResurrect->resurrectProgress>1){		//resurrect finished
+				CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false);
+				u->health*=0.05;
+				lastResurrected=u->id;
+				curResurrect->resurrectProgress=0;
+				featureHandler->DeleteFeature(curResurrect);
+				StopBuild(true);
+			}
+		} else {
+			StopBuild(true);
+		}
+	} else if(curCapture && curCapture->pos.distance2D(pos)<buildDistance+curCapture->radius && inBuildStance){
+		if(curCapture->team!=team){
+			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/buildSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4);
+			CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7,false);
+			if(curCapture->captureProgress>1){
+				curCapture->ChangeTeam(team,CUnit::ChangeCaptured);
+				curCapture->captureProgress=0.5;	//make units somewhat easier to capture back after first capture
+				StopBuild(true);
+			}
+		} else {
+			StopBuild(true);
 		}
 	}
 	CUnit::Update();
@@ -175,6 +210,7 @@ void CBuilder::SetRepairTarget(CUnit* target)
 	if(target==curBuild)
 		return;
 
+	TempHoldFire();
 	StopBuild(false);
 
 	curBuild=target;
@@ -192,6 +228,7 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 	if(curReclaim==target)
 		return;
 
+	TempHoldFire();
 	StopBuild(false);
 
 	curReclaim=target;
@@ -200,9 +237,37 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 	SetBuildStanceToward(target->pos);
 }
 
+void CBuilder::SetResurrectTarget(CFeature* target)
+{
+	if(curResurrect==target)
+		return;
+
+	TempHoldFire();
+	StopBuild(false);
+
+	curResurrect=target;
+	AddDeathDependence(target);
+
+	SetBuildStanceToward(target->pos);
+}
+
+void CBuilder::SetCaptureTarget(CUnit* target)
+{
+	if(target==curCapture)
+		return;
+
+	TempHoldFire();
+	StopBuild(false);
+
+	curCapture=target;
+	AddDeathDependence(curCapture);
+
+	SetBuildStanceToward(target->pos);
+}
 
 void CBuilder::StartRestore(float3 centerPos, float radius)
 {
+	TempHoldFire();
 	StopBuild(false);
 
 	terraforming=true;
@@ -235,12 +300,19 @@ void CBuilder::StopBuild(bool callScript)
 		DeleteDeathDependence(curReclaim);
 	if(helpTerraform)
 		DeleteDeathDependence(helpTerraform);
+	if(curResurrect)
+		DeleteDeathDependence(curResurrect);
+	if(curCapture)
+		DeleteDeathDependence(curCapture);
 	curBuild=0;
 	curReclaim=0;
 	helpTerraform=0;
+	curResurrect=0;
+	curCapture=0;
 	terraforming=false;
 	if(callScript)
 		cob->Call("StopBuilding");
+	ReleaseTempHoldFire();
 //	info->AddLine("stop build");
 }
 
@@ -250,12 +322,7 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 //	info->AddLine("start build");
 
 	UnitDef *unitdef = unitDefHandler->GetUnitByName(type);
-	buildPos.x=floor(buildPos.x/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-	buildPos.z=floor(buildPos.z/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-	buildPos.y=uh->GetBuildHeight(buildPos,unitdef);
-
-	if(unitdef->floater && buildPos.y<0)
-		buildPos.y = -unitdef->waterline;
+	buildPos=helper->Pos2BuildPos(buildPos,unitdef);
 
 	CFeature* feature;
 	int canBuild=uh->TestUnitBuildSquare(buildPos,unitdef,feature);
@@ -327,6 +394,14 @@ void CBuilder::DependentDied(CObject *o)
 	}
 	if(o==helpTerraform){
 		helpTerraform=0;
+		StopBuild();
+	}
+	if(o==curResurrect){
+		curResurrect=0;
+		StopBuild();
+	}
+	if(o==curCapture){
+		curCapture=0;
 		StopBuild();
 	}
 	CUnit::DependentDied(o);

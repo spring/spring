@@ -32,7 +32,9 @@ inline void glTranslatef3(const float3 &v)
 	glTranslatef(v.x,v.y,v.z);
 }
 
+void LoadStartPicture();
 void PrintLoadMsg(const char* text);
+void UnloadStartPicture();
 bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);
 unsigned int LoadFragmentProgram(const char* filename);

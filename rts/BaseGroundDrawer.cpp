@@ -5,6 +5,7 @@
 #include "myGL.h"
 #include "Camera.h"
 #include "BaseGroundDrawer.h"
+#include "ReadMap.h"
 //#include "mmgr.h"
 
 CBaseGroundDrawer* groundDrawer;
@@ -50,9 +51,9 @@ void CBaseGroundDrawer::AddFrustumRestraint(float3 side)
 		float3 colpoint;				//a point on the collision line
 		
 		if(side.y>0)								
-			colpoint=cam2->pos-c*((cam2->pos.y+150)/c.y);
+			colpoint=cam2->pos-c*((cam2->pos.y-(readmap->minheight-100))/c.y);
 		else
-			colpoint=cam2->pos-c*((cam2->pos.y-500)/c.y);
+			colpoint=cam2->pos-c*((cam2->pos.y-(readmap->maxheight+30))/c.y);
 		
 		
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis

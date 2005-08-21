@@ -52,7 +52,7 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 	if(maxy<miny || maxx<minx)
 		return ret;
 
-	float maxSqLength=(radius+QUAD_SIZE*0.7)*(radius+QUAD_SIZE*0.71);
+	float maxSqLength=(radius+QUAD_SIZE*0.71)*(radius+QUAD_SIZE*0.71);
 	ret.reserve((maxy-miny)*(maxx-minx));
 	for(int y=miny;y<=maxy;++y)
 		for(int x=minx;x<=maxx;++x)
@@ -89,7 +89,7 @@ void CQuadField::MovedUnit(CUnit *unit)
 		}
 		for(ui=baseQuads[*qi].teamUnits[unit->allyteam].begin();ui!=baseQuads[*qi].teamUnits[unit->allyteam].end();++ui){
 			if(*ui==unit){
-				baseQuads[*qi].units.erase(ui);
+				baseQuads[*qi].teamUnits[unit->allyteam].erase(ui);
 				break;
 			}
 		}
@@ -202,6 +202,22 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 	if(to.z>gs->mapy*SQUARE_SIZE-1){
 		to=to-dir*((to.z-gs->mapy*SQUARE_SIZE+1)/dir.z);
 	}
+	//these 4 shouldnt be needed but sometimes we seem to get strange enough values that rounding errors throw us outide the map
+	if(to.x<1){
+		to.x=1;
+	}
+	if(to.x>gs->mapx*SQUARE_SIZE-1){
+		to.x=gs->mapx*SQUARE_SIZE-1;
+	}
+	if(to.z<1){
+		to.z=1;
+	}
+	if(to.z>gs->mapy*SQUARE_SIZE-1){
+		to.z=gs->mapy*SQUARE_SIZE-1;
+	}
+//	if(to.x<0){
+///		info->AddLine("error %f %f %f %f %f %f %f %f",start.x,start.z,to.x,to.z,dir.x,dir.z,dir.y,length);
+//	}
 
 	double dx=to.x-start.x;
 	double dz=to.z-start.z;

@@ -8,6 +8,8 @@
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "FileHandler.h"
+#include "GameVersion.h"
+#include "Bitmap.h"
 //#include "mmgr.h"
 
 using namespace std;
@@ -23,6 +25,8 @@ static CVertexArray* vertexArray1=0;
 static CVertexArray* vertexArray2=0;
 static CVertexArray* currentVertexArray=0;
 
+static unsigned int startupTexture=0;
+
 CVertexArray* GetVertexArray()
 {
 	if(currentVertexArray==vertexArray1){
@@ -35,47 +39,27 @@ CVertexArray* GetVertexArray()
 
 void LoadExtensions()
 {
-        const char *glstr=(const char *)glGetString(GL_EXTENSIONS);
-        if(glstr)
-        {
-                char *s=strdup(glstr);
-                ofstream ofs("ext.txt",ios::out);
-                unsigned int i;
-                for (i=0; s[i]; i++)
-                {
-                        if(s[i]==' ')
-                                s[i]='\n';
-                }
-                ofs.write(s,i);
-                free(s);
-        }
-        
-        //#error OpenGL is not being initialized!
 	glewInit();
 
-#ifndef FORCE_GL_EXTENSIONS	
-	if (glewGetExtension("GL_ARB_texture_env_combine")==GL_FALSE)
-	{
+	if(!GLEW_ARB_multitexture || !GLEW_ARB_texture_env_combine){
 		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
-		exit(1);	  	
-	}	
-
-	if (glewGetExtension("GL_ARB_multitexture")==GL_FALSE)
-	{
-		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
-		exit(1);	  	
-	}	
-
-	if (glewGetExtension("GL_ARB_texture_compression")==GL_FALSE)
-	{
-		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
-		exit(1);	  	
+		exit(0);
 	}
-#endif
+
+	if(!GLEW_ARB_texture_compression){
+		MessageBox(0,"Needed extension GL_ARB_texture_compression not found","Update drivers",0);
+		exit(0);
+	}
 	
 	vertexArray1=new CVertexArray;
 	vertexArray2=new CVertexArray;
 
+	std::string s= (char*)glGetString(GL_EXTENSIONS);
+	for (unsigned int i=0; i<s.length(); i++) 
+		if (s[i]==' ') s[i]='\n';
+
+	ofstream ofs("ext.txt",ios::out);
+	ofs.write(s.c_str(),s.length());
 }
 
 void UnloadExtensions()
@@ -83,6 +67,33 @@ void UnloadExtensions()
 	delete vertexArray1;
 	delete vertexArray2;
 
+}
+
+void LoadStartPicture()
+{
+	vector<string> bmps=CFileHandler::FindFiles("bitmaps/loadpictures/*.bmp");
+	vector<string> jpgs=CFileHandler::FindFiles("bitmaps/loadpictures/*.jpg");
+
+	int num=bmps.size()+jpgs.size();
+	if(num==0)
+		return;
+	int selected=(int)(gu->usRandFloat()*(num-0.01));
+
+	string name;
+	if(selected<bmps.size())
+		name=bmps[selected];
+	else
+		name=jpgs[selected-bmps.size()];
+
+	CBitmap bm(name);
+	startupTexture=bm.CreateTexture(true);
+}
+
+void UnloadStartPicture()
+{
+	if(startupTexture)
+		glDeleteTextures(1,&startupTexture);
+	startupTexture=0;
 }
 
 void PrintLoadMsg(const char* text)
@@ -99,13 +110,24 @@ void PrintLoadMsg(const char* text)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
+
+	if(startupTexture){
+		glBindTexture(GL_TEXTURE_2D,startupTexture);
+		glColor3f(1,1,1);
+		glBegin(GL_QUADS);
+			glTexCoord2f(0,1);glVertex2f(0,0);
+			glTexCoord2f(0,0);glVertex2f(0,1);
+			glTexCoord2f(1,0);glVertex2f(1,1);
+			glTexCoord2f(1,1);glVertex2f(1,0);
+		glEnd();
+	}
 	glPushMatrix();
 	glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 	glScalef(0.03f,0.04f,0.1f);
 	glColor3f(1,1,1);
 	font->glPrint("%s",text);
 	glPopMatrix();
-	font->glPrintAt(0.40,0.06,1.0,"TA Spring linux 0.41b1");
+	font->glPrintAt(0.40,0.06,1.0,"TA Spring linux %s",VERSION_STRING);
 	font->glPrintAt(0.20,0.02,0.5,"This program is distributed under the GNU General Public License, see license.html for more info");
 #ifndef USE_GLUT
 	SwapBuffers(hDC);
@@ -137,7 +159,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 
 	glDeleteProgramsARB( 1, &tempProg);
 
-	delete VPbuf;
+	delete[] VPbuf;
 	if ((errorPos == -1) && (isNative == 1))
 		return true;
 	else
@@ -187,7 +209,7 @@ unsigned int LoadVertexProgram(const char* filename)
 		MessageBox(0,c,(char*)errString,0);	
 		exit(0);
 	}
-	delete VPbuf;
+	delete[] VPbuf;
 	return ret;
 }
 
@@ -217,6 +239,6 @@ unsigned int LoadFragmentProgram(const char* filename)
 		MessageBox(0,c,(char*)errString,0);	
 		exit(0);
 	}
-	delete VPbuf;
+	delete[] VPbuf;
 	return ret;
 }

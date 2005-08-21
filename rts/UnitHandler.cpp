@@ -36,6 +36,7 @@
 #include "LoadSaveInterface.h"
 #include "UnitLoader.h"
 #include "SyncTracer.h"
+#include "GameSetup.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -49,7 +50,9 @@ extern bool keys[256];
 CUnitHandler::CUnitHandler()
 :	overrideId(-1),
 	maxUnits(500),
-	lastDamageWarning(0)
+	lastDamageWarning(0),
+	lastCmdDamageWarning(0),
+	showHealthBars(true)
 {
 	//unitModelLoader=new CUnit3DLoader;
 	if(texturehandler==0)
@@ -88,15 +91,18 @@ CUnitHandler::CUnitHandler()
 			}
 		}
 	}
-	CBitmap radar(rt,128,128);
+	CBitmap radar(rt,128,128/*"bitmaps\\blip.bmp"*/);
 	radarBlippTex=radar.CreateTexture(true);
 
 	unitAmbientColor=readmap->mapDefParser.GetFloat3(float3(0.4,0.4,0.4),"MAP\\LIGHT\\UnitAmbientColor");
 	unitSunColor=readmap->mapDefParser.GetFloat3(float3(0.7,0.7,0.7),"MAP\\LIGHT\\UnitSunColor");
 	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
-	readmap->mapDefParser.GetDef(maxUnits,"500","MAP\\MaxUnits");
+	waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str())*(16.0/30.0);
+
+	if(gameSetup)
+		maxUnits=gameSetup->maxUnits;
 	if(maxUnits>MAX_UNITS/gs->activeTeams-5)
-		maxUnits=MAX_UNITS/gs->activeAllyTeams-5;
+		maxUnits=MAX_UNITS/gs->activeTeams-5;
 	
 	if(shadowHandler->drawShadows){
 		unitShadowVP=LoadVertexProgram("unitshadow.vp");
@@ -206,12 +212,15 @@ END_TIME_PROFILE("Unit handler");
 	}
 }
 
+extern GLfloat FogLand[]; 
+
 void CUnitHandler::Draw(bool drawReflection)
 {
 	ASSERT_UNSYNCED_MODE;
 	vector<CUnit*> drawFar;
 	vector<CUnit*> drawStat;
 	drawCloaked.clear();
+	glFogfv(GL_FOG_COLOR,FogLand);
 
 	list<CUnit*> drawBlipp;
 
@@ -227,7 +236,7 @@ void CUnitHandler::Draw(bool drawReflection)
 			continue;
 #endif
 		if(camera->InView((*usi)->midPos,(*usi)->radius+30)){
-			if(gs->allies[(*usi)->allyteam][gu->myAllyTeam] || loshandler->InLos(*usi,gu->myAllyTeam) || gu->spectating){
+			if(gs->allies[(*usi)->allyteam][gu->myAllyTeam] || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating){
 				if(drawReflection){
 					float3 zeroPos;
 					if((*usi)->midPos.y<0){
@@ -251,10 +260,14 @@ void CUnitHandler::Draw(bool drawReflection)
 				}else{
 					drawFar.push_back(*usi);
 				}
-				if(sqDist<unitDrawDist*unitDrawDist*500){
+				if(sqDist<unitDrawDist*unitDrawDist*500 && showHealthBars){
 					drawStat.push_back(*usi);
 				}
-			} else if(radarhandler->InRadar(*usi,gu->myAllyTeam)){
+			} else if(((*usi)->losStatus[gu->myAllyTeam] & LOS_PREVLOS)){
+				drawCloaked.push_back(*usi);
+				if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR) && !((*usi)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR))
+					drawBlipp.push_back(*usi);
+			} else if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 				drawBlipp.push_back(*usi);
 			}
 		}
@@ -282,6 +295,8 @@ void CUnitHandler::Draw(bool drawReflection)
 	camNorm.y=-0.1;
 	camNorm.Normalize();
 	glColor3f(1,1,1);
+	glEnable(GL_FOG);
+	glFogfv(GL_FOG_COLOR,FogLand);
 	for(vector<CUnit*>::iterator usi=drawFar.begin();usi!=drawFar.end();usi++){
 		DrawFar(*usi);
 	}
@@ -310,7 +325,7 @@ void CUnitHandler::Draw(bool drawReflection)
 			(*usi)->DrawStats();
 		}
 
-		if( keyShift() && !selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->buildSpeed>0){
+		if(keys[VK_SHIFT] && !selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->buildSpeed>0){
 			for(set<CBuilderCAI*>::iterator bi=builderCAIs.begin();bi!=builderCAIs.end();++bi){
 				if((*bi)->owner->team==gu->myTeam){
 					(*bi)->DrawQuedBuildingSquares();
@@ -334,7 +349,7 @@ void CUnitHandler::DrawShadowPass(void)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	for(list<CUnit*>::iterator usi=activeUnits.begin();usi!=activeUnits.end();++usi){
-		if((gs->allies[(*usi)->allyteam][gu->myAllyTeam] || loshandler->InLos(*usi,gu->myAllyTeam) || gu->spectating) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
+		if((gs->allies[(*usi)->allyteam][gu->myAllyTeam] || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
 			float sqDist=((*usi)->pos-camera->pos).SqLength2D();
 			float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
 			if(sqDist<farLength){
@@ -393,7 +408,7 @@ inline void CUnitHandler::DrawFar(CUnit *unit)
 	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)-camera->right*unit->radius,tx+(1.0/64.0),ty,camNorm);
 }
 
-float CUnitHandler::GetBuildHeight(float3 pos, UnitDef* unitdef)
+float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 {
 	float minh=-5000;
 	float maxh=5000;
@@ -405,6 +420,11 @@ float CUnitHandler::GetBuildHeight(float3 pos, UnitDef* unitdef)
 	int x2 = min(gs->mapx,x1+unitdef->xsize);
 	int z1 = (int)max(0.f,(pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	int z2 = min(gs->mapy,z1+unitdef->ysize);
+
+	if (x1 > gs->mapx) x1 = gs->mapx;
+	if (x2 < 0) x2 = 0;
+	if (z1 > gs->mapy) z1 = gs->mapy;
+	if (z2 < 0) z2 = 0; 
 
 	for(int x=x1; x<=x2; x++){
 		for(int z=z1; z<=z2; z++){
@@ -436,7 +456,7 @@ int CUnitHandler::TestUnitBuildSquare(const float3& pos, std::string unit,CFeatu
 	return TestUnitBuildSquare(pos, unitdef,feature);
 }
 
-int CUnitHandler::TestUnitBuildSquare(const float3& pos, UnitDef *unitdef,CFeature *&feature)
+int CUnitHandler::TestUnitBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature)
 {
 	feature=0;
 
@@ -470,7 +490,7 @@ int CUnitHandler::TestUnitBuildSquare(const float3& pos, UnitDef *unitdef,CFeatu
 	return canBuild;
 }
 
-int CUnitHandler::TestBuildSquare(const float3& pos, UnitDef *unitdef,CFeature *&feature)
+int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature)
 {
 	int ret=2;
 	if(pos.x<0 || pos.x>=gs->mapx*SQUARE_SIZE || pos.z<0 || pos.z>=gs->mapy*SQUARE_SIZE)
@@ -518,7 +538,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, UnitDef *unitdef,CFeature *
 	return ret;
 }
 
-int CUnitHandler::ShowUnitBuildSquare(const float3& pos, UnitDef *unitdef)
+int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef)
 {
 	glDisable(GL_DEPTH_TEST );
 	glEnable(GL_BLEND);
@@ -654,11 +674,7 @@ void CUnitHandler::DrawCloakedUnits(void)
 			float3 pos=ti->second.pos;
 			UnitDef *unitdef = ti->second.unitdef;
 
-			pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
-			pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
-			pos.y=ground->GetHeight2(pos.x,pos.z);
-			if(unitdef->floater && pos.y<0)
-				pos.y = -unitdef->waterline;
+			pos=helper->Pos2BuildPos(pos,unitdef);
 
 			float xsize=unitdef->xsize*4;
 			float ysize=unitdef->ysize*4;
@@ -679,12 +695,40 @@ void CUnitHandler::DrawCloakedUnits(void)
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glAlphaFunc(GL_GREATER,0.1f);
 	glColor4f(1,1,1,0.3);
 	texturehandler->SetTexture();
 	glDepthMask(0);
 
 	for(vector<CUnit*>::iterator ui=drawCloaked.begin();ui!=drawCloaked.end();++ui){
-		(*ui)->Draw();
+		if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
+			glColor4f(1,1,1,0.4);
+			(*ui)->Draw();
+		} else {
+			if((*ui)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
+				glColor4f(0.9,0.9,0.9,0.5);
+			else
+				glColor4f(0.6,0.6,0.6,0.4);
+			glPushMatrix();
+			glTranslatef3((*ui)->pos);
+			(*ui)->model->rootobject->DrawStatic();
+			glPopMatrix();
+		}
+	}
+	//go through the dead but still ghosted buildings
+	glColor4f(0.6,0.6,0.6,0.4);
+	for(std::list<GhostBuilding>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
+		if(loshandler->InLos(gbi->pos,gu->myAllyTeam)){
+			gbi=ghostBuildings.erase(gbi);
+		} else {
+			if(camera->InView(gbi->pos,gbi->model->radius*2)){
+				glPushMatrix();
+				glTranslatef3(gbi->pos);
+				gbi->model->rootobject->DrawStatic();
+				glPopMatrix();
+			}
+			++gbi;
+		}
 	}
 	glDepthMask(1);
 }

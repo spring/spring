@@ -28,10 +28,14 @@ public:
 
 	int GetCurrentFrame();
 	int GetMyTeam();
+	int GetMyAllyTeam();
+
+	void* CreateSharedMemArea(char* name, int size);
+	void ReleasedSharedMemArea(char* name);
 
 	int GiveOrder(int unitid,Command* c);
 	void UpdateIcons();
-	Command GetOrderPreview();
+	const Command* GetOrderPreview();
 	virtual bool IsSelected();
 
 	const vector<CommandDescription>* GetUnitCommands(int unitid);
@@ -40,13 +44,12 @@ public:
 	int GetUnitLastUserOrder(int unitid);	//last frame the user gave a direct order to a unit, ai should probably leave it be for some time to avoid irritating user
 	int GetUnitAihint(int unitid);				//integer telling something about the units main function
 	int GetUnitTeam(int unitid);
+	int GetUnitAllyTeam(int unitid);
 	float GetUnitHealth(int unitid);			//the units current health
 	float GetUnitMaxHealth(int unitid);		//the units max health
 	float GetUnitSpeed(int unitid);				//the units max speed
 	float GetUnitPower(int unitid);				//sort of the measure of the units overall power
 	float GetUnitExperience(int unitid);	//how experienced the unit is (0.0-1.0)
-	float GetUnitSupply(int unitid);			//how well supplied the unit is (0.0-1.0)
-	float GetUnitMorale(int unitid);			//the units morale (0.0-1.0)
 	float GetUnitMaxRange(int unitid);		//the furthest any weapon of the unit can fire
 	const UnitDef* GetUnitDef(int unitid);	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 	float3 GetUnitPos(int unitid);
@@ -82,10 +85,16 @@ public:
 	void DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder);
 
 	bool CanBuildAt(const UnitDef* unitDef,float3 pos);
+	virtual float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist);	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
 	virtual float GetMetal();				//stored metal for team
-	virtual float GetEnergy();				//stored energy for team
+	virtual float GetMetalIncome();				
+	virtual float GetMetalUsage();				
 	virtual float GetMetalStorage();				//metal storage for team
+
+	virtual float GetEnergy();				//stored energy for team
+	virtual float GetEnergyIncome();			
+	virtual float GetEnergyUsage();				
 	virtual float GetEnergyStorage();				//energy storage for team
 };
 

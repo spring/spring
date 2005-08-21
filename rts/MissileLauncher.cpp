@@ -45,7 +45,7 @@ void CMissileLauncher::Fire(void)
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType))
 		startSpeed+=owner->speed;
 
-	new CMissileProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed)+15,targetUnit, weaponDef);
+	new CMissileProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+25),targetUnit, weaponDef);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,startSpeed,owner,targetUnit, float3(0,0,0), weaponDef);
 	if(fireSoundId)
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
@@ -66,6 +66,9 @@ bool CMissileLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	}
 	float3 dir=pos-weaponPos;
 	float length=dir.Length();
+	if(length==0)
+		return true;
+
 	dir/=length;
 
 	if(!onlyForward){		//skip ground col testing for aircrafts

@@ -11,6 +11,7 @@
 
 #include "Bitmap.h"
 #include "ReadMap.h"
+#include "SmfReadMap.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -20,7 +21,7 @@
 CBasicWater::CBasicWater()
 {
 	glGenTextures(1, &texture);
-	CBitmap pic("bitmaps/ocean.jpg");
+	CBitmap pic(((CSmfReadMap*)readmap)->waterTexture);
 
 	// create mipmapped texture
 	glBindTexture(GL_TEXTURE_2D, texture);

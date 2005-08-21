@@ -28,6 +28,7 @@ CGameServer::CGameServer(void)
 	makeMemDump=true;
 	serverframenum=0;
 	timeLeft=0;
+	gameLoading=true;
 	gameEndDetected=false;
 	gameEndTime=0;
 	outstandingSyncFrame=-1;
@@ -44,25 +45,11 @@ CGameServer::CGameServer(void)
 	serverNet->InitServer(port);
 	net->InitClient("localhost",port,true);
 #ifndef NO_NET
-	serverNet->InitNewConn(&net->connections[0].addr,true,0);
 	serverNet->connections[0].localConnection=&net->connections[0];
 	net->connections[0].localConnection=&serverNet->connections[0];
+	serverNet->InitNewConn(&net->connections[0].addr,true,0);
 	net->onlyLocal=true;
 #endif
-	netbuf[0]=NETMSG_SCRIPT;
-	netbuf[1]=CScriptHandler::Instance()->chosenName.size()+3;
-	for(unsigned int b=0;b<CScriptHandler::Instance()->chosenName.size();b++)
-		netbuf[b+2]=CScriptHandler::Instance()->chosenName.at(b);
-	netbuf[CScriptHandler::Instance()->chosenName.size()+2]=0;
-	serverNet->SendData(netbuf,CScriptHandler::Instance()->chosenName.size()+3);
-
-	outbuf[0]=NETMSG_MAPNAME;
-	outbuf[1]=stupidGlobalMapname.size()+7;
-	*(int*)&outbuf[2]=stupidGlobalMapId;
-	for(unsigned int a=0;a<stupidGlobalMapname.size();a++)
-		outbuf[a+6]=stupidGlobalMapname.at(a);
-	outbuf[stupidGlobalMapname.size()+6]=0;
-	serverNet->SendData(outbuf,stupidGlobalMapname.size()+7);
 
 	QueryPerformanceCounter(&lastframe);
 	QueryPerformanceFrequency(&timeSpeed);
@@ -99,7 +86,7 @@ bool CGameServer::Update(void)
 				for(int a=0;a<MAX_PLAYERS;++a){
 					if(gs->players[a]->active){
 						if(!syncResponses[a]){		//if the checksum really happens to be 0 we will get lots of falls positives here
-							info->AddLine("No sync resonse from %s",gs->players[a]->playerName.c_str());
+							info->AddLine("No sync response from %s",gs->players[a]->playerName.c_str());
 							continue;
 						}
 						if(correctSync && correctSync!=syncResponses[a]){
@@ -118,6 +105,17 @@ bool CGameServer::Update(void)
 			(*((int*)&outbuf[1]))=serverframenum;
 			serverNet->SendData(outbuf,5);
 			outstandingSyncFrame=serverframenum;
+
+			//send info about the players
+			for(int a=0;a<MAX_PLAYERS;++a){
+				if(gs->players[a]->active){
+					outbuf[0]=NETMSG_PLAYERINFO;
+					outbuf[1]=a;
+					*(float*)&outbuf[2]=gs->players[a]->cpuUsage;
+					*(int*)&outbuf[6]=gs->players[a]->ping;
+					serverNet->SendData(outbuf,10);
+				}
+			}
 
 			//decide new internal speed
 			float maxCpu=0;
@@ -151,11 +149,7 @@ bool CGameServer::Update(void)
 	if (game->playing){
 		LARGE_INTEGER currentFrame;
 		QueryPerformanceCounter(&currentFrame);
-#ifdef _WIN32		
 		double timeElapsed=((double)(currentFrame.QuadPart - lastframe.QuadPart))/timeSpeed.QuadPart;
-#else
-		double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;
-#endif
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		info->AddLine("float value is %f",timeElapsed);
@@ -199,69 +193,89 @@ bool CGameServer::ServerReadNet()
 				gs->players[a]->active=false;
 				POP_CODE_MODE;
 				inbuflength=0;
-				info->AddLine("Lost connection to "+gs->players[a]->playerName);
+				outbuf[0]=NETMSG_PLAYERLEFT;
+				outbuf[1]=a;
+				outbuf[2]=0;
+				serverNet->SendData(outbuf,3);
 			}
 		}
 		//		(*info) << serverNet->numConnected << "\n";
 
 		while(inbufpos<inbuflength){
 			thisMsg=inbuf[inbufpos];
+			int lastLength=0;
 			switch (inbuf[inbufpos]){
 
 			case NETMSG_ATTEMPTCONNECT: //handled directly in CNet
-				inbufpos+=3;
+				lastLength=3;
 				break;
 
 			case NETMSG_HELLO: 
-				inbufpos++;
+				lastLength=1;
+				break;
+
+			case NETMSG_RANDSEED: 
+				lastLength=5;
+				serverNet->SendData(&inbuf[inbufpos],5);
 				break;
 
 			case NETMSG_NEWFRAME: 
-				inbufpos+=5;
+				gs->players[a]->ping=serverframenum-*(int*)&inbuf[inbufpos+1];
+				lastLength=5;
 				break;
 
 			case NETMSG_PAUSE:
 				if(inbuf[inbufpos+2]!=a){
 					info->AddLine("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
 				} else {
-					timeLeft=0;
-					serverNet->SendData(&inbuf[inbufpos],3);
+					if(game->gamePausable){
+						timeLeft=0;
+						serverNet->SendData(&inbuf[inbufpos],3);
+					}
 				}
-				inbufpos+=3;
+				lastLength=3;
 				break;
 
 			case NETMSG_INTERNAL_SPEED: 
 				info->AddLine("Server shouldnt get internal speed msgs?");
-				inbufpos+=5;
+				lastLength=5;
 				break;
 
-			case NETMSG_USER_SPEED: 
-				if(gs->speedFactor==gs->userSpeedFactor || gs->speedFactor>*((float*)&inbuf[inbufpos+1])){
-					unsigned char t[5];
-					t[0]=NETMSG_INTERNAL_SPEED;
-					*((float*)&t[1])=*((float*)&inbuf[inbufpos+1]);
-					serverNet->SendData(t,5);
+			case NETMSG_USER_SPEED: {
+				float speed=*((float*)&inbuf[inbufpos+1]);
+				if(speed>game->maxUserSpeed)
+					speed=game->maxUserSpeed;
+				if(speed<game->minUserSpeed)
+					speed=game->minUserSpeed;
+				if(gs->userSpeedFactor!=speed){
+					if(gs->speedFactor==gs->userSpeedFactor || gs->speedFactor>speed){
+						unsigned char t[5];
+						t[0]=NETMSG_INTERNAL_SPEED;
+						*((float*)&t[1])=speed;
+						serverNet->SendData(t,5);
+					}
+					serverNet->SendData(&inbuf[inbufpos],5);
 				}
-				serverNet->SendData(&inbuf[inbufpos],5);
-				inbufpos+=5;
-				break;
+				lastLength=5;
+				break;}
 
 			case NETMSG_CPU_USAGE: 
 				ENTER_MIXED;
 				gs->players[a]->cpuUsage=*((float*)&inbuf[inbufpos+1]);
 				ENTER_UNSYNCED;
-				inbufpos+=5;
+				lastLength=5;
 				break;
 
 			case NETMSG_EXECHECKSUM: 
 				if(exeChecksum!=*((unsigned int*)&inbuf[inbufpos+1])){
 					SendSystemMsg("Wrong exe checksum from %i got %X instead of %X",a,*((unsigned int*)&inbuf[inbufpos+1]),exeChecksum);
 				}
-				inbufpos+=5;
+				lastLength=5;
 				break;
 
 			case NETMSG_MAPNAME:
-				inbufpos+=inbuf[inbufpos+1];				
+				if(inbuf[inbufpos+1])
+					lastLength=inbuf[inbufpos+1];				
 				break;
 
 			case NETMSG_QUIT:
@@ -271,8 +285,12 @@ bool CGameServer::ServerReadNet()
 #ifndef NO_NET
 				serverNet->connections[a].active=false;
 #endif
-				inbufpos++;
-				SendSystemMsg("Player %s quit",gs->players[a]->playerName.c_str());
+				outbuf[0]=NETMSG_PLAYERLEFT;
+				outbuf[1]=a;
+				outbuf[2]=1;
+				serverNet->SendData(outbuf,3);
+
+				lastLength=1;
 				break;
 
 			case NETMSG_PLAYERNAME:
@@ -288,7 +306,7 @@ bool CGameServer::ServerReadNet()
 					SendSystemMsg("Player %s joined as %i",&inbuf[inbufpos+3],inbuf[inbufpos+2]);
 					serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
 				}
-				inbufpos+=inbuf[inbufpos+1];
+				lastLength=inbuf[inbufpos+1];
 				break;
 
 			case NETMSG_CHAT:
@@ -297,7 +315,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
 				}
-				inbufpos+=inbuf[inbufpos+1];	
+				lastLength=inbuf[inbufpos+1];
 				break;
 
 			case NETMSG_SYSTEMMSG:
@@ -306,7 +324,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
 				}
-				inbufpos+=inbuf[inbufpos+1];	
+				lastLength=inbuf[inbufpos+1];	
 				break;
 
 			case NETMSG_STARTPOS:
@@ -315,7 +333,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],15);
 				}
-				inbufpos+=15;
+				lastLength=15;
 				break;
 
 			case NETMSG_COMMAND:
@@ -324,7 +342,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
 				}
-				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
 			case NETMSG_SELECT:
@@ -333,7 +351,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
 				}
-				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
 			case NETMSG_AICOMMAND:
@@ -342,7 +360,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
 				}
-				inbufpos+=*((short int*)&inbuf[inbufpos+1]);
+				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
 			case NETMSG_SYNCRESPONSE:{
@@ -354,7 +372,7 @@ bool CGameServer::ServerReadNet()
 					else
 						info->AddLine("Delayed sync respone from %s",gs->players[inbuf[inbufpos+1]]->playerName.c_str());
 				}
-				inbufpos+=10;}
+				lastLength=10;}
 				break;
 
 			case NETMSG_SHARE:
@@ -363,7 +381,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],12);
 				}
-				inbufpos+=12;
+				lastLength=12;
 				break;
 
 			case NETMSG_SETSHARE:
@@ -372,7 +390,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],10);
 				}
-				inbufpos+=10;
+				lastLength=10;
 				break;
 
 			case NETMSG_PLAYERSTAT:
@@ -381,12 +399,12 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],sizeof(CPlayer::Statistics)+2);
 				}
-				inbufpos+=sizeof(CPlayer::Statistics)+2;
+				lastLength=sizeof(CPlayer::Statistics)+2;
 				break;
 
 			case NETMSG_MAPDRAW:
 				serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]);
-				inbufpos+=inbuf[inbufpos+1];				
+				lastLength=inbuf[inbufpos+1];				
 				break;
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -396,7 +414,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],2);
 				}
-				inbufpos+=2;
+				lastLength=2;
 				break;
 
 			case NETMSG_DC_UPDATE:
@@ -405,7 +423,7 @@ bool CGameServer::ServerReadNet()
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],7);
 				}
-				inbufpos+=7;
+				lastLength=7;
 				break;
 #endif
 			default:
@@ -413,16 +431,21 @@ bool CGameServer::ServerReadNet()
 				sprintf(txt,"Unknown net msg in server %d from %d pos %d last %d",(int)inbuf[inbufpos],a,inbufpos,lastMsg[a]);
 				info->AddLine(txt);
 				//MessageBox(0,txt,"Network error",0);
-				inbufpos++;
+				lastLength=1;
 				break;
 			}
+			if(lastLength<=0){
+				info->AddLine("Server readnet got packet type %i length %i pos %i from %i??",thisMsg,lastLength,inbufpos,a);
+				lastLength=1;
+			}
+			inbufpos+=lastLength;
 			lastMsg[a]=thisMsg;
 		}
 		if(inbufpos!=inbuflength){
 			char txt[200];
 			sprintf(txt,"Wrong packet length got %d from %d instead of %d",inbufpos,a,inbuflength);
 			info->AddLine(txt);
-			MessageBox(0,txt,"Network error",0);
+			MessageBox(0,txt,"Server network error",0);
 		}
 	}
 	return true;
@@ -434,6 +457,11 @@ void CGameServer::StartGame(void)
 	WaitForSingleObject(gameServerMutex,INFINITE);
 #endif
 	serverNet->StopListening();
+
+//	outbuf[0]=NETMSG_RANDSEED;
+//	*((unsigned int*)&outbuf[1])=gs->randSeed;
+//	serverNet->SendData(outbuf,5);
+
 	for(int a=0;a<MAX_PLAYERS;a++){
 		if(!gs->players[a]->active)
 			continue;
@@ -519,7 +547,11 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 
 void CGameServer::UpdateLoop(void)
 {
-	Sleep(500);		//we might crash if game hasnt finished initializing within this time
+	while(gameLoading){		//avoid timing out while loading (esp if calculating path data)
+		Sleep(100);
+		serverNet->Update();
+	}
+	Sleep(100);		//we might crash if game hasnt finished initializing within this time
 #ifndef NO_MUTEXTHREADS
 	SetThreadPriority(thisThread,THREAD_PRIORITY_ABOVE_NORMAL);		//we want the server to continue running smoothly even if the game client is struggling
 #endif

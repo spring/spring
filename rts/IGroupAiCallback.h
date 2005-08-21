@@ -27,10 +27,18 @@ public:
 
 	virtual int GetCurrentFrame()=0;															//get the current game time, there is 30 frames per second at normal speed
 	virtual int GetMyTeam()=0;
+	virtual int GetMyAllyTeam()=0;
+
+	// returns the size of the created area, this is initialized to all 0 if not previously created
+	//set something to !0 to tell other ais that the area is already initialized when they try to create it
+	//the exact internal format of the memory areas is up to the ais to keep consistent
+	virtual void* CreateSharedMemArea(char* name, int size)=0;
+	//release your reference to a memory area.
+	virtual void ReleasedSharedMemArea(char* name)=0;
 
 	virtual int GiveOrder(int unitid,Command* c)=0;					//gives a order to a unit under the groups control, see also command.h
 	virtual void UpdateIcons()=0;														//force gui to update the icons 
-	virtual Command GetOrderPreview()=0;									//this make the game to try to create an order from the current (unfinished) mouse state
+	virtual const Command* GetOrderPreview()=0;									//this make the game to try to create an order from the current (unfinished) mouse state, dont count on the command being pointed to being left after you call this again or leave the function
 	virtual bool IsSelected()=0;													//returns true if this group is currently selected
 
 	virtual int GetUnitLastUserOrder(int unitid)=0;	//last frame the user gave a direct order to a unit, ai should probably leave it be for some time to avoid irritating user
@@ -40,6 +48,7 @@ public:
 	//all the following returns 0 if you dont have los to the unit in question (including null pointers ... )
 	virtual int GetUnitAihint(int unitid)=0;				//integer telling something about the units main function, not currently working hopefully will soon
 	virtual int GetUnitTeam(int unitid)=0;
+	virtual int GetUnitAllyTeam(int unitid)=0;
 	virtual float GetUnitHealth(int unitid)=0;			//the units current health
 	virtual float GetUnitMaxHealth(int unitid)=0;		//the units max health
 	virtual float GetUnitSpeed(int unitid)=0;				//the units max speed
@@ -106,10 +115,16 @@ public:
 	virtual void DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder)=0;
 
 	virtual bool CanBuildAt(const UnitDef* unitDef,float3 pos)=0; //returns true if a given type of unit can be build at a pos (not blocked by other units etc)
+	virtual float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist)=0;	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base), returns x=-1 if a pos is not found
 
 	virtual float GetMetal()=0;				//stored metal for team
-	virtual float GetEnergy()=0;				//stored energy for team
+	virtual float GetMetalIncome()=0;				
+	virtual float GetMetalUsage()=0;				
 	virtual float GetMetalStorage()=0;				//metal storage for team
+
+	virtual float GetEnergy()=0;				//stored energy for team
+	virtual float GetEnergyIncome()=0;			
+	virtual float GetEnergyUsage()=0;				
 	virtual float GetEnergyStorage()=0;				//energy storage for team
 };
 

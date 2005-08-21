@@ -24,6 +24,23 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,c
 {
 	sizeGrowth=size/temperature;
 	checkCol=false;
+	useAirLos=true;
+	SetRadius(size+sizeGrowth*heat/heatFalloff);
+}
+
+CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,const float temperature,const float size, float sizegrowth, CUnit* owner)
+: CProjectile(pos,speed,owner),
+	heat(temperature),
+	maxheat(temperature),
+	heatFalloff(1),
+	sizemod(1)
+{
+	this->sizeGrowth = sizegrowth;
+	this->size = size;
+	checkCol=false;
+	useAirLos=true;
+	SetRadius(size+sizeGrowth*heat/heatFalloff);
+	sizemodmod=min(1.,max(0.,1-(1/pow(2.0f,heat*0.1f))));
 }
 
 CHeatCloudProjectile::~CHeatCloudProjectile()
@@ -41,6 +58,7 @@ void CHeatCloudProjectile::Update()
 		heat=0;
 	}
 	size+=sizeGrowth;
+	sizemod*=sizemodmod;
 }
 
 void CHeatCloudProjectile::Draw()
@@ -55,7 +73,7 @@ void CHeatCloudProjectile::Draw()
 	col[1]=(unsigned char)alpha;
 	col[2]=(unsigned char)alpha;
 	col[3]=1;//(dheat/maxheat)*255.0f;
-	float drawsize=size+sizeGrowth*gu->timeOffset;
+	float drawsize=(size+sizeGrowth*gu->timeOffset)*(1-sizemod);
 	float3 interPos=pos+speed*gu->timeOffset;
 	va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,0.25,0.25,col);
 	va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,0.5,0.25,col);

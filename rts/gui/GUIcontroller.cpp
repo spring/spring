@@ -33,6 +33,7 @@
 #include "GUIsharingDialog.h"
 #include "GUIendgameDialog.h"
 #include "GUItable.h"
+#include <stdarg.h>
 
 /* 
 Remaining TODOs:
@@ -59,6 +60,60 @@ map<string, CommandDescription> commandDesc;
 // which dialog controller has which token?
 map<string, GUIdialogController*> dialogControllers;
 
+GUIcontroller& GUIcontroller::operator<< (const char* c)
+{
+	for(unsigned int a=0;a<strlen(c);a++){
+		if(c[a]!='\n'){
+			tempstring+=c[a];
+		} else {
+			AddText(tempstring);
+			tempstring="";
+			break;
+		}
+	}
+	return *this;
+}
+GUIcontroller& GUIcontroller::operator<< (int i)
+{
+	char t[50];
+	sprintf(t,"%d ",i);
+	tempstring+=t;
+	return *this;
+}
+GUIcontroller& GUIcontroller::operator<< (float f)
+{
+	char t[50];
+	sprintf(t,"%f ",f);
+	tempstring+=t;
+	return *this;
+}
+
+
+void GUIcontroller::SetLastMsgPos(float3 pos)
+{
+	lastMsgPos=pos;
+}
+
+void GUIcontroller::AddText(const char* fmt, ...)
+{
+	char text[500];
+	va_list		ap;										// Pointer To List Of Arguments
+
+	if (fmt == NULL)									// If There's No Text
+		return;											// Do Nothing
+
+	va_start(ap, fmt);									// Parses The String For Variables
+	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
+	va_end(ap);	
+
+	console->AddText(text);
+}
+
+
+void GUIcontroller::AddText(const std::string& text)
+{
+	AddText("%s",text.c_str());	
+}
 
 void GUIcontroller::LoadInterface(const std::string& name)
 {
@@ -125,7 +180,10 @@ GUIcontroller::GUIcontroller()
 	commandNames[CMD_GROUPSELECT]="groupselect";
 	commandNames[CMD_GROUPADD]="groupadd";
 	commandNames[CMD_GROUPCLEAR]="groupclear";
-	
+	commandNames[CMD_REPEAT]="repeat";
+	commandNames[CMD_TRAJECTORY]="trajectory";
+	commandNames[CMD_RESURRECT]="resurrect";
+	commandNames[CMD_CAPTURE]="capture";	
 
 
 }
@@ -194,16 +252,18 @@ void GUIcontroller::ConsoleInput(const std::string& inputText)
 		gu->myAllyTeam=gs->team2allyteam[gu->myTeam];	//
 		gs->players[gu->myPlayerNum]->team=gu->myTeam;
 	}
-	userInput=gs->players[gu->myPlayerNum]->playerName+": "+inputText;
+	//userInput=gs->players[gu->myPlayerNum]->playerName+": "+inputText;
+	userInput=inputText;
 	netbuf[0]=NETMSG_CHAT;
 	netbuf[1]=userInput.size()+4;
+	netbuf[2]=gu->myPlayerNum;
 	for(unsigned int a=0;a<userInput.size();a++)
 		netbuf[a+3]=userInput.at(a);
 	netbuf[userInput.size()+3]=0;
 	net->SendData(netbuf,userInput.size()+4);
 	
-	if(console)
-		console->AddText(userInput);
+//	if(console)
+//		console->AddText(userInput);
 }
 
 char buttonMap[]={1, 3, 2, 4, 5, 6, 7, 8};
@@ -249,14 +309,14 @@ const string GUIcontroller::Modifiers()
 {
 	string keyname("");
 
-	if(keyShift())
+	if(keys[VK_SHIFT])
 		keyname.append("shift_");
-	if(keyCtrl())
+	if(keys[VK_CONTROL])
 		keyname.append("ctrl_");
 #ifndef USE_GLUT		
 	if(keys[VK_RMENU]||keys[VK_LMENU])
 #else
-	if(keyMenu())
+	if(keys[VK_MENU])
 #endif
 		keyname.append("alt_");
 #ifndef USE_GLUT

@@ -16,14 +16,30 @@ CGroundFlash::CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float f
 	flashSize(flashSize),
 	circleGrowth(circleSpeed),
 	circleSize(circleSpeed),
+	flashAge(0),
 	ttl(ttl),
 	circleAlphaDec(circleAlpha/ttl),
-	flashAlphaDec(flashAlpha/ttl),
+	flashAgeSpeed(1.0f/ttl),
 	pos(pos)
 {
-	pos.y=ground->GetHeight(pos.x,pos.z);
-	normal=ground->GetNormal(pos.x,pos.z);
+	this->pos.y=ground->GetHeight2(pos.x,pos.z)+1;
+	float3 p1(pos.x+flashSize,0,pos.z);
+	p1.y=ground->GetApproximateHeight(p1.x,p1.z);
+	float3 p2(pos.x-flashSize,0,pos.z);
+	p2.y=ground->GetApproximateHeight(p2.x,p2.z);
+	float3 p3(pos.x,0,pos.z+flashSize);
+	p3.y=ground->GetApproximateHeight(p3.x,p3.z);
+	float3 p4(pos.x,0,pos.z-flashSize);
+	p4.y=ground->GetApproximateHeight(p4.x,p4.z);
+	float3 n1((p3-p1).cross(p4-p1));
+	n1.Normalize();
+	float3 n2((p4-p2).cross(p3-p2));
+	n2.Normalize();
+
+	normal=n1+n2;
+	normal.Normalize();
 	side1=normal.cross(float3(1,0,0));
+	side1.Normalize();
 	side2=side1.cross(normal);
 	ph->AddGroundFlash(this);
 }
@@ -36,7 +52,7 @@ void CGroundFlash::Update(void)
 {
 	circleSize+=circleGrowth;
 	circleAlpha-=circleAlphaDec;
-	flashAlpha-=flashAlphaDec;
+	flashAge+=flashAgeSpeed;
 	if(--ttl<0){
 		ph->RemoveGroundFlash(this);
 	}
@@ -44,15 +60,7 @@ void CGroundFlash::Update(void)
 
 void CGroundFlash::Draw(void)
 {
-	float3 camVect=camera->pos-pos;
-	float camLength=camVect.Length();
-	camVect/=camLength;
-	float moveLength=50;
-	if(camLength<60)
-		moveLength=camLength-50;
-	float3 modPos=pos+camVect*moveLength;
-
-	float iAlpha=circleAlpha-flashAlphaDec*gu->timeOffset;
+	float iAlpha=circleAlpha-circleAlphaDec*gu->timeOffset;
 
 	unsigned char col[4];
 	col[0]=255;
@@ -61,23 +69,39 @@ void CGroundFlash::Draw(void)
 	col[3]=(unsigned char) (iAlpha*255);
 
 	float iSize=circleSize+circleGrowth*gu->timeOffset;
-	iSize*=1.0-(moveLength/(camLength));
 
 	if(iAlpha>0){
-		va->AddVertexTC(modPos-side1*iSize-side2*iSize,0,0,col);
-		va->AddVertexTC(modPos+side1*iSize-side2*iSize,1,0,col);
-		va->AddVertexTC(modPos+side1*iSize+side2*iSize,1,0.5,col);
-		va->AddVertexTC(modPos-side1*iSize+side2*iSize,0,0.5,col);
+		float3 p1=pos+(-side1-side2)*iSize;
+		float3 p2=pos+( side1-side2)*iSize;
+		float3 p3=pos+( side1+side2)*iSize;
+		float3 p4=pos+(-side1+side2)*iSize;
+
+		va->AddVertexTC(p1,0,0,col);
+		va->AddVertexTC(p2,1,0,col);
+		va->AddVertexTC(p3,1,0.5,col);
+		va->AddVertexTC(p4,0,0.5,col);
 	}
-	iAlpha=flashAlpha-flashAlphaDec*gu->timeOffset;
-	col[3]=(unsigned char) (iAlpha*255);
-	iSize=flashSize*(1.0-(moveLength/(camLength)));
 
-	if(iAlpha>0){
-		va->AddVertexTC(modPos+(-side1-side2)*iSize,0,1,col);
-		va->AddVertexTC(modPos+( side1-side2)*iSize,1,1,col);
-		va->AddVertexTC(modPos+( side1+side2)*iSize,1,0.5,col);
-		va->AddVertexTC(modPos+(-side1+side2)*iSize,0,0.5,col);
+	float iAge=flashAge+flashAgeSpeed*gu->timeOffset;
+
+	if(iAge<1){
+		if(iAge<0.091f)
+			iAlpha=flashAlpha*iAge*10.0f;
+		else
+			iAlpha=flashAlpha*(1.0f-iAge);
+
+		col[3]=(unsigned char)(iAlpha*255);
+		iSize=flashSize;
+
+		float3 p1=pos+(-side1-side2)*iSize;
+		float3 p2=pos+( side1-side2)*iSize;
+		float3 p3=pos+( side1+side2)*iSize;
+		float3 p4=pos+(-side1+side2)*iSize;
+
+		va->AddVertexTC(p1,0,1,col);
+		va->AddVertexTC(p2,1,1,col);
+		va->AddVertexTC(p3,1,0.5,col);
+		va->AddVertexTC(p4,0,0.5,col);
 	}
 }
 

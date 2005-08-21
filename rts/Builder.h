@@ -9,6 +9,7 @@
 #include "Unit.h"
 
 using namespace std;
+class CFeature;
 
 class CBuilder : public CUnit  
 {
@@ -30,7 +31,10 @@ public:
 	float buildSpeed;
 	float buildDistance;
 
+	CFeature* curResurrect;
+	int lastResurrected;
 	CUnit* curBuild;
+	CUnit* curCapture;
 	CSolidObject* curReclaim;
 	CBuilder* helpTerraform;
 
@@ -49,6 +53,8 @@ public:
 	float3 nextBuildPos;
 	void HelpTerraform(CBuilder* unit);
 	void CreateNanoParticle(float3 goal, float radius, bool inverse);
+	void SetResurrectTarget(CFeature* feature);
+	void SetCaptureTarget(CUnit* unit);
 };
 
 #endif // __BUILDER_H__

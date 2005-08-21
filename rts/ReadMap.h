@@ -16,7 +16,6 @@
 #include "mapfile.h"
 #include "float3.h"
 #include "MetalMap.h"
-#include "sm2header.h"
 #include "SunParser.h"
 
 class CFileHandler;
@@ -50,14 +49,24 @@ public:
 	float* orgheightmap;							//höjd utan skada
 	float* centerheightmap;						//höjd i mitten av squares
 	float* halfHeightmap;							//höjd i halva upplösningen (för los etc)
+	float* slopemap;
 //	float3* normals;
 	float3* facenormals;							//normalerna för trianglarna (2 per square)
 	unsigned char* typemap;						//typ av terräng (skog,väg etc
-	unsigned char* teammap;						//team som äger den squaren
-	unsigned char* damagemap;					//andel skada på den squaren
-	unsigned char* vegFilter;					//var det inte ska finnas gräs (för fälten) var tänkt att ha för olika sorters gräs etc
 	unsigned char* heightLineMap;			//för höjd karte visning (F1)
 	unsigned char* heightLinePal;			//palette för höjd karte visning
+
+	struct TerrainType{
+		std::string name;
+		float hardness;
+		float tankSpeed;
+		float kbotSpeed;
+		float hoverSpeed;
+		float shipSpeed;
+		int receiveTracks;
+	};
+
+	TerrainType terrainTypes[256];
 
 	CSolidObject** groundBlockingObjectMap;				//Pekar-karta till alla blockerande objekt på marken.
 	CMetalMap *metalMap;					//Metal-density/height-map
@@ -81,7 +90,7 @@ public:
 //	void AddYardmap(CSolidObject* unit,bool openYardmap);
 //	void RemoveYardmap(CSolidObject* unit,bool openYardmap);
 
-	SM2Header header;
+	MapHeader header;
 	CFileHandler* ifs;
 	CSunParser mapDefParser;
 
@@ -92,6 +101,8 @@ public:
 
 	float minheight,maxheight;
 	void LoadSaveMap(CLoadSaveInterface* file,bool loading);
+
+	std::string skyBox;
 };
 
 extern CReadMap* readmap;

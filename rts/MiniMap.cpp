@@ -26,10 +26,12 @@
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "GameHelper.h"
-#include "BFReadmap.h"
+#include "SmfReadMap.h"
 #include "RadarHandler.h"
 #include "Weapon.h"
 #include "WeaponDefHandler.h"
+#include "MapDamage.h"
+#include "MetalMap.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -117,7 +119,7 @@ void CMiniMap::Draw()
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, ((CBFReadmap*)readmap)->shadowTex);
+	glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
@@ -139,8 +141,8 @@ void CMiniMap::Draw()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	float isx=gs->hmapx/512.0;
-	float isy=gs->hmapy/512.0;
+	float isx=gs->mapx/float(gs->pwr2mapx);
+	float isy=gs->mapy/float(gs->pwr2mapy);
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0,isy);
@@ -272,6 +274,8 @@ void CMiniMap::Draw()
 		}
 	}
 
+	DrawNotes();
+
 	glColor4f(1,1,1,0.5);
 	glViewport(xpos,ypos,10,10);
 	glBegin(GL_QUADS);
@@ -350,8 +354,8 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 		info->AddLine("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
 		return;
 	}*/
-	if(unit->allyteam==gu->myAllyTeam || loshandler->InLos(unit,gu->myAllyTeam) || gu->spectating){
-	}else if(radarhandler->InRadar(unit,gu->myAllyTeam)){
+	if(unit->allyteam==gu->myAllyTeam || (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating){
+	}else if((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
 	}else{
 		return;
@@ -537,6 +541,59 @@ std::string CMiniMap::GetTooltip(int x, int y)
 
 	char tmp[500];
 
-	sprintf(tmp,"Pos %.0f %.0f Elevation %.0f",pos.x,pos.z,ground->GetHeight(pos.x,pos.z));
+	CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
+	string ttype=tt->name;
+	sprintf(tmp,"Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\nSpeeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",pos.x,pos.z,ground->GetHeight2(pos.x,pos.z),ttype.c_str(),tt->tankSpeed,tt->kbotSpeed,tt->hoverSpeed,tt->shipSpeed,tt->hardness*mapDamage->mapHardness,readmap->metalMap->getMetalAmount((int)(pos.x/16),(int)(pos.z/16)));
 	return tmp;
+}
+
+void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
+{
+	Notification n;
+	n.pos=pos;
+	n.color=color;
+	n.alpha=alpha;
+	n.creationTime=gu->gameTime;
+
+	notes.push_back(n);
+}
+
+void CMiniMap::DrawNotes(void)
+{
+	float baseSize=gs->mapx*SQUARE_SIZE;
+	glBegin(GL_LINES);
+	for(list<Notification>::iterator ni=notes.begin();ni!=notes.end();){
+		float age=gu->gameTime-ni->creationTime;
+		if(age>2){
+			ni=notes.erase(ni);
+			continue;
+		}
+		glColor4f(ni->color.x,ni->color.y,ni->color.z,ni->alpha);
+		for(int a=0;a<3;++a){
+			float modage=age+a*0.1;
+			float rot=modage*3;
+			float size=baseSize-modage*baseSize*0.9;
+			if(size<0){
+				if(size<-baseSize*0.4)
+					continue;
+				else if(size>-baseSize*0.2)
+					size=modage*baseSize*0.9-baseSize;
+				else
+					size=baseSize*1.4-modage*baseSize*0.9;
+			}
+			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);	
+			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);	
+
+			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);	
+			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);	
+
+			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);	
+			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);	
+
+			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);	
+			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);	
+		}
+		++ni;
+	}
+	glEnd();
 }

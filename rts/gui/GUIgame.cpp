@@ -16,6 +16,28 @@
 #include "Team.h"
 #include "BaseGroundDrawer.h"
 
+// things that I have added
+#include "Net.h"
+#include "GroupHandler.h"
+#include "Bitmap.h"
+#include "FileHandler.h"
+#include "ShadowHandler.h"
+#include "MouseHandler.h"
+#include "BaseSky.h"
+#include "InMapDraw.h"
+#include "Game.h"
+#include "Sound.h"
+#include "LoadSaveHandler.h"
+#ifndef NO_AVI
+#include "AVIGenerator.h"
+#endif
+#include "CameraController.h"
+#include "GameController.h"
+
+extern bool	keys[256];
+extern bool	globalQuit;
+extern CGame* game;
+
 extern map<string, string> bindings;
 
 bool mouseHandlerMayDoSelection=true;
@@ -421,13 +443,12 @@ void GUIgame::PrivateDraw()
 						selector[commandButton].DrawFront(maxSize, sizeDiv);
 					}
 					break;
-				case CMDTYPE_ICON_UNIT:
-						if(selector[commandButton].IsDragging())
-						{
-							selector[commandButton].DrawSelection();
-						}
-						break;
-					break;
+	//			case CMDTYPE_ICON_UNIT:
+	//					if(selector[commandButton].IsDragging())
+	//					{
+	//						selector[commandButton].DrawSelection();
+	//					}
+	//					break;
 				default:
 					if(selector[commandButton].IsDragging())
 					{
@@ -466,7 +487,7 @@ bool GUIgame::MouseDownAction(int x, int y, int button)
 
 bool GUIgame::MouseUpAction(int x, int y, int button)
 {
-	commandButton=0;
+	//commandButton=0;
 
 	if(!buttonAction[button])
 		return false;
@@ -709,6 +730,376 @@ bool GUIgame::EventAction(const string& command)
 		}
 	}
 
+///////////////////////////////// Things that I have added ////////////////////////////////////////
+	if(command=="showhealthbars"){
+		uh->showHealthBars=!uh->showHealthBars;
+	}
+
+	else if(command=="selGroup0")	
+	{
+		grouphandler->GroupCommand(0);
+	}
+	else if(command=="createGroup0")	
+	{
+		grouphandler->GroupCommand(0);
+	}
+	else if(command=="selGroup1")	
+	{
+		grouphandler->GroupCommand(1);
+	}
+	else if(command=="createGroup1")	
+	{
+		grouphandler->GroupCommand(1);
+    }
+	else if(command=="selGroup2")	
+	{
+		grouphandler->GroupCommand(2);
+	}
+	else if(command=="createGroup2")	
+	{
+		grouphandler->GroupCommand(2);
+	}
+	else if(command=="selGroup3")	
+	{
+		grouphandler->GroupCommand(3);
+	}
+	else if(command=="createGroup3")	
+	{
+		grouphandler->GroupCommand(3);
+	}
+	else if(command=="selGroup4")	
+	{
+		grouphandler->GroupCommand(4);
+	}
+	else if(command=="createGroup4")	
+	{
+		grouphandler->GroupCommand(4);
+	}
+	else if(command=="selGroup5")	
+	{
+		grouphandler->GroupCommand(5);
+	}
+	else if(command=="createGroup5")	
+	{
+		grouphandler->GroupCommand(5);
+	}
+	else if(command=="selGroup6")	
+	{
+		grouphandler->GroupCommand(6);
+	}
+	else if(command=="createGroup6")	
+	{
+		grouphandler->GroupCommand(6);
+	}
+	else if(command=="selGroup7")	
+	{
+		grouphandler->GroupCommand(7);
+	}
+	else if(command=="createGroup7")	
+	{
+		grouphandler->GroupCommand(7);
+	}
+	else if(command=="selGroup8")	
+	{
+		grouphandler->GroupCommand(8);
+	}
+	else if(command=="createGroup8")	
+	{
+		grouphandler->GroupCommand(8);
+	}
+	else if(command=="selGroup9")	
+	{
+		grouphandler->GroupCommand(9);
+	}
+	else if(command=="createGroup9")	
+	{
+		grouphandler->GroupCommand(9);
+	}
+	else if (command=="quit"){
+			globalQuit=true;
+	}
+	else if (command=="togglelos"){
+		groundDrawer->ToggleLosTexture();
+	}
+	else if(command=="mousestate"){
+		mouse->ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
+	}
+
+	else if (command=="updatefov")
+		groundDrawer->updateFov=!groundDrawer->updateFov;
+
+	else if (command=="drawtrees")
+		treeDrawer->drawTrees=!treeDrawer->drawTrees;
+
+	else if (command=="dynamicsky")
+		sky->dynamicSky=!sky->dynamicSky;
+
+//	else if (s=="hideinterface")
+//		hideInterface=!hideInterface;
+
+	else if (command=="increaseviewradius"){
+		groundDrawer->viewRadius+=2;
+	//	(*guicontroller) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
+	}
+
+	else if (command=="decreaseviewradius"){
+		groundDrawer->viewRadius-=2;
+	//	(*guicontroller) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
+	}
+
+	else if (command=="moretrees"){
+		groundDrawer->baseTreeDistance+=0.2f;
+	//	(*guicontroller) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+	}
+
+	else if (command=="lesstrees"){
+		groundDrawer->baseTreeDistance-=0.2f;
+	//	(*guicontroller) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+	}
+
+	else if (command=="moreclouds"){
+		sky->cloudDensity*=0.95f;
+	//	(*guicontroller) << "Cloud density " << 1/sky->cloudDensity << "\n";
+	}
+
+	else if (command=="lessclouds"){
+		sky->cloudDensity*=1.05f;
+	//	(*guicontroller) << "Cloud density " << 1/sky->cloudDensity << "\n";
+	}
+
+	else if (command=="screenshot"){
+		int x=gu->screenx;
+		if(gu->screenx%4)
+			gu->screenx+=4-gu->screenx%4;
+		unsigned char* buf=new unsigned char[gu->screenx*gu->screeny*4];
+		glReadPixels(0,0,gu->screenx,gu->screeny,GL_RGBA,GL_UNSIGNED_BYTE,buf);
+		CBitmap b(buf,gu->screenx,gu->screeny);
+		b.ReverseYAxis();
+		string name;
+		for(int a=0;a<99;++a){
+			char t[50];
+			snprintf(t,10,"%d",a);
+			name=string("screen")+t+".jpg";
+			CFileHandler ifs(name);
+			if(!ifs.FileExists())
+				break;
+		}
+		b.Save(name);
+		delete[] buf;
+		gu->screenx=x;
+	}
+
+	else if(command=="speedup")
+	{
+		float speed=gs->userSpeedFactor;
+		if(speed<1){
+			speed/=0.8;
+			if(speed>0.99)
+				speed=1;
+		}else 
+			speed+=0.5;
+		if(!net->playbackDemo){
+			netbuf[0]=NETMSG_USER_SPEED;
+			*((float*)&netbuf[1])=speed;
+			net->SendData(netbuf,5);
+		} else {
+			gs->speedFactor=speed;
+			gs->userSpeedFactor=speed;	
+			guicontroller->AddText("Speed %f \n",gs->speedFactor);			
+			}
+
+	}
+	else if (command=="slowdown"){
+		float speed=gs->userSpeedFactor;
+		if(speed<=1){
+			speed*=0.8;
+			if(speed<0.1)
+				speed=0.1;
+		}else 
+			speed-=0.5;
+		if(!net->playbackDemo){
+			netbuf[0]=NETMSG_USER_SPEED;
+			*((float*)&netbuf[1])=speed;
+			net->SendData(netbuf,5);
+		} else {
+			gs->speedFactor=speed;
+			gs->userSpeedFactor=speed;
+			guicontroller->AddText("Speed %f \n",gs->speedFactor);
+		}
+	}
+	else 
+	#ifdef DIRECT_CONTROL_ALLOWED
+	if(command=="controlunit"){
+		Command c;
+		c.id=CMD_STOP;
+		c.options=0;
+		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
+
+		netbuf[0]=NETMSG_DIRECT_CONTROL;
+		netbuf[1]=gu->myPlayerNum;
+		net->SendData(netbuf,2);
+	} else
+	#endif
+	if (command=="showshadowmap"){
+		shadowHandler->showShadowMap=!shadowHandler->showShadowMap;
+	}
+
+	else if (command=="showstandard"){
+		groundDrawer->SetExtraTexture(0,0,false);
+	}
+
+	else if (command=="showelevation"){	
+		groundDrawer->SetExtraTexture(readmap->heightLineMap,readmap->heightLinePal,true);
+	}
+	else if (command=="lastmsgpos"){
+		mouse->currentCamController->SetPos(guicontroller->lastMsgPos);
+		mouse->inStateTransit=true;
+		mouse->transitSpeed=0.5;
+	}
+	else if (command=="showmetalmap"){
+		groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);		
+	}
+	else if (command=="showpathmap" && gs->cheatEnabled){
+		groundDrawer->SetPathMapTexture();
+	}
+
+	else if(command=="drawinmapOn"){
+		inMapDrawer->keyPressed=true;
+	}
+		else if(command=="drawinmapOff"){
+		inMapDrawer->keyPressed=false;
+	}
+
+	else if (command=="pauseGame"){      
+		netbuf[0]=NETMSG_PAUSE;
+		netbuf[1]=!gs->paused;
+		netbuf[2]=gu->myPlayerNum;
+		net->SendData(netbuf,3);
+		QueryPerformanceCounter(&(game->lastframe));
+	}
+	else if (command=="singlestep"){	
+		game->bOneStep=true;
+	}
+//	else if (command=="chat"){
+//		activeController->userWriting=true;
+//		userPrompt="Say: ";
+//		game->chatting=true;
+//		if(k!=VK_RETURN)
+//			activeController->ignoreNextChar=true;
+//	}
+	else if (command=="debug")
+		gu->drawdebug=!gu->drawdebug;
+
+	else if (command=="track")	
+		game->trackingUnit=!game->trackingUnit;
+
+	else if (command=="nosound")
+		sound->noSound=!sound->noSound;
+	
+	else if(command=="savegame"){
+		CLoadSaveHandler ls;
+		ls.SaveGame("Test.ssf");
+	}
+
+#ifndef NO_AVI
+	else if (command=="createvideo"){
+		if(game->creatingVideo){
+			game->creatingVideo=false;
+			game->aviGenerator->ReleaseEngine();
+			delete game->aviGenerator;
+			game->aviGenerator=0;
+			guicontroller->AddText("Finished avi");
+		} else {
+			game->creatingVideo=true;
+			string name;
+			for(int a=0;a<99;++a){
+				char t[50];
+				itoa(a,t,10);
+				name=string("video")+t+".avi";
+				CFileHandler ifs(name);
+				if(!ifs.FileExists())
+					break;
+			}
+			int x=gu->screenx;
+			x-=gu->screenx%4;
+
+			int y=gu->screeny;
+			y-=gu->screeny%4;
+
+			BITMAPINFOHEADER bih;
+			bih.biSize=sizeof(BITMAPINFOHEADER);
+			bih.biWidth=x;
+			bih.biHeight=y;
+			bih.biPlanes=1;
+			bih.biBitCount=24;
+			bih.biCompression=BI_RGB;
+			bih.biSizeImage=0;
+			bih.biXPelsPerMeter=1000;
+			bih.biYPelsPerMeter=1000;
+			bih.biClrUsed=0;
+			bih.biClrImportant=0;
+
+			game->aviGenerator=new CAVIGenerator();
+			game->aviGenerator->SetFileName(name.c_str());
+			game->aviGenerator->SetRate(30);
+			game->aviGenerator->SetBitmapHeader(&bih);
+			HRESULT hr=game->aviGenerator->InitEngine();
+			if(hr!=AVIERR_OK){  
+				game->creatingVideo=false;
+			} else {
+				guicontroller->AddText("Recording avi to %s size %i %i",name.c_str(),x,y);
+			}
+		}
+	}
+#endif 
+	else if (command=="start_moveforward")
+		game->camMove[0]=true;
+
+	else if (command=="start_moveback")
+		game->camMove[1]=true;
+
+	else if (command=="start_moveleft")
+		game->camMove[2]=true;
+
+	else if (command=="start_moveright")
+		game->camMove[3]=true;
+
+	else if (command=="start_moveup")
+		game->camMove[4]=true;
+
+	else if (command=="start_movedown")
+		game->camMove[5]=true;
+
+	else if (command=="start_movefast")
+		game->camMove[6]=true;
+
+	else if (command=="start_moveslow")
+		game->camMove[7]=true;
+
+	else if (command=="end_moveforward")
+		game->camMove[0]=false;
+
+	else if (command=="end_moveback")
+		game->camMove[1]=false;
+
+	else if (command=="end_moveleft")
+		game->camMove[2]=false;
+
+	else if (command=="end_moveright")
+		game->camMove[3]=false;
+
+	else if (command=="end_moveup")
+		game->camMove[4]=false;
+
+	else if (command=="end_movedown")
+		game->camMove[5]=false;
+
+	else if (command=="end_movefast")
+		game->camMove[6]=false;
+
+	else if (command=="end_moveslow")
+		game->camMove[7]=false;
+
 	return false;
 }
 
@@ -743,7 +1134,7 @@ void GUIgame::SelectCursor()
 				if(unit->team==gu->myTeam)	// could add this unit
 				{
 					mouse->cursorText="";	// TODO: where is the selection cursor?
-					return;
+				//	return;
 				}
 
 			int cmd_id = selectedUnits.GetDefaultCmd(unit,feature);
@@ -759,7 +1150,7 @@ void GUIgame::SelectCursor()
 
 string GUIgame::Tooltip()
 {
-	if(unit)
+	if(unit && (unit->team==gu->myTeam))
 	{
 		tooltip=unit->tooltip;
 		char tmp[500];
@@ -777,11 +1168,11 @@ extern bool keys[256];
 void GUIgame::InitCommand(Command& c)
 {
 	c.options=0;
-	if(keyShift())
+	if(keys[VK_SHIFT])
 		c.options|=SHIFT_KEY;
-	if(keyCtrl())
+	if(keys[VK_CONTROL])
 		c.options|=CONTROL_KEY;
-	if(keyMenu())
+	if(keys[VK_MENU])
 		c.options|=ALT_KEY;
 }
 
@@ -866,6 +1257,7 @@ Command GUIgame::GetCommand()
 
 		case CMDTYPE_ICON_BUILDING:
 		{
+		//	button=1;
 			if(selector[button].IsDragging())
 			{
 				UnitDef *unitdef = unitDefHandler->GetUnitByID(-desc->id);
@@ -875,6 +1267,7 @@ Command GUIgame::GetCommand()
 				int size=positions.size();
 				for(int i=0; i<size; i++)
 				{
+					//MakeBuildPos(positions[i],unitdef);
 					ret.params.push_back(positions[i].x);
 					ret.params.push_back(positions[i].y);
 					ret.params.push_back(positions[i].z);
@@ -888,21 +1281,22 @@ Command GUIgame::GetCommand()
 				ret.params.push_back(position.y);
 				ret.params.push_back(position.z);
 			}
+		//	button=commandButton;
 			return ret;
 		}
 		
 		case CMDTYPE_ICON_UNIT: 
 		{
-			if(selector[button].IsDragging())
-			{
-				vector<CUnit*> units;
-				selector[button].GetSelection(units);
-				
-				int size=units.size();
-				for(int i=0; i<size; i++)
-					ret.params.push_back(units[i]->id);
-			}
-			else
+	//		if(selector[button].IsDragging())
+	//		{
+	//			vector<CUnit*> units;
+	//			selector[button].GetSelection(units);
+	//			
+	//			int size=units.size();
+	//			for(int i=0; i<size; i++)
+	//				ret.params.push_back(units[i]->id);
+	//		}
+	//		else
 			{
 				if(!unit)
 					return defaultRet;
@@ -1013,17 +1407,17 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 {
 	std::vector<float3> ret;
 
-	MakeBuildPos(start,unitdef);
-	MakeBuildPos(end,unitdef);
+	start=helper->Pos2BuildPos(start,unitdef);
+	end=helper->Pos2BuildPos(end,unitdef);
 
 	
 	CUnit* unit=0;
 	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,true);
 
-	if(unit && keyShift() && keyCtrl()){		//circle build around building
+	if(unit && keys[VK_SHIFT] && keys[VK_CONTROL]){		//circle build around building
 		UnitDef* unitdef2=unit->unitDef;
 		float3 pos2=unit->pos;
-		MakeBuildPos(pos2,unitdef2);
+		pos2=helper->Pos2BuildPos(pos2,unitdef2);
 		start=pos2;
 		end=pos2;
 		start.x-=(unitdef2->xsize/2)*SQUARE_SIZE;
@@ -1036,7 +1430,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			float3 p2=pos;
 			p2.x+=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z-=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
 		pos=start;
@@ -1045,7 +1439,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			float3 p2=pos;
 			p2.x+=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z+=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
 		pos=end;
@@ -1053,7 +1447,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			float3 p2=pos;
 			p2.x-=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z+=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
 		pos=end;
@@ -1062,10 +1456,10 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			float3 p2=pos;
 			p2.x-=(unitdef->xsize/2)*SQUARE_SIZE;
 			p2.z-=(unitdef->ysize/2)*SQUARE_SIZE;
-			MakeBuildPos(p2,unitdef);
+			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
-	} else if(keyMenu()){			//build a rectangle
+	} else if(keys[VK_MENU]){			//build a rectangle
 		float xsize=unitdef->xsize*8;
 		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
 		int xstep=(int)xsize;
@@ -1082,9 +1476,9 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 		for(float z=start.z;zn<znum;++zn){
 			int xn=0;
 			for(float x=start.x;xn<xnum;++xn){
-				if(!keyCtrl() || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
+				if(!keys[VK_CONTROL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
 					float3 pos(x,0,z);
-					MakeBuildPos(pos,unitdef);
+					pos=helper->Pos2BuildPos(pos,unitdef);
 					ret.push_back(pos);
 				}
 				x+=xstep;
@@ -1100,7 +1494,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 				return ret;
 			}
 			dir/=fabs(dir.x);
-			if(keyCtrl())
+			if(keys[VK_CONTROL])
 				dir.z=0;
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
 				ret.push_back(p);
@@ -1112,7 +1506,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 				return ret;
 			}
 			dir/=fabs(dir.z);
-			if(keyCtrl())
+			if(keys[VK_CONTROL])
 				dir.x=0;
 			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step)
 				ret.push_back(p);
@@ -1123,8 +1517,8 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 
 void GUIgame::MakeBuildPos(float3& pos,UnitDef* unitdef)
 {
-	pos.x=floor((pos.x+4)/SQUARE_SIZE)*SQUARE_SIZE;
-	pos.z=floor((pos.z+4)/SQUARE_SIZE)*SQUARE_SIZE;
+	pos.x=floor((pos.x)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
+	pos.z=floor((pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
 	pos.y=uh->GetBuildHeight(pos,unitdef);
 	if(unitdef->floater)
 		pos.y = max(pos.y,0.f);
@@ -1138,8 +1532,7 @@ bool GUIgame::IsDragCommand(CommandDescription *cmd)
 			cmd->type==CMDTYPE_ICON_UNIT_OR_AREA ||
 			cmd->type==CMDTYPE_ICON_UNIT_FEATURE_OR_AREA ||
 			cmd->type==CMDTYPE_ICON_AREA ||
-			cmd->type==CMDTYPE_ICON_FRONT ||
-			cmd->type==CMDTYPE_ICON_UNIT)
+			cmd->type==CMDTYPE_ICON_FRONT 			)
 			return true;
 	}
 	return false;

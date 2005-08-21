@@ -3,6 +3,7 @@
 #include "FileHandler.h"
 #include "SunParser.h"
 #include "InfoConsole.h"
+#include "ReadMap.h"
 //#include "mmgr.h"
 
 CMoveInfo* moveinfo;
@@ -31,20 +32,24 @@ CMoveInfo::CMoveInfo(void)
 			md->moveType=MoveData::Ship_Move;
 			md->depth=atof(sunparser->SGetValueDef("10",className+"\\MinWaterDepth").c_str());
 //			info->AddLine("class %i %s boat",num,name.c_str());
-
+			md->moveFamily=3;
 		} else if(name.find("HOVER")!=string::npos){
 			md->moveType=MoveData::Hover_Move;
-			md->maxSlope=cos(atof(sunparser->SGetValueDef("10",className+"\\MaxSlope").c_str())*1.2*PI/180);
-
+			md->maxSlope=1-cos(atof(sunparser->SGetValueDef("10",className+"\\MaxSlope").c_str())*1.5*PI/180);
+			md->moveFamily=2;
 //			info->AddLine("class %i %s hover",num,name.c_str());
 		} else {
 			md->moveType=MoveData::Ground_Move;	
 			md->depthMod=0.1;
 			md->depth=atof(sunparser->SGetValueDef("0",className+"\\MaxWaterDepth").c_str());
-			md->maxSlope=cos(atof(sunparser->SGetValueDef("60",className+"\\MaxSlope").c_str())*1.2*PI/180);
+			md->maxSlope=1-cos(atof(sunparser->SGetValueDef("60",className+"\\MaxSlope").c_str())*1.5*PI/180);
 //			info->AddLine("class %i %s ground",num,name.c_str());
+			if(name.find("TANK")!=string::npos)
+				md->moveFamily=0;
+			else
+				md->moveFamily=1;
 		}
-		md->slopeMod=3/(1-md->maxSlope+0.001);
+		md->slopeMod=4/(md->maxSlope+0.001);
 		md->size=max(2,min(8,atoi(sunparser->SGetValueDef("1", className+"\\FootprintX").c_str())*2));//ta has only half our res so multiply size with 2
 //		info->AddLine("%f %i",md->slopeMod,md->size);
 		moveInfoChecksum+=md->size;
@@ -55,6 +60,12 @@ CMoveInfo::CMoveInfo(void)
 		name2moveData[name]=md->pathType;
 	}
 
+	for(int a=0;a<256;++a){
+		terrainType2MoveFamilySpeed[a][0]=readmap->terrainTypes[a].tankSpeed;
+		terrainType2MoveFamilySpeed[a][1]=readmap->terrainTypes[a].kbotSpeed;
+		terrainType2MoveFamilySpeed[a][2]=readmap->terrainTypes[a].hoverSpeed;
+		terrainType2MoveFamilySpeed[a][3]=readmap->terrainTypes[a].shipSpeed;
+	}
 	delete sunparser;
 }
 

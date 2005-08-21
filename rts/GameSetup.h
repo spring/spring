@@ -17,6 +17,7 @@ public:
 	int myPlayer;
 	int numPlayers;				//the expected amount of players
 	std::string mapname;
+	std::string baseMod;
 
 	std::string hostip;
 	int hostport;
@@ -35,6 +36,10 @@ public:
 	int teamStartNum[MAX_TEAMS];
 
 	std::map<std::string, int> restrictedUnits;
+	
+	std::string aiDlls[MAX_TEAMS];
+
+	int maxUnits;
 };
 
 extern CGameSetup* gameSetup;

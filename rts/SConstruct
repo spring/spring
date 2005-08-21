@@ -52,6 +52,7 @@ opts.Add('disable_inputs', '(Notused) Set to no to enable input handling code (p
 opts.Add('disable_texture_filtering', 'Set to no to turn on texture filtering code', 0)
 opts.Add('disable_advtreedrawer', 'Set to no to turn on advanced tree drawing', 0)
 
+opts.Add('disable_7zip', 'Set to disable 7zip processing', 1)
 
 env = Environment(options = opts)
 Help(opts.GenerateHelpText(env))
@@ -103,16 +104,24 @@ if env.get('disable_advtreedrawer'):
 	defines+=['NO_NICETREES']
 if env.get('force_glextensions'):
 	defines+=['FORCE_GL_EXTENSIONS']
-
-env.Append(CPPDEFINES = defines)
+lzmafiles=[]
+if env.get('disable_7zip'):
+	defines+=['NO_7ZIP']
+	exclude_list.append("Archive7ZipDll.cpp")
+else:
+	lzmafiles+=["./7zip/7zip/Common/FileStreams.cpp","./7zip/Common/C_FileIO.cpp","./7zip/Common/StringConvert.cpp","./7zip/Windows/PropVariant.cpp","./7zip/Windows/PropVariantConversions.cpp","./7zip/Common/MyWindows.cpp","./7zip/Windows/wine_date_and_time.cpp","./7zip/Common/IntToString.cpp"]
 
 if detected_platform == 'linux':
 	exclude_list.append("RegHandler.cpp")
 else:
 	exclude_list.append("dotfileHandler.cpp")
 
+env.Append(CPPDEFINES = defines)
+
 ############################################################
 # files used for build
+zipfiles=["./minizip/ioapi.c","./minizip/zip.c","./minizip/unzip.c"]
+winzipfiles=["./minizip/iowin32.c"]
 
 import os
 import re
@@ -132,8 +141,6 @@ if platform == 'linux':
 			multipath.cpp
 			estimater.cpp
 			""")
-	#dead code?
-	exclude_list.append("Aircraft.cpp")			
 nbObjects=0
 nbBuiltObjects=0
 for f in tmp:
@@ -143,11 +150,11 @@ for f in tmp:
 	if re.compile("\.o$").search(f):
 		nbBuiltObjects+=1
 if platform == 'windows':
-	files = windows_files + common_files 
+	files = windows_files + common_files + zipfiles + winzipfiles + lzmafiles
 	common_include_path = common_include_path + windows_include_path
 else:
 	if platform == 'linux':
-		files = linux_files + common_files
+		files = linux_files + common_files + zipfiles + lzmafiles
 		common_include_path = common_include_path + linux_include_path	
 	else:
 		print "Unknown platform ", platform

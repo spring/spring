@@ -10,8 +10,12 @@
 #include "Game.h"
 #include "ScriptHandler.h"
 #include "GameSetup.h"
+#include "Team.h"
+#include "GameVersion.h"
 //#include "mmgr.h"
-#ifndef _WIN32
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -35,11 +39,7 @@ CNet::CNet()
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-#ifdef _WIN32
 	curTime=double(t.QuadPart)/double(f.QuadPart);
-#else
-	curTime=double(t)/double(f);
-#endif
 	WORD wVersionRequested;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -123,10 +123,9 @@ int CNet::InitServer(int portnum)
 	imServer=true;
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		MessageBox(NULL,"Error initializing socket.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		MessageBox(NULL,"Error initializing socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		connected=false;
 		exit(0);
-		return -1;
 	}
 
 	sockaddr_in saMe;
@@ -141,10 +140,8 @@ int CNet::InitServer(int portnum)
 #else
 		close(mySocket);
 #endif
-		MessageBox(NULL,"Error binding socket.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
-		connected=false;
+		MessageBox(NULL,"Error binding socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
-		return -1;
 	}
 
 #ifdef _WIN32
@@ -170,11 +167,7 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-#ifdef _WIN32
 	curTime=double(t.QuadPart)/f.QuadPart;
-#else
-	curTime = double(t)/double(f);
-#endif
 
 	if(FindDemoFile(server)){
 		onlyLocal=true;
@@ -184,7 +177,7 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 		gu->spectating=true;
 		return 1;
 	} else {
-		CreateDemoFile("test.sdf");
+		CreateDemoFile();
 	}
 
 	sockaddr_in saOther;
@@ -216,6 +209,27 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 		return -1;
 	}
 
+	if(strcmp(server,"localhost")!=0){
+		sockaddr_in saMe;
+		saMe.sin_family = AF_INET;
+		saMe.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
+		saMe.sin_port = htons(portnum);	   // Use port passed from user
+
+		int numTries=0;
+		while (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
+			numTries++;
+			if(numTries>10){
+#ifdef _WIN32
+				closesocket(mySocket);
+#else
+				close(mySocket);
+#endif
+				MessageBox(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+				exit(0);
+			}
+			saMe.sin_port = htons(portnum+numTries);
+		}
+	}
 
 	u_long u=1;
 #ifdef _WIN32
@@ -229,13 +243,13 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 
 	InitNewConn(&saOther,false,0);
 	if(!localConnect){
-		netbuf[0]=NETMSG_ATTEMPTCONNECT;
+		tempbuf[0]=NETMSG_ATTEMPTCONNECT;
 		if(gameSetup)
-			netbuf[1]=gameSetup->myPlayer;
+			tempbuf[1]=gameSetup->myPlayer;
 		else
-			netbuf[1]=0;
-		netbuf[2]=NETWORK_VERSION;
-		SendData(netbuf,3);
+			tempbuf[1]=0;
+		tempbuf[2]=NETWORK_VERSION;
+		SendData(tempbuf,3);
 		FlushNet();
 		inInitialConnect=true;
 	}
@@ -260,7 +274,7 @@ int CNet::SendData(unsigned char *data, int length,int connection)
 	if(playbackDemo)
 		return 1;
 	if(length<=0)
-		MessageBox(0,"errenous length in send","network",0);
+		info->AddLine("Errenous send length in SendData %i",length);
 
 	Connection* c=&connections[connection];
 	if(c->active){
@@ -318,11 +332,7 @@ void CNet::Update(void)
 	LARGE_INTEGER t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-#ifdef _WIN32
 	curTime=double(t.QuadPart)/double(f.QuadPart);
-#else
-	curTime=double(t)/double(f);
-#endif
 	if(onlyLocal){
 		if(playbackDemo)
 			ReadDemoFile();
@@ -386,15 +396,15 @@ void CNet::Update(void)
 			SendRawPacket(a,c->unackedPackets[0]->data,c->unackedPackets[0]->length,0);
 		}
 
-		if(c->lastSendTime<curTime-5 && !c->localConnection && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
-			netbuf[0]=NETMSG_HELLO;
-			SendData(netbuf,1);
+		if(c->lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
+			tempbuf[0]=NETMSG_HELLO;
+			SendData(tempbuf,1);
 		}
 		if(c->lastSendTime<curTime-0.2 && !c->waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
-			netbuf[0]=NETMSG_HELLO;
-			SendData(netbuf,1);
+			tempbuf[0]=NETMSG_HELLO;
+			SendData(tempbuf,1);
 		}
-		if(c->lastReceiveTime < curTime-(inInitialConnect ? 40 : 30) && !c->localConnection){		//other side has timed out
+		if(c->lastReceiveTime < curTime-(inInitialConnect ? 40 : 30)){		//other side has timed out
 			c->active=false;
 		}
 
@@ -504,36 +514,47 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 
 	connected=true;
 
-	if(imServer && !localConnect){
-		netbuf[0]=NETMSG_SETPLAYERNUM;
-		netbuf[1]=freeConn;
-		SendData(netbuf,2,freeConn);
+	if(imServer){
+		tempbuf[0]=NETMSG_SETPLAYERNUM;
+		tempbuf[1]=freeConn;
+		SendData(tempbuf,2,freeConn);
 
-		netbuf[0]=NETMSG_SCRIPT;
-		netbuf[1]=CScriptHandler::Instance()->chosenName.size()+3;
+		tempbuf[0]=NETMSG_SCRIPT;
+		tempbuf[1]=CScriptHandler::Instance()->chosenName.size()+3;
 		for(unsigned int b=0;b<CScriptHandler::Instance()->chosenName.size();b++)
-			netbuf[b+2]=CScriptHandler::Instance()->chosenName.at(b);
-		netbuf[CScriptHandler::Instance()->chosenName.size()+2]=0;
-		SendData(netbuf,CScriptHandler::Instance()->chosenName.size()+3);
+			tempbuf[b+2]=CScriptHandler::Instance()->chosenName.at(b);
+		tempbuf[CScriptHandler::Instance()->chosenName.size()+2]=0;
+		SendData(tempbuf,CScriptHandler::Instance()->chosenName.size()+3);
 
-		netbuf[0]=NETMSG_MAPNAME;
-		netbuf[1]=stupidGlobalMapname.size()+7;
-		*(int*)&netbuf[2]=stupidGlobalMapId;
+		tempbuf[0]=NETMSG_MAPNAME;
+		tempbuf[1]=stupidGlobalMapname.size()+7;
+		*(int*)&tempbuf[2]=stupidGlobalMapId;
 		for(unsigned int a=0;a<stupidGlobalMapname.size();a++)
-			netbuf[a+6]=stupidGlobalMapname.at(a);
-		netbuf[stupidGlobalMapname.size()+6]=0;
-		SendData(netbuf,stupidGlobalMapname.size()+7);
+			tempbuf[a+6]=stupidGlobalMapname.at(a);
+		tempbuf[stupidGlobalMapname.size()+6]=0;
+		SendData(tempbuf,stupidGlobalMapname.size()+7);
 
 		for(int a=0;a<MAX_PLAYERS;a++){
 			if(!gs->players[a]->readyToStart)
 				continue;
-			netbuf[0]=NETMSG_PLAYERNAME;
-			netbuf[1]=gs->players[a]->playerName.size()+4;
-			netbuf[2]=a;
+			tempbuf[0]=NETMSG_PLAYERNAME;
+			tempbuf[1]=gs->players[a]->playerName.size()+4;
+			tempbuf[2]=a;
 			for(unsigned int b=0;b<gs->players[a]->playerName.size();b++)
-				netbuf[b+3]=gs->players[a]->playerName.at(b);
-			netbuf[gs->players[a]->playerName.size()+3]=0;
-			SendData(netbuf,gs->players[a]->playerName.size()+4);
+				tempbuf[b+3]=gs->players[a]->playerName.at(b);
+			tempbuf[gs->players[a]->playerName.size()+3]=0;
+			SendData(tempbuf,gs->players[a]->playerName.size()+4);
+		}
+		if(gameSetup){
+			for(int a=0;a<gs->activeTeams;a++){
+				tempbuf[0]=NETMSG_STARTPOS;
+				tempbuf[1]=a;
+				tempbuf[2]=2;
+				*(float*)&tempbuf[3]=gs->teams[a]->startPos.x;
+				*(float*)&tempbuf[7]=gs->teams[a]->startPos.y;
+				*(float*)&tempbuf[11]=gs->teams[a]->startPos.z;
+				serverNet->SendData(tempbuf,15);
+			}
 		}
 		FlushNet();
 	}
@@ -566,21 +587,21 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 {
 	Connection* c=&connections[conn];
 
-	*(int*)&netbuf[0]=packetNum;
-	*(int*)&netbuf[4]=c->lastInOrder;
+	*(int*)&tempbuf[0]=packetNum;
+	*(int*)&tempbuf[4]=c->lastInOrder;
 	int hsize=9;
 	if(!c->waitingPackets.empty() && c->waitingPackets.find(c->lastInOrder+1)==c->waitingPackets.end()){
-		netbuf[8]=1;
-		*(int*)&netbuf[9]=c->waitingPackets.begin()->first-1;
+		tempbuf[8]=1;
+		*(int*)&tempbuf[9]=c->waitingPackets.begin()->first-1;
 		hsize=13;
 	} else {
-		netbuf[8]=0;
+		tempbuf[8]=0;
 	}
 
-	memcpy(&netbuf[hsize],data,length);
+	memcpy(&tempbuf[hsize],data,length);
 //	if(rand()&7)
 #ifndef NO_NET
-	if(sendto(mySocket,(char*)netbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
+	if(sendto(mySocket,(char*)tempbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
 #ifdef _WIN32
 		if(WSAGetLastError()==WSAEWOULDBLOCK)
 #else
@@ -599,15 +620,55 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 #endif
 }
 
-void CNet::CreateDemoFile(char* name)
+void CNet::CreateDemoFile()
 {
-	recordDemo=new ofstream(name, ios::out|ios::binary);
+	// We want this folder to exist
+#ifdef _WIN32
+	_mkdir("demos");
+#else
+	mkdir("demos",755);
+#endif
+
 	if(gameSetup){
+		struct tm *newtime;
+#ifdef _WIN32
+		__time64_t long_time;
+		_time64( &long_time );                /* Get time as long integer. */
+		newtime = _localtime64( &long_time ); /* Convert to local time. */
+#else
+		time_t long_time;
+		long_time = time(NULL);
+		newtime = localtime(&long_time);
+#endif
+
+		char buf[500];
+		sprintf(buf,"%02i%02i%02i",newtime->tm_year%100,newtime->tm_mon+1,newtime->tm_mday);
+		string name=string(buf)+"-"+gameSetup->mapname.substr(0,gameSetup->mapname.find_first_of("."));
+/*		for(int a=0;a<gameSetup->numPlayers;++a){
+			name+="-"+gs->players[a]->playerName;
+		}*/
+		name+=string("-")+VERSION_STRING;
+
+		sprintf(buf,"demos/%s.sdf",name.c_str());
+		CFileHandler ifs(buf);
+		if(ifs.FileExists()){
+			for(int a=0;a<9999;++a){
+				sprintf(buf,"demos/%s-%i.sdf",name.c_str(),a);
+				CFileHandler ifs(buf);
+				if(!ifs.FileExists())
+					break;
+			}
+		}
+		demoName = buf;
+		recordDemo=new ofstream(demoName.c_str(), ios::out|ios::binary);
+
 		char c=1;
 		recordDemo->write(&c,1);
 		recordDemo->write((char*)&gameSetup->gameSetupTextLength,sizeof(int));
 		recordDemo->write(gameSetup->gameSetupText,gameSetup->gameSetupTextLength);
 	} else {
+		demoName = "demos/test.sdf";
+		recordDemo=new ofstream(demoName.c_str(), ios::out|ios::binary);
 		char c=0;
 		recordDemo->write(&c,1);
 	}
@@ -623,7 +684,14 @@ void CNet::SaveToDemo(unsigned char* buf,int length)
 
 bool CNet::FindDemoFile(const char* name)
 {
-	playbackDemo=new CFileHandler(name);
+	string firstTry = name;
+	firstTry = "./demos/" + firstTry;
+	playbackDemo=new CFileHandler(firstTry);
+	if (!playbackDemo->FileExists()) {
+		delete playbackDemo;
+		playbackDemo=new CFileHandler(name);
+	}
+
 	if(playbackDemo->FileExists()){
 		info->AddLine("Playing demo from %s",name);
 		char c;

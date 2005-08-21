@@ -45,6 +45,8 @@ struct WeaponDef
 	float heightmod;
 	float accuracy;				//inaccuracy of whole burst
 	float sprayangle;			//inaccuracy of individual shots inside burst
+	float movingAccuracy; //inaccuracy while owner moving
+	float targetMoveError;	//fraction of targets move speed that is used as error offset
 	//float damage;
 	//float airDamage;
 	DamageArray damages;
@@ -54,6 +56,7 @@ struct WeaponDef
 	int salvosize;
 	float salvodelay;
 	float reload;
+	float beamtime;
 
 	float maxAngle;
 	float restTime;
@@ -67,11 +70,11 @@ struct WeaponDef
 	int id;
 
 	bool turret;
-	bool highTrajectory;
 	bool onlyForward;
 	bool waterweapon;
 	bool tracks;
 	bool dropped;
+	bool paralyzer;			//weapon will only paralyze not do real damage
 
 	bool noAutoTarget;			//cant target stuff (for antinuke,dgun)
 	bool manualfire;			//use dgun button
@@ -79,6 +82,17 @@ struct WeaponDef
 	int targetable;				//nuke (can be shot by interceptor)
 	bool stockpile;					
 	float coverageRange;		//range of anti nuke
+
+	bool isPlasmaRepulser;
+	float repulseEnergy;
+	float repulseRange;
+	float repulseForce;
+	float repulseSpeed;
+
+	float intensity;
+	float thickness;
+
+	int graphicsType;
 
 	struct
 	{

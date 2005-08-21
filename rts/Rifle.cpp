@@ -56,6 +56,9 @@ bool CRifle::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 
 	float3 dir=pos-weaponPos;
 	float length=dir.Length();
+	if(length==0)
+		return true;
+
 	dir/=length;
 
 	float g=ground->LineGroundCol(weaponPos,pos);

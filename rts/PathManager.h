@@ -1,12 +1,16 @@
 #ifndef PATHMANAGER_H
 #define PATHMANAGER_H
 
-#include "PathFinder.h"
-#include "PathEstimator.h"
 #include <map>
+#include "IPath.h"
 using namespace std;
 
 class CSolidObject;
+class CPathFinder;
+class CPathEstimator;
+class CPathFinderDef;
+struct MoveData;
+class CMoveMath;
 
 class CPathManager {
 public:
@@ -37,7 +41,7 @@ public:
 			Use goalRadius to define a goal area within any square could be accepted as path target.
 			If a singular goal position is wanted, then use goalRadius = 0.
 	*/
-	unsigned int RequestPath(const MoveData* moveData, float3 startPos, CPathEstimatorDef* peDef,float3 goalPos,CSolidObject* caller);
+	unsigned int RequestPath(const MoveData* moveData, float3 startPos, CPathFinderDef* peDef,float3 goalPos,CSolidObject* caller);
 	unsigned int RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos, float goalRadius = 8, CSolidObject* caller=0);
 
 
@@ -95,18 +99,12 @@ public:
 
 	
 	//Minimum distance between two waypoints.
-	static const unsigned int PATH_RESOLUTION = CPathFinder::PATH_RESOLUTION;
+	static const unsigned int PATH_RESOLUTION;
 	
 private:
 	struct MultiPath {
-		//Constructor
-		MultiPath(const float3 start, const CPathEstimatorDef* peDef, const MoveData* moveData) :
-		start(start),
-		peDef(peDef),
-		moveData(moveData) {}
-
-		//Destructor
-		~MultiPath() {delete peDef;}
+		MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData);
+		~MultiPath();
 
 		//Paths
 		IPath::Path estimatedPath2;
@@ -115,12 +113,11 @@ private:
 
 		//Request definition
 		const float3 start;
-		const CPathEstimatorDef* peDef;
+		const CPathFinderDef* peDef;
 		const MoveData* moveData;
 
 		//Additional information.
 		float3 finalGoal;
-		int timeToLive;
 		CSolidObject* caller;
 	};
 
@@ -137,7 +134,6 @@ private:
 	map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathId;
 
-	//TODO: Get rid of whose.
 	CMoveMath* ground;
 	CMoveMath* hover;
 	CMoveMath* sea;

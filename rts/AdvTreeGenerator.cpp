@@ -27,23 +27,6 @@ CAdvTreeGenerator* treeGen;
 CAdvTreeGenerator::CAdvTreeGenerator()
 {
 	PrintLoadMsg("Generating trees");
-/*
-	grassCol=new unsigned char[gs->mapx*gs->mapy];
-	float3 lightAngle=float3(0,1,2);
-	lightAngle.Normalize();
-	for(int y=0;y<gs->mapy;++y){
-		for(int x=0;x<gs->mapx;++x){
-			float ldot=readmap->facenormals[(y*gs->mapx+x)*2].dot(lightAngle);
-			float	light=0.4+ldot*0.9;
-			if(readmap->typemap[(y)*(gs->mapx)+x]>0 && readmap->typemap[(y)*(gs->mapx)+x]<7)
-				light*=0.9f;
-			if(light<0)
-				light=0;
-			if(light>1)
-				light=1;
-			grassCol[y*gs->mapx+x]=light*255;
-		}
-	}*/
 	unsigned char(* tree)[2048][4]=new unsigned char[256][2048][4]; 
 	memset(tree[0][0],128,256*2048*4);
 

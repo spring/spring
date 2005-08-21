@@ -93,6 +93,10 @@ void CAirMoveType::Update(void)
 #ifdef DEBUG_AIRCRAFT
 	lines.clear();
 #endif
+	if(owner->stunned){
+		UpdateAirPhysics(0,lastAileronPos,lastElevatorPos,0,ZeroVector);
+		goto EndNormalControl;
+	}
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl && !(aircraftState==AIRCRAFT_CRASHING)){
 		SetState(AIRCRAFT_FLYING);
@@ -400,7 +404,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 			elevator=-upside;
 		}
 	} else {
-		float gHeight2=ground->GetHeight(pos.x+speed.x*30,pos.z+speed.z*30);
+		float gHeight2=ground->GetHeight(pos.x+speed.x*40,pos.z+speed.z*40);
 		float hdif=max(gHeight,gHeight2)+60-pos.y-frontdir.y*speedf*20;
 		float minPitch;//=min(1.0f,hdif/(maxElevator*speedf*speedf*20));
 
@@ -659,6 +663,7 @@ void CAirMoveType::UpdateLanding(void)
 			owner->Deactivate();
 			owner->cob->Call(COBFN_StopMoving);
 		} else {
+			goalPos.CheckInBounds();
 			UpdateFlying(wantedHeight,1);
 			return;
 		}
@@ -773,19 +778,26 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	speed+=(frontdir*speedf-speed)*speedToFront;
 	pos+=speed;
 
-	if(gHeight>owner->pos.y-owner->model->radius*0.2){
-/*		float damage=0;
-		if(speed.y>0.05)
-			damage+=speed.y*speed.y*1000;
-		if(updir.y<0.98)
-			damage+=(1-updir.y)*1000;
-		if(damage>0)
-			owner->DoDamage(DamageArray()*(damage*0.1),0,ZeroVector);	//dont do damage until they can avoid ground better
-*/
-		pos.y=gHeight+owner->model->radius*0.2+0.01;
-		speed.y=speed.Length2D()*0.5;
-		updir=UpVector;
-		frontdir.y=0.5;
+	if(gHeight>owner->pos.y-owner->model->radius*0.2 && !owner->crashing){
+		float3 gNormal=ground->GetNormal(pos.x,pos.z);
+		float impactSpeed=-speed.dot(gNormal);
+
+		if(impactSpeed>0){
+			if(owner->stunned){
+				float damage=0;
+				if(impactSpeed>0.5)
+					damage+=impactSpeed*impactSpeed*1000;
+				if(updir.dot(gNormal)<0.95)
+					damage+=(1-(updir.dot(gNormal)))*1000;
+				if(damage>0)
+					owner->DoDamage(DamageArray()*(damage*0.4),0,ZeroVector);	//only do damage while stunned for now
+			}
+			pos.y=gHeight+owner->model->radius*0.2+0.01;
+			speed+=gNormal*(impactSpeed*1.5);
+			speed*=0.95;
+			updir=gNormal-frontdir*0.1;
+			frontdir=updir.cross(frontdir.cross(updir));
+		}
 	}
 
 	frontdir.Normalize();
@@ -857,6 +869,8 @@ float3 CAirMoveType::FindLandingPos(void)
 
 	if(tryPos.y<0)
 		return ret;
+	tryPos.CheckInBounds();
+
 	float3 tpos=owner->pos;
 	owner->pos=tryPos;
 	int2 mp=owner->GetMapPos();

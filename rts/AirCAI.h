@@ -31,6 +31,7 @@ public:
 	int activeCommand;
 	int targetAge;
 	unsigned int patrolTime;
+	void BuggerOff(float3 pos, float radius);
 };
 
 #endif // __AIR_CAI_H__

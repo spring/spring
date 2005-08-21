@@ -85,4 +85,27 @@ public:
 	float3 pos;
 };
 
+class CRotOverheadController : public CCameraController
+{
+public:
+	CRotOverheadController();
+
+	void KeyMove(float3 move);
+	void MouseMove(float3 move);
+	void ScreenEdgeMove(float3 move);
+	void MouseWheelMove(float move);
+
+	float3 GetPos();
+	float3 GetDir();
+
+	void SetPos(float3 newPos);
+	float3 SwitchFrom();
+	void SwitchTo();
+
+	float3 pos;
+	float oldHeight;
+
+	float3 dir;
+};
+
 #endif // __CAMERA_CONTROLLER_H__

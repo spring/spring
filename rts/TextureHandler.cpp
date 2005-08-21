@@ -101,20 +101,53 @@ CTextureHandler::CTextureHandler()
 	}
 
 	int cury=0;
-	int curx=0;
 	int maxy=0;
+	int curx=0;
+	int foundx,foundy;
+	std::list<int2> nextSub;
+	std::list<int2> thisSub;
 	for(int a=0;a<numfiles;++a){
 		CBitmap* curtex=&texfiles[a]->tex;
-		if(curx+curtex->xsize>bigTexX){
-			curx=0;
-			cury=maxy;
-		}
-		if(cury+curtex->ysize>maxy){
-			maxy=cury+curtex->ysize;
-		}
-		if(maxy>bigTexY){
-			MessageBox(0,"To many/large unit textures","Error",0);
-			break;
+
+		bool done=false;
+		while(!done){
+			if(thisSub.empty()){
+				if(nextSub.empty()){
+					cury=maxy;
+					maxy+=curtex->ysize;
+					if(maxy>bigTexY){
+						MessageBox(0,"To many/large unit textures","Error",0);
+						break;
+					}
+					thisSub.push_back(int2(0,cury));
+				} else {
+					thisSub=nextSub;
+					nextSub.clear();
+				}
+			}
+			if(thisSub.front().x+curtex->xsize>bigTexX){
+				thisSub.clear();
+				continue;
+			}
+			if(thisSub.front().y+curtex->ysize>maxy){
+				thisSub.pop_front();
+				continue;
+			}
+			//ok found space for us
+			foundx=thisSub.front().x;
+			foundy=thisSub.front().y;
+			done=true;
+
+			if(thisSub.front().y+curtex->ysize<maxy){
+				nextSub.push_back(int2(thisSub.front().x,thisSub.front().y+curtex->ysize));
+			}
+
+			thisSub.front().x+=curtex->xsize;
+			while(thisSub.size()>1 && thisSub.front().x >= (++thisSub.begin())->x){
+				(++thisSub.begin())->x=thisSub.front().x;
+				thisSub.erase(thisSub.begin());
+			}
+
 		}
 		for(int y=0;y<curtex->ysize;y++){
 			for(int x=0;x<curtex->xsize;x++){
@@ -122,7 +155,7 @@ CTextureHandler::CTextureHandler()
 //					tex[((cury+y)*bigTexX+(curx+x))*4+3]=0;
 //				} else {
 					for(int col=0;col<4;col++){
-						tex[((cury+y)*bigTexX+(curx+x))*4+col]=curtex->mem[(y*curtex->xsize+x)*4+col];
+						tex[((foundy+y)*bigTexX+(foundx+x))*4+col]=curtex->mem[(y*curtex->xsize+x)*4+col];
 //					}
 				}
 			}
@@ -130,10 +163,10 @@ CTextureHandler::CTextureHandler()
 
 		UnitTexture* unittex=new UnitTexture;
 
-		unittex->xstart=(curx+0.5f)/(float)bigTexX;
-		unittex->ystart=(cury+0.5f)/(float)bigTexY;
-		unittex->xend=(curx+curtex->xsize-0.5f)/(float)bigTexX;
-		unittex->yend=(cury+curtex->ysize-0.5f)/(float)bigTexY;
+		unittex->xstart=(foundx+0.5f)/(float)bigTexX;
+		unittex->ystart=(foundy+0.5f)/(float)bigTexY;
+		unittex->xend=(foundx+curtex->xsize-0.5f)/(float)bigTexX;
+		unittex->yend=(foundy+curtex->ysize-0.5f)/(float)bigTexY;
 		textures[texfiles[a]->name]=unittex;
 		
 		curx+=curtex->xsize;
@@ -183,7 +216,7 @@ CTextureHandler::CTextureHandler()
 	else
 		gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, tex);
 //		CBitmap save(tex,bigTexX,bigTexY);
-//		save.Save("unittex-1x.bmp");
+	//save.Save("unittex-1x.jpg");
 
 	UnitTexture* t=new UnitTexture;
 	t->xstart=0;

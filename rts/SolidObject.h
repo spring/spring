@@ -3,6 +3,7 @@
 
 #include "WorldObject.h"
 #include "Mobility.h"
+#include "GlobalStuff.h"
 
 class CUnit;
 struct DamageArray;
@@ -37,6 +38,8 @@ public:
 	bool blocking;								//If this object is blocking/collidable. (NOTE: Some objects could be flat => not collidable.)
 	bool floatOnWater;							//If the object will float or not in water.	(TODO: "float dencity;" would give more dynamic.)
 	bool isUnderWater;
+	bool immobile;								//Immobile objects could not be moved. (Except perhaps in y, to make them stay on gound.)
+	bool blockHeightChanges;			//map height cant change under this object
 	int xsize;									//The x-size of this object, according to it's footprint.
 	int ysize;									//The z-size of this object, according to it's footprint. NOTE: This one should have been called zsize!
 	float height;								//The height of this object.
@@ -47,9 +50,6 @@ public:
 	float3 midPos;								//This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
 
 	//Current dynamic properties.
-	bool immobile;								//Immobile objects could not be moved. (Except perhaps in y, to make them stay on gound.)
-//	float3 velocity;							//The velocity-vector of this object. Applied to the mass center.
-//	float3 momentum;							//The momentum-vector of this object. Directed as normal from the plane of rotation and with length == radii/frame.
 	bool isMoving;								//= velocity.length() > 0.0
 	
 	//Accelerated dynamic properties.

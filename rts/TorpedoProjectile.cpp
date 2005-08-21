@@ -67,6 +67,8 @@ void CTorpedoProjectile::Update(void)
 {
 	if(pos.y>-3){		//tracking etc only work when we have gotten underwater
 		speed.y+=gs->gravity;
+		if(dir.y>0)
+			dir.y=0;
 	} else {
 		ttl--;
 		if(ttl>0){

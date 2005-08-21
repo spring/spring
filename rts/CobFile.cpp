@@ -33,6 +33,13 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	//Figure out size needed and allocate it
 	long size = in.FileSize();
+
+	// Handle errors (this is fairly fatal..)
+	if (size < 0) {
+		info->AddLine("Could not find script for unit %s", name.c_str());
+		exit(0);
+	}
+
 	cobdata = new char[size];
 
 	//Read the entire thing, we will need it

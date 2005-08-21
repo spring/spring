@@ -26,9 +26,10 @@ public:
 	virtual void SetGoal(float3 pos){};
 	virtual void SetWantedSpeed(float speed){};
 	virtual void SetWantedMaxSpeed(float speed);
+	virtual void LeaveTransport(void);
 
 	virtual void Update(){};
-	virtual void SlowUpdate(){};
+	virtual void SlowUpdate();
 
 	int forceTurn;
 	int forceTurnTo;

@@ -29,6 +29,7 @@ public:
 	unsigned int serverframenum;
 	void StartGame(void);
 
+	bool gameLoading;
 	bool gameEndDetected;
 	float gameEndTime;					//how long has gone by since the game end was detected
 

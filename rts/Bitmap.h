@@ -6,6 +6,7 @@
 #define __BITMAP_H__
 
 #include <string>
+#include "nv_dds.h"
 
 using std::string;
 
@@ -23,7 +24,8 @@ public:
 	void Load(string filename);
 	void Save(string filename);
 
-	unsigned int CreateTexture(bool mipmaps);
+	unsigned int CreateTexture(bool mipmaps=false);
+	unsigned int CreateDDSTexture();
 
 	void CreateAlpha(unsigned char red,unsigned char green,unsigned char blue);
 	void Renormalize(float3 newCol);
@@ -34,6 +36,16 @@ public:
 	unsigned char* mem;
 	int xsize;
 	int ysize;
+
+	enum BitmapType
+	{
+		BitmapTypeStandar,
+		BitmapTypeDDS
+	};
+
+	int type;
+	nv_dds::CDDSImage *ddsimage;
+
 protected:
 	void LoadJPG(string filename);
 	void LoadBMP(string filename);

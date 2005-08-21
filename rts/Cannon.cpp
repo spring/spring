@@ -102,13 +102,22 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 
 	float3 dif(pos-weaponPos);
 	float predictTime=dif.Length()/projectileSpeed;
+	if(predictTime==0)
+		return true;
 	if(highTrajectory)
 		predictTime=(minPredict+maxPredict)*0.5;
 	dif.y-=predictTime*predictTime*gs->gravity*0.5;
 	float length=dif.Length();
+
 	float3 dir(dif/length);
 
-	float gc=ground->LineGroundCol(weaponPos,weaponPos+dir*(length*0.5));
+	float3 flatdir(dif.x,0,dif.z);
+	float flatlength=flatdir.Length();
+	if(flatlength==0)
+		return true;
+	flatdir/=flatlength;
+
+	float gc=ground->TrajectoryGroundCol(weaponPos,flatdir,flatlength-10,dif.y/flatlength,gs->gravity/(projectileSpeed*projectileSpeed)*0.5);
 	if(gc>0)
 		return false;
 
@@ -135,7 +144,7 @@ void CCannon::Fire(void)
 
 	dir.y-=predict*predict*gs->gravity*0.5;
 	dir.Normalize();
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->experience*0.9);
+	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9);
 	dir.Normalize();
 #ifdef TRACE_SYNC
 	tracefile << "Cannon fire: ";
@@ -143,7 +152,7 @@ void CCannon::Fire(void)
 #endif
 	int ttl=10000;
 	if(selfExplode)
-		ttl=((int) (predict+gs->randFloat()*3.5))-1;
+		ttl=(int)(predict+gs->randFloat()*2.5-0.5);
 	new CExplosiveProjectile(weaponPos,dir*projectileSpeed,owner,damages,weaponDef, ttl,areaOfEffect);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,owner->speed,owner, NULL, float3(0,0,0), weaponDef);
 

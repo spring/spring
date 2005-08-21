@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cctype>
 #include "SunParser.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 //#pragma warning(disable:4786)
@@ -45,12 +46,13 @@ void CSunParser::DeleteSection(std::map<std::string,SSection*> *section)
 
 void CSunParser::LoadFile(std::string filename)
 {
+	transform(filename.begin(), filename.end(), filename.begin(), (int (*)(int))tolower);
 	//DeleteSection(&sections);
 	this->filename = filename;
 	//FILE *pStream = fopen(filename.c_str(),"rb");
 	CFileHandler file(filename);
 	if(!file.FileExists()){
-		MessageBox(hWnd, ("File " + filename + " not found").c_str(), "file error", MB_OK);
+		MessageBox(hWnd, ("file " + filename + " not found").c_str(), "file error", MB_OK);
 		return;
 	}
 	int size = file.FileSize();
@@ -63,7 +65,7 @@ void CSunParser::LoadFile(std::string filename)
 	}
 	catch(...)
 	{
-		MessageBox(hWnd, ("Error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
+		MessageBox(hWnd, ("error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
 	}
 	delete[] filebuf;
 }
@@ -82,25 +84,24 @@ void CSunParser::LoadBuffer(char* buf, int size)
 
 void CSunParser::Parse(char *buf, int size)
 {
-#ifdef SUCKY_CODE
 	std::string thissection;
 	SSection *section = NULL;
 	//std::vector<std::map<std::string,SSection*>*> sectionlist;
 	//sectionlist.push_back(&sections);
 	int se = 0; //for section start/end errorchecking
 	char *endptr = buf+size;
-	while(buf!=endptr)
+	while(buf<endptr)
 	{
 		if(buf[0]=='/' && buf[1]=='/') //comment
 		{
-			while(*buf!='\n' && *buf!='\r')
+			while((buf != endptr) && *buf!='\n' && *buf!='\r')
 			{
 				buf++;
 			}
 		}
 		else if(buf[0]=='/' && buf[1]=='*') //comment
 		{
-			while(buf[0]!='*' || buf[1]!='/')
+			while((buf != endptr) && buf[0]!='*' || buf[1]!='/')
 			{
 				buf++;
 			}
@@ -127,29 +128,30 @@ void CSunParser::Parse(char *buf, int size)
 			sections[thissection] = section;
 			buf = ParseSection(buf, endptr-buf, section);
 		}
+		
+		// We can possible hit endptr from somewhere that increases, so don't go past it
+		if (buf != endptr)
 		buf++;
 	}
-#endif
 }
 
 char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 {
-#ifdef SUCKY_CODE
 	std::string thissection;
 	int se = 0; //for section start/end errorchecking
 	char *endptr = buf+size;
-	while(buf!=endptr)
+	while(buf<endptr)
 	{
 		if(buf[0]=='/' && buf[1]=='/') //comment
 		{
-			while(*buf!='\n' && *buf!='\r')
+			while(*buf!='\n' && *buf!='\r' && buf<endptr)
 			{
 				buf++;
 			}
 		}
 		else if(buf[0]=='/' && buf[1]=='*') //comment
 		{
-			while(buf[0]!='*' || buf[1]!='/')
+			while((buf[0]!='*' || buf[1]!='/')&&buf<endptr)
 			{
 				buf++;
 			}
@@ -157,7 +159,7 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 		else if(*buf == '[') //sectionname
 		{
 			thissection = "";
-			while(*(++buf)!=']')
+			while(*(++buf)!=']' && buf<endptr)
 			{
 				thissection += *buf;
 			}
@@ -185,13 +187,13 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 		{
 			std::string name;
 			std::string value;
-			while(*buf != '=')
+			while(*buf != '=' && buf<endptr)
 			{
 				name += *buf;
 				buf++;
 			}
 			buf++;
-			while(*buf != ';')
+			while(*buf != ';' && buf<endptr)
 			{
 				value += *buf;
 				buf++;
@@ -203,7 +205,6 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 		buf++;
 	}
 	return buf;
-#endif
 }
 
 //find value, display messagebox if no such value found
@@ -395,12 +396,14 @@ std::vector<std::string> CSunParser::GetLocationVector(std::string location)
 	std::vector<std::string> loclist;
 	int start = 0;
 	int next = 0;
-	while((next = location.find_first_of("\\", start)) != std::basic_string<char>::npos)
+
+	while((next = location.find_first_of("\\", start)) != std::string::npos)
 	{
 		loclist.push_back(location.substr(start, next-start));
 		start = next+1;
 	}
-	loclist.push_back(location.substr(start, location.length()-start));
+	loclist.push_back(location.substr(start));
+
     return loclist;
 }
 

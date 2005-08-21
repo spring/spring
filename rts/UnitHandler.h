@@ -25,6 +25,8 @@ struct UnitDef;
 class CBuilderCAI;
 class CFeature;
 class CLoadSaveInterface;
+struct S3DOModel;
+
 const int MAX_UNITS=5000;
 
 class CUnitHandler  
@@ -43,14 +45,14 @@ public:
 	//0 blocked
 	//1 mobile unit in the way
 	//2 free (or if feature is != 0 then with a blocking feature that can be reclaimed)
-	int  TestUnitBuildSquare(const float3& pos, UnitDef *unitdef,CFeature *&feature);	//test if a unit can be built at specified position
+	int  TestUnitBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature);	//test if a unit can be built at specified position
 	int  TestUnitBuildSquare(const float3& pos, std::string unit,CFeature *&feature);	//test if a unit can be built at specified position
-	int  ShowUnitBuildSquare(const float3& pos, UnitDef *unitdef);	//test if a unit can be built at specified position and show on the ground where it's to rough
-	int  TestBuildSquare(const float3& pos, UnitDef *unitdef,CFeature *&feature);	//test a singel mapsquare for build possibility
+	int  ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef);	//test if a unit can be built at specified position and show on the ground where it's to rough
+	int  TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature);	//test a singel mapsquare for build possibility
 
 	void AddBuilderCAI(CBuilderCAI*);
 	void RemoveBuilderCAI(CBuilderCAI*);
-	float GetBuildHeight(float3 pos, UnitDef* unitdef);
+	float GetBuildHeight(float3 pos, const UnitDef* unitdef);
 
 	void DrawCloakedUnits(void);		//cloaked units must be drawn after all others;
 	void DrawShadowPass(void);
@@ -83,6 +85,8 @@ public:
 	float3 unitSunColor;
 	float unitShadowDensity;
 
+	float waterDamage;
+
 	int maxUnits;			//max units per team
 
 	struct TempDrawUnit{
@@ -95,9 +99,19 @@ public:
 	std::multimap<int,TempDrawUnit> tempDrawUnits;
 	std::multimap<int,TempDrawUnit> tempTransperentDrawUnits;
 
+	struct GhostBuilding {
+		float3 pos;
+		S3DOModel* model;
+	};
+	std::list<GhostBuilding> ghostBuildings;	//these are buildings that where in LOS_PREVLOS when they died and havent been in los since then
+
 	float3 camNorm;		//used by drawfar
 
 	int lastDamageWarning;
+	int lastCmdDamageWarning;
+
+	bool showHealthBars;
+
 #ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* playerControlledUnit;		
 #endif

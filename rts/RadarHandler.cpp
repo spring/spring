@@ -15,6 +15,12 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	xsize=gs->mapx/RADAR_SIZE;
 	ysize=gs->mapy/RADAR_SIZE;
 
+	commonJammerMap=new unsigned short[xsize*ysize];
+
+	for(int b=0;b<xsize*ysize;++b){
+		commonJammerMap[b]=0;
+	}
+
 	for(int a=0;a<gs->activeAllyTeams;++a){
 		radarMaps[a]=new unsigned short[xsize*ysize];
 		sonarMaps[a]=new unsigned short[xsize*ysize];
@@ -39,6 +45,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 
 CRadarHandler::~CRadarHandler(void)
 {
+	delete[] commonJammerMap;
 	for(int a=0;a<gs->activeAllyTeams;++a){
 		delete[] radarMaps[a];
 		if(!circularRadar)
@@ -60,6 +67,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		START_TIME_PROFILE;
 		if(unit->jammerRadius){
 			AddMapArea(newPos,unit->jammerRadius,jammerMaps[unit->allyteam],1);
+			AddMapArea(newPos,unit->jammerRadius,commonJammerMap,1);
 		}	
 		if(unit->radarRadius){
 			AddMapArea(newPos,unit->radarRadius,airRadarMaps[unit->allyteam],1);
@@ -82,6 +90,7 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 	if(unit->oldRadarPos.x>=0){
 		if(unit->jammerRadius){
 			AddMapArea(unit->oldRadarPos,unit->jammerRadius,jammerMaps[unit->allyteam],-1);
+			AddMapArea(unit->oldRadarPos,unit->jammerRadius,commonJammerMap,-1);
 		}
 		if(unit->radarRadius){
 			AddMapArea(unit->oldRadarPos,unit->radarRadius,airRadarMaps[unit->allyteam],-1);
@@ -129,8 +138,8 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 	int allyteam=unit->allyteam;
 
 	int tablenum=unit->radarRadius;
-	if(tablenum>50){
-		tablenum=50;
+	if(tablenum>MAX_LOS_TABLE){
+		tablenum=MAX_LOS_TABLE;
 	}
 	CLosHandler::LosTable& table=loshandler->lostables[tablenum-1];
 

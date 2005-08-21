@@ -17,6 +17,7 @@ CBuilding::CBuilding(const float3 &pos,int team,UnitDef* unitDef)
 : CUnit(pos,team,unitDef)
 {
 	immobile=true;
+	blockHeightChanges=true;
 }
 
 CBuilding::~CBuilding()

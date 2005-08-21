@@ -65,7 +65,6 @@ public:
 	float3 skyColor;
 	float3 sunColor;
 	float3 cloudColor;
-	float fogStart;
 };
 
 #endif // __BASIC_SKY_H__

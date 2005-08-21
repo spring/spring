@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "FileHandler.h"
 #include <fstream>
-#include "HpiHandler.h"
+//#include "HpiHandler.h"
+#include "VFSHandler.h"
 #include <algorithm>
 #include <cctype>
 //#include "mmgr.h"

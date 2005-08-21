@@ -21,10 +21,15 @@ CBaseTreeDrawer::~CBaseTreeDrawer(void)
 CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
 {
 	CBaseTreeDrawer* td;
-	if(GLEW_ARB_vertex_program && regHandler.GetInt("3DTrees",1) && 0)
-		td=new CAdvTreeDrawer;
-	else
-		td=new CBasicTreeDrawer;
+	if(GLEW_ARB_vertex_program && regHandler.GetInt("3DTrees",1)){
+		int maxTexel;
+		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&maxTexel);
+		if(maxTexel>=4){
+			td=new CAdvTreeDrawer;
+			return td;
+		}
+	}
+	td=new CBasicTreeDrawer;
 	return td;
 }
 

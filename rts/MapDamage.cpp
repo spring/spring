@@ -47,6 +47,9 @@ CMapDamage::CMapDamage(void)
 	for(int a=201;a<10000;++a){
 		craterTable[a]=0;
 	}
+	for(int a=0;a<256;++a)
+		invHardness[a]=1.0f/readmap->terrainTypes[a].hardness;
+
 	mapHardness=atof(readmap->mapDefParser.SGetValueDef("100","MAP\\MapHardness").c_str());
 }
 
@@ -83,13 +86,13 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 	float invRadius=1.0/radius;
 	for(int y=e->y1;y<=e->y2;++y){
 		for(int x=e->x1;x<=e->x2;++x){
-			if(readmap->typemap[y*gs->mapx+x]&128){			//dont change squares with building on them here
+			if(readmap->groundBlockingObjectMap[y*gs->mapx+x] && readmap->groundBlockingObjectMap[y*gs->mapx+x]->blockHeightChanges){			//dont change squares with building on them here
 				e->squares.push_back(0);
 				continue;
 			}
 			float dist=pos.distance2D(float3(x*SQUARE_SIZE,0,y*SQUARE_SIZE));							//calculate the distance
 			float relDist=dist*invRadius;																					//normalize distance
-			float dif=baseStrength*craterTable[int(relDist*200)];
+			float dif=baseStrength*craterTable[int(relDist*200)]*invHardness[readmap->typemap[(y/2)*gs->hmapx+x/2]];
 
 			float prevDif=readmap->heightmap[y*(gs->mapx+1)+x]-readmap->orgheightmap[y*(gs->mapx+1)+x];
 
@@ -104,36 +107,32 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 	}
 	std::vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){		//calculate how much to offset the buildings in the explosion radius with (while still keeping the ground under them flat
-		if(dynamic_cast<CBuilding*>(*ui) && !(*ui)->isDead){
+		if((*ui)->blockHeightChanges){
+			CUnit* unit=*ui;
 			float3& upos=(*ui)->pos;
-			UnitDef* unitDef=(*ui)->unitDef;
-
-			int tx1 = (int)max(0.f,(upos.x-(unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-			int tx2 = min(gs->mapx,tx1+unitDef->xsize);
-			int tz1 = (int)max(0.f,(upos.z-(unitDef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-			int tz2 = min(gs->mapy,tz1+unitDef->ysize);
 
 			float totalDif=0;
-			for(int z=tz1; z<=tz2; z++){
-				for(int x=tx1; x<=tx2; x++){
+			for(int z=unit->mapPos.y; z<unit->mapPos.y+unit->ysize; z++){
+				for(int x=unit->mapPos.x; x<unit->mapPos.x+unit->xsize; x++){
 					float dist=pos.distance2D(float3(x*SQUARE_SIZE,0,z*SQUARE_SIZE));							//calculate the distance
 					float relDist=dist*invRadius;																					//normalize distance
-					float dif=baseStrength*craterTable[int(relDist*200)];
-					float prevDif=readmap->heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+z];
-					if(prevDif<0)
-						dif/=-prevDif*0.05+1;
+					float dif=baseStrength*craterTable[int(relDist*200)]*invHardness[readmap->typemap[(z/2)*gs->hmapx+x/2]];
+					float prevDif=readmap->heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x];
+
+					if(prevDif*dif>0)
+						dif/=fabs(prevDif)*0.1+1;
 					totalDif+=dif;
 				}
 			}
-			totalDif/=(tz2-tz1+1)*(tx2-tx1+1);
+			totalDif/=unit->xsize*unit->ysize;
 			if(totalDif!=0){
 				ExploBuilding eb;
 				eb.id=(*ui)->id;
 				eb.dif=totalDif;
-				eb.tx1=tx1;
-				eb.tx2=tx2;
-				eb.tz1=tz1;
-				eb.tz2=tz2;
+				eb.tx1=unit->mapPos.x;
+				eb.tx2=unit->mapPos.x+unit->xsize;
+				eb.tz1=unit->mapPos.y;
+				eb.tz2=unit->mapPos.y+unit->ysize;
 				e->buildings.push_back(eb);
 			}
 		}
@@ -187,6 +186,24 @@ void CMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			n.Normalize();
 
       readmap->facenormals[(y*gs->mapx+x)*2+1]=n;
+    }
+  }
+
+	for(int y=max(2,(y1&0xfffffe));y<=min(gs->mapy-3,hy2);y+=2){
+		for(int x=max(2,(x1&0xfffffe));x<=min(gs->mapx-3,hx2);x+=2){
+			float3 e1(-SQUARE_SIZE*4,readmap->heightmap[(y-1)*(gs->mapx+1)+x-1]-readmap->heightmap[(y-1)*(gs->mapx+1)+x+3],0);
+			float3 e2( 0,readmap->heightmap[(y-1)*(gs->mapx+1)+x-1]-readmap->heightmap[(y+3)*(gs->mapx+1)+x-1],-SQUARE_SIZE*4);
+
+			float3 n=e2.cross(e1);
+			n.Normalize();
+
+			e1=float3( SQUARE_SIZE*4,readmap->heightmap[(y+3)*(gs->mapx+1)+x+3]-readmap->heightmap[(y+3)*(gs->mapx+1)+x-1],0);
+			e2=float3( 0,readmap->heightmap[(y+3)*(gs->mapx+1)+x+3]-readmap->heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
+			
+			float3 n2=e2.cross(e1);
+			n2.Normalize();
+
+			readmap->slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5;
 
     }
   }
@@ -243,8 +260,8 @@ START_TIME_PROFILE;
 			int tz1 = bi->tz1;
 			int tz2 = bi->tz2;
 
-			for(int z=tz1; z<=tz2; z++){
-				for(int x=tx1; x<=tx2; x++){
+			for(int z=tz1; z<tz2; z++){
+				for(int x=tx1; x<tx2; x++){
 					readmap->heightmap[z*(gs->mapx+1)+x]+=dif;
 				}
 			}
@@ -279,6 +296,7 @@ START_TIME_PROFILE;
 		explosions.pop_front();
 	}
 
+/*
 	nextRejuv+=rejuvQue.size()/300.0;
 	while(nextRejuv>0){
 		nextRejuv-=1;
@@ -312,7 +330,7 @@ START_TIME_PROFILE;
 			inRejuvQue[by][bx]=false;
 		}
 		rejuvQue.pop_front();
-	}
+	}*/
 	UpdateLos();
 END_TIME_PROFILE("Map damage");
 }

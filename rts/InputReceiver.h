@@ -37,7 +37,7 @@ public:
 	void DrawBox(ContainerBox b);
 };
 
-extern std::deque<CInputReceiver*> *inputReceivers;
+extern std::deque<CInputReceiver*> inputReceivers;
 
 #endif /* INPUTRECEIVER_H */
 

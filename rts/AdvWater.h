@@ -18,6 +18,7 @@ public:
 	unsigned int reflectTexture;
 	unsigned int bumpTexture;
 	unsigned int rawBumpTexture[4];
+	float3 waterSurfaceColor;
 
 	unsigned int waterFP;
 };
