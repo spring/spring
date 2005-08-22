@@ -197,10 +197,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 				int minlx=cx+(-viewRadius+3-xsquaremod)*lod;
 				int maxlx=cx+(viewRadius-1-xsquaremod)*lod;
 
-				int xstart=max(minlx,mintx);
-				int xend=min(maxlx,maxtx);
-				int ystart=max(minly,minty);
-				int yend=min(maxly,maxty);
+				int xstart=std::max(minlx,mintx);
+				int xend=std::min(maxlx,maxtx);
+				int ystart=std::max(minly,minty);
+				int yend=std::min(maxly,maxty);
 
 				for(y=ystart;y<yend;y+=lod){
 					int xs=xstart;
@@ -348,7 +348,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 				//rita yttre begränsnings yta mot nästa lod
 				if(maxlx<maxtx && maxlx>=mintx){
 					x=maxlx;
-					for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
+					for(y=std::max(ystart-lod,minty);y<std::min(yend+lod,maxty);y+=lod){
 						DrawVertexA(x,y);
 						DrawVertexA(x,y+lod);
 						if(y%(lod*2)){
@@ -365,7 +365,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 				}
 				if(minlx>mintx && minlx<maxtx){
 					x=minlx-lod;
-					for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
+					for(y=std::max(ystart-lod,minty);y<std::min(yend+lod,maxty);y+=lod){
 						if(y%(lod*2)){
 							float h=((heightData[(y-lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5)*(camxpart)+heightData[(y)*heightDataX+x]*(1-camxpart);
 							DrawVertexA(x,y,h);
@@ -382,8 +382,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 				}
 				if(maxly<maxty && maxly>minty){
 					y=maxly;
-					int xs=max(xstart-lod,mintx);
-					int xe=min(xend+lod,maxtx);
+					int xs=std::max(xstart-lod,mintx);
+					int xe=std::min(xend+lod,maxtx);
 					int xtest,xtest2;
 					std::vector<fline>::iterator fli;
 					for(fli=left.begin();fli!=left.end();fli++){
@@ -427,8 +427,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 				}
 				if(minly>minty && minly<maxty){
 					y=minly-lod;
-					int xs=max(xstart-lod,mintx);
-					int xe=min(xend+lod,maxtx);
+					int xs=std::max(xstart-lod,mintx);
+					int xe=std::min(xend+lod,maxtx);
 					int xtest,xtest2;
 					std::vector<fline>::iterator fli;
 					for(fli=left.begin();fli!=left.end();fli++){
@@ -593,10 +593,10 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		int minlx=cx+(-viewRadius+3-xsquaremod)*lod;
 		int maxlx=cx+(viewRadius-1-xsquaremod)*lod;
 
-		int xstart=max(minlx,mintx);
-		int xend=min(maxlx,maxtx);
-		int ystart=max(minly,minty);
-		int yend=min(maxly,maxty);
+		int xstart=std::max(minlx,mintx);
+		int xend=std::min(maxlx,maxtx);
+		int ystart=std::max(minly,minty);
+		int yend=std::min(maxly,maxty);
 
 		for(y=ystart;y<yend;y+=lod){
 			int xs=xstart;
@@ -725,7 +725,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		//rita yttre begränsnings yta mot nästa lod
 		if(maxlx<maxtx && maxlx>=mintx){
 			x=maxlx;
-			for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
+			for(y=std::max(ystart-lod,minty);y<std::min(yend+lod,maxty);y+=lod){
 				DrawVertexA(x,y);
 				DrawVertexA(x,y+lod);
 				if(y%(lod*2)){
@@ -742,7 +742,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		}
 		if(minlx>mintx && minlx<maxtx){
 			x=minlx-lod;
-			for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
+			for(y=std::max(ystart-lod,minty);y<std::min(yend+lod,maxty);y+=lod){
 				if(y%(lod*2)){
 					float h=((heightData[(y-lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5)*(camxpart)+heightData[(y)*heightDataX+x]*(1-camxpart);
 					DrawVertexA(x,y,h);
@@ -759,8 +759,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		}
 		if(maxly<maxty && maxly>minty){
 			y=maxly;
-			int xs=max(xstart-lod,mintx);
-			int xe=min(xend+lod,maxtx);
+			int xs=std::max(xstart-lod,mintx);
+			int xe=std::min(xend+lod,maxtx);
 			if(xs<xe){
 				x=xs;
 				if(x%(lod*2)){
@@ -786,8 +786,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		}
 		if(minly>minty && minly<maxty){
 			y=minly-lod;
-			int xs=max(xstart-lod,mintx);
-			int xe=min(xend+lod,maxtx);
+			int xs=std::max(xstart-lod,mintx);
+			int xe=std::min(xend+lod,maxtx);
 			if(xs<xe){
 				x=xs;
 				if(x%(lod*2)){
@@ -907,7 +907,7 @@ bool CBFGroundDrawer::UpdateTextures()
 					float m=md->moveMath->SpeedMod(*md, x*2,y*2);
 					if(md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
 						m=0;
-					m=min(1.,sqrt(m));
+					m=std::min(1.,sqrt(m));
 
 					infoTexMem[a*4+0]=255-int(m)*255;
 					infoTexMem[a*4+1]=int(m)*255;
@@ -919,7 +919,7 @@ bool CBFGroundDrawer::UpdateTextures()
 				for(int x=0;x<gs->hmapx;++x){
 					int a=y*(gs->pwr2mapx>>1)+x;
 					if(myAirLos[(y/2)*gs->hmapx/2+x/2])
-						infoTexMem[a*4]=(unsigned char)min(255.,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
+						infoTexMem[a*4]=(unsigned char)std::min(255.,sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
 					else
 						infoTexMem[a*4]=0;
 					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);
