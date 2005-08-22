@@ -25,6 +25,7 @@ CArchiveBase* CArchiveFactory::OpenArchive(const string& fileName)
 #ifndef NO_7ZIP
 	if (ext == "sd7")
 		ret = new CArchive7ZipDll(fileName);
+	else
 #endif
 	if (ext == "sdz")
 		ret = new CArchiveZip(fileName);
