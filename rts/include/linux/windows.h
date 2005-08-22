@@ -56,26 +56,6 @@ BOOL WINAPI LocalFileTimeToFileTime(const FILETIME *,FILETIME *);
 VOID WINAPI GetSystemTime(LPSYSTEMTIME);
 BOOL WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
 
-#else
-//FIXME check following lines
-//following might stay like as is in a first time
-#ifndef WORD
-#define WORD int
-#endif
-#define DWORD long int
-#define DWORD_PTR unsigned long
-#define UCHAR unsigned char
-#define UINT8 uint8_t
-#define UINT16 uint16_t
-#define UINT32 uint32_t
-#define UINT64 uint64_t
-#define LARGE_INTEGER int64_t
-//typedef unsigned int UINT;
-typedef int LRESULT;
-#include <string>
-using namespace std;
-typedef string LPSTR;
-typedef int* LPINT;
 #endif //EMULE_WINTYPES
 
 #define MAKEWORD(a, b)      ((WORD)(((BYTE)((DWORD_PTR)(a) & 0xff)) |\\
