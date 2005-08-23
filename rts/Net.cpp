@@ -301,8 +301,7 @@ int CNet::SendData(unsigned char *data, int length,int connection)
 int CNet::GetData(unsigned char *buf, int length,int conNum)
 {
 	if(connections[conNum].active){
-		if(connections[conNum].localConnection)
-			boost::mutex::scoped_lock scoped_lock(netMutex);
+		boost::mutex::scoped_lock scoped_lock(netMutex,connections[conNum].localConnection);
 
 		int ret=connections[conNum].readyLength;
 		if(length<=ret)

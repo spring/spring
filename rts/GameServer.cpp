@@ -518,8 +518,7 @@ void CGameServer::CheckForGameEnd(void)
 
 void CGameServer::CreateNewFrame(bool fromServerThread)
 {
-	if(!fromServerThread)
-		boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	serverframenum++;
 	outbuf[0]=NETMSG_NEWFRAME;
 	(*((int*)&outbuf[1]))=serverframenum;

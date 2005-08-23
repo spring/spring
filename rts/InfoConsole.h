@@ -13,6 +13,7 @@
 
 #include <deque>
 #include <string>
+#include <boost/thread/recursive_mutex.hpp>
 
 class CInfoConsole  
 {
@@ -47,6 +48,7 @@ private:
 	int lastTime;
 	std::deque<InfoLine> data;
 	std::string tempstring;
+	mutable boost::recursive_mutex infoConsoleMutex;
 };
 
 extern CInfoConsole* info;

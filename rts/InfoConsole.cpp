@@ -16,7 +16,6 @@
 #include "SyncTracer.h"
 #include "RegHandler.h"
 #include "InfoConsole.h"
-#include <boost/thread/mutex.hpp>
 #include <boost/filesystem/path.hpp>
 
 //#include "mmgr.h"
@@ -26,7 +25,6 @@
 //////////////////////////////////////////////////////////////////////
 CInfoConsole* info=0;
 static ofstream* filelog;
-static boost::mutex infoConsoleMutex;
 
 CInfoConsole::CInfoConsole()
 : lastMsgPos(0,0,0)
@@ -53,7 +51,7 @@ CInfoConsole::~CInfoConsole()
 
 void CInfoConsole::Draw()
 {
-	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(0,0,0.5f,0.5f);
@@ -81,7 +79,7 @@ void CInfoConsole::Draw()
 
 void CInfoConsole::Update()
 {
-	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	if(lastTime>0)
 		lastTime--;
 	if(!data.empty()){
@@ -95,7 +93,7 @@ void CInfoConsole::Update()
 
 CInfoConsole& CInfoConsole::operator<< (int i)
 {
-	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	char t[50];
 	sprintf(t,"%d ",i);
 	tempstring+=t;
@@ -104,7 +102,7 @@ CInfoConsole& CInfoConsole::operator<< (int i)
 
 CInfoConsole& CInfoConsole::operator<< (float f)
 {
-	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	char t[50];
 	sprintf(t,"%f ",f);
 	tempstring+=t;
@@ -113,7 +111,7 @@ CInfoConsole& CInfoConsole::operator<< (float f)
 
 CInfoConsole& CInfoConsole::operator<< (const char* c)
 {
-	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	for(unsigned int a=0;a<strlen(c);a++){
 		if(c[a]!='\n'){
 			tempstring+=c[a];
@@ -130,7 +128,7 @@ void CInfoConsole::AddLine(const char *fmt, ...)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	char text[500];
 	va_list		ap;										// Pointer To List Of Arguments
 
