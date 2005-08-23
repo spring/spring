@@ -79,8 +79,9 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	std::vector<std::string> found = find_files("*.*",curPath+"/");
 	struct stat info;
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
-
+#ifdef DEBUG
 		printf("looking at %s\n", it->c_str());
+#endif
 		stat(it->c_str(),&info);
 
 		string fullName = it->c_str();
