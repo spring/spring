@@ -535,6 +535,11 @@ void CGameServer::UpdateLoop(void)
 		serverNet->Update();
 	}
 	Sleep(100);		//we might crash if game hasnt finished initializing within this time
+	/*
+	 * Need a better solution than this for starvation.
+	 * Decreasing thread priority (making it more important)
+	 * requires root privileges on POSIX systems
+	 */
 	//SetThreadPriority(thisThread,THREAD_PRIORITY_ABOVE_NORMAL);		//we want the server to continue running smoothly even if the game client is struggling
 	while(!quitServer)
 	{
