@@ -6,6 +6,7 @@
 #include "SyncTracer.h"
 #include <stdio.h>
 #include "InfoConsole.h"
+#include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -35,7 +36,8 @@ void CSyncTracer::Commit()
 	if(file==0){
 		char c[100];
 		sprintf(c,"trace%i.txt",gu->myTeam);
-		file=new ofstream(c, ios::out);
+		boost::filesystem::path fn(c);
+		file=new ofstream(fn.native_file_string(), ios::out);
 	}
 #endif
 	(*file) << traces[firstActive].c_str();

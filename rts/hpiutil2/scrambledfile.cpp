@@ -21,6 +21,7 @@
  */
 
 #include "scrambledfile.h"
+#include <boost/filesystem/path.hpp>
 
 /**
  * Constructor
@@ -28,7 +29,8 @@
  */
 hpiutil::scrambledfile::scrambledfile(const char *fname)
 {
-	file.open(fname,std::ios::in|std::ios::binary);
+	boost::filesystem::path fn(fname);
+	file.open(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
 	scrambled = false;
 }
 
@@ -38,7 +40,8 @@ hpiutil::scrambledfile::scrambledfile(const char *fname)
  */
 hpiutil::scrambledfile::scrambledfile(std::string const &fname)
 {
-	file.open(fname.c_str(),std::ios::in|std::ios::binary);
+	boost::filesystem::path fn(fname);
+	file.open(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
 	scrambled = false;
 }
 

@@ -19,6 +19,7 @@
 #include "glFont.h"
 #include "Camera.h"
 #include "TimeProfiler.h"
+#include <boost/filesystem/convenience.hpp>
 
 #ifdef _WIN32
 #define ZLIB_WINAPI 
@@ -692,11 +693,9 @@ Trying to write offset and vertices data to file.
 */
 void CPathEstimator::WriteFile(string name) {
 	// We need this directory to exist
-#ifdef _WIN32
-	_mkdir("maps/paths");
-#else
-	mkdir("maps/paths",0755);
-#endif
+	boost::filesystem::path f("./maps/paths");
+	if (!boost::filesystem::exists(f))
+		boost::filesystem::create_directories(f);
 
 	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + name + ".zip";
 	zipFile file = zipOpen(filename.c_str(), APPEND_STATUS_CREATE);

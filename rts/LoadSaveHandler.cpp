@@ -8,6 +8,7 @@
 #include "ReadMap.h"
 #include "FeatureHandler.h"
 #include "UnitHandler.h"
+#include <boost/filesystem/path.hpp>
 
 extern std::string stupidGlobalMapname;
 
@@ -21,7 +22,8 @@ CLoadSaveHandler::~CLoadSaveHandler(void)
 
 void CLoadSaveHandler::SaveGame(std::string file)
 {
-	std::ofstream ofs(file.c_str(),std::ios::out|std::ios::binary);
+	boost::filesystem::path fn(file);
+	std::ofstream ofs(fn.native_file_string().c_str(),std::ios::out|std::ios::binary);
 	PrintLoadMsg("Saving game");
 	if(ofs.bad() || !ofs.is_open()){
 		MessageBox(0,"Couldnt save game to file",file.c_str(),0);
@@ -41,7 +43,8 @@ void CLoadSaveHandler::SaveGame(std::string file)
 //this just loads the mapname and some other early stuff
 void CLoadSaveHandler::LoadGame(std::string file)
 {
-	ifs=new ifstream(file.c_str(),std::ios::in|std::ios::binary);
+	boost::filesystem::path fn(file);
+	ifs=new ifstream(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
 	load=new CLoadInterface(ifs);
 
 	load->lsString(stupidGlobalMapname);

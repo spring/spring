@@ -90,6 +90,7 @@
 #include "GroundDecalHandler.h"
 #include "ArchiveScanner.h"
 #include "GameVersion.h"
+#include <boost/filesystem/path.hpp>
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"
@@ -1928,10 +1929,13 @@ void InitCRCTable()
 void CGame::MakeMemDump(void)
 {
 	ofstream file;
-	if(gameServer)
-		file.open("memdump.txt", ios::out);
-	else
-		file.open("memdumpclient.txt", ios::out);
+	if(gameServer) {
+		boost::filesystem::path fn("memdump.txt");
+		file.open(fn.native_file_string().c_str(),ios::out);
+	} else {
+		boost::filesystem::path fn("memdumpclient.txt");
+		file.open(fn.native_file_string().c_str(),ios::out);
+	}
 	
 	file << "Frame " << gs->frameNum <<"\n";
 	list<CUnit*>::iterator usi;

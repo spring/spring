@@ -14,6 +14,7 @@
 #include "Building.h"
 #include "CategoryHandler.h"
 #include "CommandAI.h"
+#include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
 CSelectionKeyHandler selectionKeys;
@@ -23,7 +24,8 @@ extern bool keys[256];
 CSelectionKeyHandler::CSelectionKeyHandler(void)
 {
 	selectNumber=0;
-	std::ifstream ifs("selectkeys.txt");
+	boost::filesystem::path fn("selectkeys.txt");
+	std::ifstream ifs(fn.native_file_string().c_str());
 
 	char buf[10000];
 

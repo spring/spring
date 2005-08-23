@@ -34,9 +34,10 @@ CVFSHandler::CVFSHandler(bool mapArchives)
 
 void CVFSHandler::FindArchives(const string& pattern, const string& path)
 {
-	std::vector<std::string> found = find_files(pattern,path);
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++)
-		AddArchive(it->c_str(),false);
+	fs::path fn(path);
+	std::vector<fs::path> found = find_files(fn,pattern);
+	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
+		AddArchive(it->string().c_str(),false);
 }
 
 // Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not

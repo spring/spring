@@ -10,6 +10,7 @@
 #include "FileHandler.h"
 #include "GameVersion.h"
 #include "Bitmap.h"
+#include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
 using namespace std;
@@ -58,7 +59,8 @@ void LoadExtensions()
 	for (unsigned int i=0; i<s.length(); i++) 
 		if (s[i]==' ') s[i]='\n';
 
-	ofstream ofs("ext.txt",ios::out);
+	boost::filesystem::path fn("ext.txt");
+	ofstream ofs(fn.native_file_string().c_str(),ios::out);
 	ofs.write(s.c_str(),s.length());
 }
 

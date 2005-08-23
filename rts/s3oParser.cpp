@@ -6,6 +6,7 @@
 #include "s3oParser.h"
 #include <fstream>
 #include "windows.h"
+#include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -26,7 +27,8 @@ LObject* CS3OParser::Parse(const string& filename)
 {
 	LObject *s3o = new LObject;
 
-	FILE *pStream = fopen(filename.c_str(),"rb");
+	boost::filesystem::path fn(filename);
+	FILE *pStream = fopen(fn.native_file_string().c_str(),"rb");
 	if(!pStream){
 		return NULL;
 	}

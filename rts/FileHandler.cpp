@@ -7,6 +7,7 @@
 #include <cctype>
 //#include "mmgr.h"
 #include "filefunctions.h"
+#include <boost/filesystem/exception.hpp>
 
 using namespace std;
 
@@ -28,16 +29,26 @@ CFileHandler::CFileHandler(std::string filename)
 
 void CFileHandler::Init(const char* filename)
 {
-        ifs=new std::ifstream(filename, ios::in|ios::binary);
-	if(ifs->is_open())
-	{
+	fs::path fn;
+	std::string p;
+	try {
+		fn = fs::path(filename);
+		if (fs::exists(fn))
+			p = fn.native_file_string();
+		else
+			p = filename;
+	} catch (fs::filesystem_error) {
+		p = filename;
+	}
+	ifs=new std::ifstream(p.c_str(), ios::in|ios::binary);
+	if (ifs->is_open()) {
 		ifs->seekg(0, ios_base::end);
 		filesize = ifs->tellg();
 		ifs->seekg(0, ios_base::beg);
 		return;
 	}
 	delete ifs;
-	ifs=0;
+	ifs = 0;
 
 	if(!hpiHandler)
 		return;
@@ -116,7 +127,7 @@ bool CFileHandler::Eof()
 
 std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 {
-	std::vector<std::string> found;
+	std::vector<fs::path> found;
 	std::string patternPath=pattern;
 	if(patternPath.find_last_of('\\')!=string::npos){
 		patternPath.erase(patternPath.find_last_of('\\')+1);
@@ -126,10 +137,16 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 	}
 	if(pattern.find('\\')==string::npos && pattern.find('/')==string::npos)
 		patternPath.clear();
-
 	std::string filter=pattern;
 	filter.erase(0,patternPath.length());
-	found = find_files(filter,patternPath);
+	try {
+		fs::path fn(patternPath);
+		found = find_files(fn,filter);
+	} catch (fs::filesystem_error) {
+	}
+	std::vector<std::string> foundstrings;
+	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
+		foundstrings.push_back(it->string());
 
 	//todo: get a real regex handler
 	while(filter.find_last_of('*')!=string::npos)
@@ -146,11 +163,11 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 		std::transform(fi->begin(), fi->end(), fi->begin(), (int (*)(int))std::tolower);
 		int a=fi->find(filter);
 		if(filter.empty() || a==fi->length()-filter.length()){
-			found.push_back(patternPath+*fi);
+			foundstrings.push_back(patternPath+*fi);
 		}
 	}
 
-	return found;
+	return foundstrings;
 }
 
 int CFileHandler::FileSize()

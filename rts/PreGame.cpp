@@ -333,15 +333,16 @@ void CPreGame::SelectMap(std::string s)
 void CPreGame::ShowMapList(void)
 {
 	CglList* list=new CglList("Select map",SelectMap);
-	std::vector<std::string> found = find_files("*.smf","maps/");
+	fs::path fn("maps/");
+	std::vector<fs::path> found = find_files(fn,"*.smf");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
 	if (found.begin() == found.end() && arFound.begin() == arFound.end()
 			) {
 		MessageBox(0,"Couldnt find any map files","PreGame error",0);
 		return;
 	}
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++)
-		list->AddItem(it->substr(it->find_last_of('/')+1).c_str(),it->substr(it->find_last_of('/')+1).c_str());
+	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
+		list->AddItem(it->leaf().c_str(),it->leaf().c_str());
 	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++)
 		list->AddItem((*it).c_str(), (*it).c_str());
 

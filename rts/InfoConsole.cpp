@@ -17,6 +17,7 @@
 #include "RegHandler.h"
 #include "InfoConsole.h"
 #include <boost/thread/mutex.hpp>
+#include <boost/filesystem/path.hpp>
 
 //#include "mmgr.h"
 
@@ -40,7 +41,8 @@ CInfoConsole::CInfoConsole()
 	height=0.2f;
 	numLines = 7;
 
-	filelog=new ofstream("infolog.txt", ios::out);
+	boost::filesystem::path fn("infolog.txt");
+	filelog=new ofstream(fn.native_file_string().c_str(), ios::out);
 }
 
 CInfoConsole::~CInfoConsole()

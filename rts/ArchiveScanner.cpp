@@ -76,15 +76,16 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 	isDirty = true;
 
-	std::vector<std::string> found = find_files("*.*",curPath+"/");
+	fs::path fn(curPath+"/");
+	std::vector<fs::path> found = find_files(fn,"*.*");
 	struct stat info;
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
+	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
 #ifdef DEBUG
-		printf("looking at %s\n", it->c_str());
+		printf("looking at %s\n", it->native_file_string().c_str());
 #endif
-		stat(it->c_str(),&info);
+		stat(it->native_file_string().c_str(),&info);
 
-		string fullName = it->c_str();
+		string fullName = it->native_file_string().c_str();
 		string fn;
 		if (fullName.find_last_of('/') != string::npos)
 			fn = fullName.substr(fullName.find_last_of('/'));
@@ -100,12 +101,12 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 			// Avoid the special directories
 			if (fn.c_str()[0] != '.') {
-				Scan(it->c_str(), checksum);
+				Scan(it->native_file_string().c_str(), checksum);
 			}
 		}
 
 		// Or maybe an archive we should look into?
-		else if (CArchiveFactory::IsArchive(it->c_str())) {
+		else if (CArchiveFactory::IsArchive(it->native_file_string().c_str())) {
 
 			// Determine whether to rely on the cached info or not
 			bool cached = false;
@@ -267,7 +268,8 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 	unsigned int crc;
 	int ch;
 
-	FILE* fp = fopen(filename.c_str(), "rb");
+	boost::filesystem::path fn(filename);
+	FILE* fp = fopen(fn.native_file_string().c_str(), "rb");
 	if (!fp)
 		return 0;
 
@@ -347,7 +349,8 @@ void CArchiveScanner::WriteCacheData()
 	if (!isDirty)
 		return;
 
-	FILE* out = fopen("archivecache.txt", "wt");
+	boost::filesystem::path fn("archivecache.txt");
+	FILE* out = fopen(fn.native_file_string().c_str(), "wt");
 	//FILE* out = stdout;
 	if (!out)
 		return;

@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #endif
+#include <boost/filesystem/convenience.hpp>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -614,11 +615,9 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 void CNet::CreateDemoFile()
 {
 	// We want this folder to exist
-#ifdef _WIN32
-	_mkdir("demos");
-#else
-	mkdir("demos",755);
-#endif
+	boost::filesystem::path d("./demos");
+	if (!boost::filesystem::exists(d))
+		boost::filesystem::create_directories(d);
 
 	if(gameSetup){
 		struct tm *newtime;
@@ -651,7 +650,8 @@ void CNet::CreateDemoFile()
 			}
 		}
 		demoName = buf;
-		recordDemo=new ofstream(demoName.c_str(), ios::out|ios::binary);
+		boost::filesystem::path fn(demoName);
+		recordDemo=new ofstream(fn.native_file_string().c_str(), ios::out|ios::binary);
 
 		char c=1;
 		recordDemo->write(&c,1);
@@ -659,7 +659,8 @@ void CNet::CreateDemoFile()
 		recordDemo->write(gameSetup->gameSetupText,gameSetup->gameSetupTextLength);
 	} else {
 		demoName = "demos/test.sdf";
-		recordDemo=new ofstream(demoName.c_str(), ios::out|ios::binary);
+		boost::filesystem::path fn(demoName);
+		recordDemo=new ofstream(fn.native_file_string().c_str(), ios::out|ios::binary);
 		char c=0;
 		recordDemo->write(&c,1);
 	}

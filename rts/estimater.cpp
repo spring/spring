@@ -4,6 +4,7 @@
 #include <fstream>
 #include "ReadMap.h"
 #include "FileHandler.h"
+#include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
 using namespace std;
@@ -142,7 +143,8 @@ void CPathEstimater::CalculateSquareCosts()
 			}
 		}
 
-		ofstream ofs("bagge.pth",ios::out|ios::binary);
+		boost::filesytem::path fn("bagge.pth");
+		ofstream ofs(fn.native_file_string(),ios::out|ios::binary);
 		ofs.write((char*)&readmap->mapheader.mapid,4);
 		for(y=0;y<g.mapy/BLOCK_SIZE;++y){
 			for(int x=0;x<g.mapx/BLOCK_SIZE;++x){

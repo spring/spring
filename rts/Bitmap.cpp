@@ -9,6 +9,7 @@
 #include <fstream>
 #include <jpeglib.h>
 #include "FileHandler.h"
+#include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -605,7 +606,8 @@ void CBitmap::SaveBMP(string filename)
 	bmih.biYPelsPerMeter=1000;
 	bmih.biClrUsed=0;
 	bmih.biClrImportant=0;
-	std::ofstream ofs(filename.c_str(), std::ios::out|std::ios::binary);
+	boost::filesystem::path fn(filename);
+	std::ofstream ofs(fn.native_file_string().c_str(), std::ios::out|std::ios::binary);
 	if(ofs.bad() || !ofs.is_open())
 		MessageBox(0,"Couldnt save file",filename.c_str(),0);
 	ofs.write((char*)&bmfh,sizeof(bmfh));
@@ -623,7 +625,8 @@ void CBitmap::SaveJPG(string filename,int quality)
 	jpeg_create_compress(&cinfo);
 
 	FILE * outfile;
-	if ((outfile = fopen(filename.c_str(), "wb")) == NULL) {
+	boost::filesystem::path fn(filename);
+	if ((outfile = fopen(fn.native_file_string().c_str(), "wb")) == NULL) {
 		MessageBox(0,"Error reading jpeg","CBitmap error",0);
 		exit(1);
 	}
