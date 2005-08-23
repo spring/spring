@@ -695,7 +695,7 @@ void CPathEstimator::WriteFile(string name) {
 #ifdef _WIN32
 	_mkdir("maps/paths");
 #else
-	mkdir("maps/paths",755);
+	mkdir("maps/paths",0755);
 #endif
 
 	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + name + ".zip";
