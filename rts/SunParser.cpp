@@ -46,7 +46,7 @@ void CSunParser::DeleteSection(std::map<std::string,SSection*> *section)
 
 void CSunParser::LoadFile(std::string filename)
 {
-	transform(filename.begin(), filename.end(), filename.begin(), (int (*)(int))tolower);
+	//transform(filename.begin(), filename.end(), filename.begin(), (int (*)(int))tolower);
 	//DeleteSection(&sections);
 	this->filename = filename;
 	//FILE *pStream = fopen(filename.c_str(),"rb");
