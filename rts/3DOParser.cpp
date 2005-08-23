@@ -59,7 +59,7 @@ C3DOParser::C3DOParser()
 {
 	scaleFactor=400000.0f;
 
-	CFileHandler file("unittextures\\tatex\\teamtex.txt");
+	CFileHandler file("unittextures/tatex/teamtex.txt");
 
 	while(!file.Eof())
 	{

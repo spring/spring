@@ -312,8 +312,8 @@ unsigned int CGroundDecalHandler::LoadTexture(std::string name)
 {
 	if(name.find_first_of('.')==string::npos)
 		name+=".bmp";
-	if(name.find_first_of('\\')==string::npos)
-		name=string("bitmaps\\tracks\\")+name;
+	if(name.find_first_of('\\')==string::npos&&name.find_first_of('/')==string::npos)
+		name=string("bitmaps/tracks/")+name;
 
 	CBitmap bm(name);
 	for(int y=0;y<bm.ysize;++y){
