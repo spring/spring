@@ -203,7 +203,7 @@ static inline unsigned int _clearfp(void)
  * Performance testing
  */
 #include <sys/time.h>
-static inline bool QueryPerformanceCounter(int64_t *count)
+static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 {
 #if defined(__GNUC__) && ( defined(__i386__) || defined(__x86_64__) )
 	/*
@@ -212,7 +212,7 @@ static inline bool QueryPerformanceCounter(int64_t *count)
 	 */
 	int64_t val;
 	__asm__ __volatile__("rdtsc" : "=A" (val));
-	*count = val;
+	count->QuadPart = val;
 #elif defined(__GNUC__) && defined(__ia64__)
 	/*
 	 * Reading from the itc is only available on
@@ -220,14 +220,14 @@ static inline bool QueryPerformanceCounter(int64_t *count)
 	 */
 	int64_t val;
 	__asm__ __volatile__("mov %0=ar.itc" : "=r" (val));
-	*count = val;
+	count->QuadPart = val;
 #else
 	/*
 	 * Have to go generic
 	 */
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
-	*count = (int64_t)tv.tv_usec;
+	count->QuadPart = (int64_t)tv.tv_usec;
 #endif
 	return true;
 }
@@ -241,29 +241,29 @@ static int64_t _cpufreq;
 /*
  * Generic solution
  */
-static inline bool _freqfallback(int64_t *frequence)
+static inline bool _freqfallback(LARGE_INTEGER *frequence)
 {
 	if (!_cpufreq) {
 		int64_t tscstart,tscend;
 		struct timeval tvstart,tvend;
 		long usec;
-		int64_t tmp;
+		LARGE_INTEGER tmp;
 		QueryPerformanceCounter(&tmp);
-		tscstart = tmp;
+		tscstart = tmp.QuadPart;
 		gettimeofday(&tvstart,NULL);
 		usleep(100000);
 		QueryPerformanceCounter(&tmp);
-		tscend = tmp;
+		tscend = tmp.QuadPart;
 		gettimeofday(&tvend,NULL);
 		usec = 1000000 * (tvend.tv_sec - tvstart.tv_sec) + (tvend.tv_usec - tvstart.tv_usec);
 		_cpufreq = (tscend - tscstart) / usec;
 	}
-	*frequence = _cpufreq;
+	frequence->QuadPart = _cpufreq;
 	return !!_cpufreq;
 }
 
 #define CPUINFO "/proc/cpuinfo"
-static inline bool QueryPerformanceFrequency(int64_t *frequence)
+static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 {
 #if defined(__linux__)  /* /proc/cpuinfo on linux */
 	if (!_cpufreq) {
@@ -299,7 +299,7 @@ static inline bool QueryPerformanceFrequency(int64_t *frequence)
 			if (r == 1) {
 				fclose(f);
 				_cpufreq = (int64_t)atoi(tmp);
-				*frequence = _cpufreq;
+				frequence->QuadPart = _cpufreq;
 				return !!_cpufreq;
 			}
 		}
