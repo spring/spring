@@ -122,9 +122,9 @@ CGame::CGame(bool server,std::string mapname)
 	timeLeft=0;
 
 	oldframenum=0;
-//	if(server)
-//		gs->players[0]->readyToStart=true;
-//	gs->players[0]->active=true;
+	if(server)
+		gs->players[0]->readyToStart=true;
+	gs->players[0]->active=true;
 
 	if(net->playbackDemo)
 		gu->myPlayerNum=MAX_PLAYERS-1;
