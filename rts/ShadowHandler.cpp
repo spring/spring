@@ -228,6 +228,7 @@ void CShadowHandler::CreateShadows(void)
 
 void CShadowHandler::DrawShadowTex(void)
 {
+#ifndef NO_SHADOWS
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glColor3f(1,1,1);
@@ -261,6 +262,7 @@ void CShadowHandler::DrawShadowTex(void)
 			"ERROR",MB_OK|MB_ICONEXCLAMATION);
 		exit(-1);
 	}/**/
+#endif
 }
 extern GLuint		PixelFormat;
 void CShadowHandler::CreatePBuffer(void)
