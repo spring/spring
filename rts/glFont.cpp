@@ -19,7 +19,7 @@ using namespace std;
 CglFont* font;
 
 #define DRAW_SIZE 1
-#define FONTSIZE 20
+#define FONTSIZE 24
 #define FONTFILE "Vera.ttf"
 
 /*
