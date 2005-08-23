@@ -29,18 +29,8 @@ CFileHandler::CFileHandler(std::string filename)
 
 void CFileHandler::Init(const char* filename)
 {
-	fs::path fn;
-	std::string p;
-	try {
-		fn = fs::path(filename);
-		if (fs::exists(fn))
-			p = fn.native_file_string();
-		else
-			p = filename;
-	} catch (fs::filesystem_error) {
-		p = filename;
-	}
-	ifs=new std::ifstream(p.c_str(), ios::in|ios::binary);
+	fs::path fn(filename,fs::native);
+	ifs=new std::ifstream(fn.native_file_string().c_str(), ios::in|ios::binary);
 	if (ifs->is_open()) {
 		ifs->seekg(0, ios_base::end);
 		filesize = ifs->tellg();
@@ -139,11 +129,8 @@ std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
 		patternPath.clear();
 	std::string filter=pattern;
 	filter.erase(0,patternPath.length());
-	try {
-		fs::path fn(patternPath);
-		found = find_files(fn,filter);
-	} catch (fs::filesystem_error) {
-	}
+	fs::path fn(patternPath,fs::native);
+	found = find_files(fn,filter);
 	std::vector<std::string> foundstrings;
 	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
 		foundstrings.push_back(it->string());
