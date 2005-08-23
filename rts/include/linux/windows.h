@@ -48,13 +48,9 @@ typedef void *HANDLE;
 #define FALSE false
 #endif
 typedef void *LPVOID;
-BOOL WINAPI DosDateTimeToFileTime(WORD,WORD,FILETIME *);
-BOOL WINAPI FileTimeToDosDateTime(const FILETIME *,WORD *, WORD *);
-BOOL WINAPI FileTimeToLocalFileTime(const FILETIME *,FILETIME *);
-BOOL WINAPI FileTimeToSystemTime(const FILETIME *,LPSYSTEMTIME);
-BOOL WINAPI LocalFileTimeToFileTime(const FILETIME *,FILETIME *);
-VOID WINAPI GetSystemTime(LPSYSTEMTIME);
-BOOL WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
+typedef char *LPSTR;
+typedef int64_t INT64;
+typedef uint64_t UINT64;
 
 #endif //EMULE_WINTYPES
 
@@ -207,7 +203,7 @@ static inline unsigned int _clearfp(void)
  * Performance testing
  */
 #include <sys/time.h>
-static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
+static inline bool QueryPerformanceCounter(int64_t *count)
 {
 #if defined(__GNUC__) && ( defined(__i386__) || defined(__x86_64__) )
 	/*
@@ -216,7 +212,7 @@ static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 	 */
 	int64_t val;
 	__asm__ __volatile__("rdtsc" : "=A" (val));
-	count->QuadPart = val;
+	*count = val;
 #elif defined(__GNUC__) && defined(__ia64__)
 	/*
 	 * Reading from the itc is only available on
@@ -224,14 +220,14 @@ static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 	 */
 	int64_t val;
 	__asm__ __volatile__("mov %0=ar.itc" : "=r" (val));
-	count->QuadPart = val;
+	*count = val;
 #else
 	/*
 	 * Have to go generic
 	 */
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
-	count->QuadPart = (int64_t)tv.tv_usec;
+	*count = (int64_t)tv.tv_usec;
 #endif
 	return true;
 }
@@ -245,29 +241,29 @@ static int64_t _cpufreq;
 /*
  * Generic solution
  */
-static inline bool _freqfallback(LARGE_INTEGER *frequence)
+static inline bool _freqfallback(int64_t *frequence)
 {
 	if (!_cpufreq) {
 		int64_t tscstart,tscend;
 		struct timeval tvstart,tvend;
 		long usec;
-		LARGE_INTEGER tmp;
+		int64_t tmp;
 		QueryPerformanceCounter(&tmp);
-		tscstart = tmp.QuadPart;
+		tscstart = tmp;
 		gettimeofday(&tvstart,NULL);
 		usleep(100000);
 		QueryPerformanceCounter(&tmp);
-		tscend = tmp.QuadPart;
+		tscend = tmp;
 		gettimeofday(&tvend,NULL);
 		usec = 1000000 * (tvend.tv_sec - tvstart.tv_sec) + (tvend.tv_usec - tvstart.tv_usec);
 		_cpufreq = (tscend - tscstart) / usec;
 	}
-	frequence->QuadPart = _cpufreq;
+	*frequence = _cpufreq;
 	return !!_cpufreq;
 }
 
 #define CPUINFO "/proc/cpuinfo"
-static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
+static inline bool QueryPerformanceFrequency(int64_t *frequence)
 {
 #if defined(__linux__)  /* /proc/cpuinfo on linux */
 	if (!_cpufreq) {
@@ -303,7 +299,7 @@ static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 			if (r == 1) {
 				fclose(f);
 				_cpufreq = (int64_t)atoi(tmp);
-				frequence->QuadPart = _cpufreq;
+				*frequence = _cpufreq;
 				return !!_cpufreq;
 			}
 		}
