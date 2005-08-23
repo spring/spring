@@ -75,13 +75,6 @@ do {							\
 #define ShowCursor(a) do{}while(0)
 #endif
 
-#ifdef NO_MUTEXTHREADS
-#define CreateMutex(a,b,c) (0)
-#define ReleaseMutex(a) (0)
-#define	CloseHandle(netMutex) while(0){}
-#define WaitForSingleObject(a,b)  while(0){}
-#endif
-
 #define Sleep(a) sleep(a)
 
 #define _hypot(x,y) hypot(x,y)

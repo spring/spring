@@ -8,6 +8,7 @@
 #include "GameSetup.h"
 #include "ScriptHandler.h"
 #include <stdarg.h>
+#include <boost/bind.hpp>
 
 
 CGameServer* gameServer=0;
@@ -56,20 +57,14 @@ CGameServer::CGameServer(void)
 
 	exeChecksum=game->CreateExeChecksum();
 
-#ifndef NO_MUTEXTHREADS
-	gameServerMutex=CreateMutex(0,false,"SpringGameServerMutex");
-
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
-	thisThread=CreateThread(0,0,GameServerThreadProc,this,0,0);
-#endif
+	boost::thread thread(boost::bind(GameServerThreadProc,this));
 #endif
 }
 
 CGameServer::~CGameServer(void)
 {
-#ifndef NO_MUTEXTHREADS
-	CloseHandle(gameServerMutex);
-#endif
+	delete &gameServerMutex;
 	delete serverNet;
 	serverNet=0;
 }
@@ -453,9 +448,7 @@ bool CGameServer::ServerReadNet()
 
 void CGameServer::StartGame(void)
 {
-#ifndef NO_MUTEXTHREADS
-	WaitForSingleObject(gameServerMutex,INFINITE);
-#endif
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverNet->StopListening();
 
 //	outbuf[0]=NETMSG_RANDSEED;
@@ -487,9 +480,6 @@ void CGameServer::StartGame(void)
 	outbuf[0]=NETMSG_STARTPLAYING;
 	serverNet->SendData(outbuf,1);
 	timeLeft=0;
-#ifndef NO_MUTEXTHREADS
-	ReleaseMutex(gameServerMutex);
-#endif
 }
 
 void CGameServer::CheckForGameEnd(void)
@@ -528,10 +518,8 @@ void CGameServer::CheckForGameEnd(void)
 
 void CGameServer::CreateNewFrame(bool fromServerThread)
 {
-#ifndef NO_MUTEXTHREADS
 	if(!fromServerThread)
-		WaitForSingleObject(gameServerMutex,INFINITE);
-#endif
+		boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverframenum++;
 	outbuf[0]=NETMSG_NEWFRAME;
 	(*((int*)&outbuf[1]))=serverframenum;
@@ -539,10 +527,6 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 		info->AddLine("Server net couldnt send new frame");
 		globalQuit=true;
 	}
-#ifndef NO_MUTEXTHREADS
-	if(!fromServerThread)
-		ReleaseMutex(gameServerMutex);
-#endif
 }
 
 void CGameServer::UpdateLoop(void)
@@ -552,21 +536,14 @@ void CGameServer::UpdateLoop(void)
 		serverNet->Update();
 	}
 	Sleep(100);		//we might crash if game hasnt finished initializing within this time
-#ifndef NO_MUTEXTHREADS
-	SetThreadPriority(thisThread,THREAD_PRIORITY_ABOVE_NORMAL);		//we want the server to continue running smoothly even if the game client is struggling
-#endif
+	//SetThreadPriority(thisThread,THREAD_PRIORITY_ABOVE_NORMAL);		//we want the server to continue running smoothly even if the game client is struggling
 	while(!quitServer)
 	{
-#ifndef NO_MUTEXTHREADS
-		WaitForSingleObject(gameServerMutex,INFINITE);
-#endif
+		boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 		if(!Update()){
 			info->AddLine("Game server experienced an error in update");
 			globalQuit=true;
 		}
-#ifndef NO_MUTEXTHREADS
-		ReleaseMutex(gameServerMutex);
-#endif
 		Sleep(10);
 	}
 	delete this;

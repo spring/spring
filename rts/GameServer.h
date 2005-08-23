@@ -3,6 +3,8 @@
 
 #include <winsock2.h>
 #include <windows.h>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <ctime>
 #include <string>
@@ -38,8 +40,7 @@ public:
 	int syncResponses[MAX_PLAYERS];
 	unsigned int exeChecksum;
 
-	HANDLE gameServerMutex;
-	HANDLE thisThread;
+	mutable boost::mutex gameServerMutex;
 
 	bool quitServer;
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)

@@ -189,6 +189,9 @@ if not conf.CheckCHeader('GL/glut.h'):
 if not conf.CheckCHeader('GL/glew.h'):
 	print ' Cannot find GLEW http://glew.sourceforge.net'
 	Exit(1)
+if not conf.CheckCXXHeader('boost/thread.hpp'):
+	print ' Cannot find Boost threading'
+	Exit(1)
 if not conf.CheckLib('libc'):
 	print "You need libc to compile this program"
 	Exit(1)
@@ -204,6 +207,9 @@ if not conf.CheckLib('jpeg'):
 #if not conf.CheckLib('libboost_filesystem'):
 #	print "You need libboost_filesystem to compile this program"
 #	Exit(1)
+if not conf.CheckLib('boost_thread-mt'):
+	print "You need the Boost thread library for this program"
+	Exit(1)
 env = conf.Finish()
 
 ###################################################
@@ -211,4 +217,4 @@ env = conf.Finish()
 
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
 #env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib','GLU', 'libboost_filesystem'], CPPPATH=common_include_path)
-env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','GLU'], CPPPATH=common_include_path)
+env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','GLU','boost_thread-mt'], CPPPATH=common_include_path)

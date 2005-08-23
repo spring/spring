@@ -17,6 +17,7 @@
 #include <fstream>
 #include <deque>
 #include <map>
+#include <boost/thread/mutex.hpp>
 
 class CFileHandler;
 using namespace std;
@@ -127,7 +128,7 @@ public:
 	Connection connections[MAX_PLAYERS];
 
 
-	HANDLE netMutex;
+	mutable boost::mutex netMutex;
 #ifdef _WIN32
 	SOCKET mySocket;
 #else

@@ -16,6 +16,7 @@
 #include "SyncTracer.h"
 #include "RegHandler.h"
 #include "InfoConsole.h"
+#include <boost/thread/mutex.hpp>
 
 //#include "mmgr.h"
 
@@ -24,7 +25,7 @@
 //////////////////////////////////////////////////////////////////////
 CInfoConsole* info=0;
 static ofstream* filelog;
-static HANDLE infoConsoleMutex;
+static boost::mutex infoConsoleMutex;
 
 CInfoConsole::CInfoConsole()
 : lastMsgPos(0,0,0)
@@ -40,22 +41,17 @@ CInfoConsole::CInfoConsole()
 	numLines = 7;
 
 	filelog=new ofstream("infolog.txt", ios::out);
-#ifndef NO_MUTEXTHREADS
-	infoConsoleMutex=CreateMutex(0,false,"SpringInfoConsoleMutex");
-#endif
 }
 
 CInfoConsole::~CInfoConsole()
 {
 	delete filelog;
-#ifndef NO_MUTEXTHREADS
-	CloseHandle(infoConsoleMutex);
-#endif
+	delete &infoConsoleMutex;
 }
 
 void CInfoConsole::Draw()
 {
-	WaitForSingleObject(infoConsoleMutex,INFINITE);
+	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(0,0,0.5f,0.5f);
@@ -79,12 +75,11 @@ void CInfoConsole::Draw()
 		glTranslatef(0,-1.2f,0);
 	}
 	glPopMatrix();
-	ReleaseMutex(infoConsoleMutex);
 }
 
 void CInfoConsole::Update()
 {
-	WaitForSingleObject(infoConsoleMutex,INFINITE);
+	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	if(lastTime>0)
 		lastTime--;
 	if(!data.empty()){
@@ -92,34 +87,31 @@ void CInfoConsole::Update()
 		if(data[0].time<=0)
 			data.pop_front();
 	}
-	ReleaseMutex(infoConsoleMutex);
 }
 
 #ifndef NEW_GUI
 
 CInfoConsole& CInfoConsole::operator<< (int i)
 {
-	WaitForSingleObject(infoConsoleMutex,INFINITE);
+	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	char t[50];
 	sprintf(t,"%d ",i);
 	tempstring+=t;
-	ReleaseMutex(infoConsoleMutex);
 	return *this;
 }
 
 CInfoConsole& CInfoConsole::operator<< (float f)
 {
-	WaitForSingleObject(infoConsoleMutex,INFINITE);
+	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	char t[50];
 	sprintf(t,"%f ",f);
 	tempstring+=t;
-	ReleaseMutex(infoConsoleMutex);
 	return *this;
 }
 
 CInfoConsole& CInfoConsole::operator<< (const char* c)
 {
-	WaitForSingleObject(infoConsoleMutex,INFINITE);
+	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	for(unsigned int a=0;a<strlen(c);a++){
 		if(c[a]!='\n'){
 			tempstring+=c[a];
@@ -129,7 +121,6 @@ CInfoConsole& CInfoConsole::operator<< (const char* c)
 			break;
 		}
 	}
-	ReleaseMutex(infoConsoleMutex);
 	return *this;
 }
  
@@ -137,9 +128,7 @@ void CInfoConsole::AddLine(const char *fmt, ...)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-#ifndef NO_MUTEXTHREADS
-	WaitForSingleObject(infoConsoleMutex,INFINITE);
-#endif
+	boost::mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	char text[500];
 	va_list		ap;										// Pointer To List Of Arguments
 
@@ -171,9 +160,6 @@ void CInfoConsole::AddLine(const char *fmt, ...)
 	if(strlen(text)>42){
 		AddLine("%s",&text[42]);
 	}
-#ifndef NO_MUTEXTHREADS
-	ReleaseMutex(infoConsoleMutex);
-#endif
 	POP_CODE_MODE;
 }
 

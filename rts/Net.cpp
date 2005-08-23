@@ -76,8 +76,6 @@ CNet::CNet()
 	recordDemo=0;
 	playbackDemo=0;
 	mySocket=0;
-
-	netMutex=CreateMutex(0,false,"SpringNetLocalBufferMutex");
 }
 
 CNet::~CNet()
@@ -112,7 +110,7 @@ CNet::~CNet()
 			delete (pi2->second);
 	}
 #endif //NO_NET
-	CloseHandle(netMutex);
+	delete &netMutex;
 }
 
 int CNet::InitServer(int portnum)
@@ -279,16 +277,14 @@ int CNet::SendData(unsigned char *data, int length,int connection)
 	Connection* c=&connections[connection];
 	if(c->active){
 		if(c->localConnection){
-			WaitForSingleObject(netMutex,INFINITE);
+			boost::mutex::scoped_lock scoped_lock(netMutex);
 			Connection* lc=c->localConnection;
 			if(lc->readyLength+length>=NETWORK_BUFFER_SIZE){
 				info->AddLine("Overflow when sending to local connection %i %i %i %i %i",imServer,connection,lc->readyLength,length,NETWORK_BUFFER_SIZE);
-				ReleaseMutex(netMutex);
 				return 0;
 			}
 			memcpy(&lc->readyData[lc->readyLength],data,length);
 			lc->readyLength+=length;
-			ReleaseMutex(netMutex);
 		} else {
 			if(c->outgoingLength+length>=NETWORK_BUFFER_SIZE){
 				info->AddLine("Overflow when sending to remote connection %i %i %i %i %i",imServer,connection,c->outgoingLength,length,NETWORK_BUFFER_SIZE);
@@ -305,22 +301,17 @@ int CNet::GetData(unsigned char *buf, int length,int conNum)
 {
 	if(connections[conNum].active){
 		if(connections[conNum].localConnection)
-			WaitForSingleObject(netMutex,INFINITE);
+			boost::mutex::scoped_lock scoped_lock(netMutex);
 
 		int ret=connections[conNum].readyLength;
-		if(length<=ret){
-			if(connections[conNum].localConnection)
-				ReleaseMutex(netMutex);
+		if(length<=ret)
 			return 0;
-		}
 		memcpy(buf,connections[conNum].readyData,connections[conNum].readyLength);
 		connections[conNum].readyLength=0;
 
 		if(recordDemo && ret>0)
 			SaveToDemo(buf,ret);
 
-		if(connections[conNum].localConnection)
-			ReleaseMutex(netMutex);
 		return ret;
 	} else {
 		return -1;
