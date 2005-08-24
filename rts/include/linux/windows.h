@@ -170,26 +170,26 @@ typedef struct paletteentry_s PALETTEENTRY;
 
 static inline unsigned int _control87(unsigned int newflags, unsigned int mask)
 {
-	fenv_t *cur;
-	fegetenv(cur);
+	fenv_t cur;
+	fegetenv(&cur);
 	if (mask) {
-		cur->__control_word = ((cur->__control_word & ~mask)|(newflags & mask));
-		fesetenv(cur);
+		cur.__control_word = ((cur.__control_word & ~mask)|(newflags & mask));
+		fesetenv(&cur);
 	}
-	return (unsigned int)(cur->__control_word);
+	return (unsigned int)(cur.__control_word);
 }
 
 static inline unsigned int _clearfp(void)
 {
-	fenv_t *cur;
-	fegetenv(cur);
+	fenv_t cur;
+	fegetenv(&cur);
 #if 0	/* Windows control word default */
 	cur.__control_word &= ~FE_ALL_EXCEPT;
 	fesetenv(cur);
 #else	/* Posix control word default */
 	fesetenv(FE_DFL_ENV);
 #endif
-	return (unsigned int)(cur->__status_word);
+	return (unsigned int)(cur.__status_word);
 }
 
 /*
