@@ -74,8 +74,8 @@ void GUIinfoSelection::PrivateDraw()
 		for(ui=grouphandler->groups[selectedUnits.selectedGroup]->units.begin();ui!=grouphandler->groups[selectedUnits.selectedGroup]->units.end();++ui){
 			i++;
 			lstUnits[(*ui)->unitDef].number = lstUnits[(*ui)->unitDef].number+1;
-			lstUnits[(*ui)->unitDef].health = lstUnits[(*ui)->unitDef].health+(*ui)->health;
-			lstUnits[(*ui)->unitDef].maxHealth = lstUnits[(*ui)->unitDef].maxHealth+(*ui)->maxHealth;
+			lstUnits[(*ui)->unitDef].health = (int)(lstUnits[(*ui)->unitDef].health+(*ui)->health);
+			lstUnits[(*ui)->unitDef].maxHealth = (int)(lstUnits[(*ui)->unitDef].maxHealth+(*ui)->maxHealth);
 			lstUnits[(*ui)->unitDef].id = (*ui)->unitDef->id;
 			if ((*ui)->stockpileWeapon) {
 				lstUnits[(*ui)->unitDef].numStockpiled = lstUnits[(*ui)->unitDef].numStockpiled + (*ui)->stockpileWeapon->numStockpiled;
@@ -86,8 +86,8 @@ void GUIinfoSelection::PrivateDraw()
 		for(ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui){
 			i++;
 			lstUnits[(*ui)->unitDef].number = lstUnits[(*ui)->unitDef].number+1;
-			lstUnits[(*ui)->unitDef].health = lstUnits[(*ui)->unitDef].health+(*ui)->health;
-			lstUnits[(*ui)->unitDef].maxHealth = lstUnits[(*ui)->unitDef].maxHealth+(*ui)->maxHealth;
+			lstUnits[(*ui)->unitDef].health = (int)(lstUnits[(*ui)->unitDef].health+(*ui)->health);
+			lstUnits[(*ui)->unitDef].maxHealth = (int)(lstUnits[(*ui)->unitDef].maxHealth+(*ui)->maxHealth);
 			lstUnits[(*ui)->unitDef].id = (*ui)->unitDef->id;
 			if ((*ui)->stockpileWeapon) {
 				lstUnits[(*ui)->unitDef].numStockpiled = lstUnits[(*ui)->unitDef].numStockpiled + (*ui)->stockpileWeapon->numStockpiled;
