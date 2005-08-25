@@ -535,14 +535,18 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 #else
 
 #warning complete glut input handling
-#warning add mouse wheel handling
+
+#define UPDATE_MODIFIERS()						\
+do {									\
+	int __mod = glutGetModifiers();					\
+	keys[VK_SHIFT] = (__mod&GLUT_ACTIVE_SHIFT==GLUT_ACTIVE_SHIFT);	\
+	keys[VK_CONTROL] = (__mod&GLUT_ACTIVE_CTRL==GLUT_ACTIVE_CTRL);	\
+	keys[VK_MENU] = (__mod&GLUT_ACTIVE_ALT==GLUT_ACTIVE_ALT);	\
+} while (0)
 
 void processNormalKeys(unsigned char key, int x, int y) {
+  UPDATE_MODIFIERS();
   keys[key]=true;
-  int mod = glutGetModifiers();
-  keys[VK_SHIFT] = (mod&GLUT_ACTIVE_SHIFT==GLUT_ACTIVE_SHIFT);
-  keys[VK_CONTROL] = (mod&GLUT_ACTIVE_CTRL==GLUT_ACTIVE_CTRL);
-  keys[VK_MENU] = (mod&GLUT_ACTIVE_ALT==GLUT_ACTIVE_ALT);
   if(activeController){
     activeController->KeyPressed(key,1);
   }
@@ -560,12 +564,9 @@ void processNormalKeys(unsigned char key, int x, int y) {
 }
 
 void processNormalKeysUP(unsigned char key, int x, int y) {
-  if(key==27)
+  UPDATE_MODIFIERS();
+  if(key==27 && keys[VK_SHIFT])
     exit(0);
-  int mod = glutGetModifiers();
-  keys[VK_SHIFT] = (mod&GLUT_ACTIVE_SHIFT==GLUT_ACTIVE_SHIFT);
-  keys[VK_CONTROL] = (mod&GLUT_ACTIVE_CTRL==GLUT_ACTIVE_CTRL);
-  keys[VK_MENU] = (mod&GLUT_ACTIVE_ALT==GLUT_ACTIVE_ALT);
   if(activeController){
     activeController->KeyReleased(key);
   }
@@ -574,6 +575,7 @@ void processNormalKeysUP(unsigned char key, int x, int y) {
 
 
 void processSpecialKeys(int key, int x, int y) {
+  UPDATE_MODIFIERS();
 	int k;
   switch (key) {
 	  case GLUT_KEY_F1:
