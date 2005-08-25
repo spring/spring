@@ -4,11 +4,12 @@
 //#define SYNCIFY
 
 #ifdef SYNCIFY
-
+#ifdef _WIN32
 	void	*operator new(size_t reportedSize);
 	void	*operator new[](size_t reportedSize);
 	void	operator delete(void *reportedAddress);
 	void	operator delete[](void *reportedAddress);
+#endif
 
 	namespace Syncify {
 		void InitSyncify();
