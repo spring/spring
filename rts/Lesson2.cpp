@@ -109,10 +109,30 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 }
 
 #ifdef USE_GLUT
+static void TerminateProgram()
+{
+	delete gameSetup;
+	delete pregame;
+	//delete game;		deadlocks
+	delete font;
+#ifdef _WIN32
+	RegHandler::Deallocate();
+#else
+	dotfileHandler::Deallocate();
+#endif
+	UnloadExtensions();
+	glutDestroyWindow(windows);
+	delete gs;
+	delete gu;
+	exit(0);
+}
+
 inline void Draw()	
 {
   DrawGLScene();
   glutSwapBuffers();
+  if (globalQuit)
+	TerminateProgram();
 }
 #endif
 
@@ -565,8 +585,6 @@ void processNormalKeys(unsigned char key, int x, int y) {
 
 void processNormalKeysUP(unsigned char key, int x, int y) {
   UPDATE_MODIFIERS();
-  if(key==27 && keys[VK_SHIFT])
-    exit(0);
   if(activeController){
     activeController->KeyReleased(key);
   }
