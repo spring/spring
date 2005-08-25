@@ -159,7 +159,11 @@ START_TIME_PROFILE
 		}
 	}
 
+#ifdef __GNUG__
+	__gnu_cxx::hash_set<int>::iterator fi=updateFeatures.begin();
+#else
 	std::set<int>::iterator fi=updateFeatures.begin();
+#endif
 	while(fi!= updateFeatures.end()){
 		CFeature* feature=features[*fi];
 		

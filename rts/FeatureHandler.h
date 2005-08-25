@@ -9,6 +9,9 @@
 #include <deque>
 #include <set>
 #include <vector>
+#ifdef __GNUG__
+#include <ext/hash_set>
+#endif
 
 struct S3DOModel;
 class CFeature;
@@ -88,7 +91,11 @@ public:
 	std::list<int> freeIDs;
 
 	std::list<int> toBeRemoved;
+#ifdef __GNUG__
+	__gnu_cxx::hash_set<int> updateFeatures;
+#else
 	std::set<int> updateFeatures;
+#endif
 
 	struct DrawQuad {
 		std::set<CFeature*> staticFeatures;
