@@ -838,7 +838,7 @@ bool CGame::Update()
 	if(gameServer)
 		gameServer->gameClientUpdated=true;
 
-#ifdef SYNCIFY		//syncify doesnt support multithreading ...
+#if defined(SYNCIFY) || 1		//syncify doesnt support multithreading ...
 	gameServer->Update();
 #endif
 
@@ -859,8 +859,6 @@ bool CGame::Update()
 		userWriting=false;
 		gameServer->StartGame();
 	}
-	if (playing)
-		SimFrame();
 
 	return true;
 }
