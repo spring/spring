@@ -17,6 +17,55 @@
 //////////////////////////////////////////////////////////////////////
 #define BITMAP_MAGIC 0x4d42
 
+#define READ_BMFH(bmfh,src)				\
+do {							\
+	unsigned short __tmpw;				\
+	unsigned int __tmpdw;				\
+	unsigned short __ssize = sizeof(unsigned short);\
+	unsigned short __isize = sizeof(unsigned int);	\
+	(src).Read(&__tmpw,__ssize);			\
+	(bmfh).bfType = swabword(__tmpw);		\
+	(src).Read(&__tmpdw,__isize);			\
+	(bmfh).bfSize = swabdword(__tmpdw);		\
+	(src).Read(&__tmpw,__ssize);			\
+	(bmfh).bfReserved1 = swabword(__tmpw);		\
+	(src).Read(&__tmpw,__ssize);			\
+	(bmfh).bfReserved2 = swabword(__tmpw);		\
+	(src).Read(&__tmpdw,__isize);			\
+	(bmfh).bfOffBits = swabdword(__tmpdw);		\
+} while (0)
+
+#define READ_BMIH(bmih,src)				\
+do {							\
+	unsigned short __tmpw;				\
+	unsigned int __tmpdw;				\
+	unsigned short __uisize = sizeof(unsigned int);	\
+	unsigned short __isize = sizeof(int);		\
+	unsigned short __ssize = sizeof(unsigned short);\
+	(src).Read(&__tmpdw,__uisize);			\
+	(bmih).biSize = swabdword(__tmpdw);		\
+	(src).Read(&__tmpdw,__isize);			\
+	(bmih).biWidth = swabdword(__tmpdw);		\
+	(src).Read(&__tmpdw,__isize);			\
+	(bmih).biHeight = swabdword(__tmpdw);		\
+	(src).Read(&__tmpw,__ssize);			\
+	(bmih).biPlanes = swabword(__tmpw);		\
+	(src).Read(&__tmpw,__ssize);			\
+	(bmih).biBitCount = swabword(__tmpw);		\
+	(src).Read(&__tmpdw,__uisize);			\
+	(bmih).biCompression = swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,__uisize);			\
+	(bmih).biSizeImage = swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,__isize);			\
+	(bmih).biXPelsPerMeter = swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,__isize);			\
+	(bmih).biYPelsPerMeter = swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,__uisize);			\
+	(bmih).biClrUsed = swabdword(__tmpdw);		\
+	(src).Read(&__tmpdw,__uisize);			\
+	(bmih).biClrImportant = swabdword(__tmpdw);	\
+} while (0)
+
 struct pcx_header
 {
 	char manufacturer;
@@ -144,40 +193,8 @@ void CBitmap::LoadBMP(string filename)
 	}
 
 	// Load bitmap fileheader & infoheader
-	unsigned short tmpw;
-	unsigned int tmpdw;
-	bmpfile.Read(&tmpw,sizeof(unsigned short));
-	bmfh.bfType = swabword(tmpw);
-	bmpfile.Read(&tmpdw,sizeof(unsigned int));
-	bmfh.bfSize = swabdword(tmpdw);
-	bmpfile.Read(&tmpw,sizeof(unsigned short));
-	bmfh.bfReserved1 = swabword(tmpw);
-	bmpfile.Read(&tmpw,sizeof(unsigned short));
-	bmfh.bfReserved2 = swabword(tmpw);
-	bmpfile.Read(&tmpdw,sizeof(unsigned int));
-	bmfh.bfOffBits = swabword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(unsigned int));
-	bmih.biSize = swabdword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(int));
-	bmih.biWidth = swabdword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(int));
-	bmih.biHeight = swabdword(tmpdw);
-	bmpfile.Read(&tmpw,sizeof(unsigned short));
-	bmih.biPlanes = swabword(tmpw);
-	bmpfile.Read(&tmpw,sizeof(unsigned short));
-	bmih.biBitCount = swabword(tmpw);
-	bmpfile.Read(&tmpdw,sizeof(unsigned int));
-	bmih.biCompression = swabdword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(unsigned int));
-	bmih.biSizeImage = swabdword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(int));
-	bmih.biXPelsPerMeter = swabdword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(int));
-	bmih.biYPelsPerMeter = swabdword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(unsigned int));
-	bmih.biClrUsed = swabdword(tmpdw);
-	bmpfile.Read(&tmpdw,sizeof(unsigned int));
-	bmih.biClrImportant = swabdword(tmpdw);
+	READ_BMFH(bmfh,bmpfile);
+	READ_BMIH(bmih,bmpfile);
 
 	// Check filetype signature
 	if (bmfh.bfType!=BITMAP_MAGIC){
