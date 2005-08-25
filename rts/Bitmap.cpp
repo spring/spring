@@ -9,6 +9,7 @@
 #include <fstream>
 #include <jpeglib.h>
 #include "FileHandler.h"
+#include <IL/il.h>
 #include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
@@ -66,30 +67,13 @@ do {							\
 	(bmih).biClrImportant = swabdword(__tmpdw);	\
 } while (0)
 
-struct pcx_header
-{
-	char manufacturer;
-	char version;
-	char encoding;
-	char bits_per_pixel;
-	short x, y;
-	short width, height;
-	short horz_res;
-	short vert_res;
-	char ega_palette[48];
-	char reserved;
-	char num_color_planes;
-	short bytes_per_line;
-	short palette_type;
-	char padding[58];
-};
-
 CBitmap::CBitmap()
 : xsize(1),
 	ysize(1)
 {
 	mem=new unsigned char[4];
 	ddsimage = 0;
+	type = BitmapTypeStandar;
 }
 
 CBitmap::~CBitmap()
@@ -107,12 +91,14 @@ CBitmap::CBitmap(const CBitmap& old)
 	ysize=old.ysize;
 	mem=new unsigned char[xsize*ysize*4];
 	memcpy(mem,old.mem,xsize*ysize*4);
+	type = BitmapTypeStandar;
 }
 
 CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
 : xsize(xsize),
 	ysize(ysize)
 {
+	type = BitmapTypeStandar;
 	ddsimage = 0;
 	mem=new unsigned char[xsize*ysize*4];	
 	memcpy(mem,data,xsize*ysize*4);
@@ -123,6 +109,7 @@ CBitmap::CBitmap(string filename)
 	xsize(0),
 	ysize(0)
 {
+	type = BitmapTypeStandar;
 	ddsimage = 0;
 	Load(filename);
 }
@@ -137,7 +124,7 @@ void CBitmap::operator=(const CBitmap& bm)
 	memcpy(mem,bm.mem,xsize*ysize*4);
 }
 
-void CBitmap::Load(string filename)
+void CBitmap::Load(string filename, unsigned char defaultAlpha)
 {
 	if(mem!=0)
 	{
@@ -145,26 +132,66 @@ void CBitmap::Load(string filename)
 		mem = NULL;
 	}
 
-	if(filename.find(".jpg")!=string::npos)
-	{
-		LoadJPG(filename);
-		type = BitmapTypeStandar;
-	}
-	else if(filename.find(".pcx")!=string::npos)
-	{
-		LoadPCX(filename);
-		type = BitmapTypeStandar;
-	}
-	else if(filename.find(".dds")!=string::npos)
-	{
+	if(filename.find(".dds")!=string::npos){
 		ddsimage = new nv_dds::CDDSImage();
 		ddsimage->load(filename);
 		type = BitmapTypeDDS;
+		return;
 	}
-	else
+	type = BitmapTypeStandar;
+
+	ilInit();
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
+
+	if(mem != NULL) delete [] mem;
+
+	CFileHandler file(filename);
+	if(file.FileExists() == false)
 	{
-		LoadBMP(filename);
-		type = BitmapTypeStandar;
+		xsize = 1;
+		ysize = 1;
+		mem=new unsigned char[4];
+		memset(mem, 0, 4);
+		return;
+	}
+
+	unsigned char *buffer = new unsigned char[file.FileSize()];
+	file.Read(buffer, file.FileSize());
+
+	ILuint ImageName = 0;
+	ilGenImages(1, &ImageName);
+	ilBindImage(ImageName);
+
+	const bool success = ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+	delete [] buffer;
+
+	if(success == false)
+	{
+		xsize = 1;
+		ysize = 1;
+		mem=new unsigned char[4];
+		memset(mem, 0, 4);
+		return;   
+	}
+
+	bool noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
+	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+	xsize = ilGetInteger(IL_IMAGE_WIDTH);
+	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
+
+	mem = new unsigned char[xsize * ysize * 4];
+//	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
+	memcpy(mem, (unsigned char *) ilGetData() , xsize * ysize * 4);
+
+	ilDeleteImages(1, &ImageName); 
+
+	if(noAlpha){
+		for(int y=0;y<ysize;++y){
+			for(int x=0;x<xsize;++x){
+				mem[(y*xsize+x)*4+3]=defaultAlpha;
+			}
+		}
 	}
 }
 
@@ -175,273 +202,6 @@ void CBitmap::Save(string filename)
 		SaveJPG(filename);
 	else
 		SaveBMP(filename);
-}
-
-void CBitmap::LoadBMP(string filename)
-{
-	BITMAPFILEHEADER bmfh;
-	BITMAPINFOHEADER bmih;
-
-	// Open file.
-	CFileHandler bmpfile(filename);
-	if (! bmpfile.FileExists()){
-		MessageBox(0, "Unable to load BMP File", filename.c_str(), MB_OK);
-		xsize=1;
-		ysize=1;
-		mem=new unsigned char[xsize*ysize*4];
-		return;
-	}
-
-	// Load bitmap fileheader & infoheader
-	READ_BMFH(bmfh,bmpfile);
-	READ_BMIH(bmih,bmpfile);
-
-	// Check filetype signature
-	if (bmfh.bfType!=BITMAP_MAGIC){
-		MessageBox(0, "Unable to load BMP File", filename.c_str(), MB_OK);
-		xsize=1;
-		ysize=1;
-		mem=new unsigned char[xsize*ysize*4];
-		return;		
-	}
-
-	xsize=bmih.biWidth;
-	ysize= (bmih.biHeight>0) ? bmih.biHeight : -bmih.biHeight; // absoulte value
-	mem=new unsigned char[xsize*ysize*4];
-
-	int BytesPerRow = xsize * bmih.biBitCount / 8;
-	BytesPerRow += (4-BytesPerRow%4) % 4;	// int alignment
-
-	int rowStart=0;
-	unsigned char* row=new unsigned char[BytesPerRow];
-
-	if(bmih.biBitCount==24){
-		for(int y=0;y<ysize;++y){
-			rowStart=(ysize-1-y)*BytesPerRow;
-			bmpfile.Seek(bmfh.bfOffBits+rowStart);
-			bmpfile.Read(row,BytesPerRow);
-			for(int x=0;x<xsize;++x){
-				mem[(y*xsize+x)*4+0]=row[x*3+2];
-				mem[(y*xsize+x)*4+1]=row[x*3+1];
-				mem[(y*xsize+x)*4+2]=row[x*3+0];
-				mem[(y*xsize+x)*4+3]=255;
-			}
-		}
-	} else {
-		unsigned char* pal=new unsigned char[(1 << bmih.biBitCount)*4];
-		bmpfile.Read(pal,(1 << bmih.biBitCount)*4);
-
-		for(int y=0;y<ysize;++y){
-			rowStart=(ysize-1-y)*BytesPerRow;
-			bmpfile.Seek(bmfh.bfOffBits+rowStart);
-			bmpfile.Read(row,BytesPerRow);
-			for(int x=0;x<xsize;++x){
-				int col=row[x];	//assume 8bit
-				mem[(y*xsize+x)*4+0]=pal[col*4+2];
-				mem[(y*xsize+x)*4+1]=pal[col*4+1];
-				mem[(y*xsize+x)*4+2]=pal[col*4+0];
-				mem[(y*xsize+x)*4+3]=255;
-			}
-		}
-
-		delete[] pal;
-	}
-
-	delete[] row;
-}
-
-
-//these global functions are helper to load jpegs from the virtual file system instead of standard files
-static void* JpegBufferMem;
-static int JpegBufferLength;
-
-static void InitSource (j_decompress_ptr cinfo)
-{
-#ifndef linux
-  cinfo->src->start_of_file = TRUE;
-#else
-#warning cinfo->src->start_of_file = TRUE disabled, should be OK without
-#endif
-}
-
-static boolean FillInputBuffer (j_decompress_ptr cinfo)
-{
-	cinfo->src->bytes_in_buffer=JpegBufferLength;
-	cinfo->src->next_input_byte=(JOCTET*)JpegBufferMem;
-
-	return true;
-}
-
-static void SkipInputData (j_decompress_ptr cinfo, long num_bytes)
-{
-//	MessageBox(0,"error skipping in ground jpeg","",0);
-	cinfo->src->next_input_byte += (size_t) num_bytes;
-	cinfo->src->bytes_in_buffer -= (size_t) num_bytes;
-	//	exit(0);
-}
-
-static void TermSource (j_decompress_ptr cinfo)
-{
-}
-
-static boolean ResyncToRestart(j_decompress_ptr cinfo, int desired)
-{
-	MessageBox(0,"resync to restart","unsupported jpg function",0);
-	return true;
-}
-
-static bool firstJpgLoad=true;
-void CBitmap::LoadJPG(string filename)
-{
-	CFileHandler file(filename);
-	if(!file.FileExists()) {
-		// Display an error message saying the file was not found, then return NULL
-		MessageBox(0, "Unable to load JPG File", filename.c_str(), MB_OK);
-		xsize=1;
-		ysize=1;
-		mem=new unsigned char[xsize*ysize*4];
-		return;
-	}
-
-	static struct jpeg_decompress_struct cinfo;
-	static jpeg_error_mgr jerr;
-
-//	MessageBox(0, "Load jpg1", filename.c_str(), MB_OK);
-
-	if(firstJpgLoad){
-		firstJpgLoad=false;
-		cinfo.err = jpeg_std_error(&jerr);
-		jpeg_create_decompress(&cinfo);
-		jpeg_stdio_src(&cinfo, (FILE*)1);
-
-		struct jpeg_source_mgr* memsrc=cinfo.src;
-		memsrc->init_source = InitSource;
-		memsrc->fill_input_buffer = FillInputBuffer;
-		memsrc->skip_input_data = SkipInputData;
-		memsrc->resync_to_restart = ResyncToRestart; 
-		memsrc->term_source = TermSource;
-	}
-	struct jpeg_source_mgr* memsrc=cinfo.src;
-	memsrc->bytes_in_buffer=0;
-
-	JpegBufferLength=file.FileSize();
-	JpegBufferMem=new unsigned char[JpegBufferLength];
-	file.Read(JpegBufferMem,JpegBufferLength);
-
-	jpeg_read_header(&cinfo, TRUE);
-	jpeg_start_decompress(&cinfo);
-
-	int rowSpan = cinfo.image_width * cinfo.num_components;
-	xsize = cinfo.image_width;
-	ysize = cinfo.image_height;
-
-	unsigned char* tempLine=new unsigned char[rowSpan];
-	mem=new unsigned char[xsize*ysize*4];
-	
-	for(int y=0;y<ysize;++y){
-		jpeg_read_scanlines(&cinfo, &tempLine, 1);
-		for(int x=0;x<xsize;++x){
-			mem[(y*xsize+x)*4+0]=tempLine[x*3];
-			mem[(y*xsize+x)*4+1]=tempLine[x*3+1];
-			mem[(y*xsize+x)*4+2]=tempLine[x*3+2];
-			mem[(y*xsize+x)*4+3]=255;
-		}
-	}
-
-	delete[] tempLine;
-	jpeg_finish_decompress(&cinfo);
-//	jpeg_destroy_decompress(&cinfo);
-}
-
-void CBitmap::LoadPCX(string filename)
-{
-	short num_bytes, i;
-	long count;
-	BYTE data;
-	DWORD bw = 0;
-
-	pcx_header header;
-	long lImageSize;
-	BYTE *lpBuffer;
-
-	//HANDLE file = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	CFileHandler file(filename);
-	if(!file.FileExists())
-	{
-		//MessageBox(0, ("Unable to load PCX File " + filename).c_str(), "Error", MB_OK);
-		mem = NULL;
-		return;
-	}
-
-	file.Read(&header, sizeof(header));
-
-	if(header.num_color_planes != 1)
-	{
-		MessageBox(0, ("Unsuported PCX format: " + filename).c_str(), "Error", MB_OK);
-		return;
-	}
-
-	long lFileSize = file.FileSize() - sizeof(header);
-
-	long nWidth = header.width + 1;
-	long nHeight = header.height + 1;
-	long lSize = (long)nWidth * nHeight;
-	lImageSize = lSize;
-
-	BYTE *tmpbuf = new BYTE[lFileSize];
-	BYTE *svtmpbuf = tmpbuf;
-
-	lpBuffer = new BYTE[lSize];
-	if(lpBuffer == NULL || tmpbuf == NULL)
-	{
-		MessageBox(0, ("Read PCX error: " + filename).c_str(), "Error", MB_OK);
-		return;
-	}
-	file.Read(tmpbuf, lFileSize);
-	count = 0;
-	while(count < lSize)
-	{
-		data = *tmpbuf++;
-		if((data >= 192) && (data <= 255))
-		{
-			num_bytes = data - 192;
-			data  = *tmpbuf++;
-			while(num_bytes-- > 0)
-			{
-				lpBuffer[count++] = data;
-			}
-		}
-		else
-		{
-			lpBuffer[count++] = data;
-		}
-	}
-	if(header.num_color_planes == 1)
-	{
-		while(*tmpbuf++ != 0xc);
-		PALETTEENTRY palette[256];
-		for(i = 0; i < 256; i++)
-		{
-
-			palette[i].peRed   = *tmpbuf++;
-			palette[i].peGreen = *tmpbuf++;
-			palette[i].peBlue  = *tmpbuf++;
-			palette[i].peFlags = 0;
-		}
-
-		xsize = nWidth;
-		ysize = nHeight;
-
-		mem=new unsigned char[xsize*ysize*4];
-		for(int a=0;a<xsize*ysize;++a){
-			mem[a*4] = palette[lpBuffer[a]].peRed;
-			mem[a*4+1] = palette[lpBuffer[a]].peGreen;
-			mem[a*4+2] = palette[lpBuffer[a]].peBlue;
-			mem[a*4+3]=255;
-		}
-	}
-	delete[] svtmpbuf;
-	delete[] lpBuffer;
 }
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
@@ -536,7 +296,10 @@ void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char bl
 				}
 			}
 		}
-		aCol.xyz[a]=cCol/255.0f/numCounted;
+		if ( numCounted != 0 )
+		{
+			aCol.xyz[a]=cCol/255.0f/numCounted;
+		}
 	}
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
@@ -545,6 +308,24 @@ void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char bl
 				mem[(y*xsize+x)*4+1]= (unsigned char) (aCol.y*255);
 				mem[(y*xsize+x)*4+2]= (unsigned char) (aCol.z*255);
 				mem[(y*xsize+x)*4+3]=0;
+			}
+		}
+	}
+}
+
+void CBitmap::SetTransparent( unsigned char red, unsigned char green, unsigned char blue )
+{
+	for ( unsigned int y = 0; y < xsize; y++ )
+	{
+		for ( unsigned int x = 0; x < xsize; x++ )
+		{
+			unsigned int index = (y*xsize + x)*4;
+			if ( mem[index+0] == red &&
+				mem[index+1] == green &&
+				mem[index+2] == blue )
+			{
+				// set transparent
+				mem[index+3] = 0;
 			}
 		}
 	}

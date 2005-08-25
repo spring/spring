@@ -224,7 +224,24 @@ float GUIfont::GetWidth(const string& text) const
 {
 	float width=0;
 	for (unsigned char *p=(unsigned char*)text.c_str(); *p; p++)
+	{
+		if ( *p == 0xFF )
+		{
+			for ( char i = 0; i < 3; i++ )
+			{
+				if ( *++p == 0 )
+				{
+					break;
+				}
+			}
+			if ( *p == 0 )
+			{
+				break;
+			}
+			continue;
+		}
 		width += charWidth[*p];
+	}
 	return width;
 }
 

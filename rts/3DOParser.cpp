@@ -309,9 +309,9 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 			char chside = '0' + side;
 			std::transform(texture.begin(), texture.end(), texture.begin(), (int (*)(int))std::tolower);
 			if(teamtex.find(texture) != teamtex.end())
-				sp.texture=texturehandler->GetTexture(texture + "0" + chside + ".BMP",side, false);
+				sp.texture=texturehandler->GetTexture(texture + "0" + chside,side, false);
 			else
-				sp.texture=texturehandler->GetTexture(texture + "00.BMP",side, false);
+				sp.texture=texturehandler->GetTexture(texture + "00",side, false);
 
 			if(sp.texture==0)
 				(*info) << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
@@ -323,6 +323,8 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 		float3 n=-(obj->vertices[sp.vertices[1]].pos-obj->vertices[sp.vertices[0]].pos).cross(obj->vertices[sp.vertices[2]].pos-obj->vertices[sp.vertices[0]].pos);
 		n.Normalize();
 		sp.normal=n;
+		for(int a=0;a<sp.numVertex;++a)
+			sp.normals.push_back(n);
 
 		if(n.dot(float3(0,-1,0))>0.99){			//sometimes there are more than one selection primitive (??)
 			int ignore=true;
@@ -364,15 +366,17 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 
 void C3DOParser::CalcNormals(S3DO *o)
 {
-	std::vector<SVertex>::iterator vi;
-	for(vi=o->vertices.begin();vi!=o->vertices.end();++vi){
-		std::vector<int>::iterator pi;
-		float3 n(0,0,0);
-		for(pi=vi->prims.begin();pi!=vi->prims.end();++pi){
-			n+=o->prims[*pi].normal;
+	for(std::vector<SPrimitive>::iterator ps=o->prims.begin();ps!=o->prims.end();ps++){
+		for(int a=0;a<ps->numVertex;++a){
+			SVertex* vertex=&o->vertices[ps->vertices[a]];
+			float3 vnormal(0,0,0);
+			for(std::vector<int>::iterator pi=vertex->prims.begin();pi!=vertex->prims.end();++pi){
+				if(ps->normal.dot(o->prims[*pi].normal)>0.45)
+					vnormal+=o->prims[*pi].normal;
+			}
+			vnormal.Normalize();
+			ps->normals[a]=vnormal;
 		}
-		n.Normalize();
-		vi->normal=n;
 	}
 }
 
@@ -445,14 +449,14 @@ void C3DOParser::DrawSub(S3DO* o)
 	for(ps=o->prims.begin();ps!=o->prims.end();ps++){
 		CTextureHandler::UnitTexture* tex=ps->texture;
 		if(ps->numVertex==4){
-			va->AddVertexTN(o->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normal);
-			va->AddVertexTN(o->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normal);
-			va->AddVertexTN(o->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normal);
-			va->AddVertexTN(o->vertices[ps->vertices[3]].pos,tex->xstart,tex->yend,ps->normal);
+			va->AddVertexTN(o->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normals[0]);
+			va->AddVertexTN(o->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normals[1]);
+			va->AddVertexTN(o->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normals[2]);
+			va->AddVertexTN(o->vertices[ps->vertices[3]].pos,tex->xstart,tex->yend,ps->normals[3]);
 		} else if (ps->numVertex==3) {
-			va2->AddVertexTN(o->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normal);
-			va2->AddVertexTN(o->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normal);
-			va2->AddVertexTN(o->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normal);
+			va2->AddVertexTN(o->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normals[0]);
+			va2->AddVertexTN(o->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normals[1]);
+			va2->AddVertexTN(o->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normals[2]);
 		} else {
 			glNormal3f(ps->normal.x,ps->normal.y,ps->normal.z);
 			glBegin(GL_TRIANGLE_FAN);

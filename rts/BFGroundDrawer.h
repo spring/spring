@@ -16,6 +16,7 @@ public:
 	~CBFGroundDrawer(void);
 	void Draw(bool drawWaterReflection=false);
 	void SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes);
+	void SetHeightTexture();
 	void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes);
 	void SetPathMapTexture();
 

@@ -134,11 +134,11 @@ void GUIminimap::PrivateDraw()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	float isx=gs->hmapx/256.0;
-	float isy=gs->hmapy/256.0;
+	float isx=2*gs->hmapx/float(gs->pwr2mapx);
+	float isy=2*gs->hmapy/float(gs->pwr2mapy);
 
 	glBegin(GL_QUADS);
-		glTexCoord2f(0,1);
+		glTexCoord2f(0,isy);
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,1);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,isy);
 		glVertex2f(0,0);
@@ -146,11 +146,11 @@ void GUIminimap::PrivateDraw()
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,0);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,0);
 		glVertex2f(0,1);
-		glTexCoord2f(1,0);
+		glTexCoord2f(isx,0);
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,0);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,0);
 		glVertex2f(1,1);
-		glTexCoord2f(1,1);
+		glTexCoord2f(isx,isy);
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,1);
 		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,isy);
 		glVertex2f(1,0);
@@ -264,7 +264,7 @@ void GUIminimap::PrivateDraw()
 		}
 	}
 
-	
+	DrawNotes();
 	
 	
 	glMatrixMode(GL_PROJECTION);
@@ -429,4 +429,55 @@ void GUIminimap::MoveView(int xpos, int ypos, int button)
 void GUIminimap::SelectCursor()
 {
 	guiGameControl->SelectCursor();
+}
+
+void GUIminimap::AddNotification(float3 pos, float3 color, float alpha)
+{
+	Notification n;
+	n.pos=pos;
+	n.color=color;
+	n.alpha=alpha;
+	n.creationTime=gu->gameTime;
+
+	notes.push_back(n);
+}
+
+void GUIminimap::DrawNotes(void)
+{
+	float baseSize=gs->mapx*SQUARE_SIZE;
+	glBegin(GL_LINES);
+	for(list<Notification>::iterator ni=notes.begin();ni!=notes.end();){
+		float age=gu->gameTime-ni->creationTime;
+		if(age>2){
+			ni=notes.erase(ni);
+			continue;
+		}
+		glColor4f(ni->color.x,ni->color.y,ni->color.z,ni->alpha);
+		for(int a=0;a<3;++a){
+			float modage=age+a*0.1;
+			float rot=modage*3;
+			float size=baseSize-modage*baseSize*0.9;
+			if(size<0){
+				if(size<-baseSize*0.4)
+					continue;
+				else if(size>-baseSize*0.2)
+					size=modage*baseSize*0.9-baseSize;
+				else
+					size=baseSize*1.4-modage*baseSize*0.9;
+			}
+			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);	
+			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);	
+
+			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);	
+			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);	
+
+			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);	
+			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);	
+
+			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);	
+			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);	
+		}
+		++ni;
+	}
+	glEnd();
 }

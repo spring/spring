@@ -24,6 +24,7 @@ public:
 	float3 waterPlaneColor;
 	bool hasWaterPlane;
 	std::string waterTexture;
+	std::string detailTex;
 
 	unsigned char waterHeightColors[1024*4];
 protected:

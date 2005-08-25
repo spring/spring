@@ -70,7 +70,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	groundBlockingObjectMap = new CSolidObject*[gs->mapSquares];
 	memset(groundBlockingObjectMap, 0, gs->mapSquares*sizeof(CSolidObject*));
 
-	//CFileHandler ifs((string("maps\\")+stupidGlobalMapname).c_str());
+	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
 
 	float base=header.minHeight;
 	float mod=(header.maxHeight-header.minHeight)/65536.0f;
@@ -178,7 +178,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	heightLineMap=new unsigned char[gs->mapx*gs->mapy];
 	heightLinePal=new unsigned char[3*256];
 	if(regHandler.GetInt("ColorElev",1)){
 		for(int a=0;a<86;++a){
@@ -208,12 +207,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 			heightLinePal[a*3+2]=a;
 		}
 	}
-
-	for(int y=0;y<(gs->mapy);y++){
-		for(int x=0;x<(gs->mapx);x++){
-			heightLineMap[y*gs->mapx+x]=int(centerheightmap[y*gs->mapx+x])*8;
-		}
-	}
 	POP_CODE_MODE;
 
 	for(unsigned int a=0;a<mapname.size();++a){
@@ -223,7 +216,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PrintLoadMsg("Loading detail textures");
 
-	CBitmap bm("bitmaps/detailtex2.bmp");
+	CBitmap bm(detailTex);
 	glGenTextures(1, &detailtex2);
 	glBindTexture(GL_TEXTURE_2D, detailtex2);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -347,6 +340,13 @@ void CSmfReadMap::ParseSMD(std::string filename)
 
 	mapDefParser.GetDef(maxMetal,"0.02","MAP\\MaxMetal");
 	mapDefParser.GetDef(extractorRadius,"500","MAP\\ExtractorRadius");
+
+	mapDefParser.GetDef(detailTex, "", "MAP\\DetailTex");
+	if(detailTex.empty())
+        detailTex = "bitmaps/detailtex2.bmp";
+	else
+		detailTex = "maps/" + detailTex;
+	
 }
 
 CSmfReadMap::~CSmfReadMap(void)
@@ -369,7 +369,6 @@ CSmfReadMap::~CSmfReadMap(void)
 	delete[] centerheightmap;
 	delete[] halfHeightmap;
 	delete[] orgheightmap;
-	delete[] heightLineMap;
 	delete[] heightLinePal;
 	delete[] groundBlockingObjectMap;
 }

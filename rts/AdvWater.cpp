@@ -8,14 +8,13 @@
 #include <windows.h>
 #include "myGL.h"
 #include <math.h>
-
 #include "Camera.h"
 #include "VertexArray.h"
 #include "ReadMap.h"
 #include "InfoConsole.h"
 #include "BaseGroundDrawer.h"
 #include "BaseSky.h"
-#include "UnitHandler.h"
+#include "UnitDrawer.h"
 #include "ProjectileHandler.h"
 #include "FeatureHandler.h"
 #include "SmfReadMap.h"
@@ -330,7 +329,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	drawReflection=true;
 
 	groundDrawer->Draw(true);
-	uh->Draw(true);
+	unitDrawer->Draw(true);
 	featureHandler->Draw();
 	ph->Draw(true);
 

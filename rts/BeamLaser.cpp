@@ -100,10 +100,11 @@ void CBeamLaser::Fire(void)
 	float3 hitPos=weaponPos+dir*length;
 	float intensity=1-length/(range*2);
 
-	if(length<range*1.25)
+	if(length<range*1.05)
 		helper->Explosion(hitPos,damages*intensity,areaOfEffect,owner);
 
-	intensity=1-length/(range*1.3);
+	float startAlpha=weaponDef->intensity*255;
+	float endAlpha=(1-length/(range*1.3))*startAlpha;
 
-	new CBeamLaserProjectile(weaponPos,hitPos,intensity*200,color,owner,weaponDef->thickness);
+	new CBeamLaserProjectile(weaponPos,hitPos,startAlpha,endAlpha,color,owner,weaponDef->thickness);
 }

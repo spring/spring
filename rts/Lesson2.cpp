@@ -17,6 +17,7 @@
 #endif
 #include <time.h>
 #include <string>
+#include <algorithm>
 #include <math.h>
 #include "PreGame.h"
 #include "Game.h"
@@ -31,6 +32,9 @@
 #include "Net.h"
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
+#ifdef _WIN32
+#include <direct.h>
+#endif
 //#include "mmgr.h"
 
 #include "NewGuiDefine.h"
@@ -422,7 +426,7 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 
 		case WM_KEYDOWN:							// Is A Key Being Held Down?
 		{
-			if(wParam<256 && !keys[VK_RMENU])
+			if(wParam<256 )
 				keys[wParam]=true;
 			if(activeController){
 				activeController->KeyPressed(wParam,!!(lParam & (1<<30)));
@@ -457,12 +461,20 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 		{
 			if(wParam<256)
 				keys[wParam]=true;
+			if ( activeController )
+			{
+				activeController->KeyPressed(wParam, (bool)(lParam & (1<<30)));
+			}
 			return 0;
 		}
 		case WM_SYSKEYUP:								// Has A Key Been Released?
 		{
 			if(wParam<256)
 				keys[wParam]=false;
+			if ( activeController )
+			{
+				activeController->KeyReleased(wParam);
+			}
 			return 0;				
 		}
 
@@ -744,6 +756,36 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
 
+	// Check if the commandline parameter is specifying a demo file
+	bool playDemo = false;
+#ifdef _WIN32
+	string cmdline(lpCmdLine);
+	for (string::size_type pos = cmdline.find("\""); pos != string::npos; pos = cmdline.find("\"")) 
+		cmdline.erase(pos, 1);
+	string cmdext = cmdline.substr(cmdline.find_last_of('.') + 1);
+	transform(cmdext.begin(), cmdext.end(), cmdext.begin(), (int (*)(int))tolower);
+	if (cmdext == "sdf") {
+		playDemo = true;
+
+		// Launching a demo through a file association will not start spring with a correct working directory
+		// So we need to determine this from the commandline and change manually
+		// It should look like "x:\path\path\spring.exe" demo.sdf
+
+		string fullcmd(GetCommandLine());
+		string executable;
+		if (fullcmd[0] == '"')
+			executable = fullcmd.substr(1, fullcmd.find('"', 1));
+		else 
+			executable = fullcmd.substr(0, fullcmd.find(' '));
+
+		string path = executable.substr(0, executable.find_last_of('\\'));
+		if (path != "")
+			_chdir(path.c_str()); 
+
+		//MessageBox(NULL,path.c_str(), "Path",MB_YESNO|MB_ICONQUESTION);
+	}
+#endif
+
 	// Create the archive scanner and vfs handler
 	archiveScanner = new CArchiveScanner();
 	archiveScanner->ReadCacheData();
@@ -754,15 +796,17 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	hpiHandler = new CVFSHandler();
 
 	ENTER_SYNCED;
-	gameSetup=new CGameSetup();
+	if (!playDemo) {
+		gameSetup=new CGameSetup();
 #ifdef _WIN32
-	if(!gameSetup->Init(lpCmdLine)){
-		delete gameSetup;
-		gameSetup=0;
-	}
+		if(!gameSetup->Init(lpCmdLine)){
+			delete gameSetup;
+			gameSetup=0;
+		}
 #else	
-	gameSetup=0;
+		gameSetup=0;
 #endif
+	}
 
 	ENTER_MIXED;
 
@@ -771,7 +815,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	server=true;
 	fullscreen=true;
 #else
-	if(gameSetup)
+	if (playDemo)
+		server = false;
+	else if(gameSetup)
 		server=gameSetup->myPlayer==0;
 	else
 		server=MessageBox(NULL,"Do you want to be server?", "Be server?",MB_YESNO|MB_ICONQUESTION)==IDYES;
@@ -816,7 +862,12 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #else
 	glutSwapBuffers();
 #endif
-	pregame=new CPreGame(server);
+#ifdef _WIN32
+	if (playDemo)
+		pregame = new CPreGame(false, cmdline);
+	else
+#endif
+		pregame=new CPreGame(server, "");
 
 	#ifdef NEW_GUI
 	guicontroller = new GUIcontroller();

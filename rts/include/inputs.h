@@ -50,6 +50,10 @@
 #define VK_INSERT           0x2D
 #define VK_PRIOR            0x21
 #define VK_NEXT             0x22
+
+#define VK_ADD              0x6B
+#define VK_SUBTRACT         0x6D
+#define VK_OEM_PLUS         0xBB
 #endif
 
 extern bool keys[256];

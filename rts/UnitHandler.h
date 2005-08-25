@@ -19,13 +19,11 @@ class CUnit;
 #include <list>
 #include <stack>
 #include <string>
-#include <map>
-class CVertexArray;
+
 struct UnitDef;
 class CBuilderCAI;
 class CFeature;
 class CLoadSaveInterface;
-struct S3DOModel;
 
 const int MAX_UNITS=5000;
 
@@ -33,7 +31,6 @@ class CUnitHandler
 {
 public:
 	int CreateChecksum();
-	void Draw(bool drawReflection);
 	void Update();
 	void DeleteUnit(CUnit* unit);
 	int AddUnit(CUnit* unit);
@@ -54,11 +51,6 @@ public:
 	void RemoveBuilderCAI(CBuilderCAI*);
 	float GetBuildHeight(float3 pos, const UnitDef* unitdef);
 
-	void DrawCloakedUnits(void);		//cloaked units must be drawn after all others;
-	void DrawShadowPass(void);
-	void SetupForUnitDrawing(void);
-	void CleanUpUnitDrawing(void);
-
 	void LoadSaveUnits(CLoadSaveInterface* file, bool loading);
 
 	std::list<CUnit*> activeUnits;				//used to get all active units
@@ -69,52 +61,16 @@ public:
 	std::stack<CUnit*> toBeRemoved;			//units that will be removed at start of next update
 
 	std::list<CUnit*>::iterator slowUpdateIterator;
-	float unitDrawDist;
-
-	unsigned int whiteTex;
-	unsigned int radarBlippTex;
 
 	std::set<CBuilderCAI*> builderCAIs;
-	std::vector<CUnit*> drawCloaked;
-	CVertexArray* va;
-	inline void DrawFar(CUnit* unit);
-	unsigned int unitVP;
-	unsigned int unitShadowVP;
-
-	float3 unitAmbientColor;
-	float3 unitSunColor;
-	float unitShadowDensity;
 
 	float waterDamage;
 
 	int maxUnits;			//max units per team
 
-	struct TempDrawUnit{
-		UnitDef* unitdef;
-		int team;
-		float3 pos;
-		float rot;
-		bool drawBorder;
-	};
-	std::multimap<int,TempDrawUnit> tempDrawUnits;
-	std::multimap<int,TempDrawUnit> tempTransperentDrawUnits;
-
-	struct GhostBuilding {
-		float3 pos;
-		S3DOModel* model;
-	};
-	std::list<GhostBuilding> ghostBuildings;	//these are buildings that where in LOS_PREVLOS when they died and havent been in los since then
-
-	float3 camNorm;		//used by drawfar
-
 	int lastDamageWarning;
 	int lastCmdDamageWarning;
 
-	bool showHealthBars;
-
-#ifdef DIRECT_CONTROL_ALLOWED
-	CUnit* playerControlledUnit;		
-#endif
 	bool CanCloseYard(CUnit* unit);
 };
 

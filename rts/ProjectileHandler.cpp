@@ -22,7 +22,7 @@
 #include "Feature.h"
 #include "RegHandler.h"
 #include "ShadowHandler.h"
-#include "UnitHandler.h"
+#include "UnitDrawer.h"
 #include "3DOParser.h"
 //#include "mmgr.h"
 
@@ -405,7 +405,7 @@ void CProjectileHandler::Draw(bool drawReflection)
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(1);
-	uh->SetupForUnitDrawing();
+	unitDrawer->SetupForUnitDrawing();
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
@@ -461,7 +461,7 @@ void CProjectileHandler::Draw(bool drawReflection)
 			a++;
 		}
 	}
-	uh->CleanUpUnitDrawing();
+	unitDrawer->CleanUpUnitDrawing();
 
 	float sortSize=a;
 	qsort(distlist, (size_t)sortSize,8,CompareProjDist);
@@ -496,6 +496,7 @@ void CProjectileHandler::Draw(bool drawReflection)
 
 void CProjectileHandler::DrawShadowPass(void)
 {
+#ifndef NO_SHADOWS
 	while(distlistsize<(int)ps.size()){
 		distlistsize*=2;
 		delete[] distlist;
@@ -538,6 +539,7 @@ void CProjectileHandler::DrawShadowPass(void)
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 	glDisable( GL_VERTEX_PROGRAM_ARB );
+#endif
 }
 
 void CProjectileHandler::AddProjectile(CProjectile* p)

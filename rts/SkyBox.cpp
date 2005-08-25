@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "GlobalStuff.h"
 #include "ReadMap.h"
+#include "UnitDrawer.h"
 //#include "mmgr.h"
 
 extern GLfloat FogBlack[]; 
@@ -31,7 +32,10 @@ void CSkyBox::Draw()
 	//glTranslatef(camera->pos.x, camera->pos.y, camera->pos.z);
 	//glCallList(displist);
 
-
+	glDisable(GL_FOG);
+	glColor3f(1,1,1);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, tex);
 
@@ -41,6 +45,7 @@ void CSkyBox::Draw()
 	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glDepthMask(0);
+	glDisable(GL_DEPTH_TEST);
 
 	float3 v1 = camera->CalcPixelDir(0,0);
 	float3 v2 = camera->CalcPixelDir(gu->screenx,0);
@@ -51,20 +56,19 @@ void CSkyBox::Draw()
 			
 			glTexCoord3f(-v1.x,-v1.y,-v1.z);
 			//glNormal3f(0,1,0);
-			glVertexf3(camera->pos + v1*(NEAR_PLANE+1));
+			glVertexf3(camera->pos + v1*(NEAR_PLANE+5));
 
 			glTexCoord3f(-v2.x,-v2.y,-v2.z);
 			//glNormal3f(1,1,0);
-			glVertexf3(camera->pos + v2*(NEAR_PLANE+1));
+			glVertexf3(camera->pos + v2*(NEAR_PLANE+5));
 
 			glTexCoord3f(-v3.x,-v3.y,-v3.z);
 			//glNormal3f(0,1,1);
-			glVertexf3(camera->pos + v3*(NEAR_PLANE+1));
+			glVertexf3(camera->pos + v3*(NEAR_PLANE+5));
 
 			glTexCoord3f(-v4.x,-v4.y,-v4.z);
 			//glNormal3f(1,1,1);
-			glVertexf3(camera->pos + v4*(NEAR_PLANE+1));
-
+			glVertexf3(camera->pos + v4*(NEAR_PLANE+5));
 		glEnd();
 
 	glDisable(GL_TEXTURE_CUBE_MAP_ARB);

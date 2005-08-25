@@ -38,7 +38,7 @@ void CGround::CheckCol(CProjectileHandler* ph)
 	for(psi=ph->ps.begin();psi != ph->ps.end();++psi){
 		CProjectile* p=*psi;
 		if(p->checkCol){
-			if(GetHeight(p->pos.x,p->pos.z) > p->pos.y-p->radius)
+			if(GetHeight(p->pos.x,p->pos.z) > p->pos.y/*-p->radius*/)		//too many projectiles seems to hit the ground before hitting so remove the radius till a better fix is done
 				p->Collision();
 /*			x=(int)floor((*psi)->pos.x*1.0f/SQUARE_SIZE);
 			y=(int)floor((*psi)->pos.z*1.0f/SQUARE_SIZE);

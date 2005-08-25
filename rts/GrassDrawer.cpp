@@ -172,7 +172,7 @@ void CGrassDrawer::Draw(void)
 
 	glColor4f(0.62,0.62,0.62,1);
 
-	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
+	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex)){
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, grassVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
@@ -240,7 +240,7 @@ void CGrassDrawer::Draw(void)
 		glPushMatrix();
 		glLoadIdentity();
 	} else {
-		if((groundDrawer->drawLos || groundDrawer->drawExtraTex)){
+		if((groundDrawer->drawExtraTex)){
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 			glEnable(GL_TEXTURE_2D);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
@@ -443,7 +443,7 @@ void CGrassDrawer::Draw(void)
 	glAlphaFunc(GL_GREATER,0.01f);
 	glDepthMask(false);
 
-	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
+	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex)){
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, farTex);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -460,7 +460,7 @@ void CGrassDrawer::Draw(void)
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
 		glBindTexture(GL_TEXTURE_2D, farTex);
 
-		if((groundDrawer->drawLos || groundDrawer->drawExtraTex)){
+		if((groundDrawer->drawExtraTex)){
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 			glDisable(GL_TEXTURE_GEN_S);
 			glDisable(GL_TEXTURE_GEN_T);
@@ -544,7 +544,7 @@ void CGrassDrawer::Draw(void)
 	glDepthMask(true);
 	glEnable(GL_FOG);
 
-	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
+	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex)){
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
@@ -557,7 +557,7 @@ void CGrassDrawer::Draw(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	if((groundDrawer->drawLos || groundDrawer->drawExtraTex)){
+	if((groundDrawer->drawExtraTex)){
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glDisable(GL_TEXTURE_2D);

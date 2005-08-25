@@ -21,13 +21,15 @@ public:
 
 	virtual ~CBitmap();
 
-	void Load(string filename);
+	void Load(string filename, unsigned char defaultAlpha=255);
 	void Save(string filename);
 
 	unsigned int CreateTexture(bool mipmaps=false);
 	unsigned int CreateDDSTexture();
 
 	void CreateAlpha(unsigned char red,unsigned char green,unsigned char blue);
+	void SetTransparent(unsigned char red, unsigned char green, unsigned char blue);
+
 	void Renormalize(float3 newCol);
 
 	CBitmap GetRegion(int startx, int starty, int width, int height);
@@ -47,10 +49,6 @@ public:
 	nv_dds::CDDSImage *ddsimage;
 
 protected:
-	void LoadJPG(string filename);
-	void LoadBMP(string filename);
-	void LoadPCX(string filename);
-
 	void SaveBMP(string filename);
 	void SaveJPG(string filename,int quality=85);
 public:

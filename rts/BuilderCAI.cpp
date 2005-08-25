@@ -645,14 +645,32 @@ void CBuilderCAI::DrawCommands(void)
 			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);
 
-			pos=helper->Pos2BuildPos(pos,unitdef);
-
 			glColor4f(1,1,1,0.4);
 			glVertexf3(pos);
 			glEnd();
+
+			pos=helper->Pos2BuildPos(pos,unitdef);
+
+			if(unitdef->extractRange>0){	//draw range
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(1,0.3,0.3,0.7);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 wpos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
+					wpos+=pos;
+					wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
+					glVertexf3(wpos);
+				}
+				glEnd();
+			}
+
 			glEnable(GL_TEXTURE_2D);
 			texturehandler->SetTexture();
 			glDepthMask(0);
+			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
+			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
+			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 			glColor4f(1,1,1,0.3);
 			S3DOModel* model=unit3doparser->Load3DO(unitdef->model.modelpath.c_str() ,1, owner->team);
 			glPushMatrix();
@@ -660,6 +678,7 @@ void CBuilderCAI::DrawCommands(void)
 			//glCallList(model->displist);
 			model->rootobject->DrawStatic();
 			glDisable(GL_TEXTURE_2D);
+			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 			glDepthMask(1);
 			glPopMatrix();
 			glColor4f(1,1,1,0.4);

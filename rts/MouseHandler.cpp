@@ -150,9 +150,11 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 #endif
 
+#ifndef NEW_GUI
 	if(inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseMove(x,y,dx,dy,activeButton);
 	}
+#endif
 
 	if(buttons[2].pressed){
 		float cameraSpeed=1;
@@ -246,11 +248,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 #ifdef NEW_GUI
 	if(GUIcontroller::MouseUp(x, y, button))
 		return;
-#endif
+#else
 	if(inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseRelease(x,y,button);
 		return;
 	}
+#endif
 
 	if(button==2){
 		if(buttons[2].time>gu->gameTime-0.3)
@@ -402,8 +405,7 @@ void CMouseHandler::Draw()
 		return;
 	}
 #endif
-
-	if(buttons[0].pressed && buttons[0].movement>4 && mouseHandlerMayDoSelection && !inMapDrawer->keyPressed){
+	if(buttons[0].pressed && buttons[0].movement>4 && mouseHandlerMayDoSelection && ( !inMapDrawer || !inMapDrawer->keyPressed )){
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(1,1,1,0.5);
 

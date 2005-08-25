@@ -19,6 +19,7 @@ public:
 	float length;
 	float curLength;
 	float speedf;
+	float intensityFalloff;
 
 	void Update(void);
 	void Collision(CUnit* unit);

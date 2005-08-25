@@ -135,7 +135,6 @@ void GUIendgameDialog::UpdateStatistics()
 	map<string, DatasetList>::iterator i=statistics.begin();
 	map<string, DatasetList>::iterator e=statistics.end();
 	
-	
 	// then, for every type of statistic added
 	for(;i!=e; i++)
 	{
@@ -155,6 +154,7 @@ void GUIendgameDialog::UpdateStatistics()
 
 void GUIendgameDialog::DialogEvent(const std::string& event)
 {
+	guicontroller->AddText(event);
 	if(event=="togglehidden")
 	{
 		if(controls["endgame"])
@@ -227,7 +227,10 @@ void GUIendgameDialog::ShowPlayerStats(void)
 			values[lines].push_back(c);
 			sprintf(c,"%i",(int)(gs->players[a]->currentStats->numCommands*60/game->totalGameTime));
 			values[lines].push_back(c);
-			sprintf(c,"%i",(int)(gs->players[a]->currentStats->unitCommands/gs->players[a]->currentStats->numCommands));
+			sprintf(c,"%i",(int)
+				( gs->players[a]->currentStats->numCommands != 0 ) ? 
+				( gs->players[a]->currentStats->unitCommands/gs->players[a]->currentStats->numCommands) :
+				( 0 ));
 			values[lines].push_back(c);
 			lines++;
 		}

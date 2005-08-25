@@ -53,6 +53,7 @@ opts.Add('disable_texture_filtering', 'Set to no to turn on texture filtering co
 opts.Add('disable_advtreedrawer', 'Set to no to turn on advanced tree drawing', 0)
 
 opts.Add('disable_7zip', 'Set to disable 7zip processing', 1)
+opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation',0)
 
 env = Environment(options = opts)
 Help(opts.GenerateHelpText(env))
@@ -109,8 +110,9 @@ if env.get('disable_7zip'):
 	defines+=['NO_7ZIP']
 	exclude_list.append("Archive7ZipDll.cpp")
 else:
-	defines+=['_SZ_ONE_DIRECTORY']
-	lzmafiles+=["./7zip/7zCrc.c","./7zip/7zExtract.c","./7zip/7zIn.c","./7zip/7zAlloc.c","./7zip/7zBuffer.c","./7zip/7zItem.c","./7zip/7zDecode.c","./7zip/7zHeader.c","./7zip/LzmaDecode.c","./7zip/7zMethodID.c"]
+	defines+=['_FILE_OFFSET_BITS=64','_LARGEFILE_SOURCE','NDEBUG','_REENTRANT','ENV_UNIX','EXCLUDE_COM','NO_REGISTRY','FORMAT_7Z','FORMAT_BZIP2','FORMAT_ZIP','FORMAT_TAR','FORMAT_GZIP','COMPRESS_LZMA','COMPRESS_BCJ_X86','FORMAT_SPLIT','FORMAT_Z','COMPRESS_BCJ2','COMPRESS_COPY','COMPRESS_MF_MT','COMPRESS_PPMD','COMPRESS_DEFLATE','COMPRESS_DEFLATE64','COMPRESS_IMPLODE','COMPRESS_BZIP2','CRYPTO_ZIP','CRYPTO_7ZAES','CRYPTO_AES']
+	#lzmafiles+=['7zip/7zip/Common/FileStreams.cpp','7zip/Windows/PropVariantConversions.cpp','lib7za.a']
+	lzmafiles+=['lib7za.a']
 
 if detected_platform == 'linux':
 	exclude_list.append("RegHandler.cpp")
@@ -198,6 +200,9 @@ if not conf.CheckCXXHeader('boost/filesystem/path.hpp'):
 if not conf.CheckCXXHeader('boost/regex.hpp'):
 	print ' Cannot find Boost regex header'
 	Exit(1)
+if not conf.CheckCHeader('IL/il.h'):
+	print ' Cannot find DevIL header'
+	Exit(1)
 if not conf.CheckLib('libc'):
 	print "You need libc to compile this program"
 	Exit(1)
@@ -219,6 +224,9 @@ if not conf.CheckLib('boost_thread-mt'):
 if not conf.CheckLib('boost_regex-mt'):
 	print "You need the Boost regex library for this program"
 	Exit(1)
+if not conf.CheckLib('IL'):
+	print "You need the DevIL image library for this program"
+	Exit(1)
 env = conf.Finish()
 
 ###################################################
@@ -226,4 +234,7 @@ env = conf.Finish()
 
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
 #env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib','GLU', 'libboost_filesystem'], CPPPATH=common_include_path)
-env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','GLU','boost_thread-mt','boost_filesystem-mt','boost_regex-mt'], CPPPATH=common_include_path)
+lib=['GL','glut','GLEW','jpeg','freetype','GLU','boost_thread-mt','boost_filesystem-mt','boost_regex-mt','IL']
+if env.get('use_tcmalloc'):
+	lib+=['tcmalloc']
+env.Program('spring', files,  LIBS=lib, CPPPATH=common_include_path,LIBFLAGS=['-m32'])

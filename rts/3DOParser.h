@@ -32,6 +32,7 @@ struct SVertex {
 
 struct SPrimitive {
 	std::vector<int> vertices;
+	std::vector<float3> normals;		//normals per vertex
 	float3 normal;
 	int numVertex;
 	CTextureHandler::UnitTexture* texture;

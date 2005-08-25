@@ -3,7 +3,7 @@
 #include "myGL.h"
 #include "RegHandler.h"
 #include "Camera.h"
-#include "UnitHandler.h"
+#include "UnitDrawer.h"
 #include "BaseGroundDrawer.h"
 #include "Matrix44f.h"
 #include "Ground.h"
@@ -36,7 +36,11 @@ CShadowHandler::CShadowHandler(void)
 	
 	if(!regHandler.GetInt("Shadows",0))
 		return;
-	
+
+	if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
+		info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
+	}
+
 	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && WGLEW_ARB_pbuffer && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
 		if(GLEW_ARB_shadow && GL_ARB_depth_texture && WGLEW_ARB_pbuffer && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			info->AddLine("Using ARB_fragment_program_shadow");
@@ -188,7 +192,7 @@ void CShadowHandler::CreateShadows(void)
 	inShadowPass=true;
 
 	ph->DrawShadowPass();
-	uh->DrawShadowPass();
+	unitDrawer->DrawShadowPass();
 	featureHandler->DrawShadowPass();
 	groundDrawer->DrawShadowPass();
 	treeDrawer->DrawShadowPass();

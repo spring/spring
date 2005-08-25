@@ -52,8 +52,12 @@ public:
 	float GetUnitSupply(int unitid);			//how well supplied the unit is (0.0-1.0)
 	float GetUnitMorale(int unitid);			//the units morale (0.0-1.0)
 	float GetUnitMaxRange(int unitid);		//the furthest any weapon of the unit can fire
+	bool IsUnitActivated (int unitid); 
+	bool UnitBeingBuilt(int unitid);			//returns true if the unit is currently being built
 	const UnitDef* GetUnitDef(int unitid);	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 	float3 GetUnitPos(int unitid);
+	bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
+
 
 	const UnitDef* GetUnitDef(const char* unitName);
 
@@ -96,15 +100,21 @@ public:
 	bool CanBuildAt(const UnitDef* unitDef,float3 pos);
 	float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist);	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
-	virtual float GetMetal();				//stored metal for team
-	virtual float GetMetalIncome();				
-	virtual float GetMetalUsage();				
-	virtual float GetMetalStorage();				//metal storage for team
+	float GetMetal();				//stored metal for team
+	float GetMetalIncome();				
+	float GetMetalUsage();				
+	float GetMetalStorage();				//metal storage for team
 
-	virtual float GetEnergy();				//stored energy for team
-	virtual float GetEnergyIncome();			
-	virtual float GetEnergyUsage();				
-	virtual float GetEnergyStorage();				//energy storage for team
+	float GetEnergy();				//stored energy for team
+	float GetEnergyIncome();			
+	float GetEnergyUsage();				
+	float GetEnergyStorage();				//energy storage for team
+
+	int GetFeatures (int *features, int max);
+	int GetFeatures (int *features, int max, const float3& pos, float radius);
+	FeatureDef* GetFeatureDef (int feature);
+	float GetFeatureHealth (int feature);
+	float GetFeatureReclaimLeft (int feature);
 };
 
 #endif

@@ -38,7 +38,7 @@ void CGlobalAITestScript::Update(void)
 		gs->teams[1]->metalStorage=5000;
 
 		CSunParser p;
-		p.LoadFile("gamedata\\sidedata.tdf");
+		p.LoadFile("gamedata/sidedata.tdf");
 		string s0=p.SGetValueDef("armcom","side0\\commander");
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 

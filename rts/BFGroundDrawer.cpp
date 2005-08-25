@@ -160,7 +160,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 		for(int btx=sx;btx<ex;++btx){
 			bigtexsubx=btx;
 
-			if((drawLos || drawExtraTex) || !shadowHandler->drawShadows){
+			if((drawExtraTex) || !shadowHandler->drawShadows){
 				groundTextures->SetTexture(btx,bty);
 				SetTexGen(1.0/1024,1.0/1024,-btx,-bty);
 			} else {
@@ -516,7 +516,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 		groundDecals->Draw();
 	ph->DrawGroundFlashes();
 	if(treeDrawer->drawTrees){
-		if((drawLos || drawExtraTex)){
+		if((drawExtraTex)){
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
@@ -531,7 +531,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 		  glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 		treeDrawer->Draw(treeDistance,drawWaterReflection);
-		if((drawLos || drawExtraTex)){
+		if((drawExtraTex)){
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 			glDisable(GL_TEXTURE_GEN_S);
@@ -819,10 +819,12 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 }
 
+//todo: this part of extra textures is a mess really ...
 void CBFGroundDrawer::SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes)
 {
 	drawMetalMap=false;
 	drawPathMap=false;
+	drawHeightMap=false;
 	if(tex!=extraTex && tex!=0){
 		extraTex=tex;
 		extraTexPal=pal;
@@ -837,12 +839,30 @@ void CBFGroundDrawer::SetExtraTexture(unsigned char* tex,unsigned char* pal,bool
 	while(!UpdateTextures());
 }
 
+void CBFGroundDrawer::SetHeightTexture()
+{
+	if(drawHeightMap){
+		drawHeightMap=false;
+		drawExtraTex=false;
+	} else {
+		drawHeightMap=true;
+		drawMetalMap=false;
+		drawPathMap=false;
+		drawExtraTex=true;
+		highResInfoTexWanted=true;
+		extraTex=0;
+	}
+	updateTextureState=0;
+	while(!UpdateTextures());
+}
+
 void CBFGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes)
 {
 	if(drawMetalMap){
 		drawMetalMap=false;
 		drawExtraTex=false;
 	} else {
+		drawHeightMap=false;
 		drawMetalMap=true;
 		drawPathMap=false;
 		drawExtraTex=true;
@@ -862,6 +882,7 @@ void CBFGroundDrawer::SetPathMapTexture()
 		drawExtraTex=false;
 	} else {
 		drawPathMap=true;
+		drawHeightMap=false;
 		drawMetalMap=false;
 		drawExtraTex=true;
 		extraTex=0;
@@ -873,14 +894,25 @@ void CBFGroundDrawer::SetPathMapTexture()
 
 void CBFGroundDrawer::ToggleLosTexture()
 {
-	drawLos=!drawLos;
+	if(drawLos){
+		drawLos=false;
+		drawExtraTex=false;
+	} else {
+		drawLos=true;
+		drawPathMap=false;
+		drawHeightMap=false;
+		drawMetalMap=false;
+		drawExtraTex=true;
+		extraTex=0;
+		highResInfoTexWanted=false;
+	}
 	updateTextureState=0;
 	while(!UpdateTextures());
 }
 	
 bool CBFGroundDrawer::UpdateTextures()
 {
-	if(!drawLos && !drawExtraTex)
+	if(!drawExtraTex)
 		return true;
 
 	unsigned short* myLos=loshandler->losMap[gu->myAllyTeam];
@@ -905,7 +937,7 @@ bool CBFGroundDrawer::UpdateTextures()
 					int a=y*(gs->pwr2mapx>>1)+x;
 
 					float m=md->moveMath->SpeedMod(*md, x*2,y*2);
-					if(md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
+					if(gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
 						m=0;
 					m=std::min(1.,sqrt(m));
 
@@ -926,7 +958,19 @@ bool CBFGroundDrawer::UpdateTextures()
 					infoTexMem[a*4+2]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]);
 				}
 			}
-		} else if(drawLos && !drawExtraTex){
+		} else if(drawHeightMap){
+			extraTexPal=readmap->heightLinePal;
+			for(int y=starty;y<endy;++y){
+				for(int x=0;x<gs->mapx;++x){
+					int a=y*gs->pwr2mapx+x;
+					float height=readmap->centerheightmap[y*gs->mapx+x];
+					unsigned char value=height*8;
+					infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
+					infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
+					infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
+				}
+			}
+		} else if(drawLos){
 			for(int y=starty;y<endy;++y){
 				for(int x=0;x<gs->hmapx;++x){
 					int a=y*(gs->pwr2mapx>>1)+x;
@@ -951,7 +995,7 @@ bool CBFGroundDrawer::UpdateTextures()
 					}
 				}
 			}
-		} else if(!drawLos && drawExtraTex){
+		} else if(drawExtraTex){
 			if(highResInfoTexWanted){
 				for(int y=starty;y<endy;++y){
 					for(int x=0;x<gs->mapx;++x){
@@ -972,38 +1016,6 @@ bool CBFGroundDrawer::UpdateTextures()
 						infoTexMem[a*4+2]=64+(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]>>1);
 					}
 				}
-			}
-		} else {
-			if(highResInfoTexWanted){
-				for(int y=starty;y<endy;++y){
-					for(int x=0;x<gs->mapx;++x){
-						int a=y*gs->pwr2mapx+x;
-						if(myLos[(y/2)*gs->hmapx+x/2]!=0){
-							infoTexMem[a*4]=100+(extraTexPal[extraTex[y*gs->mapx+x]*3]>>1);
-							infoTexMem[a*4+1]=100+(extraTexPal[extraTex[y*gs->mapx+x]*3+1]>>1);
-							infoTexMem[a*4+2]=100+(extraTexPal[extraTex[y*gs->mapx+x]*3+2]>>1);
-						} else {
-							infoTexMem[a*4]=60+(extraTexPal[extraTex[y*gs->mapx+x]*3]>>1);
-							infoTexMem[a*4+1]=60+(extraTexPal[extraTex[y*gs->mapx+x]*3+1]>>1);
-							infoTexMem[a*4+2]=60+(extraTexPal[extraTex[y*gs->mapx+x]*3+2]>>1);
-						}
-					}
-				}			
-			} else {
-				for(int y=starty;y<endy;++y){
-					for(int x=0;x<gs->hmapx;++x){
-						int a=y*(gs->pwr2mapx>>1)+x;
-						if(myLos[(y)*gs->hmapx+x]!=0){
-							infoTexMem[a*4]=100+(extraTexPal[extraTex[y*gs->hmapx+x]*3]>>1);
-							infoTexMem[a*4+1]=100+(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]>>1);
-							infoTexMem[a*4+2]=100+(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]>>1);
-						} else {
-							infoTexMem[a*4]=60+(extraTexPal[extraTex[y*gs->hmapx+x]*3]>>1);
-							infoTexMem[a*4+1]=60+(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]>>1);
-							infoTexMem[a*4+2]=60+(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]>>1);
-						}
-					}
-				}			
 			}
 		}
 	}
@@ -1049,7 +1061,7 @@ bool CBFGroundDrawer::UpdateTextures()
 void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 {
 	glColor4f(1,1,1,1);
-	if((groundDrawer->drawLos || groundDrawer->drawExtraTex)){
+	if((groundDrawer->drawExtraTex)){
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
@@ -1173,7 +1185,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 {
-	if((drawLos || drawExtraTex) || !shadowHandler->drawShadows){
+	if((drawExtraTex) || !shadowHandler->drawShadows){
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 		glActiveTextureARB(GL_TEXTURE1_ARB);

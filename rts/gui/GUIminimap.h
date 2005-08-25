@@ -47,6 +47,18 @@ protected:
 		float maxz;
 	};
 	std::vector<fline> left;
+
+	void AddNotification(float3 pos, float3 color, float alpha);
+
+	struct Notification {
+		double creationTime;
+		float3 pos;
+		float3 color;
+		float alpha;
+	};
+
+	std::list<Notification> notes;
+	void DrawNotes(void);
 	
 	bool downInMinimap;
 };

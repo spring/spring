@@ -75,7 +75,7 @@ void CLightingProjectile::Draw(void)
 	float3 tempPos=pos;
 
 	for(int a=0;a<9;++a){
-		float f=(a+1)*0.1;
+		float f=(a+1)*0.111;
 		va->AddVertexTC(tempPos+dir1*(displacements[a]+0.8),11.0/16,0,    col);
 		va->AddVertexTC(tempPos+dir1*(displacements[a]-0.8),11.0/16,1.0/8,col);
 		tempPos=pos*(1-f)+endPos*f;
@@ -85,7 +85,7 @@ void CLightingProjectile::Draw(void)
 
 	tempPos=pos;
 	for(int a=0;a<9;++a){
-		float f=(a+1)*0.1;
+		float f=(a+1)*0.111;
 		va->AddVertexTC(tempPos+dir1*(displacements2[a]+0.8),11.0/16,0,    col);
 		va->AddVertexTC(tempPos+dir1*(displacements2[a]-0.8),11.0/16,1.0/8,col);
 		tempPos=pos*(1-f)+endPos*f;

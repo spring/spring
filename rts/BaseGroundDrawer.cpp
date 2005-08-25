@@ -25,7 +25,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 
 	drawLos=false;
 	drawExtraTex=false;
-
+	drawHeightMap=false;
 	infoTex=0;
 }
 

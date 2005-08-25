@@ -115,7 +115,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	if(drawReflection)
 		drawDetailed=false;
 
-	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
+	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex)){
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
 
@@ -312,7 +312,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		}
 	}
 	if(drawDetailed){
-		if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
+		if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex)){
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeVP );
 
 			glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -436,7 +436,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		}
 		glDisable( GL_VERTEX_PROGRAM_ARB );
 
-		if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
+		if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex)){
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarVP );
 			glEnable(GL_VERTEX_PROGRAM_ARB);
 
@@ -477,7 +477,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 			va->DrawArrayT(GL_QUADS);
 		}
 	}
-	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex || groundDrawer->drawLos)){
+	if(shadowHandler->drawShadows && !(groundDrawer->drawExtraTex)){
 		glDisable( GL_VERTEX_PROGRAM_ARB );
 		if(shadowHandler->useFPShadows){
 			glDisable(GL_FRAGMENT_PROGRAM_ARB);

@@ -5,6 +5,7 @@
 #include <map>
 #include "command.h"
 #include "float3.h"
+#include "SelectionKeyHandler.h"
 
 class CSunParser;
 class GUIframe;
@@ -95,6 +96,7 @@ protected:
 	virtual bool EventAction(const std::string& event);
 	
 	GUIconsole *console;
+	CSelectionKeyHandler		m_SelectionKeyHandler;
 	std::string tempstring;
 };
 

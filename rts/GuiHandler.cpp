@@ -721,6 +721,10 @@ void CGuiHandler::DrawMapStuff(void)
 					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 					glEnable(GL_TEXTURE_2D);
 					texturehandler->SetTexture();
+					glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
+					glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
+					glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
+					glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 					glDepthMask(0);
 					S3DOModel* model=unit3doparser->Load3DO((unitdef->model.modelpath).c_str() ,1, gu->myTeam);
 					glPushMatrix();
@@ -728,6 +732,7 @@ void CGuiHandler::DrawMapStuff(void)
 					//glCallList(model->displist);
 					model->rootobject->DrawStatic();
 					glDisable(GL_TEXTURE_2D);
+					glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 					glDepthMask(1);
 					glPopMatrix();
 					if(unitdef->weapons.size()>0){	//draw range
@@ -795,7 +800,7 @@ void CGuiHandler::DrawMapStuff(void)
 				}
 				glEnd();
 			}
-			if(unit->unitDef->kamikazeDist>0){			//draw self destruct distance
+			if(unit->unitDef->kamikazeDist>0){			//draw self destruct and damage distance
 				glDisable(GL_TEXTURE_2D);
 				glColor4f(0.8,0.8,0.1,0.7);
 				glBegin(GL_LINE_STRIP);
@@ -806,6 +811,19 @@ void CGuiHandler::DrawMapStuff(void)
 					glVertexf3(pos);
 				}
 				glEnd();
+				if(!unit->unitDef->selfDExplosion.empty()){
+					glColor4f(0.8,0.1,0.1,0.7);
+					WeaponDef* wd=weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
+
+					glBegin(GL_LINE_STRIP);
+					for(int a=0;a<=40;++a){
+						float3 pos(cos(a*2*PI/40)*wd->areaOfEffect,0,sin(a*2*PI/40)*wd->areaOfEffect);
+						pos+=unit->pos;
+						pos.y=ground->GetHeight(pos.x,pos.z)+8;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
 			}
 		}
 	}

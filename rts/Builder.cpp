@@ -431,6 +431,8 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 	StopBuild(false);
 
 	helpTerraform=unit;
+	AddDeathDependence(helpTerraform);
+
 	SetBuildStanceToward(unit->terraformCenter);
 }
 

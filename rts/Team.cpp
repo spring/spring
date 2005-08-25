@@ -47,6 +47,7 @@ CTeam::CTeam()
 	numCommanders(0)
 {
 	memset(&currentStats,0,sizeof(currentStats));
+	statHistory.push_back(currentStats);
 }
 
 CTeam::~CTeam()
@@ -159,9 +160,13 @@ void CTeam::Update()
 			float edif=max(0.0,gs->teams[a]->energyStorage*0.9-gs->teams[a]->energy)*de;
 			gs->teams[a]->energy+=edif;
 			energy-=edif;
+			currentStats.energySent+=edif;
+			gs->teams[a]->currentStats.energyReceived+=edif;
 			float mdif=max(0.0,gs->teams[a]->metalStorage*0.9-gs->teams[a]->metal)*dm;
 			gs->teams[a]->metal+=mdif;
 			metal-=mdif;
+			currentStats.metalSent+=edif;
+			gs->teams[a]->currentStats.metalReceived+=edif;
 		}
 	}
 

@@ -95,12 +95,14 @@ void CFactory::Update()
 		CMatrix44f mat=localmodel->GetPieceMatrix(args[0]);
 		int h=GetHeadingFromVector(mat[2],mat[10]);
 		curBuild->heading=h;
-		if(curBuild->unitDef->canfly){	//hack to get naval air plant to work correctly, how to do it correctly ?
+//		if(curBuild->unitDef->canfly){	//hack to get naval air plant to work correctly, how to do it correctly ?
 			float3 relBuildPos=localmodel->GetPiecePos(args[0]);
 			float3 buildPos=pos + frontdir*relBuildPos.z + updir*relBuildPos.y + rightdir*relBuildPos.x;
 			curBuild->pos=buildPos;
+			if(curBuild->floatOnWater)
+				curBuild->pos.y=-curBuild->unitDef->waterline;
 			curBuild->midPos=curBuild->pos+UpVector*curBuild->relMidPos.y;
-		}
+//		}
 		if(curBuild->AddBuildPower(buildSpeed,this)){
 			std::vector<long> args;
 			args.push_back(0);

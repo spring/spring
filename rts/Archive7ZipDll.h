@@ -3,15 +3,12 @@
 
 #include "ArchiveBuffered.h"
 
-extern "C" {
-#include "7zip/7zExtract.h"
-}
-
-struct _CFileInStream
-{
-	ISzInStream InStream;
-	FILE *File;
-};
+//#include <initguid.h>
+#include "7zip/Common/StringConvert.h"
+#include "7zip/7zip/Common/FileStreams.h"
+#include "7zip/7zip/Archive/IArchive.h"
+#include "7zip/Windows/PropVariant.h"
+#include "7zip/Windows/PropVariantConversions.h"
 
 class CArchive7ZipDll :
 	public CArchiveBuffered
@@ -23,6 +20,7 @@ protected:
 		string origName;
 	};
 	map<string, FileData> fileData;		
+	CMyComPtr<IInArchive> archive;
 	int curSearchHandle;
 	map<int, map<string, FileData>::iterator> searchHandles;
 	virtual ABOpenFile_t* GetEntireFile(const string& fileName);
@@ -31,10 +29,6 @@ public:
 	virtual ~CArchive7ZipDll(void);
 	virtual bool IsOpen();
 	virtual int FindFiles(int cur, string* name, int* size);
-	struct _CFileInStream archiveStream;
-	CArchiveDatabaseEx db;
-	ISzAlloc allocImp;
-	ISzAlloc allocTempImp;
 };
 
 #endif

@@ -6,6 +6,8 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+#include "GUIcontroller.h"
+
 GUIinput::GUIinput(const int x1, const int y1, int w1, int h1, Functor1<const string&> s):GUIframe(x1,y1,w1, h1), enter(s)
 {
 	caption="";

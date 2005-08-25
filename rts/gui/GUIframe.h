@@ -11,6 +11,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "GlobalStuff.h"
 #include "myGL.h"
@@ -154,7 +155,7 @@ protected:
 
 extern GUIframe *mainFrame;
 
-GLuint Texture(const std::string& name);
+GLuint Texture(const std::string& name, const vector<PALETTEENTRY>* pvTransparentColors = NULL);
 void DrawThemeRect(int edge, int size, int w, int h);
 
 

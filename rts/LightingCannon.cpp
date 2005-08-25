@@ -73,8 +73,9 @@ void CLightingCannon::Fire(void)
 	CUnit* u=0;
 	float r=helper->TraceRay(weaponPos,dir,range,0,owner,u);
 
-	if(u)
-		u->DoDamage(damages,owner,ZeroVector);
+//	if(u)
+//		u->DoDamage(damages,owner,ZeroVector);
+	helper->Explosion(weaponPos+dir*r,damages,areaOfEffect,owner,false,0.5,true);
 
 	new CLightingProjectile(weaponPos,weaponPos+dir*(r+10),owner,color,10,this);
 	if(fireSoundId)

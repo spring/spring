@@ -16,7 +16,8 @@ CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* 
 	color(color),
 	length(length),
 	curLength(0),
-	intensity(intensity)
+	intensity(intensity),
+	intensityFalloff(intensity*0.1)
 {
 	dir=speed;
 	dir.Normalize();
@@ -42,8 +43,8 @@ void CLaserProjectile::Update(void)
 		curLength=length;
 	ttl--;
 
-	if(ttl<0){
-		intensity-=0.09;
+	if(ttl<7){
+		intensity-=intensityFalloff;
 		if(intensity<=0){
 			deleteMe=true;
 			intensity=0;

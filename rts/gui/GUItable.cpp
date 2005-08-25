@@ -36,6 +36,14 @@ int GUItable::GetSelected() const
 	return selected;
 }
 
+void GUItable::SetSelect(int i,int button)
+{
+	if(i<numEntries&&i>=0)
+	{
+		selected=i;
+	}
+}
+
 void GUItable::Select(int i,int button)
 {
 	if(i<numEntries&&i>=0)

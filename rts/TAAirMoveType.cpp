@@ -515,6 +515,11 @@ void CTAAirMoveType::UpdateAirPhysics()
 	speed.y=yspeed;
 	float h = pos.y - max(ground->GetHeight(pos.x, pos.z),ground->GetHeight(pos.x+speed.x*40,pos.z+speed.z*40));
 
+	if(h<4){
+		speed.x*=0.95;
+		speed.z*=0.95;
+	}
+
 	float wh=wantedHeight;
 	if(lastColWarningType==2 && speed.dot(lastColWarning->midPos+lastColWarning->speed*20-owner->midPos-speed*20)<0){
 		if(lastColWarning->midPos.y>owner->pos.y)

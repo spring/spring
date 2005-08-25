@@ -71,6 +71,7 @@ bool CGameSetup::Init(char* buf, int size)
 	file->GetDef(hostport,"0","GAME\\HostPort");
 	file->GetDef(maxUnits,"500","GAME\\MaxUnits");
 	file->GetDef(gs->gameMode,"0","GAME\\GameMode");
+	file->GetDef(sourceport,"0","GAME\\SourcePort");
 
 	// Determine if the map is inside an archive, and possibly map needed archives
 	CFileHandler* f = new CFileHandler("maps/" + mapname);

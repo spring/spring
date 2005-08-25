@@ -27,6 +27,7 @@
 #include "GlobalAIHandler.h"
 #include "Feature.h"
 #include "PathManager.h"
+#include "UnitDrawer.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -399,7 +400,7 @@ void CGroupAiCallback::DeleteFigureGroup(int group)
 
 void CGroupAiCallback::DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder)
 {
-	CUnitHandler::TempDrawUnit tdu;
+	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef=unitDefHandler->GetUnitByName(name);
 	if(!tdu.unitdef){
 		info->AddLine("Uknown unit in CGroupAiCallback::DrawUnit %s",name);
@@ -409,11 +410,11 @@ void CGroupAiCallback::DrawUnit(const char* name,float3 pos,float rotation,int l
 	tdu.rot=rotation;
 	tdu.team=team;
 	tdu.drawBorder=drawBorder;
-	std::pair<int,CUnitHandler::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
+	std::pair<int,CUnitDrawer::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
 	if(transparent)
-		uh->tempTransperentDrawUnits.insert(tp);
+		unitDrawer->tempTransperentDrawUnits.insert(tp);
 	else
-		uh->tempDrawUnits.insert(tp);
+		unitDrawer->tempDrawUnits.insert(tp);
 }
 
 bool CGroupAiCallback::CanBuildAt(const UnitDef* unitDef,float3 pos)

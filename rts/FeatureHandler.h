@@ -17,7 +17,7 @@ class CFileHandler;
 class CLoadSaveInterface;
 class CVertexArray;
 
-#define MAX_FEATURES 400000
+#define MAX_FEATURES 100000
 #define DRAW_QUAD_SIZE 32
 
 #define DRAWTYPE_3DO 0

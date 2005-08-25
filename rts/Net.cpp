@@ -158,7 +158,7 @@ void CNet::StopListening()
 	waitOnCon=false;
 }
 
-int CNet::InitClient(const char *server, int portnum,bool localConnect)
+int CNet::InitClient(const char *server, int portnum,int sourceport,bool localConnect)
 {
 #ifndef NO_NET
   LPHOSTENT lpHostEntry;
@@ -212,7 +212,7 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 		sockaddr_in saMe;
 		saMe.sin_family = AF_INET;
 		saMe.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
-		saMe.sin_port = htons(portnum);	   // Use port passed from user
+		saMe.sin_port = htons(sourceport);	   // Use port passed from user
 
 		int numTries=0;
 		while (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
@@ -226,7 +226,7 @@ int CNet::InitClient(const char *server, int portnum,bool localConnect)
 				MessageBox(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 				exit(0);
 			}
-			saMe.sin_port = htons(portnum+numTries);
+			saMe.sin_port = htons(sourceport+numTries);
 		}
 	}
 

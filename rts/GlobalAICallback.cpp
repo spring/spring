@@ -20,12 +20,14 @@
 #include "GroupHandler.h"
 #include "GlobalAIHandler.h"
 #include "Feature.h"
+#include "FeatureHandler.h"
 #include "IGroupAI.h"
 #include "PathManager.h"
 #include "AICheats.h"
 #include "GameSetup.h"
 #include "SmfReadMap.h"
 #include "Wind.h"
+#include "UnitDrawer.h"
 //#include "mmgr.h"
 
 CGlobalAICallback::CGlobalAICallback(CGlobalAI* ai)
@@ -476,7 +478,7 @@ void CGlobalAICallback::DeleteFigureGroup(int group)
 
 void CGlobalAICallback::DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder)
 {
-	CUnitHandler::TempDrawUnit tdu;
+	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef=unitDefHandler->GetUnitByName(name);
 	if(!tdu.unitdef){
 		info->AddLine("Uknown unit in CGlobalAICallback::DrawUnit %s",name);
@@ -486,16 +488,17 @@ void CGlobalAICallback::DrawUnit(const char* name,float3 pos,float rotation,int 
 	tdu.rot=rotation;
 	tdu.team=team;
 	tdu.drawBorder=drawBorder;
-	std::pair<int,CUnitHandler::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
+	std::pair<int,CUnitDrawer::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
 	if(transparent)
-		uh->tempTransperentDrawUnits.insert(tp);
+		unitDrawer->tempTransperentDrawUnits.insert(tp);
 	else
-		uh->tempDrawUnits.insert(tp);
+		unitDrawer->tempDrawUnits.insert(tp);
 }
 
 bool CGlobalAICallback::CanBuildAt(const UnitDef* unitDef,float3 pos)
 {
 	CFeature* f;
+	pos=helper->Pos2BuildPos (pos, unitDef);
 	return !!uh->TestUnitBuildSquare(pos,unitDef->name,f);
 }
 
@@ -511,6 +514,7 @@ float3 CGlobalAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,flo
 	for(float z=pos.z-searchRadius;z<pos.z+searchRadius;z+=SQUARE_SIZE*2){
 		for(float x=pos.x-searchRadius;x<pos.x+searchRadius;x+=SQUARE_SIZE*2){
 			float3 p(x,0,z);
+			p = helper->Pos2BuildPos (p, unitdef);
 			float dist=pos.distance2D(p);
 			if(dist<bestDist && uh->TestUnitBuildSquare(p,unitdef,feature) && (!feature || feature->allyteam!=allyteam)){
 				int xs=(int)(x/SQUARE_SIZE);
@@ -576,3 +580,104 @@ float CGlobalAICallback::GetEnergyStorage()
 {
 	return gs->teams[gu->myTeam]->energyStorage;
 }
+
+bool CGlobalAICallback::GetUnitResourceInfo (int unitid, UnitResourceInfo *i)
+{
+	CUnit* unit=uh->units[unitid];
+	if(unit && (unit->losStatus[gs->team2allyteam[ai->team]] & LOS_INLOS))
+	{
+		i->energyMake = unit->energyMake;
+		i->energyUse = unit->energyUse;
+		i->metalMake = unit->metalMake;
+		i->metalUse = unit->metalUse;
+		return true;
+	}
+	return false;
+}
+
+bool CGlobalAICallback::IsUnitActivated (int unitid)
+{
+	CUnit* unit=uh->units[unitid];
+	if(unit && (unit->losStatus[gs->team2allyteam[ai->team]] & LOS_INLOS))
+		return unit->activated;
+	return false;
+}
+
+bool CGlobalAICallback::UnitBeingBuilt (int unitid)
+{
+	CUnit* unit=uh->units[unitid];
+	if(unit && (unit->losStatus[gs->team2allyteam[ai->team]] & LOS_INLOS))
+		return unit->beingBuilt;
+	return false;
+}
+
+int CGlobalAICallback::GetFeatures (int *features, int max)
+{
+	int i = 0;
+	int allyteam = gs->team2allyteam[ai->team];
+
+	for (int a=0;a<MAX_FEATURES;a++) {
+		if (featureHandler->features [a]) {
+			CFeature *f = featureHandler->features[a];
+
+			if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
+				continue;
+
+			features [i++] = f->id;
+
+			if (i == max) 
+				break;
+		}
+	}
+	return i;
+}
+
+int CGlobalAICallback::GetFeatures (int *features, int maxids, const float3& pos, float radius)
+{
+	vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
+	int allyteam = gs->team2allyteam[ai->team];
+	int n = 0;
+	
+	for (int a=0;a<ft.size();a++)
+	{
+		CFeature *f = ft[a];
+
+		if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
+			continue;
+
+		features [n++] = f->id;
+		if (maxids == n)
+			break;
+	}
+
+	return n;
+}
+
+FeatureDef* CGlobalAICallback::GetFeatureDef (int feature)
+{
+	CFeature *f = featureHandler->features [feature];
+	int allyteam = gs->team2allyteam[ai->team];
+	if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		return f->def;
+	
+	return 0;
+}
+
+float CGlobalAICallback::GetFeatureHealth (int feature)
+{
+	CFeature *f = featureHandler->features [feature];
+	int allyteam = gs->team2allyteam[ai->team];
+	if (f->allyteam < 0 || f->allyteam == gs->team2allyteam[ai->team] || loshandler->InLos(f->pos,allyteam))
+		return f->health;
+	return 0.0f;
+}
+
+float CGlobalAICallback::GetFeatureReclaimLeft (int feature)
+{
+	CFeature *f = featureHandler->features [feature];
+	int allyteam = gs->team2allyteam[ai->team];
+	if (f->allyteam < 0 || f->allyteam == gs->team2allyteam[ai->team] || loshandler->InLos(f->pos,allyteam))
+		return f->reclaimLeft;
+	return 0.0f;
+}
+

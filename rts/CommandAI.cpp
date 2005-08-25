@@ -67,7 +67,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.switchKeys=0;
 	nonQueingCommands.insert(CMD_SELFD);
 
-	if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory" || owner->unitDef->canKamikaze){
+	if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
 		c.id=CMD_FIRE_STATE;
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Fire state";

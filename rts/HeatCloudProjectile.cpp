@@ -26,6 +26,8 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,c
 	checkCol=false;
 	useAirLos=true;
 	SetRadius(size+sizeGrowth*heat/heatFalloff);
+	sizemod=0;
+	sizemodmod=0;
 }
 
 CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,const float temperature,const float size, float sizegrowth, CUnit* owner)

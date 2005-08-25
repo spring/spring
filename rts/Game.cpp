@@ -90,6 +90,7 @@
 #include "GroundDecalHandler.h"
 #include "ArchiveScanner.h"
 #include "GameVersion.h"
+#include "UnitDrawer.h"
 #include <boost/filesystem/path.hpp>
 
 #ifdef NEW_GUI
@@ -112,6 +113,9 @@ extern int stupidGlobalMapId;
 
 CGame::CGame(bool server,std::string mapname)
 {
+	guikeys = NULL;
+	script = NULL;
+	showList = NULL;
 	stupidGlobalMapname=mapname;
 
 	time(&starttime);
@@ -198,12 +202,16 @@ CGame::CGame(bool server,std::string mapname)
 	ENTER_MIXED;
 	if(!server) net->Update();	//prevent timing out during load
 	ENTER_UNSYNCED;
+#ifndef NEW_GUI
 	guihandler=new CGuiHandler();
 	minimap=new CMiniMap();
+#endif
 	ENTER_MIXED;
 	ph=new CProjectileHandler();
 	ENTER_UNSYNCED;
+#ifndef NEW_GUI
 	inMapDrawer=new CInMapDraw();
+#endif
 	geometricObjects=new CGeometricObjects();
 	ENTER_SYNCED;
 	qf=new CQuadField();
@@ -220,6 +228,7 @@ CGame::CGame(bool server,std::string mapname)
 	if(!server) net->Update();	//prevent timing out during load
 	ENTER_MIXED;
 	uh=new CUnitHandler();
+	unitDrawer=new CUnitDrawer();
 	fartextureHandler = new CFartextureHandler();
 	if(!server) net->Update();	//prevent timing out during load
 	unit3doparser = new C3DOParser();
@@ -227,11 +236,10 @@ CGame::CGame(bool server,std::string mapname)
 	sky=CBaseSky::GetSky();
 #ifndef NEW_GUI
 	resourceBar=new CResourceBar();
-#else
-	guikeys=new CGuiKeyReader("");
+	guikeys=new CGuiKeyReader("uikeys.txt");
 #endif
 	if(!server) net->Update();	//prevent timing out during load
-	guikeys=new CGuiKeyReader("uikeys.txt");
+	
 	water=CBaseWater::GetWater();
 	grouphandler=new CGroupHandler(gu->myTeam);
 	globalAI=new CGlobalAIHandler();
@@ -239,8 +247,8 @@ CGame::CGame(bool server,std::string mapname)
 	ENTER_MIXED;
 	if(!shadowHandler->drawShadows){
 		for(int a=0;a<3;++a){
-			LightAmbientLand[a]=uh->unitAmbientColor[a];
-			LightDiffuseLand[a]=uh->unitSunColor[a];
+			LightAmbientLand[a]=unitDrawer->unitAmbientColor[a];
+			LightDiffuseLand[a]=unitDrawer->unitSunColor[a];
 		}
 		glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand);		// Setup The Ambient Light
 		glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand);		// Setup The Diffuse Light
@@ -338,12 +346,14 @@ CGame::~CGame()
 	CScriptHandler::UnloadInstance();
 	delete resourceBar;
 	delete uh;
+	delete unitDrawer;
 	delete featureHandler;
 	delete geometricObjects;
 	delete ph;
 	delete globalAI;
 	delete grouphandler;
-	delete minimap;
+	if ( minimap )
+		delete minimap;
 	delete pathManager;
 	delete groundDecals;
 	delete groundDrawer;
@@ -357,7 +367,8 @@ CGame::~CGame()
 	delete tooltip;
 	delete guikeys;
 	delete sound;
-	delete guihandler;
+	if ( guihandler )
+		delete guihandler;
 	delete mouse;
 	delete helper;
 	delete shadowHandler;
@@ -382,8 +393,8 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 
 #ifdef NEW_GUI
 	GUIcontroller::KeyDown(k);
-#endif
-
+// #endif
+#else
 	if(showList){					//are we currently showing a list?
 		if(k==VK_UP)
 			showList->UpOne();
@@ -441,7 +452,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 	}
 
 	if(s=="showhealthbars"){
-		uh->showHealthBars=!uh->showHealthBars;
+		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
 	}
 
 	if (s=="pause"){
@@ -628,7 +639,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 	}
 
 	if (s=="showelevation"){
-		groundDrawer->SetExtraTexture(readmap->heightLineMap,readmap->heightLinePal,true);
+		groundDrawer->SetHeightTexture();
 	}
 	if (s=="yardmap1"){
 //		groundDrawer->SetExtraTexture(readmap->yardmapLevels[0],readmap->yardmapPal,true);
@@ -641,7 +652,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 	if (s=="showmetalmap"){
 		groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
 	}
-	if (s=="showpathmap" && gs->cheatEnabled){
+	if (s=="showpathmap"){
 		groundDrawer->SetPathMapTexture();
 	}
 
@@ -736,7 +747,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 
 	if (s=="moveslow")
 		camMove[7]=true;
-
+#endif
 	return 0;
 }
 
@@ -747,8 +758,8 @@ int CGame::KeyReleased(unsigned char k)
 
 #ifdef NEW_GUI
 	GUIcontroller::KeyUp(k);
-#endif
 
+#else
 
 	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190) )){
 		return 0;
@@ -789,7 +800,7 @@ int CGame::KeyReleased(unsigned char k)
 
 	if (s=="moveslow")
 		camMove[7]=false;
-
+#endif
 	return 0;
 }
 
@@ -897,8 +908,10 @@ bool CGame::Draw()
 		script->SetCamera();
 
 	
-	if(shadowHandler->drawShadows)
+	if(shadowHandler->drawShadows){
 		shadowHandler->CreateShadows();
+		unitDrawer->UpdateReflectTex();
+	}
 
 	camera->Update(false);
 
@@ -912,7 +925,7 @@ bool CGame::Draw()
 
 //	if (playing){
 		selectedUnits.Draw();
-		uh->Draw(false);
+		unitDrawer->Draw(false);
 		featureHandler->Draw();
 		if(gu->drawdebug && gs->cheatEnabled)
 			pathManager->Draw();
@@ -922,7 +935,7 @@ bool CGame::Draw()
 		water->Draw();
 		if(treeDrawer->drawTrees)
 			treeDrawer->DrawGrass();
-		uh->DrawCloakedUnits();
+		unitDrawer->DrawCloakedUnits();
 		ph->Draw(false);
 		sky->DrawSun();
 		if(keys[VK_SHIFT])
@@ -930,10 +943,10 @@ bool CGame::Draw()
 
 		mouse->Draw();
 		
-		#ifndef NEW_GUI
+#ifndef NEW_GUI
 		guihandler->DrawMapStuff();
-		#endif
 		inMapDrawer->Draw();
+#endif
 
 		glLoadIdentity();
 		glDisable(GL_DEPTH_TEST );
@@ -1124,6 +1137,7 @@ void CGame::SimFrame()
 	globalAI->Update();
 	grouphandler->Update();
 	profiler.Update();
+	unitDrawer->Update();
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(gu->directControl){
 		unsigned char status=0;
@@ -1882,12 +1896,14 @@ void CGame::UpdateUI()
 		chatting=false;
 		userInput="";
 	}
+#ifndef NEW_GUI
 	if(inMapDrawer->wantLabel && !userWriting){
 		inMapDrawer->CreatePoint(inMapDrawer->waitingPoint,userInput);
 		inMapDrawer->wantLabel=false;
 		userInput="";
 		ignoreChar=0;
 	}
+#endif
 }
 
 
@@ -2010,11 +2026,11 @@ void CGame::DrawDirectControlHud(void)
 		glMultMatrixf(m.m);
 	}
 	glTranslatef3(-unit->pos-unit->speed*gu->timeOffset);
-	uh->SetupForUnitDrawing();
+	unitDrawer->SetupForUnitDrawing();
 	unit->Draw();
 	glPopMatrix();
 	glDisable(GL_DEPTH_TEST);
-	uh->CleanUpUnitDrawing();
+	unitDrawer->CleanUpUnitDrawing();
 	glDisable(GL_TEXTURE_2D);
 
 	if(unit->moveType->useHeading){
@@ -2200,6 +2216,25 @@ void CGame::HandleChatMsg(std::string s,int player)
 		int team=gs->players[player]->team;
 		gs->teams[team]->AddMetal(1000);
 		gs->teams[team]->AddEnergy(1000);
+	}
+	if(s.find(".take")==0){
+		int sendTeam=gs->players[player]->team;
+		for(int a=0;a<gs->activeTeams;++a){
+			if(gs->allies[a][sendTeam]){
+				bool hasPlayer=false;
+				for(int b=0;b<MAX_PLAYERS;++b){
+					if(gs->players[b]->active && gs->players[b]->team==a)
+						hasPlayer=true;
+				}
+				if(!hasPlayer){
+					for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
+						CUnit* unit=*ui;
+						if(unit->team==a)
+							unit->ChangeTeam(sendTeam,CUnit::ChangeGiven);
+					}
+				}
+			}
+		}
 	}
 	if(s.find(".nospectatorchat")==0 && player==0){
 		noSpectatorChat=!noSpectatorChat;

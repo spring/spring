@@ -107,7 +107,7 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 	}
 	std::vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){		//calculate how much to offset the buildings in the explosion radius with (while still keeping the ground under them flat
-		if((*ui)->blockHeightChanges){
+		if((*ui)->blockHeightChanges && (*ui)->isMarkedOnBlockingMap){
 			CUnit* unit=*ui;
 			float3& upos=(*ui)->pos;
 

@@ -7,10 +7,11 @@
 #include "VertexArray.h"
 //#include "mmgr.h"
 
-CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float endAlpha,const float3& color,CUnit* owner,float thickness)
+CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color,CUnit* owner,float thickness)
 : CProjectile((startPos+endPos)*0.5,ZeroVector,owner),
 	startPos(startPos),
 	endPos(endPos),
+	startAlpha(startAlpha),
 	endAlpha(endAlpha),
 	color(color),
 	thickness(thickness)
@@ -43,9 +44,9 @@ void CBeamLaserProjectile::Draw(void)
 	float3 dir2(dif.cross(dir1));
 
 	unsigned char col[4];
-	col[0]=(unsigned char)color.x*200;
-	col[1]=(unsigned char)color.y*200;
-	col[2]=(unsigned char)color.z*200;
+	col[0]=(unsigned char)(color.x*startAlpha);
+	col[1]=(unsigned char)(color.y*startAlpha);
+	col[2]=(unsigned char)(color.z*startAlpha);
 	col[3]=1;//intensity*255;
 
 	unsigned char col2[4];

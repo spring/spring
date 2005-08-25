@@ -307,7 +307,7 @@ void CSound::PlaySound(int id,const float3& p,float volume){};
 #ifdef USE_DSOUND
 HRESULT CSound::CreateStaticBuffer(const string& name)
 {
-	string filename("sounds\\"+name);
+	string filename("sounds/"+name);
 	HRESULT hr; 
 	
 	// Free any previous globals 

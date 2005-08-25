@@ -75,7 +75,7 @@ public:
 	int GetData(unsigned char* buf,int length,int conNum);
 	int SendData(unsigned char* data,int length);
 	int SendData(unsigned char* data,int length,int connection);
-	int InitClient(const char* server,int portnum,bool localConnect=false);
+	int InitClient(const char* server,int portnum,int sourceport,bool localConnect=false);
 	int InitServer(int portnum);
 	void Update(void);
 	virtual ~CNet();

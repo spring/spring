@@ -33,6 +33,7 @@
 #include "GUIsharingDialog.h"
 #include "GUIendgameDialog.h"
 #include "GUItable.h"
+#include "GUIinfoSelection.h"
 #include <stdarg.h>
 
 /* 
@@ -313,11 +314,7 @@ const string GUIcontroller::Modifiers()
 		keyname.append("shift_");
 	if(keys[VK_CONTROL])
 		keyname.append("ctrl_");
-#ifndef USE_GLUT		
-	if(keys[VK_RMENU]||keys[VK_LMENU])
-#else
 	if(keys[VK_MENU])
-#endif
 		keyname.append("alt_");
 #ifndef USE_GLUT
 	if(keys[VK_RWIN]||keys[VK_LWIN])
@@ -331,25 +328,27 @@ const string GUIcontroller::Modifiers()
 
 void GUIcontroller::KeyDown(int keysym)
 {
-	if(!guicontroller) new GUIcontroller();
-
 	if(mainFrame->KeyDown(keysym))
 		return;
+	if(guicontroller->m_SelectionKeyHandler.KeyPressed((unsigned char)keysym & 0xFF) )
+	{
+		return;
+	}
 
 	const string& mods=Modifiers();
 	const string& key=KeyName(keysym); //SDL_GetKeyName((SDLKey)keysym);
 	keyDownMap[key]=mods;
 
 	string keyname=mods + key + "_press";
-
+	
 	if(bindings.find(keyname)!=bindings.end())
+	{
 		guicontroller->Event(bindings[keyname]);
+	}
 }
 
 void GUIcontroller::KeyUp(int keysym)
 {
-	if(!guicontroller) new GUIcontroller();
-
 	const string key=KeyName(keysym); //SDL_GetKeyName((SDLKey)keysym);
 	const string mods=keyDownMap[key];
 
@@ -367,7 +366,6 @@ void GUIcontroller::Character(char c)
 
 bool GUIcontroller::Event(const std::string& event)
 {
-	if(!guicontroller) new GUIcontroller();
 	return guicontroller->EventAction(event);
 }
 
@@ -407,6 +405,7 @@ bool GUIcontroller::EventAction(const std::string& event1)
 			command=command.substr(i+1, string::npos);
 
 			GUIframe *control=controls[target];
+
 			if(control)
 				control->EventAction(command);
 			eventHandled=true;
@@ -538,7 +537,11 @@ void GUIcontroller::UpdateCommands()
 
 							table->SetHeader(header);
 							table->ChangeList(&states);
-							table->Select(s,0);
+							if (table->GetSelected()!=0) { // certainly a bad fix
+								table->SetSelect(s,table->GetSelected()-1);
+							}else{
+								table->SetSelect(s,0);
+							}
 						}					
 					}
 					
@@ -562,8 +565,6 @@ void GUIcontroller::UpdateCommands()
 
 void GUIcontroller::Draw()
 {
-	if(!guicontroller) new GUIcontroller();
-
 	if(selectedUnits.CommandsChanged())
 		guicontroller->UpdateCommands();
 
@@ -612,6 +613,7 @@ void GUIcontroller::Draw()
 			while((lf=temp.find("\n"))!=string::npos)
 			{
 				tempWidth=(int)guifont->GetWidth(temp.substr(0, lf));
+
 				if(tempWidth>width) width=tempWidth;
 				temp=temp.substr(lf+1, string::npos);
 				numLines++;
@@ -717,6 +719,9 @@ const string GUIcontroller::KeyName(unsigned char k)
 		keyNames[VK_LEFT]="left";
 		keyNames[VK_RIGHT]="right";
 		keyNames[VK_PAUSE]=	"pause";
+		keyNames[VK_ADD]="+";
+		keyNames[VK_SUBTRACT]="-";
+		keyNames[VK_OEM_PLUS]="equals";
 	}
 	
 	return keyNames[k];
@@ -901,6 +906,17 @@ void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, 
 		pane->SetDraggable(parser.SGetValueDef("no", path+"\\draggable")=="yes");
 		pane->SetFrame(parser.SGetValueDef("yes", path+"\\frame")=="yes");
 		frame=pane;
+	}
+	else if(type=="infoselection")
+	{
+		GUIinfoSelection *infoSelection=new GUIinfoSelection((int)x, (int)y, (int)w, (int)h);
+		infoSelection->SetDraggable(parser.SGetValueDef("no", path+"\\draggable")=="yes");
+		infoSelection->SetFrame(parser.SGetValueDef("yes", path+"\\frame")=="yes");
+		infoSelection->SetResizeable(parser.SGetValueDef("no", path+"\\resizeable")=="no");
+		float num=atof(parser.SGetValueDef("64", path+"\\buildpicsize").c_str());
+		ScaleX(num);
+		infoSelection->SetBuildPicSize((int)num);
+		frame=infoSelection;
 	}
 
 	if(!frame)

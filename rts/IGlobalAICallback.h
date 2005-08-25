@@ -6,6 +6,7 @@
 #include "float3.h"
 #include "command.h"
 struct UnitDef;
+struct FeatureDef;
 class IAICheats;
 
 class IGlobalAICallback
@@ -49,6 +50,8 @@ public:
 	virtual float GetUnitPower(int unitid)=0;				//sort of the measure of the units overall power
 	virtual float GetUnitExperience(int unitid)=0;	//how experienced the unit is (0.0-1.0)
 	virtual float GetUnitMaxRange(int unitid)=0;		//the furthest any weapon of the unit can fire
+	virtual bool IsUnitActivated (int unitid)=0; 
+	virtual bool UnitBeingBuilt(int unitid)=0;			//returns true if the unit is currently being built
 	virtual const UnitDef* GetUnitDef(int unitid)=0;	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 
 	virtual const UnitDef* GetUnitDef(const char* unitName)=0;
@@ -56,6 +59,15 @@ public:
 	//this will return a value even if you only have radar to it, but it might be wrong
 	virtual float3 GetUnitPos(int unitid)=0;				//note that x and z are the horizontal axises while y represent height
 
+	// GetUnitInfo fills up this struct with info about the unit
+	struct UnitResourceInfo
+	{
+		float metalUse;
+		float energyUse;
+		float metalMake;
+		float energyMake;
+	};
+	virtual bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo)=0; // fills up the specified struct
 
 	//the following functions allows the dll to use the built in pathfinder
 	//call InitPath and you get a pathid back
@@ -101,6 +113,16 @@ public:
 	virtual float GetMinWind()=0;
 	virtual float GetMaxWind()=0;
 	virtual float GetTidalStrength()=0;
+
+	//the following functions allow the ai to draw figures in the world
+	//each figure is part of a group
+	//when creating figures use 0 as group to get a new one, the return value is the new group
+	//the lifetime is how many frames a figure should live before being autoremoved, 0 means no removal
+	//arrow!=0 means that the figure will get an arrow at the end
+	virtual int CreateSplineFigure(float3 pos1,float3 pos2,float3 pos3,float3 pos4,float width,int arrow,int lifetime,int group)=0;	//This function creates a cubic beizer spline figure
+	virtual int CreateLineFigure(float3 pos1,float3 pos2,float width,int arrow,int lifetime,int group)=0;
+	virtual void SetFigureColor(int group,float red,float green,float blue,float alpha)=0;
+	virtual void DeleteFigureGroup(int group)=0;
 
 	//this function allows you to draw units in the map, of course they dont really exist,they just show up on the local players screen
 	//they will be drawn in the standard pose before any scripts are run

@@ -24,11 +24,12 @@ extern bool keys[256];
 extern bool globalQuit;
 string stupidGlobalModName;
 
-CPreGame::CPreGame(bool server)
+CPreGame::CPreGame(bool server, const string& demo)
 : server(server),
 	waitOnAddress(false),
 	waitOnScript(false),
-	waitOnMap(false)
+	waitOnMap(false),
+	saveAddress(true)
 {
 	showList=0;
 	mapName="";
@@ -65,7 +66,7 @@ CPreGame::CPreGame(bool server)
 	} else {
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
-			if(net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport)==-1){
+			if(net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport)==-1){
 				MessageBox(0,"Client couldnt connect","PreGame error",0);
 				exit(-1);
 			}
@@ -73,10 +74,18 @@ CPreGame::CPreGame(bool server)
 			mapName=gameSetup->mapname;
 			allReady=true;
 		} else {
-			userInput=regHandler.GetString("address","");
-			userPrompt="Enter server address: ";
-			waitOnAddress=true;
-			userWriting=true;
+			if (demo != "") {
+				userInput = demo;
+				waitOnAddress = true;
+				userWriting = false;
+				saveAddress = false;
+			}
+			else {
+				userInput=regHandler.GetString("address","");
+				userPrompt="Enter server address: ";
+				waitOnAddress=true;
+				userWriting=true;
+			}
 		}
 	}
 }
@@ -182,8 +191,9 @@ bool CPreGame::Update(void)
 {
 	if(waitOnAddress && !userWriting){		//användaren har skrivit klart addressen
 		waitOnAddress=false;
-		regHandler.SetString("address",userInput);
-		if(net->InitClient(userInput.c_str(),8452)==-1){
+		if (saveAddress)
+			regHandler.SetString("address",userInput);
+		if(net->InitClient(userInput.c_str(),8452,0)==-1){
 			info->AddLine("Client couldnt connect");
 			return false;
 		}

@@ -12,6 +12,7 @@ public:
 	CGameSetup(void);
 	~CGameSetup(void);
 	bool Init(std::string setupFile);
+	bool Draw(void);
 
 	CSunParser* file;
 	int myPlayer;
@@ -21,7 +22,7 @@ public:
 
 	std::string hostip;
 	int hostport;
-	bool Draw(void);
+	int sourceport;			//the port clients will try to connect from
 
 	float readyTime;
 	bool forceReady;

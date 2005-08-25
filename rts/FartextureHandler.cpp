@@ -4,7 +4,7 @@
 #include "myGL.h"
 #include <GL/glu.h>
 #include "GlobalStuff.h"
-#include "UnitHandler.h"
+#include "UnitDrawer.h"
 #include "Bitmap.h"
 //#include "mmgr.h"
 
@@ -51,7 +51,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	GLfloat LightDiffuseLand2[]=	{ 0.0f, 0.0f, 0.0f, 1.0f };
 	GLfloat LightAmbientLand2[]=	{ 0.6f, 0.6f, 0.6f, 1.0f };
 	for(int a=0;a<3;++a)
-		LightAmbientLand2[a]=min(1.,uh->unitAmbientColor[a]+uh->unitSunColor[a]*0.2);
+		LightAmbientLand2[a]=min(1.,unitDrawer->unitAmbientColor[a]+unitDrawer->unitSunColor[a]*0.2);
 	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand2);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand2);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, LightAmbientLand2);

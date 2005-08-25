@@ -33,6 +33,15 @@
 #endif
 #include "CameraController.h"
 #include "GameController.h"
+#include "UnitDrawer.h"
+#include "GuiHandler.h"
+#include "Unit.h"
+#include "UnitDef.h"
+#include "Weapon.h"
+#include "WeaponDefHandler.h"
+#include "FeatureHandler.h"
+//#include "mmgr.h"
+#include "GUICommandPool.h"
 
 extern bool	keys[256];
 extern bool	globalQuit;
@@ -275,6 +284,9 @@ GUIgame *guiGameControl;
 
 GUIgame::GUIgame(GUIcontroller *c):GUIpane(0, 0, gu->screenx, gu->screeny), controller(c)
 {
+	// initialize the commands map
+	InitCommands();
+
 	canDrag=false;
 	canResize=false;
 
@@ -295,6 +307,9 @@ GUIgame::GUIgame(GUIcontroller *c):GUIpane(0, 0, gu->screenx, gu->screeny), cont
 
 GUIgame::GUIgame(int x, int y, int w, int h, GUIcontroller *c):GUIpane(x, y, w, h), controller(c)
 {
+	// initialize the commands map
+	InitCommands();
+
 	canDrag=true;
 	canResize=true;
 
@@ -405,6 +420,23 @@ void GUIgame::PrivateDraw()
 							glDisable(GL_TEXTURE_2D);
 							glDepthMask(1);
 							glPopMatrix();
+							if(unitdef->weapons.size()>0){	// Draw firerange
+							glDisable(GL_TEXTURE_2D);
+							glColor4f(1,0.3,0.3,0.7);
+							glBegin(GL_LINE_STRIP);
+							for(int a=0;a<=40;++a){
+								float3 wpos(cos(a*2*PI/40)*unitdef->weapons[0]->range,0,sin(a*2*PI/40)*unitdef->weapons[0]->range);
+								wpos+=pos;
+								float dh=ground->GetHeight(wpos.x,wpos.z)-pos.y;
+								float modRange=unitdef->weapons[0]->range-dh*unitdef->weapons[0]->heightmod;
+								wpos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
+								wpos+=pos;
+								wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
+								glVertexf3(wpos);
+								}
+							glEnd();
+							}	
+
 						}
 					}
 					else
@@ -420,7 +452,35 @@ void GUIgame::PrivateDraw()
 						model->rootobject->DrawStatic();
 						glDisable(GL_TEXTURE_2D);
 						glDepthMask(1);
-						glPopMatrix();
+						glPopMatrix();						
+						if(unitdef->weapons.size()>0){	// Draw firerange
+						glDisable(GL_TEXTURE_2D);
+						glColor4f(1,0.3,0.3,0.7);
+						glBegin(GL_LINE_STRIP);
+						for(int a=0;a<=40;++a){
+							float3 wpos(cos(a*2*PI/40)*unitdef->weapons[0]->range,0,sin(a*2*PI/40)*unitdef->weapons[0]->range);
+							wpos+=pos;
+							float dh=ground->GetHeight(wpos.x,wpos.z)-pos.y;
+							float modRange=unitdef->weapons[0]->range-dh*unitdef->weapons[0]->heightmod;
+							wpos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
+							wpos+=pos;
+							wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
+							glVertexf3(wpos);
+							}
+						glEnd();
+						}
+						if(unitdef->extractRange>0){	//draw range
+						glDisable(GL_TEXTURE_2D);
+						glColor4f(1,0.3,0.3,0.7);
+						glBegin(GL_LINE_STRIP);
+						for(int a=0;a<=40;++a){
+							float3 wpos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
+							wpos+=pos;
+							wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
+							glVertexf3(wpos);
+						}
+						glEnd();
+					}
 					}
 				}
 			}
@@ -457,8 +517,74 @@ void GUIgame::PrivateDraw()
 					break;
 			}
 		}
+		if (currentCommand->id == CMD_ATTACK) {
+			for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
+				CUnit* unit=*si;
+				if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
+					glDisable(GL_TEXTURE_2D);
+					glColor4f(1,0.3,0.3,0.7);
+					glBegin(GL_LINE_STRIP);
+					float h=unit->pos.y;
+					for(int a=0;a<=40;++a){
+						float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
+						pos+=unit->pos;
+						float dh=ground->GetHeight(pos.x,pos.z)-h;
+						pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
+						pos+=unit->pos;
+						pos.y=ground->GetHeight(pos.x,pos.z)+8;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
+			}
+		}
 	}
-
+	if(keys[VK_SHIFT]){
+		CUnit* unit=0;
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,false);
+		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
+			if(unit->maxRange>0){
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(1,0.3,0.3,0.7);
+				glBegin(GL_LINE_STRIP);
+				float h=unit->pos.y;
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
+					pos+=unit->pos;
+					float dh=ground->GetHeight(pos.x,pos.z)-h;
+					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			if(unit->unitDef->decloakDistance>0){			//draw decloak distance
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(0.3,0.3,1,0.7);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			if(unit->unitDef->kamikazeDist>0){			//draw self destruct distance
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(0.8,0.8,0.1,0.7);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+		}
+	}
 
 
 	glPopMatrix();
@@ -670,22 +796,37 @@ bool GUIgame::MouseMoveAction(int x, int y, int xrel, int yrel, int button)
 
 bool GUIgame::EventAction(const string& command)
 {
-	if(command=="stop_command")
+	// there needs to be a better solution to this.  right now, camera speed manipulation is command based which can be awkward
+	// for instance: press shift, then a button, then release both at the same time, or shift first.  shift__release
+	// if never fired, and camMove[6] or 7 is not changed back to false, so this needs to be done
+	game->camMove[6] = game->camMove[7] = false;
+
+	int id = FindCommand(command);
+
+	if ( id == -1 )
+	{
+		return false;
+	}
+	else if(id==COMMAND_stop_command)
 	{
 		StopCommand();
 	}
-	else if(command=="deselect_all")		// deselect units
+	else if(id==COMMAND_deselect_all)		// deselect units
 	{
 		selectedUnits.ClearSelected();
 	}
-	else if(command=="cancel_or_deselect")	// if there's a command, deselect it
+	else if(id==COMMAND_cancel_or_deselect)	// if there's a command, deselect it
 	{										// else clear the current selection
 		if(currentCommand)
 			StopCommand();
-		else
+		else if ( selectedUnits.selectedUnits.size() != 0 )
 			selectedUnits.ClearSelected();		
+		else
+		{
+			guicontroller->AddText("Use shift-esc to exit");
+		}
 	}
-	else if(command=="default_command") // if there's no command, either
+	else if(id==COMMAND_default_command) // if there's no command, either
 	{									// add unit or take default command
 		if(!currentCommand)
 		{
@@ -697,7 +838,7 @@ bool GUIgame::EventAction(const string& command)
 			temporaryCommand=true;
 		}
 	}
-	else if(command=="dispatch_command")	// dispatch the currently selected command
+	else if(id==COMMAND_dispatch_command)	// dispatch the currently selected command
 	{
 		if(!currentCommand)
 			return false;
@@ -706,7 +847,7 @@ bool GUIgame::EventAction(const string& command)
 		return true;
 		
 	}
-	else if(command=="maybe_add_selection")	// add unit, but only if no command current
+	else if(id==COMMAND_maybe_add_selection)	// add unit, but only if no command current
 	{
 		if(unit&&!currentCommand)
 		{
@@ -717,7 +858,7 @@ bool GUIgame::EventAction(const string& command)
 			}
 		}
 	}
-	else if(command=="maybe_replace_selection")	// replace unit, but only if no command current
+	else if(id==COMMAND_maybe_replace_selection)	// replace unit, but only if no command current
 	{
 		if(unit&&!currentCommand)
 		{
@@ -730,144 +871,103 @@ bool GUIgame::EventAction(const string& command)
 		}
 	}
 
-///////////////////////////////// Things that I have added ////////////////////////////////////////
-	if(command=="showhealthbars"){
-		uh->showHealthBars=!uh->showHealthBars;
+	if(id==COMMAND_showhealthbars){
+		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
 	}
 
-	else if(command=="selGroup0")	
+	else if(id==COMMAND_group0)	
 	{
 		grouphandler->GroupCommand(0);
 	}
-	else if(command=="createGroup0")	
-	{
-		grouphandler->GroupCommand(0);
-	}
-	else if(command=="selGroup1")	
+	else if(id==COMMAND_group1)	
 	{
 		grouphandler->GroupCommand(1);
 	}
-	else if(command=="createGroup1")	
-	{
-		grouphandler->GroupCommand(1);
-    }
-	else if(command=="selGroup2")	
+	else if(id==COMMAND_group2)	
 	{
 		grouphandler->GroupCommand(2);
 	}
-	else if(command=="createGroup2")	
-	{
-		grouphandler->GroupCommand(2);
-	}
-	else if(command=="selGroup3")	
+	else if(id==COMMAND_group3)	
 	{
 		grouphandler->GroupCommand(3);
 	}
-	else if(command=="createGroup3")	
-	{
-		grouphandler->GroupCommand(3);
-	}
-	else if(command=="selGroup4")	
+	else if(id==COMMAND_group4)	
 	{
 		grouphandler->GroupCommand(4);
 	}
-	else if(command=="createGroup4")	
-	{
-		grouphandler->GroupCommand(4);
-	}
-	else if(command=="selGroup5")	
+	else if(id==COMMAND_group5)	
 	{
 		grouphandler->GroupCommand(5);
 	}
-	else if(command=="createGroup5")	
-	{
-		grouphandler->GroupCommand(5);
-	}
-	else if(command=="selGroup6")	
+	else if(id==COMMAND_group6)	
 	{
 		grouphandler->GroupCommand(6);
 	}
-	else if(command=="createGroup6")	
-	{
-		grouphandler->GroupCommand(6);
-	}
-	else if(command=="selGroup7")	
+	else if(id==COMMAND_group7)	
 	{
 		grouphandler->GroupCommand(7);
 	}
-	else if(command=="createGroup7")	
-	{
-		grouphandler->GroupCommand(7);
-	}
-	else if(command=="selGroup8")	
+	else if(id==COMMAND_group8)	
 	{
 		grouphandler->GroupCommand(8);
 	}
-	else if(command=="createGroup8")	
-	{
-		grouphandler->GroupCommand(8);
-	}
-	else if(command=="selGroup9")	
+	else if(id==COMMAND_group9)	
 	{
 		grouphandler->GroupCommand(9);
 	}
-	else if(command=="createGroup9")	
-	{
-		grouphandler->GroupCommand(9);
-	}
-	else if (command=="quit"){
+	else if (id==COMMAND_quit){
 			globalQuit=true;
 	}
-	else if (command=="togglelos"){
+	else if (id==COMMAND_togglelos){
 		groundDrawer->ToggleLosTexture();
 	}
-	else if(command=="mousestate"){
+	else if(id==COMMAND_mousestate){
 		mouse->ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
 	}
 
-	else if (command=="updatefov")
+	else if (id==COMMAND_updatefov)
 		groundDrawer->updateFov=!groundDrawer->updateFov;
 
-	else if (command=="drawtrees")
+	else if (id==COMMAND_drawtrees)
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
 
-	else if (command=="dynamicsky")
+	else if (id==COMMAND_dynamicsky)
 		sky->dynamicSky=!sky->dynamicSky;
 
 //	else if (s=="hideinterface")
 //		hideInterface=!hideInterface;
 
-	else if (command=="increaseviewradius"){
+	else if (id==COMMAND_increaseviewradius){
 		groundDrawer->viewRadius+=2;
 	//	(*guicontroller) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
 	}
 
-	else if (command=="decreaseviewradius"){
+	else if (id==COMMAND_decreaseviewradius){
 		groundDrawer->viewRadius-=2;
 	//	(*guicontroller) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
 	}
 
-	else if (command=="moretrees"){
+	else if (id==COMMAND_moretrees){
 		groundDrawer->baseTreeDistance+=0.2f;
 	//	(*guicontroller) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 
-	else if (command=="lesstrees"){
+	else if (id==COMMAND_lesstrees){
 		groundDrawer->baseTreeDistance-=0.2f;
 	//	(*guicontroller) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 
-	else if (command=="moreclouds"){
+	else if (id==COMMAND_moreclouds){
 		sky->cloudDensity*=0.95f;
 	//	(*guicontroller) << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
 
-	else if (command=="lessclouds"){
+	else if (id==COMMAND_lessclouds){
 		sky->cloudDensity*=1.05f;
 	//	(*guicontroller) << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
 
-	else if (command=="screenshot"){
+	else if (id==COMMAND_screenshot){
 		int x=gu->screenx;
 		if(gu->screenx%4)
 			gu->screenx+=4-gu->screenx%4;
@@ -889,7 +989,7 @@ bool GUIgame::EventAction(const string& command)
 		gu->screenx=x;
 	}
 
-	else if(command=="speedup")
+	else if(id==COMMAND_speedup)
 	{
 		float speed=gs->userSpeedFactor;
 		if(speed<1){
@@ -909,7 +1009,7 @@ bool GUIgame::EventAction(const string& command)
 			}
 
 	}
-	else if (command=="slowdown"){
+	else if (id==COMMAND_slowdown){
 		float speed=gs->userSpeedFactor;
 		if(speed<=1){
 			speed*=0.8;
@@ -929,7 +1029,7 @@ bool GUIgame::EventAction(const string& command)
 	}
 	else 
 	#ifdef DIRECT_CONTROL_ALLOWED
-	if(command=="controlunit"){
+	if(id==COMMAND_controlunit){
 		Command c;
 		c.id=CMD_STOP;
 		c.options=0;
@@ -940,69 +1040,70 @@ bool GUIgame::EventAction(const string& command)
 		net->SendData(netbuf,2);
 	} else
 	#endif
-	if (command=="showshadowmap"){
+	if (id==COMMAND_showshadowmap){
 		shadowHandler->showShadowMap=!shadowHandler->showShadowMap;
 	}
 
-	else if (command=="showstandard"){
+	else if (id==COMMAND_showstandard){
 		groundDrawer->SetExtraTexture(0,0,false);
 	}
 
-	else if (command=="showelevation"){	
+	else if (id==COMMAND_showelevation){	
 		groundDrawer->SetExtraTexture(readmap->heightLineMap,readmap->heightLinePal,true);
 	}
-	else if (command=="lastmsgpos"){
+	else if (id==COMMAND_lastmsgpos){
 		mouse->currentCamController->SetPos(guicontroller->lastMsgPos);
 		mouse->inStateTransit=true;
 		mouse->transitSpeed=0.5;
 	}
-	else if (command=="showmetalmap"){
+	else if (id==COMMAND_showmetalmap){
 		groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);		
 	}
-	else if (command=="showpathmap" && gs->cheatEnabled){
+	else if (id==COMMAND_showpathmap && gs->cheatEnabled){
 		groundDrawer->SetPathMapTexture();
 	}
 
-	else if(command=="drawinmapOn"){
+	else if(id==COMMAND_drawinmapon){
 		inMapDrawer->keyPressed=true;
 	}
-		else if(command=="drawinmapOff"){
+	
+	else if(id==COMMAND_drawinmapoff){
 		inMapDrawer->keyPressed=false;
 	}
 
-	else if (command=="pauseGame"){      
+	else if (id==COMMAND_pausegame){      
 		netbuf[0]=NETMSG_PAUSE;
 		netbuf[1]=!gs->paused;
 		netbuf[2]=gu->myPlayerNum;
 		net->SendData(netbuf,3);
 		QueryPerformanceCounter(&(game->lastframe));
 	}
-	else if (command=="singlestep"){	
+	else if (id==COMMAND_singlestep){	
 		game->bOneStep=true;
 	}
-//	else if (command=="chat"){
+//	else if (id==COMMAND_chat"){
 //		activeController->userWriting=true;
 //		userPrompt="Say: ";
 //		game->chatting=true;
 //		if(k!=VK_RETURN)
 //			activeController->ignoreNextChar=true;
 //	}
-	else if (command=="debug")
+	else if (id==COMMAND_debug)
 		gu->drawdebug=!gu->drawdebug;
 
-	else if (command=="track")	
+	else if (id==COMMAND_track)	
 		game->trackingUnit=!game->trackingUnit;
 
-	else if (command=="nosound")
+	else if (id==COMMAND_nosound)
 		sound->noSound=!sound->noSound;
 	
-	else if(command=="savegame"){
+	else if(id==COMMAND_savegame){
 		CLoadSaveHandler ls;
 		ls.SaveGame("Test.ssf");
 	}
 
 #ifndef NO_AVI
-	else if (command=="createvideo"){
+	else if (id==COMMAND_createvideo){
 		if(game->creatingVideo){
 			game->creatingVideo=false;
 			game->aviGenerator->ReleaseEngine();
@@ -1052,53 +1153,63 @@ bool GUIgame::EventAction(const string& command)
 		}
 	}
 #endif 
-	else if (command=="start_moveforward")
+	else if (id==COMMAND_start_moveforward)
 		game->camMove[0]=true;
 
-	else if (command=="start_moveback")
+	else if (id==COMMAND_start_moveback)
 		game->camMove[1]=true;
 
-	else if (command=="start_moveleft")
+	else if (id==COMMAND_start_moveleft)
 		game->camMove[2]=true;
 
-	else if (command=="start_moveright")
+	else if (id==COMMAND_start_moveright)
 		game->camMove[3]=true;
 
-	else if (command=="start_moveup")
+	else if (id==COMMAND_start_moveup)
 		game->camMove[4]=true;
 
-	else if (command=="start_movedown")
+	else if (id==COMMAND_start_movedown)
 		game->camMove[5]=true;
 
-	else if (command=="start_movefast")
+	else if (id==COMMAND_start_movefast)
+	{
 		game->camMove[6]=true;
+		game->camMove[7]=false;
+	}
 
-	else if (command=="start_moveslow")
+	else if (id==COMMAND_start_moveslow)
+	{
 		game->camMove[7]=true;
+		game->camMove[6]=false;
+	}
 
-	else if (command=="end_moveforward")
+	else if (id==COMMAND_end_moveforward)
 		game->camMove[0]=false;
 
-	else if (command=="end_moveback")
+	else if (id==COMMAND_end_moveback)
 		game->camMove[1]=false;
 
-	else if (command=="end_moveleft")
+	else if (id==COMMAND_end_moveleft)
 		game->camMove[2]=false;
 
-	else if (command=="end_moveright")
+	else if (id==COMMAND_end_moveright)
 		game->camMove[3]=false;
 
-	else if (command=="end_moveup")
+	else if (id==COMMAND_end_moveup)
 		game->camMove[4]=false;
 
-	else if (command=="end_movedown")
+	else if (id==COMMAND_end_movedown)
 		game->camMove[5]=false;
 
-	else if (command=="end_movefast")
+	else if (id==COMMAND_end_movefast || id==COMMAND_end_moveslow)
+	{
 		game->camMove[6]=false;
-
-	else if (command=="end_moveslow")
 		game->camMove[7]=false;
+	}
+
+	else if ( id==COMMAND_trajectory )
+	{
+	}
 
 	return false;
 }
@@ -1150,13 +1261,32 @@ void GUIgame::SelectCursor()
 
 string GUIgame::Tooltip()
 {
+	char tmp[500];
 	if(unit && (unit->team==gu->myTeam))
 	{
 		tooltip=unit->tooltip;
-		char tmp[500];
+
 		sprintf(tmp,"\nHealth %.0f/%.0f \nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
 			unit->health,unit->maxHealth,unit->experience,unit->metalCost+unit->energyCost/60,unit->maxRange, unit->metalMake, unit->metalUse, unit->energyMake, unit->energyUse);
-		tooltip+=tmp;		
+		tooltip+=tmp;
+	} else
+		if ((feature) && (feature->def)) 
+	{
+		tooltip="";
+		if (feature->def->metal > 0){ 
+			sprintf(tmp , "Metal : %.0f \n" , feature->def->metal);
+			tooltip+=tmp;
+		} 
+		if (feature->def->energy > 0){
+			sprintf(tmp , "Energy : %.0f \n" , feature->def->energy);
+			tooltip+=tmp;
+		}
+		sprintf(tmp , "Health : %.0f \n" , feature->health);
+		tooltip+=tmp;
+		if (feature->reclaimLeft < 1){
+			sprintf(tmp , "Reclaim Left : %.2f \n" , feature->reclaimLeft);
+			tooltip+=tmp;
+		}		
 	}
 	else
 		tooltip="";

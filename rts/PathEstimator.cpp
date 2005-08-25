@@ -201,8 +201,8 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 
 	//Search for an accessable position.
 	float best=100000000;
-	int bestX=0;
-	int bestZ=0;
+	int bestX=BLOCK_SIZE/2;
+	int bestZ=BLOCK_SIZE/2;
 
 	int x, z;
 	for(z = 1; z < BLOCK_SIZE; z += 2){

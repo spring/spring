@@ -337,9 +337,18 @@ string GUIframe::Tooltip()
 #include "Bitmap.h"
 
 
-GLuint Texture(const std::string& name)
+GLuint Texture(const std::string& name, const vector<PALETTEENTRY>* pvTransparentColors)
 {
 	CBitmap bitmap(name);
+	if ( pvTransparentColors != NULL )
+	{
+		vector < PALETTEENTRY >::const_iterator currIter = pvTransparentColors->begin(), 
+			eIter = pvTransparentColors->end();
+		for ( ; currIter != eIter; currIter++ )
+		{
+			bitmap.SetTransparent( currIter->peRed, currIter->peGreen, currIter->peBlue );
+		}
+	}
 	return bitmap.CreateTexture(false);
 };
 

@@ -41,7 +41,6 @@
 #include "Building.h"
 #include "ShadowHandler.h"
 #include "Player.h"
-//#include "mmgr.h"
 #include "LoadSaveInterface.h"
 #include "BaseWater.h"
 #include "GlobalAIHandler.h"
@@ -49,12 +48,12 @@
 #include "MissileProjectile.h"
 #include "FlareProjectile.h"
 #include "MiniMap.h"
+#include "UnitDrawer.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-const float MINIMUM_SPEED = 0.01;
 
 CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 :	CSolidObject(pos),
@@ -207,10 +206,10 @@ CUnit::~CUnit()
 #endif
 
 	if(!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectating){
-		CUnitHandler::GhostBuilding gb;
+		CUnitDrawer::GhostBuilding gb;
 		gb.pos=pos;
 		gb.model=model;
-		uh->ghostBuildings.push_back(gb);
+		unitDrawer->ghostBuildings.push_back(gb);
 	}
 
 	if(activated && unitDef->targfac){
@@ -612,11 +611,16 @@ void CUnit::Draw()
 
 			if(shadowHandler->drawShadows && !water->drawReflection){
 				glDisable(GL_VERTEX_PROGRAM_ARB);
+				glDisable(GL_FRAGMENT_PROGRAM_ARB);
 				glDisable(GL_TEXTURE_2D);
 				glActiveTextureARB(GL_TEXTURE1_ARB);
 				glDisable(GL_TEXTURE_2D);
+				glActiveTextureARB(GL_TEXTURE2_ARB);
+				glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+				glActiveTextureARB(GL_TEXTURE3_ARB);
+				glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 				glActiveTextureARB(GL_TEXTURE0_ARB);
-				glDisable(GL_FOG);
+				glEnable(GL_FOG);
 			} else {
 				glDisable(GL_LIGHTING);
 				glDisable(GL_TEXTURE_2D);
@@ -642,9 +646,14 @@ void CUnit::Draw()
 			glDisable(GL_CLIP_PLANE1);
 			if(shadowHandler->drawShadows && !water->drawReflection){
 				glEnable(GL_VERTEX_PROGRAM_ARB);
+				glEnable(GL_FRAGMENT_PROGRAM_ARB);
 				glEnable(GL_TEXTURE_2D);
 				glActiveTextureARB(GL_TEXTURE1_ARB);
 				glEnable(GL_TEXTURE_2D);
+				glActiveTextureARB(GL_TEXTURE2_ARB);
+				glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+				glActiveTextureARB(GL_TEXTURE3_ARB);
+				glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 				glActiveTextureARB(GL_TEXTURE0_ARB);
 				glEnable(GL_FOG);
 			} else {
@@ -669,7 +678,7 @@ void CUnit::Draw()
 	} else {
 		localmodel->Draw();
 	}
-	if(gu->drawdebug){
+/*	if(gu->drawdebug){
 		glPushMatrix();
 		glTranslatef3(frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x);
 		GLUquadricObj* q=gluNewQuadric();
@@ -677,7 +686,7 @@ void CUnit::Draw()
 		gluSphere(q,radius,10,10);
 		gluDeleteQuadric(q);
 		glPopMatrix();
-	}
+	}*/
 	glPopMatrix();
 }
 
@@ -935,7 +944,8 @@ void CUnit::Init(void)
 	if(pos.y+model->height<0)
 		isUnderWater=true;
 
-	Block();
+	if(!unitDef->canKamikaze || unitDef->type!="Building")	//semi hack to make mines not block ground
+		Block();
 
 	UpdateTerrainType();
 

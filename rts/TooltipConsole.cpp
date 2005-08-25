@@ -17,6 +17,8 @@ CTooltipConsole::~CTooltipConsole(void)
 {
 }
 
+#include "GUIcontroller.h"
+
 void CTooltipConsole::Draw(void)
 {
 	std::string s=mouse->GetCurrentTooltip();

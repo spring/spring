@@ -44,7 +44,7 @@ CGameServer::CGameServer(void)
 
 	serverNet=new CNet();
 	serverNet->InitServer(port);
-	net->InitClient("localhost",port,true);
+	net->InitClient("localhost",port,0,true);
 #ifndef NO_NET
 	serverNet->connections[0].localConnection=&net->connections[0];
 	net->connections[0].localConnection=&serverNet->connections[0];

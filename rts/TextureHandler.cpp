@@ -14,9 +14,9 @@
 #include "FileHandler.h"
 #include <algorithm>
 #include <cctype>
-//#include "mmgr.h"
 #include "RegHandler.h"
-#include "TextureFilters.h"
+#include <set>
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -44,18 +44,31 @@ CTextureHandler::CTextureHandler()
 	int numfiles=0;
 	int totalSize=0;
 
-	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/*.BMP");
+	std::vector<std::string> files2=CFileHandler::FindFiles("unittextures/tatex/*.BMP");
+	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/*.TGA");
+
+	for(std::vector<string>::iterator fi=files2.begin();fi!=files2.end();++fi){
+		files.push_back(*fi);
+	}
+
+	set<string> usedNames;
 
 	for(vector<string>::iterator fi=files.begin();fi!=files.end();++fi){
 		string s=std::string(*fi);
 
+		string s2=s;
+		s2.erase(0,std::max(s2.find_last_of('\\'),s2.find_last_of('/'))+1);
+		s2=s2.substr(0,s2.find_last_of('.'));
+		std::transform(s2.begin(), s2.end(), s2.begin(), (int (*)(int))std::tolower);		
+
+		if(usedNames.find(s2)!=usedNames.end())		//avoid duplicate names and give tga images priority
+			continue;
+		usedNames.insert(s2);
+
 		TexFile* tex=new TexFile;
-		tex->tex.Load(s);
+		tex->tex.Load(s,30);
 
-		s.erase(0,s.find_last_of('/')+1);
-		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
-
-		tex->name=s;
+		tex->name=s2;
 	
 		texfiles[numfiles++]=tex;
 		totalSize+=tex->tex.xsize*tex->tex.ysize;
@@ -71,7 +84,7 @@ CTextureHandler::CTextureHandler()
 		tex->tex.mem[0]=palette[a][0];
 		tex->tex.mem[1]=palette[a][1];
 		tex->tex.mem[2]=palette[a][2];
-		tex->tex.mem[3]=palette[a][3];
+		tex->tex.mem[3]=30;
 
 		texfiles[numfiles++]=tex;
 		totalSize+=tex->tex.xsize*tex->tex.ysize;
@@ -174,48 +187,12 @@ CTextureHandler::CTextureHandler()
 
 	}
 
-	int TQ = regHandler.GetInt("UnitTextureQuality",0);
-
-	if (TQ)
-	{
-		int oldTexX = bigTexX;
-		int oldTexY = bigTexY;
-		int mul = 2;
-		if (TQ == 3)
-			mul = 4;
-		bigTexX*= mul;
-		bigTexY*= mul;
-		unsigned char* temptex=new unsigned char[bigTexX*bigTexY*4];
-		switch (TQ)
-		{
-		case 1:		// 2xSaI
-#ifdef _WIN32
-			Super2xSaI_32( (uint32 *)tex, (uint32 *)temptex, oldTexX, oldTexY, oldTexX);
-#else 
-			Super2xSaI_32( (DWORD*)tex, (DWORD*)temptex, oldTexX, oldTexY, oldTexX);
-#endif
-			break;
-		case 3:		// 4xHQ
-			hq4x_init();
-			hq4x_32( tex, temptex, oldTexX, oldTexY, oldTexX, bigTexX*4);
-			break;
-		default:	// 2xHQ
-			hq2x_init(32);
-			hq2x_32( tex, oldTexX*4, temptex, bigTexX*4, oldTexX, oldTexY);
-			break;
-		}
-		delete[] tex;
-		tex = temptex;
-	}
 	glGenTextures(1, &globalTex);
 	glBindTexture(GL_TEXTURE_2D, globalTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	if(TQ)
-		gluBuild2DMipmaps(GL_TEXTURE_2D,GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ,bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, tex);
-	else
-		gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, tex);
-//		CBitmap save(tex,bigTexX,bigTexY);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, tex);
+//	CBitmap save(tex,bigTexX,bigTexY);
 	//save.Save("unittex-1x.jpg");
 
 	UnitTexture* t=new UnitTexture;

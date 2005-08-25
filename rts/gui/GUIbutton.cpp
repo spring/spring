@@ -58,7 +58,11 @@ void GUIbutton::SetCaption(const string& capt)
 
 void GUIbutton::PrivateDraw()
 {
-	glPushAttrib(GL_CURRENT_BIT);
+	// this saves the color buffer bit, which includes alpha blending data
+	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
+	glEnable( GL_ALPHA_TEST );
+	glAlphaFunc ( GL_GREATER, 0.05f );
+
 	if(isInside)
 		glColor4f(0.7,0.7f,0.7,1.0f);
 	else
@@ -109,7 +113,14 @@ void GUIbutton::BuildList()
 {
 	static GLuint tex=0;
 	if(!tex)
-		tex=Texture("bitmaps/button.bmp");
+	{
+		vector < PALETTEENTRY > vTransparentColors;
+		PALETTEENTRY peBlack;
+		peBlack.peBlue = peBlack.peGreen = peBlack.peRed = 0;
+		peBlack.peFlags = 0;
+		vTransparentColors.push_back( peBlack );
+		tex=Texture("bitmaps/button.bmp", &vTransparentColors);
+	}
 
 	glNewList(displayList, GL_COMPILE);
 

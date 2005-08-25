@@ -132,7 +132,7 @@ void CMiniMap::Draw()
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
   glActiveTextureARB(GL_TEXTURE0_ARB);
 
-	if((groundDrawer->drawLos || groundDrawer->drawExtraTex)){
+	if((groundDrawer->drawExtraTex)){
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);

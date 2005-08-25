@@ -114,6 +114,8 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	for(fi=features.begin();fi!=features.end();++fi){
 		float3 dif=(*fi)->midPos-pos;
 		float dist=dif.Length();
+		if(dist<0.1)
+			dist=0.1;
 		float mod=(radius-dist)/radius;
 		if(radius>8 && dist<(*fi)->radius*1.1 && mod<0.1)		//always do some damage with explosive stuff (ddm wreckage etc is to big to normally be damaged otherwise, even by bb shells)
 			mod=0.1;

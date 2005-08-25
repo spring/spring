@@ -106,7 +106,14 @@ void GUIstateButton::BuildList()
 {
 	static GLuint tex=0;
 	if(!tex)
-		tex=Texture("bitmaps/stateButton.bmp");
+	{
+		vector < PALETTEENTRY > vTransparentColors;
+		PALETTEENTRY peBlack;
+		peBlack.peBlue = peBlack.peGreen = peBlack.peRed = 0;
+		peBlack.peFlags = 0;
+		vTransparentColors.push_back( peBlack );
+		tex=Texture("bitmaps/stateButton.bmp", &vTransparentColors);
+	}
 
 	glNewList(displayList, GL_COMPILE);
 

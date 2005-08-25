@@ -19,6 +19,7 @@
 #include "myMath.h"
 #include "VertexArray.h"
 #include "FartextureHandler.h"
+#include "UnitDrawer.h"
 //#include "mmgr.h"
 
 using namespace std;
@@ -100,11 +101,11 @@ CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string&
 void CFeatureHandler::Draw(void)
 {
 	ASSERT_UNSYNCED_MODE;
-	uh->SetupForUnitDrawing();
+	unitDrawer->SetupForUnitDrawing();
 
 	DrawRaw(0);
 
-	uh->CleanUpUnitDrawing();
+	unitDrawer->CleanUpUnitDrawing();
 
 	DrawFarQuads();
 
@@ -120,7 +121,7 @@ void CFeatureHandler::Draw(void)
 void CFeatureHandler::DrawShadowPass(void)
 {
 	ASSERT_UNSYNCED_MODE;
-	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, uh->unitShadowVP );
+	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -591,10 +592,10 @@ void CFeatureHandler::DrawFar(CFeature* feature,CVertexArray* va)
 	float tx=(feature->def->model->farTextureNum%8)*(1.0/8.0)+snurr*(1.0/64);
 	float ty=(feature->def->model->farTextureNum/8)*(1.0/64.0);
 	float offset=0;
-	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)+camera->right*feature->radius,tx,ty,uh->camNorm);
-	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)+camera->right*feature->radius,tx,ty+(1.0/64.0),uh->camNorm);
-	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)-camera->right*feature->radius,tx+(1.0/64.0),ty+(1.0/64.0),uh->camNorm);
-	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)-camera->right*feature->radius,tx+(1.0/64.0),ty,uh->camNorm);
+	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)+camera->right*feature->radius,tx,ty,unitDrawer->camNorm);
+	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)+camera->right*feature->radius,tx,ty+(1.0/64.0),unitDrawer->camNorm);
+	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)-camera->right*feature->radius,tx+(1.0/64.0),ty+(1.0/64.0),unitDrawer->camNorm);
+	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)-camera->right*feature->radius,tx+(1.0/64.0),ty,unitDrawer->camNorm);
 }
 
 FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
