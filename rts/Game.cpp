@@ -859,6 +859,8 @@ bool CGame::Update()
 		userWriting=false;
 		gameServer->StartGame();
 	}
+	if (playing)
+		SimFrame();
 
 	return true;
 }
