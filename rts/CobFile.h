@@ -52,12 +52,12 @@ class CCobFile
 {
 public:
 	vector<string> scriptNames;
-	vector<long> scriptOffsets;
-	vector<long> scriptLengths;			//Assumes that the scripts are sorted by offset in the file
+	vector<int> scriptOffsets;
+	vector<int> scriptLengths;			//Assumes that the scripts are sorted by offset in the file
 	vector<string> pieceNames;
 	vector<int> scriptIndex;
 	map<string, int> scriptMap;
-	long* code;
+	int* code;
 	int numStaticVars;
 	string name;
 public:

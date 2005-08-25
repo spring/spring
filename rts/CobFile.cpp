@@ -5,24 +5,64 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
+#include <windows.h>
 //#include "mmgr.h"
 
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt
 //Information on missing fields from Format_Cob.pas
 typedef struct tagCOBHeader
 {
-	long VersionSignature;
-	long NumberOfScripts;
-	long NumberOfPieces;
-	long TotalScriptLen;
-	long NumberOfStaticVars;
-	long Unknown_2; /* Always seems to be 0 */
-	long OffsetToScriptCodeIndexArray;
-	long OffsetToScriptNameOffsetArray;
-	long OffsetToPieceNameOffsetArray;
-	long OffsetToScriptCode;
-	long Unknown_3; /* Always seems to point to first script name */
+	int VersionSignature;
+	int NumberOfScripts;
+	int NumberOfPieces;
+	int TotalScriptLen;
+	int NumberOfStaticVars;
+	int Unknown_2; /* Always seems to be 0 */
+	int OffsetToScriptCodeIndexArray;
+	int OffsetToScriptNameOffsetArray;
+	int OffsetToPieceNameOffsetArray;
+	int OffsetToScriptCode;
+	int Unknown_3; /* Always seems to point to first script name */
 } COBHeader;
+
+#define READ_COBHEADER(ch,src)						\
+do {									\
+	unsigned int __tmp;						\
+	unsigned short __isize = sizeof(unsigned int);			\
+	unsigned int __c = 0;						\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).VersionSignature = (int)swabdword(__tmp);			\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).NumberOfScripts = (int)swabdword(__tmp);			\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).NumberOfPieces = (int)swabdword(__tmp);			\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).TotalScriptLen = (int)swabdword(__tmp);			\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).NumberOfStaticVars = (int)swabdword(__tmp);		\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).Unknown_2 = (int)swabdword(__tmp);				\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).OffsetToScriptCodeIndexArray = (int)swabdword(__tmp);	\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).OffsetToScriptNameOffsetArray = (int)swabdword(__tmp);	\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).OffsetToPieceNameOffsetArray = (int)swabdword(__tmp);	\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).OffsetToScriptCode = (int)swabdword(__tmp);		\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).Unknown_3 = (int)swabdword(__tmp);				\
+} while (0)
 
 
 CCobFile::CCobFile(CFileHandler &in, string name)
@@ -32,7 +72,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	this->name = name;
 
 	//Figure out size needed and allocate it
-	long size = in.FileSize();
+	int size = in.FileSize();
 
 	// Handle errors (this is fairly fatal..)
 	if (size < 0) {
@@ -47,35 +87,35 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	//Time to parse
 	COBHeader ch;
-	memcpy(&ch, cobdata, sizeof(ch));
+	READ_COBHEADER(ch,cobdata);
 
-	for (long i = 0; i < ch.NumberOfScripts; ++i) {
-		long ofs;
+	for (int i = 0; i < ch.NumberOfScripts; ++i) {
+		int ofs;
 		
-		ofs = *(long *)&cobdata[ch.OffsetToScriptNameOffsetArray + i * 4];
+		ofs = *(int *)&cobdata[ch.OffsetToScriptNameOffsetArray + i * 4];
 		string s = &cobdata[ofs];
 		scriptNames.push_back(s);
 
-		ofs = *(long *)&cobdata[ch.OffsetToScriptCodeIndexArray + i * 4];
+		ofs = *(int *)&cobdata[ch.OffsetToScriptCodeIndexArray + i * 4];
 		scriptOffsets.push_back(ofs);
 	}
 
 	//Check for zero-length scripts
-	for (long i = 0; i < ch.NumberOfScripts - 1; ++i) {
+	for (int i = 0; i < ch.NumberOfScripts - 1; ++i) {
 		scriptLengths.push_back(scriptOffsets[i + 1] - scriptOffsets[i]);
 	}
 	scriptLengths.push_back(ch.TotalScriptLen - scriptOffsets[ch.NumberOfScripts - 1]);
 
-	for (long i = 0; i < ch.NumberOfPieces; ++i) {
-		long ofs;
+	for (int i = 0; i < ch.NumberOfPieces; ++i) {
+		int ofs;
 
-		ofs = *(long *)&cobdata[ch.OffsetToPieceNameOffsetArray + i * 4];
+		ofs = *(int *)&cobdata[ch.OffsetToPieceNameOffsetArray + i * 4];
 		string s = &cobdata[ofs];
 		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
 		pieceNames.push_back(s);
 	}
 
-	code = new long[(size - ch.OffsetToScriptCode) / 4 + 4];
+	code = new int[(size - ch.OffsetToScriptCode) / 4 + 4];
 	memcpy(code, &cobdata[ch.OffsetToScriptCode], size - ch.OffsetToScriptCode);
 
 	numStaticVars = ch.NumberOfStaticVars;
