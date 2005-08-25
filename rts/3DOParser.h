@@ -98,38 +98,38 @@ class C3DOParser
 {
 	typedef struct _3DObject
 	{
-		long VersionSignature;
-		long NumberOfVertices;
-		long NumberOfPrimitives;
-		long SelectionPrimitive;
-		long XFromParent;
-		long YFromParent;
-		long ZFromParent;
-		long OffsetToObjectName;
-		long Always_0;
-		long OffsetToVertexArray;
-		long OffsetToPrimitiveArray;
-		long OffsetToSiblingObject;
-		long OffsetToChildObject;
+		int VersionSignature;
+		int NumberOfVertices;
+		int NumberOfPrimitives;
+		int SelectionPrimitive;
+		int XFromParent;
+		int YFromParent;
+		int ZFromParent;
+		int OffsetToObjectName;
+		int Always_0;
+		int OffsetToVertexArray;
+		int OffsetToPrimitiveArray;
+		int OffsetToSiblingObject;
+		int OffsetToChildObject;
 	} _3DObject;
 
 	typedef struct _Vertex
 	{
-		long x;
-		long y;
-		long z;
+		int x;
+		int y;
+		int z;
 	} _Vertex;
 
 	typedef struct _Primitive
 	{
-		long PaletteEntry;
-		long NumberOfVertexIndexes;
-		long Always_0;
-		long OffsetToVertexIndexArray;
-		long OffsetToTextureName;
-		long Unknown_1;
-		long Unknown_2;
-		long Unknown_3;    
+		int PaletteEntry;
+		int NumberOfVertexIndexes;
+		int Always_0;
+		int OffsetToVertexIndexArray;
+		int OffsetToTextureName;
+		int Unknown_1;
+		int Unknown_2;
+		int Unknown_3;    
 	} _Primitive;
 
 	typedef std::vector<float3> vertex_vector;

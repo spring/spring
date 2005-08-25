@@ -39,6 +39,72 @@ using namespace std;
 
 C3DOParser* unit3doparser;
 
+#define READ_3DOBJECT(o)					\
+do {								\
+	unsigned int __tmp;					\
+	unsigned short __isize = sizeof(unsigned int);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).VersionSignature = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).NumberOfVertices = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).NumberOfPrimitives = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).SelectionPrimitive = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).XFromParent = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).YFromParent = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).ZFromParent = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).OffsetToObjectName = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).Always_0 = (int)swabdword(__tmp);			\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).OffsetToVertexArray = (int)swabdword(__tmp);	\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).OffsetToPrimitiveArray = (int)swabdword(__tmp);	\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).OffsetToSiblingObject = (int)swabdword(__tmp);	\
+	SimStreamRead(&__tmp,__isize);				\
+	(o).OffsetToChildObject = (int)swabdword(__tmp);	\
+} while (0)
+
+#define READ_VERTEX(v)					\
+do {							\
+	unsigned int __tmp;				\
+	unsigned short __isize = sizeof(unsigned int);	\
+	SimStreamRead(&__tmp,__isize);			\
+	(v).x = (int)swabdword(__tmp);			\
+	SimStreamRead(&__tmp,__isize);			\
+	(v).y = (int)swabdword(__tmp);			\
+	SimStreamRead(&__tmp,__isize);			\
+	(v).z = (int)swabdword(__tmp);			\
+} while (0)
+
+#define READ_PRIMITIVE(p)					\
+do {								\
+	unsigned int __tmp;					\
+	unsigned short __isize = sizeof(unsigned int);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).PaletteEntry = (int)swabdword(__tmp);		\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).NumberOfVertexIndexes = (int)swabdword(__tmp);	\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).Always_0 = (int)swabdword(__tmp);			\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).OffsetToVertexIndexArray = (int)swabdword(__tmp);	\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).OffsetToTextureName = (int)swabdword(__tmp);	\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).Unknown_1 = (int)swabdword(__tmp);			\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).Unknown_2 = (int)swabdword(__tmp);			\
+	SimStreamRead(&__tmp,__isize);				\
+	(p).Unknown_3 = (int)swabdword(__tmp);			\
+} while (0)
+
 
 void S3DO::DrawStatic()
 {
@@ -124,6 +190,10 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	fileBuf=new unsigned char[file.FileSize()];
 	//hpiHandler->LoadFile(name,fileBuf);
 	file.Read(fileBuf, file.FileSize());
+	if (fileBuf == NULL) {
+		delete [] fileBuf;
+		return NULL;
+	}
 	
 	S3DOModel *model = new S3DOModel;
 	S3DO* object=new S3DO;
@@ -136,7 +206,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 //	ifs.seekg(0);
 //	ifs.read((char*)&root,sizeof(_3DObject));
 	curOffset=0;
-	SimStreamRead(&root,sizeof(_3DObject));
+	READ_3DOBJECT(root);
 	object->name = GetText(root.OffsetToObjectName);
 	std::transform(object->name.begin(), object->name.end(), object->name.begin(), (int (*)(int))std::tolower);
 
@@ -184,7 +254,7 @@ void C3DOParser::GetVertexes(_3DObject* o,S3DO* object)
 	curOffset=o->OffsetToVertexArray;
 	for(int a=0;a<o->NumberOfVertices;a++){
 		_Vertex v;
-		SimStreamRead(&v,sizeof(_Vertex));
+		READ_VERTEX(v);
 
 		SVertex vertex;
 		float3 f;
@@ -207,7 +277,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 		curOffset=pos+a*sizeof(_Primitive);
 		_Primitive p;
 
-		SimStreamRead(&p,sizeof(_Primitive));
+		READ_PRIMITIVE(p);
 		SPrimitive sp;
 		sp.numVertex=p.NumberOfVertexIndexes;
 
@@ -330,7 +400,7 @@ bool C3DOParser::ReadChild(int pos, S3DO *root,int side, int *numobj)
 	_3DObject me;
 
 	curOffset=pos;
-	SimStreamRead(&me,sizeof(_3DObject));
+	READ_3DOBJECT(me);
 
 	string s = GetText(me.OffsetToObjectName);
 	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
