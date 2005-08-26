@@ -8,4 +8,6 @@ typedef int SOCKET;
 #define SOCKET_ERROR (-1)
 typedef struct hostent* LPHOSTENT;
 typedef struct in_addr* LPIN_ADDR;
-
+#define WSAGetLastError() errno
+#define WSAEWOULDBLOCK EWOULDBLOCK
+#define WSAECONNRESET ECONNRESET

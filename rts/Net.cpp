@@ -230,8 +230,8 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		}
 	}
 
-	u_long u=1;
 #ifdef _WIN32
+	u_long u=1;
 	ioctlsocket(mySocket,FIONBIO,&u);
 #else
 	fcntl(mySocket, F_SETFL, O_NONBLOCK);
@@ -342,18 +342,10 @@ void CNet::Update(void)
 	while(true){
 #ifndef NO_NET
 		if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR){
-#ifdef _WIN32
 			if(WSAGetLastError()==WSAEWOULDBLOCK || WSAGetLastError()==WSAECONNRESET) 
-#else
-			if(errno==EWOULDBLOCK||errno==ECONNRESET)
-#endif
 				break;
 			char test[500];
-#ifdef _WIN32
 			sprintf(test,"Error receiving data. %i %d",(int)imServer,WSAGetLastError());
-#else
-			sprintf(test,"Error receiving data. %i %d",(int)imServer,errno);
-#endif
 			MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 			exit(0);
 		}
@@ -593,18 +585,10 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 //	if(rand()&7)
 #ifndef NO_NET
 	if(sendto(mySocket,(char*)tempbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
-#ifdef _WIN32
 		if(WSAGetLastError()==WSAEWOULDBLOCK)
-#else
-		if(errno==EWOULDBLOCK)
-#endif
 			return;
 		char test[100];
-#ifdef _WIN32
 		sprintf(test,"Error sending data. %d",WSAGetLastError());
-#else
-		sprintf(test,"Error sending data. %d",errno);
-#endif
 		MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 	}
@@ -626,7 +610,7 @@ void CNet::CreateDemoFile()
 		newtime = _localtime64( &long_time ); /* Convert to local time. */
 #else
 		time_t long_time;
-		long_time = time(NULL);
+		time(&long_time);
 		newtime = localtime(&long_time);
 #endif
 
