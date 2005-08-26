@@ -543,10 +543,12 @@ void CGameServer::UpdateLoop(void)
 	//SetThreadPriority(thisThread,THREAD_PRIORITY_ABOVE_NORMAL);		//we want the server to continue running smoothly even if the game client is struggling
 	while(!quitServer)
 	{
-		boost::mutex::scoped_lock scoped_lock(gameServerMutex);
-		if(!Update()){
-			info->AddLine("Game server experienced an error in update");
-			globalQuit=true;
+		{
+			boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+			if(!Update()){
+				info->AddLine("Game server experienced an error in update");
+				globalQuit=true;
+			}
 		}
 		Sleep(10);
 	}
