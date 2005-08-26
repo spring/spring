@@ -75,7 +75,7 @@ do {							\
 #define ShowCursor(a) do{}while(0)
 #endif
 
-#define Sleep(a) sleep(a)
+#define Sleep(a) usleep((a))
 
 #define _hypot(x,y) hypot(x,y)
 
