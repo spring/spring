@@ -44,8 +44,8 @@ CTextureHandler::CTextureHandler()
 	int numfiles=0;
 	int totalSize=0;
 
-	std::vector<std::string> files2=CFileHandler::FindFiles("unittextures/tatex/*.BMP");
-	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/*.TGA");
+	std::vector<std::string> files2=CFileHandler::FindFiles("unittextures/tatex/*.bmp");
+	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/*.tga");
 
 	for(std::vector<string>::iterator fi=files2.begin();fi!=files2.end();++fi){
 		files.push_back(*fi);
@@ -57,7 +57,7 @@ CTextureHandler::CTextureHandler()
 		string s=std::string(*fi);
 
 		string s2=s;
-		s2.erase(0,std::max(s2.find_last_of('\\'),s2.find_last_of('/'))+1);
+		s2.erase(0,s2.find_last_of('/')+1);
 		s2=s2.substr(0,s2.find_last_of('.'));
 		std::transform(s2.begin(), s2.end(), s2.begin(), (int (*)(int))std::tolower);		
 
