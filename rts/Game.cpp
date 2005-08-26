@@ -849,7 +849,7 @@ bool CGame::Update()
 	if(gameServer)
 		gameServer->gameClientUpdated=true;
 
-#if 1 //defined(SYNCIFY)		//syncify doesnt support multithreading ...
+#ifdef SYNCIFY		//syncify doesnt support multithreading ...
 	gameServer->Update();
 #endif
 
