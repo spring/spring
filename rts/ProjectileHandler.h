@@ -56,8 +56,7 @@ public:
 
 	Projectile_List ps;
 
-	projdist* distlist;
-	int distlistsize;
+	std::vector<projdist> distlist;
 
 	unsigned int projectileShadowVP;
 

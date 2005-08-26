@@ -313,10 +313,6 @@ CProjectileHandler::CProjectileHandler()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 1,256, 512, GL_LUMINANCE, GL_UNSIGNED_BYTE, tex2);
 
-
-	distlistsize=100;
-	distlist=new projdist[100];
-
 	if(shadowHandler->drawShadows){
 		projectileShadowVP=LoadVertexProgram("projectileshadow.vp");
 	}
@@ -333,7 +329,7 @@ CProjectileHandler::~CProjectileHandler()
 	std::set<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi)
 		delete *gfi;
-	delete[] distlist;
+	delete &distlist;
 
 	if(shadowHandler->drawShadows){
 		glDeleteProgramsARB( 1, &projectileShadowVP );
@@ -388,20 +384,14 @@ START_TIME_PROFILE
 END_TIME_PROFILE("Projectile handler");
 }
 
-int CompareProjDist( const void *arg1, const void *arg2 ){
-	if(((CProjectileHandler::projdist*)arg1)->dist > ((CProjectileHandler::projdist*)arg2)->dist)
-	   return -1;
+int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2){
+	if (arg1.dist > arg2.dist);
+	   return 0;
    return 1;
 }
 
 void CProjectileHandler::Draw(bool drawReflection)
 {
-	while(distlistsize<(int)ps.size()){
-		distlistsize*=2;
-		delete[] distlist;
-		distlist=new projdist[distlistsize];
-	}
-
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(1);
@@ -443,7 +433,7 @@ void CProjectileHandler::Draw(bool drawReflection)
 	va->DrawArrayTN(GL_QUADS);
 
 	Projectile_List::iterator psi;
-	int a=0;
+	distlist.clear();
 	for(psi=ps.begin();psi != ps.end();++psi){
 		if(cam2->InView((*psi)->pos,(*psi)->drawRadius) && (loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->allies[(*psi)->owner->allyteam][gu->myAllyTeam]))){
 			if(drawReflection){
@@ -456,15 +446,15 @@ void CProjectileHandler::Draw(bool drawReflection)
 			}
 			if((*psi)->isUnitPart)
 				(*psi)->DrawUnitPart();
-			distlist[a].proj=*psi;
-			distlist[a].dist=(*psi)->pos.dot(camera->forward);
-			a++;
+			struct projdist tmp;
+			tmp.proj=*psi;
+			tmp.dist=(*psi)->pos.dot(camera->forward);
+			distlist.push_back(tmp);
 		}
 	}
 	unitDrawer->CleanUpUnitDrawing();
 
-	float sortSize=a;
-	qsort(distlist, (size_t)sortSize,8,CompareProjDist);
+	sort(distlist.begin(), distlist.end(), CompareProjDist);
 
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
@@ -481,8 +471,8 @@ void CProjectileHandler::Draw(bool drawReflection)
 	CProjectile::inArray=false;
 	CProjectile::va=GetVertexArray();
 	CProjectile::va->Initialize();
-	for(int a=0;a<sortSize;a++){
-		distlist[a].proj->Draw();
+	for(int a=0;a<distlist.size();a++){
+		distlist.at(a).proj->Draw();
 	}
 	if(CProjectile::inArray)
 		CProjectile::DrawArray();
@@ -497,27 +487,22 @@ void CProjectileHandler::Draw(bool drawReflection)
 void CProjectileHandler::DrawShadowPass(void)
 {
 #ifndef NO_SHADOWS
-	while(distlistsize<(int)ps.size()){
-		distlistsize*=2;
-		delete[] distlist;
-		distlist=new projdist[distlistsize];
-	}
+	distlist.clear();
 	Projectile_List::iterator psi;
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, projectileShadowVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
-	int a=0;
 	for(psi=ps.begin();psi != ps.end();++psi){
 		if((loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->allies[(*psi)->owner->allyteam][gu->myAllyTeam]))){
 			if((*psi)->isUnitPart)
 				(*psi)->DrawUnitPart();
 			if((*psi)->castShadow){
-				distlist[a].proj=*psi;
-				a++;
+				struct projdist tmp;
+				tmp.proj = *psi;
+				distlist.push_back(tmp);
 			}
 		}
 	}
-	int sortSize=a;
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, CProjectile::textures[0]);
@@ -529,8 +514,8 @@ void CProjectileHandler::DrawShadowPass(void)
 	CProjectile::inArray=false;
 	CProjectile::va=GetVertexArray();
 	CProjectile::va->Initialize();
-	for(int a=0;a<sortSize;a++){
-		distlist[a].proj->Draw();
+	for(int b=0;b<distlist.size();b++){
+		distlist.at(b).proj->Draw();
 	}
 	if(CProjectile::inArray)
 		CProjectile::DrawArray();
