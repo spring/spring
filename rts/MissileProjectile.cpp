@@ -11,6 +11,7 @@
 #include "3DOParser.h"
 #include "Matrix44f.h"
 #include "WeaponDefHandler.h"
+#include "SyncTracer.h"
 //#include "mmgr.h"
 
 static const float Smoke_Time=60;

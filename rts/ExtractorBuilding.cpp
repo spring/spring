@@ -15,6 +15,7 @@
 #include "UnitDef.h"
 #include "MetalMap.h"
 #include "QuadField.h"
+#include "SyncTracer.h"
 //#include "mmgr.h"
 /*
 Constructor
