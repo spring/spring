@@ -37,7 +37,7 @@ void CSyncTracer::Commit()
 		char c[100];
 		sprintf(c,"trace%i.txt",gu->myTeam);
 		boost::filesystem::path fn(c);
-		file=new ofstream(fn.native_file_string(), ios::out);
+		file=new ofstream(fn.native_file_string().c_str(), ios::out);
 	}
 #endif
 	(*file) << traces[firstActive].c_str();
