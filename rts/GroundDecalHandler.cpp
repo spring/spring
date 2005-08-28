@@ -133,7 +133,7 @@ void CGroundDecalHandler::Draw(void)
 #ifndef ENABLE_CPPFIX
 					ti=(*tti)->tracks.erase(ti);
 #else
-					(*tti)->tracks.erase(++ti);
+					(*tti)->tracks.erase(ti++);
 #endif
 					continue;
 				}

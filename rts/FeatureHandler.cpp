@@ -173,7 +173,7 @@ START_TIME_PROFILE
 #ifndef ENABLE_CPPFIX
 			fi=updateFeatures.erase(fi);
 #else
-			updateFeatures.erase(++fi); //TODO check that
+			updateFeatures.erase(fi++); //TODO check that
 #endif
 		} else {
 			++fi;
@@ -467,7 +467,7 @@ void CFeatureHandler::DrawRaw(int extraSize)
 #ifndef ENABLE_CPPFIX							
 							fi=dq->nonStaticFeatures.erase(fi);
 #else			
-							dq->nonStaticFeatures.erase(++fi); //check this
+							dq->nonStaticFeatures.erase(fi++); //check this
 #endif
 							dq->staticFeatures.insert(f);
 							f->drawQueType=1;
@@ -538,7 +538,7 @@ void CFeatureHandler::DrawFarQuads(void)
 #ifndef ENABLE_CPPFIX
 						fi=dq->nonStaticFeatures.erase(fi);
 #else
-						dq->nonStaticFeatures.erase(++fi);
+						dq->nonStaticFeatures.erase(fi++);
 #endif
 						dq->staticFeatures.insert(f);
 						f->drawQueType=1;
