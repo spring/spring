@@ -2127,7 +2127,7 @@ void CGame::DrawDirectControlHud(void)
 			glEnd();
 
 			if(!w->onlyForward){
-				float dist=min(w->owner->directControl->targetDist,w->range*0.9);
+				float dist=min(w->owner->directControl->targetDist,w->range*0.9f);
 				pos=w->weaponPos+w->wantedDir*dist;
 				v1=(pos-camera->pos).Normalize();
 				v2=(v1.cross(UpVector)).Normalize();
@@ -2294,7 +2294,7 @@ unsigned  int CGame::CreateExeChecksum(void)
 
 	for(int a=0;a<l;++a){
 		ret+=buf[a];
-		ret*=max(1,buf[a]);
+		ret*=max((unsigned char)1,buf[a]);
 	}
 
 	delete[] buf;

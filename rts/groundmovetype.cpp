@@ -141,10 +141,10 @@ void CGroundMoveType::Update()
 		}
 		short deltaHeading=0;
 		if(owner->directControl->left){
-			deltaHeading+=turnRate;
+			deltaHeading+=(short)turnRate;
 		}
 		if(owner->directControl->right){
-			deltaHeading-=turnRate;
+			deltaHeading-=(short)turnRate;
 		}
 		
 		ENTER_UNSYNCED;

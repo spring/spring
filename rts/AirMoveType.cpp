@@ -759,7 +759,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl)
 		if((pos.y-gHeight)>wantedHeight*1.2)
-			engine=max(0,min(engine,1-(pos.y-gHeight-wantedHeight*1.2)/wantedHeight));
+			engine=max(0.,min((double)engine,1-(pos.y-gHeight-wantedHeight*1.2)/wantedHeight));
 #endif
 
 	speed+=engineVector*maxAcc*engine;

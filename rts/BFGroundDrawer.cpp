@@ -964,7 +964,7 @@ bool CBFGroundDrawer::UpdateTextures()
 				for(int x=0;x<gs->mapx;++x){
 					int a=y*gs->pwr2mapx+x;
 					float height=readmap->centerheightmap[y*gs->mapx+x];
-					unsigned char value=height*8;
+					unsigned char value=(unsigned char)(height*8);
 					infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
 					infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
 					infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
