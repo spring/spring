@@ -46,6 +46,43 @@ struct MapHeader {
 	int numExtraHeaders;		//numbers of extra headers following main header
 };
 
+#define READPTR_MAPHEADER(mh,srcptr)			\
+do {							\
+	unsigned int __tmpdw;				\
+	(srcptr)->Read((mh).magic,sizeof((mh).magic));	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).version = (int)swabdword(__tmpdw);		\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).mapid = (int)swabdword(__tmpdw);		\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).mapx = (int)swabdword(__tmpdw);		\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).mapy = (int)swabdword(__tmpdw);		\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).squareSize = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).texelPerSquare = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).tilesize = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&(mh).minHeight,sizeof(float));	\
+	(srcptr)->Read(&(mh).maxHeight,sizeof(float));	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).heightmapPtr = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).typeMapPtr = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).tilesPtr = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).minimapPtr = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).metalmapPtr = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).featurePtr = (int)swabdword(__tmpdw);	\
+	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mh).numExtraHeaders = (int)swabdword(__tmpdw);	\
+} while (0)
+	
+
 //start of every extra header must look like this, then comes data specific for header type
 struct ExtraHeader {
 	int size;			//size of extra header
@@ -72,6 +109,25 @@ struct MapTileHeader
 	int numTileFiles;
 	int numTiles;
 };
+
+#define READ_MAPTILEHEADER(mth,src)			\
+do {							\
+	unsigned int __tmpdw;				\
+	(src).Read(&__tmpdw,sizeof(unsigned int));	\
+	(mth).numTileFiles = swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,sizeof(unsigned int));	\
+	(mth).numTiles = swabdword(__tmpdw);		\
+} while (0)
+
+#define READPTR_MAPTILEHEADER(mth,src)			\
+do {							\
+	unsigned int __tmpdw;				\
+	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mth).numTileFiles = swabdword(__tmpdw);	\
+	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mth).numTiles = swabdword(__tmpdw);		\
+} while (0)
+
 //this is followed by numTileFiles file definition where each file definition is an int followed by a zero terminated file name
 //each file defines as many tiles the int indicates with the following files starting where the last one ended
 //so if there is 2 files with 100 tiles each the first defines 0-99 and the second 100-199
@@ -83,6 +139,16 @@ struct MapFeatureHeader
 	int numFeatureType;
 	int numFeatures;
 };
+
+#define READ_MAPFEATUREHEADER(mfh,src)			\
+do {							\
+	unsigned int __tmpdw;				\
+	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mfh).numFeatureType = (int)swabdword(__tmpdw);	\
+	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mfh).numFeatures = (int)swabdword(__tmpdw);	\
+} while (0)
+
 //this is followed by numFeatureType zero terminated strings indicating the names of the features in the map
 //then follow numFeatures MapFeatureStructs
 
@@ -97,7 +163,17 @@ struct MapFeatureStruct
 	float relativeSize;		//not used at the moment keep 1
 };
 
-
+#define READ_MAPFEATURESTRUCT(mfs,src)			\
+do {							\
+	unsigned int __tmpdw;				\
+	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
+	(mfs).featureType = (int)swabdword(__tmpdw);	\
+	(src)->Read(&(mfs).xpos,sizeof(float));		\
+	(src)->Read(&(mfs).ypos,sizeof(float));		\
+	(src)->Read(&(mfs).zpos,sizeof(float));		\
+	(src)->Read(&(mfs).rotation,sizeof(float));	\
+	(src)->Read(&(mfs).relativeSize,sizeof(float));	\
+} while (0)
 
 /*
 map texture tile file (.smt) layout is like this
@@ -119,6 +195,21 @@ struct TileFileHeader
 	int tileSize;			//must be 32 for now
 	int compressionType;	//must be 1=dxt1 for now
 };
+
+#define READ_TILEFILEHEADER(tfh,src)			\
+do {							\
+	unsigned int __tmpdw;				\
+	(src).Read(&(tfh).magic,sizeof((tfh).magic));	\
+	(src).Read(&__tmpdw,sizeof(unsigned int));	\
+	(tfh).version = (int)swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,sizeof(unsigned int));	\
+	(tfh).numTiles = (int)swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,sizeof(unsigned int));	\
+	(tfh).tileSize = (int)swabdword(__tmpdw);	\
+	(src).Read(&__tmpdw,sizeof(unsigned int));	\
+	(tfh).compressionType = (int)swabdword(__tmpdw);\
+} while (0)
+
 //this is followed by the raw data for the tiles
 //
 #endif //ndef __MAPFILE_H

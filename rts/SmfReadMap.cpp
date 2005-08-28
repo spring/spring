@@ -36,7 +36,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 		exit(0);
 	}
 	POP_CODE_MODE;
-	ifs->Read(&header,sizeof(MapHeader));
+	READPTR_MAPHEADER(header,ifs);
 
 	if(strcmp(header.magic,"spring map file")!=0 || header.version!=1 || header.tilesize!=32 || header.texelPerSquare!=8 || header.squareSize!=8){
 		char t[500];

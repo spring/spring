@@ -34,7 +34,7 @@ LObject* CS3OParser::Parse(const string& filename)
 	}
 
 	S3OHeader header;
-    fread(&header, sizeof(S3OHeader), 1, pStream);
+        FREAD_S3OHEADER(header,pStream);
 	if(header.signature!=S3OSIGNATURE)
 	{
 		fclose(pStream);
@@ -43,7 +43,7 @@ LObject* CS3OParser::Parse(const string& filename)
 
 	S3OObject s3oobject;
 	fseek(pStream, header.offsetToBaseObject, SEEK_SET);
-	fread(&s3oobject.object, sizeof(s3oobject.object), 1, pStream);
+	FREAD_S3OOBJECT_OBJECT(s3oobject.object,pStream);
 
 	s3o->offset = *((float3*)&s3oobject.object.offsetFromParrent);
 	//s3o->turn = float3(0,0,0);
@@ -52,7 +52,7 @@ LObject* CS3OParser::Parse(const string& filename)
 	switch(s3oobject.object.type)
 	{
 	case OBJECT_TYPE_GEOMETRY:
-		fread(&s3oobject.geometry, sizeof(s3oobject.geometry), 1, pStream);
+		FREAD_S3OOBJECT_GEOMETRY(s3oobject.geometry,pStream);
 		ReadVertices(*s3o, pStream, s3oobject.geometry.offsetToVertexArray, s3oobject.geometry.numVertex);
 		ReadPrimitives(*s3o, pStream, s3oobject.geometry.offsetToPrimitiveArray, s3oobject.geometry.numPrimitives);			
 		break;
@@ -81,14 +81,14 @@ void CS3OParser::ReadObject(LObject &s3o, FILE *pStream, int fileOffset)
 {
 	S3OObject s3oobject;
 	fseek(pStream, fileOffset, SEEK_SET);
-	fread(&s3oobject.object, sizeof(s3oobject.object), 1, pStream);
+	FREAD_S3OOBJECT_OBJECT(s3oobject.object,pStream);
 
 	LObject child;
 
 	switch(s3oobject.object.type)
 	{
 	case OBJECT_TYPE_GEOMETRY:
-		fread(&s3oobject.geometry, sizeof(s3oobject.geometry), 1, pStream);
+		FREAD_S3OOBJECT_GEOMETRY(s3oobject.geometry,pStream);
 		ReadVertices(child, pStream, s3oobject.geometry.offsetToVertexArray, s3oobject.geometry.numVertex);
 		ReadPrimitives(child, pStream, s3oobject.geometry.offsetToPrimitiveArray, s3oobject.geometry.numPrimitives);
 		break;
@@ -124,7 +124,7 @@ void CS3OParser::ReadVertices(LObject &s3o, FILE *pStream, int fileOffset, int n
 	for(int i=0; i<num; i++)
 	{
 		VertexData vertdata;
-		fread(&vertdata, sizeof(VertexData), 1, pStream);
+		FREAD_VERTEXDATA(vertdata,pStream);
 		s3o.vertdata.push_back(vertdata);
 	}
 }
@@ -136,7 +136,7 @@ void CS3OParser::ReadPrimitives(LObject &s3o, FILE *pStream, int fileOffset, int
 	{
 		fseek(pStream, fileOffset + i*sizeof(S3OPrimitive), SEEK_SET);
 		S3OPrimitive prim;
-		fread(&prim, sizeof(S3OPrimitive), 1, pStream);
+		FREAD_S3OPRIMITIVE(prim,pStream);
 
 		SsPrimitive sprim;
 
@@ -152,7 +152,7 @@ void CS3OParser::ReadVertexIndexes(SsPrimitive &prim, FILE *pStream, int fileOff
 	for(int i=0; i<num; i++)
 	{
 		VertexIndexStruct vertindex;
-		fread(&vertindex, sizeof(VertexIndexStruct), 1, pStream);
+		FREAD_VERTEXINDEXSTRUCT(vertindex,pStream);
 
 		int svertindex;
 		svertindex = vertindex.vertexIndex;

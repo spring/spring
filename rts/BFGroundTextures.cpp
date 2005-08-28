@@ -31,7 +31,7 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 	tileSize = header->tilesize;
 	
 	MapTileHeader tileHeader;
-	ifs->Read(&tileHeader,sizeof(MapTileHeader));
+	READPTR_MAPTILEHEADER(tileHeader,ifs);
 
 	tileMap = new int[(header->mapx*header->mapy)/16];
 	tiles = new char[tileHeader.numTiles*SMALL_TILE_SIZE];
@@ -59,7 +59,7 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 			continue;
 		}
 		TileFileHeader tfh;
-		tileFile.Read(&tfh,sizeof(TileFileHeader));
+		READ_TILEFILEHEADER(tfh,tileFile);
 
 		if(strcmp(tfh.magic,"spring tilefile")!=0 || tfh.version!=1 || tfh.tileSize!=32 || tfh.compressionType!=1){
 			char t[500];
