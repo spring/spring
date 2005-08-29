@@ -26,7 +26,6 @@ opts.Add('platform', 'Set to linux or windows', detected_platform)
 opts.Add('debug', 'Set to yes to produce a binary with debug informations', 1)
 
 #porting options - mandatory
-opts.Add('disable_3DO', 'Set to no to enable 3DO code (then merge with upstream and it should be fixed)', 1)
 opts.Add('disable_threads', 'Set to no to enable mutexes and threads codes (port using glib)', 1)
 opts.Add('disable_io', 'Set to no to enable input/output code', 1)
 opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1)
@@ -81,8 +80,6 @@ if env.get('disable_dll'):
 	defines+=['NO_DLL']
 if env.get('emule_wintypes'):
 	defines+=['EMULE_WINTYPES']
-if env.get('disable_3DO'):
-	defines+=['NO_3DO']
 if env.get('disable_threads'):
 	defines+=['NO_MUTEXTHREADS']
 if env.get('disable_inputs'):
@@ -138,12 +135,12 @@ for f in hpiutilf:
 	
 #linux disable unused code
 if platform == 'linux':	
-	exclude_list += exclude_list + Split(""""
+	exclude_list += exclude_list + Split("""
 			ARB_vertex_program_extension.cpp
 			mmgr.cpp
 			multipath.cpp
-			estimater.cpp
-			""")
+			estimater.cpp""")
+
 nbObjects=0
 nbBuiltObjects=0
 for f in tmp:
@@ -168,28 +165,32 @@ print nbBuiltObjects, " objects are already produced from a previous build (", n
 #################################################
 # other FLAGS
 if debug: #to use debug, please use SCustomize file
-        env.Append(CPPFLAGS = ['-ggdb3','-D_DEBUG','-DDEBUG'])
+	env.Append(CPPFLAGS = ['-ggdb3','-D_DEBUG','-DDEBUG'])
 else:
-	env.Append(CPPFLAGS = ['-O2'])
+	env.Append(CPPFLAGS = [''])
+#	env.Append(CPPFLAGS = ['i-O2'])
 
+if platform == 'linux':
+	env.Append(CPPFLAGS = ['-pthread'])
 
 #################################################
 # Check requirements
 
-print "\nCheck some header files"
+
+print "\nChecking header files"
 conf = Configure(env)
 conf.env.Append(CPPPATH=common_include_path)
 if not conf.CheckCHeader(['ft2build.h']):
 	print ' dev freetype must be installed!'
 	Exit(1)
-if not conf.CheckCHeader('GL/glut.h'):
-	print ' a dev implementation of GLUT must be installed!'
+if not conf.CheckCHeader(['GL/glut.h']):
+	print ' A dev implementation of GLUT must be installed!'
 	Exit(1)
-#if not conf.CheckCHeader('glib.h'):
-#	print ' a dev implementation of glib must be installed!'
-#	Exit(1)
-if not conf.CheckCHeader('GL/glew.h'):
+if not conf.CheckCHeader(['GL/glew.h']):
 	print ' Cannot find GLEW http://glew.sourceforge.net'
+	Exit(1)
+if not conf.CheckCXXHeader('boost/cstdint.hpp'):
+	print ' Boost library must be installed'
 	Exit(1)
 if not conf.CheckCXXHeader('boost/thread.hpp'):
 	print ' Cannot find Boost threading headers'
@@ -201,8 +202,13 @@ if not conf.CheckCXXHeader('boost/regex.hpp'):
 	print ' Cannot find Boost regex header'
 	Exit(1)
 if not conf.CheckCHeader('IL/il.h'):
-	print ' Cannot find DevIL header'
+	print ' Cannot find DevIL image library header'
 	Exit(1)
+#if not conf.CheckCHeader('glib.h'):
+#	print ' a dev implementation of glib must be installed!'
+#	Exit(1)
+
+print "\nChecking libraries"
 if not conf.CheckLib('libc'):
 	print "You need libc to compile this program"
 	Exit(1)
@@ -215,13 +221,13 @@ if not conf.CheckLib('GLEW'):
 if not conf.CheckLib('jpeg'):
 	print "You need libjpeg to compile this program"
 	Exit(1)
-if not conf.CheckLib('boost_filesystem-mt'):
+if not conf.CheckLib('boost_filesystem'):
 	print "You need the Boost filesystem library for this program"
 	Exit(1)
-if not conf.CheckLib('boost_thread-mt'):
+if not conf.CheckLib('boost_thread'):
 	print "You need the Boost thread library for this program"
 	Exit(1)
-if not conf.CheckLib('boost_regex-mt'):
+if not conf.CheckLib('boost_regex'):
 	print "You need the Boost regex library for this program"
 	Exit(1)
 if not conf.CheckLib('IL'):
@@ -232,9 +238,10 @@ env = conf.Finish()
 ###################################################
 # let's build
 
+print "\nEverything seems OK, let's build"
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
 #env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib','GLU', 'libboost_filesystem'], CPPPATH=common_include_path)
-lib=['GL','glut','GLEW','jpeg','freetype','GLU','boost_thread-mt','boost_filesystem-mt','boost_regex-mt','IL']
+lib=['GL','glut','GLEW','jpeg','freetype','GLU','boost_thread','boost_filesystem','boost_regex','IL']
 if env.get('use_tcmalloc'):
 	lib+=['tcmalloc']
 env.Program('spring', files,  LIBS=lib, CPPPATH=common_include_path,LIBFLAGS=['-m32'])
