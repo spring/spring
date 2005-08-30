@@ -15,7 +15,7 @@
 #define PI 3.141592654f
 #define MAX_WORLD_SIZE 1000000;
 #define SQUARE_SIZE 8
-#define GAME_SPEED 30
+#define GAME_SPEED 1// 30
 #define RANDINT_MAX 0x7fff
 #define MAX_VIEW_RANGE 8000
 #define MAX_TEAMS 10
