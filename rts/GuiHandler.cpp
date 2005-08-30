@@ -390,7 +390,7 @@ void CGuiHandler::DrawButtons()
 			}
 			// skriv text
 			string toPrint=commands[nr].name;
-			if(commands[nr].type==CMDTYPE_ICON_MODE){
+			if(commands[nr].type==CMDTYPE_ICON_MODE && (atoi(commands[nr].params[0].c_str())+1)<commands[nr].params.size()){
 				toPrint=commands[nr].params[atoi(commands[nr].params[0].c_str())+1];
 			}
 
