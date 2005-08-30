@@ -42,7 +42,7 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,c
 	checkCol=false;
 	useAirLos=true;
 	SetRadius(size+sizeGrowth*heat/heatFalloff);
-	sizemodmod=min(1.,max(0.,1-(1/pow(2.0f,heat*0.1f))));
+	sizemodmod=min(1.,max(0.,(double)(1-(1/pow(2.0f,heat*0.1f)))));
 }
 
 CHeatCloudProjectile::~CHeatCloudProjectile()
