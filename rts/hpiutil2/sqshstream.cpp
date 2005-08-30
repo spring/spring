@@ -32,18 +32,18 @@ hpiutil::sqshstream::sqshstream(substream &ss)
 {
 	valid = false;
 	stream = &ss;
-	uint32_t magic = readint();
+	boost::uint32_t magic = readint();
 	if (magic != SQSH_MAGIC) {
 		std::cerr << "Invalid SQSH header signature: 0x" << std::hex << magic << std::endl;
 		return;
 	}
-	uint8_t unknown = stream->read();
+	boost::uint8_t unknown = stream->read();
 	compress = stream->read();
 	encrypt = stream->read();
 	compressedsize = readint();
 	fullsize = readint();
 	checksum = readint();
-	uint32_t newcheck = stream->checksum(SQSH_HEADER);
+	boost::uint32_t newcheck = stream->checksum(SQSH_HEADER);
 	if (checksum && (newcheck != checksum)) {
 		std::cerr << "Chunk checksum " << std::hex << newcheck << " does not match stored checksum " << std::hex << checksum << std::endl;
 		return;
@@ -70,20 +70,20 @@ hpiutil::sqshstream::~sqshstream()
  */
 bool hpiutil::sqshstream::decompress()
 {
-	uint8_t *compstring = (uint8_t*)calloc(compressedsize,sizeof(uint8_t));
+	boost::uint8_t *compstring = (boost::uint8_t*)calloc(compressedsize,sizeof(boost::uint8_t));
 	stream->read(compstring,SQSH_HEADER,compressedsize);
 	if (encrypt) {
 		for (int i = 0; i < compressedsize; i++)
 			compstring[i] = compstring[i] - i ^ i;
 	}
 	position = 0;
-	uint32_t ret;
+	boost::uint32_t ret;
 	if (compress == HPI_LZ77) {
-		data = (uint8_t*)calloc(fullsize,sizeof(uint8_t));
+		data = (boost::uint8_t*)calloc(fullsize,sizeof(boost::uint8_t));
 		ret = decompresslz77(compstring,data,compressedsize,fullsize);
 		free((void*)compstring);
 	} else if (compress == HPI_ZLIB) {
-		data = (uint8_t*)calloc(fullsize,sizeof(uint8_t));
+		data = (boost::uint8_t*)calloc(fullsize,sizeof(boost::uint8_t));
 		ret = decompresszlib(compstring,data,compressedsize,fullsize);
 		free((void*)compstring);
 	} else {
@@ -98,14 +98,14 @@ bool hpiutil::sqshstream::decompress()
  * reads a single byte
  * @return byte read
  */
-uint8_t hpiutil::sqshstream::read()
+boost::uint8_t hpiutil::sqshstream::read()
 {
 	if (position >= fullsize)
 		return 0;
 	if (valid)
 		return data[position++];
 	else
-		return (uint8_t)stream->read();
+		return (boost::uint8_t)stream->read();
 }
 
 /**
@@ -114,12 +114,12 @@ uint8_t hpiutil::sqshstream::read()
  * @return number of bytes read
  * @param buf buffer to read into
  */
-uint32_t hpiutil::sqshstream::read(uint8_t *buf)
+boost::uint32_t hpiutil::sqshstream::read(boost::uint8_t *buf)
 {
 	if ((position >= fullsize)||!valid)
 		return 0;
-	uint32_t oldpos = position;
-	uint32_t len = bitmin(sizeof(buf),(fullsize-position));
+	boost::uint32_t oldpos = position;
+	boost::uint32_t len = bitmin(sizeof(buf),(fullsize-position));
 	for (int i = 0; i < len; i++)
 		buf[i] = data[position++];
 	return position - oldpos;
@@ -133,12 +133,12 @@ uint32_t hpiutil::sqshstream::read(uint8_t *buf)
  * @param off offset to start reading from
  * @param len number of bytes to read
  */
-uint32_t hpiutil::sqshstream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
+boost::uint32_t hpiutil::sqshstream::read(boost::uint8_t *buf, const boost::uint32_t off, const boost::uint32_t len)
 {
 	position = bitmin(off,fullsize);
 	if ((position >= fullsize)||!valid)
 		return 0;
-	uint32_t reallen = bitmin(len,(fullsize-position));
+	boost::uint32_t reallen = bitmin(len,(fullsize-position));
 	for (int i = 0; i < reallen; i++)
 		buf[i] = data[position++];
 	return position - off;
@@ -152,7 +152,7 @@ uint32_t hpiutil::sqshstream::read(uint8_t *buf, const uint32_t off, const uint3
  * @return number of bytes read
  * @param buf buffer to read into
  */
-uint32_t hpiutil::sqshstream::readall(uint8_t *buf)
+boost::uint32_t hpiutil::sqshstream::readall(boost::uint8_t *buf)
 {
 	if (!valid)
 		return 0;
@@ -168,12 +168,12 @@ uint32_t hpiutil::sqshstream::readall(uint8_t *buf)
  * byte swabbing if necessary
  * @return swabbed integer
  */
-uint32_t hpiutil::sqshstream::readint()
+boost::uint32_t hpiutil::sqshstream::readint()
 {
-	uint32_t a = read();
-	uint32_t b = read();
-	uint32_t c = read();
-	uint32_t d = read();
+	boost::uint32_t a = read();
+	boost::uint32_t b = read();
+	boost::uint32_t c = read();
+	boost::uint32_t d = read();
 	return (d<<24)|(c<<16)|(b<<8)|a;
 }
 
@@ -186,7 +186,7 @@ uint32_t hpiutil::sqshstream::readint()
  * @param srcsize size of source data
  * @param destsize expected size of destination data
  */
-uint32_t hpiutil::sqshstream::decompresszlib(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
+boost::uint32_t hpiutil::sqshstream::decompresszlib(boost::uint8_t *src, boost::uint8_t *dest, const boost::uint32_t srcsize, const boost::uint32_t destsize)
 {
 	z_stream zs;
 	zs.next_in = (Bytef*)src;
@@ -228,7 +228,7 @@ uint32_t hpiutil::sqshstream::decompresszlib(uint8_t *src, uint8_t *dest, const 
  * @param srcsize size of source data
  * @param destsize expected size of destination data
  */
-uint32_t hpiutil::sqshstream::decompresslz77(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize)
+boost::uint32_t hpiutil::sqshstream::decompresslz77(boost::uint8_t *src, boost::uint8_t *dest, const boost::uint32_t srcsize, const boost::uint32_t destsize)
 {
 	int w1 = 1, w2 = 1;
 	int in = 0, out = 0;
@@ -243,7 +243,7 @@ uint32_t hpiutil::sqshstream::decompresslz77(uint8_t *src, uint8_t *dest, const 
 			w1 = (w1 + 1) & 0xfff;
 			in++;
 		} else {
-			count = *((uint16_t*)(src+in));
+			count = *((boost::uint16_t*)(src+in));
 			in += 2;
 			dptr = count >> 4;
 			if (dptr == 0)

@@ -58,13 +58,13 @@ hpiutil::scrambledfile::~scrambledfile()
  * reads a single byte from the file
  * @return byte read
  */
-uint8_t hpiutil::scrambledfile::read()
+boost::uint8_t hpiutil::scrambledfile::read()
 {
-	uint32_t oldpos = file.tellg();
+	boost::uint32_t oldpos = file.tellg();
 	char ret = file.get();
 	if (scrambled && (ret != EOF))
 		ret = (char)(((key ^ oldpos) ^ ~ret)&0x00ff);
-	return (uint8_t)ret;
+	return (boost::uint8_t)ret;
 }
 
 /**
@@ -73,14 +73,14 @@ uint8_t hpiutil::scrambledfile::read()
  * @return number of bytes read
  * @param buf buffer to read into
  */
-uint32_t hpiutil::scrambledfile::read(uint8_t *buf)
+boost::uint32_t hpiutil::scrambledfile::read(boost::uint8_t *buf)
 {
-	uint32_t oldpos = (uint32_t)file.tellg();
+	boost::uint32_t oldpos = (boost::uint32_t)file.tellg();
 	file.read((char*)buf,sizeof(buf));
-	uint32_t read = (uint32_t)file.tellg() - oldpos;
+	boost::uint32_t read = (boost::uint32_t)file.tellg() - oldpos;
 	if (scrambled) {
 		for (int i = 0; i < read; i++)
-			buf[i] = (uint8_t)(((key ^ (oldpos+i)) ^ ~buf[i])&0x00ff);
+			buf[i] = (boost::uint8_t)(((key ^ (oldpos+i)) ^ ~buf[i])&0x00ff);
 	}
 	return read;
 }
@@ -93,15 +93,15 @@ uint32_t hpiutil::scrambledfile::read(uint8_t *buf)
  * @param off offset in file to start reading from
  * @param len number of bytes to read
  */
-uint32_t hpiutil::scrambledfile::read(uint8_t *buf, const uint32_t off, const uint32_t len)
+boost::uint32_t hpiutil::scrambledfile::read(boost::uint8_t *buf, const boost::uint32_t off, const boost::uint32_t len)
 {
 	file.seekg(off);
 	file.read((char*)buf,len);
 	if (scrambled) {
 		for (int i = 0; i < len; i++)
-			buf[i] = (uint8_t)(((key ^ (i+off)) ^ ~buf[i])&0x00ff);
+			buf[i] = (boost::uint8_t)(((key ^ (i+off)) ^ ~buf[i])&0x00ff);
 	}
-	return ((uint32_t)file.tellg()-off);
+	return ((boost::uint32_t)file.tellg()-off);
 }
 
 /**
@@ -110,12 +110,12 @@ uint32_t hpiutil::scrambledfile::read(uint8_t *buf, const uint32_t off, const ui
  * byte swabbing if necessary
  * @return swabbed integer
  */
-uint32_t hpiutil::scrambledfile::readint()
+boost::uint32_t hpiutil::scrambledfile::readint()
 {
-	uint32_t a = (uint32_t)read();
-	uint32_t b = (uint32_t)read();
-	uint32_t c = (uint32_t)read();
-	uint32_t d = (uint32_t)read();
+	boost::uint32_t a = (boost::uint32_t)read();
+	boost::uint32_t b = (boost::uint32_t)read();
+	boost::uint32_t c = (boost::uint32_t)read();
+	boost::uint32_t d = (boost::uint32_t)read();
 	return (d<<24)|(c<<16)|(b<<8)|a;
 }
 
@@ -124,7 +124,7 @@ uint32_t hpiutil::scrambledfile::readint()
  * seek to an offset in the file
  * @param pos offset to seek to
  */
-void hpiutil::scrambledfile::seek(const uint32_t pos)
+void hpiutil::scrambledfile::seek(const boost::uint32_t pos)
 {
 	file.seekg(pos,std::ios::beg);
 }
@@ -134,7 +134,7 @@ void hpiutil::scrambledfile::seek(const uint32_t pos)
  * set or unset decryption key to use to unscramble
  * @param k key to use (use 0 to disable)
  */
-void hpiutil::scrambledfile::setkey(const uint32_t k)
+void hpiutil::scrambledfile::setkey(const boost::uint32_t k)
 {
 	if (k) {
 		key = ~((k<<2)|(k>>6));

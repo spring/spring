@@ -31,16 +31,16 @@ namespace hpiutil
 	class substream
 	{
 	public:
-		substream(scrambledfile &sf, const uint32_t off, const uint32_t len);
+		substream(scrambledfile &sf, const boost::uint32_t off, const boost::uint32_t len);
 		~substream();
-		uint8_t read();
-		uint32_t read(uint8_t *buf);
-		uint32_t read(uint8_t *buf, const uint32_t off, const uint32_t len);
-		uint32_t readint();
-		uint32_t checksum(const uint32_t start);
-		uint8_t *data;
-		uint32_t position;
-		uint32_t length;
+		boost::uint8_t read();
+		boost::uint32_t read(boost::uint8_t *buf);
+		boost::uint32_t read(boost::uint8_t *buf, const boost::uint32_t off, const boost::uint32_t len);
+		boost::uint32_t readint();
+		boost::uint32_t checksum(const boost::uint32_t start);
+		boost::uint8_t *data;
+		boost::uint32_t position;
+		boost::uint32_t length;
 	};
 
 }

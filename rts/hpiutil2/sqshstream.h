@@ -40,26 +40,26 @@ namespace hpiutil
 	{
 	public:
 		bool valid;
-		uint8_t encrypt;
-		uint8_t compress;
-		uint32_t position;
+		boost::uint8_t encrypt;
+		boost::uint8_t compress;
+		boost::uint32_t position;
 		sqshstream(substream &ss);
 		~sqshstream();
-		uint8_t read();
-		uint32_t read(uint8_t *buf);
-		uint32_t read(uint8_t *buf, const uint32_t off, const uint32_t len);
-		uint32_t readall(uint8_t *buf);
-		uint32_t readint();
+		boost::uint8_t read();
+		boost::uint32_t read(boost::uint8_t *buf);
+		boost::uint32_t read(boost::uint8_t *buf, const boost::uint32_t off, const boost::uint32_t len);
+		boost::uint32_t readall(boost::uint8_t *buf);
+		boost::uint32_t readint();
 	private:
 		bool decompress();
-		uint32_t decompresszlib(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize);
-		uint32_t decompresslz77(uint8_t *src, uint8_t *dest, const uint32_t srcsize, const uint32_t destsize);
+		boost::uint32_t decompresszlib(boost::uint8_t *src, boost::uint8_t *dest, const boost::uint32_t srcsize, const boost::uint32_t destsize);
+		boost::uint32_t decompresslz77(boost::uint8_t *src, boost::uint8_t *dest, const boost::uint32_t srcsize, const boost::uint32_t destsize);
 		substream *stream;
 		std::istringstream *fullstream;
-		uint8_t *data;
-		uint32_t compressedsize;
-		uint32_t fullsize;
-		uint32_t checksum;
+		boost::uint8_t *data;
+		boost::uint32_t compressedsize;
+		boost::uint32_t fullsize;
+		boost::uint32_t checksum;
 	};
 
 }

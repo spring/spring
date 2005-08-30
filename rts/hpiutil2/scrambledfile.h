@@ -24,6 +24,7 @@
 
 #include <string>
 #include <fstream>
+#include <boost/cstdint.hpp>
 
 /*
  * Performance mods
@@ -51,17 +52,17 @@ namespace hpiutil
 	{
 	public:
 		bool scrambled;
-		uint32_t key;
+		boost::uint32_t key;
 		scrambledfile(const char *fname);
 		scrambledfile(std::string const &fname);
 		~scrambledfile();
-		uint8_t read();
-		uint32_t read(uint8_t *buf);
-		uint32_t read(uint8_t *buf,const uint32_t off, const uint32_t len);
-		uint32_t readint();
+		boost::uint8_t read();
+		boost::uint32_t read(boost::uint8_t *buf);
+		boost::uint32_t read(boost::uint8_t *buf,const boost::uint32_t off, const boost::uint32_t len);
+		boost::uint32_t readint();
 		std::string readstring();
-		void seek(const uint32_t pos);
-		void setkey(const uint32_t k);
+		void seek(const boost::uint32_t pos);
+		void setkey(const boost::uint32_t k);
 		std::fstream file;
 	};
 

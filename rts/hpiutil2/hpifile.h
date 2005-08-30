@@ -43,17 +43,17 @@ namespace hpiutil
 		hpifile(std::string const &fname);
 		~hpifile();
 		std::vector<hpientry*> flatlist;
-		hpientry& dirinfo(std::string const &parentname, std::string const &dirname, const uint32_t offset);
-		hpientry& fileinfo(std::string const &parentname, std::string const &name, const uint32_t offset);
-		uint32_t getdata(hpientry const &he, uint8_t *data);
+		hpientry& dirinfo(std::string const &parentname, std::string const &dirname, const boost::uint32_t offset);
+		hpientry& fileinfo(std::string const &parentname, std::string const &name, const boost::uint32_t offset);
+		boost::uint32_t getdata(hpientry const &he, boost::uint8_t *data);
 	private:
 		scrambledfile *file;
 		void validate(const char *n);
-		uint32_t header_hapimagic;
-		uint32_t header_bankmagic;
-		uint32_t header_offset;
-		uint32_t header_key;
-		uint32_t header_diroffset;
+		boost::uint32_t header_hapimagic;
+		boost::uint32_t header_bankmagic;
+		boost::uint32_t header_offset;
+		boost::uint32_t header_key;
+		boost::uint32_t header_diroffset;
 	};
 
 }

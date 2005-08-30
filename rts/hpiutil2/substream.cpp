@@ -28,9 +28,9 @@
  * @param off offset in scrambledfile to start from
  * @param len length of substream data
  */
-hpiutil::substream::substream(scrambledfile &sf, const uint32_t off, const uint32_t len)
+hpiutil::substream::substream(scrambledfile &sf, const boost::uint32_t off, const boost::uint32_t len)
 {
-	data = (uint8_t*)calloc(len,sizeof(uint8_t));
+	data = (boost::uint8_t*)calloc(len,sizeof(boost::uint8_t));
 	sf.read(data,off,len);
 	position = 0;
 	length = len;
@@ -49,7 +49,7 @@ hpiutil::substream::~substream()
  * reads a single byte
  * @return byte read
  */
-uint8_t hpiutil::substream::read()
+boost::uint8_t hpiutil::substream::read()
 {
 	if (position >= length)
 		return 0;
@@ -62,12 +62,12 @@ uint8_t hpiutil::substream::read()
  * @return the number of bytes read
  * @param buf buffer to read into
  */
-uint32_t hpiutil::substream::read(uint8_t *buf)
+boost::uint32_t hpiutil::substream::read(boost::uint8_t *buf)
 {
 	if (position >= length)
 		return 0;
-	uint32_t oldpos = position;
-	uint32_t len = bitmin(sizeof(buf),(length-position));
+	boost::uint32_t oldpos = position;
+	boost::uint32_t len = bitmin(sizeof(buf),(length-position));
 	for (int j = 0; j < len; j++)
 		buf[j] = data[position++];
 	return position - oldpos;
@@ -81,12 +81,12 @@ uint32_t hpiutil::substream::read(uint8_t *buf)
  * @param off offset in substream to start reading from
  * @param len size of data to read
  */
-uint32_t hpiutil::substream::read(uint8_t *buf, const uint32_t off, const uint32_t len)
+boost::uint32_t hpiutil::substream::read(boost::uint8_t *buf, const boost::uint32_t off, const boost::uint32_t len)
 {
 	position = bitmin(off,length);
 	if (position >= length)
 		return 0;
-	uint32_t reallen = bitmin(len,(length-position));
+	boost::uint32_t reallen = bitmin(len,(length-position));
 	for (int j = 0; j < reallen; j++)
 		buf[j] = data[position++];
 	return position-off;
@@ -99,9 +99,9 @@ uint32_t hpiutil::substream::read(uint8_t *buf, const uint32_t off, const uint32
  * @return checksum
  * @param start byte to start with
  */
-uint32_t hpiutil::substream::checksum(const uint32_t start)
+boost::uint32_t hpiutil::substream::checksum(const boost::uint32_t start)
 {
-	uint32_t check = 0;
+	boost::uint32_t check = 0;
 	for (int i = start; i < length; i++)
 		check += data[i];
 	return check;

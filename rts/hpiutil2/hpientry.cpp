@@ -30,7 +30,7 @@
  * @param o offset of this object in the hpi file
  * @param s size of the object
  */
-hpiutil::hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, const uint32_t o, const uint32_t s)
+hpiutil::hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, const boost::uint32_t o, const boost::uint32_t s)
 {
 	parentname = "";
 	parentname = pname;
