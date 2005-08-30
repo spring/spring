@@ -176,6 +176,7 @@ if platform == 'linux':
 #################################################
 # Check requirements
 
+lib=['GL','glut','GLEW','jpeg','freetype','GLU','IL']
 
 print "\nChecking header files"
 conf = Configure(env)
@@ -221,13 +222,37 @@ if not conf.CheckLib('GLEW'):
 if not conf.CheckLib('jpeg'):
 	print "You need libjpeg to compile this program"
 	Exit(1)
-if not conf.CheckLib('boost_filesystem'):
+if conf.CheckLib('boost_filesystem-gcc-mt'):
+	lib+=['boost_filesystem-gcc-mt']
+elif conf.CheckLib('boost_filesystem-mt'):
+	lib+=['boost_filesystem-mt']
+elif conf.CheckLib('boost_filesystem-gcc'):
+	lib+=['boost_filesystem-gcc']
+elif conf.CheckLib('boost_filesystem'):
+	lib+=['boost_filesystem']
+else:
 	print "You need the Boost filesystem library for this program"
 	Exit(1)
-if not conf.CheckLib('boost_thread'):
+if conf.CheckLib('boost_thread-gcc-mt'):
+	lib+=['boost_thread-gcc-mt']
+elif conf.CheckLib('boost_thread-mt'):
+	lib+=['boost_thread-mt']
+elif conf.CheckLib('boost_thread-gcc'):
+	lib+=['boost_thread-gcc']
+elif conf.CheckLib('boost_thread'):
+	lib+=['boost_thread']
+else:
 	print "You need the Boost thread library for this program"
 	Exit(1)
-if not conf.CheckLib('boost_regex'):
+if conf.CheckLib('boost_regex-gcc-mt'):
+	lib+=['boost_regex-gcc-mt']
+elif conf.CheckLib('boost_regex-mt'):
+	lib+=['boost_regex-mt']
+elif conf.CheckLib('boost_regex-gcc'):
+	lib+=['boost_regex-gcc']
+elif conf.CheckLib('boost_regex'):
+	lib+=['boost_regex']
+else:
 	print "You need the Boost regex library for this program"
 	Exit(1)
 if not conf.CheckLib('IL'):
@@ -241,7 +266,6 @@ env = conf.Finish()
 print "\nEverything seems OK, let's build"
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
 #env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib','GLU', 'libboost_filesystem'], CPPPATH=common_include_path)
-lib=['GL','glut','GLEW','jpeg','freetype','GLU','boost_thread','boost_filesystem','boost_regex','IL']
 if env.get('use_tcmalloc'):
 	lib+=['tcmalloc']
-env.Program('spring', files,  LIBS=lib, CPPPATH=common_include_path,LIBFLAGS=['-m32'])
+env.Program('spring', files,  LIBS=lib, CPPPATH=common_include_path)
