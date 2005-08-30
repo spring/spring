@@ -24,7 +24,7 @@ CTAPalette::~CTAPalette()
 
 void CTAPalette::Init(void)
 {
-	CFileHandler pal("palette.pal");
+	CFileHandler pal("PALETTE.PAL");
 
 	if(!pal.FileExists()){
 
