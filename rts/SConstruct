@@ -26,8 +26,6 @@ opts.Add('platform', 'Set to linux or windows', detected_platform)
 opts.Add('debug', 'Set to yes to produce a binary with debug informations', 1)
 
 #porting options - mandatory
-opts.Add('disable_threads', 'Set to no to enable mutexes and threads codes (port using glib)', 1)
-opts.Add('disable_io', 'Set to no to enable input/output code', 1)
 opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1)
 
 #porting options - optionnal in a first phase
@@ -80,12 +78,8 @@ if env.get('disable_dll'):
 	defines+=['NO_DLL']
 if env.get('emule_wintypes'):
 	defines+=['EMULE_WINTYPES']
-if env.get('disable_threads'):
-	defines+=['NO_MUTEXTHREADS']
 if env.get('disable_inputs'):
 	defines+=['NO_INPUT']
-if env.get('disable_io'):
-	defines+=['NO_IO']
 if env.get('enable_smallfixes'):
 	defines+=['ENABLE_SMALLFIXES','ENABLE_CPPFIX']	
 if env.get('disable_texture_filtering'):
