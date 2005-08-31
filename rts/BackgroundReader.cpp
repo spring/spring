@@ -1,17 +1,17 @@
 #include "StdAfx.h"
 #include "BackgroundReader.h"
 #include <windows.h>
+#ifndef _WIN32
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif
 //#include "mmgr.h"
 
 CBackgroundReader backgroundReader;
 
-#ifdef NO_IO
-typedef void * LPOVERLAPPED;
-#endif
-
+#ifdef _WIN32
 VOID CALLBACK FileIOComplete(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
 {
-#ifndef NO_IO
 	CloseHandle(backgroundReader.curHandle);
 	backgroundReader.curHandle=0;
 	backgroundReader.curFile.reportReady++;
@@ -19,20 +19,22 @@ VOID CALLBACK FileIOComplete(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered,
 //	MessageBox(0,"Read complete","rc",0);
 
 	backgroundReader.Update();
-#endif //NO_IO
 }
+#endif
 
 CBackgroundReader::CBackgroundReader(void)
 {
-#ifndef NO_IO
 	curFile.length=0;
+#ifdef _WIN32
 	curHandle=0;
+#elif defined(HAS_LIBAIO)
+	aio_setup(1024);
 #endif
 }
 
 CBackgroundReader::~CBackgroundReader(void) 
 {
-#ifndef NO_IO
+#ifdef _WIN32
 	while(curHandle)
 		SleepEx(10,true);
 #endif
@@ -52,7 +54,7 @@ void CBackgroundReader::ReadFile(const char* filename, unsigned char* buffer, in
 
 void CBackgroundReader::Update(void)
 {
-#ifndef NO_IO
+#ifdef _WIN32
 	if(curHandle==0){
 		if(quedFiles.empty()){
 			return;
@@ -80,5 +82,64 @@ void CBackgroundReader::Update(void)
 			return;
 		}
 	}
-#endif //NO_IO
+#elif defined(HAS_LIBAIO)
+	if(quedFiles.empty()){
+		return;
+	}
+	curFile=quedFiles.front();
+	quedFiles.pop_front();
+	if ((srcfd=open(curFile.name.c_str(),O_RDONLY))<0) {
+		MessageBox(0,curFile.name.c_str(),"Failed to open file for background reading",0);
+		curFile.reportReady++;
+		Update();
+		return;
+	}
+	if (curFile.length == 0) {
+		struct stat st;
+		if (fstat(srcfd,&st)<0) {
+			MessageBox(0,curFile.name.c_str(),"Failed to read file information",0);
+			close(srcfd);
+			Update();
+			return;
+		}
+		curFile.length = st.st_size;
+	}
+	struct iocb iocb;
+	io_prep_pread(&iocb,srcfd,curFile.buf,curFile.length,0);
+	int res = sync_submit(&iocb);
+	if (res<=0) {
+		MessageBox(0,curFile.name.c_str(),"Failed to read file",0);
+		close(srcfd);
+		Update();
+		return;
+	}
+#endif
 }
+
+#if !defined(_WIN32) && defined(HAS_LIBAIO)
+void CBackgroundReader::aio_setup(int n)
+{
+	int res = io_queue_init(n, &io_ctx);
+}
+
+int CBackgroundReader::sync_submit(struct iocb *iocb)
+{
+	struct io_event event;
+	struct iocb *iocbs[] = { iocb };
+	int res;
+	struct timespec ts;
+	ts.tv_sec = 15;
+	ts.tv_nsec = 0;
+	res = io_submit(io_ctx,1,iocbs);
+	if (res!=1) {
+		MessageBox(0,curFile.name.c_str(),"sync_submit: io_submit",0);
+		return res;
+	}
+	res = io_getevents(io_ctx,1,&event,&ts);
+	if (res!=1) {
+		MessageBox(0,curFile.name.c_str(),"sync_submit: io_getevents",0);
+		return res;
+	}
+	return event.res;
+}
+#endif

@@ -6,9 +6,10 @@
 
 #include <deque>
 #include <string>
-/* TODO (Dave#1#): Remove dependancy on windows.h */
-#ifdef ARCHDEF_PLATFORM_WINDOWS
-    #include <windows.h>
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(HAS_LIBAIO)
+#include <libaio.h>
 #endif
 
 class CBackgroundReader
@@ -27,9 +28,14 @@ public:
 
 	std::deque<FileToRead> quedFiles;
 	FileToRead curFile;
-#ifndef NO_IO
+#ifdef _WIN32
 	OVERLAPPED curReadInfo;
 	HANDLE curHandle;
+#elif defined(HAS_LIBAIO)
+	io_context_t io_ctx;
+	int srcfd;
+	void aio_setup(int n);
+	int sync_submit(struct iocb *iocb);
 #endif
 	void Update(void);
 };

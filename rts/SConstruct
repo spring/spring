@@ -205,6 +205,10 @@ if not conf.CheckCXXHeader('boost/regex.hpp'):
 if not conf.CheckCHeader('IL/il.h'):
 	print ' Cannot find DevIL image library header'
 	Exit(1)
+if conf.CheckCHeader('libaio.h'):
+	defines+=['HAS_LIBAIO']
+else:
+	print ' Cannot find libaio headers, disabling asynchronous I/O'
 #if not conf.CheckCHeader('glib.h'):
 #	print ' a dev implementation of glib must be installed!'
 #	Exit(1)
@@ -258,6 +262,10 @@ else:
 if not conf.CheckLib('IL'):
 	print "You need the DevIL image library for this program"
 	Exit(1)
+if conf.CheckLib('aio'):
+	lib+=['aio']
+else:
+	print "Libaio is necessary for asynchronous I/O, disabling BackgroundReader"
 env = conf.Finish()
 
 ###################################################
