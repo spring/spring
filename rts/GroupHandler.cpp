@@ -5,7 +5,7 @@
 
 #include "GroupHandler.h"
 #include <windows.h>
-#ifndef NO_IO
+#ifdef _WIN32
 #include <io.h>
 #endif
 #include "Group.h"
