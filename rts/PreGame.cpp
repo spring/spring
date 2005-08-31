@@ -174,9 +174,7 @@ bool CPreGame::Draw(void)
 
 	if(net->inInitialConnect){
 		char text[400];
-#ifndef NO_NET
 		sprintf(text,"Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastSendTime));
-#endif
 		glColor4f(1,1,1,1);
 		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
@@ -274,10 +272,8 @@ void CPreGame::UpdateClientNet(void)
 			allReady=true;
 			inbufpos+=inbuf[inbufpos+1];
 			if(inbufpos!=inbuflength){
-#ifndef NO_NET
 				net->connections[0].readyLength=inbuflength-inbufpos;
 				memcpy(net->connections[0].readyData,&inbuf[inbufpos],inbuflength-inbufpos);
-#endif
 			}
 			break;
 

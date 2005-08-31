@@ -43,7 +43,6 @@ opts.Add('force_glextensions', 'Skip gl extensions test for porting purpose', 0)
 
 #other ported parts
 opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', 0)
-opts.Add('disable_net', 'Set to no to turn on networking code', 0)
 opts.Add('disable_windows', '(Notused) Set to no to enable windows code and MSwindows messages (port using glut)', 0)
 opts.Add('disable_inputs', '(Notused) Set to no to enable input handling code (port using glut))', 0)
 opts.Add('disable_texture_filtering', 'Set to no to turn on texture filtering code', 0)
@@ -64,8 +63,6 @@ if env.get('disable_shadows'):
 	defines+=['NO_SHADOWS']
 if env.get('disable_hpi'):
 	defines+=['NO_HPI']
-if env.get('disable_net'):
-	defines+=['NO_NET']
 if env.get('use_glut'):
 	defines+=['USE_GLUT']
 if not env.get('use_portable_io'):

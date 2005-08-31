@@ -45,12 +45,10 @@ CGameServer::CGameServer(void)
 	serverNet=new CNet();
 	serverNet->InitServer(port);
 	net->InitClient("localhost",port,0,true);
-#ifndef NO_NET
 	serverNet->connections[0].localConnection=&net->connections[0];
 	net->connections[0].localConnection=&serverNet->connections[0];
 	serverNet->InitNewConn(&net->connections[0].addr,true,0);
 	net->onlyLocal=true;
-#endif
 
 	QueryPerformanceCounter(&lastframe);
 	QueryPerformanceFrequency(&timeSpeed);
@@ -279,9 +277,7 @@ bool CGameServer::ServerReadNet()
 				ENTER_MIXED;
 				gs->players[a]->active=false;
 				ENTER_UNSYNCED;
-#ifndef NO_NET
 				serverNet->connections[a].active=false;
-#endif
 				outbuf[0]=NETMSG_PLAYERLEFT;
 				outbuf[1]=a;
 				outbuf[2]=1;

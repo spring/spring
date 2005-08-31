@@ -207,9 +207,7 @@ bool CGameSetup::Draw(void)
 	glTranslatef(0.3f,0.7f,0.0f);
 	glScalef(0.03f,0.04f,0.1f);
 	if(!serverNet && net->inInitialConnect){
-#ifndef NO_NET
 		font->glPrint("Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastReceiveTime));
-#endif
 		return false;
 	}else if(readyTime>0)
 		font->glPrint("Starting in %i",3-(int)readyTime);

@@ -81,7 +81,6 @@ CNet::CNet()
 
 CNet::~CNet()
 {
-#ifndef NO_NET
 	if(connected && (imServer || !connections[0].localConnection)){
 		unsigned char t=NETMSG_QUIT;
 		SendData(&t,1);
@@ -110,13 +109,11 @@ CNet::~CNet()
 		for(pi2=c->waitingPackets.begin();pi2!=c->waitingPackets.end();++pi2)
 			delete (pi2->second);
 	}
-#endif //NO_NET
 	delete &netMutex;
 }
 
 int CNet::InitServer(int portnum)
 {
-#ifndef NO_NET
 	connected=true;
 	waitOnCon=true;
 	imServer=true;
@@ -149,7 +146,6 @@ int CNet::InitServer(int portnum)
 #else
 	fcntl(mySocket, F_SETFL, O_NONBLOCK);
 #endif
-#endif //NO_NET
 	return 0;
 }
 
@@ -160,7 +156,6 @@ void CNet::StopListening()
 
 int CNet::InitClient(const char *server, int portnum,int sourceport,bool localConnect)
 {
-#ifndef NO_NET
   LPHOSTENT lpHostEntry;
 
 	LARGE_INTEGER t,f;
@@ -253,7 +248,6 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		inInitialConnect=true;
 	}
 	return 1;
-#endif
 }
 
 int CNet::SendData(unsigned char *data, int length)
@@ -340,7 +334,6 @@ void CNet::Update(void)
 	unsigned char inbuf[16000];
 	if(connected)
 	while(true){
-#ifndef NO_NET
 		if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR){
 			if(WSAGetLastError()==WSAEWOULDBLOCK || WSAGetLastError()==WSAECONNRESET) 
 				break;
@@ -349,7 +342,6 @@ void CNet::Update(void)
 			MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 			exit(0);
 		}
-#endif
 		int conn=ResolveConnection(&from);
 		if(conn==-1){
 			if(waitOnCon && r>=12 && (*(int*)inbuf)==0 && (*(int*)&inbuf[4])==-1 && inbuf[8]==0 && inbuf[9]==NETMSG_ATTEMPTCONNECT && inbuf[11]==NETWORK_VERSION){
@@ -435,7 +427,6 @@ void CNet::ProcessRawPacket(unsigned char* data, int length, int conn)
 
 int CNet::ResolveConnection(sockaddr_in* from)
 {
-#ifndef NO_NET
 	unsigned int addr;
 #ifdef _WIN32
 	addr = from->sin_addr.S_un.S_addr;
@@ -456,7 +447,6 @@ int CNet::ResolveConnection(sockaddr_in* from)
 		}
 	}
 	return -1;
-#endif
 }
 
 int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
@@ -583,7 +573,6 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 
 	memcpy(&tempbuf[hsize],data,length);
 //	if(rand()&7)
-#ifndef NO_NET
 	if(sendto(mySocket,(char*)tempbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
 		if(WSAGetLastError()==WSAEWOULDBLOCK)
 			return;
@@ -592,7 +581,6 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 		MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 	}
-#endif
 }
 
 void CNet::CreateDemoFile()
