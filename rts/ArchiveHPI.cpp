@@ -18,7 +18,6 @@ CArchiveHPI::CArchiveHPI(const string& name) :
 			string name = (*it)->path();
 			transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
 			fileSizes[name] = (*it)->size;
-			printf("File %s size: %d\n",name.c_str(),fileSizes[name]);
 		}
 	}
 }
@@ -43,7 +42,6 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 	if (f == NULL)
 		return 0;
 
-	printf("Loading %s\n",fileName.c_str());
 	ABOpenFile_t* of = new ABOpenFile_t;
 	of->pos = 0;
 	of->size = f->size;
