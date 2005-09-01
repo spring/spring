@@ -134,7 +134,7 @@ if platform == 'linux':
 #################################################
 # Check requirements
 
-lib=['GL','GLEW','jpeg','freetype','IL','SDL']
+lib=['GL','GLEW','freetype','IL','SDL']
 libaiostep1=False
 
 print "\nChecking header files"
@@ -183,9 +183,6 @@ if not conf.CheckLib('GLEW'):
 #if not conf.CheckLib('glib'):
 #	print "You need glib to link this program"
 #	Exit(1)
-if not conf.CheckLib('jpeg'):
-	print "You need libjpeg to compile this program"
-	Exit(1)
 if conf.CheckLib('boost_filesystem-gcc-mt'):
 	lib+=['boost_filesystem-gcc-mt']
 elif conf.CheckLib('boost_filesystem-mt'):
