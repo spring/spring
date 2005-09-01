@@ -39,9 +39,9 @@ using namespace std;
 class CTimeProfiler : public CInputReceiver
 {
 	struct TimeRecord{
-		LARGE_INTEGER total;
-		LARGE_INTEGER current;
-		LARGE_INTEGER frames[128];
+		Uint64 total;
+		Uint64 current;
+		Uint64 frames[128];
 		float percent;
 		float3 color;
 		bool showGraph;
@@ -50,20 +50,20 @@ public:
 	void StartTimer();
 	void EndTimer(char* name);
 
-	void AddTime(string name,__int64 time);
+	void AddTime(string name,Sint64 time);
 	void Update();
 	void Draw();
 	CTimeProfiler();
 	virtual ~CTimeProfiler();
 
 	map<string,TimeRecord> profile;
-	LARGE_INTEGER timeSpeed;
+	Uint64 timeSpeed;
 	double lastBigUpdate;
 
 	virtual bool MousePress(int x, int y, int button);
 	virtual bool IsAbove(int x, int y);
 
-	__int64 startTimes[1000];
+	Sint64 startTimes[1000];
 	int startTimeNum;
 };
 

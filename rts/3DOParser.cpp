@@ -285,7 +285,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 			continue;
 
 		curOffset=p.OffsetToVertexIndexArray;
-		WORD w;
+		Uint16 w;
 		
 		list<int> orderVert;
 		for(int b=0;b<sp.numVertex;b++){

@@ -24,8 +24,8 @@ public:
 	unsigned char inbuf[40000];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE but dont want to include net.h here
 	unsigned char outbuf[40000];
 
-	LARGE_INTEGER lastframe;
-	LARGE_INTEGER timeSpeed;
+	Uint64 lastframe;
+	Uint64 timeSpeed;
 	float timeLeft;
 
 	unsigned int serverframenum;

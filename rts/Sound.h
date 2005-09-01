@@ -78,13 +78,13 @@ protected:
 
 	std::vector<LPDIRECTSOUNDBUFFER> buffers;
 
-	HRESULT RestoreBuffers(int num);
-	HRESULT CreateStaticBuffer(const string& name);
-	HRESULT FillBuffer();
+	Sint32 RestoreBuffers(int num);
+	Sint32 CreateStaticBuffer(const string& name);
+	Sint32 FillBuffer();
 
 	LPDIRECTSOUND		m_pDS;
 	CWaveSoundRead*     m_pWaveSoundRead;
-	DWORD               m_dwBufferBytes;
+	Uint32               m_dwBufferBytes;
 	LPDIRECTSOUNDNOTIFY g_pDSNotify;
 #endif
 };

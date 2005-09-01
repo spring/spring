@@ -17,6 +17,7 @@
 #include "GroupHandler.h"
 #include "MouseHandler.h"
 #include "CameraController.h"
+#include <SDL/SDL_types.h>
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -24,7 +25,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CGroupHandler* grouphandler;
-extern bool	keys[256];
+extern Uint8 *keys;
 
 CGroupHandler::CGroupHandler(int team)
 : firstUnusedGroup(10),
@@ -55,6 +56,7 @@ END_TIME_PROFILE("Group AI");
 
 void CGroupHandler::TestDll(string name)
 {
+#ifndef NO_DLL
 	typedef int (WINAPI* GETGROUPAIVERSION)();
 	typedef void (WINAPI* GETAINAME)(char* c);
 	
@@ -93,12 +95,13 @@ void CGroupHandler::TestDll(string name)
 	availableAI[name]=c;
 //	(*info) << name.c_str() << " " << c << "\n";
 	FreeLibrary(m_hDLL);
+#endif
 }
 
 void CGroupHandler::GroupCommand(int num)
 {
-	if(keys[VK_CONTROL]){
-		if(!keys[VK_SHIFT])
+	if(keys[SDLK_LCTRL]){
+		if(!keys[SDLK_LSHIFT])
 			groups[num]->ClearUnits();
 		set<CUnit*>::iterator ui;
 		for(ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui){

@@ -22,9 +22,7 @@ CPathEstimater::CPathEstimater(CPathFinder* pf)
 
 CPathEstimater::~CPathEstimater()
 {
-#ifndef ENABLE_SMALLFIXES
   openSquares.DeleteAll();
-#endif
 }
 
 void CPathEstimater::SetGoal(int x,int y)
@@ -75,12 +73,7 @@ void CPathEstimater::CalculateSquareCosts()
 	int mapSeed;
 	if(ifs.FileExists())
 		ifs.Read((char*)&mapSeed,4);
-#ifndef ENABLE_SMALLFIXES
 	if(!ifs.FileExists() || mapSeed!=readmap->mapheader.mapid){
-#else
-	  // error: 'class CReadMap' has no member named 'mapheader'
-	if(!ifs.FileExists()){
-#endif
 		for(int y=0;y<g.mapy/BLOCK_SIZE;++y){
 			for(int x=0;x<g.mapx/BLOCK_SIZE;++x){
 				float cost=MAX_COST;

@@ -20,10 +20,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#ifndef USE_GLUT
-extern HWND hWnd;
-#endif
-
 CSunParser::CSunParser()
 {
 

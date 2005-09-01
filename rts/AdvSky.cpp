@@ -727,8 +727,6 @@ void CAdvSky::CreateCover(int baseX, int baseY, float *buf)
 	}
 }
 
-extern HDC		hDC;
-
 void CAdvSky::CreateDetailTex(void)
 {
 	glViewport(0,0,256,256);

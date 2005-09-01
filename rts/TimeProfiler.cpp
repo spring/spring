@@ -54,7 +54,7 @@ void CTimeProfiler::Draw()
 
 	glPushMatrix();
 	for(pi=profile.begin();pi!=profile.end();++pi){
-		font->glPrint("%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total.QuadPart)/timeSpeed.QuadPart,pi->second.percent*100);
+		font->glPrint("%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total)/timeSpeed,pi->second.percent*100);
 
 		glTranslatef(0,-1.2f,0);
 
@@ -89,7 +89,7 @@ void CTimeProfiler::Draw()
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 		for(int a=0;a<128;++a){
-			float p=((double)pi->second.frames[a].QuadPart)/timeSpeed.QuadPart*30;
+			float p=((double)pi->second.frames[a])/timeSpeed*30;
 			va->AddVertexT(float3(0.6+a*0.003,0.02+p*0.4,0),0,0);
 		}
 		glColor3f(pi->second.color.x,pi->second.color.y,pi->second.color.z);
@@ -102,35 +102,35 @@ void CTimeProfiler::Update()
 {
 	map<string,TimeRecord>::iterator pi;
 	for(pi=profile.begin();pi!=profile.end();++pi){
-	  pi->second.frames[(gs->frameNum+1)&127].QuadPart=0;
+	  pi->second.frames[(gs->frameNum+1)&127]=0;
 	}
 
 	if(lastBigUpdate<gu->gameTime-1){
 		lastBigUpdate=gu->gameTime;
 		map<string,TimeRecord>::iterator pi;
 		for(pi=profile.begin();pi!=profile.end();++pi){
-			pi->second.percent=((double)pi->second.current.QuadPart)/timeSpeed.QuadPart;
-			pi->second.current.QuadPart=0;
+			pi->second.percent=((double)pi->second.current)/timeSpeed;
+			pi->second.current=0;
 
 		}
 	}
 }
 
-void CTimeProfiler::AddTime(string name, __int64 time)
+void CTimeProfiler::AddTime(string name, Sint64 time)
 {
 	map<string,TimeRecord>::iterator pi;
 	if((pi=profile.find(name))!=profile.end()){
-		pi->second.total.QuadPart+=time;
-		pi->second.current.QuadPart+=time;
-		pi->second.frames[gs->frameNum&127].QuadPart+=time;
+		pi->second.total+=time;
+		pi->second.current+=time;
+		pi->second.frames[gs->frameNum&127]+=time;
 	} else {
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
-		profile[name].total.QuadPart=time;
-		profile[name].current.QuadPart=time;
+		profile[name].total=time;
+		profile[name].current=time;
 		profile[name].percent=0;
 		for(int a=0;a<128;++a)
-		  profile[name].frames[a].QuadPart=0;
+		  profile[name].frames[a]=0;
 		profile[name].color.x=gu->usRandFloat();
 		profile[name].color.y=gu->usRandFloat();
 		profile[name].color.z=gu->usRandFloat();
@@ -145,9 +145,9 @@ void CTimeProfiler::StartTimer()
 		info->AddLine("To many timers");
 		return;
 	}
-	LARGE_INTEGER starttime;
+	Uint64 starttime;
 	QueryPerformanceCounter(&starttime);
-	startTimes[startTimeNum++]=(starttime.QuadPart);
+	startTimes[startTimeNum++]=(starttime);
 }
 
 void CTimeProfiler::EndTimer(char* name)
@@ -155,9 +155,9 @@ void CTimeProfiler::EndTimer(char* name)
 	if(startTimeNum==0)
 		return;
 
-	LARGE_INTEGER stop;
+	Uint64 stop;
 	QueryPerformanceCounter(&stop);
-	AddTime(name,stop.QuadPart - startTimes[--startTimeNum]);
+	AddTime(name,stop - startTimes[--startTimeNum]);
 }
 
 bool CTimeProfiler::IsAbove(int x, int y)

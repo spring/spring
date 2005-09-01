@@ -15,7 +15,7 @@ public:
 	CglList* showList;
 
 	bool Draw(void);
-	int KeyPressed(unsigned char k,bool isRepeat);
+	int KeyPressed(unsigned short k,bool isRepeat);
 	bool Update(void);
 
 	bool server;

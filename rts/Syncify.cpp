@@ -125,7 +125,7 @@ namespace Syncify{
 		if(codeType==CodeType_Synced)
 			return;
 
-		DWORD oldProtect;
+		Uint32 oldProtect;
 		if(codeType==CodeType_Unsynced)
 			VirtualProtect(SyncedMem,commitedSynced,PAGE_READWRITE,&oldProtect);
 		VirtualProtect(UnsyncedMem,commitedUnsynced,PAGE_NOACCESS,&oldProtect);
@@ -139,7 +139,7 @@ namespace Syncify{
 			return;
 
 
-		DWORD oldProtect;
+		Uint32 oldProtect;
 		VirtualProtect(SyncedMem,commitedSynced,PAGE_READONLY,&oldProtect);
 		if(codeType==CodeType_Synced)
 			VirtualProtect(UnsyncedMem,commitedUnsynced,PAGE_READWRITE,&oldProtect);
@@ -153,7 +153,7 @@ namespace Syncify{
 			return;
 
 
-		DWORD oldProtect;
+		Uint32 oldProtect;
 		if(codeType==CodeType_Unsynced)
 			VirtualProtect(SyncedMem,commitedSynced,PAGE_READWRITE,&oldProtect);
 		if(codeType==CodeType_Synced)

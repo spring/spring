@@ -15,11 +15,12 @@
 #include "CategoryHandler.h"
 #include "CommandAI.h"
 #include <boost/filesystem/path.hpp>
+#include <SDL/SDL_types.h>
 //#include "mmgr.h"
 
 CSelectionKeyHandler selectionKeys;
 
-extern bool keys[256];
+extern Uint8 *keys;
 
 CSelectionKeyHandler::CSelectionKeyHandler(void)
 {
@@ -76,10 +77,10 @@ CSelectionKeyHandler::~CSelectionKeyHandler(void)
 {
 }
 
-bool CSelectionKeyHandler::KeyPressed(unsigned char key)
+bool CSelectionKeyHandler::KeyPressed(unsigned short key)
 {
 	for(vector<HotKey>::iterator hi=hotkeys.begin();hi!=hotkeys.end();++hi){
-		if(key==hi->key && hi->shift==keys[VK_SHIFT] && hi->control==keys[VK_CONTROL] && hi->alt==keys[VK_MENU]){
+		if(key==hi->key && hi->shift==keys[SDLK_LSHIFT] && hi->control==keys[SDLK_LCTRL] && hi->alt==keys[SDLK_LALT]){
 			DoSelection(hi->select);
 			return true;
 		}
@@ -87,7 +88,7 @@ bool CSelectionKeyHandler::KeyPressed(unsigned char key)
 	return false;
 }
 
-bool CSelectionKeyHandler::KeyReleased(unsigned char key)
+bool CSelectionKeyHandler::KeyReleased(unsigned short key)
 {
 	return false;
 }

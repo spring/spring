@@ -5,8 +5,9 @@
 #include <windows.h>
 #include "InfoConsole.h"
 #include "MouseHandler.h"
+#include <SDL/SDL_types.h>
 
-extern bool keys[256];
+extern Uint8 *keys;
 
 CCameraController::CCameraController(void)
 {
@@ -119,8 +120,8 @@ void COverheadController::KeyMove(float3 move)
 void COverheadController::MouseMove(float3 move)
 {
 	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
-	pos.x+=move.x*pixelsize*(1+keys[VK_SHIFT]*3);	
-	pos.z+=move.y*pixelsize*(1+keys[VK_SHIFT]*3);
+	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3);	
+	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3);
 }
 
 void COverheadController::ScreenEdgeMove(float3 move)
@@ -198,7 +199,7 @@ void CTWController::MouseMove(float3 move)
 {
 	float dist=-camera->rot.x*1500;
 	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*dist*2;
-	move*=(1+keys[VK_SHIFT]*3)*pixelsize;
+	move*=(1+keys[SDLK_LSHIFT]*3)*pixelsize;
 	float3 flatForward=camera->forward;
 	flatForward.y=0;
 	flatForward.Normalize();

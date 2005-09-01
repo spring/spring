@@ -130,11 +130,7 @@ void CGroundDecalHandler::Draw(void)
 					if(track->owner)
 						track->owner->myTrack=0;
 					delete track;
-#ifndef ENABLE_CPPFIX
-					ti=(*tti)->tracks.erase(ti);
-#else
 					(*tti)->tracks.erase(ti++);
-#endif
 					continue;
 				}
 				if(camera->InView((track->parts.front().pos1+track->parts.back().pos1)*0.5,track->parts.front().pos1.distance(track->parts.back().pos1)+500)){

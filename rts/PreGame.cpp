@@ -18,9 +18,10 @@
 #include "ArchiveScanner.h"
 //#include "mmgr.h"
 #include "filefunctions.h"
+#include <SDL/SDL_types.h>
 
 CPreGame* pregame=0;
-extern bool keys[256];
+extern Uint8 *keys;
 extern bool globalQuit;
 string stupidGlobalModName;
 
@@ -94,21 +95,21 @@ CPreGame::~CPreGame(void)
 {
 }
 
-int CPreGame::KeyPressed(unsigned char k,bool isRepeat)
+int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 {
-	if (k==27){
-		if(keys[VK_SHIFT]){
+	if (k == SDLK_ESCAPE){
+		if(keys[SDLK_LSHIFT]){
 			info->AddLine("User exited");
 			globalQuit=true;
 		} else
 			info->AddLine("Use shift-esc to quit");
 	}
 	if(showList){					//are we currently showing a list?
-		if(k==VK_UP)
+		if(k == SDLK_UP)
 			showList->UpOne();
-		if(k==VK_DOWN)
+		if(k == SDLK_DOWN)
 			showList->DownOne();
-		if(k==VK_RETURN){
+		if(k == SDLK_RETURN){
 			showList->Select();
 			showList=0;
 		}
@@ -116,9 +117,9 @@ int CPreGame::KeyPressed(unsigned char k,bool isRepeat)
 	}
 
 	if (userWriting){
-		keys[k] = TRUE;
+		keys[k] = true;
 #ifndef NO_CLIPBOARD
-		if ((k=='V') && keys[VK_CONTROL]){
+		if (k == SDLK_v && keys[SDLK_LCTRL]){
 			OpenClipboard(0);
 			void* p;
 			if((p=GetClipboardData(CF_TEXT))!=0){
@@ -128,12 +129,12 @@ int CPreGame::KeyPressed(unsigned char k,bool isRepeat)
 			return 0;
 		}
 #endif
-		if(k==8){ //backspace
+		if(k == SDLK_BACKSPACE){ //backspace
 			if(userInput.size()!=0)
 				userInput.erase(userInput.size()-1,1);
 			return 0;
 		}
-		if(k==VK_RETURN){
+		if(k == SDLK_RETURN){
 			userWriting=false;
 			return 0;
 		}

@@ -15,11 +15,12 @@
 #include "StartPosSelecter.h"
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
+#include <SDL/SDL_types.h>
 
 CGameSetup* gameSetup=0;
 
 using namespace std;
-extern bool keys[256];
+extern Uint8 *keys;
 
 extern string stupidGlobalMapname;
 
@@ -238,7 +239,7 @@ bool CGameSetup::Draw(void)
 		font->glPrint("%s",gs->players[a]->playerName.c_str());
 		glPopMatrix();
 	}
-	if(gu->myPlayerNum==0 && keys[VK_RETURN] && keys[VK_CONTROL]){
+	if(gu->myPlayerNum==0 && keys[SDLK_RETURN] && keys[SDLK_LCTRL]){
 
 		forceReady=true;
 	}

@@ -21,7 +21,9 @@ CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 : lastCommandPage(0),
 	id(id),
 	ai(0),
+#ifndef NO_DLL
 	m_hDLL(0),
+#endif
 	currentAiNum(0),
 	handler(grouphandler)
 {
@@ -38,10 +40,12 @@ CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 CGroup::~CGroup()
 {
 	ClearUnits();			//shouldnt have any units left but just to be sure
+#ifndef NO_DLL
 	if(ai)
 		ReleaseAI(ai);
 	if(m_hDLL)
 		FreeLibrary(m_hDLL);
+#endif
 	delete callback;
 }
 
@@ -64,6 +68,7 @@ void CGroup::RemoveUnit(CUnit *unit)
 
 void CGroup::SetNewAI(string dllName)
 {
+#ifndef NO_DLL
 	if(ai)
 		ReleaseAI(ai);
 	if(m_hDLL)
@@ -93,7 +98,8 @@ void CGroup::SetNewAI(string dllName)
 
 	ai=GetNewAI();
 	ai->InitAi(callback);
-
+#endif
+	
 	set<CUnit*> unitBackup=units;
 
 	for(set<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui){

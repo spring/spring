@@ -54,9 +54,7 @@ class  CPathEstimater
   int goalx;
   int goaly;
   CPathFinder* pf;
-#ifndef ENABLE_SMALLFIXES
   CPathFinder::myPQ openSquares;
-#endif
   std::vector<int> dirtyEstimates;
   bool initializing;
 };

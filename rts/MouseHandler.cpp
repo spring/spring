@@ -30,6 +30,7 @@
 #include "CameraController.h"
 #include "MapDamage.h"
 //#include "mmgr.h"
+#include <SDL/SDL_types.h>
 
 #include "NewGuiDefine.h"
 
@@ -46,7 +47,7 @@
 extern HWND	hWnd;
 #endif
 extern bool	fullscreen;
-extern bool keys[256];
+extern Uint8 *keys;
 
 extern bool mouseHandlerMayDoSelection;
 
@@ -83,7 +84,7 @@ CMouseHandler::CMouseHandler()
 	cursors["Resurrect"] = new CMouseCursor("cursorrevive", CMouseCursor::Center);
 	cursors["Capture"] = new CMouseCursor("cursorcapture", CMouseCursor::Center);
 
-	ShowCursor(FALSE);
+	SDL_ShowCursor(SDL_DISABLE);
 
 	soundMultiselID = sound->GetWaveId("button9.wav");
 
@@ -100,7 +101,7 @@ CMouseHandler::CMouseHandler()
 
 CMouseHandler::~CMouseHandler()
 {
-	ShowCursor(TRUE);
+	SDL_ShowCursor(SDL_ENABLE);
 	for (map<string, CMouseCursor *>::iterator i = cursors.begin(); i != cursors.end(); ++i) {
 		delete i->second;
 	}
@@ -133,8 +134,8 @@ void CMouseHandler::MouseMove(int x, int y)
 	int dy=y-lasty;
 	lastx = x;  
 	lasty = y;  
-	buttons[0].movement+=abs(dx)+abs(dy);
-	buttons[1].movement+=abs(dx)+abs(dy);
+	buttons[SDL_BUTTON_LEFT].movement+=abs(dx)+abs(dy);
+	buttons[SDL_BUTTON_RIGHT].movement+=abs(dx)+abs(dy);
 
 	gs->players[gu->myPlayerNum]->currentStats->mousePixels+=abs(dx)+abs(dy);
 
@@ -156,12 +157,12 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 #endif
 
-	if(buttons[2].pressed){
+	if(buttons[SDL_BUTTON_MIDDLE].pressed){
 		float cameraSpeed=1;
-		if (keys[VK_SHIFT]){
+		if (keys[SDLK_LSHIFT]){
 			cameraSpeed*=0.1f;
 		}
-		if (keys[VK_CONTROL]){
+		if (keys[SDLK_LCTRL]){
 			cameraSpeed*=10;
 		}
 		currentCamController->MouseMove(float3(dx,dy,invertMouse?-1:1));
@@ -222,7 +223,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	if(button==2){
+	if(button==SDL_BUTTON_MIDDLE){
 		return;
 	}
 
@@ -255,9 +256,9 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	}
 #endif
 
-	if(button==2){
-		if(buttons[2].time>gu->gameTime-0.3)
-			ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
+	if(button==SDL_BUTTON_MIDDLE){
+		if(buttons[SDL_BUTTON_MIDDLE].time>gu->gameTime-0.3)
+			ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 		return;		
 	}
 
@@ -274,15 +275,15 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	}
 #endif
 
-	if(button==0 && mouseHandlerMayDoSelection){
-		if(!keys[VK_SHIFT] && !keys[VK_CONTROL])
+	if(button==SDL_BUTTON_LEFT && mouseHandlerMayDoSelection){
+		if(!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL])
 			selectedUnits.ClearSelected();
 
-		if(buttons[0].movement>4){		//select box
-			float dist=ground->LineGroundCol(buttons[0].camPos,buttons[0].camPos+buttons[0].dir*9000);
+		if(buttons[SDL_BUTTON_LEFT].movement>4){		//select box
+			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*9000);
 			if(dist<0)
 				dist=9000;
-			float3 pos1=buttons[0].camPos+buttons[0].dir*dist;
+			float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
 			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*9000);
 			if(dist<0)
@@ -347,7 +348,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			for(ui=gs->teams[gu->myTeam]->units.begin();ui!=gs->teams[gu->myTeam]->units.end();++ui){
 				float3 vec=(*ui)->midPos-camera->pos;
 				if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
-					if(keys[VK_CONTROL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
+					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(*ui);
 					} else {
 						selectedUnits.AddUnit(*ui);
@@ -368,7 +369,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			float dist=helper->GuiTraceRay(camera->pos,dir,9000,unit,20,false);
 			if(unit && unit->team==gu->myTeam){
 				if(buttons[button].lastRelease<gu->gameTime-0.2){
-					if(keys[VK_CONTROL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
+					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(unit);
 					} else {
 						selectedUnits.AddUnit(unit);
@@ -405,14 +406,14 @@ void CMouseHandler::Draw()
 		return;
 	}
 #endif
-	if(buttons[0].pressed && buttons[0].movement>4 && mouseHandlerMayDoSelection && ( !inMapDrawer || !inMapDrawer->keyPressed )){
+	if(buttons[SDL_BUTTON_LEFT].pressed && buttons[SDL_BUTTON_LEFT].movement>4 && mouseHandlerMayDoSelection && ( !inMapDrawer || !inMapDrawer->keyPressed )){
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(1,1,1,0.5);
 
-		float dist=ground->LineGroundCol(buttons[0].camPos,buttons[0].camPos+buttons[0].dir*9000);
+		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*9000);
 		if(dist<0)
 			dist=9000;
-		float3 pos1=buttons[0].camPos+buttons[0].dir*dist;
+		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
 		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*9000);
 		if(dist<0)
@@ -448,7 +449,7 @@ void CMouseHandler::Draw()
 void CMouseHandler::ShowMouse()
 {
 	if(hide){
-		ShowCursor(FALSE);
+		SDL_ShowCursor(SDL_DISABLE);
 		hide=false;
 	}
 }
@@ -458,17 +459,9 @@ void CMouseHandler::HideMouse()
 	if(!hide){
 		lastx = gu->screenx/2;  
 		lasty = gu->screeny/2;  
-#ifdef USE_GLUT
-		glutSetCursor(GLUT_CURSOR_NONE);
-		glutWarpPointer(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
-#else
-	        ShowCursor(FALSE);
+	        SDL_ShowCursor(SDL_DISABLE);
+		SDL_WarpMouse(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
 		hide=true;
-		RECT cr;
-		if(GetWindowRect(hWnd,&cr)==0)
-			MessageBox(0,"mouse error","",0);
-		SetCursorPos(gu->screenx/2+cr.left+4*!fullscreen,gu->screeny/2+cr.top+23*!fullscreen);
-#endif //GLUT
 	}
 }
 
@@ -580,14 +573,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
 	if(hide && mouseMovedFromCenter){
-#ifndef USE_GLUT
-		RECT cr;
-		if(GetWindowRect(hWnd,&cr)==0)
-			MessageBox(0,"mouse error","",0);
-		SetCursorPos(gu->screenx/2+cr.left+4*!fullscreen,gu->screeny/2+cr.top+23*!fullscreen);
-#else
-		glutWarpPointer(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
-#endif
+		SDL_WarpMouse(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
 		internalMouseMove=true;				//this only works if the msg que is empty of mouse moves, so someone should figure out something better
 		mouseMovedFromCenter=false;
 	}

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static int   RGBtoYUV[4096];
 //#define RGB32toYUV(val) (RGBtoYUV[((val&0x00FF0000)>>20)+((val&0x0000FF00)>>12)+((val&0x000000FF)>>4)])
-inline int RGB32toYUV(DWORD val)
+inline int RGB32toYUV(Uint32 val)
 {
 	int a,r,g,b,Y,u,v;
 	//r = (val&0x00FF0000)>>16;
@@ -56,46 +56,46 @@ const  int   trV   = 0x00000006;
 #define INTERP_16_MASK_SHIFT_2_4(v) (((v)&0xF0F0)>>4)
 #define INTERP_16_MASK_SHIFTBACK_2_4(v) ((INTERP_16_MASK_1_3(v))<<4)
 
-inline void hq4x_Interp1_16(unsigned char * pc, WORD p1, WORD p2)
+inline void hq4x_Interp1_16(unsigned char * pc, Uint16 p1, Uint16 p2)
 {
-	*((WORD*)pc) = INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*3 + INTERP_16_MASK_1_3(p2)) / 4)
+	*((Uint16*)pc) = INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*3 + INTERP_16_MASK_1_3(p2)) / 4)
 		| INTERP_16_MASK_SHIFTBACK_2_4((INTERP_16_MASK_SHIFT_2_4(p1)*3 + INTERP_16_MASK_SHIFT_2_4(p2)) / 4 );
 }
 
-inline void hq4x_Interp2_16(unsigned char * pc, WORD p1, WORD p2, WORD p3)
+inline void hq4x_Interp2_16(unsigned char * pc, Uint16 p1, Uint16 p2, Uint16 p3)
 {
-	*((WORD*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*2 + INTERP_16_MASK_1_3(p2) + INTERP_16_MASK_1_3(p3)) / 4)
+	*((Uint16*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*2 + INTERP_16_MASK_1_3(p2) + INTERP_16_MASK_1_3(p3)) / 4)
 		| INTERP_16_MASK_SHIFTBACK_2_4((INTERP_16_MASK_SHIFT_2_4(p1)*2 + INTERP_16_MASK_SHIFT_2_4(p2) + INTERP_16_MASK_SHIFT_2_4(p3)) / 4);
 }
 
-inline void hq4x_Interp3_16(unsigned char * pc, WORD p1, WORD p2)
+inline void hq4x_Interp3_16(unsigned char * pc, Uint16 p1, Uint16 p2)
 {
-	*((WORD*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*7 + INTERP_16_MASK_1_3(p2)) / 8)
+	*((Uint16*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*7 + INTERP_16_MASK_1_3(p2)) / 8)
 		| INTERP_16_MASK_SHIFTBACK_2_4((INTERP_16_MASK_SHIFT_2_4(p1)*7 + INTERP_16_MASK_SHIFT_2_4(p2)) / 8);
 }
 
-inline void hq4x_Interp5_16(unsigned char * pc, WORD p1, WORD p2)
+inline void hq4x_Interp5_16(unsigned char * pc, Uint16 p1, Uint16 p2)
 {
-	*((WORD*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1) + INTERP_16_MASK_1_3(p2)) / 2)
+	*((Uint16*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1) + INTERP_16_MASK_1_3(p2)) / 2)
 		| INTERP_16_MASK_SHIFTBACK_2_4((INTERP_16_MASK_SHIFT_2_4(p1) + INTERP_16_MASK_SHIFT_2_4(p2)) / 2);
 }
 
-inline void hq4x_Interp6_16(unsigned char * pc, WORD p1, WORD p2, WORD p3)
+inline void hq4x_Interp6_16(unsigned char * pc, Uint16 p1, Uint16 p2, Uint16 p3)
 {
-	*((WORD*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*5 + INTERP_16_MASK_1_3(p2)*2 + INTERP_16_MASK_1_3(p3)*1) / 8)
+	*((Uint16*)pc) =  INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*5 + INTERP_16_MASK_1_3(p2)*2 + INTERP_16_MASK_1_3(p3)*1) / 8)
 		| INTERP_16_MASK_SHIFTBACK_2_4((INTERP_16_MASK_SHIFT_2_4(p1)*5 + INTERP_16_MASK_SHIFT_2_4(p2)*2 + INTERP_16_MASK_SHIFT_2_4(p3)*1) / 8);
 }
 
-inline void hq4x_Interp7_16(unsigned char * pc, WORD p1, WORD p2, WORD p3)
+inline void hq4x_Interp7_16(unsigned char * pc, Uint16 p1, Uint16 p2, Uint16 p3)
 {
-	*((WORD*)pc) =   INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*6 + INTERP_16_MASK_1_3(p2) + INTERP_16_MASK_1_3(p3)) / 8)
+	*((Uint16*)pc) =   INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*6 + INTERP_16_MASK_1_3(p2) + INTERP_16_MASK_1_3(p3)) / 8)
 		| INTERP_16_MASK_SHIFTBACK_2_4((INTERP_16_MASK_SHIFT_2_4(p1)*6 + INTERP_16_MASK_SHIFT_2_4(p2) + INTERP_16_MASK_SHIFT_2_4(p3)) / 8);
 }
 
-inline void hq4x_Interp8_16(unsigned char * pc, WORD p1, WORD p2)
+inline void hq4x_Interp8_16(unsigned char * pc, Uint16 p1, Uint16 p2)
 {
 	//*((int*)pc) = (c1*5+c2*3)/8;
-	*((WORD*)pc) =   INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*5 + INTERP_16_MASK_1_3(p2)*3) / 8)
+	*((Uint16*)pc) =   INTERP_16_MASK_1_3((INTERP_16_MASK_1_3(p1)*5 + INTERP_16_MASK_1_3(p2)*3) / 8)
 		| INTERP_16_MASK_SHIFTBACK_2_4((INTERP_16_MASK_SHIFT_2_4(p1)*5 + INTERP_16_MASK_SHIFT_2_4(p2)*3) / 8);
 }
 
@@ -103,46 +103,46 @@ inline void hq4x_Interp8_16(unsigned char * pc, WORD p1, WORD p2)
 #define INTERP_32_MASK_SHIFT_2_4(v) (((v)&0xFF00FF00)>>8)
 #define INTERP_32_MASK_SHIFTBACK_2_4(v) (((INTERP_32_MASK_1_3(v))<<8))
 
-inline void hq4x_Interp1_32(unsigned char * pc, DWORD p1, DWORD p2)
+inline void hq4x_Interp1_32(unsigned char * pc, Uint32 p1, Uint32 p2)
 {
-	*((DWORD*)pc) = INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*3 + INTERP_32_MASK_1_3(p2)) / 4)
+	*((Uint32*)pc) = INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*3 + INTERP_32_MASK_1_3(p2)) / 4)
 		| INTERP_32_MASK_SHIFTBACK_2_4((INTERP_32_MASK_SHIFT_2_4(p1)*3 + INTERP_32_MASK_SHIFT_2_4(p2)) / 4 );
 }
 
-inline void hq4x_Interp2_32(unsigned char * pc, DWORD p1, DWORD p2, DWORD p3)
+inline void hq4x_Interp2_32(unsigned char * pc, Uint32 p1, Uint32 p2, Uint32 p3)
 {
-	*((DWORD*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*2 + INTERP_32_MASK_1_3(p2) + INTERP_32_MASK_1_3(p3)) / 4)
+	*((Uint32*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*2 + INTERP_32_MASK_1_3(p2) + INTERP_32_MASK_1_3(p3)) / 4)
 		| INTERP_32_MASK_SHIFTBACK_2_4((INTERP_32_MASK_SHIFT_2_4(p1)*2 + INTERP_32_MASK_SHIFT_2_4(p2) + INTERP_32_MASK_SHIFT_2_4(p3)) / 4);
 }
 
-inline void hq4x_Interp3_32(unsigned char * pc, DWORD p1, DWORD p2)
+inline void hq4x_Interp3_32(unsigned char * pc, Uint32 p1, Uint32 p2)
 {
-	*((DWORD*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*7 + INTERP_32_MASK_1_3(p2)) / 8)
+	*((Uint32*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*7 + INTERP_32_MASK_1_3(p2)) / 8)
 		| INTERP_32_MASK_SHIFTBACK_2_4((INTERP_32_MASK_SHIFT_2_4(p1)*7 + INTERP_32_MASK_SHIFT_2_4(p2)) / 8);
 }
 
-inline void hq4x_Interp5_32(unsigned char * pc, DWORD p1, DWORD p2)
+inline void hq4x_Interp5_32(unsigned char * pc, Uint32 p1, Uint32 p2)
 {
-	*((DWORD*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1) + INTERP_32_MASK_1_3(p2)) / 2)
+	*((Uint32*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1) + INTERP_32_MASK_1_3(p2)) / 2)
 		| INTERP_32_MASK_SHIFTBACK_2_4((INTERP_32_MASK_SHIFT_2_4(p1) + INTERP_32_MASK_SHIFT_2_4(p2)) / 2);
 }
 
-inline void hq4x_Interp6_32(unsigned char * pc, DWORD p1, DWORD p2, DWORD p3)
+inline void hq4x_Interp6_32(unsigned char * pc, Uint32 p1, Uint32 p2, Uint32 p3)
 {
-	*((DWORD*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*5 + INTERP_32_MASK_1_3(p2)*2 + INTERP_32_MASK_1_3(p3)*1) / 8)
+	*((Uint32*)pc) =  INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*5 + INTERP_32_MASK_1_3(p2)*2 + INTERP_32_MASK_1_3(p3)*1) / 8)
 		| INTERP_32_MASK_SHIFTBACK_2_4((INTERP_32_MASK_SHIFT_2_4(p1)*5 + INTERP_32_MASK_SHIFT_2_4(p2)*2 + INTERP_32_MASK_SHIFT_2_4(p3)*1) / 8);
 }
 
-inline void hq4x_Interp7_32(unsigned char * pc, DWORD p1, DWORD p2, DWORD p3)
+inline void hq4x_Interp7_32(unsigned char * pc, Uint32 p1, Uint32 p2, Uint32 p3)
 {
-	*((DWORD*)pc) =   INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*6 + INTERP_32_MASK_1_3(p2) + INTERP_32_MASK_1_3(p3)) / 8)
+	*((Uint32*)pc) =   INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*6 + INTERP_32_MASK_1_3(p2) + INTERP_32_MASK_1_3(p3)) / 8)
 		| INTERP_32_MASK_SHIFTBACK_2_4((INTERP_32_MASK_SHIFT_2_4(p1)*6 + INTERP_32_MASK_SHIFT_2_4(p2) + INTERP_32_MASK_SHIFT_2_4(p3)) / 8);
 }
 
-inline void hq4x_Interp8_32(unsigned char * pc, DWORD p1, DWORD p2)
+inline void hq4x_Interp8_32(unsigned char * pc, Uint32 p1, Uint32 p2)
 {
 	//*((int*)pc) = (c1*5+c2*3)/8;
-	*((DWORD*)pc) =   INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*5 + INTERP_32_MASK_1_3(p2)*3) / 8)
+	*((Uint32*)pc) =   INTERP_32_MASK_1_3((INTERP_32_MASK_1_3(p1)*5 + INTERP_32_MASK_1_3(p2)*3) / 8)
 		| INTERP_32_MASK_SHIFTBACK_2_4((INTERP_32_MASK_SHIFT_2_4(p1)*5 + INTERP_32_MASK_SHIFT_2_4(p2)*3) / 8);
 }
 
@@ -289,7 +289,7 @@ inline void hq4x_Interp8_32(unsigned char * pc, DWORD p1, DWORD p2)
 
 
 
-inline bool Diff_16(WORD w1, WORD w2)
+inline bool Diff_16(Uint16 w1, Uint16 w2)
 {
 	YUV1 = RGB16toYUV(w1);
 	YUV2 = RGB16toYUV(w2);
@@ -298,7 +298,7 @@ inline bool Diff_16(WORD w1, WORD w2)
 		( abs((YUV1 & Umask) - (YUV2 & Umask)) > trU ) ||
 		( abs((YUV1 & Vmask) - (YUV2 & Vmask)) > trV ) );
 }
-inline bool Diff_32(DWORD w1, DWORD w2)
+inline bool Diff_32(Uint32 w1, Uint32 w2)
 {
 	YUV1 = RGB32toYUV(w1);
 	YUV2 = RGB32toYUV(w2);
@@ -325,8 +325,8 @@ void hq4x_16( unsigned char * pIn, unsigned char * pOut, int Xres, int Yres, int
 
 	int  i, j, k;
 	int  prevline, nextline;
-	WORD  w[10];
-	WORD  c[10];
+	Uint16  w[10];
+	Uint16  c[10];
 
 	//   +----+----+----+
 	//   |    |    |    |
@@ -346,15 +346,15 @@ void hq4x_16( unsigned char * pIn, unsigned char * pOut, int Xres, int Yres, int
 
 		for (i=0; i<Xres; i++)
 		{
-			w[2] = *((WORD*)(pIn + prevline));
-			w[5] = *((WORD*)pIn);
-			w[8] = *((WORD*)(pIn + nextline));
+			w[2] = *((Uint16*)(pIn + prevline));
+			w[5] = *((Uint16*)pIn);
+			w[8] = *((Uint16*)(pIn + nextline));
 
 			if (i>0)
 			{
-				w[1] = *((WORD*)(pIn + prevline - 2));
-				w[4] = *((WORD*)(pIn - 2));
-				w[7] = *((WORD*)(pIn + nextline - 2));
+				w[1] = *((Uint16*)(pIn + prevline - 2));
+				w[4] = *((Uint16*)(pIn - 2));
+				w[7] = *((Uint16*)(pIn + nextline - 2));
 			}
 			else
 			{
@@ -365,9 +365,9 @@ void hq4x_16( unsigned char * pIn, unsigned char * pOut, int Xres, int Yres, int
 
 			if (i<Xres-1)
 			{
-				w[3] = *((WORD*)(pIn + prevline + 2));
-				w[6] = *((WORD*)(pIn + 2));
-				w[9] = *((WORD*)(pIn + nextline + 2));
+				w[3] = *((Uint16*)(pIn + prevline + 2));
+				w[6] = *((Uint16*)(pIn + 2));
+				w[9] = *((Uint16*)(pIn + nextline + 2));
 			}
 			else
 			{
@@ -443,8 +443,8 @@ void hq4x_32( unsigned char * pIn, unsigned char * pOut, int Xres, int Yres, int
 
 	int  i, j, k;
 	int  prevline, nextline;
-	DWORD  w[10];
-	DWORD  c[10];
+	Uint32  w[10];
+	Uint32  c[10];
 
 	//   +----+----+----+
 	//   |    |    |    |
@@ -464,15 +464,15 @@ void hq4x_32( unsigned char * pIn, unsigned char * pOut, int Xres, int Yres, int
 
 		for (i=0; i<Xres; i++)
 		{
-			w[2] = *((DWORD*)(pIn + prevline));
-			w[5] = *((DWORD*)pIn);
-			w[8] = *((DWORD*)(pIn + nextline));
+			w[2] = *((Uint32*)(pIn + prevline));
+			w[5] = *((Uint32*)pIn);
+			w[8] = *((Uint32*)(pIn + nextline));
 
 			if (i>0)
 			{
-				w[1] = *((DWORD*)(pIn + prevline - 4));
-				w[4] = *((DWORD*)(pIn - 4));
-				w[7] = *((DWORD*)(pIn + nextline - 4));
+				w[1] = *((Uint32*)(pIn + prevline - 4));
+				w[4] = *((Uint32*)(pIn - 4));
+				w[7] = *((Uint32*)(pIn + nextline - 4));
 			}
 			else
 			{
@@ -483,9 +483,9 @@ void hq4x_32( unsigned char * pIn, unsigned char * pOut, int Xres, int Yres, int
 
 			if (i<Xres-1)
 			{
-				w[3] = *((DWORD*)(pIn + prevline + 4));
-				w[6] = *((DWORD*)(pIn + 4));
-				w[9] = *((DWORD*)(pIn + nextline + 4));
+				w[3] = *((Uint32*)(pIn + prevline + 4));
+				w[6] = *((Uint32*)(pIn + 4));
+				w[9] = *((Uint32*)(pIn + nextline + 4));
 			}
 			else
 			{

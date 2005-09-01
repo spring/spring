@@ -92,6 +92,7 @@
 #include "GameVersion.h"
 #include "UnitDrawer.h"
 #include <boost/filesystem/path.hpp>
+#include <SDL/SDL_types.h>
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"
@@ -106,7 +107,7 @@ GLfloat FogBlack[]=			{ 0.0f,	0.0f, 0.0f, 0	 };
 
 extern bool globalQuit;
 CGame* game=0;
-extern bool keys[256];
+extern Uint8 *keys;
 extern bool fullscreen;
 extern string stupidGlobalMapname;
 extern int stupidGlobalMapId;
@@ -156,7 +157,7 @@ CGame::CGame(bool server,std::string mapname)
 	showPlayerInfo=!!regHandler.GetInt("ShowPlayerInfo",0);
 	gamePausable=true;
 	noSpectatorChat=false;
- 
+
 
 	inbufpos=0;
 	inbuflength=0;
@@ -182,7 +183,7 @@ CGame::CGame(bool server,std::string mapname)
 	sound=new CSound();
 	mouse=new CMouseHandler();
 	tooltip=new CTooltipConsole();
-	
+
 	ENTER_SYNCED;
 	damageArrayHandler=new CDamageArrayHandler();
 	unitDefHandler=new CUnitDefHandler();;
@@ -190,7 +191,7 @@ CGame::CGame(bool server,std::string mapname)
 	ENTER_MIXED;
 	if(!server) net->Update();	//prevent timing out during load
 	helper=new CGameHelper(this);
-//	physicsEngine = new CPhysicsEngine();
+	//	physicsEngine = new CPhysicsEngine();
 	ENTER_UNSYNCED;
 	shadowHandler=new CShadowHandler();
 
@@ -239,7 +240,7 @@ CGame::CGame(bool server,std::string mapname)
 	guikeys=new CGuiKeyReader("uikeys.txt");
 #endif
 	if(!server) net->Update();	//prevent timing out during load
-	
+
 	water=CBaseWater::GetWater();
 	grouphandler=new CGroupHandler(gu->myTeam);
 	globalAI=new CGlobalAIHandler();
@@ -336,7 +337,7 @@ CGame::~CGame()
 	if(gameServer){
 		gameServer->quitServer=true;
 		gameServer=0;
-		Sleep(20);
+		SDL_Delay(20);
 	}
 
 	globalAI->PreDestroy ();
@@ -385,22 +386,22 @@ CGame::~CGame()
 	delete info;
 }
 //called when the key is pressed by the user (can be called several times due to key repeat)
-int CGame::KeyPressed(unsigned char k,bool isRepeat)
+int CGame::KeyPressed(unsigned short k,bool isRepeat)
 {
 	if(!isRepeat)
 		gs->players[gu->myPlayerNum]->currentStats->keyPresses++;
-//	info->AddLine("%i",(int)k);
+	//	info->AddLine("%i",(int)k);
 
 #ifdef NEW_GUI
 	GUIcontroller::KeyDown(k);
-// #endif
+	// #endif
 #else
 	if(showList){					//are we currently showing a list?
-		if(k==VK_UP)
+		if(k==SDLK_UP)
 			showList->UpOne();
-		if(k==VK_DOWN)
+		if(k==SDLK_DOWN)
 			showList->DownOne();
-		if(k==VK_RETURN){
+		if(k==SDLK_RETURN){
 			showList->Select();
 			showList=0;
 		}
@@ -411,7 +412,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 	}
 	if (userWriting){
 #ifndef NO_CLIPBOARD
-		if ((k=='V') && keys[VK_CONTROL]){
+		if ((k=='V') && keys[SDLK_LCTRL]){
 			OpenClipboard(0);
 			void* p;
 			if((p=GetClipboardData(CF_TEXT))!=0){
@@ -426,7 +427,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 				userInput.erase(userInput.size()-1,1);
 			return 0;
 		}
-		if(k==VK_RETURN){
+		if(k==SDLK_RETURN){
 			userWriting=false;
 			keys[k] = false;		//prevent game start when server chats
 			return 0;
@@ -469,7 +470,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 		userWriting=true;
 		userPrompt="Say: ";
 		chatting=true;
-		if(k!=VK_RETURN)
+		if(k!=SDLK_RETURN)
 			ignoreNextChar=true;
 	}
 	if (s=="debug")
@@ -480,7 +481,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 
 	if (s=="nosound")
 		sound->noSound=!sound->noSound;
-	
+
 	if(s=="savegame"){
 		CLoadSaveHandler ls;
 		ls.SaveGame("Test.ssf");
@@ -493,7 +494,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 			aviGenerator->ReleaseEngine();
 			delete aviGenerator;
 			aviGenerator=0;
-//			info->AddLine("Finished avi");
+			//			info->AddLine("Finished avi");
 		} else {
 			creatingVideo=true;
 			string name;
@@ -528,7 +529,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 			aviGenerator->SetFileName(name.c_str());
 			aviGenerator->SetRate(30);
 			aviGenerator->SetBitmapHeader(&bih);
-			HRESULT hr=aviGenerator->InitEngine();
+			Sint32 hr=aviGenerator->InitEngine();
 			if(hr!=AVIERR_OK){
 				creatingVideo=false;
 			} else {
@@ -642,7 +643,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 		groundDrawer->SetHeightTexture();
 	}
 	if (s=="yardmap1"){
-//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[0],readmap->yardmapPal,true);
+		//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[0],readmap->yardmapPal,true);
 	}
 	if (s=="lastmsgpos"){
 		mouse->currentCamController->SetPos(info->lastMsgPos);
@@ -657,19 +658,19 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 	}
 
 	if (s=="yardmap4"){
-//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[3],readmap->yardmapPal,true);
+		//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[3],readmap->yardmapPal,true);
 	}
-/*	if (s=="showsupply"){
+	/*	if (s=="showsupply"){
 		groundDrawer->SetExtraTexture(supplyhandler->supplyLevel[gu->myTeam],supplyhandler->supplyPal);
-	}*/
-/*	if (s=="showteam"){
+		}*/
+	/*	if (s=="showteam"){
 		groundDrawer->SetExtraTexture(readmap->teammap,cityhandler->teampal);
-	}*/
+		}*/
 	if (s=="togglelos"){
 		groundDrawer->ToggleLosTexture();
 	}
 	if(s=="mousestate"){
-	  mouse->ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
+		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 	}
 
 	if (s=="sharedialog"){
@@ -677,7 +678,7 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 			new CShareBox();
 	}
 	if (s=="quit"){
-		if(keys[VK_SHIFT]){
+		if(keys[SDLK_LSHIFT]){
 			info->AddLine("User exited");
 			globalQuit=true;
 		} else
@@ -752,9 +753,9 @@ int CGame::KeyPressed(unsigned char k,bool isRepeat)
 }
 
 //Called when a key is released by the user
-int CGame::KeyReleased(unsigned char k)				
+int CGame::KeyReleased(unsigned short k)
 {
-//	keys[k] = false;
+	//	keys[k] = false;
 
 #ifdef NEW_GUI
 	GUIcontroller::KeyUp(k);
@@ -810,14 +811,13 @@ bool CGame::Update()
 	if(CScriptHandler::Instance()->chosenScript){
 		script=CScriptHandler::Instance()->chosenScript;
 	}
-
 	thisFps++;
 
-	LARGE_INTEGER timeNow;
+	Uint64 timeNow;
 	QueryPerformanceCounter(&timeNow);
-	LARGE_INTEGER difTime;
-	difTime.QuadPart=timeNow.QuadPart-lastModGameTimeMeasure.QuadPart;
-	double dif=double(difTime.QuadPart)/double(timeSpeed.QuadPart);
+	Uint64 difTime;
+	difTime=timeNow-lastModGameTimeMeasure;
+	double dif=double(difTime)/double(timeSpeed);
 	gu->modGameTime+=dif*gs->speedFactor;
 	gu->gameTime+=dif;
 	if(playing && !gameOver)
@@ -879,9 +879,9 @@ bool CGame::Draw()
 	ASSERT_UNSYNCED_MODE;
 //	(*info) << mouse->lastx << "\n";
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
-		LARGE_INTEGER startDraw;
+		Uint64 startDraw;
 		QueryPerformanceCounter(&startDraw);
-		gu->timeOffset = ((double)(startDraw.QuadPart - lastUpdate.QuadPart))/timeSpeed.QuadPart*GAME_SPEED*gs->speedFactor;
+		gu->timeOffset = ((double)(startDraw - lastUpdate))/timeSpeed*GAME_SPEED*gs->speedFactor;
 	} else  {
 		gu->timeOffset=0;
 		QueryPerformanceCounter(&lastUpdate);
@@ -938,7 +938,7 @@ bool CGame::Draw()
 		unitDrawer->DrawCloakedUnits();
 		ph->Draw(false);
 		sky->DrawSun();
-		if(keys[VK_SHIFT])
+		if(keys[SDLK_LSHIFT])
 			selectedUnits.DrawCommands();
 
 		mouse->Draw();
@@ -1078,9 +1078,9 @@ bool CGame::Draw()
 	glEnable(GL_DEPTH_TEST );
 	glLoadIdentity();
 
-	LARGE_INTEGER start;
+	Uint64 start;
 	QueryPerformanceCounter(&start);
-	gu->lastFrameTime = (double)(start.QuadPart - lastMoveUpdate.QuadPart)/timeSpeed.QuadPart;
+	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
 	lastMoveUpdate=start;
 
 #ifndef NO_AVI
@@ -1187,7 +1187,7 @@ START_TIME_PROFILE
 	ph->CheckUnitCol();
 END_TIME_PROFILE("Collisions");
 
-	LARGE_INTEGER stopPhysics;
+	Uint64 stopPhysics;
 	QueryPerformanceCounter(&stopPhysics);
 
 END_TIME_PROFILE("Sim time")
@@ -1278,12 +1278,12 @@ bool CGame::ClientReadNet()
 	inbuflength+=a;
 
 	if(!gameServer/* && !net->onlyLocal*/){
-		LARGE_INTEGER currentFrame;
+		Uint64 currentFrame;
 		QueryPerformanceCounter(&currentFrame);
 		
 		if(timeLeft>1)
 			timeLeft--;
-		timeLeft+=consumeSpeed*((float)(currentFrame.QuadPart - lastframe.QuadPart)/timeSpeed.QuadPart);
+		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/timeSpeed);
 		lastframe=currentFrame;
 		
 		que=0;

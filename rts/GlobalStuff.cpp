@@ -24,9 +24,9 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 {
 	hmapx=256;
 	hmapy=256;
-	LARGE_INTEGER li;
+	Uint64 li;
 	QueryPerformanceCounter(&li);
-	randSeed=18655;//li.LowPart;
+	randSeed=li&0xffffffff;
 	frameNum=0;
 	speedFactor=1;
 	userSpeedFactor=1;
@@ -105,11 +105,9 @@ float3 CGlobalSyncedStuff::randVector()
 
 CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
-	LARGE_INTEGER randnum;
+	Uint64 randnum;
 	QueryPerformanceCounter(&randnum);
-#ifdef _WIN32	
-	usRandSeed=randnum.LowPart;
-#endif	
+	usRandSeed=randnum&0xffffffff;
 	modGameTime=0;
 	gameTime=0;
 	lastFrameTime=0;

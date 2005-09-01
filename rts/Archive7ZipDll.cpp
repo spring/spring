@@ -24,12 +24,12 @@ typedef UINT32 (WINAPI * CreateObjectFunc)(
     void **outObject);
 #else
 extern "C" {
- HRESULT CreateObject(
+ Sint32 CreateObject(
     const GUID *classID, 
     const GUID *interfaceID, 
     void **outObject);
 
- HRESULT GetHandlerProperty(PROPID propID, PROPVARIANT *value);
+ Sint32 GetHandlerProperty(PROPID propID, PROPVARIANT *value);
 }
 #endif
 
@@ -44,8 +44,8 @@ public:
 	MY_UNKNOWN_IMP
 
 	virtual ~CTestOutFileStream() {}
-	STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize);
-	STDMETHOD(WritePart)(const void *data, UInt32 size, UInt32 *processedSize);
+	STDMETHOD(Write)(const void *data, Uint32 size, Uint32 *processedSize);
+	STDMETHOD(WritePart)(const void *data, Uint32 size, Uint32 *processedSize);
 	void SetBuf(ABOpenFile_t* buf);
 private:
 	ABOpenFile_t* buf;
@@ -58,7 +58,7 @@ void CTestOutFileStream::SetBuf(ABOpenFile_t* buf)
 	curbuf = buf->data;
 }
 
-HRESULT CTestOutFileStream::Write(const void *data, UInt32 size, UInt32 *processedSize)
+Sint32 CTestOutFileStream::Write(const void *data, Uint32 size, Uint32 *processedSize)
 {
 	//printf("write %d\n", size);
 	memcpy(curbuf, data, size);
@@ -69,7 +69,7 @@ HRESULT CTestOutFileStream::Write(const void *data, UInt32 size, UInt32 *process
 	return S_OK;
 }
 
-HRESULT CTestOutFileStream::WritePart(const void *data, UInt32 size, UInt32 *processedSize)
+Sint32 CTestOutFileStream::WritePart(const void *data, Uint32 size, Uint32 *processedSize)
 {
 	//printf("writepart %d\n", size);
 	return Write(data, size, processedSize);
@@ -87,14 +87,14 @@ public:
 	MY_UNKNOWN_IMP
 
 	// IProgress
-	STDMETHOD(SetTotal)(UInt64 size);
-	STDMETHOD(SetCompleted)(const UInt64 *completeValue);
+	STDMETHOD(SetTotal)(Uint64 size);
+	STDMETHOD(SetCompleted)(const Uint64 *completeValue);
 
 	// IExtractCallback
-	STDMETHOD(GetStream)(UInt32 index, ISequentialOutStream **outStream,
-      Int32 askExtractMode);
-	STDMETHOD(PrepareOperation)(Int32 askExtractMode);
-	STDMETHOD(SetOperationResult)(Int32 resultEOperationResult);
+	STDMETHOD(GetStream)(Uint32 index, ISequentialOutStream **outStream,
+      Sint32 askExtractMode);
+	STDMETHOD(PrepareOperation)(Sint32 askExtractMode);
+	STDMETHOD(SetOperationResult)(Sint32 resultEOperationResult);
 
 	void SetBuf(ABOpenFile_t* buf);
 private:
@@ -107,25 +107,25 @@ void CExtractCallbackImp::SetBuf(ABOpenFile_t* buf)
 	this->buf = buf;
 }
 
-HRESULT CExtractCallbackImp::SetTotal(UInt64 size)
+Sint32 CExtractCallbackImp::SetTotal(Uint64 size)
 {
 	//printf("Total: %ld\n", size);
 	return S_OK;
 }
 
-HRESULT CExtractCallbackImp::SetOperationResult(Int32 resultEOperationResult)
+Sint32 CExtractCallbackImp::SetOperationResult(Sint32 resultEOperationResult)
 {
 	//printf("boo %d\n", resultEOperationResult);
 	return S_OK;
 }
 
-HRESULT CExtractCallbackImp::PrepareOperation(Int32 askExtractMode)
+Sint32 CExtractCallbackImp::PrepareOperation(Sint32 askExtractMode)
 {
 	//printf("hoo %d\n", askExtractMode);
 	return 0;
 }
 
-HRESULT CExtractCallbackImp::GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode)
+Sint32 CExtractCallbackImp::GetStream(Uint32 index, ISequentialOutStream **outStream, Sint32 askExtractMode)
 {
 	//printf("lol %d\n", index);
 
@@ -138,7 +138,7 @@ HRESULT CExtractCallbackImp::GetStream(UInt32 index, ISequentialOutStream **outS
 	return S_OK;
 }
 
-HRESULT CExtractCallbackImp::SetCompleted(const UInt64 *completeValue)
+Sint32 CExtractCallbackImp::SetCompleted(const Uint64 *completeValue)
 {
 	//printf("Set completed: %ld\n", *completeValue);
 	return S_OK;
@@ -149,7 +149,7 @@ HRESULT CExtractCallbackImp::SetCompleted(const UInt64 *completeValue)
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
-#ifdef _WIN32
+#ifndef NO_DLL
 static HINSTANCE m_hDLL = NULL;
 static CreateObjectFunc createObjectFunc;
 #endif
@@ -159,7 +159,7 @@ CArchive7ZipDll::CArchive7ZipDll(const string& name) :
 	archive(NULL),
 	curSearchHandle(1)
 {
-#ifdef _WIN32
+#ifndef NO_DLL
 	if (m_hDLL == NULL) {
 		if((m_hDLL=LoadLibrary("7zxa.dll"))==0) {
 			MessageBox(0,"Failed to find 7zxa.dll","",0);
@@ -190,9 +190,9 @@ CArchive7ZipDll::CArchive7ZipDll(const string& name) :
 	if (archive->Open(file, 0, 0) != S_OK)
 	    return;
 
-	UInt32 numItems = 0;
+	Uint32 numItems = 0;
 	archive->GetNumberOfItems(&numItems);  
-	for (UInt32 i = 0; i < numItems; i++)
+	for (Uint32 i = 0; i < numItems; i++)
 	{
 		NWindows::NCOM::CPropVariant propVariant;
 		archive->GetProperty(i, kpidPath, &propVariant);
@@ -245,7 +245,7 @@ ABOpenFile_t* CArchive7ZipDll::GetEntireFile(const string& fName)
 	ExtractCallbackSpec->SetBuf(of);
 	ExtractCallback = ExtractCallbackSpec;
 
-	UInt32 files[1];
+	Uint32 files[1];
 	files[0] = fd.index;
 
 	archive->Extract(files, 1, 0, ExtractCallback);

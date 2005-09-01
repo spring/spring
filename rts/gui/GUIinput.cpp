@@ -1,6 +1,7 @@
 #include "GUIinput.h"
 #include <string>
 #include "GUIfont.h"
+#include <SDL/SDL_types.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -36,7 +37,7 @@ void GUIinput::PrivateDraw()
 	guifont->Print(guifont->GetWidth(caption)+5, (h-guifont->GetHeight())/2.0, userInput);
 }
 
-extern bool keys[256];
+extern Uint8 *keys;
 bool GUIinput::KeyAction(const int key)
 {
 	if(isHidden())
@@ -50,17 +51,17 @@ bool GUIinput::CharacterAction(const char key)
 	if(isHidden())
 		return false;
 
-	if(key==VK_RETURN)
+	if(key==SDLK_RETURN)
 	{
 		// send to delegate
 		enter(userInput);
 		userInput="";
 	}
-	else if(key==VK_ESCAPE)
+	else if(key==SDLK_ESCAPE)
 	{
 		userInput="";
 	}	
-	else if(key==VK_BACK)
+	else if(key==SDLK_BACKSPACE)
 	{
 		if(userInput.size())
 			userInput=userInput.substr(0, userInput.size()-1);

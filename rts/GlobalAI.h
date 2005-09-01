@@ -24,6 +24,7 @@ public:
 	CGlobalAICallback* callback;
 	CGroupHandler* gh;
 
+#ifndef NO_DLL
 	HINSTANCE m_hDLL;
 
 	typedef int (WINAPI* GETGLOBALAIVERSION)();
@@ -33,6 +34,7 @@ public:
 	GETGLOBALAIVERSION GetGlobalAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;
+#endif
 };
 
 #endif

@@ -8,6 +8,7 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 : team(team)
 {
 	ai=0;
+#ifndef NO_DLL
 	m_hDLL=0;
 
 	m_hDLL=LoadLibrary(dll);
@@ -33,6 +34,7 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 	ReleaseAI = (RELEASEAI)GetProcAddress(m_hDLL,"ReleaseAI");
 
 	ai=GetNewAI();
+#endif
 	callback=new CGlobalAICallback(this);
 	gh=new CGroupHandler(team);
 	ai->InitAI(callback,team);
@@ -46,7 +48,9 @@ void CGlobalAI::PreDestroy ()
 CGlobalAI::~CGlobalAI(void)
 {
 	if(ai){
+#ifndef NO_DLL
 		ReleaseAI(ai);
+#endif
 		delete callback;
 		delete gh;
 	}

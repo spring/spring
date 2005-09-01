@@ -19,9 +19,7 @@ appears in the common code
 #include <iostream>
 #include <byteswap.h>
 #include <boost/cstdint.hpp>
-
-//FIXME remove following line and include everywhere required
-#include <inputs.h>
+#include <SDL/SDL.h>
 
 #define  WINAPI
 
@@ -31,51 +29,14 @@ appears in the common code
 #define GetProcAddress(a,b) (0)
 #endif
 
-
-#ifdef EMULE_WINTYPES
-#include "wintypes.h"
-typedef void* HINSTANCE ;
-typedef void *HDC; 
-typedef void *HANDLE;
-#define __int64 int64_t
-#define BOOL bool
-#define VOID void
-#define CALLBACK
-#ifndef TRUE
-#define TRUE true
-#endif
-#ifndef FALSE
-#define FALSE false
-#endif
-typedef void *LPVOID;
-typedef char *LPSTR;
-typedef int64_t INT64;
-typedef uint64_t UINT64;
-
-#endif //EMULE_WINTYPES
-
-#define MAKEWORD(a, b)      ((WORD)(((BYTE)((DWORD_PTR)(a) & 0xff)) |\\
-			((WORD)((BYTE)((DWORD_PTR)(b) & 0xff))) << 8))
-#define MAKELONG(a, b)      ((LONG)(((WORD)((DWORD_PTR)(a) & 0xffff)) |\\
-			((DWORD)((WORD)((DWORD_PTR)(b) & 0xffff))) << 16))
-#define LOWORD(l)           ((WORD)((DWORD)(l) & 0xffff))
-#define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
-#define LOBYTE(w)           ((BYTE)((DWORD)(w) & 0xff))
-#define HIBYTE(w)           ((BYTE)((DWORD)(w) >> 8))
-
-#ifdef USE_GLUT
-#define ShowCursor(a)					\
-do {							\
-	if (a)						\
-		glutSetCursor(GLUT_CURSOR_INHERIT);	\
-	else						\
-		glutSetCursor(GLUT_CURSOR_NONE);	\
-} while (0)
-#else
-#define ShowCursor(a) do{}while(0)
-#endif
-
-#define Sleep(a) usleep((a)*1000)
+#define MAKEWORD(a, b)      ((Uint16)(((Uint8)((DWORD_PTR)(a) & 0xff)) |\\
+			((Uint16)((Uint8)((DWORD_PTR)(b) & 0xff))) << 8))
+#define MAKELONG(a, b)      ((Uint32)(((Uint16)((DWORD_PTR)(a) & 0xffff)) |\\
+			((Uint32)((Uint16)((DWORD_PTR)(b) & 0xffff))) << 16))
+#define LOWORD(l)           ((Uint16)((Uint32)(l) & 0xffff))
+#define HIWORD(l)           ((Uint16)((Uint32)(l) >> 16))
+#define LOBYTE(w)           ((Uint8)((Uint32)(w) & 0xff))
+#define HIBYTE(w)           ((Uint8)((Uint32)(w) >> 8))
 
 #define _hypot(x,y) hypot(x,y)
 
@@ -126,30 +87,30 @@ do {								\
 #define swabdword(w)	(w)
 #endif
 struct bitmapfileheader_s {
-	unsigned short bfType;
-	unsigned int bfSize;
-	unsigned short bfReserved1;
-	unsigned short bfReserved2;
-	unsigned int bfOffBits;
+	Uint16 bfType;
+	Uint32 bfSize;
+	Uint16 bfReserved1;
+	Uint16 bfReserved2;
+	Uint32 bfOffBits;
 };
 struct bitmapinfoheader_s {
-	unsigned int biSize; 
-	int biWidth; 
-	int biHeight; 
-	unsigned short biPlanes; 
-	unsigned short biBitCount; 
-	unsigned int  biCompression; 
-	unsigned int  biSizeImage; 
-	int biXPelsPerMeter; 
-	int biYPelsPerMeter; 
-	unsigned int biClrUsed; 
-	unsigned int biClrImportant; 
+	Uint32 biSize; 
+	Sint32 biWidth; 
+	Sint32 biHeight; 
+	Uint16 biPlanes; 
+	Uint16 biBitCount; 
+	Uint32 biCompression; 
+	Uint32 biSizeImage; 
+	Sint32 biXPelsPerMeter; 
+	Sint32 biYPelsPerMeter; 
+	Uint32 biClrUsed; 
+	Uint32 biClrImportant; 
 };
 struct paletteentry_s {
-	unsigned char peRed;
-	unsigned char peGreen;
-	unsigned char peBlue;
-	unsigned char peFlags;
+	Uint8 peRed;
+	Uint8 peGreen;
+	Uint8 peBlue;
+	Uint8 peFlags;
 };
 typedef struct bitmapfileheader_s BITMAPFILEHEADER;
 typedef struct bitmapinfoheader_s BITMAPINFOHEADER;
@@ -196,31 +157,31 @@ static inline unsigned int _clearfp(void)
  * Performance testing
  */
 #include <sys/time.h>
-static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
+static inline bool QueryPerformanceCounter(Uint64 *count)
 {
 #if defined(__GNUC__) && ( defined(__i386__) || defined(__x86_64__) )
 	/*
 	 * Reading from the tsc is only available on
 	 * pentium class chips (x86 compatible and x86_64)
 	 */
-	int64_t val;
+	Uint64 val;
 	__asm__ __volatile__("rdtsc" : "=A" (val));
-	count->QuadPart = val;
+	*count = val;
 #elif defined(__GNUC__) && defined(__ia64__)
 	/*
 	 * Reading from the itc is only available on
 	 * ia64
 	 */
-	int64_t val;
+	Uint64 val;
 	__asm__ __volatile__("mov %0=ar.itc" : "=r" (val));
-	count->QuadPart = val;
+	*count = val;
 #else
 	/*
 	 * Have to go generic
 	 */
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
-	count->QuadPart = (int64_t)tv.tv_usec;
+	*count = (int64_t)tv.tv_usec;
 #endif
 	return true;
 }
@@ -229,34 +190,34 @@ static inline bool QueryPerformanceCounter(LARGE_INTEGER *count)
 /*
  * Avoid repeated recalculations
  */
-static int64_t _cpufreq;
+static Uint64 _cpufreq;
 
 /*
  * Generic solution
  */
-static inline bool _freqfallback(LARGE_INTEGER *frequence)
+static inline bool _freqfallback(Uint64 *frequence)
 {
 	if (!_cpufreq) {
-		int64_t tscstart,tscend;
+		Uint64 tscstart,tscend;
 		struct timeval tvstart,tvend;
 		long usec;
-		LARGE_INTEGER tmp;
+		Uint64 tmp;
 		QueryPerformanceCounter(&tmp);
-		tscstart = tmp.QuadPart;
+		tscstart = tmp;
 		gettimeofday(&tvstart,NULL);
 		usleep(100000);
 		QueryPerformanceCounter(&tmp);
-		tscend = tmp.QuadPart;
+		tscend = tmp;
 		gettimeofday(&tvend,NULL);
 		usec = 1000000 * (tvend.tv_sec - tvstart.tv_sec) + (tvend.tv_usec - tvstart.tv_usec);
 		_cpufreq = (tscend - tscstart) / usec;
 	}
-	frequence->QuadPart = _cpufreq;
+	*frequence = _cpufreq;
 	return !!_cpufreq;
 }
 
 #define CPUINFO "/proc/cpuinfo"
-static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
+static inline bool QueryPerformanceFrequency(Uint64 *frequence)
 {
 #if defined(__linux__)  /* /proc/cpuinfo on linux */
 	if (!_cpufreq) {
@@ -291,8 +252,8 @@ static inline bool QueryPerformanceFrequency(LARGE_INTEGER *frequence)
 #endif 
 			if (r == 1) {
 				fclose(f);
-				_cpufreq = (int64_t)atoi(tmp);
-				frequence->QuadPart = _cpufreq;
+				_cpufreq = (Uint64)atoi(tmp);
+				*frequence = _cpufreq;
 				return !!_cpufreq;
 			}
 		}

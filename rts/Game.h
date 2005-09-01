@@ -14,6 +14,8 @@
 #include "Player.h"
 #include "GameController.h"
 
+#define FRAME_HISTORY 16
+
 class CglList;
 class CNet;
 class CGuiKeyReader;
@@ -33,8 +35,8 @@ public:
 	void StartPlaying();
 	bool Draw();
 	bool Update();
-	int KeyReleased(unsigned char k);
-	int KeyPressed(unsigned char k,bool isRepeat);
+	int KeyReleased(unsigned short k);
+	int KeyPressed(unsigned short k,bool isRepeat);
 	CGame(bool server, std::string mapname);
 	virtual ~CGame();
 
@@ -43,8 +45,8 @@ public:
 	unsigned int thisFps;
 
 	time_t   fpstimer,starttime;
-	LARGE_INTEGER lastUpdate;
-	LARGE_INTEGER lastMoveUpdate;
+	Uint64 lastUpdate;
+	Uint64 lastMoveUpdate;
 
 	unsigned char inbuf[40000];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE
 	int inbufpos;								//where in the input buffer we are
@@ -71,11 +73,11 @@ public:
 	bool showPlayerInfo;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
 
-	LARGE_INTEGER lastModGameTimeMeasure;
+	Uint64 lastModGameTimeMeasure;
 
 	CglList* showList;
-	LARGE_INTEGER lastframe;
-	LARGE_INTEGER timeSpeed;
+	Uint64 lastframe;
+	Uint64 timeSpeed;
 	double totalGameTime;			//time in seconds, stops at game end
 
 	float maxUserSpeed;

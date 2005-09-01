@@ -269,7 +269,7 @@ void CBFGroundTextures::ReadSlow(int speed)
 				int bufnum=numBigTexX*numBigTexY*4*readLevel + (readY*2+ty)*numBigTexX*2 + readX*2+tx;
 				SetJpegMemSource(&jpegBuffer[textureOffsets[bufnum]],textureOffsets[bufnum+1]-textureOffsets[bufnum]);
 
-				jpeg_read_header(&cinfo, TRUE);
+				jpeg_read_header(&cinfo, true);
 				jpeg_start_decompress(&cinfo);
 			} else {
 				unsigned char* buffer=&readBuffer[(ty*hsize*size+tx*hsize)*4];
@@ -308,7 +308,7 @@ void CBFGroundTextures::ReadJpeg(int bufnum, unsigned char* buffer, int xstep)
 {
 	SetJpegMemSource(&jpegBuffer[textureOffsets[bufnum]],textureOffsets[bufnum+1]-textureOffsets[bufnum]);
 
-	jpeg_read_header(&cinfo, TRUE);
+	jpeg_read_header(&cinfo, true);
 	jpeg_start_decompress(&cinfo);
 
 	int rowSpan = cinfo.image_width * cinfo.num_components;
@@ -332,9 +332,9 @@ void CBFGroundTextures::ReadJpeg(int bufnum, unsigned char* buffer, int xstep)
 static void InitSource (j_decompress_ptr cinfo)
 {
 #ifndef linux
-  cinfo->src->start_of_file = TRUE;
+  cinfo->src->start_of_file = true;
 #else
-#warning cinfo->src->start_of_file = TRUE disabled, should be OK without
+#warning cinfo->src->start_of_file = true disabled, should be OK without
 #endif
 }
 

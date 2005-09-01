@@ -10,7 +10,7 @@
 CBackgroundReader backgroundReader;
 
 #ifdef _WIN32
-VOID CALLBACK FileIOComplete(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
+void FileIOComplete(Uint32 dwErrorCode, Uint32 dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
 {
 	CloseHandle(backgroundReader.curHandle);
 	backgroundReader.curHandle=0;

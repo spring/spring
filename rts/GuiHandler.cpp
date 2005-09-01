@@ -29,7 +29,6 @@
 #include "Feature.h"
 #include "BaseGroundDrawer.h"
 #include "WeaponDefHandler.h"
-#include "inputs.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -37,7 +36,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CGuiHandler* guihandler;
-extern bool keys[256];
+extern Uint8 *keys;
 unsigned int total_active_icons;
 
 //unsigned int icon_texture[256];
@@ -271,7 +270,7 @@ void CGuiHandler::LayoutIcons()
 void CGuiHandler::DrawButtons()
 {
 	glDisable(GL_DEPTH_TEST);
-	if(needShift && !keys[VK_SHIFT]){
+	if(needShift && !keys[SDLK_LSHIFT]){
 		if(showingMetal){
 			showingMetal=false;
 			groundDrawer->SetExtraTexture(0,0,false);
@@ -464,7 +463,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 	else 
 		return;
 
-	if(needShift && !keys[VK_SHIFT]){
+	if(needShift && !keys[SDLK_LSHIFT]){
 		if(showingMetal){
 			showingMetal=false;
 			groundDrawer->SetExtraTexture(0,0,false);
@@ -608,11 +607,11 @@ void CGuiHandler::CreateOptions(Command& c,bool rmb)
 	c.options=0;
 	if(rmb)
 		c.options|=RIGHT_MOUSE_KEY;
-	if(keys[VK_SHIFT])
+	if(keys[SDLK_LSHIFT])
 		c.options|=SHIFT_KEY;
-	if(keys[VK_CONTROL])
+	if(keys[SDLK_LCTRL])
 		c.options|=CONTROL_KEY;
-	if(keys[VK_MENU])
+	if(keys[SDLK_LALT])
 		c.options|=ALT_KEY;
 	//(*info) << (int)c.options << "\n";
 }
@@ -704,7 +703,7 @@ void CGuiHandler::DrawMapStuff(void)
 			if(unitdef){
 				float3 pos=camera->pos+mouse->dir*dist;
 				std::vector<float3> buildPos;
-				if(keys[VK_SHIFT] && mouse->buttons[0].pressed){
+				if(keys[SDLK_LSHIFT] && mouse->buttons[0].pressed){
 					float dist=ground->LineGroundCol(mouse->buttons[0].camPos,mouse->buttons[0].camPos+mouse->buttons[0].dir*9000);
 					float3 pos2=mouse->buttons[0].camPos+mouse->buttons[0].dir*dist;
 					buildPos=GetBuildPos(pos2,pos,unitdef);
@@ -768,7 +767,7 @@ void CGuiHandler::DrawMapStuff(void)
 		}
 	}
 
-	if(keys[VK_SHIFT]){
+	if(keys[SDLK_LSHIFT]){
 		CUnit* unit=0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
@@ -909,9 +908,9 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 	glEnable(GL_FOG);
 }
 
-bool CGuiHandler::KeyPressed(unsigned char key)
+bool CGuiHandler::KeyPressed(unsigned short key)
 {
-	if(key==VK_ESCAPE && activeMousePress){
+	if(key==SDLK_ESCAPE && activeMousePress){
 		activeMousePress=false;
 		inCommand=-1;
 		if(showingMetal){
@@ -920,7 +919,7 @@ bool CGuiHandler::KeyPressed(unsigned char key)
 		}
 		return true;
 	}
-	if(key==VK_ESCAPE && inCommand>0){
+	if(key==SDLK_ESCAPE && inCommand>0){
 		inCommand=-1;
 		if(showingMetal){
 			showingMetal=false;
@@ -929,11 +928,11 @@ bool CGuiHandler::KeyPressed(unsigned char key)
 		return true;
 	}
 	unsigned char keyOptions=0;
-	if(keys[VK_SHIFT])
+	if(keys[SDLK_LSHIFT])
 		keyOptions|=SHIFT_KEY;
-	if(keys[VK_CONTROL])
+	if(keys[SDLK_LCTRL])
 		keyOptions|=CONTROL_KEY;
-	if(keys[VK_MENU])
+	if(keys[SDLK_LALT])
 		keyOptions|=ALT_KEY;
 
 	int a;
@@ -1017,7 +1016,7 @@ void CGuiHandler::MenuChoice(string s)
 
 void CGuiHandler::FinishCommand(int button)
 {
-	if(keys[VK_SHIFT] && button==0){
+	if(keys[SDLK_LSHIFT] && button==0){
 		needShift=true;
 	} else {
 		if(showingMetal){
@@ -1145,7 +1144,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			}
 			float3 pos=camera->pos+mouse->dir*dist;
 			std::vector<float3> buildPos;
-			if(keys[VK_SHIFT] && button==0){
+			if(keys[SDLK_LSHIFT] && button==0){
 				float dist=ground->LineGroundCol(mouse->buttons[0].camPos,mouse->buttons[0].camPos+mouse->buttons[0].dir*9000);
 				float3 pos2=mouse->buttons[0].camPos+mouse->buttons[0].dir*dist;
 				buildPos=GetBuildPos(pos2,pos,unitdef);
@@ -1312,7 +1311,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 	CUnit* unit=0;
 	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,true);
 
-	if(unit && keys[VK_SHIFT] && keys[VK_CONTROL]){		//circle build around building
+	if(unit && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
 		UnitDef* unitdef2=unit->unitDef;
 		float3 pos2=unit->pos;
 		pos2=helper->Pos2BuildPos(pos2,unitdef2);
@@ -1357,7 +1356,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
-	} else if(keys[VK_MENU]){			//build a rectangle
+	} else if(keys[SDLK_LALT]){			//build a rectangle
 		float xsize=unitdef->xsize*8+mouse->xButtonCounter*16;
 		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
 		int xstep=(int)xsize;
@@ -1374,7 +1373,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		for(float z=start.z;zn<znum;++zn){
 			int xn=0;
 			for(float x=start.x;xn<xnum;++xn){
-				if(!keys[VK_CONTROL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
+				if(!keys[SDLK_LCTRL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
 					float3 pos(x,0,z);
 					pos=helper->Pos2BuildPos(pos,unitdef);
 					ret.push_back(pos);
@@ -1392,7 +1391,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 				return ret;
 			}
 			dir/=fabs(dir.x);
-			if(keys[VK_CONTROL])
+			if(keys[SDLK_LCTRL])
 				dir.z=0;
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
 				ret.push_back(p);
@@ -1404,7 +1403,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 				return ret;
 			}
 			dir/=fabs(dir.z);
-			if(keys[VK_CONTROL])
+			if(keys[SDLK_LCTRL])
 				dir.x=0;
 			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step)
 				ret.push_back(p);

@@ -445,7 +445,7 @@ void CBitmap::SaveJPG(string filename,int quality)
 	jpeg_set_defaults(&cinfo);
 	jpeg_set_quality(&cinfo,quality,false);
 
-	jpeg_start_compress(&cinfo, TRUE);
+	jpeg_start_compress(&cinfo, true);
 
 	JSAMPROW row_pointer[1];	/* pointer to a single row */
 	int row_stride;			/* physical row width in buffer */

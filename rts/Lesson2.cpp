@@ -10,11 +10,7 @@
 #include <winsock2.h>
 #include <windows.h>		// Header File For Windows
 #include "myGL.h"
-#ifdef USE_GLUT
-#include <glut.h>
-#else
 #include <GL/glu.h>			// Header File For The GLu32 Library
-#endif
 #include <time.h>
 #include <string>
 #include <algorithm>
@@ -48,26 +44,14 @@
 #include "../crashrpt/include/crashrpt.h"
 #endif
 
-#ifndef USE_GLUT
-#pragma comment(lib, "../crashrpt/lib/crashrpt")
-HDC	hDC=NULL;			// Private GDI Device Context
-HGLRC	hRC=NULL;			// Permanent Rendering Context
-HWND	hWnd=NULL;			// Holds Our Window Handle
-HINSTANCE	hInstance;		// Holds The Instance Of The Application
-#else
-int windows;
-#endif 
-
-bool	keys[256];			// Array Used For The Keyboard Routine
-bool	active=TRUE;		// Window Active Flag Set To TRUE By Default
-bool	fullscreen=TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
+Uint8 *keys;			// Array Used For The Keyboard Routine
+Uint8 *oldkeys;
+SDL_Surface *screen;
+bool	active=true;		// Window Active Flag Set To true By Default
+bool	fullscreen=true;	// Fullscreen Flag Set To Fullscreen Mode By Default
 bool	globalQuit=false;
 //time_t   fpstimer,starttime;
 CGameController* activeController=0;
-
-#ifndef USE_GLUT
-LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
-#endif
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
 {
@@ -99,7 +83,7 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	return TRUE;										// Initialization Went OK
+	return true;										// Initialization Went OK
 }
 
 int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
@@ -112,72 +96,9 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	return true;
 }
 
-#ifdef USE_GLUT
-static void TerminateProgram()
-{
-	delete gameSetup;
-	delete pregame;
-	//delete game;		deadlocks
-	delete font;
-#ifdef _WIN32
-	RegHandler::Deallocate();
-#else
-	dotfileHandler::Deallocate();
-#endif
-	UnloadExtensions();
-	glutDestroyWindow(windows);
-	delete gs;
-	delete gu;
-	exit(0);
-}
-
-inline void Draw()	
-{
-  DrawGLScene();
-  glutSwapBuffers();
-  if (globalQuit)
-	TerminateProgram();
-}
-#endif
-
 void KillGLWindow(GLvoid)								// Properly Kill The Window
 {
-
-#ifndef USE_GLUT
-	if (fullscreen)										// Are We In Fullscreen Mode?
-	{
-		ChangeDisplaySettings(NULL,0);					// If So Switch Back To The Desktop
-	}
-	ShowCursor(TRUE);									// Show Mouse Pointer
-
-	if (hRC)											// Do We Have A Rendering Context?
-	{
-		if (!wglMakeCurrent(NULL,NULL))					// Are We Able To Release The DC And RC Contexts?
-		{
-			MessageBox(NULL,"Release Of DC And RC Failed.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
-		}
-
-		if (!wglDeleteContext(hRC))						// Are We Able To Delete The RC?
-		{
-			MessageBox(NULL,"Release Rendering Context Failed.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
-		}
-		hRC=NULL;										// Set RC To NULL
-	}
-
-	if (hDC && !ReleaseDC(hWnd,hDC))					// Are We Able To Release The DC
-	{
-		MessageBox(NULL,"Release Device Context Failed.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
-		hDC=NULL;										// Set DC To NULL
-	}
-
-	if (hWnd && !DestroyWindow(hWnd))					// Are We Able To Destroy The Window?
-	{
-		MessageBox(NULL,"Could Not Release hWnd.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
-		hWnd=NULL;										// Set hWnd To NULL
-	}
-#else //USE_GLUT
-	glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
-#endif //USE_GLUT
+	SDL_Quit();
 }
 
 /*	This Code Creates Our OpenGL Window.  Parameters Are:					*
@@ -185,529 +106,37 @@ void KillGLWindow(GLvoid)								// Properly Kill The Window
  *	width			- Width Of The GL Window Or Fullscreen Mode				*
  *	height			- Height Of The GL Window Or Fullscreen Mode			*
  *	bits			- Number Of Bits To Use For Color (8/16/24/32)			*
- *	fullscreenflag	- Use Fullscreen Mode (TRUE) Or Windowed Mode (FALSE)	*/
+ *	fullscreenflag	- Use Fullscreen Mode (true) Or Windowed Mode (false)	*/
 
 GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 
-#ifndef USE_GLUT
-BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
-#else
-BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency, int* pargc, char** pargv)
-#endif
+bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
 {
-#ifndef USE_GLUT
-	WNDCLASS	wc;						// Windows Class Structure
-	DWORD		dwExStyle;				// Window Extended Style
-	DWORD		dwStyle;				// Window Style
+	SDL_Init(SDL_INIT_VIDEO);
 
-	fullscreen=fullscreenflag;			// Set The Global Fullscreen Flag
-
-//	hInstance			= GetModuleHandle(NULL);				// Grab An Instance For Our Window
-	wc.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;	// Redraw On Size, And Own DC For Window.
-	wc.lpfnWndProc		= (WNDPROC) WndProc;					// WndProc Handles Messages
-	wc.cbClsExtra		= 0;									// No Extra Window Data
-	wc.cbWndExtra		= 0;									// No Extra Window Data
-	wc.hInstance		= hInstance;							// Set The Instance
-	wc.hIcon			= LoadIcon(NULL, IDI_WINLOGO);			// Load The Default Icon
-	wc.hCursor			= LoadCursor(NULL, IDC_ARROW);			// Load The Arrow Pointer
-	wc.hbrBackground	= NULL;									// No Background Required For GL
-	wc.lpszMenuName		= NULL;									// We Don't Want A Menu
-	wc.lpszClassName	= "TASpring";								// Set The Class Name
-
-	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
-	{
-		MessageBox(NULL,"Failed To Register The Window Class.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;											// Return FALSE
+	screen = SDL_SetVideoMode(width,height,bits,SDL_OPENGL|SDL_RESIZABLE);
+	if (!screen) {
+		MessageBox(NULL,"Could not set video mode","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		SDL_Quit();
+		return false;
 	}
-	
-	if (fullscreen)												// Attempt Fullscreen Mode?
-	{
-		DEVMODE dmScreenSettings;								// Device Mode
-		memset(&dmScreenSettings,0,sizeof(dmScreenSettings));	// Makes Sure Memory's Cleared
-		dmScreenSettings.dmSize=sizeof(dmScreenSettings);		// Size Of The Devmode Structure
-		dmScreenSettings.dmPelsWidth	= width;				// Selected Screen Width
-		dmScreenSettings.dmPelsHeight	= height;				// Selected Screen Height
-		dmScreenSettings.dmBitsPerPel	= bits;					// Selected Bits Per Pixel
-		dmScreenSettings.dmDisplayFrequency = frequency;
-		dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
-		if(frequency)
-			dmScreenSettings.dmFields|=DM_DISPLAYFREQUENCY;
-
-		// Try To Set Selected Mode And Get Results.  NOTE: CDS_FULLSCREEN Gets Rid Of Start Bar.
-		if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
-		{
-			// If The Mode Fails, Offer Two Options.  Quit Or Use Windowed Mode.
-			if (MessageBox(NULL,"The Requested Fullscreen Mode Is Not Supported By\nYour Video Card. Use Windowed Mode Instead?","NeHe GL",MB_YESNO|MB_ICONEXCLAMATION)==IDYES)
-			{
-				fullscreen=FALSE;		// Windowed Mode Selected.  Fullscreen = FALSE
-			}
-			else
-			{
-				// Pop Up A Message Box Letting User Know The Program Is Closing.
-				MessageBox(NULL,"Program Will Now Close.","ERROR",MB_OK|MB_ICONSTOP);
-				return FALSE;						// Return FALSE
-			}
-		}
-	}
-
-	if (fullscreen)									// Are We Still In Fullscreen Mode?
-	{
-		dwExStyle=WS_EX_APPWINDOW;					// Window Extended Style
-		dwStyle=WS_POPUP;							// Windows Style
-//		HideMouse();								// Hide Mouse Pointer
-	}
-	else
-	{
-		dwExStyle=WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;	// Window Extended Style
-		dwStyle=WS_OVERLAPPEDWINDOW;				// Windows Style
-	}
-
-	// Create The Window
-	if (!(hWnd=CreateWindowEx(	dwExStyle,			// Extended Style For The Window
-								"TASpring",			// Class Name
-								title,				// Window Title
-								dwStyle |			// Defined Window Style
-								WS_CLIPSIBLINGS |	// Required Window Style
-								WS_CLIPCHILDREN,	// Required Window Style
-								0, 0,				// Window Position
-								width, height,		// Selected Width And Height
-								NULL,				// No Parent Window
-								NULL,				// No Menu
-								hInstance,			// Instance
-								NULL)))				// Dont Pass Anything To WM_CREATE
-	{
-		KillGLWindow();								// Reset The Display
-		MessageBox(NULL,"Window Creation Error.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;								// Return FALSE
-	}
-
-	static	PIXELFORMATDESCRIPTOR pfd=				// pfd Tells Windows How We Want Things To Be
-	{
-		sizeof(PIXELFORMATDESCRIPTOR),				// Size Of This Pixel Format Descriptor
-		1,											// Version Number
-		PFD_DRAW_TO_WINDOW |						// Format Must Support Window
-		PFD_SUPPORT_OPENGL |						// Format Must Support OpenGL
-		PFD_DOUBLEBUFFER,							// Must Support Double Buffering
-		PFD_TYPE_RGBA,								// Request An RGBA Format
-		24,										// Select Our Color Depth
-		0, 0, 0, 0, 0, 0,							// Color Bits Ignored
-		8,											// No Alpha Buffer
-		0,											// Shift Bit Ignored
-		0,											// No Accumulation Buffer
-		0, 0, 0, 0,									// Accumulation Bits Ignored
-		24,											// 16Bit Z-Buffer (Depth Buffer)  
-		0,											// No Stencil Buffer
-		0,											// No Auxiliary Buffer
-		PFD_MAIN_PLANE,								// Main Drawing Layer
-		0,											// Reserved
-		0, 0, 0										// Layer Masks Ignored
-	};
-	
-	if (!(hDC=GetDC(hWnd)))							// Did We Get A Device Context?
-	{
-		KillGLWindow();								// Reset The Display
-		char t[500];
-		sprintf(t,"Can't Create A GL Device Context. %d",GetLastError());
-		MessageBox(NULL,t,"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;								// Return FALSE
-	}
-
-	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
-	{
-		KillGLWindow();								// Reset The Display
-		MessageBox(NULL,"Can't Find A Suitable PixelFormat.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;								// Return FALSE
-	}
-
-	if(!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
-	{
-		KillGLWindow();								// Reset The Display
-		MessageBox(NULL,"Can't Set The PixelFormat.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;								// Return FALSE
-	}
-
-	if (!(hRC=wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
-	{
-		KillGLWindow();								// Reset The Display
-		char t[500];
-		sprintf(t,"Can't Create A GL Rendering Context. %d",GetLastError());
-		MessageBox(NULL,t,"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;								// Return FALSE
-	}
-
-	if(!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
-	{
-		KillGLWindow();								// Reset The Display
-		MessageBox(NULL,"Can't Activate The GL Rendering Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;								// Return FALSE
-	}
-
-	ShowWindow(hWnd,SW_SHOW);						// Show The Window
-	SetForegroundWindow(hWnd);						// Slightly Higher Priority
-	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
-
-#else
-	unsigned int options=0;
-	if(bits==32)
-	  options |= GLUT_RGBA;
-	else
-	  options |= GLUT_INDEX;
+	SDL_WM_SetCaption(title,title);
 	  
-	//GLUT code
-	glutInit(pargc,pargv);
-	glutInitWindowSize(width, height);
-	glutInitDisplayMode(options | GLUT_DOUBLE | GLUT_DEPTH);
-
-	windows = glutCreateWindow(title);
-
 	InitGL();
-	glutReshapeFunc(ReSizeGLScene);
-#endif //USE_GLUT
-	ReSizeGLScene(width, height);					// Set Up Our Perspective GL Screen
-#ifdef USE_GLUT
-	//disable fullscreen while porting
-#if 0
-	if(fullscreen)
-		glutFullScreen();
-#endif
-        glutDisplayFunc(Draw);
-	glutIdleFunc(Draw);
-#endif
-
+	ReSizeGLScene(screen->w,screen->h);
 
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
 		KillGLWindow();								// Reset The Display
 		MessageBox(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return FALSE;								// Return FALSE
+		return false;								// Return false
 	}
 
-	return TRUE;									// Success
+	return true;									// Success
 }
-
-#ifndef USE_GLUT
-LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
-							UINT	uMsg,			// Message For This Window
-							WPARAM	wParam,			// Additional Message Information
-							LPARAM	lParam)			// Additional Message Information
-{
-	switch (uMsg)									// Check For Windows Messages
-	{
-		case WM_ACTIVATE:							// Watch For Window Activate Message
-		{
-			if (!HIWORD(wParam))					// Check Minimization State
-			{
-				active=TRUE;						// Program Is Active
-			}
-			else
-			{
-				active=FALSE;						// Program Is No Longer Active
-			}
-
-			return 0;								// Return To The Message Loop
-		}
-
-		case WM_SYSCOMMAND:							// Intercept System Commands
-		{
-			switch (wParam)							// Check System Calls
-			{
-				case SC_SCREENSAVE:					// Screensaver Trying To Start?
-				case SC_MONITORPOWER:				// Monitor Trying To Enter Powersave?
-				return 0;							// Prevent From Happening
-			}
-			break;									// Exit
-		}
-
-		case WM_CLOSE:								// Did We Receive A Close Message?
-		{
-			PostQuitMessage(0);						// Send A Quit Message
-			return 0;								// Jump Back
-		}
-
-		case WM_KEYDOWN:							// Is A Key Being Held Down?
-		{
-			if(wParam<256 )
-				keys[wParam]=true;
-			if(activeController){
-				activeController->KeyPressed(wParam,!!(lParam & (1<<30)));
-			}
-			return 0;
-		}				
-		case WM_CHAR:							// Is A Key Being Held Down?
-		{
-			#ifdef NEW_GUI
-				GUIcontroller::Character(char(wParam));
-				return 0;
-			#endif
-			if(activeController){
-				if(activeController->userWriting && (wParam>31))
-					if(activeController->ignoreNextChar || activeController->ignoreChar==char(wParam))
-						activeController->ignoreNextChar=false;
-					else
-						activeController->userInput+=char(wParam);
-			}
-			return 0;
-		}				
-		case WM_KEYUP:								// Has A Key Been Released?
-		{
-			if(activeController){
-				activeController->KeyReleased(wParam);
-			}
-			if(wParam<256)
-				keys[wParam]=false;
-			return 0;				
-		}
-		case WM_SYSKEYDOWN:							// Is A Key Being Held Down?
-		{
-			if(wParam<256)
-				keys[wParam]=true;
-			if ( activeController )
-			{
-				activeController->KeyPressed(wParam, (bool)(lParam & (1<<30)));
-			}
-			return 0;
-		}
-		case WM_SYSKEYUP:								// Has A Key Been Released?
-		{
-			if(wParam<256)
-				keys[wParam]=false;
-			if ( activeController )
-			{
-				activeController->KeyReleased(wParam);
-			}
-			return 0;				
-		}
-
-		case WM_SIZE:								// Resize The OpenGL Window
-		{
-			ReSizeGLScene(LOWORD(lParam),HIWORD(lParam));  // LoWord=Width, HiWord=Height
-			return 0;								// Jump Back
-		}
-		case WM_MOUSEMOVE:
-		{
-			if ( fullscreen )
-			{
-				RECT WindowBounds;
-				GetClientRect(hWnd, &WindowBounds);
-				ClipCursor(&WindowBounds);
-			}
-			if(mouse)
-				mouse->MouseMove(LOWORD(lParam),HIWORD(lParam));
-			return 0;
-		}
-		case WM_RBUTTONDOWN:
-		{
-			if(mouse)
-				mouse->MousePress(LOWORD(lParam),HIWORD(lParam),1);
-			return 0;
-		}
-		case WM_RBUTTONUP:
-		{
-			if(mouse)
-				mouse->MouseRelease(LOWORD(lParam),HIWORD(lParam),1);
-			return 0;
-		}
-		case WM_LBUTTONDOWN:
-		{
-			if(mouse)
-				mouse->MousePress(LOWORD(lParam),HIWORD(lParam),0);
-			return 0;
-		}
-		case WM_LBUTTONUP:
-		{
-			if(mouse)
-				mouse->MouseRelease(LOWORD(lParam),HIWORD(lParam),0);
-			return 0;
-		}
-		case 522: //WM_MOUSEWHEEL:
-		{
-			if(mouse){
-				float move;
-				move=((short) HIWORD(wParam));    // wheel rotation
-				mouse->currentCamController->MouseWheelMove(move);
-			}
-			return 0;
-		}
-		case WM_MBUTTONDOWN:
-		{
-			if(mouse)
-				mouse->MousePress(LOWORD(lParam),HIWORD(lParam),2);
-			return 0;
-		}
-		case WM_MBUTTONUP:
-		{
-			if(mouse)
-				mouse->MouseRelease(LOWORD(lParam),HIWORD(lParam),2);
-			return 0;
-		}
-		case 523: //Mouse key4?:
-		{
-			if(mouse)
-				mouse->MousePress(mouse->lastx,mouse->lasty,3+HIWORD(wParam));
-			return 0;
-		}
-	}
-//	if(info)
-//		info->AddLine("msg %i %i",uMsg,HIWORD(wParam));
-	// Pass All Unhandled Messages To DefWindowProc
-	return DefWindowProc(hWnd,uMsg,wParam,lParam);
-}
-
-BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
-{
-
-	switch (message)
-	{          // Place message cases here.  
-	case WM_INITDIALOG:
-		return true;
-	default:             
-		return FALSE; 
-    } 
-} 
-#else
-
-#warning complete glut input handling
-
-#define UPDATE_MODIFIERS()						\
-do {									\
-	int __mod = glutGetModifiers();					\
-	keys[VK_SHIFT] = (__mod&GLUT_ACTIVE_SHIFT==GLUT_ACTIVE_SHIFT);	\
-	keys[VK_CONTROL] = (__mod&GLUT_ACTIVE_CTRL==GLUT_ACTIVE_CTRL);	\
-	keys[VK_MENU] = (__mod&GLUT_ACTIVE_ALT==GLUT_ACTIVE_ALT);	\
-} while (0)
-
-void processNormalKeys(unsigned char key, int x, int y) {
-  UPDATE_MODIFIERS();
-  keys[key]=true;
-  if(activeController){
-    activeController->KeyPressed(key,1);
-  }
-#ifdef NEW_GUI
-  GUIcontroller::Character(char(key));
-  return;
-#endif
-  if(activeController){
-    if(activeController->userWriting && (key>31))
-      if(activeController->ignoreNextChar || activeController->ignoreChar==char(key))
-	activeController->ignoreNextChar=false;
-      else
-	activeController->userInput+=char(key);
-  }
-}
-
-void processNormalKeysUP(unsigned char key, int x, int y) {
-  UPDATE_MODIFIERS();
-  if(activeController){
-    activeController->KeyReleased(key);
-  }
-  keys[key]=false;
-}
-
-
-void processSpecialKeys(int key, int x, int y) {
-  UPDATE_MODIFIERS();
-	int k;
-  switch (key) {
-	  case GLUT_KEY_F1:
-		  k = VK_F1;
-		  break;
-	  case GLUT_KEY_F2:
-		  k = VK_F2;
-		  break;
-	  case GLUT_KEY_F3:
-		  k = VK_F3;
-		  break;
-	  case GLUT_KEY_F4:
-		  k = VK_F4;
-		  break;
-	  case GLUT_KEY_F5:
-		  k = VK_F5;
-		  break;
-	  case GLUT_KEY_F6:
-		  k = VK_F6;
-		  break;
-	  case GLUT_KEY_F7:
-		  k = VK_F7;
-		  break;
-	  case GLUT_KEY_F8:
-		  k = VK_F8;
-		  break;
-	  case GLUT_KEY_F9:
-		  k = VK_F9;
-		  break;
-	  case GLUT_KEY_F10:
-		  k = VK_F10;
-		  break;
-	  case GLUT_KEY_F11:
-		  k = VK_F11;
-		  break;
-	  case GLUT_KEY_F12:
-		  k = VK_F11;
-		  break;
-	  case GLUT_KEY_INSERT:
-		  k = VK_INSERT;
-		  break;
-	  case GLUT_KEY_END:
-		  k = VK_END;
-		  break;
-	  case GLUT_KEY_HOME:
-		  k = VK_HOME;
-		  break;
-	  case GLUT_KEY_PAGE_UP:
-		  k = VK_PRIOR;
-		  break;
-	  case GLUT_KEY_PAGE_DOWN:
-		  k = VK_NEXT;
-		  break;
-	  case GLUT_KEY_LEFT:
-		  k = VK_LEFT;
-		  break;
-	  case GLUT_KEY_RIGHT:
-		  k = VK_RIGHT;
-		  break;
-	  case GLUT_KEY_UP:
-		  k = VK_UP;
-		  break;
-	  case GLUT_KEY_DOWN:
-		  k = VK_DOWN;
-		  break;
-	default:
-		  k = key;
-		  break;
-  }
-  keys[k]=true;
-  if(activeController){
-    activeController->KeyPressed(k,1);
-  }
-}
-
-void processMousePassiveMotion(int x, int y) {
-  if(mouse)
-    mouse->MouseMove(x,y);
-}
-
-void processMouseActiveMotion(int x, int y) {
-  if(mouse)
-    mouse->MouseMove(x,y);
-}
-
-void processMouse(int button, int state, int x, int y) {
-  if(mouse)
-    {
-      if (button == 3)		/* Mouse wheel up */
-	      mouse->currentCamController->MouseWheelMove(8);
-      else if (button == 4)	/* Mouse wheel down */
-	      mouse->currentCamController->MouseWheelMove(-8);
-      else if(state==GLUT_DOWN)
-	mouse->MousePress(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
-      else
-	mouse->MouseRelease(x, y, (button==GLUT_RIGHT_BUTTON)?1:((button==GLUT_MIDDLE_BUTTON)?2:0));
-    }
-}
-#endif //USE_GLUT
 
 // Called when spring crashes
-BOOL CALLBACK crashCallback(LPVOID crState)
+bool crashCallback(void* crState)
 {
 	info->AddLine("Spring has crashed");
 
@@ -730,23 +159,10 @@ BOOL CALLBACK crashCallback(LPVOID crState)
 	return true;
 }
 
-#ifdef _WIN32
-int WINAPI WinMain(	HINSTANCE	hInstanceIn,			// Instance
-									 HINSTANCE	hPrevInstance,		// Previous Instance
-									 LPSTR		lpCmdLine,			// Command Line Parameters
-									 int			nCmdShow)			// Window Show State
-#else
 int main( int argc, char *argv[ ], char *envp[ ] )
-#endif
 {
 	INIT_SYNCIFY;
-#ifndef USE_GLUT
-	MSG		msg;									// Windows Message Structure
-	hInstance=hInstanceIn;
-#endif
-	BOOL	done=FALSE;								// Bool Variable To Exit Loop
-	for(int b=0;b<256;b++)
-		keys[b]=false;
+	bool	done=false;								// Bool Variable To Exit Loop
 #ifdef _WIN32
 	// Initialize crash reporting
 	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
@@ -826,7 +242,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	/*	// Ask The User Which Screen Mode They Prefer
 	if (MessageBox(NULL,"Would You Like To Run In Fullscreen Mode?", "Start FullScreen?",MB_YESNO|MB_ICONQUESTION)==IDNO)
 	{
-	fullscreen=FALSE;							// Windowed Mode
+	fullscreen=false;							// Windowed Mode
 	}*/
 #endif
 	fullscreen=regHandler.GetInt("Fullscreen",1)!=0;
@@ -842,11 +258,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	int frequency=regHandler.GetInt("DisplayFrequency",0);
 	// Create Our OpenGL Window
-#ifndef USE_GLUT
 	if (!CreateGLWindow("RtsSpring",xres,yres,32,fullscreen,frequency))
-#else
-	if (!CreateGLWindow("RtsSpring",xres,yres,32,fullscreen,frequency,&argc,argv))
-#endif
 	{
 		return 0;									// Quit If Window Was Not Created
 	}
@@ -857,11 +269,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
-#ifndef USE_GLUT
-	SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
-#else
-	glutSwapBuffers();
-#endif
+	SDL_GL_SwapBuffers();
 #ifdef _WIN32
 	if (playDemo)
 		pregame = new CPreGame(false, cmdline);
@@ -872,51 +280,105 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	#ifdef NEW_GUI
 	guicontroller = new GUIcontroller();
 	#endif
-#ifdef USE_GLUT
 
-	glutKeyboardUpFunc(processNormalKeysUP);
-	glutKeyboardFunc(processNormalKeys);
-	glutSpecialFunc(processSpecialKeys);
-	glutMouseFunc(processMouse);
-	glutMotionFunc(processMouseActiveMotion);
-	glutPassiveMotionFunc(processMousePassiveMotion);
-
-	ENTER_UNSYNCED;
-        glutMainLoop();
-#else
-
-	while(!done)									// Loop That Runs While done=FALSE
+	while(!done)									// Loop That Runs While done=false
 	{
 		ENTER_UNSYNCED;
-		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))	// Is There A Message Waiting?
-		{
-			if (msg.message==WM_QUIT)				// Have We Received A Quit Message?
-			{
-				done=TRUE;							// If So done=TRUE
-			}
-			else									// If Not, Deal With Window Messages
-			{
-				TranslateMessage(&msg);				// Translate The Message
-				DispatchMessage(&msg);				// Dispatch The Message
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+				case SDL_VIDEORESIZE:
+					screen = SDL_SetVideoMode(event.resize.w,event.resize.h,0,SDL_OPENGL|SDL_RESIZABLE);
+					if (screen)
+						ReSizeGLScene(screen->w,screen->h);
+					break;
+				case SDL_QUIT:
+					done = true;
+					break;
+				case SDL_MOUSEMOTION:
+					if(mouse)
+						mouse->MouseMove(event.motion.x,event.motion.y);
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+					if (mouse) {
+						if (event.button.button == SDL_BUTTON_WHEELUP)
+							mouse->currentCamController->MouseWheelMove(8);
+						else if (event.button.button == SDL_BUTTON_WHEELDOWN)
+							mouse->currentCamController->MouseWheelMove(-8);
+						mouse->MousePress(event.button.x,event.button.y,event.button.button);
+					}
+					break;
+				case SDL_MOUSEBUTTONUP:
+					if (mouse)
+						mouse->MouseRelease(event.button.x,event.button.y,event.button.button);
+					break;
 			}
 		}
-		else										// If There Are No Messages
-		{
+		keys = SDL_GetKeyState(NULL);
+		int mods = SDL_GetModState();
+		if (mods&KMOD_SHIFT)
+			keys[SDLK_LSHIFT] = 1;
+		else
+			keys[SDLK_LSHIFT] = 0;
+		if (mods&KMOD_CTRL)
+			keys[SDLK_LCTRL] = 1;
+		else
+			keys[SDLK_LCTRL] = 0;
+		if (mods&KMOD_ALT)
+			keys[SDLK_LALT] = 1;
+		else
+			keys[SDLK_LALT] = 0;
+		if (mods&KMOD_META)
+			keys[SDLK_LMETA] = 1;
+		else
+			keys[SDLK_LMETA] = 0;
+		if (!oldkeys) {
+			oldkeys = new Uint8[SDLK_LAST];
+			for (int j = 0; j < SDLK_LAST; j++) {
+				oldkeys[j] = 0;
+			}
+		}
+		for (int i = 0; i < SDLK_LAST; i++) {
+			if (keys[i] && !oldkeys[i]) {
+				if(activeController){
+					activeController->KeyPressed(i,1);
+				}
+				oldkeys[i] = 1;
+#ifdef NEW_GUI
+				GUIcontroller::Character(char(i));
+				if (0)
+#endif
+				{
+					if(activeController){
+						if(activeController->userWriting && (i>31))
+							if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
+								activeController->ignoreNextChar=false;
+							else
+								activeController->userInput+=char(i);
+					}
+				}
+			} else if (oldkeys[i] && !keys[i]) {
+				if (activeController) {
+					activeController->KeyReleased(i);
+				}
+				oldkeys[i] = 0;
+			}
+		}
 			// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
-			if ((active && !DrawGLScene()) || globalQuit)	// Active?  Was There A Quit Received?
-			{
-				done=TRUE;							// ESC or DrawGLScene Signalled A Quit
-			}
-			else									// Not Time To Quit, Update Screen
-			{
-				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
-				SleepEx(0,true);
-			}
+		if ((active && !DrawGLScene()) || globalQuit)	// Active?  Was There A Quit Received?
+		{
+			done=true;							// ESC or DrawGLScene Signalled A Quit
+		}
+		else									// Not Time To Quit, Update Screen
+		{
+			DrawGLScene();
+			SDL_GL_SwapBuffers();
 		}
 
 	}
-#endif //USE_GLUT
 	ENTER_MIXED;
+
+	delete[] oldkeys;
 
 	// Shutdown
 	delete gameSetup;
@@ -934,9 +396,5 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	delete gu;
 	END_SYNCIFY;
 	//m_dumpMemoryReport();
-#ifndef USE_GLUT
-	return (msg.wParam);							// Exit The Program
-#else
 	return 0;
-#endif
 }

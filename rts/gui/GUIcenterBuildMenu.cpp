@@ -9,6 +9,7 @@
 #include "InfoConsole.h"
 #include "MouseHandler.h"
 #include "SelectedUnits.h"
+#include <SDL/SDL_types.h>
 
 #include <set>
 using namespace std;
@@ -146,7 +147,7 @@ bool GUIcenterBuildMenu::MouseMoveAction(int x, int y, int xrel, int yrel, int b
 	return isPressed;
 }
 
-extern bool	keys[256];
+extern Uint8 *keys;
 
 bool GUIcenterBuildMenu::MouseUpAction(int x, int y, int button)
 {
@@ -162,11 +163,11 @@ bool GUIcenterBuildMenu::MouseUpAction(int x, int y, int button)
 				c.id=commands[hiliteNum]->id;
 				c.options=0;
 
-				if(keys[VK_SHIFT])
+				if(keys[SDLK_LSHIFT])
 					c.options|=SHIFT_KEY;
-				if(keys[VK_CONTROL])
+				if(keys[SDLK_LCTRL])
 					c.options|=CONTROL_KEY;
-				if(keys[VK_MENU])
+				if(keys[SDLK_LALT])
 					c.options|=ALT_KEY;
 				if(button!=1)
 					c.options|=RIGHT_MOUSE_KEY;

@@ -23,7 +23,7 @@
 // Name: ReadMMIO()
 // Desc: Support function for reading from a multimedia I/O stream
 //-----------------------------------------------------------------------------
-HRESULT ReadMMIO( HMMIO hmmioIn, MMCKINFO* pckInRIFF, WAVEFORMATEX** ppwfxInfo )
+Sint32 ReadMMIO( HMMIO hmmioIn, MMCKINFO* pckInRIFF, WAVEFORMATEX** ppwfxInfo )
 {
 	MMCKINFO        ckIn;           // chunk info. for general use.
 	PCMWAVEFORMAT   pcmWaveFormat;  // Temp PCM structure to load in.       
@@ -44,7 +44,7 @@ HRESULT ReadMMIO( HMMIO hmmioIn, MMCKINFO* pckInRIFF, WAVEFORMATEX** ppwfxInfo )
 
 	// Expect the 'fmt' chunk to be at least as large as <PCMWAVEFORMAT>;
 	// if there are extra parameters at the end, we'll ignore them
-	if( ckIn.cksize < (LONG) sizeof(PCMWAVEFORMAT) )
+	if( ckIn.cksize < (Sint32) sizeof(PCMWAVEFORMAT) )
 		return E_FAIL;
 
 	// Read the 'fmt ' chunk into <pcmWaveFormat>.
@@ -108,10 +108,10 @@ HRESULT ReadMMIO( HMMIO hmmioIn, MMCKINFO* pckInRIFF, WAVEFORMATEX** ppwfxInfo )
 //       so the data can be easily read with WaveReadFile. Returns 0 if
 //       successful, the error code if not.
 //-----------------------------------------------------------------------------
-HRESULT WaveOpenFile(const  CHAR* strFileName, HMMIO* phmmioIn, WAVEFORMATEX** ppwfxInfo,
+Sint32 WaveOpenFile(const  CHAR* strFileName, HMMIO* phmmioIn, WAVEFORMATEX** ppwfxInfo,
 										 MMCKINFO* pckInRIFF, char *buf, int filesize )
 {
-	HRESULT hr;
+	Sint32 hr;
 	HMMIO   hmmioIn = NULL;
 	int a;
 
@@ -152,7 +152,7 @@ HRESULT WaveOpenFile(const  CHAR* strFileName, HMMIO* phmmioIn, WAVEFORMATEX** p
 //       moved to a separate routine so there was more control on the chunks
 //       that are before the data chunk, such as 'fact', etc...
 //-----------------------------------------------------------------------------
-HRESULT WaveStartDataRead( HMMIO* phmmioIn, MMCKINFO* pckIn,
+Sint32 WaveStartDataRead( HMMIO* phmmioIn, MMCKINFO* pckIn,
 													MMCKINFO* pckInRIFF )
 {
 	// Seek to the data
@@ -180,7 +180,7 @@ HRESULT WaveStartDataRead( HMMIO* phmmioIn, MMCKINFO* pckIn,
 //          pbDest       - Destination buffer to put bytes.
 //          cbActualRead - # of bytes actually read.
 //-----------------------------------------------------------------------------
-HRESULT WaveReadFile( HMMIO hmmioIn, UINT cbRead, BYTE* pbDest,
+Sint32 WaveReadFile( HMMIO hmmioIn, UINT cbRead, BYTE* pbDest,
 										 MMCKINFO* pckIn, UINT* cbActualRead )
 {
 	MMIOINFO mmioinfoIn;         // current status of <hmmioIn>
@@ -256,12 +256,12 @@ CWaveSoundRead::~CWaveSoundRead()
 // Name: Open()
 // Desc: Opens a wave file for reading
 //-----------------------------------------------------------------------------
-HRESULT CWaveSoundRead::Open(const CHAR* strFilename )
+Sint32 CWaveSoundRead::Open(const CHAR* strFilename )
 {
 	delete[] m_pwfx;
 	m_pwfx=0;
 
-	HRESULT  hr;
+	Sint32  hr;
 
 	CFileHandler file(strFilename);
 	if(file.FileExists()){
@@ -289,7 +289,7 @@ HRESULT CWaveSoundRead::Open(const CHAR* strFilename )
 // Desc: Resets the internal m_ckIn pointer so reading starts from the 
 //       beginning of the file again 
 //-----------------------------------------------------------------------------
-HRESULT CWaveSoundRead::Reset()
+Sint32 CWaveSoundRead::Reset()
 {
 	return WaveStartDataRead( &m_hmmioIn, &m_ckIn, &m_ckInRiff );
 }
@@ -302,7 +302,7 @@ HRESULT CWaveSoundRead::Reset()
 // Desc: Reads a wave file into a pointer and returns how much read
 //       using m_ckIn to determine where to start reading from
 //-----------------------------------------------------------------------------
-HRESULT CWaveSoundRead::Read( UINT nSizeToRead, BYTE* pbData, UINT* pnSizeRead )
+Sint32 CWaveSoundRead::Read( UINT nSizeToRead, BYTE* pbData, UINT* pnSizeRead )
 {
 	return WaveReadFile( m_hmmioIn, nSizeToRead, pbData, &m_ckIn, pnSizeRead );
 }
@@ -314,7 +314,7 @@ HRESULT CWaveSoundRead::Read( UINT nSizeToRead, BYTE* pbData, UINT* pnSizeRead )
 // Name: Close()
 // Desc: Closes an open wave file 
 //-----------------------------------------------------------------------------
-HRESULT CWaveSoundRead::Close()
+Sint32 CWaveSoundRead::Close()
 {
 	mmioClose( m_hmmioIn, 0 );
 	if(buf)

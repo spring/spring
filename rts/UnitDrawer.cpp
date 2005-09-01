@@ -23,10 +23,11 @@
 #include "LosHandler.h"
 #include "BaseSky.h"
 #include "BFGroundDrawer.h"
+#include <SDL/SDL_types.h>
 
 CUnitDrawer* unitDrawer;
 using namespace std;
-extern bool keys[256];
+extern Uint8 *keys;
 
 CUnitDrawer::CUnitDrawer(void)
 :	showHealthBars(true),
@@ -241,7 +242,7 @@ void CUnitDrawer::Draw(bool drawReflection)
 			(*usi)->DrawStats();
 		}
 
-		if(keys[VK_SHIFT] && !selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->buildSpeed>0){
+		if(keys[SDLK_LSHIFT] && !selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->buildSpeed>0){
 			for(set<CBuilderCAI*>::iterator bi=uh->builderCAIs.begin();bi!=uh->builderCAIs.end();++bi){
 				if((*bi)->owner->team==gu->myTeam){
 					(*bi)->DrawQuedBuildingSquares();

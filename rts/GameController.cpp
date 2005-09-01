@@ -48,7 +48,7 @@ bool CGameController::Update(void)
 
 
 
-int CGameController::KeyPressed(unsigned char k,bool isRepeat)
+int CGameController::KeyPressed(unsigned short k,bool isRepeat)
 
 {
 
@@ -58,7 +58,7 @@ int CGameController::KeyPressed(unsigned char k,bool isRepeat)
 
 
 
-int CGameController::KeyReleased(unsigned char k)
+int CGameController::KeyReleased(unsigned short k)
 
 {
 

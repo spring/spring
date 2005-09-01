@@ -23,7 +23,7 @@ opts = Options('SCustomize')
 
 #permanent options
 opts.Add('platform', 'Set to linux or windows', detected_platform)
-opts.Add('debug', 'Set to yes to produce a binary with debug informations', 1)
+opts.Add('debug', 'Set to yes to produce a binary with debug information', 1)
 
 #porting options - mandatory
 opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1)
@@ -34,19 +34,8 @@ opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
 opts.Add('disable_shadows', 'Set to no to turn on shadows rendering', 1)
 opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
 
-#options used while porting
-opts.Add('enable_smallfixes', 'Set to yes to enable small fixes that have to be checked/cleaned', 1)
-opts.Add('emule_wintypes', '(Ported/TobeChecked) Set to no to turn off windows type emulation (replace by glib types))', 1)
-opts.Add('use_glut', 'Set to yes to replace MSwindows windows handling code by GLUT', 1)
-opts.Add('use_portable_io', 'Set to yes to replace MSwindows windows io code by portable one', 1)
-opts.Add('force_glextensions', 'Skip gl extensions test for porting purpose', 0)
-
 #other ported parts
 opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', 0)
-opts.Add('disable_windows', '(Notused) Set to no to enable windows code and MSwindows messages (port using glut)', 0)
-opts.Add('disable_inputs', '(Notused) Set to no to enable input handling code (port using glut))', 0)
-opts.Add('disable_texture_filtering', 'Set to no to turn on texture filtering code', 0)
-opts.Add('disable_advtreedrawer', 'Set to no to turn on advanced tree drawing', 0)
 
 opts.Add('disable_7zip', 'Set to disable 7zip processing', 1)
 opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation',0)
@@ -63,36 +52,13 @@ if env.get('disable_shadows'):
 	defines+=['NO_SHADOWS']
 if env.get('disable_hpi'):
 	defines+=['NO_HPI']
-if env.get('use_glut'):
-	defines+=['USE_GLUT']
-if not env.get('use_portable_io'):
-	defines+=['USE_WIN32_IO']
 if env.get('disable_clipboard'):
 	defines+=['NO_CLIPBOARD']
-if env.get('disable_windows'):
-	defines+=['NO_WINDOWS']
 if env.get('disable_dll'):
 	defines+=['NO_DLL']
-if env.get('emule_wintypes'):
-	defines+=['EMULE_WINTYPES']
-if env.get('disable_inputs'):
-	defines+=['NO_INPUT']
-if env.get('enable_smallfixes'):
-	defines+=['ENABLE_SMALLFIXES','ENABLE_CPPFIX']	
-if env.get('disable_texture_filtering'):
-	defines+=['NO_TEXTURES']
-	exclude_list+=Split(""" TextureHandler.cpp
-				TextureFilters_hq2x.cpp
-				TextureFilters_2xsai.cpp
-				TextureFilters_hq4x.cpp""")
 if env.get('disable_avi'):
 	exclude_list.append("AVIGenerator.cpp")
 	defines+=['NO_AVI']
-if env.get('disable_advtreedrawer'):
-	exclude_list+=Split("""AdvTreeGenerator.cpp AdvTreeDrawer.cpp""")
-	defines+=['NO_NICETREES']
-if env.get('force_glextensions'):
-	defines+=['FORCE_GL_EXTENSIONS']
 lzmafiles=[]
 if env.get('disable_7zip'):
 	defines+=['NO_7ZIP']
@@ -127,6 +93,7 @@ for f in hpiutilf:
 #linux disable unused code
 if platform == 'linux':	
 	exclude_list += exclude_list + Split("""
+			BackgroundReader.cpp
 			ARB_vertex_program_extension.cpp
 			mmgr.cpp
 			multipath.cpp
@@ -167,16 +134,14 @@ if platform == 'linux':
 #################################################
 # Check requirements
 
-lib=['GL','glut','GLEW','jpeg','freetype','GLU','IL']
+lib=['GL','GLEW','jpeg','freetype','IL','SDL']
+libaiostep1=False
 
 print "\nChecking header files"
 conf = Configure(env)
 conf.env.Append(CPPPATH=common_include_path)
 if not conf.CheckCHeader(['ft2build.h']):
 	print ' dev freetype must be installed!'
-	Exit(1)
-if not conf.CheckCHeader(['GL/glut.h']):
-	print ' A dev implementation of GLUT must be installed!'
 	Exit(1)
 if not conf.CheckCHeader(['GL/glew.h']):
 	print ' Cannot find GLEW http://glew.sourceforge.net'
@@ -196,8 +161,12 @@ if not conf.CheckCXXHeader('boost/regex.hpp'):
 if not conf.CheckCHeader('IL/il.h'):
 	print ' Cannot find DevIL image library header'
 	Exit(1)
+if not conf.CheckCHeader('SDL/SDL.h'):
+	print ' Cannot find LibSDL header'
+	Exit(1)
 if conf.CheckCHeader('libaio.h'):
 	defines+=['HAS_LIBAIO']
+	libaiostep1=True
 else:
 	print ' Cannot find libaio headers, disabling asynchronous I/O'
 #if not conf.CheckCHeader('glib.h'):
@@ -253,8 +222,19 @@ else:
 if not conf.CheckLib('IL'):
 	print "You need the DevIL image library for this program"
 	Exit(1)
+if not conf.CheckLib('SDL'):
+	print "You need LibSDL for this program"
+	Exit(1)
+if env.get('use_tcmalloc'):
+	if conf.CheckLib('tcmalloc'):
+		lib+=['tcmalloc']
+	else:
+		print "tcmalloc from goog-perftools requested but not available"
+		print "falling back to standard malloc"
 if conf.CheckLib('aio'):
 	lib+=['aio']
+	if libaiostep1:
+		files+=['BackgroundReader.cpp']
 else:
 	print "Libaio is necessary for asynchronous I/O, disabling BackgroundReader"
 env = conf.Finish()
@@ -264,7 +244,4 @@ env = conf.Finish()
 
 print "\nEverything seems OK, let's build"
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
-#env.Program('spring', files,  LIBS=['GL','glut','GLEW','jpeg','freetype','glib','GLU', 'libboost_filesystem'], CPPPATH=common_include_path)
-if env.get('use_tcmalloc'):
-	lib+=['tcmalloc']
 env.Program('spring', files,  LIBS=lib, CPPPATH=common_include_path)

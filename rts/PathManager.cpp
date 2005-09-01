@@ -291,7 +291,7 @@ Removes and return the next waypoint in the multipath corresponding to given id.
 */
 float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance) {
 	#ifdef PROFILE_TIME
-		LARGE_INTEGER starttime;
+		Uint64 starttime;
 		QueryPerformanceCounter(&starttime);
 	#endif
 
@@ -345,9 +345,9 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 
 	//Return the result.
 	#ifdef PROFILE_TIME
-		LARGE_INTEGER stop;
+		Uint64 stop;
 		QueryPerformanceCounter(&stop);
-		profiler.AddTime("AI:PFS",stop.QuadPart - starttime.QuadPart);
+		profiler.AddTime("AI:PFS",stop - starttime);
 	
 	#endif
 	return waypoint;

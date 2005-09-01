@@ -33,10 +33,10 @@ public:
     CWaveSoundRead();
     ~CWaveSoundRead();
 
-    HRESULT Open(const CHAR* strFilename );
-    HRESULT Reset();
-    HRESULT Read( UINT nSizeToRead, BYTE* pbData, UINT* pnSizeRead );
-    HRESULT Close();
+    Sint32 Open(const CHAR* strFilename );
+    Sint32 Reset();
+    Sint32 Read( UINT nSizeToRead, BYTE* pbData, UINT* pnSizeRead );
+    Sint32 Close();
 
 };
 

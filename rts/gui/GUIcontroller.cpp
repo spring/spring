@@ -35,6 +35,7 @@
 #include "GUItable.h"
 #include "GUIinfoSelection.h"
 #include <stdarg.h>
+#include <SDL/SDL_types.h>
 
 /* 
 Remaining TODOs:
@@ -305,23 +306,19 @@ bool GUIcontroller::MouseMove(int x1, int y1, int xrel, int yrel, int button)
 }
 
 
-extern bool keys[256];
+extern Uint8 *keys;
 const string GUIcontroller::Modifiers()
 {
 	string keyname("");
 
-	if(keys[VK_SHIFT])
+	if(keys[SDLK_LSHIFT])
 		keyname.append("shift_");
-	if(keys[VK_CONTROL])
+	if(keys[SDLK_LCTRL])
 		keyname.append("ctrl_");
-	if(keys[VK_MENU])
+	if(keys[SDLK_LALT])
 		keyname.append("alt_");
-#ifndef USE_GLUT
-	if(keys[VK_RWIN]||keys[VK_LWIN])
+	if(keys[SDLK_LMETA])
 		keyname.append("meta_");
-#else
-#warning win key not handled
-#endif
 	return keyname;
 }
 
@@ -685,12 +682,12 @@ const string GUIcontroller::KeyName(unsigned char k)
 			
 		// TODO: add more key names
 
-		keyNames[VK_SPACE]="space";
-		keyNames[VK_PAUSE]="pause";
-		keyNames[VK_RETURN]="enter";
+		keyNames[SDLK_SPACE]="space";
+		keyNames[SDLK_PAUSE]="pause";
+		keyNames[SDLK_RETURN]="enter";
 		keyNames[8]="backspace";
 		keyNames[9]="tab";
-		keyNames[VK_ESCAPE]="escape";
+		keyNames[SDLK_ESCAPE]="escape";
 		keyNames[112]="f1";
 		keyNames[113]="f2";
 		keyNames[114]="f3";
@@ -714,14 +711,14 @@ const string GUIcontroller::KeyName(unsigned char k)
 		keyNames[35]="end";
 		keyNames[33]="pageup";
 		keyNames[34]="pagedown";
-		keyNames[VK_UP]="up";
-		keyNames[VK_DOWN]="down";
-		keyNames[VK_LEFT]="left";
-		keyNames[VK_RIGHT]="right";
-		keyNames[VK_PAUSE]=	"pause";
-		keyNames[VK_ADD]="+";
-		keyNames[VK_SUBTRACT]="-";
-		keyNames[VK_OEM_PLUS]="equals";
+		keyNames[SDLK_UP]="up";
+		keyNames[SDLK_DOWN]="down";
+		keyNames[SDLK_LEFT]="left";
+		keyNames[SDLK_RIGHT]="right";
+		keyNames[SDLK_BREAK]=	"pause";
+		keyNames[SDLK_PLUS]="+";
+		keyNames[SDLK_MINUS]="-";
+		keyNames[SDLK_EQUALS]="equals";
 	}
 	
 	return keyNames[k];

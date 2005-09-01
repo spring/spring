@@ -55,7 +55,7 @@ CSound::CSound()
 	m_pDS            = NULL;
 	m_pWaveSoundRead = NULL;
 
-	HRESULT             hr;
+	Sint32             hr;
 	LPDIRECTSOUNDBUFFER pDSBPrimary = NULL;
 	
 	// Initialize COM
@@ -197,7 +197,7 @@ int CSound::GetBuf(int id,float volume)
 	if(s->freebufs.empty()){
 		LPDIRECTSOUNDBUFFER b=NULL;
 		buffers.push_back(b);
-		HRESULT r=m_pDS->DuplicateSoundBuffer(buffers[s->firstBuf],&(buffers.back()));
+		Sint32 r=m_pDS->DuplicateSoundBuffer(buffers[s->firstBuf],&(buffers.back()));
 		if(r!=DS_OK){
 			MessageBox(0,"Couldnt duplicate sound buffer","Sound error",0);
 			noSound=true;
@@ -229,7 +229,7 @@ void CSound::PlaySound(int id, float volume)
 
 	float v=0.2-volume*0.2;
 		
-	HRESULT hr;
+	Sint32 hr;
 	int num=GetBuf(id,v);
 
 	// Restore the buffers if they are lost
@@ -244,7 +244,7 @@ void CSound::PlaySound(int id, float volume)
 //		buffers[num]->SetCurrentPosition( 0L );    
 	
 	// Play buffer 
-//	DWORD dwLooped = loop ? DSBPLAY_LOOPING : 0L;
+//	Uint32 dwLooped = loop ? DSBPLAY_LOOPING : 0L;
 	if( FAILED( hr = buffers[num]->Play( 0, 0, 0/*dwLooped*/ ) ) ){
 
 	}
@@ -265,7 +265,7 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 		return;
 	}
 
-	HRESULT hr;
+	Sint32 hr;
 	float3 dif=p - camera->pos;
 	float dl=dif.Length();
 	float pan=dif.dot(camera->right)*DSBPAN_RIGHT/dl;
@@ -305,10 +305,10 @@ void CSound::PlaySound(int id,const float3& p,float volume){};
 #endif
 
 #ifdef USE_DSOUND
-HRESULT CSound::CreateStaticBuffer(const string& name)
+Sint32 CSound::CreateStaticBuffer(const string& name)
 {
 	string filename("sounds/"+name);
-	HRESULT hr; 
+	Sint32 hr; 
 	
 	// Free any previous globals 
 	SAFE_DELETE( m_pWaveSoundRead );
@@ -348,21 +348,21 @@ HRESULT CSound::CreateStaticBuffer(const string& name)
 	return 0;
 }
 
-HRESULT CSound::FillBuffer()
+Sint32 CSound::FillBuffer()
 {
-	HRESULT hr; 
-	BYTE*   pbWavData; // Pointer to actual wav data 
+	Sint32 hr; 
+	Uint8*   pbWavData; // Pointer to actual wav data 
 	UINT    cbWavSize; // Size of data
-	VOID*   pbData  = NULL;
-	VOID*   pbData2 = NULL;
-	DWORD   dwLength;
-	DWORD   dwLength2;
+	void*   pbData  = NULL;
+	void*   pbData2 = NULL;
+	Uint32   dwLength;
+	Uint32   dwLength2;
 
 	// The size of wave data is in pWaveFileSound->m_ckIn
 	INT nWaveFileSize = m_pWaveSoundRead->m_ckIn.cksize;
 
 	// Allocate that buffer.
-	pbWavData = new BYTE[ nWaveFileSize ];
+	pbWavData = new Uint8[ nWaveFileSize ];
 	if( NULL == pbWavData )
 		return E_OUTOFMEMORY;
 
@@ -394,15 +394,15 @@ HRESULT CSound::FillBuffer()
 	return 0;
 }
 
-HRESULT CSound::RestoreBuffers(int num)
+Sint32 CSound::RestoreBuffers(int num)
 {
 	
-    HRESULT hr;
+    Sint32 hr;
 
     if( NULL == buffers[num] )
         return S_OK;
 
-    DWORD dwStatus;
+    Uint32 dwStatus;
     if( FAILED( hr = buffers[num]->GetStatus( &dwStatus ) ) )
         return hr;
 
@@ -435,7 +435,7 @@ void CSound::Update()
 	float total=wantedSounds*0.5;
 	for(std::list<PlayingSound>::iterator pi=playingSounds.begin();pi!=playingSounds.end();){
 		int num=pi->num;
-		DWORD status;
+		Uint32 status;
 		buffers[num]->GetStatus(&status);
 		if(!status & DSBSTATUS_PLAYING){
 			pi=playingSounds.erase(pi);

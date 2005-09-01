@@ -708,16 +708,10 @@ void CCobInstance::ShowFlare(int piece)
 #endif
 }
 
-#ifndef ENABLE_SMALLFIXES
-#define UNPACKX(xz) ((signed short)((DWORD_PTR)(xz) >> 16))
-#define UNPACKZ(xz) ((signed short)((DWORD_PTR)(xz) & 0xffff))
-#else
-#define UNPACKX(xz) ((signed short)((xz) >> 16))
-#define UNPACKZ(xz) ((signed short)((xz) & 0xffff))
-#endif
+#define UNPACKX(xz) ((signed short)((Uint32)(xz) >> 16))
+#define UNPACKZ(xz) ((signed short)((Uint32)(xz) & 0xffff))
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
 #define SCALE 65536
-
 
 int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {

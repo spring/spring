@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /************************************************************************/
 /* 2xSAI filters                                                        */
 /************************************************************************/
-static __inline int SAI_GetResult1_32( DWORD A, DWORD B, DWORD C, DWORD D, DWORD E )
+static __inline int SAI_GetResult1_32( Uint32 A, Uint32 B, Uint32 C, Uint32 D, Uint32 E )
 {
 	int x = 0;
 	int y = 0;
@@ -37,11 +37,11 @@ static __inline int SAI_GetResult1_32( DWORD A, DWORD B, DWORD C, DWORD D, DWORD
 	return r;
 }
 
-static __inline WORD SAI_GetResult1_16( WORD A, WORD B, WORD C, WORD D, WORD E )
+static __inline Uint16 SAI_GetResult1_16( Uint16 A, Uint16 B, Uint16 C, Uint16 D, Uint16 E )
 {
-	WORD x = 0;
-	WORD y = 0;
-	WORD r = 0;
+	Uint16 x = 0;
+	Uint16 y = 0;
+	Uint16 r = 0;
 
 	if (A == C) x += 1; else if (B == C) y += 1;
 	if (A == D) x += 1; else if (B == D) y += 1;
@@ -51,7 +51,7 @@ static __inline WORD SAI_GetResult1_16( WORD A, WORD B, WORD C, WORD D, WORD E )
 	return r;
 }
 
-static __inline int SAI_GetResult2_32( DWORD A, DWORD B, DWORD C, DWORD D, DWORD E) 
+static __inline int SAI_GetResult2_32( Uint32 A, Uint32 B, Uint32 C, Uint32 D, Uint32 E) 
 {
 	int x = 0; 
 	int y = 0;
@@ -65,11 +65,11 @@ static __inline int SAI_GetResult2_32( DWORD A, DWORD B, DWORD C, DWORD D, DWORD
 	return r;
 }
 
-static __inline WORD SAI_GetResult2_16( WORD A, WORD B, WORD C, WORD D, WORD E) 
+static __inline Uint16 SAI_GetResult2_16( Uint16 A, Uint16 B, Uint16 C, Uint16 D, Uint16 E) 
 {
-	WORD x = 0; 
-	WORD y = 0;
-	WORD r = 0;
+	Uint16 x = 0; 
+	Uint16 y = 0;
+	Uint16 r = 0;
 
 	if (A == C) x += 1; else if (B == C) y += 1;
 	if (A == D) x += 1; else if (B == D) y += 1;
@@ -80,7 +80,7 @@ static __inline WORD SAI_GetResult2_16( WORD A, WORD B, WORD C, WORD D, WORD E)
 }
 
 
-static __inline int SAI_GetResult_32( DWORD A, DWORD B, DWORD C, DWORD D )
+static __inline int SAI_GetResult_32( Uint32 A, Uint32 B, Uint32 C, Uint32 D )
 {
 	int x = 0; 
 	int y = 0;
@@ -94,11 +94,11 @@ static __inline int SAI_GetResult_32( DWORD A, DWORD B, DWORD C, DWORD D )
 	return r;
 }
 
-static __inline WORD SAI_GetResult_16( WORD A, WORD B, WORD C, WORD D )
+static __inline Uint16 SAI_GetResult_16( Uint16 A, Uint16 B, Uint16 C, Uint16 D )
 {
-	WORD x = 0; 
-	WORD y = 0;
-	WORD r = 0;
+	Uint16 x = 0; 
+	Uint16 y = 0;
+	Uint16 r = 0;
 
 	if (A == C) x += 1; else if (B == C) y += 1;
 	if (A == D) x += 1; else if (B == D) y += 1;
@@ -109,7 +109,7 @@ static __inline WORD SAI_GetResult_16( WORD A, WORD B, WORD C, WORD D )
 }
 
 
-static __inline DWORD SAI_INTERPOLATE_32( DWORD A, DWORD B)
+static __inline Uint32 SAI_INTERPOLATE_32( Uint32 A, Uint32 B)
 {
 	if (A != B)
 		return	((A & 0xFEFEFEFE) >> 1) + 
@@ -119,7 +119,7 @@ static __inline DWORD SAI_INTERPOLATE_32( DWORD A, DWORD B)
 		return A;
 }
 
-static __inline WORD SAI_INTERPOLATE_16( WORD A, WORD B)
+static __inline Uint16 SAI_INTERPOLATE_16( Uint16 A, Uint16 B)
 {
 	if (A != B)
 		return	((A & 0xFEFE) >> 1) + 
@@ -130,26 +130,26 @@ static __inline WORD SAI_INTERPOLATE_16( WORD A, WORD B)
 }
 
 
-static __inline DWORD SAI_Q_INTERPOLATE_32( DWORD A, DWORD B, DWORD C, DWORD D)
+static __inline Uint32 SAI_Q_INTERPOLATE_32( Uint32 A, Uint32 B, Uint32 C, Uint32 D)
 {
-	DWORD x =	((A & 0xFCFCFCFC) >> 2) +
+	Uint32 x =	((A & 0xFCFCFCFC) >> 2) +
 		((B & 0xFCFCFCFC) >> 2) +
 		((C & 0xFCFCFCFC) >> 2) +
 		((D & 0xFCFCFCFC) >> 2);
-	DWORD y =	(((A & 0x03030303) +
+	Uint32 y =	(((A & 0x03030303) +
 		(B & 0x03030303) +
 		(C & 0x03030303) +
 		(D & 0x03030303)) >> 2) & 0x03030303;
 	return x | y;
 }
 
-static __inline WORD SAI_Q_INTERPOLATE_16( WORD A, WORD B, WORD C, WORD D)
+static __inline Uint16 SAI_Q_INTERPOLATE_16( Uint16 A, Uint16 B, Uint16 C, Uint16 D)
 {
-	WORD x =	((A & 0xFCFC) >> 2) +
+	Uint16 x =	((A & 0xFCFC) >> 2) +
 		((B & 0xFCFC) >> 2) +
 		((C & 0xFCFC) >> 2) +
 		((D & 0xFCFC) >> 2);
-	WORD y =	(((A & 0x0303) +
+	Uint16 y =	(((A & 0x0303) +
 		(B & 0x0303) +
 		(C & 0x0303) +
 		(D & 0x0303)) >> 2) & 0x0303;
@@ -157,22 +157,22 @@ static __inline WORD SAI_Q_INTERPOLATE_16( WORD A, WORD B, WORD C, WORD D)
 }
 
 
-void Super2xSaI_32( DWORD *srcPtr, DWORD *destPtr, DWORD width, DWORD height, DWORD pitch)
+void Super2xSaI_32( Uint32 *srcPtr, Uint32 *destPtr, Uint32 width, Uint32 height, Uint32 pitch)
 {
-	DWORD destWidth = width << 1;
-	DWORD destHeight = height << 1;
+	Uint32 destWidth = width << 1;
+	Uint32 destHeight = height << 1;
 
-	DWORD color4, color5, color6;
-	DWORD color1, color2, color3;
-	DWORD colorA0, colorA1, colorA2, colorA3;
-	DWORD colorB0, colorB1, colorB2, colorB3;
-	DWORD colorS1, colorS2;
-	DWORD product1a, product1b, product2a, product2b;
+	Uint32 color4, color5, color6;
+	Uint32 color1, color2, color3;
+	Uint32 colorA0, colorA1, colorA2, colorA3;
+	Uint32 colorB0, colorB1, colorB2, colorB3;
+	Uint32 colorS1, colorS2;
+	Uint32 product1a, product1b, product2a, product2b;
 
 	int row0, row1, row2, row3;
 	int col0, col1, col2, col3;
 
-	for (WORD y = 0; y < height; y++)
+	for (Uint16 y = 0; y < height; y++)
 	{
 		if (y > 0)
 		{
@@ -199,7 +199,7 @@ void Super2xSaI_32( DWORD *srcPtr, DWORD *destPtr, DWORD width, DWORD height, DW
 			row3 = 0;
 		}
 
-		for (WORD x = 0; x < width; x++)
+		for (Uint16 x = 0; x < width; x++)
 		{
 			//--------------------------------------- B0 B1 B2 B3
 			//                                         4  5  6 S2
@@ -315,22 +315,22 @@ void Super2xSaI_32( DWORD *srcPtr, DWORD *destPtr, DWORD width, DWORD height, DW
 }
 
 
-void Super2xSaI_16( WORD *srcPtr, WORD *destPtr, DWORD width, DWORD height, DWORD pitch)
+void Super2xSaI_16( Uint16 *srcPtr, Uint16 *destPtr, Uint32 width, Uint32 height, Uint32 pitch)
 {
-	DWORD destWidth = width << 1;
-	DWORD destHeight = height << 1;
+	Uint32 destWidth = width << 1;
+	Uint32 destHeight = height << 1;
 
-	WORD color4, color5, color6;
-	WORD color1, color2, color3;
-	WORD colorA0, colorA1, colorA2, colorA3;
-	WORD colorB0, colorB1, colorB2, colorB3;
-	WORD colorS1, colorS2;
-	WORD product1a, product1b, product2a, product2b;
+	Uint16 color4, color5, color6;
+	Uint16 color1, color2, color3;
+	Uint16 colorA0, colorA1, colorA2, colorA3;
+	Uint16 colorB0, colorB1, colorB2, colorB3;
+	Uint16 colorS1, colorS2;
+	Uint16 product1a, product1b, product2a, product2b;
 
 	int row0, row1, row2, row3;
 	int col0, col1, col2, col3;
 
-	for (WORD y = 0; y < height; y++)
+	for (Uint16 y = 0; y < height; y++)
 	{
 		if (y > 0)
 		{
@@ -357,7 +357,7 @@ void Super2xSaI_16( WORD *srcPtr, WORD *destPtr, DWORD width, DWORD height, DWOR
 			row3 = 0;
 		}
 
-		for (WORD x = 0; x < width; x++)
+		for (Uint16 x = 0; x < width; x++)
 		{
 			//--------------------------------------- B0 B1 B2 B3
 			//                                         4  5  6 S2

@@ -59,7 +59,7 @@ public:
 	int GetDefaultCommand(int x,int y);
 	void DrawMapStuff(void);
 	void DrawFront(int button,float maxSize,float sizeDiv);
-	bool KeyPressed(unsigned char key);
+	bool KeyPressed(unsigned short key);
 	void MenuChoice(string s);
 	void FinishCommand(int button);
 	bool IsAbove(int x, int y);

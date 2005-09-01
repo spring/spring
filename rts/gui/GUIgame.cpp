@@ -42,8 +42,9 @@
 #include "FeatureHandler.h"
 //#include "mmgr.h"
 #include "GUICommandPool.h"
+#include <SDL/SDL_types.h>
 
-extern bool	keys[256];
+extern Uint8 *keys;
 extern bool	globalQuit;
 extern CGame* game;
 
@@ -539,7 +540,7 @@ void GUIgame::PrivateDraw()
 			}
 		}
 	}
-	if(keys[VK_SHIFT]){
+	if(keys[SDLK_LSHIFT]){
 		CUnit* unit=0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
@@ -922,7 +923,7 @@ bool GUIgame::EventAction(const string& command)
 		groundDrawer->ToggleLosTexture();
 	}
 	else if(id==COMMAND_mousestate){
-		mouse->ToggleState(keys[VK_SHIFT] || keys[VK_CONTROL]);
+		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 	}
 
 	else if (id==COMMAND_updatefov)
@@ -1085,7 +1086,7 @@ bool GUIgame::EventAction(const string& command)
 //		activeController->userWriting=true;
 //		userPrompt="Say: ";
 //		game->chatting=true;
-//		if(k!=VK_RETURN)
+//		if(k!=SDLK_RETURN)
 //			activeController->ignoreNextChar=true;
 //	}
 	else if (id==COMMAND_debug)
@@ -1144,7 +1145,7 @@ bool GUIgame::EventAction(const string& command)
 			game->aviGenerator->SetFileName(name.c_str());
 			game->aviGenerator->SetRate(30);
 			game->aviGenerator->SetBitmapHeader(&bih);
-			HRESULT hr=game->aviGenerator->InitEngine();
+			Sint32 hr=game->aviGenerator->InitEngine();
 			if(hr!=AVIERR_OK){  
 				game->creatingVideo=false;
 			} else {
@@ -1294,15 +1295,14 @@ string GUIgame::Tooltip()
 	return tooltip;
 }
 
-extern bool keys[256];
 void GUIgame::InitCommand(Command& c)
 {
 	c.options=0;
-	if(keys[VK_SHIFT])
+	if(keys[SDLK_LSHIFT])
 		c.options|=SHIFT_KEY;
-	if(keys[VK_CONTROL])
+	if(keys[SDLK_LCTRL])
 		c.options|=CONTROL_KEY;
-	if(keys[VK_MENU])
+	if(keys[SDLK_LALT])
 		c.options|=ALT_KEY;
 }
 
@@ -1544,7 +1544,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 	CUnit* unit=0;
 	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,true);
 
-	if(unit && keys[VK_SHIFT] && keys[VK_CONTROL]){		//circle build around building
+	if(unit && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
 		UnitDef* unitdef2=unit->unitDef;
 		float3 pos2=unit->pos;
 		pos2=helper->Pos2BuildPos(pos2,unitdef2);
@@ -1589,7 +1589,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			p2=helper->Pos2BuildPos(p2,unitdef);
 			ret.push_back(p2);
 		}
-	} else if(keys[VK_MENU]){			//build a rectangle
+	} else if(keys[SDLK_LALT]){			//build a rectangle
 		float xsize=unitdef->xsize*8;
 		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
 		int xstep=(int)xsize;
@@ -1606,7 +1606,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 		for(float z=start.z;zn<znum;++zn){
 			int xn=0;
 			for(float x=start.x;xn<xnum;++xn){
-				if(!keys[VK_CONTROL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
+				if(!keys[SDLK_LCTRL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
 					float3 pos(x,0,z);
 					pos=helper->Pos2BuildPos(pos,unitdef);
 					ret.push_back(pos);
@@ -1624,7 +1624,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 				return ret;
 			}
 			dir/=fabs(dir.x);
-			if(keys[VK_CONTROL])
+			if(keys[SDLK_LCTRL])
 				dir.z=0;
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
 				ret.push_back(p);
@@ -1636,7 +1636,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 				return ret;
 			}
 			dir/=fabs(dir.z);
-			if(keys[VK_CONTROL])
+			if(keys[SDLK_LCTRL])
 				dir.x=0;
 			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step)
 				ret.push_back(p);

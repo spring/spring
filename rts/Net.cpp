@@ -37,11 +37,11 @@ unsigned char netbuf[NETWORK_BUFFER_SIZE];	//buffer space for outgoing data
 
 CNet::CNet()
 {
-	LARGE_INTEGER t,f;
+	Uint64 t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-	curTime=double(t.QuadPart)/double(f.QuadPart);
-	WORD wVersionRequested;
+	curTime=double(t)/double(f);
+	Uint16 wVersionRequested;
 #ifdef _WIN32
 	WSADATA wsaData;
 	int err; 
@@ -158,10 +158,10 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 {
   LPHOSTENT lpHostEntry;
 
-	LARGE_INTEGER t,f;
+	Uint64 t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-	curTime=double(t.QuadPart)/f.QuadPart;
+	curTime=double(t)/f;
 
 	if(FindDemoFile(server)){
 		onlyLocal=true;
@@ -314,10 +314,10 @@ int CNet::GetData(unsigned char *buf, int length,int conNum)
 
 void CNet::Update(void)
 {
-	LARGE_INTEGER t,f;
+	Uint64 t,f;
 	QueryPerformanceCounter(&t);
 	QueryPerformanceFrequency(&f);
-	curTime=double(t.QuadPart)/double(f.QuadPart);
+	curTime=double(t)/double(f);
 	if(onlyLocal){
 		if(playbackDemo)
 			ReadDemoFile();

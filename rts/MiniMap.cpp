@@ -32,6 +32,7 @@
 #include "WeaponDefHandler.h"
 #include "MapDamage.h"
 #include "MetalMap.h"
+#include <SDL/SDL_types.h>
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -39,7 +40,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CMiniMap* minimap;
-extern bool keys[256];
+extern Uint8 *keys;
 
 CMiniMap::CMiniMap()
 : xpos(10),
@@ -414,7 +415,7 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		ypos-=dy;
 		height+=dy;
 		width+=dx;
-	 if(keys[VK_SHIFT])
+	 if(keys[SDLK_LSHIFT])
 		{
 			width = height * gs->mapx/gs->mapy;
 		}
@@ -469,7 +470,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 //		info->AddLine("r %f",size);
 		CUnit* unit=helper->GetClosestFriendlyUnit(pos,size,gu->myAllyTeam);
 		if(unit){
-		if(!keys[VK_SHIFT])
+		if(!keys[SDLK_LSHIFT])
 		        selectedUnits.ClearSelected();
 			selectedUnits.AddUnit(unit);
 			return;

@@ -15,13 +15,6 @@
 
 using namespace std;
 
-extern HDC hDC;
-#ifndef USE_GLUT
-extern HWND	hWnd;
-#else
-#include <GL/glut.h>
-#endif
-
 static CVertexArray* vertexArray1=0;
 static CVertexArray* vertexArray2=0;
 static CVertexArray* currentVertexArray=0;
@@ -131,11 +124,7 @@ void PrintLoadMsg(const char* text)
 	glPopMatrix();
 	font->glPrintAt(0.40,0.06,1.0,"TA Spring linux %s",VERSION_STRING);
 	font->glPrintAt(0.20,0.02,0.5,"This program is distributed under the GNU General Public License, see license.html for more info");
-#ifndef USE_GLUT
-	SwapBuffers(hDC);
-#else
-	glutSwapBuffers();
-#endif
+	SDL_GL_SwapBuffers();
 }
 
 bool ProgramStringIsNative(GLenum target, const char* filename)

@@ -93,14 +93,14 @@ void CAVIGenerator::SetBitmapHeader(CView *pView)
 }
 #endif
 
-HRESULT CAVIGenerator::InitEngine()
+Sint32 CAVIGenerator::InitEngine()
 {
 	AVISTREAMINFO strHdr; // information for a single stream 
 	AVICOMPRESSOPTIONS opts;
 	AVICOMPRESSOPTIONS FAR * aopts[1] = {&opts};
 
 	TCHAR szBuffer[1024];
-	HRESULT hr;
+	Sint32 hr;
 
 	m_sError=_T("Ok");
 
@@ -264,9 +264,9 @@ void CAVIGenerator::ReleaseEngine()
 	AVIFileExit();
 }
 
-HRESULT CAVIGenerator::AddFrame(BYTE *bmBits)
+Sint32 CAVIGenerator::AddFrame(BYTE *bmBits)
 {
-	HRESULT hr;
+	Sint32 hr;
 
 	// compress bitmap
 	hr = AVIStreamWrite(m_pStreamCompressed,	// stream pointer

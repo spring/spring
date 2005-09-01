@@ -24,15 +24,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #include <math.h>
 
-#define DWORD_MAKE(r, g, b, a)   ((DWORD) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)))
-#define WORD_MAKE(r, g, b, a)   ((WORD) (((a) << 12) | ((r) << 8) | ((g) << 4) | (b)))
+#define DWORD_MAKE(r, g, b, a)   ((Uint32) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)))
+#define WORD_MAKE(r, g, b, a)   ((Uint16) (((a) << 12) | ((r) << 8) | ((g) << 4) | (b)))
 
 typedef uint32_t uint32;
 typedef uint16_t uint16;
 typedef uint8_t uint8;
 
-void Super2xSaI_32( DWORD *srcPtr, DWORD *destPtr, DWORD width, DWORD height, DWORD pitch);
-void Super2xSaI_16( WORD *srcPtr, WORD *destPtr, DWORD width, DWORD height, DWORD pitch);
+void Super2xSaI_32( Uint32 *srcPtr, Uint32 *destPtr, Uint32 width, Uint32 height, Uint32 pitch);
+void Super2xSaI_16( Uint16 *srcPtr, Uint16 *destPtr, Uint32 width, Uint32 height, Uint32 pitch);
 
 void hq4x_init(void);
 void hq4x_16( unsigned char * pIn, unsigned char * pOut, int Xres, int Yres, int SrcPPL, int BpL );

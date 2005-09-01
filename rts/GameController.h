@@ -10,8 +10,8 @@ public:
 	virtual ~CGameController(void);
 	virtual bool Draw(void);
 	virtual bool Update(void);
-	virtual int KeyPressed(unsigned char k,bool isRepeat);
-	virtual int KeyReleased(unsigned char k);
+	virtual int KeyPressed(unsigned short k,bool isRepeat);
+	virtual int KeyReleased(unsigned short k);
 
 	bool userWriting;						//true if user is writing
 	bool ignoreNextChar;

@@ -17,7 +17,7 @@ extern string stupidGlobalMapname;
 extern int stupidGlobalMapId;
 extern bool globalQuit;
 
-static DWORD WINAPI GameServerThreadProc(LPVOID lpParameter)
+static Uint32 WINAPI GameServerThreadProc(void* lpParameter)
 {
 	((CGameServer*)lpParameter)->UpdateLoop();
 	return 0;
@@ -140,10 +140,10 @@ bool CGameServer::Update(void)
 		return false;
 	}
 	if (game->playing){
-		LARGE_INTEGER currentFrame;
+		Uint64 currentFrame;
 		QueryPerformanceCounter(&currentFrame);
 		// FIXME: Buggy, yields negative value
-		//double timeElapsed=((double)(currentFrame.QuadPart - lastframe.QuadPart))/timeSpeed.QuadPart;
+		//double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;
 		double timeElapsed = 2.;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
@@ -529,10 +529,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 void CGameServer::UpdateLoop(void)
 {
 	while(gameLoading){		//avoid timing out while loading (esp if calculating path data)
-		Sleep(100);
+		SDL_Delay(100);
 		serverNet->Update();
 	}
-	Sleep(100);		//we might crash if game hasnt finished initializing within this time
+	SDL_Delay(100);		//we might crash if game hasnt finished initializing within this time
 	/*
 	 * Need a better solution than this for starvation.
 	 * Decreasing thread priority (making it more important)
@@ -548,7 +548,7 @@ void CGameServer::UpdateLoop(void)
 				globalQuit=true;
 			}
 		}
-		Sleep(10);
+		SDL_Delay(10);
 	}
 	delete this;
 }

@@ -12,8 +12,8 @@ class CSelectionKeyHandler :
 public:
 	CSelectionKeyHandler(void);
 	~CSelectionKeyHandler(void);
-	bool KeyPressed(unsigned char key);
-	bool KeyReleased(unsigned char key);
+	bool KeyPressed(unsigned short key);
+	bool KeyReleased(unsigned short key);
 	string ReadToken(string& s);
 	string ReadDelimiter(string& s);
 
