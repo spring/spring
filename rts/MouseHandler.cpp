@@ -43,9 +43,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
-extern HWND	hWnd;
-#endif
 extern bool	fullscreen;
 extern Uint8 *keys;
 
