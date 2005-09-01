@@ -48,9 +48,6 @@ public:
 	int type;
 	nv_dds::CDDSImage *ddsimage;
 
-protected:
-	void SaveBMP(string filename);
-	void SaveJPG(string filename,int quality=85);
 public:
 	CBitmap CreateRescaled(int newx, int newy);
 	void ReverseYAxis(void);

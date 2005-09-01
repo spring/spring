@@ -7,7 +7,6 @@
 #include "myGL.h"
 #include <ostream>
 #include <fstream>
-#include <jpeglib.h>
 #include "FileHandler.h"
 #include <IL/il.h>
 #include <boost/filesystem/path.hpp>
@@ -16,56 +15,6 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-#define BITMAP_MAGIC 0x4d42
-
-#define READ_BMFH(bmfh,src)				\
-do {							\
-	unsigned short __tmpw;				\
-	unsigned int __tmpdw;				\
-	unsigned short __ssize = sizeof(unsigned short);\
-	unsigned short __isize = sizeof(unsigned int);	\
-	(src).Read(&__tmpw,__ssize);			\
-	(bmfh).bfType = swabword(__tmpw);		\
-	(src).Read(&__tmpdw,__isize);			\
-	(bmfh).bfSize = swabdword(__tmpdw);		\
-	(src).Read(&__tmpw,__ssize);			\
-	(bmfh).bfReserved1 = swabword(__tmpw);		\
-	(src).Read(&__tmpw,__ssize);			\
-	(bmfh).bfReserved2 = swabword(__tmpw);		\
-	(src).Read(&__tmpdw,__isize);			\
-	(bmfh).bfOffBits = swabdword(__tmpdw);		\
-} while (0)
-
-#define READ_BMIH(bmih,src)				\
-do {							\
-	unsigned short __tmpw;				\
-	unsigned int __tmpdw;				\
-	unsigned short __uisize = sizeof(unsigned int);	\
-	unsigned short __isize = sizeof(int);		\
-	unsigned short __ssize = sizeof(unsigned short);\
-	(src).Read(&__tmpdw,__uisize);			\
-	(bmih).biSize = swabdword(__tmpdw);		\
-	(src).Read(&__tmpdw,__isize);			\
-	(bmih).biWidth = swabdword(__tmpdw);		\
-	(src).Read(&__tmpdw,__isize);			\
-	(bmih).biHeight = swabdword(__tmpdw);		\
-	(src).Read(&__tmpw,__ssize);			\
-	(bmih).biPlanes = swabword(__tmpw);		\
-	(src).Read(&__tmpw,__ssize);			\
-	(bmih).biBitCount = swabword(__tmpw);		\
-	(src).Read(&__tmpdw,__uisize);			\
-	(bmih).biCompression = swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,__uisize);			\
-	(bmih).biSizeImage = swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,__isize);			\
-	(bmih).biXPelsPerMeter = swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,__isize);			\
-	(bmih).biYPelsPerMeter = swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,__uisize);			\
-	(bmih).biClrUsed = swabdword(__tmpdw);		\
-	(src).Read(&__tmpdw,__uisize);			\
-	(bmih).biClrImportant = swabdword(__tmpdw);	\
-} while (0)
 
 CBitmap::CBitmap()
 : xsize(1),
@@ -198,10 +147,31 @@ void CBitmap::Load(string filename, unsigned char defaultAlpha)
 
 void CBitmap::Save(string filename)
 {
-	if(filename.find(".jpg")!=string::npos)
-		SaveJPG(filename);
-	else
-		SaveBMP(filename);
+	if (type == BitmapTypeDDS) {
+		ddsimage->save(filename);
+		return;
+	}
+
+	ilInit();
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
+
+	unsigned char* buf=new unsigned char[xsize*ysize*3];
+	for(int a=0;a<xsize*ysize;a++){
+		buf[a*3]=mem[a*4];
+		buf[a*3+1]=mem[a*4+1];
+		buf[a*3+2]=mem[a*4+2];
+	}
+
+	ILuint ImageName = 0;
+	ilGenImages(1, &ImageName);
+	ilBindImage(ImageName);
+
+	ilTexImage(xsize,ysize,3,3,IL_RGBA,IL_UNSIGNED_BYTE,NULL);
+	ilSetData(buf);
+	ilSaveImage((char*)filename.c_str());
+	ilDeleteImages(1,&ImageName);
+	delete[] buf;
 }
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
@@ -374,91 +344,6 @@ void CBitmap::Renormalize(float3 newCol)
 			}
 		}
 	}
-}
-
-void CBitmap::SaveBMP(string filename)
-{
-	char* buf=new char[xsize*ysize*3];
-	for(int y=0;y<ysize;y++){
-		for(int x=0;x<xsize;x++){
-			buf[((ysize-1-y)*xsize+x)*3+2]=mem[(y*xsize+x)*4+0];
-			buf[((ysize-1-y)*xsize+x)*3+1]=mem[(y*xsize+x)*4+1];
-			buf[((ysize-1-y)*xsize+x)*3+0]=mem[(y*xsize+x)*4+2];
-		}
-	}
-	BITMAPFILEHEADER bmfh;
-	bmfh.bfType=('B')+('M'<<8);
-	bmfh.bfSize=sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER)+ysize*xsize*3;
-	bmfh.bfReserved1=0;
-	bmfh.bfReserved2=0;
-	bmfh.bfOffBits=sizeof(BITMAPINFOHEADER)+sizeof(BITMAPFILEHEADER);
-	BITMAPINFOHEADER bmih;
-	bmih.biSize=sizeof(BITMAPINFOHEADER);
-	bmih.biWidth=xsize;
-	bmih.biHeight=ysize;
-	bmih.biPlanes=1;
-	bmih.biBitCount=24;
-	bmih.biCompression=BI_RGB;
-	bmih.biSizeImage=0;
-	bmih.biXPelsPerMeter=1000;
-	bmih.biYPelsPerMeter=1000;
-	bmih.biClrUsed=0;
-	bmih.biClrImportant=0;
-	boost::filesystem::path fn(filename);
-	std::ofstream ofs(fn.native_file_string().c_str(), std::ios::out|std::ios::binary);
-	if(ofs.bad() || !ofs.is_open())
-		MessageBox(0,"Couldnt save file",filename.c_str(),0);
-	ofs.write((char*)&bmfh,sizeof(bmfh));
-	ofs.write((char*)&bmih,sizeof(bmih));
-	ofs.write((char*)buf,xsize*ysize*3);
-	delete[] buf;
-}
-
-void CBitmap::SaveJPG(string filename,int quality)
-{
-	struct jpeg_compress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-
-	cinfo.err = jpeg_std_error(&jerr);
-	jpeg_create_compress(&cinfo);
-
-	FILE * outfile;
-	boost::filesystem::path fn(filename);
-	if ((outfile = fopen(fn.native_file_string().c_str(), "wb")) == NULL) {
-		MessageBox(0,"Error reading jpeg","CBitmap error",0);
-		exit(1);
-	}
-	jpeg_stdio_dest(&cinfo, outfile);
-
-	unsigned char* buf=new unsigned char[xsize*ysize*3];
-	for(int a=0;a<xsize*ysize;a++){
-		buf[a*3]=mem[a*4];
-		buf[a*3+1]=mem[a*4+1];
-		buf[a*3+2]=mem[a*4+2];
-	}
-
-	cinfo.image_width = xsize;
-	cinfo.image_height = ysize;
-	cinfo.input_components = 3;
-	cinfo.in_color_space = JCS_RGB;
-
-	jpeg_set_defaults(&cinfo);
-	jpeg_set_quality(&cinfo,quality,false);
-
-	jpeg_start_compress(&cinfo, true);
-
-	JSAMPROW row_pointer[1];	/* pointer to a single row */
-	int row_stride;			/* physical row width in buffer */
-
-	row_stride = xsize * 3;	/* JSAMPLEs per row in image_buffer */
-
-	while (cinfo.next_scanline < cinfo.image_height) {
-		row_pointer[0] = & buf[cinfo.next_scanline * row_stride];
-		jpeg_write_scanlines(&cinfo, row_pointer, 1);
-	}
-	jpeg_finish_compress(&cinfo);
-	jpeg_destroy_compress(&cinfo);
-	fclose(outfile);
 }
 
 CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
