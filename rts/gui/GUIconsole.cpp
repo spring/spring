@@ -5,7 +5,7 @@
 #include "GUIconsole.h"
 #include <string>
 #include "GUIfont.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 
 #include <time.h>
 
@@ -26,7 +26,7 @@ GUIconsole::GUIconsole(const int x1, const int y1, const int w1, const int h1):G
 {
 	numLines=(int)(h/guifont->GetHeight());
 
-	lifetime=(long int)(regHandler.GetInt("InfoMessageTime",400)/100.0);
+	lifetime=(long int)(configHandler.GetInt("InfoMessageTime",400)/100.0);
 }
 
 GUIconsole::~GUIconsole()

@@ -14,7 +14,7 @@
 #include "ReadMap.h"
 #include "Bitmap.h"
 #include "TimeProfiler.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "ReadMap.h"
 #include "Matrix44f.h"
 #include "InfoConsole.h"
@@ -222,7 +222,7 @@ CBasicSky::CBasicSky()
   glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glEndList();
-	dynamicSky=!!regHandler.GetInt("DynamicSky",0);
+	dynamicSky=!!configHandler.GetInt("DynamicSky",0);
 }
 
 CBasicSky::~CBasicSky()

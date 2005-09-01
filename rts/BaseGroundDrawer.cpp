@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "BaseGroundDrawer.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include <windows.h>
 #include "myGL.h"
 #include "Camera.h"
@@ -12,10 +12,10 @@ CBaseGroundDrawer* groundDrawer;
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
-	viewRadius=regHandler.GetInt("GroundDetail",40);
+	viewRadius=configHandler.GetInt("GroundDetail",40);
 	viewRadius+=viewRadius%2;
 
-	baseTreeDistance=regHandler.GetInt("TreeRadius",(unsigned int) (5.5f*256))/256.0;
+	baseTreeDistance=configHandler.GetInt("TreeRadius",(unsigned int) (5.5f*256))/256.0;
 
 	updateFov=true;
 
@@ -33,8 +33,8 @@ CBaseGroundDrawer::~CBaseGroundDrawer(void)
 {
 	if(infoTex!=0)
 		glDeleteTextures (1, &infoTex);
-	regHandler.SetInt("GroundDetail",viewRadius);
-	regHandler.SetInt("TreeRadius",(unsigned int)(baseTreeDistance*256));
+	configHandler.SetInt("GroundDetail",viewRadius);
+	configHandler.SetInt("TreeRadius",(unsigned int)(baseTreeDistance*256));
 }
 
 void CBaseGroundDrawer::AddFrustumRestraint(float3 side)

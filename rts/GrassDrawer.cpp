@@ -12,7 +12,7 @@
 #include "Bitmap.h"
 #include "InfoConsole.h"
 #include "myMath.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include <math.h>
 #include <algorithm>
 #include "FileHandler.h"
@@ -34,7 +34,7 @@ static float fRand(float size)
 
 CGrassDrawer::CGrassDrawer()
 {
-	int detail=regHandler.GetInt("GrassDetail",3);
+	int detail=configHandler.GetInt("GrassDetail",3);
 
 	if(detail==0){
 		grassOff=true;

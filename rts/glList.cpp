@@ -7,7 +7,7 @@
 #include "myGL.h"
 
 #include "glFont.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -16,7 +16,7 @@
 
 CglList::~CglList()
 {
-	regHandler.SetString("LastListChoice",items[place]);
+	configHandler.SetString("LastListChoice",items[place]);
 }
 
 CglList::CglList(const char *name,ListSelectCallback callback)
@@ -25,7 +25,7 @@ CglList::CglList(const char *name,ListSelectCallback callback)
 	this->callback=callback;
 	place=0;
 	lastChoosen="";
-	lastChoosen=regHandler.GetString("LastListChoice","");
+	lastChoosen=configHandler.GetString("LastListChoice","");
 }
 
 void CglList::AddItem(const char *name,const char *description)
@@ -76,8 +76,8 @@ void CglList::Draw()
 	* *
 	****************************************
 	// Get screen res, so that the selected item is always within the middle 60% of screen
-	int iResX = regHandler.GetInt("XResolution", 1024);
-	int iResY = regHandler.GetInt("YResolution", 768);
+	int iResX = configHandler.GetInt("XResolution", 1024);
+	int iResY = configHandler.GetInt("YResolution", 768);
 
 	// Keep tabs on the last place. change this ONLY AFTER a scroll
 	static int siOldPlace = place;

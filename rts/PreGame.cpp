@@ -7,7 +7,7 @@
 #include "glList.h"
 #include "Game.h"
 #include "ScriptHandler.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "InfoConsole.h"
 #include "Net.h"
 #include "GameSetup.h"
@@ -82,7 +82,7 @@ CPreGame::CPreGame(bool server, const string& demo)
 				saveAddress = false;
 			}
 			else {
-				userInput=regHandler.GetString("address","");
+				userInput=configHandler.GetString("address","");
 				userPrompt="Enter server address: ";
 				waitOnAddress=true;
 				userWriting=true;
@@ -191,7 +191,7 @@ bool CPreGame::Update(void)
 	if(waitOnAddress && !userWriting){		//användaren har skrivit klart addressen
 		waitOnAddress=false;
 		if (saveAddress)
-			regHandler.SetString("address",userInput);
+			configHandler.SetString("address",userInput);
 		if(net->InitClient(userInput.c_str(),8452,0)==-1){
 			info->AddLine("Client couldnt connect");
 			return false;

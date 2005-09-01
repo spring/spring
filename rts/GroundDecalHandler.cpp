@@ -8,7 +8,7 @@
 #include "Ground.h"
 #include "UnitDef.h"
 #include "InfoConsole.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include <cctype>
 #include "Camera.h"
 //#include "mmgr.h"
@@ -18,7 +18,7 @@ using namespace std;
 
 CGroundDecalHandler::CGroundDecalHandler(void)
 {
-	decalLevel=regHandler.GetInt("GroundDecals",1);
+	decalLevel=configHandler.GetInt("GroundDecals",1);
 
 	if(decalLevel==0)
 		return;

@@ -14,7 +14,7 @@
 #endif
  
 #include "SyncTracer.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "InfoConsole.h"
 #include <boost/filesystem/path.hpp>
 
@@ -32,7 +32,7 @@ CInfoConsole::CInfoConsole()
 	lastTime=0;
 	lifetime=400;
 
-	lifetime=regHandler.GetInt("InfoMessageTime",400);
+	lifetime=configHandler.GetInt("InfoMessageTime",400);
 	xpos=0.26f;
 	ypos=0.946f;
 	width=0.41f;

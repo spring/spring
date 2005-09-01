@@ -8,7 +8,7 @@
 #include "UnitHandler.h"
 #include "Camera.h"
 #include "AirMoveType.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "InfoConsole.h"
 #include "Ground.h"
 //#include "mmgr.h"
@@ -40,7 +40,7 @@ void CAirScript::Update(void)
 {
 	switch(gs->frameNum){
 	case 0:
-		doRoll=!regHandler.GetInt("ReflectiveWater",1);
+		doRoll=!configHandler.GetInt("ReflectiveWater",1);
 
 		ENTER_MIXED;
 		tcp=camera->pos;

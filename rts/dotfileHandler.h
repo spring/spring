@@ -7,6 +7,8 @@
 #ifndef _DOTFILEHANDLER_H
 #define _DOTFILEHANDLER_H
 
+#include "ConfigHandler.h"
+
 #include <windows.h>
 #include <string>
 #include <fstream>
@@ -17,24 +19,19 @@ using std::string;
 #define DOTCONFIGFILE ".springrc"
 #define DOTCONFIGPATH (string(getenv("HOME")).append("/").append(DOTCONFIGFILE))
 
-#define regHandler (dotfileHandler::GetInstance())
-
-class dotfileHandler
+class dotfileHandler: public ConfigHandler
 {
 public:
-	unsigned int GetInt(string name, unsigned int def);
-	string GetString(string name, string def);
-	void SetInt(string name, unsigned int value);
-	void SetString(string name, string value);
-	static dotfileHandler& GetInstance();
-	static void Deallocate();
-protected:
 	dotfileHandler(string filename);
-	~dotfileHandler();
+	virtual ~dotfileHandler();
+	virtual void SetInt(std::string name, unsigned int value);
+	virtual void SetString(std::string name, std::string value);
+	virtual std::string GetString(std::string name, std::string def);
+	virtual unsigned int GetInt(std::string name, unsigned int def);
+protected:
 	std::ofstream file;
 	std::map<string,string> data;
-	void flushfile(void);
-	static dotfileHandler* instance;
+	virtual void flushfile(void);
 };
 
 //extern dotfileHandler regHandler;

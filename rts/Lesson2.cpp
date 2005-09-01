@@ -21,7 +21,7 @@
 #include "float.h"
 #include "glFont.h"
 #include "MouseHandler.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "InfoConsole.h"
 #include "GameSetup.h"
 #include "CameraController.h"
@@ -245,7 +245,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	fullscreen=false;							// Windowed Mode
 	}*/
 #endif
-	fullscreen=regHandler.GetInt("Fullscreen",1)!=0;
+	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
 	
 #ifdef _DEBUG
 	fullscreen=false;
@@ -253,10 +253,10 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	int xres=1024;
 	int yres=768;
-	xres=regHandler.GetInt("XResolution",xres);
-	yres=regHandler.GetInt("YResolution",yres);
+	xres=configHandler.GetInt("XResolution",xres);
+	yres=configHandler.GetInt("YResolution",yres);
 
-	int frequency=regHandler.GetInt("DisplayFrequency",0);
+	int frequency=configHandler.GetInt("DisplayFrequency",0);
 	// Create Our OpenGL Window
 	if (!CreateGLWindow("RtsSpring",xres,yres,32,fullscreen,frequency))
 	{
@@ -385,11 +385,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	delete pregame;								//in case we exit during init
 	delete game;
 	delete font;
-#ifdef _WIN32
-	RegHandler::Deallocate();
-#else
-	dotfileHandler::Deallocate();
-#endif
+	ConfigHandler::Deallocate();
 	UnloadExtensions();
 	KillGLWindow();									// Kill The Window
 	delete gs;

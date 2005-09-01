@@ -10,23 +10,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-//RegHandler regHandler("Software\\SJ\\spring");
-RegHandler* RegHandler::instance=0;
-
-RegHandler& RegHandler::GetInstance()
-{
-	if(!instance)
-		instance=new RegHandler("Software\\SJ\\spring");
-
-	return *instance;
-}
-
-void RegHandler::Deallocate()
-{
-	delete instance;
-	instance=0;
-}
-
 RegHandler::RegHandler(string keyname,HKEY key)
 {
 	if(RegCreateKey(key,keyname.c_str(),&regkey)!=ERROR_SUCCESS)

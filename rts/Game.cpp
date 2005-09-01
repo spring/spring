@@ -46,7 +46,7 @@
 #include "MapDamage.h"
 #include "UnitParser.h"
 #include "BaseTreeDrawer.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "UnitDefHandler.h"
 #include "Unit.h"
 #include "TooltipConsole.h"
@@ -153,8 +153,8 @@ CGame::CGame(bool server,std::string mapname)
 	allReady=false;
 	hideInterface=false;
 	gameOver=false;
-	showClock=!!regHandler.GetInt("ShowClock",0);
-	showPlayerInfo=!!regHandler.GetInt("ShowPlayerInfo",0);
+	showClock=!!configHandler.GetInt("ShowClock",0);
+	showPlayerInfo=!!configHandler.GetInt("ShowPlayerInfo",0);
 	gamePausable=true;
 	noSpectatorChat=false;
 
@@ -276,7 +276,7 @@ CGame::CGame(bool server,std::string mapname)
 
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
-		p->playerName=regHandler.GetString("name","");
+		p->playerName=configHandler.GetString("name","");
 	netbuf[0]=NETMSG_PLAYERNAME;
 	netbuf[1]=p->playerName.size()+4;
 	netbuf[2]=gu->myPlayerNum;
@@ -319,8 +319,8 @@ CGame::CGame(bool server,std::string mapname)
 
 CGame::~CGame()
 {
-	regHandler.SetInt("ShowClock",showClock);
-	regHandler.SetInt("ShowPlayerInfo",showPlayerInfo);
+	configHandler.SetInt("ShowClock",showClock);
+	configHandler.SetInt("ShowPlayerInfo",showPlayerInfo);
 
 	ENTER_MIXED;
 #ifndef NO_AVI

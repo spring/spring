@@ -6,7 +6,7 @@
 #include "Unit.h"
 #include "MouseHandler.h"
 #include "UnitHandler.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "Ground.h"
 #include "CameraController.h"
 //#include "mmgr.h"
@@ -37,7 +37,7 @@ void CUnitTracker::SetCam(void)
 {
 	if(firstUpdate){
 		firstUpdate=false;
-		doRoll=!regHandler.GetInt("ReflectiveWater",1);
+		doRoll=!configHandler.GetInt("ReflectiveWater",1);
 	}
 	if(lastFollowUnit!=0 && uh->units[lastFollowUnit]==0){
 		timeOut=1;

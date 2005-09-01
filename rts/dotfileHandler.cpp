@@ -7,23 +7,6 @@
 #include "dotfileHandler.h"
 #include <sstream>
 
-//dotfileHandler regHandler(DOTCONFIGPATH);
-dotfileHandler* dotfileHandler::instance=0;
-
-dotfileHandler& dotfileHandler::GetInstance()
-{
-	if (!instance)
-		instance = new dotfileHandler(DOTCONFIGPATH);
-
-	return *instance;
-}
-
-void dotfileHandler::Deallocate()
-{
-	delete instance;
-	instance = 0;
-}
-
 dotfileHandler::dotfileHandler(const string filename)
 {
 	std::ifstream reader(filename.c_str());

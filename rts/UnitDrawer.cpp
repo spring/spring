@@ -7,7 +7,7 @@
 #include "Bitmap.h"
 #include "ShadowHandler.h"
 #include "BaseWater.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "Unit.h"
 #include "UnitHandler.h"
 #include "ReadMap.h"
@@ -36,7 +36,7 @@ CUnitDrawer::CUnitDrawer(void)
 	if(texturehandler==0)
 		texturehandler=new CTextureHandler;
 
-	unitDrawDist=regHandler.GetInt("UnitLodDist",200);
+	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
 
 	CBitmap white;
 	for(int a=0;a<4;++a)

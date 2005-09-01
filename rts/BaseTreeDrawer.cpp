@@ -3,7 +3,7 @@
 #include "BasicTreeDrawer.h"
 #include "AdvTreeDrawer.h"
 #include "myGL.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "BaseTreeDrawer.h"
 //#include "mmgr.h"
 
@@ -21,7 +21,7 @@ CBaseTreeDrawer::~CBaseTreeDrawer(void)
 CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
 {
 	CBaseTreeDrawer* td;
-	if(GLEW_ARB_vertex_program && regHandler.GetInt("3DTrees",1)){
+	if(GLEW_ARB_vertex_program && configHandler.GetInt("3DTrees",1)){
 		int maxTexel;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&maxTexel);
 		if(maxTexel>=4){

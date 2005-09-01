@@ -25,7 +25,7 @@
 #include "Sound.h"
 #include "UnitDef.h"
 #include "Group.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "InMapDraw.h"
 #include "CameraController.h"
 #include "MapDamage.h"
@@ -88,7 +88,7 @@ CMouseHandler::CMouseHandler()
 
 	soundMultiselID = sound->GetWaveId("button9.wav");
 
-	invertMouse=!!regHandler.GetInt("InvertMouse",1);
+	invertMouse=!!configHandler.GetInt("InvertMouse",1);
 
 	camControllers.push_back(new CFPSController);				//fps camera must always be the first one in the list
 	camControllers.push_back(new COverheadController);
