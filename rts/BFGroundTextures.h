@@ -14,12 +14,13 @@ public:
 	CBFGroundTextures(CFileHandler* ifs);
 	~CBFGroundTextures(void);
 	void SetTexture(int x, int y);
+	void DrawUpdate(void);
+	void LoadSquare(int x, int y, int level);
 
 protected:
 	int numBigTexX;
 	int numBigTexY;
 
-	unsigned char* jpegBuffer;
 	int* textureOffsets;
 
 	struct GroundSquare{
@@ -30,9 +31,6 @@ protected:
 
 	GroundSquare* squares;
 
-	struct jpeg_decompress_struct cinfo;
-	jpeg_error_mgr jerr;
-	
 	//variables controlling background reading of textures
 	bool inRead;
 	int readProgress;
@@ -48,14 +46,6 @@ protected:
 	char *tiles;
 	int tileMapXSize;
 	int tileMapYSize;
-public:
-	void ReadJpeg(int bufnum, unsigned char* buffer, int xstep);
-	void SetJpegMemSource(void* inbuffer,int length);
-	void DrawUpdate(void);
-	void SetupJpeg(void);
-	void LoadSquare(int x, int y, int level);
-	void AbortRead(void);
-	void ReadSlow(int speed);
 };
 
 extern CBFGroundTextures* groundTextures;
