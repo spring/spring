@@ -46,6 +46,7 @@
 
 Uint8 *keys;			// Array Used For The Keyboard Routine
 Uint8 *oldkeys;
+Uint64 init_time = 0;
 SDL_Surface *screen;
 bool	active=true;		// Window Active Flag Set To true By Default
 bool	fullscreen=true;	// Fullscreen Flag Set To Fullscreen Mode By Default
@@ -280,6 +281,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	#ifdef NEW_GUI
 	guicontroller = new GUIcontroller();
 	#endif
+
+	init_time = time(NULL);
 
 	while(!done)									// Loop That Runs While done=false
 	{

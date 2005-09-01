@@ -157,109 +157,28 @@ static inline unsigned int _clearfp(void)
  * Performance testing
  */
 #include <sys/time.h>
-static inline bool QueryPerformanceCounter(Uint64 *count)
+extern Uint64 init_time;
+static inline bool perfcounter(Uint64 *count, Uint64 *freq)
 {
-#if defined(__GNUC__) && ( defined(__i386__) || defined(__x86_64__) )
-	/*
-	 * Reading from the tsc is only available on
-	 * pentium class chips (x86 compatible and x86_64)
-	 */
-	Uint64 val;
-	__asm__ __volatile__("rdtsc" : "=A" (val));
-	*count = val;
-#elif defined(__GNUC__) && defined(__ia64__)
-	/*
-	 * Reading from the itc is only available on
-	 * ia64
-	 */
-	Uint64 val;
-	__asm__ __volatile__("mov %0=ar.itc" : "=r" (val));
-	*count = val;
-#else
-	/*
-	 * Have to go generic
-	 */
-	struct timeval tv;
-	gettimeofday(&tv,NULL);
-	*count = (int64_t)tv.tv_usec;
-#endif
+	struct timeval now;
+	if (!count)
+		return false;
+	gettimeofday(&now,NULL);
+	*count = (((now.tv_usec - init_time) * (Uint32)1000000 + now.tv_usec) * 105) / 88;
+	if (freq)
+		*freq = 1193182;
 	return true;
 }
 
-
-/*
- * Avoid repeated recalculations
- */
-static Uint64 _cpufreq;
-
-/*
- * Generic solution
- */
-static inline bool _freqfallback(Uint64 *frequence)
+static inline bool QueryPerformanceCounter(Uint64 *count)
 {
-	if (!_cpufreq) {
-		Uint64 tscstart,tscend;
-		struct timeval tvstart,tvend;
-		long usec;
-		Uint64 tmp;
-		QueryPerformanceCounter(&tmp);
-		tscstart = tmp;
-		gettimeofday(&tvstart,NULL);
-		usleep(100000);
-		QueryPerformanceCounter(&tmp);
-		tscend = tmp;
-		gettimeofday(&tvend,NULL);
-		usec = 1000000 * (tvend.tv_sec - tvstart.tv_sec) + (tvend.tv_usec - tvstart.tv_usec);
-		_cpufreq = (tscend - tscstart) / usec;
-	}
-	*frequence = _cpufreq;
-	return !!_cpufreq;
+	return perfcounter(count, NULL);
 }
 
-#define CPUINFO "/proc/cpuinfo"
 static inline bool QueryPerformanceFrequency(Uint64 *frequence)
 {
-#if defined(__linux__)  /* /proc/cpuinfo on linux */
-	if (!_cpufreq) {
-		FILE *f = fopen(CPUINFO,"r");
-		if (!f) {
-			char err[50];
-			sprintf(err,"Can't read from %s",CPUINFO);
-			MessageBox(0,err,"System error",0);
-			return _freqfallback(frequence);
-		}
-		for (;;) {
-			int r;
-			char buf[1000],tmp[24];
-			if (fgets(buf, sizeof(buf), f) == NULL) {
-				char err[50];
-				sprintf(err,"Can't locate cpu MHz in %s",CPUINFO);
-				MessageBox(0,err,"System error",0);
-				return _freqfallback(frequence);
-			}
-#if defined(__powerpc__)
-			r = sscanf(buf, "clock\t: %s", &tmp);
-#elif defined( __i386__ ) || defined (__hppa__)  || defined (__ia64__) || defined(__x86_64__)
-			r = sscanf(buf, "cpu MHz         : %s", &tmp);
-#elif defined( __sparc__ )
-			r = sscanf(buf, "Cpu0Bogo        : %s", &tmp);
-#elif defined( __mc68000__ )
-			r = sscanf(buf, "Clocking:       %s", &tmp);
-#elif defined( __s390__  )
-			r = sscanf(buf, "bogomips per cpu: %s", &tmp);
-#else /* MIPS, ARM, and alpha */
-			r = sscanf(buf, "BogoMIPS        : %s", &tmp);
-#endif 
-			if (r == 1) {
-				fclose(f);
-				_cpufreq = (Uint64)atoi(tmp);
-				*frequence = _cpufreq;
-				return !!_cpufreq;
-			}
-		}
-	}
-#endif /* __linux__ */
-	return _freqfallback(frequence);
+	Uint64 counter;
+	return perfcounter(&counter,frequence);
 }
 
 #endif //__WINDOWS_H__
