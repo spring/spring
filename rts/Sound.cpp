@@ -13,16 +13,6 @@
 #include "FileHandler.h"
 //#include "mmgr.h"
 
-/*
- * OpenGL's float coordinates are expressed
- * with a full cartesian system, while
- * OpenAL's coordinates are expressed entirely
- * in the range (0.0,1.0].  So the OpenGL coordinates
- * need to be scaled down so they don't all seem to come
- * from far away
- */
-#define SCALEVERTEX(v)	((v)/10)
-
 CSound* sound;
 
 CSound::CSound()
@@ -62,7 +52,7 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	if (noSound)
 		return;
 	ALuint source;
-	ALfloat SourcePos[] = {SCALEVERTEX(p.x),SCALEVERTEX(p.y),SCALEVERTEX(p.z)};
+	ALfloat SourcePos[] = {p.x/(gs->mapx*SQUARE_SIZE),p.y/(gs->mapy*SQUARE_SIZE),p.z/(p.maxzpos)};
 	ALfloat SourceVel[] = {0.0,0.0,0.0};
 	alGenSources(1,&source);
 	alSourcei(source, AL_BUFFER, id);
@@ -86,9 +76,9 @@ void CSound::UpdateListener()
 {
 	if (noSound || !camera)
 		return;
-	ALfloat ListenerPos[] = {SCALEVERTEX(camera->pos.x),SCALEVERTEX(camera->pos.y),SCALEVERTEX(camera->pos.z)};
+	ALfloat ListenerPos[] = {camera->pos.x/(gs->mapx*SQUARE_SIZE),camera->pos.y/(gs->mapy*SQUARE_SIZE),camera->pos.z/(camera->pos.maxzpos)};
 	ALfloat ListenerVel[] = {0.0,0.0,0.0};
-	ALfloat ListenerOri[] = {SCALEVERTEX(camera->forward.x),SCALEVERTEX(camera->forward.y),SCALEVERTEX(camera->forward.z),SCALEVERTEX(camera->up.x),SCALEVERTEX(camera->up.y),SCALEVERTEX(camera->up.z)};
+	ALfloat ListenerOri[] = {camera->forward.x/(gs->mapx*SQUARE_SIZE),camera->forward.y/(gs->mapy*SQUARE_SIZE),camera->forward.z/(camera->pos.maxzpos),camera->up.x/(gs->mapx*SQUARE_SIZE),camera->up.y/(gs->mapy*SQUARE_SIZE),camera->up.z/(camera->pos.maxzpos)};
 	alListenerfv(AL_POSITION,ListenerPos);
 	alListenerfv(AL_VELOCITY,ListenerVel);
 	alListenerfv(AL_ORIENTATION,ListenerOri);
