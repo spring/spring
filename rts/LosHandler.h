@@ -36,7 +36,8 @@ struct LosInstance{
 			baseSquare(baseSquare),
 			hashNum(hashNum),
 			baseHeight(baseHeight),
-			refCount(1){}
+			refCount(1),
+			toBeDeleted(false){}
 	int losSize;
 	int airLosSize;
 	int refCount;
@@ -44,6 +45,7 @@ struct LosInstance{
 	int baseSquare;
 	int hashNum;
 	float baseHeight;
+	bool toBeDeleted;
 };
 
 class CRadarHandler;

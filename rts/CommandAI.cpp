@@ -53,6 +53,14 @@ CCommandAI::CCommandAI(CUnit* owner)
 		possibleCommands.push_back(c);
 	}
 
+ 	c.id=CMD_WAIT;
+ 	c.type=CMDTYPE_ICON;
+ 	c.name="Wait";
+ 	c.key='W';
+ 	c.onlyKey=true;
+ 	c.tooltip="Wait: Tells the unit to wait until another units handles him";
+ 	possibleCommands.push_back(c);
+ 
 	c.id=CMD_SELFD;
 	c.type=CMDTYPE_ICON;
 	c.name="SelfD";
@@ -301,8 +309,12 @@ void CCommandAI::GiveCommand(Command& c)
 			if(commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_AREA_ATTACK || commandQue.front().id==CMD_DGUN){
 				owner->AttackUnit(0,true);
 			}
-		}
-		commandQue.clear();
+
+ 			if(c.id==CMD_STOP && commandQue.front().id==CMD_WAIT)
+ 				commandQue.pop_front();
+ 			else
+				commandQue.clear();
+ 		}
 		inCommand=false;
 		if(orderTarget){
 			DeleteDeathDependence(orderTarget);
@@ -346,6 +358,8 @@ void CCommandAI::SlowUpdate()
 	Command& c=commandQue.front();
 	
 	switch(c.id){
+	case CMD_WAIT:
+		break;
 	case CMD_STOP:{
 		owner->AttackUnit(0,true);
 		std::vector<CWeapon*>::iterator wi;

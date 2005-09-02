@@ -1050,7 +1050,7 @@ bool GUIgame::EventAction(const string& command)
 	}
 
 	else if (id==COMMAND_showelevation){	
-		groundDrawer->SetExtraTexture(readmap->heightLineMap,readmap->heightLinePal,true);
+		groundDrawer->SetHeightTexture();
 	}
 	else if (id==COMMAND_lastmsgpos){
 		mouse->currentCamController->SetPos(guicontroller->lastMsgPos);

@@ -1,6 +1,6 @@
 #ifndef GROUPAICALLBACK_H
 #define GROUPAICALLBACK_H
-// GroupAiCallback.h: interface for the CGroupAiCallback class.
+// GroupAICallback.h: interface for the CGroupAICallback class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -16,11 +16,11 @@
 #include "IGroupAiCallback.h"
 class CGroup;
 
-class CGroupAiCallback : public IGroupAiCallback
+class CGroupAICallback : public IGroupAICallback
 {
 public:
-	CGroupAiCallback(CGroup* group);
-	~CGroupAiCallback();
+	CGroupAICallback(CGroup* group);
+	~CGroupAICallback();
 
 	CGroup* group;
 
@@ -29,6 +29,7 @@ public:
 	int GetCurrentFrame();
 	int GetMyTeam();
 	int GetMyAllyTeam();
+	int GetPlayerTeam(int player);
 
 	void* CreateSharedMemArea(char* name, int size);
 	void ReleasedSharedMemArea(char* name);
@@ -74,6 +75,8 @@ public:
 	const unsigned short* GetRadarMap();		//a square with value zero means you dont have radar to the square, this is 1/8 the resolution of the standard map
 	const unsigned short* GetJammerMap();		//a square with value zero means you dont have radar jamming on the square, this is 1/8 the resolution of the standard map
 	const unsigned char* GetMetalMap();			//this map shows the metal density on the map, this is half the resolution of the standard map
+	const char *GetMapName ();
+	const char* GetModName();
 
 	float GetElevation(float x,float z);
 
@@ -85,17 +88,23 @@ public:
 	void DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder);
 
 	bool CanBuildAt(const UnitDef* unitDef,float3 pos);
-	virtual float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist);	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
+	float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist);	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
-	virtual float GetMetal();				//stored metal for team
-	virtual float GetMetalIncome();				
-	virtual float GetMetalUsage();				
-	virtual float GetMetalStorage();				//metal storage for team
+	float GetMetal();				//stored metal for team
+	float GetMetalIncome();				
+	float GetMetalUsage();				
+	float GetMetalStorage();				//metal storage for team
 
-	virtual float GetEnergy();				//stored energy for team
-	virtual float GetEnergyIncome();			
-	virtual float GetEnergyUsage();				
-	virtual float GetEnergyStorage();				//energy storage for team
+	float GetEnergy();				//stored energy for team
+	float GetEnergyIncome();			
+	float GetEnergyUsage();				
+	float GetEnergyStorage();				//energy storage for team
+
+	int GetFeatures (int *features, int max);
+	int GetFeatures (int *features, int max, const float3& pos, float radius);
+	FeatureDef* GetFeatureDef (int feature);
+	float GetFeatureHealth (int feature);
+	float GetFeatureReclaimLeft (int feature);
 };
 
 #endif // !defined(AFX_GROUPAICALLBACK_H__D3CCA6DA_BB40_40E0_A08F_211F4410E6E3__INCLUDED_)

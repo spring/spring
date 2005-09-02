@@ -223,16 +223,18 @@ CGame::CGame(bool server,std::string mapname)
 	loshandler=new CLosHandler();
 	radarhandler=new CRadarHandler(false);
 	if(!server) net->Update();	//prevent timing out during load
-	featureHandler->LoadFeaturesFromMap(readmap->ifs,CScriptHandler::Instance()->chosenScript->loadGame);
-	if(!server) net->Update();	//prevent timing out during load
-	pathManager = new CPathManager();
-	if(!server) net->Update();	//prevent timing out during load
 	ENTER_MIXED;
 	uh=new CUnitHandler();
 	unitDrawer=new CUnitDrawer();
 	fartextureHandler = new CFartextureHandler();
 	if(!server) net->Update();	//prevent timing out during load
 	unit3doparser = new C3DOParser();
+ 	ENTER_SYNCED;
+ 	if(!server) net->Update();	//prevent timing out during load
+ 	featureHandler->LoadFeaturesFromMap(readmap->ifs,CScriptHandler::Instance()->chosenScript->loadGame);
+ 	if(!server) net->Update();	//prevent timing out during load
+ 	pathManager = new CPathManager();
+ 	if(!server) net->Update();	//prevent timing out during load
 	ENTER_UNSYNCED;
 	sky=CBaseSky::GetSky();
 #ifndef NEW_GUI

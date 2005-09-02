@@ -19,7 +19,7 @@
 class IGroupAI;
 class CUnit;
 class CFeature;
-class CGroupAiCallback;
+class CGroupAICallback;
 class CGroupHandler;
 
 using namespace std;
@@ -60,7 +60,7 @@ public:
 	int currentAiNum;
 
 	IGroupAI* ai;
-	CGroupAiCallback* callback;
+	CGroupAICallback* callback;
 
 	CGroupHandler* handler;
 };

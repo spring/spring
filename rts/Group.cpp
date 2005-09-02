@@ -27,7 +27,7 @@ CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 	currentAiNum(0),
 	handler(grouphandler)
 {
-	callback=new CGroupAiCallback(this);
+	callback=new CGroupAICallback(this);
 	SetNewAI(dllName);
 
 	int a=0;

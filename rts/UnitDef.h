@@ -142,6 +142,7 @@ struct UnitDef
 	float loadingRadius;	//for transports
 	int transportCapacity;
 	int transportSize;
+	bool stunnedCargo; // are the units stunned while being transported?
 
 	bool canCloak;							//if the unit can cloak
 	bool startCloaked;					//if the units want to start out cloaked	

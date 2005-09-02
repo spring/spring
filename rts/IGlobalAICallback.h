@@ -33,6 +33,7 @@ public:
 	virtual int GetCurrentFrame()=0;
 	virtual int GetMyTeam()=0;
 	virtual int GetMyAllyTeam()=0;
+	virtual int GetPlayerTeam(int player)=0;
 
 	virtual int GiveOrder(int unitid, Command* c)=0;
 
@@ -141,6 +142,12 @@ public:
 	virtual float GetEnergyIncome()=0;			
 	virtual float GetEnergyUsage()=0;				
 	virtual float GetEnergyStorage()=0;				//energy storage for team
+
+	virtual int GetFeatures (int *features, int max)=0;
+	virtual int GetFeatures (int *features, int max, const float3& pos, float radius)=0;
+	virtual FeatureDef* GetFeatureDef (int feature)=0;
+	virtual float GetFeatureHealth (int feature)=0;
+	virtual float GetFeatureReclaimLeft (int feature)=0;
 };
 
 #endif

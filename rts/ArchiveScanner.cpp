@@ -20,7 +20,7 @@
  * is not slow, but mapping them all every time to make the list is)
  */
 
-#define INTERNAL_VER	1
+#define INTERNAL_VER	2
 
 CArchiveScanner* archiveScanner = NULL;
 
@@ -386,6 +386,7 @@ void CArchiveScanner::WriteCacheData()
 			fprintf(out, "\t\t\tVirtualPath=%s;\n", (*mi).virtualPath.c_str());
 			//fprintf(out, "\t\t\tDescription=%s;\n", (*mi).description.c_str());
 			fprintf(out, "\t\t}\n");
+			curmap++;
 		}
 
 		// Any mod info? or just a map archive?

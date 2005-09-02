@@ -28,6 +28,7 @@
 #include "SmfReadMap.h"
 #include "Wind.h"
 #include "UnitDrawer.h"
+#include "Player.h"
 //#include "mmgr.h"
 
 CGlobalAICallback::CGlobalAICallback(CGlobalAI* ai)
@@ -73,6 +74,14 @@ int CGlobalAICallback::GetMyTeam()
 int CGlobalAICallback::GetMyAllyTeam()
 {
 	return gs->team2allyteam[ai->team];
+}
+
+int CGlobalAICallback::GetPlayerTeam(int player)
+{
+	CPlayer *pl = gs->players [player];
+	if (pl->spectator)
+		return -1;
+	return pl->team;
 }
 
 void* CGlobalAICallback::CreateSharedMemArea(char* name, int size)

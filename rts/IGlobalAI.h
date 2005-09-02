@@ -6,7 +6,7 @@
 
 class IGlobalAICallback;
 
-#define GLOBAL_AI_INTERFACE_VERSION 4
+#define GLOBAL_AI_INTERFACE_VERSION 5
 
 class IGlobalAI
 {

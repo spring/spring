@@ -53,7 +53,6 @@ public:
 //	float3* normals;
 	float3* facenormals;							//normalerna för trianglarna (2 per square)
 	unsigned char* typemap;						//typ av terräng (skog,väg etc
-	unsigned char* heightLineMap;			//för höjd karte visning (F1)
 	unsigned char* heightLinePal;			//palette för höjd karte visning
 
 	struct TerrainType{

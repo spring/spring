@@ -23,6 +23,7 @@
 #include "LosHandler.h"
 #include "BaseSky.h"
 #include "BFGroundDrawer.h"
+//#include "mmgr.h"
 #include <SDL/SDL_types.h>
 
 CUnitDrawer* unitDrawer;
@@ -67,6 +68,9 @@ CUnitDrawer::CUnitDrawer(void)
 
 	unitAmbientColor=readmap->mapDefParser.GetFloat3(float3(0.4,0.4,0.4),"MAP\\LIGHT\\UnitAmbientColor");
 	unitSunColor=readmap->mapDefParser.GetFloat3(float3(0.7,0.7,0.7),"MAP\\LIGHT\\UnitSunColor");
+
+	float3 specularSunColor=readmap->mapDefParser.GetFloat3(unitSunColor,"MAP\\LIGHT\\SpecularSunColor");
+
 	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
 
 	if(shadowHandler->drawShadows){
@@ -74,6 +78,7 @@ CUnitDrawer::CUnitDrawer(void)
 		unitVP=LoadVertexProgram("unit.vp");
 		unitFP=LoadFragmentProgram("unit.fp");
 
+		glGenTextures(1,&boxtex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -95,12 +100,12 @@ CUnitDrawer::CUnitDrawer(void)
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,128,float3(1,1,1),float3(0,0,-2),float3(0,-2,0),gs->sunVector,100,unitSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,128,float3(-1,1,-1),float3(0,0,2),float3(0,-2,0),gs->sunVector,100,unitSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,128,float3(-1,1,-1),float3(2,0,0),float3(0,0,2),gs->sunVector,100,unitSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,128,float3(-1,-1,1),float3(2,0,0),float3(0,0,-2),gs->sunVector,100,unitSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,128,float3(-1,1,1),float3(2,0,0),float3(0,-2,0),gs->sunVector,100,unitSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,128,float3(1,1,-1),float3(-2,0,0),float3(0,-2,0),gs->sunVector,100,unitSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,128,float3(1,1,1),float3(0,0,-2),float3(0,-2,0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,128,float3(-1,1,-1),float3(0,0,2),float3(0,-2,0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,128,float3(-1,1,-1),float3(2,0,0),float3(0,0,2),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,128,float3(-1,-1,1),float3(2,0,0),float3(0,0,-2),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,128,float3(-1,1,1),float3(2,0,0),float3(0,-2,0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,128,float3(1,1,-1),float3(-2,0,0),float3(0,-2,0),gs->sunVector,100,specularSunColor);
 	}
 }
 
@@ -546,7 +551,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 		camera->up=float3(0,0,1);
 	if(camera->forward.y==-1)
 		camera->up=float3(0,0,-1);
-	if(camera->pos.y<ground->GetHeight(camera->pos.x,camera->pos.z)+50)
+//	if(camera->pos.y<ground->GetHeight(camera->pos.x,camera->pos.z)+50)
 		camera->pos.y=ground->GetHeight(camera->pos.x,camera->pos.z)+50;
 	camera->Update(false);
 
@@ -559,7 +564,11 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	sky->Draw();
+
+	int oldViewRadius=groundDrawer->viewRadius;	//this should be moved into grounddrawer
+	groundDrawer->viewRadius=(groundDrawer->viewRadius/2)&0xfffffe;
 	groundDrawer->Draw(true);
+	groundDrawer->viewRadius=oldViewRadius;
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
 	glCopyTexSubImage2D(gltype,0,0,0,0,0,128,128);

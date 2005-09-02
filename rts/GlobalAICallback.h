@@ -23,6 +23,7 @@ public:
 	int GetCurrentFrame();
 	int GetMyTeam();
 	int GetMyAllyTeam();
+	int GetPlayerTeam(int player);
 
 	void* CreateSharedMemArea(char* name, int size);
 	void ReleasedSharedMemArea(char* name);
@@ -57,7 +58,6 @@ public:
 	const UnitDef* GetUnitDef(int unitid);	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 	float3 GetUnitPos(int unitid);
 	bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
-
 
 	const UnitDef* GetUnitDef(const char* unitName);
 

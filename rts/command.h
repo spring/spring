@@ -16,6 +16,7 @@ using namespace std;
 
 //cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP 0
+#define CMD_WAIT 5
 #define CMD_MOVE 10
 #define CMD_PATROL 15
 #define CMD_ATTACK 20

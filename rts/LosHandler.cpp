@@ -475,7 +475,10 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 	instance->refCount--;
 	if(instance->refCount==0){
 		CleanupInstance(instance);
-		toBeDeleted.push_back(instance);
+		if(!instance->toBeDeleted){
+			instance->toBeDeleted=true;
+			toBeDeleted.push_back(instance);
+		}
 		if(instance->hashNum>=2310 || instance->hashNum<0){
 			info->AddLine("bad los");
 		}
@@ -487,6 +490,7 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 				info->AddLine("bad los 2");
 				return;
 			}
+			i->toBeDeleted=false;
 			if(i->refCount==0){
 				std::list<LosInstance*>::iterator lii;
 				for(lii=instanceHash[i->hashNum].begin();lii!=instanceHash[i->hashNum].end();++lii){

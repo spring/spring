@@ -266,6 +266,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	sunparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");
 	sunparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
+	ud.stunnedCargo=!!atoi(sunparser.SGetValueDef("1", "UNITINFO\\isAirBase").c_str());
 	ud.loadingRadius=220;
 
 	ud.wingDrag=0.07;			//drag caused by wings

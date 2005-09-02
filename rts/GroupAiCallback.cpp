@@ -1,4 +1,4 @@
-// GroupAiCallback.cpp: implementation of the CGroupAiCallback class.
+// GroupAICallback.cpp: implementation of the CGroupAICallback class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -26,8 +26,10 @@
 #include "GroupHandler.h"
 #include "GlobalAIHandler.h"
 #include "Feature.h"
+#include "FeatureHandler.h"
 #include "PathManager.h"
 #include "UnitDrawer.h"
+#include "Player.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -36,49 +38,57 @@
 
 using namespace std;
 
-CGroupAiCallback::CGroupAiCallback(CGroup* group)
+CGroupAICallback::CGroupAICallback(CGroup* group)
 : group(group)
 {
 
 }
 
-CGroupAiCallback::~CGroupAiCallback()
+CGroupAICallback::~CGroupAICallback()
 {
 
 }
 
-void CGroupAiCallback::SendTextMsg(const char* text,int priority)
+void CGroupAICallback::SendTextMsg(const char* text,int priority)
 {
 	//todo: fix priority
 	info->AddLine("Group%i: %s",group->id,text);
 }
 
-int CGroupAiCallback::GetCurrentFrame()
+int CGroupAICallback::GetCurrentFrame()
 {
 	return gs->frameNum;
 }
 
-int CGroupAiCallback::GetMyTeam()
+int CGroupAICallback::GetMyTeam()
 {
 	return group->handler->team;
 }
 
-int CGroupAiCallback::GetMyAllyTeam()
+int CGroupAICallback::GetMyAllyTeam()
 {
 	return gs->team2allyteam[group->handler->team];
 }
 
-void* CGroupAiCallback::CreateSharedMemArea(char* name, int size)
+int CGroupAICallback::GetPlayerTeam(int player)
+{
+	CPlayer *pl = gs->players [player];
+	if (pl->spectator)
+		return -1;
+	return pl->team;
+}
+
+void* CGroupAICallback::CreateSharedMemArea(char* name, int size)
 {
 	return globalAI->GetAIBuffer(group->handler->team,name,size);
 }
 
-void CGroupAiCallback::ReleasedSharedMemArea(char* name)
+void CGroupAICallback::ReleasedSharedMemArea(char* name)
 {
 	globalAI->ReleaseAIBuffer(group->handler->team,name);
 }
 
-int CGroupAiCallback::GiveOrder(int unitid,Command* c)
+int CGroupAICallback::GiveOrder(int unitid,Command* c)
 {
 	if(group->units.find(uh->units[unitid])==group->units.end())
 		return -1;
@@ -98,12 +108,12 @@ int CGroupAiCallback::GiveOrder(int unitid,Command* c)
 	net->SendData(netbuf,c->params.size()*4+11);
 	return 0;
 }
-void CGroupAiCallback::UpdateIcons()
+void CGroupAICallback::UpdateIcons()
 {
 	selectedUnits.PossibleCommandChange(0);
 }
 
-const Command* CGroupAiCallback::GetOrderPreview()
+const Command* CGroupAICallback::GetOrderPreview()
 {
 	static Command tempcmd;
 	//todo: need to add support for new gui
@@ -115,12 +125,12 @@ const Command* CGroupAiCallback::GetOrderPreview()
 	return &tempcmd;
 }
 
-bool CGroupAiCallback::IsSelected()
+bool CGroupAICallback::IsSelected()
 {
 	return selectedUnits.selectedGroup==group->id;
 }
 
-int CGroupAiCallback::GetUnitLastUserOrder(int unitid)
+int CGroupAICallback::GetUnitLastUserOrder(int unitid)
 {
 	if(group->units.find(uh->units[unitid])!=group->units.end()){
 		return uh->units[unitid]->commandAI->lastUserCommand;
@@ -128,7 +138,7 @@ int CGroupAiCallback::GetUnitLastUserOrder(int unitid)
 	return 0;
 }
 
-const vector<CommandDescription>* CGroupAiCallback::GetUnitCommands(int unitid)
+const vector<CommandDescription>* CGroupAICallback::GetUnitCommands(int unitid)
 {
 	if(group->units.find(uh->units[unitid])!=group->units.end()){
 		return &(uh->units[unitid]->commandAI->possibleCommands);
@@ -136,7 +146,7 @@ const vector<CommandDescription>* CGroupAiCallback::GetUnitCommands(int unitid)
 	return 0;
 }
 
-const deque<Command>* CGroupAiCallback::GetCurrentUnitCommands(int unitid)
+const deque<Command>* CGroupAICallback::GetCurrentUnitCommands(int unitid)
 {
 	if(group->units.find(uh->units[unitid])!=group->units.end()){
 		return &(uh->units[unitid]->commandAI->commandQue);
@@ -144,7 +154,7 @@ const deque<Command>* CGroupAiCallback::GetCurrentUnitCommands(int unitid)
 	return 0;
 }
 
-int CGroupAiCallback::GetUnitAihint(int unitid)
+int CGroupAICallback::GetUnitAihint(int unitid)
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -153,7 +163,7 @@ int CGroupAiCallback::GetUnitAihint(int unitid)
 	return 0;
 }
 
-int CGroupAiCallback::GetUnitTeam(int unitid)
+int CGroupAICallback::GetUnitTeam(int unitid)
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -162,7 +172,7 @@ int CGroupAiCallback::GetUnitTeam(int unitid)
 	return 0;	
 }
 
-int CGroupAiCallback::GetUnitAllyTeam(int unitid)
+int CGroupAICallback::GetUnitAllyTeam(int unitid)
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -171,7 +181,7 @@ int CGroupAiCallback::GetUnitAllyTeam(int unitid)
 	return 0;	
 }
 
-float CGroupAiCallback::GetUnitHealth(int unitid)			//the units current health
+float CGroupAICallback::GetUnitHealth(int unitid)			//the units current health
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -180,7 +190,7 @@ float CGroupAiCallback::GetUnitHealth(int unitid)			//the units current health
 	return 0;
 }
 
-float CGroupAiCallback::GetUnitMaxHealth(int unitid)		//the units max health
+float CGroupAICallback::GetUnitMaxHealth(int unitid)		//the units max health
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -189,7 +199,7 @@ float CGroupAiCallback::GetUnitMaxHealth(int unitid)		//the units max health
 	return 0;
 }
 
-float CGroupAiCallback::GetUnitSpeed(int unitid)				//the units max speed
+float CGroupAICallback::GetUnitSpeed(int unitid)				//the units max speed
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -198,7 +208,7 @@ float CGroupAiCallback::GetUnitSpeed(int unitid)				//the units max speed
 	return 0;
 }
 
-float CGroupAiCallback::GetUnitPower(int unitid)				//sort of the measure of the units overall power
+float CGroupAICallback::GetUnitPower(int unitid)				//sort of the measure of the units overall power
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -207,7 +217,7 @@ float CGroupAiCallback::GetUnitPower(int unitid)				//sort of the measure of the
 	return 0;
 }
 
-float CGroupAiCallback::GetUnitExperience(int unitid)	//how experienced the unit is (0.0-1.0)
+float CGroupAICallback::GetUnitExperience(int unitid)	//how experienced the unit is (0.0-1.0)
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -216,7 +226,7 @@ float CGroupAiCallback::GetUnitExperience(int unitid)	//how experienced the unit
 	return 0;
 }
 
-float CGroupAiCallback::GetUnitMaxRange(int unitid)		//the furthest any weapon of the unit can fire
+float CGroupAICallback::GetUnitMaxRange(int unitid)		//the furthest any weapon of the unit can fire
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -225,7 +235,7 @@ float CGroupAiCallback::GetUnitMaxRange(int unitid)		//the furthest any weapon o
 	return 0;
 }
 
-const UnitDef* CGroupAiCallback::GetUnitDef(int unitid)
+const UnitDef* CGroupAICallback::GetUnitDef(int unitid)
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & LOS_INLOS)){
@@ -234,12 +244,12 @@ const UnitDef* CGroupAiCallback::GetUnitDef(int unitid)
 	return 0;
 }
 
-const UnitDef* CGroupAiCallback::GetUnitDef(const char* unitName)
+const UnitDef* CGroupAICallback::GetUnitDef(const char* unitName)
 {
 	return unitDefHandler->GetUnitByName(unitName);
 }
 
-float3 CGroupAiCallback::GetUnitPos(int unitid)
+float3 CGroupAICallback::GetUnitPos(int unitid)
 {
 	CUnit* unit=uh->units[unitid];
 	if(unit && (unit->losStatus[gs->team2allyteam[group->handler->team]] & (LOS_INLOS|LOS_INRADAR))){
@@ -249,28 +259,28 @@ float3 CGroupAiCallback::GetUnitPos(int unitid)
 }
 
 
-int CGroupAiCallback::InitPath(float3 start,float3 end,int pathType)
+int CGroupAICallback::InitPath(float3 start,float3 end,int pathType)
 {
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType),start,end);
 }
 
-float3 CGroupAiCallback::GetNextWaypoint(int pathid)
+float3 CGroupAICallback::GetNextWaypoint(int pathid)
 {
 	return pathManager->NextWaypoint(pathid,ZeroVector);
 }
 
-void CGroupAiCallback::FreePath(int pathid)
+void CGroupAICallback::FreePath(int pathid)
 {
 	pathManager->DeletePath(pathid);
 }
 
-float CGroupAiCallback::GetPathLength(float3 start,float3 end,int pathType)
+float CGroupAICallback::GetPathLength(float3 start,float3 end,int pathType)
 {
 //	return pathfinder->GetPathLength(start,end,pathType);
 	return 0;
 }
 
-int CGroupAiCallback::GetEnemyUnits(int *units)
+int CGroupAICallback::GetEnemyUnits(int *units)
 {
 	list<CUnit*>::iterator ui;
 	int a=0;
@@ -283,7 +293,7 @@ int CGroupAiCallback::GetEnemyUnits(int *units)
 	return a;
 }
 
-int CGroupAiCallback::GetEnemyUnits(int *units,const float3& pos,float radius)
+int CGroupAICallback::GetEnemyUnits(int *units,const float3& pos,float radius)
 {
 	vector<CUnit*> unit=qf->GetUnitsExact(pos,radius);
 
@@ -299,7 +309,7 @@ int CGroupAiCallback::GetEnemyUnits(int *units,const float3& pos,float radius)
 	return a;
 }
 
-int CGroupAiCallback::GetFriendlyUnits(int *units)
+int CGroupAICallback::GetFriendlyUnits(int *units)
 {
 	int a=0;
 
@@ -311,7 +321,7 @@ int CGroupAiCallback::GetFriendlyUnits(int *units)
 	return a;
 }
 
-int CGroupAiCallback::GetFriendlyUnits(int *units,const float3& pos,float radius)
+int CGroupAICallback::GetFriendlyUnits(int *units,const float3& pos,float radius)
 {
 	vector<CUnit*> unit=qf->GetUnitsExact(pos,radius);
 
@@ -328,82 +338,95 @@ int CGroupAiCallback::GetFriendlyUnits(int *units,const float3& pos,float radius
 }
 
 
-int CGroupAiCallback::GetMapWidth()
+int CGroupAICallback::GetMapWidth()
 {
 	return gs->mapx;
 }
 
-int CGroupAiCallback::GetMapHeight()
+int CGroupAICallback::GetMapHeight()
 {
 	return gs->mapy;
 }
 
-/*const unsigned char* CGroupAiCallback::GetSupplyMap()
+extern string stupidGlobalMapname;
+const char* CGroupAICallback::GetMapName ()
+{
+	return stupidGlobalMapname.c_str();
+}
+
+extern string stupidGlobalModName;
+const char* CGroupAICallback::GetModName()
+{
+	return stupidGlobalModName.c_str();
+}
+
+
+/*const unsigned char* CGroupAICallback::GetSupplyMap()
 {
 	return supplyhandler->supplyLevel[gu->myTeam];
 }
 
-const unsigned char* CGroupAiCallback::GetTeamMap()
+const unsigned char* CGroupAICallback::GetTeamMap()
 {
 	return readmap->teammap;
 }*/
 
-const float* CGroupAiCallback::GetHeightMap()
+const float* CGroupAICallback::GetHeightMap()
 {
 	return readmap->centerheightmap;
 }
 
-const unsigned short* CGroupAiCallback::GetLosMap()
+const unsigned short* CGroupAICallback::GetLosMap()
 {
 	return loshandler->losMap[gs->team2allyteam[group->handler->team]];
 }
 
-const unsigned short* CGroupAiCallback::GetRadarMap()
+const unsigned short* CGroupAICallback::GetRadarMap()
 {
 	return radarhandler->radarMaps[gs->team2allyteam[group->handler->team]];
 }
 
-const unsigned short* CGroupAiCallback::GetJammerMap()
+const unsigned short* CGroupAICallback::GetJammerMap()
 {
 	return radarhandler->jammerMaps[gs->team2allyteam[group->handler->team]];
 }
 
-const unsigned char* CGroupAiCallback::GetMetalMap()
+const unsigned char* CGroupAICallback::GetMetalMap()
 {
 	return readmap->metalMap->metalMap;
 }
 
-float CGroupAiCallback::GetElevation(float x,float z)
+float CGroupAICallback::GetElevation(float x,float z)
 {
 	return ground->GetHeight(x,z);
 }
 
-int CGroupAiCallback::CreateSplineFigure(float3 pos1,float3 pos2,float3 pos3,float3 pos4,float width,int arrow,int lifetime,int group)
+int CGroupAICallback::CreateSplineFigure(float3 pos1,float3 pos2,float3 pos3,float3 pos4,float width,int arrow,int lifetime,int group)
 {
 	return geometricObjects->AddSpline(pos1,pos2,pos3,pos4,width,arrow,lifetime,group);
 }
 
-int CGroupAiCallback::CreateLineFigure(float3 pos1,float3 pos2,float width,int arrow,int lifetime,int group)
+int CGroupAICallback::CreateLineFigure(float3 pos1,float3 pos2,float width,int arrow,int lifetime,int group)
 {
 	return geometricObjects->AddLine(pos1,pos2,width,arrow,lifetime,group);
 }
 
-void CGroupAiCallback::SetFigureColor(int group,float red,float green,float blue,float alpha)
+void CGroupAICallback::SetFigureColor(int group,float red,float green,float blue,float alpha)
 {
 	geometricObjects->SetColor(group,red,green,blue,alpha);
 }
 
-void CGroupAiCallback::DeleteFigureGroup(int group)
+void CGroupAICallback::DeleteFigureGroup(int group)
 {
 	geometricObjects->DeleteGroup(group);
 }
 
-void CGroupAiCallback::DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder)
+void CGroupAICallback::DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder)
 {
 	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef=unitDefHandler->GetUnitByName(name);
 	if(!tdu.unitdef){
-		info->AddLine("Uknown unit in CGroupAiCallback::DrawUnit %s",name);
+		info->AddLine("Uknown unit in CGroupAICallback::DrawUnit %s",name);
 		return;
 	}
 	tdu.pos=pos;
@@ -417,14 +440,15 @@ void CGroupAiCallback::DrawUnit(const char* name,float3 pos,float rotation,int l
 		unitDrawer->tempDrawUnits.insert(tp);
 }
 
-bool CGroupAiCallback::CanBuildAt(const UnitDef* unitDef,float3 pos)
+bool CGroupAICallback::CanBuildAt(const UnitDef* unitDef,float3 pos)
 {
 	//todo fix so you cant detect enemy buildings etc with this
 	CFeature* f;
+	pos=helper->Pos2BuildPos(pos,unitDef);
 	return !!uh->TestUnitBuildSquare(pos,unitDef,f);
 }
 
-float3 CGroupAiCallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist)
+float3 CGroupAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist)
 {
 	//todo fix so you cant detect enemy buildings with it
 	float bestDist=searchRadius;
@@ -436,6 +460,7 @@ float3 CGroupAiCallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,floa
 	for(float z=pos.z-searchRadius;z<pos.z+searchRadius;z+=SQUARE_SIZE*2){
 		for(float x=pos.x-searchRadius;x<pos.x+searchRadius;x+=SQUARE_SIZE*2){
 			float3 p(x,0,z);
+			p=helper->Pos2BuildPos(p,unitdef);
 			float dist=pos.distance2D(p);
 			if(dist<bestDist && uh->TestUnitBuildSquare(p,unitdef,feature) && (!feature || feature->allyteam!=allyteam)){
 				int xs=(int)(x/SQUARE_SIZE);
@@ -461,42 +486,115 @@ float3 CGroupAiCallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,floa
 	return bestPos;	
 }
 
-float CGroupAiCallback::GetMetal()
+float CGroupAICallback::GetMetal()
 {
 	return gs->teams[gu->myTeam]->metal;
 }
 
-float CGroupAiCallback::GetMetalIncome()
+float CGroupAICallback::GetMetalIncome()
 {
 	return gs->teams[gu->myTeam]->oldMetalIncome;
 }
 
-float CGroupAiCallback::GetMetalUsage()
+float CGroupAICallback::GetMetalUsage()
 {
 	return gs->teams[gu->myTeam]->oldMetalExpense;	
 }
 
-float CGroupAiCallback::GetMetalStorage()
+float CGroupAICallback::GetMetalStorage()
 {
 	return gs->teams[gu->myTeam]->metalStorage;
 }
 
-float CGroupAiCallback::GetEnergy()
+float CGroupAICallback::GetEnergy()
 {
 	return gs->teams[gu->myTeam]->energy;
 }
 
-float CGroupAiCallback::GetEnergyIncome()
+float CGroupAICallback::GetEnergyIncome()
 {
 	return gs->teams[gu->myTeam]->oldEnergyIncome;
 }
 
-float CGroupAiCallback::GetEnergyUsage()
+float CGroupAICallback::GetEnergyUsage()
 {
 	return gs->teams[gu->myTeam]->oldEnergyExpense;	
 }
 
-float CGroupAiCallback::GetEnergyStorage()
+float CGroupAICallback::GetEnergyStorage()
 {
 	return gs->teams[gu->myTeam]->energyStorage;
 }
+
+int CGroupAICallback::GetFeatures (int *features, int max)
+{
+	int i = 0;
+
+	int allyteam = gs->team2allyteam[group->handler->team];
+
+	for (int a=0;a<MAX_FEATURES;a++)
+	{
+		if (featureHandler->features [a]) {
+			CFeature *f = featureHandler->features[a];
+
+			if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
+				continue;
+
+			features [i++] = f->id;
+
+			if (i == max) 
+				break;
+		}
+	}
+	return i;
+}
+
+int CGroupAICallback::GetFeatures (int *features, int maxids, const float3& pos, float radius)
+{
+	vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
+	int allyteam = gs->team2allyteam[group->handler->team];
+	int n = 0;
+	
+	for (int a=0;a<ft.size();a++)
+	{
+ 		CFeature *f = ft[a];
+ 
+		if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
+			continue;
+
+		features [n++] = f->id;
+		if (maxids == n)
+			break;
+	}
+
+	return n;
+}
+
+FeatureDef* CGroupAICallback::GetFeatureDef (int feature)
+{
+	CFeature *f = featureHandler->features [feature];
+	int allyteam = gs->team2allyteam[group->handler->team];
+	if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		return f->def;
+ 	
+ 	return 0;
+}
+
+float CGroupAICallback::GetFeatureHealth (int feature)
+{
+	CFeature *f = featureHandler->features [feature];
+	int allyteam = gs->team2allyteam[group->handler->team];
+	if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		return f->health;
+	return 0.0f;
+}
+
+float CGroupAICallback::GetFeatureReclaimLeft (int feature)
+{
+	CFeature *f = featureHandler->features [feature];
+	int allyteam = gs->team2allyteam[group->handler->team];
+	if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		return f->reclaimLeft;
+	return 0.0f;
+}
+

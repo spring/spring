@@ -1,6 +1,6 @@
 #ifndef IGROUPAICALLBACK_H
 #define IGROUPAICALLBACK_H
-// IGroupAiCallback.h: interface for the IGroupAiCallback class.
+// IGroupAICallback.h: interface for the IGroupAICallback class.
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
 
@@ -19,8 +19,9 @@
 #include "command.h"
 
 struct UnitDef;
+struct FeatureDef;
 
-class IGroupAiCallback  
+class IGroupAICallback  
 {
 public:
 	virtual void SendTextMsg(const char* text,int priority)=0;		//sends a text message to the local user, lower priority ones might be filtered to avoid flooding
@@ -28,6 +29,7 @@ public:
 	virtual int GetCurrentFrame()=0;															//get the current game time, there is 30 frames per second at normal speed
 	virtual int GetMyTeam()=0;
 	virtual int GetMyAllyTeam()=0;
+	virtual int GetPlayerTeam(int player)=0;
 
 	// returns the size of the created area, this is initialized to all 0 if not previously created
 	//set something to !0 to tell other ais that the area is already initialized when they try to create it
@@ -96,6 +98,8 @@ public:
 	virtual const unsigned short* GetRadarMap()=0;		//a square with value zero means you dont have radar to the square, this is 1/8 the resolution of the standard map
 	virtual const unsigned short* GetJammerMap()=0;		//a square with value zero means you dont have radar jamming on the square, this is 1/8 the resolution of the standard map
 	virtual const unsigned char* GetMetalMap()=0;			//this map shows the metal density on the map, this is half the resolution of the standard map
+	virtual const char* GetMapName()=0;
+	virtual const char* GetModName()=0;
 
 	virtual float GetElevation(float x,float z)=0;		//Gets the elevation of the map at position x,z
 
@@ -126,6 +130,12 @@ public:
 	virtual float GetEnergyIncome()=0;			
 	virtual float GetEnergyUsage()=0;				
 	virtual float GetEnergyStorage()=0;				//energy storage for team
+
+	virtual int GetFeatures (int *features, int max)=0;
+	virtual int GetFeatures (int *features, int max, const float3& pos, float radius)=0;
+	virtual FeatureDef* GetFeatureDef (int feature)=0;
+	virtual float GetFeatureHealth (int feature)=0;
+	virtual float GetFeatureReclaimLeft (int feature)=0;
 };
 
 #endif // !defined(AFX_IGROUPAICALLBACK_H__9C32D568_4691_49B6_B9F8_3DEF35A7C8F5__INCLUDED_)

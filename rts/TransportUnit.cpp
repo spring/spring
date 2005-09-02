@@ -3,6 +3,7 @@
 #include "3DOParser.h"
 #include "TAAirMoveType.h"
 #include "CommandAI.h"
+#include "UnitDef.h"
 //#include "mmgr.h"
 
 CTransportUnit::CTransportUnit(const float3 &pos,int team,UnitDef* unitDef)
@@ -69,7 +70,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		return;
 	AddDeathDependence(unit);
 	unit->inTransport=true;
-	unit->stunned=true;	//make sure unit doesnt fire etc in transport
+	if (unit->unitDef->stunnedCargo)
+		unit->stunned=true;	//make sure unit doesnt fire etc in transport
 	unit->UnBlock();
 	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
 		unit->moveType->useHeading=false;	
@@ -92,13 +94,13 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			unit->inTransport=false;
 			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
 				unit->moveType->useHeading=true;
-			Command c;
-			c.id=CMD_STOP;
-			c.options=0;
-			unit->stunned=false;
-			unit->commandAI->GiveCommand(c);
+			if(unit->unitDef->stunnedCargo) 
+				unit->stunned=false;
 			unit->Block();
 			unit->moveType->LeaveTransport();
+			Command c;
+			c.id=CMD_STOP;
+			unit->commandAI->GiveCommand(c);
 			transportCapacityUsed-=ti->size;
 			transported.erase(ti);
 			break;

@@ -12,14 +12,14 @@
 #endif // _MSC_VER > 1000
 
 #include "command.h"
-class IGroupAiCallback;
+class IGroupAICallback;
 
-#define AI_INTERFACE_VERSION 2
+#define AI_INTERFACE_VERSION 3
 
 class IGroupAI  
 {
 public:
-	virtual void InitAi(IGroupAiCallback* callback)=0;
+	virtual void InitAi(IGroupAICallback* callback)=0;
 	virtual bool AddUnit(int unit)=0;										//group should return false if it doenst want the unit for some reason
 	virtual void RemoveUnit(int unit)=0;								//no way to refuse giving up a unit
 

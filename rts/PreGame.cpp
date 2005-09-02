@@ -221,7 +221,7 @@ bool CPreGame::Update(void)
 		ENTER_MIXED;
 
 		// Map all required archives depending on selected mod(s)
-		stupidGlobalModName = "xta_se_v061.sdz";
+		stupidGlobalModName = "xta_se_v062.sdz";
 		if (gameSetup)
 			stupidGlobalModName = gameSetup->baseMod;
 		vector<string> ars = archiveScanner->GetArchives(stupidGlobalModName);
