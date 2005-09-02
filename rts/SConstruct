@@ -29,7 +29,6 @@ opts.Add('debug', 'Set to yes to produce a binary with debug information', 1)
 opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1)
 
 #porting options - optionnal in a first phase
-opts.Add('disable_sound', 'Set to no to turn on sound support (directSound) (port using openal)', 1)
 opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
 opts.Add('disable_shadows', 'Set to no to turn on shadows rendering', 1)
 opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
@@ -45,9 +44,6 @@ Help(opts.GenerateHelpText(env))
 debug = env.get('debug')
 platform = env.get('platform')
 
-if env.get('disable_sound'):
-	exclude_list.append("wavread.cpp")
-	defines+=['NO_SOUND']
 if env.get('disable_shadows'):
 	defines+=['NO_SHADOWS']
 if env.get('disable_hpi'):
@@ -96,7 +92,8 @@ if platform == 'linux':
 			BackgroundReader.cpp
 			ARB_vertex_program_extension.cpp
 			mmgr.cpp
-			multipath.cpp""")
+			multipath.cpp
+			wavread.cpp""")
 
 nbObjects=0
 nbBuiltObjects=0
