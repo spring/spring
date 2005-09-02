@@ -50,6 +50,11 @@ if debug:
 else:
 	optimize = env.get('optimize')
 
+if env.Dictionary('CC').find('gcc') != -1:
+	gcc = True
+else:
+	gcc = False
+
 if env.get('disable_crashrpt'):
 	defines+=['NO_CRASHRPT']
 if env.get('disable_shadows'):
@@ -311,33 +316,33 @@ if not conf.CheckLib('GLEW'):
 #if not conf.CheckLib('glib'):
 #	print "You need glib to link this program"
 #	Exit(1)
-if conf.CheckLib('boost_filesystem-gcc-mt'):
+if gcc and conf.CheckLib('boost_filesystem-gcc-mt'):
 	lib+=['boost_filesystem-gcc-mt']
 elif conf.CheckLib('boost_filesystem-mt'):
 	lib+=['boost_filesystem-mt']
-elif conf.CheckLib('boost_filesystem-gcc'):
+elif gcc and conf.CheckLib('boost_filesystem-gcc'):
 	lib+=['boost_filesystem-gcc']
 elif conf.CheckLib('boost_filesystem'):
 	lib+=['boost_filesystem']
 else:
 	print "You need the Boost filesystem library for this program"
 	Exit(1)
-if conf.CheckLib('boost_thread-gcc-mt'):
+if gcc and conf.CheckLib('boost_thread-gcc-mt'):
 	lib+=['boost_thread-gcc-mt']
 elif conf.CheckLib('boost_thread-mt'):
 	lib+=['boost_thread-mt']
-elif conf.CheckLib('boost_thread-gcc'):
+elif gcc and conf.CheckLib('boost_thread-gcc'):
 	lib+=['boost_thread-gcc']
 elif conf.CheckLib('boost_thread'):
 	lib+=['boost_thread']
 else:
 	print "You need the Boost thread library for this program"
 	Exit(1)
-if conf.CheckLib('boost_regex-gcc-mt'):
+if gcc and conf.CheckLib('boost_regex-gcc-mt'):
 	lib+=['boost_regex-gcc-mt']
 elif conf.CheckLib('boost_regex-mt'):
 	lib+=['boost_regex-mt']
-elif conf.CheckLib('boost_regex-gcc'):
+elif gcc and conf.CheckLib('boost_regex-gcc'):
 	lib+=['boost_regex-gcc']
 elif conf.CheckLib('boost_regex'):
 	lib+=['boost_regex']
