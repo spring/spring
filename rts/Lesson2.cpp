@@ -40,7 +40,7 @@
 #endif
 
 // Use the crashrpt library 
-#ifndef unix
+#ifndef NO_CRASHRPT
 #include "../crashrpt/include/crashrpt.h"
 #endif
 
@@ -149,7 +149,7 @@ bool crashCallback(void* crState)
 		wasRecording = true;
 	}
 
-#ifdef CRASHRPT
+#ifndef NO_CRASHRPT
 	AddFile("infolog.txt", "Spring information log");
 	AddFile("test.sdf", "Spring game demo");
 
