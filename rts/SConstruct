@@ -121,8 +121,7 @@ print nbBuiltObjects, " objects are already produced from a previous build (", n
 if debug: #to use debug, please use SCustomize file
 	env.Append(CPPFLAGS = ['-ggdb3','-D_DEBUG','-DDEBUG'])
 else:
-	env.Append(CPPFLAGS = [''])
-#	env.Append(CPPFLAGS = ['i-O2'])
+	env.Append(CPPFLAGS = ['-O2','-fomit-frame-pointer','-pipe','-s'])
 
 if platform == 'linux':
 	env.Append(CPPFLAGS = ['-pthread'])
@@ -244,3 +243,5 @@ env = conf.Finish()
 print "\nEverything seems OK, let's build"
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
 env.Program('spring', files,  LIBS=lib, CPPPATH=common_include_path)
+if not debug:
+	env.AddPostAction('spring',Action([['strip','spring']]))
