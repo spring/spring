@@ -14,7 +14,7 @@ CBubbleProjectile::CBubbleProjectile(float3 pos,float3 speed,float ttl,float sta
 	startSize(startSize),
 	size(startSize*0.4),
 	sizeExpansion(sizeExpansion),
-	ttl(ttl)
+	ttl((int)ttl)
 {
 	checkCol=false;
 }

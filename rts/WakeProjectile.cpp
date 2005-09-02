@@ -16,7 +16,7 @@ CWakeProjectile::CWakeProjectile(float3 pos,float3 speed,float startSize,float s
 : CProjectile(pos,speed,owner),
 	alpha(0),
 	alphaAdd(alpha/fadeupTime),
-	alphaAddTime(fadeupTime),
+	alphaAddTime((int)fadeupTime),
 	alphaFalloff(alphaFalloff),
 	size(startSize),
 	sizeExpansion(sizeExpansion)

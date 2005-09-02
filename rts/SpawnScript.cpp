@@ -115,7 +115,7 @@ void CSpawnScript::LoadSpawns(void)
 	while(file.FileExists() && !file.Eof()){
 
 		Spawn s;
-		s.frame=atof(LoadToken(file).c_str());
+		s.frame=atoi(LoadToken(file).c_str());
 		s.name=LoadToken(file).c_str();
 
 		if(s.name.empty())

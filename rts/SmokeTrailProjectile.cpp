@@ -22,7 +22,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& po
 	pos1(pos1),
 	pos2(pos2),
 	creationTime(gs->frameNum),
-	lifeTime(time),
+	lifeTime((int)time),
 	orgSize(size),
 	color(color),
 	dir1(dir1),

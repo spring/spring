@@ -17,7 +17,7 @@ CGroundFlash::CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float f
 	circleGrowth(circleSpeed),
 	circleSize(circleSpeed),
 	flashAge(0),
-	ttl(ttl),
+	ttl((int)ttl),
 	circleAlphaDec(circleAlpha/ttl),
 	flashAgeSpeed(1.0f/ttl),
 	pos(pos)
