@@ -96,8 +96,7 @@ if platform == 'linux':
 			BackgroundReader.cpp
 			ARB_vertex_program_extension.cpp
 			mmgr.cpp
-			multipath.cpp
-			estimater.cpp""")
+			multipath.cpp""")
 
 nbObjects=0
 nbBuiltObjects=0
