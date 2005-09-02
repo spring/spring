@@ -62,7 +62,7 @@ CMouseHandler::CMouseHandler()
 	lasty=200;
 	hide=false;
 
-	for(int a=0;a<5;a++){
+	for(int a=1;a<=5;a++){
 		buttons[a].pressed=false;
 		buttons[a].lastRelease=-20;
 		buttons[a].movement=0;
