@@ -12,7 +12,7 @@
 #define GLEW_STATIC
 
 #include "glew.h"
-#ifndef unix
+#ifdef _WIN32
 #include "wglew.h"
 #endif
 #include "float3.h"

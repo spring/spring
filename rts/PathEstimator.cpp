@@ -5,7 +5,7 @@
 #include "FileHandler.h"
 #include <math.h>
 #include <fstream>
-#ifdef unix
+#ifndef _WIN32
 #include <stdlib.h>
 #include <sys/stat.h>
 #endif

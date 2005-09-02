@@ -699,12 +699,7 @@ void CCobInstance::ShowFlare(int piece)
 
 	float size=unit->lastMuzzleFlameSize;
 
-#ifndef unix
-	//FIXME PORTING why this LOWORD?
-	new CMuzzleFlame(pos, unit->speed,dir, LOWORD(size));
-#else
-	new CMuzzleFlame(pos, unit->speed,dir, size);
-#endif 
+	new CMuzzleFlame(pos, unit->speed,dir, (Uint16)(((Uint32)size)&0xffff));
 #endif
 }
 

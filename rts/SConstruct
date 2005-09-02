@@ -2,7 +2,7 @@
 #architecture specific files / include pathes
 import sys
 windows_include_path=['include/windows']
-linux_include_path=['include/linux','include/unix','/usr/include','/usr/include/freetype2','/usr/include/GL']
+linux_include_path=['include/linux','/usr/include','/usr/include/freetype2','/usr/include/GL']
 common_include_path = ['.','gui','include']
 common_files=[]
 windows_files=[]

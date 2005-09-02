@@ -14,7 +14,7 @@
 #include "Ground.h"
 #include "ReadMap.h"
 #include "RegHandler.h"
-#ifndef unix
+#ifdef _WIN32
 #include <process.h>
 #endif
 #include "FileHandler.h"

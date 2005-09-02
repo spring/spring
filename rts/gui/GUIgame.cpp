@@ -262,7 +262,7 @@ void Selector::DrawFront(float maxSize, float sizeDiv)
 
 	if(sizeDiv!=0){
 		char c[40];
-#ifndef unix
+#ifdef _WIN32
  		itoa(pos1.distance2D(pos2)/sizeDiv,c,10);
 #else
  		snprintf(c,39,"%d",pos1.distance2D(pos2)/sizeDiv);
