@@ -10,9 +10,18 @@
 #include "RegHandler.h"
 #include "Camera.h"
 #include "WorldObject.h"
-#include "InfoConsole.h"
 #include "FileHandler.h"
 //#include "mmgr.h"
+
+/*
+ * OpenGL's float coordinates are expressed
+ * with a full cartesian system, while
+ * OpenAL's coordinates are expressed entirely
+ * in the range (0.0,1.0].  So the OpenGL coordinates
+ * need to be scaled down so they don't all seem to come
+ * from far away
+ */
+#define SCALEVERTEX(v)	((v)/10)
 
 CSound* sound;
 
@@ -53,7 +62,7 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	if (noSound)
 		return;
 	ALuint source;
-	ALfloat SourcePos[] = {p.x,p.y,p.z};
+	ALfloat SourcePos[] = {SCALEVERTEX(p.x),SCALEVERTEX(p.y),SCALEVERTEX(p.z)};
 	ALfloat SourceVel[] = {0.0,0.0,0.0};
 	alGenSources(1,&source);
 	alSourcei(source, AL_BUFFER, id);
@@ -77,9 +86,9 @@ void CSound::UpdateListener()
 {
 	if (noSound || !camera)
 		return;
-	ALfloat ListenerPos[] = {camera->pos.x,camera->pos.y,camera->pos.z};
+	ALfloat ListenerPos[] = {SCALEVERTEX(camera->pos.x),SCALEVERTEX(camera->pos.y),SCALEVERTEX(camera->pos.z)};
 	ALfloat ListenerVel[] = {0.0,0.0,0.0};
-	ALfloat ListenerOri[] = {camera->pos.x+camera->forward.x,camera->pos.y+camera->forward.y,camera->pos.z+camera->forward.z,camera->up.x,camera->up.y,camera->up.z};
+	ALfloat ListenerOri[] = {SCALEVERTEX(camera->forward.x),SCALEVERTEX(camera->forward.y),SCALEVERTEX(camera->forward.z),SCALEVERTEX(camera->up.x),SCALEVERTEX(camera->up.y),SCALEVERTEX(camera->up.z)};
 	alListenerfv(AL_POSITION,ListenerPos);
 	alListenerfv(AL_VELOCITY,ListenerVel);
 	alListenerfv(AL_ORIENTATION,ListenerOri);
@@ -100,7 +109,7 @@ ALuint CSound::LoadALBuffer(string path)
 		MessageBox(0,"Couldnt open wav file",path,0);
 		return 0;
 	}
-	alBufferData(buffer,AL_FORMAT_STEREO16,buf,file.FileSize(),22050);
+	alBufferData(buffer,AL_FORMAT_STEREO8,buf,file.FileSize(),11025);
 	delete[] buf;
 	return buffer;
 }
