@@ -12,7 +12,15 @@
 #endif // _MSC_VER > 1000
 
 #include <windows.h>
+#ifdef _WIN32
 #include <winsock2.h>
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#endif
 #include <iostream>
 #include <fstream>
 #include <deque>

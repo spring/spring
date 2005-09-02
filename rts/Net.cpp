@@ -26,6 +26,14 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+#ifndef _WIN32
+#define WSAGetLastError() errno
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+typedef struct hostent* LPHOSTENT;
+typedef struct in_addr* LPIN_ADDR;
+#endif
+
 #define NETWORK_VERSION 1
 
 CNet* net=0;
@@ -335,7 +343,7 @@ void CNet::Update(void)
 	if(connected)
 	while(true){
 		if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR){
-			if(WSAGetLastError()==WSAEWOULDBLOCK || WSAGetLastError()==WSAECONNRESET) 
+			if(WSAGetLastError()==EWOULDBLOCK || WSAGetLastError()==ECONNRESET) 
 				break;
 			char test[500];
 			sprintf(test,"Error receiving data. %i %d",(int)imServer,WSAGetLastError());
@@ -574,7 +582,7 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 	memcpy(&tempbuf[hsize],data,length);
 //	if(rand()&7)
 	if(sendto(mySocket,(char*)tempbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
-		if(WSAGetLastError()==WSAEWOULDBLOCK)
+		if(WSAGetLastError()==EWOULDBLOCK)
 			return;
 		char test[100];
 		sprintf(test,"Error sending data. %d",WSAGetLastError());

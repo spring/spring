@@ -1,7 +1,6 @@
 #ifndef __GAME_SERVER_H__
 #define __GAME_SERVER_H__
 
-#include <winsock2.h>
 #include <windows.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>

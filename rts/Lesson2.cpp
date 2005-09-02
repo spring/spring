@@ -7,7 +7,6 @@
  */
 
 #include "StdAfx.h"
-#include <winsock2.h>
 #include <windows.h>		// Header File For Windows
 #include "myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
