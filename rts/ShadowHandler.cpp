@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "ShadowHandler.h"
 #include "myGL.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "Camera.h"
 #include "UnitDrawer.h"
 #include "BaseGroundDrawer.h"
@@ -14,19 +14,9 @@
 
 CShadowHandler* shadowHandler=0;
 
-#ifndef NO_SHADOWS
-extern HDC hDC;
-extern HGLRC hRC;
-extern HWND hWnd;
-#endif //NO_SHADOWS
-
 CShadowHandler::CShadowHandler(void)
 {
 #ifndef NO_SHADOWS
-	hPBuffer=0;
-	hDCPBuffer=0;
-	hRCPBuffer=0;
-	
 	drawShadows=false;
 	inShadowPass=false;
 	showShadowMap=false;
@@ -34,15 +24,15 @@ CShadowHandler::CShadowHandler(void)
 	useFPShadows=false;
 	copyDepthTexture=true;
 	
-	if(!regHandler.GetInt("Shadows",0))
+	if(!configHandler.GetInt("Shadows",0))
 		return;
 
 	if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
 		info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
 	}
 
-	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && WGLEW_ARB_pbuffer && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
-		if(GLEW_ARB_shadow && GL_ARB_depth_texture && WGLEW_ARB_pbuffer && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
+	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && GL_EXT_framebuffer_object && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
+		if(GLEW_ARB_shadow && GL_ARB_depth_texture && GL_EXT_framebuffer_object && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			info->AddLine("Using ARB_fragment_program_shadow");
 			useFPShadows=true;
 		} else {
@@ -60,12 +50,14 @@ CShadowHandler::CShadowHandler(void)
 		}
 	}
 
+#ifdef _WIN32
 	if(WGLEW_NV_render_depth_texture){
 		info->AddLine("Using NV_render_depth_texture");
 		copyDepthTexture=false;
 	}
+#endif
 	drawShadows=true;
-	shadowMapSize=regHandler.GetInt("ShadowMapSize",2048);
+	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
 	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -75,7 +67,7 @@ CShadowHandler::CShadowHandler(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	CreatePBuffer();
+	CreateFramebuffer();
 #endif //NO_SHADOWS
 }
 
@@ -84,18 +76,10 @@ CShadowHandler::~CShadowHandler(void)
 #ifndef NO_SHADOWS
 	if(drawShadows)
 		glDeleteTextures(1,&shadowTexture);
+	glDeleteFramebuffersEXT(1,&g_frameBuffer);
+	glDeleteRenderbuffersEXT(1,&g_depthRenderBuffer);
 
-	if( hPBuffer != NULL ){
-		wglReleasePbufferDCARB( hPBuffer, hDCPBuffer );
-		wglDestroyPbufferARB( hPBuffer );
-		hPBuffer=0;
-	}
-	if( hDCPBuffer != NULL )
-	{
-		ReleaseDC( hWnd, hDCPBuffer );
-		hDCPBuffer = NULL;
-	}
-	wglMakeCurrent( hDC, hRC );
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 #endif
 }
 
@@ -103,6 +87,7 @@ void CShadowHandler::CreateShadows(void)
 {
 #ifndef NO_SHADOWS
 	if(!copyDepthTexture && !firstDraw){
+#ifdef _WIN32
 		glBindTexture(GL_TEXTURE_2D, shadowTexture);
 		if( wglReleaseTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
 		{
@@ -110,14 +95,12 @@ void CShadowHandler::CreateShadows(void)
 				"ERROR",MB_OK|MB_ICONEXCLAMATION);
 			exit(-1);
 		}
+#endif
 	}
 
-	if( wglMakeCurrent( hDCPBuffer, hRCPBuffer) == FALSE )
-	{
-		MessageBox(NULL,"Could not make the p-buffer's context current!",
-			"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		exit(-1);
-	}/**/
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frameBuffer);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_TEXTURE_2D,shadowTexture,0);
+	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,g_depthRenderBuffer);
 
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);
@@ -211,20 +194,17 @@ void CShadowHandler::CreateShadows(void)
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
 	}
 
-	if( wglMakeCurrent( hDC, hRC ) == FALSE )
-	{
-		MessageBox(NULL,"Could not make the window's context current!",
-			"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		exit(-1);
-	}
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 	glViewport(0,0,gu->screenx,gu->screeny);
 	if(!copyDepthTexture){
+#ifdef _WIN32
 		if( wglBindTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
 		{
 			MessageBox(NULL,"Could not bind p-buffer to render texture!",
 				"ERROR",MB_OK|MB_ICONEXCLAMATION);
 			exit(-1);
 		}
+#endif
 	}
 #endif //NO_SHADOWS
 }
@@ -238,12 +218,6 @@ void CShadowHandler::DrawShadowTex(void)
 	glColor3f(1,1,1);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,shadowTexture);
-/*	if( wglBindTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
-	{
-		MessageBox(NULL,"Could not bind p-buffer to render texture!",
-			"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		exit(-1);
-	}/**/
 
 	glBegin(GL_QUADS);
 
@@ -260,83 +234,15 @@ void CShadowHandler::DrawShadowTex(void)
 	glVertex3f(0.5,0,1);
 	glEnd();
 
-/*	if( wglReleaseTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
-	{
-		MessageBox(NULL,"Could not release p-buffer from render texture!",
-			"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		exit(-1);
-	}/**/
 #endif
 }
 extern GLuint		PixelFormat;
-void CShadowHandler::CreatePBuffer(void)
+void CShadowHandler::CreateFramebuffer(void)
 {
-#ifndef NO_SHADOWS
-	//
-	// Define the minimum pixel format requirements we will need for our 
-	// p-buffer. A p-buffer is just like a frame buffer, it can have a depth 
-	// buffer associated with it and it can be double buffered.
-	//
-/*
-	int pf_attr[] =
-	{
-		WGL_SUPPORT_OPENGL_ARB, TRUE,       // P-buffer will be used with OpenGL
-			WGL_DRAW_TO_PBUFFER_ARB, TRUE,      // Enable render to p-buffer
-			WGL_BIND_TO_TEXTURE_RGBA_ARB, TRUE, // P-buffer will be used as a texture
-			WGL_DOUBLE_BUFFER_ARB, FALSE,       // We don't require double buffering
-			0                                   // Zero terminates the list
-	};
-
-	unsigned int count = 0;
-	int pixelFormat;
-
-	if( !wglChoosePixelFormatARB( hDC, pf_attr, NULL, 1, &pixelFormat, &count ) )
-	{
-		MessageBox(NULL,"pbuffer creation error:  wglChoosePixelFormatARB() failed.",
-			"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		exit(-1);
-	}
-
-	if( count <= 0 )
-	{
-		MessageBox(NULL,"pbuffer creation error:  Couldn't find a suitable pixel format.",
-			"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		exit(-1);
-	}
-*/
-	//
-	// Set some p-buffer attributes so that we can use this p-buffer as a
-	// 2D RGBA texture target.
-	//
-
-	int pb_attr[16] = 
-	{
-			WGL_TEXTURE_FORMAT_ARB, WGL_TEXTURE_RGBA_ARB,                // Our p-buffer will have a texture format of RGBA
-			WGL_TEXTURE_TARGET_ARB, WGL_TEXTURE_2D_ARB,                  // Of texture target will be GL_TEXTURE_2D
-			0                                                            // Zero terminates the list
-	};
-	if(!copyDepthTexture){
-		pb_attr[4]=WGL_DEPTH_TEXTURE_FORMAT_NV;												//add nvidia depth texture support if supported
-		pb_attr[5]=WGL_TEXTURE_DEPTH_COMPONENT_NV;
-		pb_attr[6]=0;
-	}
-
-	//
-	// Create the p-buffer...
-	//
-
-	hPBuffer = wglCreatePbufferARB( hDC, PixelFormat, shadowMapSize, shadowMapSize, pb_attr );
-	hDCPBuffer      = wglGetPbufferDCARB( hPBuffer );
-	hRCPBuffer=hRC;//wglGetCurrentContext(); 
-	//hRCPBuffer      = wglCreateContext( hDCPBuffer );
-
-	if( !hPBuffer )
-	{
-		MessageBox(NULL,"pbuffer creation error: wglCreatePbufferARB() failed!",
-			"ERROR",MB_OK|MB_ICONEXCLAMATION);
-		exit(-1);
-	}
-#endif //NO_SHADOWS
+	glGenFramebuffersEXT(1,&g_frameBuffer);
+	glGenRenderbuffersEXT(1,&g_depthRenderBuffer);
+	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,g_depthRenderBuffer);
+	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,GL_DEPTH_COMPONENT24,shadowMapSize,shadowMapSize);
 }
 
 #ifndef NO_SHADOWS
