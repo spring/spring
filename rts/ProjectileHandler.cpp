@@ -486,7 +486,6 @@ void CProjectileHandler::Draw(bool drawReflection)
 
 void CProjectileHandler::DrawShadowPass(void)
 {
-#ifndef NO_SHADOWS
 	distlist.clear();
 	Projectile_List::iterator psi;
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, projectileShadowVP );
@@ -524,7 +523,6 @@ void CProjectileHandler::DrawShadowPass(void)
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 	glDisable( GL_VERTEX_PROGRAM_ARB );
-#endif
 }
 
 void CProjectileHandler::AddProjectile(CProjectile* p)

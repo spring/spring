@@ -16,7 +16,6 @@ CShadowHandler* shadowHandler=0;
 
 CShadowHandler::CShadowHandler(void)
 {
-#ifndef NO_SHADOWS
 	drawShadows=false;
 	inShadowPass=false;
 	showShadowMap=false;
@@ -68,24 +67,20 @@ CShadowHandler::CShadowHandler(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	CreateFramebuffer();
-#endif //NO_SHADOWS
 }
 
 CShadowHandler::~CShadowHandler(void)
 {
-#ifndef NO_SHADOWS
 	if(drawShadows)
 		glDeleteTextures(1,&shadowTexture);
 	glDeleteFramebuffersEXT(1,&g_frameBuffer);
 	glDeleteRenderbuffersEXT(1,&g_depthRenderBuffer);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
-#endif
 }
 
 void CShadowHandler::CreateShadows(void)
 {
-#ifndef NO_SHADOWS
 	if(!copyDepthTexture && !firstDraw){
 #ifdef _WIN32
 		glBindTexture(GL_TEXTURE_2D, shadowTexture);
@@ -206,13 +201,11 @@ void CShadowHandler::CreateShadows(void)
 		}
 #endif
 	}
-#endif //NO_SHADOWS
 }
 
 
 void CShadowHandler::DrawShadowTex(void)
 {
-#ifndef NO_SHADOWS
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glColor3f(1,1,1);
@@ -233,8 +226,6 @@ void CShadowHandler::DrawShadowTex(void)
 	glTexCoord2f(1,0);
 	glVertex3f(0.5,0,1);
 	glEnd();
-
-#endif
 }
 extern GLuint		PixelFormat;
 void CShadowHandler::CreateFramebuffer(void)
@@ -245,7 +236,6 @@ void CShadowHandler::CreateFramebuffer(void)
 	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,GL_DEPTH_COMPONENT24,shadowMapSize,shadowMapSize);
 }
 
-#ifndef NO_SHADOWS
 void CShadowHandler::CalcMinMaxView(void)
 {
 	left.clear();
@@ -323,7 +313,6 @@ void CShadowHandler::CalcMinMaxView(void)
 		y2=5000;
 	}
 }
-#endif //NO_SHADOWS
 
 //maybe standardize all these things in one place sometime (and maybe one day i should try to understand how i made them work)
 void CShadowHandler::GetFrustumSide(float3& side,bool upside)

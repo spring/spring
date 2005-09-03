@@ -30,7 +30,6 @@ opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1
 
 #porting options - optionnal in a first phase
 opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
-opts.Add('disable_shadows', 'Set to no to turn on shadows rendering', 1)
 opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
 opts.Add('disable_crashrpt', 'Set to no to turn on crashrpt code', 1)
 
@@ -57,8 +56,6 @@ else:
 
 if env.get('disable_crashrpt'):
 	defines+=['NO_CRASHRPT']
-if env.get('disable_shadows'):
-	defines+=['NO_SHADOWS']
 if env.get('disable_hpi'):
 	defines+=['NO_HPI']
 if env.get('disable_clipboard'):
