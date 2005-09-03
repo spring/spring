@@ -14,6 +14,12 @@
 
 CShadowHandler* shadowHandler=0;
 
+#ifdef _WIN32
+extern HDC hDC;
+extern HGLRC hRC;
+extern HWND hWnd;
+#endif
+
 CShadowHandler::CShadowHandler(void)
 {
 	drawShadows=false;
@@ -22,6 +28,7 @@ CShadowHandler::CShadowHandler(void)
 	firstDraw=true;
 	useFPShadows=false;
 	copyDepthTexture=true;
+	fbo = false;
 	
 	if(!configHandler.GetInt("Shadows",0))
 		return;
@@ -30,8 +37,8 @@ CShadowHandler::CShadowHandler(void)
 		info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
 	}
 
-	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && GL_EXT_framebuffer_object && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
-		if(GLEW_ARB_shadow && GL_ARB_depth_texture && GL_EXT_framebuffer_object && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
+	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
+		if(GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			info->AddLine("Using ARB_fragment_program_shadow");
 			useFPShadows=true;
 		} else {
@@ -47,6 +54,21 @@ CShadowHandler::CShadowHandler(void)
 		} else {
 			info->AddLine("You are missing the extension ARB_shadow_ambient, this will make shadows darker than they should be");
 		}
+	}
+
+	if (0&&GL_EXT_framebuffer_object)
+		fbo = true;
+	else {
+#ifdef _WIN32
+		if (!WGLEW_ARB_pbuffer)
+#else
+		g_pDisplay = glXGetCurrentDisplay();
+		g_window = glXGetCurrentDrawable();
+    		int errorBase;
+		int eventBase;
+    		if(!glXQueryExtension(g_pDisplay, &errorBase, &eventBase))
+#endif
+			return;
 	}
 
 #ifdef _WIN32
@@ -73,10 +95,31 @@ CShadowHandler::~CShadowHandler(void)
 {
 	if(drawShadows)
 		glDeleteTextures(1,&shadowTexture);
-	glDeleteFramebuffersEXT(1,&g_frameBuffer);
-	glDeleteRenderbuffersEXT(1,&g_depthRenderBuffer);
-
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+	if (fbo) {
+		glDeleteFramebuffersEXT(1,&g_frameBuffer);
+		glDeleteRenderbuffersEXT(1,&g_depthRenderBuffer);
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+	} else {
+#ifdef _WIN32
+		if( hPBuffer != NULL ){
+			wglReleasePbufferDCARB( hPBuffer, hDCPBuffer );
+			wglDestroyPbufferARB( hPBuffer );
+			hPBuffer=0;
+		}
+		if( hDCPBuffer != NULL )
+		{
+			ReleaseDC( hWnd, hDCPBuffer );
+			hDCPBuffer = NULL;
+		}
+		wglMakeCurrent( hDC, hRC );
+#else
+		glXDestroyContext(g_pDisplay, g_pbufferContext);
+		glXDestroyPbuffer(g_pDisplay, g_pbuffer);
+		if (g_windowContext != NULL) {
+			glXMakeCurrent(g_pDisplay, g_window, g_windowContext);
+		}
+#endif
+	}
 }
 
 void CShadowHandler::CreateShadows(void)
@@ -93,9 +136,22 @@ void CShadowHandler::CreateShadows(void)
 #endif
 	}
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frameBuffer);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_TEXTURE_2D,shadowTexture,0);
-	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,g_depthRenderBuffer);
+	if (fbo) {
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frameBuffer);
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_STENCIL_ATTACHMENT_EXT,GL_TEXTURE_2D,shadowTexture,0);
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,g_depthRenderBuffer);
+	} else {
+#ifdef _WIN32
+		if( wglMakeCurrent( hDCPBuffer, hRCPBuffer) == FALSE )
+		{
+			MessageBox(NULL,"Could not make the p-buffer's context current!",
+				"ERROR",MB_OK|MB_ICONEXCLAMATION);
+			exit(-1);
+		}
+#else
+		glXMakeCurrent(g_pDisplay, g_pbuffer, g_pbufferContext);
+#endif
+	}
 
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);
@@ -189,7 +245,20 @@ void CShadowHandler::CreateShadows(void)
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
 	}
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+	if (fbo) {
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+	} else {
+#ifdef _WIN32
+		if( wglMakeCurrent( hDC, hRC ) == FALSE )
+		{
+			MessageBox(NULL,"Could not make the window's context current!",
+				"ERROR",MB_OK|MB_ICONEXCLAMATION);
+			exit(-1);
+		}
+#else
+		glXMakeCurrent(g_pDisplay, g_window, g_windowContext);
+#endif
+	}
 	glViewport(0,0,gu->screenx,gu->screeny);
 	if(!copyDepthTexture){
 #ifdef _WIN32
@@ -230,10 +299,64 @@ void CShadowHandler::DrawShadowTex(void)
 extern GLuint		PixelFormat;
 void CShadowHandler::CreateFramebuffer(void)
 {
-	glGenFramebuffersEXT(1,&g_frameBuffer);
-	glGenRenderbuffersEXT(1,&g_depthRenderBuffer);
-	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,g_depthRenderBuffer);
-	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,GL_DEPTH_COMPONENT24,shadowMapSize,shadowMapSize);
+	if (fbo) {
+		glGenFramebuffersEXT(1,&g_frameBuffer);
+		glGenRenderbuffersEXT(1,&g_depthRenderBuffer);
+		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, g_depthRenderBuffer);
+		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, shadowMapSize, shadowMapSize);
+	} else {
+#ifdef _WIN32
+		int pb_attr[16] = 
+		{
+				WGL_TEXTURE_FORMAT_ARB, WGL_TEXTURE_RGBA_ARB,                // Our p-buffer will have a texture format of RGBA
+				WGL_TEXTURE_TARGET_ARB, WGL_TEXTURE_2D_ARB,                  // Of texture target will be GL_TEXTURE_2D
+				0                                                            // Zero terminates the list
+		};
+		if(!copyDepthTexture){
+			pb_attr[4]=WGL_DEPTH_TEXTURE_FORMAT_NV;												//add nvidia depth texture support if supported
+			pb_attr[5]=WGL_TEXTURE_DEPTH_COMPONENT_NV;
+			pb_attr[6]=0;
+		}
+
+		hPBuffer = wglCreatePbufferARB( hDC, PixelFormat, shadowMapSize, shadowMapSize, pb_attr );
+		hDCPBuffer      = wglGetPbufferDCARB( hPBuffer );
+		hRCPBuffer=hRC;//wglGetCurrentContext(); 
+		//hRCPBuffer      = wglCreateContext( hDCPBuffer );
+
+		if( !hPBuffer )
+		{
+			MessageBox(NULL,"pbuffer creation error: wglCreatePbufferARB() failed!",
+				"ERROR",MB_OK|MB_ICONEXCLAMATION);
+			exit(-1);
+		}
+#else
+		int attrib[] =
+		{
+			GLX_DOUBLEBUFFER, False,
+			GLX_RENDER_TYPE, GLX_RGBA_BIT,
+			GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT|GLX_WINDOW_BIT,
+			None
+		};
+		int pbufAttrib[] =
+		{
+			GLX_PBUFFER_WIDTH, shadowMapSize,
+			GLX_PBUFFER_HEIGHT, shadowMapSize,
+			GLX_LARGEST_PBUFFER, False,
+			None
+		};
+		g_windowContext = glXGetCurrentContext();
+		int scrnum = DefaultScreen(g_pDisplay);
+		GLXFBConfig *fbconfig;
+		XVisualInfo *visinfo;
+		int nitems;
+		fbconfig = glXChooseFBConfig(g_pDisplay,scrnum,attrib,&nitems);
+		g_pbuffer = glXCreatePbuffer(g_pDisplay, fbconfig[0], pbufAttrib);
+		visinfo = glXGetVisualFromFBConfig(g_pDisplay, fbconfig[0]);
+		g_pbufferContext = glXCreateContext(g_pDisplay, visinfo, g_windowContext,GL_TRUE);
+		XFree(fbconfig);
+		XFree(visinfo);
+#endif
+	}
 }
 
 void CShadowHandler::CalcMinMaxView(void)

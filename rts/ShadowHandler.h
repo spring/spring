@@ -5,6 +5,9 @@
 #include "Matrix44f.h"
 #include "myGL.h"
 #include <vector>
+#ifndef _WIN32
+#include <GL/glx.h>
+#endif
 
 class CShadowHandler
 {
@@ -33,6 +36,19 @@ public:
 	void CreateFramebuffer(void);
 	void DrawShadowTex(void);
 	void CalcMinMaxView(void);
+
+	bool fbo;
+#ifdef _WIN32
+	HPBUFFERARB hPBuffer; // Handle to a p-buffer.
+	HDC         hDCPBuffer;      // Handle to a device context.
+	HGLRC       hRCPBuffer;      // Handle to a GL rendering context.
+#else
+	Display *g_pDisplay;
+	Window g_window;
+	GLXContext g_windowContext;
+	GLXContext g_pbufferContext;
+	GLXPbuffer g_pbuffer;
+#endif
 
 protected:
 	void GetFrustumSide(float3& side,bool upside);
