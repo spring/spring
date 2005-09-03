@@ -105,7 +105,7 @@ void CglFont::init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase)
 	glEndList();
 }
 
-void CglFont::printstring(const char *text)
+void CglFont::printstring(const char *text, int *sh)
 {
 	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
 	glMatrixMode(GL_MODELVIEW);
@@ -113,21 +113,26 @@ void CglFont::printstring(const char *text)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	float modelviewmatrix[16];	
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelviewmatrix);
 	glPushMatrix();
 	glMultMatrixf(modelviewmatrix);
 	int previous = 0;
+	int shift = 0;
 	for (int i = 0; i < strlen(text); i++) {
 		FT_Vector delta;
 		FT_Get_Kerning(face,FT_Get_Char_Index(face,previous),FT_Get_Char_Index(face,text[i]),FT_KERNING_UNSCALED,&delta);
 		glTranslatef(delta.x>>6,0,0);
+		shift += delta.x>>6;
 		glCallList(text[i]+listbase);
 		previous = text[i];
+		shift += charWidths[text[i]];
 	}
+	if (sh)
+		*sh = shift;
 	glPopMatrix();
-	glPopAttrib();		
+	glPopAttrib();
 }
 
 void CglFont::glPrint(const char *fmt, ...)
@@ -159,13 +164,15 @@ void CglFont::glPrintColor(const char* fmt, ...)
 	size_t lf;
 	string temp=text;
 	while((lf=temp.find("\xff"))!=string::npos) {
-		printstring(temp.substr(0, lf).c_str());
+		int shift;
+		printstring(temp.substr(0, lf).c_str(),&shift);
 		temp=temp.substr(lf, string::npos);
 		float r=((unsigned char)temp[1])/255.0;
 		float g=((unsigned char)temp[2])/255.0;
 		float b=((unsigned char)temp[3])/255.0;
 		glColor3f(r, g, b);
 		temp=temp.substr(4, string::npos);
+		glTranslatef(shift>>5,0,0);
 	}
 	printstring(temp.c_str());
 	glPopMatrix();

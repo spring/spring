@@ -16,7 +16,7 @@ public:
 	~CglFont();
 	int *charWidths;
 private:
-	void printstring(const char *text);
+	void printstring(const char *text,int *sh = NULL);
 	void init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase);
 	void WorldChar(char c);
 	int chars;
