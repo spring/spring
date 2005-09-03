@@ -163,7 +163,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 {
 	INIT_SYNCIFY;
 	bool	done=false;								// Bool Variable To Exit Loop
-#ifdef _WIN32
+#ifdef NO_CRASHRPT
 	// Initialize crash reporting
 	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
