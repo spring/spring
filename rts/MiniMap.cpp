@@ -390,13 +390,13 @@ bool CMiniMap::MousePress(int x, int y, int button)
 		return false;
 
 	if((x>xpos) && (x<xpos+width) && (y>gu->screeny-ypos-height) && (y<gu->screeny-ypos)){
-		if(button==0){
+		if(button==SDL_BUTTON_LEFT){
 			if(x>xpos+width-10 && y>gu->screeny-ypos-10)
 				mouseResize=true;
 			else if (x<xpos+10 && y<gu->screeny-ypos-height+10)
 				mouseMove=true;
 			return true;
-		} else if(button==1){
+		} else if(button==SDL_BUTTON_RIGHT){
 			MoveView(x,y);
 			mouseLook=true;
 			return true;
@@ -435,7 +435,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 		mouseLook=false;
 		return;
 	}
-	if(button==0){
+	if(button==SDL_BUTTON_LEFT){
 		if(x>xpos+width-10 && y<gu->screeny-ypos-height+10){
 			if(maximized){
 				maximized=false;

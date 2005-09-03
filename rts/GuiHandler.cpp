@@ -323,7 +323,7 @@ void CGuiHandler::DrawButtons()
 		if(mouseIcon==nr || nr ==inCommand){
 			glBegin(GL_QUADS);
 
-			if(mouse->buttons[0].pressed)
+			if(mouse->buttons[SDL_BUTTON_LEFT].pressed)
 				glColor4f(0.5,0,0,0.2f);
 			else if (nr == inCommand)
 				glColor4f(0.5,0,0,0.8f);
@@ -420,7 +420,7 @@ void CGuiHandler::DrawButtons()
 			mouse->cursorText=commands[guihandler->inCommand].name;
 		} else {
 			int defcmd;
-			if(mouse->buttons[1].pressed && mouse->activeReceiver==this)
+			if(mouse->buttons[SDL_BUTTON_RIGHT].pressed && mouse->activeReceiver==this)
 				defcmd=defaultCmdMemory;
 			else
 				defcmd=GetDefaultCommand(mouse->lastx,mouse->lasty);
@@ -447,7 +447,7 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 		activeMousePress=true;
 		return true;
 	}
-	if(button==1){
+	if(button==SDL_BUTTON_RIGHT){
 		activeMousePress=true;
 		defaultCmdMemory=GetDefaultCommand(x,y);
 
@@ -476,7 +476,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 //	(*info) << x << " " << y << " " << mouse->lastx << " " << mouse->lasty << "\n";
 
-	if (button == 1 && icon==-1) { // right click -> default cmd
+	if (button == SDL_BUTTON_RIGHT && icon==-1) { // right click -> default cmd
 		inCommand=defaultCmdMemory;//GetDefaultCommand(x,y);
 		defaultCmdMemory=0;
 	} 
@@ -490,7 +490,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 			case CMDTYPE_ICON:{
 				Command c;
 				c.id=commands[icon].id;
-				CreateOptions(c,!!button);
+				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
 				break;}
@@ -506,7 +506,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				Command c;
 				c.id=commands[icon].id;
 				c.params.push_back(newMode);
-				CreateOptions(c,!!button);
+				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
 				break;}
@@ -647,13 +647,13 @@ void CGuiHandler::DrawMapStuff(void)
 {
 	if(activeMousePress){
 		int cc=-1;
-		int button=0;
+		int button=SDL_BUTTON_LEFT;
 		if(inCommand!=-1){
 			cc=inCommand;
 		} else {
-			if(mouse->buttons[1].pressed && mouse->activeReceiver==this){
+			if(mouse->buttons[SDL_BUTTON_RIGHT].pressed && mouse->activeReceiver==this){
 				cc=defaultCmdMemory;//GetDefaultCommand(mouse->lastx,mouse->lasty);
-				button=1;
+				button=SDL_BUTTON_RIGHT;
 			}
 		}
 
@@ -703,9 +703,9 @@ void CGuiHandler::DrawMapStuff(void)
 			if(unitdef){
 				float3 pos=camera->pos+mouse->dir*dist;
 				std::vector<float3> buildPos;
-				if(keys[SDLK_LSHIFT] && mouse->buttons[0].pressed){
-					float dist=ground->LineGroundCol(mouse->buttons[0].camPos,mouse->buttons[0].camPos+mouse->buttons[0].dir*9000);
-					float3 pos2=mouse->buttons[0].camPos+mouse->buttons[0].dir*dist;
+				if(keys[SDLK_LSHIFT] && mouse->buttons[SDL_BUTTON_LEFT].pressed){
+					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*9000);
+					float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
 					buildPos=GetBuildPos(pos2,pos,unitdef);
 				} else {
 					buildPos=GetBuildPos(pos,pos,unitdef);
@@ -1016,7 +1016,7 @@ void CGuiHandler::MenuChoice(string s)
 
 void CGuiHandler::FinishCommand(int button)
 {
-	if(keys[SDLK_LSHIFT] && button==0){
+	if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
 		needShift=true;
 	} else {
 		if(showingMetal){
@@ -1088,19 +1088,19 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 	defaultRet.id=CMD_STOP;
 
 	int button;
-	if(buttonHint>=0)
+	if(buttonHint>=SDL_BUTTON_LEFT)
 		button=buttonHint;
 	else if(inCommand!=-1)
-		button=0;
-	else if(mouse->buttons[1].pressed)
-		button=1;
+		button=SDL_BUTTON_LEFT;
+	else if(mouse->buttons[SDL_BUTTON_RIGHT].pressed)
+		button=SDL_BUTTON_RIGHT;
 	else
 		return defaultRet;
 
 	int tempInCommand=inCommand;
 
-	if (button == 1 && preview) { // right click -> default cmd, in preview we might not have default cmd memory set
-		if(mouse->buttons[1].pressed)
+	if (button == SDL_BUTTON_RIGHT && preview) { // right click -> default cmd, in preview we might not have default cmd memory set
+		if(mouse->buttons[SDL_BUTTON_RIGHT].pressed)
 			tempInCommand=defaultCmdMemory;
 		else
 			tempInCommand=GetDefaultCommand(mousex,mousey);
@@ -1112,8 +1112,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		case CMDTYPE_ICON:{
 			Command c;
 			c.id=commands[tempInCommand].id;
-			CreateOptions(c,!!button);
-			if(!button && !preview)
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+			if(button==SDL_BUTTON_LEFT && !preview)
 				info->AddLine("CMDTYPE_ICON left button press in incommand test? This shouldnt happen");
 			return c;}
 
@@ -1128,7 +1128,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
-			CreateOptions(c,!!button);
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_BUILDING:{
@@ -1144,9 +1144,9 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			}
 			float3 pos=camera->pos+mouse->dir*dist;
 			std::vector<float3> buildPos;
-			if(keys[SDLK_LSHIFT] && button==0){
-				float dist=ground->LineGroundCol(mouse->buttons[0].camPos,mouse->buttons[0].camPos+mouse->buttons[0].dir*9000);
-				float3 pos2=mouse->buttons[0].camPos+mouse->buttons[0].dir*dist;
+			if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
+				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*9000);
+				float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
 				buildPos=GetBuildPos(pos2,pos,unitdef);
 			} else {
 				buildPos=GetBuildPos(pos,pos,unitdef);
@@ -1161,7 +1161,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
-				CreateOptions(c,!!button);
+				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				if(!preview)
 					selectedUnits.GiveCommand(c);
 			}
@@ -1171,7 +1171,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
-			CreateOptions(c,!!button);
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT: {
@@ -1184,7 +1184,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				return defaultRet;
 			}
 			c.params.push_back(unit->id);
-			CreateOptions(c,!!button);
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 		
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
@@ -1206,7 +1206,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
 			}
-			CreateOptions(c,!!button);
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_FRONT:{
@@ -1237,7 +1237,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(pos2.x);
 			c.params.push_back(pos2.y);
 			c.params.push_back(pos2.z);
-			CreateOptions(c,!!button);
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_AREA:
@@ -1287,7 +1287,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				float3 pos2=camera->pos+mouse->dir*dist;
 				c.params.push_back(min(maxRadius,pos.distance2D(pos2)));
 			}
-			CreateOptions(c,!!button);
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		default:

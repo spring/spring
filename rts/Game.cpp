@@ -1147,8 +1147,8 @@ void CGame::SimFrame()
 		if(camMove[1]) status|=2;
 		if(camMove[2]) status|=4;
 		if(camMove[3]) status|=8;
-		if(mouse->buttons[0].pressed) status|=16;
-		if(mouse->buttons[1].pressed) status|=32;
+		if(mouse->buttons[SDL_BUTTON_LEFT].pressed) status|=16;
+		if(mouse->buttons[SDL_BUTTON_RIGHT].pressed) status|=32;
 		shortint2 hp=GetHAndPFromVector(camera->forward);
 
 		if(hp.x!=oldHeading || hp.y!=oldPitch || oldStatus!=status){

@@ -206,7 +206,7 @@ void CInMapDraw::MousePress(int x, int y, int button)
 		return;
 
 	switch(button){
-	case 0:
+	case SDL_BUTTON_LEFT:
 		if(lastLeftClickTime>gu->gameTime-0.3){
 			waitingPoint=pos;
 			game->userWriting=true;
@@ -216,10 +216,10 @@ void CInMapDraw::MousePress(int x, int y, int button)
 		}
 		lastLeftClickTime=gu->gameTime;
 		break;
-	case 1:
+	case SDL_BUTTON_RIGHT:
 		ErasePos(pos);
 		break;
-	case 2:{
+	case SDL_BUTTON_MIDDLE:{
 		CreatePoint(pos,"");
 		break;}
 	}
@@ -237,12 +237,12 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 	if(pos.x<0)
 		return;
 
-	if(mouse->buttons[0].pressed && lastLineTime<gu->gameTime-0.05){
+	if(mouse->buttons[SDL_BUTTON_LEFT].pressed && lastLineTime<gu->gameTime-0.05){
 		AddLine(pos,lastPos);
 		lastLineTime=gu->gameTime;
 		lastPos=pos;
 	}
-	if(mouse->buttons[1].pressed)
+	if(mouse->buttons[SDL_BUTTON_RIGHT].pressed)
 		ErasePos(pos);
 
 }
