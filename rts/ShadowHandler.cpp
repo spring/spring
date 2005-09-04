@@ -22,6 +22,11 @@ extern HWND hWnd;
 
 CShadowHandler::CShadowHandler(void)
 {
+#ifdef _WIN32
+	hPBuffer=0;
+	hDCPBuffer=0;
+	hRCPBuffer=0;
+#endif
 	drawShadows=false;
 	inShadowPass=false;
 	showShadowMap=false;
