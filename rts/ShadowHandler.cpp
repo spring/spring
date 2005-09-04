@@ -149,7 +149,7 @@ void CShadowHandler::CreateShadows(void)
 			exit(-1);
 		}
 #else
-		glXMakeCurrent(g_pDisplay, g_pbuffer, g_pbufferContext);
+		//glXMakeCurrent(g_pDisplay, g_pbuffer, g_pbufferContext);
 #endif
 	}
 
