@@ -142,9 +142,7 @@ bool CGameServer::Update(void)
 	if (game->playing){
 		Uint64 currentFrame;
 		QueryPerformanceCounter(&currentFrame);
-		// FIXME: Buggy, yields negative value
-		//double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;
-		double timeElapsed = 2.;
+		double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		info->AddLine("float value is %f",timeElapsed);
