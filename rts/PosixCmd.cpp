@@ -35,7 +35,10 @@ void PosixCmd::parselongopt(std::string arg)
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
 		if (mainpart == it->longopt) {
 			it->given = true;
-			if (it->parmtype != OPTPARM_NONE) {
+			if (it->parmtype == OPTPARM_NONE) {
+				if (arg.size() > mainpart.size()+2)
+					throw invalidoption(arg);
+			} else {
 				std::string param = "";
 				if (arg.size() > mainpart.size()+3) {
 					param += arg.substr(ind+1);
@@ -48,6 +51,7 @@ void PosixCmd::parselongopt(std::string arg)
 			return;
 		}
 	}
+	throw invalidoption(arg);
 }
 
 /**
@@ -61,11 +65,17 @@ void PosixCmd::parse()
 		if (!arg.empty() && arg.at(0) == '-') {
 			if (arg.size() > 2 && arg.at(1) == '-')
 				parselongopt(arg);
-			else {
+			else if (arg.size() >=2) {
+				bool valid = false;
 				for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
 					if (arg.at(1) == it->shortopt) {
-						it->given = true;
-						if (it->parmtype != OPTPARM_NONE) {
+						if (it->parmtype == OPTPARM_NONE) {
+							if (arg.size() <= 2)
+								it->given = true;
+							else
+								throw invalidoption(arg);
+						} else {
+							it->given = true;
 							std::string next;
 							if (arg.size() > 2) {
 								next = arg.substr(2);
@@ -77,10 +87,14 @@ void PosixCmd::parse()
 							else
 								strcpy(it->ret.stringret,next.c_str());
 						}
-						return;
+						valid = true;
+						break;
 					}
 				}
-			}
+				if (!valid)
+					throw invalidoption(arg);
+			} else
+				throw invalidoption(arg);
 		}
 	}
 }
@@ -116,4 +130,17 @@ void PosixCmd::usage(std::string program, std::string version)
 		std::cout << "\t\t" << it->desc;
 		std::cout << std::endl;
 	}
+}
+
+/**
+ * invalidoption()
+ * Prints usage message and terminates when given an invalid option
+ * @param opt invalid option
+ */
+int PosixCmd::invalidoption(std::string opt)
+{
+	std::cerr << "PosixCmd error: Unrecognized option " << opt << std::endl;
+	usage("","");
+	exit(1);
+	return 1;
 }

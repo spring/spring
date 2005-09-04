@@ -17,6 +17,7 @@ public:
 	~PosixCmd();
 private:
 	void parselongopt(std::string arg);
+	int invalidoption(std::string opt);
 };
 
 #endif /* POSIXCMD_H */
