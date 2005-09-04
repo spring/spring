@@ -27,6 +27,7 @@
 #include "Net.h"
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
+#include "BaseCmd.h"
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -163,6 +164,13 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 {
 	INIT_SYNCIFY;
 	bool	done=false;								// Bool Variable To Exit Loop
+	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
+	cmdline->parse();
+	if (cmdline->result('h')) {
+		cmdline->usage();
+		delete cmdline;
+		return 0;
+	}
 #ifndef NO_CRASHRPT
 	// Initialize crash reporting
 	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
@@ -394,5 +402,6 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	delete gu;
 	END_SYNCIFY;
 	//m_dumpMemoryReport();
+	delete cmdline;
 	return 0;
 }
