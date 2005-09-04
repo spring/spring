@@ -75,9 +75,9 @@ else:
 	lzmafiles+=['lib7za.a']
 
 if detected_platform == 'linux':
-	exclude_list.append("RegHandler.cpp")
+	exclude_list+=["Win32Cmd.cpp","RegHandler.cpp"]
 else:
-	exclude_list.append("dotfileHandler.cpp")
+	exclude_list+=["PosixCmd.cpp","dotfileHandler.cpp"]
 
 env.Append(CPPDEFINES = defines)
 

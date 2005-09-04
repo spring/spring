@@ -1,7 +1,7 @@
 /*
  * BaseCmd.h
  * Base structure for commandline parser class definition
- * Copyright (C) 2005 Christopher Han
+ * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
 #ifndef BASECMD_H
 #define BASECMD_H
@@ -17,7 +17,9 @@
 class BaseCmd
 {
 public:
-	virtual void usage();
+	BaseCmd();
+	virtual ~BaseCmd();
+	virtual void usage(std::string program, std::string version);
 	void addoption(const char shortopt, std::string longopt, unsigned int parmtype, std::string parmname, std::string desc);
 	void deloption(const char o);
 	void deloption(std::string o);
@@ -37,8 +39,10 @@ protected:
 		std::string parmname;
 		std::string desc;
 		bool given;
-		int intresult;
-		std::string stringresult;
+		union {
+			int intret;
+			char *stringret;
+		} ret;
 	};
 	std::vector<struct option> options;
 	int argc;

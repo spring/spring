@@ -1,45 +1,69 @@
 /*
  * PosixCmd.cpp
  * Posix commandline parser class definition
- * Copyright (C) 2005 Christopher Han
+ * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
 #include "PosixCmd.h"
 
-PosixCmd::PosixCmd(int c, char **v)
+/**
+ * Constructor
+ * @param c argument count
+ * @param v array of argument strings
+ */
+PosixCmd::PosixCmd(int c, char **v): BaseCmd()
 {
 	argc = c;
 	argv = v;
 }
 
+/**
+ * Destructor
+ */
+PosixCmd::~PosixCmd()
+{
+}
+
+/**
+ * parselongopt()
+ * Parses a long option (--help)
+ * @param arg argument as a C++ string
+ */
+void PosixCmd::parselongopt(std::string arg)
+{
+	std::string::size_type ind = arg.find('=',2);
+	std::string mainpart = arg.substr(2,ind);
+	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
+		if (mainpart == it->longopt) {
+			it->given = true;
+			if (it->parmtype != OPTPARM_NONE) {
+				std::string param = "";
+				if (arg.size() > mainpart.size()+3) {
+					param += arg.substr(ind+1);
+				}
+				if (it->parmtype == OPTPARM_INT)
+					it->ret.intret = atoi(param.c_str());
+				else
+					strcpy(it->ret.stringret,param.c_str());
+			}
+			return;
+		}
+	}
+}
+
+/**
+ * parse()
+ * Iterates through and processes arguments
+ */
 void PosixCmd::parse()
 {
-	addoption('h',"help",OPTPARM_NONE,"","This help message");
 	for (int i = 1; i < argc; i++) {
 		std::string arg = argv[i];
-		if (arg.at(0) == '-') {
-			char let = arg.at(1);
-			if (let == '-') {
-				std::string::size_type ind = arg.find('=',2);
-				std::string mainpart = arg.substr(2,ind);
+		if (!arg.empty() && arg.at(0) == '-') {
+			if (arg.size() > 2 && arg.at(1) == '-')
+				parselongopt(arg);
+			else {
 				for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
-					if (mainpart == it->longopt) {
-						it->given = true;
-						if (it->parmtype != OPTPARM_NONE) {
-							std::string param = "";
-							if (arg.size() > mainpart.size()+3) {
-								param += arg.substr(ind+1);
-							}
-							if (it->parmtype == OPTPARM_INT)
-								it->intresult = atoi(param.c_str());
-							else
-								it->stringresult = param;
-						}
-						break;
-					}
-				}
-			} else {
-				for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
-					if (let == it->shortopt) {
+					if (arg.at(1) == it->shortopt) {
 						it->given = true;
 						if (it->parmtype != OPTPARM_NONE) {
 							std::string next;
@@ -49,11 +73,11 @@ void PosixCmd::parse()
 								next = argv[++i];
 							}
 							if (it->parmtype == OPTPARM_INT)
-								it->intresult = atoi(next.c_str());
+								it->ret.intret = atoi(next.c_str());
 							else
-								it->stringresult = next;
+								strcpy(it->ret.stringret,next.c_str());
 						}
-						break;
+						return;
 					}
 				}
 			}
@@ -61,9 +85,13 @@ void PosixCmd::parse()
 	}
 }
 
-void PosixCmd::usage()
+/**
+ * usage()
+ * Print program usage message
+ */
+void PosixCmd::usage(std::string program, std::string version)
 {
-	BaseCmd::usage();
+	BaseCmd::usage(program, version);
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
 		std::cout << "\t";
 		if (it->shortopt) {
