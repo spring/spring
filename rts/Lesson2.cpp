@@ -28,6 +28,7 @@
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
 #include "BaseCmd.h"
+#include "GameVersion.h"
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -166,8 +167,12 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	bool	done=false;								// Bool Variable To Exit Loop
 	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
 	cmdline->parse();
-	if (cmdline->result('h')) {
-		cmdline->usage();
+	if (cmdline->result("help")) {
+		cmdline->usage("TA:Spring",VERSION_STRING);
+		delete cmdline;
+		return 0;
+	} else if (cmdline->result("version")) {
+		std::cout << "TA:Spring " << VERSION_STRING << std::endl;
 		delete cmdline;
 		return 0;
 	}

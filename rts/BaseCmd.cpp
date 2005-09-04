@@ -16,6 +16,7 @@
 BaseCmd::BaseCmd()
 {
 	addoption('h',"help",OPTPARM_NONE,"","This help message");
+	addoption('V',"version",OPTPARM_NONE,"","Display program version");
 }
 
 /**
