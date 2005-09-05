@@ -4,6 +4,7 @@
 #include "Bitmap.h"
 #include "InfoConsole.h"
 #include "myGL.h"
+#include "myMath.h"
 //#include "mmgr.h"
 
 //Would be nice if these were read from a gaf-file instead.
@@ -81,46 +82,12 @@ CMouseCursor::~CMouseCursor(void)
 	}
 }
 
-int CMouseCursor::getNextPo2(int val)
-{
-#if 0
-	if (val <= 2)
-		return 2;
-	if (val <= 4)
-		return 4;
-	if (val <= 8)
-		return 8;
-	if (val <= 16)
-		return 16;
-	if (val <= 32)
-		return 32;
-	if (val <= 64)
-		return 64;
-	if (val <= 128)
-		return 128;
-	info->AddLine("rewrite getNextPo2 ffs!");
-	return 256;
-#else
-	/*
-	 * Rewrite for fuck's sake?  You mean like this?
-	 */
-	val--;
-	val |= val >> 1;
-	val |= val >> 2;
-	val |= val >> 4;
-	val |= val >> 8;
-	val |= val >> 16;
-	val++;
-	return val < 256 ? val : 256;
-#endif
-}
-
 CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
 {
 	CBitmap *nb;
 
-	int nx = getNextPo2(orig.xsize);
-	int ny = getNextPo2(orig.ysize);
+	int nx = NextPwr2(orig.xsize);
+	int ny = NextPwr2(orig.ysize);
 
 	unsigned char *data = new unsigned char[nx * ny * 4];
 	memset(data, 0, nx * ny * 4);
