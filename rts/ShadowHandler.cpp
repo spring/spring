@@ -11,6 +11,8 @@
 #include "MiniMap.h"
 #include "InfoConsole.h"
 #include "FeatureHandler.h"
+#include "Unit.h"
+#include "UnitHandler.h"
 
 CShadowHandler* shadowHandler=0;
 
@@ -477,3 +479,115 @@ void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 	}	
 }
 
+#define M_INFINITY 50.0f
+
+void CShadowHandler::render_piece_shadow_volume(S3DO &obj, float3 &obj_pos, float3 &light_pos)
+{
+	std::vector<float3> v;
+	for (int i = 0; i < obj.vertices.size(); i++) {
+		obj.vertices[i].pos.x += obj_pos.x;
+		obj.vertices[i].pos.y += obj_pos.y;
+		obj.vertices[i].pos.z += obj_pos.z;
+		float3 ext;
+		ext.x = obj.vertices[i].pos.x - light_pos.x;
+		ext.y = obj.vertices[i].pos.y - light_pos.y;
+		ext.z = obj.vertices[i].pos.z - light_pos.z;
+		ext.Normalize();
+		ext.x *= M_INFINITY;
+		ext.y *= M_INFINITY;
+		ext.z *= M_INFINITY;
+		v.push_back(ext);
+	}
+	glBegin(GL_QUADS);
+	for (int i = v.size()-1; i >= 0; i--) {
+		glVertex3f(v.at(i).x,v.at(i).y,v.at(i).z);
+	}
+	glEnd();
+	glBegin(GL_QUADS);
+	for (int i = 0; i < obj.vertices.size(); i++) {
+		glVertex3f(obj.vertices.at(i).pos.x,obj.vertices.at(i).pos.y,obj.vertices.at(i).pos.z);
+	}
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+	glVertex3f(obj.vertices.at(0).pos.x,obj.vertices.at(0).pos.y,obj.vertices.at(0).pos.z);
+	glVertex3f(v.at(0).x,v.at(0).y,v.at(0).z);
+	for (int i = 1; i < v.size(); i++) {
+		int j = i % v.size();
+		glVertex3f(obj.vertices.at(j).pos.x,obj.vertices.at(j).pos.y,obj.vertices.at(j).pos.z);
+		glVertex3f(v.at(j).x,v.at(j).y,v.at(j).z);
+	}
+	glEnd();
+	for (int i = 0; i < obj.vertices.size(); i++) {
+		obj.vertices.at(i).pos.x -= obj_pos.x;
+		obj.vertices.at(i).pos.y -= obj_pos.y;
+		obj.vertices.at(i).pos.z -= obj_pos.z;
+	}
+	for (int i = 0; i < obj.childs.size(); i++) {
+		render_piece_shadow_volume(*obj.childs.at(i),obj_pos,light_pos);
+	}
+}
+
+void CShadowHandler::render_object_shadow(CUnit &unit)
+{
+	float3 zero(5,5,10);
+	glCullFace(GL_FRONT);
+	glStencilFunc(GL_ALWAYS,0x0,0xff);
+	glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+	render_piece_shadow_volume(*unit.model->rootobject,zero,gs->sunVector);
+	glCullFace(GL_BACK);
+	glStencilFunc(GL_ALWAYS, 0x0, 0xff);
+	glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
+	render_piece_shadow_volume(*unit.model->rootobject,zero,gs->sunVector);
+}
+
+void CShadowHandler::render_unit_shadows()
+{
+	for (std::list<CUnit*>::iterator it = uh->activeUnits.begin(); it != uh->activeUnits.end(); it++) {
+		render_object_shadow(**it);
+	}
+}
+
+void CShadowHandler::render_all_shadows()
+{
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthMask(GL_FALSE);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(0.0f,100.0f);
+
+	render_unit_shadows();
+	
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glDisable(GL_CULL_FACE);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glDepthMask(GL_TRUE);
+	glStencilFunc(GL_NOTEQUAL, 0x0, 0xff);
+	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	
+	draw_shadow();
+
+	glDisable(GL_STENCIL_TEST);
+}
+
+void CShadowHandler::draw_shadow()
+{
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0,1,1,0,0,1);
+	glDisable(GL_DEPTH_TEST);
+	glColor4f(0.0f,0.0f,0.0f,0.0f);
+	glBegin(GL_QUADS);
+		glVertex2i(0,0);
+		glVertex2i(0,1);
+		glVertex2i(1,1);
+		glVertex2i(1,0);
+	glEnd();
+	glEnable(GL_DEPTH_TEST);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}

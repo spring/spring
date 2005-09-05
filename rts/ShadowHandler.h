@@ -5,6 +5,7 @@
 #include "Matrix44f.h"
 #include "myGL.h"
 #include <vector>
+#include "3DOParser.h"
 #ifndef _WIN32
 #include <GL/glx.h>
 #endif
@@ -38,6 +39,11 @@ public:
 	void CalcMinMaxView(void);
 
 	bool fbo;
+	void render_piece_shadow_volume(S3DO &obj, float3 &obj_pos, float3 &light_pos);
+	void render_object_shadow(CUnit &unit);
+	void render_unit_shadows();
+	void render_all_shadows();
+	void draw_shadow();
 #ifdef _WIN32
 	HPBUFFERARB hPBuffer; // Handle to a p-buffer.
 	HDC         hDCPBuffer;      // Handle to a device context.
