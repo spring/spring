@@ -59,7 +59,7 @@ int CountBits(register unsigned int w)  {
 	 */
 	const int S[] = {1, 2, 4, 8, 16};
 	const int B[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF, 0x0000FFFF};
-	int c = v;
+	int c = w;
 	c = ((c >> S[0]) & B[0]) + (c & B[0]);
 	c = ((c >> S[1]) & B[1]) + (c & B[1]);
 	c = ((c >> S[2]) & B[2]) + (c & B[2]);
