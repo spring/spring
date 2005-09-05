@@ -67,7 +67,7 @@ CMouseHandler::CMouseHandler()
 		buttons[a].movement=0;
 	}
 
-	cursors["Normal"] = new CMouseCursor("cursornormal", CMouseCursor::TopLeft);
+	cursors[""] = new CMouseCursor("cursornormal", CMouseCursor::TopLeft);
 	cursors["Move"] = new CMouseCursor("cursormove", CMouseCursor::Center);
 	cursors["Guard"] = new CMouseCursor("cursordefend", CMouseCursor::Center);
 	cursors["Attack"] = new CMouseCursor("cursorattack", CMouseCursor::Center);
@@ -522,7 +522,7 @@ void CMouseHandler::DrawCursor(void)
 	}
 	else {
 		//info->AddLine("Unknown cursor: %s", cursorText.c_str());		
-		mc = cursors["Normal"];
+		mc = cursors[""];
 	}
 
 	mc->Draw(lastx, lasty);
