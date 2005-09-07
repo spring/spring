@@ -706,6 +706,10 @@ void CCobInstance::ShowFlare(int piece)
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
 #define SCALE 65536
 
+#ifdef _WIN32
+#define hypot(x,y) _hypot(x,y)
+#endif
+
 int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
 #ifndef _CONSOLE
@@ -767,11 +771,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case XZ_ATAN:
 		return (int)(TAANG2RAD*atan2f(UNPACKX(p1), UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:
-		return (int)(_hypot(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
+		return (int)(hypot(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
 	case ATAN:
 		return (int)(TAANG2RAD*atan2f(p1, p2));
 	case HYPOT:
-		return (int)_hypot(p1, p2);
+		return (int)hypot(p1, p2);
 	case GROUND_HEIGHT:
 		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
 	case BUILD_PERCENT_LEFT:

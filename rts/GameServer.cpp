@@ -17,7 +17,7 @@ extern string stupidGlobalMapname;
 extern int stupidGlobalMapId;
 extern bool globalQuit;
 
-static Uint32 WINAPI GameServerThreadProc(void* lpParameter)
+static Uint32 GameServerThreadProc(void* lpParameter)
 {
 	((CGameServer*)lpParameter)->UpdateLoop();
 	return 0;

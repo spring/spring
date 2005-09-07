@@ -21,25 +21,6 @@ appears in the common code
 #include <boost/cstdint.hpp>
 #include <SDL/SDL.h>
 
-#define  WINAPI
-
-#ifdef NO_DLL
-#define FreeLibrary(a) (0)
-#define LoadLibrary(a) (0)
-#define GetProcAddress(a,b) (0)
-#endif
-
-#define MAKEWORD(a, b)      ((Uint16)(((Uint8)((DWORD_PTR)(a) & 0xff)) |\\
-			((Uint16)((Uint8)((DWORD_PTR)(b) & 0xff))) << 8))
-#define MAKELONG(a, b)      ((Uint32)(((Uint16)((DWORD_PTR)(a) & 0xffff)) |\\
-			((Uint32)((Uint16)((DWORD_PTR)(b) & 0xffff))) << 16))
-#define LOWORD(l)           ((Uint16)((Uint32)(l) & 0xffff))
-#define HIWORD(l)           ((Uint16)((Uint32)(l) >> 16))
-#define LOBYTE(w)           ((Uint8)((Uint32)(w) & 0xff))
-#define HIBYTE(w)           ((Uint8)((Uint32)(w) >> 8))
-
-#define _hypot(x,y) hypot(x,y)
-
 /*
  * Error handling
  */
@@ -86,37 +67,13 @@ do {								\
 #define swabword(w)	(w)
 #define swabdword(w)	(w)
 #endif
-struct bitmapfileheader_s {
-	Uint16 bfType;
-	Uint32 bfSize;
-	Uint16 bfReserved1;
-	Uint16 bfReserved2;
-	Uint32 bfOffBits;
-};
-struct bitmapinfoheader_s {
-	Uint32 biSize; 
-	Sint32 biWidth; 
-	Sint32 biHeight; 
-	Uint16 biPlanes; 
-	Uint16 biBitCount; 
-	Uint32 biCompression; 
-	Uint32 biSizeImage; 
-	Sint32 biXPelsPerMeter; 
-	Sint32 biYPelsPerMeter; 
-	Uint32 biClrUsed; 
-	Uint32 biClrImportant; 
-};
 struct paletteentry_s {
 	Uint8 peRed;
 	Uint8 peGreen;
 	Uint8 peBlue;
 	Uint8 peFlags;
 };
-typedef struct bitmapfileheader_s BITMAPFILEHEADER;
-typedef struct bitmapinfoheader_s BITMAPINFOHEADER;
 typedef struct paletteentry_s PALETTEENTRY;
-
-#define BI_RGB 0
 
 /*
  * Floating point
