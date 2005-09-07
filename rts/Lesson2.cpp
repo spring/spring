@@ -49,6 +49,7 @@ Uint8 *keys;			// Array Used For The Keyboard Routine
 Uint8 *oldkeys;
 Uint64 init_time = 0;
 SDL_Surface *screen;
+int sdlflags;
 bool	active=true;		// Window Active Flag Set To true By Default
 bool	fullscreen=true;	// Fullscreen Flag Set To Fullscreen Mode By Default
 bool	globalQuit=false;
@@ -100,7 +101,7 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 
 void KillGLWindow(GLvoid)								// Properly Kill The Window
 {
-	SDL_Quit();
+	SDL_FreeSurface(screen);
 }
 
 /*	This Code Creates Our OpenGL Window.  Parameters Are:					*
@@ -115,8 +116,18 @@ GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
 {
 	SDL_Init(SDL_INIT_VIDEO);
+	atexit(SDL_Quit);
+	const SDL_VideoInfo *pSDLVideoInfo = SDL_GetVideoInfo();
+	int sdlflags = SDL_OPENGL | SDL_GL_DOUBLEBUFFER | SDL_HWPALETTE | SDL_RESIZABLE;
+	if (pSDLVideoInfo->hw_available)
+		sdlflags |= SDL_HWSURFACE;
+	else
+		sdlflags |= SDL_SWSURFACE;
+	if (pSDLVideoInfo->blit_hw)
+		sdlflags |= SDL_HWACCEL;
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
 
-	screen = SDL_SetVideoMode(width,height,bits,SDL_OPENGL|SDL_RESIZABLE);
+	screen = SDL_SetVideoMode(width,height,bits,sdlflags);
 	if (!screen) {
 		MessageBox(NULL,"Could not set video mode","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		SDL_Quit();
@@ -271,7 +282,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	int frequency=configHandler.GetInt("DisplayFrequency",0);
 	// Create Our OpenGL Window
-	if (!CreateGLWindow("RtsSpring",xres,yres,32,fullscreen,frequency))
+	if (!CreateGLWindow("RtsSpring",xres,yres,0,fullscreen,frequency))
 	{
 		return 0;									// Quit If Window Was Not Created
 	}
@@ -303,7 +314,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE:
-					screen = SDL_SetVideoMode(event.resize.w,event.resize.h,0,SDL_OPENGL|SDL_RESIZABLE);
+					screen = SDL_SetVideoMode(event.resize.w,event.resize.h,0,SDL_OPENGL|SDL_RESIZABLE|SDL_HWSURFACE|SDL_DOUBLEBUF);
 					if (screen)
 						ReSizeGLScene(screen->w,screen->h);
 					break;
