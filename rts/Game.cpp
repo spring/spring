@@ -867,7 +867,7 @@ bool CGame::Update()
 		}
 	}
 	
-	if(gameServer && serverNet->waitOnCon && allReady && (keys[13] || script->onlySinglePlayer || gameSetup)){
+	if(gameServer && serverNet->waitOnCon && allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)){
 		chatting=false;
 		userWriting=false;
 		gameServer->StartGame();
