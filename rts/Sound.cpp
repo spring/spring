@@ -17,15 +17,23 @@ CSound* sound;
 
 CSound::CSound()
 {
+	maxSounds = configHandler.GetInt("MaxSounds",16);
 	noSound = false;
+	cur = 0;
 	alutInit(NULL,0);
-	alGetError();
+	if (alGetError() != ALC_NO_ERROR) {
+		MessageBox(0,"Could not initialize sound!","OpenAL error",MB_OK);
+		noSound = true;
+	}
+	Sources = new ALuint[maxSounds];
 }
 
 CSound::~CSound()
 {
 	LoadedFiles.clear();
-	for (std::vector<ALuint>::iterator it = Buffers.begin(); it != Buffers.end(); ++it)
+	alDeleteSources(maxSounds,Sources);
+	delete[] Sources;
+	for (std::vector<ALuint>::iterator it = Buffers.begin(); it != Buffers.end(); it++)
 		alDeleteBuffers(1,&(*it));
 	Buffers.clear();
 	if (noSound)
@@ -52,17 +60,23 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	if (noSound)
 		return;
 	ALuint source;
-	ALfloat SourcePos[] = {p.x/(gs->mapx*SQUARE_SIZE),p.y/(gs->mapy*SQUARE_SIZE),p.z/(p.maxzpos)};
-	ALfloat SourceVel[] = {0.0,0.0,0.0};
 	alGenSources(1,&source);
 	alSourcei(source, AL_BUFFER, id);
 	alSourcef(source, AL_PITCH, 1.0 );
 	alSourcef(source, AL_GAIN, volume );
-	alSourcefv(source, AL_POSITION, SourcePos);
-	alSourcefv(source, AL_VELOCITY, SourceVel);
+	alSource3f(source, AL_POSITION, p.x/(gs->mapx*SQUARE_SIZE),p.y/(gs->mapy*SQUARE_SIZE),p.z/(p.maxzpos));
+	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
 	alSourcei(source, AL_LOOPING, false);
+	Enqueue(source);
 	alSourcePlay(source);
-	alDeleteSources(1,&source);
+}
+
+void CSound::Enqueue(ALuint src)
+{
+	alDeleteSources(1,&Sources[cur]);
+	Sources[cur++] = src;
+	if (cur == maxSounds)
+		cur = 0;
 }
 
 void CSound::Update()
@@ -76,11 +90,9 @@ void CSound::UpdateListener()
 {
 	if (noSound || !camera)
 		return;
-	ALfloat ListenerPos[] = {camera->pos.x/(gs->mapx*SQUARE_SIZE),camera->pos.y/(gs->mapy*SQUARE_SIZE),camera->pos.z/(camera->pos.maxzpos)};
-	ALfloat ListenerVel[] = {0.0,0.0,0.0};
+	alListener3f(AL_POSITION,camera->pos.x/(gs->mapx*SQUARE_SIZE),camera->pos.y/(gs->mapy*SQUARE_SIZE),camera->pos.z/(camera->pos.maxzpos));
+	alListener3f(AL_VELOCITY,0.0,0.0,0.0);
 	ALfloat ListenerOri[] = {camera->forward.x/(gs->mapx*SQUARE_SIZE),camera->forward.y/(gs->mapy*SQUARE_SIZE),camera->forward.z/(camera->pos.maxzpos),camera->up.x/(gs->mapx*SQUARE_SIZE),camera->up.y/(gs->mapy*SQUARE_SIZE),camera->up.z/(camera->pos.maxzpos)};
-	alListenerfv(AL_POSITION,ListenerPos);
-	alListenerfv(AL_VELOCITY,ListenerVel);
 	alListenerfv(AL_ORIENTATION,ListenerOri);
 }
 
@@ -110,9 +122,9 @@ ALuint CSound::GetWaveId(string path)
 		return 0;
 	int count = 0;
 	ALuint buffer;
-	for (vector<string>::iterator it = LoadedFiles.begin(); it != LoadedFiles.end(); ++it,count++) {
+	for (vector<string>::iterator it = LoadedFiles.begin(); it != LoadedFiles.end(); it++,count++) {
 		if (*it == path)
-			return Buffers[count];
+			return Buffers.at(count);
 	}
 	buffer = LoadALBuffer(path);
 	Buffers.push_back(buffer);
