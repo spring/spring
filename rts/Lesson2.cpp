@@ -101,6 +101,9 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 
 void KillGLWindow(GLvoid)								// Properly Kill The Window
 {
+#ifndef DEBUG
+	SDL_WM_GrabInput(SDL_GRAB_OFF);
+#endif
 	SDL_FreeSurface(screen);
 }
 
@@ -144,6 +147,10 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		MessageBox(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return false;								// Return false
 	}
+
+#ifndef DEBUG
+	SDL_WM_GrabInput(SDL_GRAB_ON);
+#endif
 
 	return true;									// Success
 }
@@ -342,33 +349,19 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		}
 		keys = SDL_GetKeyState(NULL);
 		int mods = SDL_GetModState();
-		if (mods&KMOD_SHIFT)
-			keys[SDLK_LSHIFT] = 1;
-		else
-			keys[SDLK_LSHIFT] = 0;
-		if (mods&KMOD_CTRL)
-			keys[SDLK_LCTRL] = 1;
-		else
-			keys[SDLK_LCTRL] = 0;
-		if (mods&KMOD_ALT)
-			keys[SDLK_LALT] = 1;
-		else
-			keys[SDLK_LALT] = 0;
-		if (mods&KMOD_META)
-			keys[SDLK_LMETA] = 1;
-		else
-			keys[SDLK_LMETA] = 0;
+		keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
+		keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
+		keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
+		keys[SDLK_LMETA] = mods&KMOD_META?1:0;
 		if (!oldkeys) {
 			oldkeys = new Uint8[SDLK_LAST];
-			for (int j = 0; j < SDLK_LAST; j++) {
+			for (int j = 0; j < SDLK_LAST; j++)
 				oldkeys[j] = 0;
-			}
 		}
 		for (int i = 0; i < SDLK_LAST; i++) {
 			if (keys[i] && !oldkeys[i]) {
-				if(activeController){
+				if(activeController)
 					activeController->KeyPressed(i,1);
-				}
 				oldkeys[i] = 1;
 #ifdef NEW_GUI
 				GUIcontroller::Character(char(i));
@@ -384,9 +377,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 					}
 				}
 			} else if (oldkeys[i] && !keys[i]) {
-				if (activeController) {
+				if (activeController)
 					activeController->KeyReleased(i);
-				}
 				oldkeys[i] = 0;
 			}
 		}
