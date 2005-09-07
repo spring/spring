@@ -14,7 +14,6 @@
 #include "CommandAI.h"
 #include "FactoryCAI.h"
 #include "CobInstance.h"
-#include "Factory.h"
 #include "3DOParser.h"
 #include "GfxProjectile.h"
 #include "UnitHandler.h"

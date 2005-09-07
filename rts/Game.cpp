@@ -96,7 +96,6 @@
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"
-#include "Game.h"
 #endif
 
 GLfloat LightDiffuseLand[]=	{ 0.8f, 0.8f, 0.8f, 1.0f };

@@ -11,7 +11,6 @@
 #include "VertexArray.h"
 #include "Unit.h"
 #include "InfoConsole.h"
-#include "Projectile.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

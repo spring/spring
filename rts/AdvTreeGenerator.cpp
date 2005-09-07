@@ -10,7 +10,6 @@
 #include "Camera.h"
 #include "Bitmap.h"
 #include "ReadMap.h"
-#include "AdvTreeGenerator.h"
 #include "ShadowHandler.h"
 //#include "mmgr.h"
 

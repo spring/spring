@@ -6,7 +6,6 @@
 #include "MeleeWeapon.h"
 #include "Unit.h"
 #include "Sound.h"
-#include "MeleeWeapon.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

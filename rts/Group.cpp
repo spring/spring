@@ -10,7 +10,6 @@
 #include "GroupHandler.h"
 #include "SelectedUnits.h"
 #include "InfoConsole.h"
-#include "Group.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

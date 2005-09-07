@@ -8,7 +8,6 @@
 #include "Unit.h"
 #include "SyncTracer.h"
 #include "Ground.h"
-#include "ExplosiveProjectile.h"
 #include "myGL.h"
 #include "Camera.h"
 #include "VertexArray.h"

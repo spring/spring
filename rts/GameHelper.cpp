@@ -21,7 +21,6 @@
 #include "DamageArray.h"
 #include "Weapon.h"
 #include "Feature.h"
-#include "GameHelper.h"
 #include "RadarHandler.h"
 #include "WeaponDefHandler.h"
 #include "ExplosionGraphics.h"

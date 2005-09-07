@@ -19,7 +19,6 @@
 #include "Sound.h"
 #include "UnitDef.h"
 #include "Player.h"
-#include "SelectedUnits.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

@@ -24,7 +24,6 @@
 #include "CameraController.h"
 #include "SelectedUnits.h"
 #include "GuiHandler.h"
-#include "MiniMap.h"
 #include "GameHelper.h"
 #include "SmfReadMap.h"
 #include "RadarHandler.h"

@@ -26,7 +26,6 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
-#include "3DOParser.h"
 #include "Team.h"
 #include "Player.h"
 //#include "mmgr.h"

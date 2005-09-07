@@ -8,7 +8,6 @@
 #include "Unit.h"
 #include "UnitHandler.h"
 #include "InfoConsole.h"
-#include "QuadField.h"
 #include "Feature.h"
 //#include "mmgr.h"
 

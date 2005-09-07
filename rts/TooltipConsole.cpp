@@ -3,7 +3,6 @@
 #include "MouseHandler.h"
 #include "myGL.h"
 #include "glFont.h"
-#include "TooltipConsole.h"
 
 //#include "mmgr.h"
 

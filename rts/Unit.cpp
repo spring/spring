@@ -25,7 +25,6 @@
 #include "myMath.h"
 #include "3DOParser.h"
 #include "CobInstance.h"
-#include "Unit.h"
 #include "CobFile.h"
 #include "FeatureHandler.h"
 #include "math.h"

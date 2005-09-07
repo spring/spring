@@ -16,7 +16,6 @@
 #include "WreckProjectile.h"
 #include "HeatCloudProjectile.h"
 #include "GameHelper.h"
-#include "HeatCloudProjectile.h"
 #include "MuzzleFlame.h"
 #include "SyncTracer.h"
 #include "Ground.h"
@@ -26,7 +25,6 @@
 #include "UnitHandler.h"
 #include "UnitDef.h"
 #include "ProjectileHandler.h"
-#include "SmokeProjectile.h"
 //#include "mmgr.h"
 
 #endif

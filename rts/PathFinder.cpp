@@ -5,7 +5,6 @@
 #include "glExtra.h"
 #include <ostream>
 #include "MoveInfo.h"
-#include "PathFinder.h"
 #include "Ground.h"
 
 #define PATHDEBUG false

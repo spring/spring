@@ -5,7 +5,6 @@
 #include "StdAfx.h"
 #include "Script.h"
 #include "ScriptHandler.h"
-#include "Script.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

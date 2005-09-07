@@ -7,7 +7,6 @@
 #include "Team.h"
 #include "Net.h"
 #include "Ground.h"
-#include "MouseHandler.h"
 #include "Camera.h"
 #include "InMapDraw.h"
 

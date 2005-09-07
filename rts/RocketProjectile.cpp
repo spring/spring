@@ -14,7 +14,6 @@
 #include "Camera.h"
 #include "InfoConsole.h"
 #include "Ground.h"
-#include "SyncTracer.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

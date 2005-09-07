@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "TAPalette.h"
 #include "FileHandler.h"
-#include "TAPalette.h"
 #include <iostream>
 //#include <fstream>
 //#include "mmgr.h"

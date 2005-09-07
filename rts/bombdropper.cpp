@@ -9,9 +9,7 @@
 #include "InfoConsole.h"
 #include "Sound.h"
 #include "GameHelper.h"
-#include "Unit.h"
 #include "Team.h"
-#include "bombdropper.h"
 #include "WeaponProjectile.h"
 //#include "mmgr.h"
 

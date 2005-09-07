@@ -1,4 +1,3 @@
-#include "StdAfx.h"
 // Ground.cpp: implementation of the CGround class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -9,7 +8,6 @@
 #include "ReadMap.h"
 #include "Camera.h"
 #include "ProjectileHandler.h"
-#include "ReadMap.h"
 #include "Projectile.h"
 #include "InfoConsole.h"
 #include "HeatCloudProjectile.h"

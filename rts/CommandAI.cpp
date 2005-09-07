@@ -8,7 +8,6 @@
 #include "UnitDef.h"
 #include "InfoConsole.h"
 #include "GameHelper.h"
-#include "Weapon.h"
 #include "WeaponDefHandler.h"
 #include "SelectedUnits.h"
 #include "LoadSaveInterface.h"

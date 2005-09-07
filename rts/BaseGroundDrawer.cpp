@@ -4,7 +4,6 @@
 #include <windows.h>
 #include "myGL.h"
 #include "Camera.h"
-#include "BaseGroundDrawer.h"
 #include "ReadMap.h"
 //#include "mmgr.h"
 

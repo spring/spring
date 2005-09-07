@@ -16,7 +16,6 @@
 #include "InfoConsole.h"
 #include "GrassDrawer.h"
 #include "Matrix44f.h"
-#include "AdvTreeDrawer.h"
 #include "ShadowHandler.h"
 //#include "mmgr.h"
 

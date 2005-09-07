@@ -19,7 +19,6 @@
 #include "InfoConsole.h"
 #include "TimeProfiler.h"
 #include "Matrix44f.h"
-#include "AdvSky.h"
 //#include "mmgr.h"
 
 extern GLfloat FogBlack[]; 

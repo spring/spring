@@ -15,7 +15,6 @@
 #include "Bitmap.h"
 #include "TimeProfiler.h"
 #include "ConfigHandler.h"
-#include "ReadMap.h"
 #include "Matrix44f.h"
 #include "InfoConsole.h"
 //#include "mmgr.h"

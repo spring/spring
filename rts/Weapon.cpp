@@ -7,7 +7,6 @@
 #include "Unit.h"
 #include "GameHelper.h"
 #include "Team.h"
-#include "Weapon.h"
 #include "CobInstance.h"
 #include "CobFile.h"
 #include "myMath.h"

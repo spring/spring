@@ -4,7 +4,6 @@
 
 #include "StdAfx.h"
 #include "Team.h"
-#include "Team.h"
 #include "InfoConsole.h"
 #include "Player.h"
 #include "Unit.h"

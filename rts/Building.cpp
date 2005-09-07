@@ -5,7 +5,6 @@
 
 #include "Building.h"
 #include "ReadMap.h"
-#include "Building.h"
 
 //#include "mmgr.h"
 

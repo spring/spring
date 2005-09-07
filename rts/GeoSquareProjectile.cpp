@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "GeoSquareProjectile.h"
 #include "ProjectileHandler.h"
-#include "GeoSquareProjectile.h"
 #include "myGL.h"
 #include "VertexArray.h"
 #include "Camera.h"

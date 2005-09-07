@@ -12,7 +12,6 @@
 #include "VertexArray.h"
 #include "FileHandler.h"
 #include "Bitmap.h"
-#include "Unit3DLoader.h"
 #include "UnitHandler.h"
 //#include "mmgr.h"
 

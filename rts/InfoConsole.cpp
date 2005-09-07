@@ -15,7 +15,6 @@
  
 #include "SyncTracer.h"
 #include "ConfigHandler.h"
-#include "InfoConsole.h"
 #include <boost/filesystem/path.hpp>
 
 //#include "mmgr.h"

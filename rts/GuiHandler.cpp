@@ -23,7 +23,6 @@
 //#include "Unit3DLoader.h"
 #include "UnitHandler.h"
 #include "TextureHandler.h"
-#include "GuiHandler.h"
 #include "3DOParser.h"
 #include "UnitDefHandler.h"
 #include "Feature.h"

@@ -14,7 +14,6 @@
 #include "SelectedUnits.h"
 #include "TimeProfiler.h"
 #include "Unit.h"
-#include "GroupHandler.h"
 #include "MouseHandler.h"
 #include "CameraController.h"
 #include <SDL/SDL_types.h>

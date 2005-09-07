@@ -12,7 +12,6 @@
 //#include <ostream>
 #include "Bitmap.h"
 #include "Ground.h"
-#include "ReadMap.h"
 #include "RegHandler.h"
 #ifdef _WIN32
 #include <process.h>
@@ -20,7 +19,6 @@
 #include "FileHandler.h"
 #include "SmfReadMap.h"
 #include "BFGroundDrawer.h"
-#include "ReadMap.h"
 #include "Unit.h"
 #include "UnitDef.h"
 #include "InfoConsole.h"

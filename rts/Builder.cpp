@@ -11,7 +11,6 @@
 #include "UnitHandler.h"
 #include "3DOParser.h"
 #include "CobInstance.h"
-#include "Builder.h"
 #include "myMath.h"
 #include "InfoConsole.h"
 #include "Ground.h"

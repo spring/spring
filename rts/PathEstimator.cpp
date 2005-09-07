@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #endif
-#include "PathEstimator.h"
-#include "myGL.h"
 #include "Ground.h"
 #include "Net.h"
 #include "SelectedUnits.h"

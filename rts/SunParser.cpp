@@ -10,7 +10,6 @@
 #include "FileHandler.h"
 #include <algorithm>
 #include <cctype>
-#include "SunParser.h"
 #include "InfoConsole.h"
 //#include "mmgr.h"
 

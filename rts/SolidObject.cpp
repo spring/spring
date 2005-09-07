@@ -7,7 +7,6 @@
 #include "Ground.h"
 #include "myMath.h"
 #include "glExtra.h"
-#include "SolidObject.h"
 
 CSolidObject::CSolidObject(const float3& pos) 
 : CWorldObject(pos),

@@ -14,7 +14,6 @@
 #include "InfoConsole.h"
 #include "HeatCloudProjectile.h"
 #include "myMath.h"
-#include "Rifle.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

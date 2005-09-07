@@ -4,7 +4,6 @@
 #include "AdvSky.h"
 #include "myGL.h"
 #include "ConfigHandler.h"
-#include "BaseSky.h"
 #include "SkyBox.h"
 #include "ReadMap.h"
 //#include "mmgr.h"
