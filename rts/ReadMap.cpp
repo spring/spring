@@ -30,6 +30,7 @@
 #include "GeometricObjects.h"
 #include "LoadSaveInterface.h"
 #include "MapDamage.h"
+#include "errorhandler.h"
 #include <string>
 //#include "mmgr.h"
 
@@ -78,7 +79,7 @@ static void myDelete(void* p)
 
 	for(int a=0;a<8000;++a)
 		if(p2[a]!=0xbb){
-			MessageBox(0,"Write before allocated mem","Error",0);
+			handleerror(0,"Write before allocated mem","Error",0);
 			break;
 		}
 

@@ -18,6 +18,7 @@
 #include "ArchiveScanner.h"
 //#include "mmgr.h"
 #include "filefunctions.h"
+#include "errorhandler.h"
 #include <SDL/SDL_types.h>
 
 CPreGame* pregame=0;
@@ -68,7 +69,7 @@ CPreGame::CPreGame(bool server, const string& demo)
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
 			if(net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport)==-1){
-				MessageBox(0,"Client couldnt connect","PreGame error",0);
+				handleerror(0,"Client couldnt connect","PreGame error",0);
 				exit(-1);
 			}
 			CScriptHandler::SelectScript("Commanders");
@@ -321,7 +322,7 @@ void CPreGame::UpdateClientNet(void)
 		default:
 			char txt[200];
 			sprintf(txt,"Unknown net msg in client %d",(int)inbuf[inbufpos]);
-			MessageBox(0,txt,"Network error in CPreGame",0);
+			handleerror(0,txt,"Network error in CPreGame",0);
 			inbufpos++;
 			break;
 		}
@@ -345,7 +346,7 @@ void CPreGame::ShowMapList(void)
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
 	if (found.begin() == found.end() && arFound.begin() == arFound.end()
 			) {
-		MessageBox(0,"Couldnt find any map files","PreGame error",0);
+		handleerror(0,"Couldnt find any map files","PreGame error",0);
 		return;
 	}
 	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)

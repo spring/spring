@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "GameSetup.h"
 #include "ScriptHandler.h"
+#include "errorhandler.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
 
@@ -421,7 +422,7 @@ bool CGameServer::ServerReadNet()
 				char txt[200];
 				sprintf(txt,"Unknown net msg in server %d from %d pos %d last %d",(int)inbuf[inbufpos],a,inbufpos,lastMsg[a]);
 				info->AddLine(txt);
-				//MessageBox(0,txt,"Network error",0);
+				//handleerror(0,txt,"Network error",0);
 				lastLength=1;
 				break;
 			}
@@ -436,7 +437,7 @@ bool CGameServer::ServerReadNet()
 			char txt[200];
 			sprintf(txt,"Wrong packet length got %d from %d instead of %d",inbufpos,a,inbuflength);
 			info->AddLine(txt);
-			MessageBox(0,txt,"Server network error",0);
+			handleerror(0,txt,"Server network error",0);
 		}
 	}
 	return true;

@@ -47,7 +47,7 @@
 #include "TimeProfiler.h"
 #include "PlasmaRepulser.h"
 #include "BeamLaser.h"
-
+#include "errorhandler.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -76,7 +76,7 @@ START_TIME_PROFILE;
 	if(!ud){
 		char t[500];
 		sprintf(t,"Couldnt find unittype %s",name.c_str());
-		MessageBox(0,t,"Error loading unit",0);
+		handleerror(0,t,"Error loading unit",0);
 		exit(0);
 	}
 	string type = ud->type;

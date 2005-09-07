@@ -11,6 +11,7 @@
 #include "ReadMap.h"
 #include "TimeProfiler.h"
 #include "InfoConsole.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -38,7 +39,7 @@ static void myDelete(void* p)
 
 	for(int a=0;a<2000;++a)
 		if(p2[a]!=0x0){
-			MessageBox(0,"Write before allocated mem","Error",0);
+			handleerror(0,"Write before allocated mem","Error",0);
 			break;
 		}
 	delete[] 	p2;

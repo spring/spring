@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cctype>
 #include "InfoConsole.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 //#pragma warning(disable:4786)
@@ -47,7 +48,7 @@ void CSunParser::LoadFile(std::string filename)
 	//FILE *pStream = fopen(filename.c_str(),"rb");
 	CFileHandler file(filename);
 	if(!file.FileExists()){
-		MessageBox(hWnd, ("file " + filename + " not found").c_str(), "file error", MB_OK);
+		handleerror(hWnd, ("file " + filename + " not found").c_str(), "file error", MB_OK);
 		return;
 	}
 	int size = file.FileSize();
@@ -60,7 +61,7 @@ void CSunParser::LoadFile(std::string filename)
 	}
 	catch(...)
 	{
-		MessageBox(hWnd, ("error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
+		handleerror(hWnd, ("error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
 	}
 	delete[] filebuf;
 }
@@ -73,7 +74,7 @@ void CSunParser::LoadBuffer(char* buf, int size)
 	}
 	catch(...)
 	{
-		MessageBox(hWnd, ("Error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
+		handleerror(hWnd, ("Error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
 	}
 }
 
@@ -116,7 +117,7 @@ void CSunParser::Parse(char *buf, int size)
 			std::transform(thissection.begin(), thissection.end(), thissection.begin(), (int (*)(int))std::tolower);
 			std::map<std::string, SSection*>::iterator ui=sections.find(thissection);
 			if(ui!=sections.end()){
-//				MessageBox(0,"Overwrote earlier section in sunparser",thissection.c_str(),0);
+//				handleerror(0,"Overwrote earlier section in sunparser",thissection.c_str(),0);
 				DeleteSection(&ui->second->sections);
 				delete ui->second;
 			}
@@ -166,7 +167,7 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 			std::transform(thissection.begin(), thissection.end(), thissection.begin(), (int (*)(int))std::tolower);
 			std::map<std::string, SSection*>::iterator ui=section->sections.find(thissection);
 			if(ui!=section->sections.end()){
-				MessageBox(0,"Overwrote earlier section in sunparser",thissection.c_str(),0);
+				handleerror(0,"Overwrote earlier section in sunparser",thissection.c_str(),0);
 				DeleteSection(&ui->second->sections);
 				delete ui->second;
 			}
@@ -209,7 +210,7 @@ std::string CSunParser::SGetValueMSG(std::string location)
 	std::string value;
 	bool found = SGetValue(value, location);
 	if(!found)
-		MessageBox(hWnd, value.c_str(), "Sun parsing error", MB_OK);
+		handleerror(hWnd, value.c_str(), "Sun parsing error", MB_OK);
 	return value;
 }
 
@@ -315,7 +316,7 @@ const std::map<std::string, std::string> CSunParser::GetAllValues(std::string lo
 	std::vector<std::string> loclist = GetLocationVector(location);	
 	if(sections.find(loclist[0]) == sections.end())
 	{
-		MessageBox(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
+		handleerror(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
 		return emptymap;
 	}
 	SSection *sectionptr = sections[loclist[0]];
@@ -326,7 +327,7 @@ const std::map<std::string, std::string> CSunParser::GetAllValues(std::string lo
 		searchpath += loclist[i];
 		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end())
 		{
-			MessageBox(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
+			handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
 			return emptymap;
 		}
 		sectionptr = sectionptr->sections[loclist[i]];
@@ -349,7 +350,7 @@ std::vector<std::string> CSunParser::GetSectionList(std::string location)
 			searchpath += loclist[i];
 			if(sectionsptr->find(loclist[i]) == sectionsptr->end())
 			{
-				MessageBox(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
+				handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
         			return returnvec;
 			}
 			sectionsptr = &sectionsptr->find(loclist[i])->second->sections;

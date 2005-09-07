@@ -12,6 +12,7 @@
 #include "SunParser.h"
 #include "FeatureHandler.h"
 #include "myMath.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 using namespace std;
@@ -32,7 +33,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	if(!ifs->FileExists()){
 		char t[500];
 		sprintf(t,"Error couldnt find map file %s",mapname.c_str());
-		MessageBox(0,t,"Error when reading map",0);
+		handleerror(0,t,"Error when reading map",0);
 		exit(0);
 	}
 	POP_CODE_MODE;
@@ -41,7 +42,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	if(strcmp(header.magic,"spring map file")!=0 || header.version!=1 || header.tilesize!=32 || header.texelPerSquare!=8 || header.squareSize!=8){
 		char t[500];
 		sprintf(t,"Error couldnt open map file %s",mapname.c_str());
-		MessageBox(0,t,"Error when reading map",0);
+		handleerror(0,t,"Error when reading map",0);
 		exit(0);
 	}
 

@@ -16,6 +16,7 @@
 #include "Unit.h"
 #include "MouseHandler.h"
 #include "CameraController.h"
+#include "errorhandler.h"
 #include <SDL/SDL_types.h>
 //#include "mmgr.h"
 
@@ -65,26 +66,26 @@ void CGroupHandler::TestDll(string name)
 
 	m_hDLL=LoadLibrary(name.c_str());
 	if (m_hDLL==0){
-		MessageBox(NULL,name.c_str(),"Cant load dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Cant load dll",MB_OK|MB_ICONEXCLAMATION);
 		return;
 	}
 
 	GetGroupAiVersion = (GETGROUPAIVERSION)GetProcAddress(m_hDLL,"GetGroupAiVersion");
 	if (GetGroupAiVersion==0){
-		MessageBox(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
 		return;
 	}
 
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION){
-		MessageBox(NULL,name.c_str(),"Incorrect AI dll version",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Incorrect AI dll version",MB_OK|MB_ICONEXCLAMATION);
 		return;
 	}
 	
 	GetAiName = (GETAINAME)GetProcAddress(m_hDLL,"GetAiName");
 	if (GetAiName==0){
-		MessageBox(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
 		return;
 	}
 
@@ -138,7 +139,7 @@ void CGroupHandler::FindDlls(void)
 	}
 
 	if(availableAI.empty()){
-		MessageBox(0,"Fatal error","Need at least one valid ai dll in ./aidll",0);
+		handleerror(0,"Fatal error","Need at least one valid ai dll in ./aidll",0);
 		exit(0);
 	}
 #endif //NO_DLL
@@ -150,7 +151,7 @@ CGroup* CGroupHandler::CreateNewGroup(string ainame)
 		CGroup* group=new CGroup(ainame,firstUnusedGroup++,this);
 		groups.push_back(group);
 		if(group!=groups[group->id]){
-			MessageBox(0,"Id error when creating group","Error",0);
+			handleerror(0,"Id error when creating group","Error",0);
 		}
 		return group;
 	} else {

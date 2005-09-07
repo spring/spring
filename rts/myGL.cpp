@@ -10,6 +10,7 @@
 #include "FileHandler.h"
 #include "GameVersion.h"
 #include "Bitmap.h"
+#include "errorhandler.h"
 #include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
@@ -36,12 +37,12 @@ void LoadExtensions()
 	glewInit();
 
 	if(!GLEW_ARB_multitexture || !GLEW_ARB_texture_env_combine){
-		MessageBox(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
+		handleerror(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
 		exit(0);
 	}
 
 	if(!GLEW_ARB_texture_compression){
-		MessageBox(0,"Needed extension GL_ARB_texture_compression not found","Update drivers",0);
+		handleerror(0,"Needed extension GL_ARB_texture_compression not found","Update drivers",0);
 		exit(0);
 	}
 	
@@ -169,7 +170,7 @@ void CheckParseErrors()
 		const GLubyte *errString=glGetString( GL_PROGRAM_ERROR_STRING_ARB);
 		char c[512];
 		sprintf(c,"Error at position %d",errPos);
-		MessageBox(0,c,(char*)errString,0);	
+		handleerror(0,c,(char*)errString,0);	
 		exit(0);
 	}
 }
@@ -197,7 +198,7 @@ unsigned int LoadVertexProgram(const char* filename)
 		const GLubyte *errString=glGetString( GL_PROGRAM_ERROR_STRING_ARB);
 		char c[512];
 		sprintf(c,"Error at position %d when loading vertex program file %s",errPos,filename);
-		MessageBox(0,c,(char*)errString,0);	
+		handleerror(0,c,(char*)errString,0);	
 		exit(0);
 	}
 	delete[] VPbuf;
@@ -227,7 +228,7 @@ unsigned int LoadFragmentProgram(const char* filename)
 		const GLubyte *errString=glGetString( GL_PROGRAM_ERROR_STRING_ARB);
 		char c[512];
 		sprintf(c,"Error at position %d when loading fragment program file %s",errPos,filename);
-		MessageBox(0,c,(char*)errString,0);	
+		handleerror(0,c,(char*)errString,0);	
 		exit(0);
 	}
 	delete[] VPbuf;

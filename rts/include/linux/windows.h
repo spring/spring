@@ -22,37 +22,6 @@ appears in the common code
 #include <SDL/SDL.h>
 
 /*
- * Error handling
- */
-#ifdef DEBUG
-#ifdef __GNUC__
-#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << std::dec << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
-#else
-#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << std::dec << __LINE__ << std::endl;
-#endif
-#else
-#define DEBUGSTRING
-#endif
-
-#define MB_OK 			0x00000001
-#define MB_ICONINFORMATION	0x00000002
-#define MB_ICONEXCLAMATION	0x00000004
-
-#define MessageBox(o, m, c, f)					\
-do {								\
-	if (f & MB_ICONINFORMATION)				\
-	    std::cerr << "Info: ";				\
-	else if (f & MB_ICONEXCLAMATION)			\
-	    std::cerr << "Warning: ";				\
-	else							\
-	    std::cerr << "ERROR: ";				\
-	std::cerr << c << std::endl;				\
-	std::cerr << "  " << m << std::endl;			\
-	if (!(f&(MB_ICONINFORMATION|MB_ICONEXCLAMATION)))	\
-		do {DEBUGSTRING} while (0);			\
-} while (0)
-
-/*
  * Bitmap handling
  *
  * The swabbing stuff looks backwards, but the bitmaps

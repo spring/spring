@@ -7,6 +7,7 @@
 #include <GL/glu.h>
 #include "mapfile.h"
 #include "ReadMap.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 CBFGroundTextures* groundTextures=0;
@@ -63,7 +64,7 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 		if(strcmp(tfh.magic,"spring tilefile")!=0 || tfh.version!=1 || tfh.tileSize!=32 || tfh.compressionType!=1){
 			char t[500];
 			sprintf(t,"Error couldnt open tile file %s",name.c_str());
-			MessageBox(0,t,"Error when reading tile file",0);
+			handleerror(0,t,"Error when reading tile file",0);
 			exit(0);
 		}
 

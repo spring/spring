@@ -5,6 +5,7 @@
 #include "CobFile.h"
 #include "InfoConsole.h"
 #include "FileHandler.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 #include <windows.h>
@@ -182,7 +183,7 @@ CCobFile &CCobEngine::GetCobFile(string name)
 
 	CFileHandler f(name);
 	if (!f.FileExists()) {
-		MessageBox(0,"No cob-file",name.c_str(),0);		
+		handleerror(0,"No cob-file",name.c_str(),0);		
 		//Need to return something maybe.. this is pretty fatal though
 	}
 	CCobFile *cf = new CCobFile(f, name);

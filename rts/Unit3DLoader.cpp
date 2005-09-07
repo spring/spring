@@ -13,6 +13,7 @@
 #include "FileHandler.h"
 #include "Bitmap.h"
 #include "UnitHandler.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -528,7 +529,7 @@ void CUnit3DLoader::CreateArrays(UnitModel& model)
 			}
 			if(createNew){
 				if(!newSplit){
-					MessageBox(0,"Impossible split","error in unit3dloader",0);
+					handleerror(0,"Impossible split","error in unit3dloader",0);
 				}
 				ArrayVertexSub vs;
 				vs.num=newNum++;
@@ -555,7 +556,7 @@ void CUnit3DLoader::CreateArrays(UnitModel& model)
 
 		float* texCoordBuf=(float*)glMapBufferARB(GL_ARRAY_BUFFER_ARB,GL_WRITE_ONLY_ARB);
 		if(!texCoordBuf){
-			MessageBox(0,"glMapBuffer failed","Exiting",0);
+			handleerror(0,"glMapBuffer failed","Exiting",0);
 			exit(0);
 		}
 
@@ -568,7 +569,7 @@ void CUnit3DLoader::CreateArrays(UnitModel& model)
 		}
 
 		if(!glUnmapBufferARB(GL_ARRAY_BUFFER_ARB)){
-			MessageBox(0,"glUnmapBuffer failed","Exiting",0);
+			handleerror(0,"glUnmapBuffer failed","Exiting",0);
 			exit(0);
 		}
 	}
@@ -580,7 +581,7 @@ void CUnit3DLoader::CreateArrays(UnitModel& model)
 		
 		unsigned short* indexBuf=(unsigned short*)glMapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,GL_WRITE_ONLY_ARB);
 		if(!indexBuf){
-			MessageBox(0,"glMapBuffer failed","Exiting",0);
+			handleerror(0,"glMapBuffer failed","Exiting",0);
 			exit(0);
 		}
 
@@ -601,7 +602,7 @@ void CUnit3DLoader::CreateArrays(UnitModel& model)
 			}
 		}
 		if(!glUnmapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB)){
-			MessageBox(0,"glUnmapBuffer failed","Exiting",0);
+			handleerror(0,"glUnmapBuffer failed","Exiting",0);
 			exit(0);
 		}
 		glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
@@ -614,7 +615,7 @@ void CUnit3DLoader::CreateArrays(UnitModel& model)
 		
 		float* normalBuf=(float*)glMapBufferARB(GL_ARRAY_BUFFER_ARB,GL_WRITE_ONLY_ARB);
 		if(!normalBuf){
-			MessageBox(0,"glMapBuffer failed","Exiting",0);
+			handleerror(0,"glMapBuffer failed","Exiting",0);
 			exit(0);
 		}
 		for(vector<ArrayVertex>::iterator vi=va.begin();vi!=va.end();++vi){
@@ -626,7 +627,7 @@ void CUnit3DLoader::CreateArrays(UnitModel& model)
 			}
 		}
 		if(!glUnmapBufferARB(GL_ARRAY_BUFFER_ARB)){
-			MessageBox(0,"glUnmapBuffer failed","Exiting",0);
+			handleerror(0,"glUnmapBuffer failed","Exiting",0);
 			exit(0);
 		}
 	}

@@ -12,6 +12,7 @@
 #include "GameSetup.h"
 #include "Team.h"
 #include "GameVersion.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 #ifdef _WIN32
 #include <direct.h>
@@ -56,7 +57,7 @@ CNet::CNet()
 
 	wVersionRequested = MAKEWORD( 2, 2 ); 
 	err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
-		MessageBox(NULL,"Couldnt initialize winsock.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Couldnt initialize winsock.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		return;
 	} 
 	/* Confirm that the WinSock DLL supports 2.2.*/
@@ -66,7 +67,7 @@ CNet::CNet()
 	/* requested.                                        */ 
 	if ( LOBYTE( wsaData.wVersion ) != 2 ||
         HIBYTE( wsaData.wVersion ) != 2 ) {
-		MessageBox(NULL,"Wrong WSA version.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Wrong WSA version.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		WSACleanup( );
 		return; 
 	}
@@ -127,7 +128,7 @@ int CNet::InitServer(int portnum)
 	imServer=true;
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		MessageBox(NULL,"Error initializing socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Error initializing socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		connected=false;
 		exit(0);
 	}
@@ -144,7 +145,7 @@ int CNet::InitServer(int portnum)
 #else
 		close(mySocket);
 #endif
-		MessageBox(NULL,"Error binding socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Error binding socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 	}
 
@@ -198,7 +199,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		lpHostEntry = gethostbyname(server);
 		if (lpHostEntry == NULL)
 		{
-			MessageBox(NULL,"Error looking up server from dns.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+			handleerror(NULL,"Error looking up server from dns.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 			exit(0);
 			return -1;
 		}
@@ -206,7 +207,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 	}
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		MessageBox(NULL,"Error initializing socket.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Error initializing socket.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 		return -1;
 	}
@@ -226,7 +227,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 #else
 				close(mySocket);
 #endif
-				MessageBox(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+				handleerror(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 				exit(0);
 			}
 			saMe.sin_port = htons(sourceport+numTries);
@@ -347,7 +348,7 @@ void CNet::Update(void)
 				break;
 			char test[500];
 			sprintf(test,"Error receiving data. %i %d",(int)imServer,WSAGetLastError());
-			MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+			handleerror(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 			exit(0);
 		}
 		int conn=ResolveConnection(&from);
@@ -586,7 +587,7 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 			return;
 		char test[100];
 		sprintf(test,"Error sending data. %d",WSAGetLastError());
-		MessageBox(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 	}
 }

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include "FileHandler.h"
+#include "errorhandler.h"
 
 //#include "mmgr.h"
 
@@ -105,7 +106,7 @@ CGuiKeyReader::CGuiKeyReader(char* filename)
 			MakeLow(s);
 			guiKeys[i]=s;			
 		} else 
-			MessageBox(0,"Couldnt parse control file",s.c_str(),0);
+			handleerror(0,"Couldnt parse control file",s.c_str(),0);
 		GetLine(ifs);
 	}
 }
@@ -215,7 +216,7 @@ int CGuiKeyReader::GetKey(string s)
 	
 	int a=keynames[s];
 	if(a==0)
-		MessageBox(0,s.c_str(),"Unknown key",0);
+		handleerror(0,s.c_str(),"Unknown key",0);
 	return a;
 
 }

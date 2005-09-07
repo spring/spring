@@ -8,6 +8,7 @@
 #include "ReadMap.h"
 #include "FeatureHandler.h"
 #include "UnitHandler.h"
+#include "errorhandler.h"
 #include <boost/filesystem/path.hpp>
 
 extern std::string stupidGlobalMapname;
@@ -26,7 +27,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 	std::ofstream ofs(fn.native_file_string().c_str(),std::ios::out|std::ios::binary);
 	PrintLoadMsg("Saving game");
 	if(ofs.bad() || !ofs.is_open()){
-		MessageBox(0,"Couldnt save game to file",file.c_str(),0);
+		handleerror(0,"Couldnt save game to file",file.c_str(),0);
 		return;
 	}
 

@@ -29,6 +29,7 @@
 #include "VFSHandler.h"
 #include "BaseCmd.h"
 #include "GameVersion.h"
+#include "errorhandler.h"
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -132,7 +133,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 
 	screen = SDL_SetVideoMode(width,height,bits,sdlflags);
 	if (!screen) {
-		MessageBox(NULL,"Could not set video mode","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,"Could not set video mode","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		SDL_Quit();
 		return false;
 	}
@@ -144,7 +145,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return false;								// Return false
 	}
 

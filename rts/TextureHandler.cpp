@@ -16,6 +16,7 @@
 #include <cctype>
 #include "RegHandler.h"
 #include <set>
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -103,7 +104,7 @@ CTextureHandler::CTextureHandler()
 	} else {
 		bigTexX=2048;
 		bigTexY=2048;
-		MessageBox(0,"To many/large unit textures to fit in 2048*2048","Error",0);
+		handleerror(0,"To many/large unit textures to fit in 2048*2048","Error",0);
 	}
 
 	qsort(texfiles,numfiles,sizeof(TexFile*),CompareTatex2);
@@ -129,7 +130,7 @@ CTextureHandler::CTextureHandler()
 					cury=maxy;
 					maxy+=curtex->ysize;
 					if(maxy>bigTexY){
-						MessageBox(0,"To many/large unit textures","Error",0);
+						handleerror(0,"To many/large unit textures","Error",0);
 						break;
 					}
 					thisSub.push_back(int2(0,cury));

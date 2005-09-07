@@ -5,6 +5,7 @@
  */
 
 #include "dotfileHandler.h"
+#include "errorhandler.h"
 #include <sstream>
 
 dotfileHandler::dotfileHandler(const string filename)
@@ -18,10 +19,10 @@ dotfileHandler::dotfileHandler(const string filename)
 				data[read.substr(0,idx)] = read.substr(idx+1);
 		reader.close();
 	} else
-		MessageBox(0,"Could not read from config file","dotfileHandler",MB_ICONEXCLAMATION);
+		handleerror(0,"Could not read from config file","dotfileHandler",MB_ICONEXCLAMATION);
 	file.open(filename.c_str());
 	if (!file)
-		MessageBox(0,"Could not write to config file","dotfileHandler",0);
+		handleerror(0,"Could not write to config file","dotfileHandler",0);
 	flushfile();
 }
 
