@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <stdexcept>
 #include "Camera.h"
+#include "myMath.h"
 //#include "mmgr.h"
 
 using namespace std;
@@ -21,23 +22,6 @@ CglFont* font;
 #define DRAW_SIZE 1
 #define FONTSIZE 24
 #define FONTFILE "Vera.ttf"
-
-/*
- * Bit twiddle to round up to
- * the next power of 2
- */
-static inline int pow2(int a)
-{
-	int v = a;
-	v--;
-	v |= v >> 1;
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-	v++;
-	return v;
-}
 
 CglFont::CglFont(int start, int num)
 {
@@ -71,9 +55,9 @@ void CglFont::init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase)
 	FT_GlyphSlot slot = face->glyph;
 	if (FT_Load_Char(face,ch,FT_LOAD_RENDER))
 		throw std::runtime_error("FT_Load_Char failed");
-	int width = pow2(slot->bitmap.width);
+	int width = NextPwr2(slot->bitmap.width);
 	charWidths[ch-charstart] = width;
-	int height = pow2(slot->bitmap.rows);
+	int height = NextPwr2(slot->bitmap.rows);
 	charheight = height;
 	GLubyte* expdata = new GLubyte[2*width*height];
 	for(int j=0; j <height;j++) {
