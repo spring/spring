@@ -102,7 +102,6 @@ if platform == 'linux':
 			BackgroundReader.cpp
 			ARB_vertex_program_extension.cpp
 			mmgr.cpp
-			multipath.cpp
 			wavread.cpp""")
 
 nbObjects=0
