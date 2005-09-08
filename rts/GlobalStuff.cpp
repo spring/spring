@@ -11,6 +11,7 @@
 #include <windows.h>
 #include "Player.h"
 #include "TAPalette.h"
+#include "perf.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -25,7 +26,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	hmapx=256;
 	hmapy=256;
 	Uint64 li;
-	QueryPerformanceCounter(&li);
+	perfCounter(&li);
 	randSeed=li&0xffffffff;
 	frameNum=0;
 	speedFactor=1;
@@ -106,7 +107,7 @@ float3 CGlobalSyncedStuff::randVector()
 CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
 	Uint64 randnum;
-	QueryPerformanceCounter(&randnum);
+	perfCounter(&randnum);
 	usRandSeed=randnum&0xffffffff;
 	modGameTime=0;
 	gameTime=0;

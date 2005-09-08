@@ -13,6 +13,7 @@
 #include "Team.h"
 #include "GameVersion.h"
 #include "errorhandler.h"
+#include "perf.h"
 //#include "mmgr.h"
 #ifdef _WIN32
 #include <direct.h>
@@ -47,8 +48,8 @@ unsigned char netbuf[NETWORK_BUFFER_SIZE];	//buffer space for outgoing data
 CNet::CNet()
 {
 	Uint64 t,f;
-	QueryPerformanceCounter(&t);
-	QueryPerformanceFrequency(&f);
+	perfCounter(&t);
+	perfFrequency(&f);
 	curTime=double(t)/double(f);
 	Uint16 wVersionRequested;
 #ifdef _WIN32
@@ -168,8 +169,8 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
   LPHOSTENT lpHostEntry;
 
 	Uint64 t,f;
-	QueryPerformanceCounter(&t);
-	QueryPerformanceFrequency(&f);
+	perfCounter(&t);
+	perfFrequency(&f);
 	curTime=double(t)/f;
 
 	if(FindDemoFile(server)){
@@ -324,8 +325,8 @@ int CNet::GetData(unsigned char *buf, int length,int conNum)
 void CNet::Update(void)
 {
 	Uint64 t,f;
-	QueryPerformanceCounter(&t);
-	QueryPerformanceFrequency(&f);
+	perfCounter(&t);
+	perfFrequency(&f);
 	curTime=double(t)/double(f);
 	if(onlyLocal){
 		if(playbackDemo)

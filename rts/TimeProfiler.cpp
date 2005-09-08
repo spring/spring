@@ -7,6 +7,7 @@
 #include "myGL.h"
 #include "glFont.h"
 #include "InfoConsole.h"
+#include "perf.h"
 
 #include "VertexArray.h"
 //#include "mmgr.h"
@@ -18,7 +19,7 @@ CTimeProfiler profiler;
 
 CTimeProfiler::CTimeProfiler()
 {
-	QueryPerformanceFrequency(&timeSpeed);
+	perfFrequency(&timeSpeed);
 	lastBigUpdate=0;
 	startTimeNum=0;
 }
@@ -146,7 +147,7 @@ void CTimeProfiler::StartTimer()
 		return;
 	}
 	Uint64 starttime;
-	QueryPerformanceCounter(&starttime);
+	perfCounter(&starttime);
 	startTimes[startTimeNum++]=(starttime);
 }
 
@@ -156,7 +157,7 @@ void CTimeProfiler::EndTimer(char* name)
 		return;
 
 	Uint64 stop;
-	QueryPerformanceCounter(&stop);
+	perfCounter(&stop);
 	AddTime(name,stop - startTimes[--startTimeNum]);
 }
 

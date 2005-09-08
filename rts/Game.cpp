@@ -93,6 +93,7 @@
 #include "UnitDrawer.h"
 #include <boost/filesystem/path.hpp>
 #include <SDL/SDL_types.h>
+#include "perf.h"
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"
@@ -286,11 +287,11 @@ CGame::CGame(bool server,std::string mapname)
 	netbuf[p->playerName.size()+3]=0;
 	net->SendData(netbuf,netbuf[1]);		//sending your playername to the server indicates that you are finished loading
 
-	QueryPerformanceFrequency(&timeSpeed);
-	QueryPerformanceCounter(&lastModGameTimeMeasure);
-	QueryPerformanceCounter(&lastframe);
-	QueryPerformanceCounter(&lastUpdate);
-	QueryPerformanceCounter(&lastMoveUpdate);
+	perfFrequency(&timeSpeed);
+	perfCounter(&lastModGameTimeMeasure);
+	perfCounter(&lastframe);
+	perfCounter(&lastUpdate);
+	perfCounter(&lastMoveUpdate);
 
 	glFogfv(GL_FOG_COLOR,FogLand);
 	glFogf(GL_FOG_START,0);
@@ -462,7 +463,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		netbuf[1]=!gs->paused;
 		netbuf[2]=gu->myPlayerNum;
 		net->SendData(netbuf,3);
-		QueryPerformanceCounter(&lastframe);
+		perfCounter(&lastframe);
 	}
 	if (s=="singlestep"){
 		bOneStep=true;
@@ -815,7 +816,7 @@ bool CGame::Update()
 	thisFps++;
 
 	Uint64 timeNow;
-	QueryPerformanceCounter(&timeNow);
+	perfCounter(&timeNow);
 	Uint64 difTime;
 	difTime=timeNow-lastModGameTimeMeasure;
 	double dif=double(difTime)/double(timeSpeed);
@@ -881,11 +882,11 @@ bool CGame::Draw()
 //	(*info) << mouse->lastx << "\n";
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
-		QueryPerformanceCounter(&startDraw);
+		perfCounter(&startDraw);
 		gu->timeOffset = ((double)(startDraw - lastUpdate))/timeSpeed*GAME_SPEED*gs->speedFactor;
 	} else  {
 		gu->timeOffset=0;
-		QueryPerformanceCounter(&lastUpdate);
+		perfCounter(&lastUpdate);
 	}
 	int a;
 	std::string tempstring;
@@ -1080,7 +1081,7 @@ bool CGame::Draw()
 	glLoadIdentity();
 
 	Uint64 start;
-	QueryPerformanceCounter(&start);
+	perfCounter(&start);
 	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
 	lastMoveUpdate=start;
 
@@ -1106,7 +1107,7 @@ void CGame::StartPlaying()
 {
 	playing=true;
 	lastTick=clock();
-	QueryPerformanceCounter(&lastframe);
+	perfCounter(&lastframe);
 	ENTER_MIXED;
 	gu->myTeam=gs->players[gu->myPlayerNum]->team;
 	gu->myAllyTeam=gs->team2allyteam[gu->myTeam];
@@ -1189,7 +1190,7 @@ START_TIME_PROFILE
 END_TIME_PROFILE("Collisions");
 
 	Uint64 stopPhysics;
-	QueryPerformanceCounter(&stopPhysics);
+	perfCounter(&stopPhysics);
 
 END_TIME_PROFILE("Sim time")
 
@@ -1280,7 +1281,7 @@ bool CGame::ClientReadNet()
 
 	if(!gameServer/* && !net->onlyLocal*/){
 		Uint64 currentFrame;
-		QueryPerformanceCounter(&currentFrame);
+		perfCounter(&currentFrame);
 		
 		if(timeLeft>1)
 			timeLeft--;
@@ -1451,7 +1452,7 @@ bool CGame::ClientReadNet()
 				} else {
 					info->AddLine("%s unpaused the game",gs->players[player]->playerName.c_str());
 				}
-				QueryPerformanceCounter(&lastframe);
+				perfCounter(&lastframe);
 				timeLeft=0;
 			}
 			lastLength=3;

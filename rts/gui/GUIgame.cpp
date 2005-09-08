@@ -42,6 +42,7 @@
 #include "FeatureHandler.h"
 //#include "mmgr.h"
 #include "GUICommandPool.h"
+#include "perf.h"
 #include <SDL/SDL_types.h>
 
 extern Uint8 *keys;
@@ -1077,7 +1078,7 @@ bool GUIgame::EventAction(const string& command)
 		netbuf[1]=!gs->paused;
 		netbuf[2]=gu->myPlayerNum;
 		net->SendData(netbuf,3);
-		QueryPerformanceCounter(&(game->lastframe));
+		perfCounter(&(game->lastframe));
 	}
 	else if (id==COMMAND_singlestep){	
 		game->bOneStep=true;

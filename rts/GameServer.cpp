@@ -8,6 +8,7 @@
 #include "GameSetup.h"
 #include "ScriptHandler.h"
 #include "errorhandler.h"
+#include "perf.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
 
@@ -51,8 +52,8 @@ CGameServer::CGameServer(void)
 	serverNet->InitNewConn(&net->connections[0].addr,true,0);
 	net->onlyLocal=true;
 
-	QueryPerformanceCounter(&lastframe);
-	QueryPerformanceFrequency(&timeSpeed);
+	perfCounter(&lastframe);
+	perfFrequency(&timeSpeed);
 
 	exeChecksum=game->CreateExeChecksum();
 
@@ -142,7 +143,7 @@ bool CGameServer::Update(void)
 	}
 	if (game->playing){
 		Uint64 currentFrame;
-		QueryPerformanceCounter(&currentFrame);
+		perfCounter(&currentFrame);
 		double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
