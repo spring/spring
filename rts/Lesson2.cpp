@@ -49,6 +49,9 @@
 #include "../crashrpt/include/crashrpt.h"
 #endif
 
+#define XRES_DEFAULT 1024
+#define YRES_DEFAULT 768
+
 Uint8 *keys;			// Array Used For The Keyboard Routine
 Uint8 *oldkeys;
 Uint64 init_time = 0;
@@ -141,6 +144,8 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		SDL_Quit();
 		return false;
 	}
+	if (fullscreenflag)
+		SDL_WM_ToggleFullScreen(screen);
 	SDL_WM_SetCaption(title,title);
 	  
 	InitGL();
@@ -188,7 +193,10 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 {
 	INIT_SYNCIFY;
 	bool	done=false;								// Bool Variable To Exit Loop
+	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
 	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
+	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
+	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
 	cmdline->parse();
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
@@ -198,7 +206,10 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		std::cout << "TA:Spring " << VERSION_STRING << std::endl;
 		delete cmdline;
 		return 0;
-	}
+	} else if (cmdline->result("window"))
+		fullscreen = false;
+	else if (cmdline->result("fullscreen"))
+		fullscreen = true;
 #ifndef NO_CRASHRPT
 	// Initialize crash reporting
 	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
@@ -265,7 +276,6 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	bool server;
 #ifndef _WIN32
 	server=true;
-	fullscreen=true;
 #else
 	if (playDemo)
 		server = false;
@@ -274,23 +284,14 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	else
 		server=MessageBox(NULL,"Do you want to be server?", "Be server?",MB_YESNO|MB_ICONQUESTION)==IDYES;
 
-
-	/*	// Ask The User Which Screen Mode They Prefer
-	if (MessageBox(NULL,"Would You Like To Run In Fullscreen Mode?", "Start FullScreen?",MB_YESNO|MB_ICONQUESTION)==IDNO)
-	{
-	fullscreen=false;							// Windowed Mode
-	}*/
 #endif
-	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
 	
 #ifdef _DEBUG
 	fullscreen=false;
 #endif
 
-	int xres=1024;
-	int yres=768;
-	xres=configHandler.GetInt("XResolution",xres);
-	yres=configHandler.GetInt("YResolution",yres);
+	int xres=configHandler.GetInt("XResolution",XRES_DEFAULT);
+	int yres=configHandler.GetInt("YResolution",YRES_DEFAULT);
 
 	int frequency=configHandler.GetInt("DisplayFrequency",0);
 	// Create Our OpenGL Window
@@ -404,9 +405,12 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	delete[] oldkeys;
 
 	// Shutdown
-	delete gameSetup;
-	delete pregame;								//in case we exit during init
-	delete game;
+	if (gameSetup)
+		delete gameSetup;
+	if (pregame)
+		delete pregame;								//in case we exit during init
+	if (game)
+		delete game;
 	delete font;
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
