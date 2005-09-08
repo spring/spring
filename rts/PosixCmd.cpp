@@ -127,7 +127,10 @@ void PosixCmd::usage(std::string program, std::string version)
 			if (it->parmtype != OPTPARM_NONE)
 				std::cout << "\t";
 		}
-		std::cout << "\t\t" << it->desc;
+		std::cout << "\t";
+		if (it->longopt.size()<8)
+			std::cout << "\t";
+		std::cout << it->desc;
 		std::cout << std::endl;
 	}
 }
