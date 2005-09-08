@@ -31,6 +31,7 @@ CBitmap::~CBitmap()
 		delete[] mem;
 	if(ddsimage)
 		delete ddsimage;
+	ilShutDown();
 }
 
 CBitmap::CBitmap(const CBitmap& old)
