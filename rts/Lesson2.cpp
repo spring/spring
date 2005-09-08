@@ -9,6 +9,7 @@
 #include "StdAfx.h"
 #ifdef _WIN32
 #include <windows.h>		// Header File For Windows
+#include "winreg.h"
 #endif
 #include "myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
@@ -18,7 +19,6 @@
 #include <math.h>
 #include "PreGame.h"
 #include "Game.h"
-#include "winreg.h"
 #include "float.h"
 #include "glFont.h"
 #include "MouseHandler.h"
@@ -124,6 +124,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 {
 	SDL_Init(SDL_INIT_VIDEO);
 	atexit(SDL_Quit);
+	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	const SDL_VideoInfo *pSDLVideoInfo = SDL_GetVideoInfo();
 	int sdlflags = SDL_OPENGL | SDL_GL_DOUBLEBUFFER | SDL_HWPALETTE | SDL_RESIZABLE;
 	if (pSDLVideoInfo->hw_available)
