@@ -96,7 +96,6 @@
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "SDL_timer.h"
-#include "perf.h"
 #include "fp.h"
 
 #ifdef NEW_GUI
@@ -290,11 +289,10 @@ CGame::CGame(bool server,std::string mapname)
 	netbuf[p->playerName.size()+3]=0;
 	net->SendData(netbuf,netbuf[1]);		//sending your playername to the server indicates that you are finished loading
 
-	perfFrequency(&timeSpeed);
-	perfCounter(&lastModGameTimeMeasure);
-	perfCounter(&lastframe);
-	perfCounter(&lastUpdate);
-	perfCounter(&lastMoveUpdate);
+	lastModGameTimeMeasure = SDL_GetTicks();
+	lastframe = SDL_GetTicks();
+	lastUpdate = SDL_GetTicks();
+	lastMoveUpdate = SDL_GetTicks();
 
 	glFogfv(GL_FOG_COLOR,FogLand);
 	glFogf(GL_FOG_START,0);
@@ -466,7 +464,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		netbuf[1]=!gs->paused;
 		netbuf[2]=gu->myPlayerNum;
 		net->SendData(netbuf,3);
-		perfCounter(&lastframe);
+		lastframe = SDL_GetTicks();
 	}
 	if (s=="singlestep"){
 		bOneStep=true;
@@ -820,10 +818,10 @@ bool CGame::Update()
 	thisFps++;
 
 	Uint64 timeNow;
-	perfCounter(&timeNow);
+	timeNow = SDL_GetTicks();
 	Uint64 difTime;
 	difTime=timeNow-lastModGameTimeMeasure;
-	double dif=double(difTime)/double(timeSpeed);
+	double dif=double(difTime)/1000.;
 	gu->modGameTime+=dif*gs->speedFactor;
 	gu->gameTime+=dif;
 	if(playing && !gameOver)
@@ -886,11 +884,11 @@ bool CGame::Draw()
 //	(*info) << mouse->lastx << "\n";
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
-		perfCounter(&startDraw);
-		gu->timeOffset = ((double)(startDraw - lastUpdate))/timeSpeed*GAME_SPEED*gs->speedFactor;
+		startDraw = SDL_GetTicks();
+		gu->timeOffset = ((double)(startDraw - lastUpdate))/1000.*GAME_SPEED*gs->speedFactor;
 	} else  {
 		gu->timeOffset=0;
-		perfCounter(&lastUpdate);
+		lastUpdate = SDL_GetTicks();
 	}
 	int a;
 	std::string tempstring;
@@ -1085,8 +1083,8 @@ bool CGame::Draw()
 	glLoadIdentity();
 
 	Uint64 start;
-	perfCounter(&start);
-	gu->lastFrameTime = (double)(start - lastMoveUpdate)/timeSpeed;
+	start = SDL_GetTicks();
+	gu->lastFrameTime = (double)(start - lastMoveUpdate)/1000.;
 	lastMoveUpdate=start;
 
 #ifndef NO_AVI
@@ -1111,7 +1109,7 @@ void CGame::StartPlaying()
 {
 	playing=true;
 	lastTick=clock();
-	perfCounter(&lastframe);
+	lastframe = SDL_GetTicks();
 	ENTER_MIXED;
 	gu->myTeam=gs->players[gu->myPlayerNum]->team;
 	gu->myAllyTeam=gs->team2allyteam[gu->myTeam];
@@ -1194,7 +1192,7 @@ START_TIME_PROFILE
 END_TIME_PROFILE("Collisions");
 
 	Uint64 stopPhysics;
-	perfCounter(&stopPhysics);
+	stopPhysics = SDL_GetTicks();
 
 END_TIME_PROFILE("Sim time")
 
@@ -1285,11 +1283,11 @@ bool CGame::ClientReadNet()
 
 	if(!gameServer/* && !net->onlyLocal*/){
 		Uint64 currentFrame;
-		perfCounter(&currentFrame);
+		currentFrame = SDL_GetTicks();
 		
 		if(timeLeft>1)
 			timeLeft--;
-		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/timeSpeed);
+		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/1000.);
 		lastframe=currentFrame;
 		
 		que=0;
@@ -1456,7 +1454,7 @@ bool CGame::ClientReadNet()
 				} else {
 					info->AddLine("%s unpaused the game",gs->players[player]->playerName.c_str());
 				}
-				perfCounter(&lastframe);
+				lastframe = SDL_GetTicks();
 				timeLeft=0;
 			}
 			lastLength=3;

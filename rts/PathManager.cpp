@@ -9,7 +9,7 @@
 #include <vector>
 #include "PathFinder.h"
 #include "PathEstimator.h"
-#include "perf.h"
+#include "SDL_timer.h"
 //#include "mmgr.h"
 
 const float ESTIMATE_DISTANCE = 55;
@@ -293,7 +293,7 @@ Removes and return the next waypoint in the multipath corresponding to given id.
 float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance, int numRetries) {
 	#ifdef PROFILE_TIME
 		Uint64 starttime;
-		perfCounter(&starttime);
+		starttime = SDL_GetTicks();
 	#endif
 
 	//0 indicate a no-path id.
@@ -350,7 +350,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 	//Return the result.
 	#ifdef PROFILE_TIME
 		Uint64 stop;
-		perfCounter(&stop);
+		stop = SDL_GetTicks();
 		profiler.AddTime("AI:PFS",stop - starttime);
 	
 	#endif

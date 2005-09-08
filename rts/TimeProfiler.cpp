@@ -7,7 +7,7 @@
 #include "myGL.h"
 #include "glFont.h"
 #include "InfoConsole.h"
-#include "perf.h"
+#include "SDL_timer.h"
 
 #include "VertexArray.h"
 //#include "mmgr.h"
@@ -19,7 +19,6 @@ CTimeProfiler profiler;
 
 CTimeProfiler::CTimeProfiler()
 {
-	perfFrequency(&timeSpeed);
 	lastBigUpdate=0;
 	startTimeNum=0;
 }
@@ -55,7 +54,7 @@ void CTimeProfiler::Draw()
 
 	glPushMatrix();
 	for(pi=profile.begin();pi!=profile.end();++pi){
-		font->glPrint("%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total)/timeSpeed,pi->second.percent*100);
+		font->glPrint("%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total)/1000.,pi->second.percent*100);
 
 		glTranslatef(0,-1.2f,0);
 
@@ -90,7 +89,7 @@ void CTimeProfiler::Draw()
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 		for(int a=0;a<128;++a){
-			float p=((double)pi->second.frames[a])/timeSpeed*30;
+			float p=((double)pi->second.frames[a])/1000.*30;
 			va->AddVertexT(float3(0.6+a*0.003,0.02+p*0.4,0),0,0);
 		}
 		glColor3f(pi->second.color.x,pi->second.color.y,pi->second.color.z);
@@ -110,7 +109,7 @@ void CTimeProfiler::Update()
 		lastBigUpdate=gu->gameTime;
 		map<string,TimeRecord>::iterator pi;
 		for(pi=profile.begin();pi!=profile.end();++pi){
-			pi->second.percent=((double)pi->second.current)/timeSpeed;
+			pi->second.percent=((double)pi->second.current)/1000.;
 			pi->second.current=0;
 
 		}
@@ -147,7 +146,7 @@ void CTimeProfiler::StartTimer()
 		return;
 	}
 	Uint64 starttime;
-	perfCounter(&starttime);
+	starttime = SDL_GetTicks();
 	startTimes[startTimeNum++]=(starttime);
 }
 
@@ -157,7 +156,7 @@ void CTimeProfiler::EndTimer(char* name)
 		return;
 
 	Uint64 stop;
-	perfCounter(&stop);
+	stop = SDL_GetTicks();
 	AddTime(name,stop - startTimes[--startTimeNum]);
 }
 

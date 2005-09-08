@@ -42,9 +42,9 @@
 #include "FeatureHandler.h"
 //#include "mmgr.h"
 #include "GUICommandPool.h"
-#include "perf.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
+#include "SDL_timer.h"
 
 extern Uint8 *keys;
 extern bool	globalQuit;
@@ -1079,7 +1079,7 @@ bool GUIgame::EventAction(const string& command)
 		netbuf[1]=!gs->paused;
 		netbuf[2]=gu->myPlayerNum;
 		net->SendData(netbuf,3);
-		perfCounter(&(game->lastframe));
+		game->lastframe = SDL_GetTicks();
 	}
 	else if (id==COMMAND_singlestep){	
 		game->bOneStep=true;

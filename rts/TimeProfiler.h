@@ -60,7 +60,6 @@ public:
 	virtual ~CTimeProfiler();
 
 	map<string,TimeRecord> profile;
-	Uint64 timeSpeed;
 	double lastBigUpdate;
 
 	virtual bool MousePress(int x, int y, int button);

@@ -13,7 +13,6 @@
 #include "Team.h"
 #include "GameVersion.h"
 #include "errorhandler.h"
-#include "perf.h"
 //#include "mmgr.h"
 #ifdef _WIN32
 #include <direct.h>
@@ -23,6 +22,7 @@
 #include <errno.h>
 #endif
 #include <boost/filesystem/convenience.hpp>
+#include "SDL_timer.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -47,10 +47,9 @@ unsigned char netbuf[NETWORK_BUFFER_SIZE];	//buffer space for outgoing data
 
 CNet::CNet()
 {
-	Uint64 t,f;
-	perfCounter(&t);
-	perfFrequency(&f);
-	curTime=double(t)/double(f);
+	Uint64 t;
+	t = SDL_GetTicks();
+	curTime=double(t)/1000.;
 	Uint16 wVersionRequested;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -168,10 +167,9 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 {
   LPHOSTENT lpHostEntry;
 
-	Uint64 t,f;
-	perfCounter(&t);
-	perfFrequency(&f);
-	curTime=double(t)/f;
+	Uint64 t;
+	t = SDL_GetTicks();
+	curTime=double(t)/1000.;
 
 	if(FindDemoFile(server)){
 		onlyLocal=true;
@@ -324,10 +322,9 @@ int CNet::GetData(unsigned char *buf, int length,int conNum)
 
 void CNet::Update(void)
 {
-	Uint64 t,f;
-	perfCounter(&t);
-	perfFrequency(&f);
-	curTime=double(t)/double(f);
+	Uint64 t;
+	t = SDL_GetTicks();
+	curTime=double(t)/1000.;
 	if(onlyLocal){
 		if(playbackDemo)
 			ReadDemoFile();

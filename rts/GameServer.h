@@ -27,7 +27,6 @@ public:
 	unsigned char outbuf[40000];
 
 	Uint64 lastframe;
-	Uint64 timeSpeed;
 	float timeLeft;
 
 	unsigned int serverframenum;

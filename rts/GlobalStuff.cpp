@@ -13,7 +13,8 @@
 #endif
 #include "Player.h"
 #include "TAPalette.h"
-#include "perf.h"
+#include "SDL_types.h"
+#include "SDL_timer.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -28,7 +29,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	hmapx=256;
 	hmapy=256;
 	Uint64 li;
-	perfCounter(&li);
+	li = SDL_GetTicks();
 	randSeed=li&0xffffffff;
 	frameNum=0;
 	speedFactor=1;
@@ -109,7 +110,7 @@ float3 CGlobalSyncedStuff::randVector()
 CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
 	Uint64 randnum;
-	perfCounter(&randnum);
+	randnum = SDL_GetTicks();
 	usRandSeed=randnum&0xffffffff;
 	modGameTime=0;
 	gameTime=0;

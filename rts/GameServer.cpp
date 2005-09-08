@@ -8,7 +8,6 @@
 #include "GameSetup.h"
 #include "ScriptHandler.h"
 #include "errorhandler.h"
-#include "perf.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
 #include "SDL_timer.h"
@@ -52,8 +51,7 @@ CGameServer::CGameServer(void)
 	serverNet->InitNewConn(&net->connections[0].addr,true,0);
 	net->onlyLocal=true;
 
-	perfCounter(&lastframe);
-	perfFrequency(&timeSpeed);
+	lastframe = SDL_GetTicks();
 
 	exeChecksum=game->CreateExeChecksum();
 
@@ -143,8 +141,8 @@ bool CGameServer::Update(void)
 	}
 	if (game->playing){
 		Uint64 currentFrame;
-		perfCounter(&currentFrame);
-		double timeElapsed=((double)(currentFrame - lastframe))/timeSpeed;
+		currentFrame = SDL_GetTicks();
+		double timeElapsed=((double)(currentFrame - lastframe))/1000.;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		info->AddLine("float value is %f",timeElapsed);
@@ -166,9 +164,6 @@ bool CGameServer::Update(void)
 				CreateNewFrame(true);
 			}
 			timeLeft--;
-#ifndef _WIN32
-			timeLeft--;
-#endif
 		}
 	}
 	serverNet->Update();
