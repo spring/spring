@@ -199,6 +199,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
+	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->parse();
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
@@ -223,33 +224,29 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	// Check if the commandline parameter is specifying a demo file
 	bool playDemo = false;
+	string demofile;
+	for (int i = 0; i < argc; i++) {
+		if (i == 0) {
+			string command(argv[i]);
+			int idx = command.rfind("spring");
+			string path = command.substr(0,idx);
+			if (path.at(0) == '"')
+				path.append(1,'"');
+			if (path != "")
 #ifdef _WIN32
-	string cmdline(lpCmdLine);
-	for (string::size_type pos = cmdline.find("\""); pos != string::npos; pos = cmdline.find("\"")) 
-		cmdline.erase(pos, 1);
-	string cmdext = cmdline.substr(cmdline.find_last_of('.') + 1);
-	transform(cmdext.begin(), cmdext.end(), cmdext.begin(), (int (*)(int))tolower);
-	if (cmdext == "sdf") {
-		playDemo = true;
-
-		// Launching a demo through a file association will not start spring with a correct working directory
-		// So we need to determine this from the commandline and change manually
-		// It should look like "x:\path\path\spring.exe" demo.sdf
-
-		string fullcmd(GetCommandLine());
-		string executable;
-		if (fullcmd[0] == '"')
-			executable = fullcmd.substr(1, fullcmd.find('"', 1));
-		else 
-			executable = fullcmd.substr(0, fullcmd.find(' '));
-
-		string path = executable.substr(0, executable.find_last_of('\\'));
-		if (path != "")
-			_chdir(path.c_str()); 
-
-		//MessageBox(NULL,path.c_str(), "Path",MB_YESNO|MB_ICONQUESTION);
-	}
+				_chdir(path.c_str());
+#else
+				chdir(path.c_str());
 #endif
+		} else if (argv[i][0] != '-') {
+			string command(argv[i]);
+			int idx = command.rfind("sdf");
+			if (idx == command.size()-4) {
+				playDemo = true;
+				demofile = command;
+			}
+		}
+	}
 
 	// Create the archive scanner and vfs handler
 	archiveScanner = new CArchiveScanner();
@@ -263,30 +260,21 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ENTER_SYNCED;
 	if (!playDemo) {
 		gameSetup=new CGameSetup();
-#ifdef _WIN32
-		if(!gameSetup->Init(lpCmdLine)){
+		if(!gameSetup->Init(demofile)){
 			delete gameSetup;
 			gameSetup=0;
 		}
-#else	
-		gameSetup=0;
-#endif
 	}
 
 	ENTER_MIXED;
 
 	bool server;
-#ifndef _WIN32
-	server=true;
-#else
 	if (playDemo)
 		server = false;
 	else if(gameSetup)
 		server=gameSetup->myPlayer==0;
 	else
-		server=MessageBox(NULL,"Do you want to be server?", "Be server?",MB_YESNO|MB_ICONQUESTION)==IDYES;
-
-#endif
+		server=cmdline->result("server");
 	
 #ifdef _DEBUG
 	fullscreen=false;
@@ -302,18 +290,14 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		return 0;									// Quit If Window Was Not Created
 	}
 
-
-
 	font=new CglFont(32,223);
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
 	SDL_GL_SwapBuffers();
-#ifdef _WIN32
 	if (playDemo)
-		pregame = new CPreGame(false, cmdline);
+		pregame = new CPreGame(false, demofile);
 	else
-#endif
 		pregame=new CPreGame(server, "");
 
 	#ifdef NEW_GUI
