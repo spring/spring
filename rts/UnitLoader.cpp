@@ -282,8 +282,8 @@ START_TIME_PROFILE;
 
 	unit->localmodel = unit3doparser->CreateLocalModel(unit->model, &unit->cob->pieces);
 
-	for(unsigned int i=0; i< /*(ud->type=="Bomber" ? 1:*/ud->weapons.size(); i++)
-		unit->weapons.push_back(LoadWeapon(ud->weapons[i],unit));
+	for(unsigned int i=0; i< ud->weapons.size(); i++)
+		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def,unit,&ud->weapons[i]));
 	
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;
@@ -311,7 +311,7 @@ END_TIME_PROFILE("Unit loader");
 	return unit;
 }
 
-CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
+CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw)
 {
 
 	CWeapon* weapon;
@@ -324,7 +324,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 		weapon=new CRocketLauncher(owner);
 	} else if(weapondef->type=="Cannon"){
 		weapon=new CCannon(owner);
-		((CCannon*)weapon)->selfExplode=weapondef->movement.selfExplode;
+		((CCannon*)weapon)->selfExplode=weapondef->selfExplode;
 	} else if(weapondef->type=="Rifle"){
 		weapon=new CRifle(owner);
 	} else if(weapondef->type=="Melee"){
@@ -337,10 +337,12 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 		weapon=new CFlameThrower(owner);
 	} else if(weapondef->type=="MissileLauncher"){
 		weapon=new CMissileLauncher(owner);
-		((CMissileLauncher*)weapon)->tracking=weapondef->movement.tracking;
 	} else if(weapondef->type=="TorpedoLauncher"){
 		weapon=new CTorpedoLauncher(owner);
-		((CTorpedoLauncher*)weapon)->tracking=weapondef->movement.tracking;
+		if(weapondef->tracks)
+			((CTorpedoLauncher*)weapon)->tracking=weapondef->turnrate;
+		else
+			((CTorpedoLauncher*)weapon)->tracking=0;
 	} else if(weapondef->type=="LaserCannon"){
 		weapon=new CLaserCannon(owner);
 		((CLaserCannon*)weapon)->color=weapondef->visuals.color;
@@ -356,7 +358,10 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 		weapon=new CDGunWeapon(owner);
 	} else if(weapondef->type=="StarburstLauncher"){
 		weapon=new CStarburstLauncher(owner);
-		((CStarburstLauncher*)weapon)->tracking=weapondef->movement.tracking;
+		if(weapondef->tracks)
+			((CStarburstLauncher*)weapon)->tracking=weapondef->turnrate;
+		else
+			((CStarburstLauncher*)weapon)->tracking=0;
 		((CStarburstLauncher*)weapon)->uptime=weapondef->uptime*30;
 	}else {
 		(*info) << "Unknown weapon type " << weapondef->type.c_str() << "\n";
@@ -370,7 +375,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 	weapon->range=weapondef->range;
 //	weapon->baseRange=weapondef->range;
 	weapon->heightMod=weapondef->heightmod;
-	weapon->projectileSpeed=weapondef->movement.projectilespeed;
+	weapon->projectileSpeed=weapondef->projectilespeed;
 //	weapon->baseProjectileSpeed=weapondef->projectilespeed/GAME_SPEED;
 
 	weapon->damages = weapondef->damages; //not needed anymore, to be removed
@@ -422,15 +427,18 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner)
 	weapon->fireSoundVolume=weapondef->firesound.volume;
 
 	weapon->onlyForward=weapondef->onlyForward;
-	if(owner->unitDef->type=="Fighter" && !owner->unitDef->hoverAttack)		//fighter aircrafts have to big tolerance in ta
+	if(owner->unitDef->type=="Fighter" && !owner->unitDef->hoverAttack)		//fighter aircrafts have too big tolerance in ta
 		weapon->maxAngleDif=cos(weapondef->maxAngle*0.4/180*PI);
 	else
 		weapon->maxAngleDif=cos(weapondef->maxAngle/180*PI);
 
 	weapon->weaponNum=owner->weapons.size();
 
-	weapon->badTargetCategory=weapondef->badTargetCategory;
+	weapon->badTargetCategory=udw->badTargetCat;
 	weapon->onlyTargetCategory=weapondef->onlyTargetCategory;
+
+	if(udw->slavedTo)
+		weapon->slavedTo=owner->weapons[udw->slavedTo-1];
 
 	weapon->Init();
 

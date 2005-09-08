@@ -27,6 +27,7 @@
 #include "UnitHandler.h"
 #include "UnitDef.h"
 #include "ProjectileHandler.h"
+#include "Sound.h"
 #include "SDL_types.h"
 //#include "mmgr.h"
 
@@ -689,6 +690,13 @@ void CCobInstance::Explode(int piece, int flags)
 		new CPieceProjectile(pos, speed, dl, newflags,unit,0.5);
 	}
 #endif
+}
+
+void CCobInstance::PlayUnitSound(int snr, int attr)
+{
+	int sid = script.sounds[snr];
+	//info->AddLine("Playing %d %d %d", snr, attr, sid);
+	sound->PlaySound(sid, unit->pos, attr);
 }
 
 void CCobInstance::ShowFlare(int piece)

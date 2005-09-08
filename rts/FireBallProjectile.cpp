@@ -61,11 +61,11 @@ void CFireBallProjectile::Update()
 	{
 		pos+=speed;
 
-		if(weaponDef->movement.gravityAffected)
+		if(weaponDef->gravityAffected)
 			speed.y+=gs->gravity;
 
 		//göra om till ttl sedan kanske
-		if(weaponDef->movement.noExplode)
+		if(weaponDef->noExplode)
 		{
 			if(TraveledRange())
 				checkCol=false;

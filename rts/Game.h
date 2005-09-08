@@ -60,6 +60,8 @@ public:
 	float3 trackPos[16];
 	int leastQue;
 
+	std::string userInputPrefix;
+
 	int lastTick;
 	float timeLeft;
 	float consumeSpeed;

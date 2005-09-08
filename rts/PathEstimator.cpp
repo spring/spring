@@ -652,8 +652,14 @@ Trying to read offset and vertices data from file.
 Return false if failed.
 TODO: Read-error-check.
 */
-bool CPathEstimator::ReadFile(string name) {
-	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + name + ".zip";
+bool CPathEstimator::ReadFile(string name) 
+{
+
+	unsigned int hash=Hash();
+	char hashString[50];
+	sprintf(hashString,"%u",hash);
+
+	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 	CArchiveZip file(filename);
 	if (!file.IsOpen()) 
 		return false;
@@ -661,9 +667,8 @@ bool CPathEstimator::ReadFile(string name) {
 	int fh = file.OpenFile("pathinfo");
 
 	if (fh) {
-		//Check hash.
 		unsigned int filehash = 0;
-		unsigned int hash=Hash();
+ 		//Check hash.
 //		info->AddLine("%i",hash);
 		file.ReadFile(fh, &filehash, 4);
 		if(filehash != hash)
@@ -695,7 +700,11 @@ void CPathEstimator::WriteFile(string name) {
 	if (!boost::filesystem::exists(f))
 		boost::filesystem::create_directories(f);
 
-	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + name + ".zip";
+	unsigned int hash = Hash();
+	char hashString[50];
+	sprintf(hashString,"%u",hash);
+
+	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + hashString + "." + name + ".zip";
 	zipFile file = zipOpen(filename.c_str(), APPEND_STATUS_CREATE);
 
 	if (file) {

@@ -266,7 +266,6 @@ CGame::CGame(bool server,std::string mapname)
 	for(int a=0;a<16;++a)
 		trackPos[a]=float3(0,0,0);
 
-	userInput="";
 	showList=0;
 
 	info->AddLine("TA Spring linux %s",VERSION_STRING);
@@ -475,6 +474,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if (s=="chat"){
 		userWriting=true;
 		userPrompt="Say: ";
+		userInput=userInputPrefix;
 		chatting=true;
 		if(k!=SDLK_RETURN)
 			ignoreNextChar=true;
@@ -1889,6 +1889,9 @@ void CGame::UpdateUI()
 
 	if(chatting && !userWriting){
 		if(userInput.size()>0){
+			if(userInput.size()>250)	//avoid troubles with to long lines
+				userInput=userInput.substr(0,250);
+
 			netbuf[0]=NETMSG_CHAT;
 			netbuf[1]=userInput.size()+4;
 			netbuf[2]=gu->myPlayerNum;
@@ -1904,6 +1907,9 @@ void CGame::UpdateUI()
 	}
 #ifndef NEW_GUI
 	if(inMapDrawer->wantLabel && !userWriting){
+		if(userInput.size()>200)	//avoid troubles with to long lines
+			userInput=userInput.substr(0,200);
+
 		inMapDrawer->CreatePoint(inMapDrawer->waitingPoint,userInput);
 		inMapDrawer->wantLabel=false;
 		userInput="";
@@ -2271,18 +2277,27 @@ void CGame::HandleChatMsg(std::string s,int player)
 		return;
 
 	if((s[0]=='a' || s[0]=='A') && s[1]==':'){
+		if(player==gu->myPlayerNum)
+			userInputPrefix="a:";
+
 		if((gs->allies[gs->team2allyteam[gs->players[inbuf[inbufpos+2]]->team]][gu->myAllyTeam] && !gs->players[player]->spectator) || gu->spectating){
 			s="<"+gs->players[player]->playerName+"> Allies: "+s.substr(2,255);
 			info->AddLine(s);
 			sound->PlaySound(chatSound);
 		}
 	} else if((s[0]=='s' || s[0]=='S') && s[1]==':'){
+		if(player==gu->myPlayerNum)
+			userInputPrefix="s:";
+
 		if(gu->spectating || gu->myPlayerNum == player){
 			s="<"+gs->players[player]->playerName+"> Spectators: "+s.substr(2,255);
 			info->AddLine(s);
 			sound->PlaySound(chatSound);
 		}
 	} else {
+		if(player==gu->myPlayerNum)
+			userInputPrefix="";
+
 		s="<"+gs->players[player]->playerName+"> "+s;
 		info->AddLine(s);
 		sound->PlaySound(chatSound);

@@ -116,6 +116,8 @@ public:
 	float3 errorVector;
 	float3 errorVectorAdd;
 	int lastErrorVectorUpdate;
+
+	CWeapon* slavedTo;
 };
 
 #endif // !defined(AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_)

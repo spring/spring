@@ -40,6 +40,12 @@ CShadowHandler::CShadowHandler(void)
 
 	if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
 		info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
+		return;
+	}
+
+	if(!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"unit.fp")){
+		info->AddLine("Your GFX card doesnt support the fragment programs needed to run in shadowed mode");
+		return;
 	}
 
 	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){

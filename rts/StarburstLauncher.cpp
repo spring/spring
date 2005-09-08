@@ -52,5 +52,9 @@ bool CStarburstLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit
 		if(pos.y<0)
 			return false;
 	}
+
+	if(helper->TestCone(weaponPos,UpVector,100,0,owner->allyteam,owner))
+		return false;
+
 	return true;
 }

@@ -75,7 +75,8 @@ CWeapon::CWeapon(CUnit* owner)
 	useWeaponPosForAim(0),
 	errorVector(ZeroVector),
 	errorVectorAdd(ZeroVector),
-	lastErrorVectorUpdate(0)
+	lastErrorVectorUpdate(0),
+	slavedTo(0)
 {
 }
 
@@ -94,12 +95,12 @@ void CWeapon::Update()
 			lastErrorVectorUpdate=gs->frameNum;
 		}
 		errorVector+=errorVectorAdd;
-		if(weaponDef->movement.selfExplode){	//assumes that only flakker like units that need to hit aircrafts has this,change to a separate tag later
+		if(weaponDef->selfExplode){	//assumes that only flakker like units that need to hit aircrafts has this,change to a separate tag later
 			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*(0.5+predictSpeedMod*0.5)*predict;
 		} else {
 			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*predictSpeedMod*predict;
 		}
-		targetPos+=errorVector*(weaponDef->targetMoveError*targetUnit->speed.Length()*(1.0-owner->limExperience));
+		targetPos+=errorVector*(weaponDef->targetMoveError*30*targetUnit->speed.Length()*(1.0-owner->limExperience));
 		if(!weaponDef->waterweapon && targetPos.y<1)
 			targetPos.y=1;
 	}
@@ -260,8 +261,8 @@ bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 		haveUserTarget=false;
 		return false;
 	}
-	float3 targetPos(unit->midPos);
-	targetPos+=errorVector*(weaponDef->targetMoveError*unit->speed.Length()*(1.0-owner->limExperience));
+	float3 targetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
+	targetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0-owner->limExperience));
 	if(!TryTarget(targetPos,userTarget,unit))
 		return false;
 
@@ -317,6 +318,31 @@ void CWeapon::SlowUpdate()
 	if(targetType==Target_Unit && targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
 		HoldFire();
 
+	if(slavedTo){	//use targets from the thing we are slaved to
+		if(slavedTo->targetType==Target_Unit){
+			float3 tp=helper->GetUnitErrorPos(slavedTo->targetUnit,owner->allyteam);
+			tp+=errorVector*(weaponDef->targetMoveError*30*slavedTo->targetUnit->speed.Length()*(1.0-owner->limExperience));
+			if(TryTarget(tp,false,slavedTo->targetUnit)){
+				if(targetUnit){
+					DeleteDeathDependence(targetUnit);
+				}
+				targetType=Target_Unit;
+				targetUnit=slavedTo->targetUnit;
+				targetPos=tp;
+				AddDeathDependence(targetUnit);
+			}
+		} else if(slavedTo->targetType==Target_Pos){
+			if(TryTarget(slavedTo->targetPos,false,0)){
+				if(targetUnit){
+					DeleteDeathDependence(targetUnit);
+				}
+				targetType=Target_Pos;
+				targetPos=slavedTo->targetPos;
+			}
+		}
+		return;
+	}
+
 	if(!weaponDef->noAutoTarget){
 		if(owner->fireState==2 && !haveUserTarget && (targetType==Target_None || (targetType==Target_Unit && (targetUnit->category & badTargetCategory)) || gs->frameNum>lastTargetRetry+65)){
 			std::map<float,CUnit*> targets;
@@ -326,7 +352,7 @@ void CWeapon::SlowUpdate()
 				if(targetUnit && (ti->second->category & badTargetCategory))
 					continue;
 				float3 tp(ti->second->midPos);
-				tp+=errorVector*(weaponDef->targetMoveError*ti->second->speed.Length()*(1.0-owner->limExperience));
+				tp+=errorVector*(weaponDef->targetMoveError*30*ti->second->speed.Length()*(1.0-owner->limExperience));
 				if(TryTarget(tp,false,ti->second)){
 					if(targetUnit){
 						DeleteDeathDependence(targetUnit);

@@ -42,7 +42,7 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 		return new CModelProjectile(pos,speed,owner,target,targetPos,weaponDef);
 		break;
 	case WEAPON_RENDERTYPE_LASER:
-		return new CLaserProjectile(pos, speed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->movement.projectilespeed));
+		return new CLaserProjectile(pos, speed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
 		break;
 	case WEAPON_RENDERTYPE_PLASMA:
 		break;
@@ -57,13 +57,13 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 
 void CWeaponProjectile::Collision()
 {
-	if(!weaponDef->movement.noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->movement.noExplode? 0.3:1,weaponDef->movement.noExplode);
+	if(!weaponDef->noExplode || gs->frameNum&1)
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode);
 
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
 
-	if(!weaponDef->movement.noExplode)
+	if(!weaponDef->noExplode)
 		CProjectile::Collision();
 	else
 	{
@@ -83,13 +83,13 @@ void CWeaponProjectile::Collision(CFeature* feature)
 
 void CWeaponProjectile::Collision(CUnit* unit)
 {
-	if(!weaponDef->movement.noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->movement.noExplode? 0.3:1,weaponDef->movement.noExplode);
+	if(!weaponDef->noExplode || gs->frameNum&1)
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode);
 
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
 
-	if(!weaponDef->movement.noExplode)
+	if(!weaponDef->noExplode)
 		CProjectile::Collision(unit);
 	else
 	{
@@ -102,18 +102,18 @@ void CWeaponProjectile::Update()
 {
 	//pos+=speed;
 
-	//if(weaponDef->movement.gravityAffected)
+	//if(weaponDef->gravityAffected)
 	//	speed.y+=gs->gravity;
 
 
-	//if(weaponDef->movement.noExplode)
+	//if(weaponDef->noExplode)
 	//{
  //       if(TraveledRange())
 	//		CProjectile::Collision();
 	//}
 
-	//if(speed.Length()<weaponDef->movement.maxvelocity)
-	//	speed += dir*weaponDef->movement.weaponacceleration
+	//if(speed.Length()<weaponDef->maxvelocity)
+	//	speed += dir*weaponDef->weaponacceleration
 
 	CProjectile::Update();
 }

@@ -290,7 +290,7 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
 /*
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
-float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance) {
+float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance, int numRetries) {
 	#ifdef PROFILE_TIME
 		Uint64 starttime;
 		perfCounter(&starttime);
@@ -298,6 +298,9 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 
 	//0 indicate a no-path id.
 	if(pathId == 0)
+		return float3(-1,-1,-1);
+
+	if(numRetries>4)
 		return float3(-1,-1,-1);
 
 	//Find corresponding multipath.
@@ -337,7 +340,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 			if(multiPath->estimatedPath2.path.empty() && multiPath->estimatedPath.path.empty())
 				return multiPath->finalGoal;
 			else 
-				return float3(-1,-1,-1);
+				return NextWaypoint(pathId,callerPos,minDistance,numRetries+1);
 		} else {
 			waypoint = multiPath->detailedPath.path.back();
 			multiPath->detailedPath.path.pop_back();

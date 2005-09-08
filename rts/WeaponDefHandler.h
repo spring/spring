@@ -94,29 +94,24 @@ struct WeaponDef
 
 	int graphicsType;
 
-	struct
-	{
-		bool selfExplode;
+	bool selfExplode;
+	bool gravityAffected;
+	bool twophase;
+	bool guided;
+	bool vlaunch;
+	bool selfprop;
+	bool noExplode;
+	float startvelocity;
+	float weaponacceleration;
+	float turnrate;
+	float maxvelocity;
 
-		//bool dropped;
-		//bool lineofsight;
-		//bool balistic;
-		bool gravityAffected;
-		bool twophase;
-		bool guided;
-		bool vlaunch;
-		bool selfprop;
-		bool noExplode;
-		float startvelocity;
-		float weaponacceleration;
-		float maxvelocity;
+	float projectilespeed;
 
-		float projectilespeed;
-		float tracking;
-	}movement;
-
-	unsigned int badTargetCategory;
 	unsigned int onlyTargetCategory;
+
+	float wobble;						//how much the missile will wobble around its course
+	float trajectoryHeight;			//how high trajectory missiles will try to fly in
 
 	struct
 	{

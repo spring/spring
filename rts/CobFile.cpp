@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
+#include "Sound.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -26,6 +27,9 @@ typedef struct tagCOBHeader
 	int OffsetToPieceNameOffsetArray;
 	int OffsetToScriptCode;
 	int Unknown_3; /* Always seems to point to first script name */
+
+	int OffsetToSoundNameArray;		// These two are only found in TA:K scripts
+	int NumberOfSounds;
 } COBHeader;
 
 #define READ_COBHEADER(ch,src)						\
@@ -65,6 +69,12 @@ do {									\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
 	(ch).Unknown_3 = (int)swabdword(__tmp);				\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).OffsetToSoundNameArray = (int)swabdword(__tmp);		\
+	__c+=__isize;							\
+	memcpy(&__tmp,&((src)[__c]),__isize);				\
+	(ch).NumberOfSounds = (int)swabdword(__tmp);			\
 } while (0)
 
 
@@ -123,6 +133,19 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	numStaticVars = ch.NumberOfStaticVars;
 
+	// If this is a TA:K script, read the sound names
+	if (ch.VersionSignature == 6) {
+		for (long i = 0; i < ch.NumberOfSounds; ++i) {
+			long ofs;
+			ofs = *(long *)&cobdata[ch.OffsetToSoundNameArray + i * 4];
+			string s = &cobdata[ofs];
+
+			// Load the wave file and store the ID for future use
+			s = s + ".wav";
+			sounds.push_back(sound->GetWaveId(s));
+		}
+	}
+
 	delete[] cobdata;
 
 	//Create a reverse mapping (name->int)
@@ -131,23 +154,11 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	}
 
 	//Map common function names to indicies
-	scriptIndex.resize(COBFN_Last);
+	scriptIndex.resize(COBFN_Last + COB_MaxWeapons * 4);
 	scriptIndex[COBFN_Create] = getFunctionId("Create");
 	scriptIndex[COBFN_StartMoving] = getFunctionId("StartMoving");
 	scriptIndex[COBFN_StopMoving] = getFunctionId("StopMoving");
-	scriptIndex[COBFN_QueryPrimary] = getFunctionId("QueryPrimary");
-	scriptIndex[COBFN_QuerySecondary] = getFunctionId("QuerySecondary");
-	scriptIndex[COBFN_QueryTertiary] = getFunctionId("QueryTertiary");
-	scriptIndex[COBFN_AimPrimary] = getFunctionId("AimPrimary");
-	scriptIndex[COBFN_AimSecondary] = getFunctionId("AimSecondary");
-	scriptIndex[COBFN_AimTertiary] = getFunctionId("AimTertiary");
-	scriptIndex[COBFN_AimFromPrimary] = getFunctionId("AimFromPrimary");
-	scriptIndex[COBFN_AimFromSecondary] = getFunctionId("AimFromSecondary");
-	scriptIndex[COBFN_AimFromTertiary] = getFunctionId("AimFromTertiary");
 	scriptIndex[COBFN_Activate] = getFunctionId("Activate");
-	scriptIndex[COBFN_FirePrimary] = getFunctionId("FirePrimary");
-	scriptIndex[COBFN_FireSecondary] = getFunctionId("FireSecondary");
-	scriptIndex[COBFN_FireTertiary] = getFunctionId("FireTertiary");
 	scriptIndex[COBFN_Killed] = getFunctionId("Killed");
 	scriptIndex[COBFN_Deactivate] = getFunctionId("Deactivate");
 	scriptIndex[COBFN_SetDirection] = getFunctionId("SetDirection");
@@ -159,6 +170,35 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	scriptIndex[COBFN_MoveRate2] = getFunctionId("MoveRate2");
 	scriptIndex[COBFN_MoveRate3] = getFunctionId("MoveRate3");
 	scriptIndex[COBFN_SetSFXOccupy] = getFunctionId("setSFXoccupy");
+
+	// Also add the weapon aiming stuff
+	for (int i = 0; i < COB_MaxWeapons; ++i) {
+		char buf[15];
+		sprintf(buf, "Weapon%d", i + 1);
+		string weapon(buf);
+		scriptIndex[COBFN_QueryPrimary + i] = getFunctionId("Query" + weapon);
+		scriptIndex[COBFN_AimPrimary + i] = getFunctionId("Aim" + weapon);
+		scriptIndex[COBFN_AimFromPrimary + i] = getFunctionId("AimFrom" + weapon);
+		scriptIndex[COBFN_FirePrimary + i] = getFunctionId("Fire" + weapon);
+
+		// If new-naming functions are not found, we need to support the old naming scheme
+		if (i > 2)
+			continue;
+		switch (i) {
+			case 0: weapon = "Primary"; break;
+			case 1: weapon = "Secondary"; break;
+			case 2: weapon = "Tertiary"; break;
+		}
+
+		if (scriptIndex[COBFN_QueryPrimary + i] == -1)
+			scriptIndex[COBFN_QueryPrimary + i] = getFunctionId("Query" + weapon);
+		if (scriptIndex[COBFN_AimPrimary + i] == -1)
+			scriptIndex[COBFN_AimPrimary + i] = getFunctionId("Aim" + weapon);
+		if (scriptIndex[COBFN_AimFromPrimary + i] == -1)
+			scriptIndex[COBFN_AimFromPrimary + i] = getFunctionId("AimFrom" + weapon);
+		if (scriptIndex[COBFN_FirePrimary + i] == -1)
+			scriptIndex[COBFN_FirePrimary + i] = getFunctionId("Fire" + weapon);
+	}
 }
 
 CCobFile::~CCobFile(void)

@@ -740,10 +740,10 @@ void CGuiHandler::DrawMapStuff(void)
 						glColor4f(1,0.3,0.3,0.7);
 						glBegin(GL_LINE_STRIP);
 						for(int a=0;a<=40;++a){
-							float3 wpos(cos(a*2*PI/40)*unitdef->weapons[0]->range,0,sin(a*2*PI/40)*unitdef->weapons[0]->range);
+							float3 wpos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
 							wpos+=pos;
 							float dh=ground->GetHeight(wpos.x,wpos.z)-pos.y;
-							float modRange=unitdef->weapons[0]->range-dh*unitdef->weapons[0]->heightmod;
+							float modRange=unitdef->weapons[0].def->range-dh*unitdef->weapons[0].def->heightmod;
 							wpos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
 							wpos+=pos;
 							wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;

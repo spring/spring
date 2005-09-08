@@ -91,6 +91,7 @@ public:
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
 	void Explode(int piece, int flags);
+	void PlayUnitSound(int snr, int attr);
 	void ShowFlare(int piece);
 	bool HasScriptFunction(int id);
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime);

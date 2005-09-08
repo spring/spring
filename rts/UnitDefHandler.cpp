@@ -305,55 +305,66 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	if(wd1)
 	{
-		wd1->badTargetCategory=0;
 		string badTarget;
 		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wpri_badTargetCategory");
-		if(!badTarget.empty())
-			wd1->badTargetCategory=CCategoryHandler::Instance()->GetCategories(badTarget);
+		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
 
-		ud.sweapons.push_back(weap1);
-		ud.weapons.push_back(wd1);
+		ud.weapons.push_back(UnitDef::UnitDefWeapon(weap1,wd1,0,float3(0,0,1),1,btc));
 	}
 	else
 	{
 		if(wd2||wd3)
 		{
-			ud.sweapons.push_back("");
-			ud.weapons.push_back(NULL);
+			ud.weapons.push_back(UnitDef::UnitDefWeapon("",0,0,float3(0,0,1),1,0));
 		}
 
 	}
 	if(wd2)
 	{
-		wd2->badTargetCategory=0;
 		string badTarget;
 		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wsec_badTargetCategory");
-		if(!badTarget.empty())
-			wd2->badTargetCategory=CCategoryHandler::Instance()->GetCategories(badTarget);
+		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
 
-		ud.sweapons.push_back(weap2);
-		ud.weapons.push_back(wd2);
+		ud.weapons.push_back(UnitDef::UnitDefWeapon(weap2,wd2,0,float3(0,0,1),1,btc));
 	}
 	else
 	{
 		if(wd3)
 		{
-			ud.sweapons.push_back("");
-			ud.weapons.push_back(NULL);
+			ud.weapons.push_back(UnitDef::UnitDefWeapon("",0,0,float3(0,0,1),1,0));
 		}
 	}
 	if(wd3)
 	{
-		wd3->badTargetCategory=0;
 		string badTarget;
 		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wspe_badTargetCategory");
-		if(!badTarget.empty())
-			wd3->badTargetCategory=CCategoryHandler::Instance()->GetCategories(badTarget);
+		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
 
-		ud.sweapons.push_back(weap3);
-		ud.weapons.push_back(wd3);
+		ud.weapons.push_back(UnitDef::UnitDefWeapon(weap3,wd3,0,float3(0,0,1),1,btc));
 	}
 
+	for(int a=0;a<16;++a){
+		if(ud.weapons.size()>a)		//skip weapons created by old method
+			continue;
+
+		char c[50];
+		sprintf(c,"%i",a+1);
+
+		string name;
+		sunparser.GetDef(name, "", std::string("UNITINFO\\")+"weapon"+c);
+		WeaponDef *wd = weaponDefHandler->GetWeapon(name);
+
+		if(!wd)
+			break;
+
+		string badTarget;
+		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "badTargetCategory"+c);
+		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
+
+		unsigned int slaveTo=atoi(sunparser.SGetValueDef("0", string("UNITINFO\\WeaponSlaveTo")+c).c_str());
+
+		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,float3(0,0,1),1,btc));
+	}
 	sunparser.GetDef(ud.canDGun, "0", "UNITINFO\\candgun");
 
 	ud.wantedHeight=atof(sunparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str())*1.5;
@@ -380,7 +391,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	}
 	else if(ud.canfly)
 	{
-		if(!ud.weapons.empty() && ud.weapons[0]!=0 && (ud.weapons[0]->type=="AircraftBomb" || ud.weapons[0]->type=="TorpedoLauncher")){
+		if(!ud.weapons.empty() && ud.weapons[0].def!=0 && (ud.weapons[0].def->type=="AircraftBomb" || ud.weapons[0].def->type=="TorpedoLauncher")){
 			ud.type = "Bomber";			
 			ud.turnRadius=800;			//hint to the ai about how large turn radius this plane needs
 

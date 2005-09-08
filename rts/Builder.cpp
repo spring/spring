@@ -167,8 +167,10 @@ void CBuilder::Update()
 	} else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
 		UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 		if(ud){
-			curResurrect->resurrectProgress+=buildSpeed/ud->buildTime;
-			CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7,gs->randInt()&1);
+			if(UseEnergy(ud->energyCost*buildSpeed/ud->buildTime*0.5)){
+				curResurrect->resurrectProgress+=buildSpeed/ud->buildTime;
+				CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7,gs->randInt()&1);
+			}
 			if(curResurrect->resurrectProgress>1){		//resurrect finished
 				CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false);
 				u->health*=0.05;

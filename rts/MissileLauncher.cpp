@@ -7,6 +7,7 @@
 #include "Ground.h"
 #include "WeaponProjectile.h"
 #include "AirMoveType.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CMissileLauncher::CMissileLauncher(CUnit* owner)
@@ -27,6 +28,10 @@ void CMissileLauncher::Update(void)
 			float dist=wantedDir.Length();
 			predict=dist/projectileSpeed;
 			wantedDir/=dist;
+			if(weaponDef->trajectoryHeight>0){
+				wantedDir.y+=weaponDef->trajectoryHeight;
+				wantedDir.Normalize();
+			}
 		}
 	}
 	CWeapon::Update();
@@ -40,12 +45,16 @@ void CMissileLauncher::Fire(void)
 	} else {
 		dir=targetPos-weaponPos;
 		dir.Normalize();
+		if(weaponDef->trajectoryHeight>0){
+			dir.y+=weaponDef->trajectoryHeight;
+			dir.Normalize();
+		}
 	}
-	float3 startSpeed=dir*0.01;
+	float3 startSpeed=dir*weaponDef->startvelocity;
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType))
 		startSpeed+=owner->speed;
 
-	new CMissileProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+25),targetUnit, weaponDef);
+	new CMissileProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,(int)(range/projectileSpeed+25),targetUnit, weaponDef,targetPos);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,startSpeed,owner,targetUnit, float3(0,0,0), weaponDef);
 	if(fireSoundId)
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);

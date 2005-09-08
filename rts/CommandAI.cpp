@@ -309,7 +309,7 @@ void CCommandAI::GiveCommand(Command& c)
 				owner->AttackUnit(0,true);
 			}
 
- 			if(c.id==CMD_STOP && commandQue.front().id==CMD_WAIT)
+			if((c.id==CMD_STOP || c.id==CMD_WAIT) && commandQue.front().id==CMD_WAIT)
  				commandQue.pop_front();
  			else
 				commandQue.clear();

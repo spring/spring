@@ -12,16 +12,17 @@
 #include "Matrix44f.h"
 #include "WeaponDefHandler.h"
 #include "SyncTracer.h"
+#include "GeometricObjects.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 static const float Smoke_Time=60;
 
-CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)
+CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos)
 : CWeaponProjectile(pos,speed,owner,target,ZeroVector,weaponDef,0),
 	damages(damages),
 	ttl(ttl),
 	maxSpeed(maxSpeed),
-	tracking(tracking),
 	target(target),
 	dir(speed),
 	oldSmoke(pos),
@@ -29,7 +30,13 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	drawTrail(true),
 	numParts(0),
 	areaOfEffect(areaOfEffect),
-	decoyTarget(0)
+	decoyTarget(0),
+	targPos(targetPos),
+	wobbleTime(1),
+	wobbleDir(0,0,0),
+	wobbleDif(0,0,0),
+	isWobbling(weaponDef->wobble>0),
+	extraHeightTime(0)
 {
 	curSpeed=speed.Length();
 	dir.Normalize();
@@ -60,6 +67,13 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 #endif
 	if(target)
 		target->IncomingMissile(this);
+
+	if(weaponDef->trajectoryHeight>0){
+		float dist=pos.distance(targPos);
+		extraHeight=dist*weaponDef->trajectoryHeight;
+		extraHeightTime=(int)(dist/*+pos.distance(targPos+UpVector*dist))*0.5*//maxSpeed);
+		extraHeightDecay=extraHeight/extraHeightTime;
+	}
 }
 
 CMissileProjectile::~CMissileProjectile(void)
@@ -101,10 +115,10 @@ void CMissileProjectile::Update(void)
 	ttl--;
 	if(ttl>0){
 		if(curSpeed<maxSpeed)
-			curSpeed+=max((float)0.4,tracking);
-		if(decoyTarget || target){
-			float3 targPos;
-			float3 targSpeed;
+			curSpeed+=weaponDef->weaponacceleration;
+
+		float3 targSpeed(0,0,0);
+		if(weaponDef->tracks && (decoyTarget || target)){	
 			if(decoyTarget){
 				targPos=decoyTarget->pos;
 				targSpeed=decoyTarget->speed;
@@ -115,21 +129,44 @@ void CMissileProjectile::Update(void)
 				else
 					targPos=helper->GetUnitErrorPos(target,owner->allyteam);
 			}
-
-			float dist=targPos.distance(pos);
-			float3 dif(targPos + targSpeed*(dist/maxSpeed)*0.7 - pos);
-			dif.Normalize();
-			float3 dif2=dif-dir;
-			if(dif2.Length()<tracking){
-				dir=dif;
-			} else {
-				dif2-=dir*(dif2.dot(dir));
-				dif2.Normalize();
-				dir+=dif2*tracking;
-				dir.Normalize();
-			}
 		}
+
+		if(isWobbling){
+			--wobbleTime;
+			if(wobbleTime==0){
+				float3 newWob=gs->randVector();
+				wobbleDif=(newWob-wobbleDir)*(1.0f/16);
+				wobbleTime=16;
+			}
+			wobbleDir+=wobbleDif;
+			dir+=wobbleDir*weaponDef->wobble;
+			dir.Normalize();
+		}
+
+		float3 orgTargPos(targPos);
+		if(extraHeightTime){
+			extraHeight-=extraHeightDecay;
+			--extraHeightTime;
+			targPos.y+=extraHeight;
+			//geometricObjects->AddLine(pos,targPos,3,1,1);
+		}
+		float dist=targPos.distance(pos);
+		float3 dif(targPos + targSpeed*(dist/maxSpeed)*0.7 - pos);
+		dif.Normalize();
+		float3 dif2=dif-dir;
+		float tracking=weaponDef->turnrate;
+		if(dif2.Length()<tracking){
+			dir=dif;
+		} else {
+			dif2-=dir*(dif2.dot(dir));
+			dif2.Normalize();
+			dir+=dif2*tracking;
+			dir.Normalize();
+		}
+
 		speed=dir*curSpeed;
+
+		targPos=orgTargPos;
 	} else {
 		speed*=0.995;
 		speed.y+=gs->gravity;
@@ -155,7 +192,7 @@ void CMissileProjectile::Update(void)
 		}
 	}
 
-	CWeaponProjectile::Update();
+	//CWeaponProjectile::Update();
 }
 
 void CMissileProjectile::Draw(void)

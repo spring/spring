@@ -16,6 +16,9 @@
 #include "SelectedUnits.h"
 #include "UnitDef.h"
 #include "GroundDecalHandler.h"
+#include "GuiHandler.h"
+#include "UnitHandler.h"
+#include "UnitDefHandler.h"
 //#include "mmgr.h"
 
 CBFGroundDrawer::CBFGroundDrawer(void)
@@ -936,11 +939,29 @@ bool CBFGroundDrawer::UpdateTextures()
 				for(int x=0;x<gs->hmapx;++x){
 					int a=y*(gs->pwr2mapx>>1)+x;
 
-					float m=md->moveMath->SpeedMod(*md, x*2,y*2);
-					if(gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
-						m=0;
-					m=std::min(1.,(double)sqrt(m));
+					float m;
+					//todo: fix for new gui
+					if(guihandler->inCommand>0 && guihandler->inCommand<guihandler->commands.size() && guihandler->commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
+						if(!loshandler->InLos(float3(x*16+8,0,y*16+8),gu->myAllyTeam)){
+							m=0.25;
+						}else{
+							UnitDef *unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
 
+							CFeature* f;
+							if(uh->TestUnitBuildSquare(float3(x*16+8,0,y*16+8),unitdef,f))
+								m=1;
+							else 
+								m=0;
+							if(f && m)
+								m=0.5;
+						}
+
+					} else {
+						m=md->moveMath->SpeedMod(*md, x*2,y*2);
+						if(gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
+							m=0;
+						m=min(1.,sqrt(m));
+					}
 					infoTexMem[a*4+0]=255-int(m)*255;
 					infoTexMem[a*4+1]=int(m)*255;
 					infoTexMem[a*4+2]=0;

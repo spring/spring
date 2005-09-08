@@ -115,6 +115,7 @@ const long int PUSH_STATIC = 0x10021004;
 const long int CREATE_LOCAL_VAR = 0x10022000;
 const long int POP_LOCAL_VAR = 0x10023002;
 const long int POP_STATIC = 0x10023004;
+const long int POP_STACK = 0x10024000;		// Not sure what this is supposed to do
 
 //Arithmetic operations
 const long int ADD = 0x10031000;
@@ -154,6 +155,7 @@ const long int SET_SIGNAL_MASK = 0x10068000;
 
 //Piece destruction
 const long int EXPLODE = 0x10071000;
+const long int PLAY_SOUND = 0x10072000;
 
 //Special functions
 const long int SET = 0x10082000;
@@ -312,6 +314,8 @@ int CCobThread::Tick(int deltaTime)
 				owner->staticVars[r1] = r2;
 				//info->AddLine("Pop static var %d val %d", r1, r2);
 				break;
+			case POP_STACK:
+				break;
 			case START:
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
@@ -407,6 +411,11 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				r2 = POP();
 				owner->Explode(r1, r2);
+				break;
+			case PLAY_SOUND:
+				r1 = GET_LONG_PC();
+				r2 = POP();
+				owner->PlayUnitSound(r1, r2);
 				break;
 			case PUSH_STATIC:
 				r1 = GET_LONG_PC();
@@ -635,19 +644,22 @@ int CCobThread::Tick(int deltaTime)
 				owner->SetVisibility(r1, false);
 				//info->AddLine("Hiding %d", r1);
 				break;
-			case SHOW:
+			case SHOW:{
 				r1 = GET_LONG_PC();
-				if ((callStack.back().functionId == script.scriptIndex[COBFN_FirePrimary]) ||
-				    (callStack.back().functionId == script.scriptIndex[COBFN_FireSecondary]) ||
-					(callStack.back().functionId == script.scriptIndex[COBFN_FireTertiary]))	
-				{
+				int i;
+				for (i = 0; i < COB_MaxWeapons; ++i)
+					if (callStack.back().functionId == script.scriptIndex[COBFN_FirePrimary + i])
+						break;
+
+				// If true, we are in a Fire-script and should show a special flare effect
+				if (i < COB_MaxWeapons) {
 					owner->ShowFlare(r1);
 				}
 				else {
 					owner->SetVisibility(r1, true);
 				}
 				//info->AddLine("Showing %d", r1);
-				break;
+				break;}
 			default:
 				info->AddLine("CobError: Unknown opcode %x (in %s:%s at %x)", opcode, script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
 				info->AddLine("Exec trace:");
@@ -693,6 +705,7 @@ string CCobThread::GetOpcodeName(int opcode)
 		case CREATE_LOCAL_VAR: return "clv";
 		case POP_LOCAL_VAR: return "popl";
 		case POP_STATIC: return "pops";
+		case POP_STACK: return "pop-stack";
 
 		case ADD: return "add";
 		case SUB: return "sub";
@@ -727,6 +740,7 @@ string CCobThread::GetOpcodeName(int opcode)
 		case SET_SIGNAL_MASK: return "mask";
 
 		case EXPLODE: return "explode";
+		case PLAY_SOUND: return "play-sound";
 
 		case SET: return "set";
 		case ATTACH: return "attach";

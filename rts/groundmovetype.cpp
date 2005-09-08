@@ -889,12 +889,13 @@ void CGroundMoveType::GetNextWaypoint()
 			if(DEBUG_CONTROLLER)
 				info->AddLine("Path failure %i %i",owner->id,pathFailures);
 			pathFailures++;
-			if(pathFailures>6){
+			if(pathFailures>0){
 				pathFailures=0;
 				Fail();
 			}
 			etaWaypoint = INT_MAX;
 			etaWaypoint2 =INT_MAX;
+			nextWaypoint=waypoint;
 		}
 		//If the waypoint is very close to the goal, then correct it into the goal.
 		if(waypoint.distance2D(goal) < CPathManager::PATH_RESOLUTION){

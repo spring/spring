@@ -29,7 +29,7 @@ public:
 	virtual ~CUnitLoader();
 
 protected:
-	CWeapon* LoadWeapon(WeaponDef *weapondef, CUnit* owner);
+	CWeapon* LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw);
 	void LoadSound(GuiSound &sound);
 public:
 	bool CanBuildUnit(string name, int team);

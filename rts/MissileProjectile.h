@@ -10,7 +10,7 @@ class CMissileProjectile :
 	public CWeaponProjectile
 {
 public:
-	CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef);
+	CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos);
 	~CMissileProjectile(void);
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
@@ -20,7 +20,6 @@ public:
 	void Draw(void);
 	void DrawUnitPart(void);
 
-	float tracking;
 	float3 dir;
 	float maxSpeed;
 	float curSpeed;
@@ -33,6 +32,16 @@ public:
 	CProjectile* decoyTarget;
 	bool drawTrail;
 	int numParts;
+	float3 targPos;
+
+	bool isWobbling;
+	float3 wobbleDir;
+	int wobbleTime;
+	float3 wobbleDif;
+
+	float extraHeight;
+	float extraHeightDecay;
+	int extraHeightTime;
 
 	unsigned int modelDispList;
 };

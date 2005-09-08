@@ -59,8 +59,11 @@ public:
 		minDistance
 			Could be used to set a minimum required distance between callerPos and
 			the returned waypoint.
+		numRetries
+			Dont set this, used internally
+
 	*/
-	float3 NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance = 0);
+	float3 NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance = 0, int numRetries=0);
 
 
 	/*

@@ -99,7 +99,7 @@ void CFactory::Update()
 			float3 buildPos=pos + frontdir*relBuildPos.z + updir*relBuildPos.y + rightdir*relBuildPos.x;
 			curBuild->pos=buildPos;
 			if(curBuild->floatOnWater)
-				curBuild->pos.y=-curBuild->unitDef->waterline;
+				curBuild->pos.y=ground->GetHeight(buildPos.x,buildPos.z)-curBuild->unitDef->waterline;
 			curBuild->midPos=curBuild->pos+UpVector*curBuild->relMidPos.y;
 //		}
 		if(curBuild->AddBuildPower(buildSpeed,this)){

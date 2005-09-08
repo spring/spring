@@ -87,8 +87,23 @@ struct UnitDef
 
 	UnitModelDef model;
 
-	std::vector<std::string> sweapons;
-	std::vector<WeaponDef*> weapons;
+	struct UnitDefWeapon {
+		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat)
+			: name(name),
+				def(def),
+				slavedTo(slavedTo),
+				mainDir(mainDir),
+				maxAngleDif(maxAngleDif),
+				badTargetCat(badTargetCat) {}
+
+		std::string name;
+		WeaponDef* def;
+		int slavedTo;
+		float3 mainDir;
+		float maxAngleDif;
+		unsigned int badTargetCat;
+	};
+	std::vector<UnitDefWeapon> weapons;
 
 	std::map<int,std::string> buildOptions;
 
