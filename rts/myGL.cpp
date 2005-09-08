@@ -12,6 +12,7 @@
 #include "Bitmap.h"
 #include "errorhandler.h"
 #include <boost/filesystem/path.hpp>
+#include "SDL_video.h"
 //#include "mmgr.h"
 
 using namespace std;

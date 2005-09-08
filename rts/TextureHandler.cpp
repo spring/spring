@@ -14,7 +14,7 @@
 #include "FileHandler.h"
 #include <algorithm>
 #include <cctype>
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include <set>
 #include "errorhandler.h"
 //#include "mmgr.h"

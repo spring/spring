@@ -1,7 +1,9 @@
 #ifndef GLOBALAI_H
 #define GLOBALAI_H
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "Object.h"
 
 class IGlobalAI;

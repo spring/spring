@@ -8,7 +8,9 @@
 #include "GameHelper.h"
 #include "SyncTracer.h"
 #include "Team.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "Player.h"
 #include "TAPalette.h"
 #include "perf.h"

@@ -2,10 +2,13 @@
 #include "CameraController.h"
 #include "Camera.h"
 #include "Ground.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "InfoConsole.h"
 #include "MouseHandler.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 
 extern Uint8 *keys;
 

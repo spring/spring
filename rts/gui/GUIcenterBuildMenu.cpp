@@ -9,7 +9,8 @@
 #include "InfoConsole.h"
 #include "MouseHandler.h"
 #include "SelectedUnits.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 
 #include <set>
 using namespace std;

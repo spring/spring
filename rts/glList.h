@@ -15,12 +15,14 @@
 
 #include <string>
 #include <vector>
+#ifdef _WIN32
 #ifndef _WINSOCKAPI_
 	#define _WINSOCKAPI_
 	#include <windows.h>
 	#undef _WINSOCKAPI_
 #else
 	#include <windows.h>
+#endif
 #endif
 
 typedef void (* ListSelectCallback) (std::string selected);

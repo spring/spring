@@ -4,8 +4,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "GroupHandler.h"
-#include <windows.h>
 #ifdef _WIN32
+#include <windows.h>
 #include <io.h>
 #endif
 #include "Group.h"
@@ -17,7 +17,8 @@
 #include "MouseHandler.h"
 #include "CameraController.h"
 #include "errorhandler.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

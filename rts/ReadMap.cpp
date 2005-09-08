@@ -3,7 +3,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _WIN32
 #include "windows.h"
+#endif
 #include "myGL.h"
 #include <GL/glu.h>			// Header file for the gLu32 library
 #include "ReadMap.h"
@@ -12,7 +14,7 @@
 //#include <ostream>
 #include "Bitmap.h"
 #include "Ground.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #ifdef _WIN32
 #include <process.h>
 #endif

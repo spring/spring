@@ -29,6 +29,8 @@ static inline bool perfFrequency(Uint64 *frequence)
 #else
 
 #include <sys/time.h>
+#include "SDL_types.h"
+
 extern Uint64 init_time;
 
 static inline bool perfcount(Uint64 *count, Uint64 *freq)

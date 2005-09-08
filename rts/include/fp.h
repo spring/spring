@@ -13,6 +13,8 @@
 
 #else
 
+#include <fenv.h>
+
 #define _EM_INVALID FE_INVALID
 #define _EM_DENORMAL __FE_DENORM
 #define _EM_ZERODIVIDE FE_DIVBYZERO

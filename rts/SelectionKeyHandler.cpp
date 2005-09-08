@@ -1,7 +1,9 @@
 #include "StdAfx.h"
 #include "SelectionKeyHandler.h"
 #include <fstream>
+#ifdef _WIN32
 #include "windows.h"
+#endif
 #include "InfoConsole.h"
 #include "Team.h"
 #include "SelectedUnits.h"
@@ -15,7 +17,8 @@
 #include "CategoryHandler.h"
 #include "CommandAI.h"
 #include <boost/filesystem/path.hpp>
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 //#include "mmgr.h"
 
 CSelectionKeyHandler selectionKeys;

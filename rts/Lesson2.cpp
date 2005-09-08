@@ -7,7 +7,9 @@
  */
 
 #include "StdAfx.h"
+#ifdef _WIN32
 #include <windows.h>		// Header File For Windows
+#endif
 #include "myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include <time.h>
@@ -30,6 +32,7 @@
 #include "BaseCmd.h"
 #include "GameVersion.h"
 #include "errorhandler.h"
+#include "SDL.h"
 #ifdef _WIN32
 #include <direct.h>
 #endif

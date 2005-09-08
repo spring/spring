@@ -7,11 +7,12 @@
 
 #include <math.h>
 #include "InfoConsole.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "Camera.h"
 #include "WorldObject.h"
 #include "FileHandler.h"
 #include "errorhandler.h"
+#include "SDL_types.h"
 //#include "mmgr.h"
 
 CSound* sound;

@@ -1,12 +1,14 @@
 #ifndef MYGL_H
 #define MYGL_H
 
+#ifdef _WIN32
 #ifndef _WINSOCKAPI_
 	#define _WINSOCKAPI_
 	#include <windows.h>
 	#undef _WINSOCKAPI_
 #else
 	#include <windows.h>
+#endif
 #endif
 
 #define GLEW_STATIC

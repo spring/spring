@@ -15,7 +15,8 @@
 #include "StartPosSelecter.h"
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 
 CGameSetup* gameSetup=0;
 

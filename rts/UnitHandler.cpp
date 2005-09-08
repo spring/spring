@@ -11,7 +11,7 @@
 #include "myMath.h"
 #include "Ground.h"
 #include "ReadMap.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "FartextureHandler.h"
 #include "UnitDefHandler.h"
 #include "QuadField.h"

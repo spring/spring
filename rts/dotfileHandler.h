@@ -9,7 +9,6 @@
 
 #include "ConfigHandler.h"
 
-#include <windows.h>
 #include <string>
 #include <fstream>
 #include <map>

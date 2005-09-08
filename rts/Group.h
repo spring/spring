@@ -11,7 +11,9 @@
 /*pragma once removed*/
 #endif // _MSC_VER > 1000
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "Object.h"
 #include <string>
 #include <set>

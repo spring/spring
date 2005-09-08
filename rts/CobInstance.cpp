@@ -7,7 +7,9 @@
 #ifndef _CONSOLE
 
 #include "Unit.h"
+#ifdef _WIN32
 #include "windows.h"
+#endif
 #include "InfoConsole.h"
 #include <math.h>
 #include "3DOParser.h"
@@ -25,6 +27,7 @@
 #include "UnitHandler.h"
 #include "UnitDef.h"
 #include "ProjectileHandler.h"
+#include "SDL_types.h"
 //#include "mmgr.h"
 
 #endif

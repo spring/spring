@@ -19,7 +19,8 @@
 //#include "mmgr.h"
 #include "filefunctions.h"
 #include "errorhandler.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 
 CPreGame* pregame=0;
 extern Uint8 *keys;

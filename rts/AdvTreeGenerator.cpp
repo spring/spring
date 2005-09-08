@@ -4,7 +4,9 @@
 
 #include "StdAfx.h"
 #include "AdvTreeGenerator.h"
+#ifdef _WIN32
 #include <windows.h>		// Header File For Windows
+#endif
 #include "myGL.h"
 #include "VertexArray.h"
 #include "Camera.h"

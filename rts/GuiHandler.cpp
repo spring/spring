@@ -28,6 +28,8 @@
 #include "Feature.h"
 #include "BaseGroundDrawer.h"
 #include "WeaponDefHandler.h"
+#include "SDL_keysym.h"
+#include "SDL_mouse.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

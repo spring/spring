@@ -24,7 +24,8 @@
 #include "BaseSky.h"
 #include "BFGroundDrawer.h"
 //#include "mmgr.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 
 CUnitDrawer* unitDrawer;
 using namespace std;

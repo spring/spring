@@ -4,7 +4,9 @@
 #include "Camera.h"
 #include "VertexArray.h"
 #include "ReadMap.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "BaseGroundDrawer.h"
 #include "myGL.h"
 #include <GL/glu.h>	

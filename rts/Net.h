@@ -11,8 +11,8 @@
 /*pragma once removed*/
 #endif // _MSC_VER > 1000
 
-#include <windows.h>
 #ifdef _WIN32
+#include <windows.h>
 #include <winsock2.h>
 #else
 #include <sys/types.h>

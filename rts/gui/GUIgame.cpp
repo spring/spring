@@ -43,7 +43,8 @@
 //#include "mmgr.h"
 #include "GUICommandPool.h"
 #include "perf.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 
 extern Uint8 *keys;
 extern bool	globalQuit;

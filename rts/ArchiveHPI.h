@@ -3,7 +3,9 @@
 
 #include "ArchiveBase.h"
 #include "ArchiveBuffered.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "hpiutil2/hpiutil.h"
 
 class CArchiveHPI :

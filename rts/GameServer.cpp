@@ -11,7 +11,7 @@
 #include "perf.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
-
+#include "SDL_timer.h"
 
 CGameServer* gameServer=0;
 

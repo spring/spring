@@ -92,7 +92,10 @@
 #include "GameVersion.h"
 #include "UnitDrawer.h"
 #include <boost/filesystem/path.hpp>
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
+#include "SDL_mouse.h"
+#include "SDL_timer.h"
 #include "perf.h"
 #include "fp.h"
 

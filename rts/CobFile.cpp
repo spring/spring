@@ -5,7 +5,9 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "byteorder.h"
 //#include "mmgr.h"
 

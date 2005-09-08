@@ -4,7 +4,9 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "MouseHandler.h"
+#ifdef _WIN32
 #include <windows.h>		// Header File For Windows
+#endif
 #include "myGL.h"
 #include "Ground.h"
 #include "Game.h"
@@ -29,7 +31,10 @@
 #include "CameraController.h"
 #include "MapDamage.h"
 //#include "mmgr.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_mouse.h"
+#include "SDL_keysym.h"
+#include "SDL_events.h"
 
 #include "NewGuiDefine.h"
 

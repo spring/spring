@@ -16,6 +16,17 @@
 #include "GlobalStuff.h"
 #include "myGL.h"
 
+#ifndef _WIN32
+#include "SDL_types.h"
+struct paletteentry_s {
+	Uint8 peRed;
+	Uint8 peGreen;
+	Uint8 peBlue;
+	Uint8 peFlags;
+};
+typedef struct paletteentry_s PALETTEENTRY;
+#endif
+
 using namespace std;
 
 class GUIframe;

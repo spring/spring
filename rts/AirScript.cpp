@@ -3,7 +3,9 @@
 #include "CommandAI.h"
 #include "UnitLoader.h"
 #include "command.h"
+#ifdef _WIN32
 #include "windows.h"
+#endif
 #include "Unit.h"
 #include "UnitHandler.h"
 #include "Camera.h"

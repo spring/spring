@@ -1,7 +1,9 @@
 #include "StdAfx.h"
 #include "BaseGroundDrawer.h"
 #include "ConfigHandler.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "myGL.h"
 #include "Camera.h"
 #include "ReadMap.h"

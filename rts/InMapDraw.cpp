@@ -14,6 +14,7 @@
 #include "InfoConsole.h"
 #include "Sound.h"
 #include "MiniMap.h"
+#include "SDL_mouse.h"
 
 CInMapDraw* inMapDrawer;
 

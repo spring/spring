@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "BackgroundReader.h"
+#ifdef _WIN32
 #include <windows.h>
-#ifndef _WIN32
+#else
 #include <fcntl.h>
 #include <sys/stat.h>
 #endif

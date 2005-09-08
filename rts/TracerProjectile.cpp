@@ -4,7 +4,9 @@
 
 #include "StdAfx.h"
 #include "TracerProjectile.h"
+#ifdef _WIN32
 #include <windows.h>		// Header File For Windows
+#endif
 #include "myGL.h"			// Header File For The OpenGL32 Library
 #include <math.h>
 #include "ProjectileHandler.h"

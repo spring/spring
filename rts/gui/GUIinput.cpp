@@ -1,7 +1,8 @@
 #include "GUIinput.h"
 #include <string>
 #include "GUIfont.h"
-#include <SDL/SDL_types.h>
+#include "SDL_types.h"
+#include "SDL_keysym.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
