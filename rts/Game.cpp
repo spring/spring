@@ -94,6 +94,7 @@
 #include <boost/filesystem/path.hpp>
 #include <SDL/SDL_types.h>
 #include "perf.h"
+#include "fp.h"
 
 #ifdef NEW_GUI
 #include "GUIcontroller.h"
@@ -1119,9 +1120,9 @@ void CGame::SimFrame()
 {
 	ASSERT_SYNCED_MODE;
 //	info->AddLine("New frame %i %i %i",gs->frameNum,gs->randInt(),uh->CreateChecksum());
-	_clearfp();
-	_control87(0,_EM_ZERODIVIDE);	//make sure any fpu errors generate an exception immidiatly instead of creating nans (easier to debug)
-	_control87(0,_EM_INVALID);
+	Clearfp();
+	Control87(0,_EM_ZERODIVIDE);	//make sure any fpu errors generate an exception immidiatly instead of creating nans (easier to debug)
+	Control87(0,_EM_INVALID);
 #ifdef TRACE_SYNC
 	uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
@@ -1247,9 +1248,9 @@ END_TIME_PROFILE("Sim time")
 	}
 
 #endif
-	_clearfp();
-	_control87(_MCW_EM ,_EM_ZERODIVIDE);
-	_control87(_MCW_EM ,_EM_INVALID);
+	Clearfp();
+	Control87(_MCW_EM ,_EM_ZERODIVIDE);
+	Control87(_MCW_EM ,_EM_INVALID);
 }
 
 bool CGame::ClientReadNet()
