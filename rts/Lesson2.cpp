@@ -108,6 +108,8 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 
 void KillGLWindow(GLvoid)								// Properly Kill The Window
 {
+	if (fullscreen)
+		SDL_WM_ToggleFullScreen(screen);
 #ifndef DEBUG
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 #endif
