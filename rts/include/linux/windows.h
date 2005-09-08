@@ -17,25 +17,9 @@ appears in the common code
 
 #include <fenv.h>
 #include <iostream>
-#include <byteswap.h>
 #include <boost/cstdint.hpp>
 #include <SDL/SDL.h>
 
-/*
- * Bitmap handling
- *
- * The swabbing stuff looks backwards, but the bitmaps
- * are _originally_ little endian (win32 x86).
- * So in this case little endian is the standard while
- * big endian is the exception.
- */
-#if __BYTE_ORDER == __BIG_ENDIAN
-#define swabword(w)	(bswap_16(w))
-#define swabdword(w)	(bswap_32(w))
-#else
-#define swabword(w)	(w)
-#define swabdword(w)	(w)
-#endif
 struct paletteentry_s {
 	Uint8 peRed;
 	Uint8 peGreen;

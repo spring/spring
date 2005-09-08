@@ -6,6 +6,7 @@
 #include <locale>
 #include <cctype>
 #include <windows.h>
+#include "byteorder.h"
 //#include "mmgr.h"
 
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt

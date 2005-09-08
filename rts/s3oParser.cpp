@@ -6,6 +6,7 @@
 #include "s3oParser.h"
 #include <fstream>
 #include "windows.h"
+#include "byteorder.h"
 #include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 
