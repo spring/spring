@@ -166,6 +166,9 @@ bool CGameServer::Update(void)
 				CreateNewFrame(true);
 			}
 			timeLeft--;
+#ifndef _WIN32
+			timeLeft--;
+#endif
 		}
 	}
 	serverNet->Update();
