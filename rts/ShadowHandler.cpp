@@ -90,6 +90,7 @@ CShadowHandler::CShadowHandler(void)
 #endif
 	drawShadows=true;
 	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
+	CreateFramebuffer();
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
 	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -98,8 +99,8 @@ CShadowHandler::CShadowHandler(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D,0);
 
-	CreateFramebuffer();
 }
 
 CShadowHandler::~CShadowHandler(void)
@@ -107,9 +108,9 @@ CShadowHandler::~CShadowHandler(void)
 	if(drawShadows)
 		glDeleteTextures(1,&shadowTexture);
 	if (fbo) {
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 		glDeleteFramebuffersEXT(1,&g_frameBuffer);
 		glDeleteRenderbuffersEXT(1,&g_depthRenderBuffer);
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 	} else {
 #ifdef _WIN32
 		if( hPBuffer != NULL ){
@@ -135,7 +136,7 @@ CShadowHandler::~CShadowHandler(void)
 
 void CShadowHandler::CreateShadows(void)
 {
-	if(!copyDepthTexture && !firstDraw){
+	if(!copyDepthTexture && !firstDraw && !fbo){
 #ifdef _WIN32
 		glBindTexture(GL_TEXTURE_2D, shadowTexture);
 		if( wglReleaseTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
@@ -149,8 +150,7 @@ void CShadowHandler::CreateShadows(void)
 
 	if (fbo) {
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frameBuffer);
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_STENCIL_ATTACHMENT_EXT,GL_TEXTURE_2D,shadowTexture,0);
-		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,g_depthRenderBuffer);
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D,shadowTexture,0);
 	} else {
 #ifdef _WIN32
 		if( wglMakeCurrent( hDCPBuffer, hRCPBuffer) == FALSE )
@@ -176,7 +176,7 @@ void CShadowHandler::CreateShadows(void)
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	if(firstDraw && copyDepthTexture){
+	if(firstDraw && copyDepthTexture && !fbo){
 		glBindTexture(GL_TEXTURE_2D, shadowTexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, shadowMapSize, shadowMapSize);
 	}
@@ -251,14 +251,13 @@ void CShadowHandler::CreateShadows(void)
 	glShadeModel(GL_SMOOTH);
 	glColorMask(1, 1, 1, 1);
 
-	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	if(copyDepthTexture){
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
-	}
-
 	if (fbo) {
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 	} else {
+		glBindTexture(GL_TEXTURE_2D, shadowTexture);
+		if(copyDepthTexture){
+			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
+		}
 #ifdef _WIN32
 		if( wglMakeCurrent( hDC, hRC ) == FALSE )
 		{
@@ -271,7 +270,7 @@ void CShadowHandler::CreateShadows(void)
 #endif
 	}
 	glViewport(0,0,gu->screenx,gu->screeny);
-	if(!copyDepthTexture){
+	if(!copyDepthTexture && !fbo){
 #ifdef _WIN32
 		if( wglBindTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
 		{
@@ -314,7 +313,8 @@ void CShadowHandler::CreateFramebuffer(void)
 		glGenFramebuffersEXT(1,&g_frameBuffer);
 		glGenRenderbuffersEXT(1,&g_depthRenderBuffer);
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, g_depthRenderBuffer);
-		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, shadowMapSize, shadowMapSize);
+		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize);
+		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,0);
 	} else {
 #ifdef _WIN32
 		int pb_attr[16] = 
