@@ -242,7 +242,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		} else if (argv[i][0] != '-') {
 			string command(argv[i]);
 			int idx = command.rfind("sdf");
-			if (idx == command.size()-4) {
+			if (idx == command.size()-3) {
 				playDemo = true;
 				demofile = command;
 			}
