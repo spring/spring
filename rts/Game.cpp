@@ -91,6 +91,7 @@
 #include "ArchiveScanner.h"
 #include "GameVersion.h"
 #include "UnitDrawer.h"
+#include "SelectionKeyHandler.h"
 #include <boost/filesystem/path.hpp>
 #include "SDL_types.h"
 #include "SDL_keysym.h"
@@ -185,6 +186,7 @@ CGame::CGame(bool server,std::string mapname)
 	cam2=new CCamera();
 	sound=new CSound();
 	mouse=new CMouseHandler();
+	selectionKeys=new CSelectionKeyHandler();
 	tooltip=new CTooltipConsole();
 
 	ENTER_SYNCED;
@@ -373,6 +375,7 @@ CGame::~CGame()
 	delete sound;
 	if ( guihandler )
 		delete guihandler;
+	delete selectionKeys;
 	delete mouse;
 	delete helper;
 	delete shadowHandler;

@@ -21,7 +21,7 @@
 #include "SDL_keysym.h"
 //#include "mmgr.h"
 
-CSelectionKeyHandler selectionKeys;
+CSelectionKeyHandler *selectionKeys;
 
 extern Uint8 *keys;
 
