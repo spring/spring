@@ -28,12 +28,18 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#ifndef _WIN32
+#ifdef _WIN32
+typedef int socklen_t;
+#else
 #define WSAGetLastError() errno
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 typedef struct hostent* LPHOSTENT;
 typedef struct in_addr* LPIN_ADDR;
+#define closesocket(x) close(x)
+typedef time_t __time64_t;
+#define _time64(x) time(x)
+#define _localtime64(x) localtime(x)
 #endif
 
 #define NETWORK_VERSION 1
@@ -96,13 +102,10 @@ CNet::~CNet()
 		FlushNet();
 	}
 	if(mySocket)
-#ifdef _WIN32
 		closesocket(mySocket);
-	WSACleanup( );
-#else
-		close(mySocket);
+#ifdef _WIN32
+	WSACleanup();
 #endif
-
 
 	delete recordDemo;
 	delete playbackDemo;
@@ -140,11 +143,7 @@ int CNet::InitServer(int portnum)
 	saMe.sin_port = htons(portnum);	   // Use port passed from user
 
 	if (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
-#ifdef _WIN32
 		closesocket(mySocket);
-#else
-		close(mySocket);
-#endif
 		handleerror(NULL,"Error binding socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 		exit(0);
 	}
@@ -191,10 +190,11 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 	unsigned long ul;
 	if((ul=inet_addr(server))!=INADDR_NONE){
 		saOther.sin_addr.S_un.S_addr = 	ul;
-	} else {
+	} else
 #else /* } */
-	if(inet_aton(server,&(saOther.sin_addr))==0) {
+	if(inet_aton(server,&(saOther.sin_addr))==0)
 #endif
+	{
 		lpHostEntry = gethostbyname(server);
 		if (lpHostEntry == NULL)
 		{
@@ -221,11 +221,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		while (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
 			numTries++;
 			if(numTries>10){
-#ifdef _WIN32
 				closesocket(mySocket);
-#else
-				close(mySocket);
-#endif
 				handleerror(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
 				exit(0);
 			}
@@ -331,11 +327,7 @@ void CNet::Update(void)
 		return;
 	}
 	sockaddr_in from;
-#ifdef _WIN32
-	int fromsize;
-#else
 	socklen_t fromsize;
-#endif
 	fromsize=sizeof(from);
 	int r;
 	unsigned char inbuf[16000];
@@ -599,15 +591,9 @@ void CNet::CreateDemoFile()
 
 	if(gameSetup){
 		struct tm *newtime;
-#ifdef _WIN32
 		__time64_t long_time;
-		_time64( &long_time );                /* Get time as long integer. */
-		newtime = _localtime64( &long_time ); /* Convert to local time. */
-#else
-		time_t long_time;
-		time(&long_time);
-		newtime = localtime(&long_time);
-#endif
+		_time64(&long_time);                /* Get time as long integer. */
+		newtime = _localtime64(&long_time); /* Convert to local time. */
 
 		char buf[500];
 		sprintf(buf,"%02i%02i%02i",newtime->tm_year%100,newtime->tm_mon+1,newtime->tm_mday);
