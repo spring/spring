@@ -200,6 +200,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
+	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
 	cmdline->parse();
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
@@ -268,13 +269,13 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	ENTER_MIXED;
 
-	bool server;
+	bool server = true;
 	if (playDemo)
 		server = false;
 	else if(gameSetup)
 		server=gameSetup->myPlayer==0;
 	else
-		server=cmdline->result("server");
+		server=!cmdline->result("client") || cmdline->result("server");
 	
 #ifdef _DEBUG
 	fullscreen=false;
