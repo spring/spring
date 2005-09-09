@@ -31,6 +31,6 @@ public:
 	int selectNumber;	//used to go through all possible units when selecting only a few
 };
 
-
+extern CSelectionKeyHandler *selectionKeys;
 
 #endif /* SELECTIONKEYHANDLER_H */

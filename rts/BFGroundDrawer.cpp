@@ -960,7 +960,7 @@ bool CBFGroundDrawer::UpdateTextures()
 						m=md->moveMath->SpeedMod(*md, x*2,y*2);
 						if(gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
 							m=0;
-						m=min(1.,sqrt(m));
+						m=min(1.,(double)sqrt(m));
 					}
 					infoTexMem[a*4+0]=255-int(m)*255;
 					infoTexMem[a*4+1]=int(m)*255;
