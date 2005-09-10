@@ -28,7 +28,7 @@ bool FBOFramebuffer::init()
 	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		return false;
-	texinit();
+	texinit(texture);
 	initialized = true;
 	return true;
 }
@@ -37,7 +37,7 @@ bool FBOFramebuffer::uninit()
 {
 	if (!initialized)
 		return false;
-	texuninit();
+	texuninit(texture);
 	glDeleteRenderbuffersEXT(1,&g_depthRenderBuffer);
 	glDeleteFramebuffersEXT(1,&g_frameBuffer);
 	initialized = false;

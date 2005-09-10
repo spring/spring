@@ -23,7 +23,7 @@ bool GLXPBufferFramebuffer::init()
 {
 	if (initialized)
 		return false;
-	texinit();
+	texinit(texture);
 	int attrib[] = {
 		GLX_DOUBLEBUFFER, False,
 		GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -66,7 +66,7 @@ bool GLXPBufferFramebuffer::uninit()
 {
 	if (!initialized)
 		return false;
-	texuninit();
+	texuninit(texture);
 	glXDestroyContext(g_pDisplay, g_pbufferContext);
 	glXDestroyPbuffer(g_pDisplay, g_pbuffer);
 	if (g_windowContext != NULL)

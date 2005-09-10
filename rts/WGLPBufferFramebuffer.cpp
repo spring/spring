@@ -28,6 +28,7 @@ bool WGLPBufferFramebuffer::init()
 {
 	if (initialized)
 		return false;
+	texinit(texture);
 	int pb_attr[16] = {
 		WGL_TEXTURE_FORMAT_ARB, WGL_TEXTURE_RGBA_ARB,
 		WGL_TEXTURE_TARGET_ARB, WGL_TEXTURE_2D_ARB,
@@ -46,6 +47,7 @@ bool WGLPBufferFramebuffer::uninit()
 {
 	if (!initialized)
 		return false;
+	texuninit(texture);
 	if (hPBuffer != NULL) {
 		wglReleasePbufferDCARM(hPBuffer, hDCPBuffer);
 		wglDestroyPbufferARB(hPBuffer);
