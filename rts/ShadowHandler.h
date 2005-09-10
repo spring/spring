@@ -5,7 +5,9 @@
 #include "Matrix44f.h"
 #include "myGL.h"
 #include <vector>
-#include "BaseFramebuffer.h"
+#ifndef _WIN32
+#include <GL/glx.h>
+#endif
 
 class CShadowHandler
 {
@@ -31,10 +33,22 @@ public:
 	float x1,x2,y1,y2;
 
 	CMatrix44f shadowMatrix;
+	void CreateFramebuffer(void);
 	void DrawShadowTex(void);
 	void CalcMinMaxView(void);
 
-	BaseFramebuffer *framebuffer;
+	bool fbo;
+#ifdef _WIN32
+	HPBUFFERARB hPBuffer; // Handle to a p-buffer.
+	HDC         hDCPBuffer;      // Handle to a device context.
+	HGLRC       hRCPBuffer;      // Handle to a GL rendering context.
+#else
+	Display *g_pDisplay;
+	Window g_window;
+	GLXContext g_windowContext;
+	GLXContext g_pbufferContext;
+	GLXPbuffer g_pbuffer;
+#endif
 
 protected:
 	void GetFrustumSide(float3& side,bool upside);
@@ -46,6 +60,8 @@ protected:
 		float maxz;
 	};
 	std::vector<fline> left;
+	GLuint g_frameBuffer;
+	GLuint g_depthRenderBuffer;
 };
 
 extern CShadowHandler* shadowHandler;
