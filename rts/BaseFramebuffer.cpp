@@ -104,10 +104,10 @@ unsigned int BaseFramebuffer::getTexture()
 	return texture;
 }
 
-void BaseFramebuffer::texinit()
+void BaseFramebuffer::texinit(unsigned int tex)
 {
-	glGenTextures(1,&texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glGenTextures(1,&tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -129,7 +129,7 @@ void BaseFramebuffer::texinit()
 	glTexImage2D(GL_TEXTURE_2D, 0, t, width, height, 0, t, GL_UNSIGNED_BYTE, NULL);
 }
 
-void BaseFramebuffer::texuninit()
+void BaseFramebuffer::texuninit(unsigned int tex)
 {
-	glDeleteTextures(1,&texture);
+	glDeleteTextures(1,&tex);
 }

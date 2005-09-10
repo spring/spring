@@ -45,8 +45,8 @@ public:
 	virtual unsigned int getTexture();
 	virtual bool init() = 0;
 	virtual bool uninit() = 0;
-	virtual void texinit();
-	virtual void texuninit();
+	virtual void texinit(unsigned int tex);
+	virtual void texuninit(unsigned int tex);
 	virtual bool select() = 0;
 	virtual bool deselect() = 0;
 	bool initialized;

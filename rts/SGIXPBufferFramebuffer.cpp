@@ -23,7 +23,7 @@ bool SGIXPBufferFramebuffer::init()
 {
 	if (initialized)
 		return false;
-	texinit();
+	texinit(texture);
 	int attrib[] = {
 		GLX_DOUBLEBUFFER, False,
 		GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
@@ -65,7 +65,7 @@ bool SGIXPBufferFramebuffer::uninit()
 {
 	if (!initialized)
 		return false;
-	texuninit();
+	texuninit(texture);
 	glXDestroyGLXPbufferSGIX(g_pDisplay,g_pbuffer);
 	initialized = false;
 	return true;
