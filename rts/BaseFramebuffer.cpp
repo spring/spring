@@ -5,6 +5,7 @@
  */
 #include "BaseFramebuffer.h"
 #include "FBOFramebuffer.h"
+#include "SGIXPBufferFramebuffer.h"
 #ifdef _WIN32
 #include "WGLPBufferFramebuffer.h"
 #else
@@ -32,8 +33,8 @@ BaseFramebuffer *BaseFramebuffer::initialize(const unsigned int t, const unsigne
 	if (WGLEW_ARB_pbuffer)
 		return new WGLPBufferFramebuffer(t,w,h);
 #else
-//	if (GLXEW_SGIX_pbuffer)
-//		return new SGIXPBufferFramebuffer(t,w,h);
+	if (GLX_SGIX_pbuffer)
+		return new SGIXPBufferFramebuffer(t,w,h);
 	int errorBase;
 	int eventBase;
 	if (glXQueryExtension(glXGetCurrentDisplay(),&errorBase,&eventBase))
