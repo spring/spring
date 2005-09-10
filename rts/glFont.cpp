@@ -20,7 +20,7 @@ using namespace std;
 CglFont* font;
 
 #define DRAW_SIZE 1
-#define FONTSIZE 24
+#define FONTSIZE 26
 #define FONTFILE "Luxi.ttf"
 
 CglFont::CglFont(int start, int num)
