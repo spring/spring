@@ -11,18 +11,7 @@
 #include "MiniMap.h"
 #include "InfoConsole.h"
 #include "FeatureHandler.h"
-
-#define CHECK_FRAMEBUFFER_STATUS()					\
-do {									\
-	GLenum status;							\
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);	\
-	switch(status) {						\
-		case GL_FRAMEBUFFER_COMPLETE_EXT:			\
-			break;						\
-		default:						\
-			assert(0);					\
-	}								\
-} while (0)
+#include "FBO.h"
 
 CShadowHandler* shadowHandler=0;
 
@@ -47,14 +36,19 @@ CShadowHandler::CShadowHandler(void)
 		return;
 	}
 
-	if(!(GL_EXT_framebuffer_object && GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
-		if(GL_EXT_framebuffer_object && GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
+	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
+		if(GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			info->AddLine("Using ARB_fragment_program_shadow");
 			useFPShadows=true;
 		} else {
 			info->AddLine("You are missing an OpenGL extension needed to use shadowmaps");
 			return;
 		}
+	}
+	fb = new FBO();
+	if (!fb->valid()) {
+		info->AddLine("EXT_framebuffer_object is required for shadowmaps");
+		return;
 	}
 	if(!GLEW_ARB_shadow_ambient){
 		if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
@@ -68,22 +62,7 @@ CShadowHandler::CShadowHandler(void)
 
 	drawShadows=true;
 	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
-	CreateFramebuffer();
-}
 
-CShadowHandler::~CShadowHandler(void)
-{
-	if(drawShadows) {
-		glDeleteTextures(1,&shadowTexture);
-		glDeleteFramebuffersEXT(1,&g_frameBuffer);
-	}
-}
-
-void CShadowHandler::CreateFramebuffer(void)
-{
-	glGenFramebuffersEXT(1,&g_frameBuffer);
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_frameBuffer);
-	
 	glGenTextures(1,&tempTexture);
 	glBindTexture(GL_TEXTURE_2D, tempTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -91,8 +70,7 @@ void CShadowHandler::CreateFramebuffer(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tempTexture, 0);
-	CHECK_FRAMEBUFFER_STATUS();
+	fb->attachTexture(tempTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
 
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
@@ -102,17 +80,21 @@ void CShadowHandler::CreateFramebuffer(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadowTexture, 0);
-	CHECK_FRAMEBUFFER_STATUS();
+	fb->attachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	fb->checkFBOStatus();
+}
+
+CShadowHandler::~CShadowHandler(void)
+{
+	if(drawShadows)
+		glDeleteTextures(1,&shadowTexture);
+	delete fb;
 }
 
 void CShadowHandler::CreateShadows(void)
 {
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frameBuffer);
-
-	CHECK_FRAMEBUFFER_STATUS();
+	fb->select();
 
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);
@@ -197,7 +179,7 @@ void CShadowHandler::CreateShadows(void)
 	glShadeModel(GL_SMOOTH);
 	glColorMask(1, 1, 1, 1);
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+	fb->deselect();
 	glViewport(0,0,gu->screenx,gu->screeny);
 }
 
