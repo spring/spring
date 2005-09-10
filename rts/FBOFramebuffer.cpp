@@ -28,6 +28,9 @@ bool FBOFramebuffer::init()
 	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		return false;
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_frameBuffer);
+	glDrawBuffer(GL_NONE);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	texinit(texture);
 	initialized = true;
 	return true;
