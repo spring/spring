@@ -5,10 +5,10 @@
  */
 #include "BaseFramebuffer.h"
 #include "FBOFramebuffer.h"
-#include "SGIXPBufferFramebuffer.h"
 #ifdef _WIN32
 #include "WGLPBufferFramebuffer.h"
 #else
+#include "SGIXPBufferFramebuffer.h"
 #include "GLXPBufferFramebuffer.h"
 #endif
 
