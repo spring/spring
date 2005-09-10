@@ -25,22 +25,63 @@ BaseFramebuffer::~BaseFramebuffer()
 {
 }
 
-BaseFramebuffer *BaseFramebuffer::initialize(const unsigned int t, const unsigned int w, const unsigned int h)
+BaseFramebuffer *BaseFramebuffer::resolvetype(const unsigned int t, const unsigned int w, const unsigned int h, const unsigned int buffertype)
 {
-	if (GL_EXT_framebuffer_object)
-		return new FBOFramebuffer(t,w,h);
+	if (buffertype == BUFFER_FBO) {
+		if (GL_EXT_framebuffer_object)
+			return new FBOFramebuffer(t,w,h);
+		else
+			return NULL;
+	} else if (buffertype == BUFFER_WGLPBUFFER) {
 #ifdef _WIN32
-	if (WGLEW_ARB_pbuffer)
-		return new WGLPBufferFramebuffer(t,w,h);
-#else
-	if (GLX_SGIX_pbuffer)
-		return new SGIXPBufferFramebuffer(t,w,h);
-	int errorBase;
-	int eventBase;
-	if (glXQueryExtension(glXGetCurrentDisplay(),&errorBase,&eventBase))
-		return new GLXPBufferFramebuffer(t,w,h);
+		if (WGLEW_ARB_pbuffer)
+			return new WGLPBufferFramebuffer(t,w,h);
+		else
 #endif
-//	return new EmulFramebuffer(t,w,h);
+			return NULL;
+	} else if (buffertype == BUFFER_SGIXPBUFFER) {
+#ifndef _WIN32
+		if (GLX_SGIX_pbuffer)
+			return new SGIXPBufferFramebuffer(t,w,h);
+		else
+#endif
+			return NULL;
+	} else if (buffertype == BUFFER_GLXPBUFFER) {
+#ifndef _WIN32
+		int errorBase;
+		int eventBase;
+		if (glXQueryExtension(glXGetCurrentDisplay(),&errorBase,&eventBase))
+			return new GLXPBufferFramebuffer(t,w,h);
+		else
+#endif
+			return NULL;
+	}
+//	else if (buffertype == BUFFER_EMUL)
+//		return new EmulFramebuffer(t,w,h);
+	else
+		return NULL;
+}
+
+BaseFramebuffer *BaseFramebuffer::initialize(const unsigned int t, const unsigned int w, const unsigned int h, const unsigned int buffertype)
+{
+	BaseFramebuffer *instance = resolvetype(t,w,h,buffertype);
+	if (instance != NULL)
+		return instance;
+	else {
+		unsigned int *buflist = {0};
+#ifdef _WIN32
+		buflist = windows_preferred_buffers;
+#elif defined(__linux__)
+		buflist = linux_preferred_buffers;
+#endif
+		int i = 0;
+		while (buflist[i]) {
+			instance = resolvetype(t,w,h,buflist[i++]);
+			if (instance != NULL)
+				return instance;
+		}
+	}
+	return NULL;
 }
 
 unsigned int BaseFramebuffer::getWidth()
