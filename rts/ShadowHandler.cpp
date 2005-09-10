@@ -11,29 +11,19 @@
 #include "MiniMap.h"
 #include "InfoConsole.h"
 #include "FeatureHandler.h"
+#include "errorhandler.h"
 
 CShadowHandler* shadowHandler=0;
 
-#ifdef _WIN32
-extern HDC hDC;
-extern HGLRC hRC;
-extern HWND hWnd;
-#endif
-
 CShadowHandler::CShadowHandler(void)
 {
-#ifdef _WIN32
-	hPBuffer=0;
-	hDCPBuffer=0;
-	hRCPBuffer=0;
-#endif
+	framebuffer = NULL;
 	drawShadows=false;
 	inShadowPass=false;
 	showShadowMap=false;
 	firstDraw=true;
 	useFPShadows=false;
 	copyDepthTexture=true;
-	fbo = false;
 	
 	if(!configHandler.GetInt("Shadows",0))
 		return;
@@ -67,19 +57,11 @@ CShadowHandler::CShadowHandler(void)
 		}
 	}
 
-	if (0&&GL_EXT_framebuffer_object)
-		fbo = true;
-	else {
-#ifdef _WIN32
-		if (!WGLEW_ARB_pbuffer)
-#else
-		g_pDisplay = glXGetCurrentDisplay();
-		g_window = glXGetCurrentDrawable();
-    		int errorBase;
-		int eventBase;
-    		if(!glXQueryExtension(g_pDisplay, &errorBase, &eventBase))
-#endif
-			return;
+	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
+	framebuffer = BaseFramebuffer::initialize(FBTYPE_DEPTH, shadowMapSize, shadowMapSize);
+	if (!framebuffer) {
+		info->AddLine("Could not initialize offscreen framebuffer for shadow maps");
+		return;
 	}
 
 #ifdef _WIN32
@@ -89,54 +71,19 @@ CShadowHandler::CShadowHandler(void)
 	}
 #endif
 	drawShadows=true;
-	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
-	CreateFramebuffer();
-	glGenTextures(1,&shadowTexture);
-	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glTexImage2D(	GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	if (fbo)
-		glBindTexture(GL_TEXTURE_2D,0);
+	framebuffer->init();
+	shadowTexture = framebuffer->getTexture();
 }
 
 CShadowHandler::~CShadowHandler(void)
 {
-	if(drawShadows)
-		glDeleteTextures(1,&shadowTexture);
-	if (fbo) {
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
-		glDeleteFramebuffersEXT(1,&g_frameBuffer);
-		glDeleteRenderbuffersEXT(1,&g_depthRenderBuffer);
-	} else {
-#ifdef _WIN32
-		if( hPBuffer != NULL ){
-			wglReleasePbufferDCARB( hPBuffer, hDCPBuffer );
-			wglDestroyPbufferARB( hPBuffer );
-			hPBuffer=0;
-		}
-		if( hDCPBuffer != NULL )
-		{
-			ReleaseDC( hWnd, hDCPBuffer );
-			hDCPBuffer = NULL;
-		}
-		wglMakeCurrent( hDC, hRC );
-#else
-		glXDestroyContext(g_pDisplay, g_pbufferContext);
-		glXDestroyPbuffer(g_pDisplay, g_pbuffer);
-		if (g_windowContext != NULL) {
-			glXMakeCurrent(g_pDisplay, g_window, g_windowContext);
-		}
-#endif
-	}
+	framebuffer->uninit();
+	delete framebuffer;
 }
 
 void CShadowHandler::CreateShadows(void)
 {
-	if(!copyDepthTexture && !firstDraw && !fbo){
+	if(!copyDepthTexture && !firstDraw){
 #ifdef _WIN32
 		glBindTexture(GL_TEXTURE_2D, shadowTexture);
 		if( wglReleaseTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
@@ -148,20 +95,10 @@ void CShadowHandler::CreateShadows(void)
 #endif
 	}
 
-	if (fbo) {
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frameBuffer);
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D,shadowTexture,0);
-	} else {
-#ifdef _WIN32
-		if( wglMakeCurrent( hDCPBuffer, hRCPBuffer) == FALSE )
-		{
-			MessageBox(NULL,"Could not make the p-buffer's context current!",
-				"ERROR",MB_OK|MB_ICONEXCLAMATION);
-			exit(-1);
-		}
-#else
-		//glXMakeCurrent(g_pDisplay, g_pbuffer, g_pbufferContext);
-#endif
+	if (!framebuffer->select()) {
+		handleerror(0,"Could not set offscreen framebuffer as current context!",
+				"Framebuffer error",MB_OK|MB_ICONEXCLAMATION);
+		exit(-1);
 	}
 
 	glDisable(GL_BLEND);
@@ -176,7 +113,7 @@ void CShadowHandler::CreateShadows(void)
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	if(firstDraw && copyDepthTexture && !fbo){
+	if(firstDraw && copyDepthTexture){
 		glBindTexture(GL_TEXTURE_2D, shadowTexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, shadowMapSize, shadowMapSize);
 	}
@@ -251,26 +188,13 @@ void CShadowHandler::CreateShadows(void)
 	glShadeModel(GL_SMOOTH);
 	glColorMask(1, 1, 1, 1);
 
-	if (fbo) {
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
-	} else {
-		glBindTexture(GL_TEXTURE_2D, shadowTexture);
-		if(copyDepthTexture){
-			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
-		}
-#ifdef _WIN32
-		if( wglMakeCurrent( hDC, hRC ) == FALSE )
-		{
-			MessageBox(NULL,"Could not make the window's context current!",
-				"ERROR",MB_OK|MB_ICONEXCLAMATION);
-			exit(-1);
-		}
-#else
-		glXMakeCurrent(g_pDisplay, g_window, g_windowContext);
-#endif
+	if (!framebuffer->deselect()) {
+		handleerror(0,"Could not set active window as current context!","Framebuffer error",MB_OK|MB_ICONEXCLAMATION);
+		exit(-1);
 	}
+
 	glViewport(0,0,gu->screenx,gu->screeny);
-	if(!copyDepthTexture && !fbo){
+	if(!copyDepthTexture){
 #ifdef _WIN32
 		if( wglBindTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
 		{
@@ -305,69 +229,6 @@ void CShadowHandler::DrawShadowTex(void)
 	glTexCoord2f(1,0);
 	glVertex3f(0.5,0,1);
 	glEnd();
-}
-extern GLuint		PixelFormat;
-void CShadowHandler::CreateFramebuffer(void)
-{
-	if (fbo) {
-		glGenFramebuffersEXT(1,&g_frameBuffer);
-		glGenRenderbuffersEXT(1,&g_depthRenderBuffer);
-		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, g_depthRenderBuffer);
-		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize);
-		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,0);
-	} else {
-#ifdef _WIN32
-		int pb_attr[16] = 
-		{
-				WGL_TEXTURE_FORMAT_ARB, WGL_TEXTURE_RGBA_ARB,                // Our p-buffer will have a texture format of RGBA
-				WGL_TEXTURE_TARGET_ARB, WGL_TEXTURE_2D_ARB,                  // Of texture target will be GL_TEXTURE_2D
-				0                                                            // Zero terminates the list
-		};
-		if(!copyDepthTexture){
-			pb_attr[4]=WGL_DEPTH_TEXTURE_FORMAT_NV;												//add nvidia depth texture support if supported
-			pb_attr[5]=WGL_TEXTURE_DEPTH_COMPONENT_NV;
-			pb_attr[6]=0;
-		}
-
-		hPBuffer = wglCreatePbufferARB( hDC, PixelFormat, shadowMapSize, shadowMapSize, pb_attr );
-		hDCPBuffer      = wglGetPbufferDCARB( hPBuffer );
-		hRCPBuffer=hRC;//wglGetCurrentContext(); 
-		//hRCPBuffer      = wglCreateContext( hDCPBuffer );
-
-		if( !hPBuffer )
-		{
-			MessageBox(NULL,"pbuffer creation error: wglCreatePbufferARB() failed!",
-				"ERROR",MB_OK|MB_ICONEXCLAMATION);
-			exit(-1);
-		}
-#else
-		int attrib[] =
-		{
-			GLX_DOUBLEBUFFER, False,
-			GLX_RENDER_TYPE, GLX_RGBA_BIT,
-			GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT|GLX_WINDOW_BIT,
-			None
-		};
-		int pbufAttrib[] =
-		{
-			GLX_PBUFFER_WIDTH, shadowMapSize,
-			GLX_PBUFFER_HEIGHT, shadowMapSize,
-			GLX_LARGEST_PBUFFER, False,
-			None
-		};
-		g_windowContext = glXGetCurrentContext();
-		int scrnum = DefaultScreen(g_pDisplay);
-		GLXFBConfig *fbconfig;
-		XVisualInfo *visinfo;
-		int nitems;
-		fbconfig = glXChooseFBConfig(g_pDisplay,scrnum,attrib,&nitems);
-		g_pbuffer = glXCreatePbuffer(g_pDisplay, fbconfig[0], pbufAttrib);
-		visinfo = glXGetVisualFromFBConfig(g_pDisplay, fbconfig[0]);
-		g_pbufferContext = glXCreateContext(g_pDisplay, visinfo, g_windowContext,GL_TRUE);
-		XFree(fbconfig);
-		XFree(visinfo);
-#endif
-	}
 }
 
 void CShadowHandler::CalcMinMaxView(void)
