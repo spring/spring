@@ -12,6 +12,18 @@
 #include "InfoConsole.h"
 #include "FeatureHandler.h"
 
+#define CHECK_FRAMEBUFFER_STATUS()					\
+do {									\
+	GLenum status;							\
+	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);	\
+	switch(status) {						\
+		case GL_FRAMEBUFFER_COMPLETE_EXT:			\
+			break;						\
+		default:						\
+			assert(0);					\
+	}								\
+} while (0)
+
 CShadowHandler* shadowHandler=0;
 
 CShadowHandler::CShadowHandler(void)
@@ -57,14 +69,6 @@ CShadowHandler::CShadowHandler(void)
 	drawShadows=true;
 	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
 	CreateFramebuffer();
-	glGenTextures(1,&shadowTexture);
-	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glTexImage2D(	GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 CShadowHandler::~CShadowHandler(void)
@@ -75,14 +79,40 @@ CShadowHandler::~CShadowHandler(void)
 	}
 }
 
+void CShadowHandler::CreateFramebuffer(void)
+{
+	glGenFramebuffersEXT(1,&g_frameBuffer);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_frameBuffer);
+	
+	glGenTextures(1,&tempTexture);
+	glBindTexture(GL_TEXTURE_2D, tempTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_FLOAT, NULL);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tempTexture, 0);
+	CHECK_FRAMEBUFFER_STATUS();
+
+	glGenTextures(1,&shadowTexture);
+	glBindTexture(GL_TEXTURE_2D, shadowTexture);
+	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadowTexture, 0);
+	CHECK_FRAMEBUFFER_STATUS();
+
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+}
+
 void CShadowHandler::CreateShadows(void)
 {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frameBuffer);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D,shadowTexture,0);
-	if (firstDraw) {
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
-	}
+
+	CHECK_FRAMEBUFFER_STATUS();
 
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);
@@ -90,7 +120,7 @@ void CShadowHandler::CreateShadows(void)
 	glDisable(GL_TEXTURE_2D);
 
 	glShadeModel(GL_FLAT);
-	//glColorMask(0, 0, 0, 0);
+	glColorMask(0, 0, 0, 0);
 
 	glViewport(0,0,shadowMapSize,shadowMapSize);
 
@@ -165,7 +195,7 @@ void CShadowHandler::CreateShadows(void)
 	shadowMatrix[14]-=0.00001;
 
 	glShadeModel(GL_SMOOTH);
-	//glColorMask(1, 1, 1, 1);
+	glColorMask(1, 1, 1, 1);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 	glViewport(0,0,gu->screenx,gu->screeny);
@@ -194,11 +224,6 @@ void CShadowHandler::DrawShadowTex(void)
 	glTexCoord2f(1,0);
 	glVertex3f(0.5,0,1);
 	glEnd();
-}
-extern GLuint		PixelFormat;
-void CShadowHandler::CreateFramebuffer(void)
-{
-	glGenFramebuffersEXT(1,&g_frameBuffer);
 }
 
 void CShadowHandler::CalcMinMaxView(void)
