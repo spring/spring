@@ -1,17 +1,17 @@
 /*
- * GLXPBufferFramebuffer.cpp
- * GLX PBuffer object class implementation
+ * SGIXPBufferFramebuffer.cpp
+ * SGIX PBuffer object class implementation
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
-#include "GLXPBufferFramebuffer.h"
+#include "SGIXPBufferFramebuffer.h"
 
-GLXPBufferFramebuffer::GLXPBufferFramebuffer(const unsigned int t, const unsigned int w, const unsigned int h): BaseFramebuffer(t,w,h)
+SGIXPBufferFramebuffer::SGIXPBufferFramebuffer(const unsigned int t, const unsigned int w, const unsigned int h): BaseFramebuffer(t,w,h)
 {
 	g_pDisplay = glXGetCurrentDisplay();
 	g_window = glXGetCurrentDrawable();
 }
 
-GLXPBufferFramebuffer::~GLXPBufferFramebuffer()
+SGIXPBufferFramebuffer::~SGIXPBufferFramebuffer()
 {
 	if (active)
 		deselect();
@@ -19,33 +19,32 @@ GLXPBufferFramebuffer::~GLXPBufferFramebuffer()
 		uninit();
 }
 
-bool GLXPBufferFramebuffer::init()
+bool SGIXPBufferFramebuffer::init()
 {
 	if (initialized)
 		return false;
 	texinit();
 	int attrib[] = {
 		GLX_DOUBLEBUFFER, False,
-		GLX_RENDER_TYPE, GLX_RGBA_BIT,
-		GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT | GLX_WINDOW_BIT,
+		GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
+		GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX | GLX_WINDOW_BIT_SGIX,
 		None
 	};
 	int pbufAttrib[] = {
-		GLX_PBUFFER_WIDTH, width,
-		GLX_PBUFFER_HEIGHT, height,
-		GLX_LARGEST_PBUFFER, True,
+		GLX_LARGEST_PBUFFER_SGIX, True,
+		GLX_PRESERVED_CONTENTS_SGIX, False,
 		None
 	};
 	g_windowContext = glXGetCurrentContext();
 	int scrnum = DefaultScreen(g_pDisplay);
-	GLXFBConfig *fbconfig;
+	GLXFBConfigSGIX *fbconfig;
 	XVisualInfo *visinfo;
 	int nitems;
-	fbconfig = glXChooseFBConfig(g_pDisplay, scrnum, attrib, &nitems);
+	fbconfig = glXChooseFBConfigSGIX(g_pDisplay, scrnum, attrib, &nitems);
 	if (fbconfig == NULL)
 		return false;
-	g_pbuffer = glXCreatePbuffer(g_pDisplay, fbconfig[0], pbufAttrib);
-	visinfo = glXGetVisualFromFBConfig(g_pDisplay, fbconfig[0]);
+	g_pbuffer = glXCreateGLXPbufferSGIX(g_pDisplay, fbconfig[0], width, height, pbufAttrib);
+	visinfo = glXGetVisualFromFBConfigSGIX(g_pDisplay, fbconfig[0]);
 	if (!visinfo) {
 		XFree(fbconfig);
 		return false;
@@ -62,20 +61,17 @@ bool GLXPBufferFramebuffer::init()
 	return true;
 }
 
-bool GLXPBufferFramebuffer::uninit()
+bool SGIXPBufferFramebuffer::uninit()
 {
 	if (!initialized)
 		return false;
 	texuninit();
-	glXDestroyContext(g_pDisplay, g_pbufferContext);
-	glXDestroyPbuffer(g_pDisplay, g_pbuffer);
-	if (g_windowContext != NULL)
-		glXMakeCurrent(g_pDisplay, g_window, g_windowContext);
+	glXDestroyGLXPbufferSGIX(g_pDisplay,g_pbuffer);
 	initialized = false;
 	return true;
 }
 
-bool GLXPBufferFramebuffer::select()
+bool SGIXPBufferFramebuffer::select()
 {
 	if (!initialized || active)
 		return false;
@@ -84,7 +80,7 @@ bool GLXPBufferFramebuffer::select()
 	return true;
 }
 
-bool GLXPBufferFramebuffer::deselect()
+bool SGIXPBufferFramebuffer::deselect()
 {
 	if (!initialized || !active)
 		return false;

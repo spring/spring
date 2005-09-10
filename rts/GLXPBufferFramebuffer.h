@@ -6,8 +6,8 @@
 #ifndef GLXPBUFFERFRAMEBUFFER_H
 #define GLXPBUFFERFRAMEBUFFER_H
 
-#include <GL/glx.h>
 #include "BaseFramebuffer.h"
+#include "glxew.h"
 
 class GLXPBufferFramebuffer: public BaseFramebuffer
 {
