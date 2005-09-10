@@ -2,12 +2,10 @@
 #define SHADOWHANDLER_H
 /*pragma once removed*/
 
+#include "FBO.h"
 #include "Matrix44f.h"
 #include "myGL.h"
 #include <vector>
-#ifndef _WIN32
-#include <GL/glx.h>
-#endif
 
 class CShadowHandler
 {
@@ -35,7 +33,6 @@ public:
 	CMatrix44f shadowMatrix;
 	void DrawShadowTex(void);
 	void CalcMinMaxView(void);
-	void CreateFramebuffer(void);
 
 protected:
 	void GetFrustumSide(float3& side,bool upside);
@@ -47,7 +44,7 @@ protected:
 		float maxz;
 	};
 	std::vector<fline> left;
-	GLuint g_frameBuffer;
+	FBO *fb;
 };
 
 extern CShadowHandler* shadowHandler;
