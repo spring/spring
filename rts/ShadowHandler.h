@@ -18,6 +18,7 @@ public:
 
 	int shadowMapSize;
 	unsigned int shadowTexture;
+	unsigned int tempTexture;
 
 	bool drawShadows;
 	bool inShadowPass;
@@ -32,9 +33,9 @@ public:
 	float x1,x2,y1,y2;
 
 	CMatrix44f shadowMatrix;
-	void CreateFramebuffer(void);
 	void DrawShadowTex(void);
 	void CalcMinMaxView(void);
+	void CreateFramebuffer(void);
 
 protected:
 	void GetFrustumSide(float3& side,bool upside);
@@ -47,7 +48,6 @@ protected:
 	};
 	std::vector<fline> left;
 	GLuint g_frameBuffer;
-	GLuint g_depthRenderBuffer;
 };
 
 extern CShadowHandler* shadowHandler;
