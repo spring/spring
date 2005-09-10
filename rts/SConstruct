@@ -77,7 +77,7 @@ else:
 if detected_platform == 'linux':
 	exclude_list+=["WGLPBufferFramebuffer.cpp","Win32Cmd.cpp","RegHandler.cpp"]
 else:
-	exclude_list+=["GLXPBufferFramebuffer.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
+	exclude_list+=["SGIXPBufferFramebuffer.cpp","GLXPBufferFramebuffer.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
 
 env.Append(CPPDEFINES = defines)
 
