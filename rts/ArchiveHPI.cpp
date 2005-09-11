@@ -12,8 +12,8 @@ CArchiveHPI::CArchiveHPI(const string& name) :
 	if (hpi == NULL)
 		return;
 
-	std::vector<hpientry*> ret = HPIGetFiles(*hpi);
-	for (std::vector<hpientry*>::iterator it = ret.begin(); it != ret.end(); it++) {
+	std::vector<hpientry_ptr> ret = HPIGetFiles(*hpi);
+	for (std::vector<hpientry_ptr>::iterator it = ret.begin(); it != ret.end(); it++) {
 		if (!(*it)->directory) {
 			string name = (*it)->path();
 			transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
@@ -38,8 +38,8 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 	string name = fileName;
 	transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
 
-	hpientry* f = HPIOpenFile(*hpi, (const char*)name.c_str());
-	if (f == NULL)
+	hpientry_ptr f = HPIOpenFile(*hpi, (const char*)name.c_str());
+	if (f)
 		return 0;
 
 	ABOpenFile_t* of = new ABOpenFile_t;
@@ -47,8 +47,8 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 	of->size = f->size;
 	of->data = (char*)malloc(of->size);
 
-	HPIGet(of->data, *f, 0, of->size);
-	HPICloseFile(*f);
+	HPIGet(of->data, f, 0, of->size);
+	HPICloseFile(f);
 
 	return of;
 }
