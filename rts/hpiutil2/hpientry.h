@@ -34,11 +34,14 @@
 #include <vector>
 #include <string>
 #include <boost/cstdint.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace hpiutil
 {
 	
 	class hpifile;
+	class hpientry;
+  typedef boost::shared_ptr<hpientry> hpientry_ptr;
 	class hpientry
 	{
 	public:
@@ -47,7 +50,7 @@ namespace hpiutil
 		bool directory;
 		boost::uint32_t offset;
 		boost::uint32_t size;
-		std::vector<hpientry*> subdir;
+		std::vector<hpientry_ptr> subdir;
 		hpientry(hpifile &f, std::string const &pname, std::string const &n, const boost::uint32_t offset, const boost::uint32_t size);
 		~hpientry();
 		std::string path();

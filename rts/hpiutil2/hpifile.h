@@ -24,6 +24,7 @@
 #define HPIUTIL2_HPIFILE_H
 
 #include <vector>
+#include <boost/shared_ptr.hpp>
 #include "sqshstream.h"
 #include "hpientry.h"
 
@@ -35,6 +36,7 @@
 namespace hpiutil
 {
 
+  typedef boost::shared_ptr<hpientry> hpientry_ptr;
 	class hpifile
 	{
 	public:
@@ -42,11 +44,13 @@ namespace hpiutil
 		hpifile(const char *fname);
 		hpifile(std::string const &fname);
 		~hpifile();
-		std::vector<hpientry*> flatlist;
-		hpientry& dirinfo(std::string const &parentname, std::string const &dirname, const boost::uint32_t offset);
-		hpientry& fileinfo(std::string const &parentname, std::string const &name, const boost::uint32_t offset);
-		boost::uint32_t getdata(hpientry const &he, boost::uint8_t *data);
+		std::vector<hpiutil::hpientry_ptr> flatlist;
+		hpientry_ptr dirinfo(std::string const &parentname, std::string const &dirname, const boost::uint32_t offset);
+		hpientry_ptr fileinfo(std::string const &parentname, std::string const &name, const boost::uint32_t offset);
+		boost::uint32_t getdata(hpientry_ptr const &he, boost::uint8_t *data);
 	private:
+		hpifile( hpifile const& ); // flat vs deep copy of scrambledfile?
+		hpifile& operator=( hpifile const& ); // flat vs deep copy of scrambledfile=
 		scrambledfile *file;
 		void validate(const char *n);
 		boost::uint32_t header_hapimagic;
