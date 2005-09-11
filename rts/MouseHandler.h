@@ -53,7 +53,7 @@ public:
 		int movement;
 	};
 
-	ButtonPress buttons[5];
+	ButtonPress buttons[6];
 	float3 dir;
 
 	CInputReceiver* activeReceiver;
