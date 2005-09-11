@@ -265,7 +265,16 @@ print "Checking for freetype-config... ",
 freetypecfg = env.WhereIs("freetype-config")
 if freetypecfg:
 	print freetypecfg
-	env.ParseConfig("freetype-config --cflags --libs")
+	print "Checking for Freetype >= 2.0.0... ",
+	ftobj = os.popen("freetype-config --ftversion")
+	ftver = ftobj.read()
+	fterr = ftobj.close()
+	print ftver,
+	if ftver.split('.') >= ['2','0','0']:
+		env.ParseConfig("freetype-config --cflags --libs")
+	else:
+		print "You need Freetype version 2.0.0 or greater for this program"
+		Exit(1)
 else:
 	print "no"
 	print 'Freetype2 is required for this program'
@@ -274,7 +283,16 @@ print "Checking for sdl-config... ",
 sdlcfg = env.WhereIs("sdl-config")
 if sdlcfg:
 	print sdlcfg
-	env.ParseConfig("sdl-config --cflags --libs")
+	print "Checking for LibSDL >= 1.2.0... ",
+	sdlobj = os.popen("sdl-config --version")
+	sdlver = sdlobj.read()
+	sdlerr = sdlobj.close()
+	print sdlver,
+	if sdlver.split('.') >= ['1','2','0']:
+		env.ParseConfig("sdl-config --cflags --libs")
+	else:
+		print "You need LibSDL version 1.2.0 or greater for this program"
+		Exit(1)
 else:
 	print "no"
 	print 'LibSDL is required for this program'
