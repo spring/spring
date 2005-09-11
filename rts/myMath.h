@@ -22,7 +22,7 @@ inline short int GetHeadingFromVector(float dx,float dz)
 			h=d/(1 + 0.28 * d*d);
 		}
 
-		if(dz<0)
+		if(h<0)
 			h+=PI;
 	} else {
 		if(dx>0)
@@ -37,10 +37,10 @@ inline short int GetHeadingFromVector(float dx,float dz)
 	float wantedHeading;
 
 	if(dz!=0)
-		wantedHeading=atan(dx/dz);
+		wantedHeading=atanf(dx/dz);
 	else
 		wantedHeading=PI;
-	if(dz<0)
+	if(h<0)
 		wantedHeading+=PI;
 
 	wantedHeading*=32768/PI;
