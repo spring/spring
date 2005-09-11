@@ -60,6 +60,7 @@ int sdlflags;
 bool	active=true;		// Window Active Flag Set To true By Default
 bool	fullscreen=true;	// Fullscreen Flag Set To Fullscreen Mode By Default
 bool	globalQuit=false;
+bool	FSAA = false;
 //time_t   fpstimer,starttime;
 CGameController* activeController=0;
 
@@ -116,6 +117,37 @@ void KillGLWindow(GLvoid)								// Properly Kill The Window
 	SDL_FreeSurface(screen);
 }
 
+bool MultisampleTest(void)
+{
+	if (!GL_ARB_multisample)
+		return false;
+	GLuint fsaa = configHandler.GetInt("FSAA",0);
+	if (!fsaa)
+		return false;
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
+	GLuint fsaalevel = min(configHandler.GetInt("FSAALevel",2),(unsigned int)8);
+	if (fsaalevel % 2)
+		fsaalevel--;
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,fsaalevel);
+	return true;
+}
+
+bool MultisampleVerify(void)
+{
+	GLint buffers, samples; 
+	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
+	glGetIntegerv(GL_SAMPLES_ARB, &samples);
+	if (buffers && samples) {
+#ifdef DEBUG
+		char t[22];
+		snprintf(t,22, "FSAA level %d enabled",samples);
+		handleerror(0,t,"SDL_GL",MB_OK|MB_ICONINFORMATION);
+#endif
+		return true;
+	} else
+		return false;
+}
+
 /*	This Code Creates Our OpenGL Window.  Parameters Are:					*
  *	title			- Title To Appear At The Top Of The Window				*
  *	width			- Width Of The GL Window Or Fullscreen Mode				*
@@ -139,6 +171,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	if (pSDLVideoInfo->blit_hw)
 		sdlflags |= SDL_HWACCEL;
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+	FSAA = MultisampleTest();
 
 	screen = SDL_SetVideoMode(width,height,bits,sdlflags);
 	if (!screen) {
@@ -146,6 +179,8 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		SDL_Quit();
 		return false;
 	}
+	if (FSAA)
+		FSAA = MultisampleVerify();
 	if (fullscreenflag)
 		SDL_WM_ToggleFullScreen(screen);
 	SDL_WM_SetCaption(title,title);
@@ -382,8 +417,12 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		}
 		else									// Not Time To Quit, Update Screen
 		{
+			if (FSAA)
+				glEnable(GL_MULTISAMPLE_ARB);
 			DrawGLScene();
 			SDL_GL_SwapBuffers();
+			if (FSAA)
+				glDisable(GL_MULTISAMPLE_ARB);
 		}
 
 	}
