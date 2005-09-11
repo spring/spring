@@ -1,8 +1,8 @@
 #############################################
 #architecture specific files / include pathes
 import sys
-windows_include_path=['include/windows']
-linux_include_path=['include/linux','/usr/include','/usr/include/freetype2','/usr/include/GL','/usr/include/SDL']
+windows_include_path=[]
+linux_include_path=['/usr/include','/usr/include/GL']
 common_include_path = ['.','gui','include']
 common_files=[]
 windows_files=[]
@@ -13,7 +13,7 @@ if sys.platform == 'linux2' or sys.platform == 'linux-i386':
 else:
 	print "Platform not supported yet, please edit SConstruct file"
 	detected_platform='unknown'
-defines = ['DIRECT_CONTROL_ALLOWED','_REENTRANT']
+defines = ['DIRECT_CONTROL_ALLOWED']
 exclude_list = []
 
 ##################################
@@ -260,16 +260,52 @@ env.Append(CPPFLAGS = flags)
 #################################################
 # Check requirements
 
-lib=['GL','GLEW','freetype','IL','SDL','openal']
+print "\nChecking configure scripts"
+print "Checking for freetype-config... ",
+freetypecfg = env.WhereIs("freetype-config")
+if freetypecfg:
+	print freetypecfg
+	env.ParseConfig("freetype-config --cflags --libs")
+else:
+	print "no"
+	print 'Freetype2 is required for this program'
+	Exit(1)
+print "Checking for sdl-config... ",
+sdlcfg = env.WhereIs("sdl-config")
+if sdlcfg:
+	print sdlcfg
+	env.ParseConfig("sdl-config --cflags --libs")
+else:
+	print "no"
+	print 'LibSDL is required for this program'
+	Exit(1)
+print "Checking for openal-config... ",
+openalcfg = env.WhereIs("openal-config")
+if openalcfg:
+	print openalcfg
+	env.ParseConfig("openal-config --cflags --libs")
+else:
+	print "no"
+	print 'OpenAL is required for this program'
+	Exit(1)
+#print "Checking for glib-config... ",
+#glibcfg = env.WhereIs("glib-config")
+#if glibcfg:
+#	print glibcfg
+#	env.ParseConfig("glib-config --cflags --libs")
+#else:
+#	print "no"
+#	print 'GLib is required for this program'
+#	Exit(1)
+
+
+lib=['GL','GLEW','IL','openal']
 libaiostep1=False
 
 print "\nChecking header files"
 conf = Configure(env)
 conf.env.Append(CPPPATH=common_include_path)
-if not conf.CheckCHeader(['ft2build.h']):
-	print ' dev freetype must be installed!'
-	Exit(1)
-if not conf.CheckCHeader(['GL/glew.h']):
+if not conf.CheckCHeader('GL/glew.h'):
 	print ' Cannot find GLEW http://glew.sourceforge.net'
 	Exit(1)
 if not conf.CheckCXXHeader('boost/cstdint.hpp'):
@@ -287,31 +323,16 @@ if not conf.CheckCXXHeader('boost/regex.hpp'):
 if not conf.CheckCHeader('IL/il.h'):
 	print ' Cannot find DevIL image library header'
 	Exit(1)
-if not conf.CheckCHeader('SDL.h'):
-	print ' Cannot find LibSDL header'
-	Exit(1)
 if conf.CheckCHeader('libaio.h'):
 	defines+=['HAS_LIBAIO']
 	libaiostep1=True
 else:
 	print ' Cannot find libaio headers, disabling asynchronous I/O'
-if not conf.CheckCHeader('AL/al.h'):
-	print ' Cannot find OpenAL header'
-	Exit(1)
-#if not conf.CheckCHeader('glib.h'):
-#	print ' a dev implementation of glib must be installed!'
-#	Exit(1)
 
 print "\nChecking libraries"
-if not conf.CheckLib('libc'):
-	print "You need libc to compile this program"
-	Exit(1)
 if not conf.CheckLib('GLEW'):
 	print "You need GLEW to compile this program"
 	Exit(1)
-#if not conf.CheckLib('glib'):
-#	print "You need glib to link this program"
-#	Exit(1)
 if gcc and conf.CheckLib('boost_filesystem-gcc-mt'):
 	lib+=['boost_filesystem-gcc-mt']
 elif conf.CheckLib('boost_filesystem-mt'):
@@ -348,9 +369,6 @@ else:
 if not conf.CheckLib('IL'):
 	print "You need the DevIL image library for this program"
 	Exit(1)
-if not conf.CheckLib('SDL'):
-	print "You need LibSDL for this program"
-	Exit(1)
 if env.get('use_tcmalloc'):
 	if conf.CheckLib('tcmalloc'):
 		lib+=['tcmalloc']
@@ -363,16 +381,14 @@ if conf.CheckLib('aio'):
 		files+=['BackgroundReader.cpp']
 else:
 	print "Libaio is necessary for asynchronous I/O, disabling BackgroundReader"
-if not conf.CheckLib('openal'):
-	print "You need OpenAL for this program"
-	Exit(1)
 env = conf.Finish()
 
 ###################################################
 # let's build
 
 print "\nEverything seems OK, let's build"
+env.Append(LIBS = lib)
 #print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
-env.Program('spring', files,  LIBS=lib, CPPPATH=common_include_path)
+env.Program('spring', files)
 if optimize:
 	env.AddPostAction('spring',Action([['strip','spring']]))
