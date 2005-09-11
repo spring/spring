@@ -47,6 +47,7 @@ protected:
 	std::vector<struct option> options;
 	int argc;
 	char **argv;
+	int invalidoption(std::string opt);
 };
 
 #endif

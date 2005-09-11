@@ -207,3 +207,16 @@ bool BaseCmd::result(std::string o, std::string &ret)
 	}
 	return false;
 }
+
+/**
+ * invalidoption()
+ * Prints usage message and terminates when given an invalid option
+ * @param opt invalid option
+ */
+int BaseCmd::invalidoption(std::string opt)
+{
+	std::cerr << "BaseCmd error: Unrecognized option " << opt << std::endl;
+	usage("","");
+	exit(1);
+	return 1;
+}

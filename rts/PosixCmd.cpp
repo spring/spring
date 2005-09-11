@@ -134,16 +134,3 @@ void PosixCmd::usage(std::string program, std::string version)
 		std::cout << std::endl;
 	}
 }
-
-/**
- * invalidoption()
- * Prints usage message and terminates when given an invalid option
- * @param opt invalid option
- */
-int PosixCmd::invalidoption(std::string opt)
-{
-	std::cerr << "PosixCmd error: Unrecognized option " << opt << std::endl;
-	usage("","");
-	exit(1);
-	return 1;
-}
