@@ -44,7 +44,6 @@ namespace hpiutil
 	public:
 		std::string name;
 		std::string parentname;
-		boost::uint32_t length;
 		bool directory;
 		boost::uint32_t offset;
 		boost::uint32_t size;
