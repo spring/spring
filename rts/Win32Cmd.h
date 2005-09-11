@@ -14,6 +14,7 @@ public:
 	Win32Cmd(int c, char **v);
 	virtual void parse();
 	virtual void usage(std::string program, std::string version);
+	~Win32Cmd();
 };
 
 #endif /* WIN32CMD_H */
