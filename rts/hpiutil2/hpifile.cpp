@@ -82,7 +82,7 @@ void hpiutil::hpifile::validate(const char *n)
 	header_diroffset = file->readint();
 	file->setkey(header_key);
 	valid = true;
-	flatlist.push_back(&dirinfo("","",header_diroffset));
+	flatlist.push_back(dirinfo("","",header_diroffset)); // <- result of dirinfo gets added twice?
 }
 
 /**
@@ -93,9 +93,9 @@ void hpiutil::hpifile::validate(const char *n)
  * @param dirname name of this directory
  * @param offset offset in hpi file
  */
-hpiutil::hpientry& hpiutil::hpifile::dirinfo(std::string const &parentname, std::string const &dirname, const boost::uint32_t offset)
+hpiutil::hpientry_ptr hpiutil::hpifile::dirinfo(std::string const &parentname, std::string const &dirname, const boost::uint32_t offset)
 {
-	std::vector<hpientry*> listing;
+	std::vector<hpientry_ptr> listing;
 	std::string newparent;
 	if (parentname=="")
 		newparent = dirname;
@@ -114,10 +114,10 @@ hpiutil::hpientry& hpiutil::hpifile::dirinfo(std::string const &parentname, std:
 		file->seek(infooffset);
 		switch (entrytype) {
 			case 0:
-				listing.push_back(&(fileinfo(newparent,itemname,infooffset)));
+				listing.push_back( fileinfo(newparent,itemname,infooffset));
 				break;
 			case 1:
-				listing.push_back(&(dirinfo(newparent,itemname,infooffset)));
+				listing.push_back( dirinfo(newparent,itemname,infooffset));
 				break;
 			default:
 				throw std::runtime_error("Unknown entry type");
@@ -125,11 +125,10 @@ hpiutil::hpientry& hpiutil::hpifile::dirinfo(std::string const &parentname, std:
 		}
 		file->seek(currentpos);
 	}
-	hpientry *ret = new hpientry(*this,parentname,dirname,(boost::uint32_t)0,(boost::uint32_t)0);
-	ret->directory = true;
-	ret->subdir = listing;
-	flatlist.push_back(ret);
-	return *ret;
+	flatlist.push_back( hpientry_ptr(new hpientry(*this,parentname,dirname,(boost::uint32_t)0,(boost::uint32_t)0)));
+	flatlist.back()->directory = true;
+	flatlist.back()->subdir = listing;
+	return flatlist.back();
 }
 
 /**
@@ -140,13 +139,12 @@ hpiutil::hpientry& hpiutil::hpifile::dirinfo(std::string const &parentname, std:
  * @param name name of the file
  * @param offset offset in hpi file
  */
-hpiutil::hpientry& hpiutil::hpifile::fileinfo(std::string const &parentname, std::string const &name, const boost::uint32_t offset)
+hpiutil::hpientry_ptr hpiutil::hpifile::fileinfo(std::string const &parentname, std::string const &name, const boost::uint32_t offset)
 {
 	boost::uint32_t doff = file->readint();
 	boost::uint32_t dsize = file->readint();
-	hpientry *ret = new hpientry(*this,parentname,name,doff,dsize);
-	flatlist.push_back(ret);
-	return *ret;
+	flatlist.push_back(hpientry_ptr( new hpientry(*this,parentname,name,doff,dsize) ) );
+	return flatlist.back();
 }
 
 /**
@@ -156,22 +154,22 @@ hpiutil::hpientry& hpiutil::hpifile::fileinfo(std::string const &parentname, std
  * @param he hpientry for the target file
  * @param data buffer to read data into
  */
-boost::uint32_t hpiutil::hpifile::getdata(hpientry const &he, boost::uint8_t *data)
+boost::uint32_t hpiutil::hpifile::getdata(hpientry_ptr const &he, boost::uint8_t *data)
 {
-	if (he.file != this) {
+	if (he->file != this) {
 		std::cerr << "HPIentry does not match this HPIfile" << std::endl;
 		return 0;
 	}
-	if (he.directory) {
+	if (he->directory) {
 		std::cerr << "HPIentry is a directory, not a file" << std::endl;
 		return 0;
 	}
-	boost::uint32_t chunknum = bitdiv(he.size,16) + (bitmod(he.size,16)?1:0);
+	boost::uint32_t chunknum = bitdiv(he->size,16) + (bitmod(he->size,16)?1:0);
 	boost::uint32_t *chunksizes = (boost::uint32_t*)calloc(chunknum,sizeof(boost::uint32_t));
-	file->seek(he.offset);
+	file->seek(he->offset);
 	for (int i = 0; i < chunknum; i++)
 		chunksizes[i] = file->readint();
-	boost::uint32_t chunkoffset = he.offset + (chunknum * 4);
+	boost::uint32_t chunkoffset = he->offset + (chunknum * 4);
 	int j = 0;
 	for (int i = 0; i < chunknum; i++) {
 		boost::uint32_t chunksize = chunksizes[i];
