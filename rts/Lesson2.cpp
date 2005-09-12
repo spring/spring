@@ -45,7 +45,7 @@
 #endif
 
 // Use the crashrpt library 
-#ifndef NO_CRASHRPT
+#ifdef _WIN32
 #include "../crashrpt/include/crashrpt.h"
 #endif
 
@@ -202,6 +202,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	return true;									// Success
 }
 
+#ifdef _WIN32
 // Called when spring crashes
 bool crashCallback(void* crState)
 {
@@ -215,16 +216,15 @@ bool crashCallback(void* crState)
 		wasRecording = true;
 	}
 
-#ifndef NO_CRASHRPT
 	AddFile("infolog.txt", "Spring information log");
 	AddFile("test.sdf", "Spring game demo");
 
 	if (wasRecording)
 		AddFile(net->demoName.c_str(), "Spring game demo");
-#endif
 
 	return true;
 }
+#endif
 
 int main( int argc, char *argv[ ], char *envp[ ] )
 {
@@ -249,7 +249,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		fullscreen = false;
 	else if (cmdline->result("fullscreen"))
 		fullscreen = true;
-#ifndef NO_CRASHRPT
+#ifdef _WIN32
 	// Initialize crash reporting
 	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif

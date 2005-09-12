@@ -31,7 +31,6 @@ opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1
 #porting options - optionnal in a first phase
 opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
 opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
-opts.Add('disable_crashrpt', 'Set to no to turn on crashrpt code', 1)
 
 #other ported parts
 opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', 0)
@@ -54,8 +53,6 @@ if env.Dictionary('CC').find('gcc') != -1:
 else:
 	gcc = False
 
-if env.get('disable_crashrpt'):
-	defines+=['NO_CRASHRPT']
 if env.get('disable_hpi'):
 	defines+=['NO_HPI']
 if env.get('disable_clipboard'):
