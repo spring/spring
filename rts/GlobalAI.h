@@ -5,6 +5,7 @@
 #include <windows.h>
 #endif
 #include "Object.h"
+#include "SharedLib.h"
 
 class IGlobalAI;
 class CGlobalAICallback;
@@ -26,8 +27,7 @@ public:
 	CGlobalAICallback* callback;
 	CGroupHandler* gh;
 
-#ifndef NO_DLL
-	HINSTANCE m_hDLL;
+	SharedLib *lib;
 
 	typedef int (WINAPI* GETGLOBALAIVERSION)();
 	typedef IGlobalAI* (WINAPI* GETNEWAI)();
@@ -36,7 +36,6 @@ public:
 	GETGLOBALAIVERSION GetGlobalAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;
-#endif
 };
 
 #endif

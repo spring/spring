@@ -11,6 +11,7 @@
 #include <string>
 #include <set>
 #include "command.h"
+#include "SharedLib.h"
 class IGroupAI;
 class CUnit;
 class CFeature;
@@ -41,8 +42,7 @@ public:
 	set<CUnit*> units;
 
 	vector<CommandDescription> myCommands;
-#ifndef NO_DLL
-	HINSTANCE m_hDLL;
+	SharedLib *lib;
 	typedef int (WINAPI* GETGROUPAIVERSION)();
 	typedef IGroupAI* (WINAPI* GETNEWAI)();
 	typedef void (WINAPI* RELEASEAI)(IGroupAI* i);
@@ -50,7 +50,6 @@ public:
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;
-#endif
 	int lastCommandPage;
 	int currentAiNum;
 

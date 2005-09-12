@@ -25,7 +25,11 @@ void CGlobalAITestScript::Update(void)
 {
 	switch(gs->frameNum){
 	case 0:{
+#ifdef _WIN32
 		globalAI->CreateGlobalAI(1,"./aidll/globalai/test.dll");
+#else
+		globalAI->CreateGlobalAI(1,"./aidll/globalai/test.so");
+#endif
 
 		gs->teams[0]->energy=1000;
 		gs->teams[0]->energyStorage=1000;

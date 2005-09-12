@@ -16,7 +16,9 @@
 #include "Unit.h"
 #include "MouseHandler.h"
 #include "CameraController.h"
+#include "SharedLib.h"
 #include "errorhandler.h"
+#include "filefunctions.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 //#include "mmgr.h"
@@ -57,22 +59,22 @@ END_TIME_PROFILE("Group AI");
 
 void CGroupHandler::TestDll(string name)
 {
-#ifndef NO_DLL
 	typedef int (WINAPI* GETGROUPAIVERSION)();
 	typedef void (WINAPI* GETAINAME)(char* c);
 	
-	HINSTANCE m_hDLL;
+	SharedLib *lib;
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETAINAME GetAiName;
 
-	m_hDLL=LoadLibrary(name.c_str());
-	if (m_hDLL==0){
+	fs::path p(name,fs::native);
+	lib = SharedLib::instantiate(p.native_file_string());
+	if (!lib){
 		handleerror(NULL,name.c_str(),"Cant load dll",MB_OK|MB_ICONEXCLAMATION);
 		return;
 	}
 
-	GetGroupAiVersion = (GETGROUPAIVERSION)GetProcAddress(m_hDLL,"GetGroupAiVersion");
-	if (GetGroupAiVersion==0){
+	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
+	if (!GetGroupAiVersion){
 		handleerror(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
 		return;
 	}
@@ -84,8 +86,8 @@ void CGroupHandler::TestDll(string name)
 		return;
 	}
 	
-	GetAiName = (GETAINAME)GetProcAddress(m_hDLL,"GetAiName");
-	if (GetAiName==0){
+	GetAiName = (GETAINAME)lib->FindAddress("GetAiName");
+	if (!GetAiName){
 		handleerror(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
 		return;
 	}
@@ -95,8 +97,7 @@ void CGroupHandler::TestDll(string name)
 
 	availableAI[name]=c;
 //	(*info) << name.c_str() << " " << c << "\n";
-	FreeLibrary(m_hDLL);
-#endif
+	delete lib;
 }
 
 void CGroupHandler::GroupCommand(int num)
@@ -122,28 +123,16 @@ void CGroupHandler::GroupCommand(int num)
 
 void CGroupHandler::FindDlls(void)
 {
-#ifndef NO_DLL
-	struct _finddata_t files;    
-	long hFile;
-	int morefiles=0;
-
-	if( (hFile = _findfirst( "aidll/*.dll", &files )) == -1L ){
-		morefiles=-1;
+	std::vector<fs::path> match;
+	fs::path dir("aidll",fs::native);
+#ifdef _WIN32
+	match = find_files(dir,"*.dll");
+#else
+	match = find_files(dir,"*.so");
+#endif
+	for (std::vector<fs::path>::iterator it = match.begin(); it != match.end(); it++) {
+		TestDll(it->string());
 	}
-
-	int numfiles=0;
-	while(morefiles==0){
-//		info->AddLine("Testing %s",files.name);
-		TestDll(string("aidll/")+files.name);
-		
-		morefiles=_findnext( hFile, &files ); 
-	}
-
-	if(availableAI.empty()){
-		handleerror(0,"Fatal error","Need at least one valid ai dll in ./aidll",0);
-		exit(0);
-	}
-#endif //NO_DLL
 }
 
 CGroup* CGroupHandler::CreateNewGroup(string ainame)
