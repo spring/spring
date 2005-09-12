@@ -35,7 +35,6 @@ opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
 #other ported parts
 opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', 0)
 
-opts.Add('disable_7zip', 'Set to disable 7zip processing', 1)
 opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation',0)
 opts.Add('optimize', 'Enable processor optimizations during compilation', 0)
 
@@ -62,19 +61,13 @@ if env.get('disable_dll'):
 if env.get('disable_avi'):
 	exclude_list.append("AVIGenerator.cpp")
 	defines+=['NO_AVI']
-lzmafiles=[]
-if env.get('disable_7zip'):
-	defines+=['NO_7ZIP']
-	exclude_list.append("Archive7ZipDll.cpp")
-else:
-	defines+=['_FILE_OFFSET_BITS=64','_LARGEFILE_SOURCE','NDEBUG','_REENTRANT','ENV_UNIX','EXCLUDE_COM','NO_REGISTRY','FORMAT_7Z','FORMAT_BZIP2','FORMAT_ZIP','FORMAT_TAR','FORMAT_GZIP','COMPRESS_LZMA','COMPRESS_BCJ_X86','FORMAT_SPLIT','FORMAT_Z','COMPRESS_BCJ2','COMPRESS_COPY','COMPRESS_MF_MT','COMPRESS_PPMD','COMPRESS_DEFLATE','COMPRESS_DEFLATE64','COMPRESS_IMPLODE','COMPRESS_BZIP2','CRYPTO_ZIP','CRYPTO_7ZAES','CRYPTO_AES']
-	#lzmafiles+=['7zip/7zip/Common/FileStreams.cpp','7zip/Windows/PropVariantConversions.cpp','lib7za.a']
-	lzmafiles+=['lib7za.a']
 
 if detected_platform == 'linux':
 	exclude_list+=["Win32Cmd.cpp","RegHandler.cpp"]
 else:
 	exclude_list+=["PosixCmd.cpp","dotfileHandler.cpp"]
+
+defines+=['_SZ_ONE_DIRECTORY']
 
 env.Append(CPPDEFINES = defines)
 
@@ -82,6 +75,7 @@ env.Append(CPPDEFINES = defines)
 # files used for build
 zipfiles=["./minizip/ioapi.c","./minizip/zip.c","./minizip/unzip.c"]
 winzipfiles=["./minizip/iowin32.c"]
+lzmafiles=['7zip/7zAlloc.c','7zip/7zBuffer.c','7zip/7zCrc.c','7zip/7zDecode.c','7zip/7zExtract.c','7zip/7zHeader.c','7zip/7zIn.c','7zip/7zItem.c','7zip/7zMethodID.c','7zip/LzmaDecode.c']
 
 import os
 import re
