@@ -56,7 +56,7 @@ void CMissileLauncher::Fire(void)
 
 	new CMissileProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,(int)(range/projectileSpeed+25),targetUnit, weaponDef,targetPos);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,startSpeed,owner,targetUnit, float3(0,0,0), weaponDef);
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 
@@ -74,23 +74,43 @@ bool CMissileLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 			return false;
 	}
 	float3 dir=pos-weaponPos;
-	float length=dir.Length();
-	if(length==0)
-		return true;
+	if(weaponDef->trajectoryHeight>0){	//do a different test depending on if the missile has a high trajectory or not
+		float3 flatdir(dir.x,0,dir.z);
+		dir.Normalize();
+		float flatlength=flatdir.Length();
+		if(flatlength==0)
+			return true;
+		flatdir/=flatlength;
 
-	dir/=length;
+		float linear=dir.y+weaponDef->trajectoryHeight;
+		float quadratic=-weaponDef->trajectoryHeight/flatlength;
 
-	if(!onlyForward){		//skip ground col testing for aircrafts
-		float g=ground->LineGroundCol(weaponPos,pos);
-		if(g>0 && g<length*0.9)
+		float gc=ground->TrajectoryGroundCol(weaponPos,flatdir,flatlength-30,linear,quadratic);
+		if(gc>0)
 			return false;
+
+		if(helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,linear,quadratic,0,5,owner->allyteam,owner)){
+			return false;
+		}
 	} else {
-		float3 goaldir=pos-owner->pos;
-		goaldir.Normalize();
-		if(owner->frontdir.dot(goaldir) < maxAngleDif)
+		float length=dir.Length();
+		if(length==0)
+			return true;
+
+		dir/=length;
+
+		if(!onlyForward){		//skip ground col testing for aircrafts
+			float g=ground->LineGroundCol(weaponPos,pos);
+			if(g>0 && g<length*0.9)
+				return false;
+		} else {
+			float3 goaldir=pos-owner->pos;
+			goaldir.Normalize();
+			if(owner->frontdir.dot(goaldir) < maxAngleDif)
+				return false;
+		}
+		if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner))
 			return false;
 	}
-	if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner))
-		return false;
 	return true;
 }

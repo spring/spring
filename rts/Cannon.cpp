@@ -15,6 +15,7 @@
 #include "GameHelper.h"
 #include "myMath.h"
 #include "WeaponProjectile.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -124,7 +125,10 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if(gc>0 && gc<length*0.40)
 		return false;
 */
-	if(helper->TestCone(weaponPos,dir,length*0.5,(accuracy+sprayangle)*1.2*(1-owner->limExperience*0.9)*0.9,owner->allyteam,owner)){
+	if(helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,dif.y/flatlength,gs->gravity/(projectileSpeed*projectileSpeed)*0.5,(accuracy+sprayangle)*0.6*(1-owner->limExperience*0.9)*0.9,3,owner->allyteam,owner)){
+		return false;
+	}
+/*	if(helper->TestCone(weaponPos,dir,length*0.5,(accuracy+sprayangle)*1.2*(1-owner->limExperience*0.9)*0.9,owner->allyteam,owner)){
 		return false;
 	}
 	float3 dir2(dif);
@@ -132,7 +136,7 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	dir2.Normalize();
 	if(helper->TestCone(weaponPos+dir*(length*0.5),dir2,length*0.5,(accuracy+sprayangle)*!userTarget*(1-owner->limExperience*0.9)*0.6,owner->allyteam,owner)){
 		return false;
-	}
+	}*/
 	return true;
 }
 
@@ -159,7 +163,7 @@ void CCannon::Fire(void)
 //	CHeatCloudProjectile* p=new CHeatCloudProjectile(weaponPos,dir*0.02,8,0.6,owner);
 //	p->Update();
 //	p->maxheat=p->heat;
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 

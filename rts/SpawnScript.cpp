@@ -38,7 +38,7 @@ void CSpawnScript::Update(void)
 		CSunParser p2;
 		p2.LoadFile(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'))+".smd");
 
-		float x0,x1,z0,z1;
+		float x0,z0;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");
 		p2.GetDef(z0,"1000","MAP\\TEAM0\\StartPosZ");
 

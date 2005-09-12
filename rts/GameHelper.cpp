@@ -27,6 +27,7 @@
 #include "CommandAI.h"
 #include "UnitDef.h"
 #include "GroundDecalHandler.h"
+#include "GeometricObjects.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -618,4 +619,56 @@ void CGameHelper::Update(void)
 			uh->units[w->target]->DoDamage(w->damage,w->attacker==-1?0:uh->units[w->attacker],w->impulse);
 		wd->pop_back();
 	}
+}
+
+bool CGameHelper::TestTrajectoryCone(const float3 &from, const float3 &flatdir,float length, float linear, float quadratic, float spread, float baseSize, int allyteam,CUnit* owner)
+{
+	vector<int> quads=qf->GetQuadsOnRay(from,flatdir,length);
+
+	vector<int>::iterator qi;
+	for(qi=quads.begin();qi!=quads.end();++qi){
+		list<CUnit*>::iterator ui;
+		for(ui=qf->baseQuads[*qi].teamUnits[allyteam].begin();ui!=qf->baseQuads[*qi].teamUnits[allyteam].end();++ui){
+			if((*ui)==owner)
+				continue;
+			CUnit* u=*ui;
+			float3 dif=u->midPos-from;
+			float3 flatdif(dif.x,0,dif.z);
+			float closeFlatLength=flatdif.dot(flatdir);
+			if(closeFlatLength<=0)
+				continue;//closeLength=0;
+			if(closeFlatLength>length)
+				closeFlatLength=length;
+/*
+			float3 newfrom=from+flatdir*closeFlatLength;
+			newfrom.y+=(linear+quadratic*closeFlatLength)*closeFlatLength;
+			geometricObjects->AddLine(newfrom-UpVector*(spread*closeFlatLength+baseSize),newfrom+UpVector*(spread*closeFlatLength+baseSize),3,0,16);
+/**/
+			if(fabs(linear-quadratic*closeFlatLength)<0.2){		//relativly flat region -> use approximation
+				dif.y-=(linear+quadratic*closeFlatLength)*closeFlatLength;
+
+				float3 closeVect=dif-flatdir*closeFlatLength;
+				float r=u->radius+spread*closeFlatLength+baseSize;
+				if(closeVect.SqLength() < r*r){
+					return true;
+				}
+			} else {
+				float3 newfrom=from+flatdir*closeFlatLength;
+				newfrom.y+=(linear+quadratic*closeFlatLength)*closeFlatLength;
+				float3 dir=flatdir;
+				dir.y=linear+quadratic*closeFlatLength;
+				dir.Normalize();
+
+				dif=u->midPos-newfrom;
+				float closeLength=dif.dot(dir);
+
+				float3 closeVect=dif-dir*closeLength;
+				float r=u->radius+spread*closeFlatLength+baseSize;
+				if(closeVect.SqLength() < r*r){
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }

@@ -8,7 +8,6 @@
 #include "UnitParser.h"
 #include "Unit.h"
 #include "InfoConsole.h"
-#include "RocketLauncher.h"
 #include "Cannon.h"
 #include "bombdropper.h"
 #include "FlameThrower.h"
@@ -320,8 +319,6 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 		weapon=new CNoWeapon(owner);
 		weapon->weaponDef=weaponDefHandler->GetWeapon("NoWeapon");
 		return weapon;
-	} else if(weapondef->type=="Rocket"){
-		weapon=new CRocketLauncher(owner);
 	} else if(weapondef->type=="Cannon"){
 		weapon=new CCannon(owner);
 		((CCannon*)weapon)->selfExplode=weapondef->selfExplode;
@@ -439,6 +436,9 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 
 	if(udw->slavedTo)
 		weapon->slavedTo=owner->weapons[udw->slavedTo-1];
+
+	weapon->mainDir=udw->mainDir;
+	weapon->maxMainDirAngleDif=udw->maxAngleDif;
 
 	weapon->Init();
 

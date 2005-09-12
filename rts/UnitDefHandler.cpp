@@ -266,7 +266,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	sunparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");
 	sunparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
-	ud.stunnedCargo=!!atoi(sunparser.SGetValueDef("1", "UNITINFO\\isAirBase").c_str());
+	ud.stunnedCargo=!atoi(sunparser.SGetValueDef("0", "UNITINFO\\isAirBase").c_str());
 	ud.loadingRadius=220;
 
 	ud.wingDrag=0.07;			//drag caused by wings
@@ -292,61 +292,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.noChaseCategory=CCategoryHandler::Instance()->GetCategories(sunparser.SGetValueDef("", "UNITINFO\\NoChaseCategory"));
 //	info->AddLine("Unit %s has cat %i",ud.humanName.c_str(),ud.category);
 
-	std::string weap1;
-	sunparser.GetDef(weap1, "", std::string("UNITINFO\\Weapon1"));
-	std::string weap2;
-	sunparser.GetDef(weap2, "", std::string("UNITINFO\\Weapon2"));
-	std::string weap3;
-	sunparser.GetDef(weap3, "", std::string("UNITINFO\\Weapon3"));
-
-	WeaponDef *wd1 = weaponDefHandler->GetWeapon(weap1);
-	WeaponDef *wd2 = weaponDefHandler->GetWeapon(weap2);
-	WeaponDef *wd3 = weaponDefHandler->GetWeapon(weap3);
-
-	if(wd1)
-	{
-		string badTarget;
-		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wpri_badTargetCategory");
-		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
-
-		ud.weapons.push_back(UnitDef::UnitDefWeapon(weap1,wd1,0,float3(0,0,1),1,btc));
-	}
-	else
-	{
-		if(wd2||wd3)
-		{
-			ud.weapons.push_back(UnitDef::UnitDefWeapon("",0,0,float3(0,0,1),1,0));
-		}
-
-	}
-	if(wd2)
-	{
-		string badTarget;
-		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wsec_badTargetCategory");
-		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
-
-		ud.weapons.push_back(UnitDef::UnitDefWeapon(weap2,wd2,0,float3(0,0,1),1,btc));
-	}
-	else
-	{
-		if(wd3)
-		{
-			ud.weapons.push_back(UnitDef::UnitDefWeapon("",0,0,float3(0,0,1),1,0));
-		}
-	}
-	if(wd3)
-	{
-		string badTarget;
-		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wspe_badTargetCategory");
-		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
-
-		ud.weapons.push_back(UnitDef::UnitDefWeapon(weap3,wd3,0,float3(0,0,1),1,btc));
-	}
-
 	for(int a=0;a<16;++a){
-		if(ud.weapons.size()>a)		//skip weapons created by old method
-			continue;
-
 		char c[50];
 		sprintf(c,"%i",a+1);
 
@@ -354,16 +300,41 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		sunparser.GetDef(name, "", std::string("UNITINFO\\")+"weapon"+c);
 		WeaponDef *wd = weaponDefHandler->GetWeapon(name);
 
-		if(!wd)
-			break;
+		if(!wd){
+			if(a>2)	//allow empty weapons among the first 3
+				break;
+			else
+				continue;
+		}
+
+		while(ud.weapons.size()<a)
+			ud.weapons.push_back(UnitDef::UnitDefWeapon("",0,0,float3(0,0,1),-1,0));
 
 		string badTarget;
 		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "badTargetCategory"+c);
 		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
-
+		if(a<3){
+			switch(a){
+				case 0:
+					sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wpri_badTargetCategory");
+					break;
+				case 1:
+					sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wsec_badTargetCategory");
+					break;
+				case 2:
+					sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wspe_badTargetCategory");
+					break;
+			}
+			btc|=CCategoryHandler::Instance()->GetCategories(badTarget);
+		}
 		unsigned int slaveTo=atoi(sunparser.SGetValueDef("0", string("UNITINFO\\WeaponSlaveTo")+c).c_str());
 
-		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,float3(0,0,1),1,btc));
+		float3 mainDir=sunparser.GetFloat3(float3(1,0,0),string("UNITINFO\\WeaponMainDir")+c);
+		mainDir.Normalize();
+
+		float angleDif=cos(atof(sunparser.SGetValueDef("360", string("UNITINFO\\MaxAngleDif")+c).c_str())*PI/360);
+
+		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc));
 	}
 	sunparser.GetDef(ud.canDGun, "0", "UNITINFO\\candgun");
 

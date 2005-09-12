@@ -6,6 +6,7 @@
 #include "Unit.h"
 #include "Ground.h"
 #include "UnitDef.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
@@ -46,7 +47,7 @@ void CTorpedoLauncher::Fire(void)
 //	if(onlyForward)
 //		startSpeed+=owner->speed;
 	new CTorpedoProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15),targetUnit, weaponDef);
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 

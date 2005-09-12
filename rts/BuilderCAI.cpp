@@ -530,8 +530,21 @@ int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 void CBuilderCAI::DrawCommands(void)
 {
 	float3 pos=owner->midPos;
-	glColor4f(1,1,1,0.4);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+	glEnable(GL_BLEND);
+
+	if(uh->limitDgun && owner->unitDef->isCommander){
+		glColor4f(1,1,1,0.6);
+		float3 p=gs->teams[owner->team]->startPos;
+		glBegin(GL_LINE_STRIP);
+		for(int a=0;a<=40;++a){
+			float3 pos2=float3(p.x+sin(a*PI*2/40)*uh->dgunRadius,0,p.z+cos(a*PI*2/40)*uh->dgunRadius);
+			pos2.y=ground->GetHeight(pos2.x,pos2.z)+5;
+			glVertexf3(pos2);
+		}
+		glEnd();
+	}
+	glColor4f(1,1,1,0.4);
 	glBegin(GL_LINE_STRIP);
 	glVertexf3(pos);
 	deque<Command>::iterator ci;

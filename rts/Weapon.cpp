@@ -21,6 +21,7 @@
 #include "Camera.h"
 #include "Player.h"
 #include "LosHandler.h"
+#include "GeometricObjects.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -76,7 +77,9 @@ CWeapon::CWeapon(CUnit* owner)
 	errorVector(ZeroVector),
 	errorVectorAdd(ZeroVector),
 	lastErrorVectorUpdate(0),
-	slavedTo(0)
+	slavedTo(0),
+	mainDir(0,0,1),
+	maxMainDirAngleDif(-1)
 {
 }
 
@@ -319,13 +322,15 @@ void CWeapon::SlowUpdate()
 		HoldFire();
 
 	if(slavedTo){	//use targets from the thing we are slaved to
+		if(targetUnit){
+			DeleteDeathDependence(targetUnit);
+			targetUnit=0;
+		}
+		targetType=Target_None;
 		if(slavedTo->targetType==Target_Unit){
 			float3 tp=helper->GetUnitErrorPos(slavedTo->targetUnit,owner->allyteam);
 			tp+=errorVector*(weaponDef->targetMoveError*30*slavedTo->targetUnit->speed.Length()*(1.0-owner->limExperience));
 			if(TryTarget(tp,false,slavedTo->targetUnit)){
-				if(targetUnit){
-					DeleteDeathDependence(targetUnit);
-				}
 				targetType=Target_Unit;
 				targetUnit=slavedTo->targetUnit;
 				targetPos=tp;
@@ -333,9 +338,6 @@ void CWeapon::SlowUpdate()
 			}
 		} else if(slavedTo->targetType==Target_Pos){
 			if(TryTarget(slavedTo->targetPos,false,0)){
-				if(targetUnit){
-					DeleteDeathDependence(targetUnit);
-				}
 				targetType=Target_Pos;
 				targetPos=slavedTo->targetPos;
 			}
@@ -397,8 +399,25 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 {
 	if(unit && !(onlyTargetCategory&unit->category))
 		return false;
+
+	if(weaponDef->stockpile && !numStockpiled)
+		return false;
+
+	float3 dif=pos-weaponPos;
+
 	float r=range+(owner->pos.y-pos.y)*heightMod;
-	return (weaponPos-pos).SqLength2D()<r*r && (!weaponDef->stockpile || numStockpiled);
+	if(dif.SqLength2D()>r*r)
+		return false;
+
+	if(maxMainDirAngleDif>-0.999f){
+		dif.Normalize();
+		float3 modMainDir=owner->frontdir*mainDir.z+owner->rightdir*mainDir.x+owner->updir*mainDir.y;
+		
+//		geometricObjects->AddLine(weaponPos,weaponPos+modMainDir*50,3,0,16);
+		if(modMainDir.dot(dif)<maxMainDirAngleDif)
+			return false;
+	}
+	return true;
 }
 
 void CWeapon::Init(void)

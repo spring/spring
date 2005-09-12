@@ -93,6 +93,7 @@ struct WeaponDef
 	float thickness;
 
 	int graphicsType;
+	bool soundTrigger;
 
 	bool selfExplode;
 	bool gravityAffected;

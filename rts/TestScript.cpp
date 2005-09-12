@@ -46,16 +46,13 @@ void CTestScript::Update()
 			featureHandler->CreateWreckage(pos,feature,0,1,-1,false,"");
 		}
 		for(int a=0;a<30;++a){
-/*			unitLoader.LoadUnit("ARMSPID",float3(2000+a*80,10,2900),0,false);
-			unitLoader.LoadUnit("ARMSPID",float3(2000+a*80,10,2855),0,false);
-			unitLoader.LoadUnit("ARMSPID",float3(2000+a*80,10,2800),0,false);
-/*/			unitLoader.LoadUnit("ARMFLASH",float3(2000+a*80,10,2900),0,false);
+			unitLoader.LoadUnit("ARMFLASH",float3(2000+a*80,10,2900),0,false);
 			unitLoader.LoadUnit("ARMZEUS",float3(2000+a*80,10,2855),0,false);
 			unitLoader.LoadUnit("ARMMAV",float3(2000+a*80,10,2800),0,false);
-	/**/		unitLoader.LoadUnit("CORAK",float3(2000+a*80,10,4560),1,false);
+			unitLoader.LoadUnit("CORAK",float3(2000+a*80,10,4560),1,false);
 			unitLoader.LoadUnit("CORCAN",float3(2000+a*80,10,4595),1,false);
 			unitLoader.LoadUnit("CORFAST",float3(2000+a*80,10,4640),1,false);
-		}
+		}/**/
 
 		unitLoader.LoadUnit("ARMROCK",float3(1800,10,2950),0,false);
 		unitLoader.LoadUnit("ARMROCK",float3(1825,10,2950),0,false);

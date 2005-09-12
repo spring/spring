@@ -493,6 +493,11 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	float damage=damages[armorType];
 
+	if(damage<0){
+//		info->AddLine("Negative damage");
+		return;
+	}
+
 	if(attacker){
 		float3 adir=attacker->pos-pos;
 		adir.Normalize();
@@ -677,7 +682,7 @@ void CUnit::Draw()
 	} else {
 		localmodel->Draw();
 	}
-/*	if(gu->drawdebug){
+	if(gu->drawdebug){
 		glPushMatrix();
 		glTranslatef3(frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x);
 		GLUquadricObj* q=gluNewQuadric();
@@ -685,7 +690,7 @@ void CUnit::Draw()
 		gluSphere(q,radius,10,10);
 		gluDeleteQuadric(q);
 		glPopMatrix();
-	}*/
+	}/**/
 	glPopMatrix();
 }
 

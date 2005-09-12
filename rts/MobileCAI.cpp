@@ -11,6 +11,7 @@
 #include "UnitDef.h"
 #include "Weapon.h"
 #include "TAAirMoveType.h"
+#include "Team.h"
 //#include "mmgr.h"
 
 CMobileCAI::CMobileCAI(CUnit* owner)
@@ -30,7 +31,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 
 	CommandDescription c;
 	c.id=CMD_MOVE;
-	c.type=CMDTYPE_ICON_MAP;
+	c.type=CMDTYPE_ICON_FRONT;
 	c.name="Move";
 	c.key='M';
 	c.tooltip="Move: Order the unit to move to a position";
@@ -166,8 +167,14 @@ void CMobileCAI::SlowUpdate()
 			SetGoal(patrolGoal,curPos);
 		}
 		return;}
-	case CMD_ATTACK:
 	case CMD_DGUN:
+		if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.distance(gs->teams[owner->team]->startPos)>uh->dgunRadius){
+			StopMove();
+			FinishCommand();
+			return;
+		}
+		//no break
+	case CMD_ATTACK:
 		if(!inCommand){
 			if(c.params.size()==1){
 				if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){

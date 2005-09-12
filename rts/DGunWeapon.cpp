@@ -3,6 +3,7 @@
 #include "FireBallProjectile.h"
 #include "Unit.h"
 #include "Sound.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CDGunWeapon::CDGunWeapon(CUnit* owner)
@@ -40,7 +41,7 @@ void CDGunWeapon::Fire(void)
 	dir.Normalize();
 
 	new CFireBallProjectile(weaponPos,dir*projectileSpeed,owner,0,targetPos,weaponDef);
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume*0.2);
 }
 

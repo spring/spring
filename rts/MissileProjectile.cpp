@@ -148,6 +148,7 @@ void CMissileProjectile::Update(void)
 			extraHeight-=extraHeightDecay;
 			--extraHeightTime;
 			targPos.y+=extraHeight;
+			dir.y-=extraHeightDecay/targPos.distance(pos);
 			//geometricObjects->AddLine(pos,targPos,3,1,1);
 		}
 		float dist=targPos.distance(pos);

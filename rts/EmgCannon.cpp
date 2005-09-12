@@ -9,6 +9,7 @@
 #include "Ground.h"
 #include "AirMoveType.h"
 #include "SyncTracer.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CEmgCannon::CEmgCannon(CUnit* owner)
@@ -87,7 +88,7 @@ void CEmgCannon::Fire(void)
 	dir.Normalize();
 
 	new CEmgProjectile(weaponPos,dir*projectileSpeed,owner,damages,float3(0.9f,0.9f,0.2f),0.8,(int)(range/projectileSpeed), weaponDef);
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 

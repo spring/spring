@@ -661,13 +661,15 @@ void CGuiHandler::DrawMapStuff(void)
 		if(cc>=0 && cc<commands.size()){
 			switch(commands[cc].type){
 			case CMDTYPE_ICON_FRONT:
-				if(commands[cc].params.size()>0)
-					if(commands[cc].params.size()>1)
-						DrawFront(button,atoi(commands[cc].params[0].c_str()),atof(commands[cc].params[1].c_str()));
+				if(mouse->buttons[button].movement>30){
+					if(commands[cc].params.size()>0)
+						if(commands[cc].params.size()>1)
+							DrawFront(button,atoi(commands[cc].params[0].c_str()),atof(commands[cc].params[1].c_str()));
+						else
+							DrawFront(button,atoi(commands[cc].params[0].c_str()),0);
 					else
-						DrawFront(button,atoi(commands[cc].params[0].c_str()),0);
-				else
-					DrawFront(button,1000,0);
+						DrawFront(button,1000,0);
+				}
 				break;
 			case CMDTYPE_ICON_UNIT_OR_AREA:
 			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
@@ -1223,21 +1225,22 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
 
-			dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
-			if(dist<0){
-				return defaultRet;
-			}
-			float3 pos2=camera->pos+mouse->dir*dist;
-			if(!commands[tempInCommand].params.empty() && pos.distance2D(pos2)>atoi(commands[tempInCommand].params[0].c_str())){
-				float3 dif=pos2-pos;
-				dif.Normalize();
-				pos2=pos+dif*atoi(commands[tempInCommand].params[0].c_str());
-			}
+			if(mouse->buttons[button].movement>30){		//only create the front if the mouse has moved enough
+				dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
+				if(dist<0){
+					return defaultRet;
+				}
+				float3 pos2=camera->pos+mouse->dir*dist;
+				if(!commands[tempInCommand].params.empty() && pos.distance2D(pos2)>atoi(commands[tempInCommand].params[0].c_str())){
+					float3 dif=pos2-pos;
+					dif.Normalize();
+					pos2=pos+dif*atoi(commands[tempInCommand].params[0].c_str());
+				}
 
-			c.id=commands[tempInCommand].id;
-			c.params.push_back(pos2.x);
-			c.params.push_back(pos2.y);
-			c.params.push_back(pos2.z);
+				c.params.push_back(pos2.x);
+				c.params.push_back(pos2.y);
+				c.params.push_back(pos2.z);
+			}
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 

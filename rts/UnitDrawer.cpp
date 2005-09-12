@@ -566,10 +566,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 
 	sky->Draw();
 
-	int oldViewRadius=groundDrawer->viewRadius;	//this should be moved into grounddrawer
-	groundDrawer->viewRadius=(groundDrawer->viewRadius/2)&0xfffffe;
-	groundDrawer->Draw(true);
-	groundDrawer->viewRadius=oldViewRadius;
+	groundDrawer->Draw(false,true);
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
 	glCopyTexSubImage2D(gltype,0,0,0,0,0,128,128);

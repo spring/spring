@@ -6,6 +6,7 @@
 #include "GameHelper.h"
 #include "LightingProjectile.h"
 #include "Ground.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CLightingCannon::CLightingCannon(CUnit* owner)
@@ -78,7 +79,7 @@ void CLightingCannon::Fire(void)
 	helper->Explosion(weaponPos+dir*r,damages,areaOfEffect,owner,false,0.5,true);
 
 	new CLightingProjectile(weaponPos,weaponPos+dir*(r+10),owner,color,10,this);
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 
 }
