@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GFXPROJECTILE_H__666D5ED5_9AC0_418E_883E_8066B05A37D9__INCLUDED_)
-#define AFX_GFXPROJECTILE_H__666D5ED5_9AC0_418E_883E_8066B05A37D9__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "Projectile.h"
 
 class CGfxProjectile : public CProjectile  
@@ -25,8 +18,5 @@ public:
 	int lifeTime;
 	unsigned char color[4];
 };
-
-#endif // !defined(AFX_GFXPROJECTILE_H__666D5ED5_9AC0_418E_883E_8066B05A37D9__INCLUDED_)
-
 
 #endif /* GFXPROJECTILE_H */

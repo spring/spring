@@ -1,10 +1,6 @@
 #if !defined(GUILABEL_H)
 #define GUILABEL_H
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #include "GUIframe.h"
 #include <string>
 

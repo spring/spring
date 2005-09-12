@@ -2,8 +2,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_REGHANDLER_H__508F534F_9F3D_11D6_AD55_DE4DC0775D55__INCLUDED_)
-#define AFX_REGHANDLER_H__508F534F_9F3D_11D6_AD55_DE4DC0775D55__INCLUDED_
+#ifndef REGHANDLER_H
+#define REGHANDLER_H
 
 #include "ConfigHandler.h"
 
@@ -26,5 +26,5 @@ protected:
 	HKEY regkey;
 };
 
-#endif // !defined(AFX_REGHANDLER_H__508F534F_9F3D_11D6_AD55_DE4DC0775D55__INCLUDED_)
+#endif // REGHANDLER_H
 

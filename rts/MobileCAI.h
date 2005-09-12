@@ -1,6 +1,6 @@
 #ifndef MOBILECAI_H
 #define MOBILECAI_H
-/*pragma once removed*/
+
 #include "CommandAI.h"
 
 class CMobileCAI :

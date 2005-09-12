@@ -4,14 +4,7 @@
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_IGROUPAICALLBACK_H__9C32D568_4691_49B6_B9F8_3DEF35A7C8F5__INCLUDED_)
-#define AFX_IGROUPAICALLBACK_H__9C32D568_4691_49B6_B9F8_3DEF35A7C8F5__INCLUDED_
-
 #pragma warning(disable:4786)
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
 
 #include <vector>
 #include <deque>
@@ -137,8 +130,5 @@ public:
 	virtual float GetFeatureHealth (int feature)=0;
 	virtual float GetFeatureReclaimLeft (int feature)=0;
 };
-
-#endif // !defined(AFX_IGROUPAICALLBACK_H__9C32D568_4691_49B6_B9F8_3DEF35A7C8F5__INCLUDED_)
-
 
 #endif /* IGROUPAICALLBACK_H */

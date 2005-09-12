@@ -1,6 +1,6 @@
 #ifndef PIECEPROJECTILE_H
 #define PIECEPROJECTILE_H
-/*pragma once removed*/
+
 #include "Projectile.h"
 #include "DamageArray.h"
 

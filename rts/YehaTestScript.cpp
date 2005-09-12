@@ -13,7 +13,7 @@
 CYehaTestScript yehatest;
 
 CYehaTestScript::CYehaTestScript(void)
-:	CScript(std::string("ehatest"))
+:	CScript(std::string("Yehatest"))
 {
 }
 

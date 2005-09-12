@@ -1,6 +1,5 @@
 #ifndef MOVEINFO_H
 #define MOVEINFO_H
-/*pragma once removed*/
 
 #include <vector>
 #include <map>

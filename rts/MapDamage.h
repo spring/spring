@@ -1,6 +1,5 @@
 #ifndef MAPDAMAGE_H
 #define MAPDAMAGE_H
-/*pragma once removed*/
 
 #include <deque>
 #include <vector>

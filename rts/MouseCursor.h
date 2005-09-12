@@ -1,6 +1,5 @@
 #ifndef MOUSECURSOR_H
 #define MOUSECURSOR_H
-/*pragma once removed*/
 
 #include <string>
 #include <vector>

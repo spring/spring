@@ -4,14 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_PROJECTILE_H__C7B284A9_3578_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_PROJECTILE_H__C7B284A9_3578_11D4_AD55_0080ADA84DE3__INCLUDED_
-
 #pragma warning(disable:4291)
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
 
 class CProjectileHandler;
 class CFace;
@@ -55,8 +48,5 @@ public:
 	virtual void DrawCallback(void);			//används om en projektil vill ritas efter(ovanpå) en annan
 	virtual void DrawUnitPart(void);
 };
-
-#endif // !defined(AFX_PROJECTILE_H__C7B284A9_3578_11D4_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* PROJECTILE_H */

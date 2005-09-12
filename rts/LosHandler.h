@@ -4,14 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_LOSHANDLER_H__99DB739D_46CA_4AAF_A69C_C975AA1E8566__INCLUDED_)
-#define AFX_LOSHANDLER_H__99DB739D_46CA_4AAF_A69C_C975AA1E8566__INCLUDED_
-
 #pragma warning(disable:4786)
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
 
 #include <vector>
 #include <list>
@@ -142,8 +135,5 @@ public:
 };
 
 extern CLosHandler* loshandler;
-
-#endif // !defined(AFX_LOSHANDLER_H__99DB739D_46CA_4AAF_A69C_C975AA1E8566__INCLUDED_)
-
 
 #endif /* LOSHANDLER_H */

@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_NET_H__A0712941_2020_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_NET_H__A0712941_2020_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
@@ -168,8 +161,5 @@ public:
 
 extern CNet* serverNet;
 extern CNet* net;
-
-#endif // !defined(AFX_NET_H__A0712941_2020_11D4_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* NET_H */

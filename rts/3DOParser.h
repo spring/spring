@@ -3,12 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#if !defined(AFX_3DOPARSER_H__C67F6602_9466_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_3DOPARSER_H__C67F6602_9466_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef 3DOPARSER_H
+#define 3DOPARSER_H
 
 #include <vector>
 #include <string>
@@ -169,4 +165,4 @@ private:
 
 extern C3DOParser* unit3doparser;
 
-#endif // !defined(AFX_3DOPARSER_H__C67F6602_9466_11D4_AD55_0080ADA84DE3__INCLUDED_)
+#endif // 3DOPARSER_H

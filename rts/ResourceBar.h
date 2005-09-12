@@ -1,6 +1,6 @@
 #ifndef RESOURCEBAR_H
 #define RESOURCEBAR_H
-/*pragma once removed*/
+
 #include "InputReceiver.h"
 
 class CResourceBar :

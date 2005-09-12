@@ -1,7 +1,5 @@
 #ifndef GROUNDFLASH_H
 #define GROUNDFLASH_H
-/*pragma once removed*/
-
 
 
 class CVertexArray;

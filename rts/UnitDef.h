@@ -3,8 +3,6 @@
 #ifndef UNIT_DEF_STRUCT
 #define UNIT_DEF_STRUCT
 
-/*pragma once removed*/
-
 #include <string>
 #include <vector>
 #include <map>

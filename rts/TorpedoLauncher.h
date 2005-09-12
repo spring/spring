@@ -1,6 +1,6 @@
 #ifndef TORPEDOLAUNCHER_H
 #define TORPEDOLAUNCHER_H
-/*pragma once removed*/
+
 #include "Weapon.h"
 
 class CTorpedoLauncher :

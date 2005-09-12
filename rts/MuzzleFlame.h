@@ -1,6 +1,6 @@
 #ifndef MUZZLEFLAME_H
 #define MUZZLEFLAME_H
-/*pragma once removed*/
+
 #include "Projectile.h"
 
 class CMuzzleFlame :

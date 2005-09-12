@@ -1,6 +1,6 @@
 #ifndef SELECTIONKEYHANDLER_H
 #define SELECTIONKEYHANDLER_H
-/*pragma once removed*/
+
 #include "InputReceiver.h"
 #include <vector>
 

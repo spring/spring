@@ -4,14 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GROUPHANDLER_H__A41773E8_DB6A_4AF5_AE4C_E8380F7C7D04__INCLUDED_)
-#define AFX_GROUPHANDLER_H__A41773E8_DB6A_4AF5_AE4C_E8380F7C7D04__INCLUDED_
-
 #pragma warning(disable:4786)
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
 
 #include <map>
 #include <string>
@@ -44,8 +37,5 @@ protected:
 };
 
 extern CGroupHandler* grouphandler;
-
-#endif // !defined(AFX_GROUPHANDLER_H__A41773E8_DB6A_4AF5_AE4C_E8380F7C7D04__INCLUDED_)
-
 
 #endif /* GROUPHANDLER_H */

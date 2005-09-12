@@ -1,6 +1,6 @@
 #ifndef GLTEXTBOX_H
 #define GLTEXTBOX_H
-/*pragma once removed*/
+
 #include "InputReceiver.h"
 #include <string>
 #include <vector>

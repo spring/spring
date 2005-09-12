@@ -1,6 +1,5 @@
 #ifndef UNITDEFHANDLER_H
 #define UNITDEFHANDLER_H
-/*pragma once removed*/
 
 #include <string>
 #include <vector>

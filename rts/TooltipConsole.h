@@ -1,6 +1,6 @@
 #ifndef TOOLTIPCONSOLE_H
 #define TOOLTIPCONSOLE_H
-/*pragma once removed*/
+
 #include "InputReceiver.h"
 
 class CTooltipConsole :

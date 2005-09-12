@@ -1,6 +1,6 @@
 #ifndef INPUTRECEIVER_H
 #define INPUTRECEIVER_H
-/*pragma once removed*/
+
 #include "Object.h"
 #include <deque>
 #include <string>

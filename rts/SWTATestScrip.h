@@ -1,6 +1,6 @@
 #ifndef SWTATESTSCRIP_H
 #define SWTATESTSCRIP_H
-/*pragma once removed*/
+
 #include "Script.h"
 
 class CSWTATestScrip :

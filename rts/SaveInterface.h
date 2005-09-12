@@ -1,6 +1,6 @@
 #ifndef SAVEINTERFACE_H
 #define SAVEINTERFACE_H
-/*pragma once removed*/
+
 #include "LoadSaveInterface.h"
 #include <fstream>
 

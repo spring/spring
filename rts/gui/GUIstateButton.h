@@ -2,12 +2,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GUISTATEBUTTON_H__8E295471_26AB_4630_90D9_560AFC43C36C__INCLUDED_)
-#define AFX_GUISTATEBUTTON_H__8E295471_26AB_4630_90D9_560AFC43C36C__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#ifndef GUISTATEBUTTON_H
+#define GUISTATEBUTTON_H
 
 #include "GUIbutton.h"
 #include <vector>
@@ -37,4 +33,4 @@ protected:
 	float color[4];
 };
 
-#endif // !defined(AFX_GUISTATEBUTTON_H__8E295471_26AB_4630_90D9_560AFC43C36C__INCLUDED_)
+#endif // GUISTATEBUTTON_H

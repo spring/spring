@@ -1,10 +1,6 @@
 #if !defined(GUISWITCHBAR_H)
 #define GUISWITCHBAR_H
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #include "GUIframe.h"
 #include <string>
 #include <map>

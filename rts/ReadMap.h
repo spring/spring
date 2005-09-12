@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_READMAP_H__3064C121_428C_11D4_9677_0050DADC9708__INCLUDED_)
-#define AFX_READMAP_H__3064C121_428C_11D4_9677_0050DADC9708__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include <string>
 #include <vector>
 #include "mapfile.h"
@@ -108,9 +101,5 @@ extern CReadMap* readmap;
 
 //Converts a map-square into a float3-position.
 inline float3 SquareToFloat3(int xSquare, int zSquare) {return float3(((xSquare))*SQUARE_SIZE, readmap->centerheightmap[(xSquare) + (zSquare) * gs->mapx], ((zSquare))*SQUARE_SIZE);};
-
-
-#endif // !defined(AFX_READMAP_H__3064C121_428C_11D4_9677_0050DADC9708__INCLUDED_)
-
 
 #endif /* READMAP_H */

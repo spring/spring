@@ -1,6 +1,6 @@
 #ifndef PREGAME_H
 #define PREGAME_H
-/*pragma once removed*/
+
 #include "GameController.h"
 #include <string>
 

@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_PLAYER_H__BB0F0501_9236_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_PLAYER_H__BB0F0501_9236_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 class CCraft;
 #include <string>
 
@@ -66,8 +59,5 @@ public:
 #endif
 
 };
-
-#endif // !defined(AFX_PLAYER_H__BB0F0501_9236_11D4_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* PLAYER_H */

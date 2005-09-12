@@ -4,14 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_UNIT3DLOADER_H__124A4FFE_7946_4E48_8823_CD79C234E677__INCLUDED_)
-#define AFX_UNIT3DLOADER_H__124A4FFE_7946_4E48_8823_CD79C234E677__INCLUDED_
-
 #pragma warning(disable:4786)
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
 
 #include <map>
 #include <string>
@@ -137,7 +130,5 @@ public:
 };
 
 extern CUnit3DLoader* unitModelLoader;
-#endif // !defined(AFX_UNIT3DLOADER_H__124A4FFE_7946_4E48_8823_CD79C234E677__INCLUDED_)
-
 
 #endif /* UNIT3DLOADER_H */

@@ -1,6 +1,6 @@
 #ifndef SPHEREPARTPROJECTILE_H
 #define SPHEREPARTPROJECTILE_H
-/*pragma once removed*/
+
 #include "Projectile.h"
 
 class CSpherePartProjectile :

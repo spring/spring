@@ -1,6 +1,5 @@
 #ifndef SHADOWHANDLER_H
 #define SHADOWHANDLER_H
-/*pragma once removed*/
 
 #include "FBO.h"
 #include "Matrix44f.h"
