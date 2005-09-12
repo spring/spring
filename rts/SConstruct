@@ -1,6 +1,7 @@
 #############################################
 #architecture specific files / include pathes
 import sys
+import os
 windows_include_path=[]
 linux_include_path=['/usr/include','/usr/include/GL']
 common_include_path = ['.','gui','include']
@@ -35,7 +36,7 @@ opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be 
 opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation',0)
 opts.Add('optimize', 'Enable processor optimizations during compilation', 0)
 
-env = Environment(options = opts)
+env = Environment(ENV = os.environ, options = opts)
 Help(opts.GenerateHelpText(env))
 debug = env.get('debug')
 platform = env.get('platform')
@@ -72,7 +73,6 @@ zipfiles=["./minizip/ioapi.c","./minizip/zip.c","./minizip/unzip.c"]
 winzipfiles=["./minizip/iowin32.c"]
 lzmafiles=['7zip/7zAlloc.c','7zip/7zBuffer.c','7zip/7zCrc.c','7zip/7zDecode.c','7zip/7zExtract.c','7zip/7zHeader.c','7zip/7zIn.c','7zip/7zItem.c','7zip/7zMethodID.c','7zip/LzmaDecode.c']
 
-import os
 import re
 tmp=os.listdir('.')
 guif=os.listdir('gui')
