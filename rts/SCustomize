@@ -1,4 +1,3 @@
 #build options scons -h for available options
 #option=value
-debug=1
-optimize=1
+debug=0
