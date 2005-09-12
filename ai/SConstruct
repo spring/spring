@@ -1,0 +1,5 @@
+include_path=['../rts']
+SharedLibrary('centralbuild',['CentralBuildAI/GroupAI.cpp','CentralBuildAI/TestAI.cpp'],CPPPATH=include_path)
+SharedLibrary('mmhandler',['MetalMakerAI/GroupAI.cpp','MetalMakerAI/TestAI.cpp'],CPPPATH=include_path)
+SharedLibrary('SimpleForm',['SimpleFormationAI/GroupAI.cpp','SimpleFormationAI/TestAI.cpp'],CPPPATH=include_path)
+SharedLibrary('test',['TestGlobalAI/GlobalAI.cpp','TestGlobalAI/TestAI.cpp'],CPPPATH=include_path)
