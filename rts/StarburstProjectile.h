@@ -1,6 +1,6 @@
 #ifndef STARBURSTPROJECTILE_H
 #define STARBURSTPROJECTILE_H
-/*pragma once removed*/
+
 #include "WeaponProjectile.h"
 #include "DamageArray.h"
 #include <vector>

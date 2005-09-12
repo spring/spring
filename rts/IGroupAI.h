@@ -4,13 +4,6 @@
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_IGROUPAI_H__7A933264_A3D8_4969_9003_3122E2512161__INCLUDED_)
-#define AFX_IGROUPAI_H__7A933264_A3D8_4969_9003_3122E2512161__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "command.h"
 class IGroupAICallback;
 
@@ -31,8 +24,5 @@ public:
 
 	virtual void Update()=0;																							//called once a frame (30 times a second)
 };
-
-#endif // !defined(AFX_IGROUPAI_H__7A933264_A3D8_4969_9003_3122E2512161__INCLUDED_)
-
 
 #endif /* IGROUPAI_H */

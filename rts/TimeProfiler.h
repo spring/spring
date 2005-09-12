@@ -4,9 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_TIMEPROFILER_H__3C2D635C_014C_4725_8254_32D218832C95__INCLUDED_)
-#define AFX_TIMEPROFILER_H__3C2D635C_014C_4725_8254_32D218832C95__INCLUDED_
-
 #define PROFILE_TIME
 
 #ifdef PROFILE_TIME
@@ -18,10 +15,6 @@
 #endif
 
 #pragma warning(disable:4786)
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
 
 #ifdef PROFILE_TIME
 
@@ -71,8 +64,5 @@ public:
 
 extern CTimeProfiler profiler;
 #endif
-
-#endif // !defined(AFX_TIMEPROFILER_H__3C2D635C_014C_4725_8254_32D218832C95__INCLUDED_)
-
 
 #endif /* TIMEPROFILER_H */

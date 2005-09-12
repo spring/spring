@@ -1,6 +1,6 @@
 #ifndef TRANSPORTCAI_H
 #define TRANSPORTCAI_H
-/*pragma once removed*/
+
 #include "MobileCAI.h"
 
 class CTransportCAI :

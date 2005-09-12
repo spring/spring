@@ -1,6 +1,5 @@
 #ifndef LOADSAVEHANDLER_H
 #define LOADSAVEHANDLER_H
-/*pragma once removed*/
 
 #include <string>
 

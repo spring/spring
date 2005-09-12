@@ -1,6 +1,5 @@
 #ifndef WIND_H
 #define WIND_H
-/*pragma once removed*/
 
 #include "float3.h"
 

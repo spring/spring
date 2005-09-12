@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_SMOKEPROJECTILE_H__8E8E19C3_6BF3_11D5_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_SMOKEPROJECTILE_H__8E8E19C3_6BF3_11D5_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "Projectile.h"
 
 class CSmokeProjectile : public CProjectile  
@@ -29,8 +22,5 @@ public:
 	float sizeExpansion;
 	int textureNum;
 };
-
-#endif // !defined(AFX_SMOKEPROJECTILE_H__8E8E19C3_6BF3_11D5_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* SMOKEPROJECTILE_H */

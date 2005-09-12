@@ -53,5 +53,5 @@ private:
 
 extern CAdvTreeGenerator* treeGen;
 
-#endif // !defined(AFX_DRAWTREE_H__AFE1477E_8E34_4705_9E9D_FC36356E7048__INCLUDED_)
+#endif // __ADV_TREE_GENERATOR_H__
 

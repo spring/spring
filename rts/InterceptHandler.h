@@ -1,6 +1,6 @@
 #ifndef INTERCEPTHANDLER_H
 #define INTERCEPTHANDLER_H
-/*pragma once removed*/
+
 #include "Object.h"
 
 #include <list>

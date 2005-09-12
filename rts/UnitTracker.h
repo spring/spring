@@ -1,6 +1,5 @@
 #ifndef UNITTRACKER_H
 #define UNITTRACKER_H
-/*pragma once removed*/
 
 class CUnitTracker
 {

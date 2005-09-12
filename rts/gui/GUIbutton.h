@@ -2,12 +2,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GUIBUTTON_H__4BE3DE92_730E_4CCF_B1C6_4E879920FE8F__INCLUDED_)
-#define AFX_GUIBUTTON_H__4BE3DE92_730E_4CCF_B1C6_4E879920FE8F__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#ifndef GUIBUTTON_H
+#define GUIBUTTON_H
 
 #include "GUIframe.h"
 #include "Functor.h"
@@ -53,4 +49,4 @@ private:
 	Functor1<GUIbutton*> click;
 };
 
-#endif // !defined(AFX_GUIBUTTON_H__4BE3DE92_730E_4CCF_B1C6_4E879920FE8F__INCLUDED_)
+#endif // GUIBUTTON_H

@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_)
-#define AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "Object.h"
 #include "DamageArray.h"
 #include <list>
@@ -123,8 +116,5 @@ public:
 	float maxMainDirAngleDif;					//how far away from main aim dir the weapon can aim at something (as an acos value)
 
 };
-
-#endif // !defined(AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_)
-
 
 #endif /* WEAPON_H */

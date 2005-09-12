@@ -1,10 +1,6 @@
 #if !defined(GUICENTERBUILDMENU_H)
 #define GUICENTERBUILDMENU_H
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #include "GUIframe.h"
 #include "Functor.h"
 

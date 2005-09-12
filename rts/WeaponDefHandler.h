@@ -1,6 +1,5 @@
 #ifndef WEAPONDEFHANDLER_H
 #define WEAPONDEFHANDLER_H
-/*pragma once removed*/
 
 #include <string>
 #include <map>

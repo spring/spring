@@ -1,6 +1,6 @@
 #ifndef MISSILEPROJECTILE_H
 #define MISSILEPROJECTILE_H
-/*pragma once removed*/
+
 #include "WeaponProjectile.h"
 #include "DamageArray.h"
 

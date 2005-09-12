@@ -4,14 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GUIHANDLER_H__E513A229_42ED_4319_85F2_898CECF847A5__INCLUDED_)
-#define AFX_GUIHANDLER_H__E513A229_42ED_4319_85F2_898CECF847A5__INCLUDED_
-
 #pragma warning(disable:4786)
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
 
 #include <vector>
 #include "command.h"
@@ -74,8 +67,5 @@ public:
 	std::vector<float3> GetBuildPos(float3 start, float3 end,UnitDef* unitdef);
 };
 extern CGuiHandler* guihandler;
-
-#endif // !defined(AFX_GUIHANDLER_H__E513A229_42ED_4319_85F2_898CECF847A5__INCLUDED_)
-
 
 #endif /* GUIHANDLER_H */

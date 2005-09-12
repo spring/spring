@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_HEATCLOUDPROJECTILE_H__23CBBD23_8FBE_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_HEATCLOUDPROJECTILE_H__23CBBD23_8FBE_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "Projectile.h"
 
 class CHeatCloudProjectile : public CProjectile  
@@ -31,8 +24,5 @@ public:
 	float sizemod;
 	float sizemodmod;
 };
-
-#endif // !defined(AFX_HEATCLOUDPROJECTILE_H__23CBBD23_8FBE_11D4_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* HEATCLOUDPROJECTILE_H */

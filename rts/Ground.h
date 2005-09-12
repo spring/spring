@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GROUND_H__EB512761_1B68_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_GROUND_H__EB512761_1B68_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #pragma warning(disable:4786)
 
 class CGround;
@@ -47,8 +40,5 @@ private:
 	float LineGroundSquareCol(const float3 &from,const float3 &to,int xs,int ys);
 };
 extern CGround* ground;
-
-#endif // !defined(AFX_GROUND_H__EB512761_1B68_11D4_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* GROUND_H */

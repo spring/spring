@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_VERTEXARRAYRANGE_H__F600894E_153A_4A05_9C29_7650EC565F55__INCLUDED_)
-#define AFX_VERTEXARRAYRANGE_H__F600894E_153A_4A05_9C29_7650EC565F55__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "VertexArray.h"
 #include "myGL.h"
 
@@ -32,8 +25,5 @@ public:
 
   GLuint fence;
 };
-
-#endif // !defined(AFX_VERTEXARRAYRANGE_H__F600894E_153A_4A05_9C29_7650EC565F55__INCLUDED_)
-
 
 #endif /* VERTEXARRAYRANGE_H */

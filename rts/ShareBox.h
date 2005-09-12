@@ -1,6 +1,6 @@
 #ifndef SHAREBOX_H
 #define SHAREBOX_H
-/*pragma once removed*/
+
 #include "InputReceiver.h"
 
 class CShareBox :

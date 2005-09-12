@@ -4,10 +4,6 @@
 #if !defined(GUIINFOSELECTION_H)
 #define GUIINFOSELECTION_H
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #include "GUIpane.h"
 
 struct GroupUnitsInfo {

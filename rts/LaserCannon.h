@@ -1,6 +1,6 @@
 #ifndef LASERCANNON_H
 #define LASERCANNON_H
-/*pragma once removed*/
+
 #include "Weapon.h"
 
 class CLaserCannon :

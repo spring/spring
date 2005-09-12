@@ -5,10 +5,6 @@
 #if !defined(GUI_CONSOLE_H)
 #define GUI_CONSOLE_H
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #include "GUIpane.h"
 #include <string>
 #include <deque>

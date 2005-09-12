@@ -1,6 +1,5 @@
 #ifndef LOADSAVEINTERFACE_H
 #define LOADSAVEINTERFACE_H
-/*pragma once removed*/
 
 #include <string>
 

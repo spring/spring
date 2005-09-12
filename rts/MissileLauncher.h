@@ -1,6 +1,6 @@
 #ifndef MISSILELAUNCHER_H
 #define MISSILELAUNCHER_H
-/*pragma once removed*/
+
 #include "Weapon.h"
 
 class CMissileLauncher :

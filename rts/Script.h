@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_SCRIPT_H__101D5001_6D52_11D5_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_SCRIPT_H__101D5001_6D52_11D5_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "Object.h"
 #include <string>
 
@@ -28,8 +21,5 @@ public:
 	bool onlySinglePlayer;
 	bool loadGame;
 };
-
-#endif // !defined(AFX_SCRIPT_H__101D5001_6D52_11D5_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* SCRIPT_H */

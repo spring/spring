@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_UNITLOADER_H__91B355AB_7C1B_4DFB_AB74_F6AED112DED7__INCLUDED_)
-#define AFX_UNITLOADER_H__91B355AB_7C1B_4DFB_AB74_F6AED112DED7__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 class CUnitParser;
 class CUnit;
 class CWeapon;
@@ -38,8 +31,5 @@ public:
 };
 
 extern CUnitLoader unitLoader;
-
-#endif // !defined(AFX_UNITLOADER_H__91B355AB_7C1B_4DFB_AB74_F6AED112DED7__INCLUDED_)
-
 
 #endif /* UNITLOADER_H */

@@ -2,12 +2,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GUIFRAME_H__CC73D151_5BEB_49EC_9581_6715FB94464E__INCLUDED_)
-#define AFX_GUIFRAME_H__CC73D151_5BEB_49EC_9581_6715FB94464E__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#ifndef GUIFRAME_H
+#define GUIFRAME_H
 
 #include <list>
 #include <string>
@@ -170,4 +166,4 @@ GLuint Texture(const std::string& name, const vector<PALETTEENTRY>* pvTransparen
 void DrawThemeRect(int edge, int size, int w, int h);
 
 
-#endif // !defined(AFX_GUIFRAME_H__CC73D151_5BEB_49EC_9581_6715FB94464E__INCLUDED_)
+#endif // GUIFRAME_H

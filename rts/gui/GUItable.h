@@ -2,12 +2,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GUITABLE_H__92C6772E_12A6_4416_9C70_5DB3473154B6__INCLUDED_)
-#define AFX_GUITABLE_H__92C6772E_12A6_4416_9C70_5DB3473154B6__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#ifndef GUITABLE_H
+#define GUITABLE_H
 
 #include "GUIpane.h"
 #include "Functor.h"
@@ -63,4 +59,4 @@ protected:
 	vector<HeaderInfo> header;
 };
 
-#endif // !defined(AFX_GUITABLE_H__92C6772E_12A6_4416_9C70_5DB3473154B6__INCLUDED_)
+#endif // GUITABLE_H

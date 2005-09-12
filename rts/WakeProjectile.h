@@ -1,6 +1,6 @@
 #ifndef WAKEPROJECTILE_H
 #define WAKEPROJECTILE_H
-/*pragma once removed*/
+
 #include "Projectile.h"
 
 class CWakeProjectile :

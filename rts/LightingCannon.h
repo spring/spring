@@ -1,6 +1,6 @@
 #ifndef LIGHTINGCANNON_H
 #define LIGHTINGCANNON_H
-/*pragma once removed*/
+
 #include "Weapon.h"
 
 class CLightingCannon :

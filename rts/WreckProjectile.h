@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_WRECKPROJECTILE_H__1A3049E1_6CCF_11D5_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_WRECKPROJECTILE_H__1A3049E1_6CCF_11D5_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include "Projectile.h"
 
 class CWreckProjectile : public CProjectile  
@@ -22,8 +15,5 @@ public:
 
 	void Draw(void);
 };
-
-#endif // !defined(AFX_WRECKPROJECTILE_H__1A3049E1_6CCF_11D5_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* WRECKPROJECTILE_H */

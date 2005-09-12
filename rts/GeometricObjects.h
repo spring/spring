@@ -1,6 +1,5 @@
 #ifndef GEOMETRICOBJECTS_H
 #define GEOMETRICOBJECTS_H
-/*pragma once removed*/
 
 #include <map>
 #include <vector>

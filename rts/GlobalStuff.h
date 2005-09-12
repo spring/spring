@@ -4,14 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GLOBALSTUFF1_H__2B3603E2_4EBE_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_GLOBALSTUFF1_H__2B3603E2_4EBE_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
-
 #define PI 3.141592654f
 #define MAX_WORLD_SIZE 1000000;
 #define SQUARE_SIZE 8
@@ -121,8 +113,5 @@ public:
 
 extern CGlobalSyncedStuff* gs;
 extern CGlobalUnsyncedStuff* gu;
-
-#endif // !defined(AFX_GLOBALSTUFF1_H__2B3603E2_4EBE_11D4_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* GLOBALSTUFF_H */

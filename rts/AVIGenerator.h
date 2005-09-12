@@ -9,13 +9,6 @@
 // Author : Jonathan de Halleux. dehalleux@auto.ucl.ac.be
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_AVIGENERATOR_H__6BAF2E9D_3866_4779_A43B_D1B21E7E4F39__INCLUDED_)
-#define AFX_AVIGENERATOR_H__6BAF2E9D_3866_4779_A43B_D1B21E7E4F39__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 // needed headers
 #include <comdef.h>
 #include <memory.h>
@@ -141,8 +134,5 @@ private:
 	//! Address of the compressed video stream
 	PAVISTREAM m_pStreamCompressed; 
 };
-
-#endif // !defined(AFX_AVIGENERATOR_H__6BAF2E9D_3866_4779_A43B_D1B21E7E4F39__INCLUDED_)
-
 
 #endif /* AVIGENERATOR_H */

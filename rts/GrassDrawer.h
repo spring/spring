@@ -1,8 +1,5 @@
 #ifndef GRASSDRAWER_H
 #define GRASSDRAWER_H
-/*pragma once removed*/
-
-
 
 class CAdvTreeDrawer;
 class CVertexArray;

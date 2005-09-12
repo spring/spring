@@ -1,10 +1,6 @@
 #if !defined(GUIGAME_H)
 #define GUIGAME_H
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #include "GUIpane.h"
 #include "command.h"
 #include "float3.h"

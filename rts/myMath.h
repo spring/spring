@@ -1,6 +1,5 @@
 #ifndef MYMATH_H
 #define MYMATH_H
-/*pragma once removed*/
 
 #include "GlobalStuff.h"
 

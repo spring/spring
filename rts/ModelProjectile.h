@@ -1,6 +1,6 @@
 #ifndef MODELPROJECTILE_H
 #define MODELPROJECTILE_H
-/*pragma once removed*/
+
 #include "WeaponProjectile.h"
 
 struct S3DOModel;

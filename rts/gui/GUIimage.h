@@ -2,12 +2,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_GUIIMAGE_H__9C3E486C_3635_47CC_9697_51644E0207A7__INCLUDED_)
-#define AFX_GUIIMAGE_H__9C3E486C_3635_47CC_9697_51644E0207A7__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#ifndef GUIIMAGE_H
+#define GUIIMAGE_H
 
 #include "GUIframe.h"
 
@@ -24,4 +20,4 @@ protected:
 	void PrivateDraw();
 };
 
-#endif // !defined(AFX_GUIIMAGE_H__9C3E486C_3635_47CC_9697_51644E0207A7__INCLUDED_)
+#endif // GUIIMAGE_H

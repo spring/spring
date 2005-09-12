@@ -1,6 +1,6 @@
 #ifndef YEHATESTSCRIPT_H
 #define YEHATESTSCRIPT_H
-/*pragma once removed*/
+
 #include "Script.h"
 
 class CYehaTestScript :

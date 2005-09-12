@@ -4,13 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_FLOAT3_H__026451C1_6B7D_11D4_AD55_0080ADA84DE3__INCLUDED_)
-#define AFX_FLOAT3_H__026451C1_6B7D_11D4_AD55_0080ADA84DE3__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
 #include <math.h>
 
 class float3
@@ -158,8 +151,5 @@ public:
 
 	bool CheckInBounds();
 };
-
-#endif // !defined(AFX_FLOAT3_H__026451C1_6B7D_11D4_AD55_0080ADA84DE3__INCLUDED_)
-
 
 #endif /* FLOAT3_H */
