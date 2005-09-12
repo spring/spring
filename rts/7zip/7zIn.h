@@ -6,7 +6,7 @@
 #include "7zHeader.h"
 #include "7zItem.h"
 #include "7zAlloc.h"
-
+ 
 typedef struct _CInArchiveInfo
 {
   CFileSize StartPositionAfterHeader; 
@@ -51,5 +51,5 @@ int SzArchiveOpen(
     CArchiveDatabaseEx *db,
     ISzAlloc *allocMain, 
     ISzAlloc *allocTemp);
-
+ 
 #endif
