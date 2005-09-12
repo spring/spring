@@ -12,6 +12,7 @@ extern float3 headingToVectorTable[1024];
 inline short int GetHeadingFromVector(float dx,float dz)
 {
 	float h;
+	printf("(%.2f,%.2f)\n",dx,dz);
 	if(dz!=0){
 		float d=dx/dz;
 		if(d > 1){
@@ -21,9 +22,13 @@ inline short int GetHeadingFromVector(float dx,float dz)
 		}else{
 			h=d/(1 + 0.28 * d*d);
 		}
+		if (dz<0) {
+		  if (dx>0)
+		    h+=PI;
+		  else
+		    h-=PI;
+		}
 
-		if(h<0)
-			h+=PI;
 	} else {
 		if(dx>0)
 			h=PI/2;
@@ -40,7 +45,7 @@ inline short int GetHeadingFromVector(float dx,float dz)
 		wantedHeading=atanf(dx/dz);
 	else
 		wantedHeading=PI;
-	if(h<0)
+	if(dz<0)
 		wantedHeading+=PI;
 
 	wantedHeading*=32768/PI;
