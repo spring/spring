@@ -2,9 +2,7 @@
 #include "ArchiveFactory.h"
 #include "ArchiveHPI.h"
 #include "ArchiveZip.h"
-#ifndef NO_7ZIP
 #include "Archive7ZipDll.h"
-#endif
 #include <algorithm>
 //#include "mmgr.h"
 
@@ -22,12 +20,9 @@ CArchiveBase* CArchiveFactory::OpenArchive(const string& fileName)
 
 	CArchiveBase* ret = NULL;
 
-#ifndef NO_7ZIP
 	if (ext == "sd7")
 		ret = new CArchive7ZipDll(fileName);
-	else
-#endif
-	if (ext == "sdz")
+	else if (ext == "sdz")
 		ret = new CArchiveZip(fileName);
 	else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx"))
 		ret = new CArchiveHPI(fileName);
