@@ -11,6 +11,7 @@
 #include "GameHelper.h"
 #include "Team.h"
 #include "WeaponProjectile.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -67,7 +68,7 @@ void CBombDropper::Fire(void)
 {
 	new CExplosiveProjectile(owner->pos,owner->speed,owner,damages, weaponDef, 1000,areaOfEffect);
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 

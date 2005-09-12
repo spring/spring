@@ -7,6 +7,7 @@
 #include "Ground.h"
 #include "WeaponProjectile.h"
 #include "AirMoveType.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CLaserCannon::CLaserCannon(CUnit* owner)
@@ -89,7 +90,7 @@ void CLaserCannon::Fire(void)
 	CWeaponProjectile::CreateWeaponProjectile(weaponPos,dir*projectileSpeed,owner, NULL, targetPos,  weaponDef);
 
 //>>>>>>> 1.12
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 

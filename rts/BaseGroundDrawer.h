@@ -19,7 +19,7 @@ public:
 	virtual void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes){};
 	virtual void SetPathMapTexture(){};
 	virtual void ToggleLosTexture()=0;
-	virtual void Draw(bool drawWaterReflection=false)=0;
+	virtual void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false)=0;
 	virtual bool UpdateTextures()=0;
 	virtual void DrawShadowPass(void);
 

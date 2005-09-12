@@ -35,12 +35,18 @@ public:
 	int startPosType;			//0 fixed 1 random 2 select in map
 	bool readyTeams[MAX_TEAMS];
 	int teamStartNum[MAX_TEAMS];
+	float startRectTop[MAX_TEAMS];
+	float startRectBottom[MAX_TEAMS];
+	float startRectLeft[MAX_TEAMS];
+	float startRectRight[MAX_TEAMS];
 
 	std::map<std::string, int> restrictedUnits;
 	
 	std::string aiDlls[MAX_TEAMS];
 
 	int maxUnits;
+
+	bool limitDgun;
 };
 
 extern CGameSetup* gameSetup;

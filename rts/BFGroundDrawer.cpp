@@ -97,11 +97,13 @@ void CBFGroundDrawer::DrawGroundVertexArray()
 	va->Initialize();
 }
 
-void CBFGroundDrawer::Draw(bool drawWaterReflection)
+void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection)
 {
 	drawWater=drawWaterReflection;
 
 	int baseViewRadius=viewRadius;
+	if(drawUnitReflection)
+		viewRadius=(viewRadius/2)&0xfffffe;
 	float zoom=45/camera->fov;
 	viewRadius=(int)(viewRadius*sqrt(zoom));
 	viewRadius+=viewRadius%2;
@@ -515,7 +517,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 	if(treeDistance>MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE))
 		treeDistance=MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE);
 
-	if(groundDecals && !drawWaterReflection)
+	if(groundDecals && !(drawWaterReflection || drawUnitReflection))
 		groundDecals->Draw();
 	ph->DrawGroundFlashes();
 	if(treeDrawer->drawTrees){
@@ -533,7 +535,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection)
 			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		  glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
-		treeDrawer->Draw(treeDistance,drawWaterReflection);
+		treeDrawer->Draw(treeDistance,drawWaterReflection || drawUnitReflection);
 		if((drawExtraTex)){
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);

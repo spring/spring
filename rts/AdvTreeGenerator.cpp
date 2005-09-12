@@ -43,7 +43,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	}
 	bm.Load("bitmaps/bleaf.bmp");
 	bm.CreateAlpha(0,0,0);
-	bm.Save("baseleaf.bmp");
+	//bm.Save("baseleaf.bmp");
 	bm.Renormalize(float3(0.22f,0.43f,0.18f)*1.0f);
 //	bm.Save("baseleaf2.bmp");
 	unsigned int leafTex;

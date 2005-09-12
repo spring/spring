@@ -2236,7 +2236,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			if(gs->allies[a][sendTeam]){
 				bool hasPlayer=false;
 				for(int b=0;b<MAX_PLAYERS;++b){
-					if(gs->players[b]->active && gs->players[b]->team==a)
+					if(gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator)
 						hasPlayer=true;
 				}
 				if(!hasPlayer){

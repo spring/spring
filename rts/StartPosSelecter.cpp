@@ -42,6 +42,18 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	if(dist<0)
 		return true;
 	float3 pos=camera->pos+mouse->dir*dist;
+	
+	if(pos.z<gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8)
+		pos.z=gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8;
+
+	if(pos.z>gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8)
+		pos.z=gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8;
+
+	if(pos.x<gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8)
+		pos.x=gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8;
+
+	if(pos.x>gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8)
+		pos.x=gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8;
 
 	inMapDrawer->ErasePos(gs->teams[gu->myTeam]->startPos);
 
@@ -66,6 +78,72 @@ void CStartPosSelecter::Draw()
 		delete this;
 		return;
 	}
+
+	glPushMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glMatrixMode(GL_MODELVIEW);
+
+	camera->Update(true);
+
+	glColor4f(0.2,0.8,0.2,0.5);
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_DEPTH_TEST);
+	glBegin(GL_QUADS);
+	float by=gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8;
+	float bx=gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8;
+
+	float dy=(gameSetup->startRectBottom[gu->myAllyTeam]-gameSetup->startRectTop[gu->myAllyTeam])*gs->mapy*8/10;
+	float dx=(gameSetup->startRectRight[gu->myAllyTeam]-gameSetup->startRectLeft[gu->myAllyTeam])*gs->mapx*8/10;
+
+	for(int a=0;a<10;++a){	//draw start rect restrictions
+		float3 pos1(bx+a*dx,0,by);
+		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		float3 pos2(bx+(a+1)*dx,0,by);
+		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+
+		glVertexf3(pos1);
+		glVertexf3(pos2);
+		glVertexf3(pos2+UpVector*100);
+		glVertexf3(pos1+UpVector*100);
+
+		pos1=float3(bx+a*dx,0,by+dy*10);
+		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		pos2=float3(bx+(a+1)*dx,0,by+dy*10);
+		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+
+		glVertexf3(pos1);
+		glVertexf3(pos2);
+		glVertexf3(pos2+UpVector*100);
+		glVertexf3(pos1+UpVector*100);
+
+		pos1=float3(bx,0,by+dy*a);
+		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		pos2=float3(bx,0,by+dy*(a+1));
+		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+
+		glVertexf3(pos1);
+		glVertexf3(pos2);
+		glVertexf3(pos2+UpVector*100);
+		glVertexf3(pos1+UpVector*100);
+
+		pos1=float3(bx+dx*10,0,by+dy*a);
+		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		pos2=float3(bx+dx*10,0,by+dy*(a+1));
+		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+
+		glVertexf3(pos1);
+		glVertexf3(pos2);
+		glVertexf3(pos2+UpVector*100);
+		glVertexf3(pos1+UpVector*100);
+	}
+	glEnd();
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	glDisable(GL_DEPTH_TEST);
 
 	float mx=float(mouse->lastx)/gu->screenx;
 	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;

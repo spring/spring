@@ -117,7 +117,11 @@ public:
 	float3 errorVectorAdd;
 	int lastErrorVectorUpdate;
 
-	CWeapon* slavedTo;
+	CWeapon* slavedTo;						//use this weapon to choose target
+	
+	float3 mainDir;								//main aim dir of weapon
+	float maxMainDirAngleDif;					//how far away from main aim dir the weapon can aim at something (as an acos value)
+
 };
 
 #endif // !defined(AFX_WEAPON_H__57851722_F7FA_4271_9479_800DB93A2180__INCLUDED_)

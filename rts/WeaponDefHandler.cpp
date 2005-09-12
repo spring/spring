@@ -195,6 +195,7 @@ void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponn
 	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01;
 	weaponDefs[id].paralyzer=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\paralyzer").c_str());
 	weaponDefs[id].damages.paralyzeDamage=weaponDefs[id].paralyzer;
+	weaponDefs[id].soundTrigger=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\SoundTrigger").c_str());
 
 	//sunparser->GetDef(weaponDefs[id].highTrajectory, "0", weaponname + "\\minbarrelangle");
 	sunparser->GetDef(weaponDefs[id].stockpile, "0", weaponname + "\\stockpile");

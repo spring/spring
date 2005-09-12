@@ -5,6 +5,7 @@
 #include "Ground.h"
 #include "GameHelper.h"
 #include "FlameProjectile.h"
+#include "WeaponDefHandler.h"
 //#include "mmgr.h"
 
 CFlameThrower::CFlameThrower(CUnit* owner)
@@ -24,7 +25,7 @@ void CFlameThrower::Fire(void)
 	spread-=dir*0.001;
 
 	new CFlameProjectile(weaponPos,dir*projectileSpeed,spread,owner,damages,weaponDef,(int)(range/projectileSpeed*1.2));
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 

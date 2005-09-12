@@ -36,7 +36,7 @@ void CStarburstLauncher::Fire(void)
 	if(weaponDef->targetable)
 		interceptHandler.AddInterceptTarget(p,targetPos);
 
-	if(fireSoundId)
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
 

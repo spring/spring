@@ -16,6 +16,7 @@
 #include "VFSHandler.h"
 #include "FileHandler.h"
 #include "ArchiveScanner.h"
+#include "GameVersion.h"
 //#include "mmgr.h"
 #include "filefunctions.h"
 #include "errorhandler.h"
@@ -223,7 +224,7 @@ bool CPreGame::Update(void)
 		ENTER_MIXED;
 
 		// Map all required archives depending on selected mod(s)
-		stupidGlobalModName = "xta_se_v062.sdz";
+		stupidGlobalModName = MOD_FILE;
 		if (gameSetup)
 			stupidGlobalModName = gameSetup->baseMod;
 		vector<string> ars = archiveScanner->GetArchives(stupidGlobalModName);

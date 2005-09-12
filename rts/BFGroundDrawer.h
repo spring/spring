@@ -14,7 +14,7 @@ class CBFGroundDrawer :
 public:
 	CBFGroundDrawer(void);
 	~CBFGroundDrawer(void);
-	void Draw(bool drawWaterReflection=false);
+	void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false);
 	void SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes);
 	void SetHeightTexture();
 	void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes);

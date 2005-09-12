@@ -57,6 +57,11 @@ CUnitHandler::CUnitHandler()
 	if(maxUnits>MAX_UNITS/gs->activeTeams-5)
 		maxUnits=MAX_UNITS/gs->activeTeams-5;
 	
+	limitDgun=false;
+	if(gameSetup && gameSetup->limitDgun){
+		limitDgun=true;
+		dgunRadius=gs->mapx*3;
+	}
 }
 
 CUnitHandler::~CUnitHandler()

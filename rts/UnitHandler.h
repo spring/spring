@@ -72,6 +72,9 @@ public:
 	int lastCmdDamageWarning;
 
 	bool CanCloseYard(CUnit* unit);
+
+	bool limitDgun;
+	float dgunRadius;
 };
 
 extern CUnitHandler* uh;

@@ -15,6 +15,7 @@
 #include "StartPosSelecter.h"
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
+#include "GameVersion.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 
@@ -68,12 +69,13 @@ bool CGameSetup::Init(char* buf, int size)
 		return false;
 
 	mapname=file->SGetValueDef("","GAME\\mapname");
-	baseMod=file->SGetValueDef("xta_se_060.sdz","GAME\\Gametype");
+	baseMod=file->SGetValueDef(MOD_FILE,"GAME\\Gametype");
 	file->GetDef(hostip,"0","GAME\\HostIP");
 	file->GetDef(hostport,"0","GAME\\HostPort");
 	file->GetDef(maxUnits,"500","GAME\\MaxUnits");
 	file->GetDef(gs->gameMode,"0","GAME\\GameMode");
 	file->GetDef(sourceport,"0","GAME\\SourcePort");
+	file->GetDef(limitDgun,"0","GAME\\LimitDgun");
 
 	// Determine if the map is inside an archive, and possibly map needed archives
 	CFileHandler* f = new CFileHandler("maps/" + mapname);
@@ -163,6 +165,11 @@ bool CGameSetup::Init(char* buf, int size)
 		sprintf(section,"GAME\\ALLYTEAM%i\\",a);
 		string s(section);
 
+		startRectTop[a]=atof(file->SGetValueDef("0",s+"StartRectTop").c_str());
+		startRectBottom[a]=atof(file->SGetValueDef("1",s+"StartRectBottom").c_str());
+		startRectLeft[a]=atof(file->SGetValueDef("0",s+"StartRectLeft").c_str());
+		startRectRight[a]=atof(file->SGetValueDef("1",s+"StartRectRight").c_str());
+
 		int numAllies=atoi(file->SGetValueDef("0",s+"NumAllies").c_str());
 		for(int b=0;b<numAllies;++b){
 			char key[100];
@@ -170,6 +177,10 @@ bool CGameSetup::Init(char* buf, int size)
 			int other=atoi(file->SGetValueDef("0",key).c_str());
 			gs->allies[a][other]=true;
 		}
+	}
+	if(startPosType==2){
+		for(int a=0;a<gs->activeTeams;++a)
+			gs->teams[a]->startPos=float3(startRectLeft[gs->team2allyteam[a]]*gs->mapx*8,-500,startRectTop[gs->team2allyteam[a]]*gs->mapy*8);
 	}
 
 	int metal,energy;
