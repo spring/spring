@@ -25,9 +25,6 @@ opts = Options('SCustomize')
 opts.Add('platform', 'Set to linux or windows', detected_platform)
 opts.Add('debug', 'Set to yes to produce a binary with debug information', 1)
 
-#porting options - mandatory
-opts.Add('disable_dll', 'Set to no to enable MSwindows dll (port using glib)', 1)
-
 #porting options - optionnal in a first phase
 opts.Add('disable_avi', 'Set to no to turn on avi support', 1)
 opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
@@ -56,16 +53,14 @@ if env.get('disable_hpi'):
 	defines+=['NO_HPI']
 if env.get('disable_clipboard'):
 	defines+=['NO_CLIPBOARD']
-if env.get('disable_dll'):
-	defines+=['NO_DLL']
 if env.get('disable_avi'):
 	exclude_list.append("AVIGenerator.cpp")
 	defines+=['NO_AVI']
 
 if detected_platform == 'linux':
-	exclude_list+=["Win32Cmd.cpp","RegHandler.cpp"]
+	exclude_list+=["DllLib.cpp","Win32Cmd.cpp","RegHandler.cpp"]
 else:
-	exclude_list+=["PosixCmd.cpp","dotfileHandler.cpp"]
+	exclude_list+=["SoLib.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
 
 defines+=['_SZ_ONE_DIRECTORY']
 

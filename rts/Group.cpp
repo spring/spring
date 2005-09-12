@@ -10,6 +10,8 @@
 #include "GroupHandler.h"
 #include "SelectedUnits.h"
 #include "InfoConsole.h"
+#include <boost/filesystem/path.hpp>
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -20,11 +22,9 @@ CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 : lastCommandPage(0),
 	id(id),
 	ai(0),
-#ifndef NO_DLL
-	m_hDLL(0),
-#endif
 	currentAiNum(0),
-	handler(grouphandler)
+	handler(grouphandler),
+	lib(0)
 {
 	callback=new CGroupAICallback(this);
 	SetNewAI(dllName);
@@ -39,12 +39,10 @@ CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 CGroup::~CGroup()
 {
 	ClearUnits();			//shouldnt have any units left but just to be sure
-#ifndef NO_DLL
 	if(ai)
 		ReleaseAI(ai);
-	if(m_hDLL)
-		FreeLibrary(m_hDLL);
-#endif
+	if(lib)
+		delete lib;
 	delete callback;
 }
 
@@ -67,37 +65,35 @@ void CGroup::RemoveUnit(CUnit *unit)
 
 void CGroup::SetNewAI(string dllName)
 {
-#ifndef NO_DLL
 	if(ai)
 		ReleaseAI(ai);
-	if(m_hDLL)
-		FreeLibrary(m_hDLL);
+	if(lib)
+		delete lib;
 
 	ai=0;
-	m_hDLL=0;
 	if(dllName=="default"){
 		return;
 	}
 
-	m_hDLL=LoadLibrary(dllName.c_str());
-	if (m_hDLL==0) 
-		MessageBox(NULL,dllName.c_str(),"Could not find AI dll",MB_OK|MB_ICONEXCLAMATION);
+	boost::filesystem::path p(dllName,boost::filesystem::native);
+	lib = SharedLib::instantiate(dllName.c_str());
+	if (lib==0) 
+		handleerror(NULL,dllName.c_str(),"Could not find AI dll",MB_OK|MB_ICONEXCLAMATION);
 	
-	GetGroupAiVersion = (GETGROUPAIVERSION)GetProcAddress(m_hDLL,"GetGroupAiVersion");
+	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (GetGroupAiVersion==0)
-		MessageBox(NULL,dllName.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dllName.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
 	
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION)
-		MessageBox(NULL,dllName.c_str(),"Incorrect AI dll version",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dllName.c_str(),"Incorrect AI dll version",MB_OK|MB_ICONEXCLAMATION);
 	
-	GetNewAI = (GETNEWAI)GetProcAddress(m_hDLL,"GetNewAI");
-	ReleaseAI = (RELEASEAI)GetProcAddress(m_hDLL,"ReleaseAI");
+	GetNewAI = (GETNEWAI)lib->FindAddress("GetNewAI");
+	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
 
 	ai=GetNewAI();
 	ai->InitAi(callback);
-#endif
 	
 	set<CUnit*> unitBackup=units;
 
