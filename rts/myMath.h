@@ -12,7 +12,7 @@ extern float3 headingToVectorTable[1024];
 inline short int GetHeadingFromVector(float dx,float dz)
 {
 	float h;
-	printf("(%.2f,%.2f)\n",dx,dz);
+	//printf("(%.2f,%.2f)\n",dx,dz);
 	if(dz!=0){
 		float d=dx/dz;
 		if(d > 1){
