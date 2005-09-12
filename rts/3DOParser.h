@@ -1,10 +1,10 @@
 // 3DOParser.h: interface for the C3DOParser class.
 //
 //////////////////////////////////////////////////////////////////////
-#pragma warning(disable:4786)
+#ifndef SPRING_3DOPARSER_H
+#define SPRING_3DOPARSER_H
 
-#ifndef 3DOPARSER_H
-#define 3DOPARSER_H
+#pragma warning(disable:4786)
 
 #include <vector>
 #include <string>
@@ -165,4 +165,4 @@ private:
 
 extern C3DOParser* unit3doparser;
 
-#endif // 3DOPARSER_H
+#endif // SPRING_3DOPARSER_H
