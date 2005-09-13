@@ -113,328 +113,329 @@ print nbBuiltObjects, " objects are already produced from a previous build (", n
 
 #################################################
 # other FLAGS
-if optimize:
-	print "Detecting processor..."
-	f = open('/proc/cpuinfo', 'r')
-	str = f.readline()
-	family=-1
-	model=-1
-	vendor=""
-	while str:
-		if str.startswith("vendor_id"):
-			if str.find("GenuineTMx86") != -1:
-				# Transmeta
-				vendor="GenuineTMx86"
-			elif str.find("GenuineIntel") != -1:
-				# Intel
-				vendor="GenuineIntel"
-			elif str.find("AuthenticAMD"):
-				# AMD
-				vendor="AuthenticAMD"
-		elif str.startswith("cpu "):
-			family = re.sub('^[^0-9A-Za-z]*', '', str).strip()
-		elif str.startswith("model") and str.find("name") == -1:
-			model = re.sub('^[^0-9]*', '', str).strip()
-		if vendor == "GenuineTMx86":
-			if str.startswith("model name"):
-				if str.find("Transmeta Efficeon") != -1:
-					# Automatically reorders/realigns when
-					# converting to VLIW, so no alignment
-					# saves space without sacrificing speed
-					print "  found Transmeta Efficeon"
-					archflags=['-march=i686', '-mtune=pentium3', '-msse2', '-mfpmath=sse', '-falign-functions=0', '-falign-jumps=0', '-falign-loops=0']
-		elif vendor == "GenuineIntel":
-			if str.startswith("model name"):
-				if str.find("Intel(R) Pentium(R) 4 CPU") != -1:
-					print "  found Intel Pentium 4"
-					archflags=['-march=pentium4']
-				elif str.find("Coppermine") != -1:
-					print "  found Intel Celeron (Coppermine)"
-					archflags=['-march=pentium3']
-				elif str.find("Pentium III") != -1:
-					print "  found Intel Pentium III"
-					archflags=['-march=pentium3']
-				elif str.find("Pentium II") != -1:
-					print "  found Intel Pentium II"
-					archflags=['-march=pentium2']
-				elif str.find("Intel(R) Celeron(R) CPU") != -1:
-					print "  found Intel Celeron (Willamette)"
-					archflags=['-march=pentium4']
-				elif str.find("Celeron") != -1:
-					print "  found Intel Celeron 1"
-					archflags=['-march=pentium2']
-				elif str.find("Intel(R) Pentium(R) M") != -1:
-					print "  found Intel Pentium-M"
-					archflags=['-march=pentium-m']
-				elif str.find("Intel(R) Xeon(R) CPU") != -1:
-					print "  found Intel Xeon w/EM64T"
-					archflags=['-march=nocona', '-mmmx', '-msse3']
-		elif vendor == "AuthenticAMD":
-			if str.startswith("model name"):
-				if str.find("Duron") != -1:
-					if model == 7:
-						print "  found AMD Duron Morgan"
-						archflags=['-march=athlon-xp']
-					elif model == 3:
-						print "  found AMD Mobile Duron"
-						archflags=['-march=athlon-tbird']
-					else:
-						print "  found AMD Duron"
-						archflags=['-march=athlon-tbird']
-				elif str.find("Athlon") != -1:
-					if str.find("64") != -1:
-						print "  found AMD Athlon 64"
-						archflags=['-march=athlon64']
-					elif family == 6 and model == 8:
-						print "  found AMD Athlon Thunderbird XP"
-						archflags=['-march=athlon-xp']
-					else:
-						print "  found AMD Athlon"
-						archflags=['-march=athlon']
-				elif str.find("Opteron") != -1:
-					print "  found AMD Opteron"
-					archflags=['-march=opteron']
-		else:
-			if str.find("Nehemiah") != -1:
-				print "  found VIA Nehemiah"
-				archflags=['-march=c3-2']
-			elif str.find("Eden") != -1:
-				print "  found VIA Eden C3"
-				archflags=['-march=c3']
-			elif str.find("Ezra") != -1:
-				print "  found VIA Ezra"
-				archflags=['-march=c3']
-				
-				
-		str = f.readline()
-	if not archflags:
-		if vendor == "":
-			if family.find("970"):
-				print "  found PowerPC 970 (G5)"
-				archflags=['-mtune=G5', '-maltivec', '-mabi=altivec']
-			elif family.find("7450"):
-				print "  found PowerPC 7450 (G4 v2)"
-				archflags=['-mtune=7450', '-maltivec', '-mabi=altivec']
-			elif family.find("7400"):
-				print "  found PowerPC 7400 (G4)"
-				archflags=['-mtune=7400', '-maltivec', '-mabi=altivec']
-			elif family.find("750"):
-				print "  found PowerPC 750 (G3)"
-				archflags=['-mtune=750']
-			elif family.find("604e"):
-				archflags=['-mtune=604e']
-		else:
-			# unidentified x86
-			archflags=['-march=i686']
-		
-	f.close()
-flags = []
-if debug: #to use debug, please use SCustomize file
-	flags += ['-ggdb3','-D_DEBUG','-DDEBUG']
-else:
+if not env.GetOption("clean"):
 	if optimize:
-		if archflags:
-			flags += archflags
-		flags += ['-O2','-pipe','-fomit-frame-pointer','-s']
+		print "Detecting processor..."
+		f = open('/proc/cpuinfo', 'r')
+		str = f.readline()
+		family=-1
+		model=-1
+		vendor=""
+		while str:
+			if str.startswith("vendor_id"):
+				if str.find("GenuineTMx86") != -1:
+					# Transmeta
+					vendor="GenuineTMx86"
+				elif str.find("GenuineIntel") != -1:
+					# Intel
+					vendor="GenuineIntel"
+				elif str.find("AuthenticAMD"):
+					# AMD
+					vendor="AuthenticAMD"
+			elif str.startswith("cpu "):
+				family = re.sub('^[^0-9A-Za-z]*', '', str).strip()
+			elif str.startswith("model") and str.find("name") == -1:
+				model = re.sub('^[^0-9]*', '', str).strip()
+			if vendor == "GenuineTMx86":
+				if str.startswith("model name"):
+					if str.find("Transmeta Efficeon") != -1:
+						# Automatically reorders/realigns when
+						# converting to VLIW, so no alignment
+						# saves space without sacrificing speed
+						print "  found Transmeta Efficeon"
+						archflags=['-march=i686', '-mtune=pentium3', '-msse2', '-mfpmath=sse', '-falign-functions=0', '-falign-jumps=0', '-falign-loops=0']
+			elif vendor == "GenuineIntel":
+				if str.startswith("model name"):
+					if str.find("Intel(R) Pentium(R) 4 CPU") != -1:
+						print "  found Intel Pentium 4"
+						archflags=['-march=pentium4']
+					elif str.find("Coppermine") != -1:
+						print "  found Intel Celeron (Coppermine)"
+						archflags=['-march=pentium3']
+					elif str.find("Pentium III") != -1:
+						print "  found Intel Pentium III"
+						archflags=['-march=pentium3']
+					elif str.find("Pentium II") != -1:
+						print "  found Intel Pentium II"
+						archflags=['-march=pentium2']
+					elif str.find("Intel(R) Celeron(R) CPU") != -1:
+						print "  found Intel Celeron (Willamette)"
+						archflags=['-march=pentium4']
+					elif str.find("Celeron") != -1:
+						print "  found Intel Celeron 1"
+						archflags=['-march=pentium2']
+					elif str.find("Intel(R) Pentium(R) M") != -1:
+						print "  found Intel Pentium-M"
+						archflags=['-march=pentium-m']
+					elif str.find("Intel(R) Xeon(R) CPU") != -1:
+						print "  found Intel Xeon w/EM64T"
+						archflags=['-march=nocona', '-mmmx', '-msse3']
+			elif vendor == "AuthenticAMD":
+				if str.startswith("model name"):
+					if str.find("Duron") != -1:
+						if model == 7:
+							print "  found AMD Duron Morgan"
+							archflags=['-march=athlon-xp']
+						elif model == 3:
+							print "  found AMD Mobile Duron"
+							archflags=['-march=athlon-tbird']
+						else:
+							print "  found AMD Duron"
+							archflags=['-march=athlon-tbird']
+					elif str.find("Athlon") != -1:
+						if str.find("64") != -1:
+							print "  found AMD Athlon 64"
+							archflags=['-march=athlon64']
+						elif family == 6 and model == 8:
+							print "  found AMD Athlon Thunderbird XP"
+							archflags=['-march=athlon-xp']
+						else:
+							print "  found AMD Athlon"
+							archflags=['-march=athlon']
+					elif str.find("Opteron") != -1:
+						print "  found AMD Opteron"
+						archflags=['-march=opteron']
+			else:
+				if str.find("Nehemiah") != -1:
+					print "  found VIA Nehemiah"
+					archflags=['-march=c3-2']
+				elif str.find("Eden") != -1:
+					print "  found VIA Eden C3"
+					archflags=['-march=c3']
+				elif str.find("Ezra") != -1:
+					print "  found VIA Ezra"
+					archflags=['-march=c3']
+					
+					
+			str = f.readline()
+		if not archflags:
+			if vendor == "":
+				if family.find("970"):
+					print "  found PowerPC 970 (G5)"
+					archflags=['-mtune=G5', '-maltivec', '-mabi=altivec']
+				elif family.find("7450"):
+					print "  found PowerPC 7450 (G4 v2)"
+					archflags=['-mtune=7450', '-maltivec', '-mabi=altivec']
+				elif family.find("7400"):
+					print "  found PowerPC 7400 (G4)"
+					archflags=['-mtune=7400', '-maltivec', '-mabi=altivec']
+				elif family.find("750"):
+					print "  found PowerPC 750 (G3)"
+					archflags=['-mtune=750']
+				elif family.find("604e"):
+					archflags=['-mtune=604e']
+			else:
+				# unidentified x86
+				archflags=['-march=i686']
+			
+		f.close()
+	flags = []
+	if debug: #to use debug, please use SCustomize file
+		flags += ['-ggdb3','-D_DEBUG','-DDEBUG']
 	else:
-		flags += ['-O']
+		if optimize:
+			if archflags:
+				flags += archflags
+			flags += ['-O2','-pipe','-fomit-frame-pointer','-s']
+		else:
+			flags += ['-O']
 
-if platform == 'linux':
-	flags += ['-pthread']
+	if platform == 'linux':
+		flags += ['-pthread']
 
-env.Append(CPPFLAGS = flags)
-#################################################
-# Check requirements
+	env.Append(CPPFLAGS = flags)
+	#################################################
+	# Check requirements
 
-lib=['GL','GLEW','IL']
-libaiostep1=False
+	lib=['GL','GLEW','IL']
+	libaiostep1=False
 
-conf = Configure(env)
-conf.env.Append(CPPPATH=common_include_path)
-print "\nChecking configure scripts"
-freetype = False
-openal = False
+	conf = Configure(env)
+	conf.env.Append(CPPPATH=common_include_path)
+	print "\nChecking configure scripts"
+	freetype = False
+	openal = False
 
-print "Checking for Freetype2... "
-print "  Checking for pkg-config... ",
-pkgcfg = env.WhereIs("pkg-config")
-cmd = ""
-fcmd = ""
-if pkgcfg:
-	print pkgcfg
-	print "  Checking for Freetype2 package... ",
-	ret = conf.TryAction("pkg-config --exists freetype2")
-	if not ret:
-		print "found"
-		cmd = "pkg-config --modversion freetype2"
-		fcmd = "pkg-config --libs --cflags freetype2"
-		freetype = True
-	else:
-		print "not found, continuing"
-if not freetype:
-	print "  Checking for freetype-config... ",
-	freetypecfg = env.WhereIs("freetype-config")
-	if freetypecfg:
-		print freetypecfg
-		cmd = "freetype-config --ftversion"
-		fcmd = "freetype-config --cflags --libs"
-		freetype = True
-	else:
-		print "not found, continuing"
-if cmd:
-	print "Checking for Freetype >= 2.0.0... ",
-	ftobj = os.popen(cmd)
-	ftver = ftobj.read()
-	fterr = ftobj.close()
-	print ftver,
-	if ftver.split('.') >= ['2','0','0']:
-		env.ParseConfig(fcmd)
-	else:
-		print "You need Freetype version 2.0.0 or greater for this program"
+	print "Checking for Freetype2... "
+	print "  Checking for pkg-config... ",
+	pkgcfg = env.WhereIs("pkg-config")
+	cmd = ""
+	fcmd = ""
+	if pkgcfg:
+		print pkgcfg
+		print "  Checking for Freetype2 package... ",
+		ret = conf.TryAction("pkg-config --exists freetype2")
+		if not ret:
+			print "found"
+			cmd = "pkg-config --modversion freetype2"
+			fcmd = "pkg-config --libs --cflags freetype2"
+			freetype = True
+		else:
+			print "not found"
+	if not freetype:
+		print "  Checking for freetype-config... ",
+		freetypecfg = env.WhereIs("freetype-config")
+		if freetypecfg:
+			print freetypecfg
+			cmd = "freetype-config --ftversion"
+			fcmd = "freetype-config --cflags --libs"
+			freetype = True
+		else:
+			print "not found"
+	if cmd:
+		print "Checking for Freetype >= 2.0.0... ",
+		ftobj = os.popen(cmd)
+		ftver = ftobj.read()
+		fterr = ftobj.close()
+		print ftver,
+		if ftver.split('.') >= ['2','0','0']:
+			env.ParseConfig(fcmd)
+		else:
+			print "You need Freetype version 2.0.0 or greater for this program"
+			Exit(1)
+	elif not conf.CheckLib("freetype"):
+		print "Freetype2 is required for this program"
 		Exit(1)
-elif not conf.CheckLib("freetype"):
-	print "Freetype2 is required for this program"
-	Exit(1)
-else:
-	conf.env.Append(CPPPATH=['/usr/include/freetype2'])
-	if not conf.CheckCHeader('ft2build.h'):
-		print "Freetype2 headers are required for this program"
-		Exit(1)
 	else:
-		lib+=['freetype']
+		conf.env.Append(CPPPATH=['/usr/include/freetype2'])
+		if not conf.CheckCHeader('ft2build.h'):
+			print "Freetype2 headers are required for this program"
+			Exit(1)
+		else:
+			lib+=['freetype']
 
-print "Checking for sdl-config... ",
-sdlcfg = env.WhereIs("sdl-config")
-if sdlcfg:
-	print sdlcfg
-	print "Checking for LibSDL >= 1.2.0... ",
-	sdlobj = os.popen("sdl-config --version")
-	sdlver = sdlobj.read()
-	sdlerr = sdlobj.close()
-	print sdlver,
-	if sdlver.split('.') >= ['1','2','0']:
-		env.ParseConfig("sdl-config --cflags --libs")
+	print "Checking for sdl-config... ",
+	sdlcfg = env.WhereIs("sdl-config")
+	if sdlcfg:
+		print sdlcfg
+		print "Checking for LibSDL >= 1.2.0... ",
+		sdlobj = os.popen("sdl-config --version")
+		sdlver = sdlobj.read()
+		sdlerr = sdlobj.close()
+		print sdlver,
+		if sdlver.split('.') >= ['1','2','0']:
+			env.ParseConfig("sdl-config --cflags --libs")
+		else:
+			print "You need LibSDL version 1.2.0 or greater for this program"
+			Exit(1)
 	else:
-		print "You need LibSDL version 1.2.0 or greater for this program"
+		print "no"
+		print 'LibSDL is required for this program'
 		Exit(1)
-else:
-	print "no"
-	print 'LibSDL is required for this program'
-	Exit(1)
 
 
-print "Checking for openal-config... ",
-openalcfg = env.WhereIs("openal-config")
-if openalcfg:
-	print openalcfg
-	env.ParseConfig("openal-config --cflags --libs")
-else:
-	print "no"
-	if not conf.CheckLib('openal'):
-		print 'OpenAL is required for this program'
-		Exit(1)
-	elif not conf.CheckCHeader('AL/al.h'):
-		print 'OpenAL headers are required for this program'
-		Exit(1)
+	print "Checking for openal-config... ",
+	openalcfg = env.WhereIs("openal-config")
+	if openalcfg:
+		print openalcfg
+		env.ParseConfig("openal-config --cflags --libs")
 	else:
-		lib+=['openal']
+		print "no"
+		if not conf.CheckLib('openal'):
+			print 'OpenAL is required for this program'
+			Exit(1)
+		elif not conf.CheckCHeader('AL/al.h'):
+			print 'OpenAL headers are required for this program'
+			Exit(1)
+		else:
+			lib+=['openal']
 
-#print "Checking for glib-config... ",
-#glibcfg = env.WhereIs("glib-config")
-#if glibcfg:
-#	print glibcfg
-#	env.ParseConfig("glib-config --cflags --libs")
-#else:
-#	print "no"
-#	print 'GLib is required for this program'
-#	Exit(1)
+	#print "Checking for glib-config... ",
+	#glibcfg = env.WhereIs("glib-config")
+	#if glibcfg:
+	#	print glibcfg
+	#	env.ParseConfig("glib-config --cflags --libs")
+	#else:
+	#	print "no"
+	#	print 'GLib is required for this program'
+	#	Exit(1)
 
 
-print "\nChecking header files"
-if not conf.CheckCHeader('GL/glew.h'):
-	print ' Cannot find GLEW http://glew.sourceforge.net'
-	Exit(1)
-if not conf.CheckCXXHeader('boost/cstdint.hpp'):
-	print ' Boost library must be installed'
-	Exit(1)
-if not conf.CheckCXXHeader('boost/thread.hpp'):
-	print ' Cannot find Boost threading headers'
-	Exit(1)
-if not conf.CheckCXXHeader('boost/filesystem/path.hpp'):
-	print ' Cannot find Boost filesystem headers'
-	Exit(1)
-if not conf.CheckCXXHeader('boost/regex.hpp'):
-	print ' Cannot find Boost regex header'
-	Exit(1)
-if not conf.CheckCHeader('IL/il.h'):
-	print ' Cannot find DevIL image library header'
-	Exit(1)
-if conf.CheckCHeader('libaio.h'):
-	defines+=['HAS_LIBAIO']
-	libaiostep1=True
-else:
-	print ' Cannot find libaio headers, disabling asynchronous I/O'
-
-print "\nChecking libraries"
-if not conf.CheckLib('GLEW'):
-	print "You need GLEW to compile this program"
-	Exit(1)
-if gcc and conf.CheckLib('boost_filesystem-gcc-mt'):
-	lib+=['boost_filesystem-gcc-mt']
-elif conf.CheckLib('boost_filesystem-mt'):
-	lib+=['boost_filesystem-mt']
-elif gcc and conf.CheckLib('boost_filesystem-gcc'):
-	lib+=['boost_filesystem-gcc']
-elif conf.CheckLib('boost_filesystem'):
-	lib+=['boost_filesystem']
-else:
-	print "You need the Boost filesystem library for this program"
-	Exit(1)
-if gcc and conf.CheckLib('boost_thread-gcc-mt'):
-	lib+=['boost_thread-gcc-mt']
-elif conf.CheckLib('boost_thread-mt'):
-	lib+=['boost_thread-mt']
-elif gcc and conf.CheckLib('boost_thread-gcc'):
-	lib+=['boost_thread-gcc']
-elif conf.CheckLib('boost_thread'):
-	lib+=['boost_thread']
-else:
-	print "You need the Boost thread library for this program"
-	Exit(1)
-if gcc and conf.CheckLib('boost_regex-gcc-mt'):
-	lib+=['boost_regex-gcc-mt']
-elif conf.CheckLib('boost_regex-mt'):
-	lib+=['boost_regex-mt']
-elif gcc and conf.CheckLib('boost_regex-gcc'):
-	lib+=['boost_regex-gcc']
-elif conf.CheckLib('boost_regex'):
-	lib+=['boost_regex']
-else:
-	print "You need the Boost regex library for this program"
-	Exit(1)
-if not conf.CheckLib('IL'):
-	print "You need the DevIL image library for this program"
-	Exit(1)
-if env.get('use_tcmalloc'):
-	if conf.CheckLib('tcmalloc'):
-		lib+=['tcmalloc']
+	print "\nChecking header files"
+	if not conf.CheckCHeader('GL/glew.h'):
+		print ' Cannot find GLEW http://glew.sourceforge.net'
+		Exit(1)
+	if not conf.CheckCXXHeader('boost/cstdint.hpp'):
+		print ' Boost library must be installed'
+		Exit(1)
+	if not conf.CheckCXXHeader('boost/thread.hpp'):
+		print ' Cannot find Boost threading headers'
+		Exit(1)
+	if not conf.CheckCXXHeader('boost/filesystem/path.hpp'):
+		print ' Cannot find Boost filesystem headers'
+		Exit(1)
+	if not conf.CheckCXXHeader('boost/regex.hpp'):
+		print ' Cannot find Boost regex header'
+		Exit(1)
+	if not conf.CheckCHeader('IL/il.h'):
+		print ' Cannot find DevIL image library header'
+		Exit(1)
+	if conf.CheckCHeader('libaio.h'):
+		defines+=['HAS_LIBAIO']
+		libaiostep1=True
 	else:
-		print "tcmalloc from goog-perftools requested but not available"
-		print "falling back to standard malloc"
-if conf.CheckLib('aio'):
-	lib+=['aio']
-	if libaiostep1:
-		files+=['BackgroundReader.cpp']
-else:
-	print "Libaio is necessary for asynchronous I/O, disabling BackgroundReader"
-env = conf.Finish()
+		print ' Cannot find libaio headers, disabling asynchronous I/O'
 
-###################################################
-# let's build
+	print "\nChecking libraries"
+	if not conf.CheckLib('GLEW'):
+		print "You need GLEW to compile this program"
+		Exit(1)
+	if gcc and conf.CheckLib('boost_filesystem-gcc-mt'):
+		lib+=['boost_filesystem-gcc-mt']
+	elif conf.CheckLib('boost_filesystem-mt'):
+		lib+=['boost_filesystem-mt']
+	elif gcc and conf.CheckLib('boost_filesystem-gcc'):
+		lib+=['boost_filesystem-gcc']
+	elif conf.CheckLib('boost_filesystem'):
+		lib+=['boost_filesystem']
+	else:
+		print "You need the Boost filesystem library for this program"
+		Exit(1)
+	if gcc and conf.CheckLib('boost_thread-gcc-mt'):
+		lib+=['boost_thread-gcc-mt']
+	elif conf.CheckLib('boost_thread-mt'):
+		lib+=['boost_thread-mt']
+	elif gcc and conf.CheckLib('boost_thread-gcc'):
+		lib+=['boost_thread-gcc']
+	elif conf.CheckLib('boost_thread'):
+		lib+=['boost_thread']
+	else:
+		print "You need the Boost thread library for this program"
+		Exit(1)
+	if gcc and conf.CheckLib('boost_regex-gcc-mt'):
+		lib+=['boost_regex-gcc-mt']
+	elif conf.CheckLib('boost_regex-mt'):
+		lib+=['boost_regex-mt']
+	elif gcc and conf.CheckLib('boost_regex-gcc'):
+		lib+=['boost_regex-gcc']
+	elif conf.CheckLib('boost_regex'):
+		lib+=['boost_regex']
+	else:
+		print "You need the Boost regex library for this program"
+		Exit(1)
+	if not conf.CheckLib('IL'):
+		print "You need the DevIL image library for this program"
+		Exit(1)
+	if env.get('use_tcmalloc'):
+		if conf.CheckLib('tcmalloc'):
+			lib+=['tcmalloc']
+		else:
+			print "tcmalloc from goog-perftools requested but not available"
+			print "falling back to standard malloc"
+	if conf.CheckLib('aio'):
+		lib+=['aio']
+		if libaiostep1:
+			files+=['BackgroundReader.cpp']
+	else:
+		print "Libaio is necessary for asynchronous I/O, disabling BackgroundReader"
+	env = conf.Finish()
 
-print "\nEverything seems OK, let's build"
-env.Append(LIBS = lib)
-#print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
+	###################################################
+	# let's build
+
+	print "\nEverything seems OK, let's build"
+	env.Append(LIBS = lib)
+	#print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
 env.Program('spring', files)
-if optimize:
-	env.AddPostAction('spring',Action([['strip','spring']]))
+if optimize and not env.GetOption("clean"):
+	env.AddPostAction('spring',Action([['strip','$TARGET']]))
