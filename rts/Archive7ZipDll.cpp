@@ -7,6 +7,7 @@ extern "C" {
 
 #include "Archive7ZipDll.h"
 #include <algorithm>
+#include "SDL_types.h"
 //#include "mmgr.h"
 
 /*
@@ -108,8 +109,8 @@ ABOpenFile_t* CArchive7ZipDll::GetEntireFile(const string& fName)
 	of->size = fd.size;
 	of->data = (char*)malloc(of->size); 
 
-	uint32_t blockIndex = 0xFFFFFFFF;
-	uint8_t *outBuffer = 0;
+	Uint32 blockIndex = 0xFFFFFFFF;
+	Uint8 *outBuffer = 0;
 	size_t outBufferSize = 0;
 
 	SZ_RESULT res;
