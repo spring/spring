@@ -20,24 +20,24 @@ extern "C" {  // only need to export C interface if
 std::set<IGlobalAI*> ais;
 
 //Returnerar DLLens typ och version
-int (APIENTRY GetGlobalAiVersion)()
+int (WINAPI GetGlobalAiVersion)()
 {
 	return GLOBAL_AI_INTERFACE_VERSION;
 }
 
-void (APIENTRY GetAiName)(char* name)
+void (WINAPI GetAiName)(char* name)
 {
 	strcpy(name,AI_NAME);
 }
 
-IGlobalAI* (APIENTRY GetNewAI)()
+IGlobalAI* (WINAPI GetNewAI)()
 {
 	CGlobalAI* ai=new CGlobalAI();
 	ais.insert(ai);
 	return ai;
 }
 
-void (APIENTRY ReleaseAI)(IGlobalAI* i)
+void (WINAPI ReleaseAI)(IGlobalAI* i)
 {
 	delete (CGlobalAI*)i;
 	ais.erase(i);
