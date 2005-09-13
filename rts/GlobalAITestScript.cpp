@@ -28,7 +28,7 @@ void CGlobalAITestScript::Update(void)
 #ifdef _WIN32
 		globalAI->CreateGlobalAI(1,"./aidll/globalai/test.dll");
 #else
-		globalAI->CreateGlobalAI(1,"./aidll/globalai/libtest.so");
+		globalAI->CreateGlobalAI(1,"./aidll/globalai/test.so");
 #endif
 
 		gs->teams[0]->energy=1000;

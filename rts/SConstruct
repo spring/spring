@@ -36,6 +36,8 @@ opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be 
 opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation',0)
 opts.Add('optimize', 'Enable processor optimizations during compilation', 0)
 
+opts.Add('prefix', 'Install prefix [/usr/local]')
+
 env = Environment(ENV = os.environ, options = opts)
 Help(opts.GenerateHelpText(env))
 debug = env.get('debug')
@@ -64,6 +66,10 @@ else:
 	exclude_list+=["SoLib.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
 
 defines+=['_SZ_ONE_DIRECTORY']
+
+prefix=ARGUMENTS.get('prefix',"/usr/local")
+
+defines+=['DATADIR="\\"'+prefix+'/games/taspring'+'\\""']
 
 env.Append(CPPDEFINES = defines)
 
@@ -436,6 +442,8 @@ if not env.GetOption("clean"):
 	print "\nEverything seems OK, let's build"
 	env.Append(LIBS = lib)
 	#print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
-env.Program('spring', files)
+spring = env.Program('spring', files)
 if optimize and not env.GetOption("clean"):
 	env.AddPostAction('spring',Action([['strip','$TARGET']]))
+env.InstallAs(prefix+"/bin/spring",spring)
+env.Alias('install',prefix)

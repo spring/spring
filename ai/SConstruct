@@ -1,5 +1,14 @@
+prefix=ARGUMENTS.get('prefix',"/usr/local")
 include_path=['../rts']
-SharedLibrary('centralbuild',['CentralBuildAI/GroupAI.cpp','CentralBuildAI/TestAI.cpp'],CPPPATH=include_path)
-SharedLibrary('mmhandler',['MetalMakerAI/GroupAI.cpp','MetalMakerAI/TestAI.cpp'],CPPPATH=include_path)
-SharedLibrary('SimpleForm',['SimpleFormationAI/GroupAI.cpp','SimpleFormationAI/TestAI.cpp'],CPPPATH=include_path)
-SharedLibrary('test',['TestGlobalAI/GlobalAI.cpp','TestGlobalAI/TestAI.cpp'],CPPPATH=include_path)
+centralbuild = SharedLibrary('centralbuild',['CentralBuildAI/GroupAI.cpp','CentralBuildAI/TestAI.cpp'],CPPPATH=include_path)
+mmhandler = SharedLibrary('mmhandler',['MetalMakerAI/GroupAI.cpp','MetalMakerAI/TestAI.cpp'],CPPPATH=include_path)
+SimpleForm = SharedLibrary('SimpleForm',['SimpleFormationAI/GroupAI.cpp','SimpleFormationAI/TestAI.cpp'],CPPPATH=include_path)
+test = SharedLibrary('test',['TestGlobalAI/GlobalAI.cpp','TestGlobalAI/TestAI.cpp'],CPPPATH=include_path)
+gamedir="/games/taspring"
+InstallAs([
+	prefix+gamedir+"/aidll/centralbuild.so",
+	prefix+gamedir+"/aidll/mmhandler.so",
+	prefix+gamedir+"/aidll/SimpleForm.so",
+	prefix+gamedir+"/aidll/globalai/test.so",
+	],[centralbuild,mmhandler,SimpleForm,test])
+Alias('install',prefix+gamedir+"/aidll")
