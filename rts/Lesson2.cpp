@@ -233,17 +233,17 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #endif
 	INIT_SYNCIFY;
 	bool	done=false;								// Bool Variable To Exit Loop
-#ifdef _DEBUG
-	fullscreen = false;
-#else
-	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
-#endif
 	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
 	cmdline->parse();
+#ifdef _DEBUG
+	fullscreen = false;
+#else
+	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
+#endif
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
 		delete cmdline;
