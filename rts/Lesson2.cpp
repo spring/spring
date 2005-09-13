@@ -228,6 +228,9 @@ bool crashCallback(void* crState)
 
 int main( int argc, char *argv[ ], char *envp[ ] )
 {
+#ifndef _WIN32
+	chdir(DATADIR);
+#endif
 	INIT_SYNCIFY;
 	bool	done=false;								// Bool Variable To Exit Loop
 #ifdef _DEBUG
@@ -267,16 +270,14 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	string demofile;
 	for (int i = 0; i < argc; i++) {
 		if (i == 0) {
+#ifdef _WIN32
 			string command(argv[i]);
 			int idx = command.rfind("spring");
 			string path = command.substr(0,idx);
 			if (path.at(0) == '"')
 				path.append(1,'"');
 			if (path != "")
-#ifdef _WIN32
 				_chdir(path.c_str());
-#else
-				chdir(path.c_str());
 #endif
 		} else if (argv[i][0] != '-') {
 			string command(argv[i]);
