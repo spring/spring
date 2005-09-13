@@ -17,24 +17,24 @@ extern "C" {  // only need to export C interface if
 std::set<IGroupAI*> ais;
 
 //Returnerar DLLens typ och version
-int (APIENTRY GetGroupAiVersion)()
+int (WINAPI GetGroupAiVersion)()
 {
 	return AI_INTERFACE_VERSION;
 }
 
-void (APIENTRY GetAiName)(char* name)
+void (WINAPI GetAiName)(char* name)
 {
 	strcpy(name,AI_NAME);
 }
 
-IGroupAI* (APIENTRY GetNewAI)()
+IGroupAI* (WINAPI GetNewAI)()
 {
 	CGroupAI* ai=new CGroupAI();
 	ais.insert(ai);
 	return ai;
 }
 
-void (APIENTRY ReleaseAI)(IGroupAI* i)
+void (WINAPI ReleaseAI)(IGroupAI* i)
 {
 	delete (CGroupAI*)i;
 	ais.erase(i);

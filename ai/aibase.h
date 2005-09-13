@@ -10,11 +10,9 @@
 
 #include <windows.h>
 
-#define APIENTRY WINAPI
-
 #else
 
-#define APIENTRY
+#define WINAPI
 
 #endif
 

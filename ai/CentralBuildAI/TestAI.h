@@ -15,10 +15,10 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
-/*int (APIENTRY GETGROUPAIVERSION)();
-void (APIENTRY GETAINAME)(char* c);
-IGroupAI* (APIENTRY GETNEWAI)();
-void (APIENTRY RELEASEAI)(IGroupAI* i);
+/*int (WINAPI GETGROUPAIVERSION)();
+void (WINAPI GETAINAME)(char* c);
+IGroupAI* (WINAPI GETNEWAI)();
+void (WINAPI RELEASEAI)(IGroupAI* i);
 */
 #ifdef __cplusplus
 }
