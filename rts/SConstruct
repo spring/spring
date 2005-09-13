@@ -246,25 +246,63 @@ env.Append(CPPFLAGS = flags)
 #################################################
 # Check requirements
 
+lib=['GL','GLEW','IL']
+libaiostep1=False
+
+conf = Configure(env)
+conf.env.Append(CPPPATH=common_include_path)
 print "\nChecking configure scripts"
-print "Checking for freetype-config... ",
-freetypecfg = env.WhereIs("freetype-config")
-if freetypecfg:
-	print freetypecfg
+freetype = False
+openal = False
+
+print "Checking for Freetype2... "
+print "  Checking for pkg-config... ",
+pkgcfg = env.WhereIs("pkg-config")
+cmd = ""
+fcmd = ""
+if pkgcfg:
+	print pkgcfg
+	print "  Checking for Freetype2 package... ",
+	ret = conf.TryAction("pkg-config --exists freetype2")
+	if not ret:
+		print "found"
+		cmd = "pkg-config --modversion freetype2"
+		fcmd = "pkg-config --libs --cflags freetype2"
+		freetype = True
+	else:
+		print "not found, continuing"
+if not freetype:
+	print "  Checking for freetype-config... ",
+	freetypecfg = env.WhereIs("freetype-config")
+	if freetypecfg:
+		print freetypecfg
+		cmd = "freetype-config --ftversion"
+		fcmd = "freetype-config --cflags --libs"
+		freetype = True
+	else:
+		print "not found, continuing"
+if cmd:
 	print "Checking for Freetype >= 2.0.0... ",
-	ftobj = os.popen("freetype-config --ftversion")
+	ftobj = os.popen(cmd)
 	ftver = ftobj.read()
 	fterr = ftobj.close()
 	print ftver,
 	if ftver.split('.') >= ['2','0','0']:
-		env.ParseConfig("freetype-config --cflags --libs")
+		env.ParseConfig(fcmd)
 	else:
 		print "You need Freetype version 2.0.0 or greater for this program"
 		Exit(1)
-else:
-	print "no"
-	print 'Freetype2 is required for this program'
+elif not conf.CheckLib("freetype"):
+	print "Freetype2 is required for this program"
 	Exit(1)
+else:
+	conf.env.Append(CPPPATH=['/usr/include/freetype2'])
+	if not conf.CheckCHeader('ft2build.h'):
+		print "Freetype2 headers are required for this program"
+		Exit(1)
+	else:
+		lib+=['freetype']
+
 print "Checking for sdl-config... ",
 sdlcfg = env.WhereIs("sdl-config")
 if sdlcfg:
@@ -283,6 +321,8 @@ else:
 	print "no"
 	print 'LibSDL is required for this program'
 	Exit(1)
+
+
 print "Checking for openal-config... ",
 openalcfg = env.WhereIs("openal-config")
 if openalcfg:
@@ -290,8 +330,15 @@ if openalcfg:
 	env.ParseConfig("openal-config --cflags --libs")
 else:
 	print "no"
-	print 'OpenAL is required for this program'
-	Exit(1)
+	if not conf.CheckLib('openal'):
+		print 'OpenAL is required for this program'
+		Exit(1)
+	elif not conf.CheckCHeader('AL/al.h'):
+		print 'OpenAL headers are required for this program'
+		Exit(1)
+	else:
+		lib+=['openal']
+
 #print "Checking for glib-config... ",
 #glibcfg = env.WhereIs("glib-config")
 #if glibcfg:
@@ -303,12 +350,7 @@ else:
 #	Exit(1)
 
 
-lib=['GL','GLEW','IL','openal']
-libaiostep1=False
-
 print "\nChecking header files"
-conf = Configure(env)
-conf.env.Append(CPPPATH=common_include_path)
 if not conf.CheckCHeader('GL/glew.h'):
 	print ' Cannot find GLEW http://glew.sourceforge.net'
 	Exit(1)
