@@ -3,6 +3,7 @@
  * EXT_framebuffer_object class implementation
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
+#include <assert.h>
 #include "FBO.h"
 
 FBO::FBO()
