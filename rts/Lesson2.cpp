@@ -230,7 +230,11 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 {
 	INIT_SYNCIFY;
 	bool	done=false;								// Bool Variable To Exit Loop
+#ifdef _DEBUG
+	fullscreen = false;
+#else
 	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
+#endif
 	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
@@ -312,10 +316,6 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	else
 		server=!cmdline->result("client") || cmdline->result("server");
 	
-#ifdef _DEBUG
-	fullscreen=false;
-#endif
-
 	int xres=configHandler.GetInt("XResolution",XRES_DEFAULT);
 	int yres=configHandler.GetInt("YResolution",YRES_DEFAULT);
 
