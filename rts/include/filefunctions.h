@@ -83,7 +83,7 @@ static inline std::string glob_to_regex(const std::string &glob)
 	return regex;
 }
 
-static inline std::vector<fs::path> find_files(fs::path &dirpath, const std::string &pattern, const bool recurse = true)
+static inline std::vector<fs::path> find_files(fs::path &dirpath, const std::string &pattern, const bool recurse = false)
 {
 	std::vector<fs::path> matches;
 	if (dirpath.empty())
