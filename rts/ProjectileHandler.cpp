@@ -331,7 +331,7 @@ CProjectileHandler::~CProjectileHandler()
 	std::set<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi)
 		delete *gfi;
-	delete &distlist;
+	distlist.clear();
 
 	if(shadowHandler->drawShadows){
 		glDeleteProgramsARB( 1, &projectileShadowVP );

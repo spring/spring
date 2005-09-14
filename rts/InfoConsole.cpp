@@ -45,7 +45,6 @@ CInfoConsole::CInfoConsole()
 CInfoConsole::~CInfoConsole()
 {
 	delete filelog;
-	delete &infoConsoleMutex;
 }
 
 void CInfoConsole::Draw()
