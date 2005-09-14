@@ -270,11 +270,11 @@ if not env.GetOption("clean"):
 	if pkgcfg:
 		print pkgcfg
 		print "  Checking for Freetype2 package... ",
-		ret = conf.TryAction("pkg-config --exists freetype2")
-		if not ret:
+		ret = conf.TryAction(pkgcfg+" --exists freetype2")
+		if ret[0]:
 			print "found"
-			cmd = "pkg-config --modversion freetype2"
-			fcmd = "pkg-config --libs --cflags freetype2"
+			cmd = pkgcfg+" --modversion freetype2"
+			fcmd = pkgcfg+" --libs --cflags freetype2"
 			freetype = True
 		else:
 			print "not found"
@@ -283,9 +283,13 @@ if not env.GetOption("clean"):
 		freetypecfg = env.WhereIs("freetype-config")
 		if freetypecfg:
 			print freetypecfg
-			cmd = "freetype-config --ftversion"
-			fcmd = "freetype-config --cflags --libs"
-			freetype = True
+			ftv = conf.TryAction(freetypecfg+" --ftversion")
+			if ftv[0]:
+				cmd = freetypecfg+" --ftversion"
+				fcmd = freetypecfg+" --cflags --libs"
+				freetype = True
+			else:
+				print "  "+freetypecfg+" does not give library version"
 		else:
 			print "not found"
 	if cmd:
@@ -315,12 +319,12 @@ if not env.GetOption("clean"):
 	if sdlcfg:
 		print sdlcfg
 		print "Checking for LibSDL >= 1.2.0... ",
-		sdlobj = os.popen("sdl-config --version")
+		sdlobj = os.popen(sdlcfg+" --version")
 		sdlver = sdlobj.read()
 		sdlerr = sdlobj.close()
 		print sdlver,
 		if sdlver.split('.') >= ['1','2','0']:
-			env.ParseConfig("sdl-config --cflags --libs")
+			env.ParseConfig(sdlcfg+" --cflags --libs")
 		else:
 			print "You need LibSDL version 1.2.0 or greater for this program"
 			Exit(1)
@@ -334,7 +338,7 @@ if not env.GetOption("clean"):
 	openalcfg = env.WhereIs("openal-config")
 	if openalcfg:
 		print openalcfg
-		env.ParseConfig("openal-config --cflags --libs")
+		env.ParseConfig(openalcfg+" --cflags --libs")
 	else:
 		print "no"
 		if not conf.CheckLib('openal'):
