@@ -121,7 +121,6 @@ CNet::~CNet()
 		for(pi2=c->waitingPackets.begin();pi2!=c->waitingPackets.end();++pi2)
 			delete (pi2->second);
 	}
-	delete &netMutex;
 }
 
 int CNet::InitServer(int portnum)

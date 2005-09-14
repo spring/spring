@@ -160,7 +160,6 @@ GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
 {
 	SDL_Init(SDL_INIT_VIDEO);
-	atexit(SDL_Quit);
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	const SDL_VideoInfo *pSDLVideoInfo = SDL_GetVideoInfo();
 	int sdlflags = SDL_OPENGL | SDL_GL_DOUBLEBUFFER | SDL_HWPALETTE | SDL_RESIZABLE;
@@ -176,7 +175,6 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	screen = SDL_SetVideoMode(width,height,bits,sdlflags);
 	if (!screen) {
 		handleerror(NULL,"Could not set video mode","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		SDL_Quit();
 		return false;
 	}
 	if (FSAA)
@@ -324,6 +322,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	// Create Our OpenGL Window
 	if (!CreateGLWindow("RtsSpring",xres,yres,0,fullscreen,frequency))
 	{
+		SDL_Quit();
 		return 0;									// Quit If Window Was Not Created
 	}
 
@@ -442,6 +441,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
 	KillGLWindow();									// Kill The Window
+	SDL_Quit();
 	delete gs;
 	delete gu;
 	END_SYNCIFY;
