@@ -22,10 +22,21 @@ CSound::CSound()
 	maxSounds = configHandler.GetInt("MaxSounds",16);
 	noSound = false;
 	cur = 0;
-	alutInit(NULL,0);
-	if (alGetError() != ALC_NO_ERROR) {
-		handleerror(0,"Could not initialize sound!","OpenAL error",MB_OK);
+	device = alcOpenDevice(NULL);
+	if (device != NULL) {
+		context = alcCreateContext(device, NULL);
+		if (context != NULL)
+			alcMakeContextCurrent(context);
+		else {
+			handleerror(0,"Could not create audio context","OpenAL error",MB_OK);
+			noSound = true;
+			alcCloseDevice(device);
+			return;
+		}
+	} else {
+		handleerror(0,"Could not create audio device","OpenAL error",MB_OK);
 		noSound = true;
+		return;
 	}
 	Sources = new ALuint[maxSounds];
 }
@@ -40,7 +51,9 @@ CSound::~CSound()
 	Buffers.clear();
 	if (noSound)
 		return;
-	alutExit();
+	alcMakeContextCurrent(NULL);
+	alcDestroyContext(context);
+	alcCloseDevice(device);
 }
 
 void CSound::PlaySound(int id, float volume)

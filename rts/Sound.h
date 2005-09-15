@@ -4,7 +4,6 @@
 #include <vector>
 #include <AL/al.h>
 #include <AL/alc.h>
-#include <AL/alut.h>
 
 class CWorldObject;
 
@@ -29,6 +28,8 @@ private:
 	vector<string> LoadedFiles;
 	vector<ALuint> Buffers;
 	ALuint *Sources;
+	ALCdevice *device;
+	ALCcontext *context;
 };
 
 extern CSound* sound;
