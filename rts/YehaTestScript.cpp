@@ -7,7 +7,7 @@
 #include "ReadMap.h"
 #include "Ground.h"
 #include "FeatureHandler.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 //#include "mmgr.h"
 
 CYehaTestScript yehatest;

@@ -7,7 +7,7 @@
 #include "float3.h"
 #include "SelectionKeyHandler.h"
 
-class CSunParser;
+class TdfParser;
 class GUIframe;
 class GUIbutton;
 class GUIstateButton;
@@ -35,12 +35,12 @@ public:	//generate error in guisharingdialog otherwise
 	virtual void TableSelection(GUItable* table, int i,int button) {}
 protected:
 	
-	virtual GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, CSunParser& parser)
+	virtual GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser)
 	{
 		return NULL;
 	}
 	
-	void CreateUIElement(CSunParser& parser, GUIframe* parent, const std::string& path);
+	void CreateUIElement(TdfParser & parser, GUIframe* parent, const std::string& path);
 	
 	std::map<std::string, GUIframe*> controls;
 };
@@ -89,7 +89,7 @@ protected:
 	void ConsoleInput(const std::string& text);
 	void TableSelection(GUItable* table, int i,int button);
 	
-	GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, CSunParser& parser);
+	GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser);
 	
 	GUIgame* gameControl;
 	

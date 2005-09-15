@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "UnitDefHandler.h"
 #include "myGL.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
@@ -95,10 +95,10 @@ CUnitDefHandler::~CUnitDefHandler(void)
 
 void CUnitDefHandler::FindTABuildOpt()
 {
-	CSunParser sunparser;
-      	sunparser.LoadFile("gamedata/SIDEDATA.TDF");
+	TdfParser tdfparser;
+      	tdfparser.LoadFile("gamedata/SIDEDATA.TDF");
 
-	std::vector<std::string> sideunits = sunparser.GetSectionList("CANBUILD");
+	std::vector<std::string> sideunits = tdfparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)
 	{
 		std::map<std::string, std::string>::iterator it;
@@ -111,7 +111,7 @@ void CUnitDefHandler::FindTABuildOpt()
 
 		if(builder)
 		{
-			std::map<std::string, std::string> buildoptlist = sunparser.GetAllValues("CANBUILD\\" + sideunits[i]);
+			std::map<std::string, std::string> buildoptlist = tdfparser.GetAllValues("CANBUILD\\" + sideunits[i]);
 			for(it=buildoptlist.begin(); it!=buildoptlist.end(); it++)
 			{
 				UnitDef *buildopt=0;
@@ -128,8 +128,7 @@ void CUnitDefHandler::FindTABuildOpt()
 	std::vector<std::string> files = CFileHandler::FindFiles("download/*.tdf");
 	for(unsigned int i=0; i<files.size(); i++)
 	{
-		CSunParser dparser;
-		dparser.LoadFile(files[i]);
+		TdfParser dparser(files[i]);
 
 		std::vector<std::string> sectionlist = dparser.GetSectionList("");
 
@@ -164,109 +163,108 @@ void CUnitDefHandler::FindTABuildOpt()
 
 void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 {
-	CSunParser sunparser;
-	sunparser.LoadFile(file);
+	TdfParser tdfparser(file);
 
 	UnitDef& ud=unitDefs[id];
 
-	ud.name = sunparser.SGetValueMSG("UNITINFO\\UnitName");
-	ud.humanName = sunparser.SGetValueMSG("UNITINFO\\name");
+	ud.name = tdfparser.SGetValueMSG("UNITINFO\\UnitName");
+	ud.humanName = tdfparser.SGetValueMSG("UNITINFO\\name");
 
-	sunparser.GetDef(ud.extractsMetal, "0", "UNITINFO\\ExtractsMetal");
-	sunparser.GetDef(ud.windGenerator, "0", "UNITINFO\\WindGenerator");
-	sunparser.GetDef(ud.tidalGenerator, "0", "UNITINFO\\TidalGenerator");
+	tdfparser.GetDef(ud.extractsMetal, "0", "UNITINFO\\ExtractsMetal");
+	tdfparser.GetDef(ud.windGenerator, "0", "UNITINFO\\WindGenerator");
+	tdfparser.GetDef(ud.tidalGenerator, "0", "UNITINFO\\TidalGenerator");
 
-	ud.health=atof(sunparser.SGetValueDef("0", "UNITINFO\\MaxDamage").c_str());
-	ud.metalUpkeep=atof(sunparser.SGetValueDef("0", "UNITINFO\\MetalUse").c_str());
-	ud.energyUpkeep=atof(sunparser.SGetValueDef("0", "UNITINFO\\EnergyUse").c_str());
-	ud.metalMake=atof(sunparser.SGetValueDef("0", "UNITINFO\\MetalMake").c_str());
-	ud.makesMetal=atof(sunparser.SGetValueDef("0", "UNITINFO\\MakesMetal").c_str());
-	ud.energyMake=atof(sunparser.SGetValueDef("0", "UNITINFO\\EnergyMake").c_str());
-	ud.metalStorage=atof(sunparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
-	ud.energyStorage=atof(sunparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
+	ud.health=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxDamage").c_str());
+	ud.metalUpkeep=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalUse").c_str());
+	ud.energyUpkeep=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyUse").c_str());
+	ud.metalMake=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalMake").c_str());
+	ud.makesMetal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MakesMetal").c_str());
+	ud.energyMake=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyMake").c_str());
+	ud.metalStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
+	ud.energyStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
 
 	ud.controlRadius=32;
 	ud.losHeight=20;
-	ud.metalCost=atof(sunparser.SGetValueDef("0", "UNITINFO\\BuildCostMetal").c_str());
+	ud.metalCost=atof(tdfparser.SGetValueDef("0", "UNITINFO\\BuildCostMetal").c_str());
 	ud.mass=ud.metalCost;
-	ud.energyCost=atof(sunparser.SGetValueDef("0", "UNITINFO\\BuildCostEnergy").c_str());
-	ud.buildTime=atof(sunparser.SGetValueDef("0", "UNITINFO\\BuildTime").c_str());
+	ud.energyCost=atof(tdfparser.SGetValueDef("0", "UNITINFO\\BuildCostEnergy").c_str());
+	ud.buildTime=atof(tdfparser.SGetValueDef("0", "UNITINFO\\BuildTime").c_str());
 	ud.aihint=id;		//fix
-	ud.losRadius=atof(sunparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str());
-	ud.airLosRadius=atof(sunparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*1.5;
-	ud.tooltip=sunparser.SGetValueDef(ud.name,"UNITINFO\\Description");
+	ud.losRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str());
+	ud.airLosRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*1.5;
+	ud.tooltip=tdfparser.SGetValueDef(ud.name,"UNITINFO\\Description");
 	ud.moveType=0;
 	
-	sunparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
-	sunparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
-	sunparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
-	sunparser.GetDef(ud.upright, "0", "UNITINFO\\Upright");
-	sunparser.GetDef(ud.onoffable, "0", "UNITINFO\\onoffable");
+	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
+	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
+	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
+	tdfparser.GetDef(ud.upright, "0", "UNITINFO\\Upright");
+	tdfparser.GetDef(ud.onoffable, "0", "UNITINFO\\onoffable");
 
-	sunparser.GetDef(ud.maxSlope, "0", "UNITINFO\\MaxSlope");
+	tdfparser.GetDef(ud.maxSlope, "0", "UNITINFO\\MaxSlope");
 	ud.maxHeightDif=40*tan(ud.maxSlope*(PI/180));
 	ud.maxSlope = cos(ud.maxSlope*(PI/180));
-	sunparser.GetDef(ud.minWaterDepth, "-10e6", "UNITINFO\\MinWaterDepth");
-	sunparser.GetDef(ud.maxWaterDepth, "10e6", "UNITINFO\\MaxWaterDepth");
+	tdfparser.GetDef(ud.minWaterDepth, "-10e6", "UNITINFO\\MinWaterDepth");
+	tdfparser.GetDef(ud.maxWaterDepth, "10e6", "UNITINFO\\MaxWaterDepth");
 	std::string value;
-	ud.floater = sunparser.SGetValue(value, "UNITINFO\\Waterline");
-	sunparser.GetDef(ud.waterline, "0", "UNITINFO\\Waterline");
+	ud.floater = tdfparser.SGetValue(value, "UNITINFO\\Waterline");
+	tdfparser.GetDef(ud.waterline, "0", "UNITINFO\\Waterline");
 	if(ud.waterline>8 && ud.canmove)
 		ud.waterline+=10;		//make subs travel at somewhat larger depths to reduce vulnerability to surface weapons
 
-	sunparser.GetDef(ud.selfDCountdown, "5", "UNITINFO\\selfdestructcountdown");
+	tdfparser.GetDef(ud.selfDCountdown, "5", "UNITINFO\\selfdestructcountdown");
 
-	ud.speed=atof(sunparser.SGetValueDef("0", "UNITINFO\\MaxVelocity").c_str())*30;
-	ud.maxAcc=atof(sunparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str())*0.1;
-	ud.maxDec=atof(sunparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1;
-	ud.turnRate=atof(sunparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
-	ud.buildSpeed=atof(sunparser.SGetValueDef("0", "UNITINFO\\WorkerTime").c_str());
-	ud.buildDistance=atof(sunparser.SGetValueDef("64", "UNITINFO\\Builddistance").c_str());
+	ud.speed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxVelocity").c_str())*30;
+	ud.maxAcc=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str())*0.1;
+	ud.maxDec=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1;
+	ud.turnRate=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
+	ud.buildSpeed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\WorkerTime").c_str());
+	ud.buildDistance=atof(tdfparser.SGetValueDef("64", "UNITINFO\\Builddistance").c_str());
 	ud.buildDistance=max(128.f,ud.buildDistance);
-	ud.armoredMultiple=atof(sunparser.SGetValueDef("1", "UNITINFO\\DamageModifier").c_str());
+	ud.armoredMultiple=atof(tdfparser.SGetValueDef("1", "UNITINFO\\DamageModifier").c_str());
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
 //	info->AddLine("unit %s has armor %i",ud.name.c_str(),ud.armorType);
 
-	ud.radarRadius=atoi(sunparser.SGetValueDef("0", "UNITINFO\\RadarDistance").c_str());
-	ud.sonarRadius=atoi(sunparser.SGetValueDef("0", "UNITINFO\\SonarDistance").c_str());
-	ud.jammerRadius=atoi(sunparser.SGetValueDef("0", "UNITINFO\\RadarDistanceJam").c_str());
-	ud.stealth=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\Stealth").c_str());
-	ud.targfac=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\istargetingupgrade").c_str());
-	ud.isFeature=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\IsFeature").c_str());
-	ud.canResurrect=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\canResurrect").c_str());
-	ud.canCapture=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\canCapture").c_str());
-	ud.hideDamage=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\HideDamage").c_str());
-	ud.isCommander=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\commander").c_str());
+	ud.radarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistance").c_str());
+	ud.sonarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistance").c_str());
+	ud.jammerRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistanceJam").c_str());
+	ud.stealth=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\Stealth").c_str());
+	ud.targfac=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\istargetingupgrade").c_str());
+	ud.isFeature=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\IsFeature").c_str());
+	ud.canResurrect=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canResurrect").c_str());
+	ud.canCapture=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canCapture").c_str());
+	ud.hideDamage=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HideDamage").c_str());
+	ud.isCommander=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\commander").c_str());
 
-	ud.cloakCost=atof(sunparser.SGetValueDef("-1", "UNITINFO\\CloakCost").c_str());
-	ud.cloakCostMoving=atof(sunparser.SGetValueDef("-1", "UNITINFO\\CloakCostMoving").c_str());
+	ud.cloakCost=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\CloakCost").c_str());
+	ud.cloakCostMoving=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\CloakCostMoving").c_str());
 	if(ud.cloakCostMoving<0)
 		ud.cloakCostMoving=ud.cloakCost;
 	if(ud.cloakCost>=0)
 		ud.canCloak=true;
 	else
 		ud.canCloak=false;
-	ud.startCloaked=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\init_cloaked").c_str());
-	ud.decloakDistance=atof(sunparser.SGetValueDef("-1", "UNITINFO\\mincloakdistance").c_str());
+	ud.startCloaked=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\init_cloaked").c_str());
+	ud.decloakDistance=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\mincloakdistance").c_str());
 	
-	ud.highTrajectoryType=atoi(sunparser.SGetValueDef("0", "UNITINFO\\HighTrajectory").c_str());
+	ud.highTrajectoryType=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HighTrajectory").c_str());
 
-	ud.canKamikaze=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\kamikaze").c_str());
-	ud.kamikazeDist=atof(sunparser.SGetValueDef("-25", "UNITINFO\\kamikazedistance").c_str())+25; //we count 3d distance while ta count 2d distance so increase slightly
+	ud.canKamikaze=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\kamikaze").c_str());
+	ud.kamikazeDist=atof(tdfparser.SGetValueDef("-25", "UNITINFO\\kamikazedistance").c_str())+25; //we count 3d distance while ta count 2d distance so increase slightly
 
-	sunparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
-	sunparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
-	sunparser.GetDef(ud.canhover, "0", "UNITINFO\\canhover");
-	if(sunparser.SGetValue(value, "UNITINFO\\floater"))
-		sunparser.GetDef(ud.floater, "0", "UNITINFO\\floater");
-	sunparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
+	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
+	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
+	tdfparser.GetDef(ud.canhover, "0", "UNITINFO\\canhover");
+	if(tdfparser.SGetValue(value, "UNITINFO\\floater"))
+		tdfparser.GetDef(ud.floater, "0", "UNITINFO\\floater");
+	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
 
 	if(ud.builder && !ud.buildSpeed)		//core anti is flagged as builder for some reason
 		ud.builder=false;
 
-	sunparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");
-	sunparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
-	ud.stunnedCargo=!atoi(sunparser.SGetValueDef("0", "UNITINFO\\isAirBase").c_str());
+	tdfparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");
+	tdfparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
+	ud.stunnedCargo=!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\isAirBase").c_str());
 	ud.loadingRadius=220;
 
 	ud.wingDrag=0.07;			//drag caused by wings
@@ -287,9 +285,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.maxRudder=0.004;			//turn speed around yaw axis
 
 
-	ud.categoryString=sunparser.SGetValueDef("", "UNITINFO\\Category");
-	ud.category=CCategoryHandler::Instance()->GetCategories(sunparser.SGetValueDef("", "UNITINFO\\Category"));
-	ud.noChaseCategory=CCategoryHandler::Instance()->GetCategories(sunparser.SGetValueDef("", "UNITINFO\\NoChaseCategory"));
+	ud.categoryString=tdfparser.SGetValueDef("", "UNITINFO\\Category");
+	ud.category=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\Category"));
+	ud.noChaseCategory=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\NoChaseCategory"));
 //	info->AddLine("Unit %s has cat %i",ud.humanName.c_str(),ud.category);
 
 	for(int a=0;a<16;++a){
@@ -297,7 +295,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		sprintf(c,"%i",a+1);
 
 		string name;
-		sunparser.GetDef(name, "", std::string("UNITINFO\\")+"weapon"+c);
+		tdfparser.GetDef(name, "", std::string("UNITINFO\\")+"weapon"+c);
 		WeaponDef *wd = weaponDefHandler->GetWeapon(name);
 
 		if(!wd){
@@ -311,37 +309,37 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			ud.weapons.push_back(UnitDef::UnitDefWeapon("",0,0,float3(0,0,1),-1,0));
 
 		string badTarget;
-		sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "badTargetCategory"+c);
+		tdfparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "badTargetCategory"+c);
 		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
 		if(a<3){
 			switch(a){
 				case 0:
-					sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wpri_badTargetCategory");
+					tdfparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wpri_badTargetCategory");
 					break;
 				case 1:
-					sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wsec_badTargetCategory");
+					tdfparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wsec_badTargetCategory");
 					break;
 				case 2:
-					sunparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wspe_badTargetCategory");
+					tdfparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "wspe_badTargetCategory");
 					break;
 			}
 			btc|=CCategoryHandler::Instance()->GetCategories(badTarget);
 		}
-		unsigned int slaveTo=atoi(sunparser.SGetValueDef("0", string("UNITINFO\\WeaponSlaveTo")+c).c_str());
+		unsigned int slaveTo=atoi(tdfparser.SGetValueDef("0", string("UNITINFO\\WeaponSlaveTo")+c).c_str());
 
-		float3 mainDir=sunparser.GetFloat3(float3(1,0,0),string("UNITINFO\\WeaponMainDir")+c);
+		float3 mainDir=tdfparser.GetFloat3(float3(1,0,0),string("UNITINFO\\WeaponMainDir")+c);
 		mainDir.Normalize();
 
-		float angleDif=cos(atof(sunparser.SGetValueDef("360", string("UNITINFO\\MaxAngleDif")+c).c_str())*PI/360);
+		float angleDif=cos(atof(tdfparser.SGetValueDef("360", string("UNITINFO\\MaxAngleDif")+c).c_str())*PI/360);
 
 		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc));
 	}
-	sunparser.GetDef(ud.canDGun, "0", "UNITINFO\\candgun");
+	tdfparser.GetDef(ud.canDGun, "0", "UNITINFO\\candgun");
 
-	ud.wantedHeight=atof(sunparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str())*1.5;
-	ud.hoverAttack = !!atoi(sunparser.SGetValueDef("0", "UNITINFO\\hoverattack").c_str());
+	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str())*1.5;
+	ud.hoverAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\hoverattack").c_str());
 
-	string TEDClass=sunparser.SGetValueDef("0", "UNITINFO\\TEDClass").c_str();
+	string TEDClass=tdfparser.SGetValueDef("0", "UNITINFO\\TEDClass").c_str();
 	ud.TEDClassString=TEDClass;
 
 	if(ud.extractsMetal) {
@@ -382,7 +380,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.movedata=0;
 	if(ud.canmove && !ud.canfly && ud.type!="Factory"){
-		string moveclass=sunparser.SGetValueDef("", "UNITINFO\\MovementClass");
+		string moveclass=tdfparser.SGetValueDef("", "UNITINFO\\MovementClass");
 		ud.movedata=moveinfo->GetMoveDataFromName(moveclass);
 		if(ud.movedata->moveType==MoveData::Hover_Move || ud.movedata->moveType==MoveData::Ship_Move){
 			ud.upright=true;
@@ -407,16 +405,16 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		ud.drag=1.0/(ud.speed/GAME_SPEED*1.1/ud.maxAcc)-ud.wingAngle*ud.wingAngle*ud.wingDrag;
 
 	std::string objectname;
-	sunparser.GetDef(objectname, "", "UNITINFO\\Objectname");
+	tdfparser.GetDef(objectname, "", "UNITINFO\\Objectname");
 	ud.model.modelpath = "objects3d/" + objectname + ".3do";
 	ud.model.modelname = objectname;
 
-	sunparser.GetDef(ud.wreckName, "", "UNITINFO\\Corpse");
-	sunparser.GetDef(ud.deathExplosion, "", "UNITINFO\\ExplodeAs");
-	sunparser.GetDef(ud.selfDExplosion, "", "UNITINFO\\SelfDestructAs");
+	tdfparser.GetDef(ud.wreckName, "", "UNITINFO\\Corpse");
+	tdfparser.GetDef(ud.deathExplosion, "", "UNITINFO\\ExplodeAs");
+	tdfparser.GetDef(ud.selfDExplosion, "", "UNITINFO\\SelfDestructAs");
 
 	string buildpic;
-	sunparser.GetDef(buildpic, "", "UNITINFO\\BuildPic");
+	tdfparser.GetDef(buildpic, "", "UNITINFO\\BuildPic");
 	if(buildpic.empty())
 	{
 		//try pcx first and then bmp if no pcx exist
@@ -448,51 +446,51 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.power = (ud.metalCost + ud.energyCost/60.0f);
 
-	sunparser.GetDef(ud.activateWhenBuilt, "0", "UNITINFO\\ActivateWhenBuilt");
+	tdfparser.GetDef(ud.activateWhenBuilt, "0", "UNITINFO\\ActivateWhenBuilt");
 	
-	ud.xsize=atoi(sunparser.SGetValueDef("1", "UNITINFO\\FootprintX").c_str())*2;//ta has only half our res so multiply size with 2
-	ud.ysize=atoi(sunparser.SGetValueDef("1", "UNITINFO\\FootprintZ").c_str())*2;
+	ud.xsize=atoi(tdfparser.SGetValueDef("1", "UNITINFO\\FootprintX").c_str())*2;//ta has only half our res so multiply size with 2
+	ud.ysize=atoi(tdfparser.SGetValueDef("1", "UNITINFO\\FootprintZ").c_str())*2;
 
 	ud.needGeo=false;
 	if(ud.type=="Building" || ud.type=="Factory"){
-//		CreateBlockingLevels(&ud,sunparser.SGetValueDef("c", "UNITINFO\\YardMap"));
-		CreateYardMap(&ud, sunparser.SGetValueDef("c", "UNITINFO\\YardMap"));
+//		CreateBlockingLevels(&ud,tdfparser.SGetValueDef("c", "UNITINFO\\YardMap"));
+		CreateYardMap(&ud, tdfparser.SGetValueDef("c", "UNITINFO\\YardMap"));
 	} else {
 		ud.yardmap = 0;
 	}
 
-	ud.leaveTracks=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\LeaveTracks").c_str());
-	ud.trackWidth=atof(sunparser.SGetValueDef("32", "UNITINFO\\TrackWidth").c_str());
-	ud.trackOffset=atof(sunparser.SGetValueDef("0", "UNITINFO\\TrackOffset").c_str());
-	ud.trackStrength=atof(sunparser.SGetValueDef("0", "UNITINFO\\TrackStrength").c_str());
-	ud.trackStretch=atof(sunparser.SGetValueDef("1", "UNITINFO\\TrackStretch").c_str());
+	ud.leaveTracks=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\LeaveTracks").c_str());
+	ud.trackWidth=atof(tdfparser.SGetValueDef("32", "UNITINFO\\TrackWidth").c_str());
+	ud.trackOffset=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TrackOffset").c_str());
+	ud.trackStrength=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TrackStrength").c_str());
+	ud.trackStretch=atof(tdfparser.SGetValueDef("1", "UNITINFO\\TrackStretch").c_str());
 	if(ud.leaveTracks && groundDecals)
-		ud.trackType=groundDecals->GetTrackType(sunparser.SGetValueDef("StdTank", "UNITINFO\\TrackType"));
+		ud.trackType=groundDecals->GetTrackType(tdfparser.SGetValueDef("StdTank", "UNITINFO\\TrackType"));
 
-	ud.canDropFlare=!!atoi(sunparser.SGetValueDef("0", "UNITINFO\\CanDropFlare").c_str());
-	ud.flareReloadTime=atof(sunparser.SGetValueDef("5", "UNITINFO\\FlareReload").c_str());
-	ud.flareEfficieny=atof(sunparser.SGetValueDef("0.5", "UNITINFO\\FlareEfficiency").c_str());
-	ud.flareDelay=atof(sunparser.SGetValueDef("0.3", "UNITINFO\\FlareDelay").c_str());
-	ud.flareDropVector=sunparser.GetFloat3(ZeroVector,"UNITINFO\\FlareDropVector");
-	ud.flareTime=atoi(sunparser.SGetValueDef("3", "UNITINFO\\FlareTime").c_str())*30;
-	ud.flareSalvoSize=atoi(sunparser.SGetValueDef("4", "UNITINFO\\FlareSalvoSize").c_str());
-	ud.flareSalvoDelay=atoi(sunparser.SGetValueDef("0.1", "UNITINFO\\FlareSalvoDelay").c_str())*30;
+	ud.canDropFlare=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\CanDropFlare").c_str());
+	ud.flareReloadTime=atof(tdfparser.SGetValueDef("5", "UNITINFO\\FlareReload").c_str());
+	ud.flareEfficieny=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\FlareEfficiency").c_str());
+	ud.flareDelay=atof(tdfparser.SGetValueDef("0.3", "UNITINFO\\FlareDelay").c_str());
+	ud.flareDropVector=tdfparser.GetFloat3(ZeroVector,"UNITINFO\\FlareDropVector");
+	ud.flareTime=atoi(tdfparser.SGetValueDef("3", "UNITINFO\\FlareTime").c_str())*30;
+	ud.flareSalvoSize=atoi(tdfparser.SGetValueDef("4", "UNITINFO\\FlareSalvoSize").c_str());
+	ud.flareSalvoDelay=atoi(tdfparser.SGetValueDef("0.1", "UNITINFO\\FlareSalvoDelay").c_str())*30;
 
-	ud.smoothAnim = !!atoi(sunparser.SGetValueDef("0", "UNITINFO\\SmoothAnim").c_str());
+	ud.smoothAnim = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SmoothAnim").c_str());
 
-	LoadSound(sunparser, ud.sounds.ok, "ok1");
-	LoadSound(sunparser, ud.sounds.select, "select1");
-	LoadSound(sunparser, ud.sounds.arrived, "arrived1");
-	LoadSound(sunparser, ud.sounds.build, "build");
-	LoadSound(sunparser, ud.sounds.activate, "activate");
-	LoadSound(sunparser, ud.sounds.deactivate, "deactivate");
-	LoadSound(sunparser, ud.sounds.cant, "cant");
-	LoadSound(sunparser, ud.sounds.underattack, "underattack");
+	LoadSound(tdfparser, ud.sounds.ok, "ok1");
+	LoadSound(tdfparser, ud.sounds.select, "select1");
+	LoadSound(tdfparser, ud.sounds.arrived, "arrived1");
+	LoadSound(tdfparser, ud.sounds.build, "build");
+	LoadSound(tdfparser, ud.sounds.activate, "activate");
+	LoadSound(tdfparser, ud.sounds.deactivate, "deactivate");
+	LoadSound(tdfparser, ud.sounds.cant, "cant");
+	LoadSound(tdfparser, ud.sounds.underattack, "underattack");
 }
 
-void CUnitDefHandler::LoadSound(CSunParser &sunparser, GuiSound &gsound, std::string sunname)
+void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound &gsound, std::string sunname)
 {
-	soundcategory.GetDef(gsound.name, "", sunparser.SGetValueDef("", "UNITINFO\\SoundCategory")+"\\"+sunname);
+	soundcategory.GetDef(gsound.name, "", tdfparser.SGetValueDef("", "UNITINFO\\SoundCategory")+"\\"+sunname);
 	if(gsound.name.compare("")==0)
 		gsound.id = 0;
 	else

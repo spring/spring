@@ -2,7 +2,7 @@
 #include "FeatureHandler.h"
 #include "Feature.h"
 #include "FileHandler.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "InfoConsole.h"
 #include "myGL.h"
 #include <GL/glu.h>
@@ -25,7 +25,7 @@
 using namespace std;
 CFeatureHandler* featureHandler=0;
 
-CFeatureHandler::CFeatureHandler(void)
+CFeatureHandler::CFeatureHandler()
 :	curClean(0),
 	overrideId(-1)
 {
@@ -53,7 +53,7 @@ CFeatureHandler::CFeatureHandler(void)
 	treeDrawer=CBaseTreeDrawer::GetTreeDrawer();
 }
 
-CFeatureHandler::~CFeatureHandler(void)
+CFeatureHandler::~CFeatureHandler()
 {
 //	for(std::set<CFeature*>::iterator fi=featureSet.begin();fi!=featureSet.end();++fi)
 //		delete *fi;
@@ -72,7 +72,6 @@ CFeatureHandler::~CFeatureHandler(void)
 	}
 	delete treeDrawer;
 	delete[] drawQuads;
-	delete wreckParser;
 }
 
 CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke,std::string fromUnit)
@@ -98,7 +97,7 @@ CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string&
 	return 0;
 }
 
-void CFeatureHandler::Draw(void)
+void CFeatureHandler::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
 	unitDrawer->SetupForUnitDrawing();
@@ -118,7 +117,7 @@ void CFeatureHandler::Draw(void)
 	}
 }
 
-void CFeatureHandler::DrawShadowPass(void)
+void CFeatureHandler::DrawShadowPass()
 {
 	ASSERT_UNSYNCED_MODE;
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowVP );
@@ -132,7 +131,7 @@ void CFeatureHandler::DrawShadowPass(void)
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 }
 
-void CFeatureHandler::Update(void)
+void CFeatureHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
 START_TIME_PROFILE
@@ -178,17 +177,16 @@ START_TIME_PROFILE
 END_TIME_PROFILE("Feature::Update");
 }
 
-void CFeatureHandler::LoadWreckFeatures(void)
+void CFeatureHandler::LoadWreckFeatures()
 {
 	std::vector<string> files=CFileHandler::FindFiles("features/corpses/*.tdf");
 	std::vector<string> files2=CFileHandler::FindFiles("features/All Worlds/*.tdf");
-	wreckParser=new CSunParser();
 
 	for(vector<string>::iterator fi=files.begin();fi!=files.end();++fi){
-		wreckParser->LoadFile(*fi);	
+		wreckParser.LoadFile(*fi);	
 	}
 	for(vector<string>::iterator fi=files2.begin();fi!=files2.end();++fi){
-		wreckParser->LoadFile(*fi);	
+		wreckParser.LoadFile(*fi);	
 	}
 }
 
@@ -284,7 +282,7 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 			fd->myName=name;
 			fd->mass=100000;
 			featureDefs[name]=fd;
-		} else if(wreckParser->SectionExist(name)){
+		} else if(wreckParser.SectionExist(name)){
 			GetFeatureDef(name);
 		} else {
 			info->AddLine("Unknown feature type %s",name.c_str());
@@ -507,7 +505,7 @@ void CFeatureHandler::DrawRaw(int extraSize)
 	}
 }
 
-void CFeatureHandler::DrawFarQuads(void)
+void CFeatureHandler::DrawFarQuads()
 {
 	glAlphaFunc(GL_GREATER,0.8f);
 	glEnable(GL_ALPHA_TEST);
@@ -595,30 +593,30 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 	std::map<std::string,FeatureDef*>::iterator fi=featureDefs.find(name);
 
 	if(fi==featureDefs.end()){
-		if(!wreckParser->SectionExist(name)){
+		if(!wreckParser.SectionExist(name)){
 			info->AddLine("Couldnt find wreckage info %s",name.c_str());
 			return 0;
 		}
 		FeatureDef* fd=new FeatureDef;
-		fd->blocking=!!atoi(wreckParser->SGetValueDef("1",name+"\\blocking").c_str());
+		fd->blocking=!!atoi(wreckParser.SGetValueDef("1",name+"\\blocking").c_str());
 		fd->destructable=true;
 		fd->burnable=false;
-		fd->floating=!!atoi(wreckParser->SGetValueDef("1",name+"\\nodrawundergray").c_str());		//this seem to be the closest thing to floating that ta wreckage contains
+		fd->floating=!!atoi(wreckParser.SGetValueDef("1",name+"\\nodrawundergray").c_str());		//this seem to be the closest thing to floating that ta wreckage contains
 		if(fd->floating && !fd->blocking)
 			fd->floating=false;
 
-		fd->deathFeature=wreckParser->SGetValueDef("",name+"\\featuredead");
+		fd->deathFeature=wreckParser.SGetValueDef("",name+"\\featuredead");
 		fd->drawType=DRAWTYPE_3DO;
-		fd->energy=atof(wreckParser->SGetValueDef("0",name+"\\energy").c_str());
-		fd->maxHealth=atof(wreckParser->SGetValueDef("0",name+"\\damage").c_str());
-		fd->metal=atof(wreckParser->SGetValueDef("0",name+"\\metal").c_str());
+		fd->energy=atof(wreckParser.SGetValueDef("0",name+"\\energy").c_str());
+		fd->maxHealth=atof(wreckParser.SGetValueDef("0",name+"\\damage").c_str());
+		fd->metal=atof(wreckParser.SGetValueDef("0",name+"\\metal").c_str());
 		fd->model=0;
-		fd->modelname=wreckParser->SGetValueDef("",name+"\\object");
+		fd->modelname=wreckParser.SGetValueDef("",name+"\\object");
 		if(fd->modelname.find(".3do")==string::npos && !fd->modelname.empty())
 			fd->modelname=string("objects3d/")+fd->modelname+".3do";
 		fd->radius=0;
-		fd->xsize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
-		fd->ysize=atoi(wreckParser->SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
+		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
+		fd->ysize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
 		fd->mass=fd->metal*0.4+fd->maxHealth*0.1;
 
 		fd->myName=name;

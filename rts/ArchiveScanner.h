@@ -19,7 +19,7 @@ using namespace std;
  * than one folder.
  */
 
-class CSunParser;
+class TdfParser;
 
 class CArchiveScanner
 {
@@ -57,7 +57,7 @@ protected:
 		string replaced;					// If not empty, use that archive instead
 	};
 	map<string, ArchiveInfo> archiveInfo;	
-	ModData GetModData(CSunParser* p, const string& section);
+	ModData GetModData(TdfParser* p, const string& section);
 	unsigned int GetCRC(const string& filename);
 	bool isDirty;
 	unsigned int crcTable[256];

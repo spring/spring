@@ -17,7 +17,6 @@
 #include "Builder.h"
 #include "MeleeWeapon.h"
 #include "Sound.h"
-#include "SunParser.h"
 #include "UnitDefHandler.h"
 #include "3DOParser.h"
 #include "CobEngine.h"

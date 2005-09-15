@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "GameSetup.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "Player.h"
 #include "Team.h"
 #include "myGL.h"
@@ -28,7 +28,6 @@ extern string stupidGlobalMapname;
 
 CGameSetup::CGameSetup(void)
 {
-	file=0;
 	readyTime=0;
 	gameSetupText=0;
 	startPosType=0;
@@ -37,7 +36,6 @@ CGameSetup::CGameSetup(void)
 
 CGameSetup::~CGameSetup(void)
 {
-	delete file;
 	delete[] gameSetupText;
 }
 
@@ -62,20 +60,19 @@ bool CGameSetup::Init(char* buf, int size)
 	memcpy(gameSetupText,buf,size);
 	gameSetupTextLength=size;
 
-	file=new CSunParser;
-	file->LoadBuffer(buf,size);
+	file.LoadBuffer(buf,size);
 
-	if(!file->SectionExist("GAME"))
+	if(!file.SectionExist("GAME"))
 		return false;
 
-	mapname=file->SGetValueDef("","GAME\\mapname");
-	baseMod=file->SGetValueDef(MOD_FILE,"GAME\\Gametype");
-	file->GetDef(hostip,"0","GAME\\HostIP");
-	file->GetDef(hostport,"0","GAME\\HostPort");
-	file->GetDef(maxUnits,"500","GAME\\MaxUnits");
-	file->GetDef(gs->gameMode,"0","GAME\\GameMode");
-	file->GetDef(sourceport,"0","GAME\\SourcePort");
-	file->GetDef(limitDgun,"0","GAME\\LimitDgun");
+	mapname=file.SGetValueDef("","GAME\\mapname");
+	baseMod=file.SGetValueDef(MOD_FILE,"GAME\\Gametype");
+	file.GetDef(hostip,"0","GAME\\HostIP");
+	file.GetDef(hostport,"0","GAME\\HostPort");
+	file.GetDef(maxUnits,"500","GAME\\MaxUnits");
+	file.GetDef(gs->gameMode,"0","GAME\\GameMode");
+	file.GetDef(sourceport,"0","GAME\\SourcePort");
+	file.GetDef(limitDgun,"0","GAME\\LimitDgun");
 
 	// Determine if the map is inside an archive, and possibly map needed archives
 	CFileHandler* f = new CFileHandler("maps/" + mapname);
@@ -87,13 +84,13 @@ bool CGameSetup::Init(char* buf, int size)
 	}
 	delete f;
 
-	file->GetDef(myPlayer,"0","GAME\\MyPlayerNum");
+	file.GetDef(myPlayer,"0","GAME\\MyPlayerNum");
 	gu->myPlayerNum=myPlayer;
-	file->GetDef(numPlayers,"2","GAME\\NumPlayers");
-	file->GetDef(gs->activeTeams,"2","GAME\\NumTeams");
-	file->GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
+	file.GetDef(numPlayers,"2","GAME\\NumPlayers");
+	file.GetDef(gs->activeTeams,"2","GAME\\NumTeams");
+	file.GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
 
-	file->GetDef(startPosType,"0","GAME\\StartPosType");
+	file.GetDef(startPosType,"0","GAME\\StartPosType");
 	if(startPosType==2){
 		for(int a=0;a<gs->activeTeams;++a)
 			readyTeams[a]=false;
@@ -122,30 +119,29 @@ bool CGameSetup::Init(char* buf, int size)
 		sprintf(section,"GAME\\PLAYER%i\\",a);
 		string s(section);
 
-		gs->players[a]->team=atoi(file->SGetValueDef("0",s+"team").c_str());
-		gs->players[a]->spectator=!!atoi(file->SGetValueDef("0",s+"spectator").c_str());
-		gs->players[a]->playerName=file->SGetValueDef("0",s+"name");
+		gs->players[a]->team=atoi(file.SGetValueDef("0",s+"team").c_str());
+		gs->players[a]->spectator=!!atoi(file.SGetValueDef("0",s+"spectator").c_str());
+		gs->players[a]->playerName=file.SGetValueDef("0",s+"name");
 	}
 	gu->spectating=gs->players[myPlayer]->spectator;
 
-	CSunParser p2;
-	p2.LoadFile(string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd");
+	TdfParser p2(string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd");
 
 	for(int a=0;a<gs->activeTeams;++a){
 		char section[50];
 		sprintf(section,"GAME\\TEAM%i\\",a);
 		string s(section);
 
-		gs->teams[a]->colorNum=atoi(file->SGetValueDef("0",s+"color").c_str());
+		gs->teams[a]->colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
 		for(int b=0;b<4;++b)
 			gs->teams[a]->color[b]=palette.teamColor[gs->teams[a]->colorNum][b];
 
-		gs->teams[a]->handicap=atof(file->SGetValueDef("0",s+"handicap").c_str())/100+1;
-		gs->teams[a]->leader=atoi(file->SGetValueDef("0",s+"teamleader").c_str());
-		gs->teams[a]->side=file->SGetValueDef("arm",s+"side").c_str();
+		gs->teams[a]->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
+		gs->teams[a]->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
+		gs->teams[a]->side=file.SGetValueDef("arm",s+"side").c_str();
 		std::transform(gs->teams[a]->side.begin(), gs->teams[a]->side.end(), gs->teams[a]->side.begin(), (int (*)(int))std::tolower);
-		gs->team2allyteam[a]=atoi(file->SGetValueDef("0",s+"allyteam").c_str());
-		aiDlls[a]=file->SGetValueDef("",s+"aidll");
+		gs->team2allyteam[a]=atoi(file.SGetValueDef("0",s+"allyteam").c_str());
+		aiDlls[a]=file.SGetValueDef("",s+"aidll");
 
 		float x,z;
 		char teamName[50];
@@ -165,16 +161,16 @@ bool CGameSetup::Init(char* buf, int size)
 		sprintf(section,"GAME\\ALLYTEAM%i\\",a);
 		string s(section);
 
-		startRectTop[a]=atof(file->SGetValueDef("0",s+"StartRectTop").c_str());
-		startRectBottom[a]=atof(file->SGetValueDef("1",s+"StartRectBottom").c_str());
-		startRectLeft[a]=atof(file->SGetValueDef("0",s+"StartRectLeft").c_str());
-		startRectRight[a]=atof(file->SGetValueDef("1",s+"StartRectRight").c_str());
+		startRectTop[a]=atof(file.SGetValueDef("0",s+"StartRectTop").c_str());
+		startRectBottom[a]=atof(file.SGetValueDef("1",s+"StartRectBottom").c_str());
+		startRectLeft[a]=atof(file.SGetValueDef("0",s+"StartRectLeft").c_str());
+		startRectRight[a]=atof(file.SGetValueDef("1",s+"StartRectRight").c_str());
 
-		int numAllies=atoi(file->SGetValueDef("0",s+"NumAllies").c_str());
+		int numAllies=atoi(file.SGetValueDef("0",s+"NumAllies").c_str());
 		for(int b=0;b<numAllies;++b){
 			char key[100];
 			sprintf(key,"GAME\\ALLYTEAM%i\\Ally%i",a,b);
-			int other=atoi(file->SGetValueDef("0",key).c_str());
+			int other=atoi(file.SGetValueDef("0",key).c_str());
 			gs->allies[a][other]=true;
 		}
 	}
@@ -184,8 +180,8 @@ bool CGameSetup::Init(char* buf, int size)
 	}
 
 	int metal,energy;
-	file->GetDef(metal,"1000","GAME\\StartMetal");
-	file->GetDef(energy,"1000","GAME\\StartEnergy");
+	file.GetDef(metal,"1000","GAME\\StartMetal");
+	file.GetDef(energy,"1000","GAME\\StartEnergy");
 	for(int a=0;a<gs->activeTeams;++a){
 		gs->teams[a]->metal=metal;
 		gs->teams[a]->metalStorage=metal;
@@ -196,15 +192,15 @@ bool CGameSetup::Init(char* buf, int size)
 
 	// Read the unit restrictions
 	int numRestrictions;
-	file->GetDef(numRestrictions, "0", "GAME\\NumRestrictions");
+	file.GetDef(numRestrictions, "0", "GAME\\NumRestrictions");
 
 	for (int i = 0; i < numRestrictions; ++i) {
 		char key[100];
 		sprintf(key, "GAME\\RESTRICT\\Unit%d", i);
-		string resName = file->SGetValueDef("", key);
+		string resName = file.SGetValueDef("", key);
 		sprintf(key, "GAME\\RESTRICT\\Limit%d", i);
 		int resLimit;
-		file->GetDef(resLimit, "0", key);
+		file.GetDef(resLimit, "0", key);
 
 		restrictedUnits[resName] = resLimit;
 	}

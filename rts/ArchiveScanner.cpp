@@ -2,7 +2,7 @@
 #include "ArchiveScanner.h"
 #include "ArchiveFactory.h"
 #include <algorithm>
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "myGL.h"
 #include "FileHandler.h"
 #include "filefunctions.h"
@@ -36,7 +36,7 @@ CArchiveScanner::~CArchiveScanner(void)
 		WriteCacheData();
 }
 
-CArchiveScanner::ModData CArchiveScanner::GetModData(CSunParser* p, const string& section)
+CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string& section)
 {
 	ModData md;
 	md.name = "";
@@ -166,19 +166,18 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 						}
 
 						if (name == "modinfo.tdf") {
-							CSunParser *p = new CSunParser();
 							int fh = ar->OpenFile(name);
 							if (fh) {
 								int fsize = ar->FileSize(fh);
+
 								void* buf = malloc(fsize);
 								ar->ReadFile(fh, buf, fsize);
 								ar->CloseFile(fh);
-								p->LoadBuffer((char*)buf, fsize);	
+                TdfParser p( reinterpret_cast<char*>(buf), fsize );
 								free(buf);
 								
-								ai.modData = GetModData(p, "mod");
+								ai.modData = GetModData(&p, "mod");
 							}
-							delete p;
 
 						}
 
@@ -296,8 +295,7 @@ void CArchiveScanner::ReadCacheData()
 	if (!file.FileExists())
 		return;
 
-	CSunParser p;
-	p.LoadFile("archivecache.txt");
+	TdfParser p("archivecache.txt");
 
 	// Do not load old version caches
 	int ver = atoi(p.SGetValueDef("0", "archivecache\\internalver").c_str());

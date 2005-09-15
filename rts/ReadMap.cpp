@@ -28,7 +28,6 @@
 //#include "multipath.h"
 #include "PathManager.h"
 #include "Wind.h"
-#include "SunParser.h"
 #include "GeometricObjects.h"
 #include "LoadSaveInterface.h"
 #include "MapDamage.h"

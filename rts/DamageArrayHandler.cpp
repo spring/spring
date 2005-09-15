@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "DamageArrayHandler.h"
 #include "DamageArray.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "InfoConsole.h"
 #include <algorithm>
 #include <locale>
@@ -13,8 +13,7 @@ int DamageArray::numTypes=1;
 
 CDamageArrayHandler::CDamageArrayHandler(void)
 {
-	CSunParser p;
-	p.LoadFile("Armor.txt");
+	TdfParser p("Armor.txt");
 
 	std::vector<std::string> typelist = p.GetSectionList("");
 

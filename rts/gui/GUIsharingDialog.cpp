@@ -153,7 +153,7 @@ void GUIsharingDialog::UpdatePlayerList()
 }
 
 
-GUIframe* GUIsharingDialog::CreateControl(const std::string& type, int x, int y, int w, int h, CSunParser& parser)
+GUIframe* GUIsharingDialog::CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser)
 {
 	GUIframe *frame=NULL;
 	if(type=="slider")
