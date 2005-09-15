@@ -9,7 +9,6 @@
 #include "BFGroundTextures.h"
 #include "InfoConsole.h"
 #include "MetalMap.h"
-#include "SunParser.h"
 #include "FeatureHandler.h"
 #include "myMath.h"
 #include "errorhandler.h"

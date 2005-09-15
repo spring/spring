@@ -12,10 +12,10 @@
 #ifdef __GNUG__
 #include <ext/hash_set>
 #endif
+#include "TdfParser.h"
 
 struct S3DOModel;
 class CFeature;
-class CSunParser;
 class CFileHandler;
 class CLoadSaveInterface;
 class CVertexArray;
@@ -62,13 +62,13 @@ class CFeatureHandler :
 	public CObject
 {
 public:
-	CFeatureHandler(void);
-	~CFeatureHandler(void);
+	CFeatureHandler();
+	~CFeatureHandler();
 	CFeature* CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke,std::string fromUnit);
 
-	void Update(void);
+	void Update();
 
-	void LoadWreckFeatures(void);
+	void LoadWreckFeatures();
 	int AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
 
@@ -79,11 +79,11 @@ public:
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 	void LoadSaveFeatures(CLoadSaveInterface* file, bool loading);
 
-	void Draw(void);
-	void DrawShadowPass(void);
+	void Draw();
+	void DrawShadowPass();
 	void DrawRaw(int extraSize);		//the part of draw that both draw and drawshadowpass can use
 
-	CSunParser* wreckParser;
+	TdfParser wreckParser;
 	std::map<std::string,FeatureDef*> featureDefs;
 
 //	std::set<CFeature*> featureSet;
@@ -119,7 +119,7 @@ public:
 
 	int overrideId;		//used when loading from savefile
 	void DrawFar(CFeature* feature,CVertexArray* va);
-	void DrawFarQuads(void);
+	void DrawFarQuads();
 	FeatureDef* GetFeatureDef(const std::string name);
 };
 

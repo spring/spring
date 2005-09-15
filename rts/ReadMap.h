@@ -9,7 +9,7 @@
 #include "mapfile.h"
 #include "float3.h"
 #include "MetalMap.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 
 class CFileHandler;
 class CUnit;
@@ -84,7 +84,7 @@ public:
 
 	MapHeader header;
 	CFileHandler* ifs;
-	CSunParser mapDefParser;
+  TdfParser mapDefParser;
 
 	float3 ambientColor;
 	float3 sunColor;

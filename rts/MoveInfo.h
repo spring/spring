@@ -5,7 +5,6 @@
 #include <map>
 #include <string>
 
-class CSunParser;
 class CMoveMath;
 
 struct MoveData{
@@ -31,8 +30,8 @@ struct MoveData{
 class CMoveInfo
 {
 public:
-	CMoveInfo(void);
-	~CMoveInfo(void);
+	CMoveInfo();
+	~CMoveInfo();
 
 	std::vector<MoveData*> moveData;
 	std::map<std::string,int> name2moveData;
@@ -41,8 +40,7 @@ public:
 
 	float terrainType2MoveFamilySpeed[256][4];
 protected:
-	CSunParser* sunparser;
-	bool ClassExists(int num);
+	//bool ClassExists(int num);
 };
 
 extern CMoveInfo* moveinfo;

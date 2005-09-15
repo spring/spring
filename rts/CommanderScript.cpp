@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "CommanderScript.h"
 #include "UnitLoader.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 static CCommanderScript ts;
 #include <algorithm>
 #include <cctype>
@@ -27,8 +27,7 @@ void CCommanderScript::Update(void)
 	switch(gs->frameNum){
 	case 0:
 		if(gameSetup){
-			CSunParser p;
-			p.LoadFile("gamedata/SIDEDATA.TDF");
+			TdfParser p("gamedata/SIDEDATA.TDF");
 			for(int a=0;a<gs->activeTeams;++a){		
 				if(!gameSetup->aiDlls[a].empty() && gs->teams[a]->leader==gu->myTeam){
 					globalAI->CreateGlobalAI(a,gameSetup->aiDlls[a].c_str());
@@ -56,13 +55,11 @@ void CCommanderScript::Update(void)
 				gs->teams[a]->energyStorage=gs->teams[a]->energyStorage/2+20;
 			}
 		} else {
-			CSunParser p;
-			p.LoadFile("gamedata/SIDEDATA.TDF");
+			TdfParser p("gamedata/SIDEDATA.TDF");
 			string s0=p.SGetValueDef("armcom","side0\\commander");
 			string s1=p.SGetValueDef("corcom","side1\\commander");
 
-			CSunParser p2;
-			p2.LoadFile(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find_last_of('.'))+".smd");
+			TdfParser p2(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find_last_of('.'))+".smd");
 
 			float x0,x1,z0,z1;
 			p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");

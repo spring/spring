@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "GlobalAITestScript.h"
 #include "UnitLoader.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include <algorithm>
 #include <cctype>
 #include "Team.h"
@@ -41,13 +41,11 @@ void CGlobalAITestScript::Update(void)
 		gs->teams[1]->metal=5000;
 		gs->teams[1]->metalStorage=5000;
 
-		CSunParser p;
-		p.LoadFile("gamedata/sidedata.tdf");
+		TdfParser p("gamedata/sidedata.tdf");
 		string s0=p.SGetValueDef("armcom","side0\\commander");
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 
-		CSunParser p2;
-		p2.LoadFile(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'))+".smd");
+		TdfParser p2(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'))+".smd");
 
 		float x0,x1,z0,z1;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");

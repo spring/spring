@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include "MoveInfo.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "UnitDef.h"
 
 class CUnitDefHandler;
@@ -35,14 +35,14 @@ public:
 
 	bool noCost;
 protected:
-	CSunParser soundcategory;
+	TdfParser soundcategory;
 
 	void ParseUnit(std::string file, int id);
 
 	void ParseTAUnit(std::string file, int id);
 
 	void FindTABuildOpt();
-	void LoadSound(CSunParser &sunparser, GuiSound &gsound, std::string sunname);
+	void LoadSound(TdfParser &sunparser, GuiSound &gsound, std::string sunname);
 
 public:
 //	void CreateBlockingLevels(UnitDef *def,std::string yardmap);

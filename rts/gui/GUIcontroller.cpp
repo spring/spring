@@ -1,5 +1,5 @@
 #include "GUIcontroller.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 
 #include "GUIpane.h"
 #include "GUIbutton.h"
@@ -120,9 +120,7 @@ void GUIcontroller::AddText(const std::string& text)
 
 void GUIcontroller::LoadInterface(const std::string& name)
 {
-	CSunParser parser;
-
-	parser.LoadFile("guis/standard.tdf");
+	TdfParser parser("guis/standard.tdf");
 
 	if(mainFrame)
 		delete mainFrame;
@@ -152,8 +150,7 @@ GUIcontroller::GUIcontroller()
 
 	LoadInterface("gamegui");
 
-	CSunParser keyparser;
-	keyparser.LoadFile("guis/bindings.tdf");
+	TdfParser keyparser("guis/bindings.tdf");
 
 	const map<string, string> temp = keyparser.GetAllValues("bindings");
 	bindings.insert(temp.begin(), temp.end());
@@ -424,8 +421,7 @@ bool GUIcontroller::EventAction(const std::string& event1)
 			LoadInterface("talike");
 		else if(command=="standard_gui")
 		{
-			CSunParser keyparser;
-			keyparser.LoadFile("guis/bindings.tdf");
+			TdfParser keyparser("guis/bindings.tdf");
 
 			const map<string, string> temp = keyparser.GetAllValues("bindings");
 			bindings.insert(temp.begin(), temp.end());
@@ -728,7 +724,7 @@ const string GUIcontroller::KeyName(unsigned char k)
 
 
 
-GUIframe* GUIcontroller::CreateControl(const std::string& type, int x, int y, int w, int h, CSunParser& parser)
+GUIframe* GUIcontroller::CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser)
 {
 	GUIframe *frame=NULL;
  	if(type=="console")
@@ -748,7 +744,7 @@ GUIframe* GUIcontroller::CreateControl(const std::string& type, int x, int y, in
 
 
 // this function recursively constructs the view hierarchy from a suitable tdf.
-void GUIdialogController::CreateUIElement(CSunParser& parser, GUIframe* parent, const string& path)
+void GUIdialogController::CreateUIElement(TdfParser & parser, GUIframe* parent, const string& path)
 {
 	GUIframe *frame=NULL;
 	

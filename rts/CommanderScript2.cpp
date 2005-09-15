@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "CommanderScript2.h"
 #include "UnitLoader.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "Team.h"
 
 static CCommanderScript2 ts;
@@ -32,13 +32,11 @@ void CCommanderScript2::Update(void)
 		gs->teams[1]->metal=1000;
 		gs->teams[1]->metalStorage=1000;
 
-		CSunParser p;
-		p.LoadFile("gamedata/SIDEDATA.TDF");
+		TdfParser p("gamedata/SIDEDATA.TDF");
 		string s0=p.SGetValueDef("armcom","side0\\commander");
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 
-		CSunParser p2;
-		p2.LoadFile(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find_last_of('.'))+".smd");
+		TdfParser p2(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find_last_of('.'))+".smd");
 
 		float x0,x1,z0,z1;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");

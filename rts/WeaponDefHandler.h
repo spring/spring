@@ -24,7 +24,7 @@
 #define WEAPON_RENDERTYPE_PLASMA 3
 #define WEAPON_RENDERTYPE_FIREBALL 4
 
-class CSunParser;
+class TdfParser;
 
 struct WeaponDef
 {
@@ -141,7 +141,7 @@ public:
 	static void LoadSound(GuiSound &gsound);
 
 protected:
-	void ParseTAWeapon(CSunParser *sunparser, std::string weaponname, int id);
+	void ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id);
 	float3 hs2rgb(float h, float s);
 };
 

@@ -22,7 +22,7 @@ protected:
 	
 	void UpdatePlayerList();
 	
-	GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, CSunParser& parser);
+	GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser);
 	
 	GUIslider* giveEnergy;
 	GUIslider* giveMetal;

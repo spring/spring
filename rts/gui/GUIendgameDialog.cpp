@@ -170,7 +170,7 @@ void GUIendgameDialog::DialogEvent(const std::string& event)
 	}
 }
 
-GUIframe* GUIendgameDialog::CreateControl(const std::string& type, int x, int y, int w, int h, CSunParser& parser)
+GUIframe* GUIendgameDialog::CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser & parser)
 {
 	GUIframe *frame=NULL;
 	if(type=="graph")

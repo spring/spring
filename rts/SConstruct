@@ -377,6 +377,9 @@ if not env.GetOption("clean"):
 	if not conf.CheckCXXHeader('boost/regex.hpp'):
 		print ' Cannot find Boost regex header'
 		Exit(1)
+	if not conf.CheckCXXHeader('boost/spirit.hpp'):
+		print ' Cannot find Boost Spirit header'
+		Exit(1)
 	if not conf.CheckCHeader('IL/il.h'):
 		print ' Cannot find DevIL image library header'
 		Exit(1)

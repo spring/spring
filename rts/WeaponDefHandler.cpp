@@ -1,7 +1,9 @@
+#include <stdexcept>
+#include <iostream>
 #include "StdAfx.h"
 #include "WeaponDefHandler.h"
 #include "myGL.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "FileHandler.h"
 #include "TAPalette.h"
 #include "InfoConsole.h"
@@ -16,23 +18,29 @@ CWeaponDefHandler* weaponDefHandler;
 
 CWeaponDefHandler::CWeaponDefHandler(void)
 {
-      	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");
+  std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");
+  std::cout << " getting files from weapons/*.tdf ... " << std::endl;
 
-	CSunParser tasunparser;
+  TdfParser tasunparser;
 
-	for(unsigned int i=0; i<tafiles.size(); i++)
-	{
-        tasunparser.LoadFile(tafiles[i]);
-	}
+  for(unsigned int i=0; i<tafiles.size(); i++)
+  {
+    try {
+      tasunparser.LoadFile(tafiles[i]);
+    }catch( TdfParser::parse_error const& e) {
+      std::cout << "Exception:"  << e.what() << std::endl; 
+    } catch(...) {
+      std::cout << "Unknown expcetion in parse process of " << tafiles[i] <<" caught." << std::endl; 
+    }
+  }
 
-	std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
+  std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
 
-	weaponDefs = new WeaponDef[weaponlist.size()];
-	unsigned int taid;
-	for(taid=0; taid<weaponlist.size(); taid++)
-	{
-        ParseTAWeapon(&tasunparser, weaponlist[taid], taid);
-	}
+  weaponDefs = new WeaponDef[weaponlist.size()];
+  for(std::size_t taid=0; taid<weaponlist.size(); taid++)
+  {
+    ParseTAWeapon(&tasunparser, weaponlist[taid], taid);
+  }
 }
 
 CWeaponDefHandler::~CWeaponDefHandler(void)
@@ -40,7 +48,7 @@ CWeaponDefHandler::~CWeaponDefHandler(void)
 	delete[] weaponDefs;
 }
 
-void CWeaponDefHandler::ParseTAWeapon(CSunParser *sunparser, std::string weaponname, int id)
+void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id)
 {
 	weaponDefs[id].name = weaponname;
 

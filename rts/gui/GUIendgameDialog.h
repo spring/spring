@@ -25,7 +25,7 @@ protected:
 	void ButtonPressed(GUIbutton* b);
 	void TableSelection(GUItable* table, int i,int button);
 
-	GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, CSunParser& parser);
+	GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser);
 	
 	typedef vector<GUIgraph::Dataset> DatasetList;
 

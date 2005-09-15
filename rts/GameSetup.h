@@ -3,18 +3,18 @@
 
 #include <string>
 #include <map>
+#include "TdfParser.h"
 
-class CSunParser;
 
 class CGameSetup
 {
 public:
-	CGameSetup(void);
+	CGameSetup();
 	~CGameSetup(void);
 	bool Init(std::string setupFile);
 	bool Draw(void);
 
-	CSunParser* file;
+	TdfParser file;
 	int myPlayer;
 	int numPlayers;				//the expected amount of players
 	std::string mapname;
