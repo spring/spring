@@ -54,7 +54,6 @@
 
 Uint8 *keys;			// Array Used For The Keyboard Routine
 Uint8 *oldkeys;
-Uint64 init_time = 0;
 SDL_Surface *screen;
 int sdlflags;
 bool	active=true;		// Window Active Flag Set To true By Default
@@ -159,7 +158,7 @@ GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 
 bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
 {
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER);
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	const SDL_VideoInfo *pSDLVideoInfo = SDL_GetVideoInfo();
 	int sdlflags = SDL_OPENGL | SDL_GL_DOUBLEBUFFER | SDL_HWPALETTE | SDL_RESIZABLE;
@@ -340,12 +339,10 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	guicontroller = new GUIcontroller();
 	#endif
 
-	init_time = time(NULL);
-
+	SDL_Event event;
 	while(!done)									// Loop That Runs While done=false
 	{
 		ENTER_UNSYNCED;
-		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE:
