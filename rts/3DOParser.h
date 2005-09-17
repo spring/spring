@@ -86,6 +86,7 @@ struct LocalS3DOModel
 	LocalS3DOModel(){};
 	~LocalS3DOModel();
 	void Draw();
+	bool PieceExists(int piecenum);
 	float3 GetPiecePos(int piecenum);
 	CMatrix44f GetPieceMatrix(int piecenum);
 	float3 GetPieceDirection(int piecenum);

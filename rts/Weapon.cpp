@@ -432,7 +432,7 @@ void CWeapon::Init(void)
 	if(range>owner->maxRange)
 		owner->maxRange=range;
 
-	muzzleFlareSize=min(areaOfEffect*0.2,damages[0]*0.003);
+	muzzleFlareSize=min(areaOfEffect*0.2,min(1500.f,damages[0])*0.003);
 
 	if(weaponDef->interceptor){
 		interceptHandler.AddInterceptorWeapon(this);

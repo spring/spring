@@ -939,7 +939,8 @@ bool CGame::Draw()
 		//transparent stuff
 		glEnable(GL_BLEND);
 		glDepthFunc(GL_LEQUAL);
-		water->Draw();
+		if(!readmap->voidWater)
+			water->Draw();
 		if(treeDrawer->drawTrees)
 			treeDrawer->DrawGrass();
 		unitDrawer->DrawCloakedUnits();
@@ -1130,6 +1131,11 @@ void CGame::SimFrame()
 #ifdef TRACE_SYNC
 	uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
+#endif
+
+#ifdef _H_MMGR
+	if(!(gs->frameNum & 31))
+		m_validateAllAllocUnits();
 #endif
 
 	script->Update();

@@ -133,12 +133,12 @@ static		bool		cleanupLogOnFirstRun   = true;
 static	const	unsigned int	paddingSize            = 1024; // An extra 8K per allocation!
 #else
 static	const	unsigned int	hashBits               = 12;
-static		bool		randomWipe             = false;
+static		bool		randomWipe             = true;
 static		bool		alwaysValidateAll      = false;
 static		bool		alwaysLogAll           = false;
 static		bool		alwaysWipeAll          = true;
 static		bool		cleanupLogOnFirstRun   = true;
-static	const	unsigned int	paddingSize            = 4;
+static	const	unsigned int	paddingSize            = 32;
 #endif
 
 // ---------------------------------------------------------------------------------------------------------------------------------

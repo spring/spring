@@ -347,6 +347,7 @@ void CSmfReadMap::ParseSMD(std::string filename)
 	else
 		detailTex = "maps/" + detailTex;
 	
+	mapDefParser.GetDef(voidWater, "0", "MAP\\voidWater");	
 }
 
 CSmfReadMap::~CSmfReadMap(void)

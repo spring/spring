@@ -131,6 +131,11 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection)
 	SetupTextureUnits(drawWaterReflection);
 	bool inStrip=false;
 
+	if(readmap->voidWater && !drawWater){
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER,0.9);
+	}
+
   float camxpart=0,oldcamxpart;
 	float camypart=0,oldcamypart;
 
@@ -482,6 +487,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection)
 	ResetTextureUnits(drawWaterReflection);
 
 	glDisable(GL_CULL_FACE);
+
+	if(readmap->voidWater && !drawWater){
+		glDisable(GL_ALPHA_TEST);
+	}
 
 	if(((CSmfReadMap*)readmap)->hasWaterPlane)
 	{
@@ -1105,80 +1114,26 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 	} else if(shadowHandler->drawShadows){
-		if(shadowHandler->useFPShadows){
-			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, groundFPShadow );
-			glEnable( GL_FRAGMENT_PROGRAM_ARB );
-			float3 ac=readmap->ambientColor*(210.0/255.0);
-			glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, ac.x,ac.y,ac.z,1);
-			glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,readmap->shadowDensity);
+		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, groundFPShadow );
+		glEnable( GL_FRAGMENT_PROGRAM_ARB );
+		float3 ac=readmap->ambientColor*(210.0/255.0);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, ac.x,ac.y,ac.z,1);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,readmap->shadowDensity);
 
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-			glBindTexture(GL_TEXTURE_2D,  shadowHandler->shadowTexture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
-			glActiveTextureARB(GL_TEXTURE2_ARB);
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-			glBindTexture(GL_TEXTURE_2D,  readmap->detailtex2);
-			glActiveTextureARB(GL_TEXTURE0_ARB);			
-			if(drawReflection){
-				glAlphaFunc(GL_LESS,0.3);
-				glEnable(GL_ALPHA_TEST);
-			}
-		} else {
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D,  shadowHandler->shadowTexture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1-readmap->shadowDensity);
-
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE1_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB_ARB,GL_ONE_MINUS_SRC_COLOR);
-			glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_RGB_ARB,GL_SRC_ALPHA);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE1_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB,GL_SRC_ALPHA);
-			glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_ALPHA_ARB,GL_SRC_ALPHA);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
-
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
-			glEnable(GL_TEXTURE_2D);
-			
-			float3 ac=readmap->ambientColor*(210.0/255.0);
-			float texConstant[]={ac.x,ac.y,ac.z,1};
-			glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_TEXTURE1_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_CONSTANT);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB,GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB,GL_ONE_MINUS_SRC_COLOR);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_INTERPOLATE_ARB);
-
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_CONSTANT);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_CONSTANT);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
-
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-
-			glActiveTextureARB(GL_TEXTURE2_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
-
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D,  readmap->detailtex2);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glBindTexture(GL_TEXTURE_2D,  shadowHandler->shadowTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glActiveTextureARB(GL_TEXTURE3_ARB);
+		glBindTexture(GL_TEXTURE_2D,  readmap->detailtex2);
+		glActiveTextureARB(GL_TEXTURE0_ARB);			
+		if(drawReflection){
+			glAlphaFunc(GL_GREATER,0.7);
+			glEnable(GL_ALPHA_TEST);
 		}
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, groundVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );

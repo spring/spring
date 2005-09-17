@@ -23,7 +23,8 @@
 CCobEngine GCobEngine;
 int GCurrentTime;
 
-CCobEngine::CCobEngine(void)
+CCobEngine::CCobEngine(void) :
+	curThread(NULL)
 {
 	GCurrentTime = 0;
 }
@@ -173,6 +174,20 @@ START_TIME_PROFILE
 			animating.erase(curit);		
 	}
 END_TIME_PROFILE("Scripts");
+}
+
+// Threads call this when they start executing in Tick
+void CCobEngine::SetCurThread(CCobThread *cur)
+{
+	curThread = cur;
+}
+
+void CCobEngine::ShowScriptError(const string& msg)
+{
+	if (curThread)
+		curThread->ShowError(msg);
+	else
+		info->AddLine("ScriptError: %s outside script execution", msg.c_str());
 }
 
 CCobFile &CCobEngine::GetCobFile(string name)
