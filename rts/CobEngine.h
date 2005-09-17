@@ -35,6 +35,7 @@ protected:
 	priority_queue<CCobThread *, vector<CCobThread *>, CCobThreadPtr_less> sleeping;
 	list<CCobInstance *> animating;				//hash would be optimal. but not crucial.
 	map<string, CCobFile *> cobFiles;
+	CCobThread *curThread;
 public:
 	CCobEngine(void);
 	~CCobEngine(void);
@@ -42,6 +43,8 @@ public:
 	void AddInstance(CCobInstance *instance);
 	void RemoveInstance(CCobInstance *instance);
 	void Tick(int deltaTime);
+	void SetCurThread(CCobThread *cur);
+	void ShowScriptError(const string& msg);
 	CCobFile &GetCobFile(string name);
 };
 

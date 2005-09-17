@@ -624,7 +624,7 @@ void CUnit::Draw()
 				glActiveTextureARB(GL_TEXTURE3_ARB);
 				glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 				glActiveTextureARB(GL_TEXTURE0_ARB);
-				glEnable(GL_FOG);
+				glDisable(GL_FOG);
 			} else {
 				glDisable(GL_LIGHTING);
 				glDisable(GL_TEXTURE_2D);

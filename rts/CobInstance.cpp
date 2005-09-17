@@ -507,6 +507,11 @@ void CCobInstance::SetVisibility(int piece, bool visible)
 
 void CCobInstance::EmitSfx(int type, int piece)
 {
+	if (!unit->localmodel->PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber for emit-sfx");
+		return;
+	}
+
 #ifndef _CONSOLE
 	ENTER_MIXED;
 	if(ph->particleSaturation>1){		//skip adding particles when we have to many (make sure below can be unsynced)
@@ -575,6 +580,11 @@ void CCobInstance::EmitSfx(int type, int piece)
 
 void CCobInstance::AttachUnit(int piece, int u)
 {
+	if (!unit->localmodel->PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber for attach");
+		return;
+	}
+
 #ifndef _CONSOLE
 	CTransportUnit* tu=dynamic_cast<CTransportUnit*>(unit);
 
@@ -633,6 +643,12 @@ void CCobInstance::Signal(long signal)
 //Flags as defined by the cob standard
 void CCobInstance::Explode(int piece, int flags)
 {
+	if (!unit->localmodel->PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber for explode");
+		return;
+	}
+
+
 #ifndef _CONSOLE
 	float3 pos = unit->localmodel->GetPiecePos(piece) + unit->pos;
 
@@ -701,6 +717,10 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 
 void CCobInstance::ShowFlare(int piece)
 {
+	if (!unit->localmodel->PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber for show(flare)");
+		return;
+	}
 #ifndef _CONSOLE
 	float3 relpos = unit->localmodel->GetPiecePos(piece);
 	float3 pos=unit->pos + unit->frontdir*relpos.z + unit->updir*relpos.y + unit->rightdir*relpos.x;
@@ -708,7 +728,7 @@ void CCobInstance::ShowFlare(int piece)
 
 	float size=unit->lastMuzzleFlameSize;
 
-	new CMuzzleFlame(pos, unit->speed,dir, (Uint16)(((Uint32)size)&0xffff));
+	new CMuzzleFlame(pos, unit->speed,dir, size);
 #endif
 }
 
@@ -750,10 +770,14 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		break;
 	case PIECE_XZ:{
+		if (!unit->localmodel->PieceExists(p1))
+			GCobEngine.ShowScriptError("Invalid piecenumber for get piece_xz");
 		float3 relPos = unit->localmodel->GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return PACKXZ(pos.x, pos.z);}
 	case PIECE_Y:{
+		if (!unit->localmodel->PieceExists(p1))
+			GCobEngine.ShowScriptError("Invalid piecenumber for get piece_y");
 		float3 relPos = unit->localmodel->GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return (int)(pos.y * SCALE);}
@@ -777,8 +801,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UNIT_HEIGHT:{
 		if (p1 == 0)
 			return (int)(unit->radius * SCALE);
-		CUnit *u = uh->units[p1];
-		return (int)(u->radius * SCALE);}
+		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		if (u == NULL)
+			return 0;
+		else
+			return (int)(u->radius * SCALE);}
 	case XZ_ATAN:
 		return (int)(TAANG2RAD*atan2f(UNPACKX(p1), UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:

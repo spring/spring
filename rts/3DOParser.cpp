@@ -717,6 +717,19 @@ void LocalS3DOModel::Draw()
 	//glPopMatrix();
 }
 
+bool LocalS3DOModel::PieceExists(int piecenum)
+{
+	if(piecenum>=numpieces || piecenum<0)
+		return false;
+
+	int p=scritoa[piecenum];
+
+	if(p==-1)
+		return false;
+
+	return true;
+}
+
 float3 LocalS3DOModel::GetPiecePos(int piecenum)
 {
 	if(piecenum>=numpieces || piecenum<0)

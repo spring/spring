@@ -56,6 +56,10 @@ bool CGameSetup::Init(std::string setupFile)
 
 bool CGameSetup::Init(char* buf, int size)
 {
+	for(int a=0;a<MAX_PLAYERS;a++){
+		gs->players[a]->team=0;					//needed in case one tries to spec a game with only one team
+	}
+
 	gameSetupText=new char[size];
 	memcpy(gameSetupText,buf,size);
 	gameSetupTextLength=size;

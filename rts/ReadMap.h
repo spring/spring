@@ -90,6 +90,7 @@ public:
 	float3 sunColor;
 	float shadowDensity;
 	float extractorRadius;			//extraction radius for mines
+	bool voidWater;
 
 	float minheight,maxheight;
 	void LoadSaveMap(CLoadSaveInterface* file,bool loading);

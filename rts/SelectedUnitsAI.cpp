@@ -151,7 +151,7 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	float3 centerPos(c->params[0],c->params[1],c->params[2]);
 	float3 rightPos(c->params[3],c->params[4],c->params[5]);
 
-	if(centerPos.distance(rightPos)<selectedUnits.netSelected[player].size()){	//treat this as a standard move if the front isnt long enough 
+	if(centerPos.distance(rightPos)<selectedUnits.netSelected[player].size()+33){	//treat this as a standard move if the front isnt long enough 
 		for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
 			CUnit* unit=uh->units[*ui];
 			if(unit){
@@ -168,6 +168,8 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	frontDir=sideDir.cross(float3(0,1,0));
 
 	numColumns=(int)(frontLength/columnDist);
+	if(numColumns==0)
+		numColumns=1;
 
 	int positionsUsed=0;
 
@@ -192,7 +194,7 @@ void CSelectedUnitsAI::MoveToPos(int unit, float3& basePos, int posNum,unsigned 
 	c.params.push_back(pos.x);
 	c.params.push_back(pos.y);
 	c.params.push_back(pos.z);
-	c.options=0;
+	c.options=options;
 
 	uh->units[unit]->commandAI->GiveCommand(c);
 }
