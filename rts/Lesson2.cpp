@@ -360,9 +360,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				case SDL_MOUSEBUTTONDOWN:
 					if (mouse) {
 						if (event.button.button == SDL_BUTTON_WHEELUP)
-							mouse->currentCamController->MouseWheelMove(8);
+							mouse->currentCamController->MouseWheelMove(25);
 						else if (event.button.button == SDL_BUTTON_WHEELDOWN)
-							mouse->currentCamController->MouseWheelMove(-8);
+							mouse->currentCamController->MouseWheelMove(-25);
 						mouse->MousePress(event.button.x,event.button.y,event.button.button);
 					}
 					break;
