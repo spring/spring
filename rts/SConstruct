@@ -454,3 +454,4 @@ if optimize and not env.GetOption("clean"):
 	env.AddPostAction('spring',Action([['strip','$TARGET']]))
 env.InstallAs(prefix+"/bin/spring",spring)
 env.Alias('install',prefix)
+env.Export('env')
