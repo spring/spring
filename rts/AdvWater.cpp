@@ -51,7 +51,7 @@ CAdvWater::CAdvWater()
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
 			scrap[(y*64+x)*4+0]=128;
-			scrap[(y*64+x)*4+1]=(unsigned char) ((sin(y*PI*2.0/64.0))*128)+128;
+			scrap[(y*64+x)*4+1]=(unsigned char)(sin(y*PI*2.0/64.0)*128+128);
 			scrap[(y*64+x)*4+2]=0;
 			scrap[(y*64+x)*4+3]=255;
 		}
@@ -134,9 +134,9 @@ void CAdvWater::Draw()
 	float screenY=1;
 
 	unsigned char col[4];
-	col[0]=(unsigned char)waterSurfaceColor.x*255;
-	col[1]=(unsigned char)waterSurfaceColor.y*255;
-	col[2]=(unsigned char)waterSurfaceColor.z*255;
+	col[0]=(unsigned char)(waterSurfaceColor.x*255);
+	col[1]=(unsigned char)(waterSurfaceColor.y*255);
+	col[2]=(unsigned char)(waterSurfaceColor.z*255);
 
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
