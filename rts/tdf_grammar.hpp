@@ -43,7 +43,7 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
        *(section(self.section)) // Attribute von oben nach unten reichen 
         ;
       name =  
-        (+chset<>("a-zA-Z0-9_-"))
+        (+chset<>("a-zA-Z0-9_+-"))
         [ name.name = construct_<std::string>(arg1, arg2) ] // Attribut nach oben durchreichen
         ;
       section = '[' 
