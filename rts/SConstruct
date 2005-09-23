@@ -4,13 +4,20 @@ import sys
 import os
 windows_include_path=[]
 linux_include_path=['/usr/include','/usr/include/GL']
+freebsd_include_path=['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
 common_include_path = ['.','gui','include']
+common_lib_path=[]
+freebsd_lib_path=['/usr/local/lib','/usr/X11R6/lib']
 common_files=[]
 windows_files=[]
 linux_files=[]
 if sys.platform == 'linux2' or sys.platform == 'linux-i386':
 	print "Detected platform : linux"
 	detected_platform='linux'
+elif sys.platform[:7] == 'freebsd':
+	print "Detected platform : freebsd (%s)" % sys.platform
+	print "WARNING: support is incomplete"
+	detected_platform='freebsd'
 else:
 	print "Platform not supported yet, please edit SConstruct file"
 	detected_platform='unknown'
@@ -23,7 +30,7 @@ exclude_list = []
 opts = Options('SCustomize')
 
 #permanent options
-opts.Add('platform', 'Set to linux or windows', detected_platform)
+opts.Add('platform', 'Set to linux, freebsd or windows', detected_platform)
 opts.Add('debug', 'Set to yes to produce a binary with debug information', 1)
 
 #porting options - optionnal in a first phase
@@ -60,7 +67,7 @@ if env.get('disable_avi'):
 	exclude_list.append("AVIGenerator.cpp")
 	defines+=['NO_AVI']
 
-if detected_platform == 'linux':
+if platform == 'linux' or detected_platform == 'freebsd':
 	exclude_list+=["DllLib.cpp","Win32Cmd.cpp","RegHandler.cpp"]
 else:
 	exclude_list+=["SoLib.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
@@ -89,7 +96,7 @@ for f in hpiutilf:
 	tmp.append("./hpiutil2/"+f)
 	
 #linux disable unused code
-if platform == 'linux':	
+if platform == 'linux' or platform == 'freebsd':	
 	exclude_list += exclude_list + Split("""
 			BackgroundReader.cpp
 			ARB_vertex_program_extension.cpp
@@ -111,6 +118,10 @@ else:
 	if platform == 'linux':
 		files = linux_files + common_files + zipfiles + lzmafiles
 		common_include_path = common_include_path + linux_include_path	
+	elif platform == 'freebsd':
+		files = linux_files + common_files + zipfiles + lzmafiles
+		common_include_path = common_include_path + freebsd_include_path
+		common_lib_path = common_lib_path + freebsd_lib_path
 	else:
 		print "Unknown platform ", platform
 		Exit(1)	
@@ -246,7 +257,7 @@ if not env.GetOption("clean"):
 		else:
 			flags += ['-O']
 
-	if platform == 'linux':
+	if platform == 'linux' or platform == 'freebsd':
 		flags += ['-pthread']
 
 	env.Append(CPPFLAGS = flags)
@@ -257,7 +268,7 @@ if not env.GetOption("clean"):
 	libaiostep1=False
 
 	conf = Configure(env)
-	conf.env.Append(CPPPATH=common_include_path)
+	conf.env.Append(CPPPATH=common_include_path,LIBPATH=common_lib_path)
 	print "\nChecking configure scripts"
 	freetype = False
 	openal = False
@@ -448,6 +459,7 @@ if not env.GetOption("clean"):
 
 	print "\nEverything seems OK, let's build"
 	env.Append(LIBS = lib)
+
 	#print "\nCCFLAGS : ", env['CCFLAGS'],"\n"
 spring = env.Program('spring', files)
 if optimize and not env.GetOption("clean"):
