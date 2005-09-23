@@ -23,15 +23,25 @@
 #define _EM_INEXACT FE_INEXACT
 #define _MCW_EM FE_ALL_EXCEPT
 
+#if defined(__linux__)
+#define fenv_control(xfenv_t) (xfenv_t.__control_word)
+#define fenv_status(xfenv_t) (xfenv_t.__status_word)
+#elif defined(__FreeBSD__)
+#define fenv_control(xfenv_t) (xfenv_t.__control)
+#define fenv_status(xfenv_t) (xfenv_t.__status)
+#else
+Add support for your platform here and below!
+#endif		
+
 static inline unsigned int Control87(unsigned int newflags, unsigned int mask)
 {
 	fenv_t cur;
 	fegetenv(&cur);
 	if (mask) {
-		cur.__control_word = ((cur.__control_word & ~mask)|(newflags & mask));
+		fenv_control(cur) = ((fenv_control(cur) & ~mask)|(newflags & mask));
 		fesetenv(&cur);
 	}
-	return (unsigned int)(cur.__control_word);
+	return (unsigned int)(fenv_control(cur));
 }
 
 static inline unsigned int Clearfp(void)
@@ -44,7 +54,7 @@ static inline unsigned int Clearfp(void)
 #else	/* Posix control word default */
 	fesetenv(FE_DFL_ENV);
 #endif
-	return (unsigned int)(cur.__status_word);
+	return (unsigned int)(fenv_status(cur));
 }
 
 #endif
