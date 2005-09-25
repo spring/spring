@@ -15,7 +15,7 @@
 
 CShadowHandler* shadowHandler=0;
 
-CShadowHandler::CShadowHandler(void)
+CShadowHandler::CShadowHandler(void): fb(0)
 {
 	drawShadows=false;
 	inShadowPass=false;
