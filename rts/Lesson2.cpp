@@ -54,6 +54,7 @@
 
 Uint8 *keys;			// Array Used For The Keyboard Routine
 Uint8 *oldkeys;
+Uint8 scrollWheelSpeed;
 SDL_Surface *screen;
 int sdlflags;
 bool	active=true;		// Window Active Flag Set To true By Default
@@ -241,6 +242,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #else
 	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
 #endif
+	scrollWheelSpeed=configHandler.GetInt("ScrollWheelSpeed",25);
+
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
 		delete cmdline;
@@ -360,9 +363,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				case SDL_MOUSEBUTTONDOWN:
 					if (mouse) {
 						if (event.button.button == SDL_BUTTON_WHEELUP)
-							mouse->currentCamController->MouseWheelMove(25);
+							mouse->currentCamController->MouseWheelMove(scrollWheelSpeed);
 						else if (event.button.button == SDL_BUTTON_WHEELDOWN)
-							mouse->currentCamController->MouseWheelMove(-25);
+							mouse->currentCamController->MouseWheelMove(-scrollWheelSpeed);
 						mouse->MousePress(event.button.x,event.button.y,event.button.button);
 					}
 					break;
