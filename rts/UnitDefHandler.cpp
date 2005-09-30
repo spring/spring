@@ -3,6 +3,7 @@
 #include "myGL.h"
 #include "TdfParser.h"
 #include <algorithm>
+#include <iostream>
 #include <locale>
 #include <cctype>
 #include "FileHandler.h"
@@ -509,7 +510,12 @@ void CUnitDefHandler::ParseUnit(std::string file, int id)
 /*	switch(unitDefs[id].unitsourcetype)
 	{
 	case TA_UNIT:*/
-		ParseTAUnit(file, id);
+  try {
+    ParseTAUnit(file, id);
+  } catch (std::runtime_error const& e ) {
+    std::cout << e.what() << std::endl;
+    return;
+  }
 /*		break;
 	}
 */

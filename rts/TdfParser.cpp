@@ -37,6 +37,14 @@ TdfParser::parse_error::parse_error( std::string const& line_of_error, std::size
   , filename(f) 
 {}
 
+TdfParser::parse_error::parse_error( std::string const& message, std::string const& line_of_error, std::size_t l, std::size_t c, std::string const& f) 
+  throw()
+  : std::runtime_error( "Parse error '" + message + "' in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error) 
+  , line(l)
+  , column(c)
+  , filename(f) 
+{}
+
 TdfParser::parse_error::~parse_error() throw() {}
 std::size_t TdfParser::parse_error::get_line() const {return line;}
 std::size_t TdfParser::parse_error::get_column() const {return column;}
@@ -109,8 +117,12 @@ void TdfParser::LoadFile(std::string const& filename)
   filebuf[size] = '\0'; //append newline at end to avoid parsing error at eof
 
   tdf_grammar grammar( &root_section );
+  boost::spirit::parse_info<char const*> info;
+  std::string message; 
+  boost::spirit::position_iterator2<char const*> error_it( filebuf.get(), filebuf.get() + size, filename );
 
-  boost::spirit::parse_info<char const*> info = boost::spirit::parse( 
+  try {
+   info = boost::spirit::parse( 
       filebuf.get()
       , filebuf.get() + size
       , grammar
@@ -118,11 +130,26 @@ void TdfParser::LoadFile(std::string const& filename)
       |  comment_p("/*", "*/")           // rule for C-comments
       |  comment_p("//")
       ); 
+  }
+  catch( boost::spirit::parser_error<tdf_grammar::Errors, char *> & e ) { // thrown by assertion parsers in tdf_grammar
+
+    switch(e.descriptor) {
+      case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;
+      case tdf_grammar::equals_sign_expected: message = "equals sign in name value pair expected"; break;
+      case tdf_grammar::square_bracket_expected: message = "square bracket to close section name expected"; break;
+      case tdf_grammar::brace_expected: message = "brace or further name value pairs expected"; break;
+    };
+
+    for( int i = 0, end = e.where -filebuf.get(); i != end; ++i,++error_it );
+  }
+
+  if( ! message.empty() )
+    throw parse_error( message, error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
 
 
+  // a different error might have happened:
   if(!info.full)  {
-    boost::spirit::position_iterator2<char const*> error_it( filebuf.get(), filebuf.get() + size, filename );
-    error_it += info.stop - filebuf.get();
+    for( int i = 0, end = info.stop -filebuf.get(); i != end; ++i,++error_it );
 
     throw parse_error( error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
   }
