@@ -3,7 +3,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER_
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -19,8 +21,9 @@ public:
       std::size_t line, column;
       std::string filename;
     public:
-      parse_error( std::size_t line, std::size_t column, std::string const& filename ) throw();
       parse_error( std::string const& line_of_error, std::size_t line, std::size_t column, std::string const& filename ) throw();
+      parse_error( std::size_t line, std::size_t column, std::string const& filename ) throw();
+      parse_error( std::string const& message, std::string const& line_of_error, std::size_t line, std::size_t column, std::string const& filename ) throw();
       ~parse_error() throw();
       std::size_t get_line() const;
       std::size_t get_column() const;
