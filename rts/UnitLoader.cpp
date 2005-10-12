@@ -5,7 +5,6 @@
 
 #include "StdAfx.h"
 #include "UnitLoader.h"
-#include "UnitParser.h"
 #include "Unit.h"
 #include "InfoConsole.h"
 #include "Cannon.h"
@@ -55,14 +54,12 @@ CUnitLoader unitLoader;
 
 CUnitLoader::CUnitLoader()
 {
-	parser=new CUnitParser;
 
 	CGroundMoveType::CreateLineTable();
 }
 
 CUnitLoader::~CUnitLoader()
 {
-	delete parser;
 }
 
 CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side, bool build)
@@ -135,6 +132,8 @@ START_TIME_PROFILE;
 	unit->radarRadius=ud->radarRadius/(SQUARE_SIZE*8);
 	unit->sonarRadius=ud->sonarRadius/(SQUARE_SIZE*8);
 	unit->jammerRadius=ud->jammerRadius/(SQUARE_SIZE*8);
+	unit->sonarJamRadius=ud->sonarJamRadius/(SQUARE_SIZE*8);
+	unit->hasRadarCapacity=unit->radarRadius || unit->sonarRadius || unit->jammerRadius || unit->sonarJamRadius;
 	unit->stealth=ud->stealth;
 	unit->category=ud->category;
 	unit->armorType=ud->armorType;
@@ -276,8 +275,6 @@ START_TIME_PROFILE;
 	//unit->pos.y=ground->GetHeight(unit->pos.x,unit->pos.z);
 
 	unit->cob = new CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
-	unit->cob->Call(COBFN_Create);
-
 	unit->localmodel = unit3doparser->CreateLocalModel(unit->model, &unit->cob->pieces);
 
 	for(unsigned int i=0; i< ud->weapons.size(); i++)
@@ -297,7 +294,8 @@ START_TIME_PROFILE;
 	if (unit->weapons.size() > 1)
 		relMax = max(relMax, 3000);
 
-	//info->AddLine("Setting maxrel to %d", relMax);
+	// Call initializing script functions
+	unit->cob->Call(COBFN_Create);
 	unit->cob->Call("SetMaxReloadTime", relMax);
 
 	unit->Init();
@@ -315,9 +313,11 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	CWeapon* weapon;
 
 	if(!weapondef){
+		info->AddLine("Error: No weapon def?");
+	}
+
+	if(udw->name=="NOWEAPON"){
 		weapon=new CNoWeapon(owner);
-		weapon->weaponDef=weaponDefHandler->GetWeapon("NoWeapon");
-		return weapon;
 	} else if(weapondef->type=="Cannon"){
 		weapon=new CCannon(owner);
 		((CCannon*)weapon)->selfExplode=weapondef->selfExplode;
@@ -326,7 +326,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	} else if(weapondef->type=="Melee"){
 		weapon=new CMeleeWeapon(owner);
 	} else if(weapondef->type=="AircraftBomb"){
-		weapon=new CBombDropper(owner);
+		weapon=new CBombDropper(owner,false);
 	} else if(weapondef->type=="PlasmaRepulser"){
 		weapon=new CPlasmaRepulser(owner);
 	} else if(weapondef->type=="flame"){
@@ -334,11 +334,16 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	} else if(weapondef->type=="MissileLauncher"){
 		weapon=new CMissileLauncher(owner);
 	} else if(weapondef->type=="TorpedoLauncher"){
-		weapon=new CTorpedoLauncher(owner);
-		if(weapondef->tracks)
-			((CTorpedoLauncher*)weapon)->tracking=weapondef->turnrate;
-		else
-			((CTorpedoLauncher*)weapon)->tracking=0;
+		if(weapondef->onlyForward){	//assume aircraft
+			weapon=new CBombDropper(owner,true);
+			if(weapondef->tracks)
+				((CBombDropper*)weapon)->tracking=weapondef->turnrate;
+			((CBombDropper*)weapon)->bombMoveRange=weapondef->range;
+		} else {
+			weapon=new CTorpedoLauncher(owner);
+			if(weapondef->tracks)
+				((CTorpedoLauncher*)weapon)->tracking=weapondef->turnrate;
+		}
 	} else if(weapondef->type=="LaserCannon"){
 		weapon=new CLaserCannon(owner);
 		((CLaserCannon*)weapon)->color=weapondef->visuals.color;
@@ -412,7 +417,11 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 		float soundVolume=sqrt(weapon->damages[0]*0.5);
 		if(weapondef->type=="LaserCannon")
 			soundVolume*=0.5;
+		float hitSoundVolume=soundVolume;
+		if((weapondef->type=="MissileLauncher" || weapondef->type=="StarburstLauncher") && soundVolume>100)
+			soundVolume=10*sqrt(soundVolume);
 		weapondef->firesound.volume=soundVolume;
+		soundVolume=hitSoundVolume;
 		if(weapon->areaOfEffect>8)
 			soundVolume*=2;
 		if(weapondef->type=="DGun")
@@ -431,7 +440,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->weaponNum=owner->weapons.size();
 
 	weapon->badTargetCategory=udw->badTargetCat;
-	weapon->onlyTargetCategory=weapondef->onlyTargetCategory;
+	weapon->onlyTargetCategory=weapondef->onlyTargetCategory & udw->onlyTargetCat;
 
 	if(udw->slavedTo)
 		weapon->slavedTo=owner->weapons[udw->slavedTo-1];
@@ -442,29 +451,4 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->Init();
 
 	return weapon;
-}
-
-bool CUnitLoader::CanBuildUnit(string name, int team)
-{
-	return true;
-}
-
-int CUnitLoader::GetTechLevel(string type)
-{
-	//CUnitParser::UnitInfo* unitinfo=parser->ParseUnit(type);
-	//return atoi(unitinfo->info["techlevel"].c_str());
-	return 0;
-//	int id = unitDefHandler.unitID[type];
-//	return unitDefHandler.unitDefs[id].techlevel;
-}
-
-string CUnitLoader::GetName(string name)
-{
-	return name;
-
-	/*string s3;
-	int lastdot=name.find_last_of('.');
-	for(int a=0;a<lastdot;a++)
-		s3+=name[a];
-	return s3;*/
 }

@@ -61,6 +61,7 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	}
 
 	drawShadows=true;
+	useFPShadows=true;
 	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
 
 	glGenTextures(1,&tempTexture);

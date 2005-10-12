@@ -100,7 +100,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		if(lastReclaim==gs->frameNum)	//make sure several units cant reclaim at once on a single feature
 			return true;
-		float part=(100-amount)*0.04/max(10.0f,(def->metal+def->energy));
+		float part=(100-amount)*0.02/max(10.0f,(def->metal+def->energy));
 		reclaimLeft-=part;
 		lastReclaim=gs->frameNum;
 		if(reclaimLeft<0){

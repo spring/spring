@@ -68,6 +68,10 @@ public:
 
 	bool limitDgun;
 	float dgunRadius;
+
+	bool diminishingMetalMakers;
+	float metalMakerIncome;
+	float metalMakerEfficiency;
 };
 
 extern CUnitHandler* uh;

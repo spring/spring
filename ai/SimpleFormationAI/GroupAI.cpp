@@ -4,6 +4,7 @@
 
 #include "GroupAI.h"
 #include "IGroupAiCallback.h"
+#include "IAICallback.h"
 #include "GroupAI.h"
 #include "UnitDef.h"
 
@@ -34,6 +35,7 @@ CGroupAI::~CGroupAI()
 void CGroupAI::InitAi(IGroupAICallback* callback)
 {
 	this->callback=callback;
+	aicb=callback->GetAICallback();
 
 	CommandDescription cd;
 
@@ -73,14 +75,14 @@ void CGroupAI::GiveCommand(Command* c)
 	switch(c->id){
 	case CMD_STOP:
 		for(set<int>::iterator si=myUnits.begin();si!=myUnits.end();++si){
-			callback->GiveOrder(*si,c);
+			aicb->GiveOrder(*si,c);
 		}
 		break;
 	case CMD_MOVE:
 		MakeFormationMove(c);
 		break;
 	default:
-		callback->SendTextMsg("Unknown cmd to simple formation ai",0);
+		aicb->SendTextMsg("Unknown cmd to simple formation ai",0);
 	}
 }
 
@@ -117,9 +119,9 @@ void CGroupAI::Update()
 					float side=(0.25f+colNum*0.5f)*columnDist*(colNum&1 ? -1:1);
 
 					float3 pos=centerPos-tempFrontDir*(float)lineNum*lineDist+tempSideDir*side;
-					pos.y=callback->GetElevation(pos.x,pos.z);
-					const UnitDef* ud=callback->GetUnitDef(oi->second);
-					callback->DrawUnit(ud->name.c_str(),pos,rot,1,callback->GetMyTeam(),true,false);
+					pos.y=aicb->GetElevation(pos.x,pos.z);
+					const UnitDef* ud=aicb->GetUnitDef(oi->second);
+					aicb->DrawUnit(ud->name.c_str(),pos,rot,1,aicb->GetMyTeam(),true,false);
 					++posNum;
 				}
 			}
@@ -177,7 +179,7 @@ void CGroupAI::GiveMoveOrder(int unit, const float3& pos,unsigned char options)
 	nc.params.push_back(pos.x);
 	nc.params.push_back(pos.y);
 	nc.params.push_back(pos.z);
-	callback->GiveOrder(unit,&nc);
+	aicb->GiveOrder(unit,&nc);
 }
 
 
@@ -205,11 +207,11 @@ float CGroupAI::GetRotationFromVector(float3 vector)
 void CGroupAI::CreateUnitOrder(std::multimap<float,int>& out)
 {
 	for(set<int>::iterator ui=myUnits.begin();ui!=myUnits.end();++ui){
-		const UnitDef* ud=callback->GetUnitDef(*ui);
-		float range=callback->GetUnitMaxRange(*ui);
+		const UnitDef* ud=aicb->GetUnitDef(*ui);
+		float range=aicb->GetUnitMaxRange(*ui);
 		if(range<1)
 			range=2000;		//give weaponless units a long range to make them go to the back
-		float value=(ud->metalCost*60+ud->energyCost)/callback->GetUnitMaxHealth(*ui)*range;
+		float value=(ud->metalCost*60+ud->energyCost)/aicb->GetUnitMaxHealth(*ui)*range;
 		out.insert(pair<float,int>(value,*ui));
 	}
 }

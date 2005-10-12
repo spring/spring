@@ -12,7 +12,7 @@
 
 CObject::~CObject()
 {
-	std::set<CObject*>::iterator di;
+	std::multiset<CObject*>::iterator di;
 	for(di=listeners.begin();di!=listeners.end();++di){
 		(*di)->DependentDied(this);
 		(*di)->listening.erase(this);
@@ -35,6 +35,11 @@ void CObject::AddDeathDependence(CObject *o)
 
 void CObject::DeleteDeathDependence(CObject *o)
 {
-	listening.erase(o);
-	o->listeners.erase(this);
+	//note that we can be listening to a single object from several different places (like curreclaim in CBuilder and lastAttacker in CUnit, grr) so we should only remove one of them
+	std::multiset<CObject*>::iterator oi=listening.find(o);
+	if(oi!=listening.end())
+		listening.erase(oi);
+	std::multiset<CObject*>::iterator oi2=o->listeners.find(this);
+	if(oi2!=o->listeners.end())
+		o->listeners.erase(oi2);
 }

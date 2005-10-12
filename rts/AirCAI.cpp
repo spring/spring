@@ -42,6 +42,19 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 	possibleCommands.push_back(c);
 
+	c.params.clear();
+	c.id=CMD_AUTOREPAIRLEVEL;
+	c.type=CMDTYPE_ICON_MODE;
+	c.name="Repair level";
+	c.params.push_back("1");
+	c.params.push_back("LandAt 0");
+	c.params.push_back("LandAt 30");
+	c.params.push_back("LandAt 50");
+	c.tooltip="Repair level: Sets at which health level an aircraft will try to find a repair pad";
+	c.key=0;
+	possibleCommands.push_back(c);
+	nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
+
 	basePos=owner->pos;
 	goalPos=owner->pos;
 
@@ -55,6 +68,30 @@ CAirCAI::~CAirCAI(void)
 
 void CAirCAI::GiveCommand(Command &c)
 {
+	if(c.id==CMD_AUTOREPAIRLEVEL){
+		if(c.params.empty())
+			return;
+		switch((int)c.params[0]){
+		case 0:
+			((CAirMoveType*)owner->moveType)->repairBelowHealth=0;
+			break;
+		case 1:
+			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.3;
+			break;
+		case 2:
+			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.5;
+			break;
+		}
+		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
+			if(cdi->id==CMD_AUTOREPAIRLEVEL){
+				char t[10];
+				SNPRINTF(t,10,"%d",c.params[0]);
+				cdi->params[0]=t;
+				break;
+			}
+		}
+		return;
+	}
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		activeCommand=0;
 		tempOrder=false;

@@ -3,6 +3,7 @@
 
 #include "StdAfx.h"
 #include "MoveType.h"
+#include "AirBaseHandler.h"
 
 class CTAAirMoveType :
 	public CMoveType
@@ -43,6 +44,7 @@ public:
 	float3 deltaSpeed;			//Used to determine banking (since it is the current acceleration)
 
 	float currentBank;
+	float currentPitch;
 
 	//Provided by the unitloader
 	float turnRate;
@@ -97,6 +99,11 @@ public:
 	void SetWantedAltitude(float altitude);
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
+
+	float repairBelowHealth;
+	CAirBaseHandler::LandingPad* reservedPad;
+	int padStatus;						//0 flying toward,1 landing at,2 landed
+	float3 oldGoalPos;				//goalpos to resume flying to after landing
 };
 
 

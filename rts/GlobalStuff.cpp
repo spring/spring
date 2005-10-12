@@ -62,8 +62,8 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 
 	activeTeams=2;
 	activeAllyTeams=2;
+	teams[0]->active=true;
 	teams[1]->active=true;
-	teams[2]->active=true;
 
 	sunVector=float3(0,1,2).Normalize();
 

@@ -36,7 +36,7 @@ CWeaponDefHandler::CWeaponDefHandler(void)
 
   std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
 
-  weaponDefs = new WeaponDef[weaponlist.size()];
+ weaponDefs = new WeaponDef[weaponlist.size()+1];
   for(std::size_t taid=0; taid<weaponlist.size(); taid++)
   {
     ParseTAWeapon(&tasunparser, weaponlist[taid], taid);

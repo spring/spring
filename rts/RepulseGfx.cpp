@@ -43,6 +43,7 @@ void CRepulseGfx::DependentDied(CObject* o)
 		repulsed=0;
 		deleteMe=true;
 	}
+	CProjectile::DependentDied(o);
 }
 
 void CRepulseGfx::Draw(void)

@@ -13,7 +13,6 @@ CTAPalette palette;
 
 CTAPalette::CTAPalette()
 {
-	Init();
 }
 
 CTAPalette::~CTAPalette()

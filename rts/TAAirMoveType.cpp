@@ -37,13 +37,18 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	flyState(FLY_CRUISING),
 	forceHeadingTo(0),
 	goalDistance(1),
-	goalPos(ZeroVector),
+	goalPos(owner->pos),
+	oldGoalPos(owner->pos),
 	turnRate(1),
 	wantedSpeed(ZeroVector),
 	lastColWarning(0),
 	lastColWarningType(0),
 	reservedLandingPos(-1,-1,-1),
-	maxDrift(1)
+	maxDrift(1),
+	repairBelowHealth(0.30),
+	padStatus(0),
+	reservedPad(0),
+	currentPitch(0)
 {
 	wantedHeight+=gs->randFloat()*5;
 	orgWantedHeight=wantedHeight;
@@ -51,6 +56,10 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 
 CTAAirMoveType::~CTAAirMoveType(void)
 {
+	if(reservedPad){
+		airBaseHandler->LeaveLandingPad(reservedPad);
+		reservedPad=0;
+	}
 }
 /*
 float globalForce=15;
@@ -75,6 +84,7 @@ void CTAAirMoveType::SetGoal(float3 newPos, float distance)
 	maxDrift=max(16.0f,distance);	//aircrafts need some marginals to avoid uber stacking when lots of them are ordered to one place
 
 	goalPos = newPos;
+	oldGoalPos=newPos;
 	forceHeading=false;
 	wantedHeight=orgWantedHeight;
 //	goalPos = pos;
@@ -98,8 +108,10 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	//Do animations
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
-			owner->physicalState = CSolidObject::OnGround;
-			owner->Block();
+			if(padStatus==0){		//dont set us as on ground if we are on pad
+				owner->physicalState = CSolidObject::OnGround;
+				owner->Block();
+			}
 		case AIRCRAFT_LANDING:
 //			if (ownerActivated) {
 				owner->Deactivate();
@@ -230,7 +242,9 @@ void CTAAirMoveType::UpdateLanded()
 {
 	float3 &pos = owner->pos;
 
-	pos.y = ground->GetHeight(pos.x, pos.z);
+	if(padStatus==0)		//dont place on ground if we are on a repair pad
+		pos.y = ground->GetHeight(pos.x, pos.z);
+
 	owner->speed=ZeroVector;
 }
 
@@ -258,6 +272,7 @@ void CTAAirMoveType::UpdateFlying()
 	//Direction to where we would like to be
 	float3 dir = goalPos - pos;
 	bool arrived = false;
+	owner->restTime=0;
 
 	//are we there yet?
 //	info->AddLine("max drift %f %i %f %f",maxDrift,waitCounter,dir.Length2D(),fabs(ground->GetHeight(pos.x,pos.z)-pos.y+wantedHeight));
@@ -457,7 +472,18 @@ void CTAAirMoveType::UpdateBanking()
 	float3 &frontdir = owner->frontdir;
 	float3 &updir = owner->updir;
 
+	float wantedPitch=0;
+	if(aircraftState==AIRCRAFT_FLYING && flyState==FLY_ATTACKING && circlingPos.y<owner->pos.y){
+		wantedPitch=(circlingPos.y-owner->pos.y)/circlingPos.distance(owner->pos);
+	}
+	currentPitch=currentPitch*0.95+wantedPitch*0.05;
+
+	frontdir = GetVectorFromHeading(owner->heading);
+	frontdir.y=currentPitch;
+	frontdir.Normalize();
+
 	float3 rightdir(frontdir.cross(UpVector));		//temp rightdir
+	rightdir.Normalize();
 
 	float wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5;
 	float limit=min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
@@ -473,7 +499,9 @@ void CTAAirMoveType::UpdateBanking()
 		currentBank += min(0.03f, wantedBank - currentBank);
 
 	//Calculate a suitable upvector
-	updir = UpVector*cos(currentBank)+rightdir*sin(currentBank);
+	updir= rightdir.cross(frontdir);
+	updir = updir*cos(currentBank)+rightdir*sin(currentBank);
+	owner->rightdir = frontdir.cross(updir);
 }
 
 void CTAAirMoveType::UpdateAirPhysics()
@@ -599,7 +627,7 @@ void CTAAirMoveType::Update()
 #ifdef DIRECT_CONTROL_ALLOWED
 		if(owner->directControl){
 			DirectControlStruct* dc=owner->directControl;
-			aircraftState=AIRCRAFT_FLYING;
+			SetState(AIRCRAFT_FLYING);
 
 			float3 forward=dc->viewDir;
 			float3 flatForward=forward;
@@ -624,6 +652,52 @@ void CTAAirMoveType::Update()
 		} else 
 #endif
 		{
+
+			if(reservedPad){
+				CUnit* unit=reservedPad->unit;
+				float3 relPos=unit->localmodel->GetPiecePos(reservedPad->piece);
+				float3 pos=unit->pos + unit->frontdir*relPos.z + unit->updir*relPos.y + unit->rightdir*relPos.x;
+				if(padStatus==0){
+					if(aircraftState!=AIRCRAFT_FLYING && aircraftState!=AIRCRAFT_TAKEOFF)
+						SetState(AIRCRAFT_FLYING);
+
+					goalPos=pos;
+
+					if(pos.distance(owner->pos)<400){
+						padStatus=1;
+					}
+					//geometricObjects->AddLine(owner->pos,pos,1,0,1);
+				} else if(padStatus==1){
+					if(aircraftState!=AIRCRAFT_FLYING)
+						SetState(AIRCRAFT_FLYING);
+					flyState=FLY_LANDING;
+
+					goalPos=pos;
+					reservedLandingPos=pos;
+					wantedHeight=pos.y-ground->GetHeight(pos.x,pos.z);
+
+					if(owner->pos.distance(pos)<3 || aircraftState==AIRCRAFT_LANDED){
+						padStatus=2;
+					}
+					//geometricObjects->AddLine(owner->pos,pos,10,0,1);
+				} else {
+					if(aircraftState!=AIRCRAFT_LANDED)
+						SetState(AIRCRAFT_LANDED);
+					
+					owner->pos=pos;
+
+					owner->AddBuildPower(unit->unitDef->buildSpeed/30,unit);
+
+					if(owner->health>=owner->maxHealth-1){
+						airBaseHandler->LeaveLandingPad(reservedPad);
+						reservedPad=0;
+						padStatus=0;
+						goalPos=oldGoalPos;
+						SetState(AIRCRAFT_TAKEOFF);
+					}
+				}
+			}
+
 			//Main state handling
 			switch (aircraftState) {
 				case AIRCRAFT_LANDED:
@@ -646,13 +720,11 @@ void CTAAirMoveType::Update()
 
 	//Turn and bank and move
 	UpdateHeading();
-	frontdir = GetVectorFromHeading(owner->heading);
-	UpdateBanking();			//updates updir directly
-	rightdir = frontdir.cross(updir);
+	UpdateBanking();			//updates dirs
 	owner->midPos=pos+frontdir*owner->relMidPos.z + updir*owner->relMidPos.y + rightdir*owner->relMidPos.x;
 
 	//Push other units out of the way
-	if(pos!=oldpos && aircraftState!=AIRCRAFT_TAKEOFF){
+	if(pos!=oldpos && aircraftState!=AIRCRAFT_TAKEOFF && padStatus==0){
 		oldpos=pos;
 		if(!dontCheckCol){
 			vector<CUnit*> nearUnits=qf->GetUnitsExact(pos,owner->radius+6);
@@ -711,6 +783,16 @@ void CTAAirMoveType::Update()
 
 void CTAAirMoveType::SlowUpdate(void)
 {
+	if(!reservedPad && aircraftState==AIRCRAFT_FLYING && owner->health<owner->maxHealth*repairBelowHealth){
+		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,8000);
+		if(lp){
+			AddDeathDependence(lp);
+			reservedPad=lp;
+			padStatus=0;
+			oldGoalPos=goalPos;
+		}
+	}
+
 	UpdateMoveRate();
 
 	//Update LOS stuff
@@ -832,6 +914,11 @@ void CTAAirMoveType::CheckForCollision(void)
 
 void CTAAirMoveType::DependentDied(CObject* o)
 {
+	if(o==reservedPad){
+		reservedPad=0;
+		SetState(AIRCRAFT_FLYING);
+		goalPos=oldGoalPos;
+	}
 	if(o==lastColWarning){
 		lastColWarning=0;
 		lastColWarningType=0;

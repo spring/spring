@@ -89,7 +89,7 @@ bool CMissileLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 		if(gc>0)
 			return false;
 
-		if(helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,linear,quadratic,0,5,owner->allyteam,owner)){
+		if(helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,linear,quadratic,0,8,owner->allyteam,owner)){
 			return false;
 		}
 	} else {

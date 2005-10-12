@@ -10,6 +10,7 @@
 #endif // _MSC_VER > 1000
 
 #include "IGlobalAI.h"
+#include "IAICallback.h"
 #include <map>
 #include <set>
 
@@ -47,6 +48,7 @@ public:
 	void Update();
 
 	IGlobalAICallback* callback;
+	IAICallback* aicb;
 
 	set<int> myUnits;
 	set<int> enemies;

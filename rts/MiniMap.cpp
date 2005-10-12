@@ -31,6 +31,7 @@
 #include "WeaponDefHandler.h"
 #include "MapDamage.h"
 #include "MetalMap.h"
+#include "ConfigHandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
@@ -86,6 +87,20 @@ CMiniMap::CMiniMap()
 	width = (int) (width*hw);
 	height = (int) (height/hw);
 	ypos=gu->screeny-height-10;
+
+	simpleColors=!!configHandler.GetInt("SimpleMiniMapColors",0);
+	myColor[0]=0.2*255;
+	myColor[1]=0.9*255;
+	myColor[2]=0.2*255;
+	myColor[3]=1*255;
+	allyColor[0]=0.3*255;
+	allyColor[1]=0.3*255;
+	allyColor[2]=0.9*255;
+	allyColor[3]=1*255;
+	enemyColor[0]=0.9*255;
+	enemyColor[1]=0.2*255;
+	enemyColor[2]=0.2*255;
+	enemyColor[3]=1*255;
 }
 
 CMiniMap::~CMiniMap()
@@ -364,20 +379,33 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 	}
 	if(unit->commandAI->selected)
 		glColor3f(1,1,1);
-	else 
-		glColor3ubv(gs->teams[unit->team]->color);
+	else {
+		if(simpleColors){
+			if(unit->team==gu->myTeam){
+				glColor3ubv(myColor);
+			} else if (gs->allies[gu->myAllyTeam][unit->allyteam]){
+				glColor3ubv(allyColor);
+			} else {
+				glColor3ubv(enemyColor);
+			}
+		} else {
+			glColor3ubv(gs->teams[unit->team]->color);
+		}
+	}
 
 	float x=pos.x/(gs->mapx*SQUARE_SIZE);
 	float y=1-pos.z/(gs->mapy*SQUARE_SIZE);
 
+	float aspectRatio=float(width)/float(height);
+
 	glTexCoord2f(0,0);
-	glVertex2f(x-size,y-size);
+	glVertex2f(x-size,y-size*aspectRatio);
 	glTexCoord2f(0,1);
-	glVertex2f(x-size,y+size);
+	glVertex2f(x-size,y+size*aspectRatio);
 	glTexCoord2f(1,1);
-	glVertex2f(x+size,y+size);
+	glVertex2f(x+size,y+size*aspectRatio);
 	glTexCoord2f(1,0);
-	glVertex2f(x+size,y-size);
+	glVertex2f(x+size,y-size*aspectRatio);
 }
 
 

@@ -48,6 +48,7 @@
 #include "FlareProjectile.h"
 #include "MiniMap.h"
 #include "UnitDrawer.h"
+#include "AirBaseHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -126,8 +127,10 @@ CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 	stockpileWeapon(0),
 	haveDGunRequest(false),
 	jammerRadius(0),
+	sonarJamRadius(0),
 	radarRadius(0),
 	sonarRadius(0),
+	hasRadarCapacity(false),
 	stunned(false),
 	metalUse(0),
 	energyUse(0),
@@ -188,6 +191,10 @@ CUnit::~CUnit()
 		featureHandler->CreateWreckage(pos,wreckName, heading, delayedWreckLevel,-1,true,unitDef->name);
 	}
 
+	if(unitDef->isAirBase){
+		airBaseHandler->DeregisterAirBase(this);
+	}
+
 #ifdef TRACE_SYNC
 	tracefile << "Unit died: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
@@ -235,7 +242,7 @@ CUnit::~CUnit()
 	loshandler->DelayedFreeInstance(los);
 	los=0;
 
-	if(radarRadius || jammerRadius || sonarRadius)
+	if(hasRadarCapacity)
 		radarhandler->RemoveUnit(this);
 
 	delete cob;
@@ -379,7 +386,12 @@ void CUnit::SlowUpdate()
 	{
 		if(UseEnergy(unitDef->energyUpkeep*0.5f))
 		{
-			AddMetal(unitDef->makesMetal*0.5f);
+			if(unitDef->isMetalMaker){
+				AddMetal(unitDef->makesMetal*0.5f*uh->metalMakerEfficiency);
+				uh->metalMakerIncome+=unitDef->makesMetal;
+			} else {
+				AddMetal(unitDef->makesMetal*0.5f);
+			}
 			if(unitDef->extractsMetal>0)
 				AddMetal(metalExtract * 0.5f);
 		}
@@ -545,7 +557,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		attacker->experience+=0.1*power/attacker->power*damage/maxHealth;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
-		if((uh->lastDamageWarning+100<gs->frameNum || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))&& team==gu->myTeam && !camera->InView(midPos,radius+50)){
+		if((uh->lastDamageWarning+100<gs->frameNum || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))&& team==gu->myTeam && !camera->InView(midPos,radius+50) && gu->spectating){
 			info->AddLine("%s is being attacked",unitDef->humanName.c_str());
 			info->SetLastMsgPos(pos);
 			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
@@ -782,7 +794,7 @@ void CUnit::ExperienceChange()
 	limExperience=1-(1/(experience+1));
 
 	power=unitDef->power*(1+limExperience);
-	reloadSpeed=(1+limExperience*0.7);	
+	reloadSpeed=(1+limExperience*0.4);	
 
 	float oldMaxHealth=maxHealth;
 	maxHealth=unitDef->health*(1+limExperience*0.7);
@@ -805,8 +817,12 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 	loshandler->FreeInstance(los);
 	los=0;
 	losStatus[allyteam]=0;
-	if(radarRadius || jammerRadius || sonarRadius)
+	if(hasRadarCapacity)
 		radarhandler->RemoveUnit(this);
+
+	if(unitDef->isAirBase){
+		airBaseHandler->DeregisterAirBase(this);
+	}
 
 	if(type==ChangeGiven){
 		gs->teams[team]->RemoveUnit(this,CTeam::RemoveGiven);
@@ -832,13 +848,17 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 	loshandler->MoveUnit(this,false);
 	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 	qf->MovedUnit(this);
-	if(radarRadius || jammerRadius || sonarRadius)
+	if(hasRadarCapacity)
 		radarhandler->MoveUnit(this);
 
 	//model=unitModelLoader->GetModel(model->name,newteam);
 	model = unit3doparser->Load3DO(model->name.c_str(),1,newteam);
 	delete localmodel;
 	localmodel = unit3doparser->CreateLocalModel(model, &cob->pieces);
+
+	if(unitDef->isAirBase){
+		airBaseHandler->RegisterAirBase(this);
+	}
 
 	if(type==ChangeGiven && unitDef->energyUpkeep>25){//deactivate to prevent the old give metal maker trick
 		Command c;
@@ -945,7 +965,7 @@ void CUnit::Init(void)
 		info->AddLine("Unit %s is really cheap? %f",unitDef->humanName.c_str(),power);
 		power=10;
 	}
-	if(pos.y+model->height<0)
+	if(pos.y+model->height<1)	//some torp launchers etc is exactly in the surface and should be considered uw anyway
 		isUnderWater=true;
 
 	if(!unitDef->canKamikaze || unitDef->type!="Building")	//semi hack to make mines not block ground
@@ -1084,7 +1104,7 @@ void CUnit::FinishedBuilding(void)
 	{
 		if(wind.curStrength > unitDef->windGenerator)
 		{
-			cob->Call(COBFN_SetSpeed, (long)(unitDef->windGenerator));
+			cob->Call(COBFN_SetSpeed, (long)(unitDef->windGenerator*3000.0f));
 		}
 		else
 		{
@@ -1103,6 +1123,10 @@ void CUnit::FinishedBuilding(void)
 
 	//Sets the frontdir in sync with heading.
 	frontdir = GetVectorFromHeading(heading) + float3(0,frontdir.y,0);
+
+	if(unitDef->isAirBase){
+		airBaseHandler->RegisterAirBase(this);
+	}
 
 	globalAI->UnitFinished(this);
 
@@ -1238,7 +1262,7 @@ void CUnit::Activate()
 	if(unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam]/=radarhandler->targFacEffect;
 	}
-	if(radarRadius || jammerRadius || sonarRadius)
+	if(hasRadarCapacity)
 		radarhandler->MoveUnit(this);
 
 	if(unitDef->sounds.activate.id)
@@ -1256,7 +1280,7 @@ void CUnit::Deactivate()
 	if(unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam]*=radarhandler->targFacEffect;
 	}
-	if(radarRadius || jammerRadius || sonarRadius)
+	if(hasRadarCapacity)
 		radarhandler->RemoveUnit(this);
 
 	if(unitDef->sounds.deactivate.id)

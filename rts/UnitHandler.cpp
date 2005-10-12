@@ -25,6 +25,7 @@
 #include "UnitLoader.h"
 #include "SyncTracer.h"
 #include "GameSetup.h"
+#include "AirBaseHandler.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -38,7 +39,11 @@ CUnitHandler::CUnitHandler()
 :	overrideId(-1),
 	maxUnits(500),
 	lastDamageWarning(0),
-	lastCmdDamageWarning(0)
+	lastCmdDamageWarning(0),
+	metalMakerIncome(0),
+	metalMakerEfficiency(1),
+	diminishingMetalMakers(false),
+	limitDgun(false)
 {
 	//unitModelLoader=new CUnit3DLoader;
 
@@ -57,11 +62,15 @@ CUnitHandler::CUnitHandler()
 	if(maxUnits>MAX_UNITS/gs->activeTeams-5)
 		maxUnits=MAX_UNITS/gs->activeTeams-5;
 	
-	limitDgun=false;
-	if(gameSetup && gameSetup->limitDgun){
-		limitDgun=true;
-		dgunRadius=gs->mapx*3;
+	if(gameSetup){
+		if(gameSetup->limitDgun){
+			limitDgun=true;
+			dgunRadius=gs->mapx*3;
+		}
+		if(gameSetup->diminishingMMs)
+			diminishingMetalMakers=true;
 	}
+	airBaseHandler=new CAirBaseHandler;
 }
 
 CUnitHandler::~CUnitHandler()
@@ -69,6 +78,8 @@ CUnitHandler::~CUnitHandler()
 	list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 		delete (*usi);
+
+	delete airBaseHandler;
 }
 
 int CUnitHandler::AddUnit(CUnit *unit)
@@ -147,6 +158,12 @@ START_TIME_PROFILE
 	}
 
 END_TIME_PROFILE("Unit slow update");
+
+	if(!(gs->frameNum&15)){
+		if(diminishingMetalMakers)
+			metalMakerEfficiency=8./(8.+max(0.,sqrt(metalMakerIncome/gs->activeTeams)-4));
+		metalMakerIncome=0;
+	}
 
 END_TIME_PROFILE("Unit handler");
 
@@ -254,6 +271,8 @@ int CUnitHandler::TestUnitBuildSquare(const float3& pos, const UnitDef *unitdef,
 		for(int z=z1; z<z2; z+=SQUARE_SIZE){
 			int tbs=TestBuildSquare(float3(x,h,z),unitdef,feature);
 			canBuild=min(canBuild,tbs);
+			if(canBuild==0)
+				return 0;
 		}
 	}
 
@@ -277,15 +296,6 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 		else
 			ret=1;
 	}
-/*
-	std::vector<CSolidObject*> so=qf->GetSolidsExact(pos, SQUARE_SIZE);
-
-	for(std::vector<CSolidObject*>::iterator soi=so.begin();soi!=so.end();++soi){
-		if((*soi)->blocking && !(*soi)->immobile){
-			ret=1;
-		}
-	}
-*/
 	int square=ground->GetSquare(pos);
 
 	if(!unitdef->floater){

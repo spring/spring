@@ -40,6 +40,7 @@ using namespace std;
 #define CMD_TRAJECTORY 120
 #define CMD_RESURRECT 125
 #define CMD_CAPTURE 130
+#define CMD_AUTOREPAIRLEVEL 135
 
 #define CMDTYPE_ICON 0																		//expects 0 parameters in return
 #define CMDTYPE_ICON_MODE 5																//expect 1 parameter in return (number selected mode)

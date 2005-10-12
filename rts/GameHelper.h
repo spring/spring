@@ -18,6 +18,7 @@ struct UnitDef;
 #include <vector>
 #include "DamageArray.h"
 #include <list>
+#include "MemPool.h"
 
 using namespace std;
 
@@ -53,13 +54,24 @@ public:
 	std::vector<CExplosionGraphics*> explosionGraphics;
 
 	struct WaitingDamage{
+#ifndef SYNCIFY
+		inline void* operator new(size_t size){return mempool.Alloc(size);};
+		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
+#endif
+		WaitingDamage(int attacker,int target,const DamageArray& damage,const float3& impulse)
+			:	attacker(attacker),
+				target(target),
+				damage(damage),
+				impulse(impulse)
+		{}
+
 		int target;
 		int attacker;
 		DamageArray damage;
 		float3 impulse;
 	};
 
-	std::list<WaitingDamage> waitingDamages[64];
+	std::list<WaitingDamage*> waitingDamages[128];		//probably a symptom of some other problems but im getting paranoid about putting whole classes into high trafic stl containers instead of pointers to them
 };
 
 extern CGameHelper* helper;

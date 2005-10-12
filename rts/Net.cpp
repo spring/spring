@@ -23,6 +23,7 @@
 #endif
 #include <boost/filesystem/convenience.hpp>
 #include "SDL_timer.h"
+#include "Net.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -186,7 +187,8 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		gu->spectating=true;
 		return 1;
 	} else {
-		CreateDemoFile();
+		if(!gameSetup || !gameSetup->hostDemo)
+			CreateDemoFile();
 	}
 
 	sockaddr_in saOther;
@@ -276,8 +278,9 @@ int CNet::SendData(unsigned char *data, int length)
 
 int CNet::SendData(unsigned char *data, int length,int connection)
 {
-	if(playbackDemo)
+	if(playbackDemo && !serverNet)
 		return 1;
+
 	if(length<=0)
 		info->AddLine("Errenous send length in SendData %i",length);
 
@@ -329,9 +332,9 @@ void CNet::Update(void)
 	Uint64 t;
 	t = SDL_GetTicks();
 	curTime=double(t)/1000.;
+	if(playbackDemo)
+		ReadDemoFile();
 	if(onlyLocal){
-		if(playbackDemo)
-			ReadDemoFile();
 		return;
 	}
 	sockaddr_in from;
@@ -368,6 +371,10 @@ void CNet::Update(void)
 			continue;
 		std::map<int,Packet*>::iterator wpi;
 		while((wpi=c->waitingPackets.find(c->lastInOrder+1))!=c->waitingPackets.end()){		//process all in order packets that we have waiting
+			if(c->readyLength+wpi->second->length>=NETWORK_BUFFER_SIZE){
+				info->AddLine("Overflow in incomming network buffer");
+				break;
+			}
 			memcpy(&c->readyData[c->readyLength],wpi->second->data,wpi->second->length);
 			c->readyLength+=wpi->second->length;
 			delete wpi->second;
@@ -673,7 +680,6 @@ bool CNet::FindDemoFile(const char* name)
 		playbackDemo->Read(&demoTimeOffset,sizeof(double));
 		demoTimeOffset=gu->modGameTime-demoTimeOffset;
 		nextDemoRead=gu->modGameTime-0.01;
-		gs->cheatEnabled=true;	//allow switching between teams etc
 		return true;
 	} else {
 		delete playbackDemo;
@@ -684,23 +690,87 @@ bool CNet::FindDemoFile(const char* name)
 
 void CNet::ReadDemoFile(void)
 {
-	while(connections[0].readyLength<500 && nextDemoRead<gu->modGameTime/**/){
-		if(playbackDemo->Eof()){
-			if(connections[0].readyLength<30 && game->inbuflength-game->inbufpos<30)
-				connections[0].active=false;
-			return;
+//	if(!game)
+//		return;
+	if(gs->paused){
+		return;
+	}
+	if(this==serverNet){
+		while(nextDemoRead<gu->modGameTime){
+			if(playbackDemo->Eof()){
+				for(int a=0;a<MAX_PLAYERS;++a)
+					connections[a].active=false;
+				return;
+			}
+			int l;
+			playbackDemo->Read(&l,sizeof(int));
+			playbackDemo->Read(tempbuf,l);
+			SendData(tempbuf,l);
+			playbackDemo->Read(&nextDemoRead,sizeof(double));
+			nextDemoRead+=demoTimeOffset;
+			if(playbackDemo->Eof()){
+				info->AddLine("End of demo");
+				nextDemoRead=gu->modGameTime+4*gs->speedFactor;
+			}
+	//		info->AddLine("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
 		}
-		int l;
-		playbackDemo->Read(&l,sizeof(int));
-		playbackDemo->Read(&connections[0].readyData[connections[0].readyLength],l);
-		connections[0].readyLength+=l;
-		playbackDemo->Read(&nextDemoRead,sizeof(double));
-		nextDemoRead+=demoTimeOffset;
-		if(playbackDemo->Eof()){
-			info->AddLine("End of demo");
-			nextDemoRead=gu->modGameTime+4*gs->speedFactor;
+	} else {
+		while(connections[0].readyLength<500 && nextDemoRead<gu->modGameTime/**/){
+			if(playbackDemo->Eof()){
+				if(connections[0].readyLength<30 && (!game || game->inbuflength-game->inbufpos<30))
+					connections[0].active=false;
+				return;
+			}
+			int l;
+			playbackDemo->Read(&l,sizeof(int));
+			playbackDemo->Read(&connections[0].readyData[connections[0].readyLength],l);
+			connections[0].readyLength+=l;
+			playbackDemo->Read(&nextDemoRead,sizeof(double));
+			nextDemoRead+=demoTimeOffset;
+			if(playbackDemo->Eof()){
+				info->AddLine("End of demo");
+				nextDemoRead=gu->modGameTime+4*gs->speedFactor;
+			}
+	//		info->AddLine("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
 		}
-//		info->AddLine("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
 	}
 }
 
+void CNet::CreateDemoServer(std::string demoname)
+{
+	string firstTry = demoname;
+	firstTry = "/demos/" + firstTry;
+	playbackDemo=new CFileHandler(firstTry);
+	if (!playbackDemo->FileExists()) {
+		delete playbackDemo;
+		playbackDemo = new CFileHandler(demoname);
+	}
+
+	if(playbackDemo->FileExists()){
+		char c;
+		playbackDemo->Read(&c,1);
+		if(c){
+			int length;
+			playbackDemo->Read(&length,sizeof(int));
+			char* buf=new char[length];
+			playbackDemo->Read(buf,length);
+
+			//gameSetup=new CGameSetup();	//we have already initialized ...
+			//gameSetup->Init(buf,length);
+			delete[] buf;
+			nextDemoRead=gu->modGameTime+100000000;
+		}
+	} else {
+		info->AddLine("Couldnt find file to use as server demo");
+		delete playbackDemo;
+		playbackDemo=0;
+	}
+}
+
+
+void CNet::StartDemoServer(void)
+{
+	playbackDemo->Read(&demoTimeOffset,sizeof(double));
+	demoTimeOffset=gu->modGameTime-demoTimeOffset;
+	nextDemoRead=gu->modGameTime-0.01;
+}

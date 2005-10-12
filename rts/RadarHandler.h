@@ -20,7 +20,7 @@ public:
 			return false;
 		int square=max(0,min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+max(0,min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
 		if(unit->isUnderWater){
-			return !!sonarMaps[allyteam][square];
+			return (!!sonarMaps[allyteam][square]) && !commonSonarJammerMap[square];
 		}
 		if(unit->useAirLos){
 			return airRadarMaps[allyteam][square] && !commonJammerMap[square];
@@ -36,6 +36,7 @@ public:
 	unsigned short* sonarMaps[MAX_TEAMS];
 	unsigned short* jammerMaps[MAX_TEAMS];
 	unsigned short* commonJammerMap;
+	unsigned short* commonSonarJammerMap;
 	float radarErrorSize[MAX_TEAMS];
 	float baseRadarErrorSize;
 

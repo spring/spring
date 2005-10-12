@@ -248,7 +248,7 @@ void CGrassDrawer::Draw(void)
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
-			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapx*SQUARE_SIZE),0,0);
+			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 
 			glBindTexture(GL_TEXTURE_2D, groundDrawer->infoTex);
 			glActiveTextureARB(GL_TEXTURE0_ARB);

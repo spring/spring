@@ -321,7 +321,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		} else {
 			glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeNSVP );
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,15, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapx*SQUARE_SIZE),1);
+			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,15, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),1.0/(gs->pwr2mapx*SQUARE_SIZE),1);
 		}
 		glEnable( GL_VERTEX_PROGRAM_ARB );
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);

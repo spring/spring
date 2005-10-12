@@ -122,8 +122,8 @@ void CTestScript::Update()
 		unitLoader.LoadUnit("armscab",float3(2250,10,4800),1,false);
 
 		unitLoader.LoadUnit("ARMANNI",float3(2075,10,5765),1,false);
-		unitLoader.LoadUnit("ARMANNI",float3(2275,10,5765),1,false);
-		unitLoader.LoadUnit("ARMANNI",float3(2475,10,5765),1,false);
+//		unitLoader.LoadUnit("ARMANNI",float3(2275,10,5765),1,false);
+//		unitLoader.LoadUnit("ARMANNI",float3(2475,10,5765),1,false);
 //		unitLoader.LoadUnit("ARMROCK",float3(18,10,29),0,false);
 		break;
 	}

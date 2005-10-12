@@ -5,7 +5,6 @@
 
 #include "Factory.h"
 #include "Team.h"
-#include "UnitParser.h"
 #include "UnitLoader.h"
 #include "InfoConsole.h"
 #include "myGL.h"
@@ -25,6 +24,7 @@
 #include "Sound.h"
 #include "QuadField.h"
 #include "Ground.h"
+#include "MobileCAI.h"
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ void CFactory::Update()
 				c.id=CMD_FIRE_STATE;
 				c.params.push_back(fireState);
 				curBuild->commandAI->GiveCommand(c);
-				if(curBuild->commandAI->commandQue.empty()){
+				if(curBuild->commandAI->commandQue.empty() || (dynamic_cast<CMobileCAI*>(curBuild->commandAI) && ((CMobileCAI*)curBuild->commandAI)->unimportantMove)){
 					if(((CFactoryCAI*)commandAI)->newUnitCommands.empty()){
 						SendToEmptySpot(curBuild);
 					} else {

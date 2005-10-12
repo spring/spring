@@ -41,16 +41,21 @@ CGameServer::CGameServer(void)
 	terminate = false;
 
 	int port=8452;
-	if(gameSetup)
+	int myPlayer=0;
+	if(gameSetup){
 		port=gameSetup->hostport;
-
+		myPlayer=gameSetup->myPlayer;
+	}
 	serverNet=new CNet();
 	serverNet->InitServer(port);
 	net->InitClient("localhost",port,0,true);
-	serverNet->connections[0].localConnection=&net->connections[0];
-	net->connections[0].localConnection=&serverNet->connections[0];
-	serverNet->InitNewConn(&net->connections[0].addr,true,0);
+	serverNet->connections[myPlayer].localConnection=&net->connections[0];
+	net->connections[0].localConnection=&serverNet->connections[myPlayer];
+	serverNet->InitNewConn(&net->connections[0].addr,true,myPlayer);
 	net->onlyLocal=true;
+
+	if(gameSetup && gameSetup->hostDemo)
+		serverNet->CreateDemoServer(gameSetup->demoName);
 
 	lastframe = SDL_GetTicks();
 
@@ -81,7 +86,7 @@ bool CGameServer::Update(void)
 				int correctSync=0;
 				for(int a=0;a<MAX_PLAYERS;++a){
 					if(gs->players[a]->active){
-						if(!syncResponses[a]){		//if the checksum really happens to be 0 we will get lots of falls positives here
+						if(!syncResponses[a] && !serverNet->playbackDemo){		//if the checksum really happens to be 0 we will get lots of falls positives here
 							info->AddLine("No sync response from %s",gs->players[a]->playerName.c_str());
 							continue;
 						}
@@ -96,14 +101,19 @@ bool CGameServer::Update(void)
 			for(int a=0;a<MAX_PLAYERS;++a)
 				syncResponses[a]=0;
 			
-			//send sync request
-			outbuf[0]=NETMSG_SYNCREQUEST;
-			(*((int*)&outbuf[1]))=serverframenum;
-			serverNet->SendData(outbuf,5);
-			outstandingSyncFrame=serverframenum;
+			if(!serverNet->playbackDemo){
+				//send sync request
+				outbuf[0]=NETMSG_SYNCREQUEST;
+				(*((int*)&outbuf[1]))=serverframenum;
+				serverNet->SendData(outbuf,5);
+				outstandingSyncFrame=serverframenum;
+			}
 
+			int firstReal=0;
+			if(gameSetup)
+				firstReal=gameSetup->numDemoPlayers;
 			//send info about the players
-			for(int a=0;a<MAX_PLAYERS;++a){
+			for(int a=firstReal;a<MAX_PLAYERS;++a){
 				if(gs->players[a]->active){
 					outbuf[0]=NETMSG_PLAYERINFO;
 					outbuf[1]=a;
@@ -142,7 +152,7 @@ bool CGameServer::Update(void)
 		info->AddLine("Server read net wanted quit");
 		return false;
 	}
-	if (game->playing){
+	if (game->playing && !serverNet->playbackDemo){
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
 		double timeElapsed=((double)(currentFrame - lastframe))/1000.;
@@ -182,7 +192,7 @@ bool CGameServer::ServerReadNet()
 	for(int a=0;a<MAX_PLAYERS;a++){
 		int inbufpos=0;
 		int inbuflength=0;
-		if(gs->players[a]->active){
+		if(gs->players[a]->active && (!gameSetup || a>=gameSetup->numDemoPlayers)){
 			if((inbuflength=serverNet->GetData(inbuf,NETWORK_BUFFER_SIZE,a))==-1){
 				PUSH_CODE_MODE;		//this could lead to some nasty errors if the other thread switches code mode...
 				ENTER_MIXED;
@@ -224,7 +234,7 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+2]!=a){
 					info->AddLine("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
 				} else {
-					if(game->gamePausable){
+					if(game->gamePausable || a==0){
 						timeLeft=0;
 						serverNet->SendData(&inbuf[inbufpos],3);
 					}
@@ -334,7 +344,8 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+3]!=a){
 					SendSystemMsg("Server: Warning got command msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
 				} else {
-					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
 				}
 				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
@@ -343,7 +354,8 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+3]!=a){
 					SendSystemMsg("Server: Warning got select msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
 				} else {
-					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
 				}
 				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
@@ -352,7 +364,8 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+3]!=a){
 					SendSystemMsg("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
 				} else {
-					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1]));
 				}
 				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
@@ -361,10 +374,12 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+1]!=a){
 					SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
 				} else {
-					if(outstandingSyncFrame==*(int*)&inbuf[inbufpos+6])
-						syncResponses[inbuf[inbufpos+1]]=*(int*)&inbuf[inbufpos+2];
-					else
-						info->AddLine("Delayed sync respone from %s",gs->players[inbuf[inbufpos+1]]->playerName.c_str());
+					if(!serverNet->playbackDemo){
+						if(outstandingSyncFrame==*(int*)&inbuf[inbufpos+6])
+							syncResponses[inbuf[inbufpos+1]]=*(int*)&inbuf[inbufpos+2];
+						else
+							info->AddLine("Delayed sync respone from %s",gs->players[inbuf[inbufpos+1]]->playerName.c_str());
+					}
 				}
 				lastLength=10;}
 				break;
@@ -373,7 +388,8 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+1]!=a){
 					SendSystemMsg("Server: Warning got share msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
 				} else {
-					serverNet->SendData(&inbuf[inbufpos],12);
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],12);
 				}
 				lastLength=12;
 				break;
@@ -382,7 +398,8 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+1]!=gs->players[a]->team){
 					SendSystemMsg("Server: Warning got setshare msg from player %i claiming to be from team %i",a,inbuf[inbufpos+1]);
 				} else {
-					serverNet->SendData(&inbuf[inbufpos],10);
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],10);
 				}
 				lastLength=10;
 				break;
@@ -406,7 +423,8 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+1]!=a){
 					SendSystemMsg("Server: Warning got direct control msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
 				} else {
-					serverNet->SendData(&inbuf[inbufpos],2);
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],2);
 				}
 				lastLength=2;
 				break;
@@ -415,7 +433,8 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+1]!=a){
 					SendSystemMsg("Server: Warning got dc update msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
 				} else {
-					serverNet->SendData(&inbuf[inbufpos],7);
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],7);
 				}
 				lastLength=7;
 				break;

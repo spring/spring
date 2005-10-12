@@ -70,7 +70,13 @@ void CTorpedoProjectile::Update(void)
 		speed.y+=gs->gravity;
 		if(dir.y>0)
 			dir.y=0;
+		dir=speed;
+		dir.Normalize();
 	} else {
+		if(pos.y-speed.y>-3){		//level out torpedo a bit when hitting water
+			dir.y*=0.5;
+			dir.Normalize();
+		}
 		ttl--;
 		if(ttl>0){
 			if(curSpeed<maxSpeed)
@@ -121,6 +127,9 @@ void CTorpedoProjectile::Update(void)
 
 void CTorpedoProjectile::Draw(void)
 {
+	if(isUnitPart)	//dont draw if a 3d model has been defined for us
+		return;
+
 	float3 interPos=pos+speed*gu->timeOffset;
 	inArray=true;
 

@@ -28,6 +28,7 @@
 #include "BaseCmd.h"
 #include "GameVersion.h"
 #include "errorhandler.h"
+#include "LuaBinder.h"
 #include <SDL.h>
 #include <SDL_main.h>
 //#include "mmgr.h"
@@ -265,6 +266,11 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
 
+	// Initialize lua bindings
+//	CLuaBinder lua;
+//	if (!lua.LoadScript("testscript.lua")) 
+//		MessageBox(NULL, lua.lastError.c_str(), "lua",MB_YESNO|MB_ICONQUESTION);
+
 	// Check if the commandline parameter is specifying a demo file
 	bool playDemo = false;
 	string demofile;
@@ -313,7 +319,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	if (playDemo)
 		server = false;
 	else if(gameSetup)
-		server=gameSetup->myPlayer==0;
+		server=gameSetup->myPlayer-gameSetup->numDemoPlayers == 0;
 	else
 		server=!cmdline->result("client") || cmdline->result("server");
 	
@@ -341,6 +347,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	#ifdef NEW_GUI
 	guicontroller = new GUIcontroller();
 	#endif
+
+//	lua.CreateLateBindings();
 
 	SDL_Event event;
 	while(!done)									// Loop That Runs While done=false
@@ -401,7 +409,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 							if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
 								activeController->ignoreNextChar=false;
 							else
-								activeController->userInput+=char(i);
+								if(i>31 && i<250)
+									activeController->userInput+=char(i);
 					}
 				}
 			} else if (oldkeys[i] && !keys[i]) {

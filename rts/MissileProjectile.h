@@ -42,8 +42,6 @@ public:
 	float extraHeight;
 	float extraHeightDecay;
 	int extraHeightTime;
-
-	unsigned int modelDispList;
 };
 
 

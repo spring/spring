@@ -75,6 +75,7 @@ public:
 
 	vector<CommandDescription> commands;
 	IGroupAICallback* callback;
+	IAICallback* aicb;
 	void UpdateFactoryIcon(CommandDescription* cd, int numQued);
 	void FindNewJob(int unit);
 	void SendTxt(const char *fmt, ...);

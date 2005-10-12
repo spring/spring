@@ -48,8 +48,6 @@ public:
 		std::vector<float> ageMods;
 	};
 	OldInfo* oldInfos[5];
-
-	unsigned int modelDispList;
 };
 
 

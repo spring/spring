@@ -189,8 +189,8 @@ void CMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
     }
   }
 
-	for(int y=max(2,(y1&0xfffffe));y<=min(gs->mapy-3,hy2);y+=2){
-		for(int x=max(2,(x1&0xfffffe));x<=min(gs->mapx-3,hx2);x+=2){
+	for(int y=max(2,(y1&0xfffffe));y<=min(gs->mapy-3,y2);y+=2){
+		for(int x=max(2,(x1&0xfffffe));x<=min(gs->mapx-3,x2);x+=2){
 			float3 e1(-SQUARE_SIZE*4,readmap->heightmap[(y-1)*(gs->mapx+1)+x-1]-readmap->heightmap[(y-1)*(gs->mapx+1)+x+3],0);
 			float3 e2( 0,readmap->heightmap[(y-1)*(gs->mapx+1)+x-1]-readmap->heightmap[(y+3)*(gs->mapx+1)+x-1],-SQUARE_SIZE*4);
 

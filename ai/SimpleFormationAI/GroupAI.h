@@ -9,10 +9,13 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#include "float3.h"
 #include "IGroupAI.h"
-#include "IGroupAiCallback.h"
 #include <set>
 #include <map>
+
+class IGroupAICallback;
+class IAICallback;
 
 const char AI_NAME[]="Simple formation";
 
@@ -41,6 +44,7 @@ public:
 
 	vector<CommandDescription> commands;
 	IGroupAICallback* callback;
+	IAICallback* aicb;
 
 	bool unitsChanged;
 

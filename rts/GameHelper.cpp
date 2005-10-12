@@ -54,6 +54,14 @@ CGameHelper::~CGameHelper()
 		delete explosionGraphics.back();
 		explosionGraphics.pop_back();
 	}
+
+	for(int a=0;a<128;++a){
+		std::list<WaitingDamage*>* wd=&waitingDamages[a];
+		while(!wd->empty()){
+			delete wd->back();
+			wd->pop_back();
+		}
+	}
 }
 
 void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType)
@@ -80,7 +88,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		height=0;
 
 	vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
-	float gd=max(20.f,damages[0]/20);
+	float gd=max(30.f,damages[0]/20);
 	float explosionSpeed=(8+gd*2.5)/(9+sqrt(gd)*0.7)*0.5;	//this is taken from the explosion graphics and could probably be simplified a lot
 
 	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
@@ -96,16 +104,12 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 			if(mod<0)
 				mod=0;
 			dif/=dist+0.0001;
-			dif.y+=0.1;
+			dif.y+=0.12;
 		if(dist2<explosionSpeed*2){	//damage directly
-			(*ui)->DoDamage(damages*mod2,owner,dif*(mod*damages[0]*3));
+			(*ui)->DoDamage(damages*mod2,owner,dif*(mod*damages[0]*3.2));
 		}else {	//damage later
-			WaitingDamage wd;
-			wd.attacker=owner?owner->id:-1;
-			wd.target=(*ui)->id;
-			wd.impulse=dif*(mod*damages[0]*3);
-			wd.damage=damages*mod2;
-			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed))&63].push_back(wd);
+			WaitingDamage* wd=new WaitingDamage(owner?owner->id:-1, (*ui)->id, damages*mod2, dif*(mod*damages[0]*3.2));
+			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed))&127].push_front(wd);
 		}
 	}
 
@@ -314,7 +318,7 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 	float secDamage=weapon->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
 	bool paralyzer=weapon->weaponDef->damages.paralyzeDamage;
 
-	vector<int> quads=qf->GetQuads(pos,radius+aHeight*heightMod);
+	vector<int> quads=qf->GetQuads(pos,radius+(aHeight-max(0.f,readmap->minheight))*heightMod);
 
 	int tempNum=gs->tempNum++;
 	vector<int>::iterator qi;
@@ -530,6 +534,8 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CFeature*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].features.begin();ui!=qf->baseQuads[*qi].features.end();++ui){
+			if(!(*ui)->blocking)
+				continue;
 			float3 dif=(*ui)->midPos-start;
 			float closeLength=dif.dot(dir);
 			if(closeLength<0)
@@ -612,12 +618,13 @@ float3 CGameHelper::Pos2BuildPos(float3 pos, const UnitDef* ud)
 
 void CGameHelper::Update(void)
 {
-	std::list<WaitingDamage>* wd=&waitingDamages[gs->frameNum&63];
+	std::list<WaitingDamage*>* wd=&waitingDamages[gs->frameNum&127];
 	while(!wd->empty()){
-		WaitingDamage* w=&wd->back();
+		WaitingDamage* w=wd->back();
+		wd->pop_back();
 		if(uh->units[w->target])
 			uh->units[w->target]->DoDamage(w->damage,w->attacker==-1?0:uh->units[w->attacker],w->impulse);
-		wd->pop_back();
+		delete w;
 	}
 }
 
@@ -644,7 +651,7 @@ bool CGameHelper::TestTrajectoryCone(const float3 &from, const float3 &flatdir,f
 			newfrom.y+=(linear+quadratic*closeFlatLength)*closeFlatLength;
 			geometricObjects->AddLine(newfrom-UpVector*(spread*closeFlatLength+baseSize),newfrom+UpVector*(spread*closeFlatLength+baseSize),3,0,16);
 /**/
-			if(fabs(linear-quadratic*closeFlatLength)<0.2){		//relativly flat region -> use approximation
+			if(fabs(linear-quadratic*closeFlatLength)<0.15){		//relativly flat region -> use approximation
 				dif.y-=(linear+quadratic*closeFlatLength)*closeFlatLength;
 
 				float3 closeVect=dif-flatdir*closeFlatLength;

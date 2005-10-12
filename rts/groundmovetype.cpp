@@ -311,7 +311,7 @@ void CGroundMoveType::SlowUpdate()
 //			owner->Block();
 		}
 		qf->MovedUnit(owner);
-		owner->isUnderWater=owner->pos.y+owner->height<0;
+		owner->isUnderWater=owner->pos.y+owner->height<1;
 	}
 }
 

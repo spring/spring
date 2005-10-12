@@ -56,6 +56,11 @@ public:
 
 	std::list<Notification> notes;
 	void DrawNotes(void);
+
+	bool simpleColors;
+	unsigned char myColor[4];
+	unsigned char allyColor[4];
+	unsigned char enemyColor[4];
 };
 extern CMiniMap* minimap;
 

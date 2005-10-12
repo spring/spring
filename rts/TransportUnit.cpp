@@ -8,7 +8,8 @@
 
 CTransportUnit::CTransportUnit(const float3 &pos,int team,UnitDef* unitDef)
 : CUnit(pos,team,unitDef),
-	transportCapacityUsed(0)
+	transportCapacityUsed(0),
+	transportMassUsed(0)
 {
 }
 
@@ -44,6 +45,7 @@ void CTransportUnit::DependentDied(CObject* o)
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
 		if(ti->unit==o){
 			transportCapacityUsed-=ti->size;
+			transportMassUsed-=ti->mass;
 			transported.erase(ti);
 			break;
 		}
@@ -70,6 +72,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		return;
 	AddDeathDependence(unit);
 	unit->inTransport=true;
+	unit->toBeTransported=false;
 	if (unit->unitDef->stunnedCargo)
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
 	unit->UnBlock();
@@ -79,8 +82,13 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	tu.unit=unit;
 	tu.piece=piece;
 	tu.size=unit->xsize/2;
+	tu.mass=unit->mass;
 	transportCapacityUsed+=tu.size;
+	transportMassUsed+=tu.mass;
 	transported.push_back(tu);
+
+	unit->CalculateTerrainType();
+	unit->UpdateTerrainType();
 }
 
 void CTransportUnit::DetachUnit(CUnit* unit)
@@ -102,7 +110,12 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			c.id=CMD_STOP;
 			unit->commandAI->GiveCommand(c);
 			transportCapacityUsed-=ti->size;
+			transportMassUsed-=ti->mass;
 			transported.erase(ti);
+
+			unit->CalculateTerrainType();
+			unit->UpdateTerrainType();
+
 			break;
 		}
 	}

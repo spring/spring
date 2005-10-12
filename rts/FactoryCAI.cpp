@@ -81,8 +81,7 @@ void CFactoryCAI::GiveCommand(Command& c)
 		return;
 	}
 	BuildOption &bo=boi->second;
-	if(!unitLoader.CanBuildUnit(bo.fullName,owner->team))
-		return;
+
 	int numItems=1;
 	if(c.options& SHIFT_KEY)
 		numItems*=5;
@@ -189,16 +188,12 @@ void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
 	vector<CommandDescription>::iterator pci;
 	for(pci=possibleCommands.begin();pci!=possibleCommands.end();++pci){
 		if(pci->id==id){
-			if(unitLoader.CanBuildUnit(bo.fullName,owner->team)){
-				char t[32];
-				SNPRINTF(t, 32, "%d", bo.numQued);
-				pci->name=bo.name;
-				pci->params.clear();
-				if(bo.numQued)
-					pci->params.push_back(t);
-			}else{
-				pci->name="Need tech";
-			}
+			char t[32];
+			SNPRINTF(t,10,"%d",bo.numQued);
+			pci->name=bo.name;
+			pci->params.clear();
+			if(bo.numQued)
+				pci->params.push_back(t);
 			break;
 		}
 	}

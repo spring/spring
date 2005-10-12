@@ -48,6 +48,7 @@ public:
 
 	vector<CommandDescription> commands;
 	IGroupAICallback* callback;
+	IAICallback* aicb;
 
 	set<int> currentCommands;
 };

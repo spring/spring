@@ -52,6 +52,21 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 	possibleCommands.push_back(c);
 
+	if(owner->unitDef->canfly){
+		c.params.clear();
+		c.id=CMD_AUTOREPAIRLEVEL;
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Repair level";
+		c.params.push_back("1");
+		c.params.push_back("LandAt 0");
+		c.params.push_back("LandAt 30");
+		c.params.push_back("LandAt 50");
+		c.tooltip="Repair level: Sets at which health level an aircraft will try to find a repair pad";
+		c.key=0;
+		possibleCommands.push_back(c);
+		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
+	}
+
 	nonQueingCommands.insert(CMD_SET_WANTED_MAX_SPEED);
 }
 
@@ -65,6 +80,33 @@ void CMobileCAI::GiveCommand(Command &c)
 	if(c.id == CMD_SET_WANTED_MAX_SPEED) {
 		//owner->moveType->SetWantedMaxSpeed(*c.params.begin());
 		maxWantedSpeed = *c.params.begin();
+		return;
+	}
+
+	if(c.id==CMD_AUTOREPAIRLEVEL){
+		if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
+			return;
+		if(c.params.empty())
+			return;
+		switch((int)c.params[0]){
+		case 0:
+			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0;
+			break;
+		case 1:
+			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.3;
+			break;
+		case 2:
+			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.5;
+			break;
+		}
+		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
+			if(cdi->id==CMD_AUTOREPAIRLEVEL){
+				char t[10];
+				SNPRINTF(t,10,"%d",c.params[0]);
+				cdi->params[0]=t;
+				break;
+			}
+		}
 		return;
 	}
 
@@ -384,7 +426,7 @@ void CMobileCAI::IdleCheck(void)
 		}
 	}
 	if((gs->frameNum!=lastIdleCheck+16) && owner->moveState && owner->fireState==2 && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
-		CUnit* u=helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+300*owner->moveState,owner->allyteam);
+		CUnit* u=helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
 		if(u && !(owner->unitDef->noChaseCategory & u->category)){
 			Command c;
 			c.id=CMD_ATTACK;

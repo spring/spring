@@ -31,6 +31,23 @@ CResourceBar::~CResourceBar(void)
 {
 }
 
+static string FloatToSmallString(float num,float mul=1){
+	char c[50];
+
+	if(num==0)
+		return "0";
+	if(fabs(num)<10*mul){
+		sprintf(c,"%.1f",num);
+	} else if(fabs(num)<10000*mul){
+		sprintf(c,"%.0f",num);
+	} else if(fabs(num)<10000000*mul){
+		sprintf(c,"%.0fk",num/1000);
+	} else {
+		sprintf(c,"%.0fM",num/1000000);
+	}
+	return c;
+};
+
 void CResourceBar::Draw(void)
 {
 	float mx=float(mouse->lastx)/gu->screenx;
@@ -103,14 +120,14 @@ void CResourceBar::Draw(void)
 	
 	font->glPrintAt(metalx-0.004,metaly+.005f,0.7f,"Metal");
 
-	font->glPrintAt(metalbarx2-.01f,metaly,0.5,"%.0f",gs->teams[gu->myTeam]->metalStorage);
-	font->glPrintAt(metalbarx1+metalbarlen/2.0,metaly/*+.02f*/,0.5,"%.0f",gs->teams[gu->myTeam]->metal);
+	font->glPrintAt(metalbarx2-.01f,metaly,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->metalStorage).c_str());
+	font->glPrintAt(metalbarx1+metalbarlen/2.0,metaly/*+.02f*/,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->metal).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5,"-%.1f(-%.1f)",fabs(gs->teams[gu->myTeam]->oldMetalExpense),fabs(gs->teams[gu->myTeam]->oldMetalUpkeep));
+	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldMetalExpense)).c_str(),FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldMetalUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
-	font->glPrintAt(metalx+.044f,metaly+.01f,0.5,"+%.1f",gs->teams[gu->myTeam]->oldMetalIncome);
+	font->glPrintAt(metalx+.044f,metaly+.01f,0.5,"+%s",FloatToSmallString(gs->teams[gu->myTeam]->oldMetalIncome).c_str());
 
 	// Energy
 	glDisable(GL_TEXTURE_2D);
@@ -167,14 +184,14 @@ void CResourceBar::Draw(void)
 	font->glPrintAt(energyx-0.018,energyy+.005f,0.7f,"Energy");
 
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(energybarx2-.01f,energyy,0.5,"%.0f",gs->teams[gu->myTeam]->energyStorage);
-	font->glPrintAt(energybarx1+energybarlen/2.0,energyy/*+.02f*/,0.5,"%.0f",gs->teams[gu->myTeam]->energy);
+	font->glPrintAt(energybarx2-.01f,energyy,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->energyStorage).c_str());
+	font->glPrintAt(energybarx1+energybarlen/2.0,energyy/*+.02f*/,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->energy).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5,"-%.1f(-%.1f)",fabs(gs->teams[gu->myTeam]->oldEnergyExpense),fabs(gs->teams[gu->myTeam]->oldEnergyUpkeep));
+	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldEnergyExpense)).c_str(),FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldEnergyUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
-	font->glPrintAt(energyx+.044f,energyy+.01f,0.5,"+%.1f",gs->teams[gu->myTeam]->oldEnergyIncome);
+	font->glPrintAt(energyx+.044f,energyy+.01f,0.5,"+%s",FloatToSmallString(gs->teams[gu->myTeam]->oldEnergyIncome).c_str());
 
 	glDisable(GL_TEXTURE_2D);
 

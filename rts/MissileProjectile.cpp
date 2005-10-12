@@ -49,8 +49,6 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 		S3DOModel* model = unit3doparser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName+".3do",1,0);
 		if(model){
 			SetRadius(model->radius);
-			modelDispList= model->rootobject->displist;
-			isUnitPart=true;
 		}
 	}
 
@@ -71,6 +69,8 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	if(weaponDef->trajectoryHeight>0){
 		float dist=pos.distance(targPos);
 		extraHeight=dist*weaponDef->trajectoryHeight;
+		if(dist<maxSpeed)
+			dist=maxSpeed;
 		extraHeightTime=(int)(dist/*+pos.distance(targPos+UpVector*dist))*0.5*//maxSpeed);
 		extraHeightDecay=extraHeight/extraHeightTime;
 	}
@@ -139,19 +139,21 @@ void CMissileProjectile::Update(void)
 				wobbleTime=16;
 			}
 			wobbleDir+=wobbleDif;
-			dir+=wobbleDir*weaponDef->wobble;
+			dir+=wobbleDir*weaponDef->wobble*(owner?(1-owner->limExperience*0.5):1);
 			dir.Normalize();
 		}
 
 		float3 orgTargPos(targPos);
+		float dist=targPos.distance(pos);
+		if(dist==0)
+			dist=0.1;
 		if(extraHeightTime){
 			extraHeight-=extraHeightDecay;
 			--extraHeightTime;
 			targPos.y+=extraHeight;
-			dir.y-=extraHeightDecay/targPos.distance(pos);
+			dir.y-=extraHeightDecay/dist;
 			//geometricObjects->AddLine(pos,targPos,3,1,1);
 		}
-		float dist=targPos.distance(pos);
 		float3 dif(targPos + targSpeed*(dist/maxSpeed)*0.7 - pos);
 		dif.Normalize();
 		float3 dif2=dif-dir;

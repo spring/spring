@@ -48,7 +48,7 @@ public:
 	Uint64 lastUpdate;
 	Uint64 lastMoveUpdate;
 
-	unsigned char inbuf[40000];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE
+	unsigned char inbuf[40000*2];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE*2
 	int inbufpos;								//where in the input buffer we are
 	int inbuflength;						//last byte in input buffer
 

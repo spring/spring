@@ -5,6 +5,7 @@
 #define __AIR_MOVE_TYPE_H__
 
 #include "MoveType.h"
+#include "AirBaseHandler.h"
 
 class CPropeller;
 
@@ -19,6 +20,26 @@ public:
 		AIRCRAFT_CRASHING,
 		AIRCRAFT_TAKEOFF,
 	} aircraftState;
+
+	CAirMoveType(CUnit* owner);
+	~CAirMoveType(void);
+	virtual void Update();
+	virtual void SlowUpdate();
+
+	void UpdateManeuver();
+	void UpdateFighterAttack();
+	void UpdateAttack();
+	void UpdateFlying(float wantedHeight,float engine);
+	void UpdateLanded();
+	void UpdateLanding();
+	void UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector);
+	void SetState(AircraftState state);
+	void UpdateTakeOff(float wantedHeight);
+	void ImpulseAdded(void);
+	float3 FindLandingPos(void);
+	void CheckForCollision(void);
+	void DependentDied(CObject* o);
+
 	int subState;
 
 	int maneuver;
@@ -90,24 +111,9 @@ public:
 	CUnit* lastColWarning;		//unit found to be dangerously close to our path
 	int lastColWarningType;		//1=generally forward of us,2=directly in path
 
-	CAirMoveType(CUnit* owner);
-	~CAirMoveType(void);
-	virtual void Update();
-	virtual void SlowUpdate();
-
-	void UpdateManeuver();
-	void UpdateFighterAttack();
-	void UpdateAttack();
-	void UpdateFlying(float wantedHeight,float engine);
-	void UpdateLanded();
-	void UpdateLanding();
-	void UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector);
-	void SetState(AircraftState state);
-	void UpdateTakeOff(float wantedHeight);
-	void ImpulseAdded(void);
-	float3 FindLandingPos(void);
-	void CheckForCollision(void);
-	void DependentDied(CObject* o);
+	float repairBelowHealth;
+	CAirBaseHandler::LandingPad* reservedPad;
+	int padStatus;						//0 flying toward,1 landing at,2 landed
 };
 
 #endif // __AIR_MOVE_TYPE_H__
