@@ -6,7 +6,21 @@
 #endif
 
 #pragma warning (disable:4530)
- 
+
+#ifdef _MSC_VER
+#define SNPRINTF _snprintf
+#else
+#define SNPRINTF snprintf
+#endif
+
+// This reduces compile-time with precompiled headers on msvc
+#ifdef _MSC_VER
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <set>
+#endif
+
 #include "Syncify.h"
 #include "float3.h"
 #include "GlobalStuff.h"

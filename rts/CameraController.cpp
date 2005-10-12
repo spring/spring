@@ -2,9 +2,6 @@
 #include "CameraController.h"
 #include "Camera.h"
 #include "Ground.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "InfoConsole.h"
 #include "MouseHandler.h"
 #include "SDL_types.h"

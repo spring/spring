@@ -5,9 +5,6 @@
 #include "StdAfx.h"
 #include "AdvWater.h"
 #include "Game.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "myGL.h"
 #include <math.h>
 #include "Camera.h"

@@ -6,9 +6,6 @@
 #define __GAME_H__
 
 //#include <winsock2.h>
-#ifdef _WIN32
-#include <windows.h>		// Header File For Windows
-#endif
 #include <time.h>
 #include <string>
 #include "SDL_types.h"

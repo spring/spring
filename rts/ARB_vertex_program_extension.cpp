@@ -6,12 +6,18 @@
 //	Created:	2nd October 2002
 //////////////////////////////////////////////////////////////////////////////////////////	
 #include "StdAfx.h"
-#include <windows.h>
+#include "myGL.h"
 #include <GL/gl.h>
+
 //#include <GL\glext.h>
 //#include <GL\wglext.h>
 //#include "../LOG.h"
 #include "ARB_vertex_program_extension.h"
+
+
+#ifdef _WIN32
+#include <GL/wglew.h>
+#endif
 
 //extern LOG errorLog;
 

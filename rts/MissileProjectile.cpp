@@ -93,7 +93,7 @@ void CMissileProjectile::Collision()
 {
 	float h=ground->GetHeight2(pos.x,pos.z);
 	if(h>pos.y)
-		pos-=speed*fmin((float)1,(h-pos.y)/fabs(speed.y));
+		pos-=speed*std::min((float)1,float((h-pos.y)/fabs(speed.y)));
 	CSmokeTrailProjectile* tp=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,false,true,7,Smoke_Time,0.6f,drawTrail);
 	//helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();

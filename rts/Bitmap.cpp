@@ -3,7 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Bitmap.h"
 #include "myGL.h"
 #include <ostream>
 #include <fstream>
@@ -11,6 +10,7 @@
 #include <IL/il.h>
 #include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
+#include "Bitmap.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

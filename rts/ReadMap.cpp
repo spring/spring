@@ -3,9 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
-#include "windows.h"
-#endif
 #include "myGL.h"
 #include <GL/glu.h>			// Header file for the gLu32 library
 #include "ReadMap.h"

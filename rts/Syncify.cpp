@@ -1,7 +1,6 @@
 #include "Syncify.h"
 
 #ifdef SYNCIFY
-#include <windows.h>
 #include <stdio.h>
 #include "bget.h"
 
@@ -201,7 +200,7 @@ namespace Syncify{
 		if(codeType!=CodeType_Synced){
 			char text[500];
 			sprintf(text,"Code not in synced mode in %s line %i",file,line);
-			MessageBox(0,text,"Assertion failure",0);
+			handleerror(0,text,"Assertion failure",0);
 
 			int* a=0;
 			*a=0;			//make sure we crash for easy access to call stack etc
@@ -212,7 +211,7 @@ namespace Syncify{
 		if(codeType!=CodeType_Unsynced){
 			char text[500];
 			sprintf(text,"Code not in unsynced mode in %s line %i",file,line);
-			MessageBox(0,text,"Assertion failure",0);
+			handleerror(0,text,"Assertion failure",0);
 
 			int* a=0;
 			*a=0;			//make sure we crash for easy access to call stack etc
@@ -223,7 +222,7 @@ namespace Syncify{
 		if(codeType!=CodeType_Mixed){
 			char text[500];
 			sprintf(text,"Code not in mixed mode in %s line %i",file,line);
-			MessageBox(0,text,"Assertion failure",0);
+			handleerror(0,text,"Assertion failure",0);
 
 			int* a=0;
 			*a=0;			//make sure we crash for easy access to call stack etc

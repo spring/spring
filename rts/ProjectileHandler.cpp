@@ -4,10 +4,6 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "ProjectileHandler.h"
-#ifdef _WIN32
-#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
-#include <windows.h>		// Header File For Windows
-#endif
 #include "myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Projectile.h"
@@ -26,6 +22,7 @@
 #include "ShadowHandler.h"
 #include "UnitDrawer.h"
 #include "3DOParser.h"
+#include <algorithm>
 //#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

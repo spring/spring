@@ -61,10 +61,10 @@ public:
 	SearchResult GetPath(const MoveData& moveData, std::vector<float3> startPos, const CPathFinderDef& pfDef, Path& path);
 	
 	//Minimum distance between two waypoints.
-	static const unsigned int PATH_RESOLUTION = 2*SQUARE_SIZE;
+	enum { PATH_RESOLUTION = 2*SQUARE_SIZE };
 
 private:  
-	const static unsigned int MAX_SEARCHED_SQARES = 10000;
+	enum { MAX_SEARCHED_SQARES = 10000 };
 
 	class OpenSquare {
 	public:

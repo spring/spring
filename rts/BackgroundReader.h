@@ -7,7 +7,7 @@
 #include <deque>
 #include <string>
 #ifdef _WIN32
-#include <windows.h>
+#include "win32.h"
 #elif defined(HAS_LIBAIO)
 #include <libaio.h>
 #endif

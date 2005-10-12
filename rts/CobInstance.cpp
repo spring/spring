@@ -7,9 +7,6 @@
 #ifndef _CONSOLE
 
 #include "Unit.h"
-#ifdef _WIN32
-#include "windows.h"
-#endif
 #include "InfoConsole.h"
 #include <math.h>
 #include "3DOParser.h"

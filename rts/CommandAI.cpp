@@ -192,7 +192,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_FIRE_STATE){
 					char t[10];
-					snprintf(t, 10, "%d", c.params[0]);
+					SNPRINTF(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -207,7 +207,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_MOVE_STATE){
 					char t[10];
-					snprintf(t, 10, "%d", c.params[0]);
+					SNPRINTF(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -222,7 +222,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_REPEAT){
 					char t[10];
-					snprintf(t, 10, "%d", c.params[0]);
+					SNPRINTF(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -237,7 +237,7 @@ void CCommandAI::GiveCommand(Command& c)
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_TRAJECTORY){
 					char t[10];
-					snprintf(t, 10, "%d", c.params[0]);
+					SNPRINTF(t, 10, "%d", c.params[0]);
 					cdi->params[0]=t;
 					break;
 				}
@@ -255,7 +255,7 @@ void CCommandAI::GiveCommand(Command& c)
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 			if(cdi->id==CMD_ONOFF){
 				char t[10];
-				snprintf(t, 10, "%d", c.params[0]);
+				SNPRINTF(t, 10, "%d", c.params[0]);
 				cdi->params[0]=t;
 				break;
 			}
@@ -273,7 +273,7 @@ void CCommandAI::GiveCommand(Command& c)
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 			if(cdi->id==CMD_CLOAK){
 				char t[10];
-				snprintf(t, 10, "%d", c.params[0]);
+				SNPRINTF(t, 10, "%d", c.params[0]);
 				cdi->params[0]=t;
 				break;
 			}

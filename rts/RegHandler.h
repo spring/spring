@@ -8,7 +8,7 @@
 #include "ConfigHandler.h"
 
 #include <string>
-#include <windows.h>
+#include "win32.h"
 #include <winreg.h>
 
 using std::string;

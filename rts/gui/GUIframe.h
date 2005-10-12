@@ -12,7 +12,6 @@
 #include "GlobalStuff.h"
 #include "myGL.h"
 
-#ifndef _WIN32
 #include "SDL_types.h"
 struct paletteentry_s {
 	Uint8 peRed;
@@ -20,8 +19,6 @@ struct paletteentry_s {
 	Uint8 peBlue;
 	Uint8 peFlags;
 };
-typedef struct paletteentry_s PALETTEENTRY;
-#endif
 
 using namespace std;
 
@@ -162,7 +159,7 @@ protected:
 
 extern GUIframe *mainFrame;
 
-GLuint Texture(const std::string& name, const vector<PALETTEENTRY>* pvTransparentColors = NULL);
+GLuint Texture(const std::string& name, const vector<paletteentry_s>* pvTransparentColors = NULL);
 void DrawThemeRect(int edge, int size, int w, int h);
 
 

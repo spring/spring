@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "glExtra.h"
 #include "Ground.h"
 //#include "mmgr.h"

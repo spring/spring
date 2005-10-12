@@ -337,12 +337,12 @@ string GUIframe::Tooltip()
 #include "Bitmap.h"
 
 
-GLuint Texture(const std::string& name, const vector<PALETTEENTRY>* pvTransparentColors)
+GLuint Texture(const std::string& name, const vector<paletteentry_s>* pvTransparentColors)
 {
 	CBitmap bitmap(name);
 	if ( pvTransparentColors != NULL )
 	{
-		vector < PALETTEENTRY >::const_iterator currIter = pvTransparentColors->begin(), 
+		vector < paletteentry_s >::const_iterator currIter = pvTransparentColors->begin(), 
 			eIter = pvTransparentColors->end();
 		for ( ; currIter != eIter; currIter++ )
 		{

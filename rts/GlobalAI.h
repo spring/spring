@@ -1,9 +1,6 @@
 #ifndef GLOBALAI_H
 #define GLOBALAI_H
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "Object.h"
 #include "SharedLib.h"
 
@@ -29,9 +26,9 @@ public:
 
 	SharedLib *lib;
 
-	typedef int (WINAPI* GETGLOBALAIVERSION)();
-	typedef IGlobalAI* (WINAPI* GETNEWAI)();
-	typedef void (WINAPI* RELEASEAI)(IGlobalAI* i);
+	typedef int (* GETGLOBALAIVERSION)();
+	typedef IGlobalAI* (* GETNEWAI)();
+	typedef void (* RELEASEAI)(IGlobalAI* i);
 	
 	GETGLOBALAIVERSION GetGlobalAiVersion;
 	GETNEWAI GetNewAI;

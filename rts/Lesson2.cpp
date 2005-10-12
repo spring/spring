@@ -7,10 +7,6 @@
  */
 
 #include "StdAfx.h"
-#ifdef _WIN32
-#include <windows.h>		// Header File For Windows
-#include "winreg.h"
-#endif
 #include "myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include <time.h>
@@ -32,10 +28,8 @@
 #include "BaseCmd.h"
 #include "GameVersion.h"
 #include "errorhandler.h"
-#include "SDL.h"
-#ifdef _WIN32
-#include <direct.h>
-#endif
+#include <SDL.h>
+#include <SDL_main.h>
 //#include "mmgr.h"
 
 #include "NewGuiDefine.h"
@@ -44,9 +38,11 @@
 #include "GUIcontroller.h"
 #endif
 
-// Use the crashrpt library 
 #ifdef _WIN32
 #include "../crashrpt/include/crashrpt.h"
+#include "win32.h"
+#include <winreg.h>
+#include <direct.h>
 #endif
 
 #define XRES_DEFAULT 1024
@@ -140,8 +136,8 @@ bool MultisampleVerify(void)
 	if (buffers && samples) {
 #ifdef DEBUG
 		char t[22];
-		snprintf(t,22, "FSAA level %d enabled",samples);
-		handleerror(0,t,"SDL_GL",MB_OK|MB_ICONINFORMATION);
+		SNPRINTF(t,22, "FSAA level %d enabled",samples);
+		handleerror(0,t,"SDL_GL",MBF_OK|MBF_INFO);
 #endif
 		return true;
 	} else
@@ -174,7 +170,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 
 	screen = SDL_SetVideoMode(width,height,bits,sdlflags);
 	if (!screen) {
-		handleerror(NULL,"Could not set video mode","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,"Could not set video mode","ERROR",MBF_OK|MBF_EXCL);
 		return false;
 	}
 	if (FSAA)
@@ -189,7 +185,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
 		KillGLWindow();								// Reset The Display
-		handleerror(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,"Initialization Failed.","ERROR",MBF_OK|MBF_EXCL);
 		return false;								// Return false
 	}
 
@@ -224,7 +220,11 @@ bool crashCallback(void* crState)
 }
 #endif
 
+#ifdef WIN32 /* SDL_main can't use envp in the main function */
+int main( int argc, char *argv[] )
+#else
 int main( int argc, char *argv[ ], char *envp[ ] )
+#endif
 {
 #ifndef _WIN32
 	chdir(DATADIR);
@@ -258,7 +258,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		fullscreen = true;
 #ifdef _WIN32
 	// Initialize crash reporting
-	Install(crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
+	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
 	ENTER_SYNCED;
 	gs=new CGlobalSyncedStuff();

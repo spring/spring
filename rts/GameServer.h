@@ -1,9 +1,6 @@
 #ifndef __GAME_SERVER_H__
 #define __GAME_SERVER_H__
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include "SDL_types.h"

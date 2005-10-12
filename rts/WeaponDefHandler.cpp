@@ -1,5 +1,4 @@
 #include <stdexcept>
-#include <iostream>
 #include "StdAfx.h"
 #include "WeaponDefHandler.h"
 #include "myGL.h"
@@ -13,6 +12,7 @@
 #include "DamageArrayHandler.h"
 #include "CategoryHandler.h"
 //#include "mmgr.h"
+#include <iostream>
 
 CWeaponDefHandler* weaponDefHandler;
 

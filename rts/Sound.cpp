@@ -28,13 +28,13 @@ CSound::CSound()
 		if (context != NULL)
 			alcMakeContextCurrent(context);
 		else {
-			handleerror(0,"Could not create audio context","OpenAL error",MB_OK);
+			handleerror(0, "Could not create audio context","OpenAL error",MBF_OK);
 			noSound = true;
 			alcCloseDevice(device);
 			return;
 		}
 	} else {
-		handleerror(0,"Could not create audio device","OpenAL error",MB_OK);
+		handleerror(0,"Could not create audio device","OpenAL error",MBF_OK);
 		noSound = true;
 		return;
 	}
@@ -123,7 +123,7 @@ ALuint CSound::LoadALBuffer(string path)
 		buf = new Uint8[file.FileSize()];
 		file.Read(buf, file.FileSize());
 	} else {
-		handleerror(0,"Couldnt open wav file",path,0);
+		handleerror(0, "Couldnt open wav file",path.c_str(),0);
 		return 0;
 	}
 	alBufferData(buffer,AL_FORMAT_STEREO8,buf,file.FileSize(),11025);

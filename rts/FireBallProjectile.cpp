@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "FireBallProjectile.h"
 #include "GlobalStuff.h"
 #include "VertexArray.h"

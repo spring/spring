@@ -14,7 +14,6 @@
 #include "WorldObject.h"
 #include "Unit.h"
 #include "RadarHandler.h"
-//#include <windows.h>
 
 #define MAX_LOS_TABLE 80
 

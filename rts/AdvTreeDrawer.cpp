@@ -9,9 +9,6 @@
 #include "Camera.h"
 #include "VertexArray.h"
 #include "ReadMap.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "myGL.h"
 #include "AdvTreeGenerator.h"
 #include "Bitmap.h"

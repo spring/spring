@@ -6,10 +6,14 @@
 #ifndef ERRORHANDLER_H
 #define ERRORHANDLER_H
 
+#define MBF_OK		1
+#define MBF_INFO	2
+#define MBF_EXCL	4
+
 #ifdef _WIN32
 
-#include <windows.h>
-#define handleerror(o, m, c, f) MessageBox(o, m, c, f)
+#define handleerror(o, m, c, f) ErrorMessageBox(m, c, f)
+void ErrorMessageBox(const char *msg, const char *caption, unsigned int flags);
 
 #else
 
@@ -25,21 +29,17 @@
 #define DEBUGSTRING
 #endif
 
-#define MB_OK 			0x00000001
-#define MB_ICONINFORMATION	0x00000002
-#define MB_ICONEXCLAMATION	0x00000004
-
 #define handleerror(o, m, c, f)					\
 do {								\
-	if (f & MB_ICONINFORMATION)				\
+	if (f & MBF_INFO)				\
 	    std::cerr << "Info: ";				\
-	else if (f & MB_ICONEXCLAMATION)			\
+	else if (f & MBF_EXCL)			\
 	    std::cerr << "Warning: ";				\
 	else							\
 	    std::cerr << "ERROR: ";				\
 	std::cerr << c << std::endl;				\
 	std::cerr << "  " << m << std::endl;			\
-	if (!(f&(MB_ICONINFORMATION|MB_ICONEXCLAMATION)))	\
+	if (!(f&(MBF_INFO|MBF_EXCL)))	\
 		do {DEBUGSTRING} while (0);			\
 } while (0)
 

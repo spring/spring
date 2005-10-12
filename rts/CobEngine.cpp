@@ -8,10 +8,6 @@
 #include "errorhandler.h"
 //#include "mmgr.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #ifndef _CONSOLE
 #include "TimeProfiler.h"
 #endif

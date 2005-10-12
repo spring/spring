@@ -6,6 +6,8 @@
 #define __BITMAP_H__
 
 #include <string>
+
+#include "win32.h"
 #include "nv_dds.h"
 
 using std::string;

@@ -51,6 +51,15 @@ extern int stupidGlobalMapId;
 
 unsigned char netbuf[NETWORK_BUFFER_SIZE];	//buffer space for outgoing data
 
+static bool IsFakeError()
+{
+#ifdef _WIN32
+	return WSAGetLastError()==WSAEWOULDBLOCK || WSAGetLastError()==WSAECONNRESET;
+#else
+	return errno==EWOULDBLOCK || errno==ECONNRESET;
+#endif
+}
+
 CNet::CNet()
 {
 	Uint64 t;
@@ -63,7 +72,7 @@ CNet::CNet()
 
 	wVersionRequested = MAKEWORD( 2, 2 ); 
 	err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
-		handleerror(NULL,"Couldnt initialize winsock.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Couldnt initialize winsock.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 		return;
 	} 
 	/* Confirm that the WinSock DLL supports 2.2.*/
@@ -73,7 +82,7 @@ CNet::CNet()
 	/* requested.                                        */ 
 	if ( LOBYTE( wsaData.wVersion ) != 2 ||
         HIBYTE( wsaData.wVersion ) != 2 ) {
-		handleerror(NULL,"Wrong WSA version.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Wrong WSA version.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 		WSACleanup( );
 		return; 
 	}
@@ -130,7 +139,7 @@ int CNet::InitServer(int portnum)
 	imServer=true;
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		handleerror(NULL,"Error initializing socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Error initializing socket as server.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 		connected=false;
 		exit(0);
 	}
@@ -143,7 +152,7 @@ int CNet::InitServer(int portnum)
 
 	if (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
 		closesocket(mySocket);
-		handleerror(NULL,"Error binding socket as server.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Error binding socket as server.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 		exit(0);
 	}
 
@@ -197,7 +206,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		lpHostEntry = gethostbyname(server);
 		if (lpHostEntry == NULL)
 		{
-			handleerror(NULL,"Error looking up server from dns.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+			handleerror(NULL,"Error looking up server from dns.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 			exit(0);
 			return -1;
 		}
@@ -205,7 +214,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 	}
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		handleerror(NULL,"Error initializing socket.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,"Error initializing socket.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 		exit(0);
 		return -1;
 	}
@@ -221,7 +230,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 			numTries++;
 			if(numTries>10){
 				closesocket(mySocket);
-				handleerror(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+				handleerror(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 				exit(0);
 			}
 			saMe.sin_port = htons(sourceport+numTries);
@@ -333,11 +342,11 @@ void CNet::Update(void)
 	if(connected)
 	while(true){
 		if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR){
-			if(WSAGetLastError()==EWOULDBLOCK || WSAGetLastError()==ECONNRESET) 
+			if (IsFakeError())
 				break;
 			char test[500];
 			sprintf(test,"Error receiving data. %i %d",(int)imServer,WSAGetLastError());
-			handleerror(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+			handleerror(NULL,test,"SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 			exit(0);
 		}
 		int conn=ResolveConnection(&from);
@@ -572,11 +581,11 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 	memcpy(&tempbuf[hsize],data,length);
 //	if(rand()&7)
 	if(sendto(mySocket,(char*)tempbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
-		if(WSAGetLastError()==EWOULDBLOCK)
+		if (IsFakeError())
 			return;
 		char test[100];
 		sprintf(test,"Error sending data. %d",WSAGetLastError());
-		handleerror(NULL,test,"SHUTDOWN ERROR",MB_OK | MB_ICONINFORMATION);
+		handleerror(NULL,test,"SHUTDOWN ERROR", MBF_OK | MBF_INFO);
 		exit(0);
 	}
 }

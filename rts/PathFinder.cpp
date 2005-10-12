@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "PathFinder.h"
 #include "MoveMath.h"
 #include "ReadMap.h"
@@ -38,8 +39,6 @@ void pfDealloc(void *p,size_t n)
 {
 	free(p);
 }
-
-const unsigned int CPathFinder::MAX_SEARCHED_SQARES;
 
 /*
 Constructor.
@@ -198,7 +197,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 	path.pathCost = PATHCOST_INFINITY;
 
 	//Store som basic data.
-	maxNodesToBeSearched = min(MAX_SEARCHED_SQARES, maxNodes);
+	maxNodesToBeSearched = min((unsigned int)MAX_SEARCHED_SQARES, maxNodes);
 	this->testMobile=testMobile;
 	this->exactPath = exactPath;
 	this->needPath=needPath;

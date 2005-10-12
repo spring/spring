@@ -22,6 +22,12 @@
 
 #include "hpiutil.h"
 
+#ifdef _MSC_VER
+#define STRCASECMP stricmp
+#else
+#define STRCASECMP strcasecmp
+#endif
+
 /*
  * HPIOpen
  * Opens a given hpi file and returns a pointer to its hpifile object
@@ -74,7 +80,7 @@ hpiutil::hpientry_ptr hpiutil::HPIReadFlatList(hpifile const &hpi, const char *n
 	altname[len] = '\0';
 
 	for (std::vector<hpientry_ptr>::const_iterator it = tmp.begin(); it != tmp.end(); it++) {
-		if ((!strcasecmp((*it)->path().c_str(),name) || !strcasecmp((*it)->path().c_str(),altname)) && ((*it)->directory == dir)) {
+		if ((!STRCASECMP((*it)->path().c_str(),name) || !STRCASECMP((*it)->path().c_str(),altname)) && ((*it)->directory == dir)) {
 			free(altname);
 			return *it;
 		}
@@ -119,9 +125,9 @@ void hpiutil::HPICloseFile(hpientry_ptr &he)
  * offset - offset in hpi file (unused, for compatibility only)
  * bytecount - length of file to load (unused, for compatibility only)
  */
-uint32_t hpiutil::HPIGet(char *dest, hpientry_ptr const &he, const int offset, const int bytecount)
+boost::uint32_t hpiutil::HPIGet(char *dest, hpientry_ptr const &he, const int offset, const int bytecount)
 {
-	return he->file->getdata(he,(uint8_t*)dest);
+	return he->file->getdata(he,(boost::uint8_t*)dest);
 }
 
 /*

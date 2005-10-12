@@ -7,6 +7,7 @@
 #ifdef _WIN32
 #define ZLIB_WINAPI 
 #define USEWIN32IOAPI
+#include "win32.h"
 #include "minizip/iowin32.h"
 #endif
 

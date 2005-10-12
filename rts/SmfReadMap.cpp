@@ -5,13 +5,13 @@
 #include <GL/glu.h>
 #include "FileHandler.h"
 #include "ConfigHandler.h"
-#include "Bitmap.h"
 #include "BFGroundTextures.h"
 #include "InfoConsole.h"
 #include "MetalMap.h"
 #include "FeatureHandler.h"
 #include "myMath.h"
 #include "errorhandler.h"
+#include "Bitmap.h"
 //#include "mmgr.h"
 
 using namespace std;

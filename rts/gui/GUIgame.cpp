@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GUIgame.h"
 #include "GUIcontroller.h"
 #include "Camera.h"
@@ -267,7 +268,7 @@ void Selector::DrawFront(float maxSize, float sizeDiv)
 #ifdef _WIN32
  		itoa(pos1.distance2D(pos2)/sizeDiv,c,10);
 #else
- 		snprintf(c,39,"%d",pos1.distance2D(pos2)/sizeDiv);
+ 		SNPRINTF(c,39,"%d",pos1.distance2D(pos2)/sizeDiv);
 #endif
 		mouse->cursorTextRight=c;
 	}
@@ -981,7 +982,7 @@ bool GUIgame::EventAction(const string& command)
 		string name;
 		for(int a=0;a<99;++a){
 			char t[50];
-			snprintf(t,10,"%d",a);
+			SNPRINTF(t,10,"%d",a);
 			name=string("screen")+t+".jpg";
 			CFileHandler ifs(name);
 			if(!ifs.FileExists())

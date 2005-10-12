@@ -501,7 +501,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 					newMode=0;
 
 				char t[10];
-				snprintf(t, 10, "%d", newMode);
+				SNPRINTF(t, 10, "%d", newMode);
 				commands[icon].params[0]=t;
 
 				Command c;
@@ -905,7 +905,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 
 	if(sizeDiv!=0){
 		char c[40];
-		snprintf(c, 40, "%d",pos1.distance2D(pos2)/sizeDiv );
+		SNPRINTF(c, 40, "%d",pos1.distance2D(pos2)/sizeDiv );
 		mouse->cursorTextRight=c;
 	}
 	glEnable(GL_FOG);
@@ -955,7 +955,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					newMode=0;
 
 				char t[10];
-				snprintf(t, 10, "%d", newMode);
+				SNPRINTF(t, 10, "%d", newMode);
 				commands[a].params[0]=t;
 
 				Command c;

@@ -89,7 +89,7 @@ public:
 	float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
 
 private:
-	static const unsigned int MAX_SEARCHED_BLOCKS=10000;
+	enum { MAX_SEARCHED_BLOCKS=10000 };
 	const unsigned int BLOCK_SIZE;
 	const unsigned int BLOCK_PIXEL_SIZE;
 	const unsigned int BLOCKS_TO_UPDATE;

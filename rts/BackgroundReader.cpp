@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "BackgroundReader.h"
+
 #ifdef _WIN32
-#include <windows.h>
+#include "win32.h"
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -11,7 +12,7 @@
 CBackgroundReader backgroundReader;
 
 #ifdef _WIN32
-void FileIOComplete(Uint32 dwErrorCode, Uint32 dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
+void FileIOComplete(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
 {
 	CloseHandle(backgroundReader.curHandle);
 	backgroundReader.curHandle=0;
@@ -75,7 +76,7 @@ void CBackgroundReader::Update(void)
 		curReadInfo.Offset=0;
 		curReadInfo.OffsetHigh=0;
 
-		if(!ReadFileEx(curHandle,curFile.buf,curFile.length,&curReadInfo,FileIOComplete)){
+		if(!ReadFileEx(curHandle,curFile.buf,curFile.length,&curReadInfo,(LPOVERLAPPED_COMPLETION_ROUTINE)FileIOComplete)){
 			MessageBox(0,curFile.name.c_str(),"Failed to read file",0);
 			CloseHandle(curHandle);
 			curHandle=0;

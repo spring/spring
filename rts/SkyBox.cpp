@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "SkyBox.h"
 #include "float3.h"
 #include "myGL.h"
