@@ -31,6 +31,8 @@ CGameSetup::CGameSetup(void)
 	readyTime=0;
 	gameSetupText=0;
 	startPosType=0;
+	numDemoPlayers=0;
+	hostDemo=false;
 	forceReady=false;
 }
 
@@ -77,6 +79,10 @@ bool CGameSetup::Init(char* buf, int size)
 	file.GetDef(gs->gameMode,"0","GAME\\GameMode");
 	file.GetDef(sourceport,"0","GAME\\SourcePort");
 	file.GetDef(limitDgun,"0","GAME\\LimitDgun");
+	file.GetDef(diminishingMMs,"0","GAME\\DiminishingMMs");
+	demoName=file.SGetValueDef("","GAME\\Demofile");
+	if(!demoName.empty())
+		hostDemo=true;
 
 	// Determine if the map is inside an archive, and possibly map needed archives
 	CFileHandler* f = new CFileHandler("maps/" + mapname);
@@ -126,6 +132,11 @@ bool CGameSetup::Init(char* buf, int size)
 		gs->players[a]->team=atoi(file.SGetValueDef("0",s+"team").c_str());
 		gs->players[a]->spectator=!!atoi(file.SGetValueDef("0",s+"spectator").c_str());
 		gs->players[a]->playerName=file.SGetValueDef("0",s+"name");
+
+		int fromDemo;
+		file.GetDef(fromDemo,"0",s+"IsFromDemo");
+		if(fromDemo)
+			numDemoPlayers++;
 	}
 	gu->spectating=gs->players[myPlayer]->spectator;
 

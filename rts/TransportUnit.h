@@ -15,10 +15,12 @@ public:
 		CUnit* unit;
 		int piece;
 		int size;
+		float mass;
 	};
 
 	std::list<TransportedUnit> transported;
 	int transportCapacityUsed;
+	float transportMassUsed;
 
 	void Update(void);
 	void DependentDied(CObject* object);

@@ -157,9 +157,9 @@ public:
 	int radarRadius;
 	int sonarRadius;
 	int jammerRadius;
+	int sonarJamRadius;
+	bool hasRadarCapacity;
 	std::vector<int> radarSquares;
-	std::vector<int> sonarSquares;
-	std::vector<int> jammedSquares;
 	int2 oldRadarPos;
 	bool stealth;
 

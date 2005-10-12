@@ -577,7 +577,8 @@ void CCobInstance::EmitSfx(int type, int piece)
 
 void CCobInstance::AttachUnit(int piece, int u)
 {
-	if (!unit->localmodel->PieceExists(piece)) {
+	// -1 is valid, indicates that the unit should be hidden
+	if ((piece >= 0) && (!unit->localmodel->PieceExists(piece))) {
 		GCobEngine.ShowScriptError("Invalid piecenumber for attach");
 		return;
 	}

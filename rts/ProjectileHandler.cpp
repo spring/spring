@@ -552,21 +552,29 @@ void CProjectileHandler::CheckUnitCol()
 		if(p->checkCol && !p->deleteMe){
 			CUnit* owner=p->owner;
 			float speedf=p->speed.Length();
-			float3 normSpeed=p->speed/speedf;
+			float ispeedf=1.0f/speedf;
+			float3 normSpeed=p->speed*ispeedf;
 
 			vector<CUnit*> units=qf->GetUnitsExact(p->pos,p->radius+speedf);
 			for(vector<CUnit*>::iterator ui(units.begin());ui!=units.end();++ui){
-				if(owner ==(*ui))
+				CUnit* unit=*ui;
+				if(owner == unit)
 					continue;
-				float totalRadius=(*ui)->radius+p->radius;
-				float3 dif=(*ui)->midPos-p->pos;
-				float closeTime=dif.dot(normSpeed)/speedf;
+				float totalRadius=unit->radius+p->radius;
+				float3 dif(unit->midPos-p->pos);
+				float closeTime=dif.dot(normSpeed)*ispeedf;
 				if(closeTime<0)
 					closeTime=0;
 				if(closeTime>1)
 					closeTime=1;
 				float3 closeVect=dif-(p->speed*closeTime);
 				if(dif.SqLength() < totalRadius*totalRadius){
+					if(unit->isMarkedOnBlockingMap && unit->physicalState != CSolidObject::Flying){
+						float3 closePos(p->pos+p->speed*closeTime);
+						int square=max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
+						if(readmap->groundBlockingObjectMap[square]!=unit)
+							continue;
+					}
 					p->Collision(*ui);
 					break;
 				}
@@ -585,6 +593,12 @@ void CProjectileHandler::CheckUnitCol()
 					closeTime=1;
 				float3 closeVect=dif-(p->speed*closeTime);
 				if(dif.SqLength() < totalRadius*totalRadius){
+					if((*fi)->isMarkedOnBlockingMap){
+						float3 closePos(p->pos+p->speed*closeTime);
+						int square=max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
+						if(readmap->groundBlockingObjectMap[square]!=(*fi))
+							continue;
+					}
 					p->Collision();
 					break;
 				}

@@ -59,11 +59,12 @@ void CTransportCAI::SlowUpdate(void)
 		return;
 	}
 
+	CTransportUnit* transport=(CTransportUnit*)owner;
 	Command& c=commandQue.front();
 	switch(c.id){
 	case CMD_LOAD_UNITS:
 		if(c.params.size()==1){		//load single unit
-			if(((CTransportUnit*)owner)->transportCapacityUsed >= owner->unitDef->transportCapacity){
+			if(transport->transportCapacityUsed >= owner->unitDef->transportCapacity){
 				FinishCommand();
 				return;
 			}
@@ -76,6 +77,10 @@ void CTransportCAI::SlowUpdate(void)
 			if(unit && CanTransport(unit)){
 				toBeTransportedUnitId=unit->id;
 				unit->toBeTransported=true;
+				if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass){
+					FinishCommand();
+					return;
+				}
 				if(goalPos.distance2D(unit->pos)>10){
 					float3 fix = unit->pos;
 					SetGoal(fix,owner->pos,64);
@@ -219,6 +224,8 @@ void CTransportCAI::ScriptReady(void)
 
 bool CTransportCAI::CanTransport(CUnit* unit)
 {
+	CTransportUnit* transport=(CTransportUnit*)owner;
+
 	if(unit->mass>=100000 || unit->beingBuilt)
 		return false;
 	if(unit->unitDef->canhover || unit->unitDef->floater || unit->unitDef->canfly)
@@ -226,6 +233,8 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 	if(unit->xsize > owner->unitDef->transportSize*2)
 		return false;
 	if(unit->inTransport)
+		return false;
+	if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass)
 		return false;
 
 	return true;

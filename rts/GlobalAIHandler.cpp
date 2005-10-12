@@ -5,6 +5,7 @@
 #include "IGlobalAI.h"
 #include "InfoConsole.h"
 #include "GameHelper.h"
+#include "TimeProfiler.h"
 //#include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
@@ -31,9 +32,13 @@ CGlobalAIHandler::~CGlobalAIHandler(void)
 
 void CGlobalAIHandler::Update(void)
 {
+	START_TIME_PROFILE
+
 	for(int a=0;a<gs->activeTeams;++a)
 		if(ais[a])
 			ais[a]->Update();
+
+	END_TIME_PROFILE("Global AI")
 }
 
 void CGlobalAIHandler::PreDestroy ()

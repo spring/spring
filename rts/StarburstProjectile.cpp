@@ -38,14 +38,6 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	this->uptime=uptime;
 	ttl=(int)min(3000.f,uptime+weaponDef->range/maxSpeed+100);
 
-	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = unit3doparser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName+".3do",1,0);
-		if(model){
-			modelDispList= model->rootobject->displist;
-			isUnitPart=true;
-		}
-	}
-
 	maxGoodDif=cos(tracking*0.6);
 	curSpeed=speed.Length();
 	dir.Normalize();

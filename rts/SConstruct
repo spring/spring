@@ -72,6 +72,8 @@ if platform == 'linux' or detected_platform == 'freebsd':
 else:
 	exclude_list+=["SoLib.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
 
+exclude_list+=["LuaBinder.cpp","LuaFunctions.cpp"]
+
 defines+=['_SZ_ONE_DIRECTORY']
 
 prefix=ARGUMENTS.get('prefix',"/usr/local")

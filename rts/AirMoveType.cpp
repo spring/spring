@@ -47,7 +47,10 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	reservedLandingPos(-1,-1,-1),
 	oldSlowUpdatePos(-1,-1,-1),
 	lastColWarning(0),
-	lastColWarningType(0)
+	lastColWarningType(0),
+	repairBelowHealth(0.30),
+	padStatus(0),
+	reservedPad(0)
 {
 	turnRadius=150;
 	owner->mapSquare+=1;						//to force los recalculation
@@ -78,6 +81,10 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 
 CAirMoveType::~CAirMoveType(void)
 {
+	if(reservedPad){
+		airBaseHandler->LeaveLandingPad(reservedPad);
+		reservedPad=0;
+	}
 }
 
 void CAirMoveType::Update(void)
@@ -90,9 +97,6 @@ void CAirMoveType::Update(void)
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
-#ifdef DEBUG_AIRCRAFT
-	lines.clear();
-#endif
 	if(owner->stunned){
 		UpdateAirPhysics(0,lastAileronPos,lastElevatorPos,0,ZeroVector);
 		goto EndNormalControl;
@@ -120,6 +124,51 @@ void CAirMoveType::Update(void)
 		}
 	}
 #endif
+
+	if(reservedPad){
+		CUnit* unit=reservedPad->unit;
+		float3 relPos=unit->localmodel->GetPiecePos(reservedPad->piece);
+	float3 pos=unit->pos + unit->frontdir*relPos.z + unit->updir*relPos.y + unit->rightdir*relPos.x;
+		if(padStatus==0){
+			if(aircraftState!=AIRCRAFT_FLYING && aircraftState!=AIRCRAFT_TAKEOFF)
+				SetState(AIRCRAFT_FLYING);
+
+			goalPos=pos;
+
+			if(pos.distance(owner->pos)<400){
+				padStatus=1;
+			}
+//			geometricObjects->AddLine(owner->pos,pos,1,0,1);
+		} else if(padStatus==1){
+			if(aircraftState!=AIRCRAFT_LANDING)
+				SetState(AIRCRAFT_LANDING);
+
+			goalPos=pos;
+			reservedLandingPos=pos;
+
+			if(owner->pos.distance(pos)<3 || aircraftState==AIRCRAFT_LANDED){
+				padStatus=2;
+			}
+//			geometricObjects->AddLine(owner->pos,pos,10,0,1);
+		} else {
+			if(aircraftState!=AIRCRAFT_LANDED)
+				SetState(AIRCRAFT_LANDED);
+			
+			owner->pos=pos;
+
+			owner->AddBuildPower(20,unit);
+
+
+			if(owner->health>=owner->maxHealth-1){
+				airBaseHandler->LeaveLandingPad(reservedPad);
+				reservedPad=0;
+				padStatus=0;
+				goalPos=oldGoalPos;
+				SetState(AIRCRAFT_TAKEOFF);
+			}
+		}
+	}
+
 	switch(aircraftState){
 	case AIRCRAFT_FLYING:
 #ifdef DEBUG_AIRCRAFT
@@ -127,6 +176,7 @@ void CAirMoveType::Update(void)
 		info->AddLine("Flying %i %i %.1f %i",moveState,fireState,inefficientAttackTime,(int)isFighter);
 	}
 #endif
+		owner->restTime=0;
 		if(owner->userTarget || owner->userAttackGround){
 			inefficientAttackTime=min(inefficientAttackTime,(float)gs->frameNum-owner->lastFireWeapon);
 			if(owner->userTarget){
@@ -172,7 +222,7 @@ void CAirMoveType::Update(void)
 EndNormalControl:
 	if(pos!=oldpos){
 		oldpos=pos;
-		if(aircraftState!=AIRCRAFT_TAKEOFF){		//dont check cols when taking off (hack to avoid being repulsed by build fac)
+		if(aircraftState==AIRCRAFT_FLYING || aircraftState==AIRCRAFT_CRASHING){
 			vector<CUnit*> nearUnits=qf->GetUnitsExact(pos,owner->radius+6);
 			vector<CUnit*>::iterator ui;
 			for(ui=nearUnits.begin();ui!=nearUnits.end();++ui){
@@ -236,6 +286,15 @@ EndNormalControl:
 
 void CAirMoveType::SlowUpdate(void)
 {
+	if(!reservedPad && aircraftState==AIRCRAFT_FLYING && owner->health<owner->maxHealth*repairBelowHealth){
+		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,8000);
+		if(lp){
+			AddDeathDependence(lp);
+			reservedPad=lp;
+			padStatus=0;
+			oldGoalPos=goalPos;
+		}
+	}
 	if(owner->pos!=oldSlowUpdatePos){
 		oldSlowUpdatePos=owner->pos;
 		int newmapSquare=ground->GetSquare(owner->pos);
@@ -942,6 +1001,12 @@ void CAirMoveType::CheckForCollision(void)
 
 void CAirMoveType::DependentDied(CObject* o)
 {
+	if(o==reservedPad){
+		reservedPad=0;
+		SetState(AIRCRAFT_FLYING);
+		goalPos=oldGoalPos;
+	}
+
 	if(o==lastColWarning){
 		lastColWarning=0;
 		lastColWarningType=0;

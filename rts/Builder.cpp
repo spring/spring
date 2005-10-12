@@ -172,6 +172,7 @@ void CBuilder::Update()
 				CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7,gs->randInt()&1);
 			}
 			if(curResurrect->resurrectProgress>1){		//resurrect finished
+				curResurrect->UnBlock();
 				CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false);
 				u->health*=0.05;
 				lastResurrected=u->id;
@@ -211,8 +212,8 @@ void CBuilder::SetRepairTarget(CUnit* target)
 	if(target==curBuild)
 		return;
 
-	TempHoldFire();
 	StopBuild(false);
+	TempHoldFire();
 
 	curBuild=target;
 	AddDeathDependence(curBuild);
@@ -229,25 +230,25 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 	if(curReclaim==target)
 		return;
 
-	TempHoldFire();
 	StopBuild(false);
+	TempHoldFire();
 
 	curReclaim=target;
-	AddDeathDependence(target);
+	AddDeathDependence(curReclaim);
 
 	SetBuildStanceToward(target->pos);
 }
 
 void CBuilder::SetResurrectTarget(CFeature* target)
 {
-	if(curResurrect==target)
+	if(curResurrect==target || target->createdFromUnit=="")
 		return;
 
-	TempHoldFire();
 	StopBuild(false);
+	TempHoldFire();
 
 	curResurrect=target;
-	AddDeathDependence(target);
+	AddDeathDependence(curResurrect);
 
 	SetBuildStanceToward(target->pos);
 }
@@ -257,8 +258,8 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 	if(target==curCapture)
 		return;
 
-	TempHoldFire();
 	StopBuild(false);
+	TempHoldFire();
 
 	curCapture=target;
 	AddDeathDependence(curCapture);
@@ -268,8 +269,8 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 
 void CBuilder::StartRestore(float3 centerPos, float radius)
 {
-	TempHoldFire();
 	StopBuild(false);
+	TempHoldFire();
 
 	terraforming=true;
 	terraformType=Terraform_Restore;

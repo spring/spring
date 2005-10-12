@@ -459,6 +459,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 	}
 //	glAlphaFunc(GL_GREATER,0.05f);
 	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
 }
 
 void CUnitDrawer::CleanUpUnitDrawing(void)

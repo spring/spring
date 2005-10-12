@@ -85,7 +85,7 @@ CWeapon::CWeapon(CUnit* owner)
 
 CWeapon::~CWeapon()
 {
-	if(weaponDef && weaponDef->interceptor)		//stupid noweapon has no weapondef
+	if(weaponDef->interceptor)
 		interceptHandler.RemoveInterceptorWeapon(this);
 }
 
@@ -173,7 +173,7 @@ void CWeapon::Update()
 			if(weaponDef->stockpile)
 				reloadStatus=gs->frameNum+60;
 			else
-				reloadStatus=gs->frameNum+reloadTime;
+				reloadStatus=gs->frameNum+reloadTime/owner->reloadSpeed;
 
 			salvoLeft=salvoSize;
 			nextSalvo=gs->frameNum;
@@ -215,6 +215,10 @@ void CWeapon::Update()
 		owner->cob->Call(COBFN_RockUnit,  rockAngles);		
 
 		owner->commandAI->WeaponFired(this);
+
+		if(salvoLeft==0){
+			owner->cob->Call(COBFN_EndBurst+weaponNum);		
+		}
 #ifdef TRACE_SYNC
 	tracefile << "Weapon fire: ";
 	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
@@ -224,12 +228,12 @@ void CWeapon::Update()
 
 bool CWeapon::AttackGround(float3 pos,bool userTarget)
 {
-	if(!weaponDef || (!userTarget && weaponDef->noAutoTarget))
+	if((!userTarget && weaponDef->noAutoTarget))
 		return false;
 	if(weaponDef->interceptor || weaponDef->onlyTargetCategory!=0xffffffff)
 		return false;
 
-	if(weaponDef && !weaponDef->waterweapon && pos.y<1)
+	if(!weaponDef->waterweapon && pos.y<1)
 		pos.y=1;
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
@@ -249,7 +253,7 @@ bool CWeapon::AttackGround(float3 pos,bool userTarget)
 
 bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 {
-	if(!weaponDef || (!userTarget && weaponDef->noAutoTarget))
+	if((!userTarget && weaponDef->noAutoTarget))
 		return false;
 	if(weaponDef->interceptor)
 		return false;

@@ -5,6 +5,7 @@
 #include "GroupAI.h"
 #include <stdarg.h>	
 #include "IGroupAiCallback.h"
+#include "IAICallback.h"
 #include "UnitDef.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -41,14 +42,15 @@ CGroupAI::~CGroupAI()
 void CGroupAI::InitAi(IGroupAICallback* callback)
 {
 	this->callback=callback;
+	aicb = callback->GetAICallback ();
 	UpdateAvailableCommands();
 };
 
 bool CGroupAI::AddUnit(int unit)
 {
-	const UnitDef* ud=callback->GetUnitDef(unit);
+	const UnitDef* ud=aicb->GetUnitDef(unit);
 	if(ud->buildSpeed==0){								//can only use builder units
-		callback->SendTextMsg("Cant use non builders",0);
+		aicb->SendTextMsg("Cant use non builders",0);
 		return false;
 	}
 
@@ -56,9 +58,9 @@ bool CGroupAI::AddUnit(int unit)
 	info->lastGivenOrder=0;
 	info->buildSpeed=ud->buildSpeed;
 	info->totalGuardSpeed=0;
-	info->moveSpeed=callback->GetUnitSpeed(unit);
+	info->moveSpeed=aicb->GetUnitSpeed(unit);
 
-	const vector<CommandDescription>* cd=callback->GetUnitCommands(unit);
+	const vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
 	for(vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi){		//check if this unit brings some new build options
 		if(cdi->id<0){			//id<0 = build option
 			info->possibleBuildOrders.insert(cdi->id);
@@ -68,12 +70,12 @@ bool CGroupAI::AddUnit(int unit)
 				bo->type=cdi->type;
 				bo->name=cdi->name;
 				bo->numQued=0;
-				const UnitDef* ud=callback->GetUnitDef(bo->name.c_str());
+				const UnitDef* ud=aicb->GetUnitDef(bo->name.c_str());
 				bo->buildTime=ud->buildTime;
 				if(bo->buildTime==0){
 					char c[6000];
 					sprintf(c,"Zero build time unit? %f %s %s",ud->buildTime,ud->name.c_str(),bo->name.c_str());
-					callback->SendTextMsg(c,0);
+					aicb->SendTextMsg(c,0);
 					bo->buildTime=1;
 				}
 				buildOptions[cdi->id]=bo;
@@ -171,7 +173,7 @@ void CGroupAI::CommandFinished(int unit,int type)
 		FindNewJob(unit);
 	} else {
 		if(info->lastGivenOrder>0 && type==quedBuildngs[info->lastGivenOrder]->type){
-//			callback->SendTextMsg("Command finsihed for builder",0);
+//			aicb->SendTextMsg("Command finsihed for builder",0);
 
 			QuedBuilding* qb=quedBuildngs[info->lastGivenOrder];
 			qb->unitsOnThis.erase(unit);
@@ -179,11 +181,11 @@ void CGroupAI::CommandFinished(int unit,int type)
 			
 			bool found=false;
 			int foundUnits[1000];
-			int num=callback->GetFriendlyUnits(foundUnits,qb->pos,10);
+			int num=aicb->GetFriendlyUnits(foundUnits,qb->pos,10);
 			for(int a=0;a<num;++a){
-				const UnitDef* ud=callback->GetUnitDef(foundUnits[a]);
+				const UnitDef* ud=aicb->GetUnitDef(foundUnits[a]);
 				if(ud->id==-qb->type){			//ok found the right unit
-//					callback->SendTextMsg("Building finished ok",0);
+//					aicb->SendTextMsg("Building finished ok",0);
 					
 					delete qb;
 					quedBuildngs.erase(info->lastGivenOrder);
@@ -194,7 +196,7 @@ void CGroupAI::CommandFinished(int unit,int type)
 			if(!found){
 				qb->failedTries++;
 				if(qb->failedTries>3){
-					callback->SendTextMsg("Building failed",0);
+					aicb->SendTextMsg("Building failed",0);
 					delete qb;
 					quedBuildngs.erase(info->lastGivenOrder);
 				}
@@ -219,7 +221,7 @@ int CGroupAI::GetDefaultCmd(int unitid)
 
 void CGroupAI::Update()
 {
-	frameNum=callback->GetCurrentFrame();
+	frameNum=aicb->GetCurrentFrame();
 	if(unitsChanged){
 		UpdateAvailableCommands();
 		updateUnit=myUnits.begin();
@@ -235,15 +237,15 @@ void CGroupAI::Update()
 	}
 
 	if(!(frameNum & 3) && callback->IsSelected()){
-		int team=callback->GetMyTeam();
+		int team=aicb->GetMyTeam();
 		for(map<int,QuedBuilding*>::iterator qbi=quedBuildngs.begin();qbi!=quedBuildngs.end();++qbi){
-			callback->DrawUnit(buildOptions[qbi->second->type]->name.c_str(),qbi->second->pos,0,4,team,true,true);
+			aicb->DrawUnit(buildOptions[qbi->second->type]->name.c_str(),qbi->second->pos,0,4,team,true,true);
 		}
 
 		for(map<int,QuedBuilding*>::iterator qbi=quedBuildngs.begin();qbi!=quedBuildngs.end();++qbi){
 			std::set<int>* uot=&qbi->second->unitsOnThis;
 			for(std::set<int>::iterator ui=uot->begin();ui!=uot->end();++ui){
-				callback->CreateLineFigure(qbi->second->pos+float3(0,10,0),callback->GetUnitPos(*ui)+float3(0,10,0),3,1,4,0);
+				aicb->CreateLineFigure(qbi->second->pos+float3(0,10,0),aicb->GetUnitPos(*ui)+float3(0,10,0),3,1,4,0);
 			}
 		}/**/
 	}
@@ -292,18 +294,18 @@ void CGroupAI::FindNewJob(int unit)
 	UnitInfo* info=myUnits[unit];
 
 	bool isFactory=info->moveSpeed==0;
-	const deque<Command>* curCommands=callback->GetCurrentUnitCommands(unit);
+	const deque<Command>* curCommands=aicb->GetCurrentUnitCommands(unit);
 
 	if(!isFactory && info->lastGivenOrder && !curCommands->empty()){
 		if(info->lastGivenOrder>0 && curCommands->front().id!=CMD_GUARD){
 			QuedBuilding* qb=quedBuildngs[info->lastGivenOrder];
 			int foundUnits[1000];
-			int num=callback->GetFriendlyUnits(foundUnits,qb->pos,10);
+			int num=aicb->GetFriendlyUnits(foundUnits,qb->pos,10);
 			for(int a=0;a<num;++a){
-				const UnitDef* ud=callback->GetUnitDef(foundUnits[a]);
+				const UnitDef* ud=aicb->GetUnitDef(foundUnits[a]);
 				if(ud->id==-qb->type){			//ok found the right unit
-					float health=callback->GetUnitHealth(foundUnits[a]);
-					float maxHealth=callback->GetUnitMaxHealth(foundUnits[a]);
+					float health=aicb->GetUnitHealth(foundUnits[a]);
+					float maxHealth=aicb->GetUnitMaxHealth(foundUnits[a]);
 					qb->buildTimeLeft=buildOptions[qb->type]->buildTime*((maxHealth-health)/maxHealth);		//we have no direct access to the current build status of a unit so we assumes that the health is a good indicator
 					break;
 				}
@@ -336,7 +338,7 @@ void CGroupAI::FindNewJob(int unit)
 	int bestJob=0;
 
 	if(!isFactory){		//mobile builder
-		float3 myPos=callback->GetUnitPos(unit);
+		float3 myPos=aicb->GetUnitPos(unit);
 		for(map<int,QuedBuilding*>::iterator qbi=quedBuildngs.begin();qbi!=quedBuildngs.end();++qbi){		//check for building to build
 			QuedBuilding* qb=qbi->second;
 			bool canBuildThis=info->possibleBuildOrders.find(qb->type)!=info->possibleBuildOrders.end();
@@ -351,7 +353,7 @@ void CGroupAI::FindNewJob(int unit)
 				float value=finishMod*canBuildThisMod*travelMod*ageMod;
 /*				char c[6000];
 				sprintf(c,"value %f %f",moveTime,buildTime);
-				callback->SendTextMsg(c,0);
+				aicb->SendTextMsg(c,0);
 */				if(value>bestValue){
 					bestValue=value;
 					if(!qb->unitsOnThis.empty())
@@ -362,8 +364,8 @@ void CGroupAI::FindNewJob(int unit)
 			}
 		}
 		for(map<int,UnitInfo*>::iterator ui=myUnits.begin();ui!=myUnits.end();++ui){		//find factories to guard
-			if(ui->second->moveSpeed==0 && !callback->GetCurrentUnitCommands(ui->first)->empty()){
-				float moveTime=max(1.0f,((callback->GetUnitPos(ui->first)-myPos).Length()-150)/info->moveSpeed*2);
+			if(ui->second->moveSpeed==0 && !aicb->GetCurrentUnitCommands(ui->first)->empty()){
+				float moveTime=max(1.0f,((aicb->GetUnitPos(ui->first)-myPos).Length()-150)/info->moveSpeed*2);
 				float value=3.0f*(ui->second->buildSpeed/(ui->second->totalGuardSpeed+ui->second->buildSpeed))/moveTime;
 				if(value>bestValue && ui->second->unitsGuardingMe.size()<5){
 					bestValue=value;
@@ -397,7 +399,7 @@ void CGroupAI::FindNewJob(int unit)
 					qb->totalBuildSpeed+=info->buildSpeed;
 				}
 			}
-			callback->GiveOrder(unit,&c);
+			aicb->GiveOrder(unit,&c);
 		}
 	} else {									//factory
 		CommandDescription* bestCommandDescription;
@@ -417,7 +419,7 @@ void CGroupAI::FindNewJob(int unit)
 			Command c;
 			c.id=bestJob;
 			c.options=0;
-			callback->GiveOrder(unit,&c);
+			aicb->GiveOrder(unit,&c);
 
 //			info->lastGivenOrder=bestJob;
 			UpdateFactoryIcon(bestCommandDescription,--buildOptions[bestJob]->numQued);
@@ -438,7 +440,7 @@ void CGroupAI::SendTxt(const char *fmt, ...)
 	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
 
-	callback->SendTextMsg(text,0);
+	aicb->SendTextMsg(text,0);
 }
 
 int CGroupAI::FindCloseQuedBuilding(float3 pos, float radius)
@@ -461,7 +463,7 @@ void CGroupAI::FinishBuilderTask(int unit,bool failure)
 			qb->failedTries++;
 			qb->startFrame=frameNum;
 			if(qb->failedTries>1){
-				callback->SendTextMsg("Building failed",0);
+				aicb->SendTextMsg("Building failed",0);
 				delete qb;
 				quedBuildngs.erase(info->lastGivenOrder);
 			}
@@ -476,5 +478,5 @@ void CGroupAI::FinishBuilderTask(int unit,bool failure)
 	info->lastGivenOrder=0;
 	Command c;
 	c.id=CMD_STOP;
-	callback->GiveOrder(unit,&c);
+	aicb->GiveOrder(unit,&c);
 }

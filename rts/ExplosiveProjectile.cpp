@@ -72,6 +72,9 @@ void CExplosiveProjectile::Collision(CUnit *unit)
 
 void CExplosiveProjectile::Draw(void)
 {
+	if(isUnitPart)	//dont draw if a 3d model has been defined for us
+		return;
+
 	inArray=true;
 	unsigned char col[4];
 

@@ -61,6 +61,9 @@ void CLaserProjectile::Collision(CUnit* unit)
 
 void CLaserProjectile::Draw(void)
 {
+	if(isUnitPart)	//dont draw if a 3d model has been defined for us
+		return;
+
 	inArray=true;
 	float3 dif(pos-camera->pos);
 	float camDist=dif.Length();

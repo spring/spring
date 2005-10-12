@@ -4,7 +4,6 @@
 #include "Group.h"
 #include "myGL.h"
 #include "UnitHandler.h"
-#include "UnitParser.h"
 #include "TextureHandler.h"
 #include "UnitLoader.h"
 #include "SelectedUnits.h"
@@ -519,7 +518,7 @@ int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 		}
 	}
 	if(feature){
-		if(owner->unitDef->canResurrect)
+		if(owner->unitDef->canResurrect && !feature->createdFromUnit.empty())
 			return CMD_RESURRECT;
 		else
 			return CMD_RECLAIM;
@@ -721,7 +720,7 @@ void CBuilderCAI::GiveCommand(Command& c)
 
 	map<int,string>::iterator boi;
 	if((boi=buildOptions.find(c.id))!=buildOptions.end()){
-		if(!unitLoader.CanBuildUnit(boi->second,owner->team) || c.params.size()<3)
+		if(c.params.size()<3)
 			return;
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);

@@ -67,6 +67,7 @@ struct UnitDef
 	int radarRadius;
 	int sonarRadius;
 	int jammerRadius;
+	int sonarJamRadius;
 	bool stealth;
 
 	float buildSpeed;
@@ -86,13 +87,14 @@ struct UnitDef
 	UnitModelDef model;
 
 	struct UnitDefWeapon {
-		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat)
+		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat,unsigned int onlyTargetCat)
 			: name(name),
 				def(def),
 				slavedTo(slavedTo),
 				mainDir(mainDir),
 				maxAngleDif(maxAngleDif),
-				badTargetCat(badTargetCat) {}
+				badTargetCat(badTargetCat),
+				onlyTargetCat(onlyTargetCat) {}
 
 		std::string name;
 		WeaponDef* def;
@@ -100,6 +102,7 @@ struct UnitDef
 		float3 mainDir;
 		float maxAngleDif;
 		unsigned int badTargetCat;
+		unsigned int onlyTargetCat;
 	};
 	std::vector<UnitDefWeapon> weapons;
 
@@ -156,6 +159,8 @@ struct UnitDef
 	int transportCapacity;
 	int transportSize;
 	bool stunnedCargo; // are the units stunned while being transported?
+	bool isAirBase;
+	float transportMass;
 
 	bool canCloak;							//if the unit can cloak
 	bool startCloaked;					//if the units want to start out cloaked	
@@ -210,6 +215,7 @@ struct UnitDef
 	int flareSalvoDelay;
 
 	bool smoothAnim;			// True if the unit should use interpolated animation
+	bool isMetalMaker;
 };
 
 

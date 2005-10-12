@@ -10,7 +10,8 @@
 //#include "mmgr.h"
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
-: CWeapon(owner)
+: CWeapon(owner),
+	tracking(0)
 {
 	owner->hasUWWeapons=true;
 }
@@ -45,7 +46,7 @@ void CTorpedoLauncher::Fire(void)
 //	}
 	float3 startSpeed=dir*0.01;
 //	if(onlyForward)
-//		startSpeed+=owner->speed;
+//		startSpeed+=owner->speed*0.5;
 	new CTorpedoProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15),targetUnit, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);

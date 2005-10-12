@@ -17,7 +17,7 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
-std::set<IGlobalAI*> ais;
+//std::set<IGlobalAI*> ais;
 
 //Returnerar DLLens typ och version
 int (WINAPI GetGlobalAiVersion)()
@@ -33,14 +33,14 @@ void (WINAPI GetAiName)(char* name)
 IGlobalAI* (WINAPI GetNewAI)()
 {
 	CGlobalAI* ai=new CGlobalAI();
-	ais.insert(ai);
+//	ais.insert(ai);
 	return ai;
 }
 
 void (WINAPI ReleaseAI)(IGlobalAI* i)
 {
 	delete (CGlobalAI*)i;
-	ais.erase(i);
+//	ais.erase(i);
 }
 
 

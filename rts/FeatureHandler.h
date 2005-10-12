@@ -88,7 +88,7 @@ public:
 
 //	std::set<CFeature*> featureSet;
 	CFeature* features[MAX_FEATURES];
-	std::list<int> freeIDs;
+	std::deque<int> freeIDs;
 
 	std::list<int> toBeRemoved;
 #ifdef __GNUG__

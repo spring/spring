@@ -28,6 +28,7 @@ CGlobalAI::~CGlobalAI()
 void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 {
 	this->callback=callback;
+	aicb=callback->GetAICallback();
 }
 
 void CGlobalAI::UnitCreated(int unit)
@@ -70,11 +71,11 @@ void CGlobalAI::EnemyDestroyed(int enemy)
 
 void CGlobalAI::UnitIdle(int unit)
 {
-	const UnitDef* ud=callback->GetUnitDef(unit);
+	const UnitDef* ud=aicb->GetUnitDef(unit);
 
 	char c[200];
 	sprintf(c,"Idle unit %s",ud->humanName.c_str());
-	callback->SendTextMsg(c,0);
+	aicb->SendTextMsg(c,0);
 }
 
 void CGlobalAI::GotChatMsg(const char* msg,int player)
@@ -89,12 +90,12 @@ void CGlobalAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
 
 void CGlobalAI::Update()
 {
-	int frame=callback->GetCurrentFrame();
+	int frame=aicb->GetCurrentFrame();
 
 	if(!(frame%60)){
 		char c[200];
 		sprintf(c,"Friendly %i Enemy %i",myUnits.size(),enemies.size());
-		callback->SendTextMsg(c,0);
+		aicb->SendTextMsg(c,0);
 	}
 }
 

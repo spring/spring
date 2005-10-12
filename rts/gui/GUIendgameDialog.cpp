@@ -75,6 +75,10 @@ void GUIendgameDialog::UpdateStatistics()
 	
 	for(int team=0; team<gs->activeTeams; team++)
 	{
+		// if you're not spectating and the current team is not allied to you, then don't show the
+		// teams information
+		if ( !gu->spectating && ( !gs->allies[gu->myAllyTeam][gs->team2allyteam[team]] ) )
+			continue;
 		char buf[50];
 		sprintf(buf, "Team %i", team+1);
 

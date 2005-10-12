@@ -31,7 +31,7 @@ protected:
 	float3 startpos;
 	DamageArray damages;
 	int ttl;
-	float3 dir;
+	unsigned int modelDispList;
 
 	bool TraveledRange();
 	CWeaponProjectile* interceptTarget;

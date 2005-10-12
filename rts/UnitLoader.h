@@ -4,7 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-class CUnitParser;
 class CUnit;
 class CWeapon;
 #include <string>
@@ -24,10 +23,6 @@ public:
 protected:
 	CWeapon* LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw);
 	void LoadSound(GuiSound &sound);
-public:
-	bool CanBuildUnit(string name, int team);
-	int GetTechLevel(string type);
-	string GetName(string type);
 };
 
 extern CUnitLoader unitLoader;

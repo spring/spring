@@ -156,6 +156,8 @@ public:
 	unsigned char tempbuf[NETWORK_BUFFER_SIZE];
 
 	void ReadDemoFile(void);
+	void CreateDemoServer(std::string demoname);
+	void StartDemoServer(void);
 };
 
 extern CNet* serverNet;

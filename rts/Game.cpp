@@ -44,7 +44,6 @@
 #include "MiniMap.h"
 #include "GroupHandler.h"
 #include "MapDamage.h"
-#include "UnitParser.h"
 #include "BaseTreeDrawer.h"
 #include "ConfigHandler.h"
 #include "UnitDefHandler.h"
@@ -91,6 +90,9 @@
 #include "ArchiveScanner.h"
 #include "GameVersion.h"
 #include "UnitDrawer.h"
+#include "UnitLoader.h"
+#include <locale>
+#include <cctype>
 #include "SelectionKeyHandler.h"
 #include <boost/filesystem/path.hpp>
 #include "SDL_types.h"
@@ -157,8 +159,8 @@ CGame::CGame(bool server,std::string mapname)
 	allReady=false;
 	hideInterface=false;
 	gameOver=false;
-	showClock=!!configHandler.GetInt("ShowClock",0);
-	showPlayerInfo=!!configHandler.GetInt("ShowPlayerInfo",0);
+	showClock=!!configHandler.GetInt("ShowClock",1);
+	showPlayerInfo=!!configHandler.GetInt("ShowPlayerInfo",1);
 	gamePausable=true;
 	noSpectatorChat=false;
 
@@ -320,6 +322,9 @@ CGame::CGame(bool server,std::string mapname)
 	if(gameServer)
 		gameServer->gameLoading=false;
 	UnloadStartPicture();
+
+	if(serverNet && serverNet->playbackDemo)
+		serverNet->StartDemoServer();
 }
 
 CGame::~CGame()
@@ -447,6 +452,16 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		return 0;
 	}
 
+	if(k>='0' && k<='9' && gu->spectating){
+		int team=k-'0'-1;
+		if(team<0)
+			team=9;
+		if(team<gs->activeTeams){
+			gu->myTeam=team;
+			gu->myAllyTeam=gs->team2allyteam[team];
+		}
+	}
+
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->KeyPressed(k))
@@ -463,11 +478,15 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	}
 
 	if (s=="pause"){
-		netbuf[0]=NETMSG_PAUSE;
-		netbuf[1]=!gs->paused;
-		netbuf[2]=gu->myPlayerNum;
-		net->SendData(netbuf,3);
-		lastframe = SDL_GetTicks();
+		if(net->playbackDemo){
+			gs->paused=!gs->paused;
+		} else {
+			netbuf[0]=NETMSG_PAUSE;
+			netbuf[1]=!gs->paused;
+			netbuf[2]=gu->myPlayerNum;
+			net->SendData(netbuf,3);
+			lastframe = SDL_GetTicks();
+		}
 	}
 	if (s=="singlestep"){
 		bOneStep=true;
@@ -825,7 +844,8 @@ bool CGame::Update()
 	Uint64 difTime;
 	difTime=timeNow-lastModGameTimeMeasure;
 	double dif=double(difTime)/1000.;
-	gu->modGameTime+=dif*gs->speedFactor;
+	if(!gs->paused)
+		gu->modGameTime+=dif*gs->speedFactor;
 	gu->gameTime+=dif;
 	if(playing && !gameOver)
 		totalGameTime+=dif;
@@ -1285,7 +1305,7 @@ bool CGame::ClientReadNet()
 		inbufpos=0;
 	}
 
-	if((a=net->GetData(&inbuf[inbuflength],NETWORK_BUFFER_SIZE-inbuflength,0))==-1){
+	if((a=net->GetData(&inbuf[inbuflength],NETWORK_BUFFER_SIZE*2-inbuflength,0))==-1){
 		return gameOver;
 	}
 	inbuflength+=a;
@@ -1571,12 +1591,15 @@ bool CGame::ClientReadNet()
 		case NETMSG_NEWFRAME:
 			if(!gameServer)
 				timeLeft-=1;
-			
 			netbuf[0]=NETMSG_NEWFRAME;
 			(*((int*)&netbuf[1]))=gs->frameNum;
 			net->SendData(netbuf,5);
 			SimFrame();
 			lastLength=5;
+
+			if(gameServer && serverNet && serverNet->playbackDemo)	//server doesnt update framenums automatically while playing demo
+				gameServer->serverframenum=gs->frameNum;
+
 			if(creatingVideo && net->playbackDemo){
 				POP_CODE_MODE;
 				return true;
@@ -1747,23 +1770,27 @@ bool CGame::ClientReadNet()
 				if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
 					CUnit* unit=uh->units[selectedUnits.netSelected[player][0]];
 					//info->AddLine("Player %s took control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
-
-					unit->directControl=&gs->players[player]->myControl;
-					gs->players[player]->playerControlledUnit=unit;
-					ENTER_UNSYNCED;
-					if(player==gu->myPlayerNum){
-						gu->directControl=unit;
-						mouse->currentCamController=mouse->camControllers[0];	//set fps mode
-						mouse->inStateTransit=true;
-						mouse->transitSpeed=1;
-						((CFPSController*)mouse->camControllers[0])->pos=unit->midPos;
-						if(!mouse->locked){
-							mouse->locked=true;
-							mouse->HideMouse();
+					if(unit->directControl){
+						if(player==gu->myPlayerNum)
+							info->AddLine("Sorry someone already controls that unit");
+					}	else {
+						unit->directControl=&gs->players[player]->myControl;
+						gs->players[player]->playerControlledUnit=unit;
+						ENTER_UNSYNCED;
+						if(player==gu->myPlayerNum){
+							gu->directControl=unit;
+							mouse->currentCamController=mouse->camControllers[0];	//set fps mode
+							mouse->inStateTransit=true;
+							mouse->transitSpeed=1;
+							((CFPSController*)mouse->camControllers[0])->pos=unit->midPos;
+							if(!mouse->locked){
+								mouse->locked=true;
+								mouse->HideMouse();
+							}
+							selectedUnits.ClearSelected();
 						}
-						selectedUnits.ClearSelected();
+						ENTER_SYNCED;
 					}
-					ENTER_SYNCED;
 				}
 			}
 			lastLength=2;
@@ -2045,12 +2072,14 @@ void CGame::DrawDirectControlHud(void)
 		glMultMatrixf(m.m);
 	}
 	glTranslatef3(-unit->pos-unit->speed*gu->timeOffset);
+	glDisable(GL_BLEND);
 	unitDrawer->SetupForUnitDrawing();
 	unit->Draw();
 	glPopMatrix();
 	glDisable(GL_DEPTH_TEST);
 	unitDrawer->CleanUpUnitDrawing();
 	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
 
 	if(unit->moveType->useHeading){
 		glPushMatrix();
@@ -2192,9 +2221,15 @@ void CGame::HandleChatMsg(std::string s,int player)
 	globalAI->GotChatMsg(s.c_str(),player);
 
 	if(s.find(".cheat")==0 && player==0){
-		gs->cheatEnabled=true;
-		info->AddLine("Cheating!");
+		if (gs->cheatEnabled){
+			gs->cheatEnabled=false;
+			info->AddLine("No more cheating");
+		}else{
+			gs->cheatEnabled=true;
+			info->AddLine("Cheating!");
+		}
 	}
+
 	if(s.find(".nocost")==0 && player==0 && gs->cheatEnabled){
 		for(int i=0; i<unitDefHandler->numUnits; i++)
 		{
@@ -2213,12 +2248,12 @@ void CGame::HandleChatMsg(std::string s,int player)
 		*a=0;
 	}
 
-	if(s==".spectator" && gs->cheatEnabled){
+	if(s==".spectator" && (gs->cheatEnabled || net->playbackDemo)){
 		gs->players[player]->spectator=true;
 		if(player==gu->myPlayerNum)
 			gu->spectating=true;
 	}
-	if(s.find(".team")==0 && gs->cheatEnabled){
+	if(s.find(".team")==0 && (gs->cheatEnabled || net->playbackDemo)){
 		int team=atoi(&s.c_str()[s.find(" ")]);
 		if(team>=0 && team<gs->activeTeams){
 			gs->players[player]->team=team;
@@ -2236,6 +2271,46 @@ void CGame::HandleChatMsg(std::string s,int player)
 		gs->teams[team]->AddMetal(1000);
 		gs->teams[team]->AddEnergy(1000);
 	}
+
+	if(s.find(".give")==0 && gs->cheatEnabled){
+		int team=gs->players[player]->team;
+		if (((s.rfind(" "))!=string::npos) && ((s.length() - s.rfind(" ") -1)>0)){
+			string unitName=s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);
+			string tempUnitName=s.substr(s.find(" "),s.rfind(" ")+1 - s.find(" "));
+			if(tempUnitName.find_first_not_of(" ")!=string::npos)
+				tempUnitName=tempUnitName.substr(tempUnitName.find_first_not_of(" "),tempUnitName.find_last_not_of(" ") +1 - tempUnitName.find_first_not_of(" "));
+			bool createNano=(tempUnitName.find("nano")!=string::npos);
+
+			int numUnits=1;
+			if(tempUnitName.find_first_of("0123456789")!=string::npos){
+				tempUnitName=tempUnitName.substr(tempUnitName.find_first_of("0123456789"),tempUnitName.find_last_of("0123456789") +1 -tempUnitName.find_first_of("0123456789"));
+				numUnits = atoi(tempUnitName.c_str());
+			}
+			if (unitDefHandler->GetUnitByName(unitName)!=0)   {
+				float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
+				float3 pos=camera->pos+mouse->dir*dist;
+
+				UnitDef *unitDef= unitDefHandler->GetUnitByName(unitName);
+				int xsize=unitDef->xsize;
+				int zsize=unitDef->ysize;
+				int total=numUnits;
+				int squareSize=(int)ceil(sqrtf(numUnits));
+				float3 minpos=pos;
+				minpos.x-=((squareSize-1)*xsize*SQUARE_SIZE)/2;
+				minpos.z-=((squareSize-1)*zsize*SQUARE_SIZE)/2;
+				for(int z=0;z<squareSize;++z){
+					for(int x=0;x<squareSize && total>0;++x){
+						unitLoader.LoadUnit(unitName,float3(minpos.x + x * xsize*SQUARE_SIZE, minpos.y, minpos.z + z * zsize*SQUARE_SIZE),team,createNano);
+						--total;
+					}
+				}
+				info->AddLine("Giving %i %s to team %i",numUnits,unitName.c_str(),team);
+			}else{
+				info->AddLine(unitName+" is not a valid unitname");
+			}
+		}
+	}
+
 	if(s.find(".take")==0){
 		int sendTeam=gs->players[player]->team;
 		for(int a=0;a<gs->activeTeams;++a){
@@ -2255,6 +2330,31 @@ void CGame::HandleChatMsg(std::string s,int player)
 			}
 		}
 	}
+
+	if(s.find(".kick")==0 && player==0 && gameServer && serverNet){
+		string name=s.substr(6,string::npos);
+		if(!name.empty()){
+			std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
+
+
+			for(int a=1;a<MAX_PLAYERS;++a){
+				if(gs->players[a]->active){
+					string p=gs->players[a]->playerName;
+					std::transform(p.begin(), p.end(), p.begin(), (int (*)(int))std::tolower);
+
+					if(p.find(name)==0){			//can kick on substrings of name
+						unsigned char c=NETMSG_QUIT;
+						serverNet->SendData(&c,1,a);
+						serverNet->FlushConnection(a);
+
+						serverNet->connections[a].readyData[0]=NETMSG_QUIT;		//this will rather ungracefully close the connection from our side
+						serverNet->connections[a].readyLength=1;							//so if the above was lost in packetlos etc it will never be resent
+					}
+				}
+			}
+		}
+	}
+
 	if(s.find(".nospectatorchat")==0 && player==0){
 		noSpectatorChat=!noSpectatorChat;
 		info->AddLine("No spectator chat %i",noSpectatorChat);
@@ -2287,8 +2387,11 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if(player==gu->myPlayerNum)
 			userInputPrefix="a:";
 
-		if((gs->allies[gs->team2allyteam[gs->players[inbuf[inbufpos+2]]->team]][gu->myAllyTeam] && !gs->players[player]->spectator) || gu->spectating){
-			s="<"+gs->players[player]->playerName+"> Allies: "+s.substr(2,255);
+		if((gs->allies[gs->team2allyteam[gs->players[inbuf[inbufpos+2]]->team]][gu->myAllyTeam] && (!gs->players[player]->spectator || gu->spectating))){
+			if(gs->players[player]->spectator)
+				s="["+gs->players[player]->playerName+"] Allies: "+s.substr(2,255);
+			else
+				s="<"+gs->players[player]->playerName+"> Allies: "+s.substr(2,255);
 			info->AddLine(s);
 			sound->PlaySound(chatSound);
 		}
@@ -2297,7 +2400,10 @@ void CGame::HandleChatMsg(std::string s,int player)
 			userInputPrefix="s:";
 
 		if(gu->spectating || gu->myPlayerNum == player){
-			s="<"+gs->players[player]->playerName+"> Spectators: "+s.substr(2,255);
+			if(gs->players[player]->spectator)
+				s="["+gs->players[player]->playerName+"] Spectators: "+s.substr(2,255);
+			else
+				s="<"+gs->players[player]->playerName+"> Spectators: "+s.substr(2,255);
 			info->AddLine(s);
 			sound->PlaySound(chatSound);
 		}
@@ -2305,7 +2411,11 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if(player==gu->myPlayerNum)
 			userInputPrefix="";
 
-		s="<"+gs->players[player]->playerName+"> "+s;
+		if(gs->players[player]->spectator)
+			s="["+gs->players[player]->playerName+"] "+s;
+		else
+			s="<"+gs->players[player]->playerName+"> "+s;
+		
 		info->AddLine(s);
 		sound->PlaySound(chatSound);
 	}

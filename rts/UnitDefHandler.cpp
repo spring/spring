@@ -184,12 +184,20 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.metalStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
 	ud.energyStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
 
+	ud.isMetalMaker=(ud.makesMetal>=1 && ud.energyUpkeep>ud.makesMetal*40);
+
 	ud.controlRadius=32;
 	ud.losHeight=20;
 	ud.metalCost=atof(tdfparser.SGetValueDef("0", "UNITINFO\\BuildCostMetal").c_str());
-	ud.mass=ud.metalCost;
+	if(ud.metalCost<1)		//avoid some nasty divide by 0 etc
+		ud.metalCost=1;
+	ud.mass=atof(tdfparser.SGetValueDef("0", "UNITINFO\\Mass").c_str());
+	if(ud.mass<=0)
+		ud.mass=ud.metalCost;
 	ud.energyCost=atof(tdfparser.SGetValueDef("0", "UNITINFO\\BuildCostEnergy").c_str());
 	ud.buildTime=atof(tdfparser.SGetValueDef("0", "UNITINFO\\BuildTime").c_str());
+	if(ud.buildTime<1)		//avoid some nasty divide by 0 etc
+		ud.buildTime=1;
 	ud.aihint=id;		//fix
 	ud.losRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str());
 	ud.airLosRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*1.5;
@@ -211,12 +219,12 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.floater = tdfparser.SGetValue(value, "UNITINFO\\Waterline");
 	tdfparser.GetDef(ud.waterline, "0", "UNITINFO\\Waterline");
 	if(ud.waterline>8 && ud.canmove)
-		ud.waterline+=10;		//make subs travel at somewhat larger depths to reduce vulnerability to surface weapons
+		ud.waterline+=5;		//make subs travel at somewhat larger depths to reduce vulnerability to surface weapons
 
 	tdfparser.GetDef(ud.selfDCountdown, "5", "UNITINFO\\selfdestructcountdown");
 
 	ud.speed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxVelocity").c_str())*30;
-	ud.maxAcc=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str())*0.1;
+	ud.maxAcc=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str());
 	ud.maxDec=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1;
 	ud.turnRate=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
 	ud.buildSpeed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\WorkerTime").c_str());
@@ -229,6 +237,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.radarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistance").c_str());
 	ud.sonarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistance").c_str());
 	ud.jammerRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistanceJam").c_str());
+	ud.sonarJamRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistanceJam").c_str());
 	ud.stealth=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\Stealth").c_str());
 	ud.targfac=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\istargetingupgrade").c_str());
 	ud.isFeature=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\IsFeature").c_str());
@@ -263,27 +272,30 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(ud.builder && !ud.buildSpeed)		//core anti is flagged as builder for some reason
 		ud.builder=false;
 
+	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str())*1.5;
+	ud.hoverAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\hoverattack").c_str());
+
 	tdfparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");
 	tdfparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
-	ud.stunnedCargo=!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\isAirBase").c_str());
+	ud.isAirBase=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\isAirBase").c_str());
+	ud.stunnedCargo=!ud.isAirBase;
 	ud.loadingRadius=220;
+	tdfparser.GetDef(ud.transportMass, "100000", "UNITINFO\\TransportMass");
 
-	ud.wingDrag=0.07;			//drag caused by wings
-	ud.wingAngle=0.08;			//angle between front and the wing plane
-	ud.drag=0.005;					//how fast the aircraft loses speed;
-	ud.frontToSpeed=0.1;	//fudge factor for lining up speed and front of plane
-	ud.speedToFront=0.07;	//fudge factor for lining up speed and front of plane
-	ud.myGravity=0.4;		//planes are slower than real airplanes so lower gravity to compensate
+	tdfparser.GetDef(ud.wingDrag, "0.07", "UNITINFO\\WingDrag");				//drag caused by wings
+	tdfparser.GetDef(ud.wingAngle, "0.08", "UNITINFO\\WingAngle");			//angle between front and the wing plane
+	tdfparser.GetDef(ud.drag, "0.005", "UNITINFO\\Drag");								//how fast the aircraft loses speed (see also below)
+	tdfparser.GetDef(ud.frontToSpeed, "0.1", "UNITINFO\\frontToSpeed");	//fudge factor for lining up speed and front of plane
+	tdfparser.GetDef(ud.speedToFront, "0.07", "UNITINFO\\speedToFront");//fudge factor for lining up speed and front of plane
+	tdfparser.GetDef(ud.myGravity, "0.4", "UNITINFO\\myGravity");				//planes are slower than real airplanes so lower gravity to compensate
 
-	ud.maxBank=0.8;				//max roll
-	ud.maxPitch=0.45;			//max pitch this plane tries to keep
-	ud.turnRadius=500;			//hint to the ai about how large turn radius this plane needs
-//	ud.wantedHeight=400;		//height about ground this plane tries to keep
+	tdfparser.GetDef(ud.maxBank, "0.8", "UNITINFO\\maxBank");						//max roll
+	tdfparser.GetDef(ud.maxPitch, "0.45", "UNITINFO\\maxPitch");				//max pitch this plane tries to keep
+	tdfparser.GetDef(ud.turnRadius, "500", "UNITINFO\\turnRadius");			//hint to the ai about how large turn radius this plane needs
 
-	ud.maxAcc=0.075;				//engine power
-	ud.maxAileron=0.015;		//turn speed around roll axis
-	ud.maxElevator=0.01;		//turn speed around pitch axis
-	ud.maxRudder=0.004;			//turn speed around yaw axis
+	tdfparser.GetDef(ud.maxAileron, "0.015", "UNITINFO\\maxAileron");		//turn speed around roll axis
+	tdfparser.GetDef(ud.maxElevator, "0.01", "UNITINFO\\maxElevator");	//turn speed around pitch axis
+	tdfparser.GetDef(ud.maxRudder, "0.004", "UNITINFO\\maxRudder");			//turn speed around yaw axis
 
 
 	ud.categoryString=tdfparser.SGetValueDef("", "UNITINFO\\Category");
@@ -306,8 +318,12 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 				continue;
 		}
 
-		while(ud.weapons.size()<a)
-			ud.weapons.push_back(UnitDef::UnitDefWeapon("",0,0,float3(0,0,1),-1,0));
+		while(ud.weapons.size()<a){
+			if(!weaponDefHandler->GetWeapon("NOWEAPON"))
+				info->AddLine("Error: Spring requires a NOWEAPON weapon type to be present as a placeholder for missing weapons");
+			else
+				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0));
+		}
 
 		string badTarget;
 		tdfparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "badTargetCategory"+c);
@@ -326,6 +342,15 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			}
 			btc|=CCategoryHandler::Instance()->GetCategories(badTarget);
 		}
+
+		string onlyTarget;
+		tdfparser.GetDef(onlyTarget, "", std::string("UNITINFO\\") + "onlyTargetCategory"+c);
+		unsigned int otc;
+		if(!onlyTarget.empty())
+			otc=CCategoryHandler::Instance()->GetCategories(onlyTarget);
+		else
+			otc=0xffffffff;
+
 		unsigned int slaveTo=atoi(tdfparser.SGetValueDef("0", string("UNITINFO\\WeaponSlaveTo")+c).c_str());
 
 		float3 mainDir=tdfparser.GetFloat3(float3(1,0,0),string("UNITINFO\\WeaponMainDir")+c);
@@ -333,12 +358,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 		float angleDif=cos(atof(tdfparser.SGetValueDef("360", string("UNITINFO\\MaxAngleDif")+c).c_str())*PI/360);
 
-		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc));
+		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc,otc));
 	}
 	tdfparser.GetDef(ud.canDGun, "0", "UNITINFO\\candgun");
-
-	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str())*1.5;
-	ud.hoverAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\hoverattack").c_str());
 
 	string TEDClass=tdfparser.SGetValueDef("0", "UNITINFO\\TEDClass").c_str();
 	ud.TEDClassString=TEDClass;
@@ -359,16 +381,17 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			ud.type = "Factory";
 
 	}
-	else if(ud.canfly)
+	else if(ud.canfly && !ud.hoverAttack)
 	{
 		if(!ud.weapons.empty() && ud.weapons[0].def!=0 && (ud.weapons[0].def->type=="AircraftBomb" || ud.weapons[0].def->type=="TorpedoLauncher")){
-			ud.type = "Bomber";			
-			ud.turnRadius=800;			//hint to the ai about how large turn radius this plane needs
+			ud.type = "Bomber";
+			if(ud.turnRadius==500)	//only reset it if user hasnt set it explicitly
+				ud.turnRadius=800;			//hint to the ai about how large turn radius this plane needs
 
 		} else {
 			ud.type = "Fighter";
 		}
-		ud.maxAcc=max(ud.maxAcc*0.6,0.065);
+		tdfparser.GetDef(ud.maxAcc, "0.065", "UNITINFO\\maxAcc");						//engine power
 	}
 	else if(ud.canmove)
 	{
@@ -403,7 +426,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	}
 
 	if(ud.maxAcc!=0 && ud.speed!=0)
-		ud.drag=1.0/(ud.speed/GAME_SPEED*1.1/ud.maxAcc)-ud.wingAngle*ud.wingAngle*ud.wingDrag;
+		ud.drag=1.0/(ud.speed/GAME_SPEED*1.1/ud.maxAcc)-ud.wingAngle*ud.wingAngle*ud.wingDrag;		//meant to set the drag such that the maxspeed becomes what it should be
 
 	std::string objectname;
 	tdfparser.GetDef(objectname, "", "UNITINFO\\Objectname");
@@ -454,7 +477,6 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.needGeo=false;
 	if(ud.type=="Building" || ud.type=="Factory"){
-//		CreateBlockingLevels(&ud,tdfparser.SGetValueDef("c", "UNITINFO\\YardMap"));
 		CreateYardMap(&ud, tdfparser.SGetValueDef("c", "UNITINFO\\YardMap"));
 	} else {
 		ud.yardmap = 0;
@@ -552,65 +574,6 @@ UnitDef *CUnitDefHandler::GetUnitByID(int id)
 
 	return &unitDefs[id];
 }
-
-/*
-void CUnitDefHandler::CreateBlockingLevels(UnitDef *def,std::string yardmap)
-{
-	std::transform(yardmap.begin(),yardmap.end(), yardmap.begin(), (int (*)(int))std::tolower);
-	
-	def->yardmapLevels[0]=new unsigned char[(def->xsize)*(def->ysize)];
-	for(int a=1;a<=4;++a){
-		def->yardmapLevels[a]=new unsigned char[(def->xsize+a*2-1)*(def->ysize+a*2-1)];
-	}
-	memset(def->yardmapLevels[0],1,def->xsize*def->ysize);
-
-	unsigned char* orgLevel=new unsigned char[def->xsize*def->ysize/4];
-	memset(orgLevel,1,def->xsize*def->ysize/4);
-
-	std::string::iterator si=yardmap.begin();
-	for(int y=0;y<def->ysize/2;++y){
-		for(int x=0;x<def->xsize/2;++x){
-			if(*si=='c'){
-				orgLevel[y*def->xsize/2+x]=0;
-			}
-			++si;
-			if(si==yardmap.end())
-				break;
-			if(*si==' ')
-				si++;
-			if(si==yardmap.end())
-				break;
-		}
-		if(si==yardmap.end())
-			break;
-	}
-	for(int y=0;y<def->ysize;++y){
-		for(int x=0;x<def->xsize;++x){
-			def->yardmapLevels[0][y*def->xsize+x]=orgLevel[y/2*def->xsize/2+x/2];
-		}
-	}
-
-	for(int a=1;a<=4;++a){
-		int step=2;
-		if(a==1)
-			step=1;
-		for(int y=0;y<def->ysize+a*2-1;++y){
-			int maxPrevY=def->ysize+a*2-1-step;
-			for(int x=0;x<def->xsize+a*2-1;++x){
-				int maxPrevX=def->xsize+a*2-1-step;
-				if(def->yardmapLevels[a-1][min(maxPrevY-1,y)*maxPrevX+min(maxPrevX-1,x)] || 
-					 def->yardmapLevels[a-1][min(maxPrevY-1,y)*maxPrevX+max(0,x-step)] || 
-					 def->yardmapLevels[a-1][max(0,y-step)*maxPrevX+min(maxPrevX-1,x)] || 
-					 def->yardmapLevels[a-1][max(0,y-step)*maxPrevX+max(0,x-step)]){
-						def->yardmapLevels[a][y*(def->xsize+a*2-1)+x]=1;
-					 } else {
-						def->yardmapLevels[a][y*(def->xsize+a*2-1)+x]=0;
-					 }
-			}
-		}
-	}
-}
-*/
 
 /*
 Creates a open ground blocking map, called yardmap.

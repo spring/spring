@@ -17,7 +17,7 @@ public:
 	inline CObject(){};
 	virtual ~CObject();
 	
-	std::set<CObject*> listeners,listening;
+	std::multiset<CObject*> listeners,listening;
 };
 
 #endif /* OBJECT_H */

@@ -47,6 +47,11 @@ public:
 	int maxUnits;
 
 	bool limitDgun;
+	bool diminishingMMs;
+
+	bool hostDemo;
+	std::string demoName;
+	int numDemoPlayers;
 };
 
 extern CGameSetup* gameSetup;

@@ -4,6 +4,7 @@
 
 #include "GroupAI.h"
 #include "IGroupAiCallback.h"
+#include "IAICallback.h"
 #include "UnitDef.h"
 #include <vector>
 
@@ -30,18 +31,19 @@ CGroupAI::~CGroupAI()
 void CGroupAI::InitAi(IGroupAICallback* callback)
 {
 	this->callback=callback;
+	aicb=callback->GetAICallback();
 }
 
 bool CGroupAI::AddUnit(int unit)
 {
-	const UnitDef* ud=callback->GetUnitDef(unit);
+	const UnitDef* ud=aicb->GetUnitDef(unit);
 	if(!(ud->energyUpkeep>0 && ud->makesMetal>0)){
-		callback->SendTextMsg("Can only use metal makers",0);
+		aicb->SendTextMsg("Can only use metal makers",0);
 		return false;
 	}
 	UnitInfo* info=new UnitInfo;
 
-	const std::vector<CommandDescription>* cd=callback->GetUnitCommands(unit);
+	const std::vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
 	for(std::vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi){
 		if(cdi->id==CMD_ONOFF){
 			int on=atoi(cdi->params[0].c_str());
@@ -75,12 +77,12 @@ int CGroupAI::GetDefaultCmd(int unitid)
 
 void CGroupAI::Update()
 {
-	int frameNum=callback->GetCurrentFrame();
+	int frameNum=aicb->GetCurrentFrame();
 	if(lastUpdate<=frameNum-32){
 		lastUpdate=frameNum;
 
-		float energy=callback->GetEnergy();
-		float estore=callback->GetEnergyStorage();
+		float energy=aicb->GetEnergy();
+		float estore=aicb->GetEnergyStorage();
 		float dif=energy-lastEnergy;
 		lastEnergy=energy;
 
@@ -94,7 +96,7 @@ void CGroupAI::Update()
 					Command c;
 					c.id=CMD_ONOFF;
 					c.params.push_back(0);
-					callback->GiveOrder(ui->first,&c);
+					aicb->GiveOrder(ui->first,&c);
 					ui->second->turnedOn=false;
 				}
 			}
@@ -108,7 +110,7 @@ void CGroupAI::Update()
 					Command c;
 					c.id=CMD_ONOFF;
 					c.params.push_back(1);
-					callback->GiveOrder(ui->first,&c);
+					aicb->GiveOrder(ui->first,&c);
 					ui->second->turnedOn=true;
 				}
 			}
