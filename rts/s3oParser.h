@@ -7,7 +7,6 @@
 #include <vector>
 
 #include <string>
-//#include <windows.h>
 #include "s3o.h"
 
 using namespace std;

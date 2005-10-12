@@ -31,6 +31,13 @@
 #define swabword(w)	(htole16(w))
 #define swabdword(w)	(htole32(w))
 
+#else
+
+// empty versions for win32
+#define swabword(w)	(w)
+#define swabdword(w)	(w)
+
 #endif
+
 
 #endif

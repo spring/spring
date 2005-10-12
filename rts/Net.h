@@ -5,8 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
-#include <windows.h>
-#include <winsock2.h>
+#include "win32.h"
 #else
 #include <sys/types.h>
 #include <sys/socket.h>

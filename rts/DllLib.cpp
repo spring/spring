@@ -15,7 +15,7 @@ DllLib::~DllLib()
 	FreeLibrary(dll);
 }
 
-void *DllLib::FindAddress(const char *symbol);
+void *DllLib::FindAddress(const char *symbol)
 {
 	return GetProcAddress(dll,symbol);
 }

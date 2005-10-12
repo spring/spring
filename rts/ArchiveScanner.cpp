@@ -97,8 +97,11 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 		transform(lcfn.begin(), lcfn.end(), lcfn.begin(), (int (*)(int))tolower);
 
 		// Is it a directory?
+#ifdef _MSC_VER // im guessing this is a difference between gcc and msvc, not windows and linux
+		if (info.st_mode & S_IFDIR) {
+#else
 		if (S_ISDIR(info.st_mode)) {
-
+#endif
 			// Avoid the special directories
 			if (fn.c_str()[0] != '.') {
 				Scan(it->native_file_string().c_str(), checksum);

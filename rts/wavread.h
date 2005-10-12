@@ -13,6 +13,8 @@
 #include <mmreg.h>
 #include <mmsystem.h>
 
+#include <SDL_types.h>
+
 
 //-----------------------------------------------------------------------------
 // Name: class CWaveSoundRead

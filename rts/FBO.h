@@ -7,7 +7,7 @@
 #define FBO_H
 
 #include <vector>
-#include "glew.h"
+#include <GL/glew.h>
 
 class FBO
 {

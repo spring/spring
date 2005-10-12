@@ -4,9 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "Object.h"
 #include <string>
 #include <set>
@@ -43,9 +40,9 @@ public:
 
 	vector<CommandDescription> myCommands;
 	SharedLib *lib;
-	typedef int (WINAPI* GETGROUPAIVERSION)();
-	typedef IGroupAI* (WINAPI* GETNEWAI)();
-	typedef void (WINAPI* RELEASEAI)(IGroupAI* i);
+	typedef int (* GETGROUPAIVERSION)();
+	typedef IGroupAI* (* GETNEWAI)();
+	typedef void (* RELEASEAI)(IGroupAI* i);
 	
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETNEWAI GetNewAI;

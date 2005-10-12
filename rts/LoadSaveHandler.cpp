@@ -1,8 +1,5 @@
 #include "StdAfx.h"
 #include "LoadSaveHandler.h"
-#ifdef _WIn32
-#include <windows.h>
-#endif
 #include "myGL.h"
 #include <fstream>
 #include "SaveInterface.h"

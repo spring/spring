@@ -78,16 +78,16 @@ void CGroup::SetNewAI(string dllName)
 	boost::filesystem::path p(dllName,boost::filesystem::native);
 	lib = SharedLib::instantiate(dllName.c_str());
 	if (lib==0) 
-		handleerror(NULL,dllName.c_str(),"Could not find AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
 	
 	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (GetGroupAiVersion==0)
-		handleerror(NULL,dllName.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dllName.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
 	
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION)
-		handleerror(NULL,dllName.c_str(),"Incorrect AI dll version",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dllName.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
 	
 	GetNewAI = (GETNEWAI)lib->FindAddress("GetNewAI");
 	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");

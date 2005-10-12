@@ -3,9 +3,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <SDL_types.h>
 #include "AVIGenerator.h"
 #include "myGL.h"
 //#include "mmgr.h"
+
+#include <windows.h>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -93,14 +96,14 @@ void CAVIGenerator::SetBitmapHeader(CView *pView)
 }
 #endif
 
-Sint32 CAVIGenerator::InitEngine()
+HRESULT CAVIGenerator::InitEngine()
 {
 	AVISTREAMINFO strHdr; // information for a single stream 
 	AVICOMPRESSOPTIONS opts;
 	AVICOMPRESSOPTIONS FAR * aopts[1] = {&opts};
 
 	TCHAR szBuffer[1024];
-	Sint32 hr;
+	HRESULT hr;
 
 	m_sError=_T("Ok");
 
@@ -264,9 +267,9 @@ void CAVIGenerator::ReleaseEngine()
 	AVIFileExit();
 }
 
-Sint32 CAVIGenerator::AddFrame(BYTE *bmBits)
+HRESULT CAVIGenerator::AddFrame(BYTE *bmBits)
 {
-	Sint32 hr;
+	HRESULT hr;
 
 	// compress bitmap
 	hr = AVIStreamWrite(m_pStreamCompressed,	// stream pointer

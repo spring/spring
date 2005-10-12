@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "ModelProjectile.h"
 #include "3DOParser.h"
 #include "WeaponDefHandler.h"

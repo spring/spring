@@ -4,6 +4,7 @@
 #ifndef __BF_GROUND_TEXTURES_H__
 #define __BF_GROUND_TEXTURES_H__
 
+#define XMD_H // hack to get rid of INT32, it conflicts with win32 headers
 #include <jpeglib.h>
 
 class CFileHandler;

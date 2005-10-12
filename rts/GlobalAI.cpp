@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GlobalAI.h"
 #include "IGlobalAI.h"
 #include "GlobalAICallback.h"
@@ -14,7 +15,7 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 	boost::filesystem::path l(dll,boost::filesystem::native);
 
 	if (!boost::filesystem::exists(l)) {
-		handleerror(NULL,dll,"Could not find AI lib",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dll,"Could not find AI lib",MBF_OK|MBF_EXCL);
 		return;
 	}
 
@@ -22,14 +23,14 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 	
 	GetGlobalAiVersion = (GETGLOBALAIVERSION)lib->FindAddress("GetGlobalAiVersion");
 	if (GetGlobalAiVersion==0){
-		handleerror(NULL,dll,"Incorrect Global AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dll,"Incorrect Global AI dll",MBF_OK|MBF_EXCL);
 		return;
 	}
 	
 	int i=GetGlobalAiVersion();
 
 	if (i!=GLOBAL_AI_INTERFACE_VERSION){
-		handleerror(NULL,dll,"Incorrect Global AI dll version",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,dll,"Incorrect Global AI dll version",MBF_OK|MBF_EXCL);
 		return;
 	}
 

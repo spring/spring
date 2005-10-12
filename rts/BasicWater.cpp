@@ -4,9 +4,6 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "BasicWater.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "myGL.h"
 #include <GL/glu.h>
 #include <math.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
 
+#include "StdAfx.h"
 #include "dotfileHandler.h"
 #include "errorhandler.h"
 #include <sstream>
@@ -19,7 +20,7 @@ dotfileHandler::dotfileHandler(const string filename)
 				data[read.substr(0,idx)] = read.substr(idx+1);
 		reader.close();
 	} else
-		handleerror(0,"Could not read from config file","dotfileHandler",MB_ICONEXCLAMATION);
+		handleerror(0,"Could not read from config file","dotfileHandler",MBF_EXCL);
 	file.open(filename.c_str());
 	if (!file)
 		handleerror(0,"Could not write to config file","dotfileHandler",0);

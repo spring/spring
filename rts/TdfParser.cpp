@@ -2,18 +2,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
 #include <stdexcept>
 #include <boost/scoped_array.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/spirit/utility/confix.hpp>
-#include "StdAfx.h"
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "FileHandler.h"
 #include "InfoConsole.h"
 #include "errorhandler.h"
@@ -188,7 +185,7 @@ std::string TdfParser::SGetValueMSG(std::string const& location)
 	std::string value;
 	bool found = SGetValue(value, lowerd);
 	if(!found)
-		handleerror(hWnd, value.c_str(), "Sun parsing error", MB_OK);
+		handleerror(hWnd, value.c_str(), "Sun parsing error", MBF_OK);
 	return value;
 }
 
@@ -297,7 +294,7 @@ const std::map<std::string, std::string> TdfParser::GetAllValues(std::string con
 	std::vector<std::string> loclist = GetLocationVector(lowerd);	
 	if(root_section.sections.find(loclist[0]) == root_section.sections.end())
 	{
-		handleerror(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
+		handleerror(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 		return emptymap;
 	}
 	TdfSection *sectionptr = root_section.sections[loclist[0]];
@@ -308,7 +305,7 @@ const std::map<std::string, std::string> TdfParser::GetAllValues(std::string con
 		searchpath += loclist[i];
 		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end())
 		{
-			handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
+			handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 			return emptymap;
 		}
 		sectionptr = sectionptr->sections[loclist[i]];
@@ -332,7 +329,7 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location)
 			searchpath += loclist[i];
 			if(sectionsptr->find(loclist[i]) == sectionsptr->end())
 			{
-				handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
+				handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
         			return returnvec;
 			}
 			sectionsptr = &sectionsptr->find(loclist[i])->second->sections;

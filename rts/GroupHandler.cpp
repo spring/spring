@@ -4,10 +4,6 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "GroupHandler.h"
-#ifdef _WIN32
-#include <windows.h>
-#include <io.h>
-#endif
 #include "Group.h"
 #include "IGroupAI.h"
 #include "InfoConsole.h"
@@ -59,8 +55,8 @@ END_TIME_PROFILE("Group AI");
 
 void CGroupHandler::TestDll(string name)
 {
-	typedef int (WINAPI* GETGROUPAIVERSION)();
-	typedef void (WINAPI* GETAINAME)(char* c);
+	typedef int (* GETGROUPAIVERSION)();
+	typedef void (* GETAINAME)(char* c);
 	
 	SharedLib *lib;
 	GETGROUPAIVERSION GetGroupAiVersion;
@@ -69,26 +65,26 @@ void CGroupHandler::TestDll(string name)
 	fs::path p(name,fs::native);
 	lib = SharedLib::instantiate(p.native_file_string());
 	if (!lib){
-		handleerror(NULL,name.c_str(),"Cant load dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Cant load dll",MBF_OK|MBF_EXCL);
 		return;
 	}
 
 	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (!GetGroupAiVersion){
-		handleerror(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
 		return;
 	}
 
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION){
-		handleerror(NULL,name.c_str(),"Incorrect AI dll version",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
 		return;
 	}
 	
 	GetAiName = (GETAINAME)lib->FindAddress("GetAiName");
 	if (!GetAiName){
-		handleerror(NULL,name.c_str(),"Incorrect AI dll",MB_OK|MB_ICONEXCLAMATION);
+		handleerror(NULL,name.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
 		return;
 	}
 

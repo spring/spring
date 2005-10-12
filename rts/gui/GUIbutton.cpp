@@ -114,8 +114,8 @@ void GUIbutton::BuildList()
 	static GLuint tex=0;
 	if(!tex)
 	{
-		vector < PALETTEENTRY > vTransparentColors;
-		PALETTEENTRY peBlack;
+		vector < paletteentry_s > vTransparentColors;
+		paletteentry_s peBlack;
 		peBlack.peBlue = peBlack.peGreen = peBlack.peRed = 0;
 		peBlack.peFlags = 0;
 		vTransparentColors.push_back( peBlack );

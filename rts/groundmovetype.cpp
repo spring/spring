@@ -198,9 +198,9 @@ void CGroundMoveType::Update()
 			wantedSpeed = pathId ? requestedSpeed : 0;
 			//If arriving at waypoint, then need to slow down, or may pass it.
 			if(currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
-				wantedSpeed = fmin(wantedSpeed, (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
+				wantedSpeed = std::min((float)wantedSpeed, (float)(sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
 			}
-			wantedSpeed*=max(0.,min(1.,desiredVelocity.dot(owner->frontdir)+0.1));
+			wantedSpeed*=max(0.,std::min(1.,desiredVelocity.dot(owner->frontdir)+0.1));
 			SetDeltaSpeed();
 		}
 	}

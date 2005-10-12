@@ -191,7 +191,7 @@ void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
 		if(pci->id==id){
 			if(unitLoader.CanBuildUnit(bo.fullName,owner->team)){
 				char t[32];
-				snprintf(t, 32, "%d", bo.numQued);
+				SNPRINTF(t, 32, "%d", bo.numQued);
 				pci->name=bo.name;
 				pci->params.clear();
 				if(bo.numQued)

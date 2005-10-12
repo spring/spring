@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "PathManager.h"
 #include "InfoConsole.h"
 #include "MoveInfo.h"

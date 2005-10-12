@@ -8,12 +8,8 @@
 #include "AdvSky.h"
 
 #include <math.h>
-#ifdef _WIn32
-#include <windows.h>		// Header File For Windows
-#endif
 #include "myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
-#include <GL/glut.h>
 #include "Camera.h"
 #include "ReadMap.h"
 #include "Bitmap.h"

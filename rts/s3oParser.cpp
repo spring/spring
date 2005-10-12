@@ -5,9 +5,6 @@
 #include "StdAfx.h"
 #include "s3oParser.h"
 #include <fstream>
-#ifdef _WIN32
-#include "windows.h"
-#endif
 #include "byteorder.h"
 #include <boost/filesystem/path.hpp>
 //#include "mmgr.h"

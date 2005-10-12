@@ -37,7 +37,11 @@ void Win32Cmd::parse()
 				std::string mainpart = arg.substr(1);
 				for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
 					char so[2];
+#ifdef _MSC_VER
+					_snprintf(so,2,"%c",it->shortopt);
+#else
 					snprintf(so,2,"%c",it->shortopt);
+#endif
 					if (mainpart == it->longopt || mainpart == std::string(so)) {
 						it->given = true;
 						if (it->parmtype != OPTPARM_NONE) {

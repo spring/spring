@@ -124,7 +124,7 @@ moveMathOptions(mmOpt)
 		//Generate text-message.
 		char calcMsg[1000], buffer[10];
 		strcpy(calcMsg, "Analyzing map accessability \"");
-		snprintf(buffer,10,"%d",BLOCK_SIZE);
+		SNPRINTF(buffer,10,"%d",BLOCK_SIZE);
 		strcat(calcMsg, buffer);
 		strcat(calcMsg, "\"");
 		PrintLoadMsg(calcMsg);
@@ -186,8 +186,6 @@ CPathEstimator::~CPathEstimator() {
 	delete[] vertex;
 	delete pathCache;
 }
-
-const unsigned int CPathEstimator::MAX_SEARCHED_BLOCKS;
 
 /*
 Finds a square accessable by the given movedata within the given block.
@@ -372,7 +370,7 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 	path.pathCost = PATHCOST_INFINITY;
 
 	//Initial calculations.
-	maxBlocksToBeSearched = min(maxSearchedBlocks, MAX_SEARCHED_BLOCKS);
+	maxBlocksToBeSearched = std::min(maxSearchedBlocks, (unsigned int) MAX_SEARCHED_BLOCKS);
 	startBlock.x = (int)(start.x / BLOCK_PIXEL_SIZE);
 	startBlock.y = (int)(start.z / BLOCK_PIXEL_SIZE);
 	startBlocknr = startBlock.y * nbrOfBlocksX + startBlock.x;

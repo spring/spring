@@ -24,15 +24,15 @@
 #define HPIUTIL2_H
 
 #include "hpifile.h"
+#include <SDL_types.h>
 
 namespace hpiutil
 {
-	
 	hpifile* HPIOpen(const char *filename);
 	void HPIClose(hpifile &hpi);
 	hpientry_ptr HPIOpenFile(hpifile const &hpi, const char *filename);
 	void HPICloseFile(hpientry_ptr &he);
-	uint32_t HPIGet(char *dest, hpientry_ptr const &he, const int offset, const int bytecount);
+	boost::uint32_t HPIGet(char *dest, hpientry_ptr const &he, const int offset, const int bytecount);
 	std::vector<hpientry_ptr> HPIGetFiles(hpifile const &hpi);
 	std::vector<hpientry_ptr> HPIDir(hpifile const &hpi, const char *dirname);
 	hpientry_ptr HPIReadFlatList(hpifile const &hpi, const char *name, const bool dir);

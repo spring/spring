@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "TAAirMoveType.h"
 #include "QuadField.h"
 #include "Ground.h"
