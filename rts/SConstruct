@@ -39,6 +39,7 @@ opts.Add('disable_clipboard', 'Set to no to turn on clipboard code', 1)
 
 #other ported parts
 opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', 0)
+opts.Add('disable_lua', 'Set to no to turn on Lua support',1)
 
 opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation',0)
 opts.Add('optimize', 'Enable processor optimizations during compilation', 0)
@@ -66,13 +67,14 @@ if env.get('disable_clipboard'):
 if env.get('disable_avi'):
 	exclude_list.append("AVIGenerator.cpp")
 	defines+=['NO_AVI']
+if env.get('disable_lua'):
+	exclude_list+=["LuaBinder.cpp","LuaFunctions.cpp"]
+	defines+=['NO_LUA']
 
 if platform == 'linux' or detected_platform == 'freebsd':
 	exclude_list+=["DllLib.cpp","Win32Cmd.cpp","RegHandler.cpp","Win32Support.cpp"]
 else:
 	exclude_list+=["SoLib.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
-
-exclude_list+=["LuaBinder.cpp","LuaFunctions.cpp"]
 
 defines+=['_SZ_ONE_DIRECTORY']
 
@@ -401,6 +403,10 @@ if not env.GetOption("clean"):
 		libaiostep1=True
 	else:
 		print ' Cannot find libaio headers, disabling asynchronous I/O'
+	if not env.get('disable_lua'):
+		if not conf.CheckCXXHeader('luabind/luabind.hpp'):
+			print ' Cannot find Luabind header'
+			Exit(1)
 
 	print "\nChecking libraries"
 	if not conf.CheckLib('GLEW'):
