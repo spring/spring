@@ -28,7 +28,9 @@
 #include "BaseCmd.h"
 #include "GameVersion.h"
 #include "errorhandler.h"
+#ifndef NO_LUA
 #include "LuaBinder.h"
+#endif
 #include <SDL.h>
 #include <SDL_main.h>
 //#include "mmgr.h"
@@ -266,10 +268,12 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
 
+#ifndef NO_LUA
 	// Initialize lua bindings
-//	CLuaBinder lua;
-//	if (!lua.LoadScript("testscript.lua")) 
-//		MessageBox(NULL, lua.lastError.c_str(), "lua",MB_YESNO|MB_ICONQUESTION);
+	CLuaBinder lua;
+	if (!lua.LoadScript("testscript.lua")) 
+		MessageBox(NULL, lua.lastError.c_str(), "lua",MB_YESNO|MB_ICONQUESTION);
+#endif
 
 	// Check if the commandline parameter is specifying a demo file
 	bool playDemo = false;
@@ -348,7 +352,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	guicontroller = new GUIcontroller();
 	#endif
 
-//	lua.CreateLateBindings();
+#ifndef NO_LUA
+	lua.CreateLateBindings();
+#endif
 
 	SDL_Event event;
 	while(!done)									// Loop That Runs While done=false
