@@ -184,6 +184,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.metalStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
 	ud.energyStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
 
+	ud.autoHeal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\AutoHeal").c_str())/(16.0/30.0);
+	ud.idleAutoHeal=atof(tdfparser.SGetValueDef("10", "UNITINFO\\IdleAutoHeal").c_str())/(16.0/30.0);
+	ud.idleTime=atoi(tdfparser.SGetValueDef("600", "UNITINFO\\IdleTime").c_str());
+
 	ud.isMetalMaker=(ud.makesMetal>=1 && ud.energyUpkeep>ud.makesMetal*40);
 
 	ud.controlRadius=32;
@@ -272,7 +276,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(ud.builder && !ud.buildSpeed)		//core anti is flagged as builder for some reason
 		ud.builder=false;
 
-	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str())*1.5;
+	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str());;
 	ud.hoverAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\hoverattack").c_str());
 
 	tdfparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");
@@ -430,7 +434,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	std::string objectname;
 	tdfparser.GetDef(objectname, "", "UNITINFO\\Objectname");
-	ud.model.modelpath = "objects3d/" + objectname + ".3do";
+	ud.model.modelpath = "objects3d/" + objectname;
 	ud.model.modelname = objectname;
 
 	tdfparser.GetDef(ud.wreckName, "", "UNITINFO\\Corpse");

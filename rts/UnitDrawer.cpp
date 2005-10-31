@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "UnitDrawer.h"
 #include "myGL.h"
-#include "3DOParser.h"
+#include "3DModelParser.h"
 #include "Camera.h"
 #include "myMath.h"
 #include "Bitmap.h"
@@ -23,6 +23,7 @@
 #include "LosHandler.h"
 #include "BaseSky.h"
 #include "BFGroundDrawer.h"
+#include "TextureHandler.h"
 //#include "mmgr.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
@@ -74,10 +75,14 @@ CUnitDrawer::CUnitDrawer(void)
 
 	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
 
+	advShading=false;
 	if(shadowHandler->drawShadows){
+		advShading=true;
 		unitShadowVP=LoadVertexProgram("unitshadow.vp");
 		unitVP=LoadVertexProgram("unit.vp");
 		unitFP=LoadFragmentProgram("unit.fp");
+		units3oVP=LoadVertexProgram("units3o.vp");
+		units3oFP=LoadFragmentProgram("units3o.fp");
 
 		glGenTextures(1,&boxtex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
@@ -115,10 +120,12 @@ CUnitDrawer::~CUnitDrawer(void)
 	glDeleteTextures(1,&whiteTex);
 	glDeleteTextures(1,&radarBlippTex);
 
-	if(shadowHandler->drawShadows){
+	if(advShading){
 		glDeleteProgramsARB( 1, &unitShadowVP );
 		glDeleteProgramsARB( 1, &unitVP );
 		glDeleteProgramsARB( 1, &unitFP );
+		glDeleteProgramsARB( 1, &units3oVP );
+		glDeleteProgramsARB( 1, &units3oFP );
 	
 		glDeleteTextures(1,&boxtex);
 		glDeleteTextures(1,&specularTex);
@@ -178,7 +185,11 @@ void CUnitDrawer::Draw(bool drawReflection)
 					if((*usi)->isCloaked){
 						drawCloaked.push_back(*usi);					
 					} else {
-						(*usi)->Draw();
+						if((*usi)->model->textureType){
+							QueS3ODraw(*usi,(*usi)->model->textureType);
+						} else {
+							(*usi)->Draw();
+						}
 					}
 				}else{
 					drawFar.push_back(*usi);
@@ -200,12 +211,12 @@ void CUnitDrawer::Draw(bool drawReflection)
 			glPushMatrix();
 			glTranslatef3(ti->second.pos);
 			glRotatef(ti->second.rot*180/PI,0,1,0);
-			unit3doparser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->rootobject->DrawStatic();
+			modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->DrawStatic();
 			glPopMatrix();
 		}
 	}
-//	glCullFace(GL_BACK);
-//	glDisable(GL_CULL_FACE);
+
+	DrawQuedS3O();
 
 	CleanUpUnitDrawing();
 
@@ -312,7 +323,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1,1,1,0.3);
-	texturehandler->SetTexture();
+	texturehandler->SetTATexture();
 
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
@@ -327,7 +338,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			glPushMatrix();
 			glTranslatef3(ti->second.pos);
 			glRotatef(ti->second.rot*180/PI,0,1,0);
-			unit3doparser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->rootobject->DrawStatic();
+			modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->DrawStatic();
 			glPopMatrix();
 		}
 		if(ti->second.drawBorder){
@@ -357,7 +368,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER,0.1f);
 	glColor4f(1,1,1,0.3);
-	texturehandler->SetTexture();
+	texturehandler->SetTATexture();
 	glDepthMask(0);
 	
 	for(vector<CUnit*>::iterator ui=drawCloaked.begin();ui!=drawCloaked.end();++ui){
@@ -371,7 +382,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 				glColor4f(0.6,0.6,0.6,0.4);
 			glPushMatrix();
 			glTranslatef3((*ui)->pos);
-			(*ui)->model->rootobject->DrawStatic();
+			(*ui)->model->DrawStatic();
 			glPopMatrix();
 		}
 	}
@@ -384,7 +395,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			if(camera->InView(gbi->pos,gbi->model->radius*2)){
 				glPushMatrix();
 				glTranslatef3(gbi->pos);
-				gbi->model->rootobject->DrawStatic();
+				gbi->model->DrawStatic();
 				glPopMatrix();
 			}
 			++gbi;
@@ -397,7 +408,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 
 void CUnitDrawer::SetupForUnitDrawing(void)
 {
-	if(shadowHandler->drawShadows && !water->drawReflection){		//standard doesnt seem to support vertex program+clipplanes at once
+	if(advShading && !water->drawReflection){		//standard doesnt seem to support vertex program+clipplanes at once
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );
 		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitFP );
@@ -420,7 +431,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		texturehandler->SetTexture();
+		texturehandler->SetTATexture();
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -455,7 +466,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,cols);
 		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,cols2);
 		glColor3f(1,1,1);
-		texturehandler->SetTexture();
+		texturehandler->SetTATexture();
 	}
 //	glAlphaFunc(GL_GREATER,0.05f);
 	glDisable(GL_ALPHA_TEST);
@@ -464,7 +475,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 void CUnitDrawer::CleanUpUnitDrawing(void)
 {
-	if(shadowHandler->drawShadows && !water->drawReflection){
+	if(advShading && !water->drawReflection){
 		glDisable( GL_VERTEX_PROGRAM_ARB );
 		glDisable( GL_FRAGMENT_PROGRAM_ARB );
 
@@ -491,6 +502,137 @@ void CUnitDrawer::CleanUpUnitDrawing(void)
 	}
 }
 
+void CUnitDrawer::SetupForS3ODrawing(void)
+{
+	if(advShading && !water->drawReflection){		//standard doesnt seem to support vertex program+clipplanes at once
+		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, units3oVP );
+		glEnable( GL_VERTEX_PROGRAM_ARB );
+		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, units3oFP );
+		glEnable( GL_FRAGMENT_PROGRAM_ARB );
+
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, gs->sunVector.x,gs->sunVector.y,gs->sunVector.z,0);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, unitAmbientColor.x,unitAmbientColor.y,unitAmbientColor.z,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, unitSunColor.x,unitSunColor.y,unitSunColor.z,0);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, camera->pos.x, camera->pos.y, camera->pos.z, 0);
+
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, 0,0,0,unitShadowDensity);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, unitAmbientColor.x,unitAmbientColor.y,unitAmbientColor.z,1);
+
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glEnable(GL_TEXTURE_2D);
+
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glEnable(GL_TEXTURE_2D);
+
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glBindTexture(GL_TEXTURE_2D,shadowHandler->shadowTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		glEnable(GL_TEXTURE_2D);
+		
+		glActiveTextureARB(GL_TEXTURE3_ARB);
+		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
+
+		glActiveTextureARB(GL_TEXTURE4_ARB);
+		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
+
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+
+		float t[16];
+		glGetFloatv(GL_MODELVIEW_MATRIX,t);
+
+		glMatrixMode(GL_MATRIX0_ARB);
+		glLoadMatrixf(shadowHandler->shadowMatrix.m);
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glMultMatrixf(t);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+	} else {
+		glEnable(GL_LIGHTING);
+		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);	// Position The Light
+		glEnable(GL_LIGHT1);								// Enable Light One
+	//	glDisable(GL_CULL_FACE);
+	//	glCullFace(GL_BACK);
+		glEnable(GL_TEXTURE_2D);
+		float cols[]={1,1,1,1};
+		float cols2[]={1,1,1,1};
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,cols);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,cols2);
+		glColor3f(1,1,1);
+		texturehandler->SetTATexture();
+
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_CONSTANT);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB,GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_INTERPOLATE_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+		glBindTexture(GL_TEXTURE_2D, whiteTex);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
+//	glAlphaFunc(GL_GREATER,0.05f);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+}
+
+void CUnitDrawer::CleanUpS3ODrawing(void)
+{
+	if(advShading && !water->drawReflection){
+		glDisable( GL_VERTEX_PROGRAM_ARB );
+		glDisable( GL_FRAGMENT_PROGRAM_ARB );
+
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glDisable(GL_TEXTURE_2D);
+
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glDisable(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+
+		glActiveTextureARB(GL_TEXTURE3_ARB);
+		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+
+		glActiveTextureARB(GL_TEXTURE4_ARB);
+		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+	} else {
+		glDisable(GL_LIGHTING);
+		glDisable(GL_LIGHT1);
+
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glDisable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
+	glDisable(GL_CULL_FACE);
+}
 
 void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor)
 {
@@ -576,4 +718,28 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 
 	(*camera)=realCam;
 	camera->Update(false);
+}
+
+void CUnitDrawer::QueS3ODraw(CWorldObject* object,int textureType)
+{
+	while(quedS3Os.size()<=textureType)
+		quedS3Os.push_back(std::vector<CWorldObject*>());
+
+	quedS3Os[textureType].push_back(object);
+	usedS3OTextures.insert(textureType);
+}
+
+void CUnitDrawer::DrawQuedS3O(void)
+{
+	SetupForS3ODrawing();
+	for(std::set<int>::iterator uti=usedS3OTextures.begin();uti!=usedS3OTextures.end();++uti){
+		int tex=*uti;
+		texturehandler->SetS3oTexture(tex);
+		for(std::vector<CWorldObject*>::iterator ui=quedS3Os[tex].begin();ui!=quedS3Os[tex].end();++ui){
+			(*ui)->DrawS3O();
+		}
+		quedS3Os[tex].clear();
+	}
+	usedS3OTextures.clear();
+	CleanUpS3ODrawing();
 }

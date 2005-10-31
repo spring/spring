@@ -4,46 +4,52 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <vector>
+#include "3DModelParser.h"
+#include <map>
 
-#include <string>
-#include "s3o.h"
+struct SS3O;
 
-using namespace std;
-
-struct SsPrimitive {
-	std::vector<int> vertexIdexes;
+struct SS3OVertex {
+	float3 pos;
+	float3 normal;
+	float textureX;
+	float textureY;
 };
 
-struct LObject{
-	int type;
-
-	unsigned int displist;
-	float3 turn;
-
-	std::vector<LObject> childs;
+struct SS3O {
+	std::string name;
+	std::vector<SS3O*> childs;
+	std::vector<SS3OVertex> vertices;
+	std::vector<unsigned int> vertexDrawOrder;
 	float3 offset;
-	string name;
-	
-	std::vector<SsPrimitive> prims;
-	std::vector<VertexData> vertdata;	
+	int primitiveType;
+	unsigned int displist;
+	bool isEmpty;
+	float maxx,maxy,maxz;
+	float minx,miny,minz;
+
+	void DrawStatic();
+	~SS3O();
 };
 
 class CS3OParser  
 {
 public:
-
 	CS3OParser();
 	virtual ~CS3OParser();
-	LObject *Parse(const string& filename);
+
+	S3DOModel* Load3DO(string name,float scale=1,int side=1);
+	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
+
 private:
-	void ReadObject(LObject &s3o, FILE *pStream, int fileOffset);
-	void ReadVertices(LObject &s3o, FILE *pStream, int fileOffset, int num);
-	void ReadPrimitives(LObject &s3o, FILE *pStream, int fileOffset, int num);
-	void ReadName(LObject &s3o, FILE *pStream, int fileOffset);
-	void ReadVertexIndexes(SsPrimitive &prim, FILE *pStream, int fileOffset, int num);
-	void ComputeNormals(LObject &object);
-	void GenerateSmoothVertices(LObject &object);
+	SS3O* LoadPiece(unsigned char* buf, int offset,S3DOModel* model);
+	void DeleteSS3O(SS3O* o);
+	void FindMinMax(SS3O *object);
+	void DrawSub(SS3O* o);
+	void CreateLists(SS3O *o);
+	void CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum);
+
+	map<string,S3DOModel*> units;
 };
 
 #endif /* S3OPARSER_H */

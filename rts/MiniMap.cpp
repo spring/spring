@@ -89,18 +89,18 @@ CMiniMap::CMiniMap()
 	ypos=gu->screeny-height-10;
 
 	simpleColors=!!configHandler.GetInt("SimpleMiniMapColors",0);
-	myColor[0]=0.2*255;
-	myColor[1]=0.9*255;
-	myColor[2]=0.2*255;
-	myColor[3]=1*255;
-	allyColor[0]=0.3*255;
-	allyColor[1]=0.3*255;
-	allyColor[2]=0.9*255;
-	allyColor[3]=1*255;
-	enemyColor[0]=0.9*255;
-	enemyColor[1]=0.2*255;
-	enemyColor[2]=0.2*255;
-	enemyColor[3]=1*255;
+	myColor[0]=(unsigned char)(0.2*255);
+	myColor[1]=(unsigned char)(0.9*255);
+	myColor[2]=(unsigned char)(0.2*255);
+	myColor[3]=(unsigned char)(1*255);
+	allyColor[0]=(unsigned char)(0.3*255);
+	allyColor[1]=(unsigned char)(0.3*255);
+	allyColor[2]=(unsigned char)(0.9*255);
+	allyColor[3]=(unsigned char)(1*255);
+	enemyColor[0]=(unsigned char)(0.9*255);
+	enemyColor[1]=(unsigned char)(0.2*255);
+	enemyColor[2]=(unsigned char)(0.2*255);
+	enemyColor[3]=(unsigned char)(1*255);
 }
 
 CMiniMap::~CMiniMap()

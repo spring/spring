@@ -1,7 +1,6 @@
 #ifndef UNITDRAWER_H
 #define UNITDRAWER_H
 
-class CUnit;
 #include <set>
 #include <vector>
 #include <list>
@@ -12,6 +11,8 @@ class CUnit;
 class CVertexArray;
 struct S3DOModel;
 struct UnitDef;
+class CUnit;
+class CWorldObject;
 
 class CUnitDrawer
 {
@@ -26,11 +27,15 @@ public:
 	void DrawShadowPass(void);
 	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void);
+	void SetupForS3ODrawing(void);
+	void CleanUpS3ODrawing(void);
 
 	float unitDrawDist;
 
 	unsigned int whiteTex;
 	unsigned int radarBlippTex;
+
+	bool advShading;
 
 	std::vector<CUnit*> drawCloaked;
 	CVertexArray* va;
@@ -38,6 +43,8 @@ public:
 	unsigned int unitVP;
 	unsigned int unitShadowVP;
 	unsigned int unitFP;
+	unsigned int units3oVP;
+	unsigned int units3oFP;
 	unsigned int boxtex;
 	unsigned int specularTex;
 
@@ -73,6 +80,11 @@ public:
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
 	void UpdateReflectTex(void);
 	void CreateReflectionFace(unsigned int gltype, float3 camdir);
+	void QueS3ODraw(CWorldObject* object,int textureType);
+	void DrawQuedS3O(void);
+
+	std::vector<std::vector<CWorldObject*> > quedS3Os;
+	std::set<int> usedS3OTextures;
 };
 
 extern CUnitDrawer* unitDrawer;

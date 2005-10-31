@@ -685,23 +685,25 @@ void CCobInstance::Explode(int piece, int flags)
 	}
 	speed+=baseSpeed;
 
-	S3DO* dl = unit->localmodel->pieces[unit->localmodel->scritoa[piece]].original;
-	if (flags & 1) {		//Shatter
-		ENTER_MIXED;
-		float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
-//		info->AddLine("Shattering %i %f",dl->prims.size(),pieceChance);
+	S3DO* dl = unit->localmodel->pieces[unit->localmodel->scritoa[piece]].original3do;
+	if(dl){
+		if (flags & 1) {		//Shatter
+			ENTER_MIXED;
+			float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
+	//		info->AddLine("Shattering %i %f",dl->prims.size(),pieceChance);
 
-		for(std::vector<SPrimitive>::iterator pi=dl->prims.begin();pi!=dl->prims.end();++pi){
-			if(gu->usRandFloat()>pieceChance || pi->numVertex!=4)
-				continue;
+			for(std::vector<S3DOPrimitive>::iterator pi=dl->prims.begin();pi!=dl->prims.end();++pi){
+				if(gu->usRandFloat()>pieceChance || pi->numVertex!=4)
+					continue;
 
-			ph->AddFlyingPiece(pos,speed+gu->usRandVector()*2,dl,&*pi);
+				ph->AddFlyingPiece(pos,speed+gu->usRandVector()*2,dl,&*pi);
+			}
+			ENTER_SYNCED;
 		}
-		ENTER_SYNCED;
-	}
-	else {
-		//info->AddLine("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-		new CPieceProjectile(pos, speed, dl, newflags,unit,0.5);
+		else {
+			//info->AddLine("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
+			new CPieceProjectile(pos, speed, dl, newflags,unit,0.5);
+		}
 	}
 #endif
 }

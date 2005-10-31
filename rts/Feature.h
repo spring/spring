@@ -23,6 +23,7 @@ public:
 	void Kill(float3& impulse);
 	virtual bool Update(void);
 	void StartFire(void);
+	void DrawS3O();
 
 	std::string createdFromUnit;
 	float resurrectProgress;
@@ -41,7 +42,6 @@ public:
 //	float3 residualImpulse;	//impulse energy that havent been acted on
 
 	bool inUpdateQue;
-	int drawQueType;					//0 none,1 static,2 non static
 	int drawQuad;							//which drawquad we are part of
 
 	float finalHeight;

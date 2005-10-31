@@ -29,6 +29,8 @@
 #include "Wind.h"
 #include "UnitDrawer.h"
 #include "Player.h"
+#include "InMapDraw.h"
+#include "FileHandler.h"
 //#include "mmgr.h"
 
 CAICallback::CAICallback(int Team, CGroupHandler *ghandler)
@@ -325,6 +327,21 @@ int CAICallback::GetEnemyUnits(int *units)
 	return a;
 }
 
+
+int CAICallback::GetEnemyUnitsInRadarAndLos(int *units)
+{
+	list<CUnit*>::iterator ui;
+	int a=0;
+
+	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
+		if(!gs->allies[(*ui)->allyteam][gs->team2allyteam[team]] && ((*ui)->losStatus[gs->team2allyteam[team]] & (LOS_INLOS|LOS_INRADAR))){
+			units[a++]=(*ui)->id;
+		}
+	}
+	return a;
+}
+
+
 int CAICallback::GetEnemyUnits(int *units,const float3& pos,float radius)
 {
 	vector<CUnit*> unit=qf->GetUnitsExact(pos,radius);
@@ -518,8 +535,8 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 			p = helper->Pos2BuildPos (p, unitdef);
 			float dist=pos.distance2D(p);
 			if(dist<bestDist && uh->TestUnitBuildSquare(p,unitdef,feature) && (!feature || feature->allyteam!=allyteam)){
-				int xs=x/SQUARE_SIZE;
-				int zs=z/SQUARE_SIZE;
+				int xs=(int)(x/SQUARE_SIZE);
+				int zs=(int)(z/SQUARE_SIZE);
 				bool good=true;
 				for(int z2=max(0,zs-unitdef->ysize/2-minDist);z2<min(gs->mapy,zs+unitdef->ysize+minDist);++z2){
 					for(int x2=max(0,xs-unitdef->xsize/2-minDist);x2<min(gs->mapx,xs+unitdef->xsize+minDist);++x2){
@@ -702,4 +719,114 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 		list [a] = unitDefHandler->GetUnitByID (a+1);
 }
 
+bool CAICallback::GetProperty(int id, int property, void *data)
+{
+	switch (property) {
+	case AIVAL_UNITDEF:{
+		CUnit *unit = uh->units[id];
+		if (unit && (unit->losStatus[gs->team2allyteam[team]] & LOS_INLOS)) {
+			(*(const UnitDef**)data) = unit->unitDef;
+			return true;
+		}
+		break;}
+	}
+	return false;
+}
+
+bool CAICallback::GetValue(int id, void *data)
+{
+	return false;
+}
+
+int CAICallback::HandleCommand (void *data)
+{
+	return 0;
+}
+
+// Additions to the interface by Alik
+int CAICallback::GetSelectedUnits(int *units)
+{
+	int a=0;
+	if (gu->myAllyTeam == gs->team2allyteam[team]) {
+		for(set<CUnit*>::iterator ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui)
+			units[a++]=(*ui)->id;
+	}
+	return a;
+}
+
+
+float3 CAICallback::GetMousePos() {
+	if (gu->myAllyTeam == gs->team2allyteam[team])
+		return inMapDrawer->GetMouseMapPos();
+	else
+		return ZeroVector;
+}
+
+
+int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
+{
+	int a=0;
+
+	if (gu->myAllyTeam != gs->team2allyteam[team])
+		return 0;
+
+	for (int i=0;i<inMapDrawer->numQuads;i++){
+		if(!inMapDrawer->drawQuads[i].points.empty()){
+			for(list<CInMapDraw::MapPoint>::iterator mp=inMapDrawer->drawQuads[i].points.begin();mp!=inMapDrawer->drawQuads[i].points.end();++mp){
+				if(mp->color==gs->teams[team]->color) { //Maybe add so that markers of your ally team would be also found?
+					pm[a].pos=mp->pos;
+					pm[a].color=mp->color;
+					pm[a].label=mp->label.c_str();
+					if (++a == maxPoints) return a;
+				}
+				else{ continue; }
+			}
+		}
+	}
+	return a;
+}
+
+int CAICallback::GetMapLines(LineMarker *lm, int maxLines) 
+{
+	int a=0;
+
+	if (gu->myAllyTeam != gs->team2allyteam[team])
+		return 0;
+
+	for (int i=0;i<inMapDrawer->numQuads;i++){
+		if(!inMapDrawer->drawQuads[i].points.empty()){
+			for(list<CInMapDraw::MapLine>::iterator ml=inMapDrawer->drawQuads[i].lines.begin();ml!=inMapDrawer->drawQuads[i].lines.end();++ml){
+				if(ml->color==gs->teams[team]->color){ //Maybe add so that markers of your ally team would be also found?
+					lm[a].pos=ml->pos;
+					lm[a].color=ml->color;
+					lm[a].pos2=ml->pos2;
+					if (++a == maxLines) return a;
+				}
+				else {continue;}
+			}
+		}
+	}
+	return a;
+}
+
+int CAICallback::GetFileSize (const char *name)
+{
+	CFileHandler fh (name);
+
+	if (!fh.FileExists ())
+		return -1;
+	
+	return fh.FileSize();
+}
+
+bool CAICallback::ReadFile (const char *name, void *buffer, int bufferLength)
+{
+	CFileHandler fh (name);
+	int fs;
+	if (!fh.FileExists() || bufferLength < (fs = fh.FileSize()))
+		return false;
+
+	fh.Read (buffer, fs);
+	return true;
+}
 

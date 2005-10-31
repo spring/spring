@@ -43,6 +43,8 @@ public:
 	void GotChatMsg(const char* msg,int player);					//called when someone writes a chat msg
 
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);					//called when one of your units are damaged
+	void UnitMoveFailed(int unit);
+	int HandleEvent (int msg,const void *data);
 
 	//called every frame
 	void Update();

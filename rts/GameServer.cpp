@@ -84,7 +84,7 @@ bool CGameServer::Update(void)
 			//check if last times sync responses is correct
 			if(outstandingSyncFrame>0){
 				int correctSync=0;
-				for(int a=0;a<MAX_PLAYERS;++a){
+				for(int a=0;a<gs->activePlayers;++a){
 					if(gs->players[a]->active){
 						if(!syncResponses[a] && !serverNet->playbackDemo){		//if the checksum really happens to be 0 we will get lots of falls positives here
 							info->AddLine("No sync response from %s",gs->players[a]->playerName.c_str());
@@ -98,7 +98,7 @@ bool CGameServer::Update(void)
 					}
 				}
 			}
-			for(int a=0;a<MAX_PLAYERS;++a)
+			for(int a=0;a<gs->activePlayers;++a)
 				syncResponses[a]=0;
 			
 			if(!serverNet->playbackDemo){
@@ -113,7 +113,7 @@ bool CGameServer::Update(void)
 			if(gameSetup)
 				firstReal=gameSetup->numDemoPlayers;
 			//send info about the players
-			for(int a=firstReal;a<MAX_PLAYERS;++a){
+			for(int a=firstReal;a<gs->activePlayers;++a){
 				if(gs->players[a]->active){
 					outbuf[0]=NETMSG_PLAYERINFO;
 					outbuf[1]=a;
@@ -125,7 +125,7 @@ bool CGameServer::Update(void)
 
 			//decide new internal speed
 			float maxCpu=0;
-			for(int a=0;a<MAX_PLAYERS;++a){
+			for(int a=0;a<gs->activePlayers;++a){
 				if(gs->players[a]->cpuUsage>maxCpu && gs->players[a]->active){
 					maxCpu=gs->players[a]->cpuUsage;
 				}
@@ -189,7 +189,7 @@ bool CGameServer::ServerReadNet()
 {
 	static int lastMsg[MAX_PLAYERS],thisMsg=0;
 
-	for(int a=0;a<MAX_PLAYERS;a++){
+	for(int a=0;a<gs->activePlayers;a++){
 		int inbufpos=0;
 		int inbuflength=0;
 		if(gs->players[a]->active && (!gameSetup || a>=gameSetup->numDemoPlayers)){
@@ -473,7 +473,7 @@ void CGameServer::StartGame(void)
 //	*((unsigned int*)&outbuf[1])=gs->randSeed;
 //	serverNet->SendData(outbuf,5);
 
-	for(int a=0;a<MAX_PLAYERS;a++){
+	for(int a=0;a<gs->activePlayers;a++){
 		if(!gs->players[a]->active)
 			continue;
 		outbuf[0]=NETMSG_PLAYERNAME;

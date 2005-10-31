@@ -28,6 +28,9 @@ public:
 	void UnitCreated(CUnit* unit);
 	void UnitFinished(CUnit* unit);
 	void UnitDestroyed(CUnit* unit);
+	void UnitMoveFailed(CUnit* unit);
+	void UnitTaken(CUnit* unit, int newteam);
+	void UnitGiven(CUnit* unit, int oldteam);
 
 	CGlobalAI* ais[MAX_TEAMS];
 	bool hasAI;

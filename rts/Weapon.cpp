@@ -173,7 +173,7 @@ void CWeapon::Update()
 			if(weaponDef->stockpile)
 				reloadStatus=gs->frameNum+60;
 			else
-				reloadStatus=gs->frameNum+reloadTime/owner->reloadSpeed;
+				reloadStatus=gs->frameNum+(int)(reloadTime/owner->reloadSpeed);
 
 			salvoLeft=salvoSize;
 			nextSalvo=gs->frameNum;

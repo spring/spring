@@ -84,11 +84,11 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	unsigned char buf[16*16*4];
 	for(int a=0;a<8;++a){
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		texturehandler->SetTexture();
+		texturehandler->SetTATexture();
 		//glCallList(model.displist);
 		glPushMatrix();
 		glTranslatef(0,-model->height*0.5,0);
-		model->rootobject->DrawStatic();
+		model->DrawStatic();
 		glPopMatrix();
 		glReadPixels(0,0,16,16,GL_RGBA,GL_UNSIGNED_BYTE,buf);
 		for(int y=0;y<16;++y)

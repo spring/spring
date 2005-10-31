@@ -8,6 +8,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -21,18 +22,30 @@ public:
 		float yend;
 	};
 
-	void SetTexture();
-	UnitTexture* GetTexture(string name,int team,int teamTex);
-	UnitTexture* GetTexture(string name);
-
 	CTextureHandler();
 	virtual ~CTextureHandler();
 
+	void SetTATexture();
+	UnitTexture* GetTATexture(string name,int team,int teamTex);
+	UnitTexture* GetTATexture(string name);
+
+	int LoadS3OTexture(string tex1, string tex2);
+	void SetS3oTexture(int num);
+
+
+private:
 	map<string,UnitTexture*> textures;
 	unsigned int globalTex;
 	int bigTexX;
 	int bigTexY;
-	bool newTexFound;
+
+	struct S3oTex{
+		int num;
+		unsigned int tex1;
+		unsigned int tex2;
+	};
+	map<string,int> s3oTextureNames;
+	vector<S3oTex> s3oTextures;
 };
 
 extern CTextureHandler* texturehandler;

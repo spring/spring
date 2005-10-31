@@ -75,7 +75,7 @@ void CBombDropper::Fire(void)
 	if(targetType==Target_Unit)
 		targetPos=targetUnit->pos;		//aim at base of unit instead of middle and ignore uncertainity
 	if(dropTorpedoes){
-		new CTorpedoProjectile(weaponPos,owner->speed,owner,damages,areaOfEffect,projectileSpeed,tracking,range/projectileSpeed+15+predict,targetUnit, weaponDef);
+		new CTorpedoProjectile(weaponPos,owner->speed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15+predict),targetUnit, weaponDef);
 	} else {
 		float3 dif=targetPos-owner->pos;		//fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		dif.y=0;

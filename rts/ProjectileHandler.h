@@ -8,7 +8,7 @@
 
 class CProjectileHandler;
 class CProjectile;
-struct SPrimitive;
+struct S3DOPrimitive;
 struct S3DO;
 
 #include <list>
@@ -40,7 +40,7 @@ public:
 
 	void ConvertTex(unsigned char tex[512][512][4], int startx, int starty, int endx, int endy, float absorb);
 	void DrawShadowPass(void);
-	void AddFlyingPiece(float3 pos,float3 speed,S3DO* object,SPrimitive* piece);
+	void AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3DOPrimitive* piece);
 
 	struct projdist{
 		float dist;
@@ -64,7 +64,7 @@ public:
 		inline void* operator new(size_t size){return mempool.Alloc(size);};
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
 
-		SPrimitive* prim;
+		S3DOPrimitive* prim;
 		S3DO* object;
 
 		float3 pos;

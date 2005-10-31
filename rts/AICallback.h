@@ -68,6 +68,7 @@ public:
 
 	int GetEnemyUnits(int *units);					//returns all known enemy units
 	int GetEnemyUnits(int *units,const float3& pos,float radius); //returns all known enemy units within radius from pos
+	int GetEnemyUnitsInRadarAndLos(int *units);
 	int GetFriendlyUnits(int *units);					//returns all friendly units
 	int GetFriendlyUnits(int *units,const float3& pos,float radius); //returns all friendly units within radius from pos
 
@@ -118,6 +119,19 @@ public:
 
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);
+
+	bool GetProperty(int unit, int property, void *dst);
+	bool GetValue(int id, void *dst);
+	int HandleCommand(void *data); 
+
+	int GetFileSize (const char *name); // return -1 when the file doesn't exist
+	bool ReadFile (const char *name, void *buffer,int bufferLen); // returns false when file doesn't exist or buffer is too small
+	
+	// added by alik
+	int GetSelectedUnits(int *units);
+	float3 GetMousePos();
+	int GetMapPoints(PointMarker *pm, int maxPoints);
+	int GetMapLines(LineMarker *lm, int maxLines);
 };
 
 #endif /* AICALLBACK_H */

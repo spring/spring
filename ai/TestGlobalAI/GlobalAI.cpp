@@ -88,6 +88,15 @@ void CGlobalAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
 
 }
 
+void CGlobalAI::UnitMoveFailed(int unit)
+{
+}
+
+int CGlobalAI::HandleEvent(int msg,const void* data)
+{
+	return 0;
+}
+
 void CGlobalAI::Update()
 {
 	int frame=aicb->GetCurrentFrame();

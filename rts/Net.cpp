@@ -90,7 +90,7 @@ CNet::CNet()
 #endif
 	connected=false;
 
-	for(int a=0;a<MAX_PLAYERS;a++){
+	for(int a=0;a<gs->activePlayers;a++){
 		connections[a].active=false;
 		connections[a].localConnection=0;
 	}
@@ -120,7 +120,7 @@ CNet::~CNet()
 	delete recordDemo;
 	delete playbackDemo;
 
-	for (int a=0;a<MAX_PLAYERS;a++){
+	for (int a=0;a<gs->activePlayers;a++){
 		Connection* c=&connections[a];
 		if(!c->active)
 			continue;
@@ -267,7 +267,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 int CNet::SendData(unsigned char *data, int length)
 {
 	int ret=1;			//becomes 0 if any connection return 0
-	for (int a=0;a<MAX_PLAYERS;a++){
+	for (int a=0;a<gs->activePlayers;a++){
 		Connection* c=&connections[a];
 		if(c->active){
 			ret&=SendData(data,length,a);
@@ -365,7 +365,7 @@ void CNet::Update(void)
 		ProcessRawPacket(inbuf,r,conn);
 	}
 
-	for(int a=0;a<MAX_PLAYERS;++a){
+	for(int a=0;a<gs->activePlayers;++a){
 		Connection* c=&connections[a];
 		if(c->localConnection || !c->active)
 			continue;
@@ -447,7 +447,7 @@ int CNet::ResolveConnection(sockaddr_in* from)
 #else
 	addr = from->sin_addr.s_addr;
 #endif
-	for(int a=0;a<MAX_PLAYERS;++a){
+	for(int a=0;a<gs->activePlayers;++a){
 		if(connections[a].active){
 			if(
 #ifdef _WIN32
@@ -478,7 +478,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		freeConn=wantedNumber;
 	}
 	if(wantedNumber==0){
-		for(freeConn=0;freeConn<MAX_PLAYERS;++freeConn){
+		for(freeConn=0;freeConn<gs->activePlayers;++freeConn){
 			if(!connections[freeConn].active)
 				break;
 		}
@@ -521,7 +521,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		tempbuf[stupidGlobalMapname.size()+6]=0;
 		SendData(tempbuf,stupidGlobalMapname.size()+7);
 
-		for(int a=0;a<MAX_PLAYERS;a++){
+		for(int a=0;a<gs->activePlayers;a++){
 			if(!gs->players[a]->readyToStart)
 				continue;
 			tempbuf[0]=NETMSG_PLAYERNAME;
@@ -550,7 +550,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 
 void CNet::FlushNet(void)
 {
-	for (int a=0;a<MAX_PLAYERS;a++){
+	for (int a=0;a<gs->activePlayers;a++){
 		Connection* c=&connections[a];
 		if(c->active && c->outgoingLength>0){
 			FlushConnection(a);
@@ -698,7 +698,7 @@ void CNet::ReadDemoFile(void)
 	if(this==serverNet){
 		while(nextDemoRead<gu->modGameTime){
 			if(playbackDemo->Eof()){
-				for(int a=0;a<MAX_PLAYERS;++a)
+				for(int a=0;a<gs->activePlayers;++a)
 					connections[a].active=false;
 				return;
 			}

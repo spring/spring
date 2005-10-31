@@ -62,6 +62,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 
 	activeTeams=2;
 	activeAllyTeams=2;
+	activePlayers=MAX_PLAYERS;
 	teams[0]->active=true;
 	teams[1]->active=true;
 
@@ -74,7 +75,7 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 {
 	for(int a=0;a<MAX_TEAMS;a++)
 		delete teams[a];
-	for(int a=0;a<MAX_PLAYERS;a++)
+	for(int a=0;a<gs->activePlayers;a++)
 		delete players[a];
 }
 

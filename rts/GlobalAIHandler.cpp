@@ -6,9 +6,20 @@
 #include "InfoConsole.h"
 #include "GameHelper.h"
 #include "TimeProfiler.h"
+#include "errorhandler.h"
 //#include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
+
+// to switch off the exception handling and have it catched by the debugger.
+#define HANDLE_EXCEPTION AIException()
+//#define HANDLE_EXCEPTION throw
+
+static void AIException()
+{
+	handleerror(0,"An unhandled exception occured in the global ai dll, please contact the author of the ai.","Error in global ai",0);
+	exit(-1);
+}
 
 CGlobalAIHandler::CGlobalAIHandler(void)
 {
@@ -33,19 +44,25 @@ CGlobalAIHandler::~CGlobalAIHandler(void)
 void CGlobalAIHandler::Update(void)
 {
 	START_TIME_PROFILE
-
-	for(int a=0;a<gs->activeTeams;++a)
-		if(ais[a])
-			ais[a]->Update();
-
-	END_TIME_PROFILE("Global AI")
+		try {
+			for(int a=0;a<gs->activeTeams;++a)
+				if(ais[a])
+					ais[a]->Update();
+		} catch (...){
+			HANDLE_EXCEPTION;
+		}
+		END_TIME_PROFILE("Global AI")
 }
 
 void CGlobalAIHandler::PreDestroy ()
 {
-	for(int a=0;a<gs->activeTeams;a++)
-		if(ais[a])
-			ais[a]->PreDestroy ();
+	try {
+		for(int a=0;a<gs->activeTeams;a++)
+			if(ais[a])
+				ais[a]->PreDestroy ();
+	} catch (...){
+		HANDLE_EXCEPTION;
+	}
 }
 
 void CGlobalAIHandler::UnitEnteredLos(CUnit* unit,int allyteam)
@@ -53,7 +70,11 @@ void CGlobalAIHandler::UnitEnteredLos(CUnit* unit,int allyteam)
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
 			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
-				ais[a]->ai->EnemyEnterLOS(unit->id);
+				try {
+					ais[a]->ai->EnemyEnterLOS(unit->id);
+				} catch (...){
+					HANDLE_EXCEPTION;
+				}
 		}
 	}
 }
@@ -63,7 +84,11 @@ void CGlobalAIHandler::UnitLeftLos(CUnit* unit,int allyteam)
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
 			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
-				ais[a]->ai->EnemyLeaveLOS(unit->id);
+				try {
+					ais[a]->ai->EnemyLeaveLOS(unit->id);
+				} catch (...){
+					HANDLE_EXCEPTION;
+				}
 		}
 	}
 }
@@ -73,7 +98,11 @@ void CGlobalAIHandler::UnitEnteredRadar(CUnit* unit,int allyteam)
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
 			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
-				ais[a]->ai->EnemyEnterRadar(unit->id);
+				try {
+					ais[a]->ai->EnemyEnterRadar(unit->id);
+				} catch (...){
+					HANDLE_EXCEPTION;
+				}
 		}
 	}
 }
@@ -83,7 +112,11 @@ void CGlobalAIHandler::UnitLeftRadar(CUnit* unit,int allyteam)
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
 			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
-				ais[a]->ai->EnemyLeaveRadar(unit->id);
+				try {
+					ais[a]->ai->EnemyLeaveRadar(unit->id);
+				} catch (...){
+					HANDLE_EXCEPTION;
+				}
 		}
 	}
 }
@@ -91,52 +124,72 @@ void CGlobalAIHandler::UnitLeftRadar(CUnit* unit,int allyteam)
 void CGlobalAIHandler::UnitIdle(CUnit* unit)
 {
 	if(ais[unit->team])
-		ais[unit->team]->ai->UnitIdle(unit->id);
+		try {
+			ais[unit->team]->ai->UnitIdle(unit->id);
+		} catch (...){
+			HANDLE_EXCEPTION;
+		}
 }
 
 void CGlobalAIHandler::UnitCreated(CUnit* unit)
 {
 	if(ais[unit->team])
-		ais[unit->team]->ai->UnitCreated(unit->id);
+		try {
+			ais[unit->team]->ai->UnitCreated(unit->id);
+		} catch (...){
+			HANDLE_EXCEPTION;
+		}
 }
 
 void CGlobalAIHandler::UnitFinished(CUnit* unit)
 {
 	if(ais[unit->team])
-		ais[unit->team]->ai->UnitFinished(unit->id);
+		try {
+			ais[unit->team]->ai->UnitFinished(unit->id);
+		} catch (...){
+			HANDLE_EXCEPTION;
+		}
 }
 
 void CGlobalAIHandler::UnitDestroyed(CUnit* unit)
 {
 	if(hasAI){
-		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && !gs->allies[gs->team2allyteam[a]][unit->allyteam] && unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR))
-				ais[a]->ai->EnemyDestroyed(unit->id);
+		try {
+			for(int a=0;a<gs->activeTeams;++a){
+				if(ais[a] && !gs->allies[gs->team2allyteam[a]][unit->allyteam] && unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR))
+					ais[a]->ai->EnemyDestroyed(unit->id);
+			}
+			if(ais[unit->team])
+				ais[unit->team]->ai->UnitDestroyed(unit->id);
+		} catch (...){
+			HANDLE_EXCEPTION;
 		}
-		if(ais[unit->team])
-			ais[unit->team]->ai->UnitDestroyed(unit->id);
 	}
 }
 
 bool CGlobalAIHandler::CreateGlobalAI(int team, const char* dll)
 {
-	if(team>=gs->activeTeams)
-		return false;
+	try {
+		if(team>=gs->activeTeams)
+			return false;
 
-	if(ais[team]){
-		delete ais[team];
-		ais[team]=0;
+		if(ais[team]){
+			delete ais[team];
+			ais[team]=0;
+		}
+
+		ais[team]=new CGlobalAI(team,dll);
+
+		if(!ais[team]->ai){
+			delete ais[team];
+			ais[team]=0;
+			return false;
+		}
+		hasAI=true;
+		return true;
+	} catch (...){
+		HANDLE_EXCEPTION;
 	}
-
-	ais[team]=new CGlobalAI(team,dll);
-
-	if(!ais[team]->ai){
-		delete ais[team];
-		ais[team]=0;
-		return false;
-	}
-	hasAI=true;
-	return true;
 }
 
 void* CGlobalAIHandler::GetAIBuffer(int team, std::string name, int length)
@@ -170,7 +223,11 @@ void CGlobalAIHandler::GotChatMsg(const char* msg, int player)
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
 			if(ais[a])
-				ais[a]->ai->GotChatMsg(msg,player);
+				try {
+					ais[a]->ai->GotChatMsg(msg,player);
+				} catch (...){
+					HANDLE_EXCEPTION;
+				}
 		}
 	}
 }
@@ -178,12 +235,55 @@ void CGlobalAIHandler::GotChatMsg(const char* msg, int player)
 void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 {
 	if(ais[attacked->team]){
-		if(attacker){
-			float3 dir=helper->GetUnitErrorPos(attacker,attacked->allyteam)-attacked->pos;
-			dir.Normalize();
-			ais[attacked->team]->ai->UnitDamaged(attacked->id,attacker->id,damage,dir);
-		} else {
-			ais[attacked->team]->ai->UnitDamaged(attacked->id,-1,damage,ZeroVector);
+		try {
+			if(attacker){
+				float3 dir=helper->GetUnitErrorPos(attacker,attacked->allyteam)-attacked->pos;
+				dir.Normalize();
+				ais[attacked->team]->ai->UnitDamaged(attacked->id,attacker->id,damage,dir);
+			} else {
+				ais[attacked->team]->ai->UnitDamaged(attacked->id,-1,damage,ZeroVector);
+			}
+		} catch (...){
+			HANDLE_EXCEPTION;
 		}
 	}
 }
+
+void CGlobalAIHandler::UnitMoveFailed(CUnit* unit)
+{
+	if(ais[unit->team])
+		try {
+			ais[unit->team]->ai->UnitMoveFailed (unit->id);
+		} catch (...){
+			HANDLE_EXCEPTION;
+		}
+}
+
+void CGlobalAIHandler::UnitGiven(CUnit *unit,int oldteam)
+{
+	if(ais[unit->team])
+		try {
+			IGlobalAI::ChangeTeamEvent cte;
+			cte.newteam = unit->team;
+			cte.oldteam = oldteam;
+			cte.unit = unit->id;
+			ais[unit->team]->ai->HandleEvent (AI_EVENT_UNITGIVEN, &cte);
+		} catch (...){
+			HANDLE_EXCEPTION;
+		}
+}
+
+void CGlobalAIHandler::UnitTaken (CUnit *unit,int newteam)
+{
+	if(ais[unit->team])
+		try {
+			IGlobalAI::ChangeTeamEvent cte;
+			cte.newteam = newteam;
+			cte.oldteam = unit->team;
+			cte.unit = unit->id;
+			ais[unit->team]->ai->HandleEvent (AI_EVENT_UNITCAPTURED, &cte);
+		} catch (...){
+			HANDLE_EXCEPTION;
+		}
+}
+

@@ -17,7 +17,7 @@
 #include "MeleeWeapon.h"
 #include "Sound.h"
 #include "UnitDefHandler.h"
-#include "3DOParser.h"
+#include "3DModelParser.h"
 #include "CobEngine.h"
 #include "CobInstance.h"
 #include "CobFile.h"
@@ -222,14 +222,17 @@ START_TIME_PROFILE;
 			mt->maxSpeed = ud->speed / GAME_SPEED;
 			mt->accRate = ud->maxAcc;
 			mt->decRate = ud->maxDec;
-			mt->wantedHeight = ud->wantedHeight;
+			mt->wantedHeight = ud->wantedHeight+gs->randFloat()*5;
+			mt->orgWantedHeight=mt->wantedHeight;
 
 			unit->moveType = mt;
 		}
 		else {
 			CAirMoveType *mt = new CAirMoveType(unit);
-			//mt->useHeading = false;
 		
+			if(type=="Fighter")
+				mt->isFighter=true;
+
 			mt->wingAngle = ud->wingAngle;
 			mt->invDrag = 1 - ud->drag;
 			mt->frontToSpeed = ud->frontToSpeed;
@@ -239,15 +242,12 @@ START_TIME_PROFILE;
 			mt->maxBank = ud->maxBank;
 			mt->maxPitch = ud->maxPitch;
 			mt->turnRadius = ud->turnRadius;
-			mt->wantedHeight = ud->wantedHeight;
+			mt->wantedHeight = ud->wantedHeight*1.5+(gs->randFloat()-0.3)*15*(mt->isFighter?2:1);;
 
 			mt->maxAcc = ud->maxAcc;
 			mt->maxAileron = ud->maxAileron;
 			mt->maxElevator = ud->maxElevator;
 			mt->maxRudder = ud->maxRudder;
-
-			if(type=="Fighter")
-				mt->isFighter=true;
 
 			unit->moveType = mt;
 		}
@@ -265,7 +265,7 @@ START_TIME_PROFILE;
 //		unit->mainDamageType=unit->weapons.front()->damageType;
 
 	//unit->model=unitModelLoader->GetModel(ud->model.modelname,side);
-	unit->model = unit3doparser->Load3DO((ud->model.modelpath).c_str(),ud->canfly?0.5:1,side); 	//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
+	unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->canfly?0.5:1,side); 	//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
 	unit->SetRadius(unit->model->radius);
 
 	if(ud->floater)
@@ -275,7 +275,7 @@ START_TIME_PROFILE;
 	//unit->pos.y=ground->GetHeight(unit->pos.x,unit->pos.z);
 
 	unit->cob = new CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
-	unit->localmodel = unit3doparser->CreateLocalModel(unit->model, &unit->cob->pieces);
+	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
 
 	for(unsigned int i=0; i< ud->weapons.size(); i++)
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def,unit,&ud->weapons[i]));

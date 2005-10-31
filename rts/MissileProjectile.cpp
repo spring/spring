@@ -8,7 +8,7 @@
 #include "Ground.h"
 #include "GameHelper.h"
 #include "myMath.h"
-#include "3DOParser.h"
+#include "3DModelParser.h"
 #include "Matrix44f.h"
 #include "WeaponDefHandler.h"
 #include "SyncTracer.h"
@@ -46,7 +46,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 
 	SetRadius(0.0);
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = unit3doparser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName+".3do",1,0);
+		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,0);
 		if(model){
 			SetRadius(model->radius);
 		}

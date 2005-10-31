@@ -25,9 +25,9 @@ CProjectile::CProjectile(const float3& pos,const float3& speed,CUnit* owner)
 	owner(owner),
 	speed(speed),
 	checkCol(true),
-	isUnitPart(false),
 	deleteMe(false),
-	castShadow(false)
+	castShadow(false),
+	s3domodel(0)
 {
 	SetRadius(1.7f);
 	ph->AddProjectile(this);

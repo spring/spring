@@ -9,7 +9,7 @@
 #include "SelectedUnits.h"
 #include "Building.h"
 #include "QuadField.h"
-#include "3DOParser.h"
+#include "3DModelParser.h"
 #include "Factory.h"
 #include "MoveType.h"
 #include "Ground.h"
@@ -112,7 +112,7 @@ void CBuilderCAI::SlowUpdate()
 		if(cachedRadiusId==c.id){
 			radius=cachedRadius;
 		} else {
-			radius=unit3doparser->Load3DO(unitDefHandler->GetUnitByName(boi->second)->model.modelpath,1,owner->team)->radius;
+			radius=modelParser->Load3DO(unitDefHandler->GetUnitByName(boi->second)->model.modelpath,1,owner->team)->radius;
 			cachedRadiusId=c.id;
 			cachedRadius=radius;
 		}
@@ -295,7 +295,7 @@ void CBuilderCAI::SlowUpdate()
 				else
 					NonMoving();
 			}else{
-				if((goalPos-goal).SqLength2D()>100)
+				if((goalPos-goal).SqLength2D()>4000)
 					SetGoal(goal,curPos);
 			}
 		} else {
@@ -677,18 +677,18 @@ void CBuilderCAI::DrawCommands(void)
 			}
 
 			glEnable(GL_TEXTURE_2D);
-			texturehandler->SetTexture();
+			texturehandler->SetTATexture();
 			glDepthMask(0);
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 			glColor4f(1,1,1,0.3);
-			S3DOModel* model=unit3doparser->Load3DO(unitdef->model.modelpath.c_str() ,1, owner->team);
+			S3DOModel* model=modelParser->Load3DO(unitdef->model.modelpath.c_str() ,1, owner->team);
 			glPushMatrix();
 			glTranslatef3(pos);
 			//glCallList(model->displist);
-			model->rootobject->DrawStatic();
+			model->DrawStatic();
 			glDisable(GL_TEXTURE_2D);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 			glDepthMask(1);

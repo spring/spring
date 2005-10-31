@@ -50,6 +50,10 @@ struct UnitDef
 	float metalStorage;
 	float energyStorage;
 
+	float autoHeal;		//amount autohealed 
+	float idleAutoHeal;	//amount autohealed only during idling
+	int idleTime;		//time a unit needs to idle before its considered idling
+
 	float power;
 	float health;
 	unsigned int category;

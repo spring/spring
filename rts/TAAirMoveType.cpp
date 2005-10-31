@@ -50,8 +50,6 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	reservedPad(0),
 	currentPitch(0)
 {
-	wantedHeight+=gs->randFloat()*5;
-	orgWantedHeight=wantedHeight;
 }
 
 CTAAirMoveType::~CTAAirMoveType(void)

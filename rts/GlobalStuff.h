@@ -10,8 +10,8 @@
 #define GAME_SPEED 30
 #define RANDINT_MAX 0x7fff
 #define MAX_VIEW_RANGE 8000
-#define MAX_TEAMS 10
-#define MAX_PLAYERS 16
+#define MAX_TEAMS 16
+#define MAX_PLAYERS 32
 
 #define NEAR_PLANE 2.8f
 
@@ -72,6 +72,7 @@ public:
 	CPlayer* players[MAX_PLAYERS];
 	int activeTeams;							//number of active teams (dont change during play)
 	int activeAllyTeams;					
+	int activePlayers;
 
 	float3 sunVector;											//direction of the sun
 	float sunVector4[4];										//for stuff that requires 4 components
