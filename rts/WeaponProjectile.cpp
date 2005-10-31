@@ -2,7 +2,9 @@
 #include "WeaponProjectile.h"
 #include "WeaponDefHandler.h"
 #include "Sound.h"
+#include "3DModelParser.h"
 #include "3DOParser.h"
+#include "s3oParser.h"
 #include "myGL.h"
 #include "TextureHandler.h"
 #include "Ground.h"
@@ -28,10 +30,13 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit
 		AddDeathDependence(interceptTarget);
 	}
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = unit3doparser->Load3DO(string("objects3d\\")+weaponDef->visuals.modelName+".3do",1,0);
+		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,0);
 		if(model){
-			modelDispList= model->rootobject->displist;
-			isUnitPart=true;
+			s3domodel=model;
+			if(s3domodel->rootobject3do)
+				modelDispList= model->rootobject3do->displist;
+			else
+				modelDispList= model->rootobjects3o->displist;
 		}
 	}
 }

@@ -23,7 +23,7 @@
 #include "glFont.h"
 #include "Group.h"
 #include "myMath.h"
-#include "3DOParser.h"
+#include "3DModelParser.h"
 #include "CobInstance.h"
 #include "CobFile.h"
 #include "FeatureHandler.h"
@@ -46,6 +46,7 @@
 #include "Feature.h"
 #include "MissileProjectile.h"
 #include "FlareProjectile.h"
+#include "HeatCloudProjectile.h"
 #include "MiniMap.h"
 #include "UnitDrawer.h"
 #include "AirBaseHandler.h"
@@ -411,8 +412,14 @@ void CUnit::SlowUpdate()
 	}
 	AddEnergy(energyTickMake*0.5f);
 
-	if(health<maxHealth && restTime>600){
-		health+=10;
+	if(health<maxHealth) 
+	{
+		health += unitDef->autoHeal;
+
+		if(restTime > unitDef->idleTime)
+		{
+			health += unitDef->idleAutoHeal;
+		}
 		if(health>maxHealth)
 			health=maxHealth;
 	}
@@ -448,7 +455,7 @@ void CUnit::SlowUpdate()
 	if(unitDef->canKamikaze){
 		if(fireState==2){
 			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam);
-			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<0)		//self destruct when unit start moving away from mine, should maximize damage
+			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<=0)		//self destruct when unit start moving away from mine, should maximize damage
 				KillUnit(true,false);
 		}
 		if(userTarget && userTarget->pos.distance(pos)<unitDef->kamikazeDist)
@@ -618,7 +625,7 @@ void CUnit::Draw()
 
 		} else {
 			float height=model->height;
-			float start=model->rootobject->miny;
+			float start=model->miny;
 			glEnable(GL_CLIP_PLANE0);
 			glEnable(GL_CLIP_PLANE1);
 
@@ -812,6 +819,9 @@ void CUnit::ChangeLos(int l,int airlos)
 
 void CUnit::ChangeTeam(int newteam,ChangeType type)
 {
+	int oldteam=team;
+	globalAI->UnitTaken (this, team);
+
 	qf->RemoveUnit(this);
 	quads.clear();
 	loshandler->FreeInstance(los);
@@ -852,9 +862,9 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 		radarhandler->MoveUnit(this);
 
 	//model=unitModelLoader->GetModel(model->name,newteam);
-	model = unit3doparser->Load3DO(model->name.c_str(),1,newteam);
+	model = modelParser->Load3DO(model->name.c_str(),1,newteam);
 	delete localmodel;
-	localmodel = unit3doparser->CreateLocalModel(model, &cob->pieces);
+	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
 
 	if(unitDef->isAirBase){
 		airBaseHandler->RegisterAirBase(this);
@@ -866,6 +876,8 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 		c.params.push_back(0);
 		commandAI->GiveCommand(c);
 	}
+
+	globalAI->UnitGiven (this, oldteam);
 }
 
 bool CUnit::AttackUnit(CUnit *unit,bool dgun)
@@ -943,7 +955,8 @@ void CUnit::SetUserTarget(CUnit* target)
 
 void CUnit::Init(void)
 {
-	relMidPos=model->rootobject->relMidPos;
+	relMidPos=model->relMidPos;
+
 	midPos=pos+frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x;
 	losHeight=relMidPos.y+radius*0.5;
 	height = model->height;		//TODO: This one would be much better to have either in Constructor or UnitLoader!//why this is always called in unitloader
@@ -1340,3 +1353,16 @@ void CUnit::ReleaseTempHoldFire(void)
 	dontFire=false;
 }
 
+void CUnit::DrawS3O(void)
+{
+	unsigned char* col=gs->teams[team]->color;
+	if(unitDrawer->advShading){
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1);
+	} else {
+		float texConstant[]={col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1};
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
+	Draw();
+}

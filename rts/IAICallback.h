@@ -9,6 +9,24 @@
 struct UnitDef;
 struct FeatureDef;
 
+// GetProperty/GetValue() constants
+                            // Data buffer will be filled with this:
+#define AIVAL_UNITDEF		1  // const UnitDef*
+
+struct PointMarker
+{
+	float3 pos;
+	unsigned char* color;
+	const char* label; // don't store this pointer anywhere, it may become invalid at any time after GetMapPoints()
+};
+
+struct LineMarker {
+	float3 pos;
+	float3 pos2;
+	unsigned char* color;
+};
+
+
 
 class IAICallback
 {
@@ -81,8 +99,9 @@ public:
 	//the following function return the units into arrays that must be allocated by the dll
 	//10000 is currently the max amount of units so that should be a safe size for the array
 	//the return value indicates how many units was returned, the rest of the array is unchanged
-	virtual int GetEnemyUnits(int *units)=0;					//returns all known enemy units
+	virtual int GetEnemyUnits(int *units)=0;					//returns all known enemy units (all in los)
 	virtual int GetEnemyUnits(int *units,const float3& pos,float radius)=0; //returns all known enemy units within radius from pos
+	virtual int GetEnemyUnitsInRadarAndLos(int *units)=0;       //returns all enemy units in radar and los
 	virtual int GetFriendlyUnits(int *units)=0;					//returns all friendly units
 	virtual int GetFriendlyUnits(int *units,const float3& pos,float radius)=0; //returns all friendly units within radius from pos
 
@@ -147,6 +166,19 @@ public:
 
 	virtual int GetNumUnitDefs() = 0;
 	virtual void GetUnitDefList (const UnitDef** list) = 0;
+
+	virtual bool GetProperty(int id, int property, void *dst)=0;
+	virtual bool GetValue(int id, void *dst)=0;
+	virtual int HandleCommand(void *data)=0; // future callback extensions
+
+	virtual int GetFileSize (const char *name)=0;// return -1 when the file doesn't exist
+	virtual bool ReadFile (const char *name, void *buffer,int bufferLen)=0;// returns false when file doesn't exist or buffer is too small
+
+	// added by alik
+	virtual int GetSelectedUnits(int *units)=0; 
+	virtual float3 GetMousePos()=0;
+	virtual int GetMapPoints(PointMarker *pm, int maxPoints)=0;
+	virtual int GetMapLines(LineMarker *lm, int maxLines)=0;
 };
 
 #endif /* IAICALLBACK_H */

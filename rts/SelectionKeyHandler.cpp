@@ -17,6 +17,7 @@
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 //#include "mmgr.h"
+#include "gui/GUIcontroller.h"
 
 CSelectionKeyHandler *selectionKeys;
 
@@ -79,6 +80,7 @@ CSelectionKeyHandler::~CSelectionKeyHandler(void)
 
 bool CSelectionKeyHandler::KeyPressed(unsigned short key)
 {
+	// TODO: sort the vector, and do key-based fast lookup
 	for(vector<HotKey>::iterator hi=hotkeys.begin();hi!=hotkeys.end();++hi){
 		if(key==hi->key && hi->shift==keys[SDLK_LSHIFT] && hi->control==keys[SDLK_LCTRL] && hi->alt==keys[SDLK_LALT]){
 			DoSelection(hi->select);
@@ -96,14 +98,20 @@ bool CSelectionKeyHandler::KeyReleased(unsigned short key)
 string CSelectionKeyHandler::ReadToken(string& s)
 {
 	string ret;
-	char c=s[0];
+	// **change made.  avoiding repeated substr calls...
+	int index = 0;
+	//char c=s[index];
 
-	while(c && c!='_' && c!='+'){
-		s=s.substr(1,string::npos);
-		ret+=c;
+	while ( index < s.length() && 
+		s[index] != '_' &&
+		s[index++] != '+' );
 
-		c=s[0];
-	}
+	ret = s.substr(0, index);
+	if ( index == s.length() )
+		s.clear();
+	else
+		s = s.substr(index, string::npos);
+
 	return ret;
 }
 
@@ -118,6 +126,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 {
 	list<CUnit*> selection;
 
+//	guicontroller->AddText(selectString.c_str());
 	string s=ReadToken(selectString);
 
 	if(s=="AllMap"){

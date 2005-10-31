@@ -16,6 +16,7 @@
 #include <cctype>
 #include "ConfigHandler.h"
 #include <set>
+#include "UnitDrawer.h"
 #include "errorhandler.h"
 //#include "mmgr.h"
 
@@ -204,6 +205,8 @@ CTextureHandler::CTextureHandler()
 	textures[" "]=t;
 
 	delete[] tex;
+
+	s3oTextures.push_back(S3oTex());
 }
 
 CTextureHandler::~CTextureHandler()
@@ -212,10 +215,15 @@ CTextureHandler::~CTextureHandler()
 	for(tti=textures.begin();tti!=textures.end();++tti){
 		delete tti->second;
 	}
+	while(s3oTextures.size()>1){
+		glDeleteTextures (1, &s3oTextures.back().tex1);
+		glDeleteTextures (1, &s3oTextures.back().tex2);
+		s3oTextures.pop_back();
+	}
 	glDeleteTextures (1, &(globalTex));
 }
 
-CTextureHandler::UnitTexture* CTextureHandler::GetTexture(string name,int team,int teamTex)
+CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name,int team,int teamTex)
 {
 	if(teamTex){
 		char c[50];
@@ -233,7 +241,7 @@ CTextureHandler::UnitTexture* CTextureHandler::GetTexture(string name,int team,i
 	return textures[" "];
 }
 
-CTextureHandler::UnitTexture* CTextureHandler::GetTexture(string name)
+CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name)
 {
 	std::map<std::string,UnitTexture*>::iterator tti;
 	if((tti=textures.find(name))!=textures.end()){
@@ -243,7 +251,41 @@ CTextureHandler::UnitTexture* CTextureHandler::GetTexture(string name)
 	return textures[" "];
 }
 
-void CTextureHandler::SetTexture()
+void CTextureHandler::SetTATexture()
 {
 	glBindTexture(GL_TEXTURE_2D, globalTex);
+}
+
+int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
+{
+	string totalName=tex1+tex2;
+
+	if(s3oTextureNames.find(totalName)!=s3oTextureNames.end()){
+		return s3oTextureNames[totalName];
+	}
+	int newNum=s3oTextures.size();
+	S3oTex tex;
+	tex.num=newNum;
+
+	CBitmap bm(string("unittextures/"+tex1));
+	tex.tex1=bm.CreateTexture(true);
+	tex.tex2=0;
+	if(unitDrawer->advShading){
+		CBitmap bm(string("unittextures/"+tex2));
+		tex.tex2=bm.CreateTexture(true);
+	}
+	s3oTextures.push_back(tex);
+	s3oTextureNames[totalName]=newNum;
+	return newNum;
+}
+
+void CTextureHandler::SetS3oTexture(int num)
+{
+	int tex=s3oTextures[num].tex1;
+	glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex1);
+	if(unitDrawer->advShading){
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
 }

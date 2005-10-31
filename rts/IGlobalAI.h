@@ -6,11 +6,19 @@
 
 class IGlobalAICallback;
 
-#define GLOBAL_AI_INTERFACE_VERSION 7
+#define GLOBAL_AI_INTERFACE_VERSION 10
+
+// Both use ChangeTeamEvent for data
+#define AI_EVENT_UNITGIVEN 1
+#define AI_EVENT_UNITCAPTURED 2
 
 class IGlobalAI
 {
 public:
+	struct ChangeTeamEvent { 
+		int unit, newteam, oldteam;
+	};
+
 	virtual void InitAI(IGlobalAICallback* callback, int team)=0;
 
 	virtual void UnitCreated(int unit)=0;									//called when a new unit is created on ai team
@@ -30,6 +38,9 @@ public:
 	virtual void GotChatMsg(const char* msg,int player)=0;					//called when someone writes a chat msg
 
 	virtual void UnitDamaged(int damaged,int attacker,float damage,float3 dir)=0;					//called when one of your units are damaged
+	virtual void UnitMoveFailed(int unit)=0;							// called when a ground unit failed to reach it's destination
+
+    virtual int HandleEvent (int msg, const void *data)=0; // general messaging function to be used for future API extensions.
 
 	//called every frame
 	virtual void Update()=0;

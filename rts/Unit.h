@@ -256,6 +256,7 @@ public:
 	virtual void IncomingMissile(CMissileProjectile* missile);
 	void TempHoldFire(void);
 	void ReleaseTempHoldFire(void);
+	virtual void DrawS3O(void);
 };
 
 #endif /* UNIT_H */

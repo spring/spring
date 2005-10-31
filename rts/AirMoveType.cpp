@@ -56,7 +56,6 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	owner->mapSquare+=1;						//to force los recalculation
 
 	//From Aircraft::Init
-	wantedHeight+=(gs->randFloat()-0.3)*15*(isFighter?2:1);
 	maxRudder*=0.99+gs->randFloat()*0.02;
 	maxElevator*=0.99+gs->randFloat()*0.02;
 	maxAileron*=0.99+gs->randFloat()*0.02;

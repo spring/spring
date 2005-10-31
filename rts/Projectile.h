@@ -16,6 +16,7 @@ class CBuilding;
 class CUnit;
 class CFeature;
 class CVertexArray;
+struct S3DOModel;
 
 class CProjectile : public CWorldObject
 {
@@ -39,7 +40,6 @@ public:
 	void DependentDied(CObject* o);
 
 	bool checkCol;
-	bool isUnitPart;
 	bool deleteMe;
 	bool castShadow;
 
@@ -47,6 +47,9 @@ public:
 	float3 speed;
 	virtual void DrawCallback(void);			//används om en projektil vill ritas efter(ovanpå) en annan
 	virtual void DrawUnitPart(void);
+	virtual void DrawS3O(){DrawUnitPart();};
+
+	S3DOModel* s3domodel;
 };
 
 #endif /* PROJECTILE_H */

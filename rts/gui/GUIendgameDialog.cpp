@@ -219,7 +219,7 @@ void GUIendgameDialog::ShowPlayerStats(void)
 
 	int lines=1;
 	char c[500];
-	for(int a=0;a<MAX_PLAYERS;++a){
+	for(int a=0;a<gs->activePlayers;++a){
 		if(gs->players[a]->active){
 			values.push_back(vector<string>());
 			values[lines].push_back(gs->players[a]->playerName);

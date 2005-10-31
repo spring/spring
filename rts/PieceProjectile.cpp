@@ -32,9 +32,9 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, S3DO* 
 	age(0),
 	piece(piece)
 {
-	//useAirLos=true;
 	checkCol=false;
-	isUnitPart=true;
+	if(owner)
+		s3domodel=owner->model;
 	castShadow=true;
 
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)

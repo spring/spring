@@ -423,7 +423,7 @@ void CUnit3DLoader::CreateFarTexture(UnitModel &model)
 	unsigned char buf[16*16*4];
 	for(int a=0;a<8;++a){
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		texturehandler->SetTexture();
+		texturehandler->SetTATexture();
 		glCallList(model.displist);
 //		glBindTexture(GL_TEXTURE_2D, farTexture);
 		glReadPixels(0,0,16,16,GL_RGBA,GL_UNSIGNED_BYTE,buf);
@@ -664,7 +664,7 @@ unsigned int CUnit3DLoader::CreateDisplistFromVector(UnitModel& model, vector<fl
 		vector<Quad>::iterator qi;
 		vector<QuadTex>::iterator qti;
 		for(qti=model.quadTex.begin(),qi=model.geometry->quad.begin();qti!=model.quadTex.end();++qti,++qi){
-			CTextureHandler::UnitTexture* ut=texturehandler->GetTexture(qti->texName,model.team,qti->teamTex);
+			CTextureHandler::UnitTexture* ut=texturehandler->GetTATexture(qti->texName,model.team,qti->teamTex);
 
 			if(qi->normalType==0){
 				va->AddVertexTN(model.geometry->vertex[qi->verteces[0]],
@@ -702,7 +702,7 @@ unsigned int CUnit3DLoader::CreateDisplistFromVector(UnitModel& model, vector<fl
 		vector<TriTex>::iterator tti;
 		for(ti=model.geometry->tri.begin(),tti=model.triTex.begin();ti!=model.geometry->tri.end();++ti,++tti){
 			if(fixTexCoords){
-				CTextureHandler::UnitTexture* ut=texturehandler->GetTexture(tti->texName,model.team,tti->teamTex);
+				CTextureHandler::UnitTexture* ut=texturehandler->GetTATexture(tti->texName,model.team,tti->teamTex);
 				tti->texPos[0][0]=ut->xstart*tti->texPos[0][0]+ut->xend*(1-tti->texPos[0][0]);
 				tti->texPos[0][1]=ut->ystart*tti->texPos[0][1]+ut->yend*(1-tti->texPos[0][1]);
 				tti->texPos[1][0]=ut->xstart*tti->texPos[1][0]+ut->xend*(1-tti->texPos[1][0]);

@@ -235,7 +235,7 @@ CGame::CGame(bool server,std::string mapname)
 	unitDrawer=new CUnitDrawer();
 	fartextureHandler = new CFartextureHandler();
 	if(!server) net->Update();	//prevent timing out during load
-	unit3doparser = new C3DOParser();
+	modelParser = new C3DModelParser();
  	ENTER_SYNCED;
  	if(!server) net->Update();	//prevent timing out during load
  	featureHandler->LoadFeaturesFromMap(readmap->ifs,CScriptHandler::Instance()->chosenScript->loadGame);
@@ -389,7 +389,7 @@ CGame::~CGame()
 	delete damageArrayHandler;
 	delete hpiHandler;
 	delete archiveScanner;
-	delete unit3doparser;
+	delete modelParser;
 	delete fartextureHandler;
 	CCategoryHandler::RemoveInstance();
 	delete camera;
@@ -1050,7 +1050,7 @@ bool CGame::Draw()
 		glTranslatef(0.1f,0.6f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
 		allReady=true;
-		for(a=0;a<MAX_PLAYERS;a++)
+		for(a=0;a<gs->activePlayers;a++)
 			if(gs->players[a]->active && !gs->players[a]->readyToStart)
 				allReady=false;
 		if(allReady)
@@ -1078,7 +1078,7 @@ bool CGame::Draw()
 	if(showPlayerInfo){
 		glTranslatef(0.72f,0.01f,0.0f);
 		glScalef(0.015f,0.015f,0.1f);
-		for(int a=0;a<MAX_PLAYERS;++a){
+		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->active){
 				glTranslatef(0,1.2f,0.0f);
 				glColor4ubv(gs->teams[gs->players[a]->team]->color);
@@ -1229,7 +1229,7 @@ END_TIME_PROFILE("Sim time")
 
 #ifdef DIRECT_CONTROL_ALLOWED
 
-	for(int a=0;a<MAX_PLAYERS;++a){
+	for(int a=0;a<gs->activePlayers;++a){
 		if(!gs->players[a]->active || !gs->players[a]->playerControlledUnit)
 			continue;
 
@@ -2316,7 +2316,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		for(int a=0;a<gs->activeTeams;++a){
 			if(gs->allies[a][sendTeam]){
 				bool hasPlayer=false;
-				for(int b=0;b<MAX_PLAYERS;++b){
+				for(int b=0;b<gs->activePlayers;++b){
 					if(gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator)
 						hasPlayer=true;
 				}
@@ -2337,7 +2337,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
 
 
-			for(int a=1;a<MAX_PLAYERS;++a){
+			for(int a=1;a<gs->activePlayers;++a){
 				if(gs->players[a]->active){
 					string p=gs->players[a]->playerName;
 					std::transform(p.begin(), p.end(), p.begin(), (int (*)(int))std::tolower);

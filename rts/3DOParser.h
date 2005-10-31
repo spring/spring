@@ -9,24 +9,23 @@
 #include <vector>
 #include <string>
 #include "float3.h"
-#include <iostream>
-#include <fstream>
 #include "TextureHandler.h"
 #include <map>
 #include <set>
+#include "3DModelParser.h"
 
 using namespace std;
 class CMatrix44f;
 
 class CFileHandler;
 
-struct SVertex {
+struct S3DOVertex {
 	float3 pos;
 	float3 normal;
 	std::vector<int> prims;
 };
 
-struct SPrimitive {
+struct S3DOPrimitive {
 	std::vector<int> vertices;
 	std::vector<float3> normals;		//normals per vertex
 	float3 normal;
@@ -37,8 +36,8 @@ struct SPrimitive {
 struct S3DO {
 	std::string name;
 	std::vector<S3DO*> childs;
-	std::vector<SPrimitive> prims;
-	std::vector<SVertex> vertices;
+	std::vector<S3DOPrimitive> prims;
+	std::vector<S3DOVertex> vertices;
 	float3 offset;
 	unsigned int displist;
 	bool isEmpty;
@@ -46,50 +45,9 @@ struct S3DO {
 	float3 relMidPos;
 	float maxx,maxy,maxz;
 	float minx,miny,minz;
-	bool writeName;
 
 	void DrawStatic();
 	~S3DO();
-};
-
-struct S3DOModel
-{
-	S3DO* rootobject;
-	int numobjects;
-	float radius;
-	float height;
-	string name;
-	int farTextureNum;
-};
-
-struct PieceInfo;
-
-struct LocalS3DO
-{
-	float3 offset;
-	unsigned int displist;
-	string name;
-	std::vector<LocalS3DO*> childs;
-	LocalS3DO *parent;
-	S3DO *original;
-	PieceInfo *anim;
-	void Draw();
-	void GetPiecePosIter(CMatrix44f* mat);
-};
-
-struct LocalS3DOModel
-{	
-	int numpieces;
-	//LocalS3DO *rootobject;
-	LocalS3DO *pieces;
-	int *scritoa;  //scipt index to local array index
-	LocalS3DOModel(){};
-	~LocalS3DOModel();
-	void Draw();
-	bool PieceExists(int piecenum);
-	float3 GetPiecePos(int piecenum);
-	CMatrix44f GetPieceMatrix(int piecenum);
-	float3 GetPieceDirection(int piecenum);
 };
 
 class C3DOParser  
@@ -163,7 +121,5 @@ private:
 	unsigned char* fileBuf;
 	void SimStreamRead(void* buf,int length);
 };
-
-extern C3DOParser* unit3doparser;
 
 #endif // SPRING_3DOPARSER_H

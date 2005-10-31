@@ -127,7 +127,7 @@ void CTorpedoProjectile::Update(void)
 
 void CTorpedoProjectile::Draw(void)
 {
-	if(isUnitPart)	//dont draw if a 3d model has been defined for us
+	if(s3domodel)	//dont draw if a 3d model has been defined for us
 		return;
 
 	float3 interPos=pos+speed*gu->timeOffset;

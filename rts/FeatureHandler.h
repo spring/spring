@@ -72,7 +72,6 @@ public:
 	int AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
 
-	void ResetDrawQuad(int quad);
 	void LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs);
 
 	void SetFeatureUpdateable(CFeature* feature);
@@ -81,7 +80,7 @@ public:
 
 	void Draw();
 	void DrawShadowPass();
-	void DrawRaw(int extraSize);		//the part of draw that both draw and drawshadowpass can use
+	void DrawRaw(int extraSize,std::vector<CFeature*>* farFeatures);		//the part of draw that both draw and drawshadowpass can use
 
 	TdfParser wreckParser;
 	std::map<std::string,FeatureDef*> featureDefs;
@@ -98,28 +97,17 @@ public:
 #endif
 
 	struct DrawQuad {
-		std::set<CFeature*> staticFeatures;
-		std::set<CFeature*> nonStaticFeatures;
-
-		unsigned int displist;
-		bool hasFarList;
-
-		int lastSeen;
-		float3 lastCamPos;
+		std::set<CFeature*> features;
 	};
 	
 	DrawQuad* drawQuads;
 
-	std::vector<DrawQuad*> farQuads;
-
 	int drawQuadsX;
 	int drawQuadsY;
 	int numQuads;
-	int curClean;
 
 	int overrideId;		//used when loading from savefile
 	void DrawFar(CFeature* feature,CVertexArray* va);
-	void DrawFarQuads();
 	FeatureDef* GetFeatureDef(const std::string name);
 };
 

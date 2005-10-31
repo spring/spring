@@ -20,14 +20,15 @@
 #include "VertexArray.h"
 #include "FartextureHandler.h"
 #include "UnitDrawer.h"
+#include "BaseWater.h"
+#include "ShadowHandler.h"
 //#include "mmgr.h"
 
 using namespace std;
 CFeatureHandler* featureHandler=0;
 
 CFeatureHandler::CFeatureHandler()
-:	curClean(0),
-	overrideId(-1)
+:	overrideId(-1)
 {
 	PrintLoadMsg("Initializing map features");
 
@@ -40,13 +41,6 @@ CFeatureHandler::CFeatureHandler()
 	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
 	numQuads=drawQuadsX*drawQuadsY;
 	drawQuads=new DrawQuad[numQuads];
-
-	for(int a=0;a<numQuads;++a){
-		drawQuads[a].lastSeen=0;
-		drawQuads[a].lastCamPos=float3(0,0,0);
-		drawQuads[a].displist=0;
-		drawQuads[a].hasFarList=false;
-	}
 
 	LoadWreckFeatures();
 
@@ -100,21 +94,26 @@ CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string&
 void CFeatureHandler::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
+	vector<CFeature*> drawFar;
+
 	unitDrawer->SetupForUnitDrawing();
 
-	DrawRaw(0);
+	DrawRaw(0,&drawFar);
 
 	unitDrawer->CleanUpUnitDrawing();
+	unitDrawer->DrawQuedS3O();
 
-	DrawFarQuads();
-
-	for(int a=0;a<50 && curClean<numQuads;++a,++curClean){
-		DrawQuad* dq=&drawQuads[curClean];
-		if(dq->lastSeen<gs->frameNum-50 && dq->displist){
-			glDeleteLists(dq->displist,1);
-			dq->displist=0;
-		}
+	CVertexArray* va=GetVertexArray();
+	va->Initialize();
+	glAlphaFunc(GL_GREATER,0.8f);
+	glEnable(GL_ALPHA_TEST);
+	glBindTexture(GL_TEXTURE_2D,fartextureHandler->farTexture);
+	glColor3f(1,1,1);
+	glEnable(GL_FOG);
+	for(vector<CFeature*>::iterator usi=drawFar.begin();usi!=drawFar.end();usi++){
+		DrawFar(*usi,va);
 	}
+	va->DrawArrayTN(GL_QUADS);
 }
 
 void CFeatureHandler::DrawShadowPass()
@@ -125,7 +124,7 @@ void CFeatureHandler::DrawShadowPass()
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	DrawRaw(1);
+	DrawRaw(1,0);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable( GL_VERTEX_PROGRAM_ARB );
@@ -142,13 +141,9 @@ START_TIME_PROFILE
 			freeIDs.push_back(feature->id);
 			features[feature->id]=0;
 
-			if(feature->drawQueType==1){
+			if(feature->drawQuad>=0){
 				DrawQuad* dq=&drawQuads[feature->drawQuad];
-				dq->staticFeatures.erase(feature);
-				ResetDrawQuad(feature->drawQuad);
-			} else if(feature->drawQueType==2){
-				DrawQuad* dq=&drawQuads[feature->drawQuad];
-				dq->nonStaticFeatures.erase(feature);
+				dq->features.erase(feature);
 			}
 
 			if(feature->inUpdateQue)
@@ -207,8 +202,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	if(feature->def->drawType==DRAWTYPE_3DO){
 		int quad=int(feature->pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(feature->pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
 		DrawQuad* dq=&drawQuads[quad];
-		dq->nonStaticFeatures.insert(feature);
-		feature->drawQueType=2;
+		dq->features.insert(feature);
 		feature->drawQuad=quad;
 	}
 
@@ -219,15 +213,6 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
 	ASSERT_SYNCED_MODE;
 	toBeRemoved.push_back(feature->id);
-}
-
-void CFeatureHandler::ResetDrawQuad(int quad)
-{
-	DrawQuad* dq=&drawQuads[quad];
-	if(dq->displist){
-		glDeleteLists(dq->displist,1);
-		dq->displist=0;
-	}
 }
 
 void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs)
@@ -383,8 +368,11 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 	overrideId=-1;
 }
 
-void CFeatureHandler::DrawRaw(int extraSize)
+void CFeatureHandler::DrawRaw(int extraSize,std::vector<CFeature*>* farFeatures)
 {
+	bool drawReflection=water->drawReflection;
+	float unitDrawDist=unitDrawer->unitDrawDist;
+
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*DRAW_QUAD_SIZE));
 	int cy=(int)(camera->pos.z/(SQUARE_SIZE*DRAW_QUAD_SIZE));
 
@@ -392,8 +380,6 @@ void CFeatureHandler::DrawRaw(int extraSize)
 	if(!extraSize)
 		featureDist=6000;		//farfeatures wont be drawn for shadowpass anyway
 	int featureSquare=int(featureDist/(SQUARE_SIZE*DRAW_QUAD_SIZE))+1;
-
-	farQuads.clear();
 
 	int sy=cy-featureSquare;
 	if(sy<0)
@@ -430,143 +416,43 @@ void CFeatureHandler::DrawRaw(int extraSize)
 				ex=((int)xtest)+extraSize;
 		}
 		for(int x=sx;x<=ex;x++){/**/
-
-			float3 dif;
-			dif.x=camera->pos.x-(x*SQUARE_SIZE*DRAW_QUAD_SIZE+SQUARE_SIZE*DRAW_QUAD_SIZE/2);
-			dif.y=0;
-			dif.z=camera->pos.z-(y*SQUARE_SIZE*DRAW_QUAD_SIZE+SQUARE_SIZE*DRAW_QUAD_SIZE/2);
-			float dist=dif.Length();
-			dif/=dist;
-
 			DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
-			if(dq->staticFeatures.empty() && dq->nonStaticFeatures.empty())
-				continue;
 
-			if(dist<6000 && dist>3000){//far features
-				farQuads.push_back(dq);				
-			} else {		//near features
-				//draw non static features
-				for(set<CFeature*>::iterator fi=dq->nonStaticFeatures.begin();fi!=dq->nonStaticFeatures.end();){
-					CFeature* f=(*fi);
-					FeatureDef* def=f->def;
-					if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectating) && def->drawType==DRAWTYPE_3DO){
-						if(f->inUpdateQue || f->allyteam!=-1){
-							glPushMatrix();
-							glMultMatrixf(f->transMatrix.m);
-							glTranslatef3(def->model->rootobject->offset);
-							glCallList(def->model->rootobject->displist);
-							glPopMatrix();
-						} else {		//we have become static
-						        
-							dq->nonStaticFeatures.erase(fi++);
-							dq->staticFeatures.insert(f);
-							f->drawQueType=1;
-							if(dq->displist){
-								glDeleteLists(dq->displist,1);
-								dq->displist=0;
-							}
+			for(set<CFeature*>::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
+				CFeature* f=(*fi);
+				FeatureDef* def=f->def;
+
+				if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectating) && def->drawType==DRAWTYPE_3DO){
+					if(drawReflection){
+						float3 zeroPos;
+						if(f->midPos.y<0){
+							zeroPos=f->midPos;
+						}else{
+							float dif=f->midPos.y-camera->pos.y;
+							zeroPos=camera->pos*(f->midPos.y/dif) + f->midPos*(-camera->pos.y/dif);
+						}
+						if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>f->radius){
 							continue;
 						}
 					}
-					++fi;
-				}
-				//draw static features
-				dq->lastSeen=gs->frameNum;
-				if(dq->displist && dq->hasFarList){
-					glDeleteLists(dq->displist,1);
-					dq->displist=0;
-				}
-				if(!dq->displist){
-					dq->displist=glGenLists(1);
-					glNewList(dq->displist,GL_COMPILE);
-					dq->hasFarList=false;
-
-					for(set<CFeature*>::iterator fi=dq->staticFeatures.begin();fi!=dq->staticFeatures.end();++fi){
-						CFeature* f=(*fi);
-						FeatureDef* def=f->def;
-						switch(def->drawType){
-						case DRAWTYPE_3DO:
+					float sqDist=(f->pos-camera->pos).SqLength2D();
+					float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
+					if(sqDist<farLength){
+						if(!def->model->textureType || shadowHandler->inShadowPass){
 							glPushMatrix();
-							glMultMatrixf(f->transMatrix.m);
-							glTranslatef3(def->model->rootobject->offset);
-							glCallList(def->model->rootobject->displist);
+ 							glMultMatrixf(f->transMatrix.m);
+							def->model->DrawStatic();
 							glPopMatrix();
-							break;
-						default:
-							info->AddLine("Unknown feature draw type");
+						} else {
+							unitDrawer->QueS3ODraw(f,def->model->textureType);
 						}
-					}
-
-					glEndList();
-				}
-				glCallList(dq->displist);
-			}
-		}
-	}
-}
-
-void CFeatureHandler::DrawFarQuads()
-{
-	glAlphaFunc(GL_GREATER,0.8f);
-	glEnable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D,fartextureHandler->farTexture);
-	glColor3f(1,1,1);
-
-	for(std::vector<DrawQuad*>::iterator dqi=farQuads.begin();dqi!=farQuads.end();++dqi){
-		DrawQuad* dq=*dqi;
-		if(!dq->nonStaticFeatures.empty()){
-			CVertexArray* va=GetVertexArray();
-			va->Initialize();
-			for(set<CFeature*>::iterator fi=dq->nonStaticFeatures.begin();fi!=dq->nonStaticFeatures.end();){
-				CFeature* f=(*fi);
-				FeatureDef* def=f->def;
-				if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam)) && def->drawType==DRAWTYPE_3DO){
-					if(f->inUpdateQue || f->allyteam!=-1){
-						DrawFar(f,va);
-					} else {		//we have become static
-
-						dq->nonStaticFeatures.erase(fi++);
-						dq->staticFeatures.insert(f);
-						f->drawQueType=1;
-						if(dq->displist){
-							glDeleteLists(dq->displist,1);
-							dq->displist=0;
-						}
-						continue;
+					} else {
+						if(farFeatures)
+							farFeatures->push_back(f);
 					}
 				}
-				++fi;
 			}
-			va->DrawArrayTN(GL_QUADS);
 		}
-		dq->lastSeen=gs->frameNum;
-		if(dq->displist && (!dq->hasFarList || camera->pos.distance(dq->lastCamPos)>300)){
-			glDeleteLists(dq->displist,1);
-			dq->displist=0;
-		}
-		if(!dq->displist){
-			CVertexArray* va=GetVertexArray();
-			va->Initialize();
-			dq->displist=glGenLists(1);
-			glNewList(dq->displist,GL_COMPILE);
-			dq->hasFarList=true;
-			dq->lastCamPos=camera->pos;
-
-			for(set<CFeature*>::iterator fi=dq->staticFeatures.begin();fi!=dq->staticFeatures.end();++fi){
-				CFeature* f=(*fi);
-				FeatureDef* def=f->def;
-				switch(def->drawType){
-				case DRAWTYPE_3DO:
-					DrawFar(f,va);
-					break;
-				default:
-					info->AddLine("Unknown feature draw type");
-				}
-			}
-			va->DrawArrayTN(GL_QUADS);
-			glEndList();
-		}
-		glCallList(dq->displist);
 	}
 }
 
@@ -612,8 +498,8 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		fd->metal=atof(wreckParser.SGetValueDef("0",name+"\\metal").c_str());
 		fd->model=0;
 		fd->modelname=wreckParser.SGetValueDef("",name+"\\object");
-		if(fd->modelname.find(".3do")==string::npos && !fd->modelname.empty())
-			fd->modelname=string("objects3d/")+fd->modelname+".3do";
+		if(fd->modelname.find(".")==string::npos && !fd->modelname.empty())
+			fd->modelname=string("objects3d/")+fd->modelname;
 		fd->radius=0;
 		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
 		fd->ysize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintZ").c_str())*2;

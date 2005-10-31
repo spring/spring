@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "Feature.h"
+#include "myGL.h"
 #include "FeatureHandler.h"
 #include "3DOParser.h"
 #include "Ground.h"
@@ -21,8 +22,7 @@ CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyt
 	reclaimLeft(1),
 	fireTime(0),
 	myFire(0),
-	drawQueType(0),
-	drawQuad(0),
+	drawQuad(-1),
 	allyteam(allyteam),
 	tempNum(0),
 	emitSmokeTime(0),
@@ -43,12 +43,12 @@ CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyt
 
 	if(def->drawType==DRAWTYPE_3DO){
 		if(def->model==0){
-			def->model=unit3doparser->Load3DO(def->modelname.c_str());
+			def->model=modelParser->Load3DO(def->modelname.c_str());
 			height=def->model->height;
 			def->radius=def->model->radius;
 			SetRadius(def->radius);
 		}
-		midPos=pos+def->model->rootobject->relMidPos;
+		midPos=pos+def->model->relMidPos;
 	} else if(def->drawType==DRAWTYPE_TREE){
 		midPos=pos+UpVector*def->radius;
 		height = 2*def->radius;
@@ -150,12 +150,6 @@ bool CFeature::Update(void)
 			midPos.y-=0.4;
 			transMatrix[13]-=0.4;
 		}
-		if(drawQueType==1){
-			featureHandler->ResetDrawQuad(drawQuad);
-			featureHandler->drawQuads[drawQuad].staticFeatures.erase(this);
-			featureHandler->drawQuads[drawQuad].nonStaticFeatures.insert(this);
-			drawQueType=2;
-		}
 //		info->AddLine("feature sinking");
 		retValue=true;
 	}
@@ -202,4 +196,12 @@ void CFeature::StartFire(void)
 	featureHandler->SetFeatureUpdateable(this);
 
 	myFire=new CFireProjectile(midPos,UpVector,0,300,radius*0.8,70,20);
+}
+
+void CFeature::DrawS3O()
+{
+	glPushMatrix();
+	glMultMatrixf(transMatrix.m);
+	def->model->DrawStatic();
+	glPopMatrix();
 }

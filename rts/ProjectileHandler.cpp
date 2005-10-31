@@ -404,7 +404,7 @@ void CProjectileHandler::Draw(bool drawReflection)
 		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
 		CTextureHandler::UnitTexture* tex=(*pi)->prim->texture;
 
-		SVertex* v=&(*pi)->object->vertices[(*pi)->prim->vertices[0]];
+		S3DOVertex* v=&(*pi)->object->vertices[(*pi)->prim->vertices[0]];
 		float3 tp=m.Mul(v->pos);
 		float3 tn=m.Mul(v->normal);
 		tp+=interPos;
@@ -443,8 +443,13 @@ void CProjectileHandler::Draw(bool drawReflection)
 				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>3)
 					continue;
 			}
-			if((*psi)->isUnitPart)
-				(*psi)->DrawUnitPart();
+			if((*psi)->s3domodel){
+				if((*psi)->s3domodel->textureType){
+					unitDrawer->QueS3ODraw(*psi,(*psi)->s3domodel->textureType);
+				} else {
+					(*psi)->DrawUnitPart();
+				}
+			}
 			struct projdist tmp;
 			tmp.proj=*psi;
 			tmp.dist=(*psi)->pos.dot(camera->forward);
@@ -452,6 +457,7 @@ void CProjectileHandler::Draw(bool drawReflection)
 		}
 	}
 	unitDrawer->CleanUpUnitDrawing();
+	unitDrawer->DrawQuedS3O();
 
 	sort(distlist.begin(), distlist.end(), CompareProjDist);
 
@@ -492,7 +498,7 @@ void CProjectileHandler::DrawShadowPass(void)
 	glDisable(GL_TEXTURE_2D);
 	for(psi=ps.begin();psi != ps.end();++psi){
 		if((loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->allies[(*psi)->owner->allyteam][gu->myAllyTeam]))){
-			if((*psi)->isUnitPart)
+			if((*psi)->s3domodel)
 				(*psi)->DrawUnitPart();
 			if((*psi)->castShadow){
 				struct projdist tmp;
@@ -571,7 +577,7 @@ void CProjectileHandler::CheckUnitCol()
 				if(dif.SqLength() < totalRadius*totalRadius){
 					if(unit->isMarkedOnBlockingMap && unit->physicalState != CSolidObject::Flying){
 						float3 closePos(p->pos+p->speed*closeTime);
-						int square=max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
+						int square=(int)max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
 						if(readmap->groundBlockingObjectMap[square]!=unit)
 							continue;
 					}
@@ -595,7 +601,7 @@ void CProjectileHandler::CheckUnitCol()
 				if(dif.SqLength() < totalRadius*totalRadius){
 					if((*fi)->isMarkedOnBlockingMap){
 						float3 closePos(p->pos+p->speed*closeTime);
-						int square=max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
+						int square=(int)max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
 						if(readmap->groundBlockingObjectMap[square]!=(*fi))
 							continue;
 					}
@@ -659,7 +665,7 @@ void CProjectileHandler::ConvertTex(unsigned char tex[512][512][4], int startx, 
 }
 
 
-void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,SPrimitive* piece)
+void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3DOPrimitive* piece)
 {
 	FlyingPiece* fp=new FlyingPiece;
 	fp->pos=pos;

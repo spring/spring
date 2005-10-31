@@ -13,7 +13,7 @@
 #include "Unit.h"
 #include "Feature.h"
 #include "TextureHandler.h"
-#include "3DOParser.h"
+#include "3DModelParser.h"
 #include "Team.h"
 #include "BaseGroundDrawer.h"
 
@@ -401,9 +401,9 @@ void GUIgame::PrivateDraw()
 
 					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 					glEnable(GL_TEXTURE_2D);
-					texturehandler->SetTexture();
+					texturehandler->SetTATexture();
 					glDepthMask(0);
-					S3DOModel* model=unit3doparser->Load3DO((unitdef->model.modelpath).c_str() ,1, gu->myTeam);
+					S3DOModel* model=modelParser->Load3DO((unitdef->model.modelpath).c_str() ,1, gu->myTeam);
 					
 					if(selector[commandButton].IsDragging())
 					{
@@ -420,7 +420,7 @@ void GUIgame::PrivateDraw()
 
 							glPushMatrix();
 							glTranslatef3(positions[i]);
-							model->rootobject->DrawStatic();
+							model->DrawStatic();
 							glDisable(GL_TEXTURE_2D);
 							glDepthMask(1);
 							glPopMatrix();
@@ -453,7 +453,7 @@ void GUIgame::PrivateDraw()
 						// draw single unit
 						glPushMatrix();
 						glTranslatef3(pos);
-						model->rootobject->DrawStatic();
+						model->DrawStatic();
 						glDisable(GL_TEXTURE_2D);
 						glDepthMask(1);
 						glPopMatrix();						

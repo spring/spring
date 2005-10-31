@@ -11,6 +11,7 @@ public:
 
 	virtual void Draw()=0;
 	virtual void UpdateWater(CGame* game)=0;
+	virtual void Update(){};
 
 	static CBaseWater* GetWater();
 

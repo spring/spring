@@ -8,7 +8,7 @@
 class IGroupAICallback;
 class IAICallback;
 
-#define AI_INTERFACE_VERSION 4
+#define AI_INTERFACE_VERSION 5
 
 class IGroupAI  
 {

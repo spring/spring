@@ -1,131 +1,46 @@
 #ifndef s3oH
 #define s3oH
 
-
-
-#define S3OSIGNATURE 0x676F
-
-#define OBJECT_TYPE_UNDEFINED 0
-#define OBJECT_TYPE_GEOMETRY 1
-#define OBJECT_TYPE_POINT 2
-#define OBJECT_TYPE_LIGHT 3
-
-#define LIGHT_TYPE_DIFFUSE 1
-#define LIGHT_TYPE_SPOT 2
-
-#define PRIMITIVE_TYPE_POLYGON 1
-
-/*struct float3{
-	float x;
-	float y;
-	float z;
-};*/
-
-struct Texcoord{
-	float x;
-	float y;
+struct Piece{
+	int name;		//offset in file to char* name of this piece
+	int numChilds;		//number of sub pieces this piece has
+	int childs;		//file offset to table of dwords containing offsets to child pieces
+	int numVertices;	//number of vertices in this piece
+	int vertices;		//file offset to vertices in this piece
+	int vertexType;	//0 for now
+	int primitiveType;	//type of primitives for this piece, 0=triangles,1 triangle strips,2=quads
+	int vertexTableSize;	//number of indexes in vertice table
+	int vertexTable;	//file offset to vertice table, vertice table is made up of dwords indicating vertices for this piece, to indicate end of a triangle strip use 0xffffffff
+	int collisionData;	//offset in file to collision data, must be 0 for now (no collision data)
+	float xoffset;		//offset from parent piece
+	float yoffset;
+	float zoffset;
 };
 
-struct S3OPrimitive{
-	int numberOfVertexIndexes;
-    int offsetToVertexIndexArray;
-};
-
-struct VertexIndexStruct{
-	int vertexIndex;
-};
-
-struct VertexData{
-	float3 vertex;
-	float3 normal;
-	Texcoord texcoord;
-};
-
-struct S3OObject{
-	struct Object
-	{
-		int type;
-		float3 offsetFromParrent;
-		int offsetToSiblingObject;
-		int offsetToChildObject;
-		int offsetToObjectName;
-	}object;
-
-	struct Geometry
-	{
-		int numVertex;
-		int offsetToVertexArray;
-		int numPrimitives;
-		int offsetToPrimitiveArray;
-	}geometry;
+struct Vertex{
+	float xpos;		//position of vertex relative piece origin
+	float ypos;
+	float zpos;
+	float xnormal;		//normal of vertex relative piece rotation
+	float ynormal;
+	float znormal;
+	float texu;		//texture offset for vertex
+	float texv;
 };
 
 struct S3OHeader{
-	int signature;
-	int version;
-	int offsetToBaseObject;
+	char magic[12];		//"Spring unit\0"
+	int version;		//0 for this version
+	float radius;		//radius of collision sphere
+	float height;		//height of whole object
+	float midx;		//these give the offset from origin(which is supposed to lay in the ground plane) to the middle of the unit collision sphere
+	float midy;
+	float midz;
+	int rootPiece;		//offset in file to root piece
+	int collisionData;	//offset in file to collision data, must be 0 for now (no collision data)
+	int texture1;		//offset in file to char* filename of first texture
+	int texture2;		//offset in file to char* filename of second texture
 
 };
-
-#define FREAD_S3OHEADER(s3oh,src)				\
-do {								\
-	unsigned int __tmpdw;					\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3oh).signature = (int)swabdword(__tmpdw);		\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3oh).version = (int)swabdword(__tmpdw);		\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3oh).offsetToBaseObject = (int)swabdword(__tmpdw);	\
-} while (0)
-
-#define FREAD_S3OOBJECT_OBJECT(s3oo,src)			\
-do {								\
-	unsigned int __tmpdw;					\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3oo).type = (int)swabdword(__tmpdw);			\
-	fread(&(s3oo).offsetFromParrent,sizeof(float3),1,(src));\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3oo).offsetToSiblingObject = (int)swabdword(__tmpdw);	\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3oo).offsetToChildObject = (int)swabdword(__tmpdw);	\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3oo).offsetToObjectName = (int)swabdword(__tmpdw);	\
-} while (0)
-
-#define FREAD_S3OOBJECT_GEOMETRY(s3og,src)			\
-do {								\
-	unsigned int __tmpdw;					\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3og).numVertex = (int)swabdword(__tmpdw);		\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3og).offsetToVertexArray = (int)swabdword(__tmpdw);	\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3og).numPrimitives = (int)swabdword(__tmpdw);		\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));		\
-	(s3og).offsetToPrimitiveArray = (int)swabdword(__tmpdw);\
-} while (0)
-
-#define FREAD_S3OPRIMITIVE(s3op,src)					\
-do {									\
-	unsigned int __tmpdw;						\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));			\
-	(s3op).numberOfVertexIndexes = (int)swabdword(__tmpdw);		\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));			\
-	(s3op).offsetToVertexIndexArray = (int)swabdword(__tmpdw);	\
-} while (0)
-
-#define FREAD_VERTEXINDEXSTRUCT(vis,src)		\
-do {							\
-	unsigned int __tmpdw;				\
-	fread(&__tmpdw,sizeof(unsigned int),1,(src));	\
-	(vis).vertexIndex = (int)swabdword(__tmpdw);	\
-} while (0)
-
-#define FREAD_VERTEXDATA(vd,src)			\
-do {							\
-	fread(&(vd).vertex,sizeof(float3),1,(src));	\
-	fread(&(vd).normal,sizeof(float3),1,(src));	\
-	fread(&(vd).texcoord,sizeof(Texcoord),1,src);	\
-} while (0)
 
 #endif

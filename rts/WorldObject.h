@@ -13,6 +13,8 @@ public:
 	void SetRadius(float r);
 	inline CWorldObject(const float3& pos) : pos(pos),useAirLos(false),alwaysVisible(false) {};
 	virtual ~CWorldObject();
+	virtual void DrawS3O(){};
+
 	float3 pos;
 	float radius;					//used for collisions
 	float sqRadius;				
