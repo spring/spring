@@ -108,12 +108,9 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 
 void KillGLWindow(GLvoid)								// Properly Kill The Window
 {
-	if (fullscreen)
-		SDL_WM_ToggleFullScreen(screen);
 #ifndef DEBUG
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 #endif
-	SDL_FreeSurface(screen);
 }
 
 bool MultisampleTest(void)
@@ -158,17 +155,22 @@ GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 
 bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
 {
-	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER);
+	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1)) {
+		handleerror(NULL,"Could not initialize SDL.","ERROR",MBF_OK|MBF_EXCL);
+		return false;
+	}
+
+	// Sets window manager properties
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
-	const SDL_VideoInfo *pSDLVideoInfo = SDL_GetVideoInfo();
-	int sdlflags = SDL_OPENGL | SDL_GL_DOUBLEBUFFER | SDL_HWPALETTE | SDL_RESIZABLE;
-	if (pSDLVideoInfo->hw_available)
-		sdlflags |= SDL_HWSURFACE;
-	else
-		sdlflags |= SDL_SWSURFACE;
-	if (pSDLVideoInfo->blit_hw)
-		sdlflags |= SDL_HWACCEL;
+	SDL_WM_SetCaption(title, title);
+
+	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
+	if (fullscreenflag) {
+		sdlflags |= SDL_FULLSCREEN;
+	}
+	// FIXME: Might want to set color and depth sizes, too  -- johannes
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+
 	FSAA = MultisampleTest();
 
 	screen = SDL_SetVideoMode(width,height,bits,sdlflags);
@@ -178,10 +180,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	}
 	if (FSAA)
 		FSAA = MultisampleVerify();
-	if (fullscreenflag)
-		SDL_WM_ToggleFullScreen(screen);
-	SDL_WM_SetCaption(title,title);
-	  
+	
 	InitGL();
 	ReSizeGLScene(screen->w,screen->h);
 
