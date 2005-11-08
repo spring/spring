@@ -129,12 +129,12 @@ void CBFGroundTextures::DrawUpdate(void)
 
 	for(int y=0;y<numBigTexY;++y){
 		float dy=cam2->pos.z - y*128*SQUARE_SIZE-64*SQUARE_SIZE;
-		dy=std::max(0.,fabs(dy)-64.f*SQUARE_SIZE);
+		dy=std::max(0.0f,float(fabs(dy)-64.f*SQUARE_SIZE));
 		for(int x=0;x<numBigTexX;++x){
 			GroundSquare* square=&squares[y*numBigTexX+x];
 
 			float dx=cam2->pos.x - x*128*SQUARE_SIZE-64*SQUARE_SIZE;
-			dx=std::max(0.,fabs(dx)-64.f*SQUARE_SIZE);
+			dx=std::max(0.0f,float(fabs(dx)-64.f*SQUARE_SIZE));
 			float dist=sqrt(dx*dx+dy*dy);
 
 			if(square->lastUsed<gs->frameNum-60)

@@ -19,6 +19,7 @@ private:
 	void printstring(const char *text,int *sh = NULL);
 	void init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase);
 	void WorldChar(char c);
+	const char* GetFTError (FT_Error e);
 	int chars;
 	int charstart;
 	int charheight;

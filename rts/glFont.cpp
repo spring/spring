@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include "Camera.h"
 #include "myMath.h"
+#include "InfoConsole.h"
 //#include "mmgr.h"
 
 using namespace std;
@@ -25,17 +26,31 @@ CglFont* font;
 
 CglFont::CglFont(int start, int num)
 {
-	chars = num-start;
+	FT_Error error=FT_Init_FreeType(&library);
+	if (error) {
+		string msg="FT_Init_FreeType failed";
+		msg += GetFTError(error);
+		throw std::runtime_error(msg);
+	}
+
+	error=FT_New_Face(library,FONTFILE,0,&face);
+	if (error) {
+		string msg="FT_New_Face failed";
+		msg += GetFTError(error);
+		throw std::runtime_error(msg);
+	}
+
+	FT_Set_Char_Size(face, FONTSIZE << 6, FONTSIZE << 6, 96,96);
+
+    	chars = num-start;
+
 	charstart = start;
 	charWidths = new int[chars];
 	textures = new GLuint[chars];
-	if (FT_Init_FreeType(&library))
-		throw std::runtime_error("FT_Init_FreeType failed");
-	if (FT_New_Face(library,FONTFILE,0,&face))
-		throw std::runtime_error("FT_New_Face failed");
-	FT_Set_Char_Size(face, FONTSIZE << 6, FONTSIZE << 6, 96,96);
+
 	listbase = glGenLists(chars);
 	glGenTextures(chars,textures);
+
 	for (unsigned char i = start; i < num; i++)
 		init_chartex(face,i,listbase,textures);
 }
@@ -52,9 +67,36 @@ CglFont::~CglFont()
 
 void CglFont::init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase)
 {
+	FT_Error error;
+
+	// load glyph image into the slot (erase previous one)
+    // retrieve glyph index from character code
+    FT_UInt glyph_index = FT_Get_Char_Index( face, ch );
+
+	error = FT_Load_Glyph( face, glyph_index, FT_LOAD_DEFAULT );
+	if ( error ) {
+		string msg="FT_Load_Glyph failed:";
+		msg += GetFTError(error);
+		throw std::runtime_error(msg);
+	}
+
+    // convert to an anti-aliased bitmap
+    error = FT_Render_Glyph( face->glyph, ft_render_mode_normal);
+	if ( error ) {
+		string msg="FT_Render_Glyph failed:";
+		msg += GetFTError(error);
+		throw std::runtime_error(msg);
+	}
 	FT_GlyphSlot slot = face->glyph;
-	if (FT_Load_Char(face,ch,FT_LOAD_RENDER))
-		throw std::runtime_error("FT_Load_Char failed");
+
+	/*error = FT_Load_Char(face,ch,FT_LOAD_RENDER);
+	if (error) {
+		string msg="FT_Load_Char failed:";
+		msg += GetFTError(error);
+		throw std::runtime_error(msg);
+		return;
+	}*/
+
 	int width = NextPwr2(slot->bitmap.width);
 	charWidths[ch-charstart] = width;
 	int height = NextPwr2(slot->bitmap.rows);
@@ -216,3 +258,25 @@ void CglFont::WorldChar(char c)
 	glTranslatef(DRAW_SIZE*(charpart+0.03f)*camera->right.x,DRAW_SIZE*(charpart+0.03f)*camera->right.y,DRAW_SIZE*(charpart+0.03f)*camera->right.z);
 }
 
+
+
+#undef __FTERRORS_H__
+#define FT_ERRORDEF( e, v, s )  { e, s },
+#define FT_ERROR_START_LIST     {
+#define FT_ERROR_END_LIST       { 0, 0 } };
+  struct ErrorString
+  {
+	int          err_code;
+	const char*  err_msg;
+  } static errorTable[] =
+#include FT_ERRORS_H
+
+
+const char* CglFont::GetFTError (FT_Error e)
+{
+	for (int a=0;errorTable[a].err_msg;a++) {
+		if (errorTable[a].err_code == e)
+			return errorTable[a].err_msg;
+	}
+	return "Unknown error";
+}
