@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "3DModelParser.h"
 #include "3DOParser.h"
 #include "s3oParser.h"

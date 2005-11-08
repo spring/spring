@@ -161,7 +161,7 @@ END_TIME_PROFILE("Unit slow update");
 
 	if(!(gs->frameNum&15)){
 		if(diminishingMetalMakers)
-			metalMakerEfficiency=8./(8.+max(0.,sqrt(metalMakerIncome/gs->activeTeams)-4));
+			metalMakerEfficiency=8.0f/(8.0f+max(0.0f,sqrtf(metalMakerIncome/gs->activeTeams)-4));
 		metalMakerIncome=0;
 	}
 
