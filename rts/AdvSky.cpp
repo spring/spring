@@ -275,9 +275,9 @@ void CAdvSky::CreateClouds()
 				green=1;
 			if(blue>1)
 				blue=1;
-			skytex[y][x][0]=(unsigned char) red*255;
-			skytex[y][x][1]=(unsigned char) green*255;
-			skytex[y][x][2]=(unsigned char) blue*255;
+			skytex[y][x][0]=(unsigned char)(red*255);
+			skytex[y][x][1]=(unsigned char)(green*255);
+			skytex[y][x][2]=(unsigned char)(blue*255);
 			skytex[y][x][3]=255;
 		}
 	}
@@ -296,8 +296,8 @@ void CAdvSky::CreateClouds()
 			float sunMod=0.3/sqrt(sunDist)+3.0/(1+sunDist);
 			float green=min(1.0f,(0.55f+sunMod));
 			float blue=203-(40.0/(3+sunDist));
-			skytex2[y][x][0]=(unsigned char) 255-y/2;				//sun on borders
-			skytex2[y][x][1]=(unsigned char) green*255;			//sun light through
+			skytex2[y][x][0]=(unsigned char)(255-y/2);				//sun on borders
+			skytex2[y][x][1]=(unsigned char)(green*255);			//sun light through
 			skytex2[y][x][2]=(unsigned char) blue;						//ambient
 			skytex2[y][x][3]=255;
 		}
@@ -536,7 +536,8 @@ void CAdvSky::CreateRandMatrix(int matrix[32][32],float mod)
 {
 	for(int y=0;y<32;y++){
 		for(int x=0;x<32;x++){
-			matrix[y][x]=rand()*255/RAND_MAX;
+			double r = ((double)( rand() )) / (double)RAND_MAX;
+			matrix[y][x]=((int)(r * 255.0));
 		}
 	}
 }
@@ -544,7 +545,8 @@ void CAdvSky::CreateRandMatrix(int matrix[32][32],float mod)
 void CAdvSky::CreateRandDetailMatrix(unsigned char* matrix,int size)
 {
 	for(int a=0;a<size*size;a++){
-		matrix[a]=rand()*255/RAND_MAX;
+		double r = ((double)( rand() )) / (double)RAND_MAX;
+		matrix[a]=((int)(r * 255.0));
 	}
 }
 

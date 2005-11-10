@@ -421,7 +421,7 @@ START_TIME_PROFILE
 				xdist=3*xdist*xdist-2*xdist*xdist*xdist;
 				
 				float contrib=(1-xdist)*(1-ydist);
-				kernel[y*CLOUD_SIZE/4+x]=(int)contrib*((4<<CLOUD_DETAIL)>>a);
+				kernel[y*CLOUD_SIZE/4+x]=(int)( contrib*((4<<CLOUD_DETAIL)>>a));
 			}
 		}
 		unsigned int by=0,bx=0;
@@ -568,7 +568,8 @@ void CBasicSky::CreateRandMatrix(int matrix[32][32],float mod)
 {
 	for(int y=0;y<32;y++){
 		for(int x=0;x<32;x++){
-			matrix[y][x]=rand()*255/RAND_MAX;
+			double r = ((double)( rand() )) / (double)RAND_MAX;
+			matrix[y][x]=((int)( r * 255.0 ));
 		}
 	}
 }

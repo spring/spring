@@ -4,10 +4,17 @@
 #include "Ground.h"
 #include "InfoConsole.h"
 #include "MouseHandler.h"
+#include "ConfigHandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 
 extern Uint8 *keys;
+
+#ifdef _WIN32
+#define DEFAULT_MOUSE_SCALE "0.01"
+#else
+#define DEFAULT_MOUSE_SCALE "0.003"
+#endif
 
 CCameraController::CCameraController(void)
 {
@@ -24,7 +31,7 @@ CCameraController::~CCameraController(void)
 CFPSController::CFPSController()
 : pos(2000,70,1800)
 {
-
+	mouseScale = atof(configHandler.GetString("FPSMouseScale", DEFAULT_MOUSE_SCALE).c_str());
 }
 
 void CFPSController::KeyMove(float3 move)
@@ -35,8 +42,8 @@ void CFPSController::KeyMove(float3 move)
 
 void CFPSController::MouseMove(float3 move)
 {
-	camera->rot.y -= 0.01*move.x;
-	camera->rot.x -= 0.01*move.y*move.z;  
+	camera->rot.y -= mouseScale*move.x;
+	camera->rot.x -= mouseScale*move.y*move.z;  
 
 	if(camera->rot.x>PI*0.4999)
 		camera->rot.x=PI*0.4999;
@@ -287,7 +294,7 @@ CRotOverheadController::CRotOverheadController()
 : pos(2000,70,1800),
 	oldHeight(500)
 {
-
+	mouseScale = atof(configHandler.GetString("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE).c_str());
 }
 
 void CRotOverheadController::KeyMove(float3 move)
@@ -305,8 +312,8 @@ void CRotOverheadController::KeyMove(float3 move)
 
 void CRotOverheadController::MouseMove(float3 move)
 {
-	camera->rot.y -= 0.01*move.x;
-	camera->rot.x -= 0.01*move.y*move.z;  
+	camera->rot.y -= mouseScale*move.x;
+	camera->rot.x -= mouseScale*move.y*move.z;  
 
 	if(camera->rot.x>PI*0.4999)
 		camera->rot.x=PI*0.4999;
