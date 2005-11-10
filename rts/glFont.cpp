@@ -107,13 +107,13 @@ void CglFont::init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase)
 			expdata[2*(i+j*width)] = expdata[2*(i+j*width)+1] = (i>=slot->bitmap.width || j>=slot->bitmap.rows || !slot->bitmap.buffer[i+slot->bitmap.width*j]) ? 0 : slot->bitmap.buffer[i+slot->bitmap.width*j];
 		}
 	}
-	glBindTexture(GL_TEXTURE_2D,texbase[ch]);
+	glBindTexture(GL_TEXTURE_2D,texbase[ch-charstart]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, expdata);
 	delete [] expdata;
 	glNewList(base+ch,GL_COMPILE);
-	glBindTexture(GL_TEXTURE_2D,texbase[ch]);
+	glBindTexture(GL_TEXTURE_2D,texbase[ch-charstart]);
 	glTranslatef(slot->bitmap_left,0,0);
 	glPushMatrix();
 	glTranslatef(0,slot->bitmap_top-slot->bitmap.rows,0);
@@ -216,7 +216,7 @@ void CglFont::glWorldPrint(const char *fmt, ...)
 	va_end(ap);
 	glPushMatrix();
 	glRasterPos2i(0,0);
-	float charpart = (charWidths[text[0]])/32.0f;
+	float charpart = (charWidths[text[0]-charstart])/32.0f;
 	int b = strlen(text);
 	glTranslatef(-b*0.5f*DRAW_SIZE*(charpart+0.03f)*camera->right.x,-b*0.5f*DRAW_SIZE*(charpart+0.03f)*camera->right.y,-b*0.5f*DRAW_SIZE*(charpart+0.03f)*camera->right.z);
 	for (int a = 0; a < b; a++)
@@ -243,7 +243,7 @@ void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 
 void CglFont::WorldChar(char c)
 {
-	float charpart=(charWidths[c])/32.0f;
+	float charpart=(charWidths[c-charstart])/32.0f;
 	glBindTexture(GL_TEXTURE_2D, textures[c-charstart]);
 	glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2f(0,1);

@@ -62,7 +62,7 @@ CMouseHandler::CMouseHandler()
 	lasty=200;
 	hide=false;
 
-	for(int a=1;a<=5;a++){
+	for(int a=1;a<=NUM_BUTTONS;a++){
 		buttons[a].pressed=false;
 		buttons[a].lastRelease=-20;
 		buttons[a].movement=0;
@@ -179,6 +179,8 @@ void CMouseHandler::MouseMove(int x, int y)
 
 void CMouseHandler::MousePress(int x, int y, int button)
 {
+	if (button > NUM_BUTTONS) return;
+
 	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
 	
 	gs->players[gu->myPlayerNum]->currentStats->mouseClicks++;
@@ -238,6 +240,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
+	if (button > NUM_BUTTONS) return;
+
 	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
 	
 
@@ -451,13 +455,27 @@ void CMouseHandler::ShowMouse()
 	}
 }
 
+static void recenter_mouse()
+{
+	SDL_WarpMouse(
+		gu->screenx/2
+#ifdef _WIN32
+		+4*!fullscreen
+#endif
+		, gu->screeny/2
+#ifdef _WIN32		
+		+23*!fullscreen
+#endif
+		);
+}
+
 void CMouseHandler::HideMouse()
 {
 	if(!hide){
 		lastx = gu->screenx/2;  
 		lasty = gu->screeny/2;  
 	        SDL_ShowCursor(SDL_DISABLE);
-		SDL_WarpMouse(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
+	        recenter_mouse();
 		hide=true;
 	}
 }
@@ -570,7 +588,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
 	if(hide && mouseMovedFromCenter){
-		SDL_WarpMouse(gu->screenx/2+4*!fullscreen,gu->screeny/2+23*!fullscreen);
+		recenter_mouse();
 		internalMouseMove=true;				//this only works if the msg que is empty of mouse moves, so someone should figure out something better
 		mouseMovedFromCenter=false;
 	}

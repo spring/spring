@@ -45,7 +45,8 @@ CSound::~CSound()
 {
 	LoadedFiles.clear();
 	alDeleteSources(maxSounds,Sources);
-	delete[] Sources;
+	if (!noSound)
+		delete[] Sources;
 	for (std::vector<ALuint>::iterator it = Buffers.begin(); it != Buffers.end(); it++)
 		alDeleteBuffers(1,&(*it));
 	Buffers.clear();

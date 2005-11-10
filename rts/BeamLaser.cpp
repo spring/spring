@@ -70,7 +70,7 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 void CBeamLaser::Init(void)
 {
 	salvoDelay=0;
-	salvoSize=(int)weaponDef->beamtime*30;
+	salvoSize=(int)(weaponDef->beamtime*30);
 	damages=damages*(1.0f/salvoSize);		//restate the damage from damage per salvo to damage per frame (shot)
 
 	CWeapon::Init();

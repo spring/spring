@@ -158,6 +158,7 @@ void CGuiKeyReader::CreateKeyNames()
 	keynames["§"]=220;
 	keynames["`"]=SDLK_BACKQUOTE;
 	keynames["+"]=SDLK_PLUS;
+	keynames["="]=SDLK_EQUALS;
 	keynames["-"]=SDLK_MINUS;
 	keynames["shift"]=SDLK_LSHIFT;
 	keynames["alt"]=SDLK_LALT;

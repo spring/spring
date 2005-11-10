@@ -9,6 +9,8 @@
 
 #include "MouseCursor.h"
 
+#define NUM_BUTTONS 5
+
 class CInputReceiver;
 class CCameraController;
 
@@ -45,7 +47,7 @@ public:
 		int movement;
 	};
 
-	ButtonPress buttons[6];
+	ButtonPress buttons[NUM_BUTTONS + 1]; /* One-bottomed. */
 	float3 dir;
 
 	CInputReceiver* activeReceiver;

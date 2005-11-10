@@ -164,7 +164,7 @@ CProjectileHandler::CProjectileHandler()
 					float xd=(x-16)/16.0;
 					float yd=(y-16)/16.0;
 					float dist=xd*xd+yd*yd;
-					tex[yoffs+y][xoffs+x][3]*=(unsigned char)max(0.0,(1-dist*0.7));
+					tex[yoffs+y][xoffs+x][3]=(unsigned char)( max(0.0,(1-dist*0.7)) * tex[yoffs+y][xoffs+x][3]);
 				}
 			}
 		}
@@ -657,9 +657,9 @@ void CProjectileHandler::ConvertTex(unsigned char tex[512][512][4], int startx, 
 		for(int x=startx;x<endx;++x){
 			float alpha=tex[y][x][3];
 			float mul=alpha/255.0;
-			tex[y][x][0]*=(unsigned char)mul;
-			tex[y][x][1]*=(unsigned char)mul;
-			tex[y][x][2]*=(unsigned char)mul;
+			tex[y][x][0]=(unsigned char)(mul * (float)tex[y][x][0]);
+			tex[y][x][1]=(unsigned char)(mul * (float)tex[y][x][1]);
+			tex[y][x][2]=(unsigned char)(mul * (float)tex[y][x][2]);
 		}
 	}
 }

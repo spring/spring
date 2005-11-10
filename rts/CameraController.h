@@ -41,6 +41,8 @@ public:
 	float oldHeight;
 
 	float3 dir;
+
+	float mouseScale;
 };
 
 class COverheadController : public CCameraController
@@ -106,6 +108,8 @@ public:
 	float oldHeight;
 
 	float3 dir;
+
+	float mouseScale;
 };
 
 #endif // __CAMERA_CONTROLLER_H__
