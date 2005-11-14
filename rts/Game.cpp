@@ -1169,7 +1169,9 @@ void CGame::SimFrame()
 	treeDrawer->Update();
 	globalAI->Update();
 	grouphandler->Update();
+#ifdef PROFILE_TIME
 	profiler.Update();
+#endif
 	unitDrawer->Update();
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(gu->directControl){
@@ -1681,7 +1683,11 @@ bool CGame::ClientReadNet()
 			net->SendData(netbuf,10);
 
 			netbuf[0]=NETMSG_CPU_USAGE;
+#ifdef PROFILE_TIME
 			*((float*)&netbuf[1])=profiler.profile["Sim time"].percent;
+#else
+			*((float*)&netbuf[1])=0.30;
+#endif
 			net->SendData(netbuf,5);
 			lastLength=5;
 			ENTER_SYNCED;

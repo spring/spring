@@ -51,6 +51,7 @@ struct MapHeader {
 #define READPTR_MAPHEADER(mh,srcptr)			\
 do {							\
 	unsigned int __tmpdw;				\
+	float __tmpfloat;				\
 	(srcptr)->Read((mh).magic,sizeof((mh).magic));	\
 	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
 	(mh).version = (int)swabdword(__tmpdw);		\
@@ -66,8 +67,10 @@ do {							\
 	(mh).texelPerSquare = (int)swabdword(__tmpdw);	\
 	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
 	(mh).tilesize = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&(mh).minHeight,sizeof(float));	\
-	(srcptr)->Read(&(mh).maxHeight,sizeof(float));	\
+	(srcptr)->Read(&__tmpfloat,sizeof(float));	\
+	(mh).minHeight = swabfloat(__tmpfloat);		\
+	(srcptr)->Read(&__tmpfloat,sizeof(float));	\
+	(mh).maxHeight = swabfloat(__tmpfloat);		\
 	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
 	(mh).heightmapPtr = (int)swabdword(__tmpdw);	\
 	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
@@ -168,13 +171,19 @@ struct MapFeatureStruct
 #define READ_MAPFEATURESTRUCT(mfs,src)			\
 do {							\
 	unsigned int __tmpdw;				\
+	float __tmpfloat;				\
 	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
 	(mfs).featureType = (int)swabdword(__tmpdw);	\
-	(src)->Read(&(mfs).xpos,sizeof(float));		\
-	(src)->Read(&(mfs).ypos,sizeof(float));		\
-	(src)->Read(&(mfs).zpos,sizeof(float));		\
-	(src)->Read(&(mfs).rotation,sizeof(float));	\
-	(src)->Read(&(mfs).relativeSize,sizeof(float));	\
+	(src)->Read(&__tmpfloat,sizeof(float));		\
+	(mfs).xpos = swabfloat(__tmpfloat);		\
+	(src)->Read(&__tmpfloat,sizeof(float));		\
+	(mfs).ypos = swabfloat(__tmpfloat);		\
+	(src)->Read(&__tmpfloat,sizeof(float));		\
+	(mfs).zpos = swabfloat(__tmpfloat);		\
+	(src)->Read(&__tmpfloat,sizeof(float));		\
+	(mfs).rotation = swabfloat(__tmpfloat);		\
+	(src)->Read(&__tmpfloat,sizeof(float));		\
+	(mfs).relativeSize = swabfloat(__tmpfloat);	\
 } while (0)
 
 /*

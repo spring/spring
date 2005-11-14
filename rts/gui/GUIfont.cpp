@@ -66,7 +66,11 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 			}
 		}
 
+#ifdef _WIN32
 		charWidth[c]=slot->advance.x / (float)0x10000;
+#else
+		charWidth[c]=slot->advance.x >> 6;
+#endif
 
 		// set up display list
 		

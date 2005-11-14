@@ -4,14 +4,22 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef __powerpc__
+/* HACK It won't compile under PPC Linux unless profiler is
+        made a pointer, and even then it'll smash the stack
+        before dying. Hopefully, someone's milage will vary. :(
+ */
+#undef PROFILE_TIME
+#else
 #define PROFILE_TIME
+#endif
 
 #ifdef PROFILE_TIME
 	#define START_TIME_PROFILE profiler.StartTimer();
 	#define END_TIME_PROFILE(name) profiler.EndTimer(name);
 #else
 	#define START_TIME_PROFILE
-	#define END_TIME_PROFILE
+	#define END_TIME_PROFILE(name) ;
 #endif
 
 #pragma warning(disable:4786)

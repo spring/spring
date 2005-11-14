@@ -12,6 +12,8 @@
 #include "VertexArray.h"
 //#include "mmgr.h"
 
+#ifdef PROFILE_TIME
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -189,3 +191,5 @@ bool CTimeProfiler::MousePress(int x, int y, int button)
 		pi->second.showGraph=!pi->second.showGraph;
 	return false;
 }
+
+#endif

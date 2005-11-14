@@ -67,7 +67,7 @@ public:
 	void UpdateCommands();
 	
 	static const string Modifiers();
-	static const string KeyName(unsigned char k);
+	static const string KeyName(int k);
 	
 	void LoadInterface(const std::string& name);
 	

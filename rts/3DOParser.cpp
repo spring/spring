@@ -292,6 +292,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 		list<int> orderVert;
 		for(int b=0;b<sp.numVertex;b++){
 			SimStreamRead(&w,2);
+			w = swabword(w);
 			sp.vertices.push_back(w);
 			orderVert.push_back(w);
 		}
@@ -361,6 +362,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 		
 		for(int b=0;b<sp.numVertex;b++){
 			SimStreamRead(&w,2);
+			w = swabword(w);
 			obj->vertices[w].prims.push_back(obj->prims.size()-1);
 		}
 	}

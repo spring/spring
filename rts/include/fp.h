@@ -11,7 +11,7 @@
 #define Control87(f,m) _control87(f,m)
 #define Clearfp() _clearfp()
 
-#else
+#else /* emulate WIN32 */
 
 #include <fenv.h>
 
@@ -22,6 +22,8 @@
 #define _EM_UNDERFLOW FE_UNDERFLOW
 #define _EM_INEXACT FE_INEXACT
 #define _MCW_EM FE_ALL_EXCEPT
+
+#ifdef __i386
 
 #if defined(__linux__)
 #define fenv_control(xfenv_t) (xfenv_t.__control_word)
@@ -57,6 +59,29 @@ static inline unsigned int Clearfp(void)
 	return (unsigned int)(fenv_status(cur));
 }
 
-#endif
+#else /* not __i386 */
 
-#endif
+static inline unsigned int Control87(unsigned int newflags, unsigned int mask)
+{
+	fexcept_t cur;
+	fegetexceptflag(&cur, FE_ALL_EXCEPT);
+	if (mask) {
+		cur = (cur & ~mask)|(newflags & mask);
+		fesetexceptflag(&cur, FE_ALL_EXCEPT);
+	}
+	return (unsigned int)cur;
+}
+
+static inline unsigned int Clearfp(void)
+{
+	int ret = fetestexcept(FE_ALL_EXCEPT);
+	feclearexcept(FE_ALL_EXCEPT);
+	return ret;
+}
+
+
+#endif /* not __i386 */
+
+#endif /* emulate WIN32 */
+
+#endif /* ifndef FP_H */

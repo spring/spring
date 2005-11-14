@@ -266,7 +266,11 @@ void GUIcontroller::ConsoleInput(const std::string& inputText)
 //		console->AddText(userInput);
 }
 
+#ifdef _WIN32
 char buttonMap[]={1, 3, 2, 4, 5, 6, 7, 8};
+#else
+char buttonMap[]={0 /* pad */, 1, 2, 3, 4, 5, 6, 7, 8};
+#endif
 
 bool GUIcontroller::MouseDown(int x1, int y1, int button)
 {
@@ -665,49 +669,49 @@ Command GUIcontroller::GetOrderPreview()
 }
 
 
-const string GUIcontroller::KeyName(unsigned char k)
+const string GUIcontroller::KeyName(int k)
 {
-	static map<unsigned char, string> keyNames;
+	static map<int, string> keyNames;
 
 	if(keyNames.empty())
 	{
 		for(char c='a';c<='z';++c)
-			keyNames[c+'A'-'a']=string(1, c);
+			keyNames[SDLK_a + c - 'a']=string(1, c);
 
 		for(char c='0';c<='9';++c)
-			keyNames[c+48-'0']=string(1, c);
+			keyNames[SDLK_0 + c - '0']=string(1, c);
 			
 		// TODO: add more key names
 
 		keyNames[SDLK_SPACE]="space";
 		keyNames[SDLK_PAUSE]="pause";
 		keyNames[SDLK_RETURN]="enter";
-		keyNames[8]="backspace";
+		keyNames[SDLK_BACKSPACE]="backspace";
 		keyNames[9]="tab";
 		keyNames[SDLK_ESCAPE]="escape";
-		keyNames[112]="f1";
-		keyNames[113]="f2";
-		keyNames[114]="f3";
-		keyNames[115]="f4";
-		keyNames[116]="f5";
-		keyNames[117]="f6";
-		keyNames[118]="f7";
-		keyNames[119]="f8";
-		keyNames[120]="f9";
-		keyNames[121]="f10";
-		keyNames[122]="f11";
-		keyNames[123]="f12";
-		keyNames[124]="printscreen";
-		keyNames[220]="tilde";
+		keyNames[SDLK_F1]="f1";
+		keyNames[SDLK_F2]="f2";
+		keyNames[SDLK_F3]="f3";
+		keyNames[SDLK_F4]="f4";
+		keyNames[SDLK_F5]="f5";
+		keyNames[SDLK_F6]="f6";
+		keyNames[SDLK_F7]="f7";
+		keyNames[SDLK_F8]="f8";
+		keyNames[SDLK_F9]="f9";
+		keyNames[SDLK_F10]="f10";
+		keyNames[SDLK_F11]="f11";
+		keyNames[SDLK_F12]="f12";
+		keyNames[SDLK_PRINT]="printscreen";
+		keyNames[SDLK_BACKQUOTE]="tilde";
 		keyNames[226]="<";
 		keyNames[188]=",";
 		keyNames[190]=".";
-		keyNames[45]="insert";
-		keyNames[46]="delete";
-		keyNames[36]="home";
-		keyNames[35]="end";
-		keyNames[33]="pageup";
-		keyNames[34]="pagedown";
+		keyNames[SDLK_INSERT]="insert";
+		keyNames[SDLK_DELETE]="delete";
+		keyNames[SDLK_HOME]="home";
+		keyNames[SDLK_END]="end";
+		keyNames[SDLK_PAGEUP]="pageup";
+		keyNames[SDLK_PAGEDOWN]="pagedown";
 		keyNames[SDLK_UP]="up";
 		keyNames[SDLK_DOWN]="down";
 		keyNames[SDLK_LEFT]="left";
