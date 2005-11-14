@@ -273,6 +273,29 @@ if not env.GetOption("clean"):
 
 	conf = Configure(env)
 	conf.env.Append(CPPPATH=common_include_path,LIBPATH=common_lib_path)
+
+
+	if 'Debian' in sys.version:
+		# Figure out if we're running on PowerPC 
+		# and which version of GCC we're dealing with.
+		try:
+			f = os.popen("echo '' | gcc -E -dM -")
+
+			predefines = f.read()
+		finally:
+			f.close()
+		if predefines:
+			if '#define __powerpc__ 1' in predefines:
+				if '#define __GNUC__ 4' in predefines:
+					old_gpp = env['CXX']
+					env['CXX'] = "g++-3.3"
+					if not conf.TryCompile('int main(void) { return 0; } ', '.cpp'):
+						env['CXX'] = old_gpp
+						print "Warning: Compiling with GCC4 on Debian PowerPC. The resulting executable may corrupt the stack before main()."
+					else:
+						env['CC'] = "gcc-3.3"
+						print "Note: Compiling on Debian PowerPC. Switched to GCC 3."
+
 	print "\nChecking configure scripts"
 	freetype = False
 	openal = False

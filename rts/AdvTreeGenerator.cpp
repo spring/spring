@@ -487,15 +487,15 @@ void CAdvTreeGenerator::CreateTex(unsigned char* data, unsigned int tex,int xsiz
 					}
 				}
 				if(a!=0){
-					mipmaps[mipnum][((y)*xsize+x)*4+0]=(unsigned char)(r+a*0.5)/a;
-					mipmaps[mipnum][((y)*xsize+x)*4+1]=(unsigned char)(g+a*0.5)/a;
-					mipmaps[mipnum][((y)*xsize+x)*4+2]=(unsigned char)(b+a*0.5)/a;
+					mipmaps[mipnum][((y)*xsize+x)*4+0]=(unsigned char)( (r+a*0.5)/a );
+					mipmaps[mipnum][((y)*xsize+x)*4+1]=(unsigned char)( (g+a*0.5)/a );
+					mipmaps[mipnum][((y)*xsize+x)*4+2]=(unsigned char)( (b+a*0.5)/a );
 				} else {
 					mipmaps[mipnum][((y)*xsize+x)*4+0]=40;
 					mipmaps[mipnum][((y)*xsize+x)*4+1]=80;
 					mipmaps[mipnum][((y)*xsize+x)*4+2]=20;
 				}
-				mipmaps[mipnum][((y)*xsize+x)*4+3]=(unsigned char)(a+2.0)/4;
+				mipmaps[mipnum][((y)*xsize+x)*4+3]=(unsigned char)( (a+2.0)/4 );
 			}
 		}
 	}
@@ -535,7 +535,7 @@ void CAdvTreeGenerator::CreateTex(unsigned char* data, unsigned int tex,int xsiz
 								}
 							}
 							if(alpha!=0)
-								mipmaps[mipnum][(y*xsize+x)*4+c]=(unsigned char)(col+alpha*0.5)/alpha;
+								mipmaps[mipnum][(y*xsize+x)*4+c]=(unsigned char)( (col+alpha*0.5)/alpha ); // !
 						}
 					}
 				}
@@ -701,8 +701,8 @@ void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, f
 	orto1.Normalize();
 	float3 orto2=dir.cross(orto1);
 
-	float tex=float(int(rand()*3/RAND_MAX))*0.125;
-	float flipTex=float(int(rand()*2/RAND_MAX))*0.123;
+	float tex=float(int(rand()*3.0/(float)RAND_MAX))*0.125;
+	float flipTex=float(int(rand()*2.0/(float)RAND_MAX))*0.123;
 	float baseCol=0.4+dir.dot(flatSun)*0.3+fRand(0.1f);
 
 	float col1=baseCol+fRand(0.2f);

@@ -105,13 +105,17 @@ CGrassDrawer::CGrassDrawer()
 	for(int a=0;a<readmap->header.numExtraHeaders;++a){
 		int size;
 		fh->Read(&size,4);
+		size=swabdword(size);
 		int type;
 		fh->Read(&type,4);
+		type=swabdword(type);
 		if(type==MEH_Vegetation){
 			int pos;
 			fh->Read(&pos,4);
+			pos=swabdword(pos);
 			fh->Seek(pos);
 			fh->Read(grassMap,gs->mapx*gs->mapy/16);
+			/* char; no swabbing. */
 			break;	//we arent interested in other extensions anyway
 		} else {
 			unsigned char buf[100];	//todo: fix this if we create larger extensions

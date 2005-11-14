@@ -157,18 +157,24 @@ void CBitmap::Save(string filename)
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	unsigned char* buf=new unsigned char[xsize*ysize*3];
-	for(int a=0;a<xsize*ysize;a++){
-		buf[a*3]=mem[a*4];
-		buf[a*3+1]=mem[a*4+1];
-		buf[a*3+2]=mem[a*4+2];
+	unsigned char* buf=new unsigned char[xsize*ysize*4];
+	/* HACK Flip the image so it saves the right way up.
+	   (Fiddling with ilOriginFunc didn't do anything?)
+	   Duplicated with ReverseYAxis. */
+	for(int y=0;y<ysize;++y){
+		for(int x=0;x<xsize;++x){
+			buf[((ysize-1-y)*xsize+x)*4+0]=mem[((y)*xsize+x)*4+0];
+			buf[((ysize-1-y)*xsize+x)*4+1]=mem[((y)*xsize+x)*4+1];
+			buf[((ysize-1-y)*xsize+x)*4+2]=mem[((y)*xsize+x)*4+2];
+			buf[((ysize-1-y)*xsize+x)*4+3]=mem[((y)*xsize+x)*4+3];
+		}
 	}
 
 	ILuint ImageName = 0;
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	ilTexImage(xsize,ysize,3,3,IL_RGBA,IL_UNSIGNED_BYTE,NULL);
+	ilTexImage(xsize,ysize,1,4,IL_RGBA,IL_UNSIGNED_BYTE,NULL);
 	ilSetData(buf);
 	ilSaveImage((char*)filename.c_str());
 	ilDeleteImages(1,&ImageName);

@@ -40,11 +40,13 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 	for(int a=0;a<tileHeader.numTileFiles;++a){
 		int size;
 		ifs->Read(&size,4);
+		size = swabdword(size);
 		string name;
 
 		while(true){
 			char ch;
 			ifs->Read(&ch,1);
+			/* char, no swab */
 			if(ch==0)
 				break;
 			name+=ch;
@@ -73,8 +75,14 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 			curTile++;
 		}
 	}
+	
+	int count = (header->mapx*header->mapy)/16;
 
-	ifs->Read(tileMap, ((header->mapx*header->mapy)/16)*sizeof(int));
+	ifs->Read(tileMap, count*sizeof(int));
+	
+	for (int i = 0; i < count; i++) {
+		tileMap[i] = swabdword(tileMap[i]);
+	}
 
 	tileMapXSize = header->mapx/4;
 	tileMapYSize = header->mapy/4;

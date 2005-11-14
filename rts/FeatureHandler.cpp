@@ -219,7 +219,7 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 {
 	file->Seek(readmap->header.featurePtr);
 	MapFeatureHeader fh;
-	file->Read(&fh,sizeof(fh));
+	READ_MAPFEATUREHEADER(fh, file);
 	if(file->Eof()){
 		info->AddLine("No features in map file?");
 		return;
@@ -277,7 +277,7 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 	if(!onlyCreateDefs){
 		for(int a=0;a<fh.numFeatures;++a){
 			MapFeatureStruct ffs;
-			file->Read(&ffs,sizeof(ffs));
+			READ_MAPFEATURESTRUCT(ffs, file);
 
 			string name=mapids[ffs.featureType];
 

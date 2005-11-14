@@ -80,7 +80,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	ifs->Read(temphm,mapx*mapy*2);
 
 	for(int y=0;y<mapx*mapy;++y){
-		heightmap[y]=base+temphm[y]*mod;
+		heightmap[y]=base+swabword(temphm[y])*mod;
 	}
 
 	delete[] temphm;

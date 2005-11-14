@@ -60,10 +60,10 @@ CSelectionKeyHandler::CSelectionKeyHandler(void)
 			} else {
 				char c=s[0];
 				if(c>='A' && c<='Z')
-					hk.key=c;
+					hk.key=SDLK_a + (c - 'A');
 
 				if(c>='0' && c<='9')
-					hk.key=c+48-'0';
+					hk.key=SDLK_0 + (c -'0');
 
 				break;
 			}

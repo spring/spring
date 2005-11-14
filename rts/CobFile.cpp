@@ -103,10 +103,12 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		int ofs;
 		
 		ofs = *(int *)&cobdata[ch.OffsetToScriptNameOffsetArray + i * 4];
+		ofs = swabdword(ofs);
 		string s = &cobdata[ofs];
 		scriptNames.push_back(s);
 
 		ofs = *(int *)&cobdata[ch.OffsetToScriptCodeIndexArray + i * 4];
+		ofs = swabdword(ofs);
 		scriptOffsets.push_back(ofs);
 	}
 
@@ -120,13 +122,19 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		int ofs;
 
 		ofs = *(int *)&cobdata[ch.OffsetToPieceNameOffsetArray + i * 4];
+		ofs = swabdword(ofs);
 		string s = &cobdata[ofs];
 		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
 		pieceNames.push_back(s);
 	}
 
-	code = new int[(size - ch.OffsetToScriptCode) / 4 + 4];
-	memcpy(code, &cobdata[ch.OffsetToScriptCode], size - ch.OffsetToScriptCode);
+	int code_octets = size - ch.OffsetToScriptCode;
+	int code_ints = (code_octets) / 4 + 4;
+	code = new int[code_ints];
+	memcpy(code, &cobdata[ch.OffsetToScriptCode], code_octets);
+	for (int i = 0; i < code_ints; i++) {
+		code[i] = swabdword(code[i]);
+	}
 
 	numStaticVars = ch.NumberOfStaticVars;
 
@@ -135,6 +143,8 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		for (long i = 0; i < ch.NumberOfSounds; ++i) {
 			long ofs;
 			ofs = *(long *)&cobdata[ch.OffsetToSoundNameArray + i * 4];
+			/* TODO This probably isn't correct. */
+			ofs = swabdword(ofs);
 			string s = &cobdata[ofs];
 
 			// Load the wave file and store the ID for future use
