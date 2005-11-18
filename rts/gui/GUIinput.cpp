@@ -3,6 +3,7 @@
 #include "GUIfont.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
+#include "SDL_keyboard.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -101,3 +102,14 @@ bool GUIinput::EventAction(const std::string& event)
 	return false;
 }
 
+void GUIinput::TakeFocus()
+{
+	SDL_EnableUNICODE(1);
+	GUIframe::TakeFocus();
+}
+
+void GUIinput::ReleaseFocus()
+{
+	SDL_EnableUNICODE(0);
+	GUIframe::ReleaseFocus();
+}

@@ -12,8 +12,8 @@ public:
 	CInputReceiver(void);
 	virtual ~CInputReceiver(void);
 
-	virtual bool KeyPressed(unsigned char key){return false;};
-	virtual bool KeyReleased(unsigned char key){return false;};
+	virtual bool KeyPressed(unsigned short key){return false;};
+	virtual bool KeyReleased(unsigned short key){return false;};
 
 	virtual bool MousePress(int x, int y, int button){return false;};
 	virtual void MouseMove(int x, int y, int dx,int dy, int button){};

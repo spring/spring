@@ -99,6 +99,7 @@
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "SDL_timer.h"
+#include "SDL_keyboard.h"
 #include "fp.h"
 
 #ifdef NEW_GUI
@@ -441,6 +442,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		if(k==SDLK_RETURN){
 			userWriting=false;
 			keys[k] = false;		//prevent game start when server chats
+			SDL_EnableUNICODE(0);
 			return 0;
 		}
 		if(k==27 && chatting){
@@ -494,6 +496,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if (s=="chat"){
 		userWriting=true;
 		userPrompt="Say: ";
+		SDL_EnableUNICODE(1);
 		userInput=userInputPrefix;
 		chatting=true;
 		if(k!=SDLK_RETURN)
@@ -1467,7 +1470,7 @@ bool CGame::ClientReadNet()
 			int player=inbuf[inbufpos+1];
 			if(player>=MAX_PLAYERS || player<0){
 				info->AddLine("Got invalid player num %i in playerstat msg",player);
-				inbufpos+=sizeof(CPlayer::Statistics)+2;
+				lastLength=sizeof(CPlayer::Statistics)+2;
 				break;
 			}
 			*gs->players[player]->currentStats=*(CPlayer::Statistics*)&inbuf[inbufpos+2];
@@ -1560,7 +1563,6 @@ bool CGame::ClientReadNet()
 			} else {
 				string s=(char*)(&inbuf[inbufpos+3]);
 				HandleChatMsg(s,player);
-				inbufpos+=inbuf[inbufpos+1];	
 			}
 			lastLength=inbuf[inbufpos+1];	
 			break;}

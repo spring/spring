@@ -12,12 +12,11 @@ public:
 	void glPrintColor(const char* fmt, ...);
 	void glWorldPrint(const char* fmt, ...);
 	void glPrintAt(GLfloat x, GLfloat y, float s, const char* fmt, ...);
-	CglFont(int start, int num);
+	CglFont(int start, int end);
 	~CglFont();
-	int *charWidths;
+	int *charWidths; /* glTextBox */
 private:
-	void printstring(const char *text,int *sh = NULL);
-	void init_chartex(FT_Face face, char ch, GLuint base, GLuint* texbase);
+	void printstring(const char *text);
 	void WorldChar(char c);
 	const char* GetFTError (FT_Error e);
 	int chars;
@@ -25,8 +24,6 @@ private:
 	int charheight;
 	GLuint *textures;
 	GLuint listbase;
-	FT_Face face;
-	FT_Library library;
 };
 extern CglFont* font;
 
