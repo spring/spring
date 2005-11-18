@@ -937,6 +937,9 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		keyOptions|=CONTROL_KEY;
 	if(keys[SDLK_LALT])
 		keyOptions|=ALT_KEY;
+	
+	if (key >= SDLK_a && key <= SDLK_z)
+		key = 'A' + (key - SDLK_a);
 
 	int a;
 	for(a=0;a<commands.size();++a){

@@ -23,6 +23,9 @@ protected:
 	bool EventAction(const std::string& event);
 	
 	Functor1<const string&> enter;
+
+	void TakeFocus();
+	void ReleaseFocus();
 };
 
 #endif // !defined(GUIINPUT_H)

@@ -15,6 +15,7 @@
 #include "Sound.h"
 #include "MiniMap.h"
 #include "SDL_mouse.h"
+#include "SDL_keyboard.h"
 
 CInMapDraw* inMapDrawer;
 
@@ -214,6 +215,7 @@ void CInMapDraw::MousePress(int x, int y, int button)
 			wantLabel=true;
 			game->userPrompt="Label: ";
 			game->ignoreChar='§';		//should do something better here
+			SDL_EnableUNICODE(1);
 		}
 		lastLeftClickTime=gu->gameTime;
 		break;

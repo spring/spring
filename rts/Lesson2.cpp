@@ -52,7 +52,6 @@
 #define YRES_DEFAULT 768
 
 Uint8 *keys;			// Array Used For The Keyboard Routine
-Uint8 *oldkeys;
 Uint8 scrollWheelSpeed;
 SDL_Surface *screen;
 int sdlflags;
@@ -363,6 +362,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	lua.CreateLateBindings();
 #endif
 
+	keys = new Uint8[SDLK_LAST];
+
 	SDL_Event event;
 	while(!done)									// Loop That Runs While done=false
 	{
@@ -394,45 +395,71 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 					if (mouse)
 						mouse->MouseRelease(event.button.x,event.button.y,event.button.button);
 					break;
-			}
-		}
-		keys = SDL_GetKeyState(NULL);
-		int mods = SDL_GetModState();
-		keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
-		keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
-		keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
-		keys[SDLK_LMETA] = mods&KMOD_META?1:0;
-		if (!oldkeys) {
-			oldkeys = new Uint8[SDLK_LAST];
-			for (int j = 0; j < SDLK_LAST; j++)
-				oldkeys[j] = 0;
-		}
-		for (int i = 0; i < SDLK_LAST; i++) {
-			if (keys[i] && !oldkeys[i]) {
-				if(activeController)
-					activeController->KeyPressed(i,1);
-				oldkeys[i] = 1;
-#ifdef NEW_GUI
-				GUIcontroller::Character(char(i));
-				if (0)
-#endif
+				case SDL_KEYDOWN:
 				{
-					if(activeController){
-						if(activeController->userWriting && (i>31))
-							if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
-								activeController->ignoreNextChar=false;
-							else
-								if(i>31 && i<250)
-									activeController->userInput+=char(i);
+					int i = event.key.keysym.sym;
+					
+					int numkeys;
+					Uint8 * state;
+					state = SDL_GetKeyState(&numkeys);
+					memcpy(keys, state, sizeof(Uint8) * numkeys);
+					SDLMod mods = SDL_GetModState();
+					keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
+					keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
+					keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
+					keys[SDLK_LMETA] = mods&KMOD_META?1:0;
+					if (i == SDLK_RETURN)
+						keys[i] = 1;
+					
+					if(activeController)
+						activeController->KeyPressed(i,1);
+					
+#ifdef NEW_GUI
+					i = event.key.keysym.unicode;
+					if (i > 0 && i < 128) /* HACK */
+						GUIcontroller::Character(char(i));
+						
+					if (0)
+#endif
+					{
+						if(activeController){
+							if(activeController->userWriting){ 
+								i = event.key.keysym.unicode;
+								if (i>31 && i < 128)
+									if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
+										activeController->ignoreNextChar=false;
+									else
+										if(i>31 && i<250)
+											activeController->userInput+=char(i);
+							}
+						}
 					}
+					break;
 				}
-			} else if (oldkeys[i] && !keys[i]) {
-				if (activeController)
-					activeController->KeyReleased(i);
-				oldkeys[i] = 0;
+				case SDL_KEYUP:
+				{
+					int i = event.key.keysym.sym;
+
+					int numkeys;
+					Uint8 * state;
+					state = SDL_GetKeyState(&numkeys);
+					memcpy(keys, state, sizeof(Uint8) * numkeys);
+					SDLMod mods = SDL_GetModState();
+					keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
+					keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
+					keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
+					keys[SDLK_LMETA] = mods&KMOD_META?1:0;
+					if (i == SDLK_RETURN)
+						keys[i] = 0;
+					
+					if (activeController)
+						activeController->KeyReleased(i);
+					
+					break;
+				}
 			}
 		}
-			// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
+		// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
 		if ((active && !DrawGLScene()) || globalQuit)	// Active?  Was There A Quit Received?
 		{
 			done=true;							// ESC or DrawGLScene Signalled A Quit
@@ -450,7 +477,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	}
 	ENTER_MIXED;
 
-	delete[] oldkeys;
+	delete[] keys;
 
 	// Shutdown
 	if (gameSetup)
