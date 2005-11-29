@@ -43,7 +43,11 @@ CProjectileHandler::CProjectileHandler()
 	currentParticles=0;
 	particleSaturation=0;
 
-	unsigned char tex[512][512][4];
+	// This will cause a stack overflow if not made static
+	static unsigned char tex[512][512][4];
+	static unsigned char tex2[512*256];
+	static float dotAlpha[256][256];
+
 	for(int y=0;y<512;y++)
 		for(int x=0;x<512;x++){
 			tex[y][x][0]=0;
@@ -203,7 +207,6 @@ CProjectileHandler::CProjectileHandler()
 		}
 	}
 
-	float dotAlpha[256][256];
 	for(int y=0;y<256;y++){//random dots
 		for(int x=0;x<256;x++){
 			tex[y+256][x][0]=205+(unsigned char) (gs->randFloat()*50);
@@ -284,8 +287,6 @@ CProjectileHandler::CProjectileHandler()
 
 //	CBitmap b(tex[0][0],512,512);
 //	b.Save("proj.bmp");
-
-	unsigned char tex2[512*256];
 
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
