@@ -302,7 +302,8 @@ void CBasicSky::CreateClouds()
 	glGenTextures(1, &cloudDot3Tex);
 	int y;
 
-	unsigned char skytex[512][512][4];//=new unsigned char[512][512][4];
+	static unsigned char skytex[512][512][4];//=new unsigned char[512][512][4];
+	static unsigned char skytex2[256][256][4];
 	
 	for(y=0;y<512;y++){
 		for(int x=0;x<512;x++){
@@ -332,7 +333,6 @@ void CBasicSky::CreateClouds()
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
 //	delete[] skytex;
 
-	unsigned char skytex2[256][256][4];
 	for(y=0;y<256;y++){
 		for(int x=0;x<256;x++){
 			float3 dir=GetDirFromTexCoord(x/256.0,y/256.0);

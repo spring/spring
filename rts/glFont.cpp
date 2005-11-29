@@ -43,14 +43,14 @@ CglFont::CglFont(int start, int end)
 
 	FT_Error error=FT_Init_FreeType(&library);
 	if (error) {
-		string msg="FT_Init_FreeType failed";
+		string msg="FT_Init_FreeType failed:";
 		msg += GetFTError(error);
 		throw std::runtime_error(msg);
 	}
 
 	error=FT_New_Face(library,FONTFILE,0,&face);
 	if (error) {
-		string msg="FT_New_Face failed";
+		string msg="FT_New_Face failed:";
 		msg += GetFTError(error);
 		throw std::runtime_error(msg);
 	}
@@ -158,7 +158,8 @@ CglFont::CglFont(int start, int end)
 	   start on the same pixel, so they line up properly at
 	   the right size. */
 	
-	unsigned char tex[texsize*texsize][2];
+	// variable sized arrays on stack is a GCC-specific feature unfortunately...
+	unsigned char *tex = new unsigned char[texsize*texsize*2];
 	
 	for (unsigned char ch = start; ch < end; ch++) {
 		StoredGlyph * g = &(glyphs[ch-charstart]);
@@ -187,8 +188,8 @@ CglFont::CglFont(int start, int end)
 					pel_val = g->bitmap_buffer[g->bitmap_pitch*buf_y+buf_x];
 				
 				
-				tex[y*texsize+x][0] = 255;
-				tex[y*texsize+x][1] = pel_val;
+				tex[(y*texsize+x)*2+0] = 255;
+				tex[(y*texsize+x)*2+1] = pel_val;
 			}
 		}
 		
@@ -199,7 +200,7 @@ CglFont::CglFont(int start, int end)
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 
 			0, GL_RGBA, 
-			texsize, texsize, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, tex[0]);
+			texsize, texsize, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, tex);
 		
 		/* Upload drawing instructions for the glyph. */
 		
@@ -220,6 +221,8 @@ CglFont::CglFont(int start, int end)
 		delete[] g->bitmap_buffer;
 		g->bitmap_buffer = NULL;
 	}
+
+	delete[] tex;
 	
 	delete[] glyphs;
 	FT_Done_Face(face);

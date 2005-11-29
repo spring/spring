@@ -69,16 +69,8 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 		height=1;										// Making Height Equal One
 	}
 
-	gu->screenx=width
-#ifdef _WIN32
-		-(!fullscreen&&!game)*6
-#endif
-		;
-	gu->screeny=height
-#ifdef _WIN32		
-		-(!fullscreen&&!game)*26
-#endif
-		;
+	gu->screenx=width;
+	gu->screeny=height;
 
 	glViewport(0,0,gu->screenx,gu->screeny);						// Reset The Current Viewport
 

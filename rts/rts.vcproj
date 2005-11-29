@@ -33,7 +33,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib freetype.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="bagge/debug.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
@@ -81,7 +81,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib freetype.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="./bagge/$(ProjectName).exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
@@ -2814,4 +2814,3 @@
 	<Globals>
 	</Globals>
 </VisualStudioProject>
-
