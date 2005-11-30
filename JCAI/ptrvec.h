@@ -86,4 +86,4 @@ private:
 };
 
 
-#endif JC_PTR_VEC_H
+#endif // JC_PTR_VEC_H

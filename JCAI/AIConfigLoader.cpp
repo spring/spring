@@ -90,7 +90,7 @@ bool CfgBuildOptions::Parse (CfgBuffer& buf)
 				if (!val.Parse (buf))
 					return false;
 
-				opt->count = val.value;
+				opt->count = (int) val.value;
 			}
 			else if (*buf == '{') // its a set of conditions
 			{

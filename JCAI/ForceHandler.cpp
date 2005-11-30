@@ -34,7 +34,7 @@ ForceUnit::~ForceUnit()
 
 UnitGroup::UnitGroup (CGlobals *g) : aiHandler(g)
 {
-	goal.x=-1.0f;
+	goal.x=0;
 	state=ugroup_Building;
 	current.x=-1;
 	curTarget=-1;
@@ -315,7 +315,7 @@ bool UnitGroup::CalcPositioning (float2& pmin, float2& pmax, float2& mid, int2& 
 	float2 sum= {0.0f,0.0f};
 	pmin.x=pmin.y=l;pmax.x=pmax.y=-l;
 
-	int bestdis=10000000.0f;
+	int bestdis=10000000;
 	cs.x=-1;
 
 	//for (int a=0;a<units.size();a++)

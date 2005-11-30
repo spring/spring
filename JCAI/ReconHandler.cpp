@@ -128,8 +128,8 @@ void ReconHandler::Update ()
 				globals->map->GetGameInfoCoords(pos), this, globals->cb->GetCurrentFrame(),&*i));
 		if (ngoal.x >= 0)
 		{
-			i->goal.x = (ngoal.x + 0.5f) * globals->map->gblocksize;
-			i->goal.y = (ngoal.y + 0.5f) * globals->map->gblocksize;
+			i->goal.x = (int) (ngoal.x + 0.5f) * globals->map->gblocksize;
+			i->goal.y = (int) (ngoal.y + 0.5f) * globals->map->gblocksize;
 		}
 
 		if (pgoal.x!=i->goal.x || pgoal.y!=i->goal.y)
