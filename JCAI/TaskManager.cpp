@@ -12,7 +12,6 @@
 #include "TaskManager.h"
 #include "BuildTable.h"
 #include "BuildMap.h"
-#include "RefTracker.h"
 
 #include "ResourceUnitHandler.h"
 
@@ -432,7 +431,8 @@ bool TaskManager::DoInitialBuildOrders ()
 			CfgList* info = config.InitialOrders->builds[a]->info;
 			const char *handler = info ? info->GetLiteral ("Handler") : 0;
 			if (handler) {
-				for (int h=0;h<NUM_TASK_TYPES;h++) {
+				int h;
+				for (h=0;h<NUM_TASK_TYPES;h++) {
 					if(!STRCASECMP(handler, ResourceManager::handlerStr[h])) {
 						type=h;
 						break;

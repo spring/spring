@@ -17,7 +17,6 @@
 #include "MoveInfo.h"
 #include <assert.h> 
 #include <algorithm>
-#include <hash_map>
 #include <map>
 #include <set>
 #include <vector>
@@ -60,7 +59,7 @@ CfgList *LoadConfigFromFS (IAICallback *cb, const char *file);
 
 
 #define NUM_TASK_TYPES 4
-#define AI_PATH "aidll\\globalai\\jcai\\"
+#define AI_PATH "aidll/globalai/jcai/"
 
 
 struct ResourceInfo 

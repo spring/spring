@@ -288,8 +288,8 @@ void InfoMap::UpdateBaseCenter (IAICallback *cb)
 					float3 pos = cb->GetUnitPos (u);
 					GameInfo* gi = GetGameInfo (GetGameInfoCoords(pos));
 
-					baseDirection.x += abs(pos.x - baseCenter.x);
-					baseDirection.y += abs(pos.y - baseCenter.y);
+					baseDirection.x += fabs(pos.x - baseCenter.x);
+					baseDirection.y += fabs(pos.y - baseCenter.y);
 				}
 			}
 

@@ -405,7 +405,7 @@ int UnitGroup::CountCurrentOrders ()
 }
 
 // ----------------------------------------------------------------------------------------
-// Force coördinator
+// Force coï¿½dinator
 // ----------------------------------------------------------------------------------------
 
 ForceHandler::ForceHandler (CGlobals *g) : TaskFactory(g)
@@ -637,7 +637,7 @@ bool ForceConfig::ParseForceGroup (CfgList *cfg, const string& name)
 	g.groupdist = cfg->GetNumeric ("groupdist",g.maxspread * 0.5f);
 
 	if (g.minenergy == -1.0f && g.minmetal == -1.0f)
-		logPrintf ("Warning: minmetal or minenergy not set for force group %s\n", name);
+		logPrintf ("Warning: minmetal or minenergy not set for force group %s\n", name.c_str());
 
 	if (g.minenergy < 0.0f) g.minenergy = 0.0f;
 	if (g.minmetal < 0.0f) g.minmetal = 0.0f;
