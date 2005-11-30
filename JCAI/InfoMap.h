@@ -31,8 +31,8 @@ struct GameInfo
 {
 	GameInfo ()
 	{ 
-		lastLosFrame=nthreat=0;
-		threatProximity=losThreat=0.0f;
+		lastLosFrame=0;
+		threatProximity=losThreat=nthreat=0.0f;
 		economicValue=threat=0.0f;
 
 		localDefense=defense=defenseRange=0.0f;

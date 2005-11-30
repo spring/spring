@@ -89,7 +89,7 @@ public:
 	CfgValue* GetValue (const char *name);
 	double GetNumeric(const char *name, double def=0.0f);
 	const char* GetLiteral(const char *name, const char *def=0);
-	int GetInt (const char *name, int def) { return GetNumeric (name, def); }
+	int GetInt (const char *name, int def) { return (int) GetNumeric (name, def); }
 
 	list<CfgListElem> childs;
 };

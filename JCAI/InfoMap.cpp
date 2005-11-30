@@ -159,7 +159,7 @@ int2 InfoMap::FindSafeBuildingSector (float3 sp, int maxdist, int reqspace)
 	SearchOffset *tbl = GetSearchOffsetTable ();
 	int2 sector = GetMapInfoCoords (sp);
 
-	int bestscore;
+	float bestscore;
 	int2 bestsector (-1,0);
 
 	for (int a=0;a<numSearchOffsets;a++)
@@ -188,9 +188,9 @@ int2 InfoMap::FindSafeBuildingSector (float3 sp, int maxdist, int reqspace)
 
 		// lower score means better sector
 		GameInfo &gi = gameinfo [y/2*gsw+x/2];
-		int score = sqrtf (ofs.qdist) * blk.heightDif * gi.threat;
+		float score = sqrtf (ofs.qdist) * blk.heightDif * gi.threat;
 
-		int dx=baseCenter.x/mblocksize-x, dy=baseCenter.y/mblocksize-y;
+		float dx= baseCenter.x/mblocksize-x, dy= baseCenter.y/mblocksize-y;
 		score *= max(1.0f, sqrtf (dx*dx+dy*dy));// + (baseDirection.x * ofs.dx + baseDirection.y * ofs.dy));
 
 		if (bestsector.x < 0 || bestscore > score)
@@ -207,7 +207,7 @@ int2 InfoMap::FindSafeBuildingSector (float3 sp, int maxdist, int reqspace)
 
 int2 InfoMap::FindAttackDefendSector (IAICallback *cb, int2 startpoint)
 {
-	int bestscore;
+	float bestscore;
 	int2 best (-1,0);
 
 	// picks the lowest score
@@ -391,9 +391,9 @@ void InfoMap::UpdateThreatInfo (IAICallback *cb)
 				continue;
 
 			// calculate enemy threat range
-			int enemyRange = ceilf(gi.enemyRange / gblocksize);
+			int enemyRange = (int) ceilf(gi.enemyRange / gblocksize);
 			// calculate defense range
-			int defenseRange = ceilf(gi.defenseRange / gblocksize);
+			int defenseRange = (int) ceilf(gi.defenseRange / gblocksize);
 			int range = max(enemyRange, defenseRange);
 			int minx = max(x-range,0), maxx = min(x+range,gsw);
 			int miny = max(y-range,0), maxy = min(y+range,gsh);
@@ -428,7 +428,7 @@ void InfoMap::UpdateThreatInfo (IAICallback *cb)
 			// handle threat measuring with UnitDamaged()
 			if (b.damageMeasureFrame >= 0 && b.damageMeasureFrame + NUM_DAMAGE_MEASURE_FRAMES < curFrame)
 			{
-				int statisticDamage = b.damageAccumulator / 6; // amount of damage per half second - might need tuning
+				int statisticDamage = (int) b.damageAccumulator / 6; // amount of damage per half second - might need tuning
 				if (b.threat < statisticDamage)
 					b.threat = statisticDamage;
 

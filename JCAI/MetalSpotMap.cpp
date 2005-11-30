@@ -47,8 +47,8 @@ MetalSpotID MetalSpotMap::FindSpot(const float3& startpos, InfoMap* infoMap, flo
 		MetalSpot& s = spots[a];
 		if (s.extractDepth < extractDepth)
 		{
-			int dx=s.pos.x*SQUARE_SIZE-startpos.x;
-			int dy=s.pos.y*SQUARE_SIZE-startpos.z;
+			int dx = s.pos.x*SQUARE_SIZE - (int) startpos.x;
+			int dy = s.pos.y*SQUARE_SIZE - (int) startpos.z;
 			GameInfo *gi = infoMap->GetGameInfoFromMapSquare (s.pos.x, s.pos.y);
 			float dis=sqrtf(dx*dx+dy*dy) * (20+gi->threat);
 			if(best<0 || dis < bestdis) {
@@ -116,8 +116,8 @@ static bool SpotCompare(const MetalSpot& a, const MetalSpot& b) { return a.block
 
 void MetalSpotMap::CalcBlocks (IAICallback *cb)
 {
-	width = ceil(cb->GetMapWidth () / float(BlockWidth));
-	height = ceil(cb->GetMapHeight () / float(BlockWidth));
+	width = (int) ceil(cb->GetMapWidth () / float(BlockWidth));
+	height = (int) ceil(cb->GetMapHeight () / float(BlockWidth));
 
 	blocks = new Block[width*height];
 
@@ -169,7 +169,7 @@ void MetalSpotMap::Initialize (IAICallback *cb) //add isMetalmap true?
 	float exRadius = cb->GetExtractorRadius () / METAL_MAP_SQUARE_SIZE;
 	bool isMetalMap = false;
 
-	int metalblockw = exRadius*2;
+	int metalblockw = (int) (exRadius*2);
 	if (metalblockw < 3) {
 		metalblockw = 3; // to support metal maps
 		isMetalMap = true; // kinda hackish, but who cares if it works :)
