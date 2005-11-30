@@ -86,10 +86,10 @@ public:
 	bool cfgLoaded, skip;
 	IAICallback* cb;
 	IGlobalAICallback* aicb;
-	stdext::hash_map <int, aiUnit*> units;
+	std::map <int, aiUnit*> units;
 	DbgWindow *dbgWindow;
 
-	typedef stdext::hash_map <int, aiUnit*>::iterator UnitIterator;
+	typedef std::map <int, aiUnit*>::iterator UnitIterator;
 
 	InfoMap map;
 	MetalSpotMap metalmap;

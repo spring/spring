@@ -317,7 +317,6 @@ DbgWindow* DbgCreateWindow (const char *name, int w,int h)
 void DbgDestroyWindow (DbgWindow *wnd) {}
 void DbgClearWindow (DbgWindow *wnd) {}
 void DbgWindowTextout (DbgWindow *wnd, int x,int y,const char *text) {}
-void DbgWndPrintf (DbgWindow *wnd, int x,int y,const char *fmt,...) {}
 void DbgWindowPutpixel (DbgWindow *wnd, int x,int y, int col) {}
 void DbgWindowRect (DbgWindow *wnd, int x1,int y1,int x2,int y2,int col) {}
 void DbgWindowUpdate(DbgWindow *wnd) {}

@@ -23,7 +23,7 @@ public:
 template<typename T, typename getindex_t = ptrvec_getindex<T>, typename STL_Alloc=std::allocator<T> >
 class ptrvec {
 public:
-	typedef std::vector <T*, STL_Alloc> vec_t;
+	typedef std::vector <T*, typename STL_Alloc::template rebind<T*>::other > vec_t;
 
 	struct iterator
 	{
@@ -45,7 +45,8 @@ public:
 	ptrvec() {}
 	~ptrvec() { clear(); }
 	void clear() {
-		for(vec_t::iterator i=vec.begin();i!=vec.end();++i) 
+		typename vec_t::iterator i;
+		for(i=vec.begin();i!=vec.end();++i)
 			delete *i;
 		vec.clear();
 	}
