@@ -33,6 +33,7 @@ CInfoConsole::CInfoConsole()
 
 	lifetime=configHandler.GetInt("InfoMessageTime",400);
 	xpos=0.26f;
+	verboseLevel=configHandler.GetInt("VerboseLevel",0);
 	ypos=0.946f;
 	width=0.41f;
 	height=0.2f;
@@ -87,16 +88,57 @@ void CInfoConsole::Update()
 	}
 }
 
-#ifndef NEW_GUI
+
+void CInfoConsole::AddLine(int priority, const char *fmt, ...)
+{
+	char text[500];
+	va_list		ap;										// Pointer To List Of Arguments
+
+	if (fmt == NULL)									// If There's No Text
+		return;											// Do Nothing
+
+	va_start(ap, fmt);									// Parses The String For Variables
+	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
+	va_end(ap);											// Results Are Stored In Text
+
+	AddLineHelper (priority,text);
+}
+
+void CInfoConsole::AddLine(const char *fmt, ...)
+{
+	char text[500];
+	va_list		ap;										// Pointer To List Of Arguments
+
+	if (fmt == NULL)									// If There's No Text
+		return;											// Do Nothing
+
+	va_start(ap, fmt);									// Parses The String For Variables
+	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
+	va_end(ap);											// Results Are Stored In Text
+
+	AddLineHelper (0,text);
+}
+
+void CInfoConsole::AddLine (const std::string& text)
+{
+	AddLineHelper (0, text.c_str());
+}
+
+
+void CInfoConsole::AddLine (int priority, const std::string& text)
+{
+	AddLineHelper (priority, text.c_str());
+}
+
 
 CInfoConsole& CInfoConsole::operator<< (int i)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	char t[50];
 	sprintf(t,"%d ",i);
 	tempstring+=t;
 	return *this;
 }
+
 
 CInfoConsole& CInfoConsole::operator<< (float f)
 {
@@ -121,21 +163,17 @@ CInfoConsole& CInfoConsole::operator<< (const char* c)
 	}
 	return *this;
 }
+
+#ifndef NEW_GUI
  
-void CInfoConsole::AddLine(const char *fmt, ...)
+void CInfoConsole::AddLineHelper (int priority, const char *text)
 {
+	if (priority > verboseLevel)
+		return;
+
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-	char text[500];
-	va_list		ap;										// Pointer To List Of Arguments
-
-	if (fmt == NULL)									// If There's No Text
-		return;											// Do Nothing
-
-	va_start(ap, fmt);									// Parses The String For Variables
-	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
-	va_end(ap);											// Results Are Stored In Text
 
 	char text2[50];
 	if(strlen(text)>42){
@@ -166,56 +204,14 @@ void CInfoConsole::SetLastMsgPos(float3 pos)
 	lastMsgPos=pos;
 }
 
-void CInfoConsole::AddLine(std::string text)
-{
-	AddLine("%s",text.c_str());
-}
-
 #endif
 
 #ifdef NEW_GUI
 
-CInfoConsole& CInfoConsole::operator<< (int i)
+void CInfoConsole::AddLineHelper (int priority, const char *text)
 {
-	char t[50];
-	sprintf(t,"%d ",i);
-	tempstring+=t;
-	return *this;
-}
-
-CInfoConsole& CInfoConsole::operator<< (float f)
-{
-	char t[50];
-	sprintf(t,"%f ",f);
-	tempstring+=t;
-	return *this;
-}
-
-CInfoConsole& CInfoConsole::operator<< (const char* c)
-{
-	for(unsigned int a=0;a<strlen(c);a++){
-		if(c[a]!='\n'){
-			tempstring+=c[a];
-		} else {
-			guicontroller->AddText(tempstring);
-			tempstring="";
-			break;
-		}
-	}
-	return *this;
-}
-
-void CInfoConsole::AddLine(const char *fmt, ...)
-{
-	char text[500];
-	va_list		ap;										// Pointer To List Of Arguments
-
-	if (fmt == NULL)									// If There's No Text
-		return;											// Do Nothing
-
-	va_start(ap, fmt);									// Parses The String For Variables
-	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
-	va_end(ap);	
+	if (priority > verboseLevel)
+		return;
 
 	guicontroller->AddText(text);
 }
@@ -225,8 +221,4 @@ void CInfoConsole::SetLastMsgPos(float3 pos)
 	guicontroller->SetLastMsgPos(pos);
 }
 
-void CInfoConsole::AddLine(std::string text)
-{
-	guicontroller->AddText("%s",text.c_str());
-}
 #endif 

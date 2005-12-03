@@ -135,7 +135,7 @@ void CBuilderCAI::SlowUpdate()
 				buildPos.z=c.params[2];
 				if(buildPos.distance2D(fac->pos)<fac->buildDistance*0.6+radius){
 					StopMove();
-					if(uh->maxUnits>(int)gs->teams[owner->team]->units.size()){
+					if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){
 						buildRetries++;
 						owner->moveType->KeepPointingTo(buildPos, fac->buildDistance*0.7+radius, false);
 						if(fac->StartBuild(boi->second,buildPos) || buildRetries>20){
@@ -505,7 +505,7 @@ void CBuilderCAI::SlowUpdate()
 int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 {
 	if(pointed){
-		if(!gs->allies[gu->myAllyTeam][pointed->allyteam]){
+		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
 			if(owner->maxRange>0)
 				return CMD_ATTACK;
 			else
@@ -520,7 +520,7 @@ int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 	if(feature){
 		if(owner->unitDef->canResurrect && !feature->createdFromUnit.empty())
 			return CMD_RESURRECT;
-		else
+		else if(feature->def->destructable)
 			return CMD_RECLAIM;
 	}
 	return CMD_MOVE;
@@ -534,7 +534,7 @@ void CBuilderCAI::DrawCommands(void)
 
 	if(uh->limitDgun && owner->unitDef->isCommander){
 		glColor4f(1,1,1,0.6);
-		float3 p=gs->teams[owner->team]->startPos;
+		float3 p=gs->Team(owner->team)->startPos;
 		glBegin(GL_LINE_STRIP);
 		for(int a=0;a<=40;++a){
 			float3 pos2=float3(p.x+sin(a*PI*2/40)*uh->dgunRadius,0,p.z+cos(a*PI*2/40)*uh->dgunRadius);
@@ -821,7 +821,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius,unsigned ch
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
 	int myAllyteam=owner->allyteam;
 	for(std::vector<CUnit*>::iterator ui=cu.begin();ui!=cu.end();++ui){
-		if(gs->allies[owner->allyteam][(*ui)->allyteam] && (*ui)->health<(*ui)->maxHealth && (*ui)!=owner){
+		if(gs->Ally(owner->allyteam,(*ui)->allyteam) && (*ui)->health<(*ui)->maxHealth && (*ui)!=owner){
 			if((*ui)->mobility && (*ui)->beingBuilt && owner->moveState<2)		//dont help factories produce units unless set on roam
 				continue;
 			Command nc;
@@ -830,7 +830,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius,unsigned ch
 			nc.params.push_back((*ui)->id);
 			commandQue.push_front(nc);
 			return true;
-		} else if(attackEnemy && owner->maxRange>0 && !gs->allies[owner->allyteam][(*ui)->allyteam]){
+		} else if(attackEnemy && owner->maxRange>0 && !gs->Ally(owner->allyteam,(*ui)->allyteam)){
 			Command nc;
 			nc.id=CMD_ATTACK;
 			nc.options=options | INTERNAL_ORDER;
@@ -847,7 +847,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(float3 pos, float radius,unsigned 
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
 	int myAllyteam=owner->allyteam;
 	for(std::vector<CUnit*>::iterator ui=cu.begin();ui!=cu.end();++ui){
-		if(!gs->allies[myAllyteam][(*ui)->allyteam] && (*ui)!=owner && !(*ui)->beingBuilt){
+		if(!gs->Ally(myAllyteam,(*ui)->allyteam) && (*ui)!=owner && !(*ui)->beingBuilt){
 			Command nc;
 			nc.id=CMD_CAPTURE;
 			nc.options=options | INTERNAL_ORDER;

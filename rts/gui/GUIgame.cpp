@@ -145,7 +145,7 @@ void Selector::GetSelection(vector<CUnit*>&selected)
 
 	set<CUnit*>::iterator ui;
 	int addedunits=0;
-	for(ui=gs->teams[gu->myTeam]->units.begin();ui!=gs->teams[gu->myTeam]->units.end();++ui)
+	for(ui=gs->Team(gu->myTeam)->units.begin();ui!=gs->Team(gu->myTeam)->units.end();++ui)
 	{
 		float3 vec=(*ui)->midPos-camera->pos;
 		if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0)

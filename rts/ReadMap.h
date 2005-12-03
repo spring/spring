@@ -34,7 +34,7 @@ public:
 	CSolidObject* GroundBlocked(int mapSquare);
 	void CleanBlockingMap(CSolidObject* object);	//Debug
 
-	unsigned int bigtex[16],minimapTex,detailtex,detailtex2;
+	unsigned int bigtex[16],minimapTex,detailTex;
 
 	static CReadMap* Instance();
 

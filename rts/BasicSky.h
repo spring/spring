@@ -65,7 +65,9 @@ public:
 	float3 skyColor;
 	float3 sunColor;
 	float3 cloudColor;
+
+protected:
+	inline unsigned char GetCloudThickness(int x,int y);
 };
 
 #endif // __BASIC_SKY_H__
-

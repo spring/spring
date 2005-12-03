@@ -95,7 +95,7 @@ void CEndGameBox::Draw()
 	glColor4f(1,1,1,0.8);
 	font->glPrintAt(box.x1+exitBox.x1+0.025,box.y1+exitBox.y1+0.005,1,"Exit");
 
-	if(gs->teams[gu->myTeam]->isDead){
+	if(gs->Team(gu->myTeam)->isDead){
 		font->glPrintAt(box.x1+0.25,box.y1+0.65,1,"You lost the game");
 	} else {
 		font->glPrintAt(box.x1+0.25,box.y1+0.65,1,"You won the game");

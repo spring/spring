@@ -537,9 +537,9 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 				tempbuf[0]=NETMSG_STARTPOS;
 				tempbuf[1]=a;
 				tempbuf[2]=2;
-				*(float*)&tempbuf[3]=gs->teams[a]->startPos.x;
-				*(float*)&tempbuf[7]=gs->teams[a]->startPos.y;
-				*(float*)&tempbuf[11]=gs->teams[a]->startPos.z;
+				*(float*)&tempbuf[3]=gs->Team(a)->startPos.x;
+				*(float*)&tempbuf[7]=gs->Team(a)->startPos.y;
+				*(float*)&tempbuf[11]=gs->Team(a)->startPos.z;
 				serverNet->SendData(tempbuf,15);
 			}
 		}

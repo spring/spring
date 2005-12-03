@@ -31,15 +31,15 @@ void CGlobalAITestScript::Update(void)
 		globalAI->CreateGlobalAI(1,"./aidll/globalai/test.so");
 #endif
 
-		gs->teams[0]->energy=1000;
-		gs->teams[0]->energyStorage=1000;
-		gs->teams[0]->metal=1000;
-		gs->teams[0]->metalStorage=1000;
+		gs->Team(0)->energy=1000;
+		gs->Team(0)->energyStorage=1000;
+		gs->Team(0)->metal=1000;
+		gs->Team(0)->metalStorage=1000;
 
-		gs->teams[1]->energy=5000;
-		gs->teams[1]->energyStorage=5000;
-		gs->teams[1]->metal=5000;
-		gs->teams[1]->metalStorage=5000;
+		gs->Team(1)->energy=1000;
+		gs->Team(1)->energyStorage=1000;
+		gs->Team(1)->metal=1000;
+		gs->Team(1)->metalStorage=1000;
 
 		TdfParser p("gamedata/sidedata.tdf");
 		string s0=p.SGetValueDef("armcom","side0\\commander");

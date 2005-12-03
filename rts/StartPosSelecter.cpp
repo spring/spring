@@ -26,14 +26,14 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 {
 	float mx=float(x)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
-	if(InBox(mx,my,readyBox) && gs->teams[gu->myTeam]->startPos.y!=-500){
+	if(InBox(mx,my,readyBox) && gs->Team(gu->myTeam)->startPos.y!=-500){
 		gameSetup->readyTeams[gu->myTeam]=true;
 		netbuf[0]=NETMSG_STARTPOS;
 		netbuf[1]=gu->myTeam;
 		netbuf[2]=1;
-		*(float*)&netbuf[3]=gs->teams[gu->myTeam]->startPos.x;
-		*(float*)&netbuf[7]=gs->teams[gu->myTeam]->startPos.y;
-		*(float*)&netbuf[11]=gs->teams[gu->myTeam]->startPos.z;
+		*(float*)&netbuf[3]=gs->Team(gu->myTeam)->startPos.x;
+		*(float*)&netbuf[7]=gs->Team(gu->myTeam)->startPos.y;
+		*(float*)&netbuf[11]=gs->Team(gu->myTeam)->startPos.z;
 		net->SendData(netbuf,15);
 		delete this;
 		return false;
@@ -55,7 +55,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	if(pos.x>gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8)
 		pos.x=gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8;
 
-	inMapDrawer->ErasePos(gs->teams[gu->myTeam]->startPos);
+	inMapDrawer->ErasePos(gs->Team(gu->myTeam)->startPos);
 
 	netbuf[0]=NETMSG_STARTPOS;
 	netbuf[1]=gu->myTeam;

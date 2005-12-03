@@ -10,7 +10,7 @@
 #define GAME_SPEED 30
 #define RANDINT_MAX 0x7fff
 #define MAX_VIEW_RANGE 8000
-#define MAX_TEAMS 16
+#define MAX_TEAMS 17     // team index 16 is the GAIA team
 #define MAX_PLAYERS 32
 
 #define NEAR_PLANE 2.8f
@@ -68,7 +68,6 @@ public:
 	int gameMode;					//0=cmd cont,1=cmd ends
 	float gravity;				//note that this is a negative number and in units/frame^2 not a positive number in units/second^2 as in the mapfile
 
-	CTeam* teams[MAX_TEAMS];			//the teams (note that neutrals are team zero and not counted as active)
 	CPlayer* players[MAX_PLAYERS];
 	int activeTeams;							//number of active teams (dont change during play)
 	int activeAllyTeams;					
@@ -77,8 +76,18 @@ public:
 	float3 sunVector;											//direction of the sun
 	float sunVector4[4];										//for stuff that requires 4 components
 
-	bool allies[MAX_TEAMS][MAX_TEAMS];		//allies[a][b]=true means allyteam a is allied with allyteam b not b is allied with b
+	CTeam *Team(int i) { return teams[i]; }
+	bool Ally(int a,int b) { return allies[a][b]; }
+	int AllyTeam(int team) { return team2allyteam[team]; }
+	bool AlliedTeams(int a,int b) { return allies[team2allyteam[a]][team2allyteam[b]]; }
+	
+	void SetAllyTeam(int team, int allyteam) { team2allyteam[team]=allyteam; }
+	void SetAlly(int teamA,int teamB, bool allied) { allies[teamA][teamB]=allied; }
+
+protected:
+	bool allies[MAX_TEAMS][MAX_TEAMS];		//allies[a][b]=true means allyteam a is allied with allyteam b not b is allied with a
 	int team2allyteam[MAX_TEAMS];			//what ally team a specific team is part of
+	CTeam* teams[MAX_TEAMS];
 };
 
 class CGlobalUnsyncedStuff  

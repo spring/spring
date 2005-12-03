@@ -156,7 +156,7 @@ void CFactoryCAI::SlowUpdate()
 					FinishCommand();
 				}
 			} else {
-				if(uh->maxUnits>gs->teams[owner->team]->units.size()){
+				if(uh->maxUnits>gs->Team(owner->team)->units.size()){
 					fac->StartBuild(boi->second.fullName);
 					building=true;
 				}

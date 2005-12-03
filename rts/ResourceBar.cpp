@@ -82,7 +82,7 @@ void CResourceBar::Draw(void)
 	y1=metaly+.014f;
 	x2=metalbarx2;
 	y2=metaly+.020f;
-	x=(1.0*gs->teams[gu->myTeam]->metal/gs->teams[gu->myTeam]->metalStorage)*metalbarlen;
+	x=(1.0*gs->Team(gu->myTeam)->metal/gs->Team(gu->myTeam)->metalStorage)*metalbarlen;
 	
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
@@ -106,7 +106,7 @@ void CResourceBar::Draw(void)
 	glVertex2f(x1+x, y1);
 	glEnd();
 
-	x=gs->teams[gu->myTeam]->metalShare*metalbarlen;
+	x=gs->Team(gu->myTeam)->metalShare*metalbarlen;
 	glColor4f(0.9f,0.2f,0.2f,0.7f);
 	glBegin(GL_QUADS);
 	glVertex2f(x1+x+0.003, y1-0.003);
@@ -120,14 +120,14 @@ void CResourceBar::Draw(void)
 	
 	font->glPrintAt(metalx-0.004,metaly+.005f,0.7f,"Metal");
 
-	font->glPrintAt(metalbarx2-.01f,metaly,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->metalStorage).c_str());
-	font->glPrintAt(metalbarx1+metalbarlen/2.0,metaly/*+.02f*/,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->metal).c_str());
+	font->glPrintAt(metalbarx2-.01f,metaly,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->metalStorage).c_str());
+	font->glPrintAt(metalbarx1+metalbarlen/2.0,metaly/*+.02f*/,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->metal).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldMetalExpense)).c_str(),FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldMetalUpkeep)).c_str());
+	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldMetalExpense)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldMetalUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
-	font->glPrintAt(metalx+.044f,metaly+.01f,0.5,"+%s",FloatToSmallString(gs->teams[gu->myTeam]->oldMetalIncome).c_str());
+	font->glPrintAt(metalx+.044f,metaly+.01f,0.5,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldMetalIncome).c_str());
 
 	// Energy
 	glDisable(GL_TEXTURE_2D);
@@ -145,7 +145,7 @@ void CResourceBar::Draw(void)
 	y1=energyy+.014f;
 	x2=energybarx2;
 	y2=energyy+.020f;
-	x=(1.0*gs->teams[gu->myTeam]->energy/gs->teams[gu->myTeam]->energyStorage)*energybarlen;
+	x=(1.0*gs->Team(gu->myTeam)->energy/gs->Team(gu->myTeam)->energyStorage)*energybarlen;
 	
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
@@ -169,7 +169,7 @@ void CResourceBar::Draw(void)
 	glVertex2f(x1+x, y1);
 	glEnd();
 
-	x=gs->teams[gu->myTeam]->energyShare*energybarlen;
+	x=gs->Team(gu->myTeam)->energyShare*energybarlen;
 	glColor4f(0.9f,0.2f,0.2f,0.7f);
 	glBegin(GL_QUADS);
 	glVertex2f(x1+x+0.003, y1-0.003);
@@ -184,14 +184,14 @@ void CResourceBar::Draw(void)
 	font->glPrintAt(energyx-0.018,energyy+.005f,0.7f,"Energy");
 
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(energybarx2-.01f,energyy,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->energyStorage).c_str());
-	font->glPrintAt(energybarx1+energybarlen/2.0,energyy/*+.02f*/,0.5,"%s",FloatToSmallString(gs->teams[gu->myTeam]->energy).c_str());
+	font->glPrintAt(energybarx2-.01f,energyy,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->energyStorage).c_str());
+	font->glPrintAt(energybarx1+energybarlen/2.0,energyy/*+.02f*/,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->energy).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldEnergyExpense)).c_str(),FloatToSmallString(fabs(gs->teams[gu->myTeam]->oldEnergyUpkeep)).c_str());
+	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldEnergyExpense)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldEnergyUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
-	font->glPrintAt(energyx+.044f,energyy+.01f,0.5,"+%s",FloatToSmallString(gs->teams[gu->myTeam]->oldEnergyIncome).c_str());
+	font->glPrintAt(energyx+.044f,energyy+.01f,0.5,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldEnergyIncome).c_str());
 
 	glDisable(GL_TEXTURE_2D);
 
@@ -233,7 +233,7 @@ bool CResourceBar::MousePress(int x, int y, int button)
 				netbuf[0]=NETMSG_SETSHARE;
 				netbuf[1]=gu->myTeam;
 				*(float*)&netbuf[2]=metalShare;
-				*(float*)&netbuf[6]=gs->teams[gu->myTeam]->energyShare;
+				*(float*)&netbuf[6]=gs->Team(gu->myTeam)->energyShare;
 				net->SendData(netbuf,10);
 			}
 			if(InBox(mx,my,box+energyBox)){
@@ -241,7 +241,7 @@ bool CResourceBar::MousePress(int x, int y, int button)
 				float energyShare=max(0.f,min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
 				netbuf[0]=NETMSG_SETSHARE;
 				netbuf[1]=gu->myTeam;
-				*(float*)&netbuf[2]=gs->teams[gu->myTeam]->metalShare;
+				*(float*)&netbuf[2]=gs->Team(gu->myTeam)->metalShare;
 				*(float*)&netbuf[6]=energyShare;
 				net->SendData(netbuf,10);
 			}

@@ -147,6 +147,7 @@ extern GLfloat FogLand[];
 void CUnitDrawer::Draw(bool drawReflection)
 {
 	ASSERT_UNSYNCED_MODE;
+
 	vector<CUnit*> drawFar;
 	vector<CUnit*> drawStat;
 	drawCloaked.clear();
@@ -166,7 +167,7 @@ void CUnitDrawer::Draw(bool drawReflection)
 			continue;
 #endif
 		if(camera->InView((*usi)->midPos,(*usi)->radius+30)){
-			if(gs->allies[(*usi)->allyteam][gu->myAllyTeam] || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating){
+			if(gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating){
 				if(drawReflection){
 					float3 zeroPos;
 					if((*usi)->midPos.y<0){
@@ -247,10 +248,10 @@ void CUnitDrawer::Draw(bool drawReflection)
 			float h=ground->GetHeight(pos.x,pos.z);
 			if(pos.y<h+15)
 				pos.y=h+15;
-			va->AddVertexTC(pos+camera->up*15+camera->right*15,0,0,gs->teams[u->team]->color);
-			va->AddVertexTC(pos-camera->up*15+camera->right*15,1,0,gs->teams[u->team]->color);
-			va->AddVertexTC(pos-camera->up*15-camera->right*15,1,1,gs->teams[u->team]->color);
-			va->AddVertexTC(pos+camera->up*15-camera->right*15,0,1,gs->teams[u->team]->color);
+			va->AddVertexTC(pos+camera->up*15+camera->right*15,0,0,gs->Team(u->team)->color);
+			va->AddVertexTC(pos-camera->up*15+camera->right*15,1,0,gs->Team(u->team)->color);
+			va->AddVertexTC(pos-camera->up*15-camera->right*15,1,1,gs->Team(u->team)->color);
+			va->AddVertexTC(pos+camera->up*15-camera->right*15,0,1,gs->Team(u->team)->color);
 		}
 		va->DrawArrayTC(GL_QUADS);
 
@@ -283,7 +284,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	for(list<CUnit*>::iterator usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();++usi){
-		if((gs->allies[(*usi)->allyteam][gu->myAllyTeam] || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
+		if((gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
 			float sqDist=((*usi)->pos-camera->pos).SqLength2D();
 			float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
 			if(sqDist<farLength){

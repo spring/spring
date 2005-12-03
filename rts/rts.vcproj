@@ -39,6 +39,7 @@
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/rts.pdb"
 				SubSystem="2"
+				StackReserveSize="0"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>

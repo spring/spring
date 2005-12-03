@@ -152,7 +152,7 @@ void C3DOParser::DeleteS3DO(S3DO *o)
 
 S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 {
-	int color=gs->teams[team]->colorNum;
+	int color=gs->Team(team)->colorNum;
 
 	if(name.find(".")==string::npos)
 		name+=".3do";
@@ -169,7 +169,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	}
 
 //	if(sideName.find("armstump.3do")!=std::string.npos){
-//		info->AddLine("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),gs->players[gs->teams[team]->leader]->playerName.c_str());
+//		info->AddLine("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),gs->players[gs->Team(team)->leader]->playerName.c_str());
 //	}
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;

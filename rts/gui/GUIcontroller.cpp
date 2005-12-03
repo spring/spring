@@ -249,7 +249,7 @@ void GUIcontroller::ConsoleInput(const std::string& inputText)
 	{
 		gu->spectating=false;
 		gu->myTeam=atoi(&userInput.c_str()[userInput.find(" ")]);
-		gu->myAllyTeam=gs->team2allyteam[gu->myTeam];	//
+		gu->myAllyTeam=gs->AllyTeam(gu->myTeam);	//
 		gs->players[gu->myPlayerNum]->team=gu->myTeam;
 	}
 	//userInput=gs->players[gu->myPlayerNum]->playerName+": "+inputText;

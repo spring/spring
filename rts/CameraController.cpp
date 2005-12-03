@@ -111,10 +111,8 @@ void CFPSController::SwitchTo()
 
 COverheadController::COverheadController()
 : pos(2000,70,1800),
-	height(500)
-{
-	dir=float3(0,-2,-1).Normalize();
-}
+	height(500),zscale(0.5f)
+{}
 
 void COverheadController::KeyMove(float3 move)
 {
@@ -138,7 +136,12 @@ void COverheadController::ScreenEdgeMove(float3 move)
 
 void COverheadController::MouseWheelMove(float move)
 {
-	height*=1+move*0.001;
+	if (keys[SDLK_LCTRL]) {
+		zscale *= 1+move*0.002;
+		if (zscale < 0.05) zscale = 0.05f;
+		if (zscale > 10) zscale = 10;
+	} else
+		height*=1+move*0.001;
 }
 
 float3 COverheadController::GetPos()
@@ -157,6 +160,7 @@ float3 COverheadController::GetPos()
 		height=3000;
 
 	pos.y=ground->GetHeight(pos.x,pos.z);
+	dir=float3(0,-1,-zscale).Normalize();
 	
 	float3 cpos=pos-dir*height;
 

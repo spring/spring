@@ -22,15 +22,15 @@ void CCommanderScript2::Update(void)
 {
 	switch(gs->frameNum){
 	case 0:
-		gs->teams[0]->energy=1000;
-		gs->teams[0]->energyStorage=1000;
-		gs->teams[0]->metal=1000;
-		gs->teams[0]->metalStorage=1000;
+		gs->Team(0)->energy=1000;
+		gs->Team(0)->energyStorage=1000;
+		gs->Team(0)->metal=1000;
+		gs->Team(0)->metalStorage=1000;
 
-		gs->teams[1]->energy=1000;
-		gs->teams[1]->energyStorage=1000;
-		gs->teams[1]->metal=1000;
-		gs->teams[1]->metalStorage=1000;
+		gs->Team(1)->energy=1000;
+		gs->Team(1)->energyStorage=1000;
+		gs->Team(1)->metal=1000;
+		gs->Team(1)->metalStorage=1000;
 
 		TdfParser p("gamedata/SIDEDATA.TDF");
 		string s0=p.SGetValueDef("armcom","side0\\commander");

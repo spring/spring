@@ -98,19 +98,27 @@ bool CSelectionKeyHandler::KeyReleased(unsigned short key)
 string CSelectionKeyHandler::ReadToken(string& s)
 {
 	string ret;
-	// **change made.  avoiding repeated substr calls...
-	int index = 0;
+	// change made.  avoiding repeated substr calls...
+/*	int index = 0;
 	//char c=s[index];
 
-	while ( index < s.length() && 
-		s[index] != '_' &&
-		s[index++] != '+' );
+	while ( index < s.length() && s[index] != '_' && s[index++] != '+' );
 
 	ret = s.substr(0, index);
 	if ( index == s.length() )
 		s.clear();
 	else
 		s = s.substr(index, string::npos);
+*/
+	if (s.empty())
+		return string();
+
+	char c=s[0];
+	while(c && c!='_' && c!='+'){
+		s=s.substr(1,string::npos);
+		ret+=c;
+		c=s[0];
+	}
 
 	return ret;
 }
@@ -130,12 +138,12 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 	string s=ReadToken(selectString);
 
 	if(s=="AllMap"){
-		set<CUnit*>* tu=&gs->teams[gu->myTeam]->units;
+		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
 		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
 			selection.push_back(*ui);
 		}
 	} else if(s=="Visible"){
-		set<CUnit*>* tu=&gs->teams[gu->myTeam]->units;
+		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
 		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
 			if(camera->InView((*ui)->midPos,(*ui)->radius))
 				selection.push_back(*ui);
@@ -148,7 +156,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*8000);
 		float3 mp=camera->pos+mouse->dir*dist;
 
-		set<CUnit*>* tu=&gs->teams[gu->myTeam]->units;
+		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
 		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
 			if(mp.distance((*ui)->pos)<maxDist)
 				selection.push_back(*ui);

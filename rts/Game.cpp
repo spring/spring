@@ -460,7 +460,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			team=9;
 		if(team<gs->activeTeams){
 			gu->myTeam=team;
-			gu->myAllyTeam=gs->team2allyteam[team];
+			gu->myAllyTeam=gs->AllyTeam(team);
 		}
 	}
 
@@ -1084,7 +1084,7 @@ bool CGame::Draw()
 		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->active){
 				glTranslatef(0,1.2f,0.0f);
-				glColor4ubv(gs->teams[gs->players[a]->team]->color);
+				glColor4ubv(gs->Team(gs->players[a]->team)->color);
 				font->glPrint("%20s %3.0f%% %3i",gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,gs->players[a]->ping);
 			}
 		}
@@ -1139,7 +1139,7 @@ void CGame::StartPlaying()
 	lastframe = SDL_GetTicks();
 	ENTER_MIXED;
 	gu->myTeam=gs->players[gu->myPlayerNum]->team;
-	gu->myAllyTeam=gs->team2allyteam[gu->myTeam];
+	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
 	grouphandler->team=gu->myTeam;
 	ENTER_SYNCED;
 }
@@ -1216,7 +1216,7 @@ START_TIME_PROFILE
 
 	if(!(gs->frameNum&31)){
 		for(int a=0;a<gs->activeTeams;++a)
-			gs->teams[a]->Update();
+			gs->Team(a)->Update();
 	}
 //	CPathFinder::Instance()->Update();	
 	
@@ -1249,7 +1249,7 @@ END_TIME_PROFILE("Sim time")
 		pos+=UpVector*7;
 
 		CUnit* hit;
-		float dist=helper->TraceRayTeam(pos,dc->viewDir,unit->maxRange,hit,1,unit,gs->team2allyteam[gs->players[a]->team]);
+		float dist=helper->TraceRayTeam(pos,dc->viewDir,unit->maxRange,hit,1,unit,gs->AllyTeam(gs->players[a]->team));
 		dc->target=hit;
 
 		if(hit){
@@ -1580,9 +1580,9 @@ bool CGame::ClientReadNet()
 			} else {
 				if(inbuf[inbufpos+2]!=2)
 					gameSetup->readyTeams[team]=!!inbuf[inbufpos+2];
-				gs->teams[team]->startPos.x=*(float*)&inbuf[inbufpos+3];
-				gs->teams[team]->startPos.y=*(float*)&inbuf[inbufpos+7];
-				gs->teams[team]->startPos.z=*(float*)&inbuf[inbufpos+11];
+				gs->Team(team)->startPos.x=*(float*)&inbuf[inbufpos+3];
+				gs->Team(team)->startPos.y=*(float*)&inbuf[inbufpos+7];
+				gs->Team(team)->startPos.z=*(float*)&inbuf[inbufpos+11];
 			}
 			lastLength=15;
 			break;}
@@ -1710,13 +1710,13 @@ bool CGame::ClientReadNet()
 			int team1=gs->players[player]->team;
 			int team2=inbuf[inbufpos+2];
 			bool shareUnits=!!inbuf[inbufpos+3];
-			float metalShare=min(*(float*)&inbuf[inbufpos+4],(float)gs->teams[team1]->metal);
-			float energyShare=min(*(float*)&inbuf[inbufpos+8],(float)gs->teams[team1]->energy);
+ 			float metalShare=min(*(float*)&inbuf[inbufpos+4],(float)gs->Team(team1)->metal);
+ 			float energyShare=min(*(float*)&inbuf[inbufpos+8],(float)gs->Team(team1)->energy);
 			
-			gs->teams[team1]->metal-=metalShare;
-			gs->teams[team2]->metal+=metalShare;
-			gs->teams[team1]->energy-=energyShare;
-			gs->teams[team2]->energy+=energyShare;
+			gs->Team(team1)->metal-=metalShare;
+			gs->Team(team2)->metal+=metalShare;
+			gs->Team(team1)->energy-=energyShare;
+			gs->Team(team2)->energy+=energyShare;
 	
 			if(shareUnits){
 				for(vector<int>::iterator ui=selectedUnits.netSelected[player].begin();ui!=selectedUnits.netSelected[player].end();++ui){
@@ -1737,8 +1737,8 @@ bool CGame::ClientReadNet()
 				float metalShare=*(float*)&inbuf[inbufpos+2];
 				float energyShare=*(float*)&inbuf[inbufpos+6];
 				
-				gs->teams[team]->metalShare=metalShare;
-				gs->teams[team]->energyShare=energyShare;
+				gs->Team(team)->metalShare=metalShare;
+				gs->Team(team)->energyShare=energyShare;
 			}
 			lastLength=10;
 			break;}
@@ -2269,15 +2269,15 @@ void CGame::HandleChatMsg(std::string s,int player)
 			if(player==gu->myPlayerNum){
 				gu->spectating=false;
 				gu->myTeam=team;
-				gu->myAllyTeam=gs->team2allyteam[gu->myTeam];
+				gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
 				grouphandler->team=gu->myTeam;
 			}
 		}
 	}
 	if(s.find(".atm")==0 && gs->cheatEnabled){
 		int team=gs->players[player]->team;
-		gs->teams[team]->AddMetal(1000);
-		gs->teams[team]->AddEnergy(1000);
+		gs->Team(team)->AddMetal(1000);
+		gs->Team(team)->AddEnergy(1000);
 	}
 
 	if(s.find(".give")==0 && gs->cheatEnabled){
@@ -2322,7 +2322,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 	if(s.find(".take")==0){
 		int sendTeam=gs->players[player]->team;
 		for(int a=0;a<gs->activeTeams;++a){
-			if(gs->allies[a][sendTeam]){
+			if(gs->AlliedTeams(a,sendTeam)){
 				bool hasPlayer=false;
 				for(int b=0;b<gs->activePlayers;++b){
 					if(gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator)
@@ -2395,7 +2395,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if(player==gu->myPlayerNum)
 			userInputPrefix="a:";
 
-		if((gs->allies[gs->team2allyteam[gs->players[inbuf[inbufpos+2]]->team]][gu->myAllyTeam] && (!gs->players[player]->spectator || gu->spectating))){
+		if((gs->Ally(gs->AllyTeam(gs->players[inbuf[inbufpos+2]]->team),gu->myAllyTeam) && !gs->players[player]->spectator) || gu->spectating){
 			if(gs->players[player]->spectator)
 				s="["+gs->players[player]->playerName+"] Allies: "+s.substr(2,255);
 			else

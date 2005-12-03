@@ -489,9 +489,9 @@ void CGameServer::StartGame(void)
 			outbuf[0]=NETMSG_STARTPOS;
 			outbuf[1]=a;
 			outbuf[2]=1;
-			*(float*)&outbuf[3]=gs->teams[a]->startPos.x;
-			*(float*)&outbuf[7]=gs->teams[a]->startPos.y;
-			*(float*)&outbuf[11]=gs->teams[a]->startPos.z;
+			*(float*)&outbuf[3]=gs->Team(a)->startPos.x;
+			*(float*)&outbuf[7]=gs->Team(a)->startPos.y;
+			*(float*)&outbuf[11]=gs->Team(a)->startPos.z;
 			serverNet->SendData(outbuf,15);
 		}
 	}
@@ -517,8 +517,8 @@ void CGameServer::CheckForGameEnd(void)
 		active[a]=false;
 
 	for(int a=0;a<gs->activeTeams;++a)
-		if(!gs->teams[a]->isDead)
-			active[gs->team2allyteam[a]]=true;
+		if(!gs->Team(a)->isDead)
+			active[gs->AllyTeam(a)]=true;
 
 	int numActive=0;
 

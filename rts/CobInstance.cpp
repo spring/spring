@@ -64,6 +64,17 @@ class CUnit;
 
 CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 : script(script)
+/*#define WEAPON_AIM_ABORTED	21
+#define WEAPON_READY		22
+#define WEAPON_LAUNCH_NOW	23
+#define FINISHED_DYING		26
+#define ORIENTATION			27*/
+#define IN_WATER   28
+#define CURRENT_SPEED  29
+//#define MAGIC_DEATH   31
+#define VETERAN_LEVEL  32
+#define ON_ROAD    34
+
 {
 	for (int i = 0; i < script.numStaticVars; ++i) {
 		staticVars.push_back(0);
@@ -832,6 +843,16 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 	default:
 		info->AddLine("CobError: Unknown get constant %d", val);
+	case VETERAN_LEVEL: 
+		return 100*unit->experience;
+	case CURRENT_SPEED:
+		if (unit->moveType)
+			return unit->speed.Length()*SCALE;
+		return 0;
+	case ON_ROAD:
+		return 0;
+	case IN_WATER:
+		return (unit->pos.y < 0.0f) ? 1 : 0;
 	}
 #endif
 
@@ -909,6 +930,18 @@ void CCobInstance::SetUnitVal(int val, int param)
 		break;
 	default:
 		info->AddLine("CobError: Unknown set constant %d", val);
+	case VETERAN_LEVEL: 
+		unit->experience=param*0.01f;
+		break;
+	case CURRENT_SPEED:
+		if (param==0) 
+			unit->speed=ZeroVector;
+		else {
+			float cur=unit->speed.SqLength();
+			if (cur>0.001)
+				unit->speed *= (param*(1.0f/SCALE))/sqrtf(cur); // calculate by what value the speed should be multiplied with to get it to length=param/SCALE
+		}
+		break;
 	}
 #endif
 }

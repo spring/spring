@@ -26,7 +26,8 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 
 	CBitmap TexImage("bitmaps/gran.bmp");
 	TexImage.ReverseYAxis();
-	unsigned char gran[1024][512][4];//=new unsigned char[1024][512][4]; 
+	//unsigned char gran[1024][512][4];
+	unsigned char (*gran)[512][4]=new unsigned char[1024][512][4]; 
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
 			for(int x=0;x<256;x++){
@@ -127,7 +128,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 
 	// create mipmapped texture
 	CreateTreeTex(treetex,gran[0][0],512,1024);
-//	delete[] gran;
+	delete[] gran;
 
 	treesX=gs->mapx/TREE_SQUARE_SIZE;
 	treesY=gs->mapy/TREE_SQUARE_SIZE;

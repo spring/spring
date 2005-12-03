@@ -210,7 +210,7 @@ void CMobileCAI::SlowUpdate()
 		}
 		return;}
 	case CMD_DGUN:
-		if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.distance(gs->teams[owner->team]->startPos)>uh->dgunRadius){
+		if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
 			StopMove();
 			FinishCommand();
 			return;
@@ -302,7 +302,7 @@ void CMobileCAI::SlowUpdate()
 int CMobileCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 {
 	if(pointed){
-		if(!gs->allies[gu->myAllyTeam][pointed->allyteam]){
+		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
 			return CMD_ATTACK;
 		} else {
 			return CMD_GUARD;
@@ -383,6 +383,10 @@ void CMobileCAI::NonMoving(void)
 		float3 dif=owner->pos-buggerOffPos;
 		dif.y=0;
 		float length=dif.Length();
+		if(!length) {
+			length=0.1f;
+			dif=float3(0.1f,0.0f,0.0f);
+		}
 		if(length<buggerOffRadius){
 			float3 goalPos=buggerOffPos+dif*((buggerOffRadius+128)/length);
 			Command c;

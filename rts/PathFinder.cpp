@@ -206,6 +206,13 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 	startzSqr = (int(start.z) / SQUARE_SIZE)|1;
 	startSquare = startxSqr + startzSqr * gs->mapx;
 
+
+	//Clamp the start position
+	if (startxSqr < 0) startxSqr=0;
+	if (startxSqr >= gs->mapx) startxSqr = gs->mapx-1;
+	if (startzSqr < 0) startzSqr =0;
+	if (startzSqr >= gs->mapy) startzSqr = gs->mapy-1;
+
 	//Start up the search.
 	SearchResult result = InitSearch(moveData, pfDef);
 

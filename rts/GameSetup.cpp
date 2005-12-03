@@ -83,6 +83,7 @@ bool CGameSetup::Init(char* buf, int size)
 	demoName=file.SGetValueDef("","GAME\\Demofile");
 	if(!demoName.empty())
 		hostDemo=true;
+	file.GetDef(ghostedBuildings,"1","GAME\\GhostedBuildings");
 
 	// Determine if the map is inside an archive, and possibly map needed archives
 	CFileHandler* f = new CFileHandler("maps/" + mapname);
@@ -147,15 +148,16 @@ bool CGameSetup::Init(char* buf, int size)
 		sprintf(section,"GAME\\TEAM%i\\",a);
 		string s(section);
 
-		gs->teams[a]->colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
+		gs->Team(a)->colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
 		for(int b=0;b<4;++b)
-			gs->teams[a]->color[b]=palette.teamColor[gs->teams[a]->colorNum][b];
+			gs->Team(a)->color[b]=palette.teamColor[gs->Team(a)->colorNum][b];
 
-		gs->teams[a]->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
-		gs->teams[a]->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
-		gs->teams[a]->side=file.SGetValueDef("arm",s+"side").c_str();
-		std::transform(gs->teams[a]->side.begin(), gs->teams[a]->side.end(), gs->teams[a]->side.begin(), (int (*)(int))std::tolower);
-		gs->team2allyteam[a]=atoi(file.SGetValueDef("0",s+"allyteam").c_str());
+ 		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
+ 		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
+ 		gs->Team(a)->side=file.SGetValueDef("arm",s+"side").c_str();
+ 		std::transform(gs->Team(a)->side.begin(), gs->Team(a)->side.end(), gs->Team(a)->side.begin(), (int (*)(int))std::tolower);
+ 		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0",s+"allyteam").c_str()));
+
 		aiDlls[a]=file.SGetValueDef("",s+"aidll");
 
 		float x,z;
@@ -163,13 +165,13 @@ bool CGameSetup::Init(char* buf, int size)
 		sprintf(teamName,"TEAM%i",teamStartNum[a]);
 		p2.GetDef(x,"1000",string("MAP\\")+teamName+"\\StartPosX");
 		p2.GetDef(z,"1000",string("MAP\\")+teamName+"\\StartPosZ");
-		gs->teams[a]->startPos=float3(x,100,z);
+		gs->Team(a)->startPos=float3(x,100,z);
 
 		if(startPosType==2)
-			gs->teams[a]->startPos.y=-500;	//show that we havent selected start pos yet
+			gs->Team(a)->startPos.y=-500;	//show that we havent selected start pos yet
 	}
 	gu->myTeam=gs->players[myPlayer]->team;
-	gu->myAllyTeam=gs->team2allyteam[gu->myTeam];
+	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
 		char section[50];
@@ -186,23 +188,23 @@ bool CGameSetup::Init(char* buf, int size)
 			char key[100];
 			sprintf(key,"GAME\\ALLYTEAM%i\\Ally%i",a,b);
 			int other=atoi(file.SGetValueDef("0",key).c_str());
-			gs->allies[a][other]=true;
+			gs->SetAlly(a,other, true);
 		}
 	}
 	if(startPosType==2){
 		for(int a=0;a<gs->activeTeams;++a)
-			gs->teams[a]->startPos=float3(startRectLeft[gs->team2allyteam[a]]*gs->mapx*8,-500,startRectTop[gs->team2allyteam[a]]*gs->mapy*8);
+			gs->Team(a)->startPos=float3(startRectLeft[gs->AllyTeam(a)]*gs->mapx*8,-500,startRectTop[gs->AllyTeam(a)]*gs->mapy*8);
 	}
 
 	int metal,energy;
 	file.GetDef(metal,"1000","GAME\\StartMetal");
 	file.GetDef(energy,"1000","GAME\\StartEnergy");
 	for(int a=0;a<gs->activeTeams;++a){
-		gs->teams[a]->metal=metal;
-		gs->teams[a]->metalStorage=metal;
+		gs->Team(a)->metal=metal;
+		gs->Team(a)->metalStorage=metal;
 
-		gs->teams[a]->energy=energy;
-		gs->teams[a]->energyStorage=energy;
+		gs->Team(a)->energy=energy;
+		gs->Team(a)->energyStorage=energy;
 	}
 
 	// Read the unit restrictions
@@ -272,7 +274,7 @@ bool CGameSetup::Draw(void)
 		if(readyTime==0 && !net->playbackDemo){
 			mouse->currentCamController=mouse->camControllers[1];
 			mouse->currentCamControllerNum=1;
-			mouse->currentCamController->SetPos(gs->teams[gu->myTeam]->startPos);
+			mouse->currentCamController->SetPos(gs->Team(gu->myTeam)->startPos);
 			mouse->inStateTransit=true;
 			mouse->transitSpeed=1;
 		}

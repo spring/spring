@@ -328,7 +328,7 @@ if(unit->lastDamage>gs->frameNum-90 && gs->frameNum&8)
 	if(unit->commandAI->selected)
 		glColor3f(1,1,1);
 	else 
-		glColor3ubv(gs->teams[unit->team]->color);
+		glColor3ubv(gs->Team(unit->team)->color);
 
 	float x=pos.x/(gs->mapx*SQUARE_SIZE);
 	float y=1-pos.z/(gs->mapy*SQUARE_SIZE);

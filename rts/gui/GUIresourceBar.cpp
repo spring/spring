@@ -46,27 +46,27 @@ void GUIresourceBar::PrivateDraw()
 	char buf[500];
 	
 	glColor3f(0, 1, 0);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->oldMetalIncome);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldMetalIncome);
 	guifont->Print(offset+mWidth, middle-5, 0.8, buf);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->oldEnergyIncome);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldEnergyIncome);
 	guifont->Print((w+offset)/2.0+eWidth, middle-5, 0.8, buf);
 
 	glColor3f(1, 0.2, 0.2);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->oldMetalExpense);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldMetalExpense);
 	guifont->Print(offset+mWidth, middle+5, 0.8, buf);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->oldEnergyExpense);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldEnergyExpense);
 	guifont->Print((w+offset)/2.0+eWidth, middle+5, 0.8, buf);
 
 	glColor3f(0, 1, 0);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->metal);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->metal);
 	guifont->Print(offset+mWidth + 30, middle, 0.8, buf);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->energy);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->energy);
 	guifont->Print((w+offset)/2.0+eWidth + 30, middle, 0.8, buf);
 
 	glColor3f(1, 0.2, 0.2);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->metalStorage);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->metalStorage);
 	guifont->Print(w/2-90, middle, 0.8, buf);
-	sprintf(buf, "%.1f", gs->teams[gu->myTeam]->energyStorage);
+	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->energyStorage);
 	guifont->Print(w-90, middle, 0.8, buf);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -78,12 +78,12 @@ void GUIresourceBar::PrivateDraw()
 	float barStart=mWidth+offset+95;
 	float barLength=w/2.0-barStart-100;
 	
-	float metal=gs->teams[gu->myTeam]->metal;
-	float maxMetal=gs->teams[gu->myTeam]->metalStorage;
-	float metalShared=gs->teams[gu->myTeam]->metalShare;
-	float energy=gs->teams[gu->myTeam]->energy;
-	float maxEnergy=gs->teams[gu->myTeam]->energyStorage;
-	float energyShared=gs->teams[gu->myTeam]->energyShare;
+	float metal=gs->Team(gu->myTeam)->metal;
+	float maxMetal=gs->Team(gu->myTeam)->metalStorage;
+	float metalShared=gs->Team(gu->myTeam)->metalShare;
+	float energy=gs->Team(gu->myTeam)->energy;
+	float maxEnergy=gs->Team(gu->myTeam)->energyStorage;
+	float energyShared=gs->Team(gu->myTeam)->energyShare;
 
 	Quad(barStart, middle, barLength, barHeight);
 
@@ -133,11 +133,11 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 			float rel=(x1-barStart)/(barEnd-barStart);
 			rel = max(rel, 0.0f);
 			rel = min(rel, 1.0f);
-			float metalShare=gs->teams[gu->myTeam]->metalStorage*rel;
+			float metalShare=gs->Team(gu->myTeam)->metalStorage*rel;
 			netbuf[0]=NETMSG_SETSHARE;
 			netbuf[1]=gu->myTeam;
 			*(float*)&netbuf[2]=metalShare;
-			*(float*)&netbuf[6]=gs->teams[gu->myTeam]->energyShare;
+			*(float*)&netbuf[6]=gs->Team(gu->myTeam)->energyShare;
 			net->SendData(netbuf,10);
 		}
 		
@@ -148,10 +148,10 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 			float rel=(x1-barStart)/(barEnd-barStart);
 			rel = max(rel, 0.0f);
 			rel = min(rel, 1.0f);
-			float energyShare=gs->teams[gu->myTeam]->energyStorage*rel;
+			float energyShare=gs->Team(gu->myTeam)->energyStorage*rel;
 			netbuf[0]=NETMSG_SETSHARE;
 			netbuf[1]=gu->myTeam;
-			*(float*)&netbuf[2]=gs->teams[gu->myTeam]->metalShare;
+			*(float*)&netbuf[2]=gs->Team(gu->myTeam)->metalShare;
 			*(float*)&netbuf[6]=energyShare;
 			net->SendData(netbuf,10);
 			

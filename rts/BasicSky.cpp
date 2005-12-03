@@ -20,6 +20,8 @@
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
+#include <assert.h>
+
 //////////////////////////////////////////////////////////////////////
 extern GLfloat FogBlack[]; 
 extern GLfloat FogLand[]; 
@@ -721,6 +723,17 @@ void CBasicSky::InitSun()
 	glEndList();
 }
 
+inline unsigned char CBasicSky::GetCloudThickness(int x,int y)
+{
+	assert (CLOUD_SIZE==256);
+	x &= 0xff;
+	y &= 0xff;
+
+	//assert (x>=0 && x<CLOUD_SIZE);
+	//assert (y>=0 && y<CLOUD_SIZE);
+	return cloudThickness [ (y * CLOUD_SIZE + x) * 4 + 3 ];
+}
+
 void CBasicSky::CreateCover(int baseX, int baseY, float *buf)
 {
 	static int line[]={ 5, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 5, 0, 1, 0, 2, 1, 3, 1, 4, 1, 5, 5, 0, 1, 1, 2, 1, 3, 2, 4, 2, 5, 4, 1, 1, 2, 2, 2, 3, 3, 4, 4, 1, 1, 2, 2, 3, 3, 4, 4, 4, 1, 1, 2, 2, 3, 2, 4, 3, 5, 1, 0, 2, 1, 3, 1, 4, 2, 5, 2, 5, 1, 0, 2, 0, 3, 1, 4, 1, 5, 1};
@@ -736,11 +749,11 @@ void CBasicSky::CreateCover(int baseX, int baseY, float *buf)
 		for(int x=0;x<num;++x){
 			int dx=line[i++];
 			int dy=line[i++];
-			
-			cover1+=(255-cloudThickness[((baseY+dy)*CLOUD_SIZE+baseX-dx)*4+3]);//*(num-x);
-			cover2+=(255-cloudThickness[((baseY-dx)*CLOUD_SIZE+baseX-dy)*4+3]);//*(num-x);
-			cover3+=(255-cloudThickness[((baseY-dy)*CLOUD_SIZE+baseX+dx)*4+3]);//*(num-x);
-			cover4+=(255-cloudThickness[((baseY+dx)*CLOUD_SIZE+baseX+dy)*4+3]);//*(num-x);
+			cover1+=255-GetCloudThickness(baseX-dx,baseY+dy);
+			cover2+=255-GetCloudThickness(baseX-dy,baseY-dx);//*(num-x);
+			cover3+=255-GetCloudThickness(baseX+dx,baseY-dy);//*(num-x);
+			cover4+=255-GetCloudThickness(baseX+dy,baseY+dx);//*(num-x);
+
 			total+=1;//(num-x);
 		}
 

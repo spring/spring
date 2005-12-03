@@ -6,14 +6,25 @@
 #include "InfoConsole.h"
 #include "GameHelper.h"
 #include "TimeProfiler.h"
+#include "RegHandler.h"
 #include "errorhandler.h"
 //#include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
+static bool CatchException()
+{
+	static bool init=false;
+	static bool Catch;
+	if (!init) {
+		Catch=configHandler.GetInt ("CatchAIExceptions", 1)!=0;
+		init=true;
+	}
+	return Catch;
+}
+
 
 // to switch off the exception handling and have it catched by the debugger.
-#define HANDLE_EXCEPTION AIException()
-//#define HANDLE_EXCEPTION throw
+#define HANDLE_EXCEPTION if (CatchException ()) { AIException(); } else { throw; }
 
 static void AIException()
 {
@@ -69,7 +80,7 @@ void CGlobalAIHandler::UnitEnteredLos(CUnit* unit,int allyteam)
 {
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
+			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
 				try {
 					ais[a]->ai->EnemyEnterLOS(unit->id);
 				} catch (...){
@@ -83,7 +94,7 @@ void CGlobalAIHandler::UnitLeftLos(CUnit* unit,int allyteam)
 {
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
+			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
 				try {
 					ais[a]->ai->EnemyLeaveLOS(unit->id);
 				} catch (...){
@@ -97,7 +108,7 @@ void CGlobalAIHandler::UnitEnteredRadar(CUnit* unit,int allyteam)
 {
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
+			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
 				try {
 					ais[a]->ai->EnemyEnterRadar(unit->id);
 				} catch (...){
@@ -111,7 +122,7 @@ void CGlobalAIHandler::UnitLeftRadar(CUnit* unit,int allyteam)
 {
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->team2allyteam[a]==allyteam && !gs->allies[allyteam][unit->allyteam])
+			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
 				try {
 					ais[a]->ai->EnemyLeaveRadar(unit->id);
 				} catch (...){
@@ -156,7 +167,7 @@ void CGlobalAIHandler::UnitDestroyed(CUnit* unit)
 	if(hasAI){
 		try {
 			for(int a=0;a<gs->activeTeams;++a){
-				if(ais[a] && !gs->allies[gs->team2allyteam[a]][unit->allyteam] && unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR))
+ 				if(ais[a] && !gs->Ally(gs->AllyTeam(a),unit->allyteam) && (unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))
 					ais[a]->ai->EnemyDestroyed(unit->id);
 			}
 			if(ais[unit->team])

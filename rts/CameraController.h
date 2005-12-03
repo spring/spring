@@ -62,6 +62,7 @@ public:
 	float3 SwitchFrom();
 	void SwitchTo();
 
+	float zscale;
 	float3 pos;
 	float3 dir;
 	float height;
