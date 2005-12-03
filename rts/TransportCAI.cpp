@@ -304,7 +304,7 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 int CTransportCAI::GetDefaultCmd(CUnit* pointed,CFeature* feature)
 {
 	if(pointed){
-		if(!gs->allies[gu->myAllyTeam][pointed->allyteam]){
+		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
 			return CMD_ATTACK;
 		} else {
 			if(CanTransport(pointed))

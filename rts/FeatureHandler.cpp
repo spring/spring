@@ -498,7 +498,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		fd->metal=atof(wreckParser.SGetValueDef("0",name+"\\metal").c_str());
 		fd->model=0;
 		fd->modelname=wreckParser.SGetValueDef("",name+"\\object");
-		if(fd->modelname.find(".")==string::npos && !fd->modelname.empty())
+		if(!fd->modelname.empty())
 			fd->modelname=string("objects3d/")+fd->modelname;
 		fd->radius=0;
 		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs

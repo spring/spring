@@ -100,7 +100,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 		freeIDs.pop_back();
 	}
 	units[id]=unit;
-	gs->teams[unit->team]->AddUnit(unit,CTeam::AddBuilt);
+	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
 	return id;
 }
 
@@ -126,7 +126,7 @@ START_TIME_PROFILE;
 				activeUnits.erase(usi);
 				units[delUnit->id]=0;
 				freeIDs.push_front(delUnit->id);
-				gs->teams[delUnit->team]->RemoveUnit(delUnit,CTeam::RemoveDied);
+				gs->Team(delUnit->team)->RemoveUnit(delUnit,CTeam::RemoveDied);
 				delete delUnit;
 				break;
 			}
@@ -186,8 +186,8 @@ int CUnitHandler::CreateChecksum()
 #endif
 
 	for(int a=0;a<gs->activeTeams;++a){
-		checksum^=*((int*)&(gs->teams[a]->metal));
-		checksum^=*((int*)&(gs->teams[a]->energy));
+		checksum^=*((int*)&(gs->Team(a)->metal));
+		checksum^=*((int*)&(gs->Team(a)->energy));
 	}
 #ifdef TRACE_SYNC
 		tracefile << checksum << "\n";

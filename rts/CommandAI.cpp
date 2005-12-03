@@ -400,7 +400,7 @@ void CCommandAI::SlowUpdate()
 int CCommandAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 {
 	if(pointed){
-		if(!gs->allies[gu->myAllyTeam][pointed->allyteam])
+		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam))
 			return CMD_ATTACK;
 	}
 	return CMD_STOP;

@@ -278,7 +278,7 @@ float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float leng
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
 			if((*ui)==exclude)
 				continue;
-			if(gs->allies[(*ui)->allyteam][allyteam] || ((*ui)->losStatus[allyteam] & LOS_INLOS)){
+			if(gs->Ally((*ui)->allyteam,allyteam) || ((*ui)->losStatus[allyteam] & LOS_INLOS)){
 				float3 dif=(*ui)->midPos-start;
 				float closeLength=dif.dot(dir);
 				if(closeLength<0)
@@ -325,7 +325,7 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(int t=0;t<gs->activeAllyTeams;++t){
-			if(gs->allies[attacker->allyteam][t])
+			if(gs->Ally(attacker->allyteam,t))
 				continue;
 			for(ui=qf->baseQuads[*qi].teamUnits[t].begin();ui!=qf->baseQuads[*qi].teamUnits[t].end();++ui){
 				if((*ui)->tempNum!=tempNum && ((*ui)->category&weapon->onlyTargetCategory)){
@@ -394,7 +394,7 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3 &pos, float radius,int sear
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
+			if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam) && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -418,7 +418,7 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam]){
+			if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam)){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -442,7 +442,7 @@ CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float radius,int s
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum && gs->allies[searchAllyteam][(*ui)->allyteam]){
+			if((*ui)->tempNum!=tempNum && gs->Ally(searchAllyteam,(*ui)->allyteam)){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -466,7 +466,7 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && !(*ui)->crashing && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
+			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam) && !(*ui)->crashing && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -489,7 +489,7 @@ void CGameHelper::GetEnemyUnits(float3 &pos, float radius, int searchAllyteam, v
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum && !gs->allies[searchAllyteam][(*ui)->allyteam] && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
+			if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam) && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
 				if((pos-(*ui)->midPos).SqLength2D() <= sqRadius){
 					found.push_back((*ui)->id);
@@ -579,7 +579,7 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 float3 CGameHelper::GetUnitErrorPos(CUnit* unit, int allyteam)
 {
 	float3 pos=unit->midPos;
-	if(gs->allies[allyteam][unit->allyteam] || (unit->losStatus[allyteam] & LOS_INLOS)){
+	if(gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)){
 	} else if((unit->losStatus[allyteam] & LOS_INRADAR)){
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[allyteam];
 	} else {

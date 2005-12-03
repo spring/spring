@@ -30,7 +30,7 @@ void GUIallyResourceBar::PrivateDraw()
 {
 	int numAllies=0;
 	for(int a=0;a<gs->activeTeams;++a){
-		if(gs->allies[gs->team2allyteam[a]][gu->myAllyTeam] && a!=gu->myTeam)
+		if(gs->Ally(gs->AllyTeam(a),gu->myAllyTeam) && a!=gu->myTeam)
 			numAllies++;
 	}
 	h=numAllies*32;
@@ -45,11 +45,11 @@ void GUIallyResourceBar::PrivateDraw()
 	
 	int yoff=0;
 	for(int a=0;a<gs->activeTeams;++a){
-		if(gs->allies[gs->team2allyteam[a]][gu->myAllyTeam] && a!=gu->myTeam){
+		if(gs->Ally(gs->AllyTeam(a),gu->myAllyTeam) && a!=gu->myTeam){
 			glColor3f(1, 1, 1);
-			guifont->Print(2, yoff+10, gs->players[gs->teams[a]->leader]->playerName.c_str());
-			guifont->Print(65, yoff+2, "%.0f",gs->teams[a]->metal);
-			guifont->Print(65, yoff+18, "%.0f",gs->teams[a]->energy);
+			guifont->Print(2, yoff+10, gs->players[gs->Team(a)->leader]->playerName.c_str());
+			guifont->Print(65, yoff+2, "%.0f",gs->Team(a)->metal);
+			guifont->Print(65, yoff+18, "%.0f",gs->Team(a)->energy);
 			
 			glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -57,13 +57,13 @@ void GUIallyResourceBar::PrivateDraw()
 			Quad(120,yoff+5,75,6);
 
 			glColor4f(0.8f, 0.8f, 1.0f, 0.8f);
-			Quad(120,yoff+5,75*gs->teams[a]->metal/gs->teams[a]->metalStorage,6);
+			Quad(120,yoff+5,75*gs->Team(a)->metal/gs->Team(a)->metalStorage,6);
 
 			glColor4f(0.2f, 0.2f, 0.1f, 0.8f);
 			Quad(120,yoff+21,75,6);
 
 			glColor4f(1.0f, 1.0f, 0.5f, 0.8f);
-			Quad(120,yoff+21,75*gs->teams[a]->energy/gs->teams[a]->energyStorage,6);
+			Quad(120,yoff+21,75*gs->Team(a)->energy/gs->Team(a)->energyStorage,6);
 
 			yoff+=32;
 		}

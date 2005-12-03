@@ -152,15 +152,15 @@ void CShareBox::Draw(void)
 	font->glPrintAt(box.x1+0.01,box.y1+0.16,0.7f,"Share Energy");
 
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1+0.25f,box.y1+0.12,0.7f,"%.0f",gs->teams[gu->myTeam]->energy);
-	font->glPrintAt(box.x1+0.14f,box.y1+0.12,0.7f,"%.0f",gs->teams[gu->myTeam]->energy*energyShare);
+	font->glPrintAt(box.x1+0.25f,box.y1+0.12,0.7f,"%.0f",gs->Team(gu->myTeam)->energy);
+	font->glPrintAt(box.x1+0.14f,box.y1+0.12,0.7f,"%.0f",gs->Team(gu->myTeam)->energy*energyShare);
 
 	glColor4f(0.8,0.8,0.9,0.8f);
 	font->glPrintAt(box.x1+0.01,box.y1+0.22,0.7f,"Share Metal");
 
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1+0.25f,box.y1+0.18,0.7f,"%.0f",gs->teams[gu->myTeam]->metal);
-	font->glPrintAt(box.x1+0.14f,box.y1+0.18,0.7f,"%.0f",gs->teams[gu->myTeam]->metal*metalShare);
+	font->glPrintAt(box.x1+0.25f,box.y1+0.18,0.7f,"%.0f",gs->Team(gu->myTeam)->metal);
+	font->glPrintAt(box.x1+0.14f,box.y1+0.18,0.7f,"%.0f",gs->Team(gu->myTeam)->metal*metalShare);
 
 	for(int team=0;team<gs->activeTeams-1;++team){
 		int actualTeam=team;
@@ -172,12 +172,11 @@ void CShareBox::Draw(void)
 		else
 			glColor4f(1,1,1,0.4f);
 		string ally,dead;
-		if(gs->allies[gu->myAllyTeam][gs->team2allyteam[actualTeam]])
+		if(gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam)))
 			ally="(Ally)";
-		if(gs->teams[actualTeam]->isDead)
+		if(gs->Team(actualTeam)->isDead)
 			dead="(Dead)";
-		char teamName[100];
-		font->glPrintAt(box.x1+teamBox.x1+0.002f,box.y1+teamBox.y2-0.025-team*0.025,0.7f,"Team%i (%s)%s%s",actualTeam,gs->players[gs->teams[actualTeam]->leader]->playerName.c_str(),ally.c_str(),dead.c_str());
+		font->glPrintAt(box.x1+teamBox.x1+0.002f,box.y1+teamBox.y2-0.025-team*0.025,0.7f,"Team%i (%s)%s%s",actualTeam,gs->players[gs->Team(actualTeam)->leader]->playerName.c_str(),ally.c_str(),dead.c_str());
 	}
 }
 
@@ -235,7 +234,7 @@ bool CShareBox::MousePress(int x, int y, int button)
 			int team=(int)((box.y1+teamBox.y2-my)/0.025);
 			if(team>=gu->myTeam)
 				team++;
-			if(team<gs->activeTeams && !gs->teams[team]->isDead)
+			if(team<gs->activeTeams && !gs->Team(team)->isDead)
 				shareTeam=team;
 		}
 		return true;
@@ -251,7 +250,7 @@ void CShareBox::MouseRelease(int x,int y,int button)
 	if(InBox(mx,my,box+unitBox)){
 		shareUnits=!shareUnits;
 	}
-	if(InBox(mx,my,box+okBox) || InBox(mx,my,box+applyBox) && !gs->teams[shareTeam]->isDead && !gs->teams[gu->myTeam]->isDead){
+	if(InBox(mx,my,box+okBox) || InBox(mx,my,box+applyBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
 		if(shareUnits){
 			Command c;
 			c.id=CMD_STOP;
@@ -261,8 +260,8 @@ void CShareBox::MouseRelease(int x,int y,int button)
 		netbuf[1]=gu->myPlayerNum;
 		netbuf[2]=shareTeam;
 		netbuf[3]=shareUnits;
-		*(float*)&netbuf[4]=metalShare*gs->teams[gu->myTeam]->metal;
-		*(float*)&netbuf[8]=energyShare*gs->teams[gu->myTeam]->energy;
+		*(float*)&netbuf[4]=metalShare*gs->Team(gu->myTeam)->metal;
+		*(float*)&netbuf[8]=energyShare*gs->Team(gu->myTeam)->energy;
 		net->SendData(netbuf,12);
 		if(shareUnits)
 			selectedUnits.ClearSelected();
@@ -297,7 +296,7 @@ void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
 		int team=(int)((box.y1+teamBox.y2-my)/0.025);
 		if(team>=gu->myTeam)
 			team++;
-		if(team<gs->activeTeams && !gs->teams[team]->isDead)
+		if(team<gs->activeTeams && !gs->Team(team)->isDead)
 			shareTeam=team;
 	}
 }

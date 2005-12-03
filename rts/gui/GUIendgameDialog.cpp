@@ -77,13 +77,13 @@ void GUIendgameDialog::UpdateStatistics()
 	{
 		// if you're not spectating and the current team is not allied to you, then don't show the
 		// teams information
-		if ( !gu->spectating && ( !gs->allies[gu->myAllyTeam][gs->team2allyteam[team]] ) )
+		if ( !gu->spectating && !gs->Ally(gu->myAllyTeam, gs->AllyTeam(team)) )
 			continue;
 		char buf[50];
 		sprintf(buf, "Team %i", team+1);
 
 		// for every team, take the corresponding history
-		std::list<CTeam::Statistics>& s=gs->teams[team]->statHistory;
+		std::list<CTeam::Statistics>& s=gs->Team(team)->statHistory;
 
 		std::list<CTeam::Statistics>::iterator i=s.begin();
 		std::list<CTeam::Statistics>::iterator e=s.end();
@@ -96,9 +96,9 @@ void GUIendgameDialog::UpdateStatistics()
 			
 			// set values for the teams statistics
 			#define FillStat(a) a[team].caption=buf; \
-								a[team].r=gs->teams[team]->color[0]/255.0; \
-								a[team].g=gs->teams[team]->color[1]/255.0; \
-								a[team].b=gs->teams[team]->color[2]/255.0; 
+								a[team].r=gs->Team(team)->color[0]/255.0; \
+								a[team].g=gs->Team(team)->color[1]/255.0; \
+								a[team].b=gs->Team(team)->color[2]/255.0; 
 
 			// add a value, initializing the array if it isn't already,
 			// and setting suitable values for team name and color

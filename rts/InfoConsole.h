@@ -17,13 +17,18 @@ public:
 	void Update();
 	void Draw();
 
-	void AddLine(const char* text, ...);
-	void AddLine(std::string text);
-	void SetLastMsgPos(float3 pos);
+	void AddLine(int priority,const char *fmt, ...);
+	void AddLine(int priority, const std::string& text);
 
+	// Everything without a priority will have priority 0 (the highest)
+	// Messages will be shown if messagePriority <= verboseLevel
 	CInfoConsole& operator<< (int i);
 	CInfoConsole& operator<< (float f);
 	CInfoConsole& operator<< (const char* c);
+	void AddLine(const char* text, ...);
+	void AddLine(const std::string& text);
+
+	void SetLastMsgPos(float3 pos);
 
 	int lifetime;
 	float xpos;
@@ -41,6 +46,9 @@ private:
 	int lastTime;
 	std::deque<InfoLine> data;
 	std::string tempstring;
+	int verboseLevel;
+
+	void AddLineHelper (int priority, const char *text);
 	mutable boost::recursive_mutex infoConsoleMutex;
 };
 

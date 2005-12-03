@@ -36,7 +36,7 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 dest
 
 	for(std::list<CWeapon*>::iterator wi=interceptors.begin();wi!=interceptors.end();++wi){
 		CWeapon* w=*wi;
-		if(!gs->allies[w->owner->allyteam][targTeam] && (target->weaponDef->targetable & w->weaponDef->interceptor) && w->weaponPos.distance2D(destination) < w->weaponDef->coverageRange){
+		if(!gs->Ally(w->owner->allyteam,targTeam) && (target->weaponDef->targetable & w->weaponDef->interceptor) && w->weaponPos.distance2D(destination) < w->weaponDef->coverageRange){
 			w->incoming.push_back(target);
 			w->AddDeathDependence(target);
 		}

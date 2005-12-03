@@ -140,9 +140,9 @@ void CTeam::Update()
 
 	float eShare=0,mShare=0;
 	for(int a=0;a<gs->activeTeams;++a){
-		if(a!=teamNum && gs->allies[gs->team2allyteam[teamNum]][gs->team2allyteam[a]]){
-			eShare+=max(0.0,gs->teams[a]->energyStorage*0.9-gs->teams[a]->energy);
-			mShare+=max(0.0,gs->teams[a]->metalStorage*0.9-gs->teams[a]->metal);
+		if(a!=teamNum && gs->AlliedTeams(teamNum,a)){
+			eShare+=max(0.0,gs->Team(a)->energyStorage*0.9-gs->Team(a)->energy);
+			mShare+=max(0.0,gs->Team(a)->metalStorage*0.9-gs->Team(a)->metal);
 		}
 	}
 	float eExcess=max(0.0,energy-energyStorage*energyShare);
@@ -155,17 +155,17 @@ void CTeam::Update()
 		dm=min(1.0f,mExcess/mShare);
 
 	for(int a=0;a<gs->activeTeams;++a){
-		if(a!=teamNum && gs->allies[gs->team2allyteam[teamNum]][gs->team2allyteam[a]]){
-			float edif=max(0.0,gs->teams[a]->energyStorage*0.9-gs->teams[a]->energy)*de;
-			gs->teams[a]->energy+=edif;
+		if(a!=teamNum && gs->AlliedTeams(teamNum,a)){
+			float edif=max(0.0,gs->Team(a)->energyStorage*0.9-gs->Team(a)->energy)*de;
+			gs->Team(a)->energy+=edif;
 			energy-=edif;
 			currentStats.energySent+=edif;
-			gs->teams[a]->currentStats.energyReceived+=edif;
-			float mdif=max(0.0,gs->teams[a]->metalStorage*0.9-gs->teams[a]->metal)*dm;
-			gs->teams[a]->metal+=mdif;
+			gs->Team(a)->currentStats.energyReceived+=edif;
+			float mdif=max(0.0,gs->Team(a)->metalStorage*0.9-gs->Team(a)->metal)*dm;
+			gs->Team(a)->metal+=mdif;
 			metal-=mdif;
 			currentStats.metalSent+=edif;
-			gs->teams[a]->currentStats.metalReceived+=edif;
+			gs->Team(a)->currentStats.metalReceived+=edif;
 		}
 	}
 

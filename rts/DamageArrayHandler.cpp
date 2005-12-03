@@ -20,6 +20,7 @@ CDamageArrayHandler::CDamageArrayHandler(void)
 	DamageArray::numTypes=typelist.size()+1;
 	numTypes=typelist.size()+1;
 
+	info->AddLine(1, "Number of damage types: %d", numTypes);
 	int a=1;
 	for(std::vector<std::string>::iterator ti=typelist.begin();ti!=typelist.end();++a,++ti){
 		std::string s=*ti;

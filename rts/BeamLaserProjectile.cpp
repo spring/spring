@@ -55,7 +55,7 @@ void CBeamLaserProjectile::Draw(void)
 	col2[2]=(unsigned char)(color.z*endAlpha);
 	col2[3]=1;//intensity*255;
 
-	float size=2;
+	float size=thickness;
 	float3 pos1=startPos;
 	float3 pos2=endPos;
 

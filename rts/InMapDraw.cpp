@@ -264,8 +264,8 @@ float3 CInMapDraw::GetMouseMapPos(void)
 void CInMapDraw::GotNetMsg(unsigned char* msg)
 {
 	int team=gs->players[msg[2]]->team;
-	int allyteam=gs->team2allyteam[team];
-	if((!gs->allies[gu->myAllyTeam][allyteam] || !gs->allies[allyteam][gu->myAllyTeam] || gs->players[msg[2]]->spectator) && !gu->spectating)
+	int allyteam=gs->AllyTeam(team);
+	if((!gs->Ally(gu->myAllyTeam,allyteam) || !gs->Ally(allyteam,gu->myAllyTeam) || gs->players[msg[2]]->spectator) && !gu->spectating)
 		return;
 
 	switch(msg[3]){
@@ -275,7 +275,7 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 		pos.y=ground->GetHeight(pos.x,pos.z)+2;
 		MapPoint p;
 		p.pos=pos;
-		p.color=gs->teams[team]->color;
+		p.color=gs->Team(team)->color;
 		p.label=(char*)&msg[8];
 
 		int quad=int(pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
@@ -316,7 +316,7 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 		MapLine l;
 		l.pos=pos;
 		l.pos2=pos2;
-		l.color=gs->teams[team]->color;
+		l.color=gs->Team(team)->color;
 
 		int quad=int(pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
 		drawQuads[quad].lines.push_back(l);

@@ -22,17 +22,17 @@ CAICheats::~CAICheats(void)
 
 void CAICheats::SetMyHandicap(float handicap)
 {
-	gs->teams[ai->team]->handicap=1+handicap/100;
+	gs->Team(ai->team)->handicap=1+handicap/100;
 }
 
 void CAICheats::GiveMeMetal(float amount)
 {
-	gs->teams[ai->team]->metal+=amount;
+	gs->Team(ai->team)->metal+=amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
-	gs->teams[ai->team]->energy+=amount;
+	gs->Team(ai->team)->energy+=amount;
 }
 
 int CAICheats::CreateUnit(const char* name,float3 pos)
@@ -69,7 +69,7 @@ int CAICheats::GetEnemyUnits(int *units)
 	int a=0;
 
 	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-		if(!gs->allies[(*ui)->allyteam][gs->team2allyteam[ai->team]]){
+		if(!gs->Ally((*ui)->allyteam,gs->AllyTeam(ai->team))){
 			units[a++]=(*ui)->id;
 		}
 	}
@@ -84,7 +84,7 @@ int CAICheats::GetEnemyUnits(int *units,const float3& pos,float radius)
 	int a=0;
 
 	for(ui=unit.begin();ui!=unit.end();++ui){
-		if(!gs->allies[(*ui)->allyteam][gs->team2allyteam[ai->team]]){
+		if(!gs->Ally((*ui)->allyteam,gs->AllyTeam(ai->team))){
 			units[a]=(*ui)->id;
 			++a;
 		}

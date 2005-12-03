@@ -23,6 +23,7 @@
 #include "LosHandler.h"
 #include "GeometricObjects.h"
 //#include "mmgr.h"
+#include "TAAirMoveType.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -92,6 +93,13 @@ CWeapon::~CWeapon()
 void CWeapon::Update()
 {
 	if(targetType==Target_Unit){
+	// landed aircraft can't shoot
+	if( dynamic_cast<CTAAirMoveType*> (owner->moveType) ) {
+		CTAAirMoveType *amt = (CTAAirMoveType *)owner->moveType;
+		if (amt->aircraftState == CTAAirMoveType::AIRCRAFT_LANDED)
+			return;
+	}
+
 		if(lastErrorVectorUpdate<gs->frameNum-16){
 			float3 newErrorVector(gs->randVector());
 			errorVectorAdd=(newErrorVector-errorVector)*(1.0f/16.0f);
@@ -130,7 +138,7 @@ void CWeapon::Update()
 	}
 	if(weaponDef->stockpile && numStockpileQued){
 		float p=1.0/reloadTime;
-		if(gs->teams[owner->team]->metal>=metalFireCost*p && gs->teams[owner->team]->energy>=energyFireCost*p){
+		if(gs->Team(owner->team)->metal>=metalFireCost*p && gs->Team(owner->team)->energy>=energyFireCost*p){
 			owner->UseEnergy(energyFireCost*p);
 			owner->UseMetal(metalFireCost*p);
 			buildPercent+=p;
@@ -151,7 +159,7 @@ void CWeapon::Update()
 	&& angleGood 
 	&& subClassReady 
 	&& reloadStatus<=gs->frameNum
-	&& (weaponDef->stockpile || (gs->teams[owner->team]->metal>=metalFireCost && gs->teams[owner->team]->energy>=energyFireCost))
+	&& (weaponDef->stockpile || (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost))
 	&& (!weaponDef->stockpile || numStockpiled)
 	&& (weaponDef->waterweapon || weaponPos.y>0)
 	){

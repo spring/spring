@@ -84,6 +84,9 @@ START_TIME_PROFILE;
 	bool blocking = false;	//Used to tell if ground area shall be blocked of not.
 
 	//unit = new CUnit(pos, side);
+	if (side < 0)
+		side = MAX_TEAMS-1;
+
 	if(type=="GroundUnit"){
 		unit=new CUnit(pos,side,ud);
 		blocking = true;

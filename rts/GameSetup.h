@@ -46,6 +46,7 @@ public:
 
 	int maxUnits;
 
+	bool ghostedBuildings;
 	bool limitDgun;
 	bool diminishingMMs;
 

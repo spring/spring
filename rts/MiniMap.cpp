@@ -383,13 +383,13 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 		if(simpleColors){
 			if(unit->team==gu->myTeam){
 				glColor3ubv(myColor);
-			} else if (gs->allies[gu->myAllyTeam][unit->allyteam]){
+			} else if (gs->Ally(gu->myAllyTeam,unit->allyteam)){
 				glColor3ubv(allyColor);
 			} else {
 				glColor3ubv(enemyColor);
 			}
 		} else {
-			glColor3ubv(gs->teams[unit->team]->color);
+			glColor3ubv(gs->Team(unit->team)->color);
 		}
 	}
 

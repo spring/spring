@@ -35,9 +35,8 @@ void GUIsharingDialog::ButtonPressed(GUIbutton* b)
 		netbuf[1]=gu->myPlayerNum;
 		netbuf[2]=table->GetSelected();
 		netbuf[3]=giveUnits->State();
-		*(float*)&netbuf[4]=min(gs->teams[gu->myTeam]->metal, (double)giveMetal->Position());
-
-		*(float*)&netbuf[8]=min(gs->teams[gu->myTeam]->energy, (double)giveEnergy->Position());
+ 		*(float*)&netbuf[4]=min(gs->Team(gu->myTeam)->metal, (double)giveMetal->Position());
+ 		*(float*)&netbuf[8]=min(gs->Team(gu->myTeam)->energy, (double)giveEnergy->Position());
 		net->SendData(netbuf,12);
 
 		if(giveUnits->State())
@@ -77,19 +76,19 @@ void GUIsharingDialog::DialogEvent(const std::string& event)
 
 
 		if(giveEnergy)
-			giveEnergy->SetMaximum((int)gs->teams[gu->myTeam]->energy);
+ 			giveEnergy->SetMaximum((int)gs->Team(gu->myTeam)->energy);
 		if(giveMetal)
-			giveMetal->SetMaximum((int)gs->teams[gu->myTeam]->metal);
+ 			giveMetal->SetMaximum((int)gs->Team(gu->myTeam)->metal);
 
 		if(shareEnergy)
 		{
-			shareEnergy->SetMaximum((int)gs->teams[gu->myTeam]->energyStorage);
-			shareEnergy->SetPosition((int)gs->teams[gu->myTeam]->energyShare);
+ 			shareEnergy->SetMaximum((int)gs->Team(gu->myTeam)->energyStorage);
+ 			shareEnergy->SetPosition((int)gs->Team(gu->myTeam)->energyShare);
 		}
 		if(shareMetal)
 		{
-			shareMetal->SetMaximum((int)gs->teams[gu->myTeam]->metalStorage);
-			shareMetal->SetPosition((int)gs->teams[gu->myTeam]->metalShare);
+ 			shareMetal->SetMaximum((int)gs->Team(gu->myTeam)->metalStorage);
+ 			shareMetal->SetPosition((int)gs->Team(gu->myTeam)->metalShare);
 		}
 
 		UpdatePlayerList();
@@ -117,20 +116,20 @@ void GUIsharingDialog::UpdatePlayerList()
 		
 		teamName=buf;
 
-		if(gs->allies[gu->myAllyTeam][gs->team2allyteam[team]])
+		if(gs->Ally(gu->myAllyTeam, team))
 			teamName+="(Ally)";
-		if(gs->teams[team]->isDead)
+		if(gs->Team(team)->isDead)
 			teamName+="(Dead)";
 
-		teamName+="\t"+gs->players[gs->teams[team]->leader]->playerName;
+		teamName+="\t"+gs->players[gs->Team(team)->leader]->playerName;
 
 		// display energy and metal for allied teams
 		// maybe just for those with shared mapping
-		if(gs->allies[gu->myAllyTeam][gs->team2allyteam[team]])
+		if(gs->Ally(gu->myAllyTeam,gs->AllyTeam(team)))
 		{
-			sprintf(buf, "%i", gs->teams[team]->metal);
+			sprintf(buf, "%i", gs->Team(team)->metal);
 			teamName+=string("\t")+buf;
-			sprintf(buf, "%i", gs->teams[team]->energy);
+			sprintf(buf, "%i", gs->Team(team)->energy);
 			teamName+=string("\t")+buf;
 		}
 		else

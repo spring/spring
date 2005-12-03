@@ -216,9 +216,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PrintLoadMsg("Loading detail textures");
 
-	CBitmap bm(detailTex);
-	glGenTextures(1, &detailtex2);
-	glBindTexture(GL_TEXTURE_2D, detailtex2);
+	CBitmap bm(detailTexName);
+	glGenTextures(1, &detailTex);
+	glBindTexture(GL_TEXTURE_2D, detailTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
@@ -341,11 +341,11 @@ void CSmfReadMap::ParseSMD(std::string filename)
 	mapDefParser.GetDef(maxMetal,"0.02","MAP\\MaxMetal");
 	mapDefParser.GetDef(extractorRadius,"500","MAP\\ExtractorRadius");
 
-	mapDefParser.GetDef(detailTex, "", "MAP\\DetailTex");
-	if(detailTex.empty())
-        detailTex = "bitmaps/detailtex2.bmp";
+	mapDefParser.GetDef(detailTexName, "", "MAP\\DetailTex");
+	if(detailTexName.empty())
+		detailTexName = "bitmaps/detailtex2.bmp";
 	else
-		detailTex = "maps/" + detailTex;
+		detailTexName = "maps/" + detailTexName;
 	
 	mapDefParser.GetDef(voidWater, "0", "MAP\\voidWater");	
 }
@@ -353,10 +353,9 @@ void CSmfReadMap::ParseSMD(std::string filename)
 CSmfReadMap::~CSmfReadMap(void)
 {
 	delete ifs;
-	glDeleteTextures (1, &detailtex);
-	glDeleteTextures (1, &detailtex2);
-	glDeleteTextures (1, &minimapTex);
-	glDeleteTextures (1, &shadowTex);
+	if (detailTex) glDeleteTextures (1, &detailTex);
+	if (minimapTex) glDeleteTextures (1, &minimapTex);
+	if (shadowTex) glDeleteTextures (1, &shadowTex);
 
 	delete groundTextures;
 

@@ -884,8 +884,8 @@ float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, float3 pos)
 	int xm=(int)(pos.x/(SQUARE_SIZE*BLOCK_SIZE));
 	int ym=(int)(pos.z/(SQUARE_SIZE*BLOCK_SIZE));
 
-	for(int y=max(0,ym-1);y<=min(nbrOfBlocksX-1,ym+1);++y){
-		for(int x=max(0,xm-1);x<=min(nbrOfBlocksZ-1,xm+1);++x){
+	for(int y=max(0,ym-1);y<=min(nbrOfBlocksZ-1,ym+1);++y){
+		for(int x=max(0,xm-1);x<=min(nbrOfBlocksX-1,xm+1);++x){
 			startPos.push_back(float3(blockState[y*nbrOfBlocksX+x].sqrCenter[pathType].x*SQUARE_SIZE,0,blockState[y*nbrOfBlocksX+x].sqrCenter[pathType].y*SQUARE_SIZE));
 		}
 	}

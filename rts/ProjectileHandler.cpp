@@ -435,7 +435,7 @@ void CProjectileHandler::Draw(bool drawReflection)
 	Projectile_List::iterator psi;
 	distlist.clear();
 	for(psi=ps.begin();psi != ps.end();++psi){
-		if(cam2->InView((*psi)->pos,(*psi)->drawRadius) && (loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->allies[(*psi)->owner->allyteam][gu->myAllyTeam]))){
+		if(cam2->InView((*psi)->pos,(*psi)->drawRadius) && (loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
 			if(drawReflection){
 				if((*psi)->pos.y<-3)
 					continue;
@@ -498,7 +498,7 @@ void CProjectileHandler::DrawShadowPass(void)
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
 	for(psi=ps.begin();psi != ps.end();++psi){
-		if((loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->allies[(*psi)->owner->allyteam][gu->myAllyTeam]))){
+		if((loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
 			if((*psi)->s3domodel)
 				(*psi)->DrawUnitPart();
 			if((*psi)->castShadow){

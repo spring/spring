@@ -92,8 +92,8 @@ CMouseHandler::CMouseHandler()
 	camControllers.push_back(new CTWController);
 	camControllers.push_back(new CRotOverheadController);
 
-	currentCamController=camControllers[0];
-	currentCamControllerNum=0;
+	currentCamController=camControllers[1];
+	currentCamControllerNum=1;
 }
 
 CMouseHandler::~CMouseHandler()
@@ -346,7 +346,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			set<CUnit*>::iterator ui;
 			CUnit* unit;
 			int addedunits=0;
-			for(ui=gs->teams[gu->myTeam]->units.begin();ui!=gs->teams[gu->myTeam]->units.end();++ui){
+			for(ui=gs->Team(gu->myTeam)->units.begin();ui!=gs->Team(gu->myTeam)->units.end();++ui){
 				float3 vec=(*ui)->midPos-camera->pos;
 				if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
 					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
@@ -380,7 +380,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 						selectedUnits.SelectGroup(unit->group->id);
 					} else {														//select all units of same type on screen
 						set<CUnit*>::iterator ui;
-						for(ui=gs->teams[gu->myTeam]->units.begin();ui!=gs->teams[gu->myTeam]->units.end();++ui){
+						for(ui=gs->Team(gu->myTeam)->units.begin();ui!=gs->Team(gu->myTeam)->units.end();++ui){
 							if((*ui)->aihint==unit->aihint && camera->InView((*ui)->midPos)){
 								selectedUnits.AddUnit(*ui);
 							}

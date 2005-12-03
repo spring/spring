@@ -11,6 +11,8 @@
 CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 {
 	char namebuf[100];
+	curFrame = 0;
+
 
 	if (name.length() > 80) {
 		info->AddLine("CMouseCursor: Long name %s", name.c_str());
@@ -71,7 +73,6 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	}
 
 	lastFrameTime = gu->gameTime;
-	curFrame = 0;
 }
 
 CMouseCursor::~CMouseCursor(void)
@@ -139,6 +140,9 @@ void CMouseCursor::Draw(int x, int y)
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,cursorTex);
+	if (frames.empty())
+		return;
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER,0.01f);

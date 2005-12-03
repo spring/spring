@@ -29,7 +29,7 @@ void CCommanderScript::Update(void)
 		if(gameSetup){
 			TdfParser p("gamedata/SIDEDATA.TDF");
 			for(int a=0;a<gs->activeTeams;++a){		
-				if(!gameSetup->aiDlls[a].empty() && gs->teams[a]->leader==gu->myTeam){
+				if(!gameSetup->aiDlls[a].empty() && gs->Team(a)->leader==gu->myTeam){
 					globalAI->CreateGlobalAI(a,gameSetup->aiDlls[a].c_str());
 				}
 
@@ -39,20 +39,20 @@ void CCommanderScript::Update(void)
 					if(p.SectionExist(sideText)){
 						string sideName=p.SGetValueDef("arm",string(sideText)+"\\name");
 						std::transform(sideName.begin(), sideName.end(), sideName.begin(), (int (*)(int))std::tolower);
-						if(sideName==gs->teams[a]->side){		//ok found the right side
+						if(sideName==gs->Team(a)->side){		//ok found the right side
 							string cmdType=p.SGetValueDef("armcom",string(sideText)+"\\commander");
 							
 							UnitDef* ud= unitDefHandler->GetUnitByName(cmdType);
-							ud->metalStorage=gs->teams[a]->metalStorage;			//make sure the cmd has the right amount of storage
-							ud->energyStorage=gs->teams[a]->energyStorage;
+							ud->metalStorage=gs->Team(a)->metalStorage;			//make sure the cmd has the right amount of storage
+							ud->energyStorage=gs->Team(a)->energyStorage;
 
-							unitLoader.LoadUnit(cmdType,gs->teams[a]->startPos,a,false);
+							unitLoader.LoadUnit(cmdType,gs->Team(a)->startPos,a,false);
 							break;
 						}
 					}
 				}
-				gs->teams[a]->metalStorage=gs->teams[a]->metalStorage/2+20;		//now remove the preexisting storage except for a small amount
-				gs->teams[a]->energyStorage=gs->teams[a]->energyStorage/2+20;
+				gs->Team(a)->metalStorage=gs->Team(a)->metalStorage/2+20;		//now remove the preexisting storage except for a small amount
+				gs->Team(a)->energyStorage=gs->Team(a)->energyStorage/2+20;
 			}
 		} else {
 			TdfParser p("gamedata/SIDEDATA.TDF");
