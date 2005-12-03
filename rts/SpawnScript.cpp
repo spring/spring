@@ -79,7 +79,7 @@ void CSpawnScript::Update(void)
 	if(!myUnits.empty() && !gs->Team(0)->units.empty()){
 		if(uh->units[curUnit->id]){
 			if(curUnit->target<0 || uh->units[curUnit->target]==0){
- 				int num=gs->randFloat()*0.99*gs->Team(0)->units.size();
+ 				int num=(int)(gs->randFloat()*0.99*gs->Team(0)->units.size());
  				std::set<CUnit*>::iterator tu=gs->Team(0)->units.begin();
 				for(int a=0;a<num;++a)
 					++tu;

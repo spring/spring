@@ -844,10 +844,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	default:
 		info->AddLine("CobError: Unknown get constant %d", val);
 	case VETERAN_LEVEL: 
-		return 100*unit->experience;
+		return (int)(100*unit->experience);
 	case CURRENT_SPEED:
 		if (unit->moveType)
-			return unit->speed.Length()*SCALE;
+			return (int)(unit->speed.Length()*SCALE);
 		return 0;
 	case ON_ROAD:
 		return 0;
