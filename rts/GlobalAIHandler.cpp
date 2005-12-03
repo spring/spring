@@ -6,7 +6,7 @@
 #include "InfoConsole.h"
 #include "GameHelper.h"
 #include "TimeProfiler.h"
-#include "RegHandler.h"
+#include "ConfigHandler.h"
 #include "errorhandler.h"
 //#include "mmgr.h"
 
