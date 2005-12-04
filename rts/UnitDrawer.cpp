@@ -557,34 +557,30 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glEnable(GL_LIGHTING);
 		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);	// Position The Light
 		glEnable(GL_LIGHT1);								// Enable Light One
-	//	glDisable(GL_CULL_FACE);
-	//	glCullFace(GL_BACK);
+
+		// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 		glEnable(GL_TEXTURE_2D);
+
+		// Set material color and fallback texture (3DO texture)
 		float cols[]={1,1,1,1};
-		float cols2[]={1,1,1,1};
-		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,cols);
-		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,cols2);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
 		glColor3f(1,1,1);
 		texturehandler->SetTATexture();
 
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-
+		// RGB = Primary Color * Previous
 		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_CONSTANT);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB,GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_INTERPOLATE_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 		glBindTexture(GL_TEXTURE_2D, whiteTex);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
@@ -625,12 +621,17 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 		glDisable(GL_LIGHTING);
 		glDisable(GL_LIGHT1);
 
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-
+// reset texture1 state
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+
+// reset texture0 state
 		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_CONSTANT_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
 	}
 	glDisable(GL_CULL_FACE);
 }
@@ -699,7 +700,6 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 //	if(camera->pos.y<ground->GetHeight(camera->pos.x,camera->pos.z)+50)
 		camera->pos.y=ground->GetHeight(camera->pos.x,camera->pos.z)+50;
 	camera->Update(false);
-
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();

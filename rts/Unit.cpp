@@ -1363,9 +1363,7 @@ void CUnit::DrawS3O(void)
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1);
 	} else {
 		float texConstant[]={col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1};
-		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
-		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 	Draw();
 }
