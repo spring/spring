@@ -149,10 +149,11 @@ CglFont::CglFont(int start, int end)
 	}
 	
 	int texsize = max(maxleft + maxright, maxabove + maxbelow);
-	/* Texture sizes must be even. */
-	if ((texsize % 2) == 1)
-		texsize += 1;
-		
+	/* Make texture sizes a power of two */
+	int p2 = 1;
+	while (p2 < texsize) p2 <<= 1;
+	texsize = p2;
+
 	/* Now copy each bitmap into a texture of the same size, 
 	   but position them so the bottom of the e, g and k all
 	   start on the same pixel, so they line up properly at
