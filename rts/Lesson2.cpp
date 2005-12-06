@@ -190,10 +190,6 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		return false;								// Return false
 	}
 
-#ifndef DEBUG
-	SDL_WM_GrabInput(SDL_GRAB_ON);
-#endif
-
 	return true;									// Success
 }
 
@@ -237,6 +233,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
+//	cmdline->addoption('g',"runscript",OPTPARM_STRING,"script.txt", "Run with a game setup script");
 	cmdline->parse();
 #ifdef _DEBUG
 	fullscreen = false;
@@ -275,7 +272,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	// Check if the commandline parameter is specifying a demo file
 	bool playDemo = false;
-	string demofile;
+	string demofile, startscript;
 	for (int i = 0; i < argc; i++) {
 		if (i == 0) {
 #ifdef _WIN32
@@ -294,6 +291,10 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				playDemo = true;
 				demofile = command;
 			}
+			else {
+				playDemo = false;
+				startscript = command;
+			}
 		}
 	}
 
@@ -309,7 +310,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ENTER_SYNCED;
 	if (!playDemo) {
 		gameSetup=new CGameSetup();
-		if(!gameSetup->Init(demofile)){
+		if(!gameSetup->Init(startscript)){
 			delete gameSetup;
 			gameSetup=0;
 		}
