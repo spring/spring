@@ -43,6 +43,7 @@ opts.Add('disable_lua', 'Set to no to turn on Lua support',1)
 
 opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation',0)
 opts.Add('optimize', 'Enable processor optimizations during compilation', 0)
+opts.Add('disable_optimize', 'Disable all gcc optimization', 0)
 
 opts.Add('prefix', 'Install prefix [/usr/local]')
 
@@ -258,7 +259,7 @@ if not env.GetOption("clean"):
 			if archflags:
 				flags += archflags
 			flags += ['-O2','-pipe','-fomit-frame-pointer','-s']
-		else:
+		elif not env.get('disable_optimize'):
 			flags += ['-O']
 
 	if platform == 'linux' or platform == 'freebsd':
