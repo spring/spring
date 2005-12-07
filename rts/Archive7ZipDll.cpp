@@ -8,6 +8,7 @@ extern "C" {
 #include "Archive7ZipDll.h"
 #include <algorithm>
 #include "SDL_types.h"
+#include <ctype.h>
 //#include "mmgr.h"
 
 /*
