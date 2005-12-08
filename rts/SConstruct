@@ -49,26 +49,32 @@ opts.Add('prefix', 'Install prefix [/usr/local]')
 
 env = Environment(ENV = os.environ, options = opts)
 Help(opts.GenerateHelpText(env))
-debug = env.get('debug')
+debug = int(env.get('debug'))
 platform = env.get('platform')
 if debug:
+	print "debugging enabled"
 	optimize = False
 else:
-	optimize = env.get('optimize')
+	print "debugging NOT enabled,",
+	optimize = int(env.get('optimize'))
+	if optimize:
+		print "optimizing enabled"
+	else:
+		print "optimizing NOT enabled"
 
 if env.Dictionary('CC').find('gcc') != -1:
 	gcc = True
 else:
 	gcc = False
 
-if env.get('disable_hpi'):
+if int(env.get('disable_hpi')):
 	defines+=['NO_HPI']
-if env.get('disable_clipboard'):
+if int(env.get('disable_clipboard')):
 	defines+=['NO_CLIPBOARD']
-if env.get('disable_avi'):
+if int(env.get('disable_avi')):
 	exclude_list.append("AVIGenerator.cpp")
 	defines+=['NO_AVI']
-if env.get('disable_lua'):
+if int(env.get('disable_lua')):
 	exclude_list+=["LuaBinder.cpp","LuaFunctions.cpp"]
 	defines+=['NO_LUA']
 
@@ -260,7 +266,7 @@ if not env.GetOption("clean"):
 			if archflags:
 				flags += archflags
 			flags += ['-O2','-pipe','-fomit-frame-pointer','-s']
-		elif not env.get('disable_optimize'):
+		elif not int(env.get('disable_optimize')):
 			flags += ['-O']
 
 	if platform == 'linux' or platform == 'freebsd':
@@ -428,7 +434,7 @@ if not env.GetOption("clean"):
 		libaiostep1=True
 	else:
 		print ' Cannot find libaio headers, disabling asynchronous I/O'
-	if not env.get('disable_lua'):
+	if not int(env.get('disable_lua')):
 		if not conf.CheckCXXHeader('luabind/luabind.hpp'):
 			print ' Cannot find Luabind header'
 			Exit(1)
@@ -473,7 +479,7 @@ if not env.GetOption("clean"):
 	if not conf.CheckLib('IL'):
 		print "You need the DevIL image library for this program"
 		Exit(1)
-	if env.get('use_tcmalloc'):
+	if int(env.get('use_tcmalloc')):
 		if conf.CheckLib('tcmalloc'):
 			lib+=['tcmalloc']
 		else:
