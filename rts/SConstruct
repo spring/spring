@@ -102,11 +102,12 @@ for f in hpiutilf:
 	
 #linux disable unused code
 if platform == 'linux' or platform == 'freebsd':	
-	exclude_list += exclude_list + Split("""
-			BackgroundReader.cpp
+	exclude_list += Split("""
 			ARB_vertex_program_extension.cpp
 			mmgr.cpp
 			wavread.cpp""")
+	if not env.GetOption("clean"):
+		exclude_list += ['BackgroundReader.cpp']
 
 nbObjects=0
 nbBuiltObjects=0
