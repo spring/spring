@@ -109,8 +109,7 @@ void CGroundMoveType::Update()
 	//Update mobility.
 	owner->mobility->maxSpeed = maxSpeed;
 
-	
-	if(owner->inTransport)
+	if(owner->transporter)
 		return;
 
 	if(skidding){
@@ -252,7 +251,7 @@ void CGroundMoveType::Update()
 
 void CGroundMoveType::SlowUpdate()
 {
-	if(owner->inTransport){
+	if(owner->transporter){
 		if(progressState == Active)
 			StopEngine();
 		return;
@@ -406,6 +405,11 @@ void CGroundMoveType::SetDeltaSpeed(void)
 	}
 	//Limit change according to acceleration.
 	float dif = wSpeed - currentSpeed;
+
+	if (!accRate) {
+		info->AddLine("Acceleration is zero on unit %s\n",owner->unitDef->name.c_str());
+		accRate=0.01;
+	}
 
 	if(fabs(dif)<0.05){		//good speed
 		deltaSpeed=dif/8;
@@ -912,6 +916,10 @@ starting from given speed.
 */
 float CGroundMoveType::BreakingDistance(float speed) 
 {
+	if (!owner->mobility->maxBreaking) {
+		(*info) << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
+		return 0.0f;
+	}
 	return fabs(speed * speed / owner->mobility->maxBreaking);
 }
 

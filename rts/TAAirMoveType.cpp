@@ -728,7 +728,7 @@ void CTAAirMoveType::Update()
 			vector<CUnit*> nearUnits=qf->GetUnitsExact(pos,owner->radius+6);
 			vector<CUnit*>::iterator ui;
 			for(ui=nearUnits.begin();ui!=nearUnits.end();++ui){
-				if((*ui)->inTransport)
+				if((*ui)->transporter)
 					continue;
 				float sqDist=(pos-(*ui)->pos).SqLength();
 				float totRad=owner->radius+(*ui)->radius;

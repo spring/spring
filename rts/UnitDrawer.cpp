@@ -72,14 +72,16 @@ CUnitDrawer::CUnitDrawer(void)
 	unitSunColor=readmap->mapDefParser.GetFloat3(float3(0.7,0.7,0.7),"MAP\\LIGHT\\UnitSunColor");
 
 	float3 specularSunColor=readmap->mapDefParser.GetFloat3(unitSunColor,"MAP\\LIGHT\\SpecularSunColor");
-
 	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
 
 	advShading=false;
+
 	if(shadowHandler->drawShadows){
 		advShading=true;
 		unitShadowVP=LoadVertexProgram("unitshadow.vp");
 		unitVP=LoadVertexProgram("unit.vp");
+		glDeleteProgramsARB( 1, &units3oVP );
+		glDeleteProgramsARB( 1, &units3oFP );
 		unitFP=LoadFragmentProgram("unit.fp");
 		units3oVP=LoadVertexProgram("units3o.vp");
 		units3oFP=LoadFragmentProgram("units3o.fp");
@@ -317,21 +319,34 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)-camera->right*unit->radius,tx+(1.0/64.0),ty,camNorm);
 }
 
-void CUnitDrawer::DrawCloakedUnits(void)
+void CUnitDrawer::SetupForGhostDrawing ()
 {
+	texturehandler->SetTATexture();
+	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_PREVIOUS);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+	glDepthMask(0);
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void CUnitDrawer::CleanUpGhostDrawing ()
+{
+	glPopAttrib ();
+	glDisable(GL_TEXTURE_2D);
+	glDepthMask(1);
+}
+
+void CUnitDrawer::DrawCloakedUnits(void)
+{
+	SetupForGhostDrawing ();
 	glColor4f(1,1,1,0.3);
-	texturehandler->SetTATexture();
-
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-
-	glDepthMask(0);
 
 	//ok these isnt really cloaked but the effect is the same
 	for(std::multimap<int,TempDrawUnit>::iterator ti=tempTransperentDrawUnits.begin();ti!=tempTransperentDrawUnits.end();++ti){
@@ -403,8 +418,8 @@ void CUnitDrawer::DrawCloakedUnits(void)
 		}
 	}
 
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-	glDepthMask(1);
+	// reset gl states
+	CleanUpGhostDrawing ();
 }
 
 void CUnitDrawer::SetupForUnitDrawing(void)
@@ -524,7 +539,6 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glBindTexture(GL_TEXTURE_2D,shadowHandler->shadowTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
@@ -632,6 +646,7 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_CONSTANT_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	}
 	glDisable(GL_CULL_FACE);
@@ -745,3 +760,4 @@ void CUnitDrawer::DrawQuedS3O(void)
 	usedS3OTextures.clear();
 	CleanUpS3ODrawing();
 }
+

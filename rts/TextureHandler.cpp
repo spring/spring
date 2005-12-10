@@ -16,6 +16,7 @@
 #include <cctype>
 #include "ConfigHandler.h"
 #include <set>
+#include "unitdrawer.h"
 #include "UnitDrawer.h"
 #include "errorhandler.h"
 //#include "mmgr.h"
@@ -202,6 +203,8 @@ CTextureHandler::CTextureHandler()
 	t->ystart=0;
 	t->xend=1;
 	t->yend=1;
+
+	s3oTextures.push_back(S3oTex());
 	textures[" "]=t;
 
 	delete[] tex;
@@ -245,6 +248,7 @@ CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name)
 {
 	std::map<std::string,UnitTexture*>::iterator tti;
 	if((tti=textures.find(name))!=textures.end()){
+
 		return tti->second;
 	}
 	(*info) << "Unknown texture " << name.c_str() << "\n";

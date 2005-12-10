@@ -64,7 +64,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType, float impulseFactor)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -89,7 +89,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 
 	vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
 	float gd=max(30.f,damages[0]/20);
-	float explosionSpeed=(8+gd*2.5)/(9+sqrt(gd)*0.7)*0.5;	//this is taken from the explosion graphics and could probably be simplified a lot
+	float explosionSpeed=(8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f;	//this is taken from the explosion graphics and could probably be simplified a lot
 
 	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		if(ignoreOwner && (*ui)==owner)
@@ -106,9 +106,9 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 			dif/=dist+0.0001;
 			dif.y+=0.12;
 		if(dist2<explosionSpeed*2){	//damage directly
-			(*ui)->DoDamage(damages*mod2,owner,dif*(mod*damages[0]*3.2));
+			(*ui)->DoDamage(damages*mod2,owner,dif*(impulseFactor*mod*damages[0]*3.2f));
 		}else {	//damage later
-			WaitingDamage* wd=new WaitingDamage(owner?owner->id:-1, (*ui)->id, damages*mod2, dif*(mod*damages[0]*3.2));
+			WaitingDamage* wd=new WaitingDamage(owner?owner->id:-1, (*ui)->id, damages*mod2, dif*(impulseFactor*mod*damages[0]*3.2f));
 			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed))&127].push_front(wd);
 		}
 	}
@@ -118,14 +118,14 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	for(fi=features.begin();fi!=features.end();++fi){
 		float3 dif=(*fi)->midPos-pos;
 		float dist=dif.Length();
-		if(dist<0.1)
-			dist=0.1;
+		if(dist<0.1f)
+			dist=0.1f;
 		float mod=(radius-dist)/radius;
-		if(radius>8 && dist<(*fi)->radius*1.1 && mod<0.1)		//always do some damage with explosive stuff (ddm wreckage etc is to big to normally be damaged otherwise, even by bb shells)
-			mod=0.1;
+		if(radius>8 && dist<(*fi)->radius*1.1f && mod<0.1f)		//always do some damage with explosive stuff (ddm wreckage etc is to big to normally be damaged otherwise, even by bb shells)
+			mod=0.1f;
 		if(mod>0)
-			(*fi)->DoDamage(damages*mod,owner,dif*(mod/dist*damages[0]));
-		if(gs->randFloat()>0.7)
+			(*fi)->DoDamage(damages*mod,owner,dif*(impulseFactor*mod/dist*damages[0]));
+		if(gs->randFloat()>0.7f)
 			(*fi)->StartFire();
 	}
 
@@ -134,7 +134,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		float damage = damages[0]*(1-height/radius);
 		if(damage>radius*10)
 			damage=radius*10;  //limit the depth somewhat
-		mapDamage->Explosion(pos,damage,radius-height);
+		mapDamage->Explosion(pos,damage*impulseFactor,radius-height);
 	}
 
 	explosionGraphics[graphicType]->Explosion(pos,damages,radius,owner,gfxMod);

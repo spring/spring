@@ -54,24 +54,43 @@ void CTransportUnit::DependentDied(CObject* o)
 	CUnit::DependentDied(o);
 }
 
-void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed)
+void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 {
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
-		ti->unit->inTransport=false;
+		ti->unit->transporter=0;
+		ti->unit->DeleteDeathDependence(this);
 		if(!selfDestruct)
 			ti->unit->DoDamage(DamageArray()*1000000,0,ZeroVector);	//dont want it to leave a corpse
-		ti->unit->KillUnit(selfDestruct,reclaimed);
+		ti->unit->KillUnit(selfDestruct,reclaimed,attacker);
 	}
-	CUnit::KillUnit(selfDestruct,reclaimed);
+	CUnit::KillUnit(selfDestruct,reclaimed,attacker);
 }
+
+bool CTransportUnit::CanTransport (CUnit *unit)
+{
+	if (unit->transporter)
+		return false;
+
+	CTransportUnit* u=this;
+	while (u) {
+		if (u == unit) 
+			return false;
+		u = u->transporter;
+	}
+	return true;
+}
+
 
 void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 {
 	DetachUnit(unit);
-	if(unit->inTransport)
+
+	if (!CanTransport(unit))
 		return;
+
 	AddDeathDependence(unit);
-	unit->inTransport=true;
+	unit->AddDeathDependence (this);
+    unit->transporter = this;
 	unit->toBeTransported=false;
 	if (unit->unitDef->stunnedCargo)
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
@@ -93,13 +112,14 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 void CTransportUnit::DetachUnit(CUnit* unit)
 {
-	if(!unit->inTransport)
+	if(unit->transporter != this)
 		return;
 
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
 		if(ti->unit==unit){
 			this->DeleteDeathDependence(unit);
-			unit->inTransport=false;
+			unit->DeleteDeathDependence(this);
+			unit->transporter=0;
 			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
 				unit->moveType->useHeading=true;
 			if(unit->unitDef->stunnedCargo) 

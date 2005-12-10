@@ -47,9 +47,11 @@
 #include "MissileProjectile.h"
 #include "FlareProjectile.h"
 #include "HeatCloudProjectile.h"
+#include "heatcloudprojectile.h"
 #include "MiniMap.h"
 #include "UnitDrawer.h"
 #include "AirBaseHandler.h"
+#include "TransportUnit.h"
 //#include "mmgr.h"
 
 #include "GameSetup.h"
@@ -118,7 +120,7 @@ CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 	isDead(false),
 	nextPosErrorUpdate(1),
 	posErrorDelta(0,0,0),
-	inTransport(false),
+	transporter(0),
 	toBeTransported(false),
 	hasUWWeapons(false),
 	lastNanoAdd(gs->frameNum),
@@ -345,9 +347,9 @@ void CUnit::SlowUpdate()
 		selfDCountdown--;
 		if(selfDCountdown<=1){
 			if(!beingBuilt)
-				KillUnit(true,false);
+				KillUnit(true,false,0);
 			else
-				KillUnit(false,true);	//avoid unfinished buildings making an explosion
+				KillUnit(false,true,0);	//avoid unfinished buildings making an explosion
 			selfDCountdown=0;
 			return;
 		}
@@ -363,7 +365,7 @@ void CUnit::SlowUpdate()
 			buildProgress-=1/(buildTime*0.03);
 			AddMetal(metalCost/(buildTime*0.03));
 			if(health<0)
-				KillUnit(false,true);
+				KillUnit(false,true,0);
 		}
 		return;
 	}
@@ -459,12 +461,12 @@ void CUnit::SlowUpdate()
 		if(fireState==2){
 			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam);
 			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<=0)		//self destruct when unit start moving away from mine, should maximize damage
-				KillUnit(true,false);
+				KillUnit(true,false,0);
 		}
 		if(userTarget && userTarget->pos.distance(pos)<unitDef->kamikazeDist)
-			KillUnit(true,false);
+			KillUnit(true,false,0);
 		if(userAttackGround && userAttackPos.distance(pos)<unitDef->kamikazeDist)
-			KillUnit(true,false);
+			KillUnit(true,false,0);
 	}
 
 	if(!weapons.empty()){
@@ -555,7 +557,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	}
 	recentDamage+=damage;
 	if(health<=0){
-		KillUnit(false,false);
+		KillUnit(false,false,attacker);
 		if(isDead && attacker!=0 && !gs->Ally(allyteam,attacker->allyteam) && !beingBuilt){
 			attacker->experience+=0.1*power/attacker->power;
 			gs->Team(attacker->team)->currentStats.unitsKilled++;
@@ -876,6 +878,7 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 	if(type==ChangeGiven && unitDef->energyUpkeep>25){//deactivate to prevent the old give metal maker trick
 		Command c;
 		c.id=CMD_ONOFF;
+
 		c.params.push_back(0);
 		commandAI->GiveCommand(c);
 	}
@@ -929,6 +932,8 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 void CUnit::DependentDied(CObject* o)
 {
+	if(o==transporter)
+		transporter=0;
 	if(o==lastAttacker){
 //		info->AddLine("Last attacker died %i %i",lastAttacker->id,id);
 		lastAttacker=0;
@@ -1006,7 +1011,7 @@ void CUnit::CalculateTerrainType()
 	if (!cob->HasScriptFunction(COBFN_SetSFXOccupy)) 
 		return;
 
-	if (inTransport) {
+	if (transporter) {
 		curTerrainType = 0;
 		return;
 	}
@@ -1091,13 +1096,13 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 			builder->AddMetal(metalCost*-part);
 			buildProgress+=part;
 			if(buildProgress<0 || health<0){
-				KillUnit(false,true);
+				KillUnit(false,true,0);
 				return false;
 			}
 		} else {
 			if(health<0){
 				builder->AddMetal(metalCost);
-				KillUnit(false,true);
+				KillUnit(false,true,0);
 				return false;
 			}
 		}
@@ -1152,11 +1157,11 @@ void CUnit::FinishedBuilding(void)
 		if(f){
 			f->blockHeightChanges=true;
 		}
-		KillUnit(false,true);
+		KillUnit(false,true,0);
 	}
 }
 
-void CUnit::KillUnit(bool selfDestruct,bool reclaimed)
+void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 {
 	if(isDead)
 		return;
@@ -1169,7 +1174,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed)
 	}
 	isDead=true;
 
-	globalAI->UnitDestroyed(this);
+	globalAI->UnitDestroyed(this,attacker);
 
 	blockHeightChanges=false;
 	if(unitDef->isCommander)

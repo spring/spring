@@ -232,7 +232,7 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 		return false;
 	if(unit->xsize > owner->unitDef->transportSize*2)
 		return false;
-	if(unit->inTransport)
+	if(!transport->CanTransport(unit))
 		return false;
 	if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass)
 		return false;

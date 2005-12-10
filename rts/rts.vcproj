@@ -222,9 +222,6 @@
 					RelativePath=".\UnitDefHandler.h">
 				</File>
 				<File
-					RelativePath=".\UnitDrawer.h">
-				</File>
-				<File
 					RelativePath=".\UnitHandler.cpp">
 				</File>
 				<File
@@ -980,6 +977,9 @@
 				</File>
 				<File
 					RelativePath=".\UnitDrawer.cpp">
+				</File>
+				<File
+					RelativePath=".\UnitDrawer.h">
 				</File>
 			</Filter>
 			<Filter
@@ -2620,10 +2620,10 @@
 				Name="Filesystem"
 				Filter="">
 				<File
-					RelativePath=".\Archive7ZipDll.cpp">
+					RelativePath=".\Archive7Zip.cpp">
 				</File>
 				<File
-					RelativePath=".\Archive7ZipDll.h">
+					RelativePath=".\Archive7Zip.h">
 				</File>
 				<File
 					RelativePath=".\ArchiveBase.h">

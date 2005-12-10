@@ -24,9 +24,10 @@ public:
 
 	void Update(void);
 	void DependentDied(CObject* object);
-	void KillUnit(bool selfDestruct,bool reclaimed);
+	void KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker);
 	void AttachUnit(CUnit* unit, int piece);
 	void DetachUnit(CUnit* unit);
+	bool CanTransport(CUnit* unit);
 };
 
 

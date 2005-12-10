@@ -1,7 +1,5 @@
 #ifndef UNITDEF_H
 #define UNITDEF_H
-#ifndef UNIT_DEF_STRUCT
-#define UNIT_DEF_STRUCT
 
 #include <string>
 #include <vector>
@@ -222,7 +220,5 @@ struct UnitDef
 	bool isMetalMaker;
 };
 
-
-#endif
 
 #endif /* UNITDEF_H */

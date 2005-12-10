@@ -11,8 +11,8 @@
 class CVertexArray;
 struct S3DOModel;
 struct UnitDef;
-class CUnit;
 class CWorldObject;
+class CUnit;
 
 class CUnitDrawer
 {
@@ -29,24 +29,27 @@ public:
 	void CleanUpUnitDrawing(void);
 	void SetupForS3ODrawing(void);
 	void CleanUpS3ODrawing(void);
+	void CleanUpGhostDrawing();
+	void SetupForGhostDrawing();
+
+	inline void DrawFar(CUnit* unit);
+
+	std::vector<CUnit*> drawCloaked;
+	CVertexArray* va;
+	bool advShading;
+
+	unsigned int unitVP;
+	unsigned int unitShadowVP;
+	unsigned int unitFP;
+	unsigned int boxtex;
+	unsigned int units3oVP;
+	unsigned int units3oFP;
+	unsigned int specularTex;
 
 	float unitDrawDist;
 
 	unsigned int whiteTex;
 	unsigned int radarBlippTex;
-
-	bool advShading;
-
-	std::vector<CUnit*> drawCloaked;
-	CVertexArray* va;
-	inline void DrawFar(CUnit* unit);
-	unsigned int unitVP;
-	unsigned int unitShadowVP;
-	unsigned int unitFP;
-	unsigned int units3oVP;
-	unsigned int units3oFP;
-	unsigned int boxtex;
-	unsigned int specularTex;
 
 	int updateFace;
 

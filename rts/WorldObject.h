@@ -18,6 +18,7 @@ public:
 	float3 pos;
 	float radius;					//used for collisions
 	float sqRadius;				
+
 	float drawRadius;			//used to see if in los
 	bool useAirLos;
 	bool alwaysVisible;

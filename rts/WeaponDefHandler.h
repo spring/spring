@@ -50,6 +50,8 @@ struct WeaponDef
 	//float airDamage;
 	DamageArray damages;
 	float areaOfEffect;
+	float impulseFactor;
+	bool noSelfDamage;
 	float fireStarter;
 
 	int salvosize;

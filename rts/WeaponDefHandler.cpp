@@ -81,6 +81,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].turret, "0", weaponname + "\\turret");
 	sunparser->GetDef(weaponDefs[id].visuals.modelName, "", weaponname + "\\model");
 	sunparser->GetDef(weaponDefs[id].visuals.smokeTrail, "0", weaponname + "\\smoketrail");
+	sunparser->GetDef(weaponDefs[id].noSelfDamage, "0", weaponname + "\\NoSelfDamage");
+	
 	sunparser->GetDef(weaponDefs[id].waterweapon, "0", weaponname + "\\waterweapon");
 	sunparser->GetDef(weaponDefs[id].tracks, "0", weaponname + "\\tracks");
 	sunparser->GetDef(weaponDefs[id].noExplode, "0", weaponname + "\\NoExplode");
@@ -180,6 +182,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	for(std::map<std::string, std::string>::iterator di=damages.begin();di!=damages.end();++di){
 		int type=damageArrayHandler->GetTypeFromName(di->first);
 		float damage=atof(di->second.c_str());
+	weaponDefs[id].impulseFactor=atof(sunparser->SGetValueDef("1", weaponname + "\\impulsefactor").c_str());
 		if(damage==0)
 			damage=1;
 		if(type!=0){

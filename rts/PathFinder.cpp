@@ -244,7 +244,13 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 	//If exact path is reqired and the goal is blocked, then no search is needed.
 	if(exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
 		return CantGetCloser;
-	
+
+	//Clamp the start position
+	if (startxSqr < 0) startxSqr=0;
+	if (startxSqr >= gs->mapx) startxSqr = gs->mapx-1;
+	if (startzSqr < 0) startzSqr =0;
+	if (startzSqr >= gs->mapy) startzSqr = gs->mapy-1;
+
 	//If the starting position is a goal position, then no search need to be performed.
 	if(pfDef.IsGoal(startxSqr, startzSqr))
 		return CantGetCloser;

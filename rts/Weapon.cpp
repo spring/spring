@@ -92,6 +92,13 @@ CWeapon::~CWeapon()
 
 void CWeapon::Update()
 {
+	// landed aircraft can't shoot
+	if( dynamic_cast<CTAAirMoveType*> (owner->moveType) ) {
+		CTAAirMoveType *amt = (CTAAirMoveType *)owner->moveType;
+		if (amt->aircraftState == CTAAirMoveType::AIRCRAFT_LANDED)
+			return;
+	}
+
 	if(targetType==Target_Unit){
 	// landed aircraft can't shoot
 	if( dynamic_cast<CTAAirMoveType*> (owner->moveType) ) {

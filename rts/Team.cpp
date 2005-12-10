@@ -227,7 +227,7 @@ void CTeam::CommanderDied(CUnit* commander)
 	if(gs->gameMode==1 && numCommanders<=0){
 		for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
 			if((*ui)->team==teamNum)
-				(*ui)->KillUnit(true,false);
+				(*ui)->KillUnit(true,false,0);
 		}
 	}
 }

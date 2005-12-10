@@ -162,16 +162,16 @@ void CGlobalAIHandler::UnitFinished(CUnit* unit)
 		}
 }
 
-void CGlobalAIHandler::UnitDestroyed(CUnit* unit)
+void CGlobalAIHandler::UnitDestroyed(CUnit* unit,CUnit* attacker)
 {
 	if(hasAI){
 		try {
 			for(int a=0;a<gs->activeTeams;++a){
- 				if(ais[a] && !gs->Ally(gs->AllyTeam(a),unit->allyteam) && (unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))
-					ais[a]->ai->EnemyDestroyed(unit->id);
+				if(ais[a] && !gs->Ally(gs->AllyTeam(a),unit->allyteam) && (unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))
+					ais[a]->ai->EnemyDestroyed(unit->id,attacker?attacker->id:0);
 			}
 			if(ais[unit->team])
-				ais[unit->team]->ai->UnitDestroyed(unit->id);
+				ais[unit->team]->ai->UnitDestroyed(unit->id,attacker?attacker->id:0);
 		} catch (...){
 			HANDLE_EXCEPTION;
 		}
@@ -200,6 +200,7 @@ bool CGlobalAIHandler::CreateGlobalAI(int team, const char* dll)
 		return true;
 	} catch (...){
 		HANDLE_EXCEPTION;
+		return false;
 	}
 }
 

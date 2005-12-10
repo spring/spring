@@ -14,6 +14,7 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	curFrame = 0;
 
 
+
 	if (name.length() > 80) {
 		info->AddLine("CMouseCursor: Long name %s", name.c_str());
 		return;

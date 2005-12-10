@@ -62,8 +62,6 @@ class CUnit;
 #define BUGGER_OFF			19	// set or get (ask other units to clear the area)
 #define ARMORED				20	// set or get
 
-CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
-: script(script)
 /*#define WEAPON_AIM_ABORTED	21
 #define WEAPON_READY		22
 #define WEAPON_LAUNCH_NOW	23
@@ -75,6 +73,8 @@ CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 #define VETERAN_LEVEL  32
 #define ON_ROAD    34
 
+CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
+: script(script)
 {
 	for (int i = 0; i < script.numStaticVars; ++i) {
 		staticVars.push_back(0);
