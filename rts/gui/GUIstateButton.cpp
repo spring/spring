@@ -9,7 +9,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-GUIstateButton::GUIstateButton(int x, int y, int w, vector<string>& states1, Functor2<GUIstateButton*, int> callback): GUIbutton(x, y, states1[0], (Functor1<GUIbutton*>)NULL), click(callback), states(states1)
+GUIstateButton::GUIstateButton(int x, int y, int w, vector<string>& states1, Functor2<GUIstateButton*, int> callback): GUIbutton(x, y, states1[0], (Functor1<GUIbutton*>)0), click(callback), states(states1)
 {
 	SetSize(w, 0);
 	state=0;
