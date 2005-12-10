@@ -47,7 +47,6 @@
 #include "MissileProjectile.h"
 #include "FlareProjectile.h"
 #include "HeatCloudProjectile.h"
-#include "heatcloudprojectile.h"
 #include "MiniMap.h"
 #include "UnitDrawer.h"
 #include "AirBaseHandler.h"
