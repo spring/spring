@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "Feature.h"
-#include "mygl.h"
 #include "myGL.h"
 #include "FeatureHandler.h"
 #include "3DOParser.h"
