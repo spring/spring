@@ -295,6 +295,9 @@ void InfoMap::UpdateBaseCenter (IAICallback *cb)
 
 			break;
 		}
+		if (!fixedOnly && !num)
+			break;
+
 		num=0;
 		fixedOnly=false;
 	}

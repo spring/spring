@@ -7,13 +7,43 @@
 #include "Team.h"
 #include "UnitDefHandler.h"
 #include "GlobalAIHandler.h"
+#include "FileHandler.h"
 //#include "mmgr.h"
 
-static CGlobalAITestScript ts;
+
+class CAIScriptHandler
+{
+public:
+	std::vector<CGlobalAITestScript*> scripts;
+
+	CAIScriptHandler()
+	{
+#ifdef WIN32
+		std::vector<std::string> f=CFileHandler::FindFiles("aidll\\globalai\\*.dll");
+#else
+		std::vector<std::string> f=CFileHandler::FindFiles("aidll/globalai/*.so");
+#endif
+		for(std::vector<std::string>::iterator fi=f.begin();fi!=f.end();++fi){
+			string name = (*fi).substr((*fi).find_last_of('\\') + 1);
+			scripts.push_back(new CGlobalAITestScript(name, "./aidll/globalai/"));
+		}
+	};
+	~CAIScriptHandler()
+	{
+		for(std::vector<CGlobalAITestScript*>::iterator fi=scripts.begin();fi!=scripts.end();++fi){
+			delete *fi;
+		}
+	};
+};
+
+static CAIScriptHandler aish;
+
+//static CGlobalAITestScript ts;
 extern std::string stupidGlobalMapname;
 
-CGlobalAITestScript::CGlobalAITestScript(void)
-: CScript(std::string("GlobalAI test"))
+CGlobalAITestScript::CGlobalAITestScript(std::string dll, std::string base)
+: CScript(std::string("GlobalAI test (") + dll + std::string(")")),
+	dllName(dll), baseDir(base)
 {
 }
 
@@ -25,11 +55,7 @@ void CGlobalAITestScript::Update(void)
 {
 	switch(gs->frameNum){
 	case 0:{
-#ifdef _WIN32
-		globalAI->CreateGlobalAI(1,"./aidll/globalai/test.dll");
-#else
-		globalAI->CreateGlobalAI(1,"./aidll/globalai/test.so");
-#endif
+		globalAI->CreateGlobalAI(1, string(baseDir + dllName).c_str());
 
 		gs->Team(0)->energy=1000;
 		gs->Team(0)->energyStorage=1000;
