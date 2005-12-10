@@ -47,7 +47,7 @@ public:
 	void UnitCreated(int unit);									//called when a new unit is created on ai team
 	void UnitFinished(int unit);								//called when an unit has finished building
 	void UnitIdle(int unit);										//called when a unit go idle and is not assigned to any group
-	void UnitDestroyed(int unit);								//called when a unit is destroyed
+	void UnitDestroyed(int unit, int attacker);					//called when a unit is destroyed
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);					//called when one of your units are damaged
 	void UnitMoveFailed(int unit);
 
@@ -59,7 +59,7 @@ public:
 
 	void GotChatMsg(const char* msg,int player);					//called when someone writes a chat msg
 
-	void EnemyDestroyed (int enemy);
+	void EnemyDestroyed (int enemy, int attacker);			//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 	int HandleEvent (int msg, const void*data);
 
 	// called every frame
