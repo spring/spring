@@ -16,7 +16,6 @@
 #include <cctype>
 #include "ConfigHandler.h"
 #include <set>
-#include "unitdrawer.h"
 #include "UnitDrawer.h"
 #include "errorhandler.h"
 //#include "mmgr.h"

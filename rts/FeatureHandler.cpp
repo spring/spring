@@ -20,8 +20,6 @@
 #include "VertexArray.h"
 #include "FartextureHandler.h"
 #include "UnitDrawer.h"
-#include "basewater.h"
-#include "shadowhandler.h"
 #include "BaseWater.h"
 #include "ShadowHandler.h"
 //#include "mmgr.h"
