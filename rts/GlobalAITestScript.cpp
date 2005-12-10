@@ -25,7 +25,7 @@ public:
 #endif
 		for(std::vector<std::string>::iterator fi=f.begin();fi!=f.end();++fi){
 			string name = (*fi).substr((*fi).find_last_of('\\') + 1);
-			scripts.push_back(new CGlobalAITestScript(name, "./aidll/globalai/"));
+			scripts.push_back(new CGlobalAITestScript(name, "./"));
 		}
 	};
 	~CAIScriptHandler()
