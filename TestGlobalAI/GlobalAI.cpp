@@ -15,6 +15,7 @@ namespace std{
 	void _xlen(){};
 }
 
+
 CGlobalAI::CGlobalAI()
 {
 
@@ -28,7 +29,6 @@ CGlobalAI::~CGlobalAI()
 void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 {
 	this->callback=callback;
-	aicb=callback->GetAICallback();
 }
 
 void CGlobalAI::UnitCreated(int unit)
@@ -40,7 +40,7 @@ void CGlobalAI::UnitFinished(int unit)
 {
 }
 
-void CGlobalAI::UnitDestroyed(int unit)
+void CGlobalAI::UnitDestroyed(int unit,int attacker)
 {
 	myUnits.erase(unit);
 }
@@ -64,18 +64,18 @@ void CGlobalAI::EnemyLeaveRadar(int enemy)
 
 }
 
-void CGlobalAI::EnemyDestroyed(int enemy)
+void CGlobalAI::EnemyDestroyed(int enemy,int attacker)
 {
 	enemies.erase(enemy);
 }
 
 void CGlobalAI::UnitIdle(int unit)
 {
-	const UnitDef* ud=aicb->GetUnitDef(unit);
+	const UnitDef* ud=callback->GetAICallback()->GetUnitDef(unit);
 
 	char c[200];
 	sprintf(c,"Idle unit %s",ud->humanName.c_str());
-	aicb->SendTextMsg(c,0);
+	callback->GetAICallback()->SendTextMsg(c,0);
 }
 
 void CGlobalAI::GotChatMsg(const char* msg,int player)
@@ -99,12 +99,11 @@ int CGlobalAI::HandleEvent(int msg,const void* data)
 
 void CGlobalAI::Update()
 {
-	int frame=aicb->GetCurrentFrame();
+	int frame=callback->GetAICallback()->GetCurrentFrame();
 
 	if(!(frame%60)){
 		char c[200];
 		sprintf(c,"Friendly %i Enemy %i",myUnits.size(),enemies.size());
-		aicb->SendTextMsg(c,0);
+		callback->GetAICallback()->SendTextMsg(c,0);
 	}
 }
-

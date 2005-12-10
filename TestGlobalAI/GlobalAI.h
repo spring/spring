@@ -28,7 +28,7 @@ public:
 
 	void UnitCreated(int unit);									//called when a new unit is created on ai team
 	void UnitFinished(int unit);								//called when an unit has finished building
-	void UnitDestroyed(int unit);								//called when a unit is destroyed
+	void UnitDestroyed(int unit,int attacker);								//called when a unit is destroyed
 
 	void EnemyEnterLOS(int enemy);
 	void EnemyLeaveLOS(int enemy);
@@ -36,7 +36,7 @@ public:
 	void EnemyEnterRadar(int enemy);				
 	void EnemyLeaveRadar(int enemy);				
 	
-	void EnemyDestroyed(int enemy);							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
+	void EnemyDestroyed(int enemy,int attacker);							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 
 	void UnitIdle(int unit);										//called when a unit go idle and is not assigned to any group
 
@@ -50,7 +50,6 @@ public:
 	void Update();
 
 	IGlobalAICallback* callback;
-	IAICallback* aicb;
 
 	set<int> myUnits;
 	set<int> enemies;
