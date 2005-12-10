@@ -155,9 +155,6 @@
 				RelativePath=".\GlobalAIHandler.h">
 			</File>
 			<File
-				RelativePath=".\GlobalAITestScript.cpp">
-			</File>
-			<File
 				RelativePath=".\Group.cpp">
 			</File>
 			<File
@@ -1957,6 +1954,9 @@
 				</File>
 				<File
 					RelativePath=".\EmptyScript.h">
+				</File>
+				<File
+					RelativePath=".\GlobalAITestScript.cpp">
 				</File>
 				<File
 					RelativePath=".\GlobalAITestScript.h">
