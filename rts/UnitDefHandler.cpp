@@ -185,6 +185,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.energyStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
 
 	ud.autoHeal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\AutoHeal").c_str())/(16.0/30.0);
+	ud.autoHeal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\AutoHeal").c_str())/(16.0/30.0);
+	ud.idleAutoHeal=atof(tdfparser.SGetValueDef("10", "UNITINFO\\IdleAutoHeal").c_str())/(16.0/30.0);
+	ud.idleTime=atof(tdfparser.SGetValueDef("600", "UNITINFO\\IdleTime").c_str());
+
 	ud.idleAutoHeal=atof(tdfparser.SGetValueDef("10", "UNITINFO\\IdleAutoHeal").c_str())/(16.0/30.0);
 	ud.idleTime=atoi(tdfparser.SGetValueDef("600", "UNITINFO\\IdleTime").c_str());
 

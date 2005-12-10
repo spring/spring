@@ -8,7 +8,6 @@
 #include "command.h"
 struct UnitDef;
 struct FeatureDef;
-
 // GetProperty/GetValue() constants
                             // Data buffer will be filled with this:
 #define AIVAL_UNITDEF		1  // const UnitDef*
@@ -147,6 +146,19 @@ public:
 	virtual bool CanBuildAt(const UnitDef* unitDef,float3 pos) = 0;
 	virtual float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist) = 0;	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
+	virtual bool GetProperty(int id, int property, void *dst)=0;
+	virtual bool GetValue(int id, void *dst)=0;
+	virtual int HandleCommand(void *data)=0; // future callback extensions
+
+	virtual int GetFileSize (const char *name)=0;// return -1 when the file doesn't exist
+	virtual bool ReadFile (const char *name, void *buffer,int bufferLen)=0;// returns false when file doesn't exist or buffer is too small
+
+	// added by alik
+	virtual int GetSelectedUnits(int *units)=0; 
+	virtual float3 GetMousePos()=0;
+	virtual int GetMapPoints(PointMarker *pm, int maxPoints)=0;
+	virtual int GetMapLines(LineMarker *lm, int maxLines)=0;
+
 	virtual float GetMetal() = 0;				//stored metal for team
 	virtual float GetMetalIncome() = 0;				
 	virtual float GetMetalUsage() = 0;				
@@ -167,18 +179,6 @@ public:
 	virtual int GetNumUnitDefs() = 0;
 	virtual void GetUnitDefList (const UnitDef** list) = 0;
 
-	virtual bool GetProperty(int id, int property, void *dst)=0;
-	virtual bool GetValue(int id, void *dst)=0;
-	virtual int HandleCommand(void *data)=0; // future callback extensions
-
-	virtual int GetFileSize (const char *name)=0;// return -1 when the file doesn't exist
-	virtual bool ReadFile (const char *name, void *buffer,int bufferLen)=0;// returns false when file doesn't exist or buffer is too small
-
-	// added by alik
-	virtual int GetSelectedUnits(int *units)=0; 
-	virtual float3 GetMousePos()=0;
-	virtual int GetMapPoints(PointMarker *pm, int maxPoints)=0;
-	virtual int GetMapLines(LineMarker *lm, int maxLines)=0;
 };
 
 #endif /* IAICALLBACK_H */

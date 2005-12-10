@@ -45,7 +45,7 @@ CFactory::CFactory(const float3 &pos,int team,UnitDef* unitDef)
 CFactory::~CFactory()
 {
 	if(curBuild){
-		curBuild->KillUnit(false,true);
+		curBuild->KillUnit(false,true,0);
 		curBuild=0;
 	}
 }

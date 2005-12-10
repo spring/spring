@@ -27,7 +27,7 @@ public:
 	void UnitIdle(CUnit* unit);
 	void UnitCreated(CUnit* unit);
 	void UnitFinished(CUnit* unit);
-	void UnitDestroyed(CUnit* unit);
+	void UnitDestroyed(CUnit* unit, CUnit *attacker);
 	void UnitMoveFailed(CUnit* unit);
 	void UnitTaken(CUnit* unit, int newteam);
 	void UnitGiven(CUnit* unit, int oldteam);

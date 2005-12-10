@@ -181,6 +181,8 @@ unsigned int LoadVertexProgram(const char* filename)
 	unsigned int ret;
 
 	CFileHandler VPFile(std::string("shaders/")+filename);
+	if (!VPFile.FileExists ())
+		return 0;
 	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
@@ -211,6 +213,8 @@ unsigned int LoadFragmentProgram(const char* filename)
 	unsigned int ret;
 
 	CFileHandler VPFile(std::string("shaders/")+filename);
+	if (!VPFile.FileExists ())
+		return 0;
 	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 

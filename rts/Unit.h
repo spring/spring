@@ -32,6 +32,7 @@ class CMissileProjectile;
 	struct DirectControlStruct;
 #endif
 
+class CTransportUnit;
 using namespace std;
 
 #define LOS_INLOS 1				//the unit is currently in the los of the allyteam
@@ -112,7 +113,7 @@ public:
 
 	bool beingBuilt;
 	int lastNanoAdd;					//if we arent built on for a while start decaying
-	bool inTransport;					//unit is currently loaded on a transport
+	CTransportUnit *transporter;		//transport that the unit is currently in
 	bool toBeTransported;			//unit is about to be picked up by a transport
 	float buildProgress;			//0.0-1.0
 	int realLosRadius;				//set los to this when finished building
@@ -251,7 +252,7 @@ public:
 protected:
 	void ExperienceChange();
 public:
-	virtual void KillUnit(bool SelfDestruct,bool reclaimed);
+	virtual void KillUnit(bool SelfDestruct,bool reclaimed, CUnit *attacker);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	virtual void IncomingMissile(CMissileProjectile* missile);
 	void TempHoldFire(void);

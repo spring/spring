@@ -20,6 +20,8 @@
 #include "VertexArray.h"
 #include "FartextureHandler.h"
 #include "UnitDrawer.h"
+#include "basewater.h"
+#include "shadowhandler.h"
 #include "BaseWater.h"
 #include "ShadowHandler.h"
 //#include "mmgr.h"
@@ -101,6 +103,7 @@ void CFeatureHandler::Draw()
 	DrawRaw(0,&drawFar);
 
 	unitDrawer->CleanUpUnitDrawing();
+
 	unitDrawer->DrawQuedS3O();
 
 	CVertexArray* va=GetVertexArray();
@@ -320,7 +323,8 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 				(*fi)->transMatrix=CMatrix44f();
 				(*fi)->transMatrix.Translate((*fi)->pos.x,(*fi)->pos.y,(*fi)->pos.z);
 				(*fi)->transMatrix.RotateY(-(*fi)->heading*PI/0x7fff);
-				(*fi)->transMatrix.SetUpVector(ground->GetNormal((*fi)->pos.x,(*fi)->pos.z));
+				if (!(*fi)->def->upright)
+					(*fi)->transMatrix.SetUpVector(ground->GetNormal((*fi)->pos.x,(*fi)->pos.z));
 			}
 		}
 	}
@@ -485,13 +489,14 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		}
 		FeatureDef* fd=new FeatureDef;
 		fd->blocking=!!atoi(wreckParser.SGetValueDef("1",name+"\\blocking").c_str());
-		fd->destructable=true;
-		fd->burnable=false;
+		fd->destructable=!atoi(wreckParser.SGetValueDef("0",name+"\\indestructible").c_str());
+		fd->burnable=!!atoi(wreckParser.SGetValueDef("0",name+"\\flammable").c_str());
 		fd->floating=!!atoi(wreckParser.SGetValueDef("1",name+"\\nodrawundergray").c_str());		//this seem to be the closest thing to floating that ta wreckage contains
 		if(fd->floating && !fd->blocking)
 			fd->floating=false;
 
 		fd->deathFeature=wreckParser.SGetValueDef("",name+"\\featuredead");
+		fd->upright=!!atoi(wreckParser.SGetValueDef("0",name+"\\upright").c_str());
 		fd->drawType=DRAWTYPE_3DO;
 		fd->energy=atof(wreckParser.SGetValueDef("0",name+"\\energy").c_str());
 		fd->maxHealth=atof(wreckParser.SGetValueDef("0",name+"\\damage").c_str());

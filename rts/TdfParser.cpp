@@ -185,7 +185,7 @@ std::string TdfParser::SGetValueMSG(std::string const& location)
 	std::string value;
 	bool found = SGetValue(value, lowerd);
 	if(!found)
-		handleerror(hWnd, value.c_str(), "Sun parsing error", MBF_OK);
+		handleerror(hWnd, value.c_str(), "TDF parsing error", MBF_OK);
 	return value;
 }
 

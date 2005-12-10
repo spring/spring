@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "Feature.h"
+#include "mygl.h"
 #include "myGL.h"
 #include "FeatureHandler.h"
 #include "3DOParser.h"
@@ -61,7 +62,8 @@ CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyt
 //	this->pos.y=ground->GetHeight(pos.x,pos.z);
 	transMatrix.Translate(pos.x,pos.y,pos.z);
 	transMatrix.RotateY(-heading*PI/0x7fff);
-	transMatrix.SetUpVector(ground->GetNormal(pos.x,pos.z));
+	if (!def->upright)
+		transMatrix.SetUpVector(ground->GetNormal(pos.x,pos.z));
 
 	if(blocking){
 		Block();

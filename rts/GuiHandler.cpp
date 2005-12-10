@@ -28,6 +28,7 @@
 #include "Feature.h"
 #include "BaseGroundDrawer.h"
 #include "WeaponDefHandler.h"
+#include "UnitDrawer.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 //#include "mmgr.h"
@@ -720,22 +721,14 @@ void CGuiHandler::DrawMapStuff(void)
 						glColor4f(0.7,1,1,0.4);
 					else
 						glColor4f(1,0.5,0.5,0.4);
-					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-					glEnable(GL_TEXTURE_2D);
-					texturehandler->SetTATexture();
-					glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-					glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
-					glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
-					glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-					glDepthMask(0);
+
+					unitDrawer->SetupForGhostDrawing ();
 					S3DOModel* model=modelParser->Load3DO((unitdef->model.modelpath).c_str() ,1, gu->myTeam);
 					glPushMatrix();
 					glTranslatef3(pos);
 					//glCallList(model->displist);
 					model->DrawStatic();
-					glDisable(GL_TEXTURE_2D);
-					glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-					glDepthMask(1);
+					unitDrawer->CleanUpGhostDrawing();
 					glPopMatrix();
 					if(unitdef->weapons.size()>0){	//draw range
 						glDisable(GL_TEXTURE_2D);

@@ -58,9 +58,9 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 		if(camLength<moveLength+2)
 			moveLength=camLength-2;
 		float3 npos=pos+camVect*moveLength;
-		float heatcloudsize = 7+damage*2.8;
-		float heatcloudtemperature = 8+sqrt(damage)*0.5;
-		CHeatCloudProjectile* p=new CHeatCloudProjectile(npos,speed,heatcloudtemperature,heatcloudsize,(-heatcloudsize/heatcloudtemperature)*0.5,owner);
+
+		CHeatCloudProjectile* p=new CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5,7+damage*2.8,owner);
+
 		//p->Update();
 		//p->maxheat=p->heat;
 	}

@@ -26,6 +26,9 @@ CBombDropper::CBombDropper(CUnit* owner,bool useTorps)
 	tracking(0)
 {
 	onlyForward=true;
+
+	if(useTorps)
+		owner->hasUWWeapons=true;
 }
 
 CBombDropper::~CBombDropper()
@@ -45,7 +48,7 @@ void CBombDropper::Update()
 			float s=-owner->speed.y;
 			float sq=(s-2*d)/-gs->gravity;
 			if(sq>0)
-				predict=-s/-gs->gravity+sqrt(sq);
+				predict=s/gs->gravity+sqrt(sq);
 			else
 				predict=0;
 			float3 hitpos=owner->pos+owner->speed*predict;
@@ -83,7 +86,7 @@ void CBombDropper::Fire(void)
 		dir.y=0;
 		dir.Normalize();
 		dif-=dir*dif.dot(dir);
-		dif/=predict;
+		dif/=max(0.01f,predict);
 		float size=dif.Length();
 		if(size>0.5)
 			dif/=size*0.5;

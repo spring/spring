@@ -31,6 +31,8 @@
 #include "Player.h"
 #include "InMapDraw.h"
 #include "FileHandler.h"
+#include "InMapDraw.h"
+#include "FileHandler.h"
 //#include "mmgr.h"
 
 CAICallback::CAICallback(int Team, CGroupHandler *ghandler)
@@ -707,6 +709,16 @@ float3 CAICallback::GetFeaturePos (int feature)
 	return ZeroVector;
 }
 
+bool CAICallback::GetValue(int id, void *data)
+{
+	return false;
+}
+
+int CAICallback::HandleCommand (void *data)
+{
+	return 0;
+}
+
 int CAICallback::GetNumUnitDefs ()
 {
 	return unitDefHandler->numUnits;
@@ -732,15 +744,27 @@ bool CAICallback::GetProperty(int id, int property, void *data)
 	return false;
 }
 
-bool CAICallback::GetValue(int id, void *data)
+int CAICallback::GetFileSize (const char *name)
 {
-	return false;
+	CFileHandler fh (name);
+
+	if (!fh.FileExists ())
+		return -1;
+	
+	return fh.FileSize();
 }
 
-int CAICallback::HandleCommand (void *data)
+bool CAICallback::ReadFile (const char *name, void *buffer, int bufferLength)
 {
-	return 0;
+	CFileHandler fh (name);
+	int fs;
+	if (!fh.FileExists() || bufferLength < (fs = fh.FileSize()))
+		return false;
+
+	fh.Read (buffer, fs);
+	return true;
 }
+
 
 // Additions to the interface by Alik
 int CAICallback::GetSelectedUnits(int *units)
@@ -806,26 +830,5 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 		}
 	}
 	return a;
-}
-
-int CAICallback::GetFileSize (const char *name)
-{
-	CFileHandler fh (name);
-
-	if (!fh.FileExists ())
-		return -1;
-	
-	return fh.FileSize();
-}
-
-bool CAICallback::ReadFile (const char *name, void *buffer, int bufferLength)
-{
-	CFileHandler fh (name);
-	int fs;
-	if (!fh.FileExists() || bufferLength < (fs = fh.FileSize()))
-		return false;
-
-	fh.Read (buffer, fs);
-	return true;
 }
 

@@ -40,6 +40,7 @@ struct FeatureDef
 	float radius;
 	float mass;									//used to see if the object can be overrun
 
+	bool upright;
 	int drawType;
 	S3DOModel* model;						//used by 3do obects
 	std::string modelname;			//used by 3do obects

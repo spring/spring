@@ -10,6 +10,10 @@ class IGlobalAICallback;
 
 // Both use ChangeTeamEvent for data
 #define AI_EVENT_UNITGIVEN 1
+	struct ChangeTeamEvent { 
+		int unit, newteam, oldteam;
+	};
+
 #define AI_EVENT_UNITCAPTURED 2
 
 class IGlobalAI
@@ -23,7 +27,7 @@ public:
 
 	virtual void UnitCreated(int unit)=0;									//called when a new unit is created on ai team
 	virtual void UnitFinished(int unit)=0;								//called when an unit has finished building
-	virtual void UnitDestroyed(int unit)=0;								//called when a unit is destroyed
+	virtual void UnitDestroyed(int unit, int attacker)=0;				//called when a unit is destroyed
 
 	virtual void EnemyEnterLOS(int enemy)=0;
 	virtual void EnemyLeaveLOS(int enemy)=0;
@@ -31,7 +35,7 @@ public:
 	virtual void EnemyEnterRadar(int enemy)=0;						//called when an enemy enter radar coverage (los always count as radar coverage to)
 	virtual void EnemyLeaveRadar(int enemy)=0;						//called when an enemy leave radar coverage (los always count as radar coverage to)
 	
-	virtual void EnemyDestroyed(int enemy)=0;							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
+	virtual void EnemyDestroyed(int enemy, int attacker)=0;		//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 
 	virtual void UnitIdle(int unit)=0;										//called when a unit go idle and is not assigned to any group
 

@@ -32,7 +32,6 @@ public:
 	int LoadS3OTexture(string tex1, string tex2);
 	void SetS3oTexture(int num);
 
-
 private:
 	map<string,UnitTexture*> textures;
 	unsigned int globalTex;

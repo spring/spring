@@ -180,6 +180,8 @@ START_TIME_PROFILE;
 		mt->maxWantedSpeed=ud->speed/GAME_SPEED;
 		mt->turnRate=ud->turnRate;
 		mt->baseTurnRate=ud->turnRate;
+		if (!mt->accRate) 
+			(*info) << "acceleration of " << ud->name.c_str() << " is zero!!\n";
 		mt->moveType=ud->moveType;
 		mt->accRate=ud->maxAcc;
 		mt->floatOnWater=ud->movedata->moveType==MoveData::Hover_Move || ud->movedata->moveType==MoveData::Ship_Move;

@@ -19,6 +19,7 @@
 #include "FeatureHandler.h"
 #include "InfoConsole.h"
 #include "Team.h"
+#include "UnitDrawer.h"
 //#include "mmgr.h"
 
 CBuilderCAI::CBuilderCAI(CUnit* owner)
@@ -676,22 +677,15 @@ void CBuilderCAI::DrawCommands(void)
 				glEnd();
 			}
 
-			glEnable(GL_TEXTURE_2D);
-			texturehandler->SetTATexture();
-			glDepthMask(0);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+			unitDrawer->SetupForGhostDrawing();
 			glColor4f(1,1,1,0.3);
 			S3DOModel* model=modelParser->Load3DO(unitdef->model.modelpath.c_str() ,1, owner->team);
 			glPushMatrix();
 			glTranslatef3(pos);
 			//glCallList(model->displist);
 			model->DrawStatic();
-			glDisable(GL_TEXTURE_2D);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-			glDepthMask(1);
+			unitDrawer->CleanUpGhostDrawing();
+
 			glPopMatrix();
 			glColor4f(1,1,1,0.4);
 			glBegin(GL_LINE_STRIP);

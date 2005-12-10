@@ -4,6 +4,7 @@
 #include "InfoConsole.h"
 #include "GlobalStuff.h"
 #include "Unit.h"
+#include "TransportUnit.h"
 #include "TdfParser.h"
 #include "LuaFunctions.h"
 #include "command.h"
@@ -220,7 +221,7 @@ CLuaBinder::CLuaBinder(void)
 			]
 			.def_readonly("id", &CUnit::id)
 			.def_readonly("health", &CUnit::health)
-			.def_readonly("inTransport", &CUnit::inTransport)
+			.def_readonly("transporter", &CUnit::transporter)
 			.def("__tostring", &UnitToString)
 			.def_readonly("team", &CUnit::team)
 			.def("GiveCommand", &UnitGiveCommand)

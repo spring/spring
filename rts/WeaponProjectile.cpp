@@ -3,8 +3,8 @@
 #include "WeaponDefHandler.h"
 #include "Sound.h"
 #include "3DModelParser.h"
-#include "3DOParser.h"
 #include "s3oParser.h"
+#include "3DOParser.h"
 #include "myGL.h"
 #include "TextureHandler.h"
 #include "Ground.h"
@@ -66,8 +66,8 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 void CWeaponProjectile::Collision()
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode);
-
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode || weaponDef->noSelfDamage,0,weaponDef->impulseFactor);
+		
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
 
@@ -92,7 +92,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 void CWeaponProjectile::Collision(CUnit* unit)
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode);
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode,0,weaponDef->impulseFactor);
 
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);

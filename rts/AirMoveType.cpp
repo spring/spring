@@ -211,7 +211,7 @@ void CAirMoveType::Update(void)
 		UpdateAirPhysics(crashRudder,crashAileron,crashElevator,0,owner->frontdir);
 		new CSmokeProjectile(owner->midPos,gs->randVector()*0.08,100+gs->randFloat()*50,5,0.2,owner,0.4);
 		if(!(gs->frameNum&3) && max(0.f,ground->GetApproximateHeight(pos.x,pos.z))+5+owner->radius>pos.y)
-			owner->KillUnit(true,false);
+			owner->KillUnit(true,false,0);
 		break;
 	case AIRCRAFT_TAKEOFF:
 		UpdateTakeOff(wantedHeight);
