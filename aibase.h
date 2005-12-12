@@ -16,4 +16,10 @@
 
 #endif
 
+#ifdef _MSC_VER
+#define DLL_EXPORT extern "C" __declspec(dllexport)
+#else
+#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
+#endif
+
 #endif /* AIBASE_H */
