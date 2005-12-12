@@ -15,12 +15,6 @@
 
 std::set<IGlobalAI*> ais;
 
-#ifdef _MSC_VER
-#define DLL_EXPORT extern "C" __declspec(dllexport)
-#else
-#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
-#endif
-
 DLL_EXPORT int WINAPI GetGlobalAiVersion()
 {
 	return GLOBAL_AI_INTERFACE_VERSION;
