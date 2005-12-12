@@ -1,7 +1,9 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
