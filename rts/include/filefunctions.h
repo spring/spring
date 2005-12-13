@@ -92,14 +92,17 @@ static inline std::vector<fs::path> find_files(fs::path &dirpath, const std::str
 	if (fs::exists(dirpath) && fs::is_directory(dirpath)) {
 		fs::directory_iterator enditr;
 		for (fs::directory_iterator diritr(dirpath); diritr != enditr; ++diritr) {
-			if (!fs::is_directory(*diritr)) {
-				if (boost::regex_match(diritr->leaf(),regexpattern))
-					matches.push_back(*diritr);
-			} else if (recurse) {
-				std::vector<fs::path> submatch = find_files(*diritr,pattern,true);
-				if (!submatch.empty()) {
-					for (std::vector<fs::path>::iterator it=submatch.begin(); it != submatch.end(); it++)
-						matches.push_back(*it);
+			//Exclude broken symlinks by checking if the file actually exists.
+			if (fs::exists(*diritr)) {
+				if (!fs::is_directory(*diritr)) {
+					if (boost::regex_match(diritr->leaf(),regexpattern))
+						matches.push_back(*diritr);
+				} else if (recurse) {
+					std::vector<fs::path> submatch = find_files(*diritr,pattern,true);
+					if (!submatch.empty()) {
+						for (std::vector<fs::path>::iterator it=submatch.begin(); it != submatch.end(); it++)
+							matches.push_back(*it);
+					}
 				}
 			}
 		}
