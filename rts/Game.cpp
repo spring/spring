@@ -464,6 +464,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}
 	}
 
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->KeyPressed(k))
@@ -795,6 +796,7 @@ int CGame::KeyReleased(unsigned short k)
 		return 0;
 	}
 
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->KeyReleased(k))
@@ -1015,12 +1017,15 @@ bool CGame::Draw()
 	glEnable(GL_TEXTURE_2D);
 
 #ifndef NEW_GUI
-	if(!hideInterface && !inputReceivers.empty()){
-		std::deque<CInputReceiver*>::iterator ri;
-		for(ri=--inputReceivers.end();ri!=inputReceivers.begin();--ri){
+	if(!hideInterface) {
+		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		if (!inputReceivers.empty()){
+			std::deque<CInputReceiver*>::iterator ri;
+			for(ri=--inputReceivers.end();ri!=inputReceivers.begin();--ri){
+				(*ri)->Draw();
+			}
 			(*ri)->Draw();
 		}
-		(*ri)->Draw();
 	}
 #endif
 
@@ -1047,7 +1052,7 @@ bool CGame::Draw()
 
 	if(gameSetup && !playing){
 		allReady=gameSetup->Draw();
-	} else if( gameServer && serverNet->waitOnCon){				//servern väntar på anslutningar
+	} else if( gameServer && serverNet->waitOnCon){				//servern vï¿½tar pï¿½anslutningar
 		glPushMatrix();
 		glColor4f(1,1,1,1);
 		glTranslatef(0.1f,0.6f,0.0f);

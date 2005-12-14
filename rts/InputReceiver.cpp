@@ -3,15 +3,22 @@
 #include "myGL.h"
 //#include "mmgr.h"
 
-std::deque<CInputReceiver*> inputReceivers;
+std::deque<CInputReceiver*>& GetInputReceivers()
+{
+	//This construct fixes order of initialization between different
+	//compilation units using inputReceivers. (mantis # 34)
+	static std::deque<CInputReceiver*> s_inputReceivers;
+	return s_inputReceivers;
+}
 
 CInputReceiver::CInputReceiver(void)
 {
-	inputReceivers.push_front(this);
+	GetInputReceivers().push_front(this);
 }
 
 CInputReceiver::~CInputReceiver(void)
 {
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if(*ri==this){
@@ -23,6 +30,7 @@ CInputReceiver::~CInputReceiver(void)
 
 CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 {
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->IsAbove(x,y))
