@@ -4,33 +4,23 @@
 #include <vector>
 #include <set>
 #include "float3.h"
-#include "AICallback.h"
+#include "IAICallback.h"
 #include "UnitDef.h"
 
-class CMetalHandler
-{
-	
+class CMetalHandler{	
 	std::vector<float3> *parseMap();
-
 	const char *hashname();
-
 	IAICallback *cb;
 	float getMetalAmount(int x, int z);
-
 public:
-	float getExtractionRanged(float x, float z);
-	
+	float getExtractionRanged(float x, float z);	
 	std::vector<float3>	metalpatch;
 	std::vector<float3> hotspot;
-
-	std::set<int> mex;
-
+	std::vector<int> mex;
 	void saveState();
 	void loadState();
-
 	CMetalHandler(IAICallback *callback);
-	~CMetalHandler(void);
-
+	virtual ~CMetalHandler(void);
 
 	/**
 	*	Return best zone to extract metal, where there
@@ -74,8 +64,6 @@ public:
 	*/
 	float3 getNearestPatch(float3 pos, float minMetal, float depth);
 	
-
-
 	/**
 	*	If you wand support for getting results afar from other
 	*	metal extractor, you should call this class whenewer
@@ -88,17 +76,8 @@ public:
 	*/
 	
 	void addExtractor(int unit) {
-
-	
-		if (cb->GetUnitDef(unit)!=0){
-			if (cb->GetUnitDef(unit)->extractsMetal>0) {
-				mex.insert(unit);
-			} }
-		else{
-			mex.insert(unit);
-		}
+			mex.push_back(unit);
 	};
-
 
 	/**
 	*	Used to notify the metal handler that a metal unit
@@ -107,12 +86,15 @@ public:
 	*
 	*/
 	void removeExtractor(int unit) {
-
-		mex.erase(unit);
-
+		if(mex.empty() == false){
+			for(vector<int>::iterator qi = mex.begin();qi!=mex.end();++qi){
+				if(*qi == unit){
+					mex.erase(qi);
+					break;
+				}
+			}
+		}
 	};
-
-
 
 };
 

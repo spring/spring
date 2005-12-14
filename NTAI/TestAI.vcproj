@@ -40,7 +40,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll\globalai\test.dll"
+				OutputFile=".\..\rts\bagge\aidll\globalai\NTAI.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				ModuleDefinitionFile=".\TestAI.def"
@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1053"/>
+				Culture="2057"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -103,7 +103,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll\test.dll"
+				OutputFile=".\..\rts\bagge\aidll\NTAI.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				ModuleDefinitionFile=".\TestAI.def"
@@ -145,14 +145,17 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
-			<File
-				RelativePath=".\Helpers\Log.cpp">
-			</File>
 			<Filter
-				Name="Helper"
+				Name="Helpers"
 				Filter="">
 				<File
+					RelativePath=".\Helpers\gui.cpp">
+				</File>
+				<File
 					RelativePath=".\helper.cpp">
+				</File>
+				<File
+					RelativePath=".\Helpers\Log.cpp">
 				</File>
 				<File
 					RelativePath=".\MetalHandler.cpp">
@@ -168,7 +171,7 @@
 					RelativePath=".\TestAI.cpp">
 				</File>
 				<File
-					RelativePath=".\TestAI.def">
+					RelativePath=".\UGroup.cpp">
 				</File>
 			</Filter>
 			<Filter
@@ -177,19 +180,40 @@
 				<File
 					RelativePath=".\Agents.cpp">
 				</File>
+				<File
+					RelativePath=".\Agents\Assigner.cpp">
+				</File>
+				<File
+					RelativePath=".\Agents\Chaser.cpp">
+				</File>
+				<File
+					RelativePath=".\Agents\Planning.cpp">
+				</File>
+				<File
+					RelativePath=".\Agents\Register.cpp">
+				</File>
+				<File
+					RelativePath=".\Agents\Scouter.cpp">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
-			<File
-				RelativePath=".\Helpers\Log.h">
-			</File>
 			<Filter
-				Name="Helper"
+				Name="Helpers"
 				Filter="">
 				<File
+					RelativePath=".\Helpers\gui.h">
+				</File>
+				<File
 					RelativePath=".\helper.h">
+				</File>
+				<File
+					RelativePath=".\Helpers\InitUtil.h">
+				</File>
+				<File
+					RelativePath=".\Helpers\Log.h">
 				</File>
 				<File
 					RelativePath=".\MetalHandler.h">
@@ -199,7 +223,19 @@
 				Name="Interface"
 				Filter="">
 				<File
+					RelativePath="..\rts\command.h">
+				</File>
+				<File
+					RelativePath="..\rts\FeatureHandler.h">
+				</File>
+				<File
 					RelativePath=".\GlobalAI.h">
+				</File>
+				<File
+					RelativePath="..\rts\GlobalStuff.h">
+				</File>
+				<File
+					RelativePath="..\rts\IAICheats.h">
 				</File>
 				<File
 					RelativePath="..\rts\IGlobalAI.h">
@@ -208,7 +244,10 @@
 					RelativePath="..\rts\IGlobalAICallback.h">
 				</File>
 				<File
-					RelativePath=".\TestAI.h">
+					RelativePath=".\TAgents.h">
+				</File>
+				<File
+					RelativePath=".\UGroup.h">
 				</File>
 				<File
 					RelativePath="..\rts\UnitDef.h">
@@ -220,19 +259,39 @@
 				<File
 					RelativePath=".\Agents.h">
 				</File>
+				<File
+					RelativePath=".\Agents\Assigner.h">
+				</File>
+				<File
+					RelativePath=".\Agents\Chaser.h">
+				</File>
+				<File
+					RelativePath=".\Agents\ctaunt.h">
+				</File>
+				<File
+					RelativePath=".\Agents\Planning.h">
+				</File>
+				<File
+					RelativePath=".\Agents\Register.h">
+				</File>
+				<File
+					RelativePath=".\Agents\Scouter.h">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			<File
+				RelativePath=".\Res.rc">
+			</File>
+			<File
+				RelativePath=".\resrc1.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Documentation"
 			Filter="">
-			<File
-				RelativePath=".\changelog.htm"
-				DeploymentContent="TRUE">
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

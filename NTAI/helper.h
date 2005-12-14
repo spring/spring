@@ -1,245 +1,632 @@
-///////////////////////////////////////////
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // Helper class implementation.
-///////////////////////////////////////////
-#ifndef H_H
-#define H_H
+
+#define PI 3.141592654f
+#define SQUARE_SIZE 8
+#define GAME_SPEED 30
+#define RANDINT_MAX 0x7fff
+#define MAX_VIEW_RANGE 8000
+#define MAX_PLAYERS 32
+typedef unsigned char uchar;
+typedef unsigned long ulong;
+typedef unsigned int uint;
+typedef unsigned short ushort;
+#include "GlobalStuff.h"
 #include "IAICallback.h"
 #include "IGlobalAICallback.h"
+#include "IAICheats.h"
+#include "MoveInfo.h"
+#include "WeaponDefHandler.h"
 #include "UnitDef.h"
-#include <list>
+#include "FeatureHandler.h"
+//#include <stdarg.h>
+//#include <assert.h> 
+//#include <algorithm>
+//#include <hash_map>
+//#include <boost/bind.hpp>
+//#include <stdio.h>
+#include "MetalHandler.h"
+#include "./Helpers/Log.h"
+//#include "./Helpers/GridManager.h"
 #include <map>
 #include <set>
+#include <vector>
+#include <deque>
+#include "TAgents.h"
+#include "UGroup.h"
+//#include "./Helpers/arg.h"
+#include "./Helpers/InitUtil.h"
+//#include "./Helpers/build.h"
+#include "./Agents/Register.h"
+#include "./Helpers/gui.h"
+#include "./Agents/ctaunt.h"
+#include "./Agents/Planning.h"
+#include "Agents.h"
+#include "./Agents/Assigner.h"
+#include "./Agents/Chaser.h"
+#include "./Agents/Scouter.h"
 
+#define exprint(a) G->L->eprint(a)
+
+#define AI_OTAI 2
+#define AI_AAI 3
+#define AI_JCAI 4
+#define AI_ZCAIN 5
+#define AI_NTAI 6
+#define AI_KAI 7
+#define AI_TAI 8
+#define AI_HUMAN 9
+
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 using namespace std;
-class D_Message{
+
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+class Global : base{ // derives from base, thus this is an agent not a global structure.
 public:
-	D_Message(){}
-	D_Message(string esource, string etype){this->flush(esource, etype);}
-	~D_Message(){}
-	void flush(){
-		priority = 1;
-		description = "";
-		pos.x = pos.y = pos.z = 0;
-		items.empty();
-		source = "Debug:: Source unknown";
-		items.clear();
-		type = "Unknown";
+	virtual ~Global();
+	Global(IGlobalAICallback* callback);
+	CMetalHandler* M;
+	Log* L;
+	//GridManager* GM;
+	//BuildPlacer* B;
+	int team;
+	IAICallback* cb;
+	IGlobalAICallback* gcb;
+	IAICheats* ccb;
+	Assigner* As;
+	Factor* Fa;
+	Scouter* Sc;
+	Chaser* Ch;
+	Planning* Pl;
+	ctaunt* Ct;
+	Register* R;
+	GUIController* MGUI;
+	float3 basepos;
+	int comID;
+	map<int,int> players; // player nubmer maps to an itneger signifying what this player is, be it an AI or human.
+	void InitAI(IAICallback* callback, int team){
+		L->iprint("InitAI");
+		//B->Init();
+		try{
+			As->InitAI(this);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::InitAI");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			Pl->InitAI(this);
+		} catch(exception e){
+			L->eprint("Exception, Planner::InitAI");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			Fa->InitAI(this);
+		} catch(exception e){
+			L->eprint("Exception, Factor::InitAI");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			Sc->InitAI(this);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::InitAI");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			Ch->InitAI(this);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::InitAI");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			Ct->InitAI(this);
+		} catch(exception e){
+			L->eprint("Exception, ctaunt::InitAI");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			R->InitAI(this);
+		} catch(exception e){
+			L->eprint("Exception, Register::InitAI");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}
+		L->iprint("InitAI finished");
 	}
-	void flush(string esource, string etype){
-		flush();
-		source = esource;
-		type = etype;
-	}
-	string source;
-	int format;
-	string type;
-	int priority;
-	string description;
-	float3 pos;
-	vector<string> items;
-};
-
-class Offset : public float3{
-public:
-	Offset(){}
-	Offset(float3 position);
-	Offset(int x, int y, int z);
-	Offset(int x, int y);
-	~Offset(){}
-	int get(int matrix){return matrixes[matrix];}
-	void set(int matrix, int value){matrixes[matrix]=value;}
-	void raise(int matrix, int value){matrixes[matrix]+=value;}
-	void lower(int matrix, int value){matrixes[matrix]-=value;}
-private:
-	map<int,int> matrixes;
-};
-class TOffset : public Offset{
-public:
-	TOffset(){}
-	TOffset(Offset* o){ this->offsets.push_back(o);}
-	TOffset(float3 position);
-	TOffset(vector<float3> positions);
-	TOffset(vector<Offset*> tOffsets){offsets = tOffsets;}
-	~TOffset(){}
-	int get(int value); // returns an average (mean value.)
-	void set(int matrix, int value);
-	void raise(int matrix, int value);
-	void lower(int matrix, int value);
-	int mark;
-	vector<Offset*> offsets;
-};
-
-
-
-class TUnit{
-public:
-	TUnit(int uid){id = uid;}
-	~TUnit();
-	int id;
-	bool Taken;
-	void attack(TOffset o);
-	void move(TOffset o);
-	void guard(TUnit* u);
-	void destruct();
-	void patrol(TOffset offsets);
-	void execute(Command* c);
-	void execute(vector<Command*> cv);
-	const UnitDef* ud;
-	int ownerteam;
-};
-
-struct GridData{
-	int gridnumber;
-	int SectorWidth;
-	int SectorHeight;
-	int x;
-	int y;
-};
-
-class Gridset{
-public:
-	Gridset(){}
-	Gridset(int x,int y,int gridset);
-	~Gridset(){
-		for(map<int,TOffset*>::iterator mi = Grid.begin(); mi != Grid.end(); ++mi){
-			delete mi->second;
+	void UnitCreated(int unit){
+		try{
+			As->UnitCreated(unit);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::UnitCreated");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			Fa->UnitCreated(unit);
+		} catch(exception e){
+			L->eprint("Exception, Factor::UnitCreated");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->UnitCreated(unit);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::UnitCreated");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha);
+		}try{
+			Ch->UnitCreated(unit);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::UnitCreated");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			R->UnitCreated(unit);
+		} catch(exception e){
+			L->eprint("Exception, Register::UnitCreated");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
 		}
 	}
-	Offset* TransCord(float3 position);
-	float3 TransOff(Offset* o);
-	GridData* gdata;
-	map<int,TOffset*> Grid;
-};
-#define RACE_ARM 1
-#define RACE_CORE 2
-class THelper{
-public:
-	~THelper();
-	THelper(IAICallback* callback);//Initialises the sector map and calls the threat matrix functions
-	void print(string message);
-	void post(string usource, string utype, string udescription);
-	void msg(D_Message msg);
-	string GameTime();
-	bool Verbose();
-	// below functions have not been written yet vvvvvvv
-	void AddGridset(int gridsetnum, int sectwidth, int sectheight);
-	Gridset* GetGridData(int gridsetnum){ return Grids[gridsetnum];}
-	void DestroyGrid(int gridsetnum);
-	void AddMatrix(int gridsetnum, int matrix, int defacto); // Add and initialise a matrix to a certain value for all offsets
-	void DestroyMatrix(int gridsetnum, int matrix);
-	bool MatrixPresent(int gridsetnum, int matrix); // Has this matrix been added?
-	void MatrixPercentage(int gridsetnum, int matrix, int percentage); // increase or decrease all values for the specified matrix by this percentage.
-	int MatrixDefault(int gridsetnum, int matrix){ return matrixes[matrix];}
-	void AddUnit(int unit);
-	void RemoveUnit(int unit){Unitmap.erase(unit);}
-	TUnit* GetUnit(int unit){return Unitmap[unit];}
-	map<int,TUnit*> GetUnitMap(){return Unitmap;}
-	//TOffset getMetalPatch(TOffset pos, float radius, TUnit* tu);
-	//float3 getNearestPatch(float3 pos, const UnitDef* ud);
-	//void markpatch(TUnit* tu);
-	//void unmarkpatch(TUnit* tu);
-	Offset* TransCord(int Gridset, float3 position){
-		return Grids[Gridset]->TransCord(position);
+	void UnitFinished(int unit){
+		//const UnitDef* ud = cb->GetUnitDef(unit);
+		//float3 pos = cb->GetUnitPos(unit);
+		//if(ud->speed == 0) B->Mark(ud,pos,true);
+		try{
+			As->UnitFinished(unit);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::UnitFinished");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->UnitFinished(unit);
+		} catch(exception e){
+			L->eprint("Exception, Factor::UnitFinished");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->UnitFinished(unit);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::UnitFinished");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->UnitFinished(unit);
+		} catch(exception exc){
+			L->eprint("Exception, Chaser::UnitFinished");
+			string wha = "Exception!";
+			wha += exc.what();
+			L->eprint(wha.c_str());
+		}
 	}
-	float3 TransOff(int Gridset, Offset* o){
-		return this->Grids[Gridset]->TransOff(o);
+	void UnitDestroyed(int unit){
+		//if(ud->speed == 0) B->Mark(ud,pos,false);
+		try{
+			As->UnitDestroyed(unit);
+		}catch(exception e){
+			L->eprint("Exception, Assigner::UnitDestroyed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+            Fa->UnitDestroyed(unit);
+		} catch(exception* e){
+			L->eprint("Exception, Factor::UnitDestroyed");
+			string wha = "Exception!";
+			wha += e->what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->UnitDestroyed(unit);
+		} catch(exception* e){
+			L->eprint("Exception, Scouter::UnitFinished");
+			string wha = "Exception!";
+			wha += e->what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->UnitDestroyed(unit);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::UnitDestroyed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			R->UnitDestroyed(unit);
+		} catch(exception e){
+			L->eprint("Exception, Register::UnitDestroyed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
 	}
-	int GetCommander(){return commander; }
-	int GetRace(){return race;}
-	float3 GetStartPos(){return startpos;}
-	void Init();
-private:
-	bool verbose;
-	map<int,int> matrixes;
-	map<int,Gridset*> Grids;
-	map<int,TUnit*> Unitmap;
-	//CMetalHandler* MHandler;
-	int race;
-	int commander;
-	float3 startpos;
+	void EnemyEnterLOS(int enemy){
+		//const UnitDef* ud = cb->GetUnitDef(enemy);
+		//float3 pos = cb->GetUnitPos(enemy);
+		//if(ud->speed == 0) B->Mark(ud,pos,true);
+		try{
+			As->EnemyEnterLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::EnemyEnterLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->EnemyEnterLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Factor::EnemyEnterLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->EnemyEnterLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::EnemyEnterLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->EnemyEnterLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::EnemyEnterLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void EnemyLeaveLOS(int enemy){
+		try{
+			As->EnemyLeaveLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::EnemyLeaveLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->EnemyLeaveLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Factor::EnemyLeaveLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->EnemyLeaveLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::EnemyLeaveLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->EnemyLeaveLOS(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::EnemyLeaveLOS");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void EnemyEnterRadar(int enemy){
+		try{
+			As->EnemyEnterRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::EnemyEnterRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->EnemyEnterRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Factor::EnemyEnterRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->EnemyEnterRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::EnemyEnterRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->EnemyEnterRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::EnemyEnterRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void EnemyLeaveRadar(int enemy){
+		try{
+			As->EnemyLeaveRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::EnemyLeaveRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->EnemyLeaveRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Factor::EnemyLeaveRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->EnemyLeaveRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::EnemyLeaveRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->EnemyLeaveRadar(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::EnemyLeaveRadar");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void EnemyDestroyed(int enemy){
+		//const UnitDef* ud = cb->GetUnitDef(enemy);
+		//float3 pos = cb->GetUnitPos(enemy);
+		//if(ud->speed == 0) B->Mark(ud,pos,false);
+		try{
+			As->EnemyDestroyed(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::EnemyDestroyed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->EnemyDestroyed(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Factor::EnemyDestroyed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->EnemyDestroyed(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::EnemyDestroyed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->EnemyDestroyed(enemy);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::EnemyDestroyed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void UnitIdle(int unit){
+		try{
+			As->UnitIdle(unit);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::UnitIdle");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->UnitIdle(unit);
+		} catch(exception e){
+			L->eprint("Exception, Factor::UnitIdle");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->UnitIdle(unit);
+		} catch(exception exc){
+			L->eprint("Exception, Scouter::UnitIdle");
+			string wha = "Exception!";
+			wha += exc.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->UnitIdle(unit);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::UnitIdle");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void GotChatMsg(const char* msg,int player){
+		try{
+			Ct->GotChatMsg(msg,player);
+		} catch(exception e){
+			L->eprint("Exception, CTaunt::GotChatMsg");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			As->GotChatMsg(msg,player);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::GotChatMsg");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->GotChatMsg(msg,player);
+		} catch(exception e){
+			L->eprint("Exception, Factor::GotChatMsg");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->GotChatMsg(msg,player);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::GotChatMsg");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->GotChatMsg(msg,player);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::GotChatMsg");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+		try{
+			L->Message(msg,player);
+			string tmsg = msg;
+			string verb = ".verbose";
+			if(tmsg == verb){
+				if(L->Verbose()){
+					L->iprint("Verbose turned on");
+				} else L->iprint("Verbose turned off");
+			}
+			verb = ".crash";
+			if(tmsg == verb){
+				Crash();
+			}
+			verb = ".cheat";
+			if(tmsg == verb){
+				ccb = gcb->GetCheatInterface();
+			}
+			verb = ".mouse";
+			if(tmsg == verb){
+				if(R->lines == true){
+					R->lines = false;
+				}else{
+					R->lines = true;
+				}
+			}
+		}catch(exception e){
+			L->eprint("Exception, Global::GotChatMsg");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+		//cb->SendTextMsg("medium!",2);
+		//cb->SendTextMsg("low",3);
+	}
+	void UnitDamaged(int damaged,int attacker,float damage,float3 dir){
+		try{
+			As->UnitDamaged(damaged,attacker,damage,dir);
+		} catch(exception e){
+			L->eprint("Exception, Assigner::UnitDamaged");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->UnitDamaged(damaged,attacker,damage,dir);
+		} catch(exception e){
+			L->eprint("Exception, Factor::UnitDamaged");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->UnitDamaged(damaged,attacker,damage,dir);
+		} catch(exception e){
+			L->eprint("Exception, Scouter::UnitDamaged");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->UnitDamaged(damaged,attacker,damage,dir);
+		} catch(exception e){
+			L->eprint("Exception, Chaser::UnitDamaged");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void UnitMoveFailed(int unit){
+		try{
+			As->UnitMoveFailed(unit);
+		}catch(exception e){
+			L->eprint("Exception, Assigner::UnitMoveFailed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->UnitMoveFailed(unit);
+		}catch(exception e){
+			L->eprint("Exception, Factor::UnitMoveFailed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->UnitMoveFailed(unit);
+		}catch(exception e){
+			L->eprint("Exception, Scouter::UnitMoveFailed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->UnitMoveFailed(unit);
+		}catch(exception e){
+			L->eprint("Exception, Chaser::UnitMoveFailed");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void Update(){
+		try{
+			As->Update();
+		} catch(exception e){
+			L->eprint("Exception, Assigner::Update");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			MGUI->Update();
+		} catch(exception e){
+			L->eprint("Exception, GUIController::Update");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Fa->Update();
+		} catch(exception e){
+			L->eprint("Exception, Factor::Update");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Sc->Update();
+		} catch(exception e){
+			L->eprint("Exception, Scouter::Update");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			Ch->Update();
+		} catch(exception e){
+			L->eprint("Exception, Chaser::Update");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}try{
+			R->Update();
+		} catch(exception e){
+			L->eprint("Exception, Register::Update");
+			string wha = "Exception!";
+			wha += e.what();
+			L->eprint(wha.c_str());
+		}
+	}
+	void Crash(){
+		L->eprint("The user has initiated a crash, terminating NTAI");
+		L->Close();
+		vector<string> cv;
+		string n = cv.back();
+	}
 };
-class Agent{
-public:
-	Agent(){}
-	~Agent(){}
-	void InitAI(){}
-	void Update(){}
-};
 
-class T_Agent : public Agent{
-public:
-	virtual void UnitCreated(int unit)=0;
-	void UnitCreated(TUnit* unit){UnitCreated(unit->id);}
-	virtual void UnitFinished(int unit)=0;
-	void UnitFinished(TUnit* unit){UnitFinished(unit->id);}
-	virtual void UnitDestroyed(int unit)=0;
-	void UnitDestroyed(TUnit* unit){UnitDestroyed(unit->id);}
-	virtual void EnemyEnterLOS(int enemy)=0;
-	void EnemyEnterLOS(TUnit* unit){EnemyEnterLOS(unit->id);}
-	virtual void EnemyLeaveLOS(int enemy)=0;
-	void EnemyLeaveLOS(TUnit* unit){EnemyLeaveLOS(unit->id);}
-	virtual void EnemyEnterRadar(int enemy)=0;
-	void EnemyEnterRadar(TUnit* unit){EnemyEnterRadar(unit->id);}
-	virtual void EnemyLeaveRadar(int enemy)=0;
-	void EnemyLeaveRadar(TUnit* unit){EnemyLeaveRadar(unit->id);}
-	virtual void EnemyDestroyed(int enemy)=0;
-	void EnemyDestroyed(TUnit* unit){EnemyDestroyed(unit->id);}
-	virtual void UnitIdle(int unit)=0;
-	void UnitIdle(TUnit* unit){UnitIdle(unit->id);}
-	virtual void GotChatMsg(const char* msg,int player)=0;
-	virtual void UnitDamaged(int damaged,int attacker,float damage,float3 dir)=0;
-};
-
-class base : public T_Agent{
-public:
-	base(){}
-	~base(){}
-	void InitAI(IAICallback* callback, THelper* helper){}
-	void Update(){}
-	void Add(int unit){}
-	void Remove(int unit){}
-	std::set<int> ListUnits(){ return Units;}
-	void UnitCreated(int unit){}
-	void UnitFinished(int unit){}
-	void UnitDestroyed(int unit){}
-	void EnemyEnterLOS(int enemy){}
-	void EnemyLeaveLOS(int enemy){}
-	void EnemyEnterRadar(int enemy){}
-	void EnemyLeaveRadar(int enemy){}
-	void EnemyDestroyed(int enemy){}
-	void UnitIdle(int unit){}
-	void GotChatMsg(const char* msg,int player){}
-	void UnitDamaged(int damaged,int attacker,float damage,float3 dir){}
-protected:
-	std::set<int> Units;
-};
-class UGroup : public base{
-public:
-	UGroup();
-	UGroup(TUnit* unit);
-	~UGroup();
-	void attack(TOffset o);
-	void move(TOffset o);
-	void guard(TUnit* u);
-	void destruct();
-	void patrol(TOffset offsets);
-	vector<TUnit> GetUnits();
-private:
-	vector<TUnit*> units;
-};
-
-
-/*class FClass{
-public:
-	FClass();
-	~FClass();
-	void Write(string a);
-	void Open(string file);
-	void Close();
-private:
-	string filename;
-	FILE* debugfile;
-};*/
-
-
-#endif
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

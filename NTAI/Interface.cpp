@@ -6,15 +6,13 @@
 // 
 // Released under GPL license: see LICENSE.html for more information.
 //-------------------------------------------------------------------------
-//
-// 2005.12.12: Modified by Tobi Vollebregt for use in NTAI.
-//   As opposed to TestAI.{cpp,h} this file works on Linux and Windows.
-//
 #include "float3.h"
 #include "GlobalAI.h"
 #include "../aibase.h"
 
 /////////////////////////////////////////////////////////////////////////////
+
+std::set<IGlobalAI*> ais;
 
 DLL_EXPORT int WINAPI GetGlobalAiVersion()
 {
@@ -28,11 +26,13 @@ DLL_EXPORT void WINAPI GetAiName(char* name)
 
 DLL_EXPORT IGlobalAI* WINAPI GetNewAI()
 {
-	CGlobalAI* ai=new CGlobalAI();
+	CGlobalAI* ai=new CGlobalAI(ais.size());
+	ais.insert(ai);
 	return ai;
 }
 
 DLL_EXPORT void WINAPI ReleaseAI(IGlobalAI* i)
 {
 	delete (CGlobalAI*)i;
+	ais.erase(i);
 }
