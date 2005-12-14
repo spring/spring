@@ -1,6 +1,6 @@
 ; TestAI.def : Declares the module parameters for the DLL.
 
-LIBRARY      "Default"
+LIBRARY      "NTAI"
 
 EXPORTS
     ; Explicit exports can go here
