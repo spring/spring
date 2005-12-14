@@ -5,7 +5,7 @@
 env = Environment(
 	CPPFLAGS = '-I../rts',
 	#for debugging:
-	CXXFLAGS = '-ggdb3 -Werror'
+	CXXFLAGS = '-ggdb3'
 	#for optimizing:
 	#CXXFLAGS = '-O2'
 )
