@@ -1,0 +1,32 @@
+#ifndef TORPEDOPROJECTILE_H
+#define TORPEDOPROJECTILE_H
+
+#include "WeaponProjectile.h"
+#include "DamageArray.h"
+
+class CTorpedoProjectile :
+	public CWeaponProjectile
+{
+public:
+	CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef);
+	~CTorpedoProjectile(void);
+	void DependentDied(CObject* o);
+	void Collision(CUnit* unit);
+	void Collision();
+
+	float tracking;
+	float3 dir;
+	float maxSpeed;
+	float curSpeed;
+	int ttl;
+	DamageArray damages;
+	float areaOfEffect;
+	CUnit* target;
+	int nextBubble;
+
+	void Update(void);
+	void Draw(void);
+};
+
+
+#endif /* TORPEDOPROJECTILE_H */

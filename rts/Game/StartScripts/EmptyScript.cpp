@@ -1,0 +1,23 @@
+#include "StdAfx.h"
+//#include "mmgr.h"
+// EmptyScript.cpp: implementation of the CEmptyScript class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include "EmptyScript.h"
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+static CEmptyScript es;
+
+CEmptyScript::CEmptyScript()
+: CScript(std::string("Empty script"))
+{
+
+}
+
+CEmptyScript::~CEmptyScript()
+{
+
+}
