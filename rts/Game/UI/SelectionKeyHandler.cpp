@@ -17,7 +17,7 @@
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 //#include "mmgr.h"
-#include "gui/GUIcontroller.h"
+#include "GUIcontroller.h"
 
 CSelectionKeyHandler *selectionKeys;
 
