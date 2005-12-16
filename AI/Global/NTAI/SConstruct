@@ -1,0 +1,26 @@
+###############################
+### Author: Tobi Vollebregt ###
+###############################
+
+env = Environment(
+	CPPFLAGS = '-I../rts',
+	#for debugging:
+	CXXFLAGS = '-ggdb3'
+	#for optimizing:
+	#CXXFLAGS = '-O2'
+)
+env.SharedLibrary('ntai', Split('''
+	Agents.cpp
+	GlobalAI.cpp
+	helper.cpp
+	MetalHandler.cpp
+	Interface.cpp
+	UGroup.cpp
+	Agents/Assigner.cpp
+	Agents/Chaser.cpp
+	Agents/Planning.cpp
+	Agents/Register.cpp
+	Agents/Scouter.cpp
+	Helpers/Log.cpp
+	Helpers/gui.cpp
+'''))
