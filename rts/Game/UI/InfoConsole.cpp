@@ -10,7 +10,7 @@
 #include "glFont.h"
 #include "NewGuiDefine.h"
 #ifdef NEW_GUI
-	#include "gui/GUIcontroller.h"
+	#include "GUIcontroller.h"
 #endif
  
 #include "SyncTracer.h"
