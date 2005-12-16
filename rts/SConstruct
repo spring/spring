@@ -5,7 +5,45 @@ import os
 windows_include_path=[]
 linux_include_path=['/usr/include','/usr/include/GL']
 freebsd_include_path=['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
-common_include_path = ['.','gui','include']
+#generated with: cd rts && find . -name \* -type d | grep -v "/\." | grep -v build | sort
+common_include_path = Split("""
+.
+./ExternalAI
+./Game
+./Game/StartScripts
+./Game/UI
+./Game/UI/GUI
+./lib
+./lib/7zip
+./lib/hpiutil2
+./lib/libhpi
+./lib/minizip
+./Rendering
+./Rendering/Env
+./Rendering/GL
+./Rendering/Map
+./Rendering/Textures
+./Rendering/UnitModels
+./Sim
+./Sim/Map
+./Sim/Misc
+./Sim/MoveTypes
+./Sim/MoveTypes/MoveMath
+./Sim/Objects
+./Sim/Path
+./Sim/Projectiles
+./Sim/Units
+./Sim/Units/COB
+./Sim/Units/CommandAI
+./Sim/Units/UnitTypes
+./Sim/Weapons
+./System
+./System/FileSystem
+./System/Platform
+./System/Platform/Linux
+./System/Platform/Win
+./System/Script
+	""")
 common_lib_path=[]
 freebsd_lib_path=['/usr/local/lib','/usr/X11R6/lib']
 common_files=[]
@@ -72,16 +110,16 @@ if int(env.get('disable_hpi')):
 if int(env.get('disable_clipboard')):
 	defines+=['NO_CLIPBOARD']
 if int(env.get('disable_avi')):
-	exclude_list.append("AVIGenerator.cpp")
+	exclude_list.append("./System/Platform/Win/AVIGenerator.cpp")
 	defines+=['NO_AVI']
 if int(env.get('disable_lua')):
-	exclude_list+=["LuaBinder.cpp","LuaFunctions.cpp"]
+	exclude_list+=["./System/Script/LuaBinder.cpp","./System/Script/LuaFunctions.cpp"]
 	defines+=['NO_LUA']
 
 if platform == 'linux' or detected_platform == 'freebsd':
-	exclude_list+=["DllLib.cpp","Win32Cmd.cpp","RegHandler.cpp","Win32Support.cpp"]
+	exclude_list+=["./System/Platform/Win/DllLib.cpp","./System/Platform/Win/Win32Cmd.cpp","./System/Platform/Win/RegHandler.cpp","./System/Platform/Win/Win32Support.cpp"]
 else:
-	exclude_list+=["SoLib.cpp","PosixCmd.cpp","dotfileHandler.cpp"]
+	exclude_list+=["./System/Platform/Linux/SoLib.cpp","./System/Platform/Linux/PosixCmd.cpp","./System/Platform/Linux/dotfileHandler.cpp"]
 
 defines+=['_SZ_ONE_DIRECTORY']
 
@@ -93,52 +131,317 @@ env.Append(CPPDEFINES = defines)
 
 ############################################################
 # files used for build
-zipfiles=["./minizip/ioapi.c","./minizip/zip.c","./minizip/unzip.c"]
-winzipfiles=["./minizip/iowin32.c"]
-lzmafiles=['7zip/7zAlloc.c','7zip/7zBuffer.c','7zip/7zCrc.c','7zip/7zDecode.c','7zip/7zExtract.c','7zip/7zHeader.c','7zip/7zIn.c','7zip/7zItem.c','7zip/7zMethodID.c','7zip/LzmaDecode.c']
-
 import re
-tmp=os.listdir('.')
-guif=os.listdir('gui')
-for f in guif:
-	tmp.append("./gui/"+f)
-hpiutilf=os.listdir('hpiutil2')
-for f in hpiutilf:
-	tmp.append("./hpiutil2/"+f)
-	
+
+#generated with: cd rts && find . -name \*.c\* | grep -v "/\." | sort
+tmp=Split("""
+./ExternalAI/AICallback.cpp
+./ExternalAI/AICheats.cpp
+./ExternalAI/GlobalAICallback.cpp
+./ExternalAI/GlobalAI.cpp
+./ExternalAI/GlobalAIHandler.cpp
+./ExternalAI/GroupAiCallback.cpp
+./ExternalAI/Group.cpp
+./ExternalAI/GroupHandler.cpp
+./Game/CameraController.cpp
+./Game/Camera.cpp
+./Game/GameController.cpp
+./Game/Game.cpp
+./Game/GameHelper.cpp
+./Game/GameServer.cpp
+./Game/GameSetup.cpp
+./Game/Player.cpp
+./Game/PreGame.cpp
+./Game/SelectedUnitsAI.cpp
+./Game/SelectedUnits.cpp
+./Game/StartScripts/AirScript.cpp
+./Game/StartScripts/CommanderScript2.cpp
+./Game/StartScripts/CommanderScript.cpp
+./Game/StartScripts/EmptyScript.cpp
+./Game/StartScripts/GlobalAITestScript.cpp
+./Game/StartScripts/LoadScript.cpp
+./Game/StartScripts/Script.cpp
+./Game/StartScripts/ScriptHandler.cpp
+./Game/StartScripts/SpawnScript.cpp
+./Game/StartScripts/SWTATestScrip.cpp
+./Game/StartScripts/TestScript.cpp
+./Game/StartScripts/YehaTestScript.cpp
+./Game/Team.cpp
+./Game/UI/EndGameBox.cpp
+./Game/UI/GUI/GUIallyResourceBar.cpp
+./Game/UI/GUI/GUIbuildMenu.cpp
+./Game/UI/GUI/GUIbutton.cpp
+./Game/UI/GUI/GUIcenterBuildMenu.cpp
+./Game/UI/GUI/GUICommandPool.cpp
+./Game/UI/GUI/GUIconsole.cpp
+./Game/UI/GUI/GUIcontroller.cpp
+./Game/UI/GUI/GUIendgameDialog.cpp
+./Game/UI/GUI/GUIfont.cpp
+./Game/UI/GUI/GUIframe.cpp
+./Game/UI/GUI/GUIgame.cpp
+./Game/UI/GUI/GUIgraph.cpp
+./Game/UI/GUI/GUIimage.cpp
+./Game/UI/GUI/GUIinfoSelection.cpp
+./Game/UI/GUI/GUIinput.cpp
+./Game/UI/GUI/GUIlabel.cpp
+./Game/UI/GUI/GUImatrix.cpp
+./Game/UI/GUI/GUIminimap.cpp
+./Game/UI/GUI/GUIpane.cpp
+./Game/UI/GUI/GUIresourceBar.cpp
+./Game/UI/GUI/GUIscrollbar.cpp
+./Game/UI/GUI/GUIsharingDialog.cpp
+./Game/UI/GUI/GUIslider.cpp
+./Game/UI/GUI/GUIstateButton.cpp
+./Game/UI/GUI/GUIswitchBar.cpp
+./Game/UI/GUI/GUItab.cpp
+./Game/UI/GUI/GUItable.cpp
+./Game/UI/GuiHandler.cpp
+./Game/UI/GuiKeyReader.cpp
+./Game/UI/InfoConsole.cpp
+./Game/UI/InputReceiver.cpp
+./Game/UI/MiniMap.cpp
+./Game/UI/MouseCursor.cpp
+./Game/UI/MouseHandler.cpp
+./Game/UI/ResourceBar.cpp
+./Game/UI/SelectionKeyHandler.cpp
+./Game/UI/ShareBox.cpp
+./Game/UI/StartPosSelecter.cpp
+./Game/UI/TooltipConsole.cpp
+./lib/7zip/7zAlloc.c
+./lib/7zip/7zBuffer.c
+./lib/7zip/7zCrc.c
+./lib/7zip/7zDecode.c
+./lib/7zip/7zExtract.c
+./lib/7zip/7zHeader.c
+./lib/7zip/7zIn.c
+./lib/7zip/7zItem.c
+./lib/7zip/7zMethodID.c
+./lib/7zip/LzmaDecode.c
+./lib/hpiutil2/hpientry.cpp
+./lib/hpiutil2/hpifile.cpp
+./lib/hpiutil2/hpiutil.cpp
+./lib/hpiutil2/scrambledfile.cpp
+./lib/hpiutil2/sqshstream.cpp
+./lib/hpiutil2/substream.cpp
+./lib/minizip/ioapi.c
+./lib/minizip/iowin32.c
+./lib/minizip/unzip.c
+./lib/minizip/zip.c
+./Rendering/Env/AdvSky.cpp
+./Rendering/Env/AdvTreeDrawer.cpp
+./Rendering/Env/AdvTreeGenerator.cpp
+./Rendering/Env/AdvWater.cpp
+./Rendering/Env/BaseSky.cpp
+./Rendering/Env/BaseTreeDrawer.cpp
+./Rendering/Env/BaseWater.cpp
+./Rendering/Env/BasicSky.cpp
+./Rendering/Env/BasicTreeDrawer.cpp
+./Rendering/Env/BasicWater.cpp
+./Rendering/Env/DynWater.cpp
+./Rendering/Env/GrassDrawer.cpp
+./Rendering/Env/SkyBox.cpp
+./Rendering/ExplosionGraphics.cpp
+./Rendering/FartextureHandler.cpp
+./Rendering/GL/FBO.cpp
+./Rendering/glFont.cpp
+./Rendering/GL/glExtra.cpp
+./Rendering/GL/glList.cpp
+./Rendering/GL/glTextBox.cpp
+./Rendering/GL/myGL.cpp
+./Rendering/GL/VertexArray.cpp
+./Rendering/GL/VertexArrayRange.cpp
+./Rendering/GroundDecalHandler.cpp
+./Rendering/GroundFlash.cpp
+./Rendering/InMapDraw.cpp
+./Rendering/Map/BaseGroundDrawer.cpp
+./Rendering/Map/BFGroundDrawer.cpp
+./Rendering/Map/BFGroundTextures.cpp
+./Rendering/RepulseGfx.cpp
+./Rendering/ShadowHandler.cpp
+./Rendering/Textures/nv_dds.cpp
+./Rendering/Textures/TAPalette.cpp
+./Rendering/Textures/TextureFilters_2xsai.cpp
+./Rendering/Textures/TextureFilters_hq2x.cpp
+./Rendering/Textures/TextureFilters_hq4x.cpp
+./Rendering/Textures/TextureHandler.cpp
+./Rendering/UnitModels/3DModelParser.cpp
+./Rendering/UnitModels/3DOParser.cpp
+./Rendering/UnitModels/s3oParser.cpp
+./Rendering/UnitModels/Unit3DLoader.cpp
+./Rendering/UnitModels/UnitDrawer.cpp
+./Sim/Map/Ground.cpp
+./Sim/Map/MapDamage.cpp
+./Sim/Map/MetalMap.cpp
+./Sim/Map/ReadMap.cpp
+./Sim/Map/SmfReadMap.cpp
+./Sim/Misc/AirBaseHandler.cpp
+./Sim/Misc/CategoryHandler.cpp
+./Sim/Misc/DamageArrayHandler.cpp
+./Sim/Misc/Feature.cpp
+./Sim/Misc/FeatureHandler.cpp
+./Sim/Misc/GeometricObjects.cpp
+./Sim/Misc/InterceptHandler.cpp
+./Sim/Misc/LosHandler.cpp
+./Sim/Misc/QuadField.cpp
+./Sim/Misc/RadarHandler.cpp
+./Sim/Misc/Wind.cpp
+./Sim/MoveTypes/AirMoveType.cpp
+./Sim/MoveTypes/groundmovetype.cpp
+./Sim/MoveTypes/Mobility.cpp
+./Sim/MoveTypes/MoveInfo.cpp
+./Sim/MoveTypes/MoveMath/GroundMoveMath.cpp
+./Sim/MoveTypes/MoveMath/HoverMoveMath.cpp
+./Sim/MoveTypes/MoveMath/MoveMath.cpp
+./Sim/MoveTypes/MoveMath/ShipMoveMath.cpp
+./Sim/MoveTypes/MoveType.cpp
+./Sim/MoveTypes/TAAirMoveType.cpp
+./Sim/Objects/SolidObject.cpp
+./Sim/Objects/WorldObject.cpp
+./Sim/Path/PathCache.cpp
+./Sim/Path/PathEstimator.cpp
+./Sim/Path/PathFinder.cpp
+./Sim/Path/PathManager.cpp
+./Sim/Projectiles/BeamLaserProjectile.cpp
+./Sim/Projectiles/BubbleProjectile.cpp
+./Sim/Projectiles/DirtProjectile.cpp
+./Sim/Projectiles/EmgProjectile.cpp
+./Sim/Projectiles/ExplosiveProjectile.cpp
+./Sim/Projectiles/ExploSpikeProjectile.cpp
+./Sim/Projectiles/FireBallProjectile.cpp
+./Sim/Projectiles/FireProjectile.cpp
+./Sim/Projectiles/FlameProjectile.cpp
+./Sim/Projectiles/FlareProjectile.cpp
+./Sim/Projectiles/GeoSquareProjectile.cpp
+./Sim/Projectiles/GfxProjectile.cpp
+./Sim/Projectiles/HeatCloudProjectile.cpp
+./Sim/Projectiles/LaserProjectile.cpp
+./Sim/Projectiles/LightingProjectile.cpp
+./Sim/Projectiles/MissileProjectile.cpp
+./Sim/Projectiles/MuzzleFlame.cpp
+./Sim/Projectiles/PieceProjectile.cpp
+./Sim/Projectiles/Projectile.cpp
+./Sim/Projectiles/ProjectileHandler.cpp
+./Sim/Projectiles/SmokeProjectile2.cpp
+./Sim/Projectiles/SmokeProjectile.cpp
+./Sim/Projectiles/SmokeTrailProjectile.cpp
+./Sim/Projectiles/SpherePartProjectile.cpp
+./Sim/Projectiles/StarburstProjectile.cpp
+./Sim/Projectiles/TorpedoProjectile.cpp
+./Sim/Projectiles/TracerProjectile.cpp
+./Sim/Projectiles/WakeProjectile.cpp
+./Sim/Projectiles/WeaponProjectile.cpp
+./Sim/Projectiles/WreckProjectile.cpp
+./Sim/Units/COB/CobEngine.cpp
+./Sim/Units/COB/CobFile.cpp
+./Sim/Units/COB/CobInstance.cpp
+./Sim/Units/COB/CobThread.cpp
+./Sim/Units/CommandAI/AirCAI.cpp
+./Sim/Units/CommandAI/BuilderCAI.cpp
+./Sim/Units/CommandAI/CommandAI.cpp
+./Sim/Units/CommandAI/FactoryCAI.cpp
+./Sim/Units/CommandAI/MobileCAI.cpp
+./Sim/Units/CommandAI/TransportCAI.cpp
+./Sim/Units/Unit.cpp
+./Sim/Units/UnitDefHandler.cpp
+./Sim/Units/UnitHandler.cpp
+./Sim/Units/UnitLoader.cpp
+./Sim/Units/UnitTracker.cpp
+./Sim/Units/UnitTypes/Builder.cpp
+./Sim/Units/UnitTypes/Building.cpp
+./Sim/Units/UnitTypes/ExtractorBuilding.cpp
+./Sim/Units/UnitTypes/Factory.cpp
+./Sim/Units/UnitTypes/TransportUnit.cpp
+./Sim/Weapons/BeamLaser.cpp
+./Sim/Weapons/bombdropper.cpp
+./Sim/Weapons/Cannon.cpp
+./Sim/Weapons/DGunWeapon.cpp
+./Sim/Weapons/EmgCannon.cpp
+./Sim/Weapons/FlameThrower.cpp
+./Sim/Weapons/LaserCannon.cpp
+./Sim/Weapons/LightingCannon.cpp
+./Sim/Weapons/MeleeWeapon.cpp
+./Sim/Weapons/MissileLauncher.cpp
+./Sim/Weapons/NoWeapon.cpp
+./Sim/Weapons/PlasmaRepulser.cpp
+./Sim/Weapons/Rifle.cpp
+./Sim/Weapons/StarburstLauncher.cpp
+./Sim/Weapons/TorpedoLauncher.cpp
+./Sim/Weapons/Weapon.cpp
+./Sim/Weapons/WeaponDefHandler.cpp
+./System/bget.cpp
+./System/Bitmap.cpp
+./System/FileSystem/Archive7Zip.cpp
+./System/FileSystem/ArchiveBuffered.cpp
+./System/FileSystem/ArchiveFactory.cpp
+./System/FileSystem/ArchiveHPI.cpp
+./System/FileSystem/ArchiveScanner.cpp
+./System/FileSystem/ArchiveZip.cpp
+./System/FileSystem/FileHandler.cpp
+./System/FileSystem/VFSHandler.cpp
+./System/float3.cpp
+./System/GlobalStuff.cpp
+./System/Lesson2.cpp
+./System/LoadInterface.cpp
+./System/LoadSaveHandler.cpp
+./System/LoadSaveInterface.cpp
+./System/Matrix44f.cpp
+./System/MemPool.cpp
+./System/mmgr.cpp
+./System/myMath.cpp
+./System/Net.cpp
+./System/Object.cpp
+./System/Platform/BackgroundReader.cpp
+./System/Platform/BaseCmd.cpp
+./System/Platform/ConfigHandler.cpp
+./System/Platform/Linux/dotfileHandler.cpp
+./System/Platform/Linux/PosixCmd.cpp
+./System/Platform/Linux/SoLib.cpp
+./System/Platform/SharedLib.cpp
+./System/Platform/Win/AVIGenerator.cpp
+./System/Platform/Win/DllLib.cpp
+./System/Platform/Win/RegHandler.cpp
+./System/Platform/Win/Win32Cmd.cpp
+./System/Platform/Win/Win32Support.cpp
+./System/SaveInterface.cpp
+./System/Script/LuaBinder.cpp
+./System/Script/LuaFunctions.cpp
+./System/Sound.cpp
+./System/StdAfx.cpp
+./System/Syncify.cpp
+./System/SyncTracer.cpp
+./System/TdfParser.cpp
+./System/TimeProfiler.cpp
+./System/wavread.cpp
+	""")
+#./lib/libhpi/HPIFile.cpp
+
 #linux disable unused code
 if platform == 'linux' or platform == 'freebsd':	
 	exclude_list += Split("""
 			ARB_vertex_program_extension.cpp
-			mmgr.cpp
-			wavread.cpp""")
+			./System/mmgr.cpp
+			./System/wavread.cpp
+			./lib/minizip/iowin32.c""")
 	if not env.GetOption("clean"):
-		exclude_list += ['BackgroundReader.cpp']
+		exclude_list += ['./System/Platform/BackgroundReader.cpp']
 
-nbObjects=0
-nbBuiltObjects=0
 for f in tmp:
-	if os.path.isfile(f) and re.compile("cpp$").search(f) and not f in exclude_list:
+	if not f in exclude_list:
 		common_files.append(f)
-		nbObjects+=1
-	if re.compile("\.o$").search(f):
-		nbBuiltObjects+=1
 if platform == 'windows':
-	files = windows_files + common_files + zipfiles + winzipfiles + lzmafiles
+	files = windows_files + common_files
 	common_include_path = common_include_path + windows_include_path
 else:
 	if platform == 'linux':
-		files = linux_files + common_files + zipfiles + lzmafiles
+		files = linux_files + common_files
 		common_include_path = common_include_path + linux_include_path	
 	elif platform == 'freebsd':
-		files = linux_files + common_files + zipfiles + lzmafiles
+		files = linux_files + common_files
 		common_include_path = common_include_path + freebsd_include_path
 		common_lib_path = common_lib_path + freebsd_lib_path
 	else:
 		print "Unknown platform ", platform
 		Exit(1)	
-print nbObjects, " objects have to be produced"
-print nbBuiltObjects, " objects are already produced from a previous build (", nbBuiltObjects*1./(nbObjects*1.)*100.,"%)\n"
 
 #################################################
 # other FLAGS
@@ -488,7 +791,7 @@ if not env.GetOption("clean"):
 	if conf.CheckLib('aio'):
 		lib+=['aio']
 		if libaiostep1:
-			files+=['BackgroundReader.cpp']
+			files+=['./System/Platform/BackgroundReader.cpp']
 	else:
 		print "Libaio is necessary for asynchronous I/O, disabling BackgroundReader"
 	env = conf.Finish()
