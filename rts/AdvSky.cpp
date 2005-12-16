@@ -62,6 +62,7 @@ CAdvSky::CAdvSky()
 	lastCloudUpdate=-30;
 	readmap->mapDefParser.GetDef(cloudDensity,"0.5","MAP\\ATMOSPHERE\\CloudDensity");
 	readmap->mapDefParser.GetDef(fogStart,"0.1","MAP\\ATMOSPHERE\\FogStart");
+	if (fogStart>0.99) gu->drawFog = false;
 	skyColor=readmap->mapDefParser.GetFloat3(float3(0.1,0.15,0.7),"MAP\\ATMOSPHERE\\SkyColor");
 	sunColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\SunColor");
 	cloudColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\CloudColor");
@@ -145,12 +146,16 @@ CAdvSky::CAdvSky()
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 	glColor4f(1,1,1,1);
-	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR,FogLand);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
-	glFogf(GL_FOG_DENSITY,1.0f);
-	glFogi(GL_FOG_MODE,GL_LINEAR);
+	if (gu->drawFog) {
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR,FogLand);
+		glFogf(GL_FOG_START,gu->viewRange*fogStart);
+		glFogf(GL_FOG_END,gu->viewRange);
+		glFogf(GL_FOG_DENSITY,1.0f);
+		glFogi(GL_FOG_MODE,GL_LINEAR);
+	} else {
+		glDisable(GL_FOG);
+	}
 	glEndList();
 }
 
@@ -692,7 +697,7 @@ void CAdvSky::InitSun()
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
-		glEnable(GL_FOG);
+		if (gu->drawFog) glEnable(GL_FOG);
 	glEndList();
 }
 

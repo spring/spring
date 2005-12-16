@@ -123,6 +123,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	spectating=false;
 	
 	timeOffset=0;
+	drawFog=true;
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
 #endif
