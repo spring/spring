@@ -57,6 +57,7 @@ CBasicSky::CBasicSky()
 	readmap->mapDefParser.GetDef(cloudDensity,"0.5","MAP\\ATMOSPHERE\\CloudDensity");
 	cloudDensity=0.25+cloudDensity*0.5;
 	readmap->mapDefParser.GetDef(fogStart,"0.1","MAP\\ATMOSPHERE\\FogStart");
+	if (fogStart>0.99) gu->drawFog = false;
 	skyColor=readmap->mapDefParser.GetFloat3(float3(0.1,0.15,0.7),"MAP\\ATMOSPHERE\\SkyColor");
 	sunColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\SunColor");
 	cloudColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\CloudColor");
@@ -150,7 +151,7 @@ CBasicSky::CBasicSky()
 	glEnd();
 */  glActiveTextureARB(GL_TEXTURE0_ARB);
 	glColor4f(1,1,1,1);
-	glEnable(GL_FOG);
+//	glEnable(GL_FOG);  Why not, glDisable is commented out above -- this text is so people don't accidentally uncomment just one
 
 	if(GLEW_ARB_texture_env_dot3){
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -268,11 +269,15 @@ void CBasicSky::Draw()
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
-	glFogfv(GL_FOG_COLOR,FogLand);
-	glFogi(GL_FOG_MODE,GL_LINEAR);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
-	glFogf(GL_FOG_DENSITY,1.00f);
+	if (gu->drawFog) {
+		glFogfv(GL_FOG_COLOR,FogLand);
+		glFogi(GL_FOG_MODE,GL_LINEAR);
+		glFogf(GL_FOG_START,gu->viewRange*fogStart);
+		glFogf(GL_FOG_END,gu->viewRange);
+		glFogf(GL_FOG_DENSITY,1.00f);
+	} else {
+		glDisable(GL_FOG);
+	}
 }
 
 float3 CBasicSky::GetTexCoord(int x, int y)
@@ -719,7 +724,7 @@ void CBasicSky::InitSun()
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
-		glEnable(GL_FOG);
+		if (gu->drawFog) glEnable(GL_FOG);
 	glEndList();
 }
 

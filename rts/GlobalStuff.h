@@ -114,7 +114,7 @@ public:
 	float viewRange;
 
 	float timeOffset;			//time (in number of frames) since last update (for interpolation)
-
+	bool drawFog;
 #ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* directControl;
 #endif

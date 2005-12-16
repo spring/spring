@@ -19,6 +19,7 @@ CSkyBox::CSkyBox(std::string texture)
 	tex = btex.CreateTexture(0);
 
 	readmap->mapDefParser.GetDef(fogStart,"0.1","MAP\\ATMOSPHERE\\FogStart");
+	if (fogStart>0.99) gu->drawFog = false;
 	skyColor=readmap->mapDefParser.GetFloat3(float3(0.1,0.15,0.7),"MAP\\ATMOSPHERE\\SkyColor");
 	sunColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\SunColor");
 	cloudColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\CloudColor");
@@ -79,12 +80,14 @@ void CSkyBox::Draw()
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
-	glFogfv(GL_FOG_COLOR,FogLand);
-	glFogi(GL_FOG_MODE,GL_LINEAR);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
-	glFogf(GL_FOG_DENSITY,1.00f);
-	glEnable(GL_FOG);
+	if (gu->drawFog) {
+		glFogfv(GL_FOG_COLOR,FogLand);
+		glFogi(GL_FOG_MODE,GL_LINEAR);
+		glFogf(GL_FOG_START,gu->viewRange*fogStart);
+		glFogf(GL_FOG_END,gu->viewRange);
+		glFogf(GL_FOG_DENSITY,1.00f);
+		glEnable(GL_FOG);
+	}
 }
 
 void CSkyBox::Update()
