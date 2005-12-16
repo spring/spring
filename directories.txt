@@ -1,0 +1,53 @@
+rts
+rts/build
+rts/build/vstudio7
+rts/build/... linux scons build files?
+rts/ExternalAI				AI interfaces
+rts/Sim 				All code involving game simulation
+rts/Sim/Units				Unit handling code
+rts/Sim/Units/CommandAI
+rts/Sim/Units/UnitTypes			CUnit implementations
+rts/Sim/Units/COB			COB scripts VM
+rts/Sim/MoveTypes
+rts/Sim/MoveTypes/MoveMath
+rts/Sim/Objects				SolidObject, WorldObject
+rts/Sim/Projectiles
+rts/Sim/Misc                            Radar, los, damage array, quadfield, features, categories
+rts/Sim/Map
+rts/Sim/Path				Pathfinding
+rts/Sim/Weapons
+rts/Rendering				General rendering code, font rendering
+rts/Rendering/UnitModels		S3O and 3DO rendering
+rts/Rendering/Textures			Texture management/texture filtering code
+rts/Rendering/GL			OpenGL extension loading, vertex arrays and utility code
+rts/Rendering/Env			Sky(box), trees, water, grass
+rts/Rendering/Map			Map rendering code
+rts/Game				General game code
+rts/Game/UI				Game controls including current gui
+rts/Game/UI/GUI				Temporary storage for new gui
+rts/Game/StartScripts
+rts/System
+rts/System/Filesystem
+rts/System/Platform			Code handling differences between OSes/processors
+rts/System/Platform/Win
+rts/lib					7zip, minizip, HPIUtil
+
+ai
+ai/Global
+ai/Global/JCAI
+ai/Global/NTAI
+ai/Group
+ai/Group/MetalMaker
+ai/Group/CentralBuild
+ai/Group/SimpleFormation
+
+game					Output directory for binaries
+game/gui				GUI interfaces (new gui code has configurable UIs)
+game/shaders
+game/startscripts
+game/bitmaps
+game/mods				Mod archives (sd7,sdz)
+game/aidll                              Output directory for group AI binaries
+game/aidll/globalai                     Output directory for global AI binaries, and storage for AI data
+
+mods					Mods development versions
