@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FireBallProjectile.h"
-#include "System/GlobalStuff.h"
+#include "GlobalStuff.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CFireBallProjectile::CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)
 	: CWeaponProjectile(pos,speed, owner, target, targetPos, weaponDef,0)

@@ -1,13 +1,13 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GameServer.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "Player.h"
 #include "Team.h"
 #include "UI/InfoConsole.h"
 #include "Game.h"
 #include "GameSetup.h"
 #include "StartScripts/ScriptHandler.h"
-#include "System/Platform/errorhandler.h"
+#include "Platform/errorhandler.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
 #include "SDL_timer.h"

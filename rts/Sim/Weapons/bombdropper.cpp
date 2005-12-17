@@ -2,18 +2,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "bombdropper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Projectiles/ExplosiveProjectile.h"
 #include "Game/UI/InfoConsole.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Projectiles/TorpedoProjectile.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

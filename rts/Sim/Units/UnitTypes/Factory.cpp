@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // Factory.cpp: implementation of the CFactory class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -16,16 +16,16 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Projectiles/GfxProjectile.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "Matrix44f.h"
+#include "myMath.h"
 #include "Sim/Units/COB/CobFile.h"
-#include "System/SyncTracer.h"
+#include "SyncTracer.h"
 #include "Sim/Map/ReadMap.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

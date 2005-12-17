@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "AICheats.h"
 #include <vector>
 #include "GlobalAI.h"
@@ -7,7 +7,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Game/Team.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 using namespace std;
 

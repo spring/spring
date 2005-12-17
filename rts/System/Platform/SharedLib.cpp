@@ -3,6 +3,7 @@
  * Base shared library loading class implementation
  * Copyright (C) 2005 Christopher Han
  */
+#include "StdAfx.h"
 #ifdef _WIN32
 #include "Win/DllLib.h"
 #else

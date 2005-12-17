@@ -1,7 +1,7 @@
 #ifndef __MAPFILE_H
 #define __MAPFILE_H
 
-#include "System/Platform/byteorder.h"
+#include "Platform/byteorder.h"
 
 #define SMALL_TILE_SIZE 680
 #define MINIMAP_SIZE 699048

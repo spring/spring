@@ -4,7 +4,7 @@
 #define GLEW_STATIC
 
 #include <GL/glew.h>
-#include "System/float3.h"
+#include "float3.h"
 
 inline void glVertexf3(const float3 &v)
 {

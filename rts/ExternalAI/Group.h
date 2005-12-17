@@ -4,11 +4,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/Object.h"
+#include "Object.h"
 #include <string>
 #include <set>
 #include "Game/command.h"
-#include "System/Platform/SharedLib.h"
+#include "Platform/SharedLib.h"
 class IGroupAI;
 class CUnit;
 class CFeature;

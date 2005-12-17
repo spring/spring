@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 #include "mapfile.h"
-#include "System/float3.h"
+#include "float3.h"
 #include "MetalMap.h"
-#include "System/TdfParser.h"
+#include "TdfParser.h"
 
 class CFileHandler;
 class CUnit;

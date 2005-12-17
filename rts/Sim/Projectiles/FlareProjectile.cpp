@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FlareProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -7,7 +7,7 @@
 #include "Game/Camera.h"
 #include "MissileProjectile.h"
 #include "Game/UI/InfoConsole.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)
 :	CProjectile(pos,speed,owner),

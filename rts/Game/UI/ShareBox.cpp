@@ -1,11 +1,11 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ShareBox.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Rendering/glFont.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "Game/SelectedUnits.h"
 
 int CShareBox::lastShareTeam=0;

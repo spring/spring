@@ -3,6 +3,7 @@
  * Base structure for commandline parser class implementation
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
+#include "StdAfx.h"
 #include "BaseCmd.h"
 #ifdef _WIN32
 #include "Win/Win32Cmd.h"

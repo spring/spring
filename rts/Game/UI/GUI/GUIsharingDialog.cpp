@@ -7,7 +7,7 @@
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
-#include "System/Net.h"
+#include "Net.h"
 
 
 GUIsharingDialog::GUIsharingDialog(): GUIdialogController()

@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // Builder.cpp: implementation of the CBuilder class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -11,15 +11,15 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Map/Ground.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Map/MapDamage.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 #include <algorithm>
 using namespace std;
 

@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "CameraController.h"
 #include "Camera.h"
 #include "Sim/Map/Ground.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 

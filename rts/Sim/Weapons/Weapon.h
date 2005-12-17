@@ -4,7 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/Object.h"
+#include "Object.h"
 #include "Sim/Misc/DamageArray.h"
 #include <list>
 

@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "YehaTestScript.h"
 #include "TestScript.h"
 #include "Sim/Units/UnitLoader.h"
@@ -7,8 +7,8 @@
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "System/TdfParser.h"
-//#include "System/mmgr.h"
+#include "TdfParser.h"
+//#include "mmgr.h"
 
 CYehaTestScript yehatest;
 

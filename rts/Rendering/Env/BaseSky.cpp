@@ -1,12 +1,12 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "BaseSky.h"
 #include "BasicSky.h"
 #include "AdvSky.h"
 #include "Rendering/GL/myGL.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "SkyBox.h"
 #include "Sim/Map/ReadMap.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CBaseSky* sky=0;
 

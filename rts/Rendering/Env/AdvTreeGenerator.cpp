@@ -2,15 +2,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "AdvTreeGenerator.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Sim/Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -6,7 +6,7 @@
 #ifndef SOLIB_H
 #define SOLIB_H
 
-#include "System/Platform/SharedLib.h"
+#include "Platform/SharedLib.h"
 
 class SoLib: public SharedLib
 {

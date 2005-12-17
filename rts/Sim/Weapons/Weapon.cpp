@@ -2,17 +2,17 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Weapon.h"
 #include "Sim/Units/Unit.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/COB/CobFile.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Game/UI/InfoConsole.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "System/SyncTracer.h"
+#include "SyncTracer.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/Misc/InterceptHandler.h"
@@ -22,7 +22,7 @@
 #include "Game/Player.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 
 //////////////////////////////////////////////////////////////////////

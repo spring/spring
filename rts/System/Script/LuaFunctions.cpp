@@ -4,9 +4,9 @@
 
 #include "LuaFunctions.h"
 #include "Game/StartScripts/Script.h"
-#include "System/float3.h"
+#include "float3.h"
 #include "Game/UI/InfoConsole.h"
-#include "System/GlobalStuff.h"
+#include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitLoader.h"
 #include "SunParser.h"

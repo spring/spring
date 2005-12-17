@@ -1,14 +1,14 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GlobalAIHandler.h"
 #include "GlobalAI.h"
 #include "Sim/Units/Unit.h"
 #include "IGlobalAI.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/GameHelper.h"
-#include "System/TimeProfiler.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/Platform/errorhandler.h"
-//#include "System/mmgr.h"
+#include "TimeProfiler.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/errorhandler.h"
+//#include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
 static bool CatchException()

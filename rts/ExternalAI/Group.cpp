@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Group.h"
 #include "IGroupAI.h"
 #include "Sim/Units/Unit.h"
@@ -11,8 +11,8 @@
 #include "Game/SelectedUnits.h"
 #include "Game/UI/InfoConsole.h"
 #include <boost/filesystem/path.hpp>
-#include "System/Platform/errorhandler.h"
-//#include "System/mmgr.h"
+#include "Platform/errorhandler.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

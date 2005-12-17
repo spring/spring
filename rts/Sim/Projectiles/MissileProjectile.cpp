@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "MissileProjectile.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -7,14 +7,14 @@
 #include "SmokeTrailProjectile.h"
 #include "Sim/Map/Ground.h"
 #include "Game/GameHelper.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Rendering/UnitModels/3DModelParser.h"
-#include "System/Matrix44f.h"
+#include "Matrix44f.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/SyncTracer.h"
+#include "SyncTracer.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Game/UI/InfoConsole.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 static const float Smoke_Time=60;
 

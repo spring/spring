@@ -6,7 +6,7 @@
 #ifndef WIN32CMD_H
 #define WIN32CMD_H
 
-#include "System/Platform/BaseCmd.h"
+#include "Platform/BaseCmd.h"
 
 class Win32Cmd: public BaseCmd
 {

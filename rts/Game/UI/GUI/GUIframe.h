@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "System/GlobalStuff.h"
+#include "GlobalStuff.h"
 #include "Rendering/GL/myGL.h"
 
 #include "SDL_types.h"

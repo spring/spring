@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GameHelper.h"
 #include "Game.h"
 #include "Sim/Map/Ground.h"
@@ -12,9 +12,9 @@
 #include "Sim/Units/Unit.h"
 #include "UI/InfoConsole.h"
 #include "Sim/Misc/QuadField.h"
-#include "System/SyncTracer.h"
+#include "SyncTracer.h"
 #include "Sim/Misc/LosHandler.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Map/MapDamage.h"
 #include "Camera.h"
 #include "Sim/Units/UnitHandler.h"
@@ -28,7 +28,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

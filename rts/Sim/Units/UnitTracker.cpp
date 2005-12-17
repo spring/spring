@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "UnitTracker.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Camera.h"
@@ -6,10 +6,10 @@
 #include "Unit.h"
 #include "Game/UI/MouseHandler.h"
 #include "UnitHandler.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Sim/Map/Ground.h"
 #include "Game/CameraController.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CUnitTracker unitTracker;
 

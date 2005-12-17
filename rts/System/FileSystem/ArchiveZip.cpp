@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ArchiveZip.h"
 #include <algorithm>
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //#pragma comment(lib, "../taspring/zlib/lib/zdll.lib")
 //#pragma comment(lib, "../crashrpt/zlib/lib/zlib.lib")

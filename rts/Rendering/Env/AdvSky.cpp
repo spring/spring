@@ -4,7 +4,7 @@
 
 #pragma warning(disable:4258)
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "AdvSky.h"
 
 #include <math.h>
@@ -12,12 +12,12 @@
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Game/Camera.h"
 #include "Sim/Map/ReadMap.h"
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/UI/InfoConsole.h"
-#include "System/TimeProfiler.h"
-#include "System/Matrix44f.h"
-//#include "System/mmgr.h"
+#include "TimeProfiler.h"
+#include "Matrix44f.h"
+//#include "mmgr.h"
 
 extern GLfloat FogBlack[]; 
 extern GLfloat FogLand[]; 

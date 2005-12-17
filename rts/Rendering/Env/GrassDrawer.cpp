@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GrassDrawer.h"
 #include "Sim/Map/Ground.h"
 #include "Game/Camera.h"
@@ -8,17 +8,17 @@
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>	
 #include "AdvTreeDrawer.h"
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Game/UI/InfoConsole.h"
-#include "System/myMath.h"
-#include "System/Platform/ConfigHandler.h"
+#include "myMath.h"
+#include "Platform/ConfigHandler.h"
 #include <math.h>
 #include <algorithm>
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include "Sim/Map/SmfReadMap.h"
 #include "Rendering/ShadowHandler.h"
-//#include "System/TimeProfiler.h"
-//#include "System/mmgr.h"
+//#include "TimeProfiler.h"
+//#include "mmgr.h"
 
 static const float turfSize=20;				//single turf size
 static const int grassSquareSize=4;		//mapsquares per grass square

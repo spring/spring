@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <deque>
-#include "System/float3.h"
+#include "float3.h"
 #include "Game/command.h"
 struct UnitDef;
 struct FeatureDef;

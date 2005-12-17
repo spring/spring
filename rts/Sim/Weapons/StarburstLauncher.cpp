@@ -1,13 +1,13 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "StarburstLauncher.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Projectiles/StarburstProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Map/Ground.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner)
 : CWeapon(owner),

@@ -1,16 +1,16 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "EmgCannon.h"
 #include "Sim/Units/Unit.h"
 #include "Game/Team.h"
 #include "Sim/Projectiles/TracerProjectile.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/EmgProjectile.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "System/SyncTracer.h"
+#include "SyncTracer.h"
 #include "WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CEmgCannon::CEmgCannon(CUnit* owner)
 : CWeapon(owner)

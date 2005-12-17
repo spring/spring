@@ -1,7 +1,7 @@
 #ifndef IPATH_H
 #define IPATH_H
 
-#include "System/float3.h"
+#include "float3.h"
 #include <list>
 
 class IPath {

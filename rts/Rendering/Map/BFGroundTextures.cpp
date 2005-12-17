@@ -1,14 +1,14 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "BFGroundTextures.h"
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Game/UI/InfoConsole.h"
 #include <GL/glu.h>
 #include "Sim/Map/mapfile.h"
 #include "Sim/Map/ReadMap.h"
-#include "System/Platform/errorhandler.h"
-//#include "System/mmgr.h"
+#include "Platform/errorhandler.h"
+//#include "mmgr.h"
 
 // MSVC compiler does not have std::min and max, but rather, it's own built in macro
 #ifdef _MSC_VER

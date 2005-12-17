@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "System/Matrix44f.h"
+#include "Matrix44f.h"
 
 struct S3DO;
 struct SS3O;

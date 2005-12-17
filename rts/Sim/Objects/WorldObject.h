@@ -4,8 +4,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/Object.h"
-#include "System/float3.h"
+#include "Object.h"
+#include "float3.h"
 
 class CWorldObject : public CObject  
 {

@@ -182,7 +182,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "nv_dds.h"
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 
 using namespace std;
 using namespace nv_dds;

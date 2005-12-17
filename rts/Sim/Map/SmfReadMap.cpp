@@ -1,18 +1,18 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "SmfReadMap.h"
 #include "mapfile.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/ConfigHandler.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Rendering/Map/BFGroundTextures.h"
 #include "Game/UI/InfoConsole.h"
 #include "MetalMap.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "System/myMath.h"
-#include "System/Platform/errorhandler.h"
-#include "System/Bitmap.h"
-//#include "System/mmgr.h"
+#include "myMath.h"
+#include "Platform/errorhandler.h"
+#include "Bitmap.h"
+//#include "mmgr.h"
 
 using namespace std;
 

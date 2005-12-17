@@ -2,9 +2,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GroupAiCallback.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Game/UI/InfoConsole.h"
@@ -30,7 +30,7 @@
 #include "Sim/Path/PathManager.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/Player.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

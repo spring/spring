@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -11,10 +11,10 @@
 #include "Game/GameHelper.h"
 #include "LaserProjectile.h"
 #include "FireBallProjectile.h"
-#include "System/Matrix44f.h"
+#include "Matrix44f.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget) : 
 	CProjectile(pos,speed,owner),

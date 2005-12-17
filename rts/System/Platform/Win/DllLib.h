@@ -6,7 +6,7 @@
 #ifndef DLLLIB_H
 #define DLLLIB_H
 
-#include "System/Platform/SharedLib.h"
+#include "Platform/SharedLib.h"
 #include <windows.h>
 
 class DllLib: public SharedLib

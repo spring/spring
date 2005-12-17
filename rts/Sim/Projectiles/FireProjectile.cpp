@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FireProjectile.h"
 #include "Sim/Misc/Wind.h"
 #include "Rendering/GL/myGL.h"
@@ -9,7 +9,7 @@
 #include "Sim/Misc/Feature.h"
 #include "ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CFireProjectile::CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize)
 : CProjectile(pos,speed,owner),

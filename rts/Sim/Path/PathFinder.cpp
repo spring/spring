@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "PathFinder.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Map/ReadMap.h"

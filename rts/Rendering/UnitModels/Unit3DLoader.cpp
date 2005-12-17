@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Unit3DLoader.h"
 #include <fstream>
 #include "Game/UI/InfoConsole.h"
@@ -10,11 +10,11 @@
 #include <GL/glu.h>
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/GL/VertexArray.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Bitmap.h"
+#include "FileSystem/FileHandler.h"
+#include "Bitmap.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/Platform/errorhandler.h"
-//#include "System/mmgr.h"
+#include "Platform/errorhandler.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

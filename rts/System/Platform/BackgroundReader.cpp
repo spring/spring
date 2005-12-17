@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "BackgroundReader.h"
 
 #ifdef _WIN32
@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #endif
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CBackgroundReader backgroundReader;
 

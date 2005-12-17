@@ -5,7 +5,7 @@
 #include "GUIconsole.h"
 #include <string>
 #include "GUIfont.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 
 #include <time.h>
 

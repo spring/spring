@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // glList.cpp: implementation of the CglList class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -7,8 +7,8 @@
 #include "myGL.h"
 
 #include "Rendering/glFont.h"
-#include "System/Platform/ConfigHandler.h"
-//#include "System/mmgr.h"
+#include "Platform/ConfigHandler.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

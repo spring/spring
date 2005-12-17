@@ -1,11 +1,11 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ResourceBar.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/Team.h"
 #include "Rendering/glFont.h"
-#include "System/Net.h"
-//#include "System/mmgr.h"
+#include "Net.h"
+//#include "mmgr.h"
 
 CResourceBar* resourceBar=0;
 

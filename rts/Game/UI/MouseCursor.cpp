@@ -1,11 +1,11 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "MouseCursor.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Bitmap.h"
+#include "FileSystem/FileHandler.h"
+#include "Bitmap.h"
 #include "InfoConsole.h"
 #include "Rendering/GL/myGL.h"
-#include "System/myMath.h"
-//#include "System/mmgr.h"
+#include "myMath.h"
+//#include "mmgr.h"
 
 //Would be nice if these were read from a gaf-file instead.
 CMouseCursor::CMouseCursor(const string &name, HotSpot hs)

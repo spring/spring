@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Ground.h"
 #include "ReadMap.h"
 #include "Game/Camera.h"
@@ -12,7 +12,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "Sim/Misc/GeometricObjects.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

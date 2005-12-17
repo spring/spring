@@ -3,6 +3,7 @@
  * Windows Shared Object loader class implementation
  * Copyright (C) 2005 Christopher Han
  */
+#include "StdAfx.h"
 #include "DllLib.h"
 
 DllLib::DllLib(const char *filename)

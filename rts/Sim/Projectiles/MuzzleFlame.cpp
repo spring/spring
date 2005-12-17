@@ -1,12 +1,12 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "MuzzleFlame.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "ProjectileHandler.h"
-#include "System/GlobalStuff.h"
-#include "System/SyncTracer.h"
-//#include "System/mmgr.h"
+#include "GlobalStuff.h"
+#include "SyncTracer.h"
+//#include "mmgr.h"
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size)
 : CProjectile(pos,speed,0),

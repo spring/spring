@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "BuilderCAI.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "ExternalAI/Group.h"
@@ -20,7 +20,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "Game/Team.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CBuilderCAI::CBuilderCAI(CUnit* owner)
 : CMobileCAI(owner),

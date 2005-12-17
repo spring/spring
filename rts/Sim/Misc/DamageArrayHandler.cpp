@@ -1,12 +1,12 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "DamageArrayHandler.h"
 #include "DamageArray.h"
-#include "System/TdfParser.h"
+#include "TdfParser.h"
 #include "Game/UI/InfoConsole.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CDamageArrayHandler* damageArrayHandler;
 int DamageArray::numTypes=1;

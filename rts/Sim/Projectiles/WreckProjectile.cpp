@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
@@ -11,7 +11,7 @@
 #include "SmokeProjectile.h"
 #include "ProjectileHandler.h"
 #include "Sim/Map/Ground.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

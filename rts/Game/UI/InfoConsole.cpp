@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // InfoConsole.cpp: implementation of the CInfoConsole class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -13,11 +13,11 @@
 	#include "GUI/GUIcontroller.h"
 #endif
  
-#include "System/SyncTracer.h"
-#include "System/Platform/ConfigHandler.h"
+#include "SyncTracer.h"
+#include "Platform/ConfigHandler.h"
 #include <boost/filesystem/path.hpp>
 
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

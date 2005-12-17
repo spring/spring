@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 std::deque<CInputReceiver*>& GetInputReceivers()
 {

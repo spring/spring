@@ -12,7 +12,7 @@
 #include <deque>
 //#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Sim/Misc/DamageArray.h"
-#include "System/GlobalStuff.h"
+#include "GlobalStuff.h"
 
 class CWeapon;
 class CCommandAI;

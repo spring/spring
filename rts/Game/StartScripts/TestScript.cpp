@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "TestScript.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
@@ -10,11 +10,11 @@
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "System/TdfParser.h"
+#include "TdfParser.h"
 #include "Game/Team.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/UnitHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

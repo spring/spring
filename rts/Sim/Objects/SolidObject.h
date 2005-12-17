@@ -3,7 +3,7 @@
 
 #include "WorldObject.h"
 #include "Sim/MoveTypes/Mobility.h"
-#include "System/GlobalStuff.h"
+#include "GlobalStuff.h"
 
 class CUnit;
 struct DamageArray;

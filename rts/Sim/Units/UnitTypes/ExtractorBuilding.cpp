@@ -5,7 +5,7 @@
 //////////////////////////////////////
 
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ExtractorBuilding.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Map/ReadMap.h"
@@ -15,8 +15,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
-#include "System/SyncTracer.h"
-//#include "System/mmgr.h"
+#include "SyncTracer.h"
+//#include "mmgr.h"
 /*
 Constructor
 */

@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "LoadScript.h"
-#include "System/LoadSaveHandler.h"
-#include "System/FileSystem/FileHandler.h"
+#include "LoadSaveHandler.h"
+#include "FileSystem/FileHandler.h"
 #include <vector>
 #include <iostream>
 

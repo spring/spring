@@ -3,7 +3,7 @@
 
 #include "command.h"
 #include "Sim/Units/Unit.h"
-#include "System/float3.h"
+#include "float3.h"
 #include <map>
 
 class CSelectedUnitsAI {

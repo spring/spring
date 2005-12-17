@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "TransportUnit.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CTransportUnit::CTransportUnit(const float3 &pos,int team,UnitDef* unitDef)
 : CUnit(pos,team,unitDef),

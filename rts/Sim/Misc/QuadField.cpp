@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // QuadField.cpp: implementation of the CQuadField class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -9,7 +9,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Feature.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

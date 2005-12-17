@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // Projectile.cpp: implementation of the CProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "Game/UI/InfoConsole.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

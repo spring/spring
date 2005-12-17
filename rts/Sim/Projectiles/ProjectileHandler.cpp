@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // ProjectileHandler.cpp: implementation of the CProjectileHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -11,19 +11,19 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
-#include "System/TimeProfiler.h"
-#include "System/Bitmap.h"
+#include "TimeProfiler.h"
+#include "Bitmap.h"
 #include "Rendering/GroundFlash.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Map/Ground.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Sim/Misc/Feature.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include <algorithm>
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

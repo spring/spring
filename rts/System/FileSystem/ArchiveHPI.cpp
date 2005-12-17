@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ArchiveHPI.h"
 #include <algorithm>
 

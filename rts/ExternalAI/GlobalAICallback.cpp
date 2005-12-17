@@ -1,6 +1,6 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GlobalAICallback.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "GlobalAI.h"
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -29,7 +29,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/Player.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CGlobalAICallback::CGlobalAICallback(CGlobalAI* ai)
 : ai(ai),

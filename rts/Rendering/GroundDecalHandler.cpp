@@ -1,17 +1,17 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GroundDecalHandler.h"
 #include <algorithm>
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "GL/myGL.h"
 #include "GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "Game/UI/InfoConsole.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include <cctype>
 #include "Game/Camera.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CGroundDecalHandler* groundDecals=0;
 using namespace std;

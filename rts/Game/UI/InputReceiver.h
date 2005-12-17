@@ -1,7 +1,7 @@
 #ifndef INPUTRECEIVER_H
 #define INPUTRECEIVER_H
 
-#include "System/Object.h"
+#include "Object.h"
 #include <deque>
 #include <string>
 

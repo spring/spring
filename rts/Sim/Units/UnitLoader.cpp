@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "UnitLoader.h"
 #include "Unit.h"
 #include "Game/UI/InfoConsole.h"
@@ -15,7 +15,7 @@
 #include "UnitTypes/Factory.h"
 #include "UnitTypes/Builder.h"
 #include "Sim/Weapons/MeleeWeapon.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "UnitDefHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "COB/CobEngine.h"
@@ -41,10 +41,10 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/DGunWeapon.h"
-#include "System/TimeProfiler.h"
+#include "TimeProfiler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/BeamLaser.h"
-#include "System/Platform/errorhandler.h"
+#include "Platform/errorhandler.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

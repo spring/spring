@@ -1,7 +1,7 @@
 #ifndef GLOBALAIHANDLER_H
 #define GLOBALAIHANDLER_H
 
-#include "System/Object.h"
+#include "Object.h"
 #include <map>
 #include <string>
 

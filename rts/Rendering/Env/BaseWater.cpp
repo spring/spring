@@ -1,11 +1,11 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "BaseWater.h"
 #include "BasicWater.h"
 #include "AdvWater.h"
 #include "Rendering/GL/myGL.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "DynWater.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CBaseWater* water=0;
 

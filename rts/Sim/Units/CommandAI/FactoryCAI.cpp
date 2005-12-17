@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FactoryCAI.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "ExternalAI/Group.h"
@@ -8,7 +8,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Game/Team.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
 : CCommandAI(owner),

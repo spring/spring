@@ -1,8 +1,8 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FeatureHandler.h"
 #include "Feature.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/TdfParser.h"
+#include "FileSystem/FileHandler.h"
+#include "TdfParser.h"
 #include "Game/UI/InfoConsole.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
@@ -13,16 +13,16 @@
 #include "Sim/Map/mapfile.h"
 #include "QuadField.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/LoadSaveInterface.h"
-#include "System/TimeProfiler.h"
+#include "LoadSaveInterface.h"
+#include "TimeProfiler.h"
 #include "LosHandler.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/ShadowHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 using namespace std;
 CFeatureHandler* featureHandler=0;

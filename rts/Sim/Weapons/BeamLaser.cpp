@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "BeamLaser.h"
 #include "Sim/Units/Unit.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/LaserProjectile.h"
 #include "Sim/Map/Ground.h"
@@ -9,7 +9,7 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/BeamLaserProjectile.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CBeamLaser::CBeamLaser(CUnit* owner)
 : CWeapon(owner),

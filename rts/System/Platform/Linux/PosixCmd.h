@@ -6,7 +6,7 @@
 #ifndef POSIXCMD_H
 #define POSIXCMD_H
 
-#include "System/Platform/BaseCmd.h"
+#include "Platform/BaseCmd.h"
 
 class PosixCmd: public BaseCmd
 {

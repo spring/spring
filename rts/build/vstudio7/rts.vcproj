@@ -19,13 +19,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../../lua/lua/include;../../../crashrpt/include"
+				AdditionalIncludeDirectories="../../;../../System;../../../lua/lua/include;../../../crashrpt/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"
@@ -35,7 +35,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="../../lib/ft/freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
-				OutputFile="bagge/debug.exe"
+				OutputFile="../../../game/debug.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/rts.pdb"
@@ -71,11 +71,11 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../;../../../lua/lua/include;../../../lua/luabind;../../../crashrpt/include"
+				AdditionalIncludeDirectories="../../;../../System;../../../lua/lua/include;../../../lua/luabind;../../../crashrpt/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI"
 				RuntimeLibrary="2"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="0"/>
@@ -84,7 +84,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
-				OutputFile="./bagge/$(ProjectName).exe"
+				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -360,162 +360,486 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIbutton.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIbutton.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIconsole.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIconsole.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIfont.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIfont.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIframe.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIframe.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIgame.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIgame.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIgraph.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIgraph.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIimage.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIimage.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIinput.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIinput.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIlabel.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIlabel.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUImatrix.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUImatrix.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIminimap.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIminimap.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIpane.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIpane.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIslider.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIslider.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUItab.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUItab.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUItable.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUItable.h">
@@ -773,6 +1097,18 @@
 				Filter="">
 				<File
 					RelativePath="..\..\Rendering\Gl\FBO.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Gl\FBO.h">
@@ -844,6 +1180,18 @@
 				Filter="">
 				<File
 					RelativePath="..\..\Rendering\Textures\nv_dds.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\nv_dds.h">
@@ -859,15 +1207,51 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\TextureFilters_2xsai.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\TextureFilters_hq2x.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\TextureFilters_hq2x.h">
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\TextureFilters_hq4x.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\TextureFilters_hq4x.h">
@@ -1549,6 +1933,12 @@
 			Filter="">
 			<File
 				RelativePath="..\..\System\bget.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\bget.h">
@@ -1594,6 +1984,18 @@
 			</File>
 			<File
 				RelativePath="..\..\System\Matrix44f.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\Matrix44f.h">
@@ -1642,12 +2044,36 @@
 			</File>
 			<File
 				RelativePath="..\..\System\StdAfx.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\StdAfx.h">
 			</File>
 			<File
 				RelativePath="..\..\System\Syncify.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\Syncify.h">
@@ -1741,36 +2167,108 @@
 						Filter="">
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpientry.cpp">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpientry.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpifile.cpp">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpifile.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpiutil.cpp">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpiutil.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\scrambledfile.cpp">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\scrambledfile.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\sqshstream.cpp">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\sqshstream.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\substream.cpp">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\substream.h">
@@ -1781,18 +2279,54 @@
 						Filter="">
 						<File
 							RelativePath="..\..\lib\7zip\7zAlloc.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zAlloc.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zBuffer.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zBuffer.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zCrc.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zCrc.h">
@@ -1800,10 +2334,17 @@
 						<File
 							RelativePath="..\..\lib\7zip\7zDecode.c">
 							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
 								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"/>
+									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
@@ -1811,30 +2352,90 @@
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zExtract.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zExtract.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zHeader.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zHeader.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zIn.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zIn.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zItem.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zItem.h">
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zMethodID.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zMethodID.h">
@@ -1844,6 +2445,18 @@
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\LzmaDecode.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\LzmaDecode.h">
@@ -1862,6 +2475,12 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\BaseCmd.cpp">
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\BaseCmd.h">
@@ -1871,6 +2490,12 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\ConfigHandler.cpp">
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\ConfigHandler.h">
@@ -1901,12 +2526,24 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.h">
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\RegHandler.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\RegHandler.h">
@@ -1916,6 +2553,12 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\Win32Cmd.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\Win32Cmd.h">

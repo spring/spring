@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "WakeProjectile.h"
 #include "Rendering/GL/myGL.h"	
 #include "ProjectileHandler.h"
@@ -6,7 +6,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Misc/Wind.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // ReadMap.cpp: implementation of the CReadMap class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -9,13 +9,13 @@
 #include <stdlib.h>
 #include <math.h>
 //#include <ostream>
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Ground.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #ifdef _WIN32
 #include <process.h>
 #endif
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include "SmfReadMap.h"
 #include "Rendering/Map/BFGroundDrawer.h"
 #include "Sim/Units/Unit.h"
@@ -26,11 +26,11 @@
 #include "Sim/Path/PathManager.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "System/LoadSaveInterface.h"
+#include "LoadSaveInterface.h"
 #include "MapDamage.h"
-#include "System/Platform/errorhandler.h"
+#include "Platform/errorhandler.h"
 #include <string>
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 using namespace std;
 //////////////////////////////////////////////////////////////////////
