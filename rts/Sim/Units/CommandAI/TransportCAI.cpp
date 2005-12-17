@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "TransportCAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
@@ -12,7 +12,7 @@
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Rendering/UnitModels/3DOParser.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 static void ScriptCallback(int retCode,void* p1,void* p2)
 {

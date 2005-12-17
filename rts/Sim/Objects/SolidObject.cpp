@@ -1,11 +1,11 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "SolidObject.h"
 #include "Sim/Map/ReadMap.h"
 //#include "PhysicsEngine.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Map/Ground.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Rendering/GL/glExtra.h"
 
 CSolidObject::CSolidObject(const float3& pos) 

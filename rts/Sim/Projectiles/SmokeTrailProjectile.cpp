@@ -2,16 +2,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "SmokeTrailProjectile.h"
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Map/Ground.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Sim/Misc/Wind.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

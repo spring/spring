@@ -1,14 +1,14 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "LaserCannon.h"
 #include "Sim/Units/Unit.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/LaserProjectile.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CLaserCannon::CLaserCannon(CUnit* owner)
 : CWeapon(owner)

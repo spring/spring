@@ -1,12 +1,12 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GlobalAI.h"
 #include "IGlobalAI.h"
 #include "GlobalAICallback.h"
 #include "GroupHandler.h"
 #include <boost/filesystem/operations.hpp>
-#include "System/Platform/errorhandler.h"
-#include "System/Platform/SharedLib.h"
-//#include "System/mmgr.h"
+#include "Platform/errorhandler.h"
+#include "Platform/SharedLib.h"
+//#include "mmgr.h"
 
 CGlobalAI::CGlobalAI(int team, const char* dll)
 : team(team)

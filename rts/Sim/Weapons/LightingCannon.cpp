@@ -1,13 +1,13 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "LightingCannon.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Projectiles/TracerProjectile.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/LightingProjectile.h"
 #include "Sim/Map/Ground.h"
 #include "WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CLightingCannon::CLightingCannon(CUnit* owner)
 : CWeapon(owner)

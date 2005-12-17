@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "AirScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitLoader.h"
@@ -7,10 +7,10 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Game/Camera.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Map/Ground.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 static CAirScript ts;
 

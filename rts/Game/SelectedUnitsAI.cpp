@@ -5,18 +5,18 @@
 // - Controlling formations.          //
 ////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "SelectedUnitsAI.h"
 #include "SelectedUnits.h"
 #include "UI/InfoConsole.h"
-#include "System/Net.h"
-#include "System/GlobalStuff.h"
+#include "Net.h"
+#include "GlobalStuff.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 //#include "GroundMoveType.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;

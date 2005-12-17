@@ -1,12 +1,12 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FlameThrower.h"
 #include "Sim/Units/Unit.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/FlameProjectile.h"
 #include "WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CFlameThrower::CFlameThrower(CUnit* owner)
 : CWeapon(owner)

@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "DGunWeapon.h"
 #include "Sim/Projectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CDGunWeapon::CDGunWeapon(CUnit* owner)
 : CWeapon(owner)

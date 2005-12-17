@@ -4,7 +4,7 @@
 
 #pragma warning(disable:4786)
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "MiniMap.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
@@ -31,11 +31,11 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Map/MapDamage.h"
 #include "Sim/Map/MetalMap.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

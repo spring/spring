@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CTooltipConsole* tooltip=0;
 

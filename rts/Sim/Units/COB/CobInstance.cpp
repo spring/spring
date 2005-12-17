@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "CobInstance.h"
 #include "CobThread.h"
 #include "CobFile.h"
@@ -16,7 +16,7 @@
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/MuzzleFlame.h"
-#include "System/SyncTracer.h"
+#include "SyncTracer.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Projectiles/BubbleProjectile.h"
 #include "Sim/Projectiles/WakeProjectile.h"
@@ -24,9 +24,9 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "SDL_types.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 #endif
 

@@ -1,8 +1,8 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "PathEstimator.h"
 #include "Game/UI/InfoConsole.h"
 #include "Rendering/GL/myGL.h"
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include <math.h>
 #include <fstream>
 #ifndef _WIN32
@@ -10,13 +10,13 @@
 #include <sys/stat.h>
 #endif
 #include "Sim/Map/Ground.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/glFont.h"
 #include "Game/Camera.h"
-#include "System/TimeProfiler.h"
+#include "TimeProfiler.h"
 #include <boost/filesystem/convenience.hpp>
 
 #ifdef _WIN32
@@ -25,9 +25,9 @@
 #endif
 
 #include "lib/minizip/zip.h"
-#include "System/FileSystem/ArchiveZip.h"
+#include "FileSystem/ArchiveZip.h"
 
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 #define PATHDEBUG false
 

@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "AdvTreeDrawer.h"
 #include "Rendering/Map/BaseGroundDrawer.h"
 #include "Sim/Map/Ground.h"
@@ -11,12 +11,12 @@
 #include "Sim/Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "AdvTreeGenerator.h"
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Game/UI/InfoConsole.h"
 #include "GrassDrawer.h"
-#include "System/Matrix44f.h"
+#include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "CommandAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
@@ -10,9 +10,9 @@
 #include "Game/GameHelper.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Game/SelectedUnits.h"
-#include "System/LoadSaveInterface.h"
+#include "LoadSaveInterface.h"
 #include "ExternalAI/GlobalAIHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CCommandAI::CCommandAI(CUnit* owner)
 :	lastUserCommand(-1000),

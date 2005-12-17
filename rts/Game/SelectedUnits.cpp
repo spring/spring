@@ -2,13 +2,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include <map>
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "UI/InfoConsole.h"
@@ -16,10 +16,10 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "SelectedUnitsAI.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Units/UnitDef.h"
 #include "Player.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

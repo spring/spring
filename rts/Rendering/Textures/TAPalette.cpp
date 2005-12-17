@@ -1,9 +1,9 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "TAPalette.h"
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include <iostream>
 //#include <fstream>
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

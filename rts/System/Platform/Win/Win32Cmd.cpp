@@ -3,6 +3,7 @@
  * Win32 commandline parser class definition
  * Copyright (C) 2005 Christopher Han
  */
+#include "StdAfx.h"
 #include "Win32Cmd.h"
 
 /**

@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "SpawnScript.h"
 #include <fstream>
-#include "System/TdfParser.h"
+#include "TdfParser.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -9,7 +9,7 @@
 #include <set>
 #include "Game/command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 static CSpawnScript sps;
 extern std::string stupidGlobalMapname;

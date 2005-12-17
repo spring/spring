@@ -1,8 +1,8 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "AirMoveType.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Map/Ground.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Game/GameHelper.h"
@@ -16,7 +16,7 @@
 #include "Game/Player.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Mobility.h"
-#include "System/myMath.h"
+#include "myMath.h"
 
 CAirMoveType::CAirMoveType(CUnit* owner):
 	CMoveType(owner),

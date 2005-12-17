@@ -3,6 +3,7 @@
  * Implementation of config structure class
  * Copyright (C) 2005 Christopher Han
  */
+#include "StdAfx.h"
 #include "ConfigHandler.h"
 #ifdef _WIN32
 #include "Win/RegHandler.h"

@@ -1,8 +1,8 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 
 #include "GameController.h"
 
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 
 

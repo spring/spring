@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ArchiveFactory.h"
 #include "ArchiveHPI.h"
 #include "ArchiveZip.h"
 #include "Archive7Zip.h"
 #include <algorithm>
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 // Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsArchive(const string& fileName)

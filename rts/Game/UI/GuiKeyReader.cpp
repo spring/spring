@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // GuiKeyReader.cpp: implementation of the CGuiKeyReader class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,11 +6,11 @@
 #include "GuiKeyReader.h"
 #include <algorithm>
 #include <cctype>
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/errorhandler.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/errorhandler.h"
 #include "SDL_keysym.h"
 
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 using namespace std;
 

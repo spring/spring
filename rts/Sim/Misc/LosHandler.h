@@ -9,7 +9,7 @@
 #include <vector>
 #include <list>
 #include <deque>
-#include "System/MemPool.h"
+#include "MemPool.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"

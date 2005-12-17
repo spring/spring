@@ -1,7 +1,7 @@
 #ifndef __COMMAND_AI_H__
 #define __COMMAND_AI_H__
 
-#include "System/Object.h"
+#include "Object.h"
 #include "Game/command.h"
 #include <vector>
 #include <deque>

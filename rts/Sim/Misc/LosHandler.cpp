@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // LosHandler.cpp: implementation of the CLosHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -9,10 +9,10 @@
 #include <list>
 #include <math.h>
 #include "Sim/Map/ReadMap.h"
-#include "System/TimeProfiler.h"
+#include "TimeProfiler.h"
 #include "Game/UI/InfoConsole.h"
-#include "System/Platform/errorhandler.h"
-//#include "System/mmgr.h"
+#include "Platform/errorhandler.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ExplosionGraphics.h"
 #include "GL/myGL.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"

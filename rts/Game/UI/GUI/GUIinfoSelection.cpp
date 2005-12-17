@@ -1,7 +1,7 @@
 #include "GUIinfoSelection.h"
 #include "GUIcontroller.h"
 #include "GUIfont.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "Game/SelectedUnits.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"

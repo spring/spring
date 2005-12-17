@@ -7,7 +7,7 @@
 
 #include <list>
 #include <map>
-#include "System/Object.h"
+#include "Object.h"
 class CGame;
 class CUnit;
 class CWeapon;
@@ -18,7 +18,7 @@ struct UnitDef;
 #include <vector>
 #include "Sim/Misc/DamageArray.h"
 #include <list>
-#include "System/MemPool.h"
+#include "MemPool.h"
 
 using namespace std;
 

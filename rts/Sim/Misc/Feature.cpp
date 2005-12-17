@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Feature.h"
 #include "Rendering/GL/myGL.h"
 #include "FeatureHandler.h"
@@ -13,7 +13,7 @@
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyteam,std::string fromUnit)
 : CSolidObject(pos),

@@ -3,7 +3,7 @@
 
 #include "Script.h"
 #include <string>
-#include "System/LoadSaveHandler.h"
+#include "LoadSaveHandler.h"
 
 class CLoadScript :
 	public CScript

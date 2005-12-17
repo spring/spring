@@ -2,19 +2,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Rifle.h"
 #include "Sim/Projectiles/TracerProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
-#include "System/SyncTracer.h"
-#include "System/Sound.h"
+#include "SyncTracer.h"
+#include "Sound.h"
 #include "Sim/Map/Ground.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
-#include "System/myMath.h"
-//#include "System/mmgr.h"
+#include "myMath.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

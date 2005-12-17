@@ -1,7 +1,7 @@
 #ifndef MOVETYPE_H
 #define MOVETYPE_H
 
-#include "System/Object.h"
+#include "Object.h"
 #include "Sim/Units/Unit.h"
 
 class CMoveType :

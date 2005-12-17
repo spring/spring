@@ -1,12 +1,12 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FartextureHandler.h"
 #include "UnitModels/3DOParser.h"
 #include "GL/myGL.h"
 #include <GL/glu.h>
-#include "System/GlobalStuff.h"
+#include "GlobalStuff.h"
 #include "UnitModels/UnitDrawer.h"
-#include "System/Bitmap.h"
-//#include "System/mmgr.h"
+#include "Bitmap.h"
+//#include "mmgr.h"
 
 CFartextureHandler* fartextureHandler = NULL;
 

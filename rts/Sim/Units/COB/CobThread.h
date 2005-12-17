@@ -1,7 +1,7 @@
 #ifndef __COB_THREAD_H__
 #define __COB_THREAD_H__
 
-#include "System/Object.h"
+#include "Object.h"
 #include "CobInstance.h"
 #include <vector>
 #include "Game/UI/InfoConsole.h"

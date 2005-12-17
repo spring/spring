@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // GuiHandler.cpp: implementation of the CGuiHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -18,7 +18,7 @@
 #include "Rendering/GL/glList.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Misc/LosHandler.h"
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Sim/Units/UnitLoader.h"
 //#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Sim/Units/UnitHandler.h"
@@ -31,7 +31,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

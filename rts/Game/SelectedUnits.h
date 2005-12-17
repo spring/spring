@@ -6,7 +6,7 @@
 
 #pragma warning(disable:4786)
 
-#include "System/Object.h"
+#include "Object.h"
 #include <vector>
 #include <set>
 #include "command.h"

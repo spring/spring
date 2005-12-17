@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "CommanderScript.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/TdfParser.h"
+#include "TdfParser.h"
 static CCommanderScript ts;
 #include <algorithm>
 #include <cctype>
@@ -9,7 +9,7 @@ static CCommanderScript ts;
 #include "Game/GameSetup.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
 

@@ -1,8 +1,8 @@
 // Generalized callback interface - shared between global AI and group AI
 // by Zaphod
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GlobalAICallback.h"
-#include "System/Net.h"
+#include "Net.h"
 #include "GlobalAI.h"
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -30,10 +30,10 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/Player.h"
 #include "Rendering/InMapDraw.h"
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include "Rendering/InMapDraw.h"
-#include "System/FileSystem/FileHandler.h"
-//#include "System/mmgr.h"
+#include "FileSystem/FileHandler.h"
+//#include "mmgr.h"
 
 CAICallback::CAICallback(int Team, CGroupHandler *ghandler)
 : team(Team), noMessages(false), gh(ghandler), group (0)

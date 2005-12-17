@@ -2,7 +2,7 @@
 #define MOVEMATH_H
 
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "System/float3.h"
+#include "float3.h"
 #include "Sim/Objects/SolidObject.h"
 
 class CMoveMath {

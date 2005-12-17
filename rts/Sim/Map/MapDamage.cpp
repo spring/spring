@@ -1,9 +1,9 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "MapDamage.h"
 #include "ReadMap.h"
 #include "Rendering/Map/BaseGroundDrawer.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "System/TimeProfiler.h"
+#include "TimeProfiler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/LosHandler.h"
@@ -14,7 +14,7 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitDef.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CMapDamage* mapDamage;
 

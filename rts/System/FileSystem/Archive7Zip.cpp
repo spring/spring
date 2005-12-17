@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "Archive7Zip.h"
 
 #include <algorithm>

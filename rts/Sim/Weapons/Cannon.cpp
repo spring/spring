@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // Cannon.cpp: implementation of the CCannon class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -9,14 +9,14 @@
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
-#include "System/SyncTracer.h"
-#include "System/Sound.h"
+#include "SyncTracer.h"
+#include "Sound.h"
 #include "Sim/Map/Ground.h"
 #include "Game/GameHelper.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

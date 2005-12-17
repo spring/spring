@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "SelectionKeyHandler.h"
 #include <fstream>
 #include "InfoConsole.h"
@@ -16,7 +16,7 @@
 #include <boost/filesystem/path.hpp>
 #include "SDL_types.h"
 #include "SDL_keysym.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 #include "GUI/GUIcontroller.h"
 
 CSelectionKeyHandler *selectionKeys;

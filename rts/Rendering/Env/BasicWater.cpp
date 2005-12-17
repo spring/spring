@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // DrawWater.cpp: implementation of the CBasicWater class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,10 +8,10 @@
 #include <GL/glu.h>
 #include <math.h>
 
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Map/SmfReadMap.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

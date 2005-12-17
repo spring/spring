@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "MobileCAI.h"
 #include "Sim/Map/Ground.h"
 #include "Game/GameHelper.h"
@@ -12,7 +12,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Game/Team.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CMobileCAI::CMobileCAI(CUnit* owner)
 : CCommandAI(owner),

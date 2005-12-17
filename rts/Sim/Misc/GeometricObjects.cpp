@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GeometricObjects.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/GeoSquareProjectile.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Map/ReadMap.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CGeometricObjects* geometricObjects=0;
 

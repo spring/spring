@@ -2,31 +2,31 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "3DOParser.h"
 #include <math.h>
 #include "Rendering/GL/myGL.h"
-#include "System/GlobalStuff.h"
+#include "GlobalStuff.h"
 #include "Game/UI/InfoConsole.h"
 #include <vector>
 #include "Rendering/GL/VertexArray.h"
-#include "System/FileSystem/VFSHandler.h"
+#include "FileSystem/VFSHandler.h"
 #include <set>
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include "Rendering/FartextureHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "System/Matrix44f.h"
+#include "Matrix44f.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
 #include "Game/Team.h"
 #include "Game/Player.h"
-#include "System/Platform/errorhandler.h"
-#include "System/Platform/byteorder.h"
+#include "Platform/errorhandler.h"
+#include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 using namespace std;
 

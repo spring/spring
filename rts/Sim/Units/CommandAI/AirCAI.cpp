@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "AirCAI.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Map/Ground.h"
@@ -8,7 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Units/UnitDef.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CAirCAI::CAirCAI(CUnit* owner)
 : CCommandAI(owner)

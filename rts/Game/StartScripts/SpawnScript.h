@@ -5,7 +5,7 @@
 #include <string>
 #include <list>
 #include <vector>
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 
 using namespace std;
 class CSpawnScript :

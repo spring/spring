@@ -1,15 +1,15 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "CobEngine.h"
 #include "CobThread.h"
 #include "CobInstance.h"
 #include "CobFile.h"
 #include "Game/UI/InfoConsole.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/errorhandler.h"
-//#include "System/mmgr.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/errorhandler.h"
+//#include "mmgr.h"
 
 #ifndef _CONSOLE
-#include "System/TimeProfiler.h"
+#include "TimeProfiler.h"
 #endif
 #ifdef _CONSOLE
 #define START_TIME_PROFILE {}

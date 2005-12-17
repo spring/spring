@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // MouseHandler.cpp: implementation of the CMouseHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -16,18 +16,18 @@
 #include "InfoConsole.h"
 #include "MiniMap.h"
 #include "InputReceiver.h"
-#include "System/Bitmap.h"
+#include "Bitmap.h"
 #include "Rendering/glFont.h"
 #include "Sim/Units/UnitHandler.h"
 #include "MouseCursor.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Units/UnitDef.h"
 #include "ExternalAI/Group.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Game/CameraController.h"
 #include "Sim/Map/MapDamage.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 #include "SDL_types.h"
 #include "SDL_mouse.h"
 #include "SDL_keysym.h"

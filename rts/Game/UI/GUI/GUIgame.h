@@ -3,7 +3,7 @@
 
 #include "GUIpane.h"
 #include "Game/command.h"
-#include "System/float3.h"
+#include "float3.h"
 
 #define numButtons 6
 

@@ -1,7 +1,7 @@
 #ifndef __BASE_TREE_DRAWER_H__
 #define __BASE_TREE_DRAWER_H__
 
-#include "System/float3.h"
+#include "float3.h"
 
 #define TREE_SQUARE_SIZE 64
 

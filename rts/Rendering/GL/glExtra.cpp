@@ -1,7 +1,7 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "glExtra.h"
 #include "Sim/Map/Ground.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 
 /*

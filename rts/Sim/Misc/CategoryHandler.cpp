@@ -1,9 +1,9 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "CategoryHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include <algorithm>
 #include <cctype>
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 using namespace std;
 CCategoryHandler* CCategoryHandler::instance=0;

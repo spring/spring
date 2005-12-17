@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "VFSHandler.h"
 #ifdef _WIN32
 #include <io.h>
@@ -6,8 +6,8 @@
 #include "ArchiveFactory.h"
 #include <algorithm>
 #include "Rendering/GL/myGL.h"
-#include "System/Platform/filefunctions.h"
-//#include "System/mmgr.h"
+#include "Platform/filefunctions.h"
+//#include "mmgr.h"
 
 CVFSHandler* hpiHandler=0;
 

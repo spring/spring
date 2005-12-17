@@ -1,13 +1,13 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "LightingProjectile.h"
 #include "ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "System/SyncTracer.h"
+#include "SyncTracer.h"
 #include "Sim/Weapons/Weapon.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CLightingProjectile::CLightingProjectile(const float3& pos,const float3& end,CUnit* owner,const float3& color, int ttl,CWeapon* weap)
 : CProjectile(pos,ZeroVector,owner),

@@ -1,13 +1,13 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "TorpedoLauncher.h"
-#include "System/Sound.h"
+#include "Sound.h"
 #include "Sim/Projectiles/TorpedoProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "WeaponDefHandler.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 : CWeapon(owner),

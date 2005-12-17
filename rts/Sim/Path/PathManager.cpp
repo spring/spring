@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "PathManager.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -6,12 +6,12 @@
 #include "Sim/MoveTypes/MoveMath/HoverMoveMath.h"
 #include "Sim/MoveTypes/MoveMath/ShipMoveMath.h"
 #include "Rendering/GL/myGL.h"
-#include "System/TimeProfiler.h"
+#include "TimeProfiler.h"
 #include <vector>
 #include "PathFinder.h"
 #include "PathEstimator.h"
 #include "SDL_timer.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 const float ESTIMATE_DISTANCE = 55;
 const float MIN_ESTIMATE_DISTANCE = 40;

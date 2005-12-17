@@ -1,10 +1,10 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "BaseGroundDrawer.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Sim/Map/ReadMap.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 CBaseGroundDrawer* groundDrawer;
 

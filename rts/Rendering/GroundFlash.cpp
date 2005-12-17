@@ -1,11 +1,11 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "GroundFlash.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Map/Ground.h"
 #include "Game/Camera.h"
 #include "GL/VertexArray.h"
 #include "Game/UI/InfoConsole.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 unsigned int CGroundFlash::texture=0;
 CVertexArray* CGroundFlash::va=0;

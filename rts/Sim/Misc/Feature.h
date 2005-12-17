@@ -2,7 +2,7 @@
 #define __FEATURE_H__
 
 #include "Sim/Objects/SolidObject.h"
-#include "System/Matrix44f.h"
+#include "Matrix44f.h"
 #include <vector>
 #include <list>
 #include <string>

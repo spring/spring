@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 // GfxProjectile.cpp: implementation of the CGfxProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -9,7 +9,7 @@
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-//#include "System/mmgr.h"
+//#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

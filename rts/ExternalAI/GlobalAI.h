@@ -1,8 +1,8 @@
 #ifndef GLOBALAI_H
 #define GLOBALAI_H
 
-#include "System/Object.h"
-#include "System/Platform/SharedLib.h"
+#include "Object.h"
+#include "Platform/SharedLib.h"
 
 class IGlobalAI;
 class CGlobalAICallback;

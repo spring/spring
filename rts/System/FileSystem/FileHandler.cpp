@@ -1,12 +1,12 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "FileHandler.h"
 #include <fstream>
 //#include "HpiHandler.h"
 #include "VFSHandler.h"
 #include <algorithm>
 #include <cctype>
-//#include "System/mmgr.h"
-#include "System/Platform/filefunctions.h"
+//#include "mmgr.h"
+#include "Platform/filefunctions.h"
 #include <boost/filesystem/exception.hpp>
 
 using namespace std;

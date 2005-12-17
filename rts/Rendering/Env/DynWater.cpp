@@ -1,4 +1,4 @@
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "DynWater.h"
 #include "Game/Game.h"
 #include "Rendering/GL/myGL.h"
