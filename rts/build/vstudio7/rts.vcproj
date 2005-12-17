@@ -19,8 +19,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../../lua/lua/include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI"
+				AdditionalIncludeDirectories="../../;../../../lua/lua/include;../../../crashrpt/include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -28,12 +28,13 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				DebugInformationFormat="4"
+				DisableSpecificWarnings="4244;4305;4018;4267;4305"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="bagge/debug.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"

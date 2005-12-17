@@ -10,6 +10,15 @@
 #include "System/Platform/errorhandler.h"
 //#include "System/mmgr.h"
 
+// MSVC compiler does not have std::min and max, but rather, it's own built in macro
+#ifdef _MSC_VER
+#define USE_MIN min
+#define USE_MAX max
+#else
+#define USE_MIN std::min
+#define USE_MAX std::max
+#endif
+
 CBFGroundTextures* groundTextures=0;
 
 CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
@@ -137,12 +146,12 @@ void CBFGroundTextures::DrawUpdate(void)
 
 	for(int y=0;y<numBigTexY;++y){
 		float dy=cam2->pos.z - y*128*SQUARE_SIZE-64*SQUARE_SIZE;
-		dy=std::max(0.0f,float(fabs(dy)-64.f*SQUARE_SIZE));
+		dy=USE_MAX(0.0f,float(fabs(dy)-64.f*SQUARE_SIZE));
 		for(int x=0;x<numBigTexX;++x){
 			GroundSquare* square=&squares[y*numBigTexX+x];
 
 			float dx=cam2->pos.x - x*128*SQUARE_SIZE-64*SQUARE_SIZE;
-			dx=std::max(0.0f,float(fabs(dx)-64.f*SQUARE_SIZE));
+			dx=USE_MAX(0.0f,float(fabs(dx)-64.f*SQUARE_SIZE));
 			float dist=sqrt(dx*dx+dy*dy);
 
 			if(square->lastUsed<gs->frameNum-60)
