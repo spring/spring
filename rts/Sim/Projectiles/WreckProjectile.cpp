@@ -3,15 +3,15 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "StdAfx.h"
-#include "myGL.h"
-#include "VertexArray.h"
-#include "Camera.h"
+#include "System/StdAfx.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Game/Camera.h"
 #include "WreckProjectile.h"
 #include "SmokeProjectile.h"
 #include "ProjectileHandler.h"
-#include "Ground.h"
-//#include "mmgr.h"
+#include "Sim/Map/Ground.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -1,15 +1,15 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SpawnScript.h"
 #include <fstream>
-#include "TdfParser.h"
-#include "UnitLoader.h"
-#include "Unit.h"
-#include "UnitHandler.h"
-#include "Team.h"
+#include "System/TdfParser.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Game/Team.h"
 #include <set>
-#include "command.h"
-#include "CommandAI.h"
-//#include "mmgr.h"
+#include "Game/command.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+//#include "System/mmgr.h"
 
 static CSpawnScript sps;
 extern std::string stupidGlobalMapname;

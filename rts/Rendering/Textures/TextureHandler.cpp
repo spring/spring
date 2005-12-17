@@ -2,23 +2,23 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "TextureHandler.h"
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header file for the gLu32 library
 #include <math.h>
-#include "InfoConsole.h"
+#include "Game/UI/InfoConsole.h"
 #include <vector>
-#include "Bitmap.h"
+#include "System/Bitmap.h"
 #include "TAPalette.h"
-#include "FileHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include <algorithm>
 #include <cctype>
-#include "ConfigHandler.h"
+#include "System/Platform/ConfigHandler.h"
 #include <set>
-#include "UnitDrawer.h"
-#include "errorhandler.h"
-//#include "mmgr.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "System/Platform/errorhandler.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

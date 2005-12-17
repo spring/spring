@@ -2,7 +2,7 @@
 #define TORPEDOPROJECTILE_H
 
 #include "WeaponProjectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 class CTorpedoProjectile :
 	public CWeaponProjectile

@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // GroupHandler.cpp: implementation of the CGroupHandler class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,18 +6,18 @@
 #include "GroupHandler.h"
 #include "Group.h"
 #include "IGroupAI.h"
-#include "InfoConsole.h"
-#include "SelectedUnits.h"
-#include "TimeProfiler.h"
-#include "Unit.h"
-#include "MouseHandler.h"
-#include "CameraController.h"
-#include "SharedLib.h"
-#include "errorhandler.h"
-#include "filefunctions.h"
+#include "Game/UI/InfoConsole.h"
+#include "Game/SelectedUnits.h"
+#include "System/TimeProfiler.h"
+#include "Sim/Units/Unit.h"
+#include "Game/UI/MouseHandler.h"
+#include "Game/CameraController.h"
+#include "System/Platform/SharedLib.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/filefunctions.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

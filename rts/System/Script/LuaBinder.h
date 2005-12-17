@@ -2,7 +2,7 @@
 #define __LUA_BINDER
 
 #include <string>
-#include "Object.h"
+#include "System/Object.h"
 
 struct lua_State;
 class CUnit;

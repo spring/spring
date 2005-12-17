@@ -1,7 +1,7 @@
 #ifndef WIND_H
 #define WIND_H
 
-#include "float3.h"
+#include "System/float3.h"
 
 class CWind
 {

@@ -1,13 +1,13 @@
 #include "GUIinfoSelection.h"
 #include "GUIcontroller.h"
 #include "GUIfont.h"
-#include "Net.h"
-#include "SelectedUnits.h"
-#include "GroupHandler.h"
-#include "Group.h"
-#include "Unit.h"
-#include "Weapon.h"
-#include "UnitDefHandler.h"
+#include "System/Net.h"
+#include "Game/SelectedUnits.h"
+#include "ExternalAI/GroupHandler.h"
+#include "ExternalAI/Group.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Units/UnitDefHandler.h"
 
 extern CSelectedUnits selectedUnits;
 extern CGroupHandler* grouphandler;

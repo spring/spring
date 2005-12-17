@@ -4,7 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Object.h"
+#include "System/Object.h"
 #include <string>
 
 class CScript : public CObject  

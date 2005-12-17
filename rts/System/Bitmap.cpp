@@ -3,10 +3,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <ostream>
 #include <fstream>
-#include "FileHandler.h"
+#include "FileSystem/FileHandler.h"
 #include <IL/il.h>
 #include <boost/filesystem/path.hpp>
 //#include "mmgr.h"

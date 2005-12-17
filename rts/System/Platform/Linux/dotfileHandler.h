@@ -7,7 +7,7 @@
 #ifndef _DOTFILEHANDLER_H
 #define _DOTFILEHANDLER_H
 
-#include "ConfigHandler.h"
+#include "System/Platform/ConfigHandler.h"
 
 #include <string>
 #include <fstream>

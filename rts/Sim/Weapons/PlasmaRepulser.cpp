@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "PlasmaRepulser.h"
-#include "InterceptHandler.h"
-#include "Projectile.h"
-#include "Unit.h"
+#include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "InfoConsole.h"
-#include "RepulseGfx.h"
-//#include "mmgr.h"
+#include "Game/UI/InfoConsole.h"
+#include "Rendering/RepulseGfx.h"
+//#include "System/mmgr.h"
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 : CWeapon(owner)

@@ -3,8 +3,8 @@
 
 #include "IPath.h"
 #include "PathFinder.h"
-#include "float3.h"
-#include "MoveInfo.h"
+#include "System/float3.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include <string>
 #include <queue>
 #include <list>

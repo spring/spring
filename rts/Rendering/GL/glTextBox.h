@@ -1,7 +1,7 @@
 #ifndef GLTEXTBOX_H
 #define GLTEXTBOX_H
 
-#include "InputReceiver.h"
+#include "Game/UI/InputReceiver.h"
 #include <string>
 #include <vector>
 

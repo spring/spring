@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "InterceptHandler.h"
-#include "Weapon.h"
-#include "WeaponProjectile.h"
-#include "Unit.h"
-#include "WeaponDefHandler.h"
-#include "PlasmaRepulser.h"
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Projectiles/WeaponProjectile.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
+#include "Game/UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 CInterceptHandler interceptHandler;
 

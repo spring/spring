@@ -1,18 +1,18 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // LosHandler.cpp: implementation of the CLosHandler class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "LosHandler.h"
 
-#include "Unit.h"
+#include "Sim/Units/Unit.h"
 #include <list>
 #include <math.h>
-#include "ReadMap.h"
-#include "TimeProfiler.h"
-#include "InfoConsole.h"
-#include "errorhandler.h"
-//#include "mmgr.h"
+#include "Sim/Map/ReadMap.h"
+#include "System/TimeProfiler.h"
+#include "Game/UI/InfoConsole.h"
+#include "System/Platform/errorhandler.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

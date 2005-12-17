@@ -11,8 +11,8 @@ class CFace;
 class CEdge;
 class CBuilding;
 
-#include "MemPool.h"
-#include "WorldObject.h"
+#include "System/MemPool.h"
+#include "Sim/Objects/WorldObject.h"
 class CUnit;
 class CFeature;
 class CVertexArray;

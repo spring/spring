@@ -1,14 +1,14 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "GlobalAITestScript.h"
-#include "UnitLoader.h"
-#include "TdfParser.h"
+#include "Sim/Units/UnitLoader.h"
+#include "System/TdfParser.h"
 #include <algorithm>
 #include <cctype>
-#include "Team.h"
-#include "UnitDefHandler.h"
-#include "GlobalAIHandler.h"
-#include "FileHandler.h"
-//#include "mmgr.h"
+#include "Game/Team.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "ExternalAI/GlobalAIHandler.h"
+#include "System/FileSystem/FileHandler.h"
+//#include "System/mmgr.h"
 
 
 class CAIScriptHandler

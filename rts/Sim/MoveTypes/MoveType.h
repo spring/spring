@@ -1,8 +1,8 @@
 #ifndef MOVETYPE_H
 #define MOVETYPE_H
 
-#include "Object.h"
-#include "Unit.h"
+#include "System/Object.h"
+#include "Sim/Units/Unit.h"
 
 class CMoveType :
 	public CObject

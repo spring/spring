@@ -3,18 +3,18 @@
 // them here instead to avoid recompiling LuaBinder too often.
 
 #include "LuaFunctions.h"
-#include "Script.h"
-#include "float3.h"
-#include "Infoconsole.h"
-#include "GlobalStuff.h"
-#include "Unit.h"
-#include "UnitLoader.h"
+#include "Game/StartScripts/Script.h"
+#include "System/float3.h"
+#include "Game/UI/InfoConsole.h"
+#include "System/GlobalStuff.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitLoader.h"
 #include "SunParser.h"
-#include "command.h"
-#include "CommandAI.h"
-#include "QuadField.h"
-#include "Game.h"
-#include "EndGameBox.h"
+#include "Game/command.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Misc/QuadField.h"
+#include "Game/Game.h"
+#include "Game/UI/EndGameBox.h"
 
 using namespace std;
 

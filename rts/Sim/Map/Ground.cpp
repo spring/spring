@@ -3,16 +3,16 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4786)
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Ground.h"
 #include "ReadMap.h"
-#include "Camera.h"
-#include "ProjectileHandler.h"
-#include "Projectile.h"
-#include "InfoConsole.h"
-#include "HeatCloudProjectile.h"
-#include "GeometricObjects.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Game/UI/InfoConsole.h"
+#include "Sim/Projectiles/HeatCloudProjectile.h"
+#include "Sim/Misc/GeometricObjects.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -1,8 +1,8 @@
 #ifndef RADARHANDLER_H
 #define RADARHANDLER_H
 
-#include "Object.h"
-#include "Unit.h"
+#include "System/Object.h"
+#include "Sim/Units/Unit.h"
 
 #define RADAR_SIZE 8
 

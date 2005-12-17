@@ -1,36 +1,36 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // ReadMap.cpp: implementation of the CReadMap class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header file for the gLu32 library
 #include "ReadMap.h"
 #include <stdlib.h>
 #include <math.h>
 //#include <ostream>
-#include "Bitmap.h"
+#include "System/Bitmap.h"
 #include "Ground.h"
-#include "ConfigHandler.h"
+#include "System/Platform/ConfigHandler.h"
 #ifdef _WIN32
 #include <process.h>
 #endif
-#include "FileHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "SmfReadMap.h"
-#include "BFGroundDrawer.h"
-#include "Unit.h"
-#include "UnitDef.h"
-#include "InfoConsole.h"
+#include "Rendering/Map/BFGroundDrawer.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
+#include "Game/UI/InfoConsole.h"
 #include "MetalMap.h"
 //#include "multipath.h"
-#include "PathManager.h"
-#include "Wind.h"
-#include "GeometricObjects.h"
-#include "LoadSaveInterface.h"
+#include "Sim/Path/PathManager.h"
+#include "Sim/Misc/Wind.h"
+#include "Sim/Misc/GeometricObjects.h"
+#include "System/LoadSaveInterface.h"
 #include "MapDamage.h"
-#include "errorhandler.h"
+#include "System/Platform/errorhandler.h"
 #include <string>
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 using namespace std;
 //////////////////////////////////////////////////////////////////////

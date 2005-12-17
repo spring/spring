@@ -1,19 +1,19 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // ExplosiveProjectile.cpp: implementation of the CExplosiveProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "ExplosiveProjectile.h"
-#include "GameHelper.h"
-#include "Unit.h"
-#include "SyncTracer.h"
-#include "Ground.h"
-#include "myGL.h"
-#include "Camera.h"
-#include "VertexArray.h"
-#include "WeaponDefHandler.h"
-#include "InterceptHandler.h"
-//#include "mmgr.h"
+#include "Game/GameHelper.h"
+#include "Sim/Units/Unit.h"
+#include "System/SyncTracer.h"
+#include "Sim/Map/Ground.h"
+#include "Rendering/GL/myGL.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Misc/InterceptHandler.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

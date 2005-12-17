@@ -2,24 +2,24 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SelectedUnits.h"
-#include "Unit.h"
+#include "Sim/Units/Unit.h"
 #include <map>
-#include "myGL.h"
-#include "UnitHandler.h"
-#include "Net.h"
-#include "GroupHandler.h"
-#include "Group.h"
-#include "InfoConsole.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/Units/UnitHandler.h"
+#include "System/Net.h"
+#include "ExternalAI/GroupHandler.h"
+#include "ExternalAI/Group.h"
+#include "UI/InfoConsole.h"
 #include "Camera.h"
-#include "3DOParser.h"
-#include "CommandAI.h"
+#include "Rendering/UnitModels/3DOParser.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "SelectedUnitsAI.h"
-#include "Sound.h"
-#include "UnitDef.h"
+#include "System/Sound.h"
+#include "Sim/Units/UnitDef.h"
 #include "Player.h"
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

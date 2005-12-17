@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SolidObject.h"
-#include "ReadMap.h"
+#include "Sim/Map/ReadMap.h"
 //#include "PhysicsEngine.h"
-#include "myGL.h"
-#include "InfoConsole.h"
-#include "Ground.h"
-#include "myMath.h"
-#include "glExtra.h"
+#include "Rendering/GL/myGL.h"
+#include "Game/UI/InfoConsole.h"
+#include "Sim/Map/Ground.h"
+#include "System/myMath.h"
+#include "Rendering/GL/glExtra.h"
 
 CSolidObject::CSolidObject(const float3& pos) 
 : CWorldObject(pos),

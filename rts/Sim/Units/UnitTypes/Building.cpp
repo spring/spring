@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // Building.cpp: implementation of the CBuilding class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "Building.h"
-#include "ReadMap.h"
+#include "Sim/Map/ReadMap.h"
 
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

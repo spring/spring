@@ -7,8 +7,8 @@
 #pragma warning(disable:4786)
 
 #include <vector>
-#include "command.h"
-#include "myGL.h"
+#include "Game/command.h"
+#include "Rendering/GL/myGL.h"
 #include <map>
 #include "InputReceiver.h"
 

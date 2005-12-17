@@ -1,9 +1,9 @@
 #ifndef MOVEMATH_H
 #define MOVEMATH_H
 
-#include "MoveInfo.h"
-#include "float3.h"
-#include "SolidObject.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "System/float3.h"
+#include "Sim/Objects/SolidObject.h"
 
 class CMoveMath {
 public:

@@ -5,18 +5,18 @@
 //////////////////////////////////////
 
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "ExtractorBuilding.h"
-#include "UnitHandler.h"
-#include "ReadMap.h"
-#include "CobInstance.h"
-#include "CobFile.h"
-#include "InfoConsole.h"
-#include "UnitDef.h"
-#include "MetalMap.h"
-#include "QuadField.h"
-#include "SyncTracer.h"
-//#include "mmgr.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Map/ReadMap.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/CobFile.h"
+#include "Game/UI/InfoConsole.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Map/MetalMap.h"
+#include "Sim/Misc/QuadField.h"
+#include "System/SyncTracer.h"
+//#include "System/mmgr.h"
 /*
 Constructor
 */

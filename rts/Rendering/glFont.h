@@ -3,7 +3,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "myGL.h"
+#include "GL/myGL.h"
 
 class CglFont
 {

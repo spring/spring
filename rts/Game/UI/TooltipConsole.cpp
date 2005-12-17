@@ -1,10 +1,10 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
-#include "myGL.h"
-#include "glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/glFont.h"
 
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 CTooltipConsole* tooltip=0;
 
@@ -16,7 +16,7 @@ CTooltipConsole::~CTooltipConsole(void)
 {
 }
 
-#include "GUIcontroller.h"
+#include "GUI/GUIcontroller.h"
 
 void CTooltipConsole::Draw(void)
 {

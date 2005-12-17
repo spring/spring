@@ -1,25 +1,25 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // Builder.cpp: implementation of the CBuilder class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "Builder.h"
 #include "Building.h"
-#include "UnitLoader.h"
-#include "GfxProjectile.h"
-#include "GameHelper.h"
-#include "UnitHandler.h"
-#include "3DOParser.h"
-#include "CobInstance.h"
-#include "myMath.h"
-#include "InfoConsole.h"
-#include "Ground.h"
-#include "Sound.h"
-#include "MapDamage.h"
-#include "UnitDefHandler.h"
-#include "Feature.h"
-#include "FeatureHandler.h"
-//#include "mmgr.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Projectiles/GfxProjectile.h"
+#include "Game/GameHelper.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Rendering/UnitModels/3DOParser.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "System/myMath.h"
+#include "Game/UI/InfoConsole.h"
+#include "Sim/Map/Ground.h"
+#include "System/Sound.h"
+#include "Sim/Map/MapDamage.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureHandler.h"
+//#include "System/mmgr.h"
 #include <algorithm>
 using namespace std;
 

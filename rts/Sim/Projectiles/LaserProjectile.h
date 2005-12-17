@@ -2,7 +2,7 @@
 #define LASERPROJECTILE_H
 
 #include "WeaponProjectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 class CLaserProjectile :
 	public CWeaponProjectile

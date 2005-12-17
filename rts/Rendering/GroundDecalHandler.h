@@ -1,7 +1,7 @@
 #ifndef GROUNDDECALHANDLER_H
 #define GROUNDDECALHANDLER_H
 
-#include "Object.h"
+#include "System/Object.h"
 #include <set>
 #include <list>
 #include <vector>

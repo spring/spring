@@ -2,7 +2,7 @@
 #define __FLAME_PROJECTILE_H__
 
 #include "WeaponProjectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 class CFlameProjectile :
 	public CWeaponProjectile

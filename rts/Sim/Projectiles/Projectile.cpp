@@ -1,16 +1,16 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // Projectile.cpp: implementation of the CProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "myGL.h"			// Header File For The OpenGL32 Library
+#include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
 #include "Projectile.h"
 #include "ProjectileHandler.h"
-#include "Camera.h"
-#include "VertexArray.h"
-#include "Unit.h"
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Units/Unit.h"
+#include "Game/UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

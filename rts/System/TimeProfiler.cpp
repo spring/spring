@@ -4,12 +4,12 @@
 
 #include "StdAfx.h"
 #include "TimeProfiler.h"
-#include "myGL.h"
-#include "glFont.h"
-#include "InfoConsole.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/glFont.h"
+#include "Game/UI/InfoConsole.h"
 #include "SDL_timer.h"
 
-#include "VertexArray.h"
+#include "Rendering/GL/VertexArray.h"
 //#include "mmgr.h"
 
 #ifdef PROFILE_TIME

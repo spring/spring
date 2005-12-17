@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MetalMap.h"
-#include "GlobalStuff.h"
+#include "System/GlobalStuff.h"
 #include "ReadMap.h"
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 
 /*

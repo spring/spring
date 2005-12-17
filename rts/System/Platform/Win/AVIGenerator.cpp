@@ -2,11 +2,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <SDL_types.h>
 #include "AVIGenerator.h"
-#include "myGL.h"
-//#include "mmgr.h"
+#include "Rendering/GL/myGL.h"
+//#include "System/mmgr.h"
 
 #include <windows.h>
 

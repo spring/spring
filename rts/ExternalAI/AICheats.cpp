@@ -1,13 +1,13 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "AICheats.h"
 #include <vector>
 #include "GlobalAI.h"
-#include "Unit.h"
-#include "QuadField.h"
-#include "UnitHandler.h"
-#include "UnitLoader.h"
-#include "Team.h"
-//#include "mmgr.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Game/Team.h"
+//#include "System/mmgr.h"
 
 using namespace std;
 

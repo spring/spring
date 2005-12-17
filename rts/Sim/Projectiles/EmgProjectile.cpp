@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "EmgProjectile.h"
 #include "ProjectileHandler.h"
-#include "Unit.h"
-#include "myGL.h"
-#include "Camera.h"
-#include "VertexArray.h"
-#include "SyncTracer.h"
-//#include "mmgr.h"
+#include "Sim/Units/Unit.h"
+#include "Rendering/GL/myGL.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "System/SyncTracer.h"
+//#include "System/mmgr.h"
 
 CEmgProjectile::CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,const float3& color,float intensity, int ttl, WeaponDef *weaponDef)
 : CWeaponProjectile(pos,speed,owner,0,float3(0,0,0), weaponDef,0),

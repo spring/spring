@@ -5,7 +5,7 @@
 #ifndef REGHANDLER_H
 #define REGHANDLER_H
 
-#include "ConfigHandler.h"
+#include "System/Platform/ConfigHandler.h"
 
 #include <string>
 #include "win32.h"

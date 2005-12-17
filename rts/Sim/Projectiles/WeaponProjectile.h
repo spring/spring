@@ -2,7 +2,7 @@
 #define WEAPONPROJECTILE_H
 
 #include "Projectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 struct WeaponDef;
 

@@ -2,10 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "ScriptHandler.h"
-#include "Game.h"
-//#include "mmgr.h"
+#include "Game/Game.h"
+//#include "System/mmgr.h"
 
 extern CGame* game;
 

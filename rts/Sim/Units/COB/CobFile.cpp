@@ -1,13 +1,13 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "CobFile.h"
-#include "FileHandler.h"
-#include "InfoConsole.h"
+#include "System/FileSystem/FileHandler.h"
+#include "Game/UI/InfoConsole.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
-#include "Sound.h"
-#include "byteorder.h"
-//#include "mmgr.h"
+#include "System/Sound.h"
+#include "System/Platform/byteorder.h"
+//#include "System/mmgr.h"
 
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt
 //Information on missing fields from Format_Cob.pas

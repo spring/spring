@@ -1,11 +1,11 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MoveInfo.h"
-#include "FileHandler.h"
-#include "TdfParser.h"
-#include "InfoConsole.h"
-#include "ReadMap.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/TdfParser.h"
+#include "Game/UI/InfoConsole.h"
+#include "Sim/Map/ReadMap.h"
 #include <boost/lexical_cast.hpp>
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 CMoveInfo* moveinfo;
 using namespace std;

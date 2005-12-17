@@ -1,15 +1,15 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "FireProjectile.h"
-#include "Wind.h"
-#include "myGL.h"
-#include "VertexArray.h"
-#include "Camera.h"
+#include "Sim/Misc/Wind.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Game/Camera.h"
 #include <vector>
-#include "QuadField.h"
-#include "Feature.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/Feature.h"
 #include "ProjectileHandler.h"
-#include "Unit.h"
-//#include "mmgr.h"
+#include "Sim/Units/Unit.h"
+//#include "System/mmgr.h"
 
 CFireProjectile::CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize)
 : CProjectile(pos,speed,owner),

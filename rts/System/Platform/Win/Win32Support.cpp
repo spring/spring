@@ -1,8 +1,8 @@
 
 // Win32 support functions, this file contains general functions that need windows headers
 
-#include "stdafx.h"
-#include "errorhandler.h"
+#include "System/StdAfx.h"
+#include "System/Platform/errorhandler.h"
 
 #include <windows.h>
 

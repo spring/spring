@@ -10,7 +10,7 @@
 #include <string>
 #include "SDL_types.h"
 
-#include "ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Player.h"
 #include "GameController.h"
 

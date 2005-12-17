@@ -1,15 +1,15 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // GfxProjectile.cpp: implementation of the CGfxProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "GfxProjectile.h"
-#include "myGL.h"	
+#include "Rendering/GL/myGL.h"	
 
 #include "ProjectileHandler.h"
-#include "Camera.h"
-#include "VertexArray.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

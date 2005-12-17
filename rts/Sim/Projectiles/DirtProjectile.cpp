@@ -1,15 +1,15 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // DirtProjectile.cpp: implementation of the CDirtCloudProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "DirtProjectile.h"
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include "ProjectileHandler.h"
-#include "Camera.h"
-#include "VertexArray.h"
-#include "Ground.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Map/Ground.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

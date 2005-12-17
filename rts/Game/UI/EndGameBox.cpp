@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "EndGameBox.h"
 #include "MouseHandler.h"
-#include "myGL.h"
-#include "Team.h"
-#include "Player.h"
-#include "glFont.h"
-#include "Net.h"
-#include "SelectedUnits.h"
+#include "Rendering/GL/myGL.h"
+#include "Game/Team.h"
+#include "Game/Player.h"
+#include "Rendering/glFont.h"
+#include "System/Net.h"
+#include "Game/SelectedUnits.h"
 
 extern bool globalQuit;
 

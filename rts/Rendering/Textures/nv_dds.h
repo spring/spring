@@ -16,7 +16,7 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #else*/
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 //#include <GL/gl.h>
 //#include <GL/glext.h>
 //#endif

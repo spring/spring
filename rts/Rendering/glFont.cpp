@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // glFont.cpp: implementation of the CglFont class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -7,10 +7,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdexcept>
-#include "Camera.h"
-#include "myMath.h"
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "System/myMath.h"
+#include "Game/UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 using namespace std;
 

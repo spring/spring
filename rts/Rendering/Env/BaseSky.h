@@ -4,7 +4,7 @@
 #ifndef __BASE_SKY_H__
 #define __BASE_SKY_H__
 
-#include "float3.h"
+#include "System/float3.h"
 
 class CBaseSky
 {

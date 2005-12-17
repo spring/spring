@@ -2,12 +2,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "TracerProjectile.h"
-#include "myGL.h"			// Header File For The OpenGL32 Library
+#include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
 #include <math.h>
 #include "ProjectileHandler.h"
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

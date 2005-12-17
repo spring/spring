@@ -7,43 +7,43 @@
  */
 
 #include "StdAfx.h"
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include <time.h>
 #include <string>
 #include <algorithm>
 #include <math.h>
-#include "PreGame.h"
-#include "Game.h"
-#include "float.h"
-#include "glFont.h"
-#include "MouseHandler.h"
-#include "ConfigHandler.h"
-#include "InfoConsole.h"
-#include "GameSetup.h"
-#include "CameraController.h"
+#include "Game/PreGame.h"
+#include "Game/Game.h"
+#include <float.h>
+#include "Rendering/glFont.h"
+#include "Game/UI/MouseHandler.h"
+#include "Platform/ConfigHandler.h"
+#include "Game/UI/InfoConsole.h"
+#include "Game/GameSetup.h"
+#include "Game/CameraController.h"
 #include "Net.h"
-#include "ArchiveScanner.h"
-#include "VFSHandler.h"
-#include "BaseCmd.h"
-#include "GameVersion.h"
-#include "errorhandler.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/VFSHandler.h"
+#include "Platform/BaseCmd.h"
+#include "Game/GameVersion.h"
+#include "Platform/errorhandler.h"
 #ifndef NO_LUA
-#include "LuaBinder.h"
+#include "Script/LuaBinder.h"
 #endif
 #include <SDL.h>
 #include <SDL_main.h>
 //#include "mmgr.h"
 
-#include "NewGuiDefine.h"
+#include "Game/UI/NewGuiDefine.h"
 
 #ifdef NEW_GUI
-#include "GUIcontroller.h"
+#include "Game/UI/GUI/GUIcontroller.h"
 #endif
 
 #ifdef _WIN32
-#include "../crashrpt/include/crashrpt.h"
-#include "win32.h"
+#include "CrashRpt.h"
+#include "Platform/Win/win32.h"
 #include <winreg.h>
 #include <direct.h>
 #endif

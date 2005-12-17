@@ -3,9 +3,9 @@
 
 #include <string>
 #include <map>
-#include "command.h"
-#include "float3.h"
-#include "SelectionKeyHandler.h"
+#include "Game/command.h"
+#include "System/float3.h"
+#include "Game/UI/SelectionKeyHandler.h"
 
 class TdfParser;
 class GUIframe;

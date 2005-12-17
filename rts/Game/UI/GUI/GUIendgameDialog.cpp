@@ -1,12 +1,12 @@
 #include "GUIendgameDialog.h"
 #include "GUItable.h"
 #include "GUIbutton.h"
-#include "Team.h"
-#include "Player.h"
-#include "InfoConsole.h"
+#include "Game/Team.h"
+#include "Game/Player.h"
+#include "Game/UI/InfoConsole.h"
 #include "GUImatrix.h"
 #include "GUIendgameDialog.h"
-#include "Game.h"
+#include "Game/Game.h"
 
 extern bool globalQuit;
 

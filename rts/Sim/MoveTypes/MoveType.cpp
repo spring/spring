@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MoveType.h"
-#include "Ground.h"
-#include "UnitDef.h"
-//#include "mmgr.h"
+#include "Sim/Map/Ground.h"
+#include "Sim/Units/UnitDef.h"
+//#include "System/mmgr.h"
 
 CMoveType::CMoveType(CUnit* owner)
 : owner(owner),

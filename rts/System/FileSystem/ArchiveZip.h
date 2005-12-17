@@ -2,13 +2,13 @@
 #define __ARCHIVE_ZIP
 
 #include "ArchiveBuffered.h"
-#include "minizip/unzip.h"
+#include "lib/minizip/unzip.h"
 
 #ifdef _WIN32
 //#define ZLIB_WINAPI this is specified in the build config, because minizip needs to have it defined as well
 #define USEWIN32IOAPI
-#include "win32.h"
-#include "minizip/iowin32.h"
+#include "System/Platform/Win/win32.h"
+#include "lib/minizip/iowin32.h"
 #endif
 
 class CArchiveZip :

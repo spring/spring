@@ -8,8 +8,8 @@
 
 #include <vector>
 #include <string>
-#include "float3.h"
-#include "TextureHandler.h"
+#include "System/float3.h"
+#include "Rendering/Textures/TextureHandler.h"
 #include <map>
 #include <set>
 #include "3DModelParser.h"

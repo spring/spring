@@ -1,13 +1,13 @@
 #include "StdAfx.h"
 #include "LoadSaveHandler.h"
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <fstream>
 #include "SaveInterface.h"
 #include "LoadInterface.h"
-#include "ReadMap.h"
-#include "FeatureHandler.h"
-#include "UnitHandler.h"
-#include "errorhandler.h"
+#include "Sim/Map/ReadMap.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Platform/errorhandler.h"
 #include <boost/filesystem/path.hpp>
 
 extern std::string stupidGlobalMapname;

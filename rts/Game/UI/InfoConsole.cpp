@@ -1,23 +1,23 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // InfoConsole.cpp: implementation of the CInfoConsole class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "InfoConsole.h"
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <iostream>
 #include <fstream>
-#include "glFont.h"
+#include "Rendering/glFont.h"
 #include "NewGuiDefine.h"
 #ifdef NEW_GUI
-	#include "GUIcontroller.h"
+	#include "GUI/GUIcontroller.h"
 #endif
  
-#include "SyncTracer.h"
-#include "ConfigHandler.h"
+#include "System/SyncTracer.h"
+#include "System/Platform/ConfigHandler.h"
 #include <boost/filesystem/path.hpp>
 
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

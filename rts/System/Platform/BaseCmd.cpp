@@ -5,9 +5,9 @@
  */
 #include "BaseCmd.h"
 #ifdef _WIN32
-#include "Win32Cmd.h"
+#include "Win/Win32Cmd.h"
 #else
-#include "PosixCmd.h"
+#include "Linux/PosixCmd.h"
 #endif
 
 /**

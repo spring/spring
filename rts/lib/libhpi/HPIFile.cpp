@@ -26,7 +26,7 @@
  *
  */
 
-#include "hpifile.h"
+#include "lib/hpiutil2/hpifile.h"
 
 
 HPIFile::HPIFile( char *filename )

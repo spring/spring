@@ -1,14 +1,14 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MissileLauncher.h"
-#include "Sound.h"
-#include "MissileProjectile.h"
-#include "GameHelper.h"
-#include "Unit.h"
-#include "Ground.h"
-#include "WeaponProjectile.h"
-#include "AirMoveType.h"
+#include "System/Sound.h"
+#include "Sim/Projectiles/MissileProjectile.h"
+#include "Game/GameHelper.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Map/Ground.h"
+#include "Sim/Projectiles/WeaponProjectile.h"
+#include "Sim/MoveTypes/AirMoveType.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 CMissileLauncher::CMissileLauncher(CUnit* owner)
 : CWeapon(owner)
