@@ -51,3 +51,9 @@ game/aidll                              Output directory for group AI binaries
 game/aidll/globalai                     Output directory for global AI binaries, and storage for AI data
 
 mods					Mods development versions
+
+backup                  Holds older files no longer needed by the spring project
+backup/SpringClient     Contains the old spring client built by Jouninkomiko
+backup/Lobby            Temp directory with little use
+backup/unitsync         The old code used to sync units between clients
+backup/server           The old server for the old lobby built by Jouninkomiko
