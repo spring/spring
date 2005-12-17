@@ -32,6 +32,8 @@ rts/System/Platform			Code handling differences between OSes/processors
 rts/System/Platform/Win
 rts/lib					7zip, minizip, HPIUtil
 
+omni                    The linux spring client written by Ace07
+
 ai
 ai/Global
 ai/Global/JCAI
