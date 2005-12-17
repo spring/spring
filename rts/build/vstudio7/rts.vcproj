@@ -83,7 +83,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib openal32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="./bagge/$(ProjectName).exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
