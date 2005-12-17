@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "AirBaseHandler.h"
-#include "Unit.h"
-#include "CobInstance.h"
-//#include "mmgr.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/COB/CobInstance.h"
+//#include "System/mmgr.h"
 
 CAirBaseHandler* airBaseHandler=0;
 

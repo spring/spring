@@ -4,7 +4,7 @@
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
 
-#include "command.h"
+#include "Game/command.h"
 class IGroupAICallback;
 class IAICallback;
 

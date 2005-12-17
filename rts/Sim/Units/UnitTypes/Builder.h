@@ -6,7 +6,7 @@
 #define __BUILDER_H__
 
 #include <string>
-#include "Unit.h"
+#include "Sim/Units/Unit.h"
 
 using namespace std;
 class CFeature;

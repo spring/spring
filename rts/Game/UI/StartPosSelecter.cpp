@@ -1,14 +1,14 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "StartPosSelecter.h"
 #include "MouseHandler.h"
-#include "myGL.h"
-#include "glFont.h"
-#include "GameSetup.h"
-#include "Team.h"
-#include "Net.h"
-#include "Ground.h"
-#include "Camera.h"
-#include "InMapDraw.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/glFont.h"
+#include "Game/GameSetup.h"
+#include "Game/Team.h"
+#include "System/Net.h"
+#include "Sim/Map/Ground.h"
+#include "Game/Camera.h"
+#include "Rendering/InMapDraw.h"
 
 CStartPosSelecter::CStartPosSelecter(void)
 {

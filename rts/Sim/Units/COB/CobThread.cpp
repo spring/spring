@@ -1,16 +1,16 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "CobThread.h"
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "CobEngine.h"
 
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Game/UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 #ifdef _CONSOLE
-#include "..\cobvm\GlobalStuff.h"
+#include "System/GlobalStuff.h"
 #else
-#include "GlobalStuff.h"
+#include "System/GlobalStuff.h"
 #endif
 
 CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)

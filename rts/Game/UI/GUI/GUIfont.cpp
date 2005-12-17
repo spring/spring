@@ -6,7 +6,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 
 #include <string>
 #include <stdexcept>

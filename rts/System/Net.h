@@ -5,7 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
-#include "win32.h"
+#include "Platform/Win/win32.h"
 #else
 #include <sys/types.h>
 #include <sys/socket.h>

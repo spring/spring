@@ -9,7 +9,7 @@
 #include <string>
 #include <map>
 #include "Script.h"
-#include "glList.h"
+#include "Rendering/GL/glList.h"
 
 using namespace std;
 

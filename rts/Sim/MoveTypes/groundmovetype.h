@@ -2,7 +2,7 @@
 #define GROUNDMOVETYPE_H
 
 #include "MoveType.h"
-#include "SolidObject.h"
+#include "Sim/Objects/SolidObject.h"
 
 struct MoveData;
 

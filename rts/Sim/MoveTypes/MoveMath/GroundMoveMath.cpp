@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "GroundMoveMath.h"
-#include "ReadMap.h"
-#include "SolidObject.h"
-#include "Feature.h"
+#include "Sim/Map/ReadMap.h"
+#include "Sim/Objects/SolidObject.h"
+#include "Sim/Misc/Feature.h"
 
 float CGroundMoveMath::waterCost=0;
 

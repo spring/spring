@@ -7,8 +7,8 @@
 
 #include <string>
 
-#include "win32.h"
-#include "nv_dds.h"
+#include "Platform/Win/win32.h"
+#include "Rendering/Textures/nv_dds.h"
 
 using std::string;
 

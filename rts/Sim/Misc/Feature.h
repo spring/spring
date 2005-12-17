@@ -1,8 +1,8 @@
 #ifndef __FEATURE_H__
 #define __FEATURE_H__
 
-#include "SolidObject.h"
-#include "Matrix44f.h"
+#include "Sim/Objects/SolidObject.h"
+#include "System/Matrix44f.h"
 #include <vector>
 #include <list>
 #include <string>

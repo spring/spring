@@ -2,19 +2,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "TestScript.h"
-#include "UnitLoader.h"
-#include "Unit.h"
-#include "Weapon.h"
-#include "ReadMap.h"
-#include "Ground.h"
-#include "FeatureHandler.h"
-#include "TdfParser.h"
-#include "Team.h"
-#include "SelectedUnits.h"
-#include "UnitHandler.h"
-//#include "mmgr.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Map/ReadMap.h"
+#include "Sim/Map/Ground.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "System/TdfParser.h"
+#include "Game/Team.h"
+#include "Game/SelectedUnits.h"
+#include "Sim/Units/UnitHandler.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

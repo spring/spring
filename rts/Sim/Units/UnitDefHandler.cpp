@@ -1,23 +1,23 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "UnitDefHandler.h"
-#include "myGL.h"
-#include "TdfParser.h"
+#include "Rendering/GL/myGL.h"
+#include "System/TdfParser.h"
 #include <algorithm>
 #include <iostream>
 #include <locale>
 #include <cctype>
-#include "FileHandler.h"
-#include "Bitmap.h"
-#include "InfoConsole.h"
-#include "CategoryHandler.h"
-#include "Sound.h"
-#include "WeaponDefHandler.h"
-#include "DamageArrayHandler.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Bitmap.h"
+#include "Game/UI/InfoConsole.h"
+#include "Sim/Misc/CategoryHandler.h"
+#include "System/Sound.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Misc/DamageArrayHandler.h"
 #include "UnitDef.h"
-#include "ReadMap.h"
-#include "GameSetup.h"
-#include "GroundDecalHandler.h"
-//#include "mmgr.h"
+#include "Sim/Map/ReadMap.h"
+#include "Game/GameSetup.h"
+#include "Rendering/GroundDecalHandler.h"
+//#include "System/mmgr.h"
 
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.

@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "SyncTracer.h"
 #include <stdio.h>
-#include "InfoConsole.h"
+#include "Game/UI/InfoConsole.h"
 #include <boost/filesystem/path.hpp>
 //#include "mmgr.h"
 

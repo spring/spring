@@ -4,9 +4,9 @@
 #include "GUIfont.h"
 #include "GUIpane.h"
 #include "GUItab.h"
-#include "UnitDefHandler.h"
-#include "command.h"
-#include "SelectedUnits.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Game/command.h"
+#include "Game/SelectedUnits.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 

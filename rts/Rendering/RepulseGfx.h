@@ -1,7 +1,7 @@
 #ifndef REPULSEGFX_H
 #define REPULSEGFX_H
 
-#include "Projectile.h"
+#include "Sim/Projectiles/Projectile.h"
 
 class CUnit;
 

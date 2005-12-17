@@ -4,7 +4,7 @@
 
 #include "GUIframe.h"
 #include <algorithm>
-//#include "InfoConsole.h"
+//#include "Game/UI/InfoConsole.h"
 
 GUIframe *mainFrame=NULL;
 
@@ -334,7 +334,7 @@ string GUIframe::Tooltip()
 
 
 
-#include "Bitmap.h"
+#include "System/Bitmap.h"
 
 
 GLuint Texture(const std::string& name, const vector<paletteentry_s>* pvTransparentColors)

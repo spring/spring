@@ -1,8 +1,8 @@
 #ifndef IGLOBALAI_H
 #define IGLOBALAI_H
 
-#include "command.h"
-#include "float3.h"
+#include "Game/command.h"
+#include "System/float3.h"
 
 class IGlobalAICallback;
 

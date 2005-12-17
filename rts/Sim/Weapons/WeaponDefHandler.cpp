@@ -1,17 +1,17 @@
 #include <stdexcept>
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "WeaponDefHandler.h"
-#include "myGL.h"
-#include "TdfParser.h"
-#include "FileHandler.h"
-#include "TAPalette.h"
-#include "InfoConsole.h"
+#include "Rendering/GL/myGL.h"
+#include "System/TdfParser.h"
+#include "System/FileSystem/FileHandler.h"
+#include "Rendering/Textures/TAPalette.h"
+#include "Game/UI/InfoConsole.h"
 #include <algorithm>
 #include <cctype>
-#include "Sound.h"
-#include "DamageArrayHandler.h"
-#include "CategoryHandler.h"
-//#include "mmgr.h"
+#include "System/Sound.h"
+#include "Sim/Misc/DamageArrayHandler.h"
+#include "Sim/Misc/CategoryHandler.h"
+//#include "System/mmgr.h"
 #include <iostream>
 
 CWeaponDefHandler* weaponDefHandler;

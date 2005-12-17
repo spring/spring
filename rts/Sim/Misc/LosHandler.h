@@ -9,10 +9,10 @@
 #include <vector>
 #include <list>
 #include <deque>
-#include "MemPool.h"
-#include "Ground.h"
-#include "WorldObject.h"
-#include "Unit.h"
+#include "System/MemPool.h"
+#include "Sim/Map/Ground.h"
+#include "Sim/Objects/WorldObject.h"
+#include "Sim/Units/Unit.h"
 #include "RadarHandler.h"
 
 #define MAX_LOS_TABLE 80

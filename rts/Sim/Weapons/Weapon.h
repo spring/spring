@@ -4,8 +4,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Object.h"
-#include "DamageArray.h"
+#include "System/Object.h"
+#include "Sim/Misc/DamageArray.h"
 #include <list>
 
 class CUnit;

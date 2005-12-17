@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "PathFinder.h"
-#include "MoveMath.h"
-#include "ReadMap.h"
-#include "InfoConsole.h"
-#include "glExtra.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Map/ReadMap.h"
+#include "Game/UI/InfoConsole.h"
+#include "Rendering/GL/glExtra.h"
 #include <ostream>
-#include "MoveInfo.h"
-#include "Ground.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/Map/Ground.h"
 
 #define PATHDEBUG false
 

@@ -9,7 +9,7 @@
 #include "StdAfx.h"
 #include <windows.h>
 #include "WavRead.h"
-#include "FileHandler.h"
+#include "FileSystem/FileHandler.h"
 
 //-----------------------------------------------------------------------------
 // Defines, constants, and global variables

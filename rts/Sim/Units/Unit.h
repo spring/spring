@@ -6,13 +6,13 @@
 
 #pragma warning(disable:4786)
 
-#include "SolidObject.h"
+#include "Sim/Objects/SolidObject.h"
 #include <vector>
 #include <string>
 #include <deque>
-//#include "Unit3DLoader.h"
-#include "DamageArray.h"
-#include "GlobalStuff.h"
+//#include "Rendering/UnitModels/Unit3DLoader.h"
+#include "Sim/Misc/DamageArray.h"
+#include "System/GlobalStuff.h"
 
 class CWeapon;
 class CCommandAI;

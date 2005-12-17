@@ -1,9 +1,9 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "glTextBox.h"
 #include "myGL.h"
-#include "glFont.h"
-#include "MouseHandler.h"
-//#include "mmgr.h"
+#include "Rendering/glFont.h"
+#include "Game/UI/MouseHandler.h"
+//#include "System/mmgr.h"
 
 
 CglTextBox::CglTextBox(std::string heading,std::string intext,int autoBreakAt)

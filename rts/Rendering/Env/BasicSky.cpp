@@ -3,20 +3,20 @@
 //////////////////////////////////////////////////////////////////////
 #pragma warning(disable:4258)
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "BasicSky.h"
 
 #include <math.h>
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
-#include "Camera.h"
-#include "ReadMap.h"
-#include "Bitmap.h"
-#include "TimeProfiler.h"
-#include "ConfigHandler.h"
-#include "Matrix44f.h"
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Sim/Map/ReadMap.h"
+#include "System/Bitmap.h"
+#include "System/TimeProfiler.h"
+#include "System/Platform/ConfigHandler.h"
+#include "System/Matrix44f.h"
+#include "Game/UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "GlobalStuff.h"
-#include "myGL.h"
+#include "System/GlobalStuff.h"
+#include "Rendering/GL/myGL.h"
 
 #include "SDL_types.h"
 struct paletteentry_s {

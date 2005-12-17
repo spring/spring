@@ -8,8 +8,8 @@
 
 #include <vector>
 #include <deque>
-#include "float3.h"
-#include "command.h"
+#include "System/float3.h"
+#include "Game/command.h"
 
 struct UnitDef;
 struct FeatureDef;

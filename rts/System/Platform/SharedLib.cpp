@@ -4,9 +4,9 @@
  * Copyright (C) 2005 Christopher Han
  */
 #ifdef _WIN32
-#include "DllLib.h"
+#include "Win/DllLib.h"
 #else
-#include "SoLib.h"
+#include "Linux/SoLib.h"
 #endif
 
 SharedLib *SharedLib::instantiate(const char *filename)

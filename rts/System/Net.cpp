@@ -5,14 +5,14 @@
 
 #include "Net.h"
 #include "stdio.h"
-#include "FileHandler.h"
-#include "InfoConsole.h"
-#include "Game.h"
-#include "ScriptHandler.h"
-#include "GameSetup.h"
-#include "Team.h"
-#include "GameVersion.h"
-#include "errorhandler.h"
+#include "FileSystem/FileHandler.h"
+#include "Game/UI/InfoConsole.h"
+#include "Game/Game.h"
+#include "Game/StartScripts/ScriptHandler.h"
+#include "Game/GameSetup.h"
+#include "Game/Team.h"
+#include "Game/GameVersion.h"
+#include "Platform/errorhandler.h"
 //#include "mmgr.h"
 #ifdef _WIN32
 #include <direct.h>

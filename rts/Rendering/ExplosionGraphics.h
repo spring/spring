@@ -1,7 +1,7 @@
 #ifndef __EXPLOSION_GRAPHICS_H__
 #define __EXPLOSION_GRAPHICS_H__
 
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 class CUnit;
 

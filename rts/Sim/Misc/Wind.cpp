@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Wind.h"
-#include "UnitHandler.h"
-#include "ReadMap.h"
-//#include "mmgr.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Map/ReadMap.h"
+//#include "System/mmgr.h"
 
 CWind wind;
 

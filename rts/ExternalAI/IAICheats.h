@@ -1,8 +1,8 @@
 #ifndef IAICHEATS_H
 #define IAICHEATS_H
 
-#include "command.h"
-#include "float3.h"
+#include "Game/command.h"
+#include "System/float3.h"
 struct UnitDef;
 
 class IAICheats

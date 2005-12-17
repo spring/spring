@@ -5,9 +5,9 @@
  */
 #include "ConfigHandler.h"
 #ifdef _WIN32
-#include "RegHandler.h"
+#include "Win/RegHandler.h"
 #else
-#include "dotfileHandler.h"
+#include "Linux/dotfileHandler.h"
 #endif
 
 ConfigHandler* ConfigHandler::instance=0;

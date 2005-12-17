@@ -1,9 +1,9 @@
 #ifndef SHADOWHANDLER_H
 #define SHADOWHANDLER_H
 
-#include "FBO.h"
-#include "Matrix44f.h"
-#include "myGL.h"
+#include "GL/FBO.h"
+#include "System/Matrix44f.h"
+#include "GL/myGL.h"
 #include <vector>
 
 class CShadowHandler

@@ -3,8 +3,8 @@
 
 #include <string>
 #include <map>
-#include "DamageArray.h"
-#include "UnitDef.h"
+#include "Sim/Misc/DamageArray.h"
+#include "Sim/Units/UnitDef.h"
 
 #define WEAPONTYPE_ROCKET 1
 #define WEAPONTYPE_CANNON 2

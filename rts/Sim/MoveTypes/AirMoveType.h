@@ -5,7 +5,7 @@
 #define __AIR_MOVE_TYPE_H__
 
 #include "MoveType.h"
-#include "AirBaseHandler.h"
+#include "Sim/Misc/AirBaseHandler.h"
 
 class CPropeller;
 

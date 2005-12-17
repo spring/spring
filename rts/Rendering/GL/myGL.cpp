@@ -1,19 +1,19 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "myGL.h"
-#include "GL/glu.h"
-#include "glFont.h"
+#include <GL/glu.h>
+#include "Rendering/glFont.h"
 #include <ostream>
 #include <fstream>
 #include <math.h>
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
-#include "FileHandler.h"
-#include "GameVersion.h"
-#include "Bitmap.h"
-#include "errorhandler.h"
+#include "System/FileSystem/FileHandler.h"
+#include "Game/GameVersion.h"
+#include "System/Bitmap.h"
+#include "System/Platform/errorhandler.h"
 #include <boost/filesystem/path.hpp>
 #include "SDL_video.h"
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 using namespace std;
 

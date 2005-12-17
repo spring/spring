@@ -2,22 +2,22 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "AdvWater.h"
-#include "Game.h"
-#include "myGL.h"
+#include "Game/Game.h"
+#include "Rendering/GL/myGL.h"
 #include <math.h>
-#include "Camera.h"
-#include "VertexArray.h"
-#include "ReadMap.h"
-#include "InfoConsole.h"
-#include "BaseGroundDrawer.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Map/ReadMap.h"
+#include "Game/UI/InfoConsole.h"
+#include "Rendering/Map/BaseGroundDrawer.h"
 #include "BaseSky.h"
-#include "UnitDrawer.h"
-#include "ProjectileHandler.h"
-#include "FeatureHandler.h"
-#include "SmfReadMap.h"
-//#include "mmgr.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Map/SmfReadMap.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

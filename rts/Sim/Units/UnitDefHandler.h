@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "MoveInfo.h"
-#include "TdfParser.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "System/TdfParser.h"
 #include "UnitDef.h"
 
 class CUnitDefHandler;

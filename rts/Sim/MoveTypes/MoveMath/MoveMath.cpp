@@ -1,11 +1,11 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MoveMath.h"
-#include "ReadMap.h"
-#include "Feature.h"
-#include "Unit.h"
-#include "CommandAI.h"
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Sim/Map/ReadMap.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Game/UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 
 /*

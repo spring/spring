@@ -1,14 +1,14 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "BFGroundTextures.h"
-#include "FileHandler.h"
-#include "myGL.h"
-#include "Camera.h"
-#include "InfoConsole.h"
+#include "System/FileSystem/FileHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Game/Camera.h"
+#include "Game/UI/InfoConsole.h"
 #include <GL/glu.h>
-#include "mapfile.h"
-#include "ReadMap.h"
-#include "errorhandler.h"
-//#include "mmgr.h"
+#include "Sim/Map/mapfile.h"
+#include "Sim/Map/ReadMap.h"
+#include "System/Platform/errorhandler.h"
+//#include "System/mmgr.h"
 
 CBFGroundTextures* groundTextures=0;
 

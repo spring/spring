@@ -1,23 +1,23 @@
 // s3oParser.cpp: implementation of the Cs3oParser class.
 //
 //////////////////////////////////////////////////////////////////////
-//#include "StdAfx.h"
-#include "StdAfx.h"
+//#include "System/StdAfx.h"
+#include "System/StdAfx.h"
 #include "s3oParser.h"
 #include <fstream>
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
-#include "FileHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "s3o.h"
-#include "FartextureHandler.h"
-#include "CobInstance.h"
-#include "TextureHandler.h"
-#include "byteorder.h"
-#include "errorhandler.h"
+#include "Rendering/FartextureHandler.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "Rendering/Textures/TextureHandler.h"
+#include "System/Platform/byteorder.h"
+#include "System/Platform/errorhandler.h"
 #include <boost/filesystem/path.hpp>
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 void SS3O::DrawStatic()
 {

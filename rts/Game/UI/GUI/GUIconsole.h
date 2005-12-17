@@ -8,7 +8,7 @@
 #include "GUIpane.h"
 #include <string>
 #include <deque>
-#include "InfoConsole.h"
+#include "Game/UI/InfoConsole.h"
 
 class GUIconsole : public GUIframe
 {

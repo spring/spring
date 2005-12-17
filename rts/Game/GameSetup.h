@@ -3,7 +3,7 @@
 
 #include <string>
 #include <map>
-#include "TdfParser.h"
+#include "System/TdfParser.h"
 
 
 class CGameSetup

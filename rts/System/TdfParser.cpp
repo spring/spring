@@ -11,9 +11,9 @@
 #include <boost/spirit/utility/confix.hpp>
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
-#include "FileHandler.h"
-#include "InfoConsole.h"
-#include "errorhandler.h"
+#include "FileSystem/FileHandler.h"
+#include "Game/UI/InfoConsole.h"
+#include "Platform/errorhandler.h"
 
 using boost::spirit::parse;
 using boost::spirit::space_p;

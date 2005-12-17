@@ -2,8 +2,8 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
-#include "Mobility.h"
-#include "GlobalStuff.h"
+#include "Sim/MoveTypes/Mobility.h"
+#include "System/GlobalStuff.h"
 
 class CUnit;
 struct DamageArray;

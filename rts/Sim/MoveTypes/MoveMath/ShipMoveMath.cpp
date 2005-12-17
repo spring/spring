@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "ShipMoveMath.h"
-#include "ReadMap.h"
-#include "SolidObject.h"
-//#include "mmgr.h"
+#include "Sim/Map/ReadMap.h"
+#include "Sim/Objects/SolidObject.h"
+//#include "System/mmgr.h"
 
 
 /*

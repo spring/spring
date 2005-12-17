@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "PathCache.h"
 #include <algorithm>
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Game/UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 using namespace std;
 

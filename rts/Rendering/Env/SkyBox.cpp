@@ -1,14 +1,14 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SkyBox.h"
-#include "float3.h"
-#include "myGL.h"
+#include "System/float3.h"
+#include "Rendering/GL/myGL.h"
 #include <GL/glu.h>	
-#include "Bitmap.h"
-#include "Camera.h"
-#include "GlobalStuff.h"
-#include "ReadMap.h"
-#include "UnitDrawer.h"
-//#include "mmgr.h"
+#include "System/Bitmap.h"
+#include "Game/Camera.h"
+#include "System/GlobalStuff.h"
+#include "Sim/Map/ReadMap.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+//#include "System/mmgr.h"
 
 extern GLfloat FogBlack[]; 
 extern GLfloat FogLand[]; 

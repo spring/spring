@@ -4,9 +4,9 @@
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "dotfileHandler.h"
-#include "errorhandler.h"
+#include "System/Platform/errorhandler.h"
 #include <sstream>
 
 dotfileHandler::dotfileHandler(const string filename)

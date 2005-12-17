@@ -31,7 +31,7 @@
 #include <vector>
 #include "SDL_types.h"
 
-#include "InputReceiver.h"
+#include "Game/UI/InputReceiver.h"
 
 using namespace std;
 

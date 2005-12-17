@@ -1,22 +1,22 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "PathEstimator.h"
-#include "InfoConsole.h"
-#include "myGL.h"
-#include "FileHandler.h"
+#include "Game/UI/InfoConsole.h"
+#include "Rendering/GL/myGL.h"
+#include "System/FileSystem/FileHandler.h"
 #include <math.h>
 #include <fstream>
 #ifndef _WIN32
 #include <stdlib.h>
 #include <sys/stat.h>
 #endif
-#include "Ground.h"
-#include "Net.h"
-#include "SelectedUnits.h"
-#include "Unit.h"
-#include "UnitDef.h"
-#include "glFont.h"
-#include "Camera.h"
-#include "TimeProfiler.h"
+#include "Sim/Map/Ground.h"
+#include "System/Net.h"
+#include "Game/SelectedUnits.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
+#include "Rendering/glFont.h"
+#include "Game/Camera.h"
+#include "System/TimeProfiler.h"
 #include <boost/filesystem/convenience.hpp>
 
 #ifdef _WIN32
@@ -24,10 +24,10 @@
 #include <direct.h>
 #endif
 
-#include "minizip/zip.h"
-#include "ArchiveZip.h"
+#include "lib/minizip/zip.h"
+#include "System/FileSystem/ArchiveZip.h"
 
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 #define PATHDEBUG false
 

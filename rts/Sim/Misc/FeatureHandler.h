@@ -1,7 +1,7 @@
 #ifndef __FEATURE_HANDLER_H__
 #define __FEATURE_HANDLER_H__
 
-#include "Object.h"
+#include "System/Object.h"
 #include <map>
 #include <string>
 #include <list>
@@ -12,7 +12,7 @@
 #ifdef __GNUG__
 #include <ext/hash_set>
 #endif
-#include "TdfParser.h"
+#include "System/TdfParser.h"
 
 struct S3DOModel;
 class CFeature;

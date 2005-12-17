@@ -1,29 +1,29 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // ProjectileHandler.cpp: implementation of the CProjectileHandler class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "ProjectileHandler.h"
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Projectile.h"
-#include "Camera.h"
-#include "VertexArray.h"
-#include "QuadField.h"
-#include "Unit.h"
-#include "TimeProfiler.h"
-#include "Bitmap.h"
-#include "GroundFlash.h"
-#include "LosHandler.h"
-#include "Ground.h"
-#include "TextureHandler.h"
-#include "Feature.h"
-#include "ConfigHandler.h"
-#include "ShadowHandler.h"
-#include "UnitDrawer.h"
-#include "3DOParser.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Units/Unit.h"
+#include "System/TimeProfiler.h"
+#include "System/Bitmap.h"
+#include "Rendering/GroundFlash.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Map/Ground.h"
+#include "Rendering/Textures/TextureHandler.h"
+#include "Sim/Misc/Feature.h"
+#include "System/Platform/ConfigHandler.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/UnitModels/3DOParser.h"
 #include <algorithm>
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

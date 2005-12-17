@@ -1,7 +1,7 @@
 #ifndef INTERCEPTHANDLER_H
 #define INTERCEPTHANDLER_H
 
-#include "Object.h"
+#include "System/Object.h"
 
 #include <list>
 

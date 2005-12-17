@@ -1,7 +1,7 @@
 #include "GUIallyResourceBar.h"
-#include "Team.h"
+#include "Game/Team.h"
 #include "GUIfont.h"
-#include "Player.h"
+#include "Game/Player.h"
 
 static void Quad(float x, float y, float w, float h)
 {

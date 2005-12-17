@@ -4,12 +4,12 @@
 //////////////////////////////////////////////////////////////////////
 
 
-#include "ProjectileHandler.h"
-#include "GameHelper.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Game/GameHelper.h"
 #include "SyncTracer.h"
-#include "Team.h"
-#include "Player.h"
-#include "TAPalette.h"
+#include "Game/Team.h"
+#include "Game/Player.h"
+#include "Rendering/Textures/TAPalette.h"
 #include "SDL_types.h"
 #include "SDL_timer.h"
 //#include "mmgr.h"

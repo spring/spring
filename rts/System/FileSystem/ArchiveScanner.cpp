@@ -1,15 +1,15 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "ArchiveScanner.h"
 #include "ArchiveFactory.h"
 #include <algorithm>
-#include "TdfParser.h"
-#include "myGL.h"
+#include "System/TdfParser.h"
+#include "Rendering/GL/myGL.h"
 #include "FileHandler.h"
-#include "filefunctions.h"
+#include "System/Platform/filefunctions.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 /*
  * The archive scanner is used to find stuff in archives that are needed before building the virtual

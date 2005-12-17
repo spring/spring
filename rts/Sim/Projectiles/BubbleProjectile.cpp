@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "BubbleProjectile.h"
-#include "myGL.h"	
+#include "Rendering/GL/myGL.h"	
 #include "ProjectileHandler.h"
-#include "Camera.h"
-#include "VertexArray.h"
-#include "Ground.h"
-#include "Wind.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Map/Ground.h"
+#include "Sim/Misc/Wind.h"
+//#include "System/mmgr.h"
 
 CBubbleProjectile::CBubbleProjectile(float3 pos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float alpha)
 : CProjectile(pos,speed,owner),

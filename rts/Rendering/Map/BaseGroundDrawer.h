@@ -5,8 +5,8 @@
 #define __BASE_GROUND_DRAWER_H__
 
 #include <vector>
-#include "BaseTreeDrawer.h"
-#include "float3.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
+#include "System/float3.h"
 
 class CBaseGroundDrawer
 {

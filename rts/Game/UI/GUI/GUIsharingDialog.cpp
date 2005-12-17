@@ -4,10 +4,10 @@
 #include "GUIslider.h"
 #include "GUIstateButton.h"
 
-#include "Team.h"
-#include "Player.h"
-#include "SelectedUnits.h"
-#include "Net.h"
+#include "Game/Team.h"
+#include "Game/Player.h"
+#include "Game/SelectedUnits.h"
+#include "System/Net.h"
 
 
 GUIsharingDialog::GUIsharingDialog(): GUIdialogController()

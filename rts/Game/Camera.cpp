@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // camera->cpp: implementation of the CCamera class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -6,9 +6,9 @@
 #include "Camera.h"
 
 #include "math.h"
-#include "myGL.h"
-#include "InfoConsole.h"
-//#include "mmgr.h"
+#include "Rendering/GL/myGL.h"
+#include "UI/InfoConsole.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

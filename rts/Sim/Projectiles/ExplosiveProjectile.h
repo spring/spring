@@ -6,7 +6,7 @@
 #define __EXPLOSIVE_PROJECTILE_H__
 
 #include "WeaponProjectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 class CExplosiveProjectile : public CWeaponProjectile  
 {

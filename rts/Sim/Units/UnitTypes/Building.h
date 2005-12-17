@@ -5,7 +5,7 @@
 #ifndef __BUILDING_H__
 #define __BUILDING_H__
 
-#include "Unit.h"
+#include "Sim/Units/Unit.h"
 
 class CBuilding : public CUnit  
 {

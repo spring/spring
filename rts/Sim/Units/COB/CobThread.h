@@ -1,10 +1,10 @@
 #ifndef __COB_THREAD_H__
 #define __COB_THREAD_H__
 
-#include "Object.h"
+#include "System/Object.h"
 #include "CobInstance.h"
 #include <vector>
-#include "InfoConsole.h"
+#include "Game/UI/InfoConsole.h"
 
 class CCobFile;
 class CCobInstance;

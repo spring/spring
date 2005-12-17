@@ -2,7 +2,7 @@
 #define PIECEPROJECTILE_H
 
 #include "Projectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 const int PP_Fall = 1;
 const int PP_Smoke = 2;		//smoke and fire is turned off when there is to many projectiles so make sure they are unsycned

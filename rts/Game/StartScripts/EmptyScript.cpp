@@ -1,5 +1,5 @@
-#include "StdAfx.h"
-//#include "mmgr.h"
+#include "System/StdAfx.h"
+//#include "System/mmgr.h"
 // EmptyScript.cpp: implementation of the CEmptyScript class.
 //
 //////////////////////////////////////////////////////////////////////

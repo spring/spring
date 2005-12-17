@@ -1,9 +1,9 @@
 #ifndef TAAIRMOVETYPE_H
 #define TAAIRMOVETYPE_H
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MoveType.h"
-#include "AirBaseHandler.h"
+#include "Sim/Misc/AirBaseHandler.h"
 
 class CTAAirMoveType :
 	public CMoveType

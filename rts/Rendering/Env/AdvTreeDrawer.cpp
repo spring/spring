@@ -2,21 +2,21 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "AdvTreeDrawer.h"
-#include "BaseGroundDrawer.h"
-#include "Ground.h"
-#include "Camera.h"
-#include "VertexArray.h"
-#include "ReadMap.h"
-#include "myGL.h"
+#include "Rendering/Map/BaseGroundDrawer.h"
+#include "Sim/Map/Ground.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Map/ReadMap.h"
+#include "Rendering/GL/myGL.h"
 #include "AdvTreeGenerator.h"
-#include "Bitmap.h"
-#include "InfoConsole.h"
+#include "System/Bitmap.h"
+#include "Game/UI/InfoConsole.h"
 #include "GrassDrawer.h"
-#include "Matrix44f.h"
-#include "ShadowHandler.h"
-//#include "mmgr.h"
+#include "System/Matrix44f.h"
+#include "Rendering/ShadowHandler.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

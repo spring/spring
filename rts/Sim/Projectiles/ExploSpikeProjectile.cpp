@@ -1,9 +1,9 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "ExploSpikeProjectile.h"
-#include "Camera.h"
-#include "myGL.h"
-#include "VertexArray.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+//#include "System/mmgr.h"
 
 CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner)
 :	CProjectile(pos,speed,owner),

@@ -1,15 +1,15 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 // QuadField.cpp: implementation of the CQuadField class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "QuadField.h"
 
-#include "Unit.h"
-#include "UnitHandler.h"
-#include "InfoConsole.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Game/UI/InfoConsole.h"
 #include "Feature.h"
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

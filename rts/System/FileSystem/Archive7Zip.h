@@ -4,9 +4,9 @@
 #include "ArchiveBuffered.h"
 
 extern "C" {
-#include "7zip/7zCrc.h"
-#include "7zip/7zIn.h"
-#include "7zip/7zExtract.h"
+#include "lib/7zip/7zCrc.h"
+#include "lib/7zip/7zIn.h"
+#include "lib/7zip/7zExtract.h"
 };
 
 typedef struct _CFileInStream

@@ -3,7 +3,7 @@
 
 #include "ArchiveBase.h"
 #include "ArchiveBuffered.h"
-#include "hpiutil2/hpiutil.h"
+#include "lib/hpiutil2/hpiutil.h"
 
 class CArchiveHPI :
 	public CArchiveBuffered

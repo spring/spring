@@ -2,14 +2,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Team.h"
-#include "InfoConsole.h"
+#include "UI/InfoConsole.h"
 #include "Player.h"
-#include "Unit.h"
-#include "UnitHandler.h"
-#include "UnitDef.h"
-//#include "mmgr.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDef.h"
+//#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

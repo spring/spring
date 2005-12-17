@@ -1,12 +1,12 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "FlameProjectile.h"
-#include "Unit.h"
-#include "myGL.h"
-#include "VertexArray.h"
+#include "Sim/Units/Unit.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "ProjectileHandler.h"
-#include "Camera.h"
-#include "Ground.h"
-//#include "mmgr.h"
+#include "Game/Camera.h"
+#include "Sim/Map/Ground.h"
+//#include "System/mmgr.h"
 
 CFlameProjectile::CFlameProjectile(const float3& pos,const float3& speed,const float3& spread,CUnit* owner,const DamageArray& damages, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0),

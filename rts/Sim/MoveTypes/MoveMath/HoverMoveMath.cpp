@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "HoverMoveMath.h"
-#include "ReadMap.h"
-#include "SolidObject.h"
-#include "Ground.h"
+#include "Sim/Map/ReadMap.h"
+#include "Sim/Objects/SolidObject.h"
+#include "Sim/Map/Ground.h"
 
 const float HOVERING_HEIGHT = 5;
 bool CHoverMoveMath::noWaterMove;

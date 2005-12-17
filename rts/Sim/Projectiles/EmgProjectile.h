@@ -2,7 +2,7 @@
 #define __EMG_PROJECTILE_H__
 
 #include "WeaponProjectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 
 class CEmgProjectile :
 	public CWeaponProjectile

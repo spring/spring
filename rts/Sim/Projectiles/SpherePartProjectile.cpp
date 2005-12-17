@@ -1,10 +1,10 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SpherePartProjectile.h"
-#include "myGL.h"
-#include "VertexArray.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include <algorithm>
 using namespace std;
-//#include "mmgr.h"
+//#include "System/mmgr.h"
 
 CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner)
 : CProjectile(centerPos,ZeroVector,owner),

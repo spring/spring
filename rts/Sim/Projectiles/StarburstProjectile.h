@@ -2,7 +2,7 @@
 #define STARBURSTPROJECTILE_H
 
 #include "WeaponProjectile.h"
-#include "DamageArray.h"
+#include "Sim/Misc/DamageArray.h"
 #include <vector>
 
 class CSmokeTrailProjectile;
