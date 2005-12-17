@@ -67,8 +67,8 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 
 void CArchiveScanner::Scan(const string& curPath, bool checksum)
 {
-	intptr_t handle;
-	int moreFiles;
+//	intptr_t handle;
+//	int moreFiles;
 
 	char t[500];
 	sprintf(t, "Scanning archives in %s", curPath.c_str());
