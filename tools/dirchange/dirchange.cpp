@@ -4,7 +4,8 @@
 
 // Used to automatically change #include "[somepath/]header" to #include "correctheaderpath"
 // Give the base project directory as argument:
-// Example:     dch c:\dev\projects\rts
+// Example for spring:
+//  dch <trunk path>/rts -ISystem
 #include <stdio.h> 
 #include <assert.h>
 #include <vector>
@@ -23,13 +24,13 @@ struct file_t {
 	string path;
 	string name;
 	string ext;
-	string localpath;
+	string inclpath; // path used to include this file
 };
 
 list<file_t> filelist;
 
 
-void esRemoveExtension(char *file)
+void RemoveExtension(char *file)
 {
 	int a = strlen(file)-1;
 	while(a>0) 
@@ -42,7 +43,7 @@ void esRemoveExtension(char *file)
 	}
 }
 
-const char *esGetExtension(const char *file)
+const char *GetExtension(const char *file)
 {
 	int a = strlen(file)-1;
 	while(a>0)
@@ -55,7 +56,7 @@ const char *esGetExtension(const char *file)
 }
 
 
-const char *esGetFilename (const char *file)
+const char *GetFilename (const char *file)
 {
 	int a = strlen (file) - 1;
 	while (a>0)
@@ -66,16 +67,6 @@ const char *esGetFilename (const char *file)
 	}
 	return file;
 }
-
-void esMakeFilename (const char *path, const char *file, char *dest, int max)
-{
-	strncpy (dest, path, max);
-	char ending = path [strlen (path)-1];
-	if (ending != '\\' && ending != '/')
-		strncat (dest, "/", max);
-	strncat (dest, file, max);
-}
-
 
 void Scan(const string& curPath, const string& storePath)
 {
@@ -108,10 +99,10 @@ void Scan(const string& curPath, const string& storePath)
 			f.name = files.name;
 			f.path = filepath;
 			if(storePath.empty())
-				f.localpath = files.name;
+				f.inclpath = files.name;
 			else
-				f.localpath = storePath + "/" +  files.name;
-			const char *ext=esGetExtension (files.name);
+				f.inclpath = storePath + "/" +  files.name;
+			const char *ext=GetExtension (files.name);
 			if (ext) 
 				f.ext = ext;
 
@@ -121,6 +112,27 @@ void Scan(const string& curPath, const string& storePath)
 	_findclose(handle);
 }
 
+void SimplifyFilePaths(const set<string>& inclPaths)
+{
+	for (list<file_t>::iterator fi = filelist.begin(); fi != filelist.end(); ++fi) {
+		int p=0;
+		string path;
+
+		while (p < fi->inclpath.length ()) {
+			while (fi->inclpath[p] != '/' && p < fi->inclpath.length()) {
+				p ++;
+			}
+
+			if (p == fi->inclpath.length()) // go to next file?
+				break;
+
+			p++;
+			path=fi->inclpath.substr (0, p);
+			if (inclPaths.find (path) != inclPaths.end())
+				fi->inclpath = fi->inclpath.substr (p,fi->inclpath.length());
+		}
+	}
+}
 
 string GetHeaderPath (const string& headerPath, const string& srcFilePath)
 {
@@ -150,19 +162,42 @@ string GetHeaderPath (const string& headerPath, const string& srcFilePath)
 
 int main (int argc, char *argv[])
 {
-	if(argc==2)
-		Scan(argv[1],string());
+	const char *searchPath=0;
+	set<string> inclPaths;  // Include paths defined with -I
+	map<string, file_t*> hmap; // all headers
+
+	for (int a=1;a<argc;a++) {
+		const char *arg=argv[a];
+		if (arg[0]=='-' && arg[1]=='I') {
+			string path=&arg[2];
+			if(!path.empty()) {
+				if(path[path.length ()-1] != '/')
+					path+='/';
+				inclPaths.insert (path);
+			}
+		} else
+			searchPath=arg;
+	}
+
+	if (!searchPath) {
+		printf ("Usage example: dch c:\projects\someproj -\n");
+		return -1;
+	}
+
+	Scan(searchPath,string());
 
 	if (filelist.empty())
 		return 0;
 
-	map<string, file_t*> hmap;
+	// strip away unnecessary parts based on the added include paths
+	SimplifyFilePaths (inclPaths);
 
 	printf ("Creating header list...");
 	for (list<file_t>::iterator i=filelist.begin();i!=filelist.end();++i)
 	{
 		if (i->ext == "h")  {
-			printf("Header: %s\n", i->localpath.c_str());
+			printf("Header: %s\n", i->inclpath.c_str());
+
 			hmap [i->name]=&*i;
 		}
 	}
@@ -208,7 +243,7 @@ int main (int argc, char *argv[])
 					headerpath += headernamesrc[j++];
 
 				// strip the directory part of it
-				string headername = esGetFilename (headerpath.c_str());
+				string headername = GetFilename (headerpath.c_str());
 
 				// match headername with a registered header
 				map<string,file_t*>::iterator fh=hmap.find (headername);
@@ -220,7 +255,7 @@ int main (int argc, char *argv[])
 				}
 
 				result += incl;
-				result += GetHeaderPath (fh->second->localpath, i->localpath);
+				result += GetHeaderPath (fh->second->inclpath, i->inclpath);
 			//	printf ("In file %s:  Replaced %s with %s\n", i->path.c_str(), headername.c_str(), fh->second->localpath.c_str());
 
 				x+=j+a;
@@ -232,7 +267,7 @@ int main (int argc, char *argv[])
 		}
 
 		// write the result
-		string outfn=i->path;// + ".fix";
+		string outfn=i->path;
 		FILE *outf = fopen (outfn.c_str(), "wb");
 		if (outf) {
 			fwrite (result.c_str(),result.size(),1,outf);
