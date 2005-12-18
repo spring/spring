@@ -790,7 +790,7 @@ def generate(env):
 	#other ported parts
 	opts.Add('disable_hpi', 'Set to no to turn on hpi support : a new lib has to be created to provide calls', False)
 	opts.Add('disable_lua', 'Set to no to turn on Lua support', True)
-	opts.Add('disable_aio', 'Set to no to turn on libaio support', False)
+	opts.Add('disable_aio', 'Set to no to turn on libaio support', True)
 
 	opts.Add('use_tcmalloc', 'Use tcmalloc from goog-perftools for memory allocation', False)
 	opts.Add('optimize', 'Enable processor optimizations during compilation', False)
@@ -852,7 +852,7 @@ def generate(env):
 		else: env['disable_lua'] = True
 
 		if args.has_key('disable_aio'): env['disable_aio'] = int(args['disable_aio'])
-		else: env['disable_aio'] = False
+		else: env['disable_aio'] = True
 
 		if args.has_key('use_tcmalloc'): env['use_tcmalloc'] = int(args['use_tcmalloc'])
 		else: env['use_tcmalloc'] = False
@@ -927,8 +927,11 @@ def generate(env):
 	#BuildDir support code
 	global files
 	if env['builddir']:
-		#  Avoid spreading .sconsign files everywhere - keep this line
+		if not os.path.exists(env['builddir']):
+			os.makedirs(env['builddir'])
+		#  Avoid spreading .sconsign files everywhere - keep this lines
 		env.SConsignFile(env['builddir']+'/scons_signatures')
+		files=[]
 		for f in sfiles:
 			files.append(os.path.join(env['builddir'], f))
 		for d in directories:
