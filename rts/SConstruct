@@ -802,6 +802,8 @@ def generate(env):
 	opts.Add('builddir', 'Build directory (where the object files live)')
 	opts.Add('cachedir', 'Cache directory (see scons manual)')
 
+	keys = ['platform', 'debug', 'disable_avi', 'disable_hpi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'optimize', 'disable_optimize', 'archflags', 'prefix', 'datadir', 'builddir', 'cachedir']
+
 	opts.Update(env)
 
 	env.Help(opts.GenerateHelpText(env))
@@ -813,7 +815,14 @@ def generate(env):
 	if 'configure' in sys.argv:
 		is_configuring = True
 
-	if is_configuring or not (env.has_key('platform') or env.GetOption("clean")):
+	_configure = False
+	for key in keys:
+		if not env.has_key(key): _configure = True
+
+	if is_configuring or _configure or not (env.has_key('platform') or env.GetOption("clean")):
+		# be paranoid, unset existing variables
+		for key in keys:
+			if env.has_key(key): env.__delitem__(key)
 
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect_platform()
