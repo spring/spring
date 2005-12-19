@@ -822,6 +822,7 @@ def generate(env):
 			print "debugging enabled"
 			env['debug'] = True
 			env['optimize'] = False
+			env['disable_optimize'] = False
 		else:
 			print "debugging NOT enabled,",
 			env['debug'] = False
@@ -834,7 +835,12 @@ def generate(env):
 				if args.has_key('optimize') and int(args['optimize']):
 					print "optimizing enabled"
 					env['optimize'] = True
-					env['archflags'] = detect_processor()
+					if args.has_key('archflags'): env['archflags'] = args['archflags']
+					else:
+						"""detect processor: on windows, we just assume >= i686,
+						on anything else we use detect_processor()"""
+						if env['platform'] == 'windows': env['archflags'] = ['-march=i686']
+						else: env['archflags'] = detect_processor()
 				else:
 					print "optimizing NOT enabled"
 					env['optimize'] = False
@@ -907,7 +913,7 @@ def generate(env):
 			defines += ['-D_DEBUG', '-DDEBUG']
 		else:
 			if env['optimize']:
-				if env.has_key('archflags'):
+				if env.has_key('archflags') and env['archflags']:
 					flags += env['archflags']
 				flags += ['-O2','-pipe','-fomit-frame-pointer','-s']
 			elif not env['disable_optimize']:
