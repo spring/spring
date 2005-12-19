@@ -55,7 +55,8 @@ static inline float swabfloat(float w) {
 static inline float swabfloat(float w) {
 	/* compile time assertion to validate sizeof(long) == sizeof(float) */
 	typedef int sizeof_long_equals_sizeof_float[sizeof(long) == sizeof(float) ? 1 : -1];
-	return swabdword(*(long*)&w);
+	long l = swabdword(*(long*)&w);
+	return *(float*)&l;
 }
 
 #else
