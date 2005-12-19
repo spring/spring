@@ -800,6 +800,7 @@ def generate(env):
 	opts.Add('prefix', 'Install prefix', '/usr/local')
 	opts.Add('datadir', 'Data directory', '$prefix/games/taspring')
 	opts.Add('builddir', 'Build directory (where the object files live)')
+	opts.Add('cachedir', 'Cache directory (see scons manual)')
 
 	opts.Update(env)
 
@@ -872,6 +873,9 @@ def generate(env):
 		if args.has_key('builddir'): env['builddir'] = args['builddir']
 		else: env['builddir'] = None
 
+		if args.has_key('cachedir'): env['cachedir'] = args['cachedir']
+		else: env['cachedir'] = None
+
 		opts.Save(cachefile, env)
 
 	global include_path
@@ -935,7 +939,7 @@ def generate(env):
 	if env['builddir']:
 		if not os.path.exists(env['builddir']):
 			os.makedirs(env['builddir'])
-		#  Avoid spreading .sconsign files everywhere - keep this lines
+		#  Avoid spreading .sconsign files everywhere - keep this line
 		env.SConsignFile(env['builddir']+'/scons_signatures')
 		files=[]
 		for f in sfiles:
@@ -944,6 +948,14 @@ def generate(env):
 			BuildDir(os.path.join(env['builddir'],d),d,duplicate=False)
 	else:
 		files = sfiles
+
+	#CacheDir support code
+	if env['cachedir']:
+		if not os.path.exists(env['cachedir']):
+			os.makedirs(env['cachedir'])
+		#  Avoid spreading .sconsign files everywhere - keep this line
+		env.SConsignFile(env['cachedir']+'/scons_signatures')
+		CacheDir(env['cachedir'])
 
 
 ###########################
@@ -954,9 +966,10 @@ env = Environment(ENV = os.environ)
 
 generate(env)
 
-spring = env.Program('spring', files)
+spring = env.Program('../game/spring', files)
 if env['optimize'] and not env.GetOption("clean"):
-	env.AddPostAction('spring',Action([['strip','$TARGET']]))
+	env.AddPostAction('../game/spring',Action([['strip','$TARGET']]))
 env.InstallAs(env['prefix']+"/bin/spring",spring)
 env.Alias('install',env['prefix'])
 env.Export('env')
+Default(spring)
