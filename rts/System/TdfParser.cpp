@@ -160,7 +160,13 @@ void TdfParser::LoadBuffer( char const* buf, std::size_t size)
 {
   this->filename = "buffer";
   tdf_grammar grammar( &root_section );
-  parse_info<char const*> info = parse( 
+
+
+  boost::spirit::position_iterator2<char const*> error_it( buf, buf + size, filename );
+
+  boost::spirit::parse_info<char const*> info;
+  try {
+    info = parse( 
       buf
       , buf + size
       , grammar
@@ -168,11 +174,27 @@ void TdfParser::LoadBuffer( char const* buf, std::size_t size)
       |  comment_p("/*", "*/")           // rule for C-comments
       |  comment_p("//")
       ) ; 
+  } 
+  catch( boost::spirit::parser_error<tdf_grammar::Errors, char *> & e ) { // thrown by assertion parsers in tdf_grammar
+    std::string message; 
+
+    switch(e.descriptor) {
+      case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;
+      case tdf_grammar::equals_sign_expected: message = "equals sign in name value pair expected"; break;
+      case tdf_grammar::square_bracket_expected: message = "square bracket to close section name expected"; break;
+      case tdf_grammar::brace_expected: message = "brace or further name value pairs expected"; break;
+    };
+
+
+    for( size_t  i = 0;i != size;  ++i,++error_it );
+
+    throw parse_error( message, error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
+  }
 
   if(!info.full)
   {
     boost::spirit::position_iterator2<char const*> error_it( buf, buf + size, filename );
-    error_it += info.stop - buf;
+    for( size_t i = 0; i != size; ++i,++error_it );
     throw parse_error( error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
   }
 }
