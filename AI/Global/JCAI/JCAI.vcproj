@@ -72,7 +72,7 @@ copy settings.cfg $(TargetDir)\jcai /Y
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\rts\bagge\aidll\globalai\"
+			OutputDirectory="..\..\..\game\aidll\globalai\"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			CharacterSet="2">
@@ -80,7 +80,7 @@ copy settings.cfg $(TargetDir)\jcai /Y
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="TRUE"
-				AdditionalIncludeDirectories="..\rts"
+				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;JCAI_EXPORTS"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="FALSE"

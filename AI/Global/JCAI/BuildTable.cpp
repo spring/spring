@@ -8,7 +8,7 @@
 //-------------------------------------------------------------------------
 #include "BaseAIDef.h"
 #include "BuildTable.h"
-#include "WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 #define BT_CACHE_VERSION 10
 

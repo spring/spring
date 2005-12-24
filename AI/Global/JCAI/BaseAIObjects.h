@@ -12,7 +12,7 @@ public:
 	inline aiObject(){};
 	virtual ~aiObject();
 
-	set<aiObject*> listeners,listening;
+	multiset<aiObject*> listeners,listening;
 };
 
 class BuildTask;
