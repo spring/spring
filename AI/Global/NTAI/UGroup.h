@@ -1,8 +1,8 @@
 #ifndef UG_H
 #define UG_H
 #include <list>
-#include "AICallback.h"
-#include "UnitDef.h"
+#include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDef.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // This is the class that defines a untis personality and traits.

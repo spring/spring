@@ -1,8 +1,8 @@
 #ifndef PLANNING_H
 #define PLANNING_H
 #include <list>
-#include "AICallback.h"
-#include "UnitDef.h"
+#include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDef.h"
 
 #define ENERGY 1
 #define MEX 2

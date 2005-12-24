@@ -13,7 +13,7 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\..\rts\bagge\aidll\globalai"
+			OutputDirectory="..\..\..\game\aidll\globalai\"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -22,7 +22,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\rts"
+				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TESTAI_EXPORTS"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -40,12 +40,12 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll\globalai\NTAI.dll"
+				OutputFile="$(OutDir)\NTAI.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				ModuleDefinitionFile=".\TestAI.def"
-				ProgramDatabaseFile=".\..\rts\bagge\aidll/TestAI.pdb"
-				ImportLibrary=".\..\rts\bagge\aidll/TestAI.lib"/>
+				ModuleDefinitionFile=""
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				ImportLibrary=""/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -76,7 +76,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\..\rts\bagge\aidll\globalai"
+			OutputDirectory="..\..\..\game\aidll\globalai"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -85,7 +85,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\rts"
+				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;TESTAI_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -103,13 +103,13 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll\NTAI.dll"
+				OutputFile="$(OutDir)\NTAIdebug.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
-				ModuleDefinitionFile=".\TestAI.def"
+				ModuleDefinitionFile=""
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile=".\Debug/TestAI.pdb"
-				ImportLibrary=".\Debug/TestAI.lib"/>
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				ImportLibrary=""/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -168,7 +168,7 @@
 					RelativePath=".\GlobalAI.cpp">
 				</File>
 				<File
-					RelativePath=".\TestAI.cpp">
+					RelativePath=".\Interface.cpp">
 				</File>
 				<File
 					RelativePath=".\UGroup.cpp">
@@ -223,34 +223,13 @@
 				Name="Interface"
 				Filter="">
 				<File
-					RelativePath="..\rts\command.h">
-				</File>
-				<File
-					RelativePath="..\rts\FeatureHandler.h">
-				</File>
-				<File
 					RelativePath=".\GlobalAI.h">
-				</File>
-				<File
-					RelativePath="..\rts\GlobalStuff.h">
-				</File>
-				<File
-					RelativePath="..\rts\IAICheats.h">
-				</File>
-				<File
-					RelativePath="..\rts\IGlobalAI.h">
-				</File>
-				<File
-					RelativePath="..\rts\IGlobalAICallback.h">
 				</File>
 				<File
 					RelativePath=".\TAgents.h">
 				</File>
 				<File
 					RelativePath=".\UGroup.h">
-				</File>
-				<File
-					RelativePath="..\rts\UnitDef.h">
 				</File>
 			</Filter>
 			<Filter

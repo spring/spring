@@ -96,7 +96,7 @@ copy settings.cfg $(TargetDir)\jcai /Y
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/JCAI.dll"
 				LinkIncremental="1"
-				ModuleDefinitionFile="JCAI.def"
+				ModuleDefinitionFile=""
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="0"

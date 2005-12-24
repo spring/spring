@@ -4,8 +4,8 @@
 #include <vector>
 #include <set>
 #include "float3.h"
-#include "IAICallback.h"
-#include "UnitDef.h"
+#include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDef.h"
 
 class CMetalHandler{	
 	std::vector<float3> *parseMap();
