@@ -116,7 +116,7 @@ void SimplifyFilePaths(const set<string>& inclPaths)
 {
 	for (list<file_t>::iterator fi = filelist.begin(); fi != filelist.end(); ++fi) {
 		int p=0;
-		string path;
+		string path, endInclPath;
 
 		while (p < fi->inclpath.length ()) {
 			while (fi->inclpath[p] != '/' && p < fi->inclpath.length()) {
@@ -128,9 +128,12 @@ void SimplifyFilePaths(const set<string>& inclPaths)
 
 			p++;
 			path=fi->inclpath.substr (0, p);
-			if (inclPaths.find (path) != inclPaths.end())
-				fi->inclpath = fi->inclpath.substr (p,fi->inclpath.length());
+			if (inclPaths.find (path) != inclPaths.end()) {
+				endInclPath = fi->inclpath.substr (p,fi->inclpath.length());
 		}
+
+		if (!endInclPath.empty())
+			fi->inclpath = endInclPath;
 	}
 }
 
