@@ -1,8 +1,8 @@
 #ifndef SCOUTER_H
 #define SCOUTER_H
 #include <list>
-#include "AICallback.h"
-#include "UnitDef.h"
+#include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDef.h"
 
 // The scouter agent determines a patrol path that will
 // take the unit around the entire map, thus showing

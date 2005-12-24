@@ -1,7 +1,7 @@
 #ifndef TAGENTS_H
 #define TAGENTS_H
 
-#include "IAICallback.h"
+#include "ExternalAI/IAICallback.h"
 
 class Agent{
 public:

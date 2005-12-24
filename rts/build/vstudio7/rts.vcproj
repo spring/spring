@@ -1203,63 +1203,6 @@
 					RelativePath="..\..\Rendering\Textures\TAPalette.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\TextureFilters.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureFilters_2xsai.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureFilters_hq2x.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureFilters_hq2x.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureFilters_hq4x.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureFilters_hq4x.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureFilters_lq2x.h">
-				</File>
-				<File
 					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp">
 				</File>
 				<File
@@ -1950,12 +1893,6 @@
 				RelativePath="..\..\System\Bitmap.h">
 			</File>
 			<File
-				RelativePath="..\..\System\float3.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\float3.h">
-			</File>
-			<File
 				RelativePath="..\..\System\GlobalStuff.cpp">
 			</File>
 			<File
@@ -1965,52 +1902,10 @@
 				RelativePath="..\..\System\Lesson2.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\LoadInterface.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\LoadInterface.h">
-			</File>
-			<File
-				RelativePath="..\..\System\LoadSaveHandler.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\LoadSaveHandler.h">
-			</File>
-			<File
-				RelativePath="..\..\System\LoadSaveInterface.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\LoadSaveInterface.h">
-			</File>
-			<File
-				RelativePath="..\..\System\Matrix44f.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Matrix44f.h">
-			</File>
-			<File
 				RelativePath="..\..\System\MemPool.cpp">
 			</File>
 			<File
 				RelativePath="..\..\System\MemPool.h">
-			</File>
-			<File
-				RelativePath="..\..\System\myMath.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\myMath.h">
 			</File>
 			<File
 				RelativePath="..\..\System\Net.cpp">
@@ -2029,12 +1924,6 @@
 			</File>
 			<File
 				RelativePath="..\..\System\resource.h">
-			</File>
-			<File
-				RelativePath="..\..\System\SaveInterface.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\SaveInterface.h">
 			</File>
 			<File
 				RelativePath="..\..\System\Sound.cpp">
@@ -2567,6 +2456,68 @@
 						RelativePath="..\..\System\Platform\Win\Win32Support.cpp">
 					</File>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="Math"
+				Filter="">
+				<File
+					RelativePath="..\..\System\float3.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\float3.h">
+				</File>
+				<File
+					RelativePath="..\..\System\Matrix44f.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\Matrix44f.h">
+				</File>
+				<File
+					RelativePath="..\..\System\myMath.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\myMath.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="LoadSave"
+				Filter="">
+				<File
+					RelativePath="..\..\System\LoadInterface.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\LoadInterface.h">
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSaveHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSaveHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSaveInterface.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSaveInterface.h">
+				</File>
+				<File
+					RelativePath="..\..\System\SaveInterface.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\SaveInterface.h">
+				</File>
 			</Filter>
 		</Filter>
 	</Files>

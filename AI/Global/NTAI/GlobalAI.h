@@ -2,8 +2,8 @@
 #define AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // Iincludes
-#include "UnitDef.h"
-#include "IGlobalAI.h"
+#include "Sim/Units/UnitDef.h"
+#include "ExternalAI/IGlobalAI.h"
 #include "helper.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

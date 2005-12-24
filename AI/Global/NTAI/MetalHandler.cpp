@@ -5,7 +5,7 @@
 #include <list>
 #include <iterator>
 #include "GlobalStuff.h"
-#include "UnitDef.h"
+#include "Sim/Units/UnitDef.h"
 
 #define SAVEGAME_VER 4
 

@@ -1,8 +1,8 @@
 #ifndef CHASER_H
 #define CHASER_H
 #include <list>
-#include "AICallback.h"
-#include "UnitDef.h"
+#include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDef.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // The class used to store info about a task force and what units

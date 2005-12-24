@@ -11,8 +11,8 @@
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // Includes
 
-#include "IAICallback.h"
-#include "IGlobalAICallback.h"
+#include "ExternalAI/IAICallback.h"
+#include "ExternalAI/IGlobalAICallback.h"
 #include "GlobalAI.h"
  // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
  namespace std{	void _xlen(){};}

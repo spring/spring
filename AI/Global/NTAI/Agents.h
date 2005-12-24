@@ -3,8 +3,8 @@
 #define A_H
 #include <list>
 //#include "IAICallback.h"
-#include "AICallback.h"
-#include "UnitDef.h"
+#include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDef.h"
 //#include <iostream>
 //#include <fstream>
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

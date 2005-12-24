@@ -12,13 +12,13 @@ typedef unsigned long ulong;
 typedef unsigned int uint;
 typedef unsigned short ushort;
 #include "GlobalStuff.h"
-#include "IAICallback.h"
-#include "IGlobalAICallback.h"
-#include "IAICheats.h"
-#include "MoveInfo.h"
-#include "WeaponDefHandler.h"
-#include "UnitDef.h"
-#include "FeatureHandler.h"
+#include "ExternalAI/IAICallback.h"
+#include "ExternalAI/IGlobalAICallback.h"
+#include "ExternalAI/IAICheats.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Misc/FeatureHandler.h"
 //#include <stdarg.h>
 //#include <assert.h> 
 //#include <algorithm>
