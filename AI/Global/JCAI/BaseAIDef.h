@@ -9,12 +9,12 @@
 #ifndef JC_BASE_AI_DEF_H
 #define JC_BASE_AI_DEF_H
 
-#include "IGlobalAI.h"
 #include "GlobalStuff.h"
-#include "IGlobalAICallback.h"
-#include "IAICallback.h"
-#include "UnitDef.h"
-#include "MoveInfo.h"
+#include "ExternalAI/IGlobalAI.h"
+#include "ExternalAI/IGlobalAICallback.h"
+#include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include <assert.h> 
 #include <algorithm>
 #include <map>

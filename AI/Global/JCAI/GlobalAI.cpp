@@ -9,7 +9,7 @@
 #include "BaseAIDef.h"
 #include "BaseAIObjects.h"
 #include "GlobalAI.h"
-#include <IAICheats.h>
+#include "ExternalAI/IAICheats.h"
 
 #include "AI_Config.h"
 #include "TaskManager.h"
@@ -19,7 +19,7 @@
 #include "SupportHandler.h"
 #include "ReconHandler.h"
 
-#include "UnitHandler.h" // for MAX_UNITS
+#include "Sim/Units/UnitHandler.h" // for MAX_UNITS
 
 #include "DebugWindow.h"
 
