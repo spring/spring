@@ -13,6 +13,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Platform/errorhandler.h"
 #include "SDL_types.h"
+#include "Platform/byteorder.h"
 //#include "mmgr.h"
 
 CSound* sound;
@@ -78,7 +79,7 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	ALuint source;
 	alGenSources(1,&source);
 	alSourcei(source, AL_BUFFER, id);
-	alSourcef(source, AL_PITCH, 1.0 );
+	alSourcef(source, AL_PITCH, 1.0f );
 	alSourcef(source, AL_GAIN, volume );
 	alSource3f(source, AL_POSITION, p.x/(gs->mapx*SQUARE_SIZE),p.y/(gs->mapy*SQUARE_SIZE),p.z/(p.maxzpos));
 	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
@@ -112,6 +113,72 @@ void CSound::UpdateListener()
 	alListenerfv(AL_ORIENTATION,ListenerOri);
 }
 
+#pragma pack(push, 1)
+
+// Header copied from WavLib by Michael McTernan
+struct WAVHeader
+{     
+	char riff[4];         // "RIFF"
+	long totalLength;    
+	char wavefmt[8]; // WAVEfmt "
+	long length;      // Remaining length 4 bytes
+	short format_tag; 
+	short channels;  // Mono=1 Stereo=2
+	long SamplesPerSec;
+	long AvgBytesPerSec;
+	short BlockAlign;  
+	short BitsPerSample;
+	char data[4];      // "data"
+	long datalen;      // Raw data length 4 bytes
+};
+
+#pragma pack(pop)
+
+bool ReadWAV (Uint8 *buf, int size, ALuint albuffer)
+{
+	WAVHeader *header = (WAVHeader *)buf;
+
+	if (memcmp (header->riff, "RIFF",4) || memcmp (header->wavefmt, "WAVEfmt", 7))
+		return false;
+
+#define hswabword(c) header->c = swabword(header->c)
+#define hswabdword(c) header->c = swabdword(header->c)
+	hswabword(format_tag); 
+	hswabword(channels);
+	hswabword(BlockAlign);   
+	hswabword(BitsPerSample); 
+
+	hswabdword(totalLength);
+	hswabdword(length);
+	hswabdword(SamplesPerSec);
+	hswabdword(AvgBytesPerSec);
+	hswabdword(datalen);
+#undef hswabword
+#undef hswabdword
+
+	if (header->format_tag != 1) // Microsoft PCM format?
+		return false;
+
+	ALenum format;
+	if (header->channels == 1) {
+		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
+		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
+		else return false;
+	}
+	else if(header->channels == 2) {
+		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
+		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
+		else return false;
+	}
+	else {
+		return false;
+	}
+
+	alBufferData(albuffer,format,buf+sizeof(WAVHeader),header->datalen,header->SamplesPerSec);
+	return true;
+}
+
+
 ALuint CSound::LoadALBuffer(string path)
 {
 	if (noSound)
@@ -127,8 +194,13 @@ ALuint CSound::LoadALBuffer(string path)
 		handleerror(0, "Couldnt open wav file",path.c_str(),0);
 		return 0;
 	}
-	alBufferData(buffer,AL_FORMAT_STEREO8,buf,file.FileSize(),11025);
+	bool success=ReadWAV (buf, file.FileSize(), buffer);
 	delete[] buf;
+
+	if (!success) {
+		alDeleteBuffers(1, &buffer);
+		return 0;
+	}
 	return buffer;
 }
 
