@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+#include "creg/ClassReg.h"
+
 struct MoveData;
 struct WeaponDef;
 
@@ -24,6 +26,8 @@ struct UnitModelDef
 
 struct UnitDef
 {
+	CR_DECLARE(UnitDef);
+
 	std::string name;
 	std::string humanName;
 	std::string filename;

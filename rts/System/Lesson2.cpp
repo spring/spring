@@ -28,6 +28,7 @@
 #include "Platform/BaseCmd.h"
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
+#include "creg/ClassReg.h"
 #ifndef NO_LUA
 #include "Script/LuaBinder.h"
 #endif
@@ -258,10 +259,15 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	// Initialize crash reporting
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
+	// Initialize class system
+	creg::ClassBinder::InitializeClasses ();
+
+	// Global structures
 	ENTER_SYNCED;
 	gs=new CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
+
 
 #ifndef NO_LUA
 	// Initialize lua bindings
@@ -342,6 +348,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
 	SDL_GL_SwapBuffers();
+	
 	if (playDemo)
 		pregame = new CPreGame(false, demofile);
 	else
@@ -466,7 +473,6 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 			if (FSAA)
 				glDisable(GL_MULTISAMPLE_ARB);
 		}
-
 	}
 	ENTER_MIXED;
 

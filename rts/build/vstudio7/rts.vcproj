@@ -1988,12 +1988,6 @@
 			<File
 				RelativePath="..\..\System\TimeProfiler.h">
 			</File>
-			<File
-				RelativePath="..\..\System\wavread.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\wavread.h">
-			</File>
 			<Filter
 				Name="FileSystem"
 				Filter="">
@@ -2517,6 +2511,25 @@
 				</File>
 				<File
 					RelativePath="..\..\System\SaveInterface.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="creg"
+				Filter="">
+				<File
+					RelativePath="..\..\System\creg\ClassReg.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\ClassReg.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\TypeDeduction.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\VarTypes.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\VarTypes.h">
 				</File>
 			</Filter>
 		</Filter>

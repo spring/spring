@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "Mobility.h"
 
+CR_BIND(CMobility);
 
 /*
 Constructor

@@ -8,7 +8,9 @@ class CTransportUnit :
 	public CUnit
 {
 public:
-	CTransportUnit(const float3 &pos,int team,UnitDef* unitDef);
+	CR_DECLARE(CTransportUnit);
+
+	CTransportUnit();
 	~CTransportUnit(void);
 
 	struct TransportedUnit{

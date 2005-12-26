@@ -5,7 +5,9 @@
 
 class CExtractorBuilding : public CBuilding {
 public:
-	CExtractorBuilding(const float3 &pos, int team,UnitDef* unitDef);
+	CR_DECLARE(CExtractorBuilding);
+
+	CExtractorBuilding();
 	virtual ~CExtractorBuilding();
 
 	void SetExtractionRangeAndDepth(float range, float depth);

@@ -23,13 +23,34 @@
 #include <algorithm>
 using namespace std;
 
+CR_BIND_DERIVED(CBuilder, CUnit);
+
+CR_BIND_MEMBERS(CBuilder, (
+				CR_MEMBER(buildSpeed),
+				CR_MEMBER(buildDistance),
+				CR_MEMBER(curResurrect),
+				CR_MEMBER(lastResurrected),
+				CR_MEMBER(curBuild),
+				CR_MEMBER(curCapture),
+				CR_MEMBER(curReclaim),
+				CR_MEMBER(helpTerraform),
+				CR_MEMBER(terraforming),
+				CR_MEMBER(terraformLeft),
+				CR_MEMBER(terraformHelp),
+				CR_MEMBER(terraformType),
+				CR_MEMBER(tx1), CR_MEMBER(tx2), CR_MEMBER(tz1), CR_MEMBER(tz2),
+				CR_MEMBER(terraformCenter),
+				CR_MEMBER(terraformRadius),
+				CR_MEMBER(nextBuildType),
+				CR_MEMBER(nextBuildPos)));
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilder::CBuilder(const float3 &pos,int team,UnitDef* unitDef)
-: CUnit(pos,team,unitDef),
-	buildSpeed(100),
+CBuilder::CBuilder()
+:	buildSpeed(100),
 	buildDistance(16),
 	curBuild(0),
 	curReclaim(0),

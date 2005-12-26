@@ -54,13 +54,17 @@
 //#include "mmgr.h"
 
 #include "Game/GameSetup.h"
+
+CR_BIND_DERIVED(CUnit, CSolidObject);
+
+// See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
-:	CSolidObject(pos),
-	unitDef(unitDef),
+CUnit::CUnit ()
+:	unitDef(0),
+	team(0),
 	maxHealth(100),
 	health(100),
 	power(100),
@@ -69,7 +73,6 @@ CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 	limExperience(0),
 	armorType(0),
 	beingBuilt(true),
-	team(team),
 	allyteam(gs->AllyTeam(team)),
 	restTime(0),
 	controlRadius(2),
@@ -167,25 +170,6 @@ CUnit::CUnit(const float3 &pos,int team,UnitDef* unitDef)
 #endif
 
 	activated = false;
-
-	localmodel=NULL;
-	SetRadius(1.2f);
-	id=uh->AddUnit(this);
-	qf->MovedUnit(this);
-	mapSquare=ground->GetSquare(pos);
-	oldRadarPos.x=-1;
-
-	for(int a=0;a<MAX_TEAMS;++a){
-		losStatus[a]=0;
-	}
-	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
-
-	posErrorVector=gs->randVector();
-	posErrorVector.y*=0.2;
-#ifdef TRACE_SYNC
-	tracefile << "New unit: ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
-#endif
 }
 
 CUnit::~CUnit()
@@ -253,6 +237,34 @@ CUnit::~CUnit()
 	delete cob;
 	delete localmodel;
 }
+
+void CUnit::Initialize (UnitDef* def, int Team, const float3& position)
+{
+	pos = position;
+	team = Team;
+	allyteam = gs->AllyTeam(Team);
+	unitDef = def;
+
+	localmodel=NULL;
+	SetRadius(1.2f);
+	mapSquare=ground->GetSquare(pos);
+	qf->MovedUnit(this);
+	id=uh->AddUnit(this);
+	oldRadarPos.x=-1;
+
+	for(int a=0;a<MAX_TEAMS;++a){
+		losStatus[a]=0;
+	}
+	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+
+	posErrorVector=gs->randVector();
+	posErrorVector.y*=0.2;
+#ifdef TRACE_SYNC
+	tracefile << "New unit: ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
+#endif
+}
+
 
 void CUnit::Update()
 {
@@ -1371,3 +1383,154 @@ void CUnit::DrawS3O(void)
 	}
 	Draw();
 }
+
+// Member bindings
+CR_BIND_MEMBERS(CUnit, (
+				CR_MEMBER(unitDef),
+				CR_MEMBER(id),
+				CR_MEMBER(team),
+				CR_MEMBER(allyteam),
+				CR_MEMBER(aihint),
+				CR_MEMBER(frontdir),
+				CR_MEMBER(rightdir),
+				CR_MEMBER(updir),
+				CR_MEMBER(upright),
+				CR_MEMBER(relMidPos),
+				CR_MEMBER(power),
+
+				CR_MEMBER(maxHealth),
+				CR_MEMBER(health),
+				CR_MEMBER(paralyzeDamage),
+				CR_MEMBER(captureProgress),
+				CR_MEMBER(experience),
+				CR_MEMBER(limExperience),
+				CR_MEMBER(logExperience),
+				CR_MEMBER(beingBuilt),
+				CR_MEMBER(lastNanoAdd),
+				CR_MEMBER(transporter),
+				CR_MEMBER(toBeTransported),
+				CR_MEMBER(buildProgress),
+				CR_MEMBER(realLosRadius),
+				CR_MEMBER(realAirLosRadius),
+				CR_MEMBER(losStatus),
+				CR_MEMBER(inBuildStance),
+				CR_MEMBER(stunned),
+				CR_MEMBER(useHighTrajectory),
+
+				CR_MEMBER(deathCountdown),
+				CR_MEMBER(delayedWreckLevel),
+				CR_MEMBER(restTime),
+
+				CR_MEMBER(weapons),
+				CR_MEMBER(stockpileWeapon),
+				CR_MEMBER(reloadSpeed),
+				CR_MEMBER(maxRange),
+				CR_MEMBER(haveTarget),
+				CR_MEMBER(haveUserTarget),
+				CR_MEMBER(haveDGunRequest),
+				CR_MEMBER(lastMuzzleFlameSize),
+				CR_MEMBER(lastMuzzleFlameDir),
+
+				CR_MEMBER(armorType),
+				CR_MEMBER(category),
+
+				CR_MEMBER(quads),
+				//CR_MEMBER(los)
+				CR_MEMBER(tempNum),
+				CR_MEMBER(lastSlowUpdate),
+				CR_MEMBER(mapSquare),
+
+				CR_MEMBER(controlRadius),
+				CR_MEMBER(losRadius),
+				CR_MEMBER(airLosRadius),
+				CR_MEMBER(losHeight),
+				CR_MEMBER(lastLosUpdate),
+
+				CR_MEMBER(radarRadius),
+				CR_MEMBER(sonarRadius),
+				CR_MEMBER(jammerRadius),
+				CR_MEMBER(sonarJamRadius),
+				CR_MEMBER(hasRadarCapacity),
+				CR_MEMBER(radarSquares),
+				CR_MEMBER(oldRadarPos),
+				CR_MEMBER(stealth),
+
+//				CR_MEMBER(commandAI),
+				CR_MEMBER(moveType),
+//				CR_MEMBER(group),
+
+				CR_MEMBER(metalUse),
+				CR_MEMBER(energyUse),
+				CR_MEMBER(metalMake),
+				CR_MEMBER(energyMake),
+
+				CR_MEMBER(metalUseI),
+				CR_MEMBER(energyUseI),
+				CR_MEMBER(metalMakeI),
+				CR_MEMBER(energyMakeI),
+
+				CR_MEMBER(metalUseold),
+				CR_MEMBER(energyUseold),
+				CR_MEMBER(metalMakeold),
+				CR_MEMBER(energyMakeold),
+				CR_MEMBER(energyTickMake),
+
+				CR_MEMBER(metalExtract),
+				CR_MEMBER(metalCost),
+				CR_MEMBER(energyCost),
+				CR_MEMBER(buildTime),
+
+				CR_MEMBER(lastAttacker),
+				CR_MEMBER(lastAttack),
+				CR_MEMBER(lastDamage),
+				CR_MEMBER(lastFireWeapon),
+				CR_MEMBER(recentDamage),
+				CR_MEMBER(userTarget),
+				CR_MEMBER(userAttackPos),
+
+				CR_MEMBER(userAttackGround),
+				CR_MEMBER(fireState),
+				CR_MEMBER(dontFire),
+				CR_MEMBER(moveState),
+
+				CR_MEMBER(activated),
+
+				//CR_MEMBER(model),
+				//CR_MEMBER(cob),
+				//CR_MEMBER(localmodel),
+
+				CR_MEMBER(tooltip),
+				CR_MEMBER(crashing),
+				CR_MEMBER(isDead),
+
+				CR_MEMBER(bonusShieldDir),
+				CR_MEMBER(bonusShieldSaved),
+
+				CR_MEMBER(armoredState),
+				CR_MEMBER(armoredMultiple),
+				CR_MEMBER(curArmorMultiple),
+
+				CR_MEMBER(wreckName),
+				CR_MEMBER(posErrorVector),
+				CR_MEMBER(posErrorDelta),
+				CR_MEMBER(nextPosErrorUpdate),
+
+				CR_MEMBER(hasUWWeapons),
+
+				CR_MEMBER(wantCloak),
+				CR_MEMBER(cloakTimeout),
+				CR_MEMBER(curCloakTimeout),
+				CR_MEMBER(isCloaked),
+
+				CR_MEMBER(lastTerrainType),
+				CR_MEMBER(curTerrainType),
+
+				CR_MEMBER(selfDCountdown),
+
+				//CR_MEMBER(directControl),
+
+				//CR_MEMBER(myTrack),
+				//CR_MEMBER(incomingMissiles),
+				CR_MEMBER(lastFlareDrop))
+				);
+

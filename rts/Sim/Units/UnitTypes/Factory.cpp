@@ -27,13 +27,14 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 //#include "mmgr.h"
 
+CR_BIND_DERIVED(CFactory, CBuilding);
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CFactory::CFactory(const float3 &pos,int team,UnitDef* unitDef)
-: CBuilding(pos,team,unitDef),
-	buildSpeed(100),
+CFactory::CFactory()
+:	buildSpeed(100),
 	curBuild(0),
 	quedBuild(false),
 	lastBuild(-1000),

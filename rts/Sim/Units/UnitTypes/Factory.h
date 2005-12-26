@@ -13,7 +13,9 @@ using namespace std;
 class CFactory : public CBuilding  
 {
 public:
-	CFactory(const float3 &pos,int team,UnitDef* unitDef);
+	CR_DECLARE(CFactory);
+
+	CFactory();
 	virtual ~CFactory();
 	void StopBuild();
 	void StartBuild(string type);

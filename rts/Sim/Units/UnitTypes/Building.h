@@ -10,7 +10,9 @@
 class CBuilding : public CUnit  
 {
 public:
-	CBuilding(const float3 &pos,int team,UnitDef* unitDef);
+	CR_DECLARE(CBuilding);
+
+	CBuilding();
 	virtual ~CBuilding();
 
 	void Init(void);

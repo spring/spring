@@ -13,6 +13,7 @@
 #include <ext/hash_set>
 #endif
 #include "TdfParser.h"
+#include "creg/ClassReg.h"
 
 struct S3DOModel;
 class CFeature;
@@ -29,6 +30,8 @@ class CVertexArray;
 
 struct FeatureDef
 {
+	CR_DECLARE(FeatureDef);
+
 	FeatureDef():geoThermal(0),floating(false){};
 
 	std::string myName;

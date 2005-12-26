@@ -8,9 +8,13 @@
 
 #include <set>
 
-class CObject  
+#include "creg/ClassReg.h"
+
+class CObject : public creg::Object
 {
 public:
+	CR_DECLARE(CObject);
+
 	void DeleteDeathDependence(CObject* o);
 	void AddDeathDependence(CObject* o);
 	virtual void DependentDied(CObject* o);

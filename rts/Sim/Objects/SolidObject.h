@@ -11,6 +11,8 @@ struct DamageArray;
 
 class CSolidObject : public CWorldObject {
 public:
+	CR_DECLARE(CSolidObject)
+
 	enum PhysicalState {
 		Ghost,
 		OnGround,
@@ -20,7 +22,7 @@ public:
 		Submarine
 	};
 
-	CSolidObject(const float3& pos);
+	CSolidObject();
 	virtual ~CSolidObject(void);
 
 	virtual bool AddBuildPower(float amount, CUnit* builder);

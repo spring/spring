@@ -2,10 +2,13 @@
 #define MOBILITY_H
 
 #include "MoveInfo.h"
+#include "creg/ClassReg.h"
 
 class CMobility {
 public:
 	CMobility();
+
+	CR_DECLARE(CMobility);
 
 	MoveData* moveData;
 

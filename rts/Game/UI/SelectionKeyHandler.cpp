@@ -82,7 +82,7 @@ bool CSelectionKeyHandler::KeyPressed(unsigned short key)
 {
 	// TODO: sort the vector, and do key-based fast lookup
 	for(vector<HotKey>::iterator hi=hotkeys.begin();hi!=hotkeys.end();++hi){
-		if(key==hi->key && hi->shift==keys[SDLK_LSHIFT] && hi->control==keys[SDLK_LCTRL] && hi->alt==keys[SDLK_LALT]){
+		if(key==hi->key && hi->shift==!!keys[SDLK_LSHIFT] && hi->control==!!keys[SDLK_LCTRL] && hi->alt==!!keys[SDLK_LALT]){
 			DoSelection(hi->select);
 			return true;
 		}

@@ -73,6 +73,12 @@ class CUnit;
 #define VETERAN_LEVEL  32
 #define ON_ROAD    34
 
+#define MAX_ID					70
+#define MY_ID					71
+#define UNIT_TEAM				72
+#define UNIT_BUILD_PERCENT_LEFT	73
+#define UNIT_ALLIED				74
+
 CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 : script(script)
 {
@@ -853,6 +859,21 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return 0;
 	case IN_WATER:
 		return (unit->pos.y < 0.0f) ? 1 : 0;
+	case MAX_ID:
+		return MAX_UNITS-1;
+	case MY_ID:
+		return unit->id;
+	case UNIT_TEAM:{
+		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		return u ? unit->team : 0; }
+	case UNIT_ALLIED:{
+		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		if (u) return gs->Ally (unit->allyteam, u->allyteam) ? 1 : 0;
+		return 0;}
+	case UNIT_BUILD_PERCENT_LEFT:{
+		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		if (u) return (int)((1 - u->buildProgress) * 100);
+		return 0;}
 	}
 #endif
 
