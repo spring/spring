@@ -188,9 +188,6 @@ Rendering/RepulseGfx.cpp
 Rendering/ShadowHandler.cpp
 Rendering/Textures/nv_dds.cpp
 Rendering/Textures/TAPalette.cpp
-Rendering/Textures/TextureFilters_2xsai.cpp
-Rendering/Textures/TextureFilters_hq2x.cpp
-Rendering/Textures/TextureFilters_hq4x.cpp
 Rendering/Textures/TextureHandler.cpp
 Rendering/UnitModels/3DModelParser.cpp
 Rendering/UnitModels/3DOParser.cpp
@@ -331,6 +328,8 @@ System/Syncify.cpp
 System/SyncTracer.cpp
 System/TdfParser.cpp
 System/TimeProfiler.cpp
+System/creg/ClassReg.cpp
+System/creg/VarTypes.cpp
 """)
 System_windows_files=Split("""
 System/mmgr.cpp
