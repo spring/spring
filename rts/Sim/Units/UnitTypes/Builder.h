@@ -30,6 +30,8 @@ public:
 	void StartRestore(float3 centerPos, float radius);
 	void SetBuildStanceToward(float3 pos);
 
+	void UnitInit (UnitDef* def, int team, const float3& position);
+
 	float buildSpeed;
 	float buildDistance;
 

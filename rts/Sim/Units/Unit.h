@@ -49,7 +49,7 @@ public:
 	CUnit();
 	virtual ~CUnit();
 
-	void Initialize (UnitDef* def, int team, const float3& position);
+	virtual void UnitInit (UnitDef* def, int team, const float3& position);
 
 	bool AttackGround(const float3&pos,bool dgun);
 	bool AttackUnit(CUnit* unit,bool dgun);
