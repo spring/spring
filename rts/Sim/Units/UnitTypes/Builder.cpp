@@ -64,19 +64,24 @@ CBuilder::CBuilder()
 	terraformCenter(0,0,0),
 	terraformRadius(0),
 	nextBuildPos(0,0,0),
-	nextBuildType(""),
 	terraformHelp(0),
 	helpTerraform(0),
 	curResurrect(0),
 	lastResurrected(0),
 	curCapture(0)
 {
-	buildSpeed=unitDef->buildSpeed/32.0f;
-	buildDistance=unitDef->buildDistance;
 }
 
 CBuilder::~CBuilder()
 {
+}
+
+void CBuilder::UnitInit(UnitDef* def, int team, const float3& position)
+{
+	buildSpeed=def->buildSpeed/32.0f;
+	buildDistance=def->buildDistance;
+
+	CUnit::UnitInit (def, team, position);
 }
 
 void CBuilder::Update()

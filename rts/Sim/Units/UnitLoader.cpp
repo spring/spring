@@ -112,7 +112,7 @@ START_TIME_PROFILE;
 		return 0;
 	}
 
-	unit->Initialize (ud, side, pos);
+	unit->UnitInit (ud, side, pos);
 
 	unit->beingBuilt=build;
 	unit->power=ud->power;

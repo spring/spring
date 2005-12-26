@@ -23,6 +23,8 @@ public:
 	void DependentDied(CObject* o);
 	void FinishedBuilding(void);
 
+	void UnitInit (UnitDef* def, int team, const float3& position);
+
 	float buildSpeed;
 	
 	bool quedBuild;						//if we have a unit that we want to start to nanolath when script is ready

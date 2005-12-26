@@ -40,7 +40,6 @@ CFactory::CFactory()
 	lastBuild(-1000),
 	opening(false)
 {
-	buildSpeed=unitDef->buildSpeed/32.0f;
 }
 
 CFactory::~CFactory()
@@ -50,6 +49,13 @@ CFactory::~CFactory()
 		curBuild=0;
 	}
 }
+
+void CFactory::UnitInit (UnitDef* def, int team, const float3& position)
+{
+	buildSpeed=def->buildSpeed/32.0f;
+	CUnit::UnitInit (def, team, position);
+}
+
 
 void CFactory::Update()
 {

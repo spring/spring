@@ -73,7 +73,7 @@ CUnit::CUnit ()
 	limExperience(0),
 	armorType(0),
 	beingBuilt(true),
-	allyteam(gs->AllyTeam(team)),
+	allyteam(0),
 	restTime(0),
 	controlRadius(2),
 	reloadSpeed(1),
@@ -238,7 +238,7 @@ CUnit::~CUnit()
 	delete localmodel;
 }
 
-void CUnit::Initialize (UnitDef* def, int Team, const float3& position)
+void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 {
 	pos = position;
 	team = Team;
