@@ -37,7 +37,6 @@ CR_BIND_MEMBERS(CBuilder, (
 				CR_MEMBER(terraforming),
 				CR_MEMBER(terraformLeft),
 				CR_MEMBER(terraformHelp),
-				CR_MEMBER(terraformType),
 				CR_MEMBER(tx1), CR_MEMBER(tx2), CR_MEMBER(tz1), CR_MEMBER(tz2),
 				CR_MEMBER(terraformCenter),
 				CR_MEMBER(terraformRadius),
