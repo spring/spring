@@ -192,6 +192,7 @@ ALuint CSound::LoadALBuffer(string path)
 		file.Read(buf, file.FileSize());
 	} else {
 		handleerror(0, "Couldnt open wav file",path.c_str(),0);
+		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
 	bool success=ReadWAV (buf, file.FileSize(), buffer);

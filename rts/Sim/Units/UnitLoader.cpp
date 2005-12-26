@@ -88,29 +88,31 @@ START_TIME_PROFILE;
 		side = MAX_TEAMS-1;
 
 	if(type=="GroundUnit"){
-		unit=new CUnit(pos,side,ud);
+		unit=new CUnit;
 		blocking = true;
 	} else if (type=="Transport"){
-		unit=new CTransportUnit(pos,side,ud);
+		unit=new CTransportUnit;
 		blocking = true;
 	} else if (type=="Building"){
-		unit=new CBuilding(pos,side,ud);
+		unit=new CBuilding;
 		blocking = true;
 	} else if (type=="Factory"){
-		unit=new CFactory(pos,side,ud);
+		unit=new CFactory;
 		blocking = true;
 	} else if (type=="Builder"){
-		unit=new CBuilder(pos,side,ud);
+		unit=new CBuilder;
 		blocking = true;
 	} else if (type=="Bomber" || type=="Fighter"){
-		unit=new CUnit(pos, side,ud);
+		unit=new CUnit;
 	} else if (type == "MetalExtractor") {
-		unit = new CExtractorBuilding(pos, side,ud);
+		unit = new CExtractorBuilding;
 		blocking = true;
 	} else {
 		(*info) << "Unknown unit type " << type.c_str() << "\n";
 		return 0;
 	}
+
+	unit->Initialize (ud, side, pos);
 
 	unit->beingBuilt=build;
 	unit->power=ud->power;

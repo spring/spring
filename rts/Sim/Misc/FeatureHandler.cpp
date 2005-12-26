@@ -24,6 +24,8 @@
 #include "Rendering/ShadowHandler.h"
 //#include "mmgr.h"
 
+CR_BIND(FeatureDef);
+
 using namespace std;
 CFeatureHandler* featureHandler=0;
 
@@ -82,7 +84,8 @@ CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string&
 		return CreateWreckage(pos,fd->deathFeature,rot,iter-1,allyteam,emitSmoke,"");
 	} else {
 		if(!fd->modelname.empty()){
-			CFeature* f=new CFeature(pos,fd,(short int)rot,allyteam,fromUnit);
+			CFeature* f=new CFeature;
+			f->Initialize (pos,fd,(short int)rot,allyteam,fromUnit);
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
 			return f;
@@ -283,7 +286,8 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 			string name=mapids[ffs.featureType];
 
 			ffs.ypos=ground->GetHeight2(ffs.xpos,ffs.zpos);
-			new CFeature(float3(ffs.xpos,ffs.ypos,ffs.zpos),featureDefs[name],(short int)ffs.rotation,-1,"");
+			CFeature *f = new CFeature;
+			f->Initialize (float3(ffs.xpos,ffs.ypos,ffs.zpos),featureDefs[name],(short int)ffs.rotation,-1,"");
 		}
 	}
 
@@ -351,7 +355,8 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 				file->lsShort(rotation);
 				string fromUnit;
 				file->lsString(fromUnit);
-				new CFeature(pos,featureDefs[def],rotation,-1,fromUnit);
+				CFeature* f = new CFeature;
+				f->Initialize (pos,featureDefs[def],rotation,-1,fromUnit);
 			} else {
 				file->lsFloat3(features[a]->pos);
 				file->lsString(features[a]->def->myName);

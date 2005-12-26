@@ -6,9 +6,10 @@
 #include "Sim/Units/UnitDef.h"
 //#include "mmgr.h"
 
-CTransportUnit::CTransportUnit(const float3 &pos,int team,UnitDef* unitDef)
-: CUnit(pos,team,unitDef),
-	transportCapacityUsed(0),
+CR_BIND_DERIVED(CTransportUnit, CUnit);
+
+CTransportUnit::CTransportUnit()
+:	transportCapacityUsed(0),
 	transportMassUsed(0)
 {
 }

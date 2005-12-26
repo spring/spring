@@ -8,12 +8,13 @@
 
 //#include "mmgr.h"
 
+CR_BIND_DERIVED(CBuilding, CUnit);
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilding::CBuilding(const float3 &pos,int team,UnitDef* unitDef)
-: CUnit(pos,team,unitDef)
+CBuilding::CBuilding()
 {
 	immobile=true;
 	blockHeightChanges=true;

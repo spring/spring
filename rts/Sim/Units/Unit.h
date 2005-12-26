@@ -44,8 +44,12 @@ using namespace std;
 class CUnit : public CSolidObject  
 {
 public:
-	CUnit(const float3 &pos,int team,UnitDef* unitDef);
+	CR_DECLARE(CUnit)
+
+	CUnit();
 	virtual ~CUnit();
+
+	void Initialize (UnitDef* def, int team, const float3& position);
 
 	bool AttackGround(const float3&pos,bool dgun);
 	bool AttackUnit(CUnit* unit,bool dgun);

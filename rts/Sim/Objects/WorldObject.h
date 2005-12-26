@@ -10,8 +10,12 @@
 class CWorldObject : public CObject  
 {
 public:
+	CR_DECLARE(CWorldObject);
+
+	CWorldObject() : useAirLos(false),alwaysVisible(false) {}
+	CWorldObject(const float3& pos) : useAirLos(false),alwaysVisible(false), pos(pos) {}
+
 	void SetRadius(float r);
-	inline CWorldObject(const float3& pos) : pos(pos),useAirLos(false),alwaysVisible(false) {};
 	virtual ~CWorldObject();
 	virtual void DrawS3O(){};
 

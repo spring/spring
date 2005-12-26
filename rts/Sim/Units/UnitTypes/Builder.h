@@ -14,7 +14,9 @@ class CFeature;
 class CBuilder : public CUnit  
 {
 public:
-	CBuilder(const float3 &pos,int team,UnitDef* unitDef);
+	CR_DECLARE(CBuilder);
+
+	CBuilder();
 	virtual ~CBuilder();
 
 	void Update();

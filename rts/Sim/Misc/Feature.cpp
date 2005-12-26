@@ -15,21 +15,66 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 //#include "mmgr.h"
 
-CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyteam,std::string fromUnit)
-: CSolidObject(pos),
-	def(def),
+CR_BIND_DERIVED(CFeature, CSolidObject)
+
+CR_BIND_MEMBERS(CFeature, (
+				CR_MEMBER(createdFromUnit),
+				CR_MEMBER(resurrectProgress),
+				CR_MEMBER(health),
+				CR_MEMBER(reclaimLeft),
+				CR_MEMBER(id),
+				CR_MEMBER(allyteam),
+				CR_MEMBER(tempNum),
+				CR_MEMBER(lastReclaim),
+				CR_MEMBER(def),
+				//CR_MEMBER(transMatrix),
+				CR_MEMBER(inUpdateQue),
+				CR_MEMBER(drawQuad),
+				CR_MEMBER(finalHeight),
+				CR_MEMBER(myFire),
+				CR_MEMBER(fireTime),
+				CR_MEMBER(emitSmokeTime)));
+
+CFeature::CFeature()
+:	def(0),
 	inUpdateQue(false),
 	reclaimLeft(1),
 	fireTime(0),
 	myFire(0),
 	drawQuad(-1),
-	allyteam(allyteam),
+	allyteam(0),
 	tempNum(0),
 	emitSmokeTime(0),
 	lastReclaim(0),
-	createdFromUnit(fromUnit),
-	resurrectProgress(0)
+	resurrectProgress(0),
+	health(0),
+	id(0),
+	finalHeight(0)
 {
+	immobile=true;
+	physicalState = OnGround;
+}
+
+CFeature::~CFeature(void)
+{
+	if(blocking){
+		UnBlock();
+	}
+	qf->RemoveFeature(this);
+	if(def->drawType==DRAWTYPE_TREE)
+		treeDrawer->DeleteTree(pos);
+
+	if(myFire){
+		myFire->StopFire();
+		myFire=0;
+	}
+}
+
+void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,int allyteam,std::string fromUnit)
+{
+	this->def=def;
+	createdFromUnit=fromUnit;
+	this->allyteam=allyteam;
 	this->pos.CheckInBounds();
 	this->heading=heading;
 	health=def->maxHealth;
@@ -38,8 +83,6 @@ CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyt
 	xsize=def->xsize;
 	ysize=def->ysize;
 	mass=def->mass;
-	immobile=true;
-	physicalState = OnGround;
 
 	if(def->drawType==DRAWTYPE_3DO){
 		if(def->model==0){
@@ -75,21 +118,6 @@ CFeature::CFeature(const float3& pos,FeatureDef* def,short int heading,int allyt
 
 	if(def->drawType==DRAWTYPE_TREE)
 		treeDrawer->AddTree(def->modelType,pos,1);
-}
-
-CFeature::~CFeature(void)
-{
-	if(blocking){
-		UnBlock();
-	}
-	qf->RemoveFeature(this);
-	if(def->drawType==DRAWTYPE_TREE)
-		treeDrawer->DeleteTree(pos);
-
-	if(myFire){
-		myFire->StopFire();
-		myFire=0;
-	}
 }
 
 bool CFeature::AddBuildPower(float amount, CUnit* builder)

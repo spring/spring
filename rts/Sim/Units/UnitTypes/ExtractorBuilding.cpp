@@ -17,11 +17,13 @@
 #include "Sim/Misc/QuadField.h"
 #include "SyncTracer.h"
 //#include "mmgr.h"
+
+CR_BIND_DERIVED(CExtractorBuilding, CBuilding);
+
 /*
 Constructor
 */
-CExtractorBuilding::CExtractorBuilding(const float3 &pos, int team,UnitDef* unitDef) :
-	CBuilding(pos, team,unitDef),
+CExtractorBuilding::CExtractorBuilding() :
 	extractionRange(0),
 	extractionDepth(0)
 {
