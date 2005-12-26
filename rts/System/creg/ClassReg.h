@@ -178,24 +178,25 @@ namespace creg {
 	{
 	public:
 		OrderedContainer (IType *elemType) : IContainerType(elemType) {}
+		typedef typename T::iterator iterator;
 		typedef typename T::value_type ElemT;
 
 		void Add (void *container, void *elem) { 
 			((T*)container)->insert(*(ElemT*)elem); }
 
 		void Erase (void *container, Iterator *elem) { 
-			((T*)container)->erase( *(T::iterator*)elem ); }
+			((T*)container)->erase( *(iterator*)elem ); }
 
 		// TODO: mempool for iterators?
 		Iterator* Begin (void *container) { 
 			if (((T*)container)->empty()) return 0;
-			return new T::iterator ( ((T*)container)->begin() ); }
+			return new iterator ( ((T*)container)->begin() ); }
 
 		void* Element(void *container, Iterator *i) { 
-			return &**(T::iterator*)i; }
+			return &**(iterator*)i; }
 
 		Iterator* Next (void *container, Iterator *i) { 
-			T::iterator *it = (T::iterator*)i;
+			iterator *it = (iterator*)i;
 			++(*it);
 			if ( *it == ((T*)container)->end() ) {
 				delete it;
@@ -210,6 +211,7 @@ namespace creg {
 	class UnorderedContainer : public IContainerType
 	{
 	public:
+		typedef typename T::iterator iterator;
 		typedef typename T::value_type ElemT;
 
 		UnorderedContainer (IType *elemType) : IContainerType(elemType) {}
@@ -218,17 +220,17 @@ namespace creg {
 			((T*)container)->push_back ( *(ElemT*)elem ); }
 
 		void Erase (void *container, Iterator *elem) {
-			((T*)container)->erase ( *(T::iterator*)elem ); }
+			((T*)container)->erase ( *(iterator*)elem ); }
 
 		Iterator* Begin (void *container) {
 			if (((T*)container)->empty()) return 0;
-			return (Iterator*)new T::iterator ( ((T*)container)->begin() ); }
+			return (Iterator*)new iterator ( ((T*)container)->begin() ); }
 
 		void* Element(void *container, Iterator *i) {
-			return &**(T::iterator*)i; }
+			return &**(iterator*)i; }
 
 		Iterator* Next (void *container, Iterator *i) {
-			T::iterator *it = (T::iterator*)i;
+			iterator *it = (iterator*)i;
 			++(*it);
 			if ( *it == ((T*)container)->end() ) {
 				delete it;
