@@ -178,27 +178,26 @@ namespace creg {
 	{
 	public:
 		OrderedContainer (IType *elemType) : IContainerType(elemType) {}
-		typedef typename T ct;
 		typedef typename T::value_type ElemT;
 
 		void Add (void *container, void *elem) { 
-			((ct*)container)->insert(*(ElemT*)elem); }
+			((T*)container)->insert(*(ElemT*)elem); }
 
 		void Erase (void *container, Iterator *elem) { 
-			((ct*)container)->erase( *(ct::iterator*)elem ); }
+			((T*)container)->erase( *(T::iterator*)elem ); }
 
 		// TODO: mempool for iterators?
 		Iterator* Begin (void *container) { 
-			if (((ct*)container)->empty()) return 0;
-			return new ct::iterator ( ((ct*)container)->begin() ); }
+			if (((T*)container)->empty()) return 0;
+			return new T::iterator ( ((T*)container)->begin() ); }
 
 		void* Element(void *container, Iterator *i) { 
-			return &**(ct::iterator*)i; }
+			return &**(T::iterator*)i; }
 
 		Iterator* Next (void *container, Iterator *i) { 
-			ct::iterator *it = (ct::iterator*)i;
+			T::iterator *it = (T::iterator*)i;
 			++(*it);
-			if ( *it == ((ct*)container)->end() ) {
+			if ( *it == ((T*)container)->end() ) {
 				delete it;
 				return 0;
 			}
@@ -211,28 +210,27 @@ namespace creg {
 	class UnorderedContainer : public IContainerType
 	{
 	public:
-		typedef typename T ct;
 		typedef typename T::value_type ElemT;
 
 		UnorderedContainer (IType *elemType) : IContainerType(elemType) {}
 
 		void Add (void *container, void *elem) {
-			((ct*)container)->push_back ( *(ElemT*)elem ); }
+			((T*)container)->push_back ( *(ElemT*)elem ); }
 
 		void Erase (void *container, Iterator *elem) {
-			((ct*)container)->erase ( *(T::iterator*)elem ); }
+			((T*)container)->erase ( *(T::iterator*)elem ); }
 
 		Iterator* Begin (void *container) {
-			if (((ct*)container)->empty()) return 0;
-			return (Iterator*)new ct::iterator ( ((ct*)container)->begin() ); }
+			if (((T*)container)->empty()) return 0;
+			return (Iterator*)new T::iterator ( ((T*)container)->begin() ); }
 
 		void* Element(void *container, Iterator *i) {
-			return &**(ct::iterator*)i; }
+			return &**(T::iterator*)i; }
 
 		Iterator* Next (void *container, Iterator *i) {
-			ct::iterator *it = (ct::iterator*)i;
+			T::iterator *it = (T::iterator*)i;
 			++(*it);
-			if ( *it == ((ct*)container)->end() ) {
+			if ( *it == ((T*)container)->end() ) {
 				delete it;
 				return 0;
 			}
