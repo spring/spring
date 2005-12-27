@@ -57,6 +57,7 @@ CSound::~CSound()
 	Buffers.clear();
 	if (noSound)
 		return;
+	//deadlock here on program exit --tvo
 	alcMakeContextCurrent(NULL);
 	alcDestroyContext(context);
 	alcCloseDevice(device);
@@ -136,19 +137,19 @@ void CSound::UpdateListener()
 
 // Header copied from WavLib by Michael McTernan
 struct WAVHeader
-{     
-	char riff[4];         // "RIFF"
-	long totalLength;    
-	char wavefmt[8]; // WAVEfmt "
-	long length;      // Remaining length 4 bytes
-	short format_tag; 
-	short channels;  // Mono=1 Stereo=2
-	long SamplesPerSec;
-	long AvgBytesPerSec;
-	short BlockAlign;  
-	short BitsPerSample;
-	char data[4];      // "data"
-	long datalen;      // Raw data length 4 bytes
+{
+	Uint8 riff[4];         // "RIFF"
+	Sint32 totalLength;
+	Uint8 wavefmt[8];      // WAVEfmt "
+	Sint32 length;         // Remaining length 4 bytes
+	Sint16 format_tag;
+	Sint16 channels;       // Mono=1 Stereo=2
+	Sint32 SamplesPerSec;
+	Sint32 AvgBytesPerSec;
+	Sint16 BlockAlign;
+	Sint16 BitsPerSample;
+	Uint8 data[4];         // "data"
+	Sint32 datalen;        // Raw data length 4 bytes
 };
 
 #pragma pack(pop)
@@ -157,15 +158,17 @@ bool ReadWAV (Uint8 *buf, int size, ALuint albuffer)
 {
 	WAVHeader *header = (WAVHeader *)buf;
 
-	if (memcmp (header->riff, "RIFF",4) || memcmp (header->wavefmt, "WAVEfmt", 7))
+	if (memcmp (header->riff, "RIFF",4) || memcmp (header->wavefmt, "WAVEfmt", 7)) {
+		printf("ReadWAV: invalid header\n");
 		return false;
+	}
 
 #define hswabword(c) header->c = swabword(header->c)
 #define hswabdword(c) header->c = swabdword(header->c)
-	hswabword(format_tag); 
+	hswabword(format_tag);
 	hswabword(channels);
-	hswabword(BlockAlign);   
-	hswabword(BitsPerSample); 
+	hswabword(BlockAlign);
+	hswabword(BitsPerSample);
 
 	hswabdword(totalLength);
 	hswabdword(length);
@@ -175,21 +178,30 @@ bool ReadWAV (Uint8 *buf, int size, ALuint albuffer)
 #undef hswabword
 #undef hswabdword
 
-	if (header->format_tag != 1) // Microsoft PCM format?
+	if (header->format_tag != 1) { // Microsoft PCM format?
+		printf("ReadWAV: invalid format tag\n");
 		return false;
+	}
 
 	ALenum format;
 	if (header->channels == 1) {
 		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
-		else return false;
+		else {
+			printf("ReadWAV: invalid number of bits per sample (mono)\n");
+			return false;
+		}
 	}
 	else if(header->channels == 2) {
 		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
-		else return false;
+		else {
+			printf("ReadWAV: invalid number of bits per sample (stereo)\n");
+			return false;
+		}
 	}
 	else {
+		printf("ReadWAV: invalid number of channels\n");
 		return false;
 	}
 
