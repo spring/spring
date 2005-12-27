@@ -911,7 +911,7 @@ def generate(env):
 		configure(env)
 
 		defines = ['DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
-		defines += ['DATADIR="\\"'+env['datadir']+'\\""']
+		defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
 
 		if env['disable_hpi']      : defines += ['NO_HPI']
 		if env['disable_clipboard']: defines += ['NO_CLIPBOARD']

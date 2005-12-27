@@ -225,7 +225,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #endif
 {
 #ifndef _WIN32
-	chdir(DATADIR);
+	chdir(SPRING_DATADIR);
 #endif
 	INIT_SYNCIFY;
 	bool	done=false;								// Bool Variable To Exit Loop
