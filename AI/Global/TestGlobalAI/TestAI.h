@@ -7,7 +7,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#include "../aibase.h"
+#include "aibase.h"
 #include "IGlobalAI.h"
 
 #ifdef __cplusplus

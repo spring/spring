@@ -4,7 +4,7 @@
 
 #include "GlobalAI.h"
 #include "IGlobalAICallback.h"
-#include "UnitDef.h"
+#include "Sim/Units/UnitDef.h"
 #include <vector>
 
 //////////////////////////////////////////////////////////////////////

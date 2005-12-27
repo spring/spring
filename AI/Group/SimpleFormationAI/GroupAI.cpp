@@ -6,7 +6,7 @@
 #include "IGroupAiCallback.h"
 #include "IAICallback.h"
 #include "GroupAI.h"
-#include "UnitDef.h"
+#include "Sim/Units/UnitDef.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
