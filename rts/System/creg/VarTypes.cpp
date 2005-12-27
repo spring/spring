@@ -29,6 +29,16 @@ IType* IType::CreateStaticArrayType (IType *elemType, unsigned int size)
 	return new StaticArrayType (elemType, size);
 }
 
+IType* IType::CreateEnumeratedType (size_t size)
+{
+	switch (size) {
+		case 1: return new BasicType (crUChar);
+		case 2: return new BasicType (crUShort);
+		case 4: return new BasicType (crUInt);
+	}
+	return 0;
+}
+
 
 // container type
 
