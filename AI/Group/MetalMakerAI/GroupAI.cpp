@@ -5,7 +5,7 @@
 #include "GroupAI.h"
 #include "IGroupAiCallback.h"
 #include "IAICallback.h"
-#include "UnitDef.h"
+#include "Sim/Units/UnitDef.h"
 #include <vector>
 
 //////////////////////////////////////////////////////////////////////
