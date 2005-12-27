@@ -74,6 +74,7 @@ void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,i
 {
 	this->def=def;
 	createdFromUnit=fromUnit;
+	this->pos=pos;
 	this->allyteam=allyteam;
 	this->pos.CheckInBounds();
 	this->heading=heading;

@@ -94,6 +94,8 @@ namespace creg {
 	// Macro to register a member within the CR_BIND_MEMBERS macro - the offset is a bit weird to prevent compiler warnings
 #define CR_MEMBER(Member)	\
 	class_->AddMember ( #Member, creg::GetType (null->Member), (unsigned int)(((char*)&null->Member)-((char*)0)))
+#define CR_ENUM_MEMBER(Member) \
+	class_->AddMember ( #Member, IType::CreateEnumeratedType(sizeof(null->Member)), (unsigned int)(((char*)&null->Member)-((char*)0)))
 
 	// Base object class - all objects should derive from this if they should be referencable by pointers 
 	class Object
@@ -152,6 +154,7 @@ namespace creg {
 		static IType* CreateStringType ();
 		static IType* CreatePointerToObjType (Class *objectType);
 		static IType* CreateStaticArrayType (IType *elemType, unsigned int size);
+		static IType* CreateEnumeratedType (size_t size);
 	};
 
 	struct Iterator; // Undefined Iterator struct to denote a container iterator

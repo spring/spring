@@ -954,15 +954,6 @@ void CCobInstance::SetUnitVal(int val, int param)
 	case VETERAN_LEVEL: 
 		unit->experience=param*0.01f;
 		break;
-	case CURRENT_SPEED:
-		if (param==0) 
-			unit->speed=ZeroVector;
-		else {
-			float cur=unit->speed.SqLength();
-			if (cur>0.001)
-				unit->speed *= (param*(1.0f/SCALE))/sqrtf(cur); // calculate by what value the speed should be multiplied with to get it to length=param/SCALE
-		}
-		break;
 	}
 #endif
 }

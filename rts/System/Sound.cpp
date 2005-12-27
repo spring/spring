@@ -39,15 +39,19 @@ CSound::CSound()
 		noSound = true;
 		return;
 	}
+
+	// Generate sound sources
 	Sources = new ALuint[maxSounds];
+	for (int a=0;a<maxSounds;a++) Sources[a]=0;
 }
 
 CSound::~CSound()
 {
 	LoadedFiles.clear();
-	alDeleteSources(maxSounds,Sources);
-	if (!noSound)
+	if (!noSound) {
+		alDeleteSources(maxSounds,Sources);
 		delete[] Sources;
+	}
 	for (std::vector<ALuint>::iterator it = Buffers.begin(); it != Buffers.end(); it++)
 		alDeleteBuffers(1,&(*it));
 	Buffers.clear();
@@ -78,28 +82,43 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 		return;
 	ALuint source;
 	alGenSources(1,&source);
+
+	if (alGetError() != AL_NO_ERROR) {
+		(*info) << "error generating OpenAL sound source";
+        return;
+	}
+
+	if (Sources[cur])
+		alDeleteSources(1,&Sources[cur]);
+	Sources[cur++] = source;
+	if (cur == maxSounds)
+		cur = 0;
+
 	alSourcei(source, AL_BUFFER, id);
 	alSourcef(source, AL_PITCH, 1.0f );
 	alSourcef(source, AL_GAIN, volume );
 	alSource3f(source, AL_POSITION, p.x/(gs->mapx*SQUARE_SIZE),p.y/(gs->mapy*SQUARE_SIZE),p.z/(p.maxzpos));
 	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
 	alSourcei(source, AL_LOOPING, false);
-	Enqueue(source);
 	alSourcePlay(source);
-}
-
-void CSound::Enqueue(ALuint src)
-{
-	alDeleteSources(1,&Sources[cur]);
-	Sources[cur++] = src;
-	if (cur == maxSounds)
-		cur = 0;
 }
 
 void CSound::Update()
 {
 	if (noSound)
 		return;
+
+	for (int a=0;a<maxSounds;a++) {
+		if (Sources[a]) {
+			ALint state;
+			alGetSourcei(Sources[a],AL_SOURCE_STATE, &state);
+			if (state == AL_STOPPED) {
+				alDeleteSources(1,&Sources[a]);
+				Sources[a]=0;
+			}
+		}
+	}
+
 	UpdateListener();
 }
 

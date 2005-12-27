@@ -18,6 +18,8 @@ public:
 	virtual void SetPos(float3 newPos)=0;
 	virtual float3 SwitchFrom()=0;			//return pos that to send to new controllers SetPos
 	virtual void SwitchTo()=0;
+	
+	float mouseScale;
 };
 
 class CFPSController : public CCameraController
@@ -41,8 +43,6 @@ public:
 	float oldHeight;
 
 	float3 dir;
-
-	float mouseScale;
 };
 
 class COverheadController : public CCameraController
@@ -109,8 +109,6 @@ public:
 	float oldHeight;
 
 	float3 dir;
-
-	float mouseScale;
 };
 
 #endif // __CAMERA_CONTROLLER_H__

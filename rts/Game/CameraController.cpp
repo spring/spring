@@ -18,6 +18,7 @@ extern Uint8 *keys;
 
 CCameraController::CCameraController(void)
 {
+	mouseScale = atof(configHandler.GetString("FPSMouseScale", DEFAULT_MOUSE_SCALE).c_str());
 }
 
 CCameraController::~CCameraController(void)
@@ -31,7 +32,6 @@ CCameraController::~CCameraController(void)
 CFPSController::CFPSController()
 : pos(2000,70,1800)
 {
-	mouseScale = atof(configHandler.GetString("FPSMouseScale", DEFAULT_MOUSE_SCALE).c_str());
 }
 
 void CFPSController::KeyMove(float3 move)
@@ -124,7 +124,7 @@ void COverheadController::KeyMove(float3 move)
 
 void COverheadController::MouseMove(float3 move)
 {
-	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
+	float pixelsize=100*mouseScale*tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
 	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3);	
 	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3);
 }
@@ -137,11 +137,11 @@ void COverheadController::ScreenEdgeMove(float3 move)
 void COverheadController::MouseWheelMove(float move)
 {
 	if (keys[SDLK_LCTRL]) {
-		zscale *= 1+move*0.002;
+		zscale *= 1+move * mouseScale;
 		if (zscale < 0.05) zscale = 0.05f;
 		if (zscale > 10) zscale = 10;
 	} else
-		height*=1+move*0.001;
+		height*=1+move * mouseScale*0.7;
 }
 
 float3 COverheadController::GetPos()
