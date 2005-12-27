@@ -95,6 +95,7 @@ std::vector<float3> *CMetalHandler::parseMap(){
 
 void CMetalHandler::saveState() {
 	FILE *fp=fopen(hashname(),"w");
+	if (!fp) return; // Don't crash if files/directories don't exist. --tvo
 	int v=SAVEGAME_VER;
 	fwrite(&v,sizeof(int),1,fp);
 	int s=(int)metalpatch.size();
