@@ -9,6 +9,8 @@
 SoLib::SoLib(const char *filename)
 {
 	so = dlopen(filename,RTLD_LAZY);
+	if (so == NULL)
+		fprintf(stderr, "%s:%d: SoLib::SoLib: %s\n", __FILE__, __LINE__, dlerror());
 }
 
 SoLib::~SoLib()
@@ -18,5 +20,8 @@ SoLib::~SoLib()
 
 void *SoLib::FindAddress(const char *symbol)
 {
-	return dlsym(so,symbol);
+	void* p = dlsym(so,symbol);
+	if (p == NULL)
+		fprintf(stderr, "%s:%d: SoLib::FindAddress: %s\n", __FILE__, __LINE__, dlerror());
+	return p;
 }
