@@ -43,7 +43,7 @@
 //		#include <stdlib.h>  //
 //		#include <streamio>  //
 //
-//		//#include "mmgr.h"    // mmgr.h MUST come next
+//		#include "mmgr.h"    // mmgr.h MUST come next
 //
 //		#include "myfile1.h" // Project includes MUST come last
 //		#include "myfile2.h" //
@@ -59,12 +59,13 @@
 #include <time.h>
 #include <stdarg.h>
 #include <new>
+using std::new_handler;
 
 #ifndef	WIN32
 #include <unistd.h>
 #endif
 
-//#include "mmgr.h"
+#include "mmgr.h"
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // -DOC- If you're like me, it's hard to gain trust in foreign code. This memory manager will try to INDUCE your code to crash (for
@@ -294,7 +295,7 @@ static	sAllocUnit	*findAllocUnit(const void *reportedAddress)
 	// addresses will be on four-, eight- or even sixteen-byte boundaries. If we didn't do this, the hash index would not have
 	// very good coverage.
 
-	unsigned int	hashIndex = ((unsigned int) reportedAddress >> 4) & (hashSize - 1);
+	unsigned long	hashIndex = ((unsigned long) reportedAddress >> 4) & (hashSize - 1);
 	sAllocUnit	*ptr = hashTable[hashIndex];
 	while(ptr)
 	{
@@ -313,7 +314,9 @@ static	size_t	calculateActualSize(const size_t reportedSize)
 	// being the standard word size for a processor; on a 32-bit machine, that's 4 bytes, but on a 64-bit machine, it's
 	// 8 bytes, which means an int can actually be larger than a long.)
 
-	return reportedSize + paddingSize * sizeof(long) * 2;
+	// Not true.  sizeof(int) == 4, sizeof(long) == sizeof(void*) == 8 on AMD64 w/ GCC 4.0.2 --tvo
+
+	return reportedSize + paddingSize * sizeof(int) * 2;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -324,7 +327,7 @@ static	size_t	calculateReportedSize(const size_t actualSize)
 	// being the standard word size for a processor; on a 32-bit machine, that's 4 bytes, but on a 64-bit machine, it's
 	// 8 bytes, which means an int can actually be larger than a long.)
 
-	return actualSize - paddingSize * sizeof(long) * 2;
+	return actualSize - paddingSize * sizeof(int) * 2;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -337,12 +340,12 @@ static	void	*calculateReportedAddress(const void *actualAddress)
 
 	// JUst account for the padding
 
-	return (void *) ((char *) actualAddress + sizeof(long) * paddingSize);
+	return (void *) ((char *) actualAddress + sizeof(int) * paddingSize);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-static	void	wipeWithPattern(sAllocUnit *allocUnit, unsigned long pattern, const unsigned int originalReportedSize = 0)
+static	void	wipeWithPattern(sAllocUnit *allocUnit, unsigned int pattern, const unsigned int originalReportedSize = 0)
 {
 	// For a serious test run, we use wipes of random a random value. However, if this causes a crash, we don't want it to
 	// crash in a differnt place each time, so we specifically DO NOT call srand. If, by chance your program calls srand(),
@@ -367,7 +370,7 @@ static	void	wipeWithPattern(sAllocUnit *allocUnit, unsigned long pattern, const 
 	{
 		// Fill the bulk
 
-		long	*lptr = (long *) ((char *)allocUnit->reportedAddress + originalReportedSize);
+		unsigned int	*lptr = (unsigned int *) ((char *)allocUnit->reportedAddress + originalReportedSize);
 		int	length = allocUnit->reportedSize - originalReportedSize;
 		int	i;
 		for (i = 0; i < (length >> 2); i++, lptr++)
@@ -387,8 +390,8 @@ static	void	wipeWithPattern(sAllocUnit *allocUnit, unsigned long pattern, const 
 
 	// Write in the prefix/postfix bytes
 
-	long		*pre = (long *) allocUnit->actualAddress;
-	long		*post = (long *) ((char *)allocUnit->actualAddress + allocUnit->actualSize - paddingSize * sizeof(long));
+	unsigned int		*pre = (unsigned int *) allocUnit->actualAddress;
+	unsigned int		*post = (unsigned int *) ((char *)allocUnit->actualAddress + allocUnit->actualSize - paddingSize * sizeof(int));
 	for (unsigned int i = 0; i < paddingSize; i++, pre++, post++)
 	{
 		*pre = prefixPattern;
@@ -451,10 +454,10 @@ static	void	dumpAllocations(FILE *fp)
 		sAllocUnit *ptr = hashTable[i];
 		while(ptr)
 		{
-			fprintf(fp, "%06d 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X %-8s    %c       %c    %s\r\n",
+			fprintf(fp, "%06d 0x%08lX 0x%08X 0x%08lX 0x%08X 0x%08X %-8s    %c       %c    %s\r\n",
 				ptr->allocationNumber,
-				(unsigned int) ptr->reportedAddress, ptr->reportedSize,
-				(unsigned int) ptr->actualAddress, ptr->actualSize,
+				(unsigned long) ptr->reportedAddress, ptr->reportedSize,
+				(unsigned long) ptr->actualAddress, ptr->actualSize,
 				m_calcUnused(ptr),
 				allocationTypes[ptr->allocationType],
 				ptr->breakOnDealloc ? 'Y':'N',
@@ -1007,7 +1010,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 		// Insert the new allocation into the hash table
 
-		unsigned int	hashIndex = ((unsigned int) au->reportedAddress >> 4) & (hashSize - 1);
+		unsigned long	hashIndex = ((unsigned long) au->reportedAddress >> 4) & (hashSize - 1);
 		if (hashTable[hashIndex]) hashTable[hashIndex]->prev = au;
 		au->next = hashTable[hashIndex];
 		au->prev = NULL;
@@ -1185,13 +1188,13 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 
 		// The reallocation may cause the address to change, so we should relocate our allocation unit within the hash table
 
-		unsigned int	hashIndex = (unsigned int) -1;
+		unsigned long	hashIndex = (unsigned long) -1;
 		if (oldReportedAddress != au->reportedAddress)
 		{
 			// Remove this allocation unit from the hash table
 
 			{
-				unsigned int	hashIndex = ((unsigned int) oldReportedAddress >> 4) & (hashSize - 1);
+				unsigned long	hashIndex = ((unsigned long) oldReportedAddress >> 4) & (hashSize - 1);
 				if (hashTable[hashIndex] == au)
 				{
 					hashTable[hashIndex] = hashTable[hashIndex]->next;
@@ -1205,7 +1208,7 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 
 			// Re-insert it back into the hash table
 
-			hashIndex = ((unsigned int) au->reportedAddress >> 4) & (hashSize - 1);
+			hashIndex = ((unsigned long) au->reportedAddress >> 4) & (hashSize - 1);
 			if (hashTable[hashIndex]) hashTable[hashIndex]->prev = au;
 			au->next = hashTable[hashIndex];
 			au->prev = NULL;
@@ -1325,7 +1328,7 @@ void	m_deallocator(const char *sourceFile, const unsigned int sourceLine, const 
 
 		// Remove this allocation unit from the hash table
 
-		unsigned int	hashIndex = ((unsigned int) au->reportedAddress >> 4) & (hashSize - 1);
+		unsigned long	hashIndex = ((unsigned long) au->reportedAddress >> 4) & (hashSize - 1);
 		if (hashTable[hashIndex] == au)
 		{
 			hashTable[hashIndex] = au->next;
@@ -1392,12 +1395,12 @@ bool	m_validateAllocUnit(const sAllocUnit *allocUnit)
 {
 	// Make sure the padding is untouched
 
-	long	*pre = (long *) allocUnit->actualAddress;
-	long	*post = (long *) ((char *)allocUnit->actualAddress + allocUnit->actualSize - paddingSize * sizeof(long));
+	unsigned int	*pre = (unsigned int *) allocUnit->actualAddress;
+	unsigned int	*post = (unsigned int *) ((char *)allocUnit->actualAddress + allocUnit->actualSize - paddingSize * sizeof(int));
 	bool	errorFlag = false;
 	for (unsigned int i = 0; i < paddingSize; i++, pre++, post++)
 	{
-		if (*pre != (long) prefixPattern)
+		if (*pre != prefixPattern)
 		{
 			log("A memory allocation unit was corrupt because of an underrun:");
 			m_dumpAllocUnit(allocUnit, "  ");
@@ -1407,9 +1410,9 @@ bool	m_validateAllocUnit(const sAllocUnit *allocUnit)
 		// If you hit this assert, then you should know that this allocation unit has been damaged. Something (possibly the
 		// owner?) has underrun the allocation unit (modified a few bytes prior to the start). You can interrogate the
 		// variable 'allocUnit' to see statistics and information about this damaged allocation unit.
-		m_assert(*pre == (long) prefixPattern);
+		m_assert(*pre == prefixPattern);
 
-		if (*post != (long) postfixPattern)
+		if (*post != postfixPattern)
 		{
 			log("A memory allocation unit was corrupt because of an overrun:");
 			m_dumpAllocUnit(allocUnit, "  ");
@@ -1419,7 +1422,7 @@ bool	m_validateAllocUnit(const sAllocUnit *allocUnit)
 		// If you hit this assert, then you should know that this allocation unit has been damaged. Something (possibly the
 		// owner?) has overrun the allocation unit (modified a few bytes after the end). You can interrogate the variable
 		// 'allocUnit' to see statistics and information about this damaged allocation unit.
-		m_assert(*post == (long) postfixPattern);
+		m_assert(*post == postfixPattern);
 	}
 
 	// Return the error status (we invert it, because a return of 'false' means error)
@@ -1480,12 +1483,12 @@ bool	m_validateAllAllocUnits()
 
 unsigned int	m_calcUnused(const sAllocUnit *allocUnit)
 {
-	const unsigned long	*ptr = (const unsigned long *) allocUnit->reportedAddress;
+	const unsigned int	*ptr = (const unsigned int *) allocUnit->reportedAddress;
 	unsigned int		count = 0;
 
-	for (unsigned int i = 0; i < allocUnit->reportedSize; i += sizeof(long), ptr++)
+	for (unsigned int i = 0; i < allocUnit->reportedSize; i += sizeof(int), ptr++)
 	{
-		if (*ptr == unusedPattern) count += sizeof(long);
+		if (*ptr == unusedPattern) count += sizeof(int);
 	}
 
 	return count;
