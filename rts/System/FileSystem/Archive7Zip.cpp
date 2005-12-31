@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "Archive7Zip.h"
-
 #include <algorithm>
+//#include "mmgr.h"
 
 // Most of this code is taken from 7zMain.c
 

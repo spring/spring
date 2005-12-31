@@ -7,6 +7,7 @@
 #include <ostream>
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Map/Ground.h"
+//#include "mmgr.h"
 
 #define PATHDEBUG false
 
@@ -37,14 +38,14 @@ void* pfAlloc(size_t n)
 
 void pfDealloc(void *p,size_t n)
 {
-	free(p);
+	delete[] ((char*)p);
 }
 
 /*
 Constructor.
 Building tables and precalculating data.
 */
-CPathFinder::CPathFinder() 
+CPathFinder::CPathFinder()
 : openSquareBufferPointer(openSquareBuffer)
 {
 	//Creates and init all square states.
@@ -134,11 +135,11 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, std::vector<f
 	//If exact path is reqired and the goal is blocked, then no search is needed.
 	if(exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
 		return CantGetCloser;
-	
+
 	//If the starting position is a goal position, then no search need to be performed.
 	if(pfDef.IsGoal(startxSqr, startzSqr))
 		return CantGetCloser;
-	
+
 	//Clearing the system from last search.
 	ResetSearch();
 
@@ -167,7 +168,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, std::vector<f
 
 	//Performs the search.
 	SearchResult result = DoSearch(moveData, pfDef);
-	
+
 	//Respond to the success of the search.
 	if(result == Ok) {
 		FinishSearch(moveData, path);
@@ -254,7 +255,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 	//If the starting position is a goal position, then no search need to be performed.
 	if(pfDef.IsGoal(startxSqr, startzSqr))
 		return CantGetCloser;
-	
+
 	//Clearing the system from last search.
 	ResetSearch();
 
@@ -279,7 +280,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 
 	//Performs the search.
 	SearchResult result = DoSearch(moveData, pfDef);
-	
+
 	//If no improvement has been found then return CantGetCloser instead.
 	if(goalSquare == startSquare || goalSquare == 0) {
 		return CantGetCloser;
@@ -356,12 +357,12 @@ and possibly add it to the queue of open squares.
 */
 bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection) {
 	testedNodes++;
-	
+
 	//Calculate the new square.
 	int2 square;
 	square.x = parentOpenSquare->square.x + directionVector[enterDirection].x;
 	square.y = parentOpenSquare->square.y + directionVector[enterDirection].y;
-	
+
 	//Inside map?
 	if(square.x < 0 || square.y < 0	|| square.x >= gs->mapx || square.y >= gs->mapy)
 		return false;
@@ -516,7 +517,7 @@ bool CPathFinderDef::IsGoal(int xSquare, int zSquare) const {
 /*
 Distance to goal center in mapsquares.
 */
-float CPathFinderDef::Heuristic(int xSquare, int zSquare) const 
+float CPathFinderDef::Heuristic(int xSquare, int zSquare) const
 {
 	int min=abs(xSquare-goalSquareX);
 	int max=abs(zSquare-goalSquareZ);
@@ -618,7 +619,7 @@ CPathFinderDef(goal, goalRadius)
 /*
 Tests if a square is inside is the circular constrainted area.
 */
-bool CRangedGoalWithCircularConstraint::WithinConstraints(int xSquare, int zSquare) const 
+bool CRangedGoalWithCircularConstraint::WithinConstraints(int xSquare, int zSquare) const
 {
 	int dx=halfWayX-xSquare;
 	int dz=halfWayZ-zSquare;

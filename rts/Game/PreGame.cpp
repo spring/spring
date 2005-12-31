@@ -17,11 +17,11 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "GameVersion.h"
-//#include "mmgr.h"
 #include "Platform/filefunctions.h"
 #include "Platform/errorhandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
+//#include "mmgr.h"
 
 CPreGame* pregame=0;
 extern Uint8 *keys;
@@ -192,7 +192,7 @@ bool CPreGame::Draw(void)
 
 bool CPreGame::Update(void)
 {
-	if(waitOnAddress && !userWriting){		//användaren har skrivit klart addressen
+	if(waitOnAddress && !userWriting){		//anvï¿½daren har skrivit klart addressen
 		waitOnAddress=false;
 		if (saveAddress)
 			configHandler.SetString("address",userInput);

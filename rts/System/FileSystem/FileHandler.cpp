@@ -5,9 +5,9 @@
 #include "VFSHandler.h"
 #include <algorithm>
 #include <cctype>
-//#include "mmgr.h"
 #include "Platform/filefunctions.h"
 #include <boost/filesystem/exception.hpp>
+//#include "mmgr.h"
 
 using namespace std;
 
