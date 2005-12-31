@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "ArchiveHPI.h"
 #include <algorithm>
+//#include "mmgr.h"
 
 using namespace hpiutil;
 
