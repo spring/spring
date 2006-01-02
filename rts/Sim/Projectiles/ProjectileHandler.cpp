@@ -23,7 +23,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include <algorithm>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -385,7 +385,7 @@ END_TIME_PROFILE("Projectile handler");
 }
 
 int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2){
-	if (arg1.dist > arg2.dist)
+	if (arg1.dist >= arg2.dist)
 	   return 0;
    return 1;
 }
