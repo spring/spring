@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../../lua/lua/include;../../../crashrpt/include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
+				PreprocessorDefinitions="_WIN32;WIN32;_DEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -72,7 +72,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="../../;../../System;../../../lua/lua/include;../../../lua/luabind;../../../crashrpt/include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI"
 				RuntimeLibrary="2"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="3"
@@ -1906,6 +1906,18 @@
 			</File>
 			<File
 				RelativePath="..\..\System\MemPool.h">
+			</File>
+			<File
+				RelativePath="..\..\System\mmgr.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\mmgr.h">
 			</File>
 			<File
 				RelativePath="..\..\System\Net.cpp">
