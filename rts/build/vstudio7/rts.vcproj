@@ -1155,6 +1155,12 @@
 				<File
 					RelativePath="..\..\Rendering\Gl\VertexArrayRange.h">
 				</File>
+				<File
+					RelativePath="..\..\Rendering\Gl\WinPBuffer.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Gl\WinPBuffer.h">
+				</File>
 			</Filter>
 			<Filter
 				Name="Map"
