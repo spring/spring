@@ -13,6 +13,10 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "GL/FBO.h"
 
+#ifdef WIN32
+#include "GL/WinPBuffer.h"
+#endif
+
 CShadowHandler* shadowHandler=0;
 
 CShadowHandler::CShadowHandler(void): fb(0)
@@ -25,6 +29,8 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	
 	if(!configHandler.GetInt("Shadows",0))
 		return;
+
+	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
 
 	if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
 		info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
@@ -45,11 +51,18 @@ CShadowHandler::CShadowHandler(void): fb(0)
 			return;
 		}
 	}
+
+#ifdef WIN32
+	fb = new WinPBuffer (shadowMapSize);
+	if (!fb->valid ())
+		return;
+#else
 	fb = new FBO();
 	if (!fb->valid()) {
 		info->AddLine("EXT_framebuffer_object is required for shadowmaps");
 		return;
 	}
+#endif
 	if(!GLEW_ARB_shadow_ambient){
 		if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			if(!useFPShadows)
@@ -62,7 +75,6 @@ CShadowHandler::CShadowHandler(void): fb(0)
 
 	drawShadows=true;
 	useFPShadows=true;
-	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
 
 	glGenTextures(1,&tempTexture);
 	glBindTexture(GL_TEXTURE_2D, tempTexture);
@@ -71,7 +83,7 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	fb->attachTexture(tempTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+	fb->attachTexture(tempTexture, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
 
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
@@ -81,7 +93,16 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	fb->attachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+	fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_DEPTH);
+
+	GLenum err;
+	if ((err = glGetError ()) != GL_NO_ERROR)
+	{
+		if (GL_INVALID_FRAMEBUFFER_OPERATION_EXT == err)
+			info->AddLine ("Invalid framebuffer operation.");
+		else
+			info->AddLine ("Unknown error.");
+	}
 
 	fb->checkFBOStatus();
 }

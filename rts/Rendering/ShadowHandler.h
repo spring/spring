@@ -1,10 +1,11 @@
 #ifndef SHADOWHANDLER_H
 #define SHADOWHANDLER_H
 
-#include "GL/FBO.h"
 #include "Matrix44f.h"
 #include "GL/myGL.h"
 #include <vector>
+
+class IFramebuffer;
 
 class CShadowHandler
 {
@@ -43,7 +44,7 @@ protected:
 		float maxz;
 	};
 	std::vector<fline> left;
-	FBO *fb;
+	IFramebuffer *fb;
 };
 
 extern CShadowHandler* shadowHandler;

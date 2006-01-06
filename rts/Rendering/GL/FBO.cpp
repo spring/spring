@@ -47,10 +47,17 @@ void FBO::checkFBOStatus(void)
 		assert(0);
 }
 
-void FBO::attachTexture(GLuint tex, const unsigned int textype, const unsigned int attachtype)
+void FBO::attachTexture(GLuint tex, const unsigned int textype, FramebufferAttachType attachtype)
 {
+	GLenum glattachtype;
+
+	if (attachtype == FBO_ATTACH_DEPTH)
+		glattachtype = GL_DEPTH_ATTACHMENT_EXT;
+	if (attachtype == FBO_ATTACH_COLOR)
+		glattachtype = GL_COLOR_ATTACHMENT0_EXT;
+
 	select();
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachtype, textype, tex, 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachtype, textype, tex, glattachtype);
 	deselect();
 }
 
