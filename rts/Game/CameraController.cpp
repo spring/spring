@@ -334,7 +334,7 @@ void CRotOverheadController::MouseWheelMove(float move)
 {
 	float gheight=ground->GetHeight(pos.x,pos.z);
 	float height=pos.y-gheight;
-	height*=1+move*0.001;
+	height*=1+move*mouseScale;
 	pos.y=height+gheight;
 }
 
