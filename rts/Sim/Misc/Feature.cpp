@@ -13,6 +13,7 @@
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "myMath.h"
 //#include "mmgr.h"
 
 CR_BIND_DERIVED(CFeature, CSolidObject)
@@ -102,11 +103,8 @@ void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,i
 	id=featureHandler->AddFeature(this);
 	qf->AddFeature(this);
 
+	CalculateTransform ();
 //	this->pos.y=ground->GetHeight(pos.x,pos.z);
-	transMatrix.Translate(pos.x,pos.y,pos.z);
-	transMatrix.RotateY(-heading*PI/0x7fff);
-	if (!def->upright)
-		transMatrix.SetUpVector(ground->GetNormal(pos.x,pos.z));
 
 	if(blocking){
 		Block();
@@ -119,6 +117,22 @@ void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,i
 
 	if(def->drawType==DRAWTYPE_TREE)
 		treeDrawer->AddTree(def->modelType,pos,1);
+}
+
+void CFeature::CalculateTransform ()
+{
+	float3 frontDir=GetVectorFromHeading(heading);
+	float3 upDir;
+
+	if (def->upright) upDir = float3(0.0f,1.0f,0.0f);
+	else upDir = ground->GetNormal(pos.x,pos.z);
+
+	float3 rightDir=frontDir.cross(upDir);
+	rightDir.Normalize();
+	frontDir=upDir.cross(rightDir);
+	frontDir.Normalize ();
+
+	transMatrix = CMatrix44f (pos,-rightDir,upDir,frontDir);
 }
 
 bool CFeature::AddBuildPower(float amount, CUnit* builder)

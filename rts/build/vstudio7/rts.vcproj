@@ -1184,40 +1184,6 @@
 					RelativePath="..\..\Rendering\Map\BFGroundTextures.h">
 				</File>
 			</Filter>
-			<Filter
-				Name="Textures"
-				Filter="">
-				<File
-					RelativePath="..\..\Rendering\Textures\nv_dds.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\nv_dds.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TAPalette.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TAPalette.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.h">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Simulation"
@@ -1878,6 +1844,40 @@
 						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h">
 					</File>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="Textures"
+				Filter="">
+				<File
+					RelativePath="..\..\Rendering\Textures\nv_dds.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\nv_dds.h">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TAPalette.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TAPalette.h">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TextureHandler.h">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
