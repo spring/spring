@@ -26,15 +26,16 @@ public:
 	bool valid(void);
 
 protected:
-	HPBUFFERARB hPBuffer; // Handle to a p-buffer.
-	HDC         hDCPBuffer;      // Handle to a device context.
-	HGLRC       hRCPBuffer;      // Handle to a GL rendering context.
+	HPBUFFERARB hPBuffer;	// Handle to a p-buffer.
+	HDC hDCPBuffer;			// Handle to a device context.
+	HGLRC hRCPBuffer;		// Handle to a GL rendering context.
 
-	HDC			hMainDC;
-	HWND		hWnd;
+	HDC hMainDC;
+	HWND hWnd;
 
 	int shadowMapSize;
 	unsigned int shadowTex;
+	bool copyDepthTexture;
 };
 
 #endif
