@@ -28,6 +28,7 @@ public:
 	virtual bool Update(void);
 	void StartFire(void);
 	void DrawS3O();
+	void CalculateTransform();
 
 	std::string createdFromUnit;
 	float resurrectProgress;

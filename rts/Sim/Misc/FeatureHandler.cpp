@@ -322,11 +322,7 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 					(*fi)->finalHeight=ground->GetHeight2((*fi)->pos.x,(*fi)->pos.z);
 				}
 
-				(*fi)->transMatrix=CMatrix44f();
-				(*fi)->transMatrix.Translate((*fi)->pos.x,(*fi)->pos.y,(*fi)->pos.z);
-				(*fi)->transMatrix.RotateY(-(*fi)->heading*PI/0x7fff);
-				if (!(*fi)->def->upright)
-					(*fi)->transMatrix.SetUpVector(ground->GetNormal((*fi)->pos.x,(*fi)->pos.z));
+				(*fi)->CalculateTransform ();
 			}
 		}
 	}
@@ -446,10 +442,7 @@ void CFeatureHandler::DrawRaw(int extraSize,std::vector<CFeature*>* farFeatures)
 					float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
 					if(sqDist<farLength){
 						if(!def->model->textureType || shadowHandler->inShadowPass){
-							glPushMatrix();
- 							glMultMatrixf(f->transMatrix.m);
-							def->model->DrawStatic();
-							glPopMatrix();
+							f->DrawS3O ();
 						} else {
 							unitDrawer->QueS3ODraw(f,def->model->textureType);
 						}
