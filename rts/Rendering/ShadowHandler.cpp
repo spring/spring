@@ -95,15 +95,6 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_DEPTH);
 
-	GLenum err;
-	if ((err = glGetError ()) != GL_NO_ERROR)
-	{
-		if (GL_INVALID_FRAMEBUFFER_OPERATION_EXT == err)
-			info->AddLine ("Invalid framebuffer operation.");
-		else
-			info->AddLine ("Unknown error.");
-	}
-
 	fb->checkFBOStatus();
 }
 

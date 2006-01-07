@@ -8,9 +8,18 @@
 #pragma warning (disable:4530)
 
 #ifdef _MSC_VER
-#define SNPRINTF _snprintf
+/*
+Microsoft Visual C++ 7.1: MSC_VER = 1310
+Microsoft Visual C++ 7.0: MSC_VER = 1300
+*/
+	#if _MSC_VER > 1310 // >= Visual Studio 2005
+		#define SNPRINTF sprintf_s 
+	#else              // Visual Studio 2003
+		#define SNPRINTF _snprintf
+	#endif
 #else
-#define SNPRINTF snprintf
+	// assuming GCC 
+	#define SNPRINTF snprintf
 #endif
 
 // This reduces compile-time with precompiled headers on msvc

@@ -460,13 +460,13 @@ static void recenter_mouse()
 {
 	SDL_WarpMouse(
 		gu->screenx/2
-#ifdef _WIN32
+/*#ifdef _WIN32
 		+4*!fullscreen
-#endif
+#endif*/
 		, gu->screeny/2
-#ifdef _WIN32		
+/*#ifdef _WIN32		
 		+23*!fullscreen
-#endif
+#endif*/
 		);
 }
 

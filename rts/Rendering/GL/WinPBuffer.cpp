@@ -13,6 +13,7 @@ By Jelmer Cnossen
 #include "Platform/errorhandler.h"
 #include "FBO.h"
 #include "WinPBuffer.h"
+#include "Game/UI/InfoConsole.h"
 
 
 WinPBuffer::WinPBuffer(int shadowMapSize) : shadowMapSize (shadowMapSize)
@@ -20,6 +21,13 @@ WinPBuffer::WinPBuffer(int shadowMapSize) : shadowMapSize (shadowMapSize)
 	hDCPBuffer = 0;
 	hPBuffer = 0;
 	hRCPBuffer = 0;
+
+	copyDepthTexture=true;
+
+	if(WGLEW_NV_render_depth_texture){
+		info->AddLine("Using NV_render_depth_texture");
+		copyDepthTexture=false;
+	}
 
 	//
 	// Set some p-buffer attributes so that we can use this p-buffer as a
@@ -32,11 +40,11 @@ WinPBuffer::WinPBuffer(int shadowMapSize) : shadowMapSize (shadowMapSize)
 		WGL_TEXTURE_TARGET_ARB, WGL_TEXTURE_2D_ARB,                  // Of texture target will be GL_TEXTURE_2D
 		0                                                            // Zero terminates the list
 	};
-/*	if(!copyDepthTexture){
+	if(!copyDepthTexture){
 		pb_attr[4]=WGL_DEPTH_TEXTURE_FORMAT_NV;												//add nvidia depth texture support if supported
 		pb_attr[5]=WGL_TEXTURE_DEPTH_COMPONENT_NV;
 		pb_attr[6]=0;
-	}*/
+	}
 
 	// Get DC & RC
 
@@ -100,15 +108,17 @@ void WinPBuffer::attachTexture(const unsigned int tex, const unsigned int textyp
 
 void WinPBuffer::select(void)
 {
-	/*if(!copyDepthTexture && !firstDraw){
-		glBindTexture(GL_TEXTURE_2D, shadowTexture);
+	if(!copyDepthTexture)
+	{
+		// Release the texture from the pbuffer, so the pbuffer can be used as a rendering target
+		glBindTexture(GL_TEXTURE_2D, shadowTex);
 		if( wglReleaseTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
 		{
 			handleerror(NULL,"Could not release p-buffer from render texture!",
 				"ERROR",MBF_OK|MBF_EXCL);
 			exit(-1);
 		}
-	}*/
+	}
 
 	if( wglMakeCurrent( hDCPBuffer, hRCPBuffer) == FALSE )
 	{
@@ -121,13 +131,24 @@ void WinPBuffer::select(void)
 void WinPBuffer::deselect(void)
 {
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
+	if (copyDepthTexture)
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
 
 	if( wglMakeCurrent( hMainDC, hRCPBuffer ) == FALSE )
 	{
 		handleerror(NULL,"Could not make the window's context current!",
 			"ERROR",MBF_OK|MBF_EXCL);
 		exit(-1);
+	}
+
+	// bind the P-buffer to the texture again, so the texture can be used
+	if(!copyDepthTexture){
+		if( wglBindTexImageARB( hPBuffer, WGL_DEPTH_COMPONENT_NV ) == FALSE )
+		{
+			handleerror(NULL,"Could not bind p-buffer to render texture!",
+				"ERROR",MBF_OK|MBF_EXCL);
+			exit(-1);
+		}
 	}
 }
 

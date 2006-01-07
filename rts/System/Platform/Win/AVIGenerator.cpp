@@ -289,9 +289,8 @@ HRESULT CAVIGenerator::AddFrame(BYTE *bmBits)
 
 void CAVIGenerator::MakeExtAvi()
 {
-	
 	// finding avi
-	if( _tcsstr(m_sFile,_T("avi"))==NULL )
+	if( _tcsstr((const char *)m_sFile,(const char *)_T("avi"))==NULL )
 	{
 		m_sFile+=_T(".avi");
 	}
