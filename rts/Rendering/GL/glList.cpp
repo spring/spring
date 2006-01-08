@@ -8,7 +8,7 @@
 
 #include "Rendering/glFont.h"
 #include "Platform/ConfigHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

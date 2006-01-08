@@ -9,7 +9,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Sim/Map/Ground.h"
 #include "Game/CameraController.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CUnitTracker unitTracker;
 

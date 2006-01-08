@@ -26,7 +26,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sound.h"
 #include "SDL_types.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #endif
 

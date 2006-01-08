@@ -17,7 +17,7 @@
 #include "Platform/byteorder.h"
 #include "Platform/errorhandler.h"
 #include <boost/filesystem/path.hpp>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 void SS3O::DrawStatic()
 {

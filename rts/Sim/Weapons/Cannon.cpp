@@ -16,7 +16,7 @@
 #include "myMath.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

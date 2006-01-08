@@ -14,7 +14,7 @@
 #include "Matrix44f.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget) : 
 	CProjectile(pos,speed,owner),

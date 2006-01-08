@@ -5,7 +5,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Platform/ConfigHandler.h"
 #include "DynWater.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CBaseWater* water=0;
 

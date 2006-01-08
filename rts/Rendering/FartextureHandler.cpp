@@ -6,7 +6,7 @@
 #include "GlobalStuff.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Bitmap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CFartextureHandler* fartextureHandler = NULL;
 

@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "NoWeapon.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CNoWeapon::CNoWeapon(CUnit *owner) : CWeapon(owner)
 {

@@ -16,7 +16,7 @@
 #include <boost/filesystem/path.hpp>
 #include "SDL_types.h"
 #include "SDL_keysym.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #include "GUI/GUIcontroller.h"
 
 CSelectionKeyHandler *selectionKeys;

@@ -3,7 +3,7 @@
 #include "Game/UI/InfoConsole.h"
 #include <algorithm>
 #include <cctype>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 CCategoryHandler* CCategoryHandler::instance=0;

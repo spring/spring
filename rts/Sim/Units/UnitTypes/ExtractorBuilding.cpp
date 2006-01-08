@@ -16,7 +16,7 @@
 #include "Sim/Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "SyncTracer.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CExtractorBuilding, CBuilding);
 

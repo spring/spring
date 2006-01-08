@@ -12,7 +12,7 @@
 #include "Game/SelectedUnits.h"
 #include "LoadSaveInterface.h"
 #include "ExternalAI/GlobalAIHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CCommandAI::CCommandAI(CUnit* owner)
 :	lastUserCommand(-1000),

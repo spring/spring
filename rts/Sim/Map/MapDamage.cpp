@@ -14,7 +14,7 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitDef.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CMapDamage* mapDamage;
 

@@ -27,7 +27,7 @@
 #include "Rendering/InMapDraw.h"
 #include "Game/CameraController.h"
 #include "Sim/Map/MapDamage.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #include "SDL_types.h"
 #include "SDL_mouse.h"
 #include "SDL_keysym.h"

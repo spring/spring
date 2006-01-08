@@ -25,7 +25,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CFactory, CBuilding);
 

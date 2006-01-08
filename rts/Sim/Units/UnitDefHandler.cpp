@@ -17,7 +17,7 @@
 #include "Sim/Map/ReadMap.h"
 #include "Game/GameSetup.h"
 #include "Rendering/GroundDecalHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND(UnitDef);
 

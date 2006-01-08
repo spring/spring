@@ -17,7 +17,7 @@
 #include "Platform/ConfigHandler.h"
 #include <boost/filesystem/path.hpp>
 
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

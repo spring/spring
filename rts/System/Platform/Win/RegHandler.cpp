@@ -7,7 +7,7 @@
 
 #include <SDL_types.h>
 
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -7,7 +7,7 @@
 #include "Sim/Projectiles/LightingProjectile.h"
 #include "Sim/Map/Ground.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CLightingCannon::CLightingCannon(CUnit* owner)
 : CWeapon(owner)

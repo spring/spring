@@ -9,7 +9,7 @@
 #include <set>
 #include "Game/command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 static CSpawnScript sps;
 extern std::string stupidGlobalMapname;

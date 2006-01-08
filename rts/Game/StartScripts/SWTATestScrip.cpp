@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "SWTATestScrip.h"
 #include "Sim/Units/UnitLoader.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 static CSWTATestScrip swtasTest;
 

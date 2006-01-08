@@ -9,7 +9,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Feature.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

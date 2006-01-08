@@ -21,7 +21,7 @@
 #include "Platform/errorhandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CPreGame* pregame=0;
 extern Uint8 *keys;

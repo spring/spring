@@ -8,7 +8,7 @@
 #include "Sim/Map/Ground.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "TdfParser.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CYehaTestScript yehatest;
 

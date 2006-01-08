@@ -5,7 +5,7 @@
 #include "CobEngine.h"
 
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #ifdef _CONSOLE
 #include "GlobalStuff.h"

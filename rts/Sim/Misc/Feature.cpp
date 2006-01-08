@@ -14,7 +14,7 @@
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "myMath.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CFeature, CSolidObject)
 

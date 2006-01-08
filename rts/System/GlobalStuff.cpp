@@ -12,7 +12,7 @@
 #include "Rendering/Textures/TAPalette.h"
 #include "SDL_types.h"
 #include "SDL_timer.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -10,7 +10,7 @@
 #include "Platform/errorhandler.h"
 #include "SDL_keysym.h"
 
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 

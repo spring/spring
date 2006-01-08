@@ -5,7 +5,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Map/ReadMap.h"
 #include <boost/lexical_cast.hpp>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CMoveInfo* moveinfo;
 using namespace std;

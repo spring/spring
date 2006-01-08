@@ -30,7 +30,7 @@
 #include "Sim/Path/PathManager.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/Player.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

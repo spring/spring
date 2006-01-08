@@ -5,7 +5,7 @@
 #include "Game/Camera.h"
 #include "GL/VertexArray.h"
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 unsigned int CGroundFlash::texture=0;
 CVertexArray* CGroundFlash::va=0;

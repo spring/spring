@@ -4,7 +4,7 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit);
 

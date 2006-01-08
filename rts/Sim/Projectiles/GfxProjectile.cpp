@@ -9,7 +9,7 @@
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

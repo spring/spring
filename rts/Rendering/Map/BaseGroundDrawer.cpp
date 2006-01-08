@@ -4,7 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Sim/Map/ReadMap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CBaseGroundDrawer* groundDrawer;
 

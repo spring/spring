@@ -6,7 +6,7 @@
 #include "MeleeWeapon.h"
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

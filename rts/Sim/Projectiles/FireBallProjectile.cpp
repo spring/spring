@@ -4,7 +4,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CFireBallProjectile::CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)
 	: CWeaponProjectile(pos,speed, owner, target, targetPos, weaponDef,0)

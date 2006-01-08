@@ -11,7 +11,7 @@
 #include "PathFinder.h"
 #include "PathEstimator.h"
 #include "SDL_timer.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 const float ESTIMATE_DISTANCE = 55;
 const float MIN_ESTIMATE_DISTANCE = 40;

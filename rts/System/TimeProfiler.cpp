@@ -10,7 +10,7 @@
 #include "SDL_timer.h"
 
 #include "Rendering/GL/VertexArray.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #ifdef PROFILE_TIME
 

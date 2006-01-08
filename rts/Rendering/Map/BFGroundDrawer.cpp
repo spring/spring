@@ -19,7 +19,7 @@
 #include "Game/UI/GuiHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 // MSVC compiler does not have std::min and max, but rather, it's own built in macro
 #ifdef _MSC_VER

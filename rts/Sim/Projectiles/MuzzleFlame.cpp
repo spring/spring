@@ -6,7 +6,7 @@
 #include "ProjectileHandler.h"
 #include "GlobalStuff.h"
 #include "SyncTracer.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size)
 : CProjectile(pos,speed,0),

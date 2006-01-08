@@ -4,7 +4,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Object.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CObject, creg::Object)
 

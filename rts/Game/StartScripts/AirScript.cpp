@@ -10,7 +10,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Map/Ground.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 static CAirScript ts;
 

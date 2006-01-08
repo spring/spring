@@ -14,7 +14,7 @@
 #include "Platform/errorhandler.h"
 #include "SDL_types.h"
 #include "Platform/byteorder.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CSound* sound;
 

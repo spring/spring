@@ -6,7 +6,7 @@
 #include <boost/filesystem/operations.hpp>
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CGlobalAI::CGlobalAI(int team, const char* dll)
 : team(team)

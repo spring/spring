@@ -13,6 +13,8 @@
 #ifndef	_H_MMGR
 #define	_H_MMGR
 
+#ifdef USE_MMGR
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // For systems that don't have the __FUNCTION__ variable, we can just define it here
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -125,8 +127,6 @@ void	*operator new[](size_t reportedSize, const char *sourceFile, int sourceLine
 void	operator delete(void *reportedAddress);
 void	operator delete[](void *reportedAddress);
 
-#endif // _H_MMGR
-
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Macros -- "Kids, please don't try this at home. We're trained professionals here." :)
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -143,3 +143,6 @@ void	operator delete[](void *reportedAddress);
 // mmgr.h - End of file
 // ---------------------------------------------------------------------------------------------------------------------------------
 
+#endif // USE_MMGR
+
+#endif // _H_MMGR

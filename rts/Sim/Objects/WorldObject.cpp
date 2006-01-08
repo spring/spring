@@ -4,7 +4,7 @@
 
 #include "StdAfx.h"
 #include "WorldObject.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -5,7 +5,7 @@
 #include "Game/Team.h"
 
 static CCommanderScript2 ts;
-//#include "mmgr.h"
+#include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
 

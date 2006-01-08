@@ -10,7 +10,7 @@
 #include "Bitmap.h"
 #include "Sim/Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -13,7 +13,7 @@
 #include "Game/Team.h"
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #ifdef _WIN32
 #include <direct.h>
 #else

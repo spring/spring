@@ -4,7 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CTooltipConsole* tooltip=0;
 

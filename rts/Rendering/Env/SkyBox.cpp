@@ -8,7 +8,7 @@
 #include "GlobalStuff.h"
 #include "Sim/Map/ReadMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 extern GLfloat FogBlack[]; 
 extern GLfloat FogLand[]; 

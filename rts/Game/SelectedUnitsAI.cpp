@@ -16,7 +16,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 //#include "GroundMoveType.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;

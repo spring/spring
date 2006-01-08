@@ -41,7 +41,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Misc/FeatureHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #include "GUICommandPool.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"

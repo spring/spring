@@ -24,7 +24,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Map/BFGroundDrawer.h"
 #include "Rendering/Textures/TextureHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 

@@ -14,7 +14,7 @@
 #include "SyncTracer.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 static const float Smoke_Time=60;
 

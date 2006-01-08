@@ -22,7 +22,7 @@
 #include "Game/Player.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 
 //////////////////////////////////////////////////////////////////////

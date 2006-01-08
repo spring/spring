@@ -12,7 +12,7 @@
 #include "TimeProfiler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Platform/errorhandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

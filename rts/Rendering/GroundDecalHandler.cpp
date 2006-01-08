@@ -11,7 +11,7 @@
 #include "Platform/ConfigHandler.h"
 #include <cctype>
 #include "Game/Camera.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CGroundDecalHandler* groundDecals=0;
 using namespace std;

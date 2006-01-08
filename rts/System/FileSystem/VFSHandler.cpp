@@ -7,7 +7,7 @@
 #include <algorithm>
 #include "Rendering/GL/myGL.h"
 #include "Platform/filefunctions.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CVFSHandler* hpiHandler=0;
 

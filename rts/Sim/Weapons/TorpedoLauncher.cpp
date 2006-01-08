@@ -7,7 +7,7 @@
 #include "Sim/Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 : CWeapon(owner),

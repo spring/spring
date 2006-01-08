@@ -6,7 +6,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CInterceptHandler interceptHandler;
 

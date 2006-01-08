@@ -3,7 +3,7 @@
 #include "TimeProfiler.h"
 #include "LosHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CRadarHandler* radarhandler=0;
 

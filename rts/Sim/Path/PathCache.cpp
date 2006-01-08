@@ -2,7 +2,7 @@
 #include "PathCache.h"
 #include <algorithm>
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 

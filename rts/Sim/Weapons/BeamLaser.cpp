@@ -9,7 +9,7 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/BeamLaserProjectile.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CBeamLaser::CBeamLaser(CUnit* owner)
 : CWeapon(owner),

@@ -6,7 +6,7 @@
 #include "Building.h"
 #include "Sim/Map/ReadMap.h"
 
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CBuilding, CUnit);
 

@@ -7,7 +7,7 @@
 #include "Sim/Map/Ground.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner)
 : CWeapon(owner),

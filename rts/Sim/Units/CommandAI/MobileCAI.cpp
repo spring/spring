@@ -12,7 +12,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Game/Team.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CMobileCAI::CMobileCAI(CUnit* owner)
 : CCommandAI(owner),

@@ -8,7 +8,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "FileSystem/FileHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 
 class CAIScriptHandler
