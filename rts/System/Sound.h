@@ -28,8 +28,6 @@ private:
 	vector<string> LoadedFiles;
 	vector<ALuint> Buffers;
 	ALuint *Sources;
-	ALCdevice *device;
-	ALCcontext *context;
 };
 
 extern CSound* sound;
