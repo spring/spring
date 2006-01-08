@@ -9,9 +9,9 @@
 #include "Platform/errorhandler.h"
 #include <sstream>
 
-dotfileHandler::dotfileHandler(const string filename)
+dotfileHandler::dotfileHandler(const string fname)
 {
-	std::ifstream reader(filename.c_str());
+	std::ifstream reader(fname.c_str());
 	if (reader.good()) {
 		int idx;
 		string read;
@@ -21,9 +21,10 @@ dotfileHandler::dotfileHandler(const string filename)
 		reader.close();
 	} else
 		handleerror(0,"Could not read from config file","dotfileHandler",MBF_EXCL);
-	file.open(filename.c_str());
+	file.open(fname.c_str());
 	if (!file)
 		handleerror(0,"Could not write to config file","dotfileHandler",0);
+	filename = fname;
 	flushfile();
 }
 
@@ -45,6 +46,13 @@ string dotfileHandler::GetString(const string name, const string def)
 	return ( pos == data.end() ? def : data[name] );
 }
 
+void dotfileHandler::truncatefile(void)
+{
+	if (file)
+		file.close();
+	file.open(filename.c_str(),std::ios::out|std::ios::trunc);
+}
+
 /*
  * Pretty hackish, but Windows registry changes
  * save immediately, while with dotfileHandler the
@@ -54,7 +62,7 @@ string dotfileHandler::GetString(const string name, const string def)
  */
 void dotfileHandler::flushfile(void)
 {
-	file.seekp(std::ios::beg);
+	truncatefile();
 	for(std::map<string,string>::iterator iter = data.begin(); iter != data.end(); iter++)
 		file << iter->first << "=" << iter->second << std::endl;
 	file.flush();
