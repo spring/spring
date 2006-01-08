@@ -21,16 +21,19 @@ using std::string;
 class dotfileHandler: public ConfigHandler
 {
 public:
-	dotfileHandler(string filename);
+	dotfileHandler(string fname);
 	virtual ~dotfileHandler();
 	virtual void SetInt(std::string name, unsigned int value);
 	virtual void SetString(std::string name, std::string value);
 	virtual std::string GetString(std::string name, std::string def);
 	virtual unsigned int GetInt(std::string name, unsigned int def);
 protected:
+	std::string filename;
 	std::ofstream file;
 	std::map<string,string> data;
 	virtual void flushfile(void);
+	virtual void truncatefile(void);
+	
 };
 
 //extern dotfileHandler regHandler;
