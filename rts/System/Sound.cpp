@@ -23,9 +23,9 @@ CSound::CSound()
 	maxSounds = configHandler.GetInt("MaxSounds",16);
 	noSound = false;
 	cur = 0;
-	device = alcOpenDevice(NULL);
+	ALCdevice *device = alcOpenDevice(NULL);
 	if (device != NULL) {
-		context = alcCreateContext(device, NULL);
+		ALCcontext *context = alcCreateContext(device, NULL);
 		if (context != NULL)
 			alcMakeContextCurrent(context);
 		else {
@@ -49,7 +49,8 @@ CSound::~CSound()
 {
 	LoadedFiles.clear();
 	if (!noSound) {
-		alDeleteSources(maxSounds,Sources);
+		for (int i = 0; i < maxSounds; i++)
+			alDeleteSources(1, &Sources[i]);
 		delete[] Sources;
 	}
 	for (std::vector<ALuint>::iterator it = Buffers.begin(); it != Buffers.end(); it++)
@@ -58,9 +59,11 @@ CSound::~CSound()
 	if (noSound)
 		return;
 	//deadlock here on program exit --tvo
+	ALCcontext *curcontext = alcGetCurrentContext();
+	ALCdevice *curdevice = alcGetContextsDevice(curcontext);
 	alcMakeContextCurrent(NULL);
-	alcDestroyContext(context);
-	alcCloseDevice(device);
+	alcDestroyContext(curcontext);
+	alcCloseDevice(curdevice);
 }
 
 void CSound::PlaySound(int id, float volume)
