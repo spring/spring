@@ -3,7 +3,7 @@
 #include "Sim/Units/Unit.h"
 #include "GL/myGL.h"
 #include "GL/VertexArray.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float repulseSpeed,float maxDist)
 : CProjectile(repulsed->pos,repulsed->speed,owner),

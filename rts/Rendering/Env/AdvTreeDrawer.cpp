@@ -16,7 +16,7 @@
 #include "GrassDrawer.h"
 #include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

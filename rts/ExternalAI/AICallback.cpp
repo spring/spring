@@ -33,7 +33,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "FileSystem/FileHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 /* Cast id to unsigned to catch negative ids in the same operations,
 cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning. */

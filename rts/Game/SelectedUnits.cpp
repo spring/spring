@@ -19,7 +19,7 @@
 #include "Sound.h"
 #include "Sim/Units/UnitDef.h"
 #include "Player.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

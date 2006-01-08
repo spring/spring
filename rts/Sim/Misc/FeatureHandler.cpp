@@ -22,7 +22,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/ShadowHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CR_BIND(FeatureDef);
 

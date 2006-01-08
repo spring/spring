@@ -30,7 +30,7 @@
 #include "MapDamage.h"
 #include "Platform/errorhandler.h"
 #include <string>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 //////////////////////////////////////////////////////////////////////

@@ -2,7 +2,7 @@
 #include "ShipMoveMath.h"
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Objects/SolidObject.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 
 /*

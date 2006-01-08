@@ -14,7 +14,7 @@
 #include "Bitmap.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Platform/errorhandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

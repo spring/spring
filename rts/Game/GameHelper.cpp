@@ -28,7 +28,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

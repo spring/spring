@@ -26,7 +26,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GroundDecalHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 const unsigned int MAX_REPATH_FREQUENCY = 30;		//The minimum of frames between two full path-requests.
 

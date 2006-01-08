@@ -7,7 +7,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "SyncTracer.h"
 #include "Sim/Weapons/Weapon.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CLightingProjectile::CLightingProjectile(const float3& pos,const float3& end,CUnit* owner,const float3& color, int ttl,CWeapon* weap)
 : CProjectile(pos,ZeroVector,owner),

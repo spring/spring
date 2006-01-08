@@ -12,7 +12,7 @@
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Bitmap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

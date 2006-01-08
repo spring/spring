@@ -17,7 +17,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Map/SmfReadMap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

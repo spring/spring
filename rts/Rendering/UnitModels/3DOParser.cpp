@@ -26,7 +26,7 @@
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 

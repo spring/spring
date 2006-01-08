@@ -11,7 +11,7 @@
 #include "Bitmap.h"
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Map/SmfReadMap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -5,7 +5,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color,CUnit* owner,float thickness)
 : CProjectile((startPos+endPos)*0.5,ZeroVector,owner),

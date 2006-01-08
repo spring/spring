@@ -12,7 +12,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "Sim/Misc/GeometricObjects.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

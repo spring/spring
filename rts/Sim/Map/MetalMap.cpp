@@ -2,7 +2,7 @@
 #include "MetalMap.h"
 #include "GlobalStuff.h"
 #include "ReadMap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 
 /*

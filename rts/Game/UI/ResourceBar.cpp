@@ -5,7 +5,7 @@
 #include "Game/Team.h"
 #include "Rendering/glFont.h"
 #include "Net.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CResourceBar* resourceBar=0;
 

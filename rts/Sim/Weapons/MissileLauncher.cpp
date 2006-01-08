@@ -8,7 +8,7 @@
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CMissileLauncher::CMissileLauncher(CUnit* owner)
 : CWeapon(owner)

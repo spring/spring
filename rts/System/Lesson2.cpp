@@ -34,7 +34,7 @@
 #endif
 #include <SDL.h>
 #include <SDL_main.h>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #include "Game/UI/NewGuiDefine.h"
 
@@ -493,7 +493,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	delete gs;
 	delete gu;
 	END_SYNCIFY;
-	//m_dumpMemoryReport();
+#ifdef USE_MMGR
+	m_dumpMemoryReport();
+#endif
 	delete cmdline;
 	return 0;
 }

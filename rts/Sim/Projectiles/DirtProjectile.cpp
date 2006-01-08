@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Map/Ground.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

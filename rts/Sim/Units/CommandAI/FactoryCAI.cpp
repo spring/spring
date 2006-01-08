@@ -8,7 +8,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Game/Team.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
 : CCommandAI(owner),

@@ -17,7 +17,7 @@
 #include "Platform/filefunctions.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -27,7 +27,7 @@
 #include "lib/minizip/zip.h"
 #include "FileSystem/ArchiveZip.h"
 
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #define PATHDEBUG false
 

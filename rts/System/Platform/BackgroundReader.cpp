@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #endif
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CBackgroundReader backgroundReader;
 

@@ -18,7 +18,7 @@
 #include <set>
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Platform/errorhandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

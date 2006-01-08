@@ -13,7 +13,7 @@
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Projectiles/TorpedoProjectile.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -23,7 +23,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include <algorithm>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

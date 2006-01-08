@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CDamageArrayHandler* damageArrayHandler;
 int DamageArray::numTypes=1;

@@ -6,7 +6,7 @@
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/FlameProjectile.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CFlameThrower::CFlameThrower(CUnit* owner)
 : CWeapon(owner)

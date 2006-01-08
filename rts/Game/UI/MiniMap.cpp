@@ -35,7 +35,7 @@
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

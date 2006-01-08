@@ -4,7 +4,7 @@
 #include "Sim/Projectiles/GeoSquareProjectile.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Map/ReadMap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CGeometricObjects* geometricObjects=0;
 

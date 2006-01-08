@@ -2,7 +2,7 @@
 #include "Wind.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Map/ReadMap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CWind wind;
 

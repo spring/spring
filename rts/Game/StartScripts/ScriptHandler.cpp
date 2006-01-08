@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "ScriptHandler.h"
 #include "Game/Game.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 extern CGame* game;
 

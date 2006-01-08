@@ -18,7 +18,7 @@
 #include "Sim/Map/SmfReadMap.h"
 #include "Rendering/ShadowHandler.h"
 //#include "TimeProfiler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 static const float turfSize=20;				//single turf size
 static const int grassSquareSize=4;		//mapsquares per grass square

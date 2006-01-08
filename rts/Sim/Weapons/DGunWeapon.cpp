@@ -4,7 +4,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CDGunWeapon::CDGunWeapon(CUnit* owner)
 : CWeapon(owner)

@@ -12,7 +12,7 @@
 #include "myMath.h"
 #include "Platform/errorhandler.h"
 #include "Bitmap.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 

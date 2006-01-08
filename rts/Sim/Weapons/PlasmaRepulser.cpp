@@ -6,7 +6,7 @@
 #include "WeaponDefHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Rendering/RepulseGfx.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 : CWeapon(owner)

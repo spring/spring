@@ -8,7 +8,7 @@
 #include "TimeProfiler.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
 static bool CatchException()

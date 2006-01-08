@@ -9,7 +9,7 @@ static CCommanderScript ts;
 #include "Game/GameSetup.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
 

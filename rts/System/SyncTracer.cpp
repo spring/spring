@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include "Game/UI/InfoConsole.h"
 #include <boost/filesystem/path.hpp>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

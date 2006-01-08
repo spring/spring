@@ -4,7 +4,7 @@
 #include "AdvTreeDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Platform/ConfigHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CBaseTreeDrawer* treeDrawer=0;
 

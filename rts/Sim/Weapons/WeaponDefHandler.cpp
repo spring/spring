@@ -11,7 +11,7 @@
 #include "Sound.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #include <iostream>
 
 CWeaponDefHandler* weaponDefHandler;

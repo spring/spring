@@ -14,7 +14,7 @@
 #include "Game/Team.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/UnitHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

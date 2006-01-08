@@ -12,7 +12,7 @@
 #include "Game/UI/InfoConsole.h"
 #include <boost/filesystem/path.hpp>
 #include "Platform/errorhandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

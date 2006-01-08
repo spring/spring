@@ -13,7 +13,7 @@
 #include "Platform/errorhandler.h"
 #include <boost/filesystem/path.hpp>
 #include "SDL_video.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 

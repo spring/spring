@@ -5,7 +5,7 @@
 #include "InfoConsole.h"
 #include "Rendering/GL/myGL.h"
 #include "myMath.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //Would be nice if these were read from a gaf-file instead.
 CMouseCursor::CMouseCursor(const string &name, HotSpot hs)

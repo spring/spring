@@ -51,7 +51,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "UnitTypes/TransportUnit.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #include "Game/GameSetup.h"
 

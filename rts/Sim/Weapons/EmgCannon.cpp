@@ -10,7 +10,7 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "SyncTracer.h"
 #include "WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CEmgCannon::CEmgCannon(CUnit* owner)
 : CWeapon(owner)

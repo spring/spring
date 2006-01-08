@@ -7,7 +7,7 @@
 #include <cctype>
 #include "Sound.h"
 #include "Platform/byteorder.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt
 //Information on missing fields from Format_Cob.pas

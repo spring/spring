@@ -6,7 +6,7 @@
 #include <SDL_types.h>
 #include "AVIGenerator.h"
 #include "Rendering/GL/myGL.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #include <windows.h>
 

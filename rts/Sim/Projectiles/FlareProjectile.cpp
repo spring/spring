@@ -7,7 +7,7 @@
 #include "Game/Camera.h"
 #include "MissileProjectile.h"
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)
 :	CProjectile(pos,speed,owner),

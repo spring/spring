@@ -8,7 +8,7 @@
 #include "Sim/Map/mapfile.h"
 #include "Sim/Map/ReadMap.h"
 #include "Platform/errorhandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 // MSVC compiler does not have std::min and max, but rather, it's own built in macro
 #ifdef _MSC_VER

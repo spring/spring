@@ -13,7 +13,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

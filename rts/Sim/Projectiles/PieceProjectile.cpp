@@ -16,7 +16,7 @@
 #include "SyncTracer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Matrix44f.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 
 static const float Smoke_Time=40;

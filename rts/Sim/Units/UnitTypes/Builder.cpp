@@ -19,7 +19,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 #include <algorithm>
 using namespace std;
 

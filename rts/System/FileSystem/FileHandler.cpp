@@ -7,7 +7,7 @@
 #include <cctype>
 #include "Platform/filefunctions.h"
 #include <boost/filesystem/exception.hpp>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 using namespace std;
 

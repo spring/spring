@@ -4,7 +4,7 @@
 #include "ArchiveZip.h"
 #include "Archive7Zip.h"
 #include <algorithm>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 // Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsArchive(const string& fileName)

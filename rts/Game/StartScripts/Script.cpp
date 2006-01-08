@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "Script.h"
 #include "ScriptHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

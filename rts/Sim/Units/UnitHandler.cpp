@@ -26,7 +26,7 @@
 #include "SyncTracer.h"
 #include "Game/GameSetup.h"
 #include "Sim/Misc/AirBaseHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

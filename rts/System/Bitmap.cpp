@@ -9,7 +9,7 @@
 #include "FileSystem/FileHandler.h"
 #include <IL/il.h>
 #include <boost/filesystem/path.hpp>
-//#include "mmgr.h"
+#include "mmgr.h"
 #include "Bitmap.h"
 
 //////////////////////////////////////////////////////////////////////

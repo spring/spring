@@ -11,7 +11,7 @@
 #include "Sim/Map/Ground.h"
 #include "myMath.h"
 #include "Sim/Misc/Wind.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

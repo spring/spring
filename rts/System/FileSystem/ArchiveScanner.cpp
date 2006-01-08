@@ -9,7 +9,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-//#include "mmgr.h"
+#include "mmgr.h"
 
 /*
  * The archive scanner is used to find stuff in archives that are needed before building the virtual

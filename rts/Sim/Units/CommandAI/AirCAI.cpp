@@ -8,7 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Units/UnitDef.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CAirCAI::CAirCAI(CUnit* owner)
 : CCommandAI(owner)

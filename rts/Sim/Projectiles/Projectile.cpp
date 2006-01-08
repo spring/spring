@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

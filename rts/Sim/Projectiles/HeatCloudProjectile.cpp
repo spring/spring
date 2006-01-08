@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "SyncTracer.h"
 #include "Rendering/GL/VertexArray.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

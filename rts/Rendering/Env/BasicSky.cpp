@@ -16,7 +16,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Matrix44f.h"
 #include "Game/UI/InfoConsole.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

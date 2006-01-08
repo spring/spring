@@ -17,7 +17,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "TimeProfiler.h"
 #include "Matrix44f.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 extern GLfloat FogBlack[]; 
 extern GLfloat FogLand[]; 

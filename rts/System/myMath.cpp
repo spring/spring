@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "myMath.h"
 #include "math.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 
 float3 headingToVectorTable[1024];

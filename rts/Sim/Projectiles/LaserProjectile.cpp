@@ -7,7 +7,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "SyncTracer.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color,float intensity, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0),

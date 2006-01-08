@@ -2,7 +2,7 @@
 #include "MoveType.h"
 #include "Sim/Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 CMoveType::CMoveType(CUnit* owner)
 : owner(owner),

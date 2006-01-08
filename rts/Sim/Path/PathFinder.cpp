@@ -7,7 +7,7 @@
 #include <ostream>
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Map/Ground.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 #define PATHDEBUG false
 

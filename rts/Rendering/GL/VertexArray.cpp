@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "VertexArray.h"
 #include "myGL.h"
-//#include "mmgr.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
