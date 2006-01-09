@@ -1,0 +1,212 @@
+# Copyright (C) 2006  Tobi Vollebregt
+
+import os, sys
+from SCons.Options import Options
+import config, detect, filelist
+
+
+def exists(env):
+	return True
+
+
+def generate(env):
+	# I don't see any reason to make this configurable --tvo.
+	# Note that commenting out / setting this to `None' will break the buildsystem.
+	env['builddir'] = 'build'
+
+	# SCons chokes in env.SConsignFile() if path doesn't exist.
+	if not os.path.exists(env['builddir']):
+		os.makedirs(env['builddir'])
+
+	# Avoid spreading .sconsign files everywhere - keep this line
+	# Use os.path.abspath() here because somehow the argument to SConsignFile is relative to the
+	# directory of the toplevel trunk/SConstruct and not the current directory, trunk/rts/SConstruct.
+	env.SConsignFile(os.path.abspath(os.path.join(env['builddir'], 'scons_signatures')))
+
+	usrcachefile = os.path.join(env['builddir'], 'usropts.py')
+	intcachefile = os.path.join(env['builddir'], 'intopts.py')
+	usropts = Options(usrcachefile)
+	intopts = Options(intcachefile)
+
+	#user visible options
+	usropts.AddOptions(
+		#permanent options
+		('platform',          'Set to linux, freebsd or windows', None),
+		('debug',             'Set to yes to produce a binary with debug information', 0),
+		('optimize',          'Enable processor optimizations during compilation', 1),
+		('prefix',            'Install prefix', '/usr/local'),
+		('datadir',           'Data directory', '$prefix/games/taspring'),
+		#porting options - optional in a first phase
+		('disable_avi',       'Set to no to turn on avi support', True),
+		('disable_clipboard', 'Set to no to turn on clipboard code', True),
+		#other ported parts
+		('disable_hpi',       'Set to no to turn on hpi support', False),
+		('disable_lua',       'Set to no to turn on Lua support', True),
+		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
+		('use_mmgr',          'Use memory manager', True),
+		('cachedir',          'Cache directory (see scons manual)', None))
+
+	#internal options
+	intopts.AddOptions(
+		('LINKFLAGS',     'linker flags'),
+		('LIBPATH',       'library path'),
+		('LIBS',          'libraries'),
+		('CCFLAGS',       'c compiler flags'),
+		('CXXFLAGS',      'c++ compiler flags'),
+		('CPPDEFINES',    'c preprocessor defines'),
+		('CPPPATH',       'c preprocessor include path'),
+		('is_configured', 'configuration version stamp'))
+
+	usropts.Update(env)
+	intopts.Update(env)
+
+	env.Help(usropts.GenerateHelpText(env))
+
+	# Use this to avoid an error message 'how to make target configure ?'
+	env.Alias('configure', None)
+
+	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 1) or env.GetOption('clean')):
+		print "Not configured.  Run `scons configure' first."
+		print "Use `scons --help' to show available configure options to `scons configure'."
+		env.Exit(1)
+
+	if 'configure' in sys.argv:
+
+		# be paranoid, unset existing variables
+		for key in ['platform', 'debug', 'optimize', 'prefix', 'datadir', 'cachedir', 'disable_avi', 'disable_hpi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
+			if env.has_key(key): env.__delitem__(key)
+
+		#parse cmdline
+		def makeHashTable(args):
+			table = { }
+			for arg in args:
+				if len(arg) > 1:
+					lst = arg.split('=')
+					if len(lst) < 2: continue
+					key = lst[0]
+					value = lst[1]
+					if len(key) > 0 and len(value) > 0: table[key] = value
+			return table
+
+		args = makeHashTable(sys.argv)
+
+		env['is_configured'] = 1
+
+		if args.has_key('platform'): env['platform'] = args['platform']
+		else: env['platform'] = detect.platform()
+
+		# debug?
+		if args.has_key('debug'):
+			level = args['debug']
+			if level == 'no' or level == 'false': level = '0'
+			elif level == 'yes' or level == 'true': level = '3'
+		else:
+			level = '0'
+		if int(level) == 0:
+			print "debugging NOT enabled,",
+			env['debug'] = 0
+		elif int(level) >= 1 and int(level) <= 3:
+			print "level", level, "debugging enabled,",
+			env['debug'] = level
+			env.AppendUnique(CCFLAGS=['-ggdb'+level], CPPDEFINES=['DEBUG', '_DEBUG'])
+		else:
+			print "invalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
+			env.Exit(1)
+
+		# optimize?
+		if args.has_key('optimize'):
+			level = args['optimize']
+			if level == 'no' or level == 'false': level = '0'
+			elif level == 'yes' or level == 'true': level = '2'
+		else:
+			if env['debug']: level = '0'
+			else: level = '1'
+		if int(level) == 0:
+			print "optimizing NOT enabled"
+			env['optimize'] = 0
+		elif (int(level) >= 1 and int(level) <= 3) or level == 's' or level == 'size':
+			print "level", level, "optimizing enabled"
+			env['optimize'] = level
+			"""detect processor: on windows, we just assume >= i686 (686 is from 1995...),
+			on anything else we use detect.processor()"""
+			if env['platform'] == 'windows': archflags = ['-march=i686']
+			else: archflags = detect.processor()
+			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe']+archflags)
+		else:
+			print "invalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
+			env.Exit(1)
+
+		# fall back to environment variables if neither debug nor optimize options are present
+		if not args.has_key('debug') and not args.has_key('optimize'):
+			if os.environ.has_key('CXXFLAGS'):
+				env['CXXFLAGS'] = SCons.Util.CLVar(os.environ['CXXFLAGS'])
+			if os.environ.has_key('CFLAGS'):
+				env['CCFLAGS'] = SCons.Util.CLVar(os.environ['CFLAGS'])
+
+		def bool_opt(key, default):
+			if args.has_key(key):
+				if args[key] == 'no' or args[key] == 'false' or args[key] == '0':
+					env[key] = False
+				elif args[key] == 'yes' or args[key] == 'true' or args[key] == '1':
+					env[key] = True
+				else:
+					print "invalid", key, "option, must be one of: yes, true, no, false, 0, 1."
+					env.Exit(1)
+			else: env[key] = default
+
+		def string_opt(key, default):
+			if args.has_key(key):
+				env[key] = args[key]
+			else: env[key] = default
+
+		bool_opt('disable_avi', True)
+		bool_opt('disable_clipboard', True)
+		bool_opt('disable_hpi', False)
+		bool_opt('disable_lua', True)
+		bool_opt('use_tcmalloc', False)
+		bool_opt('use_mmgr', True)
+		string_opt('prefix', '/usr/local')
+		string_opt('datadir', '$prefix/games/taspring')
+		string_opt('cachedir', None)
+
+		defines = ['DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
+		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
+		if env['disable_hpi']      : defines += ['NO_HPI']
+		if env['disable_clipboard']: defines += ['NO_CLIPBOARD']
+		if env['disable_avi']      : defines += ['NO_AVI']
+		if env['disable_lua']      : defines += ['NO_LUA']
+		if env['use_mmgr']         : defines += ['USE_MMGR']
+		env.AppendUnique(CPPDEFINES = defines)
+
+		include_path = ['rts', 'rts/System']
+		lib_path = []
+		if env['platform'] == 'freebsd':
+			include_path += ['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
+			lib_path += ['/usr/local/lib', '/usr/X11R6/lib']
+			env.AppendUnique(CCFLAGS = ['-pthread'])
+		elif env['platform'] == 'linux':
+			include_path += ['/usr/include', '/usr/include/GL']
+			env.AppendUnique(CCFLAGS = ['-pthread'])
+		elif env['platform'] == 'windows':
+			include_path += ['crashrpt/include']
+			lib_path += ['crashrpt/lib']
+
+		env.AppendUnique(CPPPATH=include_path, LIBPATH=lib_path)
+
+		config.configure(env, conf_dir=os.path.join(env['builddir'], 'sconf_temp'))
+
+		usropts.Save(usrcachefile, env)
+		intopts.Save(intcachefile, env)
+
+	#BuildDir support code
+	if env['builddir']:
+		for d in filelist.list_directories(env, 'rts'):
+			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
+		for d in filelist.list_directories(env, 'AI'):
+			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
+
+	#CacheDir support code
+	if env.has_key('cachedir') and env['cachedir']:
+		if not os.path.exists(env['cachedir']):
+			os.makedirs(env['cachedir'])
+		env.CacheDir(env['cachedir'])
