@@ -57,7 +57,6 @@ def get_spring_source(env):
 		'rts/build',
 		'rts/lib/libhpi',
 		'rts/System/Platform/BackgroundReader.cpp',
-		'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?
 		'rts/System/Lesson2.cpp',          # see SConstruct
 	]
 	# we may be called before we were configured (e.g. when cleaning)
@@ -66,6 +65,7 @@ def get_spring_source(env):
 			exclude += ['rts/System/Platform/Linux']
 		else:
 			exclude += [
+				'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?
 				'rts/lib/minizip/iowin32.c',
 				'rts/System/Platform/Win',
 				'rts/System/wavread.cpp']
