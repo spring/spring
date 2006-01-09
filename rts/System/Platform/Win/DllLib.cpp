@@ -18,5 +18,5 @@ DllLib::~DllLib()
 
 void *DllLib::FindAddress(const char *symbol)
 {
-	return GetProcAddress(dll,symbol);
+	return (void*) GetProcAddress(dll,symbol);
 }
