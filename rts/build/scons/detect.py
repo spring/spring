@@ -27,9 +27,22 @@ def platform():
 
 
 def processor():
-	#this function is unix,linux,freebsd only
 	print "Detecting processor..."
-	f = open('/proc/cpuinfo', 'r')
+
+	try:
+		f = open('/proc/cpuinfo', 'r')
+	except IOError:
+		import platform
+		bits = platform.architecture()[0]
+		if bits == '32bit':
+			# default to i686 on 32 bit platforms without /proc/cpuinfo
+			print "  couldn't detect; assuming Pentium Pro or better"
+			archflags=['-march=i686']
+		else:
+			print "  couldn't detect"
+			archflags=[]
+		return archflags
+
 	str = f.readline()
 	family=-1
 	model=-1

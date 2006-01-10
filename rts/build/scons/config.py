@@ -141,6 +141,12 @@ def check_headers(env, conf):
 	if not conf.CheckCHeader('AL/al.h'):
 		print 'OpenAL headers are required for this program'
 		env.Exit(1)
+	if not conf.CheckCHeader('GL/gl.h'):
+		print 'OpenGL headers are required for this program'
+		env.Exit(1)
+	if not conf.CheckCHeader('GL/glu.h'):
+		print 'OpenGL utility (glu) headers are required for this program'
+		env.Exit(1)
 	if not conf.CheckCHeader('GL/glew.h'):
 		print ' Cannot find GLEW http://glew.sourceforge.net'
 		env.Exit(1)
