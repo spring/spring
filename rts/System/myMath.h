@@ -5,6 +5,7 @@
 
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
+#define SHORTINT_MAXVALUE	32767
 
 extern float3 headingToVectorTable[1024];
 
@@ -80,11 +81,14 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	}
 
 //	h+=PI;
-	h*=32768/PI;
+	h*=SHORTINT_MAXVALUE/PI;
+	
+	// Prevents h from going beyond SHORTINT_MAXVALUE.
+	// If h goes beyond SHORTINT_MAXVALUE, the following 
+	// conversion to a short int crashes.
+	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
 	ret.x=(short int) h;
-
-	ret.y=(short int) (asin(vec.y)*(32768/PI));
-
+	ret.y=(short int) (asin(vec.y)*(SHORTINT_MAXVALUE/PI));
 	return ret;
 }
 
