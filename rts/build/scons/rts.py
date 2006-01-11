@@ -44,7 +44,7 @@ def generate(env):
 		('disable_hpi',       'Set to no to turn on hpi support', False),
 		('disable_lua',       'Set to no to turn on Lua support', True),
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
-		('use_mmgr',          'Use memory manager', True),
+		('use_mmgr',          'Use memory manager', False),
 		('cachedir',          'Cache directory (see scons manual)', None))
 
 	#internal options
@@ -134,6 +134,8 @@ def generate(env):
 			print "invalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
 
+		env['CXXFLAGS'] = env['CCFLAGS']
+
 		# fall back to environment variables if neither debug nor optimize options are present
 		if not args.has_key('debug') and not args.has_key('optimize'):
 			if os.environ.has_key('CXXFLAGS'):
@@ -164,12 +166,12 @@ def generate(env):
 		bool_opt('disable_hpi', False)
 		bool_opt('disable_lua', True)
 		bool_opt('use_tcmalloc', False)
-		bool_opt('use_mmgr', True)
+		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
 		string_opt('datadir', '$prefix/games/taspring')
 		string_opt('cachedir', None)
 
-		defines = ['DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
+		defines = ['_REENTRANT', 'DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
 		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
 		if env['disable_hpi']      : defines += ['NO_HPI']
 		if env['disable_clipboard']: defines += ['NO_CLIPBOARD']
@@ -183,13 +185,15 @@ def generate(env):
 		if env['platform'] == 'freebsd':
 			include_path += ['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
 			lib_path += ['/usr/local/lib', '/usr/X11R6/lib']
-			env.AppendUnique(CCFLAGS = ['-pthread'])
+			env.AppendUnique(CCFLAGS = ['-pthread'], CXXFLAGS = ['-pthread'])
 		elif env['platform'] == 'linux':
 			include_path += ['/usr/include', '/usr/include/GL']
-			env.AppendUnique(CCFLAGS = ['-pthread'])
+			env.AppendUnique(CCFLAGS = ['-pthread'], CXXFLAGS = ['-pthread'])
 		elif env['platform'] == 'windows':
 			include_path += ['crashrpt/include']
 			lib_path += ['crashrpt/lib']
+			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'])
+		# use '-pthreads' for Solaris, according to /usr/include/boost/config/requires_threads.hpp
 
 		env.AppendUnique(CPPPATH=include_path, LIBPATH=lib_path)
 
