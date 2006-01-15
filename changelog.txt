@@ -2,6 +2,7 @@ TASpring change log
 
 next
 
+- Fixed flipped features, they are now rendered exactly the same as units.
 - A few new COB "get" constants:
    70 MAX_ID             returns maximum number of units - 1
    71 MY_ID              returns ID of current unit
@@ -10,7 +11,7 @@ next
    74 UNIT_ALLIED        is unit given with parameter allied to the unit of the current COB script. 1=allied, 0=not allied
 
 - First use of multiplatform code! A huge amount of changes were done to accomplish this.
-  Spring now uses boost, SDL, freetype and OpenAL, instead of direct Win32 SDK + DirectX
+  Among these changes are switches to using boost, SDL, freetype and OpenAL, instead of direct Win32 SDK + DirectX. For a full list of changes, see the subversion log.
 
 0.67b3
 

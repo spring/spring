@@ -157,12 +157,12 @@ struct WAVHeader
 
 #pragma pack(pop)
 
-bool ReadWAV (Uint8 *buf, int size, ALuint albuffer)
+bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 {
 	WAVHeader *header = (WAVHeader *)buf;
 
 	if (memcmp (header->riff, "RIFF",4) || memcmp (header->wavefmt, "WAVEfmt", 7)) {
-		printf("ReadWAV: invalid header\n");
+		handleerror(0, "ReadWAV: invalid header.", name, 0);
 		return false;
 	}
 
@@ -182,7 +182,7 @@ bool ReadWAV (Uint8 *buf, int size, ALuint albuffer)
 #undef hswabdword
 
 	if (header->format_tag != 1) { // Microsoft PCM format?
-		printf("ReadWAV: invalid format tag\n");
+		handleerror(0,"ReadWAV: invalid format tag.", name, 0);
 		return false;
 	}
 
@@ -191,7 +191,7 @@ bool ReadWAV (Uint8 *buf, int size, ALuint albuffer)
 		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
 		else {
-			printf("ReadWAV: invalid number of bits per sample (mono)\n");
+			handleerror(0,"ReadWAV: invalid number of bits per sample (mono).",name,0);
 			return false;
 		}
 	}
@@ -199,16 +199,16 @@ bool ReadWAV (Uint8 *buf, int size, ALuint albuffer)
 		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
 		else {
-			printf("ReadWAV: invalid number of bits per sample (stereo)\n");
+			handleerror(0,"ReadWAV: invalid number of bits per sample (stereo).", name,0);
 			return false;
 		}
 	}
 	else {
-		printf("ReadWAV: invalid number of channels\n");
+		handleerror(0,"ReadWAV (%s): invalid number of channels.", name,0);
 		return false;
 	}
 
-	alBufferData(albuffer,format,buf+sizeof(WAVHeader),header->datalen,header->SamplesPerSec);
+	alBufferData(albuffer,format,buf+sizeof(WAVHeader),header->datalen > size-sizeof(WAVHeader) ? size-sizeof(WAVHeader) : header->datalen,header->SamplesPerSec);
 	return true;
 }
 
@@ -229,7 +229,7 @@ ALuint CSound::LoadALBuffer(string path)
 		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
-	bool success=ReadWAV (buf, file.FileSize(), buffer);
+	bool success=ReadWAV (path.c_str(), buf, file.FileSize(), buffer);
 	delete[] buf;
 
 	if (!success) {
