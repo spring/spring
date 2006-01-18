@@ -77,6 +77,8 @@ def generate(env):
 		for key in ['platform', 'debug', 'optimize', 'prefix', 'datadir', 'cachedir', 'disable_avi', 'disable_hpi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
 			if env.has_key(key): env.__delitem__(key)
 
+		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
+
 		#parse cmdline
 		def makeHashTable(args):
 			table = { }
@@ -128,7 +130,7 @@ def generate(env):
 		elif (int(level) >= 1 and int(level) <= 3) or level == 's' or level == 'size':
 			print "level", level, "optimizing enabled"
 			env['optimize'] = level
-			archflags = detect.processor()
+			archflags = detect.processor(config.check_gcc_version(env) >= ['3','4','0'])
 			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe']+archflags)
 		else:
 			print "invalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
@@ -138,12 +140,14 @@ def generate(env):
 
 		# fall back to environment variables if neither debug nor optimize options are present
 		if not args.has_key('debug') and not args.has_key('optimize'):
-			if os.environ.has_key('CXXFLAGS'):
-				print "using CXXFLAGS:", os.environ['CXXFLAGS']
-				env['CXXFLAGS'] = SCons.Util.CLVar(os.environ['CXXFLAGS'])
 			if os.environ.has_key('CFLAGS'):
 				print "using CFLAGS:", os.environ['CFLAGS']
 				env['CCFLAGS'] = SCons.Util.CLVar(os.environ['CFLAGS'])
+			if os.environ.has_key('CXXFLAGS'):
+				print "using CXXFLAGS:", os.environ['CXXFLAGS']
+				env['CXXFLAGS'] = SCons.Util.CLVar(os.environ['CXXFLAGS'])
+			else:
+				env['CXXFLAGS'] = env['CCFLAGS']
 
 		def bool_opt(key, default):
 			if args.has_key(key):

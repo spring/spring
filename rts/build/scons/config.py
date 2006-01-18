@@ -8,6 +8,27 @@ import os, re, sys
 ###############################
 
 
+def check_gcc_version(env, conf = None):
+	# The GCC version is needed by the detect.processor() function to recognize
+	# versions below 3.4 and versions equal to or greater than 3.4.
+	# As opposed to the other functions in this file, which are called from the
+	# configure() function below, this one is called directly from rts.py while
+	# parsing `optimize=' configure argument.
+	print env.subst("Checking $CC version..."),
+	try:
+		f = os.popen(env.subst('$CC --version'))
+		version = f.read()
+	finally:
+		f.close()
+	if version:
+		version = re.search('[0-9]\.[0-9]\.[0-9]', version).group()
+		print version
+		return re.split('\.', version)
+	else:
+		print env.subst("$CC not found")
+		env.Exit(1)
+
+
 def check_debian_powerpc(env, conf):
 	if 'Debian' in sys.version:
 		# Figure out if we're running on PowerPC
