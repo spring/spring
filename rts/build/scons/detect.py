@@ -26,7 +26,8 @@ def platform():
 	return detected_platform
 
 
-def processor():
+# Set gcc_3_4 to false for versions of gcc below 3.4.
+def processor(gcc_3_4=True):
 	print "Detecting processor..."
 
 	try:
@@ -69,7 +70,10 @@ def processor():
 					# converting to VLIW, so no alignment
 					# saves space without sacrificing speed
 					print "  found Transmeta Efficeon"
-					archflags=['-march=i686', '-mtune=pentium3', '-msse2', '-mfpmath=sse', '-falign-functions=0', '-falign-jumps=0', '-falign-loops=0']
+					archflags=['-march=i686']
+					if gcc_3_4: archflags+=['-mtune=pentium3']
+					else: archflags+=['-mcpu=pentium3']
+					archflags+=['-msse2', '-mfpmath=sse', '-falign-functions=0', '-falign-jumps=0', '-falign-loops=0']
 		elif vendor == "GenuineIntel":
 			if str.startswith("model name"):
 				if str.find("Intel(R) Pentium(R) 4 CPU") != -1:
@@ -92,7 +96,10 @@ def processor():
 					archflags=['-march=pentium2']
 				elif str.find("Intel(R) Pentium(R) M") != -1:
 					print "  found Intel Pentium-M"
-					archflags=['-march=pentium-m']
+					if gcc_3_4: archflags=['-march=pentium-m']
+					else:
+						print "WARNING: gcc versions below 3.4 don't support -march=pentium-m, using -march=pentium4 instead"
+						archflags=['-march=pentium4']
 				elif str.find("Intel(R) Xeon(R) CPU") != -1:
 					print "  found Intel Xeon w/EM64T"
 					archflags=['-march=nocona', '-mmmx', '-msse3']
@@ -111,7 +118,10 @@ def processor():
 				elif str.find("Athlon") != -1:
 					if str.find("64") != -1:
 						print "  found AMD Athlon 64"
-						archflags=['-march=athlon64']
+						if gcc_3_4: archflags=['-march=athlon64']
+						else:
+							print "WARNING: gcc versions below 3.4 don't support -march=athlon64, using -march=athlon-4 -msse2 -mfpmath=sse instead"
+							archflags=['-march=athlon', '-msse2', '-mfpmath=sse']
 					elif family == 6 and model == 8:
 						print "  found AMD Athlon Thunderbird XP"
 						archflags=['-march=athlon-xp']
@@ -120,7 +130,10 @@ def processor():
 						archflags=['-march=athlon']
 				elif str.find("Opteron") != -1:
 					print "  found AMD Opteron"
-					archflags=['-march=opteron']
+					if gcc_3_4: archflags=['-march=opteron']
+					else:
+						print "WARNING: gcc versions below 3.4 don't support -march=opteron, using -march=athlon-4 -msse2 -mfpmath=sse instead"
+						archflags=['-march=athlon-4', '-msse2', '-mfpmath=sse']
 		else:
 			if str.find("Nehemiah") != -1:
 				print "  found VIA Nehemiah"
