@@ -18,7 +18,7 @@
 
 #define NUM_DAMAGE_MEASURE_FRAMES 90
 
-const struct nOffset_t { int x,y; } static nOffsetTbl[8] = {
+static const struct nOffset_t { int x,y; } nOffsetTbl[8] = {
 	{ -1,-1 }, { 0, -1 }, { 1, -1 }, { -1, 0 }, { 1, 0 }, { -1, 1 }, { 0, 1 }, { 1, 1 }
 };
 

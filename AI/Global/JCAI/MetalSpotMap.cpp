@@ -17,7 +17,7 @@
 static const int BlockWidth=32;
 static const int2 SpotOffset(0,0);
 
-const struct Offset_t { int x,y; } static OffsetTbl[8] = {
+static const struct Offset_t { int x,y; } OffsetTbl[8] = {
 	{ -1,-1 }, { 0, -1 }, { 1, -1 }, { -1, 0 }, { 1, 0 }, { -1, 1 }, { 0, 1 }, { 1, 1 }
 };
 
