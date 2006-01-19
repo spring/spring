@@ -98,7 +98,7 @@ void CInfoConsole::AddLine(int priority, const char *fmt, ...)
 		return;											// Do Nothing
 
 	va_start(ap, fmt);									// Parses The String For Variables
-	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
+	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
 
 	AddLineHelper (priority,text);
@@ -113,7 +113,7 @@ void CInfoConsole::AddLine(const char *fmt, ...)
 		return;											// Do Nothing
 
 	va_start(ap, fmt);									// Parses The String For Variables
-	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
+	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
 
 	AddLineHelper (0,text);
