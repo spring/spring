@@ -60,6 +60,19 @@ void CAICallback::SendTextMsg(const char* text,int priority)
         info->AddLine(priority, "GlobalAI%i: %s",team,text);
 }
 
+// see if the AI hasn't modified any parts of this callback 
+// (still completely insecure ofcourse, but it filters out the easiest way of cheating)
+void CAICallback::verify()
+{
+	CGlobalAI *gai = globalAI->ais [team];
+	if ( (group && (gai->gh != group->handler || gai->team != team)) || 
+		(!group && (gai->callback != this || gai->team != team)))
+	{
+		handleerror (0, "AI has modified spring components(possible cheat)", "Spring is closing:", MBF_OK | MBF_EXCL);
+		exit (-1);
+	}
+}
+
 int CAICallback::GetCurrentFrame()
 {
 	return gs->frameNum;
@@ -165,6 +178,8 @@ int CAICallback::GiveGroupOrder(int groupid, Command* c)
 
 int CAICallback::GiveOrder(int unitid, Command* c)
 {
+	verify ();
+
 	if (!CHECK_UNITID(unitid) || c == NULL)
 		return -1;
 
@@ -217,6 +232,7 @@ const deque<Command>* CAICallback::GetCurrentUnitCommands(int unitid)
 
 int CAICallback::GetUnitAiHint(int unitid)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -228,6 +244,7 @@ int CAICallback::GetUnitAiHint(int unitid)
 
 int CAICallback::GetUnitTeam(int unitid)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -239,6 +256,7 @@ int CAICallback::GetUnitTeam(int unitid)
 
 int CAICallback::GetUnitAllyTeam(int unitid)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -250,6 +268,7 @@ int CAICallback::GetUnitAllyTeam(int unitid)
 
 float CAICallback::GetUnitHealth(int unitid)			//the units current health
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -261,6 +280,7 @@ float CAICallback::GetUnitHealth(int unitid)			//the units current health
 
 float CAICallback::GetUnitMaxHealth(int unitid)		//the units max health
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -272,6 +292,7 @@ float CAICallback::GetUnitMaxHealth(int unitid)		//the units max health
 
 float CAICallback::GetUnitSpeed(int unitid)				//the units max speed
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -283,6 +304,7 @@ float CAICallback::GetUnitSpeed(int unitid)				//the units max speed
 
 float CAICallback::GetUnitPower(int unitid)				//sort of the measure of the units overall power
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -294,6 +316,7 @@ float CAICallback::GetUnitPower(int unitid)				//sort of the measure of the unit
 
 float CAICallback::GetUnitExperience(int unitid)	//how experienced the unit is (0.0-1.0)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -305,6 +328,7 @@ float CAICallback::GetUnitExperience(int unitid)	//how experienced the unit is (
 
 float CAICallback::GetUnitMaxRange(int unitid)		//the furthest any weapon of the unit can fire
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -316,6 +340,7 @@ float CAICallback::GetUnitMaxRange(int unitid)		//the furthest any weapon of the
 
 const UnitDef* CAICallback::GetUnitDef(int unitid)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
@@ -332,6 +357,7 @@ const UnitDef* CAICallback::GetUnitDef(const char* unitName)
 
 float3 CAICallback::GetUnitPos(int unitid)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & (LOS_INLOS|LOS_INRADAR))){
@@ -368,6 +394,7 @@ int CAICallback::GetEnemyUnits(int *units)
 	list<CUnit*>::iterator ui;
 	int a=0;
 
+	verify ();
 	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
 		if(!gs->Ally((*ui)->allyteam,gs->AllyTeam(team)) && ((*ui)->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
 			units[a++]=(*ui)->id;
@@ -382,6 +409,7 @@ int CAICallback::GetEnemyUnitsInRadarAndLos(int *units)
 	list<CUnit*>::iterator ui;
 	int a=0;
 
+	verify ();
 	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
 		if(!gs->Ally((*ui)->allyteam,gs->AllyTeam(team)) && ((*ui)->losStatus[gs->AllyTeam(team)] & (LOS_INLOS|LOS_INRADAR))){
 			units[a++]=(*ui)->id;
@@ -393,6 +421,7 @@ int CAICallback::GetEnemyUnitsInRadarAndLos(int *units)
 
 int CAICallback::GetEnemyUnits(int *units,const float3& pos,float radius)
 {
+	verify ();
 	vector<CUnit*> unit=qf->GetUnitsExact(pos,radius);
 
 	vector<CUnit*>::iterator ui;
@@ -411,6 +440,7 @@ int CAICallback::GetFriendlyUnits(int *units)
 {
 	int a=0;
 
+	verify ();
 	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
 		if(gs->Ally((*ui)->allyteam,gs->AllyTeam(team))){
 			units[a++]=(*ui)->id;
@@ -421,6 +451,7 @@ int CAICallback::GetFriendlyUnits(int *units)
 
 int CAICallback::GetFriendlyUnits(int *units,const float3& pos,float radius)
 {
+	verify ();
 	vector<CUnit*> unit=qf->GetUnitsExact(pos,radius);
 
 	vector<CUnit*>::iterator ui;
@@ -569,42 +600,75 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef,float3 pos)
 	return !!uh->TestUnitBuildSquare(pos,unitDef->name,f);
 }
 
+
+struct SearchOffset {
+	int dx,dy;
+	int qdist; // dx*dx+dy*dy
+};
+
+
+bool SearchOffsetComparator (const SearchOffset& a, const SearchOffset& b)
+{
+	return a.qdist < b.qdist;
+}
+
+const vector<SearchOffset>& GetSearchOffsetTable (int radius)
+{
+	static vector <SearchOffset> searchOffsets;
+	int size = radius*radius*4;
+	if (size > searchOffsets.size()) {
+		searchOffsets.resize (size);
+
+		for (int y=0;y<radius*2;y++)
+			for (int x=0;x<radius*2;x++)
+			{
+				SearchOffset& i = searchOffsets[y*radius*2+x];
+
+				i.dx = x-radius;
+				i.dy = y-radius;
+				i.qdist = i.dx*i.dx+i.dy*i.dy;
+			}
+
+		std::sort (searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
+	}
+
+	return searchOffsets;
+}
+
 float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist)
 {
 	//todo fix so you cant detect enemy buildings with it
-	float bestDist=searchRadius;
-	float3 bestPos(-1,0,0);
-
 	CFeature* feature;
 	int allyteam=gs->AllyTeam(team);
 
-	for(float z=pos.z-searchRadius;z<pos.z+searchRadius;z+=SQUARE_SIZE*2){
-		for(float x=pos.x-searchRadius;x<pos.x+searchRadius;x+=SQUARE_SIZE*2){
-			float3 p(x,0,z);
-			p = helper->Pos2BuildPos (p, unitdef);
-			float dist=pos.distance2D(p);
-			if(dist<bestDist && uh->TestUnitBuildSquare(p,unitdef,feature) && (!feature || feature->allyteam!=allyteam)){
-				int xs=(int)(x/SQUARE_SIZE);
-				int zs=(int)(z/SQUARE_SIZE);
-				bool good=true;
-				for(int z2=max(0,zs-unitdef->ysize/2-minDist);z2<min(gs->mapy,zs+unitdef->ysize+minDist);++z2){
-					for(int x2=max(0,xs-unitdef->xsize/2-minDist);x2<min(gs->mapx,xs+unitdef->xsize+minDist);++x2){
-						CSolidObject* so=readmap->groundBlockingObjectMap[z2*gs->mapx+x2];
-						if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
-							good=false;
-							break;
-						}
+	int endr = searchRadius / (SQUARE_SIZE*2);
+	const vector<SearchOffset>& ofs = GetSearchOffsetTable (endr);
+
+	for(int so=0;so<endr;so++) {
+		float x = pos.x+ofs[so].dx*SQUARE_SIZE*2;
+		float z = pos.z+ofs[so].dy*SQUARE_SIZE*2;
+		float3 p(x,0,z);
+		p = helper->Pos2BuildPos (p, unitdef);
+		if(uh->TestUnitBuildSquare(p,unitdef,feature) && (!feature || feature->allyteam!=allyteam))
+		{
+			int xs=(int)(x/SQUARE_SIZE);
+			int zs=(int)(z/SQUARE_SIZE);
+			bool good=true;
+			for(int z2=max(0,zs-unitdef->ysize/2-minDist);z2<min(gs->mapy,zs+unitdef->ysize+minDist);++z2){
+				for(int x2=max(0,xs-unitdef->xsize/2-minDist);x2<min(gs->mapx,xs+unitdef->xsize+minDist);++x2){
+					CSolidObject* so=readmap->groundBlockingObjectMap[z2*gs->mapx+x2];
+					if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
+						good=false;
+						break;
 					}
 				}
-				if(good){
-					bestDist=dist;
-					bestPos=p;
-				}
 			}
+			if(good) 
+				return p;
 		}
 	}
 
-	return bestPos;	
+	return float3(-1.0f,0.0f,0.0f);	
 }
 
 
@@ -666,6 +730,7 @@ bool CAICallback::GetUnitResourceInfo (int unitid, UnitResourceInfo *i)
 
 bool CAICallback::IsUnitActivated (int unitid)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS))
@@ -676,6 +741,7 @@ bool CAICallback::IsUnitActivated (int unitid)
 
 bool CAICallback::UnitBeingBuilt (int unitid)
 {
+	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
 		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS))
@@ -686,6 +752,7 @@ bool CAICallback::UnitBeingBuilt (int unitid)
 
 int CAICallback::GetFeatures (int *features, int max)
 {
+	verify ();
 	int i = 0;
 	int allyteam = gs->AllyTeam(team);
 
@@ -707,6 +774,7 @@ int CAICallback::GetFeatures (int *features, int max)
 
 int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, float radius)
 {
+	verify ();
 	vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
 	int allyteam = gs->AllyTeam(team);
 	int n = 0;
@@ -728,6 +796,7 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 
 FeatureDef* CAICallback::GetFeatureDef (int feature)
 {
+	verify ();
 	if (CHECK_FEATURE(feature)) {
 		CFeature *f = featureHandler->features [feature];
 		int allyteam = gs->AllyTeam(team);
@@ -740,6 +809,7 @@ FeatureDef* CAICallback::GetFeatureDef (int feature)
 
 float CAICallback::GetFeatureHealth (int feature)
 {
+	verify ();
 	if (CHECK_FEATURE(feature)) {
 		CFeature *f = featureHandler->features [feature];
 		int allyteam = gs->AllyTeam(team);
@@ -751,6 +821,7 @@ float CAICallback::GetFeatureHealth (int feature)
 
 float CAICallback::GetFeatureReclaimLeft (int feature)
 {
+	verify ();
 	if (CHECK_FEATURE(feature)) {
 		CFeature *f = featureHandler->features [feature];
 		int allyteam = gs->AllyTeam(team);
@@ -762,6 +833,7 @@ float CAICallback::GetFeatureReclaimLeft (int feature)
 
 float3 CAICallback::GetFeaturePos (int feature)
 {
+	verify ();
 	if (CHECK_FEATURE(feature)) {
 		CFeature *f = featureHandler->features [feature];
 		int allyteam = gs->AllyTeam(team);
@@ -794,6 +866,7 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 
 bool CAICallback::GetProperty(int id, int property, void *data)
 {
+	verify ();
 	if (CHECK_UNITID(id)) {
 		switch (property) {
 		case AIVAL_UNITDEF:{
@@ -833,6 +906,7 @@ bool CAICallback::ReadFile (const char *name, void *buffer, int bufferLength)
 // Additions to the interface by Alik
 int CAICallback::GetSelectedUnits(int *units)
 {
+	verify ();
 	int a=0;
 	if (gu->myAllyTeam == gs->AllyTeam(team)) {
 		for(set<CUnit*>::iterator ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui)
@@ -843,6 +917,7 @@ int CAICallback::GetSelectedUnits(int *units)
 
 
 float3 CAICallback::GetMousePos() {
+	verify ();
 	if (gu->myAllyTeam == gs->AllyTeam(team))
 		return inMapDrawer->GetMouseMapPos();
 	else
@@ -853,6 +928,7 @@ float3 CAICallback::GetMousePos() {
 int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 {
 	int a=0;
+	verify ();
 
 	if (gu->myAllyTeam != gs->AllyTeam(team))
 		return 0;
@@ -876,6 +952,7 @@ int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 int CAICallback::GetMapLines(LineMarker *lm, int maxLines) 
 {
 	int a=0;
+	verify ();
 
 	if (gu->myAllyTeam != gs->AllyTeam(team))
 		return 0;

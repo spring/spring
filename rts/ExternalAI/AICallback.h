@@ -17,6 +17,8 @@ public:
 	CGroupHandler *gh;
 	CGroup *group; // only in case it's a group AI
 
+	void verify ();
+
 	void SendTextMsg(const char* text,int priority);
 
 //get the current game time, there is 30 frames per second at normal speed
