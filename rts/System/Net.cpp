@@ -310,7 +310,7 @@ int CNet::SendData(unsigned char *data, int length,int connection)
 int CNet::GetData(unsigned char *buf, int length,int conNum)
 {
 	if(connections[conNum].active){
-		boost::mutex::scoped_lock scoped_lock(netMutex,connections[conNum].localConnection);
+		boost::mutex::scoped_lock scoped_lock(netMutex,!!connections[conNum].localConnection);
 
 		int ret=connections[conNum].readyLength;
 		if(length<=ret)
@@ -383,6 +383,7 @@ void CNet::Update(void)
 		}
 		if(inInitialConnect && c->lastSendTime<curTime-1){		//server hasnt responded so try to send the connection attempt again
 			SendRawPacket(a,c->unackedPackets[0]->data,c->unackedPackets[0]->length,0);
+			c->lastSendTime=curTime;
 		}
 
 		if(c->lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
