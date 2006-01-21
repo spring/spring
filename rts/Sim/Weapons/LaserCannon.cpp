@@ -83,13 +83,9 @@ void CLaserCannon::Fire(void)
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.7);
 	dir.Normalize();
 
-//<<<<<<< LaserCannon.cpp
-//	new CLaserProjectile(weaponPos,dir*projectileSpeed,owner,damages,30,color,0.8,weaponDef, range/projectileSpeed-4);
-//=======
-	//new CLaserProjectile(weaponPos,dir*projectileSpeed,owner,damages,30,color,0.8,weaponDef, range/projectileSpeed);
 	CWeaponProjectile::CreateWeaponProjectile(weaponPos,dir*projectileSpeed,owner, NULL, targetPos,  weaponDef);
+	new CLaserProjectile(weaponPos, dir*projectileSpeed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
 
-//>>>>>>> 1.12
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }
