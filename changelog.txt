@@ -12,6 +12,7 @@ next
 
 - First use of multiplatform code! A huge amount of changes were done to accomplish this.
   Among these changes are switches to using boost, SDL, freetype and OpenAL, instead of direct Win32 SDK + DirectX. For a full list of changes, see the subversion log.
+- Fixed login packets being sent every frame instead of once a second when trying to connect
 
 0.67b3
 
