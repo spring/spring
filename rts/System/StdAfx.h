@@ -18,7 +18,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 		#define VSNPRINTF vsprintf_s
 	#else              // Visual Studio 2003
 		#define SNPRINTF _snprintf
-		#define SNPRINTF _vsnprintf
+		#define VSNPRINTF _vsnprintf
 	#endif
 #else
 	// assuming GCC 
