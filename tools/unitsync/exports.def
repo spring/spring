@@ -1,0 +1,52 @@
+LIBRARY	unitsync
+EXPORTS
+	Init						@1
+	UnInit						@2
+	GetCurrentList				@3
+	ProcessUnits				@4
+	ProcessUnitsNoChecksum		@15
+	AddClient					@5
+	RemoveClient				@6
+	GetClientDiff				@7
+	InstallClientDiff			@8
+	
+	GetUnitCount				@9
+	GetUnitName					@10
+	IsUnitDisabled				@11
+	IsUnitDisabledByClient		@12
+	GetFullUnitName				@13
+	
+	InitArchiveScanner			@20
+	AddArchive					@21
+	AddAllArchives				@22
+	GetArchiveChecksum			@23
+	
+	GetMapCount					@30
+	GetMapName					@31
+	GetMapInfo					@32
+	GetMinimap					@33
+	
+	GetPrimaryModCount			@40
+	GetPrimaryModName			@41
+	GetPrimaryModArchive		@42
+	GetPrimaryModIndex			@43	
+	GetPrimaryModArchiveCount	@44
+	GetPrimaryModArchiveList	@45
+	
+	GetSideCount				@50
+	GetSideName					@51
+	
+	OpenArchive					@60
+	CloseArchive				@61
+	OpenArchiveFile				@62
+	ReadArchiveFile				@63
+	CloseArchiveFile			@64
+	SizeArchiveFile				@65
+	FindFilesArchive			@66
+	
+	OpenFileVFS					@70
+	CloseFileVFS				@71
+	ReadFileVFS					@72
+	FileSizeVFS					@73
+	InitFindVFS					@74
+	FindFilesVFS				@75
