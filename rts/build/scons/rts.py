@@ -35,6 +35,7 @@ def generate(env):
 		('platform',          'Set to linux, freebsd or windows', None),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('optimize',          'Enable processor optimizations during compilation', 1),
+		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('prefix',            'Install prefix', '/usr/local'),
 		('datadir',           'Data directory', '$prefix/games/taspring'),
 		#porting options - optional in a first phase
@@ -74,7 +75,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'prefix', 'datadir', 'cachedir', 'disable_avi', 'disable_hpi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
+		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'disable_avi', 'disable_hpi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -136,19 +137,7 @@ def generate(env):
 			print "invalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
 
-		env['CXXFLAGS'] = env['CCFLAGS']
-
-		# fall back to environment variables if neither debug nor optimize options are present
-		if not args.has_key('debug') and not args.has_key('optimize'):
-			if os.environ.has_key('CFLAGS'):
-				print "using CFLAGS:", os.environ['CFLAGS']
-				env['CCFLAGS'] = SCons.Util.CLVar(os.environ['CFLAGS'])
-			if os.environ.has_key('CXXFLAGS'):
-				print "using CXXFLAGS:", os.environ['CXXFLAGS']
-				env['CXXFLAGS'] = SCons.Util.CLVar(os.environ['CXXFLAGS'])
-			else:
-				env['CXXFLAGS'] = env['CCFLAGS']
-
+		# Declare some helper functions for boolean and string options.
 		def bool_opt(key, default):
 			if args.has_key(key):
 				if args[key] == 'no' or args[key] == 'false' or args[key] == '0':
@@ -164,6 +153,24 @@ def generate(env):
 			if args.has_key(key):
 				env[key] = args[key]
 			else: env[key] = default
+
+		# profile?
+		bool_opt('profile', True)
+		if env['profile']:
+			env.AppendUnique(CCFLAGS=['-pg'], LINKFLAGS=['-pg'])
+
+		env['CXXFLAGS'] = env['CCFLAGS']
+
+		# fall back to environment variables if neither debug nor optimize options are present
+		if not args.has_key('debug') and not args.has_key('optimize'):
+			if os.environ.has_key('CFLAGS'):
+				print "using CFLAGS:", os.environ['CFLAGS']
+				env['CCFLAGS'] = SCons.Util.CLVar(os.environ['CFLAGS'])
+			if os.environ.has_key('CXXFLAGS'):
+				print "using CXXFLAGS:", os.environ['CXXFLAGS']
+				env['CXXFLAGS'] = SCons.Util.CLVar(os.environ['CXXFLAGS'])
+			else:
+				env['CXXFLAGS'] = env['CCFLAGS']
 
 		bool_opt('disable_avi', True)
 		bool_opt('disable_clipboard', True)
