@@ -130,24 +130,38 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 
 	// Possible optimization: find the start iterator by inserting the dir and see where it ends up
 	bool foundMatch = false;
-	for (map<string, FileData>::iterator i = files.begin(); i != files.end(); ++i) {
-		if (equal(dir.begin(), dir.end(), i->first.begin())) {
+	//This breaks VC8, specificaly boost iterator assertions
+	//for (map<string, FileData>::iterator i = files.begin(); i != files.end(); ++i) {
+	
+	map<string, FileData>::iterator filesStart = files.begin();
+	map<string, FileData>::iterator filesEnd = files.end();
+	while (filesStart != filesEnd)
+		{
+		//This breaks VC8, specificaly boost iterator assertions
+		//if (equal(dir.begin(), dir.end(), i->first.begin())) {
+		int dirLength = dir.length();
+		int thisLength = filesStart->first.length();
+		string path = filesStart->first.substr(0,dirLength);
+		// Test to see if this file startwith the dir path
+		if (dir.compare(path) == 0)
+			{
 
 			// Strip pathname
-			string name = i->first.substr(dir.length());
+			string name = filesStart->first.substr(dir.length());
 
 			// Do not return files in subfolders
 			if (name.find('\\') == string::npos && name.find('/') == string::npos)
 				ret.push_back(name);
 
 			foundMatch = true;
-		}
+			}
 		else {
 			// If we have had a match previously but this one isn't a match, there will be no more matches
 			if (foundMatch)
 				break;
+			}
+		filesStart++;
 		}
-	}
 
 	return ret;
 }
