@@ -139,7 +139,7 @@ def generate(env):
 			env['debug'] = level
 			env.AppendUnique(CCFLAGS=['-ggdb'+level], CPPDEFINES=['DEBUG', '_DEBUG'])
 		else:
-			print "invalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
+			print "\ninvalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
 			env.Exit(1)
 
 		# optimize?
@@ -159,7 +159,7 @@ def generate(env):
 			archflags = detect.processor(config.check_gcc_version(env) >= ['3','4','0'])
 			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe']+archflags)
 		else:
-			print "invalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
+			print "\ninvalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
 
 		env['CXXFLAGS'] = env['CCFLAGS']
