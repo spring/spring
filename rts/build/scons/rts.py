@@ -99,6 +99,31 @@ def generate(env):
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
 
+		# Declare some helper functions for boolean and string options.
+		def bool_opt(key, default):
+			if args.has_key(key):
+				if args[key] == 'no' or args[key] == 'false' or args[key] == '0':
+					env[key] = False
+				elif args[key] == 'yes' or args[key] == 'true' or args[key] == '1':
+					env[key] = True
+				else:
+					print "\ninvalid", key, "option, must be one of: yes, true, no, false, 0, 1."
+					env.Exit(1)
+			else: env[key] = default
+
+		def string_opt(key, default):
+			if args.has_key(key):
+				env[key] = args[key]
+			else: env[key] = default
+
+		# profile?
+		bool_opt('profile', False)
+		if env['profile']:
+			print "profiling enabled,",
+			env.AppendUnique(CCFLAGS=['-pg'], LINKFLAGS=['-pg'])
+		else:
+			print "profiling NOT enabled,",
+
 		# debug?
 		if args.has_key('debug'):
 			level = args['debug']
@@ -126,7 +151,7 @@ def generate(env):
 			if env['debug']: level = '0'
 			else: level = '1'
 		if int(level) == 0:
-			print "optimizing NOT enabled"
+			print "optimizing NOT enabled,",
 			env['optimize'] = 0
 		elif (int(level) >= 1 and int(level) <= 3) or level == 's' or level == 'size':
 			print "level", level, "optimizing enabled"
@@ -136,28 +161,6 @@ def generate(env):
 		else:
 			print "invalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
-
-		# Declare some helper functions for boolean and string options.
-		def bool_opt(key, default):
-			if args.has_key(key):
-				if args[key] == 'no' or args[key] == 'false' or args[key] == '0':
-					env[key] = False
-				elif args[key] == 'yes' or args[key] == 'true' or args[key] == '1':
-					env[key] = True
-				else:
-					print "invalid", key, "option, must be one of: yes, true, no, false, 0, 1."
-					env.Exit(1)
-			else: env[key] = default
-
-		def string_opt(key, default):
-			if args.has_key(key):
-				env[key] = args[key]
-			else: env[key] = default
-
-		# profile?
-		bool_opt('profile', True)
-		if env['profile']:
-			env.AppendUnique(CCFLAGS=['-pg'], LINKFLAGS=['-pg'])
 
 		env['CXXFLAGS'] = env['CCFLAGS']
 
