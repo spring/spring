@@ -444,7 +444,8 @@ Starting at goalSquare and tracking backwards.
 */
 void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 	//Backtracking the path.
-	if(needPath){
+	if(needPath)
+		{
 		int2 square;
 		square.x = goalSquare % gs->mapx;
 		square.y = goalSquare / gs->mapx;
@@ -462,9 +463,13 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 			oldSquare.y = square.y;
 			square.x -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].x;
 			square.y -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].y;
-		} while(true);
-		foundPath.pathGoal = foundPath.path.front();
-	}
+			} 
+		while(true);
+		if (foundPath.path.size() > 0)
+			{
+			foundPath.pathGoal = foundPath.path.front();
+			}
+		}
 	//Adds the cost of the path.
 	foundPath.pathCost = squareState[goalSquare].cost;
 }
