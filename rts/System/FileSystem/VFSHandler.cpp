@@ -35,7 +35,7 @@ CVFSHandler::CVFSHandler(bool mapArchives)
 void CVFSHandler::FindArchives(const string& pattern, const string& path)
 {
 	fs::path fn(path);
-	std::vector<fs::path> found = find_files(fn,pattern,true);
+	std::vector<fs::path> found = find_files(fn,pattern, false);
 	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
 		AddArchive(it->string().c_str(),false);
 }
