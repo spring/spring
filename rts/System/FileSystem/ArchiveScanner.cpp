@@ -20,7 +20,7 @@
  * is not slow, but mapping them all every time to make the list is)
  */
 
-#define INTERNAL_VER	2
+#define INTERNAL_VER	3
 
 CArchiveScanner* archiveScanner = NULL;
 
@@ -77,44 +77,24 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	isDirty = true;
 
 	fs::path fn(curPath+"/");
-	std::vector<fs::path> found = find_files(fn,"*.*");
+	std::vector<fs::path> found = find_files(fn, "*", true);
 	struct stat info;
 	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
-#ifdef DEBUG
-		printf("looking at %s\n", it->native_file_string().c_str());
-#endif
 		stat(it->native_file_string().c_str(),&info);
 
-		string fullName = it->native_file_string().c_str();
-		string fn;
-		if (fullName.find_last_of('/') != string::npos)
-			fn = fullName.substr(fullName.find_last_of('/'));
-		else if (fullName.find_last_of('\\') != string::npos)
-			fn = fullName.substr(fullName.find_last_of('\\'));
-		else
-			fn = fullName;
+		string fullName = it->native_file_string();
+		string fn = it->leaf();
+		string fpath = it->branch_path().string();
 		string lcfn = fn;
-		transform(lcfn.begin(), lcfn.end(), lcfn.begin(), (int (*)(int))tolower);
+		transform(lcfn.begin(), lcfn.end(), lcfn.begin(), (int (*)(int))tolower); 
 
-		// Is it a directory?
-#ifdef _MSC_VER // im guessing this is a difference between gcc and msvc, not windows and linux
-		if (info.st_mode & S_IFDIR) {
-#else
-		if (S_ISDIR(info.st_mode)) {
-#endif
-			// Avoid the special directories
-			if (fn.c_str()[0] != '.') {
-				Scan(it->native_file_string().c_str(), checksum);
-			}
-		}
-
-		// Or maybe an archive we should look into?
-		else if (CArchiveFactory::IsArchive(it->native_file_string().c_str())) {
+		// Is this an archive we should look into?
+		if (CArchiveFactory::IsArchive(fullName)) {
 
 			// Determine whether to rely on the cached info or not
 			bool cached = false;
 
-			map<string, ArchiveInfo>::iterator aii = archiveInfo.find(fullName);
+			map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcfn);
 			if (aii != archiveInfo.end()) {
 
 				// This archive may have been obsoleted, do not process it if so
@@ -176,7 +156,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 								void* buf = malloc(fsize);
 								ar->ReadFile(fh, buf, fsize);
 								ar->CloseFile(fh);
-                TdfParser p( reinterpret_cast<char*>(buf), fsize );
+								TdfParser p( reinterpret_cast<char*>(buf), fsize );
 								free(buf);
 								
 								ai.modData = GetModData(&p, "mod");
@@ -187,7 +167,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 						cur = ar->FindFiles(cur, &name, &size);
 					}
 
-					ai.path = curPath;
+					ai.path = fpath;
 					ai.modified = info.st_mtime;
 					ai.origName = fn;
 					ai.updated = true;
