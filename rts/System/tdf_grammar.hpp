@@ -60,7 +60,7 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
         >> name
         [ section.context = bind( &TdfParser::TdfSection::construct_subsection )(section.context, arg1)  ]
         >> expect_square_bracket( ch_p(']') )
-        >> expect_semicolon (ch_p('{') )
+        >> expect_brace (ch_p('{') )
         >> *
         (
          (
