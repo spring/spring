@@ -2,7 +2,9 @@ TASpring change log
 
 next
 
-- Fixed flipped features, they are now rendered exactly the same as units.
+- Added "dontland" unit tag, to specify aircraft that should not land. Don't use this on transport units!
+- std::sort related bug fixed in projectile handler (tvo)
+- Fixed flipped features, they are now rendered exactly the same as units.  (jcnossen)
 - A few new COB "get" constants:
    70 MAX_ID             returns maximum number of units - 1
    71 MY_ID              returns ID of current unit
