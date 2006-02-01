@@ -140,9 +140,9 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	// If this is a TA:K script, read the sound names
 	if (ch.VersionSignature == 6) {
-		for (long i = 0; i < ch.NumberOfSounds; ++i) {
-			long ofs;
-			ofs = *(long *)&cobdata[ch.OffsetToSoundNameArray + i * 4];
+		for (int i = 0; i < ch.NumberOfSounds; ++i) {
+			int ofs;
+			ofs = *(int *)&cobdata[ch.OffsetToSoundNameArray + i * 4];
 			/* TODO This probably isn't correct. */
 			ofs = swabdword(ofs);
 			string s = &cobdata[ofs];
