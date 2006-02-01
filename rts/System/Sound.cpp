@@ -73,6 +73,16 @@ CSound::~CSound()
 	alcCloseDevice(curdevice);
 }
 
+static bool CheckError(const char* msg)
+{
+	ALenum e = alGetError();
+	if (e != AL_NO_ERROR) {
+		(*info) << msg << ": " << alGetString(e) << "\n";
+		return false;
+	}
+	return true;
+}
+
 void CSound::PlaySound(int id, float volume)
 {
 	if (noSound || !camera)
@@ -94,13 +104,15 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	ALuint source;
 	alGenSources(1,&source);
 
-	if (alGetError() != AL_NO_ERROR) {
-		(*info) << "error generating OpenAL sound source";
-        return;
-	}
+	if (!CheckError("error generating OpenAL sound source"))
+		return;
 
-	if (Sources[cur])
+	if (Sources[cur]) {
+		/* The Linux port of OpenAL generates an "Illegal call" error if we
+		delete a playing source, so we must stop it first. -- tvo */
+		alSourceStop(Sources[cur]);
 		alDeleteSources(1,&Sources[cur]);
+	}
 	Sources[cur++] = source;
 	if (cur == maxSounds)
 		cur = 0;
@@ -112,6 +124,7 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
 	alSourcei(source, AL_LOOPING, false);
 	alSourcePlay(source);
+	CheckError("CSound::PlaySound");
 }
 
 void CSound::Update()
@@ -129,6 +142,7 @@ void CSound::Update()
 			}
 		}
 	}
+	CheckError("CSound::Update");
 
 	UpdateListener();
 }
@@ -141,6 +155,7 @@ void CSound::UpdateListener()
 	alListener3f(AL_VELOCITY,0.0,0.0,0.0);
 	ALfloat ListenerOri[] = {camera->forward.x/(gs->mapx*SQUARE_SIZE),camera->forward.y/(gs->mapy*SQUARE_SIZE),camera->forward.z/(camera->pos.maxzpos),camera->up.x/(gs->mapx*SQUARE_SIZE),camera->up.y/(gs->mapy*SQUARE_SIZE),camera->up.z/(camera->pos.maxzpos)};
 	alListenerfv(AL_ORIENTATION,ListenerOri);
+	CheckError("CSound::UpdateListener");
 }
 
 #pragma pack(push, 1)
@@ -164,7 +179,7 @@ struct WAVHeader
 
 #pragma pack(pop)
 
-bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
+static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 {
 	WAVHeader *header = (WAVHeader *)buf;
 
@@ -216,7 +231,7 @@ bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 	}
 
 	alBufferData(albuffer,format,buf+sizeof(WAVHeader),header->datalen > size-sizeof(WAVHeader) ? size-sizeof(WAVHeader) : header->datalen,header->SamplesPerSec);
-	return true;
+	return CheckError("ReadWAV");
 }
 
 
@@ -227,6 +242,8 @@ ALuint CSound::LoadALBuffer(string path)
 	Uint8 *buf;
 	ALuint buffer;
 	alGenBuffers(1,&buffer);
+	if (!CheckError("error generating OpenAL sound buffer"))
+		return 0;
 	CFileHandler file("Sounds/"+path);
 	if(file.FileExists()){
 		buf = new Uint8[file.FileSize()];
