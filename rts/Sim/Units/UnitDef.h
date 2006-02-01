@@ -147,6 +147,7 @@ struct UnitDef
 	float turnRadius;
 	float wantedHeight;
 	bool hoverAttack;
+	bool dontLand;
 
 	float maxAcc;
 	float maxDec;

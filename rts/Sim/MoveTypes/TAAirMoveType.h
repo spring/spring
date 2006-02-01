@@ -15,6 +15,7 @@ public:
 		AIRCRAFT_LANDING,
 		AIRCRAFT_CRASHING,
 		AIRCRAFT_TAKEOFF,
+		AIRCRAFT_HOVERING       // this is what happens to aircraft with dontLand=1 in fbi
 	} aircraftState;
 
 	enum FlyState {
@@ -82,6 +83,7 @@ public:
 	void UpdateLanding();
 	void UpdateFlying();
 	void UpdateCircling();
+	void UpdateHovering();
 
 	//Helpers for (multiple) state handlers
 	void UpdateHeading();
