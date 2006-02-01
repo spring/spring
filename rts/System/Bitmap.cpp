@@ -170,6 +170,9 @@ void CBitmap::Save(string filename)
 		}
 	}
 
+	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
+	ilSetInteger (IL_JPG_QUALITY, 80);
+
 	ILuint ImageName = 0;
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);

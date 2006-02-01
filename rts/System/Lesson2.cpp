@@ -343,6 +343,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		return 0;									// Quit If Window Was Not Created
 	}
 
+	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+
 	font=new CglFont(32,223);
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
