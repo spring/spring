@@ -47,22 +47,29 @@ CSound::CSound()
 
 CSound::~CSound()
 {
-	LoadedFiles.clear();
-	if (!noSound) {
-		for (int i = 0; i < maxSounds; i++)
-			alDeleteSources(1, &Sources[i]);
-		delete[] Sources;
-	}
-	for (std::vector<ALuint>::iterator it = Buffers.begin(); it != Buffers.end(); it++)
-		alDeleteBuffers(1,&(*it));
-	Buffers.clear();
 	if (noSound)
 		return;
-	//deadlock here on program exit --tvo
+	LoadedFiles.clear();
+	alDeleteSources(maxSounds,Sources);
+	delete[] Sources;
+	while (!Buffers.empty()) {
+		alDeleteBuffers(1,&Buffers.back());
+		Buffers.pop_back();
+	}
 	ALCcontext *curcontext = alcGetCurrentContext();
 	ALCdevice *curdevice = alcGetContextsDevice(curcontext);
-	alcMakeContextCurrent(NULL);
-	alcDestroyContext(curcontext);
+	alcSuspendContext(curcontext);
+	/*
+	 * FIXME
+	 * Technically you're supposed to detach and destroy the
+	 * current context with these two lines, but it deadlocks.
+	 * As a not-quite-as-clean shortcut, if we skip this step
+	 * and just close the device, OpenAL theoretically
+	 * destroys the context associated with that device.
+	 * 
+	 * alcMakeContextCurrent(NULL);
+	 * alcDestroyContext(curcontext);
+	 */
 	alcCloseDevice(curdevice);
 }
 
