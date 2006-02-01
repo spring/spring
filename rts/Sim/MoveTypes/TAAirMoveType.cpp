@@ -117,6 +117,10 @@ void CTAAirMoveType::SetState(AircraftState newState)
 //				owner->cob->Call(COBFN_Deactivate);	
 //			}
 			break;
+		case AIRCRAFT_HOVERING:
+			wantedHeight = orgWantedHeight;
+			wantedSpeed = ZeroVector;
+			// fall through...
 		default:
 			owner->physicalState = CSolidObject::Flying;
 			owner->UnBlock();
@@ -130,7 +134,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	}
 
 	//Cruise as default
-	if (aircraftState == AIRCRAFT_FLYING)
+	if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_HOVERING)
 		flyState = FLY_CRUISING;
 
 	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
@@ -158,6 +162,9 @@ void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 		case AIRCRAFT_LANDING:
 			SetState(AIRCRAFT_TAKEOFF);
 			break;
+		case AIRCRAFT_HOVERING:
+			SetState(AIRCRAFT_FLYING);
+			break;
 	}
 
 	//info->AddLine("Moving to %f %f %f", pos.x, pos.y, pos.z);
@@ -183,6 +190,8 @@ void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 //	info->AddLine("point order");
 
 	//Ignore the exact same order
+	if (aircraftState == AIRCRAFT_HOVERING)
+		return;
 	if ((aircraftState == AIRCRAFT_FLYING) && (flyState==FLY_CIRCLING || flyState==FLY_ATTACKING) && ((circlingPos-pos).SqLength2D()<64) && (goalDistance == distance))
 		return;
 
@@ -213,7 +222,10 @@ void CTAAirMoveType::ExecuteStop()
 			waitCounter = 30;		//trick to land directly..
 			break;
 		case AIRCRAFT_FLYING:
-			SetState(AIRCRAFT_LANDING);
+			if (owner->unitDef->dontLand)
+				SetState(AIRCRAFT_HOVERING);
+			else 
+				SetState(AIRCRAFT_LANDING);
 			break;
 		case AIRCRAFT_LANDING:
 			break;
@@ -262,6 +274,27 @@ void CTAAirMoveType::UpdateTakeoff()
 	}
 }
 
+// Move the unit around a bit.. and when it gets too far away from goal position it switches to normal flying instead
+void CTAAirMoveType::UpdateHovering()
+{
+	float lScale = accRate*8;
+
+	if ((goalPos - owner->pos).Length2D() > lScale * 10)
+		SetState (AIRCRAFT_FLYING); // drifted too far away, get back to the original position
+	else {
+		float driftSpeed = accRate * 0.05f;
+
+		float3 dir = goalPos - owner->pos;
+		float3 change(dir.x * gs->randFloat () * driftSpeed, 0.0f, dir.z * gs->randFloat () * driftSpeed);
+		wantedSpeed += change;
+
+		// add a bit of lateral movement
+		wantedSpeed += float3(-change.z, 0.0f, change.x) * gs->randFloat () * 0.1f;
+	}
+
+	UpdateAirPhysics();
+}
+
 void CTAAirMoveType::UpdateFlying()
 {
 	float3 &pos = owner->pos;
@@ -282,10 +315,13 @@ void CTAAirMoveType::UpdateFlying()
 		switch (flyState) {
 			case FLY_CRUISING:
 				if(dontLand || (++waitCounter<55 && dynamic_cast<CTransportUnit*>(owner))){		//transport aircrafts need some time to detect that they can pickup
-					wantedSpeed=ZeroVector;
-					if(waitCounter>60){
-						wantedHeight=orgWantedHeight;
-					}
+					if (dynamic_cast<CTransportUnit*>(owner)) {
+						wantedSpeed=ZeroVector;
+						if(waitCounter>60){
+							wantedHeight=orgWantedHeight;
+						}
+					} else
+						SetState(AIRCRAFT_HOVERING);
 				} else {
 					wantedHeight=orgWantedHeight;
 					SetState(AIRCRAFT_LANDING);
@@ -709,6 +745,9 @@ void CTAAirMoveType::Update()
 					break;
 				case AIRCRAFT_LANDING:
 					UpdateLanding();
+					break;
+				case AIRCRAFT_HOVERING:
+					UpdateHovering();
 					break;
 			}
 		}

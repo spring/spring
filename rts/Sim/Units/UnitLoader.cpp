@@ -231,6 +231,7 @@ START_TIME_PROFILE;
 			mt->decRate = ud->maxDec;
 			mt->wantedHeight = ud->wantedHeight+gs->randFloat()*5;
 			mt->orgWantedHeight=mt->wantedHeight;
+			mt->dontLand = ud->dontLand;
 
 			unit->moveType = mt;
 		}
@@ -316,7 +317,6 @@ END_TIME_PROFILE("Unit loader");
 
 CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw)
 {
-
 	CWeapon* weapon;
 
 	if(!weapondef){

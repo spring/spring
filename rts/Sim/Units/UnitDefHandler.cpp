@@ -44,13 +44,15 @@ CUnitDefHandler::CUnitDefHandler(void)
 		tafiles2.pop_back();
 	}
 
-      	soundcategory.LoadFile("gamedata/SOUND.TDF");
+	soundcategory.LoadFile("gamedata/SOUND.TDF");
 	
 	numUnits = tafiles.size();
+	if (gameSetup) 
+		numUnits -= gameSetup->restrictedUnits.size();
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = new UnitDef[numUnits+1];
-	
+
 	unsigned int i = 1;		// Start at unit id 1
 	for(unsigned int a = 0; a < tafiles.size(); ++a)	
 	{
@@ -89,7 +91,10 @@ CUnitDefHandler::~CUnitDefHandler(void)
 			delete[] unitDefs[i].yardmap;
 			unitDefs[i].yardmap = 0;
 		}
-		glDeleteTextures(1,&unitDefs[i].unitimage);
+		if (unitDefs[i].unitimage) {
+			glDeleteTextures(1,&unitDefs[i].unitimage);
+			unitDefs[i].unitimage = 0;
+		}
 	}
 	delete[] unitDefs;
 	delete weaponDefHandler;
@@ -279,6 +284,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str());;
 	ud.hoverAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\hoverattack").c_str());
+	ud.dontLand = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\dontland").c_str());
 
 	tdfparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");
 	tdfparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
@@ -384,7 +390,6 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			ud.type = "Builder";
 		else
 			ud.type = "Factory";
-
 	}
 	else if(ud.canfly && !ud.hoverAttack)
 	{

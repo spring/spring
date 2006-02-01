@@ -481,12 +481,12 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	delete[] keys;
 
 	// Shutdown
-	if (gameSetup)
-		delete gameSetup;
 	if (pregame)
 		delete pregame;								//in case we exit during init
 	if (game)
 		delete game;
+	if (gameSetup)
+		delete gameSetup;
 	delete font;
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
