@@ -642,7 +642,7 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 	CFeature* feature;
 	int allyteam=gs->AllyTeam(team);
 
-	int endr = searchRadius / (SQUARE_SIZE*2);
+	int endr = (int)(searchRadius / (SQUARE_SIZE*2));
 	const vector<SearchOffset>& ofs = GetSearchOffsetTable (endr);
 
 	for(int so=0;so<endr;so++) {
