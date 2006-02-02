@@ -65,10 +65,8 @@ CGameController* activeController=0;
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
 {
-	if (height==0)										// Prevent A Divide By Zero By
-	{
-		height=1;										// Making Height Equal One
-	}
+	if (!height)										// Prevent A Divide By Zero
+		height++;
 
 	gu->screenx=width;
 	gu->screeny=height;
@@ -85,7 +83,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 	glLoadIdentity();									// Reset The Modelview Matrix
 }
 
-static bool InitGL(GLvoid)										// All Setup For OpenGL Goes Here
+static inline void InitGL()										// All Setup For OpenGL Goes Here
 {
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 0.1f);				// Black Background
@@ -93,10 +91,9 @@ static bool InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	return true;										// Initialization Went OK
 }
 
-int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
+static inline int DrawGLScene()									// Here's Where We Do All The Drawing
 {
 	if(activeController){
 		if(activeController->Update()==0)
@@ -106,12 +103,6 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	return true;
 }
 
-void KillGLWindow(GLvoid)								// Properly Kill The Window
-{
-#ifndef DEBUG
-	SDL_WM_GrabInput(SDL_GRAB_OFF);
-#endif
-}
 
 bool MultisampleTest(void)
 {
@@ -122,8 +113,15 @@ bool MultisampleTest(void)
 		return false;
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
 	GLuint fsaalevel = min(configHandler.GetInt("FSAALevel",2),(unsigned int)8);
-	if (fsaalevel % 2)
-		fsaalevel--;
+
+	/*
+	 * Faster version of this:
+	 * if (fsaalevel % 2)
+	 *     fsaalevel--;
+	 */
+	fsaalevel >>= 1;
+	fsaalevel <<= 1;
+
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,fsaalevel);
 	return true;
 }
@@ -487,7 +485,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	delete font;
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
-	KillGLWindow();									// Kill The Window
+#ifndef DEBUG
+	SDL_WM_GrabInput(SDL_GRAB_OFF);
+#endif
 	SDL_Quit();
 	delete gs;
 	delete gu;
