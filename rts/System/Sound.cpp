@@ -50,7 +50,10 @@ CSound::~CSound()
 	if (noSound)
 		return;
 	LoadedFiles.clear();
-	alDeleteSources(maxSounds,Sources);
+	for (int i = 0; i < maxSounds; i++) {
+		alSourceStop(Sources[i]);
+		alDeleteSources(1,&Sources[i]);
+	}
 	delete[] Sources;
 	while (!Buffers.empty()) {
 		alDeleteBuffers(1,&Buffers.back());
