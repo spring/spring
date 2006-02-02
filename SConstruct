@@ -39,6 +39,10 @@ inst = Install(os.path.join(env['prefix'], 'bin'), spring)
 Alias('install', inst)
 Alias('install-spring', inst)
 
+# Strip the executable if rts.py said so.
+if env['strip']:
+	env.AddPostAction(spring, Action([['strip','$TARGET']]))
+
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 aienv = env.Copy(LIBS=[], LIBPATH=[])
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
