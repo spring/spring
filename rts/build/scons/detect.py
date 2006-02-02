@@ -20,6 +20,10 @@ def platform():
 		print "Detected platform : windows"
 		print "WARNING: support is incomplete"
 		detected_platform='windows'
+	elif sys.platform == 'darwin':
+		print "Detected platform : darwin"
+		print "WARNING: support is incomplete"
+		detected_platform='darwin'
 	else:
 		print "Platform not supported yet, please edit SConstruct file"
 		detected_platform='unknown'

@@ -28,7 +28,7 @@
 #if defined(__linux__)
 #define fenv_control(xfenv_t) (xfenv_t.__control_word)
 #define fenv_status(xfenv_t) (xfenv_t.__status_word)
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__APPLE_CC__)
 #define fenv_control(xfenv_t) (xfenv_t.__control)
 #define fenv_status(xfenv_t) (xfenv_t.__status)
 #else

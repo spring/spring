@@ -60,6 +60,8 @@ def guess_include_path(env, conf, name, subdir):
 			path = os.path.join(os.environ['MINGDIR'], 'include')
 		else:
 			path = 'c:/mingw/include'
+	elif env['platform'] == 'darwin':
+		path = '/opt/local/include'
 	else:
 		path = '/usr/include'
 	path = os.path.join(path, subdir)
@@ -243,6 +245,9 @@ def check_libraries(env, conf):
 def configure(env, conf_dir):
 	print "\nChecking configure scripts"
 	conf = env.Configure(conf_dir = conf_dir)
+	if env['platform'] == 'darwin':
+		# Hackery to support Darwinports configure scripts
+		env['ENV']['PATH'] = os.environ['PATH']
 	check_debian_powerpc(env, conf)
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
