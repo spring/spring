@@ -205,6 +205,9 @@ def generate(env):
 		elif env['platform'] == 'linux':
 			include_path += ['/usr/include', '/usr/include/GL']
 			env.AppendUnique(CCFLAGS = ['-pthread'], CXXFLAGS = ['-pthread'])
+		elif env['platform'] == 'darwin':
+			include_path += ['/usr/include', '/usr/local/include', '/opt/local/include', '/usr/X11R6/include']
+			lib_path += ['/opt/local/lib', '/usr/local/lib']
 		elif env['platform'] == 'windows':
 			include_path += ['crashrpt/include']
 			lib_path += ['crashrpt/lib']
