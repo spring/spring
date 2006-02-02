@@ -77,7 +77,7 @@ static bool CheckError(const char* msg)
 {
 	ALenum e = alGetError();
 	if (e != AL_NO_ERROR) {
-		(*info) << msg << ": " << alGetString(e) << "\n";
+		(*info) << msg << ": " << (char*)alGetString(e) << "\n";
 		return false;
 	}
 	return true;
