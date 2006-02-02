@@ -38,6 +38,7 @@ def generate(env):
 		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('prefix',            'Install prefix', '/usr/local'),
 		('datadir',           'Data directory', '$prefix/games/taspring'),
+		('strip',             'Discard symbols from the executable (only when neither debugging nor profiling)', True),
 		#porting options - optional in a first phase
 		('disable_avi',       'Set to no to turn on avi support', True),
 		('disable_clipboard', 'Set to no to turn on clipboard code', True),
@@ -68,14 +69,14 @@ def generate(env):
 	env.Alias('configure', None)
 
 	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 1) or env.GetOption('clean')):
-		print "Not configured.  Run `scons configure' first."
+		print "Not configured or configure script updated.  Run `scons configure' first."
 		print "Use `scons --help' to show available configure options to `scons configure'."
 		env.Exit(1)
 
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'disable_avi', 'disable_hpi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
+		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'disable_hpi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -175,6 +176,7 @@ def generate(env):
 			else:
 				env['CXXFLAGS'] = env['CCFLAGS']
 
+		bool_opt('strip', True)
 		bool_opt('disable_avi', True)
 		bool_opt('disable_clipboard', True)
 		bool_opt('disable_hpi', False)
@@ -215,6 +217,12 @@ def generate(env):
 
 		usropts.Save(usrcachefile, env)
 		intopts.Save(intcachefile, env)
+
+	#Should we strip the exe?
+	if env.has_key('strip') and env['strip'] and not env['debug'] and not env['profile'] and not env.GetOption('clean'):
+		env['strip'] = True
+	else:
+		env['strip'] = False
 
 	#BuildDir support code
 	if env['builddir']:
