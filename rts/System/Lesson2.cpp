@@ -85,7 +85,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 	glLoadIdentity();									// Reset The Modelview Matrix
 }
 
-int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
+static bool InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 0.1f);				// Black Background
@@ -140,8 +140,8 @@ bool MultisampleVerify(void)
 		handleerror(0,t,"SDL_GL",MBF_OK|MBF_INFO);
 #endif
 		return true;
-	} else
-		return false;
+	}
+	return false;
 }
 
 /*	This Code Creates Our OpenGL Window.  Parameters Are:					*
@@ -165,9 +165,15 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	SDL_WM_SetCaption(title, title);
 
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
-	if (fullscreenflag) {
-		sdlflags |= SDL_FULLSCREEN;
-	}
+
+	/*
+	 * Faster version of this:
+	 * 
+	 * if (fullscreenflag)
+	 *	sdlflags |= SDL_FULLSCREEN;
+	 */
+	sdlflags ^= (-fullscreenflag ^ sdlflags) & SDL_FULLSCREEN;
+	
 	// FIXME: Might want to set color and depth sizes, too  -- johannes
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
 
@@ -183,13 +189,6 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	
 	InitGL();
 	ReSizeGLScene(screen->w,screen->h);
-
-	if (!InitGL())									// Initialize Our Newly Created GL Window
-	{
-		KillGLWindow();								// Reset The Display
-		handleerror(NULL,"Initialization Failed.","ERROR",MBF_OK|MBF_EXCL);
-		return false;								// Return false
-	}
 
 	return true;									// Success
 }
@@ -413,29 +412,27 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 					if (i == SDLK_RETURN)
 						keys[i] = 1;
 					
-					if(activeController)
+					if(activeController) {
 						activeController->KeyPressed(i,1);
 					
+#ifndef NEW_GUI
+						if(activeController->userWriting){ 
+							i = event.key.keysym.unicode;
+							if (i>31 && i < 128)
+								if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
+									activeController->ignoreNextChar=false;
+								else
+									if(i>31 && i<250)
+										activeController->userInput+=char(i);
+						}
+#endif
+					}
 #ifdef NEW_GUI
 					i = event.key.keysym.unicode;
 					if (i > 0 && i < 128) /* HACK */
 						GUIcontroller::Character(char(i));
 						
-					if (0)
 #endif
-					{
-						if(activeController){
-							if(activeController->userWriting){ 
-								i = event.key.keysym.unicode;
-								if (i>31 && i < 128)
-									if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
-										activeController->ignoreNextChar=false;
-									else
-										if(i>31 && i<250)
-											activeController->userInput+=char(i);
-							}
-						}
-					}
 					break;
 				}
 				case SDL_KEYUP:
