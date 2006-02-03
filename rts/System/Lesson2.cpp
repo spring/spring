@@ -29,6 +29,7 @@
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
 #include "creg/ClassReg.h"
+#include "bitops.h"
 #ifndef NO_LUA
 #include "Script/LuaBinder.h"
 #endif
@@ -53,58 +54,80 @@
 #define YRES_DEFAULT 768
 
 Uint8 *keys;			// Array Used For The Keyboard Routine
-Uint8 scrollWheelSpeed;
 SDL_Surface *screen;
 int sdlflags;
-bool	active=true;		// Window Active Flag Set To true By Default
-bool	fullscreen=true;	// Fullscreen Flag Set To Fullscreen Mode By Default
-bool	globalQuit=false;
-bool	FSAA = false;
+bool active = true;		// Window Active Flag Set To true By Default
+bool fullscreen = true;
+bool globalQuit = false;
+bool FSAA = false;
 //time_t   fpstimer,starttime;
 CGameController* activeController=0;
 
-GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
+/*
+ * resizescene(width, height)
+ * Called at resize
+ */
+static void resizescene(GLsizei width, GLsizei height)
 {
-	if (!height)										// Prevent A Divide By Zero
+	if (!height)
 		height++;
+
+	/*
+	 * Reset current viewport
+	 */
+	glViewport(0,0,width,height);
+
+	/*
+	 * Reset projection matrix
+	 */
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	/*
+	 * Aspect ratio
+	 */
+	gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,2.8f,MAX_VIEW_RANGE);
+
+	/*
+	 * Reset modelview matrix
+	 */
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	gu->screenx=width;
 	gu->screeny=height;
-
-	glViewport(0,0,gu->screenx,gu->screeny);						// Reset The Current Viewport
-
-	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
-	glLoadIdentity();									// Reset The Projection Matrix
-
-	// Calculate The Aspect Ratio Of The Window
-	gluPerspective(45.0f,(GLfloat)gu->screenx/(GLfloat)gu->screeny,2.8f,MAX_VIEW_RANGE);
-
-	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
-	glLoadIdentity();									// Reset The Modelview Matrix
 }
 
-static inline void InitGL()										// All Setup For OpenGL Goes Here
+/*
+ * setupgl()
+ * Set initial OpenGL settings
+ */
+static inline void setupgl()
 {
-	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
-	glClearColor(0.0f, 0.0f, 0.0f, 0.1f);				// Black Background
-	glClearDepth(1.0f);									// Depth Buffer Setup
-	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
-	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
+	glShadeModel(GL_SMOOTH);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.1f);
+	glClearDepth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); 	/* Nice perspective calculations */
 }
 
-static inline int DrawGLScene()									// Here's Where We Do All The Drawing
+/*
+ * drawscene()
+ * Triggers draw functions
+ */
+static inline int drawscene()
 {
 	if(activeController){
 		if(activeController->Update()==0)
 			return 0;
-		return activeController->Draw();						   // Keep Going
+		return activeController->Draw();
 	}
 	return true;
 }
 
 
-bool MultisampleTest(void)
+static bool MultisampleTest(void)
 {
 	if (!GL_ARB_multisample)
 		return false;
@@ -114,19 +137,13 @@ bool MultisampleTest(void)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
 	GLuint fsaalevel = min(configHandler.GetInt("FSAALevel",2),(unsigned int)8);
 
-	/*
-	 * Faster version of this:
-	 * if (fsaalevel % 2)
-	 *     fsaalevel--;
-	 */
-	fsaalevel >>= 1;
-	fsaalevel <<= 1;
+	make_even_number(fsaalevel);
 
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,fsaalevel);
 	return true;
 }
 
-bool MultisampleVerify(void)
+static bool MultisampleVerify(void)
 {
 	GLint buffers, samples; 
 	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
@@ -147,11 +164,9 @@ bool MultisampleVerify(void)
  *	width			- Width Of The GL Window Or Fullscreen Mode				*
  *	height			- Height Of The GL Window Or Fullscreen Mode			*
  *	bits			- Number Of Bits To Use For Color (8/16/24/32)			*
- *	fullscreenflag	- Use Fullscreen Mode (true) Or Windowed Mode (false)	*/
+ *	fsflag	- Use Fullscreen Mode (true) Or Windowed Mode (false)	*/
 
-GLuint		PixelFormat;			// Holds The Results After Searching For A Match
-
-bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag,int frequency)
+static bool glwindow(char* title, int width, int height, int bits, bool fsflag,int frequency)
 {
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1)) {
 		handleerror(NULL,"Could not initialize SDL.","ERROR",MBF_OK|MBF_EXCL);
@@ -164,13 +179,7 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	/*
-	 * Faster version of this:
-	 * 
-	 * if (fullscreenflag)
-	 *	sdlflags |= SDL_FULLSCREEN;
-	 */
-	sdlflags ^= (-fullscreenflag ^ sdlflags) & SDL_FULLSCREEN;
+	conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fsflag);
 	
 	// FIXME: Might want to set color and depth sizes, too  -- johannes
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
@@ -185,10 +194,10 @@ bool CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 	if (FSAA)
 		FSAA = MultisampleVerify();
 	
-	InitGL();
-	ReSizeGLScene(screen->w,screen->h);
+	setupgl();
+	resizescene(screen->w,screen->h);
 
-	return true;									// Success
+	return true;
 }
 
 #ifdef _WIN32
@@ -215,6 +224,24 @@ bool crashCallback(void* crState)
 }
 #endif
 
+#define update_sdlkeys(k) 				\
+do { 							\
+	int __numkeys; 					\
+	Uint8 *__state; 				\
+	__state = SDL_GetKeyState(&__numkeys); 		\
+	memcpy((k), __state, sizeof(Uint8) * __numkeys);\
+} while (0)
+
+#define update_sdlmods(k) 				\
+do { 							\
+	SDLMod __mods = SDL_GetModState(); 		\
+	(k)[SDLK_LSHIFT] = __mods&KMOD_SHIFT?1:0; 	\
+	(k)[SDLK_LCTRL] = __mods&KMOD_CTRL?1:0; 	\
+	(k)[SDLK_LALT] = __mods&KMOD_ALT?1:0; 		\
+	(k)[SDLK_LMETA] = __mods&KMOD_META?1:0; 	\
+} while (0)
+
+
 #ifdef WIN32 /* SDL_main can't use envp in the main function */
 int main( int argc, char *argv[] )
 #else
@@ -225,7 +252,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	chdir(SPRING_DATADIR);
 #endif
 	INIT_SYNCIFY;
-	bool	done=false;								// Bool Variable To Exit Loop
+	bool	done=false;
 	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
@@ -236,9 +263,9 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #ifdef _DEBUG
 	fullscreen = false;
 #else
-	fullscreen=configHandler.GetInt("Fullscreen",1)!=0;
+	fullscreen = configHandler.GetInt("Fullscreen",1)!=0;
 #endif
-	scrollWheelSpeed=configHandler.GetInt("ScrollWheelSpeed",25);
+	Uint8 scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
 
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
@@ -276,25 +303,25 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	// Check if the commandline parameter is specifying a demo file
 	bool playDemo = false;
 	string demofile, startscript;
-	for (int i = 0; i < argc; i++) {
-		if (i == 0) {
+
 #ifdef _WIN32
-			string command(argv[i]);
-			int idx = command.rfind("spring");
-			string path = command.substr(0,idx);
-			if (path.at(0) == '"')
-				path.append(1,'"');
-			if (path != "")
-				_chdir(path.c_str());
+	string command(argv[0]);
+	int idx = command.rfind("spring");
+	string path = command.substr(0,idx);
+	if (path.at(0) == '"')
+		path.append(1,'"');
+	if (path != "")
+		_chdir(path.c_str());
 #endif
-		} else if (argv[i][0] != '-') {
+
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] != '-') {
 			string command(argv[i]);
 			int idx = command.rfind("sdf");
 			if (idx == command.size()-3) {
 				playDemo = true;
 				demofile = command;
-			}
-			else {
+			} else {
 				playDemo = false;
 				startscript = command;
 			}
@@ -329,33 +356,36 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	else
 		server=!cmdline->result("client") || cmdline->result("server");
 	
-	int xres=configHandler.GetInt("XResolution",XRES_DEFAULT);
-	int yres=configHandler.GetInt("YResolution",YRES_DEFAULT);
-
-	int frequency=configHandler.GetInt("DisplayFrequency",0);
-	// Create Our OpenGL Window
-	if (!CreateGLWindow("RtsSpring",xres,yres,0,fullscreen,frequency))
-	{
+	if (
+		!glwindow (
+			"RtsSpring",
+			configHandler.GetInt("XResolution",XRES_DEFAULT),
+			configHandler.GetInt("YResolution",YRES_DEFAULT),
+			0,
+			fullscreen,
+			configHandler.GetInt("DisplayFrequency",0)
+		)
+	) {
 		SDL_Quit();
-		return 0;									// Quit If Window Was Not Created
+		return 0;
 	}
 
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
-	font=new CglFont(32,223);
+	font = new CglFont(32,223);
 	LoadExtensions();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	SDL_GL_SwapBuffers();
 	
 	if (playDemo)
 		pregame = new CPreGame(false, demofile);
 	else
-		pregame=new CPreGame(server, "");
+		pregame = new CPreGame(server, "");
 
-	#ifdef NEW_GUI
+#ifdef NEW_GUI
 	guicontroller = new GUIcontroller();
-	#endif
+#endif
 
 #ifndef NO_LUA
 	lua.CreateLateBindings();
@@ -364,15 +394,14 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	keys = new Uint8[SDLK_LAST];
 
 	SDL_Event event;
-	while(!done)									// Loop That Runs While done=false
-	{
+	while (!done) {
 		ENTER_UNSYNCED;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE:
 					screen = SDL_SetVideoMode(event.resize.w,event.resize.h,0,SDL_OPENGL|SDL_RESIZABLE|SDL_HWSURFACE|SDL_DOUBLEBUF);
 					if (screen)
-						ReSizeGLScene(screen->w,screen->h);
+						resizescene(screen->w,screen->h);
 					break;
 				case SDL_QUIT:
 					done = true;
@@ -397,37 +426,28 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				case SDL_KEYDOWN:
 				{
 					int i = event.key.keysym.sym;
-					
-					int numkeys;
-					Uint8 * state;
-					state = SDL_GetKeyState(&numkeys);
-					memcpy(keys, state, sizeof(Uint8) * numkeys);
-					SDLMod mods = SDL_GetModState();
-					keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
-					keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
-					keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
-					keys[SDLK_LMETA] = mods&KMOD_META?1:0;
+				
+					update_sdlkeys(keys);
+					update_sdlmods(keys);
 					if (i == SDLK_RETURN)
 						keys[i] = 1;
 					
 					if(activeController) {
 						activeController->KeyPressed(i,1);
-					
 #ifndef NEW_GUI
 						if(activeController->userWriting){ 
 							i = event.key.keysym.unicode;
-							if (i>31 && i < 128)
+							if (i >= SDLK_SPACE && i <= SDLK_DELETE)
 								if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
 									activeController->ignoreNextChar=false;
 								else
-									if(i>31 && i<250)
-										activeController->userInput+=char(i);
+									activeController->userInput+=char(i);
 						}
 #endif
 					}
 #ifdef NEW_GUI
 					i = event.key.keysym.unicode;
-					if (i > 0 && i < 128) /* HACK */
+					if (i > SDLK_FIRST && i <= SDLK_DELETE) /* HACK */
 						GUIcontroller::Character(char(i));
 						
 #endif
@@ -437,15 +457,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				{
 					int i = event.key.keysym.sym;
 
-					int numkeys;
-					Uint8 * state;
-					state = SDL_GetKeyState(&numkeys);
-					memcpy(keys, state, sizeof(Uint8) * numkeys);
-					SDLMod mods = SDL_GetModState();
-					keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
-					keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
-					keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
-					keys[SDLK_LMETA] = mods&KMOD_META?1:0;
+					update_sdlkeys(keys);
+					update_sdlmods(keys);
 					if (i == SDLK_RETURN)
 						keys[i] = 0;
 					
@@ -456,16 +469,13 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				}
 			}
 		}
-		// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
-		if ((active && !DrawGLScene()) || globalQuit)	// Active?  Was There A Quit Received?
-		{
-			done=true;							// ESC or DrawGLScene Signalled A Quit
-		}
-		else									// Not Time To Quit, Update Screen
-		{
+
+		if (globalQuit || (active && !drawscene()))
+			done=true;
+		else {
 			if (FSAA)
 				glEnable(GL_MULTISAMPLE_ARB);
-			DrawGLScene();
+			drawscene();
 			SDL_GL_SwapBuffers();
 			if (FSAA)
 				glDisable(GL_MULTISAMPLE_ARB);
@@ -477,7 +487,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	// Shutdown
 	if (pregame)
-		delete pregame;								//in case we exit during init
+		delete pregame;			//in case we exit during init
 	if (game)
 		delete game;
 	if (gameSetup)

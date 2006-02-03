@@ -5,6 +5,7 @@
 #include "InfoConsole.h"
 #include "Rendering/GL/myGL.h"
 #include "myMath.h"
+#include "bitops.h"
 #include "mmgr.h"
 
 //Would be nice if these were read from a gaf-file instead.
@@ -88,8 +89,8 @@ CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
 {
 	CBitmap *nb;
 
-	int nx = NextPwr2(orig.xsize);
-	int ny = NextPwr2(orig.ysize);
+	int nx = next_power_of_2(orig.xsize);
+	int ny = next_power_of_2(orig.ysize);
 
 	unsigned char *data = new unsigned char[nx * ny * 4];
 	memset(data, 0, nx * ny * 4);
