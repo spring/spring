@@ -66,9 +66,7 @@ void CAICallback::SendTextMsg(const char* text,int priority)
 void CAICallback::verify()
 {
 	CGlobalAI *gai = globalAI->ais [team];
-	if ( (group && (gai->gh != group->handler || gai->team != team)) || 
-		(!group && (gai->team != team)))
-	{
+	if (gai && (((group && gai->gh != group->handler) || gai->team != team))) {
 		handleerror (0, "AI has modified spring components(possible cheat)", "Spring is closing:", MBF_OK | MBF_EXCL);
 		exit (-1);
 	}
