@@ -5,7 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
-#include "SunParser.h"
+#include "TdfParser.h"
 
 CSyncer::CSyncer(int id) :
 	populated(false)
@@ -42,7 +42,7 @@ crc_t CSyncer::CalculateCRC(const string& fileName)
 
 void CSyncer::ParseUnit(const string& fileName)
 {
-	CSunParser *p = new CSunParser();
+	TdfParser *p = new TdfParser();
 
 	p->LoadFile(fileName);
 
@@ -75,7 +75,7 @@ int CSyncer::ProcessUnits(bool checksum)
 	string unitName = curFile.substr(len, curFile.size() - 4 - len);
 	transform(unitName.begin(), unitName.end(), unitName.begin(), (int (*)(int))tolower);
 
-	CSunParser *parser = new CSunParser();
+	TdfParser *parser = new TdfParser();
 	parser->LoadFile("units\\" + unitName + ".fbi");
 
 	Unit u;

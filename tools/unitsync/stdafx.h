@@ -18,3 +18,7 @@
 // TODO: reference additional headers your program requires here
 
 #include "float3.h"
+
+#include <vector>
+#include <string>
+#include <map>

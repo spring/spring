@@ -5,8 +5,8 @@
 #include "VFSHandler.h"
 #include "ArchiveScanner.h"
 #include "FileHandler.h"
-#include "SunParser.h"
-#include "MapFile.h"
+#include "TdfParser.h"
+#include "Sim/Map/MapFile.h"
 #include "ArchiveFactory.h"
 
 #include "Syncer.h"
@@ -27,6 +27,7 @@ HWND hWnd = 0;
 class CInfoConsole {
 public:
 	void AddLine(const char *, ...);
+	void AddLine(const string& text); // HACKS FTW!   :/
 };
 
 // I'd rather not include globalstuff
@@ -34,6 +35,13 @@ public:
 
 void CInfoConsole::AddLine(const char *, ...)
 {
+}
+void CInfoConsole::AddLine (const string& text)
+{
+}
+
+void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {
+	MessageBox(0,msg,capt,MB_OK);
 }
 
 class CInfoConsole *info;
@@ -262,7 +270,7 @@ extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	}
 	delete f;
 
-	CSunParser parser;
+	TdfParser parser;
 	string smd = mapName.replace(mapName.find_last_of('.'), 4, ".smd");
 	parser.LoadFile("maps\\" + smd);
 
@@ -537,7 +545,7 @@ extern "C" int __stdcall GetSideCount()
 {
 	sideData.clear();
 
-	CSunParser p;
+	TdfParser p;
 	p.LoadFile("gamedata\\sidedata.tdf");
 
 	for(int b=0;;++b){					//loop over all sides

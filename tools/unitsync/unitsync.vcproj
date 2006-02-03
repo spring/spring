@@ -32,7 +32,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../rts/bagge/unitsync.dll"
+				OutputFile="../../game/unitsync.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="exports.def"
 				GenerateDebugInformation="TRUE"
@@ -68,9 +68,9 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\rts;..\7zip;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="4"
+				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -79,7 +79,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../rts/bagge/unitsync.dll"
+				AdditionalDependencies="zlibwapi.lib"
+				OutputFile="../../game/unitsync.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="exports.def"
 				GenerateDebugInformation="TRUE"
@@ -120,9 +121,6 @@
 				RelativePath=".\exports.def">
 			</File>
 			<File
-				RelativePath="..\rts\FileHandler.cpp">
-			</File>
-			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -138,13 +136,19 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\rts\SunParser.cpp">
-			</File>
-			<File
 				RelativePath=".\Syncer.cpp">
 			</File>
 			<File
 				RelativePath=".\SyncServer.cpp">
+			</File>
+			<File
+				RelativePath="..\..\rts\System\tdf_grammar.hpp">
+			</File>
+			<File
+				RelativePath="..\..\rts\System\TdfParser.cpp">
+			</File>
+			<File
+				RelativePath="..\..\rts\System\TdfParser.h">
 			</File>
 			<File
 				RelativePath=".\unitsync.cpp">
@@ -153,31 +157,73 @@
 				Name="Archive"
 				Filter="">
 				<File
-					RelativePath="..\rts\Archive7Zip.cpp">
+					RelativePath="..\..\rts\System\FileSystem\Archive7Zip.cpp">
 				</File>
 				<File
-					RelativePath="..\rts\ArchiveBuffered.cpp">
+					RelativePath="..\..\rts\System\FileSystem\Archive7Zip.h">
 				</File>
 				<File
-					RelativePath="..\rts\ArchiveFactory.cpp">
+					RelativePath="..\..\rts\System\FileSystem\ArchiveBase.h">
 				</File>
 				<File
-					RelativePath="..\rts\ArchiveHPI.cpp">
+					RelativePath="..\..\rts\System\FileSystem\ArchiveBuffered.cpp">
 				</File>
 				<File
-					RelativePath="..\rts\ArchiveScanner.cpp">
+					RelativePath="..\..\rts\System\FileSystem\ArchiveBuffered.h">
 				</File>
 				<File
-					RelativePath="..\rts\ArchiveZip.cpp">
+					RelativePath="..\..\rts\System\FileSystem\ArchiveFactory.cpp">
 				</File>
 				<File
-					RelativePath="..\rts\VFSHandler.cpp">
+					RelativePath="..\..\rts\System\FileSystem\ArchiveFactory.h">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveHPI.cpp">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveHPI.h">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveScanner.cpp">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveScanner.h">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveZip.cpp">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveZip.h">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\FileHandler.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\FileHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\VFSHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\VFSHandler.h">
 				</File>
 				<Filter
 					Name="7zip"
 					Filter="">
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zAlloc.c">
+						RelativePath="..\..\rts\lib\7zip\7zAlloc.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -186,7 +232,10 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zBuffer.c">
+						RelativePath="..\..\rts\lib\7zip\7zAlloc.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zBuffer.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -195,7 +244,10 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zCrc.c">
+						RelativePath="..\..\rts\lib\7zip\7zBuffer.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zCrc.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -204,7 +256,23 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zDecode.c">
+						RelativePath="..\..\rts\lib\7zip\7zCrc.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zDecode.c">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zDecode.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zExtract.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -213,7 +281,10 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zExtract.c">
+						RelativePath="..\..\rts\lib\7zip\7zExtract.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zHeader.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -222,7 +293,10 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zHeader.c">
+						RelativePath="..\..\rts\lib\7zip\7zHeader.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zIn.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -231,7 +305,10 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zIn.c">
+						RelativePath="..\..\rts\lib\7zip\7zIn.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zItem.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -240,7 +317,10 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zItem.c">
+						RelativePath="..\..\rts\lib\7zip\7zItem.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zMethodID.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -249,7 +329,13 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Archive\7z_C\7zMethodID.c">
+						RelativePath="..\..\rts\lib\7zip\7zMethodID.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\7zTypes.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\7zip\LzmaDecode.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -258,7 +344,117 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\7zip\Compress\Lzma_c\LzmaDecode.c">
+						RelativePath="..\..\rts\lib\7zip\LzmaDecode.h">
+					</File>
+				</Filter>
+				<Filter
+					Name="hpiutil"
+					Filter="">
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\hpientry.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\hpientry.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\hpifile.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\hpifile.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\hpiutil.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\hpiutil.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\scrambledfile.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\scrambledfile.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\sqshstream.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\sqshstream.h">
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\substream.cpp">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\hpiutil2\substream.h">
+					</File>
+				</Filter>
+				<Filter
+					Name="minizip"
+					Filter="">
+					<File
+						RelativePath="..\..\rts\lib\minizip\ioapi.c">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\minizip\iowin32.c">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\minizip\unzip.c">
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\rts\lib\minizip\zip.c">
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
