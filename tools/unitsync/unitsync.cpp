@@ -540,14 +540,14 @@ extern "C" int __stdcall GetSideCount()
 	CSunParser p;
 	p.LoadFile("gamedata\\sidedata.tdf");
 
-	for(int b=0;b<8;++b){					//loop over all sides
+	for(int b=0;;++b){					//loop over all sides
 		char sideText[50];
 		sprintf(sideText,"side%i",b);
 		if(p.SectionExist(sideText)){
 			SideData sd;
 			sd.name = p.SGetValueDef("arm",string(sideText)+"\\name");
 			sideData.push_back(sd);
-		}
+		} else break;
 	}
 
 	return sideData.size();
