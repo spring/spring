@@ -12,6 +12,7 @@
 #include "myMath.h"
 #include "Platform/errorhandler.h"
 #include "Bitmap.h"
+#include "bitops.h"
 #include "mmgr.h"
 
 using namespace std;
@@ -52,8 +53,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	gs->hmapy=gs->mapy/2;
 	int mapx=gs->mapx+1;
 	int mapy=gs->mapy+1;
-	gs->pwr2mapx=NextPwr2(gs->mapx);
-	gs->pwr2mapy=NextPwr2(gs->mapy);
+	gs->pwr2mapx=next_power_of_2(gs->mapx);
+	gs->pwr2mapy=next_power_of_2(gs->mapy);
 
 //	info->AddLine("%i %i",gs->mapx,gs->mapy);
 	float3::maxxpos=gs->mapx*SQUARE_SIZE-1;

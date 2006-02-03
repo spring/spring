@@ -107,11 +107,4 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 	return res;
 }
 
-
-unsigned int NextPwr2(unsigned int num);
-/*
-Gives the number of 1:s in a given bitmask.
-*/
-int CountBits(register unsigned int bitmask);
-
 #endif /* MYMATH_H */
