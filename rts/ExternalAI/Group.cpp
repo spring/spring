@@ -109,7 +109,6 @@ void CGroup::Update()
 {
 	if(units.empty() && id>=10 && handler==grouphandler){		//last check is a hack so globalai groups dont get erased
 		handler->RemoveGroup(this);
-		grouphandler->RemoveGroup(this);
 		return;
 	}
 	if(ai)
