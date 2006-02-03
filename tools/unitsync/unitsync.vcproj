@@ -68,7 +68,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem"
+				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.8\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
@@ -82,6 +82,7 @@
 				AdditionalDependencies="zlibwapi.lib"
 				OutputFile="../../game/unitsync.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.8/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
 				ModuleDefinitionFile="exports.def"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
