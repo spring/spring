@@ -23,21 +23,23 @@ CSound::CSound()
 	maxSounds = configHandler.GetInt("MaxSounds",16);
 	noSound = false;
 	cur = 0;
-	ALCdevice *device = alcOpenDevice(NULL);
-	if (device != NULL) {
-		ALCcontext *context = alcCreateContext(device, NULL);
-		if (context != NULL)
-			alcMakeContextCurrent(context);
-		else {
-			handleerror(0, "Could not create audio context","OpenAL error",MBF_OK);
+	if (!noSound) {
+		ALCdevice *device = alcOpenDevice(NULL);
+		if (device != NULL) {
+			ALCcontext *context = alcCreateContext(device, NULL);
+			if (context != NULL)
+				alcMakeContextCurrent(context);
+			else {
+				handleerror(0, "Could not create audio context","OpenAL error",MBF_OK);
+				noSound = true;
+				alcCloseDevice(device);
+				return;
+			}
+		} else {
+			handleerror(0,"Could not create audio device","OpenAL error",MBF_OK);
 			noSound = true;
-			alcCloseDevice(device);
 			return;
 		}
-	} else {
-		handleerror(0,"Could not create audio device","OpenAL error",MBF_OK);
-		noSound = true;
-		return;
 	}
 
 	// Generate sound sources
@@ -47,8 +49,10 @@ CSound::CSound()
 
 CSound::~CSound()
 {
-	if (noSound)
+	if (noSound) {
+		delete[] Sources;
 		return;
+	}
 	LoadedFiles.clear();
 	for (int i = 0; i < maxSounds; i++) {
 		alSourceStop(Sources[i]);
