@@ -9,7 +9,7 @@
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitLoader.h"
-#include "SunParser.h"
+#include "TdfParser.h"
 #include "Game/command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Misc/QuadField.h"
@@ -57,3 +57,4 @@ int GetNumUnitsAt(const float3& pos, float radius)
 }
 
 };
+

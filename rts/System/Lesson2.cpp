@@ -297,7 +297,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	// Initialize lua bindings
 	CLuaBinder lua;
 	if (!lua.LoadScript("testscript.lua")) 
-		MessageBox(NULL, lua.lastError.c_str(), "lua",MB_YESNO|MB_ICONQUESTION);
+		handleerror(NULL, lua.lastError.c_str(), "lua",MBF_OK|MBF_EXCL);
 #endif
 
 	// Check if the commandline parameter is specifying a demo file
