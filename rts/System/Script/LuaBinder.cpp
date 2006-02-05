@@ -26,7 +26,7 @@ using namespace luafunctions;
 
 // Simple error message handling
 #define check(a) { try { a } catch(luabind::error& e) { ShowLuaError(e.state()); } }
-static void ShowLuaError(lua_State* l)
+void ShowLuaError(lua_State* l)
 {
 	info->AddLine("Lua error: %s", lua_tostring(l, -1));
 }
@@ -272,7 +272,7 @@ CLuaBinder::CLuaBinder(void)
 	];
 
 	// Define global objects
-	get_globals(luaState)["gs"] = gs;
+	globals(luaState)["gs"] = gs;
 	//get_globals(luaState)["unitLoader"] = &unitLoader;
 
 	// Special override

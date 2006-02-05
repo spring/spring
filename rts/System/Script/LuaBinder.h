@@ -30,7 +30,7 @@ public:
 	virtual void DependentDied(CObject* o);
 };
 
-void ShowLuaError(lua_State* l);
+extern void ShowLuaError(lua_State* l);
 
 #endif
 

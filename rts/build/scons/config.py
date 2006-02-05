@@ -69,6 +69,36 @@ def guess_include_path(env, conf, name, subdir):
 	print path
 
 
+def check_lua(env, conf):
+	print "Checking for lua..."
+	print "  Checking for pkg-config...",
+	pkgcfg = env.WhereIs("pkg-config")
+	if pkgcfg:
+		print pkgcfg
+		print "  Checking for lua package... ",
+		ret = conf.TryAction(pkgcfg+" --exists lua")
+		if ret[0]:
+			print "found"
+			cmd = pkgcfg+" --modversion lua"
+			lcmd = pkgcfg+" --libs --cflags lua"
+			lua = True
+		else:
+			print "not found"
+	if lua:
+		print "  Checking for lua >= 5.0.0...",
+		lobj = os.popen(cmd)
+		lver = lobj.read()
+		lerr = lobj.close()
+		print lver,
+		if lver.split('.') >= ['5','0','0']:
+			env.ParseConfig(lcmd)
+		else:
+			print "You need Lua version 5.0.0 or greater for this program"
+			env.Exit(1)
+	else:
+		guess_include_path(env, conf, "Lua")
+
+
 def check_freetype2(env, conf):
 	print "Checking for Freetype2..."
 	freetype = False
@@ -192,11 +222,10 @@ def check_headers(env, conf):
 		print ' Cannot find DevIL image library header'
 		env.Exit(1)
 	if not env['disable_lua']:
-		env.AppendUnique(CPPPATH = ['../lua/luabind', '../lua/lua/include'])
 		if not conf.CheckCXXHeader('luabind/luabind.hpp'):
 			print ' Cannot find Luabind header'
 			env.Exit(1)
-		if not conf.CheckCXXHeader('lua.h'):
+		if not conf.CheckCHeader('lua.h'):
 			print ' Cannot find Lua header'
 			env.Exit(1)
 
@@ -234,6 +263,17 @@ def check_libraries(env, conf):
 	if not conf.CheckLib('IL'):
 		print "You need the DevIL image library for this program"
 		env.Exit(1)
+
+	if not env['disable_lua']:
+		if not conf.CheckLib('lua'):
+			print ' Cannot find Lua library'
+			env.Exit(1)
+		if not conf.CheckLib('lualib'):
+			print ' Cannot find Lualib libary'
+			env.Exit(1)
+		if not conf.CheckLib('luabind'):
+			print ' Cannot find Luabind library'
+			env.Exit(1)
 
 	if env['use_tcmalloc']:
 		if not conf.CheckLib('tcmalloc'):
