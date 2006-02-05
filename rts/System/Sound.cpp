@@ -108,11 +108,16 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 {
 	if (noSound)
 		return;
+
 	ALuint source;
 	alGenSources(1,&source);
 
-	if (!CheckError("error generating OpenAL sound source"))
+	/* it seems OpenAL running on Windows is giving problems when too many sources are allocated at a time,
+	in which case it still generates errors. */
+	if (alGetError () != AL_NO_ERROR)
 		return;
+//	if (!CheckError("error generating OpenAL sound source"))
+//		return;
 
 	if (Sources[cur]) {
 		/* The Linux port of OpenAL generates an "Illegal call" error if we
