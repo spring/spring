@@ -191,7 +191,7 @@ void CGuiKeyReader::CreateKeyNames()
 	keynames["down"]=SDLK_DOWN;
 	keynames["left"]=SDLK_LEFT;
 	keynames["right"]=SDLK_RIGHT;
-	keynames["pause"]=	SDLK_BREAK;
+	keynames["pause"]=SDLK_PAUSE;
 	keynames["joyx"]=400;
 	keynames["joyy"]=401;
 	keynames["joyz"]=402;
