@@ -250,7 +250,7 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 	unsigned int crc;
 	int ch;
 
-	boost::filesystem::path fn(filename);
+	boost::filesystem::path fn(filename, boost::filesystem::native);
 	FILE* fp = fopen(fn.native_file_string().c_str(), "rb");
 	if (!fp)
 		return 0;
