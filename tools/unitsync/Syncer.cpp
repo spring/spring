@@ -60,7 +60,7 @@ int CSyncer::ProcessUnits(bool checksum)
 {
 	if (!populated) {
 		//Populate the list of unit files to consider
-		files = CFileHandler::FindFiles("units\\*.fbi");
+		files = CFileHandler::FindFiles("units/*.fbi");
 		populated = true;
 	}
 
@@ -71,28 +71,35 @@ int CSyncer::ProcessUnits(bool checksum)
 	string curFile = files.back();
 	files.pop_back();
 
-	size_t len = curFile.find_last_of("\\")+1;
+	size_t len = curFile.find_last_of("/")+1;
 	string unitName = curFile.substr(len, curFile.size() - 4 - len);
 	transform(unitName.begin(), unitName.end(), unitName.begin(), (int (*)(int))tolower);
 
+	string perror("");
 	TdfParser *parser = new TdfParser();
-	parser->LoadFile("units\\" + unitName + ".fbi");
+	try {
+		parser->LoadFile("units/" + unitName + ".fbi");
+	} catch (TdfParser::parse_error& pe) {	
+		perror = unitName + " (" + string(pe.what()) + ")";
+	}
 
 	Unit u;
 
 	if (checksum) {
-		u.fbi = CalculateCRC("units\\" + unitName + ".fbi");
-		u.cob = CalculateCRC("scripts\\" + unitName + ".cob");
+		u.fbi = CalculateCRC("units/" + unitName + ".fbi");
+		u.cob = CalculateCRC("scripts/" + unitName + ".cob");
 
 		//The model filenames has to be figured out from the fbi file
 		string modelName = parser->SGetValueDef(unitName, "unitinfo\\Objectname");
 		string deadName = parser->SGetValueDef(unitName + "_dead", "unitinfo\\Corpse");
 
-		u.model = CalculateCRC("objects3d\\" + modelName + ".3do");
-		u.model += CalculateCRC("objects3d\\" + deadName + ".3do");
+		u.model = CalculateCRC("objects3d/" + modelName + ".3do");
+		u.model += CalculateCRC("objects3d/" + deadName + ".3do");
 	}
 
 	u.fullName = parser->SGetValueDef("unknown", "unitinfo\\Name");
+	if (perror.length() > 0)
+		u.fullName = perror;
 
 	units[unitName] = u; 
 

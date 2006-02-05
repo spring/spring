@@ -234,13 +234,13 @@ static vector<string> mapNames;
 
 extern "C" int __stdcall GetMapCount()
 {
-	vector<string> files = CFileHandler::FindFiles("maps\\*.smf");
+	vector<string> files = CFileHandler::FindFiles("maps/*.smf");
 	vector<string> ars = scanner->GetMaps();
 
 	mapNames.clear();
 	for (vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
 		string mn = *i;
-		mn = mn.substr(mn.find_last_of('\\') + 1);
+		mn = mn.substr(mn.find_last_of('/') + 1);
 		mapNames.push_back(mn);
 	}
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
@@ -261,7 +261,7 @@ extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	string mapName = name;
 	CVFSHandler *oh = hpiHandler;
 
-	CFileHandler* f = new CFileHandler("maps\\" + mapName);
+	CFileHandler* f = new CFileHandler("maps/" + mapName);
 	if (!f->FileExists()) {
 		vector<string> ars = scanner->GetArchivesForMap(mapName);
 
@@ -272,11 +272,11 @@ extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 
 	TdfParser parser;
 	string smd = mapName.replace(mapName.find_last_of('.'), 4, ".smd");
-	parser.LoadFile("maps\\" + smd);
+	parser.LoadFile("maps/" + smd);
 
 	// Retrieve the map header as well
 	string origName = name;
-	CFileHandler* in = new CFileHandler("maps\\" + origName);
+	CFileHandler* in = new CFileHandler("maps/" + origName);
 	MapHeader mh;
 	mh.mapx = -1;
 	if (in->FileExists()) {
@@ -353,7 +353,7 @@ extern "C" void* __stdcall GetMinimap(const char* filename, int miplevel)
 	string mapName = filename;
 	CVFSHandler *oh = hpiHandler;
 
-	CFileHandler* f = new CFileHandler("maps\\" + mapName);
+	CFileHandler* f = new CFileHandler("maps/" + mapName);
 	if (!f->FileExists()) {
 		vector<string> ars = scanner->GetArchivesForMap(mapName);
 
@@ -379,7 +379,7 @@ extern "C" void* __stdcall GetMinimap(const char* filename, int miplevel)
 
 
 	// Read the map data
-	CFileHandler in("maps\\" + mapName);
+	CFileHandler in("maps/" + mapName);
 	char* buffer = (char*)malloc(size);
 	bool done = false;
 	if (in.FileExists()) {
@@ -546,7 +546,7 @@ extern "C" int __stdcall GetSideCount()
 	sideData.clear();
 
 	TdfParser p;
-	p.LoadFile("gamedata\\sidedata.tdf");
+	p.LoadFile("gamedata/sidedata.tdf");
 
 	for(int b=0;;++b){					//loop over all sides
 		char sideText[50];

@@ -19,11 +19,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\rts;..\7zip;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.8\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -32,8 +32,10 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="zlibwapi.lib"
 				OutputFile="../../game/unitsync.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.8/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
 				ModuleDefinitionFile="exports.def"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/unitsync.pdb"
@@ -226,6 +228,12 @@
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zAlloc.c">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -237,6 +245,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zBuffer.c">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -250,6 +264,12 @@
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zCrc.c">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -261,6 +281,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zDecode.c">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -275,6 +301,12 @@
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zExtract.c">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -286,6 +318,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zHeader.c">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -299,6 +337,12 @@
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zIn.c">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -311,6 +355,12 @@
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zItem.c">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -322,6 +372,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\7zip\7zMethodID.c">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -337,6 +393,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\7zip\LzmaDecode.c">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -354,6 +416,12 @@
 					<File
 						RelativePath="..\..\rts\lib\hpiutil2\hpientry.cpp">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -365,6 +433,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\hpiutil2\hpifile.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -378,6 +452,12 @@
 					<File
 						RelativePath="..\..\rts\lib\hpiutil2\hpiutil.cpp">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -389,6 +469,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\hpiutil2\scrambledfile.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -402,6 +488,12 @@
 					<File
 						RelativePath="..\..\rts\lib\hpiutil2\sqshstream.cpp">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -413,6 +505,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\hpiutil2\substream.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -430,6 +528,12 @@
 					<File
 						RelativePath="..\..\rts\lib\minizip\ioapi.c">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -438,6 +542,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\minizip\iowin32.c">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
@@ -448,6 +558,12 @@
 					<File
 						RelativePath="..\..\rts\lib\minizip\unzip.c">
 						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
@@ -456,6 +572,12 @@
 					</File>
 					<File
 						RelativePath="..\..\rts\lib\minizip\zip.c">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32">
 							<Tool
