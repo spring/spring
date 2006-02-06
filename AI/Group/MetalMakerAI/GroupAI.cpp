@@ -2,9 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "StdAfx.h"
 #include "GroupAI.h"
-#include "IGroupAiCallback.h"
-#include "IAICallback.h"
+#include "ExternalAI/IGroupAiCallback.h"
+#include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include <vector>
 

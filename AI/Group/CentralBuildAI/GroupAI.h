@@ -9,7 +9,8 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "IGroupAI.h"
+#include "StdAfx.h"
+#include "ExternalAI/IGroupAI.h"
 #include <set>
 #include <map>
 #include "float3.h"

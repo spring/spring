@@ -4,8 +4,8 @@
 
 #include "GroupAI.h"
 #include <stdarg.h>	
-#include "IGroupAiCallback.h"
-#include "IAICallback.h"
+#include "ExternalAI/IGroupAiCallback.h"
+#include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -284,7 +284,7 @@ void CGroupAI::UpdateFactoryIcon(CommandDescription* cd, int numQued)
 	cd->params.clear();
 	if(numQued){
 		char t[32];
-		snprintf(t,10,"%d",numQued);
+		SNPRINTF(t,10,"%d",numQued);
 		cd->params.push_back(t);
 	}
 }
