@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "GlobalAI.h"
-#include "IGlobalAICallback.h"
+#include "ExternalAI/IGlobalAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include <vector>
 
