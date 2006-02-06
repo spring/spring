@@ -2,9 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "StdAfx.h"
 #include "GroupAI.h"
-#include "IGroupAiCallback.h"
-#include "IAICallback.h"
+#include "ExternalAI/IGroupAiCallback.h"
+#include "ExternalAI/IAICallback.h"
 #include "GroupAI.h"
 #include "Sim/Units/UnitDef.h"
 
@@ -52,7 +53,7 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 	cd.key='M';
 	cd.tooltip="Move: Click on the goal and hold mouse button while drawing out a front to form behind";
 	char c[40];
-	snprintf(c,10,"%d",(int)columnDist);
+	SNPRINTF(c,10,"%d",(int)columnDist);
 	cd.params.push_back(c);
 	commands.push_back(cd);
 };

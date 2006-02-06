@@ -9,7 +9,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "IGroupAI.h"
+#include "ExternalAI/IGroupAI.h"
 #include <map>
 #include <set>
 

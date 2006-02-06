@@ -13,7 +13,7 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\..\rts\bagge\aidll"
+			OutputDirectory="..\..\..\game\aidll\"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -21,8 +21,8 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\rts"
+				InlineFunctionExpansion="2"
+				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TESTAI_EXPORTS"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -41,14 +41,14 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll/centralbuild.dll"
+				OutputFile="..\..\..\game\aidll\centralbuild.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				ModuleDefinitionFile=".\TestAI.def"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="2"
-				ProgramDatabaseFile=".\..\rts\bagge\aidll/TestAI.pdb"
-				ImportLibrary=".\..\rts\bagge\aidll/TestAI.lib"/>
+				ProgramDatabaseFile="..\..\..\game\aidll\centralbuild.pdb"
+				ImportLibrary=""/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -106,7 +106,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll/centralbuild.dll"
+				OutputFile="..\..\..\game\aidll\centralbuild.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				ModuleDefinitionFile=".\TestAI.def"
@@ -153,9 +153,6 @@
 			</File>
 			<File
 				RelativePath=".\TestAI.cpp">
-			</File>
-			<File
-				RelativePath=".\TestAI.def">
 			</File>
 		</Filter>
 		<Filter

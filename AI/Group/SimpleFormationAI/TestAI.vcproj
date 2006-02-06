@@ -13,7 +13,7 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\..\rts\bagge\aidll"
+			OutputDirectory="..\..\..\game\aidll\"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -22,7 +22,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\rts"
+				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TESTAI_EXPORTS"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -42,17 +42,17 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll/SimpleForm.dll"
+				OutputFile="..\..\..\game\aidll\SimpleForm.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				ModuleDefinitionFile=".\TestAI.def"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="2"
-				ProgramDatabaseFile=".\..\rts\bagge\aidll/TestAI.pdb"
+				ProgramDatabaseFile="..\..\..\game\aidll\SimpleForm.pdb"
 				GenerateMapFile="TRUE"
 				MapExports="TRUE"
 				MapLines="TRUE"
-				ImportLibrary=".\..\rts\bagge\aidll/TestAI.lib"/>
+				ImportLibrary=""/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -83,7 +83,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
+			OutputDirectory="..\..\..\game\aidll\"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -92,7 +92,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\rts"
+				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;TESTAI_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -110,7 +110,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\..\rts\bagge\aidll/default.dll"
+				OutputFile=".\..\rts\bagge\aidll/SimpleForm.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				ModuleDefinitionFile=".\TestAI.def"
@@ -157,9 +157,6 @@
 			</File>
 			<File
 				RelativePath=".\TestAI.cpp">
-			</File>
-			<File
-				RelativePath=".\TestAI.def">
 			</File>
 		</Filter>
 		<Filter
