@@ -222,11 +222,11 @@ def check_headers(env, conf):
 		print ' Cannot find DevIL image library header'
 		env.Exit(1)
 	if not env['disable_lua']:
-		if not conf.CheckCXXHeader('luabind/luabind.hpp'):
-			print ' Cannot find Luabind header'
-			env.Exit(1)
 		if not conf.CheckCHeader('lua.h'):
 			print ' Cannot find Lua header'
+			env.Exit(1)
+		if not conf.CheckCXXHeader('luabind/luabind.hpp'):
+			print ' Cannot find Luabind header'
 			env.Exit(1)
 
 
