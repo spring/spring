@@ -9,8 +9,8 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "IGlobalAI.h"
-#include "IAICallback.h"
+#include "ExternalAI/IGlobalAI.h"
+#include "ExternalAI/IAICallback.h"
 #include <map>
 #include <set>
 
