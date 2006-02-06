@@ -641,7 +641,6 @@ void TaskManager::BalanceResourceUsage (int type)
 			if (!task->destHandler)
 				task->destHandler = h;
 
-			h->AddTask (task);
 			task->isAllocated = rm->AllocateForTask (task->def->energyCost, task->def->metalCost, type);
 			AddTask (task);
 		} else {
