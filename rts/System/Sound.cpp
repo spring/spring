@@ -45,6 +45,13 @@ CSound::CSound()
 	// Generate sound sources
 	Sources = new ALuint[maxSounds];
 	for (int a=0;a<maxSounds;a++) Sources[a]=0;
+
+	// Set distance model (sound attenuation)
+	alDistanceModel (AL_INVERSE_DISTANCE);
+
+	posScale.x = 0.02f;
+	posScale.y = 0.02f;
+	posScale.z = 0.0005f;
 }
 
 CSound::~CSound()
@@ -132,7 +139,9 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	alSourcei(source, AL_BUFFER, id);
 	alSourcef(source, AL_PITCH, 1.0f );
 	alSourcef(source, AL_GAIN, volume );
-	alSource3f(source, AL_POSITION, p.x/(gs->mapx*SQUARE_SIZE),p.y/(gs->mapy*SQUARE_SIZE),p.z/(p.maxzpos));
+
+	float3 pos = p * posScale;
+	alSource3f(source, AL_POSITION, pos.x, pos.y, pos.z);
 	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
 	alSourcei(source, AL_LOOPING, false);
 	alSourcePlay(source);
@@ -163,7 +172,8 @@ void CSound::UpdateListener()
 {
 	if (noSound || !camera)
 		return;
-	alListener3f(AL_POSITION,camera->pos.x/(gs->mapx*SQUARE_SIZE),camera->pos.y/(gs->mapy*SQUARE_SIZE),camera->pos.z/(camera->pos.maxzpos));
+	float3 pos = camera->pos * posScale;
+	alListener3f(AL_POSITION, pos.x,pos.y,pos.z);
 	alListener3f(AL_VELOCITY,0.0,0.0,0.0);
 	ALfloat ListenerOri[] = {camera->forward.x/(gs->mapx*SQUARE_SIZE),camera->forward.y/(gs->mapy*SQUARE_SIZE),camera->forward.z/(camera->pos.maxzpos),camera->up.x/(gs->mapx*SQUARE_SIZE),camera->up.y/(gs->mapy*SQUARE_SIZE),camera->up.z/(camera->pos.maxzpos)};
 	alListenerfv(AL_ORIENTATION,ListenerOri);

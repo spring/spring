@@ -27,6 +27,7 @@ private:
 	void Enqueue(ALuint src);
 	vector<string> LoadedFiles;
 	vector<ALuint> Buffers;
+	float3 posScale;
 	ALuint *Sources;
 };
 
