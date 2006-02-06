@@ -2546,6 +2546,15 @@
 				</File>
 			</Filter>
 		</Filter>
+		<File
+			RelativePath=".\resource.h">
+		</File>
+		<File
+			RelativePath=".\rts1.rc">
+		</File>
+		<File
+			RelativePath=".\spring.ico">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
