@@ -272,7 +272,13 @@ extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 
 	TdfParser parser;
 	string smd = mapName.replace(mapName.find_last_of('.'), 4, ".smd");
-	parser.LoadFile("maps/" + smd);
+
+	string err("");
+	try {
+		parser.LoadFile("maps/" + smd);
+	} catch (TdfParser::parse_error& e) {
+		err = e.what();
+	}
 
 	// Retrieve the map header as well
 	string origName = name;
@@ -287,6 +293,20 @@ extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	if (hpiHandler != oh) {
 		delete hpiHandler;
 		hpiHandler = oh;
+	}
+
+	// If the map didn't parse, say so now
+	if (err.length() > 0) {
+
+		if (err.length() > 254)
+			err = err.substr(0, 254);
+		strcpy(outInfo->description, err.c_str());
+
+		// Fill in stuff so tasclient won't crash
+		outInfo->posCount = 0;
+		outInfo->width = mh.mapx * SQUARE_SIZE;
+		outInfo->height = mh.mapy * SQUARE_SIZE;
+		return 1;
 	}
 
 	// Make sure we found stuff in both the smd and the header
