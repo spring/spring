@@ -598,6 +598,20 @@ void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNu
 	}
 }
 
+static string MakeDemoStartScript(char *startScript, int ssLen)
+{
+	string script;
+	// find the last non-zero character
+	int last = ssLen-1;
+	while (last >= 0)  {
+		if (startScript[last] != 0) break;
+		last --;
+	}
+	script.insert (script.begin(), startScript, startScript + last + 1);
+	script += "\n[VERSION]\n{\n\tGameVersion=" VERSION_STRING ";\n}\n";
+	return script;
+}
+
 void CNet::CreateDemoFile()
 {
 	// We want this folder to exist
@@ -633,10 +647,14 @@ void CNet::CreateDemoFile()
 		boost::filesystem::path fn(demoName);
 		recordDemo=new ofstream(fn.native_file_string().c_str(), ios::out|ios::binary);
 
+		// add a TDF section containing the game version to the startup script
+		string scriptText = MakeDemoStartScript (gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
+
 		char c=1;
 		recordDemo->write(&c,1);
-		recordDemo->write((char*)&gameSetup->gameSetupTextLength,sizeof(int));
-		recordDemo->write(gameSetup->gameSetupText,gameSetup->gameSetupTextLength);
+		int len = scriptText.length();
+		recordDemo->write((char*)&len, sizeof(int));
+		recordDemo->write(scriptText.c_str(), scriptText.length());
 	} else {
 		demoName = "demos/test.sdf";
 		boost::filesystem::path fn(demoName);
