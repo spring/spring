@@ -16,7 +16,6 @@ public:
 
 	int shadowMapSize;
 	unsigned int shadowTexture;
-	unsigned int tempTexture;
 
 	bool drawShadows;
 	bool inShadowPass;
