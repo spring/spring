@@ -11,11 +11,7 @@
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "GL/FBO.h"
-
-#ifdef WIN32
-#include "GL/WinPBuffer.h"
-#endif
+#include "GL/IFramebuffer.h"
 
 CShadowHandler* shadowHandler=0;
 
@@ -52,17 +48,10 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		}
 	}
 
-#ifdef WIN32
-	fb = new WinPBuffer (shadowMapSize);
-	if (!fb->valid ())
+	fb = instantiate_fb(shadowMapSize);
+	if (!(fb && fb->valid ()))
 		return;
-#else
-	fb = new FBO();
-	if (!fb->valid()) {
-		info->AddLine("EXT_framebuffer_object is required for shadowmaps");
-		return;
-	}
-#endif
+
 	if(!GLEW_ARB_shadow_ambient){
 		if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			if(!useFPShadows)

@@ -62,7 +62,7 @@ def get_spring_source(env):
 	# we may be called before we were configured (e.g. when cleaning)
 	if env.has_key('platform'):
 		if env['platform'] == 'windows':
-			exclude += ['rts/System/Platform/Linux']
+			exclude += ['rts/System/Platform/Linux', 'rts/Rendering/GL/GLXPBuffer.cpp']
 		else:
 			exclude += [
 				'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?

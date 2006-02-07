@@ -9,7 +9,6 @@ By Jelmer Cnossen
 #error This file should only be compiled on windows
 #endif
 
-#include "FBO.h"
 #include "Platform/Win/win32.h"
 #include <GL/wglew.h>
 
