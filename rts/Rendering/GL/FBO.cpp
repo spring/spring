@@ -53,7 +53,7 @@ void FBO::attachTexture(GLuint tex, const unsigned int textype, FramebufferAttac
 
 	if (attachtype == FBO_ATTACH_DEPTH)
 		glattachtype = GL_DEPTH_ATTACHMENT_EXT;
-	if (attachtype == FBO_ATTACH_COLOR)
+	else if (attachtype == FBO_ATTACH_COLOR)
 		glattachtype = GL_COLOR_ATTACHMENT0_EXT;
 
 	select();
