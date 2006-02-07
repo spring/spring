@@ -238,30 +238,24 @@ void GUIcontroller::TableSelection(GUItable* table, int i,int button)
 	}
 }
 
-void GUIcontroller::ConsoleInput(const std::string& inputText)
+void GUIcontroller::ConsoleInput(const std::string& userInput)
 {
-	if(inputText.empty())
+	if(userInput.empty())
 		return;
-	string userInput=inputText;
 	if(userInput==".spectator")
 		gu->spectating=true;
 	if(userInput.find(".team")==0)
 	{
-		gu->spectating=false;
-		gu->myTeam=atoi(&userInput.c_str()[userInput.find(" ")]);
-		gu->myAllyTeam=gs->AllyTeam(gu->myTeam);	//
-		gs->players[gu->myPlayerNum]->team=gu->myTeam;
+		std::string::size_type space = userInput.find(" ");
+		if (space != std::string::npos) {
+			gu->spectating=false;
+			gu->myTeam=atoi(&userInput.c_str()[space]);
+			gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
+			gs->players[gu->myPlayerNum]->team=gu->myTeam;
+		}
 	}
 	//userInput=gs->players[gu->myPlayerNum]->playerName+": "+inputText;
-	userInput=inputText;
-	netbuf[0]=NETMSG_CHAT;
-	netbuf[1]=userInput.size()+4;
-	netbuf[2]=gu->myPlayerNum;
-	for(unsigned int a=0;a<userInput.size();a++)
-		netbuf[a+3]=userInput.at(a);
-	netbuf[userInput.size()+3]=0;
-	net->SendData(netbuf,userInput.size()+4);
-	
+	net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, userInput);
 //	if(console)
 //		console->AddText(userInput);
 }

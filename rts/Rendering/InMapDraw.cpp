@@ -214,7 +214,7 @@ void CInMapDraw::MousePress(int x, int y, int button)
 			game->userWriting=true;
 			wantLabel=true;
 			game->userPrompt="Label: ";
-			game->ignoreChar='§';		//should do something better here
+			game->ignoreChar='\xA7';		//should do something better here
 			SDL_EnableUNICODE(1);
 		}
 		lastLeftClickTime=gu->gameTime;
@@ -326,38 +326,19 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 
 void CInMapDraw::ErasePos(float3 pos)
 {
-	netbuf[0]=NETMSG_MAPDRAW;
-	netbuf[1]=8;
-	netbuf[2]=gu->myPlayerNum;
-	netbuf[3]=NET_ERASE;
-	*(short*)&netbuf[4]=(short int)pos.x;
-	*(short*)&netbuf[6]=(short int)pos.z;
-	net->SendData(netbuf,netbuf[1]);	
+	net->SendData<unsigned char, unsigned char, unsigned char, short, short>(
+			NETMSG_MAPDRAW, 8 /*message size*/, gu->myPlayerNum, NET_ERASE, (short)pos.x, (short)pos.z);
 }
 
 void CInMapDraw::CreatePoint(float3 pos, std::string label)
 {
-	netbuf[0]=NETMSG_MAPDRAW;
-	netbuf[1]=label.size()+9;
-	netbuf[2]=gu->myPlayerNum;
-	netbuf[3]=NET_POINT;
-	*(short*)&netbuf[4]=(short int)pos.x;
-	*(short*)&netbuf[6]=(short int)pos.z;
-	for(int a=0;a<label.size();++a)
-		netbuf[a+8]=label[a];
-	netbuf[label.size()+8]=0;
-	net->SendData(netbuf,netbuf[1]);
+	net->SendSTLData<unsigned char, unsigned char, short, short, std::string>(
+			NETMSG_MAPDRAW, gu->myPlayerNum, NET_POINT, (short)pos.x, (short)pos.z, label);
 }
 
 void CInMapDraw::AddLine(float3 pos, float3 pos2)
 {
-	netbuf[0]=NETMSG_MAPDRAW;
-	netbuf[1]=12;
-	netbuf[2]=gu->myPlayerNum;
-	netbuf[3]=NET_LINE;
-	*(short*)&netbuf[4]=(short int)pos.x;
-	*(short*)&netbuf[6]=(short int)pos.z;
-	*(short*)&netbuf[8]=(short int)pos2.x;
-	*(short*)&netbuf[10]=(short int)pos2.z;
-	net->SendData(netbuf,netbuf[1]);	
+	net->SendData<unsigned char, unsigned char, unsigned char, short, short, short, short>(
+			NETMSG_MAPDRAW, 12 /*message size*/, gu->myPlayerNum, NET_LINE,
+			(short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
 }

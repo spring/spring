@@ -193,19 +193,8 @@ int CAICallback::GiveOrder(int unitid, Command* c)
 	if (unit->team != team)
 		return -1;
 
-	netbuf[0]=NETMSG_AICOMMAND;
-	*((short int*)&netbuf[1])=c->params.size()*4+11;
-	netbuf[3]=gu->myPlayerNum;
-	*((short int*)&netbuf[4])=unitid;
-	*((int*)&netbuf[6])=c->id;
-	netbuf[10]=c->options;
-	int a=0;
-	vector<float>::iterator oi;
-	for(oi=c->params.begin();oi!=c->params.end();++oi){
-		*((float*)&netbuf[11+a*4])=(*oi);			
-		a++;
-	}
-	net->SendData(netbuf,c->params.size()*4+11);
+	net->SendSTLData<unsigned char, short, int, unsigned char, std::vector<float> >(
+			NETMSG_AICOMMAND, gu->myPlayerNum, unitid, c->id, c->options, c->params);
 	return 0;
 }
 

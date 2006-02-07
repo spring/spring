@@ -134,11 +134,8 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 			rel = max(rel, 0.0f);
 			rel = min(rel, 1.0f);
 			float metalShare=gs->Team(gu->myTeam)->metalStorage*rel;
-			netbuf[0]=NETMSG_SETSHARE;
-			netbuf[1]=gu->myTeam;
-			*(float*)&netbuf[2]=metalShare;
-			*(float*)&netbuf[6]=gs->Team(gu->myTeam)->energyShare;
-			net->SendData(netbuf,10);
+			net->SendData<unsigned char, float, float>(NETMSG_SETSHARE,
+					gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
 		}
 		
 		barStart=w/2.0+eWidth+offset+95;
@@ -149,12 +146,8 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 			rel = max(rel, 0.0f);
 			rel = min(rel, 1.0f);
 			float energyShare=gs->Team(gu->myTeam)->energyStorage*rel;
-			netbuf[0]=NETMSG_SETSHARE;
-			netbuf[1]=gu->myTeam;
-			*(float*)&netbuf[2]=gs->Team(gu->myTeam)->metalShare;
-			*(float*)&netbuf[6]=energyShare;
-			net->SendData(netbuf,10);
-			
+			net->SendData<unsigned char, float, float>(NETMSG_SETSHARE,
+					gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare);
 		}
 		return true;
 	}

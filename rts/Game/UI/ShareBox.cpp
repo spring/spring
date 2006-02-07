@@ -256,13 +256,9 @@ void CShareBox::MouseRelease(int x,int y,int button)
 			c.id=CMD_STOP;
 			selectedUnits.GiveCommand(c,false);		//make sure the units are stopped and that the selection is transmitted
 		}
-		netbuf[0]=NETMSG_SHARE;
-		netbuf[1]=gu->myPlayerNum;
-		netbuf[2]=shareTeam;
-		netbuf[3]=shareUnits;
-		*(float*)&netbuf[4]=metalShare*gs->Team(gu->myTeam)->metal;
-		*(float*)&netbuf[8]=energyShare*gs->Team(gu->myTeam)->energy;
-		net->SendData(netbuf,12);
+		net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
+				NETMSG_SHARE, gu->myPlayerNum, shareTeam, shareUnits,
+				metalShare*gs->Team(gu->myTeam)->metal, energyShare*gs->Team(gu->myTeam)->energy);
 		if(shareUnits)
 			selectedUnits.ClearSelected();
 		lastShareTeam=shareTeam;
