@@ -9,10 +9,8 @@ By Jelmer Cnossen
 #include "StdAfx.h"
 
 #include <SDL_syswm.h>
-#include <GL/glew.h>
 #include "Platform/errorhandler.h"
-#include "FBO.h"
-#include "WinPBuffer.h"
+#include "IFramebuffer.h"
 #include "Game/UI/InfoConsole.h"
 
 

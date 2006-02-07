@@ -4,7 +4,7 @@
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
 #include <assert.h>
-#include "FBO.h"
+#include "IFramebuffer.h"
 
 FBO::FBO()
 {

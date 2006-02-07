@@ -7,6 +7,7 @@
 #include <deque>
 #include <string>
 #include <boost/thread/recursive_mutex.hpp>
+#include "System/float3.h"
 
 class CInfoConsole  
 {
