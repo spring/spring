@@ -22,54 +22,229 @@
 class CFileHandler;
 using namespace std;
 
-#define NETMSG_HELLO					1
-#define NETMSG_QUIT						2
-#define NETMSG_NEWFRAME				3
-#define NETMSG_STARTPLAYING		4
-#define NETMSG_SETPLAYERNUM		5
-#define NETMSG_PLAYERNAME			6
-#define NETMSG_CHAT						7
-#define NETMSG_RANDSEED				8
-//#define NETMSG_COMPARE				9
-//#define NETMSG_PROJCOMPARE		10
-#define NETMSG_COMMAND				11
-#define NETMSG_SELECT					12
-#define NETMSG_PAUSE					13
-#define NETMSG_AICOMMAND			14
-//#define NETMSG_SPENDING				15
-#define NETMSG_SCRIPT					16
-#define NETMSG_MEMDUMP				17
-#define NETMSG_MAPNAME				18
-#define NETMSG_USER_SPEED			19
-#define NETMSG_INTERNAL_SPEED	20
-#define NETMSG_CPU_USAGE			21
-#define NETMSG_DIRECT_CONTROL 22
-#define NETMSG_DC_UPDATE			23
-//#define NETMSG_SETACTIVEPLAYERS 24
-#define NETMSG_ATTEMPTCONNECT 25
-#define NETMSG_SHARE					26
-#define NETMSG_SETSHARE				27
-#define NETMSG_SENDPLAYERSTAT	28
-#define NETMSG_PLAYERSTAT			29
-#define NETMSG_GAMEOVER				30
-#define NETMSG_MAPDRAW				31
-#define NETMSG_SYNCREQUEST		32
-#define NETMSG_SYNCRESPONSE		33
-#define NETMSG_SYNCERROR			34
-#define NETMSG_SYSTEMMSG			35
-#define NETMSG_STARTPOS				36
-#define NETMSG_EXECHECKSUM		37
-#define NETMSG_PLAYERINFO			38
-#define NETMSG_PLAYERLEFT			39
+enum NETMSG {
+	NETMSG_HELLO            = 1,
+	NETMSG_QUIT             = 2,
+	NETMSG_NEWFRAME         = 3,
+	NETMSG_STARTPLAYING     = 4,
+	NETMSG_SETPLAYERNUM     = 5,
+	NETMSG_PLAYERNAME       = 6,
+	NETMSG_CHAT             = 7,
+	NETMSG_RANDSEED         = 8,
+	//NETMSG_COMPARE          = 9,
+	//NETMSG_PROJCOMPARE      = 10,
+	NETMSG_COMMAND          = 11,
+	NETMSG_SELECT           = 12,
+	NETMSG_PAUSE            = 13,
+	NETMSG_AICOMMAND        = 14,
+	//NETMSG_SPENDING         = 15,
+	NETMSG_SCRIPT           = 16,
+	NETMSG_MEMDUMP          = 17,
+	NETMSG_MAPNAME          = 18,
+	NETMSG_USER_SPEED       = 19,
+	NETMSG_INTERNAL_SPEED   = 20,
+	NETMSG_CPU_USAGE        = 21,
+	NETMSG_DIRECT_CONTROL   = 22,
+	NETMSG_DC_UPDATE        = 23,
+	//NETMSG_SETACTIVEPLAYERS = 24,
+	NETMSG_ATTEMPTCONNECT   = 25,
+	NETMSG_SHARE            = 26,
+	NETMSG_SETSHARE         = 27,
+	NETMSG_SENDPLAYERSTAT   = 28,
+	NETMSG_PLAYERSTAT       = 29,
+	NETMSG_GAMEOVER         = 30,
+	NETMSG_MAPDRAW          = 31,
+	NETMSG_SYNCREQUEST      = 32,
+	NETMSG_SYNCRESPONSE     = 33,
+	NETMSG_SYNCERROR        = 34,
+	NETMSG_SYSTEMMSG        = 35,
+	NETMSG_STARTPOS         = 36,
+	NETMSG_EXECHECKSUM      = 37,
+	NETMSG_PLAYERINFO       = 38,
+	NETMSG_PLAYERLEFT       = 39,
+};
 
 
 #define NETWORK_BUFFER_SIZE 40000
 
-extern unsigned char netbuf[NETWORK_BUFFER_SIZE];	//buffer space for outgoing data, should only be used by main thread
+// If we switch to a networking lib and start using a bitstream, we might
+// as well remove this and use int as size type (because it'd be compressed anyway).
+template<typename T> struct is_string    {
+	typedef unsigned short size_type;
+	enum { TrailingNull = 0 };
+};
+template<> struct is_string<std::string> {
+	typedef unsigned char size_type;
+	enum { TrailingNull = 1 };
+};
 
-class CNet  
+class CNet
 {
 public:
+
+	/** Send a net message without any parameters. */
+	int SendData(NETMSG msg) {
+		unsigned char t = msg;
+		return SendData(&t, 1);
+	}
+
+	/** Send a net message with one parameter. */
+	template<typename A>
+	int SendData(NETMSG msg, A a) {
+		const int size = 1 + sizeof(A);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(A*)&buf[1] = a;
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B>
+	int SendData(NETMSG msg, A a, B b) {
+		const int size = 1 + sizeof(A) + sizeof(B);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(A*)&buf[1] = a;
+		*(B*)&buf[1 + sizeof(A)] = b;
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B, typename C>
+	int SendData(NETMSG msg, A a, B b, C c) {
+		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(A*)&buf[1] = a;
+		*(B*)&buf[1 + sizeof(A)] = b;
+		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B, typename C, typename D>
+	int SendData(NETMSG msg, A a, B b, C c, D d) {
+		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(A*)&buf[1] = a;
+		*(B*)&buf[1 + sizeof(A)] = b;
+		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
+		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B, typename C, typename D, typename E>
+	int SendData(NETMSG msg, A a, B b, C c, D d, E e) {
+		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(A*)&buf[1] = a;
+		*(B*)&buf[1 + sizeof(A)] = b;
+		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
+		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
+		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B, typename C, typename D, typename E, typename F>
+	int SendData(NETMSG msg, A a, B b, C c, D d, E e, F f) {
+		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(A*)&buf[1] = a;
+		*(B*)&buf[1 + sizeof(A)] = b;
+		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
+		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
+		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
+		*(F*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E)] = f;
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B, typename C, typename D, typename E, typename F, typename G>
+	int SendData(NETMSG msg, A a, B b, C c, D d, E e, F f, G g) {
+		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F) + sizeof(G);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(A*)&buf[1] = a;
+		*(B*)&buf[1 + sizeof(A)] = b;
+		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
+		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
+		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
+		*(F*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E)] = f;
+		*(G*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F)] = g;
+		return SendData(buf, size);
+	}
+
+	/** Send a net message without any fixed size parameter but with a variable sized
+	STL container parameter (e.g. std::string or std::vector). */
+	template<typename T>
+	int SendSTLData(NETMSG msg, const T& s) {
+		typedef typename T::value_type value_type;
+		typedef typename is_string<T>::size_type size_type;
+		const int size = 1 + sizeof(size_type) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(size_type*)&buf[1] = size;
+		value_type* p = (value_type*)&buf[1 + sizeof(size_type)];
+		typename T::const_iterator q = s.begin();
+		for (; q != s.end(); ++p, ++q) *p = *q;
+		if (is_string<T>::TrailingNull) *p = value_type(0);
+		return SendData(buf, size);
+	}
+
+	/** Send a net message with one fixed size parameter and a variable sized
+	STL container parameter (e.g. std::string or std::vector). */
+	template<typename A, typename T>
+	int SendSTLData(NETMSG msg, A a, const T& s) {
+		typedef typename T::value_type value_type;
+		typedef typename is_string<T>::size_type size_type;
+		const int size = 1 + sizeof(size_type) + sizeof(A) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(size_type*)&buf[1] = size;
+		*(A*)&buf[1 + sizeof(size_type)] = a;
+		value_type* p = (value_type*)&buf[1 + sizeof(size_type) + sizeof(A)];
+		typename T::const_iterator q = s.begin();
+		for (; q != s.end(); ++p, ++q) *p = *q;
+		if (is_string<T>::TrailingNull) *p = value_type(0);
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B, typename C, typename T>
+	int SendSTLData(NETMSG msg, A a, B b, C c, const T& s) {
+		typedef typename T::value_type value_type;
+		typedef typename is_string<T>::size_type size_type;
+		const int size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(size_type*)&buf[1] = size;
+		*(A*)&buf[1 + sizeof(size_type)] = a;
+		*(B*)&buf[1 + sizeof(size_type) + sizeof(A)] = b;
+		*(C*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B)] = c;
+		value_type* p = (value_type*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C)];
+		typename T::const_iterator q = s.begin();
+		for (; q != s.end(); ++p, ++q) *p = *q;
+		if (is_string<T>::TrailingNull) *p = value_type(0);
+		return SendData(buf, size);
+	}
+
+	template<typename A, typename B, typename C, typename D, typename T>
+	int SendSTLData(NETMSG msg, A a, B b, C c, D d, const T& s) {
+		typedef typename T::value_type value_type;
+		typedef typename is_string<T>::size_type size_type;
+		const int size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		unsigned char buf[size];
+		buf[0] = msg;
+		*(size_type*)&buf[1] = size;
+		*(A*)&buf[1 + sizeof(size_type)] = a;
+		*(B*)&buf[1 + sizeof(size_type) + sizeof(A)] = b;
+		*(C*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B)] = c;
+		*(D*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C)] = d;
+		value_type* p = (value_type*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)];
+		typename T::const_iterator q = s.begin();
+		for (; q != s.end(); ++p, ++q) *p = *q;
+		if (is_string<T>::TrailingNull) *p = value_type(0);
+		return SendData(buf, size);
+	}
+
 	CNet();
 	void StopListening();
 	int GetData(unsigned char* buf,int length,int conNum);

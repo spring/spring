@@ -1003,9 +1003,7 @@ bool GUIgame::EventAction(const string& command)
 		}else 
 			speed+=0.5;
 		if(!net->playbackDemo){
-			netbuf[0]=NETMSG_USER_SPEED;
-			*((float*)&netbuf[1])=speed;
-			net->SendData(netbuf,5);
+			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;	
@@ -1022,9 +1020,7 @@ bool GUIgame::EventAction(const string& command)
 		}else 
 			speed-=0.5;
 		if(!net->playbackDemo){
-			netbuf[0]=NETMSG_USER_SPEED;
-			*((float*)&netbuf[1])=speed;
-			net->SendData(netbuf,5);
+			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -1038,10 +1034,7 @@ bool GUIgame::EventAction(const string& command)
 		c.id=CMD_STOP;
 		c.options=0;
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-
-		netbuf[0]=NETMSG_DIRECT_CONTROL;
-		netbuf[1]=gu->myPlayerNum;
-		net->SendData(netbuf,2);
+		net->SendData<unsigned char>(NETMSG_DIRECT_CONTROL, gu->myPlayerNum);
 	} else
 	#endif
 	if (id==COMMAND_showshadowmap){
@@ -1075,14 +1068,11 @@ bool GUIgame::EventAction(const string& command)
 		inMapDrawer->keyPressed=false;
 	}
 
-	else if (id==COMMAND_pausegame){      
-		netbuf[0]=NETMSG_PAUSE;
-		netbuf[1]=!gs->paused;
-		netbuf[2]=gu->myPlayerNum;
-		net->SendData(netbuf,3);
+	else if (id==COMMAND_pausegame){
+		net->SendData<unsigned char, unsigned char>(NETMSG_PAUSE, !gs->paused, gu->myPlayerNum);
 		game->lastframe = SDL_GetTicks();
 	}
-	else if (id==COMMAND_singlestep){	
+	else if (id==COMMAND_singlestep){
 		game->bOneStep=true;
 	}
 //	else if (id==COMMAND_chat"){
@@ -1095,7 +1085,7 @@ bool GUIgame::EventAction(const string& command)
 	else if (id==COMMAND_debug)
 		gu->drawdebug=!gu->drawdebug;
 
-	else if (id==COMMAND_track)	
+	else if (id==COMMAND_track)
 		game->trackingUnit=!game->trackingUnit;
 
 	else if (id==COMMAND_nosound)

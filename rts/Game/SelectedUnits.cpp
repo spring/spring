@@ -469,15 +469,12 @@ void CSelectedUnits::SetCommandPage(int page)
 
 void CSelectedUnits::SendSelection(void)
 {
-	netbuf[0]=NETMSG_SELECT;
-	*((short int*)&netbuf[1])=selectedUnits.size()*2+4;
-	netbuf[3]=gu->myPlayerNum;
-	int a=0;
-	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		*((short int*)&netbuf[4+a*2])=(*ui)->id;			
-		a++;
-	}
-	net->SendData(netbuf,*((short int*)&netbuf[1]));
+	// first, convert CUnit* to unit IDs.
+	std::vector<short> selectedUnitIDs(selectedUnits.size());
+	std::vector<short>::iterator i = selectedUnitIDs.begin();
+	std::set<CUnit*>::const_iterator ui = selectedUnits.begin();
+	for(; ui != selectedUnits.end(); ++i, ++ui) *i = (*ui)->id;
+	net->SendSTLData<unsigned char, std::vector<short> >(NETMSG_SELECT, gu->myPlayerNum, selectedUnitIDs);
 	selectionChanged=false;
 }
 
@@ -486,17 +483,6 @@ void CSelectedUnits::SendCommand(Command& c)
 	if(selectionChanged){		//send new selection
 		SendSelection();
 	}
-
-	netbuf[0]=NETMSG_COMMAND;
-	*((short int*)&netbuf[1])=c.params.size()*4+9;
-	netbuf[3]=gu->myPlayerNum;
-	*((int*)&netbuf[4])=c.id;
-	netbuf[8]=c.options;
-
-	int a=0;
-	for(vector<float>::iterator oi=c.params.begin();oi!=c.params.end();++oi){
-		*((float*)&netbuf[9+a*4])=(*oi);			
-		a++;
-	}
-	net->SendData(netbuf,*((short int*)&netbuf[1]));
+	net->SendSTLData<unsigned char, int, unsigned char, std::vector<float> >(
+			NETMSG_COMMAND, gu->myPlayerNum, c.id, c.options, c.params);
 }

@@ -50,8 +50,6 @@ CNet* serverNet=0;
 extern std::string stupidGlobalMapname;
 extern int stupidGlobalMapId;
 
-unsigned char netbuf[NETWORK_BUFFER_SIZE];	//buffer space for outgoing data
-
 static bool IsFakeError()
 {
 #ifdef _WIN32
@@ -107,8 +105,7 @@ CNet::CNet()
 CNet::~CNet()
 {
 	if(connected && (imServer || !connections[0].localConnection)){
-		unsigned char t=NETMSG_QUIT;
-		SendData(&t,1);
+		SendData(NETMSG_QUIT);
 		FlushNet();
 	}
 	if(mySocket)
@@ -251,13 +248,8 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 
 	InitNewConn(&saOther,false,0);
 	if(!localConnect){
-		tempbuf[0]=NETMSG_ATTEMPTCONNECT;
-		if(gameSetup)
-			tempbuf[1]=gameSetup->myPlayer;
-		else
-			tempbuf[1]=0;
-		tempbuf[2]=NETWORK_VERSION;
-		SendData(tempbuf,3);
+		SendData<unsigned char, unsigned char>(
+				NETMSG_ATTEMPTCONNECT, gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
 		FlushNet();
 		inInitialConnect=true;
 	}
@@ -387,12 +379,10 @@ void CNet::Update(void)
 		}
 
 		if(c->lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
-			tempbuf[0]=NETMSG_HELLO;
-			SendData(tempbuf,1);
+			SendData(NETMSG_HELLO);
 		}
 		if(c->lastSendTime<curTime-0.2 && !c->waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
-			tempbuf[0]=NETMSG_HELLO;
-			SendData(tempbuf,1);
+			SendData(NETMSG_HELLO);
 		}
 		if(c->lastReceiveTime < curTime-(inInitialConnect ? 40 : 30)){		//other side has timed out
 			c->active=false;
@@ -507,41 +497,19 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		tempbuf[1]=freeConn;
 		SendData(tempbuf,2,freeConn);
 
-		tempbuf[0]=NETMSG_SCRIPT;
-		tempbuf[1]=CScriptHandler::Instance()->chosenName.size()+3;
-		for(unsigned int b=0;b<CScriptHandler::Instance()->chosenName.size();b++)
-			tempbuf[b+2]=CScriptHandler::Instance()->chosenName.at(b);
-		tempbuf[CScriptHandler::Instance()->chosenName.size()+2]=0;
-		SendData(tempbuf,CScriptHandler::Instance()->chosenName.size()+3);
-
-		tempbuf[0]=NETMSG_MAPNAME;
-		tempbuf[1]=stupidGlobalMapname.size()+7;
-		*(int*)&tempbuf[2]=stupidGlobalMapId;
-		for(unsigned int a=0;a<stupidGlobalMapname.size();a++)
-			tempbuf[a+6]=stupidGlobalMapname.at(a);
-		tempbuf[stupidGlobalMapname.size()+6]=0;
-		SendData(tempbuf,stupidGlobalMapname.size()+7);
+		SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance()->chosenName);
+		SendSTLData<int, std::string>(NETMSG_MAPNAME, stupidGlobalMapId, stupidGlobalMapname);
 
 		for(int a=0;a<gs->activePlayers;a++){
 			if(!gs->players[a]->readyToStart)
 				continue;
-			tempbuf[0]=NETMSG_PLAYERNAME;
-			tempbuf[1]=gs->players[a]->playerName.size()+4;
-			tempbuf[2]=a;
-			for(unsigned int b=0;b<gs->players[a]->playerName.size();b++)
-				tempbuf[b+3]=gs->players[a]->playerName.at(b);
-			tempbuf[gs->players[a]->playerName.size()+3]=0;
-			SendData(tempbuf,gs->players[a]->playerName.size()+4);
+			SendSTLData<unsigned char, std::string>(NETMSG_PLAYERNAME, a, gs->players[a]->playerName);
 		}
 		if(gameSetup){
 			for(int a=0;a<gs->activeTeams;a++){
-				tempbuf[0]=NETMSG_STARTPOS;
-				tempbuf[1]=a;
-				tempbuf[2]=2;
-				*(float*)&tempbuf[3]=gs->Team(a)->startPos.x;
-				*(float*)&tempbuf[7]=gs->Team(a)->startPos.y;
-				*(float*)&tempbuf[11]=gs->Team(a)->startPos.z;
-				serverNet->SendData(tempbuf,15);
+				serverNet->SendData<unsigned char, unsigned char, float, float, float>(
+						NETMSG_STARTPOS, a, 2, gs->Team(a)->startPos.x,
+						gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 			}
 		}
 		FlushNet();

@@ -274,11 +274,8 @@ CGame::CGame(bool server,std::string mapname)
 
 	info->AddLine("TA Spring linux %s",VERSION_STRING);
 
-	if(!server){
-		netbuf[0]=NETMSG_EXECHECKSUM;
-		*((unsigned int*)&netbuf[1])=CreateExeChecksum();
-		net->SendData(netbuf,5);
-	}
+	if(!server)
+		net->SendData<unsigned int>(NETMSG_EXECHECKSUM, CreateExeChecksum());
 
 	maxUserSpeed=3;
 	minUserSpeed=0.3;
@@ -286,13 +283,8 @@ CGame::CGame(bool server,std::string mapname)
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
 		p->playerName=configHandler.GetString("name","");
-	netbuf[0]=NETMSG_PLAYERNAME;
-	netbuf[1]=p->playerName.size()+4;
-	netbuf[2]=gu->myPlayerNum;
-	for(unsigned int a=0;a<p->playerName.size();a++)
-		netbuf[a+3]=p->playerName.at(a);
-	netbuf[p->playerName.size()+3]=0;
-	net->SendData(netbuf,netbuf[1]);		//sending your playername to the server indicates that you are finished loading
+	//sending your playername to the server indicates that you are finished loading
+	net->SendSTLData<unsigned char, std::string>(NETMSG_PLAYERNAME, gu->myPlayerNum, p->playerName);
 
 	lastModGameTimeMeasure = SDL_GetTicks();
 	lastframe = SDL_GetTicks();
@@ -484,10 +476,8 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		if(net->playbackDemo){
 			gs->paused=!gs->paused;
 		} else {
-			netbuf[0]=NETMSG_PAUSE;
-			netbuf[1]=!gs->paused;
-			netbuf[2]=gu->myPlayerNum;
-			net->SendData(netbuf,3);
+			net->SendData<unsigned char, unsigned char>(
+					NETMSG_PAUSE, !gs->paused, gu->myPlayerNum);
 			lastframe = SDL_GetTicks();
 		}
 	}
@@ -620,9 +610,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}else 
 			speed+=0.5;
 		if(!net->playbackDemo){
-			netbuf[0]=NETMSG_USER_SPEED;
-			*((float*)&netbuf[1])=speed;
-			net->SendData(netbuf,5);
+			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -639,9 +627,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}else 
 			speed-=0.5;
 		if(!net->playbackDemo){
-			netbuf[0]=NETMSG_USER_SPEED;
-			*((float*)&netbuf[1])=speed;
-			net->SendData(netbuf,5);
+			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -655,10 +641,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		c.id=CMD_STOP;
 		c.options=0;
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-
-		netbuf[0]=NETMSG_DIRECT_CONTROL;
-		netbuf[1]=gu->myPlayerNum;
-		net->SendData(netbuf,2);
+		net->SendData<unsigned char>(NETMSG_DIRECT_CONTROL, gu->myPlayerNum);
 	}
 #endif
 	if (s=="showshadowmap"){
@@ -1196,13 +1179,8 @@ void CGame::SimFrame()
 			oldHeading=hp.x;
 			oldPitch=hp.y;
 			oldStatus=status;
-
-			netbuf[0]=NETMSG_DC_UPDATE;
-			netbuf[1]=gu->myPlayerNum;
-			netbuf[2]=status;
-			*((short int*)&netbuf[3])=hp.x;
-			*((short int*)&netbuf[5])=hp.y;
-			net->SendData(netbuf,7);
+			net->SendData<unsigned char, unsigned char, short int, short int>(
+					NETMSG_DC_UPDATE, gu->myPlayerNum, status, hp.x, hp.y);
 		}
 	}
 #endif
@@ -1420,13 +1398,13 @@ bool CGame::ClientReadNet()
 			net->connected=false;
 			POP_CODE_MODE;
 			return gameOver;
-			
+
 		case NETMSG_PLAYERLEFT:{
 			int player=inbuf[inbufpos+1];
 			if(player>=MAX_PLAYERS || player<0){
 				info->AddLine("Got invalid player num %i in player left msg",player);
 			} else {
-				if(netbuf[inbufpos+2]==1)
+				if(inbuf[inbufpos+2]==1)
 					info->AddLine("Player %s left",gs->players[player]->playerName.c_str());
 				else
 					info->AddLine("Lost connection to %s",gs->players[player]->playerName.c_str());
@@ -1447,7 +1425,7 @@ bool CGame::ClientReadNet()
 			StartPlaying();
 			lastLength=1;
 			break;
-			
+
 		case NETMSG_GAMEOVER:
 			ENTER_MIXED;
 			gameOver=true;
@@ -1463,10 +1441,10 @@ bool CGame::ClientReadNet()
 		case NETMSG_SENDPLAYERSTAT:
 			ENTER_MIXED;
 			info->AddLine("Game over");
-			netbuf[0]=NETMSG_PLAYERSTAT;
-			netbuf[1]=gu->myPlayerNum;
-			*(CPlayer::Statistics*)&netbuf[2]=*gs->players[gu->myPlayerNum]->currentStats;
-			net->SendData(netbuf,sizeof(CPlayer::Statistics)+2);
+			// Warning: using CPlayer::Statistics here may cause endianness problems
+			// once net->SendData is endian aware!
+			net->SendData<unsigned char, CPlayer::Statistics>(
+					NETMSG_PLAYERSTAT, gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
 			lastLength=1;
 			ENTER_SYNCED;
 			break;
@@ -1539,7 +1517,7 @@ bool CGame::ClientReadNet()
 			break;
 			
 		case NETMSG_MAPNAME:
-			lastLength=inbuf[inbufpos+1];				
+			lastLength=inbuf[inbufpos+1];
 			break;
 
 		case NETMSG_PLAYERNAME:{
@@ -1551,14 +1529,14 @@ bool CGame::ClientReadNet()
 				gs->players[player]->readyToStart=true;
 				gs->players[player]->active=true;
 			}
-			lastLength=inbuf[inbufpos+1];				
+			lastLength=inbuf[inbufpos+1];
 			break;}
-						
+
 		case NETMSG_SCRIPT:
 			CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
 			script=CScriptHandler::Instance()->chosenScript;
 			info->AddLine("Using script %s",(char*)(&inbuf[inbufpos+2]));
-			lastLength=inbuf[inbufpos+1];				
+			lastLength=inbuf[inbufpos+1];
 			break;
 
 		case NETMSG_CHAT:{
@@ -1569,13 +1547,13 @@ bool CGame::ClientReadNet()
 				string s=(char*)(&inbuf[inbufpos+3]);
 				HandleChatMsg(s,player);
 			}
-			lastLength=inbuf[inbufpos+1];	
+			lastLength=inbuf[inbufpos+1];
 			break;}
-			
+
 		case NETMSG_SYSTEMMSG:{
 			string s=(char*)(&inbuf[inbufpos+3]);
 			info->AddLine(s);
-			lastLength=inbuf[inbufpos+1];	
+			lastLength=inbuf[inbufpos+1];
 			break;}
 
 		case NETMSG_STARTPOS:{
@@ -1593,16 +1571,14 @@ bool CGame::ClientReadNet()
 			break;}
 
 		case NETMSG_RANDSEED:
-			gs->randSeed=(*((unsigned int*)&netbuf[1]));
-			lastLength=5;				
+			gs->randSeed=(*((unsigned int*)&inbuf[1]));
+			lastLength=5;
 			break;
-			
+
 		case NETMSG_NEWFRAME:
 			if(!gameServer)
 				timeLeft-=1;
-			netbuf[0]=NETMSG_NEWFRAME;
-			(*((int*)&netbuf[1]))=gs->frameNum;
-			net->SendData(netbuf,5);
+			net->SendData<int>(NETMSG_NEWFRAME, gs->frameNum);
 			SimFrame();
 			lastLength=5;
 
@@ -1614,7 +1590,7 @@ bool CGame::ClientReadNet()
 				return true;
 			}
 			break;
-			
+
 		case NETMSG_COMMAND:{
 			int player=inbuf[inbufpos+3];
 			if(player>=MAX_PLAYERS || player<0){
@@ -1681,21 +1657,15 @@ bool CGame::ClientReadNet()
 			if(frame!=gs->frameNum){
 				info->AddLine("Sync request for wrong frame");
 			}
+			net->SendData<unsigned char, int, int>(
+					NETMSG_SYNCRESPONSE, gu->myPlayerNum, uh->CreateChecksum(), gs->frameNum);
 
-			int checksum=uh->CreateChecksum();
-			netbuf[0]=NETMSG_SYNCRESPONSE;
-			netbuf[1]=gu->myPlayerNum;
-			*((int*)&netbuf[2])=checksum;
-			*((int*)&netbuf[6])=gs->frameNum;
-			net->SendData(netbuf,10);
-
-			netbuf[0]=NETMSG_CPU_USAGE;
+			net->SendData<float>(NETMSG_CPU_USAGE,
 #ifdef PROFILE_TIME
-			*((float*)&netbuf[1])=profiler.profile["Sim time"].percent;
+					profiler.profile["Sim time"].percent);
 #else
-			*((float*)&netbuf[1])=0.30;
+					0.30);
 #endif
-			net->SendData(netbuf,5);
 			lastLength=5;
 			ENTER_SYNCED;
 			break;}
@@ -1938,14 +1908,7 @@ void CGame::UpdateUI()
 		if(userInput.size()>0){
 			if(userInput.size()>250)	//avoid troubles with to long lines
 				userInput=userInput.substr(0,250);
-
-			netbuf[0]=NETMSG_CHAT;
-			netbuf[1]=userInput.size()+4;
-			netbuf[2]=gu->myPlayerNum;
-			for(unsigned int a=0;a<userInput.size();a++)
-				netbuf[a+3]=userInput.at(a);
-			netbuf[userInput.size()+3]=0;
-			net->SendData(netbuf,netbuf[1]);
+			net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, userInput);
 			if(net->playbackDemo)
 				HandleChatMsg(userInput,gu->myPlayerNum);
 		}

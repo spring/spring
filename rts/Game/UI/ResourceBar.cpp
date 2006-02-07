@@ -230,20 +230,14 @@ bool CResourceBar::MousePress(int x, int y, int button)
 			if(InBox(mx,my,box+metalBox)){
 				moveBox=false;
 				float metalShare=max(0.f,min(1.f,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
-				netbuf[0]=NETMSG_SETSHARE;
-				netbuf[1]=gu->myTeam;
-				*(float*)&netbuf[2]=metalShare;
-				*(float*)&netbuf[6]=gs->Team(gu->myTeam)->energyShare;
-				net->SendData(netbuf,10);
+				net->SendData<unsigned char, float, float>(
+						NETMSG_SETSHARE, gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
 			}
 			if(InBox(mx,my,box+energyBox)){
 				moveBox=false;
 				float energyShare=max(0.f,min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
-				netbuf[0]=NETMSG_SETSHARE;
-				netbuf[1]=gu->myTeam;
-				*(float*)&netbuf[2]=gs->Team(gu->myTeam)->metalShare;
-				*(float*)&netbuf[6]=energyShare;
-				net->SendData(netbuf,10);
+				net->SendData<unsigned char, float, float>(
+						NETMSG_SETSHARE, gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare);
 			}
 		}
 		return true;
