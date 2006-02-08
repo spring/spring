@@ -248,7 +248,6 @@ void CArchiveScanner::GenerateCRCTable()
 unsigned int CArchiveScanner::GetCRC(const string& filename)
 {
 	unsigned int crc;
-	int ch;
 
 	boost::filesystem::path fn(filename, boost::filesystem::native);
 	FILE* fp = fopen(fn.native_file_string().c_str(), "rb");
@@ -256,9 +255,15 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 		return 0;
 
     crc = 0xFFFFFFFF;
-    while ((ch = getc(fp)) != EOF)
-        crc = (crc>>8) ^ crcTable[ (crc^ch) & 0xFF ];
+	char* buf = new char[100000];
+	size_t bytes;
+	do {
+		bytes = fread((void*)buf, 1, 100000, fp);
+		for (size_t i = 0; i < bytes; ++i)
+			crc = (crc>>8) ^ crcTable[ (crc^(buf[i])) & 0xFF ];
+	} while (bytes == 100000);
 
+	delete[] buf;
 	fclose(fp);
 
 	crc = crc^0xFFFFFFFF;
