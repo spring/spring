@@ -1,7 +1,7 @@
 /*
  * GLXPBuffer.cpp
  * GLX_SGIX_pbuffer class implementation
- * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
+ * Copyright (C) 2006 Christopher Han <xiphux@gmail.com>
  */
 #include "IFramebuffer.h"
 
