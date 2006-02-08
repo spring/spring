@@ -120,6 +120,12 @@ def processor(gcc_3_4=True):
 					else:
 						print "  found AMD Duron"
 						archflags=['-march=athlon-tbird']
+				elif str.find("Sempron") != -1:
+					print "  found AMD Sempron 64"
+					if gcc_3_4: archflags=['-march=athlon64']
+					else:
+						print "WARNING: gcc versions below 3.4 don't support -march=athlon64, using -march=athlon-4 -msse2 -mfpmath=sse instead"
+						archflags=['-march=athlon', '-msse2', '-mfpmath=sse']
 				elif str.find("Athlon") != -1:
 					if str.find("64") != -1:
 						print "  found AMD Athlon 64"
