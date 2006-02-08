@@ -35,6 +35,7 @@ protected:
 	bool m_bShareObjects;
 
 	int shadowMapSize;
+	unsigned int shadowTex;
 };
 
 #endif /* _GLXPBUFFER_H */
