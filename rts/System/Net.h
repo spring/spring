@@ -17,7 +17,9 @@
 #include <fstream>
 #include <deque>
 #include <map>
+#include <algorithm>
 #include <boost/thread/mutex.hpp>
+#include <boost/scoped_array.hpp>
 
 class CFileHandler;
 using namespace std;
@@ -80,6 +82,38 @@ template<> struct is_string<std::string> {
 
 class CNet
 {
+  private:
+    struct AssembleBuffer 
+    {
+      boost::scoped_array<unsigned char> message_buffer;
+      size_t index;
+      AssembleBuffer( NETMSG msg, size_t buffer_size )
+        : message_buffer( new unsigned char[buffer_size] ), index(1)
+        { message_buffer[0] = msg; }
+
+      template<typename T>
+      AssembleBuffer& add_scalar( T const& obj) 
+      {
+        * reinterpret_cast<T*>( message_buffer.get() + index) = obj;
+        index += sizeof(T);
+        return *this;
+      }
+
+      template<typename T>
+      AssembleBuffer& add_sequence( T const& obj) 
+      {
+        typedef typename T::value_type value_type;
+        value_type * pos = reinterpret_cast<value_type*>( message_buffer.get() + index);
+        std::copy( obj.begin(), obj.end(), pos );
+        index += sizeof(value_type)*obj.size() + is_string<T>::TrailingNull;
+        if( is_string<T>::TrailingNull ) {
+          pos += obj.size();
+          *pos = typename T::value_type(0);
+        }
+        return *this;
+      }
+      unsigned char * get() const { return message_buffer.get(); };
+    };
 public:
 
 	/** Send a net message without any parameters. */
@@ -179,15 +213,12 @@ public:
 	int SendSTLData(NETMSG msg, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
-		const int size = 1 + sizeof(size_type) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(size_type*)&buf[1] = size;
-		value_type* p = (value_type*)&buf[1 + sizeof(size_type)];
-		typename T::const_iterator q = s.begin();
-		for (; q != s.end(); ++p, ++q) *p = *q;
-		if (is_string<T>::TrailingNull) *p = value_type(0);
-		return SendData(buf, size);
+
+    size_type size =  1 + sizeof(size_type) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		AssembleBuffer buf( msg, size );
+    buf.add_scalar(size).add_sequence(s );
+
+		return SendData(buf.get(), size);
 	}
 
 	/** Send a net message with one fixed size parameter and a variable sized
@@ -196,53 +227,49 @@ public:
 	int SendSTLData(NETMSG msg, A a, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
-		const int size = 1 + sizeof(size_type) + sizeof(A) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(size_type*)&buf[1] = size;
-		*(A*)&buf[1 + sizeof(size_type)] = a;
-		value_type* p = (value_type*)&buf[1 + sizeof(size_type) + sizeof(A)];
-		typename T::const_iterator q = s.begin();
-		for (; q != s.end(); ++p, ++q) *p = *q;
-		if (is_string<T>::TrailingNull) *p = value_type(0);
-		return SendData(buf, size);
+
+    size_type size =  1 + sizeof(size_type) + sizeof(A) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+    AssembleBuffer buf( msg, size );
+
+    buf.add_scalar(size).add_scalar(a).add_sequence(s);
+
+		return SendData(buf.get(), size);
 	}
 
 	template<typename A, typename B, typename C, typename T>
 	int SendSTLData(NETMSG msg, A a, B b, C c, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
-		const int size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(size_type*)&buf[1] = size;
-		*(A*)&buf[1 + sizeof(size_type)] = a;
-		*(B*)&buf[1 + sizeof(size_type) + sizeof(A)] = b;
-		*(C*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B)] = c;
-		value_type* p = (value_type*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C)];
-		typename T::const_iterator q = s.begin();
-		for (; q != s.end(); ++p, ++q) *p = *q;
-		if (is_string<T>::TrailingNull) *p = value_type(0);
-		return SendData(buf, size);
+
+    size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+    AssembleBuffer buf( msg, size );
+
+    buf.add_scalar(size)
+      .add_scalar(a)
+      .add_scalar(b)
+      .add_scalar(c)
+      .add_sequence(s);
+
+    return SendData(buf.get(), size);
 	}
 
 	template<typename A, typename B, typename C, typename D, typename T>
 	int SendSTLData(NETMSG msg, A a, B b, C c, D d, const T& s) {
-		typedef typename T::value_type value_type;
+    typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
-		const int size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(size_type*)&buf[1] = size;
-		*(A*)&buf[1 + sizeof(size_type)] = a;
-		*(B*)&buf[1 + sizeof(size_type) + sizeof(A)] = b;
-		*(C*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B)] = c;
-		*(D*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C)] = d;
-		value_type* p = (value_type*)&buf[1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)];
-		typename T::const_iterator q = s.begin();
-		for (; q != s.end(); ++p, ++q) *p = *q;
-		if (is_string<T>::TrailingNull) *p = value_type(0);
-		return SendData(buf, size);
+
+
+    size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+
+    AssembleBuffer buf( msg, size );
+    buf.add_scalar(size)
+      .add_scalar(a)
+      .add_scalar(b)
+      .add_scalar(c)
+      .add_scalar(d)
+      .add_sequence(s);
+
+    return SendData(buf.get(), size);
 	}
 
 	CNet();
