@@ -49,7 +49,7 @@ def processor(gcc_3_4=True):
 		return archflags
 
 	str = f.readline()
-	family=-1
+	family=""
 	model=-1
 	vendor=""
 	archflags=[]
