@@ -93,5 +93,5 @@ void GLXPBuffer::deselect(void)
 
 bool GLXPBuffer::valid(void)
 {
-	return m_glxPbuffer != NULL;
+	return m_glxPbuffer != 0;
 }
