@@ -29,7 +29,7 @@ GLXPBuffer::GLXPBuffer(const int shadowMapSize, const bool sharedcontext, const 
 	if (!glxConfig)
 		return;
 	int pb_attr[16] = {
-		GLX_LARGEST_PBUFFER, true,
+		GLX_LARGEST_PBUFFER, false,
 		GLX_PRESERVED_CONTENTS, true,
 		0
 	};
@@ -60,6 +60,8 @@ void GLXPBuffer::checkFBOStatus(void)
 
 void GLXPBuffer::attachTexture(const unsigned int tex, const unsigned int textype, FramebufferAttachType attachtype)
 {
+	if (attachtype == FBO_ATTACH_DEPTH)
+		shadowTex = tex;
 }
 
 void GLXPBuffer::select(void)
@@ -80,6 +82,8 @@ void GLXPBuffer::deselect(void)
 {
 	if (!(m_pOldDisplay && m_glxOldDrawable && m_glxOldContext))
 		return;
+	glBindTexture(GL_TEXTURE_2D, shadowTex);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 1, 1, 1, 1, shadowMapSize-2, shadowMapSize-2);
 	if (!glXMakeCurrent(m_pOldDisplay, m_glxOldDrawable, m_glxOldContext))
 		return;
 	m_pOldDisplay = 0;
