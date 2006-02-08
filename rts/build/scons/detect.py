@@ -52,6 +52,7 @@ def processor(gcc_3_4=True):
 	family=-1
 	model=-1
 	vendor=""
+	archflags=[]
 	while str:
 		if str.startswith("vendor_id"):
 			if str.find("GenuineTMx86") != -1:
@@ -150,7 +151,7 @@ def processor(gcc_3_4=True):
 				archflags=['-march=c3']
 
 		str = f.readline()
-	if not archflags:
+	if len(archflags) == 0:
 		if vendor == "":
 			if family.find("970"):
 				print "  found PowerPC 970 (G5)"
