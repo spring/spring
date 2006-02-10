@@ -176,9 +176,14 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
 	char text2[50];
-	if(strlen(text)>42){
-		memcpy(text2,text,42);
-		text2[42]=0;
+	int break_pos = 0;
+	if (strlen(text) > 42) {
+		memcpy(text2, text, 42);
+		break_pos = 42;
+		while (break_pos > 0 && text2[break_pos - 1] != ' ')
+			--break_pos;
+		if (break_pos <= 1) break_pos = 42;
+		text2[break_pos] = 0;
 	} else
 		strcpy(text2,text);
 	(*filelog) << text2  << "\n";
@@ -193,9 +198,8 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	data.back().time=lifetime-lastTime;
 	lastTime=lifetime;
 
-	if(strlen(text)>42){
-		AddLine("%s",&text[42]);
-	}
+	if (break_pos)
+		AddLine("%s", &text[break_pos]);
 	POP_CODE_MODE;
 }
 
