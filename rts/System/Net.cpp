@@ -45,6 +45,10 @@ typedef time_t __time64_t;
 
 #define NETWORK_VERSION 1
 
+// Mutex to prevent a race condition between client and server in
+// CNet::SendData and CNet::GetData. (for local connections only)
+static boost::mutex netMutex;
+
 CNet* net=0;
 CNet* serverNet=0;
 extern std::string stupidGlobalMapname;

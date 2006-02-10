@@ -329,8 +329,6 @@ public:
 	};
 	Connection connections[MAX_PLAYERS];
 
-
-	mutable boost::mutex netMutex;
 #ifdef _WIN32
 	SOCKET mySocket;
 #else
