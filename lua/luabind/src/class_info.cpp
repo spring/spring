@@ -29,18 +29,22 @@ namespace luabind
 {
 	class_info get_class_info(const object& o)
 	{
-		lua_State* L = o.lua_state();
+		lua_State* L = o.interpreter();
 	
-		class_info result(L);
+		class_info result;
 	
-		o.pushvalue();
+		o.push(L);
 		detail::object_rep* obj = static_cast<detail::object_rep*>(lua_touserdata(L, -1));
 		lua_pop(L, 1);
 
 		result.name = obj->crep()->name();
 		obj->crep()->get_table(L);
-		result.methods.set();
 
+		object methods(from_stack(L, -1));
+		
+		methods.swap(result.methods);
+		lua_pop(L, 1);
+		
 		result.attributes = newtable(L);
 
 		typedef detail::class_rep::property_map map_type;

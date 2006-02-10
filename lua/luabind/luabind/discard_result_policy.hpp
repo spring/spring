@@ -43,7 +43,7 @@ namespace luabind { namespace detail
 		struct can_only_convert_from_cpp_to_lua {};
 
 		template<class T, class Direction>
-		struct generate_converter
+		struct apply
 		{
 			typedef typename boost::mpl::if_<boost::is_same<Direction, cpp_to_lua>
 				, discard_converter

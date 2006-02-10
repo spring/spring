@@ -33,6 +33,8 @@
 #include <boost/preprocessor/repeat.hpp>
 #include <boost/preprocessor/comma_if.hpp>
 
+#include <boost/mpl/apply_wrap.hpp>
+
 #include <luabind/config.hpp>
 #include <luabind/wrapper_base.hpp>
 #include <luabind/detail/policy.hpp>
@@ -46,6 +48,8 @@ namespace luabind { namespace detail
 	template<int N>
 	struct constructor_helper;
 
+	namespace mpl = boost::mpl;
+	
 	template<int N>
 	struct wrapped_constructor_helper;
 	
@@ -93,10 +97,15 @@ namespace luabind { namespace detail
 #elif BOOST_PP_ITERATION_FLAGS() == 1
 
 
-#define LUABIND_DECL(z, n, text) typedef typename find_conversion_policy<n+1,Policies>::type BOOST_PP_CAT(converter_policy,n); \
-	typedef typename BOOST_PP_CAT(converter_policy,n)::template generate_converter<A##n, lua_to_cpp>::type BOOST_PP_CAT(c_t,n); \
-	typename BOOST_PP_CAT(converter_policy,n)::template generate_converter<A##n, lua_to_cpp>::type BOOST_PP_CAT(c,n);
-#define LUABIND_PARAM(z,n,text) BOOST_PP_CAT(c,n).BOOST_PP_CAT(c_t,n)::apply(L, LUABIND_DECORATE_TYPE(A##n), n + 2)
+#define LUABIND_DECL(z, n, text) \
+	typedef typename find_conversion_policy<n+1,Policies>::type BOOST_PP_CAT(converter_policy,n); \
+\
+	typename mpl::apply_wrap2< \
+		BOOST_PP_CAT(converter_policy,n), BOOST_PP_CAT(A,n), lua_to_cpp \
+	>::type BOOST_PP_CAT(c,n);
+
+#define LUABIND_PARAM(z,n,text) \
+	BOOST_PP_CAT(c,n).apply(L, LUABIND_DECORATE_TYPE(BOOST_PP_CAT(A,n)), n + 2)
 
 	template<>
 	struct constructor_helper<BOOST_PP_ITERATION()>
@@ -104,7 +113,7 @@ namespace luabind { namespace detail
         template<class T, class Policies, BOOST_PP_ENUM_PARAMS(LUABIND_MAX_ARITY, class A)>
         static T* execute(
             lua_State* L
-          , weak_ref const& ref
+          , weak_ref const&
           , T*
           , constructor<BOOST_PP_ENUM_PARAMS(LUABIND_MAX_ARITY,A)>*
           , Policies*)

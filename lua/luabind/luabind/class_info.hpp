@@ -27,15 +27,12 @@
 #include <luabind/prefix.hpp>
 #include <luabind/lua_include.hpp>
 #include <luabind/luabind.hpp>
+#include <luabind/object.hpp>
 
 namespace luabind
 {
 	struct class_info
-	{
-		class_info(lua_State* L)
-			: methods(L)
-		{}
-		
+	{	
 		std::string name;
 		object methods;
 		object attributes;

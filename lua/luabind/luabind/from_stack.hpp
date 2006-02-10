@@ -1,4 +1,4 @@
-// Copyright (c) 2003 Daniel Wallin and Arvid Norberg
+// Copyright (c) 2005 Daniel Wallin and Arvid Norberg
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,33 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef LUABIND_STACK_UTILS_HPP_INCLUDED
-#define LUABIND_STACK_UTILS_HPP_INCLUDED
+#ifndef LUABIND_FROM_STACK_050715_HPP
+#define LUABIND_FROM_STACK_050715_HPP
 
-#include <cassert>
+namespace luabind {
 
-namespace luabind { namespace detail
+struct from_stack
 {
+    from_stack(lua_State* interpreter, int index)
+      : interpreter(interpreter)
+      , index(index)
+    {}
 
-	struct stack_pop
-	{
-		stack_pop(lua_State* L, int n)
-			: m_state(L)
-			, m_n(n)
-			{
-			}
+    lua_State* interpreter;
+    int index;
+};
 
-		~stack_pop() 
-		{
-			lua_pop(m_state, m_n);
-		}
+} // namespace luabind
 
-	private:
-
-		lua_State* m_state;
-		int m_n;
-	};
-}}
-
-#endif // LUABIND_STACK_UTILS_HPP_INCLUDED
+#endif // LUABIND_FROM_STACK_050715_HPP
 

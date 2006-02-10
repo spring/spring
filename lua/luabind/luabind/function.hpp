@@ -35,6 +35,7 @@
 #include <boost/preprocessor/repetition/enum.hpp> 
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/cat.hpp>
+#include <boost/mpl/apply_wrap.hpp>
 
 #include <luabind/detail/signature_match.hpp>
 #include <luabind/detail/call_function.hpp>
@@ -48,6 +49,8 @@ namespace luabind
 	namespace detail
 	{
 
+		namespace mpl = boost::mpl;
+	  
 		namespace free_functions
 		{
 
@@ -84,7 +87,7 @@ namespace luabind
                 char end;
 			};
 
-    		struct function_rep
+    		struct LUABIND_API function_rep
 			{
 				function_rep(const char* name): m_name(name) {}
 				void add_overload(const free_functions::overload_rep& o);
@@ -107,7 +110,9 @@ namespace luabind
 		// returns generates functions that calls function pointers
 
 #define LUABIND_DECL(z, n, text) typedef typename find_conversion_policy<n + 1, Policies>::type BOOST_PP_CAT(converter_policy,n); \
-		typename BOOST_PP_CAT(converter_policy,n)::template generate_converter<A##n, lua_to_cpp>::type BOOST_PP_CAT(c,n);
+		typename mpl::apply_wrap2< \
+			BOOST_PP_CAT(converter_policy,n), BOOST_PP_CAT(A,n), lua_to_cpp \
+		>::type BOOST_PP_CAT(c,n);
 
 #define LUABIND_ADD_INDEX(z,n,text) + BOOST_PP_CAT(converter_policy,n)::has_arg
 #define LUABIND_INDEX_MAP(z,n,text) 1 BOOST_PP_REPEAT(n, LUABIND_ADD_INDEX, _)
@@ -333,16 +338,10 @@ overload_rep(R(*f)(BOOST_PP_ENUM_PARAMS(BOOST_PP_ITERATION(), A)), Policies*)
 template<class Policies BOOST_PP_COMMA_IF(BOOST_PP_ITERATION()) BOOST_PP_ENUM_PARAMS(BOOST_PP_ITERATION(), class A)>
 static int call(T(*f)(BOOST_PP_ENUM_PARAMS(BOOST_PP_ITERATION(), A)), lua_State* L, const Policies*)
 {
-/*	typedef typename get_policy<0, Policies>::type ret_policy;
-	typedef typename ret_policy::head return_value_converter_intermediate;
-	typedef typename return_value_converter_intermediate::template generate_converter<T, cpp_to_lua>::type ret_conv;*/
-
 	int nargs = lua_gettop(L);
 
-//	typedef typename get_policy_list<0, Policies>::type policy_list_ret;
-//	typedef typename find_converter_policy<policy_list_ret>::type converter_policy_ret;
 	typedef typename find_conversion_policy<0, Policies>::type converter_policy_ret;
-	typename converter_policy_ret::template generate_converter<T, cpp_to_lua>::type converter_ret;
+	typename mpl::apply_wrap2<converter_policy_ret,T,cpp_to_lua>::type converter_ret;
 
 	BOOST_PP_REPEAT(BOOST_PP_ITERATION(), LUABIND_DECL, _)
 		converter_ret.apply(L, f

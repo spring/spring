@@ -28,7 +28,7 @@ using namespace luabind::detail;
 
 bool luabind::detail::find_best_match(
     lua_State* L
-  , const overload_rep_base* start
+  , overload_rep_base const* start
   , int num_overloads
   , size_t orep_size
   , bool& ambiguous
@@ -42,6 +42,7 @@ bool luabind::detail::find_best_match(
     for (int index = 0; index < num_overloads; ++index)
     {
         int match_value = start->match(L, num_params);
+
         reinterpret_cast<const char*&>(start) += orep_size;
 
         if (match_value < 0) continue;
@@ -58,13 +59,14 @@ bool luabind::detail::find_best_match(
         }
     }
 
-    ambiguous = min_match == min_but_one_match && min_match < std::numeric_limits<int>::max();
+    ambiguous = min_match == min_but_one_match
+        && min_match < std::numeric_limits<int>::max();
     return found;
 }
 
 void luabind::detail::find_exact_match(
     lua_State* L
-  , const overload_rep_base* start
+  , overload_rep_base const* start
   , int num_overloads
   , size_t orep_size
   , int cmp_match

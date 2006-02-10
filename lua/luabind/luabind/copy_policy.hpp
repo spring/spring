@@ -99,7 +99,7 @@ namespace luabind { namespace detail {
 		static void postcall(lua_State*, const index_map&) {}
 
 		template<class T, class Direction>
-		struct generate_converter
+		struct apply
 		{
 			typedef typename boost::mpl::if_<boost::is_same<Direction, cpp_to_lua>
 					, typename boost::mpl::if_<boost::is_pointer<T>
@@ -116,7 +116,10 @@ namespace luabind
 {
 	template<int N>
 	detail::policy_cons<detail::copy_policy<N>, detail::null_type> 
-	copy(boost::arg<N>) { return detail::policy_cons<detail::copy_policy<N>, detail::null_type>(); }
+	copy(LUABIND_PLACEHOLDER_ARG(N)) 
+	{ 
+		return detail::policy_cons<detail::copy_policy<N>, detail::null_type>(); 
+	}
 }
 
 #endif // LUABIND_COPY_POLICY_HPP_INCLUDED

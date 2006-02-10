@@ -52,7 +52,7 @@ namespace luabind { namespace detail
 		}
 
 		template<class T, class Direction>
-		struct generate_converter
+		struct apply
 		{
 			typedef return_reference_to_converter<Direction> type;
 		};
@@ -63,7 +63,10 @@ namespace luabind
 {
 	template<int N>
 	detail::policy_cons<detail::return_reference_to_policy<N>, detail::null_type> 
-	return_reference_to(boost::arg<N>) { return detail::policy_cons<detail::return_reference_to_policy<N>, detail::null_type>(); }
+	return_reference_to(LUABIND_PLACEHOLDER_ARG(N)) 
+	{ 
+		return detail::policy_cons<detail::return_reference_to_policy<N>, detail::null_type>(); 
+	}
 }
 
 #endif // LUABIND_RETURN_REFERENCE_TO_POLICY_HPP_INCLUDED

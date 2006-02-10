@@ -96,7 +96,7 @@ namespace luabind
 		typename boost::mpl::if_<boost::is_void<R>
 				, luabind::detail::proxy_member_void_caller<boost::tuples::tuple<BOOST_PP_ENUM(BOOST_PP_ITERATION(), LUABIND_TUPLE_PARAMS, _)> >
 				, luabind::detail::proxy_member_caller<R, boost::tuples::tuple<BOOST_PP_ENUM(BOOST_PP_ITERATION(), LUABIND_TUPLE_PARAMS, _)> > >::type
-				call(char const* name BOOST_PP_COMMA_IF(BOOST_PP_ITERATION()) BOOST_PP_ENUM(BOOST_PP_ITERATION(), LUABIND_OPERATOR_PARAMS, _), detail::type<R>* = 0) const
+				call(char const* name BOOST_PP_COMMA_IF(BOOST_PP_ITERATION()) BOOST_PP_ENUM(BOOST_PP_ITERATION(), LUABIND_OPERATOR_PARAMS, _), detail::type_<R>* = 0) const
 		{
 			typedef boost::tuples::tuple<BOOST_PP_ENUM(BOOST_PP_ITERATION(), LUABIND_TUPLE_PARAMS, _)> tuple_t;
 	#if BOOST_PP_ITERATION() == 0
@@ -164,13 +164,13 @@ namespace luabind
         wrap_base const* self
       , char const* fn
         BOOST_PP_ENUM_TRAILING_BINARY_PARAMS(N, A, &a)
-      , detail::type<R>* = 0
+      , detail::type_<R>* = 0
     )
     {
         return self->call(
             fn
             BOOST_PP_ENUM_TRAILING_PARAMS(N, a)
-         , (detail::type<R>*)0
+         , (detail::type_<R>*)0
         );
     }
 

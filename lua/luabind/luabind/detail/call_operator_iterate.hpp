@@ -45,7 +45,8 @@ struct BOOST_PP_CAT(call_operator, N)
             BOOST_PP_ENUM_TRAILING(N, LUABIND_UNWRAP_PARAMETER, _)
         )
         {
-            detail::operator_result(
+            using namespace detail;
+            operator_result(
                 L
 #if BOOST_WORKAROUND(BOOST_MSVC, <= 1300)
               , self(BOOST_PP_ENUM_PARAMS(N, _))

@@ -240,10 +240,8 @@ namespace luabind { namespace detail {
     void class_registry::add_class(LUABIND_TYPE_INFO info, class_rep* crep)
     {
         // class is already registered
-
-		// not sure why add class is called twice for cunit_pointer. commenting out for now
-        //assert((m_classes.find(info) == m_classes.end()) 
-//            && "you are trying to register a class twice");
+        assert((m_classes.find(info) == m_classes.end()) 
+            && "you are trying to register a class twice");
         m_classes[info] = crep;
     }
 

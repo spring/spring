@@ -26,8 +26,11 @@
 
 #include <luabind/config.hpp>
 #include <luabind/detail/policy.hpp>
+#include <boost/mpl/apply_wrap.hpp>
 
 namespace luabind { namespace detail {
+
+	namespace mpl = boost::mpl;
 
 	template<class Policies>
 	struct container_converter_lua_to_cpp
@@ -38,7 +41,7 @@ namespace luabind { namespace detail {
 			typedef typename T::value_type value_type;
 
 			typedef typename find_conversion_policy<1, Policies>::type converter_policy;
-			typename converter_policy::template generate_converter<value_type, lua_to_cpp>::type converter;
+			typename mpl::apply_wrap2<converter_policy,value_type,lua_to_cpp>::type converter;
 
 			T container;
 
@@ -77,7 +80,7 @@ namespace luabind { namespace detail {
 			typedef typename T::value_type value_type;
 
 			typedef typename find_conversion_policy<1, Policies>::type converter_policy;
-			typename converter_policy::template generate_converter<value_type, cpp_to_lua>::type converter;
+			typename mpl::apply_wrap2<converter_policy,value_type,lua_to_cpp>::type converter;
 
 			lua_newtable(L);
 
@@ -104,7 +107,7 @@ namespace luabind { namespace detail {
 		struct only_accepts_nonconst_pointers {};
 
 		template<class T, class Direction>
-		struct generate_converter
+		struct apply
 		{
 			typedef typename boost::mpl::if_<boost::is_same<lua_to_cpp, Direction>
 				, container_converter_lua_to_cpp<Policies>
@@ -119,11 +122,17 @@ namespace luabind
 {
 	template<int N>
 	detail::policy_cons<detail::container_policy<N, detail::null_type>, detail::null_type> 
-	container(boost::arg<N>) { return detail::policy_cons<detail::container_policy<N, detail::null_type>, detail::null_type>(); }
+	container(LUABIND_PLACEHOLDER_ARG(N)) 
+	{ 
+		return detail::policy_cons<detail::container_policy<N, detail::null_type>, detail::null_type>(); 
+	}
 
 	template<int N, class Policies>
 	detail::policy_cons<detail::container_policy<N, Policies>, detail::null_type> 
-	container(boost::arg<N>, const Policies&) { return detail::policy_cons<detail::container_policy<N, Policies>, detail::null_type>(); }
+	container(LUABIND_PLACEHOLDER_ARG(N), const Policies&) 
+	{ 
+		return detail::policy_cons<detail::container_policy<N, Policies>, detail::null_type>(); 
+	}
 }
 
 #endif // LUABIND_CONTAINER_POLICY_HPP_INCLUDED

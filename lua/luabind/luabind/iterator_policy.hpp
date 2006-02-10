@@ -28,6 +28,7 @@
 #include <luabind/detail/policy.hpp>
 #include <luabind/detail/implicit_cast.hpp>
 #include <luabind/detail/convert_to_lua.hpp>
+#include <boost/mpl/bool.hpp>
 
 namespace luabind { namespace detail 
 {
@@ -64,6 +65,9 @@ namespace luabind { namespace detail
 
 	struct iterator_converter
 	{
+		typedef boost::mpl::bool_<false> is_value_converter;
+		typedef iterator_converter type;
+
 		template<class T>
 		void apply(lua_State* L, const T& c)
 		{
@@ -97,7 +101,7 @@ namespace luabind { namespace detail
 		static void postcall(lua_State*, const index_map&) {}
 
 		template<class T, class Direction>
-		struct generate_converter
+		struct apply
 		{
 			typedef iterator_converter type;
 		};
