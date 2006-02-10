@@ -272,7 +272,7 @@ CGame::CGame(bool server,std::string mapname)
 
 	showList=0;
 
-	info->AddLine("TA Spring linux %s",VERSION_STRING);
+	info->AddLine("TA Spring %s",VERSION_STRING);
 
 	if(!server)
 		net->SendData<unsigned int>(NETMSG_EXECHECKSUM, CreateExeChecksum());
