@@ -356,10 +356,11 @@ bool CGameServer::ServerReadNet()
 					SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
 				} else {
 					if(!serverNet->playbackDemo){
-						if(outstandingSyncFrame==*(int*)&inbuf[inbufpos+6])
+						int frame = *(int*)&inbuf[inbufpos+6];
+						if(outstandingSyncFrame == frame)
 							syncResponses[inbuf[inbufpos+1]]=*(int*)&inbuf[inbufpos+2];
 						else
-							info->AddLine("Delayed sync respone from %s",gs->players[inbuf[inbufpos+1]]->playerName.c_str());
+							info->AddLine("Delayed sync respone from %s (%i instead of %i)",gs->players[inbuf[inbufpos+1]]->playerName.c_str(), frame, outstandingSyncFrame);
 					}
 				}
 				lastLength=10;}

@@ -1655,7 +1655,7 @@ bool CGame::ClientReadNet()
 			ENTER_MIXED;
 			int frame=*((int*)&inbuf[inbufpos+1]);
 			if(frame!=gs->frameNum){
-				info->AddLine("Sync request for wrong frame");
+				info->AddLine("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 			}
 			net->SendData<unsigned char, int, int>(
 					NETMSG_SYNCRESPONSE, gu->myPlayerNum, uh->CreateChecksum(), gs->frameNum);
