@@ -35,12 +35,21 @@
 #include <luabind/detail/construct_rep.hpp>
 #include <luabind/detail/garbage_collector.hpp>
 #include <luabind/detail/operator_id.hpp>
-#include <luabind/detail/signature_match.hpp>
 #include <luabind/detail/class_registry.hpp>
 #include <luabind/detail/find_best_match.hpp>
 #include <luabind/detail/get_overload_signature.hpp>
 #include <luabind/error.hpp>
+#include <luabind/handle.hpp>
+#include <luabind/detail/primitives.hpp>
+
+#ifdef BOOST_MSVC
+// msvc doesn't have two-phase, but requires
+// method_rep (and overload_rep) to be complete
+// because of its std::list implementation.
+// gcc on the other hand has two-phase but doesn't
+// require method_rep to be complete.
 #include <luabind/detail/method_rep.hpp>
+#endif
 
 namespace luabind
 {
@@ -168,8 +177,8 @@ namespace luabind { namespace detail
 		// the lua reference to the metatable for this class' instances
 		int metatable_ref() const throw() { return m_instance_metatable; }
 
-		void get_table(lua_State* L) const { m_table_ref.get(L); }
-		void get_default_table(lua_State* L) const { m_default_table_ref.get(L); }
+		void get_table(lua_State* L) const { m_table.push(L); }
+		void get_default_table(lua_State* L) const { m_default_table.push(L); }
 
 		void(*destructor() const)(void*) { return m_destructor; }
 		void(*const_holder_destructor() const)(void*) { return m_const_holder_destructor; }
@@ -342,11 +351,11 @@ namespace luabind { namespace detail
 		// this table contains c closures for all
 		// member functions in this class, they
 		// may point to both static and virtual functions
-		detail::lua_reference m_table_ref;
+		handle m_table;
 
 		// this table contains default implementations of the
-		// virtual functions in m_table_ref.
-		detail::lua_reference m_default_table_ref;
+		// virtual functions in m_table.
+		handle m_default_table;
 
 		// the type of this class.. determines if it's written in c++ or lua
 		class_type m_class_type;
@@ -358,9 +367,8 @@ namespace luabind { namespace detail
 
 		// ***** the maps below contains all members in this class *****
 
-		// list of methods. pointers into this list is put
-		// in the m_table_ref and m_default_table_ref
-		// for access. The struct contains the function-
+		// list of methods. pointers into this list is put in the m_table and
+		// m_default_table for access. The struct contains the function-
 		// signatures for every overload
 		std::list<method_rep> m_methods;
 
@@ -386,6 +394,6 @@ namespace luabind { namespace detail
 
 }}
 
-#include <luabind/detail/overload_rep_impl.hpp>
+//#include <luabind/detail/overload_rep_impl.hpp>
 
 #endif // LUABIND_CLASS_REP_HPP_INCLUDED

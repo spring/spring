@@ -33,16 +33,25 @@ namespace luabind { namespace detail
 
 	// expects that a match function can be accesed through the iterator
 	// as int match_fun(lua_State*)
-	// returns true if it found a match better than the given. If it finds a better match match_index is
-	// updated to contain the new index to the best match (this index now refers to the list given to
-	// this call).
-	// orep_size is supposed to tell the size of the actual structures that start and end points to
-	// ambiguous is set to true if the match was ambiguous
-	// min_match should be initialized to the currently best match value (the number of implicit casts
-	// to get a perfect match). If there are no previous matches, set min_match to std::numeric_limits<int>::max()
+	// returns true if it found a match better than the given. If it finds a
+	// better match match_index is updated to contain the new index to the best
+	// match (this index now refers to the list given to this call).
+	// orep_size is supposed to tell the size of the actual structures that
+	// start and end points to ambiguous is set to true if the match was
+	// ambiguous min_match should be initialized to the currently best match
+	// value (the number of implicit casts to get a perfect match). If there
+	// are no previous matches, set min_match to
+	// std::numeric_limits<int>::max()
 
-	LUABIND_API bool find_best_match(lua_State* L, const detail::overload_rep_base* start, int num_overloads, size_t orep_size, bool& ambiguous, int& min_match, int& match_index, int num_params);
-	LUABIND_API void find_exact_match(lua_State* L, const detail::overload_rep_base* start, int num_overloads, size_t orep_size, int cmp_match, int num_params, std::vector<const overload_rep_base*>& dest);
+	LUABIND_API bool find_best_match(lua_State* L
+		, detail::overload_rep_base const* start, int num_overloads
+		, size_t orep_size, bool& ambiguous, int& min_match, int& match_index
+		, int num_params);
+
+	LUABIND_API void find_exact_match(lua_State* L
+		, detail::overload_rep_base const* start, int num_overloads
+		, size_t orep_size, int cmp_match, int num_params
+		, std::vector<overload_rep_base const*>& dest);
 
 }}
 

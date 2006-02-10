@@ -30,12 +30,17 @@
 
 #include <boost/preprocessor/enum_params.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
+#include <boost/preprocessor/repetition/enum_trailing_params.hpp>
 #include <boost/preprocessor/repeat.hpp>
+#include <vector>
 
 #include <luabind/detail/overload_rep_base.hpp>
 
-#include <luabind/detail/class_rep.hpp>
 #include <luabind/detail/is_indirect_const.hpp>
+
+#ifndef BOOST_MSVC
+#include <luabind/detail/policy.hpp>
+#endif
 
 namespace luabind { namespace detail
 {
@@ -94,7 +99,7 @@ namespace luabind { namespace detail
 #elif BOOST_PP_ITERATION_FLAGS() == 1
 
 #define LUABIND_PARAM(z, n, _) m_params_.push_back(LUABIND_TYPEID(A##n));
-#define LUABIND_POLICY_DECL(z,n,offset) typedef typename find_conversion_policy<n + offset, Policies>::type BOOST_PP_CAT(p,n);
+#define LUABIND_POLICY_DECL(z,n,offset) typedef typename detail::find_conversion_policy<n + offset, Policies>::type BOOST_PP_CAT(p,n);
 #define LUABIND_ARITY(z,n,text) + BOOST_PP_CAT(p,n)::has_arg
 
 		// overloaded template funtion that initializes the parameter list

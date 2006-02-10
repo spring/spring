@@ -32,11 +32,15 @@
 #include <luabind/detail/debug.hpp>
 #include <luabind/detail/stack_utils.hpp>
 
+#include <boost/mpl/apply_wrap.hpp>
+
 namespace luabind
 {
 
 	namespace detail
 	{
+
+		namespace mpl = boost::mpl;
 
 		template<class T, class Obj, class Policies>
 		inline T object_cast_impl(const Obj& obj, const Policies&)
@@ -58,7 +62,7 @@ namespace luabind
 			LUABIND_CHECK_STACK(obj.lua_state());
 
 			typedef typename detail::find_conversion_policy<0, Policies>::type converter_policy;
-			typename converter_policy::template generate_converter<T, lua_to_cpp>::type converter;
+			typename mpl::apply_wrap2<converter_policy,T,lua_to_cpp>::type converter;
 
 			obj.pushvalue();
 
@@ -88,7 +92,7 @@ namespace luabind
 		boost::optional<T> object_cast_nothrow_impl(const Obj& obj, const Policies&)
 		{
 			typedef typename detail::find_conversion_policy<0, Policies>::type converter_policy;
-			typename converter_policy::template generate_converter<T, lua_to_cpp>::type converter;
+			typename mpl::apply_wrap2<converter_policy,T,lua_to_cpp>::type converter;
 
 			if (obj.lua_state() == 0) return boost::optional<T>();
 			LUABIND_CHECK_STACK(obj.lua_state());

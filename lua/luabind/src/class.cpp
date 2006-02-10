@@ -233,7 +233,7 @@ namespace luabind { namespace detail {
     }
 
     void class_base::init(
-        LUABIND_TYPE_INFO type_
+        LUABIND_TYPE_INFO type_id
         , LUABIND_TYPE_INFO holder_type
         , LUABIND_TYPE_INFO const_holder_type
         , void*(*extractor)(void*)
@@ -249,7 +249,7 @@ namespace luabind { namespace detail {
         , int holder_size
         , int holder_alignment)
     {
-        m_registration->m_type = type_;
+        m_registration->m_type = type_id;
         m_registration->m_holder_type = holder_type;
         m_registration->m_const_holder_type = const_holder_type;
         m_registration->m_extractor = extractor;

@@ -1,4 +1,4 @@
-// Copyright (c) 2003 Daniel Wallin and Arvid Norberg
+// Copyright (c) 2005 Daniel Wallin and Arvid Norberg
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,33 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef LUABIND_STACK_UTILS_HPP_INCLUDED
-#define LUABIND_STACK_UTILS_HPP_INCLUDED
+#ifndef MOST_DERIVED_051018_HPP
+# define MOST_DERIVED_051018_HPP
 
-#include <cassert>
+# include <boost/mpl/if.hpp>
+# include <boost/type_traits/is_base_and_derived.hpp>
 
-namespace luabind { namespace detail
+namespace luabind { namespace detail {
+
+template<class Class, class WrappedClass>
+struct most_derived
 {
+    typedef typename boost::mpl::if_<
+        boost::is_base_and_derived<Class, WrappedClass>
+      , WrappedClass
+      , Class
+    >::type type;
+};
 
-	struct stack_pop
-	{
-		stack_pop(lua_State* L, int n)
-			: m_state(L)
-			, m_n(n)
-			{
-			}
+}} // namespace luabind::detail
 
-		~stack_pop() 
-		{
-			lua_pop(m_state, m_n);
-		}
-
-	private:
-
-		lua_State* m_state;
-		int m_n;
-	};
-}}
-
-#endif // LUABIND_STACK_UTILS_HPP_INCLUDED
+#endif // MOST_DERIVED_051018_HPP
 

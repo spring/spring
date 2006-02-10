@@ -1,4 +1,4 @@
-// Copyright (c) 2003 Daniel Wallin and Arvid Norberg
+// Copyright (c) 2005 Daniel Wallin
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,33 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef LUABIND_STACK_UTILS_HPP_INCLUDED
-#define LUABIND_STACK_UTILS_HPP_INCLUDED
+#ifndef LUABIND_GET_POINTER_051023_HPP
+# define LUABIND_GET_POINTER_051023_HPP
 
-#include <cassert>
+//
+// We need these overloads in the luabind namespace.
+//
 
-namespace luabind { namespace detail
-{
+# include <boost/get_pointer.hpp>
 
-	struct stack_pop
-	{
-		stack_pop(lua_State* L, int n)
-			: m_state(L)
-			, m_n(n)
-			{
-			}
+namespace luabind {
 
-		~stack_pop() 
-		{
-			lua_pop(m_state, m_n);
-		}
+using boost::get_pointer;
 
-	private:
+} // namespace luabind
 
-		lua_State* m_state;
-		int m_n;
-	};
-}}
-
-#endif // LUABIND_STACK_UTILS_HPP_INCLUDED
+#endif // LUABIND_GET_POINTER_051023_HPP
 

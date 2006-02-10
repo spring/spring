@@ -129,6 +129,10 @@ namespace std
 // you can set LUABIND_EXPORT to __declspec(dllexport)
 // and LUABIND_IMPORT to __declspec(dllimport)
 
+#if _GNUC_ >= 4
+#define LUABIND_API __attribute__ ((visibility("default")))
+#else
+
 // this define is set if we're currently building a luabind file
 // select import or export depending on it
 #ifdef LUABIND_BUILDING
@@ -143,6 +147,8 @@ namespace std
 	#else
 		#define LUABIND_API
 	#endif
+#endif
+
 #endif
 
 #endif // LUABIND_CONFIG_HPP_INCLUDED

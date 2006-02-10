@@ -33,7 +33,7 @@
 #include <boost/function/function1.hpp>
 #include <boost/function/function2.hpp>
 
-#include <luabind/detail/signature_match.hpp>
+//#include <luabind/detail/signature_match.hpp>
 #include <luabind/detail/overload_rep_base.hpp>
 #include <luabind/weak_ref.hpp>
 

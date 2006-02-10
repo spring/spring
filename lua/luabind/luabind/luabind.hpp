@@ -27,7 +27,6 @@
 #include <luabind/config.hpp>
 #include <luabind/class.hpp>
 #include <luabind/function.hpp>
-#include <luabind/functor.hpp>
 #include <luabind/open.hpp>
 
 #endif // LUABIND_BIND_HPP_INCLUDED

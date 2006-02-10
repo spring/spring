@@ -77,8 +77,8 @@ namespace luabind { namespace detail
 	inline std::string name_of_type(by_value<const unsigned int>, lua_State*, int) { return "number"; }
 	inline std::string name_of_type(by_value<const unsigned long>, lua_State*, int) { return "number"; }
 
-	template<class T>
-	inline std::string name_of_type(by_value<luabind::functor<T> >, lua_State* L, long) { return "function<" + name_of_type(LUABIND_DECORATE_TYPE(T), L, 0L) + ">"; }
+//	template<class T>
+//	inline std::string name_of_type(by_value<luabind::functor<T> >, lua_State* L, long) { return "function<" + name_of_type(LUABIND_DECORATE_TYPE(T), L, 0L) + ">"; }
 
 	inline std::string name_of_type(by_value<std::string>, lua_State*, int) { return "string"; }
 	inline std::string name_of_type(by_const_pointer<char>, lua_State*, int) { return "string"; }

@@ -38,7 +38,7 @@ namespace luabind { namespace detail
 	};
 
 	template<class T>
-	struct type {};
+    struct type_ {};
 
 	struct null_type {};
 
@@ -78,7 +78,7 @@ namespace luabind { namespace detail
 	// returns the offset added to a Derived* when cast to a Base*
 	// TODO: return ptrdiff
 	template<class Derived, class Base>
-	int ptr_offset(type<Derived>, type<Base>)
+	int ptr_offset(type_<Derived>, type_<Base>)
 	{
 		aligned<sizeof(Derived)> obj;
 		Derived* ptr = reinterpret_cast<Derived*>(&obj);

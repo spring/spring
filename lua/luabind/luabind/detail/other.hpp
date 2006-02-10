@@ -74,7 +74,7 @@ namespace luabind { namespace detail
 	no_other_t is_other_test(...);
 
 	template<typename T>
-	yes_other_t is_other_test(type< other<T> >);
+	yes_other_t is_other_test(type_< other<T> >);
 
 	template<bool wrapped>
 	struct other_unwrapper
@@ -102,7 +102,7 @@ namespace luabind { namespace detail
 	 public:
 			BOOST_STATIC_CONSTANT(
 					bool, value = (
-							sizeof(detail::is_other_test(type<T>()))
+							sizeof(detail::is_other_test(type_<T>()))
 							== sizeof(detail::yes_other_t)));
 	};
 

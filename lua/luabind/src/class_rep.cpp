@@ -101,10 +101,10 @@ luabind::detail::class_rep::class_rep(LUABIND_TYPE_INFO type
 	assert(m_holder_alignment >= 1 && "internal error");
 
 	lua_newtable(L);
-	m_table_ref.set(L);
-
+	handle(L, -1).swap(m_table);
 	lua_newtable(L);
-	m_default_table_ref.set(L);
+	handle(L, -1).swap(m_default_table);
+	lua_pop(L, 2);
 
 	class_registry* r = class_registry::get_registry(L);
 	assert((r->cpp_class() != LUA_NOREF) && "you must call luabind::open()");
@@ -139,10 +139,10 @@ luabind::detail::class_rep::class_rep(lua_State* L, const char* name)
 	, m_operator_cache(0)
 {
 	lua_newtable(L);
-	m_table_ref.set(L);
-
+	handle(L, -1).swap(m_table);
 	lua_newtable(L);
-	m_default_table_ref.set(L);
+	handle(L, -1).swap(m_default_table);
+	lua_pop(L, 2);
 
 	class_registry* r = class_registry::get_registry(L);
 	assert((r->cpp_class() != LUA_NOREF) && "you must call luabind::open()");
@@ -274,7 +274,7 @@ int luabind::detail::class_rep::gettable(lua_State* L)
 		lua_gettable(L, -2);
 		if (!lua_isnil(L, -1)) 
 		{
-			lua_remove(L, -2); // more table
+			lua_remove(L, -2); // remove table
 			return 1;
 		}
 		lua_pop(L, 2);
@@ -287,7 +287,7 @@ int luabind::detail::class_rep::gettable(lua_State* L)
 
 	if (!lua_isnil(L, -1)) 
 	{
-		lua_remove(L, -2); // more table
+		lua_remove(L, -2); // remove table
 		return 1;
 	}
 	lua_pop(L, 2);
@@ -615,7 +615,8 @@ int luabind::detail::class_rep::function_dispatcher(lua_State* L)
 #endif
 
 		int num_params = lua_gettop(L) /*- 1*/;
-		found = find_best_match(L, &rep->overloads().front(), rep->overloads().size(), sizeof(overload_rep), ambiguous, min_match, match_index, num_params);
+		found = find_best_match(L, &rep->overloads().front(), rep->overloads().size()
+			, sizeof(overload_rep), ambiguous, min_match, match_index, num_params);
 
 #ifdef LUABIND_NO_ERROR_CHECKING
 
@@ -639,7 +640,8 @@ int luabind::detail::class_rep::function_dispatcher(lua_State* L)
 			function_name += ":";
 			function_name += rep->name;
 
-			msg += get_overload_signatures(L, rep->overloads().begin(), rep->overloads().end(), function_name);
+			msg += get_overload_signatures(L, rep->overloads().begin()
+				, rep->overloads().end(), function_name);
 
 			lua_pushstring(L, msg.c_str());
 		}
@@ -657,14 +659,16 @@ int luabind::detail::class_rep::function_dispatcher(lua_State* L)
 			msg += ")' is ambiguous\nnone of the overloads have a best conversion:\n";
 
 			std::vector<const overload_rep_base*> candidates;
-			find_exact_match(L, &rep->overloads().front(), rep->overloads().size(), sizeof(overload_rep), min_match, num_params, candidates);
+			find_exact_match(L, &rep->overloads().front(), rep->overloads().size()
+				, sizeof(overload_rep), min_match, num_params, candidates);
 
 			std::string function_name;
 			function_name += rep->crep->name();
 			function_name += ":";
 			function_name += rep->name;
 
-			msg += get_overload_signatures_candidates(L, candidates.begin(), candidates.end(), function_name);
+			msg += get_overload_signatures_candidates(L, candidates.begin()
+				, candidates.end(), function_name);
 
 			lua_pushstring(L, msg.c_str());
 		}
@@ -734,8 +738,8 @@ namespace
 	std::string to_string(luabind::object const& o)
 	{
 		using namespace luabind;
-		if (o.type() == LUA_TSTRING) return object_cast<std::string>(o);
-		lua_State* L = o.lua_state();
+		if (type(o) == LUA_TSTRING) return object_cast<std::string>(o);
+		lua_State* L = o.interpreter();
 		LUABIND_CHECK_STACK(L);
 
 #ifdef BOOST_NO_STRINGSTREAM
@@ -744,13 +748,13 @@ namespace
 		std::stringstream s;
 #endif
 
-		if (o.type() == LUA_TNUMBER)
+		if (type(o) == LUA_TNUMBER)
 		{
 			s << object_cast<float>(o);
 			return s.str();
 		}
 
-		s << "<" << lua_typename(L, o.type()) << ">";
+		s << "<" << lua_typename(L, type(o)) << ">";
 #ifdef BOOST_NO_STRINGSTREAM
 		s << std::ends;
 #endif
@@ -762,12 +766,12 @@ namespace
 	{
 #if !defined(LUABIND_NO_ERROR_CHECKING)
         using namespace luabind;
-		lua_State* L = e.lua_state();
+		lua_State* L = e.interpreter();
 		LUABIND_CHECK_STACK(L);
 
-		if (e.type() == LUA_TFUNCTION)
+		if (type(e) == LUA_TFUNCTION)
 		{
-			e.pushvalue();
+			e.push(L);
 			detail::stack_pop p(L, 1);
 
 			{
@@ -828,21 +832,17 @@ std::string luabind::detail::class_rep::class_info_string(lua_State* L) const
 
 	ret << "dynamic dispatch functions:\n------------------\n";
 
-	get_table(L);
-	object t(L);
-	t.set();
-	for (object::iterator i = t.begin(); i != t.end(); ++i)
+	for (luabind::iterator i(m_table), end; i != end; ++i)
 	{
-		object e = *i;
+		luabind::object e = *i;
 		ret << "  " << to_string(i.key()) << ": " << member_to_string(e) << "\n";
 	}
 
 	ret << "default implementations:\n------------------\n";
-	get_default_table(L);
-	t.set();
-	for (object::iterator i = t.begin(); i != t.end(); ++i)
+
+	for (luabind::iterator i(m_default_table), end; i != end; ++i)
 	{
-		object e = *i;
+		luabind::object e = *i;
 		ret << "  " << to_string(i.key()) << ": " << member_to_string(e) << "\n";
 	}
 #ifdef BOOST_NO_STRINGSTREAM
@@ -1641,8 +1641,8 @@ void luabind::detail::class_rep::register_methods(lua_State* L)
 	LUABIND_CHECK_STACK(L);
 	// insert the function in the normal member table
 	// and in the default member table
-	m_default_table_ref.get(L);
-	m_table_ref.get(L);
+	m_default_table.push(L);
+	m_table.push(L);
 
 	// pops the tables
 	detail::stack_pop pop_tables(L, 2);
@@ -1650,7 +1650,7 @@ void luabind::detail::class_rep::register_methods(lua_State* L)
 	for (std::list<method_rep>::const_iterator m = m_methods.begin();
 		m != m_methods.end(); ++m)
 	{
-		// create the function closure in m_table_ref
+		// create the function closure in m_table
 		lua_pushstring(L, m->name);
 		lua_pushlightuserdata(L, const_cast<void*>((const void*)&(*m)));
 		lua_pushboolean(L, 0);
@@ -1658,7 +1658,7 @@ void luabind::detail::class_rep::register_methods(lua_State* L)
 		lua_pushcclosure(L, function_dispatcher, 3);
 		lua_settable(L, -3);
 
-		// create the function closure in m_default_table_ref
+		// create the function closure in m_default_table
 		lua_pushstring(L, m->name);
 		lua_pushlightuserdata(L, const_cast<void*>((const void*)&(*m)));
 		lua_pushboolean(L, 1);

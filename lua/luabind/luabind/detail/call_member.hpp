@@ -30,17 +30,22 @@
 #include <luabind/detail/convert_to_lua.hpp>
 #include <luabind/detail/pcall.hpp>
 #include <luabind/error.hpp>
+#include <luabind/detail/stack_utils.hpp>
+#include <luabind/object.hpp> // TODO: REMOVE DEPENDENCY
+
+#include <boost/tuple/tuple.hpp>
 
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/facilities/expand.hpp>
+
+#include <boost/mpl/apply_wrap.hpp>
 
 namespace luabind
 {
 	namespace detail
 	{
 
-
-
+		namespace mpl = boost::mpl;
 
 		// if the proxy_member_caller returns non-void
 			template<class Ret, class Tuple>
@@ -98,7 +103,7 @@ namespace luabind
 
 				operator Ret()
 				{
-					typename default_policy::template generate_converter<Ret, lua_to_cpp>::type converter;
+					typename mpl::apply_wrap2<default_policy,Ret,lua_to_cpp>::type converter;
 
 					m_called = true;
 
@@ -151,7 +156,7 @@ namespace luabind
 				Ret operator[](const Policies& p)
 				{
 					typedef typename find_conversion_policy<0, Policies>::type converter_policy;
-					typename converter_policy::template generate_converter<Ret, lua_to_cpp>::type converter;
+					typename mpl::apply_wrap2<converter_policy,Ret,lua_to_cpp>::type converter;
 
 					m_called = true;
 
@@ -336,18 +341,18 @@ namespace luabind
 		// once the call has been made
 
 		// get the function
-		obj.pushvalue();
-		lua_pushstring(obj.lua_state(), name);
-		lua_gettable(obj.lua_state(), -2);
+		obj.push(obj.interpreter());
+		lua_pushstring(obj.interpreter(), name);
+		lua_gettable(obj.interpreter(), -2);
 		// duplicate the self-object
-		lua_pushvalue(obj.lua_state(), -2);
+		lua_pushvalue(obj.interpreter(), -2);
 		// remove the bottom self-object
-		lua_remove(obj.lua_state(), -3);
+		lua_remove(obj.interpreter(), -3);
 
 		// now the function and self objects
 		// are on the stack. These will both
 		// be popped by pcall
-		return proxy_type(obj.lua_state(), args);
+		return proxy_type(obj.interpreter(), args);
 	}
 
 #undef LUABIND_OPERATOR_PARAMS

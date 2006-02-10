@@ -1,4 +1,4 @@
-// Copyright (c) 2003 Daniel Wallin and Arvid Norberg
+// Copyright (c) 2005 Daniel Wallin and Arvid Norberg
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,33 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef LUABIND_STACK_UTILS_HPP_INCLUDED
-#define LUABIND_STACK_UTILS_HPP_INCLUDED
+#if !BOOST_PP_IS_ITERATING
+# error Do not include object_call.hpp directly!
+#endif
 
-#include <cassert>
+#include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/preprocessor/repetition/enum_binary_params.hpp>
+#include <boost/preprocessor/facilities/intercept.hpp>
 
-namespace luabind { namespace detail
+#define N BOOST_PP_ITERATION()
+
+template<BOOST_PP_ENUM_PARAMS(N, class A)>
+call_proxy<
+    Derived
+  , boost::tuples::tuple<
+        BOOST_PP_ENUM_BINARY_PARAMS(N, A, const* BOOST_PP_INTERCEPT)
+    >
+> operator()(BOOST_PP_ENUM_BINARY_PARAMS(N, A, const& a))
 {
+    typedef boost::tuples::tuple<
+        BOOST_PP_ENUM_BINARY_PARAMS(N, A, const* BOOST_PP_INTERCEPT)
+    > arguments;
 
-	struct stack_pop
-	{
-		stack_pop(lua_State* L, int n)
-			: m_state(L)
-			, m_n(n)
-			{
-			}
+    return call_proxy<Derived, arguments>(
+        derived()
+      , arguments(BOOST_PP_ENUM_PARAMS(N, &a))
+    );
+}
 
-		~stack_pop() 
-		{
-			lua_pop(m_state, m_n);
-		}
-
-	private:
-
-		lua_State* m_state;
-		int m_n;
-	};
-}}
-
-#endif // LUABIND_STACK_UTILS_HPP_INCLUDED
+#undef N
 

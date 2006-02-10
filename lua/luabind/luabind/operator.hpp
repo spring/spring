@@ -25,6 +25,7 @@
 
 #include <boost/mpl/eval_if.hpp>
 #include <boost/mpl/identity.hpp>
+#include <boost/mpl/apply_wrap.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <luabind/detail/other.hpp>
 #include <luabind/raw_policy.hpp>
@@ -175,6 +176,8 @@ namespace detail {
     {
     }
 
+    namespace mpl = boost::mpl;
+
     template<class T, class Policies>
     inline void operator_result(lua_State* L, T const& x, Policies*)
     {
@@ -183,10 +186,7 @@ namespace detail {
           , Policies
         >::type cv_policy;
 
-        typename cv_policy::template generate_converter<
-            T
-          , cpp_to_lua
-        >::type cv;
+        typename mpl::apply_wrap2<cv_policy,T,cpp_to_lua>::type cv;
 
         cv.apply(L, x);
     }
