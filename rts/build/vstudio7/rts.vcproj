@@ -2550,7 +2550,7 @@
 			RelativePath=".\resource.h">
 		</File>
 		<File
-			RelativePath=".\rts1.rc">
+			RelativePath=".\rts.rc">
 		</File>
 		<File
 			RelativePath=".\spring.ico">
