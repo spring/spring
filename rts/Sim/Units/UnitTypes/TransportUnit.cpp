@@ -93,7 +93,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence (this);
     unit->transporter = this;
 	unit->toBeTransported=false;
-	if (unit->unitDef->stunnedCargo)
+	if (!unit->unitDef->isAirBase)
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
 	unit->UnBlock();
 	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
@@ -123,8 +123,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			unit->transporter=0;
 			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
 				unit->moveType->useHeading=true;
-			if(unit->unitDef->stunnedCargo) 
-				unit->stunned=false;
+			unit->stunned=false; // de-stun in case it isairbase=0
 			unit->Block();
 			unit->moveType->LeaveTransport();
 			Command c;

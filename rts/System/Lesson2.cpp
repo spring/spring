@@ -17,6 +17,7 @@
 #include "Game/Game.h"
 #include <float.h>
 #include "Rendering/glFont.h"
+#include "Rendering/Textures/TAPalette.h"
 #include "Game/UI/MouseHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/UI/InfoConsole.h"
@@ -336,6 +337,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	archiveScanner->Scan("./mods");
 	archiveScanner->WriteCacheData();
 	hpiHandler = new CVFSHandler();
+
+	palette.Init();
 
 	ENTER_SYNCED;
 	if (!playDemo) {
