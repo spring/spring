@@ -183,6 +183,7 @@
 #include <assert.h>
 #include "nv_dds.h"
 #include "FileSystem/FileHandler.h"
+#include "System/Platform/byteorder.h"
 
 using namespace std;
 using namespace nv_dds;
@@ -327,20 +328,39 @@ bool CDDSImage::load(string filename, bool flipImage)
     // read in DDS header
     DDS_HEADER ddsh;
     //fread(&ddsh, sizeof(DDS_HEADER), 1, fp);
-	file.Read(&ddsh, sizeof(DDS_HEADER));
+    int tmp = sizeof(unsigned int);
+    file.Read(&ddsh.dwSize, tmp);
+    file.Read(&ddsh.dwFlags, tmp);
+    file.Read(&ddsh.dwHeight, tmp);
+    file.Read(&ddsh.dwWidth, tmp);
+    file.Read(&ddsh.dwPitchOrLinearSize, tmp);
+    file.Read(&ddsh.dwDepth, tmp);
+    file.Read(&ddsh.dwMipMapCount, tmp);
+    file.Read(&ddsh.dwReserved1, tmp*11);
+    file.Read(&ddsh.ddspf.dwSize, tmp);
+    file.Read(&ddsh.ddspf.dwFlags, tmp);
+    file.Read(&ddsh.ddspf.dwFourCC, tmp);
+    file.Read(&ddsh.ddspf.dwRGBBitCount, tmp);
+    file.Read(&ddsh.ddspf.dwRBitMask, tmp);
+    file.Read(&ddsh.ddspf.dwGBitMask, tmp);
+    file.Read(&ddsh.ddspf.dwBBitMask, tmp);
+    file.Read(&ddsh.ddspf.dwABitMask, tmp);
+    file.Read(&ddsh.dwCaps1, tmp);
+    file.Read(&ddsh.dwCaps2, tmp);
+    file.Read(&ddsh.dwReserved2, tmp*3);
 
-    swap_endian(&ddsh.dwSize);
-    swap_endian(&ddsh.dwFlags);
-    swap_endian(&ddsh.dwHeight);
-    swap_endian(&ddsh.dwWidth);
-    swap_endian(&ddsh.dwPitchOrLinearSize);
-    swap_endian(&ddsh.dwMipMapCount);
-    swap_endian(&ddsh.ddspf.dwSize);
-    swap_endian(&ddsh.ddspf.dwFlags);
-    swap_endian(&ddsh.ddspf.dwFourCC);
-    swap_endian(&ddsh.ddspf.dwRGBBitCount);
-    swap_endian(&ddsh.dwCaps1);
-    swap_endian(&ddsh.dwCaps2);
+    swabdword(&ddsh.dwSize);
+    swabdword(&ddsh.dwFlags);
+    swabdword(&ddsh.dwHeight);
+    swabdword(&ddsh.dwWidth);
+    swabdword(&ddsh.dwPitchOrLinearSize);
+    swabdword(&ddsh.dwMipMapCount);
+    swabdword(&ddsh.ddspf.dwSize);
+    swabdword(&ddsh.ddspf.dwFlags);
+    swabdword(&ddsh.ddspf.dwFourCC);
+    swabdword(&ddsh.ddspf.dwRGBBitCount);
+    swabdword(&ddsh.dwCaps1);
+    swabdword(&ddsh.dwCaps2);
 
     // default to flat texture type (1D, 2D, or rectangle)
     m_type = TextureFlat;
@@ -916,20 +936,6 @@ inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height
 inline unsigned int CDDSImage::size_rgb(unsigned int width, unsigned int height)
 {
     return width*height*m_components;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Swap the bytes in a 32 bit value
-inline void CDDSImage::swap_endian(void *val)
-{
-#ifdef MACOS
-    unsigned int *ival = (unsigned int *)val;
-
-    *ival = ((*ival >> 24) & 0x000000ff) |
-            ((*ival >>  8) & 0x0000ff00) |
-            ((*ival <<  8) & 0x00ff0000) |
-            ((*ival << 24) & 0xff000000);
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
