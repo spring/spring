@@ -24,6 +24,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Map/BFGroundDrawer.h"
 #include "Rendering/Textures/TextureHandler.h"
+#include "Game/GameSetup.h"
 #include "mmgr.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
@@ -200,8 +201,10 @@ void CUnitDrawer::Draw(bool drawReflection)
 				if(sqDist<unitDrawDist*unitDrawDist*500 && showHealthBars){
 					drawStat.push_back(*usi);
 				}
-			} else if(((*usi)->losStatus[gu->myAllyTeam] & LOS_PREVLOS)){
-				drawCloaked.push_back(*usi);
+			} else if((*usi)->losStatus[gu->myAllyTeam] & LOS_PREVLOS){
+				if (!gameSetup || gameSetup->ghostedBuildings)
+					drawCloaked.push_back(*usi);
+
 				if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR) && !((*usi)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR))
 					drawBlipp.push_back(*usi);
 			} else if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
