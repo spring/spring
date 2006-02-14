@@ -190,8 +190,6 @@ void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 //	info->AddLine("point order");
 
 	//Ignore the exact same order
-	if (aircraftState == AIRCRAFT_HOVERING)
-		return;
 	if ((aircraftState == AIRCRAFT_FLYING) && (flyState==FLY_CIRCLING || flyState==FLY_ATTACKING) && ((circlingPos-pos).SqLength2D()<64) && (goalDistance == distance))
 		return;
 
@@ -279,17 +277,20 @@ void CTAAirMoveType::UpdateHovering()
 {
 	float lScale = accRate*8;
 
-	if ((goalPos - owner->pos).Length2D() > lScale * 10)
+	if ((goalPos - owner->pos).Length2D() > 100/(accRate+0.1f))
 		SetState (AIRCRAFT_FLYING); // drifted too far away, get back to the original position
 	else {
-		float driftSpeed = accRate * 0.05f;
+		float driftSpeed = accRate * 1.0f;
 
+		// move towards goal position
 		float3 dir = goalPos - owner->pos;
-		float3 change(dir.x * gs->randFloat () * driftSpeed, 0.0f, dir.z * gs->randFloat () * driftSpeed);
-		wantedSpeed += change;
+		wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.1f;
 
-		// add a bit of lateral movement
-		wantedSpeed += float3(-change.z, 0.0f, change.x) * gs->randFloat () * 0.1f;
+		// damping
+		wantedSpeed *= 0.97f;
+
+		// random movement (a sort of fake wind effect)
+		wantedSpeed += float3(gs->randFloat()-.5f, 0.0f, gs->randFloat()-0.5f) * driftSpeed * 0.5f;
 	}
 
 	UpdateAirPhysics();
