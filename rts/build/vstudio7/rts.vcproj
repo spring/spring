@@ -82,7 +82,7 @@
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
 				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"

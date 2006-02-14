@@ -11,7 +11,7 @@
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Game/Camera.h"
 #include "Sim/Map/ReadMap.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "TimeProfiler.h"
 #include "Platform/ConfigHandler.h"
 #include "Matrix44f.h"
@@ -724,7 +724,8 @@ void CBasicSky::InitSun()
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
-		if (gu->drawFog) glEnable(GL_FOG);
+		if (gu->drawFog) glEnable(GL_FOG);
+
 	glEndList();
 }
 

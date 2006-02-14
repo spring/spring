@@ -40,7 +40,7 @@
 #include "Team.h"
 #include "Sim/Misc/LosHandler.h"
 #include "TimeProfiler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "UI/MiniMap.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Sim/Map/MapDamage.h"

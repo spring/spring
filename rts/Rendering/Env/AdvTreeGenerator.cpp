@@ -7,7 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
 #include "mmgr.h"

@@ -9,7 +9,7 @@
 #include "VertexArrayRange.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
 #include <boost/filesystem/path.hpp>
 #include "SDL_video.h"

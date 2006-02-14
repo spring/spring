@@ -7,7 +7,7 @@
 #include <locale>
 #include <cctype>
 #include "FileSystem/FileHandler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sound.h"

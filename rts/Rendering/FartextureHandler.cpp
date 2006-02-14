@@ -5,7 +5,7 @@
 #include <GL/glu.h>
 #include "GlobalStuff.h"
 #include "UnitModels/UnitDrawer.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "mmgr.h"
 
 CFartextureHandler* fartextureHandler = NULL;

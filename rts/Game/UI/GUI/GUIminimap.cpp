@@ -1,6 +1,6 @@
 #include "GUIminimap.h"
 #include "GUIgame.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "GlobalStuff.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Units/COB/CobInstance.h"

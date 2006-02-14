@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "GroundDecalHandler.h"
 #include <algorithm>
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "GL/myGL.h"
 #include "GL/VertexArray.h"
 #include "Sim/Units/Unit.h"

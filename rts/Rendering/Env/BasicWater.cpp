@@ -8,7 +8,7 @@
 #include <GL/glu.h>
 #include <math.h>
 
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Map/ReadMap.h"
 #include "Sim/Map/SmfReadMap.h"
 #include "mmgr.h"

@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "MouseCursor.h"
 #include "FileSystem/FileHandler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "InfoConsole.h"
 #include "Rendering/GL/myGL.h"
 #include "myMath.h"

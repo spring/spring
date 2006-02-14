@@ -9,7 +9,7 @@
 #include <math.h>
 #include "Game/UI/InfoConsole.h"
 #include <vector>
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "TAPalette.h"
 #include "FileSystem/FileHandler.h"
 #include <algorithm>
