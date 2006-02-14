@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <math.h>
 //#include <ostream>
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Ground.h"
 #include "Platform/ConfigHandler.h"
 #ifdef _WIN32

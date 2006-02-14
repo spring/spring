@@ -11,7 +11,7 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "myMath.h"
 #include "Platform/errorhandler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "bitops.h"
 #include "mmgr.h"
 

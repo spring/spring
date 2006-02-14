@@ -12,7 +12,7 @@
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Game/Camera.h"
 #include "Sim/Map/ReadMap.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/UI/InfoConsole.h"
 #include "TimeProfiler.h"

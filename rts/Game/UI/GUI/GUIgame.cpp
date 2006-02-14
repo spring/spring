@@ -20,7 +20,7 @@
 // things that I have added
 #include "Net.h"
 #include "ExternalAI/GroupHandler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Game/UI/MouseHandler.h"

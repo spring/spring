@@ -16,7 +16,7 @@
 #include "InfoConsole.h"
 #include "MiniMap.h"
 #include "InputReceiver.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/glFont.h"
 #include "Sim/Units/UnitHandler.h"
 #include "MouseCursor.h"

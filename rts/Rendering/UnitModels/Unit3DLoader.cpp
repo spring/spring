@@ -11,7 +11,7 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/GL/VertexArray.h"
 #include "FileSystem/FileHandler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"

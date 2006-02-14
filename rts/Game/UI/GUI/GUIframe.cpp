@@ -334,7 +334,7 @@ string GUIframe::Tooltip()
 
 
 
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 
 
 GLuint Texture(const std::string& name, const vector<paletteentry_s>* pvTransparentColors)

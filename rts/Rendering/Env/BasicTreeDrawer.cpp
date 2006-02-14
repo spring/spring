@@ -11,7 +11,7 @@
 #include "Sim/Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

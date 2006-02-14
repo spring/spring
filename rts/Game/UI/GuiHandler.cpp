@@ -18,7 +18,7 @@
 #include "Rendering/GL/glList.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitLoader.h"
 //#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Sim/Units/UnitHandler.h"

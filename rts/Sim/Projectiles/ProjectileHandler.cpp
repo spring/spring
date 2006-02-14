@@ -12,7 +12,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "TimeProfiler.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GroundFlash.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Map/Ground.h"

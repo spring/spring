@@ -8,7 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>	
 #include "AdvTreeDrawer.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Game/UI/InfoConsole.h"
 #include "myMath.h"
 #include "Platform/ConfigHandler.h"

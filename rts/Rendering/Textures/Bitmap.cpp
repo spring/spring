@@ -10,7 +10,7 @@
 #include <IL/il.h>
 #include <boost/filesystem/path.hpp>
 #include "mmgr.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

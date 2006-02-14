@@ -4,7 +4,7 @@
 #include "3DModelParser.h"
 #include "Game/Camera.h"
 #include "myMath.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Platform/ConfigHandler.h"

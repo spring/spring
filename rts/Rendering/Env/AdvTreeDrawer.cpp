@@ -11,7 +11,7 @@
 #include "Sim/Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "AdvTreeGenerator.h"
-#include "Bitmap.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Game/UI/InfoConsole.h"
 #include "GrassDrawer.h"
 #include "Matrix44f.h"
