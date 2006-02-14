@@ -78,11 +78,11 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="2"
+				OptimizeForProcessor="3"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
 				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
@@ -1191,6 +1191,46 @@
 					RelativePath="..\..\Rendering\Map\BFGroundTextures.h">
 				</File>
 			</Filter>
+			<Filter
+				Name="Textures"
+				Filter="">
+				<File
+					RelativePath="..\..\Rendering\Textures\Bitmap.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\Bitmap.h">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\nv_dds.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\nv_dds.h">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TAPalette.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TAPalette.h">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TextureHandler.h">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Simulation"
@@ -1852,40 +1892,6 @@
 					</File>
 				</Filter>
 			</Filter>
-			<Filter
-				Name="Textures"
-				Filter="">
-				<File
-					RelativePath="..\..\Rendering\Textures\nv_dds.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\nv_dds.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TAPalette.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TAPalette.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.h">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="System"
@@ -1901,12 +1907,6 @@
 			</File>
 			<File
 				RelativePath="..\..\System\bget.h">
-			</File>
-			<File
-				RelativePath="..\..\System\Bitmap.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\Bitmap.h">
 			</File>
 			<File
 				RelativePath="..\..\System\GlobalStuff.cpp">
