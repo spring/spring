@@ -1,8 +1,8 @@
 #include "StdAfx.h"
 #include "RepulseGfx.h"
 #include "Sim/Units/Unit.h"
-#include "GL/myGL.h"
-#include "GL/VertexArray.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
 
 CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float repulseSpeed,float maxDist)
