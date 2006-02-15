@@ -29,6 +29,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/Player.h"
+#include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
 
 CGlobalAICallback::CGlobalAICallback(CGlobalAI* ai)
@@ -48,9 +49,13 @@ IAICheats* CGlobalAICallback::GetCheatInterface()
 	if(cheats)
 		return cheats;
 
-	if(!gs->cheatEnabled)
+	// Cheating does not generate network commands, so it would desync a multiplayer game
+	if(!net->onlyLocal) {
+		info->AddLine (0,"AI cheating is only possible in singleplayer games");
 		return 0;
+	}
 
+	info->AddLine ("AI has enabled cheating.");
 	cheats=new CAICheats(ai);
 	return cheats;
 }
