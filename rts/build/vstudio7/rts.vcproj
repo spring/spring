@@ -972,12 +972,6 @@
 				RelativePath="..\..\Rendering\InMapDraw.h">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\RepulseGfx.cpp">
-			</File>
-			<File
-				RelativePath="..\..\Rendering\RepulseGfx.h">
-			</File>
-			<File
 				RelativePath="..\..\Rendering\ShadowHandler.cpp">
 			</File>
 			<File
@@ -1496,6 +1490,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\RepulseGfx.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\RepulseGfx.h">
 				</File>
 				<File
 					RelativePath="..\..\Sim\Projectiles\SmokeProjectile.cpp">
