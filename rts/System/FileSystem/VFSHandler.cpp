@@ -91,9 +91,18 @@ void CVFSHandler::MakeLower(char *s)
 			s[a]=s[a]+'a'-'A';
 }
 
+void CVFSHandler::SetSlashesBackToForward(string& name)
+{
+	for (unsigned int i = 0; i < name.length(); ++i) {
+		if (name[i] == '\\')
+			name[i] = '/';
+	}
+}
+
 int CVFSHandler::LoadFile(string name, void* buffer)
 {
 	transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+	SetSlashesBackToForward(name);
 	FileData fd = files[name];
 
 	int fh = fd.ar->OpenFile(name);
@@ -108,6 +117,7 @@ int CVFSHandler::LoadFile(string name, void* buffer)
 int CVFSHandler::GetFileSize(string name)
 {
 	transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+	SetSlashesBackToForward(name);
 	map<string, FileData>::iterator f = files.find(name);
 
 	if (f == files.end())
@@ -121,6 +131,7 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 {
 	vector<string> ret;
 	transform(dir.begin(), dir.end(), dir.begin(), (int (*)(int))tolower);
+	SetSlashesBackToForward(dir);
 	
 	// Non-empty directories to look in should have a trailing backslash
 	if (dir.length() > 0) {
