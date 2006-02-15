@@ -5,7 +5,7 @@
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
 #include "Game/UI/InfoConsole.h"
-#include "Rendering/RepulseGfx.h"
+#include "Sim/Projectiles/RepulseGfx.h"
 #include "mmgr.h"
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
