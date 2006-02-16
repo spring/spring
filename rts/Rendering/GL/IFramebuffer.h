@@ -35,19 +35,19 @@ public:
 
 static inline IFramebuffer* instantiate_fb(const int shadowMapSize)
 {
-	if (GLEW_EXT_framebuffer_object) {
+	if (GL_EXT_framebuffer_object) {
 		info->AddLine("Using EXT_framebuffer_object");
 		return new FBO();
 	}
 #ifdef _WIN32
-	else if (WGLEW_ARB_pbuffer) {
+	else if (WGL_ARB_pbuffer) {
 		info->AddLine("Using WGLEW_ARB_pbuffer");
 		return new WinPBuffer(shadowMapSize);
 	}
 #else
 	else if (GLX_SGIX_pbuffer) {
 		info->AddLine("Using GLX_SGIX_pbuffer");
-		return new GLXPBuffer(shadowMapSize);
+		return new GLXPBuffer(shadowMapSize,false);
 	}
 #endif
 	info->AddLine("No supported pixel buffer found");
