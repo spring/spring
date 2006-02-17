@@ -14,6 +14,8 @@
 #include "mmgr.h"
 #include <iostream>
 
+using namespace std;
+
 CWeaponDefHandler* weaponDefHandler;
 
 CWeaponDefHandler::CWeaponDefHandler(void)

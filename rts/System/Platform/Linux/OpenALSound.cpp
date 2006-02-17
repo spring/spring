@@ -1,4 +1,4 @@
-// Sound.cpp: implementation of the CSound class.
+// Sound.cpp: implementation of the COpenALSound class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -16,9 +16,9 @@
 #include "Platform/byteorder.h"
 #include "mmgr.h"
 
-CSound* sound;
+#include "OpenALSound.h"
 
-CSound::CSound()
+COpenALSound::COpenALSound()
 {
 	maxSounds = configHandler.GetInt("MaxSounds",16);
 	noSound = false;
@@ -54,7 +54,7 @@ CSound::CSound()
 	posScale.z = 0.0005f;
 }
 
-CSound::~CSound()
+COpenALSound::~COpenALSound()
 {
 	if (noSound) {
 		delete[] Sources;
@@ -97,21 +97,21 @@ static bool CheckError(const char* msg)
 	return true;
 }
 
-void CSound::PlaySound(int id, float volume)
+void COpenALSound::PlaySound(int id, float volume)
 {
 	if (noSound || !camera)
 		return;
 	PlaySound(id,camera->pos,volume);
 }
 
-void CSound::PlaySound(int id,CWorldObject* p,float volume)
+void COpenALSound::PlaySound(int id,CWorldObject* p,float volume)
 {
 	if (noSound)
 		return;
 	PlaySound(id,p->pos,volume);
 }
 
-void CSound::PlaySound(int id,const float3& p,float volume)
+void COpenALSound::PlaySound(int id,const float3& p,float volume)
 {
 	if (noSound)
 		return;
@@ -145,10 +145,10 @@ void CSound::PlaySound(int id,const float3& p,float volume)
 	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
 	alSourcei(source, AL_LOOPING, false);
 	alSourcePlay(source);
-	CheckError("CSound::PlaySound");
+	CheckError("COpenALSound::PlaySound");
 }
 
-void CSound::Update()
+void COpenALSound::Update()
 {
 	if (noSound)
 		return;
@@ -163,21 +163,21 @@ void CSound::Update()
 			}
 		}
 	}
-	CheckError("CSound::Update");
+	CheckError("COpenALSound::Update");
 
 	UpdateListener();
 }
 
-void CSound::UpdateListener()
+void COpenALSound::UpdateListener()
 {
 	if (noSound || !camera)
 		return;
 	float3 pos = camera->pos * posScale;
 	alListener3f(AL_POSITION, pos.x,pos.y,pos.z);
 	alListener3f(AL_VELOCITY,0.0,0.0,0.0);
-	ALfloat ListenerOri[] = {camera->forward.x/(gs->mapx*SQUARE_SIZE),camera->forward.y/(gs->mapy*SQUARE_SIZE),camera->forward.z/(camera->pos.maxzpos),camera->up.x/(gs->mapx*SQUARE_SIZE),camera->up.y/(gs->mapy*SQUARE_SIZE),camera->up.z/(camera->pos.maxzpos)};
+	ALfloat ListenerOri[] = {camera->forward.x,camera->forward.y,camera->forward.z,camera->up.x,camera->up.y,camera->up.z};
 	alListenerfv(AL_ORIENTATION,ListenerOri);
-	CheckError("CSound::UpdateListener");
+	CheckError("COpenALSound::UpdateListener");
 }
 
 #pragma pack(push, 1)
@@ -257,7 +257,8 @@ static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 }
 
 
-ALuint CSound::LoadALBuffer(string path)
+
+ALuint COpenALSound::LoadALBuffer(const string& path)
 {
 	if (noSound)
 		return 0;
@@ -285,7 +286,7 @@ ALuint CSound::LoadALBuffer(string path)
 	return buffer;
 }
 
-ALuint CSound::GetWaveId(string path)
+ALuint COpenALSound::GetWaveId(const string& path)
 {
 	if (noSound)
 		return 0;
