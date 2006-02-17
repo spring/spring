@@ -64,7 +64,7 @@ def processor(gcc_3_4=True):
 			elif str.find("AuthenticAMD"):
 				# AMD
 				vendor="AuthenticAMD"
-		elif str.startswith("cpu "):
+		elif str.startswith("cpu"):
 			family = re.sub('^[^0-9A-Za-z]*', '', str).strip()
 		elif str.startswith("model") and str.find("name") == -1:
 			model = re.sub('^[^0-9]*', '', str).strip()
@@ -159,23 +159,25 @@ def processor(gcc_3_4=True):
 		str = f.readline()
 	if len(archflags) == 0:
 		if vendor == "":
-			if family.find("970"):
-				print "  found PowerPC 970 (G5)"
-				archflags=['-mtune=G5', '-maltivec', '-mabi=altivec']
-			elif family.find("7450"):
-				print "  found PowerPC 7450 (G4 v2)"
-				archflags=['-mtune=7450', '-maltivec', '-mabi=altivec']
-			elif family.find("7400"):
-				print "  found PowerPC 7400 (G4)"
-				archflags=['-mtune=7400', '-maltivec', '-mabi=altivec']
-			elif family.find("750"):
-				print "  found PowerPC 750 (G3)"
-				archflags=['-mtune=750']
-			elif family.find("604e"):
-				archflags=['-mtune=604e']
-		else:
-			# unidentified x86
-			archflags=['-march=i686']
+			if family != -1: # has to be checked...
+				if family.find("970") != -1:
+					print "  found PowerPC 970 (G5)"
+					archflags=['-mtune=G5', '-maltivec', '-mabi=altivec']
+				elif family.find("7450") != -1:
+					print "  found PowerPC 7450 (G4 v2)"
+					archflags=['-mtune=7450', '-maltivec', '-mabi=altivec']
+				elif family.find("7400") != -1:
+					print "  found PowerPC 7400 (G4)"
+					archflags=['-mtune=7400', '-maltivec', '-mabi=altivec']
+				elif family.find("750") != -1:
+					print "  found PowerPC 750 (G3)"
+					archflags=['-mtune=750']
+				elif family.find("604e") != -1:
+					print "  found PowerPC 604"
+					archflags=['-mtune=604e']
 
 	f.close()
+	if len(archflags) == 0:
+		print "Couldn't detect your CPU, guessing i686 compatible.."
+		archflags=['-march=i686']
 	return archflags
