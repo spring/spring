@@ -1,36 +1,24 @@
-#ifndef SOUND_H
-#define SOUND_H
-
-#include <vector>
-#include <AL/al.h>
-#include <AL/alc.h>
+#ifndef SOUNDSYSTEM_INTERFACE_H
+#define SOUNDSYSTEM_INTERFACE_H
 
 class CWorldObject;
 
-using namespace std;
-class CSound  
+// Abstract sound system interface
+class ISound
 {
 public:
-	ALuint LoadALBuffer(string path);
-	ALuint GetWaveId(string path);
-	void Update();
-	void PlaySound(int id, float volume=1);
-	void PlaySound(int id,CWorldObject* p,float volume=1);
-	void PlaySound(int id,const float3& p,float volume=1);
+	ISound() {}
+	virtual ~ISound() {}
+
+	virtual unsigned int GetWaveId(const std::string& path) = 0;
+	virtual void Update() = 0;
+	virtual void PlaySound(int id, float volume=1) = 0;
+	virtual void PlaySound(int id,CWorldObject* p,float volume=1) = 0;
+	virtual void PlaySound(int id,const float3& p,float volume=1) = 0;
+
 	bool noSound;
-	int maxSounds;
-	CSound();
-	virtual ~CSound();
-private:
-	int cur;
-	void UpdateListener();
-	void Enqueue(ALuint src);
-	vector<string> LoadedFiles;
-	vector<ALuint> Buffers;
-	float3 posScale;
-	ALuint *Sources;
 };
 
-extern CSound* sound;
+extern ISound* sound; 
 
-#endif /* SOUND_H */
+#endif

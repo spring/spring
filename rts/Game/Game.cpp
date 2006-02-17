@@ -19,7 +19,6 @@
 #include "float.h"
 #include "Rendering/glFont.h"
 #include "UI/InfoConsole.h"
-#include "Sound.h"
 #include "Camera.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Net.h"
@@ -102,6 +101,12 @@
 #include "SDL_keyboard.h"
 #include "Platform/fp.h"
 
+#ifdef _WIN32
+#include "Platform/Win/DxSound.h"
+#else
+#include "Platform/Linux/OpenALSound.h"
+#endif
+
 #ifdef NEW_GUI
 #include "UI/GUI/GUIcontroller.h"
 #endif
@@ -118,6 +123,17 @@ extern Uint8 *keys;
 extern bool fullscreen;
 extern string stupidGlobalMapname;
 extern int stupidGlobalMapId;
+
+ISound* sound;
+
+static ISound* CreateSoundInterface()
+{
+#ifdef _WIN32
+	return new CDxSound ();
+#else
+	return new COpenALSound ();
+#endif
+}
 
 CGame::CGame(bool server,std::string mapname)
 {
@@ -187,7 +203,7 @@ CGame::CGame(bool server,std::string mapname)
 	ENTER_UNSYNCED;
 	camera=new CCamera();
 	cam2=new CCamera();
-	sound=new CSound();
+	sound=CreateSoundInterface ();
 	mouse=new CMouseHandler();
 	selectionKeys=new CSelectionKeyHandler();
 	tooltip=new CTooltipConsole();
