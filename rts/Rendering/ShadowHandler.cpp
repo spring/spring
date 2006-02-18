@@ -15,6 +15,8 @@
 
 CShadowHandler* shadowHandler=0;
 
+#define DEFAULT_SHADOWMAPSIZE 2048
+
 CShadowHandler::CShadowHandler(void): fb(0)
 {
 	drawShadows=false;
@@ -26,7 +28,7 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	if(!configHandler.GetInt("Shadows",0))
 		return;
 
-	shadowMapSize=configHandler.GetInt("ShadowMapSize",2048);
+	shadowMapSize=configHandler.GetInt("ShadowMapSize",DEFAULT_SHADOWMAPSIZE);
 
 	if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
 		info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
@@ -48,10 +50,6 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		}
 	}
 
-	fb = instantiate_fb(shadowMapSize);
-	if (!(fb && fb->valid ()))
-		return;
-
 	if(!GLEW_ARB_shadow_ambient){
 		if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			if(!useFPShadows)
@@ -62,9 +60,18 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		}
 	}
 
+	if (!InitDepthTarget())
+		return;
+
 	drawShadows=true;
 	useFPShadows=true;
+}
 
+bool CShadowHandler::InitDepthTarget()
+{
+	fb = instantiate_fb(shadowMapSize);
+	if (!(fb && fb->valid()))
+		return false;
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
 	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -76,8 +83,8 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_DEPTH);
-
 	fb->checkFBOStatus();
+	return true;
 }
 
 CShadowHandler::~CShadowHandler(void)
@@ -85,6 +92,19 @@ CShadowHandler::~CShadowHandler(void)
 	if(drawShadows)
 		glDeleteTextures(1,&shadowTexture);
 	delete fb;
+}
+
+void CShadowHandler::DrawShadowPasses(void)
+{
+	inShadowPass=true;
+
+	ph->DrawShadowPass();
+	unitDrawer->DrawShadowPass();
+	featureHandler->DrawShadowPass();
+	groundDrawer->DrawShadowPass();
+	treeDrawer->DrawShadowPass();
+
+	inShadowPass=false;
 }
 
 void CShadowHandler::CreateShadows(void)
@@ -145,6 +165,7 @@ void CShadowHandler::CreateShadows(void)
 	shadowMatrix[14]=(centerPos.x*sundir.x+centerPos.z*sundir.z)/maxLength+0.5;
 	glLoadMatrixf(shadowMatrix.m);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,16, xmid,ymid,0,0);	//these registers should not be overwritten by anything
+
 	if(shadowMapSize==2048){
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,17, 0.01,0.01,0,0);	//these registers should not be overwritten by anything
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,18, -0.1,-0.1,0,0);	//these registers should not be overwritten by anything
@@ -157,15 +178,9 @@ void CShadowHandler::CreateShadows(void)
 	camera->right=shadowHandler->cross1;
 	camera->up=shadowHandler->cross2;
 	camera->pos2=camera->pos+sundir*8000;
-	inShadowPass=true;
 
-	ph->DrawShadowPass();
-	unitDrawer->DrawShadowPass();
-	featureHandler->DrawShadowPass();
-	groundDrawer->DrawShadowPass();
-	treeDrawer->DrawShadowPass();
+	DrawShadowPasses();
 
-	inShadowPass=false;
 	camera->up=oldup;
 	camera->pos2=camera->pos;
 
