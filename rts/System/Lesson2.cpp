@@ -472,17 +472,14 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				}
 			}
 		}
-
-		if (globalQuit || (active && !drawscene()))
+		if (FSAA)
+			glEnable(GL_MULTISAMPLE_ARB);
+		int ret = drawscene();
+		SDL_GL_SwapBuffers();
+		if (FSAA)
+			glDisable(GL_MULTISAMPLE_ARB);
+		if (globalQuit || (active && !ret))
 			done=true;
-		else {
-			if (FSAA)
-				glEnable(GL_MULTISAMPLE_ARB);
-			drawscene();
-			SDL_GL_SwapBuffers();
-			if (FSAA)
-				glDisable(GL_MULTISAMPLE_ARB);
-		}
 	}
 	ENTER_MIXED;
 
