@@ -85,6 +85,9 @@ bool CGameSetup::Init(char* buf, int size)
 		hostDemo=true;
 	file.GetDef(ghostedBuildings,"1","GAME\\GhostedBuildings");
 
+	file.GetDef(maxSpeed, "3", "GAME\\MaxSpeed");
+	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
+
 	// Determine if the map is inside an archive, and possibly map needed archives
 	CFileHandler* f = new CFileHandler("maps/" + mapname);
 	if (!f->FileExists()) {

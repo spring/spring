@@ -50,6 +50,9 @@ public:
 	bool limitDgun;
 	bool diminishingMMs;
 
+	float maxSpeed;
+	float minSpeed;
+
 	bool hostDemo;
 	std::string demoName;
 	int numDemoPlayers;
