@@ -322,8 +322,9 @@ void CSmfReadMap::ParseSMD(std::string filename)
 	waterBaseColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterBaseColor");
 	waterMinColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterMinColor");
 	mapDefParser.GetDef(waterTexture, "", "MAP\\WATER\\WaterTexture");
+	TdfParser resources("gamedata/resources.tdf");
 	if(waterTexture.empty())	//default water is ocean.jpg in bitmaps, map specific water textures is saved in the map dir
-		waterTexture = "bitmaps/ocean.jpg";
+		waterTexture = "bitmaps/"+resources.SGetValueDef("ocean.jpg","resources\\graphics\\maps\\watertex");
 	else
 		waterTexture = "maps/" + waterTexture;
 
@@ -344,7 +345,7 @@ void CSmfReadMap::ParseSMD(std::string filename)
 
 	mapDefParser.GetDef(detailTexName, "", "MAP\\DetailTex");
 	if(detailTexName.empty())
-		detailTexName = "bitmaps/detailtex2.bmp";
+		detailTexName = "bitmaps/"+resources.SGetValueDef("detailtex2.bmp","resources\\graphics\\maps\\detailtex");
 	else
 		detailTexName = "maps/" + detailTexName;
 	

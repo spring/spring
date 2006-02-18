@@ -24,7 +24,9 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 
 	lastListClean=0;
 
-	CBitmap TexImage("bitmaps/gran.bmp");
+	TdfParser resources("gamedata/resources.tdf");
+
+	CBitmap TexImage("bitmaps/"+resources.SGetValueDef("gran.bmp","resources\\graphics\\trees\\gran1"));
 	TexImage.ReverseYAxis();
 	//unsigned char gran[1024][512][4];
 	unsigned char (*gran)[512][4]=new unsigned char[1024][512][4]; 
@@ -46,7 +48,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps/gran2.bmp");
+	TexImage.Load("bitmaps/"+resources.SGetValueDef("gran2.bmp","resources\\graphics\\trees\\gran2"));
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
@@ -66,7 +68,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps/birch1.bmp");
+	TexImage.Load("bitmaps/"+resources.SGetValueDef("birch1.bmp","resources\\graphics\\trees\\birch1"));
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
@@ -86,7 +88,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps/birch2.bmp");
+	TexImage.Load("bitmaps/"+resources.SGetValueDef("birch2.bmp","resources\\graphics\\trees\\birch2"));
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
@@ -106,7 +108,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	TexImage.Load("bitmaps/birch3.bmp");
+	TexImage.Load("bitmaps/"+resources.SGetValueDef("birch3.bmp","resources\\graphics\\trees\\birch3"));
 	TexImage.ReverseYAxis();
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
