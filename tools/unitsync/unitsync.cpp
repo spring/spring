@@ -276,7 +276,7 @@ extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	string err("");
 	try {
 		parser.LoadFile("maps/" + smd);
-	} catch (TdfParser::parse_error& e) {
+	} catch (const TdfParser::parse_error& e) {
 		err = e.what();
 	}
 
@@ -566,7 +566,11 @@ extern "C" int __stdcall GetSideCount()
 	sideData.clear();
 
 	TdfParser p;
-	p.LoadFile("gamedata/sidedata.tdf");
+	try {
+		p.LoadFile("gamedata/sidedata.tdf");
+	} catch (const TdfParser::parse_error& e) {
+		return 0;
+	}
 
 	for(int b=0;;++b){					//loop over all sides
 		char sideText[50];

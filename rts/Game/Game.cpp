@@ -293,8 +293,14 @@ CGame::CGame(bool server,std::string mapname)
 	if(!server)
 		net->SendData<unsigned int>(NETMSG_EXECHECKSUM, CreateExeChecksum());
 
-	maxUserSpeed=3;
-	minUserSpeed=0.3;
+	if (gameSetup) {
+		maxUserSpeed = gameSetup->maxSpeed;
+		minUserSpeed = gameSetup->minSpeed;
+	}
+	else {
+		maxUserSpeed=3;
+		minUserSpeed=0.3;
+	}
 
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
