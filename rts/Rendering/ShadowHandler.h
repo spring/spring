@@ -35,6 +35,8 @@ public:
 
 protected:
 	void GetFrustumSide(float3& side,bool upside);
+	bool InitDepthTarget();
+	void DrawShadowPasses();
 	struct fline {
 		float base;
 		float dir;
