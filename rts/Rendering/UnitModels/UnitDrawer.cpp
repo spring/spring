@@ -66,7 +66,7 @@ CUnitDrawer::CUnitDrawer(void)
 			}
 		}
 	}
-	CBitmap radar(rt,128,128/*"bitmaps\\blip.bmp"*/);
+	CBitmap radar(rt,128,128);
 	radarBlippTex=radar.CreateTexture(true);
 
 	unitAmbientColor=readmap->mapDefParser.GetFloat3(float3(0.4,0.4,0.4),"MAP\\LIGHT\\UnitAmbientColor");

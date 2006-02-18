@@ -92,19 +92,44 @@ CProjectileHandler::CProjectileHandler()
 		}
 	}
 
-	LoadSmoke(tex,64,0,"bitmaps/smoke/smoke0000.bmp","bitmaps/smoke/smoke_Alpha0000.bmp");
-	LoadSmoke(tex,96,0,"bitmaps/smoke/smoke0001.bmp","bitmaps/smoke/smoke_Alpha0001.bmp");
-	LoadSmoke(tex,128,0,"bitmaps/smoke/smoke0002.bmp","bitmaps/smoke/smoke_Alpha0002.bmp");
-	LoadSmoke(tex,160,0,"bitmaps/smoke/smoke0003.bmp","bitmaps/smoke/smoke_Alpha0003.bmp");
-	LoadSmoke(tex,192,0,"bitmaps/smoke/smoke0004.bmp","bitmaps/smoke/smoke_Alpha0004.bmp");
-	LoadSmoke(tex,224,0,"bitmaps/smoke/smoke0005.bmp","bitmaps/smoke/smoke_Alpha0005.bmp");
+	TdfParser resources("gamedata/resources.tdf");
+	LoadSmoke(tex,64,0,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0000.bmp","resources\\graphics\\smoke\\smoke00")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0000.bmp","resources\\graphics\\smoke\\smoke00alpha")).c_str());
+	LoadSmoke(tex,96,0,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0001.bmp","resources\\graphics\\smoke\\smoke01")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0001.bmp","resources\\graphics\\smoke\\smoke01alpha")).c_str());
+	LoadSmoke(tex,128,0,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0002.bmp","resources\\graphics\\smoke\\smoke02")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0002.bmp","resources\\graphics\\smoke\\smoke02alpha")).c_str());
+	LoadSmoke(tex,160,0,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0003.bmp","resources\\graphics\\smoke\\smoke03")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0003.bmp","resources\\graphics\\smoke\\smoke03alpha")).c_str());
+	LoadSmoke(tex,192,0,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0004.bmp","resources\\graphics\\smoke\\smoke04")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0004.bmp","resources\\graphics\\smoke\\smoke04alpha")).c_str());
+	LoadSmoke(tex,224,0,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0005.bmp","resources\\graphics\\smoke\\smoke05")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0005.bmp","resources\\graphics\\smoke\\smoke05alpha")).c_str());
 
-	LoadSmoke(tex,64,32,"bitmaps/smoke/smoke0006.bmp","bitmaps/smoke/smoke_Alpha0006.bmp");
-	LoadSmoke(tex,96,32,"bitmaps/smoke/smoke0007.bmp","bitmaps/smoke/smoke_Alpha0007.bmp");
-	LoadSmoke(tex,128,32,"bitmaps/smoke/smoke0008.bmp","bitmaps/smoke/smoke_Alpha0008.bmp");
-	LoadSmoke(tex,160,32,"bitmaps/smoke/smoke0009.bmp","bitmaps/smoke/smoke_Alpha0009.bmp");
-	LoadSmoke(tex,192,32,"bitmaps/smoke/smoke0010.bmp","bitmaps/smoke/smoke_Alpha0010.bmp");
-	LoadSmoke(tex,224,32,"bitmaps/smoke/smoke0011.bmp","bitmaps/smoke/smoke_Alpha0011.bmp");
+	LoadSmoke(tex,64,32,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0006.bmp","resources\\graphics\\smoke\\smoke06")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0006.bmp","resources\\graphics\\smoke\\smoke06alpha")).c_str());
+	LoadSmoke(tex,96,32,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0007.bmp","resources\\graphics\\smoke\\smoke07")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0007.bmp","resources\\graphics\\smoke\\smoke07alpha")).c_str());
+	LoadSmoke(tex,128,32,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0008.bmp","resources\\graphics\\smoke\\smoke08")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0008.bmp","resources\\graphics\\smoke\\smoke08alpha")).c_str());
+	LoadSmoke(tex,160,32,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0009.bmp","resources\\graphics\\smoke\\smoke09")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0009.bmp","resources\\graphics\\smoke\\smoke09alpha")).c_str());
+	LoadSmoke(tex,192,32,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0010.bmp","resources\\graphics\\smoke\\smoke10")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0010.bmp","resources\\graphics\\smoke\\smoke10alpha")).c_str());
+	LoadSmoke(tex,224,32,
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0011.bmp","resources\\graphics\\smoke\\smoke11")).c_str(),
+			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0011.bmp","resources\\graphics\\smoke\\smoke11alpha")).c_str());
 
 	for(int y=0;y<64;y++){		//fix smoke
 		for(int x=64;x<256;x++){
@@ -176,7 +201,7 @@ CProjectileHandler::CProjectileHandler()
 	ConvertTex(tex,64,0,256,64,1);
 	ConvertTex(tex,0,64,256,128,1);
 
-	CBitmap explo("bitmaps/explo.bmp");
+	CBitmap explo((char*)("bitmaps/"+resources.SGetValueDef("explo.bmp","resources\\graphics\\explosions\\explo")).c_str());
 	for(int y=0;y<128;y++){
 		for(int x=0;x<128;x++){
 			tex[y+128][x+128][0]=explo.mem[(y*128+x)*4];
@@ -195,7 +220,7 @@ CProjectileHandler::CProjectileHandler()
 		}
 	}
 
-	CBitmap flare("bitmaps/flare.bmp");
+	CBitmap flare((char*)("bitmaps/"+resources.SGetValueDef("flare.bmp","resources\\graphics\\flares\\flare")).c_str());
 	for(int y=0;y<128;y++){
 		for(int x=0;x<256;x++){
 			tex[y+64][x+256][0]=flare.mem[(y*256+x)*4+0];

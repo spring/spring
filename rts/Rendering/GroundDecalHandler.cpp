@@ -26,10 +26,11 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	unsigned char* buf=new unsigned char[512*512*4];
 	memset(buf,0,512*512*4);
 
-	LoadScar("bitmaps/scars/scar2.bmp",buf,0,0);
-	LoadScar("bitmaps/scars/scar3.bmp",buf,256,0);
-	LoadScar("bitmaps/scars/scar1.bmp",buf,0,256);
-	LoadScar("bitmaps/scars/scar4.bmp",buf,256,256);
+	TdfParser tdfparser("gamedata/resources.tdf");
+	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar2.bmp","resources\\graphics\\scars\\scar2")).c_str(),buf,0,0);
+	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar3.bmp","resources\\graphics\\scars\\scar3")).c_str(),buf,256,0);
+	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar1.bmp","resources\\graphics\\scars\\scar1")).c_str(),buf,0,256);
+	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar4.bmp","resources\\graphics\\scars\\scar4")).c_str(),buf,256,256);
 
 	glGenTextures(1, &scarTex);			
 	glBindTexture(GL_TEXTURE_2D, scarTex);
