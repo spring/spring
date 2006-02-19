@@ -61,7 +61,7 @@ def processor(gcc_3_4=True):
 			elif str.find("GenuineIntel") != -1:
 				# Intel
 				vendor="GenuineIntel"
-			elif str.find("AuthenticAMD"):
+			elif str.find("AuthenticAMD") != -1:
 				# AMD
 				vendor="AuthenticAMD"
 		elif str.startswith("cpu"):
