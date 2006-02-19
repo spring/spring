@@ -46,6 +46,8 @@ bool CGameSetup::Init(std::string setupFile)
 	if(setupFile.empty())
 		return false;
 	CFileHandler fh(setupFile);
+	if (!fh.FileExists())
+		return false;
 	char* c=new char[fh.FileSize()];
 	fh.Read(c,fh.FileSize());
 

@@ -133,6 +133,8 @@ def check_freetype2(env, conf):
 				freetype = True
 			else:
 				print "not found"
+		else:
+			print "not found"
 
 	if freetype:
 		print "  Checking for Freetype >= 2.0.0...",
