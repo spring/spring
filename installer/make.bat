@@ -11,19 +11,22 @@ echo.
 pause > nul
 
 echo Creating normal installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_XTA /DSP_ALLMAPS taspring.nsi 
-
-echo Creating small installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_XTA taspring.nsi  
-
-echo Creating installer without cavedog content
-"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_ALLMAPS taspring.nsi 
-
-echo Creating small installer without cavedog content
 "C:\Program Files\NSIS\makensis.exe" /V3 taspring.nsi 
 
-echo Creating core only installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_CORE taspring.nsi 
+echo Creating update installer
+"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_UPDATE taspring.nsi  
+
+echo Creating patch installer
+"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_PATCH taspring.nsi
+
+rem echo Creating installer without cavedog content
+rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_ALLMAPS taspring.nsi 
+
+rem echo Creating small installer without cavedog content
+rem "C:\Program Files\NSIS\makensis.exe" /V3 taspring.nsi 
+
+rem echo Creating core only installer
+rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_CORE taspring.nsi 
 
 echo Copying debug information
 copy ..\rts\release\spring.pdb .
