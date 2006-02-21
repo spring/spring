@@ -2,7 +2,7 @@
 #define MOBILITY_H
 
 #include "MoveInfo.h"
-#include "creg/ClassReg.h"
+#include "creg/creg.h"
 
 class CMobility {
 public:

@@ -8,7 +8,7 @@ Type matching using class templates (only class template support partial special
 // Undefined types return 0
 template<typename T>
 struct DeduceType {
-	IType* Get () { return 0; }
+	IType* Get () { return IType::CreateObjInstanceType(T::StaticClass()); }
 };
 
 template<typename T>
@@ -17,7 +17,7 @@ struct IsBasicType {
 };
 
 // Support for a number of fundamental types
-#define SUPPORT_FTYPE(T, typeID)			\
+#define CREG_SUPPORT_BASIC_TYPE(T, typeID)			\
 	template <>	 struct DeduceType <T> {		\
 		IType* Get () { return IType::CreateBasicType (typeID); }	\
 	};																\
@@ -25,21 +25,19 @@ struct IsBasicType {
 		enum {Yes=1, No=0 };										\
 	};
 
-	SUPPORT_FTYPE(int, crInt)
-	SUPPORT_FTYPE(unsigned int, crUInt)
-	SUPPORT_FTYPE(short, crShort)
-	SUPPORT_FTYPE(unsigned short, crUShort)
-	SUPPORT_FTYPE(char, crChar)
-	SUPPORT_FTYPE(unsigned char, crUChar)
-	SUPPORT_FTYPE(long, crInt) // Long is assumed to be an int (4 bytes)
-	SUPPORT_FTYPE(unsigned long, crUInt)
-	SUPPORT_FTYPE(float, crFloat)
-	SUPPORT_FTYPE(double, crDouble)
-	SUPPORT_FTYPE(bool, crBool)
-	SUPPORT_FTYPE(float3, crFloat3)
-#undef SUPPORT_FTYPE
+CREG_SUPPORT_BASIC_TYPE(int, crInt)
+CREG_SUPPORT_BASIC_TYPE(unsigned int, crUInt)
+CREG_SUPPORT_BASIC_TYPE(short, crShort)
+CREG_SUPPORT_BASIC_TYPE(unsigned short, crUShort)
+CREG_SUPPORT_BASIC_TYPE(char, crChar)
+CREG_SUPPORT_BASIC_TYPE(unsigned char, crUChar)
+CREG_SUPPORT_BASIC_TYPE(long, crInt) // Long is assumed to be an int (4 bytes)
+CREG_SUPPORT_BASIC_TYPE(unsigned long, crUInt)
+CREG_SUPPORT_BASIC_TYPE(float, crFloat)
+CREG_SUPPORT_BASIC_TYPE(double, crDouble)
+CREG_SUPPORT_BASIC_TYPE(bool, crBool)
 
-// Pointer type (assumed to be a pointer to an Object)
+// Pointer type (assumed to be a pointer to an Piece)
 template<typename T>
 struct DeduceType <T *> {
 	IType* Get () { return IType::CreatePointerToObjType (T::StaticClass()); }
@@ -50,7 +48,7 @@ template<typename T, size_t ArraySize>
 struct DeduceType <T[ArraySize]> {
 	IType* Get () { 
 		DeduceType<T> subtype;
-		return IType::CreateStaticArrayType (subtype.Get(), ArraySize);
+		return new StaticArrayType <T, ArraySize> (subtype.Get());
 	}
 };
 
@@ -59,39 +57,7 @@ template<typename T>
 struct DeduceType < std::vector <T> > {
 	IType* Get () { 
 		DeduceType<T> elemtype;
-		return new UnorderedContainer < std::vector<T> > (elemtype.Get());
-	}
-};
-// Deque type (uses vector implementation)
-template<typename T>
-struct DeduceType < std::deque <T> > {
-	IType* Get () { 
-		DeduceType<T> elemtype;
-		return new UnorderedContainer < std::deque<T> > (elemtype.Get());
-	}
-};
-// List type
-template<typename T>
-struct DeduceType < std::list <T> > {
-	IType* Get () { 
-		DeduceType<T> elemtype;
-		return new UnorderedContainer < std::list<T> > (elemtype.Get());
-	}
-};
-// Set type
-template<typename T>
-struct DeduceType < std::set<T> > {
-	IType* Get () {
-		DeduceType<T> elemtype;
-		return new OrderedContainer < std::set <T> > (elemtype.Get());
-	}
-};
-// Multiset
-template<typename T>
-struct DeduceType < std::multiset<T> > {
-	IType* Get () {
-		DeduceType<T> elemtype;
-		return new OrderedContainer < std::multiset<T> > (elemtype.Get());
+		return new DynamicArrayType < std::vector<T> > (elemtype.Get());
 	}
 };
 

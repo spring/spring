@@ -3,6 +3,10 @@
 #include <memory.h>
 #include "mmgr.h"
 
+CR_BIND_STRUCT(CMatrix44f);
+
+CR_BIND_MEMBERS(CMatrix44f, CR_MEMBER(m));
+
 /*
 float globalArf=15;
 extern void arfurf();

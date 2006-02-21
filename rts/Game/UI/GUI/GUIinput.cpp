@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GUIinput.h"
 #include <string>
 #include "GUIfont.h"

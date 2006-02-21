@@ -32,6 +32,7 @@ public:
 	void Init();
 	UnitDef *GetUnitByName(std::string name);
 	UnitDef *GetUnitByID(int id);
+	unsigned int GetUnitImage(UnitDef *unitdef);
 
 	bool noCost;
 protected:

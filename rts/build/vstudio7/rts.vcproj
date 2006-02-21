@@ -1782,6 +1782,9 @@
 					RelativePath="..\..\Sim\Misc\Feature.h">
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\FeatureDef.h">
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp">
 				</File>
 				<File
@@ -2524,16 +2527,43 @@
 				Name="creg"
 				Filter="">
 				<File
-					RelativePath="..\..\System\creg\ClassReg.cpp">
+					RelativePath="..\..\System\creg\ClassBinding.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\ClassReg.h">
+					RelativePath="..\..\System\creg\creg.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\ISerializer.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\Serializer.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\Serializer.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\STL_Deque.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\STL_List.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\STL_Map.h">
+				</File>
+				<File
+					RelativePath="..\..\System\creg\STL_Set.h">
 				</File>
 				<File
 					RelativePath="..\..\System\creg\TypeDeduction.h">
 				</File>
 				<File
 					RelativePath="..\..\System\creg\VarTypes.cpp">
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="3"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\creg\VarTypes.h">

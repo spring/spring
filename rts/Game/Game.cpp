@@ -124,7 +124,7 @@ extern bool fullscreen;
 extern string stupidGlobalMapname;
 extern int stupidGlobalMapId;
 
-ISound* sound;
+ISound* sound = 0;
 
 static ISound* CreateSoundInterface()
 {

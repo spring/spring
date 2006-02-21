@@ -8,7 +8,7 @@ Implementations of IType for specific types
 #ifndef CR_VARIABLE_TYPES_H
 #define CR_VARIABLE_TYPES_H
 
-#include "ClassReg.h"
+#include "creg.h"
 
 namespace creg
 {
@@ -18,6 +18,8 @@ namespace creg
 		BasicType(BasicTypeID ID) : id(ID) {}
 		~BasicType() {}
 
+		void Serialize (ISerializer *s, void *instance);
+
 		BasicTypeID id;
 	};
 
@@ -26,6 +28,7 @@ namespace creg
 	public:
 		StringType() {}
 		~StringType() {}
+		void Serialize (ISerializer *s, void *instance);
 	};
 
 	class ObjectPointerType : public IType
@@ -33,19 +36,21 @@ namespace creg
 	public:
 		ObjectPointerType(Class* objc) : objectClass(objc) {}
 		~ObjectPointerType() {}
+		void Serialize (ISerializer *s, void *instance);
 
 		Class* objectClass;
 	};
 
-	class StaticArrayType : public IType
+	class ObjectInstanceType : public IType
 	{
 	public:
-		StaticArrayType(IType *et, size_t s) : elementType(et), size(s) {}
-		~StaticArrayType();
+		ObjectInstanceType(Class* objc) : objectClass(objc) {}
+		~ObjectInstanceType() {}
+		void Serialize (ISerializer *s, void *instance);
 
-		IType* elementType;
-		size_t size;
+		Class* objectClass;
 	};
+
 };
 
 #endif

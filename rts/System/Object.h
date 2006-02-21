@@ -6,11 +6,10 @@
 
 #pragma warning(disable:4786)
 
-#include <set>
+#include "creg/creg.h"
+#include "creg/STL_Set.h"
 
-#include "creg/ClassReg.h"
-
-class CObject : public creg::Object
+class CObject
 {
 public:
 	CR_DECLARE(CObject);

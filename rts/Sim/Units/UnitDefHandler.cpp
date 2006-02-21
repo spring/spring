@@ -74,6 +74,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 		unitDefs[i].id = i;			
 		unitDefs[i].yardmap = 0;
 		unitDefs[i].name = unitname;
+		unitDefs[i].unitimage = 0;
 		unitID[unitname] = i;
 
 		// Increase index for next unit
@@ -446,36 +447,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.deathExplosion, "", "UNITINFO\\ExplodeAs");
 	tdfparser.GetDef(ud.selfDExplosion, "", "UNITINFO\\SelfDestructAs");
 
-	string buildpic;
-	tdfparser.GetDef(buildpic, "", "UNITINFO\\BuildPic");
-	if(buildpic.empty())
-	{
-		//try pcx first and then bmp if no pcx exist
-		CFileHandler bfile("unitpics/" + ud.name + ".pcx");
-		if(bfile.FileExists())
-		{
-			CBitmap bitmap("unitpics/" + ud.name + ".pcx");
-			ud.unitimage = bitmap.CreateTexture(false);
-		}
-		else
-		{
-			CFileHandler bfile("unitpics/" + ud.name + ".bmp");
-			if(bfile.FileExists()){
-				CBitmap bitmap("unitpics/" + ud.name + ".bmp");
-				ud.unitimage = bitmap.CreateTexture(false);
-			} else {
-				CBitmap bitmap;
-				ud.unitimage = bitmap.CreateTexture(false);
-			}
-		}
-
-	}
-	else
-	{
-		CBitmap bitmap("unitpics/" + buildpic);
-		ud.unitimage = bitmap.CreateTexture(false);
-	}
-
+	tdfparser.GetDef(ud.buildpicname, "", "UNITINFO\\BuildPic");
 
 	ud.power = (ud.metalCost + ud.energyCost/60.0f);
 
@@ -625,3 +597,35 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 	delete[] originalMap;
 }
 
+unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
+{
+	if(unitdef->unitimage!=0) return unitdef->unitimage;
+	if(unitdef->buildpicname.empty())
+	{
+		//try pcx first and then bmp if no pcx exist
+		CFileHandler bfile("unitpics/" + unitdef->name + ".pcx");
+		if(bfile.FileExists())
+		{
+			CBitmap bitmap("unitpics/" + unitdef->name + ".pcx");
+			unitdef->unitimage = bitmap.CreateTexture(false);
+		}
+		else
+		{
+			CFileHandler bfile("unitpics/" + unitdef->name + ".bmp");
+			if(bfile.FileExists()){
+				CBitmap bitmap("unitpics/" + unitdef->name + ".bmp");
+				unitdef->unitimage = bitmap.CreateTexture(false);
+			} else {
+				CBitmap bitmap;
+				unitdef->unitimage = bitmap.CreateTexture(false);
+			}
+		}
+
+	}
+	else
+	{
+		CBitmap bitmap("unitpics/" + unitdef->buildpicname);
+		unitdef->unitimage = bitmap.CreateTexture(false);
+	}
+	return unitdef->unitimage;
+}

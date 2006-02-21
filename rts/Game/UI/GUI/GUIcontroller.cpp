@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GUIcontroller.h"
 #include "TdfParser.h"
 

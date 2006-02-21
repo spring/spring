@@ -16,7 +16,9 @@ public:
 	virtual void PlaySound(int id,CWorldObject* p,float volume=1) = 0;
 	virtual void PlaySound(int id,const float3& p,float volume=1) = 0;
 
-	bool noSound;
+// TODO: fix this, noSound is modified in game code to toggle sound
+// but OpenALSound assumes it is constant
+	bool noSound; 
 };
 
 extern ISound* sound; 

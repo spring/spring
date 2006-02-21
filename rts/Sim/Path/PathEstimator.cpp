@@ -19,11 +19,6 @@
 #include "TimeProfiler.h"
 #include <boost/filesystem/convenience.hpp>
 
-#ifdef _WIN32
-#define ZLIB_WINAPI 
-#include <direct.h>
-#endif
-
 #include "lib/minizip/zip.h"
 #include "FileSystem/ArchiveZip.h"
 

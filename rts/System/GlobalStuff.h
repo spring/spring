@@ -21,12 +21,14 @@ void SendChat(char* c);
 #include "float3.h"
 
 struct int2 {
+	CR_DECLARE_STRUCT(int2);
 	int2(){};
 	int2(int x,int y):x(x),y(y){};
 	int x;
 	int y;
 };
 struct float2 {
+	CR_DECLARE_STRUCT(float2);
 	float x;
 	float y;
 };

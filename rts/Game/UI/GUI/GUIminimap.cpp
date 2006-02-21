@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GUIminimap.h"
 #include "GUIgame.h"
 #include "Rendering/Textures/Bitmap.h"

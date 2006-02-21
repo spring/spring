@@ -350,7 +350,7 @@ void CGuiHandler::DrawButtons()
 		{
 			// unitikon
 			glColor4f(1,1,1,0.8f);
-			glBindTexture(GL_TEXTURE_2D, ud->unitimage);
+			glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
 			glBegin(GL_QUADS);
 			glTexCoord2f(0,0);
 			glVertex2f(x1,y1);

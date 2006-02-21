@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GUIcenterBuildMenu.h"
 #include "GUIbutton.h"
 #include "GUIlabel.h"

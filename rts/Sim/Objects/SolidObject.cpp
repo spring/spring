@@ -10,25 +10,27 @@
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject);
 
-CR_BIND_MEMBERS(CSolidObject, (
-				CR_MEMBER(mass),
-				CR_MEMBER(blocking),
-				CR_MEMBER(floatOnWater),
-				CR_MEMBER(isUnderWater),
-				CR_MEMBER(immobile),
-				CR_MEMBER(blockHeightChanges),
-				CR_MEMBER(xsize),
-				CR_MEMBER(ysize),
-				CR_MEMBER(height),
-				CR_MEMBER(heading),
-				CR_MEMBER(midPos),
-				CR_MEMBER(isMoving),
-				CR_MEMBER(residualImpulse),
-				CR_MEMBER(mobility),
-				CR_MEMBER(mapPos),
-				CR_MEMBER(isMarkedOnBlockingMap),
-				CR_MEMBER(physicalState),
-				CR_MEMBER(speed)));
+CR_BIND_MEMBERS(CSolidObject, 
+(
+	CR_MEMBER(mass),
+	CR_MEMBER(blocking),
+	CR_MEMBER(floatOnWater),
+	CR_MEMBER(isUnderWater),
+	CR_MEMBER(immobile),
+	CR_MEMBER(blockHeightChanges),
+	CR_MEMBER(xsize),
+	CR_MEMBER(ysize),
+	CR_MEMBER(height),
+	CR_MEMBER(heading),
+	CR_MEMBER(midPos),
+	CR_MEMBER(isMoving),
+	CR_MEMBER(residualImpulse),
+	CR_MEMBER(mobility),
+	CR_MEMBER(mapPos),
+	CR_MEMBER(isMarkedOnBlockingMap),
+	CR_ENUM_MEMBER(physicalState),
+	CR_MEMBER(speed))
+);
 
 CSolidObject::CSolidObject()
 :	mass(100000),
