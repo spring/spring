@@ -5,7 +5,7 @@
 #define DRAWTYPE_TREE 1
 #define DRAWTYPE_NONE -1
 
-class S3DOModel;
+struct S3DOModel;
 
 struct FeatureDef
 {
