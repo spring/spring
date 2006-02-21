@@ -25,7 +25,7 @@ namespace creg
 				int size=ct.size();
 				s->Serialize (&size, sizeof(int));
 				for (iterator i=ct.begin();i!=ct.end();++i) 
-					elemType->Serialize (s, &*i);
+					elemType->Serialize (s, (void*) &*i);
 			} else {
 				int size;
 				s->Serialize (&size, sizeof(int));
