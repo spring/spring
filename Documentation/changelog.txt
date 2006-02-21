@@ -2,6 +2,7 @@ TASpring change log
 
 next
 
+- You can enable advanced unit rendering without enabling shadow mapping (in the settings app).
 - Various resource files are now read from gamedata/resources.tdf instead of hardcoded into the game exe.
 - Added "dontland" unit tag, to specify aircraft that should not land. Don't use this on transport units!
 - std::sort related bug fixed in projectile handler

@@ -638,7 +638,6 @@ void CUnit::Draw()
 		if(shadowHandler->inShadowPass){
 			if(buildProgress>0.66)
 				localmodel->Draw();
-
 		} else {
 			float height=model->height;
 			float start=model->miny;
@@ -648,7 +647,7 @@ void CUnit::Draw()
 			float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
 			glColor3f(col*0.5,col,col*0.5);
 
-			if(shadowHandler->drawShadows && !water->drawReflection){
+			if(unitDrawer->advShading && !water->drawReflection){
 				glDisable(GL_VERTEX_PROGRAM_ARB);
 				glDisable(GL_FRAGMENT_PROGRAM_ARB);
 				glDisable(GL_TEXTURE_2D);
@@ -683,7 +682,7 @@ void CUnit::Draw()
 				localmodel->Draw();
 			}
 			glDisable(GL_CLIP_PLANE1);
-			if(shadowHandler->drawShadows && !water->drawReflection){
+			if(unitDrawer->advShading && !water->drawReflection){
 				glEnable(GL_VERTEX_PROGRAM_ARB);
 				glEnable(GL_FRAGMENT_PROGRAM_ARB);
 				glEnable(GL_TEXTURE_2D);
