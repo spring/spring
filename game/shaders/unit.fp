@@ -27,6 +27,5 @@ MUL specular, specular, texColor.w;
 TEX reflect, reflect, texture[2], CUBE;
 LRP shadeColor, texColor.w, reflect, fragment.color;
 
-# MAD result.color, texColor, shadeColor, specular;
-MUL result.color, texColor, shadeColor;
+MAD result.color, texColor, shadeColor, specular;
 END
