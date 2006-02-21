@@ -10,6 +10,7 @@ Classes for serialization of registrated class instances
 #include "Platform/byteorder.h"
 #include <fstream>
 #include <assert.h>
+#include <stdexcept>
 
 using namespace std;
 using namespace creg;
