@@ -94,12 +94,12 @@ CGuiHandler::CGuiHandler()
 	needShift(false),
 	activePage(0),
 	maxPages(0),
-	showingMetal(false)
+	showingMetal(false),
+	buildSpacing(0)
 {
 //	LoadCMDBitmap(CMD_STOP, "bitmaps\\ocean.bmp");
 	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps/armsilo1.bmp");
 	readmap->mapDefParser.GetDef(autoShowMetal,"1","MAP\\autoShowMetal");
-
 }
 
 //Ladda bitmap -> textur
@@ -1357,13 +1357,13 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			ret.push_back(p2);
 		}
 	} else if(keys[SDLK_LALT]){			//build a rectangle
-		float xsize=unitdef->xsize*8+mouse->xButtonCounter*16;
+		float xsize=unitdef->xsize*8+buildSpacing*16;
 		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
 		int xstep=(int)xsize;
 		if(start.x>end.x)
 			xstep*=-1;
 
-		float zsize=unitdef->ysize*8+mouse->xButtonCounter*16;
+		float zsize=unitdef->ysize*8+buildSpacing*16;
 		int znum=(int)((fabs(end.z-start.z)+zsize*1.4)/zsize);
 		int zstep=(int)zsize;
 		if(start.z>end.z)
@@ -1384,7 +1384,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		}
 	} else {			//build a line
 		if(fabs(start.x-end.x)>fabs(start.z-end.z)){
-			float step=unitdef->xsize*8+mouse->xButtonCounter*16;
+			float step=unitdef->xsize*8+buildSpacing*16;
 			float3 dir=end-start;
 			if(dir.x==0){
 				ret.push_back(start);
@@ -1396,7 +1396,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
 				ret.push_back(p);
 		} else {
-			float step=unitdef->ysize*8+mouse->xButtonCounter*16;
+			float step=unitdef->ysize*8+buildSpacing*16;
 			float3 dir=end-start;
 			if(dir.z==0){
 				ret.push_back(start);
