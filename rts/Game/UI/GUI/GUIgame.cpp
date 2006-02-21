@@ -1088,8 +1088,10 @@ bool GUIgame::EventAction(const string& command)
 	else if (id==COMMAND_track)
 		game->trackingUnit=!game->trackingUnit;
 
-	else if (id==COMMAND_nosound)
-		sound->noSound=!sound->noSound;
+	else if (id==COMMAND_nosound) {
+		game->soundEnabled=!game->soundEnabled;
+		sound->SetVolume (game->soundEnabled ? game->gameSoundVolume : 0.0f);
+	}
 	
 	else if(id==COMMAND_savegame){
 		CLoadSaveHandler ls;

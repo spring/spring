@@ -201,9 +201,13 @@ CGame::CGame(bool server,std::string mapname)
 	}
 
 	ENTER_UNSYNCED;
+	sound=CreateSoundInterface ();
+	gameSoundVolume=configHandler.GetInt("SoundVolume", 60)*0.01f;
+	soundEnabled=true;
+	sound->SetVolume(gameSoundVolume);
+
 	camera=new CCamera();
 	cam2=new CCamera();
-	sound=CreateSoundInterface ();
 	mouse=new CMouseHandler();
 	selectionKeys=new CSelectionKeyHandler();
 	tooltip=new CTooltipConsole();
@@ -521,8 +525,10 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if (s=="track")
 		trackingUnit=!trackingUnit;
 
-	if (s=="nosound")
-		sound->noSound=!sound->noSound;
+	if (s=="nosound") {
+		soundEnabled=!soundEnabled;
+		sound->SetVolume (soundEnabled ? gameSoundVolume : 0.0f);
+	}
 
 	if(s=="savegame"){
 		CLoadSaveHandler ls;
@@ -945,10 +951,10 @@ bool CGame::Draw()
 		script->SetCamera();
 
 	
-	if(shadowHandler->drawShadows){
+	if(shadowHandler->drawShadows)
 		shadowHandler->CreateShadows();
+	if (unitDrawer->advShading)
 		unitDrawer->UpdateReflectTex();
-	}
 
 	camera->Update(false);
 

@@ -22,6 +22,8 @@ COpenALSound::COpenALSound()
 {
 	maxSounds = configHandler.GetInt("MaxSounds",16);
 	noSound = false;
+	globalVolume = 1.0f;
+
 	cur = 0;
 	if (!noSound) {
 		ALCdevice *device = alcOpenDevice(NULL);
@@ -97,6 +99,11 @@ static bool CheckError(const char* msg)
 	return true;
 }
 
+void COpenALSound::SetVolume (float v)
+{
+	globalVolume = v;
+}
+
 void COpenALSound::PlaySound(int id, float volume)
 {
 	if (noSound || !camera)
@@ -138,7 +145,7 @@ void COpenALSound::PlaySound(int id,const float3& p,float volume)
 
 	alSourcei(source, AL_BUFFER, id);
 	alSourcef(source, AL_PITCH, 1.0f );
-	alSourcef(source, AL_GAIN, volume );
+	alSourcef(source, AL_GAIN, volume * globalVolume );
 
 	float3 pos = p * posScale;
 	alSource3f(source, AL_POSITION, pos.x, pos.y, pos.z);

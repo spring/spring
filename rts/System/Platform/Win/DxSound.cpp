@@ -30,6 +30,7 @@ CDxSound::CDxSound()
 	maxSounds=ConfigHandler::GetInstance().GetInt("MaxSounds",16);
 	curThreshhold=0.1;
 	wantedSounds=maxSounds*0.75;
+	globalVolume=1.0f;
 
 	m_pDS            = NULL;
 	m_hWnd			 = NULL;
@@ -189,6 +190,11 @@ int CDxSound::GetBuf(int id,float volume)
 	return num;
 }
 
+void CDxSound::SetVolume (float v)
+{
+	globalVolume=v;
+}
+
 void CDxSound::PlaySound(int id,float volume)
 {
 	PUSH_CODE_MODE;
@@ -198,7 +204,7 @@ void CDxSound::PlaySound(int id,float volume)
 		return;
 	}
 
-	float v=0.2-volume*0.2;
+	float v=0.2-globalVolume*volume*0.2;
 		
 	HRESULT hr;
 	int num=GetBuf(id,v);
@@ -241,8 +247,8 @@ void CDxSound::PlaySound(int id,const float3& p,float volume)
 	float dl=dif.Length();
 	float pan=dif.dot(camera->right)*DSBPAN_RIGHT/dl;
 	float v=0;
-	if(volume!=0)
-		v=dl/(volume*2000);
+	if(volume!=0.0f && globalVolume!=0.0f)
+		v=dl/(globalVolume*volume*2000);
 	if(v>0.6){
 		POP_CODE_MODE;
 		return;
