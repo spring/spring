@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GUIendgameDialog.h"
 #include "GUItable.h"
 #include "GUIbutton.h"

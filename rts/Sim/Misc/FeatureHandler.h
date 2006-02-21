@@ -2,18 +2,17 @@
 #define __FEATURE_HANDLER_H__
 
 #include "Object.h"
-#include <map>
 #include <string>
 #include <list>
-#include <stack>
 #include <deque>
 #include <set>
 #include <vector>
-#ifdef __GNUG__
-#include <ext/hash_set>
-#endif
+#include <map>
+#include SPRING_HASH_SET_H
 #include "TdfParser.h"
-#include "creg/ClassReg.h"
+#include "creg/creg.h"
+
+#include "FeatureDef.h"
 
 struct S3DOModel;
 class CFeature;
@@ -94,11 +93,7 @@ public:
 	std::deque<int> freeIDs;
 
 	std::list<int> toBeRemoved;
-#ifdef __GNUG__
-	__gnu_cxx::hash_set<int> updateFeatures;
-#else
-	std::set<int> updateFeatures;
-#endif
+	SPRING_HASH_SET<int> updateFeatures;
 
 	struct DrawQuad {
 		std::set<CFeature*> features;

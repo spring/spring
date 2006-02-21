@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GUIinfoSelection.h"
 #include "GUIcontroller.h"
 #include "GUIfont.h"

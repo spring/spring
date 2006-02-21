@@ -6,7 +6,11 @@
 #include "Object.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CObject, creg::Object)
+CR_BIND(CObject)
+
+CR_BIND_MEMBERS(CObject,(
+	CR_MEMBER(listening),
+	CR_MEMBER(listeners)));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

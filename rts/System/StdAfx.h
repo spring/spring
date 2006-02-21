@@ -5,9 +5,8 @@
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #endif
 
-#pragma warning (disable:4530)
-
 #ifdef _MSC_VER
+	#pragma warning (disable: 4530 4305 4244)
 /*
 Microsoft Visual C++ 7.1: MSC_VER = 1310
 Microsoft Visual C++ 7.0: MSC_VER = 1300
@@ -26,6 +25,23 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#define VSNPRINTF vsnprintf
 #endif
 
+
+#ifdef _MSC_VER
+	#define SPRING_HASH_SET stdext::hash_set
+	#define SPRING_HASH_SET_H <hash_set>
+
+	#define SPRING_HASH_MAP stdext::hash_map
+	#define SPRING_HASH_MAP_H <hash_map>
+#elif __GNUG__
+	#define SPRING_HASH_SET __gnu_cxx::hash_set
+	#define SPRING_HASH_SET_H <ext/hash_set>
+
+	#define SPRING_HASH_MAP __gnu_ccx::hash_map
+	#define SPRING_HASH_MAP_H <ext/hash_map>
+#else
+	#error Unsupported compiler
+#endif
+
 // This reduces compile-time with precompiled headers on msvc
 #ifdef _MSC_VER
 #include <vector>
@@ -35,6 +51,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #endif
 
 #include "Syncify.h"
+#include "creg/creg.h"
 #include "float3.h"
 #include "GlobalStuff.h"
 

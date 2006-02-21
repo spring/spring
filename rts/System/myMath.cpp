@@ -3,6 +3,11 @@
 #include "math.h"
 #include "mmgr.h"
 
+CR_BIND_STRUCT(float2);
+CR_BIND_MEMBERS(float2, (CR_MEMBER(x), CR_MEMBER(y)));
+
+CR_BIND_STRUCT(int2);
+CR_BIND_MEMBERS(int2, (CR_MEMBER(x),CR_MEMBER(y)));
 
 float3 headingToVectorTable[1024];
 

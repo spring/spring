@@ -6,6 +6,8 @@
 class CMatrix44f
 {
 public:
+	CR_DECLARE_STRUCT(CMatrix44f);
+
 	CMatrix44f(void);
 	CMatrix44f(const float3& pos,const float3& x,const float3& y,const float3& z);
 	~CMatrix44f(void);

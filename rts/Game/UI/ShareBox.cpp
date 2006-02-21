@@ -71,7 +71,6 @@ void CShareBox::Draw(void)
 	float mx=float(mouse->lastx)/gu->screenx;
 	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
 
-	GLfloat x1,y1,x2,y2,x;
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);

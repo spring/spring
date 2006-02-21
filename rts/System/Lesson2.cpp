@@ -29,7 +29,7 @@
 #include "Platform/BaseCmd.h"
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
-#include "creg/ClassReg.h"
+#include "creg/creg.h"
 #include "bitops.h"
 #ifndef NO_LUA
 #include "Script/LuaBinder.h"
@@ -374,6 +374,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	}
 
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+	SDL_SetModState (KMOD_NONE);
 
 	font = new CglFont(32,223);
 	LoadExtensions();
@@ -395,6 +396,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #endif
 
 	keys = new Uint8[SDLK_LAST];
+	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
 	SDL_Event event;
 	while (!done) {

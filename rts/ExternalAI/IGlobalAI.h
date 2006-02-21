@@ -6,7 +6,7 @@
 
 class IGlobalAICallback;
 
-#define GLOBAL_AI_INTERFACE_VERSION 10
+#define GLOBAL_AI_INTERFACE_VERSION 12
 
 // Both use ChangeTeamEvent for data
 #define AI_EVENT_UNITGIVEN 1

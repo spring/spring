@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-#include "creg/ClassReg.h"
+#include "creg/creg.h"
 
 struct MoveData;
 struct WeaponDef;
@@ -33,7 +33,8 @@ struct UnitDef
 	std::string filename;
 	bool loaded;
 	int id;											//unique id for this type of unit
-	unsigned int unitimage;
+	unsigned int unitimage; // don't read this directly use CUnitDefHandler::GetUnitImage instead
+	std::string buildpicname;
 
 	int aihint;
 
