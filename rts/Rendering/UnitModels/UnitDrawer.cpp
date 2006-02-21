@@ -75,14 +75,21 @@ CUnitDrawer::CUnitDrawer(void)
 	float3 specularSunColor=readmap->mapDefParser.GetFloat3(unitSunColor,"MAP\\LIGHT\\SpecularSunColor");
 	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
 
-	advShading=false;
+	advShading=!!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program ? 1 : 0);
 
-	if(shadowHandler->drawShadows){
-		advShading=true;
-		unitShadowVP=LoadVertexProgram("unitshadow.vp");
+	if (advShading)
+	{
+		if(shadowHandler->drawShadows){
+			unitShadowVP=LoadVertexProgram("unit_genshadow.vp");
+			unitFP=LoadFragmentProgram("unit_shadow.fp");
+			units3oFP=LoadFragmentProgram("units3o_shadow.fp");
+		} else {
+			unitShadowVP=0;
+			unitFP=LoadFragmentProgram("unit.fp");
+			units3oFP=LoadFragmentProgram("units3o.fp");
+		}
+
 		unitVP=LoadVertexProgram("unit.vp");
-		glDeleteProgramsARB( 1, &units3oVP );
-		glDeleteProgramsARB( 1, &units3oFP );
 		unitFP=LoadFragmentProgram("unit.fp");
 		units3oVP=LoadVertexProgram("units3o.vp");
 		units3oFP=LoadFragmentProgram("units3o.fp");
@@ -100,7 +107,6 @@ CUnitDrawer::CUnitDrawer(void)
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-
 
 		glGenTextures(1,&specularTex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
@@ -124,7 +130,7 @@ CUnitDrawer::~CUnitDrawer(void)
 	glDeleteTextures(1,&radarBlippTex);
 
 	if(advShading){
-		glDeleteProgramsARB( 1, &unitShadowVP );
+		if (unitShadowVP) glDeleteProgramsARB( 1, &unitShadowVP );
 		glDeleteProgramsARB( 1, &unitVP );
 		glDeleteProgramsARB( 1, &unitFP );
 		glDeleteProgramsARB( 1, &units3oVP );

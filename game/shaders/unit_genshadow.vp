@@ -1,4 +1,6 @@
 !!ARBvp1.0
+# vertex program for generating the shadow buffer
+
 ATTRIB pos = vertex.position;
 PARAM mat[4] = { state.matrix.projection };
 PARAM mat2[4] = { state.matrix.modelview };
