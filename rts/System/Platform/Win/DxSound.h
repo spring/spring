@@ -31,6 +31,7 @@ public:
 	void PlaySound(int id,float volume=1);
 	void PlaySound(int id,CWorldObject* p,float volume=1);
 	void PlaySound(int id,const float3& p,float volume=1);
+	void SetVolume (float v);
 
 	int maxSounds;
 
@@ -53,6 +54,8 @@ protected:
 	vector<SoundInfo*> loadedSounds;
 	list<PlayingSound> playingSounds;
 	vector<int> buf2id;
+	float globalVolume;
+	bool noSound;
 
 	std::vector<LPDIRECTSOUNDBUFFER> buffers;
 

@@ -85,6 +85,9 @@ public:
 	float minUserSpeed;
 	bool gamePausable;
 
+	bool soundEnabled;
+	float gameSoundVolume;
+
 	CGuiKeyReader* guikeys;
 	CScript* script;
 

@@ -1,7 +1,6 @@
-
+!!ARBfp1.0
 # 3DO Unit rendering with shadows
 
-!!ARBfp1.0
 OPTION ARB_fog_linear;
 OPTION ARB_fragment_program_shadow;
 

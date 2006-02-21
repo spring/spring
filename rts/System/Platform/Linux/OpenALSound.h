@@ -18,12 +18,16 @@ public:
 	void PlaySound(int id, float volume);
 	void PlaySound(int id,CWorldObject* p,float volume);
 	void PlaySound(int id,const float3& p,float volume);
+	void SetVolume(float v);
 
-	int maxSounds;
 	COpenALSound();
 	virtual ~COpenALSound();
 private:
+	bool noSound;
+	int maxSounds;
 	int cur;
+	float globalVolume;
+
 	void UpdateListener();
 	void Enqueue(ALuint src);
 	vector<string> LoadedFiles;
