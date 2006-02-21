@@ -1,0 +1,68 @@
+XTA SE changelog
+
+0.66
+
+Reduced speed of rocket kbot rockets 50%
+Increased cost of l2 factories 25%
+Reduced range of annihilator 5%
+
+0.65
+
+Fixed Raven hitsound and move interpolation
+Increased anti air damage from AA weapons, raised hp for non gunship aircrafts to compensate
+Reduced speed of gunships, but increased acceleration
+Anti air ships are now more effective
+Set raven and heavy plasma turrets to not be able to target air to avoid some friendly fire accidents
+Set maximum transportable mass to 3000 for tranport aircrafts
+Increased accuracy of buzzsaw/vulcan
+Fixed fibber move class
+
+0.64
+
+Weakened most expensive mobile units to compensate for friendly fire, mostly by lowering hp
+Lowered speed for sumo,warrior
+Lowered range for sumo
+Increased cost of Krogoth
+Increased build time and energy cost for l2 gunships
+Increased damage from ground aa missile units
+Removed damage modifier differences between seaair and landair and modified seaair hp to fit new scale
+Added new unit Raven heavy rocket kbot, build in arm adv kbot lab
+0.63
+
+Incresed areaofeffect for commander explosions to make sure you cant dgun one without dying
+Increased weapontimer for nukes to lessen risk of it hitting mountains
+Changed how antinukes explodes, they did more damage being destroyed than self destructing for some reason
+Increased damage for bombers bombs
+
+0.62
+
+Lowered hp for all mines so that they cant be placed so close to each other
+Increased build time for annihilator
+Reduced hp of goliath/krogoth 10%
+
+0.61
+
+Added tracks to all tanks
+Anni,Penetrator,DDM got a small targetMoverError to make them worse at hitting aircrafts
+Goliath,MobArt now has worse accuracy while moving
+Increased damage while decreasing range a bit for explosions from buildings that are killed
+
+0.6
+
+50% longer los for all units
+Krogoth/Goliath 20% more expensive
+Goliath less accurate
+Gunships -15% hp
+Fighters +20% damage against land +30% vs air
+Annihilator/Penetrator/Doomsday get beam lasers
+Annihilator 50% more expensive, get lot higher damage output
+Flakker type weapons get slightly higher area of effect to compensate for less edgeeffectivness
+Removed build time from core solar since it screwed up ctrl-b
+Necro/Fark can now resurrect
+Spider now has a paralyzing beamlaser
+Vulcan/Buzzsaw/Mobile artillery and artillery kbots get HighTrajectory tags
+MobArt get somewhat lower health
+Removed Leveller and flea from lvl1 factories
+Increades damage of nukes 20%
+Added tracks to stumpy and bulldog
+Added flares to fighters and advanced bombers
