@@ -18,7 +18,7 @@ typedef unsigned short ushort;
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/FeatureDef.h"
 //#include <stdarg.h>
 //#include <assert.h> 
 //#include <algorithm>

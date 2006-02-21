@@ -10,7 +10,7 @@
 #include "InfoMap.h"
 #include "BuildTable.h" // to access the cached unitdefs 
 #include "DebugWindow.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/FeatureDef.h"
 #include "AI_Config.h"
 
 // TODO: Fix enemy range mapping
