@@ -264,7 +264,7 @@ void CglFont::glPrint(const char *fmt, ...)
 	if (fmt == NULL)
 		return;
 	va_start(ap, fmt);
-	vsprintf(text, fmt, ap);
+	VSNPRINTF(text, sizeof(text), fmt, ap);
 	va_end(ap);
 	glPushMatrix();
 	printstring(text);
@@ -278,7 +278,7 @@ void CglFont::glPrintColor(const char* fmt, ...)
 	if (fmt == NULL)
 		return;
 	va_start(ap, fmt);
-	vsprintf(text, fmt, ap);
+	VSNPRINTF(text, sizeof(text), fmt, ap);
 	va_end(ap);
 	glPushAttrib(GL_COLOR_BUFFER_BIT);
 	glPushMatrix();
@@ -306,7 +306,7 @@ void CglFont::glWorldPrint(const char *fmt, ...)
 	if (fmt == NULL)
 		return;
 	va_start(ap, fmt);
-	vsprintf(text, fmt, ap);
+	VSNPRINTF(text, sizeof(text), fmt, ap);
 	va_end(ap);
 	glPushMatrix();
 	glRasterPos2i(0,0);
@@ -326,7 +326,7 @@ void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 	if (fmt == NULL)
 		return;
 	va_start(ap, fmt);
-	vsprintf(text, fmt, ap);
+	VSNPRINTF(text, sizeof(text), fmt, ap);
 	va_end(ap);
 	glPushAttrib(GL_LIST_BIT);
 	glPushMatrix();
