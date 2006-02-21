@@ -49,6 +49,7 @@
 #include "Platform/Win/win32.h"
 #include <winreg.h>
 #include <direct.h>
+#include <SDL_syswm.h>
 #endif
 
 #define XRES_DEFAULT 1024
@@ -398,6 +399,10 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	keys = new Uint8[SDLK_LAST];
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
+#ifdef WIN32
+	SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
+#endif
+
 	SDL_Event event;
 	while (!done) {
 		ENTER_UNSYNCED;
@@ -421,7 +426,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 							mouse->currentCamController->MouseWheelMove(scrollWheelSpeed);
 						else if (event.button.button == SDL_BUTTON_WHEELDOWN)
 							mouse->currentCamController->MouseWheelMove(-scrollWheelSpeed);
-						mouse->MousePress(event.button.x,event.button.y,event.button.button);
+						else
+							mouse->MousePress(event.button.x,event.button.y,event.button.button);
 					}
 					break;
 				case SDL_MOUSEBUTTONUP:
@@ -472,6 +478,19 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 					
 					break;
 				}
+#ifdef WIN32
+				case SDL_SYSWMEVENT:
+				{
+					SDL_SysWMmsg *msg = event.syswm.msg;
+					if (msg->msg == 0x020B) { // WM_XBUTTONDOWN, beats me why it isn't defined by default
+						if (msg->wParam & 0x20) // MK_XBUTTON1
+							mouse->MousePress (LOWORD(msg->lParam),HIWORD(msg->lParam), 4);
+						if (msg->wParam & 0x40) // MK_XBUTTON2
+							mouse->MousePress (LOWORD(msg->lParam),HIWORD(msg->lParam), 5);
+					}
+					break;
+				}
+#endif
 			}
 		}
 		if (FSAA)

@@ -54,9 +54,7 @@ CMouseHandler::CMouseHandler()
 : locked(false),
 	activeReceiver(0),
 	transitSpeed(0),
-	inStateTransit(false),
-	xButtonCounter(0)
-
+	inStateTransit(false)
 {
 	lastx=300;
 	lasty=200;
@@ -192,9 +190,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 #endif
 	
 	if(button==4){
-		xButtonCounter--;
-		if(xButtonCounter<0)
-			xButtonCounter=0;
+		if (guihandler->buildSpacing > 0)
+			guihandler->buildSpacing --;
 /*		CUnit* u;
 		float dist=helper->GuiTraceRay(camera->pos,hide ? camera->forward : camera->CalcPixelDir(x,y),9000,u,20,false);
 		if(dist<8900 && gs->cheatEnabled){
@@ -204,7 +201,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 	if(button==5){
-		xButtonCounter++;
+		guihandler->buildSpacing++;
 		return;
 	}
 

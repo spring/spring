@@ -789,6 +789,12 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 
 	if (s=="moveslow")
 		camMove[7]=true;
+
+	if (s=="mouse4")
+		mouse->MousePress (mouse->lastx, mouse->lasty, 4);
+
+	if (s=="mouse5")
+		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 #endif
 	return 0;
 }

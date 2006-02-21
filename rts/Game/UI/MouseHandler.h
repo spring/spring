@@ -65,8 +65,6 @@ public:
 	CCameraController* currentCamController;
 	std::vector<CCameraController*> camControllers;
 	int currentCamControllerNum;
-
-	int xButtonCounter;		//incremented with xbutton2 decremented with xbutton1, used for spacing buildings in guihandler
 protected:
 	int soundMultiselID;
 public:

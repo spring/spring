@@ -46,7 +46,7 @@ public:
 	int maxPages;
 	int defaultCmdMemory;
 	CglList* list;
-
+	int buildSpacing;
 
 	void CreateOptions(Command& c,bool rmb);
 	int GetDefaultCommand(int x,int y);
