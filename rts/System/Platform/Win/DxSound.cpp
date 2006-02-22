@@ -247,8 +247,8 @@ void CDxSound::PlaySound(int id,const float3& p,float volume)
 	float dl=dif.Length();
 	float pan=dif.dot(camera->right)*DSBPAN_RIGHT/dl;
 	float v=0;
-	if(volume!=0.0f && globalVolume!=0.0f)
-		v=dl/(globalVolume*volume*2000);
+	if(volume!=0.0f)
+		v=dl/((globalVolume + 0.01f)*volume*2000);
 	if(v>0.6){
 		POP_CODE_MODE;
 		return;
