@@ -1086,7 +1086,7 @@ bool CGame::Draw()
 	if(userWriting){
 		glColor4f(1,1,1,1);
 		glTranslatef(0.1f,0.75f,0.0f);
-		glScalef(0.03f,0.04f,0.1f);
+		glScalef(0.02f,0.028f,0.1f);
 		tempstring=userPrompt;
 		tempstring+=userInput;
 		font->glPrint("%s",tempstring.c_str());
