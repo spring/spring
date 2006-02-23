@@ -2,6 +2,10 @@ TASpring change log
 
 next
 
+- First use of crossplatform code! This required a lot of bugfixing and changes, which are not mentioned here.
+  Among these changes are switches to using boost, SDL, freetype, instead of Win32 SDK + DirectX. For a full list of changes, see the subversion log.
+
+- Binding for mouse button 4/5 added (defaults to Z and X), so you can set build spacing.
 - You can enable advanced unit rendering without enabling shadow mapping (in the settings app).
 - Various resource files are now read from gamedata/resources.tdf instead of hardcoded into the game exe.
 - Added "dontland" unit tag, to specify aircraft that should not land. Don't use this on transport units!
@@ -13,10 +17,8 @@ next
    72 UNIT_TEAM	         returns team of unit given with parameter
    73 UNIT_BUILD_PERCENT_LEFT   basically BUILD_PERCENT_LEFT, but comes with a unit parameter
    74 UNIT_ALLIED        is unit given with parameter allied to the unit of the current COB script. 1=allied, 0=not allied
-
-- First use of multiplatform code! A huge amount of changes were done to accomplish this.
-  Among these changes are switches to using boost, SDL, freetype, instead of Win32 SDK + DirectX. For a full list of changes, see the subversion log.
 - Fixed login packets being sent every frame instead of once a second when trying to connect
+- Fixed ghosted buildings option.
 
 0.67b3
 

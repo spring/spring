@@ -8,7 +8,7 @@
 SetCompressor lzma
 
 ; HM NIS Edit Wizard helper defines
-!define PRODUCT_NAME "TA Spring test"
+!define PRODUCT_NAME "TA Spring"
 !define PRODUCT_VERSION "0.70b1"
 !define PRODUCT_PUBLISHER "The TA Spring team"
 !define PRODUCT_WEB_SITE "http://taspring.clan-sy.com"
@@ -470,7 +470,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_BATTLEROOM} "The multiplayer battleroom used to set up multiplayer games and find opponents."
 
 !ifndef SP_UPDATE
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAPS} "Includes three maps to play TA Spring with.$\n$\nThese maps are called Small Divide, Flooded Desert and Mars."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAPS} "Includes two maps to play TA Spring with.$\n$\nThese maps are called Small Divide and Mars."
 !endif
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_START} "This creates shortcuts on the start menu to all the applications provided."
