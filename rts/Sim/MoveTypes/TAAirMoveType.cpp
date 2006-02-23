@@ -284,7 +284,7 @@ void CTAAirMoveType::UpdateHovering()
 
 		// move towards goal position
 		float3 dir = goalPos - owner->pos;
-		wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.1f;
+		wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.03f;
 
 		// damping
 		wantedSpeed *= 0.97f;
@@ -502,7 +502,7 @@ void CTAAirMoveType::UpdateHeading()
 	}	
 }
 
-void CTAAirMoveType::UpdateBanking()
+void CTAAirMoveType::UpdateBanking(bool noBanking)
 {
 	float3 &frontdir = owner->frontdir;
 	float3 &updir = owner->updir;
@@ -520,7 +520,9 @@ void CTAAirMoveType::UpdateBanking()
 	float3 rightdir(frontdir.cross(UpVector));		//temp rightdir
 	rightdir.Normalize();
 
-	float wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5;
+	float wantedBank = 0.0f;
+	if (!noBanking) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5;
+
 	float limit=min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
 	if(wantedBank>limit)
 		wantedBank=limit;
@@ -758,7 +760,7 @@ void CTAAirMoveType::Update()
 
 	//Turn and bank and move
 	UpdateHeading();
-	UpdateBanking();			//updates dirs
+	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);			//updates dirs
 	owner->midPos=pos+frontdir*owner->relMidPos.z + updir*owner->relMidPos.y + rightdir*owner->relMidPos.x;
 
 	//Push other units out of the way
