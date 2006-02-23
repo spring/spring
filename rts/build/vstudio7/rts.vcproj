@@ -917,22 +917,10 @@
 					RelativePath="..\..\Game\StartScripts\SpawnScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\SWTATestScrip.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\SWTATestScrip.h">
-				</File>
-				<File
 					RelativePath="..\..\Game\StartScripts\TestScript.cpp">
 				</File>
 				<File
 					RelativePath="..\..\Game\StartScripts\TestScript.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\YehaTestScript.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\YehaTestScript.h">
 				</File>
 			</Filter>
 		</Filter>
