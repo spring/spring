@@ -87,7 +87,7 @@ public:
 
 	//Helpers for (multiple) state handlers
 	void UpdateHeading();
-	void UpdateBanking();
+	void UpdateBanking(bool noBanking);
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 	
