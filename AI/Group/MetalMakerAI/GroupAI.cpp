@@ -38,7 +38,7 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 bool CGroupAI::AddUnit(int unit)
 {
 	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(!(ud->energyUpkeep>0 && ud->makesMetal>0)){
+	if(!(ud->energyUpkeep>0.0f && (ud->makesMetal>0.0f || ud->extractsMetal>0.0f))){
 		aicb->SendTextMsg("Can only use metal makers",0);
 		return false;
 	}
