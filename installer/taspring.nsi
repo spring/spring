@@ -210,7 +210,7 @@ FunctionEnd
 ; Deletes testscript.lua if it is from an original installation
 Function UpdateTestscript
   ClearErrors
-  FileOpen $0 "$INSTDIR\testscript.lua" r
+  FileOpen $0 "$INSTDIR\startscripts\testscript.lua" r
   IfErrors done
   FileSeek $0 0 END $1
   IntCmp $1 4215 Eq
@@ -218,7 +218,7 @@ Function UpdateTestscript
 
 Eq:
   FileClose $0
-  Delete "$INSTDIR\testscript.lua"
+  Delete "$INSTDIR\startscripts\testscript.lua"
   Goto done
 
 Neq:
@@ -228,25 +228,25 @@ Neq:
 Done:
 FunctionEnd
 
-; Only allow installation if spring.exe is from version 0.60b1
+; Only allow installation if spring.exe is from version 0.67bx
 Function CheckVersion
   ClearErrors
   FileOpen $0 "$INSTDIR\spring.exe" r
   IfErrors done
   FileSeek $0 0 END $1
-  IntCmp $1 2637824 Done             ; 0.60b1
-  IntCmp $1 2650112 Done             ; 0.61b1
-  IntCmp $1 2670592 Done             ; 0.61b2
-  IntCmp $1 2678784 Done             ; 0.62b1
-  IntCmp $1 2682880 Done             ; 0.63b1 & 0.63b2
-  IntCmp $1 2703360 Done             ; 0.64b1
-  IntCmp $1 3006464 Done             ; 0.65b1
-  IntCmp $1 3014656 Done             ; 0.65b2
-  IntCmp $1 3031040 Done             ; 0.66b1
-  IntCmp $1 3035136 Done             ; 0.67b1 & 0.67b2
+;  IntCmp $1 2637824 Done             ; 0.60b1
+;  IntCmp $1 2650112 Done             ; 0.61b1
+;  IntCmp $1 2670592 Done             ; 0.61b2
+;  IntCmp $1 2678784 Done             ; 0.62b1
+;  IntCmp $1 2682880 Done             ; 0.63b1 & 0.63b2
+;  IntCmp $1 2703360 Done             ; 0.64b1
+;  IntCmp $1 3006464 Done             ; 0.65b1
+;  IntCmp $1 3014656 Done             ; 0.65b2
+;  IntCmp $1 3031040 Done             ; 0.66b1
+  IntCmp $1 3035136 Done             ; 0.67b1 & 0.67b2 & 0.67b3
 
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.6x. Your current folder does not contain a spring.exe from any such version, so the installation will be aborted.. Please download the full installer instead and try again."
-  Abort "Unable to upgrade, version 0.60b1, 0.61b1, 0.61b2, 0.62b1, 0.63b1, 0.63b2, 0.64b1, 0.65b1, 0.65b2 or 0.66b1 not found.."
+  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.67bx. Your current folder does not contain a spring.exe from any such version, so the installation will be aborted.. Please download the full installer instead and try again."
+  Abort "Unable to upgrade, version 0.67 not found.."
   Goto done
 
 Done:
@@ -290,7 +290,8 @@ Section "Main application (req)" SEC_MAIN
   File "..\game\dbghelp.dll"
   File "..\game\devil.dll"
   File "..\game\SDL.dll"
-  File "..\game\MSVCP71.dll"
+  File "..\game\msvcp71.dll"
+  File "..\game\msvcr71.dll"
 ;  File "..\game\tower.sdu"
   Delete "$INSTDIR\tower.sdu"
   File "..\game\palette.pal"
@@ -364,6 +365,7 @@ Section "Main application (req)" SEC_MAIN
 ;  File "..\game\base\tacontent.sdz"
   Delete "$INSTDIR\base\tacontent.sdz"
 
+!ifndef SP_UPDATE
   File "..\game\base\otacontent.sdz"
   File "..\game\base\tacontent_v2.sdz"
   File "..\game\base\springcontent.sdz"
@@ -371,12 +373,15 @@ Section "Main application (req)" SEC_MAIN
   SetOutPath "$INSTDIR\base\spring"
   File "..\game\base\spring\springbitmaps_v061.sdz"
 ;  File "..\game\base\spring\springdecals_v061.sdz"
-  Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
   File "..\game\base\spring\springdecals_v062.sdz"
   File "..\game\base\spring\springloadpictures_v061.sdz"
+  Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
+!endif
 
   SetOutPath "$INSTDIR\mods"
+!ifndef SP_UPDATE
   File "..\game\mods\xta_se_v066.sdz"
+!endif
   File "..\game\mods\xtapev3.sd7"
 
   Delete "$INSTDIR\mods\xta_se_v065.sdz"
@@ -577,6 +582,8 @@ Section Uninstall
   Delete "$INSTDIR\crashrpt.dll"
   Delete "$INSTDIR\dbghelp.dll"
   Delete "$INSTDIR\devil.dll"
+  Delete "$INSTDIR\SDL.dll"
+  Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\tower.sdu"
   Delete "$INSTDIR\palette.pal"
 ;  Delete "$INSTDIR\spawn.txt"
