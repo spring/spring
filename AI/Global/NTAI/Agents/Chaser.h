@@ -1,7 +1,7 @@
 #ifndef CHASER_H
 #define CHASER_H
 #include <list>
-#include "ExternalAI/IAICallback.h"
+#include "AICallback.h"
 #include "Sim/Units/UnitDef.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -10,7 +10,7 @@
 // structrues at soem point and globalising the unit structures.
 // Then I can keep thigns down in filesize and make everything
 // that much nicer.
-
+enum a_type {a_mexraid, a_normal, a_random};
 class ackforce : public ugroup{
 public:
 	ackforce(){}
@@ -20,8 +20,20 @@ public:
 	}
 	virtual ~ackforce(){}
 	bool marching;
-	int acknum;
+//	int acknum;
 	float3 starg;
+	a_type type;
+	int i;
+};
+struct T_Targetting{
+	Global* G;
+	ackforce* i;
+	bool upthresh;
+};
+
+struct Ins{
+	Global* G;
+	ackforce i;
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -38,14 +50,15 @@ struct agrid{
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // The chaser class, deals with atatcking and defending.
 
-class Chaser : public base{
+
+
+class Chaser{
 public:
 	Chaser(){
 		//enemies = new int[10000];
-		threshold = 7; // NTAI will never send a task force smaller than this number.
+		threshold = 4; // NTAI will never send a task force smaller than this number.
 		G = 0;
-		sector = 0;
-		acknum = 0;
+		lock = false;
 	}
 	virtual ~Chaser();
 	void InitAI(Global* GLI);
@@ -53,29 +66,28 @@ public:
 	void UnitDestroyed(int unit);
 	void UnitFinished(int unit);
 	void EnemyDestroyed(int enemy);
-	void EnemyEnterLOS(int enemy);
-	void EnemyEnterRadar(int enemy);
-	void FindTarget(ackforce* i);
+	void FindTarget(ackforce* i, bool upthresh=true);
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);
-	void EnemyLeaveLOS(int enemy);
 	void UnitIdle(int unit);
 	void Update();
 	void FireSilos();
-private:
-	//int *enemies;
+	void MakeTGA();
+
 	int threshold;
-	agrid** sector;
+	map< int, map<int,agrid> > sector;
+	int xSectors, ySectors;		// number of sectors
+	int xSize, ySize;			// size of sectors (in unit pos coordinates)
+	int xSizeMap, ySizeMap;		// size of sectors (in map coodrinates = 1/8 xSize)
 	set<int> Attackers;
 	set<int> sweap;
 	float3 swtarget;
-	int acknum;
+	bool lock;
+//	int acknum;
 	Global* G;
 	vector<ackforce> groups;
 	int enemynum;
 	int forces;
-	int xSectors, ySectors;		// number of sectors
-	int xSize, ySize;			// size of sectors (in unit pos coordinates)
-	int xSizeMap, ySizeMap;		// size of sectors (in map coodrinates = 1/8 xSize)
+	
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

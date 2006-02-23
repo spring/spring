@@ -16,24 +16,31 @@ bool Planning::feasable(string s, int builder){
 		if(MetalPercentage > 0.1f) return false;
 		if(EnergyPercentage > 0.2f) return false;
 	}*/
-	return true;
+	/*const UnitDef* ud = G->cb->GetUnitDef(s.c_str());
+	if(ud != 0){
+		if(G->cb->GetMetalStorage() + ((G->cb->GetEnergyIncome()+G->cb->GetMetalIncome())*ud->buildTime) > ud->metalCost){
+			return true;
+		}
+	}*/
+	return false;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-int Planning::DrawLine(ARGB colours, float3 A, float3 B, int LifeTime, float Width, bool Arrow){
+/*int Planning::DrawLine(ARGB colours, float3 A, float3 B, int LifeTime, float Width, bool Arrow){
 	// Get New Group
-	int DrawGroup = G->cb->CreateLineFigure(float3(0,0,0), float3(1,1,1), 1.0f, 0, LifeTime, 0);
+	/*int DrawGroup = G->cb->CreateLineFigure(float3(0,0,0), float3(1,1,1), 1.0f, 0, LifeTime, 0);
 	G->cb->SetFigureColor(DrawGroup, colours.red, colours.green, colours.blue,colours.alpha);
 	G->cb->CreateLineFigure(A, B, Width, Arrow ? 1 : 0, LifeTime, DrawGroup);
 	return DrawGroup;
-}
+	return 0;
+}*/
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-int Planning::DrawLine(float3 A, float3 B, int LifeTime, float Width, bool Arrow){
+/*int Planning::DrawLine(float3 A, float3 B, int LifeTime, float Width, bool Arrow){
 	// Get New Group
-	int DrawGroup = G->cb->CreateLineFigure(float3(0,0,0), float3(1,1,1), 1.0f, 0, LifeTime, 0);
+	/*int DrawGroup = G->cb->CreateLineFigure(float3(0,0,0), float3(1,1,1), 1.0f, 0, LifeTime, 0);
 	switch(G->cb->GetMyAllyTeam()){
 		case 0:
             G->cb->SetFigureColor(DrawGroup, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -68,7 +75,8 @@ int Planning::DrawLine(float3 A, float3 B, int LifeTime, float Width, bool Arrow
 	}
     G->cb->CreateLineFigure(A, B, Width, Arrow ? 1 : 0, LifeTime, DrawGroup);
 	return DrawGroup;
-}
+	return 0;
+}*/
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

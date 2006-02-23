@@ -1,33 +1,35 @@
 
-#include "./MetalHandler.h"
+/*#include "./MetalHandler.h"
 #include <string.h>
 #include <vector>
 #include <list>
 #include <iterator>
 #include "GlobalStuff.h"
-#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDef.h"*/
+#include "helper.h"
 
 #define SAVEGAME_VER 4
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 /** MAGIC NUMBERS **/
 
-#define MIN_HOTSPOT_METAL			64
-#define MIN_PATCH_METAL				10
-#define SEARCH_PASS					32
-#define HOT_SPOT_RADIUS_MULTIPLYER	1.6f
-#define NEAR_RADIUS			400
-#define NEAR_RADIUS_2			600
-#define NEAR_RADIUS_3			800
-#define NEAR_RADIUS_4			1250
-#define NEAR_RADIUS_5			1800
-#define NEAR_RADIUS_6			2400
-#define NEAR_RADIUS_7			5000
+//#define MIN_HOTSPOT_METAL			60
+//#define MIN_PATCH_METAL				9
+//#define SEARCH_PASS					32
+#define HOT_SPOT_RADIUS_MULTIPLYER	1.3f
+#define NEAR_RADIUS			800
+#define NEAR_RADIUS_2			1200
+#define NEAR_RADIUS_3			2000
+#define NEAR_RADIUS_4			4050
+#define NEAR_RADIUS_5			8000
+#define NEAR_RADIUS_6			12000
+#define NEAR_RADIUS_7			20000
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 CMetalHandler::CMetalHandler(IAICallback *callback){
 	cb=callback;
+	m = new MetalMap(cb);
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -40,8 +42,8 @@ bool metalcmp(float3 a, float3 b) { return a.y > b.y; }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-std::vector<float3> *CMetalHandler::parseMap(){
-	std::vector<float3> *ov;
+//std::vector<float3> *CMetalHandler::parseMap(){
+	/*std::vector<float3> *ov;
 	std::list<float3> *mp=new std::list<float3>();
 	float x,z;
 	float offset=SEARCH_PASS;
@@ -88,99 +90,15 @@ std::vector<float3> *CMetalHandler::parseMap(){
 		mp->pop_front();
 	}
 	delete(mp);
-	return ov;
-};
-
-// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-void CMetalHandler::saveState() {
-	FILE *fp=fopen(hashname(),"w");
-	if (!fp) return; // Don't crash if files/directories don't exist. --tvo
-	int v=SAVEGAME_VER;
-	fwrite(&v,sizeof(int),1,fp);
-	int s=(int)metalpatch.size();
-	fwrite(&s,sizeof(int),1,fp);
-	for(int i=0;i<s;i++) {
-		fwrite(&metalpatch[i],sizeof(float3),1,fp);
-	}
-	s=(int)hotspot.size();
-	fwrite(&s,sizeof(int),1,fp);
-	for(int i=0;i<s;i++) {
-		fwrite(&hotspot[i],sizeof(float3),1,fp);
-	}
-	fclose(fp);
-}
+	return ov;*/
+//};
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void CMetalHandler::loadState() {
-	cb->SendTextMsg("loadstate()L",1);
-	FILE *fp=NULL;
-	//Can't get saving working.. bah.
-	//fp=fopen(hashname(),"r");
-	metalpatch.clear();
-	//hotspot.clear();
-	if (fp!=NULL) {
-		int s=0;
-		fread(&s,sizeof(int),1,fp);
-		if (s!=SAVEGAME_VER) {
-			cb->SendTextMsg("Wrong Savegame Magic",0);
-			fclose(fp);
-			fp=NULL;
-		}
-	}
-	if (fp==NULL) {
-		//cb->SendTextMsg("fp==NULL",1);
-		std::vector<float3> *vi=parseMap();
-		for (std::vector<float3>::iterator it=vi->begin();it!=vi->end();++it) {
-			metalpatch.push_back(*it);
-		}
-		delete(vi);
-		float sr=cb->GetExtractorRadius()*HOT_SPOT_RADIUS_MULTIPLYER;
-		if (sr<256) sr=256;
-		sr=sr*sr;
-		for (unsigned int i=0;i<this->metalpatch.size();i++){
-			float3 candidate=metalpatch[i];
-			bool used=false;
-			for (unsigned int j=0;j<hotspot.size();j++) {
-				float3 t=hotspot[j];
-				if (((candidate.x-t.x)*(candidate.x-t.x)+(candidate.z-t.z)*(candidate.z-t.z))<sr){
-					used=true;
-					hotspot[j]=float3((t.x*t.y+candidate.x*candidate.y)/(t.y+candidate.y),t.y+candidate.y,(t.z*t.y+candidate.z*candidate.y)/(t.y+candidate.y));		
-				}
-			}
-			if (used==false) {
-				if (candidate.y>MIN_HOTSPOT_METAL)
-				hotspot.push_back(candidate);
-			}
-		}
-		saveState();
-	} else {
-		int s;
-		fread(&s,sizeof(int),1,fp);
-		for(int i=0;i<s;i++) {
-			float3 tmp;
-			fread(&tmp,sizeof(float3),1,fp);
-			metalpatch.push_back(tmp);
-		}
-		fread(&s,sizeof(int),1,fp);
-		for(int i=0;i<s;i++) {
-			float3 tmp;
-			fread(&tmp,sizeof(float3),1,fp);
-			hotspot.push_back(tmp);
-		}
-		fclose(fp);
-	}
-}
-
-// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-const char *CMetalHandler::hashname() {
-	const char *name=cb->GetMapName();
-	std::string *hash=new std::string("./aidll/globalai/MEXCACHE/");
-	hash->append(cb->GetMapName());
-	hash->append(".mai");
-	return hash->c_str();
+	m->init();
+	hotspot = m->VectoredSpots;
+	metalpatch = m->VectoredSpots;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -216,9 +134,9 @@ float CMetalHandler::getMetalAmount(int x, int z) {
 		z=0;
 	else if(z>=sizez)
 		z=sizez-1;
-	float val = (float)(cb->GetMetalMap()[x + z*sizex]);
-	if(val<(cb->GetMaxMetal()*0.35f)) val *= 0.4f;
-	if(val>(cb->GetMaxMetal()*0.55f)) val *= 2.5f;
+	float val = (cb->GetMetalMap()[x + z*sizex]);
+	//if(val<(cb->GetMaxMetal()*0.35f)) val *= 0.4f;
+	//if(val>(cb->GetMaxMetal()*0.55f)) val *= 2.5f;
 	return val;
 }
 
@@ -230,28 +148,28 @@ std::vector<float3> *CMetalHandler::getHotSpots(){
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,float radius, float depth){
+std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,/*float radius,*/ float depth){
 	std::vector<float3> *v=new std::vector<float3>();
 	unsigned int i;
-	float mrad=cb->GetExtractorRadius();
+	float mrad=cb->GetExtractorRadius() + 0.1f;
 	//min extractor dist = 2* radius (squared)
 	mrad=3.0f*mrad*mrad;
 	//research radius
-	radius *=radius;
+	//radius *=radius;
 	bool valid;
-	for (i=0;i<this->metalpatch.size();i++) {
+	for (i=0;i<this->metalpatch.size();i++){
 		valid=true;
-		float3 t1=metalpatch[i];
+		float3 t1=metalpatch.at(i);
 		if (t1.y<minMetal) break;
-		float d=(pos.x-t1.x)*(pos.x-t1.x)+(pos.z-t1.z)*(pos.z-t1.z);
-		if (d>radius) continue;
-		for (std::vector<int>::iterator it=mex.begin();it!=mex.end();++it) {
-			if (const UnitDef *def=cb->GetUnitDef(*it)) {
+		//float d=(pos.x-t1.x)*(pos.x-t1.x)+(pos.z-t1.z)*(pos.z-t1.z);
+		//if (d>radius) continue;
+		for(std::vector<int>::iterator it=mex.begin();it!=mex.end();++it){
+			if (const UnitDef *def=cb->GetUnitDef(*it)){
 				if (def->extractsMetal<depth)	continue;
 			} 
 			float3 t2=cb->GetUnitPos((*it));
 			float d1=(t1.x-t2.x)*(t1.x-t2.x)+(t1.z-t2.z)*(t1.z-t2.z);
-			if (d1<mrad) {
+			if (d1<mrad){
 				valid=false;
 				break;
 			}
@@ -269,58 +187,25 @@ std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,flo
 // returned is empty, wident eh search parameters and try again.
 // If after 6 tries no spots have been found still, then return an error
 
-float3 CMetalHandler::getNearestPatch(float3 pos, float minMetal, float depth) {
-	std::vector<float3> *v=getMetalPatch(pos,minMetal,NEAR_RADIUS,depth);
+float3 CMetalHandler::getNearestPatch(float3 pos, float minMetal, float depth, const UnitDef* ud) {
+	std::vector<float3> *v=getMetalPatch(pos,minMetal,/*NEAR_RADIUS,*/depth);
+	float3 posx = ZeroVector;
+	float d = 1000000;
+	float temp = 0;
 	if(v->empty() == false){
-		float3 posx=(*v)[0];
-		delete(v);
-		return posx;
-	}else{
-		v = getMetalPatch(pos,minMetal,NEAR_RADIUS_2,depth);
-		if(v->empty() == false){
-			float3 posx=(*v)[0];
-			delete(v);
-			return posx;
-		}else{
-			v = getMetalPatch(pos,minMetal,NEAR_RADIUS_3,depth);
-			if(v->empty() == false){
-				float3 posx=(*v)[0];
-				delete(v);
-				return posx;
-			}else{
-				v = getMetalPatch(pos,minMetal,NEAR_RADIUS_4,depth);
-				if(v->empty() == false){
-					float3 posx=(*v)[0];
-					delete(v);
-					return posx;
-				}else{
-					v = getMetalPatch(pos,minMetal,NEAR_RADIUS_5,depth);
-					if(v->empty() == false){
-						float3 posx=(*v)[0];
-						delete(v);
-						return posx;
-					}else{
-						v = getMetalPatch(pos,minMetal,NEAR_RADIUS_6,depth);
-						if(v->empty() == false){
-							float3 posx=(*v)[0];
-							delete(v);
-							return posx;
-						}else{
-							v = getMetalPatch(pos,minMetal,NEAR_RADIUS_7,depth);
-							if(v->empty() == false){
-								float3 posx=(*v)[0];
-								delete(v);
-								return posx;
-							}else{
-								delete(v);
-								return ZeroVector;
-							}
-						}
-					}
-				}
+		posx = v->front();
+		d = posx.distance(pos);
+		for(vector<float3>::iterator vi = v->begin(); vi != v->end(); ++vi){
+			temp = vi->distance(pos);
+			if((temp < d)&&(cb->CanBuildAt(ud,*vi) == true)){
+				posx = *vi;
+				d = temp;
+				temp = 1000000;
 			}
 		}
 	}
+	delete(v);
+	return posx;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

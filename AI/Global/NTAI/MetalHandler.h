@@ -1,23 +1,22 @@
 #ifndef METALHANDLER_H
 #define METALHANDLER_H
-
 #include <vector>
 #include <set>
 #include "float3.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 
+
 class CMetalHandler{	
-	std::vector<float3> *parseMap();
-	const char *hashname();
+	//std::vector<float3> *parseMap();
 	IAICallback *cb;
 	float getMetalAmount(int x, int z);
 public:
-	float getExtractionRanged(float x, float z);	
+	MetalMap* m;
+	float getExtractionRanged(float x, float z);
 	std::vector<float3>	metalpatch;
 	std::vector<float3> hotspot;
 	std::vector<int> mex;
-	void saveState();
 	void loadState();
 	CMetalHandler(IAICallback *callback);
 	virtual ~CMetalHandler(void);
@@ -47,7 +46,7 @@ public:
 	*	@return vector<float3> where .y represent the metal extracted
 	*	        by a standard extractor in that point
 	*/
-	std::vector<float3> *getMetalPatch(float3 pos, float minMetal, float radius,float depth);
+	std::vector<float3> *getMetalPatch(float3 pos, float minMetal, /*float radius,*/float depth);
 	
 	/**
 	*	Quick call, this calls the getMetalPatch and returns
@@ -62,7 +61,7 @@ public:
 	*	@return float3 where y represent the metal extracted by a standard extractor
 	*           in that point, y=-1 on error
 	*/
-	float3 getNearestPatch(float3 pos, float minMetal, float depth);
+	float3 getNearestPatch(float3 pos, float minMetal, float depth, const UnitDef* ud);
 	
 	/**
 	*	If you wand support for getting results afar from other

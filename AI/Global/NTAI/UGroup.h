@@ -1,7 +1,7 @@
 #ifndef UG_H
 #define UG_H
 #include <list>
-#include "ExternalAI/IAICallback.h"
+#include "AICallback.h"
 #include "Sim/Units/UnitDef.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -16,24 +16,22 @@
 	int nurture; // Does this unit prefer building or acting as support or resourcing rather than weapons etc Main attribute for con units build queues
 };*/
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-// Defines for abstract tags
-
-#define C_METAL "m"
-#define C_ENERGY "e"
-#define C_RADAR "r"
-#define C_WISHLIST "w"
-// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // NTAI's version of Command. Still needs further globalising, and
 // for NTAI to make use of it for anythign other than construction.
 // But this holds the potential to ahve enough code put inside it to
 // replace the chaser and scouter agents when combined with a
 // more itnelligent Tunit structure.
 
+#define S_DEFENCE 15
+#define S_POWER 8
+#define S_FACTORY 8
 class Task {
 public:
 	Task(){}
 	Task(Global* GL);
-	Task(Global* GL,string uname); //Used to start a construction task
+	Task(Global* GL,string uname, int b_spacing = 9); //Used to start a construction task
+	Task(Global* GL,  bool repair,bool re);
+	Task(Global* GL, Command _c);
 	virtual ~Task(){}
 
 	bool execute(int uid);
@@ -42,11 +40,14 @@ public:
 	void refresh();
 	// err, forgotten what this does, I'll check back when I have looked
 
-	Command* c;
+	Command c;
 
 	// Used if this task is to build somehting only.
 	string targ;
 	bool construction;
+	int spacing;
+	bool help;
+	int team;
 
 	int executions;
 	bool valid;
@@ -59,7 +60,7 @@ protected:
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-class Tunit : public base{
+class Tunit{
 public:
 	Tunit(){}
 	Tunit(Global* GLI, int id);
@@ -69,15 +70,20 @@ public:
 	virtual ~Tunit();
 
 
-	void AddTask(string buildname); // Add a cosntruction task.
+	void AddTask(string buildname, int spacing = 40); // Add a cosntruction task.
+	void AddTask(bool repair, bool rep,bool re); // repair nearby unti that is currently being built
+	void AddTaskt(Task t){
+		tasks.push_back(t);
+	}
 
-	bool execute(Task* t); // Execute this task.
+	bool execute(Task t); // Execute this task.
+	string GetBuild(int btype,bool water);
 
 	int uid; // The units ID.
 	const UnitDef* ud; // It's unitDef
 	Task Tcurrent;
 	bool idle;
-	list<Task*> tasks; // Saved task list of tasks yet to eb done.
+	list<Task> tasks; // Saved task list of tasks yet to eb done.
 	int frame; // How many frames old is this unit.
 	int creation; // What game frame was this unti created in.
 	int BList; // What build tree does this unti have?
@@ -86,8 +92,8 @@ public:
 	bool guarding; //  when ti finishes its buidl queue it guards another unit
 	bool scavenge; // When it finishes its build queue it ressurects thgins and reclaims obstacles and trees
 	bool waiting; // Has this unti bene given a task that would be a ludicrous thign to do and is waiting for it to become feasible?
+	bool reclaiming;
 
-	Command current;
 	bool bad;
 protected:
 	Global* G;
@@ -108,8 +114,6 @@ public:
 	}
 	virtual ~ugroup(){}
 	//map<int,Tunit*> Getforce(){return umap;}
-	void Add(int uid){}
-	//map<int,Tunit*> umap;
 	int gid;
 	int acknum;
 	set<int> units;

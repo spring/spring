@@ -1,7 +1,7 @@
 #ifndef SCOUTER_H
 #define SCOUTER_H
 #include <list>
-#include "ExternalAI/IAICallback.h"
+#include "AICallback.h"
 #include "Sim/Units/UnitDef.h"
 
 // The scouter agent determines a patrol path that will
@@ -12,19 +12,22 @@
 // built. Because of this, any aircraft that cannot build will
 // be added to this, though this will change surely in 
 // the future.
-class Scouter : public base{
+class Scouter{
 public:
 	Scouter(){}
 	virtual ~Scouter(){}
 	void InitAI(Global* GLI);
 	void UnitFinished(int unit);
-	void Update();
 	void UnitMoveFailed(int unit);
 	void UnitIdle(int unit);
 	void UnitDestroyed(int unit);
+	float3 GetMexScout(int i);
+	float3 GetStartPos(int i);
+	list<float3> start_pos;
 private:
 	Global* G;
-	map<int,vector<float3>::iterator> cp;
+	map<int, list<float3> > cp;
+	list<float3> mexes;
 };
 
 #endif

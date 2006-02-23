@@ -1,23 +1,21 @@
 //#include "Log.h"
 #include "../helper.h"
-#include <time.h>
-#ifdef _MSC_VER
-#include <windows.h>
-#endif
 
-FILE *logFile = 0;
+int Lmagic;
 
-Log::Log(Global* GL){
-	G = GL;
+Log::Log(){
 	verbose = false;
+	First = false;
 }
 
-Log::~Log(){}
+Log::~Log(){
+G = 0;
+}
 
 string Log::GameTime(){
-	char min[2];
-	char sec[2];
-	char hour[2];
+	char min[4];
+	char sec[4];
+	char hour[4];
 	int Time = G->cb->GetCurrentFrame();
 	Time = Time/30;
 	int Seconds = Time%60;
@@ -48,100 +46,193 @@ string Log::GameTime(){
 	stime += "]";
 	return stime;
 }
-
+bool Log::FirstInstance(){
+	return First;
+}
 void Log::Open(bool plain){
-	if(plain == true){
+	if( Lmagic != 95768){
+		G->cb->SendTextMsg(":: NTAI XE 4 by AF",0);
+		G->cb->SendTextMsg(":: Extended modable NTAI 0.29",0);
+		G->cb->SendTextMsg(":: CSunParser Veylon/SJ",0);
+		G->cb->SendTextMsg(":: Metal class Krogothe/Cain",0);
+		Lmagic = 95768;
+		this->First = true;
+	}
+	if(plain == true){ // Textfile Logging
 		plaintext = true;
-		logFile = fopen ("AILog.txt", "a+");
-		fseek(logFile,0,SEEK_END);
-		string mu ="\n";
-		mu+= "NTAI V0.28.10 Log File \nProgrammed and maintained by Alantai/Redstar & co \nReleased under the GPL 2.0 Liscence \n\n";
-		fputs(mu.c_str(), logFile);
-		time_t tval;
-		char buf[128];
-		tval = time(NULL);
-		tm* now = localtime(&tval);
-		strftime(buf,sizeof(buf),"Game started:  %B %d %Y %I:%M %p.",now);
-		print(buf);
-	}else{
+		char c[400];
+		time_t now1;
+		time(&now1);
+		struct tm *now2;
+		now2 = localtime(&now1);
+		//             DDD MMM DD HH:MM:SS YYYY_X - NTAI.log
+		sprintf(c, "NTAI/Logs/%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d] - NTAI.log",
+				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
+				now2->tm_min, G->team);
+		logFile.open(c);
+		header(" :: NTAI V0.29 XE 4 Log File \n :: Programmed and maintained by AF \n :: Released under the GPL 2.0 Liscence \n");
+		logFile << " :: Game started: " << now2->tm_mday << "." << now2->tm_mon << "." << 1900 + now2->tm_year << "  " << now2->tm_hour << ":" << now2->tm_min << ":" << now2->tm_sec << endl << endl;
+		CSunParser cp(G);
+		cp.LoadFile("modinfo.tdf");
+		logFile << " :: " << cp.SGetValueMSG("MOD\\Name") << endl;
+		logFile << " :: " << cp.SGetValueMSG("MOD\\Description") << endl;
+		if(First == true) logFile << " :: First instance of NTAI" << endl;
+		CSunParser cq(G);
+		cq.LoadFile("script.txt");
+		vector<string> names;
+		for(int n=0; n<MAX_TEAMS; n++){
+    		char c[8];
+    		sprintf(c, "%i", n);
+			string s = cq.SGetValueDef("", string("GAME\\PLAYER") + string(c) + "\\name");
+			if(s != string("")){
+				names.push_back(s + " : player :: " + c);
+				PlayerNames[n] = s;
+			} else{
+				PlayerNames[n] = "spring_engine";
+			}
+		}
+		if(names.empty() == false){
+			for(vector<string>::iterator i = names.begin(); i != names.end(); ++i){
+				logFile << " :: " << *i << endl;
+			}
+		}
+		logFile << " :: AI DLL's ingame" << endl;
+		vector<string> AInames;
+		for(int n=0; n<MAX_TEAMS; n++){
+    		char c[8];
+    		sprintf(c, "%i", n);
+			string s = cq.SGetValueDef("", string("GAME\\TEAM") + string(c) + "\\AIDLL");
+			if(s != string("")) AInames.push_back(s + " : AI :: " + c);
+		}
+		if(names.empty() == false){
+			for(vector<string>::iterator i = AInames.begin(); i != AInames.end(); ++i){
+				logFile << " :: " << *i << endl;
+			}
+		}
+		logFile << endl;
+	}else{ // HTML logging
+		char c[400];
+		time_t now1;
+		time(&now1);
+		struct tm *now2;
+		now2 = localtime(&now1);
+		//                                      DDD MMM DD HH:MM:SS YYYY_X - NTAI.htm
+		sprintf(c, "NTAI/Logs/%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d] - NTAI.htm",
+				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
+				now2->tm_min, G->team);
+		logFile.open(c);
 		plaintext = false;
-		logFile = fopen ("AILog.htm", "a+");
-		fseek(logFile,0,SEEK_END);
 		string mu ="</table><style type='text/css'>\n<!--\nbody,td,th {\n	font-family: sans-serif;\n	color: #111111;\nfont-size: 12px;\n\n}\nbody {\n	background-color: #FFFFFF;\n\n}\n.c {color: #FF2222}\n.e {color: #FFCC11}\n-->\n</style>\n";
-		mu+= "<b><br><br>NTAI V0.28 b5 Log File <br>\n<span class='c'>Programmed and maintained by Alantai/Redstar & co <br>\nReleased under the GPL 2.0 Liscence </p></span></b><br> \n<table width='98%'border='0' cellpadding='0' cellspacing='0' bordercolor='#999999'>\n";
-		fputs(mu.c_str(), logFile);
+		mu+= "<b><br><br>NTAI XE 4  Log File <br>\n<span class='c'>Programmed and maintained by AF <br>\nReleased under the GPL 2.0 Liscence </p></span></b><br> \n<table width='98%'border='0' cellpadding='0' cellspacing='0' bordercolor='#999999'>\n";
+		header(mu);
 		time_t tval;
 		char buf[128];
 		tval = time(NULL);
 		tm* now = localtime(&tval);
 		strftime(buf,sizeof(buf),"<b><p>Game started: <span class='c'> %B %d %Y %I:%M %p.</p></span></b>",now);
 		print(buf);
+		CSunParser cp(G);
+		cp.LoadFile("modinfo.tdf");
+		logFile << " :: " << cp.SGetValueMSG("MOD\\Name") << endl;
+		if(First == true) logFile << " :: First instance of NTAI" << endl;
 	}
 }
 
 void Log::print(string message){
-	if(verbose){
+	if(message.empty() == true) return;
+	string gtime;
+	string getime = GameTime();
+	if(plaintext == true){
+		gtime = getime + " " + message + "\n";
+	}else{
+		gtime = "\n<tr><th width='8%' scope='row'><b>" + getime + "</b></th>\n<td width='92%'>" + message + "</td></tr>\n";
+	}
+	header(gtime);
+}
+
+void Log::header(string message){
+	if(message.empty() == true) return;
+	if(verbose == true){
 		G->cb->SendTextMsg(message.c_str(),1);
 	}
 	string gtime;
 	if(plaintext == true){
-		gtime +=GameTime().c_str();
-		gtime += " ";
-		gtime += message.c_str();
+		gtime = message;
 	}else{
-		gtime = "\n<tr><th width='8%' scope='row'><b>";
-		gtime +=GameTime().c_str();
-		gtime +="</b></th>\n<td width='92%'>";
-		gtime += message.c_str();
-		gtime += "</td></tr>\n";
+		gtime = "\n<tr><th width='100%' scope='row'><b>" + message + "</th></tr>\n";
 	}
-	if (logFile){
-		fputs (gtime.c_str(), logFile);
-	}	
+	if (logFile.is_open() == true){
+		logFile << gtime.c_str();
+	}
 }
 
 void Log::iprint(string message){
-	string gtime = GameTime().c_str();
-	gtime += message.c_str();
+	string gtime = GameTime() + message;
     G->cb->SendTextMsg(gtime.c_str(),1);
-	print(message.c_str());
+	print(message);
 }
 
 void Log::Close(){
-	if(logFile){
-		print("<b><span class='c'>Closing logfile...</b></span>");
-		fputs("\n</table>",logFile);
-		fclose(logFile);
-		logFile = 0;
+	if(logFile.is_open() == true){
+		if(plaintext){
+			header(" :: Closing LogFile...\n");
+		}else{
+            print("<b><span class='c'>Closing logfile...</b></span>");
+			header("\n</table>");
+		}
+		logFile.close();
 	}
 }
 
 void Log::Flush(){
-	if(logFile){
-        fflush(logFile);
+	if(logFile.is_open() == true){
+		logFile.flush();
 	}
 }
 
 void Log::Message(string msg,int player){
 	if(plaintext == true){
-		print(msg);
+		string m = "[" + PlayerNames[player] + "] " + GameTime() + " :: " + msg + "\n";
+		header(m);
 		return;
+	}else{
+		print("<span class='c'>" + msg + "</span>");
 	}
-	string message = "<span class='c'>";
-	message += msg.c_str();
-	message += "</span>";
-	print(message);
 }
 
 void Log::eprint(string message){
 	if(plaintext == true){
+		G->cb->SendTextMsg(message.c_str(),3);
 		print(message);
 		return;
+	} else{
+		G->cb->SendTextMsg(message.c_str(),1000);
+		string msg = "<span class='e'>" + message + "</span>";
+		print(msg);
 	}
-	G->cb->SendTextMsg(message.c_str(),1000);
-	string msg = "<span class='e'>";
-	msg += message.c_str();
-	msg += "</span>";
-	print(msg);
 }
 
+Log& Log::operator<< (const char* c){
+	this->header(c);
+	return *this;
+}
+
+Log& Log::operator<< (string s){
+	this->header(s);
+	return *this;
+}
+
+Log& Log::operator<< (int i){
+	char c[10];
+	sprintf(c,"%i",i);
+	string s = c;
+	header(s);
+	return *this;
+}
+
+Log& Log::operator<< (float f){
+	char c [15];
+	sprintf(c,"%f",f);
+	header(c);
+	return *this;
+}
