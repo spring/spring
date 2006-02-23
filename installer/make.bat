@@ -28,10 +28,7 @@ rem "C:\Program Files\NSIS\makensis.exe" /V3 taspring.nsi
 rem echo Creating core only installer
 rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_CORE taspring.nsi 
 
-echo Copying debug information
-copy ..\rts\release\spring.pdb .
-
-echo All done.. Matching debug information copied to installer folder
+echo All done.. 
 echo If this is a public release, make sure to save this and tag CVS etc..
 echo Press any key to continue..
 pause > nul
