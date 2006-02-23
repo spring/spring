@@ -42,7 +42,6 @@ namespace creg {
 
 		static IType* CreateBasicType (BasicTypeID t);
 		static IType* CreateStringType ();
-		static IType* CreatePointerToObjType (Class *objectType);
 		static IType* CreateObjInstanceType (Class *objectType);
 		static IType* CreateEnumeratedType (size_t size);
 	};

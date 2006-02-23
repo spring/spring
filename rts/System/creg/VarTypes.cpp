@@ -52,33 +52,11 @@ IType* IType::CreateBasicType (BasicTypeID t)
 {
 	return new BasicType (t);
 }
-/*
-void StringType::Serialize (ISerializer *s, void *inst)
-{
-	string& str = *(string*)inst;
-	if (s->IsWriting ()) {
-		int size = str.length();
-		s->Serialize (&size, 4);
-		s->Serialize (str.c_str(), size);
-	} else {
-		s->Serialize (
-	}
-}*/
 
 IType* IType::CreateStringType ()
 {
 	DeduceType<char> charType;
 	return new DynamicArrayType<string> (charType.Get());
-}
-
-void ObjectPointerType::Serialize (ISerializer *s, void *inst)
-{
-	s->SerializeObjectPtr ((void**)inst, objectClass);
-}
-
-IType* IType::CreatePointerToObjType (Class *objectType)
-{
-	return new ObjectPointerType (objectType);
 }
 
 void ObjectInstanceType::Serialize (ISerializer *s, void *inst)

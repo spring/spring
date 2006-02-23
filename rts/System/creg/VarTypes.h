@@ -31,15 +31,6 @@ namespace creg
 		void Serialize (ISerializer *s, void *instance);
 	};
 
-	class ObjectPointerType : public IType
-	{
-	public:
-		ObjectPointerType(Class* objc) : objectClass(objc) {}
-		~ObjectPointerType() {}
-		void Serialize (ISerializer *s, void *instance);
-
-		Class* objectClass;
-	};
 
 	class ObjectInstanceType : public IType
 	{

@@ -1,10 +1,3 @@
-/*
- *		This Code Was Created By Jeff Molofee 2000
- *		A HUGE Thanks To Fredric Echols For Cleaning Up
- *		And Optimizing The Base Code, Making It More Flexible!
- *		If You've Found This Code Useful, Please Let Me Know.
- *		Visit My Site At nehe.gamedev.net
- */
 
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
@@ -37,9 +30,7 @@
 #include <SDL.h>
 #include <SDL_main.h>
 #include "mmgr.h"
-
 #include "Game/UI/NewGuiDefine.h"
-
 #ifdef NEW_GUI
 #include "Game/UI/GUI/GUIcontroller.h"
 #endif
@@ -52,79 +43,143 @@
 #include <SDL_syswm.h>
 #endif
 
+CGameController* activeController=0;
+bool globalQuit = false;
+Uint8 *keys; // Uint8[SDLK_LAST]
+bool fullscreen;
+
 #define XRES_DEFAULT 1024
 #define YRES_DEFAULT 768
 
-Uint8 *keys;			// Array Used For The Keyboard Routine
-SDL_Surface *screen;
-int sdlflags;
-bool active = true;		// Window Active Flag Set To true By Default
-bool fullscreen = true;
-bool globalQuit = false;
-bool FSAA = false;
-//time_t   fpstimer,starttime;
-CGameController* activeController=0;
-
-/*
- * resizescene(width, height)
- * Called at resize
- */
-static void resizescene(GLsizei width, GLsizei height)
+class SpringApp
 {
-	if (!height)
-		height++;
+public:
+	SpringApp ();
+	~SpringApp ();
 
-	/*
-	 * Reset current viewport
-	 */
-	glViewport(0,0,width,height);
+	int Run(int argc, char *argv[]);
 
-	/*
-	 * Reset projection matrix
-	 */
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+protected:
+	bool Initialize ();
+	void CheckCmdLineFile (int argc,char *argv[]);
+	bool ParseCmdLine();
+	void InitVFS ();
+	void CreateGameSetup ();
+	bool InitWindow (const char* title);
+	void InitOpenGL ();
+	bool SetSDLVideoMode();
+	void Shutdown ();
+	int Draw ();
+	void UpdateSDLKeys ();
 
-	/*
-	 * Aspect ratio
-	 */
-	gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,2.8f,MAX_VIEW_RANGE);
+	BaseCmd *cmdline;
+	string demofile,startscript;
+	int screenWidth, screenHeight;
+	int screenFreq;
 
-	/*
-	 * Reset modelview matrix
-	 */
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	bool active;
+	bool FSAA;
+};
 
-	gu->screenx=width;
-	gu->screeny=height;
+SpringApp::SpringApp ()
+{
+	cmdline = 0;
+	screenWidth = screenHeight = 0;
+	screenFreq = 0;
+	keys = 0;
+
+	active = true;
+	fullscreen = true;
+	FSAA = false;
 }
 
-/*
- * setupgl()
- * Set initial OpenGL settings
- */
-static inline void setupgl()
+SpringApp::~SpringApp()
 {
-	glShadeModel(GL_SMOOTH);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.1f);
-	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); 	/* Nice perspective calculations */
+	if (cmdline) delete cmdline;
+	if (keys) delete[] keys;
+
+	creg::ClassBinder::FreeClasses ();
 }
 
-/*
- * drawscene()
- * Triggers draw functions
- */
-static inline int drawscene()
+
+#ifdef _WIN32
+// Called when spring crashes
+bool crashCallback(void* crState)
 {
-	if(activeController){
-		if(activeController->Update()==0)
-			return 0;
-		return activeController->Draw();
+	info->AddLine("Spring has crashed");
+
+	// Since we are going down, it's ok to delete the info console (it can't be mailed otherwise)
+	delete info;
+	bool wasRecording = false;
+	if (net->recordDemo) {
+		delete net->recordDemo;
+		wasRecording = true;
 	}
+
+	AddFile("infolog.txt", "Spring information log");
+	AddFile("test.sdf", "Spring game demo");
+
+	if (wasRecording)
+		AddFile(net->demoName.c_str(), "Spring game demo");
+
+	return true;
+}
+#endif
+
+bool SpringApp::Initialize ()
+{
+	ParseCmdLine ();
+
+#ifdef WIN32
+	// Initialize crash reporting
+	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
+#endif
+
+	// Initialize class system
+	creg::ClassBinder::InitializeClasses ();
+
+#ifndef NO_LUA
+	// Initialize lua bindings
+	CLuaBinder lua;
+	if (!lua.LoadScript("testscript.lua")) 
+		handleerror(NULL, lua.lastError.c_str(), "lua",MBF_OK|MBF_EXCL);
+#endif
+
+	InitVFS ();
+
+	if (!InitWindow ("RtsSpring"))
+	{
+		SDL_Quit ();
+		return false;
+	}
+	InitOpenGL();
+
+	palette.Init();
+
+	// Global structures
+	ENTER_SYNCED;
+	gs=new CGlobalSyncedStuff();
+	ENTER_UNSYNCED;
+	gu=new CGlobalUnsyncedStuff();
+
+	gu->screenx = screenWidth;
+	gu->screeny = screenHeight;
+
+	// Initialize keyboard
+	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+	SDL_SetModState (KMOD_NONE);
+	
+	keys = new Uint8[SDLK_LAST];
+	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
+
+	// Initialize font
+	font = new CglFont(32,223);
+	LoadExtensions();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	SDL_GL_SwapBuffers();
+
+	CreateGameSetup ();
+
 	return true;
 }
 
@@ -161,14 +216,8 @@ static bool MultisampleVerify(void)
 	return false;
 }
 
-/*	This Code Creates Our OpenGL Window.  Parameters Are:					*
- *	title			- Title To Appear At The Top Of The Window				*
- *	width			- Width Of The GL Window Or Fullscreen Mode				*
- *	height			- Height Of The GL Window Or Fullscreen Mode			*
- *	bits			- Number Of Bits To Use For Color (8/16/24/32)			*
- *	fsflag	- Use Fullscreen Mode (true) Or Windowed Mode (false)	*/
 
-static bool glwindow(char* title, int width, int height, int bits, bool fsflag,int frequency)
+bool SpringApp::InitWindow (const char* title)
 {
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1)) {
 		handleerror(NULL,"Could not initialize SDL.","ERROR",MBF_OK|MBF_EXCL);
@@ -179,16 +228,22 @@ static bool glwindow(char* title, int width, int height, int bits, bool fsflag,i
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
 
+	SetSDLVideoMode ();
+	return true;
+}
+
+bool SpringApp::SetSDLVideoMode ()
+{
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fsflag);
+	conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
 	
 	// FIXME: Might want to set color and depth sizes, too  -- johannes
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
 
 	FSAA = MultisampleTest();
 
-	screen = SDL_SetVideoMode(width,height,bits,sdlflags);
+	SDL_Surface *screen = SDL_SetVideoMode(screenWidth,screenHeight,0,sdlflags);
 	if (!screen) {
 		handleerror(NULL,"Could not set video mode","ERROR",MBF_OK|MBF_EXCL);
 		return false;
@@ -196,72 +251,47 @@ static bool glwindow(char* title, int width, int height, int bits, bool fsflag,i
 	if (FSAA)
 		FSAA = MultisampleVerify();
 	
-	setupgl();
-	resizescene(screen->w,screen->h);
-
 	return true;
 }
 
-#ifdef _WIN32
-// Called when spring crashes
-bool crashCallback(void* crState)
+
+void SpringApp::InitOpenGL ()
 {
-	info->AddLine("Spring has crashed");
-
-	// Since we are going down, it's ok to delete the info console (it can't be mailed otherwise)
-	delete info;
-	bool wasRecording = false;
-	if (net->recordDemo) {
-		delete net->recordDemo;
-		wasRecording = true;
-	}
-
-	AddFile("infolog.txt", "Spring information log");
-	AddFile("test.sdf", "Spring game demo");
-
-	if (wasRecording)
-		AddFile(net->demoName.c_str(), "Spring game demo");
-
-	return true;
+	// Setup viewport
+	glViewport (0, 0, screenWidth, screenHeight);
+	gluPerspective(45.0f,(GLfloat)screenWidth/(GLfloat)screenHeight,2.8f,MAX_VIEW_RANGE);
+	
+	// Initialize some GL states
+	glShadeModel(GL_SMOOTH);
+	glClearDepth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 }
-#endif
-
-#define update_sdlkeys(k) 				\
-do { 							\
-	int __numkeys; 					\
-	Uint8 *__state; 				\
-	__state = SDL_GetKeyState(&__numkeys); 		\
-	memcpy((k), __state, sizeof(Uint8) * __numkeys);\
-} while (0)
-
-#define update_sdlmods(k) 				\
-do { 							\
-	SDLMod __mods = SDL_GetModState(); 		\
-	(k)[SDLK_LSHIFT] = __mods&KMOD_SHIFT?1:0; 	\
-	(k)[SDLK_LCTRL] = __mods&KMOD_CTRL?1:0; 	\
-	(k)[SDLK_LALT] = __mods&KMOD_ALT?1:0; 		\
-	(k)[SDLK_LMETA] = __mods&KMOD_META?1:0; 	\
-} while (0)
 
 
-#ifdef WIN32 /* SDL_main can't use envp in the main function */
-int main( int argc, char *argv[] )
-#else
-int main( int argc, char *argv[ ], char *envp[ ] )
-#endif
+// Initialize the virtual file system
+void SpringApp::InitVFS()
 {
-#ifndef _WIN32
-	chdir(SPRING_DATADIR);
-#endif
-	INIT_SYNCIFY;
-	bool	done=false;
-	BaseCmd *cmdline = BaseCmd::initialize(argc,argv);
+	// Create the archive scanner and vfs handler
+	archiveScanner = new CArchiveScanner();
+	archiveScanner->ReadCacheData();
+	archiveScanner->Scan("./maps");
+	archiveScanner->Scan("./base");
+	archiveScanner->Scan("./mods");
+	archiveScanner->WriteCacheData();
+	hpiHandler = new CVFSHandler();
+}
+
+
+bool SpringApp::ParseCmdLine()
+{
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
 //	cmdline->addoption('g',"runscript",OPTPARM_STRING,"script.txt", "Run with a game setup script");
 	cmdline->parse();
+
 #ifdef _DEBUG
 	fullscreen = false;
 #else
@@ -271,41 +301,26 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
-		delete cmdline;
-		return 0;
+		return false;
 	} else if (cmdline->result("version")) {
 		std::cout << "TA:Spring " << VERSION_STRING << std::endl;
-		delete cmdline;
-		return 0;
+		return false;
 	} else if (cmdline->result("window"))
 		fullscreen = false;
 	else if (cmdline->result("fullscreen"))
 		fullscreen = true;
-#ifdef _WIN32
-	// Initialize crash reporting
-	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
-#endif
-	// Initialize class system
-	creg::ClassBinder::InitializeClasses ();
 
-	// Global structures
-	ENTER_SYNCED;
-	gs=new CGlobalSyncedStuff();
-	ENTER_UNSYNCED;
-	gu=new CGlobalUnsyncedStuff();
+	screenWidth = configHandler.GetInt("XResolution",XRES_DEFAULT);
+	screenHeight = configHandler.GetInt("YResolution",YRES_DEFAULT);
+	screenFreq = configHandler.GetInt("DisplayFrequency",0);
 
+	return true;
+}
 
-#ifndef NO_LUA
-	// Initialize lua bindings
-	CLuaBinder lua;
-	if (!lua.LoadScript("testscript.lua")) 
-		handleerror(NULL, lua.lastError.c_str(), "lua",MBF_OK|MBF_EXCL);
-#endif
-
+// See if a demo SDF file or a startscript is specified on the command line
+void SpringApp::CheckCmdLineFile(int argc, char *argv[])
+{
 	// Check if the commandline parameter is specifying a demo file
-	bool playDemo = false;
-	string demofile, startscript;
-
 #ifdef _WIN32
 	string command(argv[0]);
 	int idx = command.rfind("spring");
@@ -321,28 +336,18 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 			string command(argv[i]);
 			int idx = command.rfind("sdf");
 			if (idx == command.size()-3) {
-				playDemo = true;
 				demofile = command;
 			} else {
-				playDemo = false;
 				startscript = command;
 			}
 		}
 	}
+}
 
-	// Create the archive scanner and vfs handler
-	archiveScanner = new CArchiveScanner();
-	archiveScanner->ReadCacheData();
-	archiveScanner->Scan("./maps");
-	archiveScanner->Scan("./base");
-	archiveScanner->Scan("./mods");
-	archiveScanner->WriteCacheData();
-	hpiHandler = new CVFSHandler();
-
-	palette.Init();
-
+void SpringApp::CreateGameSetup ()
+{
 	ENTER_SYNCED;
-	if (!playDemo) {
+	if (!startscript.empty()) {
 		gameSetup=new CGameSetup();
 		if(!gameSetup->Init(startscript)){
 			delete gameSetup;
@@ -353,65 +358,77 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	ENTER_MIXED;
 
 	bool server = true;
-	if (playDemo)
+	if (!demofile.empty())
 		server = false;
 	else if(gameSetup)
 		server=gameSetup->myPlayer-gameSetup->numDemoPlayers == 0;
 	else
 		server=!cmdline->result("client") || cmdline->result("server");
-	
-	if (
-		!glwindow (
-			"RtsSpring",
-			configHandler.GetInt("XResolution",XRES_DEFAULT),
-			configHandler.GetInt("YResolution",YRES_DEFAULT),
-			0,
-			fullscreen,
-			configHandler.GetInt("DisplayFrequency",0)
-		)
-	) {
-		SDL_Quit();
-		return 0;
-	}
 
-	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	SDL_SetModState (KMOD_NONE);
-
-	font = new CglFont(32,223);
-	LoadExtensions();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	SDL_GL_SwapBuffers();
-	
-	if (playDemo)
+	if (!demofile.empty())
 		pregame = new CPreGame(false, demofile);
 	else
 		pregame = new CPreGame(server, "");
+}
 
-#ifdef NEW_GUI
-	guicontroller = new GUIcontroller();
-#endif
+int SpringApp::Draw ()
+{
+	if (FSAA)
+		glEnable(GL_MULTISAMPLE_ARB);
 
-#ifndef NO_LUA
-	lua.CreateLateBindings();
-#endif
+	int ret = 1;
+	if(activeController) {
+		if(activeController->Update()==0) ret = 0;
+		else ret = activeController->Draw();
+	}
 
-	keys = new Uint8[SDLK_LAST];
-	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
+	SDL_GL_SwapBuffers();
+	if (FSAA)
+		glDisable(GL_MULTISAMPLE_ARB);
+
+	return ret;
+}
+
+void SpringApp::UpdateSDLKeys ()
+{
+	int numkeys;
+	Uint8 *state;
+	state = SDL_GetKeyState(&numkeys);
+	memcpy(keys, state, sizeof(Uint8) * numkeys);
+
+	SDLMod mods = SDL_GetModState();
+	keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
+	keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
+	keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
+	keys[SDLK_LMETA] = mods&KMOD_META?1:0;
+}
+
+
+int SpringApp::Run (int argc, char *argv[])
+{
+	INIT_SYNCIFY;
+	CheckCmdLineFile (argc, argv);
+	cmdline = BaseCmd::initialize(argc,argv);
+
+	if (!Initialize ())
+		return -1;
 
 #ifdef WIN32
 	SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
 #endif
 
 	SDL_Event event;
+	bool done=false;
+
+	Uint8 scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
+
 	while (!done) {
 		ENTER_UNSYNCED;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE:
-					screen = SDL_SetVideoMode(event.resize.w,event.resize.h,0,SDL_OPENGL|SDL_RESIZABLE|SDL_HWSURFACE|SDL_DOUBLEBUF);
-					if (screen)
-						resizescene(screen->w,screen->h);
+					if (SetSDLVideoMode ())
+						InitOpenGL();
 					break;
 				case SDL_QUIT:
 					done = true;
@@ -438,11 +455,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				{
 					int i = event.key.keysym.sym;
 				
-					update_sdlkeys(keys);
-					update_sdlmods(keys);
-					if (i == SDLK_RETURN)
-						keys[i] = 1;
-					
+					UpdateSDLKeys ();
+
 					if(activeController) {
 						activeController->KeyPressed(i,1);
 #ifndef NEW_GUI
@@ -460,7 +474,6 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 					i = event.key.keysym.unicode;
 					if (i > SDLK_FIRST && i <= SDLK_DELETE) /* HACK */
 						GUIcontroller::Character(char(i));
-						
 #endif
 					break;
 				}
@@ -468,15 +481,11 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 				{
 					int i = event.key.keysym.sym;
 
-					update_sdlkeys(keys);
-					update_sdlmods(keys);
-					if (i == SDLK_RETURN)
-						keys[i] = 0;
-					
+					UpdateSDLKeys();
+
 					if (activeController)
 						activeController->KeyReleased(i);
-					
-					break;
+        			break;
 				}
 #ifdef WIN32
 				case SDL_SYSWMEVENT:
@@ -493,20 +502,19 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #endif
 			}
 		}
-		if (FSAA)
-			glEnable(GL_MULTISAMPLE_ARB);
-		int ret = drawscene();
-		SDL_GL_SwapBuffers();
-		if (FSAA)
-			glDisable(GL_MULTISAMPLE_ARB);
+		int ret = Draw();
 		if (globalQuit || (active && !ret))
 			done=true;
 	}
 	ENTER_MIXED;
 
-	delete[] keys;
-
 	// Shutdown
+	Shutdown();
+	return 0;
+}
+
+void SpringApp::Shutdown()
+{
 	if (pregame)
 		delete pregame;			//in case we exit during init
 	if (game)
@@ -526,6 +534,20 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif
-	delete cmdline;
-	return 0;
+}
+
+// Application entry point
+
+#ifdef WIN32 /* SDL_main can't use envp in the main function */
+int main( int argc, char *argv[] )
+#else
+int main( int argc, char *argv[ ], char *envp[ ] )
+#endif
+{
+#ifndef _WIN32
+	chdir(SPRING_DATADIR);
+#endif
+
+	SpringApp app;
+	return app.Run (argc,argv);
 }

@@ -3,7 +3,7 @@
 #define SERIALIZER_IMPL_H
 
 #include "ISerializer.h"
-#include <map>
+#include SPRING_HASH_MAP_H
 #include <vector>
 
 namespace creg {
@@ -13,7 +13,7 @@ namespace creg {
 
 	class COutputStreamSerializer : public ISerializer
 	{
-	public:
+	protected:
 		struct ObjectID {
 			int id, classIndex;
 			bool isEmbedded;
@@ -23,7 +23,7 @@ namespace creg {
 		// Temporary class reference
 		struct ClassRef;
 
-		typedef std::map<void*, ObjectID> ObjIDmap;
+		typedef SPRING_HASH_MAP<void*, ObjectID> ObjIDmap;
 		ObjIDmap ptrToID; // maps pointers to object IDs that can be serialized
 		std::ostream *stream;
 
@@ -56,7 +56,7 @@ namespace creg {
 
 	class CInputStreamSerializer : public ISerializer
 	{
-	public:
+	protected:
 		std::istream* stream;
 		std::vector <creg::Class *> classRefs;
 
