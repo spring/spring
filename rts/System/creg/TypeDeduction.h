@@ -37,10 +37,24 @@ CREG_SUPPORT_BASIC_TYPE(float, crFloat)
 CREG_SUPPORT_BASIC_TYPE(double, crDouble)
 CREG_SUPPORT_BASIC_TYPE(bool, crBool)
 
-// Pointer type (assumed to be a pointer to an Piece)
+
+template<typename T>
+class ObjectPointerType : public IType
+{
+public:
+	ObjectPointerType() { objectClass = T::StaticClass(); }
+	void Serialize (ISerializer *s, void *instance) {
+		void **ptr = (void**)instance;
+		if (s->IsWriting()) s->SerializeObjectPtr (ptr, *ptr ? ((T*)*ptr)->GetClass () : 0);
+		else s->SerializeObjectPtr (ptr, objectClass);
+	}
+	Class* objectClass;
+};
+
+// Pointer type
 template<typename T>
 struct DeduceType <T *> {
-	IType* Get () { return IType::CreatePointerToObjType (T::StaticClass()); }
+	IType* Get () { return new ObjectPointerType <T>(); }
 };
 
 // Static array type
