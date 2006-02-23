@@ -5,6 +5,7 @@ next
 - First use of crossplatform code! This required a lot of bugfixing and changes, which are not mentioned here.
   Among these changes are switches to using boost, SDL, freetype, instead of Win32 SDK + DirectX. For a full list of changes, see the subversion log.
 
+- XTA Pimped Edition Version 3, a version of XTA with high detail models, is used as the default mod now.
 - Binding for mouse button 4/5 added (defaults to Z and X), so you can set build spacing.
 - You can enable advanced unit rendering without enabling shadow mapping (in the settings app).
 - Various resource files are now read from gamedata/resources.tdf instead of hardcoded into the game exe.
