@@ -2,10 +2,10 @@
 #define ASSIGNER_H
 #include <list>
 //#include "IAICallback.h"
-#include "ExternalAI/IAICallback.h"
+#include "AICallback.h"
 #include "Sim/Units/UnitDef.h"
 
-class Assigner : public base{
+class Assigner{
 public:
 	Assigner(){}
 	virtual ~Assigner(){

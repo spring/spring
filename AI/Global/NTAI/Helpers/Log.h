@@ -1,12 +1,16 @@
-#include "ExternalAI/IAICallback.h"
-
-class Global;
+#include "IAICallback.h"
 
 class Log{
 public:
-	Log(Global* GL);
+	Log();
 	virtual ~Log();
+	Log& operator<< (int i);
+	Log& operator<< (float f);
+	Log& operator<< (const char* c);
+	Log& operator<< (string s);
+
 	string GameTime(); //returns Gametime in the format "[00:00]" min:sec
+	void header(string message); // prints without any gametime, used mainly for headers, used for << operators aswell once I figure out howto code them
 	void print(string message); // print to logfile
 	void iprint(string message); //Print to info console and log
 	void eprint(string message);
@@ -19,7 +23,11 @@ public:
 		else verbose = true;
 		return verbose;
 	}
+	map<int,string> PlayerNames;
+	bool FirstInstance();
 	bool verbose;
 	bool plaintext;
+	ofstream logFile;
 	Global* G;
+	bool First;
 };

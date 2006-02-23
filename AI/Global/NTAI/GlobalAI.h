@@ -3,7 +3,7 @@
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // Iincludes
 #include "Sim/Units/UnitDef.h"
-#include "ExternalAI/IGlobalAI.h"
+#include "IGlobalAI.h"
 #include "helper.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -37,7 +37,7 @@ public:
 	int tteam;
 	bool badmap;
 	int ai_index;
-	int teamx;
+	int team;
 	bool alone;
 	Global* GL;
 	IGlobalAICallback* cg;
