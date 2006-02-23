@@ -1,187 +1,126 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="7.10"
 	Name="rts"
 	ProjectGUID="{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
 	RootNamespace="rts"
-	Keyword="Win32Proj"
-	>
+	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
-			Name="Win32"
-		/>
+			Name="Win32"/>
 	</Platforms>
-	<ToolFiles>
-	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33_1&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
+				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
 				PreprocessorDefinitions="_WIN32;WIN32;_DEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
-				MinimalRebuild="true"
+				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="2"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="3"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4244;4305;4018;4267;4305"
-			/>
+				DisableSpecificWarnings="4244;4305;4018;4267;4305"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="../../../game/debug.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.8/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/spring.pdb"
 				SubSystem="2"
 				StackReserveSize="0"
-				TargetMachine="1"
-			/>
+				TargetMachine="1"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
+				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
+				Name="VCXMLDataGeneratorTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
+				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
+				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33_1&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
+				OptimizeForProcessor="3"
+				OptimizeForWindowsApplication="TRUE"
+				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
 				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED"
 				RuntimeLibrary="2"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="2"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="3"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="0"
-			/>
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="0"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.8/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				TargetMachine="1"
-			/>
+				TargetMachine="1"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
+				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
+				Name="VCXMLDataGeneratorTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -189,3244 +128,2469 @@
 	<Files>
 		<Filter
 			Name="External AI"
-			>
+			Filter="">
 			<File
-				RelativePath="..\..\ExternalAI\AICallback.cpp"
-				>
+				RelativePath="..\..\ExternalAI\AICallback.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\AICallback.h"
-				>
+				RelativePath="..\..\ExternalAI\AICallback.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\AICheats.cpp"
-				>
+				RelativePath="..\..\ExternalAI\AICheats.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\AICheats.h"
-				>
+				RelativePath="..\..\ExternalAI\AICheats.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAI.cpp"
-				>
+				RelativePath="..\..\ExternalAI\GlobalAI.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAI.h"
-				>
+				RelativePath="..\..\ExternalAI\GlobalAI.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAICallback.cpp"
-				>
+				RelativePath="..\..\ExternalAI\GlobalAICallback.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAICallback.h"
-				>
+				RelativePath="..\..\ExternalAI\GlobalAICallback.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAIHandler.cpp"
-				>
+				RelativePath="..\..\ExternalAI\GlobalAIHandler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAIHandler.h"
-				>
+				RelativePath="..\..\ExternalAI\GlobalAIHandler.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\Group.cpp"
-				>
+				RelativePath="..\..\ExternalAI\Group.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\Group.h"
-				>
+				RelativePath="..\..\ExternalAI\Group.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GroupAiCallback.cpp"
-				>
+				RelativePath="..\..\ExternalAI\GroupAiCallback.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GroupAiCallback.h"
-				>
+				RelativePath="..\..\ExternalAI\GroupAiCallback.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GroupHandler.cpp"
-				>
+				RelativePath="..\..\ExternalAI\GroupHandler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GroupHandler.h"
-				>
+				RelativePath="..\..\ExternalAI\GroupHandler.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IAICallback.h"
-				>
+				RelativePath="..\..\ExternalAI\IAICallback.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IAICheats.h"
-				>
+				RelativePath="..\..\ExternalAI\IAICheats.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IGlobalAI.h"
-				>
+				RelativePath="..\..\ExternalAI\IGlobalAI.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IGlobalAICallback.h"
-				>
+				RelativePath="..\..\ExternalAI\IGlobalAICallback.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IGroupAI.h"
-				>
+				RelativePath="..\..\ExternalAI\IGroupAI.h">
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IGroupAiCallback.h"
-				>
+				RelativePath="..\..\ExternalAI\IGroupAiCallback.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Game"
-			>
+			Filter="">
 			<File
-				RelativePath="..\..\Game\Camera.cpp"
-				>
+				RelativePath="..\..\Game\Camera.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\Camera.h"
-				>
+				RelativePath="..\..\Game\Camera.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\CameraController.cpp"
-				>
+				RelativePath="..\..\Game\CameraController.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\CameraController.h"
-				>
+				RelativePath="..\..\Game\CameraController.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\command.h"
-				>
+				RelativePath="..\..\Game\command.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\Game.cpp"
-				>
+				RelativePath="..\..\Game\Game.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\Game.h"
-				>
+				RelativePath="..\..\Game\Game.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameController.cpp"
-				>
+				RelativePath="..\..\Game\GameController.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameController.h"
-				>
+				RelativePath="..\..\Game\GameController.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameHelper.cpp"
-				>
+				RelativePath="..\..\Game\GameHelper.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameHelper.h"
-				>
+				RelativePath="..\..\Game\GameHelper.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameServer.cpp"
-				>
+				RelativePath="..\..\Game\GameServer.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameServer.h"
-				>
+				RelativePath="..\..\Game\GameServer.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameSetup.cpp"
-				>
+				RelativePath="..\..\Game\GameSetup.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameSetup.h"
-				>
+				RelativePath="..\..\Game\GameSetup.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\GameVersion.h"
-				>
+				RelativePath="..\..\Game\GameVersion.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\Player.cpp"
-				>
+				RelativePath="..\..\Game\Player.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\Player.h"
-				>
+				RelativePath="..\..\Game\Player.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\PreGame.cpp"
-				>
+				RelativePath="..\..\Game\PreGame.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\PreGame.h"
-				>
+				RelativePath="..\..\Game\PreGame.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\SelectedUnits.cpp"
-				>
+				RelativePath="..\..\Game\SelectedUnits.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\SelectedUnits.h"
-				>
+				RelativePath="..\..\Game\SelectedUnits.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\SelectedUnitsAI.cpp"
-				>
+				RelativePath="..\..\Game\SelectedUnitsAI.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\SelectedUnitsAI.h"
-				>
+				RelativePath="..\..\Game\SelectedUnitsAI.h">
 			</File>
 			<File
-				RelativePath="..\..\Game\Team.cpp"
-				>
+				RelativePath="..\..\Game\Team.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Game\Team.h"
-				>
+				RelativePath="..\..\Game\Team.h">
 			</File>
 			<Filter
 				Name="UI"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Game\Ui\EndGameBox.cpp"
-					>
+					RelativePath="..\..\Game\Ui\EndGameBox.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\EndGameBox.h"
-					>
+					RelativePath="..\..\Game\Ui\EndGameBox.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\GuiHandler.cpp"
-					>
+					RelativePath="..\..\Game\Ui\GuiHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\GuiHandler.h"
-					>
+					RelativePath="..\..\Game\Ui\GuiHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\GuiKeyReader.cpp"
-					>
+					RelativePath="..\..\Game\Ui\GuiKeyReader.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\GuiKeyReader.h"
-					>
+					RelativePath="..\..\Game\Ui\GuiKeyReader.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\InfoConsole.cpp"
-					>
+					RelativePath="..\..\Game\Ui\InfoConsole.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\InfoConsole.h"
-					>
+					RelativePath="..\..\Game\Ui\InfoConsole.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\InputReceiver.cpp"
-					>
+					RelativePath="..\..\Game\Ui\InputReceiver.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\InputReceiver.h"
-					>
+					RelativePath="..\..\Game\Ui\InputReceiver.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\MiniMap.cpp"
-					>
+					RelativePath="..\..\Game\Ui\MiniMap.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\MiniMap.h"
-					>
+					RelativePath="..\..\Game\Ui\MiniMap.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\MouseCursor.cpp"
-					>
+					RelativePath="..\..\Game\Ui\MouseCursor.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\MouseCursor.h"
-					>
+					RelativePath="..\..\Game\Ui\MouseCursor.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\MouseHandler.cpp"
-					>
+					RelativePath="..\..\Game\Ui\MouseHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\MouseHandler.h"
-					>
+					RelativePath="..\..\Game\Ui\MouseHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\NewGuiDefine.h"
-					>
+					RelativePath="..\..\Game\Ui\NewGuiDefine.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\ResourceBar.cpp"
-					>
+					RelativePath="..\..\Game\Ui\ResourceBar.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\ResourceBar.h"
-					>
+					RelativePath="..\..\Game\Ui\ResourceBar.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\SelectionKeyHandler.cpp"
-					>
+					RelativePath="..\..\Game\Ui\SelectionKeyHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\SelectionKeyHandler.h"
-					>
+					RelativePath="..\..\Game\Ui\SelectionKeyHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\ShareBox.cpp"
-					>
+					RelativePath="..\..\Game\Ui\ShareBox.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\ShareBox.h"
-					>
+					RelativePath="..\..\Game\Ui\ShareBox.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\StartPosSelecter.cpp"
-					>
+					RelativePath="..\..\Game\Ui\StartPosSelecter.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\StartPosSelecter.h"
-					>
+					RelativePath="..\..\Game\Ui\StartPosSelecter.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\TooltipConsole.cpp"
-					>
+					RelativePath="..\..\Game\Ui\TooltipConsole.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\TooltipConsole.h"
-					>
+					RelativePath="..\..\Game\Ui\TooltipConsole.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="New GUI"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Game\Ui\Gui\Functor.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\Functor.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbutton.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIbutton.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbutton.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIbutton.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIconsole.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIconsole.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIconsole.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIconsole.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIfont.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIfont.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIfont.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIfont.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIframe.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIframe.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIframe.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIframe.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgame.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIgame.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgame.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIgame.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgraph.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIgraph.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgraph.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIgraph.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIimage.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIimage.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIimage.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIimage.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinput.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIinput.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinput.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIinput.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIlabel.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIlabel.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIlabel.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIlabel.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUImatrix.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUImatrix.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUImatrix.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUImatrix.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIminimap.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIminimap.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIminimap.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIminimap.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIpane.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIpane.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIpane.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIpane.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIslider.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIslider.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIslider.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIslider.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItab.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUItab.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItab.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUItab.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItable.cpp"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUItable.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItable.h"
-					>
+					RelativePath="..\..\Game\Ui\Gui\GUItable.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Start Scripts"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Game\StartScripts\AirScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\AirScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\AirScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\AirScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\CommanderScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\CommanderScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript2.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\CommanderScript2.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript2.h"
-					>
+					RelativePath="..\..\Game\StartScripts\CommanderScript2.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\EmptyScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\EmptyScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\EmptyScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\EmptyScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\GlobalAITestScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\GlobalAITestScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\GlobalAITestScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\GlobalAITestScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\LoadScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\LoadScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\LoadScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\LoadScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\Script.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\Script.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\Script.h"
-					>
+					RelativePath="..\..\Game\StartScripts\Script.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\ScriptHandler.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\ScriptHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\ScriptHandler.h"
-					>
+					RelativePath="..\..\Game\StartScripts\ScriptHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\SpawnScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\SpawnScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\SpawnScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\SpawnScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\SWTATestScrip.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\SWTATestScrip.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\SWTATestScrip.h"
-					>
+					RelativePath="..\..\Game\StartScripts\SWTATestScrip.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\TestScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\TestScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\TestScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\TestScript.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\YehaTestScript.cpp"
-					>
+					RelativePath="..\..\Game\StartScripts\YehaTestScript.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\YehaTestScript.h"
-					>
+					RelativePath="..\..\Game\StartScripts\YehaTestScript.h">
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Rendering"
-			>
+			Filter="">
 			<File
-				RelativePath="..\..\Rendering\ExplosionGraphics.cpp"
-				>
+				RelativePath="..\..\Rendering\ExplosionGraphics.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\ExplosionGraphics.h"
-				>
+				RelativePath="..\..\Rendering\ExplosionGraphics.h">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.cpp"
-				>
+				RelativePath="..\..\Rendering\FartextureHandler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.h"
-				>
+				RelativePath="..\..\Rendering\FartextureHandler.h">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\glFont.cpp"
-				>
+				RelativePath="..\..\Rendering\glFont.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\glFont.h"
-				>
+				RelativePath="..\..\Rendering\glFont.h">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\GroundDecalHandler.cpp"
-				>
+				RelativePath="..\..\Rendering\GroundDecalHandler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\GroundDecalHandler.h"
-				>
+				RelativePath="..\..\Rendering\GroundDecalHandler.h">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\GroundFlash.cpp"
-				>
+				RelativePath="..\..\Rendering\GroundFlash.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\GroundFlash.h"
-				>
+				RelativePath="..\..\Rendering\GroundFlash.h">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.cpp"
-				>
+				RelativePath="..\..\Rendering\InMapDraw.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.h"
-				>
+				RelativePath="..\..\Rendering\InMapDraw.h">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\ShadowHandler.cpp"
-				>
+				RelativePath="..\..\Rendering\ShadowHandler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\ShadowHandler.h"
-				>
+				RelativePath="..\..\Rendering\ShadowHandler.h">
 			</File>
 			<Filter
 				Name="Unit Models"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Rendering\UnitModels\3DModelParser.cpp"
-					>
+					RelativePath="..\..\Rendering\UnitModels\3DModelParser.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\3DModelParser.h"
-					>
+					RelativePath="..\..\Rendering\UnitModels\3DModelParser.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\3DOParser.cpp"
-					>
+					RelativePath="..\..\Rendering\UnitModels\3DOParser.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\3DOParser.h"
-					>
+					RelativePath="..\..\Rendering\UnitModels\3DOParser.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\s3o.h"
-					>
+					RelativePath="..\..\Rendering\UnitModels\s3o.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\s3oParser.cpp"
-					>
+					RelativePath="..\..\Rendering\UnitModels\s3oParser.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\s3oParser.h"
-					>
+					RelativePath="..\..\Rendering\UnitModels\s3oParser.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.cpp"
-					>
+					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.h"
-					>
+					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.cpp"
-					>
+					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.h"
-					>
+					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Env"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Rendering\Env\AdvSky.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\AdvSky.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\AdvSky.h"
-					>
+					RelativePath="..\..\Rendering\Env\AdvSky.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\AdvTreeDrawer.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\AdvTreeDrawer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\AdvTreeDrawer.h"
-					>
+					RelativePath="..\..\Rendering\Env\AdvTreeDrawer.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\AdvTreeGenerator.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\AdvTreeGenerator.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\AdvTreeGenerator.h"
-					>
+					RelativePath="..\..\Rendering\Env\AdvTreeGenerator.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\AdvWater.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\AdvWater.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\AdvWater.h"
-					>
+					RelativePath="..\..\Rendering\Env\AdvWater.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\BaseSky.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.h"
-					>
+					RelativePath="..\..\Rendering\Env\BaseSky.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.h"
-					>
+					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\BaseWater.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.h"
-					>
+					RelativePath="..\..\Rendering\Env\BaseWater.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BasicSky.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\BasicSky.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BasicSky.h"
-					>
+					RelativePath="..\..\Rendering\Env\BasicSky.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BasicTreeDrawer.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\BasicTreeDrawer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BasicTreeDrawer.h"
-					>
+					RelativePath="..\..\Rendering\Env\BasicTreeDrawer.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BasicWater.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\BasicWater.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BasicWater.h"
-					>
+					RelativePath="..\..\Rendering\Env\BasicWater.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\DynWater.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\DynWater.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\DynWater.h"
-					>
+					RelativePath="..\..\Rendering\Env\DynWater.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\GrassDrawer.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\GrassDrawer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\GrassDrawer.h"
-					>
+					RelativePath="..\..\Rendering\Env\GrassDrawer.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\SkyBox.cpp"
-					>
+					RelativePath="..\..\Rendering\Env\SkyBox.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\SkyBox.h"
-					>
+					RelativePath="..\..\Rendering\Env\SkyBox.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="GL"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Rendering\Gl\FBO.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\FBO.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\FBO.h"
-					>
+					RelativePath="..\..\Rendering\Gl\FBO.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glExtra.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\glExtra.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glExtra.h"
-					>
+					RelativePath="..\..\Rendering\Gl\glExtra.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glh_genext.h"
-					>
+					RelativePath="..\..\Rendering\Gl\glh_genext.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glList.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\glList.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glList.h"
-					>
+					RelativePath="..\..\Rendering\Gl\glList.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glTextBox.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\glTextBox.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glTextBox.h"
-					>
+					RelativePath="..\..\Rendering\Gl\glTextBox.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\myGL.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\myGL.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\myGL.h"
-					>
+					RelativePath="..\..\Rendering\Gl\myGL.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\VertexArray.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\VertexArray.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\VertexArray.h"
-					>
+					RelativePath="..\..\Rendering\Gl\VertexArray.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\VertexArrayRange.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\VertexArrayRange.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\VertexArrayRange.h"
-					>
+					RelativePath="..\..\Rendering\Gl\VertexArrayRange.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\WinPBuffer.cpp"
-					>
+					RelativePath="..\..\Rendering\Gl\WinPBuffer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\WinPBuffer.h"
-					>
+					RelativePath="..\..\Rendering\Gl\WinPBuffer.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Map"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Rendering\Map\BaseGroundDrawer.cpp"
-					>
+					RelativePath="..\..\Rendering\Map\BaseGroundDrawer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Map\BaseGroundDrawer.h"
-					>
+					RelativePath="..\..\Rendering\Map\BaseGroundDrawer.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Map\BFGroundDrawer.cpp"
-					>
+					RelativePath="..\..\Rendering\Map\BFGroundDrawer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Map\BFGroundDrawer.h"
-					>
+					RelativePath="..\..\Rendering\Map\BFGroundDrawer.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Map\BFGroundTextures.cpp"
-					>
+					RelativePath="..\..\Rendering\Map\BFGroundTextures.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Map\BFGroundTextures.h"
-					>
+					RelativePath="..\..\Rendering\Map\BFGroundTextures.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Textures"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Rendering\Textures\Bitmap.cpp"
-					>
+					RelativePath="..\..\Rendering\Textures\Bitmap.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\Bitmap.h"
-					>
+					RelativePath="..\..\Rendering\Textures\Bitmap.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\nv_dds.cpp"
-					>
+					RelativePath="..\..\Rendering\Textures\nv_dds.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\nv_dds.h"
-					>
+					RelativePath="..\..\Rendering\Textures\nv_dds.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\TAPalette.cpp"
-					>
+					RelativePath="..\..\Rendering\Textures\TAPalette.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\TAPalette.h"
-					>
+					RelativePath="..\..\Rendering\Textures\TAPalette.h">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp"
-					>
+					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.h"
-					>
+					RelativePath="..\..\Rendering\Textures\TextureHandler.h">
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Simulation"
-			>
+			Filter="">
 			<Filter
 				Name="Units"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\Units\Unit.cpp"
-					>
+					RelativePath="..\..\Sim\Units\Unit.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\Unit.h"
-					>
+					RelativePath="..\..\Sim\Units\Unit.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitDef.h"
-					>
+					RelativePath="..\..\Sim\Units\UnitDef.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitDefHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Units\UnitDefHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitDefHandler.h"
-					>
+					RelativePath="..\..\Sim\Units\UnitDefHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Units\UnitHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitHandler.h"
-					>
+					RelativePath="..\..\Sim\Units\UnitHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitLoader.cpp"
-					>
+					RelativePath="..\..\Sim\Units\UnitLoader.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitLoader.h"
-					>
+					RelativePath="..\..\Sim\Units\UnitLoader.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitTracker.cpp"
-					>
+					RelativePath="..\..\Sim\Units\UnitTracker.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitTracker.h"
-					>
+					RelativePath="..\..\Sim\Units\UnitTracker.h">
 				</File>
 				<Filter
 					Name="COB"
-					>
+					Filter="">
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobEngine.cpp"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobEngine.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobEngine.h"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobEngine.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobFile.cpp"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobFile.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobFile.h"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobFile.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobInstance.cpp"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobInstance.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobInstance.h"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobInstance.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobThread.cpp"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobThread.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\Cob\CobThread.h"
-						>
+						RelativePath="..\..\Sim\Units\Cob\CobThread.h">
 					</File>
 				</Filter>
 				<Filter
 					Name="UnitTypes"
-					>
+					Filter="">
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\Builder.cpp"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\Builder.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\Builder.h"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\Builder.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\Building.cpp"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\Building.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\Building.h"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\Building.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\ExtractorBuilding.cpp"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\ExtractorBuilding.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\ExtractorBuilding.h"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\ExtractorBuilding.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\Factory.cpp"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\Factory.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\Factory.h"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\Factory.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\TransportUnit.cpp"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\TransportUnit.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\UnitTypes\TransportUnit.h"
-						>
+						RelativePath="..\..\Sim\Units\UnitTypes\TransportUnit.h">
 					</File>
 				</Filter>
 				<Filter
 					Name="CommandAI"
-					>
+					Filter="">
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\AirCAI.cpp"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\AirCAI.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\AirCAI.h"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\AirCAI.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\BuilderCAI.cpp"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\BuilderCAI.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\BuilderCAI.h"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\BuilderCAI.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\CommandAI.cpp"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\CommandAI.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\CommandAI.h"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\CommandAI.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\FactoryCAI.cpp"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\FactoryCAI.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\FactoryCAI.h"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\FactoryCAI.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\MobileCAI.cpp"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\MobileCAI.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\MobileCAI.h"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\MobileCAI.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\TransportCAI.cpp"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\TransportCAI.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\Units\CommandAI\TransportCAI.h"
-						>
+						RelativePath="..\..\Sim\Units\CommandAI\TransportCAI.h">
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Projectiles"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\BubbleProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\BubbleProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\BubbleProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\BubbleProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\DirtProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\DirtProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\DirtProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\DirtProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\EmgProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\EmgProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\EmgProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\EmgProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FireBallProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\FireBallProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FireBallProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\FireBallProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FireProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\FireProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FireProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\FireProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FlameProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\FlameProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FlameProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\FlameProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FlareProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\FlareProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\FlareProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\FlareProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\GfxProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\GfxProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\GfxProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\GfxProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\LaserProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\LaserProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\LaserProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\LaserProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\LightingProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\LightingProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\LightingProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\LightingProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\MissileProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\MissileProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\MissileProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\MissileProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\MuzzleFlame.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\MuzzleFlame.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\MuzzleFlame.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\MuzzleFlame.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\PieceProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\PieceProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\PieceProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\PieceProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\Projectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\Projectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\Projectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\Projectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\RepulseGfx.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\RepulseGfx.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\RepulseGfx.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\RepulseGfx.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\SmokeProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\SmokeProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\StarburstProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\StarburstProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\StarburstProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\StarburstProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\TracerProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\TracerProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\TracerProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\TracerProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\WakeProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\WakeProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\WakeProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\WakeProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\WeaponProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\WeaponProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\WeaponProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\WeaponProjectile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\WreckProjectile.cpp"
-					>
+					RelativePath="..\..\Sim\Projectiles\WreckProjectile.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\WreckProjectile.h"
-					>
+					RelativePath="..\..\Sim\Projectiles\WreckProjectile.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Weapons"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\Weapons\BeamLaser.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\BeamLaser.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\BeamLaser.h"
-					>
+					RelativePath="..\..\Sim\Weapons\BeamLaser.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\bombdropper.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\bombdropper.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\bombdropper.h"
-					>
+					RelativePath="..\..\Sim\Weapons\bombdropper.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\Cannon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\Cannon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\Cannon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\Cannon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\DGunWeapon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\DGunWeapon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\DGunWeapon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\DGunWeapon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\EmgCannon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\EmgCannon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\EmgCannon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\EmgCannon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\FlameThrower.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\FlameThrower.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\FlameThrower.h"
-					>
+					RelativePath="..\..\Sim\Weapons\FlameThrower.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\LaserCannon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\LaserCannon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\LaserCannon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\LaserCannon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\LightingCannon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\LightingCannon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\LightingCannon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\LightingCannon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\MeleeWeapon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\MeleeWeapon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\MeleeWeapon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\MeleeWeapon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\MissileLauncher.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\MissileLauncher.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\MissileLauncher.h"
-					>
+					RelativePath="..\..\Sim\Weapons\MissileLauncher.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\NoWeapon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\NoWeapon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\NoWeapon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\NoWeapon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.h"
-					>
+					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\Rifle.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\Rifle.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\Rifle.h"
-					>
+					RelativePath="..\..\Sim\Weapons\Rifle.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\StarburstLauncher.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\StarburstLauncher.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\StarburstLauncher.h"
-					>
+					RelativePath="..\..\Sim\Weapons\StarburstLauncher.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.h"
-					>
+					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\Weapon.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\Weapon.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\Weapon.h"
-					>
+					RelativePath="..\..\Sim\Weapons\Weapon.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\WeaponDefHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Weapons\WeaponDefHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Weapons\WeaponDefHandler.h"
-					>
+					RelativePath="..\..\Sim\Weapons\WeaponDefHandler.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Pathfinding"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\Path\IPath.h"
-					>
+					RelativePath="..\..\Sim\Path\IPath.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\IPathFinder.h"
-					>
+					RelativePath="..\..\Sim\Path\IPathFinder.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathCache.cpp"
-					>
+					RelativePath="..\..\Sim\Path\PathCache.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathCache.h"
-					>
+					RelativePath="..\..\Sim\Path\PathCache.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathEstimator.cpp"
-					>
+					RelativePath="..\..\Sim\Path\PathEstimator.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathEstimator.h"
-					>
+					RelativePath="..\..\Sim\Path\PathEstimator.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathFinder.cpp"
-					>
+					RelativePath="..\..\Sim\Path\PathFinder.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathFinder.h"
-					>
+					RelativePath="..\..\Sim\Path\PathFinder.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathManager.cpp"
-					>
+					RelativePath="..\..\Sim\Path\PathManager.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\PathManager.h"
-					>
+					RelativePath="..\..\Sim\Path\PathManager.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Objects"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\Objects\SolidObject.cpp"
-					>
+					RelativePath="..\..\Sim\Objects\SolidObject.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Objects\SolidObject.h"
-					>
+					RelativePath="..\..\Sim\Objects\SolidObject.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Objects\WorldObject.cpp"
-					>
+					RelativePath="..\..\Sim\Objects\WorldObject.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Objects\WorldObject.h"
-					>
+					RelativePath="..\..\Sim\Objects\WorldObject.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Map"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\Map\Ground.cpp"
-					>
+					RelativePath="..\..\Sim\Map\Ground.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\Ground.h"
-					>
+					RelativePath="..\..\Sim\Map\Ground.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\MapDamage.cpp"
-					>
+					RelativePath="..\..\Sim\Map\MapDamage.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\MapDamage.h"
-					>
+					RelativePath="..\..\Sim\Map\MapDamage.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\mapfile.h"
-					>
+					RelativePath="..\..\Sim\Map\mapfile.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\MetalMap.cpp"
-					>
+					RelativePath="..\..\Sim\Map\MetalMap.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\MetalMap.h"
-					>
+					RelativePath="..\..\Sim\Map\MetalMap.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\ReadMap.cpp"
-					>
+					RelativePath="..\..\Sim\Map\ReadMap.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\ReadMap.h"
-					>
+					RelativePath="..\..\Sim\Map\ReadMap.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\SmfReadMap.cpp"
-					>
+					RelativePath="..\..\Sim\Map\SmfReadMap.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Map\SmfReadMap.h"
-					>
+					RelativePath="..\..\Sim\Map\SmfReadMap.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Misc"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\Misc\AirBaseHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\AirBaseHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\AirBaseHandler.h"
-					>
+					RelativePath="..\..\Sim\Misc\AirBaseHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\CategoryHandler.h"
-					>
+					RelativePath="..\..\Sim\Misc\CategoryHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\DamageArray.h"
-					>
+					RelativePath="..\..\Sim\Misc\DamageArray.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\DamageArrayHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\DamageArrayHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\DamageArrayHandler.h"
-					>
+					RelativePath="..\..\Sim\Misc\DamageArrayHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\Feature.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\Feature.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\Feature.h"
-					>
+					RelativePath="..\..\Sim\Misc\Feature.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\FeatureDef.h"
-					>
+					RelativePath="..\..\Sim\Misc\FeatureDef.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.h"
-					>
+					RelativePath="..\..\Sim\Misc\FeatureHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\GeometricObjects.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\GeometricObjects.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\GeometricObjects.h"
-					>
+					RelativePath="..\..\Sim\Misc\GeometricObjects.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\InterceptHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\InterceptHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\InterceptHandler.h"
-					>
+					RelativePath="..\..\Sim\Misc\InterceptHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\LosHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\LosHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\LosHandler.h"
-					>
+					RelativePath="..\..\Sim\Misc\LosHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\QuadField.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\QuadField.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\QuadField.h"
-					>
+					RelativePath="..\..\Sim\Misc\QuadField.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\RadarHandler.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\RadarHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\RadarHandler.h"
-					>
+					RelativePath="..\..\Sim\Misc\RadarHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\Wind.cpp"
-					>
+					RelativePath="..\..\Sim\Misc\Wind.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\Wind.h"
-					>
+					RelativePath="..\..\Sim\Misc\Wind.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="MoveTypes"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\Sim\MoveTypes\AirMoveType.cpp"
-					>
+					RelativePath="..\..\Sim\MoveTypes\AirMoveType.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\AirMoveType.h"
-					>
+					RelativePath="..\..\Sim\MoveTypes\AirMoveType.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\groundmovetype.cpp"
-					>
+					RelativePath="..\..\Sim\MoveTypes\groundmovetype.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\groundmovetype.h"
-					>
+					RelativePath="..\..\Sim\MoveTypes\groundmovetype.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\Mobility.cpp"
-					>
+					RelativePath="..\..\Sim\MoveTypes\Mobility.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\Mobility.h"
-					>
+					RelativePath="..\..\Sim\MoveTypes\Mobility.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveInfo.cpp"
-					>
+					RelativePath="..\..\Sim\MoveTypes\MoveInfo.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveInfo.h"
-					>
+					RelativePath="..\..\Sim\MoveTypes\MoveInfo.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveType.cpp"
-					>
+					RelativePath="..\..\Sim\MoveTypes\MoveType.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveType.h"
-					>
+					RelativePath="..\..\Sim\MoveTypes\MoveType.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.cpp"
-					>
+					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.h"
-					>
+					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.h">
 				</File>
 				<Filter
 					Name="MoveMath"
-					>
+					Filter="">
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.cpp"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.h"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.cpp"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.h"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.cpp"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.h"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.h">
 					</File>
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.cpp"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.cpp">
 					</File>
 					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h"
-						>
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h">
 					</File>
 				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="System"
-			>
+			Filter="">
 			<File
-				RelativePath="..\..\System\bget.cpp"
-				>
+				RelativePath="..\..\System\bget.cpp">
 				<FileConfiguration
-					Name="Release|Win32"
-					>
+					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
+						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\System\bget.h"
-				>
+				RelativePath="..\..\System\bget.h">
 			</File>
 			<File
-				RelativePath="..\..\System\GlobalStuff.cpp"
-				>
+				RelativePath="..\..\System\GlobalStuff.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\GlobalStuff.h"
-				>
+				RelativePath="..\..\System\GlobalStuff.h">
 			</File>
 			<File
-				RelativePath="..\..\System\Lesson2.cpp"
-				>
+				RelativePath="..\..\System\Lesson2.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\MemPool.cpp"
-				>
+				RelativePath="..\..\System\MemPool.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\MemPool.h"
-				>
+				RelativePath="..\..\System\MemPool.h">
 			</File>
 			<File
-				RelativePath="..\..\System\Net.cpp"
-				>
+				RelativePath="..\..\System\Net.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\Net.h"
-				>
+				RelativePath="..\..\System\Net.h">
 			</File>
 			<File
-				RelativePath="..\..\System\Object.cpp"
-				>
+				RelativePath="..\..\System\Object.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\Object.h"
-				>
+				RelativePath="..\..\System\Object.h">
 			</File>
 			<File
-				RelativePath="..\..\System\resource.h"
-				>
+				RelativePath="..\..\System\resource.h">
 			</File>
 			<File
-				RelativePath="..\..\System\StdAfx.cpp"
-				>
+				RelativePath="..\..\System\StdAfx.cpp">
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
+					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
+						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
+					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
+						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\System\StdAfx.h"
-				>
+				RelativePath="..\..\System\StdAfx.h">
 			</File>
 			<File
-				RelativePath="..\..\System\Syncify.cpp"
-				>
+				RelativePath="..\..\System\Syncify.cpp">
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
+					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
+						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
+					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
+						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\System\Syncify.h"
-				>
+				RelativePath="..\..\System\Syncify.h">
 			</File>
 			<File
-				RelativePath="..\..\System\SyncTracer.cpp"
-				>
+				RelativePath="..\..\System\SyncTracer.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\SyncTracer.h"
-				>
+				RelativePath="..\..\System\SyncTracer.h">
 			</File>
 			<File
-				RelativePath="..\..\System\tdf_grammar.hpp"
-				>
+				RelativePath="..\..\System\tdf_grammar.hpp">
 			</File>
 			<File
-				RelativePath="..\..\System\TdfParser.cpp"
-				>
+				RelativePath="..\..\System\TdfParser.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\TdfParser.h"
-				>
+				RelativePath="..\..\System\TdfParser.h">
 			</File>
 			<File
-				RelativePath="..\..\System\TimeProfiler.cpp"
-				>
+				RelativePath="..\..\System\TimeProfiler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\System\TimeProfiler.h"
-				>
+				RelativePath="..\..\System\TimeProfiler.h">
 			</File>
 			<Filter
 				Name="FileSystem"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\System\FileSystem\Archive7Zip.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\Archive7Zip.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\Archive7Zip.h"
-					>
+					RelativePath="..\..\System\FileSystem\Archive7Zip.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveBase.h"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveBase.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveBuffered.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveBuffered.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveBuffered.h"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveBuffered.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveFactory.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveFactory.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveFactory.h"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveFactory.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveHPI.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveHPI.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveHPI.h"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveHPI.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveScanner.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveScanner.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveScanner.h"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveScanner.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveZip.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveZip.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveZip.h"
-					>
+					RelativePath="..\..\System\FileSystem\ArchiveZip.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\FileHandler.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\FileHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\FileHandler.h"
-					>
+					RelativePath="..\..\System\FileSystem\FileHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\VFSHandler.cpp"
-					>
+					RelativePath="..\..\System\FileSystem\VFSHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\VFSHandler.h"
-					>
+					RelativePath="..\..\System\FileSystem\VFSHandler.h">
 				</File>
 				<Filter
 					Name="Libraries"
-					>
+					Filter="">
 					<Filter
 						Name="hpiutil2"
-						>
+						Filter="">
 						<File
-							RelativePath="..\..\lib\hpiutil2\hpientry.cpp"
-							>
+							RelativePath="..\..\lib\hpiutil2\hpientry.cpp">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\hpientry.h"
-							>
+							RelativePath="..\..\lib\hpiutil2\hpientry.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\hpifile.cpp"
-							>
+							RelativePath="..\..\lib\hpiutil2\hpifile.cpp">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\hpifile.h"
-							>
+							RelativePath="..\..\lib\hpiutil2\hpifile.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\hpiutil.cpp"
-							>
+							RelativePath="..\..\lib\hpiutil2\hpiutil.cpp">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\hpiutil.h"
-							>
+							RelativePath="..\..\lib\hpiutil2\hpiutil.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\scrambledfile.cpp"
-							>
+							RelativePath="..\..\lib\hpiutil2\scrambledfile.cpp">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\scrambledfile.h"
-							>
+							RelativePath="..\..\lib\hpiutil2\scrambledfile.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\sqshstream.cpp"
-							>
+							RelativePath="..\..\lib\hpiutil2\sqshstream.cpp">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\sqshstream.h"
-							>
+							RelativePath="..\..\lib\hpiutil2\sqshstream.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\substream.cpp"
-							>
+							RelativePath="..\..\lib\hpiutil2\substream.cpp">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\hpiutil2\substream.h"
-							>
+							RelativePath="..\..\lib\hpiutil2\substream.h">
 						</File>
 					</Filter>
 					<Filter
 						Name="7zip"
-						>
+						Filter="">
 						<File
-							RelativePath="..\..\lib\7zip\7zAlloc.c"
-							>
+							RelativePath="..\..\lib\7zip\7zAlloc.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zAlloc.h"
-							>
+							RelativePath="..\..\lib\7zip\7zAlloc.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zBuffer.c"
-							>
+							RelativePath="..\..\lib\7zip\7zBuffer.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zBuffer.h"
-							>
+							RelativePath="..\..\lib\7zip\7zBuffer.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zCrc.c"
-							>
+							RelativePath="..\..\lib\7zip\7zCrc.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zCrc.h"
-							>
+							RelativePath="..\..\lib\7zip\7zCrc.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zDecode.c"
-							>
+							RelativePath="..\..\lib\7zip\7zDecode.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zDecode.h"
-							>
+							RelativePath="..\..\lib\7zip\7zDecode.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zExtract.c"
-							>
+							RelativePath="..\..\lib\7zip\7zExtract.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zExtract.h"
-							>
+							RelativePath="..\..\lib\7zip\7zExtract.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zHeader.c"
-							>
+							RelativePath="..\..\lib\7zip\7zHeader.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zHeader.h"
-							>
+							RelativePath="..\..\lib\7zip\7zHeader.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zIn.c"
-							>
+							RelativePath="..\..\lib\7zip\7zIn.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zIn.h"
-							>
+							RelativePath="..\..\lib\7zip\7zIn.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zItem.c"
-							>
+							RelativePath="..\..\lib\7zip\7zItem.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zItem.h"
-							>
+							RelativePath="..\..\lib\7zip\7zItem.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zMethodID.c"
-							>
+							RelativePath="..\..\lib\7zip\7zMethodID.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zMethodID.h"
-							>
+							RelativePath="..\..\lib\7zip\7zMethodID.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\7zTypes.h"
-							>
+							RelativePath="..\..\lib\7zip\7zTypes.h">
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\LzmaDecode.c"
-							>
+							RelativePath="..\..\lib\7zip\LzmaDecode.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								>
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
+									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath="..\..\lib\7zip\LzmaDecode.h"
-							>
+							RelativePath="..\..\lib\7zip\LzmaDecode.h">
 						</File>
 					</Filter>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Platform"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\System\Platform\BackgroundReader.cpp"
-					>
+					RelativePath="..\..\System\Platform\BackgroundReader.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\BackgroundReader.h"
-					>
+					RelativePath="..\..\System\Platform\BackgroundReader.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\BaseCmd.cpp"
-					>
+					RelativePath="..\..\System\Platform\BaseCmd.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\BaseCmd.h"
-					>
+					RelativePath="..\..\System\Platform\BaseCmd.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\byteorder.h"
-					>
+					RelativePath="..\..\System\Platform\byteorder.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\ConfigHandler.cpp"
-					>
+					RelativePath="..\..\System\Platform\ConfigHandler.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\ConfigHandler.h"
-					>
+					RelativePath="..\..\System\Platform\ConfigHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\errorhandler.h"
-					>
+					RelativePath="..\..\System\Platform\errorhandler.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\filefunctions.h"
-					>
+					RelativePath="..\..\System\Platform\filefunctions.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\fp.h"
-					>
+					RelativePath="..\..\System\Platform\fp.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\SharedLib.cpp"
-					>
+					RelativePath="..\..\System\Platform\SharedLib.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\SharedLib.h"
-					>
+					RelativePath="..\..\System\Platform\SharedLib.h">
 				</File>
 				<Filter
 					Name="Win32"
-					>
+					Filter="">
 					<File
-						RelativePath="..\..\System\Platform\Win\AVIGenerator.cpp"
-						>
+						RelativePath="..\..\System\Platform\Win\AVIGenerator.cpp">
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\AVIGenerator.h"
-						>
+						RelativePath="..\..\System\Platform\Win\AVIGenerator.h">
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\DllLib.cpp"
-						>
+						RelativePath="..\..\System\Platform\Win\DllLib.cpp">
 						<FileConfiguration
-							Name="Release|Win32"
-							>
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
+								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\DllLib.h"
-						>
+						RelativePath="..\..\System\Platform\Win\DllLib.h">
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\RegHandler.cpp"
-						>
+						RelativePath="..\..\System\Platform\Win\RegHandler.cpp">
 						<FileConfiguration
-							Name="Release|Win32"
-							>
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
+								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\RegHandler.h"
-						>
+						RelativePath="..\..\System\Platform\Win\RegHandler.h">
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\win32.h"
-						>
+						RelativePath="..\..\System\Platform\Win\win32.h">
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\Win32Cmd.cpp"
-						>
+						RelativePath="..\..\System\Platform\Win\Win32Cmd.cpp">
 						<FileConfiguration
-							Name="Release|Win32"
-							>
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
+								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\Win32Cmd.h"
-						>
+						RelativePath="..\..\System\Platform\Win\Win32Cmd.h">
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\Win32Support.cpp"
-						>
+						RelativePath="..\..\System\Platform\Win\Win32Support.cpp">
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Math"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\System\float3.cpp"
-					>
+					RelativePath="..\..\System\float3.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\float3.h"
-					>
+					RelativePath="..\..\System\float3.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Matrix44f.cpp"
-					>
+					RelativePath="..\..\System\Matrix44f.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\System\Matrix44f.h"
-					>
+					RelativePath="..\..\System\Matrix44f.h">
 				</File>
 				<File
-					RelativePath="..\..\System\myMath.cpp"
-					>
+					RelativePath="..\..\System\myMath.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\myMath.h"
-					>
+					RelativePath="..\..\System\myMath.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="LoadSave"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\System\LoadInterface.cpp"
-					>
+					RelativePath="..\..\System\LoadInterface.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\LoadInterface.h"
-					>
+					RelativePath="..\..\System\LoadInterface.h">
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveHandler.cpp"
-					>
+					RelativePath="..\..\System\LoadSaveHandler.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveHandler.h"
-					>
+					RelativePath="..\..\System\LoadSaveHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveInterface.cpp"
-					>
+					RelativePath="..\..\System\LoadSaveInterface.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveInterface.h"
-					>
+					RelativePath="..\..\System\LoadSaveInterface.h">
 				</File>
 				<File
-					RelativePath="..\..\System\SaveInterface.cpp"
-					>
+					RelativePath="..\..\System\SaveInterface.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\SaveInterface.h"
-					>
+					RelativePath="..\..\System\SaveInterface.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="creg"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\System\creg\ClassBinding.cpp"
-					>
+					RelativePath="..\..\System\creg\ClassBinding.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\creg.h"
-					>
+					RelativePath="..\..\System\creg\creg.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\ISerializer.h"
-					>
+					RelativePath="..\..\System\creg\ISerializer.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\Serializer.cpp"
-					>
+					RelativePath="..\..\System\creg\Serializer.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\Serializer.h"
-					>
+					RelativePath="..\..\System\creg\Serializer.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\STL_Deque.h"
-					>
+					RelativePath="..\..\System\creg\STL_Deque.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\STL_List.h"
-					>
+					RelativePath="..\..\System\creg\STL_List.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\STL_Map.h"
-					>
+					RelativePath="..\..\System\creg\STL_Map.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\STL_Set.h"
-					>
+					RelativePath="..\..\System\creg\STL_Set.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\TypeDeduction.h"
-					>
+					RelativePath="..\..\System\creg\TypeDeduction.h">
 				</File>
 				<File
-					RelativePath="..\..\System\creg\VarTypes.cpp"
-					>
+					RelativePath="..\..\System\creg\VarTypes.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						>
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-						/>
+							UsePrecompiledHeader="3"/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\System\creg\VarTypes.h"
-					>
+					RelativePath="..\..\System\creg\VarTypes.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Sound"
-				>
+				Filter="">
 				<File
-					RelativePath="..\..\System\Platform\Win\DxSound.cpp"
-					>
+					RelativePath="..\..\System\Platform\Win\DxSound.cpp">
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\Win\DxSound.h"
-					>
+					RelativePath="..\..\System\Platform\Win\DxSound.h">
 				</File>
 				<File
-					RelativePath="..\..\System\Sound.h"
-					>
+					RelativePath="..\..\System\Sound.h">
 				</File>
 			</Filter>
 		</Filter>
 		<File
-			RelativePath=".\resource.h"
-			>
+			RelativePath=".\resource.h">
 		</File>
 		<File
-			RelativePath=".\rts.rc"
-			>
+			RelativePath=".\rts.rc">
 		</File>
 		<File
-			RelativePath=".\spring.ico"
-			>
+			RelativePath=".\spring.ico">
 		</File>
 	</Files>
 	<Globals>
