@@ -1,6 +1,6 @@
 /*
- * dotfileHandler.h
- * dotfileHandler configuration class definition
+ * DotfileHandler.h
+ * DotfileHandler configuration class definition
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
 
@@ -18,11 +18,11 @@ using std::string;
 #define DOTCONFIGFILE ".springrc"
 #define DOTCONFIGPATH (string(getenv("HOME")).append("/").append(DOTCONFIGFILE))
 
-class dotfileHandler: public ConfigHandler
+class DotfileHandler: public ConfigHandler
 {
 public:
-	dotfileHandler(string fname);
-	virtual ~dotfileHandler();
+	DotfileHandler(string fname);
+	virtual ~DotfileHandler();
 	virtual void SetInt(std::string name, unsigned int value);
 	virtual void SetString(std::string name, std::string value);
 	virtual std::string GetString(std::string name, std::string def);
@@ -36,6 +36,6 @@ protected:
 	
 };
 
-//extern dotfileHandler regHandler;
+//extern DotfileHandler regHandler;
 
 #endif /* _DOTFILEHANDLER_H */
