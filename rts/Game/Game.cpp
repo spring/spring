@@ -12,6 +12,7 @@
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include <time.h>
 #include <stdlib.h>
+#include <direct.h>
 #include "Rendering/GL/glList.h"
 #ifdef _WIN32
 #include "winerror.h"
@@ -755,8 +756,9 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		CBitmap b(buf,gu->screenx,gu->screeny);
 		b.ReverseYAxis();
 		char t[50];
+		_mkdir("screenshots");
 		for(int a=0;a<9999;++a){
-			sprintf(t,"screen%03i.jpg",a);
+			sprintf(t,"screenshots/screen%03i.jpg",a);
 			CFileHandler ifs(t);
 			if(!ifs.FileExists())
 				break;

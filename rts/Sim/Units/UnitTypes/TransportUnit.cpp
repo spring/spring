@@ -93,7 +93,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence (this);
     unit->transporter = this;
 	unit->toBeTransported=false;
-	if (!unit->unitDef->isAirBase)
+	if (!unitDef->isAirBase)
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
 	unit->UnBlock();
 	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
