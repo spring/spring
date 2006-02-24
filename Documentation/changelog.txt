@@ -20,6 +20,7 @@ next
    74 UNIT_ALLIED        is unit given with parameter allied to the unit of the current COB script. 1=allied, 0=not allied
 - Fixed login packets being sent every frame instead of once a second when trying to connect
 - Fixed ghosted buildings option.
+- Fixed isairbase=1 unit tag.
 
 0.67b3
 

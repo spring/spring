@@ -730,7 +730,7 @@ void CNet::ReadDemoFile(void)
 void CNet::CreateDemoServer(std::string demoname)
 {
 	string firstTry = demoname;
-	firstTry = "/demos/" + firstTry;
+	firstTry = "./demos/" + firstTry;
 	playbackDemo=new CFileHandler(firstTry);
 	if (!playbackDemo->FileExists()) {
 		delete playbackDemo;
