@@ -584,6 +584,7 @@ Section Uninstall
   Delete "$INSTDIR\devil.dll"
   Delete "$INSTDIR\SDL.dll"
   Delete "$INSTDIR\MSVCP71.dll"
+  Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\tower.sdu"
   Delete "$INSTDIR\palette.pal"
 ;  Delete "$INSTDIR\spawn.txt"
