@@ -14,7 +14,8 @@ using namespace std;
 CFileHandler::CFileHandler(const char* filename)
 : hpiFileBuffer(0),
 	hpiOffset(0),
-	filesize(-1)
+	filesize(-1),
+	ifs(0)
 {
 	Init(filename);
 }
@@ -22,23 +23,36 @@ CFileHandler::CFileHandler(const char* filename)
 CFileHandler::CFileHandler(std::string filename)
 : hpiFileBuffer(0),
 	hpiOffset(0),
-	filesize(-1)
+	filesize(-1),
+	ifs(0)
 {
 	Init(filename.c_str());
 }
 
 void CFileHandler::Init(const char* filename)
 {
-	fs::path fn(filename,fs::native);
-	ifs=new std::ifstream(fn.native_file_string().c_str(), ios::in|ios::binary);
-	if (ifs->is_open()) {
-		ifs->seekg(0, ios_base::end);
-		filesize = ifs->tellg();
-		ifs->seekg(0, ios_base::beg);
-		return;
-	}
-	delete ifs;
+	string fnstr;
 	ifs = 0;
+
+	try {
+		fs::path fn(filename,fs::native);
+		fnstr = fn.native_file_string();
+	} catch (boost::filesystem::filesystem_error err) {
+		fnstr.clear();
+	}
+
+	if (!fnstr.empty())
+	{
+		ifs=new std::ifstream(fnstr.c_str(), ios::in|ios::binary);
+		if (ifs->is_open()) {
+			ifs->seekg(0, ios_base::end);
+			filesize = ifs->tellg();
+			ifs->seekg(0, ios_base::beg);
+			return;
+		}
+		delete ifs;
+		ifs = 0;
+	}
 
 	if(!hpiHandler)
 		return;
