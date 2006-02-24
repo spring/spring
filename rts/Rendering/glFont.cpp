@@ -348,7 +348,6 @@ void CglFont::glPrintCentered (float x, float y, float s, const char *fmt, ...)
 	glTranslatef(x,y,0.0f);
 	glScalef(0.02f*s,0.025f*s,1.0f);
 	glTranslatef(-0.5f*font->CalcTextWidth(text),0.0f,0.0f);
-	glColor3f(1,1,1);
 	printstring(text);
 	glPopMatrix();
 }
@@ -365,7 +364,6 @@ void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 	glPushMatrix();
 	glTranslatef(x, y, 0.0f);
 	glScalef(.02f * s, .03f * s, .01f);
-	glColor3f(1,1,1);
 	printstring(text);
 	glPopMatrix();
 }
