@@ -1230,27 +1230,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\SWTATestScrip.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\SWTATestScrip.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Game\StartScripts\TestScript.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Game\StartScripts\TestScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\YehaTestScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\YehaTestScript.h"
 					>
 				</File>
 			</Filter>
@@ -2543,7 +2527,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Lesson2.cpp"
+				RelativePath="..\..\System\Main.cpp"
 				>
 			</File>
 			<File

@@ -175,31 +175,49 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	char text2[50];
-	int break_pos = 0;
-	if (strlen(text) > 42) {
-		memcpy(text2, text, 42);
-		break_pos = 42;
-		while (break_pos > 0 && text2[break_pos - 1] != ' ')
-			--break_pos;
-		if (break_pos <= 1) break_pos = 42;
-		text2[break_pos] = 0;
-	} else
-		strcpy(text2,text);
-	(*filelog) << text2  << "\n";
-	filelog->flush();
-	InfoLine l;
-	if((int)data.size()>(numLines-1)){
-		data[1].time+=data[0].time;
-		data.pop_front();
-	}
-	data.push_back(l);
-	data.back().text=text2;
-	data.back().time=lifetime-lastTime;
-	lastTime=lifetime;
+	float maxWidth = 55.0f;
+	int pos=0, line_start=0;
 
-	if (break_pos)
-		AddLine("%s", &text[break_pos]);
+	while (text[pos]) {
+		// iterate through text until maxWidth width is reached
+		char temp[60];
+		float w = 0.0f;
+		for (;text[pos] && pos-line_start < sizeof(temp);pos++) {
+			w += font->CalcCharWidth (text[pos]);
+
+			if (w > maxWidth)
+				break;
+			temp[pos-line_start] = text[pos];
+		}
+
+		// if needed, find a breaking position
+		if (w > maxWidth) {
+			int break_pos = pos-line_start-1;
+			while (break_pos > 0 && temp[break_pos] != ' ')
+				break_pos --;
+
+			if (!break_pos) break_pos = pos-line_start;
+			temp[break_pos] = 0;
+			line_start += break_pos+1;
+			pos = line_start;
+		} else {
+			temp[pos-line_start] = 0;
+			line_start = pos;
+		}
+
+		// add the line to the console
+		(*filelog) << temp << "\n";
+		filelog->flush();
+		InfoLine l;
+		if((int)data.size()>(numLines-1)){
+			data[1].time+=data[0].time;
+			data.pop_front();
+		}
+		data.push_back(l);
+		data.back().text=temp;
+		data.back().time=lifetime-lastTime;
+		lastTime=lifetime;
+	}
 	POP_CODE_MODE;
 }
 

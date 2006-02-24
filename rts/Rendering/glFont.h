@@ -12,9 +12,11 @@ public:
 	void glPrintColor(const char* fmt, ...);
 	void glWorldPrint(const char* fmt, ...);
 	void glPrintAt(GLfloat x, GLfloat y, float s, const char* fmt, ...);
+	float CalcTextWidth (const char *txt);
+	float CalcCharWidth (char c);
+	void glPrintCentered (float x,float y, float s,const char *fmt,...);
 	CglFont(int start, int end);
 	~CglFont();
-	int *charWidths; /* glTextBox */
 private:
 	void printstring(const char *text);
 	void WorldChar(char c);
@@ -24,6 +26,7 @@ private:
 	int charheight;
 	GLuint *textures;
 	GLuint listbase;
+	int *charWidths;
 };
 extern CglFont* font;
 

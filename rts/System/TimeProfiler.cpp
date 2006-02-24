@@ -46,22 +46,18 @@ void CTimeProfiler::Draw()
 			glVertex3f(0.99f,0.99f-profile.size()*0.024-0.01,0);
 		glEnd();
 	}
-	glTranslatef(0.655f,0.965f,0);
-	glScalef(0.015f,0.02f,0.02f);
-	glColor4f(1,1,1,1);
 
 	glEnable(GL_TEXTURE_2D);
 
 	map<string,TimeRecord>::iterator pi;
 
-	glPushMatrix();
-	for(pi=profile.begin();pi!=profile.end();++pi){
-		font->glPrint("%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total)/1000.,pi->second.percent*100);
+	int y=0;
+	for(pi=profile.begin();pi!=profile.end();++pi,y++)
+		font->glPrintAt(0.655f, 0.960-y*0.024f, 1.0f, "%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total)/1000.,pi->second.percent*100);
 
-		glTranslatef(0,-1.2f,0);
-
-	}
-	glPopMatrix();
+	glTranslatef(0.655f,0.965f,0);
+	glScalef(0.015f,0.02f,0.02f);
+	glColor4f(1,1,1,1);
 
 	glDisable(GL_TEXTURE_2D);
 	for(pi=profile.begin();pi!=profile.end();++pi){
