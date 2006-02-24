@@ -322,13 +322,18 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 {
 	// Check if the commandline parameter is specifying a demo file
 #ifdef _WIN32
-	string command(argv[0]);
-	int idx = command.rfind("spring");
-	string path = command.substr(0,idx);
-	if (path.at(0) == '"')
-		path.append(1,'"');
-	if (path != "")
+	// find the correct dir
+	const char *arg0=argv[0];
+	int a,s = strlen(arg0);
+	for (a=s-1;a>0;a--) 
+		if (arg0[a] == '\\') break;
+	if (a > 0) {
+		string path;
+		path.insert (0, arg0, arg0+a);
+		if (path.at(0) == '"')
+			path.append(1,'"');
 		_chdir(path.c_str());
+	}
 #endif
 
 	for (int i = 1; i < argc; i++) {
