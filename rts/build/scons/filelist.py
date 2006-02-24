@@ -57,7 +57,7 @@ def get_spring_source(env):
 		'rts/build',
 		'rts/lib/libhpi',
 		'rts/System/Platform/BackgroundReader.cpp',
-		'rts/System/Lesson2.cpp',          # see SConstruct
+		'rts/System/Main.cpp',          # see SConstruct
 	]
 	# we may be called before we were configured (e.g. when cleaning)
 	if env.has_key('platform'):
