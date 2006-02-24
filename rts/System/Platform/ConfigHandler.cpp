@@ -8,7 +8,7 @@
 #ifdef _WIN32
 #include "Win/RegHandler.h"
 #else
-#include "Linux/dotfileHandler.h"
+#include "Linux/DotfileHandler.h"
 #endif
 
 ConfigHandler* ConfigHandler::instance=0;
@@ -19,7 +19,7 @@ ConfigHandler& ConfigHandler::GetInstance()
 #ifdef _WIN32
 		instance = new RegHandler("Software\\SJ\\spring");
 #else
-		instance = new dotfileHandler(DOTCONFIGPATH);
+		instance = new DotfileHandler(DOTCONFIGPATH);
 #endif
 	}
 	return *instance;

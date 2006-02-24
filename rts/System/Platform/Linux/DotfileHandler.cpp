@@ -1,15 +1,15 @@
 /*
- * dotfileHandler.cpp
- * dotfileHandler configuration class implementation
+ * DotfileHandler.cpp
+ * DotfileHandler configuration class implementation
  * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
  */
 
 #include "StdAfx.h"
-#include "dotfileHandler.h"
+#include "DotfileHandler.h"
 #include "Platform/errorhandler.h"
 #include <sstream>
 
-dotfileHandler::dotfileHandler(const string fname)
+DotfileHandler::DotfileHandler(const string fname)
 {
 	std::ifstream reader(fname.c_str());
 	if (reader.good()) {
@@ -20,33 +20,33 @@ dotfileHandler::dotfileHandler(const string fname)
 				data[read.substr(0,idx)] = read.substr(idx+1);
 		reader.close();
 	} else
-		handleerror(0,"Could not read from config file","dotfileHandler",MBF_EXCL);
+		handleerror(0,"Could not read from config file","DotfileHandler",MBF_EXCL);
 	file.open(fname.c_str());
 	if (!file)
-		handleerror(0,"Could not write to config file","dotfileHandler",0);
+		handleerror(0,"Could not write to config file","DotfileHandler",0);
 	filename = fname;
 	flushfile();
 }
 
-dotfileHandler::~dotfileHandler()
+DotfileHandler::~DotfileHandler()
 {
 	flushfile();
 	file.close();
 }
 
-unsigned int dotfileHandler::GetInt(const string name, const unsigned int def)
+unsigned int DotfileHandler::GetInt(const string name, const unsigned int def)
 {
 	std::map<string,string>::iterator pos = data.find(name);
 	return ( pos == data.end() ? def : atoi(data[name].c_str()) );
 }
 
-string dotfileHandler::GetString(const string name, const string def)
+string DotfileHandler::GetString(const string name, const string def)
 {
 	std::map<string,string>::iterator pos = data.find(name);
 	return ( pos == data.end() ? def : data[name] );
 }
 
-void dotfileHandler::truncatefile(void)
+void DotfileHandler::truncatefile(void)
 {
 	if (file)
 		file.close();
@@ -55,12 +55,12 @@ void dotfileHandler::truncatefile(void)
 
 /*
  * Pretty hackish, but Windows registry changes
- * save immediately, while with dotfileHandler the
+ * save immediately, while with DotfileHandler the
  * data is stored in an internal data structure for
  * fast access.  So we want to keep the settings in
  * the event of a crash
  */
-void dotfileHandler::flushfile(void)
+void DotfileHandler::flushfile(void)
 {
 	truncatefile();
 	for(std::map<string,string>::iterator iter = data.begin(); iter != data.end(); iter++)
@@ -68,13 +68,13 @@ void dotfileHandler::flushfile(void)
 	file.flush();
 }
 
-void dotfileHandler::SetString(const string name, const string value)
+void DotfileHandler::SetString(const string name, const string value)
 {
 	data[name] = value;
 	flushfile();
 }
 
-void dotfileHandler::SetInt(const string name, const unsigned int value)
+void DotfileHandler::SetInt(const string name, const unsigned int value)
 {
 	std::stringstream ss;
 	ss << value;
