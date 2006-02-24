@@ -6,6 +6,20 @@
 #include SPRING_HASH_MAP_H
 #include <vector>
 
+#ifdef __GNUG__
+// This is needed as gnu doesn't offer specialization for other pointer types other that char*
+// (look in ext/hash_fun.h for the types supported out of the box)
+namespace __gnu_cxx
+{
+
+  template<> struct hash<void*>
+  {
+    size_t operator()(const void* __s) const
+    { return (size_t)(__s); }
+  };
+}
+#endif
+
 namespace creg {
 //-------------------------------------------------------------------------
 // Base output serializer

@@ -11,6 +11,7 @@ Classes for serialization of registrated class instances
 #include <fstream>
 #include <assert.h>
 #include <stdexcept>
+#include <map>
 
 using namespace std;
 using namespace creg;

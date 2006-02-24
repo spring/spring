@@ -188,7 +188,7 @@ def generate(env):
 		string_opt('cachedir', None)
 
 		defines = ['_REENTRANT', 'DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
-		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
+		defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
 		if env['disable_hpi']      : defines += ['NO_HPI']
 		if env['disable_clipboard']: defines += ['NO_CLIPBOARD']
 		if env['disable_avi']      : defines += ['NO_AVI']

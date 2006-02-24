@@ -36,7 +36,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#define SPRING_HASH_SET __gnu_cxx::hash_set
 	#define SPRING_HASH_SET_H <ext/hash_set>
 
-	#define SPRING_HASH_MAP __gnu_ccx::hash_map
+	#define SPRING_HASH_MAP __gnu_cxx::hash_map
 	#define SPRING_HASH_MAP_H <ext/hash_map>
 #else
 	#error Unsupported compiler
