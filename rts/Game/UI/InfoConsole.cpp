@@ -175,7 +175,7 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	float maxWidth = 55.0f;
+	float maxWidth = 25.0f;
 	int pos=0, line_start=0;
 
 	while (text[pos]) {
@@ -192,8 +192,8 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 
 		// if needed, find a breaking position
 		if (w > maxWidth) {
-			int break_pos = pos-line_start-1;
-			while (break_pos > 0 && temp[break_pos] != ' ')
+			int break_pos = pos-line_start;
+			while (break_pos > 0 && temp[break_pos-1] != ' ')
 				break_pos --;
 
 			if (!break_pos) break_pos = pos-line_start;
