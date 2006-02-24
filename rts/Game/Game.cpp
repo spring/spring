@@ -764,7 +764,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 #ifdef _MSC_VER
 		_mkdir("screenshots");
 #else
-		mkdir("screenshots");
+		mkdir("screenshots", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); /* 0755 rwxr-xr-x */
 #endif
 		for(int a=0;a<9999;++a){
 			sprintf(t,"screenshots/screen%03i.jpg",a);
