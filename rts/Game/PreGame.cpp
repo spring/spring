@@ -191,7 +191,7 @@ bool CPreGame::Draw(void)
 
 bool CPreGame::Update(void)
 {
-	if(waitOnAddress && !userWriting){		//anv�daren har skrivit klart addressen
+	if(waitOnAddress && !userWriting){
 		waitOnAddress=false;
 		if (saveAddress)
 			configHandler.SetString("address",userInput);
