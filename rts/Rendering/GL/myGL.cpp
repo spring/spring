@@ -118,14 +118,9 @@ void PrintLoadMsg(const char* text)
 			glTexCoord2f(1,1);glVertex2f(1,0);
 		glEnd();
 	}
-	glPushMatrix();
-	glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
-	glScalef(0.03f,0.04f,0.1f);
-	glColor3f(1,1,1);
-	font->glPrint("%s",text);
-	glPopMatrix();
-	font->glPrintAt(0.40,0.06,1.0,"TA Spring %s",VERSION_STRING);
-	font->glPrintAt(0.20,0.02,0.5,"This program is distributed under the GNU General Public License, see license.html for more info");
+	font->glPrintCentered (0.5f,0.48f, 2.0f, text);
+	font->glPrintCentered(0.5f,0.06f,1.0,"TA Spring %s",VERSION_STRING);
+	font->glPrintCentered(0.5f,0.02f,0.6,"This program is distributed under the GNU General Public License, see license.html for more info");
 	SDL_GL_SwapBuffers();
 }
 

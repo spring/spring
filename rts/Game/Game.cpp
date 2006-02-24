@@ -1080,18 +1080,24 @@ bool CGame::Draw()
 
 	if(gameSetup && !playing){
 		allReady=gameSetup->Draw();
-	} else if( gameServer && serverNet->waitOnCon){				//servern v�tar p�anslutningar
-		glPushMatrix();
-		glColor4f(1,1,1,1);
-		glTranslatef(0.1f,0.6f,0.0f);
-		glScalef(0.03f,0.04f,0.1f);
+	} else if( gameServer && serverNet->waitOnCon){	
 		allReady=true;
 		for(a=0;a<gs->activePlayers;a++)
 			if(gs->players[a]->active && !gs->players[a]->readyToStart)
 				allReady=false;
-		if(allReady)
+
+		if (allReady)
+			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
+
+		/*if(allReady)
+		{
+			glPushMatrix();
+			glColor4f(1,1,1,1);
+			glTranslatef(0.1f,0.6f,0.0f);
+			glScalef(0.03f,0.04f,0.1f);
 			font->glPrint("Waiting for connections. Press return to start");
-		glPopMatrix();
+			glPopMatrix();
+		}*/
 	}
 	
 	if(userWriting){
@@ -1112,13 +1118,10 @@ bool CGame::Draw()
 		glLoadIdentity();
 	}
 	if(showPlayerInfo){
-		glTranslatef(0.72f,0.01f,0.0f);
-		glScalef(0.015f,0.015f,0.1f);
 		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->active){
-				glTranslatef(0,1.2f,0.0f);
 				glColor4ubv(gs->Team(gs->players[a]->team)->color);
-				font->glPrint("%20s %3.0f%% %3i",gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,gs->players[a]->ping);
+				font->glPrintAt (0.82f, 0.01f + 0.02 * a, 0.7f, "%20s %3.0f%% %3i",gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,gs->players[a]->ping);
 			}
 		}
 		glLoadIdentity();

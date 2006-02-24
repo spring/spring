@@ -299,6 +299,21 @@ void CglFont::glPrintColor(const char* fmt, ...)
 	glPopAttrib();
 }
 
+float CglFont::CalcCharWidth (char c)
+{
+	return 0.03 + charWidths[c-charstart]/32.0f;
+}
+
+float CglFont::CalcTextWidth (const char *text)
+{
+	float w=0.0f;
+	for (int a=0;text[a];a++)  {
+		float charpart = (charWidths[text[a]-charstart])/32.0f;
+		w += charpart+0.03f;
+	}
+	return w;
+}
+
 void CglFont::glWorldPrint(const char *fmt, ...)
 {
 	char text[512];
@@ -310,12 +325,31 @@ void CglFont::glWorldPrint(const char *fmt, ...)
 	va_end(ap);
 	glPushMatrix();
 	glRasterPos2i(0,0);
-	float charpart = (charWidths[text[0]-charstart])/32.0f;
-	int b = strlen(text);
+	float w=CalcTextWidth (text);
 	/* Center (screen-wise) the text above the current position. */
-	glTranslatef(-b*0.5f*DRAW_SIZE*(charpart+0.03f)*camera->right.x,-b*0.5f*DRAW_SIZE*(charpart+0.03f)*camera->right.y,-b*0.5f*DRAW_SIZE*(charpart+0.03f)*camera->right.z);
-	for (int a = 0; a < b; a++)
+	glTranslatef(-0.5f*DRAW_SIZE*w*camera->right.x,-0.5f*DRAW_SIZE*w*camera->right.y,-0.5f*DRAW_SIZE*w*camera->right.z);
+	for (int a = 0; text[a]; a++)
 		WorldChar(text[a]);
+	glPopMatrix();
+}
+
+// centered version of glPrintAt
+void CglFont::glPrintCentered (float x, float y, float s, const char *fmt, ...)
+{
+	char text[512];
+	va_list	ap;
+	if (fmt == NULL)
+		return;
+	va_start(ap, fmt);
+	VSNPRINTF(text, sizeof(text), fmt, ap);
+	va_end(ap);
+
+	glPushMatrix();
+	glTranslatef(x,y,0.0f);
+	glScalef(0.02f*s,0.025f*s,1.0f);
+	glTranslatef(-0.5f*font->CalcTextWidth(text),0.0f,0.0f);
+	glColor3f(1,1,1);
+	printstring(text);
 	glPopMatrix();
 }
 
@@ -328,12 +362,11 @@ void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 	va_start(ap, fmt);
 	VSNPRINTF(text, sizeof(text), fmt, ap);
 	va_end(ap);
-	glPushAttrib(GL_LIST_BIT);
 	glPushMatrix();
 	glTranslatef(x, y, 0.0f);
 	glScalef(.02f * s, .03f * s, .01f);
+	glColor3f(1,1,1);
 	printstring(text);
-	glPopAttrib();
 	glPopMatrix();
 }
 
