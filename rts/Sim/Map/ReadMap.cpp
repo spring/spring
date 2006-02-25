@@ -84,7 +84,7 @@ static void myDelete(void* p)
 	delete[] 	p2;
 }
 
-CReadMap::CReadMap()
+CReadMap::CReadMap(): metalMap(NULL)
 {
 }
 
