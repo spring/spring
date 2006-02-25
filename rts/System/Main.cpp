@@ -328,8 +328,7 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 	for (a=s-1;a>0;a--) 
 		if (arg0[a] == '\\') break;
 	if (a > 0) {
-		string path;
-		path.insert (0, arg0, arg0+a);
+		string path(arg0, arg0+a);
 		if (path.at(0) == '"')
 			path.append(1,'"');
 		_chdir(path.c_str());
