@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <boost/scoped_array.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/spirit/utility/confix.hpp>
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
@@ -113,7 +114,8 @@ void TdfParser::LoadFile(std::string const& filename)
 	file.Read( filebuf.get(), file.FileSize());
   filebuf[size] = '\0'; //append newline at end to avoid parsing error at eof
 
-  tdf_grammar grammar( &root_section );
+  std::list<std::string> junk_data;
+  tdf_grammar grammar( &root_section, &junk_data );
   boost::spirit::parse_info<char const*> info;
   std::string message; 
   boost::spirit::position_iterator2<char const*> error_it( filebuf.get(), filebuf.get() + size, filename );
@@ -140,9 +142,16 @@ void TdfParser::LoadFile(std::string const& filename)
     for( int i = 0, end = e.where -filebuf.get(); i != end; ++i,++error_it );
   }
 
+  for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end(); 
+      it !=e ; ++it ){
+    std::string temp = boost::trim_copy( *it );
+    if( ! temp.empty( ) ) {
+      ::info->AddLine( "Junk in "+ filename +  " :" + temp );
+    }
+  }
+
   if( ! message.empty() )
     throw parse_error( message, error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
-
 
   // a different error might have happened:
   if(!info.full)  {
@@ -159,8 +168,10 @@ TdfParser::TdfParser( char const* buf, std::size_t size) {
 void TdfParser::LoadBuffer( char const* buf, std::size_t size)
 {
   this->filename = "buffer";
-  tdf_grammar grammar( &root_section );
+  std::list<std::string> junk_data;
+  tdf_grammar grammar( &root_section, &junk_data );
 
+  std::string message; 
 
   boost::spirit::position_iterator2<char const*> error_it( buf, buf + size, filename );
 
@@ -176,7 +187,6 @@ void TdfParser::LoadBuffer( char const* buf, std::size_t size)
       ) ; 
   } 
   catch( boost::spirit::parser_error<tdf_grammar::Errors, char *> & e ) { // thrown by assertion parsers in tdf_grammar
-    std::string message; 
 
     switch(e.descriptor) {
       case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;
@@ -188,9 +198,19 @@ void TdfParser::LoadBuffer( char const* buf, std::size_t size)
 
     for( size_t  i = 0;i != size;  ++i,++error_it );
 
-    throw parse_error( message, error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
   }
 
+
+  for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end(); 
+      it !=e ; ++it ){
+    std::string temp = boost::trim_copy( *it );
+    if( ! temp.empty( ) ) {
+      ::info->AddLine( "Junk in "+ filename +  " :" + temp );
+    }
+  }
+
+  if(!message.empty())
+    throw parse_error( message, error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
   if(!info.full)
   {
     boost::spirit::position_iterator2<char const*> error_it( buf, buf + size, filename );
@@ -440,3 +460,22 @@ float3 TdfParser::GetFloat3(float3 def, std::string const& location)
 	return ret;
 }
 
+#ifdef TEST
+int main(int argc, char **argv) {
+  try{
+    while( --argc ) {
+      std::cout << "Parsing : " <<  argv[argc] << " ... ";
+      TdfParser p( argv[argc] ); 
+      p.print( std::cout );
+      std::cout <<" Ok." << std::endl;
+    }
+
+  }
+  catch( std::exception const& e){
+    std::cout << e.what();
+    return 1;
+  }
+  std::cout << "Fine" << std::endl;
+  return 0;
+}
+#endif
