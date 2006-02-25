@@ -50,11 +50,11 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
       using namespace boost::spirit;
       using namespace phoenix;
       tdf = 
-       *(section(self.section)) // Attribute von oben nach unten reichen 
+       *(section(self.section)) 
         ;
       name =  
-        (+chset<>("a-zA-Z0-9_+-,"))
-        [ name.name = construct_<std::string>(arg1, arg2) ] // Attribut nach oben durchreichen
+        (+chset<>("a-zA-Z0-9_+,-"))
+        [ name.name = construct_<std::string>(arg1, arg2) ] 
         ;
       section = '[' 
         >> name
