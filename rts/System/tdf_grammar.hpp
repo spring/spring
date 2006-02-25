@@ -104,9 +104,9 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
 
       gather_junk_line = 
         lexeme_d[
-        (+(~chset<>(";{[]}\n")))
+        (+(~chset<>("}[\n")))
         [ push_back_a( * self.junk  ) ]
-//      [ ostream_a( "Junk detected:", std::cout, "\n" ) ] // debug printouts
+        [ ostream_a( "Junk detected:", std::cout, "\n" ) ] // debug printouts
         ]
         ;
 
@@ -128,7 +128,7 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
          (
           name
           [var(temp1) = arg1] 
-          >> expect_equals_sign( ch_p('=') )
+          >> ch_p('=') // turn this into expect_equals_sign( ch_p('=') ) if you want more strict parsing
           >> lexeme_d[ (*~ch_p(';')) // might be empty too!
           [ bind( &TdfParser::TdfSection::add_name_value)(section.context, var(temp1), construct_<std::string>(arg1,arg2) ) ]
           ]
