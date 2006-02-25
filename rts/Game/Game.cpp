@@ -93,6 +93,7 @@
 #include <locale>
 #include <cctype>
 #include "UI/SelectionKeyHandler.h"
+#include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/path.hpp>
 #include "SDL_types.h"
 #include "SDL_keysym.h"
@@ -100,12 +101,6 @@
 #include "SDL_timer.h"
 #include "SDL_keyboard.h"
 #include "Platform/fp.h"
-
-#ifdef _MSC_VER
-#include <direct.h>
-#else
-#include <sys/stat.h>
-#endif
 
 #ifdef _WIN32
 #include "Platform/Win/DxSound.h"
@@ -761,11 +756,9 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		CBitmap b(buf,gu->screenx,gu->screeny);
 		b.ReverseYAxis();
 		char t[50];
-#ifdef _MSC_VER
-		_mkdir("screenshots");
-#else
-		mkdir("screenshots", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); /* 0755 rwxr-xr-x */
-#endif
+		boost::filesystem::path d("./screenshots");
+		if (!boost::filesystem::exists(d))
+			boost::filesystem::create_directories(d);
 		for(int a=0;a<9999;++a){
 			sprintf(t,"screenshots/screen%03i.jpg",a);
 			CFileHandler ifs(t);
