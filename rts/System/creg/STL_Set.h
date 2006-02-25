@@ -3,6 +3,7 @@
 
 #include <set>
 // hash_set, defined in stdafx.h
+#include "System/StdAfx.h"
 #include SPRING_HASH_SET_H
 
 namespace creg 
