@@ -237,8 +237,15 @@ bool SpringApp::SetSDLVideoMode ()
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
 	conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
-	
-	// FIXME: Might want to set color and depth sizes, too  -- johannes
+
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+#ifdef __APPLE__
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
+#else
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+#endif	
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
 
 	FSAA = MultisampleTest();
