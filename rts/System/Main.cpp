@@ -559,6 +559,11 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	chdir(SPRING_DATADIR);
 #endif
 
-	SpringApp app;
-	return app.Run (argc,argv);
+	try {
+		SpringApp app;
+		return app.Run (argc,argv);
+	} catch (const std::exception& e) {
+		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
+		return 1;
+	}
 }
