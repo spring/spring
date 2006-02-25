@@ -7,12 +7,15 @@ Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
 		Release = Release
+		Release with error catching = Release with error catching
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug.ActiveCfg = Debug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug.Build.0 = Debug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release.ActiveCfg = Release|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release.Build.0 = Release|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release with error catching.ActiveCfg = Release with error catching|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release with error catching.Build.0 = Release with error catching|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

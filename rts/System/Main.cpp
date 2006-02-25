@@ -152,18 +152,15 @@ bool SpringApp::Initialize ()
 		SDL_Quit ();
 		return false;
 	}
-	InitOpenGL();
-
-	palette.Init();
-
 	// Global structures
 	ENTER_SYNCED;
 	gs=new CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
 
-	gu->screenx = screenWidth;
-	gu->screeny = screenHeight;
+	InitOpenGL();
+
+	palette.Init();
 
 	// Initialize keyboard
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
@@ -273,6 +270,9 @@ void SpringApp::InitOpenGL ()
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+
+	gu->screenx = screenWidth;
+	gu->screeny = screenHeight;
 }
 
 
@@ -438,8 +438,9 @@ int SpringApp::Run (int argc, char *argv[])
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE:
-					if (SetSDLVideoMode ())
-						InitOpenGL();
+					screenWidth = event.resize.w;
+					screenHeight = event.resize.h;
+					InitOpenGL();
 					break;
 				case SDL_QUIT:
 					done = true;
@@ -559,6 +560,8 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 	chdir(SPRING_DATADIR);
 #endif
 
+// It's nice to be able to disable catching when you're debugging
+#ifndef NO_CATCH_EXCEPTIONS
 	try {
 		SpringApp app;
 		return app.Run (argc,argv);
@@ -566,4 +569,7 @@ int main( int argc, char *argv[ ], char *envp[ ] )
 		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
 		return 1;
 	}
+#else
+	return app.Run (argv, argv);
+#endif
 }
