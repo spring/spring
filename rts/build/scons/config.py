@@ -70,18 +70,35 @@ def guess_include_path(env, conf, name, subdir):
 
 
 def check_lua(env, conf):
-	print "Checking for lua..."
-	print "  Checking for pkg-config...",
-	pkgcfg = env.WhereIs("pkg-config")
-	if pkgcfg:
-		print pkgcfg
-		print "  Checking for lua package... ",
-		ret = conf.TryAction(pkgcfg+" --exists lua")
-		if ret[0]:
-			print "found"
-			cmd = pkgcfg+" --modversion lua"
-			lcmd = pkgcfg+" --libs --cflags lua"
+	print "Checking for Lua..."
+	lua = False
+	print "  Checking for lua-config...",
+	luacfg = env.WhereIs("lua-config")
+	if luacfg:
+		print luacfg
+		lv = conf.TryAction(luacfg+" --version")
+		if lv[0]:
+			cmd = luacfg+" --version"
+			lcmd = luacfg+" --include --libs"
 			lua = True
+		else:
+			print "  "+luacfg+" does not give library version"
+	else:
+		print "not found"
+	if not lua:
+		print "  Checking for pkg-config...",
+		pkgcfg = env.WhereIs("pkg-config")
+		if pkgcfg:
+			print pkgcfg
+			print "  Checking for lua package... ",
+			ret = conf.TryAction(pkgcfg+" --exists lua")
+			if ret[0]:
+				print "found"
+				cmd = pkgcfg+" --modversion lua"
+				lcmd = pkgcfg+" --libs --cflags lua"
+				lua = True
+			else:
+				print "not found"
 		else:
 			print "not found"
 	if lua:
@@ -224,9 +241,6 @@ def check_headers(env, conf):
 		print ' Cannot find DevIL image library header'
 		env.Exit(1)
 	if not env['disable_lua']:
-		if not conf.CheckCHeader('lua.h'):
-			print ' Cannot find Lua header'
-			env.Exit(1)
 		if not conf.CheckCXXHeader('luabind/luabind.hpp'):
 			print ' Cannot find Luabind header'
 			env.Exit(1)
@@ -267,12 +281,6 @@ def check_libraries(env, conf):
 		env.Exit(1)
 
 	if not env['disable_lua']:
-		if not conf.CheckLib('lua'):
-			print ' Cannot find Lua library'
-			env.Exit(1)
-		if not conf.CheckLib('lualib'):
-			print ' Cannot find Lualib libary'
-			env.Exit(1)
 		if not conf.CheckLib('luabind'):
 			print ' Cannot find Luabind library'
 			env.Exit(1)
@@ -294,6 +302,8 @@ def configure(env, conf_dir):
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
 	check_openal(env, conf)
+	if not env['disable_lua']:
+		check_lua(env, conf)
 	check_headers(env, conf)
 	check_libraries(env, conf)
 	env = conf.Finish()
