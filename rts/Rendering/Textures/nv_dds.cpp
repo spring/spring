@@ -191,7 +191,7 @@ using namespace nv_dds;
 ///////////////////////////////////////////////////////////////////////////////
 // static function pointers for uploading 3D textures and compressed 1D, 2D
 // and 3D textures.
-#ifndef MACOS
+#ifndef __APPLE__
 PFNGLTEXIMAGE3DEXTPROC CDDSImage::glTexImage3D = NULL;
 PFNGLCOMPRESSEDTEXIMAGE1DARBPROC CDDSImage::glCompressedTexImage1DARB = NULL;
 PFNGLCOMPRESSEDTEXIMAGE2DARBPROC CDDSImage::glCompressedTexImage2DARB = NULL;

@@ -550,13 +550,13 @@ void SpringApp::Shutdown()
 
 // Application entry point
 
-#ifdef WIN32 /* SDL_main can't use envp in the main function */
+#if defined(WIN32) || defined(__APPLE__) 
 int main( int argc, char *argv[] )
 #else
-int main( int argc, char *argv[ ], char *envp[ ] )
+int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 #endif
 {
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
 	chdir(SPRING_DATADIR);
 #endif
 

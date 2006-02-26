@@ -20,6 +20,8 @@ public:
 	{
 #ifdef WIN32
 		std::vector<std::string> f=CFileHandler::FindFiles("aidll\\globalai\\*.dll");
+#elif defined(__APPLE__)
+		std::vector<std::string> f=CFileHandler::FindFiles("aidll/globalai/*.dylib");
 #else
 		std::vector<std::string> f=CFileHandler::FindFiles("aidll/globalai/*.so");
 #endif

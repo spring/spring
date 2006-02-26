@@ -29,6 +29,8 @@ public:
 #include "FBO.h"
 #ifdef _WIN32
 #include "WinPBuffer.h"
+#elif defined(__APPLE__)
+// No native apple PBuffer support yet...just stick with the FBOs for now.
 #else
 #include "GLXPBuffer.h"
 #endif
@@ -44,6 +46,8 @@ static inline IFramebuffer* instantiate_fb(const int shadowMapSize)
 		info->AddLine("Using WGLEW_ARB_pbuffer");
 		return new WinPBuffer(shadowMapSize);
 	}
+#elif defined(__APPLE__)
+	// No native apple PBuffer support yet...just stick with the FBOs for now.
 #else
 	else if (GLX_SGIX_pbuffer) {
 		info->AddLine("Using GLX_SGIX_pbuffer");

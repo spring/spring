@@ -24,6 +24,7 @@ def platform():
 		print "Detected platform : darwin"
 		print "WARNING: support is incomplete"
 		detected_platform='darwin'
+		print "NOTE: xcode files are available in /trunk/rts/build/xcode"
 	else:
 		print "Platform not supported yet, please edit SConstruct file"
 		detected_platform='unknown'

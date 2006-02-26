@@ -12,14 +12,14 @@
 #include <deque>
 #include <assert.h>
 
-/*#if defined(MACOS)
+#include "Rendering/GL/myGL.h"
+#if defined(__APPLE__)
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
-#else*/
-#include "Rendering/GL/myGL.h"
-//#include <GL/gl.h>
-//#include <GL/glext.h>
-//#endif
+#else
+#include <GL/gl.h>
+#include <GL/glext.h>
+#endif
 
 namespace nv_dds
 {
@@ -336,7 +336,7 @@ namespace nv_dds
 
             std::deque<CTexture> m_images;
 
-#ifndef MACOS
+#ifndef __APPLE__
             static PFNGLTEXIMAGE3DEXTPROC glTexImage3D;
             static PFNGLCOMPRESSEDTEXIMAGE1DARBPROC glCompressedTexImage1DARB;
             static PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB;
