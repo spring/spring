@@ -579,6 +579,7 @@ int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 		return 1;
 	}
 #else
-	return app.Run (argv, argv);
+	SpringApp app;
+	return app.Run (argc, argv);
 #endif
 }
