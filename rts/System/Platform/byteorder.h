@@ -2,6 +2,14 @@
  * byteorder.h
  * Handling of endian byte orders
  * Copyright (C) 2005 Christopher Han
+ *
+ * Mac   PPC: BIG    Endian
+ * Mac   X86: little Endian
+ *
+ * Win   X86: little Endian
+ *
+ * BSD   X86: BIG    Endian
+ * Linux X86: BIG    Endian
  */
 #ifndef BYTEORDER_H
 #define BYTEORDER_H
@@ -57,6 +65,18 @@ static inline float swabfloat(float w) {
 	typedef int sizeof_long_equals_sizeof_float[sizeof(long) == sizeof(float) ? 1 : -1];
 	long l = swabdword(*(long*)&w);
 	return *(float*)&l;
+}
+
+#elif defined(__APPLE__)
+// Should work for both x86 and ppc
+
+#include "CoreFoundation/CFByteOrder.h"
+
+#define swabword(w) (CFSwapInt16LittleToHost((uint32_t)w))
+#define swabdword(w) (CFSwapInt32LittleToHost((uint32_t)w))
+static inline float swabfloat(float w) {
+	int i = swabdword(*(int*)&w);
+	return *(float*)&i;
 }
 
 #else

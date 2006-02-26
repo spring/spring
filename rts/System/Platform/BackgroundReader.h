@@ -8,6 +8,8 @@
 #include <string>
 #ifdef _WIN32
 #include "Win/win32.h"
+#elif defined(__APPLE__)
+class MacBackgroundReader;
 #elif defined(HAS_LIBAIO)
 #include <libaio.h>
 #endif
@@ -26,11 +28,16 @@ public:
 		int* reportReady;
 	};
 
+#if !defined(__APPLE)
 	std::deque<FileToRead> quedFiles;
 	FileToRead curFile;
+#endif /* !defined(__APPLE__) */
+
 #ifdef _WIN32
 	OVERLAPPED curReadInfo;
 	HANDLE curHandle;
+#elif defined(__APPLE__)
+	MacBackgroundReader *reader;
 #elif defined(HAS_LIBAIO)
 	io_context_t io_ctx;
 	int srcfd;

@@ -123,6 +123,8 @@ void CGroupHandler::FindDlls(void)
 	fs::path dir("aidll",fs::native);
 #ifdef _WIN32
 	match = find_files(dir,"*.dll");
+#elif defined(__APPLE__)
+	match = find_files(dir,"*.dylib");
 #else
 	match = find_files(dir,"*.so");
 #endif

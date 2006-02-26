@@ -1,0 +1,1 @@
+link rts/build/xcode/README.MACOSX.txt
