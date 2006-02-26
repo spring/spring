@@ -25,6 +25,7 @@
 #include "Rendering/Map/BFGroundDrawer.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Game/GameSetup.h"
+#include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
@@ -76,6 +77,10 @@ CUnitDrawer::CUnitDrawer(void)
 	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
 
 	advShading=!!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program ? 1 : 0);
+	if (advShading && !GLEW_ARB_fragment_program) {
+		info->AddLine("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
+		advShading = false;
+	}
 
 	if (advShading)
 	{

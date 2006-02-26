@@ -180,26 +180,23 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 
 	while (text[pos]) {
 		// iterate through text until maxWidth width is reached
-		char temp[60];
+		char temp[120];
 		float w = 0.0f;
-		for (;text[pos] && pos-line_start < sizeof(temp);pos++) {
+		for (;text[pos] && pos-line_start < sizeof(temp) && w <= maxWidth;pos++) {
 			w += font->CalcCharWidth (text[pos]);
-
-			if (w > maxWidth)
-				break;
 			temp[pos-line_start] = text[pos];
 		}
 
 		// if needed, find a breaking position
 		if (w > maxWidth) {
 			int break_pos = pos-line_start;
-			while (break_pos > 0 && temp[break_pos-1] != ' ')
+			while (break_pos >= 0 && temp[break_pos] != ' ')
 				break_pos --;
 
-			if (!break_pos) break_pos = pos-line_start;
-			temp[break_pos] = 0;
-			line_start += break_pos+1;
+			if (break_pos <= 0) break_pos = pos-line_start;
+			line_start += break_pos + (temp[break_pos] == ' ' ? 1 : 0);
 			pos = line_start;
+			temp[break_pos] = 0;
 		} else {
 			temp[pos-line_start] = 0;
 			line_start = pos;
