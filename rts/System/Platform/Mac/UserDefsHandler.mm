@@ -19,7 +19,7 @@ UserDefsHandler::UserDefsHandler()
 	
 	defDict = [defaults persistentDomainForName:bundleIdentifier];
 	
-	dictionary_ = [[NSDictionary dictionaryWithDictionary:defDict] retain];
+	dictionary_ = [[NSMutableDictionary dictionaryWithDictionary:defDict] retain];
 }
 
 UserDefsHandler::~UserDefsHandler()
