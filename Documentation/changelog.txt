@@ -2,6 +2,7 @@ TASpring change log
 
 0.70b2
 
+- Added custom SDL.dll (1.2.9) with refresh rate patch from SDL CVS, should help with the 60hz issue
 - Fixed right shift/ctrl while scrolling.
 - Fixed shift/ctrl while middle click drag scrolling.
 - Fixed map loading by less strict tdf parser.
