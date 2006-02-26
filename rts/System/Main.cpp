@@ -466,10 +466,14 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_KEYDOWN:
 				{
 					int i = event.key.keysym.sym;
-				
+
 					UpdateSDLKeys ();
 
 					if(activeController) {
+						if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
+						if (i == SDLK_RCTRL) i = SDLK_LCTRL;
+						if (i == SDLK_RMETA) i = SDLK_LMETA;
+						if (i == SDLK_RALT) i = SDLK_LALT;
 						activeController->KeyPressed(i,1);
 #ifndef NEW_GUI
 						if(activeController->userWriting){ 
@@ -495,8 +499,13 @@ int SpringApp::Run (int argc, char *argv[])
 
 					UpdateSDLKeys();
 
-					if (activeController)
+					if (activeController) {
+						if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
+						if (i == SDLK_RCTRL) i = SDLK_LCTRL;
+						if (i == SDLK_RMETA) i = SDLK_LMETA;
+						if (i == SDLK_RALT) i = SDLK_LALT;
 						activeController->KeyReleased(i);
+					}
         			break;
 				}
 #ifdef WIN32

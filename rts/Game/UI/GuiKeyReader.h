@@ -9,21 +9,18 @@
 #include <string>
 #include <map>
 
-using std::string;
-
-class CGuiKeyReader  
+class CGuiKeyReader
 {
 public:
-	int GetKey(string s);
-	string TranslateKey(int key);
+	std::string TranslateKey(int key);
 	CGuiKeyReader(char* filename);
 	virtual ~CGuiKeyReader();
-	
-	std::map<int,string> guiKeys;
 
+	std::map<int, std::string> guiKeys;
 protected:
+	int GetKey(std::string s);
 	void CreateKeyNames();
-	std::map<std::string,int> keynames;
+	std::map<std::string, int> keynames;
 };
 
 #endif /* GUIKEYREADER_H */

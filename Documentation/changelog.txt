@@ -1,6 +1,12 @@
 TASpring change log
 
-next
+0.70b2
+
+- Fixed right shift/ctrl while scrolling.
+- Fixed shift/ctrl while middle click drag scrolling.
+- Fixed map loading by less strict tdf parser.
+
+0.70b1
 
 - First use of crossplatform code! This required a lot of bugfixing and changes, which are not mentioned here.
   Among these changes are switches to using boost, SDL, freetype, instead of Win32 SDK + DirectX. For a full list of changes, see the subversion log.
