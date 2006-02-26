@@ -12,7 +12,20 @@
 		B624956D097D087C006C0989 /* libfreetype.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCFA1E097A4E8C008872C5 /* libfreetype.dylib */; };
 		B624956E097D087C006C0989 /* libGLEW.1.3.3.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCFA1A097A4DD9008872C5 /* libGLEW.1.3.3.dylib */; };
 		B68FA16E09B1420600F9AE1B /* Main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B68FA16D09B1420600F9AE1B /* Main.cpp */; };
-		B6A9C66009B1214A0003C9AC /* Data in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6A9C5FD09B121300003C9AC /* Data */; };
+		B68FA48509B18B8B00F9AE1B /* aidll in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA42409B18B7800F9AE1B /* aidll */; };
+		B68FA48609B18B8B00F9AE1B /* base in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA43309B18B7800F9AE1B /* base */; };
+		B68FA48709B18B8B00F9AE1B /* demos in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA43E09B18B7800F9AE1B /* demos */; };
+		B68FA48809B18B8B00F9AE1B /* docs in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA44109B18B7800F9AE1B /* docs */; };
+		B68FA48909B18B8B00F9AE1B /* lobby in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA44B09B18B7800F9AE1B /* lobby */; };
+		B68FA48A09B18B8B00F9AE1B /* Luxi.ttf in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA45809B18B7800F9AE1B /* Luxi.ttf */; };
+		B68FA48B09B18B8B00F9AE1B /* maps in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA45909B18B7800F9AE1B /* maps */; };
+		B68FA48C09B18B8B00F9AE1B /* mods in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA46409B18B7800F9AE1B /* mods */; };
+		B68FA48D09B18B8B00F9AE1B /* palette.pal in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA46809B18B7800F9AE1B /* palette.pal */; };
+		B68FA48E09B18B8B00F9AE1B /* selectkeys.txt in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA46909B18B7800F9AE1B /* selectkeys.txt */; };
+		B68FA48F09B18B8B00F9AE1B /* shaders in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA46A09B18B7800F9AE1B /* shaders */; };
+		B68FA49009B18B8B00F9AE1B /* spring.bmp in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA48009B18B7800F9AE1B /* spring.bmp */; };
+		B68FA49109B18B8B00F9AE1B /* startscripts in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA48109B18B7800F9AE1B /* startscripts */; };
+		B68FA49209B18B8B00F9AE1B /* uikeys.txt in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B68FA48409B18B7800F9AE1B /* uikeys.txt */; };
 		B6A9C73B09B125940003C9AC /* ClassBinding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B6A9C72F09B125910003C9AC /* ClassBinding.cpp */; };
 		B6A9C73D09B125960003C9AC /* Serializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B6A9C73209B125910003C9AC /* Serializer.cpp */; };
 		B6A9C73E09B125970003C9AC /* VarTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B6A9C73909B125910003C9AC /* VarTypes.cpp */; };
@@ -333,7 +346,20 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
-				B6A9C66009B1214A0003C9AC /* Data in Copy Data Files */,
+				B68FA48509B18B8B00F9AE1B /* aidll in Copy Data Files */,
+				B68FA48609B18B8B00F9AE1B /* base in Copy Data Files */,
+				B68FA48709B18B8B00F9AE1B /* demos in Copy Data Files */,
+				B68FA48809B18B8B00F9AE1B /* docs in Copy Data Files */,
+				B68FA48909B18B8B00F9AE1B /* lobby in Copy Data Files */,
+				B68FA48A09B18B8B00F9AE1B /* Luxi.ttf in Copy Data Files */,
+				B68FA48B09B18B8B00F9AE1B /* maps in Copy Data Files */,
+				B68FA48C09B18B8B00F9AE1B /* mods in Copy Data Files */,
+				B68FA48D09B18B8B00F9AE1B /* palette.pal in Copy Data Files */,
+				B68FA48E09B18B8B00F9AE1B /* selectkeys.txt in Copy Data Files */,
+				B68FA48F09B18B8B00F9AE1B /* shaders in Copy Data Files */,
+				B68FA49009B18B8B00F9AE1B /* spring.bmp in Copy Data Files */,
+				B68FA49109B18B8B00F9AE1B /* startscripts in Copy Data Files */,
+				B68FA49209B18B8B00F9AE1B /* uikeys.txt in Copy Data Files */,
 			);
 			name = "Copy Data Files";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -346,7 +372,20 @@
 		B6249546097D03C1006C0989 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = /usr/lib/libz.dylib; sourceTree = "<absolute>"; };
 		B68FA16D09B1420600F9AE1B /* Main.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Main.cpp; sourceTree = "<group>"; };
 		B68FA1A609B14FFB00F9AE1B /* SpringRTS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SpringRTS_Prefix.pch; sourceTree = "<group>"; };
-		B6A9C5FD09B121300003C9AC /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Data; sourceTree = "<group>"; };
+		B68FA42409B18B7800F9AE1B /* aidll */ = {isa = PBXFileReference; lastKnownFileType = folder; name = aidll; path = Data/aidll; sourceTree = "<group>"; };
+		B68FA43309B18B7800F9AE1B /* base */ = {isa = PBXFileReference; lastKnownFileType = folder; name = base; path = Data/base; sourceTree = "<group>"; };
+		B68FA43E09B18B7800F9AE1B /* demos */ = {isa = PBXFileReference; lastKnownFileType = folder; name = demos; path = Data/demos; sourceTree = "<group>"; };
+		B68FA44109B18B7800F9AE1B /* docs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = docs; path = Data/docs; sourceTree = "<group>"; };
+		B68FA44B09B18B7800F9AE1B /* lobby */ = {isa = PBXFileReference; lastKnownFileType = folder; name = lobby; path = Data/lobby; sourceTree = "<group>"; };
+		B68FA45809B18B7800F9AE1B /* Luxi.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Luxi.ttf; path = Data/Luxi.ttf; sourceTree = "<group>"; };
+		B68FA45909B18B7800F9AE1B /* maps */ = {isa = PBXFileReference; lastKnownFileType = folder; name = maps; path = Data/maps; sourceTree = "<group>"; };
+		B68FA46409B18B7800F9AE1B /* mods */ = {isa = PBXFileReference; lastKnownFileType = folder; name = mods; path = Data/mods; sourceTree = "<group>"; };
+		B68FA46809B18B7800F9AE1B /* palette.pal */ = {isa = PBXFileReference; lastKnownFileType = file; name = palette.pal; path = Data/palette.pal; sourceTree = "<group>"; };
+		B68FA46909B18B7800F9AE1B /* selectkeys.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = selectkeys.txt; path = Data/selectkeys.txt; sourceTree = "<group>"; };
+		B68FA46A09B18B7800F9AE1B /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = Data/shaders; sourceTree = "<group>"; };
+		B68FA48009B18B7800F9AE1B /* spring.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; name = spring.bmp; path = Data/spring.bmp; sourceTree = "<group>"; };
+		B68FA48109B18B7800F9AE1B /* startscripts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = startscripts; path = Data/startscripts; sourceTree = "<group>"; };
+		B68FA48409B18B7800F9AE1B /* uikeys.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = uikeys.txt; path = Data/uikeys.txt; sourceTree = "<group>"; };
 		B6A9C72F09B125910003C9AC /* ClassBinding.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ClassBinding.cpp; sourceTree = "<group>"; };
 		B6A9C73009B125910003C9AC /* creg.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = creg.h; sourceTree = "<group>"; };
 		B6A9C73109B125910003C9AC /* ISerializer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ISerializer.h; sourceTree = "<group>"; };
@@ -997,6 +1036,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B68FA42309B18B3900F9AE1B /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				B68FA42409B18B7800F9AE1B /* aidll */,
+				B68FA43309B18B7800F9AE1B /* base */,
+				B68FA43E09B18B7800F9AE1B /* demos */,
+				B68FA44109B18B7800F9AE1B /* docs */,
+				B68FA44B09B18B7800F9AE1B /* lobby */,
+				B68FA45809B18B7800F9AE1B /* Luxi.ttf */,
+				B68FA45909B18B7800F9AE1B /* maps */,
+				B68FA46409B18B7800F9AE1B /* mods */,
+				B68FA46809B18B7800F9AE1B /* palette.pal */,
+				B68FA46909B18B7800F9AE1B /* selectkeys.txt */,
+				B68FA46A09B18B7800F9AE1B /* shaders */,
+				B68FA48009B18B7800F9AE1B /* spring.bmp */,
+				B68FA48109B18B7800F9AE1B /* startscripts */,
+				B68FA48409B18B7800F9AE1B /* uikeys.txt */,
+			);
+			name = Data;
+			sourceTree = "<group>";
+		};
 		B6A9C72E09B125910003C9AC /* creg */ = {
 			isa = PBXGroup;
 			children = (
@@ -1941,7 +2001,7 @@
 		B6FCF9C9097A4864008872C5 = {
 			isa = PBXGroup;
 			children = (
-				B6A9C5FD09B121300003C9AC /* Data */,
+				B68FA42309B18B3900F9AE1B /* Data */,
 				B6FCFA55097A52A1008872C5 /* Source */,
 				B6FCFA54097A5240008872C5 /* Resources */,
 				B6FCF9E4097A4992008872C5 /* Frameworks */,
