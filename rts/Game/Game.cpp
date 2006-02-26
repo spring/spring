@@ -1079,8 +1079,10 @@ bool CGame::Draw()
 			if(gs->players[a]->active && !gs->players[a]->readyToStart)
 				allReady=false;
 
-		if (allReady)
+		if (allReady) {
+			glColor3f(1.0f, 1.0f, 1.0f);
 			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
+		}
 
 		/*if(allReady)
 		{
