@@ -1,4 +1,10 @@
-
+/**
+ * @file Main.cpp
+ * @brief Main class
+ *
+ * Main application class that launches
+ * everything else
+ */
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
@@ -43,44 +49,136 @@
 #include <SDL_syswm.h>
 #endif
 
+/**
+ * @brief current active controller
+ * 
+ * Pointer to the currently active controller
+ * (could be a PreGame, could be a Game, etc)
+ */
 CGameController* activeController=0;
+
+/**
+ * @brief global quit
+ * 
+ * Global boolean indicating whether the user
+ * wants to quit
+ */
 bool globalQuit = false;
-Uint8 *keys; // Uint8[SDLK_LAST]
+
+/**
+ * @brief keys
+ * 
+ * Array of possible keys, and which are being pressed
+ */
+Uint8 *keys;
+
+/**
+ * @brief fullscreen
+ * 
+ * Whether or not the game is running in fullscreen
+ */
 bool fullscreen;
 
+/**
+ * @brief xres default
+ * 
+ * Defines the default X resolution as 1024
+ */
 #define XRES_DEFAULT 1024
+
+/**
+ * @brief yres default
+ * 
+ * Defines the default Y resolution as 768
+ */
 #define YRES_DEFAULT 768
 
+/**
+ * @brief Spring App
+ * 
+ * Main Spring application class launched by main()
+ */
 class SpringApp
 {
 public:
-	SpringApp ();
-	~SpringApp ();
+	SpringApp (); 					//!< Constructor
+	~SpringApp (); 					//!< Destructor
 
-	int Run(int argc, char *argv[]);
+	int Run(int argc, char *argv[]); 		//!< Run game loop
 
 protected:
-	bool Initialize ();
-	void CheckCmdLineFile (int argc,char *argv[]);
-	bool ParseCmdLine();
-	void InitVFS ();
-	void CreateGameSetup ();
-	bool InitWindow (const char* title);
-	void InitOpenGL ();
-	bool SetSDLVideoMode();
-	void Shutdown ();
-	int Draw ();
-	void UpdateSDLKeys ();
+	bool Initialize (); 				//!< Initialize app
+	void CheckCmdLineFile (int argc,char *argv[]); 	//!< Check command line for files
+	bool ParseCmdLine(); 				//!< Parse command line
+	void InitVFS (); 				//!< Initialize VFS
+	void CreateGameSetup (); 			//!< Creates GameSetup
+	bool InitWindow (const char* title); 		//!< Initializes window
+	void InitOpenGL (); 				//!< Initializes OpenGL
+	bool SetSDLVideoMode(); 			//!< Sets SDL video mode
+	void Shutdown (); 				//!< Shuts down application
+	int Draw (); 					//!< Repeated draw function
+	void UpdateSDLKeys (); 				//!< Update SDL key array
 
+	/**
+	 * @brief command line
+	 * 
+	 * Pointer to instance of commandline parser
+	 */
 	BaseCmd *cmdline;
-	string demofile,startscript;
-	int screenWidth, screenHeight;
+
+	/**
+	 * @brief demofile
+	 * 
+	 * Name of a demofile
+	 */
+	string demofile;
+
+	/**
+	 * @brief startscript
+	 * 
+	 * Name of a start script
+	 */
+	string startscript;
+
+	/**
+	 * @brief screen width
+	 * 
+	 * Game screen width
+	 */
+	int screenWidth;
+
+	/**
+	 * @brief screen height
+	 * 
+	 * Game screen height
+	 */
+	int screenHeight;
+
+	/**
+	 * @brief screen freq
+	 * 
+	 * Game screen frequency
+	 */
 	int screenFreq;
 
+	/**
+	 * @brief active
+	 * 
+	 * Whether game is active
+	 */
 	bool active;
+
+	/**
+	 * @brief FSAA
+	 * 
+	 * Level of fullscreen anti-aliasing
+	 */
 	bool FSAA;
 };
 
+/**
+ * Initializes SpringApp variables
+ */
 SpringApp::SpringApp ()
 {
 	cmdline = 0;
@@ -93,6 +191,9 @@ SpringApp::SpringApp ()
 	FSAA = false;
 }
 
+/**
+ * Destroys SpringApp variables
+ */
 SpringApp::~SpringApp()
 {
 	if (cmdline) delete cmdline;
@@ -101,9 +202,15 @@ SpringApp::~SpringApp()
 	creg::ClassBinder::FreeClasses ();
 }
 
-
 #ifdef _WIN32
-// Called when spring crashes
+/**
+ * @brief crash callback
+ * @return whether callback was successful
+ * @param crState current state
+ * 
+ * Callback function executed when
+ * game crashes (win32 only)
+ */
 bool crashCallback(void* crState)
 {
 	info->AddLine("Spring has crashed");
@@ -126,6 +233,11 @@ bool crashCallback(void* crState)
 }
 #endif
 
+/**
+ * @return whether initialization was successful
+ * 
+ * Initializes the SpringApp instance
+ */
 bool SpringApp::Initialize ()
 {
 	ParseCmdLine ();
@@ -180,7 +292,13 @@ bool SpringApp::Initialize ()
 	return true;
 }
 
-
+/**
+ * @brief multisample test
+ * @return whether the multisampling test was successful
+ * 
+ * Tests if a user has requested FSAA, if it's a valid
+ * FSAA mode, and if it's supported by the current GL context
+ */
 static bool MultisampleTest(void)
 {
 	if (!GL_ARB_multisample)
@@ -197,6 +315,12 @@ static bool MultisampleTest(void)
 	return true;
 }
 
+/**
+ * @brief multisample verify
+ * @return whether verification passed
+ * 
+ * Tests whether FSAA was actually enabled
+ */
 static bool MultisampleVerify(void)
 {
 	GLint buffers, samples; 
@@ -213,7 +337,12 @@ static bool MultisampleVerify(void)
 	return false;
 }
 
-
+/**
+ * @return whether window initialization succeeded
+ * @param title char* string with window title
+ * 
+ * Initializes the game window
+ */
 bool SpringApp::InitWindow (const char* title)
 {
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1)) {
@@ -229,6 +358,11 @@ bool SpringApp::InitWindow (const char* title)
 	return true;
 }
 
+/**
+ * @return whether setting the video mode was successful
+ * 
+ * Sets SDL video mode options/settings
+ */
 bool SpringApp::SetSDLVideoMode ()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
@@ -259,7 +393,9 @@ bool SpringApp::SetSDLVideoMode ()
 	return true;
 }
 
-
+/**
+ * Initializes OpenGL
+ */
 void SpringApp::InitOpenGL ()
 {
 	// Setup viewport
@@ -276,8 +412,9 @@ void SpringApp::InitOpenGL ()
 	gu->screeny = screenHeight;
 }
 
-
-// Initialize the virtual file system
+/**
+ * Initializes the virtual filesystem
+ */
 void SpringApp::InitVFS()
 {
 	// Create the archive scanner and vfs handler
@@ -290,7 +427,11 @@ void SpringApp::InitVFS()
 	hpiHandler = new CVFSHandler();
 }
 
-
+/**
+ * @return whether commandline parsing was successful
+ * 
+ * Parse command line arguments
+ */
 bool SpringApp::ParseCmdLine()
 {
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
@@ -325,7 +466,13 @@ bool SpringApp::ParseCmdLine()
 	return true;
 }
 
-// See if a demo SDF file or a startscript is specified on the command line
+/**
+ * @param argc argument count
+ * @param argv array of argument strings
+ *
+ * Checks if a demo SDF file or a startscript has
+ * been specified on the command line
+ */
 void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 {
 	// Check if the commandline parameter is specifying a demo file
@@ -356,6 +503,9 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 	}
 }
 
+/**
+ * Initializes instance of GameSetup
+ */
 void SpringApp::CreateGameSetup ()
 {
 	ENTER_SYNCED;
@@ -383,6 +533,12 @@ void SpringApp::CreateGameSetup ()
 		pregame = new CPreGame(server, "");
 }
 
+/**
+ * @return return code of activecontroller draw function
+ * 
+ * Draw function repeatedly called, it calls all the
+ * other draw functions
+ */
 int SpringApp::Draw ()
 {
 	if (FSAA)
@@ -401,6 +557,10 @@ int SpringApp::Draw ()
 	return ret;
 }
 
+/**
+ * Tests SDL keystates and sets values
+ * in key array
+ */
 void SpringApp::UpdateSDLKeys ()
 {
 	int numkeys;
@@ -415,7 +575,13 @@ void SpringApp::UpdateSDLKeys ()
 	keys[SDLK_LMETA] = mods&KMOD_META?1:0;
 }
 
-
+/**
+ * @param argc argument count
+ * @param argv array of argument strings
+ *
+ * Executes the application
+ * (contains main game loop)
+ */
 int SpringApp::Run (int argc, char *argv[])
 {
 	INIT_SYNCIFY;
@@ -535,6 +701,9 @@ int SpringApp::Run (int argc, char *argv[])
 	return 0;
 }
 
+/**
+ * Deallocates and shuts down game
+ */
 void SpringApp::Shutdown()
 {
 	if (pregame)
@@ -558,8 +727,14 @@ void SpringApp::Shutdown()
 #endif
 }
 
-// Application entry point
-
+/**
+ * @brief main
+ * @return exit code
+ * @param argc argument count
+ * @param argv array of argument strings
+ *
+ * Main entry point function
+ */
 #if defined(WIN32) || defined(__APPLE__) 
 int main( int argc, char *argv[] )
 #else

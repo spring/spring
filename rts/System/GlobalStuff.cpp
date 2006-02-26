@@ -1,9 +1,11 @@
+/**
+ * @file GlobalStuff.cpp
+ * @brief Globally accessible stuff
+ *
+ * Contains implementation of synced and
+ * unsynced global stuff
+ */
 #include "StdAfx.h"
-// GlobalStuff.cpp: implementation of the CGlobalStuff class.
-//
-//////////////////////////////////////////////////////////////////////
-
-
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
 #include "SyncTracer.h"
@@ -14,13 +16,23 @@
 #include "SDL_timer.h"
 #include "mmgr.h"
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
+/**
+ * @brief global synced
+ * 
+ * Global instance of CGlobalSyncedStuff
+ */
 CGlobalSyncedStuff* gs;
+
+/**
+ * @brief global unsynced
+ * 
+ * Global instance of CGlobalUnsyncedStuff
+ */
 CGlobalUnsyncedStuff* gu;
 
+/**
+ * Initializes variables in CGlobalSyncedStuff
+ */
 CGlobalSyncedStuff::CGlobalSyncedStuff()
 {
 	hmapx=256;
@@ -71,6 +83,9 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	gravity = -0.1;
 }
 
+/**
+ * Destroys data inside CGlobalSyncedStuff
+ */
 CGlobalSyncedStuff::~CGlobalSyncedStuff()
 {
 	for(int a=0;a<MAX_TEAMS;a++)
@@ -79,18 +94,33 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 		delete players[a];
 }
 
+/**
+ * @return synced random integer
+ * 
+ * returns a synced random integer
+ */
 int CGlobalSyncedStuff::randInt()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
 	return randSeed & 0x7FFF;
 }
 
+/**
+ * @return synced random float
+ * 
+ * returns a synced random float
+ */
 float CGlobalSyncedStuff::randFloat()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
 	return float(randSeed & 0x7FFF)/RANDINT_MAX;
 }
 
+/**
+ * @return synced random vector
+ * 
+ * returns a synced random vector
+ */
 float3 CGlobalSyncedStuff::randVector()
 {
 	float3 ret;
@@ -103,8 +133,9 @@ float3 CGlobalSyncedStuff::randVector()
 	return ret;
 }
 
-
-
+/**
+ * Initializes variables in CGlobalUnsyncedStuff
+ */
 CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
 	Uint64 randnum;
@@ -129,22 +160,40 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 #endif
 }
 
+/**
+ * Destroys variables in CGlobalUnsyncedStuff
+ */
 CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
 {
 }
 
+/**
+ * @return unsynced random integer
+ * 
+ * Returns an unsynced random integer
+ */
 int CGlobalUnsyncedStuff::usRandInt()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
 	return usRandSeed & 0x7FFF;
 }
 
+/**
+ * @return unsynced random float
+ * 
+ * returns an unsynced random float
+ */
 float CGlobalUnsyncedStuff::usRandFloat()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
 	return float(usRandSeed & 0x7FFF)/RANDINT_MAX;
 }
 
+/**
+ * @return unsynced random vector
+ * 
+ * returns an unsynced random vector
+ */
 float3 CGlobalUnsyncedStuff::usRandVector()
 {
 	float3 ret;

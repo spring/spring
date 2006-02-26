@@ -1,10 +1,22 @@
-/*
- * bitops.h
- * bit twiddling operations
+/**
+ * @file bitops.h
+ * @brief Bit twiddling operations
+ *
+ * Bit twiddling shortcuts for various
+ * operations; see http://graphics.stanford.edu/%7Eseander/bithacks.html
+ * for details.
  */
 #ifndef _BITOPS_H
 #define _BITOPS_H
 
+/**
+ * @brief Next power of 2
+ * @param x The number to be rounded
+ * @return the rounded number
+ *
+ * Rounds an unsigned integer up to the
+ * next power of 2; i.e. 2, 4, 8, 16, etc.
+ */
 static inline unsigned int next_power_of_2(unsigned int x)
 {
 	x--;
@@ -16,6 +28,16 @@ static inline unsigned int next_power_of_2(unsigned int x)
 	return ++x;
 }
 
+/**
+ * @brief Count bits set
+ * @param w Number in which to count bits
+ * @return The number of bits set
+ *
+ * Counts the number of bits in an unsigned int
+ * that are set to 1.  So, for example, in the
+ * number 5, hich is 101 in binary, there are
+ * two bits set to 1.
+ */
 static inline unsigned int count_bits_set(unsigned int w)
 {
 #if 0
@@ -45,8 +67,26 @@ static inline unsigned int count_bits_set(unsigned int w)
 #endif
 }
 
+/**
+ * @brief Make even number macro
+ * @param x Number to make even
+ *
+ * Quick macro to make a number even, by
+ * forcing the rightmost bit to 0.
+ */
 #define make_even_number(x) 	((x) &= ~0x1)
 
+/**
+ * @brief Conditionally set flag macro
+ * @param number to set or unset flag in
+ * @param mask bitmask to be set or unset
+ * @param condition whether to set or unset the flag
+ *
+ * According to a condition, this macro will set or unset a
+ * particular flag in a number.  It's a quick way of doing
+ * this:
+ * if (condition) number |= mask; else number &= ~mask;
+ */
 #define conditionally_set_flag(number, mask, condition) 	((number) ^= (-(condition) ^ (number)) & (mask))
 
 #endif /* _BITOPS_H */
