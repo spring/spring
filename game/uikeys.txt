@@ -46,9 +46,9 @@ bind '7' group7
 bind '8' group8
 bind '9' group9
 bind '0' group0
-bind § DrawInMap
+bind 0xa7 DrawInMap
 bind ` DrawInMap
-
+bind \ DrawInMap
 // simulate mouse bindings for build spacing
 bind 'z' mouse4
-bind 'x' mouse5 
+bind 'x' mouse5
