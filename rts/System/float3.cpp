@@ -1,19 +1,23 @@
-// float3.cpp: implementation of the float3 class.
-//
-//////////////////////////////////////////////////////////////////////
-
+/**
+ * @file float3.cpp
+ * @brief float3 source
+ *
+ * Implementation of float3 class
+ */
 #include "StdAfx.h"
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 CR_BIND_STRUCT(float3);
 CR_BIND_MEMBERS(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
 
-float float3::maxxpos=2048;
-float float3::maxzpos=2048;
+float float3::maxxpos=2048; /**< Maximum X position is 2048 */
+float float3::maxzpos=2048; /**< Maximum z position is 2048 */
 
+/**
+ * @return whether or not it's in bounds
+ * 
+ * Tests whether this vector is in
+ * the bounds of the maximum x and z positions.
+ */
 bool float3::CheckInBounds()
 {
 	bool in=true;
