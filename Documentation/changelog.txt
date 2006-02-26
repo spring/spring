@@ -5,6 +5,7 @@ TASpring change log
 - Fixed right shift/ctrl while scrolling.
 - Fixed shift/ctrl while middle click drag scrolling.
 - Fixed map loading by less strict tdf parser.
+- Don't crash on parse errors, but show an error message instead.
 
 0.70b1
 
