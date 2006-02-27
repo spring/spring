@@ -265,11 +265,7 @@ void Selector::DrawFront(float maxSize, float sizeDiv)
 
 	if(sizeDiv!=0){
 		char c[40];
-#ifdef _WIN32
- 		itoa(pos1.distance2D(pos2)/sizeDiv,c,10);
-#else
- 		SNPRINTF(c,39,"%d",pos1.distance2D(pos2)/sizeDiv);
-#endif
+ 		SNPRINTF(c,39,"%d",(int)(pos1.distance2D(pos2)/sizeDiv));
 		mouse->cursorTextRight=c;
 	}
 	glEnable(GL_FOG);
