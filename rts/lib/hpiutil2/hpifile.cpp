@@ -173,10 +173,11 @@ boost::uint32_t hpiutil::hpifile::getdata(hpientry_ptr const &he, boost::uint8_t
 	int j = 0;
 	for (int i = 0; i < chunknum; i++) {
 		boost::uint32_t chunksize = chunksizes[i];
-		substream *ss = new substream(*file,(chunkoffset + j),chunksize);
+		substream *ss = new substream(*file,chunkoffset,chunksize);
 		sqshstream *sqsh = new sqshstream(*ss);
 		if (sqsh->valid) {
 			j += sqsh->readall(&data[j]);
+			chunkoffset += chunksize;
 			delete sqsh;
 			delete ss;
 		} else {
