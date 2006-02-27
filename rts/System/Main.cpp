@@ -734,12 +734,16 @@ void SpringApp::Shutdown()
  * On *nix platforms, attempts to locate
  * and change to the spring data directory
  */
-static inline void LocateDataDir(void)
+static inline int LocateDataDir(void)
 {
+	int ret;
 	char *env = getenv("SPRING_DATADIR");
 	if (!env)
 		env = SPRING_DATADIR;
-	chdir(configHandler.GetString("SpringData",std::string(env)).c_str());
+	ret = chdir(configHandler.GetString("SpringData",std::string(env)).c_str());
+	if (ret == -1)
+		perror("Spring datadir error");
+	return ret;
 }
 #endif
 
@@ -758,7 +762,9 @@ int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 #endif
 {
 #if !defined(_WIN32) && !defined(__APPLE__)
-	LocateDataDir();
+	int ret = LocateDataDir();
+	if (ret != 0)
+		exit(ret);
 #endif
 
 // It's nice to be able to disable catching when you're debugging
