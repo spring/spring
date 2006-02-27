@@ -898,7 +898,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 
 	if(sizeDiv!=0){
 		char c[40];
-		SNPRINTF(c, 40, "%d",pos1.distance2D(pos2)/sizeDiv );
+		SNPRINTF(c, 40, "%d", (int)(pos1.distance2D(pos2)/sizeDiv) );
 		mouse->cursorTextRight=c;
 	}
 	glEnable(GL_FOG);

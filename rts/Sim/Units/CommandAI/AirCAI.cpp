@@ -85,7 +85,7 @@ void CAirCAI::GiveCommand(Command &c)
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 			if(cdi->id==CMD_AUTOREPAIRLEVEL){
 				char t[10];
-				SNPRINTF(t,10,"%d",c.params[0]);
+				SNPRINTF(t,10,"%d", (int)c.params[0]);
 				cdi->params[0]=t;
 				break;
 			}
