@@ -23,8 +23,8 @@ bind home increaseViewRadius
 bind end decreaseViewRadius
 bind insert speedup
 bind delete slowdown
-bind numpad+ speedup
-bind numpad- slowdown
+bind + speedup
+bind - slowdown
 bind f1 showElevation
 bind f2 ShowPathMap
 bind f3 LastMsgPos

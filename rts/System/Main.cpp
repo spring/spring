@@ -275,6 +275,7 @@ bool SpringApp::Initialize ()
 	palette.Init();
 
 	// Initialize keyboard
+	SDL_EnableUNICODE(1);
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
 	
@@ -597,7 +598,7 @@ int SpringApp::Run (int argc, char *argv[])
 
 	SDL_Event event;
 	bool done=false;
-
+	std::map<int, int> toUnicode; // maps keysym.sym to keysym.unicode
 	Uint8 scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
 
 	while (!done) {
@@ -637,10 +638,20 @@ int SpringApp::Run (int argc, char *argv[])
 					UpdateSDLKeys ();
 
 					if(activeController) {
-						if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
-						if (i == SDLK_RCTRL) i = SDLK_LCTRL;
-						if (i == SDLK_RMETA) i = SDLK_LMETA;
-						if (i == SDLK_RALT) i = SDLK_LALT;
+						int j = event.key.keysym.unicode;
+						// Don't translate 0-9 because with ctrl that maps to weird unicode characters (eg same as esc)
+						if (j > SDLK_FIRST && j <= SDLK_DELETE && (i < SDLK_0 || i > SDLK_9)) {
+							// With control+letter, the unicode field is 1-26, so convert it back to ascii.
+							if (keys[SDLK_LCTRL] && j >= 1 && j <= 26) j += SDLK_a - 1;
+							// Store the unicode value of this sym because SDL is too stupid
+							// to do Unicode translation for SDL_KEYUP events.
+							toUnicode[i] = j;
+							i = j;
+						}
+						else if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
+						else if (i == SDLK_RCTRL)  i = SDLK_LCTRL;
+						else if (i == SDLK_RMETA)  i = SDLK_LMETA;
+						else if (i == SDLK_RALT)   i = SDLK_LALT;
 						activeController->KeyPressed(i,1);
 #ifndef NEW_GUI
 						if(activeController->userWriting){ 
@@ -667,10 +678,13 @@ int SpringApp::Run (int argc, char *argv[])
 					UpdateSDLKeys();
 
 					if (activeController) {
-						if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
-						if (i == SDLK_RCTRL) i = SDLK_LCTRL;
-						if (i == SDLK_RMETA) i = SDLK_LMETA;
-						if (i == SDLK_RALT) i = SDLK_LALT;
+						// Retrieve the Unicode value stored in the KEYDOWN event (if any).
+						std::map<int, int>::const_iterator j = toUnicode.find(i);
+						if (j != toUnicode.end())  i = j->second;
+						else if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
+						else if (i == SDLK_RCTRL)  i = SDLK_LCTRL;
+						else if (i == SDLK_RMETA)  i = SDLK_LMETA;
+						else if (i == SDLK_RALT)   i = SDLK_LALT;
 						activeController->KeyReleased(i);
 					}
         			break;
@@ -763,8 +777,9 @@ int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 {
 #if !defined(_WIN32) && !defined(__APPLE__)
 	int ret = LocateDataDir();
-	if (ret != 0)
-		exit(ret);
+// Just stay in current working directory when chdir fails.
+// 	if (ret != 0)
+// 		exit(ret);
 #endif
 
 // It's nice to be able to disable catching when you're debugging

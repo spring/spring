@@ -506,8 +506,11 @@ void GUIcontroller::UpdateCommands()
 							vector<string> states;
 
 							int size=i->params.size();
-							for(int j=1; j<size; j++)
+							for(int j=1; j<size; j++) {
 								states.push_back(i->params[j]);
+								printf("%s\n", states.back().c_str());
+							}
+							printf("selected: %d %s\n", s, states[s].c_str());
 
 							state->SetStates(states);
 							state->SetState(s);
@@ -525,8 +528,11 @@ void GUIcontroller::UpdateCommands()
 							vector<string> states;
 
 							int size=i->params.size();
-							for(int j=1; j<size; j++)
+							for(int j=1; j<size; j++) {
 								states.push_back(i->params[j]);
+								printf("%s\n", states.back().c_str());
+							}
+							printf("selected: %d %s\n", s, states[s].c_str());
 
 							table->SetHeader(header);
 							table->ChangeList(&states);

@@ -461,7 +461,6 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		if(k==SDLK_RETURN){
 			userWriting=false;
 			keys[k] = false;		//prevent game start when server chats
-			SDL_EnableUNICODE(0);
 			return 0;
 		}
 		if(k==27 && chatting){
@@ -514,7 +513,6 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if (s=="chat"){
 		userWriting=true;
 		userPrompt="Say: ";
-		SDL_EnableUNICODE(1);
 		userInput=userInputPrefix;
 		chatting=true;
 		if(k!=SDLK_RETURN)

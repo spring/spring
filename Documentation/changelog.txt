@@ -2,6 +2,8 @@ TASpring change log
 
 0.70b2
 
+- Fixed some (debug) message colors.
+- Fixed keyboard layout problems.
 - Fixed repeat orders/high trajectory etc not indicating their current state correctly
 - Fixed problem with reading hpi archives
 - Added custom SDL.dll (1.2.9) with refresh rate patch from SDL CVS, should help with the 60hz issue
