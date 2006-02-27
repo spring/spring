@@ -182,7 +182,7 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 		// iterate through text until maxWidth width is reached
 		char temp[120];
 		float w = 0.0f;
-		for (;text[pos] && pos-line_start < sizeof(temp) && w <= maxWidth;pos++) {
+		for (;text[pos] && pos-line_start < sizeof(temp) - 1 && w <= maxWidth;pos++) {
 			w += font->CalcCharWidth (text[pos]);
 			temp[pos-line_start] = text[pos];
 		}
