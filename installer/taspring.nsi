@@ -9,7 +9,7 @@ SetCompressor lzma
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "TA Spring"
-!define PRODUCT_VERSION "0.70b1"
+!define PRODUCT_VERSION "0.70b2"
 !define PRODUCT_PUBLISHER "The TA Spring team"
 !define PRODUCT_WEB_SITE "http://taspring.clan-sy.com"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
@@ -244,9 +244,10 @@ Function CheckVersion
 ;  IntCmp $1 3014656 Done             ; 0.65b2
 ;  IntCmp $1 3031040 Done             ; 0.66b1
   IntCmp $1 3035136 Done             ; 0.67b1 & 0.67b2 & 0.67b3
+  IntCmp $1 2633728 Done             ; 0.70b1
 
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.67bx. Your current folder does not contain a spring.exe from any such version, so the installation will be aborted.. Please download the full installer instead and try again."
-  Abort "Unable to upgrade, version 0.67 not found.."
+  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.67bx or 0.70b1. Your current folder does not contain a spring.exe from any such version, so the installation will be aborted.. Please download the full installer instead and try again."
+  Abort "Unable to upgrade, version 0.67bx or 0.70b1 not found.."
   Goto done
 
 Done:
@@ -274,8 +275,8 @@ Section "Main application (req)" SEC_MAIN
   File "..\game\luxi.ttf"
   File "..\game\selectioneditor.exe"
   
-  ; Can be nice and not overwrite these
-  SetOverWrite ifnewer
+  ; Can be nice and not overwrite these. or not
+  SetOverWrite on
   File "..\game\selectkeys.txt"
   File "..\game\uikeys.txt"
   
@@ -481,17 +482,18 @@ SectionEnd
 
 !else ; SP_PATCH
 
-; Only allow installation if spring.exe is from version 0.67b1
+; Only allow installation if spring.exe is from version 0.70b1
 Function CheckVersion
   ClearErrors
   FileOpen $0 "$INSTDIR\tasclient.exe" r
   IfErrors done
   FileSeek $0 0 END $1
 ;  IntCmp $1 3035136 Done             ; 0.67b1 &0.67b2
-  IntCmp $1 2277888 Done             ; 0.67b2 (tasclient 0.19)
+;  IntCmp $1 2277888 Done             ; 0.67b2 (tasclient 0.19)
+  IntCmp $1 2640896 Done              ; 0.70b1 (tasclient 0.20)
 
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to patch a full installation of TA Spring 0.67b2. Your current folder does not contain a tasclient.exe from this version, so the installation will be aborted.. Please download the full or updating installer instead and try again."
-  Abort "Unable to upgrade, version 0.67b2 not found.."
+  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to patch a full installation of TA Spring 0.70b1. Your current folder does not contain a tasclient.exe from this version, so the installation will be aborted.. Please download the full or updating installer instead and try again."
+  Abort "Unable to upgrade, version 0.70b1 not found.."
   Goto done
 
 Done:
@@ -505,10 +507,15 @@ Section -Patch
   SetOutPath "$INSTDIR"
   Call CheckVersion
   
-  !insertmacro VPatchFile "tasclient0191.pat" "$INSTDIR\TASClient.exe" "$TEMP\TASClient.tmp"
+  !insertmacro VPatchFile "tasclient070b2.pat" "$INSTDIR\TASClient.exe" "$TEMP\TASClient.tmp"
   IfErrors PatchError
-  !insertmacro VPatchFile "spring067b3.pat" "$INSTDIR\spring.exe" "$TEMP\spring.tmp"
+  !insertmacro VPatchFile "spring070b2.pat" "$INSTDIR\spring.exe" "$TEMP\spring.tmp"
   IfErrors PatchError
+  !insertmacro VPatchFile "unitsync070b2.pat" "$INSTDIR\unitsync.dll" "$TEMP\unitsync.tmp"
+  IfErrors PatchError
+  !insertmacro VPatchFile "sdl070b2.pat" "$INSTDIR\sdl.dll" "$TEMP\sdl.tmp"
+  IfErrors PatchError
+
 ;  !insertmacro VPatchFile "unitsync067b2.pat" "$INSTDIR\unitsync.dll" "$TEMP\unitsync.tmp"
 ;  IfErrors PatchError
 
@@ -626,7 +633,7 @@ Section Uninstall
 
   ; Maps
   Delete "$INSTDIR\maps\paths\SmallDivide.*"
-  Delete "$INSTDIR\maps\paths\FloodedDesert.*"
+  ; Delete "$INSTDIR\maps\paths\FloodedDesert.*"
   Delete "$INSTDIR\maps\paths\Mars.*"
   Delete "$INSTDIR\maps\SmallDivide.*"
   Delete "$INSTDIR\maps\FloodedDesert.*"
