@@ -100,11 +100,11 @@ bool hpiutil::sqshstream::decompress()
  */
 boost::uint8_t hpiutil::sqshstream::read()
 {
-	if (position >= fullsize)
-		return 0;
-	if (valid)
+	if (valid) {
+		if (position >= fullsize)
+			return 0;
 		return data[position++];
-	else
+	} else
 		return (boost::uint8_t)stream->read();
 }
 

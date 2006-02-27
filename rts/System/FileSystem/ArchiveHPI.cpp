@@ -40,7 +40,7 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 	transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
 
 	hpientry_ptr f = HPIOpenFile(*hpi, (const char*)name.c_str());
-	if (f)
+	if (!f.get())
 		return 0;
 
 	ABOpenFile_t* of = new ABOpenFile_t;
@@ -48,7 +48,12 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 	of->size = f->size;
 	of->data = (char*)malloc(of->size);
 
-	HPIGet(of->data, f, 0, of->size);
+	if (HPIGet(of->data, f, 0, of->size) != of->size) {
+		free(of->data);
+		delete of;
+		return 0;
+	}
+
 	HPICloseFile(f);
 
 	return of;
