@@ -23,13 +23,9 @@
 #ifndef HPIUTIL2_HPIENTRY_H
 #define HPIUTIL2_HPIENTRY_H
 
-#ifdef _WIN32
-#define PATHSEPARATOR '\\'
-#define OTHERPATHSEPARATOR '/'
-#else
+// The spring virtual filesystem uses '/' internally on all platforms, so removed win32 conditional
 #define PATHSEPARATOR '/'
 #define OTHERPATHSEPARATOR '\\'
-#endif
 
 #include <vector>
 #include <string>

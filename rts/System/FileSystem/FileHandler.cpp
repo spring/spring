@@ -64,8 +64,12 @@ void CFileHandler::Init(const char* filename)
 	hpiLength=hpiHandler->GetFileSize(file);
 	if(hpiLength!=-1){
 		hpiFileBuffer=new unsigned char[hpiLength];
-		hpiHandler->LoadFile(file,hpiFileBuffer);
-		filesize = hpiLength;
+		if (hpiHandler->LoadFile(file,hpiFileBuffer) < 0) {
+			delete[] hpiFileBuffer;
+			hpiFileBuffer = 0;
+		}
+		else
+			filesize = hpiLength;
 	}
 }
 
