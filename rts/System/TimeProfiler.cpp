@@ -48,6 +48,7 @@ void CTimeProfiler::Draw()
 	}
 
 	glEnable(GL_TEXTURE_2D);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	map<string,TimeRecord>::iterator pi;
 

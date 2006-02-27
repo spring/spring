@@ -215,7 +215,6 @@ void CInMapDraw::MousePress(int x, int y, int button)
 			wantLabel=true;
 			game->userPrompt="Label: ";
 			game->ignoreChar='\xA7';		//should do something better here
-			SDL_EnableUNICODE(1);
 		}
 		lastLeftClickTime=gu->gameTime;
 		break;

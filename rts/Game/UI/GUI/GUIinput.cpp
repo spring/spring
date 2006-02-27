@@ -105,12 +105,10 @@ bool GUIinput::EventAction(const std::string& event)
 
 void GUIinput::TakeFocus()
 {
-	SDL_EnableUNICODE(1);
 	GUIframe::TakeFocus();
 }
 
 void GUIinput::ReleaseFocus()
 {
-	SDL_EnableUNICODE(0);
 	GUIframe::ReleaseFocus();
 }
