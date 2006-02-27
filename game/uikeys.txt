@@ -4,7 +4,7 @@ bind 'o' SingleStep
 bind enter Chat
 bind 'j' mouseState
 bind 'b' Debug
-bind 'v' CreateVideo
+bind f10 CreateVideo
 bind 't' Track
 bind 'c' ControlUnit
 bind 'h' ShareDialog
