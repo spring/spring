@@ -12,10 +12,9 @@
 #include "Sim/Map/Ground.h"
 #include "mmgr.h"
 
-static CAirScript ts;
 
 
-CAirScript::CAirScript(void)
+CAirScript::CAirScript()
 : CScript(std::string("Air combat test")),
 	tcp(500,100,500),
 	tcf(0,0,1),
@@ -31,11 +30,11 @@ CAirScript::CAirScript(void)
 	doRoll=false;
 }
 
-CAirScript::~CAirScript(void)
+CAirScript::~CAirScript()
 {
 }
 
-void CAirScript::Update(void)
+void CAirScript::Update()
 {
 	switch(gs->frameNum){
 	case 0:

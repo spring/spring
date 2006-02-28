@@ -2,7 +2,6 @@
 #include "CommanderScript.h"
 #include "Sim/Units/UnitLoader.h"
 #include "TdfParser.h"
-static CCommanderScript ts;
 #include <algorithm>
 #include <cctype>
 #include "Game/Team.h"
@@ -13,7 +12,7 @@ static CCommanderScript ts;
 
 extern std::string stupidGlobalMapname;
 
-CCommanderScript::CCommanderScript(void)
+CCommanderScript::CCommanderScript()
 : CScript(std::string("Commanders"))
 {
 }

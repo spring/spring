@@ -14,7 +14,6 @@
 
 using namespace std;
 
-class CLoadScript;
 class CScriptHandler  
 {
 public:
@@ -29,11 +28,11 @@ public:
 	string chosenName;
 	std::map<std::string,CScript*> scripts;
 private:
-  std::list<CLoadScript*> file_scripts;
+  std::list<CScript*> loaded_scripts; ///< Scripts loaded and owned by CScriptHandler 
 	CScriptHandler();
 	CScriptHandler(CScriptHandler const&);
 	CScriptHandler& operator=(CScriptHandler const&);
-  void CScriptHandler::LoadFiles();
+  void LoadScripts();
 	virtual ~CScriptHandler();
 };
 

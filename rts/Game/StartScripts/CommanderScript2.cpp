@@ -4,12 +4,11 @@
 #include "TdfParser.h"
 #include "Game/Team.h"
 
-static CCommanderScript2 ts;
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
 
-CCommanderScript2::CCommanderScript2(void)
+CCommanderScript2::CCommanderScript2()
 : CScript(std::string("Cmds 1000 res"))
 {
 }

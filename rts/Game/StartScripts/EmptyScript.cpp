@@ -9,8 +9,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-static CEmptyScript es;
-
 CEmptyScript::CEmptyScript()
 : CScript(std::string("Empty script"))
 {

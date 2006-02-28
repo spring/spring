@@ -10,37 +10,6 @@
 #include "FileSystem/FileHandler.h"
 #include "mmgr.h"
 
-
-class CAIScriptHandler
-{
-public:
-	std::vector<CGlobalAITestScript*> scripts;
-
-	CAIScriptHandler()
-	{
-#ifdef WIN32
-		std::vector<std::string> f=CFileHandler::FindFiles("aidll\\globalai\\*.dll");
-#elif defined(__APPLE__)
-		std::vector<std::string> f=CFileHandler::FindFiles("aidll/globalai/*.dylib");
-#else
-		std::vector<std::string> f=CFileHandler::FindFiles("aidll/globalai/*.so");
-#endif
-		for(std::vector<std::string>::iterator fi=f.begin();fi!=f.end();++fi){
-			string name = (*fi).substr((*fi).find_last_of('\\') + 1);
-			scripts.push_back(new CGlobalAITestScript(name, "./"));
-		}
-	};
-	~CAIScriptHandler()
-	{
-		for(std::vector<CGlobalAITestScript*>::iterator fi=scripts.begin();fi!=scripts.end();++fi){
-			delete *fi;
-		}
-	};
-};
-
-static CAIScriptHandler aish;
-
-//static CGlobalAITestScript ts;
 extern std::string stupidGlobalMapname;
 
 CGlobalAITestScript::CGlobalAITestScript(std::string dll, std::string base)
