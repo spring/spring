@@ -70,7 +70,6 @@ def get_spring_source(env):
 				'rts/System/Platform/Win',
 				'rts/System/wavread.cpp']
 		if env['disable_avi']: exclude += ['rts/System/Platform/Win/AVIGenerator.cpp']
-		if env['disable_hpi']: exclude += ['rts/lib/hpiutil2']
 		if env['disable_lua']: exclude += ['rts/System/Script']
 
 	return get_source(env, 'rts', exclude_list = exclude)
