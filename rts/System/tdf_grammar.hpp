@@ -106,7 +106,7 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
         lexeme_d[
         (+(~chset<>("}[\n")))
         [ push_back_a( * self.junk  ) ]
-        [ ostream_a( "Junk detected:", std::cout, "\n" ) ] // debug printouts
+//         [ ostream_a( "Junk detected:", std::cout, "\n" ) ] // debug printouts
         ]
         ;
 
