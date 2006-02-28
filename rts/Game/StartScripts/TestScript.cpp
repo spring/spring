@@ -20,7 +20,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-static CTestScript ts;
 
 CTestScript::CTestScript()
 : CScript(std::string("Test script"))

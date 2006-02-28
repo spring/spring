@@ -11,20 +11,19 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "mmgr.h"
 
-static CSpawnScript sps;
 extern std::string stupidGlobalMapname;
 
-CSpawnScript::CSpawnScript(void)
+CSpawnScript::CSpawnScript()
 : CScript(std::string("Random enemies"))
 {
 	frameOffset=0;
 }
 
-CSpawnScript::~CSpawnScript(void)
+CSpawnScript::~CSpawnScript()
 {
 }
 
-void CSpawnScript::Update(void)
+void CSpawnScript::Update()
 {
 	switch(gs->frameNum){
 	case 0:
