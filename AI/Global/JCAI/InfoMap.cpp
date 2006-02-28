@@ -335,7 +335,7 @@ void InfoMap::UpdateThreatInfo (IAICallback *cb)
 			b->defense = 0;
 			b->defenseRange = 0;
 			b->localDefense = 0;
-			//b->enemyRange = 0.0f;
+			b->enemyRange = 0.0f;
 			(b++)->nthreat = 0;
 		}
 

@@ -330,9 +330,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		}
 
 		while(ud.weapons.size()<a){
-			if(!weaponDefHandler->GetWeapon("NOWEAPON"))
+			if(!weaponDefHandler->GetWeapon("NOWEAPON")) {
 				info->AddLine("Error: Spring requires a NOWEAPON weapon type to be present as a placeholder for missing weapons");
-			else
+				break;
+			} else
 				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0));
 		}
 
