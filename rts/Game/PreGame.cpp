@@ -64,7 +64,7 @@ CPreGame::CPreGame(bool server, const string& demo)
 			allReady=true;
 			return;
 		} else {
-			showList=CScriptHandler::Instance()->list;
+			showList=CScriptHandler::Instance().list;
 			waitOnScript=true;
 		}
 	} else {
@@ -210,7 +210,7 @@ bool CPreGame::Update(void)
 	if(waitOnScript && !showList){
 		waitOnScript=false;
 
-		mapName=CScriptHandler::Instance()->chosenScript->GetMapName();
+		mapName=CScriptHandler::Instance().chosenScript->GetMapName();
 
 		if(mapName==""){
 			ShowMapList();

@@ -13,7 +13,7 @@
 
 CScript::CScript(const std::string& name)
 {
-	CScriptHandler::Instance()->AddScript(name,this);
+	CScriptHandler::Instance().AddScript(name,this);
 	wantCameraControl=false;
 	onlySinglePlayer=false;
 	loadGame=false;

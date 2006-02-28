@@ -501,7 +501,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		tempbuf[1]=freeConn;
 		SendData(tempbuf,2,freeConn);
 
-		SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance()->chosenName);
+		SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance().chosenName);
 		SendSTLData<int, std::string>(NETMSG_MAPNAME, stupidGlobalMapId, stupidGlobalMapname);
 
 		for(int a=0;a<gs->activePlayers;a++){
