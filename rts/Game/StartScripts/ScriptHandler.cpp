@@ -6,43 +6,53 @@
 #include "ScriptHandler.h"
 #include "Game/Game.h"
 #include "mmgr.h"
+#include "FileSystem/FileHandler.h"
+#include "LoadScript.h"
 
-extern CGame* game;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-CScriptHandler* CScriptHandler::_instance=0;
 
 void CScriptHandler::SelectScript(std::string s)
 {
-	CScriptHandler::Instance()->chosenScript=CScriptHandler::Instance()->scripts[s];
-	CScriptHandler::Instance()->chosenName=s;
+	CScriptHandler::Instance().chosenScript=CScriptHandler::Instance().scripts[s];
+	CScriptHandler::Instance().chosenName=s;
 }
 
 CScriptHandler::CScriptHandler()
 {
+  
 	chosenScript=0;
 	list=new CglList("Select script",SelectScript);
 }
 
-CScriptHandler* CScriptHandler::Instance()
-{
-	if(_instance==0)
-		_instance=new CScriptHandler;
-	return _instance;
+void CScriptHandler::LoadFiles() {
+  std::vector<std::string> f=CFileHandler::FindFiles("*.ssf");
+
+  for(std::vector<std::string>::iterator fi=f.begin(), e = f.end();fi!=e;++fi){
+    file_scripts.push_back(new CLoadScript(*fi));
+  }
 }
 
-void CScriptHandler::UnloadInstance()
+CScriptHandler& CScriptHandler::Instance()
 {
-	if(_instance!=0){
-		delete _instance;
-		_instance=0;
-	}
+  static bool created = false;
+  static CScriptHandler instance;
+  if( !created ) {
+    created = true;
+    instance.LoadFiles();
+  }
+  return instance;
 }
+
 
 CScriptHandler::~CScriptHandler()
 {
+  while(!file_scripts.empty()) {
+    delete file_scripts.back();
+    file_scripts.pop_back();
+  }
 	delete list;
 }
 

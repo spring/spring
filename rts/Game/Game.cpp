@@ -260,7 +260,7 @@ CGame::CGame(bool server,std::string mapname)
 	modelParser = new C3DModelParser();
  	ENTER_SYNCED;
  	if(!server) net->Update();	//prevent timing out during load
- 	featureHandler->LoadFeaturesFromMap(readmap->ifs,CScriptHandler::Instance()->chosenScript->loadGame);
+ 	featureHandler->LoadFeaturesFromMap(readmap->ifs,CScriptHandler::Instance().chosenScript->loadGame);
  	if(!server) net->Update();	//prevent timing out during load
  	pathManager = new CPathManager();
  	if(!server) net->Update();	//prevent timing out during load
@@ -374,7 +374,6 @@ CGame::~CGame()
 	delete water;
 	delete sky;
 
-	CScriptHandler::UnloadInstance();
 	delete resourceBar;
 	delete uh;
 	delete unitDrawer;
@@ -858,8 +857,8 @@ int CGame::KeyReleased(unsigned short k)
 bool CGame::Update()
 {
 	mouse->EmptyMsgQueUpdate();
-	if(CScriptHandler::Instance()->chosenScript){
-		script=CScriptHandler::Instance()->chosenScript;
+	if(CScriptHandler::Instance().chosenScript){
+		script=CScriptHandler::Instance().chosenScript;
 	}
 	thisFps++;
 
@@ -1575,7 +1574,7 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_SCRIPT:
 			CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
-			script=CScriptHandler::Instance()->chosenScript;
+			script=CScriptHandler::Instance().chosenScript;
 			info->AddLine("Using script %s",(char*)(&inbuf[inbufpos+2]));
 			lastLength=inbuf[inbufpos+1];
 			break;
