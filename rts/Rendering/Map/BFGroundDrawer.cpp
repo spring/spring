@@ -982,8 +982,8 @@ bool CBFGroundDrawer::UpdateTextures()
 							m=0;
 						m=min(1.,(double)sqrt(m));
 					}
-					infoTexMem[a*4+0]=255-int(m)*255;
-					infoTexMem[a*4+1]=int(m)*255;
+					infoTexMem[a*4+0]=255-int(m*255.0f);
+					infoTexMem[a*4+1]=int(m*255.0f);
 					infoTexMem[a*4+2]=0;
 				}
 			}
@@ -1069,10 +1069,10 @@ bool CBFGroundDrawer::UpdateTextures()
 		if(infoTex==0){
 			glGenTextures(1,&infoTex);
 			glBindTexture(GL_TEXTURE_2D, infoTex);
-			if(drawPathMap)
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-			else
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+			//if(drawPathMap)
+			//	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+			//else
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 			if(highResInfoTexWanted)
 				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
