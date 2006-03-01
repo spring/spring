@@ -643,7 +643,7 @@ int SpringApp::Run (int argc, char *argv[])
 					UpdateSDLKeys ();
 
 					if(activeController) {
-						int j = std::tolower(event.key.keysym.unicode);
+						int j = tolower(event.key.keysym.unicode);
 						// Don't translate 0-9 because with ctrl that maps to weird unicode characters (eg same as esc)
 						if (j > SDLK_FIRST && j <= SDLK_DELETE && (i < SDLK_0 || i > SDLK_9)) {
 							// With control+letter, the unicode field is 1-26, so convert it back to ascii.
