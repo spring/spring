@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SYNCER_H
+#define SYNCER_H
 
 #include <map>
 #include <vector>
@@ -47,3 +48,5 @@ public:
 	bool IsUnitDisabled(int unit);
 	bool IsUnitDisabledByClient(int unit, int clientId);
 };
+
+#endif

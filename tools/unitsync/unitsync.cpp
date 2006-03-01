@@ -1,27 +1,36 @@
 #include "stdafx.h"
 #include "unitsync.h"
-#include <windows.h>
 
-#include "VFSHandler.h"
-#include "ArchiveScanner.h"
-#include "FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/FileHandler.h"
 #include "TdfParser.h"
-#include "Sim/Map/MapFile.h"
-#include "ArchiveFactory.h"
+#include "Sim/Map/mapfile.h"
+#include "FileSystem/ArchiveFactory.h"
 
 #include "Syncer.h"
 #include "SyncServer.h"
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 
+#ifdef WIN32
+#define DLL_EXPORT extern "C" __declspec(dllexport)
+#else
+#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
+#define __stdcall
+#define MB_OK 0
+static inline void MessageBox(void*, const char* msg, const char* capt, unsigned int)
+{
+	std::cerr << "unitsync: " << capt << ": " << msg << std::endl;
+}
+#endif
+
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer *syncer = NULL;
 static CArchiveScanner* scanner = NULL;
-
-//The SunParswer wants this
-HWND hWnd = 0;
 
 // And the following makes the hpihandler happy
 class CInfoConsole {
@@ -46,18 +55,20 @@ void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {
 
 class CInfoConsole *info;
 
+#ifdef WIN32
 BOOL __stdcall DllMain(HINSTANCE hInst,
                        DWORD dwReason,
                        LPVOID lpReserved) {
    return TRUE;
 }
+#endif
 
-extern "C" __declspec(dllexport) void __stdcall Message(const char* p_szMessage)
+DLL_EXPORT void __stdcall Message(const char* p_szMessage)
 {
    MessageBox(NULL, p_szMessage, "Message from DLL", MB_OK);
 }
 
-extern "C" int __stdcall Init(bool isServer, int id)
+DLL_EXPORT int __stdcall Init(bool isServer, int id)
 {
 	if (hpiHandler)
 		delete hpiHandler;
@@ -73,7 +84,7 @@ extern "C" int __stdcall Init(bool isServer, int id)
 	return 1;
 }
 
-extern "C" void __stdcall UnInit()
+DLL_EXPORT void __stdcall UnInit()
 {
 	if ( hpiHandler )
 	{
@@ -93,17 +104,17 @@ extern "C" void __stdcall UnInit()
 	}
 }
 
-extern "C" int __stdcall ProcessUnits(void)
+DLL_EXPORT int __stdcall ProcessUnits(void)
 {
 	return syncer->ProcessUnits();
 }
 
-extern "C" int __stdcall ProcessUnitsNoChecksum(void)
+DLL_EXPORT int __stdcall ProcessUnitsNoChecksum(void)
 {
 	return syncer->ProcessUnits(false);
 }
 
-extern "C" const char * __stdcall GetCurrentList()
+DLL_EXPORT const char * __stdcall GetCurrentList()
 {
 	string tmp = syncer->GetCurrentList();
 /*	int tmpLen = (int)tmp.length();
@@ -127,23 +138,23 @@ void RemoveClient(int id)
 char *GetClientDiff(int id)
 void InstallClientDiff(char *diff) */
 
-extern "C" void __stdcall AddClient(int id, char *unitList)
+DLL_EXPORT void __stdcall AddClient(int id, char *unitList)
 {
 	((CSyncServer *)syncer)->AddClient(id, unitList);
 }
 
-extern "C" void __stdcall RemoveClient(int id)
+DLL_EXPORT void __stdcall RemoveClient(int id)
 {
 	((CSyncServer *)syncer)->RemoveClient(id);
 }
 
-extern "C" const char * __stdcall GetClientDiff(int id)
+DLL_EXPORT const char * __stdcall GetClientDiff(int id)
 {
 	string tmp = ((CSyncServer *)syncer)->GetClientDiff(id);
 	return GetStr(tmp);
 }
 
-extern "C" void __stdcall InstallClientDiff(char *diff)
+DLL_EXPORT void __stdcall InstallClientDiff(char *diff)
 {
 	syncer->InstallClientDiff(diff);
 }
@@ -153,24 +164,24 @@ char *GetUnitName(int unit)
 int IsUnitDisabled(int unit)
 int IsUnitDisabledByClient(int unit, int clientId)*/
 
-extern "C" int __stdcall GetUnitCount()
+DLL_EXPORT int __stdcall GetUnitCount()
 {
 	return syncer->GetUnitCount();
 }
 
-extern "C" const char * __stdcall GetUnitName(int unit)
+DLL_EXPORT const char * __stdcall GetUnitName(int unit)
 {
 	string tmp = syncer->GetUnitName(unit);
 	return GetStr(tmp);
 }
 
-extern "C" const char * __stdcall GetFullUnitName(int unit)
+DLL_EXPORT const char * __stdcall GetFullUnitName(int unit)
 {
 	string tmp = syncer->GetFullUnitName(unit);
 	return GetStr(tmp);
 }
 
-extern "C" int __stdcall IsUnitDisabled(int unit)
+DLL_EXPORT int __stdcall IsUnitDisabled(int unit)
 {
 	if (syncer->IsUnitDisabled(unit))
 		return 1;
@@ -178,7 +189,7 @@ extern "C" int __stdcall IsUnitDisabled(int unit)
 		return 0;
 }
 
-extern "C" int __stdcall IsUnitDisabledByClient(int unit, int clientId)
+DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId)
 {
 	if (syncer->IsUnitDisabledByClient(unit, clientId))
 		return 1;
@@ -189,7 +200,7 @@ extern "C" int __stdcall IsUnitDisabledByClient(int unit, int clientId)
 //////////////////////////
 //////////////////////////
 
-extern "C" int __stdcall InitArchiveScanner()
+DLL_EXPORT int __stdcall InitArchiveScanner()
 {
 	if (!scanner) 
 		scanner = new CArchiveScanner();
@@ -210,12 +221,12 @@ extern "C" int __stdcall InitArchiveScanner()
 	return 1;
 }
 
-extern "C" void __stdcall AddArchive(const char* name)
+DLL_EXPORT void __stdcall AddArchive(const char* name)
 {
 	hpiHandler->AddArchive(name, false);
 }
 
-extern "C" void __stdcall AddAllArchives(const char* root)
+DLL_EXPORT void __stdcall AddAllArchives(const char* root)
 {
 	vector<string> ars = scanner->GetArchives(root);
 //	Message(root);
@@ -224,7 +235,7 @@ extern "C" void __stdcall AddAllArchives(const char* root)
 	}
 }
 
-extern "C" unsigned int __stdcall GetArchiveChecksum(const char* arname)
+DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)
 {
 	return scanner->GetArchiveChecksum(arname);
 }
@@ -232,7 +243,7 @@ extern "C" unsigned int __stdcall GetArchiveChecksum(const char* arname)
 // Updated on every call to getmapcount
 static vector<string> mapNames;
 
-extern "C" int __stdcall GetMapCount()
+DLL_EXPORT int __stdcall GetMapCount()
 {
 	vector<string> files = CFileHandler::FindFiles("maps/*.smf");
 	vector<string> ars = scanner->GetMaps();
@@ -250,12 +261,12 @@ extern "C" int __stdcall GetMapCount()
 	return mapNames.size();
 }
 
-extern "C" const char* __stdcall GetMapName(int index)
+DLL_EXPORT const char* __stdcall GetMapName(int index)
 {
 	return GetStr(mapNames[index]);
 }
 
-extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
+DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 {
 	// Determine if the map is found in an archive
 	string mapName = name;
@@ -367,7 +378,7 @@ extern "C" int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 // Used to return the image
 char* imgbuf[1024*1024*2];
 
-extern "C" void* __stdcall GetMinimap(const char* filename, int miplevel)
+DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 {
 	// Determine if the map is found in an archive
 	string mapName = filename;
@@ -507,19 +518,19 @@ extern "C" void* __stdcall GetMinimap(const char* filename, int miplevel)
 
 vector<CArchiveScanner::ModData> modData;
 
-extern "C" int __stdcall GetPrimaryModCount()
+DLL_EXPORT int __stdcall GetPrimaryModCount()
 {
 	modData = scanner->GetPrimaryMods();
 	return modData.size();
 }
 
-extern "C" const char* __stdcall GetPrimaryModName(int index)
+DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
 {
 	string x = modData[index].name;
 	return GetStr(x);
 }
 
-extern "C" const char* __stdcall GetPrimaryModArchive(int index)
+DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
 {
 	return GetStr(modData[index].dependencies[0]);
 }
@@ -531,18 +542,18 @@ extern "C" const char* __stdcall GetPrimaryModArchive(int index)
  */
 vector<string> primaryArchives;
 
-extern "C" int __stdcall GetPrimaryModArchiveCount(int index)
+DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
 {
 	primaryArchives = scanner->GetArchives(modData[index].dependencies[0]);
 	return primaryArchives.size();
 }
 
-extern "C" const char* __stdcall GetPrimaryModArchiveList(int arnr)
+DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr)
 {
 	return GetStr(primaryArchives[arnr]);
 }
 
-extern "C" int __stdcall GetPrimaryModIndex(const char* name)
+DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
 {
 	string n(name);
 	for (int i = 0; i < modData.size(); ++i) {
@@ -561,7 +572,7 @@ struct SideData {
 
 vector<SideData> sideData;
 
-extern "C" int __stdcall GetSideCount()
+DLL_EXPORT int __stdcall GetSideCount()
 {
 	sideData.clear();
 
@@ -585,7 +596,7 @@ extern "C" int __stdcall GetSideCount()
 	return sideData.size();
 }
 
-extern "C" const char* __stdcall GetSideName(int side)
+DLL_EXPORT const char* __stdcall GetSideName(int side)
 {
 	return GetStr(sideData[side].name);
 }
@@ -599,7 +610,7 @@ static map<int, CFileHandler*> openFiles;
 static int nextFile = 0;
 static vector<string> curFindFiles;
 
-extern "C" int _stdcall OpenFileVFS(const char* name)
+DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
 {
 	CFileHandler* fh = new CFileHandler(name);
 	if (!fh->FileExists()) {
@@ -613,19 +624,19 @@ extern "C" int _stdcall OpenFileVFS(const char* name)
 	return nextFile;
 }
 
-extern "C" void __stdcall CloseFileVFS(int handle)
+DLL_EXPORT void __stdcall CloseFileVFS(int handle)
 {
 	CFileHandler* fh = openFiles[handle];
 	delete fh;
 }
 
-extern "C" void __stdcall ReadFileVFS(int handle, void* buf, int length)
+DLL_EXPORT void __stdcall ReadFileVFS(int handle, void* buf, int length)
 {
 	CFileHandler* fh = openFiles[handle];
 	fh->Read(buf, length);
 }
 
-extern "C" int __stdcall FileSizeVFS(int handle)
+DLL_EXPORT int __stdcall FileSizeVFS(int handle)
 {
 	CFileHandler* fh = openFiles[handle];
 	return fh->FileSize();
@@ -634,7 +645,7 @@ extern "C" int __stdcall FileSizeVFS(int handle)
 
 // Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
 // pass the returned handle to findfiles to get the results
-extern "C" int __stdcall InitFindVFS(const char* pattern)
+DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 {
 	curFindFiles = CFileHandler::FindFiles(pattern);
 	return 0;
@@ -642,7 +653,7 @@ extern "C" int __stdcall InitFindVFS(const char* pattern)
 
 // On first call, pass handle from initfind. pass the return value of this function on subsequent calls
 // until 0 is returned. size should be set to max namebuffer size on call
-extern "C" int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
+DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 {
 	if (handle >= curFindFiles.size())
 		return 0;
@@ -658,7 +669,7 @@ static map<int, CArchiveBase*> openArchives;
 static int nextArchive = 0;
 
 // returns 0 on error, a handle otherwise
-extern "C" int __stdcall OpenArchive(const char* name)
+DLL_EXPORT int __stdcall OpenArchive(const char* name)
 {
 	CArchiveBase* a = CArchiveFactory::OpenArchive(name);
 	if (a) {
@@ -671,13 +682,13 @@ extern "C" int __stdcall OpenArchive(const char* name)
 	}
 }
 
-extern "C" void __stdcall CloseArchive(int archive)
+DLL_EXPORT void __stdcall CloseArchive(int archive)
 {
 	CArchiveBase* a = openArchives[archive];
 	openArchives.erase(archive);
 }
 
-extern "C" int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
+DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 {
 	CArchiveBase* a = openArchives[archive];
 	
@@ -691,25 +702,25 @@ extern "C" int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, i
 	return ret;
 }
 
-extern "C" int __stdcall OpenArchiveFile(int archive, const char* name)
+DLL_EXPORT int __stdcall OpenArchiveFile(int archive, const char* name)
 {
 	CArchiveBase* a = openArchives[archive];
 	return a->OpenFile(name);
 }
 
-extern "C" int __stdcall ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
+DLL_EXPORT int __stdcall ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 {
 	CArchiveBase* a = openArchives[archive];
 	return a->ReadFile(handle, buffer, numBytes);
 }
 
-extern "C" void __stdcall CloseArchiveFile(int archive, int handle)
+DLL_EXPORT void __stdcall CloseArchiveFile(int archive, int handle)
 {
 	CArchiveBase* a = openArchives[archive];
 	return a->CloseFile(handle);
 }
 
-extern "C" int __stdcall SizeArchiveFile(int archive, int handle)
+DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle)
 {
 	CArchiveBase* a = openArchives[archive];
 	return a->FileSize(handle);

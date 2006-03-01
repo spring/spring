@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UNITSYNC_H
+#define UNITSYNC_H
 
 #include "resource.h"
 #include <string>
@@ -29,3 +30,5 @@ struct MapInfo
 };
 
 const char *GetStr(std::string str);
+
+#endif

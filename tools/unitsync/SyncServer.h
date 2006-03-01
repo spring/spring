@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SYNCSERVER_H
+#define SYNCSERVER_H
 
 #include "Syncer.h"
 #include <string>
@@ -27,3 +28,5 @@ public:
 	const string GetClientDiff(int id);
 	virtual int ProcessUnits();
 };
+
+#endif
