@@ -608,6 +608,11 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_VIDEORESIZE:
 					screenWidth = event.resize.w;
 					screenHeight = event.resize.h;
+#ifndef WIN32
+					// HACK   We don't want to break resizing on windows (again?),
+					//        so someone should test this very well before enabling it.
+					SetSDLVideoMode();
+#endif
 					InitOpenGL();
 					break;
 				case SDL_QUIT:
@@ -756,7 +761,7 @@ static inline int LocateDataDir(void)
 		env = SPRING_DATADIR;
 	ret = chdir(configHandler.GetString("SpringData",std::string(env)).c_str());
 	if (ret == -1)
-		perror("Spring datadir error");
+		perror("Spring datadir warning");
 	return ret;
 }
 #endif
