@@ -791,6 +791,15 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if (s=="moveslow")
 		camMove[7]=true;
 
+	if (s=="mouse1")
+		mouse->MousePress (mouse->lastx, mouse->lasty, 1);
+
+	if (s=="mouse2")
+		mouse->MousePress (mouse->lastx, mouse->lasty, 2);
+
+	if (s=="mouse3")
+		mouse->MousePress (mouse->lastx, mouse->lasty, 3);
+
 	if (s=="mouse4")
 		mouse->MousePress (mouse->lastx, mouse->lasty, 4);
 
@@ -850,6 +859,23 @@ int CGame::KeyReleased(unsigned short k)
 
 	if (s=="moveslow")
 		camMove[7]=false;
+
+	if (s=="mouse1")
+		mouse->MouseRelease (mouse->lastx, mouse->lasty, 1);
+
+	if (s=="mouse2")
+		mouse->MouseRelease (mouse->lastx, mouse->lasty, 2);
+
+	if (s=="mouse3")
+		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
+
+	// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
+	// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
+// 	if (s=="mouse4")
+// 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 4);
+
+// 	if (s=="mouse5")
+// 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 5);
 #endif
 	return 0;
 }
