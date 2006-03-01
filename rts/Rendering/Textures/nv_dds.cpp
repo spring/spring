@@ -349,18 +349,18 @@ bool CDDSImage::load(string filename, bool flipImage)
     file.Read(&ddsh.dwCaps2, tmp);
     file.Read(&ddsh.dwReserved2, tmp*3);
 
-    swabdword(&ddsh.dwSize);
-    swabdword(&ddsh.dwFlags);
-    swabdword(&ddsh.dwHeight);
-    swabdword(&ddsh.dwWidth);
-    swabdword(&ddsh.dwPitchOrLinearSize);
-    swabdword(&ddsh.dwMipMapCount);
-    swabdword(&ddsh.ddspf.dwSize);
-    swabdword(&ddsh.ddspf.dwFlags);
-    swabdword(&ddsh.ddspf.dwFourCC);
-    swabdword(&ddsh.ddspf.dwRGBBitCount);
-    swabdword(&ddsh.dwCaps1);
-    swabdword(&ddsh.dwCaps2);
+    ddsh.dwSize = swabdword(ddsh.dwSize);
+    ddsh.dwFlags = swabdword(ddsh.dwFlags);
+    ddsh.dwHeight = swabdword(ddsh.dwHeight);
+    ddsh.dwWidth = swabdword(ddsh.dwWidth);
+    ddsh.dwPitchOrLinearSize = swabdword(ddsh.dwPitchOrLinearSize);
+    ddsh.dwMipMapCount = swabdword(ddsh.dwMipMapCount);
+    ddsh.ddspf.dwSize = swabdword(ddsh.ddspf.dwSize);
+    ddsh.ddspf.dwFlags = swabdword(ddsh.ddspf.dwFlags);
+    ddsh.ddspf.dwFourCC = swabdword(ddsh.ddspf.dwFourCC);
+    ddsh.ddspf.dwRGBBitCount = swabdword(ddsh.ddspf.dwRGBBitCount);
+    ddsh.dwCaps1 = swabdword(ddsh.dwCaps1);
+    ddsh.dwCaps2 = swabdword(ddsh.dwCaps2);
 
     // default to flat texture type (1D, 2D, or rectangle)
     m_type = TextureFlat;
