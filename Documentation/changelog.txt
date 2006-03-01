@@ -1,5 +1,11 @@
 TASpring change log
 
+0.70b3
+
+- Added possibility to bind mouse1, mouse2 and mouse3 to keyboard.
+- Fixed shift+letter bug.
+- Fixed Pathing Map (F2 view) bug.
+
 0.70b2
 
 - Fixed some (debug) message colors.
