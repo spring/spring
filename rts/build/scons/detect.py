@@ -66,7 +66,10 @@ def processor(gcc_3_4=True):
 				# AMD
 				vendor="AuthenticAMD"
 		elif str.startswith("cpu"):
+			# first re does not do anything more than family = str.strip() in my case
 			family = re.sub('^[^0-9A-Za-z]*', '', str).strip()
+			# this is more useful, finds the first block of numbers
+			family_number = re.findall('[0-9]+', str)[0]
 		elif str.startswith("model") and str.find("name") == -1:
 			model = re.sub('^[^0-9]*', '', str).strip()
 		if vendor == "GenuineTMx86":
@@ -134,6 +137,8 @@ def processor(gcc_3_4=True):
 						else:
 							print "WARNING: gcc versions below 3.4 don't support -march=athlon64, using -march=athlon-4 -msse2 -mfpmath=sse instead"
 							archflags=['-march=athlon', '-msse2', '-mfpmath=sse']
+					# maybe this should use int(family_number) rather than family
+					# i have no way of checking
 					elif family == 6 and model == 8:
 						print "  found AMD Athlon Thunderbird XP"
 						archflags=['-march=athlon-xp']
@@ -161,21 +166,30 @@ def processor(gcc_3_4=True):
 	if len(archflags) == 0:
 		if vendor == "":
 			if family != -1: # has to be checked...
-				if family.find("970") != -1:
+				if family_number in ('970'):
 					print "  found PowerPC 970 (G5)"
 					archflags=['-mtune=G5', '-maltivec', '-mabi=altivec']
-				elif family.find("7450") != -1:
+				#i think these are all the same as far as gcc cares
+				elif family_number in ('7450','7455','7445','7447','7457'):
 					print "  found PowerPC 7450 (G4 v2)"
 					archflags=['-mtune=7450', '-maltivec', '-mabi=altivec']
-				elif family.find("7400") != -1:
+				elif family_number in ('7400','7410'):
 					print "  found PowerPC 7400 (G4)"
 					archflags=['-mtune=7400', '-maltivec', '-mabi=altivec']
-				elif family.find("750") != -1:
+				elif family_number in ('750'):
 					print "  found PowerPC 750 (G3)"
 					archflags=['-mtune=750']
-				elif family.find("604e") != -1:
+				elif family_number in ('740'):
+					print "  found PowerPC 740 (G3)"
+					archflags=['-mtune=740']
+				elif family_number in ('604'):
 					print "  found PowerPC 604"
-					archflags=['-mtune=604e']
+					archflags=['-mtune=604']
+				elif family_number in ('603'):
+					print "  found PowerPC 603"
+					archflags=['-mtune=603']
+
+
 
 	f.close()
 	if len(archflags) == 0:
