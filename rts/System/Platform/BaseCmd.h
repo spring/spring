@@ -200,7 +200,7 @@ protected:
 		 * Boolean flag representing whether this option was
 		 * given or not.
 		 */
-		bol given;
+		bool given;
 
 		/**
 		 * @brief return union
