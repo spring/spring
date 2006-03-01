@@ -1,6 +1,6 @@
-#include "StdAfx.h"
-#include ".\syncer.h"
-#include "FileHandler.h"
+#include "stdafx.h"
+#include "Syncer.h"
+#include "FileSystem/FileHandler.h"
 #include <vector>
 #include <string>
 #include <algorithm>

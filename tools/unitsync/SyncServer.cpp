@@ -1,5 +1,5 @@
-#include "StdAfx.h"
-#include ".\syncserver.h"
+#include "stdafx.h"
+#include "SyncServer.h"
 #include <sstream>
 
 CSyncServer::CSyncServer(int id) :

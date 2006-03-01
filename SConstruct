@@ -8,6 +8,7 @@ Each target has an equivalent install target. E.g. `CentralBuildAI' has
 
 [default]
 	spring
+	unitsync
 	GroupAI
 		CentralBuildAI
 		MetalMakerAI
@@ -42,6 +43,45 @@ Alias('install-spring', inst)
 # Strip the executable if rts.py said so.
 if env['strip']:
 	env.AddPostAction(spring, Action([['strip','$TARGET']]))
+
+# Build unitsync shared object
+# HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
+# so we don't need so much bloat here.
+unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
+	['rts/System/TdfParser.cpp',
+	'rts/System/FileSystem/Archive7Zip.cpp',
+	'rts/System/FileSystem/ArchiveBuffered.cpp',
+	'rts/System/FileSystem/ArchiveFactory.cpp',
+	'rts/System/FileSystem/ArchiveHPI.cpp',
+	'rts/System/FileSystem/ArchiveScanner.cpp',
+	'rts/System/FileSystem/ArchiveZip.cpp',
+	'rts/System/FileSystem/FileHandler.cpp',
+	'rts/System/FileSystem/VFSHandler.cpp',
+	'rts/lib/7zip/7zAlloc.c',
+	'rts/lib/7zip/7zBuffer.c',
+	'rts/lib/7zip/7zCrc.c',
+	'rts/lib/7zip/7zDecode.c',
+	'rts/lib/7zip/7zExtract.c',
+	'rts/lib/7zip/7zHeader.c',
+	'rts/lib/7zip/7zIn.c',
+	'rts/lib/7zip/7zItem.c',
+	'rts/lib/7zip/7zMethodID.c',
+	'rts/lib/7zip/LzmaDecode.c',
+	'rts/lib/hpiutil2/hpientry.cpp',
+	'rts/lib/hpiutil2/hpifile.cpp',
+	'rts/lib/hpiutil2/hpiutil.cpp',
+	'rts/lib/hpiutil2/scrambledfile.cpp',
+	'rts/lib/hpiutil2/sqshstream.cpp',
+	'rts/lib/hpiutil2/substream.cpp',
+	'rts/lib/minizip/ioapi.c',
+	'rts/lib/minizip/unzip.c',
+	'rts/lib/minizip/zip.c']
+if env['platform'] == 'win32':
+	unitsync_files += ['rts/lib/minizip/iowin32.c']
+unitsync = env.SharedLibrary('game/unitsync.so', unitsync_files)
+Alias('unitsync', unitsync)
+# HACK   disable it for now, as it is not yet needed and would just increase compilation time
+#Default(unitsync)
 
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 aienv = env.Copy(LIBS=[], LIBPATH=[])

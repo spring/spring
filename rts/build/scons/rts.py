@@ -162,7 +162,14 @@ def generate(env):
 			print "\ninvalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
 
+		env['CCFLAGS'] += ['-fvisibility=hidden']
 		env['CXXFLAGS'] = env['CCFLAGS']
+
+		# This is broken, first, scons passes it to .c files compilation too (which is an error),
+		# second, linking of a shared object fails with:
+		# /usr/bin/ld: build/tools/unitsync/unitsync.os: relocation R_X86_64_PC32 against `std::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@@GLIBCXX_3.4' can not be used when making a shared object; recompile with -fPIC
+		# Even though -fPIC was passed on compilation of each object.
+		#env['CXXFLAGS'] += ['-fvisibility-inlines-hidden']
 
 		# fall back to environment variables if neither debug nor optimize options are present
 		if not args.has_key('debug') and not args.has_key('optimize'):
@@ -230,6 +237,7 @@ def generate(env):
 	if env['builddir']:
 		for d in filelist.list_directories(env, 'rts'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
+		env.BuildDir(os.path.join(env['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 		for d in filelist.list_directories(env, 'AI'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
 
