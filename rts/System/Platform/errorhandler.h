@@ -1,7 +1,11 @@
-/*
- * errorhandler.h
+/**
+ * @file errorhandler.h
+ * @brief error messages
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * Error handling based on platform
- * Copyright (C) 2005 Christopher Han
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later.
  */
 #ifndef ERRORHANDLER_H
 #define ERRORHANDLER_H

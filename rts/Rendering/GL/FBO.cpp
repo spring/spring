@@ -1,11 +1,19 @@
-/*
- * FBO.cpp
+/**
+ * @file FBO.cpp
+ * @brief EXT_framebuffer_object implementation
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * EXT_framebuffer_object class implementation
- * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later.
  */
 #include <assert.h>
 #include "IFramebuffer.h"
 
+/**
+ * Tests for support of the EXT_framebuffer_object
+ * extension, and generates a framebuffer if supported
+ */
 FBO::FBO()
 {
 	g_frameBuffer = 0;
@@ -17,6 +25,9 @@ FBO::FBO()
 	deselect();
 }
 
+/**
+ * Unbinds the framebuffer and deletes it
+ */
 FBO::~FBO()
 {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -24,21 +35,34 @@ FBO::~FBO()
 		glDeleteFramebuffersEXT(1,&g_frameBuffer);
 }
 
+/**
+ * Tests whether or not we have a valid framebuffer
+ */
 bool FBO::valid(void)
 {
 	return g_frameBuffer != 0;
 }
 
+/**
+ * Makes the framebuffer the active framebuffer context
+ */
 void FBO::select(void)
 {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_frameBuffer);
 }
 
+/**
+ * Unbinds the framebuffer from the current context
+ */
 void FBO::deselect(void)
 {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
 
+/**
+ * Tests if the framebuffer is a complete and
+ * legitimate framebuffer
+ */
 void FBO::checkFBOStatus(void)
 {
 	GLenum status;
@@ -47,6 +71,9 @@ void FBO::checkFBOStatus(void)
 		assert(0);
 }
 
+/**
+ * Attaches a GL texture to the framebuffer
+ */
 void FBO::attachTexture(GLuint tex, const unsigned int textype, FramebufferAttachType attachtype)
 {
 	GLenum glattachtype;

@@ -1,7 +1,11 @@
-/*
- * BaseCmd.cpp
+/**
+ * @file BaseCmd.cpp
+ * @brief Abstract commandline implementation
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * Base structure for commandline parser class implementation
- * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
+ * Copyright (C) 2005. Licensed under the terms of the
+ * GNU GPL, v2 or later.
  */
 #include "StdAfx.h"
 #include "BaseCmd.h"
@@ -12,7 +16,8 @@
 #endif
 
 /**
- * Constructor
+ * The base constructor sets up the default help and
+ * version options that should be available on all platforms.
  */
 BaseCmd::BaseCmd()
 {
@@ -21,18 +26,16 @@ BaseCmd::BaseCmd()
 }
 
 /**
- * Destructor
+ * The destructor currently does nothing
  */
 BaseCmd::~BaseCmd()
 {
 }
 
 /**
- * initialize()
- * Returns a new Win32Cmd or PosixCmd instance,
- * depending on the platform
- * @param c argument count
- * @param v array of argument strings
+ * This is the static initialization function that
+ * will instantiate a platform-specific derived commandline
+ * class appropriate for this platform
  */
 BaseCmd *BaseCmd::initialize(int c, char **v)
 {
@@ -44,12 +47,7 @@ BaseCmd *BaseCmd::initialize(int c, char **v)
 }
 
 /**
- * addoption()
- * Adds an option to the list of recognized options
- * @param shortopt short option letter
- * @param longopt long option string
- * @param parmtype type of parameter the argument takes
- * @param desc description string
+ * Adds a parameter to the list of recognized options
  */
 void BaseCmd::addoption(const char shortopt, std::string longopt, const unsigned int parmtype, std::string parmname, std::string desc)
 {
@@ -64,9 +62,7 @@ void BaseCmd::addoption(const char shortopt, std::string longopt, const unsigned
 }
 
 /**
- * deloption()
- * Remove an option from the list of recognized options
- * @param o short option to find
+ * Remove the option that has the given short flag
  */
 void BaseCmd::deloption(const char o)
 {
@@ -79,9 +75,7 @@ void BaseCmd::deloption(const char o)
 }
 
 /**
- * deloption()
- * Remove an option from the list of recognized options
- * @param o long option to find
+ * Remove the option that has the given long flag
  */
 void BaseCmd::deloption(std::string o)
 {
@@ -94,8 +88,8 @@ void BaseCmd::deloption(std::string o)
 }
 
 /**
- * usage()
- * Print usage message
+ * Print out usage information, along with a list of commandline
+ * options that have been set up for this commandline parser.
  */
 void BaseCmd::usage(std::string program, std::string version)
 {
@@ -110,9 +104,7 @@ void BaseCmd::usage(std::string program, std::string version)
 }
 
 /**
- * result()
  * Gets the post-parse result of an OPTPARM_NONE option
- * @param o short option to get
  */
 bool BaseCmd::result(const char o)
 {
@@ -124,9 +116,7 @@ bool BaseCmd::result(const char o)
 }
 
 /**
- * result()
  * Gets the post-parse result of an OPTPARM_NONE option
- * @param o long option to get
  */
 bool BaseCmd::result(std::string o)
 {
@@ -138,10 +128,7 @@ bool BaseCmd::result(std::string o)
 }
 
 /**
- * result()
  * Gets the post-parse result of an OPTPARM_INT option
- * @param o short option to get
- * @param ret reference to int where result should be stored
  */
 bool BaseCmd::result(const char o, int &ret)
 {
@@ -156,10 +143,7 @@ bool BaseCmd::result(const char o, int &ret)
 }
 
 /**
- * result()
  * Gets the post-parse result of an OPTPARM_INT option
- * @param o long option to get
- * @param ret reference to int where result should be stored
  */
 bool BaseCmd::result(std::string o, int &ret)
 {
@@ -174,10 +158,7 @@ bool BaseCmd::result(std::string o, int &ret)
 }
 
 /**
- * result()
  * Gets the post-parse result of an OPTPARM_STRING option
- * @param o short option to get
- * @param ret reference to string where result should be stored
  */
 bool BaseCmd::result(const char o, std::string &ret)
 {
@@ -192,10 +173,7 @@ bool BaseCmd::result(const char o, std::string &ret)
 }
 
 /**
- * result()
  * Gets the post-parse result of an OPTPARM_STRING option
- * @param o long option to get
- * @param ret reference to string where result should be stored
  */
 bool BaseCmd::result(std::string o, std::string &ret)
 {
@@ -210,9 +188,9 @@ bool BaseCmd::result(std::string o, std::string &ret)
 }
 
 /**
- * invalidoption()
- * Prints usage message and terminates when given an invalid option
- * @param opt invalid option
+ * When an unrecognized option is given, this is called.
+ * Prints out an extra "unrecognized option blah" along
+ * with the usage message.
  */
 int BaseCmd::invalidoption(std::string opt)
 {

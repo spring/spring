@@ -1,15 +1,17 @@
-/*
- * Win32Cmd.cpp
+/**
+ * @file Win32Cmd.cpp
+ * @brief Win32 commandline implementation
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * Win32 commandline parser class definition
- * Copyright (C) 2005 Christopher Han
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later
  */
 #include "StdAfx.h"
 #include "Win32Cmd.h"
 
 /**
- * Constructor
- * @param c argument count
- * @param v array of argument strings
+ * Just stores the arguments
  */
 Win32Cmd::Win32Cmd(int c, char **v)
 {
@@ -18,14 +20,13 @@ Win32Cmd::Win32Cmd(int c, char **v)
 }
 
 /**
- * Destructor
+ * does nothing
  */
 Win32Cmd::~Win32Cmd()
 {
 }
 
 /**
- * parse()
  * Iterates through and processes arguments
  */
 void Win32Cmd::parse()
@@ -65,6 +66,9 @@ void Win32Cmd::parse()
 	}
 }
 
+/**
+ * Print program usage message
+ */
 void Win32Cmd::usage(std::string program, std::string version)
 {
 	BaseCmd::usage(program, version);

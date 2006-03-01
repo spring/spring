@@ -1,8 +1,12 @@
-/*
- * filefunctions.h
+/**
+ * @file filefunctions.h
+ * @brief file functions
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * Generic Boost file handling functions
- * Copyright (C) 2005 Christopher Han
  * Glob conversion based on work by Nathaniel Smith
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later
  */
 #ifndef FILEFUNCTIONS_H
 #define FILEFUNCTIONS_H
@@ -11,8 +15,22 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 
+/**
+ * @brief fs namespace
+ *
+ * Shortcut for the full boost::filesystem namespace
+ */
 namespace fs = boost::filesystem;
 
+/**
+ * @brief quote macro
+ * @param c Character to test
+ * @param str string currently being built
+ *
+ * Given a string str that we're assembling,
+ * and an upcoming character c, will append
+ * an extra '\\' to quote the character if necessary.
+ */
 #define QUOTE(c,str)			\
 do {					\
 	if (!(isalnum(c)||(c)=='_'))	\
@@ -21,10 +39,11 @@ do {					\
 } while (0)
 
 /**
- * glob_to_regex()
- * Converts a glob expression to a regex
+ * @brief glob to regex
  * @param glob string containing glob
  * @return string containing regex
+ *
+ * Converts a glob expression to a regex
  */
 static inline std::string glob_to_regex(const std::string &glob)
 {
@@ -83,6 +102,16 @@ static inline std::string glob_to_regex(const std::string &glob)
 	return regex;
 }
 
+/**
+ * @brief find files
+ * @param dirpath path in which to start looking
+ * @param pattern pattern to search for
+ * @param recurse whether or not to recursively search
+ * @return vector of boost paths
+ *
+ * Will search for a file given a particular pattern.
+ * Starts from dirpath, descending down if recurse is true.
+ */
 static inline std::vector<fs::path> find_files(fs::path &dirpath, const std::string &pattern, const bool recurse = false)
 {
 	std::vector<fs::path> matches;

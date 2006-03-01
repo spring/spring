@@ -1,10 +1,18 @@
-/*
- * GLXPBuffer.cpp
+/**
+ * @file GLXPBuffer.cpp
+ * @brief GLX_SGIX_pbuffer
+ * @author Christopher Han <xiphux@gmail.com>
+ * 
  * GLX_SGIX_pbuffer class implementation
- * Copyright (C) 2006 Christopher Han <xiphux@gmail.com>
+ * Copyright (C) 2006.  Licensed under the terms of the
+ * GNU GPL, v2 or later
  */
 #include "IFramebuffer.h"
 
+/**
+ * Tests for existence of the GLX_SGIX_pbuffer extension,
+ * and creates an appropriate GLX pbuffer
+ */
 GLXPBuffer::GLXPBuffer(const int shadowMapSize, const bool sharedcontext, const bool shareobjects): m_pDisplay(0), m_glxPbuffer(0), m_glxContext(0), m_pOldDisplay(0), m_glxOldDrawable(0), m_glxOldContext(0), shadowMapSize(shadowMapSize), m_bSharedContext(sharedcontext), m_bShareObjects(shareobjects)
 {
 	if (!GLX_SGIX_pbuffer)
@@ -46,6 +54,9 @@ GLXPBuffer::GLXPBuffer(const int shadowMapSize, const bool sharedcontext, const 
 	m_pDisplay = pDisplay;
 }
 
+/**
+ * Cleans up and destroys context and pbuffer
+ */
 GLXPBuffer::~GLXPBuffer()
 {
 	if (m_glxContext && !m_bSharedContext)
@@ -54,16 +65,25 @@ GLXPBuffer::~GLXPBuffer()
 		glXDestroyGLXPbufferSGIX(m_pDisplay, m_glxPbuffer);
 }
 
+/**
+ * Check the status
+ */
 void GLXPBuffer::checkFBOStatus(void)
 {
 }
 
+/**
+ * Attaches a texture to the pbuffer
+ */
 void GLXPBuffer::attachTexture(const unsigned int tex, const unsigned int textype, FramebufferAttachType attachtype)
 {
 	if (attachtype == FBO_ATTACH_DEPTH)
 		shadowTex = tex;
 }
 
+/**
+ * Makes the glx pbuffer the current context
+ */
 void GLXPBuffer::select(void)
 {
 	if (m_pOldDisplay || m_glxOldDrawable || m_glxOldContext)
@@ -78,6 +98,9 @@ void GLXPBuffer::select(void)
 	}
 }
 
+/**
+ * deselects the pbuffer and makes the main display the context
+ */
 void GLXPBuffer::deselect(void)
 {
 	if (!(m_pOldDisplay && m_glxOldDrawable && m_glxOldContext))
@@ -91,6 +114,9 @@ void GLXPBuffer::deselect(void)
 	m_glxOldContext = 0;
 }
 
+/**
+ * tests whether the current framebuffer is active
+ */
 bool GLXPBuffer::valid(void)
 {
 	return m_glxPbuffer != 0;

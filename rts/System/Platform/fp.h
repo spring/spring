@@ -1,7 +1,11 @@
-/*
- * fp.h
+/**
+ * @file fp.h
+ * @brief floating point
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * Floating point handling based on platform
- * Copyright (C) 2005 Christopher Han
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later
  */
 #ifndef FP_H
 #define FP_H
