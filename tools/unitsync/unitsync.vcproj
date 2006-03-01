@@ -70,7 +70,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.8\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
+				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
