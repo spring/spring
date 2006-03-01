@@ -1,7 +1,11 @@
-/*
- * SharedLib.cpp
+/**
+ * @file SharedLib.cpp
+ * @brief shared library loader implementation
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * Base shared library loading class implementation
- * Copyright (C) 2005 Christopher Han
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later.
  */
 #include "StdAfx.h"
 #ifdef _WIN32
@@ -10,6 +14,9 @@
 #include "Linux/SoLib.h"
 #endif
 
+/**
+ * Used to create a platform-specific shared library handler.
+ */
 SharedLib *SharedLib::instantiate(const char *filename)
 {
 #ifdef _WIN32
@@ -19,6 +26,9 @@ SharedLib *SharedLib::instantiate(const char *filename)
 #endif
 }
 
+/**
+ * Used to create a platform-specific shared library handler.
+ */
 SharedLib *SharedLib::instantiate(std::string filename)
 {
 	return instantiate(filename.c_str());

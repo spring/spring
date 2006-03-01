@@ -1,14 +1,17 @@
-/*
- * PosixCmd.cpp
+/**
+ * @file PosixCmd.cpp
+ * @brief Posix commandline implementation
+ * @author Christopher Han <xiphux@gmail.com>
+ *
  * Posix commandline parser class definition
- * Copyright (C) 2005 Christopher Han <xiphux@gmail.com>
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later.
  */
 #include "PosixCmd.h"
 
 /**
- * Constructor
- * @param c argument count
- * @param v array of argument strings
+ * Just stores the arguments and calls the parent class's
+ * constructor
  */
 PosixCmd::PosixCmd(int c, char **v): BaseCmd()
 {
@@ -17,16 +20,14 @@ PosixCmd::PosixCmd(int c, char **v): BaseCmd()
 }
 
 /**
- * Destructor
+ * does nothing
  */
 PosixCmd::~PosixCmd()
 {
 }
 
 /**
- * parselongopt()
- * Parses a long option (--help)
- * @param arg argument as a C++ string
+ * Parses a long string option
  */
 void PosixCmd::parselongopt(std::string arg)
 {
@@ -55,7 +56,6 @@ void PosixCmd::parselongopt(std::string arg)
 }
 
 /**
- * parse()
  * Iterates through and processes arguments
  */
 void PosixCmd::parse()
@@ -100,7 +100,6 @@ void PosixCmd::parse()
 }
 
 /**
- * usage()
  * Print program usage message
  */
 void PosixCmd::usage(std::string program, std::string version)

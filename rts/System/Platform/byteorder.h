@@ -1,7 +1,10 @@
-/*
- * byteorder.h
- * Handling of endian byte orders
- * Copyright (C) 2005 Christopher Han
+/**
+ * @file byteorder.h
+ * @brief byte order handling
+ * @author Christopher Han <xiphux@gmail.com>
+ *
+ * Copyright (C) 2005.  Licensed under the terms of the
+ * GNU GPL, v2 or later.
  *
  * Mac   PPC: BIG    Endian
  * Mac   X86: little Endian
@@ -10,6 +13,9 @@
  *
  * BSD   X86: BIG    Endian
  * Linux X86: BIG    Endian
+ *
+ * Um... all x86 machines are little endian.
+ * - cfh
  */
 #ifndef BYTEORDER_H
 #define BYTEORDER_H
