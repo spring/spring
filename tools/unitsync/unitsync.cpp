@@ -11,22 +11,9 @@
 #include "Syncer.h"
 #include "SyncServer.h"
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
-
-#ifdef WIN32
-#define DLL_EXPORT extern "C" __declspec(dllexport)
-#else
-#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
-#define __stdcall
-#define MB_OK 0
-static inline void MessageBox(void*, const char* msg, const char* capt, unsigned int)
-{
-	std::cerr << "unitsync: " << capt << ": " << msg << std::endl;
-}
-#endif
 
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer *syncer = NULL;
@@ -138,7 +125,7 @@ void RemoveClient(int id)
 char *GetClientDiff(int id)
 void InstallClientDiff(char *diff) */
 
-DLL_EXPORT void __stdcall AddClient(int id, char *unitList)
+DLL_EXPORT void __stdcall AddClient(int id, const char *unitList)
 {
 	((CSyncServer *)syncer)->AddClient(id, unitList);
 }
@@ -154,7 +141,7 @@ DLL_EXPORT const char * __stdcall GetClientDiff(int id)
 	return GetStr(tmp);
 }
 
-DLL_EXPORT void __stdcall InstallClientDiff(char *diff)
+DLL_EXPORT void __stdcall InstallClientDiff(const char *diff)
 {
 	syncer->InstallClientDiff(diff);
 }

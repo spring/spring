@@ -31,4 +31,17 @@ struct MapInfo
 
 const char *GetStr(std::string str);
 
+#ifdef WIN32
+#define DLL_EXPORT extern "C" __declspec(dllexport)
+#else
+#include <iostream>
+#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
+#define __stdcall
+#define MB_OK 0
+static inline void MessageBox(void*, const char* msg, const char* capt, unsigned int)
+{
+	std::cerr << "unitsync: " << capt << ": " << msg << std::endl;
+}
+#endif
+
 #endif
