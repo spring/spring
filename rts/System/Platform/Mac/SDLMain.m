@@ -158,6 +158,7 @@ void setupWindowMenu(void)
 void CustomApplicationMain (argc, argv)
 {
     SDLMain				*sdlMain;
+	PreInitMac();
 
     /* Ensure the application object is initialised */
     [SDLApplication sharedApplication];

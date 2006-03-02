@@ -126,13 +126,21 @@ void CBitmap::Load(string filename, unsigned char defaultAlpha)
 	}
 
 	bool noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
+#if !defined(__APPLE__) // Temporary fix to allow testing of everything
+						// else until i get a quicktime image loader written
 	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
 	mem = new unsigned char[xsize * ysize * 4];
-//	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
+	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
 	memcpy(mem, (unsigned char *) ilGetData() , xsize * ysize * 4);
+#else
+	xsize = 4;
+	ysize = 4;
+
+	mem = new unsigned char[xsize * ysize * 4];
+#endif
 
 	ilDeleteImages(1, &ImageName); 
 
@@ -293,6 +301,7 @@ void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char bl
 	}
 }
 
+// Depreciated (Only used by GUI which will be replaced by CEGUI anyway)
 void CBitmap::SetTransparent( unsigned char red, unsigned char green, unsigned char blue )
 {
 	for ( unsigned int y = 0; y < xsize; y++ )
@@ -356,6 +365,7 @@ void CBitmap::Renormalize(float3 newCol)
 	}
 }
 
+// Unused
 CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 {
 	CBitmap bm;
@@ -408,6 +418,7 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 
 }
 
+// Unused
 CBitmap CBitmap::CreateRescaled(int newx, int newy)
 {
 	CBitmap bm;
