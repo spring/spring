@@ -838,6 +838,29 @@ bool CAICallback::GetValue(int id, void *data)
 
 int CAICallback::HandleCommand (void *data)
 {
+	if (data==NULL) return 0;
+	switch (((AIHCQuerySubVersion *)data)->commandId)
+	{
+	case AIHCQuerySubVersionId:
+		return 1; // current version of Handle Command interface
+	case AIHCAddMapPointId:
+		net->SendSTLData<unsigned char, unsigned char, short, short, std::string>(
+			NETMSG_MAPDRAW, team, CInMapDraw::NET_POINT,
+			(short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z,
+			std::string(((AIHCAddMapPoint *)data)->label));
+		return 1;
+	case AIHCAddMapLineId:
+		net->SendData<unsigned char, unsigned char, unsigned char, short, short, short, short>(
+			NETMSG_MAPDRAW, 12 /*message size*/, team, CInMapDraw::NET_LINE,
+			(short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z,
+			(short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z);
+		return 1;
+	case AIHCRemoveMapPointId:
+		net->SendData<unsigned char, unsigned char, unsigned char, short, short>(
+			NETMSG_MAPDRAW, 8 /*message size*/, team, CInMapDraw::NET_ERASE,
+			(short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z);
+		return 1;
+	}
 	return 0;
 }
 
