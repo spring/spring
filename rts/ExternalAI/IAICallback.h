@@ -30,6 +30,7 @@ struct LineMarker {
 const int AIHCQuerySubVersionId=0;
 struct AIHCQuerySubVersion ///< result of HandleCommand is version of this sub interface
 {
+	AIHCQuerySubVersion(): commandId(AIHCQuerySubVersionId) {}
 	int commandId; ///< equal to 0
 };
 
