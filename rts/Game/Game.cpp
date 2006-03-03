@@ -2429,7 +2429,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if(player==gu->myPlayerNum)
 			userInputPrefix="a:";
 
-		if((gs->Ally(gs->AllyTeam(gs->players[inbuf[inbufpos+2]]->team),gu->myAllyTeam) && !gs->players[player]->spectator) || gu->spectating){
+		if(((gs->Ally(gs->AllyTeam(gs->players[inbuf[inbufpos+2]]->team),gu->myAllyTeam) && !gs->players[player]->spectator) || gu->spectating) && s.substr(2,255).length() > 0) {
 			if(gs->players[player]->spectator)
 				s="["+gs->players[player]->playerName+"] Allies: "+s.substr(2,255);
 			else
@@ -2441,7 +2441,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if(player==gu->myPlayerNum)
 			userInputPrefix="s:";
 
-		if(gu->spectating || gu->myPlayerNum == player){
+		if((gu->spectating || gu->myPlayerNum == player) && s.substr(2,255).length() > 0) {
 			if(gs->players[player]->spectator)
 				s="["+gs->players[player]->playerName+"] Spectators: "+s.substr(2,255);
 			else
