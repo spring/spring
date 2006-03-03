@@ -25,6 +25,41 @@ struct LineMarker {
 	unsigned char* color;
 };
 
+// HandleCommand structs:
+
+const int AIHCQuerySubVersionId=0;
+struct AIHCQuerySubVersion ///< result of HandleCommand is version of this sub interface
+{
+	int commandId; ///< equal to 0
+};
+
+// These supported in sub version 1 
+
+const int AIHCAddMapPointId=1;
+struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
+{
+	AIHCAddMapPoint(): commandId(AIHCAddMapPointId) {}
+	int commandId; ///< equal to 1
+	float3 pos; ///< on this position, only x and z matter
+	char *label; ///< create this text on pos in my team color
+};
+
+const int AIHCAddMapLineId=2;
+struct AIHCAddMapLine ///< result of HandleCommand is 1 - ok supported
+{
+	AIHCAddMapLine(): commandId(AIHCAddMapLineId) {}
+	int commandId; ///< equal to 2
+	float3 posfrom; ///< draw line from this pos
+	float3 posto; ///< to this pos, again only x and z matter
+};
+
+const int AIHCRemoveMapPointId=3;
+struct AIHCRemoveMapPoint ///< result of HandleCommand is 1 - ok supported
+{
+	AIHCRemoveMapPoint(): commandId(AIHCRemoveMapPointId) {}
+	int commandId; ///< equal to 3
+	float3 pos; ///< remove map points and lines near this point (100 distance)
+};
 
 
 class IAICallback
