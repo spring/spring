@@ -109,7 +109,7 @@ def processor(gcc_3_4=True):
 					else:
 						print "WARNING: gcc versions below 3.4 don't support -march=pentium-m, using -march=pentium4 instead"
 						archflags=['-march=pentium4']
-				elif str.find("Intel(R) Xeon(R) CPU") != -1:
+				elif str.find("Intel(R) Xeon(TM) CPU") != -1:
 					print "  found Intel Xeon w/EM64T"
 					archflags=['-march=nocona', '-mmmx', '-msse3']
 		elif vendor == "AuthenticAMD":
