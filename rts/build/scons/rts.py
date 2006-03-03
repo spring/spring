@@ -99,6 +99,8 @@ def generate(env):
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
 
+		gcc_version = config.check_gcc_version(env)
+
 		# Declare some helper functions for boolean and string options.
 		def bool_opt(key, default):
 			if args.has_key(key):
@@ -156,13 +158,15 @@ def generate(env):
 		elif (int(level) >= 1 and int(level) <= 3) or level == 's' or level == 'size':
 			print "level", level, "optimizing enabled"
 			env['optimize'] = level
-			archflags = detect.processor(config.check_gcc_version(env) >= ['3','4','0'])
+			archflags = detect.processor(gcc_version >= ['3','4','0'])
 			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe']+archflags)
 		else:
 			print "\ninvalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
 
-		env['CCFLAGS'] += ['-fvisibility=hidden']
+		# it seems only gcc 4.0 and higher supports this
+		if gcc_version >= ['4','0','0']:
+			env['CCFLAGS'] += ['-fvisibility=hidden']
 		env['CXXFLAGS'] = env['CCFLAGS']
 
 		# This is broken, first, scons passes it to .c files compilation too (which is an error),
