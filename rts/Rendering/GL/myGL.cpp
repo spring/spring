@@ -83,7 +83,7 @@ void LoadStartPicture()
 		name=jpgs[selected-bmps.size()];
 
 	CBitmap bm(name);
-	startupTexture=bm.CreateTexture(true);
+	startupTexture=bm.CreateTexture(false);
 }
 
 void UnloadStartPicture()

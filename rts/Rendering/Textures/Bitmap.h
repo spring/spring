@@ -16,15 +16,15 @@ class CBitmap
 {
 public:
 	CBitmap(unsigned char* data,int xsize,int ysize);
-	CBitmap(string filename);
+	CBitmap(string const& filename);
 	CBitmap();
 	CBitmap(const CBitmap& old);
-	void operator=(const CBitmap& bm);
+	CBitmap& operator=(const CBitmap& bm);
 
 	virtual ~CBitmap();
 
-	void Load(string filename, unsigned char defaultAlpha=255);
-	void Save(string filename);
+	void Load(string const& filename, unsigned char defaultAlpha=255);
+	void Save(string const& filename);
 
 	unsigned int CreateTexture(bool mipmaps=false);
 	unsigned int CreateDDSTexture();
