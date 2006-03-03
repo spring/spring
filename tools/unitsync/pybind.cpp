@@ -235,6 +235,12 @@ static PyObject *unitsync_GetMapInfo(PyObject *self, PyObject *args)
 		return NULL;
 	MapInfo out;
 	int ret = GetMapInfo(name, &out);
+	// Set positions to 0 after the first posCount positions.
+	// (returning garbage to python seems so unprofessional ;-)
+	for (unsigned i = out.posCount; i < sizeof(out.positions) / sizeof(out.positions[0]); ++i) {
+		out.positions[i].x = 0;
+		out.positions[i].z = 0;
+	}
 	// HACK   :/
 	return Py_BuildValue("i{s:s,s:i,s:i,s:f,s:i,s:i,s:i,s:i,s:i,s:i,s:[(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)]}",
 						 ret,
@@ -365,8 +371,9 @@ static PyObject *unitsync_ReadFileVFS(PyObject *self, PyObject *args)
 	int length;
 	if (!PyArg_ParseTuple(args, "ii", &handle, &length))
 		return NULL;
-	char* buf = static_cast<char*>(malloc(length));
+	char* buf = static_cast<char*>(malloc(length + 1));
 	ReadFileVFS(handle, buf, length);
+	buf[length] = 0;
 	PyObject* ret = Py_BuildValue("s", buf);
 	free(buf);
 	return ret;
@@ -393,7 +400,7 @@ static PyObject *unitsync_FindFilesVFS(PyObject *self, PyObject *args)
 	int handle;
 	if (!PyArg_ParseTuple(args, "i", &handle))
 		return NULL;
-	char nameBuf[NAMEBUF_SIZE];
+	char nameBuf[NAMEBUF_SIZE] = "";
 	int ret = FindFilesVFS(handle, nameBuf, NAMEBUF_SIZE);
 	return Py_BuildValue("is", ret, nameBuf); // return (new_handle, name)
 }
@@ -422,7 +429,7 @@ static PyObject *unitsync_FindFilesArchive(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "ii", &archive, &cur))
 		return NULL;
 	// TODO   fix buffer overflow (strcpy in FindFilesArchive)
-	char nameBuf[NAMEBUF_SIZE];
+	char nameBuf[NAMEBUF_SIZE] = "";
 	int size;
 	int ret = FindFilesArchive(archive, cur, nameBuf, &size);
 	return Py_BuildValue("isi", ret, nameBuf, size); // return tuple (new_handle, name, size)
@@ -445,8 +452,9 @@ static PyObject *unitsync_ReadArchiveFile(PyObject *self, PyObject *args)
 	int numBytes;
 	if (!PyArg_ParseTuple(args, "iii", &archive, &handle, &numBytes))
 		return NULL;
-	char* buffer = static_cast<char*>(malloc(numBytes));
+	char* buffer = static_cast<char*>(malloc(numBytes + 1));
 	ReadArchiveFile(archive, handle, buffer, numBytes);
+	buffer[numBytes] = 0;
 	PyObject* ret = Py_BuildValue("s", buffer);
 	free(buffer);
 	return ret;
