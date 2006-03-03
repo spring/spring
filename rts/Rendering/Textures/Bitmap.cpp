@@ -9,8 +9,9 @@
 #include "FileSystem/FileHandler.h"
 #include <IL/il.h>
 #include <boost/filesystem/path.hpp>
-#include "mmgr.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "bitops.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -192,13 +193,20 @@ void CBitmap::Save(string const& filename)
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
 {
-  if(type == BitmapTypeDDS)
-  {
-    return CreateDDSTexture();
-  }
+	if(type == BitmapTypeDDS)
+	{
+		return CreateDDSTexture();
+	}
 
-  if(mem==NULL)
-    return 0;
+	if(mem==NULL)
+		return 0;
+
+	if ((xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)) &&
+			strcmp(reinterpret_cast<const char*>(glGetString(GL_VERSION)), "2.0") < 0) {
+		// We ignore the size of the texture, so might be non-power-of-two, which requires GL-2.0
+		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
+		return bm.CreateTexture(mipmaps);
+	}
 
   unsigned int texture;
 
@@ -211,21 +219,21 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
     // create mipmapped texture
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 
-    // This required GL-1.4
-    glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,true);
-    // instead of using glu, we rely on glTexImage2D to create the Mipmaps.
-    //gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+    if (strcmp(reinterpret_cast<const char*>(glGetString(GL_VERSION)), "1.4") >= 0)
+      // This required GL-1.4
+      // instead of using glu, we rely on glTexImage2D to create the Mipmaps.
+      glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,true);
+    else
+      gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
   }
   else
   {
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     //glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
-
     //gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
   }
   // We ignore the size of the texture, so might be non-power-of-two: (requires GL-2.0)
   glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
-
   return texture;
 }
 
@@ -423,7 +431,6 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 
 }
 
-// Unused
 CBitmap CBitmap::CreateRescaled(int newx, int newy)
 {
   CBitmap bm;
