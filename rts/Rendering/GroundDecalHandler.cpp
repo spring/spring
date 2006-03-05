@@ -136,10 +136,10 @@ void CGroundDecalHandler::Draw(void)
 				}
 				if(camera->InView((track->parts.front().pos1+track->parts.back().pos1)*0.5,track->parts.front().pos1.distance(track->parts.back().pos1)+500)){
 					list<TrackPart>::iterator ppi=track->parts.begin();
-					color2[3]=track->trackAlpha-(gs->frameNum-ppi->creationTime)*(int)track->alphaFalloff;
+					color2[3]=track->trackAlpha-(int)((gs->frameNum-ppi->creationTime)*track->alphaFalloff);
 
 					for(list<TrackPart>::iterator pi=++track->parts.begin();pi!=track->parts.end();++pi){
-						color[3]=track->trackAlpha-(gs->frameNum-ppi->creationTime)*(int)track->alphaFalloff;
+						color[3]=track->trackAlpha-(int)((gs->frameNum-ppi->creationTime)*track->alphaFalloff);
 						if(pi->connected){
 							va->AddVertexTC(ppi->pos1,ppi->texPos,0,color2);
 							va->AddVertexTC(ppi->pos2,ppi->texPos,1,color2);
