@@ -390,7 +390,7 @@ bool SpringApp::SetSDLVideoMode ()
 	}
 	if (FSAA)
 		FSAA = MultisampleVerify();
-	
+
 	return true;
 }
 
@@ -734,9 +734,7 @@ void SpringApp::Shutdown()
 	delete font;
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
-#ifndef DEBUG
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
-#endif
 	SDL_Quit();
 	delete gs;
 	delete gu;
