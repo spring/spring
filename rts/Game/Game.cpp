@@ -805,6 +805,15 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 
 	if (s=="mouse5")
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
+
+	if (s=="grabinput") {
+		SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
+		switch (mode) {
+			case SDL_GRAB_ON: mode = SDL_GRAB_OFF; break;
+			case SDL_GRAB_OFF: mode = SDL_GRAB_ON; break;
+		}
+		SDL_WM_GrabInput(mode);
+	}
 #endif
 	return 0;
 }
