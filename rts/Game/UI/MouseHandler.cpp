@@ -154,12 +154,12 @@ void CMouseHandler::MouseMove(int x, int y)
 
 	if(buttons[SDL_BUTTON_MIDDLE].pressed){
 		float cameraSpeed = 1.0f;
-		if (keys[SDLK_LSHIFT]){
+		/*if (keys[SDLK_LSHIFT]){
 			cameraSpeed *= 10.0f;
 		}
 		if (keys[SDLK_LCTRL]){
 			cameraSpeed *= 0.1f;
-		}
+		}*/
 		currentCamController->MouseMove(float3(dx * cameraSpeed, dy * cameraSpeed, invertMouse ? -1 : 1));
 
 		return;
