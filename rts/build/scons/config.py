@@ -200,6 +200,10 @@ def check_openal(env, conf):
 		print "not found"
 		guess_include_path(env, conf, 'OpenAL', 'AL')
 
+def check_python(env, conf):
+	print "Looking for Python2.4 headers..."
+	guess_include_path(env, conf, 'Python', 'python2.4')
+
 
 def check_headers(env, conf):
 	print "\nChecking header files"
@@ -261,6 +265,9 @@ def check_libraries(env, conf):
 	if not conf.CheckLib('openal'):
 		print 'OpenAL is required for this program'
 		env.Exit(1)
+	if not conf.CheckLib('python2.4'):
+		print 'python is required for this program'
+		env.Exit(1)
 	if not (conf.CheckLib('GLEW') or conf.CheckLib('glew32')):
 		print "You need GLEW to compile this program"
 		env.Exit(1)
@@ -302,6 +309,7 @@ def configure(env, conf_dir):
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
 	check_openal(env, conf)
+	check_python(env, conf)
 	if not env['disable_lua']:
 		check_lua(env, conf)
 	check_headers(env, conf)
