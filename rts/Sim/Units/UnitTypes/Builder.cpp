@@ -98,7 +98,7 @@ void CBuilder::Update()
 			switch(terraformType){
 			case Terraform_Building:
 				if(curBuild)
-					curBuild->AddBuildPower(0.00000001,this);			//prevent building from timing out while terraforming for it
+					curBuild->AddBuildPower(0.001,this); //prevent building from timing out while terraforming for it
 				for(int z=tz1; z<=tz2; z++){
 					for(int x=tx1; x<=tx2; x++){
 						float ch=readmap->heightmap[z*(gs->mapx+1)+x];
@@ -181,7 +181,7 @@ void CBuilder::Update()
 				}
 			}
 		} else {
-			curBuild->AddBuildPower(0.00001,this);	//prevent building timing out
+			curBuild->AddBuildPower(0.001,this); //prevent building timing out
 		}
 	} else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
 		isCloaked=false;
