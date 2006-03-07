@@ -86,7 +86,14 @@ COpenALSound::~COpenALSound()
 	 * alcMakeContextCurrent(NULL);
 	 * alcDestroyContext(curcontext);
 	 */
-	alcCloseDevice(curdevice);
+	/*
+	 * FIXME
+	 * Technically you're supposed to close the device, but
+	 * the OpenAL sound thread crashes if we do this manually.
+	 * The device seems to be closed automagically anyway.
+	 *
+	 *  alcCloseDevice(curdevice);
+	 */
 }
 
 static bool CheckError(const char* msg)
