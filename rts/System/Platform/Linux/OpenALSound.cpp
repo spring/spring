@@ -21,7 +21,7 @@
 COpenALSound::COpenALSound()
 {
 	maxSounds = configHandler.GetInt("MaxSounds",16);
-	noSound = false;
+	noSound = (maxSounds == 0);
 	globalVolume = 1.0f;
 
 	cur = 0;
@@ -82,7 +82,7 @@ COpenALSound::~COpenALSound()
 	 * As a not-quite-as-clean shortcut, if we skip this step
 	 * and just close the device, OpenAL theoretically
 	 * destroys the context associated with that device.
-	 * 
+	 *
 	 * alcMakeContextCurrent(NULL);
 	 * alcDestroyContext(curcontext);
 	 */
