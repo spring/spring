@@ -2,6 +2,7 @@ TASpring change log
 
 0.70b3
 
+- Fixed attack claxxon.
 - Fixed units getting stuck in buildings.
 - Added possibility to bind mouse1, mouse2 and mouse3 to keyboard.
 - Fixed shift+letter bug.
