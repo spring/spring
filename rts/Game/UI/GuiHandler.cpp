@@ -349,7 +349,6 @@ void CGuiHandler::DrawButtons()
 		if(UnitDef *ud = unitDefHandler->GetUnitByName(commands[nr].name))
 		{
 			// unitikon
-			glColor4f(1,1,1,0.8f);
 			glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
 			glBegin(GL_QUADS);
 			glTexCoord2f(0,0);
