@@ -1748,8 +1748,8 @@ bool CGame::ClientReadNet()
 			if(frame!=gs->frameNum){
 				info->AddLine("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 			}
-			net->SendData<unsigned char, int, int>(
-					NETMSG_SYNCRESPONSE, gu->myPlayerNum, uh->CreateChecksum(), gs->frameNum);
+			net->SendData<unsigned char, int, Checksum>(
+					NETMSG_SYNCRESPONSE, gu->myPlayerNum, gs->frameNum, uh->CreateChecksum());
 
 			net->SendData<float>(NETMSG_CPU_USAGE,
 #ifdef PROFILE_TIME

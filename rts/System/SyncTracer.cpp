@@ -15,29 +15,42 @@
 
 CSyncTracer tracefile;
 
+bool CSyncTracer::init()
+{
+#ifdef TRACE_SYNC
+	if (logfile == 0) {
+		char c[100];
+		sprintf(c, "trace%i.log", gu->myTeam);
+		boost::filesystem::path fn(c);
+		logfile = new ofstream(fn.native_file_string().c_str(), ios::out);
+	}
+#endif
+	return logfile != 0;
+}
+
 CSyncTracer::CSyncTracer()
 {
-	file=0;
-	nowActive=0;
-	firstActive=0;
+	file = 0;
+	nowActive = 0;
+	firstActive = 0;
 }
 
 CSyncTracer::~CSyncTracer()
 {
 #ifdef TRACE_SYNC
 	delete file;
+	delete logfile;
 #endif
-
 }
 
 void CSyncTracer::Commit()
 {
 #ifdef TRACE_SYNC
-	if(file==0){
+	if(file == 0){
 		char c[100];
-		sprintf(c,"trace%i.txt",gu->myTeam);
+		sprintf(c, "trace%i.txt", gu->myTeam);
 		boost::filesystem::path fn(c);
-		file=new ofstream(fn.native_file_string().c_str(), ios::out);
+		file = new ofstream(fn.native_file_string().c_str(), ios::out);
 	}
 #endif
 	(*file) << traces[firstActive].c_str();
@@ -69,7 +82,7 @@ void CSyncTracer::DeleteInterval()
 CSyncTracer& CSyncTracer::operator<<(const char* c)
 {
 	traces[nowActive]+=c;
-	(*info) << c;
+	if (init()) (*logfile) << c;
 	return *this;
 }
 
@@ -78,7 +91,7 @@ CSyncTracer& CSyncTracer::operator<<(const int i)
 	char t[20];
 	sprintf(t,"%d",i);
 	traces[nowActive]+=t;
-	(*info) << i;
+	if (init()) (*logfile) << i;
 	return *this;
 }
 
@@ -87,7 +100,7 @@ CSyncTracer& CSyncTracer::operator<<(const float f)
 	char t[50];
 	sprintf(t,"%f",f);
 	traces[nowActive]+=t;
-	(*info) << f;
+	if (init()) (*logfile) << f;
 	return *this;
 }
 

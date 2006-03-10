@@ -14,6 +14,7 @@ using namespace std;
 
 class CSyncTracer  
 {
+	bool init();
 public:
 	void DeleteInterval();
 	void NewInterval();
@@ -26,6 +27,7 @@ public:
 	CSyncTracer& operator<<(const float f);
 	
 	ofstream* file;
+	ofstream* logfile;
 	std::string traces[10];
 	int firstActive;
 	int nowActive;
