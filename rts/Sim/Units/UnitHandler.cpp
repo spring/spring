@@ -169,28 +169,31 @@ END_TIME_PROFILE("Unit handler");
 
 }
 
-int CUnitHandler::CreateChecksum()
+Checksum CUnitHandler::CreateChecksum()
 {
-	int checksum=0;
-
+	Checksum checksum;
+	
 	list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++){
-		checksum^=*((int*)&((*usi)->midPos.x));
+		checksum.x^=*((int*)&((*usi)->midPos.x));
+		checksum.y^=*((int*)&((*usi)->midPos.y));
+		checksum.z^=*((int*)&((*usi)->midPos.z));
 	}
 
-	checksum^=gs->randSeed;
-
 #ifdef TRACE_SYNC
-		tracefile << "Checksum: ";
-		tracefile << checksum << " ";
+		tracefile << gs->frameNum << " X "<< checksum.x << "\n";
+		tracefile << gs->frameNum << " Y "<< checksum.y << "\n";
+		tracefile << gs->frameNum << " Z "<< checksum.z << "\n";
+
 #endif
 
 	for(int a=0;a<gs->activeTeams;++a){
-		checksum^=*((int*)&(gs->Team(a)->metal));
-		checksum^=*((int*)&(gs->Team(a)->energy));
+		checksum.m^=*((int*)&(gs->Team(a)->metal));
+		checksum.e^=*((int*)&(gs->Team(a)->energy));
 	}
 #ifdef TRACE_SYNC
-		tracefile << checksum << "\n";
+		tracefile << gs->frameNum << " M "<< checksum.m << "\n";
+		tracefile << gs->frameNum << " E "<< checksum.e << "\n";
 #endif
 	return checksum;
 }

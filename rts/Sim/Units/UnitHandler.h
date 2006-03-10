@@ -20,10 +20,23 @@ class CLoadSaveInterface;
 
 const int MAX_UNITS=5000;
 
+
+struct Checksum {
+	Checksum() : x(0), y(0), z(0), m(0), e(0) {}
+	int toInt() const                         { return x ^ y ^ z ^ m ^ e; }
+	bool operator<(const Checksum& c) const   { return toInt() < c.toInt(); }
+	operator bool() const                     { return toInt() != 0; }
+	bool operator==(const Checksum& c) const  { return x == c.x && y == c.y && z == c.z && m == c.m && e == c.e; }
+	bool operator!=(const Checksum& c) const  { return !(*this == c); }
+	Checksum& operator=(int a)                { x = y = z = m = e = a; return *this; }
+	int x, y, z, m, e; // midPos.x, midPos.y, midPos.z, metal, energy
+};
+
+
 class CUnitHandler  
 {
 public:
-	int CreateChecksum();
+	Checksum CreateChecksum();
 	void Update();
 	void DeleteUnit(CUnit* unit);
 	int AddUnit(CUnit* unit);
