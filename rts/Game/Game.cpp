@@ -1205,6 +1205,22 @@ void CGame::StartPlaying()
 	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
 	grouphandler->team=gu->myTeam;
 	ENTER_SYNCED;
+#ifdef __GNUC__
+	// Send gcc version around to all players.
+	char version_string_buf[128];
+	SNPRINTF(version_string_buf, sizeof(version_string_buf), "gcc version: %i.%i.%i, ", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+	std::string version_string = version_string_buf;
+#if defined(i386) || defined(__i386) || defined(__i386__)
+	version_string += "i386";
+#elif defined(amd64) || defined(__amd64) || defined(__amd64__)
+	version_string += "amd64";
+#elif defined(powerpc) || defined(__powerpc) || defined(__powerpc__)
+	version_string += "powerpc";
+#else
+	version_string += "unknown architecture";
+#endif
+	net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, version_string);
+#endif // __GNUC__
 }
 
 void CGame::SimFrame()
