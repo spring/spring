@@ -43,7 +43,7 @@ public:
 
 	enum BitmapType
 	{
-		BitmapTypeStandar,
+		BitmapTypeStandard,
 		BitmapTypeDDS
 	};
 

@@ -23,7 +23,7 @@ CBitmap::CBitmap()
 {
   mem=new unsigned char[4];
   ddsimage = 0;
-  type = BitmapTypeStandar;
+  type = BitmapTypeStandard;
 }
 
 CBitmap::~CBitmap()
@@ -35,19 +35,20 @@ CBitmap::~CBitmap()
 
 CBitmap::CBitmap(const CBitmap& old)
 {
+  assert(old.type == BitmapTypeStandard);
   ddsimage = 0;
   xsize=old.xsize;
   ysize=old.ysize;
   mem=new unsigned char[xsize*ysize*4];
   memcpy(mem,old.mem,xsize*ysize*4);
-  type = BitmapTypeStandar;
+  type = BitmapTypeStandard;
 }
 
 CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
   : xsize(xsize),
   ysize(ysize)
 {
-  type = BitmapTypeStandar;
+  type = BitmapTypeStandard;
   ddsimage = 0;
   mem=new unsigned char[xsize*ysize*4];	
   memcpy(mem,data,xsize*ysize*4);
@@ -58,7 +59,7 @@ CBitmap::CBitmap(string const& filename)
   xsize(0),
   ysize(0)
 {
-  type = BitmapTypeStandar;
+  type = BitmapTypeStandard;
   ddsimage = 0;
   Load(filename);
 }
@@ -87,7 +88,7 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
     type = BitmapTypeDDS;
     return;
   }
-  type = BitmapTypeStandar;
+  type = BitmapTypeStandard;
 
   ilInit();
   ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
@@ -262,7 +263,7 @@ unsigned int CBitmap::CreateDDSTexture()
     case nv_dds::Texture3D:
       glEnable(GL_TEXTURE_3D);
       glBindTexture(GL_TEXTURE_3D, texobj);
-      if(!ddsimage->upload_texture2D())
+      if(!ddsimage->upload_texture3D())
       {
         glDeleteTextures(1, &texobj);
         texobj = 0;
@@ -272,7 +273,7 @@ unsigned int CBitmap::CreateDDSTexture()
       glEnable(GL_TEXTURE_CUBE_MAP_ARB);
       glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texobj);
       if(!ddsimage->upload_textureCubemap())
-      {
+	  {
         glDeleteTextures(1, &texobj);
         texobj = 0;
       }
