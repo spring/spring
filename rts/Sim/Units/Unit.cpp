@@ -580,7 +580,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		attacker->experience+=0.1*power/attacker->power*damage/maxHealth;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
-		if((uh->lastDamageWarning+100<gs->frameNum || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))&& (team==gu->myTeam || gu->spectating) && !camera->InView(midPos,radius+50)){
+		if ((uh->lastDamageWarning+100<gs->frameNum || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))&& team==gu->myTeam && !camera->InView(midPos,radius+50) && !gu->spectating) {
 			info->AddLine("%s is being attacked",unitDef->humanName.c_str());
 			info->SetLastMsgPos(pos);
 			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
