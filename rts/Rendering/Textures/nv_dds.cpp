@@ -160,13 +160,14 @@
 #  include <windows.h>
 #  define GET_EXT_POINTER(name, type) \
       name = (type)wglGetProcAddress(#name)
-#elif defined(UNIX)
+#elif defined(UNIX) || defined(unix)
 #define GLX_GLXEXT_PROTOTYPES
 //#  include <GL/glx.h>
 #  define GET_EXT_POINTER(name, type) \
       name = (type)glXGetProcAddressARB((const GLubyte*)#name)
 #else
 #  define GET_EXT_POINTER(name, type)
+#  error unknown platform
 #endif
 
 /*#ifdef MACOS
@@ -184,6 +185,11 @@
 #include "nv_dds.h"
 #include "FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
+
+// Moved because of conflicts with GLEW.
+#if defined(UNIX) || defined(unix)
+#  include <GL/glx.h>
+#endif
 
 using namespace std;
 using namespace nv_dds;
@@ -1077,8 +1083,8 @@ void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block)
 {
     unsigned char gBits[4][4];
     
-    const unsigned long mask = 0x00000007;          // bits = 00 00 01 11
-    unsigned long bits = 0;
+    const unsigned int mask = 0x00000007;          // bits = 00 00 01 11
+    unsigned int bits = 0;
     memcpy(&bits, &block->row[0], sizeof(unsigned char) * 3);
 
     gBits[0][0] = (unsigned char)(bits & mask);
@@ -1116,7 +1122,7 @@ void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block)
     bits >>= 3;
     gBits[3][3] = (unsigned char)(bits & mask);
 
-    unsigned long *pBits = ((unsigned long*) &(block->row[0]));
+    unsigned int *pBits = ((unsigned int*) &(block->row[0]));
 
     *pBits = *pBits | (gBits[3][0] << 0);
     *pBits = *pBits | (gBits[3][1] << 3);
@@ -1128,7 +1134,7 @@ void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block)
     *pBits = *pBits | (gBits[2][2] << 18);
     *pBits = *pBits | (gBits[2][3] << 21);
 
-    pBits = ((unsigned long*) &(block->row[3]));
+    pBits = ((unsigned int*) &(block->row[3]));
 
 #ifdef MACOS
     *pBits &= 0x000000ff;
