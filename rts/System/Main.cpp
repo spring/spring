@@ -107,7 +107,7 @@ public:
 	int Run(int argc, char *argv[]); 		//!< Run game loop
 
 protected:
-	bool Initialize (); 				//!< Initialize app
+	bool Initialize (); 	//!< Initialize app
 	void CheckCmdLineFile (int argc,char *argv[]); 	//!< Check command line for files
 	bool ParseCmdLine(); 				//!< Parse command line
 	void InitVFS (); 				//!< Initialize VFS
@@ -234,13 +234,13 @@ bool crashCallback(void* crState)
 #endif
 
 /**
+ * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
- * 
- * Initializes the SpringApp instance
  */
 bool SpringApp::Initialize ()
 {
-	ParseCmdLine ();
+	if (!ParseCmdLine ())
+		return false;
 
 #ifdef WIN32
 	// Initialize crash reporting
@@ -709,9 +709,11 @@ int SpringApp::Run (int argc, char *argv[])
 #endif
 			}
 		}
-		int ret = Draw();
-		if (globalQuit || (active && !ret))
-			done=true;
+		if (globalQuit) 
+			break;
+	
+		if (!Draw() && active)
+			break;
 	}
 	ENTER_MIXED;
 

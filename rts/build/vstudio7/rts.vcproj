@@ -29,7 +29,7 @@
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 				DisableSpecificWarnings="4244;4305;4018;4267;4305"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
