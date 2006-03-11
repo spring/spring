@@ -8,7 +8,7 @@
 #include <ctime>
 #include <string>
 
-#include <Sim/Units/UnitHandler.h> // for Checksum (should be moved somewhere else tho)
+#include <Sim/Units/UnitHandler.h> // for CChecksum (should be moved somewhere else tho)
 
 class CGameServer
 {
@@ -37,7 +37,7 @@ public:
 
 	double lastSyncRequest;
 	int outstandingSyncFrame;
-	Checksum syncResponses[MAX_PLAYERS];
+	CChecksum syncResponses[MAX_PLAYERS];
 	unsigned int exeChecksum;
 
 	mutable boost::mutex gameServerMutex;

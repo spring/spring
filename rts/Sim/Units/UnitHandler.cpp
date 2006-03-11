@@ -28,6 +28,23 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "mmgr.h"
 
+
+//////////////////////////////////////////////////////////////////////
+// CChecksum implementation
+//////////////////////////////////////////////////////////////////////
+
+char* CChecksum::diff(char* buf, const CChecksum& c) {
+	char* p = buf;
+	if (x != c.x) *(p++) = 'X';
+	if (y != c.y) *(p++) = 'Y';
+	if (z != c.z) *(p++) = 'Z';
+	if (m != c.m) *(p++) = 'M';
+	if (e != c.e) *(p++) = 'E';
+	*(p++) = 0;
+	return buf;
+}
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -169,10 +186,10 @@ END_TIME_PROFILE("Unit handler");
 
 }
 
-Checksum CUnitHandler::CreateChecksum()
+CChecksum CUnitHandler::CreateChecksum()
 {
-	Checksum checksum;
-	
+	CChecksum checksum;
+
 	list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++){
 		checksum.x^=*((int*)&((*usi)->midPos.x));
@@ -184,7 +201,6 @@ Checksum CUnitHandler::CreateChecksum()
 		tracefile << gs->frameNum << " X "<< checksum.x << "\n";
 		tracefile << gs->frameNum << " Y "<< checksum.y << "\n";
 		tracefile << gs->frameNum << " Z "<< checksum.z << "\n";
-
 #endif
 
 	for(int a=0;a<gs->activeTeams;++a){

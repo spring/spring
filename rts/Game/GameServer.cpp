@@ -86,7 +86,7 @@ bool CGameServer::Update(void)
 				// I've disabled majority voting for now.
 				// Should be tested in a few big multiplayer games first.
 #if 0
-				std::map<Checksum, int> freq; // maps checksums to their frequency
+				std::map<CChecksum, int> freq; // maps checksums to their frequency
 				for(int a = 0; a < gs->activePlayers; ++a)
 					if(gs->players[a]->active) {
 						//if the checksum really happens to be 0 we will get lots of falls positives here
@@ -97,9 +97,9 @@ bool CGameServer::Update(void)
 							++freq[syncResponses[a]];
 					}
 				if (freq.size() != 1) {
-					Checksum correctSync;
+					CChecksum correctSync;
 					int highestFreq = 0;
-					for (std::map<Checksum, int>::const_iterator it = freq.begin(); it != freq.end(); ++it)
+					for (std::map<CChecksum, int>::const_iterator it = freq.begin(); it != freq.end(); ++it)
 						if (it->second > highestFreq) {
 							correctSync = it->first;
 							highestFreq = it->second;
@@ -107,17 +107,13 @@ bool CGameServer::Update(void)
 					if (correctSync)
 						for (int a = 0; a < gs->activePlayers; ++a)
 							if (gs->players[a]->active && syncResponses[a] && correctSync != syncResponses[a]) {
-								SendSystemMsg("Sync error for %s %i %c%c%c%c%c",
-									gs->players[a]->playerName.c_str(), outstandingSyncFrame,
-									correctSync.x != syncResponses[a].x ? 'X' : ' ',
-									correctSync.y != syncResponses[a].y ? 'Y' : ' ',
-									correctSync.z != syncResponses[a].z ? 'Z' : ' ',
-									correctSync.m != syncResponses[a].m ? 'M' : ' ',
-									correctSync.e != syncResponses[a].e ? 'E' : ' ');
+								char buf[10];
+								SendSystemMsg("Sync error for %s %i %s",
+									gs->players[a]->playerName.c_str(), outstandingSyncFrame, correctSync.diff(buf, syncResponses[a]));
 							}
 				}
 #else
-				Checksum correctSync;
+				CChecksum correctSync;
 				for(int a = 0; a < gs->activePlayers; ++a)
 					if(gs->players[a]->active) {
 						//if the checksum really happens to be 0 we will get lots of falls positives here
@@ -126,13 +122,9 @@ bool CGameServer::Update(void)
 							continue;
 						}
 						if (correctSync && correctSync != syncResponses[a]) {
-							SendSystemMsg("Sync error for %s %i %c%c%c%c%c",
-										  gs->players[a]->playerName.c_str(), outstandingSyncFrame,
-										  correctSync.x != syncResponses[a].x ? 'X' : ' ',
-										  correctSync.y != syncResponses[a].y ? 'Y' : ' ',
-										  correctSync.z != syncResponses[a].z ? 'Z' : ' ',
-										  correctSync.m != syncResponses[a].m ? 'M' : ' ',
-										  correctSync.e != syncResponses[a].e ? 'E' : ' ');
+							char buf[10];
+							SendSystemMsg("Sync error for %s %i %s",
+										  gs->players[a]->playerName.c_str(), outstandingSyncFrame, correctSync.diff(buf, syncResponses[a]));
 							continue;
 						}
 						//this assumes the lowest num player is the correct one, should maybe some sort of majority voting instead
@@ -400,13 +392,13 @@ bool CGameServer::ServerReadNet()
 					if(!serverNet->playbackDemo){
 						int frame = *(int*)&inbuf[inbufpos+2];
 						if(outstandingSyncFrame == frame)
-							syncResponses[inbuf[inbufpos+1]] = *(Checksum*)&inbuf[inbufpos+6];
+							syncResponses[inbuf[inbufpos+1]] = *(CChecksum*)&inbuf[inbufpos+6];
 						else
 							info->AddLine("Delayed sync respone from %s (%i instead of %i)",
 										  gs->players[inbuf[inbufpos+1]]->playerName.c_str(), frame, outstandingSyncFrame);
 					}
 				}
-				lastLength=6+sizeof(Checksum);}
+				lastLength=6+sizeof(CChecksum);}
 				break;
 
 			case NETMSG_SHARE:
