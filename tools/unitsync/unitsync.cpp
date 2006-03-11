@@ -274,7 +274,7 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	string err("");
 	try {
 		parser.LoadFile("maps/" + smd);
-	} catch (const TdfParser::parse_error& e) {
+	} catch (const std::exception& e) {
 		err = e.what();
 	}
 
@@ -566,7 +566,7 @@ DLL_EXPORT int __stdcall GetSideCount()
 	TdfParser p;
 	try {
 		p.LoadFile("gamedata/sidedata.tdf");
-	} catch (const TdfParser::parse_error& e) {
+	} catch (const std::exception& e) {
 		return 0;
 	}
 

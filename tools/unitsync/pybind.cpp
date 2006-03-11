@@ -3,6 +3,7 @@
 
 
 #include <Python.h>
+#include <cstring>
 #include "unitsync.h"
 
 #define NAMEBUF_SIZE 4096
@@ -233,13 +234,13 @@ static PyObject *unitsync_GetMapInfo(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "s", &name))
 		return NULL;
 	MapInfo out;
+	char buf[NAMEBUF_SIZE];
+	// Zero the memory (returning garbage to python seems so unprofessional ;-)
+	std::memset(&out, 0, sizeof(out));
+	std::memset(buf, 0, sizeof(buf));
+	// Apparently unitsync assumes out.description points to a valid buffer in all/some cases.
+	out.description = buf;
 	int ret = GetMapInfo(name, &out);
-	// Set positions to 0 after the first posCount positions.
-	// (returning garbage to python seems so unprofessional ;-)
-	for (unsigned i = out.posCount; i < sizeof(out.positions) / sizeof(out.positions[0]); ++i) {
-		out.positions[i].x = 0;
-		out.positions[i].z = 0;
-	}
 	// HACK   :/
 	return Py_BuildValue("i{s:s,s:i,s:i,s:f,s:i,s:i,s:i,s:i,s:i,s:i,s:[(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)]}",
 						 ret,
