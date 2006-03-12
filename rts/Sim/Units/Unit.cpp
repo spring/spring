@@ -1384,7 +1384,7 @@ void CUnit::DrawS3O(void)
 }
 
 // Member bindings
-CR_BIND_MEMBERS(CUnit, (
+CR_REG_METADATA(CUnit, (
 				CR_MEMBER(unitDef),
 				CR_MEMBER(id),
 				CR_MEMBER(team),

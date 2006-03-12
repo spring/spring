@@ -78,7 +78,9 @@ Class* ClassBinder::GetClass (const string& name)
 
 Class::Class () : 
 	base (0),
-	binder (0)
+	binder (0),
+	serializeProc(0),
+	postLoadProc(0)
 {}
 
 Class::~Class ()
@@ -103,8 +105,18 @@ void Class::AddMember (const char *name, IType* type, unsigned int offset)
 	member->name = name;
 	member->offset = offset;
 	member->type = type;
+	member->flags = 0;
 
 	members.push_back (member);
+}
+
+void Class::SetMemberFlag (const char *name, ClassMemberFlag f)
+{
+	for (int a=0;a<members.size();a++)
+		if (!strcmp (members[a]->name, name)) {
+			members[a]->flags |= (int)f;
+			break;
+		}
 }
 
 void Class::SerializeInstance (ISerializer *s, void *ptr)
@@ -115,8 +127,49 @@ void Class::SerializeInstance (ISerializer *s, void *ptr)
 	for (int a=0;a<members.size();a++)
 	{
 		creg::Class::Member* m = members [a];
-		void *memberAddr = ((char*)ptr) + m->offset;
+		if (m->flags & CM_NoSerialize)
+			continue;
 
+		void *memberAddr = ((char*)ptr) + m->offset;
+/*		if (s->IsWriting ())
+			printf ("writing %s at %d\n", m->name,  (int)((COutputStreamSerializer *)s)->stream->tellp ());
+		else
+			printf ("reading %s at %d\n", m->name,  (int)((CInputStreamSerializer *)s)->stream->tellg ());*/
 		m->type->Serialize (s, memberAddr);
 	}
+
+	if (serializeProc) {
+		_DummyStruct *obj = (_DummyStruct*)ptr;
+		(obj->*serializeProc)(*s);
+	}
+}
+
+void* Class::CreateInstance()
+{
+	void *inst = new char[binder->size];
+	if (binder->constructor) binder->constructor (inst);
+	return inst;
+}
+
+void Class::DeleteInstance (void *inst)
+{
+	if (binder->destructor) binder->destructor(inst);
+	char *d = (char*)inst;
+	delete[] d;
+}
+
+void Class::CalculateChecksum (unsigned int& checksum)
+{
+	for (int a=0;a<members.size();a++)
+	{
+		Member *m = members[a];
+		checksum += m->flags;
+		for (int x=0;m->name[x];x++) {
+			checksum += m->name[x];
+			checksum ^= m->name[x] * x;
+			checksum *= x+1;
+		}
+	}
+	if (base)
+		base->CalculateChecksum(checksum);
 }

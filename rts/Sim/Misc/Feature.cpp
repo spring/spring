@@ -18,7 +18,7 @@
 
 CR_BIND_DERIVED(CFeature, CSolidObject)
 
-CR_BIND_MEMBERS(CFeature, (
+CR_REG_METADATA(CFeature, (
 				CR_MEMBER(createdFromUnit),
 				CR_MEMBER(resurrectProgress),
 				CR_MEMBER(health),

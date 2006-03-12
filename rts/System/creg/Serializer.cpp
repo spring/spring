@@ -385,7 +385,7 @@ class EmbeddedObj {
 	int value;
 };
 CR_BIND(EmbeddedObj);
-CR_BIND_MEMBERS(EmbeddedObj, CR_MEMBER(value));
+CR_REG_METADATA(EmbeddedObj, CR_MEMBER(value));
 
 struct TestObj {
 	CR_DECLARE(TestObj);
@@ -412,7 +412,7 @@ struct TestObj {
 
 CR_BIND(TestObj);
 
-CR_BIND_MEMBERS(TestObj, (
+CR_REG_METADATA(TestObj, (
 	CR_MEMBER(childs),
 	CR_MEMBER(intvar),
 	CR_MEMBER(str),

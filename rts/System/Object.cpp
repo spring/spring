@@ -8,7 +8,7 @@
 
 CR_BIND(CObject)
 
-CR_BIND_MEMBERS(CObject,(
+CR_REG_METADATA(CObject,(
 	CR_MEMBER(listening),
 	CR_MEMBER(listeners)));
 
