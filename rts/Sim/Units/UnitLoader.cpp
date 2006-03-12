@@ -341,7 +341,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	} else if(weapondef->type=="MissileLauncher"){
 		weapon=new CMissileLauncher(owner);
 	} else if(weapondef->type=="TorpedoLauncher"){
-		if(weapondef->onlyForward){	//assume aircraft
+		if(owner->unitDef->canfly){	
 			weapon=new CBombDropper(owner,true);
 			if(weapondef->tracks)
 				((CBombDropper*)weapon)->tracking=weapondef->turnrate;

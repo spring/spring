@@ -32,7 +32,7 @@ CWeaponDefHandler::CWeaponDefHandler(void)
     }catch( TdfParser::parse_error const& e) {
       std::cout << "Exception:"  << e.what() << std::endl; 
     } catch(...) {
-      std::cout << "Unknown expcetion in parse process of " << tafiles[i] <<" caught." << std::endl; 
+      std::cout << "Unknown exception in parse process of " << tafiles[i] <<" caught." << std::endl; 
     }
   }
 
@@ -184,7 +184,6 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	for(std::map<std::string, std::string>::iterator di=damages.begin();di!=damages.end();++di){
 		int type=damageArrayHandler->GetTypeFromName(di->first);
 		float damage=atof(di->second.c_str());
-	weaponDefs[id].impulseFactor=atof(sunparser->SGetValueDef("1", weaponname + "\\impulsefactor").c_str());
 		if(damage==0)
 			damage=1;
 		if(type!=0){
@@ -193,6 +192,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		}
 	}
 
+	weaponDefs[id].impulseFactor=atof(sunparser->SGetValueDef("1", weaponname + "\\impulsefactor").c_str());
 	weaponDefs[id].areaOfEffect=atof(sunparser->SGetValueDef("8", weaponname + "\\areaofeffect").c_str())*0.5;
 	weaponDefs[id].projectilespeed = atof(sunparser->SGetValueDef("0", weaponname + "\\weaponvelocity").c_str())/GAME_SPEED;
 	weaponDefs[id].startvelocity = max(0.01,atof(sunparser->SGetValueDef("0", weaponname + "\\startvelocity").c_str())/GAME_SPEED);
