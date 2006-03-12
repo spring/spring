@@ -950,10 +950,12 @@ bool CBFGroundDrawer::UpdateTextures()
 			starty=updateTextureState*gs->hmapy/50;
 			endy=(updateTextureState+1)*gs->hmapy/50;
 		}
-		if(drawPathMap){
-			MoveData* md=moveinfo->GetMoveDataFromName("TANKSH2");
-			if(!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata)
-				md=(*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+		if(drawPathMap)
+		{
+			if(selectedUnits.selectedUnits.empty() || !(*selectedUnits.selectedUnits.begin())->unitDef->movedata)
+				return true;
+
+			MoveData *md=(*selectedUnits.selectedUnits.begin())->unitDef->movedata;
 
 			for(int y=starty;y<endy;++y){
 				for(int x=0;x<gs->hmapx;++x){
