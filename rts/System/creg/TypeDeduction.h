@@ -45,8 +45,10 @@ public:
 	ObjectPointerType() { objectClass = T::StaticClass(); }
 	void Serialize (ISerializer *s, void *instance) {
 		void **ptr = (void**)instance;
-		if (s->IsWriting()) s->SerializeObjectPtr (ptr, *ptr ? ((T*)*ptr)->GetClass () : 0);
-		else s->SerializeObjectPtr (ptr, objectClass);
+		if (s->IsWriting()) {
+			T *obj = *ptr ? (T*)*ptr : 0;
+			s->SerializeObjectPtr (ptr, *ptr ? ((T*)*ptr)->GetClass () : 0);
+		} else s->SerializeObjectPtr (ptr, objectClass);
 	}
 	Class* objectClass;
 };
@@ -54,6 +56,12 @@ public:
 // Pointer type
 template<typename T>
 struct DeduceType <T *> {
+	IType* Get () { return new ObjectPointerType <T>(); }
+};
+
+// Reference type, handled as a pointer
+template<typename T>
+struct DeduceType <T&> {
 	IType* Get () { return new ObjectPointerType <T>(); }
 };
 

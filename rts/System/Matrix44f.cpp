@@ -5,7 +5,7 @@
 
 CR_BIND_STRUCT(CMatrix44f);
 
-CR_BIND_MEMBERS(CMatrix44f, CR_MEMBER(m));
+CR_REG_METADATA(CMatrix44f, CR_MEMBER(m));
 
 /*
 float globalArf=15;

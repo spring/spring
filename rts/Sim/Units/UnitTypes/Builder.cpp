@@ -25,7 +25,7 @@ using namespace std;
 
 CR_BIND_DERIVED(CBuilder, CUnit);
 
-CR_BIND_MEMBERS(CBuilder, (
+CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(buildSpeed),
 				CR_MEMBER(buildDistance),
 				CR_MEMBER(curResurrect),

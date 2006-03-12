@@ -6,32 +6,22 @@ namespace creg
 {
 	class Class;
 
+	/// Serializer interface
 	class ISerializer
 	{
 	public:
 		virtual bool IsWriting () = 0;
+
+		/// Serialize a memory buffer
 		virtual void Serialize (void *data, int byteSize) = 0;
 
-		// Serialize a pointer to an object.
+		/// Serialize a pointer to an instance of a creg registered class/struct
 		virtual void SerializeObjectPtr (void **ptr, Class *objectClass) = 0;
 		
-		// Serialize an instance of an object, could be a structure embedded into another object
+		/** Serialize an instance of an object, could be a structure embedded into another object
+		 * The big difference with SerializeObjectPtr, is that the caller of this function
+		 * controls the allocation of the object instead of the creg serializer itself */
 		virtual void SerializeObjectInstance (void *inst, Class *objectClass) = 0;
-
-		// useful helper operators
-		ISerializer& operator&(int& v) { Serialize(&v, sizeof(int)); return *this; }
-		ISerializer& operator&(long& v) { Serialize(&v, sizeof(long)); return *this; }
-		ISerializer& operator&(short& v) { Serialize(&v, sizeof(short)); return *this; }
-		ISerializer& operator&(char& v) { Serialize(&v, sizeof(char)); return *this; }
-
-		ISerializer& operator&(unsigned int& v) { Serialize(&v, sizeof(int)); return *this; }
-		ISerializer& operator&(unsigned long& v) { Serialize(&v, sizeof(long)); return *this; }
-		ISerializer& operator&(unsigned short& v) { Serialize(&v, sizeof(short)); return *this; }
-		ISerializer& operator&(unsigned char& v) { Serialize(&v, sizeof(char)); return *this; }
-
-	protected:
-		// Helper for derived classes, directly calls serialize on the members
-		void SerializeClassInstance (void *ptr, creg::Class *cls);
 	};
 
 };

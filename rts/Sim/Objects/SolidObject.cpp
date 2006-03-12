@@ -10,7 +10,7 @@
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject);
 
-CR_BIND_MEMBERS(CSolidObject, 
+CR_REG_METADATA(CSolidObject, 
 (
 	CR_MEMBER(mass),
 	CR_MEMBER(blocking),
