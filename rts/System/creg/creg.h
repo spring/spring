@@ -143,7 +143,7 @@ namespace creg {
 
 		void Serialize (ISerializer *s, void *instance)
 		{
-			typename T* array = (typename T*)instance;
+			T* array = (T*)instance;
 			for (int a=0;a<Size;a++)
 				elemType->Serialize (s, &array[a]);
 		}
