@@ -30,6 +30,7 @@ struct PackageHeader
 	int numObjects;
 	int objClassRefOffset; // a class ref is: zero-term class string + checksum DWORD
 	int numObjClassRefs; 
+	unsigned int metadataChecksum;
 
 	void SwapBytes ()
 	{
@@ -38,6 +39,7 @@ struct PackageHeader
 		objClassRefOffset = swabdword (objClassRefOffset);
 		numObjClassRefs = swabdword (numObjClassRefs);
 		numObjects = swabdword (numObjects);
+		metadataChecksum = swabdword (metadataChecksum);
 	}
 };
 
@@ -94,9 +96,14 @@ void COutputStreamSerializer::SerializeObjectInstance (void *inst, creg::Class *
 	ObjectID *obj = 0;
 	if (i != ptrToID.end()) {
 		obj = &i->second;
-		assert (objClass == obj->class_);
+
+		// embedded objects can have the same address as their parents
+		if (objClass != obj->class_)
+			obj = 0;
 	}
-	else {
+
+	if (!obj)
+	{
 		obj = &ptrToID[inst];
 		obj->id = objects.size ();
 		obj->class_ = objClass;
@@ -116,7 +123,6 @@ void COutputStreamSerializer::SerializeObjectInstance (void *inst, creg::Class *
 
 void COutputStreamSerializer::SerializeObjectPtr (void **ptr, creg::Class *objClass)
 {
-//	printf ("writing ptr %s* at %d\n", objClass->name.c_str(), (int)stream->tellp());
 	if (*ptr) {
 		// valid pointer, write a one and the object ID
 		int id;
@@ -189,7 +195,7 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	map<creg::Class *,ClassRef> classMap;
 	vector <ClassRef*> classRefs;
 	for (ObjIDmap::iterator oi = ptrToID.begin(); oi != ptrToID.end(); ++oi) {
-//		printf ("Obj: %s\n", oi->second.class_->name.c_str());
+		//printf ("Obj: %s\n", oi->second.class_->name.c_str());
 		map<creg::Class*,ClassRef>::iterator cr = classMap.find (oi->second.class_);
 		if (cr == classMap.end()) {
 			ClassRef *pRef = &classMap[oi->second.class_];
@@ -213,7 +219,6 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	}
 
 	// Write object info
-//	printf ("Writing %d objects (at %d)\n", objects.size(), (int)stream->tellp());
 	ph.objTableOffset = (int)stream->tellp();
 	ph.numObjects = objects.size();
 	for (int a=0;a<objects.size();a++)
@@ -227,6 +232,15 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 		d.SwapBytes ();
 		stream->write ((char*)&d, sizeof(PackageObject));
 	}
+
+	// Calculate a checksum for metadata verification
+	ph.metadataChecksum = 0;
+	for (int a=0;a<classRefs.size();a++)
+	{
+		Class *c = classRefs[a]->class_;
+		c->CalculateChecksum (ph.metadataChecksum);
+	}
+	printf("Checksum: %d\n", ph.metadataChecksum);
 
 	stream->seekp (0);
 	memcpy(ph.magic, CREG_PACKAGE_FILE_ID, 4);
@@ -272,7 +286,6 @@ void CInputStreamSerializer::SerializeObjectPtr (void **ptr, creg::Class *cls)
 		if (o.obj) *ptr = o.obj;
 		else {
 			// The object is not yet avaiable, so it needs fixing afterwards
-//			printf ("Ref to embedded obj (%d)\n", id);
 			UnfixedPtr ufp;
 			ufp.objID = id;
 			ufp.ptrAddr = ptr;
@@ -326,6 +339,13 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		classRefs[a] = class_;
 	}
 
+	// Calculate metadata checksum and compare with stored checksum
+	unsigned int checksum = 0;
+	for (int a=0;a<classRefs.size();a++) 
+		classRefs[a]->CalculateChecksum (checksum);
+	if (checksum != ph.metadataChecksum)
+		throw std::runtime_error ("Metadata checksum error: Package file was saved with a different version");
+
 	// Create all non-embedded objects
 	s->seekg (ph.objTableOffset);
 	objects.resize (ph.numObjects);
@@ -338,8 +358,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		if (!d.isEmbedded) {
 			// Allocate and construct
 			ClassBinder *binder = classRefs[d.classRefIndex]->binder;
-			void *inst = new char[binder->size];
-			if (binder->constructor) binder->constructor (inst);
+			void *inst = binder->class_->CreateInstance ();
 			objects [a].obj = inst;
 		} else objects[a].obj = 0;
 		objects [a].isEmbedded = d.isEmbedded;
@@ -358,17 +377,23 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		}
 	}
 
-	for (int a=0;a<objects.size();a++) {
-		StoredObject& o = objects[a];
-		assert (o.obj);
-	}
-
 	// Fix pointers to embedded objects
 	for (int a=0;a<unfixedPointers.size();a++) {
 		void *p = objects [unfixedPointers[a].objID].obj;
 		*unfixedPointers[a].ptrAddr = p;
 	}
 	
+	// Run post load functions on all objects
+	for (int a=0;a<objects.size();a++) {
+		StoredObject& o = objects[a];
+		Class *c = classRefs[objects[a].classRef];
+
+		if (c->postLoadProc) {
+			_DummyStruct *ds = (_DummyStruct*)o.obj;
+			(ds->*c->postLoadProc)();
+		}
+	}
+
 	// The first object is the root object
 	root = objects[0].obj;
 	rootCls = classRefs[objects[0].classRef];
@@ -376,7 +401,6 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 	unfixedPointers.clear();
 	objects.clear();
 }
-
 
 /* Testing..
 
