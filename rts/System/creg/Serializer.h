@@ -4,6 +4,7 @@
 
 #include "ISerializer.h"
 #include SPRING_HASH_MAP_H
+#include <map>
 #include <vector>
 
 #ifdef __GNUG__
