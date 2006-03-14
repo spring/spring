@@ -404,7 +404,7 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 	
 		MapHeader mh;
 		in.Read(&mh, sizeof(mh));
-		in.Seek(mh.minimapPtr);
+		in.Seek(mh.minimapPtr + offset);
 		in.Read(buffer, size);
 
 		done = true;
