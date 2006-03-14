@@ -274,15 +274,59 @@ static PyObject *unitsync_GetMapInfo(PyObject *self, PyObject *args)
 						);
 }
 
+#define RM	0x0000F800
+#define GM  0x000007E0
+#define BM  0x0000001F
+
+#define RED_RGB565(x) ((x&RM)>>11)
+#define GREEN_RGB565(x) ((x&GM)>>5)
+#define BLUE_RGB565(x) (x&BM)
+#define PACKRGB(r, g, b) (((r<<11)&RM) | ((g << 5)&GM) | (b&BM) )
+
+static bool write_targa_minimap(const char* filename, void* data, int w, int h)
+{
+	// open file
+	FILE* fp = fopen(filename, "wb");
+	if(!fp)
+		return false;
+
+	// fill & write header
+	char targaheader[18];
+	memset(targaheader, 0, sizeof(targaheader));
+
+	targaheader[2] = 2; /* image type = uncompressed gray-scale */
+	targaheader[12] = (char) (w & 0xFF);
+	targaheader[13] = (char) (w >> 8);
+	targaheader[14] = (char) (h & 0xFF);
+	targaheader[15] = (char) (h >> 8);
+	targaheader[16] = 24; /* 24 bit color */
+	targaheader[17] = 0x20; /* Top-down, non-interlaced */
+
+	fwrite(targaheader, 18, 1, fp);
+
+	// write file
+	unsigned char out[3];
+	unsigned short* begin = (unsigned short*) data;
+	unsigned short* end = begin + w * h;
+	for (; begin < end; ++begin) {
+		out[0] = BLUE_RGB565  ((*begin)) << 3;
+		out[1] = GREEN_RGB565 ((*begin)) << 2;
+		out[2] = RED_RGB565   ((*begin)) << 3;
+		fwrite(out, 3, 1, fp);
+	}
+	return fclose(fp) != EOF;
+}
+
 static PyObject *unitsync_GetMinimap(PyObject *self, PyObject *args)
 {
+	const char* targa_filename;
 	const char* filename;
 	int miplevel;
-	if (!PyArg_ParseTuple(args, "si", &filename, &miplevel))
+	if (!PyArg_ParseTuple(args, "sis", &filename, &miplevel, &targa_filename))
 		return NULL;
 	void* minimap = GetMinimap(filename, miplevel);
-	//TODO how to return minimap?
-	return Py_BuildValue("");
+	bool succes = minimap ? write_targa_minimap(targa_filename, minimap, 1024 >> miplevel, 1024 >> miplevel) : false;
+	return succes ? Py_BuildValue("s", targa_filename) : Py_BuildValue("");
 }
 
 static PyObject *unitsync_GetPrimaryModCount(PyObject *self, PyObject *args)
@@ -484,7 +528,8 @@ static PyObject *unitsync_SizeArchiveFile(PyObject *self, PyObject *args)
 // Note to self: sed "s/([^)]*);/ ),/g;s/[ \t]*DLL_EXPORT[^_]\+__stdcall /PY( /g;"
 // TODO   function documentation (last column)
 static PyMethodDef unitsyncMethods[] = {
-#define PY(name) { # name , unitsync_ ## name , METH_VARARGS , NULL }
+#define PY(name)         { # name , unitsync_ ## name , METH_VARARGS , NULL }
+#define PYDOC(name, doc) { # name , unitsync_ ## name , METH_VARARGS , doc  }
 	PY( Message ),
 	PY( Init ),
 	PY( UnInit ),
@@ -504,16 +549,30 @@ static PyMethodDef unitsyncMethods[] = {
 	PY( AddArchive ),
 	PY( AddAllArchives ),
 	PY( GetArchiveChecksum ),
-	PY( GetMapCount ),
-	PY( GetMapName ),
-	PY( GetMapInfo ),
-	PY( GetMinimap ),
-	PY( GetPrimaryModCount ),
-	PY( GetPrimaryModName ),
-	PY( GetPrimaryModArchive ),
-	PY( GetPrimaryModArchiveCount ),
-	PY( GetPrimaryModArchiveList ),
-	PY( GetPrimaryModIndex ),
+	PYDOC( GetMapCount, "GetMapCount() -- Updates the list of locally available maps and returns the number of maps.\n"
+			"InitArchiveScanner must be called before this function."),
+	PYDOC( GetMapName, "GetMapName(n) -- Returns the name of the nth map, e.g. 'SmallDivide.smf'.\n"
+			"GetMapCount must be called before this function."),
+	PYDOC( GetMapInfo, "GetMapInfo(mapName) -- Returns info about mapName.\n"
+			"The return value is a tuple of two values: an integer and a map. The integer\n"
+			"is 0 on failure, 1 on succes. The map looks like the following example:\n"
+			"{'posCount': 6, 'extractorRadius': 400, 'maxMetal': 0.029999999329447746, 'positions': [(600, 600), (3600, 3600), (3600, 600), (600, 3600), (2000, 600), (2000, 3600), ...], 'maxWind': 20, 'gravity': 130, 'height': 4096, 'minWind': 5, 'tidalStrength': 20, 'width': 4096, 'description': 'Lot of metal in middle but look out for kbot walking over the mountains'}\n"
+		 	"InitArchiveScanner must be called before this function."),
+	PYDOC( GetMinimap, "GetMinimap(mapName, mipLevel, targaFilename) -- Write 24 bit targa minimap of mapName to targaFilename.\n"
+			"The width and height of the saved targa is 1024 >> mipLevel (that is: 1024 / 2^mipLevel)" ),
+	PYDOC( GetPrimaryModCount, "GetPrimaryModCount() -- Updates the list of locally available mods and returns the number of mods.\n"
+			"InitArchiveScanner must be called before this function."),
+	PYDOC( GetPrimaryModName, "GetPrimaryModName(n) -- Returns the name of the nth mod, e.g. 'XTA v0.66 Pimped Edition V3'.\n"
+		 	"GetPrimaryModCount must be called before this function."),
+	PYDOC( GetPrimaryModArchive, "GetPrimaryModArchive(n) -- Returns the archive of the nth mod, e.g. 'xtapev3.sd7'.\n"
+			"GetPrimaryModCount must be called before this function."),
+	PYDOC( GetPrimaryModArchiveCount, "GetPrimaryModArchiveCount(n) -- Updates the list of archives the nth mod depends on.\n"
+			"GetPrimaryModCount must be called before this function."),
+	PYDOC( GetPrimaryModArchiveList, "GetPrimaryModArchiveList(n) -- Returns the nth archive of the selected mod.\n"
+			"GetPrimaryModArchiveCount must be called before this function to select a mod."),
+	PYDOC( GetPrimaryModIndex, "GetPrimaryModIndex(modName) -- Returns the index of modName or -1 if it can't be found.\n"
+			"GetPrimaryModIndex(GetPrimaryModName(n)) == n for n < GetPrimaryModCount()\n"
+			"GetPrimaryModCount must be called before this function."),
 	PY( GetSideCount ),
 	PY( GetSideName ),
 	PY( OpenFileVFS ),
@@ -530,6 +589,7 @@ static PyMethodDef unitsyncMethods[] = {
 	PY( CloseArchiveFile ),
 	PY( SizeArchiveFile ),
 	{NULL, NULL, 0, NULL}        /* Sentinel */
+#undef PYDOC
 #undef PY
 };
 
