@@ -78,7 +78,9 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	'rts/lib/minizip/zip.c']
 if env['platform'] == 'win32':
 	unitsync_files += ['rts/lib/minizip/iowin32.c']
-unitsync = env.SharedLibrary('game/unitsync.so', unitsync_files)
+unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)
+# HACK   add a post action to link unitsync.so to libunitsync.so
+env.AddPostAction(unitsync, Action([['ln','-f','$TARGET','omni/unitsync.so']]))
 Alias('unitsync', unitsync)
 # HACK   disable it for now, as it is not yet needed and would just increase compilation time
 #Default(unitsync)
