@@ -75,8 +75,10 @@ CGameServer::~CGameServer(void)
 
 bool CGameServer::Update(void)
 {
-	if (terminate)
+	if (terminate) {
 		delete this;
+		return true; // TODO   should this be true or false?
+	}
 	if(lastSyncRequest<gu->gameTime-2){
 		lastSyncRequest=gu->gameTime;
 
