@@ -333,6 +333,10 @@ void CPreGame::UpdateClientNet(void)
 
 void CPreGame::SelectMap(std::string s)
 {
+	if (s == "Random map") {
+		s = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
+		(*info) << "Map: " << s.c_str() << "\n";
+	}
 	pregame->mapName=s;
 	delete pregame->showList;
 	pregame->showList=0;
@@ -351,6 +355,7 @@ void CPreGame::ShowMapList(void)
 		handleerror(0,"Couldnt find any map files","PreGame error",0);
 		return;
 	}
+	list->AddItem("Random map", "Random map");
 	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
 		list->AddItem(it->leaf().c_str(),it->leaf().c_str());
 	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++)
