@@ -118,6 +118,9 @@ def generate(env):
 				env[key] = args[key]
 			else: env[key] = default
 
+		# start with empty FLAGS, in case everything is disabled.
+		env['CCFLAGS'] = []
+
 		# profile?
 		bool_opt('profile', False)
 		if env['profile']:
