@@ -1148,7 +1148,7 @@ bool CGame::Draw()
 		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->active){
 				glColor4ubv(gs->Team(gs->players[a]->team)->color);
-				font->glPrintAt (0.76f, 0.01f + 0.02 * a, 0.7f, "%20s %3.0f%% %3i",gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,gs->players[a]->ping);
+				font->glPrintAt (0.76f, 0.01f, 0.7f, "%20s %3.0f%% %3i",gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,gs->players[a]->ping);
 			}
 		}
 		glLoadIdentity();
