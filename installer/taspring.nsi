@@ -9,7 +9,7 @@ SetCompressor lzma
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "TA Spring"
-!define PRODUCT_VERSION "0.70b2"
+!define PRODUCT_VERSION "0.70b3"
 !define PRODUCT_PUBLISHER "The TA Spring team"
 !define PRODUCT_WEB_SITE "http://taspring.clan-sy.com"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
@@ -245,9 +245,10 @@ Function CheckVersion
 ;  IntCmp $1 3031040 Done             ; 0.66b1
   IntCmp $1 3035136 Done             ; 0.67b1 & 0.67b2 & 0.67b3
   IntCmp $1 2633728 Done             ; 0.70b1
+  IntCmp $1 2650112 Done			 ; 0.70b2
 
   MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.67bx or 0.70b1. Your current folder does not contain a spring.exe from any such version, so the installation will be aborted.. Please download the full installer instead and try again."
-  Abort "Unable to upgrade, version 0.67bx or 0.70b1 not found.."
+  Abort "Unable to upgrade, version 0.67bx, 0.70b1 or 0.70b2 not found.."
   Goto done
 
 Done:
@@ -383,8 +384,9 @@ Section "Main application (req)" SEC_MAIN
 !ifndef SP_UPDATE
   File "..\game\mods\xta_se_v066.sdz"
 !endif
-  File "..\game\mods\xtapev3.sd7"
+  File "..\game\mods\xtape.sd7"
 
+  Delete "$INSTDIR\mods\xtapev3.sd7"
   Delete "$INSTDIR\mods\xta_se_v065.sdz"
   Delete "$INSTDIR\mods\xta_se_v064.sdz"
   Delete "$INSTDIR\mods\xta_se_v063.sdz"
@@ -647,7 +649,7 @@ Section Uninstall
   Delete "$INSTDIR\base\otacontent.sdz"
   Delete "$INSTDIR\base\springcontent.sdz"
   Delete "$INSTDIR\mods\xta_se_v066.sdz"
-  Delete "$INSTDIR\mods\xtapev3.sd7"
+  Delete "$INSTDIR\mods\xtape.sd7"
   Delete "$INSTDIR\base\spring\springbitmaps_v061.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v062.sdz"
   Delete "$INSTDIR\base\spring\springloadpictures_v061.sdz"
