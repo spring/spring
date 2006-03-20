@@ -177,9 +177,8 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	//int size=hpiHandler->GetFileSize(name);
 	CFileHandler file(name);
 	if(!file.FileExists()){
-		handleerror(0,"No file",name.c_str(),0);
 		POP_CODE_MODE;
-		return 0;
+		throw std::runtime_error("File not found: "+name);
 	}
 	fileBuf=new unsigned char[file.FileSize()];
 	//hpiHandler->LoadFile(name,fileBuf);
