@@ -26,6 +26,7 @@
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
+#include <stdexcept>
 #include "mmgr.h"
 
 using namespace std;
@@ -185,7 +186,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	file.Read(fileBuf, file.FileSize());
 	if (fileBuf == NULL) {
 		delete [] fileBuf;
-		return NULL;
+		throw std::runtime_error("Failed to read file "+name);
 	}
 	
 	S3DOModel *model = new S3DOModel;
