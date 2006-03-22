@@ -155,14 +155,14 @@ def generate(env):
 		else:
 			if env['debug']: level = '0'
 			else: level = '1'
-		if int(level) == 0:
-			print "optimizing NOT enabled,",
-			env['optimize'] = 0
-		elif (int(level) >= 1 and int(level) <= 3) or level == 's' or level == 'size':
+		if level == 's' or level == 'size' or (int(level) >= 1 and int(level) <= 3):
 			print "level", level, "optimizing enabled"
 			env['optimize'] = level
 			archflags = detect.processor(gcc_version >= ['3','4','0'])
 			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe']+archflags)
+		elif int(level) == 0:
+			print "optimizing NOT enabled,",
+			env['optimize'] = 0
 		else:
 			print "\ninvalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
