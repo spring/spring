@@ -208,8 +208,10 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 	if(mem==NULL)
 		return 0;
 
-	// jcnossen: ATI drivers appear to support OpenGL 2.0, but switch to software rendering when non-power-of-two textures are used.
-	if ((xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
+	// jcnossen: Some drivers return "2.0" as a version string, 
+	// but switch to software rendering for non-power-of-two textures.
+	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
+	if ((xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)) && !GLEW_ARB_texture_non_power_of_two)
 		 //&& strcmp(reinterpret_cast<const char*>(glGetString(GL_VERSION)), "2.0") < 0 )
 	{
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));

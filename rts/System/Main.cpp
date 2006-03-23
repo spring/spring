@@ -355,8 +355,7 @@ bool SpringApp::InitWindow (const char* title)
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
 
-	SetSDLVideoMode ();
-	return true;
+	return SetSDLVideoMode ();
 }
 
 /**
