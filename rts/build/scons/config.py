@@ -173,7 +173,7 @@ def check_sdl(env, conf):
 	print "  Checking for sdl-config...",
 	sdlcfg = env.WhereIs("sdl-config")
 	if not sdlcfg: # for FreeBSD
-		env.WhereIs("sdl11-config")
+		sdlcfg = env.WhereIs("sdl11-config")
 	if sdlcfg:
 		print sdlcfg
 		print "  Checking for LibSDL >= 1.2.0...",
