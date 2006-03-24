@@ -172,6 +172,8 @@ def check_sdl(env, conf):
 	print "Checking for SDL..."
 	print "  Checking for sdl-config...",
 	sdlcfg = env.WhereIs("sdl-config")
+	if not sdlcfg: # for FreeBSD
+		env.WhereIs("sdl11-config")
 	if sdlcfg:
 		print sdlcfg
 		print "  Checking for LibSDL >= 1.2.0...",
@@ -186,7 +188,10 @@ def check_sdl(env, conf):
 			env.Exit(1)
 	else:
 		print "not found"
-		guess_include_path(env, conf, 'SDL', 'SDL')
+		if env['platform'] == 'freebsd':
+			guess_include_path(env, conf, 'SDL', 'SDL11')
+		else:
+			guess_include_path(env, conf, 'SDL', 'SDL')
 
 
 def check_openal(env, conf):
@@ -211,7 +216,8 @@ def check_headers(env, conf):
 	if not conf.CheckCHeader('ft2build.h'):
 		print "Freetype2 headers are required for this program"
 		env.Exit(1)
-	if not conf.CheckCHeader('SDL/SDL.h'):
+	# second check for FreeBSD SDL.
+	if not conf.CheckCHeader('SDL/SDL.h') and not conf.CheckCHeader('SDL11/SDL.h'):
 		print 'LibSDL headers are required for this program'
 		env.Exit(1)
 	if not conf.CheckCHeader('AL/al.h'):
@@ -259,7 +265,8 @@ def check_libraries(env, conf):
 	if not conf.CheckLib("freetype"):
 		print "Freetype2 is required for this program"
 		env.Exit(1)
-	if not conf.CheckLib('SDL'):
+	# second check for FreeBSD SDL.
+	if not conf.CheckLib('SDL') and not conf.CheckLib('SDL-1.1'):
 		print 'LibSDL is required for this program'
 		env.Exit(1)
 	if not conf.CheckLib('openal'):
