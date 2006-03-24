@@ -11,6 +11,10 @@ def exists(env):
 
 
 def generate(env):
+	# We break unitsync if the filename of the shared object has a 'lib' prefix.
+	# It is also nicer for the AI shared objects.
+	env['LIBPREFIX'] = ''
+
 	# I don't see any reason to make this configurable --tvo.
 	# Note that commenting out / setting this to `None' will break the buildsystem.
 	env['builddir'] = 'build'
@@ -200,7 +204,9 @@ def generate(env):
 		string_opt('cachedir', None)
 
 		defines = ['_REENTRANT', 'DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
-		defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
+		#Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
+		#and some AIs maybe.  Just make exceptions in SConstruct.
+		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
 		if env['disable_clipboard']: defines += ['NO_CLIPBOARD']
 		if env['disable_avi']      : defines += ['NO_AVI']
 		if env['disable_lua']      : defines += ['NO_LUA']
