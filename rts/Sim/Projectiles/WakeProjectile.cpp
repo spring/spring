@@ -7,6 +7,7 @@
 #include "Sim/Map/Ground.h"
 #include "Sim/Misc/Wind.h"
 #include "mmgr.h"
+#include "Rendering/Env/BaseWater.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -26,6 +27,11 @@ CWakeProjectile::CWakeProjectile(float3 pos,float3 speed,float startSize,float s
 	rotation=gu->usRandFloat()*PI*2;
 	rotSpeed=(gu->usRandFloat()-0.5)*PI*2*0.01;
 	checkCol=false;
+	if(water->noWakeProjectiles){
+		alpha=0;
+		alphaAddTime=0;
+		size=0;
+	}
 }
 
 CWakeProjectile::~CWakeProjectile()

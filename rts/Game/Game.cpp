@@ -1007,36 +1007,37 @@ bool CGame::Draw()
 	sky->Draw();
 	groundDrawer->UpdateTextures();
 	groundDrawer->Draw();
+	if(!readmap->voidWater && water->drawSolid)
+ 		water->Draw();
 
-//	if (playing){
-		selectedUnits.Draw();
-		unitDrawer->Draw(false);
-		featureHandler->Draw();
-		if(gu->drawdebug && gs->cheatEnabled)
-			pathManager->Draw();
-		//transparent stuff
-		glEnable(GL_BLEND);
-		glDepthFunc(GL_LEQUAL);
-		if(!readmap->voidWater)
-			water->Draw();
-		if(treeDrawer->drawTrees)
-			treeDrawer->DrawGrass();
-		unitDrawer->DrawCloakedUnits();
-		ph->Draw(false);
-		sky->DrawSun();
-		if(keys[SDLK_LSHIFT])
-			selectedUnits.DrawCommands();
+	selectedUnits.Draw();
+	unitDrawer->Draw(false);
+	featureHandler->Draw();
+	if(gu->drawdebug && gs->cheatEnabled)
+		pathManager->Draw();
+	//transparent stuff
+	glEnable(GL_BLEND);
+	glDepthFunc(GL_LEQUAL);
+	if(!readmap->voidWater && !water->drawSolid)
+		water->Draw();
+	if(treeDrawer->drawTrees)
+		treeDrawer->DrawGrass();
+	unitDrawer->DrawCloakedUnits();
+	ph->Draw(false);
+	sky->DrawSun();
+	if(keys[SDLK_LSHIFT])
+		selectedUnits.DrawCommands();
 
-		mouse->Draw();
-		
+	mouse->Draw();
+	
 #ifndef NEW_GUI
-		guihandler->DrawMapStuff();
-		inMapDrawer->Draw();
+	guihandler->DrawMapStuff();
+	inMapDrawer->Draw();
 #endif
 
-		glLoadIdentity();
-		glDisable(GL_DEPTH_TEST );
-//	}
+	glLoadIdentity();
+	glDisable(GL_DEPTH_TEST );
+
 	//reset fov
 	glMatrixMode(GL_PROJECTION);	
 	glLoadIdentity();			
@@ -1360,6 +1361,8 @@ END_TIME_PROFILE("Sim time")
 	Clearfp();
 	Control87(_MCW_EM ,_EM_ZERODIVIDE);
 	Control87(_MCW_EM ,_EM_INVALID);
+
+	water->Update();
 }
 
 bool CGame::ClientReadNet()

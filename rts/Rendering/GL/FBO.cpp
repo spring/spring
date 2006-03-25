@@ -89,4 +89,3 @@ void FBO::attachTexture(GLuint tex, const unsigned int textype, FramebufferAttac
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, glattachtype, textype, tex, 0);
 	deselect();
 }
-

@@ -31,7 +31,7 @@ public:
 	void CheckUnitCol();
 	void LoadSmoke(unsigned char tex[512][512][4],int xoffs,int yoffs,char* filename,char* alphafile);
 
-	void Draw(bool drawReflection);
+	void Draw(bool drawReflection,bool drawRefraction=false);
 	void AddProjectile(CProjectile* p);
 	void Update();
 	void AddGroundFlash(CGroundFlash* flash);

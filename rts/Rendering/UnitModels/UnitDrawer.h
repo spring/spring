@@ -21,7 +21,7 @@ public:
 	~CUnitDrawer(void);
 
 	void Update(void);
-	void Draw(bool drawReflection);
+	void Draw(bool drawReflection,bool drawRefraction=false);
 
 	void DrawCloakedUnits(void);		//cloaked units must be drawn after all others;
 	void DrawShadowPass(void);

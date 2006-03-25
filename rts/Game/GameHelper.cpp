@@ -28,6 +28,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Rendering/Env/BaseWater.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -140,6 +141,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	explosionGraphics[graphicType]->Explosion(pos,damages,radius,owner,gfxMod);
 	groundDecals->AddExplosion(pos,damages[0],radius);
 	//sound->PlaySound(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
+	water->AddExplosion(pos,damages[0],radius);
 }
 
 float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit)

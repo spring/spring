@@ -158,7 +158,7 @@ void CUnitDrawer::Update(void)
 
 extern GLfloat FogLand[]; 
 
-void CUnitDrawer::Draw(bool drawReflection)
+void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 {
 	ASSERT_UNSYNCED_MODE;
 
@@ -193,6 +193,10 @@ void CUnitDrawer::Draw(bool drawReflection)
 					if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>(*usi)->radius){
 						continue;
 					}
+				}
+				if(drawRefraction){
+					if((*usi)->pos.y > -3)
+						continue;
 				}
 				float sqDist=((*usi)->pos-camera->pos).SqLength2D();
 				float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;

@@ -61,6 +61,7 @@ public:
 	 * @return whether a valid framebuffer exists
 	 */
 	bool valid(void);
+
 private:
 	/**
 	 * @brief framebuffer

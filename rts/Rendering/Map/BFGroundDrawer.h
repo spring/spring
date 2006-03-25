@@ -14,7 +14,7 @@ class CBFGroundDrawer :
 public:
 	CBFGroundDrawer(void);
 	~CBFGroundDrawer(void);
-	void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false);
+	void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0);
 	void SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes);
 	void SetHeightTexture();
 	void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes);
@@ -50,8 +50,8 @@ protected:
 	inline void DrawVertexA(int x,int y,float height);
 	inline void EndStrip();
 	void DrawGroundVertexArray();
-	void SetupTextureUnits(bool drawReflection);
-	void ResetTextureUnits(bool drawReflection);
+	void SetupTextureUnits(bool drawReflection,unsigned int overrideVP);
+	void ResetTextureUnits(bool drawReflection,unsigned int overrideVP);
 	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 public:
 	void DrawShadowPass(void);
