@@ -1,0 +1,23 @@
+!!ARBvp1.0
+
+PARAM mat[4] = { state.matrix.mvp };
+ATTRIB pos = vertex.position;
+OUTPUT opos = result.position;
+TEMP temp;
+
+DP4 opos.x, pos, mat[0];
+DP4 opos.y, pos, mat[1];
+DP4 opos.z, pos, mat[2];
+DP4 opos.w, pos, mat[3];
+
+ADD temp, vertex.texcoord, program.env[14];
+
+MOV result.texcoord[0], temp;
+
+SUB result.texcoord[1], temp, program.env[8];
+SUB result.texcoord[2], temp, program.env[9];
+SUB result.texcoord[3], temp, program.env[10];
+SUB result.texcoord[4], temp, program.env[11];
+MAD result.texcoord[5], vertex.texcoord, program.env[12], program.env[13];
+
+END

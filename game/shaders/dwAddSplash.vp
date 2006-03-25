@@ -1,0 +1,20 @@
+!!ARBvp1.0
+OPTION NV_vertex_program3;
+
+PARAM mat[4] = { state.matrix.mvp };
+ATTRIB ipos = vertex.position;
+OUTPUT opos = result.position;
+TEMP temp,pos;
+
+MAD pos, ipos.xzyw, program.env[10], program.env[11];
+MOV result.texcoord[1], vertex.normal;
+
+DP4 opos.x, pos, mat[0];
+DP4 opos.y, pos, mat[1];
+DP4 opos.z, pos, mat[2];
+DP4 opos.w, pos, mat[3];
+
+MOV result.texcoord[0], vertex.texcoord[0];
+MOV result.texcoord[1].w, vertex.normal.z;
+
+END
