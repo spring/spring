@@ -415,7 +415,7 @@ int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler
    return 1;
 }
 
-void CProjectileHandler::Draw(bool drawReflection)
+void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 {
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
@@ -469,6 +469,8 @@ void CProjectileHandler::Draw(bool drawReflection)
 				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>3)
 					continue;
 			}
+			if(drawRefraction && (*psi)->pos.y>(*psi)->radius)
+				continue;
 			if((*psi)->s3domodel){
 				if((*psi)->s3domodel->textureType){
 					unitDrawer->QueS3ODraw(*psi,(*psi)->s3domodel->textureType);

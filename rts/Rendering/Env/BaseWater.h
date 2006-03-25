@@ -12,10 +12,13 @@ public:
 	virtual void Draw()=0;
 	virtual void Update(){};
 	virtual void UpdateWater(CGame* game)=0;
+	virtual void AddExplosion(const float3& pos, float strength, float size){};
 
 	static CBaseWater* GetWater();
 
 	bool drawReflection;
+ 	bool noWakeProjectiles;
+ 	bool drawSolid;
 };
 
 extern CBaseWater* water;

@@ -17,7 +17,6 @@ public:
 
 	unsigned int texture;
 	unsigned int displist;
-
 };
 
 #endif // __BASIC_WATER_H__

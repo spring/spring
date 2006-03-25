@@ -142,6 +142,10 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 	glBindProgramARB( target,tempProg);
 	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, VPFile.FileSize(), VPbuf);
 
+	if ( GL_INVALID_OPERATION == glGetError() )
+	{
+		return false;
+	}
 	glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
 	glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
 
