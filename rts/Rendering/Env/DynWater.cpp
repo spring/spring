@@ -1,7 +1,7 @@
-#include "stdafx.h"
-#include ".\dynwater.h"
+#include "StdAfx.h"
+#include "DynWater.h"
 #include "Game/Game.h"
-#include <windows.h>
+//#include <windows.h>
 #include "Rendering/GL/myGL.h"
 #include <math.h>
 #include "Game/Camera.h"
@@ -353,7 +353,7 @@ void CDynWater::UpdateWater(CGame* game)
 	glDepthMask(1);
 
 	int oldViewRadius=groundDrawer->viewRadius;
-	groundDrawer->viewRadius*=0.7;
+	groundDrawer->viewRadius=int(0.7*oldViewRadius);
 	DrawRefraction(game);
 	DrawReflection(game);
 	groundDrawer->viewRadius=oldViewRadius;
@@ -697,8 +697,8 @@ void CDynWater::DrawHeightTex(void)
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waveCopyHeightVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
-	camPosX=camera->pos.x/W_SIZE;
-	camPosZ=camera->pos.z/W_SIZE;
+	camPosX=int(camera->pos.x/W_SIZE);
+	camPosZ=int(camera->pos.z/W_SIZE);
 
 	float startx=(camPosX-120)/1024.0-(camPosBig.x-WH_SIZE)/WF_SIZE;
 	float startz=(camPosZ-120)/1024.0-(camPosBig.z-WH_SIZE)/WF_SIZE;
@@ -818,10 +818,10 @@ void CDynWater::DrawWaterSurface(void)
 		int ysquaremod=((cy)%(2*lod))/lod;
 		int xsquaremod=((cx)%(2*lod))/lod;
 
-		int minty=camPosBig.z/WSQUARE_SIZE-512;
-		int maxty=camPosBig.z/WSQUARE_SIZE+512;
-		int mintx=camPosBig.x/WSQUARE_SIZE-512;
-		int maxtx=camPosBig.x/WSQUARE_SIZE+512;
+		int minty=int(camPosBig.z/WSQUARE_SIZE-512);
+		int maxty=int(camPosBig.z/WSQUARE_SIZE+512);
+		int mintx=int(camPosBig.x/WSQUARE_SIZE-512);
+		int maxtx=int(camPosBig.x/WSQUARE_SIZE+512);
 
 		int minly=cy+(-viewRadius+2-ysquaremod)*lod;
 		int maxly=cy+(viewRadius-ysquaremod)*lod;
@@ -858,7 +858,7 @@ void CDynWater::DrawWaterSurface(void)
 			for(int x=xs;x<xe;x+=lod){
 				if((lod==1) || 
 					(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
-					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terräng
+					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terrï¿½g
 						if(!inStrip){
 							DrawVertexA(x,y);
 							DrawVertexA(x,y+lod);
@@ -866,7 +866,7 @@ void CDynWater::DrawWaterSurface(void)
 						}
 						DrawVertexA(x+lod,y);
 						DrawVertexA(x+lod,y+lod);
-					} else {  //inre begränsning mot föregående lod
+					} else {  //inre begrï¿½sning mot fï¿½egï¿½nde lod
 						if((x>=(cx)+viewRadius*hlod)){
 							if(inStrip){
 								va->EndStrip();	
