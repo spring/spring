@@ -95,9 +95,7 @@ CUnitDrawer::CUnitDrawer(void)
 		}
 
 		unitVP=LoadVertexProgram("unit.vp");
-		unitFP=LoadFragmentProgram("unit.fp");
 		units3oVP=LoadVertexProgram("units3o.vp");
-		units3oFP=LoadFragmentProgram("units3o.fp");
 
 		glGenTextures(1,&boxtex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
