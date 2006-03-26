@@ -1,5 +1,7 @@
-#pragma once
-#include "basewater.h"
+#ifndef BASEWATER_H
+#define BASEWATER_H
+
+#include "BaseWater.h"
 #include <vector>
 
 class CDynWater :
@@ -93,3 +95,5 @@ public:
 	std::vector<Explosion> explosions;
 	void DrawOuterSurface(void);
 };
+
+#endif
