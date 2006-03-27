@@ -11,14 +11,10 @@
 
 class Factor{
 public:
-	Factor(){	
-		energy == "";
-		race =0;
-		water = false;
-		G=0;
-		start = false;
+	Factor();
+	virtual ~Factor(){
+	//upsig.disconnect();
 	}
-	virtual ~Factor(){}
 	bool CBuild(string name,int unit, int spacing = 9);
 	bool FBuild(string name,int unit,int quantity);
 	void UnitDamaged(int damaged, int attacker, float damage, float3 dir);
@@ -27,14 +23,17 @@ public:
 	void InitAI(Global* GLI);
 	void UnitIdle(int unit);
 	void UnitDestroyed(int unit);
-	vector<Tunit> builders;
 	Global* G;
 	string energy;
 	int race;
-	//map<int,int> cfluke;
+	map<int,int> cfluke;
 	bool water;
 	vector<float3> pmex;
-	bool start;
+	//map<int,float3> plans;
+	//map<int,int> creations;
+	//connection_t upsig;
+	map<string, vector<string> > metatags;
+	bool rand_tag;
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

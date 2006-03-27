@@ -1,4 +1,3 @@
-//#include "Log.h"
 #include "../helper.h"
 
 int Lmagic;
@@ -51,10 +50,6 @@ bool Log::FirstInstance(){
 }
 void Log::Open(bool plain){
 	if( Lmagic != 95768){
-		G->cb->SendTextMsg(":: NTAI XE 4 by AF",0);
-		G->cb->SendTextMsg(":: Extended modable NTAI 0.29",0);
-		G->cb->SendTextMsg(":: CSunParser Veylon/SJ",0);
-		G->cb->SendTextMsg(":: Metal class Krogothe/Cain",0);
 		Lmagic = 95768;
 		this->First = true;
 	}
@@ -64,13 +59,26 @@ void Log::Open(bool plain){
 		time_t now1;
 		time(&now1);
 		struct tm *now2;
+		string filename = "aidll/globalai/NTAI";
+		filename += slash;
+		filename += "Logs";
+		filename += slash;
 		now2 = localtime(&now1);
 		//             DDD MMM DD HH:MM:SS YYYY_X - NTAI.log
-		sprintf(c, "NTAI/Logs/%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d] - NTAI.log",
+		sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE7.5.log",
 				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
 				now2->tm_min, G->team);
-		logFile.open(c);
-		header(" :: NTAI V0.29 XE 4 Log File \n :: Programmed and maintained by AF \n :: Released under the GPL 2.0 Liscence \n");
+		filename += c;
+		logFile.open(filename.c_str());
+		if(logFile.is_open() == false){
+			string s = "mkdir NTAI";
+			s+= slash;
+			s+= "Logs";
+			system(s.c_str());
+			logFile.close();
+			logFile.open(filename.c_str());
+		}
+		header(" :: NTAI XE7.5 Log File \n :: Programmed and maintained by AF \n :: Copyright (C) 2006 AF \n :: Released under the GPL 2.0 Liscence \n");
 		logFile << " :: Game started: " << now2->tm_mday << "." << now2->tm_mon << "." << 1900 + now2->tm_year << "  " << now2->tm_hour << ":" << now2->tm_min << ":" << now2->tm_sec << endl << endl;
 		CSunParser cp(G);
 		cp.LoadFile("modinfo.tdf");
@@ -96,12 +104,12 @@ void Log::Open(bool plain){
 				logFile << " :: " << *i << endl;
 			}
 		}
-		logFile << " :: AI DLL's ingame" << endl;
+		logFile << _T(" :: AI DLL's in game") << endl;
 		vector<string> AInames;
 		for(int n=0; n<MAX_TEAMS; n++){
     		char c[8];
-    		sprintf(c, "%i", n);
-			string s = cq.SGetValueDef("", string("GAME\\TEAM") + string(c) + "\\AIDLL");
+			sprintf(c, "%i", n);
+			string s = cq.SGetValueDef("", string(_T("GAME\\TEAM")) + string(c) + "\\AIDLL");
 			if(s != string("")) AInames.push_back(s + " : AI :: " + c);
 		}
 		if(names.empty() == false){
@@ -116,14 +124,19 @@ void Log::Open(bool plain){
 		time(&now1);
 		struct tm *now2;
 		now2 = localtime(&now1);
+		string filename = _T("aidll/globalai/NTAI");
+		filename += slash;
+		filename += _T("Logs");
+		filename += slash;
 		//                                      DDD MMM DD HH:MM:SS YYYY_X - NTAI.htm
-		sprintf(c, "NTAI/Logs/%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d] - NTAI.htm",
+		sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d] - NTAIXE7.5.htm",
 				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
 				now2->tm_min, G->team);
-		logFile.open(c);
+		filename += c;
+		logFile.open(filename.c_str());
 		plaintext = false;
 		string mu ="</table><style type='text/css'>\n<!--\nbody,td,th {\n	font-family: sans-serif;\n	color: #111111;\nfont-size: 12px;\n\n}\nbody {\n	background-color: #FFFFFF;\n\n}\n.c {color: #FF2222}\n.e {color: #FFCC11}\n-->\n</style>\n";
-		mu+= "<b><br><br>NTAI XE 4  Log File <br>\n<span class='c'>Programmed and maintained by AF <br>\nReleased under the GPL 2.0 Liscence </p></span></b><br> \n<table width='98%'border='0' cellpadding='0' cellspacing='0' bordercolor='#999999'>\n";
+		mu+= "<b><br><br>NTAI XE7c  Log File <br>\n<span class='c'>Programmed and maintained by AF Copyright (C) 2006 AF<br>\nReleased under the GPL 2.0 Liscence </p></span></b><br> \n<table width='98%'border='0' cellpadding='0' cellspacing='0' bordercolor='#999999'>\n";
 		header(mu);
 		time_t tval;
 		char buf[128];

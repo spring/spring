@@ -1,7 +1,7 @@
 // SunParser.cpp: implementation of the CSunParser class.
 //
 //////////////////////////////////////////////////////////////////////
-#include "helper.h"
+#include "../helper.h"
 
 
 
@@ -64,7 +64,7 @@ void CSunParser::Parse(char *buf, int size){
 	//std::vector<std::map<std::string,SSection*>*> sectionlist;
 	//sectionlist.push_back(&sections);
 
-	int se = 0; //for section start/end errorchecking
+	//int se = 0; //for section start/end errorchecking
 
 	char *endptr = buf+size;
 
@@ -108,7 +108,7 @@ void CSunParser::Parse(char *buf, int size){
 char *CSunParser::ParseSection(char *buf, int size, SSection *section){
 	std::string thissection;
 
-	int se = 0; //for section start/end errorchecking
+	//int se = 0; //for section start/end errorchecking
 
 	char *endptr = buf+size;
 
@@ -184,8 +184,8 @@ std::string CSunParser::SGetValueMSG(std::string location){
 
 	bool found = SGetValue(value, location);
 
-	if(!found)
-	{
+	if(!found){
+		return string("");
 //        MessageBox(hWnd, value.c_str(), "Sun parsing error", MB_OK);
 	}
 	return value;
@@ -194,7 +194,7 @@ std::string CSunParser::SGetValueMSG(std::string location){
 std::string CSunParser::SGetValueDef(std::string defaultvalue, std::string location){
 //    LOG("CSunParser::SGetValueDef(" << defaultvalue << ", " << location << ")" << endl);
 	std::transform(location.begin(), location.end(), location.begin(), (int (*)(int))std::tolower);
-	std::string value;
+	std::string value = "";
 
 	bool found = SGetValue(value, location);
 
@@ -218,17 +218,15 @@ bool CSunParser::GetValue(std::string &value, ...){
 	va_start(loc, value);
 	
 	SSection *sectionptr;
-	for(int i=0; i<numargs-1; i++)
-	{
+	for(int i=0; i<numargs-1; i++){
 		char *arg = va_arg(loc, char*);
 
 		searchpath += '\\';
 		searchpath += arg;
 
 		sectionptr = sections[arg];
-		if(sectionptr==NULL)
-		{
-			value = "Section " + searchpath + " missing in file " + filename;
+		if(sectionptr==NULL){
+			value = string("");//"Section " + searchpath + " missing in file " + filename;
 
 			return false;
 		}
@@ -241,7 +239,7 @@ bool CSunParser::GetValue(std::string &value, ...){
 	searchpath += arg;
 
 	if(svalue == ""){
-		value = "Value " + searchpath + " missing in file " + filename;
+		value = "";//"Value " + searchpath + " missing in file " + filename;
 
 		return false;
 	}
@@ -266,7 +264,7 @@ bool CSunParser::SGetValue(std::string &value, std::string location){
 	std::vector<std::string> loclist = GetLocationVector(location);
 		
 	if(sections.find(loclist[0]) == sections.end()){
-		value = "Section " + loclist[0] + " missing in file " + filename;
+		value = "";//"Section " + loclist[0] + " missing in file " + filename;
 		return false;
 	}
 	SSection *sectionptr = sections[loclist[0]];
@@ -278,7 +276,7 @@ bool CSunParser::SGetValue(std::string &value, std::string location){
 		searchpath += loclist[i];
 
 		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end()){
-			value = "Section " + searchpath + " missing in file " + filename;
+			value = "";//"Section " + searchpath + " missing in file " + filename;
 
 			return false;
 		}
@@ -289,7 +287,7 @@ bool CSunParser::SGetValue(std::string &value, std::string location){
 	searchpath += loclist[loclist.size()-1];
 
 	if(sectionptr->values.find(loclist[loclist.size()-1]) == sectionptr->values.end()){
-		value = "Value " + searchpath + " missing in file " + filename;
+		value = "";//"Value " + searchpath + " missing in file " + filename;
 
 		return false;
 	}

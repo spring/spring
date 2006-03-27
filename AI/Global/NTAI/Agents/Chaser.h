@@ -31,10 +31,6 @@ struct T_Targetting{
 	bool upthresh;
 };
 
-struct Ins{
-	Global* G;
-	ackforce i;
-};
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // The structure used to store grid data
@@ -54,16 +50,11 @@ struct agrid{
 
 class Chaser{
 public:
-	Chaser(){
-		//enemies = new int[10000];
-		threshold = 4; // NTAI will never send a task force smaller than this number.
-		G = 0;
-		lock = false;
-	}
+	Chaser();
 	virtual ~Chaser();
 	void InitAI(Global* GLI);
-	void Add(int unit);
-	void UnitDestroyed(int unit);
+	void Add(int unit,bool aircraft=false);
+	void UnitDestroyed(int unit,int attacker);
 	void UnitFinished(int unit);
 	void EnemyDestroyed(int enemy);
 	void FindTarget(ackforce* i, bool upthresh=true);
@@ -81,12 +72,16 @@ public:
 	set<int> Attackers;
 	set<int> sweap;
 	float3 swtarget;
+	map<string,bool> can_dgun;
 	bool lock;
 //	int acknum;
 	Global* G;
 	vector<ackforce> groups;
 	int enemynum;
 	int forces;
+
+	set<int> kamikaze_units;
+	map<string,bool> sd_proxim;
 	
 };
 

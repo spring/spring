@@ -21,36 +21,34 @@
 // But this holds the potential to ahve enough code put inside it to
 // replace the chaser and scouter agents when combined with a
 // more itnelligent Tunit structure.
+class Tunit;
 
-#define S_DEFENCE 15
-#define S_POWER 8
-#define S_FACTORY 8
 class Task {
 public:
 	Task(){}
 	Task(Global* GL);
 	Task(Global* GL,string uname, int b_spacing = 9); //Used to start a construction task
-	Task(Global* GL,  bool repair,bool re);
+	Task(Global* GL,  int b_type, Tunit* tu);
 	Task(Global* GL, Command _c);
 	virtual ~Task(){}
 
 	bool execute(int uid);
 	// executes the task on the unit whose id is supplied.
 
-	void refresh();
-	// err, forgotten what this does, I'll check back when I have looked
 
 	Command c;
 
-	// Used if this task is to build somehting only.
+	// Used if this task is to build something only.
 	string targ;
 	bool construction;
 	int spacing;
 	bool help;
 	int team;
+	int type;
 
 	int executions;
 	bool valid;
+	Tunit* t;
 	// Is this task valid or can it never be carried out? If this si set
 	// to false then the task will probably get deleted before its used.
 
@@ -59,11 +57,17 @@ protected:
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+enum cdgun {cd_no, cd_yes, cd_unsure};
 class Tunit{
 public:
-	Tunit(){}
+	Tunit(){
+		uid = 0;
+		bad = true;
+		can_dgun = cd_unsure;
+		iscommander = false;
+	}
 	Tunit(Global* GLI, int id);
+	bool iscommander;
 	/*units dont need initialising after construction. When the constructor is called all the necessary variables to
 	initialise will be present and InitAI would be called immediatly afterwards so why complicate the procedure with multiple calls*/
 
@@ -71,13 +75,19 @@ public:
 
 
 	void AddTask(string buildname, int spacing = 40); // Add a cosntruction task.
-	void AddTask(bool repair, bool rep,bool re); // repair nearby unti that is currently being built
+	void AddTask(int btype); // repair nearby unit that is currently being built
 	void AddTaskt(Task t){
 		tasks.push_back(t);
 	}
+	bool builder;
+	bool attacker;
+	bool scouter;
+	bool factory; // Is this unit a factory?
 
 	bool execute(Task t); // Execute this task.
 	string GetBuild(int btype,bool water);
+	string GetBuild(vector<string> v, bool efficiency=true);
+	cdgun can_dgun;
 
 	int uid; // The units ID.
 	const UnitDef* ud; // It's unitDef
@@ -86,13 +96,13 @@ public:
 	list<Task> tasks; // Saved task list of tasks yet to eb done.
 	int frame; // How many frames old is this unit.
 	int creation; // What game frame was this unti created in.
-	int BList; // What build tree does this unti have?
-	bool factory; // Is this unit a factory?
+	
 	bool repeater; // when it finishes its build queue it gets given a new one
 	bool guarding; //  when ti finishes its buidl queue it guards another unit
 	bool scavenge; // When it finishes its build queue it ressurects thgins and reclaims obstacles and trees
 	bool waiting; // Has this unti bene given a task that would be a ludicrous thign to do and is waiting for it to become feasible?
 	bool reclaiming;
+
 
 	bool bad;
 protected:
@@ -101,14 +111,16 @@ protected:
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-// This can be used to cotnrol a group fo untis without iterating
-// through each unti in turn.
-// Could do with more complete implementation fo extra functions
+// This can be used to control a group of units without iterating
+// through each unit in turn.
+// Could do with more complete implementation of extra functions
 // and actually be used.
 
 class ugroup{
 public:
-	ugroup(){}
+	ugroup(){
+		G=0;
+	}
 	ugroup(Global* GLI){
 		G = GLI;
 	}

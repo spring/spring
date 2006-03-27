@@ -4,9 +4,7 @@
 
 void Assigner::InitAI(Global* GLI){
 	G = GLI;
-	if(G->L.FirstInstance() == true){
-		LOG << " :: " << G->cb->GetMapName() << endline << " :: " << G->cb->GetModName() << endline << " :: map size " << G->cb->GetMapWidth()/64 << " x "  << G->cb->GetMapHeight()/64 << endline;
-	}
+	LOG << " :: " << G->cb->GetMapName() << endline << " :: " << G->cb->GetModName() << endline << " :: map size " << G->cb->GetMapWidth()/64 << " x "  << G->cb->GetMapHeight()/64 << endline;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -31,7 +29,6 @@ void Assigner::UnitFinished(int unit){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Assigner::Update(){
-	int frameNum=G->cb->GetCurrentFrame();
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// Every second check our metal makers. (nearly the
 	// same code as that in the metal maker AI)
@@ -47,7 +44,7 @@ void Assigner::Update(){
 					break;
 				if(ui->second.turnedOn){
 					needed-=ui->second.energyUse;
-					TCommand tc;
+					TCommand TCS(tc,_T("assigner:: turnoff"));
 					tc.created = G->cb->GetCurrentFrame();
 					tc.Priority = tc_low;
 					tc.unit = ui->first;
@@ -65,7 +62,7 @@ void Assigner::Update(){
 					break;
 				if(!ui->second.turnedOn){
 					needed-=ui->second.energyUse;
-					TCommand tc;
+					TCommand TCS(tc,_T("assigner:: turnon"));
 					tc.created = G->cb->GetCurrentFrame();
 					tc.Priority = tc_low;
 					tc.unit = ui->first;
