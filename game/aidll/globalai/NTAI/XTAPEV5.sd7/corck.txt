@@ -1,0 +1,1 @@
+corrl, B_MEX, B_MEX, corrl, B_POWER, B_POWER, B_GEO, repair, repair, repair, corhlt, repair, repair, repair, B_MEX, cortoast, B_POWER, B_POWER, repair, repair, repair, repair, B_MEX, B_MEX, B_GEO, repair, repair, coralab, corrl, corrl, corrl, repair, repeat
