@@ -12,6 +12,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
 #include <boost/filesystem/path.hpp>
+#include "Game/UI/InfoConsole.h"
 #include "SDL_video.h"
 #include "mmgr.h"
 
@@ -151,8 +152,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 	CFileHandler VPFile(std::string("shaders/")+filename);
 	if (!VPFile.FileExists ())
 	{
-		std::cerr << "Warning: ProgramStringIsNative couldn't find " <<
-			filename << "." << std::endl;
+		(*info) << "Warning: ProgramStringIsNative couldn't find " << filename << ".\n";
 		return false;
 	}
 	char *VPbuf = new char[VPFile.FileSize()];
