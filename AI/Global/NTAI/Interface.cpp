@@ -1,8 +1,8 @@
 //-------------------------------------------------------------------------
-// JCAI version 0.21
+// NTAI
 //
-// A skirmish AI for the TA Spring engine.
-// Copyright Jelmer Cnossen
+// 
+// Copyright 2004-2006 AF
 // 
 // Released under GPL license: see LICENSE.html for more information.
 //-------------------------------------------------------------------------
@@ -14,25 +14,21 @@
 
 std::set<IGlobalAI*> ais;
 
-DLL_EXPORT int GetGlobalAiVersion()
-{
+DLL_EXPORT int GetGlobalAiVersion(){
 	return GLOBAL_AI_INTERFACE_VERSION;
 }
 
-DLL_EXPORT void GetAiName(char* name)
-{
+DLL_EXPORT void GetAiName(char* name){
 	strcpy(name,AI_NAME);
 }
 
-DLL_EXPORT IGlobalAI* GetNewAI()
-{
-	CGlobalAI* ai=new CGlobalAI(ais.size());
+DLL_EXPORT IGlobalAI* GetNewAI(){
+	CGlobalAI* ai=new CGlobalAI();
 	ais.insert(ai);
 	return ai;
 }
 
-DLL_EXPORT void ReleaseAI(IGlobalAI* i)
-{
+DLL_EXPORT void ReleaseAI(IGlobalAI* i){
 	delete (CGlobalAI*)i;
 	ais.erase(i);
 }

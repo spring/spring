@@ -9,6 +9,7 @@
 
 class CMetalHandler{	
 	//std::vector<float3> *parseMap();
+	Global* G;
 	IAICallback *cb;
 	float getMetalAmount(int x, int z);
 public:
@@ -18,8 +19,11 @@ public:
 	std::vector<float3> hotspot;
 	std::vector<int> mex;
 	void loadState();
-	CMetalHandler(IAICallback *callback);
+	CMetalHandler(Global* GLI);
 	virtual ~CMetalHandler(void);
+	map<int,float3> inf_index;
+	map<int,float> infestations; // Does this mex spot infested with enemy rodents?!
+	map<int, float3> rodents;
 
 	/**
 	*	Return best zone to extract metal, where there
@@ -75,8 +79,10 @@ public:
 	*/
 	
 	void addExtractor(int unit) {
-			mex.push_back(unit);
+		mex.push_back(unit);
 	};
+	void EnemyExtractor(float3 position, int mex);
+	void EnemyExtractorDead(float3 position, int mex);
 
 	/**
 	*	Used to notify the metal handler that a metal unit

@@ -28,6 +28,7 @@ private:
 	Global* G;
 	map<int, list<float3> > cp;
 	list<float3> mexes;
+	list<float3> sectors;
 };
 
 #endif

@@ -1,12 +1,4 @@
-
-/*#include "./MetalHandler.h"
-#include <string.h>
-#include <vector>
-#include <list>
-#include <iterator>
-#include "GlobalStuff.h"
-#include "Sim/Units/UnitDef.h"*/
-#include "helper.h"
+#include "../helper.h"
 
 #define SAVEGAME_VER 4
 
@@ -17,18 +9,12 @@
 //#define MIN_PATCH_METAL				9
 //#define SEARCH_PASS					32
 #define HOT_SPOT_RADIUS_MULTIPLYER	1.3f
-#define NEAR_RADIUS			800
-#define NEAR_RADIUS_2			1200
-#define NEAR_RADIUS_3			2000
-#define NEAR_RADIUS_4			4050
-#define NEAR_RADIUS_5			8000
-#define NEAR_RADIUS_6			12000
-#define NEAR_RADIUS_7			20000
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-CMetalHandler::CMetalHandler(IAICallback *callback){
-	cb=callback;
+CMetalHandler::CMetalHandler(Global* GLI){
+	G = GLI;
+	cb=G->cb;
 	m = new MetalMap(cb);
 }
 
@@ -160,7 +146,7 @@ std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,/*f
 	for (i=0;i<this->metalpatch.size();i++){
 		valid=true;
 		float3 t1=metalpatch.at(i);
-		if (t1.y<minMetal) break;
+		if (t1.y<minMetal) continue;
 		//float d=(pos.x-t1.x)*(pos.x-t1.x)+(pos.z-t1.z)*(pos.z-t1.z);
 		//if (d>radius) continue;
 		for(std::vector<int>::iterator it=mex.begin();it!=mex.end();++it){
@@ -169,10 +155,22 @@ std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,/*f
 			} 
 			float3 t2=cb->GetUnitPos((*it));
 			float d1=(t1.x-t2.x)*(t1.x-t2.x)+(t1.z-t2.z)*(t1.z-t2.z);
+			
 			if (d1<mrad){
 				valid=false;
 				break;
 			}
+		}
+		float3 secpos = G->WhichSector(t1);
+		int v_index = -1;
+		for(map<int,float3>::iterator i = inf_index.begin(); i != inf_index.end(); ++i){
+			if(secpos == i->second){
+				v_index = i->first;
+				break;
+			}
+		}
+		if(v_index != -1){
+			if(infestations.find(v_index) != infestations.end())	continue;
 		}
 		if (valid){
 			v->push_back(t1);
@@ -189,23 +187,73 @@ std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,/*f
 
 float3 CMetalHandler::getNearestPatch(float3 pos, float minMetal, float depth, const UnitDef* ud) {
 	std::vector<float3> *v=getMetalPatch(pos,minMetal,/*NEAR_RADIUS,*/depth);
-	float3 posx = ZeroVector;
-	float d = 1000000;
-	float temp = 0;
+	float3 posx = UpVector;
+	float d = 999999999.0f;
+	float temp = 999999999.0f;
 	if(v->empty() == false){
 		posx = v->front();
-		d = posx.distance(pos);
+		d = posx.distance2D(pos);
 		for(vector<float3>::iterator vi = v->begin(); vi != v->end(); ++vi){
-			temp = vi->distance(pos);
+			temp = vi->distance2D(pos);
 			if((temp < d)&&(cb->CanBuildAt(ud,*vi) == true)){
 				posx = *vi;
 				d = temp;
-				temp = 1000000;
+				temp = 999999999.0f;
 			}
 		}
 	}
 	delete(v);
 	return posx;
 }
+
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+// An enemy extractor has been spotted! Signal the class that an
+// infestation has been found and needs avoiding!
+void CMetalHandler::EnemyExtractor(float3 position,int mex){
+	if(rodents.find(mex) != rodents.end()) return;
+	float3 sector_pos = G->WhichSector(position);
+	rodents[mex] = sector_pos;
+	int v_index = -1;
+	for(map<int,float3>::iterator i = inf_index.begin(); i != inf_index.end(); ++i){
+		if(sector_pos == i->second){
+			v_index = i->first;
+			break;
+		}
+	}
+	if(v_index == -1){
+		v_index = inf_index.size();
+	}
+	if(infestations.find(v_index) != infestations.end()){
+		infestations[v_index] += 1;
+	}else{
+		infestations[v_index] = 1;
+	}
+}
+
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+void CMetalHandler::EnemyExtractorDead(float3 position,int mex){
+	if(inf_index.empty() == false){
+		float3 sector_pos = G->WhichSector(position);
+		int v_index = -1;
+		for(map<int,float3>::iterator i = inf_index.begin(); i != inf_index.end(); ++i){
+			if(sector_pos == i->second){
+				v_index = i->first;
+				break;
+			}
+		}
+		if(v_index != -1){
+			if(infestations.find(v_index) != infestations.end()){
+				infestations[v_index] -= 1;
+			}else{
+				infestations[v_index] = 0;
+			}
+		}
+	}
+	if(rodents.find(mex) != rodents.end()){
+		rodents.erase(mex);
+	}
+}
+
+
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

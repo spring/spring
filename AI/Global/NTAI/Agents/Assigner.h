@@ -1,14 +1,15 @@
 #ifndef ASSIGNER_H
 #define ASSIGNER_H
 #include <list>
-//#include "IAICallback.h"
 #include "AICallback.h"
 #include "Sim/Units/UnitDef.h"
 
 class Assigner{
 public:
-	Assigner(){}
+	Assigner(){
+	G = 0;}
 	virtual ~Assigner(){
+		myUnits.erase(myUnits.begin(),myUnits.end());
 		myUnits.clear();
 	}
 	void InitAI(Global* GLI);

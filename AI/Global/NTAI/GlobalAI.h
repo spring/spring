@@ -9,7 +9,7 @@
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // The name NTAI gives to the spring engine.
 
-const char AI_NAME[]= {"NTAI"};
+const char AI_NAME[]= {"NTAI XE7b"};
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 using namespace std;
@@ -17,7 +17,7 @@ using namespace std;
 
 class CGlobalAI : public IGlobalAI{
 public:
-	CGlobalAI(int aindex);
+	CGlobalAI();
 	virtual ~CGlobalAI();
 	void InitAI(IGlobalAICallback* callback, int team);
 	void UnitCreated(int unit);
@@ -35,14 +35,10 @@ public:
 	void Update();
 	int HandleEvent (int msg, const void *data);
 	int tteam;
-	bool badmap;
-	int ai_index;
 	int team;
-	bool alone;
 	Global* GL;
 	IGlobalAICallback* cg;
 	IAICallback* acallback;
-	bool helped;
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)

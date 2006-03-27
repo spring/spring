@@ -5,7 +5,7 @@ MetalMap::MetalMap(IAICallback* ai)
 {
 	this->cb = ai;
 
-	MinMetalForSpot = 30; // from 0-255, the minimum percentage of metal a spot needs to have
+	MinMetalForSpot = 100; // from 0-255, the minimum percentage of metal a spot needs to have
 							//from the maximum to be saved. Prevents crappier spots in between taken spaces.
 							//They are still perfectly valid and will generate metal mind you!
 	MaxSpots = 4000; //If more spots than that are found the map is considered a metalmap, tweak this as needed
@@ -176,15 +176,15 @@ void MetalMap::GetMetalPoints()
 	}
 
 	timetaken = time (NULL) - timetaken;
-	char c[200];
-	sprintf(c,"Time taken to generate spots: %i seconds.",timetaken);
-	cb->SendTextMsg(c,0);
+	//char c[200];
+	//sprintf(c,"Time taken to generate spots: %i seconds.",timetaken);
+	//cb->SendTextMsg(c,0);
 	
 }
 
 void MetalMap::SaveMetalMap(){
 	char file[100];
-	sprintf(file,"aidll/globalai/%s.met",cb->GetMapName()); //Youll need a folder to save stuff to exist else it will crash
+	sprintf(file,"aidll/globalai/NTAI/MexData/%s.mv1",cb->GetMapName()); //Youll need a folder to save stuff to exist else it will crash
 
 	FILE *save_file = fopen(file, "wb");
 
@@ -193,17 +193,18 @@ void MetalMap::SaveMetalMap(){
 		fprintf(save_file, "%f %f %f\n",VectoredSpots[i].x,VectoredSpots[i].z,VectoredSpots[i].y);
 	
 	fclose(save_file);
-	cb->SendTextMsg("Metal Spots created and saved!",0);
+	//cb->SendTextMsg("Metal Spots created and saved!",0);
 }
 
 bool MetalMap::LoadMetalMap()
 {
 	char file[100];
-	sprintf(file,"aidll/globalai/%s.met",cb->GetMapName());//have this folder exist or crashes are imminent
-	FILE *load_file;
+	sprintf(file,"aidll/globalai/NTAI/MexData/%s.mv1",cb->GetMapName());//have this folder exist or crashes are imminent
+	FILE *load_file = 0;
 
 	// load Spots if file exists 
-	if(load_file = fopen(file, "r")){
+	load_file = fopen(file, "r");
+	if(load_file != 0){
 		fscanf(load_file, "%i %i\n",&AverageMetal,&NumSpotsFound);
 		VectoredSpots.resize(NumSpotsFound);
 		for(int i = 0; i < NumSpotsFound; i++)
@@ -211,14 +212,13 @@ bool MetalMap::LoadMetalMap()
 		fclose(load_file);
 		//cb->SendTextMsg("Metal Spots loaded from file",0);
 		return true;
-	}
-	else
+	}else
 		return false;
 
 }
 
 void MetalMap::MakeTGA(unsigned char* data){ //heavily based on Zaphods MakeTGA, thanks!
-	// open file
+	/*// open file
 	FILE *fp=fopen("debugVectoredSpots.tga", "wb");
 	// fill & write header
 	char Header[18];
@@ -242,5 +242,40 @@ void MetalMap::MakeTGA(unsigned char* data){ //heavily based on Zaphods MakeTGA,
 
 			fwrite (out, 1, 1, fp);
 			}
+	fclose(fp);
+	*/
+	string filename = "aidll/globalai/NTAI/mexdebug/";
+	filename += cb->GetMapName();
+	filename += ".tga";
+	FILE *fp=fopen(filename.c_str(), "wb");
+	// fill & write header
+	char Header[18];
+	memset(Header, 0, sizeof(Header));
+
+	Header[2] = 2;		// uncompressed gray-scale
+	Header[12] = (char) (MetalMapWidth & 0xFF);
+	Header[13] = (char) (MetalMapWidth >> 8);
+	Header[14] = (char) (MetalMapHeight & 0xFF);
+	Header[15] = (char) (MetalMapHeight >> 8);
+	Header[16] = 24; // 8 bits/pixel
+	Header[17] = 0x20;	
+
+	fwrite(Header, 18, 1, fp);
+
+	uchar out[3];
+	const unsigned char* mmap = cb->GetMetalMap();
+
+	for (int y=0;y<MetalMapHeight;y++)
+		for (int x=0;x<MetalMapWidth;x++){
+			out[0]= 0;// blue green red
+			if(data[y * MetalMapWidth + x] != 0 ){
+				out[1] = 0;
+			}else{
+				out[1] = mmap[y * MetalMapWidth + x];
+			}
+			out[2] = data[y * MetalMapWidth + x];
+
+			fwrite (out, 3, 1, fp);
+		}
 	fclose(fp);
 }
