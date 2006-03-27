@@ -83,6 +83,13 @@ void LoadStartPicture()
 		name=jpgs[selected-bmps.size()];
 
 	CBitmap bm(name);
+
+	/* HACK Really big load pictures made a GLU choke. */
+	if (bm.xsize > gu->screenx || bm.ysize > gu->screeny)
+	{
+		bm = bm.CreateRescaled(gu->screenx, gu->screeny);
+	}
+
 	startupTexture=bm.CreateTexture(false);
 }
 
