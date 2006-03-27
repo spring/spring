@@ -1,0 +1,22 @@
+[AI]
+{
+	// NTAI mod.tdf definition :: AF XE7
+	version=XE7; // has no effect and is backwards compatible between XE4/XE5/XE6
+	modname=FF 1.1 -S; // here for visibility purposes
+	GAIA=0; // this is not a gaia mod
+	
+	spacemod=1; // this is a space mod and ahs floating units that arent shipyards water units
+	abstract=0; // Uses the abstract buildtrees in the Default folder rather than custom defined buildtrees
+	use_mod_default=1;
+	
+	scout_speed=60; // minimum speed to be a scout is 60
+	dynamic_selection=1; // scouts/atatckers chosen dynamically rather than loaded from the scouters and atatckers tags below
+	use_mod_default=0; // load from NTAI\modname\commander.txt /builder.txt/factory.txt but mod specific versions of them
+	use_mod_default_if_absent=1; // if unitname.txt cant be laoded then builder/commander/factory.txt is loaded instead
+    Scouters=;
+	Attackers=;
+	cheap_multiplier=2;
+	factory_spacing=10;
+	power_spacing = 4;
+	NTAI_update=1;
+}
