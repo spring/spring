@@ -27,7 +27,6 @@ void UnloadStartPicture();
 bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);
 unsigned int LoadFragmentProgram(const char* filename);
-void CheckParseErrors();
 
 void LoadExtensions();
 void UnloadExtensions();
