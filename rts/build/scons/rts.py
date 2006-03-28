@@ -182,7 +182,12 @@ def generate(env):
 		elif int(level) >= 1 and int(level) <= 3:
 			print "level", level, "debugging enabled,",
 			env['debug'] = level
-			env.AppendUnique(CCFLAGS=['-ggdb'+level], CPPDEFINES=['DEBUG', '_DEBUG'])
+			# MinGW gdb chokes on the dwarf debugging format produced by '-ggdb',
+			# so use the more generic '-g' instead.
+			if env['platform'] == 'windows':
+				env.AppendUnique(CCFLAGS=['-g'], CPPDEFINES=['DEBUG', '_DEBUG'])
+			else:
+				env.AppendUnique(CCFLAGS=['-ggdb'+level], CPPDEFINES=['DEBUG', '_DEBUG'])
 		else:
 			print "\ninvalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
 			env.Exit(1)
