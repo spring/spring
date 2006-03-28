@@ -429,6 +429,8 @@ void CDynWater::DrawReflection(CGame* game)
 	featureHandler->Draw();
 	ph->Draw(true);
 
+	sky->DrawSun();
+
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
 

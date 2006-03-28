@@ -578,6 +578,7 @@ void CAdvSky::DrawSun()
 	glMultMatrixf(m.m);
 	
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_ALPHA_TEST);
 	unsigned char buf[32];
 	glEnable(GL_TEXTURE_2D);
 
@@ -672,13 +673,14 @@ void CAdvSky::InitSun()
 	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 //	gluBuild2DMipmaps(GL_TEXTURE_2D,1 ,32, 2, GL_ALPHA, GL_UNSIGNED_BYTE, mem);
-	glTexImage2D(GL_TEXTURE_2D,0,1 ,32, 2,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE ,32, 2,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
 
 	delete[] mem;
 
 	float3 ldir=modSunDir.cross(UpVector);
+	ldir.Normalize();
 	float3 udir=modSunDir.cross(ldir);
 
 	sunFlareList=glGenLists(1);
