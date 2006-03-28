@@ -43,8 +43,13 @@ void CTorpedoLauncher::Fire(void)
 //	} else {
 		dir=targetPos-weaponPos;
 		dir.Normalize();
+		if(weaponDef->trajectoryHeight>0){
+			dir.y+=weaponDef->trajectoryHeight;
+			dir.Normalize();
+		}
 //	}
-	float3 startSpeed=dir*0.01;
+	float3 startSpeed=dir*weaponDef->startvelocity;
+
 //	if(onlyForward)
 //		startSpeed+=owner->speed*0.5;
 	new CTorpedoProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15),targetUnit, weaponDef);
