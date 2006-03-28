@@ -282,7 +282,7 @@ def check_libraries(env, conf):
 	if not conf.CheckLib('GL') and not conf.CheckLib('opengl32'):
 		print "You need an OpenGL development library for this program"
 		env.Exit(1)
-	if not conf.CheckLib('glu') and not conf.CheckLib('glu32'):
+	if not conf.CheckLib('GLU') and not conf.CheckLib('glu32'):
 		print "You need the OpenGL Utility (GLU) library for this program"
 		env.Exit(1)
 	if not conf.CheckLib("z"):
