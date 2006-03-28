@@ -10,6 +10,41 @@ def exists(env):
 	return True
 
 
+# HACK   Oh noes, msvcrt doesn't support arbitrary lenght commandlines :/
+# source: http://www.scons.org/cgi-sys/cgiwrap/scons/moin.cgi/LongCmdLinesOnWin32
+def fix_windows_spawn(env):
+	if env['platform'] == 'windows':
+		import win32file
+		import win32event
+		import win32process
+		import win32security
+		import string
+
+		def my_spawn(sh, escape, cmd, args, spawnenv):
+			for var in spawnenv:
+				spawnenv[var] = spawnenv[var].encode('ascii', 'replace')
+
+			sAttrs = win32security.SECURITY_ATTRIBUTES()
+			StartupInfo = win32process.STARTUPINFO()
+			newargs = string.join(map(escape, args[1:]), ' ')
+			cmdline = cmd + " " + newargs
+
+			# check for any special operating system commands
+			if cmd == 'del':
+				for arg in args[1:]:
+					win32file.DeleteFile(arg)
+				exit_code = 0
+			else:
+				# otherwise execute the command.
+				hProcess, hThread, dwPid, dwTid = win32process.CreateProcess(None, cmdline, None, None, 1, 0, spawnenv, None, StartupInfo)
+				win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
+				exit_code = win32process.GetExitCodeProcess(hProcess)
+				win32file.CloseHandle(hProcess);
+				win32file.CloseHandle(hThread);
+				return exit_code
+		env['SPAWN'] = my_spawn
+
+
 def generate(env):
 	# We break unitsync if the filename of the shared object has a 'lib' prefix.
 	# It is also nicer for the AI shared objects.
@@ -102,6 +137,7 @@ def generate(env):
 
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
+		fix_windows_spawn(env)
 
 		gcc_version = config.check_gcc_version(env)
 
@@ -230,7 +266,7 @@ def generate(env):
 		elif env['platform'] == 'windows':
 			include_path += ['crashrpt/include', 'mingwlibs/include']
 			lib_path += ['crashrpt/lib', 'mingwlibs/lib']
-			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'])
+			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'], LINKFLAGS = ['-mwindows'])
 		# use '-pthreads' for Solaris, according to /usr/include/boost/config/requires_threads.hpp
 
 		env.AppendUnique(CPPPATH=include_path, LIBPATH=lib_path)
@@ -259,3 +295,5 @@ def generate(env):
 		if not os.path.exists(env['cachedir']):
 			os.makedirs(env['cachedir'])
 		env.CacheDir(env['cachedir'])
+
+	fix_windows_spawn(env)

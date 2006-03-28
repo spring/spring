@@ -208,7 +208,7 @@ def check_openal(env, conf):
 
 
 def check_python(env, conf):
-	print "Checking for Python 2.4..."
+	print "Checking for Python 2.4...",
 	if env['platform'] == 'windows':
 		# On windows, guess the python install location by looking at sys.executable,
 		# which holds the full path to the python interpreter running this code.
@@ -216,15 +216,20 @@ def check_python(env, conf):
 		p2 = sys.executable.rfind('Python')
 		p3 = sys.executable.rfind('PYTHON')
 		path = sys.executable[:max(p1, p2, p3)] # Assume at least one exists
+		print path
 		env.AppendUnique(CPPPATH = [os.path.join(path, 'include')])
 		env.AppendUnique(LIBPATH = [os.path.join(path, 'libs')])
 	else:
+		print ""
 		guess_include_path(env, conf, 'Python', 'python2.4')
 
 
 def check_headers(env, conf):
 	print "\nChecking header files"
 
+	if not conf.CheckCHeader('zlib.h'):
+		print "Zlib headers are required for this program"
+		env.Exit(1)
 	if not conf.CheckCHeader('ft2build.h'):
 		print "Freetype2 headers are required for this program"
 		env.Exit(1)
@@ -274,12 +279,17 @@ def check_libraries(env, conf):
 	if env.Dictionary('CC').find('gcc') != -1: gcc = True
 	else: gcc = False
 
+	if not conf.CheckLib('GL') and not conf.CheckLib('opengl32'):
+		print "You need an OpenGL development library for this program"
+		env.Exit(1)
+	if not conf.CheckLib('glu') and not conf.CheckLib('glu32'):
+		print "You need the OpenGL Utility (GLU) library for this program"
+		env.Exit(1)
+	if not conf.CheckLib("z"):
+		print "Zlib is required for this program"
+		env.Exit(1)
 	if not conf.CheckLib("freetype"):
 		print "Freetype2 is required for this program"
-		env.Exit(1)
-	# second check for FreeBSD.
-	if not conf.CheckLib('SDL') and not conf.CheckLib('SDL-1.1'):
-		print 'LibSDL is required for this program'
 		env.Exit(1)
 	# second check for Windows.
 	if not conf.CheckLib('openal') and not conf.CheckLib('openal32'):
@@ -308,6 +318,28 @@ def check_libraries(env, conf):
 	# second check for Windows.
 	if not conf.CheckLib('IL') and not conf.CheckLib('devil'):
 		print "You need the DevIL image library for this program"
+		env.Exit(1)
+
+	if env['platform'] == 'windows':
+		if not conf.CheckLib('gdi32'):
+			print "On windows you need the gdi32 library for this program"
+			env.Exit(1)
+		if not conf.CheckLib('winmm'):
+			print "On windows you need the winmm library for this program"
+			env.Exit(1)
+		if not conf.CheckLib('wsock32'):
+			print "On windows you need the wsock32 library for this program"
+			env.Exit(1)
+		if not conf.CheckLib('mingw32'):
+			print "On windows you need the mingw32 library for this program"
+			env.Exit(1)
+		if not conf.CheckLib('SDLmain'):
+			print "On windows you need the SDLmain library for this program"
+			env.Exit(1)
+
+	# second check for FreeBSD.
+	if not conf.CheckLib('SDL') and not conf.CheckLib('SDL-1.1'):
+		print 'LibSDL is required for this program'
 		env.Exit(1)
 
 	if not env['disable_lua']:

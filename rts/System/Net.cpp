@@ -38,7 +38,10 @@ typedef int socklen_t;
 typedef struct hostent* LPHOSTENT;
 typedef struct in_addr* LPIN_ADDR;
 #define closesocket(x) close(x)
-typedef time_t __time64_t;
+#endif
+
+#ifdef __GNUC__
+#define __time64_t time_t
 #define _time64(x) time(x)
 #define _localtime64(x) localtime(x)
 #endif

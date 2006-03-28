@@ -52,28 +52,43 @@ def get_source(env, path, exclude_list = (), exclude_regexp = '^\.'):
 
 
 def get_spring_source(env):
-	exclude = [
+	exclude1 = [
 		'rts/AI',
 		'rts/build',
 		'rts/lib/libhpi',
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Main.cpp',          # see SConstruct
-		'rts\\System\\Main.cpp',        # for windows
 	]
 	# we may be called before we were configured (e.g. when cleaning)
 	if env.has_key('platform'):
 		if env['platform'] == 'windows':
-			exclude += ['rts\\System\\Platform\\Linux', 'rts\\Rendering\\GL\\GLXPBuffer.cpp']
+			exclude1 += [
+				'rts/System/Platform/Linux',
+				'rts/Rendering/GL/GLXPBuffer.cpp',
+				'rts/System/Platform/Win/DxSound.cpp']
 		else:
-			exclude += [
+			exclude1 += [
 				'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?
 				'rts/lib/minizip/iowin32.c',
 				'rts/System/Platform/Win',
 				'rts/System/wavread.cpp']
-		if env['disable_avi']: exclude += ['rts/System/Platform/Win/AVIGenerator.cpp']
-		if env['disable_lua']: exclude += ['rts/System/Script']
+		if env['disable_avi']: exclude1 += ['rts/System/Platform/Win/AVIGenerator.cpp']
+		if env['disable_lua']: exclude1 += ['rts/System/Script']
 
-	return get_source(env, 'rts', exclude_list = exclude)
+	# for Windows we must add the backslash equivalents
+	exclude = []
+	for f in exclude1:
+		exclude += [f]
+		exclude += [f.replace('/','\\')]
+
+	source = get_source(env, 'rts', exclude_list = exclude)
+	# HACK   compile OpenALSound instead of DxSound on Mingw
+	if not env.has_key('platform') or env['platform'] == 'windows':
+		if env.has_key('builddir'):
+			source += [os.path.join(env['builddir'], 'rts\\System\\Platform\\Linux\\OpenALSound.cpp')]
+		else:
+			source += ['rts\\System\\Platform\\Linux\\OpenALSound.cpp']
+	return source
 
 
 def get_AI_source(env, path, which):

@@ -42,7 +42,9 @@
 #endif
 
 #ifdef _WIN32
+#ifndef __MINGW32__
 #include "CrashRpt.h"
+#endif
 #include "Platform/Win/win32.h"
 #include <winreg.h>
 #include <direct.h>
@@ -202,7 +204,7 @@ SpringApp::~SpringApp()
 	creg::ClassBinder::FreeClasses ();
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 /**
  * @brief crash callback
  * @return whether callback was successful
@@ -242,7 +244,7 @@ bool SpringApp::Initialize ()
 	if (!ParseCmdLine ())
 		return false;
 
-#ifdef WIN32
+#ifdef _MSC_VER
 	// Initialize crash reporting
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
