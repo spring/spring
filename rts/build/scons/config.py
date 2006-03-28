@@ -54,12 +54,13 @@ def check_debian_powerpc(env, conf):
 def guess_include_path(env, conf, name, subdir):
 	print "  Guessing", name, "include path...",
 	if env['platform'] == 'windows':
-		if os.environ.has_key('INCLUDE'):   # MSVC
-			path = os.environ['INCLUDE']
-		elif os.environ.has_key('MINGDIR'): # MinGW
-			path = os.path.join(os.environ['MINGDIR'], 'include')
-		else:
-			path = 'c:/mingw/include'
+		#if os.environ.has_key('INCLUDE'):   # MSVC
+		#	path = os.environ['INCLUDE']
+		#elif os.environ.has_key('MINGDIR'): # MinGW
+		#	path = os.path.join(os.environ['MINGDIR'], 'include')
+		#else:
+		# For now, just assume they're in the mingwlibs package.
+		path = 'mingwlibs\\include'
 	elif env['platform'] == 'darwin':
 		path = '/opt/local/include'
 	else:
@@ -205,9 +206,20 @@ def check_openal(env, conf):
 		print "not found"
 		guess_include_path(env, conf, 'OpenAL', 'AL')
 
+
 def check_python(env, conf):
-	print "Looking for Python2.4 headers..."
-	guess_include_path(env, conf, 'Python', 'python2.4')
+	print "Checking for Python 2.4..."
+	if env['platform'] == 'windows':
+		# On windows, guess the python install location by looking at sys.executable,
+		# which holds the full path to the python interpreter running this code.
+		p1 = sys.executable.rfind('python')
+		p2 = sys.executable.rfind('Python')
+		p3 = sys.executable.rfind('PYTHON')
+		path = sys.executable[:max(p1, p2, p3)] # Assume at least one exists
+		env.AppendUnique(CPPPATH = [os.path.join(path, 'include')])
+		env.AppendUnique(LIBPATH = [os.path.join(path, 'libs')])
+	else:
+		guess_include_path(env, conf, 'Python', 'python2.4')
 
 
 def check_headers(env, conf):
@@ -216,7 +228,7 @@ def check_headers(env, conf):
 	if not conf.CheckCHeader('ft2build.h'):
 		print "Freetype2 headers are required for this program"
 		env.Exit(1)
-	# second check for FreeBSD SDL.
+	# second check for FreeBSD.
 	if not conf.CheckCHeader('SDL/SDL.h') and not conf.CheckCHeader('SDL11/SDL.h'):
 		print 'LibSDL headers are required for this program'
 		env.Exit(1)
@@ -265,16 +277,19 @@ def check_libraries(env, conf):
 	if not conf.CheckLib("freetype"):
 		print "Freetype2 is required for this program"
 		env.Exit(1)
-	# second check for FreeBSD SDL.
+	# second check for FreeBSD.
 	if not conf.CheckLib('SDL') and not conf.CheckLib('SDL-1.1'):
 		print 'LibSDL is required for this program'
 		env.Exit(1)
-	if not conf.CheckLib('openal'):
+	# second check for Windows.
+	if not conf.CheckLib('openal') and not conf.CheckLib('openal32'):
 		print 'OpenAL is required for this program'
 		env.Exit(1)
-	if not conf.CheckLib('python2.4'):
+	# second check for Windows.
+	if not conf.CheckLib('python2.4') and not conf.CheckLib('python24'):
 		print 'python is required for this program'
 		env.Exit(1)
+	# second check for Windows.
 	if not (conf.CheckLib('GLEW') or conf.CheckLib('glew32')):
 		print "You need GLEW to compile this program"
 		env.Exit(1)
@@ -290,7 +305,8 @@ def check_libraries(env, conf):
 	check_boost_library('thread', 'boost/thread.hpp')
 	check_boost_library('regex', 'boost/regex.hpp')
 
-	if not conf.CheckLib('IL'):
+	# second check for Windows.
+	if not conf.CheckLib('IL') and not conf.CheckLib('devil'):
 		print "You need the DevIL image library for this program"
 		env.Exit(1)
 

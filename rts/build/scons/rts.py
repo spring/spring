@@ -228,8 +228,8 @@ def generate(env):
 			env['SHLINKFLAGS'] = '$LINKFLAGS -dynamic'
 			env['SHLIBSUFFIX'] = '.dylib'
 		elif env['platform'] == 'windows':
-			include_path += ['crashrpt/include']
-			lib_path += ['crashrpt/lib']
+			include_path += ['crashrpt/include', 'mingwlibs/include']
+			lib_path += ['crashrpt/lib', 'mingwlibs/lib']
 			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'])
 		# use '-pthreads' for Solaris, according to /usr/include/boost/config/requires_threads.hpp
 
