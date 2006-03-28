@@ -58,11 +58,12 @@ def get_spring_source(env):
 		'rts/lib/libhpi',
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Main.cpp',          # see SConstruct
+		'rts\\System\\Main.cpp',        # for windows
 	]
 	# we may be called before we were configured (e.g. when cleaning)
 	if env.has_key('platform'):
 		if env['platform'] == 'windows':
-			exclude += ['rts/System/Platform/Linux', 'rts/Rendering/GL/GLXPBuffer.cpp']
+			exclude += ['rts\\System\\Platform\\Linux', 'rts\\Rendering\\GL\\GLXPBuffer.cpp']
 		else:
 			exclude += [
 				'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?
