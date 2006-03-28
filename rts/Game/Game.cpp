@@ -102,7 +102,7 @@
 #include "SDL_keyboard.h"
 #include "Platform/fp.h"
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include "Platform/Win/DxSound.h"
 #else
 #include "Platform/Linux/OpenALSound.h"
@@ -129,7 +129,7 @@ ISound* sound = 0;
 
 static ISound* CreateSoundInterface()
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
 	return new CDxSound ();
 #else
 	return new COpenALSound ();
