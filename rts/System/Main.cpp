@@ -482,8 +482,9 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 	// find the correct dir
 	const char *arg0=argv[0];
 	int a,s = strlen(arg0);
-	for (a=s-1;a>0;a--) 
-		if (arg0[a] == '\\') break;
+	for (a=s-1;a>0;a--)
+	    // Running in gdb causes the last dir separator to be a forward slash.
+		if (arg0[a] == '\\' || arg0[a] == '/') break;
 	if (a > 0) {
 		string path(arg0, arg0+a);
 		if (path.at(0) == '"')
