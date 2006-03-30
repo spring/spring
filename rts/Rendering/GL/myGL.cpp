@@ -75,7 +75,7 @@ void LoadStartPicture()
 	int num=bmps.size()+jpgs.size();
 	if(num==0)
 		return;
-	int selected=(int)(gu->usRandFloat()*(num-0.01));
+	int selected = gu->usRandInt() % num;
 
 	string name;
 	if(selected<bmps.size())
