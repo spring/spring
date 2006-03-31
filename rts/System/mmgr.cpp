@@ -149,7 +149,7 @@ static	const	unsigned int	paddingSize            = 32;
 // simply declares a forced breakpoint.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-#ifdef	WIN32
+#ifdef	_MSC_VER
 	#ifdef	_DEBUG
 	#define	m_assert(x) if ((x) == false) __asm { int 3 }
 	#else
@@ -222,7 +222,7 @@ static	void	doCleanupLogOnFirstRun()
 {
 	if (cleanupLogOnFirstRun)
 	{
-		unlink("memory.log");
+		remove("memory.log");
 		cleanupLogOnFirstRun = false;
 	}
 }
