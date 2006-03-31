@@ -101,8 +101,6 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	if(mem != NULL) delete [] mem;
-
 	CFileHandler file(filename);
 	if(file.FileExists() == false)
 	{
@@ -129,7 +127,7 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		ysize = 1;
 		mem=new unsigned char[4];
 		memset(mem, 0, 4);
-		return;   
+		return;
 	}
 
 	bool noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
