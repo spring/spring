@@ -269,8 +269,15 @@ def generate(env):
 			env['SHLINKFLAGS'] = '$LINKFLAGS -dynamic'
 			env['SHLIBSUFFIX'] = '.dylib'
 		elif env['platform'] == 'windows':
-			include_path += ['crashrpt/include', 'mingwlibs/include']
-			lib_path += ['crashrpt/lib', 'mingwlibs/lib']
+			include_path += ['mingwlibs\\include']
+			lib_path += ['mingwlibs\\lib']
+			if os.environ.has_key('MINGDIR'):
+				include_path += [os.path.join(os.environ['MINGDIR'], 'include')]
+				lib_path += [os.path.join(os.environ['MINGDIR'], 'lib')]
+			else:
+				print 'ERROR: MINGDIR environment variable not set and MSVC build unsupported.'
+				print 'Set it to your Dev-Cpp or MinGW install directory (e.g. C:\\Dev-Cpp) and try again.'
+				env.Exit(1)
 			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'], LINKFLAGS = ['-mwindows'])
 		# use '-pthreads' for Solaris, according to /usr/include/boost/config/requires_threads.hpp
 

@@ -54,20 +54,17 @@ def check_debian_powerpc(env, conf):
 def guess_include_path(env, conf, name, subdir):
 	print "  Guessing", name, "include path...",
 	if env['platform'] == 'windows':
-		#if os.environ.has_key('INCLUDE'):   # MSVC
-		#	path = os.environ['INCLUDE']
-		#elif os.environ.has_key('MINGDIR'): # MinGW
-		#	path = os.path.join(os.environ['MINGDIR'], 'include')
-		#else:
-		# For now, just assume they're in the mingwlibs package.
-		path = 'mingwlibs\\include'
+		path = [os.path.join('mingwlibs\\include', subdir)]
+		if os.environ.has_key('MINGDIR'):
+			path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
 	elif env['platform'] == 'darwin':
-		path = '/opt/local/include'
+		path = [os.path.join('/opt/local/include', subdir)]
 	else:
-		path = '/usr/include'
-	path = os.path.join(path, subdir)
-	env.AppendUnique(CPPPATH = [path])
-	print path
+		path = [os.path.join('/usr/include', subdir)]
+	env.AppendUnique(CPPPATH = path)
+	for f in path:
+		print f,
+	print ''
 
 
 def check_lua(env, conf):

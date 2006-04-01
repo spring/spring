@@ -18,7 +18,6 @@ def platform():
 		detected_platform='freebsd'
 	elif sys.platform == 'win32':
 		print "Detected platform : windows"
-		print "WARNING: support is incomplete"
 		detected_platform='windows'
 	elif sys.platform == 'darwin':
 		print "Detected platform : darwin"
