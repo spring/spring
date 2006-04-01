@@ -579,7 +579,7 @@ void CAdvSky::DrawSun()
 	
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
-	unsigned char buf[32];
+	unsigned char buf[128];
 	glEnable(GL_TEXTURE_2D);
 
 	float3 modCamera=sundir1*camera->pos.x+sundir2*camera->pos.z;
@@ -601,19 +601,26 @@ void CAdvSky::DrawSun()
 		CreateCover(baseX+1,baseY+1,covers[3]);
 	}
 
+	float mid=0;
 	for(int x=0;x<32;++x){
 		float cx1=covers[0][x]*(1-fx)+covers[1][x]*fx;
 		float cx2=covers[2][x]*(1-fx)+covers[3][x]*fx;
 
 		float cover=cx1*(1-fy)+cx2*fy;
-
 		if(cover>127.5)
 			cover=127.5;
+		mid+=cover;
 
-		buf[x]=(unsigned char)(255-cover*2);
+		buf[x+32]=(unsigned char)(255-cover*2);
+		buf[x+64]=(unsigned char)(128-cover);
 	}
+	mid*=1.0/32;
+	for(int x=0;x<32;++x){
+		buf[x]=(unsigned char)(255-mid*2);
+	}
+
 	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
-	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,32,1,GL_LUMINANCE,GL_UNSIGNED_BYTE,buf);
+	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,32,3,GL_LUMINANCE,GL_UNSIGNED_BYTE,buf);
 
 	glColor4f(0.4f*sunColor.x,0.4f*sunColor.y,0.4f*sunColor.z,0.0f);
 	glCallList(sunFlareList);
@@ -660,7 +667,7 @@ void CAdvSky::InitSun()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,128, 128, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 
-	for(int y=0;y<2;++y){
+	for(int y=0;y<4;++y){
 		for(int x=0;x<32;++x){
 			if(y==0 && x%2)
 				mem[(y*32+x)]=255;
@@ -675,7 +682,7 @@ void CAdvSky::InitSun()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 //	gluBuild2DMipmaps(GL_TEXTURE_2D,1 ,32, 2, GL_ALPHA, GL_UNSIGNED_BYTE, mem);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE ,32, 2,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE ,32, 4,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
 
 	delete[] mem;
 
@@ -693,9 +700,9 @@ void CAdvSky::InitSun()
 			float dx=sin(x*2*PI/256.0f);
 			float dy=cos(x*2*PI/256.0f);
 
-			glTexCoord2f(x/256.0f,0.25f);
+			glTexCoord2f(x/256.0f,0.125f);
 			glVertexf3(modSunDir*5+ldir*dx*0.0014f+udir*dy*0.0014f);
-			glTexCoord2f(x/256.0f,0.75f);
+			glTexCoord2f(x/256.0f,0.875f);
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
