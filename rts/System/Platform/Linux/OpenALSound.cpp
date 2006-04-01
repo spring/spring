@@ -20,6 +20,8 @@
 
 COpenALSound::COpenALSound()
 {
+	Sources = NULL;
+
 	maxSounds = configHandler.GetInt("MaxSounds",16);
 	noSound = (maxSounds == 0);
 	globalVolume = 1.0f;
@@ -52,14 +54,16 @@ COpenALSound::COpenALSound()
 	alDistanceModel (AL_INVERSE_DISTANCE);
 
 	posScale.x = 0.02f;
-	posScale.y = 0.02f;
-	posScale.z = 0.0005f;
+	posScale.y = 0.0005f;
+	posScale.z = 0.02f;
 }
 
 COpenALSound::~COpenALSound()
 {
 	if (noSound) {
-		delete[] Sources;
+		if (Sources != NULL) {
+			delete[] Sources;
+		}
 		return;
 	}
 	LoadedFiles.clear();
