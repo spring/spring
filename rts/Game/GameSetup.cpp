@@ -82,6 +82,7 @@ bool CGameSetup::Init(char* buf, int size)
 	file.GetDef(sourceport,"0","GAME\\SourcePort");
 	file.GetDef(limitDgun,"0","GAME\\LimitDgun");
 	file.GetDef(diminishingMMs,"0","GAME\\DiminishingMMs");
+	file.GetDef(disableMapDamage,"0","GAME\\DisableMapDamage");
 	demoName=file.SGetValueDef("","GAME\\Demofile");
 	if(!demoName.empty())
 		hostDemo=true;

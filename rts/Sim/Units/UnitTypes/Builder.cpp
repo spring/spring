@@ -20,6 +20,7 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "mmgr.h"
+#include <assert.h>
 #include <algorithm>
 using namespace std;
 
@@ -90,6 +91,7 @@ void CBuilder::Update()
 
 	if(terraforming && inBuildStance){
 		if(terraformLeft>0){
+			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 			float terraformSpeed=(buildSpeed+terraformHelp)/terraformLeft;
 			terraformLeft-=(buildSpeed+terraformHelp);
 			terraformHelp=0;
@@ -366,6 +368,53 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 	if(feature)
 		return false;
 
+	if(unitdef->floater || mapDamage->disabled){
+		/* Skip the terraforming job. */
+		terraformLeft=0;
+	}
+	else {
+		CalculateBuildTerraformCost(buildPos, unitdef);
+
+		terraforming=true;
+		terraformType=Terraform_Building;
+		terraformCenter=buildPos;
+		terraformRadius=(tx2-tx1)*SQUARE_SIZE;
+	}
+
+	SetBuildStanceToward(buildPos);
+
+	nextBuildType=type;
+	nextBuildPos=buildPos;
+
+	CUnit* b=unitLoader.LoadUnit(nextBuildType,nextBuildPos,team,true);
+	AddDeathDependence(b);
+	curBuild=b;
+	if (mapDamage->disabled && !(curBuild->floatOnWater)) {
+		/* The ground isn't going to be terraformed.
+		 * When the building is completed, it'll 'pop'
+		 * into the correct height for the (un-flattened)
+		 * terrain it's on.
+		 * 
+		 * To prevent this visual artifact, put the building
+		 * at the 'right' height to begin with.
+		 *
+		 * Duplicated from CMoveType::SlowUpdate(), which
+		 * is why we use the regular code for floating things.
+		 */
+		curBuild->pos.y=ground->GetHeight2(curBuild->pos.x,curBuild->pos.z);
+		curBuild->midPos.y=curBuild->pos.y+curBuild->relMidPos.y;
+	}
+	else {
+		float d=nextBuildPos.y-curBuild->pos.y;
+		curBuild->pos.y+=d;
+		curBuild->midPos.y+=d;
+	}
+
+	return true;
+}
+
+void CBuilder::CalculateBuildTerraformCost(float3 buildPos, UnitDef * unitdef)
+{
 	tx1 = (int)max((float)0,(buildPos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	tx2 = min(gs->mapx,tx1+unitdef->xsize);
 	tz1 = (int)max((float)0,(buildPos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
@@ -384,29 +433,8 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 			tcost+=fabs(delta)*cost;			
 		}
 	}
+	
 	terraformLeft=tcost;
-
-	if(unitdef->floater)
-		terraformLeft=0;
-
-	terraforming=true;
-	terraformType=Terraform_Building;
-	terraformCenter=buildPos;
-	terraformRadius=(tx2-tx1)*SQUARE_SIZE;
-
-	SetBuildStanceToward(buildPos);
-
-	nextBuildType=type;
-	nextBuildPos=buildPos;
-
-	CUnit* b=unitLoader.LoadUnit(nextBuildType,nextBuildPos,team,true);
-	AddDeathDependence(b);
-	curBuild=b;
-	float d=nextBuildPos.y-curBuild->pos.y;
-	curBuild->pos.y+=d;
-	curBuild->midPos.y+=d;
-
-	return true;
 }
 
 void CBuilder::DependentDied(CObject *o)

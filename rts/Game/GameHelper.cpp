@@ -130,7 +130,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 			(*fi)->StartFire();
 	}
 
-	if(damageGround && radius>height)
+	if(damageGround && !(mapDamage->disabled) && radius>height)
 	{
 		float damage = damages[0]*(1-height/radius);
 		if(damage>radius*10)
