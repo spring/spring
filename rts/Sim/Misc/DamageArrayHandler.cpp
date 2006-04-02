@@ -52,6 +52,8 @@ int CDamageArrayHandler::GetTypeFromName(std::string name)
 
 DamageArray::DamageArray() {
 	paralyzeDamage=false;
+	impulseBoost=craterBoost=0.0f;
+	impulseFactor=craterMult=1.0f;
 	damages=new float[numTypes];
 	for(int a=0;a<numTypes;++a)
 		damages[a]=1;
@@ -59,6 +61,10 @@ DamageArray::DamageArray() {
 
 DamageArray::DamageArray(const DamageArray& other){
 	paralyzeDamage=other.paralyzeDamage;
+	impulseBoost=other.impulseBoost;
+	craterBoost=other.craterBoost;
+	impulseFactor=other.impulseFactor;
+	craterMult=other.craterMult;
 	damages=new float[numTypes];
 	for(int a=0;a<numTypes;++a)
 		damages[a]=other.damages[a];

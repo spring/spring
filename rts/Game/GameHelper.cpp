@@ -65,7 +65,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType, float impulseFactor)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -106,10 +106,14 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 				mod=0;
 			dif/=dist+0.0001;
 			dif.y+=0.12;
+		
+		DamageArray damageDone = damages*mod2;
+		float3 addedImpulse = dif*(damages.impulseFactor*mod*(damages[0] + damages.impulseBoost)*3.2f);
+		
 		if(dist2<explosionSpeed*2){	//damage directly
-			(*ui)->DoDamage(damages*mod2,owner,dif*(impulseFactor*mod*damages[0]*3.2f));
+			(*ui)->DoDamage(damageDone,owner,addedImpulse);
 		}else {	//damage later
-			WaitingDamage* wd=new WaitingDamage(owner?owner->id:-1, (*ui)->id, damages*mod2, dif*(impulseFactor*mod*damages[0]*3.2f));
+			WaitingDamage* wd=new WaitingDamage(owner?owner->id:-1, (*ui)->id, damageDone, addedImpulse);
 			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed))&127].push_front(wd);
 		}
 	}
@@ -125,17 +129,17 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		if(radius>8 && dist<(*fi)->radius*1.1f && mod<0.1f)		//always do some damage with explosive stuff (ddm wreckage etc is to big to normally be damaged otherwise, even by bb shells)
 			mod=0.1f;
 		if(mod>0)
-			(*fi)->DoDamage(damages*mod,owner,dif*(impulseFactor*mod/dist*damages[0]));
+			(*fi)->DoDamage(damages*mod,owner,dif*(damages.impulseFactor*mod/dist*(damages[0] + damages.impulseBoost) ));
 		if(gs->randFloat()>0.7f)
 			(*fi)->StartFire();
 	}
 
-	if(damageGround && !(mapDamage->disabled) && radius>height)
+	if(damageGround && !(mapDamage->disabled) && radius>height && damages.craterMult > 0)
 	{
 		float damage = damages[0]*(1-height/radius);
 		if(damage>radius*10)
 			damage=radius*10;  //limit the depth somewhat
-		mapDamage->Explosion(pos,damage*impulseFactor,radius-height);
+		mapDamage->Explosion(pos,(damage + damages.craterBoost)*damages.craterMult,radius-height);
 	}
 
 	explosionGraphics[graphicType]->Explosion(pos,damages,radius,owner,gfxMod);
