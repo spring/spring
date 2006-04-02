@@ -1,17 +1,18 @@
-#ifndef MAPDAMAGE_H
-#define MAPDAMAGE_H
+#ifndef BASICMAPDAMAGE_H
+#define BASICMAPDAMAGE_H
+
+#include "MapDamage.h"
 
 #include <deque>
 #include <vector>
 
-
 class CUnit;
 
-class CMapDamage
+class CBasicMapDamage : public IMapDamage
 {
 public:
-	CMapDamage(void);
-	~CMapDamage(void);
+	CBasicMapDamage(void);
+	~CBasicMapDamage(void);
 
 	struct ExploBuilding {
 		int id;			//searching for building pointers inside these on dependentdied could be messy so we use the id
@@ -65,7 +66,4 @@ public:
 	void UpdateLos(void);
 };
 
-extern CMapDamage* mapDamage;
-
-
-#endif /* MAPDAMAGE_H */
+#endif /* BASICMAPDAMAGE_H */

@@ -248,7 +248,7 @@ CGame::CGame(bool server,std::string mapname)
 	ENTER_MIXED;
 	featureHandler=new CFeatureHandler();
 	ENTER_SYNCED;
-	mapDamage=new CMapDamage();
+	mapDamage=IMapDamage::GetMapDamage();
 	loshandler=new CLosHandler();
 	radarhandler=new CRadarHandler(false);
 	if(!server) net->Update();	//prevent timing out during load

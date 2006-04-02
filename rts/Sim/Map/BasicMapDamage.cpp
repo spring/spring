@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "MapDamage.h"
+#include "BasicMapDamage.h"
 #include "ReadMap.h"
 #include "Rendering/Map/BaseGroundDrawer.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
@@ -16,9 +16,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "mmgr.h"
 
-CMapDamage* mapDamage;
-
-CMapDamage::CMapDamage(void)
+CBasicMapDamage::CBasicMapDamage(void)
 {
 	for(int a=0;a<128;++a)
 		unsinkable[a]=false;
@@ -51,9 +49,11 @@ CMapDamage::CMapDamage(void)
 		invHardness[a]=1.0f/readmap->terrainTypes[a].hardness;
 
 	mapHardness=atof(readmap->mapDefParser.SGetValueDef("100","MAP\\MapHardness").c_str());
+	
+	disabled = false;
 }
 
-CMapDamage::~CMapDamage(void)
+CBasicMapDamage::~CBasicMapDamage(void)
 {
 	while(!explosions.empty()){
 		delete explosions.front();
@@ -62,7 +62,7 @@ CMapDamage::~CMapDamage(void)
 	delete[] inRelosQue;
 }
 
-void CMapDamage::Explosion(const float3& pos, float strength,float radius)
+void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 {
 	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
 //		info->AddLine("Map damage explosion outside map %.0f %.0f",pos.x,pos.z);
@@ -143,7 +143,7 @@ void CMapDamage::Explosion(const float3& pos, float strength,float radius)
 	readmap->Explosion(pos.x,pos.z,strength);
 }
 
-void CMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
+void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
 	for(int y=y1;y<y2;y++){
     for(int x=x1;x<x2;x++){
@@ -232,7 +232,7 @@ void CMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	}
 }
 
-void CMapDamage::Update(void)
+void CBasicMapDamage::Update(void)
 {
 START_TIME_PROFILE;
 
@@ -335,7 +335,7 @@ START_TIME_PROFILE;
 END_TIME_PROFILE("Map damage");
 }
 
-void CMapDamage::UpdateLos(void)
+void CBasicMapDamage::UpdateLos(void)
 {
 	int updateSpeed=(int)(relosSize*0.01)+1;
 

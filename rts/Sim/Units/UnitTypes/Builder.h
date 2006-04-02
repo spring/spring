@@ -24,6 +24,7 @@ public:
 	void DependentDied(CObject* o);
 
 	bool StartBuild(const string& type,float3& pos);
+	void CalculateBuildTerraformCost(float3 buildPos, UnitDef * unitdef);
 	void StopBuild(bool callScript=true);
 	void SetRepairTarget(CUnit* target);
 	void SetReclaimTarget(CSolidObject* object);
