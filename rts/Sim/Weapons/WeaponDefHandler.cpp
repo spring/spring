@@ -192,7 +192,17 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		}
 	}
 
-	weaponDefs[id].impulseFactor=atof(sunparser->SGetValueDef("1", weaponname + "\\impulsefactor").c_str());
+	weaponDefs[id].damages.impulseFactor=atof(sunparser->SGetValueDef("1", weaponname + "\\impulsefactor").c_str());
+	weaponDefs[id].damages.impulseBoost=atof(sunparser->SGetValueDef("0", weaponname + "\\impulseboost").c_str());
+	std::string craterMult;
+	if (!sunparser->SGetValue(craterMult, weaponname + "\\cratermult")){
+		/* No entry given. Default: old behaviour. */
+		weaponDefs[id].damages.craterMult=weaponDefs[id].damages.impulseFactor;
+	} else {
+		weaponDefs[id].damages.craterMult=atof(craterMult.c_str());
+	}
+	weaponDefs[id].damages.craterBoost=atof(sunparser->SGetValueDef("0", weaponname + "\\craterboost").c_str());
+
 	weaponDefs[id].areaOfEffect=atof(sunparser->SGetValueDef("8", weaponname + "\\areaofeffect").c_str())*0.5;
 	weaponDefs[id].projectilespeed = atof(sunparser->SGetValueDef("0", weaponname + "\\weaponvelocity").c_str())/GAME_SPEED;
 	weaponDefs[id].startvelocity = max(0.01,atof(sunparser->SGetValueDef("0", weaponname + "\\startvelocity").c_str())/GAME_SPEED);

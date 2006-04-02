@@ -6,6 +6,7 @@ struct DamageArray
 	static int numTypes;
 	float* damages;
 	bool paralyzeDamage;
+	float impulseFactor, impulseBoost, craterMult, craterBoost;
 
 	DamageArray();
 	DamageArray(const DamageArray& other);
