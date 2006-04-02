@@ -54,8 +54,6 @@ public:
 	int neededLosUpdate;
 	std::deque<int> relosUnits;
 
-	float mapHardness;
-
 	float craterTable[10000];
 	float invHardness[256];
 
