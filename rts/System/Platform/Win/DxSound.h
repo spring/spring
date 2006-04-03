@@ -21,7 +21,7 @@
 class CWorldObject;
 
 using namespace std;
-class CDxSound : public ISound
+class CDxSound : public CSound
 {
 public:
 	CDxSound();
@@ -33,6 +33,7 @@ public:
 	void PlaySound(int id,const float3& p,float volume=1);
 	void SetVolume (float v);
 
+private:
 	int maxSounds;
 
 	float curThreshhold;

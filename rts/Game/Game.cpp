@@ -125,9 +125,9 @@ extern bool fullscreen;
 extern string stupidGlobalMapname;
 extern int stupidGlobalMapId;
 
-ISound* sound = 0;
+CSound* sound = 0;
 
-static ISound* CreateSoundInterface()
+static CSound* CreateSoundInterface()
 {
 #ifdef _MSC_VER
 	return new CDxSound ();
@@ -1249,6 +1249,7 @@ void CGame::SimFrame()
 	geometricObjects->Update();
 	if(!(gs->frameNum & 7))
 		sound->Update();
+	sound->NewFrame();
 	treeDrawer->Update();
 	globalAI->Update();
 	grouphandler->Update();

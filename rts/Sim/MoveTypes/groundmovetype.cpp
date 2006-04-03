@@ -352,7 +352,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	if(owner->team == gu->myTeam){
 		//Play "activate" sound.
 		if(owner->unitDef->sounds.activate.id)
-			sound->PlaySound(owner->unitDef->sounds.activate.id, owner->midPos, owner->unitDef->sounds.activate.volume);
+			sound->PlayUnitReply(owner->unitDef->sounds.activate.id, owner, owner->unitDef->sounds.activate.volume);
 	}
 	ENTER_SYNCED;
 }
@@ -1027,7 +1027,7 @@ void CGroundMoveType::Arrived()
 		ENTER_UNSYNCED;
 		if(owner->team == gu->myTeam){
 			if(owner->unitDef->sounds.arrived.id)
-				sound->PlaySound(owner->unitDef->sounds.arrived.id, owner->midPos, owner->unitDef->sounds.arrived.volume);
+				sound->PlayUnitReply(owner->unitDef->sounds.arrived.id, owner, owner->unitDef->sounds.arrived.volume);
 		}
 		ENTER_SYNCED;
 
@@ -1059,7 +1059,7 @@ void CGroundMoveType::Fail()
 	if(owner->team == gu->myTeam){
 		//Playing "can't" sound.
 		if(owner->unitDef->sounds.cant.id)
-			sound->PlaySound(owner->unitDef->sounds.cant.id, owner->midPos, owner->unitDef->sounds.cant.volume);
+			sound->PlayUnitReply(owner->unitDef->sounds.cant.id, owner, owner->unitDef->sounds.cant.volume);
 
 		if(owner->pos.distance(goal)>goalRadius+150){
 			*info << owner->unitDef->humanName.c_str() << ": Can't reach destination!\n";

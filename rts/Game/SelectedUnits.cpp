@@ -229,7 +229,7 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 	if(!selectedUnits.empty()){
 		set<CUnit*>::iterator ui = selectedUnits.begin();
 		if((*ui)->unitDef->sounds.ok.id)
-			sound->PlaySound((*ui)->unitDef->sounds.ok.id, (*ui)->pos,(*ui)->unitDef->sounds.ok.volume);
+			sound->PlayUnitReply((*ui)->unitDef->sounds.ok.id, (*ui), (*ui)->unitDef->sounds.ok.volume, true);
 	}
 }
 
