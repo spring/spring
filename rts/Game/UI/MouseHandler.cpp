@@ -359,7 +359,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			if(addedunits==1)
 			{
 				if(unit->unitDef->sounds.select.id)
-					sound->PlaySound(unit->unitDef->sounds.select.id, unit->pos, unit->unitDef->sounds.select.volume);
+					sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit, unit->unitDef->sounds.select.volume);
 			}
 			else if(addedunits) //more than one unit selected
 				sound->PlaySound(soundMultiselID);
@@ -388,7 +388,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				buttons[button].lastRelease=gu->gameTime;
 
 				if(unit->unitDef->sounds.select.id)
-					sound->PlaySound(unit->unitDef->sounds.select.id, unit->pos, unit->unitDef->sounds.select.volume);
+					sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit, unit->unitDef->sounds.select.volume);
 			}
 		}
 	}

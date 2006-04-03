@@ -1,7 +1,7 @@
 #ifndef OPENAL_SOUND_H
 #define OPENAL_SOUND_H
 
-// ISound interface definition
+// CSound interface definition
 #include "Sound.h"
 
 #include <vector>
@@ -9,10 +9,9 @@
 #include <AL/alc.h>
 
 using namespace std;
-class COpenALSound : public ISound
+class COpenALSound : public CSound
 {
 public:
-	ALuint LoadALBuffer(const string& path);
 	ALuint GetWaveId(const string& path);
 	void Update();
 	void PlaySound(int id, float volume);
@@ -23,6 +22,7 @@ public:
 	COpenALSound();
 	virtual ~COpenALSound();
 private:
+	ALuint LoadALBuffer(const string& path);
 	void PlaySound(int id, const float3 &p, float volume, bool relative);
 
 	bool noSound;

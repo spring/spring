@@ -1297,7 +1297,7 @@ void CUnit::Activate()
 		radarhandler->MoveUnit(this);
 
 	if(unitDef->sounds.activate.id)
-		sound->PlaySound(unitDef->sounds.activate.id, pos, unitDef->sounds.activate.volume);
+		sound->PlayUnitActivate(unitDef->sounds.activate.id, this, unitDef->sounds.activate.volume);
 }
 
 void CUnit::Deactivate()
@@ -1315,7 +1315,7 @@ void CUnit::Deactivate()
 		radarhandler->RemoveUnit(this);
 
 	if(unitDef->sounds.deactivate.id)
-		sound->PlaySound(unitDef->sounds.deactivate.id, pos, unitDef->sounds.deactivate.volume);
+		sound->PlayUnitActivate(unitDef->sounds.deactivate.id, this, unitDef->sounds.deactivate.volume);
 }
 
 void CUnit::PushWind(float x, float z, float strength)
