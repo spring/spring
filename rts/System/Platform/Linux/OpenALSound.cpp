@@ -119,7 +119,7 @@ void COpenALSound::PlaySound(int id, float volume)
 {
 	if (noSound || !camera)
 		return;
-	PlaySound(id,camera->pos,volume);
+	PlaySound(id, float3(0, 0, 0), volume, true);
 }
 
 void COpenALSound::PlaySound(int id,CWorldObject* p,float volume)
@@ -130,6 +130,11 @@ void COpenALSound::PlaySound(int id,CWorldObject* p,float volume)
 }
 
 void COpenALSound::PlaySound(int id,const float3& p,float volume)
+{
+	PlaySound(id,p,volume,false);
+}
+
+void COpenALSound::PlaySound(int id,const float3& p,float volume,bool relative)
 {
 	if (noSound)
 		return;
@@ -156,12 +161,13 @@ void COpenALSound::PlaySound(int id,const float3& p,float volume)
 
 	alSourcei(source, AL_BUFFER, id);
 	alSourcef(source, AL_PITCH, 1.0f );
-	alSourcef(source, AL_GAIN, volume * globalVolume );
+	alSourcef(source, AL_GAIN, volume );
 
 	float3 pos = p * posScale;
 	alSource3f(source, AL_POSITION, pos.x, pos.y, pos.z);
 	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
 	alSourcei(source, AL_LOOPING, false);
+	alSourcei(source, AL_SOURCE_RELATIVE, relative);
 	alSourcePlay(source);
 	CheckError("COpenALSound::PlaySound");
 }
@@ -195,6 +201,7 @@ void COpenALSound::UpdateListener()
 	alListener3f(AL_VELOCITY,0.0,0.0,0.0);
 	ALfloat ListenerOri[] = {camera->forward.x,camera->forward.y,camera->forward.z,camera->up.x,camera->up.y,camera->up.z};
 	alListenerfv(AL_ORIENTATION,ListenerOri);
+	alListenerf(AL_GAIN, globalVolume);
 	CheckError("COpenALSound::UpdateListener");
 }
 

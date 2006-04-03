@@ -23,6 +23,8 @@ public:
 	COpenALSound();
 	virtual ~COpenALSound();
 private:
+	void PlaySound(int id, const float3 &p, float volume, bool relative);
+
 	bool noSound;
 	int maxSounds;
 	int cur;
