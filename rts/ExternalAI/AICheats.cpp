@@ -6,6 +6,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Net.h"
 #include "Game/Team.h"
 #include "mmgr.h"
 
@@ -17,29 +18,39 @@ CAICheats::CAICheats(CGlobalAI* ai)
 }
 
 CAICheats::~CAICheats(void)
+{}
+
+bool CAICheats::OnlyPassiveCheats ()
 {
+	return !net->onlyLocal;
 }
 
 void CAICheats::SetMyHandicap(float handicap)
 {
-	gs->Team(ai->team)->handicap=1+handicap/100;
+	if (net->onlyLocal) {
+		gs->Team(ai->team)->handicap=1+handicap/100;
+	}
 }
 
 void CAICheats::GiveMeMetal(float amount)
 {
-	gs->Team(ai->team)->metal+=amount;
+	if (net->onlyLocal)
+		gs->Team(ai->team)->metal+=amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
-	gs->Team(ai->team)->energy+=amount;
+	if (net->onlyLocal)
+		gs->Team(ai->team)->energy+=amount;
 }
 
 int CAICheats::CreateUnit(const char* name,float3 pos)
 {
-	CUnit* u=unitLoader.LoadUnit(name,pos,ai->team,false);
-	if(u)
-		return u->id;
+	if(net->onlyLocal) {
+		CUnit* u=unitLoader.LoadUnit(name,pos,ai->team,false);
+		if(u)
+			return u->id;
+	}
 	return 0;
 }
 

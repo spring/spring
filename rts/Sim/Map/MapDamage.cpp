@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "MapDamage.h"
 #include "BasicMapDamage.h"
 #include "NoMapDamage.h"

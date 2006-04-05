@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Sound.h"
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"

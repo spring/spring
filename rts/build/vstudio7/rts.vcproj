@@ -1956,6 +1956,12 @@
 				Name="Map"
 				Filter="">
 				<File
+					RelativePath="..\..\Sim\Map\BasicMapDamage.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Map\BasicMapDamage.h">
+				</File>
+				<File
 					RelativePath="..\..\Sim\Map\Ground.cpp">
 				</File>
 				<File
@@ -1975,6 +1981,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Map\MetalMap.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Map\NoMapDamage.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Map\NoMapDamage.h">
 				</File>
 				<File
 					RelativePath="..\..\Sim\Map\ReadMap.cpp">
@@ -2972,6 +2984,9 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\Win\DxSound.h">
+				</File>
+				<File
+					RelativePath="..\..\System\Sound.cpp">
 				</File>
 				<File
 					RelativePath="..\..\System\Sound.h">
