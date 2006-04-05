@@ -24,6 +24,8 @@ public:
 	virtual float3 GetUnitPos(int unitid)=0;				//note that x and z are the horizontal axises while y represent height
 	virtual int GetEnemyUnits(int *units)=0;					//returns all known enemy units
 	virtual int GetEnemyUnits(int *units,const float3& pos,float radius)=0; //returns all known enemy units within radius from pos
+
+	virtual bool OnlyPassiveCheats()=0;
 };
 
 #endif
