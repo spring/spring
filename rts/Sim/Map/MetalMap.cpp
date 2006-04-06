@@ -2,6 +2,7 @@
 #include "MetalMap.h"
 #include "GlobalStuff.h"
 #include "ReadMap.h"
+#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
 
@@ -22,12 +23,27 @@ CMetalMap::CMetalMap(unsigned char *map, int sizex, int sizez, float metalscale)
 	for(i = 0; i < (sizex * sizez); i++) {
 		extractionMap[i] = 0.0;
 	}
+	
+	int whichPalette = configHandler.GetInt("MetalMapPalette", 0);
 
-	for(int a=0;a<256;++a){
-		metalPal[a*3+0]=a;
-		metalPal[a*3+1]=min(255,a*2);
-		metalPal[a*3+2]=max(0,a*2-255);//a/2+((a*4)&127);
+	if (whichPalette == 1){
+		/* Swap the green and blue channels. making metal go
+		   black -> blue -> cyan,
+		   rather than the usual black -> green -> cyan. */
+		for(int a=0;a<256;++a){
+			metalPal[a*3+0]=a;
+			metalPal[a*3+1]=max(0,a*2-255);
+			metalPal[a*3+2]=min(255,a*2);
+		}
 	}
+	else {
+		for(int a=0;a<256;++a){
+			metalPal[a*3+0]=a;
+			metalPal[a*3+1]=min(255,a*2);
+			metalPal[a*3+2]=max(0,a*2-255);//a/2+((a*4)&127);
+		}
+	}
+	
 }
 
 
