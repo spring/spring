@@ -120,6 +120,7 @@ protected:
 	void Shutdown (); 				//!< Shuts down application
 	int Draw (); 					//!< Repeated draw function
 	void UpdateSDLKeys (); 				//!< Update SDL key array
+	void SetVSync ();				//!< Enable or disable VSync based on the "VSync" config option
 
 	/**
 	 * @brief command line
@@ -157,13 +158,6 @@ protected:
 	int screenHeight;
 
 	/**
-	 * @brief screen freq
-	 * 
-	 * Game screen frequency
-	 */
-	int screenFreq;
-
-	/**
 	 * @brief active
 	 * 
 	 * Whether game is active
@@ -185,7 +179,6 @@ SpringApp::SpringApp ()
 {
 	cmdline = 0;
 	screenWidth = screenHeight = 0;
-	screenFreq = 0;
 	keys = 0;
 
 	active = true;
@@ -392,7 +385,32 @@ bool SpringApp::SetSDLVideoMode ()
 	if (FSAA)
 		FSAA = MultisampleVerify();
 
+	SetVSync ();
+
 	return true;
+}
+
+/**
+ * Set VSync based on the "VSync" config option
+ * Uses WGL_EXT_swap_control, so it's only supported on windows.
+ */
+void SpringApp::SetVSync ()
+{
+	bool enableVSync = configHandler.GetInt ("VSync", 0);
+
+#ifdef WIN32
+	// VSync enabled is the default for OpenGL drivers
+	if (enableVSync)
+		return;
+
+	// WGL_EXT_swap_control is the only WGL extension exposed in glGetString(GL_EXTENSIONS)
+	if (strstr( (const char*)glGetString(GL_EXTENSIONS), "WGL_EXT_swap_control")) {
+		typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
+		PFNWGLSWAPINTERVALEXTPROC SwapIntervalProc = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+		if (SwapIntervalProc) 
+			SwapIntervalProc(0);
+	}
+#endif
 }
 
 /**
@@ -463,7 +481,6 @@ bool SpringApp::ParseCmdLine()
 
 	screenWidth = configHandler.GetInt("XResolution",XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution",YRES_DEFAULT);
-	screenFreq = configHandler.GetInt("DisplayFrequency",0);
 
 	return true;
 }
