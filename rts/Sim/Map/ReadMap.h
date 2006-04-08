@@ -71,7 +71,7 @@ public:
 	unsigned char yardmapPal[256*3];
 	unsigned int mapChecksum;
 protected:
-	int CReadMap::LoadInt(CFileHandler* ifs);
+	int LoadInt(CFileHandler* ifs);
 	CReadMap();
 	static CReadMap* _instance;
 public:

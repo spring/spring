@@ -77,9 +77,9 @@ public:
 	void AddText(const std::string& text);
 	void SetLastMsgPos(float3 pos);
 	float3 lastMsgPos;
-	GUIcontroller& GUIcontroller::operator<< (const char* c);
-	GUIcontroller& GUIcontroller::operator<< (int i);
-	GUIcontroller& GUIcontroller::operator<< (float f);
+	GUIcontroller& operator<< (const char* c);
+	GUIcontroller& operator<< (int i);
+	GUIcontroller& operator<< (float f);
 
 
 protected:

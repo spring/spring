@@ -243,8 +243,8 @@ public:
 	/* returns the base position nearest to the given float3*/
 	float3 nbasepos(float3 pos);
 	int WhichCorner(float3 pos);/*returns a value signifying which corner of the map this location is in*/
-	vector<float3> Global::GetSurroundings(float3 pos);/*returns the surrounding grid squares or locations of a co-ordinate*/
-	float3 Global::WhichSector(float3 pos)/*converts a normal co-ordinate into a Sector co-ordinate on the threat matrix*/;
+	vector<float3> GetSurroundings(float3 pos);/*returns the surrounding grid squares or locations of a co-ordinate*/
+	float3 WhichSector(float3 pos)/*converts a normal co-ordinate into a Sector co-ordinate on the threat matrix*/;
 
 	CSunParser* mod_tdf;
 	vector<Tunit> units;

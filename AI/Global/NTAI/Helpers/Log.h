@@ -14,7 +14,7 @@ public:
 	void print(string message); // print to logfile
 	void iprint(string message); //Print to info console and log
 	void eprint(string message);
-	void Log::Open(bool plain=false); // Open Log file
+	void Open(bool plain=false); // Open Log file
 	void Close(); // Close Logfile
 	void Flush(); // Flushes the logfile
 	void Message(string msg,int player); // recieved a message through the console
