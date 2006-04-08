@@ -19,8 +19,9 @@ DP4 result.fogcoord.x, pos, mat[2];
 MOV result.color, vertex.color;
 
 #calculate texture coords
+MAD result.texcoord[0], pos.xzyw, program.env[12], program.env[11];		#main texture
 MUL result.texcoord[1], pos.xzyw, program.env[10];						#shade texture
-MAD result.texcoord[2], pos.xzyw, program.env[12], program.env[11];		#main texture
-MAD result.texcoord[3], pos.xzyw, program.env[14], program.env[13];		#detail texture
-MOV result.texcoord[3].z, pos.y;
+MAD result.texcoord[2], pos.xzyw, program.env[14], program.env[13];		#detail texture
+MOV result.texcoord[2].z, pos.y;
+MUL result.texcoord[3], pos.xzyw, program.env[10];						#info texture
 END

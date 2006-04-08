@@ -21,10 +21,11 @@ DP4 result.fogcoord.x, modpos, mat[2];
 MOV result.color, vertex.color;
 
 #calculate texture coords
+MAD result.texcoord[0], pos.xzyw, program.env[12], program.env[11];		#main texture
 MUL result.texcoord[1], pos.xzyw, program.env[10];						#shade texture
-MAD result.texcoord[2], pos.xzyw, program.env[12], program.env[11];		#main texture
-MAD result.texcoord[3], pos.xzyw, program.env[14], program.env[13];		#detail texture
-MOV result.texcoord[3].z, pos.y;
+MAD result.texcoord[2], pos.xzyw, program.env[14], program.env[13];		#detail texture
+MOV result.texcoord[2].z, pos.y;
+MUL result.texcoord[3], pos.xzyw, program.env[10];						#info texture
 
 #calculate shadow texture coords
 
@@ -36,9 +37,9 @@ ADD temp2,temp2,program.env[17];
 RSQ temp2.x, temp2.x;
 RSQ temp2.y, temp2.y;
 ADD temp2,temp2,program.env[18];
-MAD result.texcoord[0], temp, temp2,program.env[16];
+MAD result.texcoord[4], temp, temp2,program.env[16];
 
-DP4 result.texcoord[0].z, modpos, mat2[2];
-DP4 result.texcoord[0].w, modpos, mat2[3];
+DP4 result.texcoord[4].z, modpos, mat2[2];
+DP4 result.texcoord[4].w, modpos, mat2[3];
 
 END

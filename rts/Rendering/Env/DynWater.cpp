@@ -21,6 +21,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 
 extern GLfloat FogLand[]; 
 
@@ -205,6 +206,13 @@ CDynWater::CDynWater(void)
 	}
 	boatShape=bm.CreateTexture();
 
+	CBitmap bm2("bitmaps\\hovershape.bmp");
+	for(int a=0;a<bm2.xsize*bm2.ysize;++a){
+		bm2.mem[a*4+2]=bm2.mem[a*4];
+		bm2.mem[a*4+3]=bm2.mem[a*4];
+	}
+	hoverShape=bm2.CreateTexture();
+
 	delete[] temp;
 	glGenFramebuffersEXT(1,&frameBuffer);
 }
@@ -222,6 +230,7 @@ CDynWater::~CDynWater(void)
 	glDeleteTextures (1, &splashTex);
 	glDeleteTextures (1, &foamTex);
 	glDeleteTextures (1, &boatShape);
+	glDeleteTextures (1, &hoverShape);
 	glDeleteTextures (1, &zeroTex);
 	glDeleteTextures (1, &fixedUpTex);
 	glDeleteProgramsARB( 1, &waterFP );
@@ -307,7 +316,6 @@ void CDynWater::Draw()
 
 	DrawWaterSurface();
 
-	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindTexture(GL_TEXTURE_2D, fixedUpTex);
 
 	DrawOuterSurface();
@@ -366,8 +374,8 @@ void CDynWater::Update()
 
 	oldCamPosBig=camPosBig;
 
-	camPosBig.x=max((float)WH_SIZE, min((float)((gs->mapx*SQUARE_SIZE-WH_SIZE)/(W_SIZE*16))*(W_SIZE*16), (float)floor(camera->pos.x/(W_SIZE*16))*(W_SIZE*16)));
-	camPosBig.z=max((float)WH_SIZE, min((float)((gs->mapy*SQUARE_SIZE-WH_SIZE)/(W_SIZE*16))*(W_SIZE*16), (float)floor(camera->pos.z/(W_SIZE*16))*(W_SIZE*16)));
+	camPosBig.x=floor(max((float)WH_SIZE, min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.z=floor(max((float)WH_SIZE, min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
@@ -447,6 +455,7 @@ void CDynWater::DrawReflection(CGame* game)
 
 void CDynWater::DrawRefraction(CGame* game)
 {
+	drawRefraction=true;
 	camera->Update(false);
 
 	refractRight=camera->right;
@@ -455,30 +464,24 @@ void CDynWater::DrawRefraction(CGame* game)
 
 	glViewport(0,0,512,512);
 
-	//	glClearColor(0.5,0.6,0.8,0);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-	//	sky->Draw();
-	/*
-	*/
-	//	bool drawShadows=shadowHandler->drawShadows;
-	//	shadowHandler->drawShadows=false;
 	groundDrawer->Draw(false,false,dwGroundRefractVP);
 
-	drawReflection=true;
+
 	glEnable(GL_CLIP_PLANE2);
 	double plane[4]={0,-1,0,0};
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
 	featureHandler->Draw();
+	drawReflection=false;
 	ph->Draw(false,true);
 	glDisable(GL_CLIP_PLANE2);
 
-	//	shadowHandler->drawShadows=drawShadows;
-
+	drawRefraction=false;
 
 	glBindTexture(GL_TEXTURE_2D, refractTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
@@ -566,7 +569,8 @@ void CDynWater::DrawWaves(void)
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
 	//update flows pass
-	DrawUpdateSquare(dx,dy);
+	int resetTexs[]={0,1,2,3,4,5,-1};
+	DrawUpdateSquare(dx,dy,resetTexs);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glFlush();
@@ -602,7 +606,8 @@ void CDynWater::DrawWaves(void)
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waveVP );
 
 	//update height pass
-	DrawUpdateSquare(dx,dy);
+	int resetTexs2[]={0,-1};
+	DrawUpdateSquare(dx,dy,resetTexs2);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
@@ -860,7 +865,7 @@ void CDynWater::DrawWaterSurface(void)
 			for(int x=xs;x<xe;x+=lod){
 				if((lod==1) || 
 					(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
-					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terr�g
+					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terrain
 						if(!inStrip){
 							DrawVertexA(x,y);
 							DrawVertexA(x,y+lod);
@@ -988,16 +993,18 @@ void CDynWater::DrawDetailNormalTex(void)
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, dwDetailNormalVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
+	float swh=1.5;
+	float lwh=2.5;
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 9, gs->frameNum, 0, 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 3, 0, 0, 1.0/60);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 3, 0, 0, 1.0/60);			//controls the position and speed of the waves
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 11, 0, 0, 1.0/130);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 6, -6, 0, -1.0/70);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, 4, 8, 0, 1.0/80);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.0022, 0, 0.7, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.003, 0, 0.7, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.003, -0.003, 0.10, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.0015, 0.003, 0.25, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.0022*swh, 0*swh, 0.7*lwh, 0);		//controls the height of the waves
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.003*swh, 0*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.003*swh, -0.003*swh, 0.10*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.0015*swh, 0.003*swh, 0.25*lwh, 0);
 
 	//update detail normals
 	glBegin(GL_QUADS);
@@ -1035,9 +1042,6 @@ void CDynWater::AddShipWakes()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glBindTexture(GL_TEXTURE_2D,boatShape);
-
 	GLenum status;
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
@@ -1054,15 +1058,17 @@ void CDynWater::AddShipWakes()
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
+	CVertexArray* va2=GetVertexArray();		//never try to get more than 2 at once
+	va2->Initialize();
 
 	for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin(); ui!=uh->activeUnits.end();++ui){
 		CUnit* unit=*ui;
-		if(unit->moveType && unit->floatOnWater && unit->mobility){
+		if(unit->moveType && unit->floatOnWater && unit->mobility && !unit->unitDef->canhover){	//boat
 			float speedf=unit->speed.Length2D();
 			float3 pos=unit->pos;
 			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
 				continue;
-			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS))
+			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectating)
 				continue;
 			if(pos.y>-4 && pos.y<1){
 				float3 frontAdd=unit->frontdir*unit->radius*0.75;
@@ -1076,9 +1082,36 @@ void CDynWater::AddShipWakes()
 				va->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
 			}
 		}
+		if(unit->moveType && unit->unitDef->canhover && unit->mobility){		//hover
+			float speedf=unit->speed.Length2D();
+			float3 pos=unit->pos;
+			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
+				continue;
+			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectating)
+				continue;
+			if(pos.y>-4 && pos.y<4){
+				float3 frontAdd=unit->frontdir*unit->radius*0.75;
+				float3 sideAdd=unit->rightdir*unit->radius*0.75;
+				float depth=sqrt(sqrt(unit->mass))*0.4;
+				float3 n(depth, 0.05*depth, depth);
+
+				va2->AddVertexTN(pos+frontAdd+sideAdd,0,0,n);
+				va2->AddVertexTN(pos+frontAdd-sideAdd,1,0,n);
+				va2->AddVertexTN(pos-frontAdd-sideAdd,1,1,n);
+				va2->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
+			}
+		}
 	}
 
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glBindTexture(GL_TEXTURE_2D,boatShape);
+
 	va->DrawArrayTN(GL_QUADS);
+
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glBindTexture(GL_TEXTURE_2D,hoverShape);
+
+	va2->DrawArrayTN(GL_QUADS);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glDisable(GL_BLEND);
@@ -1132,7 +1165,7 @@ void CDynWater::AddExplosions()
 		float3 pos=explo.pos;
 		if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
 			continue;
-		float inv=1.02;
+		float inv=1.01;
 		if(pos.y<0){
 			if(pos.y<-explo.radius*0.5)
 				inv=0;
@@ -1142,7 +1175,7 @@ void CDynWater::AddExplosions()
 		float size=explo.radius-pos.y;
 		if(size<8)
 			continue;
-		float strength=explo.strength * (size/explo.radius)*0.4;
+		float strength=explo.strength * (size/explo.radius)*0.5;
 
 		float3 n(strength, strength*0.005, strength*inv);
 
@@ -1171,18 +1204,49 @@ void CDynWater::AddExplosion(const float3& pos, float strength, float size)
 	explosions.push_back(Explosion(pos,min(size*20,strength),size));
 }
 
-void CDynWater::DrawUpdateSquare(float dx,float dy)
+void CDynWater::DrawUpdateSquare(float dx,float dy, int* resetTexs)
 {
-	float start=0.1/1024;
-	float end=1023.9/1024;
+	float startx=max(0.f, -dx/WF_SIZE);
+	float starty=max(0.f, -dy/WF_SIZE);
+	float endx=min(1.f, 1-dx/WF_SIZE);
+	float endy=min(1.f, 1-dy/WF_SIZE);
+
+	DrawSingleUpdateSquare(startx,starty,endx,endy);
+
+	int a=0;
+	while(resetTexs[a]>=0){
+		glActiveTextureARB(GL_TEXTURE0_ARB+resetTexs[a]);
+		glBindTexture(GL_TEXTURE_2D, zeroTex);
+		++a;
+	}
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+
+	if(startx>0){
+		DrawSingleUpdateSquare(0,0,startx,1);
+	} else if(endx<1){
+		DrawSingleUpdateSquare(endx,0,1,1);
+	}
+
+	if(starty>0){
+		DrawSingleUpdateSquare(startx,0,endx,starty);
+	} else if (endy<1){
+		DrawSingleUpdateSquare(startx,endy,endx,1);
+	}
+}
+
+void CDynWater::DrawSingleUpdateSquare(float startx,float starty,float endx,float endy)
+{
+	float texstart=0.1/1024;
+	float texend=1023.9/1024;
+	float texdif=texend-texstart;
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
 
-	va->AddVertexT(float3(0,0,0),start,start);
-	va->AddVertexT(float3(0,1,0),start,end  );
-	va->AddVertexT(float3(1,1,0),end,  end  );
-	va->AddVertexT(float3(1,0,0),end,  start);
+	va->AddVertexT(float3(startx,starty,0),texstart + startx*texdif,texstart + starty*texdif);
+	va->AddVertexT(float3(startx,endy,0),texstart + startx*texdif,texstart + endy*texdif  );
+	va->AddVertexT(float3(endx,endy,0),texstart + endx*texdif,texstart + endy*texdif  );
+	va->AddVertexT(float3(endx,starty,0),texstart + endx*texdif,texstart + starty*texdif);
 
 	va->DrawArrayT(GL_QUADS);
 }

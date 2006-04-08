@@ -370,6 +370,7 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 void CFeatureHandler::DrawRaw(int extraSize,std::vector<CFeature*>* farFeatures)
 {
 	bool drawReflection=water->drawReflection;
+	bool drawRefraction=water->drawRefraction;
 	float unitDrawDist=unitDrawer->unitDrawDist;
 
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*DRAW_QUAD_SIZE));
@@ -433,6 +434,10 @@ void CFeatureHandler::DrawRaw(int extraSize,std::vector<CFeature*>* farFeatures)
 						if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>f->radius){
 							continue;
 						}
+					}
+					if(drawRefraction){
+						if(f->pos.y>0)
+							continue;
 					}
 					float sqDist=(f->pos-camera->pos).SqLength2D();
 					float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
