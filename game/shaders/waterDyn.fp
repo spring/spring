@@ -37,7 +37,7 @@ POW temp, specularvalue.x, {16,0,0,0}.x;
 POW specularvalue, specularvalue.x, {4096,0,0,0}.x;
 MUL specularvalue, specularvalue, 5;
 MUL specularvalue, specularvalue, shadow.x;
-LRP shadow.x, 0.5, 1, shadow.x;
+LRP shadow.x, 0.3, 1, shadow.x;
 MUL temp, temp, shadow.x;
 MAD specularvalue, temp, 0.5, specularvalue;
 
@@ -88,9 +88,7 @@ LRP temp, program.env[7].x, temp, clearcolor;
 LRP result.color, foamIntensity.x, lightColor, temp;
 
 #MUL temp, fragment.texcoord[2],4;
-#TEX temp, temp, texture[2], 2D;
-#ADD result.color, temp, 0.5;
+#TEX temp, temp, texture[1], 2D;
+#ADD result.color, temp, 0.0;
 
-#MOV result.color.a,1;
-#MOV result.color, detailNormal;
 END

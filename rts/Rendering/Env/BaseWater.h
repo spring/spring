@@ -17,6 +17,7 @@ public:
 	static CBaseWater* GetWater();
 
 	bool drawReflection;
+	bool drawRefraction;
  	bool noWakeProjectiles;
  	bool drawSolid;
 };

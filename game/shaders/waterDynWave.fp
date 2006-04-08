@@ -26,10 +26,11 @@ ADD old.x, old.x, temp.x;
 SUB temp, midFlow, flow;
 DP4 temp.x, temp, temp;
 
-MAD old.y, temp.x, 0.5, old.y;
+MAD old.y, temp.x, 0.2, old.y;
 MUL_SAT old.y, old.y, 0.99;
 
-MUL_SAT temp.x, old.w, 0.2;
+MIN temp.x, old.w, 2;
+MUL_SAT temp.x, temp.x, 0.2;
 
 LRP old.x, 0.995, old.x, backgroundWave.z;
 LRP old.x, temp.x, -old.w, old.x;

@@ -25,7 +25,8 @@ public:
 	void DrawDetailNormalTex(void);
 	void AddShipWakes();
 	void AddExplosions();
-	void DrawUpdateSquare(float dx,float dy);
+	void DrawUpdateSquare(float dx,float dy, int* resetTexs);
+	void DrawSingleUpdateSquare(float startx,float starty,float endx,float endy);
 
 	unsigned int reflectTexture;
 	unsigned int refractTexture;
@@ -59,6 +60,7 @@ public:
 
 	unsigned int splashTex;
 	unsigned int boatShape;
+	unsigned int hoverShape;
 
 	int lastWaveFrame;
 	bool firstDraw;

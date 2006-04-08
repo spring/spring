@@ -12,6 +12,7 @@ CBaseWater* water=0;
 CBaseWater::CBaseWater(void)
 {
 	drawReflection=false;
+	drawRefraction=false;
  	noWakeProjectiles=false;
  	drawSolid=false;
 }
