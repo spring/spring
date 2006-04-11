@@ -189,11 +189,7 @@ CUnit::~CUnit()
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(directControl){
-		ENTER_MIXED;
-		if(gu->directControl==this)
-			gu->directControl=0;
-		ENTER_SYNCED;
-		directControl->myController->playerControlledUnit=0;
+		directControl->myController->StopControllingUnit();
 		directControl=0;
 	}
 #endif

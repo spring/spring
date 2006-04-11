@@ -4,6 +4,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Player.h"
+#ifdef DIRECT_CONTROL_ALLOWED
+#include "UI/MouseHandler.h"
+#include "Camera.h"
+#include "CameraController.h"
+#include <assert.h>
+#endif
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -49,3 +55,28 @@ CPlayer::~CPlayer()
 {
 	delete currentStats;
 }
+
+#ifdef DIRECT_CONTROL_ALLOWED
+void CPlayer::StopControllingUnit()
+{
+	ENTER_UNSYNCED;
+	if(gu->directControl==playerControlledUnit){
+		assert(gs->players[gu->myPlayerNum] == this);
+		gu->directControl=0;
+
+		/* Switch back to the camera we were using before. */
+		mouse->currentCamController=mouse->camControllers[mouse->currentCamControllerNum];
+		mouse->currentCamController->SetPos(camera->pos);
+		mouse->inStateTransit=true;
+		mouse->transitSpeed=1;
+		
+		if (mouse->locked && !mouse->wasLocked){
+			mouse->locked = false;
+			mouse->ShowMouse();
+		}
+	}
+	ENTER_SYNCED;
+
+	playerControlledUnit=0;
+}
+#endif

@@ -1834,16 +1834,7 @@ bool CGame::ClientReadNet()
 
 				unit->directControl=0;
 				unit->AttackUnit(0,true);
-				gs->players[player]->playerControlledUnit=0;
-				ENTER_UNSYNCED;
-				if(player==gu->myPlayerNum){
-					gu->directControl=0;
-					mouse->currentCamController=mouse->camControllers[mouse->currentCamControllerNum];
-					mouse->currentCamController->SetPos(camera->pos);
-					mouse->inStateTransit=true;
-					mouse->transitSpeed=1;
-				}
-				ENTER_SYNCED;
+				gs->players[player]->StopControllingUnit();
 			} else {
 				if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
 					CUnit* unit=uh->units[selectedUnits.netSelected[player][0]];
@@ -1857,10 +1848,13 @@ bool CGame::ClientReadNet()
 						ENTER_UNSYNCED;
 						if(player==gu->myPlayerNum){
 							gu->directControl=unit;
+							/* currentCamControllerNum isn't touched; it's used to
+							   switch back to the old camera. */
 							mouse->currentCamController=mouse->camControllers[0];	//set fps mode
 							mouse->inStateTransit=true;
 							mouse->transitSpeed=1;
 							((CFPSController*)mouse->camControllers[0])->pos=unit->midPos;
+							mouse->wasLocked = mouse->locked;
 							if(!mouse->locked){
 								mouse->locked=true;
 								mouse->HideMouse();
