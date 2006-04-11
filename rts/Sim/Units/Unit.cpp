@@ -1369,13 +1369,7 @@ void CUnit::ReleaseTempHoldFire(void)
 
 void CUnit::DrawS3O(void)
 {
-	unsigned char* col=gs->Team(team)->color;
-	if(unitDrawer->advShading){
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1);
-	} else {
-		float texConstant[]={col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1};
-		glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
-	}
+	unitDrawer->SetS3OTeamColour(team);
 	Draw();
 }
 

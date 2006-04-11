@@ -536,6 +536,67 @@ void CUnitDrawer::CleanUpUnitDrawing(void)
 	}
 }
 
+void CUnitDrawer::SetS3OTeamColour(int team)
+{
+	if(unitDrawer->advShading){
+		unsigned char* col=gs->Team(team)->color;
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1);
+	} else {
+		SetBasicS3OTeamColour(team);
+	}
+}
+
+void CUnitDrawer::SetBasicS3OTeamColour(int team)
+{
+	unsigned char* col=gs->Team(team)->color;
+	float texConstant[]={col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1};
+	glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
+}
+
+/**
+ * Set up the texture environment in texture unit 0 
+ * to give an S3O texture its team-colour.
+ *
+ * Also:
+ * - call SetBasicS3OTeamColour to set the team colour to transform to.
+ * - Replace the output alpha channel. If not, only the team-coloured bits will show, if that. Or something.
+ */
+void CUnitDrawer::SetupBasicS3OTexture0(void)
+{
+	// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+	glEnable(GL_TEXTURE_2D);
+}
+
+/**
+ * This sets the first texture unit to GL_MODULATE the colours from the
+ * first texture unit with the current glColor.
+ *
+ * Normal S3O drawing sets the color to full white; translucencies
+ * use this setup to 'tint' the drawn model.
+ *
+ * - Leaves glActivateTextureARB at the first unit.
+ * - This doesn't tinker with the output alpha, either.
+ */
+void CUnitDrawer::SetupBasicS3OTexture1(void)
+{
+	// RGB = Primary Color * Previous
+	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, whiteTex);
+}
+
+
 void CUnitDrawer::SetupForS3ODrawing(void)
 {
 	if(advShading && !water->drawReflection){		//standard doesnt seem to support vertex program+clipplanes at once
@@ -592,31 +653,17 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glEnable(GL_LIGHTING);
 		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);	// Position The Light
 		glEnable(GL_LIGHT1);								// Enable Light One
-
-		// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		glEnable(GL_TEXTURE_2D);
+		
+		SetupBasicS3OTexture0();
 
 		// Set material color and fallback texture (3DO texture)
 		float cols[]={1,1,1,1};
 		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
 		glColor3f(1,1,1);
 		texturehandler->SetTATexture();
+		
+		SetupBasicS3OTexture1();
 
-		// RGB = Primary Color * Previous
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, whiteTex);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 //	glAlphaFunc(GL_GREATER,0.05f);
@@ -656,21 +703,31 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 		glDisable(GL_LIGHTING);
 		glDisable(GL_LIGHT1);
 
-// reset texture1 state
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-		glDisable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 
-// reset texture0 state
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_CONSTANT_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		CleanupBasicS3OTexture1();
+		CleanupBasicS3OTexture0();
 	}
 	glDisable(GL_CULL_FACE);
+}
+
+void CUnitDrawer::CleanupBasicS3OTexture1(void)
+{
+	// reset texture1 state
+	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glDisable(GL_TEXTURE_2D);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+}
+
+void CUnitDrawer::CleanupBasicS3OTexture0(void)
+{
+	// reset texture0 state
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_CONSTANT_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
 
 void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor)
@@ -782,3 +839,76 @@ void CUnitDrawer::DrawQuedS3O(void)
 	CleanUpS3ODrawing();
 }
 
+/**
+ * Draw one unit, 
+ * - with depth-buffering(!) and lighting off, 
+ * - 'tinted' by the current glColor, *including* alpha. 
+ *
+ * Used for drawing building orders. 
+ *
+ * Note: does all the GL state setting for that one unit, so you might want
+ * something else for drawing many translucent units.
+ */
+void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
+{
+	S3DOModel* model=modelParser->Load3DO(unitdef->model.modelpath.c_str(), 1, side);
+	
+	if (model->textureType == 0){
+		/* 3DO */
+		unitDrawer->SetupForGhostDrawing();
+		glPushMatrix();
+		glTranslatef3(pos);
+		model->DrawStatic();
+		unitDrawer->CleanUpGhostDrawing();
+		glPopMatrix();
+		return;
+	}
+	
+	/* From SetupForGhostDrawing. */
+	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
+	
+	/* *No* GL lighting. */
+	
+	/* Get the team-coloured texture constructed by unit 0. */
+	SetBasicS3OTeamColour(side);
+	SetupBasicS3OTexture0();
+	texturehandler->SetS3oTexture(model->textureType);
+	
+	/* Tint it with the current glColor in unit 1. */
+	SetupBasicS3OTexture1();
+
+	/* Use the alpha given by glColor for the outgoing alpha. 
+	   (Might need to change this if we ever have transparent bits on units?)
+	 */
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PRIMARY_COLOR_ARB);
+
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+
+	/* From SetupForGhostDrawing. */
+	glDepthMask(0);
+	glDisable(GL_CULL_FACE); /* Leave out face culling, as 3DO and 3DO translucents does. */
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+	/* Push out the polygons. */
+	glPushMatrix();
+	glTranslatef3(pos);
+	model->DrawStatic();
+	glPopMatrix();
+
+	// reset texture1 state
+	CleanupBasicS3OTexture1();
+
+	/* Also reset the alpha generation. */
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
+
+	// reset texture0 state
+	CleanupBasicS3OTexture0();
+
+	/* From CleanUpGhostDrawing. */
+	glPopAttrib ();
+	glDisable(GL_TEXTURE_2D);
+	glDepthMask(1);		
+}
