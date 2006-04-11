@@ -228,6 +228,11 @@ bool CPreGame::Update(void)
 		if (gameSetup)
 			stupidGlobalModName = gameSetup->baseMod;
 		vector<string> ars = archiveScanner->GetArchives(stupidGlobalModName);
+		
+		if (ars.empty()) {
+			printf("Warning: mod archive is missing?\n");
+		}
+		
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 			hpiHandler->AddArchive(*i, false);
 		}
