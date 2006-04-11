@@ -448,7 +448,7 @@ void CUnit::SlowUpdate()
 			float cloakCost=unitDef->cloakCost;
 			if(speed.SqLength()>0.2)
 				cloakCost=unitDef->cloakCostMoving;
-			if(UseEnergy(cloakCost)){
+			if(UseEnergy(cloakCost * 0.5f)){
 				isCloaked=true;
 			} else {
 				isCloaked=false;
