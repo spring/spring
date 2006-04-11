@@ -280,10 +280,17 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 			READ_MAPFEATURESTRUCT(ffs, file);
 
 			string name=mapids[ffs.featureType];
+			
+			std::map<std::string,FeatureDef*>::iterator def = featureDefs.find(name);
+			
+			if (def == featureDefs.end()){
+				info->AddLine("Unknown feature named '%s'", name.c_str());
+				continue;
+			}
 
 			ffs.ypos=ground->GetHeight2(ffs.xpos,ffs.zpos);
 			CFeature *f = new CFeature;
-			f->Initialize (float3(ffs.xpos,ffs.ypos,ffs.zpos),featureDefs[name],(short int)ffs.rotation,-1,"");
+			f->Initialize (float3(ffs.xpos,ffs.ypos,ffs.zpos),def->second,(short int)ffs.rotation,-1,"");
 		}
 	}
 
