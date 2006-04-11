@@ -69,6 +69,12 @@ protected:
 	int soundMultiselID;
 public:
 	void EmptyMsgQueUpdate(void);
+
+#ifdef DIRECT_CONTROL_ALLOWED
+	/* Stores if the mouse was locked or not before going into direct control,
+	   so we can restore it when we return to normal. */
+	bool wasLocked;
+#endif
 };
 
 extern CMouseHandler* mouse;

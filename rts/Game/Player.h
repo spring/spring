@@ -55,7 +55,9 @@ public:
 #ifdef DIRECT_CONTROL_ALLOWED
 	DirectControlStruct myControl;
 
-	CUnit* playerControlledUnit;		
+	CUnit* playerControlledUnit;
+	
+	void StopControllingUnit();
 #endif
 
 };
