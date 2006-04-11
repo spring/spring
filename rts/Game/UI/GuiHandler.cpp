@@ -721,14 +721,7 @@ void CGuiHandler::DrawMapStuff(void)
 					else
 						glColor4f(1,0.5,0.5,0.4);
 
-					unitDrawer->SetupForGhostDrawing ();
-					S3DOModel* model=modelParser->Load3DO((unitdef->model.modelpath).c_str() ,1, gu->myTeam);
-					glPushMatrix();
-					glTranslatef3(pos);
-					//glCallList(model->displist);
-					model->DrawStatic();
-					unitDrawer->CleanUpGhostDrawing();
-					glPopMatrix();
+					unitDrawer->DrawBuildingSample(unitdef, gu->myTeam, pos);
 					if(unitdef->weapons.size()>0){	//draw range
 						glDisable(GL_TEXTURE_2D);
 						glColor4f(1,0.3,0.3,0.7);

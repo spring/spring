@@ -677,16 +677,9 @@ void CBuilderCAI::DrawCommands(void)
 				glEnd();
 			}
 
-			unitDrawer->SetupForGhostDrawing();
 			glColor4f(1,1,1,0.3);
-			S3DOModel* model=modelParser->Load3DO(unitdef->model.modelpath.c_str() ,1, owner->team);
-			glPushMatrix();
-			glTranslatef3(pos);
-			//glCallList(model->displist);
-			model->DrawStatic();
-			unitDrawer->CleanUpGhostDrawing();
+			unitDrawer->DrawBuildingSample(unitdef, owner->team, pos);
 
-			glPopMatrix();
 			glColor4f(1,1,1,0.4);
 			glBegin(GL_LINE_STRIP);
 			draw=true;

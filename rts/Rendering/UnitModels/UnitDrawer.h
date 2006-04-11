@@ -88,6 +88,15 @@ public:
 
 	std::vector<std::vector<CWorldObject*> > quedS3Os;
 	std::set<int> usedS3OTextures;
+
+	void SetS3OTeamColour(int team);
+	void DrawBuildingSample(UnitDef* unitdef, int side, float3 pos);
+private:
+	void SetBasicS3OTeamColour(int team);
+	void SetupBasicS3OTexture0(void);
+	void SetupBasicS3OTexture1(void);
+	void CleanupBasicS3OTexture1(void);
+	void CleanupBasicS3OTexture0(void);
 };
 
 extern CUnitDrawer* unitDrawer;
