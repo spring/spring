@@ -643,22 +643,8 @@ void CUnit::Draw()
 			float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
 			glColor3f(col*0.5,col,col*0.5);
 
-			if(unitDrawer->advShading && !water->drawReflection){
-				glDisable(GL_VERTEX_PROGRAM_ARB);
-				glDisable(GL_FRAGMENT_PROGRAM_ARB);
-				glDisable(GL_TEXTURE_2D);
-				glActiveTextureARB(GL_TEXTURE1_ARB);
-				glDisable(GL_TEXTURE_2D);
-				glActiveTextureARB(GL_TEXTURE2_ARB);
-				glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-				glActiveTextureARB(GL_TEXTURE3_ARB);
-				glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-				glActiveTextureARB(GL_TEXTURE0_ARB);
-				glDisable(GL_FOG);
-			} else {
-				glDisable(GL_LIGHTING);
-				glDisable(GL_TEXTURE_2D);
-			}
+			unitDrawer->UnitDrawingTexturesOff(model);
+			
 			double plane[4]={0,-1,0,start+height*buildProgress*3};
 			glClipPlane(GL_CLIP_PLANE0 ,plane);
 			double plane2[4]={0,1,0,-start-height*(buildProgress*10-9)};
@@ -678,23 +664,8 @@ void CUnit::Draw()
 				localmodel->Draw();
 			}
 			glDisable(GL_CLIP_PLANE1);
-			if(unitDrawer->advShading && !water->drawReflection){
-				glEnable(GL_VERTEX_PROGRAM_ARB);
-				glEnable(GL_FRAGMENT_PROGRAM_ARB);
-				glEnable(GL_TEXTURE_2D);
-				glActiveTextureARB(GL_TEXTURE1_ARB);
-				glEnable(GL_TEXTURE_2D);
-				glActiveTextureARB(GL_TEXTURE2_ARB);
-				glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-				glActiveTextureARB(GL_TEXTURE3_ARB);
-				glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-				glActiveTextureARB(GL_TEXTURE0_ARB);
-				glEnable(GL_FOG);
-			} else {
-				glEnable(GL_LIGHTING);
-				glColor3f(1,1,1);
-				glEnable(GL_TEXTURE_2D);
-			}
+			unitDrawer->UnitDrawingTexturesOn(model);
+			
 			if(buildProgress>0.66){
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-2)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);

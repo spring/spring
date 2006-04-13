@@ -730,6 +730,118 @@ void CUnitDrawer::CleanupBasicS3OTexture0(void)
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
 
+/**
+ * Between a pair of SetupFor/CleanUpUnitDrawing (or SetupForS3ODrawing),
+ * temporarily turns off textures and shaders.
+ *
+ * Used by CUnit::Draw() for drawing a unit under construction.
+ */
+void CUnitDrawer::UnitDrawingTexturesOff(S3DOModel *model)
+{
+	if (model->textureType == 0){
+		/* 3DO */
+		/* If SetupForUnitDrawing is changed, this may need tweaking too. */
+		if(advShading && !water->drawReflection){
+			glDisable(GL_VERTEX_PROGRAM_ARB);
+			glDisable(GL_FRAGMENT_PROGRAM_ARB);
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE1_ARB);
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE3_ARB);
+			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+			glDisable(GL_FOG);
+		} else {
+			glDisable(GL_LIGHTING);
+			glDisable(GL_TEXTURE_2D);
+		}
+	} else {
+		/* S3O */
+		/* If SetupForS3ODrawing is changed, this may need tweaking too. */
+		if(advShading && !water->drawReflection){
+			/* Odd. Units with only the first texture build cyan rather than
+			   green. Presume it's an improvement on black. :S -- krudat */
+			glDisable(GL_VERTEX_PROGRAM_ARB);
+			glDisable(GL_FRAGMENT_PROGRAM_ARB);
+			/* TEXTURE0: Colour texture. */
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE1_ARB); // 'Shiny' texture.
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE2_ARB); // Shadows.
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE3_ARB); // boxtex
+			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE4_ARB); // specularTex
+			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+		} else {
+			glDisable(GL_LIGHTING);
+			/* TEXTURE0: Colour texture. */
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE1_ARB); // GL lighting, I think.
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+		}
+	}
+}
+
+/**
+ * The companion to UnitDrawingTexturesOff(), re-enables the texture units
+ * needed for drawing a model.
+ *
+ * Does *not* restore the texture bindings.
+ */
+void CUnitDrawer::UnitDrawingTexturesOn(S3DOModel *model)
+{
+	/* If UnitDrawingTextureOff is changed, this may need tweaking too. */
+	if (model->textureType == 0){
+		/* 3DO */
+		if(advShading && !water->drawReflection){
+			glEnable(GL_VERTEX_PROGRAM_ARB);
+			glEnable(GL_FRAGMENT_PROGRAM_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE1_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE3_ARB);
+			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+			glEnable(GL_FOG);
+		} else {
+			glEnable(GL_LIGHTING);
+			glColor3f(1,1,1);
+			glEnable(GL_TEXTURE_2D);
+		}
+	} else {
+		/* S3O */
+		if(advShading && !water->drawReflection){
+			glEnable(GL_VERTEX_PROGRAM_ARB);
+			glEnable(GL_FRAGMENT_PROGRAM_ARB);
+			
+			glEnable(GL_TEXTURE_2D);			
+			glActiveTextureARB(GL_TEXTURE1_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE3_ARB);
+			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE4_ARB);
+			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+		} else {
+			glEnable(GL_LIGHTING);
+			glColor3f(1,1,1);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE1_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+		}
+	}
+}
+
 void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor)
 {
 	unsigned char* buf=new unsigned char[size*size*4];
@@ -855,14 +967,16 @@ void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
 	
 	if (model->textureType == 0){
 		/* 3DO */
-		unitDrawer->SetupForGhostDrawing();
+		SetupForGhostDrawing();
 		glPushMatrix();
 		glTranslatef3(pos);
 		model->DrawStatic();
-		unitDrawer->CleanUpGhostDrawing();
+		CleanUpGhostDrawing();
 		glPopMatrix();
 		return;
 	}
+	
+	/* S3O */
 	
 	/* From SetupForGhostDrawing. */
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
