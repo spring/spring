@@ -14,14 +14,17 @@
 #include "Game/Camera.h"
 #include "SmokeTrailProjectile.h"
 #include "SyncTracer.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/s3oParser.h"
 #include "Matrix44f.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "mmgr.h"
 
 
 static const float Smoke_Time=40;
 
-CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, S3DO* piece, int flags,CUnit* owner,float radius)
+CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS3DO * piece, int flags,CUnit* owner,float radius)
 : CProjectile(pos,speed,owner),
   flags(flags),
   dispList(piece->displist),
@@ -29,12 +32,39 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, S3DO* 
 	oldSmoke(pos),
 	curCallback(0),
 	spinPos(0),
-	age(0),
-	piece(piece)
+	age(0)
 {
 	checkCol=false;
-	if(owner)
+	if(owner){
+		/* If we're an S3O unit, this is where ProjectileHandler
+		   fetches our texture from. */
 		s3domodel=owner->model;
+		/* If we're part of an S3O unit, save this so we can 
+		   draw with the right teamcolour. */
+		team=owner->team;
+	}
+
+	/* Don't store piece; owner may be a dying unit, so piece could be freed. */
+
+	/* //if (piece->texturetype == 0) {
+	   Great. LocalPiece doesn't carry the texture name.
+	   
+	   HACK TODO PieceProjectile shouldn't need to know about
+	   different model formats; push it into Rendering/UnitModels. 
+	   
+	   If this needs to change, also modify Sim/Units/COB/CobInstance.cpp::Explosion.
+	   
+	   Nothing else wants to draw just one part without PieceInfo, so this 
+	   polymorphism can stay put for the moment.
+	   */
+	if (piece->original3do != NULL){
+		piece3do = piece->original3do;
+		pieces3o = NULL;
+	} else if (piece->originals3o != NULL){
+		piece3do = NULL;
+		pieces3o = piece->originals3o;
+	}
+
 	castShadow=true;
 
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
@@ -119,6 +149,36 @@ void CPieceProjectile::Collision(CUnit* unit)
 	oldSmoke=pos;
 }
 
+bool CPieceProjectile::HasVertices(void)
+{	
+	if (piece3do != NULL) {
+		/* 3DO */
+		return !piece3do->vertices.empty();
+	}
+	else {
+		/* S3O */
+		return !pieces3o->vertexDrawOrder.empty();
+	}
+}
+
+float3 CPieceProjectile::RandomVertexPos(void)
+{
+	float3 pos;
+
+	if (piece3do != NULL) { 
+		/* 3DO */
+		int vertexNum=(int) (gu->usRandFloat()*0.99*piece3do->vertices.size());
+		pos=piece3do->vertices[vertexNum].pos;
+	}
+	else {
+		/* S3O */
+		int vertexNum=(int) (gu->usRandFloat()*0.99*pieces3o->vertexDrawOrder.size());
+		pos=pieces3o->vertices[pieces3o->vertexDrawOrder[vertexNum]].pos;
+	}
+	
+	return pos;
+}
+
 void CPieceProjectile::Update()
 {
 	if (flags & PP_Fall)
@@ -132,7 +192,7 @@ void CPieceProjectile::Update()
 	spinPos+=spinSpeed;
 
 	*numCallback=0;
-	if ((flags & PP_Fire && !piece->vertices.empty())/* && (gs->frameNum & 1)*/) {
+	if ((flags & PP_Fire && HasVertices() )/* && (gs->frameNum & 1)*/) {
 		ENTER_MIXED;
 		OldInfo* tempOldInfo=oldInfos[7];
 		for(int a=6;a>=0;--a){
@@ -141,8 +201,7 @@ void CPieceProjectile::Update()
 		CMatrix44f m;
 		m.Translate(pos.x,pos.y,pos.z);
 		m.Rotate(spinPos*PI/180,spinVec);
-		int vertexNum=(int) (gu->usRandFloat()*0.99*piece->vertices.size());
-		float3 pos=piece->vertices[vertexNum].pos;
+		float3 pos=RandomVertexPos();
 		m.Translate(pos.x,pos.y,pos.z);
 
 		oldInfos[0]=tempOldInfo;
@@ -261,6 +320,13 @@ void CPieceProjectile::DrawUnitPart(void)
 	glCallList(dispList);
 	glPopMatrix();
 	*numCallback=0;
+}
+
+void CPieceProjectile::DrawS3O(void)
+{
+	/* TODO Hmm, S3O nuclear missile... might want to copy this into WeaponProjectile? */
+	unitDrawer->SetS3OTeamColour(team);
+	DrawUnitPart();
 }
 
 void CPieceProjectile::DrawCallback(void)
