@@ -702,9 +702,11 @@ void CCobInstance::Explode(int piece, int flags)
 	}
 	speed+=baseSpeed;
 
-	S3DO* dl = unit->localmodel->pieces[unit->localmodel->scritoa[piece]].original3do;
-	if(dl){
-		if (flags & 1) {		//Shatter
+	LocalS3DO * pieceData = &( unit->localmodel->pieces[unit->localmodel->scritoa[piece]] );
+	if (flags & 1) {		//Shatter
+		
+		S3DO* dl = pieceData->original3do;
+		if(dl){
 			ENTER_MIXED;
 			float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
 	//		info->AddLine("Shattering %i %f",dl->prims.size(),pieceChance);
@@ -717,9 +719,11 @@ void CCobInstance::Explode(int piece, int flags)
 			}
 			ENTER_SYNCED;
 		}
-		else {
+	}
+	else {
+		if (pieceData->original3do != NULL || pieceData->originals3o != NULL) {
 			//info->AddLine("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-			new CPieceProjectile(pos, speed, dl, newflags,unit,0.5);
+			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5);
 		}
 	}
 #endif

@@ -9,13 +9,16 @@ const int PP_Smoke = 2;		//smoke and fire is turned off when there is to many pr
 const int PP_Fire = 4;
 const int PP_Explode = 8;
 class CSmokeTrailProjectile;
+struct LocalS3DO;
 struct S3DO;
+struct SS3O;
 
 class CPieceProjectile : public CProjectile
 {
 	int flags;
 	int dispList;
-	S3DO* piece;
+	S3DO* piece3do;
+	SS3O* pieces3o;
 	float3 spinVec;
 	float spinSpeed;
 	float spinPos;
@@ -32,8 +35,10 @@ class CPieceProjectile : public CProjectile
 		float size;
 	};
 	OldInfo* oldInfos[8];
+	
+	int team;
 public:
-	CPieceProjectile(const float3& pos,const float3& speed, S3DO* piece, int flags,CUnit* owner,float radius);
+	CPieceProjectile(const float3& pos,const float3& speed, LocalS3DO* piece, int flags,CUnit* owner,float radius);
 	virtual ~CPieceProjectile(void);
 	void Update();
 	void Draw();
@@ -42,6 +47,11 @@ public:
 
 	void DrawUnitPart(void);
 	void DrawCallback(void);
+	
+	void DrawS3O(void);
+private:
+	bool HasVertices();
+	float3 RandomVertexPos();
 };
 
 
