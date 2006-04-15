@@ -19,5 +19,13 @@ DP3 temp, vertex.texcoord, program.env[12];
 MAD result.texcoord[2], program.env[12].w, program.env[9].x, temp;
 DP3 temp, vertex.texcoord, program.env[13];
 MAD result.texcoord[3], program.env[13].w, program.env[9].x, temp;
+DP3 temp, vertex.texcoord, program.env[14];
+MAD result.texcoord[4], program.env[14].w, program.env[9].x, temp;
+DP3 temp, vertex.texcoord, program.env[15];
+MAD result.texcoord[5], program.env[15].w, program.env[9].x, temp;
+DP3 temp, vertex.texcoord, program.env[16];
+MAD result.texcoord[6], program.env[16].w, program.env[9].x, temp;
+DP3 temp, vertex.texcoord, program.env[17];
+MAD result.texcoord[7], program.env[17].w, program.env[9].x, temp;
 
 END

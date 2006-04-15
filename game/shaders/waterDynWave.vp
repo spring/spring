@@ -18,6 +18,6 @@ ADD result.texcoord[2], vertex.texcoord, program.env[8];
 ADD result.texcoord[3], vertex.texcoord, program.env[9];
 ADD result.texcoord[4], vertex.texcoord, program.env[10];
 ADD result.texcoord[5], vertex.texcoord, program.env[11];
-MAD result.texcoord[6], vertex.texcoord, 8, program.env[15];
+MAD result.texcoord[6], vertex.texcoord, 4, program.env[15];
 
 END

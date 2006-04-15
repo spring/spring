@@ -30,12 +30,11 @@ MUL waterNormal, waterNormal, temp.x;
 DP3 angle.x, camdir, waterNormal;
 MUL temp.x, angle.x, -2;
 MAD reflectdir, waterNormal, temp.x, camdir;
-MAX reflectdir.y, reflectdir.y, 0;
 
 DP3_SAT specularvalue.x, reflectdir, program.env[9];
 POW temp, specularvalue.x, {16,0,0,0}.x;
 POW specularvalue, specularvalue.x, {4096,0,0,0}.x;
-MUL specularvalue, specularvalue, 5;
+MUL specularvalue, specularvalue, 10;
 MUL specularvalue, specularvalue, shadow.x;
 LRP shadow.x, 0.3, 1, shadow.x;
 MUL temp, temp, shadow.x;
@@ -87,8 +86,8 @@ LRP temp, program.env[7].x, temp, clearcolor;
 
 LRP result.color, foamIntensity.x, lightColor, temp;
 
-#MUL temp, fragment.texcoord[2],4;
-#TEX temp, temp, texture[1], 2D;
-#ADD result.color, temp, 0.0;
+#MUL temp, fragment.texcoord[2],1;
+#TEX temp, temp, texture[0], 2D;
+#MAD result.color, temp, 0.5, 0.5;
 
 END

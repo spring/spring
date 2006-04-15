@@ -28,6 +28,7 @@ public:
 	void DrawUpdateSquare(float dx,float dy, int* resetTexs);
 	void DrawSingleUpdateSquare(float startx,float starty,float endx,float endy);
 
+	int refractSize;
 	unsigned int reflectTexture;
 	unsigned int refractTexture;
 	unsigned int rawBumpTexture[3];
