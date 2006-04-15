@@ -40,6 +40,7 @@ CDynWater::CDynWater(void)
 	firstDraw=true;
 	drawSolid=true;
 	camPosBig=float3(2048,0,2048);
+	refractSize=gu->screeny>=1024 ? 1024:512;
 
 	glGenTextures(1, &reflectTexture);
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
@@ -55,13 +56,13 @@ CDynWater::CDynWater(void)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,512, 512, 0,GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,refractSize, refractSize, 0,GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 	glGenTextures(1, &detailNormalTex);
 	glBindTexture(GL_TEXTURE_2D, detailNormalTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16F_ARB ,128, 128, 0,GL_RGBA, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16F_ARB ,256, 256, 0,GL_RGBA, GL_FLOAT, 0);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
 	float* temp=new float[1024*1024*4];
@@ -93,8 +94,12 @@ CDynWater::CDynWater(void)
 
 	delete[] scrap;
 
+	if(ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB,"waterdyn.vp"))
+		waterVP=LoadVertexProgram("waterdyn.vp");
+	else
+		waterVP=LoadVertexProgram("waterdynNT.vp");
+
 	waterFP=LoadFragmentProgram("waterdyn.fp");
-	waterVP=LoadVertexProgram("waterdyn.vp");
 	waveFP=LoadFragmentProgram("waterdynwave.fp");
 	waveVP=LoadVertexProgram("waterdynwave.vp");
 	waveFP2=LoadFragmentProgram("waterdynwave2.fp");
@@ -462,11 +467,16 @@ void CDynWater::DrawRefraction(CGame* game)
 	refractUp=camera->up;
 	refractForward=camera->forward;
 
-	glViewport(0,0,512,512);
+	glViewport(0,0,refractSize,refractSize);
 
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	float3 oldsun=unitDrawer->unitSunColor;
+	float3 oldambient=unitDrawer->unitAmbientColor;
+
+	unitDrawer->unitSunColor*=float3(0.5,0.7,0.9);
+	unitDrawer->unitAmbientColor*=float3(0.6,0.8,1.0);
 
 	groundDrawer->Draw(false,false,dwGroundRefractVP);
 
@@ -484,10 +494,13 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawRefraction=false;
 
 	glBindTexture(GL_TEXTURE_2D, refractTexture);
-	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
+	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,refractSize,refractSize);
 
 	glViewport(0,0,gu->screenx,gu->screeny);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+
+	unitDrawer->unitSunColor=oldsun;
+	unitDrawer->unitAmbientColor=oldambient;
 }
 
 void CDynWater::DrawWaves(void)
@@ -530,7 +543,7 @@ void CDynWater::DrawWaves(void)
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, float(WF_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), float(WF_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0,0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, (camPosBig.x-WH_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), (camPosBig.z-WH_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, dx/WF_SIZE, dy/WF_SIZE, 0,0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,15, (camPosBig.x-WH_SIZE)/WF_SIZE*8, (camPosBig.x-WH_SIZE)/WF_SIZE*8, 0,0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,15, (camPosBig.x-WH_SIZE)/WF_SIZE*4, (camPosBig.x-WH_SIZE)/WF_SIZE*4, 0,0);
 
 	//////////////////////////////////////
 
@@ -969,20 +982,16 @@ void CDynWater::DrawWaterSurface(void)
 
 void CDynWater::DrawDetailNormalTex(void)
 {
-	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glBindTexture(GL_TEXTURE_2D,rawBumpTexture[0]);
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glBindTexture(GL_TEXTURE_2D,rawBumpTexture[0]);
-	glActiveTextureARB(GL_TEXTURE2_ARB);
-	glBindTexture(GL_TEXTURE_2D,rawBumpTexture[0]);
-	glActiveTextureARB(GL_TEXTURE3_ARB);
-	glBindTexture(GL_TEXTURE_2D,rawBumpTexture[0]);
+	for(int a=0;a<8;++a){
+		glActiveTextureARB(GL_TEXTURE0_ARB+a);
+		glBindTexture(GL_TEXTURE_2D,rawBumpTexture[0]);
+	}
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, frameBuffer);
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, detailNormalTex, 0);
 
-	glViewport(0,0,128,128);
+	glViewport(0,0,256,256);
 
 	int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
@@ -993,18 +1002,26 @@ void CDynWater::DrawDetailNormalTex(void)
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, dwDetailNormalVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
-	float swh=1.5;
-	float lwh=2.5;
+	float swh=0.05;	//height of detail normal waves
+	float lwh=1.0;	//height of larger ambient waves
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 9, gs->frameNum, 0, 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 3, 0, 0, 1.0/60);			//controls the position and speed of the waves
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 11, 0, 0, 1.0/130);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 6, -6, 0, -1.0/70);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, 4, 8, 0, 1.0/80);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.0022*swh, 0*swh, 0.7*lwh, 0);		//controls the height of the waves
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.003*swh, 0*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.003*swh, -0.003*swh, 0.10*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.0015*swh, 0.003*swh, 0.25*lwh, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 5, 0, 0, 1.0/120);			//controls the position and speed of the waves
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 14, 0, 0, 1.0/90);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 29, 0, 0, 1.0/55);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, 9, 4, 0, 1.0/100);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 5, -16, 0, 1.0/80);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 17, 17, 0, 1.0/75);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, -6, -10, 0, 1.0/100);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, -20, 12, 0, 1.0/65);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.1*swh, 0.0*swh, 0.7*lwh, 0);		//controls the height of the waves
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.4*swh, 0.0*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.15*swh, 0.07*swh, 0.4*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.06*swh, 0.2*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,5, 0.2*swh, 0.2*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.07*swh, 0.15*swh, 0.4*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.3*swh, 0.17*swh, 0.7*lwh, 0);
 
 	//update detail normals
 	glBegin(GL_QUADS);
