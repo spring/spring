@@ -2266,6 +2266,14 @@
 				Name="Map"
 				>
 				<File
+					RelativePath="..\..\Sim\Map\BasicMapDamage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Map\BasicMapDamage.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Map\Ground.cpp"
 					>
 				</File>
@@ -2291,6 +2299,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Map\MetalMap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Map\NoMapDamage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Map\NoMapDamage.h"
 					>
 				</File>
 				<File
@@ -2536,6 +2552,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\MemPool.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\mmgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\mmgr.h"
 				>
 			</File>
 			<File
@@ -3392,6 +3416,10 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\Win\DxSound.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound.cpp"
 					>
 				</File>
 				<File
