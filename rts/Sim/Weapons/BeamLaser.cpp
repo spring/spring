@@ -95,8 +95,12 @@ void CBeamLaser::Fire(void)
 	dir+=(salvoError)*(1-owner->limExperience*0.7);
 	dir.Normalize();
 
+	float rangeMod=1.3;
+	if(owner->directControl)
+		rangeMod=1.0;
+
 	CUnit* hit;
-	float length=helper->TraceRay(weaponPos,dir,range*1.3,damages[0],owner,hit);
+	float length=helper->TraceRay(weaponPos,dir,range*rangeMod,damages[0],owner,hit);
 	float3 hitPos=weaponPos+dir*length;
 	float intensity=1-length/(range*2);
 

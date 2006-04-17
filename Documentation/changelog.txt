@@ -1,5 +1,11 @@
 TASpring change log
 
+0.next
+
+- Added new water renderer
+- Fixed lasers firing two projectiles at once, efficiently doing double damage.
+- Fixed firing lasers longer than maxrange exploit in FPS mode.
+
 0.70b3
 
 - Shift/ctrl do not change rotation speed in rotating camera mode anymore.
