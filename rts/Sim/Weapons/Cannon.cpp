@@ -183,3 +183,11 @@ void CCannon::SlowUpdate(void)
 	}
 	CWeapon::SlowUpdate();
 }
+
+bool CCannon::AttackGround(float3 pos,bool userTarget)
+{
+	if(owner->directControl)		//mostly prevents firing longer than max range using fps mode
+		pos.y=ground->GetHeight(pos.x,pos.z);
+
+	return CWeapon::AttackGround(pos,userTarget);
+}
