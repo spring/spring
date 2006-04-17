@@ -34,7 +34,7 @@ public:
 
 	void HoldFire();
 	bool AttackUnit(CUnit* unit,bool userTarget);
-	bool AttackGround(float3 pos,bool userTarget);
+	virtual bool AttackGround(float3 pos,bool userTarget);
 
 	void AimReady(int value);
 
