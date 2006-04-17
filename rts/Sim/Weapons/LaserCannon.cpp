@@ -83,8 +83,11 @@ void CLaserCannon::Fire(void)
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.7);
 	dir.Normalize();
 
-	CWeaponProjectile::CreateWeaponProjectile(weaponPos,dir*projectileSpeed,owner, NULL, targetPos,  weaponDef);
-	new CLaserProjectile(weaponPos, dir*projectileSpeed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
+	int fpsSub=0;
+	if(owner->directControl)
+		fpsSub=3;
+
+	new CLaserProjectile(weaponPos, dir*projectileSpeed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed)-fpsSub);
 
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
