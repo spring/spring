@@ -538,7 +538,7 @@ void CUnitDrawer::CleanUpUnitDrawing(void)
 
 void CUnitDrawer::SetS3OTeamColour(int team)
 {
-	if(unitDrawer->advShading){
+	if(advShading){
 		unsigned char* col=gs->Team(team)->color;
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1);
 	} else {
@@ -735,6 +735,9 @@ void CUnitDrawer::CleanupBasicS3OTexture0(void)
  * temporarily turns off textures and shaders.
  *
  * Used by CUnit::Draw() for drawing a unit under construction.
+ *
+ * Unfortunately, it doesn't work! With advanced shading on, the green
+ * is darker than usual; with shadows as well, it's almost black. -- krudat
  */
 void CUnitDrawer::UnitDrawingTexturesOff(S3DOModel *model)
 {
@@ -744,12 +747,13 @@ void CUnitDrawer::UnitDrawingTexturesOff(S3DOModel *model)
 		if(advShading && !water->drawReflection){
 			glDisable(GL_VERTEX_PROGRAM_ARB);
 			glDisable(GL_FRAGMENT_PROGRAM_ARB);
+			/* TEXTURE0: Shadows. */
 			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE1_ARB);
+			glActiveTextureARB(GL_TEXTURE1_ARB); // Unit texture.
 			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glActiveTextureARB(GL_TEXTURE2_ARB); // boxtex
 			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE3_ARB);
+			glActiveTextureARB(GL_TEXTURE3_ARB); // specularTex
 			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 			glActiveTextureARB(GL_TEXTURE0_ARB);
 			glDisable(GL_FOG);
@@ -770,6 +774,7 @@ void CUnitDrawer::UnitDrawingTexturesOff(S3DOModel *model)
 			glActiveTextureARB(GL_TEXTURE1_ARB); // 'Shiny' texture.
 			glDisable(GL_TEXTURE_2D);
 			glActiveTextureARB(GL_TEXTURE2_ARB); // Shadows.
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 			glDisable(GL_TEXTURE_2D);
 			glActiveTextureARB(GL_TEXTURE3_ARB); // boxtex
 			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -825,6 +830,7 @@ void CUnitDrawer::UnitDrawingTexturesOn(S3DOModel *model)
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
 			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 			glEnable(GL_TEXTURE_2D);
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -949,6 +955,31 @@ void CUnitDrawer::DrawQuedS3O(void)
 	}
 	usedS3OTextures.clear();
 	CleanUpS3ODrawing();
+}
+
+/**
+ * Draw one unit.
+ *
+ * Used for drawing the view of the controlled unit.
+ *
+ * Note: does all the GL state setting for that one unit, so you might want
+ * something else for drawing many units.
+ */
+void CUnitDrawer::DrawIndividual(CUnit * unit)
+{
+	if (unit->model->textureType == 0){
+		/* 3DO */
+		SetupForUnitDrawing();
+		unit->Draw();
+		CleanUpUnitDrawing();
+	} else {
+		/* S3O */
+		SetupForS3ODrawing();
+		texturehandler->SetS3oTexture(unit->model->textureType);
+		unit->Draw();
+		CleanUpS3ODrawing();
+	}
+		
 }
 
 /**
