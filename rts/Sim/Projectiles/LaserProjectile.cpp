@@ -43,7 +43,7 @@ void CLaserProjectile::Update(void)
 		curLength=length;
 	ttl--;
 
-	if(ttl<7){
+	if(ttl<5){
 		intensity-=intensityFalloff;
 		if(intensity<=0){
 			deleteMe=true;
