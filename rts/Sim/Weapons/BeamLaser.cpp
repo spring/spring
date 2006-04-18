@@ -97,7 +97,7 @@ void CBeamLaser::Fire(void)
 
 	float rangeMod=1.3;
 	if(owner->directControl)
-		rangeMod=1.0;
+		rangeMod=0.95;
 
 	CUnit* hit;
 	float length=helper->TraceRay(weaponPos,dir,range*rangeMod,damages[0],owner,hit);
