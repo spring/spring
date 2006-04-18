@@ -95,6 +95,9 @@ public:
 	/* CUnit::Draw */
 	void UnitDrawingTexturesOff(S3DOModel *model);
 	void UnitDrawingTexturesOn(S3DOModel *model);
+	
+	/* CGame::DrawDirectControlHud,  */
+	void DrawIndividual(CUnit * unit);
 private:
 	void SetBasicS3OTeamColour(int team);
 	void SetupBasicS3OTexture0(void);

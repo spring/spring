@@ -2138,11 +2138,9 @@ void CGame::DrawDirectControlHud(void)
 	}
 	glTranslatef3(-unit->pos-unit->speed*gu->timeOffset);
 	glDisable(GL_BLEND);
-	unitDrawer->SetupForUnitDrawing();
-	unit->Draw();
+	unitDrawer->DrawIndividual(unit);
 	glPopMatrix();
 	glDisable(GL_DEPTH_TEST);
-	unitDrawer->CleanUpUnitDrawing();
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 
