@@ -22,6 +22,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/s3oParser.h"
 #include <algorithm>
 #include "mmgr.h"
 
@@ -342,6 +343,10 @@ CProjectileHandler::CProjectileHandler()
 		projectileShadowVP=LoadVertexProgram("projectileshadow.vp");
 	}
 
+
+	flying3doPieces = new FlyingPiece_List;
+	flyingPieces.push_back(flying3doPieces);
+
 }
 
 CProjectileHandler::~CProjectileHandler()
@@ -359,8 +364,16 @@ CProjectileHandler::~CProjectileHandler()
 	if(shadowHandler->drawShadows){
 		glDeleteProgramsARB( 1, &projectileShadowVP );
 	}
-	for(std::list<FlyingPiece*>::iterator pi=flyingPieces.begin();pi!=flyingPieces.end();++pi){
-		delete *pi;
+	/* Also invalidates flying3doPieces and flyings3oPieces. */
+	for(std::list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
+		FlyingPiece_List * fpl = *pti;
+		for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
+			if ((*pi)->verts != NULL){
+				delete[] ((*pi)->verts);
+			}
+			delete *pi;
+		}
+		delete fpl;
 	}
 	ph=0;
 }
@@ -394,16 +407,20 @@ START_TIME_PROFILE
 		(*gfi)->Update();
 	}
 
-	for(std::list<FlyingPiece*>::iterator pi=flyingPieces.begin();pi!=flyingPieces.end();){
-		(*pi)->pos+=(*pi)->speed;
-		(*pi)->speed*=0.996;
-		(*pi)->speed.y+=gs->gravity;
-		(*pi)->rot+=(*pi)->rotSpeed;
-		if((*pi)->pos.y<ground->GetApproximateHeight((*pi)->pos.x,(*pi)->pos.z)-10){
-			delete *pi;
-			pi=flyingPieces.erase(pi);
-		} else {
-			++pi;
+	for(std::list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
+		FlyingPiece_List * fpl = *pti;
+		/* Note: nothing in the third clause of this loop. TODO Rewrite it as a while */
+		for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();){
+			(*pi)->pos+=(*pi)->speed;
+			(*pi)->speed*=0.996;
+			(*pi)->speed.y+=gs->gravity;
+			(*pi)->rot+=(*pi)->rotSpeed;
+			if((*pi)->pos.y<ground->GetApproximateHeight((*pi)->pos.x,(*pi)->pos.z)-10){
+				delete *pi;
+				pi=fpl->erase(pi);
+			} else {
+				++pi;
+			}
 		}
 	}
 END_TIME_PROFILE("Projectile handler");
@@ -420,11 +437,20 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(1);
-	unitDrawer->SetupForUnitDrawing();
 
 	CVertexArray* va=GetVertexArray();
+
+	int numFlyingPieces = 0;
+	int drawnPieces = 0;
+	
+	/* Putting in, say, viewport culling will deserve refactoring. */
+	
+	/* 3DO */
+	unitDrawer->SetupForUnitDrawing();
+
 	va->Initialize();
-	for(std::list<FlyingPiece*>::iterator pi=flyingPieces.begin();pi!=flyingPieces.end();++pi){
+	numFlyingPieces += flying3doPieces->size();
+	for(std::list<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
 		CMatrix44f m;
 		m.Rotate((*pi)->rot,(*pi)->rotAxis);
 		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
@@ -454,9 +480,56 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		tp+=interPos;
 		va->AddVertexTN(tp,tex->xstart,tex->yend,tn);
 	}
-	int drawnPieces=va->drawIndex/32;
+	drawnPieces+=va->drawIndex/32;
 	va->DrawArrayTN(GL_QUADS);
 
+	unitDrawer->CleanUpUnitDrawing();
+
+	/* S3O */
+	unitDrawer->SetupForS3ODrawing();
+
+	for (int textureType = 1; textureType < flyings3oPieces.size(); textureType++){
+		/* TODO Skip this if there's no FlyingPieces. */
+		
+		texturehandler->SetS3oTexture(textureType);
+		
+		for (int team = 0; team < flyings3oPieces[textureType].size(); team++){
+			FlyingPiece_List * fpl = flyings3oPieces[textureType][team];
+		
+			unitDrawer->SetS3OTeamColour(team);
+			
+			va->Initialize();
+			
+			numFlyingPieces += fpl->size();
+		
+			for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
+				CMatrix44f m;
+				m.Rotate((*pi)->rot,(*pi)->rotAxis);
+				float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
+				
+				SS3OVertex * verts = (*pi)->verts;
+				
+				float3 tp, tn;
+				
+				for (int i = 0; i < 4; i++){
+					tp=m.Mul(verts[i].pos);
+					tn=m.Mul(verts[i].normal);
+					tp+=interPos;
+					va->AddVertexTN(tp,verts[i].textureX,verts[i].textureY,tn);
+				}
+			}
+			drawnPieces+=va->drawIndex/32;
+			va->DrawArrayTN(GL_QUADS);
+		}
+	}
+	
+	unitDrawer->CleanUpS3ODrawing();
+	
+	/*
+	 * TODO Nearly cut here.
+	 */
+
+	unitDrawer->SetupForUnitDrawing();
 	Projectile_List::iterator psi;
 	distlist.clear();
 	for(psi=ps.begin();psi != ps.end();++psi){
@@ -512,7 +585,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
 	currentParticles=(int)(ps.size()*0.8+currentParticles*0.2);
-	currentParticles+=(int)(0.2*drawnPieces+0.3*flyingPieces.size());
+	currentParticles+=(int)(0.2*drawnPieces+0.3*numFlyingPieces);
 	particleSaturation=(float)currentParticles/(float)maxParticles;
 //	glFogfv(GL_FOG_COLOR,FogLand);
 }
@@ -700,11 +773,44 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3D
 	fp->speed=speed;
 	fp->prim=piece;
 	fp->object=object;
+	fp->verts=NULL;
 
 	fp->rotAxis=gu->usRandVector();
 	fp->rotAxis.Normalize();
 	fp->rotSpeed=gu->usRandFloat()*0.1;
 	fp->rot=0;
 
-	flyingPieces.push_back(fp);
+	flying3doPieces->push_back(fp);
+}
+
+void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts){
+	FlyingPiece_List * pieceList = NULL;
+	
+	while(flyings3oPieces.size()<=textureType)
+		flyings3oPieces.push_back(std::vector<FlyingPiece_List*>());
+	
+	while(flyings3oPieces[textureType].size()<=team){
+		printf("Creating piece list %d %d.\n", textureType, flyings3oPieces[textureType].size());
+		
+		FlyingPiece_List * fpl = new FlyingPiece_List;
+		flyings3oPieces[textureType].push_back(fpl);
+		flyingPieces.push_back(fpl);
+	}
+	
+	pieceList=flyings3oPieces[textureType][team];
+
+	FlyingPiece* fp=new FlyingPiece;
+	fp->pos=pos;
+	fp->speed=speed;
+	fp->prim=NULL;
+	fp->object=NULL;
+	fp->verts=verts;
+
+	/* Duplicated with AddFlyingPiece. */
+	fp->rotAxis=gu->usRandVector();
+	fp->rotAxis.Normalize();
+	fp->rotSpeed=gu->usRandFloat()*0.1;
+	fp->rot=0;
+
+	pieceList->push_back(fp);
 }
