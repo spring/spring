@@ -10,6 +10,7 @@ class CProjectileHandler;
 class CProjectile;
 struct S3DOPrimitive;
 struct S3DO;
+struct SS3OVertex;
 
 #include <list>
 #include <vector>
@@ -41,6 +42,7 @@ public:
 	void ConvertTex(unsigned char tex[512][512][4], int startx, int starty, int endx, int endy, float absorb);
 	void DrawShadowPass(void);
 	void AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3DOPrimitive* piece);
+	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts);
 
 	struct projdist{
 		float dist;
@@ -60,12 +62,15 @@ public:
 	std::set<CGroundFlash*> groundFlashes;
 	std::stack<CGroundFlash*> toBeDeletedFlashes;
 
+private:
 	struct FlyingPiece{
 		inline void* operator new(size_t size){return mempool.Alloc(size);};
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
 
 		S3DOPrimitive* prim;
 		S3DO* object;
+		
+		SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
 
 		float3 pos;
 		float3 speed;
@@ -74,7 +79,11 @@ public:
 		float rot;
 		float rotSpeed;
 	};
-	std::list<FlyingPiece*> flyingPieces;
+	typedef std::list<FlyingPiece*> FlyingPiece_List;
+	std::list<FlyingPiece_List*> flyingPieces;
+	FlyingPiece_List * flying3doPieces;
+	// flyings3oPieces[textureType][team] 
+	std::vector<std::vector<FlyingPiece_List*> > flyings3oPieces; 
 };
 extern CProjectileHandler* ph;
 
