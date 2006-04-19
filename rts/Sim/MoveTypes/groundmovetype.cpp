@@ -1336,7 +1336,9 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			int numIter=0;
 			//lowered the original 6 absolute distance to slightly more than 4.5 euclidian distance
 			//to fix units getting stuck in buildings --tvo
-			while((nwsx-moveSquareX)*(nwsx-moveSquareX)+(nwsy-moveSquareY)*(nwsy-moveSquareY) < 21 && !haveFinalWaypoint && pathId){
+			//My first fix set it to 21, as the pathfinding was still considered broken by many I reduced it to 11 (arbitrarily)
+			//Does anyone know whether lowering this constant has any adverse side effects? Like e.g. more CPU usage? --tvo
+			while((nwsx-moveSquareX)*(nwsx-moveSquareX)+(nwsy-moveSquareY)*(nwsy-moveSquareY) < 11 && !haveFinalWaypoint && pathId){
 				int ltx=nwsx-moveSquareX+5;
 				int lty=nwsy-moveSquareY+5;
 				bool wpOk=true;
