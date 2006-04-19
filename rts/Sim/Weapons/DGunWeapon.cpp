@@ -4,6 +4,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Game/Team.h"
 #include "mmgr.h"
 
 CDGunWeapon::CDGunWeapon(CUnit* owner)
@@ -30,6 +32,10 @@ void CDGunWeapon::Update(void)
 
 void CDGunWeapon::Fire(void)
 {
+	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
+		return;		//prevents dgunning using fps view if outside dgunlimit
+	}
+
 	float3 dir;
 	if(onlyForward){
 		dir=owner->frontdir;
