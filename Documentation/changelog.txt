@@ -4,7 +4,8 @@ TASpring change log
 
 - Added new water renderer
 - Fixed lasers firing two projectiles at once, efficiently doing double damage.
-- Fixed firing lasers longer than maxrange exploit in FPS mode.
+- Fixed several exploits with FPS mode.
+- Added new fbi variable CanLoopbackAttack, only affects fighter aircrafts, if 1 this will enable the player to set the aircraft to do an immelman turn after firing instead of overflying the target.
 
 0.70b3
 

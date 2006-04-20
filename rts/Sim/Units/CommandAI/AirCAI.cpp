@@ -55,6 +55,20 @@ CAirCAI::CAirCAI(CUnit* owner)
 	possibleCommands.push_back(c);
 	nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
 
+	if(owner->unitDef->canLoopbackAttack){
+		c.params.clear();
+		c.id=CMD_LOOPBACKATTACK;
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Loopback";
+		c.params.push_back("0");
+		c.params.push_back("Normal");
+		c.params.push_back("Loopback");
+		c.tooltip="Loopback attack: Sets if the aircraft should loopback after an attack instead of overflying target";
+		c.key=0;
+		possibleCommands.push_back(c);
+		nonQueingCommands.insert(CMD_LOOPBACKATTACK);
+	}
+
 	basePos=owner->pos;
 	goalPos=owner->pos;
 
@@ -84,6 +98,27 @@ void CAirCAI::GiveCommand(Command &c)
 		}
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 			if(cdi->id==CMD_AUTOREPAIRLEVEL){
+				char t[10];
+				SNPRINTF(t,10,"%d", (int)c.params[0]);
+				cdi->params[0]=t;
+				break;
+			}
+		}
+		return;
+	}
+	if(c.id==CMD_LOOPBACKATTACK){
+		if(c.params.empty())
+			return;
+		switch((int)c.params[0]){
+		case 0:
+			((CAirMoveType*)owner->moveType)->loopbackAttack=false;
+			break;
+		case 1:
+			((CAirMoveType*)owner->moveType)->loopbackAttack=true;
+			break;
+		}
+		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
+			if(cdi->id==CMD_LOOPBACKATTACK){
 				char t[10];
 				SNPRINTF(t,10,"%d", (int)c.params[0]);
 				cdi->params[0]=t;

@@ -223,6 +223,7 @@ struct UnitDef
 
 	bool smoothAnim;			// True if the unit should use interpolated animation
 	bool isMetalMaker;
+	bool canLoopbackAttack;		//only matters for fighter aircrafts
 };
 
 

@@ -482,6 +482,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.flareSalvoDelay=atoi(tdfparser.SGetValueDef("0.1", "UNITINFO\\FlareSalvoDelay").c_str())*30;
 
 	ud.smoothAnim = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SmoothAnim").c_str());
+	ud.canLoopbackAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\CanLoopbackAttack").c_str());
 
 	LoadSound(tdfparser, ud.sounds.ok, "ok1");
 	LoadSound(tdfparser, ud.sounds.select, "select1");

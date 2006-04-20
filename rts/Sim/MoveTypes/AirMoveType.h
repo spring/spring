@@ -45,6 +45,7 @@ public:
 	int maneuver;
 	int maneuverSubState;
 
+	bool loopbackAttack;
 	bool isFighter;
 
 	float wingDrag;
