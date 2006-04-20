@@ -6,7 +6,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Game/GameHelper.h"
-//#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/Weapon.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/COB/CobFile.h"
@@ -50,7 +50,8 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	lastColWarningType(0),
 	repairBelowHealth(0.30),
 	padStatus(0),
-	reservedPad(0)
+	reservedPad(0),
+	loopbackAttack(false)
 {
 	turnRadius=150;
 	owner->mapSquare+=1;						//to force los recalculation
@@ -322,7 +323,7 @@ void CAirMoveType::UpdateManeuver(void)
 #endif
 	float speedf=owner->speed.Length();
 	switch(maneuver){
-	case 1:{
+	case 1:{	//immelman 
 		int aileron=0,elevator=0;
 		if(owner->updir.y>0){
 			if(owner->rightdir.y>maxAileron*speedf){
@@ -337,7 +338,7 @@ void CAirMoveType::UpdateManeuver(void)
 		if((owner->updir.y<0 && owner->frontdir.y<0) || speedf<0.8)
 			maneuver=0;
 		break;}
-	case 2:{
+	case 2:{	//inverted immelman
 		int aileron=0,elevator=0;
 		if(maneuverSubState==0){
 			if(owner->rightdir.y>=0){
@@ -380,12 +381,20 @@ void CAirMoveType::UpdateFighterAttack(void)
 		CheckForCollision();
 
 	bool groundTarget=!owner->userTarget || !owner->userTarget->unitDef->canfly;
+	bool airTarget=owner->userTarget && owner->userTarget->unitDef->canfly && !owner->userTarget->unitDef->hoverAttack;	//only "real" aircrafts (non gunship)
 	if(groundTarget){
-		if(frontdir.dot(goalPos-pos)<0 && (pos-goalPos).SqLength()<turnRadius*turnRadius){
+		if(frontdir.dot(goalPos-pos)<0 && (pos-goalPos).SqLength()<turnRadius*turnRadius*(loopbackAttack?4:1)){
 			float3 dif=pos-goalPos;
 			dif.y=0;
 			dif.Normalize();
 			goalPos=goalPos+dif*turnRadius*4;
+		} else if (loopbackAttack && !airTarget){
+			bool hasFired=false;
+			if(!owner->weapons.empty() && owner->weapons[0]->reloadStatus > gs->frameNum && owner->weapons[0]->salvoLeft==0)
+				hasFired=true;
+			if( frontdir.dot(goalPos-pos)<owner->maxRange*(hasFired?1.0:0.7)){
+				maneuver=1;
+			}
 		} else if(frontdir.dot(goalPos-pos)<owner->maxRange*0.7){
 			goalPos+=exitVector*(owner->userTarget?owner->userTarget->radius+owner->radius+10:owner->radius+40);
 		}
