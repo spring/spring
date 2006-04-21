@@ -96,8 +96,10 @@ void CBeamLaser::Fire(void)
 	dir.Normalize();
 
 	float rangeMod=1.3;
+#ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl)
 		rangeMod=0.95;
+#endif
 
 	CUnit* hit;
 	float length=helper->TraceRay(weaponPos,dir,range*rangeMod,damages[0],owner,hit);
