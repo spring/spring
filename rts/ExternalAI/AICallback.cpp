@@ -187,6 +187,9 @@ int CAICallback::GiveOrder(int unitid, Command* c)
 
 	CUnit *unit = uh->units[unitid];
 
+	if (!unit)
+		return -1;
+
 	if (group && unit->group != group)
 		return -1;
 

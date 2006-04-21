@@ -753,7 +753,8 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					float radiusSum = (owner->xsize + object->xsize) * SQUARE_SIZE/2;
 					//If object is close enought.
 					if(distanceToObject < speedf*35 + 10 + radiusSum
-					&& distanceToObject < currentDistanceToGoal) {
+					&& distanceToObject < currentDistanceToGoal
+					&& distanceToObject > 0.001f) { // Don't divide by zero. TODO figure out why this can actually happen.
 						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);	//Positive value means "to right".
 						//If object and unit in relative motion are closing in to each other (or not yet fully apart),
 						//the object are in path of the unit and they are not collided.
