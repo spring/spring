@@ -4,6 +4,7 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Misc/LosHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit);
@@ -96,6 +97,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	if (!unitDef->isAirBase)
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
 	unit->UnBlock();
+	loshandler->FreeInstance(unit->los);
+	unit->los=0;
 	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
 		unit->moveType->useHeading=false;	
 	TransportedUnit tu;
@@ -125,6 +128,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 				unit->moveType->useHeading=true;
 			unit->stunned=false; // de-stun in case it isairbase=0
 			unit->Block();
+			loshandler->MoveUnit(unit,false);
 			unit->moveType->LeaveTransport();
 			Command c;
 			c.id=CMD_STOP;
