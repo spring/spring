@@ -582,8 +582,16 @@ static string MakeDemoStartScript(char *startScript, int ssLen)
 		if (startScript[last] != 0) break;
 		last --;
 	}
+	time_t currtime;
+	time(&currtime);
+	tm* gmttime = gmtime(&currtime);
+	char buff[500];
+	sprintf(buff, "%d-%d-%d %2d:%2d:%2d GMT", gmttime->tm_year+1900, gmttime->tm_mon, gmttime->tm_mday,
+		gmttime->tm_hour, gmttime->tm_min, gmttime->tm_sec);
+	string datetime;
 	script.insert (script.begin(), startScript, startScript + last + 1);
-	script += "\n[VERSION]\n{\n\tGameVersion=" VERSION_STRING ";\n}\n";
+	script += "\n[VERSION]\n{\n\tGameVersion=" VERSION_STRING ";\n";
+	script += "\tDateTime=" + string(buff) + ";\n}\n";
 	return script;
 }
 
