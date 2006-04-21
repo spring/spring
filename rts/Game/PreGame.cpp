@@ -224,7 +224,7 @@ bool CPreGame::Update(void)
 		ENTER_MIXED;
 
 		// Map all required archives depending on selected mod(s)
-		stupidGlobalModName = MOD_FILE;
+		stupidGlobalModName = configHandler.GetString("ModFile", MOD_FILE);
 		if (gameSetup)
 			stupidGlobalModName = gameSetup->baseMod;
 		vector<string> ars = archiveScanner->GetArchives(stupidGlobalModName);
