@@ -84,8 +84,10 @@ void CLaserCannon::Fire(void)
 	dir.Normalize();
 
 	int fpsSub=0;
+#ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl)
 		fpsSub=6;
+#endif
 
 	new CLaserProjectile(weaponPos, dir*projectileSpeed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)((weaponDef->range-fpsSub*4)/weaponDef->projectilespeed)-fpsSub);
 
