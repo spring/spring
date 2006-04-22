@@ -23,6 +23,8 @@ public:
 
 	void Update(void);
 	void Collision(CUnit* unit);
+	void Collision(CFeature* feature);
+	void Collision();
 	void Draw(void);
 };
 

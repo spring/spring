@@ -38,9 +38,17 @@ CLaserProjectile::~CLaserProjectile(void)
 void CLaserProjectile::Update(void)
 {
 	pos+=speed;
-	curLength+=speedf;
-	if(curLength>length)
-		curLength=length;
+	if(checkCol){	//normal;
+		curLength+=speedf;
+		if(curLength>length)
+			curLength=length;
+	} else {	//fading out after hit
+		curLength-=speedf;
+		if(curLength<=0){
+			deleteMe=true;
+			curLength=0;
+		}
+	}
 	ttl--;
 
 	if(ttl<5){
@@ -54,10 +62,37 @@ void CLaserProjectile::Update(void)
 
 void CLaserProjectile::Collision(CUnit* unit)
 {
-//	unit->DoDamage(damages,owner);
-
+	float3 oldPos=pos;
 	CWeaponProjectile::Collision(unit);
+
+	deleteMe=false;	//we will fade out over some time
+	checkCol=false;
+	speed=ZeroVector;
+	pos=oldPos;
 }
+
+void CLaserProjectile::Collision(CFeature* feature)
+{
+	float3 oldPos=pos;
+	CWeaponProjectile::Collision(feature);
+
+	deleteMe=false;	//we will fade out over some time
+	checkCol=false;
+	speed=ZeroVector;
+	pos=oldPos;
+}
+
+void CLaserProjectile::Collision()
+{
+	float3 oldPos=pos;
+	CWeaponProjectile::Collision();
+
+	deleteMe=false;	//we will fade out over some time
+	checkCol=false;
+	speed=ZeroVector;
+	pos=oldPos;
+}
+
 
 void CLaserProjectile::Draw(void)
 {
