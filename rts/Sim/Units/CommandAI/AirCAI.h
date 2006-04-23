@@ -19,6 +19,7 @@ public:
 	void DrawCommands(void);
 	void AddUnit(CUnit* unit);
 	void FinishCommand(void);
+	void BuggerOff(float3 pos, float radius);
 
 	float3 goalPos;
 	float3 patrolGoal;
@@ -31,7 +32,9 @@ public:
 	int activeCommand;
 	int targetAge;
 	unsigned int patrolTime;
-	void BuggerOff(float3 pos, float radius);
+
+	float3 commandPos1;		//used to limit how far away stuff can fly from path
+	float3 commandPos2;
 };
 
 #endif // __AIR_CAI_H__

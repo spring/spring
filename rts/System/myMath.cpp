@@ -40,5 +40,23 @@ float3 GetVectorFromHAndPExact(short int heading,short int pitch)
 	return ret;
 }
 
+float LinePointDist(float3 l1,float3 l2,float3 p)
+{
+	float3 dir(l2-l1);
+	float length=dir.Length();
+	if(length==0)
+		length=0.1;
+	dir/=length;
+
+	float a=(p-l1).dot(dir);
+	if(a<0)
+		a=0;
+	if(a>length)
+		a=length;
+
+	float3 p2=p-dir*a;
+	return p2.distance(l1);
+}
+
 CMyMath dummyMathObject;
 

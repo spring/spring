@@ -112,4 +112,6 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 	return res;
 }
 
+float LinePointDist(float3 l1,float3 l2,float3 p);
+
 #endif /* MYMATH_H */

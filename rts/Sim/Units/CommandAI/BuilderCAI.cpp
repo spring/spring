@@ -20,6 +20,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "Game/Team.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CBuilderCAI::CBuilderCAI(CUnit* owner)
@@ -191,6 +192,13 @@ void CBuilderCAI::SlowUpdate()
 	case CMD_REPAIR:{
 		if(c.params.size()==1){		//repair unit
 			CUnit* unit=uh->units[(int)c.params[0]];
+			if(commandFromPatrol && owner->moveState==1){		//limit how far away we go
+				if(unit && LinePointDist(commandPos1,commandPos2,unit->pos) > 500){
+					StopMove();
+					FinishCommand();
+					break;
+				}
+			}
 			if(unit && unit->health<unit->maxHealth && unit!=owner){
 				if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
 					StopMove();
@@ -433,6 +441,7 @@ void CBuilderCAI::SlowUpdate()
 			co.params.push_back(curPos.z);
 			commandQue.push_front(co);
 			activeCommand=1;
+			commandPos1=curPos;
 			patrolTime=0;
 		}
 		Command& c=commandQue[activeCommand];
@@ -441,13 +450,20 @@ void CBuilderCAI::SlowUpdate()
 			info->AddLine("Error: got patrol cmd with less than 3 params on %s",owner->unitDef->humanName.c_str());
 			return;
 		}
+		patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
+		commandPos2=patrolGoal;
 
 		if(!(patrolTime&3) && owner->fireState==2){
 			if(FindRepairTargetAndRepair(owner->pos,300*owner->moveState,c.options,true)){
-				commandFromPatrol=true;
-				inCommand=false;
-				SlowUpdate();
-				return;
+				CUnit* target=uh->units[(int)commandQue.front().params[0]];
+				if(owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,target->pos) < 300){
+					commandFromPatrol=true;
+					inCommand=false;
+					SlowUpdate();
+					return;
+				} else {
+					commandQue.pop_front();
+				}
 			}
 			if(FindReclaimableFeatureAndReclaim(owner->pos,300*owner->moveState,c.options)){
 				commandFromPatrol=true;
@@ -455,13 +471,12 @@ void CBuilderCAI::SlowUpdate()
 				SlowUpdate();
 				return;
 			}
-			patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
 		}
 		patrolTime++;
 		if(!(patrolGoal==goalPos)){
 			SetGoal(patrolGoal,curPos);
 		}
-		if((curPos-float3(c.params[0],c.params[1],c.params[2])).SqLength2D()<64){
+		if((curPos-patrolGoal).SqLength2D()<4096){
 			if(owner->group)
 				owner->group->CommandFinished(owner->id,CMD_PATROL);
 
@@ -473,11 +488,13 @@ void CBuilderCAI::SlowUpdate()
 				else
 					activeCommand++;
 			}
+			commandPos1=commandPos2;
 		}
-		if(owner->haveTarget)
+		if(owner->haveTarget && owner->moveType->progressState!=CMoveType::Done)
 			StopMove();
-		else
-			owner->moveType->StartMoving(patrolGoal, 1000);					
+		else if(owner->moveType->progressState!=CMoveType::Active)
+			owner->moveType->StartMoving(goalPos, 8);
+
 		return;}
 	case CMD_RESTORE:{
 		if(inCommand){
