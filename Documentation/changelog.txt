@@ -6,6 +6,7 @@ TASpring change log
 - Fixed lasers firing two projectiles at once, efficiently doing double damage.
 - Fixed several exploits with FPS mode.
 - Added new fbi variable CanLoopbackAttack, only affects fighter aircrafts, if 1 this will enable the player to set the aircraft to do an immelman turn after firing instead of overflying the target.
+- Changed so units in maneuver mode will abort anything that moves them further than a certain distance from the patrol path
 
 0.70b3
 

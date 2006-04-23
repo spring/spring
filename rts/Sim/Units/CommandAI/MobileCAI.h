@@ -19,6 +19,7 @@ public:
 	void BuggerOff(float3 pos, float radius);
 	void NonMoving(void);
 	void FinishCommand(void);
+	void IdleCheck(void);
 
 	float3 goalPos;
 	float3 patrolGoal;
@@ -35,7 +36,9 @@ public:
 	int lastBuggerOffTime;
 	float3 buggerOffPos;
 	float buggerOffRadius;
-	void IdleCheck(void);
+
+	float3 commandPos1;			//used to avoid stuff in maneuvre mode moving to far away from patrol path
+	float3 commandPos2;
 };
 
 

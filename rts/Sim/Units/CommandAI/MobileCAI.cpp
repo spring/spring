@@ -12,6 +12,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Game/Team.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CMobileCAI::CMobileCAI(CUnit* owner)
@@ -25,7 +26,9 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
 	maxWantedSpeed(0),
-	lastIdleCheck(0)
+	lastIdleCheck(0),
+	commandPos1(ZeroVector),
+	commandPos2(ZeroVector)
 {
 	lastUserGoal=owner->pos;
 
@@ -166,6 +169,7 @@ void CMobileCAI::SlowUpdate()
 			co.params.push_back(curPos.z);
 			commandQue.push_front(co);
 			activeCommand=1;
+			commandPos1=curPos;
 			patrolTime=1;
 		}
 		Command& c=commandQue[activeCommand];
@@ -174,20 +178,23 @@ void CMobileCAI::SlowUpdate()
 			return;
 		}
 		patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
+		commandPos2=patrolGoal;
 		patrolTime++;
 
 		if(!(patrolTime&1) && owner->fireState==2){
 			CUnit* enemy=helper->GetClosestEnemyUnit(curPos,owner->maxRange+100*owner->moveState*owner->moveState,owner->allyteam);
 			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater) && !(owner->unitDef->noChaseCategory & enemy->category) && !owner->weapons.empty()){			//todo: make sure they dont stray to far from path
-				Command c2;
-				c2.id=CMD_ATTACK;
-				c2.options=c.options;
-				c2.params.push_back(enemy->id);
-				commandQue.push_front(c2);
-				inCommand=false;
-				tempOrder=true;
-				SlowUpdate();				//if attack can finish immidiatly this could lead to an infinite loop so make sure it doesnt
-				return;
+				if(owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 300+owner->maxRange){
+					Command c2;
+					c2.id=CMD_ATTACK;
+					c2.options=c.options;
+					c2.params.push_back(enemy->id);
+					commandQue.push_front(c2);
+					inCommand=false;
+					tempOrder=true;
+					SlowUpdate();				//if attack can finish immidiatly this could lead to an infinite loop so make sure it doesnt
+					return;
+				}
 			}
 		}
 		if((curPos-patrolGoal).SqLength2D()<4096 || owner->moveType->progressState==CMoveType::Failed){
@@ -204,6 +211,8 @@ void CMobileCAI::SlowUpdate()
 			}
 			Command& c=commandQue[activeCommand];
 			patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
+			commandPos1=commandPos2;
+			commandPos2=patrolGoal;
 		}
 		if((patrolGoal!=goalPos)){
 			SetGoal(patrolGoal,curPos);
@@ -217,6 +226,13 @@ void CMobileCAI::SlowUpdate()
 		}
 		//no break
 	case CMD_ATTACK:
+		if(tempOrder && owner->moveState==1){		//limit how far away we fly
+			if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500+owner->maxRange){
+				StopMove();
+				FinishCommand();
+				break;
+			}
+		}
 		if(!inCommand){
 			if(c.params.size()==1){
 				if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
