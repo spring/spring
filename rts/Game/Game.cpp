@@ -418,7 +418,7 @@ CGame::~CGame()
 //called when the key is pressed by the user (can be called several times due to key repeat)
 int CGame::KeyPressed(unsigned short k,bool isRepeat)
 {
-	if(!isRepeat)
+	//if(!isRepeat) stupid sdl port has disabled this functionality
 		gs->players[gu->myPlayerNum]->currentStats->keyPresses++;
 	//	info->AddLine("%i",(int)k);
 
