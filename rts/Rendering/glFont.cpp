@@ -52,7 +52,7 @@ CglFont::CglFont(int start, int end)
 	if (error) {
 		string msg="FT_New_Face failed:";
 		msg += GetFTError(error);
-		throw std::runtime_error(msg);
+		throw content_error(msg);
 	}
 
 	FT_Set_Char_Size(face, FONTSIZE << 6, FONTSIZE << 6, 96,96);

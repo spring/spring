@@ -16,7 +16,7 @@
 class TdfParser  
 {
 public:
-  struct parse_error : public std::runtime_error {
+  struct parse_error : public content_error {
     private:
       std::size_t line, column;
       std::string filename;

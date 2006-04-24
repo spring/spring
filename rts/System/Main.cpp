@@ -118,7 +118,7 @@ protected:
 	void InitOpenGL (); 				//!< Initializes OpenGL
 	bool SetSDLVideoMode(); 			//!< Sets SDL video mode
 	void Shutdown (); 				//!< Shuts down application
-	int Draw (); 					//!< Repeated draw function
+	int Update (); 					//!< Run simulation and draw
 	void UpdateSDLKeys (); 				//!< Update SDL key array
 	void SetVSync ();				//!< Enable or disable VSync based on the "VSync" config option
 
@@ -223,6 +223,8 @@ bool crashCallback(void* crState)
 
 	if (wasRecording)
 		AddFile(net->demoName.c_str(), "Spring game demo");
+
+	SDL_Quit();
 
 	return true;
 }
@@ -559,7 +561,7 @@ void SpringApp::CreateGameSetup ()
  * Draw function repeatedly called, it calls all the
  * other draw functions
  */
-int SpringApp::Draw ()
+int SpringApp::Update ()
 {
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
@@ -731,7 +733,7 @@ int SpringApp::Run (int argc, char *argv[])
 		if (globalQuit) 
 			break;
 	
-		if (!Draw() && active)
+		if (!Update() && active)
 			break;
 	}
 	ENTER_MIXED;
@@ -785,6 +787,37 @@ static inline int LocateDataDir(void)
 }
 #endif
 
+// On msvc main() is declared as a non-throwing function. 
+// Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
+int Run(int argc, char *argv[])
+{
+// It's nice to be able to disable catching when you're debugging
+#ifndef NO_CATCH_EXCEPTIONS
+	try {
+		SpringApp app;
+		return app.Run (argc,argv);
+	}
+	catch (const content_error& e) {
+		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
+	#ifdef _MSC_VER
+		info->AddLine ("Content error: %s\n",  e.what());
+	#endif
+		return -1;
+	}
+	catch (const std::exception& e) {
+		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
+	#ifdef _MSC_VER
+		info->AddLine ("Fatal error: %s\n",  e.what());
+		throw; // let the error handler catch it
+	#endif
+		return -1;
+	}
+#else
+	SpringApp app;
+	return app.Run (argc, argv);
+#endif
+}
+
 /**
  * @brief main
  * @return exit code
@@ -805,18 +838,5 @@ int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 // 	if (ret != 0)
 // 		exit(ret);
 #endif
-
-// It's nice to be able to disable catching when you're debugging
-#ifndef NO_CATCH_EXCEPTIONS
-	try {
-		SpringApp app;
-		return app.Run (argc,argv);
-	} catch (const std::exception& e) {
-		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
-		return 1;
-	}
-#else
-	SpringApp app;
-	return app.Run (argc, argv);
-#endif
+	return Run (argc,argv);
 }

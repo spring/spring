@@ -55,4 +55,18 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include "float3.h"
 #include "GlobalStuff.h"
 
+#include <stdexcept>
+
+/**
+ * content_error
+ * thrown when content couldn't be found/loaded.
+ * any other type of exception will cause a crashreport box appearing (if it is installed).
+ */
+class content_error : public std::runtime_error
+{
+public: 
+	content_error(const std::string& msg) : 
+	  std::runtime_error(msg) {}
+};
+
 #endif // __STD_AFX_H__

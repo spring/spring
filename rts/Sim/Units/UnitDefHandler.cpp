@@ -517,7 +517,7 @@ void CUnitDefHandler::ParseUnit(std::string file, int id)
 	case TA_UNIT:*/
   try {
     ParseTAUnit(file, id);
-  } catch (std::runtime_error const& e ) {
+  } catch (content_error const& e ) {
     std::cout << e.what() << std::endl;
     return;
   }

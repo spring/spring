@@ -76,7 +76,7 @@ S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
 	CFileHandler file(name);
 	if(!file.FileExists()){
 		POP_CODE_MODE;
-		throw std::runtime_error("File not found: "+name);
+		throw content_error("File not found: "+name);
 	}
 	unsigned char* fileBuf=new unsigned char[file.FileSize()];
 	file.Read(fileBuf, file.FileSize());
