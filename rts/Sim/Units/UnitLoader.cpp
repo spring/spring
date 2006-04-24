@@ -68,12 +68,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side, bool buil
 START_TIME_PROFILE;
 
 	UnitDef* ud= unitDefHandler->GetUnitByName(name);
-	if(!ud){
-		char t[500];
-		sprintf(t,"Couldnt find unittype %s",name.c_str());
-		handleerror(0,t,"Error loading unit",0);
-		exit(0);
-	}
+	if(!ud)
+		throw content_error("Couldn't find unittype " +  name);
+
 	string type = ud->type;
 
 	if(!build){

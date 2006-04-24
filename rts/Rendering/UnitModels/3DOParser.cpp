@@ -179,14 +179,14 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	CFileHandler file(name);
 	if(!file.FileExists()){
 		POP_CODE_MODE;
-		throw std::runtime_error("File not found: "+name);
+		throw content_error("File not found: "+name);
 	}
 	fileBuf=new unsigned char[file.FileSize()];
 	//hpiHandler->LoadFile(name,fileBuf);
 	file.Read(fileBuf, file.FileSize());
 	if (fileBuf == NULL) {
 		delete [] fileBuf;
-		throw std::runtime_error("Failed to read file "+name);
+		throw content_error("Failed to read file "+name);
 	}
 	
 	S3DOModel *model = new S3DOModel;

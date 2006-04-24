@@ -22,14 +22,14 @@ using boost::spirit::comment_p;
 using boost::spirit::parse_info;
 
 TdfParser::parse_error::parse_error( std::size_t l, std::size_t c, std::string const& f) throw() 
-  : std::runtime_error( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +".") 
+  : content_error ( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +".") 
   , line(l)
   , column(c)
   , filename(f)
 {}
 
 TdfParser::parse_error::parse_error( std::string const& line_of_error, std::size_t l, std::size_t c, std::string const& f) throw()
-  : std::runtime_error( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error) 
+  : content_error ( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error) 
   , line(l)
   , column(c)
   , filename(f) 
@@ -37,7 +37,7 @@ TdfParser::parse_error::parse_error( std::string const& line_of_error, std::size
 
 TdfParser::parse_error::parse_error( std::string const& message, std::string const& line_of_error, std::size_t l, std::size_t c, std::string const& f) 
   throw()
-  : std::runtime_error( "Parse error '" + message + "' in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error) 
+  : content_error( "Parse error '" + message + "' in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error) 
   , line(l)
   , column(c)
   , filename(f) 
@@ -106,7 +106,7 @@ void TdfParser::LoadFile(std::string const& filename)
   this->filename = filename;
 	CFileHandler file(filename);
 	if(!file.FileExists())
-    throw std::runtime_error( ("file " + filename + " not found").c_str() );
+    throw content_error( ("file " + filename + " not found").c_str() );
 
 	int size = file.FileSize();
   boost::scoped_array<char> filebuf( new char[size+2] );
