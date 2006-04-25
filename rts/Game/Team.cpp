@@ -164,8 +164,8 @@ void CTeam::Update()
 			float mdif=max(0.0,gs->Team(a)->metalStorage*0.9-gs->Team(a)->metal)*dm;
 			gs->Team(a)->metal+=mdif;
 			metal-=mdif;
-			currentStats.metalSent+=edif;
-			gs->Team(a)->currentStats.metalReceived+=edif;
+			currentStats.metalSent+=mdif;
+			gs->Team(a)->currentStats.metalReceived+=mdif;
 		}
 	}
 

@@ -828,9 +828,12 @@ void CDynWater::DrawWaterSurface(void)
 	va=GetVertexArray();
 	va->Initialize();
 
+	camPosBig2.x=floor(max((float)WH_SIZE, min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z=floor(max((float)WH_SIZE, min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
+
 	for(int lod=1;lod<(2<<5);lod*=2){
-		int cx=(int)(camera->pos.x/(WSQUARE_SIZE));
-		int cy=(int)(camera->pos.z/(WSQUARE_SIZE));
+		int cx=(int)(cam2->pos.x/(WSQUARE_SIZE));
+		int cy=(int)(cam2->pos.z/(WSQUARE_SIZE));
 
 		cx=(cx/lod)*lod;
 		cy=(cy/lod)*lod;
@@ -838,10 +841,10 @@ void CDynWater::DrawWaterSurface(void)
 		int ysquaremod=((cy)%(2*lod))/lod;
 		int xsquaremod=((cx)%(2*lod))/lod;
 
-		int minty=int(camPosBig.z/WSQUARE_SIZE-512);
-		int maxty=int(camPosBig.z/WSQUARE_SIZE+512);
-		int mintx=int(camPosBig.x/WSQUARE_SIZE-512);
-		int maxtx=int(camPosBig.x/WSQUARE_SIZE+512);
+		int minty=int(camPosBig2.z/WSQUARE_SIZE-512);
+		int maxty=int(camPosBig2.z/WSQUARE_SIZE+512);
+		int mintx=int(camPosBig2.x/WSQUARE_SIZE-512);
+		int maxtx=int(camPosBig2.x/WSQUARE_SIZE+512);
 
 		int minly=cy+(-viewRadius+2-ysquaremod)*lod;
 		int maxly=cy+(viewRadius-ysquaremod)*lod;
@@ -1011,8 +1014,8 @@ void CDynWater::DrawDetailNormalTex(void)
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 29, 0, 0, 1.0/55);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, 9, 4, 0, 1.0/100);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 5, -16, 0, 1.0/80);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 17, 17, 0, 1.0/75);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, -6, -10, 0, 1.0/100);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 27, 27, 0, 1.0/75);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, -3, -5, 0, 1.0/100);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, -20, 12, 0, 1.0/65);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.1*swh, 0.0*swh, 0.7*lwh, 0);		//controls the height of the waves
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
@@ -1020,7 +1023,7 @@ void CDynWater::DrawDetailNormalTex(void)
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.15*swh, 0.07*swh, 0.4*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.06*swh, 0.2*swh, 0.7*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,5, 0.2*swh, 0.2*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.07*swh, 0.15*swh, 0.4*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.06*swh, 0.1*swh, 0.7*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.3*swh, 0.17*swh, 0.7*lwh, 0);
 
 	//update detail normals
@@ -1275,8 +1278,8 @@ void CDynWater::DrawOuterSurface(void)
 
 	float size=WF_SIZE;
 	float size2=WF_SIZE/16;
-	float posx=camPosBig.x-WH_SIZE;
-	float posy=camPosBig.z-WH_SIZE;
+	float posx=camPosBig2.x-WH_SIZE;
+	float posy=camPosBig2.z-WH_SIZE;
 
 	for(int y=-1;y<=1;++y){
 		for(int x=-1;x<=1;++x){
