@@ -91,7 +91,10 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	// Prevents h from going beyond SHORTINT_MAXVALUE.
 	// If h goes beyond SHORTINT_MAXVALUE, the following 
 	// conversion to a short int crashes.
+	//this change destroys the whole meaning with using short ints....
+#ifndef WIN32
 	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
+#endif
 	ret.x=(short int) h;
 	ret.y=(short int) (asin(vec.y)*(SHORTINT_MAXVALUE/PI));
 	return ret;

@@ -79,6 +79,7 @@ public:
 
 	float3 camPosBig;
 	float3 oldCamPosBig;
+	float3 camPosBig2;
 
 	int camPosX,camPosZ;
 
