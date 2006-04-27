@@ -132,7 +132,8 @@ void CMouseHandler::MouseMove(int x, int y)
 	buttons[SDL_BUTTON_LEFT].movement+=abs(dx)+abs(dy);
 	buttons[SDL_BUTTON_RIGHT].movement+=abs(dx)+abs(dy);
 
-	gs->players[gu->myPlayerNum]->currentStats->mousePixels+=abs(dx)+abs(dy);
+	if(!game->gameOver)
+		gs->players[gu->myPlayerNum]->currentStats->mousePixels+=abs(dx)+abs(dy);
 
 #ifdef NEW_GUI
 	if(dx||dy)
@@ -181,7 +182,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
 	
-	gs->players[gu->myPlayerNum]->currentStats->mouseClicks++;
+	if(!game->gameOver)
+		gs->players[gu->myPlayerNum]->currentStats->mouseClicks++;
 
 #ifdef NEW_GUI
 	activeButton=button;
