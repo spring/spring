@@ -418,7 +418,7 @@ CGame::~CGame()
 //called when the key is pressed by the user (can be called several times due to key repeat)
 int CGame::KeyPressed(unsigned short k,bool isRepeat)
 {
-	//if(!isRepeat) stupid sdl port has disabled this functionality
+	if(!gameOver && !isRepeat)
 		gs->players[gu->myPlayerNum]->currentStats->keyPresses++;
 	//	info->AddLine("%i",(int)k);
 
@@ -2337,7 +2337,18 @@ void CGame::HandleChatMsg(std::string s,int player)
 
 	if(s.find(".give")==0 && gs->cheatEnabled){
 		int team=gs->players[player]->team;
-		if (((s.rfind(" "))!=string::npos) && ((s.length() - s.rfind(" ") -1)>0)){
+		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
+		float3 pos=camera->pos+mouse->dir*dist;
+
+		if(s.find(" all")!=string::npos){
+			int squareSize=(int)ceil(sqrtf(unitDefHandler->numUnits));
+
+			for(int a=1;a<=unitDefHandler->numUnits;++a){
+				float3 pos2=float3(pos.x + (a%squareSize-squareSize/2) * 10*SQUARE_SIZE, pos.y, pos.z + (a/squareSize-squareSize/2) * 10*SQUARE_SIZE);
+				unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name,pos2,team,false);
+				
+			}
+		} else if (((s.rfind(" "))!=string::npos) && ((s.length() - s.rfind(" ") -1)>0)){
 			string unitName=s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);
 			string tempUnitName=s.substr(s.find(" "),s.rfind(" ")+1 - s.find(" "));
 			if(tempUnitName.find_first_not_of(" ")!=string::npos)
@@ -2350,8 +2361,6 @@ void CGame::HandleChatMsg(std::string s,int player)
 				numUnits = atoi(tempUnitName.c_str());
 			}
 			if (unitDefHandler->GetUnitByName(unitName)!=0)   {
-				float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
-				float3 pos=camera->pos+mouse->dir*dist;
 
 				UnitDef *unitDef= unitDefHandler->GetUnitByName(unitName);
 				int xsize=unitDef->xsize;

@@ -660,6 +660,7 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_KEYDOWN:
 				{
 					int i = event.key.keysym.sym;
+					bool isRepeat=keys[i];
 
 					UpdateSDLKeys ();
 
@@ -678,7 +679,7 @@ int SpringApp::Run (int argc, char *argv[])
 						else if (i == SDLK_RCTRL)  i = SDLK_LCTRL;
 						else if (i == SDLK_RMETA)  i = SDLK_LMETA;
 						else if (i == SDLK_RALT)   i = SDLK_LALT;
-						activeController->KeyPressed(i,1);
+						activeController->KeyPressed(i,isRepeat);
 #ifndef NEW_GUI
 						if(activeController->userWriting){ 
 							i = event.key.keysym.unicode;

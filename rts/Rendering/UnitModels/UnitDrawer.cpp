@@ -193,7 +193,7 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 					}
 				}
 				if(drawRefraction){
-					if((*usi)->pos.y > -3)
+					if((*usi)->pos.y > 0)
 						continue;
 				}
 				float sqDist=((*usi)->pos-camera->pos).SqLength2D();

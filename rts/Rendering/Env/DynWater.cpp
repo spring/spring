@@ -482,7 +482,7 @@ void CDynWater::DrawRefraction(CGame* game)
 
 
 	glEnable(GL_CLIP_PLANE2);
-	double plane[4]={0,-1,0,0};
+	double plane[4]={0,-1,0,2};
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
@@ -1017,14 +1017,14 @@ void CDynWater::DrawDetailNormalTex(void)
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 27, 27, 0, 1.0/75);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, -3, -5, 0, 1.0/100);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, -20, 12, 0, 1.0/65);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.1*swh, 0.0*swh, 0.7*lwh, 0);		//controls the height of the waves
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.2*swh, 0.0*swh, 0.7*lwh, 0);		//controls the height of the waves
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.4*swh, 0.0*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.15*swh, 0.07*swh, 0.4*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.2*swh, 0.01*swh, 0.4*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.06*swh, 0.2*swh, 0.7*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,5, 0.2*swh, 0.2*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.06*swh, 0.1*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.3*swh, 0.17*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.12*swh, 0.2*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.2*swh, 0.12*swh, 0.7*lwh, 0);
 
 	//update detail normals
 	glBegin(GL_QUADS);
@@ -1101,8 +1101,7 @@ void CDynWater::AddShipWakes()
 				va->AddVertexTN(pos-frontAdd-sideAdd,1,1,n);
 				va->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
 			}
-		}
-		if(unit->moveType && unit->unitDef->canhover && unit->mobility){		//hover
+		} else if(unit->moveType && unit->unitDef->canhover && unit->mobility){		//hover
 			float speedf=unit->speed.Length2D();
 			float3 pos=unit->pos;
 			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
