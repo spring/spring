@@ -207,9 +207,11 @@ bool CGameSetup::Init(char* buf, int size)
 	file.GetDef(energy,"1000","GAME\\StartEnergy");
 	for(int a=0;a<gs->activeTeams;++a){
 		gs->Team(a)->metal=metal;
+		gs->Team(a)->metalIncome=metal;	//for the endgame statistics
 		gs->Team(a)->metalStorage=metal;
 
 		gs->Team(a)->energy=energy;
+		gs->Team(a)->energyIncome=energy;
 		gs->Team(a)->energyStorage=energy;
 	}
 
