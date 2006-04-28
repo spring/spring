@@ -160,7 +160,15 @@ void CEndGameBox::Draw()
 	glColor4f(0.2f,0.2f,0.2f,0.4f);
 	DrawBox(box);
 
-	// exit Box on mouse over
+	glColor4f(0.2f,0.2f,0.7f,0.4f);
+	if(dispMode==0){
+		DrawBox(box+playerBox);
+	} else if(dispMode==1){
+		DrawBox(box+sumBox);
+	} else {
+		DrawBox(box+difBox);
+	}
+
 	if(InBox(mx,my,box+exitBox)){
 		glColor4f(0.7f,0.2f,0.2f,0.4f);
 		DrawBox(box+exitBox);
@@ -181,8 +189,8 @@ void CEndGameBox::Draw()
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8);
 	font->glPrintAt(box.x1+exitBox.x1+0.025,box.y1+exitBox.y1+0.005,1,"Exit");
-	font->glPrintAt(box.x1+playerBox.x1+0.025,box.y1+playerBox.y1+0.005,0.7,"Player stats");
-	font->glPrintAt(box.x1+sumBox.x1+0.025,box.y1+sumBox.y1+0.005,0.7,"Team stats");
+	font->glPrintAt(box.x1+playerBox.x1+0.015,box.y1+playerBox.y1+0.005,0.7,"Player stats");
+	font->glPrintAt(box.x1+sumBox.x1+0.015,box.y1+sumBox.y1+0.005,0.7,"Team stats");
 	font->glPrintAt(box.x1+difBox.x1+0.015,box.y1+difBox.y1+0.005,0.7,"Team delta stats");
 
 	if(gs->Team(gu->myTeam)->isDead){
@@ -225,20 +233,6 @@ void CEndGameBox::Draw()
 				
 			ypos-=0.02;
 		}		
-		
-		/*
-//		tooltips.push_back("Player Name");
-		values[0].push_back("MC/m");
-//		tooltips.push_back("Mouse clicks per minute");
-		values[0].push_back("MP/m");
-//		tooltips.push_back("Mouse movement in pixels per minute");
-		values[0].push_back("KP/m");
-//		tooltips.push_back("Keyboard presses per minute");
-		values[0].push_back("Cmds/m");
-//		tooltips.push_back("Unit commands per minute");
-		values[0].push_back("ACS");
-//		tooltips.push_back("Average command size (units affected per command)");
-*/
 	} else {
 		if(stats.empty())
 			FillTeamStats();
@@ -284,12 +278,12 @@ void CEndGameBox::Draw()
 			maxy=std::max(stats[stat1].maxdif,stats[stat2].maxdif)/16;
 
 		int numPoints=stats[0].values[0].size();
-		float scalex=0.54f/numPoints;
-		float scaley=0.52/maxy;
+		float scalex=0.54f/max(1.0f,numPoints-1.0f);
+		float scaley=0.54/maxy;
 
 		for(int a=0;a<5;++a){
 			font->glPrintAt(box.x1+0.12,box.y1+0.07+a*0.135,0.8,"%s",FloatToSmallString(maxy*0.25*a).c_str());
-			font->glPrintAt(box.x1+0.135+a*0.135,box.y1+0.057,0.8,"%i:%2i",int(a*0.25*numPoints*16/60),int(a*0.25*numPoints*16)%60);
+			font->glPrintAt(box.x1+0.135+a*0.135,box.y1+0.057,0.8,"%i:%2i",int(a*0.25*numPoints*16/60),int(a*0.25*(numPoints-1)*16)%60);
 		}
 
 		font->glPrintAt(box.x1+0.55,box.y1+0.65,0.8,"%s",stats[stat1].name.c_str());
@@ -376,6 +370,12 @@ void CEndGameBox::FillTeamStats()
 	stats.push_back(Stat("Metal sent"));
 	stats.push_back(Stat("Energy sent"));
 	
+	stats.push_back(Stat("Metal stored"));
+	stats.push_back(Stat("Energy stored"));
+
+	stats.push_back(Stat("Active Units"));
+	stats.push_back(Stat("Units killed"));
+
 	stats.push_back(Stat("Units produced"));
 	stats.push_back(Stat("Units died"));
 	
@@ -383,7 +383,6 @@ void CEndGameBox::FillTeamStats()
 	stats.push_back(Stat("Units sent"));
 	stats.push_back(Stat("Units captured"));
 	stats.push_back(Stat("Units stolen"));
-	stats.push_back(Stat("Units killed"));
 	
 	for(int team=0; team<gs->activeTeams; team++){
 		for(std::list<CTeam::Statistics>::iterator si=gs->Team(team)->statHistory.begin(); si!=gs->Team(team)->statHistory.end(); si++){
@@ -402,15 +401,20 @@ void CEndGameBox::FillTeamStats()
 			
 			stats[9].AddStat(team, si->metalSent);
 			stats[10].AddStat(team, si->energySent);
+
+			stats[11].AddStat(team, si->metalProduced+si->metalReceived - (si->metalUsed+si->metalSent+si->metalExcess) );
+			stats[12].AddStat(team, si->energyProduced+si->energyReceived - (si->energyUsed+si->energySent+si->energyExcess) );
 			
-			stats[11].AddStat(team, si->unitsProduced);
-			stats[12].AddStat(team, si->unitsDied);
+			stats[13].AddStat(team, si->unitsProduced+si->unitsReceived+si->unitsCaptured - (si->unitsDied+si->unitsSent+si->unitsOutCaptured) );
+			stats[14].AddStat(team, si->unitsKilled);
+
+			stats[15].AddStat(team, si->unitsProduced);
+			stats[16].AddStat(team, si->unitsDied);
 			
-			stats[13].AddStat(team, si->unitsReceived);
-			stats[14].AddStat(team, si->unitsSent);
-			stats[15].AddStat(team, si->unitsCaptured);
-			stats[16].AddStat(team, si->unitsOutCaptured);
-			stats[17].AddStat(team, si->unitsKilled);
+			stats[17].AddStat(team, si->unitsReceived);
+			stats[18].AddStat(team, si->unitsSent);
+			stats[19].AddStat(team, si->unitsCaptured);
+			stats[20].AddStat(team, si->unitsOutCaptured);
 		}
 	}	
 }
