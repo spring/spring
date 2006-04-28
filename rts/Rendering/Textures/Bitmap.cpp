@@ -7,7 +7,12 @@
 #include <ostream>
 #include <fstream>
 #include "FileSystem/FileHandler.h"
+#if defined(__APPLE__)
+#include <QuickTime/ImageCompression.h>
+#include <QuickTime/QuickTimeComponents.h>
+#else
 #include <IL/il.h>
+#endif
 #include <boost/filesystem/path.hpp>
 #include "Rendering/Textures/Bitmap.h"
 #include "bitops.h"
@@ -17,6 +22,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+#if !defined(__APPLE__)
 struct InitializeOpenIL {
 	InitializeOpenIL() {
 		ilInit();
@@ -25,6 +31,7 @@ struct InitializeOpenIL {
 		ilShutDown();
 	}
 } static initOpenIL;
+#endif
 
 CBitmap::CBitmap()
   : xsize(1),
@@ -87,6 +94,9 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 
 void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 {
+	bool noAlpha = true;
+	
+	
 	delete[] mem;
 	mem = NULL;
 
@@ -97,9 +107,6 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		return;
 	}
 	type = BitmapTypeStandard;
-
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
-	ilEnable(IL_ORIGIN_SET);
 
 	CFileHandler file(filename);
 	if(file.FileExists() == false)
@@ -114,6 +121,46 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	unsigned char *buffer = new unsigned char[file.FileSize()];
 	file.Read(buffer, file.FileSize());
 
+#if defined(__APPLE__) // Use QuickTime to load images on Mac
+
+	mem = LoadTextureData(filename, buffer, file.FileSize(), 
+		xsize, ysize, noAlpha);
+	
+	// Chagne the *hasAlpha* used in LoadTextureData to *noAlpha*
+	noAlpha = !noAlpha;
+	
+	delete[] buffer;
+	
+	if (!mem) {
+		xsize = 1;
+		ysize = 1;
+		mem=new unsigned char[4];
+		mem[0] = 255; // Red allows us to easily see textures that failed to load
+		mem[1] = 0;
+		mem[2] = 0;
+		mem[3] = 255; // Non Transparent
+		return;
+	}
+	
+	// Because most of the algorithms that work on our texture are not generalized yet
+	// We have to convert the image into the same format (RGBA instead of ARGB[ppc] or BGRA[x86]).
+	// We then use the same OpenGL calls since they don't chagne between (windows or x86/ppc)
+	int max_pixels = xsize * ysize;
+	for (int i = 0; i < max_pixels; ++i) {
+		int base = i * 4;
+		// ARGB; temp = A; _RGB >> RGB_; A = temp; RGBA
+		char temp = mem[base + 0]; // A
+		mem[base + 0] = mem[base + 1]; // R
+		mem[base + 1] = mem[base + 2]; // G
+		mem[base + 2] = mem[base + 3]; // B
+		mem[base + 3] = temp; // A
+	}
+	
+
+#else // Use DevIL to load images on windows/linux/...
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
+	
 	ILuint ImageName = 0;
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
@@ -126,13 +173,14 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		xsize = 1;
 		ysize = 1;
 		mem=new unsigned char[4];
-		memset(mem, 0, 4);
+		mem[0] = 255; // Red allows us to easily see textures that failed to load
+		mem[1] = 0;
+		mem[2] = 0;
+		mem[3] = 255; // Non Transparent
 		return;
 	}
 
-	bool noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
-#if !defined(__APPLE__) // Temporary fix to allow testing of everything
-						// else until i get a quicktime image loader written
+	noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
 	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
@@ -140,14 +188,9 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	mem = new unsigned char[xsize * ysize * 4];
 	//	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
 	memcpy(mem, ilGetData(), xsize * ysize * 4);
-#else
-	xsize = 4;
-	ysize = 4;
-
-	mem = new unsigned char[xsize * ysize * 4];
-#endif
 
 	ilDeleteImages(1, &ImageName); 
+#endif
 
 	if(noAlpha){
 		for(int y=0;y<ysize;++y){
@@ -166,6 +209,7 @@ void CBitmap::Save(string const& filename)
 		return;
 	}
 
+#if !defined(__APPLE__) // Use devil on Windows/Linux/...
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -194,6 +238,7 @@ void CBitmap::Save(string const& filename)
 	ilSaveImage((char*)filename.c_str());
 	ilDeleteImages(1,&ImageName);
 	delete[] buf;
+#endif // I'll add a quicktime exporter for mac soonish...Krysole
 }
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
@@ -236,7 +281,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 			glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,true);
 			glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
 		} else
-			gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+			gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize,GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	}
 	else
 	{
@@ -507,3 +552,152 @@ void CBitmap::ReverseYAxis(void)
 	delete[] mem;
 	mem=buf;
 }
+
+#if defined(__APPLE__)
+
+Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size, 
+	const std::string &filename)
+{
+	// Load Data Reference
+	Handle dataRef;
+	Handle fileNameHandle;
+	PointerDataRefRecord ptrDataRefRec;
+	ComponentInstance dataRefHandler;
+	unsigned char pstr[255];
+	
+	ptrDataRefRec.data = data;
+	ptrDataRefRec.dataLength = size;
+	
+	/*err = */PtrToHand(&ptrDataRefRec, &dataRef, sizeof(PointerDataRefRecord));
+	
+	// Open a Data Handler for the Data Reference
+	/*err = */OpenADataHandler(dataRef, PointerDataHandlerSubType, NULL, 
+		(OSType)0, NULL, kDataHCanRead, &dataRefHandler);
+	
+	// Convert From CString in filename to a PascalString in pstr
+	if (filename.length() > 255) {
+		CopyCStringToPascal(filename.c_str(), pstr);
+		//hmm...not good, pascal string limit is 255!
+		//do some error handling maybe?!
+	}
+	
+	// Add filename extension
+	/*err = */PtrToHand(pstr, &fileNameHandle, filename.length() + 1);
+	/*err = */DataHSetDataRefExtension(dataRefHandler, fileNameHandle, 
+		kDataRefExtensionFileName);
+	DisposeHandle(fileNameHandle);
+	
+	// Release old handler which does not have the extensions
+	DisposeHandle(dataRef);
+	
+	// Grab the new version of the data ref from the data handler
+	/*err = */ DataHGetDataRef(dataRefHandler, &dataRef);
+	
+	return dataRef;
+}
+		
+unsigned char *CBitmap::LoadTextureData(const std::string &filename, 
+	unsigned char *data, unsigned int sizeData, int &xsize, 
+	int &ysize, bool &hasAlpha)
+{
+	unsigned char *imageData = 0;
+	GWorldPtr gworld = 0;
+	OSType pixelFormat;
+	long rowStride;
+	GraphicsImportComponent gicomp;
+	Rect rectImage;
+	GDHandle origDevice;
+	CGrafPtr origPort;
+	ImageDescriptionHandle desc;
+	int depth;
+	
+	// Data Handle for file data ( & load data from file )
+	Handle dataRef = GetPtrDataRef(data, sizeData, filename);
+	
+	// GraphicsImporter - Get Importer for our filetype
+	GetGraphicsImporterForDataRef(dataRef, 'ptr ', &gicomp);
+	
+	// GWorld - Get Texture Info
+	if (noErr != GraphicsImportGetNaturalBounds(gicomp, &rectImage)) {
+		return 0;
+	}
+	xsize = (unsigned int)(rectImage.right - rectImage.left);
+	ysize = (unsigned int)(rectImage.bottom - rectImage.top);
+	
+	// ImageDescription - Get Image Description
+	if (noErr != GraphicsImportGetImageDescription(gicomp, &desc)) {
+		CloseComponent(gicomp);
+		return 0;
+	}
+	
+	// ImageDescription - Get Bit Depth
+	HLock(reinterpret_cast<char **>(desc));
+	if (depth == 32) { // Only if it returns 32 does the image have an alpha chanel!
+		hasAlpha = true;
+	} else {
+		hasAlpha = false;
+	}
+	
+	// GWorld - Pixel Format stuff
+	pixelFormat = k32ARGBPixelFormat; // Make sure its forced...NOTE: i'm pretty sure this cannot be RGBA!
+	
+	// GWorld - Row stride
+	rowStride = xsize * 4; // (width * depth_bpp / 8)
+	
+	// GWorld - Allocate output buffer
+	imageData = new unsigned char[rowStride * ysize];
+	
+	// GWorld - Actually Create IT!
+	QTNewGWorldFromPtr(&gworld, pixelFormat, &rectImage, 0, 0, 0, imageData, rowStride);
+	if (!gworld) {
+		delete imageData;
+		CloseComponent(gicomp);
+		DisposeHandle(reinterpret_cast<char **>(desc));
+		return 0;
+	}
+	
+	// Save old Graphics Device and Graphics Port to reset to later
+	GetGWorld (&origPort, &origDevice);
+	
+	// GraphicsImporter - Set Destination GWorld (our buffer)
+	if (noErr != GraphicsImportSetGWorld(gicomp, gworld, 0)) {
+		DisposeGWorld(gworld);
+		delete imageData;
+		CloseComponent(gicomp);
+		DisposeHandle(reinterpret_cast<char **>(desc));
+		return 0;
+	}
+	
+	// GraphicsImporter - Set Quality Level
+	if (noErr != GraphicsImportSetQuality(gicomp, codecLosslessQuality)) {
+		DisposeGWorld(gworld);
+		delete imageData;
+		CloseComponent(gicomp);
+		DisposeHandle(reinterpret_cast<char **>(desc));
+		return 0;
+	}
+	
+	// Lock pixels so that we can draw to our memory texture
+	if (!GetGWorldPixMap(gworld) || !LockPixels(GetGWorldPixMap(gworld))) {
+		DisposeGWorld(gworld);
+		delete imageData;
+		CloseComponent(gicomp);
+		DisposeHandle(reinterpret_cast<char **>(desc));
+		return 0;
+	}
+	
+	//*** Draw GWorld into our Memory Texture!
+	GraphicsImportDraw(gicomp);
+	
+	// Clean up
+	UnlockPixels(GetGWorldPixMap(gworld));
+	SetGWorld(origPort, origDevice); // set graphics port to offscreen (we don't need it now)
+	DisposeGWorld(gworld);
+	CloseComponent(gicomp);
+	DisposeHandle(reinterpret_cast<char **>(desc));
+	
+	return imageData;
+
+}
+
+#endif /* __APPLE__ */

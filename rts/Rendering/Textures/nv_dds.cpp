@@ -165,6 +165,9 @@
 //#  include <GL/glx.h>
 #  define GET_EXT_POINTER(name, type) \
       name = (type)glXGetProcAddressARB((const GLubyte*)#name)
+#elif defined(__APPLE__)
+// Mac OpenGL headers are 1.4/1.5 Compatable already!
+#  define GET_EXT_POINTER(name, type)
 #else
 #  define GET_EXT_POINTER(name, type)
 #  error unknown platform

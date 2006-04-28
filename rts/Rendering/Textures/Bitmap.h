@@ -53,6 +53,19 @@ public:
 public:
 	CBitmap CreateRescaled(int newx, int newy);
 	void ReverseYAxis(void);
+	
+	// Mac Specific (QuickTime Graphics Importer)
+#if defined(__APPLE__)
+	// Gets data reference including filename that we wan't quicktime to load
+	// from (allows us to use the VFS as well as files)
+	// NOTE: actually return Handle (defined as char **)
+	char **GetPtrDataRef(unsigned char *data, unsigned int size, 
+		const std::string &filename);
+	// Loads OpenGL Compatable Texture Data From Src Compressed File (not dds)
+	unsigned char *LoadTextureData(const std::string &filename, 
+		unsigned char *data, unsigned int sizeData, int &xsize, 
+		int &ysize, bool &hasAlpha);
+#endif /* __APPLE__ */
 };
 
 #endif // __BITMAP_H__

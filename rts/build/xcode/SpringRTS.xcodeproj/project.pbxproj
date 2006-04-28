@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B61FF8FA0997C9E400FE4933 /* libIL.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B61FF8F70997C9E400FE4933 /* libIL.dylib */; };
 		B6249547097D03C1006C0989 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B6249546097D03C1006C0989 /* libz.dylib */; };
 		B624956D097D087C006C0989 /* libfreetype.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCFA1E097A4E8C008872C5 /* libfreetype.dylib */; };
 		B624956E097D087C006C0989 /* libGLEW.1.3.3.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCFA1A097A4DD9008872C5 /* libGLEW.1.3.3.dylib */; };
@@ -283,19 +282,10 @@
 		B6C6B21809A99C200047BC51 /* libboost_filesystem-1_33_1.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = B6C6B1FA09A995660047BC51 /* libboost_filesystem-1_33_1.dylib */; };
 		B6C6B21909A99C200047BC51 /* libboost_regex-1_33_1.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = B6C6B1FB09A995660047BC51 /* libboost_regex-1_33_1.dylib */; };
 		B6C6B21A09A99C200047BC51 /* libboost_thread-1_33_1.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = B6C6B1FC09A995660047BC51 /* libboost_thread-1_33_1.dylib */; };
-		B6C779D709B6D61500C4022A /* aidll in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C7795209B6D60300C4022A /* aidll */; };
-		B6C779D809B6D61500C4022A /* base in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C7795609B6D60300C4022A /* base */; };
-		B6C779D909B6D61500C4022A /* bitmaps in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C7796109B6D60300C4022A /* bitmaps */; };
-		B6C779DA09B6D61500C4022A /* gamedata in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779A809B6D60300C4022A /* gamedata */; };
-		B6C779DB09B6D61500C4022A /* guis in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779AB09B6D60300C4022A /* guis */; };
-		B6C779DC09B6D61500C4022A /* Luxi.ttf in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779AF09B6D60300C4022A /* Luxi.ttf */; };
-		B6C779DD09B6D61500C4022A /* maps in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779B009B6D60300C4022A /* maps */; };
-		B6C779DE09B6D61500C4022A /* mods in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779B509B6D60300C4022A /* mods */; };
-		B6C779DF09B6D61500C4022A /* selectkeys.txt in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779B909B6D60300C4022A /* selectkeys.txt */; };
-		B6C779E009B6D61500C4022A /* shaders in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779BA09B6D60300C4022A /* shaders */; };
-		B6C779E109B6D61500C4022A /* startscripts in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779D209B6D60300C4022A /* startscripts */; };
-		B6C779E209B6D61500C4022A /* uikeys.txt in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779D509B6D60300C4022A /* uikeys.txt */; };
-		B6C779E309B6D61500C4022A /* Vera.ttf in Copy Data Files */ = {isa = PBXBuildFile; fileRef = B6C779D609B6D60300C4022A /* Vera.ttf */; };
+		B6ED38030A00F39A009B61E3 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6ED38020A00F39A009B61E3 /* QuickTime.framework */; };
+		B6ED38E20A01B1FA009B61E3 /* BasicMapDamage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B6ED38DE0A01B1FA009B61E3 /* BasicMapDamage.cpp */; };
+		B6ED38E40A01B1FA009B61E3 /* NoMapDamage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B6ED38E00A01B1FA009B61E3 /* NoMapDamage.cpp */; };
+		B6ED38E70A01B22E009B61E3 /* Sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B6ED38E60A01B22E009B61E3 /* Sound.cpp */; };
 		B6FCFA2D097A50F3008872C5 /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCF9E5097A49C7008872C5 /* SDL.framework */; };
 		B6FCFA2E097A50F3008872C5 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCF9E9097A4A0D008872C5 /* Cocoa.framework */; };
 		B6FCFA2F097A50F3008872C5 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCF9EA097A4A0D008872C5 /* Foundation.framework */; };
@@ -339,34 +329,10 @@
 			name = "Copy Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B694339E0982B23A009B8542 /* Copy Data Files */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 12;
-			dstPath = "";
-			dstSubfolderSpec = 16;
-			files = (
-				B6C779D709B6D61500C4022A /* aidll in Copy Data Files */,
-				B6C779D809B6D61500C4022A /* base in Copy Data Files */,
-				B6C779D909B6D61500C4022A /* bitmaps in Copy Data Files */,
-				B6C779DA09B6D61500C4022A /* gamedata in Copy Data Files */,
-				B6C779DB09B6D61500C4022A /* guis in Copy Data Files */,
-				B6C779DC09B6D61500C4022A /* Luxi.ttf in Copy Data Files */,
-				B6C779DD09B6D61500C4022A /* maps in Copy Data Files */,
-				B6C779DE09B6D61500C4022A /* mods in Copy Data Files */,
-				B6C779DF09B6D61500C4022A /* selectkeys.txt in Copy Data Files */,
-				B6C779E009B6D61500C4022A /* shaders in Copy Data Files */,
-				B6C779E109B6D61500C4022A /* startscripts in Copy Data Files */,
-				B6C779E209B6D61500C4022A /* uikeys.txt in Copy Data Files */,
-				B6C779E309B6D61500C4022A /* Vera.ttf in Copy Data Files */,
-			);
-			name = "Copy Data Files";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		B61FF80F09961F1700FE4933 /* README.MACOSX.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.MACOSX.txt; sourceTree = "<group>"; };
-		B61FF8F70997C9E400FE4933 /* libIL.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libIL.dylib; path = /usr/local/lib/libIL.dylib; sourceTree = "<absolute>"; };
 		B6249546097D03C1006C0989 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = /usr/lib/libz.dylib; sourceTree = "<absolute>"; };
 		B68FA16D09B1420600F9AE1B /* Main.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Main.cpp; sourceTree = "<group>"; };
 		B68FA1A609B14FFB00F9AE1B /* SpringRTS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SpringRTS_Prefix.pch; sourceTree = "<group>"; };
@@ -944,7 +910,6 @@
 		B6C6B0A309A9948B0047BC51 /* SoLib.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SoLib.cpp; sourceTree = "<group>"; };
 		B6C6B0A409A9948B0047BC51 /* SoLib.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SoLib.h; sourceTree = "<group>"; };
 		B6C6B0A609A9948B0047BC51 /* BackgroundReader.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; path = BackgroundReader.mm; sourceTree = "<group>"; };
-		B6C6B0A709A9948B0047BC51 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		B6C6B0A809A9948B0047BC51 /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = "<group>"; };
 		B6C6B0A909A9948B0047BC51 /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SDLMain.m; sourceTree = "<group>"; };
 		B6C6B0AB09A9948B0047BC51 /* UserDefsHandler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = UserDefsHandler.h; sourceTree = "<group>"; };
@@ -986,25 +951,12 @@
 		B6C6B1FB09A995660047BC51 /* libboost_regex-1_33_1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libboost_regex-1_33_1.dylib"; path = "boost_1_33_1/stage/lib/libboost_regex-1_33_1.dylib"; sourceTree = "<group>"; };
 		B6C6B1FC09A995660047BC51 /* libboost_thread-1_33_1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libboost_thread-1_33_1.dylib"; path = "boost_1_33_1/stage/lib/libboost_thread-1_33_1.dylib"; sourceTree = "<group>"; };
 		B6C6B20D09A9998D0047BC51 /* README.SRCFILES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README.SRCFILES.txt; sourceTree = "<group>"; };
-		B6C7795209B6D60300C4022A /* aidll */ = {isa = PBXFileReference; lastKnownFileType = folder; name = aidll; path = Data/aidll; sourceTree = "<group>"; };
-		B6C7795609B6D60300C4022A /* base */ = {isa = PBXFileReference; lastKnownFileType = folder; name = base; path = Data/base; sourceTree = "<group>"; };
-		B6C7796109B6D60300C4022A /* bitmaps */ = {isa = PBXFileReference; lastKnownFileType = folder; name = bitmaps; path = Data/bitmaps; sourceTree = "<group>"; };
-		B6C779A809B6D60300C4022A /* gamedata */ = {isa = PBXFileReference; lastKnownFileType = folder; name = gamedata; path = Data/gamedata; sourceTree = "<group>"; };
-		B6C779AB09B6D60300C4022A /* guis */ = {isa = PBXFileReference; lastKnownFileType = folder; name = guis; path = Data/guis; sourceTree = "<group>"; };
-		B6C779AF09B6D60300C4022A /* Luxi.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Luxi.ttf; path = Data/Luxi.ttf; sourceTree = "<group>"; };
-		B6C779B009B6D60300C4022A /* maps */ = {isa = PBXFileReference; lastKnownFileType = folder; name = maps; path = Data/maps; sourceTree = "<group>"; };
-		B6C779B509B6D60300C4022A /* mods */ = {isa = PBXFileReference; lastKnownFileType = folder; name = mods; path = Data/mods; sourceTree = "<group>"; };
-		B6C779B909B6D60300C4022A /* selectkeys.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = selectkeys.txt; path = Data/selectkeys.txt; sourceTree = "<group>"; };
-		B6C779BA09B6D60300C4022A /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = Data/shaders; sourceTree = "<group>"; };
-		B6C779D209B6D60300C4022A /* startscripts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = startscripts; path = Data/startscripts; sourceTree = "<group>"; };
-		B6C779D509B6D60300C4022A /* uikeys.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = uikeys.txt; path = Data/uikeys.txt; sourceTree = "<group>"; };
-		B6C779D609B6D60300C4022A /* Vera.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Vera.ttf; path = Data/Vera.ttf; sourceTree = "<group>"; };
-		B6E704ED09B54CFD00D5BC60 /* ITexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITexture.h; sourceTree = "<group>"; };
-		B6E7052E09B55B1300D5BC60 /* MemTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemTexture.h; sourceTree = "<group>"; };
-		B6E7052F09B55B1300D5BC60 /* MemTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemTexture.cpp; sourceTree = "<group>"; };
-		B6E7053609B55BAC00D5BC60 /* DevilTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DevilTexture.h; sourceTree = "<group>"; };
-		B6E7053709B55BAC00D5BC60 /* DevilTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DevilTexture.cpp; sourceTree = "<group>"; };
-		B6E7054709B55D3C00D5BC60 /* ITexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ITexture.cpp; sourceTree = "<group>"; };
+		B6ED38020A00F39A009B61E3 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
+		B6ED38DE0A01B1FA009B61E3 /* BasicMapDamage.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = BasicMapDamage.cpp; sourceTree = "<group>"; };
+		B6ED38DF0A01B1FA009B61E3 /* BasicMapDamage.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = BasicMapDamage.h; sourceTree = "<group>"; };
+		B6ED38E00A01B1FA009B61E3 /* NoMapDamage.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = NoMapDamage.cpp; sourceTree = "<group>"; };
+		B6ED38E10A01B1FA009B61E3 /* NoMapDamage.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = NoMapDamage.h; sourceTree = "<group>"; };
+		B6ED38E60A01B22E009B61E3 /* Sound.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Sound.cpp; sourceTree = "<group>"; };
 		B6FCF9E5097A49C7008872C5 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/SDL.framework; sourceTree = "<absolute>"; };
 		B6FCF9E9097A4A0D008872C5 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		B6FCF9EA097A4A0D008872C5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
@@ -1029,36 +981,16 @@
 				B6FCFA3D097A50F3008872C5 /* libGLEW.1.3.3.dylib in Frameworks */,
 				B6FCFA3E097A50F3008872C5 /* libfreetype.dylib in Frameworks */,
 				B6249547097D03C1006C0989 /* libz.dylib in Frameworks */,
-				B61FF8FA0997C9E400FE4933 /* libIL.dylib in Frameworks */,
 				B6C6B1FD09A995660047BC51 /* libboost_filesystem-1_33_1.dylib in Frameworks */,
 				B6C6B1FE09A995660047BC51 /* libboost_regex-1_33_1.dylib in Frameworks */,
 				B6C6B1FF09A995660047BC51 /* libboost_thread-1_33_1.dylib in Frameworks */,
+				B6ED38030A00F39A009B61E3 /* QuickTime.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		B68FA42309B18B3900F9AE1B /* Data */ = {
-			isa = PBXGroup;
-			children = (
-				B6C7795209B6D60300C4022A /* aidll */,
-				B6C7795609B6D60300C4022A /* base */,
-				B6C7796109B6D60300C4022A /* bitmaps */,
-				B6C779A809B6D60300C4022A /* gamedata */,
-				B6C779AB09B6D60300C4022A /* guis */,
-				B6C779AF09B6D60300C4022A /* Luxi.ttf */,
-				B6C779B009B6D60300C4022A /* maps */,
-				B6C779B509B6D60300C4022A /* mods */,
-				B6C779B909B6D60300C4022A /* selectkeys.txt */,
-				B6C779BA09B6D60300C4022A /* shaders */,
-				B6C779D209B6D60300C4022A /* startscripts */,
-				B6C779D509B6D60300C4022A /* uikeys.txt */,
-				B6C779D609B6D60300C4022A /* Vera.ttf */,
-			);
-			name = Data;
-			sourceTree = "<group>";
-		};
 		B6A9C72E09B125910003C9AC /* creg */ = {
 			isa = PBXGroup;
 			children = (
@@ -1511,12 +1443,6 @@
 				B6C6AF6E09A9948A0047BC51 /* TAPalette.h */,
 				B6C6AF6F09A9948A0047BC51 /* TextureHandler.cpp */,
 				B6C6AF7009A9948A0047BC51 /* TextureHandler.h */,
-				B6E704ED09B54CFD00D5BC60 /* ITexture.h */,
-				B6E7052E09B55B1300D5BC60 /* MemTexture.h */,
-				B6E7052F09B55B1300D5BC60 /* MemTexture.cpp */,
-				B6E7053609B55BAC00D5BC60 /* DevilTexture.h */,
-				B6E7053709B55BAC00D5BC60 /* DevilTexture.cpp */,
-				B6E7054709B55D3C00D5BC60 /* ITexture.cpp */,
 			);
 			path = Textures;
 			sourceTree = "<group>";
@@ -1557,6 +1483,10 @@
 		B6C6AF8009A9948A0047BC51 /* Map */ = {
 			isa = PBXGroup;
 			children = (
+				B6ED38DE0A01B1FA009B61E3 /* BasicMapDamage.cpp */,
+				B6ED38DF0A01B1FA009B61E3 /* BasicMapDamage.h */,
+				B6ED38E00A01B1FA009B61E3 /* NoMapDamage.cpp */,
+				B6ED38E10A01B1FA009B61E3 /* NoMapDamage.h */,
 				B6C6AF8109A9948A0047BC51 /* Ground.cpp */,
 				B6C6AF8209A9948A0047BC51 /* Ground.h */,
 				B6C6AF8309A9948A0047BC51 /* MapDamage.cpp */,
@@ -1851,6 +1781,7 @@
 		B6C6B05B09A9948B0047BC51 /* System */ = {
 			isa = PBXGroup;
 			children = (
+				B6ED38E60A01B22E009B61E3 /* Sound.cpp */,
 				B68FA16D09B1420600F9AE1B /* Main.cpp */,
 				B6A9C72E09B125910003C9AC /* creg */,
 				B6C6B05C09A9948B0047BC51 /* bget.cpp */,
@@ -1967,7 +1898,6 @@
 			isa = PBXGroup;
 			children = (
 				B6C6B0A609A9948B0047BC51 /* BackgroundReader.mm */,
-				B6C6B0A709A9948B0047BC51 /* main.m */,
 				B6C6B0A809A9948B0047BC51 /* SDLMain.h */,
 				B6C6B0A909A9948B0047BC51 /* SDLMain.m */,
 				B6C6B0AB09A9948B0047BC51 /* UserDefsHandler.h */,
@@ -2009,7 +1939,6 @@
 		B6FCF9C9097A4864008872C5 = {
 			isa = PBXGroup;
 			children = (
-				B68FA42309B18B3900F9AE1B /* Data */,
 				B6FCFA55097A52A1008872C5 /* Source */,
 				B6FCFA54097A5240008872C5 /* Resources */,
 				B6FCF9E4097A4992008872C5 /* Frameworks */,
@@ -2030,6 +1959,7 @@
 		B6FCF9E4097A4992008872C5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B6ED38020A00F39A009B61E3 /* QuickTime.framework */,
 				B6C6B1FA09A995660047BC51 /* libboost_filesystem-1_33_1.dylib */,
 				B6C6B1FB09A995660047BC51 /* libboost_regex-1_33_1.dylib */,
 				B6C6B1FC09A995660047BC51 /* libboost_thread-1_33_1.dylib */,
@@ -2041,7 +1971,6 @@
 				B6FCF9EB097A4A0D008872C5 /* OpenAL.framework */,
 				B6FCF9EC097A4A0D008872C5 /* OpenGL.framework */,
 				B6FCF9E5097A49C7008872C5 /* SDL.framework */,
-				B61FF8F70997C9E400FE4933 /* libIL.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -2086,7 +2015,6 @@
 				B6FCFA2B097A50F3008872C5 /* Sources */,
 				B6FCFA2C097A50F3008872C5 /* Frameworks */,
 				B6FCFA40097A50F3008872C5 /* Fix Install Paths for Libraries */,
-				B694339E0982B23A009B8542 /* Copy Data Files */,
 			);
 			buildRules = (
 			);
@@ -2441,6 +2369,9 @@
 				B6A9C73D09B125960003C9AC /* Serializer.cpp in Sources */,
 				B6A9C73E09B125970003C9AC /* VarTypes.cpp in Sources */,
 				B68FA16E09B1420600F9AE1B /* Main.cpp in Sources */,
+				B6ED38E20A01B1FA009B61E3 /* BasicMapDamage.cpp in Sources */,
+				B6ED38E40A01B1FA009B61E3 /* NoMapDamage.cpp in Sources */,
+				B6ED38E70A01B22E009B61E3 /* Sound.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
