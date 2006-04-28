@@ -2994,9 +2994,6 @@
 			</Filter>
 		</Filter>
 		<File
-			RelativePath=".\endgamebox.cpp">
-		</File>
-		<File
 			RelativePath=".\resource.h">
 		</File>
 		<File

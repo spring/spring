@@ -5,7 +5,7 @@ echo .
 echo Remember to generate all needed path information for the maps to be included
 echo Press any key to continue..
 echo .
-echo Also remember to update the version string in Lesson2.cpp so that
+echo Also remember to update the version string in GameVersion.h so that
 echo the correct .pdb can be identified!
 echo.
 pause > nul

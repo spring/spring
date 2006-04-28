@@ -8,6 +8,17 @@ TASpring change log
 - Added new fbi variable CanLoopbackAttack, only affects fighter aircrafts, if 1 this will enable the player to set the aircraft to do an immelman turn after firing instead of overflying the target.
 - Changed so units in maneuver mode will abort anything that moves them further than a certain distance from the patrol path
 - Added statistics to the end game dialog
+- Units with S3O models can explode into pieces.
+- Added a " all" option to .give to give all units in loaded mod
+- Fixed autoheal being about 4x to fast (or measuring heal per 0.25s depending on how one sees it)
+- Improved exception handling and crashreport handling in windows.
+- Added DateTime to the [VERSION] block in the demo recorder file
+- Removes los from units being transported
+- To disable terrain deformation: 
+   Mapmakers: Put 'NotDeformable=1' in the .smd.
+   script.txt: Put 'DisableMapDamage=1' in with the other properties.
+- VSync can be disabled with the settings application.
+- Several other smaller fixes and improvements.
 
 0.70b3
 
