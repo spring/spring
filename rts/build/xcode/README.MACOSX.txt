@@ -6,7 +6,6 @@ Contents:--------------------------------------------------------
       - ZLib (libz)
       - OpenAL
       - SDL
-      - DevIL
       - Boost C++
       - Freetype
       - GLEW
@@ -50,23 +49,9 @@ download (extra [sdk]): http://www.libsdl.org/release/SDL-devel-1.2.9.pkg.tar.gz
 
 website: www.libsdl.org
 
-- DevIL -
-
-This one is a little trickier to understand. To install just grab and run the packages...pretty simple. The issues come from that it isn't a framework (explained  under Mac Dylibs).
-
-Since the paths are fixed the xcode files should find them fine.
-
-A little issue is that they were linked against fink, so if your not using fink you'll have to use this little trick for now, sudo ln -s /usr/local /sw
-
-universal: no (is difficult to port due to deps)
-
-download: http://prdownloads.sourceforge.net/openil/DevIL_Binary_1.6.7.tgz
-
-website: www.imagelib.org
-
 - Boost C++ -
 
-Just grab it and unpack it into the /trunk/rts/build/xcode directory. Run the following commands to build it (i'm assuming you have bjam installed or build already...look at boost.org for instructions on that):
+Just grab it and unpack it into the /trunk/rts/build/xcode directory. Run the following commands within the boost directory to build it (i'm assuming you have bjam installed or build already...look at boost.org for instructions on that):
 
 bjam --without-python --with-thread --with-filesystem --with-regex stage
 
@@ -104,7 +89,7 @@ website: n/a (i'll add this soon)
 
 --- Datafiles ---
 
-Just drop the datafiles into /trunk/rts/build/xcode and all will be well. ie. unpack to trunk/rts/build/xcode/Data
+Just unpack the datafiles into the Debug directory /trunk/rts/build/xcode/build/Debug (or Relase if your in release mode)
 
 --- Mac Dylibs (install_path issue) ---
 
@@ -122,7 +107,7 @@ A couple of things to note...have a look at README.SRCFILES.txt for a descriptio
 
 ----- Notes on scons -----
 
-At the moment I'm using XCode as the build system, but this will be moved to scons after I get most stuff working on mac and fix/remove DevIL for universal/intel builds. The XCode files will then use scons to build and will just be for coding/debugging themselves.
+At the moment I'm using XCode as the build system, but this will be moved to scons after I get most stuff working properly on mac. The XCode files will then use scons to build and will just be for coding/debugging themselves.
 
 Note that mac builds will generate a .app bundle, not a cmdline program, although you will still be able to run it off the cmdline using the usual Spring.app/Contents/MacOS/SpringRTS.
 

@@ -19,6 +19,7 @@ static char  **gArgv;
 static BOOL   gFinderLaunch;
 
 static NSAutoreleasePool *pool = 0;
+void PreInitMac();
 
 #if SDL_USE_NIB_FILE
 /* A helper category for NSString */
