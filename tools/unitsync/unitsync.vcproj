@@ -596,9 +596,6 @@
 				RelativePath="..\rts\FileHandler.h">
 			</File>
 			<File
-				RelativePath=".\stdafx.h">
-			</File>
-			<File
 				RelativePath="..\rts\SunParser.h">
 			</File>
 			<File
