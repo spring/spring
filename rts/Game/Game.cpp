@@ -1145,14 +1145,14 @@ bool CGame::Draw()
 		font->glPrint("%02i:%02i",gs->frameNum/60/30,(gs->frameNum/30)%60);
 		glLoadIdentity();
 	}
+
 	if(showPlayerInfo){
 		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->active){
 				glColor4ubv(gs->Team(gs->players[a]->team)->color);
-				font->glPrintAt (0.76f, 0.01f + 0.02 * a, 0.7f, "%20s %3.0f%% Ping:%d ms",gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,(int)((gs->players[a]->ping-1)*1000.0f/30.0f));
+				font->glPrintAt (0.76f, 0.01f + 0.02 * a, 0.7f, "%s %3.0f%% Ping:%d ms",gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,(int)((gs->players[a]->ping-1)*1000.0f/30.0f));
 			}
 		}
-		glLoadIdentity();
 	}
 	if(!hideInterface)
 		info->Draw();
