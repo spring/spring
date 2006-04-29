@@ -836,7 +836,14 @@ float3 CAICallback::GetFeaturePos (int feature)
 
 bool CAICallback::GetValue(int id, void *data)
 {
-	return false;
+	verify();
+	switch (id) {
+		case AIVAL_NUMDAMAGETYPES:
+			*((int*)data) = DamageArray::numTypes;
+			return true;
+		default:
+			return false;
+	}
 }
 
 int CAICallback::HandleCommand (void *data)

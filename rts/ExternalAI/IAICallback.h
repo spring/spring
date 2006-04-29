@@ -8,9 +8,12 @@
 #include "Game/command.h"
 struct UnitDef;
 struct FeatureDef;
-// GetProperty/GetValue() constants
+// GetProperty() constants
                             // Data buffer will be filled with this:
 #define AIVAL_UNITDEF		1  // const UnitDef*
+
+// GetValue() constants
+#define AIVAL_NUMDAMAGETYPES 1 // int
 
 struct PointMarker
 {
