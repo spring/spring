@@ -121,7 +121,7 @@ CPathFinder::~CPathFinder()
 /*
 Search with several start positions
 */
-IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, std::vector<float3> startPos, const CPathFinderDef& pfDef, Path& path) {
+IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::vector<float3>& startPos, const CPathFinderDef& pfDef, Path& path) {
 	//Clear the given path.
 	path.path.clear();
 	path.pathCost = PATHCOST_INFINITY;
@@ -145,7 +145,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, std::vector<f
 
 	openSquareBufferPointer = &openSquareBuffer[0];
 
-	for(std::vector<float3>::iterator si=startPos.begin();si!=startPos.end();++si){
+	for(std::vector<float3>::const_iterator si=startPos.begin();si!=startPos.end();++si){
 		start = *si;
 		startxSqr = (int(start.x) / SQUARE_SIZE)|1;
 		startzSqr = (int(start.z) / SQUARE_SIZE)|1;
@@ -205,14 +205,14 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 	start = startPos;
 	startxSqr = (int(start.x) / SQUARE_SIZE)|1;
 	startzSqr = (int(start.z) / SQUARE_SIZE)|1;
-	startSquare = startxSqr + startzSqr * gs->mapx;
-
 
 	//Clamp the start position
 	if (startxSqr < 0) startxSqr=0;
 	if (startxSqr >= gs->mapx) startxSqr = gs->mapx-1;
 	if (startzSqr < 0) startzSqr =0;
 	if (startzSqr >= gs->mapy) startzSqr = gs->mapy-1;
+
+	startSquare = startxSqr + startzSqr * gs->mapx;
 
 	//Start up the search.
 	SearchResult result = InitSearch(moveData, pfDef);

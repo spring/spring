@@ -58,7 +58,7 @@ public:
 	*/
 	SearchResult GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, bool testMobile, bool exactPath = false, unsigned int maxSearchedNodes = 10000,bool needPath=true);
 
-	SearchResult GetPath(const MoveData& moveData, std::vector<float3> startPos, const CPathFinderDef& pfDef, Path& path);
+	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos, const CPathFinderDef& pfDef, Path& path);
 	
 	//Minimum distance between two waypoints.
 	enum { PATH_RESOLUTION = 2*SQUARE_SIZE };
