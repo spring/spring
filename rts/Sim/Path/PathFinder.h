@@ -64,7 +64,7 @@ public:
 	enum { PATH_RESOLUTION = 2*SQUARE_SIZE };
 
 private:  
-	enum { MAX_SEARCHED_SQARES = 10000 };
+	enum { MAX_SEARCHED_SQUARES = 10000 };
 
 	class OpenSquare {
 	public:
@@ -95,7 +95,7 @@ private:
 		typedef const OpenSquare* const_reference;
 
 		int bufPos;
-		OpenSquare* buf[MAX_SEARCHED_SQARES];
+		OpenSquare* buf[MAX_SEARCHED_SQUARES];
 
 		myVector() {bufPos=-1;}
 
@@ -122,8 +122,6 @@ private:
 	void FinishSearch(const MoveData& moveData, Path& path);
 
 	unsigned int maxNodesToBeSearched;
-	OpenSquare openSquareBuffer[MAX_SEARCHED_SQARES];
-	OpenSquare *openSquareBufferPointer;
 	myPQ openSquares;
 
 	SquareState* squareState;		//Map of all squares on map.
@@ -145,6 +143,9 @@ private:
 
 	//Statistic
 	unsigned int testedNodes;
+
+	OpenSquare *openSquareBufferPointer;
+	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
 public:
 	void Draw(void);
 };

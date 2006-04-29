@@ -54,7 +54,7 @@ CPathFinder::CPathFinder()
 		squareState[a].status = 0;
 		squareState[a].cost = PATHCOST_INFINITY;
 	}
-	for(int a=0;a<MAX_SEARCHED_SQARES;++a){
+	for(int a=0;a<MAX_SEARCHED_SQUARES;++a){
 		openSquareBuffer[a].cost=0;
 		openSquareBuffer[a].currentCost=0;
 		openSquareBuffer[a].sqr=0;
@@ -127,7 +127,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::ve
 	path.pathCost = PATHCOST_INFINITY;
 
 	//Store som basic data.
-	maxNodesToBeSearched = MAX_SEARCHED_SQARES;
+	maxNodesToBeSearched = MAX_SEARCHED_SQUARES;
 	testMobile=false;
 	exactPath = true;
 	needPath=true;
@@ -198,7 +198,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 	path.pathCost = PATHCOST_INFINITY;
 
 	//Store som basic data.
-	maxNodesToBeSearched = min((unsigned int)MAX_SEARCHED_SQARES, maxNodes);
+	maxNodesToBeSearched = min((unsigned int)MAX_SEARCHED_SQUARES, maxNodes);
 	this->testMobile=testMobile;
 	this->exactPath = exactPath;
 	this->needPath=needPath;
