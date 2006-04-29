@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Syncer.h"
 #include "FileSystem/FileHandler.h"
 #include <vector>
