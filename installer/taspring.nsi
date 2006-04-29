@@ -240,8 +240,8 @@ Function CheckVersion
 ;  IntCmp $1 3031040 Done             ; 0.66b1
 ;  IntCmp $1 3035136 Done             ; 0.67b1 & 0.67b2 & 0.67b3
   IntCmp $1 2633728 Done             ; 0.70b1
-  IntCmp $1 2650112 Done			 ; 0.70b2 & 0.70b3
-
+  IntCmp $1 2650112 Done			 ; 0.70b2
+  IntCmp $1 2707456 Done			 ; 0.70b3
   MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.70b*. Your current folder does not contain a spring.exe from any such version, so the installation will be aborted.. Please download the full installer instead and try again."
   Abort "Unable to upgrade, version 0.70b1, 0.70b2 or 0.70b3 not found.."
   Goto done
@@ -295,6 +295,7 @@ Section /o "Desktop shortcut" SEC_DESKTOP
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 SectionEnd
 
+SectionGroup "Skirmish AI plugins"
 Section "AAI Skirmish AI" SEC_AAI
   !define INSTALL
   !include "sections\aai.nsh"
@@ -306,6 +307,7 @@ Section "NTAI Skirmish AI" SEC_NTAI
   !include "sections\ntai.nsh"
   !undef INSTALL
 SectionEnd
+SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
 
