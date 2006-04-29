@@ -107,9 +107,7 @@
 !endif
 
   SetOutPath "$INSTDIR\mods"
-!ifndef SP_UPDATE
   File "..\game\mods\xtape.sd7"
-!endif
 
   Delete "$INSTDIR\mods\xtapev3.sd7"
   Delete "$INSTDIR\mods\xta_se_v065.sdz"
