@@ -15,7 +15,7 @@
   ; Shortcuts
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Website.lnk"
-;  Delete "$SMPROGRAMS\${PRODUCT_NAME}\TA Spring.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring test.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\TA Spring battleroom.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
