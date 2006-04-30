@@ -25,6 +25,8 @@ EXPORTS
 	GetMapName					@31
 	GetMapInfo					@32
 	GetMinimap					@33
+	GetMapArchiveCount			@34
+	GetMapArchiveName			@35
 	
 	GetPrimaryModCount			@40
 	GetPrimaryModName			@41

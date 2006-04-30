@@ -353,6 +353,19 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	return 1;
 }
 
+static vector<string> mapArchives;
+
+DLL_EXPORT int __stdcall GetMapArchiveCount(const char* mapName)
+{
+	mapArchives = scanner->GetArchivesForMap(mapName);
+	return mapArchives.size();
+}
+
+DLL_EXPORT const char* __stdcall GetMapArchiveName(int index)
+{
+	return GetStr(mapArchives[index]);
+}
+
 #define RM	0x0000F800
 #define GM  0x000007E0
 #define BM  0x0000001F
