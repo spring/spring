@@ -122,13 +122,6 @@ void COpenALSound::PlaySound(int id, float volume)
 	PlaySound(id, float3(0, 0, 0), volume, true);
 }
 
-void COpenALSound::PlaySound(int id,CWorldObject* p,float volume)
-{
-	if (noSound)
-		return;
-	PlaySound(id,p->pos,volume);
-}
-
 void COpenALSound::PlaySound(int id,const float3& p,float volume)
 {
 	PlaySound(id,p,volume,false);

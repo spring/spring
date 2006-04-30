@@ -29,7 +29,6 @@ public:
 	void Update();
 	unsigned int GetWaveId(const string& path);
 	void PlaySound(int id,float volume=1);
-	void PlaySound(int id,CWorldObject* p,float volume=1);
 	void PlaySound(int id,const float3& p,float volume=1);
 	void SetVolume (float v);
 

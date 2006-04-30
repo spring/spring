@@ -15,7 +15,6 @@ public:
 	ALuint GetWaveId(const string& path);
 	void Update();
 	void PlaySound(int id, float volume);
-	void PlaySound(int id,CWorldObject* p,float volume);
 	void PlaySound(int id,const float3& p,float volume);
 	void SetVolume(float v);
 
