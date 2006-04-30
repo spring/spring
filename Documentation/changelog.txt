@@ -1,6 +1,6 @@
 TASpring change log
 
-0.next
+0.71b1
 
 - Added new water renderer
 - Fixed lasers firing two projectiles at once, efficiently doing double damage.
@@ -19,6 +19,7 @@ TASpring change log
    script.txt: Put 'DisableMapDamage=1' in with the other properties.
 - VSync can be disabled with the settings application.
 - Several other smaller fixes and improvements.
+- Unit reply sounds are non-positional and have a seperate volume setting in the config application. Their volume is also affected by the global volume.
 
 0.70b3
 
