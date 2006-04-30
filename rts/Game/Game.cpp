@@ -206,6 +206,7 @@ CGame::CGame(bool server,std::string mapname)
 	gameSoundVolume=configHandler.GetInt("SoundVolume", 60)*0.01f;
 	soundEnabled=true;
 	sound->SetVolume(gameSoundVolume);
+	sound->SetUnitReplyVolume (configHandler.GetInt ("UnitReplySoundVolume",80)*0.01f);
 
 	camera=new CCamera();
 	cam2=new CCamera();

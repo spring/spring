@@ -3,6 +3,12 @@
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
 
+
+void CSound::PlaySound(int id,CWorldObject* p,float volume)
+{
+	PlaySound(id,p->pos,volume);
+}
+
 void CSound::PlayUnitActivate(int id, CUnit* p, float volume)
 {
 	/* If it's my unit, */
@@ -36,10 +42,16 @@ void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
 	/* Play the sound at 'full volume'. 
 	   TODO Lower the volume if it's off-screen.
 	   TODO Give it a location if it's off-screen, but don't lower the volume too much. */
-	PlaySound(id, volume);
+	PlaySound(id, volume * unitReplyVolume);
 }
 
 void CSound::NewFrame()
 {
 	repliesPlayed.clear();
+}
+
+
+void CSound::SetUnitReplyVolume (float vol)
+{
+	unitReplyVolume = vol;
 }

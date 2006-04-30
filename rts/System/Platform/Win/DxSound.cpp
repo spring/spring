@@ -204,8 +204,8 @@ void CDxSound::PlaySound(int id,float volume)
 		return;
 	}
 
-	float v=0.2-globalVolume*volume*0.2;
-		
+	float v=1.0f-globalVolume*volume*0.5f;
+
 	HRESULT hr;
 	int num=GetBuf(id,v);
 
@@ -215,7 +215,7 @@ void CDxSound::PlaySound(int id,float volume)
 		return;
 	}
 	
-	buffers[num]->SetVolume(DSBVOLUME_MIN*v-100);
+	buffers[num]->SetVolume(DSBVOLUME_MIN*v);
 	buffers[num]->SetPan(0);
 //	if(reset)
 //		buffers[num]->SetCurrentPosition( 0L );    
@@ -226,11 +226,6 @@ void CDxSound::PlaySound(int id,float volume)
 
 	}
 	POP_CODE_MODE;
-}
-
-void CDxSound::PlaySound(int id,CWorldObject* p,float volume)
-{
-	PlaySound(id,p->pos,volume);
 }
 
 void CDxSound::PlaySound(int id,const float3& p,float volume)
