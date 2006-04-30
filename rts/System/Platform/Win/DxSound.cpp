@@ -204,7 +204,7 @@ void CDxSound::PlaySound(int id,float volume)
 		return;
 	}
 
-	float v=1.0f-globalVolume*volume*0.5f;
+	float v=1.0f-globalVolume*volume*1.0f;
 
 	HRESULT hr;
 	int num=GetBuf(id,v);
