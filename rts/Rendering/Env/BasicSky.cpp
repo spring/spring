@@ -66,7 +66,9 @@ CBasicSky::CBasicSky()
 		cloudDown[a]=false;
 
 	lastCloudUpdate=-30;
-	cloudThickness=new unsigned char[CLOUD_SIZE*CLOUD_SIZE*4];
+	cloudThickness=new unsigned char[CLOUD_SIZE*CLOUD_SIZE*4+4];
+	for (int a = 0; a < 4; ++a)
+		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+a] = 0;
 	CreateClouds();
 	InitSun();
 	oldCoverBaseX=-5;
@@ -385,7 +387,7 @@ void CBasicSky::Update()
 START_TIME_PROFILE
 	lastCloudUpdate=gs->frameNum;
 
-	int blendMatrix[8][32][32];
+	int blendMatrix[CLOUD_DETAIL][32][32];
 	for(int a=0;a<CLOUD_DETAIL;a++){
 		float fade=(gs->frameNum/(70.0*(2<<(CLOUD_DETAIL-1-a))));
 		fade-=floor(fade/2)*2;
