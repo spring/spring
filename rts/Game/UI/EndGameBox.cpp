@@ -127,7 +127,7 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 	if(dispMode>0){
 		if(mx>box.x1+0.01 && mx<box.x1+0.12 && my<box.y1+0.57 && my>box.y1+0.571-stats.size()*0.02){
-			int sel=floor(-(my-box.y1-0.57)*50);
+			int sel=(int)floor(-(my-box.y1-0.57)*50);
 
 			if(button==1)
 				stat1=sel;
@@ -250,7 +250,7 @@ void CEndGameBox::Draw()
 
 		if(mx>box.x1+0.01 && mx<box.x1+0.12 && my<box.y1+0.57 && my>box.y1+0.571-stats.size()*0.02){
 
-			int sel=floor(-(my-box.y1-0.57)*50);
+			int sel=(int)floor(-(my-box.y1-0.57)*50);
 
 			glColor4f(0.7f,0.2f,0.2f,0.4f);
 			glDisable(GL_TEXTURE_2D);
