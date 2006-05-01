@@ -99,12 +99,12 @@
   File "..\game\base\springcontent.sdz"
 
   SetOutPath "$INSTDIR\base\spring"
-  File "..\game\base\spring\springbitmaps_v061.sdz"
-;  File "..\game\base\spring\springdecals_v061.sdz"
-  File "..\game\base\spring\springdecals_v062.sdz"
-  File "..\game\base\spring\springloadpictures_v061.sdz"
+  Delete "..\game\base\spring\springbitmaps_v061.sdz"
+  Delete "..\game\base\spring\springdecals_v062.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
+  File "..\game\base\spring\springloadpictures_v061.sdz"
 !endif
+  File "..\game\base\spring\bitmaps.sdz"
 
   SetOutPath "$INSTDIR\mods"
   File "..\game\mods\xtape.sd7"
