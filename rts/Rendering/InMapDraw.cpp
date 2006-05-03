@@ -325,19 +325,15 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 
 void CInMapDraw::ErasePos(float3 pos)
 {
-	net->SendData<unsigned char, unsigned char, unsigned char, short, short>(
-			NETMSG_MAPDRAW, 8 /*message size*/, gu->myPlayerNum, NET_ERASE, (short)pos.x, (short)pos.z);
+	net->SendMessage_MAPDRAW_ERASE(gu->myPlayerNum, static_cast<short>(pos.x), static_cast<short>(pos.z));
 }
 
 void CInMapDraw::CreatePoint(float3 pos, std::string label)
 {
-	net->SendSTLData<unsigned char, unsigned char, short, short, std::string>(
-			NETMSG_MAPDRAW, gu->myPlayerNum, NET_POINT, (short)pos.x, (short)pos.z, label);
+	net->SendMessage_MAPDRAW_POINT(gu->myPlayerNum, pos.x, pos.z, label);
 }
 
 void CInMapDraw::AddLine(float3 pos, float3 pos2)
 {
-	net->SendData<unsigned char, unsigned char, unsigned char, short, short, short, short>(
-			NETMSG_MAPDRAW, 12 /*message size*/, gu->myPlayerNum, NET_LINE,
-			(short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
+	net->SendMessage_MAPDRAW_LINE(gu->myPlayerNum, pos.x, pos.z, pos2.x, pos2.z);
 }

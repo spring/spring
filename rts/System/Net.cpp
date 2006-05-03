@@ -13,6 +13,7 @@
 #include "Game/Team.h"
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
+#include "Game/command.h"
 #include "mmgr.h"
 #ifdef _WIN32
 #include <direct.h>
@@ -24,6 +25,7 @@
 #include <boost/filesystem/convenience.hpp>
 #include "SDL_timer.h"
 #include "Net.h"
+#include "Rendering/InMapDraw.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -112,7 +114,7 @@ CNet::CNet()
 CNet::~CNet()
 {
 	if(connected && (imServer || !connections[0].localConnection)){
-		SendData(NETMSG_QUIT);
+		SendMessage_QUIT();
 		FlushNet();
 	}
 	if(mySocket)
@@ -255,8 +257,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 
 	InitNewConn(&saOther,false,0);
 	if(!localConnect){
-		SendData<unsigned char, unsigned char>(
-				NETMSG_ATTEMPTCONNECT, gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
+		SendMessage_ATTEMPTCONNECT(gameSetup ? gameSetup->myPlayer : 0);
 		FlushNet();
 		inInitialConnect=true;
 	}
@@ -386,10 +387,10 @@ void CNet::Update(void)
 		}
 
 		if(c->lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
-			SendData(NETMSG_HELLO);
+			SendMessage_HELLO();
 		}
 		if(c->lastSendTime<curTime-0.2 && !c->waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
-			SendData(NETMSG_HELLO);
+			SendMessage_HELLO();
 		}
 		if(c->lastReceiveTime < curTime-(inInitialConnect ? 40 : 30)){		//other side has timed out
 			c->active=false;
@@ -500,12 +501,10 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 	connected=true;
 
 	if(imServer){
-		tempbuf[0]=NETMSG_SETPLAYERNUM;
-		tempbuf[1]=freeConn;
-		SendData(tempbuf,2,freeConn);
+		SendMessage_SETPLAYERNUM(freeConn);
 
-		SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance().chosenName);
-		SendSTLData<int, std::string>(NETMSG_MAPNAME, stupidGlobalMapId, stupidGlobalMapname);
+		SendMessage_SCRIPT(CScriptHandler::Instance().chosenName);
+		SendMessage_MAPNAME(stupidGlobalMapId, stupidGlobalMapname);
 
 		for(int a=0;a<gs->activePlayers;a++){
 			if(!gs->players[a]->readyToStart)
@@ -514,9 +513,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		}
 		if(gameSetup){
 			for(int a=0;a<gs->activeTeams;a++){
-				serverNet->SendData<unsigned char, unsigned char, float, float, float>(
-						NETMSG_STARTPOS, a, 2, gs->Team(a)->startPos.x,
-						gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+				serverNet->SendMessage_STARTPOS(a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 			}
 		}
 		FlushNet();
@@ -777,4 +774,169 @@ void CNet::StartDemoServer(void)
 	playbackDemo->Read(&demoTimeOffset,sizeof(double));
 	demoTimeOffset=gu->modGameTime-demoTimeOffset;
 	nextDemoRead=gu->modGameTime-0.01;
+}
+
+int CNet::SendMessage_HELLO()
+{
+	return SendData(NETMSG_HELLO);
+}
+
+int CNet::SendMessage_QUIT()
+{
+	return SendData(NETMSG_QUIT);
+}
+
+int CNet::SendMessage_NEWFRAME(const int framenumber)
+{
+	return SendData(NETMSG_NEWFRAME, framenumber);
+}
+
+int CNet::SendMessage_STARTPLAYING()
+{
+	return SendData(NETMSG_STARTPLAYING);
+}
+
+int CNet::SendMessage_SETPLAYERNUM(const unsigned char playernumber)
+{
+	return SendData(NETMSG_SETPLAYERNUM, playernumber);
+}
+
+int CNet::SendMessage_CHAT(const unsigned char playernumber, const std::string &text)
+{
+	return SendSTLData(NETMSG_CHAT, playernumber, text);
+}
+
+int CNet::SendMessage_COMMAND(const unsigned char playernumber, const Command &command)
+{
+	return SendSTLData(NETMSG_COMMAND, playernumber, command.id, command.options, command.params);
+}
+
+int CNet::SendMessage_SELECT(const unsigned char playernumber, const std::vector<short> &unit_ids)
+{
+	return SendSTLData(NETMSG_SELECT, playernumber, unit_ids);
+}
+
+int CNet::SendMessage_PAUSE(const unsigned char not_paused, const unsigned char playernumber)
+{
+	return SendData(NETMSG_PAUSE, not_paused, playernumber);
+}
+
+int CNet::SendMessage_AICOMMAND(const unsigned char playernumber, const short unit_id, const Command &command)
+{
+	return SendSTLData(NETMSG_AICOMMAND, playernumber, unit_id, command.id, command.options, command.params);
+}
+
+int CNet::SendMessage_SCRIPT(const std::string scriptname)
+{
+	return SendSTLData(NETMSG_SCRIPT, scriptname);
+}
+
+int CNet::SendMessage_MAPNAME(const int map_id, const std::string &mapname)
+{
+	return SendSTLData(NETMSG_MAPNAME, map_id, mapname);
+}
+
+int CNet::SendMessage_USERSPEED(const float speed)
+{
+	return SendData(NETMSG_USER_SPEED, speed);
+}
+
+int CNet::SendMessage_INTERNALSPEED(const float speed)
+{
+	return SendData(NETMSG_INTERNAL_SPEED, speed);
+}
+
+int CNet::SendMessage_CPUUSAGE(const float usage)
+{
+	return SendData(NETMSG_CPU_USAGE, usage);
+}
+
+int CNet::SendMessage_DIRECTCONTROL(const unsigned char playernumber)
+{
+	return SendData(NETMSG_DIRECT_CONTROL, playernumber);
+}
+
+int CNet::SendMessage_DCUPDATE(const unsigned char playernumber, const unsigned char status, const short x, const short y)
+{
+	return SendData(NETMSG_DC_UPDATE, playernumber, status, x, y);
+}
+
+int CNet::SendMessage_ATTEMPTCONNECT(const unsigned char playernumber)
+{
+	return SendData(NETMSG_ATTEMPTCONNECT, playernumber, NETWORK_VERSION);
+}
+
+int CNet::SendMessage_SHARE(const unsigned char playernumber, const unsigned char tableselected, const unsigned char giveunitsstate, const float metal, const float energy)
+{
+	return SendData(NETMSG_SHARE, playernumber, tableselected, giveunitsstate, metal, energy);
+}
+
+int CNet::SendMessage_SETSHARE(const unsigned char teamnumber, const float metal, const float energy)
+{
+	return SendData(NETMSG_SETSHARE, teamnumber, metal, energy);
+}
+
+int CNet::SendMessage_SENDPLAYERSTAT()
+{
+	return SendData(NETMSG_SENDPLAYERSTAT);
+}
+
+int CNet::SendMessage_PLAYERSTAT(const unsigned char playernumber, const CPlayer::Statistics &stats)
+{
+	return SendData(NETMSG_PLAYERSTAT, stats);
+}
+
+int CNet::SendMessage_GAMEOVER()
+{
+	return SendData(NETMSG_GAMEOVER);
+}
+
+int CNet::SendMessage_MAPDRAW_POINT(const unsigned char teamnumber, const short x, const short y, const std::string &text)
+{
+	return SendSTLData(NETMSG_MAPDRAW, teamnumber, CInMapDraw::NET_POINT, x, y, text);
+}
+
+int CNet::SendMessage_MAPDRAW_LINE(const unsigned char teamnumber, const short x1, const short y1, const short x2, const short y2)
+{
+	return SendData(NETMSG_MAPDRAW, 12 /*message size*/, teamnumber, CInMapDraw::NET_LINE, x1, y1, x2, y2);
+}
+
+int CNet::SendMessage_MAPDRAW_ERASE(const unsigned char teamnumber, const short x, const short y)
+{
+	return SendData(NETMSG_MAPDRAW, 8 /*message size*/, teamnumber, CInMapDraw::NET_ERASE, x, y);
+}
+
+int CNet::SendMessage_SYNCREQUEST(const int framenumber)
+{
+	return SendData(NETMSG_SYNCREQUEST, framenumber);
+}
+
+int CNet::SendMessage_SYNCRESPONSE(const unsigned char playernumber, const int framenumber, const CChecksum &checksum)
+{
+	return SendData(NETMSG_SYNCRESPONSE, playernumber, framenumber, checksum);
+}
+
+int CNet::SendMessage_SYSTEMMSG(const unsigned char playernumber, const std::string &text)
+{
+	return SendSTLData(NETMSG_SYSTEMMSG, playernumber, text);
+}
+
+int CNet::SendMessage_STARTPOS(const unsigned char playernumber, const unsigned char number, const float x, const float y, const float z)
+{
+	return SendData(NETMSG_STARTPOS, playernumber, number, x, y, z);
+}
+
+int CNet::SendMessage_EXECHECKSUM(const unsigned int checksum)
+{
+	return SendData(NETMSG_EXECHECKSUM, checksum);
+}
+
+int CNet::SendMessage_PLAYERINFO(const unsigned char playernumber, const float cpuusage, const int ping)
+{
+	return SendData(NETMSG_PLAYERINFO, playernumber, cpuusage, ping);
+}
+
+int CNet::SendMessage_PLAYERLEFT(const unsigned char playernumber, const unsigned char why)
+{
+	return SendData(NETMSG_PLAYERLEFT, playernumber, why);
 }
