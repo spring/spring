@@ -184,7 +184,8 @@ START_TIME_PROFILE;
 		mt->moveType=ud->moveType;
 		mt->accRate=ud->maxAcc;
 		mt->floatOnWater=ud->movedata->moveType==MoveData::Hover_Move || ud->movedata->moveType==MoveData::Ship_Move;
-		unit->mass=ud->mass;
+		if(!unit->beingBuilt)
+			unit->mass=ud->mass;	//otherwise set this when finished building instead
 		unit->moveType=mt;
 
 
@@ -198,14 +199,6 @@ START_TIME_PROFILE;
 		unit->mobility->maxTurnRate = (short int) ud->turnRate;
 		unit->mobility->moveData = ud->movedata;
 
-		//Unit parameters
-		unit->mass = ud->mass;	//Should this not be done for all units?!  //buildings have mass 100000 to show they are immobile
-//		unit->moveType = new CDummyMoveType(unit);	//Disable old movetype-system.
-
-		//Uggly addition of UnitAI.
-//		unit->ai = new CUnitAI();
-//		unit->ai->moveAAI = new CSurfaceMoveAAI(unit);
-
 	} else if(ud->canfly){
 		//Air-mobility
 		unit->mobility = new CMobility();
@@ -217,7 +210,8 @@ START_TIME_PROFILE;
 		unit->mobility->maxTurnRate = (short int) ud->turnRate;
 		unit->mobility->moveData = ud->movedata;
 
-		unit->mass=ud->mass;
+		if(!unit->beingBuilt)
+			unit->mass=ud->mass; //otherwise set this when finished building instead
 
 		if ((type == "Builder") || ud->hoverAttack || ud->transportCapacity) {
 			CTAAirMoveType *mt = new CTAAirMoveType(unit);

@@ -3,6 +3,7 @@ TASpring change log
 0.next
 
 - Added weapontag "paralyzetime", controls how long a unit can maximaly be paralyzed after being hit by this weapon, default 10
+- Adds some new options in the settings program for scroll speeds
 
 0.71b1
 
