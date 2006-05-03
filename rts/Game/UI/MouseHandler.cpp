@@ -90,8 +90,9 @@ CMouseHandler::CMouseHandler()
 	camControllers.push_back(new CTWController);
 	camControllers.push_back(new CRotOverheadController);
 
-	currentCamController=camControllers[1];
-	currentCamControllerNum=1;
+	int mode=configHandler.GetInt("CamMode",1);
+	currentCamController=camControllers[mode];
+	currentCamControllerNum=mode;
 }
 
 CMouseHandler::~CMouseHandler()

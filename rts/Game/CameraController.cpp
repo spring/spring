@@ -19,6 +19,7 @@ extern Uint8 *keys;
 CCameraController::CCameraController(void)
 {
 	mouseScale = atof(configHandler.GetString("FPSMouseScale", DEFAULT_MOUSE_SCALE).c_str());
+	scrollSpeed=1;
 }
 
 CCameraController::~CCameraController(void)
@@ -32,18 +33,19 @@ CCameraController::~CCameraController(void)
 CFPSController::CFPSController()
 : pos(2000,70,1800)
 {
+	scrollSpeed=configHandler.GetInt("FPSScrollSpeed",10)*0.1;
 }
 
 void CFPSController::KeyMove(float3 move)
 {
 	move*=move.z*400;
-	pos+=camera->forward*move.y+camera->right*move.x;
+	pos+=(camera->forward*move.y+camera->right*move.x)*scrollSpeed;
 }
 
 void CFPSController::MouseMove(float3 move)
 {
 	camera->rot.y -= mouseScale*move.x;
-	camera->rot.x -= mouseScale*move.y*move.z;  
+	camera->rot.x -= mouseScale*move.y*move.z;
 
 	if(camera->rot.x>PI*0.4999)
 		camera->rot.x=PI*0.4999;
@@ -112,21 +114,23 @@ void CFPSController::SwitchTo()
 COverheadController::COverheadController()
 : pos(2000,70,1800),
 	height(500),zscale(0.5f)
-{}
+{
+	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1;
+}
 
 void COverheadController::KeyMove(float3 move)
 {
 	move*=sqrt(move.z)*200;
 	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
-	pos.x+=move.x*pixelsize*2;	
-	pos.z-=move.y*pixelsize*2;
+	pos.x+=move.x*pixelsize*2*scrollSpeed;	
+	pos.z-=move.y*pixelsize*2*scrollSpeed;
 }
 
 void COverheadController::MouseMove(float3 move)
 {
 	float pixelsize=100*mouseScale*tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
-	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3);	
-	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3);
+	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;	
+	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
 }
 
 void COverheadController::ScreenEdgeMove(float3 move)
@@ -194,6 +198,7 @@ void COverheadController::SwitchTo()
 CTWController::CTWController()
 : pos(2000,70,1800)
 {
+	scrollSpeed=configHandler.GetInt("TWScrollSpeed",10)*0.1;
 }
 
 void CTWController::KeyMove(float3 move)
@@ -203,7 +208,7 @@ void CTWController::KeyMove(float3 move)
 	flatForward.Normalize();
 
 	move*=sqrt(move.z)*200;
-	pos+=flatForward*move.y+camera->right*move.x;
+	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
 }
 
 void CTWController::MouseMove(float3 move)
@@ -215,7 +220,7 @@ void CTWController::MouseMove(float3 move)
 	flatForward.y=0;
 	flatForward.Normalize();
 
-	pos+=-flatForward*move.y+camera->right*move.x;
+	pos+=-(flatForward*move.y+camera->right*move.x)*scrollSpeed;
 }
 
 void CTWController::ScreenEdgeMove(float3 move)
@@ -299,6 +304,7 @@ CRotOverheadController::CRotOverheadController()
 	oldHeight(500)
 {
 	mouseScale = atof(configHandler.GetString("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE).c_str());
+	scrollSpeed=configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1;
 }
 
 void CRotOverheadController::KeyMove(float3 move)
@@ -311,7 +317,7 @@ void CRotOverheadController::KeyMove(float3 move)
 	flatForward.y=0;
 	flatForward.Normalize();
 
-	pos+=flatForward*move.y+camera->right*move.x;
+	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
 }
 
 void CRotOverheadController::MouseMove(float3 move)

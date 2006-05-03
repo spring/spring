@@ -20,6 +20,7 @@ public:
 	virtual void SwitchTo()=0;
 	
 	float mouseScale;
+	float scrollSpeed;
 };
 
 class CFPSController : public CCameraController

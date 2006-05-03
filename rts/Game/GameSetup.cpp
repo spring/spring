@@ -18,6 +18,7 @@
 #include "GameVersion.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
+#include "Platform/ConfigHandler.h"
 
 CGameSetup* gameSetup=0;
 
@@ -280,8 +281,9 @@ bool CGameSetup::Draw(void)
 		allReady=true;
 	if(allReady){
 		if(readyTime==0 && !net->playbackDemo){
-			mouse->currentCamController=mouse->camControllers[1];
-			mouse->currentCamControllerNum=1;
+			int mode=configHandler.GetInt("CamMode",1);
+			mouse->currentCamController=mouse->camControllers[mode];
+			mouse->currentCamControllerNum=mode;
 			mouse->currentCamController->SetPos(gs->Team(gu->myTeam)->startPos);
 			mouse->inStateTransit=true;
 			mouse->transitSpeed=1;
