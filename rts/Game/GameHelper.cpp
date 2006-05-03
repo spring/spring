@@ -322,7 +322,7 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 	float heightMod=weapon->heightMod;
 	float aHeight=pos.y;
 	float secDamage=weapon->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
-	bool paralyzer=weapon->weaponDef->damages.paralyzeDamage;
+	bool paralyzer=!!weapon->weaponDef->damages.paralyzeDamageTime;
 
 	vector<int> quads=qf->GetQuads(pos,radius+(aHeight-max(0.f,readmap->minheight))*heightMod);
 

@@ -326,6 +326,10 @@ void CPreGame::UpdateClientNet(void)
 			globalQuit=true;
 			return;
 
+		case NETMSG_USER_SPEED:
+		case NETMSG_INTERNAL_SPEED:
+			inbufpos+=5;				
+			break;
 		default:
 			char txt[200];
 			sprintf(txt,"Unknown net msg in client %d",(int)inbuf[inbufpos]);

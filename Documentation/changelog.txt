@@ -1,5 +1,9 @@
 TASpring change log
 
+0.next
+
+- Added weapontag "paralyzetime", controls how long a unit can maximaly be paralyzed after being hit by this weapon, default 10
+
 0.71b1
 
 - Added new water renderer
