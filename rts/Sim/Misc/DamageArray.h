@@ -5,7 +5,7 @@ struct DamageArray
 {
 	static int numTypes;
 	float* damages;
-	bool paralyzeDamage;
+	int paralyzeDamageTime;
 	float impulseFactor, impulseBoost, craterMult, craterBoost;
 
 	DamageArray();
@@ -13,7 +13,7 @@ struct DamageArray
 	~DamageArray();
 
 	inline void operator=(const DamageArray& other){
-		paralyzeDamage=other.paralyzeDamage;
+		paralyzeDamageTime=other.paralyzeDamageTime;
 		for(int a=0;a<numTypes;++a)
 			damages[a]=other.damages[a];
 	};

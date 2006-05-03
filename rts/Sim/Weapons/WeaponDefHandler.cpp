@@ -217,7 +217,10 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].selfExplode, "0", weaponname + "\\burnblow");
 	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01;
 	weaponDefs[id].paralyzer=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\paralyzer").c_str());
-	weaponDefs[id].damages.paralyzeDamage=weaponDefs[id].paralyzer;
+	if(weaponDefs[id].paralyzer)
+		weaponDefs[id].damages.paralyzeDamageTime=atoi(sunparser->SGetValueDef("10", weaponname + "\\paralyzetime").c_str());
+	else
+		weaponDefs[id].damages.paralyzeDamageTime=0;
 	weaponDefs[id].soundTrigger=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\SoundTrigger").c_str());
 
 	//sunparser->GetDef(weaponDefs[id].highTrajectory, "0", weaponname + "\\minbarrelangle");

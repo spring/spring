@@ -552,12 +552,12 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	restTime=0;
 
-	if(damages.paralyzeDamage){
+	if(damages.paralyzeDamageTime){
 		paralyzeDamage+=damage;
 		if(health-paralyzeDamage<0){
 			stunned=true;
-			if(health-paralyzeDamage<-maxHealth*0.1)
-				paralyzeDamage=health+maxHealth*0.1;
+			if(health-paralyzeDamage<-maxHealth/damages.paralyzeDamageTime)
+				paralyzeDamage=health+maxHealth/damages.paralyzeDamageTime;
 		}
 	} else {
 		health-=damage;
