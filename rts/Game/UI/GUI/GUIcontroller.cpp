@@ -256,7 +256,7 @@ void GUIcontroller::ConsoleInput(const std::string& userInput)
 		}
 	}
 	//userInput=gs->players[gu->myPlayerNum]->playerName+": "+inputText;
-	net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, userInput);
+	net->SendMessage_CHAT(gu->myPlayerNum, userInput);
 //	if(console)
 //		console->AddText(userInput);
 }

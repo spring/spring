@@ -20,8 +20,11 @@
 #include <algorithm>
 #include <boost/thread/mutex.hpp>
 #include <boost/scoped_array.hpp>
+#include "Game/Player.h"
+#include "Sim/Units/UnitHandler.h"
 
 class CFileHandler;
+struct Command;
 using namespace std;
 
 enum NETMSG {
@@ -271,6 +274,42 @@ public:
 
     return SendData(buf.get(), size);
 	}
+
+	int SendMessage_HELLO();
+	int SendMessage_QUIT();
+	int SendMessage_NEWFRAME(const int framenumber);
+	int SendMessage_STARTPLAYING();
+	int SendMessage_SETPLAYERNUM(const unsigned char playernumber);
+	int SendMessage_CHAT(const unsigned char playernumber, const std::string &text);
+	int SendMessage_COMMAND(const unsigned char playernumber, const Command &command);
+	int SendMessage_SELECT(const unsigned char playernumber, const std::vector<short> &unit_ids);
+	int SendMessage_PAUSE(const unsigned char not_paused, const unsigned char playernumber);
+	int SendMessage_AICOMMAND(const unsigned char playernumber, const short unit_id, const Command &command);
+	int SendMessage_SCRIPT(const std::string scriptname);
+	int SendMessage_MAPNAME(const int map_id, const std::string &mapname);
+	int SendMessage_USERSPEED(const float speed);
+	int SendMessage_INTERNALSPEED(const float speed);
+	int SendMessage_CPUUSAGE(const float usage);
+	int SendMessage_DIRECTCONTROL(const unsigned char playernumber);
+	int SendMessage_DCUPDATE(const unsigned char playernumber, const unsigned char status, const short x, const short y);
+	int SendMessage_ATTEMPTCONNECT(const unsigned char playernumber);
+	int SendMessage_SHARE(const unsigned char playernumber, const unsigned char tableselected, const unsigned char giveunitsstate, const float metal, const float energy);
+	int SendMessage_SETSHARE(const unsigned char teamnumber, const float metal, const float energy);
+	int SendMessage_SENDPLAYERSTAT();
+	int SendMessage_PLAYERSTAT(const unsigned char playernumber, const CPlayer::Statistics &stats);
+	int SendMessage_GAMEOVER();
+
+	int SendMessage_MAPDRAW_POINT(const unsigned char teamnumber, const short x, const short y, const std::string &text);
+	int SendMessage_MAPDRAW_LINE(const unsigned char teamnumber, const short x1, const short y1, const short x2, const short y2);
+	int SendMessage_MAPDRAW_ERASE(const unsigned char teamnumber, const short x, const short y);
+
+	int SendMessage_SYNCREQUEST(const int framenumber);
+	int SendMessage_SYNCRESPONSE(const unsigned char playernumber, const int framenumber, const CChecksum &checksum);
+	int SendMessage_SYSTEMMSG(const unsigned char playernumber, const std::string &text);
+	int SendMessage_STARTPOS(const unsigned char playernumber, const unsigned char number, const float x, const float y, const float z);
+	int SendMessage_EXECHECKSUM(const unsigned int checksum);
+	int SendMessage_PLAYERINFO(const unsigned char playernumber, const float cpuusage, const int ping);
+	int SendMessage_PLAYERLEFT(const unsigned char playernumber, const unsigned char why);
 
 	CNet();
 	void StopListening();

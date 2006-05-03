@@ -474,7 +474,7 @@ void CSelectedUnits::SendSelection(void)
 	std::vector<short>::iterator i = selectedUnitIDs.begin();
 	std::set<CUnit*>::const_iterator ui = selectedUnits.begin();
 	for(; ui != selectedUnits.end(); ++i, ++ui) *i = (*ui)->id;
-	net->SendSTLData<unsigned char, std::vector<short> >(NETMSG_SELECT, gu->myPlayerNum, selectedUnitIDs);
+	net->SendMessage_SELECT(gu->myPlayerNum, selectedUnitIDs);
 	selectionChanged=false;
 }
 
@@ -483,6 +483,6 @@ void CSelectedUnits::SendCommand(Command& c)
 	if(selectionChanged){		//send new selection
 		SendSelection();
 	}
-	net->SendSTLData<unsigned char, int, unsigned char, std::vector<float> >(
-			NETMSG_COMMAND, gu->myPlayerNum, c.id, c.options, c.params);
+
+	net->SendMessage_COMMAND(gu->myPlayerNum, c);
 }

@@ -999,7 +999,7 @@ bool GUIgame::EventAction(const string& command)
 		}else 
 			speed+=0.5;
 		if(!net->playbackDemo){
-			net->SendData<float>(NETMSG_USER_SPEED, speed);
+			net->SendMessage_USERSPEED(speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;	
@@ -1016,7 +1016,7 @@ bool GUIgame::EventAction(const string& command)
 		}else 
 			speed-=0.5;
 		if(!net->playbackDemo){
-			net->SendData<float>(NETMSG_USER_SPEED, speed);
+			net->SendMessage_USERSPEED(speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -1030,7 +1030,7 @@ bool GUIgame::EventAction(const string& command)
 		c.id=CMD_STOP;
 		c.options=0;
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-		net->SendData<unsigned char>(NETMSG_DIRECT_CONTROL, gu->myPlayerNum);
+		net->SendMessage_DIRECTCONTROL(gu->myPlayerNum);
 	} else
 	#endif
 	if (id==COMMAND_showshadowmap){
@@ -1065,7 +1065,7 @@ bool GUIgame::EventAction(const string& command)
 	}
 
 	else if (id==COMMAND_pausegame){
-		net->SendData<unsigned char, unsigned char>(NETMSG_PAUSE, !gs->paused, gu->myPlayerNum);
+		net->SendMessage_PAUSE(!gs->paused, gu->myPlayerNum);
 		game->lastframe = SDL_GetTicks();
 	}
 	else if (id==COMMAND_singlestep){

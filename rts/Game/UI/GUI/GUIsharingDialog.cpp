@@ -32,8 +32,8 @@ void GUIsharingDialog::ButtonPressed(GUIbutton* b)
 			c.id=CMD_STOP;
 			selectedUnits.GiveCommand(c,false);		//make sure the units are stopped and that the selection is transmitted
 		}
-		net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
-				NETMSG_SHARE, gu->myPlayerNum, table->GetSelected(), giveUnits->State(),
+
+		net->SendMessage_SHARE(gu->myPlayerNum, table->GetSelected(), giveUnits->State(),
 				min(gs->Team(gu->myTeam)->metal, (double)giveMetal->Position()),
 				min(gs->Team(gu->myTeam)->energy, (double)giveEnergy->Position()));
 
