@@ -1013,18 +1013,18 @@ void CDynWater::DrawDetailNormalTex(void)
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 14, 0, 0, 1.0/90);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 29, 0, 0, 1.0/55);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, 9, 4, 0, 1.0/100);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 5, -16, 0, 1.0/80);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, -5, 14, 0, 1.0/90);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 27, 27, 0, 1.0/75);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, -3, -5, 0, 1.0/100);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, -20, 12, 0, 1.0/65);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, -10, 24, 0, 1.0/60);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.2*swh, 0.0*swh, 0.7*lwh, 0);		//controls the height of the waves
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.2*swh, 0.01*swh, 0.4*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.06*swh, 0.2*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.07*swh, 0.2*swh, 0.7*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,5, 0.2*swh, 0.2*swh, 0.7*lwh, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.12*swh, 0.2*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.2*swh, 0.12*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.08*swh, 0.2*swh, 0.7*lwh, 0);
 
 	//update detail normals
 	glBegin(GL_QUADS);
@@ -1187,7 +1187,7 @@ void CDynWater::AddExplosions()
 		float inv=1.01;
 		if(pos.y<0){
 			if(pos.y<-explo.radius*0.5)
-				inv=0;
+				inv=0.99;
 			pos.y=pos.y*-0.5;
 		}
 
