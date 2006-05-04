@@ -253,7 +253,12 @@ void CShadowHandler::CalcMinMaxView(void)
 
 	//if someone could figure out how the frustum and nonlinear shadow transform really works (and not use the SJan trial and error method)
 	//so that we can skip this sort of fudge factors it would be good
-	float borderSize=200;
+	float borderSize=270;
+	float maxSize=6000;
+	if(shadowMapSize==1024){
+		borderSize*=1.5;
+		maxSize*=1.2;
+	}
 
 	if(!left.empty()){
 		std::vector<fline>::iterator fli;
@@ -280,19 +285,19 @@ void CShadowHandler::CalcMinMaxView(void)
 				}
 			}
 		}
-		if(x1<-5000)
-			x1=-5000;
-		if(x2>5000)
-			x2=5000;
-		if(y1<-5000)
-			y1=-5000;
-		if(y2>5000)
-			y2=5000;
+		if(x1<-maxSize)
+			x1=-maxSize;
+		if(x2>maxSize)
+			x2=maxSize;
+		if(y1<-maxSize)
+			y1=-maxSize;
+		if(y2>maxSize)
+			y2=maxSize;
 	} else {
-		x1=-5000;
-		x2=5000;
-		y1=-5000;
-		y2=5000;
+		x1=-maxSize;
+		x2=maxSize;
+		y1=-maxSize;
+		y2=maxSize;
 	}
 }
 
