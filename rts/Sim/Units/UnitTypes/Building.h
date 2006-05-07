@@ -16,6 +16,7 @@ public:
 	virtual ~CBuilding();
 
 	void Init(void);
+	void UnitInit (UnitDef* def, int team, const float3& position);
 };
 
 #endif // __BUILDING_H__

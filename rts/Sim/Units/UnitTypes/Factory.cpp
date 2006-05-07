@@ -53,7 +53,7 @@ CFactory::~CFactory()
 void CFactory::UnitInit (UnitDef* def, int team, const float3& position)
 {
 	buildSpeed=def->buildSpeed/32.0f;
-	CUnit::UnitInit (def, team, position);
+	CBuilding::UnitInit (def, team, position);
 }
 
 

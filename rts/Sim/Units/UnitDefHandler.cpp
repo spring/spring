@@ -483,6 +483,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.smoothAnim = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SmoothAnim").c_str());
 	ud.canLoopbackAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\CanLoopbackAttack").c_str());
+	ud.levelGround = !!atoi(tdfparser.SGetValueDef("1", "UNITINFO\\LevelGround").c_str());
 
 	LoadSound(tdfparser, ud.sounds.ok, "ok1");
 	LoadSound(tdfparser, ud.sounds.select, "select1");

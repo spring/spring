@@ -4,6 +4,7 @@ TASpring change log
 
 - Added weapontag "paralyzetime", controls how long a unit can maximaly be paralyzed after being hit by this weapon, default 10
 - Adds some new options in the settings program for scroll speeds
+- Added new fbi tag "levelground" set this to 0 to prevent a building from leveling ground beneth it. Make sure that the model continue some way below ground so that they dont look like they float in air.
 
 0.71b1
 
