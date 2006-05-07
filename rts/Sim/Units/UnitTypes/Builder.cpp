@@ -368,7 +368,7 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 	if(feature)
 		return false;
 
-	if(unitdef->floater || mapDamage->disabled){
+	if(unitdef->floater || mapDamage->disabled || !unitdef->levelGround){
 		/* Skip the terraforming job. */
 		terraformLeft=0;
 	}
