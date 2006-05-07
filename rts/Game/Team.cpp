@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Messages.h"
 #include "Team.h"
 #include "UI/InfoConsole.h"
 #include "Player.h"
@@ -209,7 +210,8 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 	}
 
 	if(units.empty()){
-		info->AddLine("Team%i(%s) is no more",teamNum,gs->players[leader]->playerName.c_str());
+// 		info->AddLine("Team%i(%s) is no more",teamNum,gs->players[leader]->playerName.c_str());
+		info->AddLine(CMessages::Tr("Team%i(%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
 		isDead=true;
 		for(int a=0;a<MAX_PLAYERS;++a){
 			if(gs->players[a]->active && gs->players[a]->team==teamNum){
