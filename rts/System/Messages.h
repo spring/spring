@@ -20,7 +20,7 @@ private:
 	message_map_t tr;
 	bool loaded;
 private:
-	CMessages::CMessages();
+	CMessages();
 	static CMessages* GetInstance();
 	void Load();
 	std::string Translate(const std::string& msg) const;
