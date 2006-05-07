@@ -164,7 +164,7 @@ CUnit::CUnit ()
 	myTrack(0),
 	lastFlareDrop(0),
 	dontFire(false),
-	deathScriptFinished(true)
+	deathScriptFinished(false)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -1145,6 +1145,14 @@ void CUnit::FinishedBuilding(void)
 	}
 }
 
+// Called when a unit's Killed script finishes executing
+static void CUnitKilledCB(int retCode, void* p1, void* p2)
+{
+	CUnit* self = (CUnit *)p1;
+	self->deathScriptFinished = true;
+	self->delayedWreckLevel = retCode;
+}
+
 void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 {
 	if(isDead)
@@ -1191,7 +1199,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 		vector<long> args;
 		args.push_back((long)(recentDamage/maxHealth*100));
 		args.push_back(0);
-		cob->Call(COBFN_Killed, args);
+		cob->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
 
 		UnBlock();
 		delayedWreckLevel=args[1];
