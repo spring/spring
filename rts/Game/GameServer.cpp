@@ -139,7 +139,7 @@ bool CGameServer::Update(void)
 			
 			if(!serverNet->playbackDemo){
 				//send sync request
-				serverNet->SendMessage_SYNCREQUEST(serverframenum);
+				serverNet->SendData<int>(NETMSG_SYNCREQUEST, serverframenum);
 				outstandingSyncFrame=serverframenum;
 			}
 
@@ -149,7 +149,8 @@ bool CGameServer::Update(void)
 			//send info about the players
 			for(int a=firstReal;a<gs->activePlayers;++a){
 				if(gs->players[a]->active){
-					serverNet->SendMessage_PLAYERINFO(a, gs->players[a]->cpuUsage, gs->players[a]->ping);
+					serverNet->SendData<unsigned char, float, int>(
+							NETMSG_PLAYERINFO, a, gs->players[a]->cpuUsage, gs->players[a]->ping);
 				}
 			}
 
@@ -171,7 +172,7 @@ bool CGameServer::Update(void)
 			if(newSpeed<0.1)
 				newSpeed=0.1;
 			if(newSpeed!=gs->speedFactor)
-				serverNet->SendMessage_INTERNALSPEED(newSpeed);
+				serverNet->SendData<float>(NETMSG_INTERNAL_SPEED, newSpeed);
 		}
 	}
 
@@ -226,7 +227,7 @@ bool CGameServer::ServerReadNet()
 				gs->players[a]->active=false;
 				POP_CODE_MODE;
 				inbuflength=0;
-				serverNet->SendMessage_PLAYERLEFT(a, 0);
+				serverNet->SendData<unsigned char, unsigned char>(NETMSG_PLAYERLEFT, a, 0);
 			}
 		}
 		//		(*info) << serverNet->numConnected << "\n";
@@ -279,7 +280,7 @@ bool CGameServer::ServerReadNet()
 					speed=game->minUserSpeed;
 				if(gs->userSpeedFactor!=speed){
 					if(gs->speedFactor==gs->userSpeedFactor || gs->speedFactor>speed)
-						serverNet->SendMessage_INTERNALSPEED(speed);
+						serverNet->SendData<float>(NETMSG_INTERNAL_SPEED, speed);
 					serverNet->SendData(&inbuf[inbufpos],5); //forward data
 				}
 				lastLength=5;
@@ -309,7 +310,7 @@ bool CGameServer::ServerReadNet()
 				gs->players[a]->active=false;
 				ENTER_UNSYNCED;
 				serverNet->connections[a].active=false;
-				serverNet->SendMessage_PLAYERLEFT(a, 1);
+				serverNet->SendData<unsigned char, unsigned char>(NETMSG_PLAYERLEFT, a, 1);
 				lastLength=1;
 				break;
 
@@ -498,10 +499,11 @@ void CGameServer::StartGame(void)
 	}
 	if(gameSetup){
 		for(int a=0;a<gs->activeTeams;a++){
-			serverNet->SendMessage_STARTPOS(a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+			serverNet->SendData<unsigned char, unsigned char, float, float, float>(
+					NETMSG_STARTPOS, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
-	serverNet->SendMessage_STARTPLAYING();
+	serverNet->SendData(NETMSG_STARTPLAYING);
 	timeLeft=0;
 }
 
@@ -509,7 +511,7 @@ void CGameServer::CheckForGameEnd(void)
 {
 	if(gameEndDetected){
 		if(gameEndTime>2 && gameEndTime<500){
-			serverNet->SendMessage_GAMEOVER();
+			serverNet->SendData(NETMSG_GAMEOVER);
 			gameEndTime=600;
 		}
 		return;
@@ -533,7 +535,7 @@ void CGameServer::CheckForGameEnd(void)
 	if(numActive<=1){
 		gameEndDetected=true;
 		gameEndTime=0;
-		serverNet->SendMessage_SENDPLAYERSTAT();
+		serverNet->SendData(NETMSG_SENDPLAYERSTAT);
 	}
 }
 
@@ -541,7 +543,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	serverframenum++;
-	if(serverNet->SendMessage_NEWFRAME(serverframenum) == -1){
+	if(serverNet->SendData<int>(NETMSG_NEWFRAME, serverframenum) == -1){
 		info->AddLine("Server net couldnt send new frame");
 		globalQuit=true;
 	}
@@ -587,6 +589,5 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 	va_end(ap);											// Results Are Stored In Text
 
 	std::string msg = text;
-
-	serverNet->SendMessage_SYSTEMMSG(gu->myPlayerNum, msg);
+	serverNet->SendSTLData<unsigned char, std::string>(NETMSG_SYSTEMMSG, gu->myPlayerNum, msg);
 }

@@ -196,7 +196,8 @@ int CAICallback::GiveOrder(int unitid, Command* c)
 	if (unit->team != team)
 		return -1;
 
-	net->SendMessage_AICOMMAND(gu->myPlayerNum, unitid, *c);
+	net->SendSTLData<unsigned char, short, int, unsigned char, std::vector<float> >(
+			NETMSG_AICOMMAND, gu->myPlayerNum, unitid, c->id, c->options, c->params);
 	return 0;
 }
 
@@ -853,25 +854,21 @@ int CAICallback::HandleCommand (void *data)
 	case AIHCQuerySubVersionId:
 		return 1; // current version of Handle Command interface
 	case AIHCAddMapPointId:
-
-		net->SendMessage_MAPDRAW_POINT(team, 
-			(short)((AIHCAddMapPoint *)data)->pos.x, 
-			(short)((AIHCAddMapPoint *)data)->pos.z,
+		net->SendSTLData<unsigned char, unsigned char, short, short, std::string>(
+			NETMSG_MAPDRAW, team, CInMapDraw::NET_POINT,
+			(short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z,
 			std::string(((AIHCAddMapPoint *)data)->label));
-
 		return 1;
 	case AIHCAddMapLineId:
-		net->SendMessage_MAPDRAW_LINE(team,
-			(short)((AIHCAddMapLine *)data)->posfrom.x,
-			(short)((AIHCAddMapLine *)data)->posfrom.z,
-			(short)((AIHCAddMapLine *)data)->posto.x,
-			(short)((AIHCAddMapLine *)data)->posto.z);
-
+		net->SendData<unsigned char, unsigned char, unsigned char, short, short, short, short>(
+			NETMSG_MAPDRAW, 12 /*message size*/, team, CInMapDraw::NET_LINE,
+			(short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z,
+			(short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z);
 		return 1;
 	case AIHCRemoveMapPointId:
-		net->SendMessage_MAPDRAW_ERASE(team,
-			(short)((AIHCRemoveMapPoint *)data)->pos.x,
-			(short)((AIHCRemoveMapPoint *)data)->pos.z);
+		net->SendData<unsigned char, unsigned char, unsigned char, short, short>(
+			NETMSG_MAPDRAW, 8 /*message size*/, team, CInMapDraw::NET_ERASE,
+			(short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z);
 		return 1;
 	}
 	return 0;
