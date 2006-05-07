@@ -27,7 +27,6 @@ void CMessages::Load()
 		std::map<std::string, std::string> allvalues = tdfparser.GetAllValues("messages\\" + *sit);
 		for (std::map<std::string, std::string>::const_iterator it = allvalues.begin(); it != allvalues.end(); ++it) {
 			tr[*sit].push_back(it->second);
-			printf("pushing %s in %s\n", it->second.c_str(), sit->c_str());
 		}
 	}
 	loaded = true;
