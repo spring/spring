@@ -127,8 +127,9 @@ public:
 	bool stunned;							//if we are stunned by a weapon or for other reason
 	bool useHighTrajectory;		//tells weapons that support it to try to use a high trajectory
 
-	int deathCountdown;
-	int delayedWreckLevel;
+	bool deathScriptFinished;	//the script has finished exectuting the killed function and the unit can be deleted
+	int deathCountdown;				//asserts a certain minimum time between death and deletion
+	int delayedWreckLevel;		//the wreck level the unit will eventually create when it has died
 
 	int restTime;							//how long the unit has been inactive
 

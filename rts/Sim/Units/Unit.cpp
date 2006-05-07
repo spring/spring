@@ -163,7 +163,8 @@ CUnit::CUnit ()
 	captureProgress(0),
 	myTrack(0),
 	lastFlareDrop(0),
-	dontFire(false)
+	dontFire(false),
+	deathScriptFinished(true)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -268,8 +269,12 @@ void CUnit::Update()
 
 	if(deathCountdown){
 		--deathCountdown;
-		if(!deathCountdown)
-			uh->DeleteUnit(this);
+		if(!deathCountdown){
+			if(deathScriptFinished)
+				uh->DeleteUnit(this);
+			else
+				deathCountdown=1;
+		}
 		return;
 	}
 
