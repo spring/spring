@@ -297,7 +297,7 @@ CGame::CGame(bool server,std::string mapname)
 	info->AddLine("TA Spring %s",VERSION_STRING);
 
 	if(!server)
-		net->SendMessage_EXECHECKSUM(CreateExeChecksum());
+		net->SendData<unsigned int>(NETMSG_EXECHECKSUM, CreateExeChecksum());
 
 	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
@@ -502,7 +502,8 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		if(net->playbackDemo){
 			gs->paused=!gs->paused;
 		} else {
-			net->SendMessage_PAUSE(!gs->paused, gu->myPlayerNum);
+			net->SendData<unsigned char, unsigned char>(
+					NETMSG_PAUSE, !gs->paused, gu->myPlayerNum);
 			lastframe = SDL_GetTicks();
 		}
 	}
@@ -636,7 +637,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}else 
 			speed+=0.5;
 		if(!net->playbackDemo){
-			net->SendMessage_USERSPEED(speed);
+			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -653,7 +654,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}else 
 			speed-=0.5;
 		if(!net->playbackDemo){
-			net->SendMessage_USERSPEED(speed);
+			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -667,7 +668,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		c.id=CMD_STOP;
 		c.options=0;
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-		net->SendMessage_DIRECTCONTROL(gu->myPlayerNum);
+		net->SendData<unsigned char>(NETMSG_DIRECT_CONTROL, gu->myPlayerNum);
 	}
 #endif
 	if (s=="showshadowmap"){
@@ -1272,7 +1273,8 @@ void CGame::SimFrame()
 			oldHeading=hp.x;
 			oldPitch=hp.y;
 			oldStatus=status;
-			net->SendMessage_DCUPDATE(gu->myPlayerNum, status, hp.x, hp.y);
+			net->SendData<unsigned char, unsigned char, short int, short int>(
+					NETMSG_DC_UPDATE, gu->myPlayerNum, status, hp.x, hp.y);
 		}
 	}
 #endif
@@ -1537,8 +1539,8 @@ bool CGame::ClientReadNet()
 			info->AddLine("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
-
-			net->SendMessage_PLAYERSTAT(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
+			net->SendData<unsigned char, CPlayer::Statistics>(
+					NETMSG_PLAYERSTAT, gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
 			lastLength=1;
 			ENTER_SYNCED;
 			break;
@@ -1672,7 +1674,7 @@ bool CGame::ClientReadNet()
 		case NETMSG_NEWFRAME:
 			if(!gameServer)
 				timeLeft-=1;
-			net->SendMessage_NEWFRAME(gs->frameNum);
+			net->SendData<int>(NETMSG_NEWFRAME, gs->frameNum);
 			SimFrame();
 			lastLength=5;
 
@@ -1751,15 +1753,15 @@ bool CGame::ClientReadNet()
 			if(frame!=gs->frameNum){
 				info->AddLine("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 			}
+			net->SendData<unsigned char, int, CChecksum>(
+					NETMSG_SYNCRESPONSE, gu->myPlayerNum, gs->frameNum, uh->CreateChecksum());
 
-			net->SendMessage_SYNCRESPONSE(gu->myPlayerNum, gs->frameNum, uh->CreateChecksum());
-
+			net->SendData<float>(NETMSG_CPU_USAGE,
 #ifdef PROFILE_TIME
-			net->SendMessage_CPUUSAGE(profiler.profile["Sim time"].percent);
+					profiler.profile["Sim time"].percent);
 #else
-			net->SendMessage_CPUUSAGE(0.3f);
+					0.30);
 #endif
-
 			lastLength=5;
 			ENTER_SYNCED;
 			break;}
@@ -1996,7 +1998,7 @@ void CGame::UpdateUI()
 		if(userInput.size()>0){
 			if(userInput.size()>250)	//avoid troubles with to long lines
 				userInput=userInput.substr(0,250);
-			net->SendMessage_CHAT(gu->myPlayerNum, userInput);
+			net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, userInput);
 			if(net->playbackDemo)
 				HandleChatMsg(userInput,gu->myPlayerNum);
 		}

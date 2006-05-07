@@ -28,8 +28,11 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(InBox(mx,my,readyBox) && gs->Team(gu->myTeam)->startPos.y!=-500){
 		gameSetup->readyTeams[gu->myTeam]=true;
-
-		net->SendMessage_STARTPOS(gu->myTeam, 1, gs->Team(gu->myTeam)->startPos.x, gs->Team(gu->myTeam)->startPos.y, gs->Team(gu->myTeam)->startPos.z);
+		net->SendData<unsigned char, unsigned char, float, float, float>(
+				NETMSG_STARTPOS, gu->myTeam, 1,
+				gs->Team(gu->myTeam)->startPos.x, /* why not a float3? */
+				gs->Team(gu->myTeam)->startPos.y,
+				gs->Team(gu->myTeam)->startPos.z);
 		delete this;
 		return false;
 	}
@@ -52,7 +55,8 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 
 	inMapDrawer->ErasePos(gs->Team(gu->myTeam)->startPos);
 
-	net->SendMessage_STARTPOS(gu->myTeam, 0, pos.x, pos.y, pos.z);
+	net->SendData<unsigned char, unsigned char, float, float, float>(
+			NETMSG_STARTPOS, gu->myTeam, 0, pos.x, pos.y, pos.z);
 
 	char t[500];
 	sprintf(t,"Start %i",gu->myTeam);
