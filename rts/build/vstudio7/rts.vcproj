@@ -2994,6 +2994,12 @@
 			</Filter>
 		</Filter>
 		<File
+			RelativePath="..\..\System\Messages.cpp">
+		</File>
+		<File
+			RelativePath="..\..\System\Messages.h">
+		</File>
+		<File
 			RelativePath=".\resource.h">
 		</File>
 		<File
