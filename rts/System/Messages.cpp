@@ -3,6 +3,7 @@
 #include <assert.h>
 #include "StdAfx.h"
 #include "GlobalStuff.h"
+#include "Game/UI/InfoConsole.h"
 #include "Messages.h"
 #include "TdfParser.h"
 #include "mmgr.h"
@@ -19,15 +20,22 @@ CMessages* CMessages::GetInstance()
 /** Load the messages from gamedata/messages.tdf into memory. */
 void CMessages::Load()
 {
-	TdfParser tdfparser("gamedata/messages.tdf");
-	// Grab a list of messages.  Each message is one section.
-	std::vector<std::string> section_list = tdfparser.GetSectionList("messages");
-	// Load the possible translations for every message.
-	for (std::vector<std::string>::const_iterator sit = section_list.begin(); sit != section_list.end(); ++sit) {
-		std::map<std::string, std::string> allvalues = tdfparser.GetAllValues("messages\\" + *sit);
-		for (std::map<std::string, std::string>::const_iterator it = allvalues.begin(); it != allvalues.end(); ++it) {
-			tr[*sit].push_back(it->second);
+	try {	
+		TdfParser tdfparser("gamedata/messages.tdf");
+		// Grab a list of messages.  Each message is one section.
+		std::vector<std::string> section_list = tdfparser.GetSectionList("messages");
+		// Load the possible translations for every message.
+		for (std::vector<std::string>::const_iterator sit = section_list.begin(); sit != section_list.end(); ++sit) {
+			std::map<std::string, std::string> allvalues = tdfparser.GetAllValues("messages\\" + *sit);
+			for (std::map<std::string, std::string>::const_iterator it = allvalues.begin(); it != allvalues.end(); ++it) {
+				tr[*sit].push_back(it->second);
+			}
 		}
+	} catch (const TdfParser::parse_error& e) {
+		// Show parse errors in the infolog.
+		info->AddLine("%s:%d: %s", e.get_filename().c_str(), e.get_line(), e.what());
+	} catch (const content_error& e) {
+		// Ignore non-existant file.
 	}
 	loaded = true;
 }
