@@ -1,12 +1,15 @@
 /* Author: Tobi Vollebregt */
 
-#include <assert.h>
 #include "StdAfx.h"
 #include "GlobalStuff.h"
 #include "Game/UI/InfoConsole.h"
 #include "Messages.h"
 #include "TdfParser.h"
 #include "mmgr.h"
+#include <algorithm>
+#include <assert.h>
+#include <locale>
+#include <cctype>
 
 CMessages::CMessages(): loaded(false) {}
 
@@ -46,7 +49,7 @@ std::string CMessages::Translate(const std::string& msg) const
 {
 	// TdfParser puts everything in lowercase.
 	std::string lowerd = msg;
-	std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), static_cast<int (*)(int)>(std::tolower));
+	std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), (int (*)(int))std::tolower);
 	message_map_t::const_iterator it = tr.find(lowerd);
 	if (it == tr.end())
 		return msg;
