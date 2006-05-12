@@ -94,26 +94,26 @@ CDynWater::CDynWater(void)
 
 	delete[] scrap;
 
-	if(ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB,"waterdyn.vp"))
-		waterVP=LoadVertexProgram("waterdyn.vp");
+	if(ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB,"waterDyn.vp"))
+		waterVP=LoadVertexProgram("waterDyn.vp");
 	else
-		waterVP=LoadVertexProgram("waterdynNT.vp");
+		waterVP=LoadVertexProgram("waterDynNT.vp");
 
-	waterFP=LoadFragmentProgram("waterdyn.fp");
-	waveFP=LoadFragmentProgram("waterdynwave.fp");
-	waveVP=LoadVertexProgram("waterdynwave.vp");
-	waveFP2=LoadFragmentProgram("waterdynwave2.fp");
-	waveVP2=LoadVertexProgram("waterdynwave2.vp");
-	waveNormalFP=LoadFragmentProgram("waterdynnormal.fp");
-	waveNormalVP=LoadVertexProgram("waterdynnormal.vp");
-	waveCopyHeightFP=LoadFragmentProgram("waterdynwave3.fp");
-	waveCopyHeightVP=LoadVertexProgram("waterdynwave3.vp");
+	waterFP=LoadFragmentProgram("waterDyn.fp");
+	waveFP=LoadFragmentProgram("waterDynWave.fp");
+	waveVP=LoadVertexProgram("waterDynWave.vp");
+	waveFP2=LoadFragmentProgram("waterDynWave2.fp");
+	waveVP2=LoadVertexProgram("waterDynWave2.vp");
+	waveNormalFP=LoadFragmentProgram("waterDynNormal.fp");
+	waveNormalVP=LoadVertexProgram("waterDynNormal.vp");
+	waveCopyHeightFP=LoadFragmentProgram("waterDynWave3.fp");
+	waveCopyHeightVP=LoadVertexProgram("waterDynWave3.vp");
 	dwGroundRefractVP=LoadVertexProgram("dwgroundrefract.vp");
 	dwGroundReflectIVP=LoadVertexProgram("dwgroundreflectinverted.vp");
-	dwDetailNormalFP=LoadFragmentProgram("dwdetailnormal.fp");
-	dwDetailNormalVP=LoadVertexProgram("dwdetailnormal.vp");
-	dwAddSplashFP=LoadFragmentProgram("dwaddsplash.fp");
-	dwAddSplashVP=LoadVertexProgram("dwaddsplash.vp");
+	dwDetailNormalFP=LoadFragmentProgram("dwDetailNormal.fp");
+	dwDetailNormalVP=LoadVertexProgram("dwDetailNormal.vp");
+	dwAddSplashFP=LoadFragmentProgram("dwAddSplash.fp");
+	dwAddSplashVP=LoadVertexProgram("dwAddSplash.vp");
 
 	waterSurfaceColor = ((CSmfReadMap*)readmap)->waterSurfaceColor;
 
