@@ -23,7 +23,7 @@ CBaseWater::~CBaseWater(void)
 
 CBaseWater* CBaseWater::GetWater()
 {
-	if(GLEW_ARB_fragment_program && configHandler.GetInt("ReflectiveWater",1)==2 && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterdyn.fp") && GLEW_ARB_texture_float)
+	if(GLEW_ARB_fragment_program && configHandler.GetInt("ReflectiveWater",1)==2 && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterDyn.fp") && GLEW_ARB_texture_float)
 		return new CDynWater;
 	else if(GLEW_ARB_fragment_program && configHandler.GetInt("ReflectiveWater",1) && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"water.fp"))
 		return new CAdvWater;
