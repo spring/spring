@@ -352,7 +352,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	if(owner->team == gu->myTeam){
 		//Play "activate" sound.
 		if(owner->unitDef->sounds.activate.id)
-			sound->PlayUnitReply(owner->unitDef->sounds.activate.id, owner, owner->unitDef->sounds.activate.volume);
+			sound->PlayUnitActivate(owner->unitDef->sounds.activate.id, owner, owner->unitDef->sounds.activate.volume);
 	}
 	ENTER_SYNCED;
 }

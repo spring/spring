@@ -11,15 +11,7 @@ void CSound::PlaySound(int id,CWorldObject* p,float volume)
 
 void CSound::PlayUnitActivate(int id, CUnit* p, float volume)
 {
-	/* If it's my unit, */
-	if (p->team == gu->myTeam){
-		/* I may have told a bunch of metalmakers to turn off.
-		   Only play the sound once. */
-		PlayUnitReply(id, p, volume, true);
-	}
-	else {
-		PlaySound(id, p, volume);
-	}
+	PlaySound (id, p, volume);
 }
 
 void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
