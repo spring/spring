@@ -162,6 +162,8 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CFeature*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].features.begin();ui!=qf->baseQuads[*qi].features.end();++ui){
+			if(!(*ui)->blocking)
+				continue;
 			float3 dif=(*ui)->midPos-start;
 			float closeLength=dif.dot(dir);
 			if(closeLength<0)
