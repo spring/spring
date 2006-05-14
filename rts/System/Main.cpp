@@ -51,6 +51,13 @@
 #include <SDL_syswm.h>
 #endif
 
+#ifdef WIN32
+/**
+ * Win32 only: command line passed to WinMain() (not including exe filename)
+ */
+static const char *win_lpCmdLine=0;
+#endif
+
 /**
  * @brief current active controller
  * 
@@ -499,21 +506,42 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 	// Check if the commandline parameter is specifying a demo file
 #ifdef _WIN32
 	// find the correct dir
-	const char *arg0=argv[0];
-	int a,s = strlen(arg0);
+	char exe[128];
+	GetModuleFileName(0, exe, sizeof(exe));
+	int a,s = strlen(exe);
 	for (a=s-1;a>0;a--)
 	    // Running in gdb causes the last dir separator to be a forward slash.
-		if (arg0[a] == '\\' || arg0[a] == '/') break;
+		if (exe[a] == '\\' || exe[a] == '/') break;
 	if (a > 0) {
-		string path(arg0, arg0+a);
+		string path(exe, exe+a);
 		if (path.at(0) == '"')
 			path.append(1,'"');
 		_chdir(path.c_str());
 	}
-#endif
 
-	for (int i = 1; i < argc; i++) {
-		if (argv[i][0] != '-') {
+	// If there are any options, they will start before the demo file name.
+	// Options also indicate that the user didn't click a demofile
+	int lastOption = -1;
+	for (int i = 1; i < argc; i++)
+		if (argv[i][0] == '-') lastOption = i;
+
+	string command;
+	if (lastOption >= 0 && lastOption < argc-1)
+		// TODO: append the non-option arguments together to get the demo file (to support demos with spaces)
+		command = argv[lastOption+1];
+	else
+		command = win_lpCmdLine;
+
+	if (!command.empty()) {
+		int idx = command.rfind("sdf");
+		if (idx == command.size()-3) 
+			demofile = command;
+		else startscript = command;
+	}
+#else
+	for (int i = 1; i < argc; i++)
+		if (argv[i][0] != '-')	
+		{
 			string command(argv[i]);
 			int idx = command.rfind("sdf");
 			if (idx == command.size()-3) {
@@ -522,7 +550,7 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 				startscript = command;
 			}
 		}
-	}
+#endif
 }
 
 /**
@@ -725,6 +753,9 @@ int SpringApp::Run (int argc, char *argv[])
 							mouse->MousePress (LOWORD(msg->lParam),HIWORD(msg->lParam), 4);
 						if (msg->wParam & 0x40) // MK_XBUTTON2
 							mouse->MousePress (LOWORD(msg->lParam),HIWORD(msg->lParam), 5);
+					} else if(msg->msg == WM_MOUSEMOVE) {
+
+						info->AddLine ("Mousemove\n");
 					}
 					break;
 				}
@@ -827,13 +858,13 @@ int Run(int argc, char *argv[])
  *
  * Main entry point function
  */
-#if defined(WIN32) || defined(__APPLE__) 
+#if defined(__APPLE__) 
 int main( int argc, char *argv[] )
 #else
 int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 #endif
 {
-#if !defined(_WIN32) && !defined(__APPLE__)
+#if !defined(WIN32) && !defined(__APPLE__)
 	int ret = LocateDataDir();
 // Just stay in current working directory when chdir fails.
 // 	if (ret != 0)
@@ -841,3 +872,14 @@ int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 #endif
 	return Run (argc,argv);
 }
+
+#ifdef WIN32
+
+int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
+{
+	win_lpCmdLine = lpCmdLine;
+	return Run (__argc, __argv);
+}
+
+#endif
+
