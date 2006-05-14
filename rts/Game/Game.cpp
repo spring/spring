@@ -2466,7 +2466,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			else
 				s="<"+gs->players[player]->playerName+"> Allies: "+s.substr(2,255);
 			info->AddLine(s);
-			sound->PlaySound(chatSound);
+			sound->PlaySound(chatSound,5);
 		}
 	} else if((s[0]=='s' || s[0]=='S') && s[1]==':'){
 		if(player==gu->myPlayerNum)
@@ -2478,7 +2478,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			else
 				s="<"+gs->players[player]->playerName+"> Spectators: "+s.substr(2,255);
 			info->AddLine(s);
-			sound->PlaySound(chatSound);
+			sound->PlaySound(chatSound,5);
 		}
 	} else {
 		if(player==gu->myPlayerNum)
@@ -2490,7 +2490,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			s="<"+gs->players[player]->playerName+"> "+s;
 		
 		info->AddLine(s);
-		sound->PlaySound(chatSound);
+		sound->PlaySound(chatSound,5);
 	}
 }
 
