@@ -100,6 +100,11 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 			if(dist<(*ui)->radius+0.1)
 				dist=(*ui)->radius+0.1;
 			float dist2=dist - (*ui)->radius;
+			if((*ui)->isUnderWater && pos.y>-1){	//should make it harder to damage subs with above water weapons
+				dist2+=(*ui)->radius;
+				if(dist2>radius)
+					dist2=radius;
+			}
 			float mod=(radius-dist)/radius;
 			float mod2=(radius-dist2)/radius;
 			if(mod<0)
@@ -340,6 +345,8 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 					(*ui)->tempNum=tempNum;
 					if((*ui)->isUnderWater && !weapon->weaponDef->waterweapon)
 						continue;
+					if((*ui)->isDead)
+						continue;
 					float3 targPos;
 					float value=1;
 					if(((*ui)->losStatus[attacker->allyteam] & LOS_INLOS)){
@@ -360,6 +367,8 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 							value*=100;
 						if(paralyzer && (*ui)->health-(*ui)->paralyzeDamage<(*ui)->maxHealth*0.09)
 							value*=4;
+						if((*ui)->crashing)
+							value*=10;
 						targets.insert(pair<float,CUnit*>(value,*ui));
 					}
 				}

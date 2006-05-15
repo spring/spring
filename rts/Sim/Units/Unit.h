@@ -126,6 +126,7 @@ public:
 	bool inBuildStance;				//used by constructing unigs
 	bool stunned;							//if we are stunned by a weapon or for other reason
 	bool useHighTrajectory;		//tells weapons that support it to try to use a high trajectory
+	bool dontUseWeapons;			//used by landed aircrafts for now
 
 	bool deathScriptFinished;	//the script has finished exectuting the killed function and the unit can be deleted
 	int deathCountdown;				//asserts a certain minimum time between death and deletion

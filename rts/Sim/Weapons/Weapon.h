@@ -55,6 +55,7 @@ public:
 	float3 weaponPos;						//absolute weapon pos
 	float muzzleFlareSize;			//size of muzzle flare if drawn
 	int useWeaponPosForAim;			//sometimes weapon pos is better to use than aimpos
+	bool hasCloseTarget;					//might need to update weapon pos more often when enemy is near
 
 	int reloadTime;							//time between succesive fires in ticks
 	int reloadStatus;						//next tick the weapon can fire again

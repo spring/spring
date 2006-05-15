@@ -13,6 +13,7 @@
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Projectiles/TorpedoProjectile.h"
+#include "Sim/MoveTypes/TAAirMoveType.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -64,7 +65,7 @@ void CBombDropper::Update()
 bool CBombDropper::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 {
 	if(unit){
-		if(unit->isUnderWater)
+		if(unit->isUnderWater && !dropTorpedoes)
 			return false;
 	} else {
 		if(pos.y<0)
@@ -78,7 +79,13 @@ void CBombDropper::Fire(void)
 	if(targetType==Target_Unit)
 		targetPos=targetUnit->pos;		//aim at base of unit instead of middle and ignore uncertainity
 	if(dropTorpedoes){
-		new CTorpedoProjectile(weaponPos,owner->speed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15+predict),targetUnit, weaponDef);
+		float3 speed=owner->speed;
+		if(dynamic_cast<CTAAirMoveType*>(owner->moveType)){
+			speed=targetPos-weaponPos;
+			speed.Normalize();
+			speed*=5;
+		}
+		new CTorpedoProjectile(weaponPos,speed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15+predict),targetUnit, weaponDef);
 	} else {
 		float3 dif=targetPos-weaponPos;		//fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		dif.y=0;

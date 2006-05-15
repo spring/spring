@@ -80,7 +80,8 @@ CWeapon::CWeapon(CUnit* owner)
 	lastErrorVectorUpdate(0),
 	slavedTo(0),
 	mainDir(0,0,1),
-	maxMainDirAngleDif(-1)
+	maxMainDirAngleDif(-1),
+	hasCloseTarget(false)
 {
 }
 
@@ -92,21 +93,18 @@ CWeapon::~CWeapon()
 
 void CWeapon::Update()
 {
-	// landed aircraft can't shoot
-	if( dynamic_cast<CTAAirMoveType*> (owner->moveType) ) {
-		CTAAirMoveType *amt = (CTAAirMoveType *)owner->moveType;
-		if (amt->aircraftState == CTAAirMoveType::AIRCRAFT_LANDED)
-			return;
+	if(hasCloseTarget){
+		std::vector<long> args;
+		args.push_back(0);
+		if(useWeaponPosForAim){
+			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+		} else {
+			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
+		}
+		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 	}
 
 	if(targetType==Target_Unit){
-	// landed aircraft can't shoot
-	if( dynamic_cast<CTAAirMoveType*> (owner->moveType) ) {
-		CTAAirMoveType *amt = (CTAAirMoveType *)owner->moveType;
-		if (amt->aircraftState == CTAAirMoveType::AIRCRAFT_LANDED)
-			return;
-	}
-
 		if(lastErrorVectorUpdate<gs->frameNum-16){
 			float3 newErrorVector(gs->randVector());
 			errorVectorAdd=(newErrorVector-errorVector)*(1.0f/16.0f);
@@ -319,13 +317,12 @@ void CWeapon::SlowUpdate()
 
 	std::vector<long> args;
 	args.push_back(0);
-//	owner->cob->Call("AimFromPrimary",args);
 	if(useWeaponPosForAim){
-		owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);
+		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
 		if(useWeaponPosForAim>1)
 			useWeaponPosForAim--;
 	} else {
-		owner->cob->Call(COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);
+		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 	}
 	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
@@ -333,6 +330,11 @@ void CWeapon::SlowUpdate()
 		weaponPos=owner->pos+10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
 	predictSpeedMod=1+(gs->randFloat()-0.5)*2*(1-owner->limExperience);
+
+	if((targetPos-weaponPos).SqLength() < relWeaponPos.SqLength()*16)
+		hasCloseTarget=true;
+	else
+		hasCloseTarget=false;
 
 	if(targetType!=Target_None && !TryTarget(targetPos,haveUserTarget,targetUnit)){
 		HoldFire();
@@ -393,7 +395,7 @@ void CWeapon::SlowUpdate()
 			owner->haveUserTarget=true;
 	} else {	//if we cant target anything try switching aim point
 		if(useWeaponPosForAim && useWeaponPosForAim==1){
-			useWeaponPosForAim--;
+			useWeaponPosForAim=0;
 		} else {
 			useWeaponPosForAim=1;
 		}
