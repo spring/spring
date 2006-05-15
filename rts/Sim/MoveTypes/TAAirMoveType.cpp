@@ -50,6 +50,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	reservedPad(0),
 	currentPitch(0)
 {
+	owner->dontUseWeapons=true;
 }
 
 CTAAirMoveType::~CTAAirMoveType(void)
@@ -100,6 +101,11 @@ void CTAAirMoveType::SetState(AircraftState newState)
 		owner->cob->Call(COBFN_StartMoving);	
 	if (newState == AIRCRAFT_LANDED)
 		owner->cob->Call(COBFN_StopMoving);	
+
+	if(newState == AIRCRAFT_LANDED)
+		owner->dontUseWeapons=true;
+	else
+		owner->dontUseWeapons=false;
 
 	aircraftState = newState;
 	

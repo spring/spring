@@ -164,7 +164,8 @@ CUnit::CUnit ()
 	myTrack(0),
 	lastFlareDrop(0),
 	dontFire(false),
-	deathScriptFinished(false)
+	deathScriptFinished(false),
+	dontUseWeapons(false)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -291,9 +292,11 @@ void CUnit::Update()
 
 	restTime++;
 
-	std::vector<CWeapon*>::iterator wi;
-	for(wi=weapons.begin();wi!=weapons.end();++wi)
-		(*wi)->Update();
+	if(!dontUseWeapons){
+		std::vector<CWeapon*>::iterator wi;
+		for(wi=weapons.begin();wi!=weapons.end();++wi)
+			(*wi)->Update();
+	}
 }
 
 void CUnit::SlowUpdate()
@@ -585,7 +588,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			info->AddLine("%s is being attacked",unitDef->humanName.c_str());
 			info->SetLastMsgPos(pos);
 			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
-				sound->PlaySound(unitDef->sounds.underattack.id,unitDef->isCommander?1:0.4);
+				sound->PlaySound(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
 			minimap->AddNotification(pos,float3(1,0.3,0.3),unitDef->isCommander?1:0.5);	//todo: make compatible with new gui
 			
 			uh->lastDamageWarning=gs->frameNum;
@@ -1204,6 +1207,8 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 		UnBlock();
 		delayedWreckLevel=args[1];
 //		featureHandler->CreateWreckage(pos,wreckName, heading, args[1],-1,true);
+	} else {
+		deathScriptFinished=true;
 	}
 	if(beingBuilt || dynamic_cast<CAirMoveType*>(moveType) || reclaimed)
 		uh->DeleteUnit(this);
