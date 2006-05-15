@@ -35,6 +35,9 @@
 #endif
 #include <SDL.h>
 #include <SDL_main.h>
+#ifdef WIN32
+#include <SDL_syswm.h>
+#endif
 #include "mmgr.h"
 #include "Game/UI/NewGuiDefine.h"
 #ifdef NEW_GUI
@@ -177,6 +180,8 @@ protected:
 	 * Level of fullscreen anti-aliasing
 	 */
 	bool FSAA;
+
+	int2 prevMousePos;
 };
 
 /**
@@ -342,6 +347,43 @@ static bool MultisampleVerify(void)
 	return false;
 }
 
+
+/* This hack fixes the windows slow mouse movement problem (happens on fullscreen mode + pressing keys).
+ This code hacks around the mouse input from DirectInput, which SDL uses in fullscreen mode.
+ Instead it installs a window message proc and reads input from WM_MOUSEMOVE */
+#ifdef WIN32
+
+static WNDPROC sdl_wndproc;
+static int2 win_mousepos;
+static bool win_mousemoved = false;
+
+LRESULT CALLBACK SpringWndProc(HWND wnd,UINT msg, WPARAM wparam,LPARAM lparam)
+{
+	if (msg==WM_MOUSEMOVE) {
+		win_mousepos = int2(LOWORD(lparam),HIWORD(lparam));
+		win_mousemoved = true;
+		return TRUE;
+	}
+	return CallWindowProc(sdl_wndproc, wnd, msg, wparam, lparam);
+}
+
+static void InstallWndCallback()
+{
+	// In windowed mode, SDL uses straight Win32 API to handle mouse movement, which works ok.
+	if (!fullscreen)
+		return;
+
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	if(!SDL_GetWMInfo(&info)) 
+		return;
+
+	HWND w = info.window;
+	sdl_wndproc = (WNDPROC)GetWindowLong(w, GWL_WNDPROC);
+	SetWindowLong(w,GWL_WNDPROC,(LONG)SpringWndProc);
+}
+#endif
+
 /**
  * @return whether window initialization succeeded
  * @param title char* string with window title
@@ -359,7 +401,14 @@ bool SpringApp::InitWindow (const char* title)
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
 
-	return SetSDLVideoMode ();
+	if (!SetSDLVideoMode ())
+		return false;
+
+#ifdef WIN32
+	InstallWndCallback();
+#endif
+
+	return true;
 }
 
 /**
@@ -594,6 +643,14 @@ int SpringApp::Update ()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
+#ifdef WIN32
+	if(win_mousemoved) {
+		win_mousemoved=false;
+		if (mouse)
+			mouse->MouseMove(win_mousepos.x,win_mousepos.y);
+	}
+#endif
+
 	int ret = 1;
 	if(activeController) {
 		if(activeController->Update()==0) ret = 0;
@@ -668,6 +725,10 @@ int SpringApp::Run (int argc, char *argv[])
 					done = true;
 					break;
 				case SDL_MOUSEMOTION:
+#ifdef WIN32
+					if(fullscreen)
+						break;
+#endif
 					if(mouse)
 						mouse->MouseMove(event.motion.x,event.motion.y);
 					break;
