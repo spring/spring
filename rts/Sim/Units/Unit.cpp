@@ -967,10 +967,6 @@ void CUnit::Init(void)
 	//All units are set as ground-blocking.
 	blocking = true;
 
-	if(power<5){
-		info->AddLine("Unit %s is really cheap? %f",unitDef->humanName.c_str(),power);
-		power=10;
-	}
 	if(pos.y+model->height<1)	//some torp launchers etc is exactly in the surface and should be considered uw anyway
 		isUnderWater=true;
 
