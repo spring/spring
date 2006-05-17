@@ -452,10 +452,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.power = (ud.metalCost + ud.energyCost/60.0f);
 	// Prevent a division by zero in experience calculations.
-	if(power<1e-3f){
-		info->AddLine("Unit %s is really cheap? %f",unitDef->humanName.c_str(),power);
+	if(ud.power<1e-3f){
+		info->AddLine("Unit %s is really cheap? %f",ud.humanName.c_str(),ud.power);
 		info->AddLine("This can cause a division by zero in experience calculations.");
-		power=1e-3f;
+		ud.power=1e-3f;
 	}
 
 	tdfparser.GetDef(ud.activateWhenBuilt, "0", "UNITINFO\\ActivateWhenBuilt");
