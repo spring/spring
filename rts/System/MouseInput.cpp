@@ -32,7 +32,6 @@ public:
 	int2 mousepos;
 	bool mousemoved;
 	HWND wnd;
-	bool windowed;
 
 	// SDL runs the window in a different thread, hence the indirectness of the mouse pos handling
 	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -65,8 +64,7 @@ public:
 		sdl_wndproc = 0;
 
 		// In windowed mode, SDL uses straight Win32 API to handle mouse movement, which works ok.
-		windowed = !fullscreen;
-		if (!windowed)
+		if (fullscreen)
 			InstallWndCallback();
 	}
 	~CWin32MouseInput()
@@ -108,7 +106,7 @@ public:
 			}
 			break;}
 		case SDL_MOUSEMOTION: // the normal SDL method works fine in windowed mode 
-			if(windowed) {
+			if(!fullscreen) {
 				mousepos = int2(event.motion.x, event.motion.y);
 				mouse->MouseMove(mousepos.x, mousepos.y);
 			}
