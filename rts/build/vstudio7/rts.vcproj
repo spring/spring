@@ -163,7 +163,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -322,6 +322,12 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\GameVersion.h">
+			</File>
+			<File
+				RelativePath="..\..\System\Messages.cpp">
+			</File>
+			<File
+				RelativePath="..\..\System\Messages.h">
 			</File>
 			<File
 				RelativePath="..\..\Game\Player.cpp">
@@ -2183,6 +2189,12 @@
 				RelativePath="..\..\System\MemPool.h">
 			</File>
 			<File
+				RelativePath="..\..\System\MouseInput.cpp">
+			</File>
+			<File
+				RelativePath="..\..\System\MouseInput.h">
+			</File>
+			<File
 				RelativePath="..\..\System\Net.cpp">
 			</File>
 			<File
@@ -2993,12 +3005,6 @@
 				</File>
 			</Filter>
 		</Filter>
-		<File
-			RelativePath="..\..\System\Messages.cpp">
-		</File>
-		<File
-			RelativePath="..\..\System\Messages.h">
-		</File>
 		<File
 			RelativePath=".\resource.h">
 		</File>

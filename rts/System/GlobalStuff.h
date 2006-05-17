@@ -548,5 +548,6 @@ public:
 
 extern CGlobalSyncedStuff* gs;
 extern CGlobalUnsyncedStuff* gu;
+extern bool fullscreen;
 
 #endif /* GLOBALSTUFF_H */
