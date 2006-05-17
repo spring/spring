@@ -20,6 +20,7 @@
 #include "Rendering/glFont.h"
 #include "Sim/Units/UnitHandler.h"
 #include "MouseCursor.h"
+#include "MouseInput.h"
 #include "Sound.h"
 #include "Sim/Units/UnitDef.h"
 #include "ExternalAI/Group.h"
@@ -156,14 +157,7 @@ void CMouseHandler::MouseMove(int x, int y)
 
 	if(buttons[SDL_BUTTON_MIDDLE].pressed){
 		float cameraSpeed = 1.0f;
-		/*if (keys[SDLK_LSHIFT]){
-			cameraSpeed *= 10.0f;
-		}
-		if (keys[SDLK_LCTRL]){
-			cameraSpeed *= 0.1f;
-		}*/
 		currentCamController->MouseMove(float3(dx * cameraSpeed, dy * cameraSpeed, invertMouse ? -1 : 1));
-
 		return;
 	} 
 
@@ -456,27 +450,14 @@ void CMouseHandler::ShowMouse()
 	}
 }
 
-static void recenter_mouse()
-{
-	SDL_WarpMouse(
-		gu->screenx/2
-/*#ifdef _WIN32
-		+4*!fullscreen
-#endif*/
-		, gu->screeny/2
-/*#ifdef _WIN32		
-		+23*!fullscreen
-#endif*/
-		);
-}
 
 void CMouseHandler::HideMouse()
 {
 	if(!hide){
 		lastx = gu->screenx/2;  
 		lasty = gu->screeny/2;  
-	        SDL_ShowCursor(SDL_DISABLE);
-	        recenter_mouse();
+	    SDL_ShowCursor(SDL_DISABLE);
+		mouseInput->SetPos (int2(lastx,lasty));
 		hide=true;
 	}
 }
@@ -590,8 +571,9 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
 	if(hide && mouseMovedFromCenter){
-		recenter_mouse();
+		mouseInput->SetPos (int2(gu->screenx/2,gu->screeny/2));
 		internalMouseMove=true;				//this only works if the msg que is empty of mouse moves, so someone should figure out something better
 		mouseMovedFromCenter=false;
 	}
 }
+

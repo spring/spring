@@ -18,6 +18,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Game/UI/MouseHandler.h"
+#include "MouseInput.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/GameSetup.h"
@@ -273,6 +274,9 @@ bool SpringApp::Initialize ()
 		SDL_Quit ();
 		return false;
 	}
+	
+	mouseInput = IMouseInput::Get ();
+
 	// Global structures
 	ENTER_SYNCED;
 	gs=new CGlobalSyncedStuff();
@@ -348,42 +352,6 @@ static bool MultisampleVerify(void)
 }
 
 
-/* This hack fixes the windows slow mouse movement problem (happens on fullscreen mode + pressing keys).
- This code hacks around the mouse input from DirectInput, which SDL uses in fullscreen mode.
- Instead it installs a window message proc and reads input from WM_MOUSEMOVE */
-#ifdef WIN32
-
-static WNDPROC sdl_wndproc;
-static int2 win_mousepos;
-static bool win_mousemoved = false;
-
-LRESULT CALLBACK SpringWndProc(HWND wnd,UINT msg, WPARAM wparam,LPARAM lparam)
-{
-	if (msg==WM_MOUSEMOVE) {
-		win_mousepos = int2(LOWORD(lparam),HIWORD(lparam));
-		win_mousemoved = true;
-		return TRUE;
-	}
-	return CallWindowProc(sdl_wndproc, wnd, msg, wparam, lparam);
-}
-
-static void InstallWndCallback()
-{
-	// In windowed mode, SDL uses straight Win32 API to handle mouse movement, which works ok.
-	if (!fullscreen)
-		return;
-
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	if(!SDL_GetWMInfo(&info)) 
-		return;
-
-	HWND w = info.window;
-	sdl_wndproc = (WNDPROC)GetWindowLong(w, GWL_WNDPROC);
-	SetWindowLong(w,GWL_WNDPROC,(LONG)SpringWndProc);
-}
-#endif
-
 /**
  * @return whether window initialization succeeded
  * @param title char* string with window title
@@ -403,10 +371,6 @@ bool SpringApp::InitWindow (const char* title)
 
 	if (!SetSDLVideoMode ())
 		return false;
-
-#ifdef WIN32
-	InstallWndCallback();
-#endif
 
 	return true;
 }
@@ -524,7 +488,6 @@ bool SpringApp::ParseCmdLine()
 #else
 	fullscreen = configHandler.GetInt("Fullscreen",1)!=0;
 #endif
-	Uint8 scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
 
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
@@ -643,13 +606,7 @@ int SpringApp::Update ()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
-#ifdef WIN32
-	if(win_mousemoved) {
-		win_mousemoved=false;
-		if (mouse)
-			mouse->MouseMove(win_mousepos.x,win_mousepos.y);
-	}
-#endif
+	mouseInput->Update ();
 
 	int ret = 1;
 	if(activeController) {
@@ -705,7 +662,6 @@ int SpringApp::Run (int argc, char *argv[])
 	SDL_Event event;
 	bool done=false;
 	std::map<int, int> toUnicode; // maps keysym.sym to keysym.unicode
-	Uint8 scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
 
 	while (!done) {
 		ENTER_UNSYNCED;
@@ -725,26 +681,10 @@ int SpringApp::Run (int argc, char *argv[])
 					done = true;
 					break;
 				case SDL_MOUSEMOTION:
-#ifdef WIN32
-					if(fullscreen)
-						break;
-#endif
-					if(mouse)
-						mouse->MouseMove(event.motion.x,event.motion.y);
-					break;
 				case SDL_MOUSEBUTTONDOWN:
-					if (mouse) {
-						if (event.button.button == SDL_BUTTON_WHEELUP)
-							mouse->currentCamController->MouseWheelMove(scrollWheelSpeed);
-						else if (event.button.button == SDL_BUTTON_WHEELDOWN)
-							mouse->currentCamController->MouseWheelMove(-scrollWheelSpeed);
-						else
-							mouse->MousePress(event.button.x,event.button.y,event.button.button);
-					}
-					break;
 				case SDL_MOUSEBUTTONUP:
-					if (mouse)
-						mouse->MouseRelease(event.button.x,event.button.y,event.button.button);
+				case SDL_SYSWMEVENT:
+					mouseInput->HandleSDLMouseEvent (event);
 					break;
 				case SDL_KEYDOWN:
 				{
@@ -805,22 +745,6 @@ int SpringApp::Run (int argc, char *argv[])
 					}
         			break;
 				}
-#ifdef WIN32
-				case SDL_SYSWMEVENT:
-				{
-					SDL_SysWMmsg *msg = event.syswm.msg;
-					if (msg->msg == 0x020B) { // WM_XBUTTONDOWN, beats me why it isn't defined by default
-						if (msg->wParam & 0x20) // MK_XBUTTON1
-							mouse->MousePress (LOWORD(msg->lParam),HIWORD(msg->lParam), 4);
-						if (msg->wParam & 0x40) // MK_XBUTTON2
-							mouse->MousePress (LOWORD(msg->lParam),HIWORD(msg->lParam), 5);
-					} else if(msg->msg == WM_MOUSEMOVE) {
-
-						info->AddLine ("Mousemove\n");
-					}
-					break;
-				}
-#endif
 			}
 		}
 		if (globalQuit) 
@@ -850,6 +774,7 @@ void SpringApp::Shutdown()
 	delete font;
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
+	delete mouseInput;
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 	SDL_Quit();
 	delete gs;
