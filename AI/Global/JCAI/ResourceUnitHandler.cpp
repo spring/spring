@@ -49,9 +49,11 @@ static bool ParseDefList (CfgValue *val, vector<UnitDefID>& v, BuildTable* tbl)
 	} else {
 		CfgLiteral *s = dynamic_cast <CfgLiteral *> (val);
 
-		UnitDefID id = buildTable.GetDefID (s->value.c_str());
-		if (id) v.push_back (id);
-		else return false;
+		if (s) {
+			UnitDefID id = buildTable.GetDefID (s->value.c_str());
+			if (id) v.push_back (id);
+			else return false;
+		}
 	}
 
 	return true;
