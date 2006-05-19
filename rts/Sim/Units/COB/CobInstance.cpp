@@ -194,6 +194,9 @@ int CCobInstance::Call(int id, vector<long> &args, CBCobThreadFinish cb, void *p
 	int fn = script.scriptIndex[id];
 	if (fn == -1) {
 		//info->AddLine("CobError: unknown function index %d called by user", id);
+		if(cb){
+			(*cb)(0, p1, p2);	//in case the function doesnt exist the callback should still be called
+		}
 		return -1;
 	}
 
