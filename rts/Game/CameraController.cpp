@@ -144,20 +144,25 @@ void COverheadController::MouseWheelMove(float move)
 		zscale *= 1+move * mouseScale;
 		if (zscale < 0.05) zscale = 0.05f;
 		if (zscale > 10) zscale = 10;
-	} else {	//implements zoom to mouse cursor instead of mid screen
-		float3 cpos=pos-dir*height;
-		float dif=-height * move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
-		if(height-dif<60)
-			dif=height-60;
-		float3 wantedPos= cpos + mouse->dir * dif;
-		float newHeight=ground->LineGroundCol(wantedPos,wantedPos+dir*10000);
-		if(wantedPos.y + dir.y * newHeight <0)
-			newHeight = -wantedPos.y / dir.y;
-		if(newHeight<3000){
-			height=newHeight;
-			pos= wantedPos + dir * height;
+	} else {	
+		if(move<0){ //zoom in to mouse cursor instead of mid screen
+			float3 cpos=pos-dir*height;
+			float dif=-height * move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
+			if(height-dif<60)
+				dif=height-60;
+			float3 wantedPos= cpos + mouse->dir * dif;
+			float newHeight=ground->LineGroundCol(wantedPos,wantedPos+dir*10000);
+			if(newHeight<0)
+				newHeight=height* (1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1));
+			if(wantedPos.y + dir.y * newHeight <0)
+				newHeight = -wantedPos.y / dir.y;
+			if(newHeight<3000){
+				height=newHeight;
+				pos= wantedPos + dir * height;
+			}
+		} else { //zoom out from mid screen
+			height*=1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
 		}
-//		height*=1+move * mouseScale*0.7;
 	}
 }
 
