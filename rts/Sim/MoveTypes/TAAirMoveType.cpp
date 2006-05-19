@@ -226,7 +226,7 @@ void CTAAirMoveType::ExecuteStop()
 			waitCounter = 30;		//trick to land directly..
 			break;
 		case AIRCRAFT_FLYING:
-			if (owner->unitDef->dontLand)
+			if (owner->unitDef->DontLand())
 				SetState(AIRCRAFT_HOVERING);
 			else 
 				SetState(AIRCRAFT_LANDING);
@@ -281,23 +281,17 @@ void CTAAirMoveType::UpdateTakeoff()
 // Move the unit around a bit.. and when it gets too far away from goal position it switches to normal flying instead
 void CTAAirMoveType::UpdateHovering()
 {
-	float lScale = accRate*8;
+	float driftSpeed = owner->unitDef->dlHoverFactor;
 
-	if ((goalPos - owner->pos).Length2D() > 100/(accRate+0.1f))
-		SetState (AIRCRAFT_FLYING); // drifted too far away, get back to the original position
-	else {
-		float driftSpeed = accRate * 1.0f;
+	// move towards goal position
+	float3 dir = goalPos - owner->pos;
+	wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.03f;
 
-		// move towards goal position
-		float3 dir = goalPos - owner->pos;
-		wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.03f;
+	// damping
+	wantedSpeed *= 0.97f;
 
-		// damping
-		wantedSpeed *= 0.97f;
-
-		// random movement (a sort of fake wind effect)
-		wantedSpeed += float3(gs->randFloat()-.5f, 0.0f, gs->randFloat()-0.5f) * driftSpeed * 0.5f;
-	}
+	// random movement (a sort of fake wind effect)
+	wantedSpeed += float3(gs->randFloat()-.5f, 0.0f, gs->randFloat()-0.5f) * driftSpeed * 0.5f;
 
 	UpdateAirPhysics();
 }
@@ -861,7 +855,6 @@ void CTAAirMoveType::SlowUpdate(void)
 //Returns true if indicated position is a suitable landing spot
 bool CTAAirMoveType::CanLandAt(float3 pos)
 {
-	//Sometimes we can never land
 	if (dontLand)
 		return false;
 

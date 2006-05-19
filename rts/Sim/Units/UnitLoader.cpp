@@ -222,7 +222,7 @@ START_TIME_PROFILE;
 			mt->decRate = ud->maxDec;
 			mt->wantedHeight = ud->wantedHeight+gs->randFloat()*5;
 			mt->orgWantedHeight=mt->wantedHeight;
-			mt->dontLand = ud->dontLand;
+			mt->dontLand = ud->DontLand ();
 
 			unit->moveType = mt;
 		}

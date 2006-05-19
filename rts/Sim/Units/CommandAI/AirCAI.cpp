@@ -150,7 +150,7 @@ void CAirCAI::SlowUpdate()
 	CAirMoveType* myPlane=(CAirMoveType*)owner->moveType;
 
 	if(commandQue.empty()){
-		if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_FLYING && !owner->unitDef->dontLand)
+		if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_FLYING && !owner->unitDef->DontLand ())
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 
 		if(owner->fireState==2 && owner->moveState!=0 && owner->maxRange>0){
