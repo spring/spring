@@ -81,9 +81,11 @@ void logFileOpen ()
 	/* Get current date and time */
 	tval = time(NULL);
 	tm* now = localtime(&tval);
-	strftime(buf,sizeof(buf),"Log started on: %A, %B %d, day %j of %Y.\nThe time is %I:%M %p.\n",now);
+	if (now) {
+		strftime(buf,sizeof(buf),"Log started on: %A, %B %d, day %j of %Y.\nThe time is %I:%M %p.\n",now);
 
-	logPrintf (buf);
+		logPrintf (buf);
+	}
 }
 
 void logFileClose ()

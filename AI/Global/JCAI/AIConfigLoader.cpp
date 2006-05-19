@@ -194,7 +194,8 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext)
 	uint l = strlen (n);
 
 	uint a=l-1;
-	while (n[a] && n[a]!='.' && a>0)
+	if (a<0) a=0;
+	while (a>0 && n[a] && n[a]!='.')
 		a--;
 
 	strncpy (dst, AI_PATH, s);
@@ -240,28 +241,30 @@ bool ModConfig::UnitTypeInfo::Load (CfgList *root, BuildTable *tbl)
 
 	CfgList *l = dynamic_cast <CfgList*> (sideinfo->GetValue ("aadefense"));
 
-	for (list<CfgListElem>::iterator i=l->childs.begin();i!=l->childs.end();++i)
-	{
-		UnitDefID id = tbl->GetDefID (i->name.c_str());
-		if (id)
+	if (l) {
+		for (list<CfgListElem>::iterator i=l->childs.begin();i!=l->childs.end();++i)
 		{
-			aadefense.push_back (id);
-			BuildTable::UDef* cd = tbl->GetCachedDef (id);
-			cd->flags |= CUD_AADefense;
+			UnitDefID id = tbl->GetDefID (i->name.c_str());
+			if (id)
+			{
+				aadefense.push_back (id);
+				BuildTable::UDef* cd = tbl->GetCachedDef (id);
+				cd->flags |= CUD_AADefense;
+			}
 		}
 	}
-
 	l = dynamic_cast <CfgList*> (sideinfo->GetValue ("gddefense"));
 
-	for (list<CfgListElem>::iterator i=l->childs.begin();i!=l->childs.end();++i)
-	{
-		UnitDefID id = tbl->GetDefID (i->name.c_str());
-		if (id) {
-			gddefense.push_back (id);
-			BuildTable::UDef* cd = tbl->GetCachedDef (id);
-			cd->flags |= CUD_GroundDefense;
+	if (l) {
+		for (list<CfgListElem>::iterator i=l->childs.begin();i!=l->childs.end();++i)
+		{
+			UnitDefID id = tbl->GetDefID (i->name.c_str());
+			if (id) {
+				gddefense.push_back (id);
+				BuildTable::UDef* cd = tbl->GetCachedDef (id);
+				cd->flags |= CUD_GroundDefense;
+			}
 		}
 	}
-
 	return true;
 }
