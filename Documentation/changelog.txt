@@ -2,6 +2,9 @@ TASpring change log
 
 0.next
 
+- Fixed the com dies, game ends exploit: sharing your com now kills you
+- Fixed a bug causing clients not to quit when server quits
+- ".give" cheat command doesn't desync the game anymore
 - Made "Team0() is no more" message customizable by modders (see XTA for an example).
 - Added weapontag "paralyzetime", controls how long a unit can maximaly be paralyzed after being hit by this weapon, default 10
 - Adds some new options in the settings program for scroll speeds
