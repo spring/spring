@@ -463,7 +463,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			keys[k] = false;		//prevent game start when server chats
 			return 0;
 		}
-		if(k==27 && chatting){
+		if(k==27 && (chatting || inMapDrawer->wantLabel)){
 			userWriting=false;
 			chatting=false;
 			inMapDrawer->wantLabel=false;
@@ -1998,6 +1998,13 @@ void CGame::UpdateUI()
 		if(userInput.size()>0){
 			if(userInput.size()>250)	//avoid troubles with to long lines
 				userInput=userInput.substr(0,250);
+			if(userInput.find(".give") == 0 && gs->cheatEnabled) {
+				float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * 9000);
+				float3 pos = camera->pos + mouse->dir * dist;
+				char buf[100];
+				sprintf(buf, " @%.0f,%.0f,%.0f", pos.x, pos.y, pos.z);
+				userInput += buf;
+			}
 			net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, userInput);
 			if(net->playbackDemo)
 				HandleChatMsg(userInput,gu->myPlayerNum);
@@ -2338,8 +2345,11 @@ void CGame::HandleChatMsg(std::string s,int player)
 
 	if(s.find(".give")==0 && gs->cheatEnabled){
 		int team=gs->players[player]->team;
-		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
-		float3 pos=camera->pos+mouse->dir*dist;
+		int p1 = s.rfind(" @"), p2 = s.find(",", p1+1), p3 = s.find(",", p2+1);
+		if (p1 == string::npos || p2 == string::npos || p3 == string::npos)
+			info->AddLine("Someone is spoofing invalid .give messages!");
+		float3 pos(atof(&s.c_str()[p1+2]), atof(&s.c_str()[p2+1]), atof(&s.c_str()[p3+1]));
+		s = s.substr(0, p1);
 
 		if(s.find(" all")!=string::npos){
 			int squareSize=(int)ceil(sqrtf(unitDefHandler->numUnits));
@@ -2347,7 +2357,6 @@ void CGame::HandleChatMsg(std::string s,int player)
 			for(int a=1;a<=unitDefHandler->numUnits;++a){
 				float3 pos2=float3(pos.x + (a%squareSize-squareSize/2) * 10*SQUARE_SIZE, pos.y, pos.z + (a/squareSize-squareSize/2) * 10*SQUARE_SIZE);
 				unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name,pos2,team,false);
-				
 			}
 		} else if (((s.rfind(" "))!=string::npos) && ((s.length() - s.rfind(" ") -1)>0)){
 			string unitName=s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);

@@ -46,7 +46,6 @@ public:
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
 	float maxTimeLeft;
 	void SendSystemMsg(const char* fmt,...);
-	bool terminate;
 };
 
 extern CGameServer* gameServer;
