@@ -824,6 +824,11 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 		airBaseHandler->DeregisterAirBase(this);
 	}
 
+	// Sharing commander in com ends game kills you.
+	// Note that this will kill the com too.
+	if (unitDef->isCommander)
+		gs->Team(team)->CommanderDied(this);
+
 	if(type==ChangeGiven){
 		gs->Team(team)->RemoveUnit(this,CTeam::RemoveGiven);
 		gs->Team(newteam)->AddUnit(this,CTeam::AddGiven);

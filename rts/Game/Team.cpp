@@ -225,7 +225,8 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 
 void CTeam::CommanderDied(CUnit* commander)
 {
-	numCommanders--;
+	assert(commander->unitDef->isCommander);
+	--numCommanders;
 	if(gs->gameMode==1 && numCommanders<=0){
 		for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
 			if((*ui)->team==teamNum)

@@ -91,7 +91,7 @@ public:
 	Statistics currentStats;
 
 	int lastStatSave;
-	int numCommanders;		//number of unints with commander tag in team, if it reaches zero with cmd ends the team dies
+	int numCommanders;		//number of units with commander tag in team, if it reaches zero with cmd ends the team dies
 	std::list<Statistics> statHistory;
 	void CommanderDied(CUnit* commander);
 };
