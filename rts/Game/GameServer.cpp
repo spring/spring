@@ -38,7 +38,6 @@ CGameServer::CGameServer(void)
 	quitServer=false;
 	gameClientUpdated=false;
 	maxTimeLeft=2;
-	terminate = false;
 
 	int port=8452;
 	int myPlayer=0;
@@ -68,17 +67,12 @@ CGameServer::CGameServer(void)
 
 CGameServer::~CGameServer(void)
 {
-	delete &gameServerMutex;
 	delete serverNet;
 	serverNet=0;
 }
 
 bool CGameServer::Update(void)
 {
-	if (terminate) {
-		delete this;
-		return true; // TODO   should this be true or false?
-	}
 	if(lastSyncRequest<gu->gameTime-2){
 		lastSyncRequest=gu->gameTime;
 
@@ -573,7 +567,7 @@ void CGameServer::UpdateLoop(void)
 		}
 		SDL_Delay(10);
 	}
-	terminate = true;
+	delete this;
 }
 
 void CGameServer::SendSystemMsg(const char* fmt,...)
