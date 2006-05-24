@@ -111,3 +111,7 @@ for f in filelist.list_globalAIs(aienv):
 	Alias('install', inst)
 	Alias('install-GlobalAI', inst)
 	Alias('install-'+f, inst)
+
+# Use this to avoid an error message 'how to make target test ?'
+# This can be replaced for unit testing code at any time (in other branch for example).
+env.Alias('test', None)
