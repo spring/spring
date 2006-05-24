@@ -2783,6 +2783,9 @@
 					RelativePath="..\..\System\Platform\ConfigHandler.h">
 				</File>
 				<File
+					RelativePath="..\..\System\Platform\errorhandler.cpp">
+				</File>
+				<File
 					RelativePath="..\..\System\Platform\errorhandler.h">
 				</File>
 				<File
@@ -2862,9 +2865,6 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\Win32Cmd.h">
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\Win32Support.cpp">
 					</File>
 				</Filter>
 			</Filter>
