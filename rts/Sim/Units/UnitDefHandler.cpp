@@ -478,6 +478,14 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(ud.leaveTracks && groundDecals)
 		ud.trackType=groundDecals->GetTrackType(tdfparser.SGetValueDef("StdTank", "UNITINFO\\TrackType"));
 
+
+	ud.useBuildingGroundDecal=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\UseBuildingGroundDecal").c_str());
+	ud.buildingDecalSizeX=atoi(tdfparser.SGetValueDef("4", "UNITINFO\\BuildingGroundDecalSizeX").c_str());
+	ud.buildingDecalSizeY=atoi(tdfparser.SGetValueDef("4", "UNITINFO\\BuildingGroundDecalSizeY").c_str());
+	ud.buildingDecalDecaySpeed=atof(tdfparser.SGetValueDef("0.1", "UNITINFO\\BuildingGroundDecalDecaySpeed").c_str());
+	if(ud.useBuildingGroundDecal && groundDecals)
+		ud.buildingDecalType=groundDecals->GetBuildingDecalType(tdfparser.SGetValueDef("", "UNITINFO\\BuildingGroundDecalType"));
+
 	ud.canDropFlare=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\CanDropFlare").c_str());
 	ud.flareReloadTime=atof(tdfparser.SGetValueDef("5", "UNITINFO\\FlareReload").c_str());
 	ud.flareEfficieny=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\FlareEfficiency").c_str());

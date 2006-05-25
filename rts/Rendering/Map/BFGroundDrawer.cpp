@@ -495,8 +495,9 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 			DrawGroundVertexArray();
 		}
 	}
-	ResetTextureUnits(drawWaterReflection,overrideVP);
 	glDisable(GL_CULL_FACE);
+
+	ResetTextureUnits(drawWaterReflection,overrideVP);
 
 	if(readmap->voidWater && !drawWater){
 		glDisable(GL_ALPHA_TEST);
@@ -524,6 +525,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		glEnd();
 	}
 
+	if(groundDecals && !(drawWaterReflection || drawUnitReflection || overrideVP)){
+		groundDecals->Draw();
+	}
+
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -536,8 +541,6 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	if(treeDistance>MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE))
 		treeDistance=MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE);
 
-	if(groundDecals && !(drawWaterReflection || drawUnitReflection))
-		groundDecals->Draw();
 	ph->DrawGroundFlashes();
 	if(treeDrawer->drawTrees){
 		if((drawExtraTex)){

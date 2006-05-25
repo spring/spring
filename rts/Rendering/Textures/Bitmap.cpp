@@ -165,7 +165,7 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	const bool success = ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
 	delete [] buffer;
 
 	if(success == false)

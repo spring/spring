@@ -11,6 +11,10 @@
 #include "Platform/ConfigHandler.h"
 #include <cctype>
 #include "Game/Camera.h"
+#include "Sim/Units/UnitTypes/Building.h"
+#include "Rendering/Map/BaseGroundDrawer.h"
+#include "Sim/Map/SmfReadMap.h"
+#include "shadowhandler.h"
 #include "mmgr.h"
 
 CGroundDecalHandler* groundDecals=0;
@@ -40,9 +44,6 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 //	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
-//	CBitmap bm(buf,512,512);
-//	bm.Save("scar.jpg");
-	
 	scarFieldX=gs->mapx/32;
 	scarFieldY=gs->mapy/32;
 	scarField=new std::set<Scar*>[scarFieldX*scarFieldY];
@@ -51,32 +52,28 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	maxOverlap=decalLevel+1;
 
 	delete[] buf;
-	/*	
-	unsigned char buf[128*128*4];
 
-	for(int y=0;y<128;++y){
-		for(int x=0;x<128;++x){
-			buf[(y*128+x)*4+0]=180;//60+gu->usRandFloat()*20;
-			buf[(y*128+x)*4+1]=0;//40+gu->usRandFloat()*10;
-			buf[(y*128+x)*4+2]=255;//20+gu->usRandFloat()*5;
-			buf[(y*128+x)*4+3]=0;
-		}
+	if(shadowHandler->drawShadows){
+		decalVP=LoadVertexProgram("grounddecals.vp");
+		decalFP=LoadFragmentProgram("grounddecals.fp");
 	}
-	for(int y=0;y<20;++y){
-		for(int x=0;x<128;++x){
-			buf[(y*128+x)*4+1]=255*min(1.0,max(0.4,sin(x*PI/16)*0.5+0.15))*(y==0?0:1);
-			buf[((y+108)*128+x)*4+1]=255*min(1.0,max(0.4,sin(x*PI/16)*0.5+0.15))*(y==19?0:1);
-		}
-	}
-	CBitmap bm(buf,128,128);
-	bm.Save("StdTank.bmp");
-	tankTex=bm.CreateTexture(true);*/
 }
 
 CGroundDecalHandler::~CGroundDecalHandler(void)
 {
 	for(std::vector<TrackType*>::iterator tti=trackTypes.begin();tti!=trackTypes.end();++tti){
 		for(set<UnitTrackStruct*>::iterator ti=(*tti)->tracks.begin();ti!=(*tti)->tracks.end();++ti){
+			delete *ti;
+		}
+		glDeleteTextures (1, &(*tti)->texture);
+		delete *tti;
+	}
+	for(std::vector<BuildingDecalType*>::iterator tti=buildingDecalTypes.begin();tti!=buildingDecalTypes.end();++tti){
+		for(set<BuildingGroundDecal*>::iterator ti=(*tti)->buildingDecals.begin();ti!=(*tti)->buildingDecals.end();++ti){
+			if((*ti)->owner)
+				(*ti)->owner->buildingDecal=0;
+			if((*ti)->gbOwner)
+				(*ti)->gbOwner->decal=0;
 			delete *ti;
 		}
 		glDeleteTextures (1, &(*tti)->texture);
@@ -101,15 +98,89 @@ void CGroundDecalHandler::Draw(void)
 	glEnable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER,0.01);
-	glDepthMask(0);
-	glPolygonOffset(-5,-10);
 	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(-10,-200);
+	glDepthMask(0);
 
 	unsigned char color[4];
 	color[0]=255;
 	color[1]=255;
 	color[2]=255;
 	color[3]=255;
+
+	glActiveTextureARB(GL_TEXTURE1_ARB);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_INTERPOLATE_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+
+	if(shadowHandler && shadowHandler->drawShadows){
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, decalFP );
+		glEnable( GL_FRAGMENT_PROGRAM_ARB );
+		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, decalVP );
+		glEnable( GL_VERTEX_PROGRAM_ARB );
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
+		float3 ac=readmap->ambientColor*(210.0/255.0);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, ac.x,ac.y,ac.z,1);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,readmap->shadowDensity);
+	}
+
+	for(std::vector<BuildingDecalType*>::iterator bdi=buildingDecalTypes.begin();bdi!=buildingDecalTypes.end();++bdi){
+		if(!(*bdi)->buildingDecals.empty()){
+			CVertexArray* va=GetVertexArray();
+			va->Initialize();
+			glBindTexture(GL_TEXTURE_2D,(*bdi)->texture);
+			for(set<BuildingGroundDecal*>::iterator bi=(*bdi)->buildingDecals.begin();bi!=(*bdi)->buildingDecals.end();){
+				BuildingGroundDecal* decal=*bi;
+				if(decal->owner){
+					decal->alpha=decal->owner->buildProgress;
+				} else if(!decal->gbOwner){
+					decal->alpha-=decal->AlphaFalloff*gu->lastFrameTime;
+				}
+				if(decal->alpha<0){
+					delete decal;
+					(*bdi)->buildingDecals.erase(bi++);
+					continue;
+				}
+				if(camera->InView(decal->pos,decal->radius)){
+					color[3]=decal->alpha*255;
+					float xts=1.0/decal->xsize;
+					float yts=1.0/decal->ysize;
+					for(int x=0;x<decal->xsize;++x){
+						int x2=decal->posx+x;
+						for(int z=0;z<decal->ysize;++z){
+							int z2=decal->posy+z;
+							va->AddVertexTC(float3(x2*8,readmap->heightmap[(z2)*(gs->mapx+1)+x2]+0.2,z2*8),x*xts,z*yts,color);
+							va->AddVertexTC(float3(x2*8+8,readmap->heightmap[(z2)*(gs->mapx+1)+x2+1]+0.2,z2*8),(x+1)*xts,z*yts,color);
+							va->AddVertexTC(float3(x2*8+8,readmap->heightmap[(z2+1)*(gs->mapx+1)+x2+1]+0.2,z2*8+8),(x+1)*xts,(z+1)*yts,color);
+							va->AddVertexTC(float3(x2*8,readmap->heightmap[(z2+1)*(gs->mapx+1)+x2]+0.2,z2*8+8),x*xts,(z+1)*yts,color);
+						}
+					}
+				}
+				++bi;
+			}
+			va->DrawArrayTC(GL_QUADS);
+		}
+	}
+
+	if(shadowHandler && shadowHandler->drawShadows){
+		glDisable( GL_FRAGMENT_PROGRAM_ARB );
+		glDisable( GL_VERTEX_PROGRAM_ARB );
+	}
+
+	glPolygonOffset(-10,-20);
+
 	unsigned char color2[4];
 	color2[0]=255;
 	color2[1]=255;
@@ -159,7 +230,7 @@ void CGroundDecalHandler::Draw(void)
 	glBindTexture(GL_TEXTURE_2D,scarTex);
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-	glPolygonOffset(-5,-200);
+	glPolygonOffset(-10,-400);
 
 	for(std::list<Scar*>::iterator si=scars.begin();si!=scars.end();){
 		Scar* scar=*si;
@@ -210,6 +281,16 @@ void CGroundDecalHandler::Draw(void)
 //	glDisable(GL_ALPHA_TEST);
 	glDepthMask(1);
 	glDisable(GL_BLEND);
+
+	glActiveTextureARB(GL_TEXTURE1_ARB);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
 
 void CGroundDecalHandler::Update(void)
@@ -478,4 +559,79 @@ void CGroundDecalHandler::RemoveScar(Scar* scar,bool removeFromScars)
 	if(removeFromScars)
 		scars.remove(scar);
 	delete scar;
+}
+
+void CGroundDecalHandler::AddBuilding(CBuilding* building)
+{
+	if(decalLevel==0)
+		return;
+
+	BuildingDecalType* type=buildingDecalTypes[building->unitDef->buildingDecalType];
+	BuildingGroundDecal* decal=new BuildingGroundDecal;
+
+	int posx=building->pos.x/8;
+	int posy=building->pos.z/8;
+	int sizex=building->unitDef->buildingDecalSizeX;
+	int sizey=building->unitDef->buildingDecalSizeY;
+
+	decal->owner=building;
+	decal->gbOwner=0;
+	decal->posx=max(0,posx-sizex);
+	decal->posy=max(0,posy-sizey);
+	decal->xsize=min(gs->mapx-1 - decal->posx, sizex*2);
+	decal->ysize=min(gs->mapy-1 - decal->posy, sizey*2);
+	decal->AlphaFalloff=building->unitDef->buildingDecalDecaySpeed;
+	decal->alpha=0;
+	decal->pos=building->pos;
+	decal->radius=sqrtf(sizex*sizex+sizey*sizey)*8+20;
+
+	building->buildingDecal=decal;
+
+	type->buildingDecals.insert(decal);
+}
+
+void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb)
+{
+	BuildingGroundDecal* decal=building->buildingDecal;
+	if(!decal)
+		return;
+
+	decal->owner=0;
+	decal->gbOwner=gb;
+	building->buildingDecal=0;
+}
+
+int CGroundDecalHandler::GetBuildingDecalType(std::string name)
+{
+	if(decalLevel==0)
+		return 0;
+
+	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);	
+
+	int a=0;
+	for(std::vector<BuildingDecalType*>::iterator bi=buildingDecalTypes.begin();bi!=buildingDecalTypes.end();++bi){
+		if((*bi)->name==name){
+			return a;
+		}
+		++a;
+	}
+	BuildingDecalType* tt=new BuildingDecalType;
+	tt->name=name;
+	CBitmap bm(string("unittextures/") + name);
+	tt->texture=bm.CreateTexture(true);
+	buildingDecalTypes.push_back(tt);
+
+	return buildingDecalTypes.size()-1;
+}
+
+void CGroundDecalHandler::SetTexGen(float scalex,float scaley, float offsetx, float offsety)
+{
+	GLfloat plan[]={scalex,0,0,offsetx};
+	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
+	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
+	glEnable(GL_TEXTURE_GEN_S);
+	GLfloat plan2[]={0,0,scaley,offsety};
+	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
+	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
+	glEnable(GL_TEXTURE_GEN_T);
 }

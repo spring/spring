@@ -456,10 +456,10 @@ START_TIME_PROFILE
 			ydif[a]-=cloudThickness2[(a-3*CLOUD_SIZE+CLOUD_SIZE*CLOUD_SIZE)];
 		}
 
-		int a=0;
-		ydif[(a)&255]+=cloudThickness2[(a-3*CLOUD_SIZE+CLOUD_SIZE*CLOUD_SIZE)];
-		ydif[(a)&255]-=cloudThickness2[(a)]*2;
-		ydif[(a)&255]+=cloudThickness2[(a+4*CLOUD_SIZE)];
+		int b=0;
+		ydif[(b)&255]+=cloudThickness2[(b-3*CLOUD_SIZE+CLOUD_SIZE*CLOUD_SIZE)];
+		ydif[(b)&255]-=cloudThickness2[(b)]*2;
+		ydif[(b)&255]+=cloudThickness2[(b+4*CLOUD_SIZE)];
 
 		for(int a=0;a<CLOUD_SIZE*3-1;a++){
 			ydif[(a+1)&255]+=cloudThickness2[(a-3*CLOUD_SIZE+1+CLOUD_SIZE*CLOUD_SIZE)];
