@@ -15,6 +15,8 @@ TASpring change log
 - New fbi tag BuildingGroundDecalType, name of a bitmap in unittextures folder
 - New fbi tag BuildingGroundDecalSizeX,BuildingGroundDecalSizeY, size of decal (same scale as footprint for unit)
 - New fbi tag BuildingGroundDecalDecaySpeed, how fast the decal will fade out after the building has died, default 0.1 (fades out in 10s)
+- New fbi tag ShowPlayerName, if set to 1 the tooltip shows the player name instead of the unit description
+- Fbi tag HideDamage now actually works: set it to 1 to hide most details in the unit's tooltip from enemies
 
 0.71b1
 

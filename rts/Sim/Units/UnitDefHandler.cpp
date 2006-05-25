@@ -256,6 +256,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.canCapture=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canCapture").c_str());
 	ud.hideDamage=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HideDamage").c_str());
 	ud.isCommander=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\commander").c_str());
+	ud.showPlayerName=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\showplayername").c_str());
 
 	ud.cloakCost=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\CloakCost").c_str());
 	ud.cloakCostMoving=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\CloakCostMoving").c_str());

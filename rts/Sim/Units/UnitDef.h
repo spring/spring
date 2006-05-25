@@ -185,6 +185,7 @@ struct UnitDef
 	bool isFeature;
 	bool hideDamage;
 	bool isCommander;
+	bool showPlayerName;
 
 	bool canResurrect;
 	bool canCapture;

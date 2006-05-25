@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Game/Team.h"
 #include "SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include <map>
@@ -431,7 +432,13 @@ std::string CSelectedUnits::GetTooltip(void)
 	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
 		s="Group selected";
 	} else if(!selectedUnits.empty()){
-		s=(*selectedUnits.begin())->tooltip;
+		// show the player name instead of unit name if it has FBI tag showPlayerName
+		if((*selectedUnits.begin())->unitDef->showPlayerName)
+		{
+			s=gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->playerName.c_str();
+		} else {
+			s=(*selectedUnits.begin())->tooltip;
+		}
 	}
 	if(selectedUnits.empty()){
 		return s;
