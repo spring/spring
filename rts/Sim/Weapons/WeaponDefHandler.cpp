@@ -259,24 +259,11 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(color2, "0", weaponname + "\\color2");
 
 	float3 rgbcol = hs2rgb(color/float(255), color2/float(255));
-	//weaponDefs[id].visuals.redcolor = rgbcol.x;
-	//weaponDefs[id].visuals.greencolor = rgbcol.y;
-	//weaponDefs[id].visuals.bluecolor = rgbcol.z;
 	weaponDefs[id].visuals.color = rgbcol;
 
-	if(weaponDefs[id].visuals.modelName.find("green")!=std::string::npos){	//swta fix
-		weaponDefs[id].visuals.color.x = 0.1;
-		weaponDefs[id].visuals.color.y = 1;
-		weaponDefs[id].visuals.color.z = 0.1;
-	}
-	if(weaponDefs[id].visuals.modelName.find("red")!=std::string::npos){	//swta fix
-		weaponDefs[id].visuals.color.x = 1;
-		weaponDefs[id].visuals.color.y = 0.1;
-		weaponDefs[id].visuals.color.z = 0.1;
-	}
-	if(weaponDefs[id].type=="LaserCannon" && weaponDefs[id].visuals.modelName.find("laser")!=std::string::npos)
-		weaponDefs[id].reload/=2.0;	//more swta
-
+	float3 tempCol=sunparser->GetFloat3(float3(-1,-1,-1),weaponname + "\\rgbcolor");
+	if(tempCol!=float3(-1,-1,-1))
+		weaponDefs[id].visuals.color = tempCol;
 
 	weaponDefs[id].uptime = atof(sunparser->SGetValueDef("0", weaponname + "\\weapontimer").c_str());
 
