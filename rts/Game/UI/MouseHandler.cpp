@@ -480,6 +480,12 @@ void CMouseHandler::ToggleState(bool shift)
 		currentCamControllerNum++;
 		if(currentCamControllerNum>=camControllers.size())
 			currentCamControllerNum=0;
+		int a=0;
+		while(a<4 && !camControllers[currentCamControllerNum]->enabled){
+			currentCamControllerNum++;
+			if(currentCamControllerNum>=camControllers.size())
+				currentCamControllerNum=0;
+		}
 		currentCamController=camControllers[currentCamControllerNum];
 		currentCamController->SetPos(oldc->SwitchFrom());
 		currentCamController->SwitchTo();

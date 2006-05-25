@@ -21,6 +21,7 @@ public:
 	
 	float mouseScale;
 	float scrollSpeed;
+	bool enabled;
 };
 
 class CFPSController : public CCameraController
