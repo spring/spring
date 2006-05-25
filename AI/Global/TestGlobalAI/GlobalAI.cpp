@@ -73,9 +73,9 @@ void CGlobalAI::UnitIdle(int unit)
 {
 	const UnitDef* ud=callback->GetAICallback()->GetUnitDef(unit);
 
-	char c[200];
+	/*char c[200];
 	sprintf(c,"Idle unit %s",ud->humanName.c_str());
-	callback->GetAICallback()->SendTextMsg(c,0);
+	callback->GetAICallback()->SendTextMsg(c,0);*/
 }
 
 void CGlobalAI::GotChatMsg(const char* msg,int player)
@@ -102,8 +102,8 @@ void CGlobalAI::Update()
 	int frame=callback->GetAICallback()->GetCurrentFrame();
 
 	if(!(frame%60)){
-		char c[200];
+/*		char c[200];
 		sprintf(c,"Friendly %i Enemy %i",myUnits.size(),enemies.size());
-		callback->GetAICallback()->SendTextMsg(c,0);
+		callback->GetAICallback()->SendTextMsg(c,0);*/
 	}
 }
