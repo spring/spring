@@ -18,6 +18,7 @@ TASpring change log
 - New fbi tag BuildingGroundDecalDecaySpeed, how fast the decal will fade out after the building has died, default 0.1 (fades out in 10s)
 - New fbi tag ShowPlayerName, if set to 1 the tooltip shows the player name instead of the unit description
 - Fbi tag HideDamage now actually works: set it to 1 to hide most details in the unit's tooltip from enemies
+- New weapon tag "rgbcolor", overrides the old color1 and color2 tags if it exists, gives the color in red green blue format (1 1 1 = white).
 
 0.71b1
 
