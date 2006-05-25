@@ -2571,6 +2571,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\MouseInput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\MouseInput.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\Net.cpp"
 				>
 			</File>
@@ -3187,6 +3195,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Platform\errorhandler.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Platform\errorhandler.h"
 					>
 				</File>
@@ -3267,10 +3279,6 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\Win32Cmd.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\Win32Support.cpp"
 						>
 					</File>
 				</Filter>
