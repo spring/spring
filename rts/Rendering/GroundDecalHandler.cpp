@@ -146,14 +146,14 @@ void CGroundDecalHandler::Draw(void)
 				if(decal->owner){
 					decal->alpha=decal->owner->buildProgress;
 				} else if(!decal->gbOwner){
-					decal->alpha-=decal->AlphaFalloff*gu->lastFrameTime;
+					decal->alpha-=decal->AlphaFalloff*gu->lastFrameTime*gs->speedFactor;
 				}
 				if(decal->alpha<0){
 					delete decal;
 					(*bdi)->buildingDecals.erase(bi++);
 					continue;
 				}
-				if(camera->InView(decal->pos,decal->radius)){
+				if(camera->InView(decal->pos,decal->radius) && (!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)))){
 					color[3]=int(decal->alpha*255);
 					float xts=1.0/decal->xsize;
 					float yts=1.0/decal->ysize;
@@ -308,7 +308,7 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 	if(mp<0)
 		mp=0;
 	if(mp>=gs->mapSquares/4)
-		mp=mp>=gs->mapSquares/4;
+		mp=gs->mapSquares/4-1;
 	if(!readmap->terrainTypes[readmap->typemap[mp]].receiveTracks)
 		return;
 

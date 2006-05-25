@@ -143,6 +143,12 @@ CUnitDrawer::~CUnitDrawer(void)
 		glDeleteTextures(1,&boxtex);
 		glDeleteTextures(1,&specularTex);
 	}
+	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
+		if((*gbi)->decal)
+			(*gbi)->decal->gbOwner=0;
+		delete *gbi;
+		gbi=ghostBuildings.erase(gbi);
+	}
 }
 
 void CUnitDrawer::Update(void)

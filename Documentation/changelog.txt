@@ -2,6 +2,7 @@ TASpring change log
 
 0.next
 
+- Bos/Cob script for units can now animate the death of the unit. Just have the Kill function return after a while instead of directly and return wreck level in return value instead of in function argument.
 - Fixed the com dies, game ends exploit: sharing your com now kills you
 - Fixed a bug causing clients not to quit when server quits
 - ".give" cheat command doesn't desync the game anymore
