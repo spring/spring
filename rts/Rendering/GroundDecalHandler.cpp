@@ -14,7 +14,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Rendering/Map/BaseGroundDrawer.h"
 #include "Sim/Map/SmfReadMap.h"
-#include "shadowhandler.h"
+#include "ShadowHandler.h"
 #include "mmgr.h"
 
 CGroundDecalHandler* groundDecals=0;
@@ -154,7 +154,7 @@ void CGroundDecalHandler::Draw(void)
 					continue;
 				}
 				if(camera->InView(decal->pos,decal->radius)){
-					color[3]=decal->alpha*255;
+					color[3]=int(decal->alpha*255);
 					float xts=1.0/decal->xsize;
 					float yts=1.0/decal->ysize;
 					for(int x=0;x<decal->xsize;++x){
@@ -569,8 +569,8 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	BuildingDecalType* type=buildingDecalTypes[building->unitDef->buildingDecalType];
 	BuildingGroundDecal* decal=new BuildingGroundDecal;
 
-	int posx=building->pos.x/8;
-	int posy=building->pos.z/8;
+	int posx=int(building->pos.x/8);
+	int posy=int(building->pos.z/8);
 	int sizex=building->unitDef->buildingDecalSizeX;
 	int sizey=building->unitDef->buildingDecalSizeY;
 
