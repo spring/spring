@@ -6,8 +6,10 @@
 #include <list>
 #include <vector>
 #include <string>
+#include "Rendering/UnitModels/UnitDrawer.h"
 
 class CUnit;
+class CBuilding;
 
 struct TrackPart {
 	float3 pos1;
@@ -25,6 +27,19 @@ struct UnitTrackStruct{
 	std::list<TrackPart> parts;
 };
 
+struct BuildingGroundDecal{
+	CBuilding* owner;
+	CUnitDrawer::GhostBuilding* gbOwner;
+	int posx,posy;
+	int xsize,ysize;
+
+	float3 pos;
+	float radius;
+
+	float alpha;
+	float AlphaFalloff;
+};
+
 class CGroundDecalHandler :
 	public CObject
 {
@@ -33,16 +48,18 @@ public:
 	virtual ~CGroundDecalHandler(void);
 	void Draw(void);
 	void Update(void);
+
 	void UnitMoved(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(std::string name);
-	unsigned int LoadTexture(std::string name);
-	void LoadScar(std::string file, unsigned char* buf, int xoffset, int yoffset);
 
 	void AddExplosion(float3 pos, float damage, float radius);
 
-	unsigned int scarTex;
+	void AddBuilding(CBuilding* building);
+	void RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb);
+	int GetBuildingDecalType(std::string name);
 
+	unsigned int scarTex;
 	int decalLevel;
 
 	struct TrackType {
@@ -51,6 +68,13 @@ public:
 		unsigned int texture;
 	};
 	std::vector<TrackType*> trackTypes;
+
+	struct BuildingDecalType {
+		std::string name;
+		std::set<BuildingGroundDecal*> buildingDecals;
+		unsigned int texture;
+	};
+	std::vector<BuildingDecalType*> buildingDecalTypes;
 
 	struct Scar {
 		float3 pos;
@@ -80,9 +104,15 @@ protected:
 	int scarFieldX;
 	int scarFieldY;
 
+	unsigned int decalVP;
+	unsigned int decalFP;
+
 	int OverlapSize(Scar* s1, Scar* s2);
 	void TestOverlaps(Scar* scar);
 	void RemoveScar(Scar* scar,bool removeFromScars);
+	unsigned int LoadTexture(std::string name);
+	void LoadScar(std::string file, unsigned char* buf, int xoffset, int yoffset);
+	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 };
 
 extern CGroundDecalHandler* groundDecals;

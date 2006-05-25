@@ -384,7 +384,8 @@ bool SpringApp::SetSDLVideoMode ()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
+	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
+	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
@@ -418,7 +419,7 @@ bool SpringApp::SetSDLVideoMode ()
  */
 void SpringApp::SetVSync ()
 {
-	bool enableVSync = configHandler.GetInt ("VSync", 0);
+	bool enableVSync = !!configHandler.GetInt ("VSync", 0);
 
 #ifdef WIN32
 	// VSync enabled is the default for OpenGL drivers
@@ -689,7 +690,7 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_KEYDOWN:
 				{
 					int i = event.key.keysym.sym;
-					bool isRepeat=keys[i];
+					bool isRepeat=!!keys[i];
 
 					UpdateSDLKeys ();
 

@@ -13,6 +13,7 @@ struct S3DOModel;
 struct UnitDef;
 class CWorldObject;
 class CUnit;
+struct BuildingGroundDecal;
 
 class CUnitDrawer
 {
@@ -68,10 +69,11 @@ public:
 	std::multimap<int,TempDrawUnit> tempTransperentDrawUnits;
 
 	struct GhostBuilding {
+		BuildingGroundDecal* decal;
 		float3 pos;
 		S3DOModel* model;
 	};
-	std::list<GhostBuilding> ghostBuildings;	//these are buildings that where in LOS_PREVLOS when they died and havent been in los since then
+	std::list<GhostBuilding*> ghostBuildings;	//these are buildings that where in LOS_PREVLOS when they died and havent been in los since then
 
 	bool showHealthBars;
 

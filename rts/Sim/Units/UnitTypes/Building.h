@@ -7,6 +7,8 @@
 
 #include "Sim/Units/Unit.h"
 
+struct BuildingGroundDecal;
+
 class CBuilding : public CUnit  
 {
 public:
@@ -17,6 +19,8 @@ public:
 
 	void Init(void);
 	void UnitInit (UnitDef* def, int team, const float3& position);
+
+	BuildingGroundDecal* buildingDecal;
 };
 
 #endif // __BUILDING_H__

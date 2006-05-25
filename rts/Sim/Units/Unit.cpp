@@ -196,15 +196,6 @@ CUnit::~CUnit()
 	}
 #endif
 
-	if(!gameSetup || gameSetup->ghostedBuildings) {
-		if(!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectating){
-			CUnitDrawer::GhostBuilding gb;
-			gb.pos=pos;
-			gb.model=model;
-			unitDrawer->ghostBuildings.push_back(gb);
-		}
-	}
-
 	if(activated && unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam]*=radarhandler->targFacEffect;
 	}

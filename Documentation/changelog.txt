@@ -10,6 +10,11 @@ TASpring change log
 - Adds some new options in the settings program for scroll speeds
 - Added new fbi tag "levelground" set this to 0 to prevent a building from leveling ground beneth it. Make sure that the model continue some way below ground so that they dont look like they float in air.
 - Fixed torpedo aircrafts not being able to attack subs
+- Added support for decals on ground below buildings
+- New fbi tag UseBuildingGroundDecal, set to 1 to enable decals for building
+- New fbi tag BuildingGroundDecalType, name of a bitmap in unittextures folder
+- New fbi tag BuildingGroundDecalSizeX,BuildingGroundDecalSizeY, size of decal (same scale as footprint for unit)
+- New fbi tag BuildingGroundDecalDecaySpeed, how fast the decal will fade out after the building has died, default 0.1 (fades out in 10s)
 
 0.71b1
 

@@ -226,6 +226,12 @@ struct UnitDef
 	bool isMetalMaker;
 	bool canLoopbackAttack;		//only matters for fighter aircrafts
 	bool levelGround;			//only matters for buildings
+
+	bool useBuildingGroundDecal;
+	int buildingDecalType;
+	int buildingDecalSizeX;
+	int buildingDecalSizeY;
+	float buildingDecalDecaySpeed;
 };
 
 

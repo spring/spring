@@ -361,7 +361,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 			void *inst = binder->class_->CreateInstance ();
 			objects [a].obj = inst;
 		} else objects[a].obj = 0;
-		objects [a].isEmbedded = d.isEmbedded;
+		objects [a].isEmbedded = !!d.isEmbedded;
 		objects [a].classRef = d.classRefIndex;
 	}
 

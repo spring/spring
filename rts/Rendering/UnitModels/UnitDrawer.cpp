@@ -26,9 +26,10 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/UI/InfoConsole.h"
-#include "mmgr.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
+#include "mmgr.h"
 
 CUnitDrawer* unitDrawer;
 using namespace std;
@@ -420,14 +421,17 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	}
 	//go through the dead but still ghosted buildings
 	glColor4f(0.6,0.6,0.6,0.4);
-	for(std::list<GhostBuilding>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
-		if(loshandler->InLos(gbi->pos,gu->myAllyTeam)){
+	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
+		if(loshandler->InLos((*gbi)->pos,gu->myAllyTeam)){
+			if((*gbi)->decal)
+				(*gbi)->decal->gbOwner=0;
+			delete *gbi;
 			gbi=ghostBuildings.erase(gbi);
 		} else {
-			if(camera->InView(gbi->pos,gbi->model->radius*2)){
+			if(camera->InView((*gbi)->pos,(*gbi)->model->radius*2)){
 				glPushMatrix();
-				glTranslatef3(gbi->pos);
-				gbi->model->DrawStatic();
+				glTranslatef3((*gbi)->pos);
+				(*gbi)->model->DrawStatic();
 				glPopMatrix();
 			}
 			++gbi;
