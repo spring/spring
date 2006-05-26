@@ -83,12 +83,6 @@ struct WeaponDef
 	bool stockpile;					
 	float coverageRange;		//range of anti nuke
 
-	bool isPlasmaRepulser;
-	float repulseEnergy;
-	float repulseRange;
-	float repulseForce;
-	float repulseSpeed;
-
 	float intensity;
 	float thickness;
 
@@ -125,6 +119,26 @@ struct WeaponDef
 		bool smokeTrail;
 		bool beamweapon;
 	}visuals;
+
+	bool isShield;					//if the weapon is a shield rather than a weapon
+	bool shieldRepulser;		//if the weapon should be repulsed or absorbed
+	bool smartShield;				//only affect enemy projectiles
+	bool exteriorShield;		//only affect stuff coming from outside shield radius
+	bool visibleShield;			//if the shield should be graphically shown
+	bool visibleShieldRepulse;	//if a small graphic should be shown at each repulse
+	float shieldEnergyUse;	//energy use per shot or per second depending on projectile
+	float shieldRadius;			//size of shielded area
+	float shieldForce;			//shield acceleration on plasma stuff
+	float shieldMaxSpeed;		//max speed shield can repulse plasma like weapons with
+	float shieldPower;			//how much damage the shield can reflect (0=infinite)
+	float shieldPowerRegen;	//how fast the power regenerates per second
+	float shieldPowerRegenEnergy;	//how much energy is needed to regenerate power per second
+	float3 shieldGoodColor;			//color when shield at full power
+	float3 shieldBadColor;			//color when shield is empty
+	float shieldAlpha;					//shield alpha value
+
+	unsigned int shieldInterceptType;				//type of shield (bitfield)
+	unsigned int interceptedByShieldType;		//weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
 };
 
 class CWeaponDefHandler

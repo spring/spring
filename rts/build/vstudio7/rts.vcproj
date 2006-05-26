@@ -3012,6 +3012,12 @@
 			RelativePath=".\rts.rc">
 		</File>
 		<File
+			RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.cpp">
+		</File>
+		<File
+			RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.h">
+		</File>
+		<File
 			RelativePath=".\spring.ico">
 		</File>
 	</Files>

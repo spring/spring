@@ -11,8 +11,7 @@
 #include "mmgr.h"
 
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)
-: CWeaponProjectile(pos,speed,owner,target,ZeroVector,weaponDef,0),
-	damages(damages),
+: CWeaponProjectile(pos,speed,owner,target,ZeroVector,weaponDef,damages,0),
 	ttl(ttl),
 	maxSpeed(maxSpeed),
 	tracking(tracking),

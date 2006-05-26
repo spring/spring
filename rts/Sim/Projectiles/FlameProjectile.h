@@ -14,7 +14,6 @@ public:
 	float3 spread;
 	float curTime;
 	float invttl;
-	DamageArray damages;
 	void Update(void);
 	void Draw(void);
 	void Collision(CUnit* unit);

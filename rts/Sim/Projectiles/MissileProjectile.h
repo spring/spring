@@ -19,12 +19,12 @@ public:
 	void Update(void);
 	void Draw(void);
 	void DrawUnitPart(void);
+	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
 	float3 dir;
 	float maxSpeed;
 	float curSpeed;
 	int ttl;
-	DamageArray damages;
 	float areaOfEffect;
 	int age;
 	float3 oldSmoke,oldDir;

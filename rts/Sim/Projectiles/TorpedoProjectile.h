@@ -19,7 +19,6 @@ public:
 	float maxSpeed;
 	float curSpeed;
 	int ttl;
-	DamageArray damages;
 	float areaOfEffect;
 	CUnit* target;
 	int nextBubble;

@@ -23,6 +23,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
+#include "Game/UI/InfoConsole.h"
 #include <algorithm>
 #include "mmgr.h"
 
@@ -533,16 +534,16 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	Projectile_List::iterator psi;
 	distlist.clear();
 	for(psi=ps.begin();psi != ps.end();++psi){
-		if(cam2->InView((*psi)->pos,(*psi)->drawRadius) && (loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
+		if(camera->InView((*psi)->pos,(*psi)->drawRadius) && (loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
 			if(drawReflection){
-				if((*psi)->pos.y<-3)
+				if((*psi)->pos.y < -(*psi)->drawRadius)
 					continue;
 				float dif=(*psi)->pos.y-camera->pos.y;
 				float3 zeroPos=camera->pos*((*psi)->pos.y/dif) + (*psi)->pos*(-camera->pos.y/dif);
-				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>3)
+				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>3+0.5*(*psi)->drawRadius)
 					continue;
 			}
-			if(drawRefraction && (*psi)->pos.y>(*psi)->radius)
+			if(drawRefraction && (*psi)->pos.y>(*psi)->drawRadius)
 				continue;
 			if((*psi)->s3domodel){
 				if((*psi)->s3domodel->textureType){

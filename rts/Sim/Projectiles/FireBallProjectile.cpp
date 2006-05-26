@@ -6,7 +6,7 @@
 #include "mmgr.h"
 
 CFireBallProjectile::CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)
-	: CWeaponProjectile(pos,speed, owner, target, targetPos, weaponDef,0)
+	: CWeaponProjectile(pos,speed, owner, target, targetPos, weaponDef,damages,0)
 {
 	SetRadius(10.0f);
 	drawRadius=15;

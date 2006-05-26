@@ -43,10 +43,33 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 dest
 	}
 }
 
-void CInterceptHandler::AddPlasma(CProjectile* p)
+void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 {
-	for(std::list<CPlasmaRepulser*>::iterator wi=plasmaRepulsors.begin();wi!=plasmaRepulsors.end();++wi)
-		(*wi)->NewPlasmaProjectile(p);
+	for(std::list<CPlasmaRepulser*>::iterator wi=plasmaRepulsors.begin();wi!=plasmaRepulsors.end();++wi){
+		CPlasmaRepulser* shield=*wi;
+		if(shield->weaponDef->shieldInterceptType & p->weaponDef->interceptedByShieldType){
+			shield->NewProjectile(p);
+		}
+	}
+}
+
+float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir,CPlasmaRepulser*& repulsedBy)
+{
+	float minRange=99999999;
+	float3 tempDir;
+
+	for(std::list<CPlasmaRepulser*>::iterator wi=plasmaRepulsors.begin();wi!=plasmaRepulsors.end();++wi){
+		CPlasmaRepulser* shield=*wi;
+		if(shield->weaponDef->shieldInterceptType & emitter->weaponDef->interceptedByShieldType){
+			float dist=shield->NewBeam(emitter,start,dir,length,tempDir);
+			if(dist>0 && dist<minRange){
+				minRange=dist;
+				newDir=tempDir;
+				repulsedBy=shield;
+			}
+		}
+	}
+	return minRange;
 }
 
 void CInterceptHandler::AddPlasmaRepulser(CPlasmaRepulser* r)

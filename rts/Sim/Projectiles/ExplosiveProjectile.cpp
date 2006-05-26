@@ -17,8 +17,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages, WeaponDef *weaponDef, int ttl,float areaOfEffect)
-: CWeaponProjectile(pos,speed,owner, 0,ZeroVector,weaponDef,0),
-	damages(damages),
+: CWeaponProjectile(pos,speed,owner, 0,ZeroVector,weaponDef,damages,0),
 	ttl(ttl),
 	areaOfEffect(areaOfEffect)
 {
@@ -27,7 +26,6 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed
 	SetRadius(0.05f);
 	drawRadius=2+min(damages[0]*0.0025,weaponDef->areaOfEffect*0.1);
 
-	interceptHandler.AddPlasma(this);
 #ifdef TRACE_SYNC
 	tracefile << "New explosive: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -89,4 +87,15 @@ void CExplosiveProjectile::Draw(void)
 		va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,0.125,0.125,col);
 		va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,0,0.125,col);
 	}
+}
+
+int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+{
+	float3 dir=pos-shieldPos;
+	dir.Normalize();
+	if(dir.dot(speed)<shieldMaxSpeed){
+		speed+=dir*shieldForce;
+		return 2;
+	}
+	return 0;
 }

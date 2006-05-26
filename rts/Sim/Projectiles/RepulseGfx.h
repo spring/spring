@@ -9,7 +9,7 @@ class CRepulseGfx :
 	public CProjectile
 {
 public:
-	CRepulseGfx(CUnit* owner,CProjectile* repulsed,float repulseSpeed,float maxDist);
+	CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color);
 	~CRepulseGfx(void);
 
 	void DependentDied(CObject* o);
@@ -17,9 +17,9 @@ public:
 	void Update(void);
 
 	CProjectile* repulsed;
-	float repulseSpeed;
 	float sqMaxDist;
 	int age;
+	float3 color;
 
 	float difs[25];
 };

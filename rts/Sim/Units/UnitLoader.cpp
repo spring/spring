@@ -325,7 +325,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 		weapon=new CMeleeWeapon(owner);
 	} else if(weapondef->type=="AircraftBomb"){
 		weapon=new CBombDropper(owner,false);
-	} else if(weapondef->type=="PlasmaRepulser"){
+	} else if(weapondef->type=="Shield"){
 		weapon=new CPlasmaRepulser(owner);
 	} else if(weapondef->type=="flame"){
 		weapon=new CFlameThrower(owner);

@@ -19,8 +19,7 @@
 static const float Smoke_Time=60;
 
 CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos)
-: CWeaponProjectile(pos,speed,owner,target,ZeroVector,weaponDef,0),
-	damages(damages),
+: CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,damages,0),
 	ttl(ttl),
 	maxSpeed(maxSpeed),
 	target(target),
@@ -327,4 +326,24 @@ void CMissileProjectile::DrawUnitPart(void)
 
 	glCallList(modelDispList);
 	glPopMatrix();
+}
+
+int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+{
+	float3 sdir=pos-shieldPos;
+	sdir.Normalize();
+	if(ttl > 0){
+		float3 dif2=sdir-dir;
+		float tracking=max(shieldForce*0.05f,weaponDef->turnrate*2);		//steer away twice as fast as we can steer toward target
+		if(dif2.Length()<tracking){
+			dir=sdir;
+		} else {
+			dif2-=dir*(dif2.dot(dir));
+			dif2.Normalize();
+			dir+=dif2*tracking;
+			dir.Normalize();
+		}
+		return 2;
+	}
+	return 0;
 }

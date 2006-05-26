@@ -17,18 +17,15 @@
 static const float Smoke_Time=70;
 
 CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef, CWeaponProjectile* interceptTarget)
-: CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,interceptTarget),
-	damages(damages),
+: CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,damages,interceptTarget),
 	ttl(200),
 	maxSpeed(maxSpeed),
 	tracking(tracking),
-	target(target),
 	dir(speed),
 	oldSmoke(pos),
 	age(0),
 	drawTrail(true),
 	numParts(0),
-	targetPos(targetPos),
 	doturn(true),
 	curCallback(0),
 	numCallback(0),
@@ -42,9 +39,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	curSpeed=speed.Length();
 	dir.Normalize();
 	oldSmokeDir=dir;
-	if(target){
-		AddDeathDependence(target);
-	}
+
 	drawRadius=maxSpeed*8;
 	ENTER_MIXED;
 	numCallback=new int;
@@ -77,13 +72,6 @@ CStarburstProjectile::~CStarburstProjectile(void)
 	for(int a=0;a<5;++a){
 		delete oldInfos[a];
 	}
-}
-
-void CStarburstProjectile::DependentDied(CObject* o)
-{
-	if(o==target)
-		target=0;
-	CWeaponProjectile::DependentDied(o);
 }
 
 void CStarburstProjectile::Collision()
@@ -365,4 +353,24 @@ void CStarburstProjectile::DrawUnitPart(void)
 
 	glCallList(modelDispList);
 	glPopMatrix();
+}
+
+int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+{
+	float3 sdir=pos-shieldPos;
+	sdir.Normalize();
+	if(ttl > 0){
+		float3 dif2=sdir-dir;
+		float tracking=max(shieldForce*0.05f,weaponDef->turnrate*2);		//steer away twice as fast as we can steer toward target
+		if(dif2.Length()<tracking){
+			dir=sdir;
+		} else {
+			dif2-=dir*(dif2.dot(dir));
+			dif2.Normalize();
+			dir+=dif2*tracking;
+			dir.Normalize();
+		}
+		return 2;
+	}
+	return 0;
 }
