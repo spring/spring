@@ -38,7 +38,7 @@ void CPlasmaRepulser::Init(void)
 	sqRadius=radius*radius;
 
 	if(weaponDef->shieldPower==0)
-		curPower=99999999999;
+		curPower=99999999999.0f;
 
 	if(weaponDef->visibleShield){
 		for(int y=0;y<16;y+=4){
