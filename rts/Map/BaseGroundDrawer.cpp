@@ -28,6 +28,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	viewRadius+=viewRadius%2;
 
 	drawMode=drawNormal;
+	drawRadarAndJammer=false;
 
 	extraTex=0;
 	extraTexPal=0;
@@ -214,23 +215,25 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				for(int x=0;x<gs->hmapx;++x){
 					int a=y*(gs->pwr2mapx>>1)+x;
 					int inRadar=0;
-					if(radarhandler->radarMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
-						inRadar=50;
 					int inJam=0;
-					if(radarhandler->jammerMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
-						inJam=50;
+					if (drawRadarAndJammer){
+						if(radarhandler->radarMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
+							inRadar=50;
+						if(radarhandler->jammerMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
+							inJam=50;
+					}
 					if(myLos[(y)*gs->hmapx+x]!=0){
-						infoTexMem[a*4]=170+inJam;
-						infoTexMem[a*4+1]=170+inRadar;
-						infoTexMem[a*4+2]=170;
+						infoTexMem[a*4]=128+inJam;
+						infoTexMem[a*4+1]=128+inRadar;
+						infoTexMem[a*4+2]=128;
 					} else if(myAirLos[(y/2)*gs->hmapx/2+x/2]!=0){
-						infoTexMem[a*4]=120+inJam;
-						infoTexMem[a*4+1]=120+inRadar;
-						infoTexMem[a*4+2]=120;
+						infoTexMem[a*4]=96+inJam;
+						infoTexMem[a*4+1]=96+inRadar;
+						infoTexMem[a*4+2]=96;
 					} else {
-						infoTexMem[a*4]=90+inJam;
-						infoTexMem[a*4+1]=90+inRadar;
-						infoTexMem[a*4+2]=90;
+						infoTexMem[a*4]=64+inJam;
+						infoTexMem[a*4+1]=64+inRadar;
+						infoTexMem[a*4+2]=64;
 					}
 				}
 			}
