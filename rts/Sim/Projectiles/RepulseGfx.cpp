@@ -5,12 +5,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
 
-CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float repulseSpeed,float maxDist)
+CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color)
 : CProjectile(repulsed->pos,repulsed->speed,owner),
 	repulsed(repulsed),
-	repulseSpeed(repulseSpeed),
 	age(0),
-	sqMaxDist(maxDist*maxDist+100)
+	sqMaxDist(maxDist*maxDist+100),
+	color(color)
 {
 	AddDeathDependence(owner);
 	AddDeathDependence(repulsed);
@@ -60,15 +60,12 @@ void CRepulseGfx::Draw(void)
 	dir1.Normalize();
 	float3 dir2=dir1.cross(dir);
 
-	float rs=repulsed->speed.dot(dir)/repulseSpeed;
-	rs=min(1.0f,max(0.0f,(rs+1)*0.5f));
-
 	inArray=true;
 	unsigned char col[4];
 	float alpha=min(255,age*10);
-	col[0]=(unsigned char)(rs*alpha);
-	col[1]=(unsigned char)(0.3*alpha);
-	col[2]=(unsigned char)((1-rs)*alpha);
+	col[0]=(unsigned char)(color.x*alpha);
+	col[1]=(unsigned char)(color.y*alpha);
+	col[2]=(unsigned char)(color.z*alpha);
 	col[3]=(unsigned char)(alpha*0.2);
 	float drawsize=10;
 	float3 interPos=pos+speed*gu->timeOffset;
@@ -86,11 +83,11 @@ void CRepulseGfx::Draw(void)
 		}
 	}
 	drawsize=7;
-	alpha=max(1.,min(10.,age*0.4));
-	col[0]=(unsigned char)(rs*alpha);
-	col[1]=(unsigned char)(0.3*alpha);
-	col[2]=(unsigned char)((1-rs)*alpha);
-	col[3]=(unsigned char)(min(2.f,alpha));
+	alpha=min(25,age);
+	col[0]=(unsigned char)(color.x*alpha);
+	col[1]=(unsigned char)(color.y*alpha);
+	col[2]=(unsigned char)(color.z*alpha);
+	col[3]=(unsigned char)(alpha*0.2);
 
 	unsigned char col2[4];
 	col2[0]=0;

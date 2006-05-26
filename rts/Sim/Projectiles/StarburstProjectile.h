@@ -13,12 +13,12 @@ class CStarburstProjectile :
 public:
 	CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,const DamageArray& damages,float areaOfEffect, float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget);
 	~CStarburstProjectile(void);
-	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
 	void Collision();
 	void Update(void);
 	void Draw(void);
 	void DrawUnitPart(void);
+	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
 	float tracking;
 	float maxGoodDif;
@@ -27,14 +27,11 @@ public:
 	float curSpeed;
 	int ttl;
 	int uptime;
-	DamageArray damages;
 	float areaOfEffect;
 	int age;
 	float3 oldSmoke,oldSmokeDir;
-	CUnit* target;
 	bool drawTrail;
 	int numParts;
-	float3 targetPos;
 	bool doturn;
 	CSmokeTrailProjectile* curCallback;
 	void DrawCallback(void);

@@ -13,21 +13,26 @@
 #include "Matrix44f.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
 
-CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget) : 
+CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,const DamageArray& damages,CWeaponProjectile* interceptTarget) : 
 	CProjectile(pos,speed,owner),
 	weaponDef(weaponDef),
 	target(target),
 	targetPos(targetPos),
 	startpos(pos),
 	targeted(false),
-	interceptTarget(interceptTarget)
+	interceptTarget(interceptTarget),
+	damages(damages)
 {
 	if(interceptTarget){
 		interceptTarget->targeted=true;
 		AddDeathDependence(interceptTarget);
 	}
+	if(weaponDef->interceptedByShieldType)
+		interceptHandler.AddShieldInterceptableProjectile(this);
+
 	if(!weaponDef->visuals.modelName.empty()){
 		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,0);
 		if(model){

@@ -12,13 +12,33 @@ TASpring change log
 - Added new fbi tag "levelground" set this to 0 to prevent a building from leveling ground beneth it. Make sure that the model continue some way below ground so that they dont look like they float in air.
 - Fixed torpedo aircrafts not being able to attack subs
 - Added support for decals on ground below buildings
-- New fbi tag UseBuildingGroundDecal, set to 1 to enable decals for building
-- New fbi tag BuildingGroundDecalType, name of a bitmap in unittextures folder
-- New fbi tag BuildingGroundDecalSizeX,BuildingGroundDecalSizeY, size of decal (same scale as footprint for unit)
-- New fbi tag BuildingGroundDecalDecaySpeed, how fast the decal will fade out after the building has died, default 0.1 (fades out in 10s)
+-  New fbi tag UseBuildingGroundDecal, set to 1 to enable decals for building
+-  New fbi tag BuildingGroundDecalType, name of a bitmap in unittextures folder
+-  New fbi tag BuildingGroundDecalSizeX,BuildingGroundDecalSizeY, size of decal (same scale as footprint for unit)
+-  New fbi tag BuildingGroundDecalDecaySpeed, how fast the decal will fade out after the building has died, default 0.1 (fades out in 10s)
 - New fbi tag ShowPlayerName, if set to 1 the tooltip shows the player name instead of the unit description
 - Fbi tag HideDamage now actually works: set it to 1 to hide most details in the unit's tooltip from enemies
 - New weapon tag "rgbcolor", overrides the old color1 and color2 tags if it exists, gives the color in red green blue format (1 1 1 = white).
+- Removed old plasmarepulser system and replaced it with a more generalized shield system
+-  New fbi tag IsShield, if 1 mean the weapon is a shield and now a weapon
+-  New fbi tag shieldrepulser, 0=destroy projectile,1=repulse (bounce) projectile
+-  New fbi tag smartshield, 1=shield doesnt affect allies weapons
+-  New fbi tag exteriorshield, 1=shield doesnt affect weapons fired from within shield
+-  New fbi tag visibleshield, 1=see a visible shell representing the shield
+-  New fbi tag visibleshieldrepulse, 1=see a beam showing when shield repulses something
+-  New fbi tag shieldenergyuse, how much energy the shield use when repulsing/destroying something
+-  New fbi tag shieldforce, how hard shield can accelerate some sort of projectiles away
+-  New fbi tag shieldradius, size of shield effect
+-  New fbi tag shieldmaxspeed, maximum speed the shield can push some sort of projectiles away
+-  New fbi tag shieldpower, how much power the shield can store, power is drained by the affected weapons damage, 0=infinite
+-  New fbi tag shieldpowerregen, how fast the shield regenerates power
+-  New fbi tag shieldpowerregenenergy, how much energy the shield uses when regenerating power
+-  New fbi tag shieldintercepttype, which types of weapon the shield can affect (bitfield)
+-  New fbi tag interceptedbyshieldtype, which types of shields can affect this weapon, if (shieldInterceptType & interceptedByShieldType) is not zero the shield can affect the weapon, default 1 for plasma, 2 for laser, 4 for missiles, 0 for other
+-  New fbi tag shieldgoodcolor, color of shield when power is full
+-  New fbi tag shieldbadcolor, color of shield when power is empty
+-  New fbi tag shieldalpha, how visible the shield shell is with visibleshield=1
+
 
 0.71b1
 

@@ -9,6 +9,8 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/BeamLaserProjectile.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
+#include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
 
 CBeamLaser::CBeamLaser(CUnit* owner)
@@ -100,17 +102,40 @@ void CBeamLaser::Fire(void)
 	if(owner->directControl)
 		rangeMod=0.95;
 #endif
+	float maxLength=range*rangeMod;
+	float curLength=0;
+	float3 curPos=weaponPos;
+	float3 hitPos;
 
-	CUnit* hit;
-	float length=helper->TraceRay(weaponPos,dir,range*rangeMod,damages[0],owner,hit);
-	float3 hitPos=weaponPos+dir*length;
-	float intensity=1-length/(range*2);
+	bool tryAgain=true;
+	for(int tries=0;tries<5 && tryAgain;++tries){
+		tryAgain=false;
+		CUnit* hit;
+		float length=helper->TraceRay(curPos,dir,maxLength-curLength,damages[0],owner,hit);
 
-	if(length<range*1.05)
+		float3 newDir;
+		CPlasmaRepulser* shieldHit;
+		float shieldLength=interceptHandler.AddShieldInterceptableBeam(this,curPos,dir,length,newDir,shieldHit);
+		if(shieldLength<length){
+			length=shieldLength;
+			bool repulsed=shieldHit->BeamIntercepted(this);
+			if(repulsed){
+				tryAgain=true;
+			}
+		}
+		hitPos=curPos+dir*length;
+
+		float baseAlpha=weaponDef->intensity*255;
+		float startAlpha=(1-curLength/(range*1.3))*baseAlpha;
+		float endAlpha=(1-(curLength+length)/(range*1.3))*baseAlpha;
+
+		new CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,owner,weaponDef->thickness);
+
+		curPos=hitPos;
+		curLength+=length;
+		dir=newDir;
+	}
+	float	intensity=1-(curLength)/(range*2);
+	if(curLength<maxLength)
 		helper->Explosion(hitPos,damages*intensity,areaOfEffect,owner);
-
-	float startAlpha=weaponDef->intensity*255;
-	float endAlpha=(1-length/(range*1.3))*startAlpha;
-
-	new CBeamLaserProjectile(weaponPos,hitPos,startAlpha,endAlpha,color,owner,weaponDef->thickness);
 }

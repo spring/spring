@@ -6,8 +6,7 @@
 #include "mmgr.h"
 
 CEmgProjectile::CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,const float3& color,float intensity, int ttl, WeaponDef *weaponDef)
-: CWeaponProjectile(pos,speed,owner,0,float3(0,0,0), weaponDef,0),
-	damages(damages),
+: CWeaponProjectile(pos,speed,owner,0,ZeroVector, weaponDef,damages,0),
 	ttl(ttl),
 	color(color),
 	intensity(intensity)
@@ -58,4 +57,15 @@ void CEmgProjectile::Draw(void)
 	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,0.125,0,col);
 	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,0.125,0.125,col);
 	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,0,0.125,col);
+}
+
+int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+{
+	float3 dir=pos-shieldPos;
+	dir.Normalize();
+	if(dir.dot(speed)<shieldMaxSpeed){
+		speed+=dir*shieldForce;
+		return 2;
+	}
+	return 0;
 }

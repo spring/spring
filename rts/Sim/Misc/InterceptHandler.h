@@ -20,7 +20,8 @@ public:
 	void RemoveInterceptorWeapon(CWeapon* weapon);
 	void AddInterceptTarget(CWeaponProjectile* target,float3 destination);
 
-	void AddPlasma(CProjectile* p);
+	void AddShieldInterceptableProjectile(CWeaponProjectile* p);
+	float AddShieldInterceptableBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir,CPlasmaRepulser*& repulsedBy);
 	void AddPlasmaRepulser(CPlasmaRepulser* r);
 	void RemovePlasmaRepulser(CPlasmaRepulser* r);
 

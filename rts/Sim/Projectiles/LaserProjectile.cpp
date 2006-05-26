@@ -3,11 +3,11 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
 
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color,float intensity, WeaponDef *weaponDef, int ttl)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0),
-	damages(damages),
+: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
 	ttl(ttl),
 	color(color),
 	length(length),
@@ -138,4 +138,17 @@ void CLaserProjectile::Draw(void)
 		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,col);
 		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,col);
 	}
+}
+
+int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+{
+	float3 sdir=pos-shieldPos;
+	sdir.Normalize();
+	if(sdir.dot(speed)<0){
+		speed-=sdir*sdir.dot(speed)*2;
+		dir=speed;
+		dir.Normalize();
+		return 1;
+	}
+	return 0;
 }

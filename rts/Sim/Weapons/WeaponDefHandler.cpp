@@ -89,7 +89,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].tracks, "0", weaponname + "\\tracks");
 	sunparser->GetDef(weaponDefs[id].noExplode, "0", weaponname + "\\NoExplode");
 	sunparser->GetDef(weaponDefs[id].maxvelocity, "0", weaponname + "\\weaponvelocity");
-	sunparser->GetDef(weaponDefs[id].isPlasmaRepulser, "0", weaponname + "\\PlasmaRepulser");
+	sunparser->GetDef(weaponDefs[id].isShield, "0", weaponname + "\\IsShield");
 	sunparser->GetDef(weaponDefs[id].beamtime, "1", weaponname + "\\beamtime");
 	sunparser->GetDef(weaponDefs[id].thickness, "2", weaponname + "\\thickness");
 	sunparser->GetDef(weaponDefs[id].intensity, "0.9", weaponname + "\\intensity");
@@ -118,8 +118,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	}	else if(beamlaser){
 		weaponDefs[id].type = "BeamLaser";
 
-	}	else if(weaponDefs[id].isPlasmaRepulser){
-		weaponDefs[id].type = "PlasmaRepulser";
+	}	else if(weaponDefs[id].isShield){
+		weaponDefs[id].type = "Shield";
 
 	} else if(weaponDefs[id].waterweapon) {
 		weaponDefs[id].type = "TorpedoLauncher";
@@ -230,15 +230,38 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].manualfire, "0", weaponname + "\\commandfire");
 	sunparser->GetDef(weaponDefs[id].coverageRange, "0", weaponname + "\\coverage");
 
-	sunparser->GetDef(weaponDefs[id].repulseEnergy, "0", weaponname + "\\repulseenergy");
-	sunparser->GetDef(weaponDefs[id].repulseForce, "0", weaponname + "\\repulseforce");
-	sunparser->GetDef(weaponDefs[id].repulseRange, "0", weaponname + "\\repulserange");
-	sunparser->GetDef(weaponDefs[id].repulseSpeed, "0", weaponname + "\\repulsespeed");
+	sunparser->GetDef(weaponDefs[id].shieldRepulser, "0", weaponname + "\\shieldrepulser");
+	sunparser->GetDef(weaponDefs[id].smartShield, "0", weaponname + "\\smartshield");
+	sunparser->GetDef(weaponDefs[id].exteriorShield, "0", weaponname + "\\exteriorshield");
+	sunparser->GetDef(weaponDefs[id].visibleShield, "0", weaponname + "\\visibleshield");
+	sunparser->GetDef(weaponDefs[id].visibleShieldRepulse, "0", weaponname + "\\visibleshieldrepulse");
+	sunparser->GetDef(weaponDefs[id].shieldEnergyUse, "0", weaponname + "\\shieldenergyuse");
+	sunparser->GetDef(weaponDefs[id].shieldForce, "0", weaponname + "\\shieldforce");
+	sunparser->GetDef(weaponDefs[id].shieldRadius, "0", weaponname + "\\shieldradius");
+	sunparser->GetDef(weaponDefs[id].shieldMaxSpeed, "0", weaponname + "\\shieldmaxspeed");
+	sunparser->GetDef(weaponDefs[id].shieldPower, "0", weaponname + "\\shieldpower");
+	sunparser->GetDef(weaponDefs[id].shieldPowerRegen, "0", weaponname + "\\shieldpowerregen");
+	sunparser->GetDef(weaponDefs[id].shieldPowerRegenEnergy, "0", weaponname + "\\shieldpowerregenenergy");
+	sunparser->GetDef(weaponDefs[id].shieldInterceptType, "0", weaponname + "\\shieldintercepttype");
+	weaponDefs[id].shieldGoodColor=sunparser->GetFloat3(float3(0.5,0.5,1),weaponname + "\\shieldgoodcolor");
+	weaponDefs[id].shieldBadColor=sunparser->GetFloat3(float3(1,0.5,0.5),weaponname + "\\shieldbadcolor");
+	sunparser->GetDef(weaponDefs[id].shieldAlpha, "0.2", weaponname + "\\shieldalpha");
+
+	int defInterceptType=0;
+	if(weaponDefs[id].type == "Cannon")
+		defInterceptType=1;
+	else if(weaponDefs[id].type == "LaserCannon" || weaponDefs[id].type == "BeamLaser")
+		defInterceptType=2;
+	else if(weaponDefs[id].type == "StarburstLauncher" || weaponDefs[id].type == "MissileLauncher")
+		defInterceptType=4;
+	char interceptChar[100];
+	sprintf(interceptChar,"%i",defInterceptType);
+	sunparser->GetDef(weaponDefs[id].interceptedByShieldType, interceptChar, weaponname + "\\interceptedbyshieldtype");
 
 	weaponDefs[id].wobble = atof(sunparser->SGetValueDef("0", weaponname + "\\wobble").c_str()) * PI / 0x7fff /30.0f;
 	sunparser->GetDef(weaponDefs[id].trajectoryHeight, "0", weaponname + "\\trajectoryheight");
 
-	weaponDefs[id].noAutoTarget= (weaponDefs[id].manualfire || weaponDefs[id].interceptor || weaponDefs[id].isPlasmaRepulser);
+	weaponDefs[id].noAutoTarget= (weaponDefs[id].manualfire || weaponDefs[id].interceptor || weaponDefs[id].isShield);
 
 	weaponDefs[id].onlyTargetCategory=0xffffffff;
 	if(atoi(sunparser->SGetValueDef("0", weaponname + "\\toairweapon").c_str())){

@@ -10,22 +10,22 @@ class CLaserProjectile :
 public:
 	CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color,float intensity, WeaponDef *weaponDef, int ttl=1000);
 	virtual ~CLaserProjectile();
+	void Draw(void);
+	void Update(void);
+	void Collision(CUnit* unit);
+	void Collision(CFeature* feature);
+	void Collision();
+	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
 	float3 dir;
 	int ttl;
 	float intensity;
 	float3 color;
-	DamageArray damages;
 	float length;
 	float curLength;
 	float speedf;
 	float intensityFalloff;
 
-	void Update(void);
-	void Collision(CUnit* unit);
-	void Collision(CFeature* feature);
-	void Collision();
-	void Draw(void);
 };
 
 
