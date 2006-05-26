@@ -6,7 +6,7 @@
 #include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/EmgProjectile.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "SyncTracer.h"
 #include "WeaponDefHandler.h"

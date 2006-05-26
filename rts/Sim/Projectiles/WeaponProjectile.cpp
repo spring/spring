@@ -7,7 +7,6 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/TextureHandler.h"
-#include "Sim/Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "LaserProjectile.h"
 #include "FireBallProjectile.h"

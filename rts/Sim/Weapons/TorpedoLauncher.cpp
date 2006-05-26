@@ -4,7 +4,7 @@
 #include "Sim/Projectiles/TorpedoProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"

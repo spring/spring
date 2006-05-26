@@ -4,43 +4,43 @@
 #ifndef __BF_GROUND_DRAWER_H__
 #define __BF_GROUND_DRAWER_H__
 
-#include "BaseGroundDrawer.h"
+#include "Map/BaseGroundDrawer.h"
 
 class CVertexArray;
+class CSmfReadMap;
+class CBFGroundTextures;
 
+
+/**
+Map drawer implementation for the CSmfReadMap map system.
+*/
 class CBFGroundDrawer :
 	public CBaseGroundDrawer
 {
 public:
-	CBFGroundDrawer(void);
+	CBFGroundDrawer(CSmfReadMap *rm);
 	~CBFGroundDrawer(void);
 	void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0);
-	void SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes);
-	void SetHeightTexture();
-	void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes);
-	void SetPathMapTexture();
-
-	bool UpdateTextures();
-	void ToggleLosTexture();
 
 protected:
+	CSmfReadMap *map;
+	CBFGroundTextures *textures;
+
 	int numBigTexX;
 	int numBigTexY;
-
-	unsigned char* infoTexMem;
-	bool highResInfoTex;
-	bool highResInfoTexWanted;
-
-	unsigned char* extraTex;
-	unsigned char* extraTexPal;
-	float* extractDepthMap;
 
 	float* heightData;
 	int heightDataX;
 
-	int updateTextureState;
-
 	CVertexArray* va;
+
+	struct fline {
+		float base;
+		float dir;
+	};
+	std::vector<fline> right,left;
+
+	friend class CSmfReadMap;
 
 	unsigned int groundVP;
 	unsigned int groundShadowVP;
@@ -52,9 +52,12 @@ protected:
 	void DrawGroundVertexArray();
 	void SetupTextureUnits(bool drawReflection,unsigned int overrideVP);
 	void ResetTextureUnits(bool drawReflection,unsigned int overrideVP);
-	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
+
+	void AddFrustumRestraint(float3 side);
+	void UpdateCamRestraints();
+	void Update(){}
 public:
-	void DrawShadowPass(void);
+	void DrawShadowPass();
 };
 
 #endif // __BF_GROUND_DRAWER_H__

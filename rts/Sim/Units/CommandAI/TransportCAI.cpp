@@ -5,7 +5,7 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
 #include "Game/UI/InfoConsole.h"
 #include "Rendering/GL/myGL.h"

@@ -12,7 +12,7 @@
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/MoveTypes/MoveType.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Sim/Misc/Feature.h"

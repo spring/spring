@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "AirCAI.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/UnitHandler.h"
 #include "ExternalAI/Group.h"

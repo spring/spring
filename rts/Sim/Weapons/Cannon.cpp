@@ -11,7 +11,7 @@
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "SyncTracer.h"
 #include "Sound.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "myMath.h"
 #include "Sim/Projectiles/WeaponProjectile.h"

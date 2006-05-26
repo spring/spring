@@ -8,9 +8,11 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
 #include "mmgr.h"
+
+using namespace std;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

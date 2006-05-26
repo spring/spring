@@ -2,7 +2,7 @@
 #include "FlameThrower.h"
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/FlameProjectile.h"
 #include "WeaponDefHandler.h"

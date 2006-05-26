@@ -6,7 +6,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
 #include "GlobalStuff.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "mmgr.h"
 

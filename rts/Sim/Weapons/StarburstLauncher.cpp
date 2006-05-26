@@ -4,7 +4,7 @@
 #include "Sim/Projectiles/StarburstProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"

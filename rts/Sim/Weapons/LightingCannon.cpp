@@ -5,7 +5,7 @@
 #include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/LightingProjectile.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 

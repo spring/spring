@@ -11,9 +11,13 @@ public:
 	~CGrassDrawer(void);
 
 	void Draw(void);
+	void AddGrass(float3 pos);
+	void ResetPos(const float3& pos);
+	void RemoveGrass(int x, int z);
+
+protected:
 	void CreateGrassBladeTex(unsigned char* buf);
 	void CreateFarTex(void);
-	void AddGrass(float3 pos);
 
 	struct GrassStruct {
 		CVertexArray* va;
@@ -30,8 +34,9 @@ public:
 	};
 	NearGrassStruct nearGrass[32*32];
 
-	void ResetPos(const float3& pos);
 	void CreateGrassDispList(int listNum);
+
+	friend class CGrassBlockDrawer;
 
 	bool grassOff;
 
@@ -41,7 +46,6 @@ public:
 	unsigned int grassDL;
 	unsigned int grassBladeTex;
 	unsigned int farTex;
-
 
 	unsigned int grassVP;
 	unsigned int grassFarVP;
@@ -54,7 +58,6 @@ public:
 	int strawPerTurf;
 
 	unsigned char* grassMap;
-	void RemoveGrass(int x, int z);
 	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 };
 

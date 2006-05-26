@@ -10,7 +10,7 @@
 #include <list>
 #include <deque>
 #include "MemPool.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 #include "RadarHandler.h"

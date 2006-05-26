@@ -4,7 +4,7 @@
 #include "GlobalAICallback.h"
 #include "Net.h"
 #include "GlobalAI.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Group.h"
@@ -25,7 +25,7 @@
 #include "Sim/Path/PathManager.h"
 #include "AICheats.h"
 #include "Game/GameSetup.h"
-#include "Sim/Map/SmfReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/Player.h"
@@ -482,12 +482,12 @@ const char* CAICallback::GetModName()
 
 float CAICallback::GetMaxMetal()
 {
-	return ((CSmfReadMap*)readmap)->maxMetal;
+	return readmap->maxMetal;
 }
 
 float CAICallback::GetExtractorRadius()
 {
-	return ((CSmfReadMap*)readmap)->extractorRadius;
+	return readmap->extractorRadius;
 }
 
 float CAICallback::GetMinWind()
@@ -502,7 +502,7 @@ float CAICallback::GetMaxWind()
 
 float CAICallback::GetTidalStrength()
 {
-	return ((CSmfReadMap*)readmap)->tidalStrength;
+	return readmap->tidalStrength;
 }
 
 /*const unsigned char* CAICallback::GetSupplyMap()

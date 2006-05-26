@@ -17,7 +17,7 @@
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Game/Player.h"
 #include "Sim/Misc/LosHandler.h"

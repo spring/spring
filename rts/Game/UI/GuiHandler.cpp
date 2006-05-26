@@ -8,7 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "MouseHandler.h"
 #include "Rendering/glFont.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "InfoConsole.h"
 #include <map>
@@ -26,7 +26,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Misc/Feature.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "SDL_keysym.h"
@@ -145,7 +145,7 @@ void CGuiHandler::LayoutIcons()
 
 	if(showingMetal){
 		showingMetal=false;
-		groundDrawer->SetExtraTexture(0,0,false);
+		readmap->GetGroundDrawer()->DisableExtraTexture();
 	}
 
 	CSelectedUnits::AvailableCommandsStruct ac=selectedUnits.GetAvailableCommands();;
@@ -275,7 +275,7 @@ void CGuiHandler::DrawButtons()
 	if(needShift && !keys[SDLK_LSHIFT]){
 		if(showingMetal){
 			showingMetal=false;
-			groundDrawer->SetExtraTexture(0,0,false);
+			readmap->GetGroundDrawer()->DisableExtraTexture();
 		}
 		inCommand=-1;
 		needShift=false;
@@ -467,7 +467,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 	if(needShift && !keys[SDLK_LSHIFT]){
 		if(showingMetal){
 			showingMetal=false;
-			groundDrawer->SetExtraTexture(0,0,false);
+			readmap->GetGroundDrawer()->DisableExtraTexture();
 		}
 		inCommand=-1;
 		needShift=false;
@@ -485,7 +485,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 	if(icon>=0 && icon<commands.size()){
 		if(showingMetal){
 			showingMetal=false;
-			groundDrawer->SetExtraTexture(0,0,false);
+			readmap->GetGroundDrawer()->DisableExtraTexture();
 		}
 		switch(commands[icon].type){
 			case CMDTYPE_ICON:{
@@ -523,8 +523,9 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 			case CMDTYPE_ICON_BUILDING:{
 				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[icon].id);
-				if(ud->extractsMetal>0 && !groundDrawer->drawMetalMap && autoShowMetal){
-					groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
+				CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
+				if(ud->extractsMetal>0 && gd->drawMode != CBaseGroundDrawer::drawMetal && autoShowMetal){
+					readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
 					showingMetal=true;
 				}
 				inCommand=icon;
@@ -903,7 +904,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		inCommand=-1;
 		if(showingMetal){
 			showingMetal=false;
-			groundDrawer->SetExtraTexture(0,0,false);
+			readmap->GetGroundDrawer()->DisableExtraTexture();
 		}
 		return true;
 	}
@@ -911,7 +912,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		inCommand=-1;
 		if(showingMetal){
 			showingMetal=false;
-			groundDrawer->SetExtraTexture(0,0,false);
+			readmap->GetGroundDrawer()->DisableExtraTexture();
 		}
 		return true;
 	}
@@ -1012,7 +1013,7 @@ void CGuiHandler::FinishCommand(int button)
 	} else {
 		if(showingMetal){
 			showingMetal=false;
-			groundDrawer->SetExtraTexture(0,0,false);
+			readmap->GetGroundDrawer()->DisableExtraTexture();
 		}
 		inCommand=-1;
 	}

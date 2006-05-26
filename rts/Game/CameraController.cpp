@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "CameraController.h"
 #include "Camera.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
 #include "Platform/ConfigHandler.h"

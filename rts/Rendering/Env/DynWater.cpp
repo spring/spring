@@ -6,17 +6,15 @@
 #include <math.h>
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Game/UI/InfoConsole.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "Sim/Map/SmfReadMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/GameHelper.h"
-#include "Sim/Map/SmfReadMap.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitHandler.h"
@@ -115,7 +113,7 @@ CDynWater::CDynWater(void)
 	dwAddSplashFP=LoadFragmentProgram("dwAddSplash.fp");
 	dwAddSplashVP=LoadVertexProgram("dwAddSplash.vp");
 
-	waterSurfaceColor = ((CSmfReadMap*)readmap)->waterSurfaceColor;
+	waterSurfaceColor = readmap->waterSurfaceColor;
 
 	for(int y=0;y<1024;++y){
 		for(int x=0;x<1024;++x){
@@ -276,7 +274,7 @@ void CDynWater::Draw()
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glBindTexture(GL_TEXTURE_2D,refractTexture);
 	glActiveTextureARB(GL_TEXTURE4_ARB);
-	glBindTexture(GL_TEXTURE_2D,((CSmfReadMap*)readmap)->shadowTex);
+	glBindTexture(GL_TEXTURE_2D,readmap->GetShadingTexture ());
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D,foamTex);
 	glActiveTextureARB(GL_TEXTURE6_ARB);
@@ -365,11 +363,12 @@ void CDynWater::UpdateWater(CGame* game)
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(1);
 
-	int oldViewRadius=groundDrawer->viewRadius;
-	groundDrawer->viewRadius=int(0.7*oldViewRadius);
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
+	int oldViewRadius=gd->viewRadius;
+	gd->viewRadius=int(0.7*oldViewRadius);
 	DrawRefraction(game);
 	DrawReflection(game);
-	groundDrawer->viewRadius=oldViewRadius;
+	gd->viewRadius=oldViewRadius;
 }
 
 void CDynWater::Update()
@@ -429,12 +428,13 @@ void CDynWater::DrawReflection(CGame* game)
 	bool drawShadows=shadowHandler->drawShadows;
 	shadowHandler->drawShadows=false;
 
-	groundDrawer->Draw(true,false,dwGroundReflectIVP);
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
+	gd->Draw(true,false,dwGroundReflectIVP);
 
 	double plane[4]={0,1,0,1.0};
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 
-	groundDrawer->Draw(true);
+	gd->Draw(true);
 
 	shadowHandler->drawShadows=drawShadows;
 
@@ -478,8 +478,8 @@ void CDynWater::DrawRefraction(CGame* game)
 	unitDrawer->unitSunColor*=float3(0.5,0.7,0.9);
 	unitDrawer->unitAmbientColor*=float3(0.6,0.8,1.0);
 
-	groundDrawer->Draw(false,false,dwGroundRefractVP);
-
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
+	gd->Draw(false,false,dwGroundRefractVP);
 
 	glEnable(GL_CLIP_PLANE2);
 	double plane[4]={0,-1,0,2};
@@ -573,7 +573,7 @@ void CDynWater::DrawWaves(void)
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D,waveTex1);
 	glActiveTextureARB(GL_TEXTURE6_ARB);
-	glBindTexture(GL_TEXTURE_2D,((CSmfReadMap*)readmap)->shadowTex);
+	glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture ());
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, waveFP2 );

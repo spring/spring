@@ -2,7 +2,7 @@
 #include "GUIgame.h"
 #include "GUIcontroller.h"
 #include "Game/Camera.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/UnitHandler.h"
@@ -15,9 +15,7 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Game/Team.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
-
-// things that I have added
+#include "Map/BaseGroundDrawer.h"
 #include "Net.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -332,7 +330,7 @@ void GUIgame::StopCommand()
 	currentCommand=NULL;
 	if(showingMetalMap)
 	{
-		groundDrawer->SetExtraTexture(0,0,false);
+		readmap->GetGroundDrawer()->DisableExtraTexture();
 		showingMetalMap=false;
 	}
 }
@@ -353,9 +351,9 @@ void GUIgame::StartCommand(CommandDescription& cmd)
 		if(currentCommand->type==CMDTYPE_ICON_BUILDING)
 		{
 			UnitDef* ud=unitDefHandler->GetUnitByID(-currentCommand->id);
-			if(ud->extractsMetal>0 && !groundDrawer->drawMetalMap)
+			if(ud->extractsMetal>0 && readmap->GetGroundDrawer ()->drawMode != CBaseGroundDrawer::drawMetal)
 			{
-					groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
+					readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
 					showingMetalMap=true;
 			}
 		}
@@ -801,6 +799,8 @@ bool GUIgame::EventAction(const string& command)
 	// if never fired, and camMove[6] or 7 is not changed back to false, so this needs to be done
 	game->camMove[6] = game->camMove[7] = false;
 
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
+
 	int id = FindCommand(command);
 
 	if ( id == -1 )
@@ -919,14 +919,14 @@ bool GUIgame::EventAction(const string& command)
 			globalQuit=true;
 	}
 	else if (id==COMMAND_togglelos){
-		groundDrawer->ToggleLosTexture();
+		gd->ToggleLosTexture();
 	}
 	else if(id==COMMAND_mousestate){
 		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 	}
 
 	else if (id==COMMAND_updatefov)
-		groundDrawer->updateFov=!groundDrawer->updateFov;
+		gd->updateFov=!gd->updateFov;
 
 	else if (id==COMMAND_drawtrees)
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
@@ -938,23 +938,23 @@ bool GUIgame::EventAction(const string& command)
 //		hideInterface=!hideInterface;
 
 	else if (id==COMMAND_increaseviewradius){
-		groundDrawer->viewRadius+=2;
-	//	(*guicontroller) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
+		gd->viewRadius+=2;
+	//	(*guicontroller) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
 
 	else if (id==COMMAND_decreaseviewradius){
-		groundDrawer->viewRadius-=2;
-	//	(*guicontroller) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
+		gd->viewRadius-=2;
+	//	(*guicontroller) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
 
 	else if (id==COMMAND_moretrees){
-		groundDrawer->baseTreeDistance+=0.2f;
-	//	(*guicontroller) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		treeDrawer->baseTreeDistance+=0.2f;
+	//	(*guicontroller) << "Base tree distance " << gd->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 
 	else if (id==COMMAND_lesstrees){
-		groundDrawer->baseTreeDistance-=0.2f;
-	//	(*guicontroller) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		treeDrawer->baseTreeDistance-=0.2f;
+	//	(*guicontroller) << "Base tree distance " << gd->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 
 	else if (id==COMMAND_moreclouds){
@@ -1038,11 +1038,11 @@ bool GUIgame::EventAction(const string& command)
 	}
 
 	else if (id==COMMAND_showstandard){
-		groundDrawer->SetExtraTexture(0,0,false);
+		gd->DisableExtraTexture();
 	}
 
 	else if (id==COMMAND_showelevation){	
-		groundDrawer->SetHeightTexture();
+		gd->SetHeightTexture();
 	}
 	else if (id==COMMAND_lastmsgpos){
 		mouse->currentCamController->SetPos(guicontroller->lastMsgPos);
@@ -1050,10 +1050,10 @@ bool GUIgame::EventAction(const string& command)
 		mouse->transitSpeed=0.5;
 	}
 	else if (id==COMMAND_showmetalmap){
-		groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);		
+		gd->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);		
 	}
 	else if (id==COMMAND_showpathmap && gs->cheatEnabled){
-		groundDrawer->SetPathMapTexture();
+		gd->SetPathMapTexture();
 	}
 
 	else if(id==COMMAND_drawinmapon){

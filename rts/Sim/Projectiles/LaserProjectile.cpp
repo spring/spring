@@ -1,11 +1,7 @@
 #include "StdAfx.h"
 #include "LaserProjectile.h"
-#include "ProjectileHandler.h"
-#include "Sim/Units/Unit.h"
-#include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "SyncTracer.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "mmgr.h"
 

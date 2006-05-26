@@ -1,10 +1,8 @@
 #include "StdAfx.h"
 #include "FireProjectile.h"
 #include "Sim/Misc/Wind.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include <vector>
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Feature.h"
 #include "ProjectileHandler.h"

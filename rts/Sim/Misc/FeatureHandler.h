@@ -37,7 +37,7 @@ public:
 	int AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
 
-	void LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs);
+	void LoadFeaturesFromMap(bool onlyCreateDefs);
 
 	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
@@ -45,7 +45,7 @@ public:
 
 	void Draw();
 	void DrawShadowPass();
-	void DrawRaw(int extraSize,std::vector<CFeature*>* farFeatures);		//the part of draw that both draw and drawshadowpass can use
+	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures);		//the part of draw that both draw and drawshadowpass can use
 
 	TdfParser wreckParser;
 	std::map<std::string,FeatureDef*> featureDefs;

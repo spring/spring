@@ -10,7 +10,7 @@
 #include "WreckProjectile.h"
 #include "SmokeProjectile.h"
 #include "ProjectileHandler.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

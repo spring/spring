@@ -5,10 +5,7 @@
 
 #include "ExplosiveProjectile.h"
 #include "Game/GameHelper.h"
-#include "Sim/Units/Unit.h"
-#include "SyncTracer.h"
-#include "Sim/Map/Ground.h"
-#include "Rendering/GL/myGL.h"
+#include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/WeaponDefHandler.h"

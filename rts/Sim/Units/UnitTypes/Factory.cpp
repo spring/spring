@@ -20,10 +20,10 @@
 #include "myMath.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "SyncTracer.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sound.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "mmgr.h"
 

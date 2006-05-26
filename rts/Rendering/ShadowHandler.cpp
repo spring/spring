@@ -6,7 +6,7 @@
 #include "UnitModels/UnitDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Matrix44f.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/InfoConsole.h"
@@ -101,10 +101,21 @@ void CShadowHandler::DrawShadowPasses(void)
 	ph->DrawShadowPass();
 	unitDrawer->DrawShadowPass();
 	featureHandler->DrawShadowPass();
-	groundDrawer->DrawShadowPass();
+	readmap->GetGroundDrawer()->DrawShadowPass();
 	treeDrawer->DrawShadowPass();
 
 	inShadowPass=false;
+}
+
+void CShadowHandler::GetShadowMapSizeFactors (float &p17, float &p18)
+{
+	if(shadowMapSize==2048){
+		p17=0.01f;
+		p18=-0.1f;
+	} else {
+		p17=0.0025f;
+		p18=-0.05f;
+	}
 }
 
 void CShadowHandler::CreateShadows(void)
@@ -147,8 +158,8 @@ void CShadowHandler::CreateShadows(void)
 	float maxLength=12000;
 	float maxLengthX=(x2-x1)*1.5;
 	float maxLengthY=(y2-y1)*1.5;
-	float xmid=1-(sqrt(fabs(x2))/(sqrt(fabs(x2))+sqrt(fabs(x1))));
-	float ymid=1-(sqrt(fabs(y2))/(sqrt(fabs(y2))+sqrt(fabs(y1))));
+	xmid=1-(sqrt(fabs(x2))/(sqrt(fabs(x2))+sqrt(fabs(x1))));
+	ymid=1-(sqrt(fabs(y2))/(sqrt(fabs(y2))+sqrt(fabs(y1))));
 	//info->AddLine("%.0f %.0f %.2f %.0f",y1,y2,ymid,maxLengthY);
 
 	shadowMatrix[0]=cross1.x/maxLengthX;
@@ -166,13 +177,11 @@ void CShadowHandler::CreateShadows(void)
 	glLoadMatrixf(shadowMatrix.m);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,16, xmid,ymid,0,0);	//these registers should not be overwritten by anything
 
-	if(shadowMapSize==2048){
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,17, 0.01,0.01,0,0);	//these registers should not be overwritten by anything
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,18, -0.1,-0.1,0,0);	//these registers should not be overwritten by anything
-	} else {
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,17, 0.0025,0.0025,0,0);	//these registers should not be overwritten by anything
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,18, -0.05,-0.05,0,0);	//these registers should not be overwritten by anything
-	}
+	float p17,p18;
+	GetShadowMapSizeFactors(p17,p18);
+
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,17, p17,p17,0.0f,0.0f);	//these registers should not be overwritten by anything
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,18, p18,p18,0.0f,0.0f);	//these registers should not be overwritten by anything
 
 	float3 oldup=camera->up;
 	camera->right=shadowHandler->cross1;

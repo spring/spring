@@ -10,8 +10,8 @@
 #include "Platform/ConfigHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Map/ReadMap.h"
-#include "Sim/Map/Ground.h"
+#include "Map/ReadMap.h"
+#include "Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/FartextureHandler.h"
@@ -22,10 +22,10 @@
 #include "Game/GameHelper.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Rendering/Env/BaseSky.h"
-#include "Rendering/Map/BFGroundDrawer.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/UI/InfoConsole.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
@@ -45,6 +45,7 @@ CUnitDrawer::CUnitDrawer(void)
 	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
 
 	CBitmap white;
+	white.Alloc(1,1);
 	for(int a=0;a<4;++a)
 		white.mem[a]=255;
 
@@ -932,7 +933,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 
 	sky->Draw();
 
-	groundDrawer->Draw(false,true);
+	readmap->GetGroundDrawer()->Draw(false,true);
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
 	glCopyTexSubImage2D(gltype,0,0,0,0,0,128,128);

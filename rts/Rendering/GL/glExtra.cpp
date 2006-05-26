@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "glExtra.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "mmgr.h"
 
 

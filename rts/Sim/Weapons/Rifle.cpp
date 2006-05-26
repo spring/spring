@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "SyncTracer.h"
 #include "Sound.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "myMath.h"

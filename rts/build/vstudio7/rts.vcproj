@@ -1402,28 +1402,6 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="Map"
-				Filter="">
-				<File
-					RelativePath="..\..\Rendering\Map\BaseGroundDrawer.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Map\BaseGroundDrawer.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Map\BFGroundDrawer.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Map\BFGroundDrawer.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Map\BFGroundTextures.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Map\BFGroundTextures.h">
-				</File>
-			</Filter>
-			<Filter
 				Name="Textures"
 				Filter="">
 				<File
@@ -1956,55 +1934,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Objects\WorldObject.h">
-				</File>
-			</Filter>
-			<Filter
-				Name="Map"
-				Filter="">
-				<File
-					RelativePath="..\..\Sim\Map\BasicMapDamage.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\BasicMapDamage.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\Ground.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\Ground.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\MapDamage.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\MapDamage.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\mapfile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\MetalMap.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\MetalMap.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\NoMapDamage.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\NoMapDamage.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\ReadMap.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\ReadMap.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\SmfReadMap.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Map\SmfReadMap.h">
 				</File>
 			</Filter>
 			<Filter
@@ -3002,6 +2931,77 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sound.h">
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="Map"
+			Filter="">
+			<File
+				RelativePath="..\..\Map\BaseGroundDrawer.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Map\BaseGroundDrawer.h">
+			</File>
+			<File
+				RelativePath="..\..\Map\BasicMapDamage.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Map\BasicMapDamage.h">
+			</File>
+			<File
+				RelativePath="..\..\Map\Ground.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Map\Ground.h">
+			</File>
+			<File
+				RelativePath="..\..\Map\MapDamage.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Map\MapDamage.h">
+			</File>
+			<File
+				RelativePath="..\..\Map\MetalMap.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Map\MetalMap.h">
+			</File>
+			<File
+				RelativePath="..\..\Map\NoMapDamage.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Map\NoMapDamage.h">
+			</File>
+			<File
+				RelativePath="..\..\Map\ReadMap.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Map\ReadMap.h">
+			</File>
+			<Filter
+				Name="SMF"
+				Filter="">
+				<File
+					RelativePath="..\..\Map\Smf\BFGroundDrawer.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Map\Smf\BFGroundDrawer.h">
+				</File>
+				<File
+					RelativePath="..\..\Map\Smf\BFGroundTextures.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Map\Smf\BFGroundTextures.h">
+				</File>
+				<File
+					RelativePath="..\..\Map\Smf\mapfile.h">
+				</File>
+				<File
+					RelativePath="..\..\Map\Smf\SmfReadMap.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Map\Smf\SmfReadMap.h">
 				</File>
 			</Filter>
 		</Filter>

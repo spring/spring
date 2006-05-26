@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "MoveType.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "mmgr.h"
 

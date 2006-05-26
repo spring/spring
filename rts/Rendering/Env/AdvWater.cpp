@@ -9,14 +9,13 @@
 #include <math.h>
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Game/UI/InfoConsole.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
+#include "Map/BaseGroundDrawer.h"
 #include "BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "Sim/Map/SmfReadMap.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -102,7 +101,7 @@ CAdvWater::CAdvWater()
 
 	waterFP=LoadFragmentProgram("water.fp");
 
-	waterSurfaceColor = ((CSmfReadMap*)readmap)->waterSurfaceColor;
+	waterSurfaceColor = readmap->waterSurfaceColor;
 }
 
 CAdvWater::~CAdvWater()
@@ -327,7 +326,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 
-	groundDrawer->Draw(true);
+	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
 	ph->Draw(true);

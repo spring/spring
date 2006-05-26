@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "MobileCAI.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/UnitHandler.h"
 #include "ExternalAI/Group.h"

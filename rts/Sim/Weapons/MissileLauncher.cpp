@@ -4,7 +4,7 @@
 #include "Sim/Projectiles/MissileProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "WeaponDefHandler.h"

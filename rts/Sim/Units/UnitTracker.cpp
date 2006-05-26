@@ -7,7 +7,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "UnitHandler.h"
 #include "Platform/ConfigHandler.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/CameraController.h"
 #include "mmgr.h"
 

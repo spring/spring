@@ -23,7 +23,9 @@ public:
 
 	virtual ~CBitmap();
 
-	void Load(string const& filename, unsigned char defaultAlpha=255);
+	void Alloc(int w,int y);
+	bool Load(string const& filename, unsigned char defaultAlpha=255);
+	bool LoadGrayscale(string const& filename);
 	void Save(string const& filename);
 
 	unsigned int CreateTexture(bool mipmaps=false);
@@ -43,7 +45,8 @@ public:
 
 	enum BitmapType
 	{
-		BitmapTypeStandard,
+		BitmapTypeStandardRGBA,
+		BitmapTypeStandardAlpha,
 		BitmapTypeDDS
 	};
 

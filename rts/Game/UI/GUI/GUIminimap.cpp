@@ -6,7 +6,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Game/Camera.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -23,7 +23,6 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Map/SmfReadMap.h"
 
 
 GUIminimap::GUIminimap():GUIframe(0, 0, 128, 128)
@@ -110,61 +109,7 @@ void GUIminimap::PrivateDraw()
 
 	glColor4f(0.6,0.6,0.6,1);
 
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, readmap->minimapTex);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-
-	if((groundDrawer->drawExtraTex)){
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		glBindTexture(GL_TEXTURE_2D, groundDrawer->infoTex);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-	}
-
-	float isx=2*gs->hmapx/float(gs->pwr2mapx);
-	float isy=2*gs->hmapy/float(gs->pwr2mapy);
-
-	glBegin(GL_QUADS);
-		glTexCoord2f(0,isy);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,1);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,isy);
-		glVertex2f(0,0);
-		glTexCoord2f(0,0);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,0);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,0);
-		glVertex2f(0,1);
-		glTexCoord2f(isx,0);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,0);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,0);
-		glVertex2f(1,1);
-		glTexCoord2f(isx,isy);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,1);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,isy);
-		glVertex2f(1,0);
-	glEnd();
-
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE2_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
-	glDisable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	readmap->DrawMinimap ();
 
 	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, unitBlip);

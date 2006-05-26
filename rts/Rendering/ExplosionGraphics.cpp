@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/WakeProjectile.h"
 #include "Game/Camera.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Projectiles/DirtProjectile.h"
 #include "Sim/Projectiles/ExploSpikeProjectile.h"
 

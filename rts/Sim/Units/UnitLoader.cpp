@@ -11,7 +11,7 @@
 #include "Sim/Weapons/bombdropper.h"
 #include "Sim/Weapons/FlameThrower.h"
 #include "Sim/Weapons/Rifle.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "UnitTypes/Factory.h"
 #include "UnitTypes/Builder.h"
 #include "Sim/Weapons/MeleeWeapon.h"

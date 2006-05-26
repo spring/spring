@@ -83,6 +83,7 @@ CTextureHandler::CTextureHandler()
 		name+=t;
 		TexFile* tex=new TexFile;
 		tex->name=name;
+		tex->tex.Alloc(1,1);
 		tex->tex.mem[0]=palette[a][0];
 		tex->tex.mem[1]=palette[a][1];
 		tex->tex.mem[2]=palette[a][2];
