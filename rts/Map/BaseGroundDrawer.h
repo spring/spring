@@ -43,7 +43,8 @@ public:
 	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 
 	bool updateFov;
-	
+	bool drawRadarAndJammer;
+
 	int striptype;
 	unsigned int infoTex;
 

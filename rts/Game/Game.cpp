@@ -686,8 +686,8 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if (s=="showelevation"){
 		gd->SetHeightTexture();
 	}
-	if (s=="yardmap1"){
-		//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[0],readmap->yardmapPal,true);
+	if (s=="toggleradarandjammer"){
+		gd->drawRadarAndJammer=!gd->drawRadarAndJammer;
 	}
 	if (s=="lastmsgpos"){
 		mouse->currentCamController->SetPos(info->lastMsgPos);

@@ -143,28 +143,45 @@ void COverheadController::ScreenEdgeMove(float3 move)
 
 void COverheadController::MouseWheelMove(float move)
 {
+	// tilt the camera if LCTRL is pressed
 	if (keys[SDLK_LCTRL]) {
 		zscale *= 1+move * mouseScale;
 		if (zscale < 0.05) zscale = 0.05f;
 		if (zscale > 10) zscale = 10;
-	} else {	
-		if(move<0){ //zoom in to mouse cursor instead of mid screen
+	} else { // holding down LALT uses 'instant-zoom' from here to the end of the function
+		//ZOOM IN to mouse cursor instead of mid screen
+		if(move<0){
 			float3 cpos=pos-dir*height;
 			float dif=-height * move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
 			if(height-dif<60)
 				dif=height-60;
+			if (keys[SDLK_LALT]) //instant-zoom: zoom in to standard view
+				dif=height-500;
 			float3 wantedPos= cpos + mouse->dir * dif;
 			float newHeight=ground->LineGroundCol(wantedPos,wantedPos+dir*10000);
 			if(newHeight<0)
 				newHeight=height* (1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1));
+			if(keys[SDLK_LALT] && newHeight < 500) // instant-zoom: set the new height to 500 if we are too low
+				newHeight=500;
 			if(wantedPos.y + dir.y * newHeight <0)
 				newHeight = -wantedPos.y / dir.y;
 			if(newHeight<3000){
 				height=newHeight;
 				pos= wantedPos + dir * height;
 			}
-		} else { //zoom out from mid screen
-			height*=1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
+		//ZOOM OUT from mid screen
+		} else {
+			if (keys[SDLK_LALT]) { // instant-zoom: zoom out to the max
+				height=3000;
+			} else {
+				height*=1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
+			}
+		}
+		// instant-zoom: turn on the smooth transition and reset the camera tilt
+		if(keys[SDLK_LALT]){
+			zscale=0.5f;
+			mouse->inStateTransit=true;
+			mouse->transitSpeed=1;
 		}
 	}
 }

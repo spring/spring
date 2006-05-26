@@ -9,6 +9,7 @@ bind 't' Track
 bind 'c' ControlUnit
 bind 'h' ShareDialog
 bind 'l' togglelos
+bind ';' toggleradarandjammer
 bind up moveforward
 bind down moveback
 bind right moveright
