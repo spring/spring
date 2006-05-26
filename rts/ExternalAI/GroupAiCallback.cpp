@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "GroupAiCallback.h"
 #include "Net.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Group.h"

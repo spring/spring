@@ -15,7 +15,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GroundFlash.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Platform/ConfigHandler.h"

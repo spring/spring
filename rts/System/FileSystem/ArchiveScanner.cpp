@@ -129,7 +129,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 						transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
 
 						// only accept new format maps
-						if (ext == "smf") {
+						if (ext == "smf" || ext == "sm3") {
 							MapData md;
 							if (name.find_last_of('\\') == string::npos && name.find_last_of('/') == string::npos) {
 								md.name = name;

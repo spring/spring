@@ -4,48 +4,26 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/InfoConsole.h"
-#include "Sim/Map/SmfReadMap.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
+#include "SmfReadMap.h"
 #include "Rendering/ShadowHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "Game/SelectedUnits.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Game/UI/GuiHandler.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "mmgr.h"
 
-// MSVC compiler does not have std::min and max, but rather, it's own built in macro
-#ifdef _MSC_VER
-#define USE_MIN min
-#define USE_MAX max
-#else
-#define USE_MIN std::min
-#define USE_MAX std::max
-#endif
+using namespace std;
 
-CBFGroundDrawer::CBFGroundDrawer(void)
+CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap *rm)
 {
+	map = rm;
+
 	numBigTexX=gs->mapx/128;
 	numBigTexY=gs->mapy/128;
 
-	heightData=readmap->heightmap;
+	heightData=map->heightmap;
 	heightDataX=gs->mapx+1;
-
-	infoTexMem=new unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
-	for(int a=0;a<gs->pwr2mapx*gs->pwr2mapy*4;++a)
-		infoTexMem[a]=255;
-
-	drawMetalMap=false;
-	drawPathMap=false;
-	highResInfoTexWanted=false;
-	extraTex=0;
 
 	if(shadowHandler->drawShadows){
 		groundVP=LoadVertexProgram("ground.vp");
@@ -53,13 +31,13 @@ CBFGroundDrawer::CBFGroundDrawer(void)
 		if(shadowHandler->useFPShadows)
 			groundFPShadow=LoadFragmentProgram("groundFPshadow.fp");
 	}
+
+	textures=new CBFGroundTextures(map);
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
 {
-	delete[] infoTexMem;
-	if(infoTex!=0)
-		glDeleteTextures(1,&infoTex);
+	delete textures;
 
 	if(shadowHandler->drawShadows){
 		glDeleteProgramsARB( 1, &groundVP );
@@ -120,7 +98,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	va=GetVertexArray();
 	va->Initialize();
 
-	groundTextures->DrawUpdate();
+	textures->DrawUpdate();
 
 	int x,y;
 	int mapx=gs->mapx+1;
@@ -141,7 +119,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	SetupTextureUnits(drawWaterReflection,overrideVP);
 	bool inStrip=false;
 
-	if(readmap->voidWater && !drawWater){
+	if(map->voidWater && !drawWater){
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER,0.9);
 	}
@@ -180,14 +158,14 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		for(int btx=sx;btx<ex;++btx){
 			bigtexsubx=btx;
 
-			if((drawExtraTex) || !shadowHandler->drawShadows){
-				groundTextures->SetTexture(btx,bty);
+			if(DrawExtraTex() || !shadowHandler->drawShadows){
+				textures->SetTexture(btx,bty);
 				SetTexGen(1.0/1024,1.0/1024,-btx,-bty);
 				if(overrideVP){
  					glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, -btx,-bty,0,0);
  				}
 			} else {
-				groundTextures->SetTexture(btx,bty);
+				textures->SetTexture(btx,bty);
 				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, -btx,-bty,0,0);
 			}
 			for(int lod=1;lod<(2<<NUM_LODS);lod*=2){
@@ -218,10 +196,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 				int minlx=cx+(-viewRadius+3-xsquaremod)*lod;
 				int maxlx=cx+(viewRadius-1-xsquaremod)*lod;
 
-				int xstart=USE_MAX(minlx,mintx);
-				int xend=USE_MIN(maxlx,maxtx);
-				int ystart=USE_MAX(minly,minty);
-				int yend=USE_MIN(maxly,maxty);
+				int xstart=max(minlx,mintx);
+				int xend=min(maxlx,maxtx);
+				int ystart=max(minly,minty);
+				int yend=min(maxly,maxty);
 
 				for(y=ystart;y<yend;y+=lod){
 					int xs=xstart;
@@ -369,7 +347,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 				//rita yttre begränsnings yta mot nästa lod
 				if(maxlx<maxtx && maxlx>=mintx){
 					x=maxlx;
-					for(y=USE_MAX(ystart-lod,minty);y<USE_MIN(yend+lod,maxty);y+=lod){
+					for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
 						DrawVertexA(x,y);
 						DrawVertexA(x,y+lod);
 						if(y%(lod*2)){
@@ -386,7 +364,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 				}
 				if(minlx>mintx && minlx<maxtx){
 					x=minlx-lod;
-					for(y=USE_MAX(ystart-lod,minty);y<USE_MIN(yend+lod,maxty);y+=lod){
+					for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
 						if(y%(lod*2)){
 							float h=((heightData[(y-lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5)*(camxpart)+heightData[(y)*heightDataX+x]*(1-camxpart);
 							DrawVertexA(x,y,h);
@@ -403,8 +381,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 				}
 				if(maxly<maxty && maxly>minty){
 					y=maxly;
-					int xs=USE_MAX(xstart-lod,mintx);
-					int xe=USE_MIN(xend+lod,maxtx);
+					int xs=max(xstart-lod,mintx);
+					int xe=min(xend+lod,maxtx);
 					int xtest,xtest2;
 					std::vector<fline>::iterator fli;
 					for(fli=left.begin();fli!=left.end();fli++){
@@ -448,8 +426,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 				}
 				if(minly>minty && minly<maxty){
 					y=minly-lod;
-					int xs=USE_MAX(xstart-lod,mintx);
-					int xe=USE_MIN(xend+lod,maxtx);
+					int xs=max(xstart-lod,mintx);
+					int xe=min(xend+lod,maxtx);
 					int xtest,xtest2;
 					std::vector<fline>::iterator fli;
 					for(fli=left.begin();fli!=left.end();fli++){
@@ -495,18 +473,17 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 			DrawGroundVertexArray();
 		}
 	}
+	ResetTextureUnits(drawWaterReflection,overrideVP);
 	glDisable(GL_CULL_FACE);
 
-	ResetTextureUnits(drawWaterReflection,overrideVP);
-
-	if(readmap->voidWater && !drawWater){
+	if(map->voidWater && !drawWater){
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	if(((CSmfReadMap*)readmap)->hasWaterPlane)
+	if(map->hasWaterPlane)
 	{
 		glDisable(GL_TEXTURE_2D);
-		glColor3f(((CSmfReadMap*)readmap)->waterPlaneColor.x, ((CSmfReadMap*)readmap)->waterPlaneColor.y, ((CSmfReadMap*)readmap)->waterPlaneColor.z);
+		glColor3f(map->waterPlaneColor.x, map->waterPlaneColor.y, map->waterPlaneColor.z);
 		glBegin(GL_QUADS);//water color edge of map <0
 		float xsize=gs->mapx*SQUARE_SIZE;
 		float ysize=gs->mapy*SQUARE_SIZE;
@@ -525,9 +502,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		glEnd();
 	}
 
-	if(groundDecals && !(drawWaterReflection || drawUnitReflection || overrideVP)){
+	if(groundDecals && !(drawWaterReflection || drawUnitReflection))
 		groundDecals->Draw();
-	}
 
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -535,15 +511,12 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	glEnable(GL_BLEND);
 
 //	sky->SetCloudShadow(1);
-	float treeDistance=baseTreeDistance*sqrt((zoom));
 //	if(drawWaterReflection)
 //		treeDistance*=0.5;
-	if(treeDistance>MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE))
-		treeDistance=MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE);
 
 	ph->DrawGroundFlashes();
 	if(treeDrawer->drawTrees){
-		if((drawExtraTex)){
+		if(DrawExtraTex()){
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
@@ -557,8 +530,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		  glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
-		treeDrawer->Draw(treeDistance,drawWaterReflection || drawUnitReflection);
-		if((drawExtraTex)){
+		treeDrawer->Draw(drawWaterReflection || drawUnitReflection);
+		if(DrawExtraTex()){
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 			glDisable(GL_TEXTURE_GEN_S);
@@ -620,10 +593,10 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		int minlx=cx+(-viewRadius+3-xsquaremod)*lod;
 		int maxlx=cx+(viewRadius-1-xsquaremod)*lod;
 
-		int xstart=USE_MAX(minlx,mintx);
-		int xend=USE_MIN(maxlx,maxtx);
-		int ystart=USE_MAX(minly,minty);
-		int yend=USE_MIN(maxly,maxty);
+		int xstart=max(minlx,mintx);
+		int xend=min(maxlx,maxtx);
+		int ystart=max(minly,minty);
+		int yend=min(maxly,maxty);
 
 		for(y=ystart;y<yend;y+=lod){
 			int xs=xstart;
@@ -752,7 +725,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		//rita yttre begränsnings yta mot nästa lod
 		if(maxlx<maxtx && maxlx>=mintx){
 			x=maxlx;
-			for(y=USE_MAX(ystart-lod,minty);y<USE_MIN(yend+lod,maxty);y+=lod){
+			for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
 				DrawVertexA(x,y);
 				DrawVertexA(x,y+lod);
 				if(y%(lod*2)){
@@ -769,7 +742,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		}
 		if(minlx>mintx && minlx<maxtx){
 			x=minlx-lod;
-			for(y=USE_MAX(ystart-lod,minty);y<USE_MIN(yend+lod,maxty);y+=lod){
+			for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
 				if(y%(lod*2)){
 					float h=((heightData[(y-lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5)*(camxpart)+heightData[(y)*heightDataX+x]*(1-camxpart);
 					DrawVertexA(x,y,h);
@@ -786,8 +759,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		}
 		if(maxly<maxty && maxly>minty){
 			y=maxly;
-			int xs=USE_MAX(xstart-lod,mintx);
-			int xe=USE_MIN(xend+lod,maxtx);
+			int xs=max(xstart-lod,mintx);
+			int xe=min(xend+lod,maxtx);
 			if(xs<xe){
 				x=xs;
 				if(x%(lod*2)){
@@ -813,8 +786,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		}
 		if(minly>minty && minly<maxty){
 			y=minly-lod;
-			int xs=USE_MAX(xstart-lod,mintx);
-			int xe=USE_MIN(xend+lod,maxtx);
+			int xs=max(xstart-lod,mintx);
+			int xe=min(xend+lod,maxtx);
 			if(xs<xe){
 				x=xs;
 				if(x%(lod*2)){
@@ -846,287 +819,28 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 }
 
-//todo: this part of extra textures is a mess really ...
-void CBFGroundDrawer::SetExtraTexture(unsigned char* tex,unsigned char* pal,bool highRes)
-{
-	drawMetalMap=false;
-	drawPathMap=false;
-	drawHeightMap=false;
-	if(tex!=extraTex && tex!=0){
-		extraTex=tex;
-		extraTexPal=pal;
-		drawExtraTex=true;
-		highResInfoTexWanted=highRes;
-	} else {
-		drawExtraTex=false;
-		extraTex=0;
-		highResInfoTexWanted=false;
-	}
-	updateTextureState=0;
-	while(!UpdateTextures());
-}
-
-void CBFGroundDrawer::SetHeightTexture()
-{
-	if(drawHeightMap){
-		drawHeightMap=false;
-		drawExtraTex=false;
-	} else {
-		drawHeightMap=true;
-		drawMetalMap=false;
-		drawPathMap=false;
-		drawExtraTex=true;
-		highResInfoTexWanted=true;
-		extraTex=0;
-	}
-	updateTextureState=0;
-	while(!UpdateTextures());
-}
-
-void CBFGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes)
-{
-	if(drawMetalMap){
-		drawMetalMap=false;
-		drawExtraTex=false;
-	} else {
-		drawHeightMap=false;
-		drawMetalMap=true;
-		drawPathMap=false;
-		drawExtraTex=true;
-		highResInfoTexWanted=false;
-		extraTex=tex;
-		extraTexPal=pal;
-		extractDepthMap=extractMap;
-	}
-	updateTextureState=0;
-	while(!UpdateTextures());
-}
-
-void CBFGroundDrawer::SetPathMapTexture()
-{
-	if(drawPathMap){
-		drawPathMap=false;
-		drawExtraTex=false;
-	} else {
-		drawPathMap=true;
-		drawHeightMap=false;
-		drawMetalMap=false;
-		drawExtraTex=true;
-		extraTex=0;
-		highResInfoTexWanted=false;
-	}
-	updateTextureState=0;
-	while(!UpdateTextures());
-}
-
-void CBFGroundDrawer::ToggleLosTexture()
-{
-	if(drawLos){
-		drawLos=false;
-		drawExtraTex=false;
-	} else {
-		drawLos=true;
-		drawPathMap=false;
-		drawHeightMap=false;
-		drawMetalMap=false;
-		drawExtraTex=true;
-		extraTex=0;
-		highResInfoTexWanted=false;
-	}
-	updateTextureState=0;
-	while(!UpdateTextures());
-}
-	
-bool CBFGroundDrawer::UpdateTextures()
-{
-	if(!drawExtraTex)
-		return true;
-
-	unsigned short* myLos=loshandler->losMap[gu->myAllyTeam];
-	unsigned short* myAirLos=loshandler->airLosMap[gu->myAllyTeam];
-	if(updateTextureState<50){
-		int starty;
-		int endy;
-		if(highResInfoTexWanted){
-			starty=updateTextureState*gs->mapy/50;
-			endy=(updateTextureState+1)*gs->mapy/50;
-		} else {
-			starty=updateTextureState*gs->hmapy/50;
-			endy=(updateTextureState+1)*gs->hmapy/50;
-		}
-		if(drawPathMap)
-		{
-			if(selectedUnits.selectedUnits.empty() || !(*selectedUnits.selectedUnits.begin())->unitDef->movedata)
-				return true;
-
-			MoveData *md=(*selectedUnits.selectedUnits.begin())->unitDef->movedata;
-
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->hmapx;++x){
-					int a=y*(gs->pwr2mapx>>1)+x;
-
-					float m;
-					//todo: fix for new gui
-					if(guihandler->inCommand>0 && guihandler->inCommand<guihandler->commands.size() && guihandler->commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
-						if(!loshandler->InLos(float3(x*16+8,0,y*16+8),gu->myAllyTeam)){
-							m=0.25;
-						}else{
-							UnitDef *unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
-
-							CFeature* f;
-							if(uh->TestUnitBuildSquare(float3(x*16+8,0,y*16+8),unitdef,f))
-								m=1;
-							else 
-								m=0;
-							if(f && m)
-								m=0.5;
-						}
-
-					} else {
-						m=md->moveMath->SpeedMod(*md, x*2,y*2);
-						if(gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
-							m=0;
-						m=min(1.,(double)sqrt(m));
-					}
-					infoTexMem[a*4+0]=255-int(m*255.0f);
-					infoTexMem[a*4+1]=int(m*255.0f);
-					infoTexMem[a*4+2]=0;
-				}
-			}
-		} else if(drawMetalMap){
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->hmapx;++x){
-					int a=y*(gs->pwr2mapx>>1)+x;
-					if(myAirLos[(y/2)*gs->hmapx/2+x/2])
-						infoTexMem[a*4]=(unsigned char)USE_MIN(255.,(double)sqrt(sqrt(extractDepthMap[y*gs->hmapx+x]))*900);
-					else
-						infoTexMem[a*4]=0;
-					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);
-					infoTexMem[a*4+2]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]);
-				}
-			}
-		} else if(drawHeightMap){
-			extraTexPal=readmap->heightLinePal;
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->mapx;++x){
-					int a=y*gs->pwr2mapx+x;
-					float height=readmap->centerheightmap[y*gs->mapx+x];
-					unsigned char value=(unsigned char)(height*8);
-					infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
-					infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
-					infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
-				}
-			}
-		} else if(drawLos){
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->hmapx;++x){
-					int a=y*(gs->pwr2mapx>>1)+x;
-					int inRadar=0;
-					if(radarhandler->radarMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
-						inRadar=50;
-					int inJam=0;
-					if(radarhandler->jammerMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
-						inJam=50;
-					if(myLos[(y)*gs->hmapx+x]!=0){
-						infoTexMem[a*4]=170+inJam;
-						infoTexMem[a*4+1]=170+inRadar;
-						infoTexMem[a*4+2]=170;
-					} else if(myAirLos[(y/2)*gs->hmapx/2+x/2]!=0){
-						infoTexMem[a*4]=120+inJam;
-						infoTexMem[a*4+1]=120+inRadar;
-						infoTexMem[a*4+2]=120;
-					} else {
-						infoTexMem[a*4]=90+inJam;
-						infoTexMem[a*4+1]=90+inRadar;
-						infoTexMem[a*4+2]=90;
-					}
-				}
-			}
-		} else if(drawExtraTex){
-			if(highResInfoTexWanted){
-				for(int y=starty;y<endy;++y){
-					for(int x=0;x<gs->mapx;++x){
-						int a=y*gs->pwr2mapx+x;
-						int value=extraTex[y*gs->mapx+x];
-						//value=readmap->groundBlockingObjectMap[y*gs->mapx+x] ? 0:128;
-						infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
-						infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
-						infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
-					}
-				}
-			} else {
-				for(int y=starty;y<endy;++y){
-					for(int x=0;x<gs->mapx;++x){
-						int a=y*(gs->pwr2mapx>>1)+x;
-						infoTexMem[a*4]=64+(extraTexPal[extraTex[y*gs->hmapx+x]*3]>>1);
-						infoTexMem[a*4+1]=64+(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]>>1);
-						infoTexMem[a*4+2]=64+(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]>>1);
-					}
-				}
-			}
-		}
-	}
-
-	if(updateTextureState==50){
-		if(infoTex!=0 && highResInfoTexWanted!=highResInfoTex){
-			glDeleteTextures(1,&infoTex);
-			infoTex=0;
-		}
-		if(infoTex==0){
-			glGenTextures(1,&infoTex);
-			glBindTexture(GL_TEXTURE_2D, infoTex);
-			//if(drawPathMap)
-			//	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-			//else
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-			if(highResInfoTexWanted)
-				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
-			else
-				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, gs->pwr2mapx>>1, gs->pwr2mapy>>1,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
-			highResInfoTex=highResInfoTexWanted;
-			updateTextureState=0;
-			return true;
-		}
-
-	}
-	if(updateTextureState>=50){
-		glBindTexture(GL_TEXTURE_2D, infoTex);
-		if(highResInfoTexWanted)
-			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*(gs->pwr2mapy/8),gs->pwr2mapx, (gs->pwr2mapy/8),GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*(gs->pwr2mapy/8)*gs->pwr2mapx*4]);
-		else
-			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*(gs->pwr2mapy/16),gs->pwr2mapx>>1, (gs->pwr2mapy/16),GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*(gs->pwr2mapy/16)*(gs->pwr2mapx>>1)*4]);
-		if(updateTextureState==57){
-			updateTextureState=0;
-			return true;
-		}
-	}
-	updateTextureState++;
-	return false;
-}
-
 void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrideVP)
 {
 	glColor4f(1,1,1,1);
-	if((groundDrawer->drawExtraTex)){
+	if(DrawExtraTex()){
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture ());
 		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		if (readmap->detailTex) {
+		if (map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D,  readmap->detailTex);
+			glBindTexture(GL_TEXTURE_2D,  map->detailTex);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 			SetTexGen(0.02,0.02,-floor(camera->pos.x*0.02),-floor(camera->pos.z*0.02));
 		} else glDisable (GL_TEXTURE_2D);
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D,  groundDrawer->infoTex);
+		glBindTexture(GL_TEXTURE_2D, infoTex);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
@@ -1146,16 +860,16 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 	} else if(shadowHandler->drawShadows){
 		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, groundFPShadow );
 		glEnable( GL_FRAGMENT_PROGRAM_ARB );
-		float3 ac=readmap->ambientColor*(210.0/255.0);
+		float3 ac=map->ambientColor*(210.0/255.0);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, ac.x,ac.y,ac.z,1);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,readmap->shadowDensity);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,map->shadowDensity);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
-		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-		if (readmap->detailTex)
-			glBindTexture(GL_TEXTURE_2D,  readmap->detailTex);
+		if (map->detailTex)
+			glBindTexture(GL_TEXTURE_2D,  map->detailTex);
 		else
 			glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTextureARB(GL_TEXTURE3_ARB);
@@ -1187,14 +901,14 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 	} else {
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture ());
 		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-		if(readmap->detailTex) {
+		if(map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D,  readmap->detailTex);
+			glBindTexture(GL_TEXTURE_2D,  map->detailTex);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 			SetTexGen(0.02,0.02,-floor(camera->pos.x*0.02),-floor(camera->pos.z*0.02));
@@ -1217,7 +931,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 
 void CBFGroundDrawer::ResetTextureUnits(bool drawReflection,unsigned int overrideVP)
 {
-	if((drawExtraTex) || !shadowHandler->drawShadows){
+	if(DrawExtraTex() || !shadowHandler->drawShadows){
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 		glDisable(GL_TEXTURE_2D);
@@ -1254,14 +968,72 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection,unsigned int overrid
 	}
 }
 
-void CBFGroundDrawer::SetTexGen(float scalex,float scaley, float offsetx, float offsety)
+
+
+void CBFGroundDrawer::AddFrustumRestraint(float3 side)
 {
-	GLfloat plan[]={scalex,0,0,offsetx};
-	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
-	glEnable(GL_TEXTURE_GEN_S);
-	GLfloat plan2[]={0,0,scaley,offsety};
-	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
-	glEnable(GL_TEXTURE_GEN_T);
+	fline temp;
+	float3 up(0,1,0);
+	
+	float3 b=up.cross(side);		//get vector for collision between frustum and horizontal plane
+	if(fabs(b.z)<0.0001f)
+		b.z=0.0001f;
+	{
+		temp.dir=b.x/b.z;				//set direction to that
+		float3 c=b.cross(side);			//get vector from camera to collision line
+		float3 colpoint;				//a point on the collision line
+		
+		if(side.y>0)								
+			colpoint=cam2->pos-c*((cam2->pos.y-(readmap->minheight-100))/c.y);
+		else
+			colpoint=cam2->pos-c*((cam2->pos.y-(readmap->maxheight+30))/c.y);
+		
+		
+		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
+		if(b.z>0){
+			left.push_back(temp);			
+		}else{
+			right.push_back(temp);
+		}
+	}	
+}
+
+void CBFGroundDrawer::UpdateCamRestraints(void)
+{
+	left.clear();
+	right.clear();
+
+	//Add restraints for camera sides
+	AddFrustumRestraint(cam2->bottom);
+	AddFrustumRestraint(cam2->top);
+	AddFrustumRestraint(cam2->rightside);
+	AddFrustumRestraint(cam2->leftside);
+
+	//Add restraint for maximum view distance
+	fline temp;
+	float3 up(0,1,0);
+	float3 side=cam2->forward;
+	float3 camHorizontal=cam2->forward;
+	camHorizontal.y=0;
+	camHorizontal.Normalize();
+	float3 b=up.cross(camHorizontal);			//get vector for collision between frustum and horizontal plane
+	if(fabs(b.z)>0.0001){
+		temp.dir=b.x/b.z;				//set direction to that
+		float3 c=b.cross(camHorizontal);			//get vector from camera to collision line
+		float3 colpoint;				//a point on the collision line
+		
+		if(side.y>0)								
+			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*(cam2->pos.y/c.y);
+		else
+			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*((cam2->pos.y-255/3.5f)/c.y);
+		
+		
+		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
+		if(b.z>0){
+			left.push_back(temp);			
+		}else{
+			right.push_back(temp);
+		}
+	}
+
 }

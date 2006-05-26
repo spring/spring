@@ -357,10 +357,9 @@ void CPreGame::ShowMapList(void)
 {
 	CglList* list=new CglList("Select map",SelectMap);
 	fs::path fn("maps/");
-	std::vector<fs::path> found = find_files(fn,"*.smf");
+	std::vector<fs::path> found = find_files(fn,"{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
-	if (found.begin() == found.end() && arFound.begin() == arFound.end()
-			) {
+	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
 		handleerror(0,"Couldnt find any map files","PreGame error",0);
 		return;
 	}

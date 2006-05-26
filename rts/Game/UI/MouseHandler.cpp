@@ -5,7 +5,7 @@
 
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "GuiHandler.h"
@@ -27,7 +27,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Game/CameraController.h"
-#include "Sim/Map/MapDamage.h"
+#include "Map/MapDamage.h"
 #include "mmgr.h"
 #include "SDL_types.h"
 #include "SDL_mouse.h"

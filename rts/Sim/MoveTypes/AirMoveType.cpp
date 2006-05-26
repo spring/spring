@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "AirMoveType.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sound.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Projectiles/SmokeProjectile.h"

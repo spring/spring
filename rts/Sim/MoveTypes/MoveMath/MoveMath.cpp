@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "MoveMath.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"

@@ -18,6 +18,7 @@ public:
 	int Peek();
 	bool Eof();
 	int FileSize();
+	int GetPos();
 
 	static std::vector<std::string> FindFiles(std::string pattern);
 private:

@@ -14,7 +14,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "UnitDef.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Game/GameSetup.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "mmgr.h"
@@ -240,7 +240,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.turnRate=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
 	ud.buildSpeed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\WorkerTime").c_str());
 	ud.buildDistance=atof(tdfparser.SGetValueDef("64", "UNITINFO\\Builddistance").c_str());
-	ud.buildDistance=max(128.f,ud.buildDistance);
+	ud.buildDistance=std::max(128.f,ud.buildDistance);
 	ud.armoredMultiple=atof(tdfparser.SGetValueDef("1", "UNITINFO\\DamageModifier").c_str());
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
 //	info->AddLine("unit %s has armor %i",ud.name.c_str(),ud.armorType);
@@ -635,6 +635,7 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 				unitdef->unitimage = bitmap.CreateTexture(false);
 			} else {
 				CBitmap bitmap;
+				bitmap.Alloc(1,1);
 				unitdef->unitimage = bitmap.CreateTexture(false);
 			}
 		}

@@ -1,10 +1,7 @@
 #include "StdAfx.h"
 #include "MuzzleFlame.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "ProjectileHandler.h"
-#include "GlobalStuff.h"
 #include "SyncTracer.h"
 #include "mmgr.h"
 

@@ -5,15 +5,14 @@
 #include "GL/myGL.h"
 #include "GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "Game/UI/InfoConsole.h"
 #include "Platform/ConfigHandler.h"
 #include <cctype>
 #include "Game/Camera.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
-#include "Sim/Map/SmfReadMap.h"
+#include "Map/BaseGroundDrawer.h"
 #include "ShadowHandler.h"
 #include "mmgr.h"
 
@@ -110,7 +109,7 @@ void CGroundDecalHandler::Draw(void)
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, ((CSmfReadMap*)readmap)->shadowTex);
+		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
 		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_INTERPOLATE_ARB);

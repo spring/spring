@@ -8,7 +8,7 @@
 #include "Sim/Units/Unit.h"
 #include <list>
 #include <math.h>
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "TimeProfiler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Platform/errorhandler.h"

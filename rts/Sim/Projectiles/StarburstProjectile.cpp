@@ -5,7 +5,7 @@
 #include "Game/Camera.h"
 #include "Sim/Units/Unit.h"
 #include "SmokeTrailProjectile.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "myMath.h"
 #include "Sim/Weapons/WeaponDefHandler.h"

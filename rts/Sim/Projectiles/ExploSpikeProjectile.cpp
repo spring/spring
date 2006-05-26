@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "ExploSpikeProjectile.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
 

@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "TAAirMoveType.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/COB/CobFile.h"

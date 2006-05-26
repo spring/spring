@@ -8,7 +8,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "myMath.h"
 #include "Sim/Misc/Wind.h"
 #include "mmgr.h"

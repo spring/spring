@@ -3,7 +3,7 @@
 #include "FileSystem/FileHandler.h"
 #include "TdfParser.h"
 #include "Game/UI/InfoConsole.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include <boost/lexical_cast.hpp>
 #include "mmgr.h"
 

@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "ShipMoveMath.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Objects/SolidObject.h"
 #include "mmgr.h"
 

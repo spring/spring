@@ -1,15 +1,13 @@
 #include "StdAfx.h"
 #include "TorpedoProjectile.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Sim/Units/Unit.h"
 #include "SmokeTrailProjectile.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/GameHelper.h"
 #include "myMath.h"
 #include "BubbleProjectile.h"
-#include "SyncTracer.h"
 #include "mmgr.h"
 
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)

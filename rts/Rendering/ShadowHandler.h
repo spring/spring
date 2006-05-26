@@ -28,10 +28,13 @@ public:
 	float3 cross2;
 
 	float x1,x2,y1,y2;
+	float xmid,ymid;
 
 	CMatrix44f shadowMatrix;
 	void DrawShadowTex(void);
 	void CalcMinMaxView(void);
+
+	void GetShadowMapSizeFactors(float &param17, float &param18);
 
 protected:
 	void GetFrustumSide(float3& side,bool upside);

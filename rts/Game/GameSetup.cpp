@@ -18,6 +18,7 @@
 #include "GameVersion.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
+#include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 
 CGameSetup* gameSetup=0;
@@ -148,7 +149,8 @@ bool CGameSetup::Init(char* buf, int size)
 	}
 	gu->spectating=gs->players[myPlayer]->spectator;
 
-	TdfParser p2(string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd");
+	TdfParser p2;
+	CReadMap::OpenTDF (mapname, p2);
 
 	for(int a=0;a<gs->activeTeams;++a){
 		char section[50];

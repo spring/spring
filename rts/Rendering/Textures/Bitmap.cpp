@@ -34,12 +34,11 @@ struct InitializeOpenIL {
 #endif
 
 CBitmap::CBitmap()
-  : xsize(1),
-  ysize(1)
+  : xsize(0), ysize(0)
 {
-	mem=new unsigned char[4];
+	mem=0;
 	ddsimage = 0;
-	type = BitmapTypeStandard;
+	type = BitmapTypeStandardRGBA;
 }
 
 CBitmap::~CBitmap()
@@ -50,22 +49,25 @@ CBitmap::~CBitmap()
 
 CBitmap::CBitmap(const CBitmap& old)
 {
-	assert(old.type == BitmapTypeStandard);
+	assert(old.type != BitmapTypeDDS);
 	ddsimage = 0;
+	type = old.type;
 	xsize=old.xsize;
 	ysize=old.ysize;
-	mem=new unsigned char[xsize*ysize*4];
-	memcpy(mem,old.mem,xsize*ysize*4);
-	type = BitmapTypeStandard;
+	int size;
+	if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
+	else size = xsize*ysize; // Alpha
+
+	mem=new unsigned char[size];
+	memcpy(mem,old.mem,size);
 }
 
 CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
-  : xsize(xsize),
-  ysize(ysize)
+  : xsize(xsize), ysize(ysize)
 {
-	type = BitmapTypeStandard;
+	type = BitmapTypeStandardRGBA;
 	ddsimage = 0;
-	mem=new unsigned char[xsize*ysize*4];	
+	mem=new unsigned char[xsize*ysize*4];
 	memcpy(mem,data,xsize*ysize*4);
 }
 
@@ -74,7 +76,7 @@ CBitmap::CBitmap(string const& filename)
   xsize(0),
   ysize(0)
 {
-	type = BitmapTypeStandard;
+	type = BitmapTypeStandardRGBA;
 	ddsimage = 0;
 	Load(filename);
 }
@@ -85,28 +87,40 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 		delete[] mem;
 		xsize=bm.xsize;
 		ysize=bm.ysize;
-		mem=new unsigned char[xsize*ysize*4];
+		int size;
+		if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
+		else size = xsize*ysize; // Alpha
 
-		memcpy(mem,bm.mem,xsize*ysize*4);
+		mem=new unsigned char[size];
+		memcpy(mem,bm.mem,size);
 	}
 	return *this;
 }
 
-void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
+void CBitmap::Alloc (int w,int h)
 {
 	bool noAlpha = true;
 	
-	
+	delete[] mem;
+	xsize=w;
+	ysize=h;
+	type=BitmapTypeStandardRGBA;
+	mem=new unsigned char[w*h*4];
+}
+
+bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
+{
+	bool noAlpha = true;
+
 	delete[] mem;
 	mem = NULL;
 
 	if(filename.find(".dds")!=string::npos){
 		ddsimage = new nv_dds::CDDSImage();
-		ddsimage->load(filename);
 		type = BitmapTypeDDS;
-		return;
+		return ddsimage->load(filename);
 	}
-	type = BitmapTypeStandard;
+	type = BitmapTypeStandardRGBA;
 
 	CFileHandler file(filename);
 	if(file.FileExists() == false)
@@ -115,7 +129,7 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		ysize = 1;
 		mem=new unsigned char[4];
 		memset(mem, 0, 4);
-		return;
+		return false;
 	}
 
 	unsigned char *buffer = new unsigned char[file.FileSize()];
@@ -177,7 +191,7 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		mem[1] = 0;
 		mem[2] = 0;
 		mem[3] = 255; // Non Transparent
-		return;
+		return false;
 	}
 
 	noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
@@ -199,6 +213,51 @@ void CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 			}
 		}
 	}
+
+	return true;
+}
+
+bool CBitmap::LoadGrayscale (const string& filename)
+{
+	type = BitmapTypeStandardAlpha;
+
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
+
+	CFileHandler file(filename);
+	if(!file.FileExists())
+		return false;
+
+	unsigned char *buffer = new unsigned char[file.FileSize()];
+	file.Read(buffer, file.FileSize());
+
+	ILuint ImageName = 0;
+	ilGenImages(1, &ImageName);
+	ilBindImage(ImageName);
+
+	const bool success = ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+	delete [] buffer;
+
+	if(success == false)
+		return false;
+
+#if !defined(__APPLE__) // Temporary fix to allow testing of everything
+						// else until i get a quicktime image loader written
+	ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_BYTE);
+	xsize = ilGetInteger(IL_IMAGE_WIDTH);
+	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
+
+	mem = new unsigned char[xsize * ysize];
+	memcpy(mem, ilGetData(), xsize * ysize);
+#else
+	xsize = 4;
+	ysize = 4;
+
+	mem = new unsigned char[xsize * ysize];
+#endif
+
+	ilDeleteImages(1, &ImageName); 
+	return true;
 }
 
 

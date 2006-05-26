@@ -8,7 +8,7 @@
 #include "Game/Camera.h"
 #include "MouseHandler.h"
 #include "Game/CameraController.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Misc/CategoryHandler.h"

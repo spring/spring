@@ -4,11 +4,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "BasicTreeDrawer.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Rendering/Textures/Bitmap.h"
@@ -166,170 +165,154 @@ static void inline SetArray(float t1,float t2,float3 v)
 	va->AddVertexT(v,t1,t2);
 }
 
+struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
+{
+	CBasicTreeSquareDrawer() {td=0;}
+	void DrawQuad (int x,int y);
+
+	CBasicTreeDrawer *td;
+	int cx,cy;
+	float treeDistance;
+};
+
+void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
+{
+	int treesX = td->treesX;
+	CBasicTreeDrawer::TreeSquareStruct* tss=&td->trees[y*treesX+x];
+
+	float3 dif;
+	dif.x=camera->pos.x-(x*SQUARE_SIZE*TREE_SQUARE_SIZE + SQUARE_SIZE*TREE_SQUARE_SIZE/2);
+	dif.y=0;
+	dif.z=camera->pos.z-(y*SQUARE_SIZE*TREE_SQUARE_SIZE + SQUARE_SIZE*TREE_SQUARE_SIZE/2);
+	float dist=dif.Length();
+	dif/=dist;
+	
+	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2 && dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance)){//far trees
+		tss->lastSeenFar=gs->frameNum;
+		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97){
+			va=GetVertexArray();
+			va->Initialize();
+			tss->viewVector=dif;
+			if(!tss->farDisplist)
+				tss->farDisplist=glGenLists(1);
+			float3 up(0,1,0);
+			float3 side=up.cross(dif);
+
+			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
+				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
+				if(ts->type<8){
+					float3 base(ts->pos);
+					float height=MAX_TREE_HEIGHT;
+					float width=MAX_TREE_HEIGHT*0.3;
+
+					SetArray(0,0,base+side*width);
+					SetArray(0,0.25,base+side*width+float3(0,height,0));
+					SetArray(0.5f,0.25,base-side*width+float3(0,height,0));
+					SetArray(0.5f,0,base-side*width);
+				} else {
+					float3 base(ts->pos);
+					float height=MAX_TREE_HEIGHT;
+					float width=MAX_TREE_HEIGHT*0.3;
+
+					SetArray(0,0.25,base+side*width);
+					SetArray(0,0.5,base+side*width+float3(0,height,0));
+					SetArray(0.25f,0.5,base-side*width+float3(0,height,0));
+					SetArray(0.25f,0.25,base-side*width);
+				}
+			}
+			glNewList(td->trees[y*treesX+x].farDisplist,GL_COMPILE);
+			va->DrawArrayT(GL_QUADS);
+			glEndList();
+		}
+		if(dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance*2-1)){
+			float trans=(SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2-dist)/(SQUARE_SIZE*TREE_SQUARE_SIZE);
+			glEnable(GL_BLEND);
+			glColor4f(1,1,1,trans);
+			glAlphaFunc(GL_GREATER,(SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2-dist)/(SQUARE_SIZE*TREE_SQUARE_SIZE*2));
+		} else {
+			glColor4f(1,1,1,1);			
+			glDisable(GL_BLEND);
+			glAlphaFunc(GL_GREATER,0.5f);
+		}
+		glCallList(tss->farDisplist);
+	}
+	
+	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance){	//midle distance trees
+		tss->lastSeen=gs->frameNum;
+		if(!tss->displist){
+			va=GetVertexArray();
+			va->Initialize();
+			tss->displist=glGenLists(1);
+
+			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
+				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
+				if(ts->type<8){
+					float3 base(ts->pos);
+					float height=MAX_TREE_HEIGHT;
+					float width=MAX_TREE_HEIGHT*0.3;
+
+					SetArray(0,0,base+float3(width,0,0));
+					SetArray(0,0.25,base+float3(width,height,0));
+					SetArray(0.5f,0.25,base+float3(-width,height,0));
+					SetArray(0.5f,0,base+float3(-width,0,0));
+
+					SetArray(0,0,base+float3(0,0,width));
+					SetArray(0,0.25,base+float3(0,height,width));
+					SetArray(0.5f,0.25,base+float3(0,height,-width));
+					SetArray(0.5f,0,base+float3(0,0,-width));
+
+					width*=1.2f;
+					SetArray(0.5,0,base+float3(width,height*0.25,0));
+					SetArray(0.5,0.25,base+float3(0,height*0.25,-width));
+					SetArray(1,0.25,base+float3(-width,height*0.25,0));
+					SetArray(1,0,base+float3(0,height*0.25,width));
+				} else {
+					float3 base(ts->pos);
+					float height=MAX_TREE_HEIGHT;
+					float width=MAX_TREE_HEIGHT*0.3;
+
+					SetArray(0,0.25,base+float3(width,0,0));
+					SetArray(0,0.5,base+float3(width,height,0));
+					SetArray(0.25f,0.5,base+float3(-width,height,0));
+					SetArray(0.25f,0.25,base+float3(-width,0,0));
+
+					SetArray(0.25f,0.25,base+float3(0,0,width));
+					SetArray(0.25f,0.5,base+float3(0,height,width));
+					SetArray(0.5f,0.5,base+float3(0,height,-width));
+					SetArray(0.5f,0.25,base+float3(0,0,-width));
+
+					width*=1.2f;
+					SetArray(0.5,0.25,base+float3(width,height*0.3,0));
+					SetArray(0.5,0.5,base+float3(0,height*0.3,-width));
+					SetArray(1,0.5,base+float3(-width,height*0.3,0));
+					SetArray(1,0.25,base+float3(0,height*0.3,width));
+				}
+			}
+			glNewList(tss->displist,GL_COMPILE);
+			va->DrawArrayT(GL_QUADS);
+			glEndList();
+		}
+		glColor4f(1,1,1,1);			
+		glDisable(GL_BLEND);
+		glAlphaFunc(GL_GREATER,0.5f);
+		glCallList(tss->displist);
+	}
+}
+
 void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 {
+	glBindTexture(GL_TEXTURE_2D, treetex);
+
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 	int cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
-	
-	int treeSquare=int(treeDistance*2)+1;
 
-	glBindTexture(GL_TEXTURE_2D, treetex);
-	int sy=cy-treeSquare;
-	if(sy<0)
-		sy=0;
-	int ey=cy+treeSquare;
-	if(ey>=treesY)
-		ey=treesY-1;
+	CBasicTreeSquareDrawer drawer;
+	drawer.td = this;
+	drawer.cx = cx;
+	drawer.cy = cy;
+	drawer.treeDistance = treeDistance;
 
-	for(int y=sy;y<=ey;y++){
-		int sx=cx-treeSquare;
-		if(sx<0)
-			sx=0;
-		int ex=cx+treeSquare;
-		if(ex>=treesX)
-			ex=treesX-1;
-		float xtest,xtest2;
-		std::vector<CBaseGroundDrawer::fline>::iterator fli;
-		for(fli=groundDrawer->left.begin();fli!=groundDrawer->left.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*TREE_SQUARE_SIZE)));
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((y*TREE_SQUARE_SIZE)+TREE_SQUARE_SIZE)));
-			if(xtest>xtest2)
-				xtest=xtest2;
-			xtest=xtest/TREE_SQUARE_SIZE;
-			if(xtest>sx)
-				sx=(int)xtest;
-		}
-		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*TREE_SQUARE_SIZE)));
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((y*TREE_SQUARE_SIZE)+TREE_SQUARE_SIZE)));
-			if(xtest<xtest2)
-				xtest=xtest2;
-			xtest=xtest/TREE_SQUARE_SIZE;
-			if(xtest<ex)
-				ex=(int)xtest;
-		}
-		for(int x=sx;x<=ex;x++){/**/
-			TreeSquareStruct* tss=&trees[y*treesX+x];
-
-			float3 dif;
-			dif.x=camera->pos.x-(x*SQUARE_SIZE*TREE_SQUARE_SIZE + SQUARE_SIZE*TREE_SQUARE_SIZE/2);
-			dif.y=0;
-			dif.z=camera->pos.z-(y*SQUARE_SIZE*TREE_SQUARE_SIZE + SQUARE_SIZE*TREE_SQUARE_SIZE/2);
-			float dist=dif.Length();
-			dif/=dist;
-			
-			if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2 && dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance)){//far trees
-				tss->lastSeenFar=gs->frameNum;
-				if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97){
-					va=GetVertexArray();
-					va->Initialize();
-					tss->viewVector=dif;
-					if(!tss->farDisplist)
-						tss->farDisplist=glGenLists(1);
-					float3 up(0,1,0);
-					float3 side=up.cross(dif);
-
-					for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
-						TreeStruct* ts=&ti->second;
-						if(ts->type<8){
-							float3 base(ts->pos);
-							float height=MAX_TREE_HEIGHT;
-							float width=MAX_TREE_HEIGHT*0.3;
-
-							SetArray(0,0,base+side*width);
-							SetArray(0,0.25,base+side*width+float3(0,height,0));
-							SetArray(0.5f,0.25,base-side*width+float3(0,height,0));
-							SetArray(0.5f,0,base-side*width);
-						} else {
-							float3 base(ts->pos);
-							float height=MAX_TREE_HEIGHT;
-							float width=MAX_TREE_HEIGHT*0.3;
-
-							SetArray(0,0.25,base+side*width);
-							SetArray(0,0.5,base+side*width+float3(0,height,0));
-							SetArray(0.25f,0.5,base-side*width+float3(0,height,0));
-							SetArray(0.25f,0.25,base-side*width);
-						}
-					}
-					glNewList(trees[y*treesX+x].farDisplist,GL_COMPILE);
-					va->DrawArrayT(GL_QUADS);
-					glEndList();
-				}
-				if(dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance*2-1)){
-					float trans=(SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2-dist)/(SQUARE_SIZE*TREE_SQUARE_SIZE);
-					glEnable(GL_BLEND);
-					glColor4f(1,1,1,trans);
-					glAlphaFunc(GL_GREATER,(SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2-dist)/(SQUARE_SIZE*TREE_SQUARE_SIZE*2));
-				} else {
-					glColor4f(1,1,1,1);			
-					glDisable(GL_BLEND);
-					glAlphaFunc(GL_GREATER,0.5f);
-				}
-				glCallList(tss->farDisplist);
-			}
-			
-			if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance){	//midle distance trees
-				tss->lastSeen=gs->frameNum;
-				if(!tss->displist){
-					va=GetVertexArray();
-					va->Initialize();
-					tss->displist=glGenLists(1);
-
-					for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
-						TreeStruct* ts=&ti->second;
-						if(ts->type<8){
-							float3 base(ts->pos);
-							float height=MAX_TREE_HEIGHT;
-							float width=MAX_TREE_HEIGHT*0.3;
-
-							SetArray(0,0,base+float3(width,0,0));
-							SetArray(0,0.25,base+float3(width,height,0));
-							SetArray(0.5f,0.25,base+float3(-width,height,0));
-							SetArray(0.5f,0,base+float3(-width,0,0));
-
-							SetArray(0,0,base+float3(0,0,width));
-							SetArray(0,0.25,base+float3(0,height,width));
-							SetArray(0.5f,0.25,base+float3(0,height,-width));
-							SetArray(0.5f,0,base+float3(0,0,-width));
-
-							width*=1.2f;
-							SetArray(0.5,0,base+float3(width,height*0.25,0));
-							SetArray(0.5,0.25,base+float3(0,height*0.25,-width));
-							SetArray(1,0.25,base+float3(-width,height*0.25,0));
-							SetArray(1,0,base+float3(0,height*0.25,width));
-						} else {
-							float3 base(ts->pos);
-							float height=MAX_TREE_HEIGHT;
-							float width=MAX_TREE_HEIGHT*0.3;
-
-							SetArray(0,0.25,base+float3(width,0,0));
-							SetArray(0,0.5,base+float3(width,height,0));
-							SetArray(0.25f,0.5,base+float3(-width,height,0));
-							SetArray(0.25f,0.25,base+float3(-width,0,0));
-
-							SetArray(0.25f,0.25,base+float3(0,0,width));
-							SetArray(0.25f,0.5,base+float3(0,height,width));
-							SetArray(0.5f,0.5,base+float3(0,height,-width));
-							SetArray(0.5f,0.25,base+float3(0,0,-width));
-
-							width*=1.2f;
-							SetArray(0.5,0.25,base+float3(width,height*0.3,0));
-							SetArray(0.5,0.5,base+float3(0,height*0.3,-width));
-							SetArray(1,0.5,base+float3(-width,height*0.3,0));
-							SetArray(1,0.25,base+float3(0,height*0.3,width));
-						}
-					}
-					glNewList(tss->displist,GL_COMPILE);
-					va->DrawArrayT(GL_QUADS);
-					glEndList();
-				}
-				glColor4f(1,1,1,1);			
-				glDisable(GL_BLEND);
-				glAlphaFunc(GL_GREATER,0.5f);
-				glCallList(tss->displist);
-			}
-		}
-	}
+	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, treeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE, &drawer);
 
 	int startClean=lastListClean*20%(treesX*treesY);
 	lastListClean=gs->frameNum;

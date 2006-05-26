@@ -179,3 +179,12 @@ int CFileHandler::FileSize()
 {
    return filesize;
 }
+
+int CFileHandler::GetPos()
+{
+	if(ifs)
+		return ifs->tellg();
+	else
+		return hpiOffset;
+}
+

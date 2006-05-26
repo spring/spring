@@ -4,7 +4,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Building.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
+#include "Sim/Units/UnitDef.h"
+#include "Rendering/GroundDecalHandler.h"
+#include "Game/GameSetup.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Game/GameSetup.h"

@@ -4,7 +4,7 @@
 #include <fstream>
 #include "SaveInterface.h"
 #include "LoadInterface.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Platform/errorhandler.h"
@@ -44,7 +44,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 void CLoadSaveHandler::LoadGame(std::string file)
 {
 	boost::filesystem::path fn(file);
-	ifs=new ifstream(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
+	ifs=new std::ifstream(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
 	load=new CLoadInterface(ifs);
 
 	load->lsString(stupidGlobalMapname);

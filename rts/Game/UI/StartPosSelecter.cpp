@@ -6,7 +6,7 @@
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
 #include "Net.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Rendering/InMapDraw.h"
 

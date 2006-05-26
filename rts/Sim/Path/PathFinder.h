@@ -2,7 +2,7 @@
 #define PATHFINDER_H
 
 #include "IPath.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include <queue>
 #include <list>

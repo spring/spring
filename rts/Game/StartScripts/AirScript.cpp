@@ -9,7 +9,7 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/UI/InfoConsole.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "mmgr.h"
 
 

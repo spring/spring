@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #endif
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Net.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"

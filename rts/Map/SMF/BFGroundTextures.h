@@ -5,17 +5,20 @@
 #define __BF_GROUND_TEXTURES_H__
 
 class CFileHandler;
+class CSmfReadMap;
 
 class CBFGroundTextures
 {
 public:
-	CBFGroundTextures(CFileHandler* ifs);
+	CBFGroundTextures(CSmfReadMap *srm);
 	~CBFGroundTextures(void);
 	void SetTexture(int x, int y);
 	void DrawUpdate(void);
 	void LoadSquare(int x, int y, int level);
 
 protected:
+	CSmfReadMap *map;
+
 	int numBigTexX;
 	int numBigTexY;
 
@@ -45,7 +48,5 @@ protected:
 	int tileMapXSize;
 	int tileMapYSize;
 };
-
-extern CBFGroundTextures* groundTextures;
 
 #endif // __BF_GROUND_TEXTURES_H__

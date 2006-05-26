@@ -7,10 +7,8 @@
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
 #include "Rendering/UnitModels/3DOParser.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/Camera.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
-#include "Sim/Map/mapfile.h"
 #include "QuadField.h"
 #include "Sim/Units/UnitHandler.h"
 #include "LoadSaveInterface.h"
@@ -22,6 +20,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
 #include "mmgr.h"
 
 CR_BIND(FeatureDef);
@@ -101,7 +100,7 @@ void CFeatureHandler::Draw()
 
 	unitDrawer->SetupForUnitDrawing();
 
-	DrawRaw(0,&drawFar);
+	DrawRaw(0, &drawFar);
 
 	unitDrawer->CleanUpUnitDrawing();
 
@@ -128,7 +127,7 @@ void CFeatureHandler::DrawShadowPass()
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	DrawRaw(1,0);
+	DrawRaw(1, 0);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable( GL_VERTEX_PROGRAM_ARB );
@@ -215,25 +214,12 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 	toBeRemoved.push_back(feature->id);
 }
 
-void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs)
+void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
-	file->Seek(readmap->header.featurePtr);
-	MapFeatureHeader fh;
-	READ_MAPFEATUREHEADER(fh, file);
-	if(file->Eof()){
-		info->AddLine("No features in map file?");
-		return;
-	}
-	string* mapids=new string[fh.numFeatureType];
+	int numType = readmap->GetNumFeatureTypes ();
 
-	for(int a=0;a<fh.numFeatureType;++a){
-		char c;
-		file->Read(&c,1);
-		while(c){
-			mapids[a]+=c;
-			file->Read(&c,1);
-		}
-		string name=mapids[a];
+	for(int a=0;a<numType;++a){
+		string name=readmap->GetFeatureType (a);
 		if(name.find("TreeType")!=string::npos){
 			FeatureDef* fd=new FeatureDef;
 			fd->blocking=1;
@@ -275,11 +261,12 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 	}
 
 	if(!onlyCreateDefs){
-		for(int a=0;a<fh.numFeatures;++a){
-			MapFeatureStruct ffs;
-			READ_MAPFEATURESTRUCT(ffs, file);
+		int numFeatures = readmap->GetNumFeatures ();
+		MapFeatureInfo *mfi = new MapFeatureInfo [numFeatures];
+		readmap->GetFeatureInfo (mfi);
 
-			string name=mapids[ffs.featureType];
+		for(int a=0;a<numFeatures;++a){
+			string name=readmap->GetFeatureType (mfi[a].featureType);
 			
 			std::map<std::string,FeatureDef*>::iterator def = featureDefs.find(name);
 			
@@ -288,13 +275,11 @@ void CFeatureHandler::LoadFeaturesFromMap(CFileHandler* file,bool onlyCreateDefs
 				continue;
 			}
 
-			ffs.ypos=ground->GetHeight2(ffs.xpos,ffs.zpos);
-			CFeature *f = new CFeature;
-			f->Initialize (float3(ffs.xpos,ffs.ypos,ffs.zpos),def->second,(short int)ffs.rotation,-1,"");
+			float ypos = ground->GetHeight2(mfi[a].pos.x,mfi[a].pos.z);
+			(new CFeature)->Initialize (float3(mfi[a].pos.x, ypos,mfi[a].pos.z),featureDefs[name],(short int)mfi[a].rotation,-1,"");
 		}
+		delete[] mfi;
 	}
-
-	delete[] mapids;
 }
 
 void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
@@ -374,94 +359,78 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 	overrideId=-1;
 }
 
-void CFeatureHandler::DrawRaw(int extraSize,std::vector<CFeature*>* farFeatures)
+struct CFeatureDrawer : CReadMap::IQuadDrawer
 {
-	bool drawReflection=water->drawReflection;
-	bool drawRefraction=water->drawRefraction;
-	float unitDrawDist=unitDrawer->unitDrawDist;
+	void DrawQuad (int x,int y);
 
+	CFeatureHandler *fh;
+	CFeatureHandler::DrawQuad *drawQuads;
+	int drawQuadsX;
+	bool drawReflection, drawRefraction;
+	float unitDrawDist;
+	std::vector<CFeature*>* farFeatures;
+};
+
+void CFeatureDrawer::DrawQuad (int x,int y)
+{
+	CFeatureHandler::DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
+
+	for(set<CFeature*>::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
+		CFeature* f=(*fi);
+		FeatureDef* def=f->def;
+
+		if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectating) && def->drawType==DRAWTYPE_3DO){
+			if(drawReflection){
+				float3 zeroPos;
+				if(f->midPos.y<0){
+					zeroPos=f->midPos;
+				}else{
+					float dif=f->midPos.y-camera->pos.y;
+					zeroPos=camera->pos*(f->midPos.y/dif) + f->midPos*(-camera->pos.y/dif);
+				}
+				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>f->radius){
+					continue;
+				}
+			}
+			if(drawRefraction){
+				if(f->pos.y>0)
+					continue;
+			}
+			float sqDist=(f->pos-camera->pos).SqLength2D();
+			float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
+			if(sqDist<farLength){
+				if(!def->model->textureType || shadowHandler->inShadowPass){
+					f->DrawS3O ();
+				} else {
+					unitDrawer->QueS3ODraw(f,def->model->textureType);
+				}
+			} else {
+				if(farFeatures)
+					farFeatures->push_back(f);
+			}
+		}
+	}
+}
+
+void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures)
+{
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*DRAW_QUAD_SIZE));
 	int cy=(int)(camera->pos.z/(SQUARE_SIZE*DRAW_QUAD_SIZE));
 
 	float featureDist=3000;
 	if(!extraSize)
 		featureDist=6000;		//farfeatures wont be drawn for shadowpass anyway
-	int featureSquare=int(featureDist/(SQUARE_SIZE*DRAW_QUAD_SIZE))+1;
 
-	int sy=cy-featureSquare;
-	if(sy<0)
-		sy=0;
-	int ey=cy+featureSquare;
-	if(ey>drawQuadsY-1)
-		ey=drawQuadsY-1;
+	CFeatureDrawer drawer;
+	drawer.drawQuads = drawQuads;
+	drawer.fh = this;
+	drawer.drawQuadsX = drawQuadsX;
+	drawer.drawReflection=water->drawReflection;
+	drawer.drawRefraction=water->drawRefraction;
+	drawer.unitDrawDist=unitDrawer->unitDrawDist;
+	drawer.farFeatures = farFeatures;
 
-	for(int y=sy;y<=ey;y++){
-		int sx=cx-featureSquare;
-		if(sx<0)
-			sx=0;
-		int ex=cx+featureSquare;
-		if(ex>drawQuadsX-1)
-			ex=drawQuadsX-1;
-		float xtest,xtest2;
-		std::vector<CBaseGroundDrawer::fline>::iterator fli;
-		for(fli=groundDrawer->left.begin();fli!=groundDrawer->left.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*DRAW_QUAD_SIZE)));
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((y*DRAW_QUAD_SIZE)+DRAW_QUAD_SIZE)));
-			if(xtest>xtest2)
-				xtest=xtest2;
-			xtest=xtest/DRAW_QUAD_SIZE;
-			if(xtest-extraSize>sx)
-				sx=((int)xtest)-extraSize;
-		}
-		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*DRAW_QUAD_SIZE)));
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((y*DRAW_QUAD_SIZE)+DRAW_QUAD_SIZE)));
-			if(xtest<xtest2)
-				xtest=xtest2;
-			xtest=xtest/DRAW_QUAD_SIZE;
-			if(xtest+extraSize<ex)
-				ex=((int)xtest)+extraSize;
-		}
-		for(int x=sx;x<=ex;x++){/**/
-			DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
-
-			for(set<CFeature*>::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
-				CFeature* f=(*fi);
-				FeatureDef* def=f->def;
-
-				if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectating) && def->drawType==DRAWTYPE_3DO){
-					if(drawReflection){
-						float3 zeroPos;
-						if(f->midPos.y<0){
-							zeroPos=f->midPos;
-						}else{
-							float dif=f->midPos.y-camera->pos.y;
-							zeroPos=camera->pos*(f->midPos.y/dif) + f->midPos*(-camera->pos.y/dif);
-						}
-						if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>f->radius){
-							continue;
-						}
-					}
-					if(drawRefraction){
-						if(f->pos.y>0)
-							continue;
-					}
-					float sqDist=(f->pos-camera->pos).SqLength2D();
-					float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
-					if(sqDist<farLength){
-						if(!def->model->textureType || shadowHandler->inShadowPass){
-							f->DrawS3O ();
-						} else {
-							unitDrawer->QueS3ODraw(f,def->model->textureType);
-						}
-					} else {
-						if(farFeatures)
-							farFeatures->push_back(f);
-					}
-				}
-			}
-		}
-	}
+	readmap->GridVisibility (camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }
 
 void CFeatureHandler::DrawFar(CFeature* feature,CVertexArray* va)

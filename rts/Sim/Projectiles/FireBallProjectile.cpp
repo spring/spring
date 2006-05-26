@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "FireBallProjectile.h"
-#include "GlobalStuff.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Sim/Weapons/WeaponDefHandler.h"

@@ -18,7 +18,7 @@
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/MuzzleFlame.h"
 #include "SyncTracer.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Sim/Projectiles/BubbleProjectile.h"
 #include "Sim/Projectiles/WakeProjectile.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"

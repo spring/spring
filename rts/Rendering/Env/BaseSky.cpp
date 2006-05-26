@@ -5,7 +5,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Platform/ConfigHandler.h"
 #include "SkyBox.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "mmgr.h"
 
 CBaseSky* sky=0;

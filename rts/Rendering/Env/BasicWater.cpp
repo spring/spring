@@ -9,8 +9,7 @@
 #include <math.h>
 
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/Map/ReadMap.h"
-#include "Sim/Map/SmfReadMap.h"
+#include "Map/ReadMap.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -20,7 +19,7 @@
 CBasicWater::CBasicWater()
 {
 	glGenTextures(1, &texture);
-	CBitmap pic(((CSmfReadMap*)readmap)->waterTexture);
+	CBitmap pic(readmap->waterTexture);
 
 	// create mipmapped texture
 	glBindTexture(GL_TEXTURE_2D, texture);

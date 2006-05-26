@@ -2,7 +2,7 @@
 #include "PieceProjectile.h"
 #include "GlobalStuff.h"
 #include "SmokeProjectile.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "ProjectileHandler.h"
 #include "HeatCloudProjectile.h"
 #include "Game/UI/InfoConsole.h"

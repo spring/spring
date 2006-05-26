@@ -4,7 +4,7 @@
 #include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/LaserProjectile.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "WeaponDefHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Game/UI/InfoConsole.h"

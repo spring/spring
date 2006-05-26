@@ -5,8 +5,6 @@
 #include "StdAfx.h"
 #include "TracerProjectile.h"
 #include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
-#include <math.h>
-#include "ProjectileHandler.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

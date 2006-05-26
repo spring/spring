@@ -1,8 +1,10 @@
 #include "StdAfx.h"
 #include "GroundMoveMath.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Feature.h"
+
+using namespace std;
 
 float CGroundMoveMath::waterCost=0;
 

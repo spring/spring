@@ -4,8 +4,6 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "HeatCloudProjectile.h"
-#include "Rendering/GL/myGL.h"
-#include "ProjectileHandler.h"
 #include "Game/Camera.h"
 #include "SyncTracer.h"
 #include "Rendering/GL/VertexArray.h"

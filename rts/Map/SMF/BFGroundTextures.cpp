@@ -5,36 +5,22 @@
 #include "Game/Camera.h"
 #include "Game/UI/InfoConsole.h"
 #include <GL/glu.h>
-#include "Sim/Map/mapfile.h"
-#include "Sim/Map/ReadMap.h"
+#include "mapfile.h"
 #include "Platform/errorhandler.h"
+#include "SmfReadMap.h"
 #include "mmgr.h"
 
-// MSVC compiler does not have std::min and max, but rather, it's own built in macro
-#ifdef _MSC_VER
-#define USE_MIN min
-#define USE_MAX max
-#else
-#define USE_MIN std::min
-#define USE_MAX std::max
-#endif
+using namespace std;
 
-CBFGroundTextures* groundTextures=0;
-
-CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
+CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 {
+	CFileHandler *ifs = rm->ifs;
+	map = rm;
+
 	numBigTexX=gs->mapx/128;
 	numBigTexY=gs->mapy/128;
 
-	//SetupJpeg();
-
-	//textureOffsets=new int[numBigTexX*numBigTexY*4*3+1];
-	//ifs->Read(textureOffsets,numBigTexX*numBigTexY*4*3*4+4);
-
-	//jpegBuffer=new unsigned char[textureOffsets[numBigTexX*numBigTexY*4*3]];
-	//ifs->Read(jpegBuffer,textureOffsets[numBigTexX*numBigTexY*4*3]);
-
-	MapHeader* header=&readmap->header;
+	MapHeader* header=&map->header;
 	ifs->Seek(header->tilesPtr);
 
 	tileSize = header->tilesize;
@@ -107,20 +93,11 @@ CBFGroundTextures::CBFGroundTextures(CFileHandler* ifs)
 			LoadSquare(x,y,2);
 		}
 	}
-	//readBuffer=new unsigned char[1024*1024*4];
-	//readTempLine=new unsigned char[1024*4];
 	inRead=false;
 }
 
 CBFGroundTextures::~CBFGroundTextures(void)
 {
-	//AbortRead();
-	//jpeg_destroy_decompress(&cinfo);
-
-	//delete[] readBuffer;
-	//delete[] readTempLine;
-	//delete[] textureOffsets;
-	//delete[] jpegBuffer;
 	delete[] squares;
 
 	delete[] tileMap;
@@ -146,12 +123,12 @@ void CBFGroundTextures::DrawUpdate(void)
 
 	for(int y=0;y<numBigTexY;++y){
 		float dy=cam2->pos.z - y*128*SQUARE_SIZE-64*SQUARE_SIZE;
-		dy=USE_MAX(0.0f,float(fabs(dy)-64.f*SQUARE_SIZE));
+		dy=max(0.0f,float(fabs(dy)-64.f*SQUARE_SIZE));
 		for(int x=0;x<numBigTexX;++x){
 			GroundSquare* square=&squares[y*numBigTexX+x];
 
 			float dx=cam2->pos.x - x*128*SQUARE_SIZE-64*SQUARE_SIZE;
-			dx=USE_MAX(0.0f,float(fabs(dx)-64.f*SQUARE_SIZE));
+			dx=max(0.0f,float(fabs(dx)-64.f*SQUARE_SIZE));
 			float dist=sqrt(dx*dx+dy*dy);
 
 			if(square->lastUsed<gs->frameNum-60)
@@ -187,23 +164,6 @@ void CBFGroundTextures::DrawUpdate(void)
 			}
 		}
 	}
-	//if(inRead && fabsf(currentReadWantedLevel-readLevel)>=fabsf(readSquare->texLevel-readLevel)){
-	//	inRead=false;
-	//	AbortRead();
-	//}
-	//
-	//if(!inRead && maxDif>0){
-	//	readX=maxX;
-	//	readY=maxY;
-	//	readSquare=&squares[readY*numBigTexX+readX];
-	//	readLevel=wantedNew;
-	//	inRead=true;
-	//	readProgress=0;
-	//}
-
-	//if(inRead){
-	//	ReadSlow(sqrt(totalDif)+1);
-	//}
 }
 
 int tileoffset[] = {0, 512, 640, 672};
@@ -247,24 +207,9 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	glBindTexture(GL_TEXTURE_2D, square->texture);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-	//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-	//gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,size, size, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	glCompressedTexImage2DARB(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size*size/2, buf);
-
-
-	//for(int y1=0; y1<32; y1++)
-	//{
-	//	for(int x1=0; x1<32; x1++)
-	//	{
-
-	//		char *tile = &tiles[tileMap[(x1+x*32)+(y1+y*32)*tileMapYSize]*TILE_SIZE + 672];
-	//		glCompressedTexSubImage2DARB(GL_TEXTURE_2D,0,x1*4,y1*4, 4,4, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, 8, tile);
-	//	}
-	//}
-
 
 	delete[] buf;
 }

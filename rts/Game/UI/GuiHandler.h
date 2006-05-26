@@ -12,7 +12,6 @@
 #include <map>
 #include "InputReceiver.h"
 
-using namespace std;
 class CglList;
 struct UnitDef;
 

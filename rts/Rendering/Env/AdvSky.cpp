@@ -11,7 +11,7 @@
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Game/Camera.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/UI/InfoConsole.h"

@@ -1,10 +1,10 @@
 #include "StdAfx.h"
 #include "SolidObject.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 //#include "PhysicsEngine.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/UI/InfoConsole.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "myMath.h"
 #include "Rendering/GL/glExtra.h"
 

@@ -22,8 +22,8 @@
 #include "Camera.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Net.h"
-#include "Sim/Map/Ground.h"
-#include "Rendering/Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
+#include "Map/BaseGroundDrawer.h"
 #include "GameHelper.h"
 #include "UI/GuiKeyReader.h"
 #include "StartScripts/Script.h"
@@ -33,7 +33,7 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Map/ReadMap.h"
+#include "Map/ReadMap.h"
 #include "UI/GuiHandler.h"
 #include "SelectedUnits.h"
 #include "Team.h"
@@ -42,7 +42,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "UI/MiniMap.h"
 #include "ExternalAI/GroupHandler.h"
-#include "Sim/Map/MapDamage.h"
+#include "Map/MapDamage.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Platform/ConfigHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -62,7 +62,7 @@
 #endif
 #include "Sim/Units/UnitTracker.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/Map/MetalMap.h"
+#include "Map/MetalMap.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
@@ -227,7 +227,7 @@ CGame::CGame(bool server,std::string mapname)
 
 	ENTER_SYNCED;
 	ground=new CGround();
-	CReadMap::Instance();
+	readmap = CReadMap::LoadMap (mapname);
 	moveinfo=new CMoveInfo();
 	groundDecals=new CGroundDecalHandler();
 	ENTER_MIXED;
@@ -261,7 +261,7 @@ CGame::CGame(bool server,std::string mapname)
 	modelParser = new C3DModelParser();
  	ENTER_SYNCED;
  	if(!server) net->Update();	//prevent timing out during load
- 	featureHandler->LoadFeaturesFromMap(readmap->ifs,CScriptHandler::Instance().chosenScript->loadGame);
+ 	featureHandler->LoadFeaturesFromMap(CScriptHandler::Instance().chosenScript->loadGame);
  	if(!server) net->Update();	//prevent timing out during load
  	pathManager = new CPathManager();
  	if(!server) net->Update();	//prevent timing out during load
@@ -353,6 +353,10 @@ CGame::~CGame()
 	configHandler.SetInt("ShowClock",showClock);
 	configHandler.SetInt("ShowPlayerInfo",showPlayerInfo);
 
+	CBaseGroundDrawer *gd = readmap ? readmap->GetGroundDrawer() : 0;
+	if (gd) configHandler.SetInt("GroundDetail",gd->viewRadius);
+	if (treeDrawer) configHandler.SetInt("TreeRadius",(unsigned int)(treeDrawer->baseTreeDistance*256));
+
 	ENTER_MIXED;
 #ifndef NO_AVI
 	if(creatingVideo){
@@ -387,7 +391,6 @@ CGame::~CGame()
 		delete minimap;
 	delete pathManager;
 	delete groundDecals;
-	delete groundDrawer;
 	delete ground;
 	delete inMapDrawer;
 	delete net;
@@ -585,9 +588,10 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}
 	}
 #endif
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
 
 	if (s=="updatefov")
-		groundDrawer->updateFov=!groundDrawer->updateFov;
+		gd->updateFov=!gd->updateFov;
 
 	if (s=="drawtrees")
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
@@ -599,23 +603,23 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		hideInterface=!hideInterface;
 
 	if (s=="increaseviewradius"){
-		groundDrawer->viewRadius+=2;
-		(*info) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
+		gd->viewRadius+=2;
+		(*info) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
 
 	if (s=="decreaseviewradius"){
-		groundDrawer->viewRadius-=2;
-		(*info) << "ViewRadius is now " << groundDrawer->viewRadius << "\n";
+		gd->viewRadius-=2;
+		(*info) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
 
 	if (s=="moretrees"){
-		groundDrawer->baseTreeDistance+=0.2f;
-		(*info) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		treeDrawer->baseTreeDistance+=0.2f;
+		(*info) << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 
 	if (s=="lesstrees"){
-		groundDrawer->baseTreeDistance-=0.2f;
-		(*info) << "Base tree distance " << groundDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		treeDrawer->baseTreeDistance-=0.2f;
+		(*info) << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 
 	if (s=="moreclouds"){
@@ -676,11 +680,11 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	}
 
 	if (s=="showstandard"){
-		groundDrawer->SetExtraTexture(0,0,false);
+		gd->DisableExtraTexture();
 	}
 
 	if (s=="showelevation"){
-		groundDrawer->SetHeightTexture();
+		gd->SetHeightTexture();
 	}
 	if (s=="yardmap1"){
 		//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[0],readmap->yardmapPal,true);
@@ -691,10 +695,10 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		mouse->transitSpeed=0.5;
 	}
 	if (s=="showmetalmap"){
-		groundDrawer->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
+		gd->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
 	}
 	if (s=="showpathmap"){
-		groundDrawer->SetPathMapTexture();
+		gd->SetPathMapTexture();
 	}
 
 	if (s=="yardmap4"){
@@ -707,7 +711,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		groundDrawer->SetExtraTexture(readmap->teammap,cityhandler->teampal);
 		}*/
 	if (s=="togglelos"){
-		groundDrawer->ToggleLosTexture();
+		gd->ToggleLosTexture();
 	}
 	if(s=="mousestate"){
 		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
@@ -993,7 +997,9 @@ bool CGame::Draw()
 	if(playing && (hideInterface || script->wantCameraControl))
 		script->SetCamera();
 
-	
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
+	gd->Update(); // let it update before shadows have to be drawn
+
 	if(shadowHandler->drawShadows)
 		shadowHandler->CreateShadows();
 	if (unitDrawer->advShading)
@@ -1006,8 +1012,8 @@ bool CGame::Draw()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
 	sky->Draw();
-	groundDrawer->UpdateTextures();
-	groundDrawer->Draw();
+	gd->UpdateExtraTexture();
+	gd->Draw();
 	if(!readmap->voidWater && water->drawSolid)
  		water->Draw();
 
@@ -1117,16 +1123,6 @@ bool CGame::Draw()
 			glColor3f(1.0f, 1.0f, 1.0f);
 			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
 		}
-
-		/*if(allReady)
-		{
-			glPushMatrix();
-			glColor4f(1,1,1,1);
-			glTranslatef(0.1f,0.6f,0.0f);
-			glScalef(0.03f,0.04f,0.1f);
-			font->glPrint("Waiting for connections. Press return to start");
-			glPopMatrix();
-		}*/
 	}
 	
 	if(userWriting){

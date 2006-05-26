@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "InMapDraw.h"
 #include "Net.h"
-#include "Sim/Map/Ground.h"
+#include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/Team.h"
@@ -80,6 +80,71 @@ CInMapDraw::~CInMapDraw(void)
 	glDeleteTextures (1, &texture);
 }
 
+struct InMapDraw_QuadDrawer : public CReadMap::IQuadDrawer
+{
+	CVertexArray *va, *lineva;
+	CInMapDraw *imd;
+
+	void DrawQuad (int x,int y);
+};
+
+void InMapDraw_QuadDrawer::DrawQuad (int x,int y)
+{
+	int drawQuadsX = imd->drawQuadsX;
+	CInMapDraw::DrawQuad* dq=&imd->drawQuads[y*drawQuadsX+x];
+
+	for(std::list<CInMapDraw::MapPoint>::iterator pi=dq->points.begin();pi!=dq->points.end();++pi){
+		float3 pos=pi->pos;
+
+		float3 dif(pos-camera->pos);
+		float camDist=dif.Length();
+		dif/=camDist;
+		float3 dir1(dif.cross(UpVector));
+		dir1.Normalize();
+		float3 dir2(dif.cross(dir1));
+
+		unsigned char col[4];
+		col[0]=pi->color[0];
+		col[1]=pi->color[1];
+		col[2]=pi->color[2];
+		col[3]=200;//intensity*255;
+
+		float size=6;
+
+		float3 pos1=pos;
+		float3 pos2=pos1;
+		pos2.y+=100;
+
+		va->AddVertexTC(pos1-dir1*size,					  0.25,0,col);
+		va->AddVertexTC(pos1+dir1*size,					  0.25,1,col);
+		va->AddVertexTC(pos1+dir1*size+dir2*size, 0.00,1,col);
+		va->AddVertexTC(pos1-dir1*size+dir2*size, 0.00,0,col);
+
+		va->AddVertexTC(pos1-dir1*size,0.75,0,col);
+		va->AddVertexTC(pos1+dir1*size,0.75,1,col);
+		va->AddVertexTC(pos2+dir1*size,0.75,1,col);
+		va->AddVertexTC(pos2-dir1*size,0.75,0,col);
+
+		va->AddVertexTC(pos2-dir1*size,					  0.25,0,col);
+		va->AddVertexTC(pos2+dir1*size,					  0.25,1,col);
+		va->AddVertexTC(pos2+dir1*size-dir2*size, 0.00,1,col);
+		va->AddVertexTC(pos2-dir1*size-dir2*size, 0.00,0,col);
+
+		if(pi->label.size()>0){
+			glPushMatrix();
+			glTranslatef3(pi->pos+UpVector*105);
+			glScalef(30,30,30);
+			glColor4ub(pi->color[0],pi->color[1],pi->color[2],250);
+			font->glWorldPrint("%s",pi->label.c_str());
+			glPopMatrix();
+		}
+	}
+	for(std::list<CInMapDraw::MapLine>::iterator li=dq->lines.begin();li!=dq->lines.end();++li){
+		lineva->AddVertexC(li->pos-(li->pos - camera->pos).Normalize()*26,li->color);
+		lineva->AddVertexC(li->pos2-(li->pos2 - camera->pos).Normalize()*26,li->color);
+	}
+}
+
 void CInMapDraw::Draw(void)
 {
 	glDepthMask(0);
@@ -90,107 +155,18 @@ void CInMapDraw::Draw(void)
 	CVertexArray* lineva=GetVertexArray();
 	lineva->Initialize();
 
-	int cx=(int)(camera->pos.x/(SQUARE_SIZE*DRAW_QUAD_SIZE));
-	int cy=(int)(camera->pos.z/(SQUARE_SIZE*DRAW_QUAD_SIZE));
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
 
-	float drawDist=3000;
-	int drawSquare=int(drawDist/(SQUARE_SIZE*DRAW_QUAD_SIZE))+1;
+	glBindTexture(GL_TEXTURE_2D,texture);
 
-	int sy=cy-drawSquare;
-	if(sy<0)
-		sy=0;
-	int ey=cy+drawSquare;
-	if(ey>drawQuadsY-1)
-		ey=drawQuadsY-1;
+	InMapDraw_QuadDrawer drawer;
+	drawer.imd = this;
+	drawer.lineva = lineva;
+	drawer.va = va;
 
-	for(int y=sy;y<=ey;y++){
-		int sx=cx-drawSquare;
-		if(sx<0)
-			sx=0;
-		int ex=cx+drawSquare;
-		if(ex>drawQuadsX-1)
-			ex=drawQuadsX-1;
-		float xtest,xtest2;
-		std::vector<CBaseGroundDrawer::fline>::iterator fli;
-		for(fli=groundDrawer->left.begin();fli!=groundDrawer->left.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*DRAW_QUAD_SIZE)));
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((y*DRAW_QUAD_SIZE)+DRAW_QUAD_SIZE)));
-			if(xtest>xtest2)
-				xtest=xtest2;
-			xtest=xtest/DRAW_QUAD_SIZE;
-			if(xtest>sx)
-				sx=(int)xtest;
-		}
-		for(fli=groundDrawer->right.begin();fli!=groundDrawer->right.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*DRAW_QUAD_SIZE)));
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((y*DRAW_QUAD_SIZE)+DRAW_QUAD_SIZE)));
-			if(xtest<xtest2)
-				xtest=xtest2;
-			xtest=xtest/DRAW_QUAD_SIZE;
-			if(xtest<ex)
-				ex=(int)xtest;
-		}
-		for(int x=sx;x<=ex;x++){/**/
-			DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
-
-			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-			glEnable(GL_TEXTURE_2D);
-			glEnable(GL_BLEND);
-
-			glBindTexture(GL_TEXTURE_2D,texture);
-
-			for(std::list<MapPoint>::iterator pi=dq->points.begin();pi!=dq->points.end();++pi){
-				float3 pos=pi->pos;
-
-				float3 dif(pos-camera->pos);
-				float camDist=dif.Length();
-				dif/=camDist;
-				float3 dir1(dif.cross(UpVector));
-				dir1.Normalize();
-				float3 dir2(dif.cross(dir1));
-
-				unsigned char col[4];
-				col[0]=pi->color[0];
-				col[1]=pi->color[1];
-				col[2]=pi->color[2];
-				col[3]=200;//intensity*255;
-
-				float size=6;
-
-				float3 pos1=pos;
-				float3 pos2=pos1;
-				pos2.y+=100;
-
-				va->AddVertexTC(pos1-dir1*size,					  0.25,0,col);
-				va->AddVertexTC(pos1+dir1*size,					  0.25,1,col);
-				va->AddVertexTC(pos1+dir1*size+dir2*size, 0.00,1,col);
-				va->AddVertexTC(pos1-dir1*size+dir2*size, 0.00,0,col);
-
-				va->AddVertexTC(pos1-dir1*size,0.75,0,col);
-				va->AddVertexTC(pos1+dir1*size,0.75,1,col);
-				va->AddVertexTC(pos2+dir1*size,0.75,1,col);
-				va->AddVertexTC(pos2-dir1*size,0.75,0,col);
-
-				va->AddVertexTC(pos2-dir1*size,					  0.25,0,col);
-				va->AddVertexTC(pos2+dir1*size,					  0.25,1,col);
-				va->AddVertexTC(pos2+dir1*size-dir2*size, 0.00,1,col);
-				va->AddVertexTC(pos2-dir1*size-dir2*size, 0.00,0,col);
-
-				if(pi->label.size()>0){
-					glPushMatrix();
-					glTranslatef3(pi->pos+UpVector*105);
-					glScalef(30,30,30);
-					glColor4ub(pi->color[0],pi->color[1],pi->color[2],250);
-					font->glWorldPrint("%s",pi->label.c_str());
-					glPopMatrix();
-				}
-			}
-			for(std::list<MapLine>::iterator li=dq->lines.begin();li!=dq->lines.end();++li){
-				lineva->AddVertexC(li->pos-(li->pos - camera->pos).Normalize()*26,li->color);
-				lineva->AddVertexC(li->pos2-(li->pos2 - camera->pos).Normalize()*26,li->color);
-			}
-		}
-	}
+	readmap->GridVisibility (camera, DRAW_QUAD_SIZE, 3000.0f, &drawer);
 
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3);

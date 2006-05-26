@@ -1,8 +1,5 @@
 #include "StdAfx.h"
 #include "EmgProjectile.h"
-#include "ProjectileHandler.h"
-#include "Sim/Units/Unit.h"
-#include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "SyncTracer.h"
