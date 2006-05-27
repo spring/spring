@@ -141,7 +141,6 @@ Removes this object from GroundBlockingMap.
 void CSolidObject::UnBlock() {
 	if(isMarkedOnBlockingMap) {
 		readmap->RemoveGroundBlockingObject(this);
-		isMarkedOnBlockingMap = false;
 	}
 }
 
@@ -160,7 +159,6 @@ void CSolidObject::Block() {
 		} else {
 			readmap->AddGroundBlockingObject(this);
 		}
-		isMarkedOnBlockingMap = true;
 	}
 }
 

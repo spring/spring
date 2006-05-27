@@ -308,6 +308,7 @@ void CReadMap::ParseSettings(TdfParser& resources)
 
 void CReadMap::AddGroundBlockingObject(CSolidObject *object)
 {
+	object->isMarkedOnBlockingMap=true;
 	object->mapPos=object->GetMapPos();
 	if(object->immobile){
 		object->mapPos.x&=0xfffffe;
@@ -331,6 +332,7 @@ void CReadMap::AddGroundBlockingObject(CSolidObject *object)
 
 void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yardMap)
 {
+	object->isMarkedOnBlockingMap=true;
 	object->mapPos=object->GetMapPos();
 	if(object->immobile){
 		object->mapPos.x&=0xfffffe;
@@ -359,6 +361,7 @@ void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yard
 
 void CReadMap::RemoveGroundBlockingObject(CSolidObject *object) 
 {
+	object->isMarkedOnBlockingMap=false;
 	int bx=object->mapPos.x;
 	int bz=object->mapPos.y;
 	int sx=object->xsize;
