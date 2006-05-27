@@ -5,6 +5,7 @@ TASpring change log
 - Bos/Cob script for units can now animate the death of the unit. Just have the Kill function return after a while instead of directly and return wreck level in return value instead of in function argument.
 - Fixed the com dies, game ends exploit: sharing your com now kills you
 - Fixed a bug causing clients not to quit when server quits
+- Fixed crash bug normally resulting in dialog with "no rtti data"
 - ".give" cheat command doesn't desync the game anymore
 - Made "Team0() is no more" message customizable by modders (see XTA for an example).
 - Added weapontag "paralyzetime", controls how long a unit can maximaly be paralyzed after being hit by this weapon, default 10
@@ -20,24 +21,24 @@ TASpring change log
 - Fbi tag HideDamage now actually works: set it to 1 to hide most details in the unit's tooltip from enemies
 - New weapon tag "rgbcolor", overrides the old color1 and color2 tags if it exists, gives the color in red green blue format (1 1 1 = white).
 - Removed old plasmarepulser system and replaced it with a more generalized shield system
--  New fbi tag IsShield, if 1 mean the weapon is a shield and now a weapon
--  New fbi tag shieldrepulser, 0=destroy projectile,1=repulse (bounce) projectile
--  New fbi tag smartshield, 1=shield doesnt affect allies weapons
--  New fbi tag exteriorshield, 1=shield doesnt affect weapons fired from within shield
--  New fbi tag visibleshield, 1=see a visible shell representing the shield
--  New fbi tag visibleshieldrepulse, 1=see a beam showing when shield repulses something
--  New fbi tag shieldenergyuse, how much energy the shield use when repulsing/destroying something
--  New fbi tag shieldforce, how hard shield can accelerate some sort of projectiles away
--  New fbi tag shieldradius, size of shield effect
--  New fbi tag shieldmaxspeed, maximum speed the shield can push some sort of projectiles away
--  New fbi tag shieldpower, how much power the shield can store, power is drained by the affected weapons damage, 0=infinite
--  New fbi tag shieldpowerregen, how fast the shield regenerates power
--  New fbi tag shieldpowerregenenergy, how much energy the shield uses when regenerating power
--  New fbi tag shieldintercepttype, which types of weapon the shield can affect (bitfield)
--  New fbi tag interceptedbyshieldtype, which types of shields can affect this weapon, if (shieldInterceptType & interceptedByShieldType) is not zero the shield can affect the weapon, default 1 for plasma, 2 for laser, 4 for missiles, 0 for other
--  New fbi tag shieldgoodcolor, color of shield when power is full
--  New fbi tag shieldbadcolor, color of shield when power is empty
--  New fbi tag shieldalpha, how visible the shield shell is with visibleshield=1
+-  New weapon tdf tag IsShield, if 1 mean the weapon is a shield and now a weapon
+-  New weapon tdf tag shieldrepulser, 0=destroy projectile,1=repulse (bounce) projectile
+-  New weapon tdf tag smartshield, 1=shield doesnt affect allies weapons
+-  New weapon tdf tag exteriorshield, 1=shield doesnt affect weapons fired from within shield
+-  New weapon tdf tag visibleshield, 1=see a visible shell representing the shield
+-  New weapon tdf tag visibleshieldrepulse, 1=see a beam showing when shield repulses something
+-  New weapon tdf tag shieldenergyuse, how much energy the shield use when repulsing/destroying something
+-  New weapon tdf tag shieldforce, how hard shield can accelerate some sort of projectiles away
+-  New weapon tdf tag shieldradius, size of shield effect
+-  New weapon tdf tag shieldmaxspeed, maximum speed the shield can push some sort of projectiles away
+-  New weapon tdf tag shieldpower, how much power the shield can store, power is drained by the affected weapons damage, 0=infinite
+-  New weapon tdf tag shieldpowerregen, how fast the shield regenerates power
+-  New weapon tdf tag shieldpowerregenenergy, how much energy the shield uses when regenerating power
+-  New weapon tdf tag shieldintercepttype, which types of weapon the shield can affect (bitfield)
+-  New weapon tdf tag interceptedbyshieldtype, which types of shields can affect this weapon, if (shieldInterceptType & interceptedByShieldType) is not zero the shield can affect the weapon, default 1 for plasma, 2 for laser, 4 for missiles, 0 for other
+-  New weapon tdf tag shieldgoodcolor, color of shield when power is full
+-  New weapon tdf tag shieldbadcolor, color of shield when power is empty
+-  New weapon tdf tag shieldalpha, how visible the shield shell is with visibleshield=1
 
 
 0.71b1
