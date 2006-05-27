@@ -75,10 +75,12 @@ void CPlasmaRepulser::Update(void)
 					continue;
 				} else if (type==1){
 					owner->UseEnergy(weaponDef->shieldEnergyUse);
-					curPower-=(*pi)->damages[0];
+					if(weaponDef->shieldPower != 0)
+						curPower-=(*pi)->damages[0];
 				} else {
 					owner->UseEnergy(weaponDef->shieldEnergyUse/30.0f);
-					curPower-=(*pi)->damages[0]/30.0f;
+					if(weaponDef->shieldPower != 0)
+						curPower-=(*pi)->damages[0]/30.0f;
 				}
 				if(weaponDef->visibleShieldRepulse){
 					if(hasGfx.find(*pi)==hasGfx.end()){
@@ -90,7 +92,8 @@ void CPlasmaRepulser::Update(void)
 				}
 			} else {						//kill the projectile
 				if(owner->UseEnergy(weaponDef->shieldEnergyUse)){
-					curPower-=(*pi)->damages[0];
+					if(weaponDef->shieldPower != 0)
+						curPower-=(*pi)->damages[0];
 					(*pi)->Collision();
 				}
 			}

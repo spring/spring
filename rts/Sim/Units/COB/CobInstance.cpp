@@ -705,6 +705,8 @@ void CCobInstance::Explode(int piece, int flags)
 		speed.y=(0.5f-gs->randFloat())*6.0;
 	}
 	speed+=baseSpeed;
+	if(speed.Length()>12)
+		speed=speed.Normalize()*12;
 	
 	/* TODO Push this back. Don't forget to pass the team (color).  */
 
