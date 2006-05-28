@@ -551,12 +551,18 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	restTime=0;
 
+	float experienceMod=1;
+
 	if(damages.paralyzeDamageTime){
 		paralyzeDamage+=damage;
+		experienceMod=0.1;		//reduce experience for paralyzers
 		if(health-paralyzeDamage<0){
+			if(stunned)
+				experienceMod=0;	//dont get any experience for paralyzing paralyzed enemy
 			stunned=true;
-			if(health-paralyzeDamage<-maxHealth/damages.paralyzeDamageTime)
+			if(health-paralyzeDamage<-maxHealth/damages.paralyzeDamageTime){
 				paralyzeDamage=health+maxHealth/damages.paralyzeDamageTime;
+			}
 		}
 	} else {
 		health-=damage;
@@ -571,8 +577,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	}
 	if(attacker!=0 && !gs->Ally(allyteam,attacker->allyteam)){
 //		info->AddLine("%s has %f/%f h attacker %s do %f d",tooltip.c_str(),health,maxHealth,attacker->tooltip.c_str(),damage);
-		SetLastAttacker(attacker);
-		attacker->experience+=0.1*power/attacker->power*damage/maxHealth;
+		attacker->experience+=0.1*power/attacker->power*damage/maxHealth*experienceMod;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
 		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum)) && team==gu->myTeam && !camera->InView(midPos,radius+50) && !gu->spectating) {
