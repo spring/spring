@@ -44,6 +44,8 @@ TASpring change log
 - Fixed mouse speed problems in windows with low FPS.
 - Demo filenames with spaces in them work again.
 - Changed non-positional sound behavior: only selected units give non-positional sound
+- Missile weapons no longer tracks to exact position of non flying units (make missile units weaker against radar targets)
+- Stun damage units now receives 1/10 of normal experience and no experience for attacking already stunned units
 
 0.71b1
 

@@ -123,7 +123,7 @@ void CMissileProjectile::Update(void)
 				targSpeed=decoyTarget->speed;
 			} else {
 				targSpeed=target->speed;
-				if((target->midPos-pos).SqLength()<150*150 || !owner)
+				if((target->physicalState==CSolidObject::Flying && (target->midPos-pos).SqLength()<150*150) || !owner)
 					targPos=target->midPos;
 				else
 					targPos=helper->GetUnitErrorPos(target,owner->allyteam);
