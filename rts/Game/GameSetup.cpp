@@ -158,6 +158,7 @@ bool CGameSetup::Init(char* buf, int size)
 		string s(section);
 
 		gs->Team(a)->colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
+		gs->Team(a)->colorNum%=palette.NumTeamColors();
 		for(int b=0;b<4;++b)
 			gs->Team(a)->color[b]=palette.teamColor[gs->Team(a)->colorNum][b];
 

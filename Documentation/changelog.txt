@@ -39,7 +39,11 @@ TASpring change log
 -  New weapon tdf tag shieldgoodcolor, color of shield when power is full
 -  New weapon tdf tag shieldbadcolor, color of shield when power is empty
 -  New weapon tdf tag shieldalpha, how visible the shield shell is with visibleshield=1
-
+- Added auto zooming using scroll + Left ALT key  (patch from colorblind)
+- Added simplified LOS drawing (patch from colorblind)
+- Fixed mouse speed problems in windows with low FPS.
+- Demo filenames with spaces in them work again.
+- Changed non-positional sound behavior: only selected units give non-positional sound
 
 0.71b1
 

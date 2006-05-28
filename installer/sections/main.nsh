@@ -76,6 +76,7 @@
   File "..\game\aidll\centralbuild.dll"
   File "..\game\aidll\mmhandler.dll"
   File "..\game\aidll\simpleform.dll"
+  File "..\game\aidll\radar.dll"
   
   SetOverWrite ifnewer
   SetOutPath "$INSTDIR\aidll\globalai"
@@ -174,6 +175,7 @@
   Delete "$INSTDIR\aidll\centralbuild.dll"
   Delete "$INSTDIR\aidll\mmhandler.dll"
   Delete "$INSTDIR\aidll\simpleform.dll"
+  Delete "$INSTDIR\aidll\radar.dll"
   RMDir "$INSTDIR\aidll"
   
   ; Gamedata
@@ -204,6 +206,7 @@
   Delete "$INSTDIR\base\spring\springbitmaps_v061.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v062.sdz"
   Delete "$INSTDIR\base\spring\springloadpictures_v061.sdz"
+  Delete "$INSTDIR\base\spring\bitmaps.sdz"
   
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
