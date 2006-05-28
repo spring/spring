@@ -1,0 +1,520 @@
+  * This is a simple text protocol in a "human readable form". I decided for text protocol since
+  * it's easier to debug and implement on the client side. It does require some more overhead,
+  * but since server and clients do not communicate much anyway, this is not an issue. What
+  * really eats the bandwidth is the game itself, not lobby.
+  *
+  * Single word arguments are separated by spaces, "sentences" (a sentence is a series of words
+  * separated by spaces, denoting a single argument) are separated by TABs. Don't forget
+  * to replace any TABs in your sentences with spaces! If you don't, your command is invalid
+  * and will not be read correctly by server.
+  *
+  * A client must maintain a constant connection with server, that is if no data is to be
+  * transfered, client must send a PING command to the server on regular intervals. This
+  * ensures server to properly detect any network timeouts/disconnects. Server will automatically
+  * disconnect a client if no data has been received from it within a certain time period.
+  * Client should send some data at least on half of that interval.
+  *
+  * Whether battle is in progress or not, clients may find out by monitoring battle's founder
+  * status. If his status changes to "in game", battle's status is also "in game".
+  *
+  * Client's status and battle status are assumed to be 0 if not said otherwise. Each client
+  * should assume that every other client's status and battle status are 0 if not stated
+  * otherwise by the server. So when client joins the server, he is notified about statuses
+  * of only those users, who have status or battle status different from 0. This way we also
+  * save some bandwidth (although that is not really an issue here. If we were worried about
+  * this protocol taking up too much bandwidth, we wouldn't use text protocol, now would we?).
+  *
+  * I use two terms for "clients": a client and an user. At first user was considered to
+  * be a registered client, that is client who is logged-in. I started to mix the two
+  * terms after a while but that should not confuse you.
+  *
+  * Most of the commands that notify about some changes are forwarded to the source of the 
+  * change too. For example: When client sends MYBATTLESTATUS command, server sends
+  * CLIENTBATTLESTATUS command to all users in the battle, including the client who sent
+  * MYBATTLESTATUS command. This is a good practice, because this way client can synchronize his 
+  * local status with server's after server has actually updated his status (serves also as
+  * confirmation).
+  * 
+  * All commands except for some admin specific commands are listed here. See tryToExecCommand
+  * method in TASServer.java for those.
+  *
+  * Also, check notes (under "--- NOTES ---" field) in TASServer.java since they contain some 
+  * information and tricks on implementing this protocol.
+  *
+  * Legend:
+  * - {} = sentence = several words (at least one!) separated by space characters
+  * - {} {} ... = two or more sentences. They are separated by TAB characters.
+  * - words are always separated by space characters.
+  *
+
+  List of commands:
+
+  * PING [key]
+  Sent by client to server. Client should send this command on every few seconds to maintain
+  constant connection to server. Server will assume timeout occured if it does not hear from
+  client for more than x seconds.
+  [key] parameter is optional - if used, server will respond with a "PONG key" command
+  so that the client will be able to calculate lag between server and himself.
+
+  * PONG [key]
+  Sent by server to client who sent a PING command. "key" parameter will only be
+  added if PING command had it.
+
+  * TASSERVER version udpport
+  Sent by server. This is the first message that client receives upon connecting to the server.
+  "version" is server's version (client should check if it supports this server version
+  before attempting to login. If it does not support it, it should send REQUESTUPDATEFILE
+  command).
+  "udpport" is server's UDP port where "NAT Help Server" is running. This is the port to
+  which clients should send their UDP packets when trying to figure out their public
+  UDP source port. This is used with some NAT traversal techniques (e.g. "hole punching"
+  technique).
+
+  * REQUESTUPDATEFILE version
+  Sent by client who is trying to find out if update exist for him since he doesn't
+  support this server's version. Send it only when server version is NOT supported
+  with client!
+
+  * REGISTER username password
+  Sent by client who hasn't logged in yet. If server is in LAN mode, this command will
+  be ignored.
+  <password> should be sent in encoded form (MD5 hash in base-64 form).
+
+  * REGISTRATIONDENIED {reason}
+  Sent by server to client who just sent REGISTER command, if registration has been refused.
+
+  * REGISTRATIONACCEPTED
+  Sent by server to client who just sent REGISTER command, if registration has been accepted.
+
+  * RENAMEACCOUNT newUsername
+  Will rename current account which is being used by the user to newUsername.
+
+  * CHANGEPASSWORD oldPassword newPassword
+  Will change password of client's account (which he is currently using)
+
+  * LOGIN username password cpu localIP {application name and version}
+  Sent by client when he is trying to log on the server. Server may respond with ACCEPTED
+  or DENIED command. CPU is an integer denoting the speed of client's processor in MHz (or
+  equivalent if AMD). Client should leave this value at 0 if it can't figure out
+  its CPU speed.
+  As localIP client should send his local IP (e.g. 192.168.x.y, or whatever it uses)
+  so server can forward local IPs to clients behind same NAT (this resolves some
+  of the host/joining issues). If client is unable to determine his local IP,
+  his should send "*" instead of localIP.
+  Note that if client hasn't yet confirmed the server agreement, then server will
+  send the agreement to client upon receiving LOGIN command (LOGIN command
+  will be ignored - client should resend LOGIN command once user has agreed to
+  the agreement or disconnect from the server if user has rejected the agreement).
+  <password> should be sent in encoded form (MD5 hash in base-64 form).
+
+  * ACCEPTED username
+  Sent by server to the client if login was successful.
+
+  * DENIED {reason}
+  Sent by server if login failed.
+
+  * AGREEMENT {agreement}
+  Sent by server upon receiving LOGIN command, if client has not yet agreed to server's
+  agreement. Server may send multiple AGREEMENT commands (which corresponds to multiple
+  new lines in agreement), finishing it by AGREEMENTEND command. Client should send 
+  CONFIRMAGREEMENT and then resend LOGIN command, or disconnect from the server if he has 
+  chosen to refuse the agreement.
+  Note that agreement can be in "Rich Text" format (.rtf).
+
+  * AGREEMENTEND
+  Sent by server after multiple AGREEMENT commands. This way server tells the client
+  that he has finished sending the agreement (this is the time when lobby should popup
+  the "agreement" screen and wait for user to accept/reject it).
+
+  * CONFIRMAGREEMENT
+  Sent by client notifying the server that client has confirm the agreement.
+  Also see AGREEMENT command.
+
+  * MOTD {message}
+  Sent by server after client has successfully logged in. Server can send multiple MOTD
+  commands (each MOTD corresponds to one line, for example).
+
+  * OFFERFILE options {filename} {url} {description}
+  Sent by server. Filename is the name of the file to which the file should
+  be saved on client's side. If filename = *, then client should extract
+  file name from URL and use it instead of filename.
+  options:
+  bit0 - should file be opened once it is downloaded
+  bit1 - should program be closed once file is downloaded
+  bit2 - is this file "mandatory" (e.g. patch - if user doesn't accept it, it must disconnect from the server)
+
+  * UDPSOURCEPORT port
+  Sent by server as a response to client's UDP packet (used with "hole punching" NAT traversal
+  technique)
+
+  * CLIENTPORT username port
+  Sent by server to battle's host notifying him about another client's UDP source port.
+  Host needs to know public UDP source ports of all players in his battle in order
+  for "hole punching" technique to work.
+
+  * HOSTPORT port
+  Sent by server to all clients participating in the battle (except for the host) notifying
+  them about the new host port. This message will only be sent right before host starts a game,
+  if this battle is being hosted using "hole punching" NAT traversal technique. When client
+  receives this message, he should replace battle's host port with this new port, so that when
+  game actually starts, he will connect to this new port rather than the port which host selected
+  when he initialy started the battle.
+
+  * SERVERMSG {message}
+  This is a message sent by server.
+
+  * SERVERMSGBOX {message}
+  This is a message sent by server that should open in message box dialog window (and not
+  just in the console).
+
+  * ADDUSER username country cpu IP
+  Sent by server to client telling him new user joined a server. Client should add this
+  user to his clients list which he must maintain while he is connected to the server.
+  Server will send multiple commands of this kind once client logs in, sending him the list
+  of all users currently connected.
+  See login command for CPU field description.
+  Country is a two-character country code based on ISO 3166.  
+
+  * REMOVEUSER username
+  Sent by server to client telling him a user disconnected from server. Client should
+  remove this user from his clients list which he must maintain while he is connected
+  to the server.
+
+  * JOIN channame [key]
+  Sent by client trying to join the channel. If channel is locked, then client must
+  supply a correct key to join the channel (clients with access >= Account.ADMIN_ACCESS
+  can join locked channels withouth supplying the key - needed for ChanServ bot).
+ 
+  * JOIN channame
+  Sent by server to a client who has successfully joined a channel.
+
+  * CHANNELS
+  Sent by client when requesting channels list
+
+  * CHANNEL channame usercount [{topic}]
+  Sent by server to client who requested channel list (a series of these commands
+  will be sent to user, one for each open channel). Topic parameter may be omited 
+  if topic is not set for the channel. A series of CHANNEL commands is ended
+  by ENDOFCHANNELS command.
+
+  * ENDOFCHANNELS
+  Sent by server to client who previously requested the channel list, after a
+  series of CHANNEL commands (one for each channel).
+
+  * JOINFAILED channame {reason}
+  Sent by server if joining a channel failed for some reason. Server MUST provide a reason
+  as a third argument to this command! Reason may be composed of several words seperated by a
+  space character.
+
+  * CHANNELTOPIC channame author changedtime {topic}
+  Sent by server to client who just joined the channel, if some topic is set for this channel.
+  "changedtime" is time in milliseconds since Jan 1, 1970 (UTC). Divide by 1000 to get unix time.
+
+  * CHANNELTOPIC channame {topic}
+  Sent by privileged user who is trying to change channel's topic. Use * as topic if you wish
+  to disable it.
+
+  * CLIENTS channame {clients}
+  Sent by server to a client who just joined the channel. WARNING: Multiple commands of this
+  kind can be sent in a row. Server takes the list of client in a channel and separates
+  it into several lines and sends each line seperately. This ensures no line is too long,
+  because client may have some limit set on the maximum length of the line and it could
+  ignore it if it was too long. WARNING 2: The client itself (his username) is sent in this
+  list too! So when client receives JOIN command he should not add his name in the clients
+  list of a channel - he should wait for CLIENTS command which will contain his name too
+  and he will add himself then automatically.
+
+  * JOINED channame username
+  Sent by server to all clients in a channel (except the new client) when a new client
+  joined a channel.
+
+  * LEAVE channame
+  Sent by client when he is trying to leave a channel. When client is disconnected, he is
+  automatically removed from all channels.
+
+  * LEFT channame username [{reason}]
+  Sent by server to all clients in a channel when some client left this channel.
+  WARNING: Server does not send this command to a client that has just left a channel,
+  because there is no need to (client who has left the channel knows that he left,
+  it was he who told us that that)! Client that was kicked from the channel is
+  notified about it via FORCELEAVECHANNEL command.
+
+  * FORCELEAVECHANNEL channame username [{reason}]
+  Sent by client (moderator) requsting <username> to be removed from the channel.
+  User will be notified with FORCELEAVECHANNEL command.
+
+  * FORCELEAVECHANNEL channame username [{reason}]
+  Sent by server to user who has just been kicked from the channel #channame
+  by <username>. (lobby client should now internally close/detach from the channel
+  as he was removed from the clients list of #channame on the server side)
+
+  * CHANNELMESSAGE channame message
+  Sent by server to all clients in a channel. Used to broadcast messages
+  in the channel.
+
+  * SAY channame {message}
+  Sent by client when he is trying to say something in a specific channel. Client must
+  first join the channel before he can receive or send messages to channel.
+
+  * SAID channame username {message}
+  Sent by server when one of the clients in the channel sent a message to it.
+
+  * SAYEX channame {message}
+  Sent by any client when he is trying to say something in "/me" irc style.
+
+  * SAIDEX channame username {message}
+  Sent by server when client said something using SAYEX command.
+
+  * SAYPRIVATE username {message}
+  - Sent by client when he is trying to send a private message to some other client.
+  - Sent by server to a client who just sent SAYPRIVATE command to server. This way client
+    can verify that server did get his message and that receiver will get it too.
+
+  * SAIDPRIVATE username {message}
+  Sent by server when some client sent this client a private message.
+
+  * OPENBATTLE type natType password port maxplayers startingmetal startingenergy maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings hashcode rank {map} {title} {modname}
+  Sent by client. The client becomes a founder of this battle, if successful. Client
+  is notified about its success via OPENBATTLE/OPENBATTLEFAILED commands sent by server.
+  "startpos" can be only 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+  "gameendcondition" can only be 0 or 1 (0=game continues, 1=game ends /if commander dies/)
+  Password must be "*" if founder does not wish to have password-protected game.
+  Hashcode is a signed 32-bit integer.
+  "type" can be 0 or 1 (0 = normal battle, 1 = battle replay)
+  "natType" (nat traversal method used by the host) must be a number (0 means no NAT traversal
+  technique should be applied).
+
+  * OPENBATTLE BATTLE_ID
+  Sent by server to a client who previously sent OPENBATTLE command to server, if client's
+  request to open new battle has been approved. If server rejected client's request, he
+  is notified via OPENBATTLEFAILED command. Server first sends BATTLEOPENED command, then
+  OPENBATTLE command (this is important - client must have the battle in his battle list
+  before he receives OPENBATTLE command!).
+
+  * BATTLEOPENED BATTLE_ID type natType founder IP port maxplayers passworded rank {mapname} {title} {modname}
+  Sent by server to all registered users, when a new battle has been opened.
+  Series of BATTLEOPENED commands are sent to user when he logs in (for each battle
+  one command).
+  Use Battle.createBattleOpenedCommand method to create this command in a String.
+  "passworded" is a boolean and must be "0" or "1" and not "true" or "false" as it
+  is default in Java! Use Misc.strToBool and Misc.boolToStr methods to convert from
+  one to another.
+  "type" can be 0 or 1 (0 = normal battle, 1 = battle replay)
+  "natType" (nat traversal method used by the host) must be a number (0 means no NAT traversal
+  technique should be applied).
+
+  * BATTLECLOSED BATTLE_ID
+  Sent by server when founder has closed a battle (or if he was disconnected).
+
+  * JOINBATTLE BATTLE_ID password*
+  Sent by a client trying to join a battle. Password is an optional parameter.
+
+  * JOINBATTLE BATTLE_ID startingmetal startingenery maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings hashcode
+  Sent by server telling the client that he has just joined the battle successfully.
+  Server will also send a series of CLIENTBATTLESTATUS commands after this command,
+  so that user will get the battle statuses of all the clients in the battle.
+  Limitdgun is a boolean (0 or 1).
+  DiminishingMMs is a boolean (0 or 1).
+  GhostedBuildings is a boolean (0 or 1).
+  Hashcode is a signed 32-bit integer.
+
+  * JOINEDBATTLE BATTLE_ID username
+  Sent by server to all clients when a new client joins the battle.
+
+  * LEFTBATTLE BATTLE_ID username
+  Sent by server to all users when client left a battle (or got disconnected from server).
+
+  * LEAVEBATTLE
+  Sent by the client when he leaves a battle. Also sent by a founder of the battle when he
+  closes the battle.
+
+  * JOINBATTLEFAILED {reason}
+  Sent by server to user who just tried to join a battle but has been rejected by server.
+
+  * OPENBATTLEFAILED {reason}
+  Sent by server to user who just tried to open(=host) a new battle and was rejected by
+  the server.
+
+  * UPDATEBATTLEINFO BATTLE_ID SpectatorCount locked {mapname}
+  Sent by server to all registered clients telling them 
+  some of the parameters of the battle changed. Battle's inside 
+  changes, like starting metal, energy, starting position etc., are sent only to clients 
+  participating in the battle via UPDATEBATTLEDETAILS command.
+  "locked" is a boolean (0 or 1). Note that when client creates a battle, server assumes
+  it is unlocked. Client must make sure it actually is.
+  Note: assume that spectator count is 0 if battle type is 0 (normal battle) and
+  1 if battle type is 1 (battle replay), as founder of the battle is automatically set
+  as spectator in that case.
+
+  * UPDATEBATTLEINFO SpectatorCount locked {mapname}
+  Sent by the founder of the battle telling the server some of the "outside" parameters
+  of the battle changed. "mapname" should NOT contain file extension.
+  "locked" is a boolean (0 or 1). Note that when client creates a battle, server assumes
+  it is unlocked. Client must make sure it actually is.
+
+  * UPDATEBATTLEDETAILS startingmetal startingenergy maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings
+  Sent by server to all clients participating in a battle when some of the battle's "inside"
+  parameters change. See also UPDATEBATTLEINFO command!
+  "startpos" can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+  "gameendcondition" can only be 0 or 1 (0=game continues, 1=game ends /if commander dies/)
+
+  * UPDATEBATTLEDETAILS startingmetal startingenergy maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings
+  Seny by founder of the battle to server telling him some of the "inside" parameters
+  of the battle changed. Even if only one of the parameters changed, all must be sent.
+  This does create some more overhead, but it simplifies the communication between server
+  and clients and vice-versa. Since this command is not often used and it is only sent
+  to clients parcticipating in the battle, this does not raise a problem.
+
+  * SAYBATTLE {message}
+  Sent by client who is participating in a battle to server, who forwards this message
+  to all other clients in the battle. BATTLE_ID is not required since every user can
+  participate in only one battle at the time. If user is not participating in the battle,
+  this command is ignored and is considered invalid.
+
+  * SAIDBATTLE username {message}
+  Sent by server to all clients participating in a battle when client sent a message
+  to it using SAYBATTLE command. BATTLE_ID is not required since every client knows in
+  which battle he is participating in, since every client may participate in only one 
+  battle at the time. If client is not participating in a battle, he should ignore
+  this command or raise an error (this should never happen!).
+
+  * SAYBATTLEEX {message}
+  Sent by any client participating in a battle when he wants to say something in "/me" irc style.
+  Server can forge this command too (for example when founder of the battle kicks a user, server
+  uses SAYBATTLEEX saying founder kicked user).
+
+  * SAIDBATTLEEX username {message}
+  Sent by server to all clients participating in a battle when client used SAYBATTLEEX command.
+  See SAYBATTLEEX for more info.
+
+  * MYSTATUS status
+  Sent by client to server telling him his status changed. Each bit has its meaning:
+  b0 = in game (0 - normal, 1 - in game)
+  b1 = away status (0 - normal, 1 - away) 
+  b2-b4 = rank (see Account class implementation for description of rank) - client is not
+          allowed to change rank bits himself (only server may set them).
+  b5 = access status (tells us whether this client is a server moderator or not) - client is not
+      allowed to change this bit himself (only server may set them).
+  Client must check founder's status to see if battle is "in game".
+
+  * CLIENTSTATUS username status
+  Sent by server to all registered clients indicating that client's status changed.
+  See MYSTATUS command for possible values of status parameter.
+
+  * MYBATTLESTATUS battlestatus
+  Sent by a client to the server telling him his status in the battle changed. 
+  "battlestatus" is an integer but with limited range: 0..2147483647 (use signed int and
+  consider only positive values and zero). Number is sent as text. Each bit has its meaning:
+  b0 = undefined (reserved for future use)
+  b1 = ready (0=not ready, 1=ready)
+  b2..b5 = team no. (from 0 to 15. b2 is LSB, b5 is MSB)
+  b6..b9 = ally team no. (from 0 to 15. b6 is LSB, b9 is MSB)
+  b10 = mode (0 = spectator, 1 = normal player)
+  b11..b17 = handicap (7-bit number. Must be in range 0..100). Note: Only host can 
+              change handicap values of the players in the battle (with HANDICAP command).
+              These 7 bits are always ignored in this command. They can only be changed
+              using HANDICAP command.
+  b18..b21 = team color index (currently only valid is 0..9, as defined in TAPallete.cpp)
+  b22..b23 = sync status (0 = unknown, 1 = synced, 2 = unsynced)
+  b24..b27 = side (e.g.: arm, core, tll, ... Side index can be between 0 and 15, inclusive)            
+  b28..b31 = undefined (reserved for future use)
+
+  * CLIENTBATTLESTATUS username battlestatus
+  Sent by server to users participating in a battle when one of the clients changes his
+  battle status. See MYBATTLESTATUS command for possible values of battlestatus parameter.
+
+  * REQUESTBATTLESTATUS
+  Sent by server to user who just opened a battle or joined one. When client receives this
+  command, he must send MYBATTLESTATUS command to the server so that server can synchronize
+  battle status with user's. This command is sent after all CLIENTBATTLESTATUS commands for
+  all clients have been sent. This way user can choose suitable team, ally and color numbers
+  since he knows battle statuses of other clients. 
+
+  * HANDICAP username value
+  Sent by founder of the battle changing username's handicap value (of his battle status).
+  Only founder can change other users handicap values (even they themselves can't change it).
+
+  * KICKFROMBATTLE username
+  Sent by founder of the battle when he kicks the client out of the battle. Server will notify
+  client with FORCEQUITBATTLE command about it.
+
+  * FORCEQUITBATTLE
+  Sent by server to client for whom founder requested kick with KICKFROMBATTLE command.
+  Client should immediately disconnect from the battle.
+
+  * FORCETEAMNO username teamno
+  Sent by founder of battle when he is trying to force some other client's team number
+  to <teamno>. Server will update client's battle status automatically. 
+
+  * FORCEALLYNO username teamno
+  Sent by founder of battle when he is trying to force some other client's ally number
+  to <allyno>. Server will update client's battle status automatically. 
+
+  * FORCETEAMCOLOR username colorindex
+  Sent by founder of battle when he is trying to force some other clients' team color
+  to <colorindex>. Server will update client's battle status automatically.
+
+  * DISABLEUNITS unitname1 unitname2 ...
+  - Sent by founder of the battle to server telling him he disabled one or more units.
+    At least one unit name must be passed as an argument.
+  - Sent by server to all clients in the battle except for the founder, notifying them
+    some units have been added to disabled units list.
+
+  * ENABLEUNITS unitname1 unitname2 ...
+  - Sent by founder of the battle to server telling him he enabled one or more previous
+    disabled units. At least one unit name must be passed as an argument.
+  - Sent by server to all clients in the battle except for the founder, notifying them
+    some units have been removed from disabled units list.
+
+  * ENABLEALLUNITS
+  - Sent by founder of the battle to server telling him he enabled ALL units and so clearing
+    the disabled units list.
+  - Sent by server to all clients in the battle except for the founder, telling them that
+    disabled units list has been cleared.
+  
+  * RING username
+  - Sent by client to server when trying to play a "ring" sound to username.
+    Only privileged users can ring anyone, although "normal" clients can ring
+    only when they are hosting and only players participating in their battle.
+  - Sent by server to client telling him username just rang (client should play
+    the "ring" sound once he gets this command).
+
+  * REDIRECT ipddress
+  Sent by server when in "redirection mode". When client connects, server will send him
+  only this message and disconnect the socket immediately. Client should connect to <ipaddress>
+  in that case. This command may be useful when official server address changes, so that
+  clients are automatically redirected to the new one.
+
+  * BROADCAST {message}
+  Sent by server when urgent message has to be delivered to all users.
+
+  * ADDBOT BATTLE_ID name owner battlestatus {AIDLL}
+  Sent by server. BATTLE_ID is there just to help client verify that
+  the bot is meant for his battle.
+
+  * ADDBOT name battlestatus {AIDLL}
+  Sent by client
+
+  * REMOVEBOT name
+  Sent by client.
+
+  * REMOVEBOT BATTLE_ID name
+  Sent by server. BATTLE_ID is there just to help client verify that
+  the bot is meant for his battle.
+
+  * UPDATEBOT BATTLE_ID name battlestatus
+  Sent by server. BATTLE_ID is there just to help client verify that
+  the bot is meant for his battle.
+
+  * UPDATEBOT name battlestatus
+  Sent by client (only bot owner and battle host can update bot)
+
+  * ADDSTARTRECT allyno left top right bottom
+  - Sent by host of the battle adding a start rectangle for allyno. See client implementation
+    and Spring docs for more info on this one.
+  - Sent by server to clients participating in a battle (except for the host).
+
+  * REMOVESTARTRECT allyno
+  - Sent by host of the battle removing a start rectangle for allyno. See client implementation
+    and Spring docs for more info on this one.
+  - Sent by server to clients participating in a battle (except for the host).
