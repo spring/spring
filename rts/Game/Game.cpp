@@ -80,6 +80,7 @@
 #include "UI/NewGuiDefine.h"
 #include "GameSetup.h"
 #include "UI/ShareBox.h"
+#include "UI/QuitBox.h"
 #include "GameServer.h"
 #include "UI/EndGameBox.h"
 #include "Rendering/InMapDraw.h"
@@ -722,11 +723,40 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			new CShareBox();
 	}
 	if (s=="quit"){
-		if(keys[SDLK_LSHIFT]){
-			info->AddLine("User exited");
-			globalQuit=true;
-		} else
+		if(!keys[SDLK_LSHIFT]){
 			info->AddLine("Use shift-esc to quit");
+		}else{
+			//The user wants to quit. Do we let him?
+			bool userMayQuit=false;
+			// Four cases when he may quit:
+			//  * If the game isn't started players are free to leave.
+			//  * If his team is dead.
+			//  * If he's a spectator.
+			//  * If there are other active players on his team.
+			//  * If there are no other players
+			if(!playing || gs->Team(gu->myTeam)->isDead || gu->spectating || net->onlyLocal) {
+				userMayQuit=true;
+			}else{
+				// Check if there are more active players on his team.
+				for(int a=0;a<MAX_PLAYERS;++a){
+					if(gs->players[a]->active && gs->players[a]->team==gu->myTeam && a!=gu->myPlayerNum){
+						userMayQuit=true;
+						break;
+					}
+				}
+			} // .. if(!playing||isDead||spectating)
+
+			// User may not quit if he is the only player in his still active team.
+			// Present him with the options given in CQuitBox.
+			if(!userMayQuit){
+				if(!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front())==0){
+					new CQuitBox();
+				}
+			} else {
+				info->AddLine("User exited");
+				globalQuit=true;
+			}
+		}
 	}
 	if(s=="group1")
 		grouphandler->GroupCommand(1);

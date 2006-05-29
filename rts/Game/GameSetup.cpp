@@ -168,7 +168,10 @@ bool CGameSetup::Init(char* buf, int size)
  		std::transform(gs->Team(a)->side.begin(), gs->Team(a)->side.end(), gs->Team(a)->side.begin(), (int (*)(int))std::tolower);
  		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0",s+"allyteam").c_str()));
 
-		aiDlls[a]=file.SGetValueDef("",s+"aidll");
+		if (demoName.empty())
+			aiDlls[a]=file.SGetValueDef("",s+"aidll");
+		else
+			aiDlls[a]="";
 
 		float x,z;
 		char teamName[50];
