@@ -342,6 +342,12 @@
 				RelativePath="..\..\Game\PreGame.h">
 			</File>
 			<File
+				RelativePath="..\..\Game\Ui\QuitBox.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Game\Ui\QuitBox.h">
+			</File>
+			<File
 				RelativePath="..\..\Game\SelectedUnits.cpp">
 			</File>
 			<File

@@ -30,7 +30,8 @@ void CCommanderScript::Update(void)
 			TdfParser p("gamedata/SIDEDATA.TDF");
 			for(int a=0;a<gs->activeTeams;++a){		
 				if(!gameSetup->aiDlls[a].empty()){
-					globalAI->CreateGlobalAI(a,gameSetup->aiDlls[a].c_str());
+					if (gu->myPlayerNum == gs->Team (a)->leader)
+						globalAI->CreateGlobalAI(a,gameSetup->aiDlls[a].c_str());
 				}
 
 				for(int b=0;b<8;++b){					//loop over all sides
