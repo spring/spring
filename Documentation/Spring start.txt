@@ -33,7 +33,7 @@ hostip)
 	{
 		TeamLeader=x;			// player number that is the "leader"
 		AllyTeam=number;
-		Color=number;
+		RgbColor=red greeb blue;	//red green blue in range [0-1]
 		Side=Arm/Core;			//other sides possible with user mods i suppose
 		Handicap=0-100;			//Percent bonus on all resources collected ?
 		AiDLL=file;			//if this line exists the team will have a global ai loaded from

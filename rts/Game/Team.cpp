@@ -37,7 +37,6 @@ CTeam::CTeam()
 	metalShare(0.99f),
 	energyShare(0.95f),
 	tempMetalIncome(0),
-	colorNum(0),
 	side("arm"),
 	startPos(100,100,100),
 	handicap(1),

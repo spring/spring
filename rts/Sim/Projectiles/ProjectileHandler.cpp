@@ -25,6 +25,7 @@
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Game/UI/InfoConsole.h"
 #include <algorithm>
+#include "Rendering/GL/IFramebuffer.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -44,6 +45,7 @@ CProjectileHandler::CProjectileHandler()
 
 	currentParticles=0;
 	particleSaturation=0;
+	numPerlinProjectiles=0;
 
 	// This will cause a stack overflow if not made static
 	static unsigned char tex[512][512][4];
@@ -268,7 +270,7 @@ CProjectileHandler::CProjectileHandler()
 				float dist=sqrt((float)(x-8)*(x-8)+(y-8)*(y-8));
 				if(dist>8)
 					continue;
-				int alpha=60-(int)(dist*35+dotAlpha[by-256+y][bx+x]);
+				int alpha=60+(int)(-dist*35+dotAlpha[by-256+y][bx+x]);
 				if(tex[by+y][bx+x][3]<alpha){
 					tex[by+y][bx+x][3]=max(0,min(255,alpha));
 				}
@@ -306,14 +308,23 @@ CProjectileHandler::CProjectileHandler()
 	}
 	ConvertTex(tex,256,256,256+128,256+128,1);
 
+	for(int y=256;y<256+128;++y){//shield
+		for(int x=384;x<512;++x){
+			tex[y][x][0]=70;
+			tex[y][x][1]=70;
+			tex[y][x][2]=70;
+			tex[y][x][3]=70;
+		}
+	}
+
 	glGenTextures(1, CProjectile::textures);
 	glBindTexture(GL_TEXTURE_2D, CProjectile::textures[0]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
-//	CBitmap b(tex[0][0],512,512);
-//	b.Save("proj.bmp");
+	CBitmap b(tex[0][0],512,512);
+	b.Save("proj.tga");
 
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
@@ -348,12 +359,36 @@ CProjectileHandler::CProjectileHandler()
 	flying3doPieces = new FlyingPiece_List;
 	flyingPieces.push_back(flying3doPieces);
 
+	for(int a=0;a<4;++a){
+		perlinBlend[a]=0;
+	}
+	unsigned char tempmem[4*16*16];
+	for(int a=0;a<4*16*16;++a)
+		tempmem[a]=0;
+	for(int a=0;a<8;++a){
+		glGenTextures(1, &perlinTex[a]);
+		glBindTexture(GL_TEXTURE_2D, perlinTex[a]);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,16, 16, GL_RGBA, GL_UNSIGNED_BYTE, tempmem);
+	}
+
+	drawPerlinTex=true;
+	perlinFB = instantiate_fb(128);
+	if (!(perlinFB && perlinFB->valid()))
+		drawPerlinTex=false;
+	perlinFB->attachTexture(CProjectile::textures[0], GL_TEXTURE_2D, FBO_ATTACH_COLOR);
+	perlinFB->checkFBOStatus();
+
 }
 
 CProjectileHandler::~CProjectileHandler()
 {
 	glDeleteTextures (1, CProjectile::textures);
 	glDeleteTextures (1, &CGroundFlash::texture);
+	for(int a=0;a<8;++a)
+		glDeleteTextures (1, &perlinTex[a]);
+
 	Projectile_List::iterator psi;
 	for(psi=ps.begin();psi!=ps.end();++psi)
 		delete *psi;
@@ -377,6 +412,7 @@ CProjectileHandler::~CProjectileHandler()
 		delete fpl;
 	}
 	ph=0;
+	delete perlinFB;
 }
 
 void CProjectileHandler::Update()
@@ -403,6 +439,7 @@ START_TIME_PROFILE
 			++psi;
 		}
 	}
+
 	std::set<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
 		(*gfi)->Update();
@@ -814,4 +851,110 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	fp->rot=0;
 
 	pieceList->push_back(fp);
+}
+
+void CProjectileHandler::UpdateTextures()
+{
+	if(numPerlinProjectiles && drawPerlinTex)
+		UpdatePerlin();
+}
+
+void CProjectileHandler::UpdatePerlin()
+{
+	perlinFB->select();
+	glViewport(384,256,128,128);
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0,1,0,1,-1,1);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
+
+	unsigned char col[4];	
+	float time=gu->lastFrameTime*gs->speedFactor*3;
+	float speed=1;
+	float size=1;
+	for(int a=0;a<4;++a){
+		perlinBlend[a]+=time*speed;
+		if(perlinBlend[a]>1){
+			unsigned int temp=perlinTex[a*2];
+			perlinTex[a*2]=perlinTex[a*2+1];
+			perlinTex[a*2+1]=temp;
+			GenerateNoiseTex(perlinTex[a*2+1],16);
+			perlinBlend[a]-=1;
+		}
+
+
+		float tsize=8/size;
+
+		if(a==0)
+			glDisable(GL_BLEND);
+
+		CVertexArray* va=GetVertexArray();
+		va->Initialize();
+		for(int b=0;b<4;++b)
+			col[b]=(1-perlinBlend[a])*16*size;
+		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2]);
+		va->AddVertexTC(float3(0,0,0),0,0,col);
+		va->AddVertexTC(float3(0,1,0),0,tsize,col);
+		va->AddVertexTC(float3(1,1,0),tsize,tsize,col);
+		va->AddVertexTC(float3(1,0,0),tsize,0,col);
+		va->DrawArrayTC(GL_QUADS);
+
+		if(a==0)
+			glEnable(GL_BLEND);
+
+		va=GetVertexArray();
+		va->Initialize();
+		for(int b=0;b<4;++b)
+			col[b]=perlinBlend[a]*16*size;
+		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2+1]);
+		va->AddVertexTC(float3(0,0,0),0,0,col);
+		va->AddVertexTC(float3(0,1,0),0,tsize,col);
+		va->AddVertexTC(float3(1,1,0),tsize,tsize,col);
+		va->AddVertexTC(float3(1,0,0),tsize,0,col);
+		va->DrawArrayTC(GL_QUADS);
+
+
+		speed*=0.6;
+		size*=2;
+	}
+/*
+	glBindTexture(GL_TEXTURE_2D, CProjectile::textures[0]);
+	glCopyTexSubImage2D(GL_TEXTURE_2D,0,384,256,0,0,128,128);
+*/
+	perlinFB->deselect();
+	glViewport(0,0,gu->screenx,gu->screeny);
+
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_TEXTURE_2D);
+
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void CProjectileHandler::GenerateNoiseTex(unsigned int tex,int size)
+{
+	unsigned char* mem=new unsigned char[4*size*size];
+
+	for(int a=0;a<size*size;++a){
+		unsigned char rnd=max(0.f,gu->usRandFloat()*555-300);
+		mem[a*4+0]=rnd;
+		mem[a*4+1]=rnd;
+		mem[a*4+2]=rnd;
+		mem[a*4+3]=rnd;
+	}
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,size,size,GL_RGBA,GL_UNSIGNED_BYTE,mem);
+	delete[] mem;
 }

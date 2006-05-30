@@ -18,6 +18,7 @@
 #include <set>
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Platform/errorhandler.h"
+#include "Game/Team.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -40,6 +41,18 @@ static int CompareTatex2( const void *arg1, const void *arg2 ){
 CTextureHandler::CTextureHandler()
 {
 	PrintLoadMsg("Creating unit textures");
+
+	CFileHandler file("unittextures/tatex/teamtex.txt");
+
+	set<string> teamTexes;
+	while(!file.Eof())
+	{
+		string s = GetLine(file);
+		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
+		char slask;
+		teamTexes.insert(s);
+		file.Read(&slask, 1);
+	}
 
 	TexFile* texfiles[10000];
 
@@ -67,13 +80,19 @@ CTextureHandler::CTextureHandler()
 			continue;
 		usedNames.insert(s2);
 
-		TexFile* tex=new TexFile;
-		tex->tex.Load(s,30);
-
-		tex->name=s2;
-	
-		texfiles[numfiles++]=tex;
-		totalSize+=tex->tex.xsize*tex->tex.ysize;
+		if(teamTexes.find(s2)==teamTexes.end()){
+			TexFile* tex=new TexFile;
+			tex->tex.Load(s,30);
+			tex->name=s2;	
+			texfiles[numfiles++]=tex;
+			totalSize+=tex->tex.xsize*tex->tex.ysize;
+		} else {
+			for(int a=0;a<gs->activeTeams;++a){
+				TexFile* tex=CreateTeamTex(s,s2,a);
+				texfiles[numfiles++]=tex;
+				totalSize+=tex->tex.xsize*tex->tex.ysize;
+			}
+		}
 	}
 	
 	for(int a=0;a<256;++a){
@@ -293,3 +312,39 @@ void CTextureHandler::SetS3oTexture(int num)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 }
+
+string CTextureHandler::GetLine(CFileHandler& fh)
+{
+	string s="";
+	char a;
+	fh.Read(&a,1);
+	while(a!='\xd' && a!='\xa'){
+		s+=a;
+		fh.Read(&a,1);
+		if(fh.Eof())
+			break;
+	}
+	return s;
+}
+
+TexFile* CTextureHandler::CreateTeamTex(string name, string name2,int team)
+{
+	TexFile* tex=new TexFile;
+	tex->tex.Load(name,30);
+	char tmp[256];
+	sprintf(tmp,"%s%02i",name2.c_str(),team);
+	tex->name=tmp;
+
+	unsigned char* teamCol=gs->Team(team)->color;
+	CBitmap* bm=&tex->tex;
+	for(int a=0;a<bm->ysize*bm->xsize;++a){
+		if(bm->mem[a*4]==bm->mem[a*4+2] && bm->mem[a*4+1]==0){
+			float lum=bm->mem[a*4]/255.0f;
+			bm->mem[a*4+0]=unsigned char(min(255,int(teamCol[0]*lum*1.5)));
+			bm->mem[a*4+1]=unsigned char(min(255,int(teamCol[1]*lum*1.5)));
+			bm->mem[a*4+2]=unsigned char(min(255,int(teamCol[2]*lum*1.5)));
+		}	
+	}
+	return tex;
+}
+

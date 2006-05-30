@@ -157,10 +157,12 @@ bool CGameSetup::Init(char* buf, int size)
 		sprintf(section,"GAME\\TEAM%i\\",a);
 		string s(section);
 
-		gs->Team(a)->colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
-		gs->Team(a)->colorNum%=palette.NumTeamColors();
-		for(int b=0;b<4;++b)
-			gs->Team(a)->color[b]=palette.teamColor[gs->Team(a)->colorNum][b];
+		int colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
+		colorNum%=palette.NumTeamColors();
+		float3 defaultCol(palette.teamColor[colorNum][0]/255.0,palette.teamColor[colorNum][1]/255.0,palette.teamColor[colorNum][2]/255.0);
+		float3 color=file.GetFloat3(defaultCol,s+"rgbcolor");
+		for(int b=0;b<3;++b)
+			gs->Team(a)->color[b]=color[b]*255;
 
  		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
  		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());

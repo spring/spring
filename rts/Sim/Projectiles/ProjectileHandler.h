@@ -22,6 +22,7 @@ struct SS3OVertex;
 typedef std::list<CProjectile*> Projectile_List;
 
 class CGroundFlash;
+class IFramebuffer;
 
 class CProjectileHandler  
 {
@@ -33,6 +34,7 @@ public:
 	void LoadSmoke(unsigned char tex[512][512][4],int xoffs,int yoffs,char* filename,char* alphafile);
 
 	void Draw(bool drawReflection,bool drawRefraction=false);
+	void UpdateTextures();
 	void AddProjectile(CProjectile* p);
 	void Update();
 	void AddGroundFlash(CGroundFlash* flash);
@@ -62,7 +64,10 @@ public:
 	std::set<CGroundFlash*> groundFlashes;
 	std::stack<CGroundFlash*> toBeDeletedFlashes;
 
+	int numPerlinProjectiles;
 private:
+	void UpdatePerlin();
+	void GenerateNoiseTex(unsigned int tex,int size);
 	struct FlyingPiece{
 		inline void* operator new(size_t size){return mempool.Alloc(size);};
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
@@ -84,6 +89,11 @@ private:
 	FlyingPiece_List * flying3doPieces;
 	// flyings3oPieces[textureType][team] 
 	std::vector<std::vector<FlyingPiece_List*> > flyings3oPieces; 
+
+	unsigned int perlinTex[8];
+	float perlinBlend[4];
+	IFramebuffer *perlinFB;
+	bool drawPerlinTex;
 };
 extern CProjectileHandler* ph;
 

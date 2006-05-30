@@ -51,7 +51,6 @@ CPreGame::CPreGame(bool server, const string& demo)
 
 	if(!gameSetup){
 		for(int a=0;a<gs->activeTeams;a++){
-			gs->Team(a)->colorNum=a;
 			for(int b=0;b<4;++b)
 				gs->Team(a)->color[b]=palette.teamColor[a][b];
 		}
