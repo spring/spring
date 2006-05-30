@@ -148,6 +148,7 @@ void CMouseCursor::Draw(int x, int y)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER,0.01f);
+	glColor4f(1,1,1,1);
 
 	glViewport(x,gu->screeny - y - ys,xs,ys);
 

@@ -153,7 +153,7 @@ void C3DOParser::DeleteS3DO(S3DO *o)
 
 S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 {
-	int color=gs->Team(team)->colorNum;
+	int color=team;
 
 	if(name.find(".")==string::npos)
 		name+=".3do";

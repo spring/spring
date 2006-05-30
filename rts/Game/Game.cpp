@@ -1009,6 +1009,8 @@ bool CGame::Draw()
 	int a;
 	std::string tempstring;
 
+	ph->UpdateTextures();
+
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
 				
 	sky->Update();

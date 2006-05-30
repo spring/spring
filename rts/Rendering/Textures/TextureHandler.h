@@ -9,6 +9,8 @@
 #include <map>
 #include <string>
 #include <vector>
+struct TexFile;
+class CFileHandler;
 
 using namespace std;
 
@@ -45,6 +47,9 @@ private:
 	};
 	map<string,int> s3oTextureNames;
 	vector<S3oTex> s3oTextures;
+
+	string GetLine(CFileHandler& fh);
+	TexFile* CreateTeamTex(string name, string name2,int team);
 };
 
 extern CTextureHandler* texturehandler;

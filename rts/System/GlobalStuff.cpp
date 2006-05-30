@@ -58,7 +58,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 		teams[a]=new CTeam();
 		teams[a]->teamNum=a;
 		team2allyteam[a]=a;
-		teams[a]->colorNum=a;
 	}
 	for(int a=0;a<MAX_PLAYERS;a++){
 		players[a]=new CPlayer();

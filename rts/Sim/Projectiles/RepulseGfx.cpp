@@ -83,11 +83,11 @@ void CRepulseGfx::Draw(void)
 		}
 	}
 	drawsize=7;
-	alpha=min(25,age);
+	alpha=min(10,age/2);
 	col[0]=(unsigned char)(color.x*alpha);
 	col[1]=(unsigned char)(color.y*alpha);
 	col[2]=(unsigned char)(color.z*alpha);
-	col[3]=(unsigned char)(alpha*0.2);
+	col[3]=(unsigned char)(alpha*0.4);
 
 	unsigned char col2[4];
 	col2[0]=0;

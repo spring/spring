@@ -12,6 +12,7 @@ public:
 
 	float3 centerPos;
 	float3 vectors[25];
+	float3 texCoords[25];
 
 	float sphereSize;
 

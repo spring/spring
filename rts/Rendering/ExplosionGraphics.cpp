@@ -80,18 +80,24 @@ void CStdExplosionGraphics::Explosion(const float3 &pos, const DamageArray& dama
 			float time=(40+sqrt(smokeDamage)*15)*(0.8+gu->usRandFloat()*0.7);
 			new CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4,owner,0.6);
 		}
-		if(!airExplosion && !uwExplosion){
+		if(!airExplosion && !uwExplosion && !waterExplosion){
 			int numDirt=(int)min(20.,damage*0.8);
 			float3 color(0.15,0.1,0.05);
-			if(waterExplosion)
-				color=float3(1,1,1);
 			for(int a=0;a<numDirt;++a){
 				float3 speed((0.5-gu->usRandFloat())*1.5,1.7f+gu->usRandFloat()*1.6,(0.5-gu->usRandFloat())*1.5);
 				speed*=0.7+min((float)30,damage)/30;
 				float3 npos(pos.x-(0.5-gu->usRandFloat())*(radius*0.6),pos.y-2.0-damage*0.2,pos.z-(0.5-gu->usRandFloat())*(radius*0.6));
-				if(waterExplosion)
-					npos=float3(pos.x-(0.5-gu->usRandFloat())*(radius*0.3),pos.y-2.0-damage*0.2,pos.z-(0.5-gu->usRandFloat())*(radius*0.3));
 				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0+sqrt(damage)*1.5,0.4,0.999f,owner,color);
+			}
+		}
+		if(!airExplosion && !uwExplosion && waterExplosion){
+			int numDirt=(int)min(40.,damage*0.8);
+			float3 color(1,1,1);
+			for(int a=0;a<numDirt;++a){
+				float3 speed((0.5-gu->usRandFloat())*0.2,a*0.1+gu->usRandFloat()*0.8,(0.5-gu->usRandFloat())*0.2);
+				speed*=0.7+min((float)30,damage)/30;
+				float3 npos(pos.x-(0.5-gu->usRandFloat())*(radius*0.2),pos.y-2.0-sqrt(damage)*2.0,pos.z-(0.5-gu->usRandFloat())*(radius*0.2));
+				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0+sqrt(damage)*2.0,0.3f,0.99f,owner,color);
 			}
 		}
 		if(damage>=20 && !uwExplosion && !airExplosion){

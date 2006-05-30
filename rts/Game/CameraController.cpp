@@ -35,7 +35,7 @@ CFPSController::CFPSController()
 : pos(2000,70,1800)
 {
 	scrollSpeed=configHandler.GetInt("FPSScrollSpeed",10)*0.1;
-	enabled=!!configHandler.GetInt("FPSEnabled",1)*0.1;
+	enabled=!!configHandler.GetInt("FPSEnabled",1);
 }
 
 void CFPSController::KeyMove(float3 move)
@@ -118,7 +118,7 @@ COverheadController::COverheadController()
 	height(500),zscale(0.5f)
 {
 	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1;
-	enabled=!!configHandler.GetInt("OverheadEnabled",1)*0.1;
+	enabled=!!configHandler.GetInt("OverheadEnabled",1);
 }
 
 void COverheadController::KeyMove(float3 move)
@@ -237,7 +237,7 @@ CTWController::CTWController()
 : pos(2000,70,1800)
 {
 	scrollSpeed=configHandler.GetInt("TWScrollSpeed",10)*0.1;
-	enabled=!!configHandler.GetInt("RotOverheadEnabled",1)*0.1;
+	enabled=!!configHandler.GetInt("RotOverheadEnabled",1);
 }
 
 void CTWController::KeyMove(float3 move)
@@ -344,7 +344,7 @@ CRotOverheadController::CRotOverheadController()
 {
 	mouseScale = atof(configHandler.GetString("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE).c_str());
 	scrollSpeed=configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1;
-	enabled=!!configHandler.GetInt("TWEnabled",1)*0.1;
+	enabled=!!configHandler.GetInt("TWEnabled",1);
 }
 
 void CRotOverheadController::KeyMove(float3 move)

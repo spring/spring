@@ -47,7 +47,6 @@ public:
 	bool active;
 	bool isDead;
 	unsigned char color[4];
-	int colorNum;
 	int leader;
 
 	float handicap;
