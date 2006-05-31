@@ -146,16 +146,6 @@ CAdvSky::CAdvSky()
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 	glColor4f(1,1,1,1);
-	if (gu->drawFog) {
-		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR,FogLand);
-		glFogf(GL_FOG_START,gu->viewRange*fogStart);
-		glFogf(GL_FOG_END,gu->viewRange);
-		glFogf(GL_FOG_DENSITY,1.0f);
-		glFogi(GL_FOG_MODE,GL_LINEAR);
-	} else {
-		glDisable(GL_FOG);
-	}
 	glEndList();
 }
 
@@ -199,6 +189,17 @@ void CAdvSky::Draw()
 	glMatrixMode(GL_MODELVIEW);
 
 	glCallList(displist);
+
+	if (gu->drawFog) {
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR,FogLand);
+		glFogf(GL_FOG_START,gu->viewRange*fogStart);
+		glFogf(GL_FOG_END,gu->viewRange);
+		glFogf(GL_FOG_DENSITY,1.0f);
+		glFogi(GL_FOG_MODE,GL_LINEAR);
+	} else {
+		glDisable(GL_FOG);
+	}
 
 	glMatrixMode(GL_TEXTURE);	
 	  glActiveTextureARB(GL_TEXTURE2_ARB);

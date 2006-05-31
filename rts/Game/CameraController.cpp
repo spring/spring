@@ -77,8 +77,8 @@ float3 CFPSController::GetPos()
 		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
 	if(pos.y<ground->GetHeight(pos.x,pos.z)+5)
 		pos.y=ground->GetHeight(pos.x,pos.z)+5;
-	if(pos.y>3000)
-		pos.y=3000;
+	if(pos.y>9000)
+		pos.y=9000;
 
 	oldHeight=pos.y-ground->GetHeight(pos.x,pos.z);
 	return pos;
@@ -115,7 +115,8 @@ void CFPSController::SwitchTo()
 
 COverheadController::COverheadController()
 : pos(2000,70,1800),
-	height(500),zscale(0.5f)
+	height(500),zscale(0.5f),
+	oldAltHeight(500)
 {
 	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1;
 	enabled=!!configHandler.GetInt("OverheadEnabled",1);
@@ -156,23 +157,33 @@ void COverheadController::MouseWheelMove(float move)
 			if(height-dif<60)
 				dif=height-60;
 			if (keys[SDLK_LALT]) //instant-zoom: zoom in to standard view
-				dif=height-500;
+				dif=(height-oldAltHeight)/mouse->dir.y*dir.y;
 			float3 wantedPos= cpos + mouse->dir * dif;
-			float newHeight=ground->LineGroundCol(wantedPos,wantedPos+dir*10000);
+			float newHeight=ground->LineGroundCol(wantedPos,wantedPos+dir*15000);
 			if(newHeight<0)
 				newHeight=height* (1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1));
 			if(keys[SDLK_LALT] && newHeight < 500) // instant-zoom: set the new height to 500 if we are too low
 				newHeight=500;
 			if(wantedPos.y + dir.y * newHeight <0)
 				newHeight = -wantedPos.y / dir.y;
-			if(newHeight<3000){
+			if(newHeight<10000){
 				height=newHeight;
 				pos= wantedPos + dir * height;
 			}
 		//ZOOM OUT from mid screen
 		} else {
 			if (keys[SDLK_LALT]) { // instant-zoom: zoom out to the max
-				height=3000;
+				if(height<6000)
+					oldAltHeight=height;
+				height=10000;
+				if(pos.x<4100)
+					pos.x=4100;
+				if(pos.x>gs->mapx*SQUARE_SIZE-4100)
+					pos.x=max(gs->mapx*SQUARE_SIZE/2,gs->mapx*SQUARE_SIZE-4100);
+				if(pos.z<4900)
+					pos.z=4900;
+				if(pos.z>gs->mapy*SQUARE_SIZE-3600)
+					pos.z=max(gs->mapy*SQUARE_SIZE/2,gs->mapy*SQUARE_SIZE-3600);
 			} else {
 				height*=1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
 			}
@@ -198,8 +209,8 @@ float3 COverheadController::GetPos()
 		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
 	if(height<60)
 		height=60;
-	if(height>3000)
-		height=3000;
+	if(height>10000)
+		height=10000;
 
 	pos.y=ground->GetHeight(pos.x,pos.z);
 	dir=float3(0,-1,-zscale).Normalize();
@@ -396,8 +407,8 @@ float3 CRotOverheadController::GetPos()
 		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
 	if(pos.y<ground->GetHeight(pos.x,pos.z)+5)
 		pos.y=ground->GetHeight(pos.x,pos.z)+5;
-	if(pos.y>3000)
-		pos.y=3000;
+	if(pos.y>9000)
+		pos.y=9000;
 
 	oldHeight=pos.y-ground->GetHeight(pos.x,pos.z);
 

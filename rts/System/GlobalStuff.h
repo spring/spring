@@ -265,13 +265,6 @@ public:
 	bool cheatEnabled;
 
 	/**
-	 * @brief view range
-	 * 
-	 * The range of the user's view
-	 */
-	float viewRange;
-
-	/**
 	 * @brief game mode
 	 * 
 	 * Determines the commander mode of this game

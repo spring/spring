@@ -568,16 +568,10 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		health-=damage;
 	}
 	recentDamage+=damage;
-	if(health<=0){
-		KillUnit(false,false,attacker);
-		if(isDead && attacker!=0 && !gs->Ally(allyteam,attacker->allyteam) && !beingBuilt){
-			attacker->experience+=0.1*power/attacker->power;
-			gs->Team(attacker->team)->currentStats.unitsKilled++;
-		}
-	}
+
 	if(attacker!=0 && !gs->Ally(allyteam,attacker->allyteam)){
 //		info->AddLine("%s has %f/%f h attacker %s do %f d",tooltip.c_str(),health,maxHealth,attacker->tooltip.c_str(),damage);
-		attacker->experience+=0.1*power/attacker->power*damage/maxHealth*experienceMod;
+		attacker->experience+=0.1*power/attacker->power*(damage+min(0.f,health))/maxHealth*experienceMod;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
 		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum)) && team==gu->myTeam && !camera->InView(midPos,radius+50) && !gu->spectating) {
@@ -592,6 +586,13 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 				uh->lastCmdDamageWarning=gs->frameNum;
 		}
 		ENTER_SYNCED;
+	}
+	if(health<=0){
+		KillUnit(false,false,attacker);
+		if(isDead && attacker!=0 && !gs->Ally(allyteam,attacker->allyteam) && !beingBuilt){
+			attacker->experience+=0.1*power/attacker->power;
+			gs->Team(attacker->team)->currentStats.unitsKilled++;
+		}
 	}
 //	if(attacker!=0 && attacker->team==team)
 //		info->AddLine("FF by %i %s on %i %s",attacker->id,attacker->tooltip.c_str(),id,tooltip.c_str());
