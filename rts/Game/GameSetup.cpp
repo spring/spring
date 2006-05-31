@@ -162,7 +162,7 @@ bool CGameSetup::Init(char* buf, int size)
 		float3 defaultCol(palette.teamColor[colorNum][0]/255.0,palette.teamColor[colorNum][1]/255.0,palette.teamColor[colorNum][2]/255.0);
 		float3 color=file.GetFloat3(defaultCol,s+"rgbcolor");
 		for(int b=0;b<3;++b)
-			gs->Team(a)->color[b]=color[b]*255;
+			gs->Team(a)->color[b]=int(color[b]*255);
 
  		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
  		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
