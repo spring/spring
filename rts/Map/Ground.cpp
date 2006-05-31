@@ -66,6 +66,16 @@ void CGround::CheckColSquare(CProjectile* p,int x,int y)
 }
 float CGround::LineGroundCol(float3 from, float3 to)
 {
+	float savedLength=0;
+	if(from.z>float3::maxzpos && to.z<float3::maxzpos){		//a special case since the camera in overhead mode can often do this
+		float3 dir=to-from;
+		float maxLength=dir.Length();
+		dir/=maxLength;
+
+		savedLength=-(from.z-float3::maxzpos)/dir.z;
+
+		from+=dir*savedLength;
+	}
 	from.CheckInBounds();
 
 	float3 dir=to-from;
@@ -102,7 +112,7 @@ float CGround::LineGroundCol(float3 from, float3 to)
 		while(keepgoing){
 			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));	
 			if(ret>=0){
-				return ret;
+				return ret+savedLength;
 			}
 			keepgoing=fabs(zp-from.z)<fabs(to.z-from.z);
 			if(dz>0)
@@ -114,7 +124,7 @@ float CGround::LineGroundCol(float3 from, float3 to)
 		while(keepgoing){
 			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));	
 			if(ret>=0){
-				return ret;
+				return ret+savedLength;
 			}
 			keepgoing=fabs(xp-from.x)<fabs(to.x-from.x);
 			if(dx>0)
@@ -128,7 +138,7 @@ float CGround::LineGroundCol(float3 from, float3 to)
 			int zs=(int)floor(zp/SQUARE_SIZE);
 			ret = LineGroundSquareCol(from,to,xs,zs);	
 			if(ret>=0){
-				return ret;
+				return ret+savedLength;
 			}
 			keepgoing=fabs(xp-from.x)<fabs(to.x-from.x) && fabs(zp-from.z)<fabs(to.z-from.z);
 

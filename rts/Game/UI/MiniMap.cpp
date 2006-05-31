@@ -456,7 +456,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 void CMiniMap::MoveView(int x, int y)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*9000);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*gu->viewRange*1.4);
 	float3 dif(0,0,0);
 	if(dist>0){
 		dif=camera->forward*dist;

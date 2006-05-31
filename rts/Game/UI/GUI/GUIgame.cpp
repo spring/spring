@@ -55,12 +55,12 @@ bool mouseHandlerMayDoSelection=true;
 
 bool Selector::BeginSelection(const float3& dir)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*9000);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
 
 	isDragging=false;
 	
 	if(dist<0)
-		dist=9000;
+		dist=gu->viewRange*1.4;
 
 	begin=camera->pos+dir*dist;
 	end=begin;
@@ -71,10 +71,10 @@ bool Selector::BeginSelection(const float3& dir)
 
 bool Selector::UpdateSelection(const float3& dir)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*9000);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
 
 	if(dist<0)
-		dist=9000;
+		dist=gu->viewRange*1.4;
 
 	end=camera->pos+dir*dist;
 	return isDragging;
@@ -376,7 +376,7 @@ void GUIgame::PrivateDraw()
 		if(currentCommand->id<0)
 		{
 			// draw possible unit placement
-			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
+			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
 			if(dist>0)
 			{
 				UnitDef *unitdef = unitDefHandler->GetUnitByID(-currentCommand->id);
@@ -539,7 +539,7 @@ void GUIgame::PrivateDraw()
 	}
 	if(keys[SDLK_LSHIFT]){
 		CUnit* unit=0;
-		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,false);
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
 			if(unit->maxRange>0){
 				glDisable(GL_TEXTURE_2D);
@@ -698,12 +698,12 @@ bool GUIgame::DirectCommand(const float3& p, int button)
 	float3 over=float3(p.x, 8000, p.z);
 	float3 dir=float3(0, -1, 0);
 	
-	float dist=ground->LineGroundCol(over, over+dir*9000);
+	float dist=ground->LineGroundCol(over, over+dir*gu->viewRange*1.4);
 	
 	position=over+dir*dist;
 	
-	helper->GuiTraceRay(over,dir,9000,unit,20,true);
-	helper->GuiTraceRayFeature(over,dir,9000,feature);
+	helper->GuiTraceRay(over,dir,gu->viewRange*1.4,unit,20,true);
+	helper->GuiTraceRayFeature(over,dir,gu->viewRange*1.4,feature);
 	
 	buttonAction[button]=NOTHING;
 	// the event was not a drag, so it must be a click. send event
@@ -721,13 +721,13 @@ bool GUIgame::MouseMoveAction(int x, int y, int xrel, int yrel, int button)
 
 	float3 dir=mouse->dir;
 
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*9000);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
 	
-	if(dist<9000)
+	if(dist<gu->viewRange*1.4)
 		position=camera->pos+dir*dist;
 
-	float dist2=helper->GuiTraceRay(camera->pos,dir,9000,unit,20,true);
-	float dist3=helper->GuiTraceRayFeature(camera->pos,dir,9000,feature);
+	float dist2=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,true);
+	float dist3=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4,feature);
 
 	for(int button=0; button<numButtons; button++)
 	{
@@ -1533,7 +1533,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 
 	
 	CUnit* unit=0;
-	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,9000,unit,20,true);
+	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
 
 	if(unit && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
 		UnitDef* unitdef2=unit->unitDef;
