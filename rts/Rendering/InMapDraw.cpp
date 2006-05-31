@@ -227,7 +227,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 
 float3 CInMapDraw::GetMouseMapPos(void)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*9000);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
 	if(dist<0){
 		return float3(-1,1,-1);
 	}

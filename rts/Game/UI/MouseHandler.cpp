@@ -276,14 +276,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			selectedUnits.ClearSelected();
 
 		if(buttons[SDL_BUTTON_LEFT].movement>4){		//select box
-			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*9000);
+			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
 			if(dist<0)
-				dist=9000;
+				dist=gu->viewRange*1.4;
 			float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*9000);
+			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
 			if(dist<0)
-				dist=9000;
+				dist=gu->viewRange*1.4;
 			float3 pos2=camera->pos+dir*dist;
 
 			float3 dir1=pos1-camera->pos;
@@ -362,7 +362,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				sound->PlaySound(soundMultiselID);
 		} else {
 			CUnit* unit;
-			float dist=helper->GuiTraceRay(camera->pos,dir,9000,unit,20,false);
+			float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,false);
 			if(unit && unit->team==gu->myTeam){
 				if(buttons[button].lastRelease<gu->gameTime-0.2){
 					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
@@ -406,14 +406,14 @@ void CMouseHandler::Draw()
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(1,1,1,0.5);
 
-		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*9000);
+		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
 		if(dist<0)
-			dist=9000;
+			dist=gu->viewRange*1.4;
 		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*9000);
+		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
 		if(dist<0)
-			dist=9000;
+			dist=gu->viewRange*1.4;
 		float3 pos2=camera->pos+dir*dist;
 
 		float3 dir1=pos1-camera->pos;
@@ -551,7 +551,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return s;
 
 	CUnit* unit=0;
-	float dist=helper->GuiTraceRay(camera->pos,dir,9000,unit,20,false);
+	float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,false);
 
 	if(unit){
 		// show the player name instead of unit name if it has FBI tag showPlayerName
@@ -571,7 +571,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		}
 		return s;
 	} else {
-		if(dist<8900){
+		if(dist<gu->viewRange*1.4-100){
 			float3 pos=camera->pos+dir*dist;
 			char tmp[500];
 			CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];

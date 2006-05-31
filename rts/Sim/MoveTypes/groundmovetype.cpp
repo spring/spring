@@ -606,7 +606,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			float dist=sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
 			dif/=dist;
-			if(u->mass==100000){
+			if(u->mass==100000 || !u->mobility){
 				midPos-=dif*(dist-totRad);
 				pos=midPos-owner->frontdir*owner->relMidPos.z - owner->updir*owner->relMidPos.y - owner->rightdir*owner->relMidPos.x;
 				float impactSpeed=-owner->speed.dot(dif);

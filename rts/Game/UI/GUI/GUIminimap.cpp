@@ -344,7 +344,7 @@ bool GUIminimap::MouseMoveAction(int x, int y, int xrel, int yrel, int button)
 
 void GUIminimap::MoveView(int xpos, int ypos, int button)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*9000);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*gu->viewRange*1.4);
 	float3 dif(0,0,0);
 	if(dist>0){
 		dif=camera->forward*dist;
