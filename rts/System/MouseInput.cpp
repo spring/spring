@@ -46,12 +46,6 @@ public:
 
 	void InstallWndCallback()
 	{
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		if(!SDL_GetWMInfo(&info)) 
-			return;
-
-		wnd = info.window;
 		sdl_wndproc = (WNDPROC)GetWindowLong(wnd, GWL_WNDPROC);
 		SetWindowLong(wnd,GWL_WNDPROC,(LONG)SpringWndProc);
 	}
@@ -62,6 +56,13 @@ public:
 
 		mousemoved = false;
 		sdl_wndproc = 0;
+
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if(!SDL_GetWMInfo(&info)) 
+			return;
+
+		wnd = info.window;
 
 		// In windowed mode, SDL uses straight Win32 API to handle mouse movement, which works ok.
 		if (fullscreen)
@@ -79,7 +80,10 @@ public:
 	}
 	void SetPos(int2 pos)
 	{
-		SetCursorPos (pos.x, pos.y);
+		if (fullscreen)
+			SetCursorPos (pos.x, pos.y);
+		else
+			SDL_WarpMouse(pos.x, pos.y);
 	}
 
 	void Update()

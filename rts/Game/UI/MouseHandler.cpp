@@ -109,28 +109,21 @@ CMouseHandler::~CMouseHandler()
 	}
 }
 
-
-static bool internalMouseMove=true;
-static bool mouseMovedFromCenter=false;
-
 void CMouseHandler::MouseMove(int x, int y)
 {
-	if(hide){
-		if(!internalMouseMove){
-			mouseMovedFromCenter=true;
-		} else {
-			internalMouseMove=false;
-			lastx = x;  
-			lasty = y;  
-			return;
-		}
+	if(hide) {
+		lastx = x;
+		lasty = y;
+		return;
 	}
-	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
 
 	int dx=x-lastx;
 	int dy=y-lasty;
 	lastx = x;  
 	lasty = y;  
+
+	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
+
 	buttons[SDL_BUTTON_LEFT].movement+=abs(dx)+abs(dy);
 	buttons[SDL_BUTTON_RIGHT].movement+=abs(dx)+abs(dy);
 
@@ -160,15 +153,6 @@ void CMouseHandler::MouseMove(int x, int y)
 		currentCamController->MouseMove(float3(dx * cameraSpeed, dy * cameraSpeed, invertMouse ? -1 : 1));
 		return;
 	} 
-
-	if(hide){
-		float3 move;
-		move.x=dx;
-		move.y=dy;
-		move.z=invertMouse? -1 : 1;
-		currentCamController->MouseMove(move);
-		return;	
-	}
 }
 
 void CMouseHandler::MousePress(int x, int y, int button)
@@ -189,12 +173,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if(button==4){
 		if (guihandler->buildSpacing > 0)
 			guihandler->buildSpacing --;
-/*		CUnit* u;
-		float dist=helper->GuiTraceRay(camera->pos,hide ? camera->forward : camera->CalcPixelDir(x,y),9000,u,20,false);
-		if(dist<8900 && gs->cheatEnabled){
-			float3 pos=camera->pos+(hide ? camera->forward : camera->CalcPixelDir(x,y))*dist;
-			helper->Explosion(pos,DamageArray()*600,64,0);
-		}/**/			//make network compatible before enabling
 		return;
 	}
 	if(button==5){
@@ -586,10 +564,20 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
-	if(hide && mouseMovedFromCenter){
-		mouseInput->SetPos (int2(gu->screenx/2,gu->screeny/2));
-		internalMouseMove=true;				//this only works if the msg que is empty of mouse moves, so someone should figure out something better
-		mouseMovedFromCenter=false;
-	}
+	if (!hide)
+		return;
+
+	int dx = lastx-gu->screenx/2;
+	int dy = lasty-gu->screeny/2;
+	lastx = gu->screenx/2; lasty = gu->screeny/2;
+
+	float3 move;
+	move.x=dx;
+	move.y=dy;
+	move.z=invertMouse? -1 : 1;
+	currentCamController->MouseMove(move);
+	
+	mouseInput->SetPos (int2(lastx,lasty));
 }
+
 
