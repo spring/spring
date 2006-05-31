@@ -8,6 +8,7 @@
 #include "math.h"
 #include "Rendering/GL/myGL.h"
 #include "UI/InfoConsole.h"
+#include "Map/Ground.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -89,11 +90,12 @@ void CCamera::Update(bool freeze)
 		cam2->up=up;
 	}
 	oldFov=fov;
+	float rangemod=1+max(0.f,pos.y-ground->GetHeight(pos.x,pos.z)-500)*0.0003;
+	gu->viewRange=MAX_VIEW_RANGE*rangemod;
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
 	glLoadIdentity();									// Reset The Projection Matrix
-	gluPerspective(fov,(GLfloat)gu->screenx/(GLfloat)gu->screeny,NEAR_PLANE,gu->viewRange);
+	gluPerspective(fov,(GLfloat)gu->screenx/(GLfloat)gu->screeny,NEAR_PLANE*rangemod,gu->viewRange);
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
-
 	glLoadIdentity();
 	gluLookAt(camera->pos.x,camera->pos.y,camera->pos.z,camera->pos.x+camera->forward.x,camera->pos.y+camera->forward.y,camera->pos.z+camera->forward.z,camera->up.x,camera->up.y,camera->up.z);
 }
@@ -102,9 +104,9 @@ bool CCamera::InView(const float3 &p,float radius)
 {
 	float3 t=p-pos;
 	float l=t.Length();
-	if(l<20)
+	if(l<50)
 		return true;
-	else if (l>MAX_VIEW_RANGE)
+	else if (l>gu->viewRange)
 		return false;
 	if(t.dot(rightside)>radius)
 		return false;

@@ -46,7 +46,9 @@ TASpring change log
 - Changed non-positional sound behavior: only selected units give non-positional sound
 - Missile weapons no longer tracks to exact position of non flying units (make missile units weaker against radar targets)
 - Stun damage units now receives 1/10 of normal experience and no experience for attacking already stunned units
+- Units no longer receive experience for "overkill" damage 
 - Adds support for using arbitary team colors, teamcolor textures for 3do need to be slightly changed to accomendate this (see the base texture archive to see how its done)
+- Increased max camera zoom out (zooming to far can cause slowdowns/graphical glitches)
 
 0.71b1
 

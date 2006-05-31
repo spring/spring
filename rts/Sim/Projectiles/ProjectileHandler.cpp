@@ -323,8 +323,8 @@ CProjectileHandler::CProjectileHandler()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
-	CBitmap b(tex[0][0],512,512);
-	b.Save("proj.tga");
+//	CBitmap b(tex[0][0],512,512);
+//	b.Save("proj.tga");
 
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){

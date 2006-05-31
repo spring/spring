@@ -263,7 +263,7 @@ void CShadowHandler::CalcMinMaxView(void)
 	//if someone could figure out how the frustum and nonlinear shadow transform really works (and not use the SJan trial and error method)
 	//so that we can skip this sort of fudge factors it would be good
 	float borderSize=270;
-	float maxSize=6000;
+	float maxSize=gu->viewRange*0.75;
 	if(shadowMapSize==1024){
 		borderSize*=1.5;
 		maxSize*=1.2;
