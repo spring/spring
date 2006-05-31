@@ -901,7 +901,7 @@ void CProjectileHandler::UpdatePerlin()
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 		for(int b=0;b<4;++b)
-			col[b]=(1-perlinBlend[a])*16*size;
+			col[b]=int((1-perlinBlend[a])*16*size);
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2]);
 		va->AddVertexTC(float3(0,0,0),0,0,col);
 		va->AddVertexTC(float3(0,1,0),0,tsize,col);
@@ -915,7 +915,7 @@ void CProjectileHandler::UpdatePerlin()
 		va=GetVertexArray();
 		va->Initialize();
 		for(int b=0;b<4;++b)
-			col[b]=perlinBlend[a]*16*size;
+			col[b]=int(perlinBlend[a]*16*size);
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2+1]);
 		va->AddVertexTC(float3(0,0,0),0,0,col);
 		va->AddVertexTC(float3(0,1,0),0,tsize,col);
@@ -948,7 +948,7 @@ void CProjectileHandler::GenerateNoiseTex(unsigned int tex,int size)
 	unsigned char* mem=new unsigned char[4*size*size];
 
 	for(int a=0;a<size*size;++a){
-		unsigned char rnd=max(0.f,gu->usRandFloat()*555-300);
+		unsigned char rnd=int(max(0.f,gu->usRandFloat()*555-300));
 		mem[a*4+0]=rnd;
 		mem[a*4+1]=rnd;
 		mem[a*4+2]=rnd;
