@@ -54,7 +54,7 @@ static inline std::string glob_to_regex(const std::string &glob)
 		char c = *i;
 #ifdef DEBUG
 		if (braces>=5)
-			fprintf(stderr,"glob_to_regex warning: braces nested too deeply\n");
+			fprintf(stderr,"glob_to_regex warning: braces nested too deeply\n%s\n", glob.c_str());
 #endif
 		switch (c) {
 			case '*':
@@ -69,8 +69,8 @@ static inline std::string glob_to_regex(const std::string &glob)
 				break;
 			case '}':
 #ifdef DEBUG
-				if (braces)
-					fprintf(stderr,"glob_to_regex warning: closing brace without an equivalent opening brace\n");
+				if (!braces)
+					fprintf(stderr,"glob_to_regex warning: closing brace without an equivalent opening brace\n%s\n", glob.c_str());
 #endif
 				regex+=')';
 				braces--;
@@ -84,7 +84,7 @@ static inline std::string glob_to_regex(const std::string &glob)
 			case '\\':
 #ifdef DEBUG
 				if (++i==glob.end())
-					fprintf(stderr,"glob_to_regex warning: pattern ends with backslash\n");
+					fprintf(stderr,"glob_to_regex warning: pattern ends with backslash\n%s\n", glob.c_str());
 #else
 				++i;
 #endif
@@ -97,7 +97,7 @@ static inline std::string glob_to_regex(const std::string &glob)
 	}
 #ifdef DEBUG
 	if (braces)
-		fprintf(stderr,"glob_to_regex warning: unterminated brace expression\n");
+		fprintf(stderr,"glob_to_regex warning: unterminated brace expression\n%s\n", glob.c_str());
 #endif
 	return regex;
 }

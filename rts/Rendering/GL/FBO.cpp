@@ -17,8 +17,9 @@
 FBO::FBO()
 {
 	g_frameBuffer = 0;
-	if (!GL_EXT_framebuffer_object)
+	if (!GLEW_EXT_framebuffer_object)
 		return;
+	assert(glGenFramebuffersEXT != 0);
 	glGenFramebuffersEXT(1,&g_frameBuffer);
 	select();
 	// Other init stuff
