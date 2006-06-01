@@ -116,7 +116,8 @@ void CFPSController::SwitchTo()
 COverheadController::COverheadController()
 : pos(2000,70,1800),
 	height(500),zscale(0.5f),
-	oldAltHeight(500)
+	oldAltHeight(500),
+	maxHeight(10000)
 {
 	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1;
 	enabled=!!configHandler.GetInt("OverheadEnabled",1);
@@ -166,24 +167,18 @@ void COverheadController::MouseWheelMove(float move)
 				newHeight=500;
 			if(wantedPos.y + dir.y * newHeight <0)
 				newHeight = -wantedPos.y / dir.y;
-			if(newHeight<10000){
+			if(newHeight<maxHeight){
 				height=newHeight;
 				pos= wantedPos + dir * height;
 			}
 		//ZOOM OUT from mid screen
 		} else {
 			if (keys[SDLK_LALT]) { // instant-zoom: zoom out to the max
-				if(height<6000)
+				if(height<maxHeight*0.5)
 					oldAltHeight=height;
-				height=10000;
-				if(pos.x<4100)
-					pos.x=4100;
-				if(pos.x>gs->mapx*SQUARE_SIZE-4100)
-					pos.x=max(gs->mapx*SQUARE_SIZE/2,gs->mapx*SQUARE_SIZE-4100);
-				if(pos.z<4900)
-					pos.z=4900;
-				if(pos.z>gs->mapy*SQUARE_SIZE-3600)
-					pos.z=max(gs->mapy*SQUARE_SIZE/2,gs->mapy*SQUARE_SIZE-3600);
+				height=maxHeight;
+				pos.x=gs->mapx*4;
+				pos.z=gs->mapy*4.8;	//somewhat longer toward bottom
 			} else {
 				height*=1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
 			}
@@ -199,6 +194,8 @@ void COverheadController::MouseWheelMove(float move)
 
 float3 COverheadController::GetPos()
 {
+	maxHeight=9.5*max(gs->mapx*1.0,gs->mapy*0.95);		//map not created when constructor run
+
 	if(pos.x<0.01f)
 		pos.x=0.01f;
 	if(pos.z<0.01f)
@@ -209,8 +206,8 @@ float3 COverheadController::GetPos()
 		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
 	if(height<60)
 		height=60;
-	if(height>10000)
-		height=10000;
+	if(height>maxHeight)
+		height=maxHeight;
 
 	pos.y=ground->GetHeight(pos.x,pos.z);
 	dir=float3(0,-1,-zscale).Normalize();

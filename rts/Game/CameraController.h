@@ -69,6 +69,7 @@ public:
 	float3 dir;
 	float height;
 	float oldAltHeight;
+	float maxHeight;
 };
 
 class CTWController : public CCameraController
