@@ -88,7 +88,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 {
 	drawWater=drawWaterReflection;
 
-	int baseViewRadius=viewRadius;
+	int baseViewRadius=max(4,viewRadius);
 	if(drawUnitReflection)
 		viewRadius=(viewRadius/2)&0xfffffe;
 	float zoom=45/camera->fov;
@@ -105,6 +105,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	int hmapx=mapx>>1;
 	int mapy=gs->mapy+1;
 
+	int neededLod=(gu->viewRange/8/viewRadius*2);
 	UpdateCamRestraints();
 
 	invMapSizeX=1.0/gs->mapx;
@@ -168,7 +169,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 				textures->SetTexture(btx,bty);
 				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, -btx,-bty,0,0);
 			}
-			for(int lod=1;lod<(2<<NUM_LODS);lod*=2){
+			for(int lod=1;lod<neededLod;lod*=2){
 				int cx=(int)(cam2->pos.x/(SQUARE_SIZE));
 				int cy=(int)(cam2->pos.z/(SQUARE_SIZE));
 
