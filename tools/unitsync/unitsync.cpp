@@ -5,7 +5,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "TdfParser.h"
-#include "Sim/Map/mapfile.h"
+#include "Map/SMF/mapfile.h"
 #include "FileSystem/ArchiveFactory.h"
 
 #include "Syncer.h"
