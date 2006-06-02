@@ -117,7 +117,8 @@ COverheadController::COverheadController()
 : pos(2000,70,1800),
 	height(500),zscale(0.5f),
 	oldAltHeight(500),
-	maxHeight(10000)
+	maxHeight(10000),
+	changeAltHeight(true)
 {
 	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1;
 	enabled=!!configHandler.GetInt("OverheadEnabled",1);
@@ -174,8 +175,10 @@ void COverheadController::MouseWheelMove(float move)
 		//ZOOM OUT from mid screen
 		} else {
 			if (keys[SDLK_LALT]) { // instant-zoom: zoom out to the max
-				if(height<maxHeight*0.5)
+				if(height<maxHeight*0.5 && changeAltHeight){
 					oldAltHeight=height;
+					changeAltHeight=false;
+				}
 				height=maxHeight;
 				pos.x=gs->mapx*4;
 				pos.z=gs->mapy*4.8;	//somewhat longer toward bottom
@@ -188,13 +191,14 @@ void COverheadController::MouseWheelMove(float move)
 			zscale=0.5f;
 			mouse->inStateTransit=true;
 			mouse->transitSpeed=1;
-		}
+		} else 
+			changeAltHeight=true;
 	}
 }
 
 float3 COverheadController::GetPos()
 {
-	maxHeight=9.5*max(gs->mapx*1.0,gs->mapy*0.95);		//map not created when constructor run
+	maxHeight=9.5*max(gs->mapx,gs->mapy);		//map not created when constructor run
 
 	if(pos.x<0.01f)
 		pos.x=0.01f;

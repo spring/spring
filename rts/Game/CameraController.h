@@ -69,6 +69,7 @@ public:
 	float3 dir;
 	float height;
 	float oldAltHeight;
+	bool changeAltHeight;
 	float maxHeight;
 };
 
