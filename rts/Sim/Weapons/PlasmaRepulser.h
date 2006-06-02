@@ -30,6 +30,8 @@ public:
 
 	float radius;
 	float sqRadius;
+
+	bool isEnabled;
 };
 
 #endif
