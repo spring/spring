@@ -792,17 +792,59 @@ void SpringApp::Shutdown()
  *
  * On *nix platforms, attempts to locate
  * and change to the spring data directory
+ *
+ * The data directory to chdir to is determined by the following, in this
+ * order (first items override lower items): 
+ *
+ * - 'SpringData=/path/to/data' variable declaration in '~/.springrc'.
+ * - 'SPRING_DATADIR' environment variable.
+ * - In the same order any line in '/etc/spring/datadir', if that file exists.
+ * - 'datadir=/path/to/data' option passed to 'scons configure'.
+ * - 'prefix=/install/path' option passed to scons configure. The datadir is
+ *   assumed to be at '$prefix/games/taspring' in this case.
+ * - the default datadir in the default prefix, ie. '/usr/local/games/taspring'
+ *
+ * If it fails to chdir to the above specified directory spring will asume the
+ * current working directory is the data directory.
+ *
+ * TODO: do this on a per file basis, ie. make it possible to merge different
+ * data directories in runtime.
  */
 static inline int LocateDataDir(void)
 {
-	int ret;
-	char *env = getenv("SPRING_DATADIR");
-	if (!env)
-		env = SPRING_DATADIR;
-	ret = chdir(configHandler.GetString("SpringData",std::string(env)).c_str());
-	if (ret == -1)
-		perror("Spring datadir warning");
-	return ret;
+	std::vector<std::string> datadirs;
+
+	std::string cfg = configHandler.GetString("SpringData","");
+	if (!cfg.empty())
+		datadirs.push_back(cfg);
+
+	char* env = getenv("SPRING_DATADIR");
+	if (env && *env)
+		datadirs.push_back(env);
+
+	FILE* f = fopen("/etc/spring/datadir", "r");
+	if (f) {
+		char buf[1024];
+		while (fgets(buf, sizeof(buf), f)) {
+			char* newl = strchr(buf, '\n');
+			if (newl)
+				*newl = 0;
+			datadirs.push_back(buf);
+		}
+		fclose(f);
+	}
+
+	datadirs.push_back(SPRING_DATADIR);
+
+	for (std::vector<std::string>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+		if (chdir((*d).c_str()) != -1) {
+			fprintf(stderr, "spring is using data directory: %s\n", (*d).c_str());
+			return 0;
+		}
+		perror((*d).c_str());
+	}
+	fprintf(stderr, "spring is using data directory: current working directory\n");
+	return 0; // assume current working directory is ok.
 }
 #endif
 

@@ -377,6 +377,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	string TEDClass=tdfparser.SGetValueDef("0", "UNITINFO\\TEDClass").c_str();
 	ud.TEDClassString=TEDClass;
+	ud.extractRange=0;
 
 	if(ud.extractsMetal) {
 		ud.extractRange = readmap->extractorRadius;

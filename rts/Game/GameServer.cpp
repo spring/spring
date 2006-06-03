@@ -156,17 +156,19 @@ bool CGameServer::Update(void)
 				}
 			}
 
-			float wantedCpu=0.35+(1-gs->speedFactor/gs->userSpeedFactor)*0.5;
-			//float speedMod=1+wantedCpu-maxCpu;
-			float newSpeed=gs->speedFactor*wantedCpu/maxCpu;
-			//info->AddLine("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
-			newSpeed=(newSpeed+gs->speedFactor)*0.5;
-			if(newSpeed>gs->userSpeedFactor)
-				newSpeed=gs->userSpeedFactor;
-			if(newSpeed<0.1)
-				newSpeed=0.1;
-			if(newSpeed!=gs->speedFactor)
-				serverNet->SendData<float>(NETMSG_INTERNAL_SPEED, newSpeed);
+			if (maxCpu != 0) {
+				float wantedCpu=0.35+(1-gs->speedFactor/gs->userSpeedFactor)*0.5;
+				//float speedMod=1+wantedCpu-maxCpu;
+				float newSpeed=gs->speedFactor*wantedCpu/maxCpu;
+				//info->AddLine("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
+				newSpeed=(newSpeed+gs->speedFactor)*0.5;
+				if(newSpeed>gs->userSpeedFactor)
+					newSpeed=gs->userSpeedFactor;
+				if(newSpeed<0.1)
+					newSpeed=0.1;
+				if(newSpeed!=gs->speedFactor)
+					serverNet->SendData<float>(NETMSG_INTERNAL_SPEED, newSpeed);
+			}
 		}
 	}
 

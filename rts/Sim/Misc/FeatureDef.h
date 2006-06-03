@@ -11,7 +11,7 @@ struct FeatureDef
 {
 	CR_DECLARE(FeatureDef);
 
-	FeatureDef():geoThermal(0),floating(false){};
+	FeatureDef():geoThermal(0),floating(false),upright(false){};
 
 	std::string myName;
 	std::string description;

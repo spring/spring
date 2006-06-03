@@ -67,8 +67,6 @@ CBasicSky::CBasicSky()
 
 	lastCloudUpdate=-30;
 	cloudThickness=new unsigned char[CLOUD_SIZE*CLOUD_SIZE*4+4];
-	for (int a = 0; a < 4; ++a)
-		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+a] = 0;
 	CreateClouds();
 	InitSun();
 	oldCoverBaseX=-5;
@@ -482,6 +480,9 @@ START_TIME_PROFILE
 	for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++){
 		cloudThickness[a*4+3]=alphaTransform[rawClouds[0][a]>>7];
 	}
+	cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+3]=alphaTransform[rawClouds[0][0]>>7];
+        // next line unused
+	cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+0]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+1]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+2]=0;
 
 	//create the cloud shading
 	int ydif[CLOUD_SIZE];
