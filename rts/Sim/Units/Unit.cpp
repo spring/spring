@@ -565,6 +565,11 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			}
 		}
 	} else {
+		// Dont log overkill damage (so dguns/nukes etc dont inflate values)
+		float statsdamage = std::min(health, damage);
+		if (attacker)
+			gs->Team(attacker->team)->currentStats.damageDealt += statsdamage;
+		gs->Team(team)->currentStats.damageReceived += statsdamage;
 		health-=damage;
 	}
 	recentDamage+=damage;
