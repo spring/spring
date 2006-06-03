@@ -78,6 +78,7 @@ public:
 		double metalExcess,energyExcess;
 		double metalReceived,energyReceived;					//received from allies
 		double metalSent,energySent;									//sent to allies
+		double damageDealt,damageReceived;				// Damage taken and dealt to enemy units
 
 		int unitsProduced;
 		int unitsDied;

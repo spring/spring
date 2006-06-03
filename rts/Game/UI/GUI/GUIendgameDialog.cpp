@@ -129,6 +129,9 @@ void GUIendgameDialog::UpdateStatistics()
 			AddValue("Units captured", i->unitsCaptured);
 			AddValue("Units stolen", i->unitsOutCaptured);
 			AddValue("Units killed", i->unitsKilled);
+
+			AddValue("Damage Dealt", i->damageDealt);
+			AddValue("Damage Received", i->damageReceived);
 			
 			#undef InitStat
 			#undef FillStat

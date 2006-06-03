@@ -384,6 +384,9 @@ void CEndGameBox::FillTeamStats()
 	stats.push_back(Stat("Units captured"));
 	stats.push_back(Stat("Units stolen"));
 	
+	stats.push_back(Stat("Damage Dealt"));
+	stats.push_back(Stat("Damage Received"));
+	
 	for(int team=0; team<gs->activeTeams; team++){
 		for(std::list<CTeam::Statistics>::iterator si=gs->Team(team)->statHistory.begin(); si!=gs->Team(team)->statHistory.end(); si++){
 			stats[0].AddStat(team,0);				
@@ -415,6 +418,9 @@ void CEndGameBox::FillTeamStats()
 			stats[18].AddStat(team, si->unitsSent);
 			stats[19].AddStat(team, si->unitsCaptured);
 			stats[20].AddStat(team, si->unitsOutCaptured);
+
+			stats[21].AddStat(team, si->damageDealt);
+			stats[22].AddStat(team, si->damageReceived);
 		}
 	}	
 }
