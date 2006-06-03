@@ -12,6 +12,7 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Misc/Feature.h"
 #include "Game/Team.h"
 #include "InfoConsole.h"
 #include "MiniMap.h"
@@ -23,6 +24,7 @@
 #include "MouseInput.h"
 #include "Sound.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Misc/FeatureDef.h"
 #include "ExternalAI/Group.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/InMapDraw.h"
@@ -528,8 +530,26 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	if(s!="")
 		return s;
 
+	/*
+	NOTE:
+	The code below (up untill "if(unit)...") is exactly the same as
+	some lines in CGuiHandler::GetDefaultCommand().
+	Perhaps it would be possible to integrate the two, because now a
+	racetray for units and features might be performed twice per frame.
+	*/
 	CUnit* unit=0;
-	float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,false);
+	CFeature* feature=0;
+	float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,true);
+	float dist2=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4,feature);
+
+	if(dist>gu->viewRange*1.4-100 && dist2>gu->viewRange*1.4-100 && unit==0){
+		return "";
+	}
+
+	if(dist>dist2)
+		unit=0;
+	else
+		feature=0;
 
 	if(unit){
 		// show the player name instead of unit name if it has FBI tag showPlayerName
@@ -548,18 +568,31 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 			s+=tmp;
 		}
 		return s;
-	} else {
-		if(dist<gu->viewRange*1.4-100){
-			float3 pos=camera->pos+dir*dist;
-			char tmp[500];
-			CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
-			string ttype=tt->name;
-			sprintf(tmp,"Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\nSpeeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",pos.x,pos.z,pos.y,ttype.c_str(),tt->tankSpeed,tt->kbotSpeed,tt->hoverSpeed,tt->shipSpeed,tt->hardness*mapDamage->mapHardness,readmap->metalMap->getMetalAmount((int)(pos.x/16),(int)(pos.z/16)));
-			return tmp;
-		} else {
-			return "";
-		}
 	}
+	if(feature){
+		if(feature->def->description==""){
+			s="Feature";
+		} else {
+			s=feature->def->description;
+		}
+		std::string metalColor = feature->def->metal > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
+		std::string energyColor = feature->def->energy > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
+		char tmp[500];
+		sprintf(tmp,"\n\xff\xd3\xdb\xffMetal: %s%.0f \xff\xd3\xdb\xff Energy: %s%.0f",
+			metalColor.c_str(), feature->def->metal, energyColor.c_str(), feature->def->energy);
+		s+=tmp;
+
+		return s;
+	}
+	if(dist<gu->viewRange*1.4-100){
+		float3 pos=camera->pos+dir*dist;
+		char tmp[500];
+		CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
+		string ttype=tt->name;
+		sprintf(tmp,"Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\nSpeeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",pos.x,pos.z,pos.y,ttype.c_str(),tt->tankSpeed,tt->kbotSpeed,tt->hoverSpeed,tt->shipSpeed,tt->hardness*mapDamage->mapHardness,readmap->metalMap->getMetalAmount((int)(pos.x/16),(int)(pos.z/16)));
+		return tmp;
+	}
+	return "";
 }
 
 void CMouseHandler::EmptyMsgQueUpdate(void)

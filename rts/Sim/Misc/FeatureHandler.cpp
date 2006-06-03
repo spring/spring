@@ -234,6 +234,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->xsize=2;
 			fd->ysize=2;
 			fd->myName=name;
+			fd->description="Tree";
 			fd->mass=20;
 			featureDefs[name]=fd;
 		} else if(name.find("GeoVent")!=string::npos){
@@ -482,6 +483,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
 		fd->ysize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
 		fd->mass=fd->metal*0.4+fd->maxHealth*0.1;
+		fd->description=wreckParser.SGetValueDef("",name+"\\description");
 
 		fd->myName=name;
 		featureDefs[name]=fd;

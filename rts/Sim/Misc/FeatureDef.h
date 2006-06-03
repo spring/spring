@@ -14,6 +14,7 @@ struct FeatureDef
 	FeatureDef():geoThermal(0),floating(false){};
 
 	std::string myName;
+	std::string description;
 
 	float metal;
 	float energy;
