@@ -1,0 +1,91 @@
+[...] - optional parameter
+
+---------------------------------------------------------------------
+Moderator commands:
+
+/ingame <username>
+  returns user's in-game time.
+/kick <username> [{reason}]
+/ban <IP> [{reason}]
+  Bans IP where IP can be in the form of "x.y.z.w" or in the form where one or more of x..w are 
+  replaced by *. Asterisk denotes any value between 0 and 255.
+/unban <IP>
+/banlist
+  lists all banned IPs.
+/topic <channel> {new topic}
+/chanmsg <channel> {message}
+  will display a message in the channel.
+/ring <username>
+  plays a "ring" sound on user's client program.
+/ip <username>
+  returns user's IP address.
+/mute <channel> <username> [minutes]
+  will mute user for specified time or for indefinit time if "minutes" are not specified.
+/unmute <channel> <username>
+/mutelist <channel>
+/lastlogin <username>
+  will return user's last login date/time
+/findip <ipaddress>
+  will return a list of clients that are currently using this IP or were recently using it.
+/lastip <username>
+  will return last IP address used by the user (or current one if still online)
+ 
+---------------------------------------------------------------------
+Administrator commands:
+
+(these commands must be put in $local window WITHOUT "/" prefix)
+
+removeaccount <username>
+stopserver
+  kills the server (but first saves accounts info to disk)
+writeaccountsinfo 
+  saves accounts info to disk
+changeaccountpass <username> <new password>
+  changes password to "new password". Note that TASClient encodes password with md5 and sends
+  base64 representation of md5 hash rather than raw password.
+changeaccountaccess <username> <new access code>
+  changes access code. See Account.java and server documentation for more info on this one. 
+  Misuse of this command may reset user's in-game time!
+redirect <IP>
+  will make server to enter "redirection mode". New users will be redirected to specified IP and
+  immediately disconnected from server. Old users (those who were logged to server before this
+  command took effect) won't be disconnected.
+broadcast <message>
+  will send message from server to all users.
+broadcastex <message>
+  will popup a message box with <message> text on all users (should be used with care - message 
+  boxes poping up might be annoying).
+adminbroadcast <message>
+  will send a message (as a broadcast) to all administrators currently logged on.
+redirectoff
+  will disable "redirection mode". Also see "redirect" command.
+getaccountcount
+  will return number of accounts registered on this server.
+findaccount <username>
+  will return account's index from accounts array. You need this index with some commands like
+  "getaccountinfo".
+getaccountinfo <account_id>
+  will return some account info. You can get account_id using "findaccount" command.
+forgemsg <username> <msg>
+  forces server to send message msg to user. This command is used for debugging purposes only!
+forceclosebattle <battle_id>
+  closes the battle.
+ip2country <IP>
+  will return country where IP is registered.
+reinitip2country <filename>
+  will reinit ip2country database from the disk (from file filename).
+changecharset <charset>
+  will change server's charset. Note: Although charset may change successfully, it might not have
+  any effect if it is not installed on the system.
+getlobbyversion <username>
+  will return player's lobby name and version.
+channelmessage <channel> <message>
+updatestatistics
+  will save current statistics to disk. This command is used for debugging purposes only!
+longtimetodate <time>
+  will convert long time to human readable date format (long time is time in milliseconds
+  since the standard base time known as "the epoch", namely January 1, 1970, 00:00:00 GMT).
+  Used for debugging purposes.
+setchannelkey <channel> <key>
+  will lock the channel with key or unlock it if key is "*". This command is available
+  to moderators as well.
