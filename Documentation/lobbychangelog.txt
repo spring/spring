@@ -1,4 +1,8 @@
   ------ CHANGELOG ------
+
+  *** 0.25 (??x??x??) ***
+  * battle client list now shows player's ingame and away status
+
   *** 0.24 (13x05x06) ***
   * fixed small bug with "online maps" getting scattered over the window if scrolling the list
     down before reading of cache has completed
@@ -8,6 +12,7 @@
   * fixed bug with watching replays not working
   * replaced battle client list with new one and moved "player control" tab
     and "update bot" dialog to right-click popup menu
+
   *** 0.23 (30x04x06) ***
   * you can now host bot vs bot battles while being a spectator
   * added ignore list manager and /ignore command
@@ -15,16 +20,19 @@
   * added new "choose color dropdown"
   * added warning icon which is displayed right next to each battle in battle list that uses NAT traversing
   * fixed connection address not switching back bug when using "Connect to backup host if primary fails" option
+
   *** 0.22 (20x03x06) ***
   * added keyword highlighting + notifications (options->program->highlights)
   * added /ping command
   * added ability to lock channels (pass key with join command to join locked channel)
   * /list command now returns more detailed channel list
   * limited maximum length of chat messages
+
   *** 0.21 (27x02x06) ***
   * fixed splash screen sometimes not dissappearing after program has loaded
   * increased send/recv buffer sizes (will hopefully fix some of the timeout issues)
   * fixed auto-complete feature
+
   *** 0.20 (25x02x06) ***
   * fixed updating "online maps" for people using a HTTP proxy
   * added simple auto-complete feature similar to the one used in mIRC (press TAB to auto-complete player's name)
@@ -35,11 +43,13 @@
   * added /chanmsg command for moderators
   * fixed small problem with double-clicking on player not always working
   * increased program loading speed (replays and "online maps" are now loaded in background threads) 
+
   *** 0.195 (23x01x06) ***
   * fixed serious bug with hosting replays (non-host players would always crash with I/O error 103)
   * "game options" in battle form are now restored on program start
   * added "load default" and "set as default" buttons to quickly save/load all battle settings when hosting
   * added HTTP proxy settings to option pages (this will solve problems some people were having downloading maps and updates)
+
   *** 0.194 (19x01x06) ***
   * fixed serious bug with disabled units list being loaded causing access violation exceptions
     on changing map or not launching spring upon starting the game.
@@ -48,14 +58,17 @@
   * "online maps" are ordered aphabetically now
   * added "perform" list (Options->Server->Perform)
   * added option to update mod list from within the lobby (you don't have to restart the lobby anymore when adding new mods)       
+
   *** 0.193 ***
   * fixed serious bug with sorting battles as game would not start for all players or would start randomly for some
   * fixed some freezing bug when auto-updating client 
+
   *** 0.192 ***
   * added battle list sorting
   * fixed serious bug which caused "ambigious commands" popup upon connecting to server in case there were roughly more
     than 100 people connected
   * other minor changes and fixes 
+
   *** 0.19 ***
   * battle hosts can now use /ring <username> command on players participating in their battles
   * fixed problem with notification dialog switching focus back to application
@@ -64,10 +77,13 @@
     "[" and "]" characters.
   * fixed small bug in demo script parser
   * added /mute, /unmute and /mutelist commands for admins/mods
+
   *** 0.182 ***
   * fixed serious bug with mod sides not being loaded when user joined battle, if he didn't host the mod before that
+
   *** 0.181 ***
   * fixed serious bug with not accepting UPDATEBATTLEDETAILS commands
+
   *** 0.18 (24x11x05) ***
   * added "ghosted buildings" option
   * added multiple mod side support (modders should put side images
@@ -77,16 +93,19 @@
     it is irrelevant now.
   * passwords are now sent to server in encoded form (MD5 hash code)
   * fixed bug in "online maps" when updater stopped responding in certain cases  
+
   *** 0.17 (08x11x05) ***
   * fixed network code (multiplayer replays should work now)
   * "online maps" are now updated only as needed
   * fixed some minor issues
+
   *** 0.161 (13x10x05) ***
   * fixed problem with application not minimizing if taskbar buttons were enabled
   * fixed problem with saving comments to demo file. Note: comments created with previous version will
     raise an "error parsing file" error when trying to watch the replay (comments should be saved
     again with new version to avoid this error).
   * temporarily disabled multiplayer replay feature due to some issues with it (probably until next update).  
+
   *** 0.16 (11x10x05) ***
   * added ability to add comments and grades to replays
   * added "diminishing metal maker returns" host option
@@ -101,6 +120,7 @@
     parameters very fast.
   * added support for multiplayer replays
   * "online maps" are now updated directly from fileuniverse.com  
+
   *** 0.152 (24x09x05) ***
   * added option to add taskbar buttons for all forms
   * changed wsoTCPNoDelay to True. This could resolve some of the timeout issues.
@@ -108,6 +128,7 @@
   * fixed problem with DecimalSeparator getting overwritten with WM_WININICHANGE message in some cases.
   * fixed freezing bug on "loading mod ...", this time in unitsync.dll
   * added support for custom sides
+
   *** 0.151 (12x09x05) ***
   * fixed crashing bug when using startrects
   * fixed issue when client crashed upon start if it couldn't read CPU info from registry
@@ -116,6 +137,7 @@
   * fixed "400 BAD REQUEST" bug when trying to download maps with spaces in the name
   * reduced starting-up time a bit. Still, having "online maps" cached adds some time to the loading procedure.
   * fixed problem with launching patch file
+
   *** 0.15 (11x09x05) ***
   * program now remembers the last mod used
   * added IP-to-country support
@@ -129,11 +151,13 @@
   * added CPU tag support (in battle screen only)
   * added start rectangles support (see HELP for more info)
   * other minor changes
+
   *** 0.141 (30x08x05) ***
   * fixed "more maps" label pointing to wrong web location
   * added explanation of ranking system to help screen
   * client now closes itself before updating, so that you don't have to restart windows anymore
     (for the changes to take effect).
+
   *** 0.14 (29x08x05) ***
   * added DELETE button to Replays window
   * change the way preferences are saved - from now on they are saved to registry (HKEY_CURRENT_USER\Software\TASClient)
@@ -148,17 +172,20 @@
     correctly when was the last time data has been received from server
   * added ranking system
   * fixed issue (again) with client freezing when joining battle in certain cases.
+
   *** 0.13 (25x08x05) ***
   * added ability to watch replays within the lobby ("REPLAYS" button)
   * added custom UDP source port support
   * added AI support
   * added "GAME SETTINGS" button in preferences screen (it launches settings.exe)
   * player list in battle screen is now double-buffered (it no longer "blinks")
+
   *** 0.121 (??x??x??) ***
   * added auto connect on startup option
   * fixed issue with lobby freezing when joining a battle (in certain cases)
   * player list box is now double-buffered (no longer blinks)
   * other minor changes (clear window (popup menu), ...)
+
   *** 0.12 (14x08x05) ***
   * fixed away status not being updated to "normal" when participating in a battle (also "away" is not drawn anymore
     for players who are in-game)
@@ -169,6 +196,7 @@
   * added splitter to battle screen in player list, it can be resized now (so that all players can fit in the list)
   * added support for commands: SERVERMSG, SERVERMSGBOX
   * other minor changes
+
   *** 0.11 (13x08x05) ***
   * added SHIFT+CTRL+B shortcut to switch to battle screen and back
   * when joining a channel the name of the channel is changed to lower-case so that players
@@ -187,5 +215,6 @@
     players assign your "outside" (internet) IP/address. I am not sure if that is to fix anything or even broke
     anything?
   * added "/PART" command
+
   *** 0.10 (11x08x05) ***
   * first public release
