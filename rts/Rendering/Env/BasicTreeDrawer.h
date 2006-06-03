@@ -37,6 +37,7 @@ public:
 		int lastSeenFar;
 		float3 viewVector;
 		std::map<int,TreeStruct> trees;
+		TreeSquareStruct() : displist(0), farDisplist(0), lastSeen(0), lastSeenFar(0) {}
 	};
 
 	TreeSquareStruct* trees;

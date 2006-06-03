@@ -236,6 +236,22 @@ public:
 		return SendData(buf.get(), size);
 	}
 
+	template<typename A, typename B, typename T>
+	int SendSTLData(NETMSG msg, A a, B b, const T& s) {
+		typedef typename T::value_type value_type;
+		typedef typename is_string<T>::size_type size_type;
+
+		size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		AssembleBuffer buf( msg, size );
+
+		buf.add_scalar(size)
+				.add_scalar(a)
+				.add_scalar(b)
+				.add_sequence(s);
+
+		return SendData(buf.get(), size);
+	}
+
 	template<typename A, typename B, typename C, typename T>
 	int SendSTLData(NETMSG msg, A a, B b, C c, const T& s) {
 		typedef typename T::value_type value_type;
