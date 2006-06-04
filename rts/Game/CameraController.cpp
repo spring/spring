@@ -164,8 +164,6 @@ void COverheadController::MouseWheelMove(float move)
 			float newHeight=ground->LineGroundCol(wantedPos,wantedPos+dir*15000);
 			if(newHeight<0)
 				newHeight=height* (1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1));
-			if(keys[SDLK_LALT] && newHeight < 500) // instant-zoom: set the new height to 500 if we are too low
-				newHeight=500;
 			if(wantedPos.y + dir.y * newHeight <0)
 				newHeight = -wantedPos.y / dir.y;
 			if(newHeight<maxHeight){
