@@ -3,8 +3,7 @@
 
 #include "Sim/Misc/DamageArray.h"
 #include "TdfParser.h"
-
-#include SPRING_HASH_MAP_H
+#include <map>
 
 class CUnit;
 class CExplosionGenerator;
@@ -18,7 +17,7 @@ public:
 	creg::Class* GetClass(const std::string& name);
 	std::string FindAlias(const std::string& className);
 protected:
-	SPRING_HASH_MAP<std::string, std::string> aliases;
+	std::map<std::string, std::string> aliases;
 };
 
 class CExplosionGeneratorHandler
@@ -31,7 +30,7 @@ public:
 
 	ClassAliasList projectileClasses, generatorClasses;
 protected:
-	SPRING_HASH_MAP<std::string, CExplosionGenerator*> generators;
+	std::map<std::string, CExplosionGenerator*> generators;
 	TdfParser parser;
 };
 
