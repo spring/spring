@@ -85,6 +85,7 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	unsigned char *typemap = rm->GetInfoMap ("type", &tbi);
 	if (typemap && tbi.width == rm->width/2 && tbi.height == rm->height/2)
 	{
+		assert (gs->hmapx == tbi.width && gs->hmapy == tbi.height);
 		rm->typemap = new unsigned char[tbi.width*tbi.height];
 		memcpy(rm->typemap, typemap, tbi.width*tbi.height);
 
@@ -173,7 +174,7 @@ void CReadMap::CalcHeightfieldData()
 
 	for(int y=0;y<gs->hmapy;++y){
 		for(int x=0;x<gs->hmapx;++x){
-			halfHeightmap[y*gs->hmapx+x]=heightmap[(y*2+1)*gs->mapx+x*2+1];
+			halfHeightmap[y*gs->hmapx+x]=heightmap[(y*2+1)*(gs->mapx+1)+x*2+1];
 		}
 	}
 

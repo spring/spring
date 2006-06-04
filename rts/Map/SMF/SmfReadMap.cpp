@@ -73,8 +73,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	gs->mapSquares = gs->mapx*gs->mapy;
 	gs->hmapx=gs->mapx/2;
 	gs->hmapy=gs->mapy/2;
-	int mapx=gs->mapx+1;
-	int mapy=gs->mapy+1;
 	gs->pwr2mapx=next_power_of_2(gs->mapx);
 	gs->pwr2mapy=next_power_of_2(gs->mapy);
 
@@ -89,11 +87,12 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	float base=header.minHeight;
 	float mod=(header.maxHeight-header.minHeight)/65536.0f;
 
-	unsigned short* temphm=new unsigned short[mapx*mapy];
+	int hmx=gs->mapx+1, hmy=gs->mapy+1;
+	unsigned short* temphm=new unsigned short[hmx * hmy];
 	ifs->Seek(header.heightmapPtr);
-	ifs->Read(temphm,mapx*mapy*2);
+	ifs->Read(temphm,hmx*hmy*2);
 
-	for(int y=0;y<mapx*mapy;++y){
+	for(int y=0;y<hmx*hmy;++y){
 		heightmap[y]=base+swabword(temphm[y])*mod;
 	}
 
