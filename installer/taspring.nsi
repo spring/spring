@@ -69,7 +69,11 @@ SetCompressor lzma
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
 ; Determine a suitable output name
+!ifdef TEST_BUILD
+!define SP_BASENAME "taspring_${PRODUCT_VERSION}_test"
+!else
 !define SP_BASENAME "taspring_${PRODUCT_VERSION}"
+!endif
 
 !ifdef SP_UPDATE
 !define SP_OUTSUFFIX1 "_update"

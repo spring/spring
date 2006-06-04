@@ -37,6 +37,7 @@
   
   ; Gamedata
   SetOutPath "$INSTDIR\gamedata"
+  File "..\game\gamedata\explosion_alias.tdf"
   File "..\game\gamedata\resources.tdf"
 
   ; Bitmaps that are not from TA
@@ -130,7 +131,7 @@
   Delete "$INSTDIR\ClientControls.dll"
   Delete "$INSTDIR\SpringClient.exe"
 
-  !insertmacro APP_ASSOCIATE "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe %1"
+  !insertmacro APP_ASSOCIATE "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" %1"
   !insertmacro UPDATEFILEASSOC
 
 !else
@@ -180,6 +181,7 @@
   
   ; Gamedata
   Delete "$INSTDIR\gamedata\resources.tdf"
+  Delete "$INSTDIR\gamedata\explosion_alias.tdf"
   RmDir "$INSTDIR\gamedata"
 
   ; Startscript
