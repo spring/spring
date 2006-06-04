@@ -40,7 +40,7 @@ creg::Class* ClassAliasList::GetClass (const std::string& name)
 {
 	std::string n = name;
 	for (;;) {
-		SPRING_HASH_MAP<string,string>::iterator i = aliases.find(n);
+		map<string,string>::iterator i = aliases.find(n);
 		if (i == aliases.end()) 
 			break;
 
@@ -54,7 +54,7 @@ creg::Class* ClassAliasList::GetClass (const std::string& name)
 
 std::string ClassAliasList::FindAlias (const std::string& className)
 {
-	for (SPRING_HASH_MAP<string,string>::iterator i = aliases.begin(); i != aliases.end(); ++i)
+	for (map<string,string>::iterator i = aliases.begin(); i != aliases.end(); ++i)
 		if (i->second == className) return i->first;
 	return className;
 }
