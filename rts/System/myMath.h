@@ -44,9 +44,9 @@ inline short int GetHeadingFromVector(float dx,float dz)
 //	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
 //	return (short int) h;
 
-	int ih = h;
+	int ih = (int) h;
 	ih %= SHORTINT_MAXVALUE;
-	return h;
+	return (short int)ih;
 
 /*
 	float wantedHeading;
