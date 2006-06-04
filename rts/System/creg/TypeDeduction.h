@@ -50,6 +50,7 @@ public:
 			s->SerializeObjectPtr (ptr, *ptr ? ((T*)*ptr)->GetClass () : 0);
 		} else s->SerializeObjectPtr (ptr, objectClass);
 	}
+	std::string GetName() { return objectClass->name + "*"; }
 	Class* objectClass;
 };
 

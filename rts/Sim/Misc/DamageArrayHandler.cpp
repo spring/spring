@@ -27,9 +27,9 @@ CDamageArrayHandler::CDamageArrayHandler(void)
 		std::transform(s.begin(), s.end(), s.begin(), (int(*)(int))std::tolower);
 		name2type[s]=a;
 //		info->AddLine("%s has type num %i",(*ti).c_str(),a);
-		std::map<std::string, std::string> units=p.GetAllValues(*ti);
+		const std::map<std::string, std::string>& units=p.GetAllValues(*ti);
 
-		for(std::map<std::string, std::string>::iterator ui=units.begin();ui!=units.end();++ui){
+		for(std::map<std::string, std::string>::const_iterator ui=units.begin();ui!=units.end();++ui){
 			std::string s=ui->first;
 			std::transform(s.begin(), s.end(), s.begin(), (int(*)(int))std::tolower);
 			name2type[s]=a;

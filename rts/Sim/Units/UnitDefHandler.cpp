@@ -109,7 +109,7 @@ void CUnitDefHandler::FindTABuildOpt()
 	std::vector<std::string> sideunits = tdfparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)
 	{
-		std::map<std::string, std::string>::iterator it;
+		std::map<std::string, std::string>::const_iterator it;
 
 		UnitDef *builder=NULL;
 		std::transform(sideunits[i].begin(), sideunits[i].end(), sideunits[i].begin(), (int (*)(int))std::tolower);
@@ -119,15 +119,16 @@ void CUnitDefHandler::FindTABuildOpt()
 
 		if(builder)
 		{
-			std::map<std::string, std::string> buildoptlist = tdfparser.GetAllValues("CANBUILD\\" + sideunits[i]);
+			const std::map<std::string, std::string>& buildoptlist = tdfparser.GetAllValues("CANBUILD\\" + sideunits[i]);
 			for(it=buildoptlist.begin(); it!=buildoptlist.end(); it++)
 			{
 				UnitDef *buildopt=0;
-				std::transform(it->second.begin(),it->second.end(), it->second.begin(), (int (*)(int))std::tolower);
+				std::string opt = it->second;
+				std::transform(opt.begin(), opt.end(), opt.begin(), (int (*)(int))std::tolower);
 
-				if(unitID.find(it->second)!= unitID.end()){
+				if(unitID.find(opt)!= unitID.end()){
 					int num=atoi(it->first.substr(8).c_str());
-					builder->buildOptions[num]=it->second;
+					builder->buildOptions[num]=opt;
 				}
 			}
 		}

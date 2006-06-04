@@ -29,7 +29,7 @@ void CMessages::Load()
 		std::vector<std::string> section_list = tdfparser.GetSectionList("messages");
 		// Load the possible translations for every message.
 		for (std::vector<std::string>::const_iterator sit = section_list.begin(); sit != section_list.end(); ++sit) {
-			std::map<std::string, std::string> allvalues = tdfparser.GetAllValues("messages\\" + *sit);
+			const std::map<std::string, std::string>& allvalues = tdfparser.GetAllValues("messages\\" + *sit);
 			for (std::map<std::string, std::string>::const_iterator it = allvalues.begin(); it != allvalues.end(); ++it) {
 				tr[*sit].push_back(it->second);
 			}

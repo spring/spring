@@ -8,9 +8,9 @@ class CGroundFlash
 {
 public:
 	CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl);
-	~CGroundFlash(void);
-	void Draw(void);
-	void Update(void);
+	~CGroundFlash();
+	void Draw();
+	bool Update();
 
 	float3 pos;
 	float3 normal;

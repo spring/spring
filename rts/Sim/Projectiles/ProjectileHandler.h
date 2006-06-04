@@ -38,7 +38,6 @@ public:
 	void AddProjectile(CProjectile* p);
 	void Update();
 	void AddGroundFlash(CGroundFlash* flash);
-	void RemoveGroundFlash(CGroundFlash* flash);
 	void DrawGroundFlashes(void);
 
 	void ConvertTex(unsigned char tex[512][512][4], int startx, int starty, int endx, int endy, float absorb);
@@ -60,9 +59,6 @@ public:
 	int maxParticles;					//different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int currentParticles;			//number of particles weighted by how complex they are
 	float particleSaturation;	//currentParticles/maxParticles
-
-	std::set<CGroundFlash*> groundFlashes;
-	std::stack<CGroundFlash*> toBeDeletedFlashes;
 
 	int numPerlinProjectiles;
 private:
@@ -94,6 +90,7 @@ private:
 	float perlinBlend[4];
 	IFramebuffer *perlinFB;
 	bool drawPerlinTex;
+	std::vector<CGroundFlash*> groundFlashes;
 };
 extern CProjectileHandler* ph;
 

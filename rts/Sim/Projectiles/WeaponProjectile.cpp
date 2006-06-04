@@ -16,6 +16,16 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
 
+CWeaponProjectile::CWeaponProjectile()
+{
+	targeted=false;				//if we are a nuke and a anti is on the way
+	weaponDef=0;
+	target=0;
+	ttl=0;
+	modelDispList=0;
+	interceptTarget=0;
+}
+
 CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,const DamageArray& damages,CWeaponProjectile* interceptTarget) : 
 	CProjectile(pos,speed,owner),
 	weaponDef(weaponDef),
@@ -70,7 +80,7 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 void CWeaponProjectile::Collision()
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode || weaponDef->noSelfDamage,0);
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator);
 		
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
@@ -96,7 +106,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 void CWeaponProjectile::Collision(CUnit* unit)
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode,0);
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode,weaponDef->explosionGenerator);
 
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);

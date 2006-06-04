@@ -9,6 +9,20 @@
 #include "Map/Ground.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CDirtProjectile, CProjectile);
+
+CR_REG_METADATA(CDirtProjectile, 
+(
+	CR_MEMBER_BEGINFLAG(CM_Config),
+		CR_MEMBER(alpha),
+		CR_MEMBER(alphaFalloff),
+		CR_MEMBER(size),
+		CR_MEMBER(sizeExpansion),
+		CR_MEMBER(slowdown),
+		CR_MEMBER(color),
+	CR_MEMBER_ENDFLAG(CM_Config)
+));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -25,10 +39,18 @@ CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float
 	alphaFalloff=255/ttl;
 }
 
-CDirtProjectile::~CDirtProjectile()
+CDirtProjectile::CDirtProjectile() :
+	alpha(255.0f),
+	size(10.0f),
+	sizeExpansion(0.0f),
+	slowdown(1.0f),
+	alphaFalloff(10.0f)
 {
-
+	checkCol=false;
 }
+
+CDirtProjectile::~CDirtProjectile()
+{}
 
 void CDirtProjectile::Update()
 {

@@ -9,9 +9,31 @@
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile);
+
+CR_REG_METADATA(CHeatCloudProjectile, 
+(
+	CR_MEMBER_BEGINFLAG(CM_Config),
+		CR_MEMBER(heat),
+		CR_MEMBER(maxheat),
+		CR_MEMBER(heatFalloff),
+		CR_MEMBER(size),
+		CR_MEMBER(sizeGrowth),
+		CR_MEMBER(sizemod),
+		CR_MEMBER(sizemodmod),
+	CR_MEMBER_ENDFLAG(CM_Config)
+));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+CHeatCloudProjectile::CHeatCloudProjectile()
+{
+	heat=maxheat=heatFalloff=size=sizeGrowth=sizemod=sizemodmod=0.0f;
+	checkCol=false;
+	useAirLos=true;
+}
 
 CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,const  float temperature,const float size, CUnit* owner)
 : CProjectile(pos,speed,owner),
@@ -26,21 +48,6 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,c
 	SetRadius(size+sizeGrowth*heat/heatFalloff);
 	sizemod=0;
 	sizemodmod=0;
-}
-
-CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,const float temperature,const float size, float sizegrowth, CUnit* owner)
-: CProjectile(pos,speed,owner),
-	heat(temperature),
-	maxheat(temperature),
-	heatFalloff(1),
-	sizemod(1)
-{
-	this->sizeGrowth = sizegrowth;
-	this->size = size;
-	checkCol=false;
-	useAirLos=true;
-	SetRadius(size+sizeGrowth*heat/heatFalloff);
-	sizemodmod=min(1.,max(0.,(double)(1-(1/pow(2.0f,heat*0.1f)))));
 }
 
 CHeatCloudProjectile::~CHeatCloudProjectile()

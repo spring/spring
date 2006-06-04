@@ -19,10 +19,12 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 		#define SNPRINTF _snprintf
 		#define VSNPRINTF _vsnprintf
 	#endif
+	#define STRCASECMP stricmp
 #else
 	// assuming GCC 
 	#define SNPRINTF snprintf
 	#define VSNPRINTF vsnprintf
+	#define STRCASECMP strcasecmp
 #endif
 
 

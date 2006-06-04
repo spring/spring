@@ -7,6 +7,18 @@
 #include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CTracerProjectile, CProjectile)
+
+CR_REG_METADATA(CTracerProjectile, 
+(
+	CR_MEMBER(speedf),
+	CR_MEMBER(drawLength),
+	CR_MEMBER(dir),
+	CR_MEMBER_BEGINFLAG(CM_Config),
+		CR_MEMBER(length),
+	CR_MEMBER_ENDFLAG(CM_Config)
+));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -20,6 +32,19 @@ CTracerProjectile::CTracerProjectile(const float3 pos, const float3 speed,const 
 	length=range;
 	drawLength=0;
 	checkCol=false;
+}
+
+CTracerProjectile::CTracerProjectile()
+{
+}
+
+void CTracerProjectile::Init(const float3& pos, CUnit* owner)
+{
+	speedf=this->speed.Length();
+	if (speedf==0.0f) speed=float3(1.0f,0.0f,0.0f);
+	dir=this->speed/speedf;
+
+	CProjectile::Init (pos, owner);
 }
 
 CTracerProjectile::~CTracerProjectile()

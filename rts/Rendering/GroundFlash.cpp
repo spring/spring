@@ -44,21 +44,19 @@ CGroundFlash::CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float f
 	ph->AddGroundFlash(this);
 }
 
-CGroundFlash::~CGroundFlash(void)
+CGroundFlash::~CGroundFlash()
 {
 }
 
-void CGroundFlash::Update(void)
+bool CGroundFlash::Update()
 {
 	circleSize+=circleGrowth;
 	circleAlpha-=circleAlphaDec;
 	flashAge+=flashAgeSpeed;
-	if(--ttl<0){
-		ph->RemoveGroundFlash(this);
-	}
+	return --ttl<0;
 }
 
-void CGroundFlash::Draw(void)
+void CGroundFlash::Draw()
 {
 	float iAlpha=circleAlpha-circleAlphaDec*gu->timeOffset;
 

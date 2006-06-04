@@ -326,12 +326,13 @@ bool TdfParser::SGetValue(std::string &value, std::string const& location)
 	return true;
 }
 
+
 //return a map with all values in section
-const std::map<std::string, std::string> TdfParser::GetAllValues(std::string const& location)
+const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string const& location)
 {
-  std::string lowerd = location;
+	static std::map<std::string, std::string> emptymap;
+	std::string lowerd = location;
 	std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), static_cast<int (*)(int)>(std::tolower));
-	std::map<std::string, std::string> emptymap;
 	std::string searchpath; //for errormessages
 	std::vector<std::string> loclist = GetLocationVector(lowerd);	
 	if(root_section.sections.find(loclist[0]) == root_section.sections.end())

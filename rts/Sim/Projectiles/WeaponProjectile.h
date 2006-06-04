@@ -7,12 +7,12 @@
 struct WeaponDef;
 class CPlasmaRepulser;
 /*
-* Base class for all projectiles originating from a weapon or having weapon-propertiers. Uses data from a weapon defenition.
+* Base class for all projectiles originating from a weapon or having weapon-properties. Uses data from a weapon definition.
 */
-class CWeaponProjectile :
-	public CProjectile
+class CWeaponProjectile : public CProjectile
 {
 public:
+	CWeaponProjectile();
 	CWeaponProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef,const DamageArray& damages,CWeaponProjectile* interceptTarget);
 	virtual ~CWeaponProjectile();
 

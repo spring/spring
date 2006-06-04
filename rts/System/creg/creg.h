@@ -35,6 +35,7 @@ namespace creg {
 		virtual ~IType() {}
 
 		virtual void Serialize (ISerializer* s, void *instance) = 0;
+		virtual std::string GetName () = 0;
 
 		static IType* CreateBasicType (BasicTypeID t);
 		static IType* CreateStringType ();
@@ -58,7 +59,8 @@ namespace creg {
 
 	/** Class member flags to use with CR_MEMBER_SETFLAG */
 	enum ClassMemberFlag {
-		CM_NoSerialize = 1 /// Make the serializers skip the member
+		CM_NoSerialize = 1, /// Make the serializers skip the member
+		CM_Config = 2,  // Exposed in config
 	};
 
 	/** Represents a C++ class or struct, declared with CR_DECLARE/CR_DECLARE_STRUCT */
@@ -87,6 +89,10 @@ namespace creg {
 		void CalculateChecksum (unsigned int& checksum);
 		void AddMember (const char *name, IType* type, unsigned int offset);
 		void SetMemberFlag (const char *name, ClassMemberFlag f);
+		Member* FindMember (const char *name);
+
+		void BeginFlag (ClassMemberFlag flag);
+		void EndFlag (ClassMemberFlag flag);
 
 		std::vector <Member*> members;
 		ClassBinder* binder;
@@ -130,17 +136,28 @@ namespace creg {
 					elemType->Serialize (s, &ct[a]);
 			}
 		}
+		std::string GetName() { return elemType->GetName() + "[]"; }
 	};
 
-	template<typename T, int Size>
-	class StaticArrayType : public IType
+	class StaticArrayBaseType : public IType
 	{
 	public:
 		IType *elemType;
+		int size, elemSize;
 
-		StaticArrayType(IType *et) : elemType(et) {}
-		~StaticArrayType() { if (elemType) delete elemType; }
+		StaticArrayBaseType(IType *et, int Size, int ElemSize) : 
+			elemType(et), size(Size), elemSize(ElemSize) {}
+		~StaticArrayBaseType() { if (elemType) delete elemType; }
+		
+		std::string GetName();
+	};
 
+	template<typename T, int Size>
+	class StaticArrayType : public StaticArrayBaseType
+	{
+	public:
+		typedef T ArrayType[Size];
+		StaticArrayType(IType *elemType) : StaticArrayBaseType(elemType, Size, sizeof(ArrayType)/Size) {}
 		void Serialize (ISerializer *s, void *instance)
 		{
 			T* array = (T*)instance;
@@ -191,6 +208,7 @@ namespace creg {
 #define CR_DECLARE(TCls)	public:					\
 	static creg::ClassBinder binder;				\
 	static creg::IMemberRegistrator *memberRegistrator;	 \
+	friend struct TCls##MemberRegistrator;			\
 	virtual creg::Class* GetClass();				\
 	inline static creg::Class *StaticClass() { return binder.class_; }
 
@@ -200,7 +218,8 @@ namespace creg {
 #define CR_DECLARE_STRUCT(TStr)		public:			\
 	static creg::ClassBinder binder;				\
 	static creg::IMemberRegistrator *memberRegistrator;	\
-	creg::Class* GetClass() { return binder.class_; }	\
+	friend struct TStr##MemberRegistrator;			\
+		creg::Class* GetClass() { return binder.class_; }	\
 	inline static creg::Class *StaticClass() { return binder.class_; }
 
 /** @def CR_BIND_STRUCT
@@ -310,6 +329,12 @@ namespace creg {
  * @see ClassMemberFlag */
 #define CR_MEMBER_SETFLAG(Member, Flag) \
 	class_->SetMemberFlag (#Member, creg::Flag)
+
+#define CR_MEMBER_BEGINFLAG(Flag) \
+	class_->BeginFlag(creg::Flag)
+
+#define CR_MEMBER_ENDFLAG(Flag) \
+	class_->EndFlag(creg::Flag)
 
 /** @def CR_SERIALIZER
  * Registers a custom serialization method for the class/struct

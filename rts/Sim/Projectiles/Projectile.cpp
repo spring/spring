@@ -10,7 +10,20 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "Game/UI/InfoConsole.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "mmgr.h"
+
+CR_BIND_DERIVED(CProjectile, CWorldObject);
+
+CR_REG_METADATA(CProjectile,
+(
+	CR_MEMBER(checkCol),
+	CR_MEMBER(castShadow),
+	CR_MEMBER(owner),
+
+	CR_MEMBER_BEGINFLAG(CM_Config),
+	CR_MEMBER(speed)
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -19,6 +32,23 @@ bool CProjectile::inArray=false;
 CVertexArray* CProjectile::va=0;
 
 unsigned int CProjectile::textures[10];
+
+CProjectile::CProjectile()
+:	owner(0),
+	checkCol(true),
+	deleteMe(false),
+	castShadow(false),
+	s3domodel(0)
+{}
+
+void CProjectile::Init (const float3& explosionPos, CUnit *owner)
+{
+	pos += explosionPos;
+	SetRadius(1.7f);
+	ph->AddProjectile(this);
+	if(owner)
+		AddDeathDependence(owner);
+}
 
 CProjectile::CProjectile(const float3& pos,const float3& speed,CUnit* owner)
 :	CWorldObject(pos),

@@ -41,8 +41,13 @@ inline short int GetHeadingFromVector(float dx,float dz)
 	// Prevents h from going beyond SHORTINT_MAXVALUE.
 	// If h goes beyond SHORTINT_MAXVALUE, the following 
 	// conversion to a short int crashes.
-	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
-	return (short int) h;
+//	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
+//	return (short int) h;
+
+	int ih = h;
+	ih %= SHORTINT_MAXVALUE;
+	return h;
+
 /*
 	float wantedHeading;
 

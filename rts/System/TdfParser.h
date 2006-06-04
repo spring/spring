@@ -81,7 +81,7 @@ public:
 		*  @return returns true on success, false otherwise and error message in value.
 		*/	
 	bool SGetValue(std::string &value, std::string const& location);
-	const std::map<std::string, std::string> GetAllValues(std::string const& location);
+	const std::map<std::string, std::string>& GetAllValues(std::string const& location);
 	std::vector<std::string> GetSectionList(std::string const& location);
 	bool SectionExist(std::string const& location);
 //	void Test();

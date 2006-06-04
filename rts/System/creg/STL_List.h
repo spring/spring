@@ -26,6 +26,7 @@ namespace creg {
 					elemType->Serialize (s, &*it);
 			}
 		}
+		std::string GetName() { return "list<" + elemType->GetName() + ">"; }
 
 		IType *elemType;
 	};
