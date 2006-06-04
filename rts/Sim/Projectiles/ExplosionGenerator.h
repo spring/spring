@@ -74,6 +74,16 @@ protected:
 		int count;// number of projectiles spawned of this type
 		unsigned int flags;
 	};
+	// TODO: Handle ground flashes with more flexibility like the projectiles
+	struct GroundFlashInfo { 
+		GroundFlashInfo() { ttl=0; }
+
+		float flashSize;
+		float flashAlpha;
+		float circleGrowth;
+		float circleAlpha;
+		int ttl;
+	} *groundFlash;
 
 	std::vector<ProjectileSpawnInfo*> projectileSpawn;
 	void ParseExplosionCode(ProjectileSpawnInfo *psi, int baseOffset, creg::IType *type, const std::string& script, std::string& code);
@@ -81,6 +91,7 @@ protected:
 
 public:
 	CCustomExplosionGenerator();
+	~CCustomExplosionGenerator();
 	static void OutputProjectileClassInfo();
 
 	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors

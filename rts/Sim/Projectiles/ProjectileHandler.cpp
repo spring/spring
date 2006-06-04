@@ -344,6 +344,15 @@ CProjectileHandler::CProjectileHandler()
 			tex2[(y+256)*256+x]=(unsigned char)(alpha*255);
 		}
 	}
+	/*
+	unsigned char *tempdata = new unsigned char[256*512*4];
+	for (int y=0;y<512*256;y++) {
+		tempdata[y*4+0] = tempdata[y*4+1] = tempdata[y*4+2] = tex2[y];
+		tempdata[y*4+3] = 255;
+	}
+	CBitmap tmp(tempdata, 256,512);
+	tmp.Save ("groundflash.bmp");
+	delete[] tempdata;*/
 
 	glGenTextures(1,&CGroundFlash::texture);
 	glBindTexture(GL_TEXTURE_2D, CGroundFlash::texture);
@@ -431,7 +440,7 @@ START_TIME_PROFILE
 		}
 	}
 
-	for(unsigned int i = 0; i < groundFlashes.size(); i++)
+	for(unsigned int i = 0; i < groundFlashes.size();)
 	{
 		CGroundFlash *gf = groundFlashes[i];
 		if (!gf->Update ()) {
@@ -440,7 +449,7 @@ START_TIME_PROFILE
 				std::swap (groundFlashes.back(), groundFlashes[i]);
 			groundFlashes.pop_back();
 			delete gf;
-		}
+		} else i++;
 	}
 
 	for(std::list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
@@ -886,7 +895,6 @@ void CProjectileHandler::UpdatePerlin()
 			perlinBlend[a]-=1;
 		}
 
-
 		float tsize=8/size;
 
 		if(a==0)
@@ -916,7 +924,6 @@ void CProjectileHandler::UpdatePerlin()
 		va->AddVertexTC(float3(1,1,0),tsize,tsize,col);
 		va->AddVertexTC(float3(1,0,0),tsize,0,col);
 		va->DrawArrayTC(GL_QUADS);
-
 
 		speed*=0.6;
 		size*=2;

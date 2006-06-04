@@ -239,6 +239,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 			}
 		}
 	}
+
 	if(radius>20 && damage>6 && height<radius*0.7){
 		float modSize=max(radius,damage*2);
 		float circleAlpha=0;
@@ -248,7 +249,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 			circleAlpha=min(0.5,damage*0.01);
 			circleGrowth=(8+damage*2.5)/(9+sqrt(damage)*0.7)*0.55;
 		}
-		float flashSize=modSize * 10.0f;
+		float flashSize=modSize;
 		float flashAlpha=min(0.8,damage*0.01);
 		new CGroundFlash(pos,circleAlpha,flashAlpha,flashSize,circleGrowth,ttl);
 	}
@@ -271,7 +272,15 @@ CR_BIND_DERIVED(CCustomExplosionGenerator, CExplosionGenerator);
 #define SPW_UNDERWATER 8
 
 CCustomExplosionGenerator::CCustomExplosionGenerator()
-{}
+{
+	groundFlash = 0;
+}
+
+CCustomExplosionGenerator::~CCustomExplosionGenerator()
+{
+	if (groundFlash)
+		delete groundFlash;
+}
 
 #define OP_END 0
 #define OP_STOREI 1
@@ -367,7 +376,6 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			case creg::crUChar: code.push_back (OP_STOREC); break;
 		}
 		Uint16 ofs = offset;
-		info->AddLine("Offset: %d", ofs);
 		code.append ((char*)&ofs, (char*)&ofs + 2);
 	}
 	else if(dynamic_cast<creg::ObjectInstanceType*>(type))
@@ -407,10 +415,12 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		throw content_error ("Explosion info for " + tag + " not found.");
 
 	vector<string> spawns = parser.GetSectionList (tag);
-
 	ProjectileSpawnInfo *psi;
 	for (vector<string>::iterator si = spawns.begin(); si != spawns.end(); ++si)
 	{
+		if (*si == "groundflash")
+			continue;
+
 		psi = new ProjectileSpawnInfo;
 		projectileSpawn.push_back (psi);
 
@@ -435,6 +445,17 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		code += (char)OP_END;
 		psi->code.resize(code.size());
 		copy(code.begin(), code.end(), psi->code.begin());
+	}
+
+	string location = tag + "\\groundflash\\";
+	int ttl = atoi(parser.SGetValueDef ("0", location + "ttl").c_str());
+	if (ttl) {
+		groundFlash = new GroundFlashInfo;
+		groundFlash->circleAlpha = atof(parser.SGetValueDef ("0",location + "circleAlpha" ).c_str());
+		groundFlash->flashSize = atof(parser.SGetValueDef ("0",location + "flashSize" ).c_str());
+		groundFlash->flashAlpha = atof(parser.SGetValueDef ("0",location + "flashAlpha" ).c_str());
+		groundFlash->circleGrowth = atof(parser.SGetValueDef ("0",location + "circleGrowth" ).c_str());
+		groundFlash->ttl = ttl;
 	}
 }
 
@@ -464,10 +485,10 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 			projectile->Init(pos, owner);
 		}
 	}
+
+	if (groundFlash)
+		new CGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl);
 }
-
-
-// Uncomment this to create a list of supported projectile classes in projectiles.txt
 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
