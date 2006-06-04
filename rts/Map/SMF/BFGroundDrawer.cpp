@@ -105,7 +105,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	int hmapx=mapx>>1;
 	int mapy=gs->mapy+1;
 
-	int neededLod=(gu->viewRange/8/viewRadius*2);
+	int neededLod=int(gu->viewRange/8/viewRadius*2);
 	UpdateCamRestraints();
 
 	invMapSizeX=1.0/gs->mapx;
