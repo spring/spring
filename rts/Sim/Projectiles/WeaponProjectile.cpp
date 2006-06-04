@@ -36,6 +36,9 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit
 	interceptTarget(interceptTarget),
 	damages(damages)
 {
+	if(target)
+		AddDeathDependence(target);
+
 	if(interceptTarget){
 		interceptTarget->targeted=true;
 		AddDeathDependence(interceptTarget);
