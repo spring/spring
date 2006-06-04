@@ -59,6 +59,7 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float t
 	ageSpeed=1.0/ttl;
 	checkCol=false;
 	castShadow=true;
+	textureNum=(int)(gu->usRandFloat()*12);
 }
 
 CSmokeProjectile::~CSmokeProjectile()
