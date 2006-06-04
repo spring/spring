@@ -9,10 +9,11 @@
 
 class CDirtProjectile : public CProjectile  
 {
-public:
+	CR_DECLARE(CDirtProjectile);
 public:
 	virtual void Draw();
 	virtual void Update();
+	CDirtProjectile();
 	CDirtProjectile(const float3 pos,const float3 speed,const float ttl,const float size,const float expansion,float slowdown,CUnit* owner,const float3& color);
 	virtual ~CDirtProjectile();
 

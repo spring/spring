@@ -8,12 +8,12 @@
 
 class CHeatCloudProjectile : public CProjectile  
 {
-public:
+	CR_DECLARE(CHeatCloudProjectile);
 public:
 	virtual void Draw();
 	virtual void Update();
+	CHeatCloudProjectile();
 	CHeatCloudProjectile(const float3 pos,const float3 speed,const float temperature,const float size, CUnit* owner);  //projectile start at size 0 and ends at size size
-	CHeatCloudProjectile(const float3 pos,const float3 speed,const float temperature,const float size, float sizegrowth, CUnit* owner);  //size is initial size and sizegrowth is size increase per tick
 	virtual ~CHeatCloudProjectile();
 
 	float heat;

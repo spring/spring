@@ -9,8 +9,11 @@
 class CGfxProjectile : public CProjectile  
 {
 public:
+	CR_DECLARE(CGfxProjectile);
+
 	void Update();
 	void Draw();
+	CGfxProjectile();
 	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color);
 	virtual ~CGfxProjectile();
 

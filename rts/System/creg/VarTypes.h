@@ -19,6 +19,7 @@ namespace creg
 		~BasicType() {}
 
 		void Serialize (ISerializer *s, void *instance);
+		std::string GetName();
 
 		BasicTypeID id;
 	};
@@ -29,6 +30,7 @@ namespace creg
 		StringType() {}
 		~StringType() {}
 		void Serialize (ISerializer *s, void *instance);
+		std::string GetName();
 	};
 
 
@@ -38,6 +40,7 @@ namespace creg
 		ObjectInstanceType(Class* objc) : objectClass(objc) {}
 		~ObjectInstanceType() {}
 		void Serialize (ISerializer *s, void *instance);
+		std::string GetName();
 
 		Class* objectClass;
 	};

@@ -23,7 +23,7 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Rendering/ExplosionGraphics.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
@@ -41,20 +41,13 @@ CGameHelper* helper;
 CGameHelper::CGameHelper(CGame* game)
 {
 	this->game=game;
-/*	explosionSounds[0]=sound->GetWaveId("XPLOMED1.WAV");
-	explosionSounds[1]=sound->GetWaveId("XPLOMED2.WAV");
-	explosionSounds[2]=sound->GetWaveId("XPLOMED3.WAV");
-	explosionSounds[3]=sound->GetWaveId("XPLOMED4.WAV");
-*/
-	explosionGraphics.push_back(new CStdExplosionGraphics());
+
+	stdExplosionGenerator = new CStdExplosionGenerator;
 }
 
 CGameHelper::~CGameHelper()
 {
-	while(!explosionGraphics.empty()){
-		delete explosionGraphics.back();
-		explosionGraphics.pop_back();
-	}
+	delete stdExplosionGenerator;
 
 	for(int a=0;a<128;++a){
 		std::list<WaitingDamage*>* wd=&waitingDamages[a];
@@ -65,7 +58,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,int graphicType)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -95,22 +88,22 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		if(ignoreOwner && (*ui)==owner)
 				continue;
-			float3 dif=(*ui)->midPos-pos;
-			float dist=dif.Length();
-			if(dist<(*ui)->radius+0.1)
-				dist=(*ui)->radius+0.1;
-			float dist2=dist - (*ui)->radius;
-			if((*ui)->isUnderWater && pos.y>-1){	//should make it harder to damage subs with above water weapons
-				dist2+=(*ui)->radius;
-				if(dist2>radius)
-					dist2=radius;
-			}
-			float mod=(radius-dist)/radius;
-			float mod2=(radius-dist2)/radius;
-			if(mod<0)
-				mod=0;
-			dif/=dist+0.0001;
-			dif.y+=0.12;
+		float3 dif=(*ui)->midPos-pos;
+		float dist=dif.Length();
+		if(dist<(*ui)->radius+0.1)
+			dist=(*ui)->radius+0.1;
+		float dist2=dist - (*ui)->radius;
+		if((*ui)->isUnderWater && pos.y>-1){	//should make it harder to damage subs with above water weapons
+			dist2+=(*ui)->radius;
+			if(dist2>radius)
+				dist2=radius;
+		}
+		float mod=(radius-dist)/radius;
+		float mod2=(radius-dist2)/radius;
+		if(mod<0)
+			mod=0;
+		dif/=dist+0.0001;
+		dif.y+=0.12;
 		
 		DamageArray damageDone = damages*mod2;
 		float3 addedImpulse = dif*(damages.impulseFactor*mod*(damages[0] + damages.impulseBoost)*3.2f);
@@ -147,7 +140,11 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		mapDamage->Explosion(pos,(damage + damages.craterBoost)*damages.craterMult,radius-height);
 	}
 
-	explosionGraphics[graphicType]->Explosion(pos,damages,radius,owner,gfxMod);
+	// use CStdExplosionGenerator by default
+	if (!explosionGraphics)
+		explosionGraphics = stdExplosionGenerator;
+
+	explosionGraphics->Explosion(pos,damages,radius,owner,gfxMod);
 	groundDecals->AddExplosion(pos,damages[0],radius);
 	//sound->PlaySound(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
 	water->AddExplosion(pos,damages[0],radius);

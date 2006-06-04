@@ -48,9 +48,30 @@ void BasicType::Serialize (ISerializer *s, void *inst)
 	}
 }
 
+std::string BasicType::GetName()
+{
+	switch(id) {
+		case crInt: return "int";
+		case crUInt: return "uint";
+		case crShort: return "short";
+		case crUShort: return "ushort";
+		case crChar:  return "char";
+		case crUChar: return "uchar";
+		case crFloat: return "float";
+		case crDouble: return "double";
+		case crBool: return "bool";
+	};
+	return std::string();
+}
+
 IType* IType::CreateBasicType (BasicTypeID t)
 {
 	return new BasicType (t);
+}
+
+std::string StringType::GetName()
+{
+	return "string";
 }
 
 IType* IType::CreateStringType ()
@@ -62,6 +83,11 @@ IType* IType::CreateStringType ()
 void ObjectInstanceType::Serialize (ISerializer *s, void *inst)
 {
 	s->SerializeObjectInstance (inst, objectClass);
+}
+
+std::string ObjectInstanceType::GetName()
+{
+	return objectClass->name;
 }
 
 IType* IType::CreateObjInstanceType (Class *objectType)
@@ -77,4 +103,11 @@ IType* IType::CreateEnumeratedType (size_t size)
 		case 4: return new BasicType (crUInt);
 	}
 	return 0;
+}
+
+string StaticArrayBaseType::GetName()
+{ 
+	char sstr[16];
+	SNPRINTF(sstr,16,"%d", size);
+	return elemType->GetName() + "[" + std::string(sstr) + "]";
 }

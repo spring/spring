@@ -54,6 +54,7 @@
 #include <direct.h>
 #include <SDL_syswm.h>
 #endif
+#include "Sim/Projectiles/ExplosionGenerator.h"
 
 #ifdef WIN32
 /**
@@ -481,7 +482,7 @@ bool SpringApp::ParseCmdLine()
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
-//	cmdline->addoption('g',"runscript",OPTPARM_STRING,"script.txt", "Run with a game setup script");
+	cmdline->addoption('p',"projectiledump", OPTPARM_NONE, "", "Dump projectile class info in projectiles.txt");
 	cmdline->parse();
 
 #ifdef _DEBUG
@@ -500,6 +501,10 @@ bool SpringApp::ParseCmdLine()
 		fullscreen = false;
 	else if (cmdline->result("fullscreen"))
 		fullscreen = true;
+	else if (cmdline->result("projectiledump")) {
+		CCustomExplosionGenerator::OutputProjectileClassInfo();
+		return false;
+	}
 
 	screenWidth = configHandler.GetInt("XResolution",XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution",YRES_DEFAULT);

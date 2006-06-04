@@ -392,7 +392,7 @@ CProjectileHandler::~CProjectileHandler()
 	Projectile_List::iterator psi;
 	for(psi=ps.begin();psi!=ps.end();++psi)
 		delete *psi;
-	std::set<CGroundFlash*>::iterator gfi;
+	std::vector<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi)
 		delete *gfi;
 	distlist.clear();
@@ -418,31 +418,29 @@ CProjectileHandler::~CProjectileHandler()
 void CProjectileHandler::Update()
 {
 START_TIME_PROFILE
-	while(!toBeDeletedFlashes.empty()){
-		CGroundFlash* del=toBeDeletedFlashes.top();
-		toBeDeletedFlashes.pop();
-		std::set<CGroundFlash*>::iterator gfi;
-		if((gfi=groundFlashes.find(del))!=groundFlashes.end()){
-			delete del;
-			groundFlashes.erase(gfi);
-		}
-	}	
-
 	Projectile_List::iterator psi=ps.begin();
 	while(psi!= ps.end()){
-		if((*psi)->deleteMe){
+		CProjectile *p = *psi;
+		if(p->deleteMe){
 			Projectile_List::iterator prev=psi++;
-			delete *prev;
 			ps.erase(prev);
+			delete p;
 		} else {
 			(*psi)->Update();
 			++psi;
 		}
 	}
 
-	std::set<CGroundFlash*>::iterator gfi;
-	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
-		(*gfi)->Update();
+	for(unsigned int i = 0; i < groundFlashes.size(); i++)
+	{
+		CGroundFlash *gf = groundFlashes[i];
+		if (!gf->Update ()) {
+			// swap gf with the groundflash at the end of the list, so pop_back() can be used to erase it
+			if ( i < groundFlashes.size()-1 )
+				std::swap (groundFlashes.back(), groundFlashes[i]);
+			groundFlashes.pop_back();
+			delete gf;
+		}
 	}
 
 	for(std::list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
@@ -754,13 +752,9 @@ void CProjectileHandler::CheckUnitCol()
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 {
-	groundFlashes.insert(flash);
+	groundFlashes.push_back(flash);
 }
 
-void CProjectileHandler::RemoveGroundFlash(CGroundFlash* flash)
-{
-	toBeDeletedFlashes.push(flash);
-}
 
 void CProjectileHandler::DrawGroundFlashes(void)
 {
@@ -777,7 +771,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	CGroundFlash::va=GetVertexArray();
 	CGroundFlash::va->Initialize();
 
-	std::set<CGroundFlash*>::iterator gfi;
+	std::vector<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
 		(*gfi)->Draw();
 	}

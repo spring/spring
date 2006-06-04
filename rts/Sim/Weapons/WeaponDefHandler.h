@@ -25,9 +25,12 @@
 #define WEAPON_RENDERTYPE_FIREBALL 4
 
 class TdfParser;
+class CExplosionGenerator;
 
 struct WeaponDef
 {
+	CR_DECLARE(WeaponDef);
+
 	std::string name;
 	std::string type;
 
@@ -139,7 +142,11 @@ struct WeaponDef
 
 	unsigned int shieldInterceptType;				//type of shield (bitfield)
 	unsigned int interceptedByShieldType;		//weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
+
+	CExplosionGenerator *explosionGenerator; // can be zero for default explosions
 };
+
+class CExplosionGeneratorHandler;
 
 class CWeaponDefHandler
 {
@@ -158,6 +165,8 @@ public:
 protected:
 	void ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id);
 	float3 hs2rgb(float h, float s);
+
+	CExplosionGeneratorHandler* explGen;
 };
 
 extern CWeaponDefHandler* weaponDefHandler;

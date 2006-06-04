@@ -11,7 +11,6 @@ class CFace;
 class CEdge;
 class CBuilding;
 
-#include "MemPool.h"
 #include "Sim/Objects/WorldObject.h"
 class CUnit;
 class CFeature;
@@ -21,16 +20,15 @@ struct S3DOModel;
 class CProjectile : public CWorldObject
 {
 public:
-#ifndef SYNCIFY
-	inline void* operator new(size_t size){return mempool.Alloc(size);};
-	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
-#endif
+	CR_DECLARE(CProjectile);
+
 	static bool inArray;
 	static CVertexArray* va;
 	static unsigned int textures[10];
 	static void DrawArray();
 
 	virtual void Draw();
+	CProjectile(); // default constructor is needed for creg
 	CProjectile(const float3& pos,const float3& speed,CUnit* owner);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
@@ -38,6 +36,7 @@ public:
 	virtual ~CProjectile();
 	virtual void Update();
 	void DependentDied(CObject* o);
+	virtual void Init(const float3& pos, CUnit *owner);
 
 	bool checkCol;
 	bool deleteMe;
@@ -45,7 +44,7 @@ public:
 
 	CUnit* owner;
 	float3 speed;
-	virtual void DrawCallback(void);			//används om en projektil vill ritas efter(ovanpå) en annan
+	virtual void DrawCallback(void);
 	virtual void DrawUnitPart(void);
 	virtual void DrawS3O(){DrawUnitPart();};
 

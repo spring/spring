@@ -198,6 +198,72 @@
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
+		<Configuration
+			Name="64bit release|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				GlobalOptimizations="TRUE"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="TRUE"
+				FavorSizeOrSpeed="1"
+				OptimizeForProcessor="3"
+				OptimizeForWindowsApplication="TRUE"
+				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED"
+				StringPooling="TRUE"
+				RuntimeLibrary="2"
+				BufferSecurityCheck="FALSE"
+				EnableFunctionLevelLinking="TRUE"
+				TreatWChar_tAsBuiltInType="TRUE"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="3"
+				WarningLevel="1"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="2"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				OutputFile="../../../game/spring.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="TRUE"
+				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.8/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
+				GenerateDebugInformation="TRUE"
+				AssemblyDebug="2"
+				ProgramDatabaseFile="../../../installer/spring.pdb"
+				MapExports="TRUE"
+				MapLines="TRUE"
+				SubSystem="2"
+				OptimizeReferences="0"
+				EnableCOMDATFolding="0"
+				TargetMachine="0"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -476,6 +542,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.h">
@@ -496,6 +568,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -524,6 +602,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIbutton.h">
@@ -544,6 +628,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -572,6 +662,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.h">
@@ -592,6 +688,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -620,6 +722,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.h">
@@ -640,6 +748,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -668,6 +782,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIfont.h">
@@ -688,6 +808,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -716,6 +842,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIgame.h">
@@ -736,6 +868,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -764,6 +902,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIimage.h">
@@ -784,6 +928,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -812,6 +962,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIinput.h">
@@ -832,6 +988,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -860,6 +1022,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUImatrix.h">
@@ -880,6 +1048,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -908,6 +1082,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIpane.h">
@@ -928,6 +1108,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -956,6 +1142,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.h">
@@ -976,6 +1168,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -1004,6 +1202,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIslider.h">
@@ -1024,6 +1228,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -1052,6 +1262,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.h">
@@ -1076,6 +1292,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\Gui\GUItab.h">
@@ -1096,6 +1318,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -1173,12 +1401,6 @@
 		<Filter
 			Name="Rendering"
 			Filter="">
-			<File
-				RelativePath="..\..\Rendering\ExplosionGraphics.cpp">
-			</File>
-			<File
-				RelativePath="..\..\Rendering\ExplosionGraphics.h">
-			</File>
 			<File
 				RelativePath="..\..\Rendering\FartextureHandler.cpp">
 			</File>
@@ -1357,6 +1579,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Gl\FBO.h">
@@ -1432,6 +1660,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -1600,118 +1834,10 @@
 				Name="Projectiles"
 				Filter="">
 				<File
-					RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.cpp">
+					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\BubbleProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\BubbleProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\DirtProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\DirtProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\EmgProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\EmgProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FireBallProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FireBallProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FireProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FireProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FlameProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FlameProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FlareProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\FlareProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\GfxProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\GfxProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\LaserProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\LaserProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\LightingProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\LightingProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\MissileProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\MissileProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\MuzzleFlame.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\MuzzleFlame.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\PieceProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\PieceProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\Projectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\Projectile.h">
+					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.h">
 				</File>
 				<File
 					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.cpp">
@@ -1719,178 +1845,306 @@
 				<File
 					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.h">
 				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\RepulseGfx.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\RepulseGfx.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\StarburstProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\StarburstProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\TracerProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\TracerProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\WakeProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\WakeProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\WeaponProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\WeaponProjectile.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\WreckProjectile.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\WreckProjectile.h">
-				</File>
+				<Filter
+					Name="Classes"
+					Filter="">
+					<File
+						RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\BubbleProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\BubbleProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\DirtProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\DirtProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\EmgProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\EmgProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FireBallProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FireBallProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FireProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FireProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FlameProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FlameProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FlareProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\FlareProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\GfxProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\GfxProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\LaserProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\LaserProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\LightingProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\LightingProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\MissileProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\MissileProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\MuzzleFlame.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\MuzzleFlame.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\PieceProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\PieceProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\Projectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\Projectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\RepulseGfx.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\RepulseGfx.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SmokeProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SmokeProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\StarburstProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\StarburstProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\TracerProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\TracerProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WakeProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WakeProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WreckProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WreckProjectile.h">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Weapons"
 				Filter="">
-				<File
-					RelativePath="..\..\Sim\Weapons\BeamLaser.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\BeamLaser.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\bombdropper.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\bombdropper.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\Cannon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\Cannon.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\DGunWeapon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\DGunWeapon.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\EmgCannon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\EmgCannon.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\FlameThrower.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\FlameThrower.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\LaserCannon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\LaserCannon.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\LightingCannon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\LightingCannon.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\MeleeWeapon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\MeleeWeapon.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\MissileLauncher.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\MissileLauncher.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\NoWeapon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\NoWeapon.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\Rifle.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\Rifle.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\StarburstLauncher.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\StarburstLauncher.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\Weapon.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Weapons\Weapon.h">
-				</File>
 				<File
 					RelativePath="..\..\Sim\Weapons\WeaponDefHandler.cpp">
 				</File>
 				<File
 					RelativePath="..\..\Sim\Weapons\WeaponDefHandler.h">
 				</File>
+				<Filter
+					Name="Classes"
+					Filter="">
+					<File
+						RelativePath="..\..\Sim\Weapons\BeamLaser.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\BeamLaser.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\bombdropper.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\bombdropper.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\Cannon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\Cannon.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\DGunWeapon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\DGunWeapon.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\EmgCannon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\EmgCannon.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\FlameThrower.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\FlameThrower.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\LaserCannon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\LaserCannon.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\LightingCannon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\LightingCannon.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\MeleeWeapon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\MeleeWeapon.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\MissileLauncher.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\MissileLauncher.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\NoWeapon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\NoWeapon.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\PlasmaRepulser.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\PlasmaRepulser.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\Rifle.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\Rifle.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\StarburstLauncher.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\StarburstLauncher.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\TorpedoLauncher.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\TorpedoLauncher.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\Weapon.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Weapons\Weapon.h">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Pathfinding"
@@ -2104,6 +2358,12 @@
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="64bit release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\bget.h">
@@ -2164,6 +2424,12 @@
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="64bit release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\StdAfx.h">
@@ -2184,6 +2450,12 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release with error catching|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="64bit release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -2293,6 +2565,12 @@
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpientry.h">
@@ -2313,6 +2591,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2341,6 +2625,12 @@
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpiutil.h">
@@ -2361,6 +2651,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2389,6 +2685,12 @@
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\sqshstream.h">
@@ -2409,6 +2711,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2441,6 +2749,12 @@
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zAlloc.h">
@@ -2465,6 +2779,12 @@
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zBuffer.h">
@@ -2485,6 +2805,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2515,6 +2841,13 @@
 									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zDecode.h">
@@ -2535,6 +2868,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2563,6 +2902,12 @@
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zHeader.h">
@@ -2583,6 +2928,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2611,6 +2962,12 @@
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zItem.h">
@@ -2631,6 +2988,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2658,6 +3021,12 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="64bit release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2692,6 +3061,12 @@
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\BaseCmd.h">
@@ -2709,6 +3084,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -2758,6 +3139,12 @@
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="64bit release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.h">
@@ -2772,6 +3159,12 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release with error catching|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="64bit release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -2793,6 +3186,12 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release with error catching|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="64bit release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -2828,6 +3227,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -2914,6 +3319,12 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="3"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="64bit release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="3"/>
@@ -3016,12 +3427,6 @@
 		</File>
 		<File
 			RelativePath=".\rts.rc">
-		</File>
-		<File
-			RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.cpp">
-		</File>
-		<File
-			RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.h">
 		</File>
 		<File
 			RelativePath=".\spring.ico">

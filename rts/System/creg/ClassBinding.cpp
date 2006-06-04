@@ -10,6 +10,7 @@ using namespace creg;
 using namespace std;
 
 static map<string, Class*> mapNameToClass;
+static int currentMemberFlags = 0; // used when registering class members
 
 // -------------------------------------------------------------------
 // Class Binder
@@ -49,6 +50,7 @@ void ClassBinder::InitializeClasses ()
 		cls->base = c->base ? c->base->class_ : 0;
 		mapNameToClass [cls->name] = cls;
 
+		currentMemberFlags = 0;
 		// Register members
 		if (*c->memberRegistrator)
 			(*c->memberRegistrator)->RegisterMembers (cls);
@@ -98,6 +100,16 @@ bool Class::IsSubclassOf (Class *other)
 	return false;
 }
 
+void Class::BeginFlag (ClassMemberFlag flag)
+{
+	currentMemberFlags |= (int)flag;
+}
+
+void Class::EndFlag (ClassMemberFlag flag)
+{
+	currentMemberFlags &= ~(int)flag;
+}
+
 void Class::AddMember (const char *name, IType* type, unsigned int offset)
 {
 	Member *member = new Member;
@@ -105,9 +117,20 @@ void Class::AddMember (const char *name, IType* type, unsigned int offset)
 	member->name = name;
 	member->offset = offset;
 	member->type = type;
-	member->flags = 0;
+	member->flags = currentMemberFlags;
 
 	members.push_back (member);
+}
+
+Class::Member* Class::FindMember (const char *name)
+{
+	for (Class *c = this; c; c=c->base) 
+		for (int a=0;a<c->members.size();a++) {
+			Member *member = c->members[a];
+			if (!STRCASECMP(member->name, name))
+				return member;
+		}
+	return 0;
 }
 
 void Class::SetMemberFlag (const char *name, ClassMemberFlag f)
@@ -173,3 +196,5 @@ void Class::CalculateChecksum (unsigned int& checksum)
 	if (base)
 		base->CalculateChecksum(checksum);
 }
+
+

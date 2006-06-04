@@ -11,43 +11,48 @@
 #include "Sound.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "mmgr.h"
 #include <iostream>
 
 using namespace std;
 
+CR_BIND(WeaponDef);
+
 CWeaponDefHandler* weaponDefHandler;
 
 CWeaponDefHandler::CWeaponDefHandler(void)
 {
-  std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");
-  //std::cout << " getting files from weapons/*.tdf ... " << std::endl;
+	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");
+	//std::cout << " getting files from weapons/*.tdf ... " << std::endl;
 
-  TdfParser tasunparser;
+	TdfParser tasunparser;
 
-  for(unsigned int i=0; i<tafiles.size(); i++)
-  {
-    try {
-      tasunparser.LoadFile(tafiles[i]);
-    }catch( TdfParser::parse_error const& e) {
-      std::cout << "Exception:"  << e.what() << std::endl; 
-    } catch(...) {
-      std::cout << "Unknown exception in parse process of " << tafiles[i] <<" caught." << std::endl; 
-    }
-  }
+	for(unsigned int i=0; i<tafiles.size(); i++)
+	{
+		try {
+			tasunparser.LoadFile(tafiles[i]);
+		}catch( TdfParser::parse_error const& e) {
+			std::cout << "Exception:"  << e.what() << std::endl; 
+		} catch(...) {
+			std::cout << "Unknown exception in parse process of " << tafiles[i] <<" caught." << std::endl; 
+		}
+	}
 
-  std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
+	std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
 
- weaponDefs = new WeaponDef[weaponlist.size()+1];
-  for(std::size_t taid=0; taid<weaponlist.size(); taid++)
-  {
-    ParseTAWeapon(&tasunparser, weaponlist[taid], taid);
-  }
+	explGen = new CExplosionGeneratorHandler();
+	weaponDefs = new WeaponDef[weaponlist.size()+1];
+	for(std::size_t taid=0; taid<weaponlist.size(); taid++)
+	{
+		ParseTAWeapon(&tasunparser, weaponlist[taid], taid);
+	}
 }
 
 CWeaponDefHandler::~CWeaponDefHandler(void)
 {
 	delete[] weaponDefs;
+	delete explGen;
 }
 
 void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id)
@@ -180,8 +185,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		if(weaponDefs[id].damages[a]==0)		//avoid division by zeroes
 			weaponDefs[id].damages[a]=1;
 	}
-	std::map<std::string, std::string> damages=sunparser->GetAllValues(weaponname + "\\DAMAGE");
-	for(std::map<std::string, std::string>::iterator di=damages.begin();di!=damages.end();++di){
+	const std::map<std::string, std::string>& damages=sunparser->GetAllValues(weaponname + "\\DAMAGE");
+	for(std::map<std::string, std::string>::const_iterator di=damages.begin();di!=damages.end();++di){
 		int type=damageArrayHandler->GetTypeFromName(di->first);
 		float damage=atof(di->second.c_str());
 		if(damage==0)
@@ -304,6 +309,9 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	}
 //	if(!weaponDefs[id].turret && weaponDefs[id].type!="TorpedoLauncher")
 //		weaponDefs[id].maxAngle*=0.4;
+
+	std::string explgentag = sunparser->SGetValueDef(std::string(), weaponname + "\\explosiongenerator");
+	weaponDefs[id].explosionGenerator = explgentag.empty() ? 0 : explGen->LoadGenerator(explgentag);
 
 	weaponDefs[id].id = id;
 	weaponID[weaponname] = id;

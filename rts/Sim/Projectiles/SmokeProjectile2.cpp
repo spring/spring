@@ -10,9 +10,47 @@
 #include "Sim/Misc/Wind.h"
 #include "mmgr.h"
 
+
+CR_BIND_DERIVED(CSmokeProjectile2, CProjectile);
+
+CR_REG_METADATA(CSmokeProjectile2, 
+(
+	CR_MEMBER_BEGINFLAG(CM_Config),
+		CR_MEMBER(color),
+		CR_MEMBER(ageSpeed),
+		CR_MEMBER(size),
+		CR_MEMBER(startSize),
+		CR_MEMBER(sizeExpansion),
+		CR_MEMBER(wantedPos),
+		CR_MEMBER(glowFalloff),
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_MEMBER(age),
+	CR_MEMBER(textureNum)
+));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+CSmokeProjectile2::CSmokeProjectile2()
+: color(0.5f), age(0.0f), ageSpeed(1.0f), startSize(0.0f), size(0.0f), sizeExpansion(0.0f), glowFalloff(0.0f)
+{
+	textureNum = 0;
+	checkCol=false;
+}
+
+void CSmokeProjectile2::Init(const float3& pos, CUnit *owner)
+{
+	textureNum=(int)(gu->usRandFloat()*12);
+
+	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
+		useAirLos=true;
+
+	if(!owner)
+		alwaysVisible=true;
+
+	CProjectile::Init(pos, owner);
+}
 
 CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color)
 : CProjectile(pos,speed,owner),
