@@ -455,6 +455,7 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		groundFlash->flashSize = atof(parser.SGetValueDef ("0",location + "flashSize" ).c_str());
 		groundFlash->flashAlpha = atof(parser.SGetValueDef ("0",location + "flashAlpha" ).c_str());
 		groundFlash->circleGrowth = atof(parser.SGetValueDef ("0",location + "circleGrowth" ).c_str());
+		groundFlash->color = parser.GetFloat3 (float3(1.0f,1.0f,1.0f), location + "color");
 		groundFlash->ttl = ttl;
 	}
 }
@@ -487,7 +488,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 	}
 
 	if (groundFlash)
-		new CGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl);
+		new CGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
 }
 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()
