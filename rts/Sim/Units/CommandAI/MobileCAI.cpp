@@ -327,7 +327,7 @@ int CMobileCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 	return CMD_MOVE;
 }
 
-void CMobileCAI::SetGoal(float3 &pos,float3& curPos, float goalRadius)
+void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadius)
 {
 	if(pos==goalPos)
 		return;

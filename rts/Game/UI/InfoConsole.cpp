@@ -101,6 +101,9 @@ void CInfoConsole::AddLine(int priority, const char *fmt, ...)
 	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
 
+	(*filelog) << text << "\n";
+	filelog->flush();
+
 	AddLineHelper (priority,text);
 }
 
@@ -115,6 +118,9 @@ void CInfoConsole::AddLine(const char *fmt, ...)
 	va_start(ap, fmt);									// Parses The String For Variables
 	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
+
+	(*filelog) << text << "\n";
+	filelog->flush();
 
 	AddLineHelper (0,text);
 }
@@ -203,8 +209,6 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 		}
 
 		// add the line to the console
-		(*filelog) << temp << "\n";
-		filelog->flush();
 		InfoLine l;
 		if((int)data.size()>(numLines-1)){
 			data[1].time+=data[0].time;
