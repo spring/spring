@@ -7,6 +7,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Game/UI/InfoConsole.h"
+#include "Game/UI/MiniMap.h"
 #include "Group.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
@@ -60,8 +61,17 @@ void CAICallback::SendTextMsg(const char* text,int priority)
 	else
         info->AddLine(priority, "GlobalAI%i: %s",team,text);
 }
+void CAICallback::SetLastMsgPos(float3 pos)
+{
+	info->SetLastMsgPos(pos);
+}
 
-// see if the AI hasn't modified any parts of this callback 
+void CAICallback::AddNotification(float3 pos, float3 color, float alpha)
+{
+	minimap->AddNotification(pos,color,alpha);
+}
+
+// see if the AI hasn't modified any parts of this callback
 // (still completely insecure ofcourse, but it filters out the easiest way of cheating)
 void CAICallback::verify()
 {

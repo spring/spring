@@ -13,12 +13,11 @@ class CUnit;
 #include <stack>
 #include <string>
 
-struct UnitDef;
+#include "UnitDef.h"
+
 class CBuilderCAI;
 class CFeature;
 class CLoadSaveInterface;
-
-const int MAX_UNITS=5000;
 
 
 struct CChecksum {
