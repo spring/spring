@@ -443,7 +443,8 @@ START_TIME_PROFILE
 	for(unsigned int i = 0; i < groundFlashes.size();)
 	{
 		CGroundFlash *gf = groundFlashes[i];
-		if (!gf->Update ()) {
+		if (!gf->Update ())
+		{
 			// swap gf with the groundflash at the end of the list, so pop_back() can be used to erase it
 			if ( i < groundFlashes.size()-1 )
 				std::swap (groundFlashes.back(), groundFlashes[i]);

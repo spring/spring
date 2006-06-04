@@ -83,6 +83,7 @@ protected:
 		float circleGrowth;
 		float circleAlpha;
 		int ttl;
+		float3 color;
 	} *groundFlash;
 
 	std::vector<ProjectileSpawnInfo*> projectileSpawn;
