@@ -1,5 +1,4 @@
 // Generalized callback interface - shared between global AI and group AI
-// by Zaphod
 #ifndef IAICALLBACK_H
 #define IAICALLBACK_H
 #include <vector>
@@ -78,6 +77,8 @@ public:
 	};
 
 	virtual void SendTextMsg(const char* text,int priority) = 0;
+	virtual void SetLastMsgPos(float3 pos) = 0;
+	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
 
 	//get the current game time, there is 30 frames per second at normal speed
 	virtual int GetCurrentFrame() = 0;

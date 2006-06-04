@@ -43,9 +43,11 @@ public:
 
 	int lastUpdate;
 	int lastEnterTime;
-	int numEnemies;
-	int* enemies;
-
+	int prevEnemies;
+	int* enemyIds;
+	int* prevEnemyIds;
+	int prevEnemyIdsSize;
+	int enemies;
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)

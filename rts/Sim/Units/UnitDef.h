@@ -10,6 +10,8 @@
 struct MoveData;
 struct WeaponDef;
 
+const int MAX_UNITS=5000;
+
 struct GuiSound
 {
 	std::string name;

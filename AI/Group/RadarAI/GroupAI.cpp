@@ -17,8 +17,10 @@ CGroupAI::CGroupAI()
 {
 	lastUpdate=0;
 	lastEnterTime=0;
-	numEnemies=0;
-    enemies = new int[10000]; 
+	prevEnemies=0;
+	prevEnemyIds = new int[MAX_UNITS];
+	prevEnemyIdsSize=0;
+	enemyIds = new int[MAX_UNITS];
 }
 
 CGroupAI::~CGroupAI()
@@ -64,27 +66,55 @@ void CGroupAI::Update()
 {
 	int frameNum=aicb->GetCurrentFrame();
 	if(lastUpdate<=frameNum-32)
-	{ 
+	{
 		lastUpdate=frameNum;
-		int diffNum = aicb->GetEnemyUnitsInRadarAndLos(enemies) - numEnemies;
-		if (diffNum <= 0)
+		enemies = aicb->GetEnemyUnitsInRadarAndLos(enemyIds);
+		int diffEnemies = enemies - prevEnemies;
+		// do we have new enemy units in LOS / radar?
+		if(diffEnemies <= 0)
 		{
-			numEnemies += diffNum;
+			prevEnemies += diffEnemies;
         }
-        else if (diffNum > 0 && lastEnterTime<=frameNum-320)
+        else if (lastEnterTime<=frameNum-320) // don't want to do this too often
 		{
-            char c[200];
-            if ( diffNum > 1)
-            {
-                  sprintf(c,"Team %i: %i enemy units have entered LOS/radar",aicb->GetMyTeam(),diffNum);
-            }
-            else
-            {
-                  sprintf(c,"Team %i: An enemy unit has entered LOS/radar",aicb->GetMyTeam());
-            }
-            aicb->SendTextMsg(c,0);
-            numEnemies += diffNum;
-            lastEnterTime=frameNum;
-        }
-     }
+			// find one of the new enemy units for the msg position
+			int newEnemyId = enemyIds[0]; // for if prevEnemyIdsSize == 0
+			for(int i=0; i < enemies; i++)
+			{
+				for(int j=0; j < prevEnemyIdsSize; j++)
+				{
+					if(enemyIds[i] != prevEnemyIds[j])
+					{
+						newEnemyId = enemyIds[i];
+						break;
+					}
+				}
+			}
+			// reset the enemy ids for the next Update()
+			prevEnemyIdsSize = enemies;
+			for(int k=0; k < enemies; k++)
+			{
+				prevEnemyIds[k] = enemyIds[k];
+			}
+
+			// print the message to the console
+			char c[200];
+			if ( diffEnemies > 1)
+			{
+				  sprintf(c,"Team %i: %i enemy units have entered LOS/radar",aicb->GetMyTeam(),diffEnemies);
+			}
+			else
+			{
+				  sprintf(c,"Team %i: An enemy unit has entered LOS/radar",aicb->GetMyTeam());
+			}
+			float3 pos = aicb->GetUnitPos(newEnemyId);
+			aicb->SendTextMsg(c,0);
+			aicb->SetLastMsgPos(pos);
+			aicb->AddNotification(pos,float3(0.3,1,0.3),0.5);
+
+			// update for the next call
+			prevEnemies += diffEnemies;
+			lastEnterTime=frameNum;
+		}
+	}
 }
