@@ -131,7 +131,9 @@
   Delete "$INSTDIR\ClientControls.dll"
   Delete "$INSTDIR\SpringClient.exe"
 
-  !insertmacro APP_ASSOCIATE "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" %1"
+  
+  !define APPWITHQUOTES "$INSTDIR\spring.exe"
+  !insertmacro APP_ASSOCIATE "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "${APPWITHQUOTES} %1"
   !insertmacro UPDATEFILEASSOC
 
 !else
