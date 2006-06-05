@@ -96,7 +96,7 @@ for f in filelist.list_groupAIs(aienv):
 	Alias(f, lib)         # Allow e.g. `scons CentralBuildAI' to compile just an AI.
 	Alias('GroupAI', lib) # Allow `scons GroupAI' to compile all groupAIs.
 	Default(lib)
-	inst = Install(os.path.join(install_dir, 'aidll'), lib)
+	inst = Install(install_dir, lib)
 	Alias('install', inst)
 	Alias('install-GroupAI', inst)
 	Alias('install-'+f, inst)
@@ -107,7 +107,7 @@ for f in filelist.list_globalAIs(aienv):
 	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
 	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
 	Default(lib)
-	inst = Install(os.path.join(install_dir, 'aidll/globalai'), lib)
+	inst = Install(os.path.join(install_dir, 'globalai'), lib)
 	Alias('install', inst)
 	Alias('install-GlobalAI', inst)
 	Alias('install-'+f, inst)
