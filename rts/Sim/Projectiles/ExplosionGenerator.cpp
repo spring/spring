@@ -302,7 +302,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 		case OP_STOREI:{
 			Uint16 offset = *(Uint16*)code;
 			code += 2;
-			*(int*)(instance + offset) = val;
+			*(int*)(instance + offset) = (int) val;
 			val = 0.0f;
 			break;}
 		case OP_STOREF:{
@@ -314,7 +314,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 		case OP_STOREC:{
 			Uint16 offset = *(Uint16*)code;
 			code += 2;
-			*(unsigned char*)(instance + offset) = val;
+			*(unsigned char*)(instance + offset) = (int) val;
 			val = 0.0f;
 			break;}
 		case OP_ADD:

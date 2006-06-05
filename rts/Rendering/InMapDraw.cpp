@@ -84,6 +84,7 @@ struct InMapDraw_QuadDrawer : public CReadMap::IQuadDrawer
 {
 	CVertexArray *va, *lineva;
 	CInMapDraw *imd;
+	unsigned int texture;
 
 	void DrawQuad (int x,int y);
 };
@@ -137,6 +138,7 @@ void InMapDraw_QuadDrawer::DrawQuad (int x,int y)
 			glColor4ub(pi->color[0],pi->color[1],pi->color[2],250);
 			font->glWorldPrint("%s",pi->label.c_str());
 			glPopMatrix();
+			glBindTexture(GL_TEXTURE_2D, texture);
 		}
 	}
 	for(std::list<CInMapDraw::MapLine>::iterator li=dq->lines.begin();li!=dq->lines.end();++li){
@@ -165,6 +167,7 @@ void CInMapDraw::Draw(void)
 	drawer.imd = this;
 	drawer.lineva = lineva;
 	drawer.va = va;
+	drawer.texture = texture;
 
 	readmap->GridVisibility (camera, DRAW_QUAD_SIZE, 3000.0f, &drawer);
 
