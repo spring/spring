@@ -23,7 +23,7 @@ CGroundFlash::CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float f
 	pos(pos)
 {
 	for (int a=0;a<3;a++)
-		color[a] = (unsigned char)col[a]*255.0f;
+		color[a] = (unsigned char)(col[a]*255.0f);
 
 	float3 fw = camera->forward*-1000.0f;
 	this->pos.y=ground->GetHeight2(pos.x,pos.z)+1;
