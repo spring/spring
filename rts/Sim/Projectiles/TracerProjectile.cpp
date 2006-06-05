@@ -36,6 +36,9 @@ CTracerProjectile::CTracerProjectile(const float3 pos, const float3 speed,const 
 
 CTracerProjectile::CTracerProjectile()
 {
+	speedf=0.0f;
+	length=drawLength=0.0f;
+	checkCol=false;
 }
 
 void CTracerProjectile::Init(const float3& pos, CUnit* owner)

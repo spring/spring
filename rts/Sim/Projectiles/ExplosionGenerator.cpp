@@ -456,6 +456,15 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		groundFlash->flashAlpha = atof(parser.SGetValueDef ("0",location + "flashAlpha" ).c_str());
 		groundFlash->circleGrowth = atof(parser.SGetValueDef ("0",location + "circleGrowth" ).c_str());
 		groundFlash->color = parser.GetFloat3 (float3(1.0f,1.0f,1.0f), location + "color");
+
+		string color = parser.SGetValueDef("1,1,0.8",location + "color");
+		string::size_type start = 0;
+		for (unsigned int i=0; i < 3; i++) {
+			string::size_type end = color.find(',', start+1);
+			groundFlash->color[i]=atof(color.substr(start,end-start).c_str());
+			start = end+1;
+			if (start >= color.length()) break;
+		}
 		groundFlash->ttl = ttl;
 	}
 }

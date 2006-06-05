@@ -395,7 +395,7 @@ void CArchiveScanner::WriteCacheData()
 			fprintf(out, "\t\t\tNumReplaces=%d;\n", i->second.modData.replaces.size());
 			int currep = 0;
 			for (vector<string>::iterator rep = i->second.modData.replaces.begin(); rep != i->second.modData.replaces.end(); ++rep) {
-				fprintf(out, "\t\t\tReplace%d=%s;\n", currep, (*rep).c_str());
+				fprintf(out, "\t\t\tReplace%d=%s;\n", currep++, (*rep).c_str());
 			}
 
 			fprintf(out, "\t\t}\n");

@@ -41,7 +41,7 @@ TASpring change log
 -  New weapon tdf tag shieldalpha, how visible the shield shell is with visibleshield=1
 - Added auto zooming using scroll + Left ALT key  (patch from colorblind)
 - Added simplified LOS drawing (patch from colorblind)
-- Fixed mouse speed problems in windows with low FPS.
+- Fixed mouse speed problems in windows with holding shift.
 - Demo filenames with spaces in them work again.
 - Changed non-positional sound behavior: only selected units give non-positional sound
 - Missile weapons no longer tracks to exact position of non flying units (make missile units weaker against radar targets)
@@ -49,6 +49,8 @@ TASpring change log
 - Units no longer receive experience for "overkill" damage 
 - Adds support for using arbitary team colors, teamcolor textures for 3do need to be slightly changed to accomendate this (see the base texture archive to see how its done)
 - Increased max camera zoom out (zooming to far can cause slowdowns/graphical glitches)
+- Added Radar group AI from colorblind: It notifies the player of incoming enemy units.
+- Added custom explosion generator: It can be enabled using "explosiongenerator=custom:SomeExplosionGeneratorName" in the weapon TDF. See the wiki page http://spring.clan-sy.com/wiki/CustomExplosionGenerators for more info.
 
 0.71b1
 
