@@ -300,17 +300,17 @@ Section /o "Desktop shortcut" SEC_DESKTOP
 SectionEnd
 
 SectionGroup "Skirmish AI plugins"
-Section "AAI Skirmish AI" SEC_AAI
-  !define INSTALL
-  !include "sections\aai.nsh"
-  !undef INSTALL
-SectionEnd
+;	Section "AAI Skirmish AI" SEC_AAI
+;	!define INSTALL
+;	!include "sections\aai.nsh"
+;	!undef INSTALL
+;	SectionEnd
 
-Section "NTAI Skirmish AI" SEC_NTAI
-  !define INSTALL
-  !include "sections\ntai.nsh"
-  !undef INSTALL
-SectionEnd
+	Section "NTAI Skirmish AI" SEC_NTAI
+	!define INSTALL
+	!include "sections\ntai.nsh"
+	!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
@@ -401,7 +401,7 @@ Section Uninstall
 
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
-  !include "sections\aai.nsh"
+;  !include "sections\aai.nsh"
   !include "sections\ntai.nsh"
   !include "sections\battleroom.nsh"
 

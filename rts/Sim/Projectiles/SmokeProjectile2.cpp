@@ -49,6 +49,8 @@ void CSmokeProjectile2::Init(const float3& pos, CUnit *owner)
 	if(!owner)
 		alwaysVisible=true;
 
+	wantedPos += pos;
+
 	CProjectile::Init(pos, owner);
 }
 

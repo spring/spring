@@ -250,6 +250,9 @@ bool crashCallback(void* crState)
  */
 bool SpringApp::Initialize ()
 {
+	// Initialize class system
+	creg::ClassBinder::InitializeClasses ();
+
 	if (!ParseCmdLine ())
 		return false;
 
@@ -257,9 +260,6 @@ bool SpringApp::Initialize ()
 	// Initialize crash reporting
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
-
-	// Initialize class system
-	creg::ClassBinder::InitializeClasses ();
 
 #ifndef NO_LUA
 	// Initialize lua bindings

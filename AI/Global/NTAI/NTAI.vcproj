@@ -1,189 +1,120 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="7.10"
 	Name="NTAI"
 	ProjectGUID="{836C0E29-BA83-4F81-97C1-22B315A5F8C6}"
-	RootNamespace="NTAI"
-	Keyword="ExtStoredProcProj"
-	>
+	Keyword="ExtStoredProcProj">
 	<Platforms>
 		<Platform
-			Name="Win32"
-		/>
+			Name="Win32"/>
 	</Platforms>
-	<ToolFiles>
-	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\..\..\game\aidll\globalai\"
 			IntermediateDirectory="Debug"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="false"
-			/>
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System;..\..\..\rts\ExternalAI"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG;_USRDLL"
-				MinimalRebuild="true"
+				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				WarningLevel="4"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
-			/>
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="4"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="TRUE"
 				SubSystem="2"
-				TargetMachine="1"
-			/>
+				TargetMachine="1"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="FALSE"/>
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
+				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
+				Name="VCXMLDataGeneratorTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\..\..\game\aidll\globalai\"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="false"
-			/>
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
+				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
+				OptimizeForProcessor="3"
+				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="..\..\..\rts;..\..\..\rts\System;..\..\..\rts\ExternalAI"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;_USRDLL"
-				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
-				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
-				WarningLevel="4"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="1"
-				ShowIncludes="false"
-			/>
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="2"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				ShowProgress="2"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
-				TargetMachine="1"
-			/>
+				TargetMachine="1"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="FALSE"/>
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
+				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
+				Name="VCXMLDataGeneratorTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -192,152 +123,110 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
-			>
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\GlobalAI.cpp"
-				>
+				RelativePath=".\Agents\Assigner.cpp">
 			</File>
 			<File
-				RelativePath=".\helper.cpp"
-				>
+				RelativePath=".\Agents\Chaser.cpp">
 			</File>
 			<File
-				RelativePath=".\Interface.cpp"
-				>
+				RelativePath=".\Agents\Factor.cpp">
 			</File>
-			<Filter
-				Name="Agents"
-				>
-				<File
-					RelativePath=".\Agents\Assigner.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Chaser.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Factor.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Planning.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Scouter.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Unit.cpp"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="Helper classes"
-				>
-				<File
-					RelativePath=".\Helpers\Log.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Helpers\MetalHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Helpers\MetalMap.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Helpers\SunParser.cpp"
-					>
-				</File>
-			</Filter>
+			<File
+				RelativePath=".\GlobalAI.cpp">
+			</File>
+			<File
+				RelativePath=".\helper.cpp">
+			</File>
+			<File
+				RelativePath=".\Interface.cpp">
+			</File>
+			<File
+				RelativePath=".\Helpers\Log.cpp">
+			</File>
+			<File
+				RelativePath=".\Helpers\MetalHandler.cpp">
+			</File>
+			<File
+				RelativePath=".\Helpers\MetalMap.cpp">
+			</File>
+			<File
+				RelativePath=".\Agents\Planning.cpp">
+			</File>
+			<File
+				RelativePath=".\Agents\Scouter.cpp">
+			</File>
+			<File
+				RelativePath=".\Helpers\SunParser.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Agents\Unit.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
-			>
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\..\..\rts\Game\command.h"
-				>
+				RelativePath=".\Agents\Assigner.h">
 			</File>
 			<File
-				RelativePath=".\GlobalAI.h"
-				>
+				RelativePath=".\Agents\Chaser.h">
 			</File>
 			<File
-				RelativePath=".\helper.h"
-				>
+				RelativePath=".\Agents\Factor.h">
 			</File>
 			<File
-				RelativePath=".\include.h"
-				>
+				RelativePath=".\GlobalAI.h">
 			</File>
-			<Filter
-				Name="Agents"
-				>
-				<File
-					RelativePath=".\Agents\Assigner.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Chaser.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Factor.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Planning.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Scouter.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Agents\Unit.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="Helper clases"
-				>
-				<File
-					RelativePath=".\Helpers\InitUtil.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Helpers\Log.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Helpers\MetalHandler.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Helpers\MetalMap.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Helpers\SunParser.h"
-					>
-				</File>
-			</Filter>
+			<File
+				RelativePath=".\helper.h">
+			</File>
+			<File
+				RelativePath=".\include.h">
+			</File>
+			<File
+				RelativePath=".\Helpers\InitUtil.h">
+			</File>
+			<File
+				RelativePath=".\Helpers\Log.h">
+			</File>
+			<File
+				RelativePath=".\Helpers\MetalHandler.h">
+			</File>
+			<File
+				RelativePath=".\Helpers\MetalMap.h">
+			</File>
+			<File
+				RelativePath=".\Agents\Planning.h">
+			</File>
+			<File
+				RelativePath=".\Agents\Scouter.h">
+			</File>
+			<File
+				RelativePath=".\Helpers\SunParser.h">
+			</File>
+			<File
+				RelativePath=".\Agents\Unit.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
-			<File
-				RelativePath=".\resources\ResTempl1.rct"
-				>
-			</File>
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
 	</Files>
 	<Globals>
