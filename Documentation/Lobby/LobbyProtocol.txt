@@ -401,7 +401,7 @@
   Sent by server to all registered clients indicating that client's status changed.
   See MYSTATUS command for possible values of status parameter.
 
-  * MYBATTLESTATUS battlestatus
+  * MYBATTLESTATUS battlestatus myteamcolor
   Sent by a client to the server telling him his status in the battle changed. 
   "battlestatus" is an integer but with limited range: 0..2147483647 (use signed int and
   consider only positive values and zero). Number is sent as text. Each bit has its meaning:
@@ -414,14 +414,18 @@
               change handicap values of the players in the battle (with HANDICAP command).
               These 7 bits are always ignored in this command. They can only be changed
               using HANDICAP command.
-  b18..b21 = team color index (currently only valid is 0..9, as defined in TAPallete.cpp)
+  b18..b21 = reserved for future use (with pre 0.71 versions these bits were used for team color index)
   b22..b23 = sync status (0 = unknown, 1 = synced, 2 = unsynced)
-  b24..b27 = side (e.g.: arm, core, tll, ... Side index can be between 0 and 15, inclusive)            
+  b24..b27 = side (e.g.: arm, core, tll, ... Side index can be between 0 and 15, inclusive)
   b28..b31 = undefined (reserved for future use)
+  <myteamcolor> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+  where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+  B = blue, G = green, R  = red).
 
-  * CLIENTBATTLESTATUS username battlestatus
+  * CLIENTBATTLESTATUS username battlestatus teamcolor
   Sent by server to users participating in a battle when one of the clients changes his
   battle status. See MYBATTLESTATUS command for possible values of battlestatus parameter.
+  <teamcolor> uses same format as the one used with MYBATTLESTATUS command.
 
   * REQUESTBATTLESTATUS
   Sent by server to user who just opened a battle or joined one. When client receives this
@@ -450,9 +454,12 @@
   Sent by founder of battle when he is trying to force some other client's ally number
   to <allyno>. Server will update client's battle status automatically. 
 
-  * FORCETEAMCOLOR username colorindex
+  * FORCETEAMCOLOR username color
   Sent by founder of battle when he is trying to force some other clients' team color
-  to <colorindex>. Server will update client's battle status automatically.
+  to <color>. Server will update client's battle status automatically.
+  <color> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+  where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+  B = blue, G = green, R  = red).
 
   * DISABLEUNITS unitname1 unitname2 ...
   - Sent by founder of the battle to server telling him he disabled one or more units.
@@ -488,12 +495,18 @@
   * BROADCAST {message}
   Sent by server when urgent message has to be delivered to all users.
 
-  * ADDBOT BATTLE_ID name owner battlestatus {AIDLL}
+  * ADDBOT BATTLE_ID name owner battlestatus teamcolor {AIDLL}
   Sent by server. BATTLE_ID is there just to help client verify that
   the bot is meant for his battle.
+  <teamcolor> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+  where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+  B = blue, G = green, R  = red).
 
-  * ADDBOT name battlestatus {AIDLL}
-  Sent by client
+  * ADDBOT name battlestatus teamcolor {AIDLL}
+  Sent by client.
+  <teamcolor> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+  where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+  B = blue, G = green, R  = red).
 
   * REMOVEBOT name
   Sent by client.
@@ -502,12 +515,18 @@
   Sent by server. BATTLE_ID is there just to help client verify that
   the bot is meant for his battle.
 
-  * UPDATEBOT BATTLE_ID name battlestatus
+  * UPDATEBOT BATTLE_ID name battlestatus teamcolor
   Sent by server. BATTLE_ID is there just to help client verify that
   the bot is meant for his battle.
+  <teamcolor> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+  where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+  B = blue, G = green, R  = red).
 
-  * UPDATEBOT name battlestatus
+  * UPDATEBOT name battlestatus teamcolor
   Sent by client (only bot owner and battle host can update bot)
+  <teamcolor> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+  where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+  B = blue, G = green, R  = red).
 
   * ADDSTARTRECT allyno left top right bottom
   - Sent by host of the battle adding a start rectangle for allyno. See client implementation
