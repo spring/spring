@@ -33,7 +33,8 @@ CCameraController::~CCameraController(void)
 /////////////////////
 
 CFPSController::CFPSController()
-: pos(2000,70,1800)
+: pos(2000,70,1800),
+	oldHeight(300)
 {
 	scrollSpeed=configHandler.GetInt("FPSScrollSpeed",10)*0.1;
 	enabled=!!configHandler.GetInt("FPSEnabled",1);
@@ -479,7 +480,7 @@ float3 COverviewController::GetPos()
 
 float3 COverviewController::GetDir()
 {
-	return float3(0,-1,-0.0001).Normalize();
+	return float3(0,-1,-0.001).Normalize();
 }
 
 void COverviewController::SetPos(float3 newPos)

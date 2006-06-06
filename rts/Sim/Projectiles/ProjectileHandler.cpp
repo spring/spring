@@ -387,7 +387,7 @@ CProjectileHandler::CProjectileHandler()
 	if(shadowHandler && shadowHandler->drawShadows){
 		perlinFB = instantiate_fb(128);
 		if (perlinFB && perlinFB->valid()){
-			drawPerlinTex=false;
+			drawPerlinTex=true;
 			perlinFB->attachTexture(CProjectile::textures[0], GL_TEXTURE_2D, FBO_ATTACH_COLOR);
 			perlinFB->checkFBOStatus();
 		}
