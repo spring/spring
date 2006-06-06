@@ -173,6 +173,20 @@ void CTeam::Update()
 		lastStatSave+=480;
 		statHistory.push_back(currentStats);
 	}
+
+	/* Kill the player on 'com dies = game ends' games.  This can't be done in
+	CTeam::CommanderDied anymore, because that function is called in
+	CUnit::ChangeTeam(), hence it'd cause a random amount of the shared units
+	to be killed if the commander is among them. Also, ".take" would kill all
+	units once it transfered the commander. */
+	if(gs->gameMode==1 && numCommanders<=0){
+		for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
+			if((*ui)->team==teamNum && !(*ui)->unitDef->isCommander)
+				(*ui)->KillUnit(true,false,0);
+		}
+		// Set to 1 to prevent above loop from being done every update.
+		numCommanders = 1;
+	}
 }
 
 void CTeam::AddUnit(CUnit* unit,AddType type)
@@ -226,10 +240,4 @@ void CTeam::CommanderDied(CUnit* commander)
 {
 	assert(commander->unitDef->isCommander);
 	--numCommanders;
-	if(gs->gameMode==1 && numCommanders<=0){
-		for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-			if((*ui)->team==teamNum)
-				(*ui)->KillUnit(true,false,0);
-		}
-	}
 }

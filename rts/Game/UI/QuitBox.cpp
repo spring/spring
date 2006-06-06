@@ -194,15 +194,15 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 
 	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
 		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+		//select all units
+		selectedUnits.ClearSelected();
+		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+			selectedUnits.AddUnit(*ui);
+		}
+		Command c;
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox)){
-			//select all units
-			selectedUnits.ClearSelected();
-			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
-				selectedUnits.AddUnit(*ui);
-			}
 			//make sure the units are stopped and that the selection is transmitted
-			Command c;
 			c.id=CMD_STOP;
 			selectedUnits.GiveCommand(c,false);
 			net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
@@ -218,10 +218,10 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, givenAwayMsg);
 		}
 		// resign, so self-d all units
-		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox))
-			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
-				(*ui)->KillUnit(true,false,0);
-			}
+		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox)) {
+			c.id=CMD_SELFD;
+			selectedUnits.GiveCommand(c,false);
+		}
 		// (resign and) quit, so leave the game
 		if(InBox(mx,my,box+resignQuitBox)){
 			info->AddLine("User exited");
