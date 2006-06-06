@@ -40,8 +40,8 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		return;
 	}
 
-	if(!(GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
-		if(GLEW_ARB_shadow && GL_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
+	if(!(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
+		if(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 			info->AddLine("Using ARB_fragment_program_shadow");
 			useFPShadows=true;
 		} else {

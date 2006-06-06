@@ -392,6 +392,8 @@ CProjectileHandler::CProjectileHandler()
 			perlinFB->checkFBOStatus();
 		}
 	}
+	else
+		perlinFB = 0;
 }
 
 CProjectileHandler::~CProjectileHandler()
