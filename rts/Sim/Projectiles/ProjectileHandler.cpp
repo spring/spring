@@ -382,13 +382,16 @@ CProjectileHandler::CProjectileHandler()
 		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,16, 16, GL_RGBA, GL_UNSIGNED_BYTE, tempmem);
 	}
 
-	drawPerlinTex=true;
-	perlinFB = instantiate_fb(128);
-	if (!(perlinFB && perlinFB->valid()))
-		drawPerlinTex=false;
-	perlinFB->attachTexture(CProjectile::textures[0], GL_TEXTURE_2D, FBO_ATTACH_COLOR);
-	perlinFB->checkFBOStatus();
+	drawPerlinTex=false;
 
+	if(shadowHandler && shadowHandler->drawShadows){
+		perlinFB = instantiate_fb(128);
+		if (perlinFB && perlinFB->valid()){
+			drawPerlinTex=false;
+			perlinFB->attachTexture(CProjectile::textures[0], GL_TEXTURE_2D, FBO_ATTACH_COLOR);
+			perlinFB->checkFBOStatus();
+		}
+	}
 }
 
 CProjectileHandler::~CProjectileHandler()

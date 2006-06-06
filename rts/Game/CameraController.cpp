@@ -5,6 +5,7 @@
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
 #include "Platform/ConfigHandler.h"
+#include "Game/UI/MiniMap.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 
@@ -104,9 +105,10 @@ float3 CFPSController::SwitchFrom()
 	return pos;
 }
 
-void CFPSController::SwitchTo()
+void CFPSController::SwitchTo(bool showText)
 {
-	info->AddLine("Switching to FPS style camera");
+	if(showText)
+		info->AddLine("Switching to FPS style camera");
 }
 
 /////////////////////
@@ -234,9 +236,10 @@ float3 COverheadController::SwitchFrom()
 	return pos;
 }
 
-void COverheadController::SwitchTo()
+void COverheadController::SwitchTo(bool showText)
 {
-	info->AddLine("Switching to overhead (TA) style camera");
+	if(showText)
+		info->AddLine("Switching to overhead (TA) style camera");
 }
 
 /////////////////////
@@ -339,9 +342,10 @@ float3 CTWController::SwitchFrom()
 	return pos;
 }
 
-void CTWController::SwitchTo()
+void CTWController::SwitchTo(bool showText)
 {
-	info->AddLine("Switching to Total War style camera");
+	if(showText)
+		info->AddLine("Switching to Total War style camera");
 }
 
 /////////////////////
@@ -434,8 +438,70 @@ float3 CRotOverheadController::SwitchFrom()
 	return pos;
 }
 
-void CRotOverheadController::SwitchTo()
+void CRotOverheadController::SwitchTo(bool showText)
 {
-	info->AddLine("Switching to rotatable overhead camera");
+	if(showText)
+		info->AddLine("Switching to rotatable overhead camera");
 }
 
+
+/////////////////////
+//Overview Controller
+/////////////////////
+
+COverviewController::COverviewController()
+{
+}
+
+void COverviewController::KeyMove(float3 move)
+{
+}
+
+void COverviewController::MouseMove(float3 move)
+{
+}
+
+void COverviewController::ScreenEdgeMove(float3 move)
+{
+}
+
+void COverviewController::MouseWheelMove(float move)
+{
+}
+
+float3 COverviewController::GetPos()
+{
+	float height=10*max(gs->mapx*gu->screeny/gu->screenx,gs->mapy);		//map not created when constructor run
+
+	pos=float3(gs->mapx*4,ground->GetHeight(gs->mapx*4,gs->mapy*4)+height,gs->mapy*4);
+	return pos;
+}
+
+float3 COverviewController::GetDir()
+{
+	return float3(0,-1,-0.0001).Normalize();
+}
+
+void COverviewController::SetPos(float3 newPos)
+{
+}
+
+float3 COverviewController::SwitchFrom()
+{
+	float3 dir=mouse->dir;
+	float length=ground->LineGroundCol(pos,pos+dir*50000);
+	float3 rpos=pos+dir*length;
+
+	minimap->minimized=minimizeMinimap;
+
+	return rpos;
+}
+
+void COverviewController::SwitchTo(bool showText)
+{
+	if(showText)
+		info->AddLine("Switching to Overview style camera");
+
+	minimizeMinimap=minimap->minimized;
+	minimap->minimized=true;
+}

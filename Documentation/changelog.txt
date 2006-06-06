@@ -51,6 +51,7 @@ TASpring change log
 - Increased max camera zoom out (zooming to far can cause slowdowns/graphical glitches)
 - Added Radar group AI from colorblind: It notifies the player of incoming enemy units.
 - Added custom explosion generator: It can be enabled using "explosiongenerator=custom:SomeExplosionGeneratorName" in the weapon TDF. See the wiki page http://spring.clan-sy.com/wiki/CustomExplosionGenerators for more info.
+- Tab will now bring zoom out to show all map in any camera mode, tab again zooms back to the mouse cursor.
 
 0.71b1
 

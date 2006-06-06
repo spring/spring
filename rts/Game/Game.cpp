@@ -497,6 +497,9 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if(s=="drawinmap"){
 		inMapDrawer->keyPressed=true;
 	}
+	if(s=="toggleoverview"){
+		mouse->ToggleOverviewCamera();
+	}
 
 	if(s=="showhealthbars"){
 		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
