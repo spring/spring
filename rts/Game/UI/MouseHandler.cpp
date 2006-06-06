@@ -93,6 +93,7 @@ CMouseHandler::CMouseHandler()
 	camControllers.push_back(new CTWController);
 	camControllers.push_back(new CRotOverheadController);
 
+	overviewController=new COverviewController();
 	int mode=configHandler.GetInt("CamMode",1);
 	currentCamController=camControllers[mode];
 	currentCamControllerNum=mode;
@@ -611,6 +612,21 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 	currentCamController->MouseMove(move);
 	
 	mouseInput->SetPos (int2(lastx,lasty));
+}
+
+void CMouseHandler::ToggleOverviewCamera(void)
+{
+	if(currentCamController==overviewController){
+		float3 pos=overviewController->SwitchFrom();
+		currentCamController=camControllers[currentCamControllerNum];
+		currentCamController->SwitchTo(false);
+		currentCamController->SetPos(pos);
+	} else {
+		currentCamController=overviewController;
+		overviewController->SwitchTo(false);
+	}
+	inStateTransit=true;
+	transitSpeed=1;
 }
 
 

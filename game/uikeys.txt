@@ -53,3 +53,4 @@ bind \ DrawInMap
 // simulate mouse bindings for build spacing
 bind 'z' mouse4
 bind 'x' mouse5
+bind tab toggleoverview

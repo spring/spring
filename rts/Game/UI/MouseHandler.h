@@ -19,6 +19,7 @@ class CMouseHandler
 public:
 	void UpdateCam();
 	void ToggleState(bool shift);
+	void ToggleOverviewCamera(void);
 	void HideMouse();
 	void ShowMouse();
 	void Draw();
@@ -65,6 +66,7 @@ public:
 	CCameraController* currentCamController;
 	std::vector<CCameraController*> camControllers;
 	int currentCamControllerNum;
+	CCameraController* overviewController;
 protected:
 	int soundMultiselID;
 public:

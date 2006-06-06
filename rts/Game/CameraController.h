@@ -17,7 +17,7 @@ public:
 
 	virtual void SetPos(float3 newPos)=0;
 	virtual float3 SwitchFrom()=0;			//return pos that to send to new controllers SetPos
-	virtual void SwitchTo()=0;
+	virtual void SwitchTo(bool showText=true)=0;
 	
 	float mouseScale;
 	float scrollSpeed;
@@ -39,7 +39,7 @@ public:
 
 	void SetPos(float3 newPos);
 	float3 SwitchFrom();
-	void SwitchTo();
+	void SwitchTo(bool showText);
 
 	float3 pos;
 	float oldHeight;
@@ -62,7 +62,7 @@ public:
 
 	void SetPos(float3 newPos);
 	float3 SwitchFrom();
-	void SwitchTo();
+	void SwitchTo(bool showText);
 
 	float zscale;
 	float3 pos;
@@ -88,7 +88,7 @@ public:
 
 	void SetPos(float3 newPos);
 	float3 SwitchFrom();
-	void SwitchTo();
+	void SwitchTo(bool showText);
 
 	float3 pos;
 };
@@ -108,12 +108,33 @@ public:
 
 	void SetPos(float3 newPos);
 	float3 SwitchFrom();
-	void SwitchTo();
+	void SwitchTo(bool showText);
 
 	float3 pos;
 	float oldHeight;
 
 	float3 dir;
+};
+
+class COverviewController : public CCameraController
+{
+public:
+	COverviewController();
+
+	void KeyMove(float3 move);
+	void MouseMove(float3 move);
+	void ScreenEdgeMove(float3 move);
+	void MouseWheelMove(float move);
+
+	float3 GetPos();
+	float3 GetDir();
+
+	void SetPos(float3 newPos);
+	float3 SwitchFrom();
+	void SwitchTo(bool showText);
+
+	float3 pos;
+	bool minimizeMinimap;
 };
 
 #endif // __CAMERA_CONTROLLER_H__
