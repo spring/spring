@@ -46,23 +46,31 @@ CInMapDraw::CInMapDraw(void)
 	for(int y=0;y<64;y++){	//circular thingy
 		for(int x=0;x<64;x++){
 			float dist=sqrt((float)(x-32)*(x-32)+(y-32)*(y-32));
-			if(dist>31.875)
-				dist=31.875;
-			tex[y][x][0]=255;
-			tex[y][x][1]=255;
-			tex[y][x][2]=255;
-			tex[y][x][3]=(unsigned char) (255-dist*8);
+			if (dist > 31.875) {
+				// do nothing - leave transparent
+			} else if (dist > 24.5) {
+				// black outline
+				tex[y][x][3]=255;
+			} else {
+				tex[y][x][0]=255;
+				tex[y][x][1]=255;
+				tex[y][x][2]=255;
+				tex[y][x][3]=(unsigned char) (255-dist*8);
+			}
 		}
 	}
 	for(int y=0;y<64;y++){	//linear falloff
 		for(int x=0;x<64;x++){
 			float dist=abs(y-32);
-			if(dist>31.5)
-				dist=31.5;
-			tex[y][x+64][0]=255;
-			tex[y][x+64][1]=255;
-			tex[y][x+64][2]=255;
-			tex[y][x+64][3]=(unsigned char) (255-dist*8);
+			if(dist > 24.5) {
+				// black outline
+				tex[y][x+64][3]=255;
+			} else {
+				tex[y][x+64][0]=255;
+				tex[y][x+64][1]=255;
+				tex[y][x+64][2]=255;
+				tex[y][x+64][3]=(unsigned char) (255-dist*8);
+			}
 		}
 	}
 	glGenTextures(1, &texture);
