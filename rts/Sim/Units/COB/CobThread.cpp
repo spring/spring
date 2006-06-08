@@ -44,7 +44,7 @@ void CCobThread::SetCallback(CBCobThreadFinish cb, void *p1, void *p2)
 //This function sets the thread in motion. Should only be called once.
 //If schedule is false the thread is not added to the scheduler, and thus
 //it is expected that the starter is responsible for ticking it.
-void CCobThread::Start(int functionId, const vector<long> &args, bool schedule) 
+void CCobThread::Start(int functionId, const vector<int> &args, bool schedule) 
 {
 	state = Run;
 	PC = script.scriptOffsets[functionId];
@@ -59,7 +59,7 @@ void CCobThread::Start(int functionId, const vector<long> &args, bool schedule)
 	callback = NULL;
 	retCode = -1;
 
-	for(vector<long>::const_iterator i = args.begin(); i != args.end(); ++i) {
+	for(vector<int>::const_iterator i = args.begin(); i != args.end(); ++i) {
 		stack.push_back(*i);
 		paramCount++;
 	}
@@ -89,78 +89,78 @@ int CCobThread::GetWakeTime() const
 //And some information from basm0.8 source (basm ops.txt)
 
 //Model interaction
-const long int MOVE = 0x10001000;
-const long int TURN = 0x10002000;
-const long int SPIN = 0x10003000;
-const long int STOP_SPIN = 0x10004000;
-const long int SHOW = 0x10005000;
-const long int HIDE = 0x10006000;
-const long int CACHE = 0x10007000;
-const long int DONT_CACHE = 0x10008000;
-const long int MOVE_NOW = 0x1000B000;
-const long int TURN_NOW = 0x1000C000;
-const long int SHADE = 0x1000D000;
-const long int DONT_SHADE = 0x1000E000;
-const long int EMIT_SFX = 0x1000F000;
+const int MOVE = 0x10001000;
+const int TURN = 0x10002000;
+const int SPIN = 0x10003000;
+const int STOP_SPIN = 0x10004000;
+const int SHOW = 0x10005000;
+const int HIDE = 0x10006000;
+const int CACHE = 0x10007000;
+const int DONT_CACHE = 0x10008000;
+const int MOVE_NOW = 0x1000B000;
+const int TURN_NOW = 0x1000C000;
+const int SHADE = 0x1000D000;
+const int DONT_SHADE = 0x1000E000;
+const int EMIT_SFX = 0x1000F000;
 
 //Blocking operations
-const long int WAIT_TURN = 0x10011000;
-const long int WAIT_MOVE = 0x10012000;
-const long int SLEEP = 0x10013000;
+const int WAIT_TURN = 0x10011000;
+const int WAIT_MOVE = 0x10012000;
+const int SLEEP = 0x10013000;
 
 //Stack manipulation
-const long int PUSH_CONSTANT = 0x10021001;
-const long int PUSH_LOCAL_VAR = 0x10021002;
-const long int PUSH_STATIC = 0x10021004;
-const long int CREATE_LOCAL_VAR = 0x10022000;
-const long int POP_LOCAL_VAR = 0x10023002;
-const long int POP_STATIC = 0x10023004;
-const long int POP_STACK = 0x10024000;		// Not sure what this is supposed to do
+const int PUSH_CONSTANT = 0x10021001;
+const int PUSH_LOCAL_VAR = 0x10021002;
+const int PUSH_STATIC = 0x10021004;
+const int CREATE_LOCAL_VAR = 0x10022000;
+const int POP_LOCAL_VAR = 0x10023002;
+const int POP_STATIC = 0x10023004;
+const int POP_STACK = 0x10024000;		// Not sure what this is supposed to do
 
 //Arithmetic operations
-const long int ADD = 0x10031000;
-const long int SUB = 0x10032000;
-const long int MUL = 0x10033000;
-const long int DIV = 0x10034000;
-const long int BITWISE_AND = 0x10035000;
-const long int BITWISE_OR = 0x10036000;
-const long int BITWISE_XOR = 0x10037000;
-const long int BITWISE_NOT = 0x10038000;
+const int ADD = 0x10031000;
+const int SUB = 0x10032000;
+const int MUL = 0x10033000;
+const int DIV = 0x10034000;
+const int BITWISE_AND = 0x10035000;
+const int BITWISE_OR = 0x10036000;
+const int BITWISE_XOR = 0x10037000;
+const int BITWISE_NOT = 0x10038000;
 
 //Native function calls
-const long int RAND = 0x10041000;
-const long int GET_UNIT_VALUE = 0x10042000;
-const long int GET = 0x10043000;
+const int RAND = 0x10041000;
+const int GET_UNIT_VALUE = 0x10042000;
+const int GET = 0x10043000;
 
 //Comparison
-const long int SET_LESS = 0x10051000;
-const long int SET_LESS_OR_EQUAL = 0x10052000;
-const long int SET_GREATER = 0x10053000;
-const long int SET_GREATER_OR_EQUAL = 0x10054000;
-const long int SET_EQUAL = 0x10055000;
-const long int SET_NOT_EQUAL = 0x10056000;
-const long int LOGICAL_AND = 0x10057000;
-const long int LOGICAL_OR = 0x10058000;
-const long int LOGICAL_XOR = 0x10059000;
-const long int LOGICAL_NOT = 0x1005A000;
+const int SET_LESS = 0x10051000;
+const int SET_LESS_OR_EQUAL = 0x10052000;
+const int SET_GREATER = 0x10053000;
+const int SET_GREATER_OR_EQUAL = 0x10054000;
+const int SET_EQUAL = 0x10055000;
+const int SET_NOT_EQUAL = 0x10056000;
+const int LOGICAL_AND = 0x10057000;
+const int LOGICAL_OR = 0x10058000;
+const int LOGICAL_XOR = 0x10059000;
+const int LOGICAL_NOT = 0x1005A000;
 
 //Flow control
-const long int START = 0x10061000;
-const long int CALL = 0x10062000;
-const long int JUMP = 0x10064000;
-const long int RETURN = 0x10065000;
-const long int JUMP_NOT_EQUAL = 0x10066000;
-const long int SIGNAL = 0x10067000;
-const long int SET_SIGNAL_MASK = 0x10068000;
+const int START = 0x10061000;
+const int CALL = 0x10062000;
+const int JUMP = 0x10064000;
+const int RETURN = 0x10065000;
+const int JUMP_NOT_EQUAL = 0x10066000;
+const int SIGNAL = 0x10067000;
+const int SET_SIGNAL_MASK = 0x10068000;
 
 //Piece destruction
-const long int EXPLODE = 0x10071000;
-const long int PLAY_SOUND = 0x10072000;
+const int EXPLODE = 0x10071000;
+const int PLAY_SOUND = 0x10072000;
 
 //Special functions
-const long int SET = 0x10082000;
-const long int ATTACH = 0x10083000;
-const long int DROP = 0x10084000;
+const int SET = 0x10082000;
+const int ATTACH = 0x10083000;
+const int DROP = 0x10084000;
 
 //Handy macros
 #define GET_LONG_PC() (script.code[PC++])
@@ -190,14 +190,14 @@ int CCobThread::Tick(int deltaTime)
 	state = Run;
 	GCobEngine.SetCurThread(this);
 
-	long r1, r2, r3, r4, r5, r6;
-	vector<long> args;
+	int r1, r2, r3, r4, r5, r6;
+	vector<int> args;
 	CCobThread *thread;
 
 	execTrace.clear();
 	delayedAnims.clear();
-	//list<long>::iterator ei;
-	vector<long>::iterator ei;
+	//list<int>::iterator ei;
+	vector<int>::iterator ei;
 
 #if COB_DEBUG > 0
 	if (COB_DEBUG_FILTER)
@@ -205,12 +205,12 @@ int CCobThread::Tick(int deltaTime)
 #endif
 
 	while (state == Run) {
-		//long opcode = *(long *)&script.code[PC];
+		//int opcode = *(int *)&script.code[PC];
 		
 		//Disabling exec trace gives about a 50% speedup on vm-intensive code
 		//execTrace.push_back(PC);
 
-		long opcode = GET_LONG_PC();
+		int opcode = GET_LONG_PC();
 
 #if COB_DEBUG > 1
 		if (COB_DEBUG_FILTER)

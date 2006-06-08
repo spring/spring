@@ -42,7 +42,7 @@ void CLoadInterface::lsFloat(float& v)
 
 void CLoadInterface::lsFloat3(float3& v)
 {
-	ifs->read((char*)v.xyz,sizeof(float)*3);
+	ifs->read((char*)&v.x,sizeof(float)*3);
 }
 
 void CLoadInterface::lsDouble(double& v)

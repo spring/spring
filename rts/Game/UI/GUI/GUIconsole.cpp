@@ -13,9 +13,9 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-static long lifetime;
+static int lifetime;
 
-static long CurrentTime()
+static int CurrentTime()
 {
 	time_t ltime;
 	time(&ltime);
@@ -26,7 +26,7 @@ GUIconsole::GUIconsole(const int x1, const int y1, const int w1, const int h1):G
 {
 	numLines=(int)(h/guifont->GetHeight());
 
-	lifetime=(long int)(configHandler.GetInt("InfoMessageTime",400)/100.0);
+	lifetime=configHandler.GetInt("InfoMessageTime",400)/100;
 }
 
 GUIconsole::~GUIconsole()
@@ -50,11 +50,11 @@ void GUIconsole::PrivateDraw()
 
 	glColor3f(1, 1, 1);
 
-	long time=CurrentTime();
+	int time=CurrentTime();
 
 	if(!lines.empty())
 	{
-		long frontTime=lines.front().time;
+		int frontTime=lines.front().time;
 		if(frontTime<time)
 			lines.pop_front();
 	}
@@ -77,7 +77,7 @@ void GUIconsole::AddText(const std::string& text)
 	curLine+=text;
 
 	size_t lf;
-	long time=CurrentTime()+lifetime;
+	int time=CurrentTime()+lifetime;
 	while((lf=curLine.find('\n'))!=string::npos)   
 	{
 		lines.push_back(ConsoleLine(curLine.substr(0, lf), time));

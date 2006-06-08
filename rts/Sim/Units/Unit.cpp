@@ -540,9 +540,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	float3 hitDir = impulse;
 	hitDir.y = 0;
 	hitDir = -hitDir.Normalize();
-	std::vector<long> hitAngles;
-	hitAngles.push_back((long)(500 * hitDir.z));
-	hitAngles.push_back((long)(500 * hitDir.x));
+	std::vector<int> hitAngles;
+	hitAngles.push_back((int)(500 * hitDir.z));
+	hitAngles.push_back((int)(500 * hitDir.x));
 	cob->Call(COBFN_HitByWeapon, hitAngles);	
 
 	damage*=curArmorMultiple;
@@ -1115,13 +1115,13 @@ void CUnit::FinishedBuilding(void)
 	{
 		if(wind.curStrength > unitDef->windGenerator)
 		{
-			cob->Call(COBFN_SetSpeed, (long)(unitDef->windGenerator*3000.0f));
+			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
 		}
 		else
 		{
-			cob->Call(COBFN_SetSpeed, (long)(wind.curStrength*3000.0f));
+			cob->Call(COBFN_SetSpeed, (int)(wind.curStrength*3000.0f));
 		}
-		cob->Call(COBFN_SetDirection, (long)GetHeadingFromVector(-wind.curDir.x, -wind.curDir.z));
+		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.curDir.x, -wind.curDir.z));
 	}
 
 	if(unitDef->activateWhenBuilt)
@@ -1202,8 +1202,8 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 		if(selfDestruct)
 			recentDamage+=maxHealth*2;
 
-		vector<long> args;
-		args.push_back((long)(recentDamage/maxHealth*100));
+		vector<int> args;
+		args.push_back((int)(recentDamage/maxHealth*100));
 		args.push_back(0);
 		cob->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
 
@@ -1272,7 +1272,7 @@ void CUnit::AddEnergy(float energy)
 void CUnit::Activate()
 {
 	//if(unitDef->tidalGenerator>0)
-	//	cob->Call(COBFN_SetSpeed, (long)(readmap->tidalStrength*3000.0f*unitDef->tidalGenerator));
+	//	cob->Call(COBFN_SetSpeed, (int)(readmap->tidalStrength*3000.0f*unitDef->tidalGenerator));
 
 	if(activated)
 		return;
@@ -1312,14 +1312,14 @@ void CUnit::PushWind(float x, float z, float strength)
 {
 	if(strength > unitDef->windGenerator)
 	{
-		cob->Call(COBFN_SetSpeed, (long)(unitDef->windGenerator*3000.0f));
+		cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
 	}
 	else
 	{
-		cob->Call(COBFN_SetSpeed, (long)(strength*3000.0f));
+		cob->Call(COBFN_SetSpeed, (int)(strength*3000.0f));
 	}
 
-	cob->Call(COBFN_SetDirection, (long)GetHeadingFromVector(-x, -z));
+	cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-x, -z));
 }
 
 void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)

@@ -468,7 +468,7 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 	float3 wantedDir=(pos-this->pos).Normalize();
 	short int h=GetHeadingFromVector(wantedDir.x,wantedDir.z);
 
-	std::vector<long> args;
+	std::vector<int> args;
 	args.push_back(short(h-heading));
 	cob->Call("StartBuilding",args);
 
@@ -491,7 +491,7 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
-	std::vector<long> args;
+	std::vector<int> args;
 	args.push_back(0);
 	cob->Call("QueryNanoPiece",args);
 	float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);

@@ -270,7 +270,7 @@ public:
 	 * (index 0 is x, index 1 is y, index 2 is z)
 	 */
 	inline float& operator[] (const int t) {
-		return xyz[t];
+		return (&x)[t];
 	}
 
 	/**
@@ -282,7 +282,7 @@ public:
 	 * a const context
 	 */
 	inline const float& operator[] (const int t) const {
-		return xyz[t];
+		return (&x)[t];
 	}
 
 	/**
@@ -409,41 +409,16 @@ public:
 		return x*x+z*z;
 	}
 
-	/**
-	 * @brief union of x/y/z floats
-	 * 
-	 * The x/y/z components can be stored
-	 * in two different ways inside this union.
-	 */
-	union {
-		/**
-		 * @brief struct method
-		 * 
-		 * Contains the individual
-		 * x/y/z floats combined in a struct.
-		 */
-		struct{
-			float x;
-			float y;
-			float z;
-		};
-
-		/**
-		 * @brief array method
-		 * 
-		 * Stores the x/y/z components in
-		 * an array of floats, such that
-		 * index 0 is x, index 1 is y, and
-		 * index 2 is z.
-		 */
-		float xyz[3];
-	};
+	float x; ///< x component
+	float y; ///< y component
+	float z; ///< z component
 
 	/**
 	 * @brief max x pos
 	 * 
 	 * Static value containing the maximum
 	 * x position
+	 * @note maxxpos is set after loading the map.
 	 */
 	static float maxxpos;
 
@@ -452,6 +427,7 @@ public:
 	 * 
 	 * Static value containing the maximum
 	 * z position
+	 * @note maxzpos is set after loading the map.
 	 */
 	static float maxzpos;
 

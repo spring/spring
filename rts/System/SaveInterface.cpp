@@ -42,7 +42,7 @@ void CSaveInterface::lsFloat(float& v)
 
 void CSaveInterface::lsFloat3(float3& v)
 {
-	ofs->write((char*)v.xyz,sizeof(float)*3);
+	ofs->write((char*)&v.x,sizeof(float)*3);
 }
 
 void CSaveInterface::lsDouble(double& v)

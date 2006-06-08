@@ -1349,7 +1349,7 @@ END_TIME_PROFILE("Sim time")
 		CUnit* unit=gs->players[a]->playerControlledUnit;
 		DirectControlStruct* dc=&gs->players[a]->myControl;
 		
-		std::vector<long> args;
+		std::vector<int> args;
 		args.push_back(0);
 		unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/**/,args);
 		float3 relPos=unit->localmodel->GetPiecePos(args[0]);
@@ -1959,7 +1959,7 @@ void CGame::UpdateUI()
 	if(gu->directControl){
 		CUnit* owner=gu->directControl;
 
-		std::vector<long> args;
+		std::vector<int> args;
 		args.push_back(0);
 		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/**/,args);
 		float3 relPos=owner->localmodel->GetPiecePos(args[0]);
