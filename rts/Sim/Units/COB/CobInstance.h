@@ -49,7 +49,7 @@ protected:
 
 public:
 	bool busy;
-	vector<long> staticVars;
+	vector<int> staticVars;
 	list<CCobThread *> threads;
 	vector<struct PieceInfo> pieces;	
 	bool smoothAnim;
@@ -59,15 +59,15 @@ public:
 	void InitVars();
 	int Call(const string &fname);
 	int Call(const string &fname, int p1);
-	int Call(const string &fname, vector<long> &args);
+	int Call(const string &fname, vector<int> &args);
 	int Call(const string &fname, CBCobThreadFinish cb, void *p1, void *p2);
-	int Call(const string &fname, vector<long> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(const string &fname, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	int Call(int id);
-	int Call(int id, vector<long> &args);
+	int Call(int id, vector<int> &args);
 	int Call(int id, int p1);
 	int Call(int id, CBCobThreadFinish cb, void *p1, void *p2);
-	int Call(int id, vector<long> &args, CBCobThreadFinish cb, void *p1, void *p2);
-	int RealCall(int functionId, vector<long> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	int Tick(int deltaTime);
 	int MoveToward(int &cur, int dest, int speed);
 	int TurnToward(int &cur, int dest, int speed);
@@ -87,7 +87,7 @@ public:
 	void AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated = false);
 	int AddTurnListener(int piece, int axis, CCobThread *listener);
 	int AddMoveListener(int piece, int axis, CCobThread *listener);
-	void Signal(long signal);
+	void Signal(int signal);
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
 	void Explode(int piece, int flags);

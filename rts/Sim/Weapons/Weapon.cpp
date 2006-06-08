@@ -94,7 +94,7 @@ CWeapon::~CWeapon()
 void CWeapon::Update()
 {
 	if(hasCloseTarget){
-		std::vector<long> args;
+		std::vector<int> args;
 		args.push_back(0);
 		if(useWeaponPosForAim){
 			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
@@ -135,7 +135,7 @@ void CWeapon::Update()
 
 			short int heading=GetHeadingFromVector(wantedDir.x,wantedDir.z);
 			short int pitch=(short int) (asin(wantedDir.dot(owner->updir))*(32768/PI));
-			std::vector<long> args;
+			std::vector<int> args;
 			args.push_back(short(heading-owner->heading));
 			args.push_back(pitch);
 			owner->cob->Call(COBFN_AimPrimary+weaponNum,args,ScriptCallback,this,0);
@@ -168,7 +168,7 @@ void CWeapon::Update()
 	&& (!weaponDef->stockpile || numStockpiled)
 	&& (weaponDef->waterweapon || weaponPos.y>0)
 	){
-		std::vector<long> args;
+		std::vector<int> args;
 		args.push_back(0);
 		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
 		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
@@ -205,7 +205,7 @@ void CWeapon::Update()
 		nextSalvo=gs->frameNum+salvoDelay;
 		owner->lastFireWeapon=gs->frameNum;
 
-		std::vector<long> args;
+		std::vector<int> args;
 		args.push_back(0);
 		owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);
 		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
@@ -222,9 +222,9 @@ void CWeapon::Update()
 		float3 rockDir = wantedDir;
 		rockDir.y = 0;
 		rockDir = -rockDir.Normalize();
-		std::vector<long> rockAngles;
-		rockAngles.push_back((long)(500 * rockDir.z));
-		rockAngles.push_back((long)(500 * rockDir.x));
+		std::vector<int> rockAngles;
+		rockAngles.push_back((int)(500 * rockDir.z));
+		rockAngles.push_back((int)(500 * rockDir.x));
 		owner->cob->Call(COBFN_RockUnit,  rockAngles);		
 
 		owner->commandAI->WeaponFired(this);
@@ -315,7 +315,7 @@ void CWeapon::SlowUpdate()
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
 
-	std::vector<long> args;
+	std::vector<int> args;
 	args.push_back(0);
 	if(useWeaponPosForAim){
 		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
@@ -443,7 +443,7 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 
 void CWeapon::Init(void)
 {
-	std::vector<long> args;
+	std::vector<int> args;
 	args.push_back(0);
 	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);

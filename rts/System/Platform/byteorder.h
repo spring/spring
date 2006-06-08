@@ -67,9 +67,9 @@ static inline float swabfloat(float w) {
 #define swabword(w)	(htole16(w))
 #define swabdword(w)	(htole32(w))
 static inline float swabfloat(float w) {
-	/* compile time assertion to validate sizeof(long) == sizeof(float) */
-	typedef int sizeof_long_equals_sizeof_float[sizeof(long) == sizeof(float) ? 1 : -1];
-	long l = swabdword(*(long*)&w);
+	/* compile time assertion to validate sizeof(int) == sizeof(float) */
+	typedef int sizeof_long_equals_sizeof_float[sizeof(int) == sizeof(float) ? 1 : -1];
+	int l = swabdword(*(int*)&w);
 	return *(float*)&l;
 }
 

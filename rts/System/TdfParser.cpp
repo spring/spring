@@ -457,7 +457,7 @@ float3 TdfParser::GetFloat3(float3 def, std::string const& location)
 	if(s.empty())
 		return def;
 	float3 ret;
-	ParseArray(s,ret.xyz,3);
+	ParseArray(s,&ret.x,3);
 	return ret;
 }
 

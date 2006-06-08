@@ -97,12 +97,12 @@ void CTransportCAI::SlowUpdate(void)
 						if(owner->pos.distance(wantedPos)<4 && abs(owner->heading-unit->heading)<50 && owner->updir.dot(UpVector)>0.995){
 							am->dontCheckCol=false;
 							am->dontLand=true;
-							std::vector<long> args;
-							args.push_back((long)(unit->model->height*65536));
+							std::vector<int> args;
+							args.push_back((int)(unit->model->height*65536));
 							owner->cob->Call("BeginTransport",args);
-							std::vector<long> args2;
+							std::vector<int> args2;
 							args2.push_back(0);
-							args2.push_back((long)(unit->model->height*65536));
+							args2.push_back((int)(unit->model->height*65536));
 							owner->cob->Call("QueryTransport",args2);
 							((CTransportUnit*)owner)->AttachUnit(unit,args2[0]);
 							am->SetWantedAltitude(0);
@@ -113,7 +113,7 @@ void CTransportCAI::SlowUpdate(void)
 						inCommand=true;
 						scriptReady=false;
 						StopMove();
-						std::vector<long> args;
+						std::vector<int> args;
 						args.push_back(unit->id);
 						owner->cob->Call("TransportPickup",args,ScriptCallback,this,0);
 					}
@@ -203,7 +203,7 @@ void CTransportCAI::SlowUpdate(void)
 					inCommand=true;
 					scriptReady=false;
 					StopMove();
-					std::vector<long> args;
+					std::vector<int> args;
 					args.push_back(((CTransportUnit*)owner)->transported.front().unit->id);
 					args.push_back(PACKXZ(pos.x, pos.z));
 					owner->cob->Call("TransportDrop",args,ScriptCallback,this,0);

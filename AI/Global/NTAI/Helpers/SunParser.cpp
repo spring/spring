@@ -423,6 +423,6 @@ float3 CSunParser::GetFloat3(float3 def, std::string location)
 		return def;
 
 	float3 ret;
-	ParseArray(s,ret.xyz,3);
+	ParseArray(s,&ret.x,3);
 	return ret;
 }

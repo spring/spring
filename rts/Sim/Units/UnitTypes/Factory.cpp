@@ -65,7 +65,7 @@ void CFactory::Update()
 	}
 
 	if(quedBuild && inBuildStance){
-		std::vector<long> args;
+		std::vector<int> args;
 		args.push_back(0);
 		cob->Call("QueryBuildInfo",args);
 		float3 relBuildPos=localmodel->GetPiecePos(args[0]);
@@ -95,7 +95,7 @@ void CFactory::Update()
 	if(curBuild && !beingBuilt){
 		lastBuild=gs->frameNum;
 
-		std::vector<long> args;
+		std::vector<int> args;
 		args.push_back(0);
 		cob->Call("QueryBuildInfo",args);
 		CMatrix44f mat=localmodel->GetPieceMatrix(args[0]);
@@ -110,7 +110,7 @@ void CFactory::Update()
 			curBuild->midPos=curBuild->pos+UpVector*curBuild->relMidPos.y;
 //		}
 		if(curBuild->AddBuildPower(buildSpeed,this)){
-			std::vector<long> args;
+			std::vector<int> args;
 			args.push_back(0);
 			cob->Call("QueryNanoPiece",args);
 			float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);

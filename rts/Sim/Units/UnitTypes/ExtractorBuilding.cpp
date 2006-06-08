@@ -134,7 +134,7 @@ void CExtractorBuilding::ReCalculateMetalExtraction() {
 	}
 
 	//Sets the new rotation-speed.
-	cob->Call(COBFN_SetSpeed, (long)(metalExtract*100.0f));
+	cob->Call(COBFN_SetSpeed, (int)(metalExtract*100.0f));
 	cob->Call("Go");
 
 }
@@ -151,6 +151,6 @@ void CExtractorBuilding::FinishedBuilding() {
 		tracefile << metalExtract << " ";
 #endif
 
-	cob->Call(COBFN_SetSpeed, (long)(metalExtract*100.0f));
+	cob->Call(COBFN_SetSpeed, (int)(metalExtract*100.0f));
 	CBuilding::FinishedBuilding();
 }

@@ -416,7 +416,7 @@ void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char bl
 		}
 		if ( numCounted != 0 )
 		{
-			aCol.xyz[a]=cCol/255.0f/numCounted;
+			aCol[a]=cCol/255.0f/numCounted;
 		}
 	}
 	for(int y=0;y<ysize;++y)
@@ -470,9 +470,9 @@ void CBitmap::Renormalize(float3 newCol)
 				}
 			}
 		}
-		aCol.xyz[a]=cCol/255.0f/numCounted;
+		aCol[a]=cCol/255.0f/numCounted;
 		cCol/=xsize*ysize;
-		colorDif.xyz[a]=newCol[a]-aCol[a];
+		colorDif[a]=newCol[a]-aCol[a];
 
 /*		int spread=0;
         for(int y=0;y<ysize;++y){
@@ -489,7 +489,7 @@ void CBitmap::Renormalize(float3 newCol)
 	for(int a=0;a<3;++a){
 		for(int y=0;y<ysize;++y){
 			for(int x=0;x<xsize;++x){
-				float nc=float(mem[(y*xsize+x)*4+a])/255.0f+colorDif.xyz[a];
+				float nc=float(mem[(y*xsize+x)*4+a])/255.0f+colorDif[a];
 				/*				float r=newCol.xyz[a]+(nc-newCol.xyz[a])*spreadMul.xyz[a];*/
 				mem[(y*xsize+x)*4+a]=(unsigned char)(std::min(255.f,std::max(0.f,nc*255)));
 			}
@@ -662,7 +662,7 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 	unsigned char *imageData = 0;
 	GWorldPtr gworld = 0;
 	OSType pixelFormat;
-	long rowStride;
+	int rowStride;
 	GraphicsImportComponent gicomp;
 	Rect rectImage;
 	GDHandle origDevice;

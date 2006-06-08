@@ -18,12 +18,12 @@ protected:
 	CCobInstance *owner;
 
 	int wakeTime;
-	long PC;
-	vector<long> stack;
-	vector<long> execTrace;
+	int PC;
+	vector<int> stack;
+	vector<int> execTrace;
 
 	int paramCount;
-	long retCode;
+	int retCode;
 
 	struct callInfo {
 		int functionId;
@@ -48,12 +48,12 @@ protected:
 public:
 	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
 	State state;
-	long signalMask;
+	int signalMask;
 public:
 	CCobThread(CCobFile &script, CCobInstance *owner);
 	~CCobThread(void);
 	int Tick(int deltaTime);
-	void Start(int functionId, const vector<long> &args, bool schedule);
+	void Start(int functionId, const vector<int> &args, bool schedule);
 	void SetCallback(CBCobThreadFinish cb, void *p1, void *p2);
 	string GetOpcodeName(int opcode);
 	void DependentDied(CObject* o);

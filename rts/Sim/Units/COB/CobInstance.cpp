@@ -132,29 +132,29 @@ CCobInstance::~CCobInstance(void)
 }
 int CCobInstance::Call(const string &fname)
 {
-	vector<long> x;
+	vector<int> x;
 	return Call(fname, x, NULL, NULL, NULL);
 }
 
-int CCobInstance::Call(const string &fname, vector<long> &args)
+int CCobInstance::Call(const string &fname, vector<int> &args)
 {
 	return Call(fname, args, NULL, NULL, NULL);
 }
 
 int CCobInstance::Call(const string &fname, int p1)
 {
-	vector<long> x;
+	vector<int> x;
 	x.push_back(p1);
 	return Call(fname, x, NULL, NULL, NULL);
 }
 
 int CCobInstance::Call(const string &fname, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	vector<long> x;
+	vector<int> x;
 	return Call(fname, x, cb, p1, p2);
 }
 
-int CCobInstance::Call(const string &fname, vector<long> &args, CBCobThreadFinish cb, void *p1, void *p2)
+int CCobInstance::Call(const string &fname, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
 	int fn = script.getFunctionId(fname);
 	if (fn == -1) {
@@ -167,29 +167,29 @@ int CCobInstance::Call(const string &fname, vector<long> &args, CBCobThreadFinis
 
 int CCobInstance::Call(int id)
 {
-	vector<long> x;
+	vector<int> x;
 	return Call(id, x, NULL, NULL, NULL);
 }
 
 int CCobInstance::Call(int id, int p1)
 {
-	vector<long> x;
+	vector<int> x;
 	x.push_back(p1);
 	return Call(id, x, NULL, NULL, NULL);
 }
 
-int CCobInstance::Call(int id, vector<long> &args)
+int CCobInstance::Call(int id, vector<int> &args)
 {
 	return Call(id, args, NULL, NULL, NULL);
 }
 
 int CCobInstance::Call(int id, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	vector<long> x;
+	vector<int> x;
 	return Call(id, x, cb, p1, p2);
 }
 
-int CCobInstance::Call(int id, vector<long> &args, CBCobThreadFinish cb, void *p1, void *p2)
+int CCobInstance::Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
 	int fn = script.scriptIndex[id];
 	if (fn == -1) {
@@ -205,7 +205,7 @@ int CCobInstance::Call(int id, vector<long> &args, CBCobThreadFinish cb, void *p
 
 //Returns 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
 //it will continue to run. Otherwise it will be killed. Returns 1 in this case.
-int CCobInstance::RealCall(int functionId, vector<long> &args, CBCobThreadFinish cb, void *p1, void *p2)
+int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
 	CCobThread *t = new CCobThread(script, this);
 	t->Start(functionId, args, false);
@@ -650,7 +650,7 @@ int CCobInstance::AddMoveListener(int piece, int axis, CCobThread *listener)
 		return 0;	
 }
 
-void CCobInstance::Signal(long signal)
+void CCobInstance::Signal(int signal)
 {
 	for (list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
 		if ((signal & (*i)->signalMask) != 0) {

@@ -26,9 +26,9 @@ protected:
 
 	struct ConsoleLine
 	{
-		ConsoleLine(std::string text1, long time1): time(time1), text(text1)
+		ConsoleLine(std::string text1, int time1): time(time1), text(text1)
 		{}
-		long time;
+		int time;
 		std::string text;
 	};	
 	std::deque<ConsoleLine> lines;

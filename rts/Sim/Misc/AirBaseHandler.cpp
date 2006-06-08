@@ -28,7 +28,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 	AirBase* ab=new AirBase;
 	ab->unit=base;
 
-	std::vector<long> args;
+	std::vector<int> args;
 	args.push_back(0);
 	args.push_back(0);
 
