@@ -55,7 +55,7 @@ static boost::mutex netMutex;
 CNet* net=0;
 CNet* serverNet=0;
 extern std::string stupidGlobalMapname;
-extern int stupidGlobalMapId;
+extern std::string stupidGlobalModname;
 
 static bool IsFakeError()
 {
@@ -504,8 +504,14 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		tempbuf[1]=freeConn;
 		SendData(tempbuf,2,freeConn);
 
-		SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance().chosenName);
-		SendSTLData<int, std::string>(NETMSG_MAPNAME, stupidGlobalMapId, stupidGlobalMapname);
+		// Send over data that's already known to other clients.
+		// Don't send it if host has not yet decided.
+		if (!CScriptHandler::Instance().chosenName.empty())
+			SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance().chosenName);
+		if (!stupidGlobalMapname.empty())
+			SendSTLData<std::string>(NETMSG_MAPNAME, stupidGlobalMapname);
+		if (!stupidGlobalModname.empty())
+			SendSTLData<std::string>(NETMSG_MODNAME, stupidGlobalModname);
 
 		for(int a=0;a<gs->activePlayers;a++){
 			if(!gs->players[a]->readyToStart)

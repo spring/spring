@@ -33,7 +33,12 @@ void CScript::SetCamera()
 
 }
 
-std::string CScript::GetMapName(void)
+std::string CScript::GetMapName()
+{
+	return "";
+}
+
+std::string CScript::GetModName()
 {
 	return "";
 }

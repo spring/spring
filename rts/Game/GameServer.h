@@ -13,13 +13,13 @@
 class CGameServer
 {
 public:
-	CGameServer(void);
-	~CGameServer(void);
-	bool Update(void);
+	CGameServer();
+	~CGameServer();
+	bool Update();
 	bool ServerReadNet();
-	void CheckForGameEnd(void);
+	void CheckForGameEnd();
 	void CreateNewFrame(bool fromServerThread=false);
-	void UpdateLoop(void);
+	void UpdateLoop();
 
 	bool makeMemDump;
 	unsigned char inbuf[40000];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE but dont want to include net.h here
@@ -29,7 +29,7 @@ public:
 	float timeLeft;
 
 	unsigned int serverframenum;
-	void StartGame(void);
+	void StartGame();
 
 	bool gameLoading;
 	bool gameEndDetected;

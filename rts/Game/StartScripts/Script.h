@@ -15,7 +15,8 @@ public:
 	CScript(const std::string& name);
 	virtual ~CScript();
 
-	virtual std::string GetMapName(void);
+	virtual std::string GetMapName();
+	virtual std::string GetModName();
 
 	bool wantCameraControl;
 	bool onlySinglePlayer;

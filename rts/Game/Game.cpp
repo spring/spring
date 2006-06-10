@@ -124,7 +124,6 @@ CGame* game=0;
 extern Uint8 *keys;
 extern bool fullscreen;
 extern string stupidGlobalMapname;
-extern int stupidGlobalMapId;
 
 CSound* sound = 0;
 
@@ -142,7 +141,6 @@ CGame::CGame(bool server,std::string mapname)
 	guikeys = NULL;
 	script = NULL;
 	showList = NULL;
-	stupidGlobalMapname=mapname;
 
 	time(&starttime);
 	lastTick=clock();
@@ -196,11 +194,6 @@ CGame::CGame(bool server,std::string mapname)
 	oldHeading=0;
 	oldStatus=255;
 #endif
-
-	if(server){		//create game server before loading stuff to avoid timeouts
-		game=this;		//should avoid gameserver crashing from using non initialized game pointer
-		gameServer=new CGameServer;
-	}
 
 	ENTER_UNSYNCED;
 	sound=CreateSoundInterface ();
@@ -930,9 +923,8 @@ int CGame::KeyReleased(unsigned short k)
 bool CGame::Update()
 {
 	mouse->EmptyMsgQueUpdate();
-	if(CScriptHandler::Instance().chosenScript){
-		script=CScriptHandler::Instance().chosenScript;
-	}
+	script = CScriptHandler::Instance().chosenScript;
+	assert(script);
 	thisFps++;
 
 	Uint64 timeNow;
@@ -1452,6 +1444,7 @@ bool CGame::ClientReadNet()
 			case NETMSG_CHAT:
 			case NETMSG_SYSTEMMSG:
 			case NETMSG_MAPNAME:
+			case NETMSG_MODNAME:
 			case NETMSG_SCRIPT:
 			case NETMSG_MAPDRAW:
 				i2+=inbuf[i2+1];
@@ -1642,9 +1635,11 @@ bool CGame::ClientReadNet()
 			//info->AddLine("Warning shouldnt receive NETMSG_SETPLAYERNUM in CGame");
 			lastLength=2;
 			break;
-			
+
+		case NETMSG_SCRIPT:
 		case NETMSG_MAPNAME:
-			lastLength=inbuf[inbufpos+1];
+		case NETMSG_MODNAME:
+			lastLength = inbuf[inbufpos+1];
 			break;
 
 		case NETMSG_PLAYERNAME:{
@@ -1658,13 +1653,6 @@ bool CGame::ClientReadNet()
 			}
 			lastLength=inbuf[inbufpos+1];
 			break;}
-
-		case NETMSG_SCRIPT:
-			CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
-			script=CScriptHandler::Instance().chosenScript;
-			info->AddLine("Using script %s",(char*)(&inbuf[inbufpos+2]));
-			lastLength=inbuf[inbufpos+1];
-			break;
 
 		case NETMSG_CHAT:{
 			int player=inbuf[inbufpos+2];

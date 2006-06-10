@@ -36,8 +36,6 @@ using namespace std;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 CReadMap* readmap=0;
-string stupidGlobalMapname;
-int stupidGlobalMapId=0;
 
 void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
 {
