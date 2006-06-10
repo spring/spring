@@ -22,7 +22,7 @@ inline void glTranslatef3(const float3 &v)
 }
 
 void LoadStartPicture();
-void PrintLoadMsg(const char* text);
+void PrintLoadMsg(const char* text, bool swapbuffers = true);
 void UnloadStartPicture();
 bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);

@@ -12,27 +12,26 @@
 #include "Script.h"
 #include "Rendering/GL/glList.h"
 
-using namespace std;
-
 class CScriptHandler  
 {
 public:
-	void AddScript(string name,CScript* s);
 	static void SelectScript(std::string s);
+	CglList* GenList(ListSelectCallback callb);
+
+	void AddScript(std::string name,CScript* s);
 
 	static CScriptHandler& Instance();
-//	static void UnloadInstance();
 
-	CScript* chosenScript;
-	CglList* list;
-	string chosenName;
-	std::map<std::string,CScript*> scripts;
+	CScript* chosenScript;  ///< Pointer to the selected CScript.
+	std::string chosenName; ///< Name of the selected script.
 private:
-  std::list<CScript*> loaded_scripts; ///< Scripts loaded and owned by CScriptHandler 
+	std::map<std::string,CScript*> scripts; ///< Maps script names to CScript pointers.
+	std::list<CScript*> loaded_scripts;     ///< Scripts loaded and owned by CScriptHandler 
+	ListSelectCallback callback;
 	CScriptHandler();
 	CScriptHandler(CScriptHandler const&);
 	CScriptHandler& operator=(CScriptHandler const&);
-  void LoadScripts();
+	void LoadScripts();
 	virtual ~CScriptHandler();
 };
 

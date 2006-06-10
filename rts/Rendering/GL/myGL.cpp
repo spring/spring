@@ -101,7 +101,7 @@ void UnloadStartPicture()
 	startupTexture=0;
 }
 
-void PrintLoadMsg(const char* text)
+void PrintLoadMsg(const char* text, bool swapbuffers)
 {
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -115,10 +115,10 @@ void PrintLoadMsg(const char* text)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
+	glColor3f(1,1,1);
 
 	if(startupTexture){
 		glBindTexture(GL_TEXTURE_2D,startupTexture);
-		glColor3f(1,1,1);
 		glBegin(GL_QUADS);
 			glTexCoord2f(0,1);glVertex2f(0,0);
 			glTexCoord2f(0,0);glVertex2f(0,1);
@@ -129,7 +129,8 @@ void PrintLoadMsg(const char* text)
 	font->glPrintCentered (0.5f,0.48f, 2.0f, text);
 	font->glPrintCentered(0.5f,0.06f,1.0,"TA Spring %s",VERSION_STRING);
 	font->glPrintCentered(0.5f,0.02f,0.6,"This program is distributed under the GNU General Public License, see license.html for more info");
-	SDL_GL_SwapBuffers();
+	if (swapbuffers)
+		SDL_GL_SwapBuffers();
 }
 
 /**

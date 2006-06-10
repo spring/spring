@@ -9,31 +9,41 @@ class CglList;
 class CPreGame : public CGameController
 {
 public:
+	enum State {
+		UNKNOWN,
+		WAIT_ON_ADDRESS,
+		WAIT_ON_SCRIPT,
+		WAIT_ON_MAP,
+		WAIT_ON_MOD,
+		ALL_READY,
+	};
 	CPreGame(bool server, const std::string& demo);
-	virtual ~CPreGame(void);
+	virtual ~CPreGame();
 
 	CglList* showList;
 
-	bool Draw(void);
+	bool Draw();
 	int KeyPressed(unsigned short k,bool isRepeat);
-	bool Update(void);
+	bool Update();
 
 	bool server;
-	bool waitOnAddress;
-	bool waitOnScript;
-	bool waitOnMap;
-	bool allReady;
+	State state;
 	bool saveAddress;
 
 	std::string mapName;
-	int mapId;
+	std::string modName;
 
-	void UpdateClientNet(void);
+	void UpdateClientNet();
 	unsigned char inbuf[16000];	//buffer space for incomming data
 	int inbufpos;								//where in the input buffer we are
 	int inbuflength;						//last byte in input buffer
-	void ShowMapList(void);
+private:
+	void ShowScriptList();
+	void ShowMapList();
+	void ShowModList();
+	static void SelectScript(std::string s);
 	static void SelectMap(std::string s);
+	static void SelectMod(std::string s);
 };
 
 extern CPreGame* pregame;

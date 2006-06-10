@@ -15,7 +15,6 @@
 CGameServer* gameServer=0;
 
 extern string stupidGlobalMapname;
-extern int stupidGlobalMapId;
 extern bool globalQuit;
 
 static Uint32 GameServerThreadProc(void* lpParameter)
@@ -25,7 +24,7 @@ static Uint32 GameServerThreadProc(void* lpParameter)
 }
 
 
-CGameServer::CGameServer(void)
+CGameServer::CGameServer()
 {
 	makeMemDump=true;
 	serverframenum=0;
@@ -58,25 +57,25 @@ CGameServer::CGameServer(void)
 
 	lastframe = SDL_GetTicks();
 
-	exeChecksum=game->CreateExeChecksum();
+	exeChecksum = game ? game->CreateExeChecksum() : 0;
 
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
 	boost::thread thread(boost::bind(GameServerThreadProc,this));
 #endif
 }
 
-CGameServer::~CGameServer(void)
+CGameServer::~CGameServer()
 {
 	delete serverNet;
 	serverNet=0;
 }
 
-bool CGameServer::Update(void)
+bool CGameServer::Update()
 {
 	if(lastSyncRequest<gu->gameTime-2){
 		lastSyncRequest=gu->gameTime;
 
-		if (game->playing) {
+		if (game && game->playing) {
 			//check if last times sync responses is correct
 			if (outstandingSyncFrame > 0) {
 				// I've disabled majority voting for now.
@@ -176,7 +175,7 @@ bool CGameServer::Update(void)
 		info->AddLine("Server read net wanted quit");
 		return false;
 	}
-	if (game->playing && !serverNet->playbackDemo){
+	if (game && game->playing && !serverNet->playbackDemo){
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
 		double timeElapsed=((double)(currentFrame - lastframe))/1000.;
@@ -255,6 +254,7 @@ bool CGameServer::ServerReadNet()
 				if(inbuf[inbufpos+2]!=a){
 					info->AddLine("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
 				} else {
+					assert(game);
 					if(game->gamePausable || a==0){
 						timeLeft=0;
 						serverNet->SendData(&inbuf[inbufpos],3);
@@ -270,6 +270,7 @@ bool CGameServer::ServerReadNet()
 
 			case NETMSG_USER_SPEED: {
 				float speed=*((float*)&inbuf[inbufpos+1]);
+				assert(game);
 				if(speed>game->maxUserSpeed)
 					speed=game->maxUserSpeed;
 				if(speed<game->minUserSpeed)
@@ -297,8 +298,11 @@ bool CGameServer::ServerReadNet()
 				break;
 
 			case NETMSG_MAPNAME:
-				if(inbuf[inbufpos+1])
-					lastLength=inbuf[inbufpos+1];
+				lastLength = inbuf[inbufpos+1];
+				break;
+
+			case NETMSG_MODNAME:
+				lastLength = inbuf[inbufpos+1];
 				break;
 
 			case NETMSG_QUIT:
@@ -479,7 +483,7 @@ bool CGameServer::ServerReadNet()
 	return true;
 }
 
-void CGameServer::StartGame(void)
+void CGameServer::StartGame()
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverNet->StopListening();
@@ -503,7 +507,7 @@ void CGameServer::StartGame(void)
 	timeLeft=0;
 }
 
-void CGameServer::CheckForGameEnd(void)
+void CGameServer::CheckForGameEnd()
 {
 	if(gameEndDetected){
 		if(gameEndTime>2 && gameEndTime<500){
@@ -545,7 +549,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 	}
 }
 
-void CGameServer::UpdateLoop(void)
+void CGameServer::UpdateLoop()
 {
 	while(gameLoading){		//avoid timing out while loading (esp if calculating path data)
 		SDL_Delay(100);

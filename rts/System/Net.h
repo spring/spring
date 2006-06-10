@@ -64,6 +64,7 @@ enum NETMSG {
 	NETMSG_EXECHECKSUM      = 37,
 	NETMSG_PLAYERINFO       = 38,
 	NETMSG_PLAYERLEFT       = 39,
+	NETMSG_MODNAME          = 40,
 };
 
 

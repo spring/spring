@@ -484,10 +484,10 @@ const char* CAICallback::GetMapName ()
 	return stupidGlobalMapname.c_str();
 }
 
-extern string stupidGlobalModName;
+extern string stupidGlobalModname;
 const char* CAICallback::GetModName()
 {
-	return stupidGlobalModName.c_str();
+	return stupidGlobalModname.c_str();
 }
 
 float CAICallback::GetMaxMetal()
