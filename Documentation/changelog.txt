@@ -1,6 +1,6 @@
 TASpring change log
 
-0.next
+0.72b1
 
 - Bos/Cob script for units can now animate the death of the unit. Just have the Kill function return after a while instead of directly and return wreck level in return value instead of in function argument.
 - Fixed the com dies, game ends exploit: sharing your com now kills you
@@ -52,6 +52,8 @@ TASpring change log
 - Added Radar group AI from colorblind: It notifies the player of incoming enemy units.
 - Added custom explosion generator: It can be enabled using "explosiongenerator=custom:SomeExplosionGeneratorName" in the weapon TDF. See the wiki page http://spring.clan-sy.com/wiki/CustomExplosionGenerators for more info.
 - Tab will now bring zoom out to show all map in any camera mode, tab again zooms back to the mouse cursor.
+- Added GetGravity(), GetUnitDefHeight() and GetUnitDefRadius() to AI interface
+- Mod can now be selected in the single player menu.
 
 0.71b1
 
