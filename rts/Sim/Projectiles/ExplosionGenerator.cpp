@@ -264,7 +264,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 // CCustomExplosionGenerator: Uses explosion info from a TDF file
 // -------------------------------------------------------------------------------
 
-CR_BIND_DERIVED(CCustomExplosionGenerator, CExplosionGenerator);
+CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator);
 
 #define SPW_WATER 1
 #define SPW_GROUND 2
@@ -467,6 +467,8 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		}
 		groundFlash->ttl = ttl;
 	}
+
+	useDefaultExplosions = !!atoi(parser.SGetValueDef("0", tag + "\\UseDefaultExplosions").c_str());
 }
 
 
@@ -498,6 +500,9 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 
 	if (groundFlash)
 		new CGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
+
+	if (useDefaultExplosions)
+		CStdExplosionGenerator::Explosion(pos, damages, radius, owner, gfxMod);
 }
 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()
