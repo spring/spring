@@ -60,6 +60,12 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float t
 	checkCol=false;
 	castShadow=true;
 	textureNum=(int)(gu->usRandFloat()*12);
+
+	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
+		useAirLos=true;
+
+	if (!owner)
+		alwaysVisible=true;
 }
 
 CSmokeProjectile::~CSmokeProjectile()
