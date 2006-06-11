@@ -26,6 +26,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "ExternalAI/GlobalAIHandler.h"
 #include "mmgr.h"
 
 const unsigned int MAX_REPATH_FREQUENCY = 30;		//The minimum of frames between two full path-requests.
@@ -1054,6 +1055,8 @@ void CGroundMoveType::Fail()
 	//Failure of finding a path means that this action
 	//has failed to reach it's goal.
 	progressState = Failed;
+
+	globalAI->UnitMoveFailed(owner);
 
 	//Sends a message to user.
 	ENTER_UNSYNCED;
