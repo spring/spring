@@ -60,7 +60,7 @@ public:
 };
 
 /* Defines the result of an explosion as a series of new projectiles */
-class CCustomExplosionGenerator : public CExplosionGenerator
+class CCustomExplosionGenerator : public CStdExplosionGenerator
 {
 protected:
 	CR_DECLARE(CCustomExplosionGenerator);
@@ -86,6 +86,7 @@ protected:
 		float3 color;
 	} *groundFlash;
 
+	bool useDefaultExplosions;
 	std::vector<ProjectileSpawnInfo*> projectileSpawn;
 	void ParseExplosionCode(ProjectileSpawnInfo *psi, int baseOffset, creg::IType *type, const std::string& script, std::string& code);
 	void ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex);

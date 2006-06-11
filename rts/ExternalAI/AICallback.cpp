@@ -16,6 +16,7 @@
 #include "Game/SelectedUnits.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "GroupHandler.h"
@@ -368,7 +369,6 @@ float3 CAICallback::GetUnitPos(int unitid)
 	return ZeroVector;
 }
 
-
 int CAICallback::InitPath(float3 start,float3 end,int pathType)
 {
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType),start,end);
@@ -513,6 +513,11 @@ float CAICallback::GetMaxWind()
 float CAICallback::GetTidalStrength()
 {
 	return readmap->tidalStrength;
+}
+
+float CAICallback::GetGravity()
+{
+	return gs->gravity;
 }
 
 /*const unsigned char* CAICallback::GetSupplyMap()
@@ -894,6 +899,22 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 	for (int a=0;a<unitDefHandler->numUnits;a++)
 		list [a] = unitDefHandler->GetUnitByID (a+1);
 }
+
+
+float CAICallback::GetUnitDefRadius(int def)
+{
+	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5:1,0);
+	return mdl->radius;
+}
+
+float CAICallback::GetUnitDefHeight(int def)
+{
+	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5:1,0);
+	return mdl->height;
+}
+
 
 bool CAICallback::GetProperty(int id, int property, void *data)
 {

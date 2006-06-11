@@ -91,6 +91,7 @@ public:
 	float GetMinWind();
 	float GetMaxWind();
 	float GetTidalStrength();
+	float GetGravity();
 
 	float GetElevation(float x,float z);
 
@@ -136,6 +137,9 @@ public:
 	float3 GetMousePos();
 	int GetMapPoints(PointMarker *pm, int maxPoints);
 	int GetMapLines(LineMarker *lm, int maxLines);
+
+	float GetUnitDefRadius(int def);
+	float GetUnitDefHeight(int def);
 };
 
 #endif /* AICALLBACK_H */

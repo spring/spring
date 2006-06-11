@@ -167,6 +167,7 @@ public:
 	virtual float GetMinWind()=0;
 	virtual float GetMaxWind()=0;
 	virtual float GetTidalStrength()=0;
+	virtual float GetGravity()=0;
 
 	//the following functions allow the ai to draw figures in the world
 	//each figure is part of a group
@@ -218,7 +219,8 @@ public:
 
 	virtual int GetNumUnitDefs() = 0;
 	virtual void GetUnitDefList (const UnitDef** list) = 0;
-
+	virtual float GetUnitDefHeight(int def) = 0; // forces loading of the unit model
+	virtual float GetUnitDefRadius(int def) = 0; // forces loading of the unit model
 };
 
 #endif /* IAICALLBACK_H */
