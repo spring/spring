@@ -91,7 +91,7 @@ void CScriptHandler::SelectScript(std::string s)
 /** Generate a CglList with all available scripts. */
 CglList* CScriptHandler::GenList(ListSelectCallback callb)
 {
-	CglList* list = new CglList("Select script", SelectScript);
+	CglList* list = new CglList("Select script", SelectScript, 1);
 	for (std::map<std::string,CScript*>::const_iterator it = scripts.begin(); it != scripts.end(); ++it)
 		list->AddItem(it->first.c_str(), it->first.c_str());
 	callback = callb;

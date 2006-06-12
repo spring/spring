@@ -8,6 +8,7 @@
 
 #include "Rendering/glFont.h"
 #include "Platform/ConfigHandler.h"
+#include <SDL_keysym.h>
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -16,23 +17,28 @@
 
 CglList::~CglList()
 {
-	configHandler.SetString("LastListChoice",items[place]);
+	char buf[50];
+	sprintf(buf, "LastListChoice%i", id);
+	configHandler.SetString(buf, (*filteredItems)[place]);
 }
 
-CglList::CglList(const char *name,ListSelectCallback callback)
+CglList::CglList(const char *name, ListSelectCallback callback, int id)
 {
+	char buf[50];
 	this->name=name;
 	this->callback=callback;
+	this->id = id;
 	place=0;
-	lastChoosen="";
-	lastChoosen=configHandler.GetString("LastListChoice","");
+	sprintf(buf, "LastListChoice%i", id);
+	lastChoosen=configHandler.GetString(buf, "");
+	filteredItems = &items;
 }
 
 void CglList::AddItem(const char *name,const char *description)
 {
+	if (lastChoosen == name)
+		place = items.size();
 	items.push_back(name);
-	if(lastChoosen.compare(name)==0)
-		place=items.size()-1;
 }
 
 void CglList::Draw()
@@ -94,11 +100,11 @@ void CglList::Draw()
 	int nDrawOffset = 0; // The offset to the first draw item
 
 	// Get list started up here
-	ii = items.begin();
+	ii = filteredItems->begin();
 	// Skip to current selection - 3; ie: scroll
-	while ((nCurIndex + 7) <= place && nCurIndex+14 <= items.size()) { ii++; nCurIndex++; }
+	while ((nCurIndex + 7) <= place && nCurIndex+14 <= filteredItems->size()) { ii++; nCurIndex++; }
 
-	for (/*ii = items.begin()*/; ii != items.end(); ii++)
+	for (/*ii = items.begin()*/; ii != filteredItems->end(); ii++)
 	{
 		if (nCurIndex == place) {
 			glColor4f(1,1,1.0f,1.0f);
@@ -113,7 +119,7 @@ void CglList::Draw()
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
-	}	
+	}
 	/**************
 	* End insert *
 	**************/
@@ -129,13 +135,51 @@ void CglList::UpOne()
 void CglList::DownOne()
 {
 	place++;
-	if(place>=(int)items.size())
-		place=items.size()-1;
+	if(place>=(int)filteredItems->size())
+		place=filteredItems->size()-1;
 	if(place<0)
 		place=0;
 }
 
 void CglList::Select()
 {
-	callback(items[place]);
+	if (!filteredItems->empty())
+		callback((*filteredItems)[place]);
+}
+
+void CglList::KeyPress(int k)
+{
+	if (k == SDLK_BACKSPACE) {
+		query = query.substr(0, query.length() - 1);
+		Filter(true);
+	} else if (std::isalnum(k)) {
+		query += std::tolower(k);
+		Filter(false);
+	}
+}
+
+void CglList::Filter(bool reset)
+{
+	std::string current = (*filteredItems)[place];
+	std::vector<std::string>* destination = filteredItems == &temp1 ? &temp2 : &temp1;
+	destination->clear();
+	if (reset) filteredItems = &items; // reset filter
+	for (std::vector<std::string>::const_iterator it = filteredItems->begin(); it != filteredItems->end(); ++it) {
+		std::string lcitem(*it, 0, query.length());
+		std::transform(lcitem.begin(), lcitem.end(), lcitem.begin(), (int (*)(int)) std::tolower);
+		if (lcitem == query) {
+			if (*it == current)
+				place = destination->size();
+			destination->push_back(*it);
+		}
+	}
+	if (destination->empty()) {
+		query = query.substr(0, query.length() - 1);
+	} else {
+		filteredItems = destination;
+		if(place>=(int)filteredItems->size())
+			place=filteredItems->size()-1;
+		if(place<0)
+			place=0;
+	}
 }
