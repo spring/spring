@@ -55,7 +55,7 @@ CInMapDraw::CInMapDraw(void)
 				tex[y][x][0]=255;
 				tex[y][x][1]=255;
 				tex[y][x][2]=255;
-				tex[y][x][3]=(unsigned char) (255-dist*8);
+				tex[y][x][3]=200;
 			}
 		}
 	}
@@ -69,7 +69,7 @@ CInMapDraw::CInMapDraw(void)
 				tex[y][x+64][0]=255;
 				tex[y][x+64][1]=255;
 				tex[y][x+64][2]=255;
-				tex[y][x+64][3]=(unsigned char) (255-dist*8);
+				tex[y][x+64][3]=200;
 			}
 		}
 	}

@@ -19,8 +19,8 @@
 #include "GameVersion.h"
 #include "Platform/filefunctions.h"
 #include "Platform/errorhandler.h"
-#include "SDL_types.h"
-#include "SDL_keysym.h"
+#include <SDL_types.h>
+#include <SDL_keysym.h>
 #include "GameServer.h"
 #include "mmgr.h"
 
@@ -34,7 +34,9 @@ CPreGame::CPreGame(bool server, const string& demo):
 		showList(0),
 		server(server),
 		state(UNKNOWN),
-		saveAddress(true)
+		saveAddress(true),
+		mapChecksum(0),
+		modChecksum(0)
 {
 	pregame = this; // prevent crashes if Select* is called from ctor
 	info = new CInfoConsole;
@@ -246,7 +248,6 @@ bool CPreGame::Update()
 			ENTER_MIXED;
 
 			// Map all required archives depending on selected mod(s)
-			stupidGlobalModname = modName;
 			vector<string> ars = archiveScanner->GetArchives(modName);
 			if (ars.empty())
 				fprintf(stderr, "Warning: mod archive \"%s\" is missing?\n", modName.c_str());
@@ -304,14 +305,24 @@ void CPreGame::UpdateClientNet()
 			break;
 
 		case NETMSG_MAPNAME:
-			SelectMap((char*)(&inbuf[inbufpos+2]));
+			SelectMap((char*)(&inbuf[inbufpos+6]));
+			if (GetMapChecksum() != *(unsigned*)(&inbuf[inbufpos+2])) {
+				// shit happens
+				throw content_error("Local map archive(s) are not binary equal to host map archive(s).\n"
+						"Consider redownloading the map.");
+			}
 			assert(state == WAIT_ON_MAP);
 			state = WAIT_ON_MOD;
 			inbufpos += inbuf[inbufpos+1];
 			break;
 
 		case NETMSG_MODNAME:
-			SelectMod((char*)(&inbuf[inbufpos+2]));
+			SelectMod((char*)(&inbuf[inbufpos+6]));
+			if (GetModChecksum() != *(unsigned*)(&inbuf[inbufpos+2])) {
+				// bad stuff too
+				throw content_error("Local mod archive(s) are not binary equal to host mod archive(s).\n"
+						"Consider redownloading the mod.");
+			}
 			assert(state == WAIT_ON_MOD);
 			state = ALL_READY;
 			inbufpos += inbuf[inbufpos+1];
@@ -393,7 +404,7 @@ void CPreGame::SelectMap(std::string s)
 	stupidGlobalMapname = s;
 	(*info) << "Map: " << s.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SendSTLData<std::string>(NETMSG_MAPNAME, pregame->mapName);
+		serverNet->SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, pregame->GetMapChecksum(), pregame->mapName);
 }
 
 /** Create a CglList for selecting the map. */
@@ -421,27 +432,58 @@ void CPreGame::SelectMod(std::string s)
 	if (s == "Random mod") {
 		s = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
 	}
+	// Convert mod name to mod archive
+	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
+	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+		if (it->name == s) {
+			s = it->dependencies.front();
+			break;
+		}
+	}
 	pregame->modName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
 	stupidGlobalModname = s;
 	(*info) << "Mod: " << s.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SendSTLData<std::string>(NETMSG_MODNAME, pregame->modName);
+		serverNet->SendSTLData<unsigned, std::string>(NETMSG_MODNAME, pregame->GetModChecksum(), pregame->modName);
 }
 
 /** Create a CglList for selecting the mod. */
 void CPreGame::ShowModList()
 {
 	CglList* list = new CglList("Select mod", SelectMod);
-	fs::path fn("mods/");
-	std::vector<fs::path> found = find_files(fn, "{*.sdz,*.sd7}");
-	if (found.begin() == found.end()) {
+	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
+	if (found.empty()) {
 		handleerror(0, "Couldn't find any mod files", "PreGame error", 0);
 		return;
 	}
 	list->AddItem("Random mod", "Random mod");
-	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); ++it)
-		list->AddItem(it->leaf().c_str(), it->leaf().c_str());
+	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it)
+		list->AddItem(it->name.c_str(), it->description.c_str());
 	showList = list;
+}
+
+/** Determine if the map is inside an archive, if so get checksum of all required archives. */
+unsigned CPreGame::GetMapChecksum()
+{
+	if (!mapChecksum) {
+		CFileHandler* f = new CFileHandler("maps/" + mapName);
+		if (!f->FileExists()) {
+			mapChecksum = archiveScanner->GetChecksumForMap(mapName);
+// 			fprintf(stderr, "Map checksum for map \"%s\" is %u.\n", mapName.c_str(), mapChecksum);
+		}
+		delete f;
+	}
+	return mapChecksum;
+}
+
+/** Get checksum of all required archives depending on selected mod(s). */
+unsigned CPreGame::GetModChecksum()
+{
+	if (!modChecksum) {
+		modChecksum = archiveScanner->GetChecksum(modName);
+// 		fprintf(stderr, "Mod checksum for mod \"%s\" is %u.\n", modName.c_str(), modChecksum);
+	}
+	return modChecksum;
 }

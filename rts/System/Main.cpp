@@ -464,9 +464,9 @@ void SpringApp::InitVFS()
 	// Create the archive scanner and vfs handler
 	archiveScanner = new CArchiveScanner();
 	archiveScanner->ReadCacheData();
-	archiveScanner->Scan("./maps");
-	archiveScanner->Scan("./base");
-	archiveScanner->Scan("./mods");
+	archiveScanner->Scan("./maps", true);
+	archiveScanner->Scan("./base", true);
+	archiveScanner->Scan("./mods", true);
 	archiveScanner->WriteCacheData();
 	hpiHandler = new CVFSHandler();
 }

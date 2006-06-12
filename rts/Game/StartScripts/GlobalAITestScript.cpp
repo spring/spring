@@ -13,7 +13,7 @@
 extern std::string stupidGlobalMapname;
 
 CGlobalAITestScript::CGlobalAITestScript(std::string dll, std::string base)
-: CScript(std::string("GlobalAI test (") + dll + std::string(")")),
+: CScript(std::string("GlobalAI test (") + dll.substr(dll.rfind('/')+1) + std::string(")")),
 	dllName(dll), baseDir(base)
 {
 }

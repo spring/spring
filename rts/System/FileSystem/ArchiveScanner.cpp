@@ -521,3 +521,23 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 		cur++;
 	}
 }*/
+
+/** Get checksum of all required archives depending on selected mod. */
+unsigned int CArchiveScanner::GetChecksum(const string& root)
+{
+	unsigned int checksum = 0;
+	vector<string> ars = archiveScanner->GetArchives(root);
+	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+		checksum  ^= archiveScanner->GetArchiveChecksum(*i);
+	return checksum;
+}
+
+/** Get checksum of all required archives depending on selected map. */
+unsigned int CArchiveScanner::GetChecksumForMap(const string& mapName)
+{
+	unsigned int checksum = 0;
+	vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+		checksum ^= archiveScanner->GetArchiveChecksum(*i);
+	return checksum;
+}
