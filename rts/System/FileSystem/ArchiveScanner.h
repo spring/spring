@@ -45,6 +45,8 @@ public:
 	vector<string> GetMaps();
 	vector<string> GetArchivesForMap(const string& mapName);
 	unsigned int GetArchiveChecksum(const string& name);
+	unsigned int GetChecksum(const string& root);
+	unsigned int GetChecksumForMap(const string& mapName);
 protected:
 	struct ArchiveInfo {
 		string path;

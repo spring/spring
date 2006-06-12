@@ -297,14 +297,6 @@ bool CGameServer::ServerReadNet()
 				lastLength=5;
 				break;
 
-			case NETMSG_MAPNAME:
-				lastLength = inbuf[inbufpos+1];
-				break;
-
-			case NETMSG_MODNAME:
-				lastLength = inbuf[inbufpos+1];
-				break;
-
 			case NETMSG_QUIT:
 				ENTER_MIXED;
 				gs->players[a]->active=false;

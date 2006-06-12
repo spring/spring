@@ -8,6 +8,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/Game.h"
+#include "Game/PreGame.h"
 #include "Game/StartScripts/ScriptHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
@@ -508,10 +509,11 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		// Don't send it if host has not yet decided.
 		if (!CScriptHandler::Instance().chosenName.empty())
 			SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance().chosenName);
-		if (!stupidGlobalMapname.empty())
-			SendSTLData<std::string>(NETMSG_MAPNAME, stupidGlobalMapname);
-		if (!stupidGlobalModname.empty())
-			SendSTLData<std::string>(NETMSG_MODNAME, stupidGlobalModname);
+		assert(pregame);
+		if (!pregame->mapName.empty())
+			SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, pregame->GetMapChecksum(), pregame->mapName);
+		if (!pregame->modName.empty())
+			SendSTLData<unsigned, std::string>(NETMSG_MODNAME, pregame->GetModChecksum(), pregame->modName);
 
 		for(int a=0;a<gs->activePlayers;a++){
 			if(!gs->players[a]->readyToStart)
