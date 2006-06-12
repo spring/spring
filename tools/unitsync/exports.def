@@ -27,6 +27,7 @@ EXPORTS
 	GetMinimap					@33
 	GetMapArchiveCount			@34
 	GetMapArchiveName			@35
+	GetMapChecksum				@36
 	
 	GetPrimaryModCount			@40
 	GetPrimaryModName			@41
@@ -34,6 +35,7 @@ EXPORTS
 	GetPrimaryModIndex			@43	
 	GetPrimaryModArchiveCount	@44
 	GetPrimaryModArchiveList	@45
+	GetPrimaryModChecksum		@46
 	
 	GetSideCount				@50
 	GetSideName					@51
