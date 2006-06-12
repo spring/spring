@@ -1600,12 +1600,6 @@
 					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Projectiles\Particle.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Projectiles\Particle.h">
-				</File>
-				<File
 					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.cpp">
 				</File>
 				<File
