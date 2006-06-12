@@ -498,7 +498,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 		}
 	}
 
-	if (groundFlash)
+	if ((flags & SPW_GROUND) && groundFlash)
 		new CGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
 
 	if (useDefaultExplosions)
