@@ -14,6 +14,7 @@ class CUnit;
 #include <string>
 
 #include "UnitDef.h"
+#include "Game\Command.h"
 
 class CBuilderCAI;
 class CFeature;
@@ -51,6 +52,7 @@ public:
 	int  TestUnitBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature);	//test if a unit can be built at specified position
 	int  TestUnitBuildSquare(const float3& pos, std::string unit,CFeature *&feature);	//test if a unit can be built at specified position
 	int  ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef);	//test if a unit can be built at specified position and show on the ground where it's to rough
+	int  ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef, const std::vector<Command> &cv);
 	int  TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature);	//test a singel mapsquare for build possibility
 
 	void AddBuilderCAI(CBuilderCAI*);
@@ -58,6 +60,7 @@ public:
 	float GetBuildHeight(float3 pos, const UnitDef* unitdef);
 
 	void LoadSaveUnits(CLoadSaveInterface* file, bool loading);
+	Command GetBuildCommand(float3 pos, float3 dir);
 
 	std::list<CUnit*> activeUnits;				//used to get all active units
 	std::deque<int> freeIDs;

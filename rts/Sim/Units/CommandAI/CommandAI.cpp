@@ -2,6 +2,7 @@
 #include "CommandAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "ExternalAI/Group.h"
 #include "Rendering/GL/myGL.h"
@@ -320,26 +321,36 @@ void CCommandAI::GiveCommand(Command& c)
 			orderTarget=0;
 		}
 	}
-	if(!commandQue.empty()){
-		std::deque<Command>::iterator ci=commandQue.end();
-		for(--ci;ci!=commandQue.begin();--ci){							//iterate from the end and dont check the current order
-			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
-				if(c.params.size()==1){			//we assume the param is a unit of feature id
-					if(ci->params[0]==c.params[0]){
-						commandQue.erase(ci);
-						return;
-					}
-				} else if(c.params.size()>=3){		//we assume this means that the first 3 makes a position
-					float3 cpos(c.params[0],c.params[1],c.params[2]);
-					float3 cipos(ci->params[0],ci->params[1],ci->params[2]);
-
-					if((cpos-cipos).SqLength2D()<17*17){
-						commandQue.erase(ci);
-						return;				
-					}
-				}
+	std::deque<Command>::iterator ci = CCommandAI::GetCancelQueued(c);
+	if(c.id<0 && ci != this->commandQue.end()){
+		do{
+			if(ci == this->commandQue.begin()){
+				this->commandQue.erase(ci);
+				Command c2;
+				c2.id = CMD_STOP;
+				this->commandQue.push_front(c2);
+				this->SlowUpdate();
+			} else {
+				this->commandQue.erase(ci);
 			}
+			ci = CCommandAI::GetCancelQueued(c);
+		}while(ci != this->commandQue.end());
+		return;
+	} else if(ci != this->commandQue.end()){
+		if(ci == this->commandQue.begin()){
+			this->commandQue.erase(ci);
+			Command c2;
+			c2.id = CMD_STOP;
+			this->commandQue.push_front(c2);
+			this->SlowUpdate();
+		} else {
+			this->commandQue.erase(ci);
 		}
+		ci = CCommandAI::GetCancelQueued(c);
+		return;
+	}
+	if(!this->GetOverlapQueued(c).empty()){
+		return;
 	}
 	if(c.id==CMD_ATTACK && owner->weapons.empty() && owner->unitDef->canKamikaze==false)		//avoid weaponless units moving to 0 distance when given attack order
 		c.id=CMD_STOP;
@@ -347,6 +358,94 @@ void CCommandAI::GiveCommand(Command& c)
 	commandQue.push_back(c);
 	if(commandQue.size()==1 && !owner->beingBuilt)
 		SlowUpdate();
+}
+
+/**
+* @brief Determins if c will cancel a queued command
+* @return true if c will cancel a queued command
+**/
+bool CCommandAI::WillCancelQueued(Command &c)
+{
+	return this->GetCancelQueued(c) != this->commandQue.end();
+}
+
+/**
+* @brief Finds the queued command that would be canceled by the Command c
+* @return An iterator located at the command, or commandQue.end() if no such queued command exsists
+**/
+std::deque<Command>::iterator CCommandAI::GetCancelQueued(Command &c){
+	if(!commandQue.empty()){
+		std::deque<Command>::iterator ci=commandQue.end();
+		do{
+			--ci;			//iterate from the end and dont check the current order
+			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
+				if(c.params.size()==1){			//we assume the param is a unit of feature id
+					if(ci->params[0]==c.params[0]){
+						return ci;
+					}
+				} else if(c.params.size()>=3){		//we assume this means that the first 3 makes a position
+					float3 cpos(c.params[0],c.params[1],c.params[2]);
+					float3 cipos(ci->params[0],ci->params[1],ci->params[2]);
+					if(c.id < 0){
+						UnitDef* u1 = unitDefHandler->GetUnitByID(-c.id);
+						UnitDef* u2 = unitDefHandler->GetUnitByID(-ci->id);
+						if(u1 && u2
+							&& abs(cpos.x-cipos.x)*2 <= max(u1->xsize, u2->xsize)*SQUARE_SIZE
+							&& abs(cpos.z-cipos.z)*2 <= max(u1->ysize, u2->ysize)*SQUARE_SIZE)
+						{
+							return ci;
+						}
+					} else {
+                        if((cpos-cipos).SqLength2D()<17*17){
+							return ci;				
+						}
+					}
+				}
+			}
+		}while(ci!=commandQue.begin());
+	}
+	return commandQue.end();
+}
+
+/**
+* @brief Returns commands that overlap c, but will not be canceled by c
+* @return a vector containing commands that overlap c
+*/
+std::vector<Command> CCommandAI::GetOverlapQueued(Command &c){
+	std::deque<Command>::iterator ci = commandQue.end();
+	std::vector<Command> v;
+	if(ci != commandQue.begin()){
+		do{
+			--ci;			//iterate from the end and dont check the current order
+			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
+				if(c.params.size()==1){			//we assume the param is a unit of feature id
+					if(ci->params[0]==c.params[0]){
+						v.push_back(*ci);
+					}
+				} else if(c.params.size()>=3){		//we assume this means that the first 3 makes a position
+					float3 cpos(c.params[0],c.params[1],c.params[2]);
+					float3 cipos(ci->params[0],ci->params[1],ci->params[2]);
+					if(c.id < 0){
+						UnitDef* u1 = unitDefHandler->GetUnitByID(-c.id);
+						UnitDef* u2 = unitDefHandler->GetUnitByID(-ci->id);
+						if(u1 && u2
+							&& (abs(cpos.x-cipos.x)*2 > max(u1->xsize, u2->xsize)*SQUARE_SIZE
+							|| abs(cpos.z-cipos.z)*2 > max(u1->ysize, u2->ysize)*SQUARE_SIZE)
+							&& abs(cpos.x-cipos.x)*2 < (u1->xsize + u2->xsize)*SQUARE_SIZE
+							&& abs(cpos.z-cipos.z)*2 < (u1->ysize + u2->ysize)*SQUARE_SIZE)
+						{
+							v.push_back(*ci);
+						}
+					} else {
+						if((cpos-cipos).SqLength2D()<17*17){
+							v.push_back(*ci);
+						}
+					}
+				}
+			}
+		}while(ci!=commandQue.begin());
+	}
+	return v;
 }
 
 void CCommandAI::SlowUpdate()

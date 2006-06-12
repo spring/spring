@@ -447,7 +447,7 @@ void CBuilderCAI::SlowUpdate()
 		Command& c=commandQue[activeCommand];
 
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got patrol cmd with less than 3 params on %s",owner->unitDef->humanName.c_str());
+			info->AddLine("Error: got patrol cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
 			return;
 		}
 		patrolGoal=float3(c.params[0],c.params[1],c.params[2]);

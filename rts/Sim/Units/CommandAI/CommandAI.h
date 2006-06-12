@@ -29,6 +29,9 @@ public:
 	virtual void WeaponFired(CWeapon* weapon);
 	virtual void BuggerOff(float3 pos, float radius);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
+	virtual bool WillCancelQueued(Command &c);
+	std::deque<Command>::iterator GetCancelQueued(Command &c);
+	std::vector<Command> GetOverlapQueued(Command &c);
 
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
