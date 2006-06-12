@@ -390,8 +390,8 @@ std::deque<Command>::iterator CCommandAI::GetCancelQueued(Command &c){
 						UnitDef* u1 = unitDefHandler->GetUnitByID(-c.id);
 						UnitDef* u2 = unitDefHandler->GetUnitByID(-ci->id);
 						if(u1 && u2
-							&& abs(cpos.x-cipos.x)*2 <= max(u1->xsize, u2->xsize)*SQUARE_SIZE
-							&& abs(cpos.z-cipos.z)*2 <= max(u1->ysize, u2->ysize)*SQUARE_SIZE)
+							&& fabs(cpos.x-cipos.x)*2 <= max(u1->xsize, u2->xsize)*SQUARE_SIZE
+							&& fabs(cpos.z-cipos.z)*2 <= max(u1->ysize, u2->ysize)*SQUARE_SIZE)
 						{
 							return ci;
 						}
@@ -429,10 +429,10 @@ std::vector<Command> CCommandAI::GetOverlapQueued(Command &c){
 						UnitDef* u1 = unitDefHandler->GetUnitByID(-c.id);
 						UnitDef* u2 = unitDefHandler->GetUnitByID(-ci->id);
 						if(u1 && u2
-							&& (abs(cpos.x-cipos.x)*2 > max(u1->xsize, u2->xsize)*SQUARE_SIZE
-							|| abs(cpos.z-cipos.z)*2 > max(u1->ysize, u2->ysize)*SQUARE_SIZE)
-							&& abs(cpos.x-cipos.x)*2 < (u1->xsize + u2->xsize)*SQUARE_SIZE
-							&& abs(cpos.z-cipos.z)*2 < (u1->ysize + u2->ysize)*SQUARE_SIZE)
+							&& (fabs(cpos.x-cipos.x)*2 > max(u1->xsize, u2->xsize)*SQUARE_SIZE
+							|| fabs(cpos.z-cipos.z)*2 > max(u1->ysize, u2->ysize)*SQUARE_SIZE)
+							&& fabs(cpos.x-cipos.x)*2 < (u1->xsize + u2->xsize)*SQUARE_SIZE
+							&& fabs(cpos.z-cipos.z)*2 < (u1->ysize + u2->ysize)*SQUARE_SIZE)
 						{
 							v.push_back(*ci);
 						}
