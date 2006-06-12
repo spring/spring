@@ -19,12 +19,15 @@
 #include "Game/SelectedUnits.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/UI/InfoConsole.h"
+#include "Game/SelectedUnits.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Units/Unit.h"
 #include "LoadSaveInterface.h"
 #include "UnitLoader.h"
 #include "SyncTracer.h"
 #include "Game/GameSetup.h"
+#include "Game/Command.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "mmgr.h"
 
@@ -333,11 +336,21 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 		return 0;
 	if(groundheight>-unitdef->minWaterDepth)
 		return 0;
+	std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+	std::vector<Command> cv;
+	for(;ui != selectedUnits.selectedUnits.end(); ui++){
+	
+	}
 
 	return ret;
 }
 
 int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef)
+{
+	return ShowUnitBuildSquare(pos, unitdef, std::vector<Command>());
+}
+
+int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef, const std::vector<Command> &cv)
 {
 	glDisable(GL_DEPTH_TEST );
 	glEnable(GL_BLEND);
@@ -376,7 +389,22 @@ int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef)
 			CFeature* feature=0;
 			int tbs=TestBuildSquare(float3(x,pos.y,z),unitdef,feature);
 			if(tbs){
-				if(feature || tbs==1)
+				UnitDef* ud;
+				float3 cPos;
+				std::vector<Command>::const_iterator ci = cv.begin();
+				for(;ci != cv.end() && tbs; ci++){
+					ud = unitDefHandler->GetUnitByID(-ci->id);
+					cPos.x = ci->params[0];
+					cPos.z = ci->params[2];
+					if(max(cPos.x-x-SQUARE_SIZE,x-cPos.x)*2 < ud->xsize*SQUARE_SIZE
+						&& max(cPos.z-z-SQUARE_SIZE,z-cPos.z)*2 < ud->ysize*SQUARE_SIZE){
+						tbs=0;
+					}
+				}
+				if(!tbs){
+					nobuildpos.push_back(float3(x,h,z));
+					canbuild = 0;
+				} else if(feature || tbs==1)
 					featurepos.push_back(float3(x,h,z));
 				else
 					canbuildpos.push_back(float3(x,h,z));
@@ -494,4 +522,37 @@ bool CUnitHandler::CanCloseYard(CUnit* unit)
 		}
 	}
 	return true;
+}
+
+/**
+* returns a build Command that intersects the ray described by pos and dir from the command queues of the
+* units units on team number team
+* @breif returns a build Command that intersects the ray described by pos and dir
+* @return the build Command, or 0 if one is not found
+*/
+
+Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
+	float3 tempF1 = pos;
+	std::list<CUnit*>::iterator ui = this->activeUnits.begin();
+	std::deque<Command>::iterator ci;
+	for(; ui != this->activeUnits.end(); ui++){
+		if((*ui)->team == gu->myTeam){
+			ci = (*ui)->commandAI->commandQue.begin();
+			for(; ci != (*ui)->commandAI->commandQue.end(); ci++){
+				if((*ci).id < 0 && (*ci).params.size() >= 3){
+					tempF1.x = (*ci).params[0];
+					tempF1.y = (*ci).params[1];
+					tempF1.z = (*ci).params[2];
+					tempF1 = pos + dir*((tempF1.y - pos.y)/dir.y) - tempF1;
+					UnitDef* ud = unitDefHandler->GetUnitByID(-(*ci).id);
+					if(ud && ud->xsize/2*SQUARE_SIZE > abs(tempF1.x) && ud->ysize/2*SQUARE_SIZE > abs(tempF1.z)){
+						return (*ci);
+					}
+				}
+			}
+		}
+	}
+	Command c;
+	c.id = 0;
+	return c;
 }
