@@ -14,7 +14,7 @@ class CUnit;
 #include <string>
 
 #include "UnitDef.h"
-#include "Game\Command.h"
+#include "Game/command.h"
 
 class CBuilderCAI;
 class CFeature;
