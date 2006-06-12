@@ -117,6 +117,7 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 			showList->DownOne();
 		if(k == SDLK_RETURN)
 			showList->Select();
+		showList->KeyPress(k);
 		return 0;
 	}
 
@@ -410,7 +411,7 @@ void CPreGame::SelectMap(std::string s)
 /** Create a CglList for selecting the map. */
 void CPreGame::ShowMapList()
 {
-	CglList* list = new CglList("Select map", SelectMap);
+	CglList* list = new CglList("Select map", SelectMap, 2);
 	fs::path fn("maps/");
 	std::vector<fs::path> found = find_files(fn,"{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
@@ -452,7 +453,7 @@ void CPreGame::SelectMod(std::string s)
 /** Create a CglList for selecting the mod. */
 void CPreGame::ShowModList()
 {
-	CglList* list = new CglList("Select mod", SelectMod);
+	CglList* list = new CglList("Select mod", SelectMod, 3);
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {
 		handleerror(0, "Couldn't find any mod files", "PreGame error", 0);
