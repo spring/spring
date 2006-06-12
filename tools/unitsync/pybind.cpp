@@ -33,12 +33,16 @@ DLL_EXPORT int __stdcall GetMapCount();
 DLL_EXPORT const char* __stdcall GetMapName(int index);
 DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo);
 DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel);
+DLL_EXPORT int __stdcall GetMapArchiveCount(const char* mapName);
+DLL_EXPORT const char* __stdcall GetMapArchiveName(int index);
+DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index);
 DLL_EXPORT int __stdcall GetPrimaryModCount();
 DLL_EXPORT const char* __stdcall GetPrimaryModName(int index);
 DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index);
 DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index);
 DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr);
 DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name);
+DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index);
 DLL_EXPORT int __stdcall GetSideCount();
 DLL_EXPORT const char* __stdcall GetSideName(int side);
 DLL_EXPORT int __stdcall OpenFileVFS(const char* name);
@@ -329,6 +333,30 @@ static PyObject *unitsync_GetMinimap(PyObject *self, PyObject *args)
 	return succes ? Py_BuildValue("s", targa_filename) : Py_BuildValue("");
 }
 
+static PyObject *unitsync_GetMapArchiveCount(PyObject *self, PyObject *args)
+{
+	const char* filename;
+	if (!PyArg_ParseTuple(args, "s", &filename))
+		return NULL;
+	return Py_BuildValue("i", GetMapArchiveCount(filename));
+}
+
+static PyObject *unitsync_GetMapArchiveName(PyObject *self, PyObject *args)
+{
+	int index;
+	if (!PyArg_ParseTuple(args, "i", &index))
+		return NULL;
+	return Py_BuildValue("s", GetMapArchiveName(index));
+}
+
+static PyObject *unitsync_GetMapChecksum(PyObject *self, PyObject *args)
+{
+	int index;
+	if (!PyArg_ParseTuple(args, "i", &index))
+		return NULL;
+	return Py_BuildValue("i", GetMapChecksum(index));
+}
+
 static PyObject *unitsync_GetPrimaryModCount(PyObject *self, PyObject *args)
 {
 	if (!PyArg_ParseTuple(args, ""))
@@ -374,6 +402,14 @@ static PyObject *unitsync_GetPrimaryModIndex(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "s", &name))
 		return NULL;
 	return Py_BuildValue("i", GetPrimaryModIndex(name));
+}
+
+static PyObject *unitsync_GetPrimaryModChecksum(PyObject *self, PyObject *args)
+{
+	int index;
+	if (!PyArg_ParseTuple(args, "i", &index))
+		return NULL;
+	return Py_BuildValue("i", GetPrimaryModChecksum(index));
 }
 
 static PyObject *unitsync_GetSideCount(PyObject *self, PyObject *args)

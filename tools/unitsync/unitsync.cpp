@@ -366,6 +366,17 @@ DLL_EXPORT const char* __stdcall GetMapArchiveName(int index)
 	return GetStr(mapArchives[index]);
 }
 
+DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
+{
+	unsigned int checksum = 0;
+	CFileHandler* f = new CFileHandler("maps/" + mapArchives[index]);
+	if (!f->FileExists()) {
+		checksum = scanner->GetChecksumForMap(mapArchives[index]);
+	}
+	delete f;
+	return checksum;
+}
+
 #define RM	0x0000F800
 #define GM  0x000007E0
 #define BM  0x0000001F
@@ -561,6 +572,11 @@ DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
 			return i;
 	}
 	return -1;
+}
+
+DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index)
+{
+	return scanner->GetChecksum(GetPrimaryModArchive(index));
 }
 
 //////////////////////////
