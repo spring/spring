@@ -545,7 +545,7 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 					tempF1.z = (*ci).params[2];
 					tempF1 = pos + dir*((tempF1.y - pos.y)/dir.y) - tempF1;
 					UnitDef* ud = unitDefHandler->GetUnitByID(-(*ci).id);
-					if(ud && ud->xsize/2*SQUARE_SIZE > abs(tempF1.x) && ud->ysize/2*SQUARE_SIZE > abs(tempF1.z)){
+					if(ud && ud->xsize/2*SQUARE_SIZE > fabs(tempF1.x) && ud->ysize/2*SQUARE_SIZE > fabs(tempF1.z)){
 						return (*ci);
 					}
 				}
