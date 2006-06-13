@@ -384,8 +384,8 @@ CProjectileHandler::CProjectileHandler()
 
 	drawPerlinTex=false;
 
-	if(shadowHandler && shadowHandler->drawShadows){
-		perlinFB = instantiate_fb(128);
+	if(shadowHandler && shadowHandler->drawShadows && GLEW_EXT_framebuffer_object && !GLEW_ATI_envmap_bumpmap){	//this seems to bug on ati cards so disable it on those (just some random ati extension to detect ati cards), should be fixed by someone that actually has a ati card
+		perlinFB = instantiate_fb(512);
 		if (perlinFB && perlinFB->valid()){
 			drawPerlinTex=true;
 			perlinFB->attachTexture(CProjectile::textures[0], GL_TEXTURE_2D, FBO_ATTACH_COLOR);
@@ -866,6 +866,18 @@ void CProjectileHandler::UpdateTextures()
 {
 	if(numPerlinProjectiles && drawPerlinTex)
 		UpdatePerlin();
+/*
+	if(gs->frameNum==300){
+		info->AddLine("Saving tex");
+		perlinFB->select();
+		unsigned char* buf=new unsigned char[512*512*4];
+		glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,buf);
+		CBitmap b(buf,512,512);
+		b.ReverseYAxis();
+		b.Save("proj2.tga");
+		delete[] buf;
+		perlinFB->deselect();
+	}*/
 }
 
 void CProjectileHandler::UpdatePerlin()
@@ -882,10 +894,12 @@ void CProjectileHandler::UpdatePerlin()
 	glLoadIdentity();
 
 	glDisable(GL_DEPTH_TEST);
+	glDepthMask(0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_FOG);
 
 	unsigned char col[4];	
 	float time=gu->lastFrameTime*gs->speedFactor*3;
@@ -943,6 +957,7 @@ void CProjectileHandler::UpdatePerlin()
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
+	glDepthMask(1);
 
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
