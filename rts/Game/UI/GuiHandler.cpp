@@ -1162,6 +1162,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				buildPos=GetBuildPos(pos,pos,unitdef);
 			}
 
+			if(buildPos.empty()){
+				return defaultRet;
+			}
+
 			int a=0;		//limit the number of max commands possible to send to avoid overflowing the network buffer
 			for(std::vector<float3>::iterator bpi=buildPos.begin();bpi!=--buildPos.end() && a<200;++bpi){
 				++a;
