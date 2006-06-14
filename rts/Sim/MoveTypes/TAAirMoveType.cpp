@@ -778,7 +778,7 @@ void CTAAirMoveType::Update()
 					float dist=sqrt(sqDist);
 					float3 dif=pos-(*ui)->pos;
 					dif/=dist;
-					if((*ui)->mass>=100000){
+					if((*ui)->mass>=100000 || (*ui)->immobile){
 						pos-=dif*(dist-totRad);
 						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;	
 						owner->speed*=0.99f;

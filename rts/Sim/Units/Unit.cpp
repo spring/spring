@@ -1104,7 +1104,8 @@ void CUnit::FinishedBuilding(void)
 	beingBuilt=false;
 	buildProgress=1;
 	
-	mass=unitDef->mass;		//set this now so that the unit is harder to move during build
+	if(!(mass==100000 && immobile))
+		mass=unitDef->mass;		//set this now so that the unit is harder to move during build
 
 	ChangeLos(realLosRadius,realAirLosRadius);
 
