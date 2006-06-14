@@ -338,7 +338,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 	if(paralyzeDamage>0){
-		paralyzeDamage-=maxHealth*0.005;
+		paralyzeDamage-=maxHealth*(16.f/30.f/40.f);
 		if(paralyzeDamage<0)
 			paralyzeDamage=0;
 		if(paralyzeDamage<health)
@@ -560,8 +560,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			if(stunned)
 				experienceMod=0;	//dont get any experience for paralyzing paralyzed enemy
 			stunned=true;
-			if(health-paralyzeDamage<-maxHealth/damages.paralyzeDamageTime){
-				paralyzeDamage=health+maxHealth/damages.paralyzeDamageTime;
+			if(paralyzeDamage>health+(maxHealth*0.025*damages.paralyzeDamageTime)){
+				paralyzeDamage=health+(maxHealth*0.025*damages.paralyzeDamageTime);
 			}
 		}
 	} else {
