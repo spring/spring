@@ -46,6 +46,21 @@
 ;             <verb> = <"menu-item text">
 ;                 command = <"command string">
 ;
+
+
+!macro APP_ASSOCIATE_SPECIAL EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
+  ; Backup the previously associated file class
+  ReadRegStr $R0 HKCR ".${EXT}" ""
+  WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
+ 
+  WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
+ 
+  WriteRegStr HKCR "${FILECLASS}" "" "${DESCRIPTION}"
+  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" "${ICON}"
+  WriteRegStr HKCR "${FILECLASS}\shell" "" "open"
+  WriteRegStr HKCR "${FILECLASS}\shell\open" "" "${COMMANDTEXT}"
+  WriteRegStr HKCR "${FILECLASS}\shell\open\command" "" '"${COMMAND}" %1'
+!macroend
  
 !macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
   ; Backup the previously associated file class

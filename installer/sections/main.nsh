@@ -97,14 +97,14 @@
 
 !ifndef SP_UPDATE
   File "..\game\base\otacontent.sdz"
+!endif
   File "..\game\base\tacontent_v2.sdz"
   File "..\game\base\springcontent.sdz"
-
   SetOutPath "$INSTDIR\base\spring"
-  Delete "..\game\base\spring\springbitmaps_v061.sdz"
-  Delete "..\game\base\spring\springdecals_v062.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
-!endif
+  Delete "$INSTDIR\base\spring\springbitmaps_v061.sdz"
+  Delete "$INSTDIR\base\spring\springdecals_v062.sdz"
+  Delete "$INSTDIR\base\spring\springloadpictures_v061.sdz"
   File "..\game\base\spring\bitmaps.sdz"
 
   SetOutPath "$INSTDIR\mods"
@@ -131,8 +131,8 @@
   Delete "$INSTDIR\SpringClient.exe"
 
   
-  !define APPWITHQUOTES "$INSTDIR\spring.exe"
-  !insertmacro APP_ASSOCIATE "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "${APPWITHQUOTES} %1"
+  !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "taspring.demofile" "TA Spring demo file" \
+         "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
   !insertmacro UPDATEFILEASSOC
 
 !else
@@ -207,10 +207,13 @@
   Delete "$INSTDIR\mods\xta_se_v066.sdz"
   Delete "$INSTDIR\mods\xtape.sd7"
   Delete "$INSTDIR\base\spring\springbitmaps_v061.sdz"
+  Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v062.sdz"
   Delete "$INSTDIR\base\spring\springloadpictures_v061.sdz"
   Delete "$INSTDIR\base\spring\bitmaps.sdz"
   
+  RmDir "$INSTDIR\aidll\globalai"
+  RmDir "$INSTDIR\aidll"
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
   RmDir "$INSTDIR\mods"
