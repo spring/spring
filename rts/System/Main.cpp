@@ -793,6 +793,40 @@ void SpringApp::Shutdown()
 
 #if !defined(_WIN32) && !defined(__APPLE__)
 /**
+ * @brief substitute environment variables with their values
+ */
+static std::string SubstEnvVars(const std::string& in)
+{
+	bool escape = false;
+	std::ostringstream out;
+	for (std::string::const_iterator ch = in.begin(); ch != in.end(); ++ch) {
+		if (escape) {
+			escape = false;
+			out << *ch;
+		} else {
+			switch (*ch) {
+				case '\\':
+					escape = true;
+					break;
+				case '$':  {
+					std::ostringstream envvar;
+					for (++ch; ch != in.end() && (isalnum(*ch) || *ch == '_'); ++ch)
+						envvar << *ch;
+					--ch;
+					char* subst = getenv(envvar.str().c_str());
+					if (subst && *subst)
+						out << subst;
+					break; }
+				default:
+					out << *ch;
+					break;
+			}
+		}
+	}
+	return out.str();
+}
+
+/**
  * @brief locate spring data directory
  *
  * On *nix platforms, attempts to locate
@@ -809,13 +843,17 @@ void SpringApp::Shutdown()
  *   assumed to be at '$prefix/games/taspring' in this case.
  * - the default datadir in the default prefix, ie. '/usr/local/games/taspring'
  *
+ * All of the above methods support environment variable substitution, eg.
+ * '$HOME/myspringdatadir' will be converted by spring to something like
+ * '/home/username/myspringdatadir'.
+ *
  * If it fails to chdir to the above specified directory spring will asume the
  * current working directory is the data directory.
  *
  * TODO: do this on a per file basis, ie. make it possible to merge different
  * data directories in runtime.
  */
-static inline int LocateDataDir(void)
+static int LocateDataDir(void)
 {
 	std::vector<std::string> datadirs;
 
@@ -842,11 +880,12 @@ static inline int LocateDataDir(void)
 	datadirs.push_back(SPRING_DATADIR);
 
 	for (std::vector<std::string>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		if (chdir((*d).c_str()) != -1) {
-			fprintf(stderr, "spring is using data directory: %s\n", (*d).c_str());
+		std::string dir = SubstEnvVars(*d);
+		if (chdir(dir.c_str()) != -1) {
+			fprintf(stderr, "spring is using data directory: %s\n", dir.c_str());
 			return 0;
 		}
-		perror((*d).c_str());
+		perror(dir.c_str());
 	}
 	fprintf(stderr, "spring is using data directory: current working directory\n");
 	return 0; // assume current working directory is ok.
