@@ -104,7 +104,6 @@
   Delete "..\game\base\spring\springbitmaps_v061.sdz"
   Delete "..\game\base\spring\springdecals_v062.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
-  File "..\game\base\spring\springloadpictures_v061.sdz"
 !endif
   File "..\game\base\spring\bitmaps.sdz"
 
