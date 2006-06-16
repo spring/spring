@@ -54,6 +54,9 @@ TASpring change log
 - Tab will now bring zoom out to show all map in any camera mode, tab again zooms back to the mouse cursor.
 - Added GetGravity(), GetUnitDefHeight() and GetUnitDefRadius() to AI interface
 - Mod can now be selected in the single player menu.
+- Checksums of the map and mod are checked on game start.
+- Mod can be selected when starting the spring exe directly.
+- Various other small changes.
 
 0.71b1
 
