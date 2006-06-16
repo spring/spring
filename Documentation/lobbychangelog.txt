@@ -1,8 +1,9 @@
   ------ CHANGELOG ------
 
-  *** 0.25 (??x??x??) ***
+  *** 0.25 (16x06x06) ***
   * battle client list now shows player's ingame and away status
   * team colors can now be customized
+  * fixed some minor graphical glitches and other problems
 
   *** 0.24 (13x05x06) ***
   * fixed small bug with "online maps" getting scattered over the window if scrolling the list
