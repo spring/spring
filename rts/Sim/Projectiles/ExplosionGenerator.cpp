@@ -426,7 +426,8 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 
 		std::string location = tag + "\\" + *si + "\\";
 
-		psi->projectileClass = h->projectileClasses.GetClass (*si);
+		std::string className = parser.SGetValueDef(*si, location + "class");
+		psi->projectileClass = h->projectileClasses.GetClass (className);
 		unsigned int flags = 0;
         if(!!atoi(parser.SGetValueDef ("0", location + "ground").c_str()))	flags |= SPW_GROUND;
         if(!!atoi(parser.SGetValueDef ("0", location + "water").c_str()))	flags |= SPW_WATER;
