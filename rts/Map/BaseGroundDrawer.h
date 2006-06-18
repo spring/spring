@@ -37,6 +37,7 @@ public:
 	void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes);
 	void SetPathMapTexture();
 	void ToggleLosTexture();
+	void ToggleRadarAndJammer();
 	bool UpdateExtraTexture();
 	bool DrawExtraTex() { return drawMode!=drawNormal; }
 

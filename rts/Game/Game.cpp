@@ -684,7 +684,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		gd->SetHeightTexture();
 	}
 	if (s=="toggleradarandjammer"){
-		gd->drawRadarAndJammer=!gd->drawRadarAndJammer;
+		gd->ToggleRadarAndJammer();
 	}
 	if (s=="lastmsgpos"){
 		mouse->currentCamController->SetPos(info->lastMsgPos);
@@ -724,13 +724,14 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}else{
 			//The user wants to quit. Do we let him?
 			bool userMayQuit=false;
-			// Four cases when he may quit:
+			// Six cases when he may quit:
 			//  * If the game isn't started players are free to leave.
+			//  * If the game is over
 			//  * If his team is dead.
 			//  * If he's a spectator.
 			//  * If there are other active players on his team.
 			//  * If there are no other players
-			if(!playing || gs->Team(gu->myTeam)->isDead || gu->spectating || net->onlyLocal) {
+			if(!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating || (net->onlyLocal && !gameServer)) {
 				userMayQuit=true;
 			}else{
 				// Check if there are more active players on his team.

@@ -28,7 +28,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	viewRadius+=viewRadius%2;
 
 	drawMode=drawNormal;
-	drawRadarAndJammer=false;
+	drawRadarAndJammer=true;
 
 	extraTex=0;
 	extraTexPal=0;
@@ -119,6 +119,15 @@ void CBaseGroundDrawer::ToggleLosTexture()
 	}
 	updateTextureState=0;
 	while(!UpdateExtraTexture());
+}
+
+void CBaseGroundDrawer::ToggleRadarAndJammer()
+{
+	drawRadarAndJammer=!drawRadarAndJammer;
+	if (drawMode==drawLos){
+		updateTextureState=0;
+		while(!UpdateExtraTexture());
+	}
 }
 
 // Gradually calculate the extra texture based on updateTextureState:
