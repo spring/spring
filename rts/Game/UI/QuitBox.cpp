@@ -11,7 +11,6 @@
 #include "Sim/Units/Unit.h"
 
 extern bool globalQuit;
-int CQuitBox::lastShareTeam=0;
 
 CQuitBox::CQuitBox(void)
 {
@@ -52,10 +51,21 @@ CQuitBox::CQuitBox(void)
 
 
 	moveBox=false;
-
-	shareTeam=lastShareTeam;
-	if(gu->myTeam==0 && shareTeam==0)
-		shareTeam++;
+	noAlliesLeft=true;
+	shareTeam=0;
+	// if we have alive allies left, set the shareteam to an undead ally.
+	for(int team=0;team<gs->activeTeams;++team){
+		if(team!=gu->myTeam && !gs->Team(team)->isDead)
+		{
+			if(shareTeam==gu->myTeam || gs->Team(shareTeam)->isDead)
+				shareTeam=team;
+			if(gs->Ally(gu->myAllyTeam, gs->AllyTeam(team))){
+				noAlliesLeft=false;
+				shareTeam=team;
+				break;
+			}
+		}
+	}
 }
 
 CQuitBox::~CQuitBox(void)
@@ -179,8 +189,12 @@ bool CQuitBox::MousePress(int x, int y, int button)
 			int team=(int)((box.y1+teamBox.y2-my)/0.025);
 			if(team>=gu->myTeam)
 				team++;
-			if(team<gs->activeTeams && !gs->Team(team)->isDead)
-				shareTeam=team;
+			if(team<gs->activeTeams && !gs->Team(team)->isDead){
+				// we don't want to give everything to the enemy if there are allies left
+				if(noAlliesLeft || (!noAlliesLeft && gs->Ally(gu->myAllyTeam, gs->AllyTeam(team)))){
+					shareTeam=team;
+				}
+			}
 		}
 		return true;
 	}
@@ -209,7 +223,6 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 				NETMSG_SHARE, gu->myPlayerNum, shareTeam, true,
 				gs->Team(gu->myTeam)->metal, gs->Team(gu->myTeam)->energy);
 			selectedUnits.ClearSelected();
-			lastShareTeam=shareTeam;
 			// inform other users of the giving away of units
 			char givenAwayMsg[200];
 			sprintf(givenAwayMsg,"%s gave everything to %s.",
@@ -255,8 +268,12 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 		int team=(int)((box.y1+teamBox.y2-my)/0.025);
 		if(team>=gu->myTeam)
 			team++;
-		if(team<gs->activeTeams && !gs->Team(team)->isDead)
-			shareTeam=team;
+		if(team<gs->activeTeams && !gs->Team(team)->isDead){
+			// we don't want to give everything to the enemy if there are allies left
+			if(noAlliesLeft || (!noAlliesLeft && gs->Ally(gu->myAllyTeam, gs->AllyTeam(team)))){
+				shareTeam=team;
+			}
+		}
 	}
 }
 

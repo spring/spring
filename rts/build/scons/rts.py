@@ -96,6 +96,8 @@ def generate(env):
 		('CXXFLAGS',      'c++ compiler flags'),
 		('CPPDEFINES',    'c preprocessor defines'),
 		('CPPPATH',       'c preprocessor include path'),
+		('CC',            'c compiler'),
+		('CXX',           'c++ compiler'),
 		('is_configured', 'configuration version stamp'))
 
 	usropts.Update(env)
@@ -114,7 +116,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
+		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -138,6 +140,11 @@ def generate(env):
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
 		fix_windows_spawn(env)
+
+		if os.environ.has_key('CC'):
+			env['CC'] = os.environ['CC']
+		if os.environ.has_key('CXX'):
+			env['CXX'] = os.environ['CXX']
 
 		gcc_version = config.check_gcc_version(env)
 

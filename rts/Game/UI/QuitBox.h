@@ -27,7 +27,7 @@ public:
 	ContainerBox cancelBox;
 
 	int shareTeam;
-	static int lastShareTeam;
+	bool noAlliesLeft;
 
 	bool moveBox;
 };
