@@ -112,7 +112,7 @@ static inline std::string glob_to_regex(const std::string &glob)
  * Will search for a file given a particular pattern.
  * Starts from dirpath, descending down if recurse is true.
  */
-static inline std::vector<fs::path> find_files(fs::path &dirpath, const std::string &pattern, const bool recurse = false)
+static inline std::vector<fs::path> find_files(fs::path dirpath, const std::string &pattern, const bool recurse = false, const bool include_dirs = false)
 {
 	std::vector<fs::path> matches;
 	if (dirpath.empty())
@@ -127,6 +127,8 @@ static inline std::vector<fs::path> find_files(fs::path &dirpath, const std::str
 					if (boost::regex_match(diritr->leaf(),regexpattern))
 						matches.push_back(*diritr);
 				} else if (recurse) {
+					if (include_dirs && boost::regex_match(diritr->leaf(),regexpattern))
+						matches.push_back(*diritr);
 					std::vector<fs::path> submatch = find_files(*diritr,pattern,true);
 					if (!submatch.empty()) {
 						for (std::vector<fs::path>::iterator it=submatch.begin(); it != submatch.end(); it++)
