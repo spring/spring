@@ -30,6 +30,7 @@ CVFSHandler::CVFSHandler(bool mapArchives)
 	FindArchives("*.hpi", taDir);
 	FindArchives("*.sdz", taDir);
 	FindArchives("*.sd7", taDir);
+	FindArchives("*.sdd", taDir);
 }
 
 void CVFSHandler::FindArchives(const string& pattern, const string& path)

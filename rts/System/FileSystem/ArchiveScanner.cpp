@@ -77,7 +77,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	isDirty = true;
 
 	fs::path fn(curPath+"/");
-	std::vector<fs::path> found = find_files(fn, "*", true);
+	std::vector<fs::path> found = find_files(fn, "*", true, true);
 	struct stat info;
 	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
 		stat(it->native_file_string().c_str(),&info);
@@ -107,7 +107,10 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 				}
 
 				// If we are here, we could have invalid info in the cache
-				if (!cached) {
+				// Force a reread if it's a directory archive, as st_mtime only
+				// reflects changes to the directory itself, not the contents.
+				if (!cached || S_ISDIR(info.st_mode)) {
+					cached = false;
 					archiveInfo.erase(aii);
 				}
 			}
@@ -124,7 +127,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 					cur = ar->FindFiles(0, &name, &size);
 					while (cur != 0) {
 						//printf("found %s %d\n", name.c_str(), size);
-						
+
 						string ext = name.substr(name.find_last_of('.') + 1);
 						transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
 
@@ -162,7 +165,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 								} catch (const TdfParser::parse_error& e) {
 									// Silently ignore mods with parse errors
 								}
-								free(buf);							
+								free(buf);
 							}
 
 						}

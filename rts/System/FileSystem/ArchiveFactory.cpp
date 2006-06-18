@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "ArchiveFactory.h"
+#include "ArchiveDir.h"
 #include "ArchiveHPI.h"
 #include "ArchiveZip.h"
 #include "Archive7Zip.h"
@@ -9,13 +10,17 @@
 // Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsArchive(const string& fileName)
 {
-	return true;
+	string ext(fileName, fileName.find_last_of('.') + 1);
+	transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
+
+	return  (ext == "sd7") || (ext == "sdz") || (ext == "sdd") ||
+			(ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx");
 }
 
 // Returns a pointer to a newly created suitable subclass of CArchiveBase
 CArchiveBase* CArchiveFactory::OpenArchive(const string& fileName)
 {
-	string ext = fileName.substr(fileName.find_last_of('.') + 1);
+	string ext(fileName, fileName.find_last_of('.') + 1);
 	transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
 
 	CArchiveBase* ret = NULL;
@@ -24,6 +29,8 @@ CArchiveBase* CArchiveFactory::OpenArchive(const string& fileName)
 		ret = new CArchive7Zip(fileName);
 	else if (ext == "sdz")
 		ret = new CArchiveZip(fileName);
+	else if (ext == "sdd")
+		ret = new CArchiveDir(fileName);
 	else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx"))
 		ret = new CArchiveHPI(fileName);
 
