@@ -1,0 +1,11 @@
+[AI]
+{
+	// NTAI mod.tdf definition :: AF XE7
+	version=XE7; // has no effect and is backwards compatible between XE4/XE5/XE6/XE7
+	modname=AA144; // here for visibility purposes
+	GAIA=0; // this is not a gaia mod
+	abstract=1;
+	scout_speed=60; // minimum speed to be a scout is 60
+	dynamic_selection=1; // scouts/aattckers chosen dynamically rather than loaded from the scouters and atatckers tags below
+	cheap_multiplier=1.6;
+}

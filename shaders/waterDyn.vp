@@ -1,0 +1,44 @@
+!!ARBvp1.0
+OPTION NV_vertex_program3;
+
+PARAM mat[4] = { state.matrix.mvp };
+PARAM mat3[4] = { state.matrix.program[0] };
+OUTPUT opos = result.position;
+TEMP temp,temp2,pos;
+
+MAD temp, vertex.position.xzyw, program.env[10], program.env[11];
+TEX temp2, temp, texture[2], 2D;
+
+MAD result.texcoord[2], vertex.position.xzyw, program.env[12], program.env[13];
+MUL result.texcoord[3], vertex.position.xzyw, {0.004,0.004,0,0};
+MUL result.texcoord[4], vertex.position.xzyw, program.env[14];
+
+MOV pos, vertex.position;
+MOV result.color, vertex.color;
+
+ADD pos.y, pos.y, temp2.x;
+
+DP4 opos.x, pos, mat[0];
+DP4 opos.y, pos, mat[1];
+DP4 opos.z, pos, mat[2];
+DP4 opos.w, pos, mat[3];
+
+DP4 result.fogcoord.x, pos, mat[2];
+
+#tex coords for shadow texture
+DP4 temp.x, pos, mat3[0];
+DP4 temp.y, pos, mat3[1];
+
+ABS temp2,temp;
+ADD temp2,temp2,program.env[17];
+RSQ temp2.x, temp2.x;
+RSQ temp2.y, temp2.y;
+ADD temp2,temp2,program.env[18];
+MAD result.texcoord[1], temp, temp2,program.env[16];
+
+DP4 result.texcoord[1].z, pos, mat3[2];
+DP4 result.texcoord[1].w, pos, mat3[3];
+
+MOV result.texcoord, pos;
+
+END
