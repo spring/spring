@@ -1,0 +1,40 @@
+[AI]
+{
+    // NTAI XE7b1 AF :: unit efficiency cache file
+
+    version=XE7B1;
+    firstload=0;
+    modname=wartesting.sd7;
+    iterations=7;
+
+    gdcom=4526.5;    // GD Command Vehicle
+    gdltankc=599.997;    // Vladost
+    gdmex=674.693;    // Metal Extractor
+    gdrad=460;    // Field Radar
+    gdreact=3449.96;    // GD Nuclear Reactor
+    gdtfact=4999.99;    // Light Vehicle Factory
+    urcadvmex=1500.18;    // Advanced Metal Extractor
+    urcadvmfact=6500;    // Medium Mech Factory
+    urccom=4605;    // URC Mobile Command
+    urcjaguarc=2201.2;    // Couger
+    urcjaguarp=2751.2;    // Jaguar
+    urcjaguarr=1801.2;    // Mammoth
+    urclpt=1207.49;    // Rock
+    urclrt=1000.07;    // Defender
+    urcmex=494.344;    // Metal Extractor
+    urcmfact=3499.97;    // Light Mech Factory
+    urcmortt=1500.01;    // Punisher
+    urcrad=454.959;    // Field Radar
+    urcreact=2099.49;    // URC Light Reactor
+    urcspidercon=379.384;    // LRA Mech
+    urcspiderf=558.287;    // Ravenger
+    urcspiderg=400.423;    // Raiden
+    urcspiderp=517.052;    // Reaver
+    urcspiderr=403.233;    // Reaper
+    urcspiderrad=500.5;    // URC C&C Mech
+    urctigerR=1101.2;    // Panther
+    urctigerc=1301.2;    // Bobcat
+    urctigercon=1005.5;    // Mobile Construction Mech
+    urctigerp=1201.48;    // Tiger
+    urctrans=2000;    // URC Transformer
+}
