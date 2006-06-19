@@ -8,8 +8,6 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/Game.h"
-#include "Game/PreGame.h"
-#include "Game/StartScripts/ScriptHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
 #include "Game/GameVersion.h"
@@ -55,8 +53,6 @@ static boost::mutex netMutex;
 
 CNet* net=0;
 CNet* serverNet=0;
-extern std::string stupidGlobalMapname;
-extern std::string stupidGlobalModname;
 
 static bool IsFakeError()
 {
@@ -507,13 +503,12 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 
 		// Send over data that's already known to other clients.
 		// Don't send it if host has not yet decided.
-		if (!CScriptHandler::Instance().chosenName.empty())
-			SendSTLData<std::string>(NETMSG_SCRIPT, CScriptHandler::Instance().chosenName);
-		assert(pregame);
-		if (!pregame->mapName.empty())
-			SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, pregame->GetMapChecksum(), pregame->mapName);
-		if (!pregame->modName.empty())
-			SendSTLData<unsigned, std::string>(NETMSG_MODNAME, pregame->GetModChecksum(), pregame->modName);
+		if (!scriptName.empty())
+			SendSTLData<std::string>(NETMSG_SCRIPT, scriptName);
+		if (!mapName.empty())
+			SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, mapChecksum, mapName);
+		if (!modName.empty())
+			SendSTLData<unsigned, std::string>(NETMSG_MODNAME, modChecksum, modName);
 
 		for(int a=0;a<gs->activePlayers;a++){
 			if(!gs->players[a]->readyToStart)
@@ -785,4 +780,25 @@ void CNet::StartDemoServer(void)
 	playbackDemo->Read(&demoTimeOffset,sizeof(double));
 	demoTimeOffset=gu->modGameTime-demoTimeOffset;
 	nextDemoRead=gu->modGameTime-0.01;
+}
+
+
+void CNet::SetScript(const std::string& name)
+{
+	scriptName = name;
+	SendSTLData<std::string>(NETMSG_SCRIPT, scriptName);
+}
+
+void CNet::SetMap(unsigned checksum, const std::string& name)
+{
+	mapChecksum = checksum;
+	mapName = name;
+	SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, mapChecksum, mapName);
+}
+
+void CNet::SetMod(unsigned checksum, const std::string& name)
+{
+	modChecksum = checksum;
+	modName = name;
+	SendSTLData<unsigned, std::string>(NETMSG_MODNAME, modChecksum, modName);
 }

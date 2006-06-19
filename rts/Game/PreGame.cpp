@@ -34,9 +34,7 @@ CPreGame::CPreGame(bool server, const string& demo):
 		showList(0),
 		server(server),
 		state(UNKNOWN),
-		saveAddress(true),
-		mapChecksum(0),
-		modChecksum(0)
+		saveAddress(true)
 {
 	pregame = this; // prevent crashes if Select* is called from ctor
 	info = new CInfoConsole;
@@ -383,7 +381,7 @@ void CPreGame::SelectScript(std::string s)
 	pregame->showList = 0;
 	(*info) << "Using script " << s.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SendSTLData<std::string>(NETMSG_SCRIPT, s);
+		serverNet->SetScript(s);
 }
 
 /** Create a CglList for selecting the script. */
@@ -399,13 +397,12 @@ void CPreGame::SelectMap(std::string s)
 	if (s == "Random map") {
 		s = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
 	}
-	pregame->mapName = s;
+	stupidGlobalMapname = pregame->mapName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
-	stupidGlobalMapname = s;
 	(*info) << "Map: " << s.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, pregame->GetMapChecksum(), pregame->mapName);
+		serverNet->SetMap(pregame->GetMapChecksum(), pregame->mapName);
 }
 
 /** Create a CglList for selecting the map. */
@@ -441,13 +438,12 @@ void CPreGame::SelectMod(std::string s)
 			break;
 		}
 	}
-	pregame->modName = s;
+	stupidGlobalModname = pregame->modName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
-	stupidGlobalModname = s;
 	(*info) << "Mod: " << s.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SendSTLData<unsigned, std::string>(NETMSG_MODNAME, pregame->GetModChecksum(), pregame->modName);
+		serverNet->SetMod(pregame->GetModChecksum(), pregame->modName);
 }
 
 /** Create a CglList for selecting the mod. */
@@ -466,25 +462,16 @@ void CPreGame::ShowModList()
 }
 
 /** Determine if the map is inside an archive, if so get checksum of all required archives. */
-unsigned CPreGame::GetMapChecksum()
+unsigned CPreGame::GetMapChecksum() const
 {
-	if (!mapChecksum) {
-		CFileHandler* f = new CFileHandler("maps/" + mapName);
-		if (!f->FileExists()) {
-			mapChecksum = archiveScanner->GetChecksumForMap(mapName);
-// 			fprintf(stderr, "Map checksum for map \"%s\" is %u.\n", mapName.c_str(), mapChecksum);
-		}
-		delete f;
-	}
-	return mapChecksum;
+	CFileHandler f("maps/" + mapName);
+	if (!f.FileExists())
+		return archiveScanner->GetChecksumForMap(mapName);
+	return 0;
 }
 
 /** Get checksum of all required archives depending on selected mod(s). */
-unsigned CPreGame::GetModChecksum()
+unsigned CPreGame::GetModChecksum() const
 {
-	if (!modChecksum) {
-		modChecksum = archiveScanner->GetChecksum(modName);
-// 		fprintf(stderr, "Mod checksum for mod \"%s\" is %u.\n", modName.c_str(), modChecksum);
-	}
-	return modChecksum;
+	return archiveScanner->GetChecksum(modName);
 }
