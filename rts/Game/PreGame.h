@@ -38,8 +38,8 @@ public:
 	int inbufpos;								//where in the input buffer we are
 	int inbuflength;						//last byte in input buffer
 
-	unsigned GetMapChecksum();
-	unsigned GetModChecksum();
+	unsigned GetMapChecksum() const;
+	unsigned GetModChecksum() const;
 
 private:
 
@@ -49,9 +49,6 @@ private:
 	static void SelectScript(std::string s);
 	static void SelectMap(std::string s);
 	static void SelectMod(std::string s);
-
-	unsigned mapChecksum;
-	unsigned modChecksum;	
 };
 
 extern CPreGame* pregame;

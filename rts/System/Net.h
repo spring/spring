@@ -375,6 +375,20 @@ public:
 	void ReadDemoFile(void);
 	void CreateDemoServer(std::string demoname);
 	void StartDemoServer(void);
+
+	// used by CPreGame to set init-data.
+	void SetScript(const std::string& name);
+	void SetMap(unsigned checksum, const std::string& name);
+	void SetMod(unsigned checksum, const std::string& name);
+
+private:
+
+	// init-data.  These are send over when a new connection is initialized.
+	std::string scriptName;
+	unsigned mapChecksum;
+	std::string mapName;
+	unsigned modChecksum;
+	std::string modName;
 };
 
 extern CNet* serverNet;

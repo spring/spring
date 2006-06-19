@@ -259,14 +259,15 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	string mapName = name;
 	CVFSHandler *oh = hpiHandler;
 
-	CFileHandler* f = new CFileHandler("maps/" + mapName);
-	if (!f->FileExists()) {
-		vector<string> ars = scanner->GetArchivesForMap(mapName);
+	{
+		CFileHandler f("maps/" + mapName);
+		if (!f.FileExists()) {
+			vector<string> ars = scanner->GetArchivesForMap(mapName);
 
-		hpiHandler = new CVFSHandler(false);
-		hpiHandler->AddArchive(ars[0], false);
+			hpiHandler = new CVFSHandler(false);
+			hpiHandler->AddArchive(ars[0], false);
+		}
 	}
-	delete f;
 
 	TdfParser parser;
 	string smd = mapName.replace(mapName.find_last_of('.'), 4, ".smd");
@@ -280,13 +281,14 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 
 	// Retrieve the map header as well
 	string origName = name;
-	CFileHandler* in = new CFileHandler("maps/" + origName);
 	MapHeader mh;
 	mh.mapx = -1;
-	if (in->FileExists()) {
-		in->Read(&mh, sizeof(mh));
+
+	{
+		CFileHandler in("maps/" + origName);
+		if (in.FileExists())
+			in.Read(&mh, sizeof(mh));
 	}
-	delete in;
 
 	if (hpiHandler != oh) {
 		delete hpiHandler;
@@ -368,13 +370,10 @@ DLL_EXPORT const char* __stdcall GetMapArchiveName(int index)
 
 DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
 {
-	unsigned int checksum = 0;
-	CFileHandler* f = new CFileHandler("maps/" + mapArchives[index]);
-	if (!f->FileExists()) {
-		checksum = scanner->GetChecksumForMap(mapArchives[index]);
-	}
-	delete f;
-	return checksum;
+	CFileHandler f("maps/" + mapArchives[index]);
+	if (!f.FileExists())
+		return scanner->GetChecksumForMap(mapArchives[index]);
+	return 0;
 }
 
 #define RM	0x0000F800
@@ -395,14 +394,15 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 	string mapName = filename;
 	CVFSHandler *oh = hpiHandler;
 
-	CFileHandler* f = new CFileHandler("maps/" + mapName);
-	if (!f->FileExists()) {
-		vector<string> ars = scanner->GetArchivesForMap(mapName);
+	{
+		CFileHandler f("maps/" + mapName);
+		if (!f.FileExists()) {
+			vector<string> ars = scanner->GetArchivesForMap(mapName);
 
-		hpiHandler = new CVFSHandler(false);
-		hpiHandler->AddArchive(ars[0], false);
+			hpiHandler = new CVFSHandler(false);
+			hpiHandler->AddArchive(ars[0], false);
+		}
 	}
-	delete f;		
 
 	// Calculate stuff
 	
