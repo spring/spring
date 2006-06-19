@@ -1,7 +1,0 @@
-Control_A AllMap++_ClearSelection_SelectAll+
-Control_B AllMap+_Builder_Idle+_ClearSelection_SelectOne+
-Control_C AllMap+_Commander+_ClearSelection_SelectOne+
-Control_R AllMap+_Radar+_ClearSelection_SelectAll+
-Control_W AllMap+_Not_Aircraft_Weapons+_ClearSelection_SelectAll+
-Control_X Visible+_Weapons+_SelectNum_5+
-Control_Z AllMap+_InPrevSel+_ClearSelection_SelectAll+
