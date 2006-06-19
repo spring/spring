@@ -1,1 +1,0 @@
-armrl, B_MEX, B_MEX, armrl, B_POWER, B_POWER, B_GEO, repair, repair, repair, armhlt, repair, repair, repair, B_MEX, armamb, B_POWER, B_POWER, repair, repair, repair, repair, B_MEX, B_MEX, B_GEO, repair, repair, armavp, armrl, armrl, armrl, repair, repeat

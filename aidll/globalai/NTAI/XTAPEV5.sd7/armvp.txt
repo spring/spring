@@ -1,1 +1,0 @@
-B_SCOUT, armsam, armsam, armsam, armcv, armcv, B_ASSAULT, B_ASSAULT, armcv, B_ASSAULT, B_RAND_ASSAULT, repeat
