@@ -51,6 +51,7 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	['rts/System/TdfParser.cpp',
 	'rts/System/FileSystem/Archive7Zip.cpp',
 	'rts/System/FileSystem/ArchiveBuffered.cpp',
+	'rts/System/FileSystem/ArchiveDir.cpp',
 	'rts/System/FileSystem/ArchiveFactory.cpp',
 	'rts/System/FileSystem/ArchiveHPI.cpp',
 	'rts/System/FileSystem/ArchiveScanner.cpp',
