@@ -600,6 +600,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon)
 {
 	if(weapon->weaponDef->manualfire && !weapon->weaponDef->dropped && !commandQue.empty() && (commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_DGUN) && inCommand){
 		owner->AttackUnit(0,true);
+		globalAI->WeaponFired(owner,weapon->weaponDef);
 		FinishCommand();
 	}
 }

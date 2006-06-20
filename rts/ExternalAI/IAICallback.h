@@ -13,6 +13,7 @@ struct FeatureDef;
 
 // GetValue() constants
 #define AIVAL_NUMDAMAGETYPES 1 // int
+#define AI_EXCEPTION_HANDLING 2
 
 struct PointMarker
 {

@@ -2,6 +2,7 @@
 #define GLOBALAIHANDLER_H
 
 #include "Object.h"
+#include "Platform/ConfigHandler.h"
 #include <map>
 #include <string>
 
@@ -13,6 +14,8 @@ class CGlobalAIHandler :
 	public CObject
 {
 public:
+	static bool CatchException();
+
 	CGlobalAIHandler(void);
 	~CGlobalAIHandler(void);
 
@@ -31,7 +34,7 @@ public:
 	void UnitMoveFailed(CUnit* unit);
 	void UnitTaken(CUnit* unit, int newteam);
 	void UnitGiven(CUnit* unit, int oldteam);
-
+	void WeaponFired(CUnit* unit,WeaponDef* def);
 	CGlobalAI* ais[MAX_TEAMS];
 	bool hasAI;
 

@@ -6,12 +6,12 @@
 #include "Game/UI/InfoConsole.h"
 #include "Game/GameHelper.h"
 #include "TimeProfiler.h"
-#include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
-static bool CatchException()
+
+bool CGlobalAIHandler::CatchException()
 {
 	static bool init=false;
 	static bool Catch;
@@ -21,7 +21,6 @@ static bool CatchException()
 	}
 	return Catch;
 }
-
 
 // to switch off the exception handling and have it catched by the debugger.
 #define HANDLE_EXCEPTION  \
@@ -251,6 +250,19 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 			} else {
 				ais[attacked->team]->ai->UnitDamaged(attacked->id,-1,damage,ZeroVector);
 			}
+		} 
+		HANDLE_EXCEPTION;
+	}
+}
+
+void CGlobalAIHandler::WeaponFired(CUnit* unit,WeaponDef* def)
+{
+	if(ais[unit->team]){
+		try {
+			WeaponFireEvent wfe;
+			wfe.unit = unit->id;
+			wfe.def = def;
+			ais[unit->team]->ai->HandleEvent(AI_EVENT_WEAPON_FIRED,&wfe);
 		} 
 		HANDLE_EXCEPTION;
 	}
