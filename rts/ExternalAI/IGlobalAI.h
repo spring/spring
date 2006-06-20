@@ -5,16 +5,21 @@
 #include "float3.h"
 
 class IGlobalAICallback;
+struct WeaponDef;
 
 #define GLOBAL_AI_INTERFACE_VERSION 15
 
 // Both use ChangeTeamEvent for data
 #define AI_EVENT_UNITGIVEN 1
-	struct ChangeTeamEvent { 
+	struct ChangeTeamEvent {
 		int unit, newteam, oldteam;
 	};
-
+	struct WeaponFireEvent {
+		int unit;
+		WeaponDef* def;
+	};
 #define AI_EVENT_UNITCAPTURED 2
+#define AI_EVENT_WEAPON_FIRED 3
 
 class IGlobalAI
 {

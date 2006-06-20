@@ -35,6 +35,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "FileSystem/FileHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
 
@@ -856,6 +857,10 @@ bool CAICallback::GetValue(int id, void *data)
 		case AIVAL_NUMDAMAGETYPES:
 			*((int*)data) = DamageArray::numTypes;
 			return true;
+		case AI_EXCEPTION_HANDLING:{
+			*(bool*)data = CGlobalAIHandler::CatchException();
+			return true;
+		}
 		default:
 			return false;
 	}
@@ -927,7 +932,8 @@ bool CAICallback::GetProperty(int id, int property, void *data)
 				(*(const UnitDef**)data) = unit->unitDef;
 				return true;
 			}
-			break;}
+			break;
+		}
 		}
 	}
 	return false;
