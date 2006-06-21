@@ -27,8 +27,7 @@ DotfileHandler::DotfileHandler(const string fname)
 			if ((idx = read.find_first_of("=")) > 0)
 				data[read.substr(0,idx)] = read.substr(idx+1);
 		reader.close();
-	} else
-		handleerror(0,"Could not read from config file","DotfileHandler",MBF_EXCL);
+	}
 	file.open(fname.c_str());
 	if (!file)
 		handleerror(0,"Could not write to config file","DotfileHandler",0);
