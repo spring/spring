@@ -11,6 +11,11 @@
 #include <sys/stat.h>
 #include "mmgr.h"
 
+// fix for windows
+#ifndef S_ISDIR
+#define S_ISDIR(x) (((x) & 0170000) == 0040000) /* directory */
+#endif
+
 /*
  * The archive scanner is used to find stuff in archives that are needed before building the virtual
  * filesystem. This currently includes maps and mods. It uses caching to speed up the process.
