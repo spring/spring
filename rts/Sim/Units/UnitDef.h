@@ -55,7 +55,7 @@ struct UnitDef
 	float metalStorage;
 	float energyStorage;
 
-	float autoHeal;		//amount autohealed 
+	float autoHeal;		//amount autohealed
 	float idleAutoHeal;	//amount autohealed only during idling
 	int idleTime;		//time a unit needs to idle before its considered idling
 
@@ -127,6 +127,8 @@ struct UnitDef
 	std::string TEDClassString;	//these might be changed later for something better
 	std::string categoryString;
 
+	std::string iconType;
+
 	int selfDCountdown;
 
 	bool canfly;
@@ -173,7 +175,7 @@ struct UnitDef
 	float transportMass;
 
 	bool canCloak;							//if the unit can cloak
-	bool startCloaked;					//if the units want to start out cloaked	
+	bool startCloaked;					//if the units want to start out cloaked
 	float cloakCost;						//energy cost per second to stay cloaked when stationary
 	float cloakCostMoving;			//energy cost per second when moving
 	float decloakDistance;			//if enemy unit come within this range decloaking is forced

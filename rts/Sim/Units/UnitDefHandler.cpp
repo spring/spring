@@ -36,7 +36,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 	weaponDefHandler=new CWeaponDefHandler();
 
 	numUnits = 0;
-	
+
 	std::vector<std::string> tafiles = CFileHandler::FindFiles("units/*.fbi");
 	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units/*.swu");
 	while(!tafiles2.empty()){
@@ -45,16 +45,16 @@ CUnitDefHandler::CUnitDefHandler(void)
 	}
 
 	soundcategory.LoadFile("gamedata/SOUND.TDF");
-	
+
 	numUnits = tafiles.size();
-	if (gameSetup) 
+	if (gameSetup)
 		numUnits -= gameSetup->restrictedUnits.size();
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = new UnitDef[numUnits+1];
 
 	unsigned int i = 1;		// Start at unit id 1
-	for(unsigned int a = 0; a < tafiles.size(); ++a)	
+	for(unsigned int a = 0; a < tafiles.size(); ++a)
 	{
 		// Determine the name (in lowercase) first
 		int len = tafiles[a].find_last_of("/")+1;
@@ -71,7 +71,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 		// Seems ok, load it
 		unitDefs[i].loaded = false;
 		unitDefs[i].filename = tafiles[a];
-		unitDefs[i].id = i;			
+		unitDefs[i].id = i;
 		unitDefs[i].yardmap = 0;
 		unitDefs[i].name = unitname;
 		unitDefs[i].unitimage = 0;
@@ -215,7 +215,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.airLosRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*1.5;
 	ud.tooltip=tdfparser.SGetValueDef(ud.name,"UNITINFO\\Description");
 	ud.moveType=0;
-	
+
 	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
 	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
 	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
@@ -269,7 +269,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		ud.canCloak=false;
 	ud.startCloaked=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\init_cloaked").c_str());
 	ud.decloakDistance=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\mincloakdistance").c_str());
-	
+
 	ud.highTrajectoryType=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HighTrajectory").c_str());
 
 	ud.canKamikaze=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\kamikaze").c_str());
@@ -315,6 +315,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.category=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\Category"));
 	ud.noChaseCategory=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\NoChaseCategory"));
 //	info->AddLine("Unit %s has cat %i",ud.humanName.c_str(),ud.category);
+
+	ud.iconType=tdfparser.SGetValueDef("default", "UNITINFO\\iconType");
 
 	for(int a=0;a<16;++a){
 		char c[50];
@@ -386,7 +388,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	}
 	else if(ud.transportCapacity)
 	{
-		ud.type = "Transport";	
+		ud.type = "Transport";
 	}
 	else if(ud.builder)
 	{
@@ -462,7 +464,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	}
 
 	tdfparser.GetDef(ud.activateWhenBuilt, "0", "UNITINFO\\ActivateWhenBuilt");
-	
+
 	ud.xsize=atoi(tdfparser.SGetValueDef("1", "UNITINFO\\FootprintX").c_str())*2;//ta has only half our res so multiply size with 2
 	ud.ysize=atoi(tdfparser.SGetValueDef("1", "UNITINFO\\FootprintZ").c_str())*2;
 
@@ -569,7 +571,7 @@ UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 }
 
 UnitDef *CUnitDefHandler::GetUnitByID(int id)
-{	
+{
 	if(!unitDefs[id].loaded)
 		ParseUnit(unitDefs[id].filename, id);
 
