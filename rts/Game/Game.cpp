@@ -68,6 +68,7 @@
 #include "Sim/Path/PathManager.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "System/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #ifdef DIRECT_CONTROL_ALLOWED
 #include "Sim/Units/COB/CobFile.h"
@@ -115,9 +116,9 @@
 
 GLfloat LightDiffuseLand[]=	{ 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat LightAmbientLand[]=	{ 0.2f, 0.2f, 0.2f, 1.0f };
-GLfloat FogLand[]=			{ 0.7f,	0.7f, 0.8f, 0	 }; 
-GLfloat FogWhite[]=			{ 1.0f,	1.0f, 1.0f, 0	 }; 
-GLfloat FogBlack[]=			{ 0.0f,	0.0f, 0.0f, 0	 }; 
+GLfloat FogLand[]=			{ 0.7f,	0.7f, 0.8f, 0	 };
+GLfloat FogWhite[]=			{ 1.0f,	1.0f, 1.0f, 0	 };
+GLfloat FogBlack[]=			{ 0.0f,	0.0f, 0.0f, 0	 };
 
 extern bool globalQuit;
 CGame* game=0;
@@ -249,6 +250,7 @@ CGame::CGame(bool server,std::string mapname)
 	if(!server) net->Update();	//prevent timing out during load
 	ENTER_MIXED;
 	uh=new CUnitHandler();
+	iconHandler=new CIconHandler();
 	unitDrawer=new CUnitDrawer();
 	fartextureHandler = new CFartextureHandler();
 	if(!server) net->Update();	//prevent timing out during load
@@ -635,7 +637,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			speed/=0.8;
 			if(speed>0.99)
 				speed=1;
-		}else 
+		}else
 			speed+=0.5;
 		if(!net->playbackDemo){
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
@@ -652,7 +654,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			speed*=0.8;
 			if(speed<0.1)
 				speed=0.1;
-		}else 
+		}else
 			speed-=0.5;
 		if(!net->playbackDemo){
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
@@ -980,7 +982,7 @@ bool CGame::Update()
 			return false;
 		}
 	}
-	
+
 	if(gameServer && serverNet->waitOnCon && allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)){
 		chatting=false;
 		userWriting=false;
@@ -1008,7 +1010,7 @@ bool CGame::Draw()
 	ph->UpdateTextures();
 
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
-				
+
 	sky->Update();
 //	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1058,13 +1060,14 @@ bool CGame::Draw()
 	if(treeDrawer->drawTrees)
 		treeDrawer->DrawGrass();
 	unitDrawer->DrawCloakedUnits();
+	unitDrawer->DrawIcons();
 	ph->Draw(false);
 	sky->DrawSun();
 	if(keys[SDLK_LSHIFT])
 		selectedUnits.DrawCommands();
 
 	mouse->Draw();
-	
+
 #ifndef NEW_GUI
 	guihandler->DrawMapStuff();
 	inMapDrawer->Draw();
@@ -1074,8 +1077,8 @@ bool CGame::Draw()
 	glDisable(GL_DEPTH_TEST );
 
 	//reset fov
-	glMatrixMode(GL_PROJECTION);	
-	glLoadIdentity();			
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
 
@@ -1129,7 +1132,7 @@ bool CGame::Draw()
 		//skriv ut fps etc
 		font->glPrint("FPS %3.0d Frame %d Units %d Part %d(%d)",fps,gs->frameNum,uh->activeUnits.size(),ph->ps.size(),ph->currentParticles);
 		glPopMatrix();
-		
+
 		if(playing){
 			glPushMatrix();
 			glTranslatef(0.03f,0.08f,0.0f);
@@ -1141,7 +1144,7 @@ bool CGame::Draw()
 
 	if(gameSetup && !playing){
 		allReady=gameSetup->Draw();
-	} else if( gameServer && serverNet->waitOnCon){	
+	} else if( gameServer && serverNet->waitOnCon){
 		allReady=true;
 		for(a=0;a<gs->activePlayers;a++)
 			if(gs->players[a]->active && !gs->players[a]->readyToStart)
@@ -1152,7 +1155,7 @@ bool CGame::Draw()
 			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
 		}
 	}
-	
+
 	if(userWriting){
 		glColor4f(1,1,1,1);
 		glTranslatef(0.1f,0.75f,0.0f);
@@ -1161,7 +1164,7 @@ bool CGame::Draw()
 		tempstring+=userInput;
 		font->glPrint("%s",tempstring.c_str());
 		glLoadIdentity();
-	}	
+	}
 
 	if(showClock){
 		glColor4f(1,1,1,1);
@@ -1319,10 +1322,10 @@ START_TIME_PROFILE
 		for(int a=0;a<gs->activeTeams;++a)
 			gs->Team(a)->Update();
 	}
-//	CPathFinder::Instance()->Update();	
-	
+//	CPathFinder::Instance()->Update();
+
 START_TIME_PROFILE
-	ground->CheckCol(ph);	
+	ground->CheckCol(ph);
 	ph->CheckUnitCol();
 END_TIME_PROFILE("Collisions");
 
@@ -1341,7 +1344,7 @@ END_TIME_PROFILE("Sim time")
 
 		CUnit* unit=gs->players[a]->playerControlledUnit;
 		DirectControlStruct* dc=&gs->players[a]->myControl;
-		
+
 		std::vector<int> args;
 		args.push_back(0);
 		unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/**/,args);
@@ -1360,7 +1363,7 @@ END_TIME_PROFILE("Sim time")
 				unit->AttackUnit(hit,true);
 				/*					for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
 				if((*wi)->targetType!=Target_Unit || (*wi)->targetUnit!=hit)
-				(*wi)->AttackUnit(hit,true);							
+				(*wi)->AttackUnit(hit,true);
 				*/
 			}
 		} else {
@@ -1421,12 +1424,12 @@ bool CGame::ClientReadNet()
 	if(!gameServer/* && !net->onlyLocal*/){
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
-		
+
 		if(timeLeft>1)
 			timeLeft--;
 		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/1000.);
 		lastframe=currentFrame;
-		
+
 		que=0;
 		for(int i2=inbufpos;i2<inbuflength;){
 			switch (inbuf[i2]){
@@ -1803,12 +1806,12 @@ bool CGame::ClientReadNet()
 			bool shareUnits=!!inbuf[inbufpos+3];
  			float metalShare=min(*(float*)&inbuf[inbufpos+4],(float)gs->Team(team1)->metal);
  			float energyShare=min(*(float*)&inbuf[inbufpos+8],(float)gs->Team(team1)->energy);
-			
+
 			gs->Team(team1)->metal-=metalShare;
 			gs->Team(team2)->metal+=metalShare;
 			gs->Team(team1)->energy-=energyShare;
 			gs->Team(team2)->energy+=energyShare;
-	
+
 			if(shareUnits){
 				for(vector<int>::iterator ui=selectedUnits.netSelected[player].begin();ui!=selectedUnits.netSelected[player].end();++ui){
 					if(uh->units[*ui] && uh->units[*ui]->team==team1 && !uh->units[*ui]->beingBuilt){
@@ -1827,7 +1830,7 @@ bool CGame::ClientReadNet()
 			} else {
 				float metalShare=*(float*)&inbuf[inbufpos+2];
 				float energyShare=*(float*)&inbuf[inbufpos+6];
-				
+
 				gs->Team(team)->metalShare=metalShare;
 				gs->Team(team)->energyShare=energyShare;
 			}
@@ -2091,7 +2094,7 @@ void CGame::MakeMemDump(void)
 		boost::filesystem::path fn("memdumpclient.txt");
 		file.open(fn.native_file_string().c_str(),ios::out);
 	}
-	
+
 	file << "Frame " << gs->frameNum <<"\n";
 	list<CUnit*>::iterator usi;
 	for(usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();usi++){
@@ -2139,7 +2142,7 @@ void CGame::DrawDirectControlHud(void)
 	if(unit->moveType->useHeading){
 		glPushMatrix();
 		glRotatef(unit->heading*180.0/32768+180,0,0,1);
-		
+
 		glColor4d(0.3,0.9,0.3,0.4);
 		glBegin(GL_TRIANGLE_FAN);
 		glVertex2d(-0.2,-0.3);
@@ -2176,7 +2179,7 @@ void CGame::DrawDirectControlHud(void)
 		glPushMatrix();
 		glRotatef(GetHeadingFromVector(camera->forward.x,camera->forward.z)*180.0/32768+180,0,0,1);
 		glScalef(0.4,0.4,0.3);
-		
+
 		glColor4d(0.4,0.4,1.0,0.6);
 		glBegin(GL_TRIANGLE_FAN);
 		glVertex2d(-0.2,-0.3);
@@ -2228,7 +2231,7 @@ void CGame::DrawDirectControlHud(void)
 	glDisable(GL_DEPTH_TEST);
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);						
+	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	camera->Update(false);		//draw some stuff in world coordinates
 	glDisable(GL_TEXTURE_2D);
@@ -2299,7 +2302,7 @@ void CGame::DrawDirectControlHud(void)
 	}
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);						
+	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 	glEnable(GL_DEPTH_TEST);
 
@@ -2517,7 +2520,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			s="["+gs->players[player]->playerName+"] "+s;
 		else
 			s="<"+gs->players[player]->playerName+"> "+s;
-		
+
 		info->AddLine(s);
 		sound->PlaySound(chatSound,5);
 	}

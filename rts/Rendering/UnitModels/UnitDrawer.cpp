@@ -30,6 +30,8 @@
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "mmgr.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "System/IconHandler.h"
 
 CUnitDrawer* unitDrawer;
 using namespace std;
@@ -43,6 +45,8 @@ CUnitDrawer::CUnitDrawer(void)
 		texturehandler=new CTextureHandler;
 
 	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
+	unitIconDist=200; // TODO: make this a config option just like 'unitDrawDist'.
+	iconLength=750*unitIconDist*unitIconDist;
 
 	CBitmap white;
 	white.Alloc(1,1);
@@ -140,7 +144,7 @@ CUnitDrawer::~CUnitDrawer(void)
 		glDeleteProgramsARB( 1, &unitFP );
 		glDeleteProgramsARB( 1, &units3oVP );
 		glDeleteProgramsARB( 1, &units3oFP );
-	
+
 		glDeleteTextures(1,&boxtex);
 		glDeleteTextures(1,&specularTex);
 	}
@@ -162,7 +166,7 @@ void CUnitDrawer::Update(void)
 	}
 }
 
-extern GLfloat FogLand[]; 
+extern GLfloat FogLand[];
 
 void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 {
@@ -170,6 +174,7 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 
 	vector<CUnit*> drawFar;
 	vector<CUnit*> drawStat;
+	drawIcon.clear();
 	drawCloaked.clear();
 	glFogfv(GL_FOG_COLOR,FogLand);
 
@@ -204,11 +209,11 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 					if((*usi)->pos.y > 0)
 						continue;
 				}
-				float sqDist=((*usi)->pos-camera->pos).SqLength2D();
+				float sqDist=((*usi)->pos-camera->pos).SqLength();
 				float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
-				if(sqDist<farLength){
+				if(sqDist<farLength && sqDist<iconLength){
 					if((*usi)->isCloaked){
-						drawCloaked.push_back(*usi);					
+						drawCloaked.push_back(*usi);
 					} else {
 						if((*usi)->model->textureType){
 							QueS3ODraw(*usi,(*usi)->model->textureType);
@@ -217,9 +222,13 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 						}
 					}
 				}else{
-					drawFar.push_back(*usi);
+					if(sqDist>iconLength){
+						drawIcon.push_back(*usi);
+					} else {
+						drawFar.push_back(*usi);
+					}
 				}
-				if(sqDist<unitDrawDist*unitDrawDist*500 && showHealthBars){
+				if(sqDist<unitDrawDist*unitDrawDist*500 && showHealthBars && sqDist<iconLength){
 					drawStat.push_back(*usi);
 				}
 			} else if((*usi)->losStatus[gu->myAllyTeam] & LOS_PREVLOS){
@@ -264,6 +273,7 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 	va->DrawArrayTN(GL_QUADS);
 
 	if(!drawReflection){
+		//draw radar blipps
 		glAlphaFunc(GL_GREATER,0.5f);
 		glBindTexture(GL_TEXTURE_2D,radarBlippTex);
 		va=GetVertexArray();
@@ -343,6 +353,60 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)-camera->right*unit->radius,tx+(1.0/64.0),ty,camNorm);
 }
 
+void CUnitDrawer::DrawIcons()
+{
+	// Set some OpenGL stuff.
+	glDisable(GL_FOG);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
+
+	unsigned char color[4];
+	color[3]=255;
+
+	for(vector<CUnit*>::iterator ui=drawIcon.begin();ui!=drawIcon.end();ui++){
+
+		CUnit* u=*ui;
+		std::string iconType=u->unitDef->iconType;
+
+		// Calculate the icon size. It scales with:
+		//  * The square root of the camera distance.
+		//  * The mod defined 'iconSize' (which acts a multiplier).
+		//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
+		float3 pos=u->midPos;
+		float dist=sqrt((pos-camera->pos).Length());
+		float scale=dist*iconHandler->GetSize(u->unitDef->iconType)/2;
+		if(iconHandler->GetRadiusAdjust(iconType))
+			scale=scale*u->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
+
+		// Is the unit selected? Then draw it white.
+		set<CUnit*>::iterator ui2=selectedUnits.selectedUnits.find(u);
+		if(*ui2==u){
+			color[0]=255;
+			color[1]=255;
+			color[2]=255;
+		} else {
+			color[0] = gs->Team(u->team)->color[0];
+			color[1] = gs->Team(u->team)->color[1];
+			color[2] = gs->Team(u->team)->color[2];
+		}
+
+		// Draw the icon.
+		glBindTexture(GL_TEXTURE_2D,*iconHandler->GetIcon(iconType));
+		va=GetVertexArray();
+		va->Initialize();
+		va->AddVertexTC(pos+camera->up*scale+camera->right*scale,1,0,color);
+		va->AddVertexTC(pos-camera->up*scale+camera->right*scale,1,1,color);
+		va->AddVertexTC(pos-camera->up*scale-camera->right*scale,0,1,color);
+		va->AddVertexTC(pos+camera->up*scale-camera->right*scale,0,0,color);
+		va->DrawArrayTC(GL_QUADS);
+	}
+
+	// Reset OpenGL stuff.
+	glEnable(GL_FOG);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_TEXTURE_2D);
+}
+
 void CUnitDrawer::SetupForGhostDrawing ()
 {
 	texturehandler->SetTATexture();
@@ -410,7 +474,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glColor4f(1,1,1,0.3);
 	texturehandler->SetTATexture();
 	glDepthMask(0);
-	
+
 	for(vector<CUnit*>::iterator ui=drawCloaked.begin();ui!=drawCloaked.end();++ui){
 		if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
 			glColor4f(1,1,1,0.4);
@@ -561,11 +625,11 @@ void CUnitDrawer::SetBasicS3OTeamColour(int team)
 {
 	unsigned char* col=gs->Team(team)->color;
 	float texConstant[]={col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1};
-	glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
+	glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant);
 }
 
 /**
- * Set up the texture environment in texture unit 0 
+ * Set up the texture environment in texture unit 0
  * to give an S3O texture its team-colour.
  *
  * Also:
@@ -664,7 +728,7 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glEnable(GL_LIGHTING);
 		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);	// Position The Light
 		glEnable(GL_LIGHT1);								// Enable Light One
-		
+
 		SetupBasicS3OTexture0();
 
 		// Set material color and fallback texture (3DO texture)
@@ -672,7 +736,7 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
 		glColor3f(1,1,1);
 		texturehandler->SetTATexture();
-		
+
 		SetupBasicS3OTexture1();
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -836,8 +900,8 @@ void CUnitDrawer::UnitDrawingTexturesOn(S3DOModel *model)
 		if(advShading && !water->drawReflection){
 			glEnable(GL_VERTEX_PROGRAM_ARB);
 			glEnable(GL_FRAGMENT_PROGRAM_ARB);
-			
-			glEnable(GL_TEXTURE_2D);			
+
+			glEnable(GL_TEXTURE_2D);
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
 			glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -874,7 +938,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 			buf[(y*size+x)*4+1]=(unsigned char)(suncolor.y*exp*255);
 			buf[(y*size+x)*4+2]=(unsigned char)(suncolor.z*exp*255);
 			buf[(y*size+x)*4+3]=255;
-		}		
+		}
 	}
 	glTexImage2D(gltype,0,GL_RGBA8,size,size,0,GL_RGBA,GL_UNSIGNED_BYTE,buf);
 	delete[] buf;
@@ -990,15 +1054,15 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 		unit->Draw();
 		CleanUpS3ODrawing();
 	}
-		
+
 }
 
 /**
- * Draw one unit, 
- * - with depth-buffering(!) and lighting off, 
- * - 'tinted' by the current glColor, *including* alpha. 
+ * Draw one unit,
+ * - with depth-buffering(!) and lighting off,
+ * - 'tinted' by the current glColor, *including* alpha.
  *
- * Used for drawing building orders. 
+ * Used for drawing building orders.
  *
  * Note: does all the GL state setting for that one unit, so you might want
  * something else for drawing many translucent units.
@@ -1006,7 +1070,7 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
 {
 	S3DOModel* model=modelParser->Load3DO(unitdef->model.modelpath.c_str(), 1, side);
-	
+
 	if (model->textureType == 0){
 		/* 3DO */
 		SetupForGhostDrawing();
@@ -1017,23 +1081,23 @@ void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
 		glPopMatrix();
 		return;
 	}
-	
+
 	/* S3O */
-	
+
 	/* From SetupForGhostDrawing. */
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
-	
+
 	/* *No* GL lighting. */
-	
+
 	/* Get the team-coloured texture constructed by unit 0. */
 	SetBasicS3OTeamColour(side);
 	SetupBasicS3OTexture0();
 	texturehandler->SetS3oTexture(model->textureType);
-	
+
 	/* Tint it with the current glColor in unit 1. */
 	SetupBasicS3OTexture1();
 
-	/* Use the alpha given by glColor for the outgoing alpha. 
+	/* Use the alpha given by glColor for the outgoing alpha.
 	   (Might need to change this if we ever have transparent bits on units?)
 	 */
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
@@ -1066,5 +1130,5 @@ void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
 	/* From CleanUpGhostDrawing. */
 	glPopAttrib ();
 	glDisable(GL_TEXTURE_2D);
-	glDepthMask(1);		
+	glDepthMask(1);
 }

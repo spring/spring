@@ -34,7 +34,9 @@ public:
 	void SetupForGhostDrawing();
 
 	inline void DrawFar(CUnit* unit);
+	void DrawIcons();
 
+	std::vector<CUnit*> drawIcon;
 	std::vector<CUnit*> drawCloaked;
 	CVertexArray* va;
 	bool advShading;
@@ -48,6 +50,8 @@ public:
 	unsigned int specularTex;
 
 	float unitDrawDist;
+	float unitIconDist;
+	float iconLength;
 
 	unsigned int whiteTex;
 	unsigned int radarBlippTex;
@@ -80,7 +84,7 @@ public:
 	float3 camNorm;		//used by drawfar
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	CUnit* playerControlledUnit;		
+	CUnit* playerControlledUnit;
 #endif
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
 	void UpdateReflectTex(void);
@@ -97,7 +101,7 @@ public:
 	/* CUnit::Draw */
 	void UnitDrawingTexturesOff(S3DOModel *model);
 	void UnitDrawingTexturesOn(S3DOModel *model);
-	
+
 	/* CGame::DrawDirectControlHud,  */
 	void DrawIndividual(CUnit * unit);
 private:
