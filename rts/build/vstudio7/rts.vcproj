@@ -3026,6 +3026,18 @@
 			</Filter>
 		</Filter>
 		<File
+			RelativePath="..\..\System\FileSystem\ArchiveDir.cpp">
+		</File>
+		<File
+			RelativePath="..\..\System\FileSystem\ArchiveDir.h">
+		</File>
+		<File
+			RelativePath="..\..\System\IconHandler.cpp">
+		</File>
+		<File
+			RelativePath="..\..\System\IconHandler.h">
+		</File>
+		<File
 			RelativePath=".\resource.h">
 		</File>
 		<File
