@@ -10,8 +10,9 @@ struct S3DOModel;
 struct FeatureDef
 {
 	CR_DECLARE(FeatureDef);
+	virtual ~FeatureDef();
 
-	FeatureDef():geoThermal(0),floating(false),upright(false){};
+	FeatureDef():upright(false),floating(false),geoThermal(0){};
 
 	std::string myName;
 	std::string description;

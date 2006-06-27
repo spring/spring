@@ -132,7 +132,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		return false;
 	}
 
-	unsigned char *buffer = new unsigned char[file.FileSize()+1];
+	unsigned char *buffer = new unsigned char[file.FileSize()+2];
 	file.Read(buffer, file.FileSize());
 
 #if defined(__APPLE__) // Use QuickTime to load images on Mac
@@ -228,7 +228,7 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	if(!file.FileExists())
 		return false;
 
-	unsigned char *buffer = new unsigned char[file.FileSize()];
+	unsigned char *buffer = new unsigned char[file.FileSize()+1];
 	file.Read(buffer, file.FileSize());
 
 	ILuint ImageName = 0;

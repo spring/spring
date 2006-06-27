@@ -402,6 +402,9 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 	objects.clear();
 }
 
+ISerializer::~ISerializer() {
+}
+
 /* Testing..
 
 class EmbeddedObj {

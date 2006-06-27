@@ -33,3 +33,6 @@ SharedLib *SharedLib::instantiate(std::string filename)
 {
 	return instantiate(filename.c_str());
 }
+
+SharedLib::~SharedLib() {
+}

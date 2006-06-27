@@ -70,6 +70,9 @@ public:
 	 * @brief deallocate
 	 */
 	static void Deallocate();
+
+	virtual ~ConfigHandler();
+
 protected:
 	/**
 	 * @brief instance

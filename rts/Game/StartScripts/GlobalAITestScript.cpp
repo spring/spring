@@ -26,7 +26,8 @@ void CGlobalAITestScript::Update(void)
 {
 	switch(gs->frameNum){
 	case 0:{
-		globalAI->CreateGlobalAI(1, string(baseDir + dllName).c_str());
+		string name = baseDir + dllName;
+		globalAI->CreateGlobalAI(1, name.c_str());
 
 		gs->Team(0)->energy=1000;
 		gs->Team(0)->energyStorage=1000;

@@ -53,6 +53,8 @@ public:
 	 * Abstract so it must be implemented specifically by all platforms.
 	 */
 	virtual void *FindAddress(const char *symbol) = 0;
+
+	virtual ~SharedLib();
 };
 
 #endif /* SHAREDLIB_H */

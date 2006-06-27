@@ -29,6 +29,7 @@ struct UnitModelDef
 struct UnitDef
 {
 	CR_DECLARE(UnitDef);
+        virtual ~UnitDef();
 
 	std::string name;
 	std::string humanName;

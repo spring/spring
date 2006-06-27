@@ -249,3 +249,6 @@ void CFeature::DrawS3O()
 	def->model->DrawStatic();
 	glPopMatrix();
 }
+
+FeatureDef::~FeatureDef() {
+}

@@ -1031,3 +1031,6 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 	return a;
 }
 
+IAICallback::~IAICallback() {
+}
+

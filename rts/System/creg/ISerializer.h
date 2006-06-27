@@ -10,6 +10,7 @@ namespace creg
 	class ISerializer
 	{
 	public:
+		virtual ~ISerializer();
 		virtual bool IsWriting () = 0;
 
 		/// Serialize a memory buffer
@@ -24,6 +25,6 @@ namespace creg
 		virtual void SerializeObjectInstance (void *inst, Class *objectClass) = 0;
 	};
 
-};
+}
 
 #endif

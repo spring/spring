@@ -44,3 +44,6 @@ CArchiveBase* CArchiveFactory::OpenArchive(const string& fileName)
 
 	return ret;
 }
+
+CArchiveBase::~CArchiveBase() {
+}

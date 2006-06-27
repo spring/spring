@@ -7,6 +7,7 @@
 class CMobility {
 public:
 	CMobility();
+	virtual ~CMobility();
 
 	CR_DECLARE(CMobility);
 

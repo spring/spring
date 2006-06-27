@@ -222,6 +222,7 @@ public:
 	virtual void GetUnitDefList (const UnitDef** list) = 0;
 	virtual float GetUnitDefHeight(int def) = 0; // forces loading of the unit model
 	virtual float GetUnitDefRadius(int def) = 0; // forces loading of the unit model
+	virtual ~IAICallback();
 };
 
 #endif /* IAICALLBACK_H */

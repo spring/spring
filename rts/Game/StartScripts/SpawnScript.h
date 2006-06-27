@@ -12,11 +12,14 @@ class CSpawnScript :
 	public CScript
 {
 public:
-	CSpawnScript(void);
-	~CSpawnScript(void);
-	void Update(void);
+	CSpawnScript(bool _autonomous);
+	~CSpawnScript();
+	void Update();
 
-	void LoadSpawns(void);
+private:
+	void LoadSpawns();
+
+	bool autonomous;
 
 	struct Spawn {
 		int frame;
@@ -32,6 +35,7 @@ public:
 	struct Unit{
 		int id;
 		int target;
+		int team;
 		float3 lastTargetPos;
 	};
 	std::list<Unit> myUnits;

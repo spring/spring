@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "GlobalAI.h"
+#include "TestGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include <vector>
@@ -16,60 +16,60 @@ namespace std{
 }
 
 
-CGlobalAI::CGlobalAI()
+TestGlobalAI::TestGlobalAI()
 {
 
 }
 
-CGlobalAI::~CGlobalAI()
+TestGlobalAI::~TestGlobalAI()
 {
 
 }
 
-void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
+void TestGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 {
 	this->callback=callback;
 }
 
-void CGlobalAI::UnitCreated(int unit)
+void TestGlobalAI::UnitCreated(int unit)
 {
 	myUnits.insert(unit);
 }
 
-void CGlobalAI::UnitFinished(int unit)
+void TestGlobalAI::UnitFinished(int unit)
 {
 }
 
-void CGlobalAI::UnitDestroyed(int unit,int attacker)
+void TestGlobalAI::UnitDestroyed(int unit,int attacker)
 {
 	myUnits.erase(unit);
 }
 
-void CGlobalAI::EnemyEnterLOS(int enemy)
+void TestGlobalAI::EnemyEnterLOS(int enemy)
 {
 	enemies.insert(enemy);
 }
 
-void CGlobalAI::EnemyLeaveLOS(int enemy)
+void TestGlobalAI::EnemyLeaveLOS(int enemy)
 {
 	enemies.erase(enemy);
 }
 
-void CGlobalAI::EnemyEnterRadar(int enemy)
+void TestGlobalAI::EnemyEnterRadar(int enemy)
 {
 }
 
-void CGlobalAI::EnemyLeaveRadar(int enemy)
+void TestGlobalAI::EnemyLeaveRadar(int enemy)
 {
 
 }
 
-void CGlobalAI::EnemyDestroyed(int enemy,int attacker)
+void TestGlobalAI::EnemyDestroyed(int enemy,int attacker)
 {
 	enemies.erase(enemy);
 }
 
-void CGlobalAI::UnitIdle(int unit)
+void TestGlobalAI::UnitIdle(int unit)
 {
 	const UnitDef* ud=callback->GetAICallback()->GetUnitDef(unit);
 
@@ -78,26 +78,26 @@ void CGlobalAI::UnitIdle(int unit)
 	callback->GetAICallback()->SendTextMsg(c,0);*/
 }
 
-void CGlobalAI::GotChatMsg(const char* msg,int player)
+void TestGlobalAI::GotChatMsg(const char* msg,int player)
 {
 
 }
 
-void CGlobalAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
+void TestGlobalAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
 {
 
 }
 
-void CGlobalAI::UnitMoveFailed(int unit)
+void TestGlobalAI::UnitMoveFailed(int unit)
 {
 }
 
-int CGlobalAI::HandleEvent(int msg,const void* data)
+int TestGlobalAI::HandleEvent(int msg,const void* data)
 {
 	return 0;
 }
 
-void CGlobalAI::Update()
+void TestGlobalAI::Update()
 {
 	int frame=callback->GetAICallback()->GetCurrentFrame();
 

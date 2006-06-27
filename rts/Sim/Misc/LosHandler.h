@@ -24,11 +24,11 @@ struct LosInstance{
 	inline LosInstance(int lossize,int allyteam,int baseSquare,int hashNum,float baseHeight,int airLosSize)
 		: losSize(lossize),
 			airLosSize(airLosSize),
+			refCount(1),
 			allyteam(allyteam),
 			baseSquare(baseSquare),
 			hashNum(hashNum),
 			baseHeight(baseHeight),
-			refCount(1),
 			toBeDeleted(false){}
 	int losSize;
 	int airLosSize;

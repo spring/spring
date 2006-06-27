@@ -119,6 +119,7 @@ public:
 	// Determine visibility for a rectangular grid
 	struct IQuadDrawer
 	{
+		virtual ~IQuadDrawer();
 		virtual void DrawQuad (int x,int y) = 0;
 	};
 	virtual void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0) = 0;

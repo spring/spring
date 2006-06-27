@@ -18,11 +18,11 @@ const char AI_NAME[]="Test global AI";
 
 using namespace std;
 
-class CGlobalAI : public IGlobalAI  
+class TestGlobalAI : public IGlobalAI  
 {
 public:
-	CGlobalAI();
-	virtual ~CGlobalAI();
+	TestGlobalAI();
+	virtual ~TestGlobalAI();
 
 	void InitAI(IGlobalAICallback* callback, int team);
 

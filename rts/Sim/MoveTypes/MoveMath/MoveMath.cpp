@@ -204,3 +204,5 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
   return 0;
 }
 
+CMoveMath::~CMoveMath() {
+}

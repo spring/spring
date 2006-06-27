@@ -972,3 +972,5 @@ void GUIdialogController::CreateUIElement(TdfParser & parser, GUIframe* parent, 
 	}
 }
 
+GUIdialogController::~GUIdialogController() {
+}

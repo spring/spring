@@ -198,3 +198,9 @@ void Class::CalculateChecksum (unsigned int& checksum)
 }
 
 
+IType::~IType() {
+}
+
+IMemberRegistrator::~IMemberRegistrator() {
+}
+

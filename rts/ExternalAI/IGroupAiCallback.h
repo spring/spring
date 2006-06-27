@@ -25,6 +25,8 @@ public:
 	virtual bool IsSelected()=0;													//returns true if this group is currently selected
 
 	virtual int GetUnitLastUserOrder(int unitid)=0;	//last frame the user gave a direct order to a unit, ai should probably leave it be for some time to avoid irritating user
+
+	virtual ~IGroupAICallback();
 };
 
 #endif /* IGROUPAICALLBACK_H */

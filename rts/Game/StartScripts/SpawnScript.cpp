@@ -13,10 +13,11 @@
 
 extern std::string stupidGlobalMapname;
 
-CSpawnScript::CSpawnScript()
-: CScript(std::string("Random enemies"))
+CSpawnScript::CSpawnScript(bool _autonomous) :
+		CScript(std::string(_autonomous ? "Random enemies 2" : "Random enemies")),
+		autonomous(_autonomous),
+		frameOffset(0)
 {
-	frameOffset=0;
 }
 
 CSpawnScript::~CSpawnScript()
@@ -39,33 +40,49 @@ void CSpawnScript::Update()
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");
 		p2.GetDef(z0,"1000","MAP\\TEAM0\\StartPosZ");
 
-		unitLoader.LoadUnit(s0,float3(x0,80,z0),0,false);
+		// Set the TEAM0 startpos as spawnpos if we're supposed to be
+		// autonomous, load the commander for the player if not.
+		if (autonomous) spawnPos.push_back(float3(x0,80,z0));
+		else unitLoader.LoadUnit(s0,float3(x0,80,z0),0,false);
 
 		p2.GetDef(x0,"1000","MAP\\TEAM1\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM1\\StartPosZ");		
+		p2.GetDef(z0,"1000","MAP\\TEAM1\\StartPosZ");
 		spawnPos.push_back(float3(x0,80,z0));
 
 		p2.GetDef(x0,"1000","MAP\\TEAM2\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM2\\StartPosZ");		
+		p2.GetDef(z0,"1000","MAP\\TEAM2\\StartPosZ");
 		spawnPos.push_back(float3(x0,80,z0));
 
 		p2.GetDef(x0,"1000","MAP\\TEAM3\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM3\\StartPosZ");		
+		p2.GetDef(z0,"1000","MAP\\TEAM3\\StartPosZ");
 		spawnPos.push_back(float3(x0,80,z0));
 	}
 
 	if(!spawns.empty()){
 		while(curSpawn->frame+frameOffset<gs->frameNum){
-			int num=(int)(spawnPos.size()*0.99*gs->randFloat());
+			int num = gs->randInt() % spawnPos.size();
+			float3 pos;
+			float dist=200;
+			CFeature* feature;
+			do {
+				pos=spawnPos[num]+gs->randVector()*dist;
+				dist*=1.05;
+			} while (dist < 500 && uh->TestUnitBuildSquare(pos,curSpawn->name,feature) != 2);
 
-			CUnit* u=unitLoader.LoadUnit(curSpawn->name,spawnPos[num]+gs->randVector()*200,1,false);
+			// Ignore unit if it really doesn't fit.
+			// (within 18 tries, 200*1.05^18 < 500 < 200*1.05^19)
+			if (dist < 500) {
+				int team = autonomous ? (num & 1) : 1;
+				CUnit* u = unitLoader.LoadUnit(curSpawn->name, pos, team, false);
 
-			Unit unit;
-			unit.id=u->id;
-			unit.target=-1;
-			myUnits.push_back(unit);
-			if(myUnits.size()==1)
-				curUnit=myUnits.begin();
+				Unit unit;
+				unit.id=u->id;
+				unit.target=-1;
+				unit.team=team;
+				myUnits.push_back(unit);
+				if(myUnits.size()==1)
+					curUnit=myUnits.begin();
+			}
 
 			++curSpawn;
 			if(curSpawn==spawns.end()){
@@ -74,15 +91,23 @@ void CSpawnScript::Update()
 			}
 		}
 	}
-	
-	if(!myUnits.empty() && !gs->Team(0)->units.empty()){
+
+	if(!myUnits.empty() && !gs->Team(1 - curUnit->team)->units.empty()) {
 		if(uh->units[curUnit->id]){
 			if(curUnit->target<0 || uh->units[curUnit->target]==0){
- 				int num=(int)(gs->randFloat()*0.99*gs->Team(0)->units.size());
- 				std::set<CUnit*>::iterator tu=gs->Team(0)->units.begin();
+				// We can't rely on the ordering of units in a std::set<CUnit*>,
+				// because they're sorted on memory address. Hence we must first
+				// build a set of IDs and then pick an unit from that.
+				// This guarantees the script doesn't desync in multiplayer games.
+				int num = gs->randInt() % gs->Team(1 - curUnit->team)->units.size();
+				std::set<int> unitids;
+				std::set<CUnit*>* tu = &gs->Team(1 - curUnit->team)->units;
+				for (std::set<CUnit*>::iterator u = tu->begin(); u != tu->end(); ++u)
+					unitids.insert((*u)->id);
+				std::set<int>::iterator ui = unitids.begin();
 				for(int a=0;a<num;++a)
-					++tu;
-				curUnit->target=(*tu)->id;
+					++ui;
+				curUnit->target=(*ui);
 				curUnit->lastTargetPos.x=-500;
 			}
 			float3 pos=uh->units[curUnit->target]->pos;
@@ -105,7 +130,7 @@ void CSpawnScript::Update()
 	}
 }
 
-void CSpawnScript::LoadSpawns(void)
+void CSpawnScript::LoadSpawns()
 {
 	CFileHandler file("spawn.txt");
 

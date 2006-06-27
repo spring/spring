@@ -461,3 +461,6 @@ void CReadMap::LoadSaveMap(CLoadSaveInterface* file,bool loading)
 		mapDamage->RecalcArea(0,gs->mapx,0,gs->mapy);
 	}
 }
+
+CReadMap::IQuadDrawer::~IQuadDrawer() {
+}

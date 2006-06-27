@@ -15,6 +15,7 @@ class IGlobalAICallback
 public:
 	virtual IAICheats* GetCheatInterface()=0;	//this returns zero if .cheats is not enabled or there is several players in the game
 	virtual IAICallback* GetAICallback()=0;
+	virtual ~IGlobalAICallback();
 };
 
 #endif

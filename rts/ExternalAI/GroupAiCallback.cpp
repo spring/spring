@@ -9,6 +9,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Group.h"
+#include "IGroupAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Game/Team.h"
@@ -82,3 +83,8 @@ int CGroupAICallback::GetUnitLastUserOrder(int unitid)
 	return 0;
 }
 
+IGroupAICallback::~IGroupAICallback() {
+}
+
+IGroupAI::~IGroupAI() {
+}
