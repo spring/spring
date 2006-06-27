@@ -53,6 +53,8 @@ public:
 
 	//called every frame
 	virtual void Update()=0;
+
+	virtual ~IGlobalAI();
 };
 
 #endif

@@ -389,3 +389,5 @@ float3 CWeaponDefHandler::hs2rgb(float h, float s)
 	return col;
 }
 
+WeaponDef::~WeaponDef() {
+}

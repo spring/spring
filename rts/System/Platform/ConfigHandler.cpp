@@ -54,3 +54,6 @@ void ConfigHandler::Deallocate()
 		delete instance;
 	instance=0;
 }
+
+ConfigHandler::~ConfigHandler() {
+}

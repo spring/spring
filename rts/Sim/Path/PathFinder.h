@@ -164,12 +164,14 @@ public:
 	float sqGoalRadius;
 	int goalSquareX;
 	int goalSquareZ;
+	virtual ~CPathFinderDef();
 };
 
 class CRangedGoalWithCircularConstraint : public CPathFinderDef {
 public:
 	CRangedGoalWithCircularConstraint(float3 start, float3 goal, float goalRadius,float searchSize,int extraSize);
 	virtual bool WithinConstraints(int xSquare, int zSquare) const;
+	virtual ~CRangedGoalWithCircularConstraint();
 
 private:
 	int halfWayX;

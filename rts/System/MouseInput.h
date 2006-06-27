@@ -9,7 +9,7 @@ public:
 	static IMouseInput* Get();
 
 	IMouseInput ();
-	virtual ~IMouseInput() {}
+	virtual ~IMouseInput();
 
 	virtual int2 GetPos () = 0;
 	virtual void SetPos (int2 pos) = 0;

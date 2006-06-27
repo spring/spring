@@ -652,3 +652,6 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 	}
 	return unitdef->unitimage;
 }
+
+UnitDef::~UnitDef() {
+}

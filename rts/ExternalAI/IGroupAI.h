@@ -24,6 +24,7 @@ public:
 	virtual void CommandFinished(int unit,int type)=0;										//a specific unit has finished a specific command, might be a good idea to give new orders to it
 
 	virtual void Update()=0;																							//called once a frame (30 times a second)
+	virtual ~IGroupAI();
 };
 
 #endif /* IGROUPAI_H */

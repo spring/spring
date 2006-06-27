@@ -36,18 +36,21 @@ public:
 	virtual bool KeyDown(const int key)=0;
 	
 	virtual bool Event(const std::string& event)=0;
+	virtual ~GUIresponder();
 };
 
 class GUIdrawer
 {
 public:
 	virtual void Draw()=0;
+	virtual ~GUIdrawer();
 };
 
 class GUIcaption
 {
 public:
 	virtual void SetCaption(const string& caption)=0;
+	virtual ~GUIcaption();
 };
 
 class GUIframe : public GUIresponder, public GUIdrawer

@@ -103,3 +103,6 @@ int CAICheats::GetEnemyUnits(int *units,const float3& pos,float radius)
 	return a;
 
 }
+
+IAICheats::~IAICheats() {
+}

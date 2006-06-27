@@ -16,6 +16,8 @@
 #include "SDL_video.h"
 #include "mmgr.h"
 
+#include "IFramebuffer.h"
+
 using namespace std;
 
 static CVertexArray* vertexArray1=0;
@@ -241,4 +243,7 @@ unsigned int LoadVertexProgram(const char* filename)
 unsigned int LoadFragmentProgram(const char* filename)
 {
 	return LoadProgram(GL_FRAGMENT_PROGRAM_ARB, filename, "fragment");
+}
+
+IFramebuffer::~IFramebuffer() {
 }

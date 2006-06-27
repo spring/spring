@@ -639,3 +639,8 @@ void CPathFinder::myPQ::DeleteAll()
 	c.clear();
 //	c.reserve(1000);
 }
+
+CPathFinderDef::~CPathFinderDef() {
+}
+CRangedGoalWithCircularConstraint::~CRangedGoalWithCircularConstraint() {
+}

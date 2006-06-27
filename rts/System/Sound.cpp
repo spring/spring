@@ -47,3 +47,6 @@ void CSound::SetUnitReplyVolume (float vol)
 {
 	unitReplyVolume = vol;
 }
+
+CSound::~CSound() {
+}

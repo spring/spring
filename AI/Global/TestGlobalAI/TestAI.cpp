@@ -1,4 +1,4 @@
-#include "GlobalAI.h"
+#include "TestGlobalAI.h"
 #include "ExternalAI/aibase.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -17,13 +17,13 @@ DLL_EXPORT void GetAiName(char* name)
 
 DLL_EXPORT IGlobalAI* GetNewAI()
 {
-	CGlobalAI* ai=new CGlobalAI;
+	TestGlobalAI* ai=new TestGlobalAI;
 	ais.insert(ai);
 	return ai;
 }
 
 DLL_EXPORT void ReleaseAI(IGlobalAI* i)
 {
-	delete (CGlobalAI*)i;
+	delete i;
 	ais.erase(i);
 }

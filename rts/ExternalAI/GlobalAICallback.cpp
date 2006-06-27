@@ -59,3 +59,5 @@ IAICallback *CGlobalAICallback::GetAICallback ()
 	return &scb;
 }
 
+IGlobalAICallback::~IGlobalAICallback () {
+}

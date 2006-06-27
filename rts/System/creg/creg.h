@@ -32,7 +32,7 @@ namespace creg {
 	{
 	public:
 		// Type interface can go here...
-		virtual ~IType() {}
+		virtual ~IType();
 
 		virtual void Serialize (ISerializer* s, void *instance) = 0;
 		virtual std::string GetName () = 0;
@@ -46,6 +46,7 @@ namespace creg {
 	class IMemberRegistrator
 	{
 	public:
+                virtual ~IMemberRegistrator();
 		virtual void RegisterMembers (Class *cls) = 0;
 	};
 

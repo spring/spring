@@ -16,6 +16,9 @@ IMouseInput::IMouseInput()
 	scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
 }
 
+IMouseInput::~IMouseInput() {
+}
+
 //////////////////////////////////////////////////////////////////////
 
 #ifdef WIN32

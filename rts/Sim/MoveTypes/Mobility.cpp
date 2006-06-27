@@ -15,3 +15,6 @@ maxBreaking(0),
 canFly(false),
 subMarine(false) {
 }
+
+CMobility::~CMobility() {
+}

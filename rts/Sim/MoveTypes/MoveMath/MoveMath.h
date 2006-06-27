@@ -38,6 +38,8 @@ public:
 
 	//Investigate the block-status of a single quare.
 	int SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare);
+
+	virtual ~CMoveMath();
 };
 
 #endif

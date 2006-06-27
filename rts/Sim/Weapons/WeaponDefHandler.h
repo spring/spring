@@ -30,6 +30,7 @@ class CExplosionGenerator;
 struct WeaponDef
 {
 	CR_DECLARE(WeaponDef);
+	virtual ~WeaponDef();
 
 	std::string name;
 	std::string type;

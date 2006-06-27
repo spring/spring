@@ -32,7 +32,8 @@ void CScriptHandler::LoadScripts() {
 	loaded_scripts.push_back( new CCommanderScript2() );
 	loaded_scripts.push_back( new CAirScript() );
 	loaded_scripts.push_back( new CEmptyScript() );
-	loaded_scripts.push_back( new CSpawnScript() );
+	loaded_scripts.push_back( new CSpawnScript(false) );
+	loaded_scripts.push_back( new CSpawnScript(true) );
 	loaded_scripts.push_back( new CTestScript() );
 
 #ifdef WIN32

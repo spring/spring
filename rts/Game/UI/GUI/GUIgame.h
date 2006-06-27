@@ -17,7 +17,7 @@ class Selector
 {
 public:
 	Selector() {isDragging=false;}
-	virtual ~Selector() {}
+	virtual ~Selector();
 
 	bool BeginSelection(const float3& dir);
 	bool UpdateSelection(const float3& dir);

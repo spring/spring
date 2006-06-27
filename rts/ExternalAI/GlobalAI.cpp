@@ -63,3 +63,6 @@ void CGlobalAI::Update(void)
 	gh->Update();
 	ai->Update();
 }
+
+IGlobalAI::~IGlobalAI() {
+}

@@ -23,7 +23,7 @@ class GUIdialogController
 {
 public:
 	GUIdialogController() {}
-	virtual ~GUIdialogController() {}
+	virtual ~GUIdialogController();
 	
 	virtual void DialogEvent(const std::string& event) {}
 protected:

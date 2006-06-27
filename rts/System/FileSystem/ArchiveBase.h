@@ -11,7 +11,7 @@ class CArchiveBase
 {
 public:
 	CArchiveBase(const string& archiveName) {};
-	virtual ~CArchiveBase(void) {};
+	virtual ~CArchiveBase();
 	virtual bool IsOpen() = 0;
 	virtual int OpenFile(const string& fileName) = 0;
 	virtual int ReadFile(int handle, void* buffer, int numBytes) = 0;

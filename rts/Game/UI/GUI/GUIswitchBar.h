@@ -9,6 +9,7 @@ class GUIswitchableCaption
 {
 public:
 	virtual const string GetCaption()=0;
+	virtual ~GUIswitchableCaption();
 };
 
 class GUIbutton;

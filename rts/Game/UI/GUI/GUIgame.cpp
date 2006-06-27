@@ -1659,5 +1659,7 @@ bool GUIgame::IsDragCommand(CommandDescription *cmd)
 	return false;
 }
 
+Selector::~Selector() {
+}
 
 

@@ -12,7 +12,7 @@ class CSound
 {
 public:
 	CSound() { unitReplyVolume=1.0f; }
-	virtual ~CSound() {}
+	virtual ~CSound();
 
 	virtual unsigned int GetWaveId(const std::string& path) = 0;
 	virtual void Update() = 0;

@@ -16,7 +16,7 @@ enum FramebufferAttachType
 class IFramebuffer
 {
 public:
-	virtual ~IFramebuffer() {}
+	virtual ~IFramebuffer();
     
 	virtual void checkFBOStatus(void) = 0;
 	virtual void attachTexture(const unsigned int tex, const unsigned int textype, FramebufferAttachType attachtype) = 0;
