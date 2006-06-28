@@ -269,7 +269,7 @@ def generate(env):
 			env.AppendUnique(CCFLAGS = ['-pthread'], CXXFLAGS = ['-pthread'])
 		elif env['platform'] == 'linux':
 			include_path += ['/usr/include', '/usr/include/GL']
-			env.AppendUnique(CCFLAGS = ['-pthread'], CXXFLAGS = ['-pthread'])
+			env.AppendUnique(CCFLAGS = ['-pthread'], CXXFLAGS = ['-pthread'], LINKFLAGS = ['-Wl,-E'])
 		elif env['platform'] == 'darwin':
 			include_path += ['/usr/include', '/usr/local/include', '/opt/local/include', '/usr/X11R6/include']
 			lib_path += ['/opt/local/lib', '/usr/local/lib']

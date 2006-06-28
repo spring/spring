@@ -34,7 +34,7 @@ DLL_EXPORT IGlobalAI* GetNewAI()
 
 DLL_EXPORT void ReleaseAI(IGlobalAI* i)
 {
-	delete (MainAI*)i;
+	delete i;
 	ais.erase(i);
 
 	if (ais.empty ())

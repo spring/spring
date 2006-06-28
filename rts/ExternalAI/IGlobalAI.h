@@ -1,6 +1,7 @@
 #ifndef IGLOBALAI_H
 #define IGLOBALAI_H
 
+#include "aibase.h"
 #include "Game/command.h"
 #include "float3.h"
 
@@ -21,7 +22,7 @@ struct WeaponDef;
 #define AI_EVENT_UNITCAPTURED 2
 #define AI_EVENT_WEAPON_FIRED 3
 
-class IGlobalAI
+class SPRING_API IGlobalAI
 {
 public:
 	struct ChangeTeamEvent { 

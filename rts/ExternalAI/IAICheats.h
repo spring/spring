@@ -1,11 +1,12 @@
 #ifndef IAICHEATS_H
 #define IAICHEATS_H
 
+#include "aibase.h"
 #include "Game/command.h"
 #include "float3.h"
 struct UnitDef;
 
-class IAICheats
+class SPRING_API IAICheats
 {
 public:
 	//note that all of these commands are network insecure
