@@ -16,10 +16,30 @@
 
 #endif
 
+// Shared library support
 #ifdef _MSC_VER
-#define DLL_EXPORT extern "C" __declspec(dllexport)
+	#define DLL_EXPORT extern "C" __declspec(dllexport)
+	#define SPRING_EXPORT __declspec(dllexport)
+	#define SPRING_IMPORT __declspec(dllimport)
+	#define SPRING_LOCAL
 #else
-#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
+	#if __GNUC__ >= 4 && !defined(SYNCDEBUG)
+		#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
+		#define SPRING_EXPORT __attribute__ ((visibility("default")))
+		#define SPRING_IMPORT __attribute__ ((visibility("default")))
+		#define SPRING_LOCAL  __attribute__ ((visibility("hidden")))
+	#else
+		#define DLL_EXPORT
+		#define SPRING_EXPORT
+		#define SPRING_IMPORT
+		#define SPRING_LOCAL
+	#endif
+#endif
+
+#ifdef BUILDING_SPRING
+	#define SPRING_API SPRING_EXPORT
+#else
+	#define SPRING_API SPRING_IMPORT
 #endif
 
 #endif /* AIBASE_H */

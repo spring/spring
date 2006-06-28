@@ -3,6 +3,7 @@
 #define IAICALLBACK_H
 #include <vector>
 #include <deque>
+#include "aibase.h"
 #include "float3.h"
 #include "Game/command.h"
 struct UnitDef;
@@ -66,7 +67,7 @@ struct AIHCRemoveMapPoint ///< result of HandleCommand is 1 - ok supported
 };
 
 
-class IAICallback
+class SPRING_API IAICallback
 {
 public:
 	struct UnitResourceInfo

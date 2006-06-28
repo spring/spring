@@ -21,7 +21,7 @@ DLL_EXPORT IGroupAI* GetNewAI()
 
 DLL_EXPORT void ReleaseAI(IGroupAI* i)
 {
-	delete (CGroupAI*)i;
+	delete i;
 //	ais.erase(i);
 }
 

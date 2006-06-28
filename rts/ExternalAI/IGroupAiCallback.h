@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <deque>
+#include "aibase.h"
 #include "float3.h"
 #include "Game/command.h"
 
@@ -15,7 +16,7 @@ struct UnitDef;
 struct FeatureDef;
 class IAICallback;
 
-class IGroupAICallback  
+class SPRING_API IGroupAICallback
 {
 public:
 	virtual IAICallback *GetAICallback ()=0;

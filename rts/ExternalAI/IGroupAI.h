@@ -4,13 +4,14 @@
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
 
+#include "aibase.h"
 #include "Game/command.h"
 class IGroupAICallback;
 class IAICallback;
 
 #define AI_INTERFACE_VERSION 8
 
-class IGroupAI  
+class SPRING_API IGroupAI
 {
 public:
 	virtual void InitAi(IGroupAICallback* callback)=0;
