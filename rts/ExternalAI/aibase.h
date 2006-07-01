@@ -17,7 +17,7 @@
 #endif
 
 // Shared library support
-#ifdef _MSC_VER
+#ifdef _WIN32
 	#define DLL_EXPORT extern "C" __declspec(dllexport)
 	#define SPRING_EXPORT __declspec(dllexport)
 	#define SPRING_IMPORT __declspec(dllimport)

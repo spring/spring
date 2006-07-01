@@ -55,7 +55,7 @@ public:
 	//called every frame
 	virtual void Update()=0;
 
-	virtual ~IGlobalAI();
+	virtual ~IGlobalAI() = 0;
 };
 
 #endif
