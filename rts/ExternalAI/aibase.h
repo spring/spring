@@ -17,34 +17,35 @@
 #endif
 
 // Shared library support
-#ifdef _MSC_VER
+#ifdef _WIN32
 	#define DLL_EXPORT extern "C" __declspec(dllexport)
 	#define SPRING_API
+#elif __GNUC__ >= 4
+	// Support for '-fvisibility=hidden'.
+	#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
+	#define SPRING_API __attribute__ ((visibility("default")))
 #else
-	#if __GNUC__ >= 4
-		// Support for '-fvisibility=hidden'.
-		#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
-		#define SPRING_API __attribute__ ((visibility("default")))
-	#else
-		#define DLL_EXPORT extern "C"
-		#define SPRING_API
-	#endif
+	// Older versions of gcc have everything visible; no need for fancy stuff.
+	#define DLL_EXPORT extern "C"
+	#define SPRING_API
 #endif
 
 // Virtual destructor support (across DLL/SO interface)
-#ifdef __GNUC__
-	// MinGW crashes on pure virtual destructors. Bah.
-	// GCC on linux works fine, but vtable is emitted at place of the
-	// implementation of the virtual destructor, so even if it's pure,
-	// it must be implemented.
-	// We just combine these 2 facts and don't make dtors pure virtual
-	// on GCC in any case.
-	#define DECLARE_PURE_VIRTUAL(proto) virtual proto;
-	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
-#else
-	// MSVC chokes if we don't declare the destructor pure virtual.
-	#define DECLARE_PURE_VIRTUAL(proto) virtual proto = 0;
+#ifdef _WIN32
+	// MSVC chokes on (pure) virtual destructors across DLL boundaries,
+	// just dont define/declare any.
+	// MinGW crashes on pure virtual destructors and doesn't link non
+	// pure ones (as below), so we disable them on MinGW too.
+	// FIXME Note that this may introduce bugs like invalid vtables,
+	// memory leaks because destructors not being called etc.
+	#define DECLARE_PURE_VIRTUAL(proto)
 	#define IMPLEMENT_PURE_VIRTUAL(proto)
+#else
+	// GCC on linux is the only config which works fine, but vtable is
+	// emitted at place of the implementation of the virtual destructor,
+	// so even if it's pure, it must be implemented.
+	#define DECLARE_PURE_VIRTUAL(proto) virtual proto = 0;
+	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
 #endif
 
 #endif /* AIBASE_H */
