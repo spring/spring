@@ -34,9 +34,7 @@ public:
 	void SetupForGhostDrawing();
 
 	inline void DrawFar(CUnit* unit);
-	void DrawIcons();
 
-	std::vector<CUnit*> drawIcon;
 	std::vector<CUnit*> drawCloaked;
 	CVertexArray* va;
 	bool advShading;
@@ -54,7 +52,6 @@ public:
 	float iconLength;
 
 	unsigned int whiteTex;
-	unsigned int radarBlippTex;
 
 	int updateFace;
 
@@ -110,6 +107,7 @@ private:
 	void SetupBasicS3OTexture1(void);
 	void CleanupBasicS3OTexture1(void);
 	void CleanupBasicS3OTexture0(void);
+	void DrawIcon(CUnit * unit, bool asRadarBlip);
 };
 
 extern CUnitDrawer* unitDrawer;

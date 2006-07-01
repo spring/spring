@@ -28,6 +28,7 @@ CIconHandler::CIconHandler()
 		for (std::vector<std::string>::const_iterator it = iconList.begin(); it != iconList.end(); ++it) {
 			//Parse the bitmap location, the size, and the unit radius adjustment.
 			iconSizes[*it]=atof(tdfparser.SGetValueDef("1", "icontypes\\" + *it + "\\size").c_str());
+			iconDistances[*it]=atof(tdfparser.SGetValueDef("1", "icontypes\\" + *it + "\\distance").c_str());
 			iconLocations[*it]=tdfparser.SGetValueDef("", "icontypes\\" + *it + "\\bitmap");
 			iconRadiusAdjust[*it]=!!atoi(tdfparser.SGetValueDef("0", "icontypes\\" + *it + "\\radiusadjust").c_str());
 			// If we can't load the bitmap replace it with the default one.
@@ -51,6 +52,7 @@ CIconHandler::CIconHandler()
 	if(it==iconLocations.end()){
 		iconTextures["default"] = *GetStandardTexture();
 		iconSizes["default"] = 1;
+		iconDistances["default"] = 1;
 		iconRadiusAdjust["default"] = false;
 	}
 }
@@ -83,6 +85,15 @@ bool CIconHandler::GetRadiusAdjust(const std::string& iconName)
 	std::map<std::string, bool>::const_iterator it=iconRadiusAdjust.find(iconName);
 	if(it==iconRadiusAdjust.end()){
 		return false;
+	} else {
+		return it->second;
+	}
+}
+float CIconHandler::GetDistance(const std::string& iconName)
+{
+	std::map<std::string, float>::const_iterator it=iconDistances.find(iconName);
+	if(it==iconDistances.end()){
+		return 1;
 	} else {
 		return it->second;
 	}

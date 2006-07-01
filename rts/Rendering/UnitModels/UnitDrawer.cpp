@@ -45,7 +45,7 @@ CUnitDrawer::CUnitDrawer(void)
 		texturehandler=new CTextureHandler;
 
 	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
-	unitIconDist=200; // TODO: make this a config option just like 'unitDrawDist'.
+	unitIconDist=configHandler.GetInt("UnitIconDist",200); // TODO: make this a config option just like 'unitDrawDist'.
 	iconLength=750*unitIconDist*unitIconDist;
 
 	CBitmap white;
@@ -54,27 +54,6 @@ CUnitDrawer::CUnitDrawer(void)
 		white.mem[a]=255;
 
 	whiteTex=white.CreateTexture(false);
-
-	unsigned char rt[128*128*4];
-
-	for(int y=0;y<128;++y){
-		for(int x=0;x<128;++x){
-			float r=sqrtf((y-64)*(y-64)+(x-64)*(x-64))/64.0;
-			if(r>1){
-				rt[(y*128+x)*4+0]=0;
-				rt[(y*128+x)*4+1]=0;
-				rt[(y*128+x)*4+2]=0;
-				rt[(y*128+x)*4+3]=0;
-			} else {
-				rt[(y*128+x)*4+0]=(unsigned char)(255-r*r*r*255);
-				rt[(y*128+x)*4+1]=(unsigned char)(255-r*r*r*255);
-				rt[(y*128+x)*4+2]=(unsigned char)(255-r*r*r*255);
-				rt[(y*128+x)*4+3]=255;
-			}
-		}
-	}
-	CBitmap radar(rt,128,128);
-	radarBlippTex=radar.CreateTexture(true);
 
 	unitAmbientColor=readmap->mapDefParser.GetFloat3(float3(0.4,0.4,0.4),"MAP\\LIGHT\\UnitAmbientColor");
 	unitSunColor=readmap->mapDefParser.GetFloat3(float3(0.7,0.7,0.7),"MAP\\LIGHT\\UnitSunColor");
@@ -136,7 +115,6 @@ CUnitDrawer::CUnitDrawer(void)
 CUnitDrawer::~CUnitDrawer(void)
 {
 	glDeleteTextures(1,&whiteTex);
-	glDeleteTextures(1,&radarBlippTex);
 
 	if(advShading){
 		if (unitShadowVP) glDeleteProgramsARB( 1, &unitShadowVP );
@@ -174,11 +152,11 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 
 	vector<CUnit*> drawFar;
 	vector<CUnit*> drawStat;
-	drawIcon.clear();
 	drawCloaked.clear();
 	glFogfv(GL_FOG_COLOR,FogLand);
 
-	list<CUnit*> drawBlipp;
+	vector<CUnit*> drawIcon;
+	vector<CUnit*> drawRadarIcon;
 
 	SetupForUnitDrawing();
 
@@ -210,35 +188,37 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 						continue;
 				}
 				float sqDist=((*usi)->pos-camera->pos).SqLength();
-				float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
-				if(sqDist<farLength && sqDist<iconLength){
-					if((*usi)->isCloaked){
-						drawCloaked.push_back(*usi);
+				float realIconLength=iconLength*iconHandler->GetDistance((*usi)->unitDef->iconType);
+				if(sqDist>realIconLength){
+					drawIcon.push_back(*usi);
+				} else {
+					float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
+					if(sqDist>farLength){
+						drawFar.push_back(*usi);
 					} else {
-						if((*usi)->model->textureType){
-							QueS3ODraw(*usi,(*usi)->model->textureType);
+						if((*usi)->isCloaked){
+							drawCloaked.push_back(*usi);
 						} else {
-							(*usi)->Draw();
+							if((*usi)->model->textureType){
+								QueS3ODraw(*usi,(*usi)->model->textureType);
+							} else {
+								(*usi)->Draw();
+							}
 						}
 					}
-				}else{
-					if(sqDist>iconLength){
-						drawIcon.push_back(*usi);
-					} else {
-						drawFar.push_back(*usi);
+					if(sqDist<unitDrawDist*unitDrawDist*500 && showHealthBars){
+						drawStat.push_back(*usi);
 					}
-				}
-				if(sqDist<unitDrawDist*unitDrawDist*500 && showHealthBars && sqDist<iconLength){
-					drawStat.push_back(*usi);
 				}
 			} else if((*usi)->losStatus[gu->myAllyTeam] & LOS_PREVLOS){
 				if (!gameSetup || gameSetup->ghostedBuildings)
 					drawCloaked.push_back(*usi);
 
-				if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR) && !((*usi)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR))
-					drawBlipp.push_back(*usi);
+				if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR) && !((*usi)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)){
+					drawRadarIcon.push_back(*usi);
+				}
 			} else if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
-				drawBlipp.push_back(*usi);
+				drawRadarIcon.push_back(*usi);
 			}
 		}
 	}
@@ -273,24 +253,14 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 	va->DrawArrayTN(GL_QUADS);
 
 	if(!drawReflection){
-		//draw radar blipps
+		// Draw unit icons and radar blips.
 		glAlphaFunc(GL_GREATER,0.5f);
-		glBindTexture(GL_TEXTURE_2D,radarBlippTex);
-		va=GetVertexArray();
-		va->Initialize();
-		for(list<CUnit*>::iterator usi=drawBlipp.begin();usi!=drawBlipp.end();usi++){
-			CUnit* u=*usi;
-			float3 pos=u->midPos + u->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
-			float h=ground->GetHeight(pos.x,pos.z);
-			if(pos.y<h+15)
-				pos.y=h+15;
-			va->AddVertexTC(pos+camera->up*15+camera->right*15,0,0,gs->Team(u->team)->color);
-			va->AddVertexTC(pos-camera->up*15+camera->right*15,1,0,gs->Team(u->team)->color);
-			va->AddVertexTC(pos-camera->up*15-camera->right*15,1,1,gs->Team(u->team)->color);
-			va->AddVertexTC(pos+camera->up*15-camera->right*15,0,1,gs->Team(u->team)->color);
+		for(vector<CUnit*>::iterator ui=drawIcon.begin();ui!=drawIcon.end();ui++){
+			DrawIcon(*ui,false);
 		}
-		va->DrawArrayTC(GL_QUADS);
-
+		for(vector<CUnit*>::iterator ui=drawRadarIcon.begin();ui!=drawRadarIcon.end();ui++){
+			DrawIcon(*ui,true);
+		}
 		glDisable(GL_TEXTURE_2D);
 		for(vector<CUnit*>::iterator usi=drawStat.begin();usi!=drawStat.end();usi++){
 			(*usi)->DrawStats();
@@ -353,58 +323,56 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)-camera->right*unit->radius,tx+(1.0/64.0),ty,camNorm);
 }
 
-void CUnitDrawer::DrawIcons()
+void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 {
-	// Set some OpenGL stuff.
-	glDisable(GL_FOG);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
+	std::string iconType;
+	if(asRadarBlip){
+		iconType="default";
+	} else {
+		iconType=unit->unitDef->iconType;
+	}
 
 	unsigned char color[4];
 	color[3]=255;
 
-	for(vector<CUnit*>::iterator ui=drawIcon.begin();ui!=drawIcon.end();ui++){
+	// Calculate the icon size. It scales with:
+	//  * The square root of the camera distance.
+	//  * The mod defined 'iconSize' (which acts a multiplier).
+	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
+	float3 pos=unit->midPos;
+	if(asRadarBlip)
+		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
+	float dist=sqrt((pos-camera->pos).Length());
+	float scale=dist*iconHandler->GetSize(iconType)/2;
+	if(iconHandler->GetRadiusAdjust(iconType) && !asRadarBlip)
+		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
 
-		CUnit* u=*ui;
-		std::string iconType=u->unitDef->iconType;
-
-		// Calculate the icon size. It scales with:
-		//  * The square root of the camera distance.
-		//  * The mod defined 'iconSize' (which acts a multiplier).
-		//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-		float3 pos=u->midPos;
-		float dist=sqrt((pos-camera->pos).Length());
-		float scale=dist*iconHandler->GetSize(u->unitDef->iconType)/2;
-		if(iconHandler->GetRadiusAdjust(iconType))
-			scale=scale*u->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
-
-		// Is the unit selected? Then draw it white.
-		set<CUnit*>::iterator ui2=selectedUnits.selectedUnits.find(u);
-		if(*ui2==u){
-			color[0]=255;
-			color[1]=255;
-			color[2]=255;
-		} else {
-			color[0] = gs->Team(u->team)->color[0];
-			color[1] = gs->Team(u->team)->color[1];
-			color[2] = gs->Team(u->team)->color[2];
-		}
-
-		// Draw the icon.
-		glBindTexture(GL_TEXTURE_2D,*iconHandler->GetIcon(iconType));
-		va=GetVertexArray();
-		va->Initialize();
-		va->AddVertexTC(pos+camera->up*scale+camera->right*scale,1,0,color);
-		va->AddVertexTC(pos-camera->up*scale+camera->right*scale,1,1,color);
-		va->AddVertexTC(pos-camera->up*scale-camera->right*scale,0,1,color);
-		va->AddVertexTC(pos+camera->up*scale-camera->right*scale,0,0,color);
-		va->DrawArrayTC(GL_QUADS);
+	// Is the unit selected? Then draw it white.
+	set<CUnit*>::iterator ui=selectedUnits.selectedUnits.find(unit);
+	if(*ui==unit){
+		color[0]=255;
+		color[1]=255;
+		color[2]=255;
+	} else {
+		color[0] = gs->Team(unit->team)->color[0];
+		color[1] = gs->Team(unit->team)->color[1];
+		color[2] = gs->Team(unit->team)->color[2];
 	}
 
-	// Reset OpenGL stuff.
-	glEnable(GL_FOG);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
+	// If the icon is partly under the ground, move it up.
+	float h=ground->GetHeight(pos.x,pos.z);
+	if(pos.y<h+scale)
+		pos.y=h+scale;
+
+	// Draw the icon.
+	glBindTexture(GL_TEXTURE_2D,*iconHandler->GetIcon(iconType));
+	va=GetVertexArray();
+	va->Initialize();
+	va->AddVertexTC(pos+camera->up*scale+camera->right*scale,1,0,color);
+	va->AddVertexTC(pos-camera->up*scale+camera->right*scale,1,1,color);
+	va->AddVertexTC(pos-camera->up*scale-camera->right*scale,0,1,color);
+	va->AddVertexTC(pos+camera->up*scale-camera->right*scale,0,0,color);
+	va->DrawArrayTC(GL_QUADS);
 }
 
 void CUnitDrawer::SetupForGhostDrawing ()

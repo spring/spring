@@ -1060,7 +1060,6 @@ bool CGame::Draw()
 	if(treeDrawer->drawTrees)
 		treeDrawer->DrawGrass();
 	unitDrawer->DrawCloakedUnits();
-	unitDrawer->DrawIcons();
 	ph->Draw(false);
 	sky->DrawSun();
 	if(keys[SDLK_LSHIFT])
