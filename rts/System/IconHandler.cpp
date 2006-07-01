@@ -27,17 +27,19 @@ CIconHandler::CIconHandler()
 
 		for (std::vector<std::string>::const_iterator it = iconList.begin(); it != iconList.end(); ++it) {
 			//Parse the bitmap location, the size, and the unit radius adjustment.
-			iconSizes[*it]=atof(tdfparser.SGetValueDef("1", "icontypes\\" + *it + "\\size").c_str());
-			iconDistances[*it]=atof(tdfparser.SGetValueDef("1", "icontypes\\" + *it + "\\distance").c_str());
-			iconLocations[*it]=tdfparser.SGetValueDef("", "icontypes\\" + *it + "\\bitmap");
-			iconRadiusAdjust[*it]=!!atoi(tdfparser.SGetValueDef("0", "icontypes\\" + *it + "\\radiusadjust").c_str());
+			float size=atof(tdfparser.SGetValueDef("1", "icontypes\\" + *it + "\\size").c_str());
+			float distance=atof(tdfparser.SGetValueDef("1", "icontypes\\" + *it + "\\distance").c_str());
+			bool radiusAdjust=!!atoi(tdfparser.SGetValueDef("0", "icontypes\\" + *it + "\\radiusadjust").c_str());
 			// If we can't load the bitmap replace it with the default one.
-			if(bitmap.Load(iconLocations[*it])){
+			std::string bitmapLocation=tdfparser.SGetValueDef("", "icontypes\\" + *it + "\\bitmap");
+			unsigned int texture;
+			if(bitmap.Load(bitmapLocation)){
 				bitmap.CreateAlpha(0,0,0);
-				iconTextures[*it] = bitmap.CreateTexture(false);
+				texture = bitmap.CreateTexture(false);
 			} else {
-				iconTextures[*it] = *GetStandardTexture();
+				texture = *GetStandardTexture();
 			}
+			icons[*it]=new CIcon(texture,size,distance,radiusAdjust);
 		}
 
 	} catch (const TdfParser::parse_error& e) {
@@ -48,12 +50,9 @@ CIconHandler::CIconHandler()
 	}
 
 	// If the default icon doesn't exist we'll have to create one (as unitdef->iconType defaults to "default").
-	std::map<std::string, std::string>::const_iterator it=iconLocations.find("default");
-	if(it==iconLocations.end()){
-		iconTextures["default"] = *GetStandardTexture();
-		iconSizes["default"] = 1;
-		iconDistances["default"] = 1;
-		iconRadiusAdjust["default"] = false;
+	std::map<std::string, CIcon*>::const_iterator it=icons.find("default");
+	if(it==icons.end()){
+		icons["default"]=new CIcon(*GetStandardTexture(),1,1,false);
 	}
 }
 
@@ -61,41 +60,22 @@ CIconHandler::~CIconHandler()
 {
 }
 
-unsigned int *CIconHandler::GetIcon(const std::string& iconName)
+CIcon * CIconHandler::GetIcon(const std::string& iconName)
 {
-	std::map<std::string, unsigned int>::const_iterator it=iconTextures.find(iconName);
-	if(it==iconTextures.end()){
-		return GetStandardTexture();
-	} else {
-		return &iconTextures[iconName];
-	}
-}
-
-float CIconHandler::GetSize(const std::string& iconName)
-{
-	std::map<std::string, float>::const_iterator it=iconSizes.find(iconName);
-	if(it==iconSizes.end()){
-		return 1;
-	} else {
-		return it->second;
-	}
-}
-bool CIconHandler::GetRadiusAdjust(const std::string& iconName)
-{
-	std::map<std::string, bool>::const_iterator it=iconRadiusAdjust.find(iconName);
-	if(it==iconRadiusAdjust.end()){
-		return false;
+	std::map<std::string, CIcon*>::const_iterator it=icons.find(iconName);
+	if(it==icons.end()){
+		return icons["default"];
 	} else {
 		return it->second;
 	}
 }
 float CIconHandler::GetDistance(const std::string& iconName)
 {
-	std::map<std::string, float>::const_iterator it=iconDistances.find(iconName);
-	if(it==iconDistances.end()){
+	std::map<std::string, CIcon*>::const_iterator it=icons.find(iconName);
+	if(it==icons.end()){
 		return 1;
 	} else {
-		return it->second;
+		return it->second->distance;
 	}
 }
 
