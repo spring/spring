@@ -7,24 +7,34 @@
 #include <string>
 #include <vector>
 
+class CIcon
+{
+public:
+	unsigned int texture;
+	float size;
+	float distance;
+	bool radiusAdjust;
+	CIcon(unsigned int tex, float siz, float dis, bool radius)
+	{
+		texture		= tex;
+		size		= siz;
+		distance	= dis;
+		radiusAdjust= radius;
+	};
+};
+
 class CIconHandler
 {
 public:
 	CIconHandler(void);
 	~CIconHandler(void);
-	unsigned int *GetIcon(const std::string& iconName);
-	float GetSize(const std::string& iconName);
-	bool GetRadiusAdjust(const std::string& iconName);
+	CIcon * GetIcon(const std::string& iconName);
 	float GetDistance(const std::string& iconName);
 private:
 	unsigned int *GetStandardTexture();
 	unsigned int standardTexture;
 	bool standardTextureGenerated;
-	std::map<std::string, std::string> iconLocations; // locations of the external bitmaps.
-	std::map<std::string, unsigned int> iconTextures; // holds the textures.
-	std::map<std::string, float> iconSizes; // holds the size multiplier.
-	std::map<std::string, bool> iconRadiusAdjust; // adjust to unit radius or not.
-	std::map<std::string, float> iconDistances; //holds the distance multipliers.
+	std::map<std::string, CIcon*> icons;
 };
 
 extern CIconHandler* iconHandler;

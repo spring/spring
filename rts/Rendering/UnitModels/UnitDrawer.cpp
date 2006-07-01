@@ -188,7 +188,8 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 						continue;
 				}
 				float sqDist=((*usi)->pos-camera->pos).SqLength();
-				float realIconLength=iconLength*iconHandler->GetDistance((*usi)->unitDef->iconType);
+				float iconDistMult=iconHandler->GetDistance((*usi)->unitDef->iconType);
+				float realIconLength=iconLength*iconDistMult*iconDistMult;
 				if(sqDist>realIconLength){
 					drawIcon.push_back(*usi);
 				} else {
@@ -325,12 +326,16 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 
 void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 {
+	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	std::string iconType;
 	if(asRadarBlip){
 		iconType="default";
 	} else {
 		iconType=unit->unitDef->iconType;
 	}
+
+	// Fetch the icon information.
+	CIcon* icon=iconHandler->GetIcon(iconType);
 
 	unsigned char color[4];
 	color[3]=255;
@@ -343,8 +348,8 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	if(asRadarBlip)
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
 	float dist=sqrt((pos-camera->pos).Length());
-	float scale=dist*iconHandler->GetSize(iconType)/2;
-	if(iconHandler->GetRadiusAdjust(iconType) && !asRadarBlip)
+	float scale=icon->size*dist/2;
+	if(icon->radiusAdjust && !asRadarBlip)
 		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
 
 	// Is the unit selected? Then draw it white.
@@ -365,7 +370,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 		pos.y=h+scale;
 
 	// Draw the icon.
-	glBindTexture(GL_TEXTURE_2D,*iconHandler->GetIcon(iconType));
+	glBindTexture(GL_TEXTURE_2D,icon->texture);
 	va=GetVertexArray();
 	va->Initialize();
 	va->AddVertexTC(pos+camera->up*scale+camera->right*scale,1,0,color);
