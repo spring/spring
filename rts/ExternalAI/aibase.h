@@ -17,29 +17,25 @@
 #endif
 
 // Shared library support
-#ifdef _WIN32
+#ifdef _MSC_VER
 	#define DLL_EXPORT extern "C" __declspec(dllexport)
-	#define SPRING_EXPORT __declspec(dllexport)
-	#define SPRING_IMPORT __declspec(dllimport)
-	#define SPRING_LOCAL
+	#define SPRING_API
 #else
-	#if __GNUC__ >= 4 && !defined(SYNCDEBUG)
+	#if __GNUC__ >= 4
+		// Support for '-fvisibility=hidden'.
 		#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
-		#define SPRING_EXPORT __attribute__ ((visibility("default")))
-		#define SPRING_IMPORT __attribute__ ((visibility("default")))
-		#define SPRING_LOCAL  __attribute__ ((visibility("hidden")))
+		#define SPRING_API __attribute__ ((visibility("default")))
 	#else
-		#define DLL_EXPORT
-		#define SPRING_EXPORT
-		#define SPRING_IMPORT
-		#define SPRING_LOCAL
+		#define DLL_EXPORT extern "C"
+		#define SPRING_API
 	#endif
 #endif
 
-#ifdef BUILDING_SPRING
-	#define SPRING_API SPRING_EXPORT
+// Virtual destructor support
+#ifdef _WIN32
+	#define IMPLEMENT_PURE_VIRTUAL(proto)
 #else
-	#define SPRING_API SPRING_IMPORT
+	#define IMPLEMENT_PURE_VIRTUAL(proto) proto {}
 #endif
 
 #endif /* AIBASE_H */

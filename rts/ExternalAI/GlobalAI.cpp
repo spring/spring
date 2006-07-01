@@ -64,5 +64,4 @@ void CGlobalAI::Update(void)
 	ai->Update();
 }
 
-IGlobalAI::~IGlobalAI() {
-}
+IMPLEMENT_PURE_VIRTUAL(IGlobalAI::~IGlobalAI())

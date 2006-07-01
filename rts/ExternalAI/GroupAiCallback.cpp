@@ -83,8 +83,5 @@ int CGroupAICallback::GetUnitLastUserOrder(int unitid)
 	return 0;
 }
 
-IGroupAICallback::~IGroupAICallback() {
-}
-
-IGroupAI::~IGroupAI() {
-}
+IMPLEMENT_PURE_VIRTUAL(IGroupAICallback::~IGroupAICallback())
+IMPLEMENT_PURE_VIRTUAL(IGroupAI::~IGroupAI())

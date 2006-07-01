@@ -59,5 +59,4 @@ IAICallback *CGlobalAICallback::GetAICallback ()
 	return &scb;
 }
 
-IGlobalAICallback::~IGlobalAICallback () {
-}
+IMPLEMENT_PURE_VIRTUAL(IGlobalAICallback::~IGlobalAICallback())
