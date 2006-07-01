@@ -104,5 +104,4 @@ int CAICheats::GetEnemyUnits(int *units,const float3& pos,float radius)
 
 }
 
-IAICheats::~IAICheats() {
-}
+IMPLEMENT_PURE_VIRTUAL(IAICheats::~IAICheats())

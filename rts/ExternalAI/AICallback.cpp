@@ -1031,6 +1031,4 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 	return a;
 }
 
-IAICallback::~IAICallback() {
-}
-
+IMPLEMENT_PURE_VIRTUAL(IAICallback::~IAICallback())
