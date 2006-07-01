@@ -27,7 +27,7 @@ public:
 
 	virtual int GetUnitLastUserOrder(int unitid)=0;	//last frame the user gave a direct order to a unit, ai should probably leave it be for some time to avoid irritating user
 
-	virtual ~IGroupAICallback();
+	virtual ~IGroupAICallback() = 0;
 };
 
 #endif /* IGROUPAICALLBACK_H */

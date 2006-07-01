@@ -27,7 +27,7 @@ public:
 	virtual int GetEnemyUnits(int *units,const float3& pos,float radius)=0; //returns all known enemy units within radius from pos
 
 	virtual bool OnlyPassiveCheats()=0;
-	virtual ~IAICheats();
+	virtual ~IAICheats() = 0;
 };
 
 #endif
