@@ -31,11 +31,20 @@
 	#endif
 #endif
 
-// Virtual destructor support
-#ifdef _WIN32
-	#define IMPLEMENT_PURE_VIRTUAL(proto)
+// Virtual destructor support (across DLL/SO interface)
+#ifdef __GNUC__
+	// MinGW crashes on pure virtual destructors. Bah.
+	// GCC on linux works fine, but vtable is emitted at place of the
+	// implementation of the virtual destructor, so even if it's pure,
+	// it must be implemented.
+	// We just combine these 2 facts and don't make dtors pure virtual
+	// on GCC in any case.
+	#define DECLARE_PURE_VIRTUAL(proto) proto;
+	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
 #else
-	#define IMPLEMENT_PURE_VIRTUAL(proto) proto {}
+	// MSVC chokes if we don't declare the destructor pure virtual.
+	#define DECLARE_PURE_VIRTUAL(proto) proto = 0;
+	#define IMPLEMENT_PURE_VIRTUAL(proto)
 #endif
 
 #endif /* AIBASE_H */
