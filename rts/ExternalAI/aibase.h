@@ -39,11 +39,11 @@
 	// it must be implemented.
 	// We just combine these 2 facts and don't make dtors pure virtual
 	// on GCC in any case.
-	#define DECLARE_PURE_VIRTUAL(proto) proto;
+	#define DECLARE_PURE_VIRTUAL(proto) virtual proto;
 	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
 #else
 	// MSVC chokes if we don't declare the destructor pure virtual.
-	#define DECLARE_PURE_VIRTUAL(proto) proto = 0;
+	#define DECLARE_PURE_VIRTUAL(proto) virtual proto = 0;
 	#define IMPLEMENT_PURE_VIRTUAL(proto)
 #endif
 
