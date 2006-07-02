@@ -157,7 +157,7 @@ void CBuilderCAI::SlowUpdate()
 					if(owner->moveType->progressState==CMoveType::Failed){
 						if(++buildRetries>5){
 							StopMove();
-							FinishCommand();			
+							FinishCommand();
 						}
 					}
 					SetGoal(buildPos,owner->pos, fac->buildDistance*0.4+radius);
@@ -338,7 +338,7 @@ void CBuilderCAI::SlowUpdate()
 
 			} else {							//reclaim unit
 				CUnit* unit=uh->units[id];
-				if(unit && unit!=owner){
+				if(unit && unit!=owner && (unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 					if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
 						StopMove();
 						owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9+unit->radius, false);
@@ -349,7 +349,7 @@ void CBuilderCAI::SlowUpdate()
 						}else{
 							if(owner->moveType->progressState==CMoveType::Failed){
 								StopMove();
-								FinishCommand();			
+								FinishCommand();
 							}
 						}
 					}
@@ -388,7 +388,7 @@ void CBuilderCAI::SlowUpdate()
 						} else {
 							if(owner->moveType->progressState==CMoveType::Failed){
 								StopMove();
-								FinishCommand();			
+								FinishCommand();
 							}
 						}
 					}
@@ -702,7 +702,7 @@ void CBuilderCAI::DrawCommands(void)
 			draw=true;
 		}
 		if(draw){
-			glVertexf3(pos);	
+			glVertexf3(pos);
 		}
 	}
 	glEnd();

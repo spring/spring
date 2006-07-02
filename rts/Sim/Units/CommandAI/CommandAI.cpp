@@ -60,7 +60,7 @@ CCommandAI::CCommandAI(CUnit* owner)
  	c.onlyKey=true;
  	c.tooltip="Wait: Tells the unit to wait until another units handles him";
  	possibleCommands.push_back(c);
- 
+
 	c.id=CMD_SELFD;
 	c.type=CMDTYPE_ICON;
 	c.name="SelfD";
@@ -84,7 +84,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.params.push_back("Return fire");
 		c.params.push_back("Fire at will");
 		c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
-		possibleCommands.push_back(c);	
+		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_FIRE_STATE);
 	}
 
@@ -141,7 +141,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.params.push_back("On");
 
 		c.tooltip="Active State: Sets the active state of the unit to on or off";
-		possibleCommands.push_back(c);	
+		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_ONOFF);
 		c.key=0;
 	}
@@ -162,7 +162,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.params.push_back("Cloaked");
 
 		c.tooltip="Cloak State: Sets wheter the unit is cloaked or not";
-		possibleCommands.push_back(c);	
+		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_CLOAK);
 		c.key=0;
 	}
@@ -397,7 +397,7 @@ std::deque<Command>::iterator CCommandAI::GetCancelQueued(Command &c){
 						}
 					} else {
                         if((cpos-cipos).SqLength2D()<17*17){
-							return ci;				
+							return ci;
 						}
 					}
 				}
@@ -452,9 +452,9 @@ void CCommandAI::SlowUpdate()
 {
 	if(commandQue.empty())
 		return;
-	
+
 	Command& c=commandQue.front();
-	
+
 	switch(c.id){
 	case CMD_WAIT:
 		break;
@@ -462,13 +462,13 @@ void CCommandAI::SlowUpdate()
 		owner->AttackUnit(0,true);
 		std::vector<CWeapon*>::iterator wi;
 		for(wi=owner->weapons.begin();wi!=owner->weapons.end();++wi)
-			(*wi)->HoldFire();			
+			(*wi)->HoldFire();
 		FinishCommand();
 		break;};
 	case CMD_ATTACK:
 	case CMD_DGUN:
 		if(inCommand){
-			if(targetDied){
+			if(targetDied || !(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 				FinishCommand();
 			}
 		} else {
@@ -538,7 +538,7 @@ void CCommandAI::DrawCommands(void)
 			break;
 		}
 		if(draw){
-			glVertexf3(pos);	
+			glVertexf3(pos);
 		}
 	}
 	glEnd();
@@ -556,13 +556,13 @@ void CCommandAI::FinishCommand(void)
 	orderTarget=0;
 	if(owner->group)
 		owner->group->CommandFinished(owner->id,type);
-	
+
 	if(!owner->group && commandQue.empty())
 		globalAI->UnitIdle(owner);
 
 	if(lastFinishCommand!=gs->frameNum){	//avoid infinite loops
 		lastFinishCommand=gs->frameNum;
-		SlowUpdate();			
+		SlowUpdate();
 	}
 }
 

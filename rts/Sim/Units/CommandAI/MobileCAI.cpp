@@ -252,7 +252,7 @@ void CMobileCAI::SlowUpdate()
 				inCommand=true;
 			}
 		}
-		if(targetDied){
+		if(targetDied || !(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 			StopMove();		//cancel keeppointingto
 			FinishCommand();
 			break;
@@ -278,7 +278,7 @@ void CMobileCAI::SlowUpdate()
 				owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9, true);
 			} else {
 				if(pos.distance2D(goalPos)>10)
-					SetGoal(pos,curPos);					
+					SetGoal(pos,curPos);
 			}
 		}
 		break;
@@ -380,7 +380,7 @@ void CMobileCAI::DrawCommands(void)
 			break;
 		}
 		if(draw){
-			glVertexf3(pos);	
+			glVertexf3(pos);
 		}
 	}
 	glEnd();
