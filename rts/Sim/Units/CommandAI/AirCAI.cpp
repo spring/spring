@@ -353,7 +353,7 @@ void CAirCAI::SlowUpdate()
 			}
 		}
 		if(inCommand){
-			if(targetDied){
+			if(targetDied || !(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 				FinishCommand();
 				break;
 			}
@@ -479,12 +479,12 @@ void CAirCAI::DrawCommands(void)
 		case CMD_MOVE:
 			pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
 			glColor4f(0.5,1,0.5,0.4);
-			glVertexf3(pos);	
+			glVertexf3(pos);
 			break;
 		case CMD_PATROL:
 			pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);
-			glVertexf3(pos);	
+			glVertexf3(pos);
 			break;
 		case CMD_ATTACK:
 			if(ci->params.size()==1){
@@ -494,7 +494,7 @@ void CAirCAI::DrawCommands(void)
 				pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
 			}
 			glColor4f(1,0.5,0.5,0.4);
-			glVertexf3(pos);	
+			glVertexf3(pos);
 			break;
 		case CMD_AREA_ATTACK:
 			pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
@@ -520,7 +520,7 @@ void CAirCAI::DrawCommands(void)
 			if(uh->units[int(ci->params[0])]!=0)
 				pos=uh->units[int(ci->params[0])]->pos;
 			glColor4f(0.3,0.3,1,0.4);
-			glVertexf3(pos);	
+			glVertexf3(pos);
 			break;
 		}
 	}
