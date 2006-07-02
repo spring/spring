@@ -28,6 +28,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	viewRadius+=viewRadius%2;
 
 	drawMode=drawNormal;
+	drawLineOfSight=false;
 	drawRadarAndJammer=true;
 
 	extraTex=0;
@@ -59,11 +60,15 @@ void CBaseGroundDrawer::SetDrawMode (DrawMode dm)
 //todo: this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
 {
-	SetDrawMode(drawNormal);
-
+	if(drawLineOfSight){
+		SetDrawMode(drawLos);
+	} else {
+		SetDrawMode(drawNormal);
+	}
 	extraTex=0;
 	highResInfoTexWanted=false;
 	updateTextureState=0;
+	while(!UpdateExtraTexture());
 }
 
 void CBaseGroundDrawer::SetHeightTexture()
@@ -74,14 +79,14 @@ void CBaseGroundDrawer::SetHeightTexture()
 		SetDrawMode (drawHeight);
 		highResInfoTexWanted=true;
 		extraTex=0;
+		updateTextureState=0;
+		while(!UpdateExtraTexture());
 	}
-	updateTextureState=0;
-	while(!UpdateExtraTexture());
 }
 
 void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes)
 {
-	if (drawMode == drawMetal) 
+	if (drawMode == drawMetal)
 		DisableExtraTexture();
 	else {
 		SetDrawMode (drawMetal);
@@ -90,9 +95,9 @@ void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,uns
 		extraTex=tex;
 		extraTexPal=pal;
 		extractDepthMap=extractMap;
-	} 
-	updateTextureState=0;
-	while(!UpdateExtraTexture());
+		updateTextureState=0;
+		while(!UpdateExtraTexture());
+	}
 }
 
 void CBaseGroundDrawer::SetPathMapTexture()
@@ -103,22 +108,24 @@ void CBaseGroundDrawer::SetPathMapTexture()
 		SetDrawMode(drawPath);
 		extraTex=0;
 		highResInfoTexWanted=false;
+		updateTextureState=0;
+		while(!UpdateExtraTexture());
 	}
-	updateTextureState=0;
-	while(!UpdateExtraTexture());
 }
 
 void CBaseGroundDrawer::ToggleLosTexture()
 {
-	if (drawMode==drawLos) 
+	if (drawMode==drawLos) {
+		drawLineOfSight=false;
 		DisableExtraTexture();
-	else {
+	} else {
+		drawLineOfSight=true;
 		SetDrawMode(drawLos);
 		extraTex=0;
 		highResInfoTexWanted=false;
+		updateTextureState=0;
+		while(!UpdateExtraTexture());
 	}
-	updateTextureState=0;
-	while(!UpdateExtraTexture());
 }
 
 void CBaseGroundDrawer::ToggleRadarAndJammer()
@@ -174,7 +181,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							CFeature* f;
 							if(uh->TestUnitBuildSquare(float3(x*16+8,0,y*16+8),unitdef,f))
 								m=1;
-							else 
+							else
 								m=0;
 							if(f && m)
 								m=0.5;
