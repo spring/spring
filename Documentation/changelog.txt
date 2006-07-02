@@ -5,6 +5,7 @@ TASpring change log
 * [feature] Custom unit icons are supported. See http://taspring.clan-sy.com/wiki/CustomUnitIcons for more info.
 * [bugfix] 'Quit and Resign' dialog now also appears when you're hosting, and stays hidden when the game is over.
 * [change] 'Quit and Resign' dialog now only gives everything to allies (and not enemies) if they are still alive.
+* [change] The LOS drawing mode is remembered when you switch back and forth to others (e.g. metalmap, heightmap).
 * [change] Radar and jammer range is shown by default if you press 'L'.
 * [change] Radar and jammer toggle ';' happens instantly.
 
