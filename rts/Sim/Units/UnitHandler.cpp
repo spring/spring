@@ -313,9 +313,11 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 	if(s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)){
 		if(dynamic_cast<CFeature*>(s))
 			feature=(CFeature*)s;
-		else if(s->immobile)
-			return 0;
-		else
+		else if(s->immobile) {
+			CUnit* unit=dynamic_cast<CUnit*>(s);
+			if(unit && (unit->losStatus[gu->myAllyTeam] & LOS_INLOS))
+				return 0;
+		} else
 			ret=1;
 	}
 	int square=ground->GetSquare(pos);
@@ -336,11 +338,6 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 		return 0;
 	if(groundheight>-unitdef->minWaterDepth)
 		return 0;
-	std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-	std::vector<Command> cv;
-	for(;ui != selectedUnits.selectedUnits.end(); ui++){
-	
-	}
 
 	return ret;
 }
