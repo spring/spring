@@ -51,6 +51,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "UnitTypes/TransportUnit.h"
+#include "Game/SelectedUnits.h"
 #include "mmgr.h"
 
 #include "Game/GameSetup.h"
@@ -1035,6 +1036,9 @@ bool CUnit::SetGroup(CGroup* newGroup)
 		if(!group->AddUnit(this)){
 			group=0;									//group ai didnt accept us
 			return false;
+		} else { // add us to selected units if group is selected
+			if(selectedUnits.selectedGroup == group->id)
+				selectedUnits.AddUnit(this);
 		}
 	}
 	return true;
