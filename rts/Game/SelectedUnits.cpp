@@ -240,7 +240,8 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 	AddDeathDependence(unit);
 	selectionChanged=true;
 	possibleCommandsChanged=true;
-	selectedGroup=-1;
+	if(!(unit->group) || unit->group->id != selectedGroup)
+		selectedGroup=-1;
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	unit->commandAI->selected=true;
@@ -384,13 +385,15 @@ int CSelectedUnits::GetDefaultCmd(CUnit *unit,CFeature* feature)
 	int cmd=CMD_STOP;
 	int lowestHint=10000;//find better way to decide
 	CUnit* selected=0;
-	set<CUnit*>::iterator ui;
-	for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		if((*ui)->aihint<lowestHint){
+	int i = 0;
+	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+		if((!(*ui)->immobile || (i==selectedUnits.size() - 1 && lowestHint == 10000)) && (*ui)->aihint<lowestHint)
+		{
 			selected=*ui;
 			lowestHint=(*ui)->aihint;
 		}
-	}
+		i++;
+	} 	
 	if(selected)
 		cmd=selected->commandAI->GetDefaultCmd(unit,feature);
 	return cmd;
