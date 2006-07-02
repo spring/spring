@@ -352,8 +352,12 @@ void CCommandAI::GiveCommand(Command& c)
 	if(!this->GetOverlapQueued(c).empty()){
 		return;
 	}
-	if(c.id==CMD_ATTACK && owner->weapons.empty() && owner->unitDef->canKamikaze==false)		//avoid weaponless units moving to 0 distance when given attack order
-		c.id=CMD_STOP;
+	if(c.id==CMD_ATTACK && owner->weapons.empty() && owner->unitDef->canKamikaze==false){		//avoid weaponless units moving to 0 distance when given attack order
+		Command c2;
+		c2.id=CMD_STOP;
+		commandQue.push_back(c2);
+		return;
+	}
 
 	commandQue.push_back(c);
 	if(commandQue.size()==1 && !owner->beingBuilt)
