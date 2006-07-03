@@ -490,7 +490,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 			elevator=-upside;
 		}*/
 //	} else {
-		if(lastColWarningType==2 && frontdir.dot(lastColWarning->pos+lastColWarning->speed*20-pos-owner->speed*20)<0){
+		if(lastColWarning && lastColWarningType==2 && frontdir.dot(lastColWarning->pos+lastColWarning->speed*20-pos-owner->speed*20)<0){
 /*			float pitchMod=updir.y>0?1:-1;
 			if(lastColWarning->pos.y>pos.y)
 				elevator=-pitchMod;
