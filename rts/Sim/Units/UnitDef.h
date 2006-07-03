@@ -172,7 +172,7 @@ struct UnitDef
 	float loadingRadius;	//for transports
 	int transportCapacity;
 	int transportSize;
-	bool isAirBase;// should the carried units still be able to shoot?
+	bool isAirBase;
 	float transportMass;
 
 	bool canCloak;							//if the unit can cloak
@@ -238,6 +238,7 @@ struct UnitDef
 	int buildingDecalSizeX;
 	int buildingDecalSizeY;
 	float buildingDecalDecaySpeed;
+	bool isfireplatform;// should the carried units still be able to shoot?
 };
 
 
