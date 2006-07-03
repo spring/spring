@@ -94,7 +94,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence (this);
     unit->transporter = this;
 	unit->toBeTransported=false;
-	if (!unitDef->isAirBase)
+	if (!unitDef->isfireplatform)
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
 	unit->UnBlock();
 	loshandler->FreeInstance(unit->los);
@@ -126,7 +126,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			unit->transporter=0;
 			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
 				unit->moveType->useHeading=true;
-			unit->stunned=false; // de-stun in case it isairbase=0
+			unit->stunned=false; // de-stun in case it isfireplatform=0
 			unit->Block();
 			loshandler->MoveUnit(unit,false);
 			unit->moveType->LeaveTransport();
