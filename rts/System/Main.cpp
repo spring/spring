@@ -342,11 +342,6 @@ static bool MultisampleVerify(void)
 	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
 	glGetIntegerv(GL_SAMPLES_ARB, &samples);
 	if (buffers && samples) {
-#ifdef DEBUG
-		char t[22];
-		SNPRINTF(t,22, "FSAA level %d enabled",samples);
-		handleerror(0,t,"SDL_GL",MBF_OK|MBF_INFO);
-#endif
 		return true;
 	}
 	return false;

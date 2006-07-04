@@ -472,7 +472,7 @@ void CCommandAI::SlowUpdate()
 	case CMD_ATTACK:
 	case CMD_DGUN:
 		if(inCommand){
-			if(targetDied || !(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
+			if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR))){
 				FinishCommand();
 			}
 		} else {
