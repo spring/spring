@@ -89,3 +89,5 @@ longtimetodate <time>
 setchannelkey <channel> <key>
   will lock the channel with key or unlock it if key is "*". This command is available
   to moderators as well.
+updatemotd <filename>
+  will reload MOTD ("message of the day") from a file <filename>.
