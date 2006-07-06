@@ -5,19 +5,36 @@
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
 
-CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color,CUnit* owner,float thickness)
+CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness, float flaresize)
 : CProjectile((startPos+endPos)*0.5,ZeroVector,owner),
 	startPos(startPos),
 	endPos(endPos),
-	startAlpha(startAlpha),
-	endAlpha(endAlpha),
-	color(color),
-	thickness(thickness)
+	thickness(thickness),
+	corethickness(corethickness),
+	flaresize(flaresize)
 {
 	checkCol=false;
 	useAirLos=true;
 
 	SetRadius(pos.distance(endPos));
+
+
+	corecolstart[0]=(unsigned char)(color2.x*startAlpha);
+	corecolstart[1]=(unsigned char)(color2.y*startAlpha);
+	corecolstart[2]=(unsigned char)(color2.z*startAlpha);
+	corecolstart[3]=1;
+	corecolend[0]=(unsigned char)(color2.x*endAlpha);
+	corecolend[1]=(unsigned char)(color2.y*endAlpha);
+	corecolend[2]=(unsigned char)(color2.z*endAlpha);
+	corecolend[3]=1;
+	kocolstart[0]=(unsigned char)(color.x*startAlpha);
+	kocolstart[1]=(unsigned char)(color.y*startAlpha);
+	kocolstart[2]=(unsigned char)(color.z*startAlpha);
+	kocolstart[3]=1;
+	kocolend[0]=(unsigned char)(color.x*endAlpha);
+	kocolend[1]=(unsigned char)(color.y*endAlpha);
+	kocolend[2]=(unsigned char)(color.z*endAlpha);
+	kocolend[3]=1;
 }
 
 CBeamLaserProjectile::~CBeamLaserProjectile(void)
@@ -41,41 +58,60 @@ void CBeamLaserProjectile::Draw(void)
 	dir1.Normalize();
 	float3 dir2(dif.cross(dir1));
 
-	unsigned char col[4];
-	col[0]=(unsigned char)(color.x*startAlpha);
-	col[1]=(unsigned char)(color.y*startAlpha);
-	col[2]=(unsigned char)(color.z*startAlpha);
-	col[3]=1;//intensity*255;
-
-	unsigned char col2[4];
-	col2[0]=(unsigned char)(color.x*endAlpha);
-	col2[1]=(unsigned char)(color.y*endAlpha);
-	col2[2]=(unsigned char)(color.z*endAlpha);
-	col2[3]=1;//intensity*255;
-
 	float size=thickness;
+	float coresize=size*corethickness;
 	float3 pos1=startPos;
 	float3 pos2=endPos;
 
 	if(camDist<1000){
-		va->AddVertexTC(pos1-dir1*size,					  15.0/16,0,    col);
-		va->AddVertexTC(pos1+dir1*size,					  15.0/16,1.0/8,col);
-		va->AddVertexTC(pos1+dir1*size-dir2*size, 14.0/16,1.0/8,col);
-		va->AddVertexTC(pos1-dir1*size-dir2*size, 14.0/16,0		,col);
+		va->AddVertexTC(pos1-dir1*size,					  15.0/16,0,    kocolstart);
+		va->AddVertexTC(pos1+dir1*size,					  15.0/16,1.0/8,kocolstart);
+		va->AddVertexTC(pos1+dir1*size-dir2*size, 14.0/16,1.0/8,kocolstart);
+		va->AddVertexTC(pos1-dir1*size-dir2*size, 14.0/16,0		,kocolstart);
+		va->AddVertexTC(pos1-dir1*coresize,					  15.0/16,0,    corecolstart);
+		va->AddVertexTC(pos1+dir1*coresize,					  15.0/16,1.0/8,corecolstart);
+		va->AddVertexTC(pos1+dir1*size-dir2*coresize, 14.0/16,1.0/8,corecolstart);
+		va->AddVertexTC(pos1-dir1*size-dir2*coresize, 14.0/16,0		,corecolstart);
 
-		va->AddVertexTC(pos1-dir1*size,11.0/16,0,    col);
-		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,col);
-		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,col2);
+		va->AddVertexTC(pos1-dir1*size,11.0/16,0,    kocolstart);
+		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,kocolstart);
+		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,kocolend);
+		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,kocolend);
+		va->AddVertexTC(pos1-dir1*(coresize),11.0/16,0,    corecolstart);
+		va->AddVertexTC(pos1+dir1*(coresize),11.0/16,1.0/8,corecolstart);
+		va->AddVertexTC(pos2+dir1*(coresize),11.0/16,1.0/8,corecolend);
+		va->AddVertexTC(pos2-dir1*(coresize),11.0/16,0    ,corecolend);
 
-		va->AddVertexTC(pos2-dir1*size,					  15.0/16,0,    col2);
-		va->AddVertexTC(pos2+dir1*size,					  15.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2+dir1*size+dir2*size, 14.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2-dir1*size+dir2*size, 14.0/16,0		,col2);
+
+		va->AddVertexTC(pos2-dir1*size,					  15.0/16,0,    kocolend);
+		va->AddVertexTC(pos2+dir1*size,					  15.0/16,1.0/8,kocolend);
+		va->AddVertexTC(pos2+dir1*size+dir2*size, 14.0/16,1.0/8,kocolend);
+		va->AddVertexTC(pos2-dir1*size+dir2*size, 14.0/16,0		,kocolend);
+		va->AddVertexTC(pos2-dir1*coresize,					  15.0/16,0,    corecolstart);
+		va->AddVertexTC(pos2+dir1*coresize,					  15.0/16,1.0/8,corecolstart);
+		va->AddVertexTC(pos2+dir1*coresize+dir2*coresize, 14.0/16,1.0/8,corecolstart);
+		va->AddVertexTC(pos2-dir1*coresize+dir2*coresize, 14.0/16,0		,corecolstart);
 	} else {
-		va->AddVertexTC(pos1-dir1*size,11.0/16,0,    col);
-		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,col);
-		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,col2);
+		va->AddVertexTC(pos1-dir1*size,11.0/16,0,    kocolstart);
+		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,kocolstart);
+		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,kocolend);
+		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,kocolend);
+		va->AddVertexTC(pos1-dir1*coresize,11.0/16,0,    corecolstart);
+		va->AddVertexTC(pos1+dir1*coresize,11.0/16,1.0/8,corecolstart);
+		va->AddVertexTC(pos2+dir1*coresize,11.0/16,1.0/8,corecolend);
+		va->AddVertexTC(pos2-dir1*coresize,11.0/16,0    ,corecolend);
 	}
+
+	//draw flare
+	float fsize = size*flaresize;
+	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,0.51,0.13,kocolstart);
+	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,0.99,0.13,kocolstart);
+	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,0.99,0.36,kocolstart);
+	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,0.51,0.36,kocolstart);
+
+	fsize = fsize*corethickness;
+	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,0.51,0.13,corecolstart);
+	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,0.99,0.13,corecolstart);
+	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,0.99,0.36,corecolstart);
+	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,0.51,0.36,corecolstart);
 }

@@ -96,7 +96,10 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].maxvelocity, "0", weaponname + "\\weaponvelocity");
 	sunparser->GetDef(weaponDefs[id].isShield, "0", weaponname + "\\IsShield");
 	sunparser->GetDef(weaponDefs[id].beamtime, "1", weaponname + "\\beamtime");
+
 	sunparser->GetDef(weaponDefs[id].thickness, "2", weaponname + "\\thickness");
+	sunparser->GetDef(weaponDefs[id].corethickness, "0.25", weaponname + "\\corethickness");
+	sunparser->GetDef(weaponDefs[id].laserflaresize, "15", weaponname + "\\laserflaresize");
 	sunparser->GetDef(weaponDefs[id].intensity, "0.9", weaponname + "\\intensity");
 
 	if(weaponDefs[id].name.find("disintegrator")!=string::npos){	//fulhack
@@ -288,6 +291,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 
 	float3 rgbcol = hs2rgb(color/float(255), color2/float(255));
 	weaponDefs[id].visuals.color = rgbcol;
+	weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(1,1.0,1.0),weaponname + "\\rgbcolor2");
 
 	float3 tempCol=sunparser->GetFloat3(float3(-1,-1,-1),weaponname + "\\rgbcolor");
 	if(tempCol!=float3(-1,-1,-1))

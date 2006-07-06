@@ -76,6 +76,8 @@ void CBeamLaser::Init(void)
 	damages=damages*(1.0f/salvoSize);		//restate the damage from damage per salvo to damage per frame (shot)
 
 	CWeapon::Init();
+
+	muzzleFlareSize = 0;
 }
 
 void CBeamLaser::Fire(void)
@@ -129,7 +131,7 @@ void CBeamLaser::Fire(void)
 		float startAlpha=(1-curLength/(range*1.3))*baseAlpha;
 		float endAlpha=(1-(curLength+length)/(range*1.3))*baseAlpha;
 
-		new CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,owner,weaponDef->thickness);
+		new CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,weaponDef->visuals.color2, owner,weaponDef->thickness,weaponDef->corethickness, weaponDef->laserflaresize);
 
 		curPos=hitPos;
 		curLength+=length;
