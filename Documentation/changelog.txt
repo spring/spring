@@ -9,6 +9,9 @@ TASpring change log
 * [change] The LOS drawing mode is remembered when you switch back and forth to others (e.g. metalmap, heightmap).
 * [change] Radar and jammer range is shown by default if you press 'L'.
 * [change] Radar and jammer toggle ';' happens instantly.
+* New weapon tdf tag rgbcolor2, used to make laser weapon have diferent color at the center, defaults to white.
+* New weapon tdf tag corethickness, how thick the inner color of a laser is, this is a percentage value, default is 0.25
+* New weapon tdf tag laserflaresize, size of the flare for laser weapons, multiplier for thickness, default 15.
 
 0.72b1
 
