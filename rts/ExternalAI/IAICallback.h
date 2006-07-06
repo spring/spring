@@ -14,7 +14,8 @@ struct FeatureDef;
 
 // GetValue() constants
 #define AIVAL_NUMDAMAGETYPES 1 // int
-#define AI_EXCEPTION_HANDLING 2
+#define AI_EXCEPTION_HANDLING 2 // bool
+#define AIVAL_SCRIPT_FILENAME 3 // string
 
 struct PointMarker
 {

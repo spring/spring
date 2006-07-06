@@ -10,23 +10,25 @@ struct WeaponDef;
 
 #define GLOBAL_AI_INTERFACE_VERSION 15
 
-// Both use ChangeTeamEvent for data
-#define AI_EVENT_UNITGIVEN 1
-	struct ChangeTeamEvent {
-		int unit, newteam, oldteam;
-	};
-	struct WeaponFireEvent {
-		int unit;
-		WeaponDef* def;
-	};
+#define AI_EVENT_UNITGIVEN 1    // Both use ChangeTeamEvent for data
 #define AI_EVENT_UNITCAPTURED 2
 #define AI_EVENT_WEAPON_FIRED 3
+#define AI_EVENT_PLAYER_COMMAND 4
 
 class SPRING_API IGlobalAI
 {
 public:
 	struct ChangeTeamEvent { 
 		int unit, newteam, oldteam;
+	};
+	struct WeaponFireEvent {
+		int unit;
+		WeaponDef* def;
+	};
+	struct PlayerCommandEvent {
+		std::vector<int> units;
+		Command command;
+ 		int player;
 	};
 
 	virtual void InitAI(IGlobalAICallback* callback, int team)=0;

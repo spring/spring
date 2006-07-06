@@ -7,6 +7,7 @@
 #include "Game/GameHelper.h"
 #include "TimeProfiler.h"
 #include "Platform/errorhandler.h"
+#include "Game/Player.h"
 #include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
@@ -259,7 +260,7 @@ void CGlobalAIHandler::WeaponFired(CUnit* unit,WeaponDef* def)
 {
 	if(ais[unit->team]){
 		try {
-			WeaponFireEvent wfe;
+			IGlobalAI::WeaponFireEvent wfe;
 			wfe.unit = unit->id;
 			wfe.def = def;
 			ais[unit->team]->ai->HandleEvent(AI_EVENT_WEAPON_FIRED,&wfe);
@@ -301,3 +302,17 @@ void CGlobalAIHandler::UnitTaken (CUnit *unit,int newteam)
 		HANDLE_EXCEPTION;
 }
 
+void CGlobalAIHandler::PlayerCommandGiven(std::vector<int>& selectedunits,Command& c,int player)
+{
+	if(ais[gs->players[player]->team]){
+		try {
+			IGlobalAI::PlayerCommandEvent pce;
+			pce.units = selectedunits;
+			pce.player = player;
+			pce.command = c;
+			ais[gs->players[player]->team]->ai->HandleEvent(AI_EVENT_PLAYER_COMMAND,&pce);
+			//shouldn't "delete pce" be here??
+		} 
+		HANDLE_EXCEPTION;
+	}
+}
