@@ -1,1 +1,0 @@
-Wolf, Sheep, Sheep, Sheep, Holder, SpireRook, AutoFac, SpireRook, SpireRook, Knight, Archer, Archer, Archer, Archer, Archer, Holder, SquareRook
