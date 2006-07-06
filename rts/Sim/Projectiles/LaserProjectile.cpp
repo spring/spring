@@ -6,10 +6,11 @@
 #include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
 
-CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color,float intensity, WeaponDef *weaponDef, int ttl)
+CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
 	ttl(ttl),
 	color(color),
+	color2(color2),
 	length(length),
 	curLength(0),
 	intensity(intensity),
@@ -108,8 +109,14 @@ void CLaserProjectile::Draw(void)
 	col[1]=(unsigned char) (color.y*intensity*255);
 	col[2]=(unsigned char) (color.z*intensity*255);
 	col[3]=1;//intensity*255;
+	unsigned char col2[4];
+	col2[0]=(unsigned char) (color2.x*intensity*255);
+	col2[1]=(unsigned char) (color2.y*intensity*255);
+	col2[2]=(unsigned char) (color2.z*intensity*255);
+	col2[3]=1;//intensity*255;
 
 	float size=weaponDef->thickness;
+	float coresize=size * weaponDef->corethickness;
 
 	if(camDist<1000){
 		float3 pos1=pos+speed*gu->timeOffset;
@@ -119,16 +126,28 @@ void CLaserProjectile::Draw(void)
 		va->AddVertexTC(pos1+dir1*size,					  15.0/16,1.0/8,col);
 		va->AddVertexTC(pos1+dir1*size-dir2*size, 14.0/16,1.0/8,col);
 		va->AddVertexTC(pos1-dir1*size-dir2*size, 14.0/16,0		,col);
+		va->AddVertexTC(pos1-dir1*coresize,					  15.0/16,0,    col2);
+		va->AddVertexTC(pos1+dir1*coresize,					  15.0/16,1.0/8,col2);
+		va->AddVertexTC(pos1+dir1*coresize-dir2*size, 14.0/16,1.0/8,col2);
+		va->AddVertexTC(pos1-dir1*coresize-dir2*size, 14.0/16,0		,col2);
 
 		va->AddVertexTC(pos1-dir1*size,11.0/16,0,    col);
 		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,col);
 		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,col);
 		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,col);
+		va->AddVertexTC(pos1-dir1*coresize,11.0/16,0,    col2);
+		va->AddVertexTC(pos1+dir1*coresize,11.0/16,1.0/8,col2);
+		va->AddVertexTC(pos2+dir1*coresize,11.0/16,1.0/8,col2);
+		va->AddVertexTC(pos2-dir1*coresize,11.0/16,0    ,col2);
 
 		va->AddVertexTC(pos2-dir1*size,					  15.0/16,0,    col);
 		va->AddVertexTC(pos2+dir1*size,					  15.0/16,1.0/8,col);
 		va->AddVertexTC(pos2+dir1*size+dir2*size, 14.0/16,1.0/8,col);
 		va->AddVertexTC(pos2-dir1*size+dir2*size, 14.0/16,0		,col);
+		va->AddVertexTC(pos2-dir1*coresize,					  15.0/16,0,    col2);
+		va->AddVertexTC(pos2+dir1*coresize,					  15.0/16,1.0/8,col2);
+		va->AddVertexTC(pos2+dir1*coresize+dir2*size, 14.0/16,1.0/8,col2);
+		va->AddVertexTC(pos2-dir1*coresize+dir2*size, 14.0/16,0		,col2);
 	} else {
 		float3 pos1=pos+speed*gu->timeOffset+dir*(size*0.5);
 		float3 pos2=pos1-dir*(curLength+size);
@@ -137,6 +156,10 @@ void CLaserProjectile::Draw(void)
 		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,col);
 		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,col);
 		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,col);
+		va->AddVertexTC(pos1-dir1*coresize,11.0/16,0,    col2);
+		va->AddVertexTC(pos1+dir1*coresize,11.0/16,1.0/8,col2);
+		va->AddVertexTC(pos2+dir1*coresize,11.0/16,1.0/8,col2);
+		va->AddVertexTC(pos2-dir1*coresize,11.0/16,0    ,col2);
 	}
 }
 

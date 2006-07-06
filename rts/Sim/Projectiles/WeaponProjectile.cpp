@@ -67,7 +67,7 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 	switch(weaponDef->visuals.renderType)
 	{
 	case WEAPON_RENDERTYPE_LASER:
-		return new CLaserProjectile(pos, speed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
+		return new CLaserProjectile(pos, speed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
 		break;
 	case WEAPON_RENDERTYPE_PLASMA:
 		break;

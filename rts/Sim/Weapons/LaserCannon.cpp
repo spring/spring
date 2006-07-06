@@ -89,7 +89,7 @@ void CLaserCannon::Fire(void)
 		fpsSub=6;
 #endif
 
-	new CLaserProjectile(weaponPos, dir*projectileSpeed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->intensity, weaponDef, (int)((weaponDef->range-fpsSub*4)/weaponDef->projectilespeed)-fpsSub);
+	new CLaserProjectile(weaponPos, dir*projectileSpeed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity, weaponDef, (int)((weaponDef->range-fpsSub*4)/weaponDef->projectilespeed)-fpsSub);
 
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);

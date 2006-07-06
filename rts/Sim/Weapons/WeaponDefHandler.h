@@ -89,6 +89,8 @@ struct WeaponDef
 
 	float intensity;
 	float thickness;
+	float laserflaresize;
+	float corethickness;
 
 	int graphicsType;
 	bool soundTrigger;
@@ -115,6 +117,7 @@ struct WeaponDef
 	struct
 	{
 		float3 color;
+		float3 color2;
 
 		int renderType;
 		//bool hasmodel;
