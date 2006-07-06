@@ -354,7 +354,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 
 	// Is the unit selected? Then draw it white.
 	set<CUnit*>::iterator ui=selectedUnits.selectedUnits.find(unit);
-	if(*ui==unit){
+	if(ui!=selectedUnits.selectedUnits.end()){
 		color[0]=255;
 		color[1]=255;
 		color[2]=255;

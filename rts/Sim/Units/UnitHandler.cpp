@@ -313,12 +313,13 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 	if(s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)){
 		if(dynamic_cast<CFeature*>(s))
 			feature=(CFeature*)s;
-		else if(s->immobile) {
-			CUnit* unit=dynamic_cast<CUnit*>(s);
-			if(unit && (unit->losStatus[gu->myAllyTeam] & LOS_INLOS))
+		else if(!dynamic_cast<CUnit*>(s) || (((CUnit*)s)->losStatus[gu->myAllyTeam] & LOS_INLOS))
+		{
+			if(s->immobile)
 				return 0;
-		} else
-			ret=1;
+			else
+				ret=1;
+		}
 	}
 	int square=ground->GetSquare(pos);
 
