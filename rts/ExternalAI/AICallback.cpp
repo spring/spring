@@ -37,6 +37,8 @@
 #include "FileSystem/FileHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
+#include "Game/UI/MouseHandler.h"
+#include "Game/CameraController.h"
 #include "mmgr.h"
 
 /* Cast id to unsigned to catch negative ids in the same operations,
@@ -854,16 +856,62 @@ bool CAICallback::GetValue(int id, void *data)
 {
 	verify();
 	switch (id) {
-		case AIVAL_NUMDAMAGETYPES:
+		case AIVAL_NUMDAMAGETYPES:{
 			*((int*)data) = DamageArray::numTypes;
 			return true;
-		case AI_EXCEPTION_HANDLING:
+		}case AIVAL_EXCEPTION_HANDLING:{
 			*(bool*)data = CGlobalAIHandler::CatchException();
 			return true;
-		case AIVAL_SCRIPT_FILENAME:
+		}case AIVAL_SLOPE_MAP:{
+			*(float**)data = readmap->slopemap;
+			return true;
+		}case AIVAL_MAX_HEIGHT:{
+			*(float*)data = readmap->maxheight;
+			return true;
+		}case AIVAL_MIN_HEIGHT:{
+			*(float*)data = readmap->minheight;
+			return true;
+		}case AIVAL_MAX_METAL:{
+			*(float*)data = readmap->maxMetal;
+			return true;
+		}case AIVAL_MAP_CHECKSUM:{
+			*(unsigned int*)data = readmap->mapChecksum;
+			return true;
+		}case AIVAL_DEBUG_MODE:{
+			*(bool*)data = gs->drawdebug;
+			return true;
+		}case AIVAL_BLOCK_MAP:{
+			*(CSolidObject***)data = readmap->groundBlockingObjectMap;
+			return true;
+		}case AIVAL_GAME_MODE:{
+			*(int*)data = gs->gameMode;
+			return true;
+		}case AIVAL_GAME_PAUSED:{
+			*(bool*)data = gs->paused;
+			return true;
+		}case AIVAL_GAME_SPEED_FACTOR:{
+			*(float*)data = gs->speedFactor;
+			return true;
+		}case AIVAL_GUI_VIEW_RANGE:{
+			*(float*)data = gu->viewRange;
+			return true;
+		}case AIVAL_GUI_SCREENX:{
+			*(float*)data = gu->screenx;
+			return true;
+		}case AIVAL_GUI_SCREENY:{
+			*(float*)data = gu->screeny;
+			return true;
+		}case AIVAL_GUI_CAMERA_DIR:{
+			*(float3*)data = mouse->currentCamController->GetDir();
+			return true;
+		}case AIVAL_GUI_CAMERA_POS:{
+			*(float3*)data = mouse->currentCamController->GetPos();
+			return true;
+		}case AIVAL_SCRIPT_FILENAME:{
 			if (gameSetup) *((std::string*)data) = gameSetup->setupFileName;
 			else *((std::string*)data) = "";
 			return true;
+		}
 		default:
 			return false;
 	}

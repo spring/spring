@@ -167,7 +167,7 @@
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;E:\springfodler3\vclibs\SDL-1.2.9\lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
+				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="2"
 				ProgramDatabaseFile="../../../installer/spring.pdb"

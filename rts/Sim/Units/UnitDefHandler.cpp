@@ -275,6 +275,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.canKamikaze=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\kamikaze").c_str());
 	ud.kamikazeDist=atof(tdfparser.SGetValueDef("-25", "UNITINFO\\kamikazedistance").c_str())+25; //we count 3d distance while ta count 2d distance so increase slightly
 
+	tdfparser.GetDef(ud.showNanoSpray, "1", "UNITINFO\\shownanospray");
+	ud.NanoColor=tdfparser.GetFloat3(float3(0.2f,0.7f,0.2f),"UNITINFO\\nanocolor");
+
 	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
 	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
 	tdfparser.GetDef(ud.canhover, "0", "UNITINFO\\canhover");

@@ -19,6 +19,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
+#include "Game/Team.h"
+#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 #include <assert.h>
 #include <algorithm>
@@ -494,6 +496,10 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	std::vector<int> args;
 	args.push_back(0);
 	cob->Call("QueryNanoPiece",args);
+
+	if(!unitDef->showNanoSpray)
+        return;
+
 	float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);
 	float3 weaponPos=pos + frontdir*relWeaponFirePos.z + updir*relWeaponFirePos.y + rightdir*relWeaponFirePos.x;
 
@@ -501,9 +507,14 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	float l=dif.Length();
 	dif/=l;
 	float3 error=gs->randVector()*(radius/l);
+	float3 color = unitDef->NanoColor;
+	if(configHandler.GetInt ("TeamNanoSpray", 1)){
+		unsigned char* col=gs->Team(team)->color;
+		color = float3(col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.));
+	}
 
 	if(inverse)
-		new CGfxProjectile(weaponPos+(dif+error)*l,-(dif+error)*3,(int)(l/3),float3(0.2f,0.7f,0.2f));
+		new CGfxProjectile(weaponPos+(dif+error)*l,-(dif+error)*3,(int)(l/3),color);
 	else
-		new CGfxProjectile(weaponPos,(dif+error)*3,(int)(l/3),float3(0.2f,0.7f,0.2f));
+		new CGfxProjectile(weaponPos,(dif+error)*3,(int)(l/3),color);
 }

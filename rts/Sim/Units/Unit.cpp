@@ -652,9 +652,17 @@ void CUnit::Draw()
 			float start=model->miny;
 			glEnable(GL_CLIP_PLANE0);
 			glEnable(GL_CLIP_PLANE1);
-
-			float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
-			glColor3f(col*0.5,col,col*0.5);
+			//float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
+			float3 fc;// fc frame color
+			if(configHandler.GetInt ("TeamNanoSpray", 1)){
+				unsigned char* tcol=gs->Team(team)->color;
+				fc = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+			}else{
+				fc = unitDef->NanoColor;
+			}
+			//fc *= 255;
+			//fc *= col;
+			glColor3f(fc.x,fc.y,fc.z);
 
 			unitDrawer->UnitDrawingTexturesOff(model);
 			
@@ -667,8 +675,7 @@ void CUnit::Draw()
 			glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
 			if(buildProgress>0.33){
-				col=1.5-col;
-				glColor3f(col*0.5,col,col*0.5);
+				glColor3f(1.2*fc.x,1.2*fc.y,1.2*fc.z);
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-1)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);
 				double plane2[4]={0,1,0,-start-height*(buildProgress*3-2)};
@@ -1058,7 +1065,7 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 		if(beingBuilt){
 			float metalUse=metalCost*part;
 			float energyUse=energyCost*part;
-			if(gs->Team(builder->team)->metal>metalUse && gs->Team(builder->team)->energy>energyUse){
+			if(((gs->Team(builder->team)->metal>metalUse)||(metalUse==0)) && ((gs->Team(builder->team)->energy>energyUse)||(energyUse==0))){
 				builder->UseMetal(metalUse);
 				builder->UseEnergy(energyUse);
 				health+=maxHealth*part;
