@@ -12,6 +12,7 @@
 #include "Net.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
+#include "ExternalAI/GlobalAIHandler.h"
 #include "UI/InfoConsole.h"
 #include "Camera.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -343,6 +344,9 @@ void CSelectedUnits::NetSelect(vector<int>& s,int player)
 void CSelectedUnits::NetOrder(Command &c, int player)
 {
 	selectedUnitsAI.GiveCommandNet(c,player);
+
+	if (netSelected[player].size() > 0)
+		globalAI->PlayerCommandGiven(netSelected[player],c,player);
 
 /*	if(!(c.options & CONTROL_KEY) && c.params.size()==3) {//fix: some better way to detect if its a map position
 		float3 oldPos(0,0,0);

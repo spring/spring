@@ -38,8 +38,8 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
 
 	ai=GetNewAI();
-	callback=new CGlobalAICallback(this);
 	gh=new CGroupHandler(team);
+	callback=new CGlobalAICallback(this);
 	ai->InitAI(callback,team);
 }
 

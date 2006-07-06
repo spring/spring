@@ -9,6 +9,7 @@
 class CUnit;
 class CGlobalAI;
 struct WeaponDef;
+struct Command;
 
 class CGlobalAIHandler :
 	public CObject
@@ -35,6 +36,7 @@ public:
 	void UnitTaken(CUnit* unit, int newteam);
 	void UnitGiven(CUnit* unit, int oldteam);
 	void WeaponFired(CUnit* unit,WeaponDef* def);
+	void PlayerCommandGiven(std::vector<int>& selectedunits,Command& c,int player);
 	CGlobalAI* ais[MAX_TEAMS];
 	bool hasAI;
 

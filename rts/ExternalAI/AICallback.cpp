@@ -78,7 +78,7 @@ void CAICallback::AddNotification(float3 pos, float3 color, float alpha)
 void CAICallback::verify()
 {
 	CGlobalAI *gai = globalAI->ais [team];
-	if (gai && (((group && gai->gh != group->handler) || gai->team != team))) {
+	if (gai && (((group && group->handler != gai->gh && group->handler != grouphandler) || gai->team != team))) {
 		handleerror (0, "AI has modified spring components(possible cheat)", "Spring is closing:", MBF_OK | MBF_EXCL);
 		exit (-1);
 	}
@@ -857,10 +857,13 @@ bool CAICallback::GetValue(int id, void *data)
 		case AIVAL_NUMDAMAGETYPES:
 			*((int*)data) = DamageArray::numTypes;
 			return true;
-		case AI_EXCEPTION_HANDLING:{
+		case AI_EXCEPTION_HANDLING:
 			*(bool*)data = CGlobalAIHandler::CatchException();
 			return true;
-		}
+		case AIVAL_SCRIPT_FILENAME:
+			if (gameSetup) *((std::string*)data) = gameSetup->setupFileName;
+			else *((std::string*)data) = "";
+			return true;
 		default:
 			return false;
 	}

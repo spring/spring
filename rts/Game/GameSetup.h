@@ -15,6 +15,7 @@ public:
 	bool Draw(void);
 
 	TdfParser file;
+	std::string setupFileName;
 	int myPlayer;
 	int numPlayers;				//the expected amount of players
 	std::string mapname;
