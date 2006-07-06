@@ -295,18 +295,20 @@ void CCommandAI::GiveCommand(Command& c)
 			stockpileWeapon->numStockpileQued=0;
 		UpdateStockpileIcon();
 		return; }
-	case CMD_SELFD:
+	case CMD_SELFD:{
 		if(owner->selfDCountdown){
 			owner->selfDCountdown=0;
 		} else {
 			owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
 		}
-		return;
+		return;}
 	}
-
+    
 	if(!(c.options & SHIFT_KEY)){
 		if(!commandQue.empty()){
-			if(commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_AREA_ATTACK || commandQue.front().id==CMD_DGUN){
+			if(commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_AREA_ATTACK
+				|| commandQue.front().id==CMD_DGUN)
+			{
 				owner->AttackUnit(0,true);
 			}
 
@@ -321,30 +323,65 @@ void CCommandAI::GiveCommand(Command& c)
 			orderTarget=0;
 		}
 	}
+	if(c.id == CMD_PATROL){
+		std::deque<Command>::iterator ci = commandQue.begin();
+		for(; ci != commandQue.end() && ci->id!=CMD_PATROL; ci++);
+		if(ci==commandQue.end()){
+			if(commandQue.empty()){
+				Command c2;
+				c2.id = CMD_PATROL;
+				c2.params.push_back(owner->pos.x);
+				c2.params.push_back(owner->pos.y);
+				c2.params.push_back(owner->pos.z);
+				c2.options = c.options;
+				commandQue.push_back(c2);
+			} else {
+				do{
+					ci--;
+					if(ci->params.size() >=3){
+						Command c2;
+						c2.id = CMD_PATROL;
+						c2.params = ci->params;
+						c2.options = c.options;
+						commandQue.push_back(c2);
+						ci=commandQue.begin();
+					} else if(ci==commandQue.begin()){
+						Command c2;
+						c2.id = CMD_PATROL;
+						c2.params.push_back(owner->pos.x);
+						c2.params.push_back(owner->pos.y);
+						c2.params.push_back(owner->pos.z);
+						c2.options = c.options;
+						commandQue.push_back(c2);
+					}
+				}while(ci!=commandQue.begin());
+			}
+		}
+	}
 	std::deque<Command>::iterator ci = CCommandAI::GetCancelQueued(c);
-	if(c.id<0 && ci != this->commandQue.end()){
+	if(c.id<0 && ci != commandQue.end()){
 		do{
-			if(ci == this->commandQue.begin()){
-				this->commandQue.erase(ci);
+			if(ci == commandQue.begin()){
+				commandQue.erase(ci);
 				Command c2;
 				c2.id = CMD_STOP;
-				this->commandQue.push_front(c2);
-				this->SlowUpdate();
+				commandQue.push_front(c2);
+				SlowUpdate();
 			} else {
-				this->commandQue.erase(ci);
+				commandQue.erase(ci);
 			}
 			ci = CCommandAI::GetCancelQueued(c);
-		}while(ci != this->commandQue.end());
+		}while(ci != commandQue.end());
 		return;
-	} else if(ci != this->commandQue.end()){
-		if(ci == this->commandQue.begin()){
-			this->commandQue.erase(ci);
+	} else if(ci != commandQue.end()){
+		if(ci == commandQue.begin()){
+			commandQue.erase(ci);
 			Command c2;
 			c2.id = CMD_STOP;
-			this->commandQue.push_front(c2);
-			this->SlowUpdate();
+			commandQue.push_front(c2);
+			SlowUpdate();
 		} else {
-			this->commandQue.erase(ci);
+			commandQue.erase(ci);
 		}
 		ci = CCommandAI::GetCancelQueued(c);
 		return;
@@ -551,7 +588,7 @@ void CCommandAI::DrawCommands(void)
 void CCommandAI::FinishCommand(void)
 {
 	int type=commandQue.front().id;
-	if(repeatOrders && type!=CMD_STOP && !(commandQue.front().options & INTERNAL_ORDER))
+	if(repeatOrders && type!=CMD_STOP && type != CMD_PATROL && !(commandQue.front().options & INTERNAL_ORDER))
 		commandQue.push_back(commandQue.front());
 	commandQue.pop_front();
 	inCommand=false;
@@ -593,7 +630,8 @@ void CCommandAI::UpdateStockpileIcon(void)
 	for(pci=possibleCommands.begin();pci!=possibleCommands.end();++pci){
 		if(pci->id==CMD_STOCKPILE){
 			char name[50];
-			sprintf(name,"%i/%i",stockpileWeapon->numStockpiled,stockpileWeapon->numStockpiled+stockpileWeapon->numStockpileQued);
+			sprintf(name,"%i/%i",stockpileWeapon->numStockpiled,
+				stockpileWeapon->numStockpiled+stockpileWeapon->numStockpileQued);
 			pci->name=name;
 			selectedUnits.PossibleCommandChange(owner);
 		}
@@ -602,7 +640,9 @@ void CCommandAI::UpdateStockpileIcon(void)
 
 void CCommandAI::WeaponFired(CWeapon* weapon)
 {
-	if(weapon->weaponDef->manualfire && !weapon->weaponDef->dropped && !commandQue.empty() && (commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_DGUN) && inCommand){
+	if(weapon->weaponDef->manualfire && !weapon->weaponDef->dropped && !commandQue.empty()
+		&& (commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_DGUN) && inCommand)
+	{
 		owner->AttackUnit(0,true);
 		globalAI->WeaponFired(owner,weapon->weaponDef);
 		FinishCommand();

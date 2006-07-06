@@ -76,6 +76,7 @@ CMouseHandler::CMouseHandler()
 	cursors["Attack"] = new CMouseCursor("cursorattack", CMouseCursor::Center);
 	cursors["DGun"] = new CMouseCursor("cursorattack", CMouseCursor::Center);
 	cursors["Patrol"] = new CMouseCursor("cursorpatrol", CMouseCursor::Center);
+	cursors["Fight"] = new CMouseCursor("cursorattack", CMouseCursor::Center);
 	cursors["Repair"] = new CMouseCursor("cursorrepair", CMouseCursor::Center);
 	cursors["Load units"] = new CMouseCursor("cursorpickup", CMouseCursor::Center);
 	cursors["Unload units"] = new CMouseCursor("cursorunload", CMouseCursor::Center);	

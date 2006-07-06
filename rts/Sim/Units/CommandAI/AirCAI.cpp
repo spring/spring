@@ -12,7 +12,7 @@
 #include "mmgr.h"
 
 CAirCAI::CAirCAI(CUnit* owner)
-: CCommandAI(owner)
+: CCommandAI(owner), lastPC1(-1), lastPC2(-1)
 {
 	CommandDescription c;
 	c.id=CMD_MOVE;
@@ -27,6 +27,13 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.name="Patrol";
 	c.key='P';
 	c.tooltip="Patrol: Sets the aircraft to patrol a path to one or more waypoints";
+	possibleCommands.push_back(c);
+
+	c.id = CMD_FIGHT;
+	c.type = CMDTYPE_ICON_MAP;
+	c.name = "Fight";
+	c.key = 'F';
+	c.tooltip = "Fight: Order the aircraft to take action while moving to a position";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_AREA_ATTACK;
@@ -254,63 +261,99 @@ void CAirCAI::SlowUpdate()
 		}
 		break;}
 	case CMD_PATROL:{
+		float3 curPos=owner->pos;
+		if(c.params.size()<3){		//this shouldnt happen but anyway ...
+			info->AddLine("Error: got patrol cmd with less than 3 params on %s in aircai",
+				owner->unitDef->humanName.c_str());
+			return;
+		}
+		Command temp;
+		temp.id = CMD_FIGHT;
+		temp.params.push_back(c.params[0]);
+		temp.params.push_back(c.params[1]);
+		temp.params.push_back(c.params[2]);
+		temp.options = c.options|INTERNAL_ORDER;
+		commandQue.push_back(c);
+		commandQue.pop_front();
+		commandQue.push_front(temp);
+		if(owner->group){
+			owner->group->CommandFinished(owner->id,CMD_PATROL);
+		}
+		SlowUpdate();
+		break;}
+	case CMD_FIGHT:{
 		if(tempOrder){
 			tempOrder=false;
 			inCommand=true;
 		}
+		goalPos=float3(c.params[0],c.params[1],c.params[2]);
 		if(!inCommand){
-			float3 pos(c.params[0],c.params[1],c.params[2]);
+			commandPos2=goalPos;
 			inCommand=true;
-			Command co;
-			co.id=CMD_PATROL;
-			co.params.push_back(curPos.x);
-			co.params.push_back(curPos.y);
-			co.params.push_back(curPos.z);
-			commandQue.push_front(co);
-			commandPos1=curPos;
-			activeCommand=1;
-			patrolTime=3;
 		}
-		Command& c=commandQue[activeCommand];
-		if(c.params.size()<3){
-			info->AddLine("Patrol command with insufficient parameters ?");
+		commandPos1=curPos;
+		if(c.params.size()<3){		//this shouldnt happen but anyway ...
+			info->AddLine("Error: got fight cmd with less than 3 params on %s in aircai",
+				owner->unitDef->humanName.c_str());
 			return;
 		}
-		goalPos=float3(c.params[0],c.params[1],c.params[2]);
-		commandPos2=goalPos;
-		patrolTime++;
 
+		float testRad=1000*owner->moveState;
+		CUnit* enemy = helper->GetClosestEnemyAircraft(owner->pos+owner->speed*10,testRad,owner->allyteam);
 		if(owner->fireState==2 && owner->moveState!=0 && owner->maxRange>0){
-			if(myPlane->isFighter){
-				float testRad=1000*owner->moveState;
-				CUnit* enemy=helper->GetClosestEnemyAircraft(owner->pos+owner->speed*10,testRad,owner->allyteam);
-				if(enemy && !enemy->crashing){
-					if(owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 1000){
-						Command nc;
-						nc.id=CMD_ATTACK;
-						nc.params.push_back(enemy->id);
-						nc.options=c.options;
-						commandQue.push_front(nc);
-						tempOrder=true;
-						inCommand=false;
-						SlowUpdate();
-						return;
-					}
+			if(myPlane->isFighter
+				&& enemy && !enemy->crashing
+				&& (owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 1000))
+			{
+				Command nc,c3;
+				c3.id = CMD_MOVE; //keep it from being pulled too far off the path
+				float3 dir = goalPos-curPos;
+				dir.Normalize();
+				dir*=sqrtf(1024+owner->xsize*owner->xsize+owner->ysize*owner->ysize);
+				dir+=curPos;
+				c3.params.push_back(dir.x);
+				c3.params.push_back(dir.y);
+				c3.params.push_back(dir.z);
+				c3.options = c.options|INTERNAL_ORDER;
+				nc.id=CMD_ATTACK;
+				nc.params.push_back(enemy->id);
+				nc.options=c.options|INTERNAL_ORDER;
+				commandQue.push_front(nc);
+				tempOrder=true;
+				inCommand=false;
+				if(lastPC1!=gs->frameNum){	//avoid infinite loops
+					lastPC1=gs->frameNum;
+					SlowUpdate();
 				}
-			}
-			if((!myPlane->isFighter || owner->moveState==2) && owner->maxRange>0){
+				return;
+			} else if(owner->maxRange>0){
 				float testRad=500*owner->moveState;
-				CUnit* enemy=helper->GetClosestEnemyUnit(owner->pos+owner->speed*20,testRad,owner->allyteam);
-				if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)  && !enemy->crashing && (myPlane->isFighter || !enemy->unitDef->canfly)){
+				enemy=helper->GetClosestEnemyUnit(owner->pos+owner->speed*20,testRad,owner->allyteam);
+				if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)  && !enemy->crashing
+					&& (myPlane->isFighter || !enemy->unitDef->canfly))
+				{
 					if(owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 1000){
-						Command nc;
+						Command nc,c3;
+						c3.id = CMD_MOVE; //keep it from being pulled too far off the path
+						float3 dir = goalPos-curPos;
+						dir.Normalize();
+						dir*=sqrtf(1024+owner->xsize*owner->xsize+owner->ysize*owner->ysize);
+						dir+=curPos;
+						c3.params.push_back(dir.x);
+						c3.params.push_back(dir.y);
+						c3.params.push_back(dir.z);
+						c3.options = c.options|INTERNAL_ORDER;
 						nc.id=CMD_ATTACK;
 						nc.params.push_back(enemy->id);
-						nc.options=c.options;
+						nc.options=c.options|INTERNAL_ORDER;
+						commandQue.push_front(c3);
 						commandQue.push_front(nc);
 						tempOrder=true;
 						inCommand=false;
-						SlowUpdate();
+						if(lastPC2!=gs->frameNum){	//avoid infinite loops
+							lastPC2=gs->frameNum;
+							SlowUpdate();
+						}
 						return;
 					}
 				}
@@ -319,18 +362,7 @@ void CAirCAI::SlowUpdate()
 		myPlane->goalPos=goalPos;
 
 		if((owner->pos-goalPos).SqLength2D()<16000 || (owner->pos+owner->speed*8-goalPos).SqLength2D()<16000){
-			if(owner->group)
-				owner->group->CommandFinished(owner->id,CMD_PATROL);
-
-			commandPos1=commandPos2;
-			if((int)commandQue.size()<=activeCommand+1)
-				activeCommand=0;
-			else {
-				if(commandQue[activeCommand+1].id!=CMD_PATROL)
-					activeCommand=0;
-				else
-					activeCommand++;
-			}
+			FinishCommand();
 		}
 		return;}
 	case CMD_ATTACK:
@@ -481,6 +513,7 @@ void CAirCAI::DrawCommands(void)
 			glColor4f(0.5,1,0.5,0.4);
 			glVertexf3(pos);
 			break;
+		case CMD_FIGHT:
 		case CMD_PATROL:
 			pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);

@@ -15,6 +15,7 @@ using namespace std;
 #define CMD_WAIT 5
 #define CMD_MOVE 10
 #define CMD_PATROL 15
+#define CMD_FIGHT 16
 #define CMD_ATTACK 20
 #define CMD_AREA_ATTACK 21
 #define CMD_GUARD 25
