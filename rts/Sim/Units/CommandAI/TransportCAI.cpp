@@ -334,6 +334,7 @@ void CTransportCAI::DrawCommands(void)
 			glColor4f(0.5,1,0.5,0.4);
 			draw=true;
 			break;
+		case CMD_FIGHT:
 		case CMD_PATROL:
 			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);

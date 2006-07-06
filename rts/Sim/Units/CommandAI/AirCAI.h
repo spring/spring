@@ -31,7 +31,10 @@ public:
 
 	int activeCommand;
 	int targetAge;
-	unsigned int patrolTime;
+//	unsigned int patrolTime;
+
+	int lastPC1;
+	int lastPC2;
 
 	float3 commandPos1;		//used to limit how far away stuff can fly from path
 	float3 commandPos2;

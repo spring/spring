@@ -21,12 +21,21 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	c.key='M';
 	c.tooltip="Move: Order ready built units to move to a position";
 	possibleCommands.push_back(c);
+
 	c.id=CMD_PATROL;
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Patrol";
 	c.key='P';
 	c.tooltip="Patrol: Order ready built units to patrol to one or more waypoints";
 	possibleCommands.push_back(c);
+
+	c.id = CMD_FIGHT;
+	c.type = CMDTYPE_ICON_MAP;
+	c.name = "Fight";
+	c.key = 'F';
+	c.tooltip = "Fight: Order ready built units to take action while moving to a position";
+	possibleCommands.push_back(c);
+
 	c.id=CMD_GUARD;
 	c.type=CMDTYPE_ICON_UNIT;
 	c.name="Guard";
@@ -220,6 +229,7 @@ void CFactoryCAI::DrawCommands(void)
 			glColor4f(0.5,1,0.5,0.4);
 			draw=true;
 			break;
+		case CMD_FIGHT:
 		case CMD_PATROL:
 			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);

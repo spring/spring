@@ -27,6 +27,8 @@ public:
 	void StopMoving();
 
 	void ImpulseAdded(void);
+	
+	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 
 	//float baseSpeed;		//Not used
 	//float maxSpeed;		//Moved to CMoveType, by Lars 04-08-23
@@ -120,6 +122,11 @@ protected:
 	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
 
 	static std::vector<int2> lineTable[11][11];
+	
+	float3 mainHeadingPos;
+	bool useMainHeading;
+	void SetMainHeading();
+
 public:
 	static void CreateLineTable(void);
 	void TestNewTerrainSquare(void);

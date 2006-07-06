@@ -17,8 +17,7 @@
 
 CMobileCAI::CMobileCAI(CUnit* owner)
 : CCommandAI(owner),
-	activeCommand(0),
-	patrolTime(0),
+//	patrolTime(0),
 	goalPos(-1,-1,-1),
 	tempOrder(false),
 	patrolGoal(1,1,1),
@@ -28,7 +27,8 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	maxWantedSpeed(0),
 	lastIdleCheck(0),
 	commandPos1(ZeroVector),
-	commandPos2(ZeroVector)
+	commandPos2(ZeroVector),
+	lastPC(-1)
 {
 	lastUserGoal=owner->pos;
 
@@ -47,6 +47,15 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	c.key='P';
 	c.tooltip="Patrol: Order the unit to patrol to one or more waypoints";
 	possibleCommands.push_back(c);
+
+	c.params.clear();
+	c.id = CMD_FIGHT;
+	c.type = CMDTYPE_ICON_MAP;
+	c.name = "Fight";
+	c.key = 'F';
+	c.tooltip = "Fight: Order the unit to take action while moving to a position";
+	possibleCommands.push_back(c);
+
 
 	c.id=CMD_GUARD;
 	c.type=CMDTYPE_ICON_UNIT;
@@ -114,7 +123,6 @@ void CMobileCAI::GiveCommand(Command &c)
 	}
 
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
-		activeCommand=0;
 		tempOrder=false;
 	}
 	CCommandAI::GiveCommand(c);
@@ -154,72 +162,83 @@ void CMobileCAI::SlowUpdate()
 		}
 		break;}
 	case CMD_PATROL:{
-		if(tempOrder){
-			tempOrder=false;
-			inCommand=true;
-			patrolTime=1;
-		}
-		if(!inCommand){
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			inCommand=true;
-			Command co;
-			co.id=CMD_PATROL;
-			co.params.push_back(curPos.x);
-			co.params.push_back(curPos.y);
-			co.params.push_back(curPos.z);
-			commandQue.push_front(co);
-			activeCommand=1;
-			commandPos1=curPos;
-			patrolTime=1;
-		}
-		Command& c=commandQue[activeCommand];
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got patrol cmd with less than 3 params on %s in mobilecai",owner->unitDef->humanName.c_str());
+			info->AddLine("Error: got patrol cmd with less than 3 params on %s in mobilecai",
+				owner->unitDef->humanName.c_str());
 			return;
 		}
-		patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
-		commandPos2=patrolGoal;
-		patrolTime++;
+		Command temp;
+		temp.id = CMD_FIGHT;
+		temp.params.push_back(c.params[0]);
+		temp.params.push_back(c.params[1]);
+		temp.params.push_back(c.params[2]);
+		temp.options = c.options|INTERNAL_ORDER;
+		commandQue.push_back(c);
+		commandQue.pop_front();
+		commandQue.push_front(temp);
+		if(owner->group){
+			owner->group->CommandFinished(owner->id,CMD_PATROL);
+		}
+		SlowUpdate();
+		return;}
+	case CMD_FIGHT:{
+		if(tempOrder){
+			inCommand = true;
+			tempOrder = false;
+		}
+		if(c.params.size()<3){		//this shouldnt happen but anyway ...
+			info->AddLine("Error: got fight cmd with less than 3 params on %s in mobilecai",
+				owner->unitDef->humanName.c_str());
+			return;
+		}
+		if(c.params.size() >= 6){
+			if(!inCommand){
+				commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
+			}
+		} else {
+			commandPos1 = curPos;
+		}
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		if(!inCommand){
+			inCommand = true;
+			commandPos2 = pos;
+		}
+		if(pos!=goalPos){
+			SetGoal(pos,curPos);
+		}
 
-		if(!(patrolTime&1) && owner->fireState==2){
-			CUnit* enemy=helper->GetClosestEnemyUnit(curPos,owner->maxRange+100*owner->moveState*owner->moveState,owner->allyteam);
-			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater) && !(owner->unitDef->noChaseCategory & enemy->category) && !owner->weapons.empty()){			//todo: make sure they dont stray to far from path
-				if(owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 300+owner->maxRange){
-					Command c2;
+		if(owner->fireState==2){
+			CUnit* enemy=helper->GetClosestEnemyUnit(
+				curPos, owner->maxRange+100*owner->moveState*owner->moveState, owner->allyteam);
+			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
+			  && !(owner->unitDef->noChaseCategory & enemy->category) && !owner->weapons.empty()){	//todo: make sure they dont stray to far from path
+				if(owner->moveState!=1 
+				  || LinePointDist(commandPos1,commandPos2,enemy->pos)
+				  < 300+max(owner->maxRange, (float)owner->losRadius)){
+					Command c2,c3;
+					c3 = this->GetReturnFight(c);
 					c2.id=CMD_ATTACK;
-					c2.options=c.options;
+					c2.options=c.options|INTERNAL_ORDER;
 					c2.params.push_back(enemy->id);
+					commandQue.push_front(c3);
 					commandQue.push_front(c2);
 					inCommand=false;
 					tempOrder=true;
-					SlowUpdate();				//if attack can finish immidiatly this could lead to an infinite loop so make sure it doesnt
+					if(lastPC!=gs->frameNum){	//avoid infinite loops
+						lastPC=gs->frameNum;
+						SlowUpdate();
+					}
 					return;
 				}
 			}
 		}
-		if((curPos-patrolGoal).SqLength2D()<4096 || owner->moveType->progressState==CMoveType::Failed){
-			if(owner->group)
-				owner->group->CommandFinished(owner->id,CMD_PATROL);
-
-			if((int)commandQue.size()<=activeCommand+1)
-				activeCommand=0;
-			else {
-				if(commandQue[activeCommand+1].id!=CMD_PATROL)
-					activeCommand=0;
-				else
-					activeCommand++;
-			}
-			Command& c=commandQue[activeCommand];
-			patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
-			commandPos1=commandPos2;
-			commandPos2=patrolGoal;
-		}
-		if((patrolGoal!=goalPos)){
-			SetGoal(patrolGoal,curPos);
+		if((curPos-goalPos).SqLength2D()<4096 || owner->moveType->progressState==CMoveType::Failed){
+			FinishCommand();
 		}
 		return;}
 	case CMD_DGUN:
-		if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
+		if(uh->limitDgun && owner->unitDef->isCommander
+		  && owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
 			StopMove();
 			FinishCommand();
 			return;
@@ -259,33 +278,33 @@ void CMobileCAI::SlowUpdate()
 		}
 		if(orderTarget){
 			//note that we handle aircrafts slightly differently
-			if(((owner->AttackUnit(orderTarget, c.id==CMD_DGUN) || dynamic_cast<CTAAirMoveType*>(owner->moveType)) && (owner->pos-orderTarget->pos).Length2D()<owner->maxRange*0.9) || (owner->pos-orderTarget->pos).SqLength2D()<1024){
-				//					if(owner->isMoving) {
+			if((((owner->AttackUnit(orderTarget, c.id==CMD_DGUN) && owner->weapons.size() > 0
+			  && owner->weapons.front()->range > orderTarget->pos.distance(owner->pos))
+			  || dynamic_cast<CTAAirMoveType*>(owner->moveType))
+			  && (owner->pos-orderTarget->pos).Length2D()<owner->maxRange*0.9)
+			  || (owner->pos-orderTarget->pos).SqLength2D()<1024){
 				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget->pos, min((double)(owner->losRadius*SQUARE_SIZE*2),owner->maxRange*0.9), true);
-				//					}
-			} else {
-				if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos)>10+orderTarget->pos.distance2D(owner->pos)*0.2)
-				{
-					float3 fix=orderTarget->pos+owner->posErrorVector*128;
-					SetGoal(fix,curPos);
-				}
+				owner->moveType->KeepPointingTo(orderTarget->pos, min((double)(owner->losRadius*SQUARE_SIZE*2), owner->maxRange*0.9), true);
+			} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2){
+				float3 fix=orderTarget->pos+owner->posErrorVector*128;
+				SetGoal(fix,curPos);
 			}
 		} else {
 			float3 pos(c.params[0],c.params[1],c.params[2]);
-			if(owner->AttackGround(pos,c.id==CMD_DGUN) || (owner->pos-pos).SqLength2D()<1024) {
+			if((owner->AttackGround(pos,c.id==CMD_DGUN) && owner->weapons.size() > 0
+			  && (owner->pos-pos).Length()< owner->weapons.front()->range) || (owner->pos-pos).SqLength2D()<1024){
 				StopMove();
 				owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9, true);
-			} else {
-				if(pos.distance2D(goalPos)>10)
-					SetGoal(pos,curPos);
+			} else if(pos.distance2D(goalPos)>10){
+				SetGoal(pos,curPos);
 			}
 		}
 		break;
 	case CMD_GUARD:
 		if(uh->units[int(c.params[0])]!=0){
 			CUnit* guarded=uh->units[int(c.params[0])];
-			if(guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum && (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
+			if(guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum
+			  && (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
 				Command nc;
 				nc.id=CMD_ATTACK;
 				nc.params.push_back(guarded->lastAttacker->id);
@@ -357,6 +376,7 @@ void CMobileCAI::DrawCommands(void)
 			draw=true;
 			break;
 		case CMD_PATROL:
+		case CMD_FIGHT:
 			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);
 			draw=true;
@@ -424,7 +444,6 @@ void CMobileCAI::FinishCommand(void)
 		lastUserGoal=owner->pos;
 //		info->AddLine("Reseting user goal");
 	}
-
 	CCommandAI::FinishCommand();
 }
 
@@ -470,4 +489,35 @@ void CMobileCAI::IdleCheck(void)
 	} else {
 		NonMoving();
 	}
+}
+
+/**
+* @brief gets the command that keeps the unit close to the path
+* @return a Fight Command with 6 arguments, the first three being where to return to (the current position of the
+*	unit), and the second being the location of the origional command.
+* @param c the command to return to
+**/
+Command CMobileCAI::GetReturnFight(Command c){
+	Command c3;
+	c3.id = CMD_FIGHT; //keep it from being pulled too far off the path
+	float3 pos = float3(c.params[0],c.params[1],c.params[2]);
+	const float3 &curPos = this->owner->pos;
+	float3 dir = pos-curPos;
+	dir.Normalize();
+	dir*=sqrtf(abs(1024+owner->xsize*owner->xsize+owner->ysize*owner->ysize));
+	dir+=curPos;
+	c3.params.push_back(dir.x);
+	c3.params.push_back(dir.y);
+	c3.params.push_back(dir.z);
+	if(c.params.size() >= 6){
+		c3.params.push_back(c.params[3]);
+		c3.params.push_back(c.params[4]);
+		c3.params.push_back(c.params[5]);
+	} else {
+		c3.params.push_back(c.params[0]);
+		c3.params.push_back(c.params[1]);
+		c3.params.push_back(c.params[2]);
+	}
+	c3.options = c.options|INTERNAL_ORDER;
+	return c3;
 }

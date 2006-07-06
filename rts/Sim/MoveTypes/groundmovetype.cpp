@@ -24,6 +24,7 @@
 #include "Mobility.h"
 #include "MoveMath/MoveMath.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Weapons/Weapon.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
@@ -90,7 +91,9 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	nextDeltaSpeedUpdate(0),
 	nextObstacleAvoidanceUpdate(0),
 	oldPhysState(CSolidObject::OnGround),
-	lastTrackUpdate(0)
+	lastTrackUpdate(0),
+	mainHeadingPos(0,0,0),
+	useMainHeading(false)
 {
 	moveSquareX=(int)owner->pos.x/(SQUARE_SIZE*2);
 	moveSquareY=(int)owner->pos.z/(SQUARE_SIZE*2);
@@ -155,7 +158,6 @@ void CGroundMoveType::Update()
 		ChangeHeading(owner->heading+deltaHeading);
 	} else
 #endif
-	{
 	if(pathId || currentSpeed > 0.0) {	//TODO: Stop the unit from moving as a reaction on collision/explosion physics.
 		//Initial calculations.
 		currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
@@ -191,8 +193,11 @@ void CGroundMoveType::Update()
 		//Apply obstacle avoidance.
 		float3 desiredVelocity = /*waypointDir/*/ObstacleAvoidance(waypointDir)/**/;
 
-		if(desiredVelocity != ZeroVector)
+		if(desiredVelocity != ZeroVector){
 			ChangeHeading(GetHeadingFromVector(desiredVelocity.x, desiredVelocity.z));
+		} else {
+			this->SetMainHeading();
+		}
 
 		if(nextDeltaSpeedUpdate<=gs->frameNum){
 			wantedSpeed = pathId ? requestedSpeed : 0;
@@ -203,7 +208,8 @@ void CGroundMoveType::Update()
 			wantedSpeed*=max(0.,std::min(1.,desiredVelocity.dot(owner->frontdir)+0.1));
 			SetDeltaSpeed();
 		}
-	}
+	} else {
+		this->SetMainHeading();
 	}
 
 	if(wantedSpeed>0 || currentSpeed>0) {
@@ -343,6 +349,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	requestedSpeed = min(speed, maxSpeed*2);
 	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
+	useMainHeading = false;
 
 	progressState = Active;
 
@@ -368,6 +375,7 @@ void CGroundMoveType::StopMoving() {
 
 	StopEngine();
 
+	this->useMainHeading = false;
 	if(progressState != Done)
 		progressState = Done;
 }
@@ -1410,4 +1418,53 @@ bool CGroundMoveType::CheckGoalFeasability(void)
 void CGroundMoveType::LeaveTransport(void)
 {
 	oldPos=owner->pos+UpVector*0.001;
+}
+
+void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive){
+	this->mainHeadingPos = pos;
+	this->useMainHeading = aggressive;
+	if(this->useMainHeading && !this->owner->weapons.empty()){
+		float3 dir1 = this->owner->weapons.front()->mainDir;
+		dir1.y = 0;
+		dir1.Normalize();
+		float3 dir2 = this->mainHeadingPos-this->owner->pos;
+		dir2.y = 0;
+		dir2.Normalize();
+		if(dir2 != ZeroVector){
+			short heading = GetHeadingFromVector(dir2.x,dir2.z) - GetHeadingFromVector(dir1.x,dir1.z);
+			if(this->owner->heading != heading
+			  && !this->owner->weapons.front()->TryTarget(this->mainHeadingPos, true,0)){
+				this->progressState = Active;
+			}
+		}
+	}
+}
+
+/**
+* @breif Orients owner so that weapon[0]'s arc includes mainHeadingPos
+*/
+void CGroundMoveType::SetMainHeading(){
+	if(this->useMainHeading && !this->owner->weapons.empty()){
+		float3 dir1 = this->owner->weapons.front()->mainDir;
+		dir1.y = 0;
+		dir1.Normalize();
+		float3 dir2 = this->mainHeadingPos-this->owner->pos;
+		dir2.y = 0;
+		dir2.Normalize();
+		if(dir2 != ZeroVector){
+			short heading = GetHeadingFromVector(dir2.x,dir2.z) - GetHeadingFromVector(dir1.x,dir1.z);
+			if(this->progressState == Active && this->owner->heading == heading){
+				this->owner->cob->Call(COBFN_StopMoving);
+				this->progressState = Done;
+			} else if(this->progressState == Active){
+				this->ChangeHeading(heading);
+			} else if(this->progressState != Active
+			  && this->owner->heading != heading
+			  && !this->owner->weapons.front()->TryTarget(this->mainHeadingPos, true,0)){
+				this->progressState = Active;
+				this->owner->cob->Call(COBFN_StartMoving);
+				this->ChangeHeading(heading);
+			}
+		}
+	}
 }

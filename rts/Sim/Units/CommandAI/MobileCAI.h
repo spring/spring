@@ -20,16 +20,18 @@ public:
 	void NonMoving(void);
 	void FinishCommand(void);
 	void IdleCheck(void);
+	Command GetReturnFight(Command c);
 
 	float3 goalPos;
 	float3 patrolGoal;
 	float3 lastUserGoal;
 
-	int activeCommand;
 	int lastIdleCheck;
 	bool tempOrder;
 
-	unsigned int patrolTime;
+	int lastPC; //helps avoid infinate loops
+
+//	unsigned int patrolTime;
 
 	float maxWantedSpeed;
 
