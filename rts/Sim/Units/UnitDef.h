@@ -239,6 +239,9 @@ struct UnitDef
 	int buildingDecalSizeY;
 	float buildingDecalDecaySpeed;
 	bool isfireplatform;// should the carried units still be able to shoot?
+
+	bool showNanoSpray; // Does nano spray get shown at all
+	float3 NanoColor; // If nano spray is displayed what color is it?
 };
 
 

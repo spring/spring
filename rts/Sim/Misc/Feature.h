@@ -29,6 +29,7 @@ public:
 	void StartFire(void);
 	void DrawS3O();
 	void CalculateTransform();
+	CUnit* LastBuilder;
 
 	std::string createdFromUnit;
 	float resurrectProgress;

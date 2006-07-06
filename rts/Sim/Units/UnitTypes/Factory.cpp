@@ -25,6 +25,8 @@
 #include "Sim/Misc/QuadField.h"
 #include "Map/Ground.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
+#include "Game/Team.h"
+#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CFactory, CBuilding);
@@ -113,15 +115,23 @@ void CFactory::Update()
 			std::vector<int> args;
 			args.push_back(0);
 			cob->Call("QueryNanoPiece",args);
-			float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);
-			float3 weaponPos=pos + frontdir*relWeaponFirePos.z + updir*relWeaponFirePos.y + rightdir*relWeaponFirePos.x;
 
-			float3 dif=curBuild->midPos-weaponPos;
-			float l=dif.Length();
-			dif/=l;
-			dif+=gs->randVector()*0.15f;
+			if(unitDef->showNanoSpray){
 
-			new CGfxProjectile(weaponPos,dif,(int)l,float3(0.2f,0.7f,0.2f));
+				float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);
+				float3 weaponPos=pos + frontdir*relWeaponFirePos.z + updir*relWeaponFirePos.y + rightdir*relWeaponFirePos.x;
+
+				float3 dif=curBuild->midPos-weaponPos;
+				float l=dif.Length();
+				dif/=l;
+				float3 error=gs->randVector()*(radius/l);
+				float3 color = unitDef->NanoColor;
+				if(configHandler.GetInt ("TeamNanoSpray", 1)){
+					unsigned char* col=gs->Team(team)->color;
+					color = float3(col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.));
+				}
+				new CGfxProjectile(weaponPos,(dif+error)*3,(int)(l/3),color);
+			}
 		} else {
 			if(!curBuild->beingBuilt){
 				if(group)

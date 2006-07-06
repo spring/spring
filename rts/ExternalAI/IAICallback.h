@@ -14,8 +14,23 @@ struct FeatureDef;
 
 // GetValue() constants
 #define AIVAL_NUMDAMAGETYPES 1 // int
-#define AI_EXCEPTION_HANDLING 2 // bool
-#define AIVAL_SCRIPT_FILENAME 3 // string
+#define AIVAL_EXCEPTION_HANDLING 2 // bool
+#define AIVAL_DEBUG_MODE 3
+#define AIVAL_SLOPE_MAP 4
+#define AIVAL_MAX_HEIGHT 5
+#define AIVAL_MIN_HEIGHT 6
+#define AIVAL_MAX_METAL 7
+#define AIVAL_MAP_CHECKSUM 8
+#define AIVAL_BLOCK_MAP 9
+#define AIVAL_GAME_MODE 10
+#define AIVAL_GAME_PAUSED 11
+#define AIVAL_GAME_SPEED_FACTOR 12
+#define AIVAL_GUI_VIEW_RANGE 13
+#define AIVAL_GUI_SCREENX 14
+#define AIVAL_GUI_SCREENY 15
+#define AIVAL_GUI_CAMERA_DIR 16
+#define AIVAL_GUI_CAMERA_POS 17
+#define AIVAL_SCRIPT_FILENAME 18 // string
 
 struct PointMarker
 {
