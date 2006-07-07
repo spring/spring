@@ -1,5 +1,9 @@
   ------ CHANGELOG ------
 
+  *** 0.26 (??x??x??) ***
+  * fixed serious bug with hosting replays not working
+  * players who don't have the map can't ready up anymore
+ 
   *** 0.25 (16x06x06) ***
   * battle client list now shows player's ingame and away status
   * team colors can now be customized
