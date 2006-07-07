@@ -1065,7 +1065,7 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 		if(beingBuilt){
 			float metalUse=metalCost*part;
 			float energyUse=energyCost*part;
-			if(((gs->Team(builder->team)->metal>metalUse)||(metalUse==0)) && ((gs->Team(builder->team)->energy>energyUse)||(energyUse==0))){
+			if (gs->Team(builder->team)->metal >= metalUse && gs->Team(builder->team)->energy >= energyUse) {
 				builder->UseMetal(metalUse);
 				builder->UseEnergy(energyUse);
 				health+=maxHealth*part;
@@ -1078,7 +1078,7 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 				return true;
 			}
 			return false;
-		}	else {
+		} else {
 			if(health<maxHealth){
 				health+=maxHealth*part;
 				if(health>maxHealth)
