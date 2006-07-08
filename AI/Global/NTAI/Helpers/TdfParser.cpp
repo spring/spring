@@ -1,14 +1,15 @@
 // SunParser.cpp: implementation of the TdfParser class.
 //
 //////////////////////////////////////////////////////////////////////
-#include "../Core/helper.h"
 #include <algorithm>
 #include <cctype>
 #include <stdexcept>
+#include <boost/spirit.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/spirit/utility/confix.hpp>
+#include "../Core/helper.h"
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
 
