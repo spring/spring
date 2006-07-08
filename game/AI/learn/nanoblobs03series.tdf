@@ -1,0 +1,22 @@
+[AI]
+{
+    // NTai XE8 AF :: unit efficiency cache file
+
+    version=XE8;
+    firstload=0;
+    modname=NanoBlobs040b.sdz;
+    iterations=12;
+
+    Archer=258.952;    // Archer :: Volley-fire area-suppressor.
+    AutoFac=4999.95;    // AutoFac :: Builds armies.
+    Demon=13012.9;    // Demon :: Destroyer of Worlds.  Ravager of continents.
+    Holder=8811.37;    // Holder :: A device for securing captured ground.
+    Knight=730.138;    // Knight :: A close-range, auto-healing combat robot.
+    Lord=15402.1;    // Lord :: A strategic unit with many uses.
+    MegaSheep=3300.04;    // MegaSheep :: Self-defending Sheep.
+    Sheep=498.192;    // Sheep :: The defenseless robots you must defend.
+    SpireRook=4832.53;    // Spire Rook :: A powerful but slow defensive unit.
+    SquareRook=7605.33;    // Square Rook :: A powerful but slow offensive unit.
+    Strider=1150.24;    // Strider :: A spamming, climbing death-machine.
+    Wolf=178.501;    // Wolf :: A speedy, multipurpose unit.
+}

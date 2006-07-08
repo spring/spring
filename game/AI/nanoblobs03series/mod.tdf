@@ -1,0 +1,53 @@
+[AI]
+{
+	abstract=0;//best to define all 3 as false
+	use_mod_default_if_absent=0;
+	use_mod_default=0;
+	hard_target=1;// 0 by default
+	first_attack_mexraid=0;// 0 by default, specified here.  Mexraid is a pre-programmed attack pattern.
+	GAIA=0;
+	fire_state_commanders=2;
+	move_state_commanders=1;
+	dynamic_selection=0; // 1 is the default, specified here to prevent borked attack queues
+	Scouters=Wolf;
+	Attackers=Knight, Archer, SpireRook, Strider, Demon, SquareRook;
+	default_spacing=10;// spacing element for builders searching for room to build w/out cluttering base
+	factory_spacing=15;// larger number means more space must be clear around factories placed
+	
+	hold_pos=Archer;
+	maneouvre=Lord;
+	roam=Knight, Demon, Strider;
+	fire_at_will=Lord;
+	
+}
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+[LORD]
+{
+[TARGET_WEIGHTS]
+{
+undefined=30;
+}
+}
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+[KNIGHT]
+{
+[TARGET_WEIGHTS]
+{
+undefined=30;
+spirerook=60;
+lord=90;
+}
+}
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+[ARCHER]
+{
+[TARGET_WEIGHTS]
+{
+undefined=30;
+knight=40;
+spirerook=100;
+}
+}
