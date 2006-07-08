@@ -303,13 +303,13 @@ enum unit_role{ // used for cosntruction untis to differentiate between factory 
 #include "../Helpers/Log.h" // Logging class
 #include "../Helpers/Terrain/CSector.h" // Map Sector data structure
 #include "../Engine/TCommand.h" // Unit cached command data structure
-#include "../Events/EData.h" // Event information data structure
-#include "../Events/CEvent.h" // Event data structure
+//#include "../Events/EData.h" // Event information data structure
+//#include "../Events/CEvent.h" // Event data structure
 #include "../Core/CCached.h"// Cached data storage class
 #include "../Engine/COrderRouter.h"// Caches orders and issues them so the engine doesnt give an overflow message
 #include "../Helpers/CEconomy.h" // Construction rules
-#include "../Tasks/CTask.h" // Task Interface
-#include "../Tasks/CTaskFactory.h" // Task object generator/ Object Factory
+//#include "../Tasks/CTask.h" // Task Interface
+//#include "../Tasks/CTaskFactory.h" // Task object generator/ Object Factory
 //#include "../Helpers/Media/Bitmap.h" // Was used for loading Jpegs and bitmaps to draw onmap but it failed terribly
 #include "../Helpers/Units/Actions.h" // Common actions in a useful class
 #include "../Helpers/Terrain/Map.h" // Common Map related procedures such as which corner of the mapare we in
