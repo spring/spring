@@ -12,6 +12,7 @@ TASpring change log
 * New weapon tdf tag rgbcolor2, used to make laser weapon have diferent color at the center, defaults to white.
 * New weapon tdf tag corethickness, how thick the inner color of a laser is, this is a percentage value, default is 0.25
 * New weapon tdf tag laserflaresize, size of the flare for laser weapons, multiplier for thickness, default 15.
+* New weapon tdf tag beamlength, defines length of beam for laser weapons, default is 30.
 
 0.72b1
 
