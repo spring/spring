@@ -112,8 +112,8 @@ Global::Global(IGlobalAICallback* callback){
 	L.print("Scouter constructed");
 	Economy = new CEconomy(G);
 	L.print("Economy constructed");
-	TaskFactory = new CTaskFactory(G);
-	L.print("TaskFactory constructed");
+	//TaskFactory = new CTaskFactory(G);
+	//L.print("TaskFactory constructed");
 	Manufacturer = new CManufacturer(G);
 	L.print("Manufacturer constructed");
 	Ch = new Chaser;
@@ -141,7 +141,7 @@ Global::~Global(){
 	delete info->mod_tdf;
 	delete Cached;
 	delete OrderRouter;
-	delete TaskFactory;
+	//delete TaskFactory;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
