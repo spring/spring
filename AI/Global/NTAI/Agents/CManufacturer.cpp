@@ -60,7 +60,11 @@ bool CManufacturer::TaskCycle(CBuilder* i){
 	if(i->tasks.empty() == true){
 		if(i->GetRepeat()==true){
 			G->L.print("CManufacturer::TaskCycle, buildtreecomeptled and now being reloaded!");
-			LoadBuildTree(i);
+			if(LoadBuildTree(i)){
+				G->L.print("loaded build tree for " + i->GetUnitDef()->name);
+			}else{
+				G->L.print("failed loading of build tree for " + i->GetUnitDef()->name);
+			}
 		}else{
 			G->L.print("CManufacturer::TaskCycle, cycle has no tasks!!!");
 			return false;
@@ -114,7 +118,7 @@ float3 CManufacturer::GetBuildPlacement(int unit,float3 unitpos,const UnitDef* u
 		return pos;
 	} else if((ud->type == string("Building"))&&(ud->builder == false)&&(ud->weapons.empty() == true)&&(ud->radarRadius > 100)){ // Radar!
 		//pos = G->DTHandler->GetDTBuildSite(unit);
-		pos = G->RadarHandler->NextSite(unit,ud,2500);
+		pos = G->RadarHandler->NextSite(unit,ud,1200);
 		if(G->Map->CheckFloat3(pos) == false){
 			G->L.print("zero radar placement co-ordinates intercepted");
 			return UpVector;
@@ -205,7 +209,6 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 		return false;
 	}
 	const UnitDef* uda = G->GetUnitDef(unit);
-	if(uda == 0) return false;
 	const UnitDef* ud = G->GetUnitDef(name);
 	
 	/////////////
@@ -263,6 +266,7 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 			return false;
 		}
 		tc.PushFloat3(pos);
+		tc.Push(0);
 		tc.c.timeOut = int(ud->buildTime/5) + G->cb->GetCurrentFrame();
 		tc.created = G->cb->GetCurrentFrame();
 		tc.delay=0;
@@ -491,7 +495,7 @@ void CManufacturer::EnemyDestroyed(int eid){
 	NLOG("CManufacturer::EnemyDestroyed");
 }
 
-bool CManufacturer::FBuild(string name, int unit, int quantity){
+/*bool CManufacturer::FBuild(string name, int unit, int quantity){
 	NLOG("CManufacturer::FBuild");
 	if(G->GetUnitDef(unit) == 0) return false;
 	if(G->cb->GetUnitHealth(unit)<1){
@@ -506,9 +510,8 @@ bool CManufacturer::FBuild(string name, int unit, int quantity){
 		TCommand TCS(tc,"FBuild");
 		tc.c.id = -ud->id;
 		G->L.print("issuing mobile unit :: " + name);
-		tc.c.params.push_back(1.0f);
-		tc.c.params.push_back(1.0f);
-		tc.c.params.push_back(1.0f);
+		tc.PushFloat3(UpVector);
+		//tc.Push(1);
 		tc.delay = 2 SECONDS;
 		tc.c.timeOut = int(ud->buildTime*4) + G->cb->GetCurrentFrame() + tc.delay;
 		tc.created = G->cb->GetCurrentFrame();
@@ -525,9 +528,7 @@ bool CManufacturer::FBuild(string name, int unit, int quantity){
 		//	return false;
 		//}
 	}
-}
-map<string,btype> types;
-map<btype,string> typenames;
+}*/
 void CManufacturer::RegisterTaskPair(string name, btype type){
 	types[name] = type;
 	typenames[type] = name;
@@ -775,9 +776,10 @@ string CManufacturer::GetBuild(int uid, string tag, bool efficiency){
 	return string("");
 }
 
-void CManufacturer::LoadBuildTree(CBuilder* ui){
+bool CManufacturer::LoadBuildTree(CBuilder* ui){
 	NLOG("CManufacturer::LoadBuildTree");
 	const UnitDef* ud = ui->GetUnitDef();
+	G->L.print("loading buildtree for "+ud->name);
 	// get the list of filenames
 	vector<string> vl;
 	string sl = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\")+ud->name);
@@ -806,7 +808,7 @@ void CManufacturer::LoadBuildTree(CBuilder* ui){
 		}
 		if(G->ReadFile(filename,buffer) == false){
 			G->L.print("error :: " + filename + " could not be opened!!! (1)" );
-			return;
+			return false;
 		}
 	}else if(G->info->use_modabstracts == true){ /*Otherwise is mod_abstracts = true then load from datapath\tdfpath\builder.txt etc*/
 		filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash);
@@ -819,7 +821,7 @@ void CManufacturer::LoadBuildTree(CBuilder* ui){
 		}
 		if(G->ReadFile(filename,buffer) == false){
 			G->L.print("error :: " + filename + " could not be opened!!! (2)" );
-			return;
+			return false;
 		}
 	}else {/* load map specific*/
 		filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + G->cb->GetMapName() + string(slash) + G->lowercase(u) + string(".txt");
@@ -843,10 +845,10 @@ void CManufacturer::LoadBuildTree(CBuilder* ui){
 							}
 							if(G->ReadFile(filename,buffer) == false){
 								G->L.print("error :: " + filename + " could not be opened!!! (3)" );
-							return;
+								return false;
 							}
 						}else{
-							return;
+							return false;
 						}
 					}
 				}
@@ -865,10 +867,10 @@ void CManufacturer::LoadBuildTree(CBuilder* ui){
 						}
 						if(G->ReadFile(filename,buffer) == false){
 							G->L.print("error :: " + filename + " could not be opened!!! (3)");
-							return;
+							return false;
 						}
 					}else{
-						return;
+						return false;
 					}
 				}
 			}
@@ -878,12 +880,16 @@ void CManufacturer::LoadBuildTree(CBuilder* ui){
 	 string s = *buffer;
 	 if(s.empty() == true){
 		 G->L.print(" error loading contents of  file :: " + filename + " :: buffer empty, most likely because of an empty file");
-		 return;
+		 return false;
 	 }
+	 G->L.print("loaded contents of  file :: " + filename + " :: filling buildtree");
 	 v = bds::set_cont(v,s.c_str());
 	 if(v.empty() == false){
 		 bool polate=false;
 		 bool polation = G->info->rule_extreme_interpolate;
+		 if(ui->GetRole() == R_FACTORY){
+			 polation = false;
+		 }
 		 for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			 if(polation==true){
 				if(polate==true){
@@ -948,9 +954,11 @@ void CManufacturer::LoadBuildTree(CBuilder* ui){
 		 if(ud->isCommander == true)	G->Map->basepos = G->GetUnitPos(ui->GetID());
 		 if((ud->isCommander== true)||(ui->GetRole() == R_FACTORY))	G->Map->base_positions.push_back(G->GetUnitPos(ui->GetID()));
 		 G->L.print("issuing scheduled idle from factor::loadbuildtree");
+		 return true;
 		 //G->Actions->ScheduleIdle(ui->GetID());
 	 } else{
 		 G->L.print(" error loading contents of  file :: " + filename + " :: buffer empty, most likely because of an empty file");
+		 return false;
 	 }
 }
 

@@ -58,12 +58,13 @@ bool CActions::Attack(int unit, int target,bool mobile){
 	tc.Push(target);
 	tc.created = G->cb->GetCurrentFrame();
 	tc.unit = unit;
-	if(G->OrderRouter->GiveOrder(tc,true)==true){
+	return G->OrderRouter->GiveOrder(tc,true);
+	//if(G->OrderRouter->GiveOrder(tc,true)==true){
 		//if(mobile==true) attackers.insert(unit);
-		return true;
-	}else{
-		return false;
-	}
+	//	return true;
+	//}else{
+	//	return false;
+	//}
 }
 
 bool CActions::Capture(int uid,int enemy){
@@ -107,6 +108,14 @@ bool CActions::Repair(int uid,int unit){
 	}
 }
 
+bool CActions::MoveToStrike(int unit,float3 pos){
+	NLOG("CActions::MoveToStrike");
+	if(unit < 1) return false;
+	if(G->Map->CheckFloat3(pos)==false) return false;
+	float3 npos = G->Map->distfrom(G->GetUnitPos(unit),pos,G->cb->GetUnitMaxRange(unit)*0.95f);
+	npos.y = G->cb->GetElevation(npos.x,npos.z);
+	return Move(unit,npos);
+}
 bool CActions::Move(int unit,float3 pos){
 	NLOG("CActions::Move");
 	if(unit < 1) return false;
@@ -188,7 +197,63 @@ bool CActions::RessurectNearby(int uid){
 	}
 	return false;
 }
-
+bool CActions::AttackNearest(int unit){ // Attack nearby enemies...
+	const UnitDef* ud = G->GetUnitDef(unit);
+	if(ud == 0) return false;
+	if(G->positions.empty()==false){
+		float3 p = G->GetUnitPos(unit);
+		if(G->Map->CheckFloat3(p)==false){
+			return false;
+		}
+		// iterate through them all generating a score, if the score is the highest encountered
+		float highest_score=0.01f;
+		int target=0;
+		float tscore=0;
+		float3 tpos=UpVector;
+		int frame= G->GetCurrentFrame()-10;
+		bool mobile = false;
+		for(map<int,Global::temp_pos>::const_iterator i = G->positions.begin(); i != G->positions.end(); ++i){
+			if(i->second.enemy == false){
+				continue;
+			}
+			if(i->second.last_update < frame){
+				continue;
+			}
+			float3 pos = i->second.pos;
+			float d = pos.distance2D(p);
+			const UnitDef* ude = G->GetUnitDef(i->first);
+			if(ude != 0){
+				float eff = G->GetTargettingWeight(ud->name,ude->name);
+				
+				tscore = eff/max(d,0.1f);
+				if(tscore > highest_score){
+					if(ud->highTrajectoryType == 2){
+						if((ude->movedata != 0)||(ude->canfly)){
+							if(G->info->hardtarget == false) tscore = tscore/4;
+							mobile = true;
+						}else{
+							mobile = false;
+						}
+					}
+					target = i->first;
+					tpos =pos;
+					highest_score=tscore;
+					tscore=0;
+					continue;
+				}
+			}
+		}
+		//
+		
+		if(target > 0){
+			if(ud->highTrajectoryType == 2){
+				Trajectory(unit,(int)mobile);
+			}
+			return MoveToStrike(unit,tpos);
+		}
+	}
+	return false;
+}
 bool CActions::AttackNear(int unit,float LOSmultiplier){
 	NLOG("CActions::AttackNear");
 	const UnitDef* ud = G->GetUnitDef(unit);
@@ -202,7 +267,7 @@ bool CActions::AttackNear(int unit,float LOSmultiplier){
 		bool mobile = true;
 		for(int i = 0; i < e; i++){
 			if(en[i] < 1) continue;
-			const UnitDef* endi = G->GetUnitDef(en[i]);
+			const UnitDef* endi = G->GetEnemyDef(en[i]);
 			if(endi == 0){
 				continue;
 			}else{

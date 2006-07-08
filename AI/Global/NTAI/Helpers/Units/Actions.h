@@ -13,11 +13,14 @@ public:
 	bool Attack(int uid, float3 pos);
 	bool Attack(int unit, int target,bool mobile);
 	bool AttackNear(int unit,float LOSmultiplier=3.0f); // Attack nearby enemies...
+	bool AttackNearest(int unit); // Attack nearby enemies...
 	bool DGunNearby(int uid); // Makes the unit fire dgun at nearby objects if it has a dgun type weapon
 	bool DGun(int uid,int enemy); // Makes 'uid' DGun 'enemy'
 	bool Capture(int uid,int enemy); // Makesunit a capture unit b
 	bool Repair(int uid,int unit); // Makes unit a repair unit b
 	bool Move(int unit,float3 pos); // makes the unit move to that position
+	bool MoveToStrike(int unit,float3 pos);
+	// makes the unit move to that position but keepign its range as if its the position of an enemy
 	bool Guard(int unit,int guarded); // Makes the unit guard the other unit
 	bool SeekOutLastAssault(int unit);
 	bool Trajectory(int unit,int traj);

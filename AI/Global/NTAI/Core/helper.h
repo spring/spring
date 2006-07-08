@@ -79,6 +79,14 @@ public:
 	CRadarHandler* RadarHandler;
 	CTaskFactory* TaskFactory;
 
+	map<string,float> efficiency;
+	map<string,string> unit_names; //unitname -> human name
+	map<string,string> unit_descriptions; //unitname -> human name
+	int iterations;
+	bool loaded;
+	bool firstload;
+	bool saved;
+
 	bool DrawTGA(string filename,float3 position);
 	
 	bool LoadTGA(const char *filename, STGA& tgaFile);
@@ -98,6 +106,7 @@ public:
 	void UnitDamaged(int damaged, int attacker, float damage,float3 dir); // a unit has been damaged
 	void UnitMoveFailed(int unit); // a unit has failed to mvoe to its given location
 	void Update();// called every frame (usually 30 frames per second)
+	void SortSolobuilds(int unit);
 
 	string ComName;
 	void Crash();// Used to crash NTAI when the user types the ".crash" command 
@@ -137,21 +146,14 @@ public:
 	const UnitDef* GetUnitDef(string s){
 		return cb->GetUnitDef(s.c_str());
 	}
-	float3 GetUnitPos(int unitid){
-		if(unitid < 1){
-			return UpVector;
-		}
-		float3 p = cb->GetUnitPos(unitid);
-		if(Map->CheckFloat3(p)==false){
-			if(Cached->cheating==false){
-				return UpVector;
-			}else{
-				return chcb->GetUnitPos(unitid);
-			}
-		}else{
-			return p;
-		}
-	}
+	struct temp_pos{
+		float3 pos;
+		int last_update;
+		bool enemy;
+		string name;
+	};
+	map<int,temp_pos> positions;
+	float3 GetUnitPos(int unitid,int enemy=0);// 1 = true, 2 = false, 0 = find out for us/wedunno
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

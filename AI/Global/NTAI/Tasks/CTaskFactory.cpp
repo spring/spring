@@ -18,20 +18,3 @@ CTask* CTaskFactory::GetTask(btype TaskType){
 	//
 	return 0;
 }
-
-void CTask::Init(Global* GL) {
-}
-void CTask::Update() {
-}
-void CTask::UnitIdle() {
-}
-void CTask::Event(CEvent e) {
-}
-btype CTask::GetPrimaryType() {
-    return B_NA;
-}
-void CTask::Execute(set<int> units) {
-}
-
-CTask::~CTask() {
-}

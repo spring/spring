@@ -4,16 +4,11 @@
 using namespace std;
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-map<string,float> efficiency;
-map<string,string> unit_names; //unitname -> human name
-map<string,string> unit_descriptions; //unitname -> human name
-bool loaded;
-bool firstload;
-bool saved;
+
 bool send_to_web;
 bool get_from_web;
 bool update_NTAI;
-int iterations;
+
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -178,7 +173,7 @@ void Global::Update(){
 		if(cb->GetCurrentFrame() == (1 SECOND)){
 			NLOG("STARTUP BANNER IN Global::Update()");
 			if(L.FirstInstance() == true){
-				cb->SendTextMsg(":: NTai XE9RC18 by AF",0);
+				cb->SendTextMsg(":: NTai XE9RC21 by AF",0);
 				cb->SendTextMsg(":: Copyright (C) 2006 AF",0);
 				string s = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
 				if(s != string("")){
@@ -205,7 +200,7 @@ void Global::Update(){
 		}
 	},"Startup Banner and getting commander name",NA)
 	EXCEPTION_HANDLER({
-		if(EVERY_((1 SECOND))){
+		if(EVERY_((15 FRAMES))){
 			if((idlenextframe.empty()==false)&&(cb->GetCurrentFrame() > (1 SECOND))){
 				char c[200];
 				sprintf(c,"%i units scheduled for idle calls",idlenextframe.size());
@@ -278,31 +273,44 @@ void Global::Update(){
 	NLOG("Global::Update :: done");
 }
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-void Global::UnitCreated(int unit){
-	EXCEPTION_HANDLER({
-		Cached->enemies.erase(unit);
-		if(endefs.find(unit) != endefs.end()) endefs.erase(unit);
-		const UnitDef* ud = GetUnitDef(unit);
-		if(ud != 0){
-			bool found = false;
-			for(vector<string>::iterator vi = Cached->solobuild.begin(); vi != Cached->solobuild.end(); ++vi){
-				if(*vi == ud->name){
-					found = true;
-					break;
-				}
-			}
-			if(Cached->singlebuilds.find(ud->name)!= Cached->singlebuilds.end()){
-				Cached->singlebuilds[ud->name] = true;
-			}
-			if(found == true)	Cached->solobuilds[ud->name] = unit;
+void Global::SortSolobuilds(int unit){
+	Cached->enemies.erase(unit);
+	if(endefs.find(unit) != endefs.end()) endefs.erase(unit);
+	if(positions.empty()==false){
+		map<int,temp_pos>::iterator q = positions.find(unit);
+		if(q != positions.end()){
+			positions.erase(q);
 		}
-	},"Sorting solobuilds and singlebuilds in Global::UnitCreated",NA)
+	}
+	const UnitDef* ud = GetUnitDef(unit);
+	if(ud != 0){
+		bool found = false;
+		for(vector<string>::iterator vi = Cached->solobuild.begin(); vi != Cached->solobuild.end(); ++vi){
+			if(*vi == ud->name){
+				found = true;
+				break;
+			}
+		}
+		if(Cached->singlebuilds.find(ud->name)!= Cached->singlebuilds.end()){
+			Cached->singlebuilds[ud->name] = true;
+		}
+		if(found == true)	Cached->solobuilds[ud->name] = unit;
+	}
+}
+void Global::UnitCreated(int unit){
+	EXCEPTION_HANDLER(SortSolobuilds(unit),"Sorting solobuilds and singlebuilds in Global::UnitCreated",NA)
 	//EXCEPTION_HANDLER(Ch->UnitCreated(unit),"Ch->UnitCreated",NA)
 	EXCEPTION_HANDLER(Manufacturer->UnitCreated(unit),"Manufacturer->UnitCreated",NA)
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 void Global::EnemyDestroyed(int enemy,int attacker){
+	if(positions.empty()==false){
+		map<int,temp_pos>::iterator i = positions.find(enemy);
+		if(i != positions.end()){
+			positions.erase(i);
+		}
+	}
 	Cached->enemies.erase(enemy);
 	if(endefs.find(enemy) != endefs.end()) endefs.erase(enemy);
 	if(attacker > 0){
@@ -368,18 +376,6 @@ bool Global::CanDGun(int uid){
 	const UnitDef* ud = GetUnitDef(uid);
 	if(ud!=0){
 		return ud->canDGun;
-		/*if(ud->weapons.empty() == false){
-			for(vector<UnitDef::UnitDefWeapon>::const_iterator i = ud->weapons.begin(); i!= ud->weapons.end(); ++i){
-				if(i->def->type ==string("DGun")){
-					return true;
-				}else{
-					continue;
-				}
-			}
-			return false;
-		}else{
-			return false;
-		}*/
 	}else{
 		return false;
 	}
@@ -395,10 +391,10 @@ void Global::UnitMoveFailed(int unit){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Global::UnitIdle(int unit){
-	/*if(unit<1){
+	if(unit<1){
 		L.print("CManufacturer::UnitIdle negative uid, aborting");
 		return;
-	}*/
+	}
 	EXCEPTION_HANDLER(Manufacturer->UnitIdle(unit),"Manufacturer->UnitIdle",NA)
 	EXCEPTION_HANDLER(Sc->UnitIdle(unit),"Sc->UnitIdle",NA)
 	//EXCEPTION_HANDLER(Actions->UnitIdle(unit),"Actions->UnitIdle",NA)
@@ -517,6 +513,12 @@ void Global::GotChatMsg(const char* msg,int player){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Global::UnitDestroyed(int unit, int attacker){
+	if(positions.empty()==false){
+		map<int,temp_pos>::iterator i = positions.find(unit);
+		if(i != positions.end()){
+			positions.erase(i);
+		}
+	}
 	idlenextframe.erase(unit);
 	const UnitDef* udu = GetUnitDef(unit);
 	if(udu != 0){
@@ -763,7 +765,7 @@ int Global::GetEnemyUnits(int* units, const float3 &pos, float radius){
 
 int Global::GetEnemyUnitsInRadarAndLos(int* units){
 	NLOG("Global::GetEnemyUnitsinradarandLOS :: B");
-	if(cb->GetCurrentFrame() > Cached->lastcacheupdate + (1 SECOND)){
+	if(GetCurrentFrame() - Cached->lastcacheupdate>  30){
 		if(Cached->cheating == true){
 			Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
 			for(uint h = 0; h < Cached->enemy_number; h++){
@@ -788,7 +790,7 @@ int Global::GetEnemyUnitsInRadarAndLos(int* units){
 
 int Global::GetEnemyUnits(int* units){
 	NLOG("Global::GetEnemyUnits :: B");
-	if(cb->GetCurrentFrame() > Cached->lastcacheupdate + (1 SECOND)){
+	if(GetCurrentFrame() - Cached->lastcacheupdate>  30){
 		if(Cached->cheating == true){
 			Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
 		}else{
@@ -809,63 +811,61 @@ float Global::GetEfficiency(string s){
 		return efficiency[s];
 	}else{
 		L.iprint("error ::   " + s + " is missing from the efficiency array");
-		return 100;
+		return 100.0f;
 	}
 }
 
 
 
 bool Global::LoadUnitData(){
-	if(L.FirstInstance() == true){
-		int unum = cb->GetNumUnitDefs();
-		const UnitDef** ulist = new const UnitDef*[unum];
-		cb->GetUnitDefList(ulist);
-		for(int i = 0; i < unum; i++){
-			float ts = ulist[i]->health+ulist[i]->energyMake + ulist[i]->metalMake + ulist[i]->extractsMetal*50+ulist[i]->tidalGenerator*30 + ulist[i]->windGenerator*30;
-			if(ts > 20){
-				efficiency[ulist[i]->name] = ts;
-			}else{
-				efficiency[ulist[i]->name] = 1;
-			}
-			unit_names[ulist[i]->name] = ulist[i]->humanName;
-			unit_descriptions[ulist[i]->name] = ulist[i]->tooltip;
+	int unum = cb->GetNumUnitDefs();
+	const UnitDef** ulist = new const UnitDef*[unum];
+	cb->GetUnitDefList(ulist);
+	for(int i = 0; i < unum; i++){
+		float ts = ulist[i]->health+ulist[i]->energyMake + ulist[i]->metalMake + ulist[i]->extractsMetal*50+ulist[i]->tidalGenerator*30 + ulist[i]->windGenerator*30;
+		if(ts > 20){
+			efficiency[ulist[i]->name] = ts;
+		}else{
+			efficiency[ulist[i]->name] = 1;
 		}
-		string filename = info->datapath;
-		filename += slash;
-		filename += "learn";
-		filename += slash;
-		filename += info->tdfpath;
-		filename += ".tdf";
-		string* buffer = new string;
-		if(ReadFile(filename,buffer) == true){
-			TdfParser cq(this);
-			cq.LoadBuffer(buffer->c_str(), buffer->size());
-			iterations = atoi(cq.SGetValueDef("1", "AI\\iterations").c_str());
+		unit_names[ulist[i]->name] = ulist[i]->humanName;
+		unit_descriptions[ulist[i]->name] = ulist[i]->tooltip;
+	}
+	string filename = info->datapath;
+	filename += slash;
+	filename += "learn";
+	filename += slash;
+	filename += info->tdfpath;
+	filename += ".tdf";
+	string* buffer = new string;
+	if(ReadFile(filename,buffer) == true){
+		TdfParser cq(this);
+		cq.LoadBuffer(buffer->c_str(), buffer->size());
+		iterations = atoi(cq.SGetValueDef("1", "AI\\iterations").c_str());
+		for(map<string,float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){
+			string s = "AI\\";
+			s += i->first;
+			float ank = (float)atof(cq.SGetValueDef("10", s.c_str()).c_str());
+			if(ank > i->second) i->second = ank;
+		}
+		iterations = atoi(cq.SGetValueDef("1", "AI\\iterations").c_str());
+		iterations++;
+		cq.GetDef(firstload, "1", "AI\\firstload");
+		if(firstload == true){
+			L.iprint(" This is the first time this mod has been loaded, up. Take this first game to train NTai up, and be careful f fthrowing the same units at it over and over again");
+			firstload = false;
 			for(map<string,float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-				string s = "AI\\";
-				s += i->first;
-				float ank = (float)atof(cq.SGetValueDef("10", s.c_str()).c_str());
-				if(ank > i->second) i->second = ank;
-			}
-			iterations = atoi(cq.SGetValueDef("1", "AI\\iterations").c_str());
-			iterations++;
-			cq.GetDef(firstload, "1", "AI\\firstload");
-			if(firstload == true){
-				L.iprint(" This is the first time this mod has been loaded, up. Take this first game to train NTai up, and be careful f fthrowing the same units at it over and over again");
-				firstload = false;
-				for(map<string,float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-					const UnitDef* uda = GetUnitDef(i->first);
-					if(uda !=0){
-						i->second += uda->health;
-					}
+				const UnitDef* uda = GetUnitDef(i->first);
+				if(uda !=0){
+					i->second += uda->health;
 				}
 			}
-			loaded = true;
-			return true;
-		} else{
-			SaveUnitData();
-			return false;
 		}
+		loaded = true;
+		return true;
+	} else{
+		SaveUnitData();
+		return false;
 	}
 	return false;
 }
@@ -882,10 +882,10 @@ bool Global::SaveUnitData(){
 		filename += ".tdf";
 		off.open(filename.c_str());
 		if(off.is_open() == true){
-			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC18 AF :: unit efficiency cache file" << endl << endl;
+			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC21 AF :: unit efficiency cache file" << endl << endl;
 			// put stuff in here;
 			int first = firstload;
-			off << "    version=XE9RC18;" << endl;
+			off << "    version=XE9RC21;" << endl;
 			off << "    firstload=" << first << ";" << endl;
 			off << "    modname=" << G->cb->GetModName() << ";" << endl;
 			off << "    iterations=" << iterations << ";" << endl;
@@ -982,7 +982,69 @@ void Global::EnemyLeaveRadar(int enemy){ // an enemy has left radar
 	Cached->enemies.erase(enemy);
 }
 
-
+float3 Global::GetUnitPos(int unitid,int enemy){ // do 10 frame delays between updates fo different units
+	if(unitid < 1){
+		return UpVector;
+	}
+	bool mine = true;
+	if(enemy==1){
+		mine=false;
+	}else if (enemy==0){
+		if(G->cb->GetUnitAllyTeam(unitid)!=G->cb->GetMyAllyTeam()){
+			mine=false;
+		}
+	}
+	
+	if(positions.empty()==false){
+		map<int,temp_pos>::iterator i = positions.find(unitid);
+		if(i!=positions.end()){
+			temp_pos k = i->second;
+			if(GetCurrentFrame()-k.last_update > 10){
+				float3 p = cb->GetUnitPos(unitid);
+				if(Map->CheckFloat3(p)==false){
+					if(Cached->cheating==false){
+						return UpVector;
+					}else{
+						p = chcb->GetUnitPos(unitid);
+						if(Map->CheckFloat3(p)==false){
+							return UpVector;
+						}else{
+							k.pos = p;
+							k.last_update=GetCurrentFrame();
+							return p;
+						}
+					}
+				}else{
+					k.pos = p;
+					k.last_update=GetCurrentFrame();
+					return p;
+				}
+			}else{
+				return k.pos;
+			}
+		}
+	}
+	float3 p = cb->GetUnitPos(unitid);
+	if(Map->CheckFloat3(p)==false){
+		if(Cached->cheating==false){
+			return UpVector;
+		}else{
+			p = chcb->GetUnitPos(unitid);
+			if(Map->CheckFloat3(p)==false){
+				return UpVector;
+			}else{
+				temp_pos k;
+				k.enemy=!mine;
+				k.pos = p;
+				k.last_update=GetCurrentFrame();
+				positions[unitid]=k;
+				return p;
+			}
+		}
+	}else{
+		return p;
+	}
+}
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 /** unitdef->type

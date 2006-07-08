@@ -54,6 +54,9 @@ void Planning::Update(){
 	}*/
 }
 
+float Planning::GetRealValue(float value){
+	return value * 0.937207123f;
+}
 float3 Planning::GetDirVector(int enemy,float3 unit, const WeaponDef* def){
 	NLOG("Planning::GetDirVector");
 	const UnitDef* ed = G->GetUnitDef(enemy);
@@ -136,38 +139,95 @@ bool Planning::feasable(string s, int builder){
 			}
 		}
 	}
+	if(G->info->antistall == 4){// LINDIRS ANTISTALL ALGORITHM // bad algorithm, use V3 instead
+		const UnitDef* uud = G->GetUnitDef(s);
+		const UnitDef* pud = G->GetUnitDef(builder);
+		if(uud == 0){
+			G->L.print("uud == 0 , could not get unitdef for :: " + s );
+			return false;
+		}
+		if(pud== 0){
+			G->L.print("pud == 0 could not get unitdef for builder");
+			return false;
+		}
+		float ctime = uud->buildTime/pud->buildSpeed;
+		float ecost = (uud->energyCost*(pud->buildSpeed/uud->buildTime))+(G->cb->GetEnergyUsage()*ctime);
+		float energyIn = ctime*G->cb->GetEnergyIncome();
+		float energyincome = energyIn - ecost;
+		float ItWillStallAfter = G->cb->GetEnergyStorage()/energyincome;
+		float stalltime = ctime-ItWillStallAfter;
+		if(stalltime > G->info->Max_Stall_Time){
+			G->L.print("ENERGY STALL anticipated :: "+s);
+			return false;
+		}
+		float mcost = (uud->metalCost*(pud->buildSpeed/uud->buildTime))+(G->cb->GetMetalUsage()*ctime);
+		float metalIn = ctime*G->cb->GetMetalIncome();
+		float metalincome = metalIn - ecost;
+		ItWillStallAfter = G->cb->GetMetalStorage()/metalincome;
+		stalltime = ctime-ItWillStallAfter;
+		if(stalltime > G->info->Max_Stall_Time){
+			G->L.print("METAL STALL anticipated :: "+s);
+			return false;
+		}
+		return true;
+	}
 	if(G->info->antistall == 3){ // ANTISTALL ALGORITHM V3
 		const UnitDef* uud = G->GetUnitDef(s);
 		const UnitDef* pud = G->GetUnitDef(builder);
-		if(uud == 0) return true;
-		if(pud== 0) return true;
-		float t = uud->buildTime / pud->buildSpeed;
-		float Um = uud->metalCost/t;
-		float Ue = uud->energyCost/t;
-		float Oe = G->cb->GetEnergyUsage();
-		float Om = G->cb->GetMetalUsage();
-		float Ie = G->cb->GetEnergyIncome();
-		float Im = G->cb->GetMetalIncome();
-		float Sm = G->cb->GetMetal();
-		float Se = G->cb->GetEnergy();
-		if(Ue + Oe > Ie){
-			//
-			if(Se < (t-G->info->Max_Stall_Time)*(Ue + Oe)){
-				//ENERGY STALL
-				return false;
+		if(uud == 0){
+			G->L.print("uud == 0 , could not get unitdef for :: " + s );
+			return false;
+		}
+		if(pud== 0){
+			G->L.print("pud == 0 could not get unitdef for builder");
+			return false;
+		}
+		float t = uud->buildTime/GetRealValue(pud->buildSpeed);
+		//t *=1.875;
+// 		char c2[20];
+// 		sprintf( c2,"%f",t);
+// 		G->L.iprint(string("time to build :: ") + c2 + string(" :: ") + s);
+		if(uud->energyCost > 0){
+			float e_usage = G->cb->GetEnergyUsage()+( (uud->energyCost*GetRealValue(pud->buildSpeed))/uud->buildTime) ;
+		//	float e = G->cb->GetEnergyIncome()-e_usage;
+// 			char c[20];
+// 			sprintf( c,"%f",e_usage);
+// 			G->L.iprint(string("energy out :: ") + c + string(" :: ") + s);
+			float Se = G->cb->GetEnergy();
+			if(G->cb->GetEnergyIncome() < e_usage){
+				//char c3[20];
+				//sprintf( c3,"%f",(t*e));
+				//G->L.iprint(string("energy cost :: ") + c3 + string(" :: ") + s);
+				//float eres = Se -(t*e)
+				if(Se+(G->cb->GetEnergyIncome()*t) < /*((t-G->info->Max_Stall_Time)*/(t*e_usage)){
+					//ENERGY STALL
+					//G->L.print("ENERGY STALL anticipated :: "+s);
+					return false;
+				}
 			}
 		}
-		if(Um + Om > Im){
-			//
-			if(Sm < (t-G->info->Max_Stall_Time)*(Um + Om)){
-				//METAL STALL
-				return false;
+		if(uud->metalCost>0){
+			float m_usage = G->cb->GetMetalUsage()+( (uud->metalCost*GetRealValue(pud->buildSpeed))/uud->buildTime);
+		//	float m = -;
+			//char c[20];
+			//sprintf( c,"%f",m_usage);
+			//G->L.iprint(string("metal out :: ") + c+ string(" :: ") + s);
+			float Sm = G->cb->GetMetal();
+			if(G->cb->GetMetalIncome()<m_usage){
+				//
+				if(Sm+(G->cb->GetMetalIncome()*t) < t*m_usage){
+					//METAL STALL
+					//G->L.print("METAL STALL anticipated :: "+ s);
+					return false;
+				}
 			}
 		}
+		//G->L.print("Given the go ahead :: "+s);
 		return true;
 	}
 
 	///
+	/*
 	if(G->cb->GetMetal() < G->cb->GetMetalStorage()*0.2f){
 		return false;
 	}
@@ -185,23 +245,23 @@ bool Planning::feasable(string s, int builder){
 	if(uud == 0) return true;
 	if(pud== 0) return true;
 	float BuildTime = uud->buildTime / pud->buildSpeed;
-	/*if(G->info->abstract == true){
-		
-		
-		// Energy Cost/Second
-		float EPerS = (uud->energyCost*0.9f) / BuildTime;
-		if (G->cb->GetEnergy() + BuildTime * (G->cb->GetEnergyIncome() - (G->cb->GetEnergyUsage() + EPerS)) < 0.0f){
-			//insufficient energy
-			G->L << "insufficient energy to build " << s << ", a stall is anticipated if construction is started" << endline;
-			return false;
-		}
-		float MPerS = (uud->metalCost*0.9f) / BuildTime;
-		if (G->cb->GetMetal() + BuildTime * (G->cb->GetMetalIncome() - (G->cb->GetMetalUsage() + MPerS)) < 0.0f){
-			// insufficient metal
-			G->L << "insufficient metal to build " << s << ", a stall is anticipated if construction is started" << endline;
-			return false;
-		}
-	}else{*/
+// 	if(G->info->abstract == true){
+// 		
+// 		
+// 		// Energy Cost/Second
+// 		float EPerS = (uud->energyCost*0.9f) / BuildTime;
+// 		if (G->cb->GetEnergy() + BuildTime * (G->cb->GetEnergyIncome() - (G->cb->GetEnergyUsage() + EPerS)) < 0.0f){
+// 			//insufficient energy
+// 			G->L << "insufficient energy to build " << s << ", a stall is anticipated if construction is started" << endline;
+// 			return false;
+// 		}
+// 		float MPerS = (uud->metalCost*0.9f) / BuildTime;
+// 		if (G->cb->GetMetal() + BuildTime * (G->cb->GetMetalIncome() - (G->cb->GetMetalUsage() + MPerS)) < 0.0f){
+// 			// insufficient metal
+// 			G->L << "insufficient metal to build " << s << ", a stall is anticipated if construction is started" << endline;
+// 			return false;
+// 		}
+// 	}else{
 		// This anti stall algorithm should work but it works better as the amount you have stored goes up, so build storage buildings!
 	if(G->cb->GetMetalUsage() > G->cb->GetMetalIncome()*a){
 		//check if we'll run out at this rate if( timexout > stored
@@ -218,7 +278,7 @@ bool Planning::feasable(string s, int builder){
 			return false;
 		}
 	}
-	//}
+	//}*/
 	return true;
 }
 
