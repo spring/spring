@@ -1,0 +1,19 @@
+[AI]
+{
+    // NTai XE8 AF :: unit efficiency cache file
+
+    version=XE8;
+    firstload=0;
+    modname=NanoBlobs031b.sdz;
+    iterations=32;
+
+    Archer=302.085;    // Archer
+    AutoFac=5000;    // AutoFac
+    Holder=9003.1;    // Holder
+    Knight=1108.27;    // Knight
+    Lord=15404.4;    // Lord
+    Sheep=496.906;    // Sheep
+    SpireRook=4979.44;    // Spire Rook
+    SquareRook=7644.03;    // Square Rook
+    Wolf=438.166;    // Wolf
+}

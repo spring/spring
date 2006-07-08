@@ -1,0 +1,276 @@
+[AI]
+{
+	abstract=0;
+	use_mod_default=0;
+	use_mod_default_if_absent=0;
+	Scouters=ARMAMPH, ARMAWAC, ARMFAST, ARMFAV, ARMFLEA, ARMLATNK, ARMPEEP, ARMPT, ARMSEER, ARMSEHAK, ARMSFIG, ARMSH, ARMSPY, ARMWAR, CORAWAC, CORFAST, CORFAV, CORFINK, CORHUNT, CORPT, CORSFIG, CORSH, CORSPY, CORVOYER, CORVRAD;
+	Attackers=ARMAAS, ARMACSUB, ARMAH, ARMAMPH, ARMANAC, ARMASER, ARMBATS, ARMBRAWL, ARMBULL, ARMCROC, ARMCRUS, ARMFIDO, ARMFIG, ARMFLAK, ARMFLASH, ARMFLEA, ARMHAM, ARMHAWK, ARMJAM, ARMJETH, ARMLANCE, ARMLATNK, ARMMANNI, ARMMARK, ARMMART, ARMMAV, ARMMERLl, ARMMH, ARMMSHIP, ARMPNIX, ARMPT, ARMPW, ARMRAVEN, ARMROCK, ARMROY, ARMSAM, ARMSCRAM, ARMSEAP, ARMSFIG, ARMSH, ARMSJAM, ARMSNIPE, ARMSPID, ARMSTUMP, ARMSUB, ARMSUBK, ARMTHUND, ARMVADER, ARMWAR, ARMYORK, ARMZEUS, CORAH, CORAL, CORAMPH, CORAPE, CORARCH, CORBATS, CORCAN, CORCRASH, CORCRUS, CORETER, CORGATOR, CORGOL, CORHRK, CORHURK, CORKROG, CORLEVLR, CORMART, CORMH, CORMIST, CORMORT, CORMSHIP, CORPT, CORPYRO, CORRAID, CORREAP, CORROACH, CORROY, CORSEAL, CORSEAP, CORSENT, CORSFIG, CORSH, CORSHAD, CORSHARK, CORSJAM, CORSNAP, CORSPEC, CORSSUB, CORSTORM, CORSUB, CORSUMO, CORTHUD, CORTITAN, CORVAMP, CORVENG, CORVROCK;
+	// both=armamph, armflea, armlatnk, armpt, armsfig, armsh, armwar, corpt, corsfig, corsh;
+	cheap_multiplier=1.7;  // doesn't affect anything in this current buildtree
+	defence_spacing=10;
+	power_spacing=6;
+	factory_spacing=8;
+	default_spacing=7;
+	dynamic_selection=0;
+	fire_state_commanders=0;
+	move_state_commanders=0;
+	kamikaze=;
+	solobuild=CORBUZZ,ARMVULC,CORTARG,ARMTARG;
+	singlebuild=CORTARG, ARMTARG;
+	author=Lindir The Green + AF:  Send questions, comments, suggestions and/or hatemail to lindirthegreen@yahoo.com;
+	version=0.7.1;
+	message=XTA buildtree by Lindir The Green and AF;
+	metatags=SMALL_FUSION, BIG_FUSION, MOHOMETAL, MOHOMINE, HEAVY_DEFENSE, MISSLE_DEFENSE, DT;
+	hard_target=0;
+	antistall=3;
+	MaxStallTime=7;  // I want this to be a 7, darnit!
+	AlwaysAntiStall=ARMALAB, CORALAB, CORSY, ARMSY, CORGANT;
+	NoAntiStall=CORMEX, ARMMEX, CORSOLAR, ARMSOLAR, CORTIDE, ARMTIDE, CORUWMEX, ARMUWMEX, ARMWIN, CORWIN;
+	hold_fire=CORCOM,ARMCOM;
+	return_fire=;
+	fire_at_will=;
+	roam=;
+	maneouvre=;
+	hold_pos=CORCOM,ARMCOM;
+	rule_extreme_interpolate=1;
+	[STALL_MULTIPLIERS]
+	{
+		energyIncome=1;
+		energyStored=1;
+		metalIncome=1;
+		metalStored=1;
+	}
+}
+
+// This section does do stuff though
+[TAGS] 
+{
+	SMALL_FUSION=ARMCKFUS, CORCKFUS;
+	BIG_FUSION=ARMFUS, CORFUS, ARMUWFUS, CORUWFUS;
+	MOHOMETAL=ARMMMKR, CORMMMKR;
+	MOHOMINE=ARMMOHO, CORMOHO;
+	HEAVY_DEFENSE=ARMBRTHA, ARMSILO, CORDOOM, CORINT, CORSILO;
+	MISSLE_DEFENSE=ARMAMD, CORFMD;
+	DT=CORDRAG, ARMDRAG;// Please USE B_FORTIFICATION INSTEAD!!
+	// B_SOLAR=CORSOLAR, ARMSOLAR;
+	// USE B_POWER!!!! You're preventing NTai from taking advantage of high wind and tidal values!!!!!!
+	// B_SOLAR is a unviersal build tag now that does the same as B_POWER
+}
+[TASKLISTS]
+{
+	armca=armca1, R1, R2;
+	corca=corca1, R1, R2;
+	armck=armck1, R1, R2;
+	corck=corck1, R1, R2;
+	armcv=armcv1, R1;
+	corcv=corcv1, R1;
+	corcom=corcom1, corcom2, corcom3, corcom4;
+	armcom=armcom1, armcom2, armcom3, armcom4;
+	cordecom=R1, R2;
+	armdecom=R1, R2;
+}
+[Resource]
+{
+	[ConstructionRepairRanges]
+	{
+		ARMTARG=10000; // Obsolete
+		CORTARG=10000;
+		ARMSILO=3000; // Superweapons
+		CORSILO=3000;
+		ARMVULC=3000;
+		CORBUZZ=3000;
+		CORGANT=3000;
+		ARMFUS=1500; // The really expensive
+		CORFUS=1500;
+		ARMUWFUS=1500;
+		CORUWFUS=1500;
+		ARMBRTHA=1500; // If you get it up early, it is a game ender
+		CORDOOM=1500;
+		CORINT=1500;
+		ARMASY=1000; // More expensive than the others
+		CORASY=1000;
+		CORCKFUS=800; // Upper level infastructure
+		ARMCKFUS=800;
+		ARMANNI=800;
+		ARMALAB=800;
+		CORALAB=800;
+		ARMAVP=800;
+		CORAVP=800;
+		ARMAAP=800;
+		CORAAP=800;
+		CORASY=800;
+		ARMASY=800;
+		CORHLT=600; // Expensive, until you get the upper level stuff up.  Also very important.
+		ARMHLT=600;
+		CORTOAST=600;
+		ARMAMB=600;
+		ARMLAB=400; // Lower level infastructure
+		CORLAB=400;
+		ARMVP=400;
+		CORVP=400;
+		ARMAP=400;
+		CORAP=400;
+		ARMSY=700;
+		CORSY=700;
+		ARMMOHO=400; // So darn cheap and quick to build
+		CORMOHO=400;
+		ARMMMKR=400;
+		CORMMKR=400;
+	}
+	[MaxEnergy]
+	{
+		ARMSOLAR=1000;
+		CORSOLAR=1000;
+		ARMTIDE=1000;
+		CORTIDE=1000;
+		ARMCKFUS=10000;
+		CORCKFUS=10000;
+		ARMMEX=2000;  // At 2000, it is officially switched to higher level everything.
+		CORMEX=2000;
+		ARMLAB=2000;
+		CORLAB=2000;
+		ARMVP=2000;
+		CORVP=2000;
+		ARMAP=2000;
+		CORAP=2000;
+		ARMSY=2000;
+		CORSY=2000;
+	}
+}
+[ECONOMY]
+{
+	[RULES]
+	{
+		power=0.5; // energy stored < 40% of maxenergystorage
+		mex=0.5; // metal stored < 80% of maxmetalstorage
+		factorymetal=0.8; // metal stored > 95% of maxmetalstorage
+		factoryenergy=0.8; // energy stored > 90% of maxenergystorage
+		factorymetalgap=6; // factory rule n#2 if MetalIncome - 120% of MetalUsage > 7
+		energystorage=0.98; // if energystored > 120% of maxenergy storage.
+		// I never want e-storage to be built.
+		//AF :: I disagree, storage enables NTai to continue after its lost a commander else these rules themselves
+		//and a lot of other things based on storage goes haywire when the comamnder is lost and storage goes down 
+		// to a max of 50 instead fo 1k:, It also improves the accuracy of the rules and its ability to make use of metal makers
+		metalstorage=0.98; // if metalstored > 98% of maxmetal storage.
+		//I never want m-storage to be built.
+		makermetal=0.15; // metalstored <10% of maxmetalstorage AND MetalUsage > MetalIncome
+		makerenergy=0.9;// energystored > 95% of maxenergystorage AND energyUsage < energyIncome
+		[EXTREME]
+		{
+			factorymetal=0.9;
+			factoryenergy=0.9;
+			
+			power=0.4;
+			mex=0.3;
+			
+			makermetal=0.1;
+			makerenergy=0.95;
+		}
+	}
+}
+
+// This entire section doesn't so anything anymore; it is just here for reference
+[CORSFIG]  
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=30;
+		ARMRL=30;
+		CORCOM=25;
+		ARMCOM=25;
+	}
+}
+[ARMSFIG]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=30;
+		ARMRL=30;
+		CORCOM=25;
+		ARMCOM=25;
+	}
+}
+[CORFAST]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}
+[ARMFAST]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}
+[CORFAV]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}
+[ARMFAV]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}
+[CORAK]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}
+[ARMPW]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}
+[CORGATOR]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}
+[ARMFLASH]
+{
+	[TARGET_WEIGHTS]
+	{
+		CORMEX=30;
+		ARMMEX=30;
+		CORRL=25;
+		ARMRL=25;
+	}
+}

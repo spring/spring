@@ -1,0 +1,1 @@
+armrl, B_RADAR, armhlt, repair, repair, armsolar, armsolar, armmoho, armmoho, B_MEX, B_MEX, B_MEX, repair, repair, repair, armaap, repair, repair, repeat
