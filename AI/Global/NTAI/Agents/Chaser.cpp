@@ -99,15 +99,15 @@ void Chaser::UnitDestroyed(int unit, int attacker){
 	sweap.erase(unit);
 	kamikaze_units.erase(unit);
 	Attackers.erase(unit);
-	if(groups.empty() == false){
-		for(vector<ackforce>::iterator at = groups.begin();at !=groups.end();++at){
-			set<int>::iterator i = at->units.find(unit);
-			if(i != at->units.end()){
-				at->units.erase(i);
-				break;
-			}
-		}
-	}
+// 	if(groups.empty() == false){
+// 		for(vector<ackforce>::iterator at = groups.begin();at !=groups.end();++at){
+// 			set<int>::iterator i = at->units.find(unit);
+// 			if(i != at->units.end()){
+// 				at->units.erase(i);
+// 				break;
+// 			}
+// 		}
+// 	}
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -283,43 +283,44 @@ void Chaser::UnitFinished(int unit){
 	if(atk == true){
 		Add(unit);
 		G->L.print("new attacker added :: " + ud->name);
-		if(((attack_units.size())/min(max(int(groups.size()),1),1) < threshold*0.7f)||(groups.size() > 4)){
-			//merge all units into a single mega group
-			G->L.print("merging all attack groups into a single mega group");
-			if(Attackers.empty() == false){
-				Attackers.erase(Attackers.begin(),Attackers.end());
-				Attackers.clear();
-			}
-			if(groups.empty() == false){
-				groups.erase(groups.begin(),groups.end());
-				groups.clear();
-			}
-			Attackers = attack_units;
-		}
-		if((int)Attackers.size()>threshold){
-			ackforce ac(G);
-			ac.marching = false;
-			ac.idle = true;
-			if((G->info->mexfirst == true)&&(groups.empty() == true)) ac.type = a_mexraid;
-			ac.units = Attackers;
-			groups.push_back(ac);
-			FindTarget(&groups.back(),false);
-			//_beginthread((void (__cdecl *)(void *))AckInsert, 0, (void*)ik);
-			Attackers.erase(Attackers.begin(),Attackers.end());
-			Attackers.clear();
-		} else {
-			Attackers.insert(unit);
-		}
-		if(G->Actions->AttackNear(unit,5.0f)==false){
-			if(G->Actions->SeekOutLastAssault(unit)==false){
+// 		if(((attack_units.size())/min(max(int(groups.size()),1),1) < threshold*0.7f)||(groups.size() > 4)){
+// 			//merge all units into a single mega group
+// 			G->L.print("merging all attack groups into a single mega group");
+// 			if(Attackers.empty() == false){
+// 				Attackers.erase(Attackers.begin(),Attackers.end());
+// 				Attackers.clear();
+// 			}
+// 			if(groups.empty() == false){
+// 				groups.erase(groups.begin(),groups.end());
+// 				groups.clear();
+// 			}
+// 			Attackers = attack_units;
+// 		}
+// 		if((int)Attackers.size()>threshold){
+// 			ackforce ac(G);
+// 			ac.marching = false;
+// 			ac.idle = true;
+// 			if((G->info->mexfirst == true)&&(groups.empty() == true)) ac.type = a_mexraid;
+// 			ac.units = Attackers;
+// 			groups.push_back(ac);
+// 			FindTarget(&groups.back(),false);
+// 			//_beginthread((void (__cdecl *)(void *))AckInsert, 0, (void*)ik);
+// 			Attackers.erase(Attackers.begin(),Attackers.end());
+// 			Attackers.clear();
+// 		} else {
+// 			Attackers.insert(unit);
+// 		}
+		if(G->Actions->AttackNearest(unit)==false){
+			//if(G->Actions->SeekOutLastAssault(unit)==false){
 				if(G->Actions->SeekOutNearestInterest(unit)==true){
 					walking.insert(unit);
 				}
-			}else{
-				walking.insert(unit);
-			}
+			//}else{
+			//	walking.insert(unit);
+			//}
 		}else{
 			engaged.insert(unit);
+			//Beacon(unit,1000);
 		}
 	}
 	NLOG("kamikaze");
@@ -354,203 +355,113 @@ void Chaser::EnemyDestroyed(int enemy, int attacker){
 		dir = G->Map->WhichSector(dir);
 		const UnitDef* def = G->GetEnemyDef(enemy);
 		if(def == 0){
-			if(threat_matrix[sector[uint(dir.x)][uint(dir.z)].index] <10) return;
-			threat_matrix[sector[uint(dir.x)][uint(dir.z)].index] -= 120;
-			if(threat_matrix[sector[uint(dir.x)][uint(dir.z)].index] <1.0f) threat_matrix[sector[uint(dir.x)][uint(dir.z)].index] = 1.0f;
+			int index = sector[uint(dir.x)][uint(dir.z)].index;
+			if(index >max_index) return;
+			threat_matrix[index] *= 0.7f;
 		}else{
 			if(def->extractsMetal > 0) G->M->EnemyExtractorDead(dir,enemy);
 			int index = sector[uint(dir.x)][uint(dir.z)].index;
-			if(index >-1){
-				threat_matrix[index] -= G->GetEfficiency(def->name);
-				if(threat_matrix[index] <1.0f) threat_matrix[index] = 1.0f;
+			if((index >-1)&&(index < max_index)){
+				threat_matrix[index] *= 0.6f;
 			}
-			
 		}
 	}
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-bool T_FindTarget(T_Targetting* T){
-	//NLOG("Chaser::T_FindTarget");
-	T->G->Ch->lock = true;
-	if(T->i->units.empty() == true){
-		T->i->idle =  true;
-		delete T;
-		return false;
-	}
-	float3 final_dest = UpVector;
-	if(T->i->type == a_mexraid){
-		final_dest = T->G->Sc->GetMexScout(T->i->i);
-		T->i->i++;
-		if(T->G->Map->CheckFloat3(final_dest) == false){
-			delete T;
-			return false;
-		}
-	}else{
-		float best_rating , my_rating;
-		best_rating = my_rating = 0;
-		float3 dest = UpVector;
-		float sx1 = -1,sy1 = -1;
-
-		// TODO: improve destination sector selection
-		for(int x = 0; x < T->G->Ch->xSectors; x++){
-			for(int y = 0; y < T->G->Ch->ySectors; y++){
-				my_rating =  T->G->Ch->threat_matrix[T->G->Ch->sector[x][y].index];
-				if(my_rating > best_rating){
-					if(T->i->starg != T->G->Ch->sector[x][y].centre){
-						dest = T->G->Ch->sector[x][y].centre;
-						best_rating = my_rating;
-						sx1 = float(x);
-						sy1 = float(y);
-					}
-				}
-			}
-		}
-		T->G->Ch->threat_matrix[T->G->Ch->sector[(int)sx1][(int)sy1].index]=1.0f;
-		if(best_rating < 30){
-			delete T;
-			return false;
-		}
-		if((sx1 == -1)||(sy1 == -1)){
-			delete T;
-			return false;
-		}
-		final_dest = dest;
-	}
-	if(T->G->Map->CheckFloat3(final_dest) == false){
-		T->G->L.print("find target exiting on up vector target");
-		delete T;
-		return false;
-	}else{
-		if(T->i->units.empty() == false){
-			for(set<int>::iterator aik = T->i->units.begin();aik != T->i->units.end();++aik){
-				if(T->G->cb->GetUnitHealth(*aik) >1){
-					TCommand TCS(tc,"chaser::_TFindTarget attacking move.area_attack");
-					tc.clear = false;
-					tc.Priority = tc_pseudoinstant;
-					if(T->i->type == a_mexraid){
-						tc.c.id = CMD_AREA_ATTACK;
-						tc.c.params.push_back(final_dest.x);
-						tc.c.params.push_back(T->G->cb->GetElevation(final_dest.x,final_dest.z));
-						tc.c.params.push_back(final_dest.z);
-						tc.created = T->G->cb->GetCurrentFrame();
-						tc.c.timeOut = tc.created + 10 MINUTES;
-						tc.c.params.push_back(300.0f);
-						tc.unit = *aik;
-						if(tc.c.params.empty() == false)T->G->OrderRouter->GiveOrder(tc);
-					}else {
-						float3 npos = T->G->Map->distfrom(T->G->GetUnitPos(*aik),final_dest,T->G->cb->GetUnitMaxRange(*aik)*0.95f);
-						npos.y = T->G->cb->GetElevation(npos.x,npos.z);
-						T->G->Actions->Move(*aik,npos);
-					}
-				}
-			}
-		}
-		if(T->upthresh == true){
-			T->G->Ch->threshold++;
-			char c[10];
-			sprintf(c,"%i",T->G->Ch->threshold);
-			T->G->L.print(string("new threshold :: ") + c);
-		}
-		T->i->marching = true;
-		T->i->idle = false;
-	}
-	T->G->Ch->lock = false;
-	delete T;
-	return true;
-}
+// bool T_FindTarget(T_Targetting* T){
+// 	//NLOG("Chaser::T_FindTarget");
+// 	T->G->Ch->lock = true;
+// 	if(T->i->units.empty() == true){
+// 		T->i->idle =  true;
+// 		delete T;
+// 		return false;
+// 	}
+// 	float3 final_dest = UpVector;
+// 	if(T->i->type == a_mexraid){
+// 		final_dest = T->G->Sc->GetMexScout(T->i->i);
+// 		T->i->i++;
+// 		if(T->G->Map->CheckFloat3(final_dest) == false){
+// 			delete T;
+// 			return false;
+// 		}
+// 	}else{
+// 		float best_rating , my_rating;
+// 		best_rating = my_rating = 0;
+// 		float3 dest = UpVector;
+// 		float sx1 = -1,sy1 = -1;
+// 
+// 		// TODO: improve destination sector selection
+// 		for(int x = 0; x < T->G->Ch->xSectors; x++){
+// 			for(int y = 0; y < T->G->Ch->ySectors; y++){
+// 				my_rating =  T->G->Ch->threat_matrix[T->G->Ch->sector[x][y].index];
+// 				if(my_rating > best_rating){
+// 					if(T->i->starg != T->G->Ch->sector[x][y].centre){
+// 						dest = T->G->Ch->sector[x][y].centre;
+// 						best_rating = my_rating;
+// 						sx1 = float(x);
+// 						sy1 = float(y);
+// 					}
+// 				}
+// 			}
+// 		}
+// 		T->G->Ch->threat_matrix[T->G->Ch->sector[(int)sx1][(int)sy1].index]=1.0f;
+// 		if(best_rating < 30){
+// 			delete T;
+// 			return false;
+// 		}
+// 		if((sx1 == -1)||(sy1 == -1)){
+// 			delete T;
+// 			return false;
+// 		}
+// 		final_dest = dest;
+// 	}
+// 	if(T->G->Map->CheckFloat3(final_dest) == false){
+// 		T->G->L.print("find target exiting on up vector target");
+// 		delete T;
+// 		return false;
+// 	}else{
+// 		if(T->i->units.empty() == false){
+// 			for(set<int>::iterator aik = T->i->units.begin();aik != T->i->units.end();++aik){
+// 				if(T->G->cb->GetUnitHealth(*aik) >1){
+// 					TCommand TCS(tc,"chaser::_TFindTarget attacking move.area_attack");
+// 					tc.clear = false;
+// 					tc.Priority = tc_pseudoinstant;
+// 					if(T->i->type == a_mexraid){
+// 						tc.c.id = CMD_AREA_ATTACK;
+// 						tc.c.params.push_back(final_dest.x);
+// 						tc.c.params.push_back(T->G->cb->GetElevation(final_dest.x,final_dest.z));
+// 						tc.c.params.push_back(final_dest.z);
+// 						tc.created = T->G->cb->GetCurrentFrame();
+// 						tc.c.timeOut = tc.created + 10 MINUTES;
+// 						tc.c.params.push_back(300.0f);
+// 						tc.unit = *aik;
+// 						if(tc.c.params.empty() == false)T->G->OrderRouter->GiveOrder(tc);
+// 					}else {
+// 						float3 npos = T->G->Map->distfrom(T->G->GetUnitPos(*aik),final_dest,T->G->cb->GetUnitMaxRange(*aik)*0.95f);
+// 						npos.y = T->G->cb->GetElevation(npos.x,npos.z);
+// 						T->G->Actions->Move(*aik,npos);
+// 					}
+// 				}
+// 			}
+// 		}
+// 		if(T->upthresh == true){
+// 			T->G->Ch->threshold++;
+// 			char c[10];
+// 			sprintf(c,"%i",T->G->Ch->threshold);
+// 			T->G->L.print(string("new threshold :: ") + c);
+// 		}
+// 		T->i->marching = true;
+// 		T->i->idle = false;
+// 	}
+// 	T->G->Ch->lock = false;
+// 	delete T;
+// 	return true;
+// }
 
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-bool Chaser::FindTarget(ackforce* i, bool upthresh){
-	NLOG("Chaser::FindTarget");
-	NO_GAIA(false)
-	/*float3 final_dest = UpVector;
-	if(i->type == a_mexraid){
-		final_dest = G->Sc->GetMexScout(i->i);
-		i->i++;
-		if(G->Map->CheckFloat3(final_dest) == false){
-			return false;
-		}else{
-			return true;
-		}
-	}else{*/
-		T_Targetting* T = new T_Targetting;
-		T->G = G;
-		T->i = i;
-		T->upthresh = upthresh;
-		NLOG("attempting to find a target");
-		bool ab= T_FindTarget(T);
-		if(ab==true){
-			NLOG("a target was found");
-			return true;
-		}else{
-			NLOG("a target wasnt found");
-			return false;
-		}
-	/*}
-		G->L.print("targeting started");
-		Targetting->GetPoints(threat_matrix);
-		G->L.print("targeting done");
-		G->L.print("wiping caches");
-		Targetting->WipeCache();
-		G->L.print("caches wiped");
-		if(Targetting->VectoredSpots.empty() == true){
-			G->L.print("no targets found");
-			return false;
-		}
-		G->L.print("checking targets");
-		for(vector<float3>::iterator ik = Targetting->VectoredSpots.begin(); ik != Targetting->VectoredSpots.end(); ++ik){
-			if(ik->y > final_dest.y){
-				if(i->starg != *ik){
-					final_dest = *ik;
-				}
-			}
-		}
-		G->L.print("targets checked");
-	}
-	if(G->Map->CheckFloat3(final_dest) == false){
-		G->L.print(_T("find target exiting on up vector target"));
-		return false;
-		//_endthread();
-	}else{
-		if(i->units.empty() == false){
-			i->starg = final_dest;
-			final_dest = sector[uint(final_dest.x)][uint(final_dest.z)].centre;
-			for(set<int>::const_iterator aik = i->units.begin();aik != i->units.end();++aik){
-				if(G->cb->GetUnitHealth(*aik) >1){
-					TCommand TCS(tc,_T("chaser::_TFindTarget attacking move.area_attack"));
-					tc.clear = false;
-					tc.Priority = tc_pseudoinstant;
-					if(i->type == a_mexraid){
-						tc.c.id = CMD_AREA_ATTACK;
-					}else {
-						tc.c.id = CMD_MOVE;
-					}
-					float3 npos = G->Map->distfrom(G->GetUnitPos(*aik),final_dest,G->cb->GetUnitMaxRange(*aik)*0.98f);
-					tc.c.params.push_back(npos.x);
-					tc.c.params.push_back(G->cb->GetElevation(npos.x,npos.z));
-					tc.c.params.push_back(npos.z);
-					tc.created = G->cb->GetCurrentFrame();
-					tc.c.timeOut = tc.created + 10 MINUTES;
-					if(i->type == a_mexraid) tc.c.params.push_back(300.0f);
-					tc.unit = *aik;
-					if(tc.c.params.empty() == false)G->OrderRouter->GiveOrder(tc);
-				}
-			}
-		}
-		if(upthresh == true){
-			threshold++;
-			char c[10];
-			sprintf(c,"%i",threshold);
-			G->L.print(string(_T("new threshold :: ")) + c);
-		}
-		i->marching = true;
-		i->idle = false;
-	}
-	return true;*/
-}
 
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -579,112 +490,82 @@ void Chaser::UnitIdle(int unit){
 				float3 pos = G->GetUnitPos(unit);
 				if(G->Map->CheckFloat3(pos)==false) continue;
 				if(engaged.find(unit) != engaged.end()) continue;
-				if(G->Actions->AttackNear(unit,1) == false){
-					if(G->Actions->AttackNear(unit,2)==false){
-						if(G->Actions->AttackNear(unit,3)==false){
-							if(G->Actions->AttackNear(unit,4)==false){
-								if(walking.find(unit) == walking.end()){
-									if(G->Actions->SeekOutInterest(unit)==false){
-										if(G->Actions->SeekOutLastAssault(unit)==false){
-											if(G->Actions->SeekOutNearestInterest(unit)==false){
-												if(G->Actions->RandomSpiral(unit)==false){
-													//	G->Actions->ScheduleIdle(*aa);
-												}else{
-													walking.insert(unit);
-												}
-											}else{
-												walking.insert(unit);
-											}
-										}else{
-											walking.insert(unit);
-										}
+				if(G->Actions->AttackNearest(unit) == false){
+					if(walking.find(unit) == walking.end()){
+						if(G->Actions->SeekOutInterest(unit)==false){
+							if(G->Actions->SeekOutLastAssault(unit)==false){
+								if(G->Actions->SeekOutNearestInterest(unit)==false){
+									if(G->Actions->RandomSpiral(unit)==false){
+										//	G->Actions->ScheduleIdle(*aa);
 									}else{
 										walking.insert(unit);
 									}
 								}else{
-									continue;
+									walking.insert(unit);
 								}
 							}else{
-								engaged.insert(unit);
-								Beacon(pos,600);
+								walking.insert(unit);
 							}
 						}else{
-							engaged.insert(unit);
-							Beacon(pos,600);
+							walking.insert(unit);
 						}
 					}else{
-						engaged.insert(unit);
-						Beacon(pos,600);
+						continue;
 					}
 				}else{
 					engaged.insert(unit);
-					Beacon(pos,600);
+					Beacon(pos,1000);
 				}
 				return;
 			}
 		}
 	}
-	if(this->groups.empty() == false){
-		if(found == false){
-			for(vector<ackforce>::iterator si = groups.begin(); si != groups.end(); ++si){
-				if(si->units.empty() == false){
-					for(set<int>::iterator sd = si->units.begin(); sd != si->units.end(); ++sd){
-						if(*sd == unit){
-							found = true;
-							if(FindTarget(&*si,false) == false){
-								float3 pos = G->GetUnitPos(unit);
-								if(G->Map->CheckFloat3(pos)==false) continue;
-								if(engaged.find(unit) != engaged.end()) continue;
-								if(G->Actions->AttackNear(unit,1) == false){
-									if(G->Actions->AttackNear(unit,2)==false){
-										if(G->Actions->AttackNear(unit,3)==false){
-											if(G->Actions->AttackNear(unit,4)==false){
-												if(walking.find(unit) == walking.end()){
-													if(G->Actions->SeekOutInterest(unit)==false){
-														if(G->Actions->SeekOutLastAssault(unit)==false){
-															if(G->Actions->SeekOutNearestInterest(unit)==false){
-																if(G->Actions->RandomSpiral(unit)==false){
-																	//	G->Actions->ScheduleIdle(*aa);
-																}else{
-																	walking.insert(unit);
-																}
-															}else{
-																walking.insert(unit);
-															}
-														}else{
-															walking.insert(unit);
-														}
-													}else{
-														walking.insert(unit);
-													}
-												}else{
-													continue;
-												}
-											}else{
-												engaged.insert(unit);
-												Beacon(pos,600);
-											}
-										}else{
-											engaged.insert(unit);
-											Beacon(pos,600);
-										}
-									}else{
-										engaged.insert(unit);
-										Beacon(pos,600);
-									}
-								}else{
-									engaged.insert(unit);
-									Beacon(pos,600);
-								}
-							}
-							break;
-						}
-					}
-				}
-				if(found == true) break;
-			}
-		}
-	}
+// 	if(this->groups.empty() == false){
+// 		if(found == false){
+// 			for(vector<ackforce>::iterator si = groups.begin(); si != groups.end(); ++si){
+// 				if(si->units.empty() == false){
+// 					for(set<int>::iterator sd = si->units.begin(); sd != si->units.end(); ++sd){
+// 						if(*sd == unit){
+// 							found = true;
+// 							//if(FindTarget(&*si,false) == false){
+// 								float3 pos = G->GetUnitPos(unit);
+// 								if(G->Map->CheckFloat3(pos)==false) continue;
+// 								if(engaged.find(unit) != engaged.end()) continue;
+// 								if(G->Actions->AttackNearest(unit) == false){
+// 									if(walking.find(unit) == walking.end()){
+// 										if(G->Actions->SeekOutInterest(unit)==false){
+// 											if(G->Actions->SeekOutLastAssault(unit)==false){
+// 												if(G->Actions->SeekOutNearestInterest(unit)==false){
+// 													if(G->Actions->RandomSpiral(unit)==false){
+// 														//	G->Actions->ScheduleIdle(*aa);
+// 													}else{
+// 														walking.insert(unit);
+// 													}
+// 												}else{
+// 													walking.insert(unit);
+// 												}
+// 											}else{
+// 												walking.insert(unit);
+// 											}
+// 										}else{
+// 											walking.insert(unit);
+// 										}
+// 									}else{
+// 										continue;
+// 									}
+// 								}else{
+// 									engaged.insert(unit);
+// 									Beacon(pos,1000);
+// 								}
+// 							}
+// 							break;
+// 						}
+// 					}
+// 				}
+// 				if(found == true) break;
+// 			}
+// 		}
+// 	}
 	return;
 }
 
@@ -797,17 +678,11 @@ void Chaser::MakeTGA(){
 void Chaser::DepreciateMatrix(){
 	threat_matrix[0] *= 0.9999f;
 	if(EVERY_(3 FRAMES)){
-		for(map<int, map<int,agrid> >::iterator i = sector.begin(); i != sector.end(); ++i){
-			for(map<int,agrid>::iterator j = i->second.begin(); j != i->second.end(); ++j){
-				int index = j->second.index;
-				if(index > max_index) continue;
-				if(index >-1){
-					if(G->Cached->cheating==true){
-						threat_matrix[index] *= 0.95f;
-					}else{
-						threat_matrix[index] *= 0.9995f;
-					}
-				}
+		for(int i = 1; i < max_index; i++){
+			if(G->Cached->cheating==true){
+				threat_matrix[i] *= 0.95f;
+			}else{
+				threat_matrix[i] *= 0.9995f;
 			}
 		}
 	}
@@ -821,18 +696,13 @@ void Chaser::UpdateMatrixFriendlyUnits(){
 			const UnitDef* urd = G->GetUnitDef(funits[f]);
 			if(urd != 0){
 				float3 fupos = G->GetUnitPos(funits[f]);
+				if(G->Map->CheckFloat3(fupos) == false) continue;
 				float3 fusec = G->Map->WhichSector(fupos);
-				if(G->Map->CheckFloat3(fusec) == false) continue;
 				int z = min(ySectors,int(fusec.z-1));
 				int x = min(xSectors,int(fusec.x-1));
-				if(urd->losRadius > max(xSize,ySize)){
-					int* eg = new int[1000];
-					int iy = G->GetEnemyUnits(eg,fupos,300.0f);
-					if(eg ==  0){
-						threat_matrix[sector[x][z].index]= 1.0f;
-						threat_matrix[sector[x][z].index] = 1.0f;
-					}
-					delete [] eg;
+				threat_matrix[sector[x][z].index]*= 0.8f;
+				if(urd->type== string("Factory")){
+					threat_matrix[sector[x][z].index]*= 0.5f;
 				}
 			}
 		}
@@ -874,8 +744,7 @@ void Chaser::RemoveBadSites(){
 							ensites.erase(i);
 							break;
 						}
-						threat_matrix[index] = threat_matrix[index] - 10*e.efficiency;
-						if(threat_matrix[index] < 1.0f) threat_matrix[index] = 1.0f;
+						threat_matrix[index] = 1.0f;
 						ensites.erase(i);
 						break;
 					}else{
@@ -911,11 +780,7 @@ void Chaser::UpdateSites(){
 		esite e =i->second;
 		int x = min(int(e.sector.x),xSectors-1);
 		int z = min(int(e.sector.z),ySectors-1);
-		if(e.ground == false){
-			threat_matrix[sector[x][z].index] += e.efficiency;
-		}else{
-			threat_matrix[sector[x][z].index] += e.efficiency;
-		}
+		threat_matrix[sector[x][z].index] += 300;
 	}
 }
 //
@@ -952,20 +817,19 @@ void Chaser::UpdateMatrixEnemies(){
 				}else{
 					if(def->extractsMetal > 0.0f) G->M->EnemyExtractor(pos,en[i]);
 					float ef = G->GetEfficiency(def->name);
-					es.efficiency = ef;
+					es.efficiency = 1000;
 					G->Actions->AddPoint(es.position);
 					if((def->movedata == 0)&&(def->canfly == false)){ // its a building
-						threat_matrix[index] += ef;
+						threat_matrix[index] += 2000;
 						es.ground = false;
 						ensites[en[i]] = es;
 					}else{
-						threat_matrix[index] *= ef;
+						threat_matrix[index] += 2300;
 						es.ground = true;
 						es.created  = G->cb->GetCurrentFrame();
 						ensites[en[i]] = es;
 					}
 				}
-
 			}
 		}
 	}
@@ -978,37 +842,37 @@ void Chaser::Update(){
 	NLOG("Chaser::Update");
 	NO_GAIA(NA)
 	// decrease threat values of all sectors..
-	EXCEPTION_HANDLER(DepreciateMatrix(),"Chaser::DepreciateMatrix()",NA)
-	if(EVERY_(60 FRAMES)){
-		EXCEPTION_HANDLER(UpdateMatrixFriendlyUnits(),"Chaser::UpdateMatrixFriendlyUnits()",NA)
-	}
+	//EXCEPTION_HANDLER(DepreciateMatrix(),"Chaser::DepreciateMatrix()",NA)
+	//if(EVERY_(60 FRAMES)){
+	//	EXCEPTION_HANDLER(UpdateMatrixFriendlyUnits(),"Chaser::UpdateMatrixFriendlyUnits()",NA)
+	//}
 	// Run the code that handles stockpiled weapons.
-	EXCEPTION_HANDLER({
-		if(EVERY_((10 SECONDS))){
-			if((sweap.empty() == false)&&(G->Cached->enemies.empty() == false)){
-				NLOG("Chaser::Update :: firing silos");
-				FireSilos();
-			}
-		}
-	},"Chaser::Update :: firing silos",NA)
+	//EXCEPTION_HANDLER({
+	//	if(EVERY_((10 SECONDS))){
+	//		if((sweap.empty() == false)&&(G->Cached->enemies.empty() == false)){
+	//			NLOG("Chaser::Update :: firing silos");
+	//			FireSilos();
+	//		}
+	//	}
+	//},"Chaser::Update :: firing silos",NA)
 	if(EVERY_((3 SECONDS))){
 		EXCEPTION_HANDLER(CheckKamikaze(),"Chaser::CheckKamikaze()",NA)
 	}
-	if((EVERY_((2 FRAMES)))&&(ensites.empty() == false)){ // remove enemy sites logged if they're in LOS and they cant be seen....
-		EXCEPTION_HANDLER(RemoveBadSites(),"Chaser::RemoveBadSites()",NA)
-	}
-	if((EVERY_((11 FRAMES)))&&(ensites.empty() == false)){
-		EXCEPTION_HANDLER(UpdateSites(),"Chaser::UpdateSites()",NA)
-	}
-	if((EVERY_((10 FRAMES)))&&(G->Cached->enemies.empty() == false)){
-		EXCEPTION_HANDLER(UpdateMatrixEnemies(),"Chaser::UpdateMatrixEnemies()",NA)
-	}
+	//if((EVERY_((2 FRAMES)))&&(ensites.empty() == false)){ // remove enemy sites logged if they're in LOS and they cant be seen....
+	//	EXCEPTION_HANDLER(RemoveBadSites(),"Chaser::RemoveBadSites()",NA)
+	//}
+	//if((EVERY_((11 FRAMES)))&&(ensites.empty() == false)){
+	//	EXCEPTION_HANDLER(UpdateSites(),"Chaser::UpdateSites()",NA)
+	//}
+	//if((EVERY_((10 FRAMES)))&&(G->Cached->enemies.empty() == false)){
+	//	EXCEPTION_HANDLER(UpdateMatrixEnemies(),"Chaser::UpdateMatrixEnemies()",NA)
+	//}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// re-evaluate the target of an attack force
-	if(EVERY_(919 FRAMES)){
-		EXCEPTION_HANDLER(EvaluateTargets(),"Chaser::EvaluateTargets()",NA)
-	}
+	//if(EVERY_(919 FRAMES)){
+	//	EXCEPTION_HANDLER(EvaluateTargets(),"Chaser::EvaluateTargets()",NA)
+	//}
 	if(EVERY_(120 FRAMES)/*&&(G->enemies.empty() == false)*/){
 		EXCEPTION_HANDLER(FireWeaponsNearby(),"Chaser::FireWeaponsNearby()",NA)
 	}
@@ -1021,35 +885,6 @@ void Chaser::Update(){
 	NLOG("Chaser::Update :: DONE");
 }
 
-void Chaser::EvaluateTargets(){
-	NLOG("Chaser::Update :: re-evaluate attack targets");
-	if(groups.empty() == false){
-		for(vector<ackforce>::iterator af = groups.begin();af != groups.end();++af){
-			if(af->units.empty() == false){
-				if(FindTarget(&*af,false)==false){
-					for(set<int>::iterator i = af->units.begin(); i != af->units.end(); ++i){
-						if(G->Actions->AttackNear(*i,1)==false){
-							if(G->Actions->AttackNear(*i,2)==false){
-								if(G->Actions->AttackNear(*i,3)==false){
-									if(G->Actions->AttackNear(*i,4)==false){
-										if(G->Actions->SeekOutInterest(*i)==false){
-											if(G->Actions->RandomSpiral(*i) == false){
-												//	G->Actions->ScheduleIdle(*i);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}else{
-				groups.erase(af); // a group with empty units in it shouldn't be kept intact else this container will keep getting bigger and bigger and distort other calculations...
-			}
-		}
-	}
-	NLOG("Chaser::Update :: re-evaluate attack targets done");
-}
 
 void Chaser::Beacon(float3 pos, float radius){
 	if(walking.empty() == false){
@@ -1058,7 +893,7 @@ void Chaser::Beacon(float3 pos, float radius){
 			float3 rpos = G->GetUnitPos(*i);
 			if(G->Map->CheckFloat3(rpos)==true){
 				if (rpos.distance2D(pos)<radius){
-					G->Actions->Move(*i,pos);
+					G->Actions->MoveToStrike(*i,pos);
 				}
 			}
 		}
@@ -1071,106 +906,76 @@ void Chaser::FireWeaponsNearby(){
 			float3 pos = G->GetUnitPos(*aa);
 			if(G->Map->CheckFloat3(pos)==false) continue;
 			if(engaged.find(*aa) != engaged.end()) continue;
-			if(G->Actions->AttackNear(*aa,1) == false){
-				if(G->Actions->AttackNear(*aa,2)==false){
-					if(G->Actions->AttackNear(*aa,3)==false){
-						if(G->Actions->AttackNear(*aa,4)==false){
-							if(walking.find(*aa) == walking.end()){
-								if(G->Actions->SeekOutInterest(*aa)==false){
-									if(G->Actions->SeekOutLastAssault(*aa)==false){
-										if(G->Actions->SeekOutNearestInterest(*aa)==false){
-											if(G->Actions->RandomSpiral(*aa)==false){
-												//	G->Actions->ScheduleIdle(*aa);
-											}else{
-												walking.insert(*aa);
-											}
-										}else{
-												walking.insert(*aa);
-											}
-									}else{
-										walking.insert(*aa);
-									}
+			if(G->Actions->AttackNearest(*aa) == false){
+				if(walking.find(*aa) == walking.end()){
+					if(G->Actions->SeekOutInterest(*aa)==false){
+						if(G->Actions->SeekOutLastAssault(*aa)==false){
+							if(G->Actions->SeekOutNearestInterest(*aa)==false){
+								if(G->Actions->RandomSpiral(*aa)==false){
+									//	G->Actions->ScheduleIdle(*aa);
 								}else{
 									walking.insert(*aa);
 								}
 							}else{
-								continue;
-							}
+									walking.insert(*aa);
+								}
 						}else{
-							engaged.insert(*aa);
-							Beacon(pos,600);
+							walking.insert(*aa);
 						}
 					}else{
-						engaged.insert(*aa);
-						Beacon(pos,600);
+						walking.insert(*aa);
 					}
 				}else{
-					engaged.insert(*aa);
-					Beacon(pos,600);
+					continue;
 				}
 			}else{
 				engaged.insert(*aa);
-				Beacon(pos,600);
+				Beacon(pos,1000);
 			}
 		}
 	}
-	NLOG("Chaser::Update :: make sent attackers attack nearby targets");
-	if(groups.empty() == false){
-		for(vector<ackforce>::iterator k = groups.begin(); k != groups.end(); ++k){
-			if(k->units.empty() == false){
-				if(FindTarget(&*k,false)==false){
-					for(set<int>::iterator aa = k->units.begin(); aa != k->units.end();++aa){
-						float3 pos = G->GetUnitPos(*aa);
-						if(G->Map->CheckFloat3(pos)==false) continue;
-						if(engaged.find(*aa) != engaged.end()) continue;
-						if(G->Actions->AttackNear(*aa,1.5) == false){
-							if(G->Actions->AttackNear(*aa,3)==false){
-								if(G->Actions->AttackNear(*aa,4)==false){
-									if(G->Actions->AttackNear(*aa,5)==false){
-										if(walking.find(*aa) == walking.end()){
-											if(G->Actions->SeekOutInterest(*aa)==false){
-												if(G->Actions->SeekOutLastAssault(*aa)==false){
-													if(G->Actions->SeekOutNearestInterest(*aa)==false){
-														if(G->Actions->RandomSpiral(*aa)==false){
-															//	G->Actions->ScheduleIdle(*aa);
-														}else{
-															walking.insert(*aa);
-														}
-													}else{
-														walking.insert(*aa);
-													}
-												}else{
-													walking.insert(*aa);
-												}
-											}else{
-												walking.insert(*aa);
-											}
-										}else{
-											continue;
-										}
-									}else{
-										engaged.insert(*aa);
-										Beacon(pos,2000);
-									}
-								}else{
-									engaged.insert(*aa);
-									Beacon(pos,2000);
-								}
-							}else{
-								engaged.insert(*aa);
-								Beacon(pos,2000);
-							}
-						}else{
-							engaged.insert(*aa);
-							Beacon(pos,2000);
-						}
-					}
-				}
-			}else{
-				groups.erase(k);
-			}
-		}
-	}
+// 	NLOG("Chaser::Update :: make sent attackers attack nearby targets");
+// 	if(groups.empty() == false){
+// 		for(vector<ackforce>::iterator k = groups.begin(); k != groups.end(); ++k){
+// 			if(k->units.empty() == false){
+// 				if(FindTarget(&*k,false)==false){
+// 					for(set<int>::iterator aa = k->units.begin(); aa != k->units.end();++aa){
+// 						float3 pos = G->GetUnitPos(*aa);
+// 						if(G->Map->CheckFloat3(pos)==false) continue;
+// 						if(engaged.find(*aa) != engaged.end()) continue;
+// 						if(G->Actions->AttackNearest(*aa) == false){
+// 							if(walking.find(*aa) == walking.end()){
+// 								if(G->Actions->SeekOutInterest(*aa)==false){
+// 									if(G->Actions->SeekOutLastAssault(*aa)==false){
+// 										if(G->Actions->SeekOutNearestInterest(*aa)==false){
+// 											if(G->Actions->RandomSpiral(*aa)==false){
+// 												//	G->Actions->ScheduleIdle(*aa);
+// 											}else{
+// 												walking.insert(*aa);
+// 											}
+// 										}else{
+// 											walking.insert(*aa);
+// 										}
+// 									}else{
+// 										walking.insert(*aa);
+// 									}
+// 								}else{
+// 									walking.insert(*aa);
+// 								}
+// 							}else{
+// 								continue;
+// 							}
+// 						}else{
+// 							engaged.insert(*aa);
+// 							Beacon(pos,2000);
+// 						}
+// 					}
+// 				}
+// 			}else{
+// 				groups.erase(k);
+// 			}
+// 		}
+// 	}
 }
 
 void Chaser::FireDgunsNearby(){

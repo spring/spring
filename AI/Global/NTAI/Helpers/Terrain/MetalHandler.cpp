@@ -176,7 +176,9 @@ std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,/*f
 	}
 	return v;
 }
-
+bool CMetalHandler::Viable(){
+	return true;
+}
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // Cycle through each getting an array. If an array is returned with
 // a value then return teh first value in the array. If the array
@@ -194,6 +196,26 @@ float3 CMetalHandler::getNearestPatch(float3 pos, float minMetal, float depth, c
 		for(vector<float3>::iterator vi = v->begin(); vi != v->end(); ++vi){
 			temp = vi->distance2D(pos);
 			if((temp < d)&&(cb->CanBuildAt(ud,*vi) == true)){
+				// check to see if this is in range of an enemy..............
+				int* e = new int[2000];
+				int en = G->GetEnemyUnits(e,*vi,600);
+				if( en > 0){
+					for(int i = 0; i < en; i++){
+						const UnitDef* ud = G->GetEnemyDef(e[i]);
+						if(ud == 0){
+							continue;
+						}else{
+							if(ud->weapons.empty()==false){
+								EnemyExtractor(*vi,e[i]);
+								delete [] e;
+								continue;;
+							}
+						}
+						//
+					}
+				}
+				delete [] e;
+				// ok add it
 				posx = *vi;
 				d = temp;
 				temp = 999999999.0f;
@@ -212,6 +234,13 @@ void CMetalHandler::EnemyExtractor(float3 position,int mex){
 	float3 sector_pos = G->Map->WhichSector(position);
 	rodents[mex] = sector_pos;
 	int v_index = -1;
+	if(infesters.empty()==false){
+		map<int,float3>::iterator i = infesters.find(mex);
+		if( i != infesters.end()){
+			// we already have this mex here!!!!!
+			return;
+		}
+	}
 	for(map<int,float3>::iterator i = inf_index.begin(); i != inf_index.end(); ++i){
 		if(sector_pos == i->second){
 			v_index = i->first;
@@ -221,6 +250,7 @@ void CMetalHandler::EnemyExtractor(float3 position,int mex){
 	if(v_index == -1){
 		v_index = inf_index.size();
 	}
+	infesters[mex]=position;
 	if(infestations.find(v_index) != infestations.end()){
 		infestations[v_index] += 1;
 	}else{
@@ -230,6 +260,12 @@ void CMetalHandler::EnemyExtractor(float3 position,int mex){
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 void CMetalHandler::EnemyExtractorDead(float3 position,int mex){
+	float3 p = position;
+	map<int,float3>::iterator i = infesters.find(mex);
+	if( i != infesters.end()){
+		p = i->second;
+		infesters.erase(i);
+	}
 	if(inf_index.empty() == false){
 		float3 sector_pos = G->Map->WhichSector(position);
 		int v_index = -1;

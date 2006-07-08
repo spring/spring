@@ -65,8 +65,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,6,18,0
- PRODUCTVERSION 0,6,18,0
+ FILEVERSION 0,6,21,0
+ PRODUCTVERSION 0,6,21,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -82,13 +82,13 @@ BEGIN
         BLOCK "080904b0"
         BEGIN
             VALUE "CompanyName", "AF Darkstars"
-            VALUE "FileDescription", "NTai XE9RC18 AF 2006"
-            VALUE "FileVersion", "0, 6, 18, 0"
-            VALUE "InternalName", "NTai XE9RC18"
+            VALUE "FileDescription", "NTai XE9RC21 AF 2006"
+            VALUE "FileVersion", "0, 6, 21, 0"
+            VALUE "InternalName", "NTai XE9RC21"
             VALUE "LegalCopyright", "Copyright (C)  AF Darkstars 2006"
             VALUE "OriginalFilename", "NTai.dll"
-            VALUE "ProductName", " NTai XE9RC18 skirmish AI for spring"
-            VALUE "ProductVersion", "0, 6, 18, 0"
+            VALUE "ProductName", " NTai XE9RC21 skirmish AI for spring"
+            VALUE "ProductVersion", "0, 6, 21, 0"
         END
     END
     BLOCK "VarFileInfo"

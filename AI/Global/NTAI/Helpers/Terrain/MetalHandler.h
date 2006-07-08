@@ -13,7 +13,9 @@ class CMetalHandler{
 	IAICallback *cb;
 	float getMetalAmount(int x, int z);
 public:
+	map<int,float3> infesters;
 	CMetalMap* m;
+	bool Viable();
 	float getExtractionRanged(float x, float z);
 	std::vector<float3>	metalpatch;
 	std::vector<float3> hotspot;

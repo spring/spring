@@ -10,26 +10,6 @@
 // structures at some point and globalising the unit structures.
 // Then I can keep things down in file size and make everything
 // that much nicer.
-enum a_type {a_mexraid, a_normal, a_random};
-class ackforce : public ugroup{
-public:
-	ackforce(){}
-	ackforce(Global* GLI){
-		G = GLI;
-		marching  = false;
-	}
-	virtual ~ackforce(){}
-	bool marching;
-	float3 starg;
-	a_type type;
-	unsigned int i;
-};
-struct T_Targetting{
-	Global* G;
-	ackforce* i;
-	bool upthresh;
-};
-
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // The structure used to store grid data
@@ -61,7 +41,7 @@ public:
 	void UnitDestroyed(int unit,int attacker);
 	void UnitFinished(int unit);
 	void EnemyDestroyed(int enemy, int attacker);
-	bool FindTarget(ackforce* i, bool upthresh=true);
+//	bool FindTarget(ackforce* i, bool upthresh=true);
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);
 	void UnitIdle(int unit);
 	void Update();
@@ -76,14 +56,10 @@ public:
 	void FireDgunsNearby();
 	void FireWeaponsNearby();
 	void FireDefences();
-	void EvaluateTargets();
 	float* threat_matrix;
 	int max_index;
 	set<int> engaged;
 	set<int> walking;
-	//CPotential* Targetting;
-	//float3 biggest_sector;
-	//float biggest_threat;
 
 	int threshold;
 	map<int, map<int,agrid> > sector;
@@ -99,7 +75,7 @@ public:
 	bool lock;
 //	int acknum;
 	Global* G;
-	vector<ackforce> groups;
+	//vector<ackforce> groups;
 	set<int> attack_units;
 	int enemynum;
 	vector<string> hold_pos;

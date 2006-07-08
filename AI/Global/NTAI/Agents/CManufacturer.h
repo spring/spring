@@ -23,11 +23,12 @@ public:
 	float3 GetBuildPlacement(int unit,float3 unitpos,const UnitDef* ud,int spacing);
 	bool TaskCycle(CBuilder* i);
 	bool CBuild(string name, int unit, int spacing);
-	bool FBuild(string name,int unit,int quantity);
-	void LoadBuildTree(CBuilder* ui);
+	//bool FBuild(string name,int unit,int quantity);
+	bool LoadBuildTree(CBuilder* ui);
 	void LoadGlobalTree();
 	vector<Task> Global_queue;
-
+	map<string,btype> types;
+	map<btype,string> typenames;
 	btype GetTaskType(string s);
 	string GetTaskName(btype type);
 	void RegisterTaskPair(string name, btype type);

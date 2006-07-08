@@ -64,25 +64,11 @@ bool Task::execute(int uid){
 			construction = true;
 		}
 		if(construction == true){
-			string typ = "Factory";
-			if(udi->type == typ){
-				if(G->Manufacturer->FBuild(targ,uid,1)==true){
-					return true;
-				}else{
-					valid = false;
-					G->L.print(string("fbuild returns false on :: ")+targ);
-					return false;
-				} 
-			} else{
-				if(G->Manufacturer->CBuild(targ,uid,spacing) == true){
-					return true;
-				}else{
-					valid = false;
-					G->L.print(string("cbuild returns false on :: ") + targ);
-					return false;
-				}
-			}
-				//
+			valid = G->Manufacturer->CBuild(targ,uid,spacing);
+			if(valid == false){
+				G->L.print(string("cbuild returns false on :: ")+targ);
+			} 
+			return valid;
 		} else if(type == B_RANDMOVE){
 			if(G->Actions->RandomSpiral(uid)==false){
 				valid = false;
@@ -105,38 +91,12 @@ bool Task::execute(int uid){
 		} else if(type == B_GUARDIAN){
 			return G->Actions->RepairNearby(uid,1200);
 		} else if(type == B_RESURECT){
-			if(G->Actions->RessurectNearby(uid)==false){
-				valid = false;
-				return false;
-			}else{
-				return true;
-			}
-		} else if(type == B_GLOBAL){
-			if(G->Manufacturer->Global_queue.empty() ==false){
-				//
-				for(vector<Task>::iterator i = G->Manufacturer->Global_queue.begin(); i != G->Manufacturer->Global_queue.end(); ++i){
-					if(i->execute(uid)==true){
-						G->Manufacturer->Global_queue.erase(i);
-						valid = false;
-						return true;
-					}else{
-						i->valid = true;
-						continue;
-					}
-				}
-				return false;
-			}else{
-				G->Manufacturer->LoadGlobalTree();
-			}
-			return false;
+			valid = G->Actions->RessurectNearby(uid);
+			return valid;
 		} else if(type == B_RULE){//////////////////////////////
-			//G->L.print("creating CUBuild b");
 			CUBuild b;
-			//G->L.print("created, initilialising");
 			b.Init(G,udi,uid);
-			//G->L.print("initialised, getting Economy btype");
 			btype bt = G->Economy->Get(false);
-			//G->L.print("gotten econoym btype of " + G->Manufacturer->GetTaskName(bt));
 			if(bt == B_NA){
 				valid = false;
 				return false;
@@ -155,28 +115,21 @@ bool Task::execute(int uid){
 				}
 				spacing = max(spacing,1);
 				if(r == R_FACTORY){
-					return G->Manufacturer->FBuild(targ,uid,1);
+					return G->Manufacturer->CBuild(targ,uid,0);
 				}else{
 					return G->Manufacturer->CBuild(targ,uid,spacing);
 				}
 			}else{
-				//G->L.print("B_RULE_EXTREME skipped bad return");
 				return false;
 			}
-			
 		} else if((type == B_RULE_EXTREME)||(type == B_RULE_EXTREME_CARRY)){//////////////////////////////
-			//G->L.print("creating CUBuild b");
 			CUBuild b;
-			//G->L.print("created, initilialising");
 			b.Init(G,udi,uid);
-			//G->L.print("initialised, getting Economy btype");
 			btype bt = G->Economy->Get(true);
-			//G->L.print("gotten econoym btype of " + G->Manufacturer->GetTaskName(bt));
 			if(bt == B_NA){
 				valid = false;
 				return false;
 			}
-			//G->L.print("checks out, getting targ value");
 			targ = b(bt);
 			G->L.print("gotten targ value of " + targ + " for RULE");
 			if (targ != string("")){
@@ -190,7 +143,7 @@ bool Task::execute(int uid){
 				}
 				spacing = max(spacing,1);
 				if(r == R_FACTORY){
-					return G->Manufacturer->FBuild(targ,uid,1);
+					return G->Manufacturer->CBuild(targ,uid,0);
 				}else{
 					return G->Manufacturer->CBuild(targ,uid,spacing);
 				}
@@ -209,13 +162,10 @@ bool Task::execute(int uid){
 				}else{
 					return true;
 				}
-				//
 			}else{
 				return true;
 			}
 			return valid;
-			//,
-			//,
 		}else if(type  == B_RECLAIM){
 			valid = G->Actions->ReclaimNearby(uid);
 			return valid;
@@ -241,7 +191,7 @@ bool Task::execute(int uid){
 							if(rd == 0){
 								continue;
 							}else{
-								if(rd->type == string("Factory")){
+								if(rd->builder && (rd->movedata == 0) && (rd->buildOptions.empty()==false)){
 									d = q;
 									closest = funits[i];
 									continue;
@@ -311,31 +261,19 @@ bool Task::execute(int uid){
 			}else{
 				switch (type) {
 					case B_FACTORY: {
-						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("8", "AI\\factory_spacing").c_str());
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\factory_spacing").c_str());
 						break;
 					}
 					case B_FACTORY_CHEAP:{
-						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("8", "AI\\factory_spacing").c_str());
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\factory_spacing").c_str());
 						break;
 					}
 					case B_POWER: {
-						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("8", "AI\\power_spacing").c_str());
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("5", "AI\\power_spacing").c_str());
 						break;
 					 }
 				}
-				unit_role r = R_BUILDER;
-				if(udi->movedata == 0){
-					if(udi->canfly == false){
-						if(udi->buildOptions.empty() == false){
-							r = R_FACTORY; // Factory!
-						}
-					}
-				}
-				if(r == R_FACTORY){
-					return G->Manufacturer->FBuild(targ,uid,1);
-				}else{
-                    return G->Manufacturer->CBuild(targ,uid,spacing);
-				}
+				return G->Manufacturer->CBuild(targ,uid,spacing);
 			}
 		}else{
 			if(G->cb->GiveOrder(uid,&c) != -1){
