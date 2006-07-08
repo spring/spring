@@ -77,7 +77,7 @@ public:
 	CInfo* info;
 	CDTHandler* DTHandler; // handles dragon teeth rings
 	CRadarHandler* RadarHandler;
-	CTaskFactory* TaskFactory;
+	//CTaskFactory* TaskFactory;
 
 	map<string,float> efficiency;
 	map<string,string> unit_names; //unitname -> human name
