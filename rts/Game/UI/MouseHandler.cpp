@@ -570,8 +570,17 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 			if(!(!gu->spectating && unit->unitDef->hideDamage && gs->AllyTeam(unit->team) != gu->myAllyTeam))
 			{
 				char tmp[500];
-				sprintf(tmp,"\nHealth %.0f/%.0f \nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
-					unit->health,unit->maxHealth,unit->experience,unit->metalCost+unit->energyCost/60,unit->maxRange, unit->metalMake, unit->metalUse, unit->energyMake, unit->energyUse);
+
+				sprintf(tmp,"\nHealth %.0f/%.0f",unit->health,unit->maxHealth);
+				s+=tmp;
+
+				if(unit->unitDef->maxFuel>0){
+					sprintf(tmp," Fuel %.0f/%.0f",unit->currentFuel,unit->unitDef->maxFuel);
+					s+=tmp;
+				}
+
+				sprintf(tmp,"\nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
+					unit->experience,unit->metalCost+unit->energyCost/60,unit->maxRange, unit->metalMake, unit->metalUse, unit->energyMake, unit->energyUse);
 				s+=tmp;
 			}
 		return s;

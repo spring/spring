@@ -451,7 +451,7 @@ std::string CSelectedUnits::GetTooltip(void)
 		return s;
 	}
 	char tmp[500];
-	float maxHealth=0,curHealth=0,cost=0,exp=0,range=0,metalMake=0,metalUse=0,energyMake=0,energyUse=0;
+	float maxHealth=0,curHealth=0,cost=0,exp=0,range=0,metalMake=0,metalUse=0,energyMake=0,energyUse=0,maxfuel=0,curfuel=0,numfuel=0;
 	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		maxHealth+=(*ui)->maxHealth;
 		curHealth+=(*ui)->health;
@@ -462,11 +462,22 @@ std::string CSelectedUnits::GetTooltip(void)
 		metalUse+=(*ui)->metalUse;
 		energyMake+=(*ui)->energyMake;
 		energyUse+=(*ui)->energyUse;
-
+		maxfuel+=(*ui)->unitDef->maxFuel;
+		curfuel+=(*ui)->currentFuel;
+		if((*ui)->unitDef->maxFuel > 0)
+			numfuel++;
 	}
 	float num=selectedUnits.size();
-	sprintf(tmp,"\nHealth %.0f/%.0f \nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
-			curHealth,maxHealth,exp/num,cost,range/num, metalMake, metalUse, energyMake, energyUse);
+	sprintf(tmp,"\nHealth %.0f/%.0f",curHealth,maxHealth);
+	s+=tmp;
+
+	if(maxfuel>0){
+		sprintf(tmp," Fuel %.0f/%.0f",curfuel/numfuel,maxfuel/numfuel);
+		s+=tmp;
+	}
+
+	sprintf(tmp,"\nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
+			exp/num,cost,range/num, metalMake, metalUse, energyMake, energyUse);
 	s+=tmp;
 
 	return s;

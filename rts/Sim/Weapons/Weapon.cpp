@@ -81,7 +81,8 @@ CWeapon::CWeapon(CUnit* owner)
 	slavedTo(0),
 	mainDir(0,0,1),
 	maxMainDirAngleDif(-1),
-	hasCloseTarget(false)
+	hasCloseTarget(false),
+	fuelUsage(0)
 {
 }
 
@@ -167,6 +168,7 @@ void CWeapon::Update()
 	&& (weaponDef->stockpile || (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost))
 	&& (!weaponDef->stockpile || numStockpiled)
 	&& (weaponDef->waterweapon || weaponPos.y>0)
+	&& (owner->unitDef->maxFuel==0 || owner->currentFuel > 0)
 	){
 		std::vector<int> args;
 		args.push_back(0);
@@ -182,6 +184,7 @@ void CWeapon::Update()
 			} else {
 				owner->UseEnergy(energyFireCost);
 				owner->UseMetal(metalFireCost);
+				owner->currentFuel = max(0.f, owner->currentFuel - fuelUsage);
 			}
 			if(weaponDef->stockpile)
 				reloadStatus=gs->frameNum+60;

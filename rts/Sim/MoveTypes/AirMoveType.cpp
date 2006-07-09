@@ -128,7 +128,7 @@ void CAirMoveType::Update(void)
 	if(reservedPad){
 		CUnit* unit=reservedPad->unit;
 		float3 relPos=unit->localmodel->GetPiecePos(reservedPad->piece);
-	float3 pos=unit->pos + unit->frontdir*relPos.z + unit->updir*relPos.y + unit->rightdir*relPos.x;
+		float3 pos=unit->pos + unit->frontdir*relPos.z + unit->updir*relPos.y + unit->rightdir*relPos.x;
 		if(padStatus==0){
 			if(aircraftState!=AIRCRAFT_FLYING && aircraftState!=AIRCRAFT_TAKEOFF)
 				SetState(AIRCRAFT_FLYING);
@@ -138,7 +138,7 @@ void CAirMoveType::Update(void)
 			if(pos.distance(owner->pos)<400){
 				padStatus=1;
 			}
-//			geometricObjects->AddLine(owner->pos,pos,1,0,1);
+			//			geometricObjects->AddLine(owner->pos,pos,1,0,1);
 		} else if(padStatus==1){
 			if(aircraftState!=AIRCRAFT_LANDING)
 				SetState(AIRCRAFT_LANDING);
@@ -149,17 +149,17 @@ void CAirMoveType::Update(void)
 			if(owner->pos.distance(pos)<3 || aircraftState==AIRCRAFT_LANDED){
 				padStatus=2;
 			}
-//			geometricObjects->AddLine(owner->pos,pos,10,0,1);
+			//			geometricObjects->AddLine(owner->pos,pos,10,0,1);
 		} else {
 			if(aircraftState!=AIRCRAFT_LANDED)
 				SetState(AIRCRAFT_LANDED);
-			
+
 			owner->pos=pos;
 
-			owner->AddBuildPower(20,unit);
+			owner->AddBuildPower(unit->unitDef->buildSpeed/30,unit);
+			owner->currentFuel = min (owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
-
-			if(owner->health>=owner->maxHealth-1){
+			if(owner->health>=owner->maxHealth-1 && owner->currentFuel >= owner->unitDef->maxFuel){
 				airBaseHandler->LeaveLandingPad(reservedPad);
 				reservedPad=0;
 				padStatus=0;
@@ -286,8 +286,11 @@ EndNormalControl:
 
 void CAirMoveType::SlowUpdate(void)
 {
+	if(aircraftState!=AIRCRAFT_LANDED && owner->unitDef->maxFuel>0)
+		owner->currentFuel = max (0.f, owner->currentFuel - (16.f/GAME_SPEED));
+
 	if(!reservedPad && aircraftState==AIRCRAFT_FLYING && owner->health<owner->maxHealth*repairBelowHealth){
-		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,8000);
+		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,8000,owner->unitDef->minAirBasePower);
 		if(lp){
 			AddDeathDependence(lp);
 			reservedPad=lp;
@@ -873,6 +876,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	updir=rightdir.cross(frontdir);
 
 	owner->midPos=pos+frontdir*owner->relMidPos.z + updir*owner->relMidPos.y + rightdir*owner->relMidPos.x;
+
 #ifdef DEBUG_AIRCRAFT
 	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){
 		info->AddLine("UpdataAP %.1f %.1f %.1f %.1f",speedf,pos.x,pos.y,pos.z);

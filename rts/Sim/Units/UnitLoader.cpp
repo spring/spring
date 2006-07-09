@@ -446,6 +446,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->mainDir=udw->mainDir;
 	weapon->maxMainDirAngleDif=udw->maxAngleDif;
 
+	weapon->fuelUsage = udw->fuelUsage;
 	weapon->Init();
 
 	return weapon;

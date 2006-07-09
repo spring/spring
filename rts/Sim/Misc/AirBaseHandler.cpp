@@ -2,6 +2,7 @@
 #include "AirBaseHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/UnitDef.h"
 #include "mmgr.h"
 
 CAirBaseHandler* airBaseHandler=0;
@@ -81,16 +82,27 @@ void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 //Try to find an airbase and reserve it if one can be found
 //caller must call LeaveLandingPad if it gets one and is finished with it or dies
 //its the callers responsibility to detect if the base dies while its reserved
-CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float maxDist)
+CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float maxDist,float minPower)
 {
+	float closest=maxDist;
+	std::list<LandingPad*>::iterator foundPad;
+	std::list<AirBase*>::iterator foundBase=freeBases[unit->allyteam].end();
+
 	for(std::list<AirBase*>::iterator bi=freeBases[unit->allyteam].begin();bi!=freeBases[unit->allyteam].end();++bi){
-		if((*bi)->unit->pos.distance(unit->pos)>maxDist)
+		if((*bi)->unit->pos.distance(unit->pos)>=closest || (*bi)->unit->unitDef->buildSpeed < minPower)
 			continue;
 		for(std::list<LandingPad*>::iterator pi=(*bi)->freePads.begin();pi!=(*bi)->freePads.end();++pi){
-			LandingPad* lp=*pi;
-			(*bi)->freePads.erase(pi);
-			return lp;
+			closest=(*bi)->unit->pos.distance(unit->pos);
+			foundPad=pi;
+			foundBase=bi;
 		}
+	}
+
+
+	if(foundBase!=freeBases[unit->allyteam].end()){
+		LandingPad* found=*foundPad;
+		(*foundBase)->freePads.erase(foundPad);
+		return found;
 	}
 	return 0;
 }
@@ -98,4 +110,23 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float max
 void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 {
 	pad->base->freePads.push_back(pad);
+}
+
+//Try to find the closest airbase even if its reserved
+float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float maxDist,float minPower)
+{
+	float closest=maxDist;
+	std::list<AirBase*>::iterator foundBase=freeBases[unit->allyteam].end();
+
+	for(std::list<AirBase*>::iterator bi=freeBases[unit->allyteam].begin();bi!=freeBases[unit->allyteam].end();++bi){
+		if((*bi)->unit->pos.distance(unit->pos)>=closest || (*bi)->unit->unitDef->buildSpeed < minPower)
+			continue;
+		closest=(*bi)->unit->pos.distance(unit->pos);
+		foundBase=bi;
+	}
+
+	if(foundBase!=freeBases[unit->allyteam].end()){
+		return (*foundBase)->unit->pos;
+	}
+	return ZeroVector;
 }

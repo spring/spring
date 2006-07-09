@@ -314,6 +314,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.maxElevator, "0.01", "UNITINFO\\maxElevator");	//turn speed around pitch axis
 	tdfparser.GetDef(ud.maxRudder, "0.004", "UNITINFO\\maxRudder");			//turn speed around yaw axis
 
+	tdfparser.GetDef(ud.maxFuel, "0", "UNITINFO\\maxfuel");						//max flight time in seconds before aircraft must return to base
+	tdfparser.GetDef(ud.refuelTime, "5", "UNITINFO\\refueltime");
+	tdfparser.GetDef(ud.minAirBasePower, "0", "UNITINFO\\minairbasepower");
+
 
 	ud.categoryString=tdfparser.SGetValueDef("", "UNITINFO\\Category");
 	ud.category=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\Category"));
@@ -342,7 +346,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 				info->AddLine("Error: Spring requires a NOWEAPON weapon type to be present as a placeholder for missing weapons");
 				break;
 			} else
-				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0));
+				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0,0));
 		}
 
 		string badTarget;
@@ -378,7 +382,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 		float angleDif=cos(atof(tdfparser.SGetValueDef("360", string("UNITINFO\\MaxAngleDif")+c).c_str())*PI/360);
 
-		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc,otc));
+		float fuelUse=atof(tdfparser.SGetValueDef("0", string("UNITINFO\\WeaponFuelUsage")+c).c_str());
+
+		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc,otc,fuelUse));
 	}
 	tdfparser.GetDef(ud.canDGun, "0", "UNITINFO\\candgun");
 

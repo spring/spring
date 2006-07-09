@@ -116,6 +116,7 @@ public:
 	float3 mainDir;								//main aim dir of weapon
 	float maxMainDirAngleDif;					//how far away from main aim dir the weapon can aim at something (as an acos value)
 
+	float fuelUsage;
 };
 
 #endif /* WEAPON_H */

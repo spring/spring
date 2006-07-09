@@ -33,8 +33,10 @@ public:
 	std::list<AirBase*> freeBases[MAX_TEAMS];
 	std::list<AirBase*> bases[MAX_TEAMS];
 
-	LandingPad* FindAirBase(CUnit* unit, float maxDist);
+	LandingPad* FindAirBase(CUnit* unit, float maxDist, float minPower);
 	void LeaveLandingPad(LandingPad* pad);
+
+	float3 FindClosestAirBasePos(CUnit* unit, float maxDist, float minPower);
 };
 
 extern CAirBaseHandler* airBaseHandler;
