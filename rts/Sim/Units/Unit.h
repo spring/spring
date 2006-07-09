@@ -255,6 +255,7 @@ public:
 	std::list<CMissileProjectile*> incomingMissiles;
 	int lastFlareDrop;
 
+	float currentFuel;
 protected:
 	void ExperienceChange();
 public:

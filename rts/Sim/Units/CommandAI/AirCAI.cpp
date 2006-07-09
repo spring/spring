@@ -156,6 +156,55 @@ void CAirCAI::SlowUpdate()
 
 	CAirMoveType* myPlane=(CAirMoveType*)owner->moveType;
 
+	if(owner->unitDef->maxFuel>0){
+		if(myPlane->reservedPad){
+			return;
+		}else{
+			if(owner->currentFuel <= 0){
+				owner->userAttackGround=false;
+				owner->userTarget=0;
+				inCommand=false;
+
+				CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,8000,owner->unitDef->minAirBasePower);
+				if(lp){
+					myPlane->AddDeathDependence(lp);
+					myPlane->reservedPad=lp;
+					myPlane->padStatus=0;
+					myPlane->oldGoalPos=myPlane->goalPos;
+					return;
+				}
+				float3 landingPos = airBaseHandler->FindClosestAirBasePos(owner,8000,owner->unitDef->minAirBasePower);
+				if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 300){
+					if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED && owner->pos.distance2D(landingPos) > 800)
+						myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);	
+					myPlane->goalPos=landingPos;		
+				} else {
+					if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
+						myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);	
+				}
+				return;
+			}
+			if(owner->currentFuel < myPlane->repairBelowHealth*owner->unitDef->maxFuel){
+				if(commandQue.empty() || commandQue.front().id==CMD_PATROL){
+					CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,8000,owner->unitDef->minAirBasePower);
+					if(lp){
+						owner->userAttackGround=false;
+						owner->userTarget=0;
+						inCommand=false;
+						myPlane->AddDeathDependence(lp);
+						myPlane->reservedPad=lp;
+						myPlane->padStatus=0;
+						myPlane->oldGoalPos=myPlane->goalPos;
+						if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_LANDED){
+							myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
+						}
+						return;
+					}		
+				}
+			}
+		}
+	}
+
 	if(commandQue.empty()){
 		if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_FLYING && !owner->unitDef->DontLand ())
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);

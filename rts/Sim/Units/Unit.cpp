@@ -166,7 +166,8 @@ CUnit::CUnit ()
 	lastFlareDrop(0),
 	dontFire(false),
 	deathScriptFinished(false),
-	dontUseWeapons(false)
+	dontUseWeapons(false),
+	currentFuel(0)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -970,6 +971,7 @@ void CUnit::Init(void)
 	midPos=pos+frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x;
 	losHeight=relMidPos.y+radius*0.5;
 	height = model->height;		//TODO: This one would be much better to have either in Constructor or UnitLoader!//why this is always called in unitloader
+	currentFuel=unitDef->maxFuel;
 
 	//All ships starts on water, all other on ground.
 	//TODO: Improve this. There might be cases when this is not correct.

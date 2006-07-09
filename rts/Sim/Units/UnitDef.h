@@ -97,20 +97,22 @@ struct UnitDef
 	UnitModelDef model;
 
 	struct UnitDefWeapon {
-		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat,unsigned int onlyTargetCat)
+		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat,unsigned int onlyTargetCat,float fuelUse)
 			: name(name),
 				def(def),
 				slavedTo(slavedTo),
 				mainDir(mainDir),
 				maxAngleDif(maxAngleDif),
 				badTargetCat(badTargetCat),
-				onlyTargetCat(onlyTargetCat) {}
+				onlyTargetCat(onlyTargetCat),
+				fuelUsage(fuelUse) {}
 
 		std::string name;
 		WeaponDef* def;
 		int slavedTo;
 		float3 mainDir;
 		float maxAngleDif;
+		float fuelUsage;							//how many seconds of fuel it costs for the owning unit to fire this weapon
 		unsigned int badTargetCat;
 		unsigned int onlyTargetCat;
 	};
@@ -242,6 +244,11 @@ struct UnitDef
 
 	bool showNanoSpray; // Does nano spray get shown at all
 	float3 NanoColor; // If nano spray is displayed what color is it?
+
+
+	float maxFuel;					//max flight time in seconds before the aircraft needs to return to a air repair bay to refuel
+	float refuelTime;				//time to fully refuel unit
+	float minAirBasePower;	//min buildpower for airbases that this aircraft can land on
 };
 
 
