@@ -91,7 +91,7 @@ struct WeaponDef
 	float thickness;
 	float laserflaresize;
 	float corethickness;
-	float beamlength;
+	float duration;
 
 	int graphicsType;
 	bool soundTrigger;
