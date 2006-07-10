@@ -101,7 +101,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].corethickness, "0.25", weaponname + "\\corethickness");
 	sunparser->GetDef(weaponDefs[id].laserflaresize, "15", weaponname + "\\laserflaresize");
 	sunparser->GetDef(weaponDefs[id].intensity, "0.9", weaponname + "\\intensity");
-	sunparser->GetDef(weaponDefs[id].beamlength, "30", weaponname + "\\beamlength");
+	sunparser->GetDef(weaponDefs[id].duration, "0.05", weaponname + "\\duration");
 
 	if(weaponDefs[id].name.find("disintegrator")!=string::npos){	//fulhack
 		weaponDefs[id].visuals.renderType = WEAPON_RENDERTYPE_FIREBALL;}
