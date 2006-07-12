@@ -24,9 +24,9 @@ string Log::FrameTime(){
 	char c[20];
 	int Time = G->cb->GetCurrentFrame();
 	sprintf(c,"%i",Time);
-	string R = " <";
+	string R = " < Frame: ";
 	R += c;
-	R += " Frames> ";
+	R += " >";
 	return R;
 }
 string Log::GameTime(){
