@@ -21,33 +21,36 @@ CUBuild::~CUBuild(){
 bool CUBuild::Useless(string name){
 	NLOG("CUBuild::Useless");
 	//TODO: Finish CUBuild::Useless()
-	const UnitDef* ud = G->GetUnitDef(name);
-	if(ud == 0){
+	if(G->Pl->feasable(name,this->uid)==false){
+		return false;
+	}
+	const UnitDef* udt = G->GetUnitDef(name);
+	if(udt == 0){
 		return false;
 	}else{
 		// do stuff to determine if there is no use for this unit
-		if(ud->radarRadius > 1) return false;
-		if(ud->sonarJamRadius> 1) return false;
-		if(ud->sonarRadius > 1) return false;
-		if(ud->builder == true) return false;
-		if(ud->weapons.empty() == false) return false;
-		if(ud->canmove == true) return false;
-		if(ud->canfly == true) return false;
-		if(ud->canhover == true) return false;
-		if(ud->canCapture == true) return false;
-		if(ud->canDGun == true) return false;
-		if(ud->canKamikaze == true) return false;
-		if(ud->canResurrect == true) return false;
-		if(ud->energyMake > 10) return false;
-		if(ud->type == string("MetalExtractor")) return false;
-		if(ud->isMetalMaker == true) return false;
-		if(ud->isFeature == true) return false;
-		if(ud->jammerRadius > 10) return false;
-		if(ud->metalMake > 0) return false;
-		if(ud->needGeo == true) return false;
-		if(ud->tidalGenerator > 0) return false;
-		if(ud->windGenerator > 0) return false;
-		if(ud->transportCapacity > 0) return false;
+		if(udt->radarRadius > 1) return false;
+		if(udt->sonarJamRadius> 1) return false;
+		if(udt->sonarRadius > 1) return false;
+		if(udt->builder == true) return false;
+		if(udt->weapons.empty() == false) return false;
+		if(udt->canmove == true) return false;
+		if(udt->canfly == true) return false;
+		if(udt->canhover == true) return false;
+		if(udt->canCapture == true) return false;
+		if(udt->canDGun == true) return false;
+		if(udt->canKamikaze == true) return false;
+		if(udt->canResurrect == true) return false;
+		if(udt->energyMake > 10) return false;
+		if(udt->type == string("MetalExtractor")) return false;
+		if(udt->isMetalMaker == true) return false;
+		if(udt->isFeature == true) return false;
+		if(udt->jammerRadius > 10) return false;
+		if(udt->metalMake > 0) return false;
+		if(udt->needGeo == true) return false;
+		if(udt->tidalGenerator > 0) return false;
+		if(udt->windGenerator > 0) return false;
+		if(udt->transportCapacity > 0) return false;
 		return true;
 	}
 	return false;
@@ -524,11 +527,11 @@ string CUBuild::GetFACTORY(){
 			if(pd == 0) continue;
 			if((pd->builder == true)&&(!pd->movedata)&&(pd->canfly == false)){
 				if((G->info->spacemod == true)||(water == true)){
-					if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+					if(G->Pl->feasable(pd->name,uid)==false) continue;
 					possibles.push_back(pd->name);
 					facnum++;
 				} else if (pd->floater == false){
-					if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+					if(G->Pl->feasable(pd->name,uid)==false) continue;
 					possibles.push_back(pd->name);
 					facnum++;
 				}
@@ -595,7 +598,7 @@ string CUBuild::GetGEO(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+			if(G->Pl->feasable(pd->name,uid)==false) continue;
 			if((pd->needGeo == true)&&(pd->builder == false)) possibles.push_back(pd->name);
 		}
 	}
@@ -637,7 +640,7 @@ string CUBuild::GetRANDOM(){
 			if(pd->isMetalMaker == true) continue; // no metal makers
 			if(Useless(pd->name)==true) continue;
 			if((pd->metalCost+pd->energyCost < (G->cb->GetEnergy()+G->cb->GetMetal())*0.9)&&(((pd->floater == false)&&(water == false)&&(G->info->spacemod == false))||((G->info->spacemod == true)||(water == true)))){
-				if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				possibles.push_back(pd->name);
 				randnum++;
 			}
@@ -672,11 +675,11 @@ string CUBuild::GetDEFENCE(){
 			if(pd == 0) continue;
 			if((pd->weapons.empty() == false)&&(!pd->movedata)){
 				if((G->info->spacemod == true)||(water == true)){
-					if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+					if(G->Pl->feasable(pd->name,uid)==false) continue;
 					possibles.push_back(pd->name);
 					defnum++;
 				} else if (pd->floater == false){
-					if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+					if(G->Pl->feasable(pd->name,uid)==false) continue;
 					possibles.push_back(pd->name);
 					defnum++;
 				}
@@ -747,14 +750,13 @@ string CUBuild::GetESTORE(){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
 			if(pd->energyStorage >100){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				if(pd->floater == true){
 					if((G->info->spacemod == true)||(water == true)){
-						if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
 						possibles.push_back(pd->name);
 						randnum++;
 					}
 				} else{
-					if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
 					possibles.push_back(pd->name);
 					randnum++;
 				}
@@ -790,14 +792,13 @@ string CUBuild::GetMSTORE(){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
 			if(pd->metalStorage >100){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				if(pd->floater == true){
 					if((G->info->spacemod == true)||(water == true)){
-						if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
 						possibles.push_back(pd->name);
 						randnum++;
 					}
 				} else{
-					if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
 					possibles.push_back(pd->name);
 					randnum++;
 				}
@@ -832,9 +833,8 @@ string CUBuild::GetSILO(){
 			if(pd == 0) continue;
 			if(pd->weapons.empty() != true){
 				for(vector<UnitDef::UnitDefWeapon>::const_iterator i = pd->weapons.begin(); i != pd->weapons.end(); ++i){
-					//
 					if((i->def->stockpile == true)&&(i->def->targetable > 0)){
-						if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+						if(G->Pl->feasable(pd->name,uid)==false) continue;
 						possibles.push_back(pd->name);
 						randnum++;
 						break;
@@ -948,7 +948,7 @@ string CUBuild::GetANTIMISSILE(){
 				for(vector<UnitDef::UnitDefWeapon>::const_iterator i = pd->weapons.begin(); i != pd->weapons.end(); ++i){
 					//
 					if(i->def->interceptor == 1){
-						if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
+						if(G->Pl->feasable(pd->name,uid)==false) continue;
 						possibles.push_back(pd->name);
 						randnum++;
 						break;
@@ -980,7 +980,6 @@ string CUBuild::GetARTILLERY(){
 	//list<string> possibles;
 	//const vector<CommandDescription>* di = G->cb->GetUnitCommands(uid);
 	//if(di == 0) return string("");
-	
 }
 
 string CUBuild::GetTARG(){
@@ -994,14 +993,13 @@ string CUBuild::GetTARG(){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
 			if(pd->targfac == true){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				if(pd->floater == true){
 					if((G->info->spacemod == true)||(water == true)){
-						if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
 						possibles.push_back(pd->name);
 						randnum++;
 					}
 				} else{
-					if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
 					possibles.push_back(pd->name);
 					randnum++;
 				}
@@ -1035,6 +1033,7 @@ string CUBuild::GetFOCAL_MINE(){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
 			if((pd->canKamikaze==true)&&((pd->canfly == false)&&(pd->movedata == 0))){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				if(pd->floater == true){
 					if((G->info->spacemod == true)||(water == true)){
 						possibles.push_back(pd->name);
@@ -1093,6 +1092,7 @@ string CUBuild::GetMINE(){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
 			if((pd->canKamikaze)&&((pd->canfly == false)&&(pd->movedata == 0))){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				if(pd->floater == true){
 					if((G->info->spacemod == true)||(water == true)){
 						possibles.push_back(pd->name);
@@ -1133,6 +1133,7 @@ string CUBuild::GetCARRIER(){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
 			if(pd->isAirBase == true){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				if(pd->floater == true){
 					if((G->info->spacemod == true)||(water == true)){
 						possibles.push_back(pd->name);

@@ -12,6 +12,7 @@ void Scouter::InitAI(Global* GLI){
 	cq.GetDef(nd,"0","GAME\\NumTeams");
 	TdfParser MP(G);
 	MP.LoadFile(string("maps\\")+string(G->cb->GetMapName()).substr(0,string(G->cb->GetMapName()).find('.'))+".smd");
+	vector<string> sections = MP.GetSectionList("MAP\\");
 	for(int n=0; n<nd; n++){
     	char c[8];
     	//itoa(n,c,10);// something to do with ANSI standards and 64 bit compatability
@@ -19,8 +20,10 @@ void Scouter::InitAI(Global* GLI){
 		float3 pos= UpVector;
     	MP.GetDef(pos.x, "-1", string("MAP\\TEAM") + string(c) + "\\StartPosX");
     	MP.GetDef(pos.z, "-1", string("MAP\\TEAM") + string(c) + "\\StartPosZ");
-		start_pos.push_back(pos);
-		G->Actions->AddPoint(pos);
+		if(G->Map->CheckFloat3(pos)==true){
+			start_pos.push_back(pos);
+			G->Actions->AddPoint(pos);
+		}
     }
 }
 
