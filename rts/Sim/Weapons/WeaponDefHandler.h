@@ -56,6 +56,7 @@ struct WeaponDef
 	float areaOfEffect;
 	bool noSelfDamage;
 	float fireStarter;
+	float edgeEffectivness;
 
 	int salvosize;
 	float salvodelay;
