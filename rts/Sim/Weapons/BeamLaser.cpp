@@ -139,5 +139,5 @@ void CBeamLaser::Fire(void)
 	}
 	float	intensity=1-(curLength)/(range*2);
 	if(curLength<maxLength)
-		helper->Explosion(hitPos,damages*intensity,areaOfEffect,owner, true, 1.0f, false,weaponDef->explosionGenerator);
+		helper->Explosion(hitPos,damages*intensity,areaOfEffect,weaponDef->edgeEffectivness,owner, true, 1.0f, false,weaponDef->explosionGenerator);
 }
