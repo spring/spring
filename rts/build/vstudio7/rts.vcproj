@@ -1198,6 +1198,12 @@
 				RelativePath="..\..\Rendering\GroundFlash.h">
 			</File>
 			<File
+				RelativePath="..\..\Rendering\IconHandler.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Rendering\IconHandler.h">
+			</File>
+			<File
 				RelativePath="..\..\Rendering\InMapDraw.cpp">
 			</File>
 			<File
@@ -2246,6 +2252,12 @@
 					RelativePath="..\..\System\FileSystem\ArchiveBuffered.h">
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\ArchiveDir.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\ArchiveDir.h">
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\ArchiveFactory.cpp">
 				</File>
 				<File
@@ -3025,18 +3037,6 @@
 				</File>
 			</Filter>
 		</Filter>
-		<File
-			RelativePath="..\..\System\FileSystem\ArchiveDir.cpp">
-		</File>
-		<File
-			RelativePath="..\..\System\FileSystem\ArchiveDir.h">
-		</File>
-		<File
-			RelativePath="..\..\System\IconHandler.cpp">
-		</File>
-		<File
-			RelativePath="..\..\System\IconHandler.h">
-		</File>
 		<File
 			RelativePath=".\resource.h">
 		</File>

@@ -31,7 +31,7 @@
 #include "SDL_keysym.h"
 #include "mmgr.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "System/IconHandler.h"
+#include "Rendering/IconHandler.h"
 
 CUnitDrawer* unitDrawer;
 using namespace std;
@@ -45,7 +45,7 @@ CUnitDrawer::CUnitDrawer(void)
 		texturehandler=new CTextureHandler;
 
 	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
-	unitIconDist=configHandler.GetInt("UnitIconDist",200); // TODO: make this a config option just like 'unitDrawDist'.
+	unitIconDist=configHandler.GetInt("UnitIconDist",200); 
 	iconLength=750*unitIconDist*unitIconDist;
 
 	CBitmap white;

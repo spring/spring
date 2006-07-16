@@ -68,7 +68,7 @@
 #include "Sim/Path/PathManager.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
-#include "System/IconHandler.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #ifdef DIRECT_CONTROL_ALLOWED
 #include "Sim/Units/COB/CobFile.h"
