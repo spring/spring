@@ -12,6 +12,10 @@
 #ifdef NEW_GUI
 	#include "GUI/GUIcontroller.h"
 #endif
+
+#ifdef WIN32
+#include "Platform/Win/win32.h"
+#endif
  
 #include "SyncTracer.h"
 #include "Platform/ConfigHandler.h"
@@ -181,6 +185,10 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
+#ifdef WIN32
+	OutputDebugString(text);
+	OutputDebugString("\n");
+#endif
 	float maxWidth = 25.0f;
 	int pos=0, line_start=0;
 
