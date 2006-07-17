@@ -379,7 +379,7 @@ namespace terrain {
 		}
 	}
 
-	static inline bool QuadSortFunc (QuadRenderInfo& q1, QuadRenderInfo& q2)
+	static inline bool QuadSortFunc (const QuadRenderInfo& q1, const QuadRenderInfo& q2)
 	{
 		return q1.quad->textureSetup->sortkey < q2.quad->textureSetup->sortkey;
 	}
