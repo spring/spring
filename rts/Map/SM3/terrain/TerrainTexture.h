@@ -9,8 +9,6 @@
 #include "Textures.h"
 
 class TdfParser;
-class CglFont;
-
 
 namespace terrain {
 

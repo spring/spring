@@ -11,6 +11,8 @@
 
 #include <cassert>
 #include <deque>
+#include <set>
+#include <algorithm>
 
 #include "TerrainBase.h"
 #include "Terrain.h"
@@ -514,7 +516,7 @@ namespace terrain {
 		for (int a=0;a<numStages;a++)
 		{
 			char num[10];
-			itoa(a, num, 10);
+			SNPRINTF(num, 10, "%d", a);
 			
 			string ts = path + "texstage" + num + "\\";
 
