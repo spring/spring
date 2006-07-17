@@ -81,7 +81,7 @@ void* VertexBuffer::Bind ()
 		glBindBufferARB(type, id);
 		return 0;
 	}
-	else return data;
+	else return (void*)data;
 }
 
 
