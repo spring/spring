@@ -29,7 +29,7 @@ namespace terrain {
 		static int TotalSize() { return totalBufferSize; } /// returns total buffer memory size used by all VertexBuffer instances
 
 	protected:
-		void *data;
+		char *data;
 		uint id;
 		uint size;
 		uint type;
