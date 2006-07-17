@@ -17,7 +17,7 @@
 #endif
 #include "FileSystem/FileHandler.h"
 #include "SMF/SmfReadMap.h"
-//#include "SM3/Sm3Map.h"
+#include "SM3/Sm3Map.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Game/UI/InfoConsole.h"
@@ -42,8 +42,8 @@ void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
 	string extension = mapname.substr(mapname.length()-3);
 	if (extension == "smf") 
 		parser.LoadFile (string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd");
-/*	else if(extension == "sm3")
-		parser.LoadFile (string("maps/")+mapname);*/
+	else if(extension == "sm3")
+		parser.LoadFile (string("maps/")+mapname);
 }
 
 CReadMap* CReadMap::LoadMap (const std::string& mapname)
@@ -51,10 +51,10 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	string extension = mapname.substr(mapname.length()-3);
 
 	CReadMap *rm = 0;
-/*	if (extension=="sm3") {
+	if (extension=="sm3") {
 		rm = new CSm3ReadMap;
 		((CSm3ReadMap*)rm)->Initialize (mapname.c_str());
-	} else */
+	} else
 		rm = new CSmfReadMap(mapname);
 	
 	if (!rm)
@@ -102,7 +102,7 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 			rm->mapDefParser.GetDef(rm->terrainTypes[a].receiveTracks,"1",section+"receivetracks");
 		}
 	} else
-		throw std::runtime_error ("Bad/no terrain type map.");
+		throw content_error("Bad/no terrain type map.");
 	if (typemap) rm->FreeInfoMap ("type", typemap);
 
 	rm->groundBlockingObjectMap = new CSolidObject*[gs->mapSquares];
