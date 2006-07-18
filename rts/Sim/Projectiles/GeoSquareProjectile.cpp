@@ -3,6 +3,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2)
 : CProjectile((p1+p2)*0.5,ZeroVector,0),
@@ -45,15 +46,15 @@ void CGeoSquareProjectile::Draw(void)
 	dir2.Normalize();
 
 	if(w2!=0){
-		va->AddVertexTC(p1-dir1*w1,1.0/16,1.0/8,col);
-		va->AddVertexTC(p1+dir1*w1,1.0/16,0.0/8,col);
-		va->AddVertexTC(p2+dir2*w2,1.0/16,0.0/8,col);
-		va->AddVertexTC(p2-dir2*w2,1.0/16,1.0/8,col);
+		va->AddVertexTC(p1-dir1*w1,ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,col);
+		va->AddVertexTC(p1+dir1*w1,ph->laserfallofftex.xstart/16,ph->laserfallofftex.yend,col);
+		va->AddVertexTC(p2+dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.yend,col);
+		va->AddVertexTC(p2-dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.ystart,col);
 	} else {
-		va->AddVertexTC(p1-dir1*w1,1.0/16,1.0/8,col);
-		va->AddVertexTC(p1+dir1*w1,1.0/16,0.0/8,col);
-		va->AddVertexTC(p2+dir2*w2,1.0/16,0.5/8,col);
-		va->AddVertexTC(p2-dir2*w2,1.0/16,1.5/8,col);
+		va->AddVertexTC(p1-dir1*w1,ph->laserfallofftex.xstart,ph->laserfallofftex.yend,col);
+		va->AddVertexTC(p1+dir1*w1,ph->laserfallofftex.xstart/16,ph->laserfallofftex.ystart,col);
+		va->AddVertexTC(p2+dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.ystart,col);
+		va->AddVertexTC(p2-dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.yend,col);
 	}
 }
 

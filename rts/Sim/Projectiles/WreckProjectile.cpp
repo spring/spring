@@ -56,8 +56,8 @@ void CWreckProjectile::Draw(void)
 	col[3]=200;
 
 	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,0,0,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,0.125,0,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,0.125,0.125,col);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,0.0,0.125,col);
+	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.yend,col);
+	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.yend,col);
 }

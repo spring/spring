@@ -8,6 +8,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Map/Ground.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CR_BIND_DERIVED(CDirtProjectile, CProjectile);
 
@@ -85,8 +86,10 @@ void CDirtProjectile::Draw()
 
 	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+gu->timeOffset*sizeExpansion;
-	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize*partAbove,0.25*(1-partAbove),0.51,col);
-	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize*partAbove,0.25*(1-partAbove),1,col);
-	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,0.5,1,col);
-	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,0.5,0.51,col);
+	float texx = ph->randdotstex.xstart + (ph->randdotstex.xend-ph->randdotstex.xstart)*((1-partAbove)*0.5);//0.25*(1-partAbove)
+
+	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize*partAbove,texx,ph->randdotstex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize*partAbove,texx,ph->randdotstex.yend,col);
+	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,ph->randdotstex.xend,ph->randdotstex.yend,col);
+	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,ph->randdotstex.xend,ph->randdotstex.ystart,col);
 }

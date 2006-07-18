@@ -9,6 +9,7 @@
 #include "myMath.h"
 #include "BubbleProjectile.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)
 : CWeaponProjectile(pos,speed,owner,target,ZeroVector,weaponDef,damages,0),
@@ -28,6 +29,8 @@ CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUn
 	SetRadius(0.0);
 	drawRadius=maxSpeed*8;
 	float3 camDir=(pos-camera->pos).Normalize();
+	texx = ph->circularthingytex.xstart - (ph->circularthingytex.xend-ph->circularthingytex.xstart)*0.5;
+	texy = ph->circularthingytex.ystart - (ph->circularthingytex.yend-ph->circularthingytex.ystart)*0.5;
 #ifdef TRACE_SYNC
 	tracefile << "New projectile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -143,44 +146,44 @@ void CTorpedoProjectile::Draw(void)
 	float3 u=dir.cross(r);
 	const float h=12;
 	const float w=2;
-	va->AddVertexTC(interPos+r*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+u*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+u*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+r*w+dir*h, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos+r*w, texx,texy,col);
+	va->AddVertexTC(interPos+u*w, texx,texy,col);
+	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
 
-	va->AddVertexTC(interPos+u*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-r*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-r*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+u*w+dir*h, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos+u*w, texx,texy,col);
+	va->AddVertexTC(interPos-r*w, texx,texy,col);
+	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
 
-	va->AddVertexTC(interPos-r*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-u*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-u*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-r*w+dir*h, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos-r*w, texx,texy,col);
+	va->AddVertexTC(interPos-u*w, texx,texy,col);
+	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
 
-	va->AddVertexTC(interPos-u*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+r*w, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+r*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-u*w+dir*h, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos-u*w, texx,texy,col);
+	va->AddVertexTC(interPos+r*w, texx,texy,col);
+	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
 
 
-	va->AddVertexTC(interPos+r*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+u*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
 
-	va->AddVertexTC(interPos+u*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-r*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
 
-	va->AddVertexTC(interPos-r*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-u*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
 
-	va->AddVertexTC(interPos-u*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+r*w+dir*h, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*h*1.2, 1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
 }

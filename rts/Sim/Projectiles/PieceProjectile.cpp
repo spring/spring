@@ -20,7 +20,7 @@
 #include "Matrix44f.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "mmgr.h"
-
+#include "ProjectileHandler.h"
 
 static const float Smoke_Time=40;
 
@@ -278,11 +278,11 @@ void CPieceProjectile::Draw()
 			float size=(1);
 			float size2=1+(age2*(1/Smoke_Time))*14;
 
-			float txs=(1-age2/8.0);
-			va->AddVertexTC(interPos-dir1*size, txs/4+1.0/32, 2.0/16, col);
-			va->AddVertexTC(interPos+dir1*size, txs/4+1.0/32, 3.0/16, col);
-			va->AddVertexTC(oldSmoke+dir2*size2, 0.25+1.0/32, 3.0/16, col2);
-			va->AddVertexTC(oldSmoke-dir2*size2, 0.25+1.0/32, 2.0/16, col2);
+			float txs=ph->smoketrailtex.xstart - (ph->smoketrailtex.xend-ph->smoketrailtex.xstart)*(age2/8.0);//(1-age2/8.0);
+			va->AddVertexTC(interPos-dir1*size, txs, ph->smoketrailtex.ystart, col);
+			va->AddVertexTC(interPos+dir1*size, txs, ph->smoketrailtex.yend, col);
+			va->AddVertexTC(oldSmoke+dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend, col2);
+			va->AddVertexTC(oldSmoke-dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
 		} else {	//draw the trail as particles
 			float dist=pos.distance(oldSmoke);
 			float3 dirpos1=pos-dir*dist*0.33;
@@ -299,10 +299,10 @@ void CPieceProjectile::Draw()
 				float size=1+((a)*(1/Smoke_Time))*14;
 
 				float3 pos1=CalcBeizer(float(a)/(numParts),pos,dirpos1,dirpos2,oldSmoke);
-				va->AddVertexTC(pos1+( camera->up+camera->right)*size, 4.0/16, 0.0/16, col);
-				va->AddVertexTC(pos1+( camera->up-camera->right)*size, 5.0/16, 0.0/16, col);
-				va->AddVertexTC(pos1+(-camera->up-camera->right)*size, 5.0/16, 1.0/16, col);
-				va->AddVertexTC(pos1+(-camera->up+camera->right)*size, 4.0/16, 1.0/16, col);
+				va->AddVertexTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+				va->AddVertexTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+				va->AddVertexTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+				va->AddVertexTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 			}
 		}
 	}
@@ -353,10 +353,10 @@ void CPieceProjectile::DrawCallback(void)
 			col[2]=(unsigned char) (150*alpha);
 			col[3]=(unsigned char) (alpha*50);
 			float drawsize=(0.5+modage)*size;
-			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,0.0,0.25,col);
-			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,0.25,0.25,col);
-			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,0.25,0.5,col);
-			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,0.0,0.5,col);
+			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explofadetex.xstart,ph->explofadetex.ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explofadetex.xend,ph->explofadetex.ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explofadetex.xend,ph->explofadetex.yend,col);
+			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explofadetex.xstart,ph->explofadetex.yend,col);
 		}
 	}
 }

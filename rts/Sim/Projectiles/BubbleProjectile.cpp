@@ -3,6 +3,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CBubbleProjectile::CBubbleProjectile(float3 pos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float alpha)
 : CProjectile(pos,speed,owner),
@@ -54,8 +55,8 @@ void CBubbleProjectile::Draw()
 
 	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+sizeExpansion*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize,0    ,0    ,col);
-	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize,1.0/8,0    ,col);
-	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,1.0/8,1.0/8,col);
-	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,0    ,1.0/8,col);
+	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize,ph->circularthingytex.xstart    ,ph->circularthingytex.ystart    ,col);
+	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize,ph->circularthingytex.xend,ph->circularthingytex.ystart    ,col);
+	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,ph->circularthingytex.xend,ph->circularthingytex.yend,col);
+	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,ph->circularthingytex.xstart    ,ph->circularthingytex.yend,col);
 }

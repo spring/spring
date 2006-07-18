@@ -24,7 +24,6 @@ public:
 
 	static bool inArray;
 	static CVertexArray* va;
-	static unsigned int textures[10];
 	static void DrawArray();
 
 	virtual void Draw();

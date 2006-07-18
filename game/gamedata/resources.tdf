@@ -4,30 +4,18 @@
 	{
 		[smoke]
 		{
-			smoke00=smoke/smoke0000.bmp;
-			smoke00alpha=smoke/smoke_Alpha0000.bmp;
-			smoke01=smoke/smoke0001.bmp;
-			smoke01alpha=smoke/smoke_Alpha0001.bmp;
-			smoke02=smoke/smoke0002.bmp;
-			smoke02alpha=smoke/smoke_Alpha0002.bmp;
-			smoke03=smoke/smoke0003.bmp;
-			smoke03alpha=smoke/smoke_Alpha0003.bmp;
-			smoke04=smoke/smoke0004.bmp;
-			smoke04alpha=smoke/smoke_Alpha0004.bmp;
-			smoke05=smoke/smoke0005.bmp;
-			smoke05alpha=smoke/smoke_Alpha0005.bmp;
-			smoke06=smoke/smoke0006.bmp;
-			smoke06alpha=smoke/smoke_Alpha0006.bmp;
-			smoke07=smoke/smoke0007.bmp;
-			smoke07alpha=smoke/smoke_Alpha0007.bmp;
-			smoke08=smoke/smoke0008.bmp;
-			smoke08alpha=smoke/smoke_Alpha0008.bmp;
-			smoke09=smoke/smoke0009.bmp;
-			smoke09alpha=smoke/smoke_Alpha0009.bmp;
-			smoke10=smoke/smoke0010.bmp;
-			smoke10alpha=smoke/smoke_Alpha0010.bmp;
-			smoke11=smoke/smoke0011.bmp;
-			smoke11alpha=smoke/smoke_Alpha0011.bmp;
+			smoke00=smoke/smoke00.tga;
+			smoke01=smoke/smoke01.tga;
+			smoke02=smoke/smoke02.tga;
+			smoke03=smoke/smoke03.tga;
+			smoke04=smoke/smoke04.tga;
+			smoke05=smoke/smoke05.tga;
+			smoke06=smoke/smoke06.tga;
+			smoke07=smoke/smoke07.tga;
+			smoke08=smoke/smoke08.tga;
+			smoke09=smoke/smoke09.tga;
+			smoke10=smoke/smoke10.tga;
+			smoke11=smoke/smoke11.tga;
 		}
 		[scars]
 		{
@@ -38,11 +26,12 @@
 		}
 		[explosions]
 		{
-			explo=explo.bmp;
+			explo=explo.tga;
+			explofade=explofade.tga;
 		}
 		[flares]
 		{
-			flare=flare.bmp;
+			flare=flare.tga;
 		}
 		[trees]
 		{
@@ -58,6 +47,22 @@
 		{
 			detailtex=detailtex2.bmp;
 			watertex=ocean.jpg;
+		}
+		[groundfx]
+		{
+			groundflash=groundflash.tga;
+			groundring=groundring.tga;
+			
+		}
+		[things]
+		{
+			circularthingy=circularthingy.tga;
+			laserend=laserend.tga;
+			laserfalloff=laserfalloff.tga;
+			randdots=randdots.tga;
+			smoketrail=smoketrail.tga;
+			wake=wake.tga;
+			
 		}
 	}
 }

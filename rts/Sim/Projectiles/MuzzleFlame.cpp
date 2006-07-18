@@ -4,6 +4,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "SyncTracer.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size)
 : CProjectile(pos,speed,0),
@@ -57,15 +58,15 @@ void CMuzzleFlame::Draw(void)
 
 	for(int a=0;a<numSmoke;++a){
 		int tex=a%12;
-		float xmod=0.125+(float(int(tex%6)))/16;
-		float ymod=(int(tex/6))/16.0;
+		//float xmod=0.125+(float(int(tex%6)))/16;
+		//float ymod=(int(tex/6))/16.0;
 
 		float drawsize=(age+8)/3.0;
 		float3 interPos(pos+randSmokeDir[a]*(a+2)*age/12.0);
-		va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,xmod,ymod,col);
-		va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,xmod+1.0/16,ymod,col);
-		va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,xmod+1.0/16,ymod+1.0/16,col);
-		va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,xmod,ymod+1.0/16,col);
+		va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->smoketex[a].xstart,ph->smoketex[a].ystart,col);
+		va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->smoketex[a].xend,ph->smoketex[a].ystart,col);
+		va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->smoketex[a].xend,ph->smoketex[a].yend,col);
+		va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->smoketex[a].xstart,ph->smoketex[a].yend,col);
 
 	}
 
@@ -84,10 +85,10 @@ void CMuzzleFlame::Draw(void)
 			float drawsize=(age+10)/4.0;
 			drawsize+=max(0.,(0.25-fabs(curAge-(a/float(numFlame))))*0.5);
 			float3 interPos(pos+dir*(a+2)*age/4);
-			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,0.25,0.25,col);
-			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,0.5,0.25,col);
-			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,0.5,0.5,col);
-			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,0.25,0.5,col);
+			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explotex.xstart,ph->explotex.ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explotex.xend,ph->explotex.ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explotex.xend,ph->explotex.yend,col);
+			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explotex.xstart,ph->explotex.yend,col);
 		}
 	}
 }

@@ -22,6 +22,8 @@ public:
 	float areaOfEffect;
 	CUnit* target;
 	int nextBubble;
+	float texx;
+	float texy;
 
 	void Update(void);
 	void Draw(void);

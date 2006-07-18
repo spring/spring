@@ -4,6 +4,7 @@
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CFlameProjectile::CFlameProjectile(const float3& pos,const float3& speed,const float3& spread,CUnit* owner,const DamageArray& damages, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
@@ -68,10 +69,10 @@ void CFlameProjectile::Draw(void)
 	col[3]=1;//(0.3-curTime*0.3)*255;
 
 	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*radius-camera->up*radius,0.25f,0.25f,col);
-	va->AddVertexTC(interPos+camera->right*radius-camera->up*radius,0.5f ,0.25f,col);
-	va->AddVertexTC(interPos+camera->right*radius+camera->up*radius,0.5f ,0.5f ,col);
-	va->AddVertexTC(interPos-camera->right*radius+camera->up*radius,0.25f,0.5f ,col);
+		va->AddVertexTC(interPos-camera->right*radius-camera->up*radius,ph->flaretex.xstart ,ph->flaretex.ystart ,col);
+		va->AddVertexTC(interPos+camera->right*radius-camera->up*radius,ph->flaretex.xend ,ph->flaretex.ystart ,col);
+		va->AddVertexTC(interPos+camera->right*radius+camera->up*radius,ph->flaretex.xend ,ph->flaretex.yend ,col);
+		va->AddVertexTC(interPos-camera->right*radius+camera->up*radius,ph->flaretex.xstart ,ph->flaretex.yend ,col);
 }
 
 

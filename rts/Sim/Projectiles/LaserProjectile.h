@@ -26,6 +26,7 @@ public:
 	float curLength;
 	float speedf;
 	float intensityFalloff;
+	float midtexx;
 
 };
 

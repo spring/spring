@@ -5,6 +5,7 @@
 #include "Sim/Misc/Wind.h"
 #include "mmgr.h"
 #include "Rendering/Env/BaseWater.h"
+#include "ProjectileHandler.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -69,8 +70,8 @@ void CWakeProjectile::Draw()
 
 	float3 dir1=float3(cos(interRot),0,sin(interRot))*interSize;
 	float3 dir2=dir1.cross(UpVector);
-	va->AddVertexTC(interPos+dir1+dir2, 0.5,0.5,col);
-	va->AddVertexTC(interPos+dir1-dir2, 0.5,0.75,col);
-	va->AddVertexTC(interPos-dir1-dir2, 0.75,0.75,col);
-	va->AddVertexTC(interPos-dir1+dir2, 0.75,0.5,col);
+	va->AddVertexTC(interPos+dir1+dir2, ph->waketex.xstart,ph->waketex.ystart,col);
+	va->AddVertexTC(interPos+dir1-dir2, ph->waketex.xstart,ph->waketex.yend,col);
+	va->AddVertexTC(interPos-dir1-dir2, ph->waketex.xend,ph->waketex.yend,col);
+	va->AddVertexTC(interPos-dir1+dir2, ph->waketex.xend,ph->waketex.ystart,col);
 }
