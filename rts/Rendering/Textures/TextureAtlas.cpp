@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include ".\textureatlas.h"
+#include "TextureAtlas.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/UI/InfoConsole.h"
