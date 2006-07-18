@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 //Class for combining multiple bitmaps into one large singel bitmap.
 class CTextureAtlas
 {
