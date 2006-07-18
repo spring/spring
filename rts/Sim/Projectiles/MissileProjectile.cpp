@@ -15,6 +15,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 static const float Smoke_Time=60;
 
@@ -241,11 +242,11 @@ void CMissileProjectile::Draw(void)
 		float size=(1);
 		float size2=(1+(age2*(1/Smoke_Time))*7);
 
-		float txs=(1-age2/8.0);
-		va->AddVertexTC(interPos-dir1*size, txs/4+1.0/32, 2.0/16, col);
-		va->AddVertexTC(interPos+dir1*size, txs/4+1.0/32, 3.0/16, col);
-		va->AddVertexTC(oldSmoke+dir2*size2, 0.25+1.0/32, 3.0/16, col2);
-		va->AddVertexTC(oldSmoke-dir2*size2, 0.25+1.0/32, 2.0/16, col2);
+		float txs=ph->smoketrailtex.xstart - (ph->smoketrailtex.xend-ph->smoketrailtex.xstart)*(age2/8.0);//(1-age2/8.0);
+		va->AddVertexTC(interPos-dir1*size, txs, ph->smoketrailtex.ystart, col);
+		va->AddVertexTC(interPos+dir1*size, txs, ph->smoketrailtex.yend, col);
+		va->AddVertexTC(oldSmoke+dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend, col2);
+		va->AddVertexTC(oldSmoke-dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
 	} else {	//draw the trail as particles
 		float dist=pos.distance(oldSmoke);
 		float3 dirpos1=pos-dir*dist*0.33;
@@ -261,10 +262,10 @@ void CMissileProjectile::Draw(void)
 			float size=(1+(a*(1/Smoke_Time))*7);
 
 			float3 pos1=CalcBeizer(float(a)/(numParts),pos,dirpos1,dirpos2,oldSmoke);
-			va->AddVertexTC(pos1+( camera->up+camera->right)*size, 4.0/16, 0.0/16, col);
-			va->AddVertexTC(pos1+( camera->up-camera->right)*size, 5.0/16, 0.0/16, col);
-			va->AddVertexTC(pos1+(-camera->up-camera->right)*size, 5.0/16, 1.0/16, col);
-			va->AddVertexTC(pos1+(-camera->up+camera->right)*size, 4.0/16, 1.0/16, col);
+			va->AddVertexTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+			va->AddVertexTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+			va->AddVertexTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+			va->AddVertexTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 		}
 
 	}
@@ -274,10 +275,10 @@ void CMissileProjectile::Draw(void)
 	col[2]=180;
 	col[3]=1;
 	float fsize = radius*0.4;
-	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,0.51,0.13,col);
-	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,0.99,0.13,col);
-	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,0.99,0.36,col);
-	va->AddVertexTC(interPos-camera->right*fsize+camera->up*fsize,0.51,0.36,col);
+	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,ph->flaretex.xstart,ph->flaretex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,ph->flaretex.xend,ph->flaretex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,ph->flaretex.xend,ph->flaretex.yend,col);
+	va->AddVertexTC(interPos-camera->right*fsize+camera->up*fsize,ph->flaretex.xstart,ph->flaretex.yend,col);
 
 /*	col[0]=200;
 	col[1]=200;

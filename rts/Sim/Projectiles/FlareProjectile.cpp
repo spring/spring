@@ -8,6 +8,7 @@
 #include "MissileProjectile.h"
 #include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)
 :	CProjectile(pos,speed,owner),
@@ -90,9 +91,9 @@ void CFlareProjectile::Draw(void)
 		float3 interPos=subPos[a]+subSpeed[a]*gu->timeOffset;
 		float rad=5;
 
-		va->AddVertexTC(interPos-camera->right*rad-camera->up*rad,0.51,0.13,col);
-		va->AddVertexTC(interPos+camera->right*rad-camera->up*rad,0.99,0.13,col);
-		va->AddVertexTC(interPos+camera->right*rad+camera->up*rad,0.99,0.36,col);
-		va->AddVertexTC(interPos-camera->right*rad+camera->up*rad,0.51,0.36,col);
+		va->AddVertexTC(interPos-camera->right*rad-camera->up*rad,ph->flaretex.xstart,ph->flaretex.ystart,col);
+		va->AddVertexTC(interPos+camera->right*rad-camera->up*rad,ph->flaretex.xend,ph->flaretex.ystart,col);
+		va->AddVertexTC(interPos+camera->right*rad+camera->up*rad,ph->flaretex.xend,ph->flaretex.yend,col);
+		va->AddVertexTC(interPos-camera->right*rad+camera->up*rad,ph->flaretex.xstart,ph->flaretex.yend,col);
 	}
 }

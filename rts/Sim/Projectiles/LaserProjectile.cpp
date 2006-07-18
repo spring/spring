@@ -5,6 +5,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
@@ -22,6 +23,7 @@ CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* 
 
 	SetRadius(0.5);
 	drawRadius=length;
+	midtexx = ph->laserendtex.xstart + (ph->laserendtex.xend-ph->laserendtex.xstart)*0.5;
 #ifdef TRACE_SYNC
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -122,44 +124,44 @@ void CLaserProjectile::Draw(void)
 		float3 pos1=pos+speed*gu->timeOffset;
 		float3 pos2=pos1-dir*curLength;
 
-		va->AddVertexTC(pos1-dir1*size,					  15.0/16,0,    col);
-		va->AddVertexTC(pos1+dir1*size,					  15.0/16,1.0/8,col);
-		va->AddVertexTC(pos1+dir1*size-dir2*size, 14.0/16,1.0/8,col);
-		va->AddVertexTC(pos1-dir1*size-dir2*size, 14.0/16,0		,col);
-		va->AddVertexTC(pos1-dir1*coresize,					  15.0/16,0,    col2);
-		va->AddVertexTC(pos1+dir1*coresize,					  15.0/16,1.0/8,col2);
-		va->AddVertexTC(pos1+dir1*coresize-dir2*size, 14.0/16,1.0/8,col2);
-		va->AddVertexTC(pos1-dir1*coresize-dir2*size, 14.0/16,0		,col2);
+		va->AddVertexTC(pos1-dir1*size,	midtexx,ph->laserendtex.ystart,    col);
+		va->AddVertexTC(pos1+dir1*size,	midtexx,ph->laserendtex.yend,col);
+		va->AddVertexTC(pos1+dir1*size-dir2*size, ph->laserfallofftex.xstart,ph->laserendtex.yend,col);
+		va->AddVertexTC(pos1-dir1*size-dir2*size, ph->laserfallofftex.xstart,ph->laserendtex.ystart,col);
+		va->AddVertexTC(pos1-dir1*coresize,midtexx,ph->laserendtex.ystart,    col2);
+		va->AddVertexTC(pos1+dir1*coresize,midtexx,ph->laserendtex.yend,col2);
+		va->AddVertexTC(pos1+dir1*coresize-dir2*coresize,ph->laserfallofftex.xstart,ph->laserendtex.yend,col2);
+		va->AddVertexTC(pos1-dir1*coresize-dir2*coresize,ph->laserfallofftex.xstart,ph->laserendtex.ystart,col2);
 
-		va->AddVertexTC(pos1-dir1*size,11.0/16,0,    col);
-		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,col);
-		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,col);
-		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,col);
-		va->AddVertexTC(pos1-dir1*coresize,11.0/16,0,    col2);
-		va->AddVertexTC(pos1+dir1*coresize,11.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2+dir1*coresize,11.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2-dir1*coresize,11.0/16,0    ,col2);
+		va->AddVertexTC(pos1-dir1*size,ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,		col);
+		va->AddVertexTC(pos1+dir1*size,ph->laserfallofftex.xstart,ph->laserfallofftex.yend,			col);
+		va->AddVertexTC(pos2+dir1*size,ph->laserfallofftex.xend,ph->laserfallofftex.yend,			col);
+		va->AddVertexTC(pos2-dir1*size,ph->laserfallofftex.xend,ph->laserfallofftex.ystart,			col);
+		va->AddVertexTC(pos1-dir1*coresize,ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,	col2);
+		va->AddVertexTC(pos1+dir1*coresize,ph->laserfallofftex.xstart,ph->laserfallofftex.yend,	col2);
+		va->AddVertexTC(pos2+dir1*coresize,ph->laserfallofftex.xend,ph->laserfallofftex.yend,		col2);
+		va->AddVertexTC(pos2-dir1*coresize,ph->laserfallofftex.xend,ph->laserfallofftex.ystart,		col2);
 
-		va->AddVertexTC(pos2-dir1*size,					  15.0/16,0,    col);
-		va->AddVertexTC(pos2+dir1*size,					  15.0/16,1.0/8,col);
-		va->AddVertexTC(pos2+dir1*size+dir2*size, 14.0/16,1.0/8,col);
-		va->AddVertexTC(pos2-dir1*size+dir2*size, 14.0/16,0		,col);
-		va->AddVertexTC(pos2-dir1*coresize,					  15.0/16,0,    col2);
-		va->AddVertexTC(pos2+dir1*coresize,					  15.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2+dir1*coresize+dir2*size, 14.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2-dir1*coresize+dir2*size, 14.0/16,0		,col2);
+		va->AddVertexTC(pos2-dir1*size,	midtexx,ph->laserendtex.ystart,    col);
+		va->AddVertexTC(pos2+dir1*size,	midtexx,ph->laserendtex.yend,col);
+		va->AddVertexTC(pos2+dir1*size+dir2*size, ph->laserendtex.xend,ph->laserendtex.yend,col);
+		va->AddVertexTC(pos2-dir1*size+dir2*size, ph->laserendtex.xend,ph->laserendtex.ystart,col);
+		va->AddVertexTC(pos2-dir1*coresize,midtexx,ph->laserendtex.ystart,    col2);
+		va->AddVertexTC(pos2+dir1*coresize,midtexx,ph->laserendtex.yend,col2);
+		va->AddVertexTC(pos2+dir1*coresize+dir2*coresize,ph->laserendtex.xend,ph->laserendtex.yend,col2);
+		va->AddVertexTC(pos2-dir1*coresize+dir2*coresize,ph->laserendtex.xend,ph->laserendtex.ystart,col2);
 	} else {
 		float3 pos1=pos+speed*gu->timeOffset+dir*(size*0.5);
 		float3 pos2=pos1-dir*(curLength+size);
 
-		va->AddVertexTC(pos1-dir1*size,11.0/16,0,    col);
-		va->AddVertexTC(pos1+dir1*size,11.0/16,1.0/8,col);
-		va->AddVertexTC(pos2+dir1*size,11.0/16,1.0/8,col);
-		va->AddVertexTC(pos2-dir1*size,11.0/16,0    ,col);
-		va->AddVertexTC(pos1-dir1*coresize,11.0/16,0,    col2);
-		va->AddVertexTC(pos1+dir1*coresize,11.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2+dir1*coresize,11.0/16,1.0/8,col2);
-		va->AddVertexTC(pos2-dir1*coresize,11.0/16,0    ,col2);
+		va->AddVertexTC(pos1-dir1*size,ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,		col);
+		va->AddVertexTC(pos1+dir1*size,ph->laserfallofftex.xstart,ph->laserfallofftex.yend,			col);
+		va->AddVertexTC(pos2+dir1*size,ph->laserfallofftex.xend,ph->laserfallofftex.yend,			col);
+		va->AddVertexTC(pos2-dir1*size,ph->laserfallofftex.xend,ph->laserfallofftex.ystart,			col);
+		va->AddVertexTC(pos1-dir1*coresize,ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,	col2);
+		va->AddVertexTC(pos1+dir1*coresize,ph->laserfallofftex.xstart,ph->laserfallofftex.yend,	col2);
+		va->AddVertexTC(pos2+dir1*coresize,ph->laserfallofftex.xend,ph->laserfallofftex.yend,		col2);
+		va->AddVertexTC(pos2-dir1*coresize,ph->laserfallofftex.xend,ph->laserfallofftex.ystart,		col2);
 	}
 }
 

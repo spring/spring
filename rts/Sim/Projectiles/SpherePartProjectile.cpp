@@ -5,6 +5,7 @@
 #include <algorithm>
 using namespace std;
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner)
 : CProjectile(centerPos,ZeroVector,owner),
@@ -30,6 +31,8 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,i
 
 	drawRadius=60;
 	alwaysVisible=true;
+	texx = ph->circularthingytex.xstart - (ph->circularthingytex.xend-ph->circularthingytex.xstart)*0.5;
+	texy = ph->circularthingytex.ystart - (ph->circularthingytex.yend-ph->circularthingytex.ystart)*0.5;
 }
 
 CSpherePartProjectile::~CSpherePartProjectile(void)
@@ -58,16 +61,16 @@ void CSpherePartProjectile::Draw(void)
 			col[1]=(unsigned char) (200*alpha);
 			col[2]=(unsigned char) (150*alpha);
 			col[3]=(unsigned char) (40*alpha);
-			va->AddVertexTC(centerPos+vectors[y*5+x]*interSize,1.0/16,1.0/16,col);
-			va->AddVertexTC(centerPos+vectors[y*5+x+1]*interSize,1.0/16,1.0/16,col);
+			va->AddVertexTC(centerPos+vectors[y*5+x]*interSize,texx,texy,col);
+			va->AddVertexTC(centerPos+vectors[y*5+x+1]*interSize,texx,texy,col);
 			alpha=baseAlpha*(1.0-min(float(1.0),float(age+gu->timeOffset)/ttl))*(1-fabs(y+1+ybase-8.0f)/8.0*1.0);
 
 			col[0]=(unsigned char) (200*alpha);
 			col[1]=(unsigned char) (200*alpha);
 			col[2]=(unsigned char) (150*alpha);
 			col[3]=(unsigned char) (40*alpha);
-			va->AddVertexTC(centerPos+vectors[(y+1)*5+x+1]*interSize,1.0/16,1.0/16,col);
-			va->AddVertexTC(centerPos+vectors[(y+1)*5+x]*interSize,1.0/16,1.0/16,col);
+			va->AddVertexTC(centerPos+vectors[(y+1)*5+x+1]*interSize,texx,texy,col);
+			va->AddVertexTC(centerPos+vectors[(y+1)*5+x]*interSize,texx,texy,col);
 		}
 	}
 }

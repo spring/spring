@@ -118,20 +118,22 @@ void CSmokeTrailProjectile::Draw()
 			col3[2]=(unsigned char) (color*alpha);
 			col3[3]=(unsigned char)alpha;
 
-			va->AddVertexTC(pos1-odir1*size,0+1.0/32,1.0/8,col);
-			va->AddVertexTC(pos1+odir1*size,0+1.0/32,3.0/16,col);
-			va->AddVertexTC(midpos+odir3*size3,0.125+1.0/32,3.0/16,col3);
-			va->AddVertexTC(midpos-odir3*size3,0.125+1.0/32,1.0/8,col3);
+			float midtexx = ph->smoketrailtex.xstart + (ph->smoketrailtex.xend - ph->smoketrailtex.xstart)*0.5;
 
-			va->AddVertexTC(midpos-odir3*size3,0.125+1.0/32,1.0/8,col3);
-			va->AddVertexTC(midpos+odir3*size3,0.125+1.0/32,3.0/16,col3);
-			va->AddVertexTC(pos2+odir2*size2,0.25+1.0/32,3.0/16,col2);
-			va->AddVertexTC(pos2-odir2*size2,0.25+1.0/32,1.0/8,col2);
+			va->AddVertexTC(pos1-odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.ystart,col);
+			va->AddVertexTC(pos1+odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.yend,col);
+			va->AddVertexTC(midpos+odir3*size3,midtexx,ph->smoketrailtex.yend,col3);
+			va->AddVertexTC(midpos-odir3*size3,midtexx,ph->smoketrailtex.ystart,col3);
+
+			va->AddVertexTC(midpos-odir3*size3,midtexx,ph->smoketrailtex.ystart,col3);
+			va->AddVertexTC(midpos+odir3*size3,midtexx,ph->smoketrailtex.yend,col3);
+			va->AddVertexTC(pos2+odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.yend,col2);
+			va->AddVertexTC(pos2-odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.ystart,col2);
 		} else {
-			va->AddVertexTC(pos1-odir1*size,0+1.0/32,1.0/8,col);
-			va->AddVertexTC(pos1+odir1*size,0+1.0/32,3.0/16,col);
-			va->AddVertexTC(pos2+odir2*size2,0.25+1.0/32,3.0/16,col2);
-			va->AddVertexTC(pos2-odir2*size2,0.25+1.0/32,1.0/8,col2);
+			va->AddVertexTC(pos1-odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.ystart,col);
+			va->AddVertexTC(pos1+odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.yend,col);
+			va->AddVertexTC(pos2+odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.yend,col2);
+			va->AddVertexTC(pos2-odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.ystart,col2);
 		}
 	} else {	//draw as particles
 		unsigned char col[4];
@@ -145,10 +147,10 @@ void CSmokeTrailProjectile::Draw()
 			float size=((0.2+(age+a)*(1.0/lifeTime))*orgSize)*1.2;
 
 			float3 pos=CalcBeizer(a/8.0,pos1,dirpos1,dirpos2,pos2);
-			va->AddVertexTC(pos+( camera->up+camera->right)*size, 4.0/16, 0.0/16, col);
-			va->AddVertexTC(pos+( camera->up-camera->right)*size, 5.0/16, 0.0/16, col);
-			va->AddVertexTC(pos+(-camera->up-camera->right)*size, 5.0/16, 1.0/16, col);
-			va->AddVertexTC(pos+(-camera->up+camera->right)*size, 4.0/16, 1.0/16, col);
+			va->AddVertexTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+			va->AddVertexTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+			va->AddVertexTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+			va->AddVertexTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 		}
 	}
 	if(drawCallbacker)

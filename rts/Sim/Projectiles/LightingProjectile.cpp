@@ -4,6 +4,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/Weapon.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CLightingProjectile::CLightingProjectile(const float3& pos,const float3& end,CUnit* owner,const float3& color, int ttl,CWeapon* weap)
 : CProjectile(pos,ZeroVector,owner),
@@ -72,21 +73,21 @@ void CLightingProjectile::Draw(void)
 
 	for(int a=0;a<9;++a){
 		float f=(a+1)*0.111;
-		va->AddVertexTC(tempPos+dir1*(displacements[a]+0.8),11.0/16,0,    col);
-		va->AddVertexTC(tempPos+dir1*(displacements[a]-0.8),11.0/16,1.0/8,col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a]+0.8),ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,    col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a]-0.8),ph->laserfallofftex.xstart,ph->laserfallofftex.yend,col);
 		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexTC(tempPos+dir1*(displacements[a+1]-0.8),11.0/16,1.0/8,col);
-		va->AddVertexTC(tempPos+dir1*(displacements[a+1]+0.8),11.0/16,0    ,col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a+1]-0.8),ph->laserfallofftex.xend,ph->laserfallofftex.yend,col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a+1]+0.8),ph->laserfallofftex.xend,ph->laserfallofftex.ystart    ,col);
 	}
 
 	tempPos=pos;
 	for(int a=0;a<9;++a){
 		float f=(a+1)*0.111;
-		va->AddVertexTC(tempPos+dir1*(displacements2[a]+0.8),11.0/16,0,    col);
-		va->AddVertexTC(tempPos+dir1*(displacements2[a]-0.8),11.0/16,1.0/8,col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a]+0.8),ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,    col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a]-0.8),ph->laserfallofftex.xstart,ph->laserfallofftex.yend,col);
 		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]-0.8),11.0/16,1.0/8,col);
-		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]+0.8),11.0/16,0    ,col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]-0.8),ph->laserfallofftex.xend,ph->laserfallofftex.yend,col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]+0.8),ph->laserfallofftex.xend,ph->laserfallofftex.ystart    ,col);
 	}
 }
 

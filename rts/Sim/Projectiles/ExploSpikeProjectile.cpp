@@ -3,6 +3,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner)
 :	CProjectile(pos,speed,owner),
@@ -56,8 +57,8 @@ void CExploSpikeProjectile::Draw(void)
 	float3 l=dir*length+lengthGrowth*gu->timeOffset;
 	float3 w=dir2*width;
 
-	va->AddVertexTC(interpos+l+w, 8/8.0, 1/8.0, col);
-	va->AddVertexTC(interpos+l-w, 8/8.0, 0/8.0, col);
-	va->AddVertexTC(interpos-l-w, 7/8.0, 0/8.0, col);
-	va->AddVertexTC(interpos-l+w, 7/8.0, 1/8.0, col);
+	va->AddVertexTC(interpos+l+w, ph->laserendtex.xend, ph->laserendtex.yend, col);
+	va->AddVertexTC(interpos+l-w, ph->laserendtex.xend, ph->laserendtex.ystart, col);
+	va->AddVertexTC(interpos-l-w, ph->laserendtex.xstart, ph->laserendtex.ystart, col);
+	va->AddVertexTC(interpos-l+w, ph->laserendtex.xstart, ph->laserendtex.yend, col);
 }

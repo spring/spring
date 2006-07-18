@@ -26,7 +26,6 @@ public:
 	unsigned char color[3];
 	int ttl;
 
-	static unsigned int texture;
 	static CVertexArray* va;
 };
 

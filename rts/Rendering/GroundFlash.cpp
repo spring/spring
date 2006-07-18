@@ -7,7 +7,6 @@
 #include "Game/UI/InfoConsole.h"
 #include "mmgr.h"
 
-unsigned int CGroundFlash::texture=0;
 CVertexArray* CGroundFlash::va=0;
 
 CGroundFlash::CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 col)
@@ -86,10 +85,10 @@ void CGroundFlash::Draw()
 		float3 p3=pos+( side1+side2)*iSize;
 		float3 p4=pos+(-side1+side2)*iSize;
 
-		va->AddVertexTC(p1,0,0,col);
-		va->AddVertexTC(p2,1,0,col);
-		va->AddVertexTC(p3,1,0.5,col);
-		va->AddVertexTC(p4,0,0.5,col);
+		va->AddVertexTC(p1,ph->groundringtex.xstart,ph->groundringtex.ystart,col);
+		va->AddVertexTC(p2,ph->groundringtex.xend,ph->groundringtex.ystart,col);
+		va->AddVertexTC(p3,ph->groundringtex.xend,ph->groundringtex.yend,col);
+		va->AddVertexTC(p4,ph->groundringtex.xstart,ph->groundringtex.yend,col);
 	}
 
 	float iAge=flashAge+flashAgeSpeed*gu->timeOffset;
@@ -111,10 +110,10 @@ void CGroundFlash::Draw()
 		float3 p3=pos+( side1+side2)*iSize;
 		float3 p4=pos+(-side1+side2)*iSize;
 
-		va->AddVertexTC(p1,0,1,col);
-		va->AddVertexTC(p2,1,1,col);
-		va->AddVertexTC(p3,1,0.5,col);
-		va->AddVertexTC(p4,0,0.5,col);
+		va->AddVertexTC(p1,ph->groundflashtex.xstart,ph->groundflashtex.yend,col);
+		va->AddVertexTC(p2,ph->groundflashtex.xend,ph->groundflashtex.yend,col);
+		va->AddVertexTC(p3,ph->groundflashtex.xend,ph->groundflashtex.ystart,col);
+		va->AddVertexTC(p4,ph->groundflashtex.xstart,ph->groundflashtex.ystart,col);
 	}
 }
 

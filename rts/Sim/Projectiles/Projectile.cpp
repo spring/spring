@@ -31,8 +31,6 @@ CR_REG_METADATA(CProjectile,
 bool CProjectile::inArray=false;
 CVertexArray* CProjectile::va=0;
 
-unsigned int CProjectile::textures[10];
-
 CProjectile::CProjectile()
 :	owner(0),
 	checkCol(true),
@@ -106,10 +104,10 @@ void CProjectile::Draw()
 	col[2]=0*255;
 	col[3]=10;
 	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,0,0,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,0.125,0,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,0.125,0.125,col);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,0,0.125,col);
+	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.yend,col);
+	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.yend,col);
 }
 
 void CProjectile::DrawArray()

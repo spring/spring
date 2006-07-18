@@ -9,6 +9,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/Wind.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CR_BIND_DERIVED(CSmokeProjectile, CProjectile);
 
@@ -98,16 +99,16 @@ void CSmokeProjectile::Draw()
 	col[1]=(unsigned char) (color*alpha);
 	col[2]=(unsigned char) (color*alpha);
 	col[3]=(unsigned char)alpha/*-alphaFalloff*gu->timeOffset*/;
-	int frame=textureNum;
-	float xmod=0.125+(float(int(frame%6)))/16;
-	float ymod=(int(frame/6))/16.0;
+	//int frame=textureNum;
+	//float xmod=0.125+(float(int(frame%6)))/16;
+	//float ymod=(int(frame/6))/16.0;
 
 	const float3 interPos(pos+speed*gu->timeOffset);
 	const float interSize=size+sizeExpansion*gu->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
-	va->AddVertexTC(interPos-pos2,xmod,ymod,col);
-	va->AddVertexTC(interPos+pos1,xmod+1.0/16,ymod,col);
-	va->AddVertexTC(interPos+pos2,xmod+1.0/16,ymod+1.0/16,col);
-	va->AddVertexTC(interPos-pos1,xmod,ymod+1.0/16,col);
+	va->AddVertexTC(interPos-pos2,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].ystart,col);
+	va->AddVertexTC(interPos+pos1,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].ystart,col);
+	va->AddVertexTC(interPos+pos2,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].yend,col);
+	va->AddVertexTC(interPos-pos1,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].yend,col);
 }

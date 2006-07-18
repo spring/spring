@@ -7,6 +7,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CR_BIND_DERIVED(CGfxProjectile, CProjectile);
 
@@ -61,8 +62,8 @@ void CGfxProjectile::Draw()
 	inArray=true;
 
 	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,0,0,color);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,0.125,0,color);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,0.125,0.125,color);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,0,0.125,color);
+	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.ystart,color);
+	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.ystart,color);
+	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.yend,color);
+	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.yend,color);
 }

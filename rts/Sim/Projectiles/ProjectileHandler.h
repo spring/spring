@@ -18,6 +18,7 @@ struct SS3OVertex;
 #include <set>
 #include <stack>
 #include "MemPool.h"
+#include "Rendering/Textures/TextureAtlas.h"
 
 typedef std::list<CProjectile*> Projectile_List;
 
@@ -61,6 +62,23 @@ public:
 	float particleSaturation;	//currentParticles/maxParticles
 
 	int numPerlinProjectiles;
+
+	//texturcoordinates for projectiles
+	CTextureAtlas::Texture flaretex;
+	CTextureAtlas::Texture explotex;
+	CTextureAtlas::Texture explofadetex;
+	CTextureAtlas::Texture circularthingytex;
+	CTextureAtlas::Texture laserendtex;
+	CTextureAtlas::Texture laserfallofftex;
+	CTextureAtlas::Texture randdotstex;
+	CTextureAtlas::Texture smoketrailtex;
+	CTextureAtlas::Texture waketex;
+	CTextureAtlas::Texture smoketex[12];
+	CTextureAtlas::Texture perlintex;
+
+	CTextureAtlas::Texture groundflashtex;
+	CTextureAtlas::Texture groundringtex;
+
 private:
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex,int size);
@@ -91,6 +109,8 @@ private:
 	IFramebuffer *perlinFB;
 	bool drawPerlinTex;
 	std::vector<CGroundFlash*> groundFlashes;
+	CTextureAtlas *textureAtlas;
+	CTextureAtlas *groundFXAtlas;
 };
 extern CProjectileHandler* ph;
 

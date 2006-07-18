@@ -22,6 +22,7 @@ public:
 	float thickness;
 	float corethickness;
 	float flaresize;
+	float midtexx;
 
 	void Update(void);
 	void Draw(void);

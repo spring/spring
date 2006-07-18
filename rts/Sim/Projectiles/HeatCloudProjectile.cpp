@@ -8,6 +8,7 @@
 #include "SyncTracer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile);
 
@@ -82,8 +83,8 @@ void CHeatCloudProjectile::Draw()
 	col[3]=1;//(dheat/maxheat)*255.0f;
 	float drawsize=(size+sizeGrowth*gu->timeOffset)*(1-sizemod);
 	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,0.25,0.25,col);
-	va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,0.5,0.25,col);
-	va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,0.5,0.5,col);
-	va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,0.25,0.5,col);
+	va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explotex.xstart,ph->explotex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explotex.xend,ph->explotex.ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explotex.xend,ph->explotex.yend,col);
+	va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explotex.xstart,ph->explotex.yend,col);
 }

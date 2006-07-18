@@ -27,7 +27,6 @@
 #include <algorithm>
 #include "Rendering/GL/IFramebuffer.h"
 #include "mmgr.h"
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -47,318 +46,63 @@ CProjectileHandler::CProjectileHandler()
 	particleSaturation=0;
 	numPerlinProjectiles=0;
 
-	// This will cause a stack overflow if not made static
-	static unsigned char tex[512][512][4];
-	static unsigned char tex2[512*256];
-	static float dotAlpha[256][256];
-
-	for(int y=0;y<512;y++)
-		for(int x=0;x<512;x++){
-			tex[y][x][0]=0;
-			tex[y][x][1]=0;
-			tex[y][x][2]=0;
-			tex[y][x][3]=0;
-		}
-
-	for(int y=0;y<64;y++){	//circular thingy
-		for(int x=0;x<64;x++){
-			float dist=sqrt((float)(x-32)*(x-32)+(y-32)*(y-32));
-			if(dist>31.875)
-				dist=31.875;
-			tex[y][x][0]=255-(unsigned char) (dist*8);
-			tex[y][x][1]=255-(unsigned char) (dist*8);
-			tex[y][x][2]=255-(unsigned char) (dist*8);
-			tex[y][x][3]=255-(unsigned char) (dist*8);
-		}
-	}
-
-	for(int y=0;y<64;y++){	//linear falloff for lasers
-		for(int x=0;x<64;x++){
-			float dist=abs(y-32);
-			if(dist>31.5)
-				dist=31.5;
-			tex[y][x+320][0]=255-(unsigned char) (dist*8);
-			tex[y][x+320][1]=255-(unsigned char) (dist*8);
-			tex[y][x+320][2]=255-(unsigned char) (dist*8);
-			tex[y][x+320][3]=255;
-		}
-	}
-	for(int y=0;y<64;y++){	//laser endings
-		for(int x=0;x<64;x++){
-			float dist=sqrt((float)(x-32)*(x-32)+(y-32)*(y-32));
-			if(dist>31.875)
-				dist=31.875;
-			tex[y][x+448][0]=255-(unsigned char) (dist*8);
-			tex[y][x+448][1]=255-(unsigned char) (dist*8);
-			tex[y][x+448][2]=255-(unsigned char) (dist*8);
-			if(tex[y][x+448][0]!=0)
-				tex[y][x+448][3]=255;
-		}
-	}
-
 	TdfParser resources("gamedata/resources.tdf");
-	LoadSmoke(tex,64,0,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0000.bmp","resources\\graphics\\smoke\\smoke00")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0000.bmp","resources\\graphics\\smoke\\smoke00alpha")).c_str());
-	LoadSmoke(tex,96,0,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0001.bmp","resources\\graphics\\smoke\\smoke01")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0001.bmp","resources\\graphics\\smoke\\smoke01alpha")).c_str());
-	LoadSmoke(tex,128,0,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0002.bmp","resources\\graphics\\smoke\\smoke02")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0002.bmp","resources\\graphics\\smoke\\smoke02alpha")).c_str());
-	LoadSmoke(tex,160,0,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0003.bmp","resources\\graphics\\smoke\\smoke03")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0003.bmp","resources\\graphics\\smoke\\smoke03alpha")).c_str());
-	LoadSmoke(tex,192,0,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0004.bmp","resources\\graphics\\smoke\\smoke04")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0004.bmp","resources\\graphics\\smoke\\smoke04alpha")).c_str());
-	LoadSmoke(tex,224,0,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0005.bmp","resources\\graphics\\smoke\\smoke05")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0005.bmp","resources\\graphics\\smoke\\smoke05alpha")).c_str());
+	textureAtlas = new CTextureAtlas(2048, 2048);
 
-	LoadSmoke(tex,64,32,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0006.bmp","resources\\graphics\\smoke\\smoke06")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0006.bmp","resources\\graphics\\smoke\\smoke06alpha")).c_str());
-	LoadSmoke(tex,96,32,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0007.bmp","resources\\graphics\\smoke\\smoke07")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0007.bmp","resources\\graphics\\smoke\\smoke07alpha")).c_str());
-	LoadSmoke(tex,128,32,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0008.bmp","resources\\graphics\\smoke\\smoke08")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0008.bmp","resources\\graphics\\smoke\\smoke08alpha")).c_str());
-	LoadSmoke(tex,160,32,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0009.bmp","resources\\graphics\\smoke\\smoke09")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0009.bmp","resources\\graphics\\smoke\\smoke09alpha")).c_str());
-	LoadSmoke(tex,192,32,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0010.bmp","resources\\graphics\\smoke\\smoke10")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0010.bmp","resources\\graphics\\smoke\\smoke10alpha")).c_str());
-	LoadSmoke(tex,224,32,
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke0011.bmp","resources\\graphics\\smoke\\smoke11")).c_str(),
-			(char*)("bitmaps/"+resources.SGetValueDef("smoke/smoke_Alpha0011.bmp","resources\\graphics\\smoke\\smoke11alpha")).c_str());
+	textureAtlas->AddTexFromFile("flare", "bitmaps/"+resources.SGetValueDef("flare.tga","resources\\graphics\\flares\\flare"));
+	textureAtlas->AddTexFromFile("explo", "bitmaps/"+resources.SGetValueDef("explo.tga","resources\\graphics\\explosions\\explo"));
+	textureAtlas->AddTexFromFile("explofade", "bitmaps/"+resources.SGetValueDef("explofade.tga","resources\\graphics\\explosions\\explofade"));
+	textureAtlas->AddTexFromFile("circularthingy", "bitmaps/"+resources.SGetValueDef("circularthingy.tga","resources\\graphics\\things\\circularthingy"));
+	textureAtlas->AddTexFromFile("laserend", "bitmaps/"+resources.SGetValueDef("laserend.tga","resources\\graphics\\things\\laserend"));
+	textureAtlas->AddTexFromFile("laserfalloff", "bitmaps/"+resources.SGetValueDef("laserfalloff.tga","resources\\graphics\\things\\laserfalloff"));
+	textureAtlas->AddTexFromFile("randdots", "bitmaps/"+resources.SGetValueDef("randdots.tga","resources\\graphics\\things\\randdots"));
+	textureAtlas->AddTexFromFile("smoketrail", "bitmaps/"+resources.SGetValueDef("smoketrail.tga","resources\\graphics\\things\\smoketrail"));
+	textureAtlas->AddTexFromFile("wake", "bitmaps/"+resources.SGetValueDef("wake.tga","resources\\graphics\\things\\wake"));
 
-	for(int y=0;y<64;y++){		//fix smoke
-		for(int x=64;x<256;x++){
-			int a=(255-tex[y][x][3])/3;
-			tex[y][x][0]-=a;
-			tex[y][x][1]-=a;
-			tex[y][x][2]-=a;
-		}
+	for(int i=0; i<12; i++)
+	{
+		char num[10];
+		sprintf(num, "%02i", i);
+		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+resources.SGetValueDef(std::string("smoke/smoke") + num +".tga",std::string("resources\\graphics\\smoke\\smoke")+num+"alpha"));
 	}
 
-	for(int y=64;y<96;y++){	//smoke trail
-		for(int x=0;x<256;x++){
-			tex[y][x][0]=128;
-			tex[y][x][1]=128;
-			tex[y][x][2]=128;
-			tex[y][x][3]=0;
-		}
-	}
-
-	for(int a=0;a<16;++a){//smoke trail
-		int xnum=(rand()%6)*32;
-		int	ynum=(rand()&1)*32;
-		for(int by=0;by<32;by++){
-			int y=by+64;
-			for(int bx=0;bx<32;bx++){
-				int x=bx+a*8;
-				if(x>127)
-					x-=128;
-				if(tex[by+ynum][bx+xnum+64][3]==0)
-					continue;
-				int totalAlpha=tex[y][x+16][3]+tex[by+ynum][bx+xnum+64][3];
-				float alpha=(tex[by+ynum][bx+xnum+64][3]/255.0)/(totalAlpha/255.0);
-				tex[y][x+16][0]=(unsigned char) (tex[y][x+16][0]*(1-alpha)+tex[by+ynum][bx+xnum+64][0]*alpha);
-				tex[y][x+16][1]=(unsigned char) (tex[y][x+16][1]*(1-alpha)+tex[by+ynum][bx+xnum+64][1]*alpha);
-				tex[y][x+16][2]=(unsigned char) (tex[y][x+16][2]*(1-alpha)+tex[by+ynum][bx+xnum+64][2]*alpha);
-				tex[y][x+16][3]=min(255,totalAlpha);
-			}
-		}
-	}
-	for(int y=0;y<32;y++){//smoke trail
-		for(int x=0;x<16;x++){
-			for(int c=0;c<4;++c){
-				tex[y+64][x][c]=tex[y+64][112+x][c];
-				tex[y+64][144+x][c]=tex[y+64][16+x][c];			
-			}
-		}
-	}
-	for(int y=0;y<32;y++){//smoke trail
-		float dist=1-fabs(float(y-16))/16.0;
-		float amod=sqrt(dist);
-		for(int x=0;x<160;x++){
-			tex[y+64][x][3]=(unsigned char) (tex[y+64][x][3]*amod);
-		}
-	}
-	for(int y2=0;y2<2;++y2){		//make alpha fall of a bit radially for the smoke
-		int yoffs=y2*32;
-		for(int x2=0;x2<6;++x2){
-			int xoffs=64+x2*32;
-			for(int y=0;y<32;y++){
-				for(int x=0;x<32;x++){
-					float xd=(x-16)/16.0;
-					float yd=(y-16)/16.0;
-					float dist=xd*xd+yd*yd;
-					tex[yoffs+y][xoffs+x][3]=(unsigned char)( max(0.0,(1-dist*0.7)) * tex[yoffs+y][xoffs+x][3]);
-				}
-			}
-		}
-	}
-	ConvertTex(tex,64,0,256,64,1);
-	ConvertTex(tex,0,64,256,128,1);
-
-	CBitmap explo((char*)("bitmaps/"+resources.SGetValueDef("explo.bmp","resources\\graphics\\explosions\\explo")).c_str());
-	for(int y=0;y<128;y++){
+	char tex[128][128][4];
+	for(int y=0;y<128;y++){//shield
 		for(int x=0;x<128;x++){
-			tex[y+128][x+128][0]=explo.mem[(y*128+x)*4];
-			tex[y+128][x+128][1]=explo.mem[(y*128+x)*4+1];
-			tex[y+128][x+128][2]=explo.mem[(y*128+x)*4+2];
-			if(explo.mem[(y*128+x)*4]!=0)
-				tex[y+128][x+128][3]=255;
-		}
-	}
-	for(int y=0;y<128;y++){	//explo med fadeande alpha
-		for(int x=0;x<128;x++){
-			tex[y+128][x][0]=explo.mem[(y*128+x)*4];
-			tex[y+128][x][1]=explo.mem[(y*128+x)*4+1];
-			tex[y+128][x][2]=explo.mem[(y*128+x)*4+2];
-			tex[y+128][x][3]=(explo.mem[(y*128+x)*4]+explo.mem[(y*128+x)*4+1]+explo.mem[(y*128+x)*4+2])/3;
-		}
-	}
-
-	CBitmap flare((char*)("bitmaps/"+resources.SGetValueDef("flare.bmp","resources\\graphics\\flares\\flare")).c_str());
-	for(int y=0;y<128;y++){
-		for(int x=0;x<256;x++){
-			tex[y+64][x+256][0]=flare.mem[(y*256+x)*4+0];
-			tex[y+64][x+256][1]=flare.mem[(y*256+x)*4+1];
-			tex[y+64][x+256][2]=flare.mem[(y*256+x)*4+2];
-			tex[y+64][x+256][3]=255;
-			if(!tex[y+64][x+256][0] && !tex[y+64][x+256][1] && !tex[y+64][x+256][2])
-				tex[y+64][x+256][3]=0;
-		}
-	}
-
-	for(int y=0;y<256;y++){//random dots
-		for(int x=0;x<256;x++){
-			tex[y+256][x][0]=205+(unsigned char) (gs->randFloat()*50);
-			tex[y+256][x][1]=205+(unsigned char) (gs->randFloat()*50);
-			tex[y+256][x][2]=205+(unsigned char) (gs->randFloat()*50);
-			tex[y+256][x][3]=0;
-			dotAlpha[y][x]=gu->usRandFloat()*30;
-		}
-	}
-	for(int a=0;a<3;++a){//random dots
-		float mag=(60<<a);
-		float size=(2<<a);
-		for(int y=(int)size;y<255-(int)size;y+=(int)size){
-			for(int x=(int)size;x<255-(int)size;x+=(int)size){
-				float p=gu->usRandFloat()*mag;
-				for(int y2=y-(int)size;y2<=y+(int)size;y2++){
-					float ym=float(size-abs(y2-y))/size;
-					for(int x2=x-(int)size;x2<=x+(int)size;x2++){
-						float xm=float(size-abs(x2-x))/size;
-						dotAlpha[y2][x2]+=p*xm*ym;
-					}
-				}
-			}
-		}
-	}
-
-	for(int a=0;a<20;++a){//random dots
-		int bx=(int) (gu->usRandFloat()*228);
-		int by=(int) (gu->usRandFloat()*228)+256;
-		for(int y=0;y<16;y++){
-			for(int x=0;x<16;x++){
-				float dist=sqrt((float)(x-8)*(x-8)+(y-8)*(y-8));
-				if(dist>8)
-					continue;
-				int alpha=60+(int)(-dist*35+dotAlpha[by-256+y][bx+x]);
-				if(tex[by+y][bx+x][3]<alpha){
-					tex[by+y][bx+x][3]=max(0,min(255,alpha));
-				}
-			}
-		}
-	}
-	ConvertTex(tex,0,256,256,512,1);
-
-	for(int y=256;y<256+128;++y){//wake
-		for(int x=256;x<256+128;++x){
-			tex[y][x][0]=220;
-			tex[y][x][1]=230;
-			tex[y][x][2]=255;
-		}
-	}
-	for(int a=0;a<40;++a){//wake
-		float3 r(0,0,0);
-		do{
-			r.x=(gu->usRandFloat()-0.5)*2;
-			r.y=(gu->usRandFloat()-0.5)*2;
-		} while(r.Length()>1);
-		int bx=(int)(r.x*52)+256+64-12;
-		int by=(int)(r.y*52)+256+64-12;
-		for(int y=0;y<24;y++){
-			for(int x=0;x<24;x++){
-				float dist=sqrt((float)(x-12)*(x-12)+(y-12)*(y-12));
-				if(dist>12)
-					continue;
-				float alpha=255-dist*20;
-				float alpha2=tex[by+y][bx+x][3];
-				alpha=1-((1-alpha/255)*(1-alpha2/255));
-				tex[by+y][bx+x][3]=(unsigned char) max((float)0,min((float)255,alpha*255));
-			}
-		}
-	}
-	ConvertTex(tex,256,256,256+128,256+128,1);
-
-	for(int y=256;y<256+128;++y){//shield
-		for(int x=384;x<512;++x){
 			tex[y][x][0]=70;
 			tex[y][x][1]=70;
 			tex[y][x][2]=70;
 			tex[y][x][3]=70;
 		}
 	}
+	textureAtlas->AddTexFromMem("perlintex", 128, 128, CTextureAtlas::RGBA32, tex);
 
-	glGenTextures(1, CProjectile::textures);
-	glBindTexture(GL_TEXTURE_2D, CProjectile::textures[0]);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
+	textureAtlas->Finalize();
 
-//	CBitmap b(tex[0][0],512,512);
-//	b.Save("proj.tga");
-
-	for(int y=0;y<256;y++){
-		for(int x=0;x<256;x++){
-			float dist=sqrt((float)(x-127)*(x-127)+(y-127)*(y-127))/128.0;
-			float alpha;
-			if(dist<0.5){
-				alpha=0.0;
-			}else {
-				alpha=1-4.0*fabs(dist-0.75);
-				if(alpha<0)
-					alpha=0;
-			}
-			tex2[y*256+x]=(unsigned char)(alpha*255);
-			alpha=1-dist;
-			if(alpha<0)
-				alpha=0;
-			tex2[(y+256)*256+x]=(unsigned char)(alpha*255);
-		}
+	flaretex = textureAtlas->GetTexture("flare");
+	explotex = textureAtlas->GetTexture("explo");
+	explofadetex = textureAtlas->GetTexture("explofade");
+	circularthingytex = textureAtlas->GetTexture("circularthingy");
+	laserendtex = textureAtlas->GetTexture("laserend");
+	laserfallofftex = textureAtlas->GetTexture("laserfalloff");
+	randdotstex = textureAtlas->GetTexture("randdots");
+	smoketrailtex = textureAtlas->GetTexture("smoketrail");
+	waketex = textureAtlas->GetTexture("wake");
+	perlintex = textureAtlas->GetTexture("perlintex");
+	for(int i=0; i<12; i++)
+	{
+		char num[10];
+		sprintf(num, "%02i", i);
+		smoketex[i] = textureAtlas->GetTexture(std::string("ismoke") + num);
 	}
-	/*
-	unsigned char *tempdata = new unsigned char[256*512*4];
-	for (int y=0;y<512*256;y++) {
-		tempdata[y*4+0] = tempdata[y*4+1] = tempdata[y*4+2] = tex2[y];
-		tempdata[y*4+3] = 255;
-	}
-	CBitmap tmp(tempdata, 256,512);
-	tmp.Save ("groundflash.bmp");
-	delete[] tempdata;*/
 
-	glGenTextures(1,&CGroundFlash::texture);
-	glBindTexture(GL_TEXTURE_2D, CGroundFlash::texture);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 1,256, 512, GL_LUMINANCE, GL_UNSIGNED_BYTE, tex2);
+
+	groundFXAtlas = new CTextureAtlas(2048, 2048);
+	groundFXAtlas->AddTexFromFile("groundflash", "bitmaps/"+resources.SGetValueDef("groundflash.tga","resources\\graphics\\groundfx\\groundflash"));
+	groundFXAtlas->AddTexFromFile("groundring", "bitmaps/"+resources.SGetValueDef("groundring.tga","resources\\graphics\\groundfx\\groundring"));
+	groundFXAtlas->Finalize();
+	groundflashtex = groundFXAtlas->GetTexture("groundflash");
+	groundringtex = groundFXAtlas->GetTexture("groundring");
 
 	if(shadowHandler->drawShadows){
 		projectileShadowVP=LoadVertexProgram("projectileshadow.vp");
@@ -388,7 +132,7 @@ CProjectileHandler::CProjectileHandler()
 		perlinFB = instantiate_fb(512);
 		if (perlinFB && perlinFB->valid()){
 			drawPerlinTex=true;
-			perlinFB->attachTexture(CProjectile::textures[0], GL_TEXTURE_2D, FBO_ATTACH_COLOR);
+			perlinFB->attachTexture(textureAtlas->gltex, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
 			perlinFB->checkFBOStatus();
 		}
 	}
@@ -398,8 +142,6 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
-	glDeleteTextures (1, CProjectile::textures);
-	glDeleteTextures (1, &CGroundFlash::texture);
 	for(int a=0;a<8;++a)
 		glDeleteTextures (1, &perlinTex[a]);
 
@@ -427,6 +169,8 @@ CProjectileHandler::~CProjectileHandler()
 	}
 	ph=0;
 	delete perlinFB;
+	delete textureAtlas;
+	delete groundFXAtlas;
 }
 
 void CProjectileHandler::Update()
@@ -615,7 +359,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, CProjectile::textures[0]);
+	textureAtlas->BindTexture();
 	glEnable(GL_BLEND);
 	glDepthMask(0);
 	glColor4f(1,1,1,0.2f);
@@ -661,7 +405,7 @@ void CProjectileHandler::DrawShadowPass(void)
 	}
 
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, CProjectile::textures[0]);
+	textureAtlas->BindTexture();
 	glColor4f(1,1,1,1);
 	glAlphaFunc(GL_GREATER,0.3);
 	glEnable(GL_ALPHA_TEST);
@@ -727,6 +471,7 @@ void CProjectileHandler::CheckUnitCol()
 					closeTime=1;
 				float3 closeVect=dif-(p->speed*closeTime);
 				if(dif.SqLength() < totalRadius*totalRadius){
+
 					if(unit->isMarkedOnBlockingMap && unit->physicalState != CSolidObject::Flying){
 						float3 closePos(p->pos+p->speed*closeTime);
 						int square=(int)max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
@@ -776,7 +521,8 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glBindTexture(GL_TEXTURE_2D, CGroundFlash::texture);
+//	glBindTexture(GL_TEXTURE_2D, CGroundFlash::texture);
+	groundFXAtlas->BindTexture();
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(0);
 	glPolygonOffset(-20,-1000);
@@ -883,7 +629,7 @@ void CProjectileHandler::UpdateTextures()
 void CProjectileHandler::UpdatePerlin()
 {
 	perlinFB->select();
-	glViewport(384,256,128,128);
+	glViewport(perlintex.ixstart,perlintex.iystart,128,128);
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();

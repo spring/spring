@@ -8,6 +8,7 @@
 #include "ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "mmgr.h"
+#include "ProjectileHandler.h"
 
 CFireProjectile::CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize)
 : CProjectile(pos,speed,owner),
@@ -117,10 +118,10 @@ void CFireProjectile::Draw(void)
 		col[1]=(unsigned char)((1-age)*255);
 		col[2]=(unsigned char)((1-age)*255);
 
-		va->AddVertexTC(interPos-dir1-dir2,0.25f,0.25f,col);
-		va->AddVertexTC(interPos+dir1-dir2,0.5f ,0.25f,col);
-		va->AddVertexTC(interPos+dir1+dir2,0.5f ,0.5f ,col);
-		va->AddVertexTC(interPos-dir1+dir2,0.25f,0.5f ,col);
+		va->AddVertexTC(interPos-dir1-dir2,ph->explofadetex.xstart,ph->explofadetex.ystart,col);
+		va->AddVertexTC(interPos+dir1-dir2,ph->explofadetex.xend ,ph->explofadetex.ystart,col);
+		va->AddVertexTC(interPos+dir1+dir2,ph->explofadetex.xend ,ph->explofadetex.yend ,col);
+		va->AddVertexTC(interPos-dir1+dir2,ph->explofadetex.xstart,ph->explofadetex.yend ,col);
 	}
 	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		float age=pi->age+ageSpeed*gu->timeOffset;
@@ -139,10 +140,10 @@ void CFireProjectile::Draw(void)
 			col[1]=(unsigned char)((1-age*1.3)*255);
 			col[2]=(unsigned char)((1-age*1.3)*255);
 
-			va->AddVertexTC(interPos-dir1-dir2,0.25f,0.25f,col);
-			va->AddVertexTC(interPos+dir1-dir2,0.5f ,0.25f,col);
-			va->AddVertexTC(interPos+dir1+dir2,0.5f ,0.5f ,col);
-			va->AddVertexTC(interPos-dir1+dir2,0.25f,0.5f ,col);
+		va->AddVertexTC(interPos-dir1-dir2,ph->explofadetex.xstart,ph->explofadetex.ystart,col);
+		va->AddVertexTC(interPos+dir1-dir2,ph->explofadetex.xend ,ph->explofadetex.ystart,col);
+		va->AddVertexTC(interPos+dir1+dir2,ph->explofadetex.xend ,ph->explofadetex.yend ,col);
+		va->AddVertexTC(interPos-dir1+dir2,ph->explofadetex.xstart,ph->explofadetex.yend ,col);
 		}
 
 		unsigned char c;
@@ -158,10 +159,10 @@ void CFireProjectile::Draw(void)
 		float xmod=0.125+(float(int(pi->smokeType%6)))/16;
 		float ymod=(int(pi->smokeType/6))/16.0;
 
-		va->AddVertexTC(interPos-dir1-dir2,xmod        ,ymod        ,col2);
-		va->AddVertexTC(interPos+dir1-dir2,xmod+1.0f/16,ymod        ,col2);
-		va->AddVertexTC(interPos+dir1+dir2,xmod+1.0f/16,ymod+1.0f/16,col2);
-		va->AddVertexTC(interPos-dir1+dir2,xmod        ,ymod+1.0f/16,col2);
+		va->AddVertexTC(interPos-dir1-dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].ystart,col2);
+		va->AddVertexTC(interPos+dir1-dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].ystart,col2);
+		va->AddVertexTC(interPos+dir1+dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].yend,col2);
+		va->AddVertexTC(interPos-dir1+dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].yend,col2);
 	}
 }
 
