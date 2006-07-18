@@ -17,11 +17,29 @@
 	[gadgetconsoleoutput]
 	{
 		type=console;
-		x=238;
+		x=350;
 		y=22;
 		x2=0;
 		h=128;
 	}
+
+	[gadgetcommandnotfound]
+	{
+		type=table;
+		x=200;
+		y2=50;
+		w=100;
+		h=120;
+		id=selection_commandnotfound;
+		[states]
+		{
+			first=Simple;
+			second=Complex;
+			third=Default;
+		}
+	}
+
+
 	[gadgetinfoselection]
 	{
 		type=infoselection;
@@ -29,7 +47,6 @@
 		y=22;			
 		w=100;
 		h=1;
-		hidden=yes;
 		draggable=yes;
 		resizeable=no;
 		caption=Info Selection;
@@ -38,7 +55,6 @@
 		tooltip=Inform you about your curent selection;
 	}	
 
-	
 	[gadgetswitch]
 	{
 		type=switchbar;
@@ -71,9 +87,9 @@
 		[gadgetresourcebar]
 		{
 			type=resourcebar;
-			x=0;
+			x=250;
 			y=0;
-			w=1.0;
+			x2=0;
 			h=22;
 			draggable=yes;
 			resizeable=yes;
@@ -87,9 +103,9 @@
 		{
 			type=pane;
 			x=0;
-			y=22;
-			w=110;
-			h=110;
+			y=0;
+			w=250;
+			h=250;
 			draggable=yes;
 			frame=no;
 			caption=Minimap;
@@ -104,11 +120,12 @@
 		{
 			type=pane;
 			x=0;
-			y=132;
-			w=110;
+			y=250;
+			w=150;
 			y2=20;
 			caption=Orders;
 			draggable=yes;
+			resizeable=yes;
 			[gadgetbuildorderstab]
 			{
 				type=tab;
@@ -117,18 +134,39 @@
 				x2=0;
 				y2=0;
 				id=buildorderstab;
-				
 
 				[gadget1]
 				{
 					type=frame;
 					x=0;
-					y=22;
-					w=110;
+					y=24;
+					y2=00;
+					w=1.0;
+					caption=Build;
+					id=Build;
+					[gadgetthemenu]
+					{
+						type=buildmenu;
+						x=0;
+						y=0;
+						w=1;
+						h=1;
+						id=buildmenu;
+						buildpicsize=0.333;	
+		
+					}
+				}
+				
+				[gadget2]
+				{
+					type=frame;
+					x=0;
+					y=42;
+					w=1.0;
 					y2=0;
 					id=Orders;
 					draggable=no;
-					caption=Orders;
+					caption=Orders2;
 					frame=yes;
 					
 					[gadgetai]
@@ -151,8 +189,8 @@
 					{
 						type=frame;
 						x=0;
-						y2=265;
-						h=155;
+						y2=150;
+						h=200;
 						w=1.0;
 						
 						[gadgeta]
@@ -203,7 +241,7 @@
 						{
 							type=state;
 							x=0;
-							y=80;
+							y=70;
 							w=1.0;
 							h=20;
 							id=selection_onoff;
@@ -217,6 +255,21 @@
 						{
 							type=state;
 							x=0;
+							y=80;
+							w=1.0;
+							h=20;
+							id=selection_trajectory;
+							[states]
+							{
+								first=Off;
+								second=On;
+							}
+
+						}
+						[gadgetf]
+						{
+							type=state;
+							x=0;
 							y=105;
 							w=1.0;
 							h=20;
@@ -226,21 +279,9 @@
 								first=Off;
 								second=On;
 							}
+
 						}
-						[gadgetf]
-						{
-							type=state;
-							x=0;
-							y=130;
-							w=1.0;
-							h=20;
-							id=selection_trajectory;
-							[states]
-							{
-								first=Off;
-								second=On;
-							}
-						}
+
 					}
 
 					[gadgetcommands]
@@ -248,8 +289,8 @@
 						type=frame;
 						x=0;
 						y2=10;
-						w=110;
-						h=250;
+						w=1.0;
+						h=150;
 						caption=Commands;
 						hidden=no;
 						frame=yes;
@@ -278,6 +319,7 @@
 						{
 							type=button;
 							x=0;
+					
 							w=0.5;
 							h=20;
 							y2=25;
@@ -289,6 +331,7 @@
 							type=button;
 							x=0.5;
 							w=0.5;
+
 							h=20;
 							y2=25;
 							caption=Patrol;
@@ -380,9 +423,10 @@
 							x=0;
 					
 							w=1.0;
-							h=20;
-							y2=25;
-							caption=Stockpile;
+							h=70;
+							y2=75;
+							caption=stockpile;
+							tex=bitmaps/armsilo1.bmp;
 							id=selection_stockpile;
 						}
 						[gadgetd]
@@ -391,7 +435,7 @@
 							x=0.0;
 							w=0.5;
 							h=20;
-							y2=150;
+							y2=125;
 							caption=Area attack;
 							id=selection_area_attack;
 						}
@@ -402,7 +446,7 @@
 							w=0.5;
 							h=20;
 							y2=150;
-							caption=G select;
+							caption=Group select;
 							id=selection_groupselect;
 						}
 						[gadgetf]
@@ -412,7 +456,7 @@
 							w=0.5;
 							h=20;
 							y2=175;
-							caption=G add;
+							caption=Group add;
 							id=selection_groupadd;
 						}
 						[gadgetg]
@@ -422,53 +466,31 @@
 							w=0.5;
 							h=20;
 							y2=175;
-							caption=G clear;
+							caption=Group clear;
 							id=selection_groupclear;
 						}
 						[gadgeth]
 						{
 							type=button;
 							x=0.0;
-							w=1.0;
-							h=20;
-							y2=200;
-							caption=Self Destruct;
-							id=selection_selfdestruct;
-						}
-						[gadgetj]
-						{
-							type=button;
-							x=0.0;
 							w=0.5;
 							h=20;
-							y2=225;
+							y2=150;
+							caption=SelfD;
+							id=selection_selfdestruct;
+						}
+						[gadgeti]
+						{
+							type=button;
+							x=0.5;
+							w=0.5;
+							h=20;
+							y2=100;
 							caption=Capture;
 							id=selection_capture;
 						}
 					}
-				}
-
-				[gadget2]
-				{
-					type=frame;
-					x=0;
-					y=24;
-					y2=00;
-					w=110;
-					caption=Build;
-					id=Build;
-
-					[gadgetthemenu]
-					{
-						type=buildmenu;
-						x=0;
-						y=0;
-						w=1;
-						h=1;
-						id=buildmenu;
-						buildpicsize=0.5;		
-					}
-				}
+				}				
 			}
 		}
 
@@ -1025,3 +1047,4 @@
 		}
 	}
 }
+

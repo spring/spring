@@ -107,7 +107,7 @@ void GUIinfoSelection::PrivateDraw()
 			glColor3f(1.0f,hpp*2.0f,0.0);
 		sprintf(buf,"%d x",lsti->second.number);
 		guifont->Print(13,buildPicSize*i,1,buf);
-		glBindTexture(GL_TEXTURE_2D,lsti->first->unitimage);
+		glBindTexture(GL_TEXTURE_2D,unitDefHandler->GetUnitImage(lsti->first));
 		int x=48;
 		int y=buildPicSize*(i-1)+buildPicSize/2;
 		glColor3f(1.0, 1.0, 1.0);

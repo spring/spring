@@ -22,6 +22,7 @@
 #include "Game/SelectedUnits.h"
 #include "Game/command.h"
 #include "float3.h"
+#include "Rendering/InMapDraw.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/UnitHandler.h"
@@ -63,6 +64,10 @@ map<int, string> commandNames;
 map<string, CommandDescription> commandDesc;
 // which dialog controller has which token?
 map<string, GUIdialogController*> dialogControllers;
+
+#define DEFAULT_CONTEXT "ctx_default"
+#define CONTEXT_SEP ":"
+
 
 GUIcontroller& GUIcontroller::operator<< (const char* c)
 {
@@ -110,7 +115,9 @@ void GUIcontroller::AddText(const char* fmt, ...)
 	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
 	va_end(ap);	
 
-	console->AddText(text);
+	if (console) {
+		console->AddText(text);
+	}
 }
 
 
@@ -140,7 +147,7 @@ void GUIcontroller::LoadInterface(const std::string& name)
 
 GUIcontroller::GUIcontroller()
 {
-	guicontroller=this;
+//	guicontroller=this;
 	if(!guifont)
 		guifont=new GUIfont("Luxi.ttf", 10);
 
@@ -184,9 +191,12 @@ GUIcontroller::GUIcontroller()
 	commandNames[CMD_REPEAT]="repeat";
 	commandNames[CMD_TRAJECTORY]="trajectory";
 	commandNames[CMD_RESURRECT]="resurrect";
-	commandNames[CMD_CAPTURE]="capture";	
+	commandNames[CMD_CAPTURE]="capture";
+	commandNames[CMD_WAIT]="wait";
 
-
+	// NOTE: the default context can be used by commands that should not ALWAYS work, but only
+	// when no other context is active.  
+	AddContext(DEFAULT_CONTEXT);
 }
 
 GUIcontroller::~GUIcontroller()
@@ -262,7 +272,8 @@ void GUIcontroller::ConsoleInput(const std::string& userInput)
 }
 
 #ifdef _WIN32
-char buttonMap[]={1, 3, 2, 4, 5, 6, 7, 8};
+//char buttonMap[]={1, 3, 2, 4, 5, 6, 7, 8};
+char buttonMap[]={0, 1, 2, 3, 4, 5, 6, 7, 8};
 #else
 char buttonMap[]={0 /* pad */, 1, 2, 3, 4, 5, 6, 7, 8};
 #endif
@@ -271,6 +282,12 @@ bool GUIcontroller::MouseDown(int x1, int y1, int button)
 {
 	if(button<0||button>5) return false;
 	if(!mainFrame) return false;
+
+//	if(inMapDrawer &&  inMapDrawer->keyPressed){
+//		inMapDrawer->MousePress(x1,y1,button);
+//		return true;
+//	}
+
 	if(mouse->hide)
 		return guiGameControl->MouseDown(x1, y1, buttonMap[button]);
 	return mainFrame->MouseDown(x1, y1, buttonMap[button]);
@@ -280,6 +297,12 @@ bool GUIcontroller::MouseUp(int x1, int y1, int button)
 {
 	if(button<0||button>5) return false;
 	if(!mainFrame) return false;
+
+//	if(inMapDrawer && inMapDrawer->keyPressed){
+//		inMapDrawer->MouseRelease(x1,y1,button);
+//		return true;
+//	}
+
 	if(mouse->hide)
 		return guiGameControl->MouseUp(x1, y1, buttonMap[button]);
 	return mainFrame->MouseUp(x1, y1, buttonMap[button]);
@@ -290,6 +313,11 @@ bool GUIcontroller::MouseMove(int x1, int y1, int xrel, int yrel, int button)
 	if(button<0||button>5) 
 		return false;
 	if(!mainFrame) return false;
+	
+	if(inMapDrawer && inMapDrawer->keyPressed){
+		inMapDrawer->MouseMove(x1,y1,xrel,yrel,button);
+		return true;
+	}
 
 	if(mouse->hide)
 	{
@@ -338,6 +366,8 @@ void GUIcontroller::KeyDown(int keysym)
 	if(bindings.find(keyname)!=bindings.end())
 	{
 		guicontroller->Event(bindings[keyname]);
+	} else {
+		//guicontroller->AddText(string("no binding for '")+keyname+"'");
 	}
 }
 
@@ -426,6 +456,23 @@ bool GUIcontroller::EventAction(const std::string& event1)
 			bindings.insert(temp.begin(), temp.end());
 			
 			LoadInterface("gamegui");
+		} 
+		else if (!command.compare(0, 8, "pushctx:")) 
+		{
+			// NOTE: don't push if the current top is the same as the one we are
+			// pushing.
+			std::string curContext = command.substr(8);
+			AddContext(curContext);
+
+		}
+		else if (!command.compare(0, 7, "popctx:"))
+		{
+			std::string curContext = command.substr(7);
+			RemoveContext(curContext);
+		}
+		else if (CheckAndExecContext(command)) 
+		{
+			// NOTE: nothing to do here
 		}
 		else
 		{
@@ -728,6 +775,16 @@ const string GUIcontroller::KeyName(int k)
 
 
 
+/**
+ * Initialize the global 'guicontroller' object with a new instance
+ * of GUIcontroller, unless it is already initialized
+ *
+ */
+void GUIcontroller::GlobalInitialize()
+{
+	if (!guicontroller)
+		guicontroller = new GUIcontroller();
+}
 
 GUIframe* GUIcontroller::CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser)
 {
@@ -747,6 +804,65 @@ GUIframe* GUIcontroller::CreateControl(const std::string& type, int x, int y, in
 }
 
 
+/**
+ * If there is any context on the stack, then we only want to execute
+ * commands that are in that context.  We don't want to execute 'default context'
+ * or any other context commands.
+ *
+ */
+bool GUIcontroller::CheckAndExecContext(std::string testContext)
+{
+	if (inputContext.empty())
+		return false;
+
+	std::string& curContext = inputContext.top();
+
+	if (!testContext.compare(0, curContext.length(), curContext)) {
+		std::string command = testContext.substr(curContext.length());
+
+		EventAction(command);
+
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void GUIcontroller::AddContext(const std::string& context)
+{
+	std::string curContext = context + CONTEXT_SEP;
+
+	if (inputContext.empty())
+	{
+		inputContext.push(curContext);
+	}
+	else
+	{
+		std::string& topContext = inputContext.top();
+		if (curContext != topContext)
+			inputContext.push(curContext);
+	}
+}
+void GUIcontroller::RemoveContext(const std::string& context)
+{
+	std::string curContext = context + CONTEXT_SEP;
+	if (!inputContext.empty()) 
+	{
+		std::string& topContext = inputContext.top();
+		if (curContext == topContext) 
+			if (curContext == DEFAULT_CONTEXT) 
+				AddText(std::string("not removing default context ")+DEFAULT_CONTEXT);
+			else
+				inputContext.pop();
+	} 
+	else
+	{
+		if (!inputContext.empty()) 
+			AddText(std::string("current context '")+inputContext.top()+
+				"' does not match requested pop context '"+curContext+"'");
+	}
+
+}
 
 // this function recursively constructs the view hierarchy from a suitable tdf.
 void GUIdialogController::CreateUIElement(TdfParser & parser, GUIframe* parent, const string& path)

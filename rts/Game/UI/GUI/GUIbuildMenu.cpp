@@ -30,8 +30,11 @@ static void DrawTexturedQuad(int x, int y, int w, int h)
 	glEnd();
 }
 
-//this is just extremly ugly
-vector<UnitDef*> unitDefs;	
+//this is just extremly ugly --
+// TODO: enable registration of 'GUIbuildMenus' with the GUIcontroller, so that the GUIcontroller
+// can call back 'SetBuildMenuOptions' when needed.  This way, it doesn't have to be static,
+// and unitDefs can be a class variable rather than global.
+vector<UnitDef*> unitDefs;
 vector<CommandDescription*> commands;
 set<GUIbuildMenu*> buildMenus;
 
@@ -85,7 +88,7 @@ void GUIbuildMenu::PrivateDraw()
 	int i;
 	for(i=menuOffset; i<unitDefs.size()&&(i-menuOffset)<perCol*perRow; i++)
 	{
-		glBindTexture(GL_TEXTURE_2D, unitDefs[i]->unitimage);
+		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(unitDefs[i]));
 
 		int x=(i-menuOffset)%perRow*(buildPicSize+dist);
 		int y=(i-menuOffset)/perRow*(buildPicSize+dist);

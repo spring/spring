@@ -2,6 +2,7 @@
 #define GUICONTROLLER_H
 
 #include <string>
+#include <stack>
 #include <map>
 #include "Game/command.h"
 #include "float3.h"
@@ -68,6 +69,8 @@ public:
 	
 	static const string Modifiers();
 	static const string KeyName(int k);
+
+	static void GlobalInitialize();
 	
 	void LoadInterface(const std::string& name);
 	
@@ -90,6 +93,7 @@ protected:
 	void TableSelection(GUItable* table, int i,int button);
 	
 	GUIframe* CreateControl(const std::string& type, int x, int y, int w, int h, TdfParser& parser);
+	bool CheckAndExecContext(std::string testContext);
 	
 	GUIgame* gameControl;
 	
@@ -98,6 +102,11 @@ protected:
 	GUIconsole *console;
 	CSelectionKeyHandler		m_SelectionKeyHandler;
 	std::string tempstring;
+	std::stack<std::string> inputContext;
+
+	void AddContext(const std::string& context);
+	void RemoveContext(const std::string& context);
+
 };
 
 extern GUIcontroller* guicontroller;

@@ -232,12 +232,19 @@ CGame::CGame(bool server,std::string mapname)
 	guihandler=new CGuiHandler();
 	minimap=new CMiniMap();
 #endif
+
+#ifdef NEW_GUI
+	GUIcontroller::GlobalInitialize();
+#endif
+
 	ENTER_MIXED;
 	ph=new CProjectileHandler();
 	ENTER_UNSYNCED;
 #ifndef NEW_GUI
-	inMapDrawer=new CInMapDraw();
 #endif
+	inMapDrawer=new CInMapDraw();
+
+
 	geometricObjects=new CGeometricObjects();
 	ENTER_SYNCED;
 	qf=new CQuadField();
@@ -1069,8 +1076,8 @@ bool CGame::Draw()
 
 #ifndef NEW_GUI
 	guihandler->DrawMapStuff();
-	inMapDrawer->Draw();
 #endif
+	inMapDrawer->Draw();
 
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST );
