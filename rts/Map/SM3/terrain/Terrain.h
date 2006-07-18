@@ -128,7 +128,7 @@ namespace terrain {
 
 		// Heightmap interface, for dynamically changing heightmaps
 		void GetHeightmap (int x,int y,int w,int h, float *dest);
-		void SetHeightmap (int x,int y,int w,int h, float *src);
+		void SetHeightmap (int x,int y,int w,int h, float *src, int srcW,int srcH);
 		float GetHeight (float x,float y); // get height from world coordinates 
 		float GetHeightAtPixel (int x,int y);
 

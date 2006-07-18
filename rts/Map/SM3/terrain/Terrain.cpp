@@ -1020,7 +1020,8 @@ namespace terrain {
 		texturing->SetShaderParams (dir, eyevec);
 	}
 
-	void Terrain::SetHeightmap (int sx,int sy,int w,int h, float *src)
+	// heightmap blitting
+	void Terrain::SetHeightmap (int sx,int sy,int w,int h, float *src, int srcW, int srcH)
 	{
 		// clip
 		if (sx < 0) sx = 0;
@@ -1028,22 +1029,27 @@ namespace terrain {
 		if (sx + w > heightmap->w) w = heightmap->w - sx;
 		if (sy + h > heightmap->h) h = heightmap->h - sy;
 
+		// mark for vertex buffer update
+		renderDataManager->UpdateRect(sx,sy,w,h);
+
 		// update heightmap mipmap chain
 		Heightmap *hm = heightmap;
 		int scale = 1, dstw=w, dsth=h;
 		while (hm) {
 			for (int y=0;y<dsth;y++)
-				for (int x=0;x<dstw;x++)
-					hm->at (x+sx, y+sy) = (src[scale * (y*w + x)] - hm->offset) / hm->scale;
-
+				for (int x=0;x<dstw;x++) {
+					int px=x+sx,py=y+sy;
+					int val = (int)((src[scale * (py*srcW + px)] - hm->offset) / hm->scale);
+					const int maxshort = (1<<16)-1;
+					if (val > maxshort) val = maxshort;
+					if (val < 0) val = 0;
+					hm->at (px,py) = val;
+				}
 			sx/=2; sy/=2;
 			dstw/=2; dsth/=2;
 			hm = hm->lowDetail;
 			scale *= 2;
 		}
-
-		// mark for normal recalculation
-		renderDataManager->UpdateRect(sx,sy,w,h);
 	}
 
 	void Terrain::GetHeightmap (int sx,int sy,int w,int h, float *dest)
@@ -1063,10 +1069,10 @@ namespace terrain {
 	float Terrain::GetHeight (float x, float z)
 	{
 		const float s = 1.0f / SquareSize;
-		int px = x*s;
+		int px = (int)(x*s);
 		if (px < 0) px=0;
 		if (px >= heightmap->w) px=heightmap->w-1;
-		int pz = z*s;
+		int pz = (int)(z*s);
 		if (pz < 0) pz=0;
 		if (pz >= heightmap->h) pz=heightmap->h-1;
 		return heightmap->HeightAt (px,pz);

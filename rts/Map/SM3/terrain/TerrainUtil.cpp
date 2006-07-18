@@ -106,11 +106,12 @@ namespace terrain {
 				Vector3 normal = binormal.cross(tangent);
 				normal.Normalize ();
 
-				*(cnorm++) = (normal.x * 0.5f + 0.5f) * 255;
-				*(cnorm++) = (normal.y * 0.5f + 0.5f) * 255;
-				*(cnorm++) = (normal.z * 0.5f + 0.5f) * 255;
+				*(cnorm++) = (uchar)((normal.x * 0.5f + 0.5f) * 255);
+				*(cnorm++) = (uchar)((normal.y * 0.5f + 0.5f) * 255);
+				*(cnorm++) = (uchar)((normal.z * 0.5f + 0.5f) * 255);
 			}
 	}
+
 
 //-----------------------------------------------------------------------
 // Index calculater
