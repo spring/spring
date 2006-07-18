@@ -655,7 +655,7 @@ void CUnit::Draw()
 			glEnable(GL_CLIP_PLANE1);
 			//float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
 			float3 fc;// fc frame color
-			if(configHandler.GetInt ("TeamNanoSpray", 1)){
+			if(configHandler.GetInt ("TeamNanoSpray", 0)){
 				unsigned char* tcol=gs->Team(team)->color;
 				fc = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
 			}else{
