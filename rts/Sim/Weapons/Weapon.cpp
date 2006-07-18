@@ -118,6 +118,10 @@ void CWeapon::Update()
 			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*predictSpeedMod*predict;
 		}
 		targetPos+=errorVector*(weaponDef->targetMoveError*30*targetUnit->speed.Length()*(1.0-owner->limExperience));
+		float appHeight=ground->GetApproximateHeight(targetPos.x,targetPos.z)+2;
+		if(targetPos.y < appHeight)
+			targetPos.y=appHeight;
+
 		if(!weaponDef->waterweapon && targetPos.y<1)
 			targetPos.y=1;
 	}
@@ -253,7 +257,7 @@ bool CWeapon::AttackGround(float3 pos,bool userTarget)
 		pos.y=1;
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
-		weaponPos=owner->pos+10;		//hope that we are underground because we are a popup weapon and will come above ground later
+		weaponPos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
 	if(!TryTarget(pos,userTarget,0))
 		return false;
@@ -276,7 +280,7 @@ bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
-		weaponPos=owner->pos+10;		//hope that we are underground because we are a popup weapon and will come above ground later
+		weaponPos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
 	if(!unit){
 		if(targetType!=Target_Unit)			//make the unit be more likely to keep the current target if user start to move it
@@ -284,8 +288,12 @@ bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 		haveUserTarget=false;
 		return false;
 	}
-	float3 targetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
-	targetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0-owner->limExperience));
+	float3 tempTargetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
+	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0-owner->limExperience));
+	float appHeight=ground->GetApproximateHeight(tempTargetPos.x,tempTargetPos.z)+2;
+	if(tempTargetPos.y < appHeight)
+		tempTargetPos.y=appHeight;
+
 	if(!TryTarget(targetPos,userTarget,unit))
 		return false;
 
@@ -296,7 +304,7 @@ bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 	haveUserTarget=userTarget;
 	targetType=Target_Unit;
 	targetUnit=unit;
-	targetPos=unit->midPos+float3(0,0.3,0)*unit->radius;
+	targetPos=tempTargetPos;
 	AddDeathDependence(targetUnit);
 	return true;
 }
@@ -330,7 +338,7 @@ void CWeapon::SlowUpdate()
 	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
-		weaponPos=owner->pos+10;		//hope that we are underground because we are a popup weapon and will come above ground later
+		weaponPos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
 	predictSpeedMod=1+(gs->randFloat()-0.5)*2*(1-owner->limExperience);
 
@@ -371,6 +379,7 @@ void CWeapon::SlowUpdate()
 
 	if(!weaponDef->noAutoTarget){
 		if(owner->fireState==2 && !haveUserTarget && (targetType==Target_None || (targetType==Target_Unit && (targetUnit->category & badTargetCategory)) || gs->frameNum>lastTargetRetry+65)){
+			lastTargetRetry=gs->frameNum;
 			std::map<float,CUnit*> targets;
 			helper->GenerateTargets(this,targetUnit,targets);
 
@@ -379,6 +388,10 @@ void CWeapon::SlowUpdate()
 					continue;
 				float3 tp(ti->second->midPos);
 				tp+=errorVector*(weaponDef->targetMoveError*30*ti->second->speed.Length()*(1.0-owner->limExperience));
+				float appHeight=ground->GetApproximateHeight(tp.x,tp.z)+2;
+				if(tp.y < appHeight)
+					tp.y=appHeight;
+
 				if(TryTarget(tp,false,ti->second)){
 					if(targetUnit){
 						DeleteDeathDependence(targetUnit);

@@ -296,7 +296,7 @@ void CMobileCAI::SlowUpdate()
 		}
 		//no break
 	case CMD_ATTACK:
-		if(tempOrder && owner->moveState==1){		//limit how far away we fly
+		if(tempOrder && owner->moveState<2){		//limit how far away we fly
 			if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500+owner->maxRange){
 				StopMove();
 				FinishCommand();
