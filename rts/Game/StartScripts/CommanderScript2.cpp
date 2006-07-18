@@ -3,6 +3,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "TdfParser.h"
 #include "Game/Team.h"
+#include "Map/ReadMap.h"
 
 #include "mmgr.h"
 
@@ -32,14 +33,15 @@ void CCommanderScript2::Update(void)
 		gs->Team(1)->energyIncome=1000;
 		gs->Team(1)->energyStorage=1000;
 		gs->Team(1)->metal=1000;
-		gs->Team(1)->metalIncome=1000;	
+		gs->Team(1)->metalIncome=1000;
 		gs->Team(1)->metalStorage=1000;
 
 		TdfParser p("gamedata/SIDEDATA.TDF");
 		string s0=p.SGetValueDef("armcom","side0\\commander");
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 
-		TdfParser p2(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find_last_of('.'))+".smd");
+		TdfParser p2;
+		CReadMap::OpenTDF (stupidGlobalMapname, p2);
 
 		float x0,x1,z0,z1;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");

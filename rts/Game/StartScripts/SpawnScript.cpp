@@ -9,6 +9,7 @@
 #include <set>
 #include "Game/command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Map/ReadMap.h"
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
@@ -34,7 +35,8 @@ void CSpawnScript::Update()
 		string s0=p.SGetValueDef("armcom","side0\\commander");
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 
-		TdfParser p2(string("maps/")+stupidGlobalMapname.substr(0,stupidGlobalMapname.find('.'))+".smd");
+		TdfParser p2;
+		CReadMap::OpenTDF (stupidGlobalMapname, p2);
 
 		float x0,z0;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");
