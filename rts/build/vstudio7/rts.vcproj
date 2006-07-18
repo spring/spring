@@ -3126,6 +3126,12 @@
 		<File
 			RelativePath=".\spring.ico">
 		</File>
+		<File
+			RelativePath="..\..\Rendering\Textures\TextureAtlas.cpp">
+		</File>
+		<File
+			RelativePath="..\..\Rendering\Textures\TextureAtlas.h">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

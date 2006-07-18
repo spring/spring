@@ -3,6 +3,7 @@
 #include "Sim/Units/Unit.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "mmgr.h"
 
 CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color)
@@ -70,16 +71,22 @@ void CRepulseGfx::Draw(void)
 	float drawsize=10;
 	float3 interPos=pos+speed*gu->timeOffset;
 
+	CTextureAtlas::Texture& et=ph->explotex;
+	float txo=et.xstart;
+	float tyo=et.ystart;
+	float txs=et.xend-et.xstart;
+	float tys=et.yend-et.ystart;
+
 	for(int y=0;y<4;++y){
 		float dy=y-2;
 		float ry=y*0.25;
 		for(int x=0;x<4;++x){
 			float dx=x-2;
 			float rx=x*0.25;
-			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+0)+dir*difs[y*5+x]			 ,0.0+ry*0.25			,0.25+(rx)*0.25,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,0.0+(ry+0.25)*0.25,0.25+(rx)*0.25,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],0.0+(ry+0.25)*0.25,0.25+(rx+0.25)*0.25,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+0)+dir*difs[y*5+x+1]		 ,0.0+ry*0.25			,0.25+(rx+0.25)*0.25,col);
+			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+0)+dir*difs[y*5+x]			 ,txo+ry*txs				,tyo+(rx)*tys			,col);
+			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,txo+(ry+0.25)*txs	,tyo+(rx)*tys			,col);
+			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],txo+(ry+0.25)*txs	,tyo+(rx+0.25)*tys,col);
+			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+0)+dir*difs[y*5+x+1]		 ,txo+ry*txs				,tyo+(rx+0.25)*tys,col);
 		}
 	}
 	drawsize=7;
@@ -89,31 +96,35 @@ void CRepulseGfx::Draw(void)
 	col[2]=(unsigned char)(color.z*alpha);
 	col[3]=(unsigned char)(alpha*0.4);
 
+	CTextureAtlas::Texture& ct=ph->circularthingytex;
+	float tx=(ct.xend+ct.xstart)*0.5;
+	float ty=(ct.yend+ct.ystart)*0.5;
+
 	unsigned char col2[4];
 	col2[0]=0;
 	col2[1]=0;
 	col2[2]=0;
 	col2[3]=0;
 
-	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
-	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
+	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
-	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
+	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
-	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
+	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2,0.0625,0.0625,col2);
-	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
-	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],0.0625,0.0625,col);
+	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 }
 
 void CRepulseGfx::Update(void)

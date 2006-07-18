@@ -16,13 +16,15 @@ CShieldPartProjectile::CShieldPartProjectile(const float3& centerPos,int xpart,i
 {
 	checkCol=false;
 
+	CTextureAtlas::Texture& tex=ph->perlintex;
+
 	for(int y=0;y<5;++y){
 		float yp=(y+ypart)/16.0*PI-PI/2;
 		for(int x=0;x<5;++x){
 			float xp=(x+xpart)/32.0*2*PI;
 			vectors[y*5+x]=float3(sin(xp)*cos(yp),sin(yp),cos(xp)*cos(yp));
-			texCoords[y*5+x].x=(vectors[y*5+x].x*(2-fabs(vectors[y*5+x].y)))*(1./16.)+(7./8.);
-			texCoords[y*5+x].y=(vectors[y*5+x].z*(2-fabs(vectors[y*5+x].y)))*(1./16.)+(5./8.);
+			texCoords[y*5+x].x=(vectors[y*5+x].x*(2-fabs(vectors[y*5+x].y)))*((tex.xend-tex.xstart)*0.25)+((tex.xstart+tex.xend)*0.5);
+			texCoords[y*5+x].y=(vectors[y*5+x].z*(2-fabs(vectors[y*5+x].y)))*((tex.yend-tex.ystart)*0.25)+((tex.ystart+tex.yend)*0.5);
 		}
 	}
 	pos=centerPos+vectors[12]*sphereSize;

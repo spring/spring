@@ -126,7 +126,7 @@ void CFactory::Update()
 				dif/=l;
 				dif+=gs->randVector()*0.15f;
 				float3 color = unitDef->NanoColor;
-				if(configHandler.GetInt ("TeamNanoSpray", 1)){
+				if(configHandler.GetInt ("TeamNanoSpray", 0)){
 					unsigned char* col=gs->Team(team)->color;
 					color = float3(col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.));
 				}
