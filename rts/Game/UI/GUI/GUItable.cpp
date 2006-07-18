@@ -57,7 +57,7 @@ void GUItable::Select(int i,int button)
 void GUItable::PrivateDraw()
 {
 	glDisable(GL_TEXTURE_2D);
-		glColor4f(0.0, 0.0, 0.0, 0.4f);	
+		glColor4f(0.0, 0.0, 0.0, GUI_TRANS);	
 	glBegin(GL_QUADS);		
 		glTexCoord2d(0.0f, 0.0f);
 		glVertex3f(10, 10, 0);

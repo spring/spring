@@ -27,6 +27,7 @@ typedef struct
 	FT_Pos ybearing;
 	FT_Pos xbearing;
 	FT_Pos advance_x;
+	FT_Pos height;
 	unsigned char * bitmap_buffer;
 	int bitmap_pitch; 
 } StoredGlyph;
@@ -61,6 +62,7 @@ CglFont::CglFont(int start, int end)
 
 	charstart = start;
 	charWidths = new int[chars];
+	charHeights = new int[chars];
 	textures = new GLuint[chars];
 
 	listbase = glGenLists(chars);
@@ -101,6 +103,7 @@ CglFont::CglFont(int start, int end)
 		g->ybearing = slot->metrics.horiBearingY / 64;	
 		g->xbearing = slot->metrics.horiBearingX / 64;
 		g->advance_x = slot->advance.x;
+		g->height = slot->metrics.height;
 		
 		g->bitmap_buffer = new unsigned char[slot->bitmap.rows * slot->bitmap.width];
 		memcpy(g->bitmap_buffer, 
@@ -208,6 +211,8 @@ CglFont::CglFont(int start, int end)
 		glNewList(listbase+ch,GL_COMPILE);
 		glBindTexture(GL_TEXTURE_2D,textures[ch-charstart]);
 		charWidths[ch-charstart] = g->advance_x / 2 / texsize;		
+		charHeights[ch-charstart] = g->height / 2 / texsize;		
+
 		float x = (charWidths[ch-charstart]) / 32.0f;
 		const float y = 1 - 1.0 / 64;
 		glBegin(GL_TRIANGLE_STRIP);
@@ -236,6 +241,7 @@ CglFont::~CglFont()
 	glDeleteTextures(chars,textures);
 	delete [] textures;
 	delete [] charWidths;
+	delete [] charHeights;
 }
 
 void CglFont::printstring(const char *text)
@@ -312,6 +318,20 @@ float CglFont::CalcTextWidth (const char *text)
 		w += charpart+0.03f;
 	}
 	return w;
+}
+
+float CglFont::CalcTextHeight(const char *text)
+{
+	float h=0.0f;
+	for (int a=0;text[a];a++)  {
+		float charpart = (charHeights[text[a]-charstart])/32.0f;
+		if (charpart>h)
+		{
+			h = charpart;
+		}
+		;
+	}
+	return h+0.03f;
 }
 
 void CglFont::glWorldPrint(const char *fmt, ...)

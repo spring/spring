@@ -9,6 +9,7 @@
 #include "Game/SelectedUnits.h"
 #include "InfoConsole.h"
 #include "Sim/Units/Unit.h"
+#include "Game/UI/GUI/GUIframe.h"
 
 extern bool globalQuit;
 
@@ -82,39 +83,39 @@ void CQuitBox::Draw(void)
 	glDisable(GL_ALPHA_TEST);
 
 	// Large Box
-	glColor4f(0.2f,0.2f,0.2f,0.4f);
+	glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
 	DrawBox(box);
 
 	// resign and quit Box on mouse over
 	if(InBox(mx,my,box+resignQuitBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+resignQuitBox);
 	}
 
 	// resign Box on mouse over
 	if(InBox(mx,my,box+resignBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+resignBox);
 	}
 
 	// give away Box on mouse over
 	if(InBox(mx,my,box+giveAwayBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+giveAwayBox);
 	}
 	// cancel Box on mouse over
 	if(InBox(mx,my,box+cancelBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+cancelBox);
 	}
 	// quit Box on mouse over
 	if(InBox(mx,my,box+quitBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+quitBox);
 	}
 
 
-	glColor4f(0.2f,0.2f,0.2f,0.4f);
+	glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
 	DrawBox(box+teamBox);
 
 
@@ -136,7 +137,7 @@ void CQuitBox::Draw(void)
 		if(shareTeam==actualTeam)
 			glColor4f(1,1,1,0.8f);
 		else
-			glColor4f(1,1,1,0.4f);
+			glColor4f(1,1,1,GUI_TRANS);
 		string ally,dead;
 		if(gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam)))
 			ally="(Ally)";

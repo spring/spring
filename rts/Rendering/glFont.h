@@ -14,6 +14,7 @@ public:
 	void glPrintAt(GLfloat x, GLfloat y, float s, const char* fmt, ...);
 	float CalcTextWidth (const char *txt);
 	float CalcCharWidth (char c);
+	float CalcTextHeight(const char *text);
 	void glPrintCentered (float x,float y, float s,const char *fmt,...);
 	CglFont(int start, int end);
 	~CglFont();
@@ -27,6 +28,7 @@ private:
 	GLuint *textures;
 	GLuint listbase;
 	int *charWidths;
+	int *charHeights;
 };
 extern CglFont* font;
 

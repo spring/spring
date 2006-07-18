@@ -33,6 +33,7 @@
 #include "SDL_mouse.h"
 #include "mmgr.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Game/UI/GUI/GUIframe.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -129,6 +130,8 @@ CGuiHandler::~CGuiHandler()
 	glDeleteTextures (1, &iconmap[0].texture);
 }
 
+
+
 // Ikonpositioner
 void CGuiHandler::LayoutIcons() 
 {
@@ -139,15 +142,30 @@ void CGuiHandler::LayoutIcons()
 	GLfloat texticon_height = .06f;
 	GLfloat height,width;
 
-	buttonBox.x1 = 0.01f;
-	buttonBox.y1 = 0.125f;
-	buttonBox.x2 = 0.18f;
+	//buttonBox.x1 = 0.01f;
+	//buttonBox.y1 = 0.125f;
+	//buttonBox.x2 = 0.18f;
+	//buttonBox.y2 = 0.71f;
+
+	//GLfloat xstep = .09f;
+	//GLfloat ystep = -.07f;
+
+	GLfloat fMargin = 0.005f;
+	GLfloat xstep = .065f;
+	GLfloat ystep = -.065f;
+
+	buttonBox.x1 = fMargin;
+	buttonBox.x2 = fMargin*2+xstep*2;
 	buttonBox.y2 = 0.71f;
+	buttonBox.y1 = buttonBox.y2+
+		ystep*NUMICOPAGE/2// number of buttons
+		-ystep/2;// las buttons are twiche smaller
 
 	if(showingMetal){
 		showingMetal=false;
 		readmap->GetGroundDrawer()->DisableExtraTexture();
 	}
+
 
 	CSelectedUnits::AvailableCommandsStruct ac=selectedUnits.GetAvailableCommands();;
 	vector<CommandDescription> uncommands=ac.commands;
@@ -155,11 +173,8 @@ void CGuiHandler::LayoutIcons()
 
 	commands.clear();
 	
-	GLfloat x0 = buttonBox.x1 + .01f;
-	GLfloat y0 = buttonBox.y2 - .01f;
-	
-	GLfloat xstep = .09f;
-	GLfloat ystep = -.07f;
+	GLfloat x0 = buttonBox.x1 + fMargin;
+	GLfloat y0 = buttonBox.y2 - fMargin;
 	
 	vector<CommandDescription> hidden;
 
@@ -196,14 +211,14 @@ void CGuiHandler::LayoutIcons()
 			curricon[nr].x1 = x0 + xpos*xstep;
 			curricon[nr].y1 = y0 + ypos*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;	
+			curricon[nr].y2 = curricon[nr].y1 - height/2;	
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
 			curricon[nr].x1 = x0 + xpos*xstep;
 			curricon[nr].y1 = y0 + ypos*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;	
+			curricon[nr].y2 = curricon[nr].y1 - height/2;	
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
@@ -212,13 +227,13 @@ void CGuiHandler::LayoutIcons()
 			CommandDescription c;
 			c.id=CMD_INTERNAL;
 			c.type=CMDTYPE_PREV;
-			c.name="<--";
+			c.name="";
 			c.tooltip = "Previous menu";
 			commands.push_back(c);
 
 			c.id=CMD_INTERNAL;
 			c.type=CMDTYPE_NEXT;
-			c.name="-->";
+			c.name="";
 			c.tooltip = "Next menu";
 			commands.push_back(c);
 
@@ -231,14 +246,14 @@ void CGuiHandler::LayoutIcons()
 			curricon[nr].x1 = x0 + 0*xstep;
 			curricon[nr].y1 = y0 + 7*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;	
+			curricon[nr].y2 = curricon[nr].y1 - height/2;	
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
 			curricon[nr].x1 = x0 + 1*xstep;
 			curricon[nr].y1 = y0 + 7*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;	
+			curricon[nr].y2 = curricon[nr].y1 - height/2;	
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
@@ -247,13 +262,13 @@ void CGuiHandler::LayoutIcons()
 		CommandDescription c;
 		c.id=CMD_INTERNAL;
 		c.type=CMDTYPE_PREV;
-		c.name="<--";
+		c.name="";
 		c.tooltip = "Previous menue";
 		commands.push_back(c);
 
 		c.id=CMD_INTERNAL;
 		c.type=CMDTYPE_NEXT;
-		c.name="-->";
+		c.name="";
 		c.tooltip = "Next menue";
 		commands.push_back(c);
 	}
@@ -295,7 +310,7 @@ void CGuiHandler::DrawButtons()
 	if (total_active_icons > 0) {
 		
 		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.2f,0.2f,0.2f,0.4f);
+		glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
 		glBegin(GL_QUADS);
 
 		GLfloat fx = 0;//-.2f*(1-fadein/100.0)+.2f;
@@ -389,18 +404,100 @@ void CGuiHandler::DrawButtons()
 				glVertex2f(x1,y2);
 				glEnd();
 			}
+			else 
+			{
+				glPushAttrib(GL_ENABLE_BIT);	
+				glDisable(GL_LIGHTING);
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_TEXTURE_2D);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+				GLfloat xSize = fabs(x2-x1);
+				GLfloat yCenter = (y1+y2)/2.f;
+				GLfloat ySize = fabs(y2-y1);
+
+				if (commands[nr].type == CMDTYPE_PREV)
+				{
+					glBegin(GL_POLYGON);
+					if(mouseIcon==nr || nr ==inCommand)
+					{	// selected
+						glColor4f(1.f,1.f,0.f,1.f);
+					}
+					else
+					{	// normal
+						glColor4f(0.7f,0.7f,0.7f,1.f);
+					}
+					glVertex2f(x2-xSize/6,yCenter-ySize/4);
+					glVertex2f(x1+2*xSize/6,yCenter-ySize/4);
+					glVertex2f(x1+xSize/6,yCenter);
+					glVertex2f(x1+2*xSize/6,yCenter+ySize/4);
+					glVertex2f(x2-xSize/6,yCenter+ySize/4);
+					glEnd();
+				}
+				else if (commands[nr].type == CMDTYPE_NEXT)
+				{
+					glBegin(GL_POLYGON);
+					if(mouseIcon==nr || nr ==inCommand)
+					{	// selected
+						glColor4f(1.f,1.f,0.f,1.f);
+					}
+					else
+					{	// normal
+						glColor4f(0.7f,0.7f,0.7f,1.f);
+					}
+					glVertex2f(x1+xSize/6,yCenter-ySize/4);
+					glVertex2f(x2-2*xSize/6,yCenter-ySize/4);
+					glVertex2f(x2-xSize/6,yCenter);
+					glVertex2f(x2-2*xSize/6,yCenter+ySize/4);
+					glVertex2f(x1+xSize/6,yCenter+ySize/4);
+					glEnd();
+				}
+				else
+				{
+					glBegin(GL_LINE_LOOP);
+					glColor4f(1.f,1.f,1.f,0.1f);
+					glVertex2f(x1,y1);
+					glVertex2f(x2,y1);
+					glVertex2f(x2,y2);
+					glVertex2f(x1,y2);
+					glEnd();
+				}
+				glPopAttrib();
+			}
+
 			// skriv text
 			string toPrint=commands[nr].name;
 			if(commands[nr].type==CMDTYPE_ICON_MODE && (atoi(commands[nr].params[0].c_str())+1)<commands[nr].params.size()){
 				toPrint=commands[nr].params[atoi(commands[nr].params[0].c_str())+1];
 			}
 
-			if (toPrint.length() > 6) 
-				scalef = toPrint.length()/4.0;
-			else 
-				scalef = 6.0/4.0;
-			
-		  glTranslatef(x1+.004f,y1-.039f,0.0f);
+
+			float fDecX = 0.f;
+			float fTxtLen = font->CalcTextWidth(toPrint.c_str());
+			scalef = 1.f;
+			float fIconWidth = 2.5f;
+			float fIconHeight = 2.0;
+			if (fTxtLen>fIconWidth)
+			{
+				scalef = fTxtLen/fIconWidth;
+			}
+			else
+			{
+				fDecX = (fIconWidth-fTxtLen)/2;
+				fDecX = fDecX / fIconWidth * (x2-x1);// convert to screen coords
+			}
+
+			glPushMatrix();
+			float dshadow = 0.003f/scalef;
+			glColor4f(0.0f,0.0f,0.f,0.8f);
+			glTranslatef(dshadow+fDecX+x1+.004f,-dshadow+y1-.039f,0.0f);
+			glScalef(0.02f/scalef,0.03f/scalef,0.1f);
+			font->glPrint("%s",toPrint.c_str()); 
+			glPopMatrix();
+
+			glColor4f(1.f,1.f,1.f,1.f);
+			glTranslatef(fDecX+x1+.004f,y1-.039f,0.0f);
 			glScalef(0.02f/scalef,0.03f/scalef,0.1f);
 			font->glPrint("%s",toPrint.c_str()); 
 		}

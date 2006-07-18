@@ -103,6 +103,7 @@
 #include "SDL_timer.h"
 #include "SDL_keyboard.h"
 #include "Platform/fp.h"
+#include "Game/UI/GUI/GUIframe.h"
 
 #ifdef _MSC_VER
 #include "Platform/Win/DxSound.h"
@@ -784,6 +785,16 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		grouphandler->GroupCommand(9);
 	if(s=="group0")
 		grouphandler->GroupCommand(0);
+
+	if (s=="incguiopacity")
+	{
+		GUIframe::SetGUIOpacity(min(GUIframe::GetGUIOpacity()+0.1f,1.f));
+	}
+
+	if (s=="decguiopacity")
+	{
+		GUIframe::SetGUIOpacity(max(GUIframe::GetGUIOpacity()-0.1f,0.f));
+	}
 
 	if (s=="screenshot"){
 		int x=gu->screenx;

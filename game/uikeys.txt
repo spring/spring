@@ -54,3 +54,6 @@ bind \ DrawInMap
 bind 'z' mouse4
 bind 'x' mouse5
 bind tab toggleoverview
+
+bind > incguiopacity
+bind < decguiopacity

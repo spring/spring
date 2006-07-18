@@ -9,6 +9,7 @@
 #include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Rendering/InMapDraw.h"
+#include "Game/UI/GUI/GUIframe.h"
 
 CStartPosSelecter::CStartPosSelecter(void)
 {
@@ -146,7 +147,7 @@ void CStartPosSelecter::Draw()
 	glDisable(GL_ALPHA_TEST);
 
 	if(InBox(mx,my,readyBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(readyBox);
 	}
 	glEnable(GL_TEXTURE_2D);
