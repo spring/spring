@@ -36,7 +36,7 @@ void BlurGrayscaleImage(int w, int h, uchar *data)
 			AT(x,b);
 			AT(r,b);
 #undef AT
-			nd[y*w+x] = result / 8.0f;
+			nd[y*w+x] = (uchar)(result / 8);
 		}
 	}
 	memcpy(data,nd,w*h);
@@ -69,8 +69,8 @@ Lightmap::Lightmap(Heightmap *orghm, int level, LightingInfo *li)
 	{
 		memset(lightMap, 255, w*w); // 255 is lit, 0 is unlit
 
-		int lightx = l->position.x / hm->squareSize;
-		int lighty = l->position.z / hm->squareSize;
+		int lightx = (int)(l->position.x / hm->squareSize);
+		int lighty = (int)(l->position.z / hm->squareSize);
 		
 		for (int y=0;y<w;y++)
 		{
@@ -153,9 +153,9 @@ Lightmap::Lightmap(Heightmap *orghm, int level, LightingInfo *li)
 	uchar *shadingTexData=new uchar[w*w*3], *td = shadingTexData;
 	for(int y=0;y<w;y++) {
 		for (int x=0;x<w;x++) {
-			shadingTexData[(y*w+x)*3+0] = min(1.0f, shading[y*w+x].x) * 255;
-			shadingTexData[(y*w+x)*3+1] = min(1.0f, shading[y*w+x].y) * 255;
-			shadingTexData[(y*w+x)*3+2] = min(1.0f, shading[y*w+x].z) * 255;
+			shadingTexData[(y*w+x)*3+0] = (uchar)(min(1.0f, shading[y*w+x].x) * 255);
+			shadingTexData[(y*w+x)*3+1] = (uchar)(min(1.0f, shading[y*w+x].y) * 255);
+			shadingTexData[(y*w+x)*3+2] = (uchar)(min(1.0f, shading[y*w+x].z) * 255);
 		}
 	}
 

@@ -30,70 +30,71 @@ struct Sm3LoadCB : terrain::ILoadCallback
 
 void CSm3ReadMap::Initialize (const char *mapname)
 {
-	int tu;
 	try {
-	string lmsg = "Loading " + string(mapname);
-	PrintLoadMsg(lmsg.c_str());
-	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
+		string lmsg = "Loading " + string(mapname);
+		PrintLoadMsg(lmsg.c_str());
+		int tu;
+		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
 
-	if (false) {//tu < 4) {
-		tr.config.cacheTextures=true;
-		tr.config.cacheTextureSize=256;
-	}
-	else {
-		tr.config.cacheTextures=false;
-
-		if (GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
-			tr.config.useBumpMaps=false;
-
-			tr.config.anisotropicFiltering = 0.0f;
+		if (false) {//tu < 4) {
+			tr.config.cacheTextures=true;
+			tr.config.cacheTextureSize=256;
 		}
-		tr.config.terrainNormalMaps = false;
-		tr.config.normalMapLevel = 3;
+		else {
+			tr.config.cacheTextures=false;
+
+			if (GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
+				tr.config.useBumpMaps=false;
+
+				tr.config.anisotropicFiltering = 0.0f;
+			}
+			tr.config.terrainNormalMaps = false;
+			tr.config.normalMapLevel = 3;
+		}
+
+		if (shadowHandler->drawShadows)
+			tr.config.useShadowMaps = true;
+
+		tr.config.useStaticShadow=true;
+
+		// Load map info from TDF
+		std::string fn = std::string("maps/") + mapname;
+		mapDefParser.LoadFile (fn);
+		TdfParser resources("gamedata/resources.tdf");
+		ParseSettings(resources);
+
+		Sm3LoadCB loadcb;
+		terrain::LightingInfo lightInfo;
+		lightInfo.ambient = ambientColor;
+		terrain::StaticLight light;
+		light.color = sunColor;
+		light.directional = false;
+		light.position = gs->sunVector * 10000;
+		lightInfo.staticLights.push_back (light);
+		tr.Load (mapDefParser, &lightInfo, &loadcb);
+
+		height = width = tr.GetHeightmapWidth ()-1;
+
+		// Set global map info
+		gs->mapx=width;
+		gs->mapy=height;
+		gs->mapSquares = width*height;
+		gs->hmapx=width/2;
+		gs->hmapy=height/2;
+		gs->pwr2mapx=next_power_of_2(width);
+		gs->pwr2mapy=next_power_of_2(height);
+
+		float3::maxxpos=width*SQUARE_SIZE-1;
+		float3::maxzpos=height*SQUARE_SIZE-1;
+
+		heightmap=new float[(width+1)*(height+1)];
+		tr.GetHeightmap (0,0,width+1,height+1,heightmap);
+
+		CalcHeightfieldData();
+		
+		groundDrawer = new CSm3GroundDrawer (this);
 	}
-
-	if (shadowHandler->drawShadows)
-		tr.config.useShadowMaps = true;
-
-	tr.config.useStaticShadow=true;
-
-	// Load map info from TDF
-	std::string fn = std::string("maps/") + mapname;
-	mapDefParser.LoadFile (fn);
-	TdfParser resources("gamedata/resources.tdf");
-	ParseSettings(resources);
-
-	Sm3LoadCB loadcb;
-	terrain::LightingInfo lightInfo;
-	lightInfo.ambient = ambientColor;
-	terrain::StaticLight light;
-	light.color = sunColor;
-	light.directional = false;
-	light.position = gs->sunVector * 10000;
-	lightInfo.staticLights.push_back (light);
-	tr.Load (mapDefParser, &lightInfo, &loadcb);
-
-	height = width = tr.GetHeightmapWidth ()-1;
-
-	// Set global map info
-	gs->mapx=width;
-	gs->mapy=height;
-	gs->mapSquares = width*height;
-	gs->hmapx=width/2;
-	gs->hmapy=height/2;
-	gs->pwr2mapx=next_power_of_2(width);
-	gs->pwr2mapy=next_power_of_2(height);
-
-	float3::maxxpos=width*SQUARE_SIZE-1;
-	float3::maxzpos=height*SQUARE_SIZE-1;
-
-	heightmap=new float[(width+1)*(height+1)];
-	tr.GetHeightmap (0,0,width+1,height+1,heightmap);
-
-	CalcHeightfieldData();
-	
-	groundDrawer = new CSm3GroundDrawer (this);
-	}catch(content_error& e)
+	catch(content_error& e)
 	{
 		ErrorMessageBox(e.what(), "Error:", MBF_OK);
 	}
@@ -118,14 +119,17 @@ void CSm3ReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	if (y2<0) y2=0;
 	if (y2>width) y2=height;
 
-
+	tr.SetHeightmap(x1,y1, x2-x1,y2-y1, heightmap, width+1, height+1);
 }
 
 void CSm3ReadMap::Update() {}
 void CSm3ReadMap::Explosion(float x,float y,float strength) {}
 void CSm3ReadMap::ExplosionUpdate(int x1,int x2,int y1,int y2) {}
 unsigned int CSm3ReadMap::GetShadingTexture () { return 0; } // a texture with RGB for shading and A for height
-void CSm3ReadMap::DrawMinimap () {} // draw the minimap in a quad (with extends: (0,0)-(1,1))
+void CSm3ReadMap::DrawMinimap () 
+{
+	 // draw the minimap in a quad (with extends: (0,0)-(1,1))
+}
 
 // Determine visibility for a rectangular grid
 void CSm3ReadMap::GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize)

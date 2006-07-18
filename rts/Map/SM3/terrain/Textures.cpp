@@ -120,7 +120,7 @@ namespace terrain {
 			gi->maxHeightFuzzy = atof (tdf->SGetValueDef ("0", section + "\\MaxHeightFuzzy").c_str());
 			gi->minHeightFuzzy = atof (tdf->SGetValueDef ("0", section + "\\MinHeightFuzzy").c_str());
 
-			int generatorLOD = atof (tdf->SGetValueDef ("0", section + "\\GeneratorLOD").c_str());
+			int generatorLOD = atoi (tdf->SGetValueDef ("0", section + "\\GeneratorLOD").c_str());
 
 			if (cb) cb->PrintMsg ("    generating %s...", name.c_str());
 			Generate (heightmap, generatorLOD);
@@ -286,15 +286,15 @@ namespace terrain {
 				Vector3 n;
 
 				if (sx*sx + sy*sy < 32*32) {
-					int sz = sqrtf(32 * 32 - sx*sx - sy*sy);
+					int sz = (int)sqrtf(32 * 32 - sx*sx - sy*sy);
 					n = Vector3(sx,sy,sz);
 					n.Normalize ();
 				}
 
 				// compress it into a color
-				*(p++) = 255 * (n.x * 0.5f + 0.5f);
-				*(p++) = 255 * (n.y * 0.5f + 0.5f);
-				*(p++) = 255 * (n.z * 0.5f + 0.5f);
+				*(p++) = (uchar)(255 * (n.x * 0.5f + 0.5f));
+				*(p++) = (uchar)(255 * (n.y * 0.5f + 0.5f));
+				*(p++) = (uchar)(255 * (n.z * 0.5f + 0.5f));
 			}
 		}
 
