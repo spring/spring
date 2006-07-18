@@ -244,11 +244,13 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	if (priority > verboseLevel)
 		return;
 
-	guicontroller->AddText(text);
+	if (guicontroller) 
+		guicontroller->AddText(text);
 }
 
 void CInfoConsole::SetLastMsgPos(float3 pos)
 {
+	if (guicontroller)
 	guicontroller->SetLastMsgPos(pos);
 }
 

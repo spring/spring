@@ -197,11 +197,7 @@ void CInMapDraw::MousePress(int x, int y, int button)
 	switch(button){
 	case SDL_BUTTON_LEFT:
 		if(lastLeftClickTime>gu->gameTime-0.3){
-			waitingPoint=pos;
-			game->userWriting=true;
-			wantLabel=true;
-			game->userPrompt="Label: ";
-			game->ignoreChar='\xA7';		//should do something better here
+			PromptLabel(pos);
 		}
 		lastLeftClickTime=gu->gameTime;
 		break;
@@ -329,3 +325,21 @@ void CInMapDraw::AddLine(float3 pos, float3 pos2)
 			NETMSG_MAPDRAW, 12 /*message size*/, gu->myPlayerNum, NET_LINE,
 			(short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
 }
+
+
+#ifdef NEW_GUI
+void CInMapDraw::PromptLabel (float3 pos)
+{
+}
+#else
+
+void CInMapDraw::PromptLabel (float3 pos)
+{
+	waitingPoint=pos;
+	game->userWriting=true;
+	wantLabel=true;
+	game->userPrompt="Label: ";
+	game->ignoreChar='\xA7';		//should do something better here
+}
+
+#endif // NEW_GUI

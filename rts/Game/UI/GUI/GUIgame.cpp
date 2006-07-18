@@ -12,6 +12,7 @@
 #include "float3.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureHandler.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Game/Team.h"
@@ -292,6 +293,7 @@ GUIgame::GUIgame(GUIcontroller *c):GUIpane(0, 0, gu->screenx, gu->screeny), cont
 	mouseLook=false;
 	unit=0;
 	feature=0;
+	featureId=-1;
 	position=ZeroVector;
 	showingMetalMap=false;
 
@@ -346,7 +348,15 @@ void GUIgame::StartCommand(CommandDescription& cmd)
 	}
 	else
 	{
-		currentCommand=&cmd;
+		// NOTE: if there are no selected units, then don't remember the current command.
+		// If we don't do this, then right-click-drag causes an exception.
+		if (!selectedUnits.selectedUnits.empty()) {
+			currentCommand=&cmd;
+		}
+		else
+		{
+			return;
+		}
 
 		if(currentCommand->type==CMDTYPE_ICON_BUILDING)
 		{
@@ -694,6 +704,7 @@ bool GUIgame::DirectCommand(const float3& p, int button)
 {
 	unit=0;
 	feature=0;
+	featureId=-1;
 	
 	float3 over=float3(p.x, 8000, p.z);
 	float3 dir=float3(0, -1, 0);
@@ -704,6 +715,8 @@ bool GUIgame::DirectCommand(const float3& p, int button)
 	
 	helper->GuiTraceRay(over,dir,gu->viewRange*1.4,unit,20,true);
 	helper->GuiTraceRayFeature(over,dir,gu->viewRange*1.4,feature);
+	if (feature)
+		featureId=feature->id;
 	
 	buttonAction[button]=NOTHING;
 	// the event was not a drag, so it must be a click. send event
@@ -717,6 +730,7 @@ bool GUIgame::MouseMoveAction(int x, int y, int xrel, int yrel, int button)
 {
 	unit=0;
 	feature=0;
+	featureId=-1;
 	position=ZeroVector;
 
 	float3 dir=mouse->dir;
@@ -728,6 +742,8 @@ bool GUIgame::MouseMoveAction(int x, int y, int xrel, int yrel, int button)
 
 	float dist2=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,true);
 	float dist3=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4,feature);
+	if (feature)
+		featureId=feature->id;
 
 	for(int button=0; button<numButtons; button++)
 	{
@@ -797,7 +813,7 @@ bool GUIgame::EventAction(const string& command)
 	// there needs to be a better solution to this.  right now, camera speed manipulation is command based which can be awkward
 	// for instance: press shift, then a button, then release both at the same time, or shift first.  shift__release
 	// if never fired, and camMove[6] or 7 is not changed back to false, so this needs to be done
-	game->camMove[6] = game->camMove[7] = false;
+	//game->camMove[6] = game->camMove[7] = false;
 
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
 
@@ -1239,13 +1255,21 @@ void GUIgame::SelectCursor()
 					mouse->cursorText="";	// TODO: where is the selection cursor?
 				//	return;
 				}
-
-			int cmd_id = selectedUnits.GetDefaultCmd(unit,feature);
-
-			string name="selection_" + commandNames[cmd_id];
-			if(commandDesc.find(name)!=commandDesc.end())
+			
+			//NOTE: since the feature object can get deleted mid-stream, we must test to
+			// see if it is still 'valid'.  We do this by looking up the feature by
+			// its id.
+			// This is a fix for a crash when mouse-overing an object that is being
+			// reclaimed.  When it is finally deleted, an exception occurs.
+			if (featureHandler->features[featureId]) 
 			{
-				mouse->cursorText=commandDesc[name].name;
+				int cmd_id = selectedUnits.GetDefaultCmd(unit,feature);
+
+				string name="selection_" + commandNames[cmd_id];
+				if(commandDesc.find(name)!=commandDesc.end())
+				{
+					mouse->cursorText=commandDesc[name].name;
+				}
 			}
 		}
 	}
@@ -1269,7 +1293,7 @@ string GUIgame::Tooltip()
 			unit->experience,unit->metalCost+unit->energyCost/60,unit->maxRange, unit->metalMake, unit->metalUse, unit->energyMake, unit->energyUse);
 		tooltip+=tmp;
 	} else
-		if ((feature) && (feature->def)) 
+		if ((feature) && (feature->def) && featureHandler->features[featureId]) 
 	{
 		tooltip="";
 		if (feature->def->metal > 0){ 
@@ -1454,8 +1478,15 @@ Command GUIgame::GetCommand()
 
 		case CMDTYPE_ICON_FRONT:
 		{
-			if(!selector[button].IsDragging())
-				return defaultRet;
+			if(!selector[button].IsDragging()) {
+				if(position==ZeroVector)
+					return defaultRet;
+				ret.params.push_back(position.x);
+				ret.params.push_back(position.y);
+				ret.params.push_back(position.z);
+				return ret;
+			//	return defaultRet;
+			}
 
 			float3 pos=selector[button].Start();
 

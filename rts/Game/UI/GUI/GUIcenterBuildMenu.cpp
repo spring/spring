@@ -85,7 +85,7 @@ void GUIcenterBuildMenu::PrivateDraw()
 	int i;
 	for(i=menuOffset; i<unitDefs.size()&&(i-menuOffset)<perCol*perRow; i++)
 	{
-		glBindTexture(GL_TEXTURE_2D, unitDefs[i]->unitimage);
+		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(unitDefs[i]));
 
 		int x=(i-menuOffset)%perRow*(buildPicSize+dist);
 		int y=(i-menuOffset)/perRow*(buildPicSize+dist);

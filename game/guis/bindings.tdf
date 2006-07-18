@@ -1,48 +1,51 @@
 [bindings]
 {
+//	shift_1_press=gadget_buildorderstab_switch_0;
+//	shift_2_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_0;
+//	shift_3_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_1;
+//	shift_4_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_2;
+//	shift_5_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_3;
+//	shift_6_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_4;
+//	shift_7_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_5;
+//	shift_8_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_6;
+//	shift_9_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_7;
+//	shift_0_press=gadget_buildorderstab_switch_1 gadget_buildmenu_switch_8;
 	space_press=gadget_bmtest_show;
 	space_release=gadget_bmtest_hide;
 
-	// change camera mode
-	j_press=mousestate;
-	shift_j_press=mousestate;
-	ctrl_j_press=mousestate;
-
 	// select - selected command
-	mouse1_click=maybe_replace_selection dispatch_command stop_command;
+	mouse1_click=popctx:ctx_action maybe_replace_selection dispatch_command stop_command;
 	shift_mouse1_click=maybe_add_selection dispatch_command;
 	mouse1_drag=drag_command_replace;
 	shift_mouse1_drag=drag_command_add;
 
 	// right mouse is only default command
-	mouse3_click=stop_command default_command dispatch_command stop_command;
-	shift_mouse3_click=stop_command default_command dispatch_command stop_command;
+	mouse3_click=ctx_default:default_command ctx_default:dispatch_command ctx_action:cancel_or_deselect popctx:ctx_action;
+	shift_mouse3_click=ctx_default:default_command ctx_default:dispatch_command ctx_action:cancel_or_deselect popctx:ctx_action;
+	//shift_mouse3_click=stop_command default_command dispatch_command stop_command;
 	ctrl_mouse3_click=stop_command default_command dispatch_command stop_command;
 	alt_mouse3_click=stop_command default_command dispatch_command stop_command;
 	mouse3_drag=drag_defaultcommand;
 	shift_mouse3_drag=drag_defaultcommand;
+	shift__release=stop_command end_movefast;
+	shift__press=start_movefast;
 
 	enter_release=gadget_consoleinput_togglefocus gadget_consoleinput_togglehidden;
 
-   +_press=speedup;
-	-_press=slowdown;
-	shift_equals_press=speedup;
-
 	// esc cancels command or deselects
 	escape_release=cancel_or_deselect;
-	shift_escape_release=cancel_or_deselect;
 
 	n_release=NewCameraMode;
 	pause_release=Pause;
 	o_release=SingleStep;
 	shift_escape_release=quit;
-	pause_press=pauseGame;
+	escape_press=falseQuit;
 
 	insert_release=speedup;
 	delete_release=slowdown;
-
-	b_release=debug;
-	f12_press=screenshot;
+	+_release=speedup;
+	-_release=slowdown;
+	equals_release=speedup;
 
 	up_press=start_moveforward;
 	down_press=start_moveback;
@@ -52,54 +55,92 @@
 	down_release=end_moveback;
 	right_release=end_moveright;
 	left_release=end_moveleft;
-
-	f1_release=traditional_gui;
-	f2_release=standard_gui;
-
-	a_press=selection_attack;
-	ctrl_a_press=selection_area_attack;
-	ctrl_d_press=selection_selfdestruct;
-	d_press=selection_dgun;
-	l_press=selection_loadunits;
-	u_press=selection_unloadunits;
-	r_press=selection_repair;
-	g_press=selection_guard;
-	p_press=selection_patrol;
-	m_press=selection_move;
-	s_press=selection_stop;
-	e_press=selection_reclaim;
-
-	v_press=createvideo;
-	l_press=togglelos;
 	
+	shift_up_press=start_movefast start_moveforward;
+	shift_up_release=end_movefast end_moveforward;
+	shift_down_press=start_movefast start_moveback;
+	shift_down_release=end_movefast end_moveback;
+	shift_left_press=start_movefast start_moveleft;
+	shift_left_release=end_movefast end_moveleft;
+	shift_right_press=start_movefast start_moveright;
+	shift_right_release=end_movefast end_moveright;
+
+//	f1_release=traditional_gui;
+//	f2_release=standard_gui;
+
+	a_press=pushctx:ctx_action ctx_action:selection_attack;
+	shift_a_press=selection_area_attack;
+	ctrl_d_press=selection_selfdestruct;
+	d_press=pushctx:ctx_action ctx_action:selection_dgun;
+	l_press=pushctx:ctx_action ctx_action:selection_loadunits;
+	u_press=pushctx:ctx_action ctx_action:selection_unloadunits;
+	r_press=pushctx:ctx_action ctx_action:selection_repair;
+	g_press=pushctx:ctx_action ctx_action:selection_guard;
+	p_press=pushctx:ctx_action ctx_action:selection_patrol;
+	m_press=pushctx:ctx_action ctx_action:selection_move;
+	s_press=pushctx:ctx_action ctx_action:selection_stop;
+	e_press=pushctx:ctx_action ctx_action:selection_reclaim;
+	l_press=togglelos;
+	c_press=controlunit;
+	//o_press=singlestep;
+	o_press=gadget_buildorderstab_switch_1;
+	b_press=gadget_buildorderstab_switch_0;
+	shift_b_press=debug;
+	t_press=track;
+	v_press=createvideo;
+	tilde_press=drawinmapon;
+	tilde_release=drawinmapoff;
+	n_press=cancel_or_deselect;
+
+	alt__press=showhealthbars;	
+
+	0_press=group0;
+	ctrl_0_press=group0;
+	1_press=group1;
+	ctrl_1_press=group1;
+	2_press=group2;
+	ctrl_2_press=group2;
+	3_press=group3;
+	ctrl_3_press=group3;
+	4_press=group4;
+	ctrl_4_press=group4;
+	5_press=group5;
+	ctrl_5_press=group5;
+	6_press=group6;
+	ctrl_6_press=group6;
+	7_press=group7;
+	ctrl_7_press=group7;
+	8_press=group8;
+	ctrl_8_press=group8;
+	9_press=group9;
+	ctrl_9_press=group9;
+	shift_ctrl_1_press=group1;
+	shift_ctrl_2_press=group2;
+	shift_ctrl_3_press=group3;
+	shift_ctrl_4_press=group4;
+	shift_ctrl_5_press=group5;
+	shift_ctrl_6_press=group6;
+	shift_ctrl_7_press=group7;
+	shift_ctrl_8_press=group8;
+	shift_ctrl_9_press=group9;
+	shift_ctrl_0_press=group0;
+	
+	f1_press=showelevation;
+	f2_press=showpathmap;
+	f3_press=lastmsgpos;
+	f4_press=showmetalmap;
 	f6_press=dialog_endgame_togglehidden;
 	f7_press=dialog_sharing_togglehidden;
+	f8_press=savegame;	
+	f11_press=showhealthbars;
+	f12_press=screenshot;
 
-	shift__press=start_movefast;
-	ctrl__press=start_moveslow;
-	shift__release=end_movefast;
-	ctrl__release=end_moveslow;
-	
-	0_press=group0;
-	1_press=group1;
-	2_press=group2;
-	3_press=group3;
-	4_press=group4;
-	5_press=group5;
-	6_press=group6;
-	7_press=group7;
-	8_press=group8;
-	9_press=group9;
-	ctrl_0_press=group0;
-	ctrl_1_press=group1;
-	ctrl_2_press=group2;
-	ctrl_3_press=group3;
-	ctrl_4_press=group4;
-	ctrl_5_press=group5;
-	ctrl_6_press=group6;
-	ctrl_7_press=group7;
-	ctrl_8_press=group8;
-	ctrl_9_press=group9;
+	shift_esc=quit;
+	end_press=moretrees;
+	home_press=lesstrees;
+	pageup_press=increaseviewradius;
+	pagedown_press=decreaseviewradius;
+	pause_press=pauseGame;
 }
 
 [traditional]
@@ -114,5 +155,5 @@
 	// right mouse drag is mouse look
 	mouse3_drag=look;
 	ctrl_mouse3_drag=look_fast;
-	shift_mouse3_drag=look_slow;
+	shift_mouse3_drag=look_slow;	
 }

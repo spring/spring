@@ -60,6 +60,7 @@ public:
 	static void InMapDrawVisCallback (int x,int y,void *userData);
 	void CreatePoint(float3 pos, std::string label);
 	void AddLine(float3 pos, float3 pos2);
+	void PromptLabel (float3 pos);
 };
 
 extern CInMapDraw* inMapDrawer;

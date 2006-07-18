@@ -105,6 +105,8 @@ protected:
 	
 	CUnit *unit;
 	CFeature *feature;
+	int featureId;
+
 	float3 position;
 	
 	string Tooltip();
