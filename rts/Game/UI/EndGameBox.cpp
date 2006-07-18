@@ -11,6 +11,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/UI/InfoConsole.h"
+#include "Game/UI/GUI/GUIframe.h"
 
 extern bool globalQuit;
 
@@ -157,10 +158,10 @@ void CEndGameBox::Draw()
 	glDisable(GL_ALPHA_TEST);
 
 	// Large Box
-	glColor4f(0.2f,0.2f,0.2f,0.4f);
+	glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
 	DrawBox(box);
 
-	glColor4f(0.2f,0.2f,0.7f,0.4f);
+	glColor4f(0.2f,0.2f,0.7f,GUI_TRANS);
 	if(dispMode==0){
 		DrawBox(box+playerBox);
 	} else if(dispMode==1){
@@ -170,19 +171,19 @@ void CEndGameBox::Draw()
 	}
 
 	if(InBox(mx,my,box+exitBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+exitBox);
 	}
 	if(InBox(mx,my,box+playerBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+playerBox);
 	}
 	if(InBox(mx,my,box+sumBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+sumBox);
 	}
 	if(InBox(mx,my,box+difBox)){
-		glColor4f(0.7f,0.2f,0.2f,0.4f);
+		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 		DrawBox(box+difBox);
 	}
 
@@ -252,7 +253,7 @@ void CEndGameBox::Draw()
 
 			int sel=(int)floor(-(my-box.y1-0.57)*50);
 
-			glColor4f(0.7f,0.2f,0.2f,0.4f);
+			glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
 			glDisable(GL_TEXTURE_2D);
 			CVertexArray* va=GetVertexArray();
 			va->Initialize();

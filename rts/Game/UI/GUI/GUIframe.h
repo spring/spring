@@ -24,7 +24,7 @@ using namespace std;
 
 class GUIframe;
 
-#define GUI_TRANS 0.4f
+#define GUI_TRANS (GUIframe::GetGUIOpacity())
 
 class GUIresponder
 {
@@ -109,7 +109,14 @@ public:
 	
 	virtual void SelectCursor() {};
 
+	
+	static float GetGUIOpacity() { return s_fGuiOpacity; }
+	static void SetGUIOpacity( float f ) { s_fGuiOpacity = f; }
+
+
 protected:
+
+	static float s_fGuiOpacity;
 
 	std::string identifier;
 	std::string tooltip;

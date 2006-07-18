@@ -20,6 +20,9 @@ GUIcaption::~GUIcaption() {
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+float GUIframe::s_fGuiOpacity = 0.8f; // static
+
 GUIframe::GUIframe(const int x1, const int y1, const int w1, const int h1):x(x1), y(y1), w(w1), h(h1), parent() 
 {
 	isMainFrame=false;
