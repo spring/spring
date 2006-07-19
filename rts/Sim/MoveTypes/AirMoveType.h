@@ -39,6 +39,7 @@ public:
 	float3 FindLandingPos(void);
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
+	void SetMaxSpeed(float speed);
 
 	int subState;
 

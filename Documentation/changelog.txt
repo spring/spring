@@ -19,6 +19,7 @@ TASpring change log
 -  New fbi tag RefuelTime, how long time it takes to fully refuel the unit, default 5
 -  New fbi tag MinAirBasePower, minimum build power an airbase unit must have for the aircraft to land on it, default 0
 -  New fbi tag WeaponFuelUsage<1-16>, how much fuel in seconds that firing the weapon takes from the owning unit, default 0
+- New COB "get"/"set" constant: 75 MAX_SPEED get/sets the max speed of the unit (multiplied with 64k)
 
 0.72b1
 

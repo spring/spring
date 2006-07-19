@@ -27,6 +27,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sound.h"
 #include "SDL_types.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "mmgr.h"
 
 #endif
@@ -79,6 +80,7 @@ class CUnit;
 #define UNIT_TEAM				72
 #define UNIT_BUILD_PERCENT_LEFT	73
 #define UNIT_ALLIED				74
+#define MAX_SPEED					75
 
 CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 : script(script)
@@ -947,6 +949,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u) return (int)((1 - u->buildProgress) * 100);
 		return 0;}
+	case MAX_SPEED:
+		if(unit->moveType){
+			return unit->moveType->maxSpeed*SCALE;
+		}
+		break;
 	}
 #endif
 
@@ -1026,6 +1033,11 @@ void CCobInstance::SetUnitVal(int val, int param)
 		info->AddLine("CobError: Unknown set constant %d", val);
 	case VETERAN_LEVEL: 
 		unit->experience=param*0.01f;
+		break;
+	case MAX_SPEED:
+		if(unit->moveType){
+			unit->moveType->SetMaxSpeed(param/SCALE);
+		}
 		break;
 	}
 #endif

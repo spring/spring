@@ -1468,3 +1468,10 @@ void CGroundMoveType::SetMainHeading(){
 		}
 	}
 }
+
+void CGroundMoveType::SetMaxSpeed(float speed)
+{
+	if(requestedSpeed == maxSpeed*2)
+		requestedSpeed = speed*2;	//why the *2 everywhere?
+	maxSpeed=speed;
+}

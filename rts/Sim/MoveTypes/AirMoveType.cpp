@@ -1025,3 +1025,12 @@ void CAirMoveType::DependentDied(CObject* o)
 	}
 	CMoveType::DependentDied(o);
 }
+
+void CAirMoveType::SetMaxSpeed(float speed)
+{
+	maxSpeed=speed;
+	if(owner->unitDef->maxAcc!=0 && owner->unitDef->speed!=0){
+		float drag=1.0/(maxSpeed/GAME_SPEED*1.1/maxAcc) - wingAngle*wingAngle*wingDrag;		//meant to set the drag such that the maxspeed becomes what it should be
+		invDrag = 1-drag;
+	}
+}

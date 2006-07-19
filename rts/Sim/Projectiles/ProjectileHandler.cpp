@@ -452,16 +452,17 @@ void CProjectileHandler::CheckUnitCol()
 	for(psi=ps.begin();psi != ps.end();++psi){
 		CProjectile* p=(*psi);
 		if(p->checkCol && !p->deleteMe){
-			CUnit* owner=p->owner;
 			float speedf=p->speed.Length();
-			float ispeedf=1.0f/speedf;
-			float3 normSpeed=p->speed*ispeedf;
 
 			vector<CUnit*> units=qf->GetUnitsExact(p->pos,p->radius+speedf);
 			for(vector<CUnit*>::iterator ui(units.begin());ui!=units.end();++ui){
 				CUnit* unit=*ui;
-				if(owner == unit)
+				if(p->owner == unit)
 					continue;
+
+				float ispeedf=1.0f/speedf;
+				float3 normSpeed=p->speed*ispeedf;
+
 				float totalRadius=unit->radius+p->radius;
 				float3 dif(unit->midPos-p->pos);
 				float closeTime=dif.dot(normSpeed)*ispeedf;
@@ -487,6 +488,8 @@ void CProjectileHandler::CheckUnitCol()
 			for(vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
 				if(!(*fi)->blocking)
 					continue;
+				float ispeedf=1.0f/speedf;
+				float3 normSpeed=p->speed*ispeedf;
 				float totalRadius=(*fi)->radius+p->radius;
 				float3 dif=(*fi)->midPos-p->pos;
 				float closeTime=dif.dot(normSpeed)/speedf;
