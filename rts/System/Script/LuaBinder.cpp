@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "LuaBinder.h"
 #include "Game/StartScripts/Script.h"
 #include "float3.h"
@@ -20,9 +21,13 @@ extern "C"
 #include <luabind/discard_result_policy.hpp>
 #include <luabind/adopt_policy.hpp>
 
+#include <boost/shared_ptr.hpp>
+
 using namespace std;
 using namespace luabind;
 using namespace luafunctions;
+
+extern std::string stupidGlobalMapname;
 
 // Simple error message handling
 #define check(a) { try { a } catch(luabind::error& e) { ShowLuaError(e.state()); } }
@@ -42,127 +47,107 @@ struct CScript_wrapper : CScript, wrap_base
 	static string GetMapName_static(CScript *ptr) { return ptr->CScript::GetMapName(); }
 };
 
-CUnit_pointer::CUnit_pointer(CUnit *u) :
-	unit(u)
+namespace luabind 
 {
-	AddDeathDependence(unit);
-}
-
-CUnit_pointer::~CUnit_pointer()
-{
-	if (unit)
-		DeleteDeathDependence(unit);
-}
-
-namespace luabind {
-
-    CUnit* get_pointer(CUnit_pointer& p) 
+    template<class T>
+    T* get_pointer(CObject_pointer<T>& p) 
     {
-		if (!p.unit)
-			info->AddLine("Lua warning: Using invalid unit reference");
-        return p.unit; 
+        return p.held; 
     }
 
-	const CUnit* get_pointer(const CUnit_pointer& p)
-	{
-		return p.unit;
-	}
-
-    const CUnit_pointer * 
-    get_const_holder(CUnit_pointer*)
+    template<class A>
+    CObject_pointer<const A>* 
+    get_const_holder(CObject_pointer<A>*)
     {
         return 0;
-    } 
+    }
 }
 
-void CUnit_pointer::DependentDied(CObject* o)
-{
-	unit = NULL;
-}
+namespace luafunctions {
 
-bool UnitPointerIsValid(CUnit_pointer* u)
-{
-	return (u->unit != NULL);
-}
+	bool UnitPointerIsValid(CObject_pointer<CUnit>* u)
+	{
+		return (u->held != NULL);
+	}
 
-// Some useful helper methods
-string FloatToString(float3 f)
-{
-	char tmp[100];
-	sprintf(tmp, "%.1f %.1f %.1f", f.x, f.y, f.z);
-	return string(tmp);
-}
+	// Some useful helper methods
+	string FloatToString(float3 f)
+	{
+		char tmp[100];
+		sprintf(tmp, "%.1f %.1f %.1f", f.x, f.y, f.z);
+		return string(tmp);
+	}
 
-string UnitToString(CUnit* u)
-{
-	char tmp[100];
-	sprintf(tmp, "unit %d", u->id);
-	return string(tmp);
-}
+	string UnitToString(CUnit* u)
+	{
+		char tmp[100];
+		sprintf(tmp, "unit %d", u->id);
+		return string(tmp);
+	}
 
-int TdfGetInteger(TdfParser* s, int def, string key)
-{
-	int val;
-	char buf[100];
-	sprintf(buf, "%d", def);
-	s->GetDef(val, buf, key);
-	return val;
-}
+	int TdfGetInteger(TdfParser* s, int def, string key)
+	{
+		int val;
+		char buf[100];
+		sprintf(buf, "%d", def);
+		s->GetDef(val, buf, key);
+		return val;
+	}
 
-float TdfGetFloat(TdfParser* s, float def, string key)
-{
-	float val;
-	char buf[100];
-	sprintf(buf, "%f", def);
-	s->GetDef(val, buf, key);
-	return val;
-}
+	float TdfGetFloat(TdfParser* s, float def, string key)
+	{
+		float val;
+		char buf[100];
+		sprintf(buf, "%f", def);
+		s->GetDef(val, buf, key);
+		return val;
+	}
 
-string TdfGetString(TdfParser* s, string def, string key)
-{
-	return s->SGetValueDef(def, key);
-}
+	string TdfGetString(TdfParser* s, string def, string key)
+	{
+		return s->SGetValueDef(def, key);
+	}
 
-extern std::string stupidGlobalMapname;
+	string GSGetMapName()
+	{
+		return stupidGlobalMapname.substr(0,stupidGlobalMapname.find_last_of('.'));
+	}
 
-string GSGetMapName()
-{
-	return stupidGlobalMapname.substr(0,stupidGlobalMapname.find_last_of('.'));
-}
+	void DisabledFunction()
+	{
+		info->AddLine("Lua: Attempt to call disabled function");
+	}
 
-void DisabledFunction()
-{
-	info->AddLine("Lua: Attempt to call disabled function");
-}
+	// Redefinition of the lua standard function print to use the spring infoconsole
+	int SpringPrint (lua_State *L) {
+		int n = lua_gettop(L);  /* number of arguments */
+		int i;
+		lua_getglobal(L, "tostring");
+		string tmp;
 
-// Redefinition of the lua standard function print to use the spring infoconsole
-static int SpringPrint (lua_State *L) {
-  int n = lua_gettop(L);  /* number of arguments */
-  int i;
-  lua_getglobal(L, "tostring");
-  string tmp;
-
-  for (i=1; i<=n; i++) {
-    const char *s;
-    lua_pushvalue(L, -1);  /* function to be called */
-    lua_pushvalue(L, i);   /* value to print */
-    lua_call(L, 1, 1);
-    s = lua_tostring(L, -1);  /* get result */
-    if (s == NULL)
-      return luaL_error(L, "`tostring' must return a string to `print'");
+		for (i=1; i<=n; i++) {
+			const char *s;
+			lua_pushvalue(L, -1);  /* function to be called */
+			lua_pushvalue(L, i);   /* value to print */
+			lua_call(L, 1, 1);
+			s = lua_tostring(L, -1);  /* get result */
+			if (s == NULL)
+				return luaL_error(L, "`tostring' must return a string to `print'");
     
-	if (i > 1)
-		tmp += " ";
-	tmp += string(s);
-	//if (i>1) fputs("\t", stdout);    
-	//fputs(s, stdout);
-    lua_pop(L, 1);  /* pop result */
-  }
+			if (i > 1)
+				tmp += " ";
+			tmp += string(s);
+			//if (i>1) fputs("\t", stdout);    
+			//fputs(s, stdout);
+			lua_pop(L, 1);  /* pop result */
+		}
 
-  if (info)
-	  info->AddLine(tmp);
+		if (info)
+		info->AddLine(tmp);
 
-  return 0;
+		return 0;
+	}
+
 }
 
 CLuaBinder::CLuaBinder(void)
@@ -203,17 +188,10 @@ CLuaBinder::CLuaBinder(void)
 			.def_readwrite("z", &float3::z)
 			.def("__tostring", &FloatToString),
 
-/*		class_<CUnitLoader>("UnitLoader")
-			//.def("LoadUnit", &CUnitLoader::LoadUnit)
-			.def("LoadUnit", &UnitLoaderLoadUnit, adopt(result))
-			.def("GetName", &CUnitLoader::GetName),*/
-
 		class_<CWorldObject>("WorldObject")
-			.def_readonly("pos", &CWorldObject::pos),
+			.def_readonly("pos", &CWorldObject::pos), 
 
-		class_<CUnit, CUnit_pointer, bases<CWorldObject> >("Unit")
-		//class_<CUnit, boost::shared_ptr<CUnit> >("Unit")
-		//class_<CUnit>("Unit")
+		class_<CUnit, bases<CWorldObject>, CObject_pointer<CUnit> >("Unit")
 			.enum_("constants")
 			[
 				value("GIVEN", CUnit::ChangeGiven),
@@ -221,10 +199,10 @@ CLuaBinder::CLuaBinder(void)
 			]
 			.def_readonly("id", &CUnit::id)
 			.def_readonly("health", &CUnit::health)
-			.def_readonly("transporter", &CUnit::transporter)
+			.property("transporter", &UnitGetTransporter)
 			.def("__tostring", &UnitToString)
 			.def_readonly("team", &CUnit::team)
-			.def("GiveCommand", &UnitGiveCommand)
+			.def("GiveCommand", &UnitGiveCommand) 
 			.def("ChangeTeam", &CUnit::ChangeTeam)
 			.def("IsValid", &UnitPointerIsValid),
 
@@ -269,7 +247,7 @@ CLuaBinder::CLuaBinder(void)
 		[
 			def("random", &DisabledFunction)
 		]
-	];
+	]; 
 
 	// Define global objects
 	globals(luaState)["gs"] = gs;
@@ -279,11 +257,6 @@ CLuaBinder::CLuaBinder(void)
 	lua_register(luaState, "print", SpringPrint);
 
 	lastError = "";
-}
-
-// Create bindings that requires most global spring objects to be ready
-void CLuaBinder::CreateLateBindings()
-{
 }
 
 bool CLuaBinder::LoadScript(const string& name)

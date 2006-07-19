@@ -12,7 +12,7 @@ end
 
 -- Return the mapname this script wants
 function TestScript:GetMapName()
-	return "SmallDivide.smf"
+	return "smalldivide.smf"
 end
 
 -- This function is executed every simulated frame (30 times/sec)
@@ -20,8 +20,8 @@ function TestScript:Update()
 
 	-- Perform initialization
 	if self.state == 0 then
-		self:Setup()
 		self.state = 1
+		self:Setup()
 		
 		print("A small ARM force has been trapped all alone. You must get them to the galactic gate quickly to call in reinforcements!")				
 	end
@@ -42,6 +42,7 @@ end
 function TestScript:SlowUpdate()
 
 	if self.state == 1 then
+
 		local num = GetNumUnitsAt(self.gatepos, 50)
 		
 		if num > 1 then
@@ -61,7 +62,7 @@ function TestScript:SlowUpdate()
 		end
 	
 	elseif self.state == 2 then
-	    if not self.cmd.inTransport then
+	    if not self.cmd.transporter then
 			print("The commander is here. Now destroy the CORE forces on the other side of the pass.")
 	   	    self.state = 3
 	    end
