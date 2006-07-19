@@ -76,6 +76,7 @@ public:
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	virtual void StopMoving();
 	virtual void Idle();
+	virtual void SetMaxSpeed(float speed);
 
 	//Main state handlers
 	void UpdateLanded();

@@ -24,7 +24,7 @@ public:
 //	virtual float GetSpeedMod(float avrHeight, float maxHeight, float maxDepth, float avrSlope, float maxSlope) {return 1;};
 
 	virtual void SetGoal(float3 pos){};
-	virtual void SetWantedSpeed(float speed){};
+	virtual void SetMaxSpeed(float speed){maxSpeed=speed;};
 	virtual void SetWantedMaxSpeed(float speed);
 	virtual void LeaveTransport(void);
 

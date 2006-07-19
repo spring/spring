@@ -26,6 +26,8 @@ public:
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void StopMoving();
 
+	virtual void SetMaxSpeed(float speed);
+
 	void ImpulseAdded(void);
 	
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
