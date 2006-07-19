@@ -1,5 +1,5 @@
 /*
-** $Id: llimits.h,v 1.1 2005/10/11 18:38:53 fnordia Exp $
+** $Id: llimits.h,v 1.52 2003/02/20 19:33:23 roberto Exp $
 ** Limits, basic types, and some other `installation-dependent' definitions
 ** See Copyright Notice in lua.h
 */
