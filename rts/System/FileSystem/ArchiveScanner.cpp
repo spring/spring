@@ -93,6 +93,10 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 		string lcfn = fn;
 		transform(lcfn.begin(), lcfn.end(), lcfn.begin(), (int (*)(int))tolower); 
 
+		string::size_type sdd = lcfn.find(".sdd/");
+		if (sdd != string::npos)
+			continue;
+
 		// Is this an archive we should look into?
 		if (CArchiveFactory::IsArchive(fullName)) {
 

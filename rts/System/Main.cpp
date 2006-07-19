@@ -29,11 +29,9 @@
 #include "Platform/BaseCmd.h"
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
+#include "Game/StartScripts/ScriptHandler.h"
 #include "creg/creg.h"
 #include "bitops.h"
-#ifndef NO_LUA
-#include "Script/LuaBinder.h"
-#endif
 #include <SDL.h>
 #include <SDL_main.h>
 #ifdef WIN32
@@ -261,13 +259,6 @@ bool SpringApp::Initialize ()
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
 
-#ifndef NO_LUA
-	// Initialize lua bindings
-	CLuaBinder lua;
-	if (!lua.LoadScript("testscript.lua")) 
-		handleerror(NULL, lua.lastError.c_str(), "lua",MBF_OK|MBF_EXCL);
-#endif
-
 	InitVFS ();
 
 	if (!InitWindow ("RtsSpring"))
@@ -301,6 +292,8 @@ bool SpringApp::Initialize ()
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
+
+	CScriptHandler::Instance().StartLua();
 
 	CreateGameSetup ();
 

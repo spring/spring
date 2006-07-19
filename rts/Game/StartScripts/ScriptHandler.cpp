@@ -15,7 +15,9 @@
 #include "SpawnScript.h"
 #include "EmptyScript.h"
 #include "TestScript.h"
-
+#ifndef NO_LUA
+#include "System/Platform/errorhandler.h"
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -54,6 +56,19 @@ void CScriptHandler::LoadScripts() {
 	}
 }
 
+void CScriptHandler::StartLua()
+{
+#ifndef NO_LUA
+	std::vector<string> files = CFileHandler::FindFiles("startscripts/*.lua");
+	for (std::vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
+		CLuaBinder* lua = new CLuaBinder();
+		if (!lua->LoadScript(*i)) 
+			handleerror(NULL, lua->lastError.c_str(), "Lua", MBF_OK|MBF_EXCL);
+		lua_binders.push_back(lua);
+	}
+#endif
+}
+
 /** @Return a reference to the only CScriptHandler instance */
 CScriptHandler& CScriptHandler::Instance()
 {
@@ -72,6 +87,13 @@ CScriptHandler::~CScriptHandler()
 		delete loaded_scripts.back();
 		loaded_scripts.pop_back();
 	}
+
+#ifndef NO_LUA
+	while (!lua_binders.empty()) {
+		delete lua_binders.back();
+		lua_binders.pop_back();
+	}
+#endif
 }
 
 /** Called by the CScript constructors to add themselves to the CScriptHandler. */
