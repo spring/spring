@@ -1,5 +1,5 @@
 /*
-** $Id: lbaselib.c,v 1.1 2005/10/11 18:38:54 fnordia Exp $
+** $Id: lbaselib.c,v 1.130c 2003/04/03 13:35:34 roberto Exp $
 ** Basic library
 ** See Copyright Notice in lua.h
 */
@@ -173,6 +173,7 @@ static int luaB_rawequal (lua_State *L) {
 static int luaB_rawget (lua_State *L) {
   luaL_checktype(L, 1, LUA_TTABLE);
   luaL_checkany(L, 2);
+  lua_settop(L, 2);
   lua_rawget(L, 1);
   return 1;
 }
@@ -181,6 +182,7 @@ static int luaB_rawset (lua_State *L) {
   luaL_checktype(L, 1, LUA_TTABLE);
   luaL_checkany(L, 2);
   luaL_checkany(L, 3);
+  lua_settop(L, 3);
   lua_rawset(L, 1);
   return 1;
 }
@@ -274,10 +276,11 @@ static int luaB_loadfile (lua_State *L) {
 
 static int luaB_dofile (lua_State *L) {
   const char *fname = luaL_optstring(L, 1, NULL);
+  int n = lua_gettop(L);
   int status = luaL_loadfile(L, fname);
   if (status != 0) lua_error(L);
   lua_call(L, 0, LUA_MULTRET);
-  return lua_gettop(L) - 1;
+  return lua_gettop(L) - n;
 }
 
 
@@ -324,7 +327,7 @@ static int luaB_xpcall (lua_State *L) {
 
 
 static int luaB_tostring (lua_State *L) {
-  char buff[64];
+  char buff[128];
   luaL_checkany(L, 1);
   if (luaL_callmeta(L, 1, "__tostring"))  /* is there a metafield? */
     return 1;  /* use its value */

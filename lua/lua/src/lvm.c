@@ -1,5 +1,5 @@
 /*
-** $Id: lvm.c,v 1.1 2005/10/11 18:38:53 fnordia Exp $
+** $Id: lvm.c,v 1.284c 2003/04/03 13:35:34 roberto Exp $
 ** Lua virtual machine
 ** See Copyright Notice in lua.h
 */
@@ -66,7 +66,7 @@ int luaV_tostring (lua_State *L, StkId obj) {
 
 static void traceexec (lua_State *L) {
   lu_byte mask = L->hookmask;
-  if (mask > LUA_MASKLINE) {  /* instruction-hook set? */
+  if (mask & LUA_MASKCOUNT) {  /* instruction-hook set? */
     if (L->hookcount == 0) {
       resethookcount(L);
       luaD_callhook(L, LUA_HOOKCOUNT, -1);
@@ -321,15 +321,15 @@ void luaV_concat (lua_State *L, int total, int last) {
         luaG_concaterror(L, top-2, top-1);
     } else if (tsvalue(top-1)->tsv.len > 0) {  /* if len=0, do nothing */
       /* at least two string values; get as many as possible */
-      lu_mem tl = cast(lu_mem, tsvalue(top-1)->tsv.len) +
-                  cast(lu_mem, tsvalue(top-2)->tsv.len);
+      size_t tl = tsvalue(top-1)->tsv.len;
       char *buffer;
       int i;
-      while (n < total && tostring(L, top-n-1)) {  /* collect total length */
-        tl += tsvalue(top-n-1)->tsv.len;
-        n++;
+      /* collect total length */
+      for (n = 1; n < total && tostring(L, top-n-1); n++) {
+        size_t l = tsvalue(top-n-1)->tsv.len;
+        if (l >= MAX_SIZET - tl) luaG_runerror(L, "string length overflow");
+        tl += l;
       }
-      if (tl > MAX_SIZET) luaG_runerror(L, "string size overflow");
       buffer = luaZ_openspace(L, &G(L)->buff, tl);
       tl = 0;
       for (i=n; i>0; i--) {  /* concat all strings */
@@ -399,10 +399,12 @@ StkId luaV_execute (lua_State *L) {
   TObject *k;
   const Instruction *pc;
  callentry:  /* entry point when calling new functions */
-  L->ci->u.l.pc = &pc;
-  if (L->hookmask & LUA_MASKCALL)
+  if (L->hookmask & LUA_MASKCALL) {
+    L->ci->u.l.pc = &pc;
     luaD_callhook(L, LUA_HOOKCALL, -1);
+  }
  retentry:  /* entry point when returning to old functions */
+  L->ci->u.l.pc = &pc;
   lua_assert(L->ci->state == CI_SAVEDPC ||
              L->ci->state == (CI_SAVEDPC | CI_CALLING));
   L->ci->state = CI_HASFRAME;  /* activate frame */
@@ -673,9 +675,7 @@ StkId luaV_execute (lua_State *L) {
         }
         else {  /* yes: continue its execution */
           int nresults;
-          lua_assert(ci->u.l.pc == &pc &&
-                     ttisfunction(ci->base - 1) &&
-                     (ci->state & CI_SAVEDPC));
+          lua_assert(ttisfunction(ci->base - 1) && (ci->state & CI_SAVEDPC));
           lua_assert(GET_OPCODE(*(ci->u.l.savedpc - 1)) == OP_CALL);
           nresults = GETARG_C(*(ci->u.l.savedpc - 1)) - 1;
           luaD_poscall(L, nresults, ra);
@@ -777,4 +777,5 @@ StkId luaV_execute (lua_State *L) {
     }
   }
 }
+
 
