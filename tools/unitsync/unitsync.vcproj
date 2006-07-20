@@ -175,6 +175,12 @@
 					RelativePath="..\..\rts\System\FileSystem\ArchiveBuffered.h">
 				</File>
 				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveDir.cpp">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveDir.h">
+				</File>
+				<File
 					RelativePath="..\..\rts\System\FileSystem\ArchiveFactory.cpp">
 				</File>
 				<File
