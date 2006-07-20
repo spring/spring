@@ -51,7 +51,7 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 	if(maxy<miny || maxx<minx)
 		return ret;
 
-	float maxSqLength=(radius+QUAD_SIZE*0.71)*(radius+QUAD_SIZE*0.71);
+	float maxSqLength=(radius+QUAD_SIZE*0.72)*(radius+QUAD_SIZE*0.72);
 	ret.reserve((maxy-miny)*(maxx-minx));
 	for(int y=miny;y<=maxy;++y)
 		for(int x=minx;x<=maxx;++x)

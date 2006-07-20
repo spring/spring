@@ -108,11 +108,11 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		DamageArray damageDone = damages*mod2;
 		float3 addedImpulse = dif*(damages.impulseFactor*mod*(damages[0] + damages.impulseBoost)*3.2f);
 		
-		if(dist2<explosionSpeed*2){	//damage directly
+		if(dist2<explosionSpeed*4){	//damage directly
 			(*ui)->DoDamage(damageDone,owner,addedImpulse);
 		}else {	//damage later
 			WaitingDamage* wd=new WaitingDamage(owner?owner->id:-1, (*ui)->id, damageDone, addedImpulse);
-			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed))&127].push_front(wd);
+			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed)-3)&127].push_front(wd);
 		}
 	}
 
