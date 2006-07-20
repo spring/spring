@@ -200,6 +200,21 @@
   * ENDOFCHANNELS
   Sent by server to client who previously requested the channel list, after a
   series of CHANNEL commands (one for each channel).
+  
+  * MUTELIST channame
+  Sent by client when requesting mute list of a channel.
+
+  * MUTELISTBEGIN channame
+  Sent by server when sending channel's mute list to the client. This command is immediately followed
+  by 0 or more MUTELIST commands and finally by a MUTELISTEND command.
+  
+  * MUTELIST {mute description}
+  Sent by server after MUTELISTSTART command. Multiple commands of this kind may be sent
+  after MUTELISTSTART command (or none, if mute list is empty). Form of "mute description" field
+  is not prescribed (it may vary from version to version).
+  
+  * MUTELISTEND
+  Sent by server after it has finished sending the list of mutes for a channel.
 
   * JOINFAILED channame {reason}
   Sent by server if joining a channel failed for some reason. Server MUST provide a reason

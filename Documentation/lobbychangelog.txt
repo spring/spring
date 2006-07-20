@@ -3,6 +3,8 @@
   *** 0.26 (??x??x??) ***
   * fixed serious bug with hosting replays not working
   * players who don't have the map can't ready up anymore
+  * fixed bug with /password command not checking password correctly
+  * added /mutelist command for non-admins
  
   *** 0.25 (16x06x06) ***
   * battle client list now shows player's ingame and away status
