@@ -82,6 +82,9 @@ def get_spring_source(env):
 		exclude += [f.replace('/','\\')]
 
 	source = get_source(env, 'rts', exclude_list = exclude)
+	if not env['disable_lua']:
+		source += get_source(env, 'lua')
+	
 	# HACK   compile OpenALSound instead of DxSound on Mingw
 	if not env.has_key('platform') or env['platform'] == 'windows':
 		if env.has_key('builddir'):

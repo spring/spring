@@ -82,7 +82,7 @@ def generate(env):
 		('disable_avi',       'Set to no to turn on avi support', True),
 		('disable_clipboard', 'Set to no to turn on clipboard code', True),
 		#other ported parts
-		('disable_lua',       'Set to no to turn on Lua support', True),
+		('disable_lua',       'Set to no to turn on Lua support', False),
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
 		('cachedir',          'Cache directory (see scons manual)', None))
@@ -244,7 +244,7 @@ def generate(env):
 		bool_opt('strip', True)
 		bool_opt('disable_avi', True)
 		bool_opt('disable_clipboard', True)
-		bool_opt('disable_lua', True)
+		bool_opt('disable_lua', False)
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
@@ -262,6 +262,9 @@ def generate(env):
 		env.AppendUnique(CPPDEFINES = defines)
 
 		include_path = ['rts', 'rts/System']
+		if not env['disable_lua']:
+			include_path += ["lua/luabind", "lua/lua/include"]
+		
 		lib_path = []
 		if env['platform'] == 'freebsd':
 			include_path += ['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
@@ -305,6 +308,9 @@ def generate(env):
 	if env['builddir']:
 		for d in filelist.list_directories(env, 'rts'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
+		if not env['disable_lua']:
+			for d in filelist.list_directories(env, 'lua'):
+				env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
 		env.BuildDir(os.path.join(env['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 		for d in filelist.list_directories(env, 'AI'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
