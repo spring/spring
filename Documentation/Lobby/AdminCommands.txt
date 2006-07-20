@@ -23,10 +23,13 @@ Moderator commands:
   will mute user for specified time or for indefinit time if "minutes" are not specified.
 /unmute <channel> <username>
 /mutelist <channel>
+  this command is available to normal users as well.
 /lastlogin <username>
   will return user's last login date/time
 /findip <ipaddress>
   will return a list of clients that are currently using this IP or were recently using it.
+  You can use '*' for each field as well, e.g. "192.168.*.*" to search for any IPs that
+  start with "192.168...".
 /lastip <username>
   will return last IP address used by the user (or current one if still online)
  
@@ -67,7 +70,9 @@ findaccount <username>
 getaccountinfo <account_id>
   will return some account info. You can get account_id using "findaccount" command.
 forgemsg <username> <msg>
-  forces server to send message msg to user. This command is used for debugging purposes only!
+  forces server to send message <msg> to user. This command is used for debugging purposes only!
+forgereversemsg <username> <msg>
+  forces server to process message <msg> as if it were sent by the user <username>. This command is used for debugging purposes only!
 forceclosebattle <battle_id>
   closes the battle.
 ip2country <IP>
