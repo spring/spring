@@ -46,8 +46,6 @@ unsigned int total_active_icons;
 //unsigned int icon_texture[256];
 //bool has_bitmap[256] = {false};
 
-GLfloat guiposition_x[3] = {0.02f, 0.11f, 0.20f};
-GLfloat guiposition_y[6] = {0.70f, 0.64f, 0.58f, 0.52f, 0.46f, 0.40f};
 unsigned int maxxpos=1;
 int fadein;
 
@@ -158,8 +156,7 @@ void CGuiHandler::LayoutIcons()
 	buttonBox.x2 = fMargin*2+xstep*2;
 	buttonBox.y2 = 0.71f;
 	buttonBox.y1 = buttonBox.y2+
-		ystep*NUMICOPAGE/2// number of buttons
-		-ystep/2;// las buttons are twiche smaller
+		ystep*NUMICOPAGE/2;// number of buttons
 
 	if(showingMetal){
 		showingMetal=false;
@@ -211,14 +208,14 @@ void CGuiHandler::LayoutIcons()
 			curricon[nr].x1 = x0 + xpos*xstep;
 			curricon[nr].y1 = y0 + ypos*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height/2;	
+			curricon[nr].y2 = curricon[nr].y1 - height;	
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
 			curricon[nr].x1 = x0 + xpos*xstep;
 			curricon[nr].y1 = y0 + ypos*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height/2;	
+			curricon[nr].y2 = curricon[nr].y1 - height;	
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
@@ -428,11 +425,11 @@ void CGuiHandler::DrawButtons()
 					{	// normal
 						glColor4f(0.7f,0.7f,0.7f,1.f);
 					}
-					glVertex2f(x2-xSize/6,yCenter-ySize/4);
-					glVertex2f(x1+2*xSize/6,yCenter-ySize/4);
+					glVertex2f(x2-xSize/6,yCenter-ySize/8);
+					glVertex2f(x1+2*xSize/6,yCenter-ySize/8);
 					glVertex2f(x1+xSize/6,yCenter);
-					glVertex2f(x1+2*xSize/6,yCenter+ySize/4);
-					glVertex2f(x2-xSize/6,yCenter+ySize/4);
+					glVertex2f(x1+2*xSize/6,yCenter+ySize/8);
+					glVertex2f(x2-xSize/6,yCenter+ySize/8);
 					glEnd();
 				}
 				else if (commands[nr].type == CMDTYPE_NEXT)
@@ -446,11 +443,11 @@ void CGuiHandler::DrawButtons()
 					{	// normal
 						glColor4f(0.7f,0.7f,0.7f,1.f);
 					}
-					glVertex2f(x1+xSize/6,yCenter-ySize/4);
-					glVertex2f(x2-2*xSize/6,yCenter-ySize/4);
+					glVertex2f(x1+xSize/6,yCenter-ySize/8);
+					glVertex2f(x2-2*xSize/6,yCenter-ySize/8);
 					glVertex2f(x2-xSize/6,yCenter);
-					glVertex2f(x2-2*xSize/6,yCenter+ySize/4);
-					glVertex2f(x1+xSize/6,yCenter+ySize/4);
+					glVertex2f(x2-2*xSize/6,yCenter+ySize/8);
+					glVertex2f(x1+xSize/6,yCenter+ySize/8);
 					glEnd();
 				}
 				else

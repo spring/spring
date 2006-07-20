@@ -118,10 +118,10 @@ void CFireProjectile::Draw(void)
 		col[1]=(unsigned char)((1-age)*255);
 		col[2]=(unsigned char)((1-age)*255);
 
-		va->AddVertexTC(interPos-dir1-dir2,ph->explofadetex.xstart,ph->explofadetex.ystart,col);
-		va->AddVertexTC(interPos+dir1-dir2,ph->explofadetex.xend ,ph->explofadetex.ystart,col);
-		va->AddVertexTC(interPos+dir1+dir2,ph->explofadetex.xend ,ph->explofadetex.yend ,col);
-		va->AddVertexTC(interPos-dir1+dir2,ph->explofadetex.xstart,ph->explofadetex.yend ,col);
+		va->AddVertexTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
+		va->AddVertexTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
+		va->AddVertexTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
+		va->AddVertexTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
 	}
 	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		float age=pi->age+ageSpeed*gu->timeOffset;
@@ -139,11 +139,12 @@ void CFireProjectile::Draw(void)
 			col[0]=(unsigned char)((1-age*1.3)*255);
 			col[1]=(unsigned char)((1-age*1.3)*255);
 			col[2]=(unsigned char)((1-age*1.3)*255);
+			col[3]=1;
 
-		va->AddVertexTC(interPos-dir1-dir2,ph->explofadetex.xstart,ph->explofadetex.ystart,col);
-		va->AddVertexTC(interPos+dir1-dir2,ph->explofadetex.xend ,ph->explofadetex.ystart,col);
-		va->AddVertexTC(interPos+dir1+dir2,ph->explofadetex.xend ,ph->explofadetex.yend ,col);
-		va->AddVertexTC(interPos-dir1+dir2,ph->explofadetex.xstart,ph->explofadetex.yend ,col);
+			va->AddVertexTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
+			va->AddVertexTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
+			va->AddVertexTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
+			va->AddVertexTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
 		}
 
 		unsigned char c;

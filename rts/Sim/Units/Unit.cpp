@@ -443,7 +443,7 @@ void CUnit::SlowUpdate()
 	residualImpulse*=0.6;
 
 	if(wantCloak){
-		if(helper->GetClosestEnemyUnit(pos,unitDef->decloakDistance,allyteam)){
+		if(helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->decloakDistance,allyteam)){
 			curCloakTimeout=gs->frameNum+cloakTimeout;
 			isCloaked=false;
 		}

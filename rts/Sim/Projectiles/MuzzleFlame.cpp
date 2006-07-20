@@ -51,44 +51,38 @@ void CMuzzleFlame::Draw(void)
 	inArray=true;
 	unsigned char col[4];
 	float alpha=max(0.f,1-age/(4+size*30));
-	col[0]=(unsigned char) (200*alpha);
-	col[1]=(unsigned char) (200*alpha);
-	col[2]=(unsigned char) (200*alpha);
-	col[3]=(unsigned char) (alpha*255);
+	float modAge=sqrtf(age+2);
 
 	for(int a=0;a<numSmoke;++a){
 		int tex=a%12;
 		//float xmod=0.125+(float(int(tex%6)))/16;
 		//float ymod=(int(tex/6))/16.0;
 
-		float drawsize=(age+8)/3.0;
-		float3 interPos(pos+randSmokeDir[a]*(a+2)*age/12.0);
-		va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->smoketex[a].xstart,ph->smoketex[a].ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->smoketex[a].xend,ph->smoketex[a].ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->smoketex[a].xend,ph->smoketex[a].yend,col);
-		va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->smoketex[a].xstart,ph->smoketex[a].yend,col);
+		float drawsize=modAge*3;
+		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4);
+		float fade=max(0.f, min(1.f, (1-alpha)*(20+a)*0.1f));
 
-	}
+		col[0]=(unsigned char) (180*alpha*fade);
+		col[1]=(unsigned char) (180*alpha*fade);
+		col[2]=(unsigned char) (180*alpha*fade);
+		col[3]=(unsigned char) (alpha*255*fade);
 
+		va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].ystart,col);
+		va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].ystart,col);
+		va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].yend,col);
+		va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].yend,col);
 
-	if(age<6+size*2){
-		inArray=true;
-		unsigned char col[4];
-		float alpha=(1-age/(6+size*2))*(1-age/(6+size*2));
-		col[0]=(unsigned char) (255*alpha);
-		col[1]=(unsigned char) (255*alpha);
-		col[2]=(unsigned char) (255*alpha);
-		col[3]=1;
+		if(fade<1){
+			float ifade= 1-fade;
+			col[0]=(unsigned char)(ifade*255);
+			col[1]=(unsigned char)(ifade*255);
+			col[2]=(unsigned char)(ifade*255);
+			col[3]=(unsigned char)(1);
 
-		float curAge=age/(6.0+size*2.0);
-		for(int a=0;a<numFlame;++a){
-			float drawsize=(age+10)/4.0;
-			drawsize+=max(0.,(0.25-fabs(curAge-(a/float(numFlame))))*0.5);
-			float3 interPos(pos+dir*(a+2)*age/4);
 			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explotex.xstart,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explotex.xend,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explotex.xend,ph->explotex.yend,col);
-			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explotex.xstart,ph->explotex.yend,col);
+			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explotex.xend ,ph->explotex.ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explotex.xend ,ph->explotex.yend ,col);
+			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explotex.xstart,ph->explotex.yend ,col);
 		}
 	}
 }
