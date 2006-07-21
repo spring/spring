@@ -894,8 +894,8 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 			 if(polation==true){
 				if(polate==true){
 					ui->AddTask(B_RULE_EXTREME);
+					polate = false;
 				}
-				polate=!polate;
 			 }
 			 
 			 if(metatags.empty() ==false){

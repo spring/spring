@@ -90,7 +90,7 @@ void CNTai::Update(){
 	if(Good == false){
 		if(acallback->GetCurrentFrame() == (6 SECONDS)){
 			//
-			acallback->SendTextMsg("Error :: InitAI() in XE9RC21 failed, please notify AF at once",1);
+			acallback->SendTextMsg("Error :: InitAI() in XE9RC22 failed, please notify AF at once",1);
 			acallback->SendTextMsg("Error :: www.darkstars.co.uk",1);
 		}
 		return;

@@ -81,7 +81,7 @@ void Log::Open(bool plain){
 		string filename = G->info->datapath + slash + "Logs" + slash;
 		now2 = localtime(&now1);
 		//             DDD MMM DD HH:MM:SS YYYY_X - NTAI.log
-		sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE9RC21.log",
+		sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE9RC22.log",
 				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
 				now2->tm_min, G->Cached->team);
 		filename += c;
@@ -95,7 +95,7 @@ void Log::Open(bool plain){
 				return;
 			}
 		}
-		header(" :: NTAI XE9RC21 Log File \n :: Programmed and maintained by AF \n :: Copyright (C) 2006 AF \n :: Released under the GPL 2.0 Liscence \n");
+		header(" :: NTAI XE9RC22 Log File \n :: Programmed and maintained by AF \n :: Copyright (C) 2006 AF \n :: Released under the GPL 2.0 Liscence \n");
 		logFile << " :: Game started: " << now2->tm_mday << "." << now2->tm_mon << "." << 1900 + now2->tm_year << "  " << now2->tm_hour << ":" << now2->tm_min << ":" << now2->tm_sec << endl << endl <<  flush;
 		TdfParser cp(G);
 		cp.LoadFile("modinfo.tdf");

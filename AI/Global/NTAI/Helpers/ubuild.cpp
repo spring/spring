@@ -174,40 +174,43 @@ string CUBuild::operator() (btype build){// CBuild c; string s = c(btype build);
 
 string CUBuild::GetMEX(){
 	NLOG("CUBuild::GetMEX");
-	list<string> possibles;
 	// Find all metal extractors this unit can build and add them to a list.
-	int defnum=0;
+	float highscore=0;
+	string highest="";
 	for(map<int,string>::const_iterator is = ud->buildOptions.begin(); is != ud->buildOptions.end();++is){
 		const UnitDef* pd = G->GetUnitDef(is->second);
 		if(pd == 0) continue;
-		if(pd->type == string("MetalExtractor")){
-			//if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
-			possibles.push_back(pd->name);
-			defnum++;
+		if(G->Pl->feasable(pd->name,uid)==true) continue;
+		if(pd->extractRange){
+			float score = pd->extractsMetal*100;
+			if(pd->weapons.empty()==false){
+				score *= 1.2f;
+			}
+			if(pd->canCloak==true){
+				score *= 1.2f;
+			}
+			if(score > highscore){
+				highscore = score;
+				highest = pd->name;
+			}
 			continue;
 		}
 		if((pd->metalMake > 5)&&(pd->builder == false)&&(pd->movedata == 0 )&&(pd->canfly == false)){
-			//if((G->Pl->feasable(pd->name,uid)==true)&&(G->info->antistall>0)) continue;
-			possibles.push_back(pd->name);
-			defnum++;
+			float score = pd->metalMake;
+			if(pd->weapons.empty()==false){
+				score *= 1.2f;
+			}
+			if(pd->canCloak==true){
+				score *= 1.2f;
+			}
+			if(score > highscore){
+				highscore = score;
+				highest = pd->name;
+			}
 			continue;
 		}
 	}
-	if(possibles.empty() == false){
-		srand(uint(time(NULL)) +uint(G->Cached->team) +  uint(G->Cached->randadd));
-		G->Cached->randadd++;
-		defnum = rand()%defnum;
-		int j = 0;
-		for(list<string>::iterator k = possibles.begin(); k != possibles.end(); ++k){
-			if(j == defnum){
-				return *k;
-			}else{
-				j++;
-			}
-		}
-		return possibles.front();
-	}
-	return string("");
+	return highest;
 }
 
 string CUBuild::GetPOWER(){

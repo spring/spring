@@ -173,7 +173,7 @@ void Global::Update(){
 		if(cb->GetCurrentFrame() == (1 SECOND)){
 			NLOG("STARTUP BANNER IN Global::Update()");
 			if(L.FirstInstance() == true){
-				cb->SendTextMsg(":: NTai XE9RC21 by AF",0);
+				cb->SendTextMsg(":: NTai XE9RC22 by AF",0);
 				cb->SendTextMsg(":: Copyright (C) 2006 AF",0);
 				string s = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
 				if(s != string("")){
@@ -317,17 +317,17 @@ void Global::EnemyDestroyed(int enemy,int attacker){
 		const UnitDef* uda = GetUnitDef(attacker);
 		if(uda != 0){
 			if(efficiency.find(uda->name) != efficiency.end()){
-				efficiency[uda->name] += 20/uda->metalCost;
+				efficiency[uda->name] += 200/uda->metalCost;
 			}else{
-				efficiency[uda->name] = 20/uda->metalCost;
+				efficiency[uda->name] = 500;
 			}
 		}
 		const UnitDef* ude = GetUnitDef(attacker);
 		if(uda != 0){
 			if(efficiency.find(ude->name) != efficiency.end()){
-				efficiency[ude->name] += 10/ude->metalCost;
+				efficiency[ude->name] += 100/ude->metalCost;
 			}else{
-				efficiency[ude->name] = 10/ude->metalCost;
+				efficiency[ude->name] = 100/ude->metalCost;
 			}
 		}
 	}
@@ -429,9 +429,9 @@ void Global::UnitDamaged(int damaged,int attacker,float damage,float3 dir){
 			const UnitDef* uda = GetUnitDef(attacker);
 			if(uda != 0){
 				if(efficiency.find(uda->name) != efficiency.end()){
-					efficiency[uda->name] += 1/uda->metalCost;
+					efficiency[uda->name] += 10000/uda->metalCost;
 				}else{
-					efficiency[uda->name] = 1/uda->metalCost;
+					efficiency[uda->name] = 500;
 				}
 			}
 		}
@@ -532,14 +532,14 @@ void Global::UnitDestroyed(int unit, int attacker){
 			map<string,int>::iterator k = Cached->solobuilds.find(udu->name);
 			if(k != Cached->solobuilds.end()) Cached->solobuilds.erase(k);
 			if(efficiency.find(uda->name) != efficiency.end()){
-				efficiency[uda->name] += 20/udu->metalCost;
+				efficiency[uda->name] += 20000/udu->metalCost;
 			}else{
-				efficiency[uda->name] = 20/udu->metalCost;
+				efficiency[uda->name] = 500;
 			}
 			if(efficiency.find(udu->name) != efficiency.end()){
-				efficiency[udu->name] -= 10/uda->metalCost;
+				efficiency[udu->name] -= 10000/uda->metalCost;
 			}else{
-				efficiency[udu->name] = 10/uda->metalCost;
+				efficiency[udu->name] = 500;
 			}
 		}
 	}
@@ -811,7 +811,7 @@ float Global::GetEfficiency(string s){
 		return efficiency[s];
 	}else{
 		L.iprint("error ::   " + s + " is missing from the efficiency array");
-		return 100.0f;
+		return 500.0f;
 	}
 }
 
@@ -822,12 +822,12 @@ bool Global::LoadUnitData(){
 	const UnitDef** ulist = new const UnitDef*[unum];
 	cb->GetUnitDefList(ulist);
 	for(int i = 0; i < unum; i++){
-		float ts = ulist[i]->health+ulist[i]->energyMake + ulist[i]->metalMake + ulist[i]->extractsMetal*50+ulist[i]->tidalGenerator*30 + ulist[i]->windGenerator*30;
-		if(ts > 20){
-			efficiency[ulist[i]->name] = ts;
-		}else{
-			efficiency[ulist[i]->name] = 1;
+		float ts = 500;
+		if(ulist[i]->weapons.empty()){
+			ts += ulist[i]->health+ulist[i]->energyMake + ulist[i]->metalMake + ulist[i]->extractsMetal*50+ulist[i]->tidalGenerator*30 + ulist[i]->windGenerator*30;
+			ts *= 300;
 		}
+		efficiency[ulist[i]->name] = ts;
 		unit_names[ulist[i]->name] = ulist[i]->humanName;
 		unit_descriptions[ulist[i]->name] = ulist[i]->tooltip;
 	}
@@ -873,6 +873,9 @@ bool Global::LoadUnitData(){
 bool Global::SaveUnitData(){
 	NLOG("Global::SaveUnitData()");
 	if(L.FirstInstance() == true){
+		if(this->iterations > 5){
+			return true;
+		}
 		ofstream off;
 		string filename = info->datapath;
 		filename += slash;
@@ -882,10 +885,10 @@ bool Global::SaveUnitData(){
 		filename += ".tdf";
 		off.open(filename.c_str());
 		if(off.is_open() == true){
-			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC21 AF :: unit efficiency cache file" << endl << endl;
+			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC22 AF :: unit efficiency cache file" << endl << endl;
 			// put stuff in here;
 			int first = firstload;
-			off << "    version=XE9RC21;" << endl;
+			off << "    version=XE9RC22;" << endl;
 			off << "    firstload=" << first << ";" << endl;
 			off << "    modname=" << G->cb->GetModName() << ";" << endl;
 			off << "    iterations=" << iterations << ";" << endl;
