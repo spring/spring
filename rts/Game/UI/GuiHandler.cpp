@@ -73,7 +73,7 @@ struct active_icon {
 	GLfloat y2;
 	int id;
 };
-	
+
 static map<int,guiicon_data> iconmap;
 
 //guiicon_data icon_data[2560];
@@ -103,11 +103,11 @@ CGuiHandler::CGuiHandler()
 }
 
 //Ladda bitmap -> textur
-bool CGuiHandler::LoadCMDBitmap (int id, char* filename) 
+bool CGuiHandler::LoadCMDBitmap (int id, char* filename)
 {
 	guiicon_data icondata;
 	glGenTextures(1, &icondata.texture);
-	CBitmap TextureImage(filename);				
+	CBitmap TextureImage(filename);
 
 	// create mipmapped texture
 	glBindTexture(GL_TEXTURE_2D, icondata.texture);
@@ -118,7 +118,7 @@ bool CGuiHandler::LoadCMDBitmap (int id, char* filename)
 	icondata.has_bitmap = true;
 	icondata.width = .06f;
 	icondata.height = .06f;
-	
+
 	iconmap[id] = icondata;
 	return true;
 }
@@ -131,7 +131,7 @@ CGuiHandler::~CGuiHandler()
 
 
 // Ikonpositioner
-void CGuiHandler::LayoutIcons() 
+void CGuiHandler::LayoutIcons()
 {
 	defaultCmdMemory=0;
 	unsigned int nr=0;
@@ -169,10 +169,10 @@ void CGuiHandler::LayoutIcons()
 	activePage=ac.commandPage;
 
 	commands.clear();
-	
+
 	GLfloat x0 = buttonBox.x1 + fMargin;
 	GLfloat y0 = buttonBox.y2 - fMargin;
-	
+
 	vector<CommandDescription> hidden;
 
 	vector<CommandDescription>::iterator cdi;
@@ -189,11 +189,11 @@ void CGuiHandler::LayoutIcons()
 			width = texticon_width;
 			height = texticon_height;
 		}
-		
+
 		curricon[nr].x1 = x0 + xpos*xstep;
 		curricon[nr].y1 = y0 + ypos*ystep;
 		curricon[nr].x2 = curricon[nr].x1 + width;
-		curricon[nr].y2 = curricon[nr].y1 - height;	
+		curricon[nr].y2 = curricon[nr].y1 - height;
 
 		curricon[nr].id = cdi->id;
 
@@ -208,14 +208,14 @@ void CGuiHandler::LayoutIcons()
 			curricon[nr].x1 = x0 + xpos*xstep;
 			curricon[nr].y1 = y0 + ypos*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;	
+			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
 			curricon[nr].x1 = x0 + xpos*xstep;
 			curricon[nr].y1 = y0 + ypos*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;	
+			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
@@ -243,14 +243,14 @@ void CGuiHandler::LayoutIcons()
 			curricon[nr].x1 = x0 + 0*xstep;
 			curricon[nr].y1 = y0 + 7*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height/2;	
+			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
 			curricon[nr].x1 = x0 + 1*xstep;
 			curricon[nr].y1 = y0 + 7*ystep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height/2;	
+			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
@@ -260,13 +260,13 @@ void CGuiHandler::LayoutIcons()
 		c.id=CMD_INTERNAL;
 		c.type=CMDTYPE_PREV;
 		c.name="";
-		c.tooltip = "Previous menue";
+		c.tooltip = "Previous menu";
 		commands.push_back(c);
 
 		c.id=CMD_INTERNAL;
 		c.type=CMDTYPE_NEXT;
 		c.name="";
-		c.tooltip = "Next menue";
+		c.tooltip = "Next menu";
 		commands.push_back(c);
 	}
 
@@ -305,7 +305,7 @@ void CGuiHandler::DrawButtons()
 
 	// Rita "container"ruta
 	if (total_active_icons > 0) {
-		
+
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
 		glBegin(GL_QUADS);
@@ -319,7 +319,7 @@ void CGuiHandler::DrawButtons()
 
 		glEnd();
 	}
-	
+
 	// För varje knapp (rita den)
 	int buttonStart=max(0,(int)(min(activePage*NUMICOPAGE,(int)total_active_icons)));
 	int buttonEnd=max(0,int(min((activePage+1)*NUMICOPAGE,(int)total_active_icons)));
@@ -332,9 +332,9 @@ void CGuiHandler::DrawButtons()
 		y1 = curricon[nr].y1;
 		x2 = curricon[nr].x2;
 		y2 = curricon[nr].y2;
-		
+
 		glDisable(GL_TEXTURE_2D);
-		
+
 		if(mouseIcon==nr || nr ==inCommand){
 			glBegin(GL_QUADS);
 
@@ -351,7 +351,7 @@ void CGuiHandler::DrawButtons()
 			glVertex2f(x1,y2);
 			glVertex2f(x1,y1);
 			glEnd();
-		} 
+		}
 		//else
 		//glBegin(GL_LINE_STRIP);
 
@@ -366,7 +366,7 @@ void CGuiHandler::DrawButtons()
 			glBegin(GL_QUADS);
 			glTexCoord2f(0,0);
 			glVertex2f(x1,y1);
-			glTexCoord2f(1,0); 
+			glTexCoord2f(1,0);
 			glVertex2f(x2,y1);
 			glTexCoord2f(1,1);
 			glVertex2f(x2,y2);
@@ -376,14 +376,14 @@ void CGuiHandler::DrawButtons()
 			if(!commands[nr].params.empty()){			//skriv texten i första param ovanpå
 				string toPrint=commands[nr].params[0];
 
-				if (toPrint.length() > 6) 
+				if (toPrint.length() > 6)
 					scalef = toPrint.length()/4.0;
-				else 
+				else
 					scalef = 6.0/4.0;
-				
+
 				glTranslatef(x1+.004f,y1-.039f,0.0f);
 				glScalef(0.02f/scalef,0.03f/scalef,0.1f);
-				font->glPrint("%s",toPrint.c_str()); 
+				font->glPrint("%s",toPrint.c_str());
 			}
 		}
 		else {
@@ -393,7 +393,7 @@ void CGuiHandler::DrawButtons()
 				glBegin(GL_QUADS);
 				glTexCoord2f(0,0);
 				glVertex2f(x1,y1);
-				glTexCoord2f(1,0); 
+				glTexCoord2f(1,0);
 				glVertex2f(x2,y1);
 				glTexCoord2f(1,1);
 				glVertex2f(x2,y2);
@@ -401,9 +401,9 @@ void CGuiHandler::DrawButtons()
 				glVertex2f(x1,y2);
 				glEnd();
 			}
-			else 
+			else
 			{
-				glPushAttrib(GL_ENABLE_BIT);	
+				glPushAttrib(GL_ENABLE_BIT);
 				glDisable(GL_LIGHTING);
 				glDisable(GL_DEPTH_TEST);
 				glDisable(GL_TEXTURE_2D);
@@ -490,13 +490,13 @@ void CGuiHandler::DrawButtons()
 			glColor4f(0.0f,0.0f,0.f,0.8f);
 			glTranslatef(dshadow+fDecX+x1+.004f,-dshadow+y1-.039f,0.0f);
 			glScalef(0.02f/scalef,0.03f/scalef,0.1f);
-			font->glPrint("%s",toPrint.c_str()); 
+			font->glPrint("%s",toPrint.c_str());
 			glPopMatrix();
 
 			glColor4f(1.f,1.f,1.f,1.f);
 			glTranslatef(fDecX+x1+.004f,y1-.039f,0.0f);
 			glScalef(0.02f/scalef,0.03f/scalef,0.1f);
-			font->glPrint("%s",toPrint.c_str()); 
+			font->glPrint("%s",toPrint.c_str());
 		}
 
 		glLoadIdentity();
@@ -504,9 +504,9 @@ void CGuiHandler::DrawButtons()
 	if (total_active_icons > 0) {
 		glColor4f(1,1,1,0.6f);
 		if(selectedUnits.selectedGroup!=-1){
-			font->glPrintAt(0.02,0.13,0.6,"Group %i selected ",selectedUnits.selectedGroup); 
+			font->glPrintAt(0.02,0.13,0.6,"Group %i selected ",selectedUnits.selectedGroup);
 		} else {
-			font->glPrintAt(0.02,0.13,0.6,"Selected units %i",selectedUnits.selectedUnits.size()); 
+			font->glPrintAt(0.02,0.13,0.6,"Selected units %i",selectedUnits.selectedUnits.size());
 		}
 	}
 	if(GetReceiverAt(mouse->lastx,mouse->lasty)){
@@ -556,7 +556,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 {
 	if(activeMousePress)
 		activeMousePress=false;
-	else 
+	else
 		return;
 
 	if(needShift && !keys[SDLK_LSHIFT]){
@@ -575,7 +575,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 	if (button == SDL_BUTTON_RIGHT && icon==-1) { // right click -> default cmd
 		inCommand=defaultCmdMemory;//GetDefaultCommand(x,y);
 		defaultCmdMemory=0;
-	} 
+	}
 
 	if(icon>=0 && icon<commands.size()){
 		if(showingMetal){
@@ -680,7 +680,7 @@ int CGuiHandler::IconAtPos(int x, int y)
 	int buttonStart=max(0,min(activePage*NUMICOPAGE,(int)total_active_icons));
 	int buttonEnd=max(0,min((activePage+1)*NUMICOPAGE,(int)total_active_icons));
 	for (int a=buttonStart;a<buttonEnd;a++) {
-		if (fx>curricon[a].x1 && fy<curricon[a].y1 && fx<curricon[a].x2 && fy>curricon[a].y2) 
+		if (fx>curricon[a].x1 && fy<curricon[a].y1 && fx<curricon[a].x2 && fy>curricon[a].y2)
 			return a;
 	}
 
@@ -1035,7 +1035,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		keyOptions|=CONTROL_KEY;
 	if(keys[SDLK_LALT])
 		keyOptions|=ALT_KEY;
-	
+
 	if (key >= SDLK_a && key <= SDLK_z)
 		key = 'A' + (key - SDLK_a);
 
@@ -1172,7 +1172,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius)
 		glVertexf3(pos);
 		for(int a=0;a<=40;++a){
 			float3 p(cos(a*2*PI/40)*radius,0,sin(a*2*PI/40)*radius);
-			p+=pos;		
+			p+=pos;
 			p.y=ground->GetHeight(p.x,p.z);
 			glVertexf3(p);
 		}
@@ -1208,7 +1208,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			tempInCommand=defaultCmdMemory;
 		else
 			tempInCommand=GetDefaultCommand(mousex,mousey);
-	} 
+	}
 
 	if(tempInCommand>=0 && tempInCommand<commands.size()){
 		switch(commands[tempInCommand].type){
@@ -1294,9 +1294,9 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(unit->id);
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
-		
+
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
-			
+
 			Command c;
 			c.id=commands[tempInCommand].id;
 
@@ -1449,7 +1449,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		start.z-=(unitdef2->ysize/2)*SQUARE_SIZE;
 		end.x+=(unitdef2->xsize/2)*SQUARE_SIZE;
 		end.z+=(unitdef2->ysize/2)*SQUARE_SIZE;
-		
+
 		float3 pos=start;
 		for(;pos.x<=end.x;pos.x+=unitdef->xsize*SQUARE_SIZE){
 			float3 p2=pos;
