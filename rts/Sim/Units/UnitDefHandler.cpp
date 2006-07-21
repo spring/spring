@@ -412,7 +412,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		if(!ud.weapons.empty() && ud.weapons[0].def!=0 && (ud.weapons[0].def->type=="AircraftBomb" || ud.weapons[0].def->type=="TorpedoLauncher")){
 			ud.type = "Bomber";
 			if(ud.turnRadius==500)	//only reset it if user hasnt set it explicitly
-				ud.turnRadius=800;			//hint to the ai about how large turn radius this plane needs
+				ud.turnRadius=1000;			//hint to the ai about how large turn radius this plane needs
 
 		} else {
 			ud.type = "Fighter";
