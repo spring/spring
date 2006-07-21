@@ -95,8 +95,8 @@ void CBombDropper::Fire(void)
 		dif-=dir*dif.dot(dir);
 		dif/=max(0.01f,predict);
 		float size=dif.Length();
-		if(size>0.5)
-			dif/=size*0.5;
+		if(size>1.0)
+			dif/=size*1.0;
 		new CExplosiveProjectile(weaponPos,owner->speed+dif,owner,damages, weaponDef, 1000,areaOfEffect);
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
