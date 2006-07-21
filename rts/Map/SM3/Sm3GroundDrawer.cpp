@@ -13,7 +13,7 @@
 CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 {
 	map = m;
-	tr = &map->tr;
+	tr = map->renderer;
 	rc = tr->AddRenderContext (&cam, true);
 
 	if (shadowHandler->drawShadows) {
@@ -25,6 +25,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 		shadowrc = 0;
 		groundShadowVP = 0;
 	}
+	reflectrc = 0;
 }
 
 CSm3GroundDrawer::~CSm3GroundDrawer()
@@ -70,7 +71,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
-
+/*
 	glColor4f(1.0f,1.0f,1.0f,1.0f);
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT0, GL_POSITION,gs->sunVector4);
@@ -82,13 +83,13 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	for (int a=0;a<4;a++) d[a]=0.0f;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, d);
 	glDisable(GL_LIGHT1);
-	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT0);*/
 //////////////////
 	glEnable(GL_RESCALE_NORMAL);
 
 //	glLightfv (GL_LIGHT0, GL_SPOT_DIRECTION,dir.getf());
 //	glLightf (GL_LIGHT0, GL_SPOT_CUTOFF, 90.0f);
-	const float ambient[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+/*	const float ambient[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	const float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glLightfv (GL_LIGHT0, GL_DIFFUSE, diffuse);
 	glLightfv (GL_LIGHT0, GL_AMBIENT, ambient);
@@ -102,7 +103,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	const float md[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, md);
 	glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, md);
-	glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 10.0f);
+	glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 10.0f);*/
 	/////////////////////
 
 	tr->Draw ();
@@ -119,7 +120,11 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 		glDisable(GL_BLEND);
 	}
 
+	glFrontFace(GL_CCW);
 	glDisable(GL_CULL_FACE);
+
+	glColor3ub(255,255,255);
+	glDisable(GL_TEXTURE_2D);
 
 	DrawObjects(drawWaterReflection, drawUnitReflection);
 }

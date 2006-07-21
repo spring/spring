@@ -39,11 +39,18 @@ CReadMap* readmap=0;
 
 void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
 {
+	parser.LoadFile(GetTDFName(mapname));
+}
+
+std::string CReadMap::GetTDFName(const std::string& mapname)
+{
 	string extension = mapname.substr(mapname.length()-3);
 	if (extension == "smf") 
-		parser.LoadFile (string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd");
+		return string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd";
 	else if(extension == "sm3")
-		parser.LoadFile (string("maps/")+mapname);
+		return string("maps/")+mapname;
+	else
+		throw std::runtime_error("GetTDFName: Unknown extension: " + extension);
 }
 
 CReadMap* CReadMap::LoadMap (const std::string& mapname)

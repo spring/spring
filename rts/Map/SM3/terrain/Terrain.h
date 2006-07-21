@@ -19,7 +19,7 @@ namespace terrain {
 	struct QuadMap;
 	struct IndexTable;
 	
-	struct QuadRenderData;
+	class QuadRenderData;
 	class TerrainTexture;
 	class RenderDataManager;
 

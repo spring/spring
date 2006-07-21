@@ -42,7 +42,7 @@ public:
 	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0);
 protected:
 	CSm3GroundDrawer *groundDrawer;
-	terrain::Terrain tr;
+	terrain::Terrain *renderer;
 
 	struct InfoMap {
 		InfoMap ();

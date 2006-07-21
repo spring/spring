@@ -45,6 +45,7 @@ public:
 	CSolidObject* GroundBlocked(int mapSquare);
 	void CleanBlockingMap(CSolidObject* object);	//Debug
 
+	static std::string GetTDFName (const std::string& mapname);
 	static void OpenTDF (const std::string& mapname, TdfParser& parser);
 	static CReadMap* LoadMap (const std::string& mapname);
 
