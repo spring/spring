@@ -24,7 +24,7 @@ namespace terrain
 	struct Heightmap;
 	struct QuadMap;
 	struct IndexTable;
-	struct QuadRenderData;
+	class QuadRenderData;
 	class QuadNormals;
 	struct RenderSetupCollection;
 	struct IShaderSetup;
@@ -57,6 +57,7 @@ namespace terrain
 		bool InFrustum (Frustum *f);
 		float CalcLod (const Vector3& campos);
 		void CollectNodes(std::vector<TQuad*>& quads);
+		void FreeCachedTexture();
 
 		int GetVertexSize ();
 
@@ -99,14 +100,18 @@ namespace terrain
 		friend class Terrain;
 	};
 
-
 	// renderdata for a visible quad
-	struct QuadRenderData
+	class QuadRenderData
 	{
+	public:
 		QuadRenderData();
 		~QuadRenderData();
 
 		uint GetDataSize();
+
+		// seems silly yeah, but I use it to set breakpoints in.
+		TQuad* GetQuad() { return quad; }
+		void SetQuad(TQuad *q) { quad=q; }
 
 		// renderdata: normalmap + vertex buffer
 		// normalmap for detail preservation
@@ -116,9 +121,10 @@ namespace terrain
 		VertexBuffer vertexBuffer;
 		int vertexSize;
 
-		TQuad *quad;
 		int index;
 		bool used;
+	protected:
+		TQuad *quad;
 	};
 
 	// Manager for QuadRenderData

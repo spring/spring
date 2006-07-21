@@ -243,6 +243,14 @@ namespace terrain {
 		quads.push_back(this);
 	}
 
+	void TQuad::FreeCachedTexture()
+	{
+		if (cacheTexture) {
+			glDeleteTextures(1,&cacheTexture);
+			cacheTexture = 0;
+		}
+	}
+
 //-----------------------------------------------------------------------
 // Terrain Main class
 //-----------------------------------------------------------------------
@@ -702,7 +710,8 @@ namespace terrain {
 		glLoadIdentity ();
 		glOrtho (q->start.x, q->end.x, q->start.z, q->end.z, -10000.0, 100000.0);
 
-		renderDataManager->InitializeNode (q);
+		if (!q->renderData)
+			renderDataManager->InitializeNode (q);
 
 		// render to the framebuffer
 		for (int p=0;p<q->textureSetup->renderSetup [0]->passes.size();p++)
@@ -742,6 +751,8 @@ namespace terrain {
 		glDepthMask (GL_FALSE);
 		glDisable (GL_DEPTH_TEST);
 		glDisable (GL_CULL_FACE);
+
+		glDisable(GL_LIGHTING);
 
 		// Make sure every node that might be drawn, has a cached texture
 		for (int ctx=0;ctx<contexts.size();ctx++)
@@ -900,6 +911,27 @@ namespace terrain {
 		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize ());
 	}
 
+	void FindRAWProps(int len, int& width, int& bytespp, ILoadCallback* cb)
+	{
+		// test for 16-bit
+		int w = 3;
+		while (w*w*2 < len)
+			w = (w-1)*2+1;
+
+		if (w*w*2 != len) {
+			w = 3; // test for 8-bit
+			while (w*w < len)
+				w = (w-1)*2+1;
+
+			if (w*w != len) {
+				cb->PrintMsg ("Incorrect raw file size: %d, last comparing size: %d", len, w*w*2);
+				return;
+			} else bytespp=1;
+		} else bytespp=2;
+
+		width = w;
+	}
+
 	Heightmap* Terrain::LoadHeightmapFromRAW (const std::string& file, ILoadCallback *cb)
 	{
 		CFileHandler fh (file);
@@ -910,22 +942,10 @@ namespace terrain {
 
 		int len = fh.FileSize();
 
-		// test for 16-bit
-		int w = 3;
-		while (w*w*2 < len)
-			w = (w-1)*2+1;
-
-		int bits;
-		if (w*w*2 != len) {
-			w = 3; // test for 8-bit
-			while (w*w < len)
-				w = (w-1)*2+1;
-
-			if (w*w != len) {
-				cb->PrintMsg ("Incorrect raw file size: %d, last comparing size: %d", len, w*w*2);
-				return 0;
-			} else bits=8;
-		} else bits=16;
+		int w=-1, bits;
+		FindRAWProps(len, w, bits, cb);
+		bits*=8;
+		if (w<0) return 0;
 
 		Heightmap *hm = new Heightmap;
 		hm->Alloc (w,w);

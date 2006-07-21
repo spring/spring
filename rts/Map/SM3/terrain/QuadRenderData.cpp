@@ -84,7 +84,27 @@ namespace terrain {
 		qrd.pop_back();
 
 		freeRD.push_back (rd);
-		rd->quad->renderData = 0;
+		rd->GetQuad()->renderData = 0;
+
+		rd->GetQuad()->FreeCachedTexture();
+	}
+
+	void RenderDataManager::UpdateRect (int sx,int sy,int w,int h)
+	{
+		vector<QuadRenderData*> remain;
+		for (int a=0;a<qrd.size();a++)
+		{
+			QuadRenderData *rd = qrd[a];
+			TQuad *q = rd->GetQuad();
+
+			// rect vs rect collision:
+			if (q->sqPos.x + q->width >= sx && q->sqPos.y + q->width >= sy &&
+				q->sqPos.x <= sx + w && q->sqPos.y <= sy + h) 
+			{
+				assert (q->renderData==qrd[a]);
+				Free(q->renderData);
+			} 
+		}
 	}
 
 	// delete all renderdata that is not used this frame and has maxlod < VBufMinDetail
@@ -99,30 +119,17 @@ namespace terrain {
 				continue;
 			}
 
-			if (rd->quad->maxLodValue < VBufMinDetail) {
+			if (rd->GetQuad()->maxLodValue < VBufMinDetail) {
 				Free (rd);
 				a--;
 			}
 		}
 	}
 
-	void RenderDataManager::UpdateRect (int sx,int sy,int w,int h)
-	{
-		for (int a=0;a<qrd.size();a++)
-		{
-			TQuad *q = qrd[a]->quad;
-
-			// rect vs rect collision:
-			if (q->sqPos.x + q->width >= sx && q->sqPos.y + q->width >= sy &&
-				q->sqPos.x <= sx + w && q->sqPos.y <= sy + h) 
-			{
-				Free(q->renderData);
-			}
-		}
-	}
-
 	void RenderDataManager::InitializeNode (TQuad *q)
 	{
+		assert (!q->renderData);
+
 		QuadRenderData *rd = q->renderData = Allocate ();
 
 		// Allocate vertex data space
@@ -177,7 +184,7 @@ namespace terrain {
 				}*/
 			}
 		rd->vertexBuffer.UnlockData ();
-		rd->quad = q;
+		rd->SetQuad(q);
 	}
 
 

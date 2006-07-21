@@ -21,6 +21,7 @@ CSm3ReadMap::CSm3ReadMap()
 CSm3ReadMap::~CSm3ReadMap()
 {
 	delete groundDrawer;
+	delete renderer;
 }
 
 struct Sm3LoadCB : terrain::ILoadCallback
@@ -36,26 +37,30 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		int tu;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
 
+		renderer = new terrain::Terrain;
+		
 		if (false) {//tu < 4) {
-			tr.config.cacheTextures=true;
-			tr.config.cacheTextureSize=256;
+			renderer->config.cacheTextures=true;
+			renderer->config.cacheTextureSize=256;
 		}
 		else {
-			tr.config.cacheTextures=false;
+			renderer->config.cacheTextures=false;
 
 			if (GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
-				tr.config.useBumpMaps=false;
+				renderer->config.useBumpMaps=false;
 
-				tr.config.anisotropicFiltering = 0.0f;
+				renderer->config.anisotropicFiltering = 0.0f;
 			}
-			tr.config.terrainNormalMaps = false;
-			tr.config.normalMapLevel = 3;
+			renderer->config.terrainNormalMaps = false;
+			renderer->config.normalMapLevel = 3;
 		}
 
 		if (shadowHandler->drawShadows)
-			tr.config.useShadowMaps = true;
+			renderer->config.useShadowMaps = true;
 
-		tr.config.useStaticShadow=true;
+		renderer->config.useStaticShadow=true;
+		renderer->config.cacheTextures=false;
+		renderer->config.cacheTextureSize=128;
 
 		// Load map info from TDF
 		std::string fn = std::string("maps/") + mapname;
@@ -71,9 +76,9 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		light.directional = false;
 		light.position = gs->sunVector * 10000;
 		lightInfo.staticLights.push_back (light);
-		tr.Load (mapDefParser, &lightInfo, &loadcb);
+		renderer->Load (mapDefParser, &lightInfo, &loadcb);
 
-		height = width = tr.GetHeightmapWidth ()-1;
+		height = width = renderer->GetHeightmapWidth ()-1;
 
 		// Set global map info
 		gs->mapx=width;
@@ -88,7 +93,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		float3::maxzpos=height*SQUARE_SIZE-1;
 
 		heightmap=new float[(width+1)*(height+1)];
-		tr.GetHeightmap (0,0,width+1,height+1,heightmap);
+		renderer->GetHeightmap (0,0,width+1,height+1,heightmap);
 
 		CalcHeightfieldData();
 		
@@ -119,7 +124,7 @@ void CSm3ReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	if (y2<0) y2=0;
 	if (y2>width) y2=height;
 
-	tr.SetHeightmap(x1,y1, x2-x1,y2-y1, heightmap, width+1, height+1);
+	renderer->SetHeightmap(x1,y1, x2-x1,y2-y1, heightmap, width+1, height+1);
 }
 
 void CSm3ReadMap::Update() {}

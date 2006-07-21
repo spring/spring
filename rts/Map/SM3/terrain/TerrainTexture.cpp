@@ -259,7 +259,7 @@ namespace terrain {
 		// Calculate shadows
 		if (cfg->useStaticShadow) {
 			if (cb) cb->PrintMsg("  calculating lightmap");
-			lightmap = new Lightmap(heightmap, 1, li);
+			lightmap = new Lightmap(heightmap, 0, 1,li);
 		}
 
 		// see how lighting should be implemented, based on config and avaiable textures

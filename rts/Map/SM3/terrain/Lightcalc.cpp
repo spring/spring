@@ -43,7 +43,7 @@ void BlurGrayscaleImage(int w, int h, uchar *data)
 	delete[] nd;
 }
 
-Lightmap::Lightmap(Heightmap *orghm, int level, LightingInfo *li)
+Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo *li)
 {
 	int startTicks = SDL_GetTicks();
 	tilesize.x = orghm->w-1;
@@ -52,6 +52,12 @@ Lightmap::Lightmap(Heightmap *orghm, int level, LightingInfo *li)
 
 	Heightmap *hm = orghm->GetLevel(-level);
 	int w=hm->w-1;
+	shadowLevelDif=0;
+
+	Heightmap *shadowhm = orghm->GetLevel(-(level+shadowLevelDif));
+	int shadowScale=1<<shadowLevelDif;
+	int shadowW=shadowhm->w-1;
+	assert (w/shadowW == shadowScale);
 	float org2c = w/float(orghm->w-1);
 	float c2org = (float)(orghm->w-1)/w;
 
@@ -63,68 +69,22 @@ Lightmap::Lightmap(Heightmap *orghm, int level, LightingInfo *li)
 			shading[y*w+x] = li->ambient;
 		}
 
-	uchar *lightMap = new uchar[w*w];
+	uchar *lightMap = new uchar[shadowW*shadowW];
 	int lightIndex = 0;
 	for (std::vector<StaticLight>::const_iterator l=li->staticLights.begin();l!=li->staticLights.end();++l) 
 	{
-		memset(lightMap, 255, w*w); // 255 is lit, 0 is unlit
-
 		int lightx = (int)(l->position.x / hm->squareSize);
 		int lighty = (int)(l->position.z / hm->squareSize);
 		
-		for (int y=0;y<w;y++)
-		{
-			for (int x=0;x<w;x++)
-			{
-				if (!lightMap[y*w+x]) // shadowed pixels can't shadow other pixels
-					continue;
-
-				if (x==lightx && y==lighty)
-					continue;
-
-				float dx = lightx-x;
-				float dy = lighty-y;
-				float h = centerhm[y*w+x];
-
-				float dh = l->position.y-h;
-				float len = sqrtf(dx*dx+dy*dy);
-				const float step = 5.0f;
-				float invLength2d = step/len;
-				dx *= invLength2d;
-				dy *= invLength2d;
-				dh *= invLength2d;
-
-				float px = x + dx, py = y + dy;
-				h += dh;
-				while (px >= 0.0f && px < w && py >= 0.0f && py < w && len >= 0.0f)
-				{
-					int index = (int)py * w + (int)px;
-
-					if (centerhm[index] > h + 2.0f)
-					{
-						lightMap[y*w+x]=0;
-						break;
-					}
-
-					px += dx;
-					py += dy;
-					h += dh;
-					len -= step;
-				}
-			}
-		}
-
-		BlurGrayscaleImage(w,w,lightMap);
-
-		char sm_fn[64];
-		SNPRINTF(sm_fn, sizeof(sm_fn), "shadowmap%d.bmp", lightIndex++);
-		SaveImage(sm_fn, 1, IL_UNSIGNED_BYTE, w,w, lightMap);
+		CalculateShadows(lightMap, shadowW, 
+			(int)(l->position.x / shadowhm->squareSize), 
+			(int)(l->position.z / shadowhm->squareSize), l->position.y,centerhm, w, shadowScale);
 
 		for (int y=0;y<w;y++)
 		{
 			for (int x=0;x<w;x++)
 			{
-				if (!lightMap[y*w+x])
+				if (!lightMap[(y*shadowW+x)/shadowScale])
 					continue;
 
 				Vector3 wp((x+0.5f)*hm->squareSize,centerhm[y*w+x],(y+0.5f)*hm->squareSize);
@@ -137,7 +97,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, LightingInfo *li)
 				float dot = wp.dot(normv);
 				if(dot < 0.0f) dot = 0.0f; 
 				if(dot > 1.0f) dot = 1.0f;
-				dot *= lightMap[y*w+x]*(1.0f/255.0f);
+				dot *= lightMap[(y*shadowW+x)/shadowScale]*(1.0f/255.0f);
 				shading[y*w+x] += l->color * dot;
 			}
 		}
@@ -159,7 +119,6 @@ Lightmap::Lightmap(Heightmap *orghm, int level, LightingInfo *li)
 		}
 	}
 
-
 	SaveImage ("lightmap.png", 3, IL_UNSIGNED_BYTE, w,w, shadingTexData);
 
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w,w, GL_RGB, GL_UNSIGNED_BYTE, shadingTexData);
@@ -180,4 +139,57 @@ Lightmap::~Lightmap()
 		glDeleteTextures(1, &shadingTex);
 }
 
+void Lightmap::CalculateShadows (uchar *dst, int dstw, int lightX,int lightY, float lightH, float *centerhm, int hmw, int hmscale)
+{
+	memset(dst, 255, dstw*dstw); // 255 is lit, 0 is unlit
+
+	for (int y=0;y<dstw;y++)
+	{
+		for (int x=0;x<dstw;x++)
+		{
+			if (!dst[y*dstw+x]) // shadowed pixels can't shadow other pixels
+				continue;
+
+			if (x==lightX && y==lightY)
+				continue;
+
+			float dx = lightX-x;
+			float dy = lightY-y;
+			float h = centerhm[(y*hmw+x)*hmscale];
+
+			float dh = lightH-h;
+			float len = sqrtf(dx*dx+dy*dy);
+			const float step = 5.0f;
+			float invLength2d = step/len;
+			dx *= invLength2d;
+			dy *= invLength2d;
+			dh *= invLength2d;
+
+			float px = (x + dx) * hmscale, py = (y + dy) * hmscale;
+			h += dh;
+			while (px >= 0.0f && px < hmw && py >= 0.0f && py < hmw && len >= 0.0f)
+			{
+				int index = (int)py * hmw + (int)px;
+
+				if (centerhm[index] > h + 2.0f)
+				{
+					dst[y*dstw+x]=0;
+					break;
+				}
+
+				px += dx;
+				py += dy;
+				h += dh;
+				len -= step;
+			}
+		}
+	}
+	
+	BlurGrayscaleImage(dstw, dstw, dst);
+
+	char sm_fn[64];
+	static int lightIndex=0;
+	SNPRINTF(sm_fn, sizeof(sm_fn), "shadowmap%d.png", lightIndex++);
+	SaveImage(sm_fn, 1, IL_UNSIGNED_BYTE, dstw,dstw, dst);
+}
 };
