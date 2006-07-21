@@ -27,6 +27,7 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/TestAI.pch"
 				AssemblerListingLocation=".\Release/"
@@ -43,7 +44,7 @@
 				OutputFile="..\..\..\game\aidll\mmhandler.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				ModuleDefinitionFile=".\TestAI.def"
+				ModuleDefinitionFile=""
 				ProgramDatabaseFile="..\..\..\game\aidll\TestAI.pdb"
 				ImportLibrary=""/>
 			<Tool
@@ -89,6 +90,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;TESTAI_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Debug/TestAI.pch"
 				AssemblerListingLocation=".\Debug/"
@@ -106,7 +108,7 @@
 				OutputFile="..\..\..\game\aidll\mmhandler.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
-				ModuleDefinitionFile=".\TestAI.def"
+				ModuleDefinitionFile=""
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/TestAI.pdb"
 				ImportLibrary=".\Debug/TestAI.lib"/>
