@@ -668,6 +668,8 @@ void CDDSImage::clear()
     m_images.clear();
 }
 
+#ifndef BITMAP_NO_OPENGL
+
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed 1D texture
 bool CDDSImage::upload_texture1D()
@@ -917,6 +919,8 @@ bool CDDSImage::upload_textureCubemap()
 
     return true;
 }
+
+#endif // !BITMAP_NO_OPENGL
 
 ///////////////////////////////////////////////////////////////////////////////
 // clamps input size to [1-size]

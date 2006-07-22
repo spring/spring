@@ -16,12 +16,15 @@
 CSm3ReadMap::CSm3ReadMap()
 {
 	groundDrawer=0;
+	minimapTexture = 0;
 }
 
 CSm3ReadMap::~CSm3ReadMap()
 {
 	delete groundDrawer;
 	delete renderer;
+
+	glDeleteTextures(1, &minimapTexture);
 }
 
 struct Sm3LoadCB : terrain::ILoadCallback
@@ -68,6 +71,13 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		TdfParser resources("gamedata/resources.tdf");
 		ParseSettings(resources);
 
+		string minimap = mapDefParser.SGetValueDef(string(),"map\\minimap");
+		if (!minimap.empty()) {
+			CBitmap bmp;
+			if(bmp.Load(minimap)) 
+				minimapTexture=bmp.CreateTexture(true);
+		}
+		
 		Sm3LoadCB loadcb;
 		terrain::LightingInfo lightInfo;
 		lightInfo.ambient = ambientColor;
@@ -133,7 +143,56 @@ void CSm3ReadMap::ExplosionUpdate(int x1,int x2,int y1,int y2) {}
 unsigned int CSm3ReadMap::GetShadingTexture () { return 0; } // a texture with RGB for shading and A for height
 void CSm3ReadMap::DrawMinimap () 
 {
+	if (!minimapTexture)
+		return;
+
 	 // draw the minimap in a quad (with extends: (0,0)-(1,1))
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, minimapTexture);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+
+	if(groundDrawer->DrawExtraTex()){
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+		glBindTexture(GL_TEXTURE_2D, groundDrawer->infoTex);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
+
+	float isx=gs->mapx/float(gs->pwr2mapx);
+	float isy=gs->mapy/float(gs->pwr2mapy);
+
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,isy);
+		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,1);
+		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,isy);
+		glVertex2f(0,0);
+		glTexCoord2f(0,0);
+		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,0);
+		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,0,0);
+		glVertex2f(0,1);
+		glTexCoord2f(isx,0);
+		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,0);
+		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,0);
+		glVertex2f(1,1);
+		glTexCoord2f(isx,isy);
+		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,1);
+		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,isx,isy);
+		glVertex2f(1,0);
+	glEnd();
+
+	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+	glDisable(GL_TEXTURE_2D);
+
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	glDisable(GL_TEXTURE_2D);
 }
 
 // Determine visibility for a rectangular grid

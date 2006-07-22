@@ -51,6 +51,8 @@ protected:
 		unsigned char *data;
 	};
 
+	GLuint minimapTexture;
+
 	std::map<std::string, InfoMap> infoMaps;
 	friend class CSm3GroundDrawer;
 };

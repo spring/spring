@@ -71,7 +71,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;BITMAP_NO_OPENGL"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
@@ -81,7 +81,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlibwapi.lib"
+				AdditionalDependencies="zlibwapi.lib devil.lib"
 				OutputFile="../../game/unitsync.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.8/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
@@ -612,6 +612,28 @@
 			</File>
 			<File
 				RelativePath=".\unitsync.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Bitmap"
+			Filter="">
+			<File
+				RelativePath="..\..\rts\Rendering\Textures\Bitmap.cpp">
+			</File>
+			<File
+				RelativePath="..\..\rts\Rendering\Textures\Bitmap.h">
+			</File>
+			<File
+				RelativePath="..\..\rts\Rendering\Textures\nv_dds.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\rts\Rendering\Textures\nv_dds.h">
 			</File>
 		</Filter>
 		<File

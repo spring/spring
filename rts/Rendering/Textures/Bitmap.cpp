@@ -300,6 +300,8 @@ void CBitmap::Save(string const& filename)
 #endif // I'll add a quicktime exporter for mac soonish...Krysole
 }
 
+#ifndef BITMAP_NO_OPENGL
+
 unsigned int CBitmap::CreateTexture(bool mipmaps)
 {
 	if(type == BitmapTypeDDS)
@@ -398,6 +400,8 @@ unsigned int CBitmap::CreateDDSTexture()
 	glPopAttrib();
 	return texobj;
 }
+
+#endif // !BITMAP_NO_OPENGL
 
 void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char blue)
 {
