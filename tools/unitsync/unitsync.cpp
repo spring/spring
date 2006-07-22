@@ -11,6 +11,8 @@
 #include "Syncer.h"
 #include "SyncServer.h"
 
+#include "Rendering/Textures/Bitmap.h"
+
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -232,9 +234,14 @@ static vector<string> mapNames;
 
 DLL_EXPORT int __stdcall GetMapCount()
 {
+	//vector<string> files = CFileHandler::FindFiles("{maps/*.smf,maps/*.sm3}");
 	vector<string> files = CFileHandler::FindFiles("maps/*.smf");
 	vector<string> ars = scanner->GetMaps();
-
+/*	vector<string> files2 = CFileHandler::FindFiles("maps/*.sm3");
+	unsigned int nfiles=files.size();
+	files.resize(files.size()+files2.size());
+	copy(files2.begin(),files2.end(),files.begin()+nfiles);
+*/
 	mapNames.clear();
 	for (vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
 		string mn = *i;
@@ -253,6 +260,8 @@ DLL_EXPORT const char* __stdcall GetMapName(int index)
 	return GetStr(mapNames[index]);
 }
 
+
+
 DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 {
 	// Determine if the map is found in an archive
@@ -270,29 +279,46 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	}
 
 	TdfParser parser;
-	string smd = mapName.replace(mapName.find_last_of('.'), 4, ".smd");
+	string extension = mapName.substr(mapName.length()-3), maptdf;
+	if (extension == "smf")
+		maptdf = string("maps/")+mapName.substr(0,mapName.find_last_of('.'))+".smd";
+	else if(extension == "sm3")
+		maptdf = string("maps/")+mapName;
 
 	string err("");
 	try {
-		parser.LoadFile("maps/" + smd);
+		parser.LoadFile(maptdf);
 	} catch (const std::exception& e) {
 		err = e.what();
 	}
 
 	// Retrieve the map header as well
-	string origName = name;
-	MapHeader mh;
-	mh.mapx = -1;
-
+	if (extension == "smf") 
 	{
-		CFileHandler in("maps/" + origName);
-		if (in.FileExists())
-			in.Read(&mh, sizeof(mh));
-	}
+		MapHeader mh;
+		string origName = name;
+		mh.mapx = -1;
 
-	if (hpiHandler != oh) {
-		delete hpiHandler;
-		hpiHandler = oh;
+		{
+			CFileHandler in("maps/" + origName);
+			if (in.FileExists())
+				in.Read(&mh, sizeof(mh));
+		}
+		outInfo->width = mh.mapx * SQUARE_SIZE;
+		outInfo->height = mh.mapy * SQUARE_SIZE;
+
+		if (hpiHandler != oh) {
+			delete hpiHandler;
+			hpiHandler = oh;
+		}
+	}
+	else
+	{
+		int w = atoi(parser.SGetValueDef(string(), "map\\gameAreaW").c_str());
+		int h = atoi(parser.SGetValueDef(string(), "map\\gameAreaH").c_str());
+			
+		outInfo->width = w * SQUARE_SIZE;
+		outInfo->height = h * SQUARE_SIZE;
 	}
 
 	// If the map didn't parse, say so now
@@ -304,8 +330,6 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 
 		// Fill in stuff so tasclient won't crash
 		outInfo->posCount = 0;
-		outInfo->width = mh.mapx * SQUARE_SIZE;
-		outInfo->height = mh.mapy * SQUARE_SIZE;
 		return 1;
 	}
 
@@ -313,7 +337,7 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	if ( !parser.SectionExist("MAP") ) {
 		return 0;
 	}
-	if (mh.mapx < 0)
+	if (outInfo->width < 0)
 		return 0;
 
 	map<string, string> values = parser.GetAllValues("MAP");
@@ -331,10 +355,6 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 
 	outInfo->minWind = atoi(values["minwind"].c_str());
 	outInfo->maxWind = atoi(values["maxwind"].c_str());
-
-	// New stuff
-	outInfo->width = mh.mapx * SQUARE_SIZE;
-	outInfo->height = mh.mapy * SQUARE_SIZE;
 
 	// Find the start positions
 	int curPos;
@@ -388,22 +408,46 @@ DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
 // Used to return the image
 char* imgbuf[1024*1024*2];
 
-DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
+static void* GetMinimapSM3(string mapName, int miplevel)
 {
-	// Determine if the map is found in an archive
-	string mapName = filename;
-	CVFSHandler *oh = hpiHandler;
-
-	{
-		CFileHandler f("maps/" + mapName);
-		if (!f.FileExists()) {
-			vector<string> ars = scanner->GetArchivesForMap(mapName);
-
-			hpiHandler = new CVFSHandler(false);
-			hpiHandler->AddArchive(ars[0], false);
-		}
+	string minimapFile;
+	try {
+		TdfParser tdf("Maps/" + mapName);
+		minimapFile = tdf.SGetValueDef(string(), "map\\minimap");
+	} catch (TdfParser::parse_error&) {
+		return 0;
 	}
 
+	if (minimapFile.empty())
+		return 0;
+
+	CBitmap bm;
+	if (!bm.Load(minimapFile))
+		return 0;
+
+	if (1024 >> miplevel != bm.xsize || 1024 >> miplevel != bm.ysize) 
+		bm = bm.CreateRescaled (1024 >> miplevel, 1024 >> miplevel);
+
+	unsigned short *dst = (unsigned short*)imgbuf;
+	unsigned char *src = bm.mem;
+	for (int y=0;y<bm.ysize;y++)
+		for (int x=0;x<bm.xsize;x++)
+		{
+			*dst = 0;
+
+			*dst |= ((src[0]>>3) << 11) & RM;
+			*dst |= ((src[1]>>2) << 5) & GM;
+			*dst |= (src[2]>>3) & BM;
+
+			dst ++;
+			src += 4;
+		}
+
+	return imgbuf;
+}
+
+static void* GetMinimapSMF(string mapName, int miplevel)
+{
 	// Calculate stuff
 	
 	int mipsize = 1024;
@@ -418,7 +462,6 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 	
 	int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
 	int numblocks = size/8;
-
 
 	// Read the map data
 	CFileHandler in("maps/" + mapName);
@@ -443,12 +486,6 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 
 	char* buffer = (char*)malloc(size);
 	inFile.read(buffer, size); */
-
-	// Restore VFS
-	if (hpiHandler != oh) {
-		delete hpiHandler;
-		hpiHandler = oh;
-	}
 
 	if (!done) {
 		free(buffer);
@@ -524,6 +561,38 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 	return (void*)ret;
 }
 
+DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
+{
+	// Determine if the map is found in an archive
+	string mapName = filename;
+	string extension = mapName.substr(mapName.length()-3);
+	CVFSHandler *oh = hpiHandler; // original handler, so hpiHandler can be restored later
+
+	{
+		CFileHandler f("maps/" + mapName);
+		if (!f.FileExists()) {
+			vector<string> ars = scanner->GetArchivesForMap(mapName);
+
+			hpiHandler = new CVFSHandler(false);
+			hpiHandler->AddArchive(ars[0], false);
+		}
+	}
+
+	void *ret = 0;
+	if (extension == "smf") 
+		ret = GetMinimapSMF(mapName, miplevel);
+	else if (extension == "sm3")
+		ret = GetMinimapSM3(mapName, miplevel);
+
+	// Restore VFS
+	if (hpiHandler != oh) {
+		delete hpiHandler;
+		hpiHandler = oh;
+	}
+
+	return ret;
+}
+
 //////////////////////////
 //////////////////////////
 
@@ -595,7 +664,7 @@ DLL_EXPORT int __stdcall GetSideCount()
 	TdfParser p;
 	try {
 		p.LoadFile("gamedata/sidedata.tdf");
-	} catch (const std::exception& e) {
+	} catch (const std::exception&) {
 		return 0;
 	}
 

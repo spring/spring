@@ -846,6 +846,14 @@ namespace terrain {
 			throw content_error("Failed to load heightmap " + heightmapName);
 
 		d_trace("heightmap size: %dx%d\n", heightmap->w, heightmap->h);
+
+		if (heightmap->w-1 != atoi(tdf.SGetValueDef("","MAP\\GameAreaW").c_str()) ||
+			heightmap->h-1 != atoi(tdf.SGetValueDef("","MAP\\GameAreaH").c_str()))
+		{
+			char hmdims[32];
+			SNPRINTF(hmdims,32,"%dx%d", heightmap->w, heightmap->h);
+			throw content_error("Map size (" + string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
+		}
 		
 		hmScale = atof (tdf.SGetValueDef ("1000", basepath + "HeightScale").c_str());
 		hmOffset = atof (tdf.SGetValueDef ("0", basepath + "HeightOffset").c_str());
