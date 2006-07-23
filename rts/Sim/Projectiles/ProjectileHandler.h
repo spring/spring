@@ -63,21 +63,24 @@ public:
 
 	int numPerlinProjectiles;
 
+	CTextureAtlas *textureAtlas;
 	//texturcoordinates for projectiles
-	CTextureAtlas::Texture flaretex;
-	CTextureAtlas::Texture explotex;
-	CTextureAtlas::Texture explofadetex;
-	CTextureAtlas::Texture circularthingytex;
-	CTextureAtlas::Texture laserendtex;
-	CTextureAtlas::Texture laserfallofftex;
-	CTextureAtlas::Texture randdotstex;
-	CTextureAtlas::Texture smoketrailtex;
-	CTextureAtlas::Texture waketex;
-	CTextureAtlas::Texture smoketex[12];
-	CTextureAtlas::Texture perlintex;
+	AtlasedTexture flaretex;
+	AtlasedTexture explotex;
+	AtlasedTexture explofadetex;
+	AtlasedTexture circularthingytex;
+	AtlasedTexture laserendtex;
+	AtlasedTexture laserfallofftex;
+	AtlasedTexture randdotstex;
+	AtlasedTexture smoketrailtex;
+	AtlasedTexture waketex;
+	AtlasedTexture smoketex[12];
+	AtlasedTexture perlintex;
 
-	CTextureAtlas::Texture groundflashtex;
-	CTextureAtlas::Texture groundringtex;
+	AtlasedTexture groundflashtex;
+	AtlasedTexture groundringtex;
+
+	//CTextureAtlas::Texture seismictex;
 
 private:
 	void UpdatePerlin();
@@ -109,7 +112,6 @@ private:
 	IFramebuffer *perlinFB;
 	bool drawPerlinTex;
 	std::vector<CGroundFlash*> groundFlashes;
-	CTextureAtlas *textureAtlas;
 	CTextureAtlas *groundFXAtlas;
 };
 extern CProjectileHandler* ph;

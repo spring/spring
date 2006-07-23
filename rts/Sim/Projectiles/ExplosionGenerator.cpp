@@ -251,7 +251,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 		}
 		float flashSize=modSize;
 		float flashAlpha=min(0.8,damage*0.01);
-		new CGroundFlash(pos,circleAlpha,flashAlpha,flashSize,circleGrowth,ttl);
+		new CStandarGroundFlash(pos,circleAlpha,flashAlpha,flashSize,circleGrowth,ttl);
 	}
 
 	if(radius>40 && damage>12){
@@ -500,7 +500,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 	}
 
 	if ((flags & SPW_GROUND) && groundFlash)
-		new CGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
+		new CStandarGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
 
 	if (useDefaultExplosions)
 		CStdExplosionGenerator::Explosion(pos, damages, radius, owner, gfxMod);

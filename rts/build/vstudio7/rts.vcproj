@@ -1417,9 +1417,6 @@
 				RelativePath="..\..\Rendering\GroundDecalHandler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\Rendering\GroundDecalHandler.h">
-			</File>
-			<File
 				RelativePath="..\..\Rendering\GroundFlash.cpp">
 			</File>
 			<File
@@ -1937,6 +1934,12 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\LargeBeamLaserProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\LargeBeamLaserProjectile.h">
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\LaserProjectile.cpp">

@@ -210,10 +210,6 @@ CGame::CGame(bool server,std::string mapname)
 	selectionKeys=new CSelectionKeyHandler();
 	tooltip=new CTooltipConsole();
 
-	ENTER_SYNCED;
-	damageArrayHandler=new CDamageArrayHandler();
-	unitDefHandler=new CUnitDefHandler();;
-
 	ENTER_MIXED;
 	if(!server) net->Update();	//prevent timing out during load
 	helper=new CGameHelper(this);
@@ -240,6 +236,11 @@ CGame::CGame(bool server,std::string mapname)
 
 	ENTER_MIXED;
 	ph=new CProjectileHandler();
+
+	ENTER_SYNCED;
+	damageArrayHandler=new CDamageArrayHandler();
+	unitDefHandler=new CUnitDefHandler();
+
 	ENTER_UNSYNCED;
 #ifndef NEW_GUI
 #endif

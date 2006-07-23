@@ -14,6 +14,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "mmgr.h"
 #include <iostream>
+#include "Sim/Projectiles/ProjectileHandler.h"
 
 using namespace std;
 
@@ -279,6 +280,15 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 //		info->AddLine("air only weapon %s %i",weaponname.c_str(),weaponDefs[id].onlyTargetCategory);
 	}
 
+
+	sunparser->GetDef(weaponDefs[id].visuals.tilelength, "200", weaponname + "\\tilelength");
+	sunparser->GetDef(weaponDefs[id].visuals.scrollspeed, "5", weaponname + "\\scrollspeed");
+	sunparser->GetDef(weaponDefs[id].visuals.pulseSpeed, "1", weaponname + "\\pulseSpeed");
+	std::string tmp;
+	sunparser->GetDef(tmp, "", weaponname + "\\texture1");
+	weaponDefs[id].visuals.texture1 = ph->textureAtlas->GetTexturePtr(tmp);
+	sunparser->GetDef(tmp, "", weaponname + "\\texture2");
+	weaponDefs[id].visuals.texture2 = ph->textureAtlas->GetTexturePtr(tmp);
 
 	weaponDefs[id].heightmod = 0.2f;
 	if(weaponDefs[id].type == "Cannon")

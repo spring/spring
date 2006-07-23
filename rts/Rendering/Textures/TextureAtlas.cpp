@@ -32,7 +32,7 @@ int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, Texture
 	memtex->ypos = 0;
 	memtex->texType = texType;
 	memtex->data = new char[xsize*ysize*gpp/8];
-	memtex->name = name;
+	memtex->names.push_back(name);
 	memcpy(memtex->data, data, xsize*ysize*gpp/8);
 	memtextures.push_back(memtex);
 
@@ -41,6 +41,13 @@ int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, Texture
 
 int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 {
+	//if the file allready loaded, use that instead
+	if(files.find(file)!=files.end())
+	{
+		MemTex *memtex = files.find(file)->second;
+		memtex->names.push_back(name);
+		return 1;
+	}
 	CBitmap bitmap(file);
 	if(bitmap.type != CBitmap::BitmapTypeStandardRGBA)  //only suport rgba for now
 	{
@@ -128,7 +135,7 @@ bool CTextureAtlas::Finalize()
 	CreateTexture();
 	for(int i=0; i<memtextures.size(); i++)
 	{
-		Texture tex;
+		AtlasedTexture tex;
 		//ajust textur coordinates by half a pixel to avoid filtering artifacts
 		float halfx = 1/((float)xsize*2);
 		float halfy = 1/((float)ysize*2);
@@ -138,7 +145,8 @@ bool CTextureAtlas::Finalize()
 		tex.yend = (memtextures[i]->ypos+memtextures[i]->ysize)/(float)ysize - halfy;
 		tex.ixstart = memtextures[i]->xpos;
 		tex.iystart = memtextures[i]->ypos;
-		textures[memtextures[i]->name] = tex;
+		for(int n=0; n<memtextures[i]->names.size(); n++)
+			textures[memtextures[i]->names[n]] = tex;
 
 		usedPixels += memtextures[i]->xpos*memtextures[i]->ypos;
 		delete [] memtextures[i]->data;
@@ -236,7 +244,12 @@ void CTextureAtlas::BindTexture()
 	glBindTexture(GL_TEXTURE_2D, gltex);
 }
 
-CTextureAtlas::Texture CTextureAtlas::GetTexture(std::string name)
+AtlasedTexture CTextureAtlas::GetTexture(std::string name)
 {
 	return textures[name];
+}
+
+AtlasedTexture* CTextureAtlas::GetTexturePtr(std::string name)
+{
+	return &textures[name];
 }

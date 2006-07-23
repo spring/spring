@@ -71,7 +71,7 @@ void CRepulseGfx::Draw(void)
 	float drawsize=10;
 	float3 interPos=pos+speed*gu->timeOffset;
 
-	CTextureAtlas::Texture& et=ph->explotex;
+	AtlasedTexture& et=ph->explotex;
 	float txo=et.xstart;
 	float tyo=et.ystart;
 	float txs=et.xend-et.xstart;
@@ -96,7 +96,7 @@ void CRepulseGfx::Draw(void)
 	col[2]=(unsigned char)(color.z*alpha);
 	col[3]=(unsigned char)(alpha*0.4);
 
-	CTextureAtlas::Texture& ct=ph->circularthingytex;
+	AtlasedTexture& ct=ph->circularthingytex;
 	float tx=(ct.xend+ct.xstart)*0.5;
 	float ty=(ct.yend+ct.ystart)*0.5;
 

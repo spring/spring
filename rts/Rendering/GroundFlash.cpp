@@ -9,7 +9,7 @@
 
 CVertexArray* CGroundFlash::va=0;
 
-CGroundFlash::CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 col)
+CStandarGroundFlash::CStandarGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 col)
 : circleAlpha(circleAlpha),
 	flashAlpha(flashAlpha),
 	flashSize(flashSize),
@@ -53,11 +53,11 @@ CGroundFlash::CGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float f
 	ph->AddGroundFlash(this);
 }
 
-CGroundFlash::~CGroundFlash()
+CStandarGroundFlash::~CStandarGroundFlash()
 {
 }
 
-bool CGroundFlash::Update()
+bool CStandarGroundFlash::Update()
 {
 	circleSize+=circleGrowth;
 	circleAlpha-=circleAlphaDec;
@@ -65,7 +65,7 @@ bool CGroundFlash::Update()
 	return --ttl>0;
 }
 
-void CGroundFlash::Draw()
+void CStandarGroundFlash::Draw()
 {
 	float iAlpha=circleAlpha-circleAlphaDec*gu->timeOffset;
 	if (iAlpha > 1.0f) iAlpha = 1.0f;
@@ -115,5 +115,73 @@ void CGroundFlash::Draw()
 		va->AddVertexTC(p3,ph->groundflashtex.xend,ph->groundflashtex.ystart,col);
 		va->AddVertexTC(p4,ph->groundflashtex.xstart,ph->groundflashtex.ystart,col);
 	}
+}
+
+CSimpleGroundFlash::CSimpleGroundFlash(float3 pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, float3 col)
+: 	sizeGrowth(sizeGrowth),
+	size(size),
+	texture(texture),
+	alpha(alpha),
+	ttl(ttl),
+	fade(fade),
+	pos(pos)
+{
+	for (int a=0;a<3;a++)
+		color[a] = (unsigned char)(col[a]*255.0f);
+
+	float flashsize = size+sizeGrowth*ttl;
+
+	float3 fw = camera->forward*-1000.0f;
+	this->pos.y=ground->GetHeight2(pos.x,pos.z)+1;
+	float3 p1(pos.x+flashsize,0,pos.z);
+	p1.y=ground->GetApproximateHeight(p1.x,p1.z);
+	p1 += fw;
+	float3 p2(pos.x-flashsize,0,pos.z);
+	p2.y=ground->GetApproximateHeight(p2.x,p2.z);
+	p2 += fw;
+	float3 p3(pos.x,0,pos.z+flashsize);
+	p3.y=ground->GetApproximateHeight(p3.x,p3.z);
+	p3 += fw;
+	float3 p4(pos.x,0,pos.z-flashsize);
+	p4.y=ground->GetApproximateHeight(p4.x,p4.z);
+	p4 += fw;
+	float3 n1((p3-p1).cross(p4-p1));
+	n1.Normalize();
+	float3 n2((p4-p2).cross(p3-p2));
+	n2.Normalize();
+
+	pos += fw;
+
+	float3 normal=n1+n2;
+	normal.Normalize();
+	side1=normal.cross(float3(1,0,0));
+	side1.Normalize();
+	side2=side1.cross(normal);
+	ph->AddGroundFlash(this);
+}
+
+CSimpleGroundFlash::~CSimpleGroundFlash()
+{
+}
+
+void CSimpleGroundFlash::Draw()
+{
+	color[3] = ttl<fade ? ((ttl)/(float)(fade))*255 : 255;
+
+	float3 p1=pos+(-side1-side2)*size;
+	float3 p2=pos+( side1-side2)*size;
+	float3 p3=pos+( side1+side2)*size;
+	float3 p4=pos+(-side1+side2)*size;
+
+	va->AddVertexTC(p1,texture.xstart,texture.ystart,color);
+	va->AddVertexTC(p2,texture.xend,texture.ystart,color);
+	va->AddVertexTC(p3,texture.xend,texture.yend,color);
+	va->AddVertexTC(p4,texture.xstart,texture.yend,color);
+}
+
+bool CSimpleGroundFlash::Update()
+{
+	size+=sizeGrowth;
+	return --ttl>0;
 }
 

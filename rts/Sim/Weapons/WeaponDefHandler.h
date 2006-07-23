@@ -26,6 +26,7 @@
 
 class TdfParser;
 class CExplosionGenerator;
+struct AtlasedTexture;
 
 struct WeaponDef
 {
@@ -127,6 +128,12 @@ struct WeaponDef
 
 		bool smokeTrail;
 		bool beamweapon;
+
+		AtlasedTexture *texture1;
+		AtlasedTexture *texture2;
+		float tilelength;
+		float scrollspeed;
+		float pulseSpeed;
 	}visuals;
 
 	bool isShield;					//if the weapon is a shield rather than a weapon

@@ -24,15 +24,6 @@
 			scar3=scars/scar3.bmp;
 			scar4=scars/scar4.bmp;
 		}
-		[explosions]
-		{
-			explo=explo.tga;
-			explofade=explofade.tga;
-		}
-		[flares]
-		{
-			flare=flare.tga;
-		}
 		[trees]
 		{
 			bark=Bark.bmp;
@@ -54,7 +45,7 @@
 			groundring=groundring.tga;
 			
 		}
-		[things]
+		[projectiletextures]
 		{
 			circularthingy=circularthingy.tga;
 			laserend=laserend.tga;
@@ -62,7 +53,16 @@
 			randdots=randdots.tga;
 			smoketrail=smoketrail.tga;
 			wake=wake.tga;
+			flare=flare.tga;
+			explo=explo.tga;
+			explofade=explofade.tga;
+			test=test2.tga;
+
+			muzzleside=muzzleside.tga;
+			muzzlefront=muzzlefront.tga;
+			largebeam=largelaserfalloff.tga;
 			
+
 		}
 	}
 }

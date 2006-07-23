@@ -4,18 +4,19 @@
 #include <vector>
 #include <map>
 //Class for combining multiple bitmaps into one large singel bitmap.
+struct AtlasedTexture
+{
+	float xstart;
+	float xend;
+	float ystart;
+	float yend;
+
+	int ixstart,iystart;
+};
+
 class CTextureAtlas
 {
 public:
-	struct Texture
-	{
-		float xstart;
-		float xend;
-		float ystart;
-		float yend;
-
-		int ixstart,iystart;
-	};
 
 	unsigned int gltex;
 
@@ -39,12 +40,16 @@ public:
 
 	void BindTexture();
 
-	Texture GetTexture(std::string name);
+	//return a Texture struct of the specified texture
+	AtlasedTexture GetTexture(std::string name);
+
+	//return a pointer to a Texture struct of the specified texture, this pointer points to the actuall Texture struct stored, do not delete or modify
+	AtlasedTexture* GetTexturePtr(std::string name);
 
 protected:
 	struct MemTex
 	{
-		std::string name;
+		std::vector<std::string> names;
 		int xsize;
 		int ysize;
 		TextureType texType;
@@ -54,8 +59,9 @@ protected:
 
 	//temporary storage of all textures
 	std::vector<MemTex*> memtextures;
+	std::map<std::string, MemTex*> files;
 
-	std::map<std::string, Texture> textures;
+	std::map<std::string, AtlasedTexture> textures;
 	int maxxsize;
 	int maxysize;
 	int xsize;
