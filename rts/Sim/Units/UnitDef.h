@@ -78,6 +78,8 @@ struct UnitDef
 	int sonarRadius;
 	int jammerRadius;
 	int sonarJamRadius;
+	int seismicRadius;
+	int seismicSignature;
 	bool stealth;
 
 	float buildSpeed;

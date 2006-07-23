@@ -126,7 +126,7 @@ CProjectileHandler::CProjectileHandler()
 	groundFXAtlas->Finalize();
 	groundflashtex = groundFXAtlas->GetTexture("groundflash");
 	groundringtex = groundFXAtlas->GetTexture("groundring");
-	//seismictex = groundFXAtlas->GetTexture("seismic");
+	seismictex = groundFXAtlas->GetTexture("seismic");
 
 	if(shadowHandler->drawShadows){
 		projectileShadowVP=LoadVertexProgram("projectileshadow.vp");

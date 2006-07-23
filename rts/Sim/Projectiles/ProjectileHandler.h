@@ -80,7 +80,7 @@ public:
 	AtlasedTexture groundflashtex;
 	AtlasedTexture groundringtex;
 
-	//CTextureAtlas::Texture seismictex;
+	AtlasedTexture seismictex;
 
 private:
 	void UpdatePerlin();

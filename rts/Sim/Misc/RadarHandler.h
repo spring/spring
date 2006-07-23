@@ -29,12 +29,18 @@ public:
 		}
 	}
 
+	inline bool InSeismicDistance(const CUnit* unit,int allyteam){
+		int square=max(0,min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+max(0,min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
+		return (bool)seismicMaps[allyteam][square];
+	}
+
 	bool circularRadar;
 
 	unsigned short* radarMaps[MAX_TEAMS];
 	unsigned short* airRadarMaps[MAX_TEAMS];
 	unsigned short* sonarMaps[MAX_TEAMS];
 	unsigned short* jammerMaps[MAX_TEAMS];
+	unsigned short* seismicMaps[MAX_TEAMS];
 	unsigned short* commonJammerMap;
 	unsigned short* commonSonarJammerMap;
 	float radarErrorSize[MAX_TEAMS];
