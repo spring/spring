@@ -53,6 +53,8 @@
 #include "UnitTypes/TransportUnit.h"
 #include "Game/SelectedUnits.h"
 #include "mmgr.h"
+#include "Rendering/GroundFlash.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 
 #include "Game/GameSetup.h"
 
@@ -511,6 +513,12 @@ void CUnit::SlowUpdate()
 					w->AttackUnit(lastAttacker,false);
 			}
 		}
+	}
+
+	if(moveType->progressState == CMoveType::Active)
+	{
+		if(physicalState == OnGround && !(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
+			new CSimpleGroundFlash(pos, ph->seismictex, 30, 15, 0, sqrt(mass/100.0), 1, float3(0.8,0.1,0.1));
 	}
 
 	CalculateTerrainType();

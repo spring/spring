@@ -43,6 +43,8 @@
 		{
 			groundflash=groundflash.tga;
 			groundring=groundring.tga;
+
+			seismic=circles.tga;
 			
 		}
 		[projectiletextures]

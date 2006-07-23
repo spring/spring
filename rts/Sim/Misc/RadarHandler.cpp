@@ -25,6 +25,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	for(int a=0;a<gs->activeAllyTeams;++a){
 		radarMaps[a]=new unsigned short[xsize*ysize];
 		sonarMaps[a]=new unsigned short[xsize*ysize];
+		seismicMaps[a] = new unsigned short[xsize*ysize];
 
 		if(circularRadar)																			//if we use circular radar air radar and standard radar is the same
 			airRadarMaps[a]=radarMaps[a];
@@ -36,6 +37,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 		for(int b=0;b<xsize*ysize;++b){
 			radarMaps[a][b]=0;
 			airRadarMaps[a][b]=0;
+			seismicMaps[a][b]=0;
 			jammerMaps[a][b]=0;
 			sonarMaps[a][b]=0;
 		}
@@ -54,6 +56,7 @@ CRadarHandler::~CRadarHandler(void)
 			delete[] airRadarMaps[a];
 		delete[] jammerMaps[a];		
 		delete[] sonarMaps[a];
+		delete[] seismicMaps[a];
 	}
 }
 
@@ -82,7 +85,10 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		}	
 		if(unit->sonarRadius){
 			AddMapArea(newPos,unit->sonarRadius,sonarMaps[unit->allyteam],1);
-		}	
+		}
+		if(unit->seismicRadius){
+			AddMapArea(newPos,unit->seismicRadius,seismicMaps[unit->allyteam],1);
+		}
 		unit->oldRadarPos=newPos;
 		END_TIME_PROFILE("Radar");
 	}
@@ -111,6 +117,9 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 		}
 		if(unit->sonarRadius){
 			AddMapArea(unit->oldRadarPos,unit->sonarRadius,sonarMaps[unit->allyteam],-1);
+		}
+		if(unit->seismicRadius){
+			AddMapArea(unit->oldRadarPos,unit->seismicRadius,seismicMaps[unit->allyteam],-1);
 		}
 		unit->oldRadarPos.x=-1;
 	}
