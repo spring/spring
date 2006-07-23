@@ -12,6 +12,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
+#include "Sim/Projectiles/LargeBeamLaserProjectile.h"
 
 CBeamLaser::CBeamLaser(CUnit* owner)
 : CWeapon(owner),
@@ -131,7 +132,11 @@ void CBeamLaser::Fire(void)
 		float startAlpha=(1-curLength/(range*1.3))*baseAlpha;
 		float endAlpha=(1-(curLength+length)/(range*1.3))*baseAlpha;
 
-		new CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,weaponDef->visuals.color2, owner,weaponDef->thickness,weaponDef->corethickness, weaponDef->laserflaresize);
+		if(weaponDef->visuals.texture1->xend!=0)//texture defined, use largebeamlaser
+			new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner,weaponDef->thickness,weaponDef->corethickness, weaponDef->laserflaresize,
+											weaponDef->visuals.tilelength, weaponDef->visuals.scrollspeed, weaponDef->visuals.pulseSpeed,weaponDef->visuals.texture1, weaponDef->visuals.texture2);
+		else
+			new CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,weaponDef->visuals.color2, owner,weaponDef->thickness,weaponDef->corethickness, weaponDef->laserflaresize);
 
 		curPos=hitPos;
 		curLength+=length;

@@ -16,7 +16,7 @@ CShieldPartProjectile::CShieldPartProjectile(const float3& centerPos,int xpart,i
 {
 	checkCol=false;
 
-	CTextureAtlas::Texture& tex=ph->perlintex;
+	AtlasedTexture& tex=ph->perlintex;
 
 	for(int y=0;y<5;++y){
 		float yp=(y+ypart)/16.0*PI-PI/2;

@@ -49,15 +49,23 @@ CProjectileHandler::CProjectileHandler()
 	TdfParser resources("gamedata/resources.tdf");
 	textureAtlas = new CTextureAtlas(2048, 2048);
 
-	textureAtlas->AddTexFromFile("flare", "bitmaps/"+resources.SGetValueDef("flare.tga","resources\\graphics\\flares\\flare"));
-	textureAtlas->AddTexFromFile("explo", "bitmaps/"+resources.SGetValueDef("explo.tga","resources\\graphics\\explosions\\explo"));
-	textureAtlas->AddTexFromFile("explofade", "bitmaps/"+resources.SGetValueDef("explofade.tga","resources\\graphics\\explosions\\explofade"));
-	textureAtlas->AddTexFromFile("circularthingy", "bitmaps/"+resources.SGetValueDef("circularthingy.tga","resources\\graphics\\things\\circularthingy"));
-	textureAtlas->AddTexFromFile("laserend", "bitmaps/"+resources.SGetValueDef("laserend.tga","resources\\graphics\\things\\laserend"));
-	textureAtlas->AddTexFromFile("laserfalloff", "bitmaps/"+resources.SGetValueDef("laserfalloff.tga","resources\\graphics\\things\\laserfalloff"));
-	textureAtlas->AddTexFromFile("randdots", "bitmaps/"+resources.SGetValueDef("randdots.tga","resources\\graphics\\things\\randdots"));
-	textureAtlas->AddTexFromFile("smoketrail", "bitmaps/"+resources.SGetValueDef("smoketrail.tga","resources\\graphics\\things\\smoketrail"));
-	textureAtlas->AddTexFromFile("wake", "bitmaps/"+resources.SGetValueDef("wake.tga","resources\\graphics\\things\\wake"));
+	//add all textures in projectiletextures section
+	std::map<std::string,std::string> ptex = resources.GetAllValues("resources\\graphics\\projectiletextures");
+	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
+	{
+		textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+	}
+	//add all texture from sections within projectiletextures section
+	std::vector<std::string> seclist = resources.GetSectionList("resources\\graphics\\projectiletextures");
+	for(int i=0; i<seclist.size(); i++)
+	{
+		std::map<std::string,std::string> ptex2 = resources.GetAllValues("resources\\graphics\\projectiletextures\\" + seclist[i]);
+		for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
+		{
+			textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+		}
+	}
+
 
 	for(int i=0; i<12; i++)
 	{
@@ -98,11 +106,27 @@ CProjectileHandler::CProjectileHandler()
 
 
 	groundFXAtlas = new CTextureAtlas(2048, 2048);
-	groundFXAtlas->AddTexFromFile("groundflash", "bitmaps/"+resources.SGetValueDef("groundflash.tga","resources\\graphics\\groundfx\\groundflash"));
-	groundFXAtlas->AddTexFromFile("groundring", "bitmaps/"+resources.SGetValueDef("groundring.tga","resources\\graphics\\groundfx\\groundring"));
+	//add all textures in groundfx section
+	ptex = resources.GetAllValues("resources\\graphics\\groundfx");
+	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
+	{
+		groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+	}
+	//add all texture from sections within groundfx section
+	seclist = resources.GetSectionList("resources\\graphics\\groundfx");
+	for(int i=0; i<seclist.size(); i++)
+	{
+		std::map<std::string,std::string> ptex2 = resources.GetAllValues("resources\\graphics\\groundfx\\" + seclist[i]);
+		for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
+		{
+			groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+		}
+	}
+
 	groundFXAtlas->Finalize();
 	groundflashtex = groundFXAtlas->GetTexture("groundflash");
 	groundringtex = groundFXAtlas->GetTexture("groundring");
+	//seismictex = groundFXAtlas->GetTexture("seismic");
 
 	if(shadowHandler->drawShadows){
 		projectileShadowVP=LoadVertexProgram("projectileshadow.vp");
