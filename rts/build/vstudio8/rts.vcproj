@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33_1&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.8/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
+				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/Boost/include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
 				PreprocessorDefinitions="_WIN32;WIN32;_DEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -51,7 +51,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4244;4305;4018;4267;4305"
+				DisableSpecificWarnings="4244;4305;4018;4267;4305;4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -64,10 +64,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib AdvAPI32.Lib User32.lib comsuppw.lib"
 				OutputFile="../../../game/debug.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.8/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
+				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
+				IgnoreDefaultLibraryNames="libc.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/spring.pdb"
 				SubSystem="2"
@@ -148,10 +149,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib comsuppw.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.8/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
+				IgnoreDefaultLibraryNames="LIBC.lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -1251,14 +1253,6 @@
 			Name="Rendering"
 			>
 			<File
-				RelativePath="..\..\Rendering\ExplosionGraphics.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Rendering\ExplosionGraphics.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Rendering\FartextureHandler.cpp"
 				>
 			</File>
@@ -1288,6 +1282,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\GroundFlash.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\IconHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\IconHandler.h"
 				>
 			</File>
 			<File
@@ -1594,6 +1596,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Textures\TextureAtlas.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\TextureAtlas.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp"
 					>
 				</File>
@@ -1819,6 +1829,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Projectiles\EmgProjectile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.h"
 					>
 				</File>
 				<File
@@ -2619,6 +2637,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveBuffered.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\ArchiveDir.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\ArchiveDir.h"
 					>
 				</File>
 				<File
@@ -3638,6 +3664,110 @@
 					RelativePath="..\..\Map\SMF\SmfReadMap.h"
 					>
 				</File>
+			</Filter>
+			<Filter
+				Name="SM3"
+				>
+				<File
+					RelativePath="..\..\Map\SM3\Frustum.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SM3\Frustum.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SM3\Plane.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SM3\Plane.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SM3\Sm3GroundDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SM3\Sm3GroundDrawer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SM3\Sm3Map.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SM3\Sm3Map.h"
+					>
+				</File>
+				<Filter
+					Name="Terrain"
+					>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\Lightcalc.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\Lightcalc.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\QuadRenderData.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\Terrain.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\Terrain.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainBase.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainNode.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainTexEnvCombine.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainTexEnvCombine.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainTexture.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainTexture.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainUtil.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainVertexBuffer.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainVertexBuffer.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\Textures.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\Textures.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<File
