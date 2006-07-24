@@ -172,16 +172,17 @@ namespace terrain
 		void FindMinMax (int2 st, int2 size, float& minH, float& maxH);
 		Heightmap *CreateLowDetailHM ();
 		void GenerateNormals ();
+		void UpdateLower (int sx,int sy,int w,int h);
 		Heightmap *GetLevel (int level); // level > 0 returns a high detail HM
 										// level < 0 returns a lower detail HM
 
-		ushort& at(int x,int y) { return data[y*w+x]; }
+		float& at(int x,int y) { return data[y*w+x]; }
 		uchar* GetNormal(int x,int y) { return &normalData[3*(y*w+x)]; }
-		float HeightAt(int x,int y) { return data[y*w+x] * scale + offset; }
+		float HeightAt(int x,int y) { return data[y*w+x]; }// * scale + offset; }
 
 		int w,h;
-		ushort *data;
-		float scale, offset;
+		float *data;
+		//float scale, offset;
 		float squareSize;
 
         uchar *normalData; // optional heightmap normals, stored as compressed vectors (3 bytes per normal)
@@ -249,8 +250,8 @@ namespace terrain
 		int dhdz = hm->at (xm, yp) + 2 * hm->at (x, yp) + hm->at (xp, yp);
 		dhdz -= hm->at (xm, ym) + 2 * hm->at (x, ym) + hm->at (xp, ym);
 
-		tangent = Vector3(hm->squareSize * 2.0f, hm->scale * dhdx * 0.25f, 0.0f);
-		binormal = Vector3(0.0f, dhdz * hm->scale * 0.25f, hm->squareSize * 2.0f);
+		tangent = Vector3(hm->squareSize * 2.0f, /*hm->scale * */ dhdx * 0.25f, 0.0f);
+		binormal = Vector3(0.0f, dhdz * /*hm->scale * */ 0.25f, hm->squareSize * 2.0f);
 
 //		tangent.set (vdif * 2.0f, dhdx, 0.0f);
 //		binormal.set (0.0f, dhdz, vdif * 2.0f);

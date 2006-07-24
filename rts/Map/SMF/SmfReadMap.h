@@ -19,6 +19,7 @@ public:
 	void DrawMinimap ();
 	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize);
 	CBaseGroundDrawer* GetGroundDrawer();
+	float* GetHeightmap() { return heightmap; }
 	
 	int GetNumFeatureTypes ();
 	int GetNumFeatures ();
@@ -40,6 +41,8 @@ protected:
 
 	unsigned int shadowTex;
 	unsigned int minimapTex;
+
+	float* heightmap;
 
 	MapFeatureHeader featureHeader;
 	std::string* featureTypes;

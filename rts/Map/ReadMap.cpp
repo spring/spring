@@ -122,7 +122,6 @@ CReadMap::CReadMap() : metalMap(NULL)
 {
 	groundBlockingObjectMap=0;
 	metalMap=0;	
-	heightmap=0;
 	orgheightmap=0;
 	centerheightmap=0;
 	halfHeightmap=0;
@@ -134,7 +133,6 @@ CReadMap::CReadMap() : metalMap(NULL)
 CReadMap::~CReadMap()
 {
 	delete metalMap;
-	delete[] heightmap;
 	delete[] facenormals;
 	delete[] typemap;
 	delete[] slopemap;
@@ -147,6 +145,8 @@ CReadMap::~CReadMap()
 
 void CReadMap::CalcHeightfieldData()
 {
+	float* heightmap = GetHeightmap();
+
 	orgheightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
 	//	normals=new float3[(gs->mapx+1)*(gs->mapy+1)];
 	facenormals=new float3[gs->mapx*gs->mapy*2];
@@ -457,6 +457,7 @@ void CReadMap::CleanBlockingMap(CSolidObject* object) {
 //this function assumes that the correct map has been loaded and only load/saves new height values
 void CReadMap::LoadSaveMap(CLoadSaveInterface* file,bool loading)
 {
+	float* heightmap=readmap->GetHeightmap();
 	//load/save heightmap
 	for(int y=0;y<gs->mapy+1;++y){		
 		for(int x=0;x<gs->mapx+1;++x){

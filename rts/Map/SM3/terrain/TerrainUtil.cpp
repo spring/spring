@@ -25,7 +25,7 @@ namespace terrain {
 
 	Heightmap::Heightmap()
 	{ 
-		w=h=0;data=0; lowDetail=highDetail=0; scale=offset=0.0f; normalData=0; squareSize=0.0f; 
+		w=h=0;data=0; lowDetail=highDetail=0; normalData=0; squareSize=0.0f; 
 	}
 	Heightmap::~Heightmap()
 	{ 
@@ -36,7 +36,7 @@ namespace terrain {
 	void Heightmap::Alloc (int W,int H)
 	{
 		w=W; h=H;
-		data=new ushort[w*h];
+		data=new float[w*h];
 	}
 
 	void Heightmap::LodScaleDown (Heightmap* dst)
@@ -45,12 +45,10 @@ namespace terrain {
 		dst->Alloc ((w-1)/2+1,(h-1)/2+1);
 		
 		for (int y=0;y<dst->h;y++) {
-			ushort *srcrow = &data[y*2*w];
+			float *srcrow = &data[y*2*w];
 			for (int x=0;x<dst->w;x++)
 				dst->at (x,y) = srcrow [x*2];
 		}
-		dst->scale = scale;
-		dst->offset = offset;
 	}
 
 	Heightmap* Heightmap::CreateLowDetailHM ()
@@ -61,18 +59,16 @@ namespace terrain {
 		return lowDetail;
 	}
 
-	void Heightmap::FindMinMax (int2 st, int2 size, float& fminH, float& fmaxH)
+	void Heightmap::FindMinMax (int2 st, int2 size, float& minH, float& maxH)
 	{
-		ushort minH,maxH;
+		//float minH,maxH;
 		minH = maxH = at (st.x,st.y);
 		for (int y=st.y;y<st.y+size.y;y++)
 			for (int x=st.x;x<st.x+size.x;x++) {
-				ushort v = at (x,y);
+				float v = at (x,y);
 				if (minH > v) minH = v;
 				if (maxH < v) maxH = v;
 			}
-		fminH=minH*scale+offset;
-		fmaxH=maxH*scale+offset;
 	}
 
 	// level > 0 returns a high detail HM
@@ -112,6 +108,19 @@ namespace terrain {
 			}
 	}
 
+
+	void Heightmap::UpdateLower(int sx, int sy,int w,int h)
+	{
+		if(!lowDetail)
+			return;
+
+		for (int x=sx/2;x<(sx+w)/2;x++)
+			for (int y=sy/2;y<(sy+h)/2;y++)
+				lowDetail->at(x,y)=at(x*2,y*2);
+
+		if (lowDetail)
+			lowDetail->UpdateLower(sx/2,sy/2,w/2,h/2);
+	}
 
 //-----------------------------------------------------------------------
 // Index calculater

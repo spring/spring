@@ -152,18 +152,21 @@ void CGroundDecalHandler::Draw(void)
 					(*bdi)->buildingDecals.erase(bi++);
 					continue;
 				}
-				if(camera->InView(decal->pos,decal->radius) && (!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)))){
+				if(camera->InView(decal->pos,decal->radius) && 
+					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS))))
+				{
 					color[3]=int(decal->alpha*255);
+					float* heightmap=readmap->GetHeightmap();
 					float xts=1.0/decal->xsize;
 					float yts=1.0/decal->ysize;
 					for(int x=0;x<decal->xsize;++x){
 						int x2=decal->posx+x;
 						for(int z=0;z<decal->ysize;++z){
 							int z2=decal->posy+z;
-							va->AddVertexTC(float3(x2*8,readmap->heightmap[(z2)*(gs->mapx+1)+x2]+0.2,z2*8),x*xts,z*yts,color);
-							va->AddVertexTC(float3(x2*8+8,readmap->heightmap[(z2)*(gs->mapx+1)+x2+1]+0.2,z2*8),(x+1)*xts,z*yts,color);
-							va->AddVertexTC(float3(x2*8+8,readmap->heightmap[(z2+1)*(gs->mapx+1)+x2+1]+0.2,z2*8+8),(x+1)*xts,(z+1)*yts,color);
-							va->AddVertexTC(float3(x2*8,readmap->heightmap[(z2+1)*(gs->mapx+1)+x2]+0.2,z2*8+8),x*xts,(z+1)*yts,color);
+							va->AddVertexTC(float3(x2*8,heightmap[(z2)*(gs->mapx+1)+x2]+0.2,z2*8),x*xts,z*yts,color);
+							va->AddVertexTC(float3(x2*8+8,heightmap[(z2)*(gs->mapx+1)+x2+1]+0.2,z2*8),(x+1)*xts,z*yts,color);
+							va->AddVertexTC(float3(x2*8+8,heightmap[(z2+1)*(gs->mapx+1)+x2+1]+0.2,z2*8+8),(x+1)*xts,(z+1)*yts,color);
+							va->AddVertexTC(float3(x2*8,heightmap[(z2+1)*(gs->mapx+1)+x2]+0.2,z2*8+8),x*xts,(z+1)*yts,color);
 						}
 					}
 				}
@@ -253,6 +256,7 @@ void CGroundDecalHandler::Draw(void)
 			int ex=(int)min(float(gs->hmapx-1),(pos.x+radius)/16.0f);
 			int sz=(int)max(0.f,(pos.z-radius)/16.0f);
 			int ez=(int)min(float(gs->hmapy-1),(pos.z+radius)/16.0f);
+			float* heightmap=readmap->GetHeightmap();
 			for(int x=sx;x<=ex;++x){
 				for(int z=sz;z<=ez;++z){
 					float px1=x*16;
@@ -265,10 +269,10 @@ void CGroundDecalHandler::Draw(void)
 					float tz1=min(0.5f,(pos.z-pz1)/(radius*4.0f)+0.25f);
 					float tz2=max(0.0f,(pos.z-pz2)/(radius*4.0f)+0.25f);
 
-					va->AddVertexTC(float3(px1,readmap->heightmap[(z*2)*(gs->mapx+1)+x*2]+0.5,pz1),tx1+tx,tz1+ty,color);
-					va->AddVertexTC(float3(px2,readmap->heightmap[(z*2)*(gs->mapx+1)+x*2+2]+0.5,pz1),tx2+tx,tz1+ty,color);
-					va->AddVertexTC(float3(px2,readmap->heightmap[(z*2+2)*(gs->mapx+1)+x*2+2]+0.5,pz2),tx2+tx,tz2+ty,color);
-					va->AddVertexTC(float3(px1,readmap->heightmap[(z*2+2)*(gs->mapx+1)+x*2]+0.5,pz2),tx1+tx,tz2+ty,color);
+					va->AddVertexTC(float3(px1,heightmap[(z*2)*(gs->mapx+1)+x*2]+0.5,pz1),tx1+tx,tz1+ty,color);
+					va->AddVertexTC(float3(px2,heightmap[(z*2)*(gs->mapx+1)+x*2+2]+0.5,pz1),tx2+tx,tz1+ty,color);
+					va->AddVertexTC(float3(px2,heightmap[(z*2+2)*(gs->mapx+1)+x*2+2]+0.5,pz2),tx2+tx,tz2+ty,color);
+					va->AddVertexTC(float3(px1,heightmap[(z*2+2)*(gs->mapx+1)+x*2]+0.5,pz2),tx1+tx,tz2+ty,color);
 				}
 			}
 		}

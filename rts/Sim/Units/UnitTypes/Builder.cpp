@@ -93,6 +93,7 @@ void CBuilder::Update()
 
 	if(terraforming && inBuildStance){
 		if(terraformLeft>0){
+			float* heightmap=readmap->GetHeightmap();
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 			float terraformSpeed=(buildSpeed+terraformHelp)/terraformLeft;
 			terraformLeft-=(buildSpeed+terraformHelp);
@@ -105,17 +106,17 @@ void CBuilder::Update()
 					curBuild->AddBuildPower(0.001,this); //prevent building from timing out while terraforming for it
 				for(int z=tz1; z<=tz2; z++){
 					for(int x=tx1; x<=tx2; x++){
-						float ch=readmap->heightmap[z*(gs->mapx+1)+x];
-						readmap->heightmap[z*(gs->mapx+1)+x]+=(nextBuildPos.y-ch)*terraformSpeed;
+						float ch=heightmap[z*(gs->mapx+1)+x];
+						heightmap[z*(gs->mapx+1)+x]+=(nextBuildPos.y-ch)*terraformSpeed;
 					}
 				}
 				break;
 			case Terraform_Restore:
 				for(int z=tz1; z<=tz2; z++){
 					for(int x=tx1; x<=tx2; x++){
-						float ch=readmap->heightmap[z*(gs->mapx+1)+x];
+						float ch=heightmap[z*(gs->mapx+1)+x];
 						float oh=readmap->orgheightmap[z*(gs->mapx+1)+x];
-						readmap->heightmap[z*(gs->mapx+1)+x]+=(oh-ch)*terraformSpeed;
+						heightmap[z*(gs->mapx+1)+x]+=(oh-ch)*terraformSpeed;
 					}
 				}
 				break;
@@ -123,32 +124,32 @@ void CBuilder::Update()
 			for(int z=tz1; z<=tz2; z++){		//smooth the borders x
 				for(int x=1; x<=3; x++){
 					if(tx1-3>=0){
-						float ch3=readmap->heightmap[z*(gs->mapx+1)+tx1];
-						float ch=readmap->heightmap[z*(gs->mapx+1)+tx1-x];
-						float ch2=readmap->heightmap[z*(gs->mapx+1)+tx1-3];
-						readmap->heightmap[z*(gs->mapx+1)+tx1-x]+=((ch3*(3-x)+ch2*x)/3-ch)*terraformSpeed;
+						float ch3=heightmap[z*(gs->mapx+1)+tx1];
+						float ch=heightmap[z*(gs->mapx+1)+tx1-x];
+						float ch2=heightmap[z*(gs->mapx+1)+tx1-3];
+						heightmap[z*(gs->mapx+1)+tx1-x]+=((ch3*(3-x)+ch2*x)/3-ch)*terraformSpeed;
 					}
 					if(tx2+3<gs->mapx){
-						float ch3=readmap->heightmap[z*(gs->mapx+1)+tx2];
-						float ch=readmap->heightmap[z*(gs->mapx+1)+tx2+x];
-						float ch2=readmap->heightmap[z*(gs->mapx+1)+tx2+3];
-						readmap->heightmap[z*(gs->mapx+1)+tx2+x]+=((ch3*(3-x)+ch2*x)/3-ch)*terraformSpeed;
+						float ch3=heightmap[z*(gs->mapx+1)+tx2];
+						float ch=heightmap[z*(gs->mapx+1)+tx2+x];
+						float ch2=heightmap[z*(gs->mapx+1)+tx2+3];
+						heightmap[z*(gs->mapx+1)+tx2+x]+=((ch3*(3-x)+ch2*x)/3-ch)*terraformSpeed;
 					}
 				}
 			}
 			for(int z=1; z<=3; z++){		//smooth the borders z
 				for(int x=tx1; x<=tx2; x++){
 					if(tz1-3>=0){
-						float ch3=readmap->heightmap[(tz1)*(gs->mapx+1)+x];
-						float ch=readmap->heightmap[(tz1-z)*(gs->mapx+1)+x];
-						float ch2=readmap->heightmap[(tz1-3)*(gs->mapx+1)+x];
-						readmap->heightmap[(tz1-z)*(gs->mapx+1)+x]+=((ch3*(3-z)+ch2*z)/3-ch)*terraformSpeed;
+						float ch3=heightmap[(tz1)*(gs->mapx+1)+x];
+						float ch=heightmap[(tz1-z)*(gs->mapx+1)+x];
+						float ch2=heightmap[(tz1-3)*(gs->mapx+1)+x];
+						heightmap[(tz1-z)*(gs->mapx+1)+x]+=((ch3*(3-z)+ch2*z)/3-ch)*terraformSpeed;
 					}
 					if(tz2+3<gs->mapy){
-						float ch3=readmap->heightmap[(tz2)*(gs->mapx+1)+x];
-						float ch=readmap->heightmap[(tz2+z)*(gs->mapx+1)+x];
-						float ch2=readmap->heightmap[(tz2+3)*(gs->mapx+1)+x];
-						readmap->heightmap[(tz2+z)*(gs->mapx+1)+x]+=((ch3*(3-z)+ch2*z)/3-ch)*terraformSpeed;
+						float ch3=heightmap[(tz2)*(gs->mapx+1)+x];
+						float ch=heightmap[(tz2+z)*(gs->mapx+1)+x];
+						float ch2=heightmap[(tz2+3)*(gs->mapx+1)+x];
+						heightmap[(tz2+z)*(gs->mapx+1)+x]+=((ch3*(3-z)+ch2*z)/3-ch)*terraformSpeed;
 					}
 				}
 			}
@@ -312,9 +313,10 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	tz2 = (int)min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
 
 	float tcost=0;
+	float* heightmap = readmap->GetHeightmap();
 	for(int z=tz1; z<=tz2; z++){
 		for(int x=tx1; x<=tx2; x++){
-			float delta=readmap->orgheightmap[z*(gs->mapx+1)+x]-readmap->heightmap[z*(gs->mapx+1)+x];
+			float delta=readmap->orgheightmap[z*(gs->mapx+1)+x]-heightmap[z*(gs->mapx+1)+x];
 			tcost+=fabs(delta);			
 		}
 	}
@@ -423,14 +425,15 @@ void CBuilder::CalculateBuildTerraformCost(float3 buildPos, UnitDef * unitdef)
 	tz2 = min(gs->mapy,tz1+unitdef->ysize);
 
 	float tcost=0;
+	float* heightmap = readmap->GetHeightmap();
 	for(int z=tz1; z<=tz2; z++){
 		for(int x=tx1; x<=tx2; x++){
-			float delta=buildPos.y-readmap->heightmap[z*(gs->mapx+1)+x];
+			float delta=buildPos.y-heightmap[z*(gs->mapx+1)+x];
 			float cost;
 			if(delta>0){
-				cost=max(3.,readmap->heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x]+delta*0.5);
+				cost=max(3.,heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x]+delta*0.5);
 			} else {
-				cost=max(3.,readmap->orgheightmap[z*(gs->mapx+1)+x]-readmap->heightmap[z*(gs->mapx+1)+x]-delta*0.5);
+				cost=max(3.,readmap->orgheightmap[z*(gs->mapx+1)+x]-heightmap[z*(gs->mapx+1)+x]-delta*0.5);
 			}
 			tcost+=fabs(delta)*cost;			
 		}

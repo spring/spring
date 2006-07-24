@@ -128,7 +128,8 @@ namespace terrain {
 
 		// Heightmap interface, for dynamically changing heightmaps
 		void GetHeightmap (int x,int y,int w,int h, float *dest);
-		void SetHeightmap (int x,int y,int w,int h, float *src, int srcW,int srcH);
+		float* GetHeightmap (); // if you change the heightmap, call HeightmapUpdated
+		void HeightmapUpdated (int x,int y,int w,int h);
 		float GetHeight (float x,float y); // get height from world coordinates 
 		float GetHeightAtPixel (int x,int y);
 
@@ -156,8 +157,8 @@ namespace terrain {
 		IndexTable *indexTable;
 		TerrainTexture* texturing;
 		// settings read from config file
-		float hmScale;
-		float hmOffset;
+		//float hmScale;
+		//float hmOffset;
 		uint shadowMap;
 
 		RenderDataManager *renderDataManager;

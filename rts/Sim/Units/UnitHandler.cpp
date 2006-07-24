@@ -223,6 +223,7 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	float maxh=5000;
 	int numBorder=0;
 	float borderh=0;
+	float* heightmap=readmap->GetHeightmap();
 
 	float maxDif=unitdef->maxHeightDif;
 	int x1 = (int)max(0.f,(pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
@@ -238,7 +239,7 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	for(int x=x1; x<=x2; x++){
 		for(int z=z1; z<=z2; z++){
 			float orgh=readmap->orgheightmap[z*(gs->mapx+1)+x];
-			float h=readmap->heightmap[z*(gs->mapx+1)+x];
+			float h=heightmap[z*(gs->mapx+1)+x];
 			if(x==x1 || x==x2 || z==z1 || z==z2){
 				numBorder++;
 				borderh+=h;
@@ -323,11 +324,13 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 	}
 	int square=ground->GetSquare(pos);
 
-	if(!unitdef->floater){
+	if(!unitdef->floater)
+	{
+		float* heightmap=readmap->GetHeightmap();
 		int x=(int) (pos.x/SQUARE_SIZE);
 		int z=(int) (pos.z/SQUARE_SIZE);
 		float orgh=readmap->orgheightmap[z*(gs->mapx+1)+x];
-		float h=readmap->heightmap[z*(gs->mapx+1)+x];
+		float h=heightmap[z*(gs->mapx+1)+x];
 		float hdif=unitdef->maxHeightDif;
 		if(pos.y>orgh+hdif && pos.y>h+hdif)
 			return 0;

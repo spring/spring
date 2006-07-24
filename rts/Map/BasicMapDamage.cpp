@@ -82,6 +82,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 	e->y1=max((int)(pos.z-radius)/SQUARE_SIZE,2);
 	e->y2=min((int)(pos.z+radius)/SQUARE_SIZE,gs->mapy-3);
 
+	float* heightmap = readmap->GetHeightmap();
 	float baseStrength=-pow(strength,0.6f)*3/mapHardness;
 	float invRadius=1.0/radius;
 	for(int y=e->y1;y<=e->y2;++y){
@@ -94,7 +95,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 			float relDist=dist*invRadius;																					//normalize distance
 			float dif=baseStrength*craterTable[int(relDist*200)]*invHardness[readmap->typemap[(y/2)*gs->hmapx+x/2]];
 
-			float prevDif=readmap->heightmap[y*(gs->mapx+1)+x]-readmap->orgheightmap[y*(gs->mapx+1)+x];
+			float prevDif=heightmap[y*(gs->mapx+1)+x]-readmap->orgheightmap[y*(gs->mapx+1)+x];
 
 //			prevDif+=dif*5;
 
@@ -117,7 +118,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 					float dist=pos.distance2D(float3(x*SQUARE_SIZE,0,z*SQUARE_SIZE));							//calculate the distance
 					float relDist=dist*invRadius;																					//normalize distance
 					float dif=baseStrength*craterTable[int(relDist*200)]*invHardness[readmap->typemap[(z/2)*gs->hmapx+x/2]];
-					float prevDif=readmap->heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x];
+					float prevDif=heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x];
 
 					if(prevDif*dif>0)
 						dif/=fabs(prevDif)*0.1+1;
@@ -145,22 +146,24 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
-	for(int y=y1;y<y2;y++){
-    for(int x=x1;x<x2;x++){
-			float height=readmap->heightmap[(y)*(gs->mapx+1)+x];
-			height+=readmap->heightmap[(y)*(gs->mapx+1)+x+1];
-			height+=readmap->heightmap[(y+1)*(gs->mapx+1)+x];
-			height+=readmap->heightmap[(y+1)*(gs->mapx+1)+x+1];
-      readmap->centerheightmap[y*gs->mapx+x]=height*0.25;
-    }
-  }
-	int hy2=min(gs->hmapy-1,y2/2);
-	int hx2=min(gs->hmapx-1,x2/2);
-	for(int y=y1/2;y<=hy2;y++){
-    for(int x=x1/2;x<=hx2;x++){
-			readmap->halfHeightmap[y*gs->hmapx+x]=readmap->heightmap[(y*2+1)*(gs->mapx+1)+(x*2+1)];
+	float* heightmap = readmap->GetHeightmap();
+	for(int y=y1;y<y2;y++)
+	{
+		for(int x=x1;x<x2;x++)
+		{
+			float height=heightmap[(y)*(gs->mapx+1)+x];
+			height+=heightmap[(y)*(gs->mapx+1)+x+1];
+			height+=heightmap[(y+1)*(gs->mapx+1)+x];
+			height+=heightmap[(y+1)*(gs->mapx+1)+x+1];
+			readmap->centerheightmap[y*gs->mapx+x]=height*0.25;
 		}
 	}
+	
+	int hy2=min(gs->hmapy-1,y2/2);
+	int hx2=min(gs->hmapx-1,x2/2);
+	for(int y=y1/2;y<=hy2;y++)
+		for(int x=x1/2;x<=hx2;x++)
+			readmap->halfHeightmap[y*gs->hmapx+x]=heightmap[(y*2+1)*(gs->mapx+1)+(x*2+1)];
 
 	float3 n1,n2,n3,n4;
 	int decy=max(0,y1-1);
@@ -168,45 +171,46 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	int decx=max(0,x1-1);
 	int incx=min(gs->mapx-1,x2+1);
 
-	for(int y=decy;y<=incy;y++){
-		for(int x=decx;x<=incx;x++){
+	for(int y=decy;y<=incy;y++) {
+		for(int x=decx;x<=incx;x++)
+		{
+			float3 e1(-SQUARE_SIZE,heightmap[y*(gs->mapx+1)+x]-heightmap[y*(gs->mapx+1)+x+1],0);
+			float3 e2( 0,heightmap[y*(gs->mapx+1)+x]-heightmap[(y+1)*(gs->mapx+1)+x],-SQUARE_SIZE);
 
-			float3 e1(-SQUARE_SIZE,readmap->heightmap[y*(gs->mapx+1)+x]-readmap->heightmap[y*(gs->mapx+1)+x+1],0);
-			float3 e2( 0,readmap->heightmap[y*(gs->mapx+1)+x]-readmap->heightmap[(y+1)*(gs->mapx+1)+x],-SQUARE_SIZE);
-			
 			float3 n=e2.cross(e1);
 			n.Normalize();
 
-      readmap->facenormals[(y*gs->mapx+x)*2]=n;
+			readmap->facenormals[(y*gs->mapx+x)*2]=n;
 
-			e1=float3( SQUARE_SIZE,readmap->heightmap[(y+1)*(gs->mapx+1)+x+1]-readmap->heightmap[(y+1)*(gs->mapx+1)+x],0);
-			e2=float3( 0,readmap->heightmap[(y+1)*(gs->mapx+1)+x+1]-readmap->heightmap[(y)*(gs->mapx+1)+x+1],SQUARE_SIZE);
+			e1=float3( SQUARE_SIZE,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y+1)*(gs->mapx+1)+x],0);
+			e2=float3( 0,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y)*(gs->mapx+1)+x+1],SQUARE_SIZE);
 			
 			n=e2.cross(e1);
 			n.Normalize();
 
-      readmap->facenormals[(y*gs->mapx+x)*2+1]=n;
-    }
-  }
+			readmap->facenormals[(y*gs->mapx+x)*2+1]=n;
+		}
+	}
 
-	for(int y=max(2,(y1&0xfffffe));y<=min(gs->mapy-3,y2);y+=2){
-		for(int x=max(2,(x1&0xfffffe));x<=min(gs->mapx-3,x2);x+=2){
-			float3 e1(-SQUARE_SIZE*4,readmap->heightmap[(y-1)*(gs->mapx+1)+x-1]-readmap->heightmap[(y-1)*(gs->mapx+1)+x+3],0);
-			float3 e2( 0,readmap->heightmap[(y-1)*(gs->mapx+1)+x-1]-readmap->heightmap[(y+3)*(gs->mapx+1)+x-1],-SQUARE_SIZE*4);
+	for(int y=max(2,(y1&0xfffffe));y<=min(gs->mapy-3,y2);y+=2)
+	{
+		for(int x=max(2,(x1&0xfffffe));x<=min(gs->mapx-3,x2);x+=2)
+		{
+			float3 e1(-SQUARE_SIZE*4,heightmap[(y-1)*(gs->mapx+1)+x-1]-heightmap[(y-1)*(gs->mapx+1)+x+3],0);
+			float3 e2( 0,heightmap[(y-1)*(gs->mapx+1)+x-1]-heightmap[(y+3)*(gs->mapx+1)+x-1],-SQUARE_SIZE*4);
 
 			float3 n=e2.cross(e1);
 			n.Normalize();
 
-			e1=float3( SQUARE_SIZE*4,readmap->heightmap[(y+3)*(gs->mapx+1)+x+3]-readmap->heightmap[(y+3)*(gs->mapx+1)+x-1],0);
-			e2=float3( 0,readmap->heightmap[(y+3)*(gs->mapx+1)+x+3]-readmap->heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
+			e1=float3( SQUARE_SIZE*4,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y+3)*(gs->mapx+1)+x-1],0);
+			e2=float3( 0,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
 			
 			float3 n2=e2.cross(e1);
 			n2.Normalize();
 
 			readmap->slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5;
-
-    }
-  }
+		}
+	}
 	pathManager->TerrainChange(x1,y1,x2,y2);
 	featureHandler->TerrainChanged(x1,y1,x2,y2);
 	readmap->HeightmapUpdated(x1,x2,y1,y2);
@@ -237,6 +241,7 @@ void CBasicMapDamage::Update(void)
 START_TIME_PROFILE;
 
 	std::deque<Explo*>::iterator ei;
+	float* heightmap=readmap->GetHeightmap();
 
 	for(ei=explosions.begin();ei!=explosions.end();++ei){
 		Explo* e=*ei;
@@ -250,7 +255,7 @@ START_TIME_PROFILE;
 		for(int y=y1;y<=y2;++y){
 			for(int x=x1;x<=x2;++x){
 				float dif=*(si++);
-				readmap->heightmap[y*(gs->mapx+1)+x]+=dif;
+				heightmap[y*(gs->mapx+1)+x]+=dif;
 			}
 		}
 		for(std::vector<ExploBuilding>::iterator bi=e->buildings.begin();bi!=e->buildings.end();++bi){
@@ -262,7 +267,7 @@ START_TIME_PROFILE;
 
 			for(int z=tz1; z<tz2; z++){
 				for(int x=tx1; x<tx2; x++){
-					readmap->heightmap[z*(gs->mapx+1)+x]+=dif;
+					heightmap[z*(gs->mapx+1)+x]+=dif;
 				}
 			}
 			CUnit* unit=uh->units[bi->id];
