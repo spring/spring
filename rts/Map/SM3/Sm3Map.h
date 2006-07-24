@@ -19,6 +19,7 @@ public:
 
 	CBaseGroundDrawer *GetGroundDrawer ();
 	void HeightmapUpdated(int x1, int x2, int y1, int y2);
+	float* GetHeightmap();
 	void Update();
 	void Explosion(float x,float y,float strength);
 	void ExplosionUpdate(int x1,int x2,int y1,int y2);

@@ -52,13 +52,14 @@ void CGround::CheckColSquare(CProjectile* p,int x,int y)
 	float yp=p->pos.y;
 	float zp=p->pos.z;
 
+	float* hm = readmap->GetHeightmap();
 	float xt=x*SQUARE_SIZE;
 	float yt=y*SQUARE_SIZE;
-	if (((xp-xt)*readmap->facenormals[(y*gs->mapx+x)*2].x+(yp-readmap->heightmap[y*(gs->mapx+1)+x])*readmap->facenormals[(y*gs->mapx+x)*2].y+(zp-yt)*readmap->facenormals[(y*gs->mapx+x)*2].z<=p->radius) &&
+	if (((xp-xt)*readmap->facenormals[(y*gs->mapx+x)*2].x+(yp-hm[y*(gs->mapx+1)+x])*readmap->facenormals[(y*gs->mapx+x)*2].y+(zp-yt)*readmap->facenormals[(y*gs->mapx+x)*2].z<=p->radius) &&
 		/*(xp-xt+p->radius>0) && (zp-yt+p->radius>0) &&*/ (xp+zp-xt-yt-p->radius<SQUARE_SIZE)){
 		p->Collision();
 	}
-	if (((xp-(xt+2))*readmap->facenormals[(y*gs->mapx+x)*2+1].x+(yp-readmap->heightmap[(y+1)*(gs->mapx+1)+x+1])*readmap->facenormals[(y*gs->mapx+x)*2+1].y+(zp-(yt+2))*readmap->facenormals[(y*gs->mapx+x)*2+1].z<=p->radius) &&
+	if (((xp-(xt+2))*readmap->facenormals[(y*gs->mapx+x)*2+1].x+(yp-hm[(y+1)*(gs->mapx+1)+x+1])*readmap->facenormals[(y*gs->mapx+x)*2+1].y+(zp-(yt+2))*readmap->facenormals[(y*gs->mapx+x)*2+1].z<=p->radius) &&
 		/*(xp-(xt+2)-p->radius<0) && (zp-(yt+2)-p->radius<0) &&*/ (xp+zp-xt-yt-SQUARE_SIZE*2+p->radius>-SQUARE_SIZE)){
 		p->Collision();
 	}
@@ -175,7 +176,8 @@ float CGround::LineGroundSquareCol(const float3 &from,const float3 &to,int xs,in
 	//triangel 1
 	tri.x=xs*SQUARE_SIZE;
 	tri.z=ys*SQUARE_SIZE;
-	tri.y=readmap->heightmap[ys*(gs->mapx+1)+xs];
+	float* heightmap=readmap->GetHeightmap();
+	tri.y=heightmap[ys*(gs->mapx+1)+xs];
 
 	float3 norm=readmap->facenormals[(ys*gs->mapx+xs)*2];
 	double side1=(from-tri).dot(norm);
@@ -195,7 +197,7 @@ float CGround::LineGroundSquareCol(const float3 &from,const float3 &to,int xs,in
 	//triangel 2
 	tri.x=(xs+1)*SQUARE_SIZE;
 	tri.z=(ys+1)*SQUARE_SIZE;
-	tri.y=readmap->heightmap[(ys+1)*(gs->mapx+1)+xs+1];
+	tri.y=heightmap[(ys+1)*(gs->mapx+1)+xs+1];
 
 	norm=readmap->facenormals[(ys*gs->mapx+xs)*2+1];
 	side1=(from-tri).dot(norm);
@@ -248,14 +250,17 @@ float CGround::GetHeight(float x, float y)
 	float dx=(x-sx*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	float dy=(y-sy*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	int hs=sx+sy*(gs->mapx+1);
+
+	float* heightmap = readmap->GetHeightmap();
+
 	if(dx+dy<1){
-		float xdif=(dx)*(readmap->heightmap[hs+1]-readmap->heightmap[hs]);
-		float ydif=(dy)*(readmap->heightmap[hs+gs->mapx+1]-readmap->heightmap[hs]);
-		r=readmap->heightmap[hs]+xdif+ydif;
+		float xdif=(dx)*(heightmap[hs+1]-heightmap[hs]);
+		float ydif=(dy)*(heightmap[hs+gs->mapx+1]-heightmap[hs]);
+		r=heightmap[hs]+xdif+ydif;
 	} else {
-		float xdif=(1-dx)*(readmap->heightmap[hs+gs->mapx+1]-readmap->heightmap[hs+1+1+gs->mapx]);
-		float ydif=(1-dy)*(readmap->heightmap[hs+1]-readmap->heightmap[hs+1+1+gs->mapx]);
-		r=readmap->heightmap[hs+1+1+gs->mapx]+xdif+ydif;
+		float xdif=(1-dx)*(heightmap[hs+gs->mapx+1]-heightmap[hs+1+1+gs->mapx]);
+		float ydif=(1-dy)*(heightmap[hs+1]-heightmap[hs+1+1+gs->mapx]);
+		r=heightmap[hs+1+1+gs->mapx]+xdif+ydif;
 	}
 	if(r<0)
 		r=0;
@@ -280,14 +285,15 @@ float CGround::GetHeight2(float x, float y)
 	float dx=(x-sx*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	float dy=(y-sy*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
 	int hs=sx+sy*(gs->mapx+1);
+	float* heightmap = readmap->GetHeightmap();
 	if(dx+dy<1){
-		float xdif=(dx)*(readmap->heightmap[hs+1]-readmap->heightmap[hs]);
-		float ydif=(dy)*(readmap->heightmap[hs+gs->mapx+1]-readmap->heightmap[hs]);
-		r=readmap->heightmap[hs]+xdif+ydif;
+		float xdif=(dx)*(heightmap[hs+1]-heightmap[hs]);
+		float ydif=(dy)*(heightmap[hs+gs->mapx+1]-heightmap[hs]);
+		r=heightmap[hs]+xdif+ydif;
 	} else {
-		float xdif=(1-dx)*(readmap->heightmap[hs+gs->mapx+1]-readmap->heightmap[hs+1+1+gs->mapx]);
-		float ydif=(1-dy)*(readmap->heightmap[hs+1]-readmap->heightmap[hs+1+1+gs->mapx]);
-		r=readmap->heightmap[hs+1+1+gs->mapx]+xdif+ydif;
+		float xdif=(1-dx)*(heightmap[hs+gs->mapx+1]-heightmap[hs+1+1+gs->mapx]);
+		float ydif=(1-dy)*(heightmap[hs+1]-heightmap[hs+1+1+gs->mapx]);
+		r=heightmap[hs+1+1+gs->mapx]+xdif+ydif;
 	}
 	return r;
 }

@@ -65,7 +65,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	Vector3 *shading = new Vector3[w*w];
 	for (int y=0;y<w;y++)
 		for (int x=0;x<w;x++) {
-			centerhm[y*w+x] = hm->scale * 0.25f * ( (int)hm->at(x,y)+ (int)hm->at(x+1,y)+ (int)hm->at(x,y+1) + (int)hm->at(x+1,y+1) ) + hm->offset;
+			centerhm[y*w+x] =/* hm->scale * */ 0.25f * ( (int)hm->at(x,y)+ (int)hm->at(x+1,y)+ (int)hm->at(x,y+1) + (int)hm->at(x+1,y+1) ); //+ hm->offset;
 			shading[y*w+x] = li->ambient;
 		}
 

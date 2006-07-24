@@ -164,6 +164,7 @@ CSmfReadMap::~CSmfReadMap(void)
 	delete[] featureTypes;
 	delete groundDrawer;
 	delete ifs;
+	delete[] heightmap;
 	if (detailTex) glDeleteTextures (1, &detailTex);
 	if (minimapTex) glDeleteTextures (1, &minimapTex);
 	if (shadowTex) glDeleteTextures (1, &shadowTex);

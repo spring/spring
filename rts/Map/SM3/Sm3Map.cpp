@@ -102,9 +102,6 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		float3::maxxpos=width*SQUARE_SIZE-1;
 		float3::maxzpos=height*SQUARE_SIZE-1;
 
-		heightmap=new float[(width+1)*(height+1)];
-		renderer->GetHeightmap (0,0,width+1,height+1,heightmap);
-
 		CalcHeightfieldData();
 		
 		groundDrawer = new CSm3GroundDrawer (this);
@@ -134,8 +131,14 @@ void CSm3ReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	if (y2<0) y2=0;
 	if (y2>width) y2=height;
 
-	renderer->SetHeightmap(x1,y1, x2-x1,y2-y1, heightmap, width+1, height+1);
+	renderer->HeightmapUpdated(x1,y1,x2-x1,y2-y1);
 }
+
+float* CSm3ReadMap::GetHeightmap()
+{
+	return renderer->GetHeightmap();
+}
+
 
 void CSm3ReadMap::Update() {}
 void CSm3ReadMap::Explosion(float x,float y,float strength) {}

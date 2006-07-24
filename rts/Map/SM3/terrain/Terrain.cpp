@@ -855,11 +855,12 @@ namespace terrain {
 			throw content_error("Map size (" + string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
 		}
 		
-		hmScale = atof (tdf.SGetValueDef ("1000", basepath + "HeightScale").c_str());
-		hmOffset = atof (tdf.SGetValueDef ("0", basepath + "HeightOffset").c_str());
+		float hmScale = atof (tdf.SGetValueDef ("1000", basepath + "HeightScale").c_str());
+		float hmOffset = atof (tdf.SGetValueDef ("0", basepath + "HeightOffset").c_str());
 
-		heightmap->offset = hmOffset;
-		heightmap->scale = hmScale / (1<<16);
+		// apply scaling and offset to the heightmap
+		for (int y=0;y<heightmap->w*heightmap->h;y++)
+			heightmap->data[y]=heightmap->data[y]*hmScale + hmOffset;
 
 		if (cb) cb->PrintMsg ("initializing heightmap renderer...");
 
@@ -959,7 +960,9 @@ namespace terrain {
 		hm->Alloc (w,w);
 
 		if (bits==16) {
-			fh.Read (hm->data, len);
+			ushort *tmp=new ushort[w*w];
+			fh.Read (tmp, len);
+			for (int y=0;y<w*w;y++) hm->data[y]=tmp[y] / float((1<<16)-1);
 #ifdef SWAP_SHORT
 			char *p = (char*)hm->data;
 			for (int x=0;x<len;x+=2, p+=2)
@@ -969,7 +972,7 @@ namespace terrain {
 			char *buf=new char[len], *p=buf;
 			fh.Read(buf,len);
 			for (w*=w;w>=0;w--) 
-				hm->data[w]=*(p++)*256;
+				hm->data[w]=*(p++)/255.0f;
 			delete[] buf;
 		}
 
@@ -1026,7 +1029,8 @@ namespace terrain {
 		hm->Alloc (hmWidth,hmHeight);
 		ushort* data=(ushort*)ilGetData ();
 
-		memcpy(hm->data, data, sizeof(ushort) * hmWidth * hmHeight);
+		for (int y=0;y<hmWidth*hmHeight;y++)
+			hm->data[y]=data[y]/float((1<<16)-1);
 
 		// heightmap is copied, so the original image can be deleted
 		ilDeleteImages (1,&ilheightmap);
@@ -1049,7 +1053,7 @@ namespace terrain {
 	}
 
 	// heightmap blitting
-	void Terrain::SetHeightmap (int sx,int sy,int w,int h, float *src, int srcW, int srcH)
+	void Terrain::HeightmapUpdated (int sx,int sy,int w,int h)
 	{
 		// clip
 		if (sx < 0) sx = 0;
@@ -1061,23 +1065,7 @@ namespace terrain {
 		renderDataManager->UpdateRect(sx,sy,w,h);
 
 		// update heightmap mipmap chain
-		Heightmap *hm = heightmap;
-		int scale = 1, dstw=w, dsth=h;
-		while (hm) {
-			for (int y=0;y<dsth;y++)
-				for (int x=0;x<dstw;x++) {
-					int px=x+sx,py=y+sy;
-					int val = (int)((src[scale * (py*srcW + px)] - hm->offset) / hm->scale);
-					const int maxshort = (1<<16)-1;
-					if (val > maxshort) val = maxshort;
-					if (val < 0) val = 0;
-					hm->at (px,py) = val;
-				}
-			sx/=2; sy/=2;
-			dstw/=2; dsth/=2;
-			hm = hm->lowDetail;
-			scale *= 2;
-		}
+		heightmap->UpdateLower(sx,sy,w,h);
 	}
 
 	void Terrain::GetHeightmap (int sx,int sy,int w,int h, float *dest)
@@ -1091,6 +1079,11 @@ namespace terrain {
 		for (int y=sy;y<sy+h;y++) 
 			for (int x=sx;x<sx+w;x++) 
 				*(dest++) = heightmap->HeightAt (x,y);
+	}
+
+	float* Terrain::GetHeightmap()
+	{
+		return heightmap->data;
 	}
 
 	//TODO: Interpolate
