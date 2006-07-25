@@ -15,8 +15,11 @@
 
 CGroupAI::CGroupAI()
 {
-	lastUpdate			= 0;
-	friendlyUnits 		= new int[MAX_UNITS];
+	mode			= manual;
+	maxMetal		= 0;
+	mohoBuilderId	= -1;
+	unitsChanged 	= false;
+	friendlyUnits	= new int[MAX_UNITS];
 }
 
 CGroupAI::~CGroupAI()
@@ -25,6 +28,22 @@ CGroupAI::~CGroupAI()
 		delete ui->second;
 	myUnits.clear();
 	lockedMexxes.clear();
+	commandQue.clear();
+}
+
+void CGroupAI::Reset()
+{
+	// clear all commands and stop all units
+	lockedMexxes.clear();
+	commandQue.clear();
+	Command c;
+	c.id = CMD_STOP;
+	for(map<int,UnitInfo*>::iterator ui=myUnits.begin();ui!=myUnits.end();++ui)
+	{
+		ui->second->status = idle;
+		aicb->GiveOrder(ui->first, &c);
+	}
+	unitsChanged = true; // this isn't the case, but it forces ManualFindMex to set all builders to guard the mohoBuilder.
 }
 
 void CGroupAI::InitAi(IGroupAICallback* callback)
@@ -36,18 +55,18 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 
 bool CGroupAI::AddUnit(int unit)
 {
+	// check if it's a builder
 	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(ud->buildSpeed==0){								//can only use builder units
+	if(ud->buildSpeed==0){
 		aicb->SendTextMsg("Cant use non builders",0);
 		return false;
 	}
 
 	UnitInfo* info=new UnitInfo;
 	info->maxExtractsMetal 	= 0;
-	info->reclaiming		= false;
-	info->building			= false;
-	info->hasReported		= false;
+	info->status			= idle;
 
+	// determine what's the best mine this unit can build
 	const vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
 	for(vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi)		//check if this unit brings some new build options
 	{
@@ -62,43 +81,139 @@ bool CGroupAI::AddUnit(int unit)
 			}
 		}
 	}
+	// if it can't build a mine, we don't want it
 	if(info->maxExtractsMetal == 0)
 	{
 		aicb->SendTextMsg("Must use units that can build mexes",0);
 		delete info;
 		return false;
 	}
-
-	myUnits[unit]=info;
+	// add it to the AI
+	myUnits[unit]	= info;
+	unitsChanged	= true;
+	// set the unit to work.
+	if(mode==automatic)
+		AutoFindMex(unit);
 	return true;
 }
 
 void CGroupAI::RemoveUnit(int unit)
 {
+	// if it was reclaiming a mex, release that mex from lockedMexxes
+	UnitInfo* info = myUnits[unit];
+	if (info->status == reclaiming)
+	{
+		lockedMexxes.erase(info->nearestMex);
+	}
+	// do some cleaning-up
 	delete myUnits[unit];
 	myUnits.erase(unit);
+	unitsChanged = true;
+	if(unit == mohoBuilderId && mode == manual && !commandQue.empty())
+		ManualFindMex();
 }
 
 void CGroupAI::GiveCommand(Command* c)
 {
+	switch(c->id)
+	{
+		case CMD_STOP:
+			Reset();
+			break;
+		case CMD_ONOFF:
+			if(c->params.empty())
+				break;
+			Reset();
+			if(c->params[0]==0)
+			{
+				mode = automatic;
+				for(map<int,UnitInfo*>::const_iterator ui=myUnits.begin();ui!=myUnits.end();++ui)
+				{
+					AutoFindMex(ui->first);
+				}
+			}
+			else if(c->params[0]==1)
+			{
+				mode = manual;
+			}
+			break;
+		case CMD_RECLAIM:
+			break;
+		default:
+			aicb->SendTextMsg("Unknown cmd to mexUpgrader AI",0);
+	}
+	if(c->id==CMD_RECLAIM && c->params.size()==4)
+	{
+		Command c2;
+		c2.id = CMD_RECLAIM;
+		c2.params.push_back(c->params[0]);
+		c2.params.push_back(c->params[1]);
+		c2.params.push_back(c->params[2]);
+		c2.params.push_back(c->params[3]);
+		commandQue.push_back(c2);
+		if(commandQue.size()==1)
+			ManualFindMex();
+	}
 }
 
 const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 {
+	commands.clear();
+	CommandDescription cd;
+
+	cd.id=CMD_ONOFF;
+	cd.type=CMDTYPE_ICON_MODE;
+	cd.key='X';
+	if(mode==manual)
+	{
+		cd.params.push_back("1");
+	}
+	else //automatic
+	{
+		cd.params.push_back("0");
+	}
+	cd.params.push_back("Auto");
+	cd.params.push_back("Manual");
+	cd.tooltip="Mode: upgrade mexes manually or automatically";
+	commands.push_back(cd);
+
+	cd.params.clear();
+	cd.id=CMD_RECLAIM;
+	cd.type=CMDTYPE_ICON_AREA;
+	cd.name="Area upgrade";
+	cd.tooltip="Area upgrade: drag out an area to upgrade all mexes there";
+	cd.key='R';
+	commands.push_back(cd);
+
+	cd.params.clear();
+	cd.id=CMD_STOP;
+	cd.type=CMDTYPE_ICON;
+	cd.name="Stop";
+	cd.key='S';
+	commands.push_back(cd);
+
 	return commands;
 }
 
 int CGroupAI::GetDefaultCmd(int unit)
 {
-	return CMD_MOVE;
+	if(mode==manual)
+		return CMD_RECLAIM;
 }
 
 void CGroupAI::CommandFinished(int unit,int type)
 {
-	UnitInfo* info=myUnits[unit];
-	if(type==CMD_RECLAIM && info->reclaiming)
+	map<int,UnitInfo*>::iterator ui=myUnits.find(unit);
+	if(ui==myUnits.end())
 	{
-		info->reclaiming = false;
+		//aicb->SendTextMsg("unitid not in group",0);
+		return;
+	}
+	UnitInfo* info = ui->second;
+	if(type==CMD_RECLAIM && info->status == reclaiming)
+	{
+		info->status = idle;
+		// we are done reclaiming, so build a moho mine
 		lockedMexxes.erase(info->nearestMex);
 		// find the nearest buildsite
 		const UnitDef* ud 	= aicb->GetUnitDef(info->wantedMohoName.c_str());
@@ -118,83 +233,185 @@ void CGroupAI::CommandFinished(int unit,int type)
 		c.params.push_back(pos.z);
 
 		aicb->GiveOrder(unit,&c);
-		info->building = true;
+		info->status = building;
 	}
-	if(type==info->wantedMohoId && info->building)
+	if(type==info->wantedMohoId && info->status == building)
 	{
-		info->building = false;
+		// we are done building a moho mine, so find a new order
+		info->status = idle;
+		if(mode==manual)
+		{
+			ManualFindMex();
+		}
+		if(mode==automatic)
+		{
+			AutoFindMex(unit);
+		}
 	}
+}
+
+void CGroupAI::AutoFindMex(int unit)
+{
+	if(myUnits[unit]->status == idle)
+	{
+		// we're doing nothing, so it's time to find a mex we can upgrade
+		int	numFriendlyUnits = aicb->GetFriendlyUnits(friendlyUnits);
+		int nearestMex = FindNearestMex(unit,friendlyUnits,numFriendlyUnits);
+		if(nearestMex != -1)
+		{
+			// we have found an upgradable mex, so let's reclaim it first
+			ReclaimMex(unit, nearestMex);
+		}
+		else
+		{
+			// no more reclaimable mexes
+			aicb->SendTextMsg("There are no mexes to upgrade",0);
+			aicb->SetLastMsgPos(aicb->GetUnitPos(unit));
+		}
+	}
+}
+
+void CGroupAI::ManualFindMex()
+{
+	if(unitsChanged)
+	{
+		// the units in the AI have changed. we might have lost our mohobuilder, so lets find a new one
+		maxMetal = 0;
+		for(map<int,UnitInfo*>::const_iterator ui=myUnits.begin();ui!=myUnits.end();++ui)
+		{
+			float extractsMetal = ui->second->maxExtractsMetal;
+			if(extractsMetal > maxMetal)
+			{
+				maxMetal 		= extractsMetal;
+				mohoBuilderId 	= ui->first;
+			}
+		}
+		unitsChanged = false;
+		// set the moho builder to idle, and the others to guard it
+		Command c1;
+		c1.id = CMD_GUARD;
+		c1.params.push_back(mohoBuilderId);
+		for(map<int,UnitInfo*>::iterator ui=myUnits.begin();ui!=myUnits.end();++ui)
+		{
+			if(ui->first != mohoBuilderId)
+			{
+				aicb->GiveOrder(ui->first, &c1);
+				ui->second->status = guarding;
+			}
+			else
+			{
+				ui->second->status = idle;
+			}
+		}
+	}
+	// check if there are any commands left in the queue
+	if(commandQue.empty())
+	{
+		aicb->SendTextMsg("There are no mexes to upgrade",0);
+		aicb->SetLastMsgPos(aicb->GetUnitPos(mohoBuilderId));
+		return;
+	}
+
+	// we still have an area-upgrade command left, so let's find an upgradable mex
+	Command& c2=commandQue.front();
+	float3 pos(c2.params[0],c2.params[1],c2.params[2]);
+	if(myUnits[mohoBuilderId]->status == idle)
+	{
+		// we're doing nothing, so it's time to find a mex we can upgrade
+		int	numFriendlyUnits = aicb->GetFriendlyUnits(friendlyUnits,pos,c2.params[3]);
+		int nearestMex = FindNearestMex(mohoBuilderId,friendlyUnits,numFriendlyUnits);
+		if(nearestMex != -1)
+		{
+			ReclaimMex(mohoBuilderId, nearestMex);
+		}
+		else
+		{
+			// there aren't any upgradable mexes left in this area, so let's move on the next one
+			commandQue.pop_front();
+			ManualFindMex();
+		}
+	}
+}
+
+int CGroupAI::FindNearestMex(int unit, int* possibleMexes, int size)
+{
+	// we're doing nothing, so it's time to find a mex we can upgrade
+	UnitInfo* info				= myUnits[unit];
+	float 	minSqDist 			= 0;
+	int 	nearestMex			= -1;
+	for (int i=0; i < size; i++)
+	{
+		// check if it's a unit of our own (and not one of our allies).
+		int mex = possibleMexes[i];
+		if(myTeam == aicb->GetUnitTeam(mex))
+		{
+			//check if it's a mex we can upgrade
+			const UnitDef* ud = aicb->GetUnitDef(mex);
+			if(ud->extractsMetal > 0 && ud->extractsMetal < info->maxExtractsMetal)
+			{
+				// check if it's already being reclaimed by another unit
+				set<int>::const_iterator mi=lockedMexxes.find(mex);
+				if(mi==lockedMexxes.end())
+				{
+					float sqDist = (aicb->GetUnitPos(unit) - aicb->GetUnitPos(mex)).SqLength();
+					// find the nearest mex we can upgrade
+					if(sqDist < minSqDist || minSqDist == 0)
+					{
+						minSqDist = sqDist;
+						nearestMex= mex;
+					}
+				}
+			} // if (upgradable)
+		} // if (myTeam)
+	} // for (size)
+	return nearestMex;
+}
+
+void CGroupAI::ReclaimMex(int unit, int mex)
+{
+	UnitInfo* info = myUnits[unit];
+	info->nearestMex 		= mex;
+	info->status 			= reclaiming;
+	info->wantedBuildSite 	= aicb->GetUnitPos(info->nearestMex);
+	lockedMexxes.insert(info->nearestMex);
+	// reclaim it
+	Command c;
+	c.id=CMD_RECLAIM;
+	c.options=0;
+	c.params.push_back(info->nearestMex);
+	aicb->GiveOrder(unit,&c);
 }
 
 void CGroupAI::Update()
 {
-	int frameNum=aicb->GetCurrentFrame();
-	if(lastUpdate<=frameNum-32)
+	// draw the queued-up commands if the group is selected
+	if(mode==manual && callback->IsSelected())
 	{
-		lastUpdate = frameNum;
-
-		for(map<int,UnitInfo*>::iterator ui=myUnits.begin();ui!=myUnits.end();++ui)
+		float3 pos1, pos2, pos3, pos4;
+		for(deque<Command>::const_iterator ci=commandQue.begin();ci!=commandQue.end();++ci)
 		{
-			UnitInfo* info 	= ui->second;
-			int unit		= ui->first;
-			if(!info->reclaiming && !info->building)
+			if(ci==commandQue.begin())
 			{
-				// we're doing nothing, so it's time to find a mex we can upgrade
-				minSqDist = 0;
-				numUpgradableMexxes = 0;
-				numFriendlyUnits = aicb->GetFriendlyUnits(friendlyUnits);
-				for (int i=0; i < numFriendlyUnits; i++)
-				{
-					// check if it's a unit of our own (and not one of our allies).
-					int mex = friendlyUnits[i];
-					if(myTeam == aicb->GetUnitTeam(mex))
-					{
-						//check if it's a mex we can upgrade
-						const UnitDef* ud = aicb->GetUnitDef(mex);
-						if(ud->extractsMetal > 0 && ud->extractsMetal < info->maxExtractsMetal)
-						{
-							// check if it's already being reclaimed by another unit
-							set<int>::iterator mi=lockedMexxes.find(mex);
-							if(mi==lockedMexxes.end())
-							{
-								numUpgradableMexxes++;
-								float sqDist = (aicb->GetUnitPos(unit) - aicb->GetUnitPos(mex)).SqLength();
-								// find the nearest mex we can upgrade
-								if(sqDist < minSqDist || minSqDist == 0)
-								{
-									minSqDist = sqDist;
-									info->nearestMex = mex;
-								}
-							}
-						} // if (upgradable)
-					} // if (myTeam)
-				} // for (numFriendlyUnits)
-
-				if(numUpgradableMexxes > 0)
-				{
-					info->reclaiming 	= true;
-					info->hasReported 	= false;
-					// we have a nearest mex we can upgade.
-					lockedMexxes.insert(info->nearestMex);
-					// use its position for the buildsite of a moho mine
-					info->wantedBuildSite = aicb->GetUnitPos(info->nearestMex);
-					// reclaim it
-					Command c;
-					c.id=CMD_RECLAIM;
-					c.options=0;
-					c.params.push_back(info->nearestMex);
-					aicb->GiveOrder(unit,&c);
-				}
-				else
-				{
-					if(!info->hasReported)
-					{
-						aicb->SendTextMsg("There are no mexes to upgrade",0);
-						aicb->SetLastMsgPos(aicb->GetUnitPos(unit));
-						info->hasReported = true;
-					}
-				}
-			} // if (!reclaiming && !building)
-		} // for (units)
-	} // if (update)
+				pos1 = aicb->GetUnitPos(mohoBuilderId);
+			}
+			else
+			{
+				deque<Command>::const_iterator prev = ci;
+				--prev;
+				pos1 = float3(prev->params[0],prev->params[1],prev->params[2]);
+			}
+			pos2 = float3(ci->params[0],ci->params[1],ci->params[2]);
+			int g = aicb->CreateLineFigure(pos1,pos2,1.0f,0,1,0);
+			float radius=ci->params[3];
+			for(int a=0;a<=20;++a)
+			{
+				pos3=float3(pos2.x+sin(a*PI*2/20)*radius,0,pos2.z+cos(a*PI*2/20)*radius);
+				pos3.y=aicb->GetElevation(pos3.x,pos3.z)+5;
+				if(a>0)
+					aicb->CreateLineFigure(pos3,pos4,1.0f,0,1,g);
+				pos4 = pos3;
+			}
+			aicb->SetFigureColor(g,1.0f,1.0f,1.0f,0.5f);
+		}
+	}
 }
