@@ -4,6 +4,8 @@
 #include "LuaBinder.h"
 #include "Object.h"
 
+#include <luabind/object.hpp>
+
 struct Command;
 class float3;
 class CUnit;
@@ -29,6 +31,10 @@ namespace luafunctions
 	void CommandAddParam(Command* c, float p);
 	CObject_pointer<CUnit>* UnitLoaderLoadUnit(std::string name, float3 pos, int team, bool buil);
 	int GetNumUnitsAt(const float3& pos, float radius);
+	luabind::object GetUnitsAt(lua_State* L, const float3& pos, float radius);
+	std::string MapGetTDFName();
+	luabind::object GetSelectedUnits(lua_State* L, int player);
+	void SendSelectedUnits();
 };
 
 #endif

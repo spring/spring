@@ -9,6 +9,7 @@
 #include "TdfParser.h"
 #include "LuaFunctions.h"
 #include "Game/command.h"
+#include "Sim/Units/UnitDef.h"
 
 extern "C"
 {
@@ -42,9 +43,11 @@ struct CScript_wrapper : CScript, wrap_base
 	CScript_wrapper(const string& name) : CScript(name) {}
 
 	virtual void Update() { check( call<void>("Update"); );	}
-	static void Update_static(CScript *ptr) { return ptr->CScript::Update(); }
+	static void Update_static(CScript *ptr) { ptr->CScript::Update(); }
 	virtual string GetMapName() { string x; check( x = call<string>("GetMapName"); ); return x; }
 	static string GetMapName_static(CScript *ptr) { return ptr->CScript::GetMapName(); }
+	virtual void GotChatMsg(const string& msg, int player) { check( call<void>("GotChatMsg", msg, player); ); }
+	static void GotChatMsg_static(CScript *ptr, const string& msg, int player) { ptr->CScript::GotChatMsg(msg, player); }
 };
 
 namespace luabind 
@@ -52,12 +55,13 @@ namespace luabind
     template<class T>
     T* get_pointer(CObject_pointer<T>& p) 
     {
+		if (!p.held)
+			info->AddLine("Lua warning: using invalid unit reference");
         return p.held; 
     }
 
     template<class A>
-    CObject_pointer<const A>* 
-    get_const_holder(CObject_pointer<A>*)
+    CObject_pointer<const A>* get_const_holder(CObject_pointer<A>*)
     {
         return 0;
     }
@@ -143,7 +147,7 @@ namespace luafunctions {
 		}
 
 		if (info)
-		info->AddLine(tmp);
+			info->AddLine(tmp.c_str());
 
 		return 0;
 	}
@@ -172,14 +176,13 @@ CLuaBinder::CLuaBinder(void)
 			.def(constructor<const string&>())
 			.def_readwrite("onlySinglePlayer", &CScript::onlySinglePlayer)
 			.def("GetMapName", &CScript::GetMapName, &CScript_wrapper::GetMapName_static)
-			.def("Update", &CScript::Update, &CScript_wrapper::Update_static),
+			.def("Update", &CScript::Update, &CScript_wrapper::Update_static)
+			.def("GotChatMsg", &CScript::GotChatMsg, &CScript_wrapper::GotChatMsg_static),
 
 		class_<CGlobalSyncedStuff>("GlobalSynced")
 			.def_readonly("frameNum", &CGlobalSyncedStuff::frameNum)
 			.def_readonly("mapx", &CGlobalSyncedStuff::mapx)
 			.def_readonly("mapy", &CGlobalSyncedStuff::mapy),
-			//.def_readonly("activeTeams", &CGlobalSyncedStuff::activeTeams)
-			//.def_readonly("activeAllyTeams
 
 		class_<float3>("float3")
 			.def(constructor<const float, const float, const float>())
@@ -200,11 +203,15 @@ CLuaBinder::CLuaBinder(void)
 			.def_readonly("id", &CUnit::id)
 			.def_readonly("health", &CUnit::health)
 			.property("transporter", &UnitGetTransporter)
+			.def_readonly("definition", &CUnit::unitDef)
 			.def("__tostring", &UnitToString)
 			.def_readonly("team", &CUnit::team)
 			.def("GiveCommand", &UnitGiveCommand) 
 			.def("ChangeTeam", &CUnit::ChangeTeam)
 			.def("IsValid", &UnitPointerIsValid),
+
+		class_<UnitDef>("UnitDef")
+			.def_readonly("name", &UnitDef::name),
 
 		class_<TdfParser>("TdfParser")
 			.def(constructor<>())
@@ -231,10 +238,25 @@ CLuaBinder::CLuaBinder(void)
 			.def_readwrite("options", &Command::options)
 			.def("AddParam", &CommandAddParam),
 
-		def("LoadUnit", &UnitLoaderLoadUnit, adopt(result)),
-		def("GetMapName", &GSGetMapName),
+		// Access to spring's various global handlers are grouped into 
+		// relevant lua namespaces to present a nice(r) interface than just exporting
+		// all the handlers directly
+		namespace_("units")
+		[
+			def("Load", &UnitLoaderLoadUnit, adopt(result)),
+			def("GetNumAt", &GetNumUnitsAt),
+			def("GetAt", &GetUnitsAt, raw(_1)),
+			def("GetSelected", &GetSelectedUnits, raw(_1)),
+			def("SendSelection", &SendSelectedUnits)
+		],
+
+		namespace_("map")
+		[
+			def("GetName", &GSGetMapName),
+			def("GetTDFName", &MapGetTDFName)
+		],
+
 		def("EndGame", &EndGame),
-		def("GetNumUnitsAt", &GetNumUnitsAt),
 		
 		// File access should probably be limited to the virtual filesystem. Disabled for now
 		def("dofile", &DisabledFunction),
@@ -251,7 +273,6 @@ CLuaBinder::CLuaBinder(void)
 
 	// Define global objects
 	globals(luaState)["gs"] = gs;
-	//get_globals(luaState)["unitLoader"] = &unitLoader;
 
 	// Special override
 	lua_register(luaState, "print", SpringPrint);

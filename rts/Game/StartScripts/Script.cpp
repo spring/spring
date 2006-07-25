@@ -33,6 +33,10 @@ void CScript::SetCamera()
 
 }
 
+void CScript::GotChatMsg(const std::string& msg, int player)
+{
+}
+
 std::string CScript::GetMapName()
 {
 	return "";

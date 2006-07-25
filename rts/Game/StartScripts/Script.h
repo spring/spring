@@ -12,6 +12,7 @@ class CScript : public CObject
 public:
 	virtual void SetCamera();
 	virtual void Update();
+	virtual void GotChatMsg(const std::string& msg, int player);
 	CScript(const std::string& name);
 	virtual ~CScript();
 
