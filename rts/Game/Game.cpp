@@ -2331,6 +2331,7 @@ void CGame::DrawDirectControlHud(void)
 void CGame::HandleChatMsg(std::string s,int player)
 {
 	globalAI->GotChatMsg(s.c_str(),player);
+	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
 
 	if(s.find(".cheat")==0 && player==0){
 		if (gs->cheatEnabled){

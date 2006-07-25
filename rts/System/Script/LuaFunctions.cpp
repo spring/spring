@@ -17,8 +17,14 @@
 #include "Sim/Misc/QuadField.h"
 #include "Game/Game.h"
 #include "Game/UI/EndGameBox.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Map/ReadMap.h"
+#include "Game/SelectedUnits.h"
 
 using namespace std;
+using namespace luabind;
+
+extern std::string stupidGlobalMapname;
 
 namespace luafunctions 
 {
@@ -61,10 +67,42 @@ namespace luafunctions
 	//	vector<CUnit*> GetUnits(const float3& pos,float radius);
 	//	vector<CUnit*> GetUnitsExact(const float3& pos,float radius);
 
-	// Probably nice to be able to get the actual list as well, need to find out how to return a table
 	int GetNumUnitsAt(const float3& pos, float radius)
 	{
 		vector<CUnit*> x = qf->GetUnits(pos, radius);
 		return x.size();
+	}
+
+	object GetUnitsAt(lua_State* L, const float3& pos, float radius)
+	{
+		vector<CUnit*> x = qf->GetUnits(pos, radius);
+		object o = newtable(L);
+
+		int count = 1;
+		for (vector<CUnit*>::iterator i = x.begin(); i != x.end(); ++i)
+			o[count++] = new CObject_pointer<CUnit>(*i);
+		
+		return o;
+	}
+
+	object GetSelectedUnits(lua_State* L, int player)
+	{
+		object o = newtable(L);
+
+		for (int i = 0; i < selectedUnits.netSelected[player].size(); ++i)
+			o[i+1] = new CObject_pointer<CUnit>(uh->units[selectedUnits.netSelected[player][i]]);
+
+		return o;
+	}
+
+	void SendSelectedUnits()
+	{
+		if (selectedUnits.selectionChanged)
+			selectedUnits.SendSelection();
+	}
+
+	string MapGetTDFName()
+	{
+		return CReadMap::GetTDFName(stupidGlobalMapname);
 	}
 }
