@@ -951,7 +951,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return 0;}
 	case MAX_SPEED:
 		if(unit->moveType){
-			return unit->moveType->maxSpeed*SCALE;
+			return int(unit->moveType->maxSpeed*SCALE);
 		}
 		break;
 	}

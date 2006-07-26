@@ -166,7 +166,7 @@ CSimpleGroundFlash::~CSimpleGroundFlash()
 
 void CSimpleGroundFlash::Draw()
 {
-	color[3] = ttl<fade ? ((ttl)/(float)(fade))*255 : 255;
+	color[3] = ttl<fade ? int(((ttl)/(float)(fade))*255) : 255;
 
 	float3 p1=pos+(-side1-side2)*size;
 	float3 p2=pos+( side1-side2)*size;

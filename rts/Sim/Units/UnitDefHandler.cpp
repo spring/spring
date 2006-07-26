@@ -253,7 +253,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.seismicRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\seismicDistance").c_str());
 	ud.seismicSignature=atoi(tdfparser.SGetValueDef("-1", "UNITINFO\\seismicSignature").c_str());
 	if(ud.seismicSignature==-1)
-		ud.seismicSignature = sqrt(ud.mass/100);
+		ud.seismicSignature = int(sqrt(ud.mass/100));
 	ud.stealth=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\Stealth").c_str());
 	ud.targfac=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\istargetingupgrade").c_str());
 	ud.isFeature=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\IsFeature").c_str());
