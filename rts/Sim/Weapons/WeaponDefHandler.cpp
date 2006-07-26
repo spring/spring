@@ -284,11 +284,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].visuals.tilelength, "200", weaponname + "\\tilelength");
 	sunparser->GetDef(weaponDefs[id].visuals.scrollspeed, "5", weaponname + "\\scrollspeed");
 	sunparser->GetDef(weaponDefs[id].visuals.pulseSpeed, "1", weaponname + "\\pulseSpeed");
-	std::string tmp;
-	sunparser->GetDef(tmp, "", weaponname + "\\texture1");
-	weaponDefs[id].visuals.texture1 = ph->textureAtlas->GetTexturePtr(tmp);
-	sunparser->GetDef(tmp, "", weaponname + "\\texture2");
-	weaponDefs[id].visuals.texture2 = ph->textureAtlas->GetTexturePtr(tmp);
+	sunparser->GetDef(weaponDefs[id].largeBeamLaser, "0", weaponname + "\\largeBeamLaser");
 
 	weaponDefs[id].heightmod = 0.2f;
 	if(weaponDefs[id].type == "Cannon")
@@ -325,6 +321,80 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	}
 //	if(!weaponDefs[id].turret && weaponDefs[id].type!="TorpedoLauncher")
 //		weaponDefs[id].maxAngle*=0.4;
+
+	//get some weapon specific defaults
+	if(weaponDefs[id].type=="Cannon"){
+		//CExplosiveProjectile
+		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
+		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(1.0f,0.5f,0.0f),weaponname + "\\rgbcolor");
+		sunparser->GetDef(weaponDefs[id].intensity, "0.2", weaponname + "\\intensity");
+	} else if(weaponDefs[id].type=="Rifle"){
+		//...
+	} else if(weaponDefs[id].type=="Melee"){
+		//...
+	} else if(weaponDefs[id].type=="AircraftBomb"){
+		//CExplosiveProjectile or CTorpedoProjectile
+		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
+	} else if(weaponDefs[id].type=="Shield"){
+		weaponDefs[id].visuals.texture1 = &ph->perlintex;
+	} else if(weaponDefs[id].type=="flame"){
+		//CFlameProjectile
+		weaponDefs[id].visuals.texture1 = &ph->flaretex;
+	} else if(weaponDefs[id].type=="MissileLauncher"){
+		//CMissileProjectile
+		weaponDefs[id].visuals.texture1 = &ph->flaretex;
+		weaponDefs[id].visuals.texture2 = &ph->smoketrailtex;
+	} else if(weaponDefs[id].type=="TorpedoLauncher"){
+		//CExplosiveProjectile or CTorpedoProjectile
+		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
+	} else if(weaponDefs[id].type=="LaserCannon"){
+		//CLaserProjectile
+		weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
+		weaponDefs[id].visuals.texture2 = &ph->laserendtex;		
+	} else if(weaponDefs[id].type=="BeamLaser"){
+		if(weaponDefs[id].largeBeamLaser)
+		{
+			weaponDefs[id].visuals.texture1 = ph->textureAtlas->GetTexturePtr("largebeam");
+			weaponDefs[id].visuals.texture2 = &ph->laserendtex;
+			weaponDefs[id].visuals.texture3 = ph->textureAtlas->GetTexturePtr("muzzleside");
+			weaponDefs[id].visuals.texture4 = &ph->flaretex;
+		}
+		else
+		{
+			weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
+			weaponDefs[id].visuals.texture2 = &ph->laserendtex;
+			weaponDefs[id].visuals.texture3 = &ph->flaretex;
+		}
+	} else if(weaponDefs[id].type=="LightingCannon"){
+		weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
+	} else if(weaponDefs[id].type=="EmgCannon"){
+		//CEmgProjectile
+		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
+		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(0.9f,0.9f,0.2f),weaponname + "\\rgbcolor");
+	} else if(weaponDefs[id].type=="DGun"){
+		//CFireBallProjectile
+	} else if(weaponDefs[id].type=="StarburstLauncher"){
+		//CStarburstProjectile
+		weaponDefs[id].visuals.texture1 = &ph->flaretex;
+		weaponDefs[id].visuals.texture2 = &ph->smoketrailtex;
+		weaponDefs[id].visuals.texture3 = &ph->explotex;
+	}else {
+		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
+		weaponDefs[id].visuals.texture2 = &ph->circularthingytex;
+	}
+	std::string tmp;
+	sunparser->GetDef(tmp, "", weaponname + "\\texture1");
+	if(tmp != "")
+		weaponDefs[id].visuals.texture1 = ph->textureAtlas->GetTexturePtr(tmp);
+	sunparser->GetDef(tmp, "", weaponname + "\\texture2");
+	if(tmp != "")
+		weaponDefs[id].visuals.texture2 = ph->textureAtlas->GetTexturePtr(tmp);
+	sunparser->GetDef(tmp, "", weaponname + "\\texture3");
+	if(tmp != "")
+		weaponDefs[id].visuals.texture3 = ph->textureAtlas->GetTexturePtr(tmp);
+	sunparser->GetDef(tmp, "", weaponname + "\\texture4");
+	if(tmp != "")
+		weaponDefs[id].visuals.texture4 = ph->textureAtlas->GetTexturePtr(tmp);
 
 	std::string explgentag = sunparser->SGetValueDef(std::string(), weaponname + "\\explosiongenerator");
 	weaponDefs[id].explosionGenerator = explgentag.empty() ? 0 : explGen->LoadGenerator(explgentag);

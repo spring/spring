@@ -1,13 +1,13 @@
 #ifndef BEAMLASERPROJECTILE_H
 #define BEAMLASERPROJECTILE_H
 
-#include "Projectile.h"
+#include "WeaponProjectile.h"
 
 class CBeamLaserProjectile :
-	public CProjectile
+	public CWeaponProjectile
 {
 public:
-	CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness, float flaresize);
+	CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness, float flaresize, WeaponDef *weaponDef);
 	~CBeamLaserProjectile(void);
 
 	float3 startPos;

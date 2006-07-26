@@ -78,15 +78,15 @@ void CExplosiveProjectile::Draw(void)
 	dir.Normalize();
 
 	for(int a=0;a<5;++a){
-		col[0]=(5-a)*51;
-		col[1]=(5-a)*25;
-		col[2]=0;
-		col[3]=(5-a)*10;
+		col[0]=(5-a)*0.2*weaponDef->visuals.color.x*255;
+		col[1]=(5-a)*0.2*weaponDef->visuals.color.y*255;
+		col[2]=(5-a)*0.2*weaponDef->visuals.color.z*255;
+		col[3]=(5-a)*0.2*weaponDef->intensity*255;
 		float3 interPos=pos+speed*gu->timeOffset-dir*drawRadius*0.6*a;
-		va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.yend,col);
-		va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.yend,col);
+		va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
+		va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
+		va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 	}
 }
 

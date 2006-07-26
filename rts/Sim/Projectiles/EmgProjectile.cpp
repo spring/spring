@@ -5,6 +5,7 @@
 #include "SyncTracer.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 CEmgProjectile::CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,const float3& color,float intensity, int ttl, WeaponDef *weaponDef)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector, weaponDef,damages,0),
@@ -54,10 +55,10 @@ void CEmgProjectile::Draw(void)
 	col[2]=(unsigned char) (color.z*intensity*255);
 	col[3]=5;//intensity*255;
 	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xend,ph->circularthingytex.yend,col);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->circularthingytex.xstart,ph->circularthingytex.yend,col);
+	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 }
 
 int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)

@@ -1,14 +1,13 @@
 #ifndef LARGEBEAMLASERPROJECTILE_H
 #define LARGEBEAMLASERPROJECTILE_H
 
-#include "Projectile.h"
+#include "WeaponProjectile.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-class CLargeBeamLaserProjectile : public CProjectile
+class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
 public:
-	CLargeBeamLaserProjectile(const float3& startPos,const float3& endPos,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness,
-							float flaresize, float tilelength, float scrollspeed, float pulseSpeed, AtlasedTexture *beamtex, AtlasedTexture *side);
+	CLargeBeamLaserProjectile(const float3& startPos,const float3& endPos,const float3& color, const float3& color2,CUnit* owner, WeaponDef *weaponDef);
 	~CLargeBeamLaserProjectile(void);
 
 	float3 startPos;

@@ -131,10 +131,14 @@ struct WeaponDef
 
 		AtlasedTexture *texture1;
 		AtlasedTexture *texture2;
+		AtlasedTexture *texture3;
+		AtlasedTexture *texture4;
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;
 	}visuals;
+
+	bool largeBeamLaser;
 
 	bool isShield;					//if the weapon is a shield rather than a weapon
 	bool shieldRepulser;		//if the weapon should be repulsed or absorbed

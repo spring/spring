@@ -49,7 +49,7 @@ void CPlasmaRepulser::Init(void)
 	if(weaponDef->visibleShield){
 		for(int y=0;y<16;y+=4){
 			for(int x=0;x<32;x+=4){
-				visibleShieldParts.push_back(new CShieldPartProjectile(owner->pos,x,y,radius,weaponDef->shieldBadColor,weaponDef->shieldAlpha,owner));
+				visibleShieldParts.push_back(new CShieldPartProjectile(owner->pos,x,y,radius,weaponDef->shieldBadColor,weaponDef->shieldAlpha,weaponDef->visuals.texture1, owner));
 			}
 		}
 	}

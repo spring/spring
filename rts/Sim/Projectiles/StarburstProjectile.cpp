@@ -231,11 +231,11 @@ void CStarburstProjectile::Draw(void)
 		float size=1;
 		float size2=(1+age2*(1/Smoke_Time)*7);
 
-		float txs=ph->smoketrailtex.xstart - (ph->smoketrailtex.xend-ph->smoketrailtex.xstart)*(age2/8.0);//(1-age2/8.0);
-		va->AddVertexTC(interPos-dir1*size, txs, ph->smoketrailtex.ystart, col);
-		va->AddVertexTC(interPos+dir1*size, txs, ph->smoketrailtex.yend, col);
-		va->AddVertexTC(oldSmoke+dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend, col2);
-		va->AddVertexTC(oldSmoke-dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
+		float txs=weaponDef->visuals.texture2->xstart - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0);//(1-age2/8.0);
+		va->AddVertexTC(interPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
+		va->AddVertexTC(interPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
+		va->AddVertexTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
+		va->AddVertexTC(oldSmoke-dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 	} else {	//draw the trail as particles
 		float dist=pos.distance(oldSmoke);
 		float3 dirpos1=pos-dir*dist*0.33;
@@ -306,10 +306,10 @@ void CStarburstProjectile::DrawCallback(void)
 				col[2]=(unsigned char) (150*alpha);
 			}
 			drawsize=1+age2*0.8*ageMod*7;
-			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explotex.xstart,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explotex.xend,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explotex.xend,ph->explotex.yend,col);
-			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explotex.xstart,ph->explotex.yend,col);
+			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,col);
+			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->yend,col);
 		}
 	}
 
@@ -319,10 +319,10 @@ void CStarburstProjectile::DrawCallback(void)
 	col[2]=180;
 	col[3]=1;
 	float fsize = 25.0f;
-	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,ph->flaretex.xstart,ph->flaretex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,ph->flaretex.xend,ph->flaretex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,ph->flaretex.xend,ph->flaretex.yend,col);
-	va->AddVertexTC(interPos-camera->right*fsize+camera->up*fsize,ph->flaretex.xstart,ph->flaretex.yend,col);
+	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+	va->AddVertexTC(interPos-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 }
 
 void CStarburstProjectile::DrawUnitPart(void)

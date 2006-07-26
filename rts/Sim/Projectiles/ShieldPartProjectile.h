@@ -1,11 +1,13 @@
 #pragma once
 #include "Sim/Projectiles/Projectile.h"
 
+struct AtlasedTexture;
+
 class CShieldPartProjectile :
 	public CProjectile
 {
 public:
-	CShieldPartProjectile(const float3& centerPos,int xpart,int ypart,float size,float3 color,float alpha,CUnit* owner);
+	CShieldPartProjectile(const float3& centerPos,int xpart,int ypart,float size,float3 color,float alpha, AtlasedTexture *texture,CUnit* owner);
 	~CShieldPartProjectile(void);
 	void Draw(void);
 	void Update(void);
