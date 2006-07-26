@@ -136,7 +136,7 @@ START_TIME_PROFILE;
 	unit->jammerRadius=ud->jammerRadius/(SQUARE_SIZE*8);
 	unit->sonarJamRadius=ud->sonarJamRadius/(SQUARE_SIZE*8);
 	unit->seismicRadius = ud->seismicRadius /(SQUARE_SIZE*8);
-	unit->seismicSignature = ud->seismicSignature /(SQUARE_SIZE*8);
+	unit->seismicSignature = ud->seismicSignature;
 	unit->hasRadarCapacity=unit->radarRadius || unit->sonarRadius || unit->jammerRadius || unit->sonarJamRadius || unit->seismicRadius;
 	unit->stealth=ud->stealth;
 	unit->category=ud->category;

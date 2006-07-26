@@ -517,8 +517,8 @@ void CUnit::SlowUpdate()
 
 	if(moveType->progressState == CMoveType::Active)
 	{
-		if(physicalState == OnGround && !(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
-			new CSimpleGroundFlash(pos, ph->seismictex, 30, 15, 0, sqrt(mass/100.0), 1, float3(0.8,0.1,0.1));
+		if(/*physicalState == OnGround*/seismicSignature && !(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
+			new CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat()),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat())), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8,0.0,0.0));
 	}
 
 	CalculateTerrainType();
