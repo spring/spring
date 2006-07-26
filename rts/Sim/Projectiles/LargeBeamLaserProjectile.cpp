@@ -5,28 +5,28 @@
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
-CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,const float3& endPos,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness,
-													 float flaresize, float tilelength, float scrollspeed, float pulseSpeed, AtlasedTexture *beamtex, AtlasedTexture *side)
-: CProjectile((startPos+endPos)*0.5,ZeroVector,owner),
+CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,const float3& endPos,const float3& color, const float3& color2,CUnit* owner, WeaponDef *weaponDef)
+:	CWeaponProjectile(startPos+(endPos-startPos)*0.5,ZeroVector, owner, 0, ZeroVector, weaponDef,damages,0),//CProjectile((startPos+endPos)*0.5,ZeroVector,owner),
 	startPos(startPos),
-	endPos(endPos),
-	thickness(thickness),
-	corethickness(corethickness),
-	flaresize(flaresize),
-	tilelength(tilelength),
-	scrollspeed(scrollspeed),
-	pulseSpeed(pulseSpeed)
+	endPos(endPos)
+	//thickness(thickness),
+	//corethickness(corethickness),
+	//flaresize(flaresize),
+	//tilelength(tilelength),
+	//scrollspeed(scrollspeed),
+	//pulseSpeed(pulseSpeed)
 {
 	checkCol=false;
 	useAirLos=true;
 
-	this->beamtex = *beamtex;
-	this->side = *side;
+	this->beamtex = *weaponDef->visuals.texture1;
+	this->side = *weaponDef->visuals.texture3;
 
 	SetRadius(pos.distance(endPos));
 
-	//midtexx = ph->laserendtex.xstart + (ph->laserendtex.xend-ph->laserendtex.xstart)*0.5;
+	//midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5;
 	corecolstart[0]=(unsigned char)(color2.x*255);
 	corecolstart[1]=(unsigned char)(color2.y*255);
 	corecolstart[2]=(unsigned char)(color2.z*255);
@@ -43,6 +43,13 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,cons
 	kocolend[1]=(unsigned char)(color.y*endAlpha);
 	kocolend[2]=(unsigned char)(color.z*endAlpha);
 	kocolend[3]=1;*/
+
+	thickness = weaponDef->thickness;
+	corethickness = weaponDef->corethickness;
+	flaresize = weaponDef->laserflaresize;
+	tilelength = weaponDef->visuals.tilelength;
+	scrollspeed = weaponDef->visuals.scrollspeed;
+	pulseSpeed = weaponDef->visuals.pulseSpeed;
 
 	//tilelength = 200;
 	//scrollspeed = 5;
@@ -155,15 +162,15 @@ void CLargeBeamLaserProjectile::Draw(void)
 		va->AddVertexTC(pos2-dir1*coresize,tex.xend,tex.ystart,		corecolstart);
 	}
 
-	//float 	midtexx = ph->laserendtex.xstart + (ph->laserendtex.xend-ph->laserendtex.xstart)*0.5;
-	va->AddVertexTC(pos2-dir1*size,	ph->laserendtex.xstart,ph->laserendtex.ystart,    kocolstart);
-	va->AddVertexTC(pos2+dir1*size,	ph->laserendtex.xstart,ph->laserendtex.yend,kocolstart);
-	va->AddVertexTC(pos2+dir1*size+dir2*size, ph->laserendtex.xend,ph->laserendtex.yend,kocolstart);
-	va->AddVertexTC(pos2-dir1*size+dir2*size, ph->laserendtex.xend,ph->laserendtex.ystart,kocolstart);
-	va->AddVertexTC(pos2-dir1*coresize,ph->laserendtex.xstart,ph->laserendtex.ystart,    corecolstart);
-	va->AddVertexTC(pos2+dir1*coresize,ph->laserendtex.xstart,ph->laserendtex.yend,corecolstart);
-	va->AddVertexTC(pos2+dir1*coresize+dir2*coresize,ph->laserendtex.xend,ph->laserendtex.yend,corecolstart);
-	va->AddVertexTC(pos2-dir1*coresize+dir2*coresize,ph->laserendtex.xend,ph->laserendtex.ystart,corecolstart);
+	//float 	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5;
+	va->AddVertexTC(pos2-dir1*size,	weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,    kocolstart);
+	va->AddVertexTC(pos2+dir1*size,	weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,kocolstart);
+	va->AddVertexTC(pos2+dir1*size+dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,kocolstart);
+	va->AddVertexTC(pos2-dir1*size+dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,kocolstart);
+	va->AddVertexTC(pos2-dir1*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,    corecolstart);
+	va->AddVertexTC(pos2+dir1*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,corecolstart);
+	va->AddVertexTC(pos2+dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,corecolstart);
+	va->AddVertexTC(pos2-dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,corecolstart);
 
 	//for(float bpos=0; bpos
 	//CTextureAtlas::Texture side = ph->textureAtlas->GetTexture("muzzleside");
@@ -220,15 +227,15 @@ void CLargeBeamLaserProjectile::Draw(void)
 	//draw flare
 	float fsize = size*flaresize;
 	pos1 = startPos - camera->forward*3;//move flare slightly in camera direction
-	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,ph->flaretex.xstart,ph->flaretex.ystart,kocolstart);
-	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,ph->flaretex.xend,ph->flaretex.ystart,kocolstart);
-	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,ph->flaretex.xend,ph->flaretex.yend,kocolstart);
-	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,ph->flaretex.xstart,ph->flaretex.yend,kocolstart);
+	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture4->xstart,weaponDef->visuals.texture4->ystart,kocolstart);
+	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture4->xend,weaponDef->visuals.texture4->ystart,kocolstart);
+	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture4->xend,weaponDef->visuals.texture4->yend,kocolstart);
+	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture4->xstart,weaponDef->visuals.texture4->yend,kocolstart);
 
 	fsize = fsize*corethickness;
-	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,ph->flaretex.xstart,ph->flaretex.ystart,corecolstart);
-	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,ph->flaretex.xend,ph->flaretex.ystart,corecolstart);
-	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,ph->flaretex.xend,ph->flaretex.yend,corecolstart);
-	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,ph->flaretex.xstart,ph->flaretex.yend,corecolstart);
+	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture4->xstart,weaponDef->visuals.texture4->ystart,corecolstart);
+	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture4->xend,weaponDef->visuals.texture4->ystart,corecolstart);
+	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture4->xend,weaponDef->visuals.texture4->yend,corecolstart);
+	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture4->xstart,weaponDef->visuals.texture4->yend,corecolstart);
 
 }
