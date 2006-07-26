@@ -166,7 +166,7 @@ public:
 	int jammerRadius;
 	int sonarJamRadius;
 	int seismicRadius;
-	int seismicSignature;
+	float seismicSignature;
 	bool hasRadarCapacity;
 	std::vector<int> radarSquares;
 	int2 oldRadarPos;
