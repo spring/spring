@@ -48,7 +48,9 @@ if env['strip']:
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
 unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
-	['rts/System/TdfParser.cpp',
+	['rts/Rendering/Textures/Bitmap.cpp',
+	'rts/Rendering/Textures/nv_dds.cpp',
+	'rts/System/TdfParser.cpp',
 	'rts/System/FileSystem/Archive7Zip.cpp',
 	'rts/System/FileSystem/ArchiveBuffered.cpp',
 	'rts/System/FileSystem/ArchiveDir.cpp',
@@ -77,7 +79,7 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	'rts/lib/minizip/ioapi.c',
 	'rts/lib/minizip/unzip.c',
 	'rts/lib/minizip/zip.c']
-if env['platform'] == 'win32':
+if env['platform'] == 'windows':
 	unitsync_files += ['rts/lib/minizip/iowin32.c']
 unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)
 Alias('unitsync', unitsync)
