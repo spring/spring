@@ -179,8 +179,8 @@ void CLargeBeamLaserProjectile::Draw(void)
 		kocol[3] = 1;
 		for(int i=0; i<3; i++)
 		{
-			corcol[i] = corecolstart[i]*(1-starttex);
-			kocol[i] = kocolstart[i]*(1-starttex);
+			corcol[i] = int(corecolstart[i]*(1-starttex));
+			kocol[i] = int(kocolstart[i]*(1-starttex));
 		}
 
 		pos1 = startPos-dir*(size*flaresize)*0.02;
@@ -200,8 +200,8 @@ void CLargeBeamLaserProjectile::Draw(void)
 			starttex=starttex-1;
 		for(int i=0; i<3; i++)
 		{
-			corcol[i] = corecolstart[i]*(1-starttex);
-			kocol[i] = kocolstart[i]*(1-starttex);
+			corcol[i] = int(corecolstart[i]*(1-starttex));
+			kocol[i] = int(kocolstart[i]*(1-starttex));
 		}
 		muzzlesize = size*flaresize*starttex;
 		va->AddVertexTC(pos1+dir1*muzzlesize,side.xstart,side.ystart,kocol);

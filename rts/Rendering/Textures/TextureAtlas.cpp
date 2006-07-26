@@ -149,7 +149,7 @@ bool CTextureAtlas::Finalize()
 			textures[memtextures[i]->names[n]] = tex;
 
 		usedPixels += memtextures[i]->xpos*memtextures[i]->ypos;
-		delete [] memtextures[i]->data;
+		delete [] (char*)memtextures[i]->data;
 		delete memtextures[i];
 	}
 	memtextures.clear();

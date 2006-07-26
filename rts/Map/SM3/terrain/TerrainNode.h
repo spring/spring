@@ -234,9 +234,9 @@ namespace terrain
 		dhdx += -hm->HeightAt (xm,yp) + hm->HeightAt (xp, yp);
 		dhdx *= 0.25f;*/
 
-		int dhdx = -hm->at (xm,ym) + hm->at (xp, ym);
-		dhdx += 2 * (-hm->at (xm,y) + hm->at (xp, y));
-		dhdx += -hm->at (xm,yp) + hm->at (xp, yp);
+		int dhdx = int(-hm->at (xm,ym) + hm->at (xp, ym));
+		dhdx += int(2 * (-hm->at (xm,y) + hm->at (xp, y)));
+		dhdx += int(-hm->at (xm,yp) + hm->at (xp, yp));
 
 		// 
 		//Z filter:
@@ -247,8 +247,8 @@ namespace terrain
 		/*float dhdz = hm->HeightAt (xm, yp) + 2.0f * hm->HeightAt (x, yp) + hm->HeightAt (xp, yp);
 		dhdz -= hm->HeightAt (xm, ym) + 2.0f * hm->HeightAt (x, ym) + hm->HeightAt (xp, ym);
 		dhdz *= 0.25f;*/
-		int dhdz = hm->at (xm, yp) + 2 * hm->at (x, yp) + hm->at (xp, yp);
-		dhdz -= hm->at (xm, ym) + 2 * hm->at (x, ym) + hm->at (xp, ym);
+		int dhdz = int(hm->at (xm, yp) + 2 * hm->at (x, yp) + hm->at (xp, yp));
+		dhdz -= int(hm->at (xm, ym) + 2 * hm->at (x, ym) + hm->at (xp, ym));
 
 		tangent = Vector3(hm->squareSize * 2.0f, /*hm->scale * */ dhdx * 0.25f, 0.0f);
 		binormal = Vector3(0.0f, dhdz * /*hm->scale * */ 0.25f, hm->squareSize * 2.0f);
