@@ -10,12 +10,49 @@ TASpring change log
 * [change] The LOS drawing mode is remembered when you switch back and forth to others (e.g. metalmap, heightmap).
 * [change] Radar and jammer range is shown by default if you press 'L'.
 * [change] Radar and jammer toggle ';' happens instantly.
+
 * New weapon tdf tag rgbcolor2, used to make laser weapon have diferent color at the center, defaults to white.
 * New weapon tdf tag corethickness, how thick the inner color of a laser is, this is a percentage value, default is 0.25
 * New weapon tdf tag laserflaresize, size of the flare for laser weapons, multiplier for thickness, default 15.
-* New weapon FBI tags, texture1, texture2, tilelength, scrollspeed, pulseSpeed.
+* New weapon td tag LargeBeamLaser, if set to 1 a beamlaser uses an alternat graphics effect.
+	New tags usable for a LargeBeamLaser is:
+		tilelength: defines the length before the texture used is repeated (tiled).
+		scrollspeed: how fast the beam apears to be moving towards it target.
+		pulseSpeed: how fast the pulsating effect at the beam start is.
+
+* New weapon FBI tags, texture1, texture2, texture3, texture4, the texture must be defined in resources.tdf in the projectile section.
+	MissileProjectile (standar rockets and guided missiles):
+		texture1 = flare
+		texture2 = smoke
+	LaserProjectile:
+		texture1 = laserbeam
+		texture2 = Start and end of the beam (half of the texture used at either end.
+	BeamLaserProjectile:
+		texture1 = laserbeam
+		texture2 = Start and end of the beam (half of the texture used at either end.
+		texture3 = muzzle flare
+	LargeBeamLaserProjectile:
+		texture1 = laserbeam
+		texture2 = Start and end of the beam (half of the texture used at either end.
+		texture3 = Extra graphical effect at the start of the beam.
+		texture4 = muzzle flare
+	StarBurstProjectile (starburst weaponry, like nukes):
+		texture1 = flare
+		texture2 = smoke
+		texture3 = flame
+	EmgProjectile
+		texture1 = texture for the projectile
+	LightningProjectile
+		texture1 = texture for the lightning
+	ExplosiveProjectile (used in most plasma cannons)
+		texture1 = texture of the projectile, will be blended multiple times.
+
+
 * tdf tag duration is used for laser weapons.
+* tdf tag rgbcolor is used for EmgProjectile and ExplosiveProjectile.
+* tdf tag intensity is used for EmgProjectile and ExplosiveProjectile.
 * edgeEffectivness added for weapons
+
 - Added limited fuel settings for units (only work for aircrafts so far, need a good mechanism for refueling other stuff)
 -  New fbi tag MaxFuel, max fuel in seconds that the unit can carry, default 0 = unlimited
 -  New fbi tag RefuelTime, how long time it takes to fully refuel the unit, default 5
