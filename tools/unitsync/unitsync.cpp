@@ -17,6 +17,16 @@
 #include <vector>
 #include <algorithm>
 
+#define ASSERT(condition, message) \
+	do { \
+		if (!(condition)) { \
+			char buf[256]; \
+			sprintf(buf, "%s:%d: %s", __FILE__, __LINE__, message); \
+			MessageBox(0, buf, "Unitsync assertion failed", MB_OK); \
+		} \
+		assert(condition); /* just crash after the error in release mode */ \
+	} while(0)
+
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer *syncer = NULL;
 static CArchiveScanner* scanner = NULL;
@@ -212,11 +222,15 @@ DLL_EXPORT int __stdcall InitArchiveScanner()
 
 DLL_EXPORT void __stdcall AddArchive(const char* name)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before AddArchive.");
+	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to AddArchive.");
 	hpiHandler->AddArchive(name, false);
 }
 
 DLL_EXPORT void __stdcall AddAllArchives(const char* root)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before AddAllArchives.");
+	ASSERT(root && *root, "Don't pass a NULL pointer or an empty string to AddAllArchives.");
 	vector<string> ars = scanner->GetArchives(root);
 //	Message(root);
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
@@ -226,6 +240,8 @@ DLL_EXPORT void __stdcall AddAllArchives(const char* root)
 
 DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetArchiveChecksum.");
+	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchiveChecksum.");
 	return scanner->GetArchiveChecksum(arname);
 }
 
@@ -234,6 +250,7 @@ static vector<string> mapNames;
 
 DLL_EXPORT int __stdcall GetMapCount()
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMapCount.");
 	//vector<string> files = CFileHandler::FindFiles("{maps/*.smf,maps/*.sm3}");
 	vector<string> files = CFileHandler::FindFiles("maps/*.smf");
 	vector<string> ars = scanner->GetMaps();
@@ -257,6 +274,8 @@ DLL_EXPORT int __stdcall GetMapCount()
 
 DLL_EXPORT const char* __stdcall GetMapName(int index)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMapName.");
+	ASSERT((unsigned)index < mapNames.size(), "Array index out of bounds. Call GetMapCount before GetMapName.");
 	return GetStr(mapNames[index]);
 }
 
@@ -264,6 +283,9 @@ DLL_EXPORT const char* __stdcall GetMapName(int index)
 
 DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMapInfo.");
+	ASSERT(name && *name && outInfo, "Don't pass a NULL pointer or an empty string to GetMapInfo.");
+
 	// Determine if the map is found in an archive
 	string mapName = name;
 	CVFSHandler *oh = hpiHandler;
@@ -379,20 +401,25 @@ static vector<string> mapArchives;
 
 DLL_EXPORT int __stdcall GetMapArchiveCount(const char* mapName)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMapArchiveCount.");
 	mapArchives = scanner->GetArchivesForMap(mapName);
 	return mapArchives.size();
 }
 
 DLL_EXPORT const char* __stdcall GetMapArchiveName(int index)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMapArchiveName.");
+	ASSERT((unsigned)index < mapArchives.size(), "Array index out of bounds. Call GetMapArchiveCount before GetMapArchiveName.");
 	return GetStr(mapArchives[index]);
 }
 
 DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
 {
-	CFileHandler f("maps/" + mapArchives[index]);
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMapChecksum.");
+	ASSERT((unsigned)index < mapNames.size(), "Array index out of bounds. Call GetMapCount before GetMapChecksum.");
+	CFileHandler f("maps/" + mapNames[index]);
 	if (!f.FileExists())
-		return scanner->GetChecksumForMap(mapArchives[index]);
+		return scanner->GetChecksumForMap(mapNames[index]);
 	return 0;
 }
 
@@ -563,6 +590,10 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 
 DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMinimap.");
+	ASSERT(filename && *filename, "Don't pass a NULL pointer or an empty string to GetMinimap.");
+	ASSERT(miplevel >= 0 && miplevel <= 10, "Miplevel must be between 0 and 10 (inclusive) in GetMinimap.");
+
 	// Determine if the map is found in an archive
 	string mapName = filename;
 	string extension = mapName.substr(mapName.length()-3);
@@ -600,18 +631,23 @@ vector<CArchiveScanner::ModData> modData;
 
 DLL_EXPORT int __stdcall GetPrimaryModCount()
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModCount.");
 	modData = scanner->GetPrimaryMods();
 	return modData.size();
 }
 
 DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModName.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModName.");
 	string x = modData[index].name;
 	return GetStr(x);
 }
 
 DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModArchive.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModArchive.");
 	return GetStr(modData[index].dependencies[0]);
 }
 
@@ -624,27 +660,35 @@ vector<string> primaryArchives;
 
 DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModArchiveCount.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModArchiveCount.");
 	primaryArchives = scanner->GetArchives(modData[index].dependencies[0]);
 	return primaryArchives.size();
 }
 
 DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModArchiveList.");
+	ASSERT((unsigned)arnr < primaryArchives.size(), "Array index out of bounds. Call GetPrimaryModArchiveCount before GetPrimaryModArchiveList.");
 	return GetStr(primaryArchives[arnr]);
 }
 
 DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModIndex.");
 	string n(name);
 	for (int i = 0; i < modData.size(); ++i) {
 		if (modData[i].name == n)
 			return i;
 	}
+	// if it returns -1, make sure you call GetPrimaryModCount before GetPrimaryModIndex.
 	return -1;
 }
 
 DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index)
 {
+	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModChecksum.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModChecksum.");
 	return scanner->GetChecksum(GetPrimaryModArchive(index));
 }
 
@@ -683,6 +727,7 @@ DLL_EXPORT int __stdcall GetSideCount()
 
 DLL_EXPORT const char* __stdcall GetSideName(int side)
 {
+	ASSERT((unsigned)side < modData.size(), "Array index out of bounds. Call GetSideCount before GetSideName.");
 	return GetStr(sideData[side].name);
 }
 
@@ -697,6 +742,7 @@ static vector<string> curFindFiles;
 
 DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
 {
+	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenFileVFS.");
 	CFileHandler* fh = new CFileHandler(name);
 	if (!fh->FileExists()) {
 		delete fh;
@@ -711,18 +757,22 @@ DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
 
 DLL_EXPORT void __stdcall CloseFileVFS(int handle)
 {
-	CFileHandler* fh = openFiles[handle];
-	delete fh;
+	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to CloseFileVFS.");
+	delete openFiles[handle];
+	openFiles.erase(handle);
 }
 
 DLL_EXPORT void __stdcall ReadFileVFS(int handle, void* buf, int length)
 {
+	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to ReadFileVFS.");
+	ASSERT(buf, "Don't pass a NULL pointer to ReadFileVFS.");
 	CFileHandler* fh = openFiles[handle];
 	fh->Read(buf, length);
 }
 
 DLL_EXPORT int __stdcall FileSizeVFS(int handle)
 {
+	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to FileSizeVFS.");
 	CFileHandler* fh = openFiles[handle];
 	return fh->FileSize();
 }
@@ -740,6 +790,8 @@ DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 // until 0 is returned. size should be set to max namebuffer size on call
 DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 {
+	ASSERT(nameBuf, "Don't pass a NULL pointer to FindFilesVFS.");
+	ASSERT(size <= 0, "Negative or zero buffer length doesn't make sense.");
 	if (handle >= curFindFiles.size())
 		return 0;
 	strncpy(nameBuf, curFindFiles[handle].c_str(), size);
@@ -756,6 +808,7 @@ static int nextArchive = 0;
 // returns 0 on error, a handle otherwise
 DLL_EXPORT int __stdcall OpenArchive(const char* name)
 {
+	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenArchive.");
 	CArchiveBase* a = CArchiveFactory::OpenArchive(name);
 	if (a) {
 		nextArchive++;
@@ -769,12 +822,15 @@ DLL_EXPORT int __stdcall OpenArchive(const char* name)
 
 DLL_EXPORT void __stdcall CloseArchive(int archive)
 {
-	CArchiveBase* a = openArchives[archive];
+	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to CloseArchive.");
+	delete openArchives[archive];
 	openArchives.erase(archive);
 }
 
 DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 {
+	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to FindFilesArchive.");
+	ASSERT(nameBuf && size, "Don't pass a NULL pointer to FindFilesArchive.");
 	CArchiveBase* a = openArchives[archive];
 	
 	string name;
@@ -789,24 +845,30 @@ DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, i
 
 DLL_EXPORT int __stdcall OpenArchiveFile(int archive, const char* name)
 {
+	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to OpenArchiveFile.");
+	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenArchiveFile.");
 	CArchiveBase* a = openArchives[archive];
 	return a->OpenFile(name);
 }
 
 DLL_EXPORT int __stdcall ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 {
+	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to ReadArchiveFile.");
+	ASSERT(buffer, "Don't pass a NULL pointer to ReadArchiveFile.");
 	CArchiveBase* a = openArchives[archive];
 	return a->ReadFile(handle, buffer, numBytes);
 }
 
 DLL_EXPORT void __stdcall CloseArchiveFile(int archive, int handle)
 {
+	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to CloseArchiveFile.");
 	CArchiveBase* a = openArchives[archive];
 	return a->CloseFile(handle);
 }
 
 DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle)
 {
+	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to SizeArchiveFile.");
 	CArchiveBase* a = openArchives[archive];
 	return a->FileSize(handle);
 }

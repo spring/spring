@@ -596,6 +596,9 @@ static PyMethodDef unitsyncMethods[] = {
 		 	"InitArchiveScanner must be called before this function."),
 	PYDOC( GetMinimap, "GetMinimap(mapName, mipLevel, targaFilename) -- Write 24 bit targa minimap of mapName to targaFilename.\n"
 			"The width and height of the saved targa is 1024 >> mipLevel (that is: 1024 / 2^mipLevel)" ),
+	PY( GetMapArchiveCount ),
+	PY( GetMapArchiveName ),
+	PY( GetMapChecksum ),
 	PYDOC( GetPrimaryModCount, "GetPrimaryModCount() -- Updates the list of locally available mods and returns the number of mods.\n"
 			"InitArchiveScanner must be called before this function."),
 	PYDOC( GetPrimaryModName, "GetPrimaryModName(n) -- Returns the name of the nth mod, e.g. 'XTA v0.66 Pimped Edition V3'.\n"
@@ -609,6 +612,7 @@ static PyMethodDef unitsyncMethods[] = {
 	PYDOC( GetPrimaryModIndex, "GetPrimaryModIndex(modName) -- Returns the index of modName or -1 if it can't be found.\n"
 			"GetPrimaryModIndex(GetPrimaryModName(n)) == n for n < GetPrimaryModCount()\n"
 			"GetPrimaryModCount must be called before this function."),
+	PY( GetPrimaryModChecksum ),
 	PY( GetSideCount ),
 	PY( GetSideName ),
 	PY( OpenFileVFS ),
