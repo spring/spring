@@ -538,9 +538,9 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 unsigned int CArchiveScanner::GetChecksum(const string& root)
 {
 	unsigned int checksum = 0;
-	vector<string> ars = archiveScanner->GetArchives(root);
+	vector<string> ars = GetArchives(root);
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-		checksum  ^= archiveScanner->GetArchiveChecksum(*i);
+		checksum  ^= GetArchiveChecksum(*i);
 	return checksum;
 }
 
@@ -548,8 +548,8 @@ unsigned int CArchiveScanner::GetChecksum(const string& root)
 unsigned int CArchiveScanner::GetChecksumForMap(const string& mapName)
 {
 	unsigned int checksum = 0;
-	vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+	vector<string> ars = GetArchivesForMap(mapName);
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-		checksum ^= archiveScanner->GetArchiveChecksum(*i);
+		checksum ^= GetArchiveChecksum(*i);
 	return checksum;
 }
