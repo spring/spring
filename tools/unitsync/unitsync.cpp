@@ -604,6 +604,9 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 		if (!f.FileExists()) {
 			vector<string> ars = scanner->GetArchivesForMap(mapName);
 
+			if (ars.empty())
+				return NULL;
+
 			hpiHandler = new CVFSHandler(false);
 			hpiHandler->AddArchive(ars[0], false);
 		}

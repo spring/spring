@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <cstring>
 #include "unitsync.h"
+#include "Rendering/Textures/Bitmap.h"
 
 #define NAMEBUF_SIZE 4096
 
@@ -287,50 +288,42 @@ static PyObject *unitsync_GetMapInfo(PyObject *self, PyObject *args)
 #define BLUE_RGB565(x) (x&BM)
 #define PACKRGB(r, g, b) (((r<<11)&RM) | ((g << 5)&GM) | (b&BM) )
 
-static bool write_targa_minimap(const char* filename, void* data, int w, int h)
-{
-	// open file
-	FILE* fp = fopen(filename, "wb");
-	if(!fp)
-		return false;
-
-	// fill & write header
-	char targaheader[18];
-	memset(targaheader, 0, sizeof(targaheader));
-
-	targaheader[2] = 2; /* image type = uncompressed gray-scale */
-	targaheader[12] = (char) (w & 0xFF);
-	targaheader[13] = (char) (w >> 8);
-	targaheader[14] = (char) (h & 0xFF);
-	targaheader[15] = (char) (h >> 8);
-	targaheader[16] = 24; /* 24 bit color */
-	targaheader[17] = 0x20; /* Top-down, non-interlaced */
-
-	fwrite(targaheader, 18, 1, fp);
-
-	// write file
-	unsigned char out[3];
-	unsigned short* begin = (unsigned short*) data;
-	unsigned short* end = begin + w * h;
-	for (; begin < end; ++begin) {
-		out[0] = BLUE_RGB565  ((*begin)) << 3;
-		out[1] = GREEN_RGB565 ((*begin)) << 2;
-		out[2] = RED_RGB565   ((*begin)) << 3;
-		fwrite(out, 3, 1, fp);
-	}
-	return fclose(fp) != EOF;
-}
-
 static PyObject *unitsync_GetMinimap(PyObject *self, PyObject *args)
 {
-	const char* targa_filename;
+	const char* bitmap_filename;
 	const char* filename;
 	int miplevel;
-	if (!PyArg_ParseTuple(args, "sis", &filename, &miplevel, &targa_filename))
+	if (!PyArg_ParseTuple(args, "sis", &filename, &miplevel, &bitmap_filename))
 		return NULL;
 	void* minimap = GetMinimap(filename, miplevel);
-	bool succes = minimap ? write_targa_minimap(targa_filename, minimap, 1024 >> miplevel, 1024 >> miplevel) : false;
-	return succes ? Py_BuildValue("s", targa_filename) : Py_BuildValue("");
+	if (!minimap)
+		return Py_BuildValue(""); // return failure
+	int size = 1024 >> miplevel;
+	CBitmap bm;
+	bm.Alloc(size, size);
+	unsigned short *src = (unsigned short*)minimap;
+	unsigned char *dst = bm.mem;
+	for (int y = 0; y < size; y++) {
+		for (int x = 0; x < size; x++)
+		{
+			dst[0] = RED_RGB565   ((*src)) << 3;
+			dst[1] = GREEN_RGB565 ((*src)) << 2;
+			dst[2] = BLUE_RGB565  ((*src)) << 3;
+			dst[3] = 255;
+			++src;
+			dst += 4;
+		}
+	}
+	remove(bitmap_filename); //somehow overwriting doesn't work??
+	bm.Save(bitmap_filename);
+	// check whether the bm.Save succeeded?
+	FILE* f = fopen(bitmap_filename, "rb");
+	bool success = !!f;
+	if (success) {
+		fclose(f);
+		return Py_BuildValue("s", bitmap_filename); // return success
+	}
+	return Py_BuildValue(""); // return failure
 }
 
 static PyObject *unitsync_GetMapArchiveCount(PyObject *self, PyObject *args)
@@ -594,8 +587,8 @@ static PyMethodDef unitsyncMethods[] = {
 			"is 0 on failure, 1 on succes. The map looks like the following example:\n"
 			"{'posCount': 6, 'extractorRadius': 400, 'maxMetal': 0.029999999329447746, 'positions': [(600, 600), (3600, 3600), (3600, 600), (600, 3600), (2000, 600), (2000, 3600), ...], 'maxWind': 20, 'gravity': 130, 'height': 4096, 'minWind': 5, 'tidalStrength': 20, 'width': 4096, 'description': 'Lot of metal in middle but look out for kbot walking over the mountains'}\n"
 		 	"InitArchiveScanner must be called before this function."),
-	PYDOC( GetMinimap, "GetMinimap(mapName, mipLevel, targaFilename) -- Write 24 bit targa minimap of mapName to targaFilename.\n"
-			"The width and height of the saved targa is 1024 >> mipLevel (that is: 1024 / 2^mipLevel)" ),
+	PYDOC( GetMinimap, "GetMinimap(mapName, mipLevel, bitmapFilename) -- Write minimap image of mapName to bitmapFilename.\n"
+			"The width and height of the saved image is 1024 >> mipLevel (that is: 1024 / 2^mipLevel). Any format supported by DevIL is supported by this function." ),
 	PY( GetMapArchiveCount ),
 	PY( GetMapArchiveName ),
 	PY( GetMapChecksum ),
