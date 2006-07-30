@@ -10,6 +10,8 @@
   File "..\game\Unitsync.dll"
   
   CreateDirectory "$INSTDIR\lobby\cache"
+  CreateDirectory "$INSTDIR\lobby\cache\online"
+  CreateDirectory "$INSTDIR\lobby\cache\maps"
   CreateDirectory "$INSTDIR\lobby\var"
   CreateDirectory "$INSTDIR\lobby\logs"
   
