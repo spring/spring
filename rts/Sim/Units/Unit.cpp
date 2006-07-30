@@ -98,6 +98,7 @@ CUnit::CUnit ()
 	lastAttack(-200),
 	userTarget(0),
 	userAttackGround(false),
+	commandShotCount(0),
 	lastLosUpdate(0),
 	fireState(2),
 	moveState(0),
@@ -902,6 +903,7 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 	bool r=false;
 	haveDGunRequest=dgun;
 	userAttackGround=false;
+	commandShotCount=0;
 	SetUserTarget(unit);
 	std::vector<CWeapon*>::iterator wi;
 	for(wi=weapons.begin();wi!=weapons.end();++wi){
@@ -920,6 +922,7 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 	SetUserTarget(0);
 	userAttackPos=pos;
 	userAttackGround=true;
+	commandShotCount=0;
 	std::vector<CWeapon*>::iterator wi;
 	for(wi=weapons.begin();wi!=weapons.end();++wi){
 		(*wi)->haveUserTarget=false;
@@ -1496,6 +1499,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(userAttackPos),
 
 				CR_MEMBER(userAttackGround),
+				CR_MEMBER(commandShotCount),
 				CR_MEMBER(fireState),
 				CR_MEMBER(dontFire),
 				CR_MEMBER(moveState),

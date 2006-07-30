@@ -36,7 +36,6 @@
 #include "SDL_mouse.h"
 #include "SDL_keysym.h"
 #include "SDL_events.h"
-
 #include "NewGuiDefine.h"
 
 #ifdef NEW_GUI
@@ -89,6 +88,7 @@ CMouseHandler::CMouseHandler()
 	soundMultiselID = sound->GetWaveId("button9.wav");
 
 	invertMouse=!!configHandler.GetInt("InvertMouse",1);
+  doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
 	camControllers.push_back(new CFPSController);				//fps camera must always be the first one in the list
 	camControllers.push_back(new COverheadController);
@@ -347,7 +347,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			CUnit* unit;
 			float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,false);
 			if(unit && unit->team==gu->myTeam){
-				if(buttons[button].lastRelease<gu->gameTime-0.2){
+				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
 					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(unit);
 					} else {

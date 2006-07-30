@@ -2,25 +2,45 @@ TASpring change log
 
 0.next
 
-* [feature] A new group AI, "MexUpgrader AI" has been added. See http://taspring.clan-sy.com/wiki/MexUpgrader_AI for more info.
-* [feature] Custom unit icons are supported. See http://taspring.clan-sy.com/wiki/CustomUnitIcons for more info.
-* [bugfix] 'Quit and Resign' dialog now also appears when you're hosting, and stays hidden when the game is over.
-* [bugfix] Commands on enemy units (attack, reclaim) get canceled automatically when the unit leaves LOS / radar.
-* [change] 'Quit and Resign' dialog now only gives everything to allies (and not enemies) if they are still alive.
-* [change] The LOS drawing mode is remembered when you switch back and forth to others (e.g. metalmap, heightmap).
-* [change] Radar and jammer range is shown by default if you press 'L'.
-* [change] Radar and jammer toggle ';' happens instantly.
+- modified the ground attack command for queued attack patterns
+  (the last queued attack position is repeated for backwards compatibility)
+- removed the height factor from AirCAI ground attack command drawing
+- added word completion, with dot commands, player names, and unit names
+  (also does partial match reporting, ex: ".<tab>" shows all commands,
+   and the unit names are only active for .give commands)
+- added console input history buffer
+- added [DoubleClickTime=200] config parameter
+- added [WindowEdgeMove=1], for folks who run windowed with fullscreen size
+  (ex: good with X11/icewm to allow moving between virtual screens,
+       and to avoid display lockups during crashes)
+- disabled rendering while inactive (minimized)
+- added a null sound driver [NoSound=1]
+- merged global synced/unsynced "drawdebug" variables
+- added vsync for GLX
+- windows users can use [VSync=-1] to use system default
+- allow selection of vsync rate
 
-* New weapon tdf tag rgbcolor2, used to make laser weapon have diferent color at the center, defaults to white.
-* New weapon tdf tag corethickness, how thick the inner color of a laser is, this is a percentage value, default is 0.25
-* New weapon tdf tag laserflaresize, size of the flare for laser weapons, multiplier for thickness, default 15.
-* New weapon td tag LargeBeamLaser, if set to 1 a beamlaser uses an alternat graphics effect.
+- added the ".cmd <action>" command for testing guikeys
+- added the ".bind <key> <action>" command for testing guikeys
+- [feature] A new group AI, "MexUpgrader AI" has been added. See http://taspring.clan-sy.com/wiki/MexUpgrader_AI for more info.
+- [feature] Custom unit icons are supported. See http://taspring.clan-sy.com/wiki/CustomUnitIcons for more info.
+- [bugfix] 'Quit and Resign' dialog now also appears when you're hosting, and stays hidden when the game is over.
+- [bugfix] Commands on enemy units (attack, reclaim) get canceled automatically when the unit leaves LOS / radar.
+- [change] 'Quit and Resign' dialog now only gives everything to allies (and not enemies) if they are still alive.
+- [change] The LOS drawing mode is remembered when you switch back and forth to others (e.g. metalmap, heightmap).
+- [change] Radar and jammer range is shown by default if you press 'L'.
+- [change] Radar and jammer toggle ';' happens instantly.
+
+- New weapon tdf tag rgbcolor2, used to make laser weapon have diferent color at the center, defaults to white.
+- New weapon tdf tag corethickness, how thick the inner color of a laser is, this is a percentage value, default is 0.25
+- New weapon tdf tag laserflaresize, size of the flare for laser weapons, multiplier for thickness, default 15.
+- New weapon td tag LargeBeamLaser, if set to 1 a beamlaser uses an alternat graphics effect.
 	New tags usable for a LargeBeamLaser is:
 		tilelength: defines the length before the texture used is repeated (tiled).
 		scrollspeed: how fast the beam apears to be moving towards it target.
 		pulseSpeed: how fast the pulsating effect at the beam start is.
 
-* New weapon FBI tags, texture1, texture2, texture3, texture4, the texture must be defined in resources.tdf in the projectile section.
+- New weapon FBI tags, texture1, texture2, texture3, texture4, the texture must be defined in resources.tdf in the projectile section.
 	MissileProjectile (standar rockets and guided missiles):
 		texture1 = flare
 		texture2 = smoke
@@ -48,10 +68,10 @@ TASpring change log
 		texture1 = texture of the projectile, will be blended multiple times.
 
 
-* tdf tag duration is used for laser weapons.
-* tdf tag rgbcolor is used for EmgProjectile and ExplosiveProjectile.
-* tdf tag intensity is used for EmgProjectile and ExplosiveProjectile.
-* edgeEffectivness added for weapons
+- tdf tag duration is used for laser weapons.
+- tdf tag rgbcolor is used for EmgProjectile and ExplosiveProjectile.
+- tdf tag intensity is used for EmgProjectile and ExplosiveProjectile.
+- edgeEffectivness added for weapons
 
 - Added limited fuel settings for units (only work for aircrafts so far, need a good mechanism for refueling other stuff)
 -  New fbi tag MaxFuel, max fuel in seconds that the unit can carry, default 0 = unlimited

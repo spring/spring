@@ -90,18 +90,37 @@ CGuiKeyReader::CGuiKeyReader(char* filename)
 			GetWord(ifs, s);
 			MakeLow(s);
 			int i = GetKey(s);
+			if (i < 0) {
+				handleerror(0, s.c_str(), "Unknown key", 0);
+			}
 			GetWord(ifs, s);
 			MakeLow(s);
 			guiKeys[i] = s;
-		} else 
+		} else { 
 			handleerror(0,"Couldnt parse control file",s.c_str(),0);
+		}
 		GetLine(ifs);
 	}
 }
 
+  
+
 CGuiKeyReader::~CGuiKeyReader()
 {
 }
+
+
+bool CGuiKeyReader::Bind(std::string key, std::string action)
+{
+  int k = GetKey(key);  
+  if (k < 0) {
+  	return false;
+	}
+	MakeLow(action);
+	guiKeys[k] = action;
+	return true;
+}
+
 
 std::string CGuiKeyReader::TranslateKey(int key)
 {
@@ -234,6 +253,6 @@ int CGuiKeyReader::GetKey(std::string s)
 
 	int a = keynames[s];
 	if(a == 0)
-		handleerror(0, s.c_str(), "Unknown key", 0);
+		return -1;
 	return a;
 }

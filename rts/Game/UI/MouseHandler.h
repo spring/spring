@@ -35,6 +35,7 @@ public:
 	bool locked;
 	bool inStateTransit;
 	bool invertMouse;
+	float doubleClickTime;
 	double transitSpeed;
 
 	struct ButtonPress{

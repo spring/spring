@@ -878,7 +878,7 @@ bool CAICallback::GetValue(int id, void *data)
 			*(unsigned int*)data = readmap->mapChecksum;
 			return true;
 		}case AIVAL_DEBUG_MODE:{
-			*(bool*)data = gs->drawdebug;
+			*(bool*)data = gu->drawdebug;
 			return true;
 		}case AIVAL_BLOCK_MAP:{
 			*(CSolidObject***)data = readmap->groundBlockingObjectMap;

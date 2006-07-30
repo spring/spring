@@ -368,7 +368,7 @@ void CNet::Update(void)
 		std::map<int,Packet*>::iterator wpi;
 		while((wpi=c->waitingPackets.find(c->lastInOrder+1))!=c->waitingPackets.end()){		//process all in order packets that we have waiting
 			if(c->readyLength+wpi->second->length>=NETWORK_BUFFER_SIZE){
-				info->AddLine("Overflow in incomming network buffer");
+				info->AddLine("Overflow in incoming network buffer");
 				break;
 			}
 			memcpy(&c->readyData[c->readyLength],wpi->second->data,wpi->second->length);

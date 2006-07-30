@@ -15,6 +15,7 @@ public:
 	std::string TranslateKey(int key);
 	CGuiKeyReader(char* filename);
 	virtual ~CGuiKeyReader();
+	bool Bind(std::string key, std::string action);
 
 	std::map<int, std::string> guiKeys;
 protected:

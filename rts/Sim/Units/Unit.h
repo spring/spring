@@ -207,6 +207,7 @@ public:
 	CUnit* userTarget;
 	float3 userAttackPos;
 	bool userAttackGround;
+	int commandShotCount;				//number of shots due to the latest command
 
 	int fireState;							//0=hold fire,1=return,2=fire at will
 	bool dontFire;							//temp variable that can be set when building etc to stop units to turn away to fire

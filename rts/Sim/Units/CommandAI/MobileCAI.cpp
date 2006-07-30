@@ -322,6 +322,12 @@ void CMobileCAI::SlowUpdate()
 				inCommand=true;
 			}
 		}
+		else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+			StopMove();
+			FinishCommand();
+			break;
+		}
+
 		if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && (!(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR)))){
 			StopMove();		//cancel keeppointingto
 			FinishCommand();
