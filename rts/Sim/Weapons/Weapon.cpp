@@ -188,7 +188,7 @@ void CWeapon::Update()
 			} else {
 				owner->UseEnergy(energyFireCost);
 				owner->UseMetal(metalFireCost);
-				owner->currentFuel = max(0.f, owner->currentFuel - fuelUsage);
+				owner->currentFuel = max(0.0f, owner->currentFuel - fuelUsage);
 			}
 			if(weaponDef->stockpile)
 				reloadStatus=gs->frameNum+60;
@@ -211,7 +211,15 @@ void CWeapon::Update()
 		salvoLeft--;
 		nextSalvo=gs->frameNum+salvoDelay;
 		owner->lastFireWeapon=gs->frameNum;
-
+		
+		// add a shot count if it helps to end the current 'attack ground' command
+		// (the 'salvoLeft' check is done because the positions may already have been adjusted)
+		if ((salvoLeft == (salvoSize - 1)) &&
+		    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos)) ||
+				((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
+			owner->commandShotCount++;
+		}
+		
 		std::vector<int> args;
 		args.push_back(0);
 		owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);

@@ -8,11 +8,14 @@
 //#include <winsock2.h>
 #include <time.h>
 #include <string>
+#include <deque>
+#include <set>
 #include "SDL_types.h"
 
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Player.h"
 #include "GameController.h"
+
 
 #define FRAME_HISTORY 16
 
@@ -22,6 +25,8 @@ class CGuiKeyReader;
 class CScript;
 class CBaseWater;
 class CAVIGenerator;
+class CConsoleHistory;
+class CWordCompletion;
 
 class CGame : public CGameController
 {
@@ -71,6 +76,7 @@ public:
 	bool camRot[4];
 	bool hideInterface;
 	bool gameOver;
+	bool windowedEdgeMove;
 	bool showClock;
 	bool showPlayerInfo;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
@@ -93,6 +99,9 @@ public:
 
 	void MakeMemDump(void);
 
+  CConsoleHistory* consoleHistory;
+	CWordCompletion* wordCompletion;
+
 	bool creatingVideo;
 	CAVIGenerator* aviGenerator;
 
@@ -102,6 +111,7 @@ public:
 	short oldHeading,oldPitch;
 	unsigned char oldStatus;
 #endif
+	
 	void HandleChatMsg(std::string msg,int player);
 	unsigned  int CreateExeChecksum(void);
 };

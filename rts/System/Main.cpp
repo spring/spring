@@ -54,6 +54,10 @@
 #endif
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
+#ifndef WIN32
+#include <GL/glxew.h> // for glXWaitVideoSyncSGI()
+#endif
+
 #ifdef WIN32
 /**
  * Win32 only: command line passed to WinMain() (not including exe filename)
@@ -180,6 +184,16 @@ protected:
 	 * Level of fullscreen anti-aliasing
 	 */
 	bool FSAA;
+
+	/**
+	 * @brief vertical sync
+	 * 
+	 * Synchronize buffer swaps with the screen refresh rate.
+	 * A value < 0 leaves the vsync mechanism at the system
+	 * default, and higher values specify the interval between
+	 * synced frames.
+	 */
+	int vsyncFrames;
 
 	int2 prevMousePos;
 };
@@ -397,30 +411,32 @@ bool SpringApp::SetSDLVideoMode ()
 	if (FSAA)
 		FSAA = MultisampleVerify();
 
-	SetVSync ();
+	SetVSync();
 
 	return true;
 }
 
 /**
  * Set VSync based on the "VSync" config option
- * Uses WGL_EXT_swap_control, so it's only supported on windows.
+ * Uses WGL_EXT_swap_control or GLX_SGI_video_sync
  */
 void SpringApp::SetVSync ()
 {
-	bool enableVSync = !!configHandler.GetInt ("VSync", 0);
+	vsyncFrames = configHandler.GetInt("VSync", -1); // default to noop
 
 #ifdef WIN32
 	// VSync enabled is the default for OpenGL drivers
-	if (enableVSync)
+	if (vsyncFrames < 0) {
 		return;
+	}
 
 	// WGL_EXT_swap_control is the only WGL extension exposed in glGetString(GL_EXTENSIONS)
 	if (strstr( (const char*)glGetString(GL_EXTENSIONS), "WGL_EXT_swap_control")) {
 		typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
 		PFNWGLSWAPINTERVALEXTPROC SwapIntervalProc = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-		if (SwapIntervalProc) 
-			SwapIntervalProc(0);
+		if (SwapIntervalProc) {
+			SwapIntervalProc(vsyncFrames);
+		}
 	}
 #endif
 }
@@ -578,15 +594,17 @@ void SpringApp::CreateGameSetup ()
 	bool server = true;
 	if (!demofile.empty())
 		server = false;
-	else if(gameSetup)
+	else if(gameSetup) {
 		server=gameSetup->myPlayer-gameSetup->numDemoPlayers == 0;
+	}
 	else
 		server=!cmdline->result("client") || cmdline->result("server");
 
-	if (!demofile.empty())
+	if (!demofile.empty()) {
 		pregame = new CPreGame(false, demofile);
-	else
+	} else {
 		pregame = new CPreGame(server, "");
+	}
 }
 
 /**
@@ -608,7 +626,21 @@ int SpringApp::Update ()
 		else ret = activeController->Draw();
 	}
 
+#ifndef WIN32
+  if (vsyncFrames > 0) {
+    if (!GLXEW_SGI_video_sync) {
+      vsyncFrames = 0; // disable
+    } else {
+			GLuint frameCount;
+			if (glXGetVideoSyncSGI(&frameCount) == 0) {
+				glXWaitVideoSyncSGI(vsyncFrames, frameCount % vsyncFrames, &frameCount);
+			}
+		}
+  }
+#endif  
+
 	SDL_GL_SwapBuffers();
+
 	if (FSAA)
 		glDisable(GL_MULTISAMPLE_ARB);
 
@@ -674,6 +706,11 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_QUIT:
 					done = true;
 					break;
+				case SDL_ACTIVEEVENT:
+				  if (event.active.state & SDL_APPACTIVE) {
+				    gu->active = !!event.active.gain;
+					}
+				  break;
 				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:

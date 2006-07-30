@@ -357,6 +357,12 @@
 				RelativePath="..\..\Game\command.h">
 			</File>
 			<File
+				RelativePath="..\..\Game\ConsoleHistory.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Game\ConsoleHistory.h">
+			</File>
+			<File
 				RelativePath="..\..\Game\Game.cpp">
 			</File>
 			<File
@@ -430,6 +436,12 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\Team.h">
+			</File>
+			<File
+				RelativePath="..\..\Game\WordCompletion.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Game\WordCompletion.h">
 			</File>
 			<Filter
 				Name="UI"

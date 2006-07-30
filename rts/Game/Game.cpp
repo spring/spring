@@ -105,11 +105,15 @@
 #include "Platform/fp.h"
 #include "Game/UI/GUI/GUIframe.h"
 
+#include "ConsoleHistory.h"
+#include "WordCompletion.h"
+
 #ifdef _MSC_VER
 #include "Platform/Win/DxSound.h"
 #else
 #include "Platform/Linux/OpenALSound.h"
 #endif
+#include "Platform/NullSound.h"
 
 #ifdef NEW_GUI
 #include "UI/GUI/GUIcontroller.h"
@@ -131,6 +135,9 @@ CSound* sound = 0;
 
 static CSound* CreateSoundInterface()
 {
+  if (!!configHandler.GetInt("NoSound",0)) {
+    return new CNullSound ();
+  }
 #ifdef _MSC_VER
 	return new CDxSound ();
 #else
@@ -180,6 +187,7 @@ CGame::CGame(bool server,std::string mapname)
 	gameOver=false;
 	showClock=!!configHandler.GetInt("ShowClock",1);
 	showPlayerInfo=!!configHandler.GetInt("ShowPlayerInfo",1);
+	windowedEdgeMove=!!configHandler.GetInt("WindowedEdgeMove",1);
 	gamePausable=true;
 	noSpectatorChat=false;
 
@@ -190,6 +198,12 @@ CGame::CGame(bool server,std::string mapname)
 	chatting=false;
 	userInput="";
 	userPrompt="";
+	
+	consoleHistory = new CConsoleHistory;
+	wordCompletion = new CWordCompletion;
+	for (int p = 0; p < MAX_PLAYERS; p++) {
+	  wordCompletion->AddWord(gs->players[p]->playerName, false, false);
+	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	oldPitch=0;
@@ -246,6 +260,11 @@ CGame::CGame(bool server,std::string mapname)
 #endif
 	inMapDrawer=new CInMapDraw();
 
+  const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
+	std::map<std::string, int>::const_iterator uit;
+	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
+	  wordCompletion->AddWord(uit->first, false, true);
+	}
 
 	geometricObjects=new CGeometricObjects();
 	ENTER_SYNCED;
@@ -353,6 +372,7 @@ CGame::CGame(bool server,std::string mapname)
 		serverNet->StartDemoServer();
 }
 
+
 CGame::~CGame()
 {
 	configHandler.SetInt("ShowClock",showClock);
@@ -423,7 +443,11 @@ CGame::~CGame()
 	delete camera;
 	delete cam2;
 	delete info;
+	delete consoleHistory;
+	delete wordCompletion;
 }
+
+
 //called when the key is pressed by the user (can be called several times due to key repeat)
 int CGame::KeyPressed(unsigned short k,bool isRepeat)
 {
@@ -449,6 +473,8 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}
 		return 0;
 	}
+	
+	string fakeGuiKey("");
 	if (userWriting){
 #ifndef NO_CLIPBOARD
 		if ((k=='V') && keys[SDLK_LCTRL]){
@@ -469,7 +495,13 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		if(k==SDLK_RETURN){
 			userWriting=false;
 			keys[k] = false;		//prevent game start when server chats
-			return 0;
+			if (chatting && (userInput.size() > 5) && (userInput.substr(0, 4) == ".cmd")) {
+			  fakeGuiKey = userInput.substr(5);
+			  chatting = false;
+			  userInput = "";
+			} else {
+			  return 0;
+			}
 		}
 		if(k==27 && (chatting || inMapDrawer->wantLabel)){
 			userWriting=false;
@@ -477,7 +509,28 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			inMapDrawer->wantLabel=false;
 			userInput="";
 		}
-		return 0;
+		if(k==SDLK_UP) {
+		  userInput = consoleHistory->PrevLine(userInput);
+		  return 0;
+		}
+		if(k==SDLK_DOWN) {
+		  userInput = consoleHistory->NextLine(userInput);
+		  return 0;
+		}
+		if(k==SDLK_TAB) {
+		  vector<string> partials = wordCompletion->Complete(userInput);
+		  if (!partials.empty()) {
+		    string msg;
+		    for (int i = 0; i < partials.size(); i++) {
+		      msg += "  ";
+		      msg += partials[i];
+		    }
+		    info->AddLine(msg);
+		  }
+		}
+		if(fakeGuiKey.size() <= 0) {
+		  return 0;
+		}
 	}
 
 	if(k>='0' && k<='9' && gu->spectating){
@@ -490,13 +543,18 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}
 	}
 
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+  std::string s;
+  std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri)->KeyPressed(k))
-			return 0;
+  if (fakeGuiKey.size() > 0) {
+    s=fakeGuiKey;
+  } else {
+		for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+			if((*ri)->KeyPressed(k))
+				return 0;
+		}
+		s=guikeys->TranslateKey(k);
 	}
-	std::string s=guikeys->TranslateKey(k);
 
 	if(s=="drawinmap"){
 		inMapDrawer->keyPressed=true;
@@ -528,6 +586,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		chatting=true;
 		if(k!=SDLK_RETURN)
 			ignoreNextChar=true;
+		consoleHistory->ResetPosition();
 	}
 	if (s=="debug")
 		gu->drawdebug=!gu->drawdebug;
@@ -871,6 +930,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	return 0;
 }
 
+
 //Called when a key is released by the user
 int CGame::KeyReleased(unsigned short k)
 {
@@ -1014,6 +1074,12 @@ bool CGame::Update()
 bool CGame::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
+	
+	if (!gu->active) {
+    SDL_Delay(10); // milliseconds
+	  return true;
+	}
+	
 //	(*info) << mouse->lastx << "\n";
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
@@ -1672,6 +1738,7 @@ bool CGame::ClientReadNet()
 				gs->players[player]->playerName=(char*)(&inbuf[inbufpos+3]);
 				gs->players[player]->readyToStart=true;
 				gs->players[player]->active=true;
+				wordCompletion->AddWord(gs->players[player]->playerName, false, false); // required?
 			}
 			lastLength=inbuf[inbufpos+1];
 			break;}
@@ -2010,21 +2077,23 @@ void CGame::UpdateUI()
 
 		movement=float3(0,0,0);
 
-		if ((mouse->lasty<2 && fullscreen)){
-			movement.y+=gu->lastFrameTime;
-			trackingUnit=false;
-		}
-		if ((mouse->lasty>gu->screeny-2 && fullscreen)){
-			movement.y-=gu->lastFrameTime;
-			trackingUnit=false;
-		}
-		if ((mouse->lastx>gu->screenx-2 && fullscreen)){
-			movement.x+=gu->lastFrameTime;
-			trackingUnit=false;
-		}
-		if ((mouse->lastx<2 && fullscreen)){
-			movement.x-=gu->lastFrameTime;
-			trackingUnit=false;
+    if (fullscreen || windowedEdgeMove) {
+			if (mouse->lasty < 2){
+				movement.y+=gu->lastFrameTime;
+				trackingUnit=false;
+			}
+			if (mouse->lasty > (gu->screeny - 2)){
+				movement.y-=gu->lastFrameTime;
+				trackingUnit=false;
+			}
+			if (mouse->lastx > (gu->screenx - 2)){
+				movement.x+=gu->lastFrameTime;
+				trackingUnit=false;
+			}
+			if (mouse->lastx < 2){
+				movement.x-=gu->lastFrameTime;
+				trackingUnit=false;
+			}
 		}
 		movement.z=cameraSpeed;
 		mouse->currentCamController->ScreenEdgeMove(movement);
@@ -2037,7 +2106,7 @@ void CGame::UpdateUI()
 
 	if(chatting && !userWriting){
 		if(userInput.size()>0){
-			if(userInput.size()>250)	//avoid troubles with to long lines
+			if(userInput.size()>250)	//avoid troubles with long lines
 				userInput=userInput.substr(0,250);
 			if(userInput.find(".give") == 0 && gs->cheatEnabled) {
 				float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * 9000);
@@ -2047,8 +2116,10 @@ void CGame::UpdateUI()
 				userInput += buf;
 			}
 			net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, userInput);
-			if(net->playbackDemo)
+			if(net->playbackDemo) {
 				HandleChatMsg(userInput,gu->myPlayerNum);
+			}
+		  consoleHistory->AddLine(userInput);
 		}
 		chatting=false;
 		userInput="";
@@ -2484,6 +2555,21 @@ void CGame::HandleChatMsg(std::string s,int player)
 		info->AddLine("No spectator chat %i",noSpectatorChat);
 	}
 
+	if(s.find(".bind")==0 && player==gu->myPlayerNum){
+		string::size_type startKey = s.find_first_not_of(' ', 5);
+		if (startKey == string::npos) return;
+		string::size_type endKey = s.find_first_of(' ', startKey);
+		if (endKey == string::npos) return;
+		string::size_type startAction = s.find_first_not_of(' ', endKey);
+		if (startAction == string::npos) return;
+		string::size_type endAction = s.find_first_of(' ', startAction);
+		if (endAction != string::npos) return;
+		const string key = s.substr(startKey, endKey - startKey);
+		const string action = s.substr(startAction, endAction - startAction);
+		if (guikeys->Bind(key, action)) {
+			info->AddLine("Bound key(%s) to action(%s)", key.c_str(), action.c_str());
+		}
+	}
 	if(s.find(".clock")==0 && player==gu->myPlayerNum){
 		showClock=!showClock;
 	}

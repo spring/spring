@@ -251,13 +251,6 @@ public:
 	int tempNum;
 
 	/**
-	 * @brief draw debug
-	 * 
-	 * Whether debugging info is drawn
-	 */
-	bool drawdebug;
-
-	/**
 	 * @brief cheat enabled
 	 * 
 	 * Whether cheating is enabled
@@ -504,6 +497,13 @@ public:
 	 * Whether debugging info is drawn
 	 */
 	bool drawdebug;
+
+	/**
+	 * @brief active video
+	 * 
+	 * Whether the graphics need to be drawn
+	 */
+	bool active;
 
 	/**
 	 * @brief view range

@@ -511,6 +511,11 @@ void CCommandAI::SlowUpdate()
 		if(inCommand){
 			if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR))){
 				FinishCommand();
+				break;
+			}
+			if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+	      FinishCommand();
+	      break;
 			}
 		} else {
 			if(c.params.size()==1){
