@@ -280,8 +280,7 @@ DLL_EXPORT const char* __stdcall GetMapName(int index)
 }
 
 
-
-DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
+DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
 	ASSERT(scanner && hpiHandler, "Call InitArchiveScanner before GetMapInfo.");
 	ASSERT(name && *name && outInfo, "Don't pass a NULL pointer or an empty string to GetMapInfo.");
@@ -373,6 +372,9 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	outInfo->maxMetal = atof(values["maxmetal"].c_str());
 	outInfo->extractorRadius = atoi(values["extractorradius"].c_str());
 
+	if(version >= 1)
+		strncpy(outInfo->author, values["author"].c_str(), 200);
+
 	values = parser.GetAllValues("MAP\\ATMOSPHERE");
 
 	outInfo->minWind = atoi(values["minwind"].c_str());
@@ -395,6 +397,12 @@ DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 	outInfo->posCount = curPos;
 
 	return 1;
+}
+
+
+DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
+{
+	return GetMapInfoEx(name, outInfo, 0);
 }
 
 static vector<string> mapArchives;

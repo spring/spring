@@ -32,6 +32,7 @@ DLL_EXPORT void __stdcall AddAllArchives(const char* root);
 DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname);
 DLL_EXPORT int __stdcall GetMapCount();
 DLL_EXPORT const char* __stdcall GetMapName(int index);
+DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
 DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo);
 DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel);
 DLL_EXPORT int __stdcall GetMapArchiveCount(const char* mapName);
@@ -239,15 +240,18 @@ static PyObject *unitsync_GetMapInfo(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "s", &name))
 		return NULL;
 	MapInfo out;
-	char buf[NAMEBUF_SIZE];
+	char buf[256];
 	// Zero the memory (returning garbage to python seems so unprofessional ;-)
 	std::memset(&out, 0, sizeof(out));
 	std::memset(buf, 0, sizeof(buf));
 	// Apparently unitsync assumes out.description points to a valid buffer in all/some cases.
 	out.description = buf;
-	int ret = GetMapInfo(name, &out);
+	char author[200];
+	std::memset(author, 0, sizeof(author));
+	out.author = author;
+	int ret = GetMapInfoEx(name, &out, 1);
 	// HACK   :/
-	return Py_BuildValue("i{s:s,s:i,s:i,s:f,s:i,s:i,s:i,s:i,s:i,s:i,s:[(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)]}",
+	return Py_BuildValue("i{s:s,s:i,s:i,s:f,s:i,s:i,s:i,s:i,s:i,s:i,s:s,s:[(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)(ii)]}",
 						 ret,
 						 "description",     out.description,
 						 "tidalStrength",   out.tidalStrength,
@@ -259,7 +263,8 @@ static PyObject *unitsync_GetMapInfo(PyObject *self, PyObject *args)
 						 "width",           out.width,
 						 "height",          out.height,
 						 "posCount",        out.posCount,
-						 "positions",
+						 "author",			out.author,
+						 "positions",	
 						 out.positions[0].x,  out.positions[0].z,
 						 out.positions[1].x,  out.positions[1].z,
 						 out.positions[2].x,  out.positions[2].z,
