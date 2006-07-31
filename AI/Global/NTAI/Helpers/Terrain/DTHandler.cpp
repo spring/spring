@@ -1,6 +1,6 @@
 #include "../../Core/helper.h"
 
-bool CDTHandler::NoDT = false;
+//bool CDTHandler::NoDT = false;
 
 float3 CDTHandler::GetDTBuildSite(int uid){
 	if(DTRings.empty() == true) return UpVector;
@@ -8,16 +8,19 @@ float3 CDTHandler::GetDTBuildSite(int uid){
 	for(vector<DTRing>::iterator i = this->DTRings.begin(); i != DTRings.end(); ++i){
 		// go through DT Rings and add all locations without a DT on them to the locations container;
 		for(vector<float3>::iterator d = i->DTPos.begin(); d != i->DTPos.end(); ++d){
-			int* f = new int[2];
-			int h = G->cb->GetFeatures(f,1,*d,20);
+			int* f = new int[10];
+			int h = G->cb->GetFeatures(f,2,*d,10);
 			delete [] f;
-			if(h > 0) locations.push_back(*d);
+			if(h == 0) locations.push_back(*d);
 		}
 	}
 	if(locations.empty()==true) return UpVector;
 	float3 closest = locations.front();
-	float distance = 5000000;
 	float3 pos = G->GetUnitPos(uid);
+	if(G->Map->CheckFloat3(pos)==false){
+		return UpVector;
+	}
+	float distance = pos.distance2D(closest);
 	float tempdist=0;
 	for(vector<float3>::iterator j = locations.begin(); j != locations.end(); ++j){
 		tempdist = j->distance2D(pos);
@@ -34,7 +37,7 @@ CDTHandler::CDTHandler(Global* GL){
 	//NLOG("CDTHandler::CDTHandler()");
 	G = GL;
     // Find ID of DT
-    string filename = G->info->datapath + slash + "DTBuildData" + slash + G->info->tdfpath + string(".DTBuildData");
+    /*string filename = G->info->datapath + slash + "DTBuildData" + slash + G->info->tdfpath + string(".DTBuildData");
     ofstream DTBuildDataOut(filename.c_str(), ios::binary);
 	int unum = G->cb->GetNumUnitDefs();
 	const UnitDef** UnitDefList = new const UnitDef*[unum];
@@ -46,14 +49,13 @@ CDTHandler::CDTHandler(Global* GL){
             	const UnitDef* pud2 = G->cb->GetUnitDef(bit->second.c_str());
                 if(pud2->isFeature && !pud2->floater){
                     DTBuilds.insert(map<int, int>::value_type(n, pud2->id));
-                    //LOG(" " << pud2->name << "(" << pud2->wreckName << ")");
                     DTBuildDataOut << n << pud2->id;
                     break;
                 }
             }
         }
     }
-    DTBuildDataOut.close();
+    DTBuildDataOut.close();*/
 }
 
 void CDTHandler::AddRing(float3 _loc, float _Radius , float _Twist){
@@ -91,32 +93,21 @@ void CDTHandler::AddRing(float3 _loc, float _Radius , float _Twist){
                 A-= (float)PIx2;
             // Nudging
             if(A < PI_4){
-				//Nudge Right
-                pos.x+=8;
+                pos.x+=8;//Nudge Right
             }else if(A < 3.0f * PI_4){
-				//Nudge Down
-                pos.z+=8;
+                pos.z+=8;//Nudge Down
             }else if(A < 5.0f * PI_4){
-				//Nudge Left
-                pos.x-=8;
+                pos.x-=8;//Nudge Left
             }else if(A < 7.0f * PI_4){
-				//Nudge Up
-                pos.z-=8;
+                pos.z-=8;//Nudge Up
             }else{
-				//Nudge Right
-                pos.x+=8;
+                pos.x+=8;//Nudge Right
             }
         }
-        if(pos.x < 0.0f || pos.x > maxx){
-			//LOG("Off map (X)" << endl);
-            continue;
-        }
-        if(pos.z < 0.0f || pos.z > maxz){
-			//LOG("Off map (Y)" << endl);
-            continue;
-        }
+		if(G->Map->CheckFloat3(pos)==false){
+			continue;
+		}
         if(G->cb->GetElevation(pos.x, pos.z) < 0){
-//            //LOG(n << "Too Low" << endl);
             continue;
         }
         pos.y = G->cb->GetElevation(pos.x, pos.z);
@@ -134,29 +125,25 @@ void CDTHandler::AddRing(float3 _loc, float _Radius , float _Twist){
 CDTHandler::~CDTHandler(){
 }
 
-
 bool CDTHandler::DTNeeded(){
-	if(NoDT)
-        return false;
+	//if(NoDT)
+   //     return false;
 	return true;
 }
-bool CDTHandler::IsDragonsTeeth(const int Feature){
-	return IsDragonsTeeth(G->cb->GetFeatureDef(Feature)->myName);
-}
 
-bool CDTHandler::IsDragonsTeeth(const char *FeatureName){
+// bool CDTHandler::IsDragonsTeeth(const int Feature){
+// 	return IsDragonsTeeth(G->cb->GetFeatureDef(Feature)->myName);
+//}
+
+bool CDTHandler::IsDragonsTeeth(const char* FeatureName){
 	return IsDragonsTeeth(string(FeatureName));
 }
 
 bool CDTHandler::IsDragonsTeeth(const string FeatureName){
-	string FN(FeatureName);
-	int unum = G->cb->GetNumUnitDefs();
-	const UnitDef** UnitDefList = new const UnitDef*[unum];
-	G->cb->GetUnitDefList(UnitDefList);
-	if(UnitDefList == 0) return false;
-	for(map<int, int>::iterator DTit = DTBuilds.begin(); DTit != DTBuilds.end(); DTit++){
-    	if(UnitDefList[DTit->second]->wreckName == FN)
-            return true;
-    }
-    return false;
+	const UnitDef* ud = G->GetUnitDef(FeatureName);
+    return IsDragonsTeeth(ud);
+}
+bool CDTHandler::IsDragonsTeeth(const UnitDef* ud){
+	if(ud == 0) return false;
+	return ud->isFeature;
 }
