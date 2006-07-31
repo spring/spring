@@ -473,12 +473,21 @@ void CProjectileHandler::LoadSmoke(unsigned char tex[512][512][4],int xoffs,int 
 void CProjectileHandler::CheckUnitCol()
 {
 	Projectile_List::iterator psi;
+	static vector<CUnit*> units;
+	static vector<CFeature*> features;
+	static vector<int> quads;
+	units.clear();
+	features.clear();
+	quads.clear();
+
 	for(psi=ps.begin();psi != ps.end();++psi){
 		CProjectile* p=(*psi);
 		if(p->checkCol && !p->deleteMe){
 			float speedf=p->speed.Length();
 
-			vector<CUnit*> units=qf->GetUnitsExact(p->pos,p->radius+speedf);
+			qf->GetQuads(p->pos, p->radius+speedf, quads);
+			qf->GetUnitsAndFeaturesExact(p->pos, p->radius+speedf, quads, units, features);
+
 			for(vector<CUnit*>::iterator ui(units.begin());ui!=units.end();++ui){
 				CUnit* unit=*ui;
 				if(p->owner == unit)
@@ -508,7 +517,6 @@ void CProjectileHandler::CheckUnitCol()
 				}
 			}
 
-			vector<CFeature*> features=qf->GetFeaturesExact(p->pos,p->radius+speedf);
 			for(vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
 				if(!(*fi)->blocking)
 					continue;

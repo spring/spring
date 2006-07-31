@@ -61,6 +61,29 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 	return ret;
 }
 
+
+void CQuadField::GetQuads(float3 pos,float radius, vector<int> &dst)
+{
+	pos.CheckInBounds();
+
+	int maxx=min(((int)(pos.x+radius))/QUAD_SIZE+1,numQuadsX-1);
+	int maxy=min(((int)(pos.z+radius))/QUAD_SIZE+1,numQuadsZ-1);
+
+	int minx=max(((int)(pos.x-radius))/QUAD_SIZE,0);
+	int miny=max(((int)(pos.z-radius))/QUAD_SIZE,0);
+	
+	if(maxy<miny || maxx<minx)
+		return;
+
+	float maxSqLength=(radius+QUAD_SIZE*0.72)*(radius+QUAD_SIZE*0.72);
+	dst.reserve(dst.size()+(maxy-miny)*(maxx-minx));
+	for(int y=miny;y<=maxy;++y)
+		for(int x=minx;x<=maxx;++x)
+			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5,0,y*QUAD_SIZE+QUAD_SIZE*0.5)).SqLength2D()<maxSqLength)
+				dst.push_back(y*numQuadsX+x);
+}
+
+
 void CQuadField::MovedUnit(CUnit *unit)
 {
 	vector<int> newQuads=GetQuads(unit->pos,unit->radius);
@@ -417,3 +440,32 @@ vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& pos2)
 	return ret;
 
 }
+
+// optimization specifically for projectile collisions
+void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, const vector<int>& quads, vector<CUnit*>& dstunits, vector<CFeature*>& dstfeatures)
+{
+	int tempNum=gs->tempNum++;
+
+	vector<int>::const_iterator qi;
+	for(qi=quads.begin();qi!=quads.end();++qi){
+		list<CUnit*>::iterator ui;
+		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+			if((*ui)->tempNum!=tempNum){
+				(*ui)->tempNum=tempNum;
+				dstunits.push_back(*ui);
+			}
+		}
+	}
+
+	for(qi=quads.begin();qi!=quads.end();++qi){
+		list<CFeature*>::iterator fi;
+		for(fi=baseQuads[*qi].features.begin();fi!=baseQuads[*qi].features.end();++fi){
+			float totRad=radius+(*fi)->radius;
+			if((*fi)->tempNum!=tempNum && (pos-(*fi)->midPos).SqLength()<totRad*totRad){
+				(*fi)->tempNum=tempNum;
+				dstfeatures.push_back(*fi);
+			}
+		}
+	}
+}
+
