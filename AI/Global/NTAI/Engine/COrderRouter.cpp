@@ -31,7 +31,7 @@ bool COrderRouter::GiveOrder(TCommand c, bool newer){
 #endif
 				return false;
 			}
-		}else if((c.c.params.size()==3)||(c.c.params.size()>3)){
+		}else if(((c.c.params.size()==3)||(c.c.params.size()>3))&&(c.c.id > 0)){
 			float3 p(c.c.params.at(0),c.c.params.at(1),c.c.params.at(2));
 			if(G->Map->CheckFloat3(p)==false){
 				G->L.print("intercepted erroneous float3 in a command");
@@ -120,26 +120,23 @@ void COrderRouter::IssueOrders(){
 						a++;
 						continue;
 					}
-							}
-				case B_IDLE : {
+				}case B_IDLE : {
 					G->L.print("idle task issuing");
 					timed_out_units.erase(i->unit);
 					i->clear = true;
 					//UnitIdle(i->unit);
 					continue;
-								}
-				case B_NA :{
+				}case B_NA :{
 					G->L.print("hmm failed task update() B_NA found");
 					i->clear = true;
 					timed_out_units.insert(i->unit);
 					continue;
-							}
-				default:{
-					G->L.print("hmm failed task update() default??!?!?!");
+				}default:{
+					G->L.print("hmm failed task update() default????");
 					i->clear = true;
 					timed_out_units.insert(i->unit);
 					continue;
-						}
+				}
 			}
 		}
 		if(timed_out_units.empty()== false){

@@ -14,7 +14,7 @@ bool update_NTAI;
 
 TdfParser* Global::Get_mod_tdf(){
 	return info->mod_tdf;
-};
+}
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -117,6 +117,7 @@ Global::Global(IGlobalAICallback* callback){
 	Manufacturer = new CManufacturer(G);
 	L.print("Manufacturer constructed");
 	Ch = new Chaser;
+	UnitDefHelper = new CUnitDefHelp(G);
 	L.print("Chaser constructed");
 }
 
@@ -141,6 +142,7 @@ Global::~Global(){
 	delete info->mod_tdf;
 	delete Cached;
 	delete OrderRouter;
+	delete UnitDefHelper;
 	//delete TaskFactory;
 }
 

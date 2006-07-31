@@ -9,8 +9,8 @@ public:
 	virtual ~CUBuild();
 
 	void Init(Global* GL, const UnitDef* u, int unit); // Initialize object
-	bool SetWater();
-	string operator() (btype build); // () operator, allows it to be called like this, Object(build); rather than something like object->getbuild(build);
+	void SetWater(bool w);
+	string operator() (btype build,float3 pos=ZeroVector); // () operator, allows it to be called like this, Object(build); rather than something like object->getbuild(build);
 
 	string GetMEX(); // metal extractor
 	string GetPOWER(); // energy producer
@@ -45,9 +45,8 @@ public:
 	string GetFIGHTER();
 	string GetGUNSHIP();
 
-	bool Useless(string name); // To filter out things like dragons eye in AA, things that serve no purpose other than to simply exist (things made by bananas!)
+	bool Useless(const UnitDef* udt); // To filter out things like dragons eye in AA, things that serve no purpose other than to simply exist (things made by bananas!)
 	bool antistall;
-private:
 	Global* G;
 	const UnitDef* ud;
 	int uid;

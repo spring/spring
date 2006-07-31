@@ -6,37 +6,26 @@ CEconomy::CEconomy(Global* GL){
 }
 
 btype CEconomy::Get(bool extreme,bool factory){
-	//G->L.print("BuildMex");
 	if(BuildMex(extreme)==true){
-		//G->L.print("BuildMex(extreme)==true");
 		return B_MEX;
 	}
-	//G->L.print("BuildPowe");
 	if(BuildPower(extreme)==true){
-		//G->L.print("BuildPower(extreme)==true");
 		return B_POWER;
 	}
-	//G->L.print("BuildMaker");
 	if(BuildMaker(extreme)==true){
-		//G->L.print("BuildMaker(extreme)==true");
 		return B_METAL_MAKER;
 	}
-	//G->L.print("BuildFactory");
-	if(BuildFactory(extreme)==true){
-		//G->L.print("BuildFactory(extreme)==true");
-		return B_FACTORY;
+	if(factory){
+		if(BuildFactory(extreme)==true){
+			return B_FACTORY;
+		}
+		if (BuildEnergyStorage(extreme)==true){
+			return B_ESTORE;
+		}
+		if(BuildMetalStorage(extreme)==true){
+			return B_MSTORE;
+		}
 	}
-	//G->L.print("BuildEnergyStorage");
-	if (BuildEnergyStorage(extreme)==true){
-		//G->L.print("BuildEnergyStorage(extreme)==true");
-		return B_ESTORE;
-	}
-	//G->L.print("BuildMetalStorage");
-	if(BuildMetalStorage(extreme)==true){
-		//G->L.print("BuildMetalStorage(extreme)==true");
-		return B_MSTORE;
-	}
-	//G->L.print("return B_NA;");
 	return B_NA;
 }
 bool CEconomy::BuildFactory(bool extreme){
@@ -63,7 +52,7 @@ bool CEconomy::BuildFactory(bool extreme){
 			}else{
 				return false;
 			}
-		}else if(G->cb->GetMetalIncome() - G->cb->GetMetalUsage()*1.2f > c){
+		}else if(G->Pl->GetMetalIncome() - G->cb->GetMetalUsage()*1.2f > c){
 			return true;
 		}else{
 			return false;
@@ -82,6 +71,9 @@ bool CEconomy::BuildPower(bool extreme){
 			if(G->cb->GetEnergy()<400.0f){
 				return true;
 			}
+			if(G->Pl->GetEnergyIncome() < G->cb->GetEnergyUsage()*(1-x)){
+				return true;
+			}
 			return false;
 		}
 	}else{
@@ -90,6 +82,9 @@ bool CEconomy::BuildPower(bool extreme){
 			return true;
 		}else{
 			if(G->cb->GetEnergy()<500.0f){
+				return true;
+			}
+			if(G->Pl->GetEnergyIncome() < G->cb->GetEnergyUsage()*(1-x)){
 				return true;
 			}
 			return false;
@@ -107,6 +102,9 @@ bool CEconomy::BuildMex(bool extreme){
 			if(G->cb->GetMetal() < 400.0f){
 				return true;
 			}
+			if(G->Pl->GetMetalIncome() < G->cb->GetMetalUsage()*(1-x)){
+				return true;
+			}
 			return false;
 		}
 	}else{
@@ -115,6 +113,9 @@ bool CEconomy::BuildMex(bool extreme){
 			return true;
 		}else{
 			if(G->cb->GetMetal() < 500.0f){
+				return true;
+			}
+			if(G->Pl->GetMetalIncome() < G->cb->GetMetalUsage()*(1-x)){
 				return true;
 			}
 			return false;
@@ -169,8 +170,8 @@ bool CEconomy::BuildMaker(bool extreme){
 	if(extreme == true){
 		float a = (float)atof(G->Get_mod_tdf()->SGetValueDef("0.1","ECONOMY\\RULES\\EXTREME\\makermetal").c_str());
 		float b = (float)atof(G->Get_mod_tdf()->SGetValueDef("0.8","ECONOMY\\RULES\\EXTREME\\makerenergy").c_str());
-		if((G->cb->GetMetal() < G->cb->GetMetalStorage()*a)&&(G->cb->GetMetalIncome() < G->cb->GetMetalUsage())){ // if below 10% metal stored then yah we need makers
-			if((G->cb->GetEnergy() > G->cb->GetEnergyStorage()*b)&&(G->cb->GetEnergyIncome() > G->cb->GetEnergyUsage())){ // we need the energy to do this else we'll be even worse off with no metal or energy...
+		if((G->cb->GetMetal() < G->cb->GetMetalStorage()*a)&&(G->Pl->GetMetalIncome() < G->cb->GetMetalUsage())){ // if below 10% metal stored then yah we need makers
+			if((G->cb->GetEnergy() > G->cb->GetEnergyStorage()*b)&&(G->Pl->GetEnergyIncome() > G->cb->GetEnergyUsage())){ // we need the energy to do this else we'll be even worse off with no metal or energy...
 				return true;
 			}else{
 				return false;
@@ -181,8 +182,8 @@ bool CEconomy::BuildMaker(bool extreme){
 	}else{
 		float a = (float)atof(G->Get_mod_tdf()->SGetValueDef("0.3","ECONOMY\\RULES\\EXTREME\\makermetal").c_str());
 		float b = (float)atof(G->Get_mod_tdf()->SGetValueDef("0.75","ECONOMY\\RULES\\EXTREME\\makerenergy").c_str());
-		if((G->cb->GetMetal() < G->cb->GetMetalStorage()*a)&&(G->cb->GetMetalIncome() < G->cb->GetMetalUsage())){ // if below 30% metal stored then yah we need makers
-			if((G->cb->GetEnergy() > G->cb->GetEnergyStorage()*b)&&(G->cb->GetEnergyIncome() > G->cb->GetEnergyUsage())){ // we need the energy to do this else we'll be even worse off with no metal or energy...
+		if((G->cb->GetMetal() < G->cb->GetMetalStorage()*a)&&(G->Pl->GetMetalIncome() < G->cb->GetMetalUsage())){ // if below 30% metal stored then yah we need makers
+			if((G->cb->GetEnergy() > G->cb->GetEnergyStorage()*b)&&(G->Pl->GetEnergyIncome() > G->cb->GetEnergyUsage())){ // we need the energy to do this else we'll be even worse off with no metal or energy...
 				return true;
 			}else{
 				return false;

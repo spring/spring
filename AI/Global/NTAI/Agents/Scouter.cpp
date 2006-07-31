@@ -72,6 +72,7 @@ void Scouter::UnitFinished(int unit){
 		}
 	}
 	if(naset){
+		scouters.insert(unit);
 		if((G->cb->GetCurrentFrame()%4 == 2)||(cp.empty() == true)){
             cp[unit] = start_pos;
 		}else if((G->cb->GetCurrentFrame()%4 == 1)||(G->cb->GetCurrentFrame()%4 == 3)){
@@ -148,6 +149,9 @@ void Scouter::UnitIdle(int unit){
 	}
 	
 	if(naset){
+		if(G->Actions->CopyMove(unit,scouters)==true){
+			return;
+		}
 		srand(uint(time(NULL)) + uint(G->Cached->randadd));
 		G->Cached->randadd++;
 		int j = rand()%66;
@@ -189,6 +193,8 @@ void Scouter::UnitIdle(int unit){
 
 void Scouter::UnitDestroyed(int unit){
 	NLOG("Scouter::UnitDestroyed");
+	if(scouters.find(unit)==scouters.end()) return;
+	scouters.erase(unit);
 	if(cp.empty() == false){
 		for(map< int, list<float3> >::iterator q = cp.begin(); q != cp.end();++q){
 			if(q->first == unit){
