@@ -126,7 +126,7 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if(gc>0 && gc<length*0.40)
 		return false;
 */
-	if(helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,dif.y/flatlength,gs->gravity/(projectileSpeed*projectileSpeed)*0.5,(accuracy+sprayangle)*0.6*(1-owner->limExperience*0.9)*0.9,3,owner->allyteam,owner)){
+	if(avoidFriendly && helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,dif.y/flatlength,gs->gravity/(projectileSpeed*projectileSpeed)*0.5,(accuracy+sprayangle)*0.6*(1-owner->limExperience*0.9)*0.9,3,owner->allyteam,owner)){
 		return false;
 	}
 /*	if(helper->TestCone(weaponPos,dir,length*0.5,(accuracy+sprayangle)*1.2*(1-owner->limExperience*0.9)*0.9,owner->allyteam,owner)){

@@ -56,6 +56,8 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit
 				modelDispList= model->rootobjects3o->displist;
 		}
 	}
+
+	collisionFlags = weaponDef->collisionFlags;
 }
 
 CWeaponProjectile::~CWeaponProjectile(void)

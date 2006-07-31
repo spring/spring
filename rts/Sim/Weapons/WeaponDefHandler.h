@@ -162,6 +162,9 @@ struct WeaponDef
 	unsigned int shieldInterceptType;				//type of shield (bitfield)
 	unsigned int interceptedByShieldType;		//weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
 
+	bool avoidFriendly;		//if true tried to avoid firendly units when fireing
+	unsigned int collisionFlags;
+
 	CExplosionGenerator *explosionGenerator; // can be zero for default explosions
 };
 

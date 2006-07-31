@@ -53,7 +53,7 @@ bool CStarburstLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit
 			return false;
 	}
 
-	if(helper->TestCone(weaponPos,UpVector,100,0,owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponPos,UpVector,100,0,owner->allyteam,owner))
 		return false;
 
 	return true;

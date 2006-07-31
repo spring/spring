@@ -56,7 +56,7 @@ bool CFlameThrower::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if(helper->LineFeatureCol(weaponPos,dir,length))
 		return false;
 
-	if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner)){
+	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner)){
 		return false;
 	}
 	return true;

@@ -17,6 +17,9 @@ class CFeature;
 class CVertexArray;
 struct S3DOModel;
 
+#define COLLISION_NOFRIEDNLY		1
+#define COLLISION_NOFEATURE			2
+
 class CProjectile : public CWorldObject
 {
 public:
@@ -40,6 +43,7 @@ public:
 	bool checkCol;
 	bool deleteMe;
 	bool castShadow;
+	unsigned int collisionFlags;
 
 	CUnit* owner;
 	float3 speed;

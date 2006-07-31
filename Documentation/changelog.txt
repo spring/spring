@@ -75,6 +75,8 @@ TASpring change log
 - New weapon tdf tag soundstartvolume and soundhitvolume.
 - New weapon tdf tag size, defines the size of projectiles.
 - New weapon tdf tag sizegrowth, defines how fast flame projectiles will grow in size.
+- New weapon tdf tag AvoidFriendly, if set to 0 units will not try to avoid friendly units in their line of fire.
+- New weapon tdf tag CollideFriendly, if set to 0 this weapon will not hit friendly units.
 - edgeEffectivness added for weapons
 
 - Added limited fuel settings for units (only work for aircrafts so far, need a good mechanism for refueling other stuff)

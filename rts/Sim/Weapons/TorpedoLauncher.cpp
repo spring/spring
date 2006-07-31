@@ -78,7 +78,7 @@ bool CTorpedoLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 
 	dir/=length;
 
-	if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)+0.05,owner->allyteam,owner))	//+0.05 since torpedoes has an unfortunate tendency to hit own ships due to movement
+	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)+0.05,owner->allyteam,owner))	//+0.05 since torpedoes has an unfortunate tendency to hit own ships due to movement
 		return false;
 	return true;
 }
