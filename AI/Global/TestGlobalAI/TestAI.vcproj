@@ -146,29 +146,17 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath=".\GlobalAI.cpp">
+				RelativePath=".\TestAI.cpp">
 			</File>
 			<File
-				RelativePath=".\TestAI.cpp">
+				RelativePath=".\TestGlobalAI.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath=".\GlobalAI.h">
-			</File>
-			<File
-				RelativePath="..\rts\IGlobalAI.h">
-			</File>
-			<File
-				RelativePath="..\rts\IGlobalAICallback.h">
-			</File>
-			<File
-				RelativePath=".\TestAI.h">
-			</File>
-			<File
-				RelativePath="..\rts\UnitDef.h">
+				RelativePath=".\TestGlobalAI.h">
 			</File>
 		</Filter>
 		<Filter

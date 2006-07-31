@@ -476,15 +476,15 @@ void CProjectileHandler::CheckUnitCol()
 	static vector<CUnit*> units;
 	static vector<CFeature*> features;
 	static vector<int> quads;
-	units.clear();
-	features.clear();
-	quads.clear();
 
 	for(psi=ps.begin();psi != ps.end();++psi){
 		CProjectile* p=(*psi);
 		if(p->checkCol && !p->deleteMe){
 			float speedf=p->speed.Length();
 
+			units.clear();
+			features.clear();
+			quads.clear();
 			qf->GetQuads(p->pos, p->radius+speedf, quads);
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius+speedf, quads, units, features);
 
