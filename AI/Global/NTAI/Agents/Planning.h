@@ -11,10 +11,27 @@ public:
 	virtual ~Planning(){}
 	void InitAI();
 	bool feasable(string s, int builder); // Antistall algorithm
+	bool feasable(const UnitDef* uud, const UnitDef* pud); // Antistall algorithm
 	void Update();
-	float GetRealValue(float value); // used to obtaint eh true value e..g a solar giving 20 energy actually gives 18.75
-	float UndoRealValue(float value);
-	float3 GetDirVector(int enemy,float3 unit, const WeaponDef* def); // Predictive Targetting
+	
+	// Predictive Targetting
+	float3 GetDirVector(int enemy,float3 unit, const WeaponDef* def);
+	float GetEnergyIncome();
+
+	// Simulates the fluctuations of the resource based on the parameters given and returns the time in seconds at which the amount of resources stored falls below the
+	// given value
+	float FramesTillZeroRes(float in, float out, float starting, float maxres, float mtime, float minRes);
+
+	// AAI algorithm
+	// returns true if enough metal for constr.
+	bool MetalForConstr(const UnitDef* ud, int workertime = 175);
+
+	// AAI algorithm
+	// returns true if enough energy for construction.
+	bool EnergyForConstr(const UnitDef* ud, int workertime = 175);
+
+	float GetMetalIncome();
+
 	//int DrawLine(float3 LocA, float3 LocB, int LifeTime, float Width = 5.0f, bool Arrow = false);
 	//int DrawLine(ARGB colours, float3 LocA, float3 LocB, int LifeTime, float Width = 5.0f, bool Arrow = false);
 	float a;
@@ -26,11 +43,11 @@ public:
 	int fnum;
 private:
 	Global* G;
-	struct envec{
-		float3 last;
-		float3 now;
-		int last_frame;
-	};
-	map<int,envec> enemy_vectors;
+// 	struct envec{
+// 		float3 last;
+// 		float3 now;
+// 		int last_frame;
+// 	};
+// 	map<int,envec> enemy_vectors;
 };
 #endif

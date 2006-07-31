@@ -13,22 +13,37 @@ void CUBuild::Init(Global* GL, const UnitDef* u, int unit){
 	ud = u;
 	uid = unit;
 	water = false;
+	if(u->floater == true){
+		water=true;
+	}
 }
 
 CUBuild::~CUBuild(){
 }
 
-bool CUBuild::Useless(string name){
+bool CUBuild::Useless(const UnitDef* udt){
 	NLOG("CUBuild::Useless");
 	//TODO: Finish CUBuild::Useless()
-	if(G->Pl->feasable(name,this->uid)==false){
+	if(G->Pl->feasable(udt,ud)==false){
 		return false;
 	}
-	const UnitDef* udt = G->GetUnitDef(name);
-	if(udt == 0){
-		return false;
-	}else{
+	if(udt != 0){
+		if(water){
+			if (udt->minWaterDepth <= 0) { 
+				//it is a ground unit or building 
+				if ((udt->floater==false)&&(udt->maxWaterDepth < 30)){ 
+					//unit is ground only 
+					return true;
+				} 
+			}
+		}else{
+			if (udt->minWaterDepth > 0) { 
+				//it is a water-only unit or building 
+				return true;
+			} 
+		}
 		// do stuff to determine if there is no use for this unit
+		if(udt->extractRange > 0) return false;
 		if(udt->radarRadius > 1) return false;
 		if(udt->sonarJamRadius> 1) return false;
 		if(udt->sonarRadius > 1) return false;
@@ -44,7 +59,7 @@ bool CUBuild::Useless(string name){
 		if(udt->energyMake > 10) return false;
 		if(udt->type == string("MetalExtractor")) return false;
 		if(udt->isMetalMaker == true) return false;
-		if(udt->isFeature == true) return false;
+		//if(udt->isFeature == true) return false;
 		if(udt->jammerRadius > 10) return false;
 		if(udt->metalMake > 0) return false;
 		if(udt->needGeo == true) return false;
@@ -56,18 +71,12 @@ bool CUBuild::Useless(string name){
 	return false;
 }
 
-bool CUBuild::SetWater(){
+void CUBuild::SetWater(bool w){
 	NLOG("CUBuild::SetWater");
-	if(water == true){
-		water = false;
-		return false;
-	}else{
-		water = true;
-		return true;
-	}
+	water =w;
 }
 
-string CUBuild::operator() (btype build){// CBuild c; string s = c(btype build);
+string CUBuild::operator() (btype build,float3 pos){// CBuild c; string s = c(btype build);
 	NLOG("CUBuild::operator()");
 	if(ud->buildOptions.empty() == true) return string("");
 	switch(build){
@@ -175,14 +184,19 @@ string CUBuild::operator() (btype build){// CBuild c; string s = c(btype build);
 string CUBuild::GetMEX(){
 	NLOG("CUBuild::GetMEX");
 	// Find all metal extractors this unit can build and add them to a list.
-	float highscore=0;
+	float highscore= 0;
 	string highest="";
 	for(map<int,string>::const_iterator is = ud->buildOptions.begin(); is != ud->buildOptions.end();++is){
 		const UnitDef* pd = G->GetUnitDef(is->second);
 		if(pd == 0) continue;
-		if(G->Pl->feasable(pd->name,uid)==true) continue;
-		if(pd->extractRange){
-			float score = pd->extractsMetal*100;
+		if(pd->type == string("MetalExtractor")){
+			if(!water){
+				if(ud->minWaterDepth > 200){
+					continue;
+				}
+			}
+			if(Useless(pd)==true) continue;
+			float score = (pd->extractsMetal+1)*1000;
 			if(pd->weapons.empty()==false){
 				score *= 1.2f;
 			}
@@ -224,9 +238,7 @@ string CUBuild::GetPOWER(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if(G->Pl->feasable(is->name,uid) == false) continue;
-			if(((pd->energyMake>10)||(pd->energyUpkeep<0)||(pd->tidalGenerator>0)||(pd->windGenerator>0))&&(pd->needGeo == false)) possibles_u.push_back(pd);
-			if((pd->windGenerator>0)&&(pd->needGeo == false)) possibles_u.push_back(pd);
+			if(G->UnitDefHelper->IsEnergy(pd)) possibles_u.push_back(pd);
 		}
 	}
 	string best_energy = "";
@@ -528,13 +540,14 @@ string CUBuild::GetFACTORY(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if((pd->builder == true)&&(!pd->movedata)&&(pd->canfly == false)){
-				if((G->info->spacemod == true)||(water == true)){
-					if(G->Pl->feasable(pd->name,uid)==false) continue;
-					possibles.push_back(pd->name);
-					facnum++;
-				} else if (pd->floater == false){
-					if(G->Pl->feasable(pd->name,uid)==false) continue;
+			if(G->UnitDefHelper->IsFactory(pd)==true){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
+				if(pd->floater == true){
+					if((G->info->spacemod == true)||(water == true)){
+						possibles.push_back(pd->name);
+						facnum++;
+					}
+				} else{
 					possibles.push_back(pd->name);
 					facnum++;
 				}
@@ -641,7 +654,7 @@ string CUBuild::GetRANDOM(){
 			if((pd->radarRadius > 10)&&((pd->builder == false)||(pd->isAirBase == true))) continue; // no radar towers!!!!
 			if((pd->energyStorage > 100)||(pd->metalStorage > 100)) continue; // no resource storage!!!!!!!!
 			if(pd->isMetalMaker == true) continue; // no metal makers
-			if(Useless(pd->name)==true) continue;
+			if(Useless(pd)==true) continue;
 			if((pd->metalCost+pd->energyCost < (G->cb->GetEnergy()+G->cb->GetMetal())*0.9)&&(((pd->floater == false)&&(water == false)&&(G->info->spacemod == false))||((G->info->spacemod == true)||(water == true)))){
 				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				possibles.push_back(pd->name);
@@ -1069,6 +1082,7 @@ string CUBuild::GetFOCAL_MINE(){
 string CUBuild::GetSUB(){
 	NLOG("CUBuild::GetSUB");
 	return string("");
+	water=true;
 	const vector<CommandDescription>* di = G->cb->GetUnitCommands(uid);
 	if(di == 0) return string("");
 	list<string> possibles;
@@ -1208,8 +1222,7 @@ string CUBuild::GetFORTIFICATION(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
-			if(pd == 0) continue;
-			if(G->DTHandler->IsDragonsTeeth(pd->name)==true) possibles.push_back(ud->name);
+			if(G->DTHandler->IsDragonsTeeth(pd)) possibles.push_back(pd->name);
 		}
 	}
 	if(possibles.empty() == false){

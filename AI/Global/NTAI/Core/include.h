@@ -146,7 +146,7 @@ struct ARGB{
 };
 
 // The max n# of orders sent on each cycle by the command cache
-#define BUFFERMAX 6
+#define BUFFERMAX 8
 
 // typedefs to shorten these
 typedef unsigned char uchar;
@@ -243,6 +243,7 @@ enum btype {
 	B_GUARD_FACTORY,
 	B_GUARD_LIKE_CON,
 	B_RECLAIM,
+	B_RULE_EXTREME_NOFACT,
 	B_NA
 };
 
@@ -307,19 +308,20 @@ enum unit_role{ // used for cosntruction untis to differentiate between factory 
 //#include "../Events/CEvent.h" // Event data structure
 #include "../Core/CCached.h"// Cached data storage class
 #include "../Engine/COrderRouter.h"// Caches orders and issues them so the engine doesnt give an overflow message
+#include "../Helpers/Units/CUnitDefHelp.h" // Helps in identifying types of Units aka Is this a mex or a tidal generator or a factory?
 #include "../Helpers/CEconomy.h" // Construction rules
 //#include "../Tasks/CTask.h" // Task Interface
 //#include "../Tasks/CTaskFactory.h" // Task object generator/ Object Factory
 //#include "../Helpers/Media/Bitmap.h" // Was used for loading Jpegs and bitmaps to draw onmap but it failed terribly
-#include "../Helpers/Units/Actions.h" // Common actions in a useful class
 #include "../Helpers/Terrain/Map.h" // Common Map related procedures such as which corner of the mapare we in
 #include "../Helpers/TdfParser.h"// Parses TDF files
 #include "../Helpers/Information.h" // Stores data from the mod.tdf and AI.tdf files
 #include "../Helpers/InitUtil.h" // Seperates a string" a,b,c,d" in a vector<&T> {a,b,c,d}
-#include "../Helpers/Terrain/RadarHandler.h" // Spaces out radar tower placement so they cover more area and dotn overlap
+#include "../Helpers/Terrain/RadarHandler.h" // Spaces out radar tower placement so they cover more area and dont overlap
 #include "../Helpers/Terrain/DTHandler.h" // Manages creation and pacement of DT rings
 #include "../Helpers/Terrain/MetalMap.h" // Krogothes core metal spot fidner algorithm
 #include "../Helpers/Terrain/MetalHandler.h" // Handles metal spots and choices
+#include "../Helpers/Units/Actions.h" // Common actions in a useful class
 #include "../Helpers/ubuild.h" // Universal Build Routines
 
 // Agents

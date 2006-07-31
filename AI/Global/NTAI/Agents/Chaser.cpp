@@ -26,17 +26,17 @@ void Chaser::InitAI(Global* GLI){
 	}
 
 	// calculate number of sectors
-	xSectors = uint(floor(0.5f + ( G->cb->GetMapWidth()*8)/300.0f));
-	ySectors = uint(floor(0.5f + ( G->cb->GetMapHeight()*8)/300.0f));
+	xSectors = uint(floor(0.5f + ( G->cb->GetMapWidth()*8)/900.0f));
+	ySectors = uint(floor(0.5f + ( G->cb->GetMapHeight()*8)/900.0f));
 
 	// calculate effective sector size
-	xSize = 300;
-	ySize = 300;
+	xSize = 900;
+	ySize = 900;
 	//Targetting = new CPotential(G,float3(float(xSectors),0,float(ySectors)),3.0f,100.0f,30000);
 	
 	//if(sec_set == false){
 	// create field of sectors
-	float3 ik(150.0f,0, float(ySize)/2.0f );
+	float3 ik(float(xSize)/2.0f,0, float(ySize)/2.0f );
 	int id = 0;
 	for(int i = 0; i < xSectors; i++){
 		for(int j = 0; j < ySectors; j++){
@@ -794,42 +794,15 @@ void Chaser::UpdateMatrixEnemies(){
 	// go through the list 
 	if(unum > 0){
 		for(int i = 0; i < unum; i++){
-			if(en[i] < 1){
-				continue;
-			}else{
+			if(en[i] > 0){
 				if(G->cb->GetUnitAllyTeam(en[i]) == G->Cached->unitallyteam) continue;
 				pos = G->GetUnitPos(en[i]);
-				esite es;
-				es.position = pos;
-				pos = G->Map->WhichSector(pos);
-				es.sector = pos;
 				if(G->Map->CheckFloat3(pos) == false) continue;
-				int x = min(int(pos.x),xSectors-1);
-				int y = min(int(pos.z),ySectors-1);
-				int index = sector[x][y].index;
-				if(index > max_index){
-					continue;
-				}
-				const UnitDef* def = G->GetEnemyDef(en[i]);
-				if(def == 0){
-					threat_matrix[index] += 2000;
-					continue;
-				}else{
-					if(def->extractsMetal > 0.0f) G->M->EnemyExtractor(pos,en[i]);
-					float ef = G->GetEfficiency(def->name);
-					es.efficiency = 1000;
-					G->Actions->AddPoint(es.position);
-					if((def->movedata == 0)&&(def->canfly == false)){ // its a building
-						threat_matrix[index] += 2000;
-						es.ground = false;
-						ensites[en[i]] = es;
-					}else{
-						threat_matrix[index] += 2300;
-						es.ground = true;
-						es.created  = G->cb->GetCurrentFrame();
-						ensites[en[i]] = es;
-					}
-				}
+				//const UnitDef* def = G->GetEnemyDef(en[i]);
+				//if(def){
+				//	if(def->extractsMetal > 0.0f) G->M->EnemyExtractor(pos,en[i]);
+				//}
+				G->Actions->AddPoint(pos);
 			}
 		}
 	}
@@ -864,9 +837,9 @@ void Chaser::Update(){
 	//if((EVERY_((11 FRAMES)))&&(ensites.empty() == false)){
 	//	EXCEPTION_HANDLER(UpdateSites(),"Chaser::UpdateSites()",NA)
 	//}
-	//if((EVERY_((10 FRAMES)))&&(G->Cached->enemies.empty() == false)){
-	//	EXCEPTION_HANDLER(UpdateMatrixEnemies(),"Chaser::UpdateMatrixEnemies()",NA)
-	//}
+	if((EVERY_((10 FRAMES)))&&(G->Cached->enemies.empty() == false)){
+		EXCEPTION_HANDLER(UpdateMatrixEnemies(),"Chaser::UpdateMatrixEnemies()",NA)
+	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// re-evaluate the target of an attack force
@@ -907,26 +880,35 @@ void Chaser::FireWeaponsNearby(){
 			if(G->Map->CheckFloat3(pos)==false) continue;
 			if(engaged.find(*aa) != engaged.end()) continue;
 			if(G->Actions->AttackNearest(*aa) == false){
-				if(walking.find(*aa) == walking.end()){
-					if(G->Actions->SeekOutInterest(*aa)==false){
-						if(G->Actions->SeekOutLastAssault(*aa)==false){
-							if(G->Actions->SeekOutNearestInterest(*aa)==false){
-								if(G->Actions->RandomSpiral(*aa)==false){
-									//	G->Actions->ScheduleIdle(*aa);
+				if(G->Actions->CopyAttack(*aa,Attackers)==false){
+					if(G->Actions->CopyMove(*aa,Attackers)==false){
+						if(walking.find(*aa) == walking.end()){
+							if(G->Actions->SeekOutInterest(*aa)==false){
+								if(G->Actions->SeekOutLastAssault(*aa)==false){
+									if(G->Actions->SeekOutNearestInterest(*aa)==false){
+										if(G->Actions->RandomSpiral(*aa)==false){
+											//	G->Actions->ScheduleIdle(*aa);
+										}else{
+											walking.insert(*aa);
+										}
+									}else{
+											walking.insert(*aa);
+										}
 								}else{
 									walking.insert(*aa);
 								}
 							}else{
-									walking.insert(*aa);
-								}
+								walking.insert(*aa);
+							}
 						}else{
-							walking.insert(*aa);
+							continue;
 						}
 					}else{
 						walking.insert(*aa);
 					}
 				}else{
-					continue;
+					engaged.insert(*aa);
+					Beacon(pos,500);
 				}
 			}else{
 				engaged.insert(*aa);
@@ -934,48 +916,6 @@ void Chaser::FireWeaponsNearby(){
 			}
 		}
 	}
-// 	NLOG("Chaser::Update :: make sent attackers attack nearby targets");
-// 	if(groups.empty() == false){
-// 		for(vector<ackforce>::iterator k = groups.begin(); k != groups.end(); ++k){
-// 			if(k->units.empty() == false){
-// 				if(FindTarget(&*k,false)==false){
-// 					for(set<int>::iterator aa = k->units.begin(); aa != k->units.end();++aa){
-// 						float3 pos = G->GetUnitPos(*aa);
-// 						if(G->Map->CheckFloat3(pos)==false) continue;
-// 						if(engaged.find(*aa) != engaged.end()) continue;
-// 						if(G->Actions->AttackNearest(*aa) == false){
-// 							if(walking.find(*aa) == walking.end()){
-// 								if(G->Actions->SeekOutInterest(*aa)==false){
-// 									if(G->Actions->SeekOutLastAssault(*aa)==false){
-// 										if(G->Actions->SeekOutNearestInterest(*aa)==false){
-// 											if(G->Actions->RandomSpiral(*aa)==false){
-// 												//	G->Actions->ScheduleIdle(*aa);
-// 											}else{
-// 												walking.insert(*aa);
-// 											}
-// 										}else{
-// 											walking.insert(*aa);
-// 										}
-// 									}else{
-// 										walking.insert(*aa);
-// 									}
-// 								}else{
-// 									walking.insert(*aa);
-// 								}
-// 							}else{
-// 								continue;
-// 							}
-// 						}else{
-// 							engaged.insert(*aa);
-// 							Beacon(pos,2000);
-// 						}
-// 					}
-// 				}
-// 			}else{
-// 				groups.erase(k);
-// 			}
-// 		}
-// 	}
 }
 
 void Chaser::FireDgunsNearby(){

@@ -149,12 +149,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-			<File
-				RelativePath="..\Helpers\CEconomy.cpp">
-			</File>
-			<File
-				RelativePath="..\Helpers\TdfParser.cpp">
-			</File>
 			<Filter
 				Name="Agents"
 				Filter="">
@@ -184,6 +178,9 @@
 				Name="Helper classes"
 				Filter="">
 				<File
+					RelativePath="..\Helpers\CEconomy.cpp">
+				</File>
+				<File
 					RelativePath="..\Helpers\commented_code.cpp">
 				</File>
 				<Filter
@@ -191,6 +188,9 @@
 					Filter="">
 					<File
 						RelativePath="..\Helpers\Units\Actions.cpp">
+					</File>
+					<File
+						RelativePath="..\Helpers\Units\CUnitDefHelp.cpp">
 					</File>
 					<File
 						RelativePath="..\Helpers\ubuild.cpp">
@@ -257,6 +257,9 @@
 					<File
 						RelativePath="..\Helpers\Log.cpp">
 					</File>
+					<File
+						RelativePath="..\Helpers\TdfParser.cpp">
+					</File>
 				</Filter>
 			</Filter>
 			<Filter
@@ -281,9 +284,6 @@
 				<Filter
 					Name="Base"
 					Filter="">
-					<File
-						RelativePath="..\Tasks\CTaskFactory.cpp">
-					</File>
 				</Filter>
 				<Filter
 					Name="Tasks"
@@ -296,13 +296,7 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\Events\CEvent.h">
-			</File>
-			<File
-				RelativePath="..\Tasks\CTask.h">
-			</File>
-			<File
-				RelativePath="..\Events\EData.h">
+				RelativePath=".\CUnitDefHelp.h">
 			</File>
 			<File
 				RelativePath="..\Helpers\tdf_grammar.hpp">
@@ -347,6 +341,9 @@
 					Filter="">
 					<File
 						RelativePath="..\Helpers\Units\Actions.h">
+					</File>
+					<File
+						RelativePath="..\Helpers\Units\CUnitDefHelp.h">
 					</File>
 					<File
 						RelativePath="..\Helpers\ubuild.h">
@@ -498,9 +495,6 @@
 				<Filter
 					Name="Base"
 					Filter="">
-					<File
-						RelativePath="..\Tasks\CTaskFactory.h">
-					</File>
 				</Filter>
 				<Filter
 					Name="Tasks"

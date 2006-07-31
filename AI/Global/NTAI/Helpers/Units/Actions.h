@@ -22,9 +22,14 @@ public:
 	bool MoveToStrike(int unit,float3 pos);
 	// makes the unit move to that position but keepign its range as if its the position of an enemy
 	bool Guard(int unit,int guarded); // Makes the unit guard the other unit
+	bool Reclaim(int uid,int enemy); // reclaim a unti or feature
+	bool Retreat(int uid);
 	bool SeekOutLastAssault(int unit);
 	bool Trajectory(int unit,int traj);
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);
+
+	bool CopyAttack(int unit,set<int> tocopy);
+	bool CopyMove(int unit,set<int> tocopy);
 	/*void UnitIdle(int unit){
 		attackers.erase(unit);
 	}

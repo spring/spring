@@ -92,7 +92,7 @@ bool CActions::Repair(int uid,int unit){
 	if (RemainingTime < 30.0f) return false;
 	float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
 	float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-	if (	G->cb->GetMetal() + (G->cb->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->cb->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
+	if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
 		if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
 			TCommand TCS(tc,"capture CActions");
 			tc.ID(CMD_REPAIR);
@@ -143,7 +143,7 @@ bool CActions::Guard(int unit,int guarded){
 bool CActions::ReclaimNearby(int uid){
 	NLOG("CActions::ReclaimNearby");
 	float3 upos = G->GetUnitPos(uid);
-	if(upos != UpVector){
+	if(G->Map->CheckFloat3(upos)){
 		int* f = new int[100];
 		int fc = G->cb->GetFeatures(f,99,upos,700);
 		if(fc >0){
@@ -157,16 +157,10 @@ bool CActions::ReclaimNearby(int uid){
 					fid = f[i];
 				}
 			}
-			//
+			delete [] f;
 			if(fid >0){
 				// do stuff
-				TCommand TCS(tc,"reclaim nearby CActions");
-				tc.ID(CMD_RECLAIM);
-				tc.Push(fid);
-				tc.created = G->cb->GetCurrentFrame();
-				tc.unit = uid;
-				delete [] f;
-				return G->OrderRouter->GiveOrder(tc,true);
+				return Reclaim(uid,fid);
 			}
 		}else{
 			delete [] f;
@@ -178,9 +172,10 @@ bool CActions::ReclaimNearby(int uid){
 bool CActions::RessurectNearby(int uid){
 	NLOG("CActions::RessurectNearby");
 	float3 upos = G->GetUnitPos(uid);
-	if(upos != UpVector){
-		int* f = new int[100];
+	if(G->Map->CheckFloat3(upos)){
+		int* f = new int[1000];
 		int fc = G->cb->GetFeatures(f,99,upos,700);
+		delete [] f;
 		if(fc >0){
 			TCommand TCS(tc,"ressurect nearby CActions");
 			tc.ID(CMD_RESURRECT);
@@ -188,10 +183,8 @@ bool CActions::RessurectNearby(int uid){
 			tc.Push(700);
 			tc.created = G->cb->GetCurrentFrame();
 			tc.unit = uid;
-			delete [] f;
 			return G->OrderRouter->GiveOrder(tc,true);
 		}else{
-			delete [] f;
 			return false;
 		}
 	}
@@ -276,6 +269,8 @@ bool CActions::AttackNear(int unit,float LOSmultiplier){
 				if((endi->movedata != 0)||(endi->canfly)){
 					if(G->info->hardtarget == false) tempscore = tempscore/4;
 					tmobile = true;
+				}else if(endi->weapons.empty()==false){
+					tempscore /= 2;
 				}
 				if(tempscore > best_score){
 					best_score = tempscore;
@@ -317,19 +312,10 @@ void CActions::ScheduleIdle(int unit){
 bool CActions::DGun(int uid,int enemy){
 	NLOG("CActions::DGun");
 	TCommand TCS(tc,"cmd_attack chaser::update every 4 secs");
-	const UnitDef* ud = G->GetUnitDef(enemy);
-	if(ud == 0){
-		return false;
-	}else{
-		if(ud->isCommander){
-			tc.ID(CMD_RECLAIM);
-		}else{
-			tc.ID(CMD_DGUN);
-		}
-	}
+	tc.ID(CMD_DGUN);
 	tc.Push(enemy);
 	tc.c.timeOut = 3 SECONDS+(G->cb->GetCurrentFrame()%300) + G->cb->GetCurrentFrame(); // dont let this command get in the way of the commanders taskqueue with a never ending vendetta that can never be fulfilled
-	tc.Priority = tc_instant;
+
 	tc.created = G->cb->GetCurrentFrame();
 	tc.unit = uid;
 	if(G->OrderRouter->GiveOrder(tc,true)==false){
@@ -341,10 +327,20 @@ bool CActions::DGun(int uid,int enemy){
 		return true;
 	}
 }
+bool CActions::Reclaim(int uid,int enemy){
+	NLOG("CActions::Reclaim");
+	TCommand TCS(tc,"cmd_recl CActions::Reclaim");
+	tc.ID(CMD_RECLAIM);
+	tc.Push(enemy);
+	tc.created = G->cb->GetCurrentFrame();
+	tc.unit = uid;
+	return G->OrderRouter->GiveOrder(tc,true);
+}
+
 bool CActions::DGunNearby(int uid){
 	NLOG("CActions::DGunNearby");
-	return false;
-	/*if(G->Ch->dgunning.find(uid) != G->Ch->dgunning.end()){
+	
+	if(G->Ch->dgunning.find(uid) != G->Ch->dgunning.end()){
 		G->L.print("Dgunning failed, dgunning.find() != dgunning.end()");
 		// This unit is ALREADY dgunning, and is in the middle of doing so, without this check the commander would get confused and
 		// not dgun anything because it'd be switching between different targets to quickly
@@ -359,6 +355,7 @@ bool CActions::DGunNearby(int uid){
 		G->L.print("Dgunning failed, canDGun == false");
 		return false;
 	}
+	
 	int* en = new int[5000];
 	int e = G->GetEnemyUnits(en,G->GetUnitPos(uid),G->cb->GetUnitMaxRange(uid)*1.3f); // get all enemy units within weapons range atm
 	if(e>0){
@@ -366,7 +363,9 @@ bool CActions::DGunNearby(int uid){
 		int best_target = 0;
 		float tempscore = 0;
 		float3 compos = G->GetUnitPos(uid); // get units position
+		if(G->Map->CheckFloat3(compos)==false) return false;
 		bool  capture=ud->canCapture;
+		bool commander = false;
 		for(int i = 0; i < e; i++){
 			if(en[i] < 1) continue;
 			const UnitDef* endi = G->GetEnemyDef(en[i]);
@@ -380,6 +379,7 @@ bool CActions::DGunNearby(int uid){
 				if(endi->canfly == true) continue; // attempting to dgun an aircraft without predictive dgunning leads to a goose chase
 				tempscore = G->GetTargettingWeight(ud->name,endi->name);
 				float3 enpos = G->GetUnitPos(en[i]);
+				if(G->Map->CheckFloat3(enpos)) continue;
 				if(endi->weapons.empty() == false){
 					capture = false;
 				}
@@ -390,34 +390,33 @@ bool CActions::DGunNearby(int uid){
 				if(tempscore > best_score){
 					best_score = tempscore;
 					best_target = en[i];
+					commander = endi->isCommander;
 				}
 				tempscore = 0;
 			}
 		}
+		delete [] en;
 		if(best_target < 1){
 			G->L.print("Dgunning failed, best_target < 1");
-			delete [] en;
 			return false;
 		}
-		bool res;
-		if(capture == false){
-			res= DGun(uid,best_target);
+		if(commander==true){
+			if(G->cb->GetUnitHealth(uid)/ud->buildSpeed > G->cb->GetUnitHealth(best_target)/ud->buildSpeed){
+				return Reclaim(uid,best_target);
+			}else{
+				return Retreat(uid);
+			}
 		}else{
-			res = Capture(uid,best_target);
+			if(capture == false){
+				return DGun(uid,best_target);
+			}else{
+				return Capture(uid,best_target);
+			}
 		}
-
-		if(res == false){
-			G->L.print("failed, DGun() returns false!");
-			delete [] en;
-			return false;
-		}else{
-			delete [] en;
-			return true;
-		}
-		//G->Manufacturer->UnitDamaged(*aa,99,99,UpVector,true);
+		//G->Manufacturer->UnitDamaged(*aa,99,99,UpVector,true);*/
 	}
 	delete [] en;
-	return false;*/
+	return false;
 }
 
 
@@ -437,7 +436,7 @@ bool CActions::RepairNearby(int uid,float radius){
 				if (RemainingTime < 30.0f) continue;
 				float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
 				float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-				if (	G->cb->GetMetal() + (G->cb->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->cb->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
+				if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
 					if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
 						TCommand TCS(tc,"Task::execute :: repair cammand unfinished units");
 						tc.unit = uid;
@@ -463,7 +462,7 @@ bool CActions::RepairNearby(int uid,float radius){
 				if (RemainingTime < 30.0f) continue;
 				float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
 				float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-				if (	G->cb->GetMetal() + (G->cb->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->cb->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
+				if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
 					if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
 						TCommand TCS(tc,"Task::execute :: repair cammand damaged units");
 						tc.unit = uid;
@@ -608,3 +607,78 @@ void CActions::Update(){
 		}
 	}
 }
+
+bool CActions::Retreat(int uid){
+	float3 pos = G->GetUnitPos(uid);
+	if(G->Map->CheckFloat3(pos)==true){
+		float3 bpos =G->Map->nbasepos(pos);
+		if(bpos.distance2D(pos) < 900){
+			return false;
+		}
+		pos = G->Map->distfrom(pos,bpos,900);
+		return Move(uid,pos);
+	}else{
+		return false;
+	}
+}
+
+bool CActions::CopyAttack(int unit,set<int> tocopy){
+	float3 p = G->GetUnitPos(unit);
+	if(G->Map->CheckFloat3(p)==false){
+		return false;
+	}
+	int* a = new int[10000];
+	int n = G->cb->GetFriendlyUnits(a,p,900.0f);
+	if(n > 1){
+		//
+		for(int i =0; i < n; i++){
+			if(i == unit) continue;
+			if(tocopy.find(i) == tocopy.end()) continue;
+			const deque<Command>* vc = G->cb->GetCurrentUnitCommands(i);
+			if(vc == 0) continue;
+			if(vc->empty()) continue;
+			for(deque<Command>::const_iterator q = vc->begin(); q != vc->end(); ++q){
+				//
+				if(q->id == CMD_ATTACK){
+					delete [] a;
+					int eu = (int)q->params.front();
+					return Attack(unit,eu,false);
+				}
+			}
+		}
+	}
+	delete [] a;
+	return false;
+}
+bool CActions::CopyMove(int unit,set<int> tocopy){
+	float3 p = G->GetUnitPos(unit);
+	if(G->Map->CheckFloat3(p)==false){
+		return false;
+	}
+	 int* a = new int[10000];
+	int n = G->cb->GetFriendlyUnits(a,p,1300.0f);
+	if(n > 1){
+		//
+		for(int i =0; i < n; i++){
+			if(i == unit) continue;
+			if(tocopy.find(i) == tocopy.end()) continue;
+			
+			const deque<Command>* vc = G->cb->GetCurrentUnitCommands(i);
+			if(vc == 0) continue;
+			if(vc->empty()) continue;
+			for(deque<Command>::const_iterator q = vc->begin(); q != vc->end(); ++q){
+				if(q->id == CMD_MOVE){
+					float3 rpos = float3(q->params.at(0),q->params.at(1),q->params.at(2));
+					if(rpos.distance2D(p) < 200.0f) continue;
+					delete [] a;
+					return Move(unit,rpos);
+				}
+			}
+		}
+	}
+	delete [] a;
+	return false;
+}
+
+
+//

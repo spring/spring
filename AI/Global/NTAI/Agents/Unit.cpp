@@ -77,17 +77,7 @@ bool Task::execute(int uid){
 				return true;
 			}
 		} else if(type == B_RETREAT){
-			float3 pos = G->GetUnitPos(uid);
-			if(G->Map->CheckFloat3(pos)==true){
-				float3 bpos =G->Map->nbasepos(pos);
-				if(bpos.distance2D(pos) < 900){
-					return false;
-				}
-				pos = G->Map->distfrom(pos,bpos,900);
-				return G->Actions->Move(uid,pos);
-			}else{
-				return false;
-			}
+			return G->Actions->Retreat(uid);
 		} else if(type == B_GUARDIAN){
 			return G->Actions->RepairNearby(uid,1200);
 		} else if(type == B_RESURECT){
@@ -101,31 +91,44 @@ bool Task::execute(int uid){
 				valid = false;
 				return false;
 			}
+			if(G->UnitDefHelper->IsUWCapable(udi)){
+				b.SetWater(true);
+			}
 			//G->L.print("checks out, getting targ value");
 			targ = b(bt);
 			//G->L.print("gotten targ value of " + targ);
 			if (targ != string("")){
-				unit_role r = R_BUILDER;
-				if(udi->movedata == 0){
-					if(udi->canfly == false){
-						if(udi->buildOptions.empty() == false){
-							r = R_FACTORY; // Factory!
-						}
+				switch (bt) {
+					case B_FACTORY: {
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("14", "AI\\factory_spacing").c_str());
+						break;
+									}
+					case B_DEFENCE:{
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\defence_spacing").c_str());
+						break;
+								   }
+					case B_POWER: {
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("3", "AI\\power_spacing").c_str());
+						break;
+								  }
+					default:{
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("1", "AI\\default_spacing").c_str());
+						break;
 					}
 				}
-				spacing = max(spacing,1);
-				if(r == R_FACTORY){
-					return G->Manufacturer->CBuild(targ,uid,0);
-				}else{
-					return G->Manufacturer->CBuild(targ,uid,spacing);
-				}
+				return G->Manufacturer->CBuild(targ,uid,spacing);
 			}else{
 				return false;
 			}
-		} else if((type == B_RULE_EXTREME)||(type == B_RULE_EXTREME_CARRY)){//////////////////////////////
+		} else if((type == B_RULE_EXTREME)||(type == B_RULE_EXTREME_NOFACT)||(type == B_RULE_EXTREME_CARRY)){//////////////////////////////
 			CUBuild b;
 			b.Init(G,udi,uid);
-			btype bt = G->Economy->Get(true);
+			btype bt;
+			if(B_RULE_EXTREME_NOFACT == type){
+				bt= G->Economy->Get(true,true);
+			}else{
+				bt= G->Economy->Get(true,false);
+			}
 			if(bt == B_NA){
 				valid = false;
 				return false;
@@ -133,20 +136,25 @@ bool Task::execute(int uid){
 			targ = b(bt);
 			G->L.print("gotten targ value of " + targ + " for RULE");
 			if (targ != string("")){
-				unit_role r = R_BUILDER;
-				if(udi->movedata == 0){
-					if(udi->canfly == false){
-						if(udi->buildOptions.empty() == false){
-							r = R_FACTORY; // Factory!
-						}
-					}
+				switch (type) {
+					case B_FACTORY: {
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("14", "AI\\factory_spacing").c_str());
+						break;
+									}
+					case B_DEFENCE:{
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\defence_spacing").c_str());
+						break;
+								   }
+					case B_POWER: {
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("3", "AI\\power_spacing").c_str());
+						break;
+								  }
+					default:{
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("1", "AI\\default_spacing").c_str());
+						break;
+							}
 				}
-				spacing = max(spacing,1);
-				if(r == R_FACTORY){
-					return G->Manufacturer->CBuild(targ,uid,0);
-				}else{
-					return G->Manufacturer->CBuild(targ,uid,spacing);
-				}
+				return G->Manufacturer->CBuild(targ,uid,spacing);
 			}else{
 				G->L.print("B_RULE_EXTREME skipped bad return");
 				return false;
@@ -254,26 +262,35 @@ bool Task::execute(int uid){
 		}else if( (type != B_NA) &&(type != B_RULE)&&(type != B_GUARDIAN)&&(type != B_RECLAIM)&&(type != B_RETREAT)&&(type != B_RULE_EXTREME)&&(type!= B_RESURECT)&&(type != B_RANDMOVE)&& (type != B_REPAIR)){
 			CUBuild b;
 			b.Init(G,G->GetUnitDef(uid),uid);
-			if(G->info->spacemod == true)b.SetWater();
+			b.SetWater(G->info->spacemod);
+			//if(b.ud->floater==true){
+			//	b.SetWater(true);
+			//}
 			targ = b(type);
 			if(targ == string("")){
+				G->L << "if(targ == string(\"\")) for "<< G->Manufacturer->GetTaskName(type)<< endline;
 				return false;
 			}else{
 				switch (type) {
 					case B_FACTORY: {
-						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\factory_spacing").c_str());
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("14", "AI\\factory_spacing").c_str());
 						break;
 					}
-					case B_FACTORY_CHEAP:{
-						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\factory_spacing").c_str());
+					case B_DEFENCE:{
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\defence_spacing").c_str());
 						break;
 					}
 					case B_POWER: {
-						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("5", "AI\\power_spacing").c_str());
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("3", "AI\\power_spacing").c_str());
 						break;
 					 }
+					default:{
+						spacing = atoi(G->Get_mod_tdf()->SGetValueDef("2", "AI\\default_spacing").c_str());
+						break;
+					}
 				}
-				return G->Manufacturer->CBuild(targ,uid,spacing);
+				valid =  G->Manufacturer->CBuild(targ,uid,spacing);
+				return valid;
 			}
 		}else{
 			if(G->cb->GiveOrder(uid,&c) != -1){
@@ -287,6 +304,8 @@ bool Task::execute(int uid){
 		valid = false;
 		return false;
 	}
+	valid = false;
+	return false;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

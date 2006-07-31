@@ -102,8 +102,8 @@ bool CManufacturer::TaskCycle(CBuilder* i){
 }
 float3 CManufacturer::GetBuildPlacement(int unit,float3 unitpos,const UnitDef* ud, int spacing){
 	float3 pos = unitpos;
-	if(ud->type == string("MetalExtractor")/*)&&(G->M->m->IsMetalMap == false)*/){
-		pos = G->M->getNearestPatch(unitpos,0.8f,ud->extractsMetal,ud);
+	if(ud->type == string("MetalExtractor")){
+		pos = G->M->getNearestPatch(unitpos,0.7f,ud->extractsMetal,ud);
 		if(G->Map->CheckFloat3(pos) == false){
 			G->L.print("zero mex co-ordinates intercepted");
 			return UpVector;
@@ -158,10 +158,22 @@ float3 CManufacturer::GetBuildPlacement(int unit,float3 unitpos,const UnitDef* u
 bool CManufacturer::CBuild(string name, int unit, int spacing){
 	NLOG("CManufacturer::CBuild");
 	G->L.print("CBuild() :: " + name);
+	const UnitDef* uda = G->GetUnitDef(unit);
+	const UnitDef* ud = G->GetUnitDef(name);
+
+	/////////////
+
+	if(ud == 0){
+		G->L.print("Factor::CBuild(3) error: a problem occurred loading this units unit definition : " + name);
+		return false;
+	} else if(uda == 0){
+		G->L.print("Factor::CBuild(3) error: a problem occurred loading uda ");
+		return false;
+	}
 	if(G->Pl->AlwaysAntiStall.empty() == false){ // Sort out the stuff that's setup to ALWAYS be under the antistall algorithm
 		for(vector<string>::iterator i = G->Pl->AlwaysAntiStall.begin(); i != G->Pl->AlwaysAntiStall.end(); ++i){
 			if(*i == name){
-				if(G->Pl->feasable(name,unit) == false){
+				if(G->Pl->feasable(ud,uda) == false){
 					G->L.print("Factor::CBuild  unfeasable " + name);
 					return false;
 				}else{
@@ -173,19 +185,15 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 	float emax=1000000000;
 	string key = "Resource\\MaxEnergy\\";
 	key += name;
-	G->Get_mod_tdf()->GetDef(emax,"3000000",key);// +300k energy per tick by default
-	if(G->cb->GetEnergyIncome() > emax){
+	/*G->Get_mod_tdf()->GetDef(emax,"3000000",key);// +300k energy per tick by default
+	if(G->Pl->GetEnergyIncome() > emax){
 		G->L.print("Factor::CBuild  emax " + name);
 		return G->Actions->RepairNearby(unit,1000);
-	}
+	}*/
 	// Now sort out stuff that can only be built one at a time
 	if(G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()){
 		G->L.print("Factor::CBuild  solobuild " + name);
-		TCommand TCS(tc,"repair solobuilds Factor::CBuild()"); // One is already being built, change to a repair order to go help it!
-		tc.unit = unit;
-		tc.ID(CMD_REPAIR);
-		tc.Push(G->Cached->solobuilds[name]);
-		return G->OrderRouter->GiveOrder(tc,true);
+		return G->Actions->Repair(unit,G->Cached->solobuilds[name]);// One is already being built, change to a repair order to go help it!
 	}
 	// Now sort out if it's one of those things that can only be built once
 	if(G->Cached->singlebuilds.find(name) != G->Cached->singlebuilds.end()){
@@ -199,7 +207,7 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 	//}
 	// If Antistall == 2/3 then we always do this
 	if(G->info->antistall>1){
-		if(G->Pl->feasable(name,unit) == false){
+		if(G->Pl->feasable(ud,uda) == false){
 			G->L.print("Factor::CBuild  unfeasable " + name);
 			return false;
 		}
@@ -208,90 +216,79 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 		G->L.print("Factor::CBuild(2)unit finished does not exist?! Could it have been destroyed? CBuild()");		
 		return false;
 	}
-	const UnitDef* uda = G->GetUnitDef(unit);
-	const UnitDef* ud = G->GetUnitDef(name);
 	
-	/////////////
 
-	if(ud == 0){
-		G->L.print("Factor::CBuild(3) error: a problem occurred loading this units unit definition : " + name);
-		return false;
-	} else if(uda == 0){
-		G->L.print("Factor::CBuild(3) error: a problem occurred loading uda ");
-		return false;
-	}else {
-		float3 pos=UpVector;
-		TCommand TCS(tc,"CBuild");
-		tc.unit = unit;
-		tc.ID(-ud->id);
+	float3 pos=UpVector;
+	TCommand TCS(tc,"CBuild");
+	tc.unit = unit;
+	tc.ID(-ud->id);
 
-		float3 unitpos = G->GetUnitPos(unit);
-		if(G->Map->CheckFloat3(unitpos) == false){
-			return false;
-		}
-		float rmax;
-		key = "Resource\\ConstructionRepairRanges\\";
-		key += name;
-		G->Get_mod_tdf()->GetDef(rmax,"5",key);// by default dont do this so we give ti a tiny default range
-		if(rmax > 10){
-			int* funits = new int[5000];
-			int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
-			if(fnum > 1){
-				//
-				for(int i = 0; i < fnum; i++){
-					const UnitDef* udf = G->GetUnitDef(funits[i]);
-					if(udf == 0) continue;
-					if(udf->name == name){
-						if(G->cb->UnitBeingBuilt(funits[i])==true){
-							delete [] funits;
-							return G->Actions->Repair(unit,funits[i]);
-						}
+	float3 unitpos = G->GetUnitPos(unit);
+	if(G->Map->CheckFloat3(unitpos) == false){
+		return false;
+	}
+	float rmax;
+	key = "Resource\\ConstructionRepairRanges\\";
+	key += name;
+	G->Get_mod_tdf()->GetDef(rmax,"5",key);// by default dont do this so we give ti a tiny default range
+	if(rmax > 10){
+		int* funits = new int[5000];
+		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
+		if(fnum > 1){
+			//
+			for(int i = 0; i < fnum; i++){
+				const UnitDef* udf = G->GetUnitDef(funits[i]);
+				if(udf == 0) continue;
+				if(udf->name == name){
+					if(G->cb->UnitBeingBuilt(funits[i])==true){
+						delete [] funits;
+						return G->Actions->Repair(unit,funits[i]);
 					}
 				}
 			}
-			delete [] funits;
 		}
-		if(ud->type != string("MetalExtractor")){
-			unitpos = GetBuildPos(unit,ud,unitpos);
-		}
+		delete [] funits;
+	}
+	//if(ud->type != string("MetalExtractor")){
+	//	unitpos = GetBuildPos(unit,ud,unitpos);
+	//}
 
-		pos = GetBuildPlacement(unit,unitpos,ud,spacing);
-		if(G->Map->CheckFloat3(pos)==false){
-			G->L.print("GetBuildPlacement returned UpVector or some other nasty position");
-			return false;
-		}
-		pos.y = G->cb->GetElevation(pos.x,pos.z);
-		if(G->cb->CanBuildAt(ud,pos) == false){
-			G->L.print("GetBuildPlacement returned UpVector or some other nasty position which didnt check out with CanBuildAt()");
-			return false;
-		}
-		tc.PushFloat3(pos);
-		tc.Push(0);
-		tc.c.timeOut = int(ud->buildTime/5) + G->cb->GetCurrentFrame();
-		tc.created = G->cb->GetCurrentFrame();
-		tc.delay=0;
-		if(G->OrderRouter->GiveOrder(tc)== false){
-			G->L.print("Error::Cbuild Failed Order :: " + name);
-			return false;
+	pos = GetBuildPlacement(unit,unitpos,ud,spacing);
+	if(G->Map->CheckFloat3(pos)==false){
+		G->L.print("GetBuildPlacement returned UpVector or some other nasty position");
+		return false;
+	}
+	pos.y = G->cb->GetElevation(pos.x,pos.z);
+	if(G->cb->CanBuildAt(ud,pos) == false){
+		G->L.print("GetBuildPlacement returned UpVector or some other nasty position which didnt check out with CanBuildAt()");
+		return false;
+	}
+	tc.PushFloat3(pos);
+	tc.Push(0);
+	tc.c.timeOut = int(ud->buildTime/5) + G->cb->GetCurrentFrame();
+	tc.created = G->cb->GetCurrentFrame();
+	tc.delay=0;
+	if(G->OrderRouter->GiveOrder(tc)== false){
+		G->L.print("Error::Cbuild Failed Order :: " + name);
+		return false;
+	}else{
+		// create a plan
+		CBPlan Bplan;
+		Bplan.started = false;
+		Bplan.builder = unit;
+		Bplan.subject = 0;
+		Bplan.pos = pos;
+		if(ud->movedata != 0){
+			Bplan.mobile_mobile = true;
 		}else{
-			// create a plan
-			CBPlan Bplan;
-			Bplan.started = false;
-			Bplan.builder = unit;
-			Bplan.subject = 0;
-			Bplan.pos = pos;
-			if(ud->movedata != 0){
+			if(ud->canfly == true){
 				Bplan.mobile_mobile = true;
 			}else{
-				if(ud->canfly == true){
-					Bplan.mobile_mobile = true;
-				}else{
-					Bplan.mobile_mobile = false;
-				}
+				Bplan.mobile_mobile = false;
 			}
-			BPlans.push_back(Bplan);
-			return true;
 		}
+		BPlans.push_back(Bplan);
+		return true;
 	}
 	return false;
 }
@@ -579,6 +576,7 @@ void CManufacturer::RegisterTaskTypes(){
 		RegisterTaskPair("B_GLOBAL", B_RULE);
 		RegisterTaskPair("B_RULE", B_RULE);
 		RegisterTaskPair("B_RULE_EXTREME", B_RULE_EXTREME);
+		RegisterTaskPair("B_RULE_EXTREME_NOFACT", B_RULE_EXTREME_NOFACT);
 		RegisterTaskPair("B_RULE_EXTREME_CARRY", B_RULE_EXTREME_CARRY);
 		RegisterTaskPair("B_RULE_CARRY", B_RULE_EXTREME_CARRY);
 		RegisterTaskPair("B_RETREAT", B_RETREAT);
@@ -887,13 +885,14 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 	 if(v.empty() == false){
 		 bool polate=false;
 		 bool polation = G->info->rule_extreme_interpolate;
+		 btype bt = GetTaskType(G->Get_mod_tdf()->SGetValueDef("B_RULE_EXTREME_NOFACT","AI\\interpolate_tag"));
 		 if(ui->GetRole() == R_FACTORY){
 			 polation = false;
 		 }
 		 for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			 if(polation==true){
 				if(polate==true){
-					ui->AddTask(B_RULE_EXTREME);
+					ui->AddTask(bt);
 					polate = false;
 				}
 			 }
