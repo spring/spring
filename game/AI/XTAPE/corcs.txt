@@ -1,1 +1,1 @@
-B_RADAR, B_RANDMOVE, corasy, corsy, B_RULE, B_RULE, repair, B_RULE, B_RULE, B_RULE, repair, B_DEFENSE, repair, B_GLOBAL, B_GLOBAL, B_GLOBAL, repair, repeat
+armasy, armsy, B_RADAR, B_DEFENSE, repair, repair, B_RULE, B_RULE, B_RULE, B_FACTORY, B_DEFENSE, repair, repeat

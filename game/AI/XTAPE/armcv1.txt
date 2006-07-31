@@ -1,1 +1,1 @@
-armrl, armavp, armmoho, armmoho, B_RULE, B_RULE, B_RULE, B_RULE, B_RULE, B_RADAR, B_GEO, armllt, B_GEO, repair, armavp, armhlt, repair, armap, armmoho, armmoho, B_RULE, B_RULE, B_RULE, B_RULE, B_RULE, armllt, repair, B_RADAR, armamb, repair, armlab, armavp, armllt, repeat
+armrl, armavp, defense, armrl, armvp, repair, B_RULE, B_GEO, B_RULE, B_GEO, B_RULE, repair, defense, armrl, B_FACTORY, repair, B_RULE, B_RULE, B_RULE, repair, armavp, armvp, defense, armrl, repair, B_RETREAT, B_GUARDIAN, B_RANDMOVE, B_GUARDIAN, B_RANDMOVE, B_GUARDIAN, B_RANDMOVE, B_GUARDIAN, repeat
