@@ -329,7 +329,7 @@ static bool MultisampleTest(void)
 	if (!fsaa)
 		return false;
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
-	GLuint fsaalevel = min(configHandler.GetInt("FSAALevel",2),(unsigned int)8);
+	GLuint fsaalevel = max(min(configHandler.GetInt("FSAALevel", 2), 8), 0);
 
 	make_even_number(fsaalevel);
 

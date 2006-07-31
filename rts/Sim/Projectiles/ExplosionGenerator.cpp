@@ -282,18 +282,21 @@ CCustomExplosionGenerator::~CCustomExplosionGenerator()
 		delete groundFlash;
 }
 
-#define OP_END 0
-#define OP_STOREI 1
-#define OP_STOREF 2
-#define OP_STOREC 3
-#define OP_ADD 4
-#define OP_RAND 5
+#define OP_END    0
+#define OP_STOREI 1 // int
+#define OP_STOREF 2 // float
+#define OP_STOREC 3 // char
+#define OP_ADD    4
+#define OP_RAND   5
 #define OP_DAMAGE 6
-#define OP_INDEX 7
+#define OP_INDEX  7
+#define OP_LOADP  8 // load a void* into the pointer register
+#define OP_STOREP 9 // store the pointer register into a void*
 
 void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex)
 {
-	float val=0.0f;
+	float val = 0.0f;
+	void* ptr = NULL;
 
 	for (;;) {
 		switch (*(code++)) {
@@ -333,6 +336,16 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 			val += spawnIndex * *(float*)code;
 			code += 4;
 			break;
+		case OP_LOADP:{
+			ptr = *(void**)code;
+			code += sizeof(void*);
+			break;}
+		case OP_STOREP:{
+			Uint16 offset = *(Uint16*)code;
+			code += 2;
+			*(void**)(instance + offset) = ptr;
+			ptr = NULL;
+			break;}
 		}
 	}
 }
@@ -411,11 +424,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		{
 			string::size_type end = script.find(';', 0);
 			std::string texname = script.substr(0, end);
-			AtlasedTexture *tex = ph->textureAtlas->GetTexturePtr(texname);
-			code += OP_ADD;
-			unsigned int mo = reinterpret_cast<int>(tex);
-			code.append((char*)(&mo), ((char*)(&mo)) + 4);
-			code += OP_STOREF;
+			void* tex = ph->textureAtlas->GetTexturePtr(texname);
+			code += OP_LOADP;
+			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
+			code += OP_STOREP;
 			Uint16 ofs = offset;
 			code.append ((char*)&ofs, (char*)&ofs + 2);
 		}
@@ -444,10 +456,10 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		std::string className = parser.SGetValueDef(*si, location + "class");
 		psi->projectileClass = h->projectileClasses.GetClass (className);
 		unsigned int flags = 0;
-        if(!!atoi(parser.SGetValueDef ("0", location + "ground").c_str()))	flags |= SPW_GROUND;
-        if(!!atoi(parser.SGetValueDef ("0", location + "water").c_str()))	flags |= SPW_WATER;
-        if(!!atoi(parser.SGetValueDef ("0", location + "air").c_str()))	flags |= SPW_AIR;
-        if(!!atoi(parser.SGetValueDef ("0", location + "underwater").c_str()))	flags |= SPW_UNDERWATER;
+		if(!!atoi(parser.SGetValueDef ("0", location + "ground").c_str()))     flags |= SPW_GROUND;
+		if(!!atoi(parser.SGetValueDef ("0", location + "water").c_str()))      flags |= SPW_WATER;
+		if(!!atoi(parser.SGetValueDef ("0", location + "air").c_str()))        flags |= SPW_AIR;
+		if(!!atoi(parser.SGetValueDef ("0", location + "underwater").c_str())) flags |= SPW_UNDERWATER;
 		psi->flags = flags;
 		psi->count = atoi(parser.SGetValueDef("1", location + "count").c_str());
 
@@ -497,7 +509,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 	else if (pos.y<-15) flags = SPW_UNDERWATER;
 	else if (pos.y-max((float)0,h2)>20) flags = SPW_AIR;
 	else flags = SPW_GROUND;
-    
+
 	for (int a=0;a<projectileSpawn.size();a++)
 	{
 		ProjectileSpawnInfo *psi = projectileSpawn[a];

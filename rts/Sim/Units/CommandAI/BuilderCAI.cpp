@@ -170,7 +170,7 @@ void CBuilderCAI::SlowUpdate()
 			bi.pos.y=c.params[1];
 			CFeature* f=0;
 			if (c.params.size()==4)
-				bi.buildFacing = c.params[3];
+				bi.buildFacing = int(c.params[3]);
 			bi.def = unitDefHandler->GetUnitByName(boi->second);
 
 			uh->TestUnitBuildSquare(bi,f);
@@ -685,7 +685,7 @@ void CBuilderCAI::DrawCommands(void)
 		if((boi=buildOptions.find(ci->id))!=buildOptions.end()){
 			BuildInfo bi;
             bi.pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			if(ci->params.size()==4) bi.buildFacing=ci->params[3];
+			if(ci->params.size()==4) bi.buildFacing=int(ci->params[3]);
 			bi.def = unitDefHandler->GetUnitByName(boi->second);
 
 			glColor4f(1,1,1,0.4);
@@ -741,7 +741,7 @@ void CBuilderCAI::GiveCommand(Command& c)
 			return;
 		BuildInfo bi;
 		bi.pos = float3(c.params[0],c.params[1],c.params[2]);
-		if(c.params.size()==4) bi.buildFacing=c.params[3];
+		if(c.params.size()==4) bi.buildFacing=int(c.params[3]);
 		bi.def = unitDefHandler->GetUnitByName(boi->second);
 		bi.pos=helper->Pos2BuildPos(bi);
 		CFeature* feature;

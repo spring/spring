@@ -50,7 +50,7 @@ bool BuildInfo::Parse(Command& c)
 
 			buildFacing = 0;
 			if (c.params.size()==4)
-				buildFacing = c.params[3];
+				buildFacing = int(c.params[3]);
 
 			return true;
 		}

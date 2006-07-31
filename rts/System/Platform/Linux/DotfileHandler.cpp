@@ -47,7 +47,7 @@ DotfileHandler::~DotfileHandler()
 /**
  * Gets integer value from config
  */
-unsigned int DotfileHandler::GetInt(const string name, const unsigned int def)
+int DotfileHandler::GetInt(const string name, const int def)
 {
 	std::map<string,string>::iterator pos = data.find(name);
 	return ( pos == data.end() ? def : atoi(data[name].c_str()) );
@@ -102,7 +102,7 @@ void DotfileHandler::SetString(const string name, const string value)
 /**
  * Sets a config integer
  */
-void DotfileHandler::SetInt(const string name, const unsigned int value)
+void DotfileHandler::SetInt(const string name, const int value)
 {
 	std::stringstream ss;
 	ss << value;

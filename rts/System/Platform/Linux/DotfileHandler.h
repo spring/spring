@@ -58,7 +58,7 @@ public:
 	 * @param name name of key to set
 	 * @param value integer value to set
 	 */
-	virtual void SetInt(std::string name, unsigned int value);
+	virtual void SetInt(std::string name, int value);
 
 	/**
 	 * @brief set string
@@ -81,7 +81,7 @@ public:
 	 * @param def default integer value to use if key is not found
 	 * @return integer value
 	 */
-	virtual unsigned int GetInt(std::string name, unsigned int def);
+	virtual int GetInt(std::string name, int def);
 protected:
 	/**
 	 * @brief filename
