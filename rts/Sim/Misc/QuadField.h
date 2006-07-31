@@ -30,9 +30,12 @@ public:
 	void AddFeature(CFeature* feature);
 	void RemoveFeature(CFeature* feature);
 	vector<int> GetQuads(float3 pos,float radius);
+	void GetQuads(float3 pos,float radius, vector<int>& dst);
 	vector<int> GetQuadsRectangle(const float3& pos,const float3& pos2);
 	vector<CFeature*> GetFeaturesExact(const float3& pos,float radius);
 	vector<CSolidObject*> GetSolidsExact(const float3& pos,float radius);
+	// optimization specifically for projectile collisions
+	void GetUnitsAndFeaturesExact(const float3& pos, float radius, const vector<int>& quads, vector<CUnit*>& dstunits, vector<CFeature*>& dstfeatures);
 
 	struct Quad {
 		float startx;
