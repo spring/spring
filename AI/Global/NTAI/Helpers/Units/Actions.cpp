@@ -355,20 +355,21 @@ bool CActions::DGunNearby(int uid){
 		G->L.print("Dgunning failed, canDGun == false");
 		return false;
 	}
-	
+	float3 compos = G->GetUnitPos(uid);
+	if(G->Map->CheckFloat3(compos)==false){
+		return false;
+	}
 	int* en = new int[5000];
-	int e = G->GetEnemyUnits(en,G->GetUnitPos(uid),G->cb->GetUnitMaxRange(uid)*1.3f); // get all enemy units within weapons range atm
+	int e = G->GetEnemyUnits(en,compos,G->cb->GetUnitMaxRange(uid)*1.3f); // get all enemy units within weapons range atm
 	if(e>0){
 		float best_score = 0;
 		int best_target = 0;
 		float tempscore = 0;
-		float3 compos = G->GetUnitPos(uid); // get units position
-		if(G->Map->CheckFloat3(compos)==false) return false;
 		bool  capture=ud->canCapture;
 		bool commander = false;
 		for(int i = 0; i < e; i++){
 			if(en[i] < 1) continue;
-			const UnitDef* endi = G->GetEnemyDef(en[i]);
+			const UnitDef* endi = G->GetUnitDef(en[i]);
 			if(endi == 0){
 				continue;
 			}else{
@@ -376,21 +377,24 @@ bool CActions::DGunNearby(int uid){
 				// no dgunning enemy commanders is commented out because now if the enemy is a commander the CMD_DGUN is
 				// changed to CMD_RECLAIM, allowing the enemy commander to be eliminated without causing a wild goose chase of
 				// building dgunned building dgunned, commander in the way of building dgunned, BANG, both commanders bye bye
-				if(endi->canfly == true) continue; // attempting to dgun an aircraft without predictive dgunning leads to a goose chase
-				tempscore = G->GetTargettingWeight(ud->name,endi->name);
+				if((endi->type == string("Fighter"))&&(endi->type == string("Bomber"))) continue; // attempting to dgun an aircraft without predictive dgunning leads to a goose chase
 				float3 enpos = G->GetUnitPos(en[i]);
 				if(G->Map->CheckFloat3(enpos)) continue;
+				tempscore = G->GetTargettingWeight(ud->name,endi->name);
 				if(endi->weapons.empty() == false){
 					capture = false;
 				}
-				if(endi->canKamikaze == true){
-					capture = false;
-				}
+// 				if(endi->canKamikaze == true){
+// 					capture = false;
+// 				}
+				tempscore *= 2;
 				tempscore = tempscore / compos.distance2D(enpos);
 				if(tempscore > best_score){
 					best_score = tempscore;
 					best_target = en[i];
-					commander = endi->isCommander;
+					if(commander == false){
+						commander = endi->isCommander;
+					}
 				}
 				tempscore = 0;
 			}
