@@ -14,11 +14,10 @@ class CDTHandler{
         bool DTNeeded();
 		float3 GetDTBuildSite(int uid);
 
-        
-        bool IsDragonsTeeth(const int Feature);
-        bool IsDragonsTeeth(const char *FeatureName);
-        bool IsDragonsTeeth(const std::string FeatureName);
-        
+//		bool IsDragonsTeeth(const int Feature);
+		bool IsDragonsTeeth(const char *FeatureName);
+		bool IsDragonsTeeth(const std::string FeatureName);
+		bool IsDragonsTeeth(const UnitDef* ud);
         Global* G;
         std::map<int, int> DTBuilds;
         //float BuildPower;
@@ -29,5 +28,5 @@ class CDTHandler{
         };
         std::vector<DTRing> DTRings;
         
-        static bool NoDT;
+        bool NoDT;
 };

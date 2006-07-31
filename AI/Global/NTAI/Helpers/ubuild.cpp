@@ -956,10 +956,10 @@ string CUBuild::GetANTIMISSILE(){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
 			if(pd->weapons.empty() != true){
+				if(G->Pl->feasable(pd->name,uid)==false) continue;
 				for(vector<UnitDef::UnitDefWeapon>::const_iterator i = pd->weapons.begin(); i != pd->weapons.end(); ++i){
 					//
 					if(i->def->interceptor == 1){
-						if(G->Pl->feasable(pd->name,uid)==false) continue;
 						possibles.push_back(pd->name);
 						randnum++;
 						break;
@@ -1077,19 +1077,19 @@ string CUBuild::GetFOCAL_MINE(){
 string CUBuild::GetSUB(){
 	NLOG("CUBuild::GetSUB");
 	return string("");
-	water=true;
-	const vector<CommandDescription>* di = G->cb->GetUnitCommands(uid);
-	if(di == 0) return string("");
-	list<string> possibles;
+// 	water=true;
+// 	const vector<CommandDescription>* di = G->cb->GetUnitCommands(uid);
+// 	if(di == 0) return string("");
+// 	list<string> possibles;
 	
 }
 
 string CUBuild::GetAMPHIB(){
 	NLOG("CUBuild::GetAMPHIB");
 	return string("");
-	const vector<CommandDescription>* di = G->cb->GetUnitCommands(uid);
-	if(di == 0) return string("");
-	list<string> possibles;
+// 	const vector<CommandDescription>* di = G->cb->GetUnitCommands(uid);
+// 	if(di == 0) return string("");
+// 	list<string> possibles;
 	
 }
 
@@ -1217,6 +1217,7 @@ string CUBuild::GetFORTIFICATION(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
+			if(pd == 0) continue;
 			if(G->DTHandler->IsDragonsTeeth(pd)) possibles.push_back(pd->name);
 		}
 	}
