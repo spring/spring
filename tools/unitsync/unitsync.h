@@ -27,6 +27,9 @@ struct MapInfo
 	int height;
 	int posCount;
 	StartPos positions[16];		// I'd rather not allocate memory, this should be enough
+
+	// VERSION>=1
+	char *author; // max 200 chars
 };
 
 const char *GetStr(std::string str);

@@ -21,6 +21,7 @@ EXPORTS
 	AddAllArchives				@22
 	GetArchiveChecksum			@23
 	
+	GetMapInfoEx				@29
 	GetMapCount					@30
 	GetMapName					@31
 	GetMapInfo					@32
