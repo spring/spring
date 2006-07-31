@@ -1439,7 +1439,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const B
 				assert(c.params.size()==4);
 				other.pos = float3(c.params[0],c.params[1],c.params[2]);
 				other.def = unitDefHandler->GetUnitByID(-c.id);
-				other.buildFacing = c.params[3];
+				other.buildFacing = int(c.params[3]);
 			}
 		}
 	}

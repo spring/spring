@@ -281,7 +281,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	tdfparser.GetDef(ud.showNanoSpray, "1", "UNITINFO\\shownanospray");
 	float3 nanocolor = tdfparser.GetFloat3(float3(0.2f,0.7f,0.2f),"UNITINFO\\nanocolor");
-	ud.nanoColor[0] = nanocolor.x*255, ud.nanoColor[1]=nanocolor.y*255, ud.nanoColor[2]=nanocolor.z*255, ud.nanoColor[3]=255;
+	ud.nanoColor[0] = int(nanocolor.x*255);
+	ud.nanoColor[1] = int(nanocolor.y*255);
+	ud.nanoColor[2] = int(nanocolor.z*255);
+	ud.nanoColor[3] = 255;
 
 	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
 	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
