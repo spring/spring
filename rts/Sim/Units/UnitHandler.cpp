@@ -289,7 +289,7 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	return h;
 }
 
-int CUnitHandler::TestUnitBuildSquare(BuildInfo& buildInfo, CFeature *&feature)
+int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&feature)
 {
 	feature=0;
 	int xsize=buildInfo.GetXSize();
@@ -372,12 +372,12 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 	return ret;
 }
 
-int CUnitHandler::ShowUnitBuildSquare(BuildInfo& buildInfo)
+int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo)
 {
 	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
 }
 
-int CUnitHandler::ShowUnitBuildSquare(BuildInfo& buildInfo, const std::vector<Command> &cv)
+int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command> &cv)
 {
 	glDisable(GL_DEPTH_TEST );
 	glEnable(GL_BLEND);
@@ -387,7 +387,7 @@ int CUnitHandler::ShowUnitBuildSquare(BuildInfo& buildInfo, const std::vector<Co
 	glBegin(GL_QUADS);
 	int xsize=buildInfo.GetXSize();
 	int ysize=buildInfo.GetYSize();
-	float3& pos = buildInfo.pos;
+	const float3& pos = buildInfo.pos;
 
 	int x1 = (int) (pos.x-(xsize*0.5f*SQUARE_SIZE));
 	int x2 = x1+xsize*SQUARE_SIZE;
