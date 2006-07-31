@@ -6,6 +6,8 @@
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
 
+CR_BIND_STRUCT(AtlasedTexture);
+
 CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
 {
 	this->maxxsize = maxxsize;

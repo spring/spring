@@ -413,20 +413,25 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	CWeaponDefHandler::LoadSound(weapondef->firesound);
 	CWeaponDefHandler::LoadSound(weapondef->soundhit);
 
-	if(weapon->damages[0]>50){
-		float soundVolume=sqrt(weapon->damages[0]*0.5);
-		if(weapondef->type=="LaserCannon")
-			soundVolume*=0.5;
-		float hitSoundVolume=soundVolume;
-		if((weapondef->type=="MissileLauncher" || weapondef->type=="StarburstLauncher") && soundVolume>100)
-			soundVolume=10*sqrt(soundVolume);
-		weapondef->firesound.volume=soundVolume;
-		soundVolume=hitSoundVolume;
-		if(weapon->areaOfEffect>8)
-			soundVolume*=2;
-		if(weapondef->type=="DGun")
-			soundVolume*=0.15;
-		weapondef->soundhit.volume=soundVolume;
+	if(weapondef->firesound.volume == -1 || weapondef->firesound.volume == -1)  //no volume read from defenition
+	{
+		if(weapon->damages[0]>50){
+			float soundVolume=sqrt(weapon->damages[0]*0.5);
+			if(weapondef->type=="LaserCannon")
+				soundVolume*=0.5;
+			float hitSoundVolume=soundVolume;
+			if((weapondef->type=="MissileLauncher" || weapondef->type=="StarburstLauncher") && soundVolume>100)
+				soundVolume=10*sqrt(soundVolume);
+			if(weapondef->firesound.volume==-1)
+				weapondef->firesound.volume=soundVolume;
+			soundVolume=hitSoundVolume;
+			if(weapon->areaOfEffect>8)
+				soundVolume*=2;
+			if(weapondef->type=="DGun")
+				soundVolume*=0.15;
+			if(weapondef->soundhit.volume==-1)
+				weapondef->soundhit.volume=soundVolume;
+		}
 	}
 	weapon->fireSoundId = weapondef->firesound.id;
 	weapon->fireSoundVolume=weapondef->firesound.volume;

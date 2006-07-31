@@ -14,7 +14,8 @@ CFlameProjectile::CFlameProjectile(const float3& pos,const float3& speed,const f
 {
 	invttl=1.0/ttl;
 
-	SetRadius(speed.Length()*0.9);
+	//SetRadius(speed.Length()*0.9);
+	SetRadius(weaponDef->size);
 }
 
 CFlameProjectile::~CFlameProjectile(void)
@@ -41,7 +42,7 @@ void CFlameProjectile::Update(void)
 	pos+=speed;
 	speed+=spread;
 
-	SetRadius(radius+0.2);
+	SetRadius(radius+weaponDef->sizeGrowth);
 
 	curTime+=invttl;
 	if(curTime>1){

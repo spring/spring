@@ -162,6 +162,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 
 	sunparser->GetDef(weaponDefs[id].firesound.name, "", weaponname + "\\soundstart");
 	sunparser->GetDef(weaponDefs[id].soundhit.name, "", weaponname + "\\soundhit");
+	sunparser->GetDef(weaponDefs[id].firesound.volume, "-1", weaponname + "\\soundstartvolume");
+	sunparser->GetDef(weaponDefs[id].soundhit.volume, "-1", weaponname + "\\soundhitvolume");
 
 	/*if(weaponDefs[id].firesound.name.find(".wav") == -1)
 		weaponDefs[id].firesound.name = weaponDefs[id].firesound.name + ".wav";
@@ -322,6 +324,11 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 //	if(!weaponDefs[id].turret && weaponDefs[id].type!="TorpedoLauncher")
 //		weaponDefs[id].maxAngle*=0.4;
 
+	//2+min(damages[0]*0.0025,weaponDef->areaOfEffect*0.1)
+	float tempsize = 2.0f+min(weaponDefs[id].damages[0]*0.0025,weaponDefs[id].areaOfEffect*0.1);
+	sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
+	sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.2", weaponname + "\\sizeGrowth");
+
 	//get some weapon specific defaults
 	if(weaponDefs[id].type=="Cannon"){
 		//CExplosiveProjectile
@@ -340,6 +347,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	} else if(weaponDefs[id].type=="flame"){
 		//CFlameProjectile
 		weaponDefs[id].visuals.texture1 = &ph->flaretex;
+		sunparser->GetTDef(weaponDefs[id].size, weaponDefs[id].projectilespeed, weaponname + "\\size");
 	} else if(weaponDefs[id].type=="MissileLauncher"){
 		//CMissileProjectile
 		weaponDefs[id].visuals.texture1 = &ph->flaretex;
@@ -371,6 +379,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		//CEmgProjectile
 		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
 		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(0.9f,0.9f,0.2f),weaponname + "\\rgbcolor");
+		sunparser->GetDef(weaponDefs[id].size, "3", weaponname + "\\size");
 	} else if(weaponDefs[id].type=="DGun"){
 		//CFireBallProjectile
 	} else if(weaponDefs[id].type=="StarburstLauncher"){
@@ -405,7 +414,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 
 void CWeaponDefHandler::LoadSound(GuiSound &gsound)
 {
-	gsound.volume = 5.0f;
+	//gsound.volume = 5.0f;
 	if(gsound.name.compare("")==0)
 	{
 		gsound.id = 0;

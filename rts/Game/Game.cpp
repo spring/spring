@@ -201,8 +201,8 @@ CGame::CGame(bool server,std::string mapname)
 	
 	consoleHistory = new CConsoleHistory;
 	wordCompletion = new CWordCompletion;
-	for (int p = 0; p < MAX_PLAYERS; p++) {
-	  wordCompletion->AddWord(gs->players[p]->playerName, false, false);
+	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
+	  wordCompletion->AddWord(gs->players[pp]->playerName, false, false);
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED

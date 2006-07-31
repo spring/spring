@@ -6,6 +6,8 @@
 
 #include "Projectile.h"
 
+struct AtlasedTexture;
+
 class CHeatCloudProjectile : public CProjectile  
 {
 	CR_DECLARE(CHeatCloudProjectile);
@@ -23,6 +25,8 @@ public:
 	float sizeGrowth;
 	float sizemod;
 	float sizemodmod;
+
+	AtlasedTexture *texture;
 };
 
 #endif /* HEATCLOUDPROJECTILE_H */

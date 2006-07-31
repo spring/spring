@@ -7,6 +7,8 @@
 
 #include "Projectile.h"
 
+struct AtlasedTexture;
+
 class CDirtProjectile : public CProjectile  
 {
 	CR_DECLARE(CDirtProjectile);
@@ -23,6 +25,8 @@ public:
 	float sizeExpansion;
 	float slowdown;
 	float3 color;
+
+	AtlasedTexture *texture;
 };
 
 #endif // __DIRT_PROJECTILE_H__

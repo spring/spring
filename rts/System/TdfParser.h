@@ -125,6 +125,22 @@ public:
 		stream >> value;
 	}
 
+	//Retreive a value into value, or use defvalue if it does not exist (templeted defvalue version of GetDef)
+	template<typename T>
+	void GetTDef(T& value, const T& defvalue, const std::string& key)
+	{
+		std::string str;
+		if(!SGetValue(str, key))
+		{
+			value = defvalue;
+			return;
+		}
+
+		std::stringstream stream;
+		stream << str;
+		stream >> value;
+	}
+
 private:
   TdfSection root_section;
   std::string filename;

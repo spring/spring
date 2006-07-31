@@ -405,6 +405,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			if (start >= script.length()) break;
 		}
 	}
+	else
+	{
+		if(type->GetName()=="AtlasedTexture*")
+		{
+			string::size_type end = script.find(';', 0);
+			std::string texname = script.substr(0, end);
+			AtlasedTexture *tex = ph->textureAtlas->GetTexturePtr(texname);
+			code += OP_ADD;
+			unsigned int mo = reinterpret_cast<int>(tex);
+			code.append((char*)(&mo), ((char*)(&mo)) + 4);
+			code += OP_STOREF;
+			Uint16 ofs = offset;
+			code.append ((char*)&ofs, (char*)&ofs + 2);
+		}
+	}
 }
 
 void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::string& tag)

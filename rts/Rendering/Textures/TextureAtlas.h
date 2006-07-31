@@ -3,9 +3,14 @@
 #include <string>
 #include <vector>
 #include <map>
+
+#include "creg/creg.h"
+
 //Class for combining multiple bitmaps into one large singel bitmap.
 struct AtlasedTexture
 {
+public:
+	CR_DECLARE_STRUCT(AtlasedTexture);
 	float xstart;
 	float xend;
 	float ystart;

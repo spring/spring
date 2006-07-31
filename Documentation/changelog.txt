@@ -40,6 +40,7 @@ TASpring change log
 		scrollspeed: how fast the beam apears to be moving towards it target.
 		pulseSpeed: how fast the pulsating effect at the beam start is.
 
+- Texture tag added to the explosiongenerator for HeatCloud and Dirt
 - New weapon FBI tags, texture1, texture2, texture3, texture4, the texture must be defined in resources.tdf in the projectile section.
 	MissileProjectile (standar rockets and guided missiles):
 		texture1 = flare
@@ -71,6 +72,9 @@ TASpring change log
 - tdf tag duration is used for laser weapons.
 - tdf tag rgbcolor is used for EmgProjectile and ExplosiveProjectile.
 - tdf tag intensity is used for EmgProjectile and ExplosiveProjectile.
+- New weapon tdf tag soundstartvolume and soundhitvolume.
+- New weapon tdf tag size, defines the size of projectiles.
+- New weapon tdf tag sizegrowth, defines how fast flame projectiles will grow in size.
 - edgeEffectivness added for weapons
 
 - Added limited fuel settings for units (only work for aircrafts so far, need a good mechanism for refueling other stuff)
