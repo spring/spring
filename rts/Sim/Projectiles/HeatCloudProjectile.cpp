@@ -22,6 +22,7 @@ CR_REG_METADATA(CHeatCloudProjectile,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(sizemod),
 		CR_MEMBER(sizemodmod),
+		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
@@ -34,6 +35,7 @@ CHeatCloudProjectile::CHeatCloudProjectile()
 	heat=maxheat=heatFalloff=size=sizeGrowth=sizemod=sizemodmod=0.0f;
 	checkCol=false;
 	useAirLos=true;
+	texture = &ph->explotex;
 }
 
 CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,const  float temperature,const float size, CUnit* owner)
@@ -49,6 +51,7 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,c
 	SetRadius(size+sizeGrowth*heat/heatFalloff);
 	sizemod=0;
 	sizemodmod=0;
+	texture = &ph->explotex;
 }
 
 CHeatCloudProjectile::~CHeatCloudProjectile()
@@ -83,8 +86,8 @@ void CHeatCloudProjectile::Draw()
 	col[3]=1;//(dheat/maxheat)*255.0f;
 	float drawsize=(size+sizeGrowth*gu->timeOffset)*(1-sizemod);
 	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explotex.xstart,ph->explotex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explotex.xend,ph->explotex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explotex.xend,ph->explotex.yend,col);
-	va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explotex.xstart,ph->explotex.yend,col);
+	va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,texture->xstart,texture->ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,texture->xend,texture->ystart,col);
+	va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,texture->xend,texture->yend,col);
+	va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,texture->xstart,texture->yend,col);
 }

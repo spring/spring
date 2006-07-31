@@ -21,6 +21,7 @@ CR_REG_METADATA(CDirtProjectile,
 		CR_MEMBER(sizeExpansion),
 		CR_MEMBER(slowdown),
 		CR_MEMBER(color),
+		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
@@ -38,6 +39,7 @@ CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float
 {
 	checkCol=false;
 	alphaFalloff=255/ttl;
+	texture = &ph->randdotstex;
 }
 
 CDirtProjectile::CDirtProjectile() :
@@ -48,6 +50,7 @@ CDirtProjectile::CDirtProjectile() :
 	alphaFalloff(10.0f)
 {
 	checkCol=false;
+	texture = &ph->randdotstex;
 }
 
 CDirtProjectile::~CDirtProjectile()
@@ -76,7 +79,6 @@ void CDirtProjectile::Draw()
 		return;
 	else if(partAbove>1)
 		partAbove=1;
-
 	inArray=true;
 	unsigned char col[4];
 	col[0]=(unsigned char) (color.x*alpha);
@@ -86,10 +88,10 @@ void CDirtProjectile::Draw()
 
 	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+gu->timeOffset*sizeExpansion;
-	float texx = ph->randdotstex.xstart + (ph->randdotstex.xend-ph->randdotstex.xstart)*((1-partAbove)*0.5);//0.25*(1-partAbove)
+	float texx = texture->xstart + (texture->xend-texture->xstart)*((1-partAbove)*0.5);//0.25*(1-partAbove)
 
-	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize*partAbove,texx,ph->randdotstex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize*partAbove,texx,ph->randdotstex.yend,col);
-	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,ph->randdotstex.xend,ph->randdotstex.yend,col);
-	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,ph->randdotstex.xend,ph->randdotstex.ystart,col);
+	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize*partAbove,texx,texture->ystart,col);
+	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize*partAbove,texx,texture->yend,col);
+	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,texture->xend,texture->yend,col);
+	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,texture->xend,texture->ystart,col);
 }
