@@ -190,11 +190,6 @@ string CUBuild::GetMEX(){
 		const UnitDef* pd = G->GetUnitDef(is->second);
 		if(pd == 0) continue;
 		if(pd->type == string("MetalExtractor")){
-			if(!water){
-				if(ud->minWaterDepth > 200){
-					continue;
-				}
-			}
 			if(Useless(pd)==true) continue;
 			float score = (pd->extractsMetal+1)*1000;
 			if(pd->weapons.empty()==false){
@@ -270,7 +265,7 @@ string CUBuild::GetRAND_ASSAULT(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if(pd->metalCost+pd->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
+			if(G->Pl->feasable(pd,ud)==false) continue;
 			if(((pd->weapons.empty() == false)&&((pd->movedata)||(pd->canfly == true)))&&((((pd->speed > 70)&&(pd->canfly == false))||((pd->weapons.empty() == true)&&(pd->canfly == true)&&(pd->builder == false)&&(pd->isCommander == false))) == false)&&(pd->transportCapacity == 0)){
 				possibles.push_back(pd->name);
 				defnum++;
@@ -306,7 +301,7 @@ string CUBuild::GetASSAULT(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if(pd->metalCost+pd->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
+			if(G->Pl->feasable(pd,ud)==false) continue;
 			if(((pd->weapons.empty() == false)&&((pd->movedata)||(pd->canfly == true)))&&((((pd->speed > 70)&&(pd->canfly == false))||((pd->weapons.empty() == true)&&(pd->canfly == true)&&(pd->builder == false)&&(pd->isCommander == false))) == false)&&(pd->transportCapacity == 0)){
 				srand(uint(time(NULL) + G->Cached->randadd));
 				G->Cached->randadd++;
@@ -337,8 +332,8 @@ string CUBuild::GetBOMBER(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if(pd->metalCost+pd->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
-			if(pd->type == string("Bomber")){
+			if(G->Pl->feasable(pd,ud)==false) continue;
+			if(G->UnitDefHelper->IsBomber(pd)){
 				srand(uint(time(NULL) + G->Cached->randadd));
 				G->Cached->randadd++;
 				float temp = G->GetEfficiency(pd->name);
@@ -364,8 +359,8 @@ string CUBuild::GetFIGHTER(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if(pd->metalCost+pd->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
-			if((pd->type == string("Fighter"))&&(pd->hoverAttack == false)){
+			if(G->Pl->feasable(pd,ud)==false) continue;
+			if(G->UnitDefHelper->IsFighter(pd)){
 				srand(uint(time(NULL) + G->Cached->randadd));
 				G->Cached->randadd++;
 				float temp = G->GetEfficiency(pd->name);
@@ -391,8 +386,8 @@ string CUBuild::GetGUNSHIP(){
 		if(is->id<0){
 			const UnitDef* pd = G->GetUnitDef(is->name);
 			if(pd == 0) continue;
-			if(pd->metalCost+pd->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
-			if((pd->type == string("Fighter"))&&(pd->hoverAttack == true)){
+			if(G->Pl->feasable(pd,ud)==false) continue;
+			if(G->UnitDefHelper->IsGunship(pd)){
 				srand(uint(time(NULL) + G->Cached->randadd));
 				G->Cached->randadd++;
 				float temp = G->GetEfficiency(pd->name);

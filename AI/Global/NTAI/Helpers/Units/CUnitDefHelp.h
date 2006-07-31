@@ -7,6 +7,11 @@ public:
 	bool IsEnergy(const UnitDef* ud);
 	bool IsFactory(const UnitDef* ud);
 
+	bool IsAirCraft(const UnitDef* ud);
+	bool IsGunship(const UnitDef* ud);
+	bool IsFighter(const UnitDef* ud);
+	bool IsBomber(const UnitDef* ud);
+
 	bool IsUWCapable(const UnitDef* ud){
 		return IsUWStructure(ud)||IsShip(ud)||IsSub(ud);
 	}

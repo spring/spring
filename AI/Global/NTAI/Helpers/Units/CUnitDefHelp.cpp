@@ -33,3 +33,29 @@ bool CUnitDefHelp::IsMex(const UnitDef* ud){
 	}
 	return false;
 }
+
+bool CUnitDefHelp::IsAirCraft(const UnitDef* ud){
+	if(ud == 0) return false;
+	if(ud->type == string("Fighter"))	return true;
+	if(ud->type == string("Bomber"))	return true;
+	if((ud->canfly==true)&&(ud->movedata == 0)) return true;
+	return false;
+}
+
+bool CUnitDefHelp::IsGunship(const UnitDef* ud){
+	if(ud == 0) return false;
+	if(IsAirCraft(ud)&&ud->hoverAttack) return true;
+	return false;
+}
+
+bool CUnitDefHelp::IsFighter(const UnitDef* ud){
+	if(ud == 0) return false;
+	if(IsAirCraft(ud)&&(ud->hoverAttack == false)) return true;
+	return false;
+}
+
+bool CUnitDefHelp::IsBomber(const UnitDef* ud){
+	if(ud == 0) return false;
+	if(IsAirCraft(ud)&&(ud->type == string("Bomber"))) return true;
+	return false;
+}
