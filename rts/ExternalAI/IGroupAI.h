@@ -9,7 +9,7 @@
 class IGroupAICallback;
 class IAICallback;
 
-#define AI_INTERFACE_VERSION 8
+#define AI_INTERFACE_VERSION 9
 
 class SPRING_API IGroupAI
 {

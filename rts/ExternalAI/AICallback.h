@@ -100,10 +100,10 @@ public:
 	void SetFigureColor(int group,float red,float green,float blue,float alpha);
 	void DeleteFigureGroup(int group);
 
-	void DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder);
+	void DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder,int facing);
 
-	bool CanBuildAt(const UnitDef* unitDef,float3 pos);
-	float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist);	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
+	bool CanBuildAt(const UnitDef* unitDef,float3 pos, int facing);
+	float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing);	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
 	float GetMetal();				//stored metal for team
 	float GetMetalIncome();				

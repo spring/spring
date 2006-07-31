@@ -20,7 +20,6 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Game/Team.h"
-#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 #include <assert.h>
 #include <algorithm>
@@ -203,7 +202,7 @@ void CBuilder::Update()
 			}
 			if(curResurrect->resurrectProgress>1){		//resurrect finished
 				curResurrect->UnBlock();
-				CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false);
+				CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false,curResurrect->buildFacing);
 				u->health*=0.05;
 				lastResurrected=u->id;
 				curResurrect->resurrectProgress=0;
@@ -349,22 +348,21 @@ void CBuilder::StopBuild(bool callScript)
 //	info->AddLine("stop build");
 }
 
-bool CBuilder::StartBuild(const string &type, float3 &buildPos)
+bool CBuilder::StartBuild(BuildInfo& buildInfo)
 {
 	StopBuild(false);
 //	info->AddLine("start build");
 
-	UnitDef *unitdef = unitDefHandler->GetUnitByName(type);
-	buildPos=helper->Pos2BuildPos(buildPos,unitdef);
+	buildInfo.pos=helper->Pos2BuildPos(buildInfo);
 
 	CFeature* feature;
-	int canBuild=uh->TestUnitBuildSquare(buildPos,unitdef,feature);
+	int canBuild=uh->TestUnitBuildSquare(buildInfo, feature);
 	if(canBuild<2){
-		CUnit* u=helper->GetClosestFriendlyUnit(buildPos,5,allyteam);
-		if(u && u->unitDef==unitdef){
+		CUnit* u=helper->GetClosestFriendlyUnit(buildInfo.pos,5,allyteam);
+		if(u && u->unitDef==buildInfo.def){
 			curBuild=u;
 			AddDeathDependence(u);
-			SetBuildStanceToward(buildPos);
+			SetBuildStanceToward(buildInfo.pos);
 			return true;
 		}
 		return false;
@@ -372,25 +370,26 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 	if(feature)
 		return false;
 
-	if(unitdef->floater || mapDamage->disabled || !unitdef->levelGround){
+	if(buildInfo.def->floater || mapDamage->disabled || !buildInfo.def->levelGround)
+	{
 		/* Skip the terraforming job. */
 		terraformLeft=0;
 	}
 	else {
-		CalculateBuildTerraformCost(buildPos, unitdef);
+		CalculateBuildTerraformCost(buildInfo);
 
 		terraforming=true;
 		terraformType=Terraform_Building;
-		terraformCenter=buildPos;
+		terraformCenter=buildInfo.pos;
 		terraformRadius=(tx2-tx1)*SQUARE_SIZE;
 	}
 
-	SetBuildStanceToward(buildPos);
+	SetBuildStanceToward(buildInfo.pos);
 
-	nextBuildType=type;
-	nextBuildPos=buildPos;
+	nextBuildType=buildInfo.def->name;
+	nextBuildPos=buildInfo.pos;
 
-	CUnit* b=unitLoader.LoadUnit(nextBuildType,nextBuildPos,team,true);
+	CUnit* b=unitLoader.LoadUnit(nextBuildType,nextBuildPos,team,true, buildInfo.buildFacing);
 	AddDeathDependence(b);
 	curBuild=b;
 	if (mapDamage->disabled && !(curBuild->floatOnWater)) {
@@ -417,12 +416,14 @@ bool CBuilder::StartBuild(const string &type, float3 &buildPos)
 	return true;
 }
 
-void CBuilder::CalculateBuildTerraformCost(float3 buildPos, UnitDef * unitdef)
+void CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 {
-	tx1 = (int)max((float)0,(buildPos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-	tx2 = min(gs->mapx,tx1+unitdef->xsize);
-	tz1 = (int)max((float)0,(buildPos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-	tz2 = min(gs->mapy,tz1+unitdef->ysize);
+	float3& buildPos=buildInfo.pos;
+	const UnitDef *unitdef=buildInfo.def;
+	tx1 = (int)max((float)0,(buildPos.x-(buildInfo.GetXSize()*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	tx2 = min(gs->mapx,tx1+buildInfo.GetXSize());
+	tz1 = (int)max((float)0,(buildPos.z-(buildInfo.GetYSize()*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	tz2 = min(gs->mapy,tz1+buildInfo.GetYSize());
 
 	float tcost=0;
 	float* heightmap = readmap->GetHeightmap();
@@ -510,11 +511,8 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	float l=dif.Length();
 	dif/=l;
 	float3 error=gs->randVector()*(radius/l);
-	float3 color = unitDef->NanoColor;
-	if(configHandler.GetInt ("TeamNanoSpray", 0)){
-		unsigned char* col=gs->Team(team)->color;
-		color = float3(col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.));
-	}
+	unsigned char* col=unitDef->nanoColor;
+	float3 color = float3(col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.));
 
 	if(inverse)
 		new CGfxProjectile(weaponPos+(dif+error)*l,-(dif+error)*3,(int)(l/3),color);

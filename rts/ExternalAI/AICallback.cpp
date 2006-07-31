@@ -583,7 +583,7 @@ void CAICallback::DeleteFigureGroup(int group)
 	geometricObjects->DeleteGroup(group);
 }
 
-void CAICallback::DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder)
+void CAICallback::DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder,int facing)
 {
 	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef=unitDefHandler->GetUnitByName(name);
@@ -592,21 +592,23 @@ void CAICallback::DrawUnit(const char* name,float3 pos,float rotation,int lifeti
 		return;
 	}
 	tdu.pos=pos;
-	tdu.rot=rotation;
+	tdu.rotation=rotation;
 	tdu.team=team;
 	tdu.drawBorder=drawBorder;
+	tdu.facing=facing;
 	std::pair<int,CUnitDrawer::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
 	if(transparent)
-		unitDrawer->tempTransperentDrawUnits.insert(tp);
+		unitDrawer->tempTransparentDrawUnits.insert(tp);
 	else
 		unitDrawer->tempDrawUnits.insert(tp);
 }
 
-bool CAICallback::CanBuildAt(const UnitDef* unitDef,float3 pos)
+bool CAICallback::CanBuildAt(const UnitDef* unitDef,float3 pos, int facing)
 {
 	CFeature* f;
-	pos=helper->Pos2BuildPos (pos, unitDef);
-	return !!uh->TestUnitBuildSquare(pos,unitDef->name,f);
+	BuildInfo bi(unitDef, pos, facing);
+	bi.pos=helper->Pos2BuildPos (bi);
+	return !!uh->TestUnitBuildSquare(bi,f);
 }
 
 
@@ -644,7 +646,7 @@ const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 	return searchOffsets;
 }
 
-float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist)
+float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing)
 {
 	//todo fix so you cant detect enemy buildings with it
 	CFeature* feature;
@@ -656,15 +658,17 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 	for(int so=0;so<endr*endr*4;so++) {
 		float x = pos.x+ofs[so].dx*SQUARE_SIZE*2;
 		float z = pos.z+ofs[so].dy*SQUARE_SIZE*2;
-		float3 p(x,0,z);
-		p = helper->Pos2BuildPos (p, unitdef);
-		if(uh->TestUnitBuildSquare(p,unitdef,feature) && (!feature || feature->allyteam!=allyteam))
+		BuildInfo bi(unitdef, float3(x,0,z), facing);
+		bi.pos = helper->Pos2BuildPos (bi);
+		if(uh->TestUnitBuildSquare(bi,feature) && (!feature || feature->allyteam!=allyteam))
 		{
 			int xs=(int)(x/SQUARE_SIZE);
 			int zs=(int)(z/SQUARE_SIZE);
 			bool good=true;
-			for(int z2=max(0,zs-unitdef->ysize/2-minDist);z2<min(gs->mapy,zs+unitdef->ysize+minDist);++z2){
-				for(int x2=max(0,xs-unitdef->xsize/2-minDist);x2<min(gs->mapx,xs+unitdef->xsize+minDist);++x2){
+			int xsize=bi.GetXSize();
+			int ysize=bi.GetYSize();
+			for(int z2=max(0,zs-ysize/2-minDist);z2<min(gs->mapy,zs+ysize+minDist);++z2){
+				for(int x2=max(0,xs-xsize/2-minDist);x2<min(gs->mapx,xs+xsize+minDist);++x2){
 					CSolidObject* so=readmap->groundBlockingObjectMap[z2*gs->mapx+x2];
 					if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
 						good=false;
@@ -673,7 +677,7 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 				}
 			}
 			if(good) 
-				return p;
+				return bi.pos;
 		}
 	}
 
@@ -879,9 +883,6 @@ bool CAICallback::GetValue(int id, void *data)
 			return true;
 		}case AIVAL_DEBUG_MODE:{
 			*(bool*)data = gu->drawdebug;
-			return true;
-		}case AIVAL_BLOCK_MAP:{
-			*(CSolidObject***)data = readmap->groundBlockingObjectMap;
 			return true;
 		}case AIVAL_GAME_MODE:{
 			*(int*)data = gs->gameMode;

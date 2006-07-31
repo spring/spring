@@ -611,21 +611,27 @@ void CGameHelper::BuggerOff(float3 pos, float radius,CUnit* exclude)
 	}
 }
 
-float3 CGameHelper::Pos2BuildPos(float3 pos, const UnitDef* ud)
+float3 CGameHelper::Pos2BuildPos(const float3& pos, UnitDef* ud)
 {
-	if(ud->xsize&2)
-		pos.x=floor((pos.x)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
-	else
-		pos.x=floor((pos.x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
+	return Pos2BuildPos(BuildInfo(ud,pos,0));
+}
 
-	if(ud->ysize&2)
-		pos.z=floor((pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
+float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo)
+{
+	float3 pos;
+	if(buildInfo.GetXSize()&2)
+		pos.x=floor((buildInfo.pos.x)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
 	else
-		pos.z=floor((pos.z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
+		pos.x=floor((buildInfo.pos.x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
 
-	pos.y=uh->GetBuildHeight(pos,ud);
-	if(ud->floater && pos.y<0)
-		pos.y = -ud->waterline;
+	if(buildInfo.GetYSize()&2)
+		pos.z=floor((buildInfo.pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
+	else
+		pos.z=floor((buildInfo.pos.z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
+
+	pos.y=uh->GetBuildHeight(pos,buildInfo.def);
+	if(buildInfo.def->floater && pos.y<0)
+		pos.y = -buildInfo.def->waterline;
 
 	return pos;
 }

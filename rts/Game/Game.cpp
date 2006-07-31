@@ -660,6 +660,23 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	if (s=="updatefov")
 		gd->updateFov=!gd->updateFov;
 
+	static char *buildFaceDirs[] = { "South", "East", "North", "West" };
+	if (s=="incbuildfacing"){
+		guihandler->buildFacing ++;
+		if (guihandler->buildFacing > 3)
+			guihandler->buildFacing = 0;
+
+		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
+	}
+
+	if (s=="decbuildfacing"){
+		guihandler->buildFacing --;
+		if (guihandler->buildFacing < 0)
+			guihandler->buildFacing = 3;
+
+		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
+	}
+
 	if (s=="drawtrees")
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
 
@@ -956,6 +973,26 @@ int CGame::KeyReleased(unsigned short k)
 
 	if(s=="drawinmap"){
 		inMapDrawer->keyPressed=false;
+	}
+
+	if(s=="buildfaceup"){
+		guihandler->buildFacing=0;
+		info->AddLine("Buildings set to face South");
+	}
+
+	if(s=="buildfaceright"){
+		guihandler->buildFacing=3;
+		info->AddLine("Buildings set to face West");
+	}
+
+	if(s=="buildfacedown"){
+		guihandler->buildFacing=2;
+		info->AddLine("Buildings set to face North");
+	}
+
+	if(s=="buildfaceleft"){
+		guihandler->buildFacing=1;
+		info->AddLine("Buildings set to face East");
 	}
 
 	if (s=="moveforward")

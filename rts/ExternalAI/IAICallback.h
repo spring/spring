@@ -21,7 +21,6 @@ struct FeatureDef;
 #define AIVAL_MIN_HEIGHT 6
 #define AIVAL_MAX_METAL 7
 #define AIVAL_MAP_CHECKSUM 8
-#define AIVAL_BLOCK_MAP 9
 #define AIVAL_GAME_MODE 10
 #define AIVAL_GAME_PAUSED 11
 #define AIVAL_GAME_SPEED_FACTOR 12
@@ -200,10 +199,10 @@ public:
 	//this function allows you to draw units in the map, of course they dont really exist,they just show up on the local players screen
 	//they will be drawn in the standard pose before any scripts are run
 	//the rotation is in radians,team affects the color of the unit
-	virtual void DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder)=0;
+	virtual void DrawUnit(const char* name,float3 pos,float rotation,int lifetime,int team,bool transparent,bool drawBorder,int facing=0)=0;
 
-	virtual bool CanBuildAt(const UnitDef* unitDef,float3 pos) = 0;
-	virtual float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist) = 0;	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
+	virtual bool CanBuildAt(const UnitDef* unitDef,float3 pos,int facing=0) = 0;
+	virtual float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist,int facing=0) = 0;	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
 	virtual bool GetProperty(int id, int property, void *dst)=0;
 	virtual bool GetValue(int id, void *dst)=0;

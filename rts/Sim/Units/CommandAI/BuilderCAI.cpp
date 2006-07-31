@@ -26,7 +26,6 @@
 CBuilderCAI::CBuilderCAI(CUnit* owner)
 : CMobileCAI(owner),
 	building(false),
-	buildPos(0,0,0),
 	cachedRadius(0),
 	cachedRadiusId(0),
 	buildRetries(0),
@@ -123,11 +122,11 @@ void CBuilderCAI::SlowUpdate()
 		}
 		if(inCommand){
 			if(building){
-				if(buildPos.distance2D(fac->pos)>fac->buildDistance+radius-8){
-					owner->moveType->StartMoving(buildPos, fac->buildDistance*0.5+radius);
+				if(build.pos.distance2D(fac->pos)>fac->buildDistance+radius-8){
+					owner->moveType->StartMoving(build.pos, fac->buildDistance*0.5+radius);
 				} else {
 					StopMove();
-					owner->moveType->KeepPointingTo(buildPos, (fac->buildDistance+radius)*0.6, false);	//needed since above startmoving cancels this
+					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance+radius)*0.6, false);	//needed since above startmoving cancels this
 				}
 				if(!fac->curBuild && !fac->terraforming){
 					building=false;
@@ -135,15 +134,13 @@ void CBuilderCAI::SlowUpdate()
 					FinishCommand();
 				}
 			} else {
-				buildPos.x=c.params[0];
-				buildPos.y=c.params[1];
-				buildPos.z=c.params[2];
-				if(buildPos.distance2D(fac->pos)<fac->buildDistance*0.6+radius){
+				build.Parse(c);
+				if(build.pos.distance2D(fac->pos)<fac->buildDistance*0.6+radius){
 					StopMove();
 					if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){
 						buildRetries++;
-						owner->moveType->KeepPointingTo(buildPos, fac->buildDistance*0.7+radius, false);
-						if(fac->StartBuild(boi->second,buildPos) || buildRetries>20){
+						owner->moveType->KeepPointingTo(build.pos, fac->buildDistance*0.7+radius, false);
+						if(fac->StartBuild(build) || buildRetries>20){
 							building=true;
 						} else {
 							ENTER_MIXED;
@@ -152,7 +149,7 @@ void CBuilderCAI::SlowUpdate()
 								info->SetLastMsgPos(owner->pos);
 							}
 							ENTER_SYNCED;
-							helper->BuggerOff(buildPos,radius);
+							helper->BuggerOff(build.pos,radius);
 							NonMoving();
 						}
 					}
@@ -163,16 +160,20 @@ void CBuilderCAI::SlowUpdate()
 							FinishCommand();
 						}
 					}
-					SetGoal(buildPos,owner->pos, fac->buildDistance*0.4+radius);
+					SetGoal(build.pos,owner->pos, fac->buildDistance*0.4+radius);
 				}
 			}
 		} else {		//!inCommand
-			float3 pos;
-			pos.x=floor(c.params[0]/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-			pos.z=floor(c.params[2]/SQUARE_SIZE+0.5)*SQUARE_SIZE;
-			pos.y=c.params[1];
+			BuildInfo bi;
+			bi.pos.x=floor(c.params[0]/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+			bi.pos.z=floor(c.params[2]/SQUARE_SIZE+0.5)*SQUARE_SIZE;
+			bi.pos.y=c.params[1];
 			CFeature* f=0;
-			uh->TestUnitBuildSquare(pos,boi->second,f);
+			if (c.params.size()==4)
+				bi.buildFacing = c.params[3];
+			bi.def = unitDefHandler->GetUnitByName(boi->second);
+
+			uh->TestUnitBuildSquare(bi,f);
 			if(f){
 				Command c2;
 				c2.id=CMD_RECLAIM;
@@ -682,22 +683,24 @@ void CBuilderCAI::DrawCommands(void)
 		}
 		map<int,string>::iterator boi;
 		if((boi=buildOptions.find(ci->id))!=buildOptions.end()){
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);
+			BuildInfo bi;
+            bi.pos=float3(ci->params[0],ci->params[1],ci->params[2]);
+			if(ci->params.size()==4) bi.buildFacing=ci->params[3];
+			bi.def = unitDefHandler->GetUnitByName(boi->second);
 
 			glColor4f(1,1,1,0.4);
 			glVertexf3(pos);
 			glEnd();
 
-			pos=helper->Pos2BuildPos(pos,unitdef);
+			bi.pos=helper->Pos2BuildPos(bi);
 
-			if(unitdef->extractRange>0){	//draw range
+			if(bi.def->extractRange>0){	//draw range
 				glDisable(GL_TEXTURE_2D);
 				glColor4f(1,0.3,0.3,0.7);
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=40;++a){
-					float3 wpos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
-					wpos+=pos;
+					float3 wpos(cos(a*2*PI/40)*bi.def->extractRange,0,sin(a*2*PI/40)*bi.def->extractRange);
+					wpos+=bi.pos;
 					wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
 					glVertexf3(wpos);
 				}
@@ -705,7 +708,7 @@ void CBuilderCAI::DrawCommands(void)
 			}
 
 			glColor4f(1,1,1,0.3);
-			unitDrawer->DrawBuildingSample(unitdef, owner->team, pos);
+			unitDrawer->DrawBuildingSample(bi.def, owner->team, bi.pos, bi.buildFacing);
 
 			glColor4f(1,1,1,0.4);
 			glBegin(GL_LINE_STRIP);
@@ -736,13 +739,14 @@ void CBuilderCAI::GiveCommand(Command& c)
 	if((boi=buildOptions.find(c.id))!=buildOptions.end()){
 		if(c.params.size()<3)
 			return;
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);
-		pos=helper->Pos2BuildPos(pos,unitdef);
+		BuildInfo bi;
+		bi.pos = float3(c.params[0],c.params[1],c.params[2]);
+		if(c.params.size()==4) bi.buildFacing=c.params[3];
+		bi.def = unitDefHandler->GetUnitByName(boi->second);
+		bi.pos=helper->Pos2BuildPos(bi);
 		CFeature* feature;
-		if(!uh->TestUnitBuildSquare(pos,unitdef,feature)){
+		if(!uh->TestUnitBuildSquare(bi,feature))
 			return;
-		}
 	}
 	CMobileCAI::GiveCommand(c);
 }
@@ -754,20 +758,18 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		map<int,string>::iterator boi;
 		if((boi=buildOptions.find(ci->id))!=buildOptions.end()){
-			float3 pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
-			UnitDef *unitdef = unitDefHandler->GetUnitByName(boi->second);
-
-			pos=helper->Pos2BuildPos(pos,unitdef);
-
-			float xsize=unitdef->xsize*4;
-			float ysize=unitdef->ysize*4;
+			BuildInfo bi(*ci);
+			bi.pos=helper->Pos2BuildPos(bi);
+			
+			float xsize=bi.GetXSize()*4;
+			float ysize=bi.GetYSize()*4;
 			glColor4f(0.2,1,0.2,1);
 			glBegin(GL_LINE_STRIP);
-			glVertexf3(pos+float3(xsize,1,ysize));
-			glVertexf3(pos+float3(-xsize,1,ysize));
-			glVertexf3(pos+float3(-xsize,1,-ysize));
-			glVertexf3(pos+float3(xsize,1,-ysize));
-			glVertexf3(pos+float3(xsize,1,ysize));
+			glVertexf3(bi.pos+float3(xsize,1,ysize));
+			glVertexf3(bi.pos+float3(-xsize,1,ysize));
+			glVertexf3(bi.pos+float3(-xsize,1,-ysize));
+			glVertexf3(bi.pos+float3(xsize,1,-ysize));
+			glVertexf3(bi.pos+float3(xsize,1,ysize));
 			glEnd();
 		}
 	}

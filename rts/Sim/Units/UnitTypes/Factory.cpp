@@ -26,7 +26,6 @@
 #include "Map/Ground.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Game/Team.h"
-#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CFactory, CBuilding);
@@ -81,7 +80,7 @@ void CFactory::Update()
 		}
 		if(canBuild){
 			quedBuild=false;
-			CUnit* b=unitLoader.LoadUnit(nextBuild,buildPos+float3(0.01,0.01,0.01),team,true);
+			CUnit* b=unitLoader.LoadUnit(nextBuild,buildPos+float3(0.01,0.01,0.01),team,true,0);
 			AddDeathDependence(b);
 			curBuild=b;
 
@@ -117,7 +116,6 @@ void CFactory::Update()
 			cob->Call("QueryNanoPiece",args);
 
 			if(unitDef->showNanoSpray){
-
 				float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);
 				float3 weaponPos=pos + frontdir*relWeaponFirePos.z + updir*relWeaponFirePos.y + rightdir*relWeaponFirePos.x;
 
@@ -125,12 +123,8 @@ void CFactory::Update()
 				float l=dif.Length();
 				dif/=l;
 				dif+=gs->randVector()*0.15f;
-				float3 color = unitDef->NanoColor;
-				if(configHandler.GetInt ("TeamNanoSpray", 0)){
-					unsigned char* col=gs->Team(team)->color;
-					color = float3(col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.));
-				}
-				new CGfxProjectile(weaponPos,dif,(int)l,color);
+				unsigned char *col = unitDef->nanoColor;
+				new CGfxProjectile(weaponPos,dif,(int)l,float3(col[0]*(1/255.0f),col[1]*(1/255.0f),col[2]*(1/255.0f)));
 			}
 		} else {
 			if(!curBuild->beingBuilt){
@@ -184,7 +178,7 @@ void CFactory::StartBuild(string type)
 
 	if(!opening){
 		cob->Call(COBFN_Activate);
-		readmap->OpenBlockingYard(this, unitDef->yardmap);
+		readmap->OpenBlockingYard(this, yardMap);
 		opening=true;
 	}
 }

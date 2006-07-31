@@ -8,7 +8,7 @@
 class IGlobalAICallback;
 struct WeaponDef;
 
-#define GLOBAL_AI_INTERFACE_VERSION 15
+#define GLOBAL_AI_INTERFACE_VERSION 16
 
 #define AI_EVENT_UNITGIVEN 1    // Both use ChangeTeamEvent for data
 #define AI_EVENT_UNITCAPTURED 2

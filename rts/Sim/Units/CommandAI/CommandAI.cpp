@@ -455,32 +455,33 @@ std::deque<Command>::iterator CCommandAI::GetCancelQueued(Command &c){
 std::vector<Command> CCommandAI::GetOverlapQueued(Command &c){
 	std::deque<Command>::iterator ci = commandQue.end();
 	std::vector<Command> v;
+	BuildInfo buildInfo(c);
+
 	if(ci != commandQue.begin()){
 		do{
 			--ci;			//iterate from the end and dont check the current order
 			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
-				if(c.params.size()==1){			//we assume the param is a unit of feature id
-					if(ci->params[0]==c.params[0]){
+				if(c.params.size()==1) //we assume the param is a unit or feature id
+				{			
+					if(ci->params[0]==c.params[0])
 						v.push_back(*ci);
-					}
-				} else if(c.params.size()>=3){		//we assume this means that the first 3 makes a position
-					float3 cpos(c.params[0],c.params[1],c.params[2]);
-					float3 cipos(ci->params[0],ci->params[1],ci->params[2]);
-					if(c.id < 0){
-						UnitDef* u1 = unitDefHandler->GetUnitByID(-c.id);
-						UnitDef* u2 = unitDefHandler->GetUnitByID(-ci->id);
-						if(u1 && u2
-							&& (fabs(cpos.x-cipos.x)*2 > max(u1->xsize, u2->xsize)*SQUARE_SIZE
-							|| fabs(cpos.z-cipos.z)*2 > max(u1->ysize, u2->ysize)*SQUARE_SIZE)
-							&& fabs(cpos.x-cipos.x)*2 < (u1->xsize + u2->xsize)*SQUARE_SIZE
-							&& fabs(cpos.z-cipos.z)*2 < (u1->ysize + u2->ysize)*SQUARE_SIZE)
+				}
+				else if(c.params.size()>=3)		//we assume this means that the first 3 makes a position
+				{
+					BuildInfo other;
+
+					if(other.Parse(*ci)){
+						if(buildInfo.def && other.def
+							&& (fabs(buildInfo.pos.x-other.pos.x)*2 > max(buildInfo.GetXSize(), other.GetXSize())*SQUARE_SIZE
+							|| fabs(buildInfo.pos.z-other.pos.z)*2 > max(buildInfo.GetYSize(), other.GetYSize())*SQUARE_SIZE)
+							&& fabs(buildInfo.pos.x-other.pos.x)*2 < (buildInfo.GetXSize() + other.GetXSize())*SQUARE_SIZE
+							&& fabs(buildInfo.pos.z-other.pos.z)*2 < (buildInfo.GetYSize() + other.GetYSize())*SQUARE_SIZE)
 						{
 							v.push_back(*ci);
 						}
 					} else {
-						if((cpos-cipos).SqLength2D()<17*17){
+						if((buildInfo.pos-other.pos).SqLength2D()<17*17)
 							v.push_back(*ci);
-						}
 					}
 				}
 			}
@@ -514,8 +515,8 @@ void CCommandAI::SlowUpdate()
 				break;
 			}
 			if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
-	      FinishCommand();
-	      break;
+				FinishCommand();
+				break;
 			}
 		} else {
 			if(c.params.size()==1){

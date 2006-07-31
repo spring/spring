@@ -3,6 +3,7 @@
 
 #include <map>
 #include "MobileCAI.h"
+#include "../UnitDef.h"
 
 class CBuilderCAI :
 	public CMobileCAI
@@ -25,7 +26,7 @@ public:
 
 	map<int,string> buildOptions;
 	bool building;
-	float3 buildPos;
+	BuildInfo build;
 
 	float cachedRadius;
 	int cachedRadiusId;

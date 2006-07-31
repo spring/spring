@@ -246,9 +246,9 @@ void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 	id=uh->AddUnit(this);
 	oldRadarPos.x=-1;
 
-	for(int a=0;a<MAX_TEAMS;++a){
+	for(int a=0;a<MAX_TEAMS;++a)
 		losStatus[a]=0;
-	}
+
 	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 	posErrorVector=gs->randVector();
@@ -466,6 +466,7 @@ void CUnit::SlowUpdate()
 		isCloaked=false;
 	}
 
+
 	if(uh->waterDamage && (physicalState==CSolidObject::Floating || (physicalState==CSolidObject::OnGround && pos.y<=-3 && readmap->halfHeightmap[int((pos.z/(SQUARE_SIZE*2))*gs->hmapx+(pos.x/(SQUARE_SIZE*2)))]<-1))){
 		DoDamage(DamageArray()*uh->waterDamage,0,ZeroVector);
 	}
@@ -631,7 +632,7 @@ void CUnit::Draw()
 {
 	glPushMatrix();
 	float3 interPos=pos+speed*gu->timeOffset;
-
+	
 	if (physicalState == Flying && unitDef->canmove) {
 		//aircraft or skidding ground unit
 		CMatrix44f transMatrix(interPos,-rightdir,updir,frontdir);
@@ -664,15 +665,9 @@ void CUnit::Draw()
 			glEnable(GL_CLIP_PLANE1);
 			//float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
 			float3 fc;// fc frame color
-			if(configHandler.GetInt ("TeamNanoSpray", 0)){
-				unsigned char* tcol=gs->Team(team)->color;
-				fc = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
-			}else{
-				fc = unitDef->NanoColor;
-			}
-			//fc *= 255;
-			//fc *= col;
-			glColor3f(fc.x,fc.y,fc.z);
+			unsigned char* tcol=unitDef->nanoColor;
+			fc = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+			glColorf3(fc);
 
 			unitDrawer->UnitDrawingTexturesOff(model);
 			
@@ -685,7 +680,7 @@ void CUnit::Draw()
 			glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
 			if(buildProgress>0.33){
-				glColor3f(1.2*fc.x,1.2*fc.y,1.2*fc.z);
+				glColorf3(fc*1.2f);
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-1)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);
 				double plane2[4]={0,1,0,-start-height*(buildProgress*3-2)};
@@ -759,8 +754,6 @@ void CUnit::DrawStats()
 	glVertexf3(interPos+(camera->up*6-camera->right*end));
 	glVertexf3(interPos+(camera->up*4-camera->right*end));
 	glVertexf3(interPos+(camera->up*4-camera->right*5));
-
-
 
 	if(gu->myTeam!=team && !gu->spectating){
 		glEnd();
@@ -978,7 +971,6 @@ void CUnit::SetUserTarget(CUnit* target)
 void CUnit::Init(void)
 {
 	relMidPos=model->relMidPos;
-
 	midPos=pos+frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x;
 	losHeight=relMidPos.y+radius*0.5;
 	height = model->height;		//TODO: This one would be much better to have either in Constructor or UnitLoader!//why this is always called in unitloader
