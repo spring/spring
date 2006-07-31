@@ -168,10 +168,12 @@ struct UnitDef
 
 	MoveData* movedata;
 //	unsigned char* yardmapLevels[6];
-	unsigned char* yardmap;				//Used for open ground blocking maps.
-
+	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
+	
 	int xsize;									//each size is 8 units
 	int ysize;									//each size is 8 units
+
+	int buildangle;
 
 	float loadingRadius;	//for transports
 	int transportCapacity;
@@ -245,12 +247,30 @@ struct UnitDef
 	bool isfireplatform;// should the carried units still be able to shoot?
 
 	bool showNanoSpray; // Does nano spray get shown at all
-	float3 NanoColor; // If nano spray is displayed what color is it?
-
+	unsigned char nanoColor[4]; // If nano spray is displayed what color is it?
 
 	float maxFuel;					//max flight time in seconds before the aircraft needs to return to a air repair bay to refuel
 	float refuelTime;				//time to fully refuel unit
 	float minAirBasePower;	//min buildpower for airbases that this aircraft can land on
+};
+
+struct Command;
+
+struct BuildInfo
+{
+	BuildInfo() { def=0; buildFacing=0; }
+	BuildInfo(const UnitDef *def, const float3& p, int facing) :
+		def(def), pos(p), buildFacing(facing) {}
+	BuildInfo(Command& c) { Parse(c); }
+	BuildInfo(const std::string& name, const float3& p, int facing);
+
+	int GetXSize() const { return (buildFacing&1)==0 ? def->xsize : def->ysize; }
+	int GetYSize() const { return (buildFacing&1)==1 ? def->xsize : def->ysize; }
+	bool Parse(Command& c);
+
+	const UnitDef* def;
+	int buildFacing;
+	float3 pos;
 };
 
 

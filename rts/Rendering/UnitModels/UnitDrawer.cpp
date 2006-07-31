@@ -139,8 +139,8 @@ void CUnitDrawer::Update(void)
 	while(!tempDrawUnits.empty() && tempDrawUnits.begin()->first<gs->frameNum-1){
 		tempDrawUnits.erase(tempDrawUnits.begin());
 	}
-	while(!tempTransperentDrawUnits.empty() && tempTransperentDrawUnits.begin()->first<=gs->frameNum){
-		tempTransperentDrawUnits.erase(tempTransperentDrawUnits.begin());
+	while(!tempTransparentDrawUnits.empty() && tempTransparentDrawUnits.begin()->first<=gs->frameNum){
+		tempTransparentDrawUnits.erase(tempTransparentDrawUnits.begin());
 	}
 }
 
@@ -227,7 +227,7 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 		if(camera->InView(ti->second.pos,100)){
 			glPushMatrix();
 			glTranslatef3(ti->second.pos);
-			glRotatef(ti->second.rot*180/PI,0,1,0);
+			glRotatef(ti->second.rotation*180/PI,0,1,0);
 			modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->DrawStatic();
 			glPopMatrix();
 		}
@@ -410,22 +410,23 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glColor4f(1,1,1,0.3);
 
 	//ok these isnt really cloaked but the effect is the same
-	for(std::multimap<int,TempDrawUnit>::iterator ti=tempTransperentDrawUnits.begin();ti!=tempTransperentDrawUnits.end();++ti){
+	for(std::multimap<int,TempDrawUnit>::iterator ti=tempTransparentDrawUnits.begin();ti!=tempTransparentDrawUnits.end();++ti){
 		if(camera->InView(ti->second.pos,100)){
 			glPushMatrix();
 			glTranslatef3(ti->second.pos);
-			glRotatef(ti->second.rot*180/PI,0,1,0);
+			glRotatef(ti->second.rotation*180/PI,0,1,0);
 			modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->DrawStatic();
 			glPopMatrix();
 		}
 		if(ti->second.drawBorder){
 			float3 pos=ti->second.pos;
-			UnitDef *unitdef = ti->second.unitdef;
+			const UnitDef *unitdef = ti->second.unitdef;
 
-			pos=helper->Pos2BuildPos(pos,unitdef);
+			BuildInfo bi(unitdef, pos, ti->second.facing);
+			pos=helper->Pos2BuildPos(bi);
 
-			float xsize=unitdef->xsize*4;
-			float ysize=unitdef->ysize*4;
+			float xsize=bi.GetXSize()*4;
+			float ysize=bi.GetYSize()*4;
 			glColor4f(0.2,1,0.2,0.7);
 			glDisable(GL_TEXTURE_2D);
 			glBegin(GL_LINE_STRIP);
@@ -475,6 +476,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			if(camera->InView((*gbi)->pos,(*gbi)->model->radius*2)){
 				glPushMatrix();
 				glTranslatef3((*gbi)->pos);
+				glRotatef((*gbi)->facing*90,0,1,0);
 				(*gbi)->model->DrawStatic();
 				glPopMatrix();
 			}
@@ -1040,7 +1042,7 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
  * Note: does all the GL state setting for that one unit, so you might want
  * something else for drawing many translucent units.
  */
-void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
+void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing)
 {
 	S3DOModel* model=modelParser->Load3DO(unitdef->model.modelpath.c_str(), 1, side);
 
@@ -1049,6 +1051,7 @@ void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
 		SetupForGhostDrawing();
 		glPushMatrix();
 		glTranslatef3(pos);
+		glRotatef((facing*1024*16)*(180.0/32768.0),0,1,0);
 		model->DrawStatic();
 		CleanUpGhostDrawing();
 		glPopMatrix();
@@ -1087,6 +1090,7 @@ void CUnitDrawer::DrawBuildingSample(UnitDef* unitdef, int side, float3 pos)
 	/* Push out the polygons. */
 	glPushMatrix();
 	glTranslatef3(pos);
+	
 	model->DrawStatic();
 	glPopMatrix();
 

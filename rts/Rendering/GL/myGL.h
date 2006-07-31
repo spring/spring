@@ -11,6 +11,11 @@ inline void glVertexf3(const float3 &v)
 	glVertex3f(v.x,v.y,v.z);
 }
 
+inline void glColorf3(const float3& v)
+{
+	glColor3f(v.x,v.y,v.z);
+}
+
 inline void glNormalf3(const float3 &v)
 {
 	glNormal3f(v.x,v.y,v.z);

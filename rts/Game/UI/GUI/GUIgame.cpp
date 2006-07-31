@@ -34,7 +34,6 @@
 #include "Game/CameraController.h"
 #include "Game/GameController.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Game/UI/GuiHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
@@ -417,7 +416,7 @@ void GUIgame::PrivateDraw()
 						int size=positions.size();
 						for(int i=0; i<size; i++)
 						{
-							if(uh->ShowUnitBuildSquare(positions[i],unitdef))
+							if(uh->ShowUnitBuildSquare(BuildInfo(unitdef, positions[i],0)))
 								glColor4f(0.7,1,1,0.4);
 							else
 								glColor4f(1,0.5,0.5,0.4);
@@ -449,7 +448,7 @@ void GUIgame::PrivateDraw()
 					}
 					else
 					{
-						if(uh->ShowUnitBuildSquare(pos,unitdef))
+						if(uh->ShowUnitBuildSquare(BuildInfo(unitdef,pos,0)))
 							glColor4f(0.7,1,1,0.4);
 						else
 							glColor4f(1,0.5,0.5,0.4);

@@ -14,6 +14,7 @@
 
 class CglList;
 struct UnitDef;
+struct BuildInfo;
 
 class CGuiHandler : public CInputReceiver
 {
@@ -47,6 +48,8 @@ public:
 	CglList* list;
 	int buildSpacing;
 
+	int buildFacing; // which side the built buildings should face?
+
 	void CreateOptions(Command& c,bool rmb);
 	int GetDefaultCommand(int x,int y);
 	void DrawMapStuff(void);
@@ -63,7 +66,7 @@ private:
 public:
 	Command GetOrderPreview(void);
 	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);
-	std::vector<float3> GetBuildPos(float3 start, float3 end,UnitDef* unitdef);
+	std::vector<float3> GetBuildPos(BuildInfo& startInfo, BuildInfo& endInfo); // start.def has to be end.def
 };
 extern CGuiHandler* guihandler;
 

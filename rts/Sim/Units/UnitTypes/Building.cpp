@@ -37,6 +37,7 @@ CBuilding::~CBuilding()
 			gb->pos=pos;
 			gb->model=model;
 			gb->decal=buildingDecal;
+			gb->facing=buildFacing;
 			unitDrawer->ghostBuildings.push_back(gb);
 			mygb=gb;
 		}

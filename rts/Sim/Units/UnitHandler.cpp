@@ -31,6 +31,32 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "mmgr.h"
 
+BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
+{
+	def = unitDefHandler->GetUnitByName(name);
+	pos = p;
+	buildFacing = facing;
+}
+
+
+
+bool BuildInfo::Parse(Command& c)
+{
+	if (c.params.size() >= 3) {
+		pos = float3(c.params[0],c.params[1],c.params[2]);
+
+		if(c.id < 0) {
+			def = unitDefHandler->GetUnitByID(-c.id);
+
+			buildFacing = 0;
+			if (c.params.size()==4)
+				buildFacing = c.params[3];
+
+			return true;
+		}
+	}
+	return false;
+}
 
 //////////////////////////////////////////////////////////////////////
 // CChecksum implementation
@@ -225,11 +251,14 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	float borderh=0;
 	float* heightmap=readmap->GetHeightmap();
 
+	int xsize=1;
+	int ysize=1;
+
 	float maxDif=unitdef->maxHeightDif;
-	int x1 = (int)max(0.f,(pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-	int x2 = min(gs->mapx,x1+unitdef->xsize);
-	int z1 = (int)max(0.f,(pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-	int z2 = min(gs->mapy,z1+unitdef->ysize);
+	int x1 = (int)max(0.f,(pos.x-(xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	int x2 = min(gs->mapx,x1+xsize);
+	int z1 = (int)max(0.f,(pos.z-(ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	int z2 = min(gs->mapy,z1+ysize);
 
 	if (x1 > gs->mapx) x1 = gs->mapx;
 	if (x2 < 0) x2 = 0;
@@ -260,30 +289,27 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	return h;
 }
 
-int CUnitHandler::TestUnitBuildSquare(const float3& pos, std::string unit,CFeature *&feature)
-{
-	UnitDef *unitdef = unitDefHandler->GetUnitByName(unit);
-	return TestUnitBuildSquare(pos, unitdef,feature);
-}
-
-int CUnitHandler::TestUnitBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature)
+int CUnitHandler::TestUnitBuildSquare(BuildInfo& buildInfo, CFeature *&feature)
 {
 	feature=0;
+	int xsize=buildInfo.GetXSize();
+	int ysize=buildInfo.GetYSize();
+	float3 pos=buildInfo.pos;
 
-	int x1 = (int) (pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE));
-	int x2 = x1+unitdef->xsize*SQUARE_SIZE;
-	int z1 = (int) (pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE));
-	int z2 = z1+unitdef->ysize*SQUARE_SIZE;
-	float h=GetBuildHeight(pos,unitdef);
+	int x1 = (int) (pos.x-(xsize*0.5f*SQUARE_SIZE));
+	int x2 = x1+xsize*SQUARE_SIZE;
+	int z1 = (int) (pos.z-(ysize*0.5f*SQUARE_SIZE));
+	int z2 = z1+ysize*SQUARE_SIZE;
+	float h=GetBuildHeight(pos,buildInfo.def);
 
 	int canBuild=2;
 
-	if(unitdef->needGeo){
+	if(buildInfo.def->needGeo){
 		canBuild=0;
-		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(unitdef->xsize,unitdef->ysize)*6);
+		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,ysize)*6);
 		
 		for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<unitdef->xsize*4-4 && fabs((*fi)->pos.z-pos.z)<unitdef->ysize*4-4){
+			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<xsize*4-4 && fabs((*fi)->pos.z-pos.z)<ysize*4-4){
 				canBuild=2;
 				break;
 			}
@@ -292,7 +318,7 @@ int CUnitHandler::TestUnitBuildSquare(const float3& pos, const UnitDef *unitdef,
 
 	for(int x=x1; x<x2; x+=SQUARE_SIZE){
 		for(int z=z1; z<z2; z+=SQUARE_SIZE){
-			int tbs=TestBuildSquare(float3(x,h,z),unitdef,feature);
+			int tbs=TestBuildSquare(float3(x,h,z),buildInfo.def,feature);
 			canBuild=min(canBuild,tbs);
 			if(canBuild==0)
 				return 0;
@@ -346,12 +372,12 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 	return ret;
 }
 
-int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef)
+int CUnitHandler::ShowUnitBuildSquare(BuildInfo& buildInfo)
 {
-	return ShowUnitBuildSquare(pos, unitdef, std::vector<Command>());
+	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
 }
 
-int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef, const std::vector<Command> &cv)
+int CUnitHandler::ShowUnitBuildSquare(BuildInfo& buildInfo, const std::vector<Command> &cv)
 {
 	glDisable(GL_DEPTH_TEST );
 	glEnable(GL_BLEND);
@@ -359,21 +385,25 @@ int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef,
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBegin(GL_QUADS);
+	int xsize=buildInfo.GetXSize();
+	int ysize=buildInfo.GetYSize();
+	float3& pos = buildInfo.pos;
 
-	int x1 = (int) (pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE));
-	int x2 = x1+unitdef->xsize*SQUARE_SIZE;
-	int z1 = (int) (pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE));
-	int z2 = z1+unitdef->ysize*SQUARE_SIZE;
-	float h=GetBuildHeight(pos,unitdef);
+	int x1 = (int) (pos.x-(xsize*0.5f*SQUARE_SIZE));
+	int x2 = x1+xsize*SQUARE_SIZE;
+	int z1 = (int) (pos.z-(ysize*0.5f*SQUARE_SIZE));
+	int z2 = z1+ysize*SQUARE_SIZE;
+	float h=GetBuildHeight(pos,buildInfo.def);
 
 	int canbuild=2;
 
-	if(unitdef->needGeo){
+	if(buildInfo.def->needGeo)
+	{
 		canbuild=0;
-		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(unitdef->xsize,unitdef->ysize)*6);
+		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,ysize)*6);
 
 		for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<unitdef->xsize*4-4 && fabs((*fi)->pos.z-pos.z)<unitdef->ysize*4-4){
+			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<xsize*4-4 && fabs((*fi)->pos.z-pos.z)<ysize*4-4){
 				canbuild=2;
 				break;
 			}
@@ -388,7 +418,7 @@ int CUnitHandler::ShowUnitBuildSquare(const float3& pos, const UnitDef *unitdef,
 
 			int square=ground->GetSquare(float3(x,pos.y,z));
 			CFeature* feature=0;
-			int tbs=TestBuildSquare(float3(x,pos.y,z),unitdef,feature);
+			int tbs=TestBuildSquare(float3(x,pos.y,z),buildInfo.def,feature);
 			if(tbs){
 				UnitDef* ud;
 				float3 cPos;
@@ -541,12 +571,9 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 			ci = (*ui)->commandAI->commandQue.begin();
 			for(; ci != (*ui)->commandAI->commandQue.end(); ci++){
 				if((*ci).id < 0 && (*ci).params.size() >= 3){
-					tempF1.x = (*ci).params[0];
-					tempF1.y = (*ci).params[1];
-					tempF1.z = (*ci).params[2];
-					tempF1 = pos + dir*((tempF1.y - pos.y)/dir.y) - tempF1;
-					UnitDef* ud = unitDefHandler->GetUnitByID(-(*ci).id);
-					if(ud && ud->xsize/2*SQUARE_SIZE > fabs(tempF1.x) && ud->ysize/2*SQUARE_SIZE > fabs(tempF1.z)){
+					BuildInfo bi(*ci);
+					tempF1 = pos + dir*((bi.pos.y - pos.y)/dir.y) - bi.pos;
+					if(bi.def && bi.GetXSize()/2*SQUARE_SIZE > fabs(tempF1.x) && bi.GetYSize()/2*SQUARE_SIZE > fabs(tempF1.z)){
 						return (*ci);
 					}
 				}

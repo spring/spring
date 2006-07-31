@@ -19,8 +19,7 @@ struct UnitDef;
 #include "Sim/Misc/DamageArray.h"
 #include <list>
 #include "MemPool.h"
-
-using namespace std;
+#include "Sim/Units/UnitDef.h"
 
 class CExplosionGenerator;
 
@@ -31,7 +30,7 @@ public:
 	virtual ~CGameHelper();
 	bool TestCone(const float3& from,const float3& dir,float length,float spread,int allyteam,CUnit* owner);
 	bool TestTrajectoryCone(const float3 &from, const float3 &flatdir,float length, float linear, float quadratic, float spread, float baseSize, int allyteam,CUnit* owner);
-	void GetEnemyUnits(float3& pos,float radius,int searchAllyteam,vector<int>& found);
+	void GetEnemyUnits(float3& pos,float radius,int searchAllyteam,std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos,float radius);
 	CUnit* GetClosestEnemyUnit(const float3& pos,float radius,int searchAllyteam);
 	CUnit* GetClosestEnemyUnitNoLosTest(const float3& pos,float radius,int searchAllyteam);
@@ -44,7 +43,8 @@ public:
 	void Explosion(float3 pos,const DamageArray& damages,float radius, float edgeEffectivness, CUnit* owner,bool damageGround=true,float gfxMod=1,bool ignoreOwner=false,CExplosionGenerator *explosionGraphics=0);
 	float TraceRayTeam(const float3& start,const float3& dir,float length, CUnit*& hit,bool useRadar,CUnit* exclude,int allyteam);
 	void BuggerOff(float3 pos, float radius,CUnit* exclude=0);
-	float3 Pos2BuildPos(float3 pos, const UnitDef* ud);
+	float3 Pos2BuildPos(const BuildInfo& buildInfo);
+	float3 Pos2BuildPos(const float3& pos, UnitDef* ud);
 	void Update(void);
 
 	bool LineFeatureCol(const float3& start, const float3& dir,float length);

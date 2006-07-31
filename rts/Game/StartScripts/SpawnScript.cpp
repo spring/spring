@@ -69,7 +69,7 @@ void CSpawnScript::Update()
 			do {
 				pos=spawnPos[num]+gs->randVector()*dist;
 				dist*=1.05;
-			} while (dist < 500 && uh->TestUnitBuildSquare(pos,curSpawn->name,feature) != 2);
+			} while (dist < 500 && uh->TestUnitBuildSquare(BuildInfo(curSpawn->name,pos,0),feature) != 2);
 
 			// Ignore unit if it really doesn't fit.
 			// (within 18 tries, 200*1.05^18 < 500 < 200*1.05^19)

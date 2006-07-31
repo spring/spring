@@ -57,3 +57,6 @@ bind tab toggleoverview
 
 bind > incguiopacity
 bind < decguiopacity
+
+bind [ incbuildfacing
+bind ] decbuildfacing

@@ -95,7 +95,8 @@ CGuiHandler::CGuiHandler()
 	activePage(0),
 	maxPages(0),
 	showingMetal(false),
-	buildSpacing(0)
+	buildSpacing(0),
+	buildFacing(0)
 {
 //	LoadCMDBitmap(CMD_STOP, "bitmaps\\ocean.bmp");
 	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps/armsilo1.bmp");
@@ -805,12 +806,14 @@ void CGuiHandler::DrawMapStuff(void)
 				if(keys[SDLK_LSHIFT] && mouse->buttons[SDL_BUTTON_LEFT].pressed){
 					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
 					float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
-					buildPos=GetBuildPos(pos2,pos,unitdef);
+					buildPos=GetBuildPos(BuildInfo(unitdef, pos2,buildFacing), BuildInfo(unitdef,pos, buildFacing));
 				} else {
-					buildPos=GetBuildPos(pos,pos,unitdef);
+					BuildInfo bi(unitdef, pos, buildFacing);
+					buildPos=GetBuildPos(bi,bi);
 				}
 
-				for(std::vector<float3>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi){
+				for(std::vector<float3>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
+				{
 					float3 pos=*bpi;
 					std::vector<Command> cv;
 					if(keys[SDLK_LSHIFT]){
@@ -819,22 +822,23 @@ void CGuiHandler::DrawMapStuff(void)
 						c.params.push_back(pos.x);
 						c.params.push_back(pos.y);
 						c.params.push_back(pos.z);
+						c.params.push_back(buildFacing);
 						std::vector<Command> temp;
 						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 						for(; ui != selectedUnits.selectedUnits.end(); ui++){
 							temp = (*ui)->commandAI->GetOverlapQueued(c);
 							std::vector<Command>::iterator ti = temp.begin();
-							for(; ti != temp.end(); ti++){
+							for(; ti != temp.end(); ti++)
 								cv.insert(cv.end(),*ti);
-							}
 						}
 					}
-					if(uh->ShowUnitBuildSquare(pos,unitdef,cv))
+					BuildInfo buildInfo(unitdef, pos, buildFacing);
+					if(uh->ShowUnitBuildSquare(buildInfo, cv))
 						glColor4f(0.7,1,1,0.4);
 					else
 						glColor4f(1,0.5,0.5,0.4);
 
-					unitDrawer->DrawBuildingSample(unitdef, gu->myTeam, pos);
+					unitDrawer->DrawBuildingSample(unitdef, gu->myTeam, pos, buildFacing);
 					if(unitdef->weapons.size()>0){	//draw range
 						glDisable(GL_TEXTURE_2D);
 						glColor4f(1,0.3,0.3,0.7);
@@ -1246,15 +1250,16 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(!unitdef){
 				return defaultRet;
 			}
+
 			float3 pos=camera->pos+mouse->dir*dist;
 			std::vector<float3> buildPos;
+			BuildInfo bi(unitdef, pos, buildFacing);
 			if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
 				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
 				float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
-				buildPos=GetBuildPos(pos2,pos,unitdef);
-			} else {
-				buildPos=GetBuildPos(pos,pos,unitdef);
-			}
+				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi);
+			} else 
+				buildPos=GetBuildPos(bi,bi);
 
 			if(buildPos.empty()){
 				return defaultRet;
@@ -1269,6 +1274,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
+				c.params.push_back(buildFacing);
 				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				if(!preview)
 					selectedUnits.GiveCommand(c);
@@ -1279,6 +1285,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
+			c.params.push_back(buildFacing);
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
@@ -1409,56 +1416,57 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 	return defaultRet;
 }
 
-std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* unitdef)
+// Assuming both builds have the same unitdef
+std::vector<float3> CGuiHandler::GetBuildPos(BuildInfo& startInfo, BuildInfo& endInfo)
 {
 	std::vector<float3> ret;
 
-	start=helper->Pos2BuildPos(start,unitdef);
-	end=helper->Pos2BuildPos(end,unitdef);
+	float3 start=helper->Pos2BuildPos(startInfo);
+	float3 end=helper->Pos2BuildPos(endInfo);
 
-	float3 buildPos;
-	UnitDef* unitdef2=0;
-	if(keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){
+	BuildInfo other; // the unit around which buildings can be circled
+	if(keys[SDLK_LSHIFT] && keys[SDLK_LCTRL])
+	{
 		CUnit* unit=0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
 		if(unit){
-			unitdef2=unit->unitDef;
-			buildPos = unit->pos;
+			other.def = unit->unitDef;
+			other.pos = unit->pos;
+			other.buildFacing = unit->buildFacing;
 		} else {
 			Command c = uh->GetBuildCommand(camera->pos,mouse->dir);
 			if(c.id < 0){
-				unitdef2=unitDefHandler->GetUnitByID(-c.id);
-				buildPos.x = c.params[0];
-				buildPos.y = c.params[1];
-				buildPos.z = c.params[2];
+				assert(c.params.size()==4);
+				other.pos = float3(c.params[0],c.params[1],c.params[2]);
+				other.def = unitDefHandler->GetUnitByID(-c.id);
+				other.buildFacing = c.params[3];
 			}
 		}
 	}
-	if(unitdef2 && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
-		Command c;
-		c.id = -unitdef->id;
-		c.params.push_back(0);
-		c.params.push_back(0);
-		c.params.push_back(0);
 
-		float3 pos2 = buildPos;
-		pos2=helper->Pos2BuildPos(pos2,unitdef2);
-		start=pos2;
-		end=pos2;
-		start.x-=(unitdef2->xsize/2)*SQUARE_SIZE;
-		start.z-=(unitdef2->ysize/2)*SQUARE_SIZE;
-		end.x+=(unitdef2->xsize/2)*SQUARE_SIZE;
-		end.z+=(unitdef2->ysize/2)*SQUARE_SIZE;
+	if(other.def && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
+		Command c;
+		c.id = -startInfo.def->id;
+		c.params.resize(4);
+
+		start=end=helper->Pos2BuildPos(other);
+		start.x-=(other.GetXSize()/2)*SQUARE_SIZE;
+		start.z-=(other.GetYSize()/2)*SQUARE_SIZE;
+		end.x+=(other.GetXSize()/2)*SQUARE_SIZE;
+		end.z+=(other.GetYSize()/2)*SQUARE_SIZE;
 
 		float3 pos=start;
-		for(;pos.x<=end.x;pos.x+=unitdef->xsize*SQUARE_SIZE){
+		int xsize=startInfo.GetXSize();
+		int ysize=startInfo.GetYSize();
+		for(;pos.x<=end.x;pos.x+=xsize*SQUARE_SIZE){
 			float3 p2=pos;
-			p2.x+=(unitdef->xsize/2)*SQUARE_SIZE;
-			p2.z-=(unitdef->ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(p2,unitdef);
+			p2.x+=(xsize/2)*SQUARE_SIZE;
+			p2.z-=(ysize/2)*SQUARE_SIZE;
+			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
 			c.params[0] = p2.x;
 			c.params[1] = p2.y;
 			c.params[2] = p2.z;
+			c.params[3] = startInfo.buildFacing;
 			bool cancel = false;
 			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
@@ -1472,14 +1480,15 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		}
 		pos=start;
 		pos.x=end.x;
-		for(;pos.z<=end.z;pos.z+=unitdef->ysize*SQUARE_SIZE){
+		for(;pos.z<=end.z;pos.z+=ysize*SQUARE_SIZE){
 			float3 p2=pos;
-			p2.x+=(unitdef->xsize/2)*SQUARE_SIZE;
-			p2.z+=(unitdef->ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(p2,unitdef);
+			p2.x+=(xsize/2)*SQUARE_SIZE;
+			p2.z+=(ysize/2)*SQUARE_SIZE;
+			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
 			c.params[0] = p2.x;
 			c.params[1] = p2.y;
 			c.params[2] = p2.z;
+			c.params[3] = startInfo.buildFacing;
 			bool cancel = false;
 			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
@@ -1492,14 +1501,15 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			}
 		}
 		pos=end;
-		for(;pos.x>=start.x;pos.x-=unitdef->xsize*SQUARE_SIZE){
+		for(;pos.x>=start.x;pos.x-=xsize*SQUARE_SIZE){
 			float3 p2=pos;
-			p2.x-=(unitdef->xsize/2)*SQUARE_SIZE;
-			p2.z+=(unitdef->ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(p2,unitdef);
+			p2.x-=(xsize/2)*SQUARE_SIZE;
+			p2.z+=(ysize/2)*SQUARE_SIZE;
+			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
 			c.params[0] = p2.x;
 			c.params[1] = p2.y;
 			c.params[2] = p2.z;
+			c.params[3] = startInfo.buildFacing;
 			bool cancel = false;
 			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
@@ -1507,20 +1517,20 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 					cancel = true;
 				}
 			}
-			if(!cancel){
+			if(!cancel)
 				ret.push_back(p2);
-			}
 		}
 		pos=end;
 		pos.x=start.x;
-		for(;pos.z>=start.z;pos.z-=unitdef->ysize*SQUARE_SIZE){
+		for(;pos.z>=start.z;pos.z-=ysize*SQUARE_SIZE){
 			float3 p2=pos;
-			p2.x-=(unitdef->xsize/2)*SQUARE_SIZE;
-			p2.z-=(unitdef->ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(p2,unitdef);
+			p2.x-=(xsize/2)*SQUARE_SIZE;
+			p2.z-=(ysize/2)*SQUARE_SIZE;
+			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
 			c.params[0] = p2.x;
 			c.params[1] = p2.y;
 			c.params[2] = p2.z;
+			c.params[3] = startInfo.buildFacing;
 			bool cancel = false;
 			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
@@ -1533,13 +1543,13 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			}
 		}
 	} else if(keys[SDLK_LALT]){			//build a rectangle
-		float xsize=unitdef->xsize*8+buildSpacing*16;
+		float xsize=startInfo.GetXSize()*8+buildSpacing*16;
 		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
 		int xstep=(int)xsize;
 		if(start.x>end.x)
 			xstep*=-1;
 
-		float zsize=unitdef->ysize*8+buildSpacing*16;
+		float zsize=startInfo.GetYSize()*8+buildSpacing*16;
 		int znum=(int)((fabs(end.z-start.z)+zsize*1.4)/zsize);
 		int zstep=(int)zsize;
 		if(start.z>end.z)
@@ -1550,9 +1560,10 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			int xn=0;
 			for(float x=start.x;xn<xnum;++xn){
 				if(!keys[SDLK_LCTRL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
-					float3 pos(x,0,z);
-					pos=helper->Pos2BuildPos(pos,unitdef);
-					ret.push_back(pos);
+					BuildInfo bi = startInfo;
+					bi.pos = float3(x,0,z);
+					bi.pos=helper->Pos2BuildPos(bi);
+					ret.push_back(bi.pos);
 				}
 				x+=xstep;
 			}
@@ -1560,7 +1571,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 		}
 	} else {			//build a line
 		if(fabs(start.x-end.x)>fabs(start.z-end.z)){
-			float step=unitdef->xsize*8+buildSpacing*16;
+			float step=startInfo.GetXSize()*8+buildSpacing*16;
 			float3 dir=end-start;
 			if(dir.x==0){
 				ret.push_back(start);
@@ -1572,7 +1583,7 @@ std::vector<float3> CGuiHandler::GetBuildPos(float3 start, float3 end,UnitDef* u
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
 				ret.push_back(p);
 		} else {
-			float step=unitdef->ysize*8+buildSpacing*16;
+			float step=startInfo.GetYSize()*8+buildSpacing*16;
 			float3 dir=end-start;
 			if(dir.z==0){
 				ret.push_back(start);

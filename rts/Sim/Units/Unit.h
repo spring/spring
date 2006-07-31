@@ -13,6 +13,7 @@
 //#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Sim/Misc/DamageArray.h"
 #include "GlobalStuff.h"
+#include "UnitDef.h"
 
 class CWeapon;
 class CCommandAI;

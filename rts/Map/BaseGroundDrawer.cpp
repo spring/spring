@@ -179,7 +179,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							UnitDef *unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
 
 							CFeature* f;
-							if(uh->TestUnitBuildSquare(float3(x*16+8,0,y*16+8),unitdef,f))
+							if(uh->TestUnitBuildSquare(BuildInfo(unitdef,float3(x*16+8,0,y*16+8),guihandler->buildFacing),f))
 								m=1;
 							else
 								m=0;

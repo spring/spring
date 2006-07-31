@@ -16,7 +16,7 @@ struct GuiSound;
 class CUnitLoader  
 {
 public:
-	CUnit* LoadUnit(const string& name,float3 pos, int side, bool build=true);
+	CUnit* LoadUnit(const string& name,float3 pos, int side, bool build=true, int facing=0);
 	CUnitLoader();
 	virtual ~CUnitLoader();
 

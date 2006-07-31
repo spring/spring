@@ -62,7 +62,7 @@ CUnitLoader::~CUnitLoader()
 {
 }
 
-CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side, bool build)
+CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side, bool build, int facing)
 {
 	CUnit* unit;
 START_TIME_PROFILE;
@@ -112,6 +112,11 @@ START_TIME_PROFILE;
 	unit->UnitInit (ud, side, pos);
 
 	unit->beingBuilt=build;
+
+	unit->xsize = (facing&1)==0 ? ud->xsize : ud->ysize;
+	unit->ysize = (facing&1)==1 ? ud->ysize : ud->xsize;
+	unit->buildFacing = facing;
+	unit->yardMap = ud->yardmaps[facing];
 	unit->power=ud->power;
 	unit->maxHealth=ud->health;
 	unit->health=ud->health;
@@ -129,8 +134,6 @@ START_TIME_PROFILE;
 	unit->realLosRadius=(int) (ud->losRadius/(SQUARE_SIZE*2));
 	unit->realAirLosRadius=(int) (ud->airLosRadius/(SQUARE_SIZE*4));
 	unit->upright=ud->upright;
-	unit->xsize=ud->xsize;
-	unit->ysize=ud->ysize;
 	unit->radarRadius=ud->radarRadius/(SQUARE_SIZE*8);
 	unit->sonarRadius=ud->sonarRadius/(SQUARE_SIZE*8);
 	unit->jammerRadius=ud->jammerRadius/(SQUARE_SIZE*8);
@@ -300,6 +303,7 @@ START_TIME_PROFILE;
 	unit->cob->Call("SetMaxReloadTime", relMax);
 
 	unit->Init();
+	unit->heading=facing*16*1024;
 
 	if(!build)
 		unit->FinishedBuilding();

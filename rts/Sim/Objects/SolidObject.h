@@ -46,7 +46,7 @@ public:
 	int ysize;									//The z-size of this object, according to it's footprint. NOTE: This one should have been called zsize!
 	float height;								//The height of this object.
 	short heading;								//Contains the same information as frontdir, but in a short signed integer.
-
+	
 	//Positional properties.
 	PhysicalState physicalState;				//The current state of the object within the gameworld. I.e Flying or OnGround.
 	float3 midPos;								//This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
@@ -65,6 +65,7 @@ public:
 	//Map
 	int2 mapPos;								//Current position on GroundBlockingMap.
 	unsigned char* yardMap;						//Current active yardmap of this object. 0 means no active yardmap => all blocked.
+	int buildFacing;
 	bool isMarkedOnBlockingMap;					//Tells if this object are marked on the GroundBlockingMap.
 
 	//Old stuff. Used for back-compability. NOTE: Don't use whose!

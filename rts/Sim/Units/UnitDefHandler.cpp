@@ -17,6 +17,8 @@
 #include "Map/ReadMap.h"
 #include "Game/GameSetup.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Platform/ConfigHandler.h"
+#include "Game/Team.h"
 #include "mmgr.h"
 
 CR_BIND(UnitDef);
@@ -72,7 +74,8 @@ CUnitDefHandler::CUnitDefHandler(void)
 		unitDefs[i].loaded = false;
 		unitDefs[i].filename = tafiles[a];
 		unitDefs[i].id = i;
-		unitDefs[i].yardmap = 0;
+		for (int u=0;u<4;u++) unitDefs[i].yardmaps[u] = 0;
+		unitDefs[i].buildangle=0;
 		unitDefs[i].name = unitname;
 		unitDefs[i].unitimage = 0;
 		unitID[unitname] = i;
@@ -88,10 +91,9 @@ CUnitDefHandler::~CUnitDefHandler(void)
 {
 	//Deleting eventual yeardmaps.
 	for(int i = 1; i <= numUnits; i++){
-		if(unitDefs[i].yardmap != 0) {
-			delete[] unitDefs[i].yardmap;
-			unitDefs[i].yardmap = 0;
-		}
+		for (int u = 0; u < 4; u++)
+			delete[] unitDefs[i].yardmaps[u];
+
 		if (unitDefs[i].unitimage) {
 			glDeleteTextures(1,&unitDefs[i].unitimage);
 			unitDefs[i].unitimage = 0;
@@ -196,6 +198,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.idleAutoHeal=atof(tdfparser.SGetValueDef("10", "UNITINFO\\IdleAutoHeal").c_str())*(16.0/30.0);
 	ud.idleTime=atoi(tdfparser.SGetValueDef("600", "UNITINFO\\IdleTime").c_str());
 
+    ud.buildangle=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\buildangle").c_str());
+
 	ud.isMetalMaker=(ud.makesMetal>=1 && ud.energyUpkeep>ud.makesMetal*40);
 
 	ud.controlRadius=32;
@@ -276,7 +280,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.kamikazeDist=atof(tdfparser.SGetValueDef("-25", "UNITINFO\\kamikazedistance").c_str())+25; //we count 3d distance while ta count 2d distance so increase slightly
 
 	tdfparser.GetDef(ud.showNanoSpray, "1", "UNITINFO\\shownanospray");
-	ud.NanoColor=tdfparser.GetFloat3(float3(0.2f,0.7f,0.2f),"UNITINFO\\nanocolor");
+	float3 nanocolor = tdfparser.GetFloat3(float3(0.2f,0.7f,0.2f),"UNITINFO\\nanocolor");
+	ud.nanoColor[0] = nanocolor.x*255, ud.nanoColor[1]=nanocolor.y*255, ud.nanoColor[2]=nanocolor.z*255, ud.nanoColor[3]=255;
 
 	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
 	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
@@ -482,7 +487,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(ud.type=="Building" || ud.type=="Factory"){
 		CreateYardMap(&ud, tdfparser.SGetValueDef("c", "UNITINFO\\YardMap"));
 	} else {
-		ud.yardmap = 0;
+		for (int u=0;u<4;u++)
+			ud.yardmaps[u] = 0;
 	}
 
 	ud.leaveTracks=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\LeaveTracks").c_str());
@@ -607,8 +613,8 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 	std::transform(yardmapStr.begin(), yardmapStr.end(), yardmapStr.begin(), (int(*)(int))std::tolower);
 
 	//Creates the map.
-	def->yardmap = new unsigned char[def->xsize * def->ysize];
-	memset(def->yardmap, 1, def->xsize * def->ysize);	//Q: Needed?
+	for (int u=0;u<4;u++)
+		def->yardmaps[u] = new unsigned char[def->xsize * def->ysize];
 
 	unsigned char *originalMap = new unsigned char[def->xsize * def->ysize / 4];		//TAS resolution is double of TA resolution.
 	memset(originalMap, 1, def->xsize * def->ysize / 4);
@@ -633,9 +639,12 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 		}
 	}
 	for(int y = 0; y < def->ysize; y++)
-		for(int x = 0; x < def->xsize; x++)
-			def->yardmap[x + y*def->xsize] = originalMap[x/2 + y/2*def->xsize/2];
-
+		for(int x = 0; x < def->xsize; x++){
+			def->yardmaps[0][x + y*def->xsize] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[1][def->ysize*(x+1)-(y+1)] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[2][(def->ysize*def->xsize)-(x + y*def->xsize+1)] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[3][(def->ysize*def->xsize)-(def->ysize*(x+1)-(y+1)+1)] = originalMap[x/2 + y/2*def->xsize/2];
+		}
 	delete[] originalMap;
 }
 
