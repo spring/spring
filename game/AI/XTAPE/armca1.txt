@@ -1,1 +1,1 @@
-armrl, B_RADAR, repair, armhlt, repair, B_FACTORY, repair, B_RULE, B_RULE, repair, B_RULE, B_RULE, B_RULE, repair, B_RULE, B_RULE, B_RULE, repair, B_RULE, B_RULE, B_RULE, repair, armaap, B_RETREAT, B_GUARDIAN, repeat
+armrl, B_RADAR, repair, defense, armrl, armrl, repair, B_RULE, B_RULE, B_RULE, repair, B_FACTORY, defense, armrl, armrl, B_RADAR, repair, armaap, armap, B_RETREAT, B_GUARD_FACTORY, repeat

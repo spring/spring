@@ -1,1 +1,1 @@
-repair, repair, repair, B_GEO,resurrect, resurrect, repair, retreat, B_GEO, B_GUARD_FACTORY, B_GUARDIAN, repeat
+repair, repair, repair, B_RESSURECT, B_RESSURECT, repair, retreat, B_GUARDIAN, repeat

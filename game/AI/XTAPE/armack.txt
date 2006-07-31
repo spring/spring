@@ -1,1 +1,1 @@
-repair, repair, B_RADAR, repair, B_GLOBAL, repair, armmoho, armmoho, B_RULE, armmoho, repair, B_GLOBAL, repair, B_GLOBAL, repair, repeat
+repair, B_RADAR, repair, heavy_defense, missle_defense, missle_defense, repair, armalab, armlab, repair, mohomaker, mohomaker, heavy_fusion, light_fusion, B_RULE, repair, B_RETREAT, B_GUARD_UNIT_LIKE, repeat

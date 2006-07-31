@@ -1,0 +1,30 @@
+0.8.3 =====
+
+LTG - Reduced the spacings some more.
+LTG - Made the RULEs less likely to build factories.
+LTG - Changed the commander buildlists to now build resources before it starts its first factory.
+LTG - Changed the Stall Multipliers to 1, coz they no longer do anything.
+LTG - Dramatically decreased the max energies, to allow for faster advancement to level 2.
+
+0.8.2 =====
+
+LTG - Increased the max energys.
+LTG - Tweaked the Stall Multipliers.
+LTG - Changed max_stall_time in anticipation of when it will be enabled again.
+LTG - Removed interpolation from the beginning of the commander buildtree.
+LTG - Heavily decreased all spacing values.
+LTG - Tweaked the stall multipliers.
+LTG - Tweaked the RULE modifiers.
+
+0.8.1 =====
+
+LTG - Decreased factoryspacing by 1.
+LTG - Tweaked the B_RULE modifiers.
+LTG - Tweaked the stall multipliers.
+LTG - Changed the ACAs to "B_GUARDIAN, B_RANDMOVE, repeat" b/c the new interpolation of B_RULE_EXTREME.
+	will take care of emergency situations most of the time, allowing the ACAs to usually just help out with construction.
+LTG - In the advanced ground constructors, changed "B_RULE, B_RULE, B_RULE" to "mohomine, mohomine, light_fusion, heavy_fusion, B_RULE."
+LTG - Changed the end of the CVs; now they have a few B_GUARDIANs instead of a B_FACTORY.
+LTG - Started keeping track of the changes.
+
+0.8.0.1 =====

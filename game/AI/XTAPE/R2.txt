@@ -1,1 +1,1 @@
-B_RADAR, repair, B_DEFENSE, repair, B_GEO, B_FACTORY, B_RETREAT, B_GUARD_FACTORY, repeat
+B_RADAR, repair, B_DEFENSE, repair, B_FACTORY, B_RETREAT, B_GUARD_FACTORY, repeat

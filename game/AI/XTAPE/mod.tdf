@@ -4,36 +4,33 @@
 	use_mod_default=0;
 	use_mod_default_if_absent=0;
 	Scouters=ARMAMPH, ARMAWAC, ARMFAST, ARMFAV, ARMFLEA, ARMLATNK, ARMPEEP, ARMPT, ARMSEER, ARMSEHAK, ARMSFIG, ARMSH, ARMSPY, ARMWAR, CORAWAC, CORFAST, CORFAV, CORFINK, CORHUNT, CORPT, CORSFIG, CORSH, CORSPY, CORVOYER, CORVRAD;
-	Attackers=ARMAAS, ARMACSUB, ARMAH, ARMAMPH, ARMANAC, ARMASER, ARMBATS, ARMBRAWL, ARMBULL, ARMCROC, ARMCRUS, ARMFIDO, ARMFIG, ARMFLAK, ARMFLASH, ARMFLEA, ARMHAM, ARMHAWK, ARMJAM, ARMJETH, ARMLANCE, ARMLATNK, ARMMANNI, ARMMARK, ARMMART, ARMMAV, ARMMERLl, ARMMH, ARMMSHIP, ARMPNIX, ARMPT, ARMPW, ARMRAVEN, ARMROCK, ARMROY, ARMSAM, ARMSCRAM, ARMSEAP, ARMSFIG, ARMSH, ARMSJAM, ARMSNIPE, ARMSPID, ARMSTUMP, ARMSUB, ARMSUBK, ARMTHUND, ARMVADER, ARMWAR, ARMYORK, ARMZEUS, CORAH, CORAL, CORAMPH, CORAPE, CORARCH, CORBATS, CORCAN, CORCRASH, CORCRUS, CORETER, CORGATOR, CORGOL, CORHRK, CORHURK, CORKROG, CORLEVLR, CORMART, CORMH, CORMIST, CORMORT, CORMSHIP, CORPT, CORPYRO, CORRAID, CORREAP, CORROACH, CORROY, CORSEAL, CORSEAP, CORSENT, CORSFIG, CORSH, CORSHAD, CORSHARK, CORSJAM, CORSNAP, CORSPEC, CORSSUB, CORSTORM, CORSUB, CORSUMO, CORTHUD, CORTITAN, CORVAMP, CORVENG, CORVROCK;
-	// both=armamph, armflea, armlatnk, armpt, armsfig, armsh, armwar, corpt, corsfig, corsh;
-	cheap_multiplier=1.7;  // doesn't affect anything in this current buildtree
-	defence_spacing=10;
-	power_spacing=6;
-	factory_spacing=8;
-	default_spacing=7;
+	Attackers=ARMAAS, ARMACSUB, ARMAH, ARMAMPH, ARMANAC, ARMASER, ARMBATS, ARMBRAWL, ARMBULL, ARMCROC, ARMCRUS, ARMFIDO, ARMFIG, ARMFLAK, ARMFLASH, ARMFLEA, ARMHAM, ARMHAWK, ARMJAM, ARMJETH, ARMLANCE, ARMLATNK, ARMMANNI, ARMMARK, ARMMART, ARMMAV, ARMMERLl, ARMMH, ARMMSHIP, ARMPNIX, ARMPT, ARMPW, ARMRAVEN, ARMROCK, ARMROY, ARMSAM, ARMSCRAM, ARMSEAP, ARMSFIG, ARMSH, ARMSJAM, ARMSNIPE, ARMSPID, ARMSTUMP, ARMSUB, ARMSUBK, ARMTHUND, ARMVADER, ARMWAR, ARMYORK, ARMZEUS, CORAK, CORAL, CORAMPH, CORAPE, CORARCH, CORBATS, CORCAN, CORCRASH, CORCRUS, CORETER, CORGATOR, CORGOL, CORHRK, CORHURK, CORKROG, CORLEVLR, CORMART, CORMH, CORMIST, CORMORT, CORMSHIP, CORPT, CORPYRO, CORRAID, CORREAP, CORROACH, CORROY, CORSEAL, CORSEAP, CORSENT, CORSFIG, CORSH, CORSHAD, CORSHARK, CORSJAM, CORSNAP, CORSPEC, CORSSUB, CORSTORM, CORSUB, CORSUMO, CORTHUD, CORTITAN, CORVAMP, CORVENG, CORVROCK;
+	// both=armamph, armflea, armlatnk, armpt, armsfig, armsh, armwar, corpt, corsfig, corsh; // here for reference.
+	cheap_multiplier=1.7;  // doesn't affect anything in this current buildtree.
+	defence_spacing=2;
+	power_spacing=1;
+	factory_spacing=1;
+	default_spacing=1;
 	dynamic_selection=0;
-	fire_state_commanders=0;
-	move_state_commanders=0;
-	kamikaze=;
-	solobuild=CORBUZZ,ARMVULC,CORTARG,ARMTARG;
+	// kamikaze=; // crashes the game
+	solobuild=CORBUZZ, ARMVULC;  // AF seems to think these are really important or something.
 	singlebuild=CORTARG, ARMTARG;
 	author=Lindir The Green + AF:  Send questions, comments, suggestions and/or hatemail to lindirthegreen@yahoo.com;
-	version=0.7.1;
+	version=0.8.3;
 	message=XTA buildtree by Lindir The Green and AF;
-	metatags=SMALL_FUSION, BIG_FUSION, MOHOMETAL, MOHOMINE, HEAVY_DEFENSE, MISSLE_DEFENSE, DT;
 	hard_target=0;
-	antistall=3;
-	MaxStallTime=7;  // I want this to be a 7, darnit!
-	AlwaysAntiStall=ARMALAB, CORALAB, CORSY, ARMSY, CORGANT;
+	AlwaysAntiStall=ARMALAB, CORALAB, CORSY, ARMSY, CORGANT, ARMAVP, CORAVP, ARMAAP, CORAAP, ARMASY, CORASY;
 	NoAntiStall=CORMEX, ARMMEX, CORSOLAR, ARMSOLAR, CORTIDE, ARMTIDE, CORUWMEX, ARMUWMEX, ARMWIN, CORWIN;
-	hold_fire=CORCOM,ARMCOM;
+	hold_fire=CORCOM, ARMCOM;
 	return_fire=;
 	fire_at_will=;
 	roam=;
-	maneouvre=;
-	hold_pos=CORCOM,ARMCOM;
-	rule_extreme_interpolate=1;
-	[STALL_MULTIPLIERS]
+	maneouvre=;  // Crazy brits spell "maneuver" wrong.  I hope both ways are accepted by NTai...
+	hold_pos=CORCOM, ARMCOM;
+	rule_extreme_interpolate=1;  // I'm extremely hesitant... B_RULE_EXTREME has never worked well for me.
+	antistall=7;
+	MaxStallTime=0;  // In frames.  Yes, I am OK with some stall in important situations.  // Still not used right now...
+	[STALL_MULTIPLIERS] // not used right now...
 	{
 		energyIncome=1;
 		energyStored=1;
@@ -41,33 +38,59 @@
 		metalStored=1;
 	}
 }
-
-// This section does do stuff though
-[TAGS] 
+[ECONOMY]
 {
-	SMALL_FUSION=ARMCKFUS, CORCKFUS;
-	BIG_FUSION=ARMFUS, CORFUS, ARMUWFUS, CORUWFUS;
-	MOHOMETAL=ARMMMKR, CORMMMKR;
-	MOHOMINE=ARMMOHO, CORMOHO;
-	HEAVY_DEFENSE=ARMBRTHA, ARMSILO, CORDOOM, CORINT, CORSILO;
-	MISSLE_DEFENSE=ARMAMD, CORFMD;
-	DT=CORDRAG, ARMDRAG;// Please USE B_FORTIFICATION INSTEAD!!
-	// B_SOLAR=CORSOLAR, ARMSOLAR;
-	// USE B_POWER!!!! You're preventing NTai from taking advantage of high wind and tidal values!!!!!!
-	// B_SOLAR is a unviersal build tag now that does the same as B_POWER
+	[RULES]
+	{
+		power=0.8;
+		mex=0.8;
+		
+		factorymetal=0.95;
+		factoryenergy=0.95;
+		factorymetalgap=10;
+		
+		energystorage=0.9;
+		metalstorage=0.9;
+		
+		makermetal=0.4;
+		makerenergy=0.95;
+		
+		[EXTREME]
+		{
+			factorymetal=0.99; // maxed out
+			factoryenergy=0.99; // maxed out
+			
+			power=0.3;
+			mex=0.2;
+			
+			makermetal=0.1;
+			makerenergy=0.95; //only if it's maxed out
+		}
+	}
+}
+[TAGS]
+{
+	small_fusion=ARMCKFUS, CORCKFUS;
+	big_fusion=ARMFUS, CORFUS, ARMUWFUS, CORUWFUS;
+	mohometal=ARMMMKR, CORMMMKR;
+	mohomine=ARMMOHO, CORMOHO;
+	heavy_defense=ARMBRTHA, ARMSILO, CORDOOM, CORINT, CORSILO;
+	missle_defense=ARMAMD, CORFMD;
+	defense=ARMHLT, CORHLT, ARMAMB, CORTOAST;
+	dt=CORDRAG, ARMDRAG;  // Just in case.
 }
 [TASKLISTS]
 {
-	armca=armca1, R1, R2;
-	corca=corca1, R1, R2;
-	armck=armck1, R1, R2;
-	corck=corck1, R1, R2;
-	armcv=armcv1, R1;
-	corcv=corcv1, R1;
+	armca=armca1, r1, r2;
+	corca=corca1, r1, r2;
+	armck=armck1, r1, r2;
+	corck=corck1, r1, r2;
+	armcv=armcv1, r1;
+	corcv=corcv1, r1;
 	corcom=corcom1, corcom2, corcom3, corcom4;
 	armcom=armcom1, armcom2, armcom3, armcom4;
-	cordecom=R1, R2;
-	armdecom=R1, R2;
+	cordecom=r1, r2;
+	armdecom=r1, r2;
 }
 [Resource]
 {
@@ -98,24 +121,22 @@
 		CORAVP=800;
 		ARMAAP=800;
 		CORAAP=800;
-		CORASY=800;
-		ARMASY=800;
 		CORHLT=600; // Expensive, until you get the upper level stuff up.  Also very important.
 		ARMHLT=600;
 		CORTOAST=600;
 		ARMAMB=600;
+		ARMSY=600; // More expensive than the others
+		CORSY=600;
 		ARMLAB=400; // Lower level infastructure
 		CORLAB=400;
 		ARMVP=400;
 		CORVP=400;
 		ARMAP=400;
 		CORAP=400;
-		ARMSY=700;
-		CORSY=700;
-		ARMMOHO=400; // So darn cheap and quick to build
-		CORMOHO=400;
-		ARMMMKR=400;
-		CORMMKR=400;
+		ARMMOHO=300; // So darn cheap and quick to build
+		CORMOHO=300;
+		ARMMMKR=300;
+		CORMMKR=300;
 	}
 	[MaxEnergy]
 	{
@@ -123,54 +144,24 @@
 		CORSOLAR=1000;
 		ARMTIDE=1000;
 		CORTIDE=1000;
-		ARMCKFUS=10000;
-		CORCKFUS=10000;
-		ARMMEX=2000;  // At 2000, it is officially switched to higher level everything.
-		CORMEX=2000;
-		ARMLAB=2000;
-		CORLAB=2000;
-		ARMVP=2000;
-		CORVP=2000;
-		ARMAP=2000;
-		CORAP=2000;
-		ARMSY=2000;
-		CORSY=2000;
-	}
-}
-[ECONOMY]
-{
-	[RULES]
-	{
-		power=0.5; // energy stored < 40% of maxenergystorage
-		mex=0.5; // metal stored < 80% of maxmetalstorage
-		factorymetal=0.8; // metal stored > 95% of maxmetalstorage
-		factoryenergy=0.8; // energy stored > 90% of maxenergystorage
-		factorymetalgap=6; // factory rule n#2 if MetalIncome - 120% of MetalUsage > 7
-		energystorage=0.98; // if energystored > 120% of maxenergy storage.
-		// I never want e-storage to be built.
-		//AF :: I disagree, storage enables NTai to continue after its lost a commander else these rules themselves
-		//and a lot of other things based on storage goes haywire when the comamnder is lost and storage goes down 
-		// to a max of 50 instead fo 1k:, It also improves the accuracy of the rules and its ability to make use of metal makers
-		metalstorage=0.98; // if metalstored > 98% of maxmetal storage.
-		//I never want m-storage to be built.
-		makermetal=0.15; // metalstored <10% of maxmetalstorage AND MetalUsage > MetalIncome
-		makerenergy=0.9;// energystored > 95% of maxenergystorage AND energyUsage < energyIncome
-		[EXTREME]
-		{
-			factorymetal=0.9;
-			factoryenergy=0.9;
-			
-			power=0.4;
-			mex=0.3;
-			
-			makermetal=0.1;
-			makerenergy=0.95;
-		}
+		ARMCKFUS=5000;
+		CORCKFUS=5000;
+		ARMMEX=1000;
+		CORMEX=1000;
+		ARMLAB=75; // forcing it to go to level 2
+		CORLAB=75;
+		ARMVP=75;
+		CORVP=75;
+		ARMAP=75;
+		CORAP=75;
+		ARMSY=75;
+		CORSY=100;
 	}
 }
 
-// This entire section doesn't so anything anymore; it is just here for reference
-[CORSFIG]  
+
+/*  This entire section is just here for reference.  It doesn't do anything, coz hardtarget=0.
+[CORSFIG]
 {
 	[TARGET_WEIGHTS]
 	{
@@ -274,3 +265,4 @@
 		ARMRL=25;
 	}
 }
+*/
