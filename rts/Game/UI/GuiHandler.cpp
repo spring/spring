@@ -1417,7 +1417,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 }
 
 // Assuming both builds have the same unitdef
-std::vector<float3> CGuiHandler::GetBuildPos(BuildInfo& startInfo, BuildInfo& endInfo)
+std::vector<float3> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo)
 {
 	std::vector<float3> ret;
 

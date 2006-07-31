@@ -114,7 +114,7 @@ START_TIME_PROFILE;
 	unit->beingBuilt=build;
 
 	unit->xsize = (facing&1)==0 ? ud->xsize : ud->ysize;
-	unit->ysize = (facing&1)==1 ? ud->ysize : ud->xsize;
+	unit->ysize = (facing&1)==1 ? ud->xsize : ud->ysize;
 	unit->buildFacing = facing;
 	unit->yardMap = ud->yardmaps[facing];
 	unit->power=ud->power;
