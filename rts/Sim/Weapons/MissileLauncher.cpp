@@ -89,7 +89,7 @@ bool CMissileLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 		if(gc>0)
 			return false;
 
-		if(helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,linear,quadratic,0,8,owner->allyteam,owner)){
+		if(avoidFriendly && helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,linear,quadratic,0,8,owner->allyteam,owner)){
 			return false;
 		}
 	} else {
@@ -109,7 +109,7 @@ bool CMissileLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 			if(owner->frontdir.dot(goaldir) < maxAngleDif)
 				return false;
 		}
-		if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner))
+		if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner))
 			return false;
 	}
 	return true;

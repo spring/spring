@@ -458,6 +458,8 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->maxMainDirAngleDif=udw->maxAngleDif;
 
 	weapon->fuelUsage = udw->fuelUsage;
+	weapon->avoidFriendly = weapondef->avoidFriendly;
+	weapon->collisionFlags = weapondef->collisionFlags;
 	weapon->Init();
 
 	return weapon;

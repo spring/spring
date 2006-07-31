@@ -15,6 +15,7 @@
 #include "mmgr.h"
 #include <iostream>
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Projectile.h"
 
 using namespace std;
 
@@ -74,6 +75,16 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	//bool turret;
 	//bool smokeTrail;
 	//std::string modelName;
+
+	sunparser->GetDef(weaponDefs[id].avoidFriendly, "1", weaponname + "\\AvoidFriendly");
+	weaponDefs[id].collisionFlags=0;
+	bool collideFriendly, collideFeature;
+	sunparser->GetDef(collideFriendly, "1", weaponname + "\\CollideFriendly");
+	sunparser->GetDef(collideFeature, "1", weaponname + "\\CollideFeature");
+	if(!collideFriendly)
+		weaponDefs[id].collisionFlags+=COLLISION_NOFRIEDNLY;
+	if(!collideFeature)
+		weaponDefs[id].collisionFlags+=COLLISION_NOFEATURE;
 
 	sunparser->GetDef(weaponDefs[id].dropped, "0", weaponname + "\\dropped");
 	sunparser->GetDef(lineofsight, "0", weaponname + "\\lineofsight");

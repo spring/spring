@@ -36,7 +36,8 @@ CProjectile::CProjectile()
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
-	s3domodel(0)
+	s3domodel(0),
+	collisionFlags(0)
 {}
 
 void CProjectile::Init (const float3& explosionPos, CUnit *owner)

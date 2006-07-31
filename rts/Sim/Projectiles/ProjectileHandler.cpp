@@ -490,7 +490,7 @@ void CProjectileHandler::CheckUnitCol()
 
 			for(vector<CUnit*>::iterator ui(units.begin());ui!=units.end();++ui){
 				CUnit* unit=*ui;
-				if(p->owner == unit)
+				if(p->owner == unit || ((p->collisionFlags&COLLISION_NOFRIEDNLY) && p->owner && (unit->allyteam==p->owner->allyteam)) )
 					continue;
 
 				float ispeedf=1.0f/speedf;
@@ -517,30 +517,33 @@ void CProjectileHandler::CheckUnitCol()
 				}
 			}
 
-			for(vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-				if(!(*fi)->blocking)
-					continue;
-				float ispeedf=1.0f/speedf;
-				float3 normSpeed=p->speed*ispeedf;
-				float totalRadius=(*fi)->radius+p->radius;
-				float3 dif=(*fi)->midPos-p->pos;
-				float closeTime=dif.dot(normSpeed)/speedf;
-				if(closeTime<0)
-					closeTime=0;
-				if(closeTime>1)
-					closeTime=1;
-				float3 closeVect=dif-(p->speed*closeTime);
-				if(dif.SqLength() < totalRadius*totalRadius){
-					if((*fi)->isMarkedOnBlockingMap){
-						float3 closePos(p->pos+p->speed*closeTime);
-						int square=(int)max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
-						if(readmap->groundBlockingObjectMap[square]!=(*fi))
-							continue;
+			//if(!(p->collisionFlags&COLLISION_NOFEATURE))
+			//{
+				for(vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
+					if(!(*fi)->blocking)
+						continue;
+					float ispeedf=1.0f/speedf;
+					float3 normSpeed=p->speed*ispeedf;
+					float totalRadius=(*fi)->radius+p->radius;
+					float3 dif=(*fi)->midPos-p->pos;
+					float closeTime=dif.dot(normSpeed)/speedf;
+					if(closeTime<0)
+						closeTime=0;
+					if(closeTime>1)
+						closeTime=1;
+					float3 closeVect=dif-(p->speed*closeTime);
+					if(dif.SqLength() < totalRadius*totalRadius){
+						if((*fi)->isMarkedOnBlockingMap){
+							float3 closePos(p->pos+p->speed*closeTime);
+							int square=(int)max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
+							if(readmap->groundBlockingObjectMap[square]!=(*fi))
+								continue;
+						}
+						p->Collision();
+						break;
 					}
-					p->Collision();
-					break;
 				}
-			}
+			 //}
 		}
 	}	
 }
