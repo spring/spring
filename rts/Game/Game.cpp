@@ -147,6 +147,16 @@ static CSound* CreateSoundInterface()
 
 CGame::CGame(bool server,std::string mapname)
 {
+	{
+		// determine whether the modder allows the user to use team coloured nanospray
+		TdfParser tdfparser("gamedata\\particles.tdf");
+		tdfparser.GetDef(gu->team_nanospray,"1","nanospray\\allow_team_colours");
+		if(gu->team_nanospray){
+			// Load the users preference for team coloured nanospray
+			gu->team_nanospray = configHandler.GetInt ("TeamNanoSpray", 0);
+		}
+	}
+
 	guikeys = NULL;
 	script = NULL;
 	showList = NULL;
@@ -198,7 +208,7 @@ CGame::CGame(bool server,std::string mapname)
 	chatting=false;
 	userInput="";
 	userPrompt="";
-	
+
 	consoleHistory = new CConsoleHistory;
 	wordCompletion = new CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
@@ -260,7 +270,7 @@ CGame::CGame(bool server,std::string mapname)
 #endif
 	inMapDrawer=new CInMapDraw();
 
-  const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
+	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
 	  wordCompletion->AddWord(uit->first, false, true);

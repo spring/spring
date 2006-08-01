@@ -511,8 +511,12 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	float l=dif.Length();
 	dif/=l;
 	float3 error=gs->randVector()*(radius/l);
-	unsigned char* col=unitDef->nanoColor;
-	float3 color = float3(col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.));
+
+	float3 color= unitDef->nanoColor;
+	if(gu->team_nanospray){
+		unsigned char* tcol=gs->Team(team)->color;
+		color = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+	}
 
 	if(inverse)
 		new CGfxProjectile(weaponPos+(dif+error)*l,-(dif+error)*3,(int)(l/3),color);

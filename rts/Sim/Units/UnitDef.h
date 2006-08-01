@@ -246,12 +246,13 @@ struct UnitDef
 	float buildingDecalDecaySpeed;
 	bool isfireplatform;// should the carried units still be able to shoot?
 
+	bool showNanoFrame; // Does the nano frame animation get shown during cosntruction?
 	bool showNanoSpray; // Does nano spray get shown at all
-	unsigned char nanoColor[4]; // If nano spray is displayed what color is it?
+	float3 nanoColor; // If nano spray is displayed what color is it?
 
 	float maxFuel;					//max flight time in seconds before the aircraft needs to return to a air repair bay to refuel
 	float refuelTime;				//time to fully refuel unit
-	float minAirBasePower;	//min buildpower for airbases that this aircraft can land on
+	float minAirBasePower;	//min build power for airbases that this aircraft can land on
 };
 
 struct Command;
