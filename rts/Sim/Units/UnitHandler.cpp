@@ -38,9 +38,17 @@ BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 	buildFacing = facing;
 }
 
+void BuildInfo::FillCmd(Command& c) const
+{
+	c.id=-def->id;
+	c.params.resize(4);
+	c.params[0]=pos.x;
+	c.params[1]=pos.y;
+	c.params[2]=pos.z;
+	c.params[3]=(float)buildFacing;
+}
 
-
-bool BuildInfo::Parse(Command& c)
+bool BuildInfo::Parse(const Command& c)
 {
 	if (c.params.size() >= 3) {
 		pos = float3(c.params[0],c.params[1],c.params[2]);
