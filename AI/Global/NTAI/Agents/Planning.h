@@ -42,6 +42,7 @@ public:
 	vector<string> AlwaysAntiStall;
 	int fnum;
 private:
+	bool equalsIgnoreCase(string, string);
 	Global* G;
 // 	struct envec{
 // 		float3 last;
