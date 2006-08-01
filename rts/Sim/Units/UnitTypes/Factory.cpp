@@ -123,8 +123,12 @@ void CFactory::Update()
 				float l=dif.Length();
 				dif/=l;
 				dif+=gs->randVector()*0.15f;
-				unsigned char *col = unitDef->nanoColor;
-				new CGfxProjectile(weaponPos,dif,(int)l,float3(col[0]*(1/255.0f),col[1]*(1/255.0f),col[2]*(1/255.0f)));
+				float3 color= unitDef->nanoColor;
+				if(gu->team_nanospray){
+					unsigned char* tcol=gs->Team(team)->color;
+					color = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+				}
+				new CGfxProjectile(weaponPos,dif,(int)l,color);
 			}
 		} else {
 			if(!curBuild->beingBuilt){

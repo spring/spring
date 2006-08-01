@@ -654,7 +654,7 @@ void CUnit::Draw()
 		glMultMatrixf(&transMatrix[0]);
 	}
 
-	if(beingBuilt){
+	if(beingBuilt && unitDef->showNanoFrame){
 		if(shadowHandler->inShadowPass){
 			if(buildProgress>0.66)
 				localmodel->Draw();
@@ -665,8 +665,12 @@ void CUnit::Draw()
 			glEnable(GL_CLIP_PLANE1);
 			//float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
 			float3 fc;// fc frame color
-			unsigned char* tcol=unitDef->nanoColor;
-			fc = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+			if(gu->team_nanospray){
+				unsigned char* tcol=gs->Team(team)->color;
+				fc = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+			}else{
+				fc = unitDef->nanoColor;
+			}
 			glColorf3(fc);
 
 			unitDrawer->UnitDrawingTexturesOff(model);
@@ -680,7 +684,7 @@ void CUnit::Draw()
 			glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
 			if(buildProgress>0.33){
-				glColorf3(fc*1.2f);
+				glColorf3(fc*1.4f);
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-1)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);
 				double plane2[4]={0,1,0,-start-height*(buildProgress*3-2)};

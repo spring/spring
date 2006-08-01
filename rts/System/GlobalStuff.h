@@ -418,6 +418,7 @@ public:
 	float usRandFloat(); 			//!< Unsynced random float
 	float3 usRandVector(); 			//!< Unsynced random vector
 
+	bool team_nanospray;
 	/**
 	 * @brief rand seed
 	 * 
