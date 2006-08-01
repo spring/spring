@@ -171,7 +171,7 @@ bool CEconomy::BuildMaker(bool extreme){
 		float a = (float)atof(G->Get_mod_tdf()->SGetValueDef("0.1","ECONOMY\\RULES\\EXTREME\\makermetal").c_str());
 		float b = (float)atof(G->Get_mod_tdf()->SGetValueDef("0.8","ECONOMY\\RULES\\EXTREME\\makerenergy").c_str());
 		if((G->cb->GetMetal() < G->cb->GetMetalStorage()*a)&&(G->Pl->GetMetalIncome() < G->cb->GetMetalUsage())){ // if below 10% metal stored then yah we need makers
-			if((G->cb->GetEnergy() > G->cb->GetEnergyStorage()*b)&&(G->Pl->GetEnergyIncome() > G->cb->GetEnergyUsage())){ // we need the energy to do this else we'll be even worse off with no metal or energy...
+			if((G->cb->GetEnergy() > G->cb->GetEnergyStorage()*b)&&(G->Pl->GetEnergyIncome() > G->max_energy_use)){ // we need the energy to do this else we'll be even worse off with no metal or energy...
 				return true;
 			}else{
 				return false;

@@ -8,7 +8,7 @@ bool CUnitDefHelp::IsEnergy(const UnitDef* ud){
 		G->L << "error UntiDef==0 in CUnitDefHelp::IsEnergy" << endline;
 		return false;
 	}
-	
+
 	if(ud->needGeo==true){
 		return false;
 	}

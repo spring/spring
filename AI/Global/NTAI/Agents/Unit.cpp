@@ -125,9 +125,9 @@ bool Task::execute(int uid){
 			b.Init(G,udi,uid);
 			btype bt;
 			if(B_RULE_EXTREME_NOFACT == type){
-				bt= G->Economy->Get(true,true);
-			}else{
 				bt= G->Economy->Get(true,false);
+			}else{
+				bt= G->Economy->Get(true,true);
 			}
 			if(bt == B_NA){
 				valid = false;

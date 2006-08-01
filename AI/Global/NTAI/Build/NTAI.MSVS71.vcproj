@@ -149,6 +149,9 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath="..\Helpers\Units\CUnitDefLoader.cpp">
+			</File>
 			<Filter
 				Name="Agents"
 				Filter="">
@@ -344,6 +347,9 @@
 					</File>
 					<File
 						RelativePath="..\Helpers\Units\CUnitDefHelp.h">
+					</File>
+					<File
+						RelativePath="..\Helpers\Units\CUnitDefLoader.h">
 					</File>
 					<File
 						RelativePath="..\Helpers\ubuild.h">
