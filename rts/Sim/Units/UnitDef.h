@@ -266,7 +266,8 @@ struct BuildInfo
 
 	int GetXSize() const { return (buildFacing&1)==0 ? def->xsize : def->ysize; }
 	int GetYSize() const { return (buildFacing&1)==1 ? def->xsize : def->ysize; }
-	bool Parse(Command& c);
+	bool Parse(const Command& c);
+	void FillCmd(Command& c) const;
 
 	const UnitDef* def;
 	int buildFacing;

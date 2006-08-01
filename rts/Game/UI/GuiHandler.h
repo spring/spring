@@ -66,7 +66,7 @@ private:
 public:
 	Command GetOrderPreview(void);
 	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);
-	std::vector<float3> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo); // start.def has to be end.def
+	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo); // start.def has to be end.def
 };
 extern CGuiHandler* guihandler;
 

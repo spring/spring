@@ -802,7 +802,7 @@ void CGuiHandler::DrawMapStuff(void)
 
 			if(unitdef){
 				float3 pos=camera->pos+mouse->dir*dist;
-				std::vector<float3> buildPos;
+				std::vector<BuildInfo> buildPos;
 				if(keys[SDLK_LSHIFT] && mouse->buttons[SDL_BUTTON_LEFT].pressed){
 					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
 					float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
@@ -812,17 +812,13 @@ void CGuiHandler::DrawMapStuff(void)
 					buildPos=GetBuildPos(bi,bi);
 				}
 
-				for(std::vector<float3>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
+				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
 				{
-					float3 pos=*bpi;
+					float3 pos=bpi->pos;
 					std::vector<Command> cv;
 					if(keys[SDLK_LSHIFT]){
 						Command c;
-						c.id = -unitdef->id;
-						c.params.push_back(pos.x);
-						c.params.push_back(pos.y);
-						c.params.push_back(pos.z);
-						c.params.push_back(buildFacing);
+						bpi->FillCmd(c);
 						std::vector<Command> temp;
 						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 						for(; ui != selectedUnits.selectedUnits.end(); ui++){
@@ -832,13 +828,12 @@ void CGuiHandler::DrawMapStuff(void)
 								cv.insert(cv.end(),*ti);
 						}
 					}
-					BuildInfo buildInfo(unitdef, pos, buildFacing);
-					if(uh->ShowUnitBuildSquare(buildInfo, cv))
+					if(uh->ShowUnitBuildSquare(*bpi, cv))
 						glColor4f(0.7,1,1,0.4);
 					else
 						glColor4f(1,0.5,0.5,0.4);
 
-					unitDrawer->DrawBuildingSample(unitdef, gu->myTeam, pos, buildFacing);
+					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, pos, bpi->buildFacing);
 					if(unitdef->weapons.size()>0){	//draw range
 						glDisable(GL_TEXTURE_2D);
 						glColor4f(1,0.3,0.3,0.7);
@@ -1252,7 +1247,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			}
 
 			float3 pos=camera->pos+mouse->dir*dist;
-			std::vector<float3> buildPos;
+			std::vector<BuildInfo> buildPos;
 			BuildInfo bi(unitdef, pos, buildFacing);
 			if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
 				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
@@ -1266,26 +1261,16 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			}
 
 			int a=0;		//limit the number of max commands possible to send to avoid overflowing the network buffer
-			for(std::vector<float3>::iterator bpi=buildPos.begin();bpi!=--buildPos.end() && a<200;++bpi){
+			for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=--buildPos.end() && a<200;++bpi){
 				++a;
-				float3 pos=*bpi;
 				Command c;
-				c.id=commands[tempInCommand].id;
-				c.params.push_back(pos.x);
-				c.params.push_back(pos.y);
-				c.params.push_back(pos.z);
-				c.params.push_back(buildFacing);
+				bpi->FillCmd(c);
 				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				if(!preview)
 					selectedUnits.GiveCommand(c);
 			}
-			pos=*(--buildPos.end());
 			Command c;
-			c.id=commands[tempInCommand].id;
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
-			c.params.push_back(buildFacing);
+			buildPos.back().FillCmd(c);
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
@@ -1417,9 +1402,9 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 }
 
 // Assuming both builds have the same unitdef
-std::vector<float3> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo)
+std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo)
 {
-	std::vector<float3> ret;
+	std::vector<BuildInfo> ret;
 
 	float3 start=helper->Pos2BuildPos(startInfo);
 	float3 end=helper->Pos2BuildPos(endInfo);
@@ -1446,8 +1431,6 @@ std::vector<float3> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const B
 
 	if(other.def && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
 		Command c;
-		c.id = -startInfo.def->id;
-		c.params.resize(4);
 
 		start=end=helper->Pos2BuildPos(other);
 		start.x-=(other.GetXSize()/2)*SQUARE_SIZE;
@@ -1459,88 +1442,72 @@ std::vector<float3> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const B
 		int xsize=startInfo.GetXSize();
 		int ysize=startInfo.GetYSize();
 		for(;pos.x<=end.x;pos.x+=xsize*SQUARE_SIZE){
-			float3 p2=pos;
-			p2.x+=(xsize/2)*SQUARE_SIZE;
-			p2.z-=(ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
-			c.params[0] = p2.x;
-			c.params[1] = p2.y;
-			c.params[2] = p2.z;
-			c.params[3] = startInfo.buildFacing;
+			BuildInfo bi(startInfo.def,pos,startInfo.buildFacing);
+			bi.pos.x+=(xsize/2)*SQUARE_SIZE;
+			bi.pos.z-=(ysize/2)*SQUARE_SIZE;
+			bi.pos=helper->Pos2BuildPos(bi);
+			bi.FillCmd(c);
 			bool cancel = false;
 			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
-				if((*ui)->commandAI->WillCancelQueued(c)){
+			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui)
+			{
+				if((*ui)->commandAI->WillCancelQueued(c))
 					cancel = true;
-				}
-			}
-			if(!cancel){
-				ret.push_back(p2);
-			}
-		}
-		pos=start;
-		pos.x=end.x;
-		for(;pos.z<=end.z;pos.z+=ysize*SQUARE_SIZE){
-			float3 p2=pos;
-			p2.x+=(xsize/2)*SQUARE_SIZE;
-			p2.z+=(ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
-			c.params[0] = p2.x;
-			c.params[1] = p2.y;
-			c.params[2] = p2.z;
-			c.params[3] = startInfo.buildFacing;
-			bool cancel = false;
-			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
-				if((*ui)->commandAI->WillCancelQueued(c)){
-					cancel = true;
-				}
-			}
-			if(!cancel){
-				ret.push_back(p2);
-			}
-		}
-		pos=end;
-		for(;pos.x>=start.x;pos.x-=xsize*SQUARE_SIZE){
-			float3 p2=pos;
-			p2.x-=(xsize/2)*SQUARE_SIZE;
-			p2.z+=(ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
-			c.params[0] = p2.x;
-			c.params[1] = p2.y;
-			c.params[2] = p2.z;
-			c.params[3] = startInfo.buildFacing;
-			bool cancel = false;
-			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
-				if((*ui)->commandAI->WillCancelQueued(c)){
-					cancel = true;
-				}
 			}
 			if(!cancel)
-				ret.push_back(p2);
+				ret.push_back(bi);
 		}
 		pos=end;
 		pos.x=start.x;
 		for(;pos.z>=start.z;pos.z-=ysize*SQUARE_SIZE){
-			float3 p2=pos;
-			p2.x-=(xsize/2)*SQUARE_SIZE;
-			p2.z-=(ysize/2)*SQUARE_SIZE;
-			p2=helper->Pos2BuildPos(BuildInfo(startInfo.def,p2,startInfo.buildFacing));
-			c.params[0] = p2.x;
-			c.params[1] = p2.y;
-			c.params[2] = p2.z;
-			c.params[3] = startInfo.buildFacing;
+			BuildInfo bi(startInfo.def,pos,(startInfo.buildFacing+1)%4);
+			bi.pos.x-=(xsize/2)*SQUARE_SIZE;
+			bi.pos.z-=(ysize/2)*SQUARE_SIZE;
+			bi.pos=helper->Pos2BuildPos(bi);
+			bi.FillCmd(c);
 			bool cancel = false;
 			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
-				if((*ui)->commandAI->WillCancelQueued(c)){
+				if((*ui)->commandAI->WillCancelQueued(c))
 					cancel = true;
-				}
 			}
-			if(!cancel){
-				ret.push_back(p2);
+			if(!cancel)
+				ret.push_back(bi);
+		}
+		pos=end;
+		for(;pos.x>=start.x;pos.x-=xsize*SQUARE_SIZE) {
+			BuildInfo bi(startInfo.def,pos,(startInfo.buildFacing+2)%4);
+			bi.pos.x-=(xsize/2)*SQUARE_SIZE;
+			bi.pos.z+=(ysize/2)*SQUARE_SIZE;
+			bi.pos=helper->Pos2BuildPos(bi);
+			bi.FillCmd(c);
+			bool cancel = false;
+			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui)
+			{
+				if((*ui)->commandAI->WillCancelQueued(c))
+					cancel = true;
 			}
+			if(!cancel)
+				ret.push_back(bi);
+		}
+		pos=start;
+		pos.x=end.x;
+		for(;pos.z<=end.z;pos.z+=ysize*SQUARE_SIZE){
+			BuildInfo bi(startInfo.def,pos,(startInfo.buildFacing+3)%4);
+			bi.pos.x+=(xsize/2)*SQUARE_SIZE;
+			bi.pos.z+=(ysize/2)*SQUARE_SIZE;
+			bi.pos=helper->Pos2BuildPos(bi);
+			bi.FillCmd(c);
+			bool cancel = false;
+			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui)
+			{
+				if((*ui)->commandAI->WillCancelQueued(c))
+					cancel = true;
+			}
+			if(!cancel)
+				ret.push_back(bi);
 		}
 	} else if(keys[SDLK_LALT]){			//build a rectangle
 		float xsize=startInfo.GetXSize()*8+buildSpacing*16;
@@ -1563,37 +1530,44 @@ std::vector<float3> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const B
 					BuildInfo bi = startInfo;
 					bi.pos = float3(x,0,z);
 					bi.pos=helper->Pos2BuildPos(bi);
-					ret.push_back(bi.pos);
+					ret.push_back(bi);
 				}
 				x+=xstep;
 			}
 			z+=zstep;
 		}
 	} else {			//build a line
+		BuildInfo bi=startInfo;
 		if(fabs(start.x-end.x)>fabs(start.z-end.z)){
 			float step=startInfo.GetXSize()*8+buildSpacing*16;
 			float3 dir=end-start;
 			if(dir.x==0){
-				ret.push_back(start);
+				bi.pos = start;
+				ret.push_back(bi);
 				return ret;
 			}
 			dir/=fabs(dir.x);
 			if(keys[SDLK_LCTRL])
 				dir.z=0;
-			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
-				ret.push_back(p);
+			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step) {
+				bi.pos=p;
+				ret.push_back(bi);
+			}
 		} else {
 			float step=startInfo.GetYSize()*8+buildSpacing*16;
 			float3 dir=end-start;
 			if(dir.z==0){
-				ret.push_back(start);
+				bi.pos=start;
+				ret.push_back(bi);
 				return ret;
 			}
 			dir/=fabs(dir.z);
 			if(keys[SDLK_LCTRL])
 				dir.x=0;
-			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step)
-				ret.push_back(p);
+			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step) {
+				bi.pos=p;
+				ret.push_back(bi);
+			}
 		}
 	}
 	return ret;
