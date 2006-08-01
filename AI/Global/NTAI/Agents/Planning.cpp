@@ -208,7 +208,7 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 		return true;
 	}
 	if(G->info->antistall==7){ // SIMULATIVE ANTISTALL ALGORITHM V7
-		float ti = uud->buildTime/pud->buildSpeed - (G->info->Max_Stall_Time*(32/30));
+		float ti = (uud->buildTime/pud->buildSpeed + G->info->Max_Stall_Time)*(32/30);
 		// Energy Cost/Second
 		float e_usage = G->cb->GetEnergyUsage()+( uud->energyCost/ti);
 		float t;
@@ -242,7 +242,7 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 		}
 	}
 	if((G->info->antistall == 3)||(G->info->antistall == 5)){ // ANTISTALL ALGORITHM V3+5
-		float t = uud->buildTime/pud->buildSpeed - (G->info->Max_Stall_Time*(32/30));
+		float t = (uud->buildTime/pud->buildSpeed + G->info->Max_Stall_Time)*(32/30);
 		if(uud->energyCost > 100.0f){
 			if(G->Economy->BuildPower(true)&&(G->UnitDefHelper->IsEnergy(uud)==false)){
 				return false;
@@ -254,12 +254,12 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 					G->L << "(5) insufficient energy to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
 					return false;
 				}
+			}
 			
-				if((G->cb->GetEnergy()+ (t*GetEnergyIncome()))< (30/32)*t*e_usage){
-					//ENERGY STALL
-					G->L << "(5) insufficient energy to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
-					return false;
-				}
+			if((G->cb->GetEnergy()+ (t*GetEnergyIncome()))< (30/32)*t*e_usage){
+				//ENERGY STALL
+				G->L << "(5) insufficient energy to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+				return false;
 			}
 		}
 		if(uud->metalCost>50){
@@ -268,18 +268,17 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 			}
 			float m_usage = G->cb->GetMetalUsage()+( uud->metalCost/t);//G->cb->GetMetalUsage()+( (uud->metalCost*GetRealValue(pud->buildSpeed))/uud->buildTime);
 
-			if(2*GetMetalIncome()<m_usage){
+			if(GetMetalIncome()<m_usage){
 				if(G->info->antistall == 5){
 					//METAL STALL
 					G->L << "(3) insufficient metal to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
 					return false;
 				}
-
-				if(G->cb->GetMetal() +(t*GetMetalIncome())< (30/32)*t*m_usage){
-					//METAL STALL
-					G->L << "(3) insufficient metal to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
-					return false;
-				}
+			}
+			if(G->cb->GetMetal() +(t*GetMetalIncome())< (30/32)*t*m_usage){
+				//METAL STALL
+				G->L << "(3) insufficient metal to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+				return false;
 			}
 		}
 		G->L.print("Given the go ahead :: "+uud->name);

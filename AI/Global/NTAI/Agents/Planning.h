@@ -13,6 +13,8 @@ public:
 	bool feasable(string s, int builder); // Antistall algorithm
 	bool feasable(const UnitDef* uud, const UnitDef* pud); // Antistall algorithm
 	void Update();
+
+	bool equalsIgnoreCase(string a ,string b);
 	
 	// Predictive Targetting
 	float3 GetDirVector(int enemy,float3 unit, const WeaponDef* def);
@@ -42,7 +44,6 @@ public:
 	vector<string> AlwaysAntiStall;
 	int fnum;
 private:
-	bool equalsIgnoreCase(string, string);
 	Global* G;
 // 	struct envec{
 // 		float3 last;
