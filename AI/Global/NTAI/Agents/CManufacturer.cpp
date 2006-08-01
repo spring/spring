@@ -894,6 +894,8 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 				if(polate==true){
 					ui->AddTask(bt);
 					polate = false;
+				}else{
+					polate=true;
 				}
 			 }
 			 

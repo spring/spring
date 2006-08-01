@@ -302,6 +302,7 @@ enum unit_role{ // used for cosntruction untis to differentiate between factory 
 
 // helpers
 #include "../Helpers/Log.h" // Logging class
+#include "../Helpers/Units/CUnitDefLoader.h" // Loads untidefs
 #include "../Helpers/Terrain/CSector.h" // Map Sector data structure
 #include "../Engine/TCommand.h" // Unit cached command data structure
 //#include "../Events/EData.h" // Event information data structure

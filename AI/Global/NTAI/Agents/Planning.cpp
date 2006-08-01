@@ -187,11 +187,17 @@ float Planning::FramesTillZeroRes(float in, float out, float starting, float max
 	}
 	return mtime;
 }
-bool Planning:: feasable(const UnitDef* uud, const UnitDef* pud){
+
+bool Planning::equalsIgnoreCase(string a ,string b){
+	return G->lowercase(a)== G->lowercase(b);
+}
+bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 	NLOG("Planning::feasable");
 	if(NoAntiStall.empty() == false){
+		string n2 = G->lowercase(uud->name);
 		for(vector<string>::iterator i = NoAntiStall.begin(); i != NoAntiStall.end(); ++i){
-			if(*i == uud->name){
+			string i2 = G->lowercase(*i);
+			if(i2 == n2){
 				G->L.print("Given the go ahead :: "+uud->name);
 				return true;
 			}
@@ -237,7 +243,7 @@ bool Planning:: feasable(const UnitDef* uud, const UnitDef* pud){
 	}
 	if((G->info->antistall == 3)||(G->info->antistall == 5)){ // ANTISTALL ALGORITHM V3+5
 		float t = uud->buildTime/pud->buildSpeed - (G->info->Max_Stall_Time*(32/30));
-		if(uud->energyCost > 550.0f){
+		if(uud->energyCost > 100.0f){
 			if(G->Economy->BuildPower(true)&&(G->UnitDefHelper->IsEnergy(uud)==false)){
 				return false;
 			}
@@ -256,8 +262,8 @@ bool Planning:: feasable(const UnitDef* uud, const UnitDef* pud){
 				}
 			}
 		}
-		if(uud->metalCost>60){
-			if(G->Economy->BuildMex(true)&& !G->UnitDefHelper->IsMex(uud)){
+		if(uud->metalCost>50){
+			if(G->Economy->BuildMex(true)&& (G->UnitDefHelper->IsMex(uud)==false)){
 				return false;
 			}
 			float m_usage = G->cb->GetMetalUsage()+( uud->metalCost/t);//G->cb->GetMetalUsage()+( (uud->metalCost*GetRealValue(pud->buildSpeed))/uud->buildTime);

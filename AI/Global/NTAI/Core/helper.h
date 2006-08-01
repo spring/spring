@@ -68,6 +68,7 @@ public:
 	Scouter* Sc;// Scouter agent, this deals with scouting the map
 	Chaser* Ch;// Chaser Agent, deals with attacking and things such as kamikaze units/dgunning/stockpiling missiles/several attack unit behaviours
 	CUnitDefHelp* UnitDefHelper;
+	CUnitDefLoader* UnitDefLoader;
 
 	CManufacturer* Manufacturer; // Construction Agent
 	CEconomy* Economy; // Construction rules (AAI/OTAI/JCAI style building selection)
@@ -87,6 +88,8 @@ public:
 	bool loaded;
 	bool firstload;
 	bool saved;
+
+	float max_energy_use;
 
 	bool DrawTGA(string filename,float3 position);
 	
@@ -145,7 +148,8 @@ public:
 			return chcb->GetUnitDef(unitid);
 	}
 	const UnitDef* GetUnitDef(string s){
-		return cb->GetUnitDef(s.c_str());
+		return UnitDefLoader->GetUnitDef(s);
+		//return cb->GetUnitDef(s.c_str());
 	}
 	struct temp_pos{
 		float3 pos;

@@ -98,6 +98,7 @@ Global::Global(IGlobalAICallback* callback){
 	//if(L.FirstInstance() == true){
     L << " :: Found " << M->m->NumSpotsFound << " Metal Spots" << endline;
 	//}
+	UnitDefLoader = new CUnitDefLoader(G);
 	OrderRouter = new COrderRouter(G);
 	L.print("Order Router constructed");
 	DTHandler = new CDTHandler(G);
@@ -143,6 +144,7 @@ Global::~Global(){
 	delete Cached;
 	delete OrderRouter;
 	delete UnitDefHelper;
+	delete UnitDefLoader;
 	//delete TaskFactory;
 }
 
@@ -343,6 +345,7 @@ void Global::UnitFinished(int unit){
 	try{ 
 		const UnitDef* ud = GetUnitDef(unit);
 		if(ud!=0){
+			max_energy_use += ud->energyUpkeep;
 			map<string,int>::iterator k = Cached->solobuilds.find(ud->name);
 			if(k != Cached->solobuilds.end()) Cached->solobuilds.erase(k);
 			if(ud->movedata == 0){
@@ -524,6 +527,7 @@ void Global::UnitDestroyed(int unit, int attacker){
 	idlenextframe.erase(unit);
 	const UnitDef* udu = GetUnitDef(unit);
 	if(udu != 0){
+		max_energy_use -= udu->energyUpkeep;
 		if(Cached->singlebuilds.find(udu->name) != Cached->singlebuilds.end()){
 			Cached->singlebuilds[udu->name] = false;
 		}
