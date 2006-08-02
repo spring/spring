@@ -1,1 +1,1 @@
-corrl, coralab, defense, corrl, corlab, repair, B_RULE, B_GEO, B_RULE, B_GEO, B_RULE, repair, defense, corrl, B_FACTORY, repair, B_RULE, B_RULE, B_RULE, repair, coralab, corlab, defense, corrl, repair, B_RETREAT, B_GUARDIAN, B_RANDMOVE, B_GUARDIAN, B_RANDMOVE, B_GUARDIAN, repeat
+B_RULE_EXTREME, corrl, coralab, defense, corrl, corlab, repair, B_RULE, B_GEO, B_RULE, B_GEO, B_RULE, repair, defense, corrl, B_FACTORY, repair, B_RULE, B_RULE, B_RULE, repair, coralab, corlab, defense, corrl, repair, B_RETREAT, B_GUARDIAN, B_RANDMOVE, B_GUARDIAN, B_RANDMOVE, B_GUARDIAN, repeat

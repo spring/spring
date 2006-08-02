@@ -1,1 +1,1 @@
-repair, B_RADAR, repair, heavy_defense, missle_defense, missle_defense, repair, armalab, armlab, repair, mohomaker, mohomaker, heavy_fusion, light_fusion, B_RULE, repair, B_RETREAT, B_GUARD_UNIT_LIKE, repeat
+B_RULE_EXTREME, repair, B_RADAR, repair, heavy_defense, missle_defense, missle_defense, repair, armalab, armlab, repair, mohomaker, mohomaker, heavy_fusion, light_fusion, B_RULE, repair, B_RETREAT, B_GUARD_LIKE_CON, repeat
