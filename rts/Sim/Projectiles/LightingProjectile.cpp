@@ -74,21 +74,21 @@ void CLightingProjectile::Draw(void)
 
 	for(int a=0;a<9;++a){
 		float f=(a+1)*0.111;
-		va->AddVertexTC(tempPos+dir1*(displacements[a]+0.8),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
-		va->AddVertexTC(tempPos+dir1*(displacements[a]-0.8),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexTC(tempPos+dir1*(displacements[a+1]-0.8),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-		va->AddVertexTC(tempPos+dir1*(displacements[a+1]+0.8),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexTC(tempPos+dir1*(displacements[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
 	}
 
 	tempPos=pos;
 	for(int a=0;a<9;++a){
 		float f=(a+1)*0.111;
-		va->AddVertexTC(tempPos+dir1*(displacements2[a]+0.8),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
-		va->AddVertexTC(tempPos+dir1*(displacements2[a]-0.8),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]-0.8),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]+0.8),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
 	}
 }
 

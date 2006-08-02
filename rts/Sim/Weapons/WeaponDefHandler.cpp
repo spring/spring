@@ -386,6 +386,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		}
 	} else if(weaponDefs[id].type=="LightingCannon"){
 		weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
+		sunparser->GetDef(weaponDefs[id].thickness, "0.8", weaponname + "\\thickness");
 	} else if(weaponDefs[id].type=="EmgCannon"){
 		//CEmgProjectile
 		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
