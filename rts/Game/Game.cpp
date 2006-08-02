@@ -149,7 +149,7 @@ CGame::CGame(bool server,std::string mapname)
 {
 	{
 		// determine whether the modder allows the user to use team coloured nanospray
-		TdfParser tdfparser("gamedata\\particles.tdf");
+		TdfParser tdfparser("gamedata/particles.tdf");
 		tdfparser.GetDef(gu->team_nanospray,"1","nanospray\\allow_team_colours");
 		if(gu->team_nanospray){
 			// Load the users preference for team coloured nanospray
