@@ -631,11 +631,14 @@ static PyMethodDef unitsyncMethods[] = {
 #undef PY
 };
 
-
-
 // PyMODINIT_FUNC already includes the DLL_EXPORT equivalent
 // and the right calling convention for the host platform.
+#ifdef _MSC_VER
+PyMODINIT_FUNC initunitsync(void)
+#else
 PyMODINIT_FUNC __attribute__ ((visibility("default"))) initunitsync(void)
+#endif
 {
 	(void) Py_InitModule("unitsync", unitsyncMethods);
 }
+
