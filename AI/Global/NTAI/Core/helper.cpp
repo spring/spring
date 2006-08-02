@@ -606,7 +606,8 @@ void Global::InitAI(IAICallback* callback, int team){
 	Get_mod_tdf()->GetDef(info->absent_abstract, "1", "AI\\use_mod_default_if_absent");
 	Get_mod_tdf()->GetDef(info->rule_extreme_interpolate, "1", "AI\\rule_extreme_interpolate");
 	info->antistall = atoi(Get_mod_tdf()->SGetValueDef("0", "AI\\antistall").c_str());
-	info->Max_Stall_Time = (float)atof(Get_mod_tdf()->SGetValueDef("1", "AI\\MaxStallTime").c_str());
+	info->Max_Stall_TimeMobile = (float)atof(Get_mod_tdf()->SGetValueDef("0", "AI\\MaxStallTime").c_str());
+	info->Max_Stall_TimeIMMobile = (float)atof(Get_mod_tdf()->SGetValueDef(Get_mod_tdf()->SGetValueDef("0", "AI\\MaxStallTime"), "AI\\MaxStallTimeimmobile").c_str());
 	//Get_mod_tdf()->GetDef(send_to_web, "1", "AI\\web_contribute");
 	//Get_mod_tdf()->GetDef(get_from_web, "1", "AI\\web_recieve");
 	//Get_mod_tdf()->GetDef(update_NTAI, "1", "AI\\NTAI_update");

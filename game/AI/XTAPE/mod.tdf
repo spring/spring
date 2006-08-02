@@ -7,29 +7,29 @@
 	Attackers=ARMAAS, ARMACSUB, ARMAH, ARMAMPH, ARMANAC, ARMASER, ARMBATS, ARMBRAWL, ARMBULL, ARMCROC, ARMCRUS, ARMFIDO, ARMFIG, ARMFLAK, ARMFLASH, ARMFLEA, ARMHAM, ARMHAWK, ARMJAM, ARMJETH, ARMLANCE, ARMLATNK, ARMMANNI, ARMMARK, ARMMART, ARMMAV, ARMMERLl, ARMMH, ARMMSHIP, ARMPNIX, ARMPT, ARMPW, ARMRAVEN, ARMROCK, ARMROY, ARMSAM, ARMSCRAM, ARMSEAP, ARMSFIG, ARMSH, ARMSJAM, ARMSNIPE, ARMSPID, ARMSTUMP, ARMSUB, ARMSUBK, ARMTHUND, ARMVADER, ARMWAR, ARMYORK, ARMZEUS, CORAK, CORAL, CORAMPH, CORAPE, CORARCH, CORBATS, CORCAN, CORCRASH, CORCRUS, CORETER, CORGATOR, CORGOL, CORHRK, CORHURK, CORKROG, CORLEVLR, CORMART, CORMH, CORMIST, CORMORT, CORMSHIP, CORPT, CORPYRO, CORRAID, CORREAP, CORROACH, CORROY, CORSEAL, CORSEAP, CORSENT, CORSFIG, CORSH, CORSHAD, CORSHARK, CORSJAM, CORSNAP, CORSPEC, CORSSUB, CORSTORM, CORSUB, CORSUMO, CORTHUD, CORTITAN, CORVAMP, CORVENG, CORVROCK;
 	// both=armamph, armflea, armlatnk, armpt, armsfig, armsh, armwar, corpt, corsfig, corsh; // here for reference.
 	cheap_multiplier=1.7;  // doesn't affect anything in this current buildtree.
-	defence_spacing=2;
-	power_spacing=1;
+	defence_spacing==4;
+	power_spacing=3;
 	factory_spacing=1;
-	default_spacing=1;
+	default_spacing=3;
 	dynamic_selection=0;
 	// kamikaze=; // crashes the game
 	solobuild=CORBUZZ, ARMVULC;  // AF seems to think these are really important or something.
 	singlebuild=CORTARG, ARMTARG;
 	author=Lindir The Green + AF:  Send questions, comments, suggestions and/or hatemail to lindirthegreen@yahoo.com;
-	version=0.8.3;
+	version=0.8.4;
 	message=XTA buildtree by Lindir The Green and AF;
 	hard_target=0;
 	AlwaysAntiStall=ARMALAB, CORALAB, CORSY, ARMSY, CORGANT, ARMAVP, CORAVP, ARMAAP, CORAAP, ARMASY, CORASY;
-	NoAntiStall=CORMEX, ARMMEX, CORSOLAR, ARMSOLAR, CORTIDE, ARMTIDE, CORUWMEX, ARMUWMEX, ARMWIN, CORWIN;
+	NoAntiStall=CORMEX, ARMMEX, CORSOLAR, ARMSOLAR, CORTIDE, ARMTIDE, CORUWMEX, ARMUWMEX, ARMWIN, CORWIN, x1corminifus, armmfus;
 	hold_fire=CORCOM, ARMCOM;
 	return_fire=;
 	fire_at_will=;
 	roam=;
 	maneouvre=;  // Crazy brits spell "maneuver" wrong.  I hope both ways are accepted by NTai...
 	hold_pos=CORCOM, ARMCOM;
-	rule_extreme_interpolate=1;  // I'm extremely hesitant... B_RULE_EXTREME has never worked well for me.
-	antistall=7;
-	MaxStallTime=0;  // In frames.  Yes, I am OK with some stall in important situations.  // Still not used right now...
+	interpolate_tag=B_RULE_EXTREME_NOFACT;
+	antistall=3; // 3 and 7 are currently the only good options.
+	MaxStallTime=-3;  // Hey, it's finally used!
 	[STALL_MULTIPLIERS] // not used right now...
 	{
 		energyIncome=1;
@@ -45,15 +45,15 @@
 		power=0.8;
 		mex=0.8;
 		
-		factorymetal=0.95;
-		factoryenergy=0.95;
+		factorymetal=0.9;
+		factoryenergy=0.9;
 		factorymetalgap=10;
 		
 		energystorage=0.9;
 		metalstorage=0.9;
 		
-		makermetal=0.4;
-		makerenergy=0.95;
+		makermetal=0.6;
+		makerenergy=0.7;
 		
 		[EXTREME]
 		{
@@ -63,16 +63,16 @@
 			power=0.3;
 			mex=0.2;
 			
-			makermetal=0.1;
-			makerenergy=0.95; //only if it's maxed out
+			makermetal=0.2;
+			makerenergy=0.8;
 		}
 	}
 }
 [TAGS]
 {
-	small_fusion=ARMCKFUS, CORCKFUS;
-	big_fusion=ARMFUS, CORFUS, ARMUWFUS, CORUWFUS;
-	mohometal=ARMMMKR, CORMMMKR;
+	light_fusion=ARMCKFUS, CORCKFUS;
+	heavy_fusion=ARMFUS, CORFUS, ARMUWFUS, CORUWFUS;
+	mohomaker=ARMMMKR, CORMMMKR;
 	mohomine=ARMMOHO, CORMOHO;
 	heavy_defense=ARMBRTHA, ARMSILO, CORDOOM, CORINT, CORSILO;
 	missle_defense=ARMAMD, CORFMD;
@@ -140,14 +140,14 @@
 	}
 	[MaxEnergy]
 	{
-		ARMSOLAR=1000;
-		CORSOLAR=1000;
-		ARMTIDE=1000;
-		CORTIDE=1000;
-		ARMCKFUS=5000;
-		CORCKFUS=5000;
-		ARMMEX=1000;
-		CORMEX=1000;
+		ARMSOLAR=500;
+		CORSOLAR=500;
+		ARMTIDE=500;
+		CORTIDE=500;
+		ARMCKFUS=3000;
+		CORCKFUS=3000;
+		ARMMEX=500;
+		CORMEX=500;
 		ARMLAB=75; // forcing it to go to level 2
 		CORLAB=75;
 		ARMVP=75;

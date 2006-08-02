@@ -272,6 +272,10 @@ bool CMap::CheckFloat3(float3 pos){
 		return false;
 	}else if(pos == ZeroVector){ //error codes
 		return false;
+	}else if(pos == float3(-1,0,0)){ //error codes
+		return false;
+	}else if(pos.distance2D(UpVector) <200){ // top corner!!!!!
+		return false;
 	}else if(pos.x > G->cb->GetMapWidth()*8){ // offmap
 		return false;
 	}else if(pos.z > G->cb->GetMapHeight()*8){ // offmap

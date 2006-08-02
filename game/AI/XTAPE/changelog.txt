@@ -1,3 +1,25 @@
+0.8.4.1 =====
+
+LTG - Squished a few bugs
+LTG - Rolled back the construction units on the no_antistall list, because of problems where NTai was building only construction units.
+LTG - Increased MaxStallTime.
+LTG - Added B_RULE_EXTREME to the beginning of every mobile construction unit.
+
+0.8.4 =====
+
+LTG - Made NTai more likely to build MMs.
+LTG - Added all mobile construction units to the no_antistall list.
+LTG - Removed the advanced SYs from the commanders' buildlists.
+LTG - Added the miniature fusions to the antistall list.
+LTG - Changed the FARKs and necros to now build defense.
+LTG - Squished a few bugs.
+LTG - Decreased more of the max energies.
+LTG - Changed the end of the commanders' buildlists to no longer guard a factory.
+LTG - Added another mex to the beginning of the commanders' buildlists.
+LTG - Made B_RULE_EXTREME more likely to build resources.
+LTG - Set the max stall time to 0.
+LTG - Increased the spacings a bit, coz AF told me to.
+
 0.8.3 =====
 
 LTG - Reduced the spacings some more.

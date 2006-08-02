@@ -1,1 +1,0 @@
-repair, B_RULE_EXTREME_CARRY, repair, B_RULE, repair, repair, repair, repair, repair, repeat

@@ -203,12 +203,16 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 			}
 		}
 	}
+	float Max_Stall_Time = G->info->Max_Stall_TimeMobile;
+	if((pud->movedata == 0)&&(pud->canfly==false)){
+		Max_Stall_Time = G->info->Max_Stall_TimeIMMobile;
+	}
 	if(G->GetCurrentFrame() < 43 SECONDS){
 		G->L.print("Given the go ahead :: "+uud->name);
 		return true;
 	}
 	if(G->info->antistall==7){ // SIMULATIVE ANTISTALL ALGORITHM V7
-		float ti = (uud->buildTime/pud->buildSpeed + G->info->Max_Stall_Time)*(32/30);
+		float ti = (uud->buildTime/pud->buildSpeed + Max_Stall_Time)*(32/30);
 		// Energy Cost/Second
 		float e_usage = G->cb->GetEnergyUsage()+( uud->energyCost/ti);
 		float t;
@@ -242,7 +246,7 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 		}
 	}
 	if((G->info->antistall == 3)||(G->info->antistall == 5)){ // ANTISTALL ALGORITHM V3+5
-		float t = (uud->buildTime/pud->buildSpeed + G->info->Max_Stall_Time)*(32/30);
+		float t = (uud->buildTime/pud->buildSpeed + Max_Stall_Time)*(32/30);
 		if(uud->energyCost > 100.0f){
 			if(G->Economy->BuildPower(true)&&(G->UnitDefHelper->IsEnergy(uud)==false)){
 				return false;

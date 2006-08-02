@@ -26,7 +26,8 @@ public:
 	unsigned int fire_state_commanders;
 	unsigned int move_state_commanders;
 	int antistall;
-	float Max_Stall_Time;
+	float Max_Stall_TimeMobile;
+	float Max_Stall_TimeIMMobile;
 	bool rule_extreme_interpolate;
 
 	string tdfpath;

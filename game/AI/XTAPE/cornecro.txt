@@ -1,1 +1,1 @@
-repair, repair, repair, B_RESSURECT, B_RESSURECT, repair, retreat, B_GUARDIAN, repeat
+repair, B_DEFENSE, B_DEFENSE, repair, repair, B_RESSURECT, B_RESSURECT, repair, retreat, B_DEFENSE, B_GUARDIAN, repeat
