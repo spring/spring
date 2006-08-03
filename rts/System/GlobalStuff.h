@@ -418,7 +418,6 @@ public:
 	float usRandFloat(); 			//!< Unsynced random float
 	float3 usRandVector(); 			//!< Unsynced random vector
 
-	bool team_nanospray;
 	/**
 	 * @brief rand seed
 	 * 
@@ -527,6 +526,27 @@ public:
 	 * Whether fog (of war) is drawn or not
 	 */
 	bool drawFog;
+
+	/**
+	 * @brief team coloured nanospray?
+	 */
+	bool team_nanospray;
+
+	/**
+	 * @brief quit automatically?
+	 *
+	 * If set, quit immediately on game over or if gameTime > quitTime,
+	 * whichever comes first.
+	 */
+	bool autoQuit;
+
+	/**
+	 * @brief quit time
+	 *
+	 * If autoQuit is set, the host quits if gameTime > quitTime.
+	 * (This automatically causes all other clients to quit too.)
+	 */
+	float quitTime;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	/**

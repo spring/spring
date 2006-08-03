@@ -289,6 +289,13 @@ bool SpringApp::Initialize ()
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
 
+	// Enable auto quit?
+	int quit_time;
+	if (cmdline->result("quit", quit_time)) {
+		gu->autoQuit = true;
+		gu->quitTime = 60 * quit_time;
+	}
+
 	InitOpenGL();
 
 	palette.Init();
@@ -487,6 +494,7 @@ bool SpringApp::ParseCmdLine()
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
 	cmdline->addoption('p',"projectiledump", OPTPARM_NONE, "", "Dump projectile class info in projectiles.txt");
+	cmdline->addoption('q',"quit", OPTPARM_INT, "T", "Quit immediately on game over or after T minutes");
 	cmdline->parse();
 
 #ifdef _DEBUG
@@ -495,20 +503,23 @@ bool SpringApp::ParseCmdLine()
 	fullscreen = configHandler.GetInt("Fullscreen",1)!=0;
 #endif
 
+	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->result("help")) {
 		cmdline->usage("TA:Spring",VERSION_STRING);
 		return false;
 	} else if (cmdline->result("version")) {
 		std::cout << "TA:Spring " << VERSION_STRING << std::endl;
 		return false;
-	} else if (cmdline->result("window"))
-		fullscreen = false;
-	else if (cmdline->result("fullscreen"))
-		fullscreen = true;
-	else if (cmdline->result("projectiledump")) {
+	} else if (cmdline->result("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		return false;
 	}
+
+	// flags
+	if (cmdline->result("window"))
+		fullscreen = false;
+	else if (cmdline->result("fullscreen"))
+		fullscreen = true;
 
 	screenWidth = configHandler.GetInt("XResolution",XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution",YRES_DEFAULT);
