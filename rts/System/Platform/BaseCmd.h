@@ -242,6 +242,20 @@ protected:
 	 * @return exit code to use
 	 */
 	int invalidoption(std::string opt);
+
+	/**
+	 * @brief missing parameter
+	 * @param opt unrecognized option string
+	 * @return exit code to use
+	 */
+	int missingparm(std::string opt);
+
+	/**
+	 * @brief is s an integer?
+	 * @param s string to examine
+	 * @return true if s is an integer, false if not.
+	 */
+	bool BaseCmd::is_int(const std::string& s) const;
 };
 
 #endif

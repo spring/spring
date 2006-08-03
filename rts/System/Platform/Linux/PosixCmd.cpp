@@ -9,6 +9,7 @@
  */
 #include "PosixCmd.h"
 
+
 /**
  * Just stores the arguments and calls the parent class's
  * constructor
@@ -29,25 +30,32 @@ PosixCmd::~PosixCmd()
 /**
  * Parses a long string option
  */
-void PosixCmd::parselongopt(std::string arg)
+void PosixCmd::parselongopt(char* _arg)
 {
+	std::string arg(_arg);
 	std::string::size_type ind = arg.find('=',2);
-	std::string mainpart = arg.substr(2,ind);
+	std::string mainpart = arg.substr(2,ind-2);
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
 		if (mainpart == it->longopt) {
 			it->given = true;
 			if (it->parmtype == OPTPARM_NONE) {
+				if (ind != std::string::npos)
+					throw missingparm(arg);
 				if (arg.size() > mainpart.size()+2)
 					throw invalidoption(arg);
 			} else {
 				std::string param = "";
+				if (ind == std::string::npos)
+					throw missingparm(arg);
 				if (arg.size() > mainpart.size()+3) {
 					param += arg.substr(ind+1);
 				}
-				if (it->parmtype == OPTPARM_INT)
+				if (it->parmtype == OPTPARM_INT) {
+					if (!is_int(param))
+						throw missingparm(arg);
 					it->ret.intret = atoi(param.c_str());
-				else
-					strcpy(it->ret.stringret,param.c_str());
+				} else
+					it->ret.stringret = &_arg[ind];
 			}
 			return;
 		}
@@ -64,7 +72,7 @@ void PosixCmd::parse()
 		std::string arg = argv[i];
 		if (!arg.empty() && arg.at(0) == '-') {
 			if (arg.size() > 2 && arg.at(1) == '-')
-				parselongopt(arg);
+				parselongopt(argv[i]);
 			else if (arg.size() >=2) {
 				bool valid = false;
 				for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
@@ -80,12 +88,16 @@ void PosixCmd::parse()
 							if (arg.size() > 2) {
 								next = arg.substr(2);
 							} else {
-								next = argv[++i];
+								if (++i >= argc)
+									throw missingparm(arg);
+								next = argv[i];
 							}
-							if (it->parmtype == OPTPARM_INT)
+							if (it->parmtype == OPTPARM_INT) {
+								if (!is_int(next))
+									throw missingparm(arg);
 								it->ret.intret = atoi(next.c_str());
-							else
-								strcpy(it->ret.stringret,next.c_str());
+							} else
+								it->ret.stringret = argv[i];
 						}
 						valid = true;
 						break;

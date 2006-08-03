@@ -49,7 +49,7 @@ private:
 	 * @brief parse long option
 	 * @param arg argument to parse
 	 */
-	void parselongopt(std::string arg);
+	void parselongopt(char* arg);
 };
 
 #endif /* POSIXCMD_H */
