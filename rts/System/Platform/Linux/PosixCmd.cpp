@@ -139,7 +139,7 @@ void PosixCmd::usage(std::string program, std::string version)
 				std::cout << "\t";
 		}
 		std::cout << "\t";
-		if (it->longopt.size()<8)
+		if (it->longopt.size()<9)
 			std::cout << "\t";
 		std::cout << it->desc;
 		std::cout << std::endl;

@@ -420,6 +420,9 @@ bool SpringApp::SetSDLVideoMode ()
 
 	SetVSync();
 
+	if (cmdline->result("minimise"))
+		SDL_WM_IconifyWindow();
+
 	return true;
 }
 
@@ -491,6 +494,7 @@ bool SpringApp::ParseCmdLine()
 {
 	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
 	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
+	cmdline->addoption('m',"minimise", OPTPARM_NONE, "", "Start minimised");
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
 	cmdline->addoption('p',"projectiledump", OPTPARM_NONE, "", "Dump projectile class info in projectiles.txt");
