@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.8\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
+				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;;&quot;..\..\vclibs\DevIL\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -70,7 +70,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
+				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;;&quot;..\..\vclibs\DevIL\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;BITMAP_NO_OPENGL"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
@@ -120,7 +120,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;"
+				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;&quot;..\..\vclibs\Boost\include\boost-1_33&quot;;&quot;..\..\vclibs\DevIL\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;BITMAP_NO_OPENGL"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
