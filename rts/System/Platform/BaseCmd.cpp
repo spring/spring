@@ -199,3 +199,29 @@ int BaseCmd::invalidoption(std::string opt)
 	exit(1);
 	return 1;
 }
+
+/**
+ * When an option is missing a parameter, this is called.
+ * Prints out an extra "unrecognized option blah" along
+ * with the usage message.
+ */
+int BaseCmd::missingparm(std::string opt)
+{
+	std::cerr << "BaseCmd error: Invalid or missing parameter for option " << opt << std::endl;
+	usage("","");
+	exit(1);
+	return 1;
+}
+
+/**
+ * Checks whether string s is an integer.
+ */
+bool BaseCmd::is_int(const std::string& s) const
+{
+	if (!isdigit(s[0]) && s[0] != '-' && s[0] != '+')
+		return false;
+	for (int j = 1; j < s.size(); ++j)
+		if (!isdigit(s[j]))
+			return false;
+	return true;
+}

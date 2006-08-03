@@ -44,11 +44,15 @@ void Win32Cmd::parse()
 						it->given = true;
 						if (it->parmtype != OPTPARM_NONE) {
 							std::string next;
-							next = argv[++i];
-							if (it->parmtype == OPTPARM_INT)
+							if (++i >= argc)
+								throw missingparm(arg);
+							next = argv[i];
+							if (it->parmtype == OPTPARM_INT) {
+								if (!is_int(next))
+									throw missingparm(arg);
 								it->ret.intret = atoi(next.c_str());
-							else
-								strcpy(it->ret.stringret,next.c_str());
+							} else
+								it->ret.stringret = argv[i];
 						}
 						valid = true;
 						break;
