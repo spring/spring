@@ -1068,6 +1068,11 @@ bool CGame::Update()
 		totalGameTime+=dif;
 	lastModGameTimeMeasure=timeNow;
 
+	if (gameServer && gu->autoQuit && gu->gameTime > gu->quitTime) {
+		info->AddLine("Automatical quit enforced from commandline");
+		return false;
+	}
+
 	time(&fpstimer);
 	if 	(difftime(fpstimer,starttime)!=0){		//do once every second
 		fps=thisFps;
@@ -1684,11 +1689,16 @@ bool CGame::ClientReadNet()
 		case NETMSG_GAMEOVER:
 			ENTER_MIXED;
 			gameOver=true;
-			#ifdef NEW_GUI
-			guicontroller->Event("dialog_endgame_togglehidden");
-			#else
-			new CEndGameBox();
-			#endif
+			if (gu->autoQuit) {
+				info->AddLine("Automatical quit enforced from commandline");
+				globalQuit = true;
+			} else {
+				#ifdef NEW_GUI
+				guicontroller->Event("dialog_endgame_togglehidden");
+				#else
+				new CEndGameBox();
+				#endif
+			}
 			lastLength=1;
 			ENTER_SYNCED;
 			break;

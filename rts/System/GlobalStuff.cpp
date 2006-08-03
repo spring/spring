@@ -148,13 +148,15 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	myPlayerNum=0;
 	myTeam=1;
 	myAllyTeam=1;
-	active=true;
-	drawdebug=false;
-	viewRange=MAX_VIEW_RANGE;
 	spectating=false;
-	
+	drawdebug=false;
+	active=true;
+	viewRange=MAX_VIEW_RANGE;
 	timeOffset=0;
 	drawFog=true;
+	team_nanospray=false;
+	autoQuit=false;
+	quitTime=0;
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
 #endif
