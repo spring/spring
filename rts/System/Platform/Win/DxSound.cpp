@@ -130,9 +130,9 @@ int CDxSound::InitFile(const string& name)
 
 	// Create the sound buffer object from the wave file data
 	if( !CreateStaticBuffer(name.c_str()) )
-	{        
-		MessageBox(0,"Couldnt create sound buffer","Sound error",0);
-		noSound=true;
+	{   
+		if (info)
+			(*info) << "no such sound: " << name.c_str() << "\n";
 		return -1;
 	}
 
@@ -159,13 +159,15 @@ unsigned int CDxSound::GetWaveId(const string &name)
 		InitFile(name);
 		si=waveid.find(name);
 	}
-	int ret=si->second;
+	int ret=(si!=waveid.end())?si->second:0;
 	POP_CODE_MODE;
 	return ret;
 }
 
 int CDxSound::GetBuf(int id,float volume)
 {
+	if(id<=0 || id>=loadedSounds.size())
+		return -1;
 	SoundInfo* s=loadedSounds[id];
 	int num;
 	if(s->freebufs.empty()){
@@ -348,7 +350,7 @@ bool CDxSound::CreateStaticBuffer(const string& path)
 		buf = new Uint8[fileSize];
 		file.Read(buf, fileSize);
 	} else {
-		handleerror(0, "Couldnt open wav file",path.c_str(),0);
+		//handleerror(0, "Couldnt open wav file",path.c_str(),0);
 		return false;
 	}
 	// Read the WAV file
