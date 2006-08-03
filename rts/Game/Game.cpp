@@ -119,6 +119,8 @@
 #include "UI/GUI/GUIcontroller.h"
 #endif
 
+#include "mmgr.h"
+
 GLfloat LightDiffuseLand[]=	{ 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat LightAmbientLand[]=	{ 0.2f, 0.2f, 0.2f, 1.0f };
 GLfloat FogLand[]=			{ 0.7f,	0.7f, 0.8f, 0	 };
@@ -1400,7 +1402,7 @@ void CGame::SimFrame()
 	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
 #endif
 
-#ifdef _H_MMGR
+#ifdef USE_MMGR
 	if(!(gs->frameNum & 31))
 		m_validateAllAllocUnits();
 #endif

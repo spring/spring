@@ -315,8 +315,8 @@ void CArchiveScanner::ReadCacheData()
 		ai.origName = p.SGetValueDef("", key + "Name");
 
 		ai.path = p.SGetValueDef("", key + "Path");
-		ai.modified = atol(p.SGetValueDef("0", key + "Modified").c_str());
-		ai.checksum = atol(p.SGetValueDef("0", key + "Checksum").c_str());
+		ai.modified = strtoul(p.SGetValueDef("0", key + "Modified").c_str(), 0, 10);
+		ai.checksum = strtoul(p.SGetValueDef("0", key + "Checksum").c_str(), 0, 10);
 		ai.updated = false;
 
 		int numMaps = atoi(p.SGetValueDef("0", key + "NumMaps").c_str());
