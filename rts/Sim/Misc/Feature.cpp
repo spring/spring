@@ -7,9 +7,11 @@
 #include "QuadField.h"
 #include "DamageArray.h"
 #include "Map/ReadMap.h"
+#include "Game/Team.h"
 #include "Game/UI/InfoConsole.h"
 #include "Sim/Units/Unit.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
+#include "Sim/ModInfo.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -20,6 +22,7 @@ CR_BIND_DERIVED(CFeature, CSolidObject)
 
 CR_REG_METADATA(CFeature, (
 				CR_MEMBER(createdFromUnit),
+				CR_MEMBER(isRepairingBeforeResurrect),
 				CR_MEMBER(resurrectProgress),
 				CR_MEMBER(health),
 				CR_MEMBER(reclaimLeft),
@@ -47,6 +50,7 @@ CFeature::CFeature()
 	tempNum(0),
 	emitSmokeTime(0),
 	lastReclaim(0),
+	isRepairingBeforeResurrect(false),
 	resurrectProgress(0),
 	health(0),
 	id(0),
@@ -137,24 +141,98 @@ void CFeature::CalculateTransform ()
 
 bool CFeature::AddBuildPower(float amount, CUnit* builder)
 {
+	float oldReclaimLeft = reclaimLeft;
+	float fractionReclaimed;
 	if(amount>0){
-		return false;		//cant repair a feature
-	} else {
-		if(reclaimLeft<0)	//avoid multisuck :)
+		
+		// Check they are trying to repair a feature that can be resurrected
+		if(createdFromUnit == "")
 			return false;
-		if(lastReclaim==gs->frameNum)	//make sure several units cant reclaim at once on a single feature
+
+		// 'Repairing' previously-sucked features prior to resurrection
+		// This is reclaim-option independant - repairing features should always
+		// be like other repairing - gradual and multi-unit
+		// Lots of this code is stolen from unit->AddBuildPower
+		
+		isRepairingBeforeResurrect = true; // Stop them exploiting chunk reclaiming
+
+		if (reclaimLeft >= 1)
+			return false;		// cant repair a 'fresh' feature
+
+		// Work out how much to try to put back, based on the speed this unit would reclaim at.
+		float part=(100-amount)*0.02/max(10.0f,(def->metal+def->energy));
+
+		// Work out how much that will cost
+		float metalUse=def->metal*part;
+		float energyUse=def->energy*part;
+		if (gs->Team(builder->team)->metal >= metalUse && gs->Team(builder->team)->energy >= energyUse)
+		{
+			builder->UseMetal(metalUse);
+			builder->UseEnergy(energyUse);
+			reclaimLeft+=part;
+			if(reclaimLeft>=1)
+				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
+				reclaimLeft = 1;
 			return true;
+		}
+		return false;
+
+
+	} else {
+		// Reclaiming
+		if(reclaimLeft <= 0)	// avoid multisuck when reclaim has already completed during this frame
+			return false;
+		
+		if(isRepairingBeforeResurrect && modInfo->reclaimMethod > 1) // don't let them exploit chunk reclaim
+			return false;
+		
+		if(modInfo->multiReclaim == 0 && lastReclaim == gs->frameNum) // make sure several units cant reclaim at once on a single feature
+			return true;
+		
 		float part=(100-amount)*0.02/max(10.0f,(def->metal+def->energy));
 		reclaimLeft-=part;
-		lastReclaim=gs->frameNum;
-		if(reclaimLeft<0){
+		
+		// Stop the last bit giving too much resource
+		if(reclaimLeft < 0) reclaimLeft = 0;
+
+		fractionReclaimed = oldReclaimLeft-reclaimLeft;
+
+		if(modInfo->reclaimMethod == 1 && reclaimLeft == 0) // All-at-end method
+		{
 			builder->AddMetal(def->metal);
 			builder->AddEnergy(def->energy);
+		}
+		else if(modInfo->reclaimMethod == 0) // Gradual reclaim
+		{
+			builder->AddMetal(def->metal * fractionReclaimed);
+			builder->AddEnergy(def->energy * fractionReclaimed);
+		}
+		else  // Chunky reclaiming
+		{
+			// Work out how many chunk boundaries we crossed
+			float chunkSize = 1.0 / modInfo->reclaimMethod;
+			int oldChunk = ChunkNumber(oldReclaimLeft);
+			int newChunk = ChunkNumber(reclaimLeft);
+			if (oldChunk != newChunk)
+			{
+				float noChunks = (float)oldChunk - (float)newChunk;
+				builder->AddMetal(noChunks * def->metal * chunkSize);
+				builder->AddEnergy(noChunks * def->energy * chunkSize);
+			}
+		}
+
+		// Has the reclaim finished?
+		if(reclaimLeft<=0)
+		{
 			featureHandler->DeleteFeature(this);
 			return false;
 		}
+
+		lastReclaim=gs->frameNum;
 		return true;
 	}
+	// Should never get here
+	assert(false);
 	return false;
 }
 
@@ -249,6 +327,37 @@ void CFeature::DrawS3O()
 	def->model->DrawStatic();
 	glPopMatrix();
 }
+
+int CFeature::ChunkNumber(float f)
+{
+	return (int) ceil(f * modInfo->reclaimMethod);	
+}
+
+float CFeature::RemainingResource(float res)
+{
+	// Old style - all reclaimed at the end
+	if(modInfo->reclaimMethod == 0)
+		return res * reclaimLeft;
+
+	// Gradual reclaim
+	if(modInfo->reclaimMethod == 1)
+		return res;
+
+	// Otherwise we are doing chunk reclaiming
+	float chunkSize = res / modInfo->reclaimMethod; // resource/no_chunks
+	float chunksLeft = ceil(reclaimLeft * modInfo->reclaimMethod);
+	return chunkSize * chunksLeft;
+}
+
+float CFeature::RemainingMetal()
+{
+	return RemainingResource(def->metal);
+}
+float CFeature::RemainingEnergy()
+{
+	return RemainingResource(def->energy);
+}
+
 
 FeatureDef::~FeatureDef() {
 }

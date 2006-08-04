@@ -6,6 +6,7 @@
 #include "Builder.h"
 #include "Building.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/ModInfo.h"
 #include "Sim/Projectiles/GfxProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/UnitHandler.h"
@@ -196,18 +197,28 @@ void CBuilder::Update()
 	} else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
 		UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 		if(ud){
-			if(UseEnergy(ud->energyCost*buildSpeed/ud->buildTime*0.5)){
-				curResurrect->resurrectProgress+=buildSpeed/ud->buildTime;
-				CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7,gs->randInt()&1);
+			if( modInfo->reclaimMethod != 1 && curResurrect->reclaimLeft < 1)
+			{
+				// This corpse has been reclaimed a little, need to restore the resources
+				// before we can let the player resurrect it.
+				curReclaim->AddBuildPower(buildSpeed,this);
 			}
-			if(curResurrect->resurrectProgress>1){		//resurrect finished
-				curResurrect->UnBlock();
-				CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false,curResurrect->buildFacing);
-				u->health*=0.05;
-				lastResurrected=u->id;
-				curResurrect->resurrectProgress=0;
-				featureHandler->DeleteFeature(curResurrect);
-				StopBuild(true);
+			else
+			{
+				// Corpse has been restored, begin resurrection
+				if(UseEnergy(ud->energyCost*buildSpeed/ud->buildTime*0.5)){
+					curResurrect->resurrectProgress+=buildSpeed/ud->buildTime;
+					CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7,gs->randInt()&1);
+				}
+				if(curResurrect->resurrectProgress>1){		//resurrect finished
+					curResurrect->UnBlock();
+					CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false,curResurrect->buildFacing);
+					u->health*=0.05;
+					lastResurrected=u->id;
+					curResurrect->resurrectProgress=0;
+					featureHandler->DeleteFeature(curResurrect);
+					StopBuild(true);
+				}
 			}
 		} else {
 			StopBuild(true);

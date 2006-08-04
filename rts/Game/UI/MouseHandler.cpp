@@ -591,11 +591,17 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		} else {
 			s=feature->def->description;
 		}
-		std::string metalColor = feature->def->metal > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
-		std::string energyColor = feature->def->energy > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
+
+		float remainingMetal = feature->RemainingMetal();
+		float remainingEnergy = feature->RemainingEnergy();
+
+		std::string metalColor = remainingMetal > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
+		std::string energyColor = remainingEnergy > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
+		
 		char tmp[500];
 		sprintf(tmp,"\n\xff\xd3\xdb\xffMetal: %s%.0f \xff\xd3\xdb\xff Energy: %s%.0f",
-			metalColor.c_str(), feature->def->metal, energyColor.c_str(), feature->def->energy);
+			metalColor.c_str(), remainingMetal,
+			energyColor.c_str(), remainingEnergy);
 		s+=tmp;
 
 		return s;

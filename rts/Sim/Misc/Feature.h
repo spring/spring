@@ -27,11 +27,20 @@ public:
 	void Kill(float3& impulse);
 	virtual bool Update(void);
 	void StartFire(void);
+	float RemainingResource(float res);
+	float RemainingMetal(void);
+	float RemainingEnergy(void);
+	int ChunkNumber(float f);
 	void DrawS3O();
 	void CalculateTransform();
 	CUnit* LastBuilder;
 
 	std::string createdFromUnit;
+	// This flag is used to stop a potential exploit involving tripping a unit back and forth
+	// across a chunk boundary to get unlimited resources. Basically, once a corspe has been a little bit
+	// reclaimed, if they start rezzing then they cannot reclaim again until the corpse has been fully
+	// 'repaired'.
+	bool isRepairingBeforeResurrect;
 	float resurrectProgress;
 
 	float health;
