@@ -173,7 +173,7 @@ void CBuilderCAI::SlowUpdate()
 				bi.buildFacing = int(c.params[3]);
 			bi.def = unitDefHandler->GetUnitByName(boi->second);
 
-			uh->TestUnitBuildSquare(bi,f);
+			uh->TestUnitBuildSquare(bi,f,owner->allyteam);
 			if(f){
 				Command c2;
 				c2.id=CMD_RECLAIM;
@@ -342,7 +342,7 @@ void CBuilderCAI::SlowUpdate()
 
 			} else {							//reclaim unit
 				CUnit* unit=uh->units[id];
-				if(unit && unit!=owner && (unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
+				if(unit && unit!=owner && (unit->losStatus[owner->allyteam] & LOS_INRADAR)){
 					if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
 						StopMove();
 						owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9+unit->radius, false);
@@ -745,7 +745,7 @@ void CBuilderCAI::GiveCommand(Command& c)
 		bi.def = unitDefHandler->GetUnitByName(boi->second);
 		bi.pos=helper->Pos2BuildPos(bi);
 		CFeature* feature;
-		if(!uh->TestUnitBuildSquare(bi,feature))
+		if(!uh->TestUnitBuildSquare(bi,feature,owner->allyteam))
 			return;
 	}
 	CMobileCAI::GiveCommand(c);

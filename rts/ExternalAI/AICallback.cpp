@@ -607,7 +607,7 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef,float3 pos, int facing)
 	CFeature* f;
 	BuildInfo bi(unitDef, pos, facing);
 	bi.pos=helper->Pos2BuildPos (bi);
-	return !!uh->TestUnitBuildSquare(bi,f);
+	return !!uh->TestUnitBuildSquare(bi,f,gs->AllyTeam(team));
 }
 
 
@@ -659,7 +659,7 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 		float z = pos.z+ofs[so].dy*SQUARE_SIZE*2;
 		BuildInfo bi(unitdef, float3(x,0,z), facing);
 		bi.pos = helper->Pos2BuildPos (bi);
-		if(uh->TestUnitBuildSquare(bi,feature) && (!feature || feature->allyteam!=allyteam))
+		if(uh->TestUnitBuildSquare(bi,feature,allyteam) && (!feature || feature->allyteam!=allyteam))
 		{
 			int xs=(int)(x/SQUARE_SIZE);
 			int zs=(int)(z/SQUARE_SIZE);

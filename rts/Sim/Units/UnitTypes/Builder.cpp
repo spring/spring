@@ -356,7 +356,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	buildInfo.pos=helper->Pos2BuildPos(buildInfo);
 
 	CFeature* feature;
-	int canBuild=uh->TestUnitBuildSquare(buildInfo, feature);
+	int canBuild=uh->TestUnitBuildSquare(buildInfo, feature, allyteam);
 	if(canBuild<2){
 		CUnit* u=helper->GetClosestFriendlyUnit(buildInfo.pos,5,allyteam);
 		if(u && u->unitDef==buildInfo.def){
