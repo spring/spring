@@ -297,7 +297,7 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	return h;
 }
 
-int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&feature)
+int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&feature, int allyteam)
 {
 	feature=0;
 	int xsize=buildInfo.GetXSize();
@@ -326,7 +326,7 @@ int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&fea
 
 	for(int x=x1; x<x2; x+=SQUARE_SIZE){
 		for(int z=z1; z<z2; z+=SQUARE_SIZE){
-			int tbs=TestBuildSquare(float3(x,h,z),buildInfo.def,feature);
+			int tbs=TestBuildSquare(float3(x,h,z),buildInfo.def,feature,allyteam);
 			canBuild=min(canBuild,tbs);
 			if(canBuild==0)
 				return 0;
@@ -336,7 +336,7 @@ int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&fea
 	return canBuild;
 }
 
-int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature)
+int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFeature *&feature, int allyteam)
 {
 	int ret=2;
 	if(pos.x<0 || pos.x>=gs->mapx*SQUARE_SIZE || pos.z<0 || pos.z>=gs->mapy*SQUARE_SIZE)
@@ -348,7 +348,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFea
 	if(s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)){
 		if(dynamic_cast<CFeature*>(s))
 			feature=(CFeature*)s;
-		else if(!dynamic_cast<CUnit*>(s) || (((CUnit*)s)->losStatus[gu->myAllyTeam] & LOS_INLOS))
+		else if(!dynamic_cast<CUnit*>(s) || (((CUnit*)s)->losStatus[allyteam] & LOS_INLOS))
 		{
 			if(s->immobile)
 				return 0;
@@ -426,7 +426,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 			int square=ground->GetSquare(float3(x,pos.y,z));
 			CFeature* feature=0;
-			int tbs=TestBuildSquare(float3(x,pos.y,z),buildInfo.def,feature);
+			int tbs=TestBuildSquare(float3(x,pos.y,z),buildInfo.def,feature,gu->myAllyTeam);
 			if(tbs){
 				UnitDef* ud;
 				float3 cPos;

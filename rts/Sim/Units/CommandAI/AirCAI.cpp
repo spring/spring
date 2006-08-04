@@ -434,7 +434,7 @@ void CAirCAI::SlowUpdate()
 			}
 		}
 		if(inCommand){
-			if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[gu->myAllyTeam] & LOS_INRADAR))){
+			if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[owner->allyteam] & LOS_INRADAR))){
 				FinishCommand();
 				break;
 			}

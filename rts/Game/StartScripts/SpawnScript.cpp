@@ -63,18 +63,18 @@ void CSpawnScript::Update()
 	if(!spawns.empty()){
 		while(curSpawn->frame+frameOffset<gs->frameNum){
 			int num = gs->randInt() % spawnPos.size();
+			int team = autonomous ? (num & 1) : 1;
 			float3 pos;
 			float dist=200;
 			CFeature* feature;
 			do {
 				pos=spawnPos[num]+gs->randVector()*dist;
 				dist*=1.05;
-			} while (dist < 500 && uh->TestUnitBuildSquare(BuildInfo(curSpawn->name,pos,0),feature) != 2);
+			} while (dist < 500 && uh->TestUnitBuildSquare(BuildInfo(curSpawn->name,pos,0),feature,team) != 2);
 
 			// Ignore unit if it really doesn't fit.
 			// (within 18 tries, 200*1.05^18 < 500 < 200*1.05^19)
 			if (dist < 500) {
-				int team = autonomous ? (num & 1) : 1;
 				CUnit* u = unitLoader.LoadUnit(curSpawn->name, pos, team, false);
 
 				Unit unit;
