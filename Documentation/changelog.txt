@@ -88,6 +88,8 @@ TASpring change log
 -  New fbi tag SeismicSignature, The magnitude of seismic disturbance when this unit is moving, default sqrt(mass/100).
 - New COB "get"/"set" constant: 75 MAX_SPEED get/sets the max speed of the unit (multiplied with 64k)
 
+- New archive format (for map/mod development): *.sdd. It is a directory, but it is treated as an archive just like *.sdz and *.sd7.
+
 0.72b1
 
 - Bos/Cob script for units can now animate the death of the unit. Just have the Kill function return after a while instead of directly and return wreck level in return value instead of in function argument.
