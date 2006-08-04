@@ -104,6 +104,7 @@
 #include "SDL_keyboard.h"
 #include "Platform/fp.h"
 #include "Game/UI/GUI/GUIframe.h"
+#include "Sim/ModInfo.h"
 
 #include "ConsoleHistory.h"
 #include "WordCompletion.h"
@@ -147,18 +148,8 @@ static CSound* CreateSoundInterface()
 #endif
 }
 
-CGame::CGame(bool server,std::string mapname)
+CGame::CGame(bool server,std::string mapname, std::string modName)
 {
-	{
-		// determine whether the modder allows the user to use team coloured nanospray
-		TdfParser tdfparser("gamedata/particles.tdf");
-		tdfparser.GetDef(gu->team_nanospray,"1","nanospray\\allow_team_colours");
-		if(gu->team_nanospray){
-			// Load the users preference for team coloured nanospray
-			gu->team_nanospray = configHandler.GetInt ("TeamNanoSpray", 0);
-		}
-	}
-
 	guikeys = NULL;
 	script = NULL;
 	showList = NULL;
@@ -242,6 +233,8 @@ CGame::CGame(bool server,std::string mapname)
 	//	physicsEngine = new CPhysicsEngine();
 	ENTER_UNSYNCED;
 	shadowHandler=new CShadowHandler();
+
+	modInfo=new CModInfo(modName.c_str());
 
 	ENTER_SYNCED;
 	ground=new CGround();
@@ -452,6 +445,7 @@ CGame::~CGame()
 	delete modelParser;
 	delete fartextureHandler;
 	CCategoryHandler::RemoveInstance();
+	delete modInfo;
 	delete camera;
 	delete cam2;
 	delete info;

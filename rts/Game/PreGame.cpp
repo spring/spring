@@ -27,7 +27,6 @@
 CPreGame* pregame=0;
 extern Uint8 *keys;
 extern bool globalQuit;
-std::string stupidGlobalModname;
 std::string stupidGlobalMapname;
 
 CPreGame::CPreGame(bool server, const string& demo):
@@ -265,7 +264,7 @@ bool CPreGame::Update()
 
 			LoadStartPicture();
 
-			game=new CGame(server,mapName);
+			game=new CGame(server,mapName,modName);
 			ENTER_UNSYNCED;
 			game->Update();
 			pregame=0;
@@ -438,7 +437,7 @@ void CPreGame::SelectMod(std::string s)
 			break;
 		}
 	}
-	stupidGlobalModname = pregame->modName = s;
+	pregame->modName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
 	(*info) << "Mod: " << s.c_str() << "\n";

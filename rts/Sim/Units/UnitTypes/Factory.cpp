@@ -124,7 +124,7 @@ void CFactory::Update()
 				dif/=l;
 				dif+=gs->randVector()*0.15f;
 				float3 color= unitDef->nanoColor;
-				if(gu->team_nanospray){
+				if(gu->teamNanospray){
 					unsigned char* tcol=gs->Team(team)->color;
 					color = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
 				}
