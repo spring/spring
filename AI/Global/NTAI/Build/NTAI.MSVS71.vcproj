@@ -183,9 +183,6 @@
 				<File
 					RelativePath="..\Helpers\CEconomy.cpp">
 				</File>
-				<File
-					RelativePath="..\Helpers\commented_code.cpp">
-				</File>
 				<Filter
 					Name="Units"
 					Filter="">

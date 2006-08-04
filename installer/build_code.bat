@@ -8,8 +8,8 @@ devenv ..\AI\Group\CentralBuildAI\TestAI.sln /build Release
 devenv ..\AI\Group\MetalMakerAI\TestAI.sln /build Release
 devenv ..\AI\Group\RadarAI\TestAI.sln /build Release
 devenv ..\AI\Group\SimpleFormationAI\TestAI.sln /build Release
-devenv ..\tools\unitsync\unitsync.sln /build Release
+devenv ..\tools\unitsync\unitsync.sln /build "Release with python binding"
 devenv ..\tools\RtsSettings\RtsSettings.sln /build Release
-devenv ..\AI\Global\NTAI\NTAI.sln /build Release
+devenv ..\AI\Global\NTAI\Build\NTAI-msvs7.sln /build Release
 devenv ..\AI\Global\TestGlobalAI\TestAI.sln /build Release
 devenv ..\rts\build\vstudio7\rts.sln /build "Final release"
