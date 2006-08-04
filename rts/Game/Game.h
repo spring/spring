@@ -42,7 +42,7 @@ public:
 	bool Update();
 	int KeyReleased(unsigned short k);
 	int KeyPressed(unsigned short k,bool isRepeat);
-	CGame(bool server, std::string mapname);
+	CGame(bool server, std::string mapname, std::string modName);
 	virtual ~CGame();
 
 	unsigned int oldframenum;

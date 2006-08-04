@@ -1712,6 +1712,12 @@
 		<Filter
 			Name="Simulation"
 			Filter="">
+			<File
+				RelativePath="..\..\Sim\ModInfo.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Sim\ModInfo.h">
+			</File>
 			<Filter
 				Name="Units"
 				Filter="">

@@ -1,5 +1,4 @@
 // Generalized callback interface - shared between global AI and group AI
-// by Zaphod
 #include "StdAfx.h"
 #include "GlobalAICallback.h"
 #include "Net.h"
@@ -39,6 +38,7 @@
 #include "Platform/errorhandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/CameraController.h"
+#include "Sim/ModInfo.h"
 #include "mmgr.h"
 
 /* Cast id to unsigned to catch negative ids in the same operations,
@@ -487,10 +487,9 @@ const char* CAICallback::GetMapName ()
 	return stupidGlobalMapname.c_str();
 }
 
-extern string stupidGlobalModname;
 const char* CAICallback::GetModName()
 {
-	return stupidGlobalModname.c_str();
+	return modInfo->name.c_str();
 }
 
 float CAICallback::GetMaxMetal()

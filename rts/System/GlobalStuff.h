@@ -419,6 +419,11 @@ public:
 	float3 usRandVector(); 			//!< Unsynced random vector
 
 	/**
+	 * Does the user want team colored nanospray if the mod allows it?
+	 */
+	bool teamNanospray;
+
+	/**
 	 * @brief rand seed
 	 * 
 	 * Stores the unsynced random seed
