@@ -58,7 +58,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectivness, CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectivness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -82,8 +82,8 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		height=0;
 
 	vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
-	float gd=max(30.f,damages[0]/20);
-	float explosionSpeed=(8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f;	//this is taken from the explosion graphics and could probably be simplified a lot
+	//float gd=max(30.f,damages[0]/20);
+	//float explosionSpeed=(8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f;	//this is taken from the explosion graphics and could probably be simplified a lot
 
 	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		if(ignoreOwner && (*ui)==owner)
