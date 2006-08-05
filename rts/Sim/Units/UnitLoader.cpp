@@ -417,7 +417,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	CWeaponDefHandler::LoadSound(weapondef->firesound);
 	CWeaponDefHandler::LoadSound(weapondef->soundhit);
 
-	if(weapondef->firesound.volume == -1 || weapondef->firesound.volume == -1)  //no volume read from defenition
+	if(weapondef->firesound.volume == -1 || weapondef->soundhit.volume == -1)  //no volume read from defenition
 	{
 		if(weapon->damages[0]>50){
 			float soundVolume=sqrt(weapon->damages[0]*0.5);
@@ -435,6 +435,11 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 				soundVolume*=0.15;
 			if(weapondef->soundhit.volume==-1)
 				weapondef->soundhit.volume=soundVolume;
+		}
+		else
+		{
+			weapondef->soundhit.volume = 5.0f;
+			weapondef->firesound.volume = 5.0f;
 		}
 	}
 	weapon->fireSoundId = weapondef->firesound.id;
