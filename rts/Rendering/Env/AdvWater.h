@@ -12,7 +12,8 @@ class CAdvWater : public CBaseWater
 public:
 	void UpdateWater(CGame* game);
 	void Draw();
-	CAdvWater();
+	void Draw(bool useBlending);
+	CAdvWater(bool loadShader=true);
 	virtual ~CAdvWater();
 
 	unsigned int reflectTexture;

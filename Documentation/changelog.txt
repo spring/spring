@@ -2,6 +2,9 @@ TASpring change log
 
 0.next
 
+- added new water rendering mode, refracting+reflecting but without the heavy dynamic simulation.
+- added gradual feature reclaiming, see mantis #262
+- support for rotating buildings by 90 degrees, bind to "incbuildfacing" and "decbuildfacing" (bound to ']' and '[' by default)
 - modified the ground attack command for queued attack patterns
   (the last queued attack position is repeated for backwards compatibility)
 - removed the height factor from AirCAI ground attack command drawing
@@ -90,6 +93,7 @@ TASpring change log
 - New COB "get"/"set" constant: 75 MAX_SPEED get/sets the max speed of the unit (multiplied with 64k)
 
 - New archive format (for map/mod development): *.sdd. It is a directory, but it is treated as an archive just like *.sdz and *.sd7.
+
 
 0.72b1
 

@@ -24,7 +24,7 @@
 
 extern GLfloat FogLand[]; 
 
-CAdvWater::CAdvWater()
+CAdvWater::CAdvWater(bool loadShader)
 {
 	glGenTextures(1, &reflectTexture);
 	unsigned char* scrap=new unsigned char[512*512*4];
@@ -99,7 +99,8 @@ CAdvWater::CAdvWater()
 /**/
 	delete[] scrap;
 
-	waterFP=LoadFragmentProgram("water.fp");
+	if (loadShader)
+		waterFP=LoadFragmentProgram("water.fp");
 
 	waterSurfaceColor = readmap->waterSurfaceColor;
 }
@@ -113,6 +114,11 @@ CAdvWater::~CAdvWater()
 }
 
 void CAdvWater::Draw()
+{
+	Draw(true);
+}
+
+void CAdvWater::Draw(bool useBlending)
 {
 	if(readmap->minheight>10)
 		return;
@@ -134,8 +140,11 @@ void CAdvWater::Draw()
 	col[1]=(unsigned char)(waterSurfaceColor.y*255);
 	col[2]=(unsigned char)(waterSurfaceColor.z*255);
 
-	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
+	if(useBlending) {
+		glEnable(GL_BLEND);
+	} else
+		glDisable(GL_BLEND);
 	glDepthMask(0);
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -210,6 +219,9 @@ void CAdvWater::Draw()
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+
+	if(!useBlending) // for translucent stuff like water, the default mode is blending and alpha testing enabled
+		glEnable(GL_BLEND);
 }
 
 void CAdvWater::UpdateWater(CGame* game)
@@ -310,7 +322,6 @@ void CAdvWater::UpdateWater(CGame* game)
 	camera->up.z=0;
 	camera->forward.y*=-1;
 	camera->pos.y*=-1;
-	camera->pos.y+=0.2;
 	camera->Update(false);
 
 	glViewport(0,0,512,512);
@@ -322,7 +333,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	sky->Draw();
 
 	glEnable(GL_CLIP_PLANE2);
-	double plane[4]={0,1,0,3};
+	double plane[4]={0,1,0,0};
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 

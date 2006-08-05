@@ -1565,6 +1565,12 @@
 					RelativePath="..\..\Rendering\Env\GrassDrawer.h">
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Env\RefractWater.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\RefractWater.h">
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Env\SkyBox.cpp">
 				</File>
 				<File

@@ -196,20 +196,16 @@ void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 					tempMem[(y*xsize+x)*4+0] = (unsigned char)(waterHeightColors[h*4+0]*wc+light.x*(1-wc));
 					tempMem[(y*xsize+x)*4+1] = (unsigned char)(waterHeightColors[h*4+1]*wc+light.y*(1-wc));
 					tempMem[(y*xsize+x)*4+2] = (unsigned char)(waterHeightColors[h*4+2]*wc+light.z*(1-wc));
-					tempMem[(y*xsize+x)*4+3] = (unsigned char)((1-wc)*255);
-					
 				} else if(h<1024){
 					tempMem[(y*xsize+x)*4+0] = waterHeightColors[h*4+0];
 					tempMem[(y*xsize+x)*4+1] = waterHeightColors[h*4+1];
 					tempMem[(y*xsize+x)*4+2] = waterHeightColors[h*4+2];
-					tempMem[(y*xsize+x)*4+3] = 0;
 				} else {
 					tempMem[(y*xsize+x)*4+0] = waterHeightColors[1023*4+0];
 					tempMem[(y*xsize+x)*4+1] = waterHeightColors[1023*4+1];
 					tempMem[(y*xsize+x)*4+2] = waterHeightColors[1023*4+2];
-					tempMem[(y*xsize+x)*4+3] = 0;
 				}
-				;//waterHeightColors[h*4+3];
+				tempMem[(y*xsize+x)*4+3] = (unsigned char)std::max(0,(int)(255+10.0f*height));
 			} else {
 				float3 light = GetLightValue(x+x1,y+y1)*210.0f;
 				tempMem[(y*xsize+x)*4] = (unsigned char)light.x;
