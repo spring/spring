@@ -113,6 +113,7 @@ struct WeaponDef
 	float maxvelocity;
 
 	float projectilespeed;
+	float explosionSpeed;
 
 	unsigned int onlyTargetCategory;
 

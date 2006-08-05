@@ -85,7 +85,7 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 void CWeaponProjectile::Collision()
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator);
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator);
 		
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
@@ -111,7 +111,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 void CWeaponProjectile::Collision(CUnit* unit)
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode,weaponDef->explosionGenerator);
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3:1,weaponDef->noExplode,weaponDef->explosionGenerator);
 
 	if(weaponDef->soundhit.id)
 		sound->PlaySound(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
