@@ -206,8 +206,7 @@ static void CheckParseErrors(const char * program_type, const char * filename)
 	char c[512];
 	SNPRINTF(c,512,"Error at position %d when loading %s program file %s",
 		errPos,program_type,filename);
-	handleerror(0,c,(char*)errString,0);	
-	exit(0);
+	throw content_error(c);
 }
 
 static unsigned int LoadProgram(GLenum target, const char* filename, const char * program_type)
@@ -219,8 +218,7 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 	{
 		char c[512];
 		SNPRINTF(c,512,"Cannot find %s program file", program_type);
-		handleerror(0, filename, (char*)c, 0);
-		return 0;
+		throw content_error(c);
 	}
 	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
