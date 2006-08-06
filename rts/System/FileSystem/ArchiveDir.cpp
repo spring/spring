@@ -26,18 +26,20 @@ CArchiveDir::CArchiveDir(const string& archivename) :
 {
 	fs::path fn(archiveName, fs::no_check);
 	std::vector<fs::path> found = find_files(fn, "*", true);
-	//std::vector<fs::path> found = find_files(archiveName, "*", true);
 
 	// because spring expects the contents of archives to be case independent,
-	// we convert and report all names in lowercase, and keep a std::map
+	// we convert filenames to lowercase in every function, and keep a std::map
 	// lcNameToOrigName to convert back from lowercase to original case.
 	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
 		// strip our own name off..
 		std::string origName(it->string(), archiveName.length());
+		// dont read hidden files (starting with a dot)
+		if (origName.find("/.") != std::string::npos)
+			continue;
 		// convert to lowercase and store
 		std::string lcName(origName);
 		std::transform(lcName.begin(), lcName.end(), lcName.begin(), (int (*)(int))tolower);
-		searchFiles.push_back(lcName);
+		searchFiles.push_back(origName);
 		lcNameToOrigName[lcName] = origName;
 	}
 }
@@ -53,7 +55,10 @@ bool CArchiveDir::IsOpen()
 
 int CArchiveDir::OpenFile(const std::string& fileName)
 {
-	CFileHandler* f = new CFileHandler(archiveName + lcNameToOrigName[fileName]);
+	std::string lcname(fileName);
+	std::transform(lcname.begin(), lcname.end(), lcname.begin(), (int (*)(int))tolower);
+
+	CFileHandler* f = new CFileHandler(archiveName + lcNameToOrigName[lcname]);
 
 	if (!f || !f->FileExists())
 		return 0;
@@ -110,8 +115,7 @@ int CArchiveDir::FindFiles(int cur, string* name, int* size)
 	std::vector<std::string>::iterator& it = GetSearchHandle(cur);
 
 	*name = *searchHandles[cur];
-	CFileHandler f(archiveName + lcNameToOrigName[*name]);
-	*size = f.FileSize();
+	*size = fs::file_size(fs::path(archiveName + *name, fs::no_check));
 
 	++searchHandles[cur];
 	return cur;
