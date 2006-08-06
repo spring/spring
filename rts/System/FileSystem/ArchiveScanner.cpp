@@ -25,7 +25,7 @@
  * is not slow, but mapping them all every time to make the list is)
  */
 
-#define INTERNAL_VER	3
+#define INTERNAL_VER	4
 
 CArchiveScanner* archiveScanner = NULL;
 
@@ -72,13 +72,6 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 
 void CArchiveScanner::Scan(const string& curPath, bool checksum)
 {
-//	intptr_t handle;
-//	int moreFiles;
-
-	char t[500];
-	sprintf(t, "Scanning archives in %s", curPath.c_str());
-	//PrintLoadMsg(t);
-
 	isDirty = true;
 
 	fs::path fn(curPath+"/");
@@ -91,9 +84,12 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 		string fn = it->leaf();
 		string fpath = it->branch_path().string();
 		string lcfn = fn;
+		string lcfpath = fpath;
 		transform(lcfn.begin(), lcfn.end(), lcfn.begin(), (int (*)(int))tolower); 
+		transform(lcfpath.begin(), lcfpath.end(), lcfpath.begin(), (int (*)(int))tolower); 
 
-		string::size_type sdd = lcfn.find(".sdd/");
+		// Exclude archivefiles found inside directory (.sdd) archives.
+		string::size_type sdd = lcfpath.find(".sdd");
 		if (sdd != string::npos)
 			continue;
 
@@ -186,11 +182,14 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 					ai.modified = info.st_mtime;
 					ai.origName = fn;
 					ai.updated = true;
+					ai.directory = !!S_ISDIR(info.st_mode);
 
 					delete ar;
 
 					// Optionally calculate a checksum for the file
-					if (checksum) {
+					// To prevent reading all files in all directory (.sdd) archives every time this function
+					// is called, directory archive checksums are calculated on the fly.
+					if (checksum && !S_ISDIR(info.st_mode)) {
 						ai.checksum = GetCRC(fullName);
 					}
 					else {
@@ -202,7 +201,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 			}
 			else {
 				// If cached is true, aii will point to the archive
-				if ((checksum) && (aii->second.checksum == 0)) {
+				if ((checksum) && (aii->second.checksum == 0) && !S_ISDIR(info.st_mode)) {
 					aii->second.checksum = GetCRC(fullName);
 				}
 			}
@@ -260,17 +259,28 @@ void CArchiveScanner::GenerateCRCTable()
         }
 }
 
-unsigned int CArchiveScanner::GetCRC(const string& filename)
+/** Update CRC over the data in buf. Use this to CRC filenames. */
+void CArchiveScanner::GetDataCRC(const string& buf, unsigned int& crc)
 {
-	unsigned int crc;
+	crc ^= 0xFFFFFFFF;
+	size_t bytes = buf.size();
+	for (size_t i = 0; i < bytes; ++i)
+		crc = (crc>>8) ^ crcTable[ (crc^(buf[i])) & 0xFF ];
+	crc ^= 0xFFFFFFFF;
+}
 
+/** Update CRC over the data in the specified file. (Can be used to get a
+single CRC of multiple files.) Returns true on success, false if file could
+not be opened. */
+bool CArchiveScanner::GetCRC(const string& filename, unsigned int& crc)
+{
 	boost::filesystem::path fn(filename, boost::filesystem::native);
 	FILE* fp = fopen(fn.native_file_string().c_str(), "rb");
 	if (!fp)
-		return 0;
+		return false;
 
-    crc = 0xFFFFFFFF;
-	char* buf = new char[100000];
+	crc ^= 0xFFFFFFFF;
+	unsigned char* buf = new unsigned char[100000];
 	size_t bytes;
 	do {
 		bytes = fread((void*)buf, 1, 100000, fp);
@@ -281,7 +291,47 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 	delete[] buf;
 	fclose(fp);
 
-	crc = crc^0xFFFFFFFF;
+	crc ^= 0xFFFFFFFF;
+	return true;
+}
+
+/** Get CRC of the data in the specified file. Returns 0 if file could not be opened. */
+unsigned int CArchiveScanner::GetCRC(const string& filename)
+{
+	unsigned int crc = 0;
+
+	if (!GetCRC(filename, crc))
+		return 0;
+
+	// A value of 0 is used to indicate no crc.. so never return that
+	// Shouldn't happen all that often
+	if (crc == 0)
+		return 4711;
+	else
+		return crc;
+}
+
+/** Get combined CRC of all files and filenames in a directory (recursively). */
+unsigned int CArchiveScanner::GetDirectoryCRC(const string& curPath)
+{
+	unsigned int crc = 0;
+
+	fs::path fn(curPath+"/");
+	std::vector<fs::path> found = find_files(fn, "*", true, false); // recurse but don't include directories
+
+	// sort because order in which find_files finds them is undetermined
+	std::sort(found.begin(), found.end());
+
+	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
+		string path = it->native_file_string();
+
+		// Don't CRC hidden files (starting with a dot).
+		if (path.find("/.") != string::npos)
+			continue;
+
+		GetDataCRC(path, crc); // CRC the filename
+		GetCRC(path, crc);     // CRC the contents
+	}
 
 	// A value of 0 is used to indicate no crc.. so never return that
 	// Shouldn't happen all that often
@@ -338,6 +388,9 @@ void CArchiveScanner::ReadCacheData()
 
 		string lcname = ai.origName;
 		transform(lcname.begin(), lcname.end(), lcname.begin(), (int (*)(int))tolower);
+
+		string ext(lcname, lcname.find_last_of('.') + 1);
+		ai.directory = (ext == "sdd");
 
 		archiveInfo[lcname] = ai;
 	}
@@ -519,6 +572,10 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())
 		return 0;
+
+	// Calculate directory archive (.sdd) checksum on the fly.
+	if (aii->second.checksum == 0 && aii->second.directory)
+		aii->second.checksum = GetDirectoryCRC(name);
 
 	return aii->second.checksum;
 }

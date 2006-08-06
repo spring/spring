@@ -56,11 +56,15 @@ protected:
 		ModData modData;
 		unsigned int checksum;
 		bool updated;
+		bool directory;
 		string replaced;					// If not empty, use that archive instead
 	};
 	map<string, ArchiveInfo> archiveInfo;	
 	ModData GetModData(TdfParser* p, const string& section);
+	void GetDataCRC(const string& buf, unsigned int& crc);
+	bool GetCRC(const string& filename, unsigned int& crc);
 	unsigned int GetCRC(const string& filename);
+	unsigned int GetDirectoryCRC(const string& curPath);
 	bool isDirty;
 	unsigned int crcTable[256];
 	void GenerateCRCTable();
