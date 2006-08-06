@@ -217,7 +217,7 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 	if (!VPFile.FileExists ())
 	{
 		char c[512];
-		SNPRINTF(c,512,"Cannot find %s program file", program_type);
+		SNPRINTF(c,512,"Cannot find %s program file '%s'", program_type, filename);
 		throw content_error(c);
 	}
 	char *VPbuf = new char[VPFile.FileSize()];
