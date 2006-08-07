@@ -242,7 +242,7 @@ void CMissileProjectile::Draw(void)
 		float size=(1);
 		float size2=(1+(age2*(1/Smoke_Time))*7);
 
-		float txs=weaponDef->visuals.texture2->xstart - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0);//(1-age2/8.0);
+		float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0);//(1-age2/8.0);
 		va->AddVertexTC(interPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
 		va->AddVertexTC(interPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
 		va->AddVertexTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
