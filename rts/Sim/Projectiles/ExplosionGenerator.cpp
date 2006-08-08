@@ -17,8 +17,10 @@
 #include "Game/UI/InfoConsole.h"
 #include "FileSystem/FileHandler.h"
 #include "creg/VarTypes.h"
+#include "Platform/FileSystem.h"
 #include <SDL_types.h>
 #include <fstream>
+#include "mmgr.h"
 
 using namespace std;
 
@@ -70,7 +72,7 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 	projectileClasses.Load(aliasParser, "projectiles");
 	generatorClasses.Load(aliasParser, "generators");
 
-	vector<string> files = CFileHandler::FindFiles("gamedata/explosions/*.tdf");
+	vector<string> files = CFileHandler::FindFiles("gamedata/explosions/", "*.tdf");
 
 	for(unsigned int i=0; i<files.size(); i++)
 	{
@@ -536,9 +538,12 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
 	const vector<creg::Class*>& classes = creg::ClassBinder::GetClasses();
-	std::ofstream fs;
-	fs.open ("projectiles.txt", ios_base::out);
+	std::auto_ptr<std::ofstream> pfs(filesystem.ofstream("projectiles.txt"));
+	std::ofstream& fs(*pfs);
 	CExplosionGeneratorHandler egh;
+
+	if (!pfs.get())
+		return;
 
 	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci)
 	{

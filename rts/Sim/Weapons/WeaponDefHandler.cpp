@@ -25,7 +25,7 @@ CWeaponDefHandler* weaponDefHandler;
 
 CWeaponDefHandler::CWeaponDefHandler(void)
 {
-	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/*.tdf");
+	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/", "*.tdf");
 	//std::cout << " getting files from weapons/*.tdf ... " << std::endl;
 
 	TdfParser tasunparser;

@@ -3,8 +3,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Net.h"
-#include "stdio.h"
+#include <stdio.h>
 #include "FileSystem/FileHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/Game.h"
@@ -12,7 +11,6 @@
 #include "Game/Team.h"
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
-#include "mmgr.h"
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -20,9 +18,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #endif
-#include <boost/filesystem/convenience.hpp>
-#include "SDL_timer.h"
+#include "Platform/FileSystem.h"
+#include <SDL_timer.h>
 #include "Net.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -601,9 +600,8 @@ static string MakeDemoStartScript(char *startScript, int ssLen)
 void CNet::CreateDemoFile()
 {
 	// We want this folder to exist
-	boost::filesystem::path d("./demos");
-	if (!boost::filesystem::exists(d))
-		boost::filesystem::create_directories(d);
+	if (!filesystem.CreateDirectory("demos"))
+		return;
 
 	if(gameSetup){
 		struct tm *newtime;
@@ -618,8 +616,10 @@ void CNet::CreateDemoFile()
 			name+="-"+gs->players[a]->playerName;
 		}*/
 		name+=string("-")+VERSION_STRING;
-		for (int i = 0; i < name.length(); ++i)
-			if (name[i] == ' ') name[i] = '_';
+
+// This was a boost::filesystem workaround, I assume it can be trashed?
+// 		for (int i = 0; i < name.length(); ++i)
+// 			if (name[i] == ' ') name[i] = '_';
 
 		sprintf(buf,"demos/%s.sdf",name.c_str());
 		CFileHandler ifs(buf);
@@ -632,8 +632,7 @@ void CNet::CreateDemoFile()
 			}
 		}
 		demoName = buf;
-		boost::filesystem::path fn(demoName);
-		recordDemo=new ofstream(fn.native_file_string().c_str(), ios::out|ios::binary);
+		recordDemo=filesystem.ofstream(buf, ios::out|ios::binary);
 
 		// add a TDF section containing the game version to the startup script
 		string scriptText = MakeDemoStartScript (gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
@@ -645,8 +644,7 @@ void CNet::CreateDemoFile()
 		recordDemo->write(scriptText.c_str(), scriptText.length());
 	} else {
 		demoName = "demos/test.sdf";
-		boost::filesystem::path fn(demoName);
-		recordDemo=new ofstream(fn.native_file_string().c_str(), ios::out|ios::binary);
+		recordDemo=filesystem.ofstream(demoName.c_str(), ios::out|ios::binary);
 		char c=0;
 		recordDemo->write(&c,1);
 	}
@@ -663,7 +661,7 @@ void CNet::SaveToDemo(unsigned char* buf,int length)
 bool CNet::FindDemoFile(const char* name)
 {
 	string firstTry = name;
-	firstTry = "./demos/" + firstTry;
+	firstTry = "demos/" + firstTry;
 	playbackDemo=new CFileHandler(firstTry);
 	if (!playbackDemo->FileExists()) {
 		delete playbackDemo;

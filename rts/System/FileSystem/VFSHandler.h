@@ -24,6 +24,8 @@ public:
 	CVFSHandler(bool mapArchives = true);
 	virtual ~CVFSHandler();
 
+	void MapArchives(const string& taDir);
+
 	void MakeLower(char* s);
 	void MakeLower(string &s);
 	

@@ -95,13 +95,12 @@
 #include <locale>
 #include <cctype>
 #include "UI/SelectionKeyHandler.h"
-#include <boost/filesystem/convenience.hpp>
-#include <boost/filesystem/path.hpp>
-#include "SDL_types.h"
-#include "SDL_keysym.h"
-#include "SDL_mouse.h"
-#include "SDL_timer.h"
-#include "SDL_keyboard.h"
+#include "Platform/FileSystem.h"
+#include <SDL_types.h>
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+#include <SDL_timer.h>
+#include <SDL_keyboard.h>
 #include "Platform/fp.h"
 #include "Game/UI/GUI/GUIframe.h"
 #include "Sim/ModInfo.h"
@@ -880,26 +879,24 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	}
 
 	if (s=="screenshot"){
-		int x=gu->screenx;
-		if(gu->screenx%4)
-			gu->screenx+=4-gu->screenx%4;
-		unsigned char* buf=new unsigned char[gu->screenx*gu->screeny*4];
-		glReadPixels(0,0,gu->screenx,gu->screeny,GL_RGBA,GL_UNSIGNED_BYTE,buf);
-		CBitmap b(buf,gu->screenx,gu->screeny);
-		b.ReverseYAxis();
-		char t[50];
-		boost::filesystem::path d("./screenshots");
-		if (!boost::filesystem::exists(d))
-			boost::filesystem::create_directories(d);
-		for(int a=0;a<9999;++a){
-			sprintf(t,"screenshots/screen%03i.jpg",a);
-			CFileHandler ifs(t);
-			if(!ifs.FileExists())
-				break;
+		if (filesystem.CreateDirectory("screenshots")) {
+			int x=gu->screenx;
+			if(x%4)
+				x+=4-x%4;
+			unsigned char* buf=new unsigned char[x*gu->screeny*4];
+			glReadPixels(0,0,x,gu->screeny,GL_RGBA,GL_UNSIGNED_BYTE,buf);
+			CBitmap b(buf,x,gu->screeny);
+			b.ReverseYAxis();
+			char t[50];
+			for(int a=0;a<9999;++a){
+				sprintf(t,"screenshots/screen%03i.jpg",a);
+				CFileHandler ifs(t);
+				if(!ifs.FileExists())
+					break;
+			}
+			b.Save(t);
+			delete[] buf;
 		}
-		b.Save(t);
-		delete[] buf;
-		gu->screenx=x;
 	}
 
 	if (s=="moveforward")
@@ -2228,14 +2225,11 @@ void InitCRCTable()
 
 void CGame::MakeMemDump(void)
 {
-	ofstream file;
-	if(gameServer) {
-		boost::filesystem::path fn("memdump.txt");
-		file.open(fn.native_file_string().c_str(),ios::out);
-	} else {
-		boost::filesystem::path fn("memdumpclient.txt");
-		file.open(fn.native_file_string().c_str(),ios::out);
-	}
+	std::auto_ptr<std::ofstream> pfile(filesystem.ofstream(gameServer ? "memdump.txt" : "memdumpclient.txt"));
+	std::ofstream& file(*pfile);
+
+	if (!pfile.get())
+		return;
 
 	file << "Frame " << gs->frameNum <<"\n";
 	list<CUnit*>::iterator usi;

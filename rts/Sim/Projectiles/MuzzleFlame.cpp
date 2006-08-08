@@ -50,7 +50,7 @@ void CMuzzleFlame::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	float alpha=max(0.f,1-age/(4+size*30));
+	float alpha=std::max(0.f,1-age/(4+size*30));
 	float modAge=sqrtf(age+2);
 
 	for(int a=0;a<numSmoke;++a){
@@ -60,7 +60,7 @@ void CMuzzleFlame::Draw(void)
 
 		float drawsize=modAge*3;
 		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4);
-		float fade=max(0.f, min(1.f, (1-alpha)*(20+a)*0.1f));
+		float fade=std::max(0.f, std::min(1.f, (1-alpha)*(20+a)*0.1f));
 
 		col[0]=(unsigned char) (180*alpha*fade);
 		col[1]=(unsigned char) (180*alpha*fade);

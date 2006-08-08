@@ -20,7 +20,7 @@ public:
 	int FileSize();
 	int GetPos();
 
-	static std::vector<std::string> FindFiles(std::string pattern);
+	static std::vector<std::string> FindFiles(const std::string& path, const std::string& pattern);
 private:
 	void Init(const char* filename);
 

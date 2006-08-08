@@ -39,8 +39,8 @@ CUnitDefHandler::CUnitDefHandler(void)
 
 	numUnits = 0;
 
-	std::vector<std::string> tafiles = CFileHandler::FindFiles("units/*.fbi");
-	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units/*.swu");
+	std::vector<std::string> tafiles = CFileHandler::FindFiles("units/", "*.fbi");
+	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units/", "*.swu");
 	while(!tafiles2.empty()){
 		tafiles.push_back(tafiles2.back());
 		tafiles2.pop_back();
@@ -136,7 +136,7 @@ void CUnitDefHandler::FindTABuildOpt()
 		}
 	}
 
-	std::vector<std::string> files = CFileHandler::FindFiles("download/*.tdf");
+	std::vector<std::string> files = CFileHandler::FindFiles("download/", "*.tdf");
 	for(unsigned int i=0; i<files.size(); i++)
 	{
 		TdfParser dparser(files[i]);

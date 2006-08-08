@@ -4,45 +4,45 @@
 #include "ArchiveHPI.h"
 #include "ArchiveZip.h"
 #include "Archive7Zip.h"
+#include "Platform/FileSystem.h"
 #include <algorithm>
 #include "mmgr.h"
 
 // Returns true if the indicated file is in fact an archive
-bool CArchiveFactory::IsArchive(const string& fileName)
+bool CArchiveFactory::IsArchive(const std::string& fileName)
 {
-	string ext(fileName, fileName.find_last_of('.') + 1);
-	transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
+	std::string ext = filesystem.GetExtension(fileName);
+	std::transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
 
 	return  (ext == "sd7") || (ext == "sdz") || (ext == "sdd") ||
 			(ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx");
 }
 
 // Returns a pointer to a newly created suitable subclass of CArchiveBase
-CArchiveBase* CArchiveFactory::OpenArchive(const string& fileName)
+CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName)
 {
-	string ext(fileName, fileName.find_last_of('.') + 1);
-	transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
+	std::string ext = filesystem.GetExtension(fileName);
+	std::transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
 
-	CArchiveBase* ret = NULL;
+	std::vector<std::string> filenames = filesystem.GetNativeFilenames(fileName);
+	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
+		CArchiveBase* ret = NULL;
 
-	if (ext == "sd7")
-		ret = new CArchive7Zip(fileName);
-	else if (ext == "sdz")
-		ret = new CArchiveZip(fileName);
-	else if (ext == "sdd")
-		ret = new CArchiveDir(fileName);
-	else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx"))
-		ret = new CArchiveHPI(fileName);
+		if (ext == "sd7")
+			ret = new CArchive7Zip(*it);
+		else if (ext == "sdz")
+			ret = new CArchiveZip(*it);
+		else if (ext == "sdd")
+			ret = new CArchiveDir(*it);
+		else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx"))
+			ret = new CArchiveHPI(*it);
 
-	if (!ret)
-		return NULL;
+		if (ret && ret->IsOpen())
+			return ret;
 
-	if (!ret->IsOpen()) {
 		delete ret;
-		return NULL;
 	}
-
-	return ret;
+	return NULL;
 }
 
 CArchiveBase::~CArchiveBase() {

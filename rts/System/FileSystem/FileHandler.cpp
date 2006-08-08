@@ -1,12 +1,11 @@
 #include "StdAfx.h"
 #include "FileHandler.h"
 #include <fstream>
-//#include "HpiHandler.h"
 #include "VFSHandler.h"
 #include <algorithm>
 #include <cctype>
-#include "Platform/filefunctions.h"
-#include <boost/filesystem/exception.hpp>
+#include "Platform/FileSystem.h"
+#include <boost/regex.hpp>
 #include "mmgr.h"
 
 using namespace std;
@@ -31,28 +30,15 @@ CFileHandler::CFileHandler(std::string filename)
 
 void CFileHandler::Init(const char* filename)
 {
-	string fnstr;
+	ifs=filesystem.ifstream(filename, ios::in|ios::binary);
+	if (ifs) {
+		ifs->seekg(0, ios_base::end);
+		filesize = ifs->tellg();
+		ifs->seekg(0, ios_base::beg);
+		return;
+	}
+	delete ifs;
 	ifs = 0;
-
-	try {
-		fs::path fn(filename,fs::native);
-		fnstr = fn.native_file_string();
-	} catch (boost::filesystem::filesystem_error err) {
-		fnstr.clear();
-	}
-
-	if (!fnstr.empty())
-	{
-		ifs=new std::ifstream(fnstr.c_str(), ios::in|ios::binary);
-		if (ifs->is_open()) {
-			ifs->seekg(0, ios_base::end);
-			filesize = ifs->tellg();
-			ifs->seekg(0, ios_base::beg);
-			return;
-		}
-		delete ifs;
-		ifs = 0;
-	}
 
 	if(!hpiHandler)
 		return;
@@ -133,46 +119,21 @@ bool CFileHandler::Eof()
 	return true;
 }
 
-std::vector<std::string> CFileHandler::FindFiles(std::string pattern)
+std::vector<std::string> CFileHandler::FindFiles(const std::string& path, const std::string& pattern)
 {
-	std::vector<fs::path> found;
-	std::string patternPath=pattern;
-	if(patternPath.find_last_of('\\')!=string::npos){
-		patternPath.erase(patternPath.find_last_of('\\')+1);
-	}
-	if(patternPath.find_last_of('/')!=string::npos){
-		patternPath.erase(patternPath.find_last_of('/')+1);
-	}
-	if(pattern.find('\\')==string::npos && pattern.find('/')==string::npos)
-		patternPath.clear();
-	std::string filter=pattern;
-	filter.erase(0,patternPath.length());
-	fs::path fn(patternPath,fs::native);
-	found = find_files(fn,filter);
-	std::vector<std::string> foundstrings;
-	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
-		foundstrings.push_back(it->string());
-
-	//todo: get a real regex handler
-	while(filter.find_last_of('*')!=string::npos)
-		filter.erase(filter.find_last_of('*'),1);
-//	while(filter.find_last_of('.')!=string::npos)
-//		filter.erase(filter.find_last_of('.'),1);
-	std::transform(filter.begin(), filter.end(), filter.begin(), (int (*)(int))std::tolower);
-
+	std::vector<std::string> found = filesystem.FindFiles(path, pattern);
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
 	std::vector<std::string> f;
-	if(hpiHandler)
-		f=hpiHandler->GetFilesInDir(patternPath);
 
-	for(std::vector<std::string>::iterator fi=f.begin();fi!=f.end();fi++){
-		std::transform(fi->begin(), fi->end(), fi->begin(), (int (*)(int))std::tolower);
-		int a=fi->find(filter);
-		if(filter.empty() || a==fi->length()-filter.length()){
-			foundstrings.push_back(patternPath+*fi);
+	if(hpiHandler)
+		f = hpiHandler->GetFilesInDir(path);
+
+	for(std::vector<std::string>::iterator fi = f.begin(); fi != f.end(); ++fi){
+		if (boost::regex_match(*fi, regexpattern)) {
+			found.push_back(path + *fi);
 		}
 	}
-
-	return foundstrings;
+	return found;
 }
 
 int CFileHandler::FileSize()

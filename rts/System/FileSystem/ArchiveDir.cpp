@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "ArchiveDir.h"
-#include "Platform/filefunctions.h"
+#include "Platform/FileSystem.h"
 
 inline CFileHandler* CArchiveDir::GetFileHandler(int handle)
 {
@@ -24,18 +24,14 @@ CArchiveDir::CArchiveDir(const string& archivename) :
 		curFileHandle(0),
 		curSearchHandle(0)
 {
-	fs::path fn(archiveName, fs::no_check);
-	std::vector<fs::path> found = find_files(fn, "*", true);
+	std::vector<std::string> found = filesystem.FindFiles(archiveName, "*", true);
 
 	// because spring expects the contents of archives to be case independent,
 	// we convert filenames to lowercase in every function, and keep a std::map
 	// lcNameToOrigName to convert back from lowercase to original case.
-	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
+	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
 		// strip our own name off..
-		std::string origName(it->string(), archiveName.length());
-		// dont read hidden files (starting with a dot)
-		if (origName.find("/.") != std::string::npos)
-			continue;
+		std::string origName(*it, archiveName.length());
 		// convert to lowercase and store
 		std::string lcName(origName);
 		std::transform(lcName.begin(), lcName.end(), lcName.begin(), (int (*)(int))tolower);
@@ -115,7 +111,7 @@ int CArchiveDir::FindFiles(int cur, string* name, int* size)
 	std::vector<std::string>::iterator& it = GetSearchHandle(cur);
 
 	*name = *searchHandles[cur];
-	*size = fs::file_size(fs::path(archiveName + *name, fs::no_check));
+	*size = filesystem.GetFilesize(archiveName + *name);
 
 	++searchHandles[cur];
 	return cur;

@@ -11,9 +11,9 @@
 #include "Game/GameVersion.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
-#include <boost/filesystem/path.hpp>
+#include "Platform/FileSystem.h"
 #include "Game/UI/InfoConsole.h"
-#include "SDL_video.h"
+#include <SDL_video.h>
 #include "mmgr.h"
 
 #include "IFramebuffer.h"
@@ -57,9 +57,10 @@ void LoadExtensions()
 	for (unsigned int i=0; i<s.length(); i++) 
 		if (s[i]==' ') s[i]='\n';
 
-	boost::filesystem::path fn("ext.txt");
-	ofstream ofs(fn.native_file_string().c_str(),ios::out);
-	ofs.write(s.c_str(),s.length());
+	std::auto_ptr<std::ofstream> ofs(filesystem.ofstream("ext.txt"));
+
+	if (ofs.get())
+		ofs->write(s.c_str(), s.length());
 }
 
 void UnloadExtensions()
@@ -71,8 +72,8 @@ void UnloadExtensions()
 
 void LoadStartPicture()
 {
-	vector<string> bmps=CFileHandler::FindFiles("bitmaps/loadpictures/*.bmp");
-	vector<string> jpgs=CFileHandler::FindFiles("bitmaps/loadpictures/*.jpg");
+	vector<string> bmps=CFileHandler::FindFiles("bitmaps/loadpictures/", "*.bmp");
+	vector<string> jpgs=CFileHandler::FindFiles("bitmaps/loadpictures/", "*.jpg");
 
 	int num=bmps.size()+jpgs.size();
 	if(num==0)

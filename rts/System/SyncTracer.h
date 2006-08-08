@@ -10,8 +10,6 @@
 #include <fstream>
 #include <deque>
 
-using namespace std;
-
 class CSyncTracer  
 {
 	bool init();
@@ -25,9 +23,9 @@ public:
 	CSyncTracer& operator<<(const char* c);
 	CSyncTracer& operator<<(const int i);
 	CSyncTracer& operator<<(const float f);
-	
-	ofstream* file;
-	ofstream* logfile;
+
+	std::ofstream* file;
+	std::ofstream* logfile;
 	std::string traces[10];
 	int firstActive;
 	int nowActive;

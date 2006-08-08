@@ -16,6 +16,7 @@
 #include "TerrainNode.h"
 #include "Textures.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Platform/FileSystem.h"
 
 using namespace std;
 
@@ -330,7 +331,7 @@ namespace terrain {
 		if (components==4) fmt = IL_RGBA;
 		if (components==1) fmt = IL_LUMINANCE;
 		ilTexImage(w,h,1,components,fmt,type,data);
-		FILE *tf = fopen(fn, "rb");
+		FILE *tf = filesystem.fopen(fn, "rb");
 		if (tf) {
 			fclose(tf);
 			remove(fn);

@@ -36,8 +36,8 @@ public:
 		vector<string> replaces;			// This archive obsoletes these ones
 	};
 	CArchiveScanner(void);
-	void ReadCacheData();
-	void WriteCacheData();
+	void ReadCacheData(const std::string& filename);
+	void WriteCacheData(const std::string& filename);
 	virtual ~CArchiveScanner(void);
 	void Scan(const string& curPath, bool checksum = false);
 	vector<ModData> GetPrimaryMods();

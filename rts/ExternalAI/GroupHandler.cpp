@@ -14,7 +14,7 @@
 #include "Game/CameraController.h"
 #include "Platform/SharedLib.h"
 #include "Platform/errorhandler.h"
-#include "Platform/filefunctions.h"
+#include "Platform/FileSystem.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "mmgr.h"
@@ -62,8 +62,7 @@ void CGroupHandler::TestDll(string name)
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETAINAME GetAiName;
 
-	fs::path p(name,fs::native);
-	lib = SharedLib::instantiate(p.native_file_string());
+	lib = SharedLib::instantiate(name);
 	if (!lib){
 		handleerror(NULL,name.c_str(),"Cant load dll",MBF_OK|MBF_EXCL);
 		return;
@@ -119,17 +118,17 @@ void CGroupHandler::GroupCommand(int num)
 
 void CGroupHandler::FindDlls(void)
 {
-	std::vector<fs::path> match;
-	fs::path dir("aidll",fs::native);
+	std::vector<std::string> match;
+	std::string dir("aidll");
 #ifdef _WIN32
-	match = find_files(dir,"*.dll");
+	match = filesystem.FindFiles(dir,"*.dll");
 #elif defined(__APPLE__)
-	match = find_files(dir,"*.dylib");
+	match = filesystem.FindFiles(dir,"*.dylib");
 #else
-	match = find_files(dir,"*.so");
+	match = filesystem.FindFiles(dir,"*.so");
 #endif
-	for (std::vector<fs::path>::iterator it = match.begin(); it != match.end(); it++) {
-		TestDll(it->string());
+	for (std::vector<std::string>::iterator it = match.begin(); it != match.end(); it++) {
+		TestDll(*it);
 	}
 }
 

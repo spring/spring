@@ -29,11 +29,15 @@ import filelist
 env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
 spring_files = filelist.get_spring_source(env)
-# Build Main.cpp separately from the other sources.  This is to prevent recompilation of
+# Build UnixDataDirHandler.cpp separately from the other sources.  This is to prevent recompilation of
 # the entire source if one wants to change just the install prefix (and hence the datadir).
-Maincpp = env.Object(os.path.join(env['builddir'], 'rts/System/Main.cpp'),
-	CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
-spring = env.Program('game/spring', spring_files + [Maincpp])
+if env['platform'] == 'windows':
+	spring = env.Program('game/spring', spring_files)
+else:
+	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'),
+	                     CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
+	spring = env.Program('game/spring', spring_files + [ufshcpp])
+
 Alias('spring', spring)
 Default(spring)
 inst = Install(os.path.join(env['prefix'], 'bin'), spring)

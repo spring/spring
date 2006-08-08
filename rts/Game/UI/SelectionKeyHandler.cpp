@@ -1,6 +1,6 @@
 #include "StdAfx.h"
-#include "SelectionKeyHandler.h"
 #include <fstream>
+#include "SelectionKeyHandler.h"
 #include "InfoConsole.h"
 #include "Game/Team.h"
 #include "Game/SelectedUnits.h"
@@ -13,11 +13,11 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include <boost/filesystem/path.hpp>
 #include "SDL_types.h"
 #include "SDL_keysym.h"
-#include "mmgr.h"
 #include "GUI/GUIcontroller.h"
+#include "Platform/FileSystem.h"
+#include "mmgr.h"
 
 CSelectionKeyHandler *selectionKeys;
 
@@ -25,11 +25,12 @@ extern Uint8 *keys;
 
 CSelectionKeyHandler::CSelectionKeyHandler(void)
 {
-	selectNumber=0;
-	boost::filesystem::path fn("selectkeys.txt");
-	std::ifstream ifs(fn.native_file_string().c_str());
+	std::auto_ptr<std::ifstream> pifs(filesystem.ifstream("selectkeys.txt"));
+	std::ifstream& ifs(*pifs);
 
 	char buf[10000];
+
+	selectNumber=0;
 
 	while(ifs.peek()!=EOF && !ifs.eof()){
 		ifs >> buf;

@@ -173,8 +173,8 @@ END_TIME_PROFILE("Feature::Update");
 
 void CFeatureHandler::LoadWreckFeatures()
 {
-	std::vector<string> files=CFileHandler::FindFiles("features/corpses/*.tdf");
-	std::vector<string> files2=CFileHandler::FindFiles("features/All Worlds/*.tdf");
+	std::vector<string> files=CFileHandler::FindFiles("features/corpses/", "*.tdf");
+	std::vector<string> files2=CFileHandler::FindFiles("features/All Worlds/", "*.tdf");
 
 	for(vector<string>::iterator fi=files.begin();fi!=files.end();++fi){
 		wreckParser.LoadFile(*fi);	
