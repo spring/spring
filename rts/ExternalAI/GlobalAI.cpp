@@ -3,7 +3,7 @@
 #include "IGlobalAI.h"
 #include "GlobalAICallback.h"
 #include "GroupHandler.h"
-#include <boost/filesystem/operations.hpp>
+#include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "mmgr.h"
@@ -12,14 +12,13 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 : team(team)
 {
 	ai=0;
-	boost::filesystem::path l(dll,boost::filesystem::native);
 
-	if (!boost::filesystem::exists(l)) {
+	if (!filesystem.GetFilesize(dll)) {
 		handleerror(NULL,dll,"Could not find AI lib",MBF_OK|MBF_EXCL);
 		return;
 	}
 
-	lib = SharedLib::instantiate(l.native_file_string());
+	lib = SharedLib::instantiate(dll);
 	
 	GetGlobalAiVersion = (GETGLOBALAIVERSION)lib->FindAddress("GetGlobalAiVersion");
 	if (GetGlobalAiVersion==0){

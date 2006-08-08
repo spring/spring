@@ -67,7 +67,11 @@ FileSystemHandler::FileSystemHandler(int native_path_sep): native_path_separator
  */
 std::string FileSystemHandler::GetWriteDir() const
 {
-	return "./";
+	char buf[3];
+	buf[0] = '.';
+	buf[1] = native_path_separator;
+	buf[2] = 0;
+	return buf;
 }
 
 /**
@@ -134,7 +138,7 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 	std::vector<std::string> matches;
 	boost::filesystem::path dirpath(dir, boost::filesystem::no_check);
 	if (dirpath.empty())
-		dirpath=boost::filesystem::path("./", boost::filesystem::no_check);
+		dirpath=boost::filesystem::path(".", boost::filesystem::no_check);
 	if (boost::filesystem::exists(dirpath) && boost::filesystem::is_directory(dirpath)) {
 		boost::regex regexpattern(filesystem.glob_to_regex(pattern));
 		matches = ::FindFiles(dirpath, regexpattern, recurse, include_dirs);
@@ -275,8 +279,7 @@ size_t FileSystem::GetFilesize(std::string file) const
 
 bool FileSystem::CreateDirectory(std::string dir) const
 {
-	// mkdir can not create full paths at once, so complain about them.
-	if (!CheckFile(dir) || dir.find('/') != std::string::npos || dir.find('\\') != std::string::npos)
+	if (!CheckFile(dir))
 		return false;
 	FixSlashes(dir);
 	return fs.mkdir(dir);
