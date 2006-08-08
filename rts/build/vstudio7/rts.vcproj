@@ -3153,6 +3153,12 @@
 					RelativePath="..\..\System\Platform\filefunctions.h">
 				</File>
 				<File
+					RelativePath="..\..\System\Platform\FileSystem.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\FileSystem.h">
+				</File>
+				<File
 					RelativePath="..\..\System\Platform\fp.h">
 				</File>
 				<File
@@ -3244,6 +3250,12 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\Win32Cmd.h">
+					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\WinFileSystemHandler.cpp">
+					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\WinFileSystemHandler.h">
 					</File>
 				</Filter>
 			</Filter>

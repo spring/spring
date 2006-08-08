@@ -4,13 +4,16 @@
 #ifdef _WIN32
 #include <windows.h>
 
-#undef PlaySound
+	#undef PlaySound
 
-// std min&max are used instead of the macros
-#ifdef min
-#undef min
-#undef max
-#endif
+	// std min&max are used instead of the macros
+	#ifdef min
+	#undef min
+	#undef max
+	#endif
+
+	#undef CreateDirectory
+	#undef PlaySound
 #endif
 
 #endif
