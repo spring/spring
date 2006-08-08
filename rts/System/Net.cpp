@@ -11,6 +11,7 @@
 #include "Game/Team.h"
 #include "Game/GameVersion.h"
 #include "Platform/errorhandler.h"
+#include "Platform/Win/win32.h"
 #ifdef _WIN32
 #include <direct.h>
 #else

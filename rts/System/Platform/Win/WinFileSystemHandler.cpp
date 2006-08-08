@@ -16,6 +16,7 @@
 #include "WinFileSystemHandler.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <direct.h>
 #include "mmgr.h"
 
 // fix for windows
@@ -47,7 +48,7 @@ WinFileSystemHandler::~WinFileSystemHandler()
 /**
  * @brief FILE* fp = fopen() wrapper
  */
-FILE* FileSystemHandler::fopen(const std::string& file, const char* mode) const
+FILE* WinFileSystemHandler::fopen(const std::string& file, const char* mode) const
 {
 	return ::fopen(file.c_str(), mode);
 }
@@ -55,7 +56,7 @@ FILE* FileSystemHandler::fopen(const std::string& file, const char* mode) const
 /**
  * @brief std::ifstream* ifs = new std::ifstream() wrapper
  */
-std::ifstream* FileSystemHandler::ifstream(const std::string& file, std::ios_base::openmode mode) const
+std::ifstream* WinFileSystemHandler::ifstream(const std::string& file, std::ios_base::openmode mode) const
 {
 	std::ifstream* ifs = new std::ifstream(file.c_str(), mode);
 	if (ifs->good() && ifs->is_open())
@@ -67,7 +68,7 @@ std::ifstream* FileSystemHandler::ifstream(const std::string& file, std::ios_bas
 /**
  * @brief std::ofstream* ofs = new std::ofstream() wrapper
  */
-std::ofstream* FileSystemHandler::ofstream(const std::string& file, std::ios_base::openmode mode) const
+std::ofstream* WinFileSystemHandler::ofstream(const std::string& file, std::ios_base::openmode mode) const
 {
 	std::ofstream* ofs = new std::ofstream(file.c_str(), mode);
 	if (ofs->good() && ofs->is_open())
@@ -83,7 +84,7 @@ std::ofstream* FileSystemHandler::ofstream(const std::string& file, std::ios_bas
  *
  * (Looks quite like the UNIX version but mkdir has different arguments.)
  */
-bool WinFileSystemHandler::mkdir(const std::string& dir) const
+bool WinFileSystemHandler::mkdir(const std::string& path) const
 {
 	struct stat info;
 
