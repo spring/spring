@@ -10,7 +10,6 @@
 #include "GroupHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/InfoConsole.h"
-#include <boost/filesystem/path.hpp>
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
 
@@ -75,8 +74,7 @@ void CGroup::SetNewAI(string dllName)
 		return;
 	}
 
-	boost::filesystem::path p(dllName,boost::filesystem::native);
-	lib = SharedLib::instantiate(dllName.c_str());
+	lib = SharedLib::instantiate(dllName);
 	if (lib==0) 
 		handleerror(NULL,dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
 	
