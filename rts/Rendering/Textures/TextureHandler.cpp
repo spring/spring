@@ -59,8 +59,8 @@ CTextureHandler::CTextureHandler()
 	int numfiles=0;
 	int totalSize=0;
 
-	std::vector<std::string> files2=CFileHandler::FindFiles("unittextures/tatex/*.bmp");
-	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/*.tga");
+	std::vector<std::string> files2=CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
+	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
 
 	for(std::vector<string>::iterator fi=files2.begin();fi!=files2.end();++fi){
 		files.push_back(*fi);
@@ -94,7 +94,7 @@ CTextureHandler::CTextureHandler()
 			}
 		}
 	}
-	
+
 	for(int a=0;a<256;++a){
 		string name="ta_color";
 		char t[50];

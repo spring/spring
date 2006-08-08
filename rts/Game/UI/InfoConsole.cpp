@@ -5,7 +5,6 @@
 
 #include "InfoConsole.h"
 #include "Rendering/GL/myGL.h"
-#include <iostream>
 #include <fstream>
 #include "Rendering/glFont.h"
 #include "NewGuiDefine.h"
@@ -19,7 +18,7 @@
  
 #include "SyncTracer.h"
 #include "Platform/ConfigHandler.h"
-#include <boost/filesystem/path.hpp>
+#include "Platform/FileSystem.h"
 
 #include "mmgr.h"
 
@@ -27,7 +26,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 CInfoConsole* info=0;
-static ofstream* filelog;
+static std::ofstream* filelog;
 
 CInfoConsole::CInfoConsole()
 : lastMsgPos(0,0,0)
@@ -43,8 +42,8 @@ CInfoConsole::CInfoConsole()
 	height=0.2f;
 	numLines = 7;
 
-	boost::filesystem::path fn("infolog.txt");
-	filelog=new ofstream(fn.native_file_string().c_str(), ios::out);
+	assert(!filelog); // multiple infologs can't exist together!
+	filelog = filesystem.ofstream("infolog.txt");
 }
 
 CInfoConsole::~CInfoConsole()

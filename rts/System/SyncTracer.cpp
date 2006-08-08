@@ -6,7 +6,7 @@
 #include "SyncTracer.h"
 #include <stdio.h>
 #include "Game/UI/InfoConsole.h"
-#include <boost/filesystem/path.hpp>
+#include "Platform/FileSystem.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -21,8 +21,7 @@ bool CSyncTracer::init()
 	if (logfile == 0) {
 		char c[100];
 		sprintf(c, "trace%i.log", gu->myTeam);
-		boost::filesystem::path fn(c);
-		logfile = new ofstream(fn.native_file_string().c_str(), ios::out);
+		logfile = filesystem.new_ofstream(c);
 	}
 #endif
 	return logfile != 0;
@@ -31,6 +30,7 @@ bool CSyncTracer::init()
 CSyncTracer::CSyncTracer()
 {
 	file = 0;
+	logfile = 0;
 	nowActive = 0;
 	firstActive = 0;
 }
@@ -49,10 +49,13 @@ void CSyncTracer::Commit()
 	if(file == 0){
 		char c[100];
 		sprintf(c, "trace%i.txt", gu->myTeam);
-		boost::filesystem::path fn(c);
-		file = new ofstream(fn.native_file_string().c_str(), ios::out);
+		file = filesystem.new_ofstream(c);
 	}
 #endif
+
+	if (!file)
+		return;
+
 	(*file) << traces[firstActive].c_str();
 	while(nowActive!=firstActive){
 		firstActive++;

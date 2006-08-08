@@ -29,8 +29,7 @@
  */
 hpiutil::scrambledfile::scrambledfile(const char *fname)
 {
-	boost::filesystem::path fn(fname);
-	file.open(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
+	file.open(fname,std::ios::in|std::ios::binary);
 	scrambled = false;
 }
 
@@ -40,8 +39,7 @@ hpiutil::scrambledfile::scrambledfile(const char *fname)
  */
 hpiutil::scrambledfile::scrambledfile(std::string const &fname)
 {
-	boost::filesystem::path fn(fname);
-	file.open(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
+	file.open(fname.c_str(),std::ios::in|std::ios::binary);
 	scrambled = false;
 }
 
@@ -58,13 +56,13 @@ hpiutil::scrambledfile::~scrambledfile()
  * reads a single byte from the file
  * @return byte read
  */
-boost::uint8_t hpiutil::scrambledfile::read()
+boost::uint32_t hpiutil::scrambledfile::read()
 {
 	boost::uint32_t oldpos = file.tellg();
-	char ret = file.get();
+	boost::uint32_t ret = file.get();
 	if (scrambled && (ret != EOF))
 		ret = (char)(((key ^ oldpos) ^ ~ret)&0x00ff);
-	return (boost::uint8_t)ret;
+	return ret;
 }
 
 /**
@@ -112,10 +110,10 @@ boost::uint32_t hpiutil::scrambledfile::read(boost::uint8_t *buf, const boost::u
  */
 boost::uint32_t hpiutil::scrambledfile::readint()
 {
-	boost::uint32_t a = (boost::uint32_t)read();
-	boost::uint32_t b = (boost::uint32_t)read();
-	boost::uint32_t c = (boost::uint32_t)read();
-	boost::uint32_t d = (boost::uint32_t)read();
+	boost::uint32_t a = read();
+	boost::uint32_t b = read();
+	boost::uint32_t c = read();
+	boost::uint32_t d = read();
 	return (d<<24)|(c<<16)|(b<<8)|a;
 }
 

@@ -10,6 +10,7 @@
 #include "Game/Camera.h"
 #include "myMath.h"
 #include "Game/UI/InfoConsole.h"
+#include "Platform/FileSystem.h"
 #include "mmgr.h"
 
 using namespace std;
@@ -49,16 +50,23 @@ CglFont::CglFont(int start, int end)
 		throw std::runtime_error(msg);
 	}
 
-	error=FT_New_Face(library,FONTFILE,0,&face);
-	if (error) {
-		string msg="FT_New_Face failed:";
+	bool success = false;
+	std::vector<std::string> filenames = filesystem.GetNativeFilenames(FONTFILE);
+	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
+		if (!FT_New_Face(library, it->c_str(), 0, &face)) {
+			success = true;
+			break;
+		}
+	}
+	if (!success) {
+		string msg = FONTFILE ": FT_New_Face failed: ";
 		msg += GetFTError(error);
 		throw content_error(msg);
 	}
 
 	FT_Set_Char_Size(face, FONTSIZE << 6, FONTSIZE << 6, 96,96);
 
-    	chars = end-start;
+	chars = end-start;
 
 	charstart = start;
 	charWidths = new int[chars];

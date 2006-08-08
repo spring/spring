@@ -17,7 +17,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "GameVersion.h"
-#include "Platform/filefunctions.h"
+#include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include <SDL_types.h>
 #include <SDL_keysym.h>
@@ -408,16 +408,17 @@ void CPreGame::SelectMap(std::string s)
 void CPreGame::ShowMapList()
 {
 	CglList* list = new CglList("Select map", SelectMap, 2);
-	fs::path fn("maps/");
-	std::vector<fs::path> found = find_files(fn,"{*.sm3,*.smf}");
+	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
 	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
 		handleerror(0, "Couldn't find any map files", "PreGame error", 0);
 		return;
 	}
 	list->AddItem("Random map", "Random map");
-	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
-		list->AddItem(it->leaf().c_str(),it->leaf().c_str());
+	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
+		std::string fn(filesystem.GetFilename(*it));
+		list->AddItem(fn.c_str(),fn.c_str());
+	}
 	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++)
 		list->AddItem((*it).c_str(), (*it).c_str());
 	showList = list;

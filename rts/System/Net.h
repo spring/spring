@@ -22,7 +22,6 @@
 #include <boost/scoped_array.hpp>
 
 class CFileHandler;
-using namespace std;
 
 enum NETMSG {
 	NETMSG_HELLO            = 1,
@@ -364,7 +363,7 @@ public:
 	bool FindDemoFile(const char* name);
 
 	std::string demoName;
-	ofstream* recordDemo;
+	std::ofstream* recordDemo;
 	CFileHandler* playbackDemo;
 
 	double demoTimeOffset;

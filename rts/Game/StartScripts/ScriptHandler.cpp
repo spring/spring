@@ -39,18 +39,18 @@ void CScriptHandler::LoadScripts() {
 	loaded_scripts.push_back( new CTestScript() );
 
 #ifdef WIN32
-	std::vector<std::string> f = CFileHandler::FindFiles("aidll\\globalai\\*.dll");
+	std::vector<std::string> f = CFileHandler::FindFiles("aidll\\globalai\\", "*.dll");
 #elif defined(__APPLE__)
-	std::vector<std::string> f = CFileHandler::FindFiles("aidll/globalai/*.dylib");
+	std::vector<std::string> f = CFileHandler::FindFiles("aidll/globalai/", "*.dylib");
 #else
-	std::vector<std::string> f = CFileHandler::FindFiles("aidll/globalai/*.so");
+	std::vector<std::string> f = CFileHandler::FindFiles("aidll/globalai/", "*.so");
 #endif
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
 		string name = fi->substr(fi->find_last_of('\\') + 1);
 		loaded_scripts.push_back(new CGlobalAITestScript(name, "./"));
 	}
 
-	f = CFileHandler::FindFiles("*.ssf");
+	f = CFileHandler::FindFiles("", "*.ssf");
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
 		loaded_scripts.push_back(new CLoadScript(*fi));
 	}
@@ -59,7 +59,7 @@ void CScriptHandler::LoadScripts() {
 void CScriptHandler::StartLua()
 {
 #ifndef NO_LUA
-	std::vector<string> files = CFileHandler::FindFiles("startscripts/*.lua");
+	std::vector<string> files = CFileHandler::FindFiles("startscripts/", "*.lua");
 	for (std::vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
 		CLuaBinder* lua = new CLuaBinder();
 		if (!lua->LoadScript(*i)) 

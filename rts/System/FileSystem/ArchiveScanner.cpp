@@ -5,7 +5,7 @@
 #include "TdfParser.h"
 #include "Rendering/GL/myGL.h"
 #include "FileHandler.h"
-#include "Platform/filefunctions.h"
+#include "Platform/FileSystem.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -38,7 +38,7 @@ CArchiveScanner::CArchiveScanner(void) :
 CArchiveScanner::~CArchiveScanner(void)
 {
 	if (isDirty)
-		WriteCacheData();
+		WriteCacheData(filesystem.GetWriteDir() + "archivecache.txt");
 }
 
 CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string& section)
@@ -74,15 +74,14 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 {
 	isDirty = true;
 
-	fs::path fn(curPath+"/");
-	std::vector<fs::path> found = find_files(fn, "*", true, true);
+	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", true, true);
 	struct stat info;
-	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
-		stat(it->native_file_string().c_str(),&info);
+	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
+		stat(it->c_str(),&info);
 
-		string fullName = it->native_file_string();
-		string fn = it->leaf();
-		string fpath = it->branch_path().string();
+		string fullName = *it;
+		string fn = filesystem.GetFilename(fullName);
+		string fpath = filesystem.GetDirectory(fullName);
 		string lcfn = fn;
 		string lcfpath = fpath;
 		transform(lcfn.begin(), lcfn.end(), lcfn.begin(), (int (*)(int))tolower); 
@@ -274,8 +273,7 @@ single CRC of multiple files.) Returns true on success, false if file could
 not be opened. */
 bool CArchiveScanner::GetCRC(const string& filename, unsigned int& crc)
 {
-	boost::filesystem::path fn(filename, boost::filesystem::native);
-	FILE* fp = fopen(fn.native_file_string().c_str(), "rb");
+	FILE* fp = fopen(filename.c_str(), "rb");
 	if (!fp)
 		return false;
 
@@ -316,14 +314,14 @@ unsigned int CArchiveScanner::GetDirectoryCRC(const string& curPath)
 {
 	unsigned int crc = 0;
 
-	fs::path fn(curPath+"/");
-	std::vector<fs::path> found = find_files(fn, "*", true, false); // recurse but don't include directories
+	// recurse but don't include directories
+	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", true, false);
 
 	// sort because order in which find_files finds them is undetermined
 	std::sort(found.begin(), found.end());
 
-	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++) {
-		string path = it->native_file_string();
+	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
+		const std::string& path(*it);
 
 		// Don't CRC hidden files (starting with a dot).
 		if (path.find("/.") != string::npos)
@@ -341,14 +339,15 @@ unsigned int CArchiveScanner::GetDirectoryCRC(const string& curPath)
 		return crc;
 }
 
-void CArchiveScanner::ReadCacheData()
+void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
-	// check if the file exists first
-	CFileHandler file("archivecache.txt");
-	if (!file.FileExists())
-		return;
+	TdfParser p;
 
-	TdfParser p("archivecache.txt");
+	try {
+		p.LoadFile(filename);
+	} catch (const content_error&) {
+		return;
+	}
 
 	// Do not load old version caches
 	int ver = atoi(p.SGetValueDef("0", "archivecache\\internalver").c_str());
@@ -398,14 +397,12 @@ void CArchiveScanner::ReadCacheData()
 	isDirty = false;
 }
 
-void CArchiveScanner::WriteCacheData()
+void CArchiveScanner::WriteCacheData(const std::string& filename)
 {
 	if (!isDirty)
 		return;
 
-	boost::filesystem::path fn("archivecache.txt");
-	FILE* out = fopen(fn.native_file_string().c_str(), "wt");
-	//FILE* out = stdout;
+	FILE* out = fopen(filename.c_str(), "wt");
 	if (!out)
 		return;
 	

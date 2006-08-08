@@ -56,7 +56,7 @@ namespace hpiutil
 		scrambledfile(const char *fname);
 		scrambledfile(std::string const &fname);
 		~scrambledfile();
-		boost::uint8_t read();
+		boost::uint32_t read();
 		boost::uint32_t read(boost::uint8_t *buf);
 		boost::uint32_t read(boost::uint8_t *buf,const boost::uint32_t off, const boost::uint32_t len);
 		boost::uint32_t readint();

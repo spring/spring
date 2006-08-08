@@ -20,6 +20,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "MouseInput.h"
 #include "Platform/ConfigHandler.h"
+#include "Platform/FileSystem.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/GameSetup.h"
 #include "Game/CameraController.h"
@@ -126,7 +127,6 @@ protected:
 	bool Initialize (); 	//!< Initialize app
 	void CheckCmdLineFile (int argc,char *argv[]); 	//!< Check command line for files
 	bool ParseCmdLine(); 				//!< Parse command line
-	void InitVFS (); 				//!< Initialize VFS
 	void CreateGameSetup (); 			//!< Creates GameSetup
 	bool InitWindow (const char* title); 		//!< Initializes window
 	void InitOpenGL (); 				//!< Initializes OpenGL
@@ -273,7 +273,8 @@ bool SpringApp::Initialize ()
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
 
-	InitVFS ();
+	// first call to GetInstance() initializes the VFS
+	FileSystemHandler::GetInstance();
 
 	if (!InitWindow ("RtsSpring"))
 	{
@@ -468,21 +469,6 @@ void SpringApp::InitOpenGL ()
 
 	gu->screenx = screenWidth;
 	gu->screeny = screenHeight;
-}
-
-/**
- * Initializes the virtual filesystem
- */
-void SpringApp::InitVFS()
-{
-	// Create the archive scanner and vfs handler
-	archiveScanner = new CArchiveScanner();
-	archiveScanner->ReadCacheData();
-	archiveScanner->Scan("./maps", true);
-	archiveScanner->Scan("./base", true);
-	archiveScanner->Scan("./mods", true);
-	archiveScanner->WriteCacheData();
-	hpiHandler = new CVFSHandler();
 }
 
 /**
@@ -831,107 +817,6 @@ void SpringApp::Shutdown()
 #endif
 }
 
-#if !defined(_WIN32) && !defined(__APPLE__)
-/**
- * @brief substitute environment variables with their values
- */
-static std::string SubstEnvVars(const std::string& in)
-{
-	bool escape = false;
-	std::ostringstream out;
-	for (std::string::const_iterator ch = in.begin(); ch != in.end(); ++ch) {
-		if (escape) {
-			escape = false;
-			out << *ch;
-		} else {
-			switch (*ch) {
-				case '\\':
-					escape = true;
-					break;
-				case '$':  {
-					std::ostringstream envvar;
-					for (++ch; ch != in.end() && (isalnum(*ch) || *ch == '_'); ++ch)
-						envvar << *ch;
-					--ch;
-					char* subst = getenv(envvar.str().c_str());
-					if (subst && *subst)
-						out << subst;
-					break; }
-				default:
-					out << *ch;
-					break;
-			}
-		}
-	}
-	return out.str();
-}
-
-/**
- * @brief locate spring data directory
- *
- * On *nix platforms, attempts to locate
- * and change to the spring data directory
- *
- * The data directory to chdir to is determined by the following, in this
- * order (first items override lower items): 
- *
- * - 'SpringData=/path/to/data' variable declaration in '~/.springrc'.
- * - 'SPRING_DATADIR' environment variable.
- * - In the same order any line in '/etc/spring/datadir', if that file exists.
- * - 'datadir=/path/to/data' option passed to 'scons configure'.
- * - 'prefix=/install/path' option passed to scons configure. The datadir is
- *   assumed to be at '$prefix/games/taspring' in this case.
- * - the default datadir in the default prefix, ie. '/usr/local/games/taspring'
- *
- * All of the above methods support environment variable substitution, eg.
- * '$HOME/myspringdatadir' will be converted by spring to something like
- * '/home/username/myspringdatadir'.
- *
- * If it fails to chdir to the above specified directory spring will asume the
- * current working directory is the data directory.
- *
- * TODO: do this on a per file basis, ie. make it possible to merge different
- * data directories in runtime.
- */
-static int LocateDataDir(void)
-{
-	std::vector<std::string> datadirs;
-
-	std::string cfg = configHandler.GetString("SpringData","");
-	if (!cfg.empty())
-		datadirs.push_back(cfg);
-
-	char* env = getenv("SPRING_DATADIR");
-	if (env && *env)
-		datadirs.push_back(env);
-
-	FILE* f = fopen("/etc/spring/datadir", "r");
-	if (f) {
-		char buf[1024];
-		while (fgets(buf, sizeof(buf), f)) {
-			char* newl = strchr(buf, '\n');
-			if (newl)
-				*newl = 0;
-			datadirs.push_back(buf);
-		}
-		fclose(f);
-	}
-
-	datadirs.push_back(SPRING_DATADIR);
-
-	for (std::vector<std::string>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		std::string dir = SubstEnvVars(*d);
-		if (chdir(dir.c_str()) != -1) {
-			fprintf(stderr, "spring is using data directory: %s\n", dir.c_str());
-			return 0;
-		}
-		perror(dir.c_str());
-	}
-	fprintf(stderr, "spring is using data directory: current working directory\n");
-	return 0; // assume current working directory is ok.
-}
-#endif
-
 // On msvc main() is declared as a non-throwing function. 
 // Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
 int Run(int argc, char *argv[])
@@ -971,18 +856,12 @@ int Run(int argc, char *argv[])
  *
  * Main entry point function
  */
-#if defined(__APPLE__) 
+#if defined(__APPLE__)
 int main( int argc, char *argv[] )
 #else
 int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 #endif
 {
-#if !defined(WIN32) && !defined(__APPLE__)
-	int ret = LocateDataDir();
-// Just stay in current working directory when chdir fails.
-// 	if (ret != 0)
-// 		exit(ret);
-#endif
 	return Run (argc,argv);
 }
 

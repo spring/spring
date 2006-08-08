@@ -6,22 +6,19 @@
 #include "ArchiveFactory.h"
 #include <algorithm>
 #include "Rendering/GL/myGL.h"
-#include "Platform/filefunctions.h"
+#include "Platform/FileSystem.h"
 #include "mmgr.h"
 
 CVFSHandler* hpiHandler=0;
 
 CVFSHandler::CVFSHandler(bool mapArchives)
 {
-	if (!mapArchives)
-		return;
+	if (mapArchives)
+		MapArchives("./");
+}
 
-	string taDir;
-	taDir="./";
-	char t[500];
-	sprintf(t,"Creating virtual file system from %s",taDir.c_str());
-	//PrintLoadMsg(t);
-
+void CVFSHandler::MapArchives(const string& taDir)
+{
 	FindArchives("*.gp4", taDir);
 	FindArchives("*.swx", taDir);
 	FindArchives("*.gp3", taDir);
@@ -35,10 +32,9 @@ CVFSHandler::CVFSHandler(bool mapArchives)
 
 void CVFSHandler::FindArchives(const string& pattern, const string& path)
 {
-	fs::path fn(path);
-	std::vector<fs::path> found = find_files(fn,pattern, false);
-	for (std::vector<fs::path>::iterator it = found.begin(); it != found.end(); it++)
-		AddArchive(it->string().c_str(),false);
+	std::vector<std::string> found = filesystem.FindFiles(path, pattern);
+	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it)
+		AddArchive(it->c_str(), false);
 }
 
 // Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not

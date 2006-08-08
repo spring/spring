@@ -1,36 +1,39 @@
 #include "StdAfx.h"
+#include <memory>
 #include "LoadSaveHandler.h"
 #include "Rendering/GL/myGL.h"
-#include <fstream>
 #include "SaveInterface.h"
 #include "LoadInterface.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Platform/errorhandler.h"
-#include <boost/filesystem/path.hpp>
+#include "Platform/FileSystem.h"
+#include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
 
-CLoadSaveHandler::CLoadSaveHandler(void)
+CLoadSaveHandler::CLoadSaveHandler(void): ifs(NULL), load(NULL)
 {
 }
 
 CLoadSaveHandler::~CLoadSaveHandler(void)
 {
+	delete ifs;
+	delete load;
 }
 
 void CLoadSaveHandler::SaveGame(std::string file)
 {
-	boost::filesystem::path fn(file);
-	std::ofstream ofs(fn.native_file_string().c_str(),std::ios::out|std::ios::binary);
+	std::auto_ptr<std::ofstream> ofs(filesystem.ofstream(file.c_str(), std::ios::out|std::ios::binary));
+
 	PrintLoadMsg("Saving game");
-	if(ofs.bad() || !ofs.is_open()){
+	if (!ofs.get() || ofs->bad() || !ofs->is_open()) {
 		handleerror(0,"Couldnt save game to file",file.c_str(),0);
 		return;
 	}
 
-	CSaveInterface save(&ofs);
+	CSaveInterface save(ofs.get());
 
 	save.lsString(stupidGlobalMapname);
 
@@ -43,8 +46,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 //this just loads the mapname and some other early stuff
 void CLoadSaveHandler::LoadGame(std::string file)
 {
-	boost::filesystem::path fn(file);
-	ifs=new std::ifstream(fn.native_file_string().c_str(),std::ios::in|std::ios::binary);
+	ifs=filesystem.ifstream(file.c_str(),std::ios::in|std::ios::binary);
 	load=new CLoadInterface(ifs);
 
 	load->lsString(stupidGlobalMapname);
@@ -58,4 +60,6 @@ void CLoadSaveHandler::LoadGame2(void)
 	uh->LoadSaveUnits(load,true);
 	delete load;
 	delete ifs;
+	load = NULL;
+	ifs = NULL;
 }

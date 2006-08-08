@@ -4,13 +4,11 @@
 #include <string>
 #include "ArchiveBase.h"
 
-using namespace std;
-
 class CArchiveFactory
 {
 public:
-	static bool IsArchive(const string& fileName);
-	static CArchiveBase* OpenArchive(const string& fileName);
+	static bool IsArchive(const std::string& fileName);
+	static CArchiveBase* OpenArchive(const std::string& fileName);
 };
 
 #endif
