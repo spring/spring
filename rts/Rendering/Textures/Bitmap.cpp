@@ -13,7 +13,7 @@
 #else
 #include <IL/il.h>
 #endif
-#include <boost/filesystem/path.hpp>
+#include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "bitops.h"
 #include "mmgr.h"
@@ -294,7 +294,13 @@ void CBitmap::Save(string const& filename)
 
 	ilTexImage(xsize,ysize,1,4,IL_RGBA,IL_UNSIGNED_BYTE,NULL);
 	ilSetData(buf);
-	ilSaveImage((char*)filename.c_str());
+
+	std::vector<std::string> filenames = filesystem.GetNativeFilenames(filename, true);
+	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
+		// TODO how to detect errors, so the image doesn't end up in every writable data directory?
+		ilSaveImage((char*)(it->c_str()));
+	}
+
 	ilDeleteImages(1,&ImageName);
 	delete[] buf;
 #endif // I'll add a quicktime exporter for mac soonish...Krysole

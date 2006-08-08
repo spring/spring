@@ -21,7 +21,6 @@
  */
 
 #include "scrambledfile.h"
-#include <boost/filesystem/path.hpp>
 
 /**
  * Constructor
