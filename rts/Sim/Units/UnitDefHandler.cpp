@@ -60,8 +60,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 	{
 		// Determine the name (in lowercase) first
 		int len = tafiles[a].find_last_of("/")+1;
-		std::string unitname = tafiles[a].substr(len, tafiles[a].size()-4-len);
-		std::transform(unitname.begin(), unitname.end(), unitname.begin(), (int (*)(int))std::tolower);
+		std::string unitname = StringToLower(tafiles[a].substr(len, tafiles[a].size()-4-len));
 
 		// Restrictions may tell us not to use this unit at all
 		if (gameSetup)
@@ -114,7 +113,7 @@ void CUnitDefHandler::FindTABuildOpt()
 		std::map<std::string, std::string>::const_iterator it;
 
 		UnitDef *builder=NULL;
-		std::transform(sideunits[i].begin(), sideunits[i].end(), sideunits[i].begin(), (int (*)(int))std::tolower);
+		StringToLowerInPlace(sideunits[i]);
 		std::map<std::string, int>::iterator it1 = unitID.find(sideunits[i]);
 		if(it1!= unitID.end())
 			builder = &unitDefs[it1->second];
@@ -125,8 +124,7 @@ void CUnitDefHandler::FindTABuildOpt()
 			for(it=buildoptlist.begin(); it!=buildoptlist.end(); it++)
 			{
 				UnitDef *buildopt=0;
-				std::string opt = it->second;
-				std::transform(opt.begin(), opt.end(), opt.begin(), (int (*)(int))std::tolower);
+				std::string opt = StringToLower(it->second);
 
 				if(unitID.find(opt)!= unitID.end()){
 					int num=atoi(it->first.substr(8).c_str());
@@ -146,8 +144,7 @@ void CUnitDefHandler::FindTABuildOpt()
 		for(unsigned int j=0; j<sectionlist.size(); j++)
 		{
 			UnitDef *builder=NULL;
-			std::string un1 = dparser.SGetValueDef("", sectionlist[j] + "\\UNITMENU");
-			std::transform(un1.begin(), un1.end(), un1.begin(), (int (*)(int))std::tolower);
+			std::string un1 = StringToLower(dparser.SGetValueDef("", sectionlist[j] + "\\UNITMENU"));
 			std::map<std::string, int>::iterator it1 = unitID.find(un1);
 			if(it1!= unitID.end())
 				builder = &unitDefs[it1->second];
@@ -155,8 +152,7 @@ void CUnitDefHandler::FindTABuildOpt()
 			if(builder)
 			{
 				UnitDef *buildopt=NULL;
-				string un2 = dparser.SGetValueDef("", sectionlist[j] + "\\UNITNAME");
-				std::transform(un2.begin(), un2.end(), un2.begin(), (int (*)(int))std::tolower);
+				string un2 = StringToLower(dparser.SGetValueDef("", sectionlist[j] + "\\UNITNAME"));
 
 				if(unitID.find(un2)!= unitID.end()){
 					int menu=atoi(dparser.SGetValueDef("", sectionlist[j] + "\\MENU").c_str());
@@ -583,7 +579,7 @@ void CUnitDefHandler::ParseUnit(std::string file, int id)
 
 UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 {
-	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
+	StringToLowerInPlace(name);
 
 	std::map<std::string, int>::iterator it = unitID.find(name);
 	if(it == unitID.end())
@@ -610,7 +606,7 @@ When sat != 0, is used instead of normal all-over-blocking.
 */
 void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 	//Force string to lower case.
-	std::transform(yardmapStr.begin(), yardmapStr.end(), yardmapStr.begin(), (int(*)(int))std::tolower);
+	StringToLowerInPlace(yardmapStr);
 
 	//Creates the map.
 	for (int u=0;u<4;u++)

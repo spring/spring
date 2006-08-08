@@ -63,7 +63,7 @@ CArchive7Zip::CArchive7Zip(const string& name) :
 			fd.fp = i;
 			fd.size = fi->Size;
 
-			transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+			StringToLowerInPlace(name);
 			fileData[name] = fd;
 		}
 	}
@@ -83,8 +83,7 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const string& fName)
 		return NULL;
 
 	// Figure out the file index
-	string fileName = fName;
-	transform(fileName.begin(), fileName.end(), fileName.begin(), (int (*)(int))tolower);
+	string fileName = StringToLower(fName);
 	
 	if (fileData.find(fileName) == fileData.end())
 		return NULL;

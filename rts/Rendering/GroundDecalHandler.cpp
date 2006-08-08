@@ -373,7 +373,7 @@ int CGroundDecalHandler::GetTrackType(std::string name)
 	if(decalLevel==0)
 		return 0;
 
-	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);	
+	StringToLowerInPlace(name);
 
 	int a=0;
 	for(std::vector<TrackType*>::iterator ti=trackTypes.begin();ti!=trackTypes.end();++ti){
@@ -609,7 +609,7 @@ int CGroundDecalHandler::GetBuildingDecalType(std::string name)
 	if(decalLevel==0)
 		return 0;
 
-	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);	
+	StringToLowerInPlace(name);
 
 	int a=0;
 	for(std::vector<BuildingDecalType*>::iterator bi=buildingDecalTypes.begin();bi!=buildingDecalTypes.end();++bi){

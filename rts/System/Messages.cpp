@@ -48,8 +48,7 @@ Returns \p msg if no messages are available. */
 std::string CMessages::Translate(const std::string& msg) const
 {
 	// TdfParser puts everything in lowercase.
-	std::string lowerd = msg;
-	std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), (int (*)(int))std::tolower);
+	std::string lowerd = StringToLower(msg);
 	message_map_t::const_iterator it = tr.find(lowerd);
 	if (it == tr.end())
 		return msg;

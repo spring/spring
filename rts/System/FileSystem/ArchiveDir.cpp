@@ -33,8 +33,7 @@ CArchiveDir::CArchiveDir(const string& archivename) :
 		// strip our own name off..
 		std::string origName(*it, archiveName.length());
 		// convert to lowercase and store
-		std::string lcName(origName);
-		std::transform(lcName.begin(), lcName.end(), lcName.begin(), (int (*)(int))tolower);
+		std::string lcName(StringToLower(origName));
 		searchFiles.push_back(origName);
 		lcNameToOrigName[lcName] = origName;
 	}
@@ -51,8 +50,7 @@ bool CArchiveDir::IsOpen()
 
 int CArchiveDir::OpenFile(const std::string& fileName)
 {
-	std::string lcname(fileName);
-	std::transform(lcname.begin(), lcname.end(), lcname.begin(), (int (*)(int))tolower);
+	std::string lcname(StringToLower(fileName));
 
 	CFileHandler* f = new CFileHandler(archiveName + lcNameToOrigName[lcname]);
 

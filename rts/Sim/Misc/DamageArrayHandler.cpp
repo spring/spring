@@ -25,16 +25,14 @@ CDamageArrayHandler::CDamageArrayHandler(void)
 		info->AddLine(1, "Number of damage types: %d", numTypes);
 		int a=1;
 		for(std::vector<std::string>::iterator ti=typelist.begin();ti!=typelist.end();++a,++ti){
-			std::string s=*ti;
-			std::transform(s.begin(), s.end(), s.begin(), (int(*)(int))std::tolower);
+			std::string s = StringToLower(*ti);
 			name2type[s]=a;
 	//		info->AddLine("%s has type num %i",(*ti).c_str(),a);
 			const std::map<std::string, std::string>& units=p.GetAllValues(*ti);
 
 			for(std::map<std::string, std::string>::const_iterator ui=units.begin();ui!=units.end();++ui){
-				std::string s=ui->first;
-				std::transform(s.begin(), s.end(), s.begin(), (int(*)(int))std::tolower);
-				name2type[s]=a;
+				std::string s = StringToLower(ui->first);
+				name2type[s] = a;
 	//			info->AddLine("unit %s has type num %i",ui->first.c_str(),a);
 			}
 		}
@@ -52,7 +50,7 @@ CDamageArrayHandler::~CDamageArrayHandler(void)
 
 int CDamageArrayHandler::GetTypeFromName(std::string name)
 {
-	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
+	StringToLowerInPlace(name);
 	if(name2type.find(name)!=name2type.end())
 		return name2type[name];
 	return 0;

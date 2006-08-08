@@ -123,8 +123,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 		ofs = *(int *)&cobdata[ch.OffsetToPieceNameOffsetArray + i * 4];
 		ofs = swabdword(ofs);
-		string s = &cobdata[ofs];
-		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
+		string s = StringToLower(&cobdata[ofs]);
 		pieceNames.push_back(s);
 	}
 

@@ -168,8 +168,7 @@ bool CGameSetup::Init(char* buf, int size)
 
  		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
  		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
- 		gs->Team(a)->side=file.SGetValueDef("arm",s+"side").c_str();
- 		std::transform(gs->Team(a)->side.begin(), gs->Team(a)->side.end(), gs->Team(a)->side.begin(), (int (*)(int))std::tolower);
+ 		gs->Team(a)->side = StringToLower(file.SGetValueDef("arm",s+"side").c_str());
  		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0",s+"allyteam").c_str()));
 
 		if (demoName.empty())

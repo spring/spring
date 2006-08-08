@@ -452,8 +452,7 @@ void CWeaponDefHandler::LoadSound(GuiSound &gsound)
 
 WeaponDef *CWeaponDefHandler::GetWeapon(const std::string weaponname2)
 {
-	std::string weaponname(weaponname2);
-	std::transform(weaponname.begin(), weaponname.end(), weaponname.begin(), (int (*)(int))std::tolower);
+	std::string weaponname(StringToLower(weaponname2));
 
 	std::map<std::string,int>::iterator ii=weaponID.find(weaponname);
 	if(ii == weaponID.end())

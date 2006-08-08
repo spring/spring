@@ -32,8 +32,7 @@ CArchiveZip::CArchiveZip(const string& name) :
 		unzGetCurrentFileInfo(zip, &info, fname, 512, NULL, 0, NULL, 0);
 
 		if (info.uncompressed_size > 0) {
-			name = fname;
-			transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+			name = StringToLower(fname);
 //			SetSlashesForwardToBack(name);
 
 			FileData fd;
@@ -68,8 +67,7 @@ ABOpenFile_t* CArchiveZip::GetEntireFile(const string& fName)
 	if (!zip)
 		return NULL;
 
-	string fileName = fName;
-	transform(fileName.begin(), fileName.end(), fileName.begin(), (int (*)(int))tolower);
+	string fileName = StringToLower(fName);
 
 	//if (unzLocateFile(zip, fileName.c_str(), 2) != UNZ_OK) 
 	//	return 0;

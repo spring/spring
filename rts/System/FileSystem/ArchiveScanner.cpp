@@ -82,10 +82,8 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 		string fullName = *it;
 		string fn = filesystem.GetFilename(fullName);
 		string fpath = filesystem.GetDirectory(fullName);
-		string lcfn = fn;
-		string lcfpath = fpath;
-		transform(lcfn.begin(), lcfn.end(), lcfn.begin(), (int (*)(int))tolower); 
-		transform(lcfpath.begin(), lcfpath.end(), lcfpath.begin(), (int (*)(int))tolower); 
+		string lcfn = StringToLower(fn);
+		string lcfpath = StringToLower(fpath);
 
 		// Exclude archivefiles found inside directory (.sdd) archives.
 		string::size_type sdd = lcfpath.find(".sdd");
@@ -132,8 +130,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 					while (cur != 0) {
 						//printf("found %s %d\n", name.c_str(), size);
 
-						string ext = name.substr(name.find_last_of('.') + 1);
-						transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
+						string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
 
 						// only accept new format maps
 						if (ext == "smf" || ext == "sm3") {
@@ -211,8 +208,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	for (map<string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
 		for (vector<string>::iterator i = aii->second.modData.replaces.begin(); i != aii->second.modData.replaces.end(); ++i) {
 
-			string lcname = *i;
-			transform(lcname.begin(), lcname.end(), lcname.begin(), (int (*)(int))tolower);
+			string lcname = StringToLower(*i);
 
 			map<string, ArchiveInfo>::iterator ar = archiveInfo.find(lcname);
 
@@ -385,8 +381,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 			ai.modData = GetModData(&p, key + "Mod");
 		}
 
-		string lcname = ai.origName;
-		transform(lcname.begin(), lcname.end(), lcname.begin(), (int (*)(int))tolower);
+		string lcname = StringToLower(ai.origName);
 
 		string ext(lcname, lcname.find_last_of('.') + 1);
 		ai.directory = (ext == "sdd");
@@ -496,8 +491,7 @@ vector<string> CArchiveScanner::GetArchives(const string& root)
 {
 	vector<string> ret;
 
-	string lcname = root;
-	transform(lcname.begin(), lcname.end(), lcname.begin(), (int (*)(int))tolower);
+	string lcname = StringToLower(root);
 
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())
@@ -564,7 +558,7 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	if (lcname.find_last_of('/') != string::npos)
 		lcname = lcname.substr(lcname.find_last_of('/') + 1);
 
-	transform(lcname.begin(), lcname.end(), lcname.begin(), (int (*)(int))tolower);
+	StringToLowerInPlace(lcname);
 
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())

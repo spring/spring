@@ -11,8 +11,7 @@
 // Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsArchive(const std::string& fileName)
 {
-	std::string ext = filesystem.GetExtension(fileName);
-	std::transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
+	std::string ext = StringToLower(filesystem.GetExtension(fileName));
 
 	return  (ext == "sd7") || (ext == "sdz") || (ext == "sdd") ||
 			(ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx");
@@ -21,8 +20,7 @@ bool CArchiveFactory::IsArchive(const std::string& fileName)
 // Returns a pointer to a newly created suitable subclass of CArchiveBase
 CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName)
 {
-	std::string ext = filesystem.GetExtension(fileName);
-	std::transform(ext.begin(), ext.end(), ext.begin(), (int (*)(int))tolower);
+	std::string ext = StringToLower(filesystem.GetExtension(fileName));
 
 	std::vector<std::string> filenames = filesystem.GetNativeFilenames(fileName);
 	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
