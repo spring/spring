@@ -59,6 +59,8 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 
 #include <cassert>
 #include <stdexcept>
+#include <string>
+#include <ctype.h>
 
 /**
  * content_error
@@ -71,5 +73,18 @@ public:
 	content_error(const std::string& msg) : 
 	  std::runtime_error(msg) {}
 };
+
+static inline void
+StringToLowerInPlace(std::string &s)
+{
+	std::transform (s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
+}
+
+static inline std::string
+StringToLower(std::string s)
+{
+	StringToLowerInPlace(s);
+	return s;
+}
 
 #endif // __STD_AFX_H__

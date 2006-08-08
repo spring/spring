@@ -125,8 +125,7 @@ C3DOParser::C3DOParser()
 
 	while(!file.Eof())
 	{
-		string s = GetLine(file);
-		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
+		string s = StringToLower(GetLine(file));
 		char slask;
 		teamtex.insert(s);
 		file.Read(&slask, 1);
@@ -203,8 +202,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 //	ifs.read((char*)&root,sizeof(_3DObject));
 	curOffset=0;
 	READ_3DOBJECT(root);
-	object->name = GetText(root.OffsetToObjectName);
-	std::transform(object->name.begin(), object->name.end(), object->name.begin(), (int (*)(int))std::tolower);
+	object->name = StringToLower(GetText(root.OffsetToObjectName));
 
 	std::vector<float3> vertexes;
 	
@@ -310,7 +308,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 			if(side>9)
 				(*info) << "error: side > 9" << "\n";
 			char chside = '0' + side;
-			std::transform(texture.begin(), texture.end(), texture.begin(), (int (*)(int))std::tolower);
+			StringToLowerInPlace(texture);
 			if(teamtex.find(texture) != teamtex.end())
 				sp.texture=texturehandler->GetTATexture(texture + "0" + chside,side, false);
 			else
@@ -410,8 +408,7 @@ bool C3DOParser::ReadChild(int pos, S3DO *root,int side, int *numobj)
 	curOffset=pos;
 	READ_3DOBJECT(me);
 
-	string s = GetText(me.OffsetToObjectName);
-	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
+	string s = StringToLower(GetText(me.OffsetToObjectName));
 	object->name = s;
 	object->displist=0;
 

@@ -169,7 +169,7 @@ void CglList::Filter(bool reset)
 	if (reset) filteredItems = &items; // reset filter
 	for (std::vector<std::string>::const_iterator it = filteredItems->begin(); it != filteredItems->end(); ++it) {
 		std::string lcitem(*it, 0, query.length());
-		std::transform(lcitem.begin(), lcitem.end(), lcitem.begin(), (int (*)(int)) tolower);
+		StringToLowerInPlace(lcitem);
 		if (lcitem == query) {
 			if (*it == current)
 				place = destination->size();

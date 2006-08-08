@@ -62,7 +62,7 @@ S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
 	if(name.find(".")==string::npos)
 		name+=".s3o";
 
-	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
+	StringToLowerInPlace(name);
 
 	map<string,S3DOModel*>::iterator ui;
 	if((ui=units.find(name))!=units.end()){

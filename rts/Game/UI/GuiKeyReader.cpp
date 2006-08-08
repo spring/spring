@@ -49,11 +49,6 @@ static std::string GetLine(CFileHandler& fh)
 	return s;
 }
 
-static void MakeLow(std::string &s)
-{
-	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
-}
-
 CGuiKeyReader::CGuiKeyReader(char* filename)
 {
 	CreateKeyNames();	
@@ -74,13 +69,13 @@ CGuiKeyReader::CGuiKeyReader(char* filename)
 			if (inComment)
 				continue;
 		}
-		MakeLow(s);
+		StringToLowerInPlace(s);
 		if (ifs.Eof())
 			break;
 		while ((s.c_str()[0] == '/') || (s.c_str()[0] == '\n')) {
 			GetLine(ifs);
 			GetWord(ifs, s);
-			MakeLow(s);
+			StringToLowerInPlace(s);
 			if(ifs.Eof())
 				break;
 		}
@@ -88,13 +83,13 @@ CGuiKeyReader::CGuiKeyReader(char* filename)
 			break;
 		if (s.compare("bind") == 0){
 			GetWord(ifs, s);
-			MakeLow(s);
+			StringToLowerInPlace(s);
 			int i = GetKey(s);
 			if (i < 0) {
 				handleerror(0, s.c_str(), "Unknown key", 0);
 			}
 			GetWord(ifs, s);
-			MakeLow(s);
+			StringToLowerInPlace(s);
 			guiKeys[i] = s;
 		} else { 
 			handleerror(0,"Couldnt parse control file",s.c_str(),0);
@@ -116,7 +111,7 @@ bool CGuiKeyReader::Bind(std::string key, std::string action)
   if (k < 0) {
   	return false;
 	}
-	MakeLow(action);
+	StringToLowerInPlace(action);
 	guiKeys[k] = action;
 	return true;
 }

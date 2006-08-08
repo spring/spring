@@ -40,7 +40,7 @@ void CVFSHandler::FindArchives(const string& pattern, const string& path)
 // Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not
 void CVFSHandler::AddArchive(string arName, bool override)
 {
-//	transform(arName.begin(), arName.end(), arName.begin(), (int (*)(int))tolower);
+//	StringToLowerInPlace(arName);
 
 	CArchiveBase* ar = archives[arName];
 	if (!ar) {
@@ -55,7 +55,7 @@ void CVFSHandler::AddArchive(string arName, bool override)
 	int size;
 
 	for (cur = ar->FindFiles(0, &name, &size); cur != 0; cur = ar->FindFiles(cur, &name, &size)) {
-		transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+		StringToLowerInPlace(name);
 		if ((!override) && (files.find(name) != files.end())) 
 			continue;
 
@@ -98,7 +98,7 @@ void CVFSHandler::SetSlashesBackToForward(string& name)
 
 int CVFSHandler::LoadFile(string name, void* buffer)
 {
-	transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+	StringToLowerInPlace(name);
 	SetSlashesBackToForward(name);
 	FileData fd = files[name];
 
@@ -113,7 +113,7 @@ int CVFSHandler::LoadFile(string name, void* buffer)
 
 int CVFSHandler::GetFileSize(string name)
 {
-	transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+	StringToLowerInPlace(name);
 	SetSlashesBackToForward(name);
 	map<string, FileData>::iterator f = files.find(name);
 
@@ -127,7 +127,7 @@ int CVFSHandler::GetFileSize(string name)
 vector<string> CVFSHandler::GetFilesInDir(string dir)
 {
 	vector<string> ret;
-	transform(dir.begin(), dir.end(), dir.begin(), (int (*)(int))tolower);
+	StringToLowerInPlace(dir);
 	SetSlashesBackToForward(dir);
 	
 	// Non-empty directories to look in should have a trailing backslash

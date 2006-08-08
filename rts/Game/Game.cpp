@@ -2576,13 +2576,11 @@ void CGame::HandleChatMsg(std::string s,int player)
 	if(s.find(".kick")==0 && player==0 && gameServer && serverNet){
 		string name=s.substr(6,string::npos);
 		if(!name.empty()){
-			std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
-
+			StringToLowerInPlace(name);
 
 			for(int a=1;a<gs->activePlayers;++a){
 				if(gs->players[a]->active){
-					string p=gs->players[a]->playerName;
-					std::transform(p.begin(), p.end(), p.begin(), (int (*)(int))std::tolower);
+					string p = StringToLower(gs->players[a]->playerName);
 
 					if(p.find(name)==0){			//can kick on substrings of name
 						unsigned char c=NETMSG_QUIT;

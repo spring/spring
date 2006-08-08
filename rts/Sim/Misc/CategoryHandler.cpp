@@ -20,7 +20,7 @@ CCategoryHandler::~CCategoryHandler(void)
 
 unsigned int CCategoryHandler::GetCategory(std::string name)
 {
-	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
+	StringToLowerInPlace(name);
 	while(!name.empty() && *name.begin()==' ')
 		name.erase(name.begin());
 	if(name.empty())
@@ -49,7 +49,7 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 
 unsigned int CCategoryHandler::GetCategories(std::string names)
 {
-	std::transform(names.begin(), names.end(), names.begin(), (int (*)(int))std::tolower);
+	StringToLowerInPlace(names);
 	unsigned int ret=0;
 
 	while(!names.empty()){

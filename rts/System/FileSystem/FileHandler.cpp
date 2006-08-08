@@ -44,8 +44,7 @@ void CFileHandler::Init(const char* filename)
 		return;
 
 	//hpi dont have info about directory
-	std::string file=filename;
-	std::transform(file.begin(), file.end(), file.begin(), (int (*)(int))std::tolower);
+	std::string file = StringToLower(filename);
 
 	hpiLength=hpiHandler->GetFileSize(file);
 	if(hpiLength!=-1){

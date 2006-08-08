@@ -16,8 +16,7 @@ CArchiveHPI::CArchiveHPI(const string& name) :
 	std::vector<hpientry_ptr> ret = HPIGetFiles(*hpi);
 	for (std::vector<hpientry_ptr>::iterator it = ret.begin(); it != ret.end(); it++) {
 		if (!(*it)->directory) {
-			string name = (*it)->path();
-			transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+			string name = StringToLower((*it)->path());
 			fileSizes[name] = (*it)->size;
 		}
 	}
@@ -36,8 +35,7 @@ bool CArchiveHPI::IsOpen()
 
 ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 {
-	string name = fileName;
-	transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
+	string name = StringToLower(fileName);
 
 	hpientry_ptr f = HPIOpenFile(*hpi, (const char*)name.c_str());
 	if (!f.get())

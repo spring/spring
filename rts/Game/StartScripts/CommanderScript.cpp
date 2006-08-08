@@ -38,8 +38,7 @@ void CCommanderScript::Update(void)
 					char sideText[50];
 					sprintf(sideText,"side%i",b);
 					if(p.SectionExist(sideText)){
-						string sideName=p.SGetValueDef("arm",string(sideText)+"\\name");
-						std::transform(sideName.begin(), sideName.end(), sideName.begin(), (int (*)(int))std::tolower);
+						string sideName = StringToLower(p.SGetValueDef("arm",string(sideText)+"\\name"));
 						if(sideName==gs->Team(a)->side){		//ok found the right side
 							string cmdType=p.SGetValueDef("armcom",string(sideText)+"\\commander");
 							

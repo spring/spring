@@ -47,8 +47,7 @@ CTextureHandler::CTextureHandler()
 	set<string> teamTexes;
 	while(!file.Eof())
 	{
-		string s = GetLine(file);
-		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
+		string s = StringToLower(GetLine(file));
 		char slask;
 		teamTexes.insert(s);
 		file.Read(&slask, 1);
@@ -73,8 +72,7 @@ CTextureHandler::CTextureHandler()
 
 		string s2=s;
 		s2.erase(0,s2.find_last_of('/')+1);
-		s2=s2.substr(0,s2.find_last_of('.'));
-		std::transform(s2.begin(), s2.end(), s2.begin(), (int (*)(int))std::tolower);		
+		s2 = StringToLower(s2.substr(0,s2.find_last_of('.')));
 
 		if(usedNames.find(s2)!=usedNames.end())		//avoid duplicate names and give tga images priority
 			continue;
@@ -253,7 +251,7 @@ CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name,int team
 		name=string(c)+name;
 	}
 
-	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
+	StringToLowerInPlace(name);
 
 	std::map<std::string,UnitTexture*>::iterator tti;
 	if((tti=textures.find(name))!=textures.end()){

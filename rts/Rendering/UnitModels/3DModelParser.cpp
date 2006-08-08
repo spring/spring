@@ -21,7 +21,7 @@ C3DModelParser::~C3DModelParser(void)
 
 S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side)
 {
-	std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::tolower);
+	StringToLowerInPlace(name);
 	if(name.find(".s3o")!=string::npos)
 		return units3oparser->Load3DO(name,scale,side);
 	else
