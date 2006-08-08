@@ -17,7 +17,7 @@
 #include "Rendering/glFont.h"
 #include "Game/Camera.h"
 #include "TimeProfiler.h"
-#include <boost/filesystem/convenience.hpp>
+#include "Platform/FileSystem.h"
 
 #include "lib/minizip/zip.h"
 #include "FileSystem/ArchiveZip.h"
@@ -647,15 +647,28 @@ TODO: Read-error-check.
 */
 bool CPathEstimator::ReadFile(string name) 
 {
-
 	unsigned int hash=Hash();
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
 	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
-	CArchiveZip file(filename);
-	if (!file.IsOpen()) 
+
+	// open file for reading from a suitable location (where the file exists)
+	CArchiveZip* pfile = NULL;
+	std::vector<std::string> filenames = filesystem.GetNativeFilenames(filename, true);
+	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
+		pfile = new CArchiveZip(*it);
+		if (pfile->IsOpen())
+			break;
+		delete pfile;
+		pfile = NULL;
+	}
+
+	if (!pfile)
 		return false;
+
+	std::auto_ptr<CArchiveZip> auto_pfile(pfile);
+	CArchiveZip& file(*pfile);
 
 	int fh = file.OpenFile("pathinfo");
 
@@ -689,16 +702,22 @@ Trying to write offset and vertices data to file.
 */
 void CPathEstimator::WriteFile(string name) {
 	// We need this directory to exist
-	boost::filesystem::path f("./maps/paths");
-	if (!boost::filesystem::exists(f))
-		boost::filesystem::create_directories(f);
+	if (!filesystem.CreateDirectory("maps/paths"))
+		return;
 
 	unsigned int hash = Hash();
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
 	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + hashString + "." + name + ".zip";
-	zipFile file = zipOpen(filename.c_str(), APPEND_STATUS_CREATE);
+	zipFile file;
+
+	// open file for writing in a suitable location
+	std::vector<std::string> filenames = filesystem.GetNativeFilenames(filename, true);
+	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
+		file = zipOpen(filename.c_str(), APPEND_STATUS_CREATE);
+		if (file) break;
+	}
 
 	if (file) {
 		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
