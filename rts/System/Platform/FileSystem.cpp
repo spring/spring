@@ -74,6 +74,11 @@ FileSystemHandler::FileSystemHandler(int native_path_sep): native_path_separator
 	instance = this;
 }
 
+bool FileSystemHandler::remove(const std::string& file) const
+{
+	return remove(file.c_str()) == 0;
+}
+
 /**
  * @brief return a writable directory
  */
@@ -402,4 +407,12 @@ std::vector<std::string> FileSystem::GetNativeFilenames(std::string file, bool w
 		return std::vector<std::string>();
 	FixSlashes(file);
 	return fs.GetNativeFilenames(file, write);
+}
+
+bool FileSystem::Remove(std::string file) const
+{
+	if (!CheckFile(file))
+		return false;
+	FixSlashes(file);
+	return fs.remove(file);
 }

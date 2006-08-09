@@ -33,6 +33,7 @@ class FileSystemHandler
 		virtual std::ifstream* ifstream(const std::string& file, std::ios_base::openmode mode) const = 0;
 		virtual std::ofstream* ofstream(const std::string& file, std::ios_base::openmode mode) const = 0;
 		virtual bool mkdir(const std::string& dir) const = 0;
+		virtual bool remove(const std::string& file) const;
 
 		// custom functions
 		virtual size_t GetFilesize(const std::string& file) const;
@@ -63,6 +64,7 @@ class FileSystem
 		// generic functions
 		std::string GetWriteDir() const;
 		std::vector<std::string> GetNativeFilenames(std::string file, bool write = false) const;
+		bool Remove(std::string file) const;
 
 		// data read functions
 		FILE* fopen(std::string file, const char* mode) const;

@@ -53,15 +53,15 @@ std::string UnixFileSystemHandler::SubstEnvVars(const std::string& in) const
 				case '\\':
 					escape = true;
 					break;
-					case '$':  {
-						std::ostringstream envvar;
-						for (++ch; ch != in.end() && (isalnum(*ch) || *ch == '_'); ++ch)
-							envvar << *ch;
-						--ch;
-						char* subst = getenv(envvar.str().c_str());
-						if (subst && *subst)
-							out << subst;
-						break; }
+				case '$':  {
+					std::ostringstream envvar;
+					for (++ch; ch != in.end() && (isalnum(*ch) || *ch == '_'); ++ch)
+						envvar << *ch;
+					--ch;
+					char* subst = getenv(envvar.str().c_str());
+					if (subst && *subst)
+						out << subst;
+					break; }
 				default:
 					out << *ch;
 					break;
@@ -155,7 +155,7 @@ void UnixFileSystemHandler::LocateDataDirs()
 	if (env && *env)
 		AddDirs(SubstEnvVars(env));
 
-	FILE* f = fopen("/etc/spring/datadir", "r");
+	FILE* f = ::fopen("/etc/spring/datadir", "r");
 	if (f) {
 		char buf[1024];
 		while (fgets(buf, sizeof(buf), f)) {
@@ -299,11 +299,11 @@ std::vector<std::string> UnixFileSystemHandler::GetNativeFilenames(const std::st
 FILE* UnixFileSystemHandler::fopen(const std::string& file, const char* mode) const
 {
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		// Don't bother parsing the mode flags,
-		// fopen() will fail anyway if we don't have permission or the file doesn't exist
-		FILE* f = ::fopen((d->path + file).c_str(), mode);
-		if (f)
-			return f;
+		if ((mode[0] == 'r' && !strchr(mode, '+') && d->readable) || d->writable) {
+			FILE* f = ::fopen((d->path + file).c_str(), mode);
+			if (f)
+				return f;
+		}
 	}
 	return NULL;
 }
@@ -383,3 +383,19 @@ bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 	return false;
 }
 
+/**
+ * @brief removes a file from all writable data directories
+ *
+ * Returns true if at least one remove succeeded.
+ */
+bool UnixFileSystemHandler::remove(const std::string& file) const
+{
+	bool retval = false;
+	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+		if (d->writable) {
+			if (::remove((d->path + file).c_str()) == 0)
+				retval = true;
+		}
+	}
+	return retval;
+}
