@@ -378,6 +378,17 @@ std::string& FileSystem::FixSlashes(std::string& path) const
 }
 
 /**
+ * @brief converts backslashes in path to forward slashes
+ */
+std::string& FileSystem::ForwardSlashes(std::string& path) const
+{
+	for (unsigned i = 0; i < path.size(); ++i)
+		if (path[i] == '\\')
+			path[i] = '/';
+	return path;
+}
+
+/**
  * @brief does a little checking of a filename
  */
 bool FileSystem::CheckFile(const std::string& file) const

@@ -73,33 +73,10 @@ CVFSHandler::~CVFSHandler(void)
 	}
 }
 
-void CVFSHandler::MakeLower(string &s)
-{
-	for(unsigned int a=0;a<s.size();++a){
-		if(s[a]>='A' && s[a]<='Z')
-			s[a]=s[a]+'a'-'A';
-	}
-}
-
-void CVFSHandler::MakeLower(char *s)
-{
-	for(int a=0;s[a]!=0;++a)
-		if(s[a]>='A' && s[a]<='Z')
-			s[a]=s[a]+'a'-'A';
-}
-
-void CVFSHandler::SetSlashesBackToForward(string& name)
-{
-	for (unsigned int i = 0; i < name.length(); ++i) {
-		if (name[i] == '\\')
-			name[i] = '/';
-	}
-}
-
 int CVFSHandler::LoadFile(string name, void* buffer)
 {
 	StringToLowerInPlace(name);
-	SetSlashesBackToForward(name);
+	filesystem.ForwardSlashes(name);
 	FileData fd = files[name];
 
 	int fh = fd.ar->OpenFile(name);
@@ -114,7 +91,7 @@ int CVFSHandler::LoadFile(string name, void* buffer)
 int CVFSHandler::GetFileSize(string name)
 {
 	StringToLowerInPlace(name);
-	SetSlashesBackToForward(name);
+	filesystem.ForwardSlashes(name);
 	map<string, FileData>::iterator f = files.find(name);
 
 	if (f == files.end())
@@ -128,10 +105,10 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 {
 	vector<string> ret;
 	StringToLowerInPlace(dir);
-	SetSlashesBackToForward(dir);
-	
+	filesystem.ForwardSlashes(dir);
+
 	// Non-empty directories to look in should have a trailing backslash
-	if (dir.length() > 0) {
+	if (!dir.empty()) {
 		if (dir[dir.length() - 1] != '/')
 			dir += "/";
 	}
@@ -147,9 +124,8 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 		{
 		//This breaks VC8, specificaly boost iterator assertions
 		//if (equal(dir.begin(), dir.end(), i->first.begin())) {
-		int dirLength = dir.length();
 		int thisLength = filesStart->first.length();
-		string path = filesStart->first.substr(0,dirLength);
+		string path = filesystem.GetDirectory(filesStart->first);
 		// Test to see if this file startwith the dir path
 		if (dir.compare(path) == 0)
 			{

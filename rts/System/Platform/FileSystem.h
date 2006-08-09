@@ -85,6 +85,7 @@ class FileSystem
 		std::string GetExtension (const std::string& path) const;
 		std::string glob_to_regex(const std::string& glob) const;
 		std::string& FixSlashes  (std::string& path) const;
+		std::string& ForwardSlashes(std::string& path) const;
 
 	private:
 
