@@ -30,6 +30,7 @@ class UnixFileSystemHandler : public FileSystemHandler
 		virtual std::ifstream* ifstream(const std::string& file, std::ios_base::openmode mode) const;
 		virtual std::ofstream* ofstream(const std::string& file, std::ios_base::openmode mode) const;
 		virtual bool mkdir(const std::string& dir) const;
+		virtual bool remove(const std::string& file) const;
 
 		virtual std::string GetWriteDir() const;
 		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const;
