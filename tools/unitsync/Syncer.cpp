@@ -60,7 +60,7 @@ int CSyncer::ProcessUnits(bool checksum)
 {
 	if (!populated) {
 		//Populate the list of unit files to consider
-		files = CFileHandler::FindFiles("units/*.fbi");
+		files = CFileHandler::FindFiles("units/", "*.fbi");
 		populated = true;
 	}
 
