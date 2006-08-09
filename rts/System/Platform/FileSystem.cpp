@@ -21,6 +21,8 @@
 #else
 #include "Linux/UnixFileSystemHandler.h"
 #endif
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/VFSHandler.h"
 #include "mmgr.h"
 
 #define fs (FileSystemHandler::GetInstance())
@@ -50,8 +52,18 @@ FileSystemHandler& FileSystemHandler::GetInstance()
 	return *instance;
 }
 
+void FileSystemHandler::Cleanup()
+{
+	delete instance;
+	instance = NULL;
+}
+
 FileSystemHandler::~FileSystemHandler()
 {
+	delete archiveScanner;
+	delete hpiHandler;
+	archiveScanner = NULL;
+	hpiHandler = NULL;
 }
 
 FileSystemHandler::FileSystemHandler(int native_path_sep): native_path_separator(native_path_sep)

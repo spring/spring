@@ -23,6 +23,7 @@ class FileSystemHandler
 	public:
 
 		static FileSystemHandler& GetInstance();
+		static void Cleanup();
 
 		virtual ~FileSystemHandler();
 		FileSystemHandler(int native_path_sep = '/');
