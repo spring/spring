@@ -139,7 +139,6 @@ void UnixFileSystemHandler::DeterminePermissions(int start_at)
 			// and it may give funny effects on errors, e.g. it probably only gives funny things
 			// like network mounted datadir lost connection and suddenly files end up in some
 			// other random writedir you didn't even remember you had added it.
-			some random dir you didn't even remember you had added it
 			if (!writedir && access(d->path.c_str(), W_OK) == 0) {
 				d->writable = true;
 				fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
