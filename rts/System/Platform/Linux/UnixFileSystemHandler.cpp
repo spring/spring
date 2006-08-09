@@ -355,6 +355,10 @@ std::vector<std::string> UnixFileSystemHandler::GetNativeFilenames(const std::st
  */
 FILE* UnixFileSystemHandler::fopen(const std::string& file, const char* mode) const
 {
+	// if it's an absolute path, don't look for it in the data directories
+	if (file[0] == '/')
+		return ::fopen(file.c_str(), mode);
+
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if ((mode[0] == 'r' && !strchr(mode, '+') && d->readable) || d->writable) {
 			FILE* f = ::fopen((d->path + file).c_str(), mode);
@@ -374,6 +378,15 @@ FILE* UnixFileSystemHandler::fopen(const std::string& file, const char* mode) co
 std::ifstream* UnixFileSystemHandler::ifstream(const std::string& file, std::ios_base::openmode mode) const
 {
 	std::ifstream* ifs = new std::ifstream;
+
+	// if it's an absolute path, don't look for it in the data directories
+	if (file[0] == '/') {
+		ifs->open(file.c_str(), mode);
+		if (ifs->good() && ifs->is_open())
+			return ifs;
+		delete ifs;
+		return NULL;
+	}
 
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->readable) {
@@ -396,6 +409,15 @@ std::ifstream* UnixFileSystemHandler::ifstream(const std::string& file, std::ios
 std::ofstream* UnixFileSystemHandler::ofstream(const std::string& file, std::ios_base::openmode mode) const
 {
 	std::ofstream* ofs = new std::ofstream;
+
+	// if it's an absolute path, don't look for it in the data directories
+	if (file[0] == '/') {
+		ofs->open(file.c_str(), mode);
+		if (ofs->good() && ofs->is_open())
+			return ofs;
+		delete ofs;
+		return NULL;
+	}
 
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->writable) {
@@ -425,6 +447,10 @@ std::ofstream* UnixFileSystemHandler::ofstream(const std::string& file, std::ios
  */
 bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 {
+	// if it's an absolute path, don't mkdir inside the data directories
+	if (dir[0] == '/')
+		return mkdir_helper(dir);
+
 	return mkdir_helper(GetWriteDir() + dir);
 }
 
@@ -435,5 +461,9 @@ bool UnixFileSystemHandler::mkdir(const std::string& dir) const
  */
 bool UnixFileSystemHandler::remove(const std::string& file) const
 {
+	// if it's an absolute path, don't remove inside the data directories
+	if (file[0] == '/')
+		return ::remove(file.c_str()) == 0;
+
 	return ::remove((GetWriteDir() + file).c_str()) == 0;
 }
