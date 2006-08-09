@@ -31,7 +31,7 @@ class WinFileSystemHandler : public FileSystemHandler
 		virtual std::ofstream* ofstream(const std::string& file, std::ios_base::openmode mode) const;
 		virtual bool mkdir(const std::string& dir) const;
 
-		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string &pattern, const bool recurse, const bool include_dirs) const;
+		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const;
 };
 
 #endif // !WINFILESYSTEMHANDLER_H

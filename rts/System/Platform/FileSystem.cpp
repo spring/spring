@@ -133,7 +133,7 @@ static std::vector<std::string> FindFiles(const boost::filesystem::path& dirpath
  * Will search for a file given a particular pattern.
  * Starts from dirpath, descending down if recurse is true.
  */
-std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, const bool recurse, const bool include_dirs) const
+std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const
 {
 	std::vector<std::string> matches;
 	boost::filesystem::path dirpath(dir, boost::filesystem::no_check);

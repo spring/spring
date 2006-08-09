@@ -102,7 +102,7 @@ bool WinFileSystemHandler::mkdir(const std::string& path) const
 	return false;
 }
 
-static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, const bool recurse, const bool include_dirs)
+static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, bool recurse, bool include_dirs)
 {
 	struct _finddata_t files;
 	long hFile;
@@ -112,7 +112,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 
 	do {
 		// exclude hidden/system files
-		if (!(files.attrib & (_A_HIDDEN | _A_SYSTEM))) {
+		if (files.name[0] != '.' && !(files.attrib & (_A_HIDDEN | _A_SYSTEM))) {
 			// is it a file?
 			if (!(files.attrib & _A_SUBDIR)) {
 				if (boost::regex_match(files.name, regexpattern))
@@ -130,7 +130,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 	_findclose( hFile );
 }
 
-std::vector<std::string> WinFileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, const bool recurse, const bool include_dirs) const
+std::vector<std::string> WinFileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const
 {
 	assert(!dir.empty() && dir[dir.length() - 1] == '\\');
 
