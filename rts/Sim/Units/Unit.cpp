@@ -1211,7 +1211,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 		if(!exp.empty()){
 			WeaponDef* wd=weaponDefHandler->GetWeapon(exp);
 			if(wd){
-				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,wd->edgeEffectivness,wd->explosionSpeed,this,true,wd->damages[0]>500?1:2,false,wd->explosionGenerator);
+				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,wd->edgeEffectivness,wd->explosionSpeed,this,true,wd->damages[0]>500?1:2,false,wd->explosionGenerator,0);
 
 				// Play explosion sound
 				CWeaponDefHandler::LoadSound(wd->soundhit);

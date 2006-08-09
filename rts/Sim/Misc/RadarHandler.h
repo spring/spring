@@ -31,7 +31,7 @@ public:
 
 	inline bool InSeismicDistance(const CUnit* unit,int allyteam){
 		int square=max(0,min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+max(0,min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
-		return (bool)seismicMaps[allyteam][square];
+		return !!seismicMaps[allyteam][square];
 	}
 
 	bool circularRadar;

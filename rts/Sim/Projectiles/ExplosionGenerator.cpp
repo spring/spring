@@ -132,7 +132,7 @@ CStdExplosionGenerator::~CStdExplosionGenerator()
 void CStdExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::string& tag)
 {}
 
-void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod)
+void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
@@ -272,6 +272,8 @@ CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator);
 #define SPW_GROUND 2
 #define SPW_AIR 4
 #define SPW_UNDERWATER 8
+#define SPW_UNIT 16 // only execute when the explosion hits a unit
+#define SPW_NO_UNIT 32 // only execute when the explosion doesn't hit a unit (environment)
 
 CCustomExplosionGenerator::CCustomExplosionGenerator()
 {
@@ -462,6 +464,8 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		if(!!atoi(parser.SGetValueDef ("0", location + "water").c_str()))      flags |= SPW_WATER;
 		if(!!atoi(parser.SGetValueDef ("0", location + "air").c_str()))        flags |= SPW_AIR;
 		if(!!atoi(parser.SGetValueDef ("0", location + "underwater").c_str())) flags |= SPW_UNDERWATER;
+		if(!!atoi(parser.SGetValueDef ("0", location + "unit").c_str())) flags |= SPW_UNIT;
+		if(!!atoi(parser.SGetValueDef ("0", location + "nounit").c_str())) flags |= SPW_NO_UNIT;
 		psi->flags = flags;
 		psi->count = atoi(parser.SGetValueDef("1", location + "count").c_str());
 
@@ -502,7 +506,7 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 }
 
 
-void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod)
+void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit)
 {
 	float h2=ground->GetHeight2(pos.x,pos.z);
 
@@ -511,6 +515,8 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 	else if (pos.y<-15) flags = SPW_UNDERWATER;
 	else if (pos.y-max((float)0,h2)>20) flags = SPW_AIR;
 	else flags = SPW_GROUND;
+	if (hit) flags |= SPW_UNIT;
+	else flags |= SPW_NO_UNIT;
 
 	for (int a=0;a<projectileSpawn.size();a++)
 	{
@@ -532,7 +538,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 		new CStandarGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
 
 	if (useDefaultExplosions)
-		CStdExplosionGenerator::Explosion(pos, damages, radius, owner, gfxMod);
+		CStdExplosionGenerator::Explosion(pos, damages, radius, owner, gfxMod, hit);
 }
 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()

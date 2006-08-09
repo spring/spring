@@ -43,7 +43,7 @@ public:
 	CExplosionGenerator();
 	virtual ~CExplosionGenerator();
 
-	virtual void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod) = 0;
+	virtual void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit) = 0;
 	virtual void Load(CExplosionGeneratorHandler* loader, const std::string& tag) = 0;
 };
 
@@ -55,7 +55,7 @@ public:
 	CStdExplosionGenerator();
 	virtual ~CStdExplosionGenerator();
 
-	void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod);
+	void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit);
 	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);
 };
 
@@ -97,7 +97,7 @@ public:
 	static void OutputProjectileClassInfo();
 
 	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
-	void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod);
+	void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit);
 };
 
 

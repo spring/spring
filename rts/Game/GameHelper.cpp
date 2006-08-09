@@ -58,7 +58,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectivness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectivness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics, CUnit *hit)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -144,7 +144,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	if (!explosionGraphics)
 		explosionGraphics = stdExplosionGenerator;
 
-	explosionGraphics->Explosion(pos,damages,radius,owner,gfxMod);
+	explosionGraphics->Explosion(pos,damages,radius,owner,gfxMod,hit);
 	groundDecals->AddExplosion(pos,damages[0],radius);
 	//sound->PlaySound(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
 	water->AddExplosion(pos,damages[0],radius);
