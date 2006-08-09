@@ -111,9 +111,10 @@ void CBeamLaser::Fire(void)
 	float3 hitPos;
 
 	bool tryAgain=true;
+	CUnit* hit;
 	for(int tries=0;tries<5 && tryAgain;++tries){
 		tryAgain=false;
-		CUnit* hit;
+		hit=0;
 		float length=helper->TraceRay(curPos,dir,maxLength-curLength,damages[0],owner,hit);
 
 		float3 newDir;
@@ -143,5 +144,5 @@ void CBeamLaser::Fire(void)
 	}
 	float	intensity=1-(curLength)/(range*2);
 	if(curLength<maxLength)
-		helper->Explosion(hitPos,damages*intensity,areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner, true, 1.0f, false,weaponDef->explosionGenerator);
+		helper->Explosion(hitPos,damages*intensity,areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner, true, 1.0f, false,weaponDef->explosionGenerator,hit);
 }

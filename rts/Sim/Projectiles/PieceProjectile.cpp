@@ -119,7 +119,7 @@ void CPieceProjectile::Collision()
 		pos+=norm*0.1;
 	} else {
 		if (flags & PP_Explode) {
-			helper->Explosion(pos,DamageArray()*50,5,0,10,owner,false);
+			helper->Explosion(pos,DamageArray()*50,5,0,10,owner,false,1.0f,false,0,0);
 		}
 		if(flags & PP_Smoke){
 			float3 dir=speed;
@@ -137,7 +137,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 	if(unit==owner)
 		return;
 	if (flags & PP_Explode) {
-		helper->Explosion(pos,DamageArray()*50,5,0,10,owner,false);
+		helper->Explosion(pos,DamageArray()*50,5,0,10,owner,false,1.0f, false, 0, unit);
 	}
 	if(flags & PP_Smoke){
 		float3 dir=speed;
