@@ -715,7 +715,7 @@ void CPathEstimator::WriteFile(string name) {
 	// open file for writing in a suitable location
 	std::vector<std::string> filenames = filesystem.GetNativeFilenames(filename, true);
 	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
-		file = zipOpen(filename.c_str(), APPEND_STATUS_CREATE);
+		file = zipOpen(it->c_str(), APPEND_STATUS_CREATE);
 		if (file) break;
 	}
 
