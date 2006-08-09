@@ -160,7 +160,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	scaleFactor=1/(65536.0f);
 
 	string sideName(name);
-	hpiHandler->MakeLower(sideName);
+	StringToLowerInPlace(sideName);
 	sideName+=color+'0';
 
 	map<string,S3DOModel*>::iterator ui;
@@ -685,7 +685,7 @@ void LocalS3DO::Draw()
 {
 	#define CORDDIV 65536.0f
 	#define ANGDIV 182.0f
-	//detta kan väl optimeras lite kanske.. men tills vidare
+	//detta kan vï¿½ optimeras lite kanske.. men tills vidare
 	glPushMatrix();
 	glTranslatef(offset.x,offset.y,offset.z);
 	if(anim)

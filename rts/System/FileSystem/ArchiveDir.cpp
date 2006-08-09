@@ -30,12 +30,12 @@ CArchiveDir::CArchiveDir(const string& archivename) :
 	// we convert filenames to lowercase in every function, and keep a std::map
 	// lcNameToOrigName to convert back from lowercase to original case.
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
-		// strip our own name off..
+		// strip our own name off.. & convert to forward slashes
 		std::string origName(*it, archiveName.length());
+		filesystem.ForwardSlashes(origName);
 		// convert to lowercase and store
-		std::string lcName(StringToLower(origName));
 		searchFiles.push_back(origName);
-		lcNameToOrigName[lcName] = origName;
+		lcNameToOrigName[StringToLower(origName)] = origName;
 	}
 }
 
@@ -50,9 +50,7 @@ bool CArchiveDir::IsOpen()
 
 int CArchiveDir::OpenFile(const std::string& fileName)
 {
-	std::string lcname(StringToLower(fileName));
-
-	CFileHandler* f = new CFileHandler(archiveName + lcNameToOrigName[lcname]);
+	CFileHandler* f = new CFileHandler(archiveName + lcNameToOrigName[StringToLower(fileName)]);
 
 	if (!f || !f->FileExists())
 		return 0;

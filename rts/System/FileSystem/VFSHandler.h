@@ -19,16 +19,12 @@ protected:
 	map<string, FileData> files; 
 	map<string, CArchiveBase*> archives;
 	void FindArchives(const string& pattern, const string& path);
-	void SetSlashesBackToForward(string& name);
 public:
 	CVFSHandler(bool mapArchives = true);
 	virtual ~CVFSHandler();
 
 	void MapArchives(const string& taDir);
 
-	void MakeLower(char* s);
-	void MakeLower(string &s);
-	
 	int LoadFile(string name, void* buffer);
 	int GetFileSize(string name);
 
