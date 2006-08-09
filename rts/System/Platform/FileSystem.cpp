@@ -137,8 +137,6 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 {
 	std::vector<std::string> matches;
 	boost::filesystem::path dirpath(dir, boost::filesystem::no_check);
-	if (dirpath.empty())
-		dirpath=boost::filesystem::path(".", boost::filesystem::no_check);
 	if (boost::filesystem::exists(dirpath) && boost::filesystem::is_directory(dirpath)) {
 		boost::regex regexpattern(filesystem.glob_to_regex(pattern));
 		matches = ::FindFiles(dirpath, regexpattern, recurse, include_dirs);
@@ -289,6 +287,10 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
 {
 	if (!CheckFile(dir))
 		return std::vector<std::string>();
+	if (dir.empty())
+		dir = "./";
+	if (dir[dir.length() - 1] != '/' && dir[dir.length() - 1] != '\\')
+		dir += '/';
 	FixSlashes(dir);
 	return fs.FindFiles(dir, pattern, recurse, include_dirs);
 }

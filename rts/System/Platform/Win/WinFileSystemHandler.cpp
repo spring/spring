@@ -10,10 +10,12 @@
  */
 
 #include "StdAfx.h"
+#include <boost/regex.hpp>
 #include <fstream>
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "WinFileSystemHandler.h"
+#include <io.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <direct.h>
@@ -98,4 +100,44 @@ bool WinFileSystemHandler::mkdir(const std::string& path) const
 
 	// Otherwise we return false.
 	return false;
+}
+
+static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, const bool recurse, const bool include_dirs)
+{
+	struct _finddata_t files;
+	long hFile;
+
+	if( (hFile = _findfirst( (dir + "*.*").c_str() , &files )) == -1L )
+		return;
+
+	do {
+		// exclude hidden/system files
+		if (!(files.attrib & (_A_HIDDEN | _A_SYSTEM))) {
+			// is it a file?
+			if (!(files.attrib & _A_SUBDIR)) {
+				if (boost::regex_match(files.name, regexpattern))
+					matches.push_back(dir + files.name);
+			}
+			// or a directory?
+			else if (recurse) {
+				if (include_dirs && boost::regex_match(files.name, regexpattern))
+					matches.push_back(dir + files.name);
+				FindFiles(matches, dir + files.name + "\\", regexpattern, recurse, include_dirs);
+			}
+		}
+	} while (_findnext( hFile, &files ) == 0);
+
+	_findclose( hFile );
+}
+
+std::vector<std::string> WinFileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, const bool recurse, const bool include_dirs) const
+{
+	assert(!dir.empty() && dir[dir.length() - 1] == '\\');
+
+	std::vector<std::string> matches;
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
+
+	::FindFiles(matches, dir, regexpattern, recurse, include_dirs);
+
+	return matches;
 }
