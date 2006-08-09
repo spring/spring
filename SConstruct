@@ -29,14 +29,16 @@ import filelist
 env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
 spring_files = filelist.get_spring_source(env)
+
 # Build UnixDataDirHandler.cpp separately from the other sources.  This is to prevent recompilation of
 # the entire source if one wants to change just the install prefix (and hence the datadir).
-if env['platform'] == 'windows':
-	spring = env.Program('game/spring', spring_files)
-else:
+
+if env['platform'] != 'windows':
 	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'),
-	                     CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
-	spring = env.Program('game/spring', spring_files + [ufshcpp])
+                             CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
+	spring_files += [ufshcpp]
+
+spring = env.Program('game/spring', spring_files)
 
 Alias('spring', spring)
 Default(spring)
@@ -64,6 +66,7 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	'rts/System/FileSystem/ArchiveZip.cpp',
 	'rts/System/FileSystem/FileHandler.cpp',
 	'rts/System/FileSystem/VFSHandler.cpp',
+	'rts/System/Platform/FileSystem.cpp',
 	'rts/lib/7zip/7zAlloc.c',
 	'rts/lib/7zip/7zBuffer.c',
 	'rts/lib/7zip/7zCrc.c',
@@ -83,8 +86,14 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	'rts/lib/minizip/ioapi.c',
 	'rts/lib/minizip/unzip.c',
 	'rts/lib/minizip/zip.c']
+
 if env['platform'] == 'windows':
-	unitsync_files += ['rts/lib/minizip/iowin32.c']
+	unitsync_files += ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp']
+else:
+	ufshcpp = env.SharedObject(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'),
+                             CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
+	unitsync_files += ['rts/System/Platform/ConfigHandler.cpp', 'rts/System/Platform/Linux/DotfileHandler.cpp', ufshcpp]
+
 unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)
 Alias('unitsync', unitsync)
 # HACK   disable it for now, as it is not yet needed and would just increase compilation time
