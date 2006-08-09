@@ -23,6 +23,38 @@
 #include "mmgr.h"
 
 /**
+ * @brief creates a directory
+ *
+ * Returns true if postcondition is that directory exists.
+ * Used in UnixFileSystemHandler::mkdir() and to try to create data directories
+ * if they don't yet exist.
+ */
+static bool mkdir_helper(const std::string& dir, bool verbose = false)
+{
+	struct stat info;
+
+	// First check if directory exists. We'll return success if it does.
+	if (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
+		return true;
+
+	if (verbose)
+		fprintf(stderr, "WARNING: trying to create directory: %s ... ", dir.c_str());
+
+	// If it doesn't exist we try to mkdir it and return success if that succeeds.
+	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0) {
+		if (verbose)
+			fprintf(stderr, "Success\n");
+		return true;
+	}
+
+	if (verbose)
+		perror("");
+
+	// Otherwise we return false.
+	return false;
+}
+
+/**
  * @brief construct a data directory object
  *
  * Appends a slash to the end of the path if there isn't one already.
@@ -102,17 +134,42 @@ void UnixFileSystemHandler::DeterminePermissions(int start_at)
 		// Note: modifying permissions while or after this function runs has undefined behaviour
 		if (access(d->path.c_str(), R_OK | X_OK | F_OK) == 0) {
 			d->readable = true;
-			if (access(d->path.c_str(), W_OK) == 0) {
+			// Note: disallow multiple write directories.
+			// There isn't really a use for it as every thing is written to the first one anyway,
+			// and it may give funny effects on errors, e.g. it probably only gives funny things
+			// like network mounted datadir lost connection and suddenly files end up in some
+			// other random writedir you didn't even remember you had added it.
+			some random dir you didn't even remember you had added it
+			if (!writedir && access(d->path.c_str(), W_OK) == 0) {
 				d->writable = true;
 				fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
-				// if it's the first writable one we mark it as "the write directory"
-				if (!writedir)
-					writedir = &*d;
+				writedir = &*d;
 			} else {
 				fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
 			}
 		} else {
 			fprintf(stderr, "WARNING: can not access data directory: %s\n", d->path.c_str());
+			size_t prev_slash = 0, slash;
+			bool success = true;
+			while ((slash = d->path.find('/', prev_slash + 1)) != std::string::npos) {
+				if (!mkdir_helper(d->path.substr(0, slash), true)) {
+					success = false;
+					break;
+				}
+				prev_slash = slash;
+			}
+			if (success) {
+				// it didn't exist before, now it does and we just created it with rw access,
+				// so we just assume we still have read-write acces...
+				d->readable = true;
+				if (!writedir) {
+					fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
+					d->writable = true;
+					writedir = &*d;
+				} else {
+					fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
+				}
+			}
 		}
 	}
 }
@@ -174,7 +231,8 @@ void UnixFileSystemHandler::LocateDataDirs()
 	DeterminePermissions();
 
 	if (!writedir) {
-		// silently add current working directory to search path & try again
+		// add current working directory to search path & try again
+		fprintf(stderr, "WARNING: adding current working directory to search path\n");
 		char buf[4096];
 		getcwd(buf, sizeof(buf));
 		buf[sizeof(buf) - 1] = 0;
@@ -368,19 +426,7 @@ std::ofstream* UnixFileSystemHandler::ofstream(const std::string& file, std::ios
  */
 bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 {
-	std::string path(GetWriteDir() + dir);
-	struct stat info;
-
-	// First check if directory exists. We'll return success if it does.
-	if (stat(path.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
-		return true;
-
-	// If it doesn't exist we try to mkdir it and return success if that succeeds.
-	if (::mkdir(path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
-		return true;
-
-	// Otherwise we return false.
-	return false;
+	return mkdir_helper(GetWriteDir() + dir);
 }
 
 /**
@@ -390,12 +436,5 @@ bool UnixFileSystemHandler::mkdir(const std::string& dir) const
  */
 bool UnixFileSystemHandler::remove(const std::string& file) const
 {
-	bool retval = false;
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		if (d->writable) {
-			if (::remove((d->path + file).c_str()) == 0)
-				retval = true;
-		}
-	}
-	return retval;
+	return ::remove((GetWriteDir() + file).c_str()) == 0;
 }
