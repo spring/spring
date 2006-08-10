@@ -45,7 +45,7 @@ CUnitDrawer::CUnitDrawer(void)
 		texturehandler=new CTextureHandler;
 
 	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
-	unitIconDist=configHandler.GetInt("UnitIconDist",200); 
+	unitIconDist=configHandler.GetInt("UnitIconDist",200);
 	iconLength=750*unitIconDist*unitIconDist;
 
 	CBitmap white;
@@ -353,8 +353,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
 
 	// Is the unit selected? Then draw it white.
-	set<CUnit*>::iterator ui=selectedUnits.selectedUnits.find(unit);
-	if(ui!=selectedUnits.selectedUnits.end()){
+	if(unit->commandAI->selected){
 		color[0]=255;
 		color[1]=255;
 		color[2]=255;
@@ -1090,7 +1089,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	/* Push out the polygons. */
 	glPushMatrix();
 	glTranslatef3(pos);
-	
+
 	model->DrawStatic();
 	glPopMatrix();
 

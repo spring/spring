@@ -35,6 +35,7 @@
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "mmgr.h"
+#include "Rendering/IconHandler.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -54,33 +55,8 @@ CMiniMap::CMiniMap()
 	maximized(false),
 	minimized(false)
 {
-	unsigned char tex[16][16][4];
-	for(int y=0;y<16;++y){
-		float dy=y-7.5;
-		for(int x=0;x<16;++x){
-			float dx=x-7.5;
-			float dist=sqrt(dx*dx+dy*dy);
-			if(dist<6 || dist>9){
-				tex[y][x][0]=255;
-				tex[y][x][1]=255;
-				tex[y][x][2]=255;
-			} else {
-				tex[y][x][0]=0;
-				tex[y][x][1]=0;
-				tex[y][x][2]=0;
-			}
-			if(dist<7){
-				tex[y][x][3]=255;
-			} else {
-				tex[y][x][3]=0;
-			}
-		}
-	}
-	glGenTextures(1, &unitBlip);
-	glBindTexture(GL_TEXTURE_2D, unitBlip);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,16, 16, GL_RGBA, GL_UNSIGNED_BYTE, tex);
 
 	float hw=sqrt(float(gs->mapx)/gs->mapy);
 	width = (int) (width*hw);
@@ -104,7 +80,6 @@ CMiniMap::CMiniMap()
 
 CMiniMap::~CMiniMap()
 {
-	glDeleteTextures (1, &unitBlip);
 }
 
 void CMiniMap::Draw()
@@ -135,19 +110,16 @@ void CMiniMap::Draw()
 	readmap->DrawMinimap ();
 
 	glEnable(GL_BLEND);
-	glBindTexture(GL_TEXTURE_2D, unitBlip);
-	glBegin(GL_QUADS);
-	float size=0.2f/sqrt((float)width+height);
+	float size=0.25f/sqrt((float)width+height);
 	list<CUnit*>::iterator ui;
 	for(ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();ui++){
 		DrawUnit(*ui,size);
 	}
-	glEnd();
 
 	glDisable(GL_TEXTURE_2D);
 
 	left.clear();
-	
+
 	//Add restraints for camera sides
 	GetFrustumSide(cam2->bottom);
 	GetFrustumSide(cam2->top);
@@ -281,7 +253,7 @@ void CMiniMap::GetFrustumSide(float3& side)
 {
 	fline temp;
 	float3 up(0,1,0);
-	
+
 	float3 b=up.cross(side);		//get vector for collision between frustum and horizontal plane
 	if(fabs(b.z)<0.0001)
 		b.z=0.00011f;
@@ -289,21 +261,21 @@ void CMiniMap::GetFrustumSide(float3& side)
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(side);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
-		
-		if(side.y>0)								
+
+		if(side.y>0)
 			colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
 		else
 			colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
-		
-		
+
+
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
 		temp.left=-1;
 		if(b.z>0)
 			temp.left=1;
 		temp.maxz=gs->mapy*SQUARE_SIZE;
 		temp.minz=0;
-		left.push_back(temp);			
-	}	
+		left.push_back(temp);
+	}
 
 }
 
@@ -311,17 +283,30 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 {
 	if(unit->lastDamage>gs->frameNum-90 && gs->frameNum&8)
 		return;
+
 	float3 pos=unit->pos;
 /*	if(pos.z<0 || pos.z>gs->mapy*SQUARE_SIZE){
 		info->AddLine("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
 		return;
 	}*/
-	if(unit->allyteam==gu->myAllyTeam || (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating){
-	}else if((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
+	CIcon* icon;
+	if(unit->allyteam==gu->myAllyTeam || (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)
+	{
+		icon=iconHandler->GetIcon(unit->unitDef->iconType);
+		if(icon->radiusAdjust)
+			size=size*unit->radius/30;
+	}
+	else if((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR))
+	{
+		icon=iconHandler->GetIcon("default");
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
-	}else{
+
+	}
+	else
+	{
 		return;
 	}
+	size=size*icon->size;
 	if(unit->commandAI->selected)
 		glColor3f(1,1,1);
 	else {
@@ -343,14 +328,17 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 
 	float aspectRatio=float(width)/float(height);
 
-	glTexCoord2f(0,0);
-	glVertex2f(x-size,y-size*aspectRatio);
-	glTexCoord2f(0,1);
-	glVertex2f(x-size,y+size*aspectRatio);
-	glTexCoord2f(1,1);
-	glVertex2f(x+size,y+size*aspectRatio);
+	glBindTexture(GL_TEXTURE_2D,icon->texture);
+	glBegin(GL_QUADS);
 	glTexCoord2f(1,0);
+	glVertex2f(x+size,y+size*aspectRatio);
+	glTexCoord2f(1,1);
 	glVertex2f(x+size,y-size*aspectRatio);
+	glTexCoord2f(0,1);
+	glVertex2f(x-size,y-size*aspectRatio);
+	glTexCoord2f(0,0);
+	glVertex2f(x-size,y+size*aspectRatio);
+	glEnd();
 }
 
 
@@ -556,17 +544,17 @@ void CMiniMap::DrawNotes(void)
 				else
 					size=baseSize*1.4-modage*baseSize*0.9;
 			}
-			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);	
-			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);	
+			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);
+			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);
 
-			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);	
-			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);	
+			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);
+			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);
 
-			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);	
-			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);	
+			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);
+			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);
 
-			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);	
-			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);	
+			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);
+			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);
 		}
 		++ni;
 	}
