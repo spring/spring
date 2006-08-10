@@ -713,7 +713,7 @@ void CPathEstimator::WriteFile(string name) {
 	zipFile file;
 
 	// open file for writing in a suitable location
-	file = zipOpen((filesystem.GetWriteDir() + filename).c_str(), APPEND_STATUS_CREATE);
+	file = zipOpen(filesystem.GetNativeFilenames(filename, true).front().c_str(), APPEND_STATUS_CREATE);
 
 	if (file) {
 		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);

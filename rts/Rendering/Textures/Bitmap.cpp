@@ -295,7 +295,7 @@ void CBitmap::Save(string const& filename)
 	ilTexImage(xsize,ysize,1,4,IL_RGBA,IL_UNSIGNED_BYTE,NULL);
 	ilSetData(buf);
 
-	ilSaveImage((char*)((filesystem.GetWriteDir() + filename).c_str()));
+	ilSaveImage((char*)(filesystem.GetNativeFilenames(filename, true).front().c_str()));
 
 	ilDeleteImages(1,&ImageName);
 	delete[] buf;
