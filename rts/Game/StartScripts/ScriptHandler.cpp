@@ -47,7 +47,7 @@ void CScriptHandler::LoadScripts() {
 #endif
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
 		string name = fi->substr(fi->find_last_of('\\') + 1);
-		loaded_scripts.push_back(new CGlobalAITestScript(name, "./"));
+		loaded_scripts.push_back(new CGlobalAITestScript(name));
 	}
 
 	f = CFileHandler::FindFiles("", "*.ssf");
