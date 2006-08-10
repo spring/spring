@@ -35,6 +35,7 @@ class UnixFileSystemHandler : public FileSystemHandler
 		virtual std::string GetWriteDir() const;
 		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const;
 		virtual std::vector<std::string> GetNativeFilenames(const std::string& file, bool write) const;
+		virtual std::vector<std::string> GetDataDirectories() const;
 
 	private:
 

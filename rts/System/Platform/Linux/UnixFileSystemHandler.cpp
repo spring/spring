@@ -243,6 +243,10 @@ void UnixFileSystemHandler::LocateDataDirs()
 		// bail out
 		throw content_error("not a single read-write data directory found!");
 	}
+
+	// for now, chdir to the datadirectory as a safety measure:
+	// all AIs still just assume it's ok to put their stuff in the current directory after all
+	chdir(GetWriteDir().c_str());
 }
 
 /**
@@ -343,6 +347,17 @@ std::vector<std::string> UnixFileSystemHandler::GetNativeFilenames(const std::st
 			if (!write || d->writable)
 				f.push_back(d->path + file);
 		}
+	}
+	return f;
+}
+
+std::vector<std::string> UnixFileSystemHandler::GetDataDirectories() const
+{
+	std::vector<std::string> f;
+
+	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+		if (d->readable)
+			f.push_back(d->path);
 	}
 	return f;
 }

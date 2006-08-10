@@ -722,7 +722,7 @@ DLL_EXPORT int __stdcall GetSideCount()
 
 DLL_EXPORT const char* __stdcall GetSideName(int side)
 {
-	ASSERT((unsigned)side < modData.size(), "Array index out of bounds. Call GetSideCount before GetSideName.");
+	ASSERT((unsigned)side < sideData.size(), "Array index out of bounds. Call GetSideCount before GetSideName.");
 	return GetStr(sideData[side].name);
 }
 
