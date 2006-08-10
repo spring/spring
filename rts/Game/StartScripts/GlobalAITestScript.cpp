@@ -13,9 +13,9 @@
 
 extern std::string stupidGlobalMapname;
 
-CGlobalAITestScript::CGlobalAITestScript(std::string dll, std::string base)
+CGlobalAITestScript::CGlobalAITestScript(std::string dll)
 : CScript(std::string("GlobalAI test (") + dll.substr(dll.rfind('/')+1) + std::string(")")),
-	dllName(dll), baseDir(base)
+	dllName(dll)
 {
 }
 
@@ -27,8 +27,7 @@ void CGlobalAITestScript::Update(void)
 {
 	switch(gs->frameNum){
 	case 0:{
-		string name = baseDir + dllName;
-		globalAI->CreateGlobalAI(1, name.c_str());
+		globalAI->CreateGlobalAI(1, dllName.c_str());
 
 		gs->Team(0)->energy=1000;
 		gs->Team(0)->energyStorage=1000;

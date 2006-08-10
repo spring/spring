@@ -7,9 +7,8 @@ class CGlobalAITestScript :
 	public CScript
 {
 	std::string dllName;
-	std::string baseDir;
 public:
-	CGlobalAITestScript(std::string dll, std::string base);
+	CGlobalAITestScript(std::string dll);
 	~CGlobalAITestScript(void);
 
 	void Update(void);
