@@ -172,6 +172,13 @@ std::vector<std::string> FileSystemHandler::GetNativeFilenames(const std::string
 	return f;
 }
 
+std::vector<std::string> FileSystemHandler::GetDataDirectories() const
+{
+	std::vector<std::string> f;
+	f.push_back(FileSystemHandler::GetWriteDir());
+	return f;
+}
+
 ////////////////////////////////////////
 ////////// FileSystem
 
@@ -418,6 +425,11 @@ std::vector<std::string> FileSystem::GetNativeFilenames(std::string file, bool w
 		return std::vector<std::string>();
 	FixSlashes(file);
 	return fs.GetNativeFilenames(file, write);
+}
+
+std::vector<std::string> FileSystem::GetDataDirectories() const
+{
+	return fs.GetDataDirectories();
 }
 
 bool FileSystem::Remove(std::string file) const

@@ -40,6 +40,7 @@ class FileSystemHandler
 		virtual std::string GetWriteDir() const;
 		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const;
 		virtual std::vector<std::string> GetNativeFilenames(const std::string& file, bool write) const;
+		virtual std::vector<std::string> GetDataDirectories() const;
 
 		int GetNativePathSeparator() const { return native_path_separator; }
 
@@ -64,6 +65,7 @@ class FileSystem
 		// generic functions
 		std::string GetWriteDir() const;
 		std::vector<std::string> GetNativeFilenames(std::string file, bool write = false) const;
+		std::vector<std::string> GetDataDirectories() const;
 		bool Remove(std::string file) const;
 
 		// data read functions

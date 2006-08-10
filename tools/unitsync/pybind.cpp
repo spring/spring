@@ -6,6 +6,7 @@
 #include <cstring>
 #include "unitsync.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Platform/FileSystem.h"
 
 #define NAMEBUF_SIZE 4096
 
@@ -557,6 +558,26 @@ static PyObject *unitsync_SizeArchiveFile(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", SizeArchiveFile(archive, handle));
 }
 
+////////////////////////////////////////////////////////////
+////////// Functions not in other bindings (TODO)
+
+static PyObject *unitsync_GetDataDirectories(PyObject *self, PyObject *args)
+{
+	// unitsync.GetDataDirectories(bool write = False)
+	int write = 0;
+	if (/*!PyArg_ParseTuple(args, "") &&*/ !PyArg_ParseTuple(args, "i", &write))
+		return NULL;
+	std::vector<std::string> f;
+	if (write)
+		f.push_back(filesystem.GetWriteDir());
+	else
+		f = filesystem.GetDataDirectories();
+	PyObject *ret = PyList_New(f.size());
+	for (unsigned i = 0; i < f.size(); ++i) {
+		PyList_SET_ITEM(ret, i, PyString_FromString(f[i].c_str()));
+	}
+	return ret;
+}
 
 
 // Note to self: sed "s/([^)]*);/ ),/g;s/[ \t]*DLL_EXPORT[^_]\+__stdcall /PY( /g;"
@@ -626,6 +647,7 @@ static PyMethodDef unitsyncMethods[] = {
 	PY( ReadArchiveFile ),
 	PY( CloseArchiveFile ),
 	PY( SizeArchiveFile ),
+	PY( GetDataDirectories ),
 	{NULL, NULL, 0, NULL}        /* Sentinel */
 #undef PYDOC
 #undef PY
