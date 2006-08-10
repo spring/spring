@@ -36,7 +36,6 @@ public:
 	bool minimized;
 	bool mouseMove,mouseResize,mouseLook;
 
-	unsigned int unitBlip;
 	bool MousePress(int x, int y, int button);
 	void MouseMove(int x, int y, int dx,int dy, int button);
 	void MouseRelease(int x, int y, int button);
