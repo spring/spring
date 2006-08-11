@@ -55,7 +55,8 @@ public:
 	virtual float* GetHeightmap() = 0; // if you modify the heightmap, call HeightmapUpdated
 	float* orgheightmap;
 	float* centerheightmap;
-	float* halfHeightmap;
+	static const int numHeightMipMaps = 7;	//number of heightmap mipmaps, including full resolution
+	float* mipHeightmap[numHeightMipMaps];	//array of pointers to heightmap in diferent resolution, mipHeightmap[0] is full resolution, mipHeightmap[n+1] is half resolution of mipHeightmap[n]
 	float* slopemap;
 	float3* facenormals;
 	unsigned char* typemap;

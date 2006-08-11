@@ -131,8 +131,8 @@ START_TIME_PROFILE;
 	unit->tooltip=ud->humanName + " " + ud->tooltip;
 	unit->armoredMultiple=max(0.0001f,ud->armoredMultiple);		//armored multiple of 0 will crash spring
 	unit->wreckName=ud->wreckName;
-	unit->realLosRadius=(int) (ud->losRadius/(SQUARE_SIZE*2));
-	unit->realAirLosRadius=(int) (ud->airLosRadius/(SQUARE_SIZE*4));
+	unit->realLosRadius=(int) (ud->losRadius);
+	unit->realAirLosRadius=(int) (ud->airLosRadius);
 	unit->upright=ud->upright;
 	unit->radarRadius=ud->radarRadius/(SQUARE_SIZE*8);
 	unit->sonarRadius=ud->sonarRadius/(SQUARE_SIZE*8);
@@ -153,7 +153,7 @@ START_TIME_PROFILE;
 		unit->ChangeLos(1,1);
 		unit->health=0.1;
 	} else {
-		unit->ChangeLos((int)(ud->losRadius/SQUARE_SIZE),(int)(ud->airLosRadius/(SQUARE_SIZE*2)));
+		unit->ChangeLos((int)(ud->losRadius),(int)(ud->airLosRadius));
 	}
 
 	if(type=="GroundUnit"){

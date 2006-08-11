@@ -104,6 +104,7 @@
 #include "Platform/fp.h"
 #include "Game/UI/GUI/GUIframe.h"
 #include "Sim/ModInfo.h"
+#include "Sim/Misc/SensorHandler.h"
 
 #include "ConsoleHistory.h"
 #include "WordCompletion.h"
@@ -277,6 +278,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 	featureHandler=new CFeatureHandler();
 	ENTER_SYNCED;
 	mapDamage=IMapDamage::GetMapDamage();
+	sensorHandler=new CSensorHandler();
 	loshandler=new CLosHandler();
 	radarhandler=new CRadarHandler(false);
 	if(!server) net->Update();	//prevent timing out during load
@@ -2249,10 +2251,10 @@ void CGame::MakeMemDump(void)
 	}
 	for(int a=0;a<gs->activeTeams;++a){
 		file << "Losmap for team " << a << "\n";
-		for(int y=0;y<gs->mapy/2;++y){
+		for(int y=0;y<gs->mapy>>sensorHandler->losMipLevel;++y){
 			file << " ";
-			for(int x=0;x<gs->mapx/2;++x){
-				file << loshandler->losMap[a][y*gs->mapx/2+x] << " ";
+			for(int x=0;x<gs->mapx>>sensorHandler->losMipLevel;++x){
+				file << loshandler->losMap[a][y*(gs->mapx>>sensorHandler->losMipLevel)+x] << " ";
 			}
 			file << "\n";
 		}

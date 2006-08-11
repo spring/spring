@@ -124,7 +124,7 @@ CReadMap::CReadMap() : metalMap(NULL)
 	metalMap=0;	
 	orgheightmap=0;
 	centerheightmap=0;
-	halfHeightmap=0;
+	//halfHeightmap=0;
 	slopemap=0;
 	facenormals=0;	
 	typemap=0;		
@@ -137,7 +137,8 @@ CReadMap::~CReadMap()
 	delete[] typemap;
 	delete[] slopemap;
 	delete[] centerheightmap;
-	delete[] halfHeightmap;
+	for(int i=1; i<numHeightMipMaps; i++)	//don't delete first pointer since it points to centerheightmap
+		delete[] mipHeightmap[i];
 	delete[] orgheightmap;
 	delete[] groundBlockingObjectMap;
 	delete[] heightLinePal;
@@ -151,7 +152,11 @@ void CReadMap::CalcHeightfieldData()
 	//	normals=new float3[(gs->mapx+1)*(gs->mapy+1)];
 	facenormals=new float3[gs->mapx*gs->mapy*2];
 	centerheightmap=new float[gs->mapx*gs->mapy];
-	halfHeightmap=new float[gs->hmapx*gs->hmapy];
+	//halfHeightmap=new float[gs->hmapx*gs->hmapy];
+	mipHeightmap[0] = centerheightmap;
+	for(int i=1; i<numHeightMipMaps; i++)
+		mipHeightmap[i] = new float[(gs->mapx>>i)*(gs->mapy>>i)];
+
 	slopemap=new float[gs->hmapx*gs->hmapy];
 
 	minheight=1000;
@@ -177,9 +182,17 @@ void CReadMap::CalcHeightfieldData()
 		}
 	}
 
-	for(int y=0;y<gs->hmapy;++y){
-		for(int x=0;x<gs->hmapx;++x){
-			halfHeightmap[y*gs->hmapx+x]=heightmap[(y*2+1)*(gs->mapx+1)+x*2+1];
+	for(int i=0; i<numHeightMipMaps-1; i++){
+		int hmapx = gs->mapx>>i;
+		int hmapy = gs->mapy>>i;
+		for(int y=0;y<hmapy;y+=2){
+			for(int x=0;x<hmapx;x+=2){
+				float height = mipHeightmap[i][(x)+(y)*hmapx];
+				height += mipHeightmap[i][(x)+(y+1)*hmapx];
+				height += mipHeightmap[i][(x+1)+(y)*hmapx];
+				height += mipHeightmap[i][(x+1)+(y+1)*hmapx];
+				mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height/4.0;
+			}
 		}
 	}
 

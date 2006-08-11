@@ -30,7 +30,7 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) {
 
 	//Extract data.
 	int square = xSquare/2 + zSquare/2 * gs->hmapx;
-	float height = readmap->halfHeightmap[square];
+	float height = readmap->mipHeightmap[1][square];
 	float slope = readmap->slopemap[square];
 	float typemod=moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
 
@@ -57,7 +57,7 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare,con
 
 	//Extract data.
 	int square = xSquare/2 + zSquare/2 * gs->hmapx;
-	float height = readmap->halfHeightmap[square];
+	float height = readmap->mipHeightmap[1][square];
 	float slope = readmap->slopemap[square];
 
 	float3 flatNorm=readmap->facenormals[(xSquare + zSquare * gs->mapx)*2];
