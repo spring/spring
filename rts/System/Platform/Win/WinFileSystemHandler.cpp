@@ -35,11 +35,11 @@ WinFileSystemHandler::WinFileSystemHandler() : FileSystemHandler('\\')
 
 	// Create the archive scanner and vfs handler
 	archiveScanner = new CArchiveScanner();
-	archiveScanner->ReadCacheData("archivecache.txt");
+	archiveScanner->ReadCacheData(archiveScanner->GetFilename());
 	archiveScanner->Scan("./maps", true);
 	archiveScanner->Scan("./base", true);
 	archiveScanner->Scan("./mods", true);
-	archiveScanner->WriteCacheData("archivecache.txt");
+	archiveScanner->WriteCacheData(archiveScanner->GetFilename());
 	hpiHandler = new CVFSHandler();
 }
 

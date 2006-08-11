@@ -11,6 +11,7 @@
 #include "UI/InfoConsole.h"
 #include "Net.h"
 #include "GameSetup.h"
+#include "command.h"
 #include "Team.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "FileSystem/VFSHandler.h"
@@ -35,6 +36,8 @@ CPreGame::CPreGame(bool server, const string& demo):
 		state(UNKNOWN),
 		saveAddress(true)
 {
+	CommandDescription::Init();
+	
 	pregame = this; // prevent crashes if Select* is called from ctor
 	info = new CInfoConsole;
 	net = new CNet;

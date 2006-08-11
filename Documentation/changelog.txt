@@ -2,8 +2,53 @@ TASpring change log
 
 0.next
 
+- replaced key binding code with a more flexible solution:
+  * can specify key for almost all commands
+  * can specify modifiers
+  * can specify direction (down by default, Up+ for key releases)
+  * can specify context   (example: "command" for unit commands)
+- added internal default bindings  (see rts/Game/UI/KeyBindings.cpp)
+- added "unbindall"                        uikeys.txt command
+- added "unbindKeyset  <keyset> [context]" uikeys.txt command
+- added "unbindAction  <action> [context]" uikeys.txt command
+- added "unbindContext <context>"          uikeys.txt command
+
+- pseudo mouse actions now discard key repeats
+
+- added command queue icons
+- added AreaAttack command queue area display
+
+- added game info panel (and "gameinfo" uikeys.txt action)
+
+- versionned the "archivecache.txt" filename (ex: "ArchiveCacheV4.txt")
+
+- Quit and Share menus close when they receive ESC
+
+- added "drawlabel" action  (Shift+~)  (avoid the double-click, and key repeats)
+
+- added "chatally" uikeys.txt action   (Alt+enter)
+- added "chatspec" uikeys.txt action   (Shift+enter)
+- added "chatall" uikeys.txt action    (Ctrl+enter | Ctrl+m)
+
+- added group tracking selection rotation
+- added Average and Extents tracking modes
+- added "trackoff" uikeys.txt action   (Shift+t)
+- added "trackmode" uikeys.txt action  (Ctrl+t)
+
+- added "viewfps" uikeys.txt action    (Ctrl+f1)
+- added "viewta" uikeys.txt action     (Ctrl+f2)
+- added "viewtw" uikeys.txt action     (Ctrl+f3)
+- added "viewrot" uikeys.txt action    (Ctrl+f4)
+
+- added "firestate" uikeys.txt action
+- added "movestate" uikeys.txt action
+- added "prevmenu" uikeys.txt action
+- added "nextmenu" uikeys.txt action
+- added "buildunit_<name>" action
+- added "select:<selection criteria>" action  (redundant)
+
 - added new water rendering mode, refracting+reflecting but without the heavy dynamic simulation.
-- Added '--quit=T', '/quit T' commandline option to auto-quit spring on game over or after T minutes.
+- Added '--quit=T', '/quit T' commandline option to auto-quit spring on game over or after T seconds.
 - Added '--minimise', '/minimise' commandline option to start spring minimised.
 - added gradual feature reclaiming, see mantis #262
 - support for rotating buildings by 90 degrees, bind to "incbuildfacing" and "decbuildfacing" (bound to ']' and '[' by default)

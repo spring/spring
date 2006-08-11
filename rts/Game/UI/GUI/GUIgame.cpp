@@ -7,6 +7,7 @@
 #include "Game/GameHelper.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitTracker.h"
 #include "Game/SelectedUnits.h"
 #include "Game/command.h"
 #include "float3.h"
@@ -1097,7 +1098,7 @@ bool GUIgame::EventAction(const string& command)
 		gu->drawdebug=!gu->drawdebug;
 
 	else if (id==COMMAND_track)
-		game->trackingUnit=!game->trackingUnit;
+		unitTracker.Track();
 
 	else if (id==COMMAND_nosound) {
 		game->soundEnabled=!game->soundEnabled;

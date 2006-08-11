@@ -445,6 +445,27 @@ void CMouseHandler::HideMouse()
 	}
 }
 
+
+void CMouseHandler::SetCameraMode(int mode)
+{
+	if ((mode < 0)
+	 || (mode >= camControllers.size())
+	 || (mode == currentCamControllerNum)
+	 || (!camControllers[currentCamControllerNum]->enabled)) {
+		return;
+	}
+
+	currentCamControllerNum = mode;
+	inStateTransit = true;
+	transitSpeed = 1;
+
+	CCameraController* oldc = currentCamController;
+	currentCamController = camControllers[currentCamControllerNum];
+	currentCamController->SetPos(oldc->SwitchFrom());
+	currentCamController->SwitchTo();
+}
+
+
 void CMouseHandler::ToggleState(bool shift)
 {
 	if(!shift){
@@ -498,6 +519,14 @@ void CMouseHandler::UpdateCam()
 		camera->forward=wantedCamDir;
 	}
 	dir=(hide ? camera->forward : camera->CalcPixelDir(lastx,lasty));
+}
+
+void CMouseHandler::UpdateCursors()
+{
+	map<string, CMouseCursor *>::iterator i;
+	for (i = cursors.begin(); i != cursors.end(); ++i) {
+		i->second->Update();
+	}
 }
 
 void CMouseHandler::DrawCursor(void)

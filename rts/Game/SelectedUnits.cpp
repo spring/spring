@@ -52,11 +52,11 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 
 		CommandDescription c;			//make sure we can clear the group even when selected
 		c.id=CMD_GROUPCLEAR;
+		c.action="groupclear";
 		c.type=CMDTYPE_ICON;
 		c.name="Clear group";
 		c.tooltip="Removes the units from any group they belong to";
-		c.key='Q';
-		c.switchKeys=SHIFT_KEY;
+		c.hotkey="Shift+q";
 		ac.commands.push_back(c);
 
 		return ac;
@@ -103,11 +103,11 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	if(foundGroup!=-2){			//create a new group
 		CommandDescription c;
 		c.id=CMD_AISELECT;
+		c.action="aiselect";
 		c.type=CMDTYPE_COMBO_BOX;
 		c.name="Select AI";
 		c.tooltip="Create a new group using the selected units and with the ai selected";
-		c.key='Q';
-		c.switchKeys=CONTROL_KEY;
+		c.hotkey="Ctrl+q";
 
 		c.params.push_back("0");
 		c.params.push_back("None");
@@ -121,10 +121,11 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	if(foundGroup<0 && foundGroup2>=0){			//add the selected units to a previous group (that at least one unit is also selected from)
 		CommandDescription c;
 		c.id=CMD_GROUPADD;
+		c.action="groupadd";
 		c.type=CMDTYPE_ICON;
 		c.name="Add to group";
 		c.tooltip="Adds the selected to an existing group (of which one or more units is already selected)";
-		c.key='Q';
+		c.hotkey="q";
 		commands.push_back(c);
 	}
 
@@ -132,10 +133,11 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		CommandDescription c;
 
 		c.id=CMD_GROUPSELECT;
+		c.action="groupselect";
 		c.type=CMDTYPE_ICON;
 		c.name="Select group";
 		c.tooltip="Select the group that these units belong to";
-		c.key='Q';
+		c.hotkey="q";
 		commands.push_back(c);
 	}
 
@@ -143,11 +145,11 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		CommandDescription c;
 
 		c.id=CMD_GROUPCLEAR;
+		c.action="groupclear";
 		c.type=CMDTYPE_ICON;
 		c.name="Clear group";
 		c.tooltip="Removes the units from any group they belong to";
-		c.key='Q';
-		c.switchKeys=SHIFT_KEY;
+		c.hotkey="Shift+q";
 		commands.push_back(c);
 	}
 

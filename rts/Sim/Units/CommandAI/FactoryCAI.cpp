@@ -3,6 +3,7 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "ExternalAI/Group.h"
 #include "Game/SelectedUnits.h"
+#include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
@@ -16,30 +17,34 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 {
 	CommandDescription c;
 	c.id=CMD_MOVE;
+	c.action="move";
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Move";
-	c.key='M';
+	c.hotkey="m";
 	c.tooltip="Move: Order ready built units to move to a position";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_PATROL;
+	c.action="patrol";
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Patrol";
-	c.key='P';
+	c.hotkey="p";
 	c.tooltip="Patrol: Order ready built units to patrol to one or more waypoints";
 	possibleCommands.push_back(c);
 
 	c.id = CMD_FIGHT;
+	c.action="fight";
 	c.type = CMDTYPE_ICON_MAP;
 	c.name = "Fight";
-	c.key = 'F';
+	c.hotkey = "f";
 	c.tooltip = "Fight: Order ready built units to take action while moving to a position";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_GUARD;
+	c.action="guard";
 	c.type=CMDTYPE_ICON_UNIT;
 	c.name="Guard";
-	c.key='G';
+	c.hotkey="g";
 	c.tooltip="Guard: Order ready built units to guard another unit and attack units attacking it";
 	possibleCommands.push_back(c);
 
@@ -50,7 +55,8 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		string name=bi->second;
 		UnitDef* ud= unitDefHandler->GetUnitByName(name);
 		CommandDescription c;
-		c.id=-ud->id;								//build options are always negative
+		c.id=-ud->id; //build options are always negative
+		c.action="buildunit_" + StringToLower(ud->name);
 		c.type=CMDTYPE_ICON;
 		c.name=name;
 
@@ -253,7 +259,8 @@ void CFactoryCAI::DrawCommands(void)
 			break;
 		}
 		if(draw){
-			glVertexf3(pos);	
+			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 		}
 	}
 	glEnd();

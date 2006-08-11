@@ -18,6 +18,8 @@ class CMouseHandler
 {
 public:
 	void UpdateCam();
+	void UpdateCursors();
+	void SetCameraMode(int mode);
 	void ToggleState(bool shift);
 	void ToggleOverviewCamera(void);
 	void HideMouse();

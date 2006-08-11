@@ -8,6 +8,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
 #include "Game/UI/InfoConsole.h"
+#include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -27,16 +28,18 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 {
 	CommandDescription c;
 	c.id=CMD_LOAD_UNITS;
+	c.action="loadunits";
 	c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 	c.name="Load units";
-	c.key='L';
+	c.hotkey="l";
 	c.tooltip="Sets the transport to load a unit or units within an area";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_UNLOAD_UNITS;
+	c.action="unloadunits";
 	c.type=CMDTYPE_ICON_AREA;
 	c.name="Unload units";
-	c.key='U';
+	c.hotkey="u";
 	c.tooltip="Sets the transport to unload units in an area";
 	possibleCommands.push_back(c);
 }
@@ -404,6 +407,7 @@ void CTransportCAI::DrawCommands(void)
 		}
 		if(draw){
 			glVertexf3(pos);	
+			cursorIcons->AddIcon(ci->id, pos);
 		}
 	}
 	glEnd();

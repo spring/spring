@@ -4,110 +4,109 @@
 
 #pragma warning(disable:4786)
 
-
 #include "StdAfx.h"
-#include "Game.h"
-#include "SyncTracer.h"
+
+#include <stdlib.h>
+#include <time.h>
+#include <cctype>
+#include <locale>
+
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
-#include <time.h>
-#include <stdlib.h>
-#include "Rendering/GL/glList.h"
-#ifdef _WIN32
-#include "winerror.h"
-#endif
-#include "float.h"
-#include "Rendering/glFont.h"
-#include "UI/InfoConsole.h"
-#include "Camera.h"
-#include "Rendering/Env/BaseSky.h"
-#include "Net.h"
-#include "Map/Ground.h"
-#include "Map/BaseGroundDrawer.h"
-#include "GameHelper.h"
-#include "UI/GuiKeyReader.h"
-#include "StartScripts/Script.h"
-#include "Sim/Projectiles/SmokeProjectile.h"
-#include "StartScripts/ScriptHandler.h"
-#include "UI/MouseHandler.h"
-#include "Rendering/Env/BaseWater.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sim/Misc/QuadField.h"
-#include "Map/ReadMap.h"
-#include "UI/GuiHandler.h"
-#include "SelectedUnits.h"
-#include "Team.h"
-#include "Sim/Misc/LosHandler.h"
-#include "TimeProfiler.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "UI/MiniMap.h"
-#include "ExternalAI/GroupHandler.h"
-#include "Map/MapDamage.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
-#include "Platform/ConfigHandler.h"
-#include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/Unit.h"
-#include "UI/TooltipConsole.h"
-#include "Sim/Misc/GeometricObjects.h"
-#include "FileSystem/FileHandler.h"
-//#include "HpiHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "UI/ResourceBar.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/FartextureHandler.h"
-#include "Sim/Units/COB/CobEngine.h"
-#include "Sim/Misc/FeatureHandler.h"
-#ifndef NO_AVI
-#include "Platform/Win/AVIGenerator.h"
-#endif
-#include "Sim/Units/UnitTracker.h"
-#include "Sim/Misc/Wind.h"
-#include "Map/MetalMap.h"
-#include "Sim/Misc/RadarHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Path/PathManager.h"
-#include "Sim/Misc/DamageArrayHandler.h"
-#include "Sim/Misc/CategoryHandler.h"
-#include "Rendering/IconHandler.h"
-#include "Rendering/ShadowHandler.h"
-#ifdef DIRECT_CONTROL_ALLOWED
-#include "Sim/Units/COB/CobFile.h"
-#include "myMath.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/MoveTypes/MoveType.h"
-#endif
-//#include "PhysicsEngine.h"
-#include "LoadSaveHandler.h"
-#include "UI/NewGuiDefine.h"
-#include "GameSetup.h"
-#include "UI/ShareBox.h"
-#include "UI/QuitBox.h"
-#include "GameServer.h"
-#include "UI/EndGameBox.h"
-#include "Rendering/InMapDraw.h"
-#include "CameraController.h"
-#include "ExternalAI/GlobalAIHandler.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "GameVersion.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Units/UnitLoader.h"
-#include <locale>
-#include <cctype>
-#include "UI/SelectionKeyHandler.h"
-#include "Platform/FileSystem.h"
-#include <SDL_types.h>
+#include <SDL_keyboard.h>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
-#include <SDL_keyboard.h>
-#include "Platform/fp.h"
-#include "Game/UI/GUI/GUIframe.h"
-#include "Sim/ModInfo.h"
-#include "Sim/Misc/SensorHandler.h"
+#include <SDL_types.h>
 
+#include "Game.h"
+#include "float.h"
+#include "Camera.h"
+#include "CameraController.h"
 #include "ConsoleHistory.h"
+#include "GameHelper.h"
+#include "GameServer.h"
+#include "GameSetup.h"
+#include "GameVersion.h"
+#include "LoadSaveHandler.h"
+#include "SelectedUnits.h"
+#include "SyncTracer.h"
+#include "Team.h"
+#include "TimeProfiler.h"
 #include "WordCompletion.h"
+#ifdef _WIN32
+#include "winerror.h"
+#endif
+#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/GroupHandler.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "Game/UI/GUI/GUIframe.h"
+//#include "HpiHandler.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
+#include "Map/MapDamage.h"
+#include "Map/MetalMap.h"
+#include "Map/ReadMap.h"
+#include "Net.h"
+//#include "PhysicsEngine.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/FileSystem.h"
+#include "Platform/fp.h"
+#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/BaseWater.h"
+#include "Rendering/FartextureHandler.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/glList.h"
+#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/IconHandler.h"
+#include "Rendering/InMapDraw.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Misc/DamageArrayHandler.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/SensorHandler.h"
+#include "Sim/Misc/Wind.h"
+#include "Sim/ModInfo.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/Path/PathManager.h"
+#include "Sim/Projectiles/SmokeProjectile.h"
+#include "Sim/Units/COB/CobEngine.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitTracker.h"
+#include "StartScripts/Script.h"
+#include "StartScripts/ScriptHandler.h"
+#include "UI/CursorIcons.h"
+#include "UI/EndGameBox.h"
+#include "UI/GameInfo.h"
+#include "UI/GuiHandler.h"
+#include "UI/InfoConsole.h"
+#include "UI/KeyBindings.h"
+#include "UI/KeyCodes.h"
+#include "UI/MiniMap.h"
+#include "UI/MouseHandler.h"
+#include "UI/NewGuiDefine.h"
+#include "UI/QuitBox.h"
+#include "UI/ResourceBar.h"
+#include "UI/SelectionKeyHandler.h"
+#include "UI/ShareBox.h"
+#include "UI/TooltipConsole.h"
+
+#ifndef NO_AVI
+#include "Platform/Win/AVIGenerator.h"
+#endif
 
 #ifdef _MSC_VER
 #include "Platform/Win/DxSound.h"
@@ -115,6 +114,13 @@
 #include "Platform/Linux/OpenALSound.h"
 #endif
 #include "Platform/NullSound.h"
+
+#ifdef DIRECT_CONTROL_ALLOWED
+#include "myMath.h"
+#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Units/COB/CobFile.h"
+#include "Sim/Weapons/Weapon.h"
+#endif
 
 #ifdef NEW_GUI
 #include "UI/GUI/GUIcontroller.h"
@@ -150,7 +156,6 @@ static CSound* CreateSoundInterface()
 
 CGame::CGame(bool server,std::string mapname, std::string modName)
 {
-	guikeys = NULL;
 	script = NULL;
 	showList = NULL;
 
@@ -179,7 +184,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 	totalGameTime=0;
 
 	debugging=false;
-	trackingUnit=false;
 
 	bOneStep=false;
 	creatingVideo=false;
@@ -224,6 +228,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 	camera=new CCamera();
 	cam2=new CCamera();
 	mouse=new CMouseHandler();
+	cursorIcons=new CCursorIcons();
 	selectionKeys=new CSelectionKeyHandler();
 	tooltip=new CTooltipConsole();
 
@@ -299,7 +304,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 	sky=CBaseSky::GetSky();
 #ifndef NEW_GUI
 	resourceBar=new CResourceBar();
-	guikeys=new CGuiKeyReader("uikeys.txt");
+	keyCodes=new CKeyCodes();
+	keyBindings=new CKeyBindings("uikeys.txt");
 #endif
 	if(!server) net->Update();	//prevent timing out during load
 
@@ -319,8 +325,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,0);
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,0);
 	}
-	for(int a=0;a<16;++a)
-		trackPos[a]=float3(0,0,0);
 
 	showList=0;
 
@@ -372,6 +376,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 
 	if(gameServer)
 		gameServer->gameLoading=false;
+
 	UnloadStartPicture();
 
 	if(serverNet && serverNet->playbackDemo)
@@ -430,12 +435,14 @@ CGame::~CGame()
 	delete mapDamage;
 	delete qf;
 	delete tooltip;
-	delete guikeys;
+	delete keyBindings;
+	delete keyCodes;
 	delete sound;
 	if ( guihandler )
 		delete guihandler;
 	delete selectionKeys;
 	delete mouse;
+	delete cursorIcons;
 	delete helper;
 	delete shadowHandler;
 	delete moveinfo;
@@ -456,7 +463,7 @@ CGame::~CGame()
 
 
 //called when the key is pressed by the user (can be called several times due to key repeat)
-int CGame::KeyPressed(unsigned short k,bool isRepeat)
+int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if(!gameOver && !isRepeat)
 		gs->players[gu->myPlayerNum]->currentStats->keyPresses++;
@@ -466,6 +473,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	GUIcontroller::KeyDown(k);
 	// #endif
 #else
+
 	if(showList){					//are we currently showing a list?
 		if(k==SDLK_UP)
 			showList->UpOne();
@@ -502,41 +510,42 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		if(k==SDLK_RETURN){
 			userWriting=false;
 			keys[k] = false;		//prevent game start when server chats
-			if (chatting && (userInput.size() > 5) && (userInput.substr(0, 4) == ".cmd")) {
-			  fakeGuiKey = userInput.substr(5);
-			  chatting = false;
-			  userInput = "";
+			if (chatting && (userInput.find(".cmd") == 0)) {
+				fakeGuiKey = userInput.substr(5);
+				consoleHistory->AddLine(userInput);
+				chatting = false;
+				userInput = "";
 			} else {
-			  return 0;
+				return 0;
 			}
 		}
-		if(k==27 && (chatting || inMapDrawer->wantLabel)){
+		if(k==27 && (chatting || inMapDrawer->wantLabel)){ // escape
 			userWriting=false;
 			chatting=false;
 			inMapDrawer->wantLabel=false;
 			userInput="";
 		}
 		if(k==SDLK_UP) {
-		  userInput = consoleHistory->PrevLine(userInput);
-		  return 0;
+			userInput = consoleHistory->PrevLine(userInput);
+			return 0;
 		}
 		if(k==SDLK_DOWN) {
-		  userInput = consoleHistory->NextLine(userInput);
-		  return 0;
+			userInput = consoleHistory->NextLine(userInput);
+			return 0;
 		}
 		if(k==SDLK_TAB) {
-		  vector<string> partials = wordCompletion->Complete(userInput);
-		  if (!partials.empty()) {
-		    string msg;
-		    for (int i = 0; i < partials.size(); i++) {
-		      msg += "  ";
-		      msg += partials[i];
-		    }
-		    info->AddLine(msg);
-		  }
+			vector<string> partials = wordCompletion->Complete(userInput);
+			if (!partials.empty()) {
+				string msg;
+				for (int i = 0; i < partials.size(); i++) {
+					msg += "  ";
+					msg += partials[i];
+				}
+				info->AddLine(msg);
+			}
 		}
 		if(fakeGuiKey.size() <= 0) {
-		  return 0;
+			return 0;
 		}
 	}
 
@@ -548,6 +557,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			gu->myTeam=team;
 			gu->myAllyTeam=gs->AllyTeam(team);
 		}
+		return 0;
 	}
 
   std::string s;
@@ -557,36 +567,128 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
     s=fakeGuiKey;
   } else {
 		for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-			if((*ri)->KeyPressed(k))
+			if((*ri)->KeyPressed(k)) {
 				return 0;
+			}
 		}
-		s=guikeys->TranslateKey(k);
+		CKeySet ks(k, false);
+		s = keyBindings->GetAction(ks, "");
 	}
 
-	if(s=="drawinmap"){
+	// grab a gd pointer
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
+	
+	static char *buildFaceDirs[] = { "South", "East", "North", "West" };
+	
+
+	// process the action
+	if (s.find("select:") == 0) {
+		string selectCmd(s, 7);
+		selectionKeys->DoSelection(selectCmd);
+	}
+	else if (s=="drawinmap") {
 		inMapDrawer->keyPressed=true;
 	}
-	if(s=="toggleoverview"){
-		mouse->ToggleOverviewCamera();
-	}
-
-	if(s=="showhealthbars"){
-		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
-	}
-
-	if (s=="pause"){
-		if(net->playbackDemo){
-			gs->paused=!gs->paused;
-		} else {
-			net->SendData<unsigned char, unsigned char>(
-					NETMSG_PAUSE, !gs->paused, gu->myPlayerNum);
-			lastframe = SDL_GetTicks();
+	else if (s=="drawlabel") {
+		float3 pos = inMapDrawer->GetMouseMapPos();
+		if (pos.x >= 0) {
+			inMapDrawer->keyPressed = false;
+			inMapDrawer->PromptLabel(pos);
+			if ((k >= SDLK_SPACE) && (k <= SDLK_DELETE)) {
+				ignoreNextChar=true;
+			}
 		}
 	}
-	if (s=="singlestep"){
-		bOneStep=true;
+	else if (!isRepeat && s=="mouse1") {
+		mouse->MousePress (mouse->lastx, mouse->lasty, 1);
 	}
-	if (s=="chat"){
+	else if (!isRepeat && s=="mouse2") {
+		mouse->MousePress (mouse->lastx, mouse->lasty, 2);
+	}
+	else if (!isRepeat && s=="mouse3") {
+		mouse->MousePress (mouse->lastx, mouse->lasty, 3);
+	}
+	else if (!isRepeat && s=="mouse4") {
+		mouse->MousePress (mouse->lastx, mouse->lasty, 4);
+	}
+	else if (!isRepeat && s=="mouse5") {
+		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
+	}
+	else if (s=="viewfps") {
+		mouse->SetCameraMode(0);
+	}
+	else if (s=="viewta") {
+		mouse->SetCameraMode(1);
+	}
+	else if (s=="viewtw") {
+		mouse->SetCameraMode(2);
+	}
+	else if (s=="viewrot") {
+		mouse->SetCameraMode(3);
+	}
+	else if (s=="moveforward") {
+		camMove[0]=true;
+	}
+	else if (s=="moveback") {
+		camMove[1]=true;
+	}
+	else if (s=="moveleft") {
+		camMove[2]=true;
+	}
+	else if (s=="moveright") {
+		camMove[3]=true;
+	}
+	else if (s=="moveup") {
+		camMove[4]=true;
+	}
+	else if (s=="movedown") {
+		camMove[5]=true;
+	}
+	else if (s=="movefast") {
+		camMove[6]=true;
+	}
+	else if (s=="moveslow") {
+		camMove[7]=true;
+	}
+	else if (s=="group0") {
+		grouphandler->GroupCommand(0);
+	}
+	else if (s=="group1") {
+		grouphandler->GroupCommand(1);
+	}
+	else if (s=="group2") {
+		grouphandler->GroupCommand(2);
+	}
+	else if (s=="group3") {
+		grouphandler->GroupCommand(3);
+	}
+	else if (s=="group4") {
+		grouphandler->GroupCommand(4);
+	}
+	else if (s=="group5") {
+		grouphandler->GroupCommand(5);
+	}
+	else if (s=="group6") {
+		grouphandler->GroupCommand(6);
+	}
+	else if (s=="group7") {
+		grouphandler->GroupCommand(7);
+	}
+	else if (s=="group8") {
+		grouphandler->GroupCommand(8);
+	}
+	else if (s=="group9") {
+		grouphandler->GroupCommand(9);
+	}
+	else if (s=="lastmsgpos") {
+		mouse->currentCamController->SetPos(info->lastMsgPos);
+		mouse->inStateTransit=true;
+		mouse->transitSpeed=0.5;
+	}
+	else if ((s=="chat") || (s=="chatall") || (s=="chatally") || (s=="chatspec")) {
+		if (s=="chatall")  { userInputPrefix = ""; }
+		if (s=="chatally") { userInputPrefix = "a:"; }
+		if (s=="chatspec") { userInputPrefix = "s:"; }
 		userWriting=true;
 		userPrompt="Say: ";
 		userInput=userInputPrefix;
@@ -595,24 +697,47 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			ignoreNextChar=true;
 		consoleHistory->ResetPosition();
 	}
-	if (s=="debug")
+	else if (s=="track") {
+		unitTracker.Track();
+	}
+	else if (s=="trackoff") {
+		unitTracker.Disable();
+	}
+	else if (s=="trackmode") {
+		unitTracker.IncMode();
+	}
+	else if (s=="toggleoverview") {
+		mouse->ToggleOverviewCamera();
+	}
+	else if (s=="showhealthbars") {
+		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
+	}
+	else if (s=="pause") {
+		if(net->playbackDemo){
+			gs->paused=!gs->paused;
+		} else {
+			net->SendData<unsigned char, unsigned char>(
+					NETMSG_PAUSE, !gs->paused, gu->myPlayerNum);
+			lastframe = SDL_GetTicks();
+		}
+	}
+	else if (s=="singlestep") {
+		bOneStep=true;
+	}
+	else if (s=="debug") {
 		gu->drawdebug=!gu->drawdebug;
-
-	if (s=="track")
-		trackingUnit=!trackingUnit;
-
-	if (s=="nosound") {
+	}
+	else if (s=="nosound") {
 		soundEnabled=!soundEnabled;
 		sound->SetVolume (soundEnabled ? gameSoundVolume : 0.0f);
 	}
-
-	if(s=="savegame"){
+	else if (s=="savegame"){
 		CLoadSaveHandler ls;
 		ls.SaveGame("Test.ssf");
 	}
 
 #ifndef NO_AVI
-	if (s=="createvideo"){
+	else if (s=="createvideo") {
 		if(creatingVideo){
 			creatingVideo=false;
 			aviGenerator->ReleaseEngine();
@@ -662,76 +787,71 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}
 	}
 #endif
-	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
 
-	if (s=="updatefov")
+	else if (s=="updatefov") {
 		gd->updateFov=!gd->updateFov;
-
-	static char *buildFaceDirs[] = { "South", "East", "North", "West" };
-	if (s=="incbuildfacing"){
+	}
+	else if (s=="incbuildfacing"){
 		guihandler->buildFacing ++;
 		if (guihandler->buildFacing > 3)
 			guihandler->buildFacing = 0;
 
 		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
 	}
-
-	if (s=="decbuildfacing"){
+	else if (s=="decbuildfacing"){
 		guihandler->buildFacing --;
 		if (guihandler->buildFacing < 0)
 			guihandler->buildFacing = 3;
 
 		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
 	}
-
-	if (s=="drawtrees")
+	else if (s=="drawtrees") {
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
-
-	if (s=="dynamicsky")
+	}
+	else if (s=="dynamicsky") {
 		sky->dynamicSky=!sky->dynamicSky;
-
-	if (s=="hideinterface")
+	}
+	else if (s=="gameinfo") {
+		new CGameInfo;
+	}
+	else if (s=="hideinterface") {
 		hideInterface=!hideInterface;
-
-	if (s=="increaseviewradius"){
+	}
+	else if (s=="increaseviewradius") {
 		gd->viewRadius+=2;
 		(*info) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
-
-	if (s=="decreaseviewradius"){
+	else if (s=="decreaseviewradius") {
 		gd->viewRadius-=2;
 		(*info) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
-
-	if (s=="moretrees"){
+	else if (s=="moretrees") {
 		treeDrawer->baseTreeDistance+=0.2f;
 		(*info) << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
-
-	if (s=="lesstrees"){
+	else if (s=="lesstrees") {
 		treeDrawer->baseTreeDistance-=0.2f;
 		(*info) << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
-
-	if (s=="moreclouds"){
+	else if (s=="moreclouds") {
 		sky->cloudDensity*=0.95f;
 		(*info) << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
-
-	if (s=="lessclouds"){
+	else if (s=="lessclouds") {
 		sky->cloudDensity*=1.05f;
 		(*info) << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
-
-	if (s=="speedup"){
+	else if (s=="speedup") {
 		float speed=gs->userSpeedFactor;
-		if(speed<1){
+		if (speed<1) {
 			speed/=0.8;
-			if(speed>0.99)
+			if (speed>0.99) {
 				speed=1;
-		}else
+			}
+		} else {
 			speed+=0.5;
-		if(!net->playbackDemo){
+		}
+		if (!net->playbackDemo) {
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
@@ -739,16 +859,17 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			(*info) << "Speed " << gs->speedFactor << "\n";
 		}
 	}
-
-	if (s=="slowdown"){
+	else if (s=="slowdown") {
 		float speed=gs->userSpeedFactor;
-		if(speed<=1){
+		if (speed<=1) {
 			speed*=0.8;
-			if(speed<0.1)
+			if (speed<0.1) {
 				speed=0.1;
-		}else
+			}
+		} else {
 			speed-=0.5;
-		if(!net->playbackDemo){
+		}
+		if (!net->playbackDemo) {
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
 			gs->speedFactor=speed;
@@ -758,7 +879,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(s=="controlunit"){
+	else if (s=="controlunit") {
 		Command c;
 		c.id=CMD_STOP;
 		c.options=0;
@@ -766,33 +887,26 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		net->SendData<unsigned char>(NETMSG_DIRECT_CONTROL, gu->myPlayerNum);
 	}
 #endif
-	if (s=="showshadowmap"){
+
+	else if (s=="showshadowmap") {
 		shadowHandler->showShadowMap=!shadowHandler->showShadowMap;
 	}
-
-	if (s=="showstandard"){
+	else if (s=="showstandard") {
 		gd->DisableExtraTexture();
 	}
-
-	if (s=="showelevation"){
+	else if (s=="showelevation") {
 		gd->SetHeightTexture();
 	}
-	if (s=="toggleradarandjammer"){
+	else if (s=="toggleradarandjammer"){
 		gd->ToggleRadarAndJammer();
 	}
-	if (s=="lastmsgpos"){
-		mouse->currentCamController->SetPos(info->lastMsgPos);
-		mouse->inStateTransit=true;
-		mouse->transitSpeed=0.5;
-	}
-	if (s=="showmetalmap"){
+	else if (s=="showmetalmap") {
 		gd->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
 	}
-	if (s=="showpathmap"){
+	else if (s=="showpathmap") {
 		gd->SetPathMapTexture();
 	}
-
-	if (s=="yardmap4"){
+	else if (s=="yardmap4") {
 		//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[3],readmap->yardmapPal,true);
 	}
 	/*	if (s=="showsupply"){
@@ -801,18 +915,14 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 	/*	if (s=="showteam"){
 		groundDrawer->SetExtraTexture(readmap->teammap,cityhandler->teampal);
 		}*/
-	if (s=="togglelos"){
+	else if (s=="togglelos") {
 		gd->ToggleLosTexture();
 	}
-	if(s=="mousestate"){
-		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
-	}
-
-	if (s=="sharedialog"){
+	else if (s=="sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
 	}
-	if (s=="quit"){
+	else if (s=="quit") {
 		if(!keys[SDLK_LSHIFT]){
 			info->AddLine("Use shift-esc to quit");
 		}else{
@@ -849,38 +959,13 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			}
 		}
 	}
-	if(s=="group1")
-		grouphandler->GroupCommand(1);
-	if(s=="group2")
-		grouphandler->GroupCommand(2);
-	if(s=="group3")
-		grouphandler->GroupCommand(3);
-	if(s=="group4")
-		grouphandler->GroupCommand(4);
-	if(s=="group5")
-		grouphandler->GroupCommand(5);
-	if(s=="group6")
-		grouphandler->GroupCommand(6);
-	if(s=="group7")
-		grouphandler->GroupCommand(7);
-	if(s=="group8")
-		grouphandler->GroupCommand(8);
-	if(s=="group9")
-		grouphandler->GroupCommand(9);
-	if(s=="group0")
-		grouphandler->GroupCommand(0);
-
-	if (s=="incguiopacity")
-	{
+	else if (s=="incguiopacity") {
 		GUIframe::SetGUIOpacity(min(GUIframe::GetGUIOpacity()+0.1f,1.f));
 	}
-
-	if (s=="decguiopacity")
-	{
+	else if (s=="decguiopacity") {
 		GUIframe::SetGUIOpacity(max(GUIframe::GetGUIOpacity()-0.1f,0.f));
 	}
-
-	if (s=="screenshot"){
+	else if (s=="screenshot") {
 		if (filesystem.CreateDirectory("screenshots")) {
 			int x=gu->screenx;
 			if(x%4)
@@ -900,47 +985,7 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 			delete[] buf;
 		}
 	}
-
-	if (s=="moveforward")
-		camMove[0]=true;
-
-	if (s=="moveback")
-		camMove[1]=true;
-
-	if (s=="moveleft")
-		camMove[2]=true;
-
-	if (s=="moveright")
-		camMove[3]=true;
-
-	if (s=="moveup")
-		camMove[4]=true;
-
-	if (s=="movedown")
-		camMove[5]=true;
-
-	if (s=="movefast")
-		camMove[6]=true;
-
-	if (s=="moveslow")
-		camMove[7]=true;
-
-	if (s=="mouse1")
-		mouse->MousePress (mouse->lastx, mouse->lasty, 1);
-
-	if (s=="mouse2")
-		mouse->MousePress (mouse->lastx, mouse->lasty, 2);
-
-	if (s=="mouse3")
-		mouse->MousePress (mouse->lastx, mouse->lasty, 3);
-
-	if (s=="mouse4")
-		mouse->MousePress (mouse->lastx, mouse->lasty, 4);
-
-	if (s=="mouse5")
-		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
-
-	if (s=="grabinput") {
+	else if (s=="grabinput") {
 		SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 		switch (mode) {
 			case SDL_GRAB_ON: mode = SDL_GRAB_OFF; break;
@@ -948,7 +993,27 @@ int CGame::KeyPressed(unsigned short k,bool isRepeat)
 		}
 		SDL_WM_GrabInput(mode);
 	}
-#endif
+	else if (s=="keyload") {
+		keyBindings->Load("uikeys.txt");
+	}
+	else if (s=="keysave") {
+		keyBindings->Save("uikeys.tmp"); // tmp, not txt
+	}
+	else if (s=="keyprint") {
+		keyBindings->Print();
+	}
+	else if (s=="keysyms") {
+		keyCodes->PrintNameToCode();
+	}
+	else if (s=="keycodes") {
+		keyCodes->PrintCodeToName();
+	}
+	else if (s=="keydebug") {
+		keyBindings->debug = !keyBindings->debug;
+	}
+
+#endif // NEW_GUI
+
 	return 0;
 }
 
@@ -974,65 +1039,64 @@ int CGame::KeyReleased(unsigned short k)
 			return 0;
 	}
 
-	std::string s=guikeys->TranslateKey(k);
+	CKeySet ks(k, true);
+	const string s = keyBindings->GetAction(ks, "");
 
 	if(s=="drawinmap"){
 		inMapDrawer->keyPressed=false;
 	}
-
-	if(s=="buildfaceup"){
+	else if (s=="buildfaceup") {
 		guihandler->buildFacing=0;
 		info->AddLine("Buildings set to face South");
 	}
-
-	if(s=="buildfaceright"){
+	else if (s=="buildfaceright") {
 		guihandler->buildFacing=3;
 		info->AddLine("Buildings set to face West");
 	}
-
-	if(s=="buildfacedown"){
+	else if (s=="buildfacedown") {
 		guihandler->buildFacing=2;
 		info->AddLine("Buildings set to face North");
 	}
-
-	if(s=="buildfaceleft"){
+	else if (s=="buildfaceleft") {
 		guihandler->buildFacing=1;
 		info->AddLine("Buildings set to face East");
 	}
-
-	if (s=="moveforward")
+	else if (s=="moveforward") {
 		camMove[0]=false;
-
-	if (s=="moveback")
+	}
+	else if (s=="moveback") {
 		camMove[1]=false;
-
-	if (s=="moveleft")
+	}
+	else if (s=="moveleft") {
 		camMove[2]=false;
-
-	if (s=="moveright")
+	}
+	else if (s=="moveright") {
 		camMove[3]=false;
-
-	if (s=="moveup")
+	}
+	else if (s=="moveup") {
 		camMove[4]=false;
-
-	if (s=="movedown")
+	}
+	else if (s=="movedown") {
 		camMove[5]=false;
-
-	if (s=="movefast")
+	}
+	else if (s=="movefast") {
 		camMove[6]=false;
-
-	if (s=="moveslow")
+	}
+	else if (s=="moveslow") {
 		camMove[7]=false;
-
-	if (s=="mouse1")
+	}
+	else if (s=="mouse1") {
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 1);
-
-	if (s=="mouse2")
+	}
+	else if (s=="mouse2") {
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 2);
-
-	if (s=="mouse3")
+	}
+	else if (s=="mouse3") {
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
-
+	}
+	else if (s=="mousestate") {
+		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
+	}
 	// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
 	// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
 // 	if (s=="mouse4")
@@ -1152,8 +1216,9 @@ bool CGame::Draw()
 
 	//set camera
 	mouse->UpdateCam();
+	mouse->UpdateCursors();
 
-	if(trackingUnit)
+	if(unitTracker.Enabled())
 		unitTracker.SetCam();
 
 	if(playing && (hideInterface || script->wantCameraControl))
@@ -1194,8 +1259,10 @@ bool CGame::Draw()
 	unitDrawer->DrawCloakedUnits();
 	ph->Draw(false);
 	sky->DrawSun();
-	if(keys[SDLK_LSHIFT])
+	if(keys[SDLK_LSHIFT]) {
 		selectedUnits.DrawCommands();
+		cursorIcons->Draw();
+	}
 
 	mouse->Draw();
 
@@ -1205,7 +1272,7 @@ bool CGame::Draw()
 	inMapDrawer->Draw();
 
 	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST );
+	glDisable(GL_DEPTH_TEST);
 
 	//reset fov
 	glMatrixMode(GL_PROJECTION);
@@ -2110,19 +2177,19 @@ void CGame::UpdateUI()
 
 		if (camMove[0]){
 			movement.y+=gu->lastFrameTime;
-			trackingUnit=false;
+			unitTracker.Disable();
 		}
 		if (camMove[1]){
 			movement.y-=gu->lastFrameTime;
-			trackingUnit=false;
+			unitTracker.Disable();
 		}
 		if (camMove[3]){
 			movement.x+=gu->lastFrameTime;
-			trackingUnit=false;
+			unitTracker.Disable();
 		}
 		if (camMove[2]){
 			movement.x-=gu->lastFrameTime;
-			trackingUnit=false;
+			unitTracker.Disable();
 		}
 		movement.z=cameraSpeed;
 		mouse->currentCamController->KeyMove(movement);
@@ -2132,19 +2199,19 @@ void CGame::UpdateUI()
     if (fullscreen || windowedEdgeMove) {
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
-				trackingUnit=false;
+				unitTracker.Disable();
 			}
 			if (mouse->lasty > (gu->screeny - 2)){
 				movement.y-=gu->lastFrameTime;
-				trackingUnit=false;
+				unitTracker.Disable();
 			}
 			if (mouse->lastx > (gu->screenx - 2)){
 				movement.x+=gu->lastFrameTime;
-				trackingUnit=false;
+				unitTracker.Disable();
 			}
 			if (mouse->lastx < 2){
 				movement.x-=gu->lastFrameTime;
-				trackingUnit=false;
+				unitTracker.Disable();
 			}
 		}
 		movement.z=cameraSpeed;
@@ -2613,7 +2680,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if (endAction != string::npos) return;
 		const string key = s.substr(startKey, endKey - startKey);
 		const string action = s.substr(startAction, endAction - startAction);
-		if (guikeys->Bind(key, action)) {
+		if (keyBindings->Bind(key, action, "")) {
 			info->AddLine("Bound key(%s) to action(%s)", key.c_str(), action.c_str());
 		}
 	}

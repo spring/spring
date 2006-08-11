@@ -7,6 +7,7 @@
  */
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GLContext.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include <time.h>
 #include <string>
@@ -294,7 +295,7 @@ bool SpringApp::Initialize ()
 	int quit_time;
 	if (cmdline->result("quit", quit_time)) {
 		gu->autoQuit = true;
-		gu->quitTime = 60 * quit_time;
+		gu->quitTime = quit_time;
 	}
 
 	InitOpenGL();
@@ -424,6 +425,15 @@ bool SpringApp::SetSDLVideoMode ()
 	if (cmdline->result("minimise"))
 		SDL_WM_IconifyWindow();
 
+	// there must be a way to see if this is necessary, compare old/new context pointers?
+	if (!!configHandler.GetInt("FixAltTab", 0)) {
+		// free GL resources
+		GLContext::Free();
+
+		// initialize any GL resources that were lost
+		GLContext::Init();
+	}
+
 	return true;
 }
 
@@ -484,7 +494,7 @@ bool SpringApp::ParseCmdLine()
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
 	cmdline->addoption('p',"projectiledump", OPTPARM_NONE, "", "Dump projectile class info in projectiles.txt");
-	cmdline->addoption('q',"quit", OPTPARM_INT, "T", "Quit immediately on game over or after T minutes");
+	cmdline->addoption('q',"quit", OPTPARM_INT, "T", "Quit immediately on game over or after T seconds");
 	cmdline->parse();
 
 #ifdef _DEBUG
@@ -804,6 +814,7 @@ void SpringApp::Shutdown()
 	if (gameSetup)
 		delete gameSetup;
 	delete font;
+	GLContext::Free();
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
 	delete mouseInput;

@@ -9,6 +9,7 @@ class CCraft;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 class CPlayer;
+class CUnit;
 struct DirectControlStruct{
 	bool forward;
 	bool back;

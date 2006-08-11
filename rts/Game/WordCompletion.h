@@ -30,7 +30,7 @@ class CWordCompletion
 				bool startOfLine;
 				bool unitName;
 		};
-		map<string,WordProperties> words; // bool for 'start of line'
+		map<string, WordProperties> words;
 };
 
 #endif /* WORD_COMPLETION_H */

@@ -12,10 +12,11 @@ public:
 	void glPrintColor(const char* fmt, ...);
 	void glWorldPrint(const char* fmt, ...);
 	void glPrintAt(GLfloat x, GLfloat y, float s, const char* fmt, ...);
+	void glPrintRight (float x,float y, float s,const char *fmt,...);
+	void glPrintCentered (float x,float y, float s,const char *fmt,...);
 	float CalcTextWidth (const char *txt);
 	float CalcCharWidth (char c);
 	float CalcTextHeight(const char *text);
-	void glPrintCentered (float x,float y, float s,const char *fmt,...);
 	CglFont(int start, int end);
 	~CglFont();
 private:

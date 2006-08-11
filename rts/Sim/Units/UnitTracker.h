@@ -1,26 +1,64 @@
 #ifndef UNITTRACKER_H
 #define UNITTRACKER_H
 
+#include <set>
+#include "float.h"
+
+using namespace std;
+
+class CUnit;
+
 class CUnitTracker
 {
-public:
-	CUnitTracker(void);
-	~CUnitTracker(void);
-	void SetCam(void);
+	public:
+		CUnitTracker();
+		~CUnitTracker();
 
-	double lastUpdateTime;
+		void Track();
+		void Disable();
+		bool Enabled() const { return enabled; }
 
-	int lastFollowUnit;
-	float3 tcp;
-	float3 tcf;
-	float3 oldUp[32];
-	
-	float3 oldCamDir;
-	float3 oldCamPos;
-	bool doRoll;
-	bool firstUpdate;
-	int timeOut;
+		void SetCam();
 
+		int  GetMode();
+		void IncMode();
+		void SetMode(int);
+		enum TrackMode {
+			TrackSingle = 0,
+			TrackAverage,
+			TrackExtents,
+			TrackModeCount
+		};
+
+	protected:
+		void NextUnit(void);
+		void MakeTrackGroup();
+		void CleanTrackGroup();
+		CUnit* GetTrackUnit();
+		float3 CalcAveragePos() const;
+		float3 CalcExtentsPos() const;
+		
+	protected:
+		bool enabled;
+		bool doRoll;
+		bool firstUpdate;
+
+		int trackMode;
+		int trackUnit;
+		set<int> trackGroup;
+		
+		int timeOut;
+		int lastFollowUnit;
+		double lastUpdateTime;
+
+		float3 trackPos;
+		float3 trackDir;
+
+		float3 oldUp[32];
+		float3 oldCamDir;
+		float3 oldCamPos;
+		
+		static const char* modeNames[TrackModeCount];
 };
 
 extern CUnitTracker unitTracker;

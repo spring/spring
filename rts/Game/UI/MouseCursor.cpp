@@ -8,13 +8,24 @@
 #include "bitops.h"
 #include "mmgr.h"
 
+
+CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
+{
+	// FIXME: not used, yet
+	CMouseCursor* c = new CMouseCursor(name, hs);
+	if (c->frames.size() == 0) {
+		delete c;
+		return NULL;
+	}
+	return c;	
+}
+
+
 //Would be nice if these were read from a gaf-file instead.
 CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 {
 	char namebuf[100];
 	curFrame = 0;
-
-
 
 	if (name.length() > 80) {
 		info->AddLine("CMouseCursor: Long name %s", name.c_str());
@@ -44,9 +55,8 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 			glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,final->xsize, final->ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, final->mem);
 
-			frames.push_back(cursorTex);
-			xsize.push_back(final->xsize);
-			ysize.push_back(final->ysize);
+			FrameData frame(cursorTex, final->xsize, final->ysize);
+			frames.push_back(frame);
 
 			maxxsize = max(b.xsize, maxxsize);
 			maxysize = max(b.ysize, maxysize);
@@ -77,13 +87,15 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	lastFrameTime = gu->gameTime;
 }
 
+
 CMouseCursor::~CMouseCursor(void)
 {
-	for (vector<unsigned int>::iterator i = frames.begin(); i != frames.end(); ++i) {
-		unsigned int tn = *i;
+	for (vector<FrameData>::iterator i = frames.begin(); i != frames.end(); ++i) {
+		unsigned int tn = i->texture;
 		glDeleteTextures(1, &tn);
 	}
 }
+
 
 CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
 {
@@ -106,6 +118,7 @@ CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
 	return nb;
 }
 
+
 void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 {
 	for(int y=0;y<bm.ysize;++y){
@@ -120,30 +133,23 @@ void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 	}
 }
 
+
 void CMouseCursor::Draw(int x, int y)
 {
 	if (frames.size()==0)
 		return;
-	//Advance a frame in animated cursors
-	if (gu->gameTime - lastFrameTime > 0.1) {
-		lastFrameTime = gu->gameTime;
-		curFrame++;
-		if (curFrame >= (int)frames.size()) 
-			curFrame = 0;
-	}
 
 	//Center on hotspot
 	x -= xofs;
 	y -= yofs;
 
-	unsigned int cursorTex = frames[curFrame];
-	int xs = xsize[curFrame];
-	int ys = ysize[curFrame];
+	const FrameData& f = frames[curFrame];
+	unsigned int cursorTex = f.texture;
+	int xs = f.xsize;
+	int ys = f.ysize;
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,cursorTex);
-	if (frames.empty())
-		return;
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -170,5 +176,54 @@ void CMouseCursor::Draw(int x, int y)
 	cursorTextRight=""; */
 
 	glViewport(0,0,gu->screenx,gu->screeny);
+}
+
+
+void CMouseCursor::DrawQuad(int x, int y)
+{
+	if (frames.size()==0) {
+		return;
+	}
+		
+	const FrameData& f = frames[curFrame];
+	int xs = f.xsize;
+	int ys = f.ysize;
+
+	//Center on hotspot
+	x -= xofs;
+	y -= (ys - yofs);
+
+	glViewport(x,y,xs,ys);
+
+	glBegin(GL_QUADS);
+ 	glTexCoord2f(0,0);glVertex3f(0,0,0);
+ 	glTexCoord2f(0,1);glVertex3f(0,1,0);
+ 	glTexCoord2f(1,1);glVertex3f(1,1,0);
+ 	glTexCoord2f(1,0);glVertex3f(1,0,0);
+	glEnd();
+}
+
+
+void CMouseCursor::Update()
+{
+	if (frames.size() == 0) {
+		return;
+	}
+	
+	//Advance a frame in animated cursors
+	if (gu->gameTime - lastFrameTime > 0.1) {
+		lastFrameTime = gu->gameTime;
+		curFrame = (curFrame + 1) % (int)frames.size();
+	}
+}
+
+
+void CMouseCursor::BindTexture()
+{
+	if (frames.size() == 0) {
+		return;
+	}
+	unsigned int cursorTex = frames[curFrame].texture;
+	glBindTexture(GL_TEXTURE_2D, cursorTex);
 }
 

@@ -127,8 +127,7 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	c.name="Select AI";
 	c.tooltip="Select the AI to use for this group from the available AIs";
 	c.showUnique=true;
-	c.key='Q';
-	c.switchKeys=CONTROL_KEY;
+	c.hotkey="Ctrl+q";
 
 	char t[50];
 	sprintf(t,"%i",currentAiNum);

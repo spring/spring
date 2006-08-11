@@ -10,19 +10,29 @@ class CBitmap;
 
 class CMouseCursor
 {
-	vector<unsigned int> frames;
-	vector<int> xsize;
-	vector<int> ysize;
+public:
+	enum HotSpot {TopLeft, Center};
+	static CMouseCursor* New(const string &name, HotSpot hs);
+	CMouseCursor(const string &name, HotSpot hs);
+	~CMouseCursor(void);
+	void Update();
+	void Draw(int x, int y);
+	void DrawQuad(int x, int y);
+	void BindTexture();
+protected:	
+	CBitmap* getAlignedBitmap(const CBitmap &orig);
+	void setBitmapTransparency(CBitmap &bm, int r, int g, int b);
+	struct FrameData {
+		FrameData() : texture(0), xsize(0), ysize(0) {}
+		FrameData(unsigned int t, int x, int y) : texture(t), xsize(x), ysize(y) {}
+		unsigned int  texture;
+		int xsize;
+		int ysize;
+	};
+	vector<FrameData> frames;
 	double lastFrameTime;
 	int curFrame;
 	int xofs, yofs;			//Describes where the center of the cursor is. Calculated after the largest cursor if animated
-public:
-	enum HotSpot {TopLeft, Center};
-	CMouseCursor(const string &name, HotSpot hs);
-	~CMouseCursor(void);
-	CBitmap* getAlignedBitmap(const CBitmap &orig);
-	void setBitmapTransparency(CBitmap &bm, int r, int g, int b);
-	void Draw(int x, int y);
 };
 
 

@@ -1,62 +1,15 @@
-bind pause Pause
-bind 'o' SingleStep
-//bind 't' Chat
-bind enter Chat
-bind 'j' mouseState
-bind 'b' Debug
-bind f10 CreateVideo
-bind 't' Track
-bind 'c' ControlUnit
-bind 'h' ShareDialog
-bind 'l' togglelos
-bind ';' toggleradarandjammer
-bind up moveforward
-bind down moveback
-bind right moveright
-bind left moveleft
-bind ctrl moveslow
-bind shift movefast
-bind pageup moveup
-bind pagedown movedown
-bind esc quit
-bind backspace mousestate
-bind home increaseViewRadius
-bind end decreaseViewRadius
-bind insert speedup
-bind delete slowdown
-bind + speedup
-bind - slowdown
-bind f1 showElevation
-bind f2 ShowPathMap
-bind f3 LastMsgPos
-bind f4 ShowMetalMap
-bind f5 hideinterface
-bind f6 NoSound
-bind f7 dynamicSky
-bind f8 savegame
-bind f9 showhealthbars
-bind f11 screenshot
-bind f12 screenshot
-bind '1' group1
-bind '2' group2
-bind '3' group3
-bind '4' group4
-bind '5' group5
-bind '6' group6
-bind '7' group7
-bind '8' group8
-bind '9' group9
-bind '0' group0
-bind 0xa7 DrawInMap
-bind ` DrawInMap
-bind \ DrawInMap
-// simulate mouse bindings for build spacing
-bind 'z' mouse4
-bind 'x' mouse5
-bind tab toggleoverview
-
-bind > incguiopacity
-bind < decguiopacity
-
-bind [ incbuildfacing
-bind ] decbuildfacing
+//
+// Using the built-in defaults
+//
+// Somebody needs to document the new key binding mechanism...
+// (it'll get done once the new code is a little closer to final)
+//
+// try:
+//   .bind <keyset> <action>
+//   .cmd keydebug
+//   .cmd keyload
+//   .cmd keysave
+//   .cmd keysyms
+//   .cmd keycodes
+//   .cmd keyprint
+//

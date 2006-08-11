@@ -296,3 +296,13 @@ void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
 			shareTeam=team;
 	}
 }
+
+bool CShareBox::KeyPressed(unsigned short key)
+{
+	if (key == 27) { // escape
+		delete this;
+		return true;
+	}
+	return false;
+}
+
