@@ -112,6 +112,10 @@ void CWeapon::Update()
 			lastErrorVectorUpdate=gs->frameNum;
 		}
 		errorVector+=errorVectorAdd;
+		if (predict > 50000) {
+			/* to prevent runaway prediction (happens sometimes when a missile is moving *away* from it's target), we may need to disable missiles in case they fly around too long */
+			predict = 50000;
+		}
 		if(weaponDef->selfExplode){	//assumes that only flakker like units that need to hit aircrafts has this,change to a separate tag later
 			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*(0.5+predictSpeedMod*0.5)*predict;
 		} else {
