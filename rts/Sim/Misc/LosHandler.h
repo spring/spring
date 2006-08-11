@@ -15,18 +15,19 @@
 #include "Sim/Units/Unit.h"
 #include "RadarHandler.h"
 
-#define MAX_LOS_TABLE 80
+#define MAX_LOS_TABLE 110
 
 struct LosInstance{
 	inline void* operator new(size_t size){return mempool.Alloc(size);};
 	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
  	std::vector<int> losSquares;
-	inline LosInstance(int lossize,int allyteam,int baseSquare,int hashNum,float baseHeight,int airLosSize)
+	inline LosInstance(int lossize,int allyteam,int baseSquare,int baseAirSquare,int hashNum,float baseHeight,int airLosSize)
 		: losSize(lossize),
 			airLosSize(airLosSize),
 			refCount(1),
 			allyteam(allyteam),
 			baseSquare(baseSquare),
+			baseAirSquare(baseAirSquare),
 			hashNum(hashNum),
 			baseHeight(baseHeight),
 			toBeDeleted(false){}
@@ -35,6 +36,7 @@ struct LosInstance{
 	int refCount;
 	int allyteam;
 	int baseSquare;
+	int baseAirSquare;
 	int hashNum;
 	float baseHeight;
 	bool toBeDeleted;
@@ -51,22 +53,22 @@ public:
 		if(unit->isCloaked)
 			return false;
 		if(unit->useAirLos){
-			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(unit->pos.z))/(SQUARE_SIZE*4))))*airSizeX) + max(0,min(airSizeX-1,((int(unit->pos.x))/(SQUARE_SIZE*4))))];
+			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(unit->pos.z*invAirDiv)))))*airSizeX) + max(0,min(airSizeX-1,((int(unit->pos.x*invAirDiv)))))];
 		} else {
 			if(unit->isUnderWater && !radarhandler->InRadar(unit,allyteam))
 				return false;
-			return !!losMap[allyteam][max(0,min(gs->hmapy-1,((int)unit->pos.z)/(SQUARE_SIZE*2)))*gs->hmapx+ max(0,min(gs->hmapx-1,((int)unit->pos.x)/(SQUARE_SIZE*2)))];
+			return !!losMap[allyteam][max(0,min(losSizeY-1,((int)(unit->pos.z*invLosDiv))))*losSizeX+ max(0,min(losSizeX-1,((int)(unit->pos.x*invLosDiv))))];
 		}
 	}
 	inline bool InLos(const CWorldObject* object, int allyteam){
 		if(object->useAirLos)
-			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(object->pos.z))/(SQUARE_SIZE*4))))*airSizeX) + max(0,min(airSizeX-1,((int(object->pos.x))/(SQUARE_SIZE*4))))] | object->alwaysVisible;
+			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(object->pos.z*invAirDiv)))))*airSizeX) + max(0,min(airSizeX-1,((int(object->pos.x*invAirDiv)))))] | object->alwaysVisible;
 		else
-			return !!losMap[allyteam][max(0,min(gs->hmapy-1,((int)object->pos.z)/(SQUARE_SIZE*2)))*gs->hmapx+ max(0,min(gs->hmapx-1,((int)object->pos.x)/(SQUARE_SIZE*2)))] | object->alwaysVisible;
+			return !!losMap[allyteam][max(0,min(losSizeY-1,((int)(object->pos.z*invLosDiv))))*losSizeX+ max(0,min(losSizeX-1,((int)(object->pos.x*invLosDiv))))] | object->alwaysVisible;
 	}
 	inline bool InLos(float3 pos, int allyteam){
 		pos.CheckInBounds();
-		return !!losMap[allyteam][((int)pos.z)/(SQUARE_SIZE*2)*gs->hmapx+((int)pos.x)/(SQUARE_SIZE*2)];
+		return !!losMap[allyteam][((int)(pos.z*invLosDiv))*losSizeX+((int)(pos.x*invLosDiv))];
 	}
 	CLosHandler();
 	virtual ~CLosHandler();
@@ -75,6 +77,16 @@ public:
 	unsigned short* airLosMap[MAX_TEAMS];
 
 	friend class CRadarHandler;
+
+	int losMipLevel;
+	int airMipLevel;
+	float invLosDiv;
+	float invAirDiv;
+	int airSizeX;
+	int airSizeY;
+	int losSizeX;
+	int losSizeY;
+
 private:
 
 	void SafeLosAdd(LosInstance* instance,int xm,int ym);
@@ -120,9 +132,6 @@ private:
 	typedef std::vector<LosLine> LosTable;
 
 	std::vector<LosTable> lostables;
-
-	int airSizeX;
-	int airSizeY;
 
 	int Round(float num);
 	void DrawLine(int x,int y,int Size);

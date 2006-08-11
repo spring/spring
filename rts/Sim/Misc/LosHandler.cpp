@@ -13,6 +13,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
+#include "Sim/Misc/SensorHandler.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -47,14 +48,20 @@ static void myDelete(void* p)
 
 CLosHandler::CLosHandler()
 {
-	airSizeX=gs->hmapx/2;
-	airSizeY=gs->hmapy/2;
+	losMipLevel = sensorHandler->losMipLevel;
+	airMipLevel = sensorHandler->airMipLevel;
+	airSizeX=gs->mapx>>sensorHandler->airMipLevel;
+	airSizeY=gs->mapy>>sensorHandler->airMipLevel;
+	losSizeX=gs->mapx>>sensorHandler->losMipLevel;
+	losSizeY=gs->mapy>>sensorHandler->losMipLevel;
+	invLosDiv = 1/((double)SQUARE_SIZE*(1<<sensorHandler->losMipLevel));
+	invAirDiv = 1/((double)SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
-		losMap[a]=(unsigned short*)myNew(gs->hmapx*gs->hmapy*2);
+		losMap[a]=(unsigned short*)myNew(losSizeX*losSizeY*2);
 		airLosMap[a]=(unsigned short*)myNew(airSizeX*airSizeY*2);
 		
-		for(int b=0;b<gs->hmapx*gs->hmapy;++b){
+		for(int b=0;b<losSizeX*losSizeY;++b){
 			losMap[a][b]=0;
 		}
 		for(int b=0;b<airSizeX*airSizeY;++b){
@@ -111,9 +118,9 @@ START_TIME_PROFILE;
 		END_TIME_PROFILE("Los");
 		return;
 	}
-	int xmap=(int)(losPos.x/(SQUARE_SIZE*2));
-	int ymap=(int)(losPos.z/(SQUARE_SIZE*2));
-	int baseSquare=max(0,min(gs->hmapy-1,(ymap)))*gs->hmapx + max(0,min(gs->hmapx-1,xmap));
+	int xmap=(int)(losPos.x*invLosDiv);
+	int ymap=(int)(losPos.z*invLosDiv);
+	int baseSquare=max(0,min(losSizeY-1,(ymap)))*losSizeX + max(0,min(losSizeX-1,xmap));
 
 	LosInstance* instance;
 	if(redoCurrent){
@@ -125,6 +132,8 @@ START_TIME_PROFILE;
 		CleanupInstance(instance);
 		instance->losSquares.clear();
 		instance->baseSquare=baseSquare;	//this could be a problem if several units are sharing the same instance
+		int baseAirSquare=max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
+		instance->baseAirSquare=baseAirSquare;
 	} else {
 		if(unit->los && unit->los->baseSquare==baseSquare){
 			END_TIME_PROFILE("Los");
@@ -141,11 +150,12 @@ START_TIME_PROFILE;
 				return;
 			}
 		}
-		instance=new LosInstance(unit->losRadius,allyteam,baseSquare,hash,unit->losHeight,unit->airLosRadius);
+		int baseAirSquare=max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
+		instance=new LosInstance(unit->losRadius,allyteam,baseSquare,baseAirSquare,hash,unit->losHeight,unit->airLosRadius);
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}
-	if(xmap-unit->losRadius<0 || xmap+unit->losRadius>=gs->hmapx || ymap-unit->losRadius<0 || ymap+unit->losRadius>=gs->hmapy)
+	if(xmap-unit->losRadius<0 || xmap+unit->losRadius>=losSizeX || ymap-unit->losRadius<0 || ymap+unit->losRadius>=losSizeY)
 		SafeLosAdd(instance,xmap,ymap);
 	else
 		LosAdd(instance);
@@ -172,7 +182,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	for(li=table.begin();li!=table.end();++li){
 		LosLine& line=*li;
 		LosLine::iterator linei;
-		float baseHeight=readmap->halfHeightmap[mapSquare]+instance->baseHeight-15;
+		float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
 		float maxAng1=-1000;
 		float maxAng2=-1000;
 		float maxAng3=-1000;
@@ -180,8 +190,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 		float r=1;
 		for(linei=line.begin();linei!=line.end();++linei){
 			float invR=1.0/r;
-			int square=mapSquare+linei->x+linei->y*gs->hmapx;
-			float dh=readmap->halfHeightmap[square]-baseHeight;
+			int square=mapSquare+linei->x+linei->y*losSizeX;
+			float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 			float ang=dh*invR;
 			if(ang>maxAng1){
 				instance->losSquares.push_back(square);
@@ -193,8 +203,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 				maxAng1=ang;
 			}
 
-			square=mapSquare-linei->x-linei->y*gs->hmapx;
-			dh=readmap->halfHeightmap[square]-baseHeight;
+			square=mapSquare-linei->x-linei->y*losSizeX;
+			dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 			ang=dh*invR;
 			if(ang>maxAng2){
 				instance->losSquares.push_back(square);
@@ -206,8 +216,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 				maxAng2=ang;
 			}
 
-			square=mapSquare-linei->x*gs->hmapx+linei->y;
-			dh=readmap->halfHeightmap[square]-baseHeight;
+			square=mapSquare-linei->x*losSizeX+linei->y;
+			dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 			ang=dh*invR;
 			if(ang>maxAng3){
 				instance->losSquares.push_back(square);
@@ -219,8 +229,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 				maxAng3=ang;
 			}
 
-			square=mapSquare+linei->x*gs->hmapx-linei->y;
-			dh=readmap->halfHeightmap[square]-baseHeight;
+			square=mapSquare+linei->x*losSizeX-linei->y;
+			dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 			ang=dh*invR;
 			if(ang>maxAng4){
 				instance->losSquares.push_back(square);
@@ -256,7 +266,7 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 	for(li=table.begin();li!=table.end();++li){
 		LosLine& line=*li;
 		LosLine::iterator linei;
-		float baseHeight=readmap->halfHeightmap[mapSquare]+instance->baseHeight-15;
+		float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
 		float maxAng1=-1000;
 		float maxAng2=-1000;
 		float maxAng3=-1000;
@@ -266,9 +276,9 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 		losMap[allyteam][mapSquare]++;
 
 		for(linei=line.begin();linei!=line.end();++linei){
-			if(xmap+linei->x<gs->hmapx && ymap+linei->y<gs->hmapy){
-				int square=mapSquare+linei->x+linei->y*gs->hmapx;
-				float dh=readmap->halfHeightmap[square]-baseHeight;
+			if(xmap+linei->x<losSizeX && ymap+linei->y<losSizeY){
+				int square=mapSquare+linei->x+linei->y*losSizeX;
+				float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng1){
 					instance->losSquares.push_back(square);
@@ -281,8 +291,8 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 				}
 			}
 			if(xmap-linei->x>=0 && ymap-linei->y>=0){
-				int square=mapSquare-linei->x-linei->y*gs->hmapx;
-				float dh=readmap->halfHeightmap[square]-baseHeight;
+				int square=mapSquare-linei->x-linei->y*losSizeX;
+				float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng2){
 					instance->losSquares.push_back(square);
@@ -294,9 +304,9 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 					maxAng2=ang;
 				}
 			}
-			if(xmap+linei->y<gs->hmapx && ymap-linei->x>=0){
-				int square=mapSquare-linei->x*gs->hmapx+linei->y;
-				float dh=readmap->halfHeightmap[square]-baseHeight;
+			if(xmap+linei->y<losSizeX && ymap-linei->x>=0){
+				int square=mapSquare-linei->x*losSizeX+linei->y;
+				float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng3){
 					instance->losSquares.push_back(square);
@@ -308,9 +318,9 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 					maxAng3=ang;
 				}
 			}
-			if(xmap-linei->y>=0 && ymap+linei->x<gs->hmapy){
-				int square=mapSquare+linei->x*gs->hmapx-linei->y;
-				float dh=readmap->halfHeightmap[square]-baseHeight;
+			if(xmap-linei->y>=0 && ymap+linei->x<losSizeY){
+				int square=mapSquare+linei->x*losSizeX-linei->y;
+				float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng4){
 					instance->losSquares.push_back(square);
@@ -531,9 +541,8 @@ void CLosHandler::CleanupInstance(LosInstance* instance)
 		--losMap[instance->allyteam][*lsi];
 	}
 
-	int by=(instance->baseSquare/gs->hmapx);
-	int bx=(instance->baseSquare-by*gs->hmapx)/2;
-	by/=2;
+	int by=(instance->baseAirSquare/airSizeX);
+	int bx=(instance->baseAirSquare-by*airSizeX);
 
 	int sx=max(0,bx-instance->airLosSize);
 	int ex=min(airSizeX-1,bx+instance->airLosSize);
@@ -553,9 +562,11 @@ void CLosHandler::CleanupInstance(LosInstance* instance)
 
 void CLosHandler::LosAddAir(LosInstance* instance)
 {
-	int by=(instance->baseSquare/gs->hmapx);
+	/*int by=(instance->baseSquare/gs->hmapx);
 	int bx=(instance->baseSquare-by*gs->hmapx)/2;
-	by/=2;
+	by/=2;*/
+	int by=(instance->baseAirSquare/airSizeX);
+	int bx=(instance->baseAirSquare-by*airSizeX);
 
 	int sx=max(0,bx-instance->airLosSize);
 	int ex=min(airSizeX-1,bx+instance->airLosSize);

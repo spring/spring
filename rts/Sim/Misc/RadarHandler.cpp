@@ -177,7 +177,7 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 			if(xradar+linei->x < xsize && yradar+linei->y < ysize){
 				int rsquare=(xradar+linei->x)+(yradar+linei->y)*xsize;
 				int msquare=(xmap+linei->x*4)+(ymap+linei->y*4)*gs->hmapx;
-				float dh=readmap->halfHeightmap[msquare]-baseHeight;
+				float dh=readmap->mipHeightmap[1][msquare]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng1){
 					unit->radarSquares.push_back(rsquare);
@@ -192,7 +192,7 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 			if(xradar-linei->x >= 0 && yradar-linei->y >= 0){
 				int rsquare=(xradar-linei->x)+(yradar-linei->y)*xsize;
 				int msquare=(xmap-linei->x*4)+(ymap-linei->y*4)*gs->hmapx;
-				float dh=readmap->halfHeightmap[msquare]-baseHeight;
+				float dh=readmap->mipHeightmap[1][msquare]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng2){
 					unit->radarSquares.push_back(rsquare);
@@ -207,7 +207,7 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 			if(xradar+linei->y < xsize && yradar-linei->x >= 0){
 				int rsquare=(xradar+linei->y)+(yradar-linei->x)*xsize;
 				int msquare=(xmap+linei->y*4)+(ymap-linei->x*4)*gs->hmapx;
-				float dh=readmap->halfHeightmap[msquare]-baseHeight;
+				float dh=readmap->mipHeightmap[1][msquare]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng3){
 					unit->radarSquares.push_back(rsquare);
@@ -222,7 +222,7 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 			if(xradar-linei->y >= 0 && yradar+linei->x < ysize){
 				int rsquare=(xradar-linei->y)+(yradar+linei->x)*xsize;
 				int msquare=(xmap-linei->y*4)+(ymap+linei->x*4)*gs->hmapx;
-				float dh=readmap->halfHeightmap[msquare]-baseHeight;
+				float dh=readmap->mipHeightmap[1][msquare]-baseHeight;
 				float ang=dh/r;
 				if(ang>maxAng4){
 					unit->radarSquares.push_back(rsquare);

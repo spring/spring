@@ -238,11 +238,11 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						if(radarhandler->jammerMaps[gu->myAllyTeam][y/(RADAR_SIZE/2)*radarhandler->xsize+x/(RADAR_SIZE/2)])
 							inJam=50;
 					}
-					if(myLos[(y)*gs->hmapx+x]!=0){
+					if(myLos[((y*2)>>loshandler->losMipLevel)*loshandler->losSizeX+((x*2)>>loshandler->losMipLevel)]!=0){
 						infoTexMem[a*4]=128+inJam;
 						infoTexMem[a*4+1]=128+inRadar;
 						infoTexMem[a*4+2]=128;
-					} else if(myAirLos[(y/2)*gs->hmapx/2+x/2]!=0){
+					} else if(myAirLos[((y*2)>>loshandler->airMipLevel)*loshandler->airSizeX+((x*2)>>loshandler->airMipLevel)]!=0){
 						infoTexMem[a*4]=96+inJam;
 						infoTexMem[a*4+1]=96+inRadar;
 						infoTexMem[a*4+2]=96;

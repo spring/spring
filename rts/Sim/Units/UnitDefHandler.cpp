@@ -20,6 +20,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Game/Team.h"
 #include "mmgr.h"
+#include "Sim/Misc/SensorHandler.h"
 
 CR_BIND(UnitDef);
 
@@ -211,8 +212,13 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(ud.buildTime<1)		//avoid some nasty divide by 0 etc
 		ud.buildTime=1;
 	ud.aihint=id;		//fix
-	ud.losRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str());
-	ud.airLosRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*1.5;
+	ud.losRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*sensorHandler->losMul/(SQUARE_SIZE*(1<<sensorHandler->losMipLevel));
+	ud.airLosRadius=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\AirSightDistance").c_str());
+	if(ud.airLosRadius==-1)
+		ud.airLosRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*sensorHandler->airLosMul*1.5/(SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
+	else
+		ud.airLosRadius = ud.airLosRadius*sensorHandler->airLosMul/(SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
+
 	ud.tooltip=tdfparser.SGetValueDef(ud.name,"UNITINFO\\Description");
 	ud.moveType=0;
 
