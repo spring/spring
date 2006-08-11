@@ -51,6 +51,8 @@
 //
 // ---------------------------------------------------------------------------------------------------------------------------------
 
+#include "StdAfx.h"
+
 #ifdef USE_MMGR
 
 #include <iostream>
@@ -70,7 +72,6 @@ using std::new_handler;
 #include "mmgr.h"
 
 #include "Platform/FileSystem.h"
-#include "StdAfx.h"
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // -DOC- If you're like me, it's hard to gain trust in foreign code. This memory manager will try to INDUCE your code to crash (for
