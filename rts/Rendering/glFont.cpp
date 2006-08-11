@@ -380,6 +380,25 @@ void CglFont::glPrintCentered (float x, float y, float s, const char *fmt, ...)
 	glPopMatrix();
 }
 
+// right justified version of glPrintAt
+void CglFont::glPrintRight (float x, float y, float s, const char *fmt, ...)
+{
+	char text[512];
+	va_list	ap;
+	if (fmt == NULL)
+		return;
+	va_start(ap, fmt);
+	VSNPRINTF(text, sizeof(text), fmt, ap);
+	va_end(ap);
+
+	glPushMatrix();
+	glTranslatef(x,y,0.0f);
+	glScalef(0.02f*s,0.025f*s,1.0f);
+	glTranslatef(-font->CalcTextWidth(text),0.0f,0.0f);
+	printstring(text);
+	glPopMatrix();
+}
+
 void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 {
 	char text[512];

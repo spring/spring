@@ -18,6 +18,7 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Game/UI/InfoConsole.h"
+#include "Game/UI/CursorIcons.h"
 #include "Game/Team.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "myMath.h"
@@ -34,42 +35,47 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 {
 	CommandDescription c;
 	c.id=CMD_REPAIR;
+	c.action="repair";
+	c.hotkey="r";
 	c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 	c.name="Repair";
 	c.tooltip="Repair: Repairs another unit";
-	c.key='R';
 	possibleCommands.push_back(c);
 
 	c.id=CMD_RECLAIM;
+	c.action="reclaim";
+	c.hotkey="e";
 	c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
 	c.name="Reclaim";
 	c.tooltip="Reclaim: Sucks in the metal/energy content of a unit/feature and add it to your storage";
-	c.key='E';
 	possibleCommands.push_back(c);
 
 	c.id=CMD_RESTORE;
+	c.action="restore";
+	c.hotkey="";
 	c.type=CMDTYPE_ICON_AREA;
 	c.name="Restore";
 	c.tooltip="Restore: Restores an area of the map to its original height";
-	c.key=0;
 	c.params.push_back("200");
 	possibleCommands.push_back(c);
 	c.params.clear();
 
 	if(owner->unitDef->canResurrect){
 		c.id=CMD_RESURRECT;
+		c.action="resurrect";
+		c.hotkey="";
 		c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
 		c.name="Resurrect";
 		c.tooltip="Resurrect: Resurrects a unit from a feature";
-		c.key=0;
 		possibleCommands.push_back(c);
 	}
 	if(owner->unitDef->canCapture){
 		c.id=CMD_CAPTURE;
+		c.action="capture";
+		c.hotkey="";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 		c.name="Capture";
 		c.tooltip="Capture: Captures a unit from the enemy";
-		c.key=0;
 		possibleCommands.push_back(c);
 	}
 	CBuilder* fac=(CBuilder*)owner;
@@ -79,7 +85,8 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		string name=bi->second;
 		UnitDef* ud= unitDefHandler->GetUnitByName(name);
 		CommandDescription c;
-		c.id=-ud->id;						//build options are always negative
+		c.id=-ud->id; //build options are always negative
+		c.action="buildunit_" + StringToLower(ud->name);
 		c.type=CMDTYPE_ICON_BUILDING;
 		c.name=name;
 
@@ -716,6 +723,7 @@ void CBuilderCAI::DrawCommands(void)
 		}
 		if(draw){
 			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 		}
 	}
 	glEnd();

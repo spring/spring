@@ -89,7 +89,7 @@ vector<string> CWordCompletion::Complete(string& msg) const
 		if (cmp > 0) break;
 		if ((!it->second.startOfLine || startOfLine) &&
 			(!it->second.unitName || unitName)) {
-		partials.push_back(it->first);
+			partials.push_back(it->first);
 		}
 	}
 	  
@@ -110,7 +110,7 @@ vector<string> CWordCompletion::Complete(string& msg) const
 	unsigned int least = min(firstStr.size(), lastStr.size());
 	for (i = 0; i < least; i++) {
 		if (firstStr[i] != lastStr[i]) {
-		break;
+			break;
 		}
 	}
 	msg = prefix + rawmsg.substr(0, startPos) + partials[0].substr(0, i);

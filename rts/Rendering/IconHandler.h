@@ -16,10 +16,10 @@ public:
 	bool radiusAdjust;
 	CIcon(unsigned int tex, float siz, float dis, bool radius)
 	{
-		texture		= tex;
-		size		= siz;
-		distance	= dis;
-		radiusAdjust= radius;
+		texture      = tex;
+		size         = siz;
+		distance     = dis;
+		radiusAdjust = radius;
 	};
 };
 

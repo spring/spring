@@ -6,7 +6,9 @@
 #include "Sim/Units/UnitHandler.h"
 #include "ExternalAI/Group.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
 #include "Game/UI/InfoConsole.h"
+#include "Game/UI/CursorIcons.h"
 #include "Sim/Units/UnitDef.h"
 #include "myMath.h"
 #include "mmgr.h"
@@ -16,42 +18,48 @@ CAirCAI::CAirCAI(CUnit* owner)
 {
 	CommandDescription c;
 	c.id=CMD_MOVE;
+	c.action="move";
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Move";
-	c.key='M';
+	c.hotkey="m";
 	c.tooltip="Move: Commands the aircraft to fly to the location";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_PATROL;
+	c.action="patrol";
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Patrol";
-	c.key='P';
+	c.hotkey="p";
 	c.tooltip="Patrol: Sets the aircraft to patrol a path to one or more waypoints";
 	possibleCommands.push_back(c);
 
 	c.id = CMD_FIGHT;
+	c.action="fight";
 	c.type = CMDTYPE_ICON_MAP;
 	c.name = "Fight";
-	c.key = 'F';
+	c.hotkey = "f";
 	c.tooltip = "Fight: Order the aircraft to take action while moving to a position";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_AREA_ATTACK;
+	c.action="areaattack";
 	c.type=CMDTYPE_ICON_AREA;
 	c.name="Area attack";
-	c.key='A';
+	c.hotkey="a";
 	c.tooltip="Sets the aircraft to attack enemy units within a circle";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_GUARD;
+	c.action="guard";
 	c.type=CMDTYPE_ICON_UNIT;
 	c.name="Guard";
-	c.key='G';
+	c.hotkey="g";
 	c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 	possibleCommands.push_back(c);
 
 	c.params.clear();
 	c.id=CMD_AUTOREPAIRLEVEL;
+	c.action="autorepairlevel";
 	c.type=CMDTYPE_ICON_MODE;
 	c.name="Repair level";
 	c.params.push_back("1");
@@ -59,20 +67,21 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.params.push_back("LandAt 30");
 	c.params.push_back("LandAt 50");
 	c.tooltip="Repair level: Sets at which health level an aircraft will try to find a repair pad";
-	c.key=0;
+	c.hotkey="";
 	possibleCommands.push_back(c);
 	nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
 
 	if(owner->unitDef->canLoopbackAttack){
 		c.params.clear();
 		c.id=CMD_LOOPBACKATTACK;
+		c.action="loopbackattack";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Loopback";
 		c.params.push_back("0");
 		c.params.push_back("Normal");
 		c.params.push_back("Loopback");
 		c.tooltip="Loopback attack: Sets if the aircraft should loopback after an attack instead of overflying target";
-		c.key=0;
+		c.hotkey="";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_LOOPBACKATTACK);
 	}
@@ -438,6 +447,11 @@ void CAirCAI::SlowUpdate()
 				FinishCommand();
 				break;
 			}
+			if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+				owner->AttackUnit(0,true); 
+				FinishCommand();
+			  break;
+			}    
 			if(orderTarget && orderTarget->unitDef->canfly && orderTarget->crashing){
 				owner->SetUserTarget(0);
 				FinishCommand();
@@ -553,56 +567,49 @@ void CAirCAI::DrawCommands(void)
 	glColor4f(1,1,1,0.4);
 	glBegin(GL_LINE_STRIP);
 	glVertexf3(pos);
-	float curHeight=pos.y-ground->GetHeight(pos.x,pos.z);
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
 		case CMD_MOVE:
-			pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,1,0.5,0.4);
 			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 			break;
 		case CMD_FIGHT:
 		case CMD_PATROL:
-			pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			glColor4f(0.5,0.5,1,0.4);
 			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 			break;
 		case CMD_ATTACK:
 			if(ci->params.size()==1){
 				if(uh->units[int(ci->params[0])]!=0)
 					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
 			} else {
-				pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
+				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
 			}
 			glColor4f(1,0.5,0.5,0.4);
 			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 			break;
 		case CMD_AREA_ATTACK:
-			pos=float3(ci->params[0],ci->params[1]+curHeight,ci->params[2]);
-			glColor4f(1,0.1,0.1,0.6);
+			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
+			glColor4f(1,0.5,0.5,0.4);
 			glVertexf3(pos);
-			if(owner->userTarget){
-				glEnd();
-				glBegin(GL_LINES);
-					glVertexf3(pos);
-					glVertexf3(owner->userTarget->pos);
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-			} else if(owner->userAttackGround){
-				glEnd();
-				glBegin(GL_LINES);
-					glVertexf3(pos);
-					glVertexf3(owner->userAttackPos);
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-			}
+			glEnd();
+			glSurfaceCircle(pos, ci->params[3], 20);
+			glBegin(GL_LINE_STRIP);
+			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 			break;
 		case CMD_GUARD:
 			if(uh->units[int(ci->params[0])]!=0)
 				pos=uh->units[int(ci->params[0])]->pos;
 			glColor4f(0.3,0.3,1,0.4);
 			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 			break;
 		}
 	}

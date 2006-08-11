@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "GuiHandler.h"
+#include "KeyBindings.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GL/myGL.h"
 #include "MouseHandler.h"
@@ -224,12 +225,14 @@ void CGuiHandler::LayoutIcons()
 //			(*info) << "arf" << "\n";
 			CommandDescription c;
 			c.id=CMD_INTERNAL;
+			c.action="prevmenu";
 			c.type=CMDTYPE_PREV;
 			c.name="";
 			c.tooltip = "Previous menu";
 			commands.push_back(c);
 
 			c.id=CMD_INTERNAL;
+			c.action="nextmenu";
 			c.type=CMDTYPE_NEXT;
 			c.name="";
 			c.tooltip = "Next menu";
@@ -259,12 +262,14 @@ void CGuiHandler::LayoutIcons()
 //		(*info) << "arf" << "\n";
 		CommandDescription c;
 		c.id=CMD_INTERNAL;
+		c.action="prevmenu";
 		c.type=CMDTYPE_PREV;
 		c.name="";
 		c.tooltip = "Previous menu";
 		commands.push_back(c);
 
 		c.id=CMD_INTERNAL;
+		c.action="nextmenu";
 		c.type=CMDTYPE_NEXT;
 		c.name="";
 		c.tooltip = "Next menu";
@@ -1027,28 +1032,32 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		}
 		return true;
 	}
-	unsigned char keyOptions=0;
-	if(keys[SDLK_LSHIFT])
-		keyOptions|=SHIFT_KEY;
-	if(keys[SDLK_LCTRL])
-		keyOptions|=CONTROL_KEY;
-	if(keys[SDLK_LALT])
-		keyOptions|=ALT_KEY;
 
-	if (key >= SDLK_a && key <= SDLK_z)
-		key = 'A' + (key - SDLK_a);
-
+	CKeySet ks(key, false);
+	const string action = keyBindings->GetAction(ks, "command");
+		
 	int a;
-	for(a=0;a<commands.size();++a){
-		if(commands[a].key==key && (keyOptions==commands[a].switchKeys || keyOptions==(commands[a].switchKeys|SHIFT_KEY))){
-			switch(commands[a].type){
+	if (action == "showcommands") {
+		for(a = 0; a < commands.size(); ++a){
+			printf("  button: %i, id = %i, action = %s\n",
+						 a, commands[a].id, commands[a].action.c_str());
+		}
+		return true;
+	}
+
+	for(a = 0; a < commands.size(); ++a){
+		if(commands[a].action != action) {
+			continue;
+		}
+		switch(commands[a].type){
 			case CMDTYPE_ICON:{
 				Command c;
 				c.id=commands[a].id;
-				CreateOptions(c,0);
+				CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
-				break;}
+				break;
+			}
 			case CMDTYPE_ICON_MODE:{
 				int newMode=atoi(commands[a].params[0].c_str())+1;
 				if(newMode>commands[a].params.size()-2)
@@ -1061,25 +1070,64 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				Command c;
 				c.id=commands[a].id;
 				c.params.push_back(newMode);
-				CreateOptions(c,0);
+				CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
-				break;}
+				break;
+			}
+			case CMDTYPE_ICON_MAP:
+			case CMDTYPE_ICON_AREA:
+			case CMDTYPE_ICON_UNIT:
+			case CMDTYPE_ICON_UNIT_OR_MAP:
+			case CMDTYPE_ICON_FRONT:
+			case CMDTYPE_ICON_UNIT_OR_AREA:
+			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
+				inCommand=a;
+				break;
+			}
+			case CMDTYPE_ICON_BUILDING:{
+				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[a].id);
+				CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
+				if(ud->extractsMetal>0 && gd->drawMode != CBaseGroundDrawer::drawMetal && autoShowMetal){
+					readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
+					showingMetal=true;
+				}
+				inCommand=a;
+				break;
+			}
 			case CMDTYPE_COMBO_BOX:{
 				inCommand=a;
 				CommandDescription& cd=commands[a];
 				list=new CglList(cd.name.c_str(),MenuSelection);
-				vector<string>::iterator pi;
-				for(pi=++cd.params.begin();pi!=cd.params.end();++pi)
+				for(vector<string>::iterator pi=++cd.params.begin();pi!=cd.params.end();++pi)
 					list->AddItem(pi->c_str(),"");
 				list->place=atoi(cd.params[0].c_str());
 				game->showList=list;
-				break;}
-			default:
+				//						return;
+				inCommand=-1;
+				break;
+			}
+			case CMDTYPE_NEXT:{
+				++activePage;
+				if(activePage>maxPages)
+					activePage=0;
+				selectedUnits.SetCommandPage(activePage);
+				inCommand=-1;
+				break;
+			}
+			case CMDTYPE_PREV:{
+				--activePage;
+				if(activePage<0)
+					activePage=maxPages;
+				selectedUnits.SetCommandPage(activePage);
+				inCommand=-1;
+				break;
+			}
+			default:{
 				inCommand=a;
 			}
-			return true;
 		}
+		return true; // we used the command
 	}
 	return false;
 }
@@ -1144,15 +1192,8 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 			s=commands[icon].tooltip;
 		else
 			s=commands[icon].name;
-		if(commands[icon].key){
-			s+="\nHotkey ";
-			if(commands[icon].switchKeys & SHIFT_KEY)
-				s+="Shift+";
-			if(commands[icon].switchKeys & CONTROL_KEY)
-				s+="Ctrl+";
-			if(commands[icon].switchKeys & ALT_KEY)
-				s+="Alt+";
-			s+=commands[icon].key;
+		if(!commands[icon].hotkey.empty()){
+			s+="\nHotkey " + commands[icon].hotkey;
 		}
 	}
 	return s;

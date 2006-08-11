@@ -5,11 +5,13 @@
 #include "StdAfx.h"
 #include "ConsoleHistory.h"
 
+
 unsigned int CConsoleHistory::MaxLines = 256;
 
 
 CConsoleHistory::CConsoleHistory()
 {
+	lines.push_back(""); // queue is never empty
 	ResetPosition();
 	return;
 }
@@ -33,15 +35,17 @@ bool CConsoleHistory::AddLine(const string& msg)
 	if (msg.empty()) {
 		return false; // do not save blank lines
 	}
-	if (!lines.empty() && (lines.back() == msg)) {
+	if (lines.back() == msg) {
 		return false; // do not save duplicates
 	}
 	  
 	if (lines.size() >= MaxLines) {
-		if (pos == lines.begin()) {
-		pos++;
+		if (pos != lines.begin()) {
+			lines.pop_front();
+		} else {
+			lines.pop_front();
+			pos = lines.begin();
 		}
-		lines.pop_front();
 	}
 
 	lines.push_back(msg);
@@ -57,13 +61,24 @@ string CConsoleHistory::NextLine(const string& current)
 		pos = lines.end();
 		return "";
 	}
+
 	if (*pos != current) {
-		AddLine(current);
+		if (pos != --lines.end()) {
+			AddLine(current);
+		} else {
+			if (AddLine(current)) {
+				pos = lines.end();
+				return "";
+			}
+		}
 	}
+
 	pos++;
+
 	if (pos == lines.end()) {
 		return "";
 	}
+
 	return *pos;
 }
 
@@ -71,18 +86,21 @@ string CConsoleHistory::NextLine(const string& current)
 string CConsoleHistory::PrevLine(const string& current)
 {
 	if (pos == lines.begin()) {
-		AddLine(current);
+		if (*pos != current) {
+			AddLine(current);
+			pos = lines.begin();
+		}
 		return "";
 	}
+
 	if ((pos == lines.end()) || (*pos != current)) {
 		AddLine(current);
 		if (pos == lines.begin()) {
-		return ""; // AddLine() will adjust begin() iterators when it shifts
+			return ""; // AddLine() will adjust begin() iterators when it rolls
 		}
 	}
+
 	pos--;
-	if (pos == lines.begin()) {
-		return "";
-	}
+
 	return *pos;
 }

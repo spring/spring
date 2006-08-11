@@ -8,6 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitDef.h"
 #include "Game/UI/InfoConsole.h"
+#include "Game/UI/CursorIcons.h"
 #include "Game/GameHelper.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Game/SelectedUnits.h"
@@ -31,52 +32,56 @@ CCommandAI::CCommandAI(CUnit* owner)
 	owner->commandAI=this;
 	CommandDescription c;
 	c.id=CMD_STOP;
+	c.action="stop";
 	c.type=CMDTYPE_ICON;
 	c.name="Stop";
-	c.key='S';
+	c.hotkey="s";
 	c.tooltip="Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
 	c.id=CMD_ATTACK;
+	c.action="attack";
 	c.type=CMDTYPE_ICON_UNIT_OR_MAP;
 	c.name="Attack";
-	c.key='A';
+	c.hotkey="a";
 	c.tooltip="Attack: Attacks an unit or a position on the ground";
 	possibleCommands.push_back(c);
 
 	if(owner->unitDef->canDGun){
 		c.id=CMD_DGUN;
+		c.action="dgun";
 		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
 		c.name="DGun";
-		c.key='D';
+		c.hotkey="d";
 		c.tooltip="DGun: Attacks using the units special weapon";
 		possibleCommands.push_back(c);
 	}
 
  	c.id=CMD_WAIT;
+	c.action="wait";
  	c.type=CMDTYPE_ICON;
  	c.name="Wait";
- 	c.key='W';
+ 	c.hotkey="w";
  	c.onlyKey=true;
  	c.tooltip="Wait: Tells the unit to wait until another units handles him";
  	possibleCommands.push_back(c);
 
 	c.id=CMD_SELFD;
+	c.action="selfd";
 	c.type=CMDTYPE_ICON;
 	c.name="SelfD";
-	c.key='D';
-	c.switchKeys=CONTROL_KEY;
+	c.hotkey="Ctrl+d";
 	c.onlyKey=true;
 	c.tooltip="SelfD: Tells the unit to self destruct";
 	possibleCommands.push_back(c);
 
 	c.onlyKey=false;
-	c.key=0;
-	c.switchKeys=0;
+	c.hotkey="";
 	nonQueingCommands.insert(CMD_SELFD);
 
 	if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
 		c.id=CMD_FIRE_STATE;
+		c.action="firestate";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Fire state";
 		c.params.push_back("2");
@@ -90,6 +95,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 
 	c.params.clear();
 	c.id=CMD_MOVE_STATE;
+	c.action="movestate";
 	c.type=CMDTYPE_ICON_MODE;
 	c.name="Move state";
 	c.params.push_back("1");
@@ -103,6 +109,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 
 	c.params.clear();
 	c.id=CMD_REPEAT;
+	c.action="repeat";
 	c.type=CMDTYPE_ICON_MODE;
 	c.name="Repeat";
 	c.params.push_back("0");
@@ -115,8 +122,9 @@ CCommandAI::CCommandAI(CUnit* owner)
 	if(owner->unitDef->highTrajectoryType>1){
 		c.params.clear();
 		c.id=CMD_TRAJECTORY;
+		c.action="trajectory";
 		c.type=CMDTYPE_ICON_MODE;
-		c.name="Move state";
+		c.name="Trajectory";
 		c.params.push_back("0");
 		c.params.push_back("Low traj");
 		c.params.push_back("High traj");
@@ -129,9 +137,10 @@ CCommandAI::CCommandAI(CUnit* owner)
 	{
 		c.params.clear();
 		c.id=CMD_ONOFF;
+		c.action="onoff";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Active state";
-		c.key='X';
+		c.hotkey="x";
 		if(owner->unitDef->activateWhenBuilt)
 			c.params.push_back("1");
 		else
@@ -143,16 +152,17 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.tooltip="Active State: Sets the active state of the unit to on or off";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_ONOFF);
-		c.key=0;
+		c.hotkey="";
 	}
 
 	if(owner->unitDef->canCloak)
 	{
 		c.params.clear();
 		c.id=CMD_CLOAK;
+		c.action="cloak";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Cloak state";
-		c.key='K';
+		c.hotkey="k";
 		if(owner->unitDef->startCloaked)
 			c.params.push_back("1");
 		else
@@ -164,7 +174,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.tooltip="Cloak State: Sets wheter the unit is cloaked or not";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_CLOAK);
-		c.key=0;
+		c.hotkey="";
 	}
 }
 
@@ -586,6 +596,7 @@ void CCommandAI::DrawCommands(void)
 		}
 		if(draw){
 			glVertexf3(pos);
+			cursorIcons->AddIcon(ci->id, pos);
 		}
 	}
 	glEnd();
@@ -618,10 +629,12 @@ void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
 	stockpileWeapon=weapon;
 	CommandDescription c;
 	c.id=CMD_STOCKPILE;
+	c.action="stockpile";
+	c.hotkey="";
 	c.type=CMDTYPE_ICON;
 	c.name="0/0";
+	c.tooltip="Stockpile: Queue up ammunition for later use";
 	c.iconname="bitmaps/flare.bmp";
-	c.tooltip="Stockpile: Que up ammunition for later use";
 	possibleCommands.push_back(c);
 }
 

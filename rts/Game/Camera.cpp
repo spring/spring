@@ -92,12 +92,21 @@ void CCamera::Update(bool freeze)
 	oldFov=fov;
 	float rangemod=1+max(0.f,pos.y-ground->GetHeight(pos.x,pos.z)-500)*0.0003;
 	gu->viewRange=MAX_VIEW_RANGE*rangemod;
+
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
 	glLoadIdentity();									// Reset The Projection Matrix
 	gluPerspective(fov,(GLfloat)gu->screenx/(GLfloat)gu->screeny,NEAR_PLANE*rangemod,gu->viewRange);
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 	glLoadIdentity();
 	gluLookAt(camera->pos.x,camera->pos.y,camera->pos.z,camera->pos.x+camera->forward.x,camera->pos.y+camera->forward.y,camera->pos.z+camera->forward.z,camera->up.x,camera->up.y,camera->up.z);
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+	
+	viewport[0] = 0;
+	viewport[1] = 0;
+	viewport[2] = gu->screenx;
+	viewport[3] = gu->screeny;
 }
 
 bool CCamera::InView(const float3 &p,float radius)
@@ -134,5 +143,14 @@ float3 CCamera::CalcPixelDir(int x, int y)
 	float3 dir=camera->forward-camera->up*dy+camera->right*dx;
 	dir.Normalize();
 	return dir;
+}
+
+float3 CCamera::CalcWindowCoordinates(const float3& objPos)
+{
+	double winPos[3];
+	gluProject((double)objPos.x, (double)objPos.y, (double)objPos.z,
+	           modelview, projection, viewport,
+	           &winPos[0], &winPos[1], &winPos[2]);
+	return float3((float)winPos[0], (float)winPos[1], (float)winPos[2]);
 }
 

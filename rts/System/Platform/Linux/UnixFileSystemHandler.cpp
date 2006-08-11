@@ -82,10 +82,11 @@ std::string UnixFileSystemHandler::SubstEnvVars(const std::string& in) const
 			out << *ch;
 		} else {
 			switch (*ch) {
-				case '\\':
+				case '\\': {
 					escape = true;
 					break;
-				case '$':  {
+				}
+				case '$': {
 					std::ostringstream envvar;
 					for (++ch; ch != in.end() && (isalnum(*ch) || *ch == '_'); ++ch)
 						envvar << *ch;
@@ -93,10 +94,12 @@ std::string UnixFileSystemHandler::SubstEnvVars(const std::string& in) const
 					char* subst = getenv(envvar.str().c_str());
 					if (subst && *subst)
 						out << subst;
-					break; }
-				default:
+					break;
+				}
+				default: {
 					out << *ch;
 					break;
+				}
 			}
 		}
 	}
@@ -271,7 +274,7 @@ void UnixFileSystemHandler::LocateDataDirs()
 void UnixFileSystemHandler::InitVFS(bool mapArchives) const
 {
 	archiveScanner = new CArchiveScanner();
-	archiveScanner->ReadCacheData(writedir->path + "archivecache.txt");
+	archiveScanner->ReadCacheData(writedir->path + archiveScanner->GetFilename());
 	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
 		if (d->readable) {
 			archiveScanner->Scan(d->path + "maps", true);
@@ -279,7 +282,7 @@ void UnixFileSystemHandler::InitVFS(bool mapArchives) const
 			archiveScanner->Scan(d->path + "mods", true);
 		}
 	}
-	archiveScanner->WriteCacheData(writedir->path + "archivecache.txt");
+	archiveScanner->WriteCacheData(writedir->path + archiveScanner->GetFilename());
 
 	hpiHandler = new CVFSHandler(false);
 	if (mapArchives) {

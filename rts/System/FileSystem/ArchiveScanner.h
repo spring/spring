@@ -36,6 +36,7 @@ public:
 		vector<string> replaces;			// This archive obsoletes these ones
 	};
 	CArchiveScanner(void);
+	std::string GetFilename();
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 	virtual ~CArchiveScanner(void);

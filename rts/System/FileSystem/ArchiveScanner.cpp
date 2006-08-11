@@ -38,7 +38,14 @@ CArchiveScanner::CArchiveScanner(void) :
 CArchiveScanner::~CArchiveScanner(void)
 {
 	if (isDirty)
-		WriteCacheData(filesystem.GetWriteDir() + "archivecache.txt");
+		WriteCacheData(filesystem.GetWriteDir() + GetFilename());
+}
+
+std::string CArchiveScanner::GetFilename()
+{
+	char buf[16];
+	sprintf(buf, "ArchiveCacheV%i.txt", INTERNAL_VER);
+	return string(buf);
 }
 
 CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string& section)

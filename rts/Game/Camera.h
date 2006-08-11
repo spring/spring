@@ -9,6 +9,7 @@ class CCamera
 {
 public:
 	float3 CalcPixelDir(int x,int y);
+	float3 CalcWindowCoordinates(const float3& objPos);
 	void UpdateForward();
 	bool InView(const float3& p,float radius=0);
 	void Update(bool freeze);
@@ -27,6 +28,9 @@ public:
 	float3 leftside;
 	float fov;
 	float oldFov;
+	double modelview[16];
+	double projection[16];
+	int viewport[4];
 };
 
 extern CCamera* camera;

@@ -67,36 +67,41 @@ using namespace std;
 #define CONTROL_KEY 64
 #define ALT_KEY 128
 
+
+struct Command {
+	Command()
+	: timeOut(INT_MAX), options(0) {};
+	int id;
+	vector<float> params;
+	unsigned char options;
+	int timeOut;              //remove this command after this frame, can only be set localy not sent over net etc (used for temporary orders)
+};
+
+
 struct CommandDescription {
+
+	CommandDescription() : showUnique(false), onlyKey(false) {}
+
+	bool SetupCommandDefaults(int id);
+
+	static void Init();
+	static bool GetId(const string& a, int& id);
+	static bool GetAction(int id, string& a);
+
 	int id;
 	int type;
+	string action;            // the associated command action binding name
+	string hotkey;            // suggested hotkey
 	string name;
 	string iconname;
 	string mouseicon;
 	string tooltip;
 
+	bool showUnique;          // command only applies to single units
+	bool onlyKey;             // if true dont show a button for the command
+	
 	vector<string> params;
-	bool showUnique;
-	bool onlyKey;											//if true dont show a button for the command
-	unsigned char key;
-	unsigned char switchKeys;					//uses SHIFT_KEY etc
-
-	CommandDescription()
-		: showUnique(false),
-		key(0),
-		switchKeys(0),
-		onlyKey(false)
-		{};
 };
 
-struct Command {
-	Command():
-		timeOut(INT_MAX),
-		options(0){};
-	int id;
-	vector<float> params;
-	unsigned char options;
-	int timeOut;									//remove this command after this frame, can only be set localy not sent over net etc (used for temporary orders)
-};
 
 #endif /* COMMAND_H */

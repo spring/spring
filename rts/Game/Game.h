@@ -21,7 +21,6 @@
 
 class CglList;
 class CNet;
-class CGuiKeyReader;
 class CScript;
 class CBaseWater;
 class CAVIGenerator;
@@ -59,7 +58,6 @@ public:
 
 	bool bOneStep;						//do a single step while game is paused
 
-	float3 trackPos[16];
 	int leastQue;
 
 	std::string userInputPrefix;
@@ -94,7 +92,6 @@ public:
 	bool soundEnabled;
 	float gameSoundVolume;
 
-	CGuiKeyReader* guikeys;
 	CScript* script;
 
 	void MakeMemDump(void);
@@ -105,7 +102,6 @@ public:
 	bool creatingVideo;
 	CAVIGenerator* aviGenerator;
 
-	bool trackingUnit;
 	void DrawDirectControlHud(void);
 #ifdef DIRECT_CONTROL_ALLOWED
 	short oldHeading,oldPitch;

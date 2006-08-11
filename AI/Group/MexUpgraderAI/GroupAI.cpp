@@ -163,7 +163,7 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 
 	cd.id=CMD_ONOFF;
 	cd.type=CMDTYPE_ICON_MODE;
-	cd.key='X';
+	cd.hotkey="x";
 	if(mode==manual)
 	{
 		cd.params.push_back("1");
@@ -182,14 +182,14 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.type=CMDTYPE_ICON_AREA;
 	cd.name="Area upgrade";
 	cd.tooltip="Area upgrade: drag out an area to upgrade all mexes there";
-	cd.key='R';
+	cd.hotkey="r";
 	commands.push_back(cd);
 
 	cd.params.clear();
 	cd.id=CMD_STOP;
 	cd.type=CMDTYPE_ICON;
 	cd.name="Stop";
-	cd.key='S';
+	cd.hotkey="s";
 	commands.push_back(cd);
 
 	return commands;
