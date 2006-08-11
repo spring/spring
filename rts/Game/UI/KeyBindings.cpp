@@ -89,6 +89,7 @@ defaultBindings[] = {
 	{ "k",       "cloak",        "command" },
 	{ "x",       "onoff",        "command" },
 	{ "q",       "groupadd",     "command" },
+	{ "q",       "groupselect",  "command" },
 	{ "Shift+q", "groupclear",   "command" },
 	{ "Ctrl+q",  "aiselect",     "command" },
 
