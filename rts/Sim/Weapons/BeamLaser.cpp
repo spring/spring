@@ -74,6 +74,7 @@ void CBeamLaser::Init(void)
 {
 	salvoDelay=0;
 	salvoSize=(int)(weaponDef->beamtime*30);
+	if (salvoSize <= 0) salvoSize = 1;
 	damages=damages*(1.0f/salvoSize);		//restate the damage from damage per salvo to damage per frame (shot)
 
 	CWeapon::Init();
