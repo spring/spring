@@ -55,9 +55,6 @@ CMiniMap::CMiniMap()
 	maximized(false),
 	minimized(false)
 {
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-
 	float hw=sqrt(float(gs->mapx)/gs->mapy);
 	width = (int) (width*hw);
 	height = (int) (height/hw);
