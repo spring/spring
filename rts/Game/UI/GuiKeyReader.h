@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 
+
 class CGuiKeyReader
 {
 public:
@@ -23,5 +24,6 @@ protected:
 	void CreateKeyNames();
 	std::map<std::string, int> keynames;
 };
+
 
 #endif /* GUIKEYREADER_H */
