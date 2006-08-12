@@ -193,7 +193,7 @@ CUnit* CUnitTracker::GetTrackUnit()
 float3 CUnitTracker::CalcAveragePos() const
 {
 	float3 p(0,0,0);
-	set<int>::iterator it;
+	set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
 		p += uh->units[*it]->midPos;
 	}
@@ -206,7 +206,7 @@ float3 CUnitTracker::CalcExtentsPos() const
 {
 	float3 minPos(+1e9, +1e9, +1e9);
 	float3 maxPos(-1e9, -1e9, -1e9);
-	set<int>::iterator it;
+	set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
 		const float3& p = uh->units[*it]->midPos;
 		if (p.x < minPos.x) { minPos.x = p.x; }
