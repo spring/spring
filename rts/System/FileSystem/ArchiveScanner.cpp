@@ -43,7 +43,7 @@ CArchiveScanner::~CArchiveScanner(void)
 
 std::string CArchiveScanner::GetFilename()
 {
-	char buf[16];
+	char buf[32];
 	sprintf(buf, "ArchiveCacheV%i.txt", INTERNAL_VER);
 	return string(buf);
 }
