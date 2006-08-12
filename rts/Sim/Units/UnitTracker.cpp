@@ -127,22 +127,26 @@ void CUnitTracker::MakeTrackGroup()
 
 void CUnitTracker::CleanTrackGroup()
 {
-	set<int>::iterator it;
-	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
-		if (uh->units[*it] == NULL) {
-			set<int>::iterator it_next = it;
-			it_next++;
-			if (trackUnit == *it) {
-				if (it_next == trackGroup.end()) {
-					trackUnit = *trackGroup.begin();
-				} else {
-					trackUnit = *it_next;
-				}
-			}
-			trackGroup.erase(it);
-			it = it_next;
+	set<int>::iterator it = trackGroup.begin();
+
+	while (it != trackGroup.end()) {
+		if (uh->units[*it] != NULL) {
+			it++;
+			continue;
 		}
+		set<int>::iterator it_next = it;
+		it_next++;
+		if (trackUnit == *it) {
+			if (it_next == trackGroup.end()) {
+				trackUnit = *trackGroup.begin();
+			} else {
+				trackUnit = *it_next;
+			}
+		}
+		trackGroup.erase(it);
+		it = it_next;
 	}
+	
 	if (trackGroup.empty()) {
 		Disable();
 	}
