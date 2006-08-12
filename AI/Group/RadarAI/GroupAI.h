@@ -7,7 +7,6 @@
 
 #include "ExternalAI/IGroupAI.h"
 #include <set>
-#include <map>
 
 class IGroupAICallback;
 class IAICallback;
@@ -16,7 +15,7 @@ const char AI_NAME[]="Radar AI";
 
 using namespace std;
 
-class CGroupAI : public IGroupAI  
+class CGroupAI : public IGroupAI
 {
 public:
 	CGroupAI();
@@ -34,20 +33,21 @@ public:
 
 	virtual void Update();
 
-	set<int> myUnits;
 	vector<CommandDescription> commands;
 
+	bool alertText;
+	bool alertMinimap;
 
 	IGroupAICallback* callback;
 	IAICallback* aicb;
 
 	int lastUpdate;
 	int lastEnterTime;
-	int prevEnemies;
+	int numEnemies;
+	int numPrevEnemies;
 	int* enemyIds;
-	int* prevEnemyIds;
-	int prevEnemyIdsSize;
-	int enemies;
+	set<int> prevEnemyIds;
+
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)
