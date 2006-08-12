@@ -45,11 +45,11 @@ static const char* floatString(float value)
 
 
 struct FontString {
-	FontString::FontString() : msg(""), width(0.0f), height(0.0f) {}
-	FontString::FontString(const char* c)	  : msg(c)      { CalcDimensions(); }
-	FontString::FontString(const string& s)	: msg(s)      { CalcDimensions(); }
-	FontString::FontString(bool b)	: msg(boolString(b))  { CalcDimensions(); }
-	FontString::FontString(float f)	: msg(floatString(f)) { CalcDimensions(); }
+	FontString() : msg(""), width(0.0f), height(0.0f) {}
+	FontString(const char* c)	  : msg(c)      { CalcDimensions(); }
+	FontString(const string& s)	: msg(s)      { CalcDimensions(); }
+	FontString(bool b)	: msg(boolString(b))  { CalcDimensions(); }
+	FontString(float f)	: msg(floatString(f)) { CalcDimensions(); }
 	void CalcDimensions() {
 		width = font->CalcTextWidth(msg.c_str());
 		height = font->CalcTextHeight(msg.c_str());
