@@ -1,10 +1,15 @@
+#include "StdAfx.h"
+// command.cpp: implementation of the CCommandDescription class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include "command.h"
 
 #include <string>
 #include <vector>
 #include <map>
 
 #include "Platform/errorhandler.h"
-#include "command.h"
 
 using namespace std;
 
