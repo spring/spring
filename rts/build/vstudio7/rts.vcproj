@@ -354,6 +354,9 @@
 				RelativePath="..\..\Game\CameraController.h">
 			</File>
 			<File
+				RelativePath="..\..\Game\command.cpp">
+			</File>
+			<File
 				RelativePath="..\..\Game\command.h">
 			</File>
 			<File
@@ -447,10 +450,22 @@
 				Name="UI"
 				Filter="">
 				<File
+					RelativePath="..\..\Game\Ui\CursorIcons.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\CursorIcons.h">
+				</File>
+				<File
 					RelativePath="..\..\Game\Ui\EndGameBox.cpp">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\EndGameBox.h">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\GameInfo.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\GameInfo.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\GuiHandler.cpp">
@@ -475,6 +490,24 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\InputReceiver.h">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\KeyBindings.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\KeyBindings.h">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\KeyCodes.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\KeyCodes.h">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\KeySet.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\KeySet.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\MiniMap.cpp">
@@ -1418,6 +1451,12 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\FartextureHandler.h">
+			</File>
+			<File
+				RelativePath="..\..\Rendering\GLContext.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Rendering\GLContext.h">
 			</File>
 			<File
 				RelativePath="..\..\Rendering\glFont.cpp">
@@ -2371,6 +2410,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\RadarHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SensorHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SensorHandler.h">
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\Wind.cpp">
