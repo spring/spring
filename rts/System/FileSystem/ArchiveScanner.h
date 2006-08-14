@@ -57,7 +57,6 @@ protected:
 		ModData modData;
 		unsigned int checksum;
 		bool updated;
-		bool directory;
 		string replaced;					// If not empty, use that archive instead
 	};
 	map<string, ArchiveInfo> archiveInfo;	
