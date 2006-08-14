@@ -1,1 +1,0 @@
-armpt, armpt, armcs, armroy, armcs, armroy, armpt, armpt, B_ASSAULT, B_ASSAULT, repeat
