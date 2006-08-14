@@ -110,6 +110,17 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 				if (aii->second.replaced.length() > 0)
 					continue;
 
+				if (S_ISDIR(info.st_mode)) {
+					struct stat info2;
+					std::vector<std::string> sddfiles = filesystem.FindFiles(fpath, "*", true, true);
+					for (std::vector<std::string>::iterator sddit = found.begin(); sddit != found.end(); ++sddit) {
+						stat(sddit->c_str(), &info2);
+						if (S_ISDIR(info2.st_mode) && (info.st_mtime < info2.st_mtime)) {
+							info.st_mtime = info2.st_mtime;
+						}
+					}
+				}
+
 				if (info.st_mtime == aii->second.modified) {
 					cached = true;
 					aii->second.updated = true;
@@ -118,8 +129,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 				// If we are here, we could have invalid info in the cache
 				// Force a reread if it's a directory archive, as st_mtime only
 				// reflects changes to the directory itself, not the contents.
-				if (!cached || S_ISDIR(info.st_mode)) {
-					cached = false;
+				if (!cached) {
 					archiveInfo.erase(aii);
 				}
 			}
@@ -185,14 +195,13 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 					ai.modified = info.st_mtime;
 					ai.origName = fn;
 					ai.updated = true;
-					ai.directory = !!S_ISDIR(info.st_mode);
 
 					delete ar;
 
 					// Optionally calculate a checksum for the file
 					// To prevent reading all files in all directory (.sdd) archives every time this function
 					// is called, directory archive checksums are calculated on the fly.
-					if (checksum && !S_ISDIR(info.st_mode)) {
+					if (checksum) {
 						ai.checksum = GetCRC(fullName);
 					}
 					else {
@@ -204,7 +213,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 			}
 			else {
 				// If cached is true, aii will point to the archive
-				if ((checksum) && (aii->second.checksum == 0) && !S_ISDIR(info.st_mode)) {
+				if ((checksum) && (aii->second.checksum == 0)) {
 					aii->second.checksum = GetCRC(fullName);
 				}
 			}
@@ -299,10 +308,20 @@ bool CArchiveScanner::GetCRC(const string& filename, unsigned int& crc)
 /** Get CRC of the data in the specified file. Returns 0 if file could not be opened. */
 unsigned int CArchiveScanner::GetCRC(const string& filename)
 {
+	struct stat info;
 	unsigned int crc = 0;
 
-	if (!GetCRC(filename, crc))
-		return 0;
+	stat(filename.c_str(), &info);
+	if (S_ISDIR(info.st_mode)) {
+
+		crc = GetDirectoryCRC(filename);
+
+	} else {
+
+		if (!GetCRC(filename, crc))
+			return 0;
+
+	}
 
 	// A value of 0 is used to indicate no crc.. so never return that
 	// Shouldn't happen all that often
@@ -389,9 +408,6 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		}
 
 		string lcname = StringToLower(ai.origName);
-
-		string ext(lcname, lcname.find_last_of('.') + 1);
-		ai.directory = (ext == "sdd");
 
 		archiveInfo[lcname] = ai;
 	}
@@ -570,10 +586,6 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())
 		return 0;
-
-	// Calculate directory archive (.sdd) checksum on the fly.
-	if (aii->second.checksum == 0 && aii->second.directory)
-		aii->second.checksum = GetDirectoryCRC(name);
 
 	return aii->second.checksum;
 }
