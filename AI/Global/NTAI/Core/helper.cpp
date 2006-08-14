@@ -691,7 +691,7 @@ bool Global::InLOS(float3 pos){
 	}
 }
 void tolowercase(string &str){
-	std::transform (str.begin(),str.end(), str.begin(), tolower);
+	std::transform (str.begin(), str.end(), str.begin(), (int (*)(int))tolower);
 }
 
 bool Global::ReadFile(string filename, string* buffer){
