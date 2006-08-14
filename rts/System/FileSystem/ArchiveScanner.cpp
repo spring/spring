@@ -115,7 +115,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 					std::vector<std::string> sddfiles = filesystem.FindFiles(fpath, "*", true, true);
 					for (std::vector<std::string>::iterator sddit = found.begin(); sddit != found.end(); ++sddit) {
 						stat(sddit->c_str(), &info2);
-						if (S_ISDIR(info2.st_mode) && (info.st_mtime < info2.st_mtime)) {
+						if (info.st_mtime < info2.st_mtime) {
 							info.st_mtime = info2.st_mtime;
 						}
 					}
