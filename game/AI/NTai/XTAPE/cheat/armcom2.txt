@@ -1,0 +1,1 @@
+no_rule_interpolation, armlab, repair, armalab, repair, repair, B_DEFENSE, B_RADAR, repair, B_RULE, repair, armsy, repair, armasy, repair, armvp, repair, armavp, repair, B_RULE, B_RULE, B_RULE, repair, armap, repair, armaap, repair, B_DEFENSE, repeat

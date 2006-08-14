@@ -1,0 +1,1 @@
+no_rule_interpolation,B_MEX, B_POWER, l2kbot, l1kbot, rule_interpolate, B_RADAR, ground_defense, B_MEX, B_POWER, B_POWER, ground_defense, aa_defense, B_GUARDIAN, ground_defense, B_RANDMOVE, B_GUARDIAN, ground_defense, B_RANDMOVE, B_GUARDIAN, aa_defense, B_RETREAT, l1air, repeat

@@ -19,6 +19,7 @@ public:
 	bool GetRepeat(){
 		return repeat;
 	}
+	int GetAge();
 	bool antistall;
 	vector<Task> tasks;
 	CUBuild Build;
@@ -31,5 +32,6 @@ private:
 	string con;
 	bool valid;
 	bool repeat;
+	int birth;
 };
 

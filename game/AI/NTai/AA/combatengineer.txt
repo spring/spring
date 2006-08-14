@@ -1,0 +1,1 @@
+ground_defense, ground_defense, air_defense, B_FORTIFICATION, B_RADAR, ground_defense, ground_defense, air_defense, B_ASSAULT, B_ASSAULT, B_SCOUT, B_SCOUT, B_ASSAULT, B_ASSAULT, repeat

@@ -30,6 +30,10 @@ struct STGA{
 	unsigned char* data;
 };
 
+void trim(string &str);
+
+void tolowercase(string &str);
+
 class ctri { // structure used to store data on triangle markers
 public:
 	int creation;
@@ -124,7 +128,6 @@ public:
 		return Cached->enemies;
 	}
 	bool ReadFile(string filename, string* buffer); // reads a file in from the given path and shoves it in the buffer string provided
-	string lowercase(string s);// convert a string to all lower case
 	TdfParser* Get_mod_tdf();// returns a TdfParser object loaded with the contents of mod.tdf
 
 	//Triangle & marker stuff
@@ -145,7 +148,11 @@ public:
 	//int GiveOrder(TCommand c, bool newer=true);// Command cache
 
 	const UnitDef* GetUnitDef(int unitid){
+		if(Cached->cheating){
 			return chcb->GetUnitDef(unitid);
+		}else{
+			return cb->GetUnitDef(unitid);
+		}
 	}
 	const UnitDef* GetUnitDef(string s){
 		return UnitDefLoader->GetUnitDef(s);

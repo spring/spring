@@ -1,0 +1,1 @@
+B_RULE, repair, B_RADAR, repair, mohomaker, B_POWER, heavy_defense, missle_defense, missle_defense, armavp, armvp, repair, mohomaker, mohomaker, heavy_fusion, light_fusion, B_RULE, repair, B_RETREAT, B_GUARD_LIKE_CON, repeat

@@ -149,9 +149,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-			<File
-				RelativePath="..\Helpers\Units\CUnitDefLoader.cpp">
-			</File>
 			<Filter
 				Name="Agents"
 				Filter="">
@@ -183,6 +180,9 @@
 				<File
 					RelativePath="..\Helpers\CEconomy.cpp">
 				</File>
+				<File
+					RelativePath="..\Helpers\commented_code.cpp">
+				</File>
 				<Filter
 					Name="Units"
 					Filter="">
@@ -191,6 +191,9 @@
 					</File>
 					<File
 						RelativePath="..\Helpers\Units\CUnitDefHelp.cpp">
+					</File>
+					<File
+						RelativePath="..\Helpers\Units\CUnitDefLoader.cpp">
 					</File>
 					<File
 						RelativePath="..\Helpers\ubuild.cpp">
@@ -488,9 +491,6 @@
 			<Filter
 				Name="Experimental"
 				Filter="">
-				<File
-					RelativePath="..\Helpers\Terrain\Potential.h">
-				</File>
 			</Filter>
 			<Filter
 				Name="Task System"

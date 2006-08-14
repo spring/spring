@@ -244,6 +244,8 @@ enum btype {
 	B_GUARD_LIKE_CON,
 	B_RECLAIM,
 	B_RULE_EXTREME_NOFACT,
+	B_WAIT,
+	B_METAFAILED,
 	B_NA
 };
 
@@ -283,6 +285,7 @@ enum unit_role{ // used for cosntruction untis to differentiate between factory 
 //#ifdef _MSC_VER
 //#endif
 
+
 // Standard libraries
 #include <map>
 #include <set>
@@ -290,7 +293,6 @@ enum unit_role{ // used for cosntruction untis to differentiate between factory 
 //#include <deque>
 #include <time.h> // needed for logging adn random values
 #include <fstream> // needed for logging and reading files
-
 
 // Spring Engine
 #include "GlobalStuff.h" // Common definitions in spring

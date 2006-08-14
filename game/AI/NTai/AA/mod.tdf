@@ -1,0 +1,246 @@
+[AI]
+{
+	abstract=0;
+	use_mod_default=0;
+	use_mod_default_if_absent=0;
+	// Every scout plus a few raiding units.
+	Scouters=ARMFLEA, ARMPW, ARMFAV, ARMPEEP, ARMPT, CORAK, CORFAV, CORFINK, CORPT, ARMFAST, ARMAMPH, ARMSPTK, ARMSPID, ARMFIDO, ARMST, ARMSPY, ARMAWAC, ARMSEER, CORVOYR, CORSPY, CORAWAC, CORPYRO, CORTERMITE, ARMSEHAK, CORHUNT;
+	// Every armed unit in the game + jammers.
+	Attackers=ARMROCK, ARMHAM, ARMJETH, ARMWAR, ARMFLASH, ARMPINCER, ARMSTUMP, TAWF013, ARMJANUS, ARMSAM, ARMFIG, ARMTHUND, ARMKAM, CORSTORM, CORTHUD, CORCRASH, CORGATOR, CORGARP, CORRAID, CORLEVLR, CORWOLV, CORMIST, CORVENG, CORSHAD, BLADEW, ARMROY, ARMSUB, DECADE, CORROY, CORSUB, CORESUPP, ARMFAST, ARMAMPH, ARMZEUS, ARMMAV, ARMSPTK, ARMFIDO, ARMSNIPE, ARMSPID, ARMASER, ARMFBOY, ARMSCAB, ARMCROC, ARMLATNK, ARMBULL, ARMST, ARMMART, ARMMERL, ARMMANNI, ARMYORK, ARMBRAWL, ARMPNIX, ARMLANCE, ARMHAWK, BLADE, CORGRIPN, ARMCYBR, CORPYRO, CORAMPH, CORCAN, CORSUMO, CORTERMITE, CORMORT, CORHRK, CORMABM, CORSEAL, CORREAP, CORPARROW, CORGOL, TAWF114, CORMART, CORVROC, TREM, CORSENT, CORETER, CORAPE, CORHURC, CORTITAN, CORVAMP, CORCRW, ARMSUBK, ARMMSHIP, ARMCRUS, ARMBATS, ARMSJAM, ARMAAS, TAWF009, ASEADRAGON, ANABEL, ARMBC, CORSHARK, CORMSHIP, CORCRUS, CORBATS, CORSJAM, CORARCH, CORSSUB, CORBLACKHY, CNCAINE, ZULU, ARMORCO, ARMBANTH, ARMRAZ, ARMSHOCK, MARAUDER, AVTR, REQU, CORKROG, KROGTAAR, CORKARG, GORG, SHIVA, CLB, ARMRAVEN, ARMSFIG, ARMSEAP, ARMSABER, ARMSB, CORSFIG, CORSEAP, CORCUT, CORSB;
+	// Units in both are fast, so can be used as raiders.
+	// both = ARMFAST, ARMAMPH, ARMSPTK, ARMSPID, ARMFIDO, ARMST, CORPYRO, CORTERMITE
+	cheap_multiplier=2.0;
+	defence_spacing=0.5;
+	power_spacing=0.5;
+	factory_spacing=0.5;
+	default_spacing=0.5;
+	dynamic_selection=0;
+	fire_state_commanders=0;
+	move_state_commanders=0;
+	kamikaze=ARMVADER, CORROACH, CORSKTL;
+	solobuild=CORBUZZ, ARMVULC, ARNSHLTX, CORGANT, ARMSILO, CORSILO; // Don't try to build two of any of these units at once.
+	singlebuild=CORTARG, ARMTARG; // Only ever build one of these units.
+	author=Egarwaen;
+	version=2.11;
+	message=AA BT 0.12 by Egarwaen, Lindir The Green and AF;
+	hard_target=0;
+	antistall=3;
+	MaxStallTime=7;  // I want this to be a 7, darnit!
+	AlwaysAntiStall=ARMALAB, CORALAB, CORSY, ARMSY, CORGANT, ARMSHLTX; // Always make sre we aren't stalling when building certain vital structures.
+	NoAntiStall=CORMEX, ARMMEX, CORSOLAR, ARMSOLAR, CORTIDE, ARMTIDE, CORUWMEX, ARMUWMEX, ARMWIN, CORWIN; // Don't use anti-stall algo when building these units.
+	hold_fire=CORCOM,ARMCOM;
+	return_fire=;
+	fire_at_will=;
+	roam=;
+	maneouvre=;
+	hold_pos=CORCOM,ARMCOM;
+	rule_extreme_interpolate=1;
+	[STALL_MULTIPLIERS]
+	{
+		energyIncome=1;
+		energyStored=1;
+		metalIncome=1;
+		metalStored=1;
+	}
+}
+
+[TAGS] 
+{
+	// L1 Factories.
+	l1kbot=armlab, corlab; // Both L1 KBot labs.
+	l1vehicle=armvp, corvp; // Both L1 Vehicle Plants.
+	l1air=armap, corap; // Both L1 Air Plants.
+	l1ship=armsy, corsy; // Both L1 Shipyards.
+	l1factory=armlab, corlab, armvp, corvp, armap, corap, armsy, corsy;
+	// L2 Factories
+	l2kbot=armalab, coralab; // Both L2 KBot labs.
+	l2vehicle=armavp, coravp; // Both L2 Vehicle Plants.
+	l2air=armaap, coraap; // Both L2 Air Plants.
+	l2ship=armasy, corasy; // Both L2 Shipyards.
+	l2factory=armalab, coralab, armavp, coravp, armaap, coraap, armasy, corasy;
+	// L3 Factories
+	l3kbot=armshltx, corgant; // Both uber-labs.
+	// Commanders
+	commander=armcom, corcom;
+	// L1 constructors
+	l1constructor=armck, corck, armcv, corcv, armca, corca, armcs, corcs;
+	// L2 constructors
+	l2constructor=armack, corack, armacv, coracv, armaca, coraca;
+	// Combat Engineers
+	combatengineer=corfast, consul;
+	// Resurrectors
+	resurrector=armrecl, correcl, armrectr, cornecro;
+	// Assist Units
+	assist=armfark;
+	// Decoy Commanders
+	decoycomm=armdecom, cordecom;
+	// Nanotowers
+	nanotower=armnanotc, cornanotc;
+	// Ground defensive structures.
+	ground_defense=armllt, corllt, tawf001, armhlt, armguard, hllt, corhlt, corpun, armpb, corvipe, corakick, armamb, cortoast, cordoom, armanni, ajuno, cjuno, armemp, cortron, armsilo, corsilo, armbrtha, corint, armvulc, corbuzz;
+	// AA defensive structures.
+	aa_defense=armrl, corrl, packo, madsam, armcir, corrad, armflak, corflak, mercury, screamer;
+	// TODO: Hover builders, seaplane builders, con subs.
+}
+[TASKLISTS]
+{
+	// Each side is going to be using the same build lists. I'm hoping that, by using
+	//  global tags and the metatags listed above, I'll be able to create generic
+	//  buildlists for each factory type. This will be exploiting the fact that AA
+	//  skips invalid units for a given constructor. So the buildtree shared by the
+	//  armalab and coralab would have, say, l2constructor, l2constructor, assist,
+	//  assist, assist, assist, combatengineer, combatengineer, combatengineer.
+	//
+	// This would lead to two Adv. Construction KBots and either four FARKS or
+	//  three Freakers.
+	
+	// Scripts for Commanders.
+	armcom=commander;
+	corcom=commander;
+	// Scripts for land-based L1 constructors.
+	armck=l1constructor;
+	corck=l1constructor;
+	armcv=l1constructor;
+	corcv=l1constructor;
+	armca=l1constructor;
+	corca=l1constructor;
+	// Scripts for land-based L2 constructors.
+	armack=l2constructor;
+	corack=l2constructor;
+	armacv=l2constructor;
+	coracv=l2constructor;
+	armaca=l2constructor;
+	coraca=l2constructor;
+	// Scripts for L1 factories.
+	armlab=l1factory;
+	corlab=l1factory;
+	armvp=l1factory;
+	corvp=l1factory;
+	armap=airplant;
+	corap=airplant;
+	armsy=l1factory;
+	corsy=l1factory;
+	// Scripts for L2 factories.
+	armalab=l2factory;
+	coralab=l2factory;
+	armavp=l2factory;
+	coravp=l2factory;
+	armaap=airplant;
+	coraap=airplant;
+	armasy=l2factory;
+	corasy=l2factory;
+	// Scripts for L3 factories are customized.
+	// Resurrection units.
+	armrecl=resurrector;
+	armrectr=resurrector;
+	correcl=resurrector;
+	cornecro=resurrector;
+	// Combat engineers. These will either be used for defence-building or assisting,
+	//  as they're a nice, cheap source of buildpower.
+	corfast=combatengineer, assist;
+	consul=combatengineer, assist;
+	// Assist units.
+	armfark=assist;
+	// Decoy Commanders.
+	armdecom=assist;
+	cordecom=assist;
+	// Nanotowers
+	armnanotc=assist;
+	cornanotc=assist;
+}
+[Resource]
+{
+	[ConstructionRepairRanges]
+	{
+		ARMSILO=3000; // Superweapons
+		CORSILO=3000;
+		ARMVULC=3000;
+		CORBUZZ=3000;
+		CORGANT=3000;
+		ARMSHLTX=3000;
+		ARMFUS=1500; // The really expensive
+		CORFUS=1500;
+		ARMUWFUS=1500;
+		CORUWFUS=1500;
+		ARMBRTHA=1500;
+		CORINT=1500;
+		ARMANNI=1200;
+		ARMASY=1000; // More expensive than the others
+		CORASY=1000;
+		CORDOOM=1000;
+		CORCKFUS=800; // Upper level infastructure
+		ARMCKFUS=800;
+		ARMALAB=800;
+		CORALAB=800;
+		ARMAVP=800;
+		CORAVP=800;
+		ARMAAP=800;
+		CORAAP=800;
+		CORASY=800;
+		ARMASY=800;
+		CORHLT=600; // Expensive, until you get the upper level stuff up.  Also very important.
+		ARMHLT=600;
+		CORTOAST=600;
+		ARMAMB=600;
+		ARMLAB=400; // Lower level infastructure
+		CORLAB=400;
+		ARMVP=400;
+		CORVP=400;
+		ARMAP=400;
+		CORAP=400;
+		ARMSY=700;
+		CORSY=700;
+		ARMMOHO=400; // So darn cheap and quick to build
+		CORMOHO=400;
+		ARMMMKR=400;
+		CORMMKR=400;
+	}
+	[MaxEnergy]
+	{
+		ARMSOLAR=1000;
+		CORSOLAR=1000;
+		ARMTIDE=1000;
+		CORTIDE=1000;
+		ARMMEX=2000;  // At 2000, it is officially switched to higher level everything.
+		CORMEX=2000;
+		ARMLAB=2000;
+		CORLAB=2000;
+		ARMVP=2000;
+		CORVP=2000;
+		ARMAP=2000;
+		CORAP=2000;
+		ARMSY=2000;
+		CORSY=2000;
+	}
+}
+[ECONOMY]
+{
+	[RULES]
+	{
+		power=0.5; // energy stored < 40% of maxenergystorage
+		mex=0.5; // metal stored < 80% of maxmetalstorage
+		factorymetal=0.8; // metal stored > 95% of maxmetalstorage
+		factoryenergy=0.8; // energy stored > 90% of maxenergystorage
+		factorymetalgap=6; // factory rule n#2 if MetalIncome - 120% of MetalUsage > 7
+		energystorage=0.8; // if energystored > 120% of maxenergy storage.
+		// I never want e-storage to be built.
+		//AF :: I disagree, storage enables NTai to continue after its lost a commander else these rules themselves
+		//and a lot of other things based on storage goes haywire when the comamnder is lost and storage goes down 
+		// to a max of 50 instead fo 1k:, It also improves the accuracy of the rules and its ability to make use of metal makers
+		metalstorage=0.8; // if metalstored > 98% of maxmetal storage.
+		//I never want m-storage to be built.
+		makermetal=0.15; // metalstored <10% of maxmetalstorage AND MetalUsage > MetalIncome
+		makerenergy=0.9;// energystored > 95% of maxenergystorage AND energyUsage < energyIncome
+		[EXTREME]
+		{
+			factorymetal=0.9;
+			factoryenergy=0.9;
+			
+			power=0.4;
+			mex=0.3;
+			
+			makermetal=0.1;
+			makerenergy=0.95;
+		}
+	}
+}

@@ -1,0 +1,1 @@
+l2constructor, l2constructor, assist, assist, B_SCOUT, assist, assist, combatengineer, combatengineer, B_SCOUT, combatengineer, B_SCOUT, B_SCOUT, B_SCOUT, B_ASSAULT, B_ASSAULT, B_ASSAULT, B_ASSAULT, decoycomm, B_RAND_ASSAULT, B_RAND_ASSAULT, B_RAND_ASSAULT, B_MISSILE_UNIT, B_ASSAULT, B_ASSAULT, B_ASSAULT, B_MISSILE_UNIT, B_SCOUT, B_SCOUT, resurrector, B_SCOUT, repeat

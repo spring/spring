@@ -56,6 +56,7 @@ public:
 	void FireDgunsNearby();
 	void FireWeaponsNearby();
 	void FireDefences();
+	void DoUnitStuff(int aa);
 	float* threat_matrix;
 	int max_index;
 	set<int> engaged;

@@ -17,7 +17,7 @@ public:
 	CMetalMap* m;
 	bool Viable();
 	float getExtractionRanged(float x, float z);
-	std::vector<float3>	metalpatch;
+	std::vector<float3>metalpatch;
 	std::vector<float3> hotspot;
 	std::vector<int> mex;
 	void loadState();
@@ -26,6 +26,13 @@ public:
 	map<int,float3> inf_index;
 	map<int,float> infestations; // Does this mex spot infested with enemy rodents?!
 	map<int, float3> rodents;
+	struct s_warning{
+		float3 pos;
+		int time;
+	};
+	vector<s_warning> warnings;
+	
+	void UnitDestroyed(float3 pos);
 
 	/**
 	*	Return best zone to extract metal, where there

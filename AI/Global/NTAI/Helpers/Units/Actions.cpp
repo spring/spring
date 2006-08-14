@@ -339,14 +339,15 @@ bool CActions::Reclaim(int uid,int enemy){
 
 bool CActions::DGunNearby(int uid){
 	NLOG("CActions::DGunNearby");
-	
-	if(G->Ch->dgunning.find(uid) != G->Ch->dgunning.end()){
-		G->L.print("Dgunning failed, dgunning.find() != dgunning.end()");
-		// This unit is ALREADY dgunning, and is in the middle of doing so, without this check the commander would get confused and
-		// not dgun anything because it'd be switching between different targets to quickly
-		return false;
-	}
-	const UnitDef* ud = G->GetUnitDef(uid);
+// 	if(G->Ch->dgunning.empty()==false){
+// 		if(G->Ch->dgunning.find(uid) != G->Ch->dgunning.end()){
+// 			G->L.print("Dgunning failed, dgunning.find() != dgunning.end()");
+// 			// This unit is ALREADY dgunning, and is in the middle of doing so, without this check the commander would get confused and
+// 			// not dgun anything because it'd be switching between different targets to quickly
+// 			return false;
+// 		}
+// 	}
+	const UnitDef* ud = G->cb->GetUnitDef(uid);
 	if(ud == 0 ){
 		G->L.print("Dgunning failed, ud == 0");
 		return false;
@@ -362,11 +363,11 @@ bool CActions::DGunNearby(int uid){
 	int* en = new int[5000];
 	int e = G->GetEnemyUnits(en,compos,G->cb->GetUnitMaxRange(uid)*1.3f); // get all enemy units within weapons range atm
 	if(e>0){
-		float best_score = 0;
-		int best_target = 0;
-		float tempscore = 0;
-		bool  capture=ud->canCapture;
-		bool commander = false;
+// 		float best_score = 0;
+// 		int best_target = 0;
+// 		float tempscore = 0;
+		//bool  capture=ud->canCapture;
+		//bool commander = false;
 		for(int i = 0; i < e; i++){
 			if(en[i] < 1) continue;
 			const UnitDef* endi = G->GetUnitDef(en[i]);
@@ -378,45 +379,52 @@ bool CActions::DGunNearby(int uid){
 				// changed to CMD_RECLAIM, allowing the enemy commander to be eliminated without causing a wild goose chase of
 				// building dgunned building dgunned, commander in the way of building dgunned, BANG, both commanders bye bye
 				if((endi->type == string("Fighter"))&&(endi->type == string("Bomber"))) continue; // attempting to dgun an aircraft without predictive dgunning leads to a goose chase
-				float3 enpos = G->GetUnitPos(en[i]);
-				if(G->Map->CheckFloat3(enpos)) continue;
-				tempscore = G->GetTargettingWeight(ud->name,endi->name);
-				if(endi->weapons.empty() == false){
-					capture = false;
+				int k = en[i];
+				delete [] en;
+				if(endi->isCommander){
+					return Reclaim(uid,k);
+				}else{
+					return DGun(uid,k);
 				}
-// 				if(endi->canKamikaze == true){
+// 				float3 enpos = G->GetUnitPos(en[i]);
+// 				if(G->Map->CheckFloat3(enpos)) continue;
+// 				tempscore = G->GetTargettingWeight(ud->name,endi->name);
+// 				if(endi->weapons.empty() == false){
 // 					capture = false;
 // 				}
-				tempscore *= 2;
-				tempscore = tempscore / compos.distance2D(enpos);
-				if(tempscore > best_score){
-					best_score = tempscore;
-					best_target = en[i];
-					if(commander == false){
-						commander = endi->isCommander;
-					}
-				}
-				tempscore = 0;
+// // 				if(endi->canKamikaze == true){
+// // 					capture = false;
+// // 				}
+// 				tempscore *= 2;
+// 				tempscore = tempscore / compos.distance2D(enpos);
+// 				if(tempscore > best_score){
+// 					best_score = tempscore;
+// 					best_target = en[i];
+// 					if(!commander){
+// 						commander = endi->isCommander;
+// 					}
+// 				}
+// 				tempscore = 0;
 			}
 		}
-		delete [] en;
-		if(best_target < 1){
-			G->L.print("Dgunning failed, best_target < 1");
-			return false;
-		}
-		if(commander==true){
-			if(G->cb->GetUnitHealth(uid)/ud->buildSpeed > G->cb->GetUnitHealth(best_target)/ud->buildSpeed){
-				return Reclaim(uid,best_target);
-			}else{
-				return Retreat(uid);
-			}
-		}else{
-			if(capture == false){
-				return DGun(uid,best_target);
-			}else{
-				return Capture(uid,best_target);
-			}
-		}
+// 		delete [] en;
+// 		if(best_target < 1){
+// 			G->L.print("Dgunning failed, best_target < 1");
+// 			return false;
+// 		}
+// 		if(commander==true){
+// 			if(G->cb->GetUnitHealth(uid)/ud->buildSpeed > G->cb->GetUnitHealth(best_target)/ud->buildSpeed){
+// 				;
+// 			}else{
+// 				return Retreat(uid);
+// 			}
+// 		}else{
+// 			if(capture == false){
+// 				return DGun(uid,best_target);
+// 			}else{
+// 				return Capture(uid,best_target);
+// 			}
+// 		}
 		//G->Manufacturer->UnitDamaged(*aa,99,99,UpVector,true);*/
 	}
 	delete [] en;
@@ -684,5 +692,40 @@ bool CActions::CopyMove(int unit,set<int> tocopy){
 	return false;
 }
 
+bool CActions::IfNobodyNearMoveToNearest(int uid, set<int> units){
+	if(units.empty()) return false;
+	float3 pos = G->GetUnitPos(uid);
+	if(G->Map->CheckFloat3(pos)==false){
+		return false;
+	}
+	int* nu = new int[2000];
+	int n = G->cb->GetFriendlyUnits(nu,pos,600.0f);
+	if(n > 0){
+		for(int i = 0; i < n; i++){
+			if(nu[i]==uid) continue;
+			if(units.find(nu[i])!=units.end()){
+				delete [] nu;
+				return false;
+			}
+		}
+	}
+	delete [] nu;
+	float3 best=UpVector;
+	float d= 900000.0f;
+	for(set<int>::iterator i = units.begin(); i != units.end(); ++i){
+		if(*i == uid) continue;
+		float3 tpos = G->GetUnitPos(*i);
+		if(G->Map->CheckFloat3(tpos)==false) continue;
+		float td = tpos.distance2D(pos);
+		if(td < d){
+			d = td;
+			best = tpos;
+		}
+	}
+	if(G->Map->CheckFloat3(best)){
+		return Move(uid,best);
+	}
+	return false;
+}
 
 //

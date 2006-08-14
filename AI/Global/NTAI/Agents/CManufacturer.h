@@ -34,7 +34,7 @@ public:
 	void RegisterTaskPair(string name, btype type);
 	void RegisterTaskTypes();
 	string GetBuild(int uid, string tag, bool efficiency=true);
-	bool CanBuild(const UnitDef* ud, string name);
+	bool CanBuild(int uid,const UnitDef* ud, string name);
 private:
 	map<string, vector<string> > metatags;
 	vector<CBPlan> BPlans;

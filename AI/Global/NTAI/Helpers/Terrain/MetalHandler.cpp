@@ -26,6 +26,26 @@ bool metalcmp(float3 a, float3 b) { return a.y > b.y; }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+void CMetalHandler::UnitDestroyed(float3 pos){
+	if(warnings.empty()==false){
+		for(vector<s_warning>::iterator i = warnings.begin(); i != warnings.end(); ++i){
+			if(i->pos.distance2D(pos) < 400.0f){
+				if(G->GetCurrentFrame()-i->time > 5 MINUTES){
+					i->time=G->GetCurrentFrame();
+					return;
+				}
+				return;
+			}
+		}
+	}
+	s_warning sw;
+	sw.pos = pos;
+	sw.time=G->GetCurrentFrame();
+	warnings.push_back(sw);
+}
+
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
 //std::vector<float3> *CMetalHandler::parseMap(){
 	/*std::vector<float3> *ov;
 	std::list<float3> *mp=new std::list<float3>();
@@ -159,6 +179,16 @@ std::vector<float3> *CMetalHandler::getMetalPatch(float3 pos, float minMetal,/*f
 				break;
 			}
 		}
+		if(warnings.empty()==false){
+			for(vector<s_warning>::iterator k = warnings.begin(); k != warnings.end(); ++k){
+				if(k->pos.distance2D(t1) < 900.0f){
+					if(G->GetCurrentFrame()-k->time < 5 MINUTES){
+						valid=false;
+						break;
+					}
+				}
+			}
+		}
 		float3 secpos = G->Map->WhichSector(t1);
 		int v_index = -1;
 		for(map<int,float3>::iterator i = inf_index.begin(); i != inf_index.end(); ++i){
@@ -188,17 +218,17 @@ bool CMetalHandler::Viable(){
 float3 CMetalHandler::getNearestPatch(float3 pos, float minMetal, float depth, const UnitDef* ud) {
 	std::vector<float3> *v=getMetalPatch(pos,minMetal,/*NEAR_RADIUS,*/depth);
 	float3 posx = UpVector;
-	float d = 999999999.0f;
+	float d = 6000.0f;
 	float temp = 999999999.0f;
 	if(v->empty() == false){
 		posx = v->front();
-		d = posx.distance2D(pos);
+		//d = posx.distance2D(pos);
 		for(vector<float3>::iterator vi = v->begin(); vi != v->end(); ++vi){
 			temp = vi->distance2D(pos);
 			if((temp < d)&&(cb->CanBuildAt(ud,*vi) == true)){
 				// check to see if this is in range of an enemy..............
 				int* e = new int[2000];
-				int en = G->GetEnemyUnits(e,*vi,600);
+				int en = G->GetEnemyUnits(e,*vi,900);
 				if( en > 0){
 					for(int i = 0; i < en; i++){
 						const UnitDef* ud = G->GetEnemyDef(e[i]);

@@ -189,14 +189,24 @@ float Planning::FramesTillZeroRes(float in, float out, float starting, float max
 }
 
 bool Planning::equalsIgnoreCase(string a ,string b){
-	return G->lowercase(a)== G->lowercase(b);
+	string c = a;
+	string d = b;
+	trim(c);
+	trim(d);
+	tolowercase(c);
+	tolowercase(d);
+	return (c == d);
 }
 bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 	NLOG("Planning::feasable");
 	if(NoAntiStall.empty() == false){
-		string n2 = G->lowercase(uud->name);
+		string n2 = uud->name;
+		trim(n2);
+		tolowercase(n2);
 		for(vector<string>::iterator i = NoAntiStall.begin(); i != NoAntiStall.end(); ++i){
-			string i2 = G->lowercase(*i);
+			string i2 = *i;
+			trim(i2);
+			tolowercase(i2);
 			if(i2 == n2){
 				G->L.print("Given the go ahead :: "+uud->name);
 				return true;

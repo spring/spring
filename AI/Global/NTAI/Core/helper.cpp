@@ -18,6 +18,16 @@ TdfParser* Global::Get_mod_tdf(){
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+void trim(string &str){
+	string::size_type pos = str.find_last_not_of(' ');
+	if(pos != string::npos) {
+		str.erase(pos + 1);
+		pos = str.find_first_not_of(' ');
+		if(pos != string::npos) str.erase(0, pos);
+	}
+	else str.erase(str.begin(), str.end());
+}
+
 Global::Global(IGlobalAICallback* callback){
 	G = this;
 	gcb = callback;
@@ -43,9 +53,9 @@ Global::Global(IGlobalAICallback* callback){
 	L.Set(this);
 	CLOG("Loading AI.tdf with TdfParser");
 	TdfParser cs(G);
-	cs.LoadFile("AI.tdf");
+	cs.LoadFile("AI/AI.tdf");
 	CLOG("Retrieving datapath value");
-	info->datapath = cs.SGetValueDef(string("AI"),"AI\\data_path");
+	info->datapath = cs.SGetValueDef(string("AI/NTai"),"AI\\data_path");
 	CLOG("Opening logfile in plaintext");
 	L.Open(true);
 	//L.Verbose();
@@ -524,6 +534,10 @@ void Global::UnitDestroyed(int unit, int attacker){
 			positions.erase(i);
 		}
 	}
+	float3 p = GetUnitPos(unit);
+	if(G->Map->CheckFloat3(p)){
+		M->UnitDestroyed(p);
+	}
 	idlenextframe.erase(unit);
 	const UnitDef* udu = GetUnitDef(unit);
 	if(udu != 0){
@@ -676,11 +690,8 @@ bool Global::InLOS(float3 pos){
 		return true;
 	}
 }
-string Global::lowercase(string s){
-	string ss = s;
-	int (*pf)(int)=tolower;
-	transform(ss.begin(), ss.end(), ss.begin(), pf);
-	return ss;
+void tolowercase(string &str){
+	std::transform (str.begin(),str.end(), str.begin(), tolower);
 }
 
 bool Global::ReadFile(string filename, string* buffer){
@@ -880,16 +891,8 @@ bool Global::LoadUnitData(){
 bool Global::SaveUnitData(){
 	NLOG("Global::SaveUnitData()");
 	if(L.FirstInstance() == true){
-		if(this->iterations > 5){
-			return true;
-		}
 		ofstream off;
-		string filename = info->datapath;
-		filename += slash;
-		filename += "learn";
-		filename += slash;
-		filename += info->tdfpath;
-		filename += ".tdf";
+		string filename = info->datapath + "/learn/" + info->tdfpath +".tdf";
 		off.open(filename.c_str());
 		if(off.is_open() == true){
 			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC22 AF :: unit efficiency cache file" << endl << endl;

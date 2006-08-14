@@ -1,0 +1,1 @@
+armfast, armck, armjeth, armjeth, armjeth, armck, armpw, armpw, armpw, armck, B_RAND_ASSAULT, B_ASSAULT, B_ASSAULT, B_ASSAULT, repeat

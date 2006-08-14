@@ -30,6 +30,8 @@ public:
 
 	bool CopyAttack(int unit,set<int> tocopy);
 	bool CopyMove(int unit,set<int> tocopy);
+
+	bool IfNobodyNearMoveToNearest(int uid, set<int> units);
 	/*void UnitIdle(int unit){
 		attackers.erase(unit);
 	}

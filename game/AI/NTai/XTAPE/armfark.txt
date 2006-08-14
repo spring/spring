@@ -1,0 +1,1 @@
+B_RULE_EXTREME, repair, B_DEFENSE, B_DEFENSE, repair, repair, B_RESSURECT, B_RESSURECT, repair, retreat, B_DEFENSE, B_GUARDIAN, repeat
