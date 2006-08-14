@@ -305,18 +305,31 @@ CManufacturer::~CManufacturer(){
 void CManufacturer::Init(){
 	NLOG("CManufacturer::Init");
 	NLOG("Loading MetaTags");
-	if(G->Get_mod_tdf()->SectionExist("TAGS")==true){
-		const map<string, string> section = G->Get_mod_tdf()->GetAllValues("TAGS");
+	if(G->Get_mod_tdf()->SectionExist("tags")==true){
+		const map<string, string> section = G->Get_mod_tdf()->GetAllValues("tags");
 		if(section.empty()==false){
 			//
+			G->L << "Meta Tags :::" <<endline;
 			for(map<string,string>::const_iterator j = section.begin(); j != section.end(); ++j){
 				vector<string> vh;
-				vh = bds::set_cont(vh,j->second);
+				string f,se;
+				f = j->first;
+				trim(f);
+				tolowercase(f);
+				se= j->second;
+				trim(se);
+				tolowercase(se);
+				vh = bds::set_cont(vh,se);
 				if(vh.empty()==false){
-					metatags[j->first]= vh;
+					metatags[f]= vh;
+					G->L << "Meta tag :: " << f << " :: " << se <<endline;
+				}else{
+					G->L << "Meta tag empty?? :: " << f << " :: " << se <<endline;
 				}
 			}
 		}
+	}else{
+		G->L << "No MetaTags where defined" << endline;
 	}
 	/*if(contents != string("")){
 		vector<string> v;
@@ -533,65 +546,67 @@ void CManufacturer::RegisterTaskPair(string name, btype type){
 void CManufacturer::RegisterTaskTypes(){
 	NLOG("CManufacturer::RegisterTaskTypes");
 	if(types.empty()==true){
-		RegisterTaskPair("B_SOLAR", B_POWER);
-		RegisterTaskPair("B_POWER",B_POWER);
-		RegisterTaskPair("B_MEX", B_MEX);
-		RegisterTaskPair("B_RAND_ASSAULT", B_RAND_ASSAULT);
-		RegisterTaskPair("B_ASSAULT", B_ASSAULT);
-		RegisterTaskPair("B_FACTORY_CHEAP", B_FACTORY_CHEAP);
-		RegisterTaskPair("B_FACTORY", B_FACTORY);
-		RegisterTaskPair("B_BUILDER", B_BUILDER);
-		RegisterTaskPair("B_GEO", B_GEO);
-		RegisterTaskPair("B_SCOUT", B_SCOUT);
-		RegisterTaskPair("B_RANDOM", B_RANDOM);
-		RegisterTaskPair("B_DEFENCE", B_DEFENCE);
-		RegisterTaskPair("B_DEFENSE", B_DEFENCE);
-		RegisterTaskPair("B_RADAR", B_RADAR);
-		RegisterTaskPair("B_ESTORE", B_ESTORE);
-		RegisterTaskPair("B_TARG", B_TARG);
-		RegisterTaskPair("B_MSTORE", B_MSTORE);
-		RegisterTaskPair("B_SILO", B_SILO);
-		RegisterTaskPair("B_JAMMER", B_JAMMER);
-		RegisterTaskPair("B_SONAR", B_SONAR);
-		RegisterTaskPair("B_ANTIMISSILE", B_ANTIMISSILE);
-		RegisterTaskPair("B_ARTILLERY", B_ARTILLERY);
-		RegisterTaskPair("B_FOCAL_MINE", B_FOCAL_MINE);
-		RegisterTaskPair("B_SUB", B_SUB);
-		RegisterTaskPair("B_AMPHIB", B_AMPHIB);
-		RegisterTaskPair("B_MINE", B_MINE);
-		RegisterTaskPair("B_CARRIER", B_CARRIER);
-		RegisterTaskPair("B_METAL_MAKER", B_METAL_MAKER);
-		RegisterTaskPair("B_FORTIFICATION", B_FORTIFICATION);
-		RegisterTaskPair("B_DGUN", B_DGUN);
-		RegisterTaskPair("B_REPAIR", B_REPAIR);
+		RegisterTaskPair("b_metatag_failed", B_METAFAILED);
+		RegisterTaskPair("b_solar", B_POWER);
+		RegisterTaskPair("b_power",B_POWER);
+		RegisterTaskPair("b_mex", B_MEX);
+		RegisterTaskPair("b_rand_assault", B_RAND_ASSAULT);
+		RegisterTaskPair("b_assault", B_ASSAULT);
+		RegisterTaskPair("b_factory_cheap", B_FACTORY_CHEAP);
+		RegisterTaskPair("b_factory", B_FACTORY);
+		RegisterTaskPair("b_builder", B_BUILDER);
+		RegisterTaskPair("b_geo", B_GEO);
+		RegisterTaskPair("b_scout", B_SCOUT);
+		RegisterTaskPair("b_random", B_RANDOM);
+		RegisterTaskPair("b_defence", B_DEFENCE);
+		RegisterTaskPair("b_defense", B_DEFENCE);
+		RegisterTaskPair("b_radar", B_RADAR);
+		RegisterTaskPair("b_estore", B_ESTORE);
+		RegisterTaskPair("b_targ", B_TARG);
+		RegisterTaskPair("b_mstore", B_MSTORE);
+		RegisterTaskPair("b_silo", B_SILO);
+		RegisterTaskPair("b_jammer", B_JAMMER);
+		RegisterTaskPair("b_sonar", B_SONAR);
+		RegisterTaskPair("b_antimissile", B_ANTIMISSILE);
+		RegisterTaskPair("b_artillery", B_ARTILLERY);
+		RegisterTaskPair("b_focal_mine", B_FOCAL_MINE);
+		RegisterTaskPair("b_sub", B_SUB);
+		RegisterTaskPair("b_amphib", B_AMPHIB);
+		RegisterTaskPair("b_mine", B_MINE);
+		RegisterTaskPair("b_carrier", B_CARRIER);
+		RegisterTaskPair("b_metal_maker", B_METAL_MAKER);
+		RegisterTaskPair("b_fortification", B_FORTIFICATION);
+		RegisterTaskPair("b_dgun", B_DGUN);
+		RegisterTaskPair("b_repair", B_REPAIR);
 		RegisterTaskPair("repair", B_REPAIR);
 		RegisterTaskPair("reclaim", B_RECLAIM);
 		RegisterTaskPair("retreat", B_RETREAT);
-		RegisterTaskPair("B_IDLE", B_IDLE);
-		RegisterTaskPair("B_CMD", B_CMD);
-		RegisterTaskPair("B_RANDMOVE", B_RANDMOVE);
-		RegisterTaskPair("B_RESURRECT", B_RESURECT);
-		RegisterTaskPair("B_RESSURECT", B_RESURECT);
-		RegisterTaskPair("B_RESURECT", B_RESURECT);
-		RegisterTaskPair("B_GLOBAL", B_RULE);
-		RegisterTaskPair("B_RULE", B_RULE);
-		RegisterTaskPair("B_RULE_EXTREME", B_RULE_EXTREME);
-		RegisterTaskPair("B_RULE_EXTREME_NOFACT", B_RULE_EXTREME_NOFACT);
-		RegisterTaskPair("B_RULE_EXTREME_CARRY", B_RULE_EXTREME_CARRY);
-		RegisterTaskPair("B_RULE_CARRY", B_RULE_EXTREME_CARRY);
-		RegisterTaskPair("B_RETREAT", B_RETREAT);
-		RegisterTaskPair("B_GUARDIAN", B_GUARDIAN);
-		RegisterTaskPair("B_BOMBER", B_BOMBER);
-		RegisterTaskPair("B_GUNSHIP", B_GUNSHIP);
-		RegisterTaskPair("B_PLASMA_REPULSOR", B_SHIELD);
-		RegisterTaskPair("B_PLASMA_REPULSER", B_SHIELD);
-		RegisterTaskPair("B_SHIELD", B_SHIELD);
-		RegisterTaskPair("B_MISSILE_UNIT", B_MISSILE_UNIT);
-		RegisterTaskPair("B_NA", B_NA);
-		RegisterTaskPair("B_FIGHTER", B_FIGHTER);
-		RegisterTaskPair("B_GUARD_FACTORY", B_GUARD_FACTORY);
-		RegisterTaskPair("B_GUARD_LIKE_CON", B_GUARD_LIKE_CON);
-		RegisterTaskPair("B_RECLAIM", B_RECLAIM);
+		RegisterTaskPair("b_idle", B_IDLE);
+		RegisterTaskPair("b_cmd", B_CMD);
+		RegisterTaskPair("b_randmove", B_RANDMOVE);
+		RegisterTaskPair("b_resurrect", B_RESURECT);
+		RegisterTaskPair("b_ressurect", B_RESURECT);
+		RegisterTaskPair("b_resurect", B_RESURECT);
+		RegisterTaskPair("b_global", B_RULE);
+		RegisterTaskPair("b_rule", B_RULE);
+		RegisterTaskPair("b_rule_extreme", B_RULE_EXTREME);
+		RegisterTaskPair("b_rule_extreme_nofact", B_RULE_EXTREME_NOFACT);
+		RegisterTaskPair("b_rule_extreme_carry", B_RULE_EXTREME_CARRY);
+		RegisterTaskPair("b_rule_carry", B_RULE_EXTREME_CARRY);
+		RegisterTaskPair("b_retreat", B_RETREAT);
+		RegisterTaskPair("b_guardian", B_GUARDIAN);
+		RegisterTaskPair("b_bomber", B_BOMBER);
+		RegisterTaskPair("b_gunship", B_GUNSHIP);
+		RegisterTaskPair("b_plasma_repulsor", B_SHIELD);
+		RegisterTaskPair("b_plasma_repulser", B_SHIELD);
+		RegisterTaskPair("b_shield", B_SHIELD);
+		RegisterTaskPair("b_missile_unit", B_MISSILE_UNIT);
+		RegisterTaskPair("b_na", B_NA);
+		RegisterTaskPair("b_fighter", B_FIGHTER);
+		RegisterTaskPair("b_guard_factory", B_GUARD_FACTORY);
+		RegisterTaskPair("b_guard_like_con", B_GUARD_LIKE_CON);
+		RegisterTaskPair("b_reclaim", B_RECLAIM);
+		RegisterTaskPair("b_wait", B_WAIT);
 		//,
 		//	,
 	//	RegisterTaskPair("")] = ;
@@ -707,16 +722,17 @@ void CManufacturer::LoadGlobalTree(){
 	}
 }
 
-bool CManufacturer::CanBuild(const UnitDef* ud, string name){
+bool CManufacturer::CanBuild(int uid,const UnitDef* ud, string name){
 	NLOG("CManufacturer::CanBuild");
-	if(ud->buildOptions.empty() == true){
+	tolowercase(name);
+	if(ud->buildOptions.empty()){
 		return false;
 	}else{
 		for(map<int,string>::const_iterator i = ud->buildOptions.begin(); i !=ud->buildOptions.end(); ++i){
-			if(i->second == name){
+			string k = i->second;
+			tolowercase(k);
+			if(k==name){
 				return true;
-			}else{
-				continue;
 			}
 		}
 		return false;
@@ -725,29 +741,42 @@ bool CManufacturer::CanBuild(const UnitDef* ud, string name){
 
 string CManufacturer::GetBuild(int uid, string tag, bool efficiency){
 	NLOG("CManufacturer::GetBuild");
-	vector<string> v = metatags[tag];
+	if(metatags.empty()){
+		return string("b_metatag_failed");
+	}
 	const UnitDef* ud = G->GetUnitDef(uid);
-	if(ud == 0) return string("");
-	if(efficiency == true){
-		float best_score = 0;
-		string best = "";
-		if(v.empty() == false){
-			for(vector<string>::const_iterator is = v.begin(); is != v.end();++is){
-				if(CanBuild(ud,*is)==false) continue;
-				const UnitDef* pd = G->cb->GetUnitDef(is->c_str());
-				if(pd == 0) continue;
-				srand(uint(time(NULL) + G->Cached->randadd + G->Cached->team));
-				G->Cached->randadd++;
-				float temp = G->GetEfficiency(pd->name);
-				temp = temp - rand()%(int)(temp/3);
-				if(temp > best_score){
-					best_score = temp;
-					best = pd->name;
-				}
+	if(ud == 0){
+		G->L.print("GetBuild metatag error with Builder not getting a unit def");
+		return string("b_metatag_failed");
+	}
+	map<string, vector<string> >::const_iterator ik = metatags.find(tag);
+	if(ik == metatags.end()){
+		G->L.print("Metatag error in GetBuild ik == metatags.end()");
+		return string("b_metatag_failed");
+	}
+	vector<string> v = ik->second;
+	//if(efficiency == true){
+	float best_score = 0;
+	string best = "b_metatag_failed";
+	if(v.empty() == false){
+		for(vector<string>::const_iterator is = v.begin(); is != v.end();++is){
+			string w = *is;
+			if(w == string("")) continue;
+			if(CanBuild(uid,ud,w)==false){
+				G->L.print("hmm canbuild() == false for \":"+w+"\" on the "+ud->name);
+				continue;
+			}
+			float temp = G->GetEfficiency(w);
+			if(temp > best_score){
+				best_score = temp;
+				best = w;
 			}
 		}
 		return best;
 	}else{
+		return "b_metatag_failed";
+	}
+	/*}else{
 		if(v.empty() == false){
 			srand(uint(time(NULL) +G->Cached->team +  G->Cached->randadd));
 			G->Cached->randadd++;
@@ -767,11 +796,11 @@ string CManufacturer::GetBuild(int uid, string tag, bool efficiency){
 			if(CanBuild(ud,v.front())==false){
 				return v.front();
 			}else{
-				return string("");
+				return string("b_metatag_failed");
 			}
 		}
 	}
-	return string("");
+	return string("");*/
 }
 
 bool CManufacturer::LoadBuildTree(CBuilder* ui){
@@ -781,6 +810,8 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 	// get the list of filenames
 	vector<string> vl;
 	string sl = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\")+ud->name);
+	tolowercase(sl);
+	trim(sl);
 	string u = ud->name;
 	if(sl != string("")){
 		vl = bds::set_cont(vl,sl.c_str());
@@ -795,7 +826,7 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 	string* buffer= new string("");
 	/* if abstract = true and we're not to use mod specific builder.txt etc then load from the default folder
 	*/
-	if((G->info->abstract == true)&&(G->info->use_modabstracts == false)){ 
+	if((G->info->abstract == true)&&(G->info->use_modabstracts == false)){
 		filename = G->info->datapath + string(slash) + "Default" + string(slash);
 		if(ud->isCommander == true){
 			filename += "commander.txt";
@@ -822,14 +853,15 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 			return false;
 		}
 	}else {/* load map specific*/
-		filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + G->cb->GetMapName() + string(slash) + G->lowercase(u) + string(".txt");
+		tolowercase(u);
+		filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + G->cb->GetMapName() + string(slash) + u + string(".txt");
 		G->L.print("loading buildtree from "+filename);
 		// map specific doesnt exist, load mod specific instead
 		if(G->ReadFile(filename,buffer) == false){
 			if(G->Cached->cheating == true){
-				filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + string("cheat") + string(slash) +  G->lowercase(u) + string(".txt");
+				filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + string("cheat") + string(slash) +  u + string(".txt");
 				if(G->ReadFile(filename,buffer) == false){
-					filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + G->lowercase(u) + string(".txt");
+					filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + u + string(".txt");
 					if(G->ReadFile(filename,buffer) == false){
 						// absent_abstract is true so we'll load the builder.txt etc now that the definite data cannot be loaded
 						if(G->info->absent_abstract == true){
@@ -851,7 +883,7 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 					}
 				}
 			}else{
-				filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + G->lowercase(u) + string(".txt");
+				filename = G->info->datapath + string(slash) + G->info->tdfpath + string(slash) + u + string(".txt");
 				if(G->ReadFile(filename,buffer) == false){
 					// absent_abstract is true so we'll load the builder.txt etc now that the definite data cannot be loaded
 					if(G->info->absent_abstract == true){
@@ -881,13 +913,19 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 		 return false;
 	 }
 	 G->L.print("loaded contents of  file :: " + filename + " :: filling buildtree");
+	 tolowercase(s);
+	 trim(s);
 	 v = bds::set_cont(v,s.c_str());
 	 if(v.empty() == false){
 		 bool polate=false;
 		 bool polation = G->info->rule_extreme_interpolate;
-		 btype bt = GetTaskType(G->Get_mod_tdf()->SGetValueDef("B_RULE_EXTREME_NOFACT","AI\\interpolate_tag"));
+		 btype bt = GetTaskType(G->Get_mod_tdf()->SGetValueDef("b_rule_extreme_nofact","AI\\interpolate_tag"));
 		 if(ui->GetRole() == R_FACTORY){
 			 polation = false;
+		 }
+		 if((ui->GetUnitDef()->canfly ||ui->GetUnitDef()->movedata) &&  (ui->GetAge() < (5 SECONDS))){
+			 G->Actions->ScheduleIdle(ui->GetID());
+			 return true;
 		 }
 		 for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			 if(polation==true){
@@ -898,53 +936,49 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 					polate=true;
 				}
 			 }
-			 
+			 string q = *vi;
+			 trim(q);
+			 tolowercase(q);
 			 if(metatags.empty() ==false){
-				if (metatags.find(*vi) != metatags.end()){
+				if (metatags.find(q) != metatags.end()){
 					string s = "";
-					s = GetBuild(ui->GetID(),*vi,true);
-					if(s != *vi){
+					s = GetBuild(ui->GetID(),q,true);
+					if((s != *vi)&&(s != string(""))&&(s != string("b_metatag_failed"))){
 						ui->AddTask(s,true);
-						continue;
+					}else{
+						G->L.print(" error with metatag!!!!!!! ::  "+ s + " :: " + *vi);
 					}
+					continue;
 				}
 			  }
 			 const UnitDef* uj = G->GetUnitDef(*vi);
 			 if(uj != 0){
-				  ui->AddTask(*vi,false);
-				  if(v.size() == 1) ui->AddTask(*vi,false);
-			  }else if(*vi == string("")){
+				  ui->AddTask(q,false);
+				  if(v.size() == 1) ui->AddTask(q,false);
+			  }else if(q == string("")){
 				 continue;
-			 } else if(*vi == string("is_factory")){
+			 } else if(q == string("is_factory")){
 				 ui->SetRole(R_FACTORY);
-			 } else if(*vi == string("is_builder")){
+			 } else if(q == string("is_builder")){
 				 ui->SetRole(R_BUILDER);
-			 } else if(*vi == string("repeat")){
+			 } else if(q == string("repeat")){
 				 ui->SetRepeat(true);
-			 } else if(*vi == string("no_rule_interpolation")){
+			 } else if(q == string("no_rule_interpolation")){
 				 polation=false;
-			 } else if(*vi == string("rule_interpolate")){
+			 } else if(q == string("rule_interpolate")){
 				 polation=true;
-			 } else if(*vi == string("dont_repeat")){
+			 } else if(q == string("dont_repeat")){
 				 ui->SetRepeat(false);
-			 }else if(*vi == string("base_pos")){
+			 }else if(q == string("base_pos")){
 			 G->Map->base_positions.push_back(G->GetUnitPos(ui->GetID()));
-			  } else if(*vi == string("gaia")){
+			  } else if(q == string("gaia")){
 				  G->info->gaia = true;
-			  } else if(*vi == string("not_gaia")){
+			  } else if(q == string("not_gaia")){
 				  G->info->gaia = false;
-			  } else if(*vi == string("switch_gaia")){
+			  } else if(q == string("switch_gaia")){
 				  G->info->gaia = !G->info->gaia;
-			  } else if(*vi == string("set5_attack_threshold")){
-				  G->Ch->threshold = 5;
-			  } else if(*vi == string("set10_attack_threshold")){
-				  G->Ch->threshold = 10;
-			  } else if(*vi == string("set20_attack_threshold")){
-				  G->Ch->threshold = 20;
-			  } else if(*vi == string("set30_attack_threshold")){
-				  G->Ch->threshold = 30;
 			  } else{
-				  btype x = GetTaskType(*vi);
+				  btype x = GetTaskType(q);
 				  if( x != B_NA){
 					  ui->AddTask(x);
 				  }else{

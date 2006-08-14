@@ -28,23 +28,23 @@ public:
 			return u.efficiency > efficiency;
 		}
 	};
-	struct CloakInfo{
-		int uid;
-		float cloakCost;
-		float cloakCostMoving;
-		float efficiency;
-		bool cloaked;
-		string name;
-		bool operator< (CloakInfo& u){
-			return u.efficiency < efficiency;
-		}
-		bool operator>(CloakInfo& u){
-			return u.efficiency > efficiency;
-		}
-	};
+// 	struct CloakInfo{
+// 		int uid;
+// 		float cloakCost;
+// 		float cloakCostMoving;
+// 		float efficiency;
+// 		bool cloaked;
+// 		string name;
+// 		bool operator< (CloakInfo& u){
+// 			return u.efficiency < efficiency;
+// 		}
+// 		bool operator>(CloakInfo& u){
+// 			return u.efficiency > efficiency;
+// 		}
+// 	};
 
 	list<UnitInfo> myUnits;
-	list<CloakInfo> CloakedUnits;
+//	list<CloakInfo> CloakedUnits;
 	float lastEnergy;
 private:
 	Global* G;

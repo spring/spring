@@ -83,6 +83,9 @@ bool Task::execute(int uid){
 		} else if(type == B_RESURECT){
 			valid = G->Actions->RessurectNearby(uid);
 			return valid;
+		} else if(type == B_WAIT){
+			valid = G->Actions->RessurectNearby(uid);
+			return true;
 		} else if(type == B_RULE){//////////////////////////////
 			CUBuild b;
 			b.Init(G,udi,uid);

@@ -13,11 +13,14 @@ CBuilder::CBuilder(Global* GL, int uid){
 		return;
 	}
 	Build.Init(GL,ud,uid);
+	birth = G->GetCurrentFrame();
 }
 
 CBuilder::~CBuilder(){}
 
-
+int CBuilder::GetAge(){
+	return G->GetCurrentFrame()-birth;
+}
 const UnitDef* CBuilder::GetUnitDef(){
 	NLOG("CBuilder::GetUnitDef");
 	return ud;

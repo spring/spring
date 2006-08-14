@@ -38,8 +38,8 @@ bool COrderRouter::GiveOrder(TCommand c, bool newer){
 				return false;
 			}
 		}else if ((c.c.params.size()==1)&&(c.c.id==CMD_DGUN)){
-			if(c.c.params.at(1)<0){
-				G->L.print("c.c.params.at(1)<0 in CMD_DGUN");
+			if(c.c.params.at(0)<0){
+				G->L.print("c.c.params.at(0)<0 in CMD_DGUN");
 				return false;
 			}
 		}

@@ -25,7 +25,7 @@ void Assigner::UnitFinished(int unit){
 		myUnits.push_back(info);
 		myUnits.sort();
 	}
-	if(ud->canCloak == true){
+	/*if(ud->canCloak == true){
 		if(ud->movedata == 0){
 			if(ud->canfly == false){
 				if(ud->cloakCost < 40){
@@ -47,7 +47,7 @@ void Assigner::UnitFinished(int unit){
 		info.efficiency = G->GetEfficiency(ud->name);
 		CloakedUnits.push_back(info);
 		CloakedUnits.sort();
-	}
+	}*/
 	return;
 }
 
@@ -100,7 +100,7 @@ void Assigner::Update(){
 			}
 		}
 	}
-	if(EVERY_((2 SECONDS))){
+	/*if(EVERY_((2 SECONDS))){
 		if(G->GetCurrentFrame() < (2 MINUTES)){
 			return;
 		}
@@ -146,7 +146,7 @@ void Assigner::Update(){
 				}
 			}
 		}
-	}
+	}*/
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -160,14 +160,14 @@ void Assigner::UnitDestroyed(int unit){
 			}
 		}
 	}
-	if(CloakedUnits.empty() == false){
-		for(list<CloakInfo>::iterator i = CloakedUnits.begin(); i != CloakedUnits.end(); ++i){
-			if( i->uid == unit){
-				CloakedUnits.erase(i);
-				break;
-			}
-		}
-	}
+// 	if(CloakedUnits.empty() == false){
+// 		for(list<CloakInfo>::iterator i = CloakedUnits.begin(); i != CloakedUnits.end(); ++i){
+// 			if( i->uid == unit){
+// 				CloakedUnits.erase(i);
+// 				break;
+// 			}
+// 		}
+// 	}
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

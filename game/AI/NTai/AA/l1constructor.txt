@@ -1,0 +1,1 @@
+B_MEX, B_POWER, B_POWER, B_GEO, l3kbot, L2FACTORY, ground_defense, ground_defense, aa_defense, B_FORTIFICATION, B_RADAR, B_RETREAT, B_JAMMER, B_GUARDIAN, nanotower, B_GUARDIAN, nanotower, B_GUARDIAN, repeat

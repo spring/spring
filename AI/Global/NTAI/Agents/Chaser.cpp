@@ -15,12 +15,19 @@ void Chaser::InitAI(Global* GLI){
 	enemynum=0;
 	threshold = atoi(G->Get_mod_tdf()->SGetValueDef("4", "AI\\initial_threat_value").c_str());
 	string contents = G->Get_mod_tdf()->SGetValueMSG("AI\\kamikaze");
+	trim(contents);
+	tolowercase(contents);
 	if(contents.empty() == false){
-		vector<string> v = bds::set_cont(v,contents.c_str());
+		vector<string> v;
+		v = bds::set_cont(v,contents);
 		if(v.empty() == false){
 			for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-				*vi = G->lowercase(*vi);
-				sd_proxim[*vi] = true;
+				string h = *vi;
+				trim(h);
+				tolowercase(h);
+				if(h != string("")){
+					sd_proxim[h] = true;
+				}
 			}
 		}
 	}
@@ -121,15 +128,11 @@ void Chaser::UnitDamaged(int damaged,int attacker,float damage,float3 dir){
 		float mhealth = G->cb->GetUnitMaxHealth(damaged);
 		float chealth = G->cb->GetUnitHealth(damaged);
 		if((mhealth != 0)&&(chealth != 0)){
-			if((chealth < mhealth*0.35f)||(damage > mhealth*0.5f)){
+			if((chealth < mhealth*0.45f)||(damage > mhealth*0.7f)){
 				// ahk ahk unit is low on health run away! run away!
 				// Or unit is being attacked by a weapon that's going to blow it up very quickly
 				// Units will want to stay alive!!!
-				float3 bpos =G->Map->nbasepos(dpos);
-				if(bpos.distance2D(dpos) > 600){
-					dpos = G->Map->distfrom(dpos,bpos,400);
-					G->Actions->Move(damaged,dpos);
-				}
+				G->Actions->Retreat(damaged);
 			}
 		}
 	},"Chaser::UnitDamaged running away routine!!!!!!",NA)
@@ -147,7 +150,7 @@ void Chaser::UnitFinished(int unit){
 		return;
 	}
 	NLOG("stockpile/dgun");
-	if(G->CanDGun(unit)==true){
+	if(ud->canDGun){
 		dgunners.insert(unit);
 	}
 	if(ud->weapons.empty() == false){
@@ -310,22 +313,13 @@ void Chaser::UnitFinished(int unit){
 // 		} else {
 // 			Attackers.insert(unit);
 // 		}
-		if(G->Actions->AttackNearest(unit)==false){
-			//if(G->Actions->SeekOutLastAssault(unit)==false){
-				if(G->Actions->SeekOutNearestInterest(unit)==true){
-					walking.insert(unit);
-				}
-			//}else{
-			//	walking.insert(unit);
-			//}
-		}else{
-			engaged.insert(unit);
-			//Beacon(unit,1000);
-		}
+		DoUnitStuff(unit);
 	}
 	NLOG("kamikaze");
 	if(sd_proxim.empty() == false){
-		string sh = G->lowercase(ud->name);
+		string sh = ud->name;
+		trim(sh);
+		tolowercase(sh);
 		if(sd_proxim.find(sh) != sd_proxim.end()){
 			kamikaze_units.insert(unit);
 		}
@@ -483,43 +477,7 @@ void Chaser::UnitIdle(int unit){
 	//if(G->Actions->AttackNear(unit)==false){
 		/* find attack group*/
 	bool found = false;
-	if(this->Attackers.empty() == false){
-		for(set<int>::iterator sd = Attackers.begin(); sd != Attackers.end(); ++sd){
-			if(*sd == unit){
-				found = true;
-				float3 pos = G->GetUnitPos(unit);
-				if(G->Map->CheckFloat3(pos)==false) continue;
-				if(engaged.find(unit) != engaged.end()) continue;
-				if(G->Actions->AttackNearest(unit) == false){
-					if(walking.find(unit) == walking.end()){
-						if(G->Actions->SeekOutInterest(unit)==false){
-							if(G->Actions->SeekOutLastAssault(unit)==false){
-								if(G->Actions->SeekOutNearestInterest(unit)==false){
-									if(G->Actions->RandomSpiral(unit)==false){
-										//	G->Actions->ScheduleIdle(*aa);
-									}else{
-										walking.insert(unit);
-									}
-								}else{
-									walking.insert(unit);
-								}
-							}else{
-								walking.insert(unit);
-							}
-						}else{
-							walking.insert(unit);
-						}
-					}else{
-						continue;
-					}
-				}else{
-					engaged.insert(unit);
-					Beacon(pos,1000);
-				}
-				return;
-			}
-		}
-	}
+	DoUnitStuff(unit);
 // 	if(this->groups.empty() == false){
 // 		if(found == false){
 // 			for(vector<ackforce>::iterator si = groups.begin(); si != groups.end(); ++si){
@@ -852,9 +810,9 @@ void Chaser::Update(){
 	if(EVERY_(120 FRAMES)&&(G->Cached->enemies.empty() == false)){
 		EXCEPTION_HANDLER(FireDefences(),"Chaser::FireDefences()",NA)
 	}
-	if(EVERY_(30 FRAMES)){
-		EXCEPTION_HANDLER(FireDgunsNearby(),"Chaser::FireDgunsNearby()",NA)
-	}
+ 	if(EVERY_(30 FRAMES)){
+ 		EXCEPTION_HANDLER(FireDgunsNearby(),"Chaser::FireDgunsNearby()",NA)
+ 	}
 	NLOG("Chaser::Update :: DONE");
 }
 
@@ -872,48 +830,54 @@ void Chaser::Beacon(float3 pos, float radius){
 		}
 	}
 }
+void Chaser::DoUnitStuff(int aa){
+	float3 pos = G->GetUnitPos(aa);
+	if(G->Map->CheckFloat3(pos)==false) return;
+	if(engaged.find(aa) != engaged.end()) return;
+	if(G->Actions->IfNobodyNearMoveToNearest(aa,Attackers)){
+		return;
+	}
+	if(G->Actions->CopyAttack(aa,Attackers)==false){
+		if(G->Actions->AttackNearest(aa) == false){
+			if(G->Actions->CopyMove(aa,Attackers)==false){
+				if(walking.find(aa) == walking.end()){
+					if(G->Actions->SeekOutInterest(aa)==false){
+						if(G->Actions->SeekOutLastAssault(aa)==false){
+							if(G->Actions->SeekOutNearestInterest(aa)==false){
+								if(G->Actions->RandomSpiral(aa)==false){
+									//	G->Actions->ScheduleIdle(*aa);
+								}else{
+									walking.insert(aa);
+								}
+							}else{
+								walking.insert(aa);
+							}
+						}else{
+							walking.insert(aa);
+						}
+					}else{
+						walking.insert(aa);
+					}
+				}else{
+					return;
+				}
+			}else{
+				walking.insert(aa);
+			}
+		}else{
+			engaged.insert(aa);
+			Beacon(pos,500);
+		}
+	}else{
+		engaged.insert(aa);
+		Beacon(pos,1000);
+	}
+}
 void Chaser::FireWeaponsNearby(){
 	NLOG("Chaser::Update :: make attackers attack nearby targets");
 	if(Attackers.empty() == false){
 		for(set<int>::iterator aa = Attackers.begin(); aa != Attackers.end();++aa){
-			float3 pos = G->GetUnitPos(*aa);
-			if(G->Map->CheckFloat3(pos)==false) continue;
-			if(engaged.find(*aa) != engaged.end()) continue;
-			if(G->Actions->AttackNearest(*aa) == false){
-				if(G->Actions->CopyAttack(*aa,Attackers)==false){
-					if(G->Actions->CopyMove(*aa,Attackers)==false){
-						if(walking.find(*aa) == walking.end()){
-							if(G->Actions->SeekOutInterest(*aa)==false){
-								if(G->Actions->SeekOutLastAssault(*aa)==false){
-									if(G->Actions->SeekOutNearestInterest(*aa)==false){
-										if(G->Actions->RandomSpiral(*aa)==false){
-											//	G->Actions->ScheduleIdle(*aa);
-										}else{
-											walking.insert(*aa);
-										}
-									}else{
-											walking.insert(*aa);
-										}
-								}else{
-									walking.insert(*aa);
-								}
-							}else{
-								walking.insert(*aa);
-							}
-						}else{
-							continue;
-						}
-					}else{
-						walking.insert(*aa);
-					}
-				}else{
-					engaged.insert(*aa);
-					Beacon(pos,500);
-				}
-			}else{
-				engaged.insert(*aa);
-				Beacon(pos,1000);
-			}
+			DoUnitStuff(*aa);
 		}
 	}
 }

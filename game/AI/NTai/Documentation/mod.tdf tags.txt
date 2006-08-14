@@ -1,0 +1,75 @@
+19:20 27 February 2006
+NTAI XE7 AF
+
+defval tag name                                        Description
+
+0        "AI\\abstract"                                   //use the default abstract buildtrees in the default folder
+
+0        "AI\\GAIA"                                       // turns off the offensive attack routines
+
+0        "AI\\spacemod"                               // this is a space mod so ignore water detection in unviersal build routines
+                                                               // also usefull or mods that work only in water and have no land buildings
+
+1        "AI\\dynamic_selection"                   // rely on algorithms to detect attackers and scouters instead of using the scouters
+                                                               // and attackers tags
+
+1        "AI\\use_mod_default"                     // Dont load unitname.txt instead load a custom default buildtree from the mod folder
+                                                               // rather than Default folder
+
+1        "AI\\use_mod_default_if_absent"      // load from default abstract buildtrees in the mod folder if unitname.txt doesnt exist
+
+          "AI\\Scouters"                                // A comma seperated list of unitnames of units that are scouts
+
+          "AI\\Attackers"                               // same as AI\\scouters but for ttackers
+
+60      "AI\\scout_speed"                           // the minimum speed for a unit to be detected as a scout
+
+0        "AI\\fire_state_commanders"           // firing state of the commander at startup 0= hold fire, 1= return fire, 2 = fire at will
+
+0        "AI\\move_state_commanders"        // move state of the commander at startup 0= hold position, 1= maneouvre, 2 = roam
+
+                    Future tags
+
+1        "AI\\web_contribute"                       // Will the learning file be sent off and compiled with other contributed learning files
+                                                              // automatically? note: this feature is experimental and may or may not be working
+
+1        "AI\\web_recieve"                           // will learning files be downloaded from the web at game start and saved to disk?
+                                                              // note: same as above tag, this is reliant on code I have yet to finalize and test out
+
+1        "AI\\NTAI_update"                          // will NTAI search for updates and tell the user when they are found?
+                                                              // note: once again this is subject to the same restraints as the last two tags
+
+                    XE7 tags
+
+          "AI\\kamikaze"                              // Units in this list will start a self destruct if an enemy is in close proximity.
+                                                             // Same format as the scouters and atatckers tags (unitname, unitname, etc...)
+
+1.3      "AI\\cheap_multiplier"                     // The algorithms that use resource checking in unviersal build routines (Such as B_CHEAP_FACTORY)
+                                                              // rely on the following algorithm: metalCost+energyCost < EnergyStorage+MetalStorage*multiplier
+                                                              // where multiplier si this value defined by the cheap_multiplier tag
+
+           "AI\\metatags"                              // Same format as the scouters and attackers and kamikaze, onyl instead of unitnames they're the names
+                                                              // of custom tags
+                                                              // For example B_ARTILLERY could be such a tag, and whenever NTAI came across this tag it would load
+                                                              // the contents of "TAGS\\B_ARTILLERY" and sort through them selecting one of the unitnames inside according
+                                                              // to how you choose it to be selected. The "TAG\\B_ARTILLERY" would contains a list of artillery units
+                                                              // be extremely careful to avoid name collisions between keywords/freeformtags and meta tags as the meta tags
+                                                              // have a higher priority. The metatag CORARAD will not work if there is a unit with the name CORARAD
+                                                              // however as unitnames ahve even higher priorities. (oh bugger now I have a problem, what if there's a unit called
+                                                              // repair? All the repair keyword tags become useless!)
+
+1        "AI\\metatag_efficiency"                  // select a unit from a metatag based on efficiency
+                                                              //  if set to '0' then units are instead chosen randomly
+
+15       "AI\\defence_spacing"                    // determines the spacing parameter given to closestbuildsite for defences
+
+8        "AI\\power_spacing"                      // determines the spacing parameter given to closestbuildsite for energy buildings, larger values mean a greater chance
+                                                             // another defence isnt in your way, but at a cost of them being too spaced out
+
+8        "AI\\factory_spacing"                     // determines the spacing parameter given to closestbuildsite for factories
+
+9        "AI\\default_spacing"                     // determines the spacing parameter given to closestbuildsite for other buildings
+
+
+
+
