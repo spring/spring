@@ -36,8 +36,8 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 
 // all paths 
 #ifdef WIN32
-	#define AI_PATH "aidll\\globalai\\aai\\"
-	#define AILOG_PATH "aidll\\globalai\\aai\\log\\"
+	#define AI_PATH "AI\\AAI\\"
+	#define AILOG_PATH "AI\\AAI\\log\\"
 	#define MOD_CFG_PATH "cfg\\mod\\"
 	#define GENERAL_CFG_FILE "cfg\\general.cfg"
 	#define MOD_LEARN_PATH "learn\\mod\\"
@@ -45,8 +45,8 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 	#define MAP_CACHE_PATH "cache\\"
 	#define MAP_LEARN_PATH "learn\\map\\"
 #else
-	#define AI_PATH "aidll/globalai/aai/"
-	#define AILOG_PATH "aidll/globalai/aai/log/"
+	#define AI_PATH "AI/AAI/"
+	#define AILOG_PATH "AI/AAI/log/"
 	#define MOD_CFG_PATH "cfg/mod/"
 	#define GENERAL_CFG_FILE "cfg/general.cfg"
 	#define MOD_LEARN_PATH "learn/mod/"
