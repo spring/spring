@@ -1,0 +1,1 @@
+repair, repair, repair, repair, Wolf, Knight, B_RANDMOVE, Wolf, Knight, SpireRook, Sheep, Sheep, repair, Holder, Wolf, Strider, Wolf, SquareRook, repair, repair, repair, autofac, sheep, sheep, repair, repair, repair, repair, holder, Strider, B_RANDMOVE, Sheep, Sheep, Sheep, Sheep, demon, trirook, trirook, strider, holder, b_rule_extreme_carry, b_guardian, repeat
