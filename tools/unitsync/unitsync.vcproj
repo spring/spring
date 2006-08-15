@@ -132,7 +132,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="zlibwapi.lib devil.lib"
-				OutputFile="../../game/unitsync.dll"
+				OutputFile="../../game/unitsync-python.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.8/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
 				ModuleDefinitionFile="exports.def"
@@ -796,6 +796,22 @@
 						</FileConfiguration>
 					</File>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="FileSystem"
+				Filter="">
+				<File
+					RelativePath="..\..\rts\System\Platform\FileSystem.cpp">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\Platform\FileSystem.h">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\Platform\Win\WinFileSystemHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\rts\System\Platform\Win\WinFileSystemHandler.h">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
