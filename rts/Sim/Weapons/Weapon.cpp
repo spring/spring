@@ -306,7 +306,7 @@ bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 	if(tempTargetPos.y < appHeight)
 		tempTargetPos.y=appHeight;
 
-	if(!TryTarget(targetPos,userTarget,unit))
+	if(!TryTarget(tempTargetPos,userTarget,unit))
 		return false;
 
 	if(targetUnit){
