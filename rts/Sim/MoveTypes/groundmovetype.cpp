@@ -1441,7 +1441,7 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 }
 
 /**
-* @breif Orients owner so that weapon[0]'s arc includes mainHeadingPos
+* @brief Orients owner so that weapon[0]'s arc includes mainHeadingPos
 */
 void CGroundMoveType::SetMainHeading(){
 	if(this->useMainHeading && !this->owner->weapons.empty()){

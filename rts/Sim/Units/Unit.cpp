@@ -1216,9 +1216,14 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 				// Play explosion sound
 				CWeaponDefHandler::LoadSound(wd->soundhit);
 				if (wd->soundhit.id) {
+
+					// HACK loading code doesn't set sane defaults for explosion sounds, so we do it here
+					if (wd->soundhit.volume == -1)
+						wd->soundhit.volume = 5.0f;
+
 					sound->PlaySound(wd->soundhit.id, pos, wd->soundhit.volume);
 				}
-				
+
 				//info->AddLine("Should play %s (%d)", wd->soundhit.name.c_str(), wd->soundhit.id); 
 			}
 		}

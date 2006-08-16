@@ -129,6 +129,8 @@ void COpenALSound::PlaySound(int id,const float3& p,float volume)
 
 void COpenALSound::PlaySound(int id,const float3& p,float volume,bool relative)
 {
+	assert(volume >= 0.0);
+
 	if (noSound)
 		return;
 
