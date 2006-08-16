@@ -638,16 +638,16 @@ int SpringApp::Update ()
 	}
 
 #ifndef WIN32
-  if (vsyncFrames > 0) {
-    if (!GLXEW_SGI_video_sync) {
-      vsyncFrames = 0; // disable
-    } else {
+	if (vsyncFrames > 0) {
+		if (!GLXEW_SGI_video_sync) {
+			vsyncFrames = 0; // disable
+	} else {
 			GLuint frameCount;
 			if (glXGetVideoSyncSGI(&frameCount) == 0) {
 				glXWaitVideoSyncSGI(vsyncFrames, frameCount % vsyncFrames, &frameCount);
 			}
 		}
-  }
+	}
 #endif  
 
 	SDL_GL_SwapBuffers();
@@ -718,10 +718,10 @@ int SpringApp::Run (int argc, char *argv[])
 					done = true;
 					break;
 				case SDL_ACTIVEEVENT:
-				  if (event.active.state & SDL_APPACTIVE) {
-				    gu->active = !!event.active.gain;
+					if (event.active.state & SDL_APPACTIVE) {
+						gu->active = !!event.active.gain;
 					}
-				  break;
+					break;
 				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
