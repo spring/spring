@@ -1185,12 +1185,12 @@ bool CGame::Update()
 bool CGame::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
-	
+
 	if (!gu->active) {
-    SDL_Delay(10); // milliseconds
-	  return true;
+		SDL_Delay(10); // milliseconds
+		return true;
 	}
-	
+
 //	(*info) << mouse->lastx << "\n";
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
@@ -1376,7 +1376,7 @@ bool CGame::Draw()
 		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->active){
 				glColor4ubv(gs->Team(gs->players[a]->team)->color);
-				font->glPrintAt (0.76f, 0.01f + 0.02 * a, 0.7f, "(%i) %s %3.0f%% Ping:%d ms",a,gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,(int)((gs->players[a]->ping-1)*1000.0f/30.0f));
+				font->glPrintAt (0.76f, 0.01f + 0.02 * a, 0.7f, "(%i) %s %3.0f%% Ping:%d ms",a,gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,(int)((gs->players[a]->ping-1)*1000/(30*gs->speedFactor)));
 			}
 		}
 	}
