@@ -10,6 +10,8 @@
  */
 
 #include "StdAfx.h"
+#include <boost/regex.hpp>
+#include <dirent.h>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
@@ -319,16 +321,27 @@ std::string UnixFileSystemHandler::GetWriteDir() const
 	return writedir->path;
 }
 
+/**
+ * @brief find files
+ * @param dir path in which to start looking (tried relative to each data directory)
+ * @param pattern pattern to search for
+ * @param recurse whether or not to recursively search
+ * @param include_dirs whether or not to include directory names in the result
+ * @return vector of std::strings containing absolute paths to the files
+ *
+ * Will search for a file given a particular pattern.
+ * Starts from dirpath, descending down if recurse is true.
+ */
 std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const
 {
 	// if it's an absolute path, don't look for it in the data directories
 	if (dir[0] == '/')
-		return FileSystemHandler::FindFiles(dir, pattern, recurse, include_dirs);
+		return FindFilesSingleDir(dir, pattern, recurse, include_dirs);
 
 	std::vector<std::string> match;
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->readable) {
-			std::vector<std::string> submatch = FileSystemHandler::FindFiles(d->path + dir, pattern, recurse, include_dirs);
+			std::vector<std::string> submatch = FindFilesSingleDir(d->path + dir, pattern, recurse, include_dirs);
 			match.insert(match.end(), submatch.begin(), submatch.end());
 		}
 	}
@@ -484,4 +497,54 @@ bool UnixFileSystemHandler::remove(const std::string& file) const
 		return ::remove(file.c_str()) == 0;
 
 	return ::remove((GetWriteDir() + file).c_str()) == 0;
+}
+
+static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, bool recurse, bool include_dirs)
+{
+	DIR* dp;
+	struct dirent* ep;
+
+	if (!(dp = opendir(dir.c_str())))
+		return;
+
+	while ((ep = readdir(dp))) {
+		// exclude hidden files
+		if (ep->d_name[0] != '.') {
+			// is it a file? (we just treat sockets / pipes / fifos / character&block devices as files...)
+			if (!(ep->d_type == DT_DIR)) {
+				if (boost::regex_match(ep->d_name, regexpattern))
+					matches.push_back(dir + ep->d_name);
+			}
+			// or a directory?
+			else if (recurse) {
+				if (include_dirs && boost::regex_match(ep->d_name, regexpattern))
+					matches.push_back(dir + ep->d_name);
+				FindFiles(matches, dir + ep->d_name + '/', regexpattern, recurse, include_dirs);
+			}
+		}
+	}
+	closedir(dp);
+}
+
+/**
+ * @brief internal find-files-in-a-single-datadir-function
+ * @param dir path in which to start looking
+ * @param pattern pattern to search for
+ * @param recurse whether or not to recursively search
+ * @param include_dirs whether or not to include directory names in the result
+ * @return vector of std::strings
+ *
+ * Will search for a file given a particular pattern.
+ * Starts from dirpath, descending down if recurse is true.
+ */
+std::vector<std::string> UnixFileSystemHandler::FindFilesSingleDir(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const
+{
+	assert(!dir.empty() && dir[dir.length() - 1] == '/');
+
+	std::vector<std::string> matches;
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
+
+	::FindFiles(matches, dir, regexpattern, recurse, include_dirs);
+
+	return matches;
 }

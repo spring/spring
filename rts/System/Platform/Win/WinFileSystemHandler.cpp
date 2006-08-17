@@ -122,7 +122,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 			else if (recurse) {
 				if (include_dirs && boost::regex_match(files.name, regexpattern))
 					matches.push_back(dir + files.name);
-				FindFiles(matches, dir + files.name + "\\", regexpattern, recurse, include_dirs);
+				FindFiles(matches, dir + files.name + '\\', regexpattern, recurse, include_dirs);
 			}
 		}
 	} while (_findnext( hFile, &files ) == 0);
@@ -130,6 +130,17 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 	_findclose( hFile );
 }
 
+/**
+ * @brief find files
+ * @param dir path in which to start looking
+ * @param pattern pattern to search for
+ * @param recurse whether or not to recursively search
+ * @param include_dirs whether or not to include directory names in the result
+ * @return vector of std::strings
+ *
+ * Will search for a file given a particular pattern.
+ * Starts from dirpath, descending down if recurse is true.
+ */
 std::vector<std::string> WinFileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const
 {
 	assert(!dir.empty() && dir[dir.length() - 1] == '\\');
