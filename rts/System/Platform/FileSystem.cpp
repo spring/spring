@@ -11,7 +11,6 @@
 
 #include "StdAfx.h"
 #include <assert.h>
-#include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -100,69 +99,6 @@ size_t FileSystemHandler::GetFilesize(const std::string& path) const
 	if (stat(path.c_str(), &info) != 0)
 		return 0;
 	return info.st_size;
-}
-
-/**
- * @brief internal find files
- *
- * Helper function for FileSystemHandler::FindFiles.
- *
- * This one assumes dirpath is not empty, exists & is a directory,
- * and it expects arguments of types boost::filesystem::path and boost::regex instead
- * of 2x std::string.
- *
- * This function does the real work: the actual walking through the
- * directory tree.
- */
-static std::vector<std::string> FindFiles(const boost::filesystem::path& dirpath, const boost::regex &regexpattern, const bool recurse, const bool include_dirs)
-{
-	std::vector<std::string> matches;
-	boost::filesystem::directory_iterator enditr;
-	for (boost::filesystem::directory_iterator diritr(dirpath); diritr != enditr; ++diritr) {
-		// Don't traverse hidden entries (ie. starting with a dot).
-		//Exclude broken symlinks by checking if the file actually exists.
-		if (diritr->leaf()[0] != '.' && boost::filesystem::exists(*diritr)) {
-			if (!boost::filesystem::is_directory(*diritr)) {
-				if (boost::regex_match(diritr->leaf(), regexpattern))
-					matches.push_back(diritr->native_file_string());
-			} else if (recurse) {
-				if (include_dirs && boost::regex_match(diritr->leaf(), regexpattern))
-					matches.push_back(diritr->native_file_string());
-				std::vector<std::string> submatch = FindFiles(*diritr, regexpattern, recurse, include_dirs);
-				if (!submatch.empty()) {
-					for (std::vector<std::string>::iterator it=submatch.begin(); it != submatch.end(); it++)
-						matches.push_back(*it);
-				}
-			}
-		}
-	}
-	return matches;
-}
-
-/**
- * @brief find files
- * @param dirpath path in which to start looking
- * @param pattern pattern to search for
- * @param recurse whether or not to recursively search
- * @param include_dirs whether or not to include directory names in the result
- * @return vector of std::strings
- *
- * Will search for a file given a particular pattern.
- * Starts from dirpath, descending down if recurse is true.
- */
-std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const
-{
-	std::vector<std::string> matches;
-	boost::filesystem::path dirpath(dir, boost::filesystem::no_check);
-	if (boost::filesystem::exists(dirpath) && boost::filesystem::is_directory(dirpath)) {
-		boost::regex regexpattern(filesystem.glob_to_regex(pattern));
-		matches = ::FindFiles(dirpath, regexpattern, recurse, include_dirs);
-	} else {
-#ifdef DEBUG
-		fprintf(stderr,"find_files warning: search path %s is not a directory\n",dirpath.string().c_str());
-#endif
-	}
-	return matches;
 }
 
 std::vector<std::string> FileSystemHandler::GetNativeFilenames(const std::string& file, bool write) const

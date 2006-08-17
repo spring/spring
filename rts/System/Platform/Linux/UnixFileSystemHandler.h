@@ -52,6 +52,7 @@ class UnixFileSystemHandler : public FileSystemHandler
 		void DeterminePermissions(int start_at = 0);
 		void LocateDataDirs();
 		void InitVFS(bool mapArchives = true) const;
+		std::vector<std::string> FindFilesSingleDir(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const;
 
 		std::vector<DataDir> datadirs;
 		const DataDir* writedir;

@@ -38,7 +38,7 @@ class FileSystemHandler
 		// custom functions
 		virtual size_t GetFilesize(const std::string& file) const;
 		virtual std::string GetWriteDir() const;
-		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const;
+		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const = 0;
 		virtual std::vector<std::string> GetNativeFilenames(const std::string& file, bool write) const;
 		virtual std::vector<std::string> GetDataDirectories() const;
 
