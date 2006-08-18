@@ -44,6 +44,7 @@
 #include "TimeProfiler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/BeamLaser.h"
+#include "myMath.h"
 #include "Platform/errorhandler.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -304,6 +305,9 @@ START_TIME_PROFILE;
 
 	unit->Init();
 	unit->heading=facing*16*1024;
+	unit->frontdir=GetVectorFromHeading(unit->heading);
+	unit->updir=UpVector;
+	unit->rightdir=unit->frontdir.cross(unit->updir);
 
 	if(!build)
 		unit->FinishedBuilding();

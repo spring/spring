@@ -57,6 +57,21 @@ void CFactory::UnitInit (UnitDef* def, int team, const float3& position)
 	CBuilding::UnitInit (def, team, position);
 }
 
+int CFactory::GetBuildPiece()
+{
+	std::vector<int> args;
+	args.push_back(0);
+	cob->Call("QueryBuildInfo",args);
+	return args[0];
+}
+
+// GetBuildPiece() is called if piece < 0
+float3 CFactory::CalcBuildPos(int buildPiece)
+{
+	float3 relBuildPos=localmodel->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
+	float3 buildPos=pos + frontdir*relBuildPos.z + updir*relBuildPos.y + rightdir*relBuildPos.x;
+	return buildPos;
+}
 
 void CFactory::Update()
 {
@@ -66,11 +81,7 @@ void CFactory::Update()
 	}
 
 	if(quedBuild && inBuildStance){
-		std::vector<int> args;
-		args.push_back(0);
-		cob->Call("QueryBuildInfo",args);
-		float3 relBuildPos=localmodel->GetPiecePos(args[0]);
-		float3 buildPos=pos + frontdir*relBuildPos.z + updir*relBuildPos.y + rightdir*relBuildPos.x;
+		float3 buildPos = CalcBuildPos();
 
 		bool canBuild=true;
 		std::vector<CUnit*> units=qf->GetUnitsExact(buildPos,16);
@@ -96,20 +107,16 @@ void CFactory::Update()
 	if(curBuild && !beingBuilt){
 		lastBuild=gs->frameNum;
 
-		std::vector<int> args;
-		args.push_back(0);
-		cob->Call("QueryBuildInfo",args);
-		CMatrix44f mat=localmodel->GetPieceMatrix(args[0]);
+		int buildPiece = GetBuildPiece();
+		CMatrix44f mat=localmodel->GetPieceMatrix(buildPiece);
 		int h=GetHeadingFromVector(mat[2],mat[10]);
 		curBuild->heading=h;
-//		if(curBuild->unitDef->canfly){	//hack to get naval air plant to work correctly, how to do it correctly ?
-			float3 relBuildPos=localmodel->GetPiecePos(args[0]);
-			float3 buildPos=pos + frontdir*relBuildPos.z + updir*relBuildPos.y + rightdir*relBuildPos.x;
-			curBuild->pos=buildPos;
-			if(curBuild->floatOnWater)
-				curBuild->pos.y=ground->GetHeight(buildPos.x,buildPos.z)-curBuild->unitDef->waterline;
-			curBuild->midPos=curBuild->pos+UpVector*curBuild->relMidPos.y;
-//		}
+
+		float3 buildPos = curBuild->pos = CalcBuildPos(buildPiece);
+		if(curBuild->floatOnWater)
+			curBuild->pos.y=ground->GetHeight(buildPos.x,buildPos.z)-curBuild->unitDef->waterline;
+		curBuild->midPos=curBuild->pos+UpVector*curBuild->relMidPos.y;
+
 		if(curBuild->AddBuildPower(buildSpeed,this)){
 			std::vector<int> args;
 			args.push_back(0);
