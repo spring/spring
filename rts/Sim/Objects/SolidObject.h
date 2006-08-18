@@ -65,7 +65,7 @@ public:
 	//Map
 	int2 mapPos;								//Current position on GroundBlockingMap.
 	unsigned char* yardMap;						//Current active yardmap of this object. 0 means no active yardmap => all blocked.
-	int buildFacing;
+	int buildFacing;							//Orientation of footprint, 4 different states
 	bool isMarkedOnBlockingMap;					//Tells if this object are marked on the GroundBlockingMap.
 
 	//Old stuff. Used for back-compability. NOTE: Don't use whose!

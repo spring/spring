@@ -23,6 +23,9 @@ public:
 	void DependentDied(CObject* o);
 	void FinishedBuilding(void);
 
+	float3 CalcBuildPos(int buildPiece=-1); // supply the build piece to speed up
+	int GetBuildPiece();
+
 	void UnitInit (UnitDef* def, int team, const float3& position);
 
 	float buildSpeed;
