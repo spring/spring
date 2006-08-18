@@ -118,16 +118,17 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	return rm;
 }
 
-CReadMap::CReadMap() : metalMap(NULL)
+CReadMap::CReadMap() :
+		orgheightmap(NULL),
+		centerheightmap(NULL),
+		slopemap(NULL),
+		facenormals(NULL),
+		typemap(NULL),
+		heightLinePal(NULL),
+		groundBlockingObjectMap(NULL),
+		metalMap(NULL)
 {
-	groundBlockingObjectMap=0;
-	metalMap=0;	
-	orgheightmap=0;
-	centerheightmap=0;
-	//halfHeightmap=0;
-	slopemap=0;
-	facenormals=0;	
-	typemap=0;		
+	memset(mipHeightmap, 0, sizeof(mipHeightmap));
 }
 
 CReadMap::~CReadMap()
