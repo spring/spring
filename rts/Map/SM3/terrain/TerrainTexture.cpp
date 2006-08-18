@@ -19,8 +19,11 @@
 #include "TerrainTexture.h"
 
 #include "TerrainTexEnvCombine.h"
-//#include "TerrainTextureGLSL.h"
+#include "TerrainTextureGLSL.h"
 #include "Lightcalc.h"
+
+#include <SDL_keysym.h>
+extern unsigned char *keys;
 
 namespace terrain {
 
@@ -83,6 +86,7 @@ namespace terrain {
 		maxPasses = 0;
 		currentRenderSetup = 0;
 		lightmap = 0;
+		flatBumpmap = 0;
 	}
 
 	TerrainTexture::~TerrainTexture ()
@@ -104,29 +108,6 @@ namespace terrain {
 		textures.clear();
 	}
 
-	void TerrainTexture::LoadBumpmaps (Config *cfg)
-	{
-		for (int a=0;a<textures.size();a++)
-		{
-			TiledTexture *tt = textures[a];
-			if (tt->bumpMapName.empty ())
-				continue;
-
-			uint texid = LoadTexture (tt->bumpMapName, true);
-
-			if (texid)
-			{
-				if (cfg->anisotropicFiltering > 0.0f)
-					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, cfg->anisotropicFiltering);
-
-				tt->bumpMap = new BaseTexture;
-				tt->bumpMap->name = tt->name + "_BM";
-				tt->bumpMap->tilesize = tt->tilesize;
-				tt->bumpMap->id = texid;
-			}
-		}
-	}
-
 	struct TerrainTexture::GenerateInfo
 	{
 		deque<AlphaImage*>* bmMipmaps;
@@ -136,11 +117,18 @@ namespace terrain {
 		map<uint, RenderSetupCollection*> nodesetup;
 	};
 
-	BaseTexture* TerrainTexture::LoadImageSource(const std::string& name, const std::string& basepath, Heightmap *heightmap, ILoadCallback *cb, Config* cfg)
+	BaseTexture* TerrainTexture::LoadImageSource(
+		const std::string& name, 
+		const std::string& basepath, 
+		Heightmap *heightmap, ILoadCallback *cb,
+		Config* cfg, bool isBumpmap)
 	{
 		BaseTexture *btex = 0;
 		if (!!atoi(tdfParser->SGetValueDef("0", basepath + name + "\\Blendmap").c_str()))
 		{
+			if (isBumpmap) 
+				throw content_error(name + " should be a bumpmap, not a blendmap.");
+
 			Blendmap *bm = new Blendmap;
 			bm->Load (name, basepath + name, heightmap, cb, tdfParser);
 			blendMaps.push_back (bm);
@@ -149,7 +137,11 @@ namespace terrain {
 		else // a regular texturemap?
 		{
 			TiledTexture *tex = new TiledTexture;
-			tex->Load (name, basepath + name, cb, tdfParser);
+			tex->Load (name, basepath + name, cb, tdfParser, isBumpmap);
+			if (!tex->id) {
+				delete tex;
+				return 0;
+			}
 			textures.push_back (tex);
 			btex = tex;
 		}
@@ -165,7 +157,7 @@ namespace terrain {
 	{
 		string basepath="MAP\\TERRAIN\\";
 
-		if (cb) cb->PrintMsg ("  parsing color expression...");
+		if (cb) cb->PrintMsg ("  parsing texture stages...");
 
 		if (!GLEW_ARB_multitexture)
 			throw std::runtime_error ("No multitexture avaiable");
@@ -175,7 +167,7 @@ namespace terrain {
 		heightmapW = heightmap->w;
 		tdfParser = tdf;
 
-		shaderDef.Parse(*tdf);
+		shaderDef.Parse(*tdf, cfg->useBumpMaps);
 
 		// Load textures
 		map<string, BaseTexture*> nametbl;
@@ -187,7 +179,36 @@ namespace terrain {
 			ShaderDef::Stage* st = &shaderDef.stages [a];
 			// Already loaded?
 			if (nametbl.find (st->sourceName) == nametbl.end()) 
-				st->source = nametbl[st->sourceName] = LoadImageSource(st->sourceName, basepath, heightmap, cb, cfg);
+				nametbl[st->sourceName] = LoadImageSource(st->sourceName, basepath, heightmap, cb, cfg);
+			st->source = nametbl[st->sourceName];
+		}
+		if (cfg->useBumpMaps)
+		{
+			for (int a=0;a<shaderDef.normalMapStages.size();a++)
+			{
+				ShaderDef::Stage* st = &shaderDef.normalMapStages [a];
+
+				string name = st->sourceName;
+				if (st->operation != ShaderDef::Alpha)
+					name += "_BM"; // make it unique
+
+				// Already loaded?
+				if (nametbl.find (name) == nametbl.end()) {
+					// load a bumpmap unless it's an alpha operation
+					st->source = LoadImageSource(st->sourceName, basepath, 
+						heightmap, cb, cfg, st->operation != ShaderDef::Alpha);
+					if (!st->source) {
+						if (!flatBumpmap) {
+							flatBumpmap = TiledTexture::CreateFlatBumpmap();
+							textures.push_back (flatBumpmap);
+						}
+						st->source = flatBumpmap;
+					}
+					st->sourceName = st->source->name;
+					nametbl[st->sourceName] = st->source;
+				}
+				st->source = nametbl[st->sourceName];
+			}
 		}
 
 		// Generate blendmap mipmaps
@@ -248,18 +269,18 @@ namespace terrain {
 		}
 
 		// Create texture application object
-/*		if (GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader && 
-			GLEW_ARB_shader_objects && GLEW_ARB_shading_language_100 && !forceFallback) {
+		if (!cfg->forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader && 
+			GLEW_ARB_shader_objects && GLEW_ARB_shading_language_100) {
 			shaderHandler = new GLSLShaderHandler;
-		} else {*/
+		} else {
 			// texture_env_combine as fallback
 			shaderHandler = new TexEnvSetupHandler;
-		//}
+		}
 
 		// Calculate shadows
 		if (cfg->useStaticShadow) {
 			if (cb) cb->PrintMsg("  calculating lightmap");
-			lightmap = new Lightmap(heightmap, 0, 1,li);
+			lightmap = new Lightmap(heightmap, 2, 1,li);
 		}
 
 		// see how lighting should be implemented, based on config and avaiable textures
@@ -325,8 +346,7 @@ namespace terrain {
 			{
 				RenderSetup *rs = tns->renderSetup [a] = new RenderSetup;
 
-//				shaders[a]->def.Optimize(&rs->shaderDef);
-				rs->shaderDef = shaders[a]->def;
+				shaders[a]->def.Optimize(&rs->shaderDef);
 				shaderHandler->BuildNodeSetup(&rs->shaderDef, rs);
 
 				for (int p=0;p<tns->renderSetup [a]->passes.size();p++) {
@@ -374,14 +394,17 @@ namespace terrain {
 		shaders.push_back (&nearShader);
 	}
 
-	bool TerrainTexture::SetupNode (TQuad *q, int pass, bool unlit)
+	bool TerrainTexture::SetupNode (TQuad *q, int pass)
 	{
 		RenderSetupCollection *ns = q->textureSetup;
 		if (debugShader>=0) ns = texNodeSetup[debugShader];
 
 		RenderSetup *rs = 0;
 
-		assert (q->renderData);
+		if (!q->renderData)
+			return false;
+
+		//assert (q->renderData);
 
 /*		if (unlit) {
 			rs = ns->renderSetup [unlitShader.index];
@@ -425,9 +448,11 @@ namespace terrain {
 		NodeSetupParams parms;
 		parms.blendmaps = &blendMaps;
 		parms.textures = &textures;
-		parms.wsLightVec = &wsLightVec;
-		parms.wsEyeVec = &wsEyeVec;
+		parms.wsLightDir = &wsLightDir;
+		parms.wsEyePos = &wsEyePos;
 		parms.pass = passIndex;
+
+		glDepthMask(p->depthWrite ? GL_TRUE : GL_FALSE);
 
         bool blend=true;
 		switch (p->operation) {
@@ -449,7 +474,7 @@ namespace terrain {
 
 		case Pass_MulColor:
 			glBlendFunc (GL_ZERO, GL_SRC_COLOR); // color=src*0+dst*src
-			shaderHandler->CleanupStates();
+			shaderHandler->EndTexturing();
 			glEnable(GL_BLEND);
 			return true;
 		}
@@ -460,12 +485,24 @@ namespace terrain {
 		return shaderHandler->SetupShader (p->shaderSetup, parms);
 	}
 
-	void TerrainTexture::CleanupTexturing ()
+	void TerrainTexture::EndTexturing ()
 	{
 		currentRenderSetup = 0;
 		glDisable (GL_BLEND);
 
-		shaderHandler->CleanupStates ();
+		shaderHandler->EndTexturing ();
+	}
+	void TerrainTexture::BeginTexturing()
+	{
+		static bool z_last=false, x_last;
+		if(keys[SDLK_z] && !z_last) 
+			DebugEvent("t_prev_shader");
+		if(keys[SDLK_x] && !x_last)
+			DebugEvent ("t_next_shader");
+		z_last=!!keys[SDLK_z];
+		x_last=!!keys[SDLK_x];
+
+		shaderHandler->BeginTexturing();
 	}
 
 	int TerrainTexture::NumPasses ()
@@ -476,14 +513,18 @@ namespace terrain {
 	void TerrainTexture::EndPass()
 	{
 		currentRenderSetup = 0;
+		shaderHandler->EndPass();
+	}
+	void TerrainTexture::BeginPass(int p)
+	{
+		shaderHandler->BeginPass(blendMaps, textures);
 	}
 
-	void TerrainTexture::SetShaderParams (const Vector3& lightVec, const Vector3& eyeVec)
+	void TerrainTexture::SetShaderParams (const Vector3& lightDir, const Vector3& eyePos)
 	{
-		wsLightVec = lightVec;
-		wsLightVec.Normalize ();
-		wsEyeVec = eyeVec;
-		wsEyeVec.Normalize ();
+		wsLightDir = lightDir;
+		wsLightDir.Normalize ();
+		wsEyePos = eyePos;
 	}
 
 	void TerrainTexture::DebugEvent (const std::string& event)
@@ -502,23 +543,19 @@ namespace terrain {
 #ifndef TERRAINRENDERERLIB_EXPORTS
 	void TerrainTexture::DebugPrint (IFontRenderer *fontRenderer)
 	{
-		fontRenderer->printf(0,75,16.0f,"Numpasses: %d, curshader=%d, texture units: %d, sundir(%1.3f,%1.3f,%1.3f)", maxPasses, debugShader, shaderHandler->MaxTextureUnits (), wsLightVec.x,wsLightVec.y,wsLightVec.z);
+		fontRenderer->printf(0,75,16.0f,"Numpasses: %d, curshader=%d, texture units: %d, sundir(%1.3f,%1.3f,%1.3f)", maxPasses, debugShader, shaderHandler->MaxTextureUnits (), wsLightDir.x,wsLightDir.y,wsLightDir.z);
 	}
 #endif
 
-	void ShaderDef::Parse(TdfParser& tdf)
+	void ShaderDef::LoadStages(int numStages,const char *stagename, TdfParser& tdf, std::vector<ShaderDef::Stage>& stages)
 	{
-		string path = "map\\terrain\\";
-
-		int numStages = atoi(tdf.SGetValueDef("0", path + "NumTextureStages").c_str());
-		bool autoBumpMap = !!atoi(tdf.SGetValueDef("0", path + "AutoBumpmapStages").c_str());
-
 		for (int a=0;a<numStages;a++)
 		{
+			string path = "map\\terrain\\";
 			char num[10];
 			SNPRINTF(num, 10, "%d", a);
 			
-			string ts = path + "texstage" + num + "\\";
+			string ts = path + stagename + num + "\\";
 
 			string opstr = tdf.SGetValueDef("mul", ts + "operation");
 			struct { StageOp op; const char *str; } tbl[] = 
@@ -550,61 +587,98 @@ namespace terrain {
 			stages.push_back(Stage());
 			stages.back().sourceName = tdf.SGetValueDef(string(), ts + "source");
 			stages.back().operation = operation;
+			if (stages.back().sourceName.empty())
+				throw content_error(ts + " does not have a source texture");
 		}
+	}
 
-		// generate the bumpmap stages from the texture stages?
-		if (autoBumpMap)
-		{
+	void ShaderDef::Parse(TdfParser& tdf, bool needNormalMap)
+	{
+		string path = "map\\terrain\\";
 
-		}
-		else { 
-			// otherwise load them from the bmstage list
+		int numStages = atoi(tdf.SGetValueDef("0", path + "NumTextureStages").c_str());
+		bool autoBumpMap = !!atoi(tdf.SGetValueDef("1", path + "AutoBumpmapStages").c_str());
+		bool autoSpecular = !!atoi(tdf.SGetValueDef("1", path + "AutoSpecularStages").c_str());
+		specularExponent = atof(tdf.SGetValueDef("8", path  + "SpecularExponent").c_str());
+
+		LoadStages(numStages, "texstage", tdf, stages);
+
+		if (needNormalMap) {
+			// generate the bumpmap stages from the texture stages?
+			if (autoBumpMap)
+			{
+				for (uint a=0;a<stages.size();a++) 
+				{
+					Stage& st = stages[a];
+					if (a && st.operation != Alpha && st.operation != Blend)
+						continue;
+
+					normalMapStages.push_back (Stage());
+
+					Stage& bmst = normalMapStages.back();
+					bmst.operation = st.operation;
+					bmst.sourceName = st.sourceName;//tdf.SGetValueDef(string(), path + st.sourceName + "\\Bumpmap");
+				}
+			}
+			else { 
+				// otherwise load them from the bmstage list
+				numStages = atoi(tdf.SGetValueDef("0", path + "NumBumpmapStages").c_str());
+				LoadStages(numStages, "bmstage", tdf, normalMapStages);
+			}
 		}
 	}
 
 	void ShaderDef::Optimize(ShaderDef* dst)
 	{
+		OptimizeStages(stages,dst->stages);
+		OptimizeStages(normalMapStages,dst->normalMapStages);
+		dst->hasLighting = hasLighting;
+		dst->specularExponent = specularExponent;
+	}
+
+	void ShaderDef::OptimizeStages(std::vector<Stage>& src, std::vector<Stage>& dst)
+	{
 		AlphaImage::AreaTestResult atr = AlphaImage::AREA_ONE;
 
 		// create an optimized shader definition based on replacing the blendmap with a constant
-		for (int a=0;a<stages.size();a++) 
+		for (int a=0;a<src.size();a++) 
 		{
-			Stage &st = stages[a];
+			Stage &st = src[a];
+			if (a == 0) atr = AlphaImage::AREA_MIXED;
 			switch (st.operation) {
 				case Blend: // previous * (1-alpha) + source * alpha
-					if (atr == AlphaImage::AREA_MIXED) 
-						dst->stages.push_back (st);
-					else if(atr == AlphaImage::AREA_ONE) {
+					if (atr == AlphaImage::AREA_MIXED)
+						dst.push_back (st);
+					else if(atr == AlphaImage::AREA_ONE)
+					{
 						// only source remains
-						dst->stages.clear();
-						dst->stages.push_back (st);
-						dst->stages.back().operation = Mul;
+						dst.clear();
+						dst.push_back (st);
+						dst.back().operation = Mul;
 					}
-					else if (atr == AlphaImage::AREA_ZERO) 
+					else if (atr == AlphaImage::AREA_ZERO)
 					{
 						 // only previous, remove the alpha channel
-						for(int i=dst->stages.size()-1; i>=0 && dst->stages[i].operation == Alpha; i--)
-							dst->stages.pop_back();
+						for(int i=dst.size()-1; i>=0 && dst[i].operation == Alpha; i--)
+							dst.pop_back();
 					}
 					break;
 				case Alpha: {
 					// remove redundant alpha stages
-					for(int i=dst->stages.size()-1;i>=0 && dst->stages[i].operation == Alpha;i--)
-						dst->stages.pop_back();
+					for(int i=dst.size()-1;i>=0 && dst[i].operation == Alpha;i--)
+						dst.pop_back();
 
 					Blendmap* bm = dynamic_cast<Blendmap*>(st.source);
-					if (bm) {
-						atr = bm->curAreaResult;
-						dst->stages.push_back (st);
-					}
+					if (bm) atr = bm->curAreaResult;
+					else atr = AlphaImage::AREA_MIXED;
+					dst.push_back (st);
 					break;}
 				case Add:
 				case Mul:
-					dst->stages.push_back(st);
+					dst.push_back(st);
 					break;
 			}
 		}
-		dst->hasLighting = hasLighting;
 	}
 
 	void ShaderDef::Output()
@@ -615,30 +689,5 @@ namespace terrain {
 			d_trace ("%d\toperation=%s\n",a, opstr[(int)stages[a].operation]);
 			d_trace ("\tsource=%s\n", stages[a].sourceName.c_str());
 		}
-	}
-
-	void ShaderDef::GetTextureUsage(TextureUsage* tu)
-	{
-		set<BaseTexture*> texUnits;
-		set<BaseTexture*> texCoordUnits;
-
-		for(int a=0;a<stages.size();a++) {
-			texUnits.insert(stages[a].source);
-
-			if (stages[a].source->ShareTexCoordUnit()) {
-				set<BaseTexture*>::iterator i=texCoordUnits.begin();
-				for (; i != texCoordUnits.end(); i++)
-					if ((*i)->tilesize.x == stages[a].source->tilesize.x && (*i)->tilesize.y == stages[a].source->tilesize.y)
-						break;
-
-				if (i == texCoordUnits.end())
-					texCoordUnits.insert(stages[a].source);
-
-			} else texCoordUnits.insert(stages[a].source);
-		}
-		tu->texUnits.resize(texUnits.size());
-		copy(texUnits.begin(), texUnits.end(), tu->texUnits.begin());
-		tu->coordUnits.resize(texCoordUnits.size());
-		copy(texCoordUnits.begin(), texCoordUnits.end(), tu->coordUnits.begin());
 	}
 };

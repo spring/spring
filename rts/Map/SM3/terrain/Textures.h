@@ -54,8 +54,6 @@ namespace terrain {
 	{
 		BaseTexture ();
 		virtual ~BaseTexture();
-		virtual BaseTexture* GetBumpMap() { return 0; }
-		virtual BaseTexture* GetSpecularMap() { return 0; }
 
 		virtual bool ShareTexCoordUnit () { return true; }
 
@@ -66,7 +64,9 @@ namespace terrain {
 		// the "texgen vector" is defined as:
 		// { Xfactor, Zfactor, Xoffset, Zoffset }
 		virtual void CalcTexGenVector (float *v4);
-		void SetupTexGen();
+		virtual void SetupTexGen();
+
+		virtual bool IsRect() {return false;}
 	};
 
 	struct TiledTexture : public BaseTexture
@@ -74,11 +74,8 @@ namespace terrain {
 		TiledTexture ();
 		~TiledTexture ();
 
-		BaseTexture* GetBumpMap () { return bumpMap; }
-		void Load(const std::string& name, const std::string& section, ILoadCallback *cb, TdfParser *tdf);
-
-		std::string bumpMapName;
-		BaseTexture* bumpMap;
+		void Load(const std::string& name, const std::string& section, ILoadCallback *cb, TdfParser *tdf, bool isBumpmap);
+		static TiledTexture* CreateFlatBumpmap();
 	};
 
     struct Blendmap : public BaseTexture
@@ -86,7 +83,7 @@ namespace terrain {
 		Blendmap ();
 		~Blendmap ();
 
-		void Generate (Heightmap *rootHm, int lodLevel);
+		void Generate (Heightmap *rootHm, int lodLevel, float hmscale, float hmoffset);
 		void Load(const std::string& name, const std::string& section, Heightmap *heightmap, ILoadCallback *cb, TdfParser *tdf);
 
 		struct GeneratorInfo {
@@ -114,7 +111,7 @@ namespace terrain {
 
 	GLuint LoadTexture (const std::string& fn, bool isBumpmap=false);
 	void SaveImage(const char *fn, int components, GLenum type, int w,int h, void *data);
-
+	void SetTexCoordGen(float *tgv);
 };
 
 

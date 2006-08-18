@@ -15,7 +15,7 @@ The frustum clips the polygons against a certain convex space
 class Frustum
 {
 public:
-	void CalcCameraPlanes (Vector3 *base, Vector3 *right, Vector3* up, Vector3* front, float fov); // should at least have 
+	void CalcCameraPlanes (Vector3 *base, Vector3 *right, Vector3* up, Vector3* front, float fov, float aspect); // should at least have 
 	void InversePlanes ();
 
 	enum VisType { Inside, Outside, Partial };
@@ -23,7 +23,7 @@ public:
 	VisType IsPointVisible (const Vector3& pt);
 
 	std::vector<Plane> planes;
-	Vector3 base, pos[4];
+	Vector3 base, pos[4], front, right, up;
 	void Draw ();
 };
 

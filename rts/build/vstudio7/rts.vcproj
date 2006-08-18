@@ -474,12 +474,6 @@
 					RelativePath="..\..\Game\Ui\GuiHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\GuiKeyReader.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\GuiKeyReader.h">
-				</File>
-				<File
 					RelativePath="..\..\Game\Ui\InfoConsole.cpp">
 				</File>
 				<File
@@ -1671,6 +1665,9 @@
 					RelativePath="..\..\Rendering\Gl\glTextBox.h">
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Gl\IFramebuffer.h">
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Gl\myGL.cpp">
 				</File>
 				<File
@@ -1687,12 +1684,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Gl\VertexArrayRange.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Gl\WinPBuffer.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Gl\WinPBuffer.h">
 				</File>
 			</Filter>
 			<Filter
@@ -4522,6 +4513,100 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 					</File>
+					<Filter
+						Name="headers"
+						Filter="">
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\adopt_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\back_reference.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\back_reference_fwd.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\class.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\class_info.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\config.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\container_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\copy_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\dependency_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\discard_result_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\error.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\from_stack.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\function.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\get_pointer.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\handle.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\iterator_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\lua_include.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\luabind.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\object.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\open.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\operator.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\out_value_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\prefix.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\raw_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\return_reference_to_policy.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\scope.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\value_wrapper.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\weak_ref.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\wrapper_base.hpp">
+						</File>
+						<File
+							RelativePath="..\..\..\lua\luabind\luabind\yield_policy.hpp">
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 		</Filter>
@@ -4659,6 +4744,12 @@
 						RelativePath="..\..\Map\Sm3\terrain\TerrainTexture.h">
 					</File>
 					<File
+						RelativePath="..\..\Map\Sm3\terrain\TerrainTextureGLSL.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Map\Sm3\terrain\TerrainTextureGLSL.h">
+					</File>
+					<File
 						RelativePath="..\..\Map\Sm3\terrain\TerrainUtil.cpp">
 					</File>
 					<File
@@ -4673,6 +4764,19 @@
 					<File
 						RelativePath="..\..\Map\Sm3\terrain\Textures.h">
 					</File>
+					<Filter
+						Name="shaders"
+						Filter="">
+						<File
+							RelativePath="..\..\..\game\shaders\terrainCommon.glsl">
+						</File>
+						<File
+							RelativePath="..\..\..\game\shaders\terrainFragmentShader.glsl">
+						</File>
+						<File
+							RelativePath="..\..\..\game\shaders\terrainVertexShader.glsl">
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 		</Filter>

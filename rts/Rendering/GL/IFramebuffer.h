@@ -9,8 +9,8 @@
 #include <GL/glew.h>
 enum FramebufferAttachType
 {
-	FBO_ATTACH_COLOR,
-	FBO_ATTACH_DEPTH
+	FBO_ATTACH_COLOR = 1,
+	FBO_ATTACH_DEPTH = 2,
 };
 
 class IFramebuffer
@@ -27,33 +27,20 @@ public:
 
 #include "Game/UI/InfoConsole.h"
 #include "FBO.h"
-#ifdef _WIN32
-#include "WinPBuffer.h"
-#elif defined(__APPLE__)
-// No native apple PBuffer support yet...just stick with the FBOs for now.
-#else
-#include "GLXPBuffer.h"
-#endif
 
-static inline IFramebuffer* instantiate_fb(const int shadowMapSize)
+enum FramebufferProperties
+{
+	FBO_NEED_DEPTH, // zbuffering is needed, but only for rendering
+	FBO_NEED_DEPTH_TEXTURE, // for shadow mapping
+	FBO_NEED_COLOR 
+};
+
+static inline IFramebuffer* instantiate_fb(const int w, const int h, int requires)
 {
 	if (GLEW_EXT_framebuffer_object) {
 		info->AddLine("Using EXT_framebuffer_object");
-		return new FBO();
+		return new FBO(requires, w, h);
 	}
-#ifdef _WIN32
-	else if (WGLEW_ARB_pbuffer) {
-		info->AddLine("Using WGLEW_ARB_pbuffer");
-		return new WinPBuffer(shadowMapSize);
-	}
-#elif defined(__APPLE__)
-	// No native apple PBuffer support yet...just stick with the FBOs for now.
-#else
-	else if (GLXEW_SGIX_pbuffer) {
-		info->AddLine("Using GLX_SGIX_pbuffer");
-		return new GLXPBuffer(shadowMapSize,false);
-	}
-#endif
 	info->AddLine("No supported pixel buffer found");
 	return NULL;
 }

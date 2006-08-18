@@ -14,15 +14,24 @@
  * Tests for support of the EXT_framebuffer_object
  * extension, and generates a framebuffer if supported
  */
-FBO::FBO()
+FBO::FBO(int requires, int w, int h)
 {
-	g_frameBuffer = 0;
+	this->requires = requires;
+	frameBuffer = 0;
 	if (!GLEW_EXT_framebuffer_object)
 		return;
 	assert(glGenFramebuffersEXT != 0);
-	glGenFramebuffersEXT(1,&g_frameBuffer);
+	glGenFramebuffersEXT(1,&frameBuffer);
 	select();
-	// Other init stuff
+	// Is a depth renderbuffer needed?
+	if ((requires & FBO_NEED_DEPTH) && !(requires & FBO_NEED_DEPTH_TEXTURE))
+	{
+		glGenRenderbuffersEXT(1, &depthRenderBuffer);
+		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, depthRenderBuffer);
+		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, w, h);  
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  
+										GL_RENDERBUFFER_EXT, depthRenderBuffer);
+	}
 	deselect();
 }
 
@@ -32,8 +41,12 @@ FBO::FBO()
 FBO::~FBO()
 {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-	if (g_frameBuffer)
-		glDeleteFramebuffersEXT(1,&g_frameBuffer);
+	if (frameBuffer)
+		glDeleteFramebuffersEXT(1,&frameBuffer);
+	
+	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
+	if (depthRenderBuffer)
+		glDeleteRenderbuffersEXT(1, &depthRenderBuffer);
 }
 
 /**
@@ -41,7 +54,7 @@ FBO::~FBO()
  */
 bool FBO::valid(void)
 {
-	return g_frameBuffer != 0;
+	return frameBuffer != 0;
 }
 
 /**
@@ -49,7 +62,7 @@ bool FBO::valid(void)
  */
 void FBO::select(void)
 {
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_frameBuffer);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, frameBuffer);
 }
 
 /**
@@ -81,11 +94,12 @@ void FBO::attachTexture(GLuint tex, const unsigned int textype, FramebufferAttac
 
 	select();
 	if (attachtype == FBO_ATTACH_DEPTH) {
+		assert (requires & FBO_NEED_DEPTH_TEXTURE);
 		glattachtype = GL_DEPTH_ATTACHMENT_EXT;
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
-	} else if (attachtype == FBO_ATTACH_COLOR)
+	} else if (attachtype == FBO_ATTACH_COLOR) {
+		assert (requires & FBO_NEED_COLOR);
 		glattachtype = GL_COLOR_ATTACHMENT0_EXT;
+	}
 
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, glattachtype, textype, tex, 0);
 	deselect();

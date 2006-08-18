@@ -30,43 +30,72 @@ static void BoxPlaneVerts (const Vector3& min, const Vector3& max, const Vector3
 	else { close.z = max.z; far.z = min.z; }
 }
 
-void Frustum::CalcCameraPlanes (Vector3 *cbase, Vector3 *cright, Vector3* cup, Vector3* cfront, float fov)
+void Frustum::CalcCameraPlanes (Vector3 *cbase, Vector3 *cright, Vector3* cup, Vector3* cfront, float fov, float aspect)
 {
 	float sf = tan((PI * fov / 180.0f) / 2);
 
 	planes.resize(5);
 	planes[0].SetVec (*cfront);
-	planes[0].CalcDist (*pos + *cfront);
+	planes[0].CalcDist (*cbase + *cfront);
 
 	float m = 200.0f;
 	base = *cbase + *cfront * m;
-	Vector3 up = *cup * sf * m, right = *cright * sf * m;
+	up = *cup , right = *cright;
+	up *= sf * m;
+	right *= sf * m * aspect;
+	front = *cfront;
+
 	pos [0] = base + right + up; // rightup
 	pos [1] = base + right - up; // rightdown
 	pos [2] = base - right - up; // leftdown
 	pos [3] = base - right + up; // leftup
 
-	base = *pos;
+	base = *cbase;
 
-	planes[1].MakePlane (base, pos[3], pos[2]); // left
-	planes[2].MakePlane (base, pos[0], pos[3]); // up
-	planes[3].MakePlane (base, pos[1], pos[0]); // right
-	planes[4].MakePlane (base, pos[2], pos[1]);// down
+	planes[1].MakePlane (base, pos[2], pos[3]); // left
+	planes[2].MakePlane (base, pos[3], pos[0]); // up
+	planes[3].MakePlane (base, pos[0], pos[1]); // right
+	planes[4].MakePlane (base, pos[1], pos[2]);// down
+
+	right.Normalize();
+	up.Normalize();
+	front.Normalize();
 }
 
 void Frustum::Draw ()
 {
-	glColor3ub (255,255,0);
-	glBegin (GL_LINES);
-	for (int a=0;a<4;a++) {
-		glVertex3fv ((float*)&base);
-		glVertex3fv ((float*)&pos[a]);
-	}
-	glEnd();
-	glBegin (GL_LINE_LOOP);
-	for (int a=0;a<4;a++) 
-		glVertex3fv ((float*)&pos[a]);
-	glEnd();
+	if (base.x==0.0f) return;
+
+	glDisable(GL_CULL_FACE);
+
+/*	if (keys[SDLK_t]) {
+		glBegin(GL_LINES);
+		glColor3ub (255,0,0);
+		glVertex3fv((float*)&base);
+		glVertex3fv((float*)&(base+front*100));
+		glEnd();
+		glBegin(GL_LINES);
+		glColor3ub (0,255,0);
+		glVertex3fv((float*)&base);
+		glVertex3fv((float*)&(base+right*100));
+		glEnd();
+		glBegin(GL_LINES);
+		glColor3ub (0,0,255);
+		glVertex3fv((float*)&base);
+		glVertex3fv((float*)&(base+up*100));
+		glEnd();
+	}else{*/
+		glBegin (GL_LINES);
+		for (int a=0;a<4;a++) {
+			glVertex3f (base.x, base.y, base.z);
+			glVertex3f (pos[a].x, pos[a].y, pos[a].z);
+		}
+		glEnd();
+		glBegin (GL_LINE_LOOP);
+		for (int a=0;a<4;a++) 
+			glVertex3fv ((float*)&pos[a]);
+		glEnd();
+	//}
 	glColor3ub(255,255,255);
 }
 

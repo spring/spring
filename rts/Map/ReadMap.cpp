@@ -318,6 +318,7 @@ void CReadMap::ParseSettings(TdfParser& resources)
 
 	ambientColor=mapDefParser.GetFloat3(float3(0.5,0.5,0.5),"MAP\\LIGHT\\GroundAmbientColor");
 	sunColor=mapDefParser.GetFloat3(float3(0.5,0.5,0.5),"MAP\\LIGHT\\GroundSunColor");
+	specularColor=mapDefParser.GetFloat3(float3(0.1,0.1,0.1),"MAP\\LIGHT\\GroundSpecularColor");
 	mapDefParser.GetDef(shadowDensity, "0.8", "MAP\\LIGHT\\GroundShadowDensity");
 
 	mapDefParser.GetDef(maxMetal,"0.02","MAP\\MaxMetal");

@@ -60,12 +60,13 @@ namespace terrain {
 		void SetTexCoordGen (float *tgv);
 
 		// ITexShaderHandler interface
-		void CleanupStates ();
-		void SetupForPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures);
+		void BeginTexturing();
+		void EndTexturing();
+		void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures);
+		void EndPass() {}
 		void BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *renderSetup);
 		bool SetupShader (IShaderSetup *shadercfg, NodeSetupParams& params);
 
-		bool AdvancedShading () { return false; }
 		int MaxTextureUnits ();
 		int MaxTextureCoords ();
 	protected:

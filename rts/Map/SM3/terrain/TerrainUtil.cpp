@@ -327,6 +327,10 @@ namespace terrain {
 					return a;
 			}
 		}
+		else {
+			for(int a=0;a<coordUnits.size();a++)
+				if(coordUnits[a]==texture) return a;
+		}
 
 		if (maxCoords == (int)coordUnits.size())
 			return -1;
@@ -340,6 +344,8 @@ namespace terrain {
 		if (maxUnits == (int)texUnits.size())
 			return -1;
 
+		for(int a=0;a<texUnits.size();a++)
+			if(texUnits[a] == texture) return a;
 		texUnits.push_back(texture);
 		return (int)texUnits.size()-1;
 	}

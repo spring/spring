@@ -22,6 +22,20 @@ using namespace std;
 
 namespace terrain {
 
+	void SetTexCoordGen (float *tgv)
+	{
+		glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+		glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+
+		Plane s(tgv[0],0,0,tgv[2]);
+		glTexGenfv (GL_S, GL_OBJECT_PLANE, (float*)&s);
+		Plane t(0,0,tgv[1],tgv[3]);
+		glTexGenfv (GL_T, GL_OBJECT_PLANE, (float*)&t);
+
+		glEnable (GL_TEXTURE_GEN_S);
+		glEnable (GL_TEXTURE_GEN_T);
+	}
+
 //-----------------------------------------------------------------------
 // Texturing objects
 //-----------------------------------------------------------------------
@@ -59,30 +73,44 @@ namespace terrain {
 	}
 
 	TiledTexture::TiledTexture ()
-	{
-		bumpMap = 0;
-	}
+	{}
 
 	TiledTexture::~TiledTexture()
-	{
-		delete bumpMap;
-	}
+	{}
 
-	void TiledTexture::Load(const std::string& name, const std::string& section, ILoadCallback *cb, TdfParser *tdf)
+	void TiledTexture::Load(const std::string& name, const std::string& section, ILoadCallback *cb, TdfParser *tdf, bool isBumpmap)
 	{
 		this->name = name;
 
 		tilesize.x = tilesize.y = atof (tdf->SGetValueDef ("10", section + "\\Tilesize").c_str());
-		bumpMapName = tdf->SGetValueDef (string(), section + "\\Bumpmap");
 
 		string texture;
-		if (!tdf->SGetValue (texture, section + "\\File"))
-			throw content_error("Texture " + section + " has no image file.");
+		if (isBumpmap) {
+			if (!tdf->SGetValue (texture, section + "\\Bumpmap"))
+				return;
 
-		if (cb) cb->PrintMsg ("    loading %s...", texture.c_str());
+			this->name += "_BM";
+		} else {
+			if (!tdf->SGetValue (texture, section + "\\File"))
+				throw content_error("Texture " + section + " has no image file.");
+		}
+
+		if (cb) cb->PrintMsg ("    loading %s %s from %s...", isBumpmap ? "bumpmap" : "texture", name.c_str(), texture.c_str());
 		id = LoadTexture (texture);
 	}
 
+	TiledTexture* TiledTexture::CreateFlatBumpmap()
+	{
+		TiledTexture *tt = new TiledTexture;
+		glGenTextures(1, &tt->id);
+		glBindTexture(GL_TEXTURE_2D, tt->id);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		uchar img[3] = { 127, 127, 255 };
+		glTexImage2D (GL_TEXTURE_2D,0, 3, 1, 1, 0,GL_RGB, GL_UNSIGNED_BYTE, img);
+		tt->name = "_flatbm";
+		return tt;
+	}
 
 	Blendmap::Blendmap ()
 	{
@@ -123,8 +151,11 @@ namespace terrain {
 
 			int generatorLOD = atoi (tdf->SGetValueDef ("0", section + "\\GeneratorLOD").c_str());
 
+			float hmScale = atof (tdf->SGetValueDef ("1000", "map\\terrain\\HeightScale").c_str());
+			float hmOffset = atof (tdf->SGetValueDef ("0", "map\\terrain\\HeightOffset").c_str());
+
 			if (cb) cb->PrintMsg ("    generating %s...", name.c_str());
-			Generate (heightmap, generatorLOD);
+			Generate (heightmap, generatorLOD, hmScale, hmOffset);
 		}
 		else { // Load blendmap from file
 			CBitmap bitmap;
@@ -166,15 +197,7 @@ namespace terrain {
 				result += img->at (r,b);
 
 				result *= (1.0f/8.0f);
-				float v = img->at(x,y);
-				if (result > 0.5f) {
-					v += 0.25f;
-					if (v > 1.0f) v=1.0f;
-				} else if(result < 0.5f) {
-					v -= 0.25f;
-					if (v < 0.0f) v=0.0f;
-				}
-				nd[y*img->w+x] = v;
+				nd[y*img->w+x] = result;
 			}
 		}
 
@@ -183,7 +206,7 @@ namespace terrain {
 	}
 
 
-	void Blendmap::Generate (Heightmap *rootHm, int lodLevel)
+	void Blendmap::Generate (Heightmap *rootHm, int lodLevel, float hmScale, float hmOffset)
 	{
 		Heightmap *heightmap = rootHm->GetLevel(-lodLevel);
 
@@ -194,14 +217,11 @@ namespace terrain {
 		Blendmap::GeneratorInfo *gi = generatorInfo;
 
 		// Calculate blend factors using the function parameters and heightmap input:
-		// blendFactor = max(0, (1 - abs(height - originHeight) / heightRange) * (1-slopePart) + slope * slopePart;
 		for (int y=0;y<bm->h;y++)
 		{
 			for (int x=0;x<bm->w;x++)
 			{
-				const float heightScale = 1.0f / (1<<16);
-				float h = heightmap->at (x,y) * heightScale;
-
+				float h = (heightmap->at (x,y) - hmOffset) / hmScale;
 				float factor=1.0f;
 
 				if(h < gi->minHeight - gi->minHeightFuzzy) {
@@ -224,7 +244,9 @@ namespace terrain {
 				} else {
 					Vector3 tangent, binormal;
 					CalculateTangents(heightmap, x,y,tangent,binormal);
-					norm_y = tangent.z * binormal.x - binormal.z * tangent.x;
+					Vector3 normal = tangent.cross(binormal);
+					normal.Normalize();
+					norm_y = normal.y;
 				}
 
 				// flatness=dotproduct of surface normal with up vector

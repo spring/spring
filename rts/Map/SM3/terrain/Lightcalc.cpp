@@ -4,6 +4,7 @@
 #include "TerrainNode.h"
 #include "Textures.h"
 #include "Lightcalc.h"
+#include "Map/ReadMap.h"
 
 #include <SDL.h>
 
@@ -50,10 +51,21 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	tilesize.y = orghm->h-1;
 	name = "lightmap";
 
-	Heightmap *hm = orghm->GetLevel(-level);
-	int w=hm->w-1;
-	shadowLevelDif=0;
+	Heightmap *hm;
+	int w;
+	
+	for(;;) {
+		hm = orghm->GetLevel(-level);
+		w=hm->w-1;
 
+		int maxw;
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxw);
+
+		if (w > maxw) level ++;
+		else break;
+	} 
+
+	shadowLevelDif=0;
 	Heightmap *shadowhm = orghm->GetLevel(-(level+shadowLevelDif));
 	int shadowScale=1<<shadowLevelDif;
 	int shadowW=shadowhm->w-1;
@@ -73,12 +85,18 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	int lightIndex = 0;
 	for (std::vector<StaticLight>::const_iterator l=li->staticLights.begin();l!=li->staticLights.end();++l) 
 	{
-		int lightx = (int)(l->position.x / hm->squareSize);
-		int lighty = (int)(l->position.z / hm->squareSize);
-		
-		CalculateShadows(lightMap, shadowW, 
-			(int)(l->position.x / shadowhm->squareSize), 
-			(int)(l->position.z / shadowhm->squareSize), l->position.y,centerhm, w, shadowScale);
+		float lightx;
+		float lighty;
+
+		if (l->directional) {
+			lightx = l->position.x;
+			lighty = l->position.y;
+		} else {
+			lightx = (int)(l->position.x / shadowhm->squareSize);
+			lighty = (int)(l->position.z / shadowhm->squareSize);
+		}
+		CalculateShadows(lightMap, shadowW, lightx, lighty, 
+			l->position.y, centerhm, w, shadowScale, l->directional);
 
 		for (int y=0;y<w;y++)
 		{
@@ -87,8 +105,11 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 				if (!lightMap[(y*shadowW+x)/shadowScale])
 					continue;
 
-				Vector3 wp((x+0.5f)*hm->squareSize,centerhm[y*w+x],(y+0.5f)*hm->squareSize);
-				wp = l->position - wp;
+				Vector3 wp;
+				if (l->directional)
+					wp = l->position;
+				else
+					wp = l->position - Vector3((x+0.5f)*hm->squareSize,centerhm[y*w+x],(y+0.5f)*hm->squareSize);
 
 				uchar* normal = hm->GetNormal (x,y);
 				Vector3 normv((2 * (int)normal[0] - 256)/255.0f, (2 * (int)normal[1] - 256)/255.0f, (2 * (int)normal[2] - 256)/255.0f);
@@ -110,18 +131,19 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	uchar *shadingTexData=new uchar[w*w*3], *td = shadingTexData;
+	uchar *shadingTexData=new uchar[w*w*4], *td = shadingTexData;
 	for(int y=0;y<w;y++) {
 		for (int x=0;x<w;x++) {
-			shadingTexData[(y*w+x)*3+0] = (uchar)(min(1.0f, shading[y*w+x].x) * 255);
-			shadingTexData[(y*w+x)*3+1] = (uchar)(min(1.0f, shading[y*w+x].y) * 255);
-			shadingTexData[(y*w+x)*3+2] = (uchar)(min(1.0f, shading[y*w+x].z) * 255);
+			shadingTexData[(y*w+x)*4+0] = (uchar)(min(1.0f, shading[y*w+x].x) * 255);
+			shadingTexData[(y*w+x)*4+1] = (uchar)(min(1.0f, shading[y*w+x].y) * 255);
+			shadingTexData[(y*w+x)*4+2] = (uchar)(min(1.0f, shading[y*w+x].z) * 255);
+			shadingTexData[(y*w+x)*4+3] = CReadMap::EncodeHeight(centerhm[w*y+x]);
 		}
 	}
 
-	SaveImage ("lightmap.png", 3, IL_UNSIGNED_BYTE, w,w, shadingTexData);
+	SaveImage ("lightmap.png", 4, IL_UNSIGNED_BYTE, w,w, shadingTexData);
 
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w,w, GL_RGB, GL_UNSIGNED_BYTE, shadingTexData);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 4, w,w, GL_RGBA, GL_UNSIGNED_BYTE, shadingTexData);
 	delete[] shadingTexData;
 
 	id = shadingTex;
@@ -139,7 +161,7 @@ Lightmap::~Lightmap()
 		glDeleteTextures(1, &shadingTex);
 }
 
-void Lightmap::CalculateShadows (uchar *dst, int dstw, int lightX,int lightY, float lightH, float *centerhm, int hmw, int hmscale)
+void Lightmap::CalculateShadows (uchar *dst, int dstw, float lightX,float lightY, float lightH, float *centerhm, int hmw, int hmscale, bool directional)
 {
 	memset(dst, 255, dstw*dstw); // 255 is lit, 0 is unlit
 
@@ -150,14 +172,22 @@ void Lightmap::CalculateShadows (uchar *dst, int dstw, int lightX,int lightY, fl
 			if (!dst[y*dstw+x]) // shadowed pixels can't shadow other pixels
 				continue;
 
-			if (x==lightX && y==lightY)
-				continue;
-
-			float dx = lightX-x;
-			float dy = lightY-y;
+			float dx,dy,dh;
 			float h = centerhm[(y*hmw+x)*hmscale];
 
-			float dh = lightH-h;
+			if (directional) {
+				dx = lightX;
+				dy = lightY;
+				dh = lightH;
+			} else {
+				dx = lightX-x;
+				dy = lightY-y;
+				dh = lightH-h;
+
+				if (x==lightX && y==lightY)
+					continue;
+			}
+					
 			float len = sqrtf(dx*dx+dy*dy);
 			const float step = 5.0f;
 			float invLength2d = step/len;

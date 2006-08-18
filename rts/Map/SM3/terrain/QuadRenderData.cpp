@@ -160,28 +160,20 @@ namespace terrain {
 
 				if (vda & VRT_Normal)
 					*(v++) = normal;
-/*
+
 				if (vda & VRT_TangentSpaceMatrix)
 				{
-					CMatrix44f tgspace;
-
 					tangent.Normalize ();
 					binormal.Normalize ();
 
-					// Define tangent space
-					tgspace.setcx (tangent);
-					tgspace.setcy (binormal);
-					tgspace.setcz (normal);
-
+					// orthonormal matrix, so inverse=transpose
 					// Take the inverse of the tangent space -> world space transformation
-					// Because of the type of transformation and normalized axis, inverse=transpose
-
 					Vector3* tgs2ws = v;
-					tgs2ws[0] = *tgspace.getx ();
-					tgs2ws[1] = *tgspace.gety ();
-					tgs2ws[2] = *tgspace.getz ();
+					tgs2ws[0] = Vector3(tangent.x, binormal.x, normal.x);
+					tgs2ws[1] = Vector3(tangent.y, binormal.y, normal.y);
+					tgs2ws[2] = Vector3(tangent.z, binormal.z, normal.z);
 					v+=3;
-				}*/
+				}
 			}
 		rd->vertexBuffer.UnlockData ();
 		rd->SetQuad(q);
