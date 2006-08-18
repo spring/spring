@@ -53,8 +53,8 @@ namespace terrain {
 	class ShaderDef
 	{
 	public:
-		ShaderDef() { hasLighting=false; }
-		void Parse(TdfParser& tdf);
+		ShaderDef() { hasLighting=false; specularExponent = 16.0f; }
+		void Parse(TdfParser& tdf, bool needNormalMap);
 		void Optimize(ShaderDef* dst);
 		void Output();
 		void GetTextureUsage(TextureUsage* tu);
@@ -75,19 +75,20 @@ namespace terrain {
 			StageOp operation;
 		};
 
-/*		struct AdvStage {
-
-		};
-		std::vector<*/
+		std::vector<Stage> normalMapStages;
 		std::vector<Stage> stages;
 		bool hasLighting;
+		float specularExponent;
+
+		static void OptimizeStages(std::vector<Stage>& src, std::vector<Stage>& dst);
+		static void LoadStages(int numStages, const char *stagename, TdfParser& tdf, std::vector<Stage>& stages);
 	};
 
 	struct NodeSetupParams
 	{
 		const std::vector<Blendmap*>* blendmaps;
 		const std::vector<TiledTexture*>* textures;
-		const Vector3* wsLightVec, *wsEyeVec;
+		const Vector3* wsLightDir, *wsEyePos;
 		int pass;
 	};
 
@@ -103,9 +104,10 @@ namespace terrain {
 
 	struct RenderPass 
 	{ // a renderpass
-		RenderPass() { shaderSetup=0; operation=Pass_Replace; invertAlpha=false;}
+		RenderPass() { shaderSetup=0; depthWrite=false; operation=Pass_Replace; invertAlpha=false;}
 		IShaderSetup * shaderSetup; 
 		PassBlendop operation;
+		bool depthWrite;
 		bool invertAlpha; // in case of Pass_Interpolate
 	};
 
@@ -138,10 +140,14 @@ namespace terrain {
 		virtual ~ITexShaderHandler() {}
 
 		virtual bool SetupShader (IShaderSetup *shader, NodeSetupParams& params) = 0;// returns false if it doesn't have to be drawn
-		virtual void CleanupStates() = 0;
+
+		virtual void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures) = 0;
+		virtual void EndPass () = 0;
+
+		virtual void EndTexturing () {}
+		virtual void BeginTexturing () {}
 
 		// true for FragmentProgram, false for TexEnvCombine
-		virtual bool AdvancedShading () = 0;
 		virtual int MaxTextureUnits () = 0;
 		virtual int MaxTextureCoords () = 0;
 
@@ -163,11 +169,15 @@ namespace terrain {
 
 		void Load (TdfParser *parser, Heightmap *heightmap, TQuad *quadTree, const std::vector<QuadMap*>& qmaps, Config *cfg, ILoadCallback *cb, LightingInfo* li);
 
-		void CleanupTexturing ();
 		int NumPasses ();
+
+		void BeginTexturing ();
+		void EndTexturing ();
+
+		void BeginPass(int p);
 		void EndPass();
 
-		bool SetupNode (TQuad *q, int pass, bool unlit);
+		bool SetupNode (TQuad *q, int pass);
 
 		void DebugPrint (IFontRenderer *fr);
 		void DebugEvent (const std::string& event);
@@ -179,8 +189,7 @@ namespace terrain {
 		// Calculate blending factors for textures with blending defined by terrain properties
 		void GenerateBlendmap (Blendmap* bm, Heightmap *heightmap, int level);
 		void InstantiateShaders (Config *cfg, ILoadCallback *cb);
-		void LoadBumpmaps (Config *cfg);
-		BaseTexture* LoadImageSource(const std::string& texName, const std::string& basepath, Heightmap *heightmap, ILoadCallback *cb, Config *cfg);
+		BaseTexture* LoadImageSource(const std::string& texName, const std::string& basepath, Heightmap *heightmap, ILoadCallback *cb, Config *cfg, bool isBumpmap=false);
 
 		bool SetupShading (RenderPass *p, int passIndex);
 
@@ -213,7 +222,7 @@ namespace terrain {
 		RenderSetup *currentRenderSetup;
 
 		ITexShaderHandler* shaderHandler;
-		Vector3 wsLightVec, wsEyeVec;
+		Vector3 wsLightDir, wsEyePos;
 
 		std::vector <Blendmap *> blendMaps;
 		std::vector <TiledTexture *> textures;
@@ -226,6 +235,8 @@ namespace terrain {
 
 		Lightmap *lightmap;
 		ShaderDef shaderDef;
+
+		TiledTexture *flatBumpmap;
 	};
 	void SetTexGen (float scale);
 };

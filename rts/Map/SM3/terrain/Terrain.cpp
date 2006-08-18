@@ -42,6 +42,8 @@ namespace terrain {
 		cacheTextureSize = 128;
 		useShadowMaps = false;
 		anisotropicFiltering = 0;
+		forceFallbackTexturing = false;
+		maxLodLevel = 4;
 	}
 
 
@@ -161,8 +163,6 @@ namespace terrain {
 
 	void TQuad::Draw (IndexTable *indexTable, bool onlyPositions, int lodState)
 	{
-		glColor3ub (255,255,255);
-
 		uint vda = textureSetup->vertexDataReq;
 		int vertexSize = GetVertexSize();
 
@@ -251,6 +251,21 @@ namespace terrain {
 		}
 	}
 
+	TQuad *TQuad::FindSmallestContainingQuad2D(const Vector3& pos, float range, int maxdepth)
+	{
+		if (depth < maxdepth)
+		{
+			for (int a=0;a<4;a++) {
+				TQuad *r = childs[a]->FindSmallestContainingQuad2D(pos,range,maxdepth);
+				if (r) return r;
+			}
+		}
+		if (start.x <= pos.x - range && end.x >= pos.x + range &&
+			start.z <= pos.z - range && end.z >= pos.z + range)
+			return this;
+		return 0;
+	}
+
 //-----------------------------------------------------------------------
 // Terrain Main class
 //-----------------------------------------------------------------------
@@ -268,6 +283,8 @@ namespace terrain {
 		logUpdates=false;
 		nodeUpdateCount=0;
 		curRC = 0;
+		activeRC = 0;
+		quadTreeDepth = 0;
 	}
 	Terrain::~Terrain()
 	{
@@ -368,10 +385,10 @@ namespace terrain {
 	// Handle visibility with the frustum, and select LOD based on distance to camera and LOD setting
 	void Terrain::QuadVisLod (TQuad *q)
 	{
-		if (true){//q->InFrustum (&frustum)) {
+		if (q->InFrustum (&frustum)) {
 			// Node is visible, now determine if this LOD is suitable, or that a higher LOD should be used.
 			float lod = config.detailMod * q->CalcLod (curRC->cam->pos);
-			if (lod > 1.0f && !q->isLeaf()) {
+			if (q->depth < quadTreeDepth-config.maxLodLevel || (lod > 1.0f && !q->isLeaf())) {
 				q->drawState=TQuad::Parent;
 				for (int a=0;a<4;a++)
 					QuadVisLod (q->childs[a]);
@@ -391,6 +408,7 @@ namespace terrain {
 	{
 		return q1.quad->textureSetup->sortkey < q2.quad->textureSetup->sortkey;
 	}
+
 
 	// update quad node drawing list
 	void Terrain::Update ()
@@ -418,7 +436,8 @@ namespace terrain {
 
 			// Update the frustum based on the camera, to cull away TQuad nodes
 			Camera *camera = rc->cam;
-			frustum.CalcCameraPlanes (&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov);
+			frustum.CalcCameraPlanes (&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
+			assert (camera->pos.x == 0.0f || frustum.IsPointVisible (camera->pos + camera->front * 20)==Frustum::Inside);
 
 			// determine the new set of quads to draw
 			QuadVisLod (quadtree);
@@ -508,6 +527,7 @@ namespace terrain {
 	{
 		glEnable (GL_TEXTURE_2D);
 		glBindTexture (GL_TEXTURE_2D, tex);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_MODULATE);
         SetTexGen (1.0f / (heightmap->w * SquareSize));
 
 		DrawSimple ();
@@ -559,6 +579,7 @@ namespace terrain {
 			glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffuse);
 		}
 		glEnable(GL_CULL_FACE);
+		glColor3f(1.0f,1.0f,1.0f);
 
 		if (config.cacheTextures)
 		{
@@ -569,7 +590,7 @@ namespace terrain {
 			glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 
 			glEnable (GL_TEXTURE_2D);
-			glEnable (GL_LIGHTING);
+			glDisable (GL_LIGHTING);
 
 			for (int a=0;a<activeRC->quads.size();a++)
 			{
@@ -582,11 +603,11 @@ namespace terrain {
 				float ht = (q->end.x-q->start.x) / ( 2 * config.cacheTextureSize );
 
 				float v[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-				v[0] = 1.0f / (q->end.x-q->start.x + ht * 2);
+				v[0] = 1.0f / (q->end.x - q->start.x + ht * 2);
 				v[3] = -v[0] * (q->start.x - ht);
 				glTexGenfv (GL_S, GL_OBJECT_PLANE, v);
 				v[0] = 0.0f;
-				v[2] = 1.0f / (q->end.x-q->start.x + ht * 2);
+				v[2] = 1.0f / (q->end.z - q->start.z + ht * 2);
                 v[3] = -v[2] * (q->start.z - ht);
 				glTexGenfv (GL_T, GL_OBJECT_PLANE, v);
 
@@ -602,16 +623,15 @@ namespace terrain {
 		{  
 			int numPasses=texturing->NumPasses();
 
+			if (fill) texturing->BeginTexturing();
+
 			if (!fill) numPasses=1;
 			for (int pass=0;pass<numPasses;pass++)
 			{
 				bool skipNodes=false;
 
-				if (pass > 0)
-				{
-					// Disable depth writing after the first pass
-					glDepthMask (GL_FALSE);
-				}
+				if (fill)
+					texturing->BeginPass(pass);
 
 				for (int a=0;a<activeRC->quads.size();a++) 
 				{
@@ -619,7 +639,7 @@ namespace terrain {
 
 					// Setup node texturing
 					if (fill)
-						skipNodes = !texturing->SetupNode (q, pass, false);
+						skipNodes = !texturing->SetupNode (q, pass);
 
 					assert (q->renderData);
 
@@ -629,20 +649,21 @@ namespace terrain {
 					}
 				}
 
-				texturing->EndPass();
+				if (fill) texturing->EndPass();
 			}
 
 			glDisable (GL_BLEND);
 			glDepthMask (GL_TRUE);
 
-			if (fill) texturing->CleanupTexturing ();
+			if (fill) 
+				texturing->EndTexturing ();
 		}
 
 		if (debugQuad)
 			DrawNormals (debugQuad, lowdetailhm->GetLevel (debugQuad->depth));
 
 		glPolygonMode (GL_FRONT_AND_BACK,GL_FILL);
-		//frustum.Draw ();
+	//	frustum.Draw ();
 	}
 
 	void Terrain::CalcRenderStats (RenderStats& stats, RenderContext *ctx)
@@ -709,14 +730,17 @@ namespace terrain {
 		glPushMatrix ();
 		glLoadIdentity ();
 		glOrtho (q->start.x, q->end.x, q->start.z, q->end.z, -10000.0, 100000.0);
+		glColor3f(1.f,1.f,1.f);
 
 		if (!q->renderData)
 			renderDataManager->InitializeNode (q);
 
+		texturing->BeginTexturing();
 		// render to the framebuffer
 		for (int p=0;p<q->textureSetup->renderSetup [0]->passes.size();p++)
 		{
-			if (texturing->SetupNode (q, p, true))
+			texturing->BeginPass(p);
+			if (texturing->SetupNode (q, p))
 			{
 				glBegin(GL_QUADS);
 				glVertex3f (q->start.x, 0.0f, q->start.z);
@@ -725,8 +749,9 @@ namespace terrain {
 				glVertex3f (q->start.x, 0.0f, q->end.z);
 				glEnd();
 			}
+			texturing->EndPass();
 		}
-		texturing->CleanupTexturing();
+		texturing->EndTexturing();
 		glMatrixMode (GL_PROJECTION);
 		glPopMatrix ();
 	}
@@ -854,7 +879,7 @@ namespace terrain {
 			SNPRINTF(hmdims,32,"%dx%d", heightmap->w, heightmap->h);
 			throw content_error("Map size (" + string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
 		}
-		
+
 		float hmScale = atof (tdf.SGetValueDef ("1000", basepath + "HeightScale").c_str());
 		float hmOffset = atof (tdf.SGetValueDef ("0", basepath + "HeightOffset").c_str());
 
@@ -867,11 +892,14 @@ namespace terrain {
 		// create a set of low resolution heightmaps
 		int w=heightmap->w-1;
 		Heightmap *prev = heightmap;
+		quadTreeDepth = 0;
 		while (w>QUAD_W) {
 			prev = prev->CreateLowDetailHM();
+			quadTreeDepth++;
 			w/=2;
 		}
 		lowdetailhm = prev;
+		assert((1<<quadTreeDepth)*(lowdetailhm->w-1) == heightmap->w-1);
 
 		// set heightmap squareSize for all lod's
 		heightmap->squareSize = SquareSize;
@@ -962,14 +990,14 @@ namespace terrain {
 		if (bits==16) {
 			ushort *tmp=new ushort[w*w];
 			fh.Read (tmp, len);
-			for (int y=0;y<w*w;y++) hm->data[y]=tmp[y] / float((1<<16)-1);
+			for (int y=0;y<w*w;y++) hm->data[y]=float(tmp[y]) / float((1<<16)-1);
 #ifdef SWAP_SHORT
 			char *p = (char*)hm->data;
 			for (int x=0;x<len;x+=2, p+=2)
 				std::swap (p[0],p[1]);
 #endif
 		} else {
-			char *buf=new char[len], *p=buf;
+			uchar *buf=new uchar[len], *p=buf;
 			fh.Read(buf,len);
 			for (w*=w;w>=0;w--) 
 				hm->data[w]=*(p++)/255.0f;
@@ -1119,15 +1147,6 @@ namespace terrain {
 	void Terrain::SetActiveContext (RenderContext *rc)
 	{
 		activeRC = rc;
-	}
-
-	void Terrain::VidInit()
-	{
-	}
-
-	void Terrain::VidShutdown()
-	{
-		// free
 	}
 
 };

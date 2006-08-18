@@ -26,7 +26,7 @@ public:
 	/**
 	 * @brief Constructor
 	 */
-	FBO();
+	FBO(int requires, int w, int h);
 
 	/**
 	 * @brief Destructor
@@ -68,7 +68,9 @@ private:
 	 *
 	 * GLuint pointing to the current framebuffer
 	 */
-	GLuint g_frameBuffer;
+	GLuint frameBuffer;
+	GLuint depthRenderBuffer;
+	int requires;
 };
 
 #endif /* FBO_H */

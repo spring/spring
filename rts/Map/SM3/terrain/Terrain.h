@@ -23,10 +23,16 @@ namespace terrain {
 	class TerrainTexture;
 	class RenderDataManager;
 
+	struct TerrainVisibilityNode
+	{
+		TerrainVisibilityNode() { quad=0; }
+		TQuad *quad;
+	};
+
 	class Camera
 	{
 	public:
-		Camera () {yaw=0.0f; pitch=0.0f; fov=80.0f; }
+		Camera () {yaw=0.0f; pitch=0.0f; fov=80.0f;aspect=1.0f; }
 
 		void Update ();
 
@@ -34,7 +40,7 @@ namespace terrain {
 		Vector3 pos, front, up, right;
 		CMatrix44f mat;
 		
-		float fov;
+		float fov, aspect;
 	};
 
 	// for rendering debug text
@@ -65,6 +71,8 @@ namespace terrain {
 		float anisotropicFiltering; // level of anisotropic filtering - default is 0 (no anisotropy)
 
 		bool useStaticShadow;
+		bool forceFallbackTexturing; // only use GL_ARB_texture_env_combine even if shader GL extensions are avaiable
+		int maxLodLevel; // lower max lod usually requires less heavy texturing but more geometry
 	};
 
 	struct StaticLight
@@ -108,8 +116,7 @@ namespace terrain {
 		void DrawSimple (); // no texture/no lighting
 		void DrawOverlayTexture (uint tex); // draw with single texture/no lighting
 
-		void VidShutdown();
-		void VidInit(); // re-initialize textures after a vidshutdown()
+		TQuad *GetQuadTree() { return quadtree; }
 
 		// Allow it to use any part of the current rendering buffer target for caching textures
 		// should be called just before glClear (it doesn't need a cleared framebuffer)
@@ -160,6 +167,7 @@ namespace terrain {
 		//float hmScale;
 		//float hmOffset;
 		uint shadowMap;
+		uint quadTreeDepth;
 
 		RenderDataManager *renderDataManager;
 
@@ -182,6 +190,14 @@ namespace terrain {
 		TQuad *debugQuad;
 		int nodeUpdateCount; // number of node updates since last frame
 		bool logUpdates;
+
+		struct VisNode
+		{
+			TQuad *quad;
+			uint index;
+		};
+
+		std::vector<VisNode> visNodes;
 	};
 
 };

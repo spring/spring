@@ -39,8 +39,8 @@ public:
 	unsigned char *GetInfoMap (const std::string& name, MapBitmapInfo* bm);
 	void FreeInfoMap(const std::string& name, unsigned char *data);
 
-	// Determine visibility for a rectangular grid
-	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0);
+	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize) {}
+
 protected:
 	CSm3GroundDrawer *groundDrawer;
 	terrain::Terrain *renderer;
@@ -56,6 +56,11 @@ protected:
 
 	std::map<std::string, InfoMap> infoMaps;
 	friend class CSm3GroundDrawer;
+
+	std::vector<std::string*> featureTypes;
+	MapFeatureInfo *featureInfo;
+	unsigned int numFeatures;
+	void LoadFeatureData();
 };
 
 

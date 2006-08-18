@@ -18,8 +18,14 @@ namespace terrain
 		uint GetShadingTexture() { return shadingTex; }
 
 	protected:
-		void CalculateShadows (uchar *dst, int dstw, int lightX,int lightY, float lightH, float *centerhm, int hmw, int hmscale);
+		void CalculateShadows (uchar *dst, int dstw, float lightX,float lightY, float lightH, float *centerhm, int hmw, int hmscale, bool directional);
 
 		uint shadowTex, shadingTex;
+	};
+
+	class Shadowmap : public BaseTexture
+	{
+	public:
+		Shadowmap (Heightmap *hm, int level, LightingInfo *li);
 	};
 };

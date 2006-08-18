@@ -14,8 +14,10 @@ public:
 
 	void Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP);
 	void DrawShadowPass(void);
-	void UpdateCamRestraints();
 	void Update();
+
+	void IncreaseDetail();
+	void DecreaseDetail();
 
 protected:
 	void DrawObjects(bool drawWaterReflection,bool drawUnitReflection);

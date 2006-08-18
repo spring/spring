@@ -106,6 +106,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 	IShaderSetup *ts = setup = curSetup = new NodeTexEnvSetup;
 	renderSetup->passes.push_back(RenderPass());
 	renderSetup->passes.back().shaderSetup = setup;
+	renderSetup->passes.back().depthWrite = true;
     
 	// Handle the first stages with texture units
 	while (c < maxTextureUnits && c < shaderDef->stages.size()) 
@@ -136,9 +137,8 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 				break;
 		}
 
-		if (!c) {
+		if (!c) 
 			ts.operation = TexEnvStage::Replace;
-		}
 
 		c++;
 	}
@@ -211,10 +211,8 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 	}	
 }
 
-void TexEnvSetupHandler::SetupForPass (const vector<Blendmap*>& blendMaps, const vector<TiledTexture*>& textures)
-{
-	lastShader = 0;
-}
+void TexEnvSetupHandler::BeginPass (const vector<Blendmap*>& blendMaps, const vector<TiledTexture*>& textures)
+{}
 
 bool TexEnvSetupHandler::SetupShader (IShaderSetup *shadercfg, NodeSetupParams& parms)
 {
@@ -314,7 +312,13 @@ bool TexEnvSetupHandler::SetupShader (IShaderSetup *shadercfg, NodeSetupParams& 
 	return true;
 }
 
-void TexEnvSetupHandler::CleanupStates ()
+void TexEnvSetupHandler::BeginTexturing()
+{
+	lastShader = 0;
+	maxtu = 0;
+}
+
+void TexEnvSetupHandler::EndTexturing ()
 {
 	for (int a=0;a<maxtu;a++) {
 		glActiveTextureARB(GL_TEXTURE0_ARB+a);

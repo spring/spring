@@ -11,6 +11,7 @@
 #include "TerrainVertexBuffer.h"
 
 class Frustum;
+struct Sm3VisibilityNode;
 
 namespace terrain
 {
@@ -59,7 +60,12 @@ namespace terrain
 		void CollectNodes(std::vector<TQuad*>& quads);
 		void FreeCachedTexture();
 
+		TQuad* FindSmallestContainingQuad2D(const Vector3& pos, float range, int maxlevel);
+
 		int GetVertexSize ();
+
+		// Possible objects linked to this quad, for visibility determination
+		std::vector<Sm3VisibilityNode*> nodeLinks;
 
 		TQuad *parent;
 		TQuad *childs[4];
@@ -95,9 +101,7 @@ namespace terrain
 		bool needsTexturing; // contexts like shadow buffers don't need texturing
 		bool needsNormalMap;
 
-	protected:
 		std::vector<QuadRenderInfo> quads;
-		friend class Terrain;
 	};
 
 	// renderdata for a visible quad

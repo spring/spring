@@ -4,10 +4,15 @@
 #include "Game/Camera.h"
 #include "Sm3GroundDrawer.h"
 #include "Sm3Map.h"
+#include "terrain/TerrainNode.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Rendering/GroundDecalHandler.h"
 #include <GL/glew.h>
+#include "Platform/ConfigHandler.h"
+
+#include <SDL_keysym.h>
+extern unsigned char *keys;
 
 
 CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
@@ -15,6 +20,8 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 	map = m;
 	tr = map->renderer;
 	rc = tr->AddRenderContext (&cam, true);
+
+	tr->config.detailMod = configHandler.GetInt("SM3TerrainDetail", 200) / 100.0f;
 
 	if (shadowHandler->drawShadows) {
 		shadowrc = tr->AddRenderContext (&shadowCam,false);
@@ -25,34 +32,60 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 		shadowrc = 0;
 		groundShadowVP = 0;
 	}
-	reflectrc = 0;
+	reflectrc = tr->AddRenderContext(&reflectCam, true);
 }
 
 CSm3GroundDrawer::~CSm3GroundDrawer()
 {
 	if (groundShadowVP)
 		glDeleteProgramsARB( 1, &groundShadowVP );
+
+	configHandler.SetInt("SM3TerrainDetail", tr->config.detailMod * 100);
 }
 
 void CSm3GroundDrawer::Update()
 {
-	tr->Update();
-	tr->CacheTextures();
-}
-
-void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
-{
-	if(drawWaterReflection || drawUnitReflection)
-		return;
-
 	// Copy camera settings
-	cam.fov = PI * camera->fov / 180.0f;
+	cam.fov = camera->fov;
 	cam.front = camera->forward;
 	cam.right = camera->right;
 	cam.up = camera->up;
 	cam.pos = camera->pos;
-	
-	tr->SetShaderParams(gs->sunVector, Vector3());
+	cam.aspect = gu->screenx / (float)gu->screeny;
+
+	tr->Update();
+	tr->CacheTextures();
+
+	// Update visibility nodes
+	for (unsigned int i=0;i<rc->quads.size();i++) {
+		terrain::TQuad *q = rc->quads[i].quad;
+
+	//	if (q
+
+	//	for (unsigned int j=0;j<q->nodeLinks.size();j++)
+	//		q->nodeLinks[j]->callback->Draw(
+	}
+}
+
+void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
+{
+	if(drawUnitReflection || drawWaterReflection)
+		return;
+
+	terrain::RenderContext *currc;
+	if (drawWaterReflection)
+	{
+		reflectCam.fov = PI * camera->fov / 180.0f;
+		reflectCam.front = camera->forward;
+		reflectCam.right = camera->right;
+		reflectCam.up = camera->up;
+		reflectCam.pos = camera->pos;
+		reflectCam.aspect = 1.0f;
+		currc = reflectrc;
+	} else 
+		currc = rc;
+
+	tr->SetShaderParams(gs->sunVector, currc->cam->pos);
 /*
 	if (shadowHandler->drawShadows) {
 		terrain::ShadowMapParams params;
@@ -67,11 +100,11 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 		tr->SetShadowParams (&params);
 	}*/
 
-	tr->SetActiveContext (rc);
+	tr->SetActiveContext (currc);
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
-/*
+
 	glColor4f(1.0f,1.0f,1.0f,1.0f);
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT0, GL_POSITION,gs->sunVector4);
@@ -80,11 +113,14 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, d);
 	for (int a=0;a<3;a++) d[a]=map->ambientColor[a];
 	glLightfv(GL_LIGHT0, GL_AMBIENT, d);
+	for (int a=0;a<3;a++) d[a]=map->specularColor[a];
+	glLightfv (GL_LIGHT0, GL_SPECULAR, d);
 	for (int a=0;a<4;a++) d[a]=0.0f;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, d);
+	const float zero[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	glLightModelfv (GL_LIGHT_MODEL_AMBIENT, zero);
 	glDisable(GL_LIGHT1);
-	glEnable(GL_LIGHT0);*/
-//////////////////
+	glEnable(GL_LIGHT0);
 	glEnable(GL_RESCALE_NORMAL);
 
 //	glLightfv (GL_LIGHT0, GL_SPOT_DIRECTION,dir.getf());
@@ -93,10 +129,6 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	const float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glLightfv (GL_LIGHT0, GL_DIFFUSE, diffuse);
 	glLightfv (GL_LIGHT0, GL_AMBIENT, ambient);
-
-	const float zero[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	glLightfv (GL_LIGHT0, GL_SPECULAR, zero);
-	glLightModelfv (GL_LIGHT_MODEL_AMBIENT, zero);
 
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
 
@@ -137,6 +169,7 @@ void CSm3GroundDrawer::DrawShadowPass()
 	shadowCam.right = camera->right;
 	shadowCam.up = camera->up;
 	shadowCam.pos = camera->pos;
+	shadowCam.aspect = 1.0f;
 	
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -201,8 +234,21 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 	glDisable(GL_ALPHA_TEST);
 }
 
+const int maxQuadDepth = 4;
 
-void CSm3GroundDrawer::UpdateCamRestraints()
+void CSm3GroundDrawer::IncreaseDetail()
 {
+	tr->config.detailMod *= 1.1f;
+	if (tr->config.detailMod > 12.0f)
+		tr->config.detailMod = 12.0f;
+	info->AddLine("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
+void CSm3GroundDrawer::DecreaseDetail()
+{
+	tr->config.detailMod /= 1.1f;
+	if (tr->config.detailMod < 0.25f)
+		tr->config.detailMod = 0.25f;
+
+	info->AddLine("Terrain detail changed to: %2.2f", tr->config.detailMod);
+}

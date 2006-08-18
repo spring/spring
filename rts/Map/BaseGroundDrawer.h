@@ -16,7 +16,6 @@ public:
 
 	virtual void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0)=0;
 	virtual void DrawShadowPass(void);
-	virtual void UpdateCamRestraints() = 0;
 	virtual void Update()=0;
 
 	enum DrawMode

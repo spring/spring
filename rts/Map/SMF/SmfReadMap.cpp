@@ -50,21 +50,13 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	ifs=new CFileHandler(string("maps/")+mapname);
-	if(!ifs->FileExists()){
-		char t[500];
-		sprintf(t,"Error couldnt find map file %s",mapname.c_str());
-		handleerror(0,t,"Error when reading map",0);
-		exit(0);
-	}
+	if(!ifs->FileExists())
+		throw content_error("Couldn't open map file " + mapname);
 	POP_CODE_MODE;
 	READPTR_MAPHEADER(header,ifs);
 
-	if(strcmp(header.magic,"spring map file")!=0 || header.version!=1 || header.tilesize!=32 || header.texelPerSquare!=8 || header.squareSize!=8){
-		char t[500];
-		sprintf(t,"Error couldnt open map file %s",mapname.c_str());
-		handleerror(0,t,"Error when reading map",0);
-		exit(0);
-	}
+	if(strcmp(header.magic,"spring map file")!=0 || header.version!=1 || header.tilesize!=32 || header.texelPerSquare!=8 || header.squareSize!=8)
+		throw content_error("Incorrect map file " + mapname);
 
 	width=header.mapx;
 	height=header.mapy;
@@ -205,7 +197,7 @@ void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 					tempMem[(y*xsize+x)*4+1] = waterHeightColors[1023*4+1];
 					tempMem[(y*xsize+x)*4+2] = waterHeightColors[1023*4+2];
 				}
-				tempMem[(y*xsize+x)*4+3] = (unsigned char)std::max(0,(int)(255+10.0f*height));
+				tempMem[(y*xsize+x)*4+3] = EncodeHeight(height);
 			} else {
 				float3 light = GetLightValue(x+x1,y+y1)*210.0f;
 				tempMem[(y*xsize+x)*4] = (unsigned char)light.x;

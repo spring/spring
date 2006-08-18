@@ -69,7 +69,7 @@ CShadowHandler::CShadowHandler(void): fb(0)
 
 bool CShadowHandler::InitDepthTarget()
 {
-	fb = instantiate_fb(shadowMapSize);
+	fb = instantiate_fb(shadowMapSize,shadowMapSize, FBO_NEED_DEPTH_TEXTURE);
 	if (!(fb && fb->valid()))
 		return false;
 	glGenTextures(1,&shadowTexture);
