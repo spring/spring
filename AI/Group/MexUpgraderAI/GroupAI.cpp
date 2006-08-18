@@ -7,7 +7,10 @@
 #include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
-#include <vector>
+
+#define CMD_CHANGE_MODE 	160
+#define CMD_AREA_UPGRADE 	165
+#define CMD_DUMMY			170
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -109,7 +112,7 @@ void CGroupAI::RemoveUnit(int unit)
 	delete myUnits[unit];
 	myUnits.erase(unit);
 	unitsChanged = true;
-	if(unit == mohoBuilderId && mode == manual && !commandQue.empty())
+	if(mode == manual && unit == mohoBuilderId && !commandQue.empty() && !myUnits.empty())
 		ManualFindMex();
 }
 
@@ -120,7 +123,7 @@ void CGroupAI::GiveCommand(Command* c)
 		case CMD_STOP:
 			Reset();
 			break;
-		case CMD_ONOFF:
+		case CMD_CHANGE_MODE:
 			if(c->params.empty())
 				break;
 			Reset();
@@ -137,12 +140,14 @@ void CGroupAI::GiveCommand(Command* c)
 				mode = manual;
 			}
 			break;
-		case CMD_RECLAIM:
+		case CMD_AREA_UPGRADE:
+			break;
+		case CMD_DUMMY:
 			break;
 		default:
 			aicb->SendTextMsg("Unknown cmd to mexUpgrader AI",0);
 	}
-	if(c->id==CMD_RECLAIM && c->params.size()==4)
+	if(c->id==CMD_AREA_UPGRADE && c->params.size()==4)
 	{
 		Command c2;
 		c2.id = CMD_RECLAIM;
@@ -161,7 +166,7 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	commands.clear();
 	CommandDescription cd;
 
-	cd.id=CMD_ONOFF;
+	cd.id=CMD_CHANGE_MODE;
 	cd.type=CMDTYPE_ICON_MODE;
 	cd.hotkey="x";
 	if(mode==manual)
@@ -178,7 +183,7 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	commands.push_back(cd);
 
 	cd.params.clear();
-	cd.id=CMD_RECLAIM;
+	cd.id=CMD_AREA_UPGRADE;
 	cd.type=CMDTYPE_ICON_AREA;
 	cd.name="Area upgrade";
 	cd.tooltip="Area upgrade: drag out an area to upgrade all mexes there";
@@ -198,7 +203,13 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 int CGroupAI::GetDefaultCmd(int unit)
 {
 	if(mode==manual)
-		return CMD_RECLAIM;
+	{
+		return CMD_AREA_UPGRADE;
+	}
+	else
+	{
+		return CMD_DUMMY;
+	}
 }
 
 void CGroupAI::CommandFinished(int unit,int type)
@@ -343,26 +354,28 @@ int CGroupAI::FindNearestMex(int unit, int* possibleMexes, int size)
 	{
 		// check if it's a unit of our own (and not one of our allies).
 		int mex = possibleMexes[i];
-		if(myTeam == aicb->GetUnitTeam(mex))
+		if(myTeam != aicb->GetUnitTeam(mex))
+			continue;
+
+		//check if it's a mex we can upgrade
+		const UnitDef* ud = aicb->GetUnitDef(mex);
+		if(ud == 0) // for some reason aicb->GetUnitDef(mex) returns 0 from time to time
+			continue;
+		if(ud->extractsMetal > 0 && ud->extractsMetal < info->maxExtractsMetal)
 		{
-			//check if it's a mex we can upgrade
-			const UnitDef* ud = aicb->GetUnitDef(mex);
-			if(ud->extractsMetal > 0 && ud->extractsMetal < info->maxExtractsMetal)
+			// check if it's already being reclaimed by another unit
+			set<int>::const_iterator mi=lockedMexxes.find(mex);
+			if(mi==lockedMexxes.end())
 			{
-				// check if it's already being reclaimed by another unit
-				set<int>::const_iterator mi=lockedMexxes.find(mex);
-				if(mi==lockedMexxes.end())
+				float sqDist = (aicb->GetUnitPos(unit) - aicb->GetUnitPos(mex)).SqLength();
+				// find the nearest mex we can upgrade
+				if(sqDist < minSqDist || minSqDist == 0)
 				{
-					float sqDist = (aicb->GetUnitPos(unit) - aicb->GetUnitPos(mex)).SqLength();
-					// find the nearest mex we can upgrade
-					if(sqDist < minSqDist || minSqDist == 0)
-					{
-						minSqDist = sqDist;
-						nearestMex= mex;
-					}
+					minSqDist = sqDist;
+					nearestMex= mex;
 				}
-			} // if (upgradable)
-		} // if (myTeam)
+			}
+		} // if (upgradable)
 	} // for (size)
 	return nearestMex;
 }
@@ -387,8 +400,10 @@ void CGroupAI::Update()
 	// draw the queued-up commands if the group is selected
 	if(mode==manual && callback->IsSelected())
 	{
+		int g = 0 ;
 		float3 pos1, pos2, pos3, pos4;
-		for(deque<Command>::const_iterator ci=commandQue.begin();ci!=commandQue.end();++ci)
+		deque<Command>::const_iterator ci, prev;
+		for(ci=commandQue.begin();ci!=commandQue.end();++ci)
 		{
 			if(ci==commandQue.begin())
 			{
@@ -396,22 +411,22 @@ void CGroupAI::Update()
 			}
 			else
 			{
-				deque<Command>::const_iterator prev = ci;
+				prev = ci;
 				--prev;
 				pos1 = float3(prev->params[0],prev->params[1],prev->params[2]);
 			}
 			pos2 = float3(ci->params[0],ci->params[1],ci->params[2]);
-			int g = aicb->CreateLineFigure(pos1,pos2,1.0f,0,1,0);
+			g = aicb->CreateLineFigure(pos1,pos2,2.0f,0,1,g);
 			float radius=ci->params[3];
 			for(int a=0;a<=20;++a)
 			{
 				pos3=float3(pos2.x+sin(a*PI*2/20)*radius,0,pos2.z+cos(a*PI*2/20)*radius);
 				pos3.y=aicb->GetElevation(pos3.x,pos3.z)+5;
 				if(a>0)
-					aicb->CreateLineFigure(pos3,pos4,1.0f,0,1,g);
+					g = aicb->CreateLineFigure(pos3,pos4,2.0f,0,1,g);
 				pos4 = pos3;
 			}
-			aicb->SetFigureColor(g,1.0f,1.0f,1.0f,0.5f);
+			aicb->SetFigureColor(g,1.0f,1.0f,1.0f,1.0f);
 		}
 	}
 }

@@ -40,7 +40,6 @@ public:
 	void AutoFindMex(int unitid);			// finds the next upgradable mex for unit "unitid"
 	void ManualFindMex();					// finds the next upgradable mex for the moho builder
 	void Reset();							// clears all orders and stops all units
-	void GuardMohoBuilder(int unitid);		// orders unitid to guard the mohobuilder
 	void ReclaimMex(int unitid, int mex);	// orders unitid to reclaim mex
 	int FindNearestMex(int unitid, int* possibleMexes, int size); // finds the nearest upgradable mex for unit "unitid" from possibleMexes with size "size"
 
