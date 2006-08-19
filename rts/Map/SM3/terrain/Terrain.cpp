@@ -999,7 +999,7 @@ namespace terrain {
 		} else {
 			uchar *buf=new uchar[len], *p=buf;
 			fh.Read(buf,len);
-			for (w*=w;w>=0;w--) 
+			for (w=w*w-1;w>=0;w--) 
 				hm->data[w]=*(p++)/255.0f;
 			delete[] buf;
 		}

@@ -315,6 +315,8 @@ void CglFont::glPrintColor(const char* fmt, ...)
 
 float CglFont::CalcCharWidth (char c)
 {
+	if(c < charstart || c >= chars + charstart)
+		return 0.03 + charWidths[charstart]/32.0f;
 	return 0.03 + charWidths[c-charstart]/32.0f;
 }
 

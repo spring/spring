@@ -142,7 +142,7 @@ void CGroundDecalHandler::Draw(void)
 			glBindTexture(GL_TEXTURE_2D,(*bdi)->texture);
 			for(set<BuildingGroundDecal*>::iterator bi=(*bdi)->buildingDecals.begin();bi!=(*bdi)->buildingDecals.end();){
 				BuildingGroundDecal* decal=*bi;
-				if(decal->owner){
+				if(decal->owner && decal->owner->buildProgress >= 0){
 					decal->alpha=decal->owner->buildProgress;
 				} else if(!decal->gbOwner){
 					decal->alpha-=decal->AlphaFalloff*gu->lastFrameTime*gs->speedFactor;

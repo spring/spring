@@ -553,17 +553,21 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 	}
 
 	// If there are any options, they will start before the demo file name.
-	// Options also indicate that the user didn't click a demofile
-	int lastOption = -1;
-	for (int i = 1; i < argc; i++)
-		if (argv[i][0] == '-') lastOption = i;
+
+	string cmdLineStr = win_lpCmdLine;
+	string::size_type offset = 0;
+	//Simply assumes that any argument coming after a argument starting with “/q” is a variable to “/q”.
+	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/' && argv[i-1][1] == 'q')); i++){
+		offset += strlen(argv[i]);
+		offset = cmdLineStr.find_first_not_of(' ', offset);
+		if(offset == string::npos)
+			break;
+	}
 
 	string command;
-	if (lastOption >= 0 && lastOption < argc-1)
-		// TODO: append the non-option arguments together to get the demo file (to support demos with spaces)
-		command = argv[lastOption+1];
-	else
-		command = win_lpCmdLine;
+	if(offset != string::npos)
+		command = cmdLineStr.substr(offset);
+
 
 	if (!command.empty()) {
 		int idx = command.rfind("sdf");

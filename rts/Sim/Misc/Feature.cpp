@@ -75,7 +75,7 @@ CFeature::~CFeature(void)
 	}
 }
 
-void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,int allyteam,std::string fromUnit)
+void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,int facing, int allyteam,std::string fromUnit)
 {
 	this->def=def;
 	createdFromUnit=fromUnit;
@@ -89,6 +89,7 @@ void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,i
 	xsize=def->xsize;
 	ysize=def->ysize;
 	mass=def->mass;
+	buildFacing=facing;
 
 	if(def->drawType==DRAWTYPE_3DO){
 		if(def->model==0){
@@ -241,7 +242,7 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 	residualImpulse=impulse;
 	health-=damages[0];
 	if(health<=0 && def->destructable){
-		featureHandler->CreateWreckage(pos,def->deathFeature,heading,1,-1,false,"");
+		featureHandler->CreateWreckage(pos,def->deathFeature,heading,buildFacing, 1,-1,false,"");
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges=false;
 

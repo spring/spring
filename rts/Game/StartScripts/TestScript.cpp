@@ -42,7 +42,7 @@ void CTestScript::Update()
 			pos.y=ground->GetHeight(pos.x,pos.z);
 			int num=featureHandler->wreckParser.GetSectionList("").size();
 			string feature=featureHandler->wreckParser.GetSectionList("")[(int)(gs->randFloat()*num)];
-			featureHandler->CreateWreckage(pos,feature,0,1,-1,false,"");
+			featureHandler->CreateWreckage(pos,feature,0,0,1,-1,false,"");
 		}
 		for(int a=0;a<30;++a){
 			unitLoader.LoadUnit("ARMFLASH",float3(2000+a*80,10,2900),0,false);

@@ -60,12 +60,14 @@ CGameServer::CGameServer()
 	exeChecksum = game ? game->CreateExeChecksum() : 0;
 
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
-	boost::thread thread(boost::bind(GameServerThreadProc,this));
+	thread = new boost::thread(boost::bind(GameServerThreadProc,this));
 #endif
 }
 
 CGameServer::~CGameServer()
 {
+	quitServer=true;
+	thread->join();
 	delete serverNet;
 	serverNet=0;
 }
@@ -565,7 +567,6 @@ void CGameServer::UpdateLoop()
 		}
 		SDL_Delay(10);
 	}
-	delete this;
 }
 
 void CGameServer::SendSystemMsg(const char* fmt,...)

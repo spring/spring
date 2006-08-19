@@ -348,7 +348,7 @@ float3 CGround::GetSmoothNormal(float x, float y)
 	if(sy>=gs->mapy-1)
 		sy=gs->mapy-2;
 	if(sx>=gs->mapx-1)
-		sx=gs->mapy-2;
+		sx=gs->mapx-2;
 
 	float dx=(x-sx*SQUARE_SIZE)/SQUARE_SIZE;
 	float dy=(y-sy*SQUARE_SIZE)/SQUARE_SIZE;
