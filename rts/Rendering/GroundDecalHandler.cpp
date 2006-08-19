@@ -586,7 +586,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	decal->AlphaFalloff=building->unitDef->buildingDecalDecaySpeed;
 	decal->alpha=0;
 	decal->pos=building->pos;
-	decal->radius=sqrtf(sizex*sizex+sizey*sizey)*8+20;
+	decal->radius=sqrt((float)(sizex*sizex+sizey*sizey))*8+20;
 
 	building->buildingDecal=decal;
 

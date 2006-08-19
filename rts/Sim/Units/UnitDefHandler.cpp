@@ -387,7 +387,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		float3 mainDir=tdfparser.GetFloat3(float3(1,0,0),string("UNITINFO\\WeaponMainDir")+c);
 		mainDir.Normalize();
 
-		float angleDif=cos(atof(tdfparser.SGetValueDef("360", string("UNITINFO\\MaxAngleDif")+c).c_str())*PI/360);
+		float angleDif=cos((float)atof(tdfparser.SGetValueDef("360", string("UNITINFO\\MaxAngleDif")+c).c_str())*PI/360);
 
 		float fuelUse=atof(tdfparser.SGetValueDef("0", string("UNITINFO\\WeaponFuelUsage")+c).c_str());
 

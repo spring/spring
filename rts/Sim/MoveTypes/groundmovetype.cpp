@@ -466,7 +466,6 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	}
 
 	owner->frontdir = GetVectorFromHeading(heading);
-	owner->frontdir.Normalize();
 	if(owner->upright){
 		owner->updir=UpVector;
 		owner->rightdir=owner->frontdir.cross(owner->updir);
@@ -529,7 +528,7 @@ void CGroundMoveType::UpdateSkid(void)
 {
 	float3& speed=owner->speed;
 	float3& pos=owner->pos;
-	float3& midPos=owner->midPos;
+	SyncedFloat3& midPos=owner->midPos;
 
 	if(flying){
 		speed.y+=gs->gravity;
@@ -563,14 +562,14 @@ void CGroundMoveType::UpdateSkid(void)
 			skidRotSpeed=0;
 			owner->physicalState=oldPhysState;
 			owner->moveType->useHeading=true;
-			float rp=floor(skidRotPos2+skidRotSpeed2+0.5);
+			float rp=floor(skidRotPos2+skidRotSpeed2+0.5f);
 			skidRotSpeed2=(rp-skidRotPos2)*0.5;
 			ChangeHeading(owner->heading);
 		} else {
 			speed*=(speedf-speedReduction)/speedf;
 
 			float remTime=speedf/speedReduction-1;
-			float rp=floor(skidRotPos2+skidRotSpeed2*remTime+0.5);
+			float rp=floor(skidRotPos2+skidRotSpeed2*remTime+0.5f);
 			skidRotSpeed2=(rp-skidRotPos2)/(remTime+1);
 
 			if(floor(skidRotPos2)!=floor(skidRotPos2+skidRotSpeed2)){
@@ -604,7 +603,7 @@ void CGroundMoveType::UpdateSkid(void)
 void CGroundMoveType::CheckCollisionSkid(void)
 {
 	float3& pos=owner->pos;
-	float3& midPos=owner->midPos;
+	SyncedFloat3& midPos=owner->midPos;
 
 	vector<CUnit*> nearUnits=qf->GetUnitsExact(midPos,owner->radius);
 	for(vector<CUnit*>::iterator ui=nearUnits.begin();ui!=nearUnits.end();++ui){
@@ -669,7 +668,6 @@ void CGroundMoveType::CalcSkidRot(void)
 	owner->heading+=(short int)skidRotSpeed;
 
 	owner->frontdir = GetVectorFromHeading(owner->heading);
-	owner->frontdir.Normalize();
 	if(owner->upright){
 		owner->updir=UpVector;
 		owner->rightdir=owner->frontdir.cross(owner->updir);
@@ -1221,11 +1219,11 @@ void CGroundMoveType::CreateLineTable(void)
 			float3 start(0.5,0,0.5);
 			float3 to((xt-5)+0.5,0,(yt-5)+0.5);
 
-			double dx=to.x-start.x;
-			double dz=to.z-start.z;
-			double xp=start.x;
-			double zp=start.z;
-			double xn,zn;
+			float dx=to.x-start.x;
+			float dz=to.z-start.z;
+			float xp=start.x;
+			float zp=start.z;
+			float xn,zn;
 
 			if(floor(start.x)==floor(to.x)){
 				if(dz>0)

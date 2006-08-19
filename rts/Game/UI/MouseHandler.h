@@ -38,7 +38,7 @@ public:
 	bool inStateTransit;
 	bool invertMouse;
 	float doubleClickTime;
-	double transitSpeed;
+	float transitSpeed;
 
 	struct ButtonPress{
 		bool pressed;
@@ -46,8 +46,8 @@ public:
 		int y;
 		float3 camPos;
 		float3 dir;
-		double time;
-		double lastRelease;
+		float time;
+		float lastRelease;
 		int movement;
 	};
 

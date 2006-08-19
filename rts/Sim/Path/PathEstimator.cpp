@@ -3,7 +3,6 @@
 #include "Game/UI/InfoConsole.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
-#include <math.h>
 #include <fstream>
 #ifndef _WIN32
 #include <stdlib.h>

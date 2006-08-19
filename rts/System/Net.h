@@ -64,6 +64,13 @@ enum NETMSG {
 	NETMSG_PLAYERINFO       = 38,
 	NETMSG_PLAYERLEFT       = 39,
 	NETMSG_MODNAME          = 40,
+#ifdef SYNCDEBUG
+	NETMSG_SD_CHKREQUEST    = 41,
+	NETMSG_SD_CHKRESPONSE   = 42,
+	NETMSG_SD_BLKREQUEST    = 43,
+	NETMSG_SD_BLKRESPONSE   = 44,
+	NETMSG_SD_RESET         = 45,
+#endif
 };
 
 
@@ -305,7 +312,7 @@ public:
 	bool imServer;
 	bool onlyLocal;
 
-	double curTime;
+	float curTime;
 
 	struct Packet {
 		int length;
@@ -321,8 +328,8 @@ public:
 	struct Connection {
 		sockaddr_in addr;
 		bool active;
-		double lastReceiveTime;
-		double lastSendTime;
+		float lastReceiveTime;
+		float lastSendTime;
 		int lastSendFrame;
 		Connection* localConnection;
 
@@ -341,7 +348,7 @@ public:
 		std::map<int,Packet*> waitingPackets;
 		int lastInOrder;
 		int lastNak;
-		double lastNakTime;
+		float lastNakTime;
 	};
 	Connection connections[MAX_PLAYERS];
 
@@ -366,8 +373,8 @@ public:
 	std::ofstream* recordDemo;
 	CFileHandler* playbackDemo;
 
-	double demoTimeOffset;
-	double nextDemoRead;
+	float demoTimeOffset;
+	float nextDemoRead;
 
 	unsigned char tempbuf[NETWORK_BUFFER_SIZE];
 

@@ -7,8 +7,10 @@
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
+#include "streflop.h"
+using namespace streflop;
+
 #include "creg/creg.h"
-#include <math.h>
 
 /**
  * @brief float3 class
@@ -246,7 +248,7 @@ public:
 	 * checking each x/y/z component individually.
 	 */
 	inline bool operator== (const float3 &f) const {
-		return !(fabs(x-f.x) > 1.0E-34 || fabs(y-f.y) > 1.0E-34 || fabs(z-f.z) > 1.0E-34) ;
+		return fabs(x-f.x) <= 1.0E-4*x && fabs(y-f.y) <= 1.0E-4*y && fabs(z-f.z) <= 1.0E-4*z;
 	}
 
 	/**
@@ -258,7 +260,7 @@ public:
 	 * checking each x/y/z component individually.
 	 */
 	inline bool operator!= (const float3 &f) const {
-		return ((x!=f.x) || (y!=f.y) || (z!=f.z));
+		return !(*this == f);
 	}
 
 	/**

@@ -3,7 +3,6 @@
 #include "Game/Game.h"
 //#include <windows.h>
 #include "Rendering/GL/myGL.h"
-#include <math.h>
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
@@ -67,9 +66,9 @@ CDynWater::CDynWater(void)
 
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
-			temp[(y*64+x)*4+0]=(sin(x*PI*2.0/64.0)) + (x<32 ? -1:1)*0.3;
+			temp[(y*64+x)*4+0]=(sin(x*PI*2.0f/64.0f)) + (x<32 ? -1:1)*0.3;
 			temp[(y*64+x)*4+1]=temp[(y*64+x)*4+0];
-			temp[(y*64+x)*4+2]=(cos(x*PI*2.0/64.0)) + (x<32 ? 16-x:x-48)/16.0*0.3;
+			temp[(y*64+x)*4+2]=(cos(x*PI*2.0f/64.0f)) + (x<32 ? 16-x:x-48)/16.0*0.3;
 			temp[(y*64+x)*4+3]=0;
 		}
 	}

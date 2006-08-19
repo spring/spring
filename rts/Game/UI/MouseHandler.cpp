@@ -508,9 +508,9 @@ void CMouseHandler::UpdateCam()
 
 
 	if(inStateTransit){
-		transitSpeed=transitSpeed*pow(0.00003,(double)gu->lastFrameTime)/*-gu->lastFrameTime*/;
-		camera->pos+=(wantedCamPos-camera->pos)*(1-pow(transitSpeed,(double)gu->lastFrameTime));
-		camera->forward+=(wantedCamDir-camera->forward)*(1-pow(transitSpeed,(double)gu->lastFrameTime));
+		transitSpeed=transitSpeed*pow(0.00003f,(float)gu->lastFrameTime)/*-gu->lastFrameTime*/;
+		camera->pos+=(wantedCamPos-camera->pos)*(1-pow(transitSpeed,(float)gu->lastFrameTime));
+		camera->forward+=(wantedCamDir-camera->forward)*(1-pow(transitSpeed,(float)gu->lastFrameTime));
 		camera->forward.Normalize();
 		if(camera->pos.distance(wantedCamPos)<0.01 && camera->forward.distance(wantedCamDir)<0.001)
 			inStateTransit=false;

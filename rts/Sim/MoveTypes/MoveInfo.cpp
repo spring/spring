@@ -35,14 +35,14 @@ CMoveInfo::CMoveInfo()
 			md->moveFamily=3;
 		} else if(name.find("HOVER")!=string::npos){
 			md->moveType=MoveData::Hover_Move;
-			md->maxSlope=1-cos(atof(parser.SGetValueDef("10",class_name+"\\MaxSlope").c_str())*1.5*PI/180);
+			md->maxSlope=1-cos((float)atof(parser.SGetValueDef("10",class_name+"\\MaxSlope").c_str())*1.5f*PI/180);
 			md->moveFamily=2;
 //			info->AddLine("class %i %s hover",num,name.c_str());
 		} else {
 			md->moveType=MoveData::Ground_Move;	
 			md->depthMod=0.1;
 			md->depth=atof(parser.SGetValueDef("0",class_name+"\\MaxWaterDepth").c_str());
-			md->maxSlope=1-cos(atof(parser.SGetValueDef("60",class_name+"\\MaxSlope").c_str())*1.5*PI/180);
+			md->maxSlope=1-cos((float)atof(parser.SGetValueDef("60",class_name+"\\MaxSlope").c_str())*1.5f*PI/180);
 //			info->AddLine("class %i %s ground",num,name.c_str());
 			if(name.find("TANK")!=string::npos)
 				md->moveFamily=0;

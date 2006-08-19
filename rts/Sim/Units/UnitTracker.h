@@ -49,7 +49,7 @@ class CUnitTracker
 		
 		int timeOut;
 		int lastFollowUnit;
-		double lastUpdateTime;
+		float lastUpdateTime;
 
 		float3 trackPos;
 		float3 trackDir;

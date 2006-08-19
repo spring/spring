@@ -95,12 +95,12 @@ float CGround::LineGroundCol(float3 from, float3 to)
 
 	to=from+dir*maxLength;
 
-	double dx=to.x-from.x;
-	double dz=to.z-from.z;
-	double xp=from.x;
-	double zp=from.z;
-	double ret;
-	double xn,zn;
+	const float dx=to.x-from.x;
+	const float dz=to.z-from.z;
+	float xp=from.x;
+	float zp=from.z;
+	float ret;
+	float xn,zn;
 
 	bool keepgoing=true;
 
@@ -115,56 +115,76 @@ float CGround::LineGroundCol(float3 from, float3 to)
 			if(ret>=0){
 				return ret+savedLength;
 			}
-			keepgoing=fabs(zp-from.z)<fabs(to.z-from.z);
+			keepgoing=fabs(zp-from.z)<fabs(dz);
 			if(dz>0)
 				zp+=SQUARE_SIZE;
 			else 
 				zp-=SQUARE_SIZE;
 		}
+		// if you hit this the collision detection hit an infinite loop
+		assert(!keepgoing);
 	} else if(floor(from.z/SQUARE_SIZE)==floor(to.z/SQUARE_SIZE)){
 		while(keepgoing){
 			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));	
 			if(ret>=0){
 				return ret+savedLength;
 			}
-			keepgoing=fabs(xp-from.x)<fabs(to.x-from.x);
+			keepgoing=fabs(xp-from.x)<fabs(dx);
 			if(dx>0)
 				xp+=SQUARE_SIZE;
 			else 
 				xp-=SQUARE_SIZE;
 		}
+		// if you hit this the collision detection hit an infinite loop
+		assert(!keepgoing);
 	} else {
 		while(keepgoing){
-			int xs=(int)floor(xp/SQUARE_SIZE);
-			int zs=(int)floor(zp/SQUARE_SIZE);
-			ret = LineGroundSquareCol(from,to,xs,zs);	
+			float xs, zs;
+
+			// Push value just over the edge of the square
+			// This is the best accuracy we can get with floats:
+			// add one digit and (xp*constant) reduces to xp itself
+			// This accuracy means that at (16384,16384) (lower right of 32x32 map)
+			// 1 in every 1/(16384*1e-7/8)=4883 clicks on the map will be ignored.
+			if (dx>0) xs = floor(xp*1.0000001f/SQUARE_SIZE);
+			else      xs = floor(xp*0.9999999f/SQUARE_SIZE);
+			if (dz>0) zs = floor(zp*1.0000001f/SQUARE_SIZE);
+			else      zs = floor(zp*0.9999999f/SQUARE_SIZE);
+
+			ret = LineGroundSquareCol(from, to, (int)xs, (int)zs);
 			if(ret>=0){
 				return ret+savedLength;
 			}
-			keepgoing=fabs(xp-from.x)<fabs(to.x-from.x) && fabs(zp-from.z)<fabs(to.z-from.z);
+			keepgoing=fabs(xp-from.x)<fabs(dx) && fabs(zp-from.z)<fabs(dz);
 
 			if(dx>0){
-				xn=(floor(xp/SQUARE_SIZE)*SQUARE_SIZE+SQUARE_SIZE-xp)/dx;
+				// distance xp to right edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the right edge
+				xn=(xs*SQUARE_SIZE+SQUARE_SIZE-xp)/dx;
 			} else {
-				xn=(floor(xp/SQUARE_SIZE)*SQUARE_SIZE-xp)/dx;
+				// distance xp to left edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the left edge
+				xn=(xs*SQUARE_SIZE-xp)/dx;
 			}
 			if(dz>0){
-				zn=(floor(zp/SQUARE_SIZE)*SQUARE_SIZE+SQUARE_SIZE-zp)/dz;
+				// distance zp to bottom edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the bottom edge
+				zn=(zs*SQUARE_SIZE+SQUARE_SIZE-zp)/dz;
 			} else {
-				zn=(floor(zp/SQUARE_SIZE)*SQUARE_SIZE-zp)/dz;
+				// distance zp to top edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the top edge
+				zn=(zs*SQUARE_SIZE-zp)/dz;
 			}
-			
+			// xn and zn are always positive, minus signs are divided out above
+
+			// this puts (xp,zp) exactly on the first edge you see if you look from (xp,zp) in the (dx,dz) direction
 			if(xn<zn){
-				xp+=(xn+0.00001)*dx;
-				zp+=(xn+0.00001)*dz;
+				xp+=xn*dx;
+				zp+=xn*dz;
 			} else {
-				xp+=(zn+0.00001)*dx;
-				zp+=(zn+0.00001)*dz;
+				xp+=zn*dx;
+				zp+=zn*dz;
 			}
 		}
 	}
 	return -1;
-}	
+}
 
 float CGround::LineGroundSquareCol(const float3 &from,const float3 &to,int xs,int ys)
 {
@@ -180,13 +200,13 @@ float CGround::LineGroundSquareCol(const float3 &from,const float3 &to,int xs,in
 	tri.y=heightmap[ys*(gs->mapx+1)+xs];
 
 	float3 norm=readmap->facenormals[(ys*gs->mapx+xs)*2];
-	double side1=(from-tri).dot(norm);
-	double side2=(to-tri).dot(norm);
+	float side1=(from-tri).dot(norm);
+	float side2=(to-tri).dot(norm);
 
 	if(side2<=0){				//linjen passerar triangelns plan?
-		double dif=side1-side2;
+		float dif=side1-side2;
 		if(dif!=0){
-			double frontpart=side1/dif;
+			float frontpart=side1/dif;
 			float3 col=from+(dir*frontpart);
 
 			if((col.x>=tri.x) && (col.z>=tri.z) && (col.x+col.z<=tri.x+tri.z+SQUARE_SIZE)){	//kollision inuti triangeln (utnyttja trianglarnas "2d aktighet")
@@ -204,9 +224,9 @@ float CGround::LineGroundSquareCol(const float3 &from,const float3 &to,int xs,in
 	side2=(to-tri).dot(norm);
 
 	if(side2<=0){				//linjen passerar triangelns plan?
-		double dif=side1-side2;
+		float dif=side1-side2;
 		if(dif!=0){
-			double frontpart=side1/dif;
+			float frontpart=side1/dif;
 			float3 col=from+(dir*frontpart);
 
 			if((col.x<=tri.x) && (col.z<=tri.z) && (col.x+col.z>=tri.x+tri.z-SQUARE_SIZE)){	//kollision inuti triangeln (utntri.ytja trianglarnas "2d aktighet")

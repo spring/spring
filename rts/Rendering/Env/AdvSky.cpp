@@ -7,7 +7,6 @@
 #include "StdAfx.h"
 #include "AdvSky.h"
 
-#include <math.h>
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Game/Camera.h"
@@ -542,7 +541,7 @@ void CAdvSky::CreateRandMatrix(int matrix[32][32],float mod)
 {
 	for(int y=0;y<32;y++){
 		for(int x=0;x<32;x++){
-			double r = ((double)( rand() )) / (double)RAND_MAX;
+			float r = ((float)( rand() )) / (float)RAND_MAX;
 			matrix[y][x]=((int)(r * 255.0));
 		}
 	}
@@ -551,7 +550,7 @@ void CAdvSky::CreateRandMatrix(int matrix[32][32],float mod)
 void CAdvSky::CreateRandDetailMatrix(unsigned char* matrix,int size)
 {
 	for(int a=0;a<size*size;a++){
-		double r = ((double)( rand() )) / (double)RAND_MAX;
+		float  r = ((float)( rand() )) / (float)RAND_MAX;
 		matrix[a]=((int)(r * 255.0));
 	}
 }
@@ -783,7 +782,7 @@ void CAdvSky::CreateDetailTex(void)
 
 		}
 		float tSize=max(1,8>>a);
-		float c=pow(2.,a)*6/255.0;
+		float c=pow(2.0f,a)*6/255.0f;
 //		info->AddLine("%f",c);
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();

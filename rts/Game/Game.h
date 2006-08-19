@@ -83,7 +83,7 @@ public:
 
 	CglList* showList;
 	Uint64 lastframe;
-	double totalGameTime;			//time in seconds, stops at game end
+	float totalGameTime;			//time in seconds, stops at game end
 
 	float maxUserSpeed;
 	float minUserSpeed;

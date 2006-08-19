@@ -366,11 +366,11 @@ GLuint Texture(const std::string& name, const vector<paletteentry_s>* pvTranspar
 
 void DrawThemeRect(int edge, int size, int w, int h)
 {
-	const double t=edge;
-	const double s=size;
+	const float t=edge;
+	const float s=size;
 	
-	#define coordx(a) ((double)(a)/(double)s)
-	#define coordy(a) ((double)(a)/(double)s)
+	#define coordx(a) ((float)(a)/(float)s)
+	#define coordy(a) ((float)(a)/(float)s)
 	
 
 	glBegin(GL_QUADS);

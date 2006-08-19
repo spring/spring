@@ -56,7 +56,7 @@ public:
 	virtual ~CTimeProfiler();
 
 	map<string,TimeRecord> profile;
-	double lastBigUpdate;
+	float lastBigUpdate;
 
 	virtual bool MousePress(int x, int y, int button);
 	virtual bool IsAbove(int x, int y);

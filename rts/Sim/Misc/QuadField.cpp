@@ -241,12 +241,12 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 ///		info->AddLine("error %f %f %f %f %f %f %f %f",start.x,start.z,to.x,to.z,dir.x,dir.z,dir.y,length);
 //	}
 
-	double dx=to.x-start.x;
-	double dz=to.z-start.z;
-	double xp=start.x;
-	double zp=start.z;
-	double xn,zn;
-	double invQuadSize=1.0/QUAD_SIZE;
+	float dx=to.x-start.x;
+	float dz=to.z-start.z;
+	float xp=start.x;
+	float zp=start.z;
+	float xn,zn;
+	float invQuadSize=1.0/QUAD_SIZE;
 
 	if((floor(start.x*invQuadSize)==floor(to.x*invQuadSize)) && (floor(start.z*invQuadSize)==floor(to.z*invQuadSize))){
 		quads.push_back((int(start.x*invQuadSize))+(int(start.z*invQuadSize))*numQuadsX);

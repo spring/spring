@@ -36,7 +36,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	this->uptime=uptime;
 	ttl=(int)min(3000.f,uptime+weaponDef->range/maxSpeed+100);
 
-	maxGoodDif=cos(tracking*0.6);
+	maxGoodDif=cos(tracking*0.6f);
 	curSpeed=speed.Length();
 	dir.Normalize();
 	oldSmokeDir=dir;

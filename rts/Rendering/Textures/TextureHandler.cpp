@@ -6,7 +6,6 @@
 #include "TextureHandler.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header file for the gLu32 library
-#include <math.h>
 #include "Game/UI/InfoConsole.h"
 #include <vector>
 #include "Rendering/Textures/Bitmap.h"

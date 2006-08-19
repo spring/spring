@@ -55,8 +55,8 @@ public:
 	set<CUnit*> units;
 	float3 startPos;
 
-	double metal;
-	double energy;
+	float metal;
+	float energy;
 
 	float metalIncome,oldMetalIncome;
 	float energyIncome,oldEnergyIncome;
@@ -73,12 +73,12 @@ public:
 	float metalShare,energyShare;
 
 	struct Statistics {
-		double metalUsed,energyUsed;
-		double metalProduced,energyProduced;
-		double metalExcess,energyExcess;
-		double metalReceived,energyReceived;					//received from allies
-		double metalSent,energySent;									//sent to allies
-		double damageDealt,damageReceived;				// Damage taken and dealt to enemy units
+		float metalUsed,energyUsed;
+		float metalProduced,energyProduced;
+		float metalExcess,energyExcess;
+		float metalReceived,energyReceived;					//received from allies
+		float metalSent,energySent;									//sent to allies
+		float damageDealt,damageReceived;				// Damage taken and dealt to enemy units
 
 		int unitsProduced;
 		int unitsDied;

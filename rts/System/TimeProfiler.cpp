@@ -54,7 +54,7 @@ void CTimeProfiler::Draw()
 
 	int y=0;
 	for(pi=profile.begin();pi!=profile.end();++pi,y++)
-		font->glPrintAt(0.655f, 0.960-y*0.024f, 1.0f, "%20s %6.2fs %5.2f%%",pi->first.c_str(),((double)pi->second.total)/1000.,pi->second.percent*100);
+		font->glPrintAt(0.655f, 0.960-y*0.024f, 1.0f, "%20s %6.2fs %5.2f%%",pi->first.c_str(),((float)pi->second.total)/1000.,pi->second.percent*100);
 
 	glTranslatef(0.655f,0.965f,0);
 	glScalef(0.015f,0.02f,0.02f);
@@ -88,7 +88,7 @@ void CTimeProfiler::Draw()
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 		for(int a=0;a<128;++a){
-			float p=((double)pi->second.frames[a])/1000.*30;
+			float p=((float)pi->second.frames[a])/1000.*30;
 			va->AddVertexT(float3(0.6+a*0.003,0.02+p*0.4,0),0,0);
 		}
 		glColor3f(pi->second.color.x,pi->second.color.y,pi->second.color.z);
@@ -108,7 +108,7 @@ void CTimeProfiler::Update()
 		lastBigUpdate=gu->gameTime;
 		map<string,TimeRecord>::iterator pi;
 		for(pi=profile.begin();pi!=profile.end();++pi){
-			pi->second.percent=((double)pi->second.current)/1000.;
+			pi->second.percent=((float)pi->second.current)/1000.;
 			pi->second.current=0;
 
 		}

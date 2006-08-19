@@ -56,6 +56,7 @@ def get_spring_source(env):
 		'rts/AI',
 		'rts/build',
 		'rts/lib/libhpi',
+		'rts/lib/streflop', # streflop is compiled with it's own Makefiles
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Platform/Linux/UnixFileSystemHandler.cpp', # see SConstruct
 	]

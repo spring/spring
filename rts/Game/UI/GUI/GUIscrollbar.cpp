@@ -27,11 +27,11 @@ GUIscrollbar::GUIscrollbar(int x, int y, int h, int m, Functor1<int>clicked):GUI
 	glNewList(displayList, GL_COMPILE);
 
 
-	const double t=SB_WIDTH;
-	const double s=64;
+	const float t=SB_WIDTH;
+	const float s=64;
 	
-	#define coordx(a) ((double)(a)/(double)16)
-	#define coordy(a) ((double)(a)/(double)64)
+	#define coordx(a) ((float)(a)/(float)16)
+	#define coordy(a) ((float)(a)/(float)64)
 	
 	glBindTexture(GL_TEXTURE_2D, tex);
 

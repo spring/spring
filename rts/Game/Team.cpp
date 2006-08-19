@@ -145,8 +145,8 @@ void CTeam::Update()
 			mShare+=max(0.0,gs->Team(a)->metalStorage*0.9-gs->Team(a)->metal);
 		}
 	}
-	float eExcess=max(0.0,energy-energyStorage*energyShare);
-	float mExcess=max(0.0,metal-metalStorage*metalShare);
+	float eExcess=max(0.0f,energy-energyStorage*energyShare);
+	float mExcess=max(0.0f,metal-metalStorage*metalShare);
 	
 	float de=0,dm=0;
 	if(eShare>0)

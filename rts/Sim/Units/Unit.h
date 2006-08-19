@@ -98,11 +98,11 @@ public:
 	int allyteam;
 	int aihint;							//tells the unit main function to the ai
 
-	float3 frontdir;				//the forward direction of the unit
-	float3 rightdir;
-	float3 updir;
+	SyncedFloat3 frontdir;				//the forward direction of the unit
+	SyncedFloat3 rightdir;
+	SyncedFloat3 updir;
 	bool upright;						//if the updir is straight up or align to the ground vector
-	float3 relMidPos;							//= (midPos - pos)
+	SyncedFloat3 relMidPos;							//= (midPos - pos)
 
 //	float3 residualImpulse;	//impulse energy that havent been acted on
 

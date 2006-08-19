@@ -47,7 +47,7 @@ protected:
 	void AddNotification(float3 pos, float3 color, float alpha);
 
 	struct Notification {
-		double creationTime;
+		float creationTime;
 		float3 pos;
 		float3 color;
 		float alpha;

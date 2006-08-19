@@ -63,7 +63,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player) {
 
 		float3 sideDir=frontdir.cross(UpVector);
 
-		float length=100+sqrtf(nbrOfSelectedUnits)*32;		//calculate so that the units form in an aproximate square
+		float length=100+sqrt((float)nbrOfSelectedUnits)*32;		//calculate so that the units form in an aproximate square
 
 		c.params.push_back(pos.x+sideDir.x*length);				//push back some extra params so it confer with a front move
 		c.params.push_back(pos.y+sideDir.y*length);

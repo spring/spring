@@ -24,6 +24,7 @@
 #include "Camera.h"
 #include "CameraController.h"
 #include "ConsoleHistory.h"
+#include "FPUCheck.h"
 #include "GameHelper.h"
 #include "GameServer.h"
 #include "GameSetup.h"
@@ -53,7 +54,6 @@
 //#include "PhysicsEngine.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
-#include "Platform/fp.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
@@ -88,6 +88,7 @@
 #include "Sim/Units/UnitTracker.h"
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
+#include "Sync/SyncedPrimitiveIO.h"
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
@@ -1115,7 +1116,7 @@ bool CGame::Update()
 	timeNow = SDL_GetTicks();
 	Uint64 difTime;
 	difTime=timeNow-lastModGameTimeMeasure;
-	double dif=double(difTime)/1000.;
+	float dif=float(difTime)/1000.;
 	if(!gs->paused)
 		gu->modGameTime+=dif*gs->speedFactor;
 	gu->gameTime+=dif;
@@ -1191,7 +1192,7 @@ bool CGame::Draw()
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
 		startDraw = SDL_GetTicks();
-		gu->timeOffset = ((double)(startDraw - lastUpdate))/1000.*GAME_SPEED*gs->speedFactor;
+		gu->timeOffset = ((float)(startDraw - lastUpdate))/1000.*GAME_SPEED*gs->speedFactor;
 	} else  {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
@@ -1397,7 +1398,7 @@ bool CGame::Draw()
 
 	Uint64 start;
 	start = SDL_GetTicks();
-	gu->lastFrameTime = (double)(start - lastMoveUpdate)/1000.;
+	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.;
 	lastMoveUpdate=start;
 
 #ifndef NO_AVI
@@ -1448,11 +1449,12 @@ void CGame::StartPlaying()
 
 void CGame::SimFrame()
 {
+	// Enable trapping of NaNs and divisions by zero to make debugging easier.
+	feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+	assert(good_fpu_control_registers());
+
 	ASSERT_SYNCED_MODE;
 //	info->AddLine("New frame %i %i %i",gs->frameNum,gs->randInt(),uh->CreateChecksum());
-	Clearfp();
-	Control87(0,_EM_ZERODIVIDE);	//make sure any fpu errors generate an exception immidiatly instead of creating nans (easier to debug)
-	Control87(0,_EM_INVALID);
 #ifdef TRACE_SYNC
 	uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
@@ -1581,11 +1583,10 @@ END_TIME_PROFILE("Sim time")
 	}
 
 #endif
-	Clearfp();
-	Control87(_MCW_EM ,_EM_ZERODIVIDE);
-	Control87(_MCW_EM ,_EM_INVALID);
 
 	water->Update();
+
+	feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 }
 
 bool CGame::ClientReadNet()
@@ -1688,9 +1689,18 @@ bool CGame::ClientReadNet()
 			case NETMSG_STARTPOS:
 				i2+=15;
 				break;
-			default:
-				info->AddLine("Unknown net msg in read ahead %i",(int)inbuf[i2]);
-				i2++;
+			default:{
+#ifdef SYNCDEBUG
+				// maybe something for the sync debugger?
+				int x = CSyncDebugger::GetInstance()->GetMessageLength(&inbuf[i2]);
+				if (x) i2 += x;
+				else
+#endif
+				{
+					info->AddLine("Unknown net msg in read ahead %i",(int)inbuf[i2]);
+					i2++;
+				}
+				break;}
 			}
 		}
 		if(que<leastQue)
@@ -2124,11 +2134,14 @@ bool CGame::ClientReadNet()
 #endif
 
 		default:
-			char txt[200];
-			sprintf(txt,"Unknown net msg in client %d last %d",(int)inbuf[inbufpos],lastMsg);
-			info->AddLine(txt);
-			//MessageBox(0,txt,"Network error in CGame",0);
-			lastLength=1;
+#ifdef SYNCDEBUG
+			lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
+			if (!lastLength)
+#endif
+			{
+				info->AddLine("Unknown net msg in client %d last %d", (int)inbuf[inbufpos], lastMsg);
+				lastLength=1;
+			}
 			break;
 		}
 		if(lastLength<=0){
@@ -2488,11 +2501,11 @@ void CGame::DrawDirectControlHud(void)
 				glVertexf3(pos);
 				glVertexf3(w->targetPos);
 
-				glVertexf3(pos+(v2*sin(PI*0.25)+v3*cos(PI*0.25))*radius);
-				glVertexf3(pos+(v2*sin(PI*1.25)+v3*cos(PI*1.25))*radius);
+				glVertexf3(pos+(v2*sin(PI*0.25f)+v3*cos(PI*0.25f))*radius);
+				glVertexf3(pos+(v2*sin(PI*1.25f)+v3*cos(PI*1.25f))*radius);
 
-				glVertexf3(pos+(v2*sin(PI*-0.25)+v3*cos(PI*-0.25))*radius);
-				glVertexf3(pos+(v2*sin(PI*-1.25)+v3*cos(PI*-1.25))*radius);
+				glVertexf3(pos+(v2*sin(PI*-0.25f)+v3*cos(PI*-0.25f))*radius);
+				glVertexf3(pos+(v2*sin(PI*-1.25f)+v3*cos(PI*-1.25f))*radius);
 			}
 			if((w->targetPos-camera->pos).Normalize().dot(camera->forward)<0.7){
 				glVertexf3(w->targetPos);
@@ -2544,6 +2557,38 @@ void CGame::HandleChatMsg(std::string s,int player)
 		*a=0;
 	}
 
+	if (s.find(".divbyzero") == 0 && gs->cheatEnabled) {
+		float a = 0;
+		info->AddLine("Result: %f", 1.0/a);
+	}
+
+#ifdef SYNCDEBUG
+	if (s.find(".desync") == 0 && gs->cheatEnabled) {
+		for (int i = MAX_UNITS - 1; i >= 0; --i) {
+			if (uh->units[i]) {
+				if (player == gu->myPlayerNum) {
+					++uh->units[i]->midPos.x; // and desync...
+					++uh->units[i]->midPos.x;
+				} else {
+					// execute the same amount of flops on any other player, but don't desync (it's a NOP)...
+					++uh->units[i]->midPos.x;
+					--uh->units[i]->midPos.x;
+				}
+				break;
+			}
+		}
+		info->AddLine("Desyncing.");
+	}
+	if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer && serverNet) {
+		gameServer->fakeDesync = true;
+		info->AddLine("Fake desyncing.");
+	}
+	if (s.find(".reset") == 0 && gs->cheatEnabled) {
+		CSyncDebugger::GetInstance()->Reset();
+		info->AddLine("Resetting sync debugger.");
+	}
+#endif
+
 	if(s==".spectator" && (gs->cheatEnabled || net->playbackDemo)){
 		gs->players[player]->spectator=true;
 		if(player==gu->myPlayerNum)
@@ -2577,7 +2622,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		s = s.substr(0, p1);
 
 		if(s.find(" all")!=string::npos){
-			int squareSize=(int)ceil(sqrtf(unitDefHandler->numUnits));
+			int squareSize=(int)ceil(sqrt((float)unitDefHandler->numUnits));
 
 			for(int a=1;a<=unitDefHandler->numUnits;++a){
 				float3 pos2=float3(pos.x + (a%squareSize-squareSize/2) * 10*SQUARE_SIZE, pos.y, pos.z + (a/squareSize-squareSize/2) * 10*SQUARE_SIZE);
@@ -2601,7 +2646,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 				int xsize=unitDef->xsize;
 				int zsize=unitDef->ysize;
 				int total=numUnits;
-				int squareSize=(int)ceil(sqrtf(numUnits));
+				int squareSize=(int)ceil(sqrt((float)numUnits));
 				float3 minpos=pos;
 				minpos.x-=((squareSize-1)*xsize*SQUARE_SIZE)/2;
 				minpos.z-=((squareSize-1)*zsize*SQUARE_SIZE)/2;

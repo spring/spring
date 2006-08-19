@@ -504,8 +504,8 @@ void CTAAirMoveType::UpdateHeading()
 
 void CTAAirMoveType::UpdateBanking(bool noBanking)
 {
-	float3 &frontdir = owner->frontdir;
-	float3 &updir = owner->updir;
+	SyncedFloat3 &frontdir = owner->frontdir;
+	SyncedFloat3 &updir = owner->updir;
 
 	float wantedPitch=0;
 	if(aircraftState==AIRCRAFT_FLYING && flyState==FLY_ATTACKING && circlingPos.y<owner->pos.y){
@@ -640,9 +640,9 @@ void CTAAirMoveType::Update()
 {
 	//Handy stuff. Wonder if there is a better way?
 	float3 &pos=owner->pos;
-	float3 &rightdir = owner->rightdir;
-	float3 &frontdir = owner->frontdir;
-	float3 &updir = owner->updir;
+	SyncedFloat3 &rightdir = owner->rightdir;
+	SyncedFloat3 &frontdir = owner->frontdir;
+	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
 
 	//This is only set to false after the plane has finished constructing
@@ -906,8 +906,8 @@ void CTAAirMoveType::SetWantedAltitude(float altitude)
 
 void CTAAirMoveType::CheckForCollision(void)
 {
-	float3& pos=owner->midPos;
-	float3 forward=owner->speed;
+	SyncedFloat3& pos=owner->midPos;
+	SyncedFloat3 forward=owner->speed;
 	forward.Normalize();
 	float3 midTestPos=pos+forward*121;
 
@@ -923,7 +923,7 @@ void CTAAirMoveType::CheckForCollision(void)
 	for(std::vector<CUnit*>::iterator ui=others.begin();ui!=others.end();++ui){
 		if(*ui==owner || !(*ui)->unitDef->canfly)
 			continue;
-		float3& op=(*ui)->midPos;
+		SyncedFloat3& op=(*ui)->midPos;
 		float3 dif=op-pos;
 		float3 forwardDif=forward*(forward.dot(dif));
 		if(forwardDif.SqLength()<dist*dist){

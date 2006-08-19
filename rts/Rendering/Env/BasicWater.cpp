@@ -6,7 +6,6 @@
 #include "BasicWater.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
-#include <math.h>
 
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/ReadMap.h"

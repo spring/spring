@@ -347,7 +347,7 @@ void CMobileCAI::SlowUpdate()
 			  && (owner->pos-orderTarget->pos).Length2D()<owner->maxRange*0.9)
 			  || (owner->pos-orderTarget->pos).SqLength2D()<1024){
 				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget->pos, min((double)(owner->losRadius*SQUARE_SIZE*2), owner->maxRange*0.9), true);
+				owner->moveType->KeepPointingTo(orderTarget->pos, min((float)(owner->losRadius*SQUARE_SIZE*2), owner->maxRange*0.9f), true);
 			} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2){
 				float3 fix=orderTarget->pos+owner->posErrorVector*128;
 				SetGoal(fix,curPos);

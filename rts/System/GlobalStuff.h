@@ -436,7 +436,7 @@ public:
 	 * How long the game has been going on
 	 * (modified with game's speed factor)
 	 */
-	double modGameTime;
+	float modGameTime;
 
 	/**
 	 * @brief game time
@@ -444,7 +444,7 @@ public:
 	 * How long the game has been going on
 	 * in real time
 	 */
-	double gameTime;
+	float gameTime;
 
 	/**
 	 * @brief last frame time

@@ -50,8 +50,8 @@ public:
 	};
 
 	unsigned int texture;
-	double lastLeftClickTime;
-	double lastLineTime;
+	float lastLeftClickTime;
+	float lastLineTime;
 	float3 lastPos;
 	bool wantLabel;
 	float3 waitingPoint;

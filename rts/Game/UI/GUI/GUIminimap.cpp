@@ -171,7 +171,7 @@ void GUIminimap::PrivateDraw()
 		if((*si)->radarRadius){
 			glColor3f(0.3f,1,0.3f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrtf(height)*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
+			int numSegments=(int)(sqrt((float)height)*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE));
 			}
@@ -180,7 +180,7 @@ void GUIminimap::PrivateDraw()
 		if((*si)->sonarRadius){
 			glColor3f(0.3f,1,0.3f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrtf(height)*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
+			int numSegments=(int)(sqrt((float)height)*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE));
 			}
@@ -189,7 +189,7 @@ void GUIminimap::PrivateDraw()
 		if((*si)->jammerRadius){
 			glColor3f(1.0f,0.2f,0.2f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrtf(height)*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
+			int numSegments=(int)(sqrt((float)height)*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE));
 			}
@@ -202,7 +202,7 @@ void GUIminimap::PrivateDraw()
 			else
 				glColor4f(0.0f,0.0f,0.0f,0.6f);
 			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrtf(height)*w->weaponDef->coverageRange/2000)+8;
+			int numSegments=(int)(sqrt((float)height)*w->weaponDef->coverageRange/2000)+8;
 			for(int a=0;a<=numSegments;++a){
 				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*w->weaponDef->coverageRange);
 			}

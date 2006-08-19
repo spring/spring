@@ -1,0 +1,54 @@
+/* Author: Tobi Vollebregt */
+
+#ifndef LOGGER_H
+#define LOGGER_H
+
+#ifdef SYNCDEBUG
+
+#include <stdio.h>
+#include <boost/thread/mutex.hpp>
+#include <string>
+#include <vector>
+
+/**
+ * @brief logging class for sync debugger
+ *
+ * Logging class with the special feature that it can replace "{hex address}"
+ * with "function [filename:lineno]".
+ *
+ * Specifically written for & used by the sync debugger.
+ */
+class CLogger {
+
+	public:
+
+		CLogger() : filename(NULL), logfile(NULL) {}
+
+		void AddLine(const char* fmt, ...)
+#ifdef __GNUC__
+				__attribute__((format(printf, 2, 3)))
+#endif
+				;
+		void CloseSession();
+
+		void SetFilename(const char* fn) { filename = fn; }
+
+	private:
+
+		// no copying
+		CLogger(const CLogger&);
+		CLogger& operator=(const CLogger&);
+
+		void FlushBuffer();
+		void CppFilt(char* sym, int size);
+
+		boost::mutex logmutex;
+		const char* filename;
+		FILE* logfile;
+		std::vector<std::string> buffer;
+		std::string exename;
+};
+
+#endif // SYNCDEBUG
+
+#endif // LOGGER_H
