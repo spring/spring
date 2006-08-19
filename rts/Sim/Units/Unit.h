@@ -260,6 +260,10 @@ public:
 	int lastFlareDrop;
 
 	float currentFuel;
+
+	bool isIcon;
+	float iconRadius;
+
 protected:
 	void ExperienceChange();
 public:

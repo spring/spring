@@ -237,7 +237,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				if(closeLength>length)
 					closeLength=length;
 				float3 closeVect=dif-dir*closeLength;
-				float rad=(*ui)->radius;
+				float rad = ((*ui)->isIcon) ? (*ui)->iconRadius : (*ui)->radius;
 				
 				//The argument to sqrt became negative (3.5*10^-7) for some reason... so tempstoring the value
 				float tmp = rad * rad - closeVect.SqLength();
@@ -253,7 +253,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				if(closeLength>length)
 					closeLength=length;
 				float3 closeVect=dif-dir*closeLength;
-				float rad=20;
+				float rad=(*ui)->iconRadius;
 				
 				//The argument to sqrt became negative (3.5*10^-7) for some reason... so tempstoring the value
 				float tmp = rad * rad - closeVect.SqLength();

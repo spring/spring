@@ -310,6 +310,8 @@ void CSelectedUnits::Draw()
 	glBegin(GL_QUADS);
 	if(selectedGroup!=-1){
 		for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
+			if((*ui)->isIcon)
+				continue;
 			float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
 			glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
 			glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
@@ -318,6 +320,8 @@ void CSelectedUnits::Draw()
 		}
 	} else {
 		for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+			if((*ui)->isIcon)
+				continue;
 			float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
 			glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
 			glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
