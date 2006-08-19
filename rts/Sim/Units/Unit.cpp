@@ -27,7 +27,6 @@
 #include "COB/CobInstance.h"
 #include "COB/CobFile.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "math.h"
 #include "UnitDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"

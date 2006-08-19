@@ -4,7 +4,6 @@
 
 #include "StdAfx.h"
 #include "3DOParser.h"
-#include <math.h>
 #include "Rendering/GL/myGL.h"
 #include "GlobalStuff.h"
 #include "Game/UI/InfoConsole.h"

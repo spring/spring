@@ -28,7 +28,7 @@ CglTextBox::CglTextBox(std::string heading,std::string intext,int autoBreakAt)
 
 		} else {
 			currentLine+=*ti;
-			textLineSize+=(int)ceilf(font->CalcCharWidth(*ti));
+			textLineSize+=(int)ceil(font->CalcCharWidth(*ti));
 		}
 	}
 	if(textLineSize>longestLine)

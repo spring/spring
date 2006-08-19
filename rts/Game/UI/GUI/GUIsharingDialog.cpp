@@ -34,8 +34,8 @@ void GUIsharingDialog::ButtonPressed(GUIbutton* b)
 		}
 		net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
 				NETMSG_SHARE, gu->myPlayerNum, table->GetSelected(), giveUnits->State(),
-				min(gs->Team(gu->myTeam)->metal, (double)giveMetal->Position()),
-				min(gs->Team(gu->myTeam)->energy, (double)giveEnergy->Position()));
+				min(gs->Team(gu->myTeam)->metal, (float)giveMetal->Position()),
+				min(gs->Team(gu->myTeam)->energy, (float)giveEnergy->Position()));
 
 		if(giveUnits->State())
 			selectedUnits.ClearSelected();

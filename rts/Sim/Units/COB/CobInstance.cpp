@@ -8,7 +8,6 @@
 
 #include "Sim/Units/Unit.h"
 #include "Game/UI/InfoConsole.h"
-#include <math.h>
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -829,10 +828,6 @@ void CCobInstance::ShowFlare(int piece)
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
 #define SCALE 65536
 
-#ifdef _WIN32
-#define hypot(x,y) _hypot(x,y)
-#endif
-
 int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
 #ifndef _CONSOLE
@@ -899,13 +894,13 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return (int)(u->radius * SCALE);}
 	case XZ_ATAN:
-		return (int)(TAANG2RAD*atan2f(UNPACKX(p1), UNPACKZ(p1)) + 32768 - unit->heading);
+		return (int)(TAANG2RAD*atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:
-		return (int)(hypot(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
+		return (int)(hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * SCALE);
 	case ATAN:
-		return (int)(TAANG2RAD*atan2f(p1, p2));
+		return (int)(TAANG2RAD*atan2((float)p1, (float)p2));
 	case HYPOT:
-		return (int)hypot(p1, p2);
+		return (int)hypot((float)p1, (float)p2);
 	case GROUND_HEIGHT:
 		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
 	case BUILD_PERCENT_LEFT:

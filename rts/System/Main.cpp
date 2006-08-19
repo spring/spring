@@ -12,7 +12,6 @@
 #include <time.h>
 #include <string>
 #include <algorithm>
-#include <math.h>
 #include "Game/PreGame.h"
 #include "Game/Game.h"
 #include <float.h>
@@ -34,6 +33,7 @@
 #include "Game/StartScripts/ScriptHandler.h"
 #include "creg/creg.h"
 #include "bitops.h"
+#include "FPUCheck.h"
 #include <SDL.h>
 #include <SDL_main.h>
 #ifdef WIN32
@@ -417,6 +417,11 @@ bool SpringApp::SetSDLVideoMode ()
 		handleerror(NULL,"Could not set video mode","ERROR",MBF_OK|MBF_EXCL);
 		return false;
 	}
+
+	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
+	// Set single precision floating point math.
+	streflop_init<streflop::Simple>();
+
 	if (FSAA)
 		FSAA = MultisampleVerify();
 
@@ -614,6 +619,11 @@ void SpringApp::CreateGameSetup ()
 	}
 	else
 		server=!cmdline->result("client") || cmdline->result("server");
+
+#ifdef SYNCDEBUG
+	// initialize sync debugger as soon as we know whether we will be server
+	CSyncDebugger::GetInstance()->Initialize(server);
+#endif
 
 	if (!demofile.empty()) {
 		pregame = new CPreGame(false, demofile);
@@ -836,6 +846,21 @@ void SpringApp::Shutdown()
 // Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
 int Run(int argc, char *argv[])
 {
+#ifdef __MINGW32__
+	// For the MinGW backtrace() implementation we need to know the stack end.
+	{
+		extern void* stack_end;
+		char here;
+		stack_end = (void*) &here;
+	}
+#endif
+
+	// Set single precision floating point math.
+	streflop_init<streflop::Simple>();
+	feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+	assert(good_fpu_control_registers());
+	feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+
 // It's nice to be able to disable catching when you're debugging
 #ifndef NO_CATCH_EXCEPTIONS
 	try {

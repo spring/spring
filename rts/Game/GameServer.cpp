@@ -62,6 +62,9 @@ CGameServer::CGameServer()
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
 	thread = new boost::thread(boost::bind(GameServerThreadProc,this));
 #endif
+#ifdef SYNCDEBUG
+	fakeDesync = false;
+#endif
 }
 
 CGameServer::~CGameServer()
@@ -111,6 +114,7 @@ bool CGameServer::Update()
 				}
 #else
 				CChecksum correctSync;
+				bool err = false;
 				for(int a = 0; a < gs->activePlayers; ++a)
 					if(gs->players[a]->active) {
 						//if the checksum really happens to be 0 we will get lots of falls positives here
@@ -122,11 +126,18 @@ bool CGameServer::Update()
 							char buf[10];
 							SendSystemMsg("Sync error for %s %i %s",
 										  gs->players[a]->playerName.c_str(), outstandingSyncFrame, correctSync.diff(buf, syncResponses[a]));
+							err = true;
 							continue;
 						}
 						//this assumes the lowest num player is the correct one, should maybe some sort of majority voting instead
 						correctSync = syncResponses[a];
 					}
+#endif
+#ifdef SYNCDEBUG
+				if (err || fakeDesync) {
+					CSyncDebugger::GetInstance()->TriggerSyncErrorHandling(serverframenum);
+					fakeDesync = false;
+				}
 #endif
 			}
 			for(int a=0;a<gs->activePlayers;++a)
@@ -180,7 +191,7 @@ bool CGameServer::Update()
 	if (game && game->playing && !serverNet->playbackDemo){
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
-		double timeElapsed=((double)(currentFrame - lastframe))/1000.;
+		float timeElapsed=((float)(currentFrame - lastframe))/1000.;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		info->AddLine("float value is %f",timeElapsed);
@@ -453,11 +464,15 @@ bool CGameServer::ServerReadNet()
 				break;
 #endif
 			default:
-				char txt[200];
-				sprintf(txt,"Unknown net msg in server %d from %d pos %d last %d",(int)inbuf[inbufpos],a,inbufpos,lastMsg[a]);
-				info->AddLine(txt);
-				//handleerror(0,txt,"Network error",0);
-				lastLength=1;
+#ifdef SYNCDEBUG
+				// maybe something for the sync debugger?
+				lastLength = CSyncDebugger::GetInstance()->ServerReceived(&inbuf[inbufpos]);
+				if (!lastLength)
+#endif
+				{
+					info->AddLine("Unknown net msg in server %d from %d pos %d last %d", (int)inbuf[inbufpos], a, inbufpos, lastMsg[a]);
+					lastLength=1;
+				}
 				break;
 			}
 			if(lastLength<=0){
@@ -474,6 +489,9 @@ bool CGameServer::ServerReadNet()
 			handleerror(0,txt,"Server network error",0);
 		}
 	}
+#ifdef SYNCDEBUG
+	CSyncDebugger::GetInstance()->ServerHandlePendingBlockRequests();
+#endif
 	return true;
 }
 

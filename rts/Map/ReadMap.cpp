@@ -7,7 +7,6 @@
 #include <GL/glu.h>			// Header file for the gLu32 library
 #include "ReadMap.h"
 #include <stdlib.h>
-#include <math.h>
 //#include <ostream>
 #include "Rendering/Textures/Bitmap.h"
 #include "Ground.h"

@@ -9,7 +9,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Game/UI/InfoConsole.h"
-#include "math.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
@@ -39,7 +38,7 @@ CBasicMapDamage::CBasicMapDamage(void)
 
 	for(int a=0;a<=200;++a){
 		float r=a/200.0;
-		float d=cos((r-0.1)*(PI+0.3))*(1-r)*(0.5+0.5*cos(max(0.f,r*3-2)*PI));
+		float d=cos((r-0.1f)*(PI+0.3f))*(1-r)*(0.5f+0.5f*cos(max(0.0f,r*3-2)*PI));
 		craterTable[a]=d;
 	}
 	for(int a=201;a<10000;++a){

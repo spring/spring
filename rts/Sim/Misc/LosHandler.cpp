@@ -7,7 +7,6 @@
 
 #include "Sim/Units/Unit.h"
 #include <list>
-#include <math.h>
 #include "Map/ReadMap.h"
 #include "TimeProfiler.h"
 #include "Game/UI/InfoConsole.h"
@@ -54,8 +53,8 @@ CLosHandler::CLosHandler()
 	airSizeY=gs->mapy>>sensorHandler->airMipLevel;
 	losSizeX=gs->mapx>>sensorHandler->losMipLevel;
 	losSizeY=gs->mapy>>sensorHandler->losMipLevel;
-	invLosDiv = 1/((double)SQUARE_SIZE*(1<<sensorHandler->losMipLevel));
-	invAirDiv = 1/((double)SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
+	invLosDiv = 1/((float)SQUARE_SIZE*(1<<sensorHandler->losMipLevel));
+	invAirDiv = 1/((float)SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
 		losMap[a]=(unsigned short*)myNew(losSizeX*losSizeY*2);

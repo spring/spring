@@ -380,9 +380,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			else throw content_error ("Explosion script error: \"" + script + "\"  : \'" + string(1, c) + "\' is unknown opcode.");
 
 			char *endp;
-			double dv = strtod(&script[p], &endp);
+			float v = (float)strtod(&script[p], &endp);
 			p += endp - &script[p];
-			float v=dv;
 			code += opcode;
 			code.append ((char*)&v, ((char*)&v) + 4);
 		}

@@ -12,7 +12,6 @@
 #include "Game/UI/InfoConsole.h"
 #include "myMath.h"
 #include "Platform/ConfigHandler.h"
-#include <math.h>
 #include <algorithm>
 #include "FileSystem/FileHandler.h"
 #include "Map/ReadMap.h"
@@ -62,11 +61,11 @@ CGrassDrawer::CGrassDrawer()
 		return;
 	}
 
-	maxGrassDist=800+sqrtf(detail)*240;
+	maxGrassDist=800+sqrt((float)detail)*240;
 	maxDetailedDist=146+detail*24;
 	detailedBlocks=(int)((maxDetailedDist-24)/(SQUARE_SIZE*grassSquareSize*grassBlockSize))+1;
 	numTurfs=3+(int)(detail*0.5);
-	strawPerTurf=50+(int)sqrtf(detail)*10;
+	strawPerTurf=50+(int)sqrt((float)detail)*10;
 
 //	info->AddLine("%f %f %i %i %i",maxGrassDist,maxDetailedDist,detailedBlocks,numTurfs,strawPerTurf);
 
@@ -465,7 +464,7 @@ void CGrassDrawer::Draw(void)
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,8,  side.x,side.y,side.z,0);
 		float3 up(side.cross(v));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
-		float ang=acosf(v.y);
+		float ang=acos(v.y);
 		int texPart=min(15,(int)max(0,(int)((ang+PI/16-PI/2)/PI*30)));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0,0,0,0.0f);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
@@ -487,7 +486,7 @@ void CGrassDrawer::Draw(void)
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,8,  side.x,side.y,side.z,0);
 			float3 up(side.cross(v));
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
-			float ang=acosf(v.y);
+			float ang=acos(v.y);
 			int texPart=min(15,int(max(0,int((ang+PI/16-PI/2)/PI*30))));
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0,0,0,0.0f);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);

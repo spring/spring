@@ -73,8 +73,10 @@ def generate(env):
 		#permanent options
 		('platform',          'Set to linux, freebsd or windows', None),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
+		('syncdebug',         'Set to yes to enable the sync debugger', False),
 		('optimize',          'Enable processor optimizations during compilation', 1),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
+		('fpmath',            'Set to 387 or SSE on i386 and AMD64 architectures', '387'),
 		('prefix',            'Install prefix', '/usr/local'),
 		('datadir',           'Data directory', '$prefix/games/taspring'),
 		('strip',             'Discard symbols from the executable (only when neither debugging nor profiling)', True),
@@ -165,8 +167,10 @@ def generate(env):
 				env[key] = args[key]
 			else: env[key] = default
 
-		# start with empty FLAGS, in case everything is disabled.
-		env['CCFLAGS'] = []
+		# Use single precision constants only.
+		# This should be redundant with the modifications done by tools/double_to_single_precision.sed.
+		# Other options copied from streflop makefiles.
+		env['CCFLAGS'] = ['-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-mieee-fp']
 
 		# profile?
 		bool_opt('profile', False)
@@ -191,7 +195,7 @@ def generate(env):
 			env['debug'] = level
 			# MinGW gdb chokes on the dwarf debugging format produced by '-ggdb',
 			# so use the more generic '-g' instead.
-			if env['platform'] == 'windows':
+			if env['platform'] == 'windows' or env['syncdebug']:
 				env.AppendUnique(CCFLAGS=['-g'], CPPDEFINES=['DEBUG', '_DEBUG'])
 			else:
 				env.AppendUnique(CCFLAGS=['-ggdb'+level], CPPDEFINES=['DEBUG', '_DEBUG'])
@@ -210,8 +214,12 @@ def generate(env):
 		if level == 's' or level == 'size' or (int(level) >= 1 and int(level) <= 3):
 			print "level", level, "optimizing enabled"
 			env['optimize'] = level
-			archflags = detect.processor(gcc_version >= ['3','4','0'])
-			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe']+archflags)
+			#archflags = detect.processor(gcc_version >= ['3','4','0'])
+			# -fstrict-aliasing causes constructs like:
+			#    float f = 10.0f; int x = *(int*)&f;
+			# to break.
+			# Since those constructs are used in the netcode and MathTest code, we disable the optimization.
+			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe', '-fno-strict-aliasing', '-frename-registers'])
 		elif int(level) == 0:
 			print "optimizing NOT enabled,",
 			env['optimize'] = 0
@@ -219,9 +227,26 @@ def generate(env):
 			print "\ninvalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
 
-		# it seems only gcc 4.0 and higher supports this
-		if gcc_version >= ['4','0','0']:
+		# Must come before the '-fvisibility=hidden' code.
+		bool_opt('syncdebug', False)
+		string_opt('fpmath', '387')
+
+		# If sync debugger is on, disable inlining, as it makes it much harder to follow backtraces.
+		if env['syncdebug']:
+			# Disable all possible inlining, just to be sure.
+			env['CCFLAGS'] += ['-fno-default-inline', '-fno-inline', '-fno-inline-functions', '-fno-inline-functions-called-once']
+
+		# It seems only gcc 4.0 and higher supports this.
+		# This breaks the backtrace() glibc function used by syncdebug, so don't add it if syncdebug is on.
+		if gcc_version >= ['4','0','0'] and not env['syncdebug']:
 			env['CCFLAGS'] += ['-fvisibility=hidden']
+
+		# Allow easy switching between 387 and SSE fpmath.
+		if env['fpmath']:
+			env['CCFLAGS'] += ['-mfpmath='+env['fpmath']]
+			if env['fpmath'] == 'sse':
+				env['CCFLAGS'] += ['-msse', '-msse2']
+
 		env['CXXFLAGS'] = env['CCFLAGS']
 
 		# This is broken, first, scons passes it to .c files compilation too (which is an error),
@@ -230,16 +255,20 @@ def generate(env):
 		# Even though -fPIC was passed on compilation of each object.
 		#env['CXXFLAGS'] += ['-fvisibility-inlines-hidden']
 
+		# Do not do this anymore because it may severely mess up our carefully selected options.
+		# Print a warning and ignore them instead.
 		# fall back to environment variables if neither debug nor optimize options are present
 		if not args.has_key('debug') and not args.has_key('optimize'):
 			if os.environ.has_key('CFLAGS'):
-				print "using CFLAGS:", os.environ['CFLAGS']
-				env['CCFLAGS'] = SCons.Util.CLVar(os.environ['CFLAGS'])
+				#print "using CFLAGS:", os.environ['CFLAGS']
+				#env['CCFLAGS'] = SCons.Util.CLVar(os.environ['CFLAGS'])
+				print "WARNING: attempt to use environment CFLAGS has been ignored."
 			if os.environ.has_key('CXXFLAGS'):
-				print "using CXXFLAGS:", os.environ['CXXFLAGS']
-				env['CXXFLAGS'] = SCons.Util.CLVar(os.environ['CXXFLAGS'])
-			else:
-				env['CXXFLAGS'] = env['CCFLAGS']
+				#print "using CXXFLAGS:", os.environ['CXXFLAGS']
+				#env['CXXFLAGS'] = SCons.Util.CLVar(os.environ['CXXFLAGS'])
+				print "WARNING: attempt to use environment CXXFLAGS has been ignored."
+			#else:
+			#	env['CXXFLAGS'] = env['CCFLAGS']
 
 		bool_opt('strip', True)
 		bool_opt('disable_avi', True)
@@ -251,9 +280,22 @@ def generate(env):
 		string_opt('datadir', '$prefix/games/taspring')
 		string_opt('cachedir', None)
 
+		# Make a list of preprocessor defines.
 		defines = ['_REENTRANT', 'DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
-		#Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
-		#and some AIs maybe.  Just make exceptions in SConstruct.
+
+		# Add define specifying type of floating point math to use.
+		if env['fpmath']:
+			if env['fpmath'] == 'sse':
+				defines += ['STREFLOP_SSE']
+			if env['fpmath'] == '387':
+				defines += ['STREFLOP_X87']
+
+		# Add/remove SYNCDEBUG to enable/disable sync debugging.
+		if env['syncdebug']:
+			defines += ['SYNCDEBUG']
+
+		# Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
+		# and some AIs maybe.  Just make exceptions in SConstruct.
 		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
 		if env['disable_clipboard']: defines += ['NO_CLIPBOARD']
 		if env['disable_avi']      : defines += ['NO_AVI']
@@ -261,11 +303,12 @@ def generate(env):
 		if env['use_mmgr']         : defines += ['USE_MMGR']
 		env.AppendUnique(CPPDEFINES = defines)
 
-		include_path = ['rts', 'rts/System']
+		include_path = ['rts', 'rts/System', 'rts/lib/streflop']
 		if not env['disable_lua']:
 			include_path += ["lua/luabind", "lua/lua/include"]
-		
-		lib_path = []
+
+		lib_path = ['rts/lib/streflop']
+
 		if env['platform'] == 'freebsd':
 			include_path += ['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
 			lib_path += ['/usr/local/lib', '/usr/X11R6/lib']
@@ -294,6 +337,8 @@ def generate(env):
 		env.AppendUnique(CPPPATH=include_path, LIBPATH=lib_path)
 
 		config.configure(env, conf_dir=os.path.join(env['builddir'], 'sconf_temp'))
+
+		env.AppendUnique(LIBS=['streflop'])
 
 		usropts.Save(usrcachefile, env)
 		intopts.Save(intcachefile, env)

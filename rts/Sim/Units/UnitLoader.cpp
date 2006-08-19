@@ -424,7 +424,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	if(weapondef->firesound.volume == -1 || weapondef->soundhit.volume == -1)  //no volume read from defenition
 	{
 		if(weapon->damages[0]>50){
-			float soundVolume=sqrt(weapon->damages[0]*0.5);
+			float soundVolume=sqrt(weapon->damages[0]*0.5f);
 			if(weapondef->type=="LaserCannon")
 				soundVolume*=0.5;
 			float hitSoundVolume=soundVolume;
@@ -451,7 +451,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 
 	weapon->onlyForward=weapondef->onlyForward;
 	if(owner->unitDef->type=="Fighter" && !owner->unitDef->hoverAttack)		//fighter aircrafts have too big tolerance in ta
-		weapon->maxAngleDif=cos(weapondef->maxAngle*0.4/180*PI);
+		weapon->maxAngleDif=cos(weapondef->maxAngle*0.4f/180*PI);
 	else
 		weapon->maxAngleDif=cos(weapondef->maxAngle/180*PI);
 

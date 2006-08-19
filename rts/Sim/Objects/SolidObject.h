@@ -49,7 +49,7 @@ public:
 	
 	//Positional properties.
 	PhysicalState physicalState;				//The current state of the object within the gameworld. I.e Flying or OnGround.
-	float3 midPos;								//This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
+	SyncedFloat3 midPos;								//This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
 
 	//Current dynamic properties.
 	bool isMoving;								//= velocity.length() > 0.0

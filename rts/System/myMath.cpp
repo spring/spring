@@ -1,6 +1,6 @@
 #include "StdAfx.h"
+#include "Platform/errorhandler.h"
 #include "myMath.h"
-#include "math.h"
 #include "mmgr.h"
 
 CR_BIND_STRUCT(float2);
@@ -16,6 +16,10 @@ class CMyMath
 public:
 	CMyMath()
 	{
+		// This must be put here too because it's executed before the streflop_init in main().
+		// Set single precision floating point math.
+		streflop_init<streflop::Simple>();
+
 		for(int a=0;a<1024;++a){
 			float ang=(a-512)*2*PI/1024;
 			float3 v;
@@ -23,8 +27,19 @@ public:
 			v.y=0;
 			v.z=cos(ang);
 			headingToVectorTable[a]=v;
-			headingToVectorTable[a].Normalize();
 		}
+		unsigned checksum = 0;
+		for (int a = 0; a < 1024; ++a) {
+			for (int b = 0; b < 3; ++b) {
+				checksum = 33 * checksum + *(unsigned*) &headingToVectorTable[a][b];
+			}
+		}
+// 		fprintf(stderr, "headingToVectorTable checksum: %08x\n", checksum);
+		assert(checksum == 0x617a9968);
+
+		// release mode check
+		if (checksum != 0x617a9968)
+			handleerror(0, "invalid headingToVectorTable checksum", "Sync Error", 0);
 	}
 };
 

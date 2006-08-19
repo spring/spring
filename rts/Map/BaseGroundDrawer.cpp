@@ -191,7 +191,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						m=md->moveMath->SpeedMod(*md, x*2,y*2);
 						if(gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
 							m=0;
-						m=min(1.,(double)sqrt(m));
+						m=min(1.0f,(float)sqrt(m));
 					}
 					infoTexMem[a*4+0]=255-int(m*255.0f);
 					infoTexMem[a*4+1]=int(m*255.0f);
@@ -205,7 +205,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 					int a=y*gs->pwr2mapx/2+x;
 					if(myAirLos[(y/2)*gs->hmapx/2+x/2]) {
 						float extractDepth = extractDepthMap[y*gs->hmapx+x];
-						infoTexMem[a*4]=(unsigned char)min(255.,(double)sqrt(sqrt(extractDepth))*900);
+						infoTexMem[a*4]=(unsigned char)min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
 					} else
 						infoTexMem[a*4]=0;
 					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);

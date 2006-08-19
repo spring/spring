@@ -4,7 +4,6 @@
 #include "Rendering/glFont.h"
 #include <ostream>
 #include <fstream>
-#include <math.h>
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "FileSystem/FileHandler.h"

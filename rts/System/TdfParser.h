@@ -12,6 +12,7 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include "Sync/SyncedPrimitiveIO.h"
 
 class TdfParser  
 {

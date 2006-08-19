@@ -369,9 +369,9 @@ void CAirMoveType::UpdateManeuver(void)
 void CAirMoveType::UpdateFighterAttack(void)
 {
 	float3 &pos = owner->pos;
-	float3 &rightdir = owner->rightdir;
-	float3 &frontdir = owner->frontdir;
-	float3 &updir = owner->updir;
+	SyncedFloat3 &rightdir = owner->rightdir;
+	SyncedFloat3 &frontdir = owner->frontdir;
+	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
 
 	float speedf=owner->speed.Length();
@@ -560,9 +560,9 @@ void CAirMoveType::UpdateAttack(void)
 void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 {
 	float3 &pos = owner->pos;
-	float3 &rightdir = owner->rightdir;
-	float3 &frontdir = owner->frontdir;
-	float3 &updir = owner->updir;
+	SyncedFloat3 &rightdir = owner->rightdir;
+	SyncedFloat3 &frontdir = owner->frontdir;
+	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
 
 	float speedf=speed.Length();
@@ -669,9 +669,9 @@ void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 void CAirMoveType::UpdateLanded(void)
 {
 	float3 &pos = owner->pos;
-	float3 &rightdir = owner->rightdir;
-	float3 &frontdir = owner->frontdir;
-	float3 &updir = owner->updir;
+	SyncedFloat3 &rightdir = owner->rightdir;
+	SyncedFloat3 &frontdir = owner->frontdir;
+	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
 
 	speed=ZeroVector;
@@ -713,9 +713,9 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 void CAirMoveType::UpdateLanding(void)
 {
 	float3 &pos = owner->pos;
-	float3 &rightdir = owner->rightdir;
-	float3 &frontdir = owner->frontdir;
-	float3 &updir = owner->updir;
+	SyncedFloat3 &rightdir = owner->rightdir;
+	SyncedFloat3 &frontdir = owner->frontdir;
+	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
 	float speedf=speed.Length();
 
@@ -810,9 +810,9 @@ void CAirMoveType::UpdateLanding(void)
 void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector)
 {
 	float3 &pos = owner->pos;
-	float3 &rightdir = owner->rightdir;
-	float3 &frontdir = owner->frontdir;
-	float3 &updir = owner->updir;
+	SyncedFloat3 &rightdir = owner->rightdir;
+	SyncedFloat3 &frontdir = owner->frontdir;
+	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
 
 	lastRudderPos=rudder;
@@ -829,7 +829,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl)
 		if((pos.y-gHeight)>wantedHeight*1.2)
-			engine=max(0.,min((double)engine,1-(pos.y-gHeight-wantedHeight*1.2)/wantedHeight));
+			engine=max(0.0f,min(engine,1-(pos.y-gHeight-wantedHeight*1.2f)/wantedHeight));
 #endif
 
 	speed+=engineVector*maxAcc*engine;
@@ -963,8 +963,8 @@ float3 CAirMoveType::FindLandingPos(void)
 
 void CAirMoveType::CheckForCollision(void)
 {
-	float3& pos=owner->midPos;
-	float3& forward=owner->frontdir;
+	SyncedFloat3& pos=owner->midPos;
+	SyncedFloat3& forward=owner->frontdir;
 	float3 midTestPos=pos+forward*121;
 
 	std::vector<CUnit*> others=qf->GetUnitsExact(midTestPos,115);
@@ -979,7 +979,7 @@ void CAirMoveType::CheckForCollision(void)
 	for(std::vector<CUnit*>::iterator ui=others.begin();ui!=others.end();++ui){
 		if(*ui==owner || !(*ui)->unitDef->canfly)
 			continue;
-		float3& op=(*ui)->midPos;
+		SyncedFloat3& op=(*ui)->midPos;
 		float3 dif=op-pos;
 		float3 forwardDif=forward*(forward.dot(dif));
 		if(forwardDif.SqLength()<dist*dist){

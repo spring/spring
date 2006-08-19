@@ -17,7 +17,7 @@ public:
 
 	std::deque<int> planes;
 	int curPlane;
-	double lastUpdateTime;
+	float lastUpdateTime;
 	float3 tcp;
 	float3 tcf;
 	float3 oldUp[32];

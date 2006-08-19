@@ -392,8 +392,8 @@ void GUIgame::PrivateDraw()
 				UnitDef *unitdef = unitDefHandler->GetUnitByID(-currentCommand->id);
 
 				float3 pos=camera->pos+mouse->dir*dist;
-				pos.x=floor(pos.x/(float)SQUARE_SIZE+0.5)*(float)SQUARE_SIZE;
-				pos.z=floor(pos.z/(float)SQUARE_SIZE+0.5)*(float)SQUARE_SIZE;
+				pos.x=floor(pos.x/(float)SQUARE_SIZE+0.5f)*(float)SQUARE_SIZE;
+				pos.z=floor(pos.z/(float)SQUARE_SIZE+0.5f)*(float)SQUARE_SIZE;
 
 				if(unitdef->floater)
 					pos.y = max(ground->GetHeight2(pos.x,pos.z),-unitdef->waterline);

@@ -973,8 +973,8 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		memset(au, 0, sizeof(sAllocUnit));
 		au->actualSize        = calculateActualSize(reportedSize);
 		#ifdef RANDOM_FAILURE
-		double	a = rand();
-		double	b = RAND_MAX / 100.0 * RANDOM_FAILURE;
+		float	a = rand();
+		float	b = RAND_MAX / 100.0 * RANDOM_FAILURE;
 		if (a > b)
 		{
 			au->actualAddress = malloc(au->actualSize);
@@ -1148,8 +1148,8 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		size_t	newActualSize = calculateActualSize(reportedSize);
 		void	*newActualAddress = NULL;
 		#ifdef RANDOM_FAILURE
-		double	a = rand();
-		double	b = RAND_MAX / 100.0 * RANDOM_FAILURE;
+		float	a = rand();
+		float	b = RAND_MAX / 100.0 * RANDOM_FAILURE;
 		if (a > b)
 		{
 			newActualAddress = realloc(au->actualAddress, newActualSize);

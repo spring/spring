@@ -5,7 +5,6 @@
 #include "StdAfx.h"
 #include "Sound.h"
 
-#include <math.h>
 #include "Game/UI/InfoConsole.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"

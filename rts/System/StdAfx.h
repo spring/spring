@@ -55,6 +55,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include "Syncify.h"
 #include "creg/creg.h"
 #include "float3.h"
+#include "Sync/SyncedFloat3.h"
 #include "GlobalStuff.h"
 
 #include <cassert>

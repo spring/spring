@@ -6,7 +6,6 @@
 #include "StdAfx.h"
 #include "BasicSky.h"
 
-#include <math.h>
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Game/Camera.h"
@@ -578,7 +577,7 @@ void CBasicSky::CreateRandMatrix(int matrix[32][32],float mod)
 {
 	for(int y=0;y<32;y++){
 		for(int x=0;x<32;x++){
-			double r = ((double)( rand() )) / (double)RAND_MAX;
+			float r = ((float)( rand() )) / (float)RAND_MAX;
 			matrix[y][x]=((int)( r * 255.0 ));
 		}
 	}

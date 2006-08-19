@@ -30,7 +30,7 @@ protected:
 		int ysize;
 	};
 	vector<FrameData> frames;
-	double lastFrameTime;
+	float lastFrameTime;
 	int curFrame;
 	int xofs, yofs;			//Describes where the center of the cursor is. Calculated after the largest cursor if animated
 };

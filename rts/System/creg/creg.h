@@ -10,6 +10,7 @@ Copyright 2005 Jelmer Cnossen
 #include <string>
 
 #include "ISerializer.h"
+#include "Sync/SyncedPrimitive.h"
 
 namespace creg {
 
@@ -26,6 +27,14 @@ namespace creg {
 		crFloat,
 		crDouble,
 		crBool,
+#ifdef SYNCDEBUG
+		crSyncedSint,   crSyncedUint,
+		crSyncedSshort, crSyncedUshort,
+		crSyncedSchar,  crSyncedUchar,
+		crSyncedFloat,
+		crSyncedDouble,
+		crSyncedBool,
+#endif
 	};
 
 	class IType

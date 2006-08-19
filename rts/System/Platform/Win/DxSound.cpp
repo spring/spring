@@ -9,7 +9,6 @@
 	#include <windows.h>
 #endif
 
-#include <math.h>
 #include "Game/UI/InfoConsole.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"

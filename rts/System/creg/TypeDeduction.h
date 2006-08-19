@@ -37,6 +37,20 @@ CREG_SUPPORT_BASIC_TYPE(float, crFloat)
 CREG_SUPPORT_BASIC_TYPE(double, crDouble)
 CREG_SUPPORT_BASIC_TYPE(bool, crBool)
 
+#ifdef SYNCDEBUG
+CREG_SUPPORT_BASIC_TYPE(SyncedSint,   crSyncedSint)
+CREG_SUPPORT_BASIC_TYPE(SyncedUint,   crSyncedUint)
+CREG_SUPPORT_BASIC_TYPE(SyncedSshort, crSyncedSshort)
+CREG_SUPPORT_BASIC_TYPE(SyncedUshort, crSyncedUshort)
+CREG_SUPPORT_BASIC_TYPE(SyncedSchar,  crSyncedSchar)
+CREG_SUPPORT_BASIC_TYPE(SyncedUchar,  crSyncedUchar)
+CREG_SUPPORT_BASIC_TYPE(SyncedSlong,  crSyncedSint) // Long is assumed to be an int (4 bytes)
+CREG_SUPPORT_BASIC_TYPE(SyncedUlong,  crSyncedUint)
+CREG_SUPPORT_BASIC_TYPE(SyncedFloat,  crSyncedFloat)
+CREG_SUPPORT_BASIC_TYPE(SyncedDouble, crSyncedDouble)
+CREG_SUPPORT_BASIC_TYPE(SyncedBool,   crSyncedBool)
+#endif
+
 
 template<typename T>
 class ObjectPointerType : public IType

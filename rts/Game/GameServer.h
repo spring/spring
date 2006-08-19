@@ -35,7 +35,7 @@ public:
 	bool gameEndDetected;
 	float gameEndTime;					//how long has gone by since the game end was detected
 
-	double lastSyncRequest;
+	float lastSyncRequest;
 	int outstandingSyncFrame;
 	CChecksum syncResponses[MAX_PLAYERS];
 	unsigned int exeChecksum;
@@ -47,6 +47,9 @@ public:
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
 	float maxTimeLeft;
 	void SendSystemMsg(const char* fmt,...);
+#ifdef SYNCDEBUG
+	volatile bool fakeDesync; // set in client on .fakedesync, read and reset in server
+#endif
 };
 
 extern CGameServer* gameServer;

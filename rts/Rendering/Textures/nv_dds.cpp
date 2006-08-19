@@ -156,6 +156,8 @@
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
 
+#include "StdAfx.h"
+
 #if defined(WIN32)
 #  include <windows.h>
 #  define GET_EXT_POINTER(name, type) \

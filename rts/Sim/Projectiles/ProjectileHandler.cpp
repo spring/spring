@@ -508,7 +508,7 @@ void CProjectileHandler::CheckUnitCol()
 
 					if(unit->isMarkedOnBlockingMap && unit->physicalState != CSolidObject::Flying){
 						float3 closePos(p->pos+p->speed*closeTime);
-						int square=(int)max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
+						int square=(int)max(0.0f,min((float)(gs->mapSquares-1),closePos.x*(1.0f/8.0f)+int(closePos.z*(1.0f/8.0f))*gs->mapx));
 						if(readmap->groundBlockingObjectMap[square]!=unit)
 							continue;
 					}
@@ -535,7 +535,7 @@ void CProjectileHandler::CheckUnitCol()
 					if(dif.SqLength() < totalRadius*totalRadius){
 						if((*fi)->isMarkedOnBlockingMap){
 							float3 closePos(p->pos+p->speed*closeTime);
-							int square=(int)max(0.,min((double)(gs->mapSquares-1),closePos.x*(1./8.)+int(closePos.z*(1./8.))*gs->mapx));
+							int square=(int)max(0.0f,min((float)(gs->mapSquares-1),closePos.x*(1.0f/8.0f)+int(closePos.z*(1.0f/8.0f))*gs->mapx));
 							if(readmap->groundBlockingObjectMap[square]!=(*fi))
 								continue;
 						}

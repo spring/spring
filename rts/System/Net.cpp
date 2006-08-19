@@ -67,7 +67,7 @@ CNet::CNet()
 {
 	Uint64 t;
 	t = SDL_GetTicks();
-	curTime=double(t)/1000.;
+	curTime=float(t)/1000.;
 	Uint16 wVersionRequested;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -178,7 +178,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 
 	Uint64 t;
 	t = SDL_GetTicks();
-	curTime=double(t)/1000.;
+	curTime=float(t)/1000.;
 
 	if(FindDemoFile(server)){
 		onlyLocal=true;
@@ -327,7 +327,7 @@ void CNet::Update(void)
 {
 	Uint64 t;
 	t = SDL_GetTicks();
-	curTime=double(t)/1000.;
+	curTime=float(t)/1000.;
 	if(playbackDemo)
 		ReadDemoFile();
 	if(onlyLocal){
@@ -653,7 +653,7 @@ void CNet::CreateDemoFile()
 
 void CNet::SaveToDemo(unsigned char* buf,int length)
 {
-	recordDemo->write((char*)&gu->modGameTime,sizeof(double));
+	recordDemo->write((char*)&gu->modGameTime,sizeof(float));
 	recordDemo->write((char*)&length,sizeof(int));
 	recordDemo->write((char*)buf,length);
 	recordDemo->flush();
@@ -683,7 +683,7 @@ bool CNet::FindDemoFile(const char* name)
 			gameSetup->Init(buf,length);
 			delete[] buf;
 		}
-		playbackDemo->Read(&demoTimeOffset,sizeof(double));
+		playbackDemo->Read(&demoTimeOffset,sizeof(float));
 		demoTimeOffset=gu->modGameTime-demoTimeOffset;
 		nextDemoRead=gu->modGameTime-0.01;
 		return true;
@@ -712,7 +712,7 @@ void CNet::ReadDemoFile(void)
 			playbackDemo->Read(&l,sizeof(int));
 			playbackDemo->Read(tempbuf,l);
 			SendData(tempbuf,l);
-			playbackDemo->Read(&nextDemoRead,sizeof(double));
+			playbackDemo->Read(&nextDemoRead,sizeof(float));
 			nextDemoRead+=demoTimeOffset;
 			if(playbackDemo->Eof()){
 				info->AddLine("End of demo");
@@ -731,7 +731,7 @@ void CNet::ReadDemoFile(void)
 			playbackDemo->Read(&l,sizeof(int));
 			playbackDemo->Read(&connections[0].readyData[connections[0].readyLength],l);
 			connections[0].readyLength+=l;
-			playbackDemo->Read(&nextDemoRead,sizeof(double));
+			playbackDemo->Read(&nextDemoRead,sizeof(float));
 			nextDemoRead+=demoTimeOffset;
 			if(playbackDemo->Eof()){
 				info->AddLine("End of demo");
@@ -776,7 +776,7 @@ void CNet::CreateDemoServer(std::string demoname)
 
 void CNet::StartDemoServer(void)
 {
-	playbackDemo->Read(&demoTimeOffset,sizeof(double));
+	playbackDemo->Read(&demoTimeOffset,sizeof(float));
 	demoTimeOffset=gu->modGameTime-demoTimeOffset;
 	nextDemoRead=gu->modGameTime-0.01;
 }
