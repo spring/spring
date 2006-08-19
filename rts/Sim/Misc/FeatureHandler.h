@@ -29,7 +29,7 @@ class CFeatureHandler :
 public:
 	CFeatureHandler();
 	~CFeatureHandler();
-	CFeature* CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke,std::string fromUnit);
+	CFeature* CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter,int allyteam,bool emitSmoke,std::string fromUnit);
 
 	void Update();
 

@@ -405,11 +405,7 @@ CGame::~CGame()
 #ifdef TRACE_SYNC
 	tracefile << "End game\n";
 #endif
-	if(gameServer){
-		gameServer->quitServer=true;
-		gameServer=0;
-		SDL_Delay(20);
-	}
+	delete gameServer;
 
 	globalAI->PreDestroy ();
 	delete water;

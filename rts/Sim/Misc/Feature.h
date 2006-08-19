@@ -21,7 +21,7 @@ public:
 	CFeature();	
 	~CFeature();
 
-	void Initialize(const float3& pos,FeatureDef* def,short int heading,int allyteam,std::string fromUnit); //pos of quad must not change after this
+	void Initialize(const float3& pos,FeatureDef* def,short int heading, int facing, int allyteam,std::string fromUnit); //pos of quad must not change after this
 	bool AddBuildPower(float amount, CUnit* builder);								//negative amount=reclaim,return=true->reclaimed
 	void DoDamage(const DamageArray& damages, CUnit* attacker,const float3& impulse);
 	void Kill(float3& impulse);

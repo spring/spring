@@ -31,7 +31,7 @@ public:
 	This code hacks around the mouse input from DirectInput, which SDL uses in fullscreen mode.
 	Instead it installs a window message proc and reads input from WM_MOUSEMOVE */
 
-	WNDPROC sdl_wndproc;
+	LONG_PTR sdl_wndproc;
 	int2 mousepos;
 	bool mousemoved;
 	HWND wnd;
@@ -44,13 +44,13 @@ public:
 			inst->mousemoved = true;
 			return FALSE;
 		}
-		return CallWindowProc(inst->sdl_wndproc, wnd, msg, wparam, lparam);
+		return CallWindowProc((WNDPROC)inst->sdl_wndproc, wnd, msg, wparam, lparam);
 	}
 
 	void InstallWndCallback()
 	{
-		sdl_wndproc = (WNDPROC)GetWindowLong(wnd, GWL_WNDPROC);
-		SetWindowLong(wnd,GWL_WNDPROC,(LONG)SpringWndProc);
+		sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
+		SetWindowLongPtr(wnd,GWLP_WNDPROC,(LONG_PTR)SpringWndProc);
 	}
 	
 	CWin32MouseInput()
@@ -74,7 +74,7 @@ public:
 	~CWin32MouseInput()
 	{
 		// reinstall the SDL window proc
-		SetWindowLong(wnd, GWL_WNDPROC, (LONG)sdl_wndproc);
+		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
 
 	int2 GetPos()

@@ -50,7 +50,7 @@ CSolidObject::CSolidObject()
 	//momentum(0,0,0),
 	isMoving(false),
 	heading(0),
-
+	buildFacing(0),
 	//newVelocity(0,0,0),
 	//newMomentum(0,0,0),
 	residualImpulse(0,0,0),

@@ -69,7 +69,7 @@ CFeatureHandler::~CFeatureHandler()
 	delete[] drawQuads;
 }
 
-CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int iter,int allyteam,bool emitSmoke,std::string fromUnit)
+CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter, int allyteam, bool emitSmoke,std::string fromUnit)
 {
 	ASSERT_SYNCED_MODE;
 	if(name.empty())
@@ -80,11 +80,11 @@ CFeature*  CFeatureHandler::CreateWreckage(const float3& pos, const std::string&
 		return 0;
 
 	if(iter>1){
-		return CreateWreckage(pos,fd->deathFeature,rot,iter-1,allyteam,emitSmoke,"");
+		return CreateWreckage(pos,fd->deathFeature,rot,facing, iter-1,allyteam,emitSmoke,"");
 	} else {
 		if(!fd->modelname.empty()){
 			CFeature* f=new CFeature;
-			f->Initialize (pos,fd,(short int)rot,allyteam,fromUnit);
+			f->Initialize (pos,fd,(short int)rot,facing,allyteam,fromUnit);
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
 			return f;
@@ -277,7 +277,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			float ypos = ground->GetHeight2(mfi[a].pos.x,mfi[a].pos.z);
-			(new CFeature)->Initialize (float3(mfi[a].pos.x, ypos,mfi[a].pos.z),featureDefs[name],(short int)mfi[a].rotation,-1,"");
+			(new CFeature)->Initialize (float3(mfi[a].pos.x, ypos,mfi[a].pos.z),featureDefs[name],(short int)mfi[a].rotation,0,-1,"");
 		}
 		delete[] mfi;
 	}
@@ -341,7 +341,7 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 				string fromUnit;
 				file->lsString(fromUnit);
 				CFeature* f = new CFeature;
-				f->Initialize (pos,featureDefs[def],rotation,-1,fromUnit);
+				f->Initialize (pos,featureDefs[def],rotation,0,-1,fromUnit);
 			} else {
 				file->lsFloat3(features[a]->pos);
 				file->lsString(features[a]->def->myName);
