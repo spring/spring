@@ -303,7 +303,7 @@ def generate(env):
 		if env['use_mmgr']         : defines += ['USE_MMGR']
 		env.AppendUnique(CPPDEFINES = defines)
 
-		include_path = ['rts', 'rts/System', 'rts/lib/streflop']
+		include_path = ['rts', 'rts/System']
 		if not env['disable_lua']:
 			include_path += ["lua/luabind", "lua/lua/include"]
 
