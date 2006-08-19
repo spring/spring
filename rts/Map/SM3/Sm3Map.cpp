@@ -250,7 +250,7 @@ void CSm3ReadMap::LoadFeatureData()
 		if (version > 0) 
 			throw content_error("Map feature data has incorrect version, you are probably using an outdated spring version.");
 
-		uint32_t nf;
+		unsigned int nf;
 		fh.Read(&nf, 4);
 		numFeatures = swabdword(nf);
 
