@@ -1590,13 +1590,13 @@ int AAIBuildTable::GetMetalMaker(int side, float cost, float efficiency, float m
 			my_rating = 0;
 		else if(!water && unitList[*maker-1]->minWaterDepth <= 0)
 		{
-			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * unitList[*maker-1]->makesMetal, (long double) 1.6))
-				/(pow((long double) cost * units_static[*maker].cost,(long double) 1.4) + pow((long double) urgency * unitList[*maker-1]->buildTime,(long double) 1.4));
+			my_rating = (pow(efficiency * units_static[*maker].efficiency[0], 1.4) + pow(metal * unitList[*maker-1]->makesMetal, 1.6))
+				/(pow(cost * units_static[*maker].cost, 1.4) + pow(urgency * unitList[*maker-1]->buildTime, 1.4));
 		}
 		else if(water && unitList[*maker-1]->minWaterDepth > 0)
 		{
-			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * unitList[*maker-1]->makesMetal, (long double) 1.6))
-				/(pow((long double) cost * units_static[*maker].cost,(long double) 1.4) + pow((long double) urgency * unitList[*maker-1]->buildTime,(long double) 1.4));
+			my_rating = (pow(efficiency * units_static[*maker].efficiency[0], 1.4) + pow(metal * unitList[*maker-1]->makesMetal, 1.6))
+				/(pow(cost * units_static[*maker].cost, 1.4) + pow(urgency * unitList[*maker-1]->buildTime, 1.4));
 		}
 		else 
 			my_rating = 0;
@@ -2405,7 +2405,7 @@ bool AAIBuildTable::CanBuildUnit(int id_builder, int id_unit)
 			return true;
 	}
 
-	// unit not found in builder´s buildoptions
+	// unit not found in builders buildoptions
 	return false;
 }
 
