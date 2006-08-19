@@ -234,6 +234,14 @@ void CGroupAI::CommandFinished(int unit,int type)
 		{
 			aicb->SendTextMsg("Can't find a moho spot",0);
 			aicb->SetLastMsgPos(aicb->GetUnitPos(unit));
+			if(mode==manual)
+			{
+				ManualFindMex();
+			}
+			if(mode==automatic)
+			{
+				AutoFindMex(unit);
+			}
 			return;
 		}
 		// give the build order

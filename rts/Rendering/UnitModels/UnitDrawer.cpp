@@ -308,6 +308,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 inline void CUnitDrawer::DrawFar(CUnit *unit)
 {
+	unit->isIcon = false;
 	float3 interPos=unit->pos+unit->speed*gu->timeOffset+UpVector*unit->model->height*0.5;
 	int snurr=-unit->heading+GetHeadingFromVector(camera->pos.x-unit->pos.x,camera->pos.z-unit->pos.z)+(0xffff>>4);
 	if(snurr<0)
@@ -326,6 +327,7 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 
 void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 {
+	unit->isIcon = true;
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	std::string iconType;
 	if(asRadarBlip){
@@ -351,6 +353,8 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	float scale=icon->size*dist/2;
 	if(icon->radiusAdjust && !asRadarBlip)
 		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
+
+	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
 
 	// Is the unit selected? Then draw it white.
 	if(unit->commandAI->selected){

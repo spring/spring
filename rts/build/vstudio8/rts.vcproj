@@ -1535,14 +1535,6 @@
 					RelativePath="..\..\Rendering\Gl\VertexArrayRange.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\Rendering\Gl\WinPBuffer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Gl\WinPBuffer.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Textures"
@@ -3849,6 +3841,14 @@
 					</File>
 					<File
 						RelativePath="..\..\Map\SM3\terrain\TerrainTexture.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainTextureGLSL.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SM3\terrain\TerrainTextureGLSL.h"
 						>
 					</File>
 					<File

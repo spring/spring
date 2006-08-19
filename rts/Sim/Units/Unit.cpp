@@ -170,7 +170,9 @@ CUnit::CUnit ()
 	dontFire(false),
 	deathScriptFinished(false),
 	dontUseWeapons(false),
-	currentFuel(0)
+	currentFuel(0),
+	isIcon(false),
+	iconRadius(0)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -630,6 +632,7 @@ void CUnit::Kill(float3& impulse) {
 
 void CUnit::Draw()
 {
+	isIcon = false;
 	glPushMatrix();
 	float3 interPos=pos+speed*gu->timeOffset;
 	
