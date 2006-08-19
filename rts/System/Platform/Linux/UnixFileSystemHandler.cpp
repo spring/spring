@@ -511,15 +511,19 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 		// exclude hidden files
 		if (ep->d_name[0] != '.') {
 			// is it a file? (we just treat sockets / pipes / fifos / character&block devices as files...)
-			if (!(ep->d_type == DT_DIR)) {
-				if (boost::regex_match(ep->d_name, regexpattern))
-					matches.push_back(dir + ep->d_name);
-			}
-			// or a directory?
-			else if (recurse) {
-				if (include_dirs && boost::regex_match(ep->d_name, regexpattern))
-					matches.push_back(dir + ep->d_name);
-				FindFiles(matches, dir + ep->d_name + '/', regexpattern, recurse, include_dirs);
+			// (need to stat because d_type is DT_UNKNOWN on linux :-/)
+			struct stat info;
+			if (stat((dir + ep->d_name).c_str(), &info) == 0) {
+				if (!S_ISDIR(info.st_mode)) {
+					if (boost::regex_match(ep->d_name, regexpattern))
+						matches.push_back(dir + ep->d_name);
+				}
+				// or a directory?
+				else if (recurse) {
+					if (include_dirs && boost::regex_match(ep->d_name, regexpattern))
+						matches.push_back(dir + ep->d_name);
+					FindFiles(matches, dir + ep->d_name + '/', regexpattern, recurse, include_dirs);
+				}
 			}
 		}
 	}
