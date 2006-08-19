@@ -128,6 +128,22 @@ for f in filelist.list_globalAIs(aienv):
 	Alias('install-GlobalAI', inst)
 	Alias('install-'+f, inst)
 
+# Build streflop (which has it's own Makefile-based build system)
+if not 'configure' in sys.argv and not 'test' in sys.argv:
+	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
+	if env['fpmath'] == 'sse':
+		cmd = "STREFLOP_SSE=1 " + cmd
+	else:
+		cmd = "STREFLOP_X87=1 " + cmd
+	if env.GetOption('clean'):
+		cmd += " clean"
+	status = os.system("make " + cmd)
+	if status:
+		print "Failed building streflop!"
+		env.Exit(status)
+	else:
+		print "Succes building streflop!"
+
 # Use this to avoid an error message 'how to make target test ?'
 # This can be replaced for unit testing code at any time (in other branch for example).
 env.Alias('test', None)

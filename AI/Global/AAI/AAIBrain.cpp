@@ -474,7 +474,7 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 			dist = 0.1;
 			for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); sector++)
 			{
-				dist += 2.0 * sqrt(pow( (*t)->x - (*sector)->x , 2) + pow( (*t)->y - (*sector)->y , 2));
+				dist += 2.0 * sqrt(pow( float((*t)->x - (*sector)->x) , 2.0) + pow( float((*t)->y - (*sector)->y) , 2.0));
 			}
 
 			if(sectorType = LAND_SECTOR)
