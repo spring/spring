@@ -1,6 +1,9 @@
 /* Author: Tobi Vollebregt */
 /* Python bindings for unitsync library */
 
+/* dirty hack to stop streflop from being included & conflicting with Python.h */
+#define STREFLOP_H
+namespace streflop {};
 
 #include <Python.h>
 #include <cstring>
