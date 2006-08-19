@@ -236,7 +236,7 @@ DLL_EXPORT int __stdcall GetMapCount()
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetMapCount.");
 	//vector<string> files = CFileHandler::FindFiles("{maps/*.smf,maps/*.sm3}");
-	vector<string> files = CFileHandler::FindFiles("maps/", "*.smf");
+	vector<string> files = CFileHandler::FindFiles("maps/", "{*.smf,*.sm3}");
 	vector<string> ars = archiveScanner->GetMaps();
 /*	vector<string> files2 = CFileHandler::FindFiles("maps/*.sm3");
 	unsigned int nfiles=files.size();

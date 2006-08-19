@@ -2,6 +2,9 @@ TASpring change log
 
 0.next
 
+- linux vs linux is now synced, independently of the distribution & gcc version
+- if host finishes loading before client executable is started spring no longer loses connection
+
 - replaced key binding code with a more flexible solution:
   * can specify key for almost all commands
   * can specify modifiers

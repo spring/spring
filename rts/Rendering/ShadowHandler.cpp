@@ -82,6 +82,9 @@ bool CShadowHandler::InitDepthTarget()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	fb->select();
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
 	fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_DEPTH);
 	fb->checkFBOStatus();
 	return true;
