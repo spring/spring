@@ -497,6 +497,10 @@ void CAirCAI::SlowUpdate()
 				DeleteDeathDependence(orderTarget);
 				orderTarget=0;
 			}
+			if ((c.params.size() == 4) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+				owner->AttackUnit(0,true); 
+				FinishCommand();
+			}    
 		} else {
 			if(myPlane->aircraftState!=CAirMoveType::AIRCRAFT_LANDED){
 				inCommand=true;
