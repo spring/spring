@@ -96,3 +96,9 @@ setchannelkey <channel> <key>
   to moderators as well.
 updatemotd <filename>
   will reload MOTD ("message of the day") from a file <filename>.
+launchprocess <process name + parameters>
+  used for debugging purposes only! This command will launch the specified process.
+  Note though that you can't execute system commands this way (like "dir" on Windows).
+  Warning: any process you lunch must terminate immediately or at least before server
+  stops, or else server process won't terminate properly (it will remain ghosted until
+  all of its child processes are terminated).

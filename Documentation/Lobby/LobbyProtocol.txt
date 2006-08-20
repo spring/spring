@@ -560,6 +560,9 @@
   map hashes!) followed by an integer in range [0..10] where 0 means user hasn't graded the
   map yet and 1 to 10 means user's map grade. Server will return MAPGRADES command containing
   global grades for all the maps specified with MAPGRADES command sent by the client.
+  Note that only grades from players with rank greater than "beginner" will get written to
+  global grades (this is to avoid exploiting of this system - anyone could register multiple
+  accounts and vote for some map).
 
   * MAPGRADES hashlist
   Sent by server as a response to MAPGRADES command sent by the client. "hashlist" has similar
