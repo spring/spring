@@ -60,7 +60,7 @@ static bool IsFakeError()
 	int err=WSAGetLastError();
 	return err==WSAEWOULDBLOCK || err==WSAECONNRESET || err==WSAEINTR;
 #else
-	return errno==EWOULDBLOCK || errno==ECONNRESET || errno=EINTR;
+	return errno==EWOULDBLOCK || errno==ECONNRESET || errno==EINTR;
 #endif
 }
 
