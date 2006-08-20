@@ -1,6 +1,12 @@
   ------ CHANGELOG ------
 
-  *** 0.26 (??x??x??) ***
+  *** 0.30 (??x??x??) ***
+  * added new map list with some new options (map grading, custom comments, online grades, ...)
+  * last open map is now restored on program start
+  * fixed some graphical glitch on program start (showing distorted main window before initialization is completed)
+  * can't change player settings anymore once you ready up
+
+  *** 0.26 (20x07x06) ***
   * fixed serious bug with hosting replays not working
   * players who don't have the map can't ready up anymore
   * fixed bug with /password command not checking password correctly
