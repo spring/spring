@@ -57,9 +57,10 @@ CNet* serverNet=0;
 static bool IsFakeError()
 {
 #ifdef _WIN32
-	return WSAGetLastError()==WSAEWOULDBLOCK || WSAGetLastError()==WSAECONNRESET;
+	int err=WSAGetLastError();
+	return err==WSAEWOULDBLOCK || err==WSAECONNRESET || err==WSAEINTR;
 #else
-	return errno==EWOULDBLOCK || errno==ECONNRESET;
+	return errno==EWOULDBLOCK || errno==ECONNRESET || errno=EINTR;
 #endif
 }
 
