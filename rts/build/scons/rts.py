@@ -278,7 +278,7 @@ def generate(env):
 
 		# Make a list of preprocessor defines.
 		env.AppendUnique(CPPDEFINES = ['_REENTRANT', '_SZ_ONE_DIRECTORY'])
-		spring_defines = ['DIRECT_CONTROL_ALLOWED', 'LUA_NUMBER=float']
+		spring_defines = ['DIRECT_CONTROL_ALLOWED']
 
 		# Add define specifying type of floating point math to use.
 		if env['fpmath']:

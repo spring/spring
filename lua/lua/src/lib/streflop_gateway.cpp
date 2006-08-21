@@ -10,7 +10,7 @@ See lmathlib.c for details.
 
 // stolen from lua.h
 #ifndef LUA_NUMBER
-typedef double lua_Number;
+typedef float lua_Number;
 #else
 typedef LUA_NUMBER lua_Number;
 #endif
