@@ -160,12 +160,12 @@ std::string CSpawnScript::LoadToken(CFileHandler& file)
 		if(c>='0' && c<='z')
 			break;
 	}
-
+	s += c;
 	while (!file.Eof()) {
+		file.Read(&c,1);
 		if(c<'0' || c>'z')
 			return s;
 		s+=c;
-		file.Read(&c,1);
 	}
 	return s;
 }
