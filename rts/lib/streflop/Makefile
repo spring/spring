@@ -18,12 +18,8 @@ else
 USE_SOFT_BINARY=
 endif
 
-TARGETS = libm/flt-target libm/dbl-target
-LIBM_OBJECTS = $(flt-32-objects) $(dbl-64-objects)
-ifndef STREFLOP_SSE
-TARGETS += libm/ldbl-target
-LIBM_OBJECTS += $(ldbl-96-objects)
-endif
+TARGETS = libm/flt-target
+LIBM_OBJECTS = $(flt-32-objects)
 
 all: streflop.a
 
