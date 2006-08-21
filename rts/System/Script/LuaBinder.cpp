@@ -13,7 +13,7 @@
 
 extern "C"
 {
-    #include "lua.h"
+	#include "lua.h"
 	#include "lauxlib.h"
 	#include "lualib.h"
 }
@@ -52,19 +52,27 @@ struct CScript_wrapper : CScript, wrap_base
 
 namespace luabind 
 {
-    template<class T>
-    T* get_pointer(CObject_pointer<T>& p) 
-    {
+	template<class T>
+	T* get_pointer(CObject_pointer<T>& p) 
+	{
 		if (!p.held)
 			info->AddLine("Lua warning: using invalid unit reference");
-        return p.held; 
-    }
+		return p.held; 
+	}
 
-    template<class A>
-    CObject_pointer<const A>* get_const_holder(CObject_pointer<A>*)
-    {
-        return 0;
-    }
+	template<class T>
+	const T* get_pointer(const CObject_pointer<T>& p) 
+	{
+		if (!p.held)
+			info->AddLine("Lua warning: using invalid unit reference");
+		return p.held; 
+	}
+
+	template<class A>
+	CObject_pointer<const A>* get_const_holder(CObject_pointer<A>*)
+	{
+		return 0;
+	}
 }
 
 namespace luafunctions {
@@ -163,11 +171,11 @@ CLuaBinder::CLuaBinder(void)
 	open(luaState);
 
 	// Setup the lua global environment
-    luaopen_base(luaState);
-    //luaopen_io(luaState);
-    luaopen_string(luaState);
+	luaopen_base(luaState);
+	//luaopen_io(luaState);
+	luaopen_string(luaState);
 	luaopen_table(luaState);
-    luaopen_math(luaState);
+	luaopen_math(luaState);
 
 	// Define the useful spring classes to lua
 	module(luaState)
