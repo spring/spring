@@ -84,7 +84,6 @@ def generate(env):
 		('disable_avi',       'Set to no to turn on avi support', True),
 		('disable_clipboard', 'Set to no to turn on clipboard code', True),
 		#other ported parts
-		('disable_lua',       'Set to no to turn on Lua support', False),
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
 		('cachedir',          'Cache directory (see scons manual)', None))
@@ -100,6 +99,7 @@ def generate(env):
 		('CPPPATH',       'c preprocessor include path'),
 		('CC',            'c compiler'),
 		('CXX',           'c++ compiler'),
+		('spring_defines','extra c preprocessor defines for spring'),
 		('is_configured', 'configuration version stamp'))
 
 	usropts.Update(env)
@@ -110,7 +110,7 @@ def generate(env):
 	# Use this to avoid an error message 'how to make target configure ?'
 	env.Alias('configure', None)
 
-	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 2) or env.GetOption('clean')):
+	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 3) or env.GetOption('clean')):
 		print "Not configured or configure script updated.  Run `scons configure' first."
 		print "Use `scons --help' to show available configure options to `scons configure'."
 		env.Exit(1)
@@ -118,7 +118,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'disable_lua', 'disable_aio', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured']:
+		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'is_configured', 'spring_defines']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -137,7 +137,7 @@ def generate(env):
 
 		args = makeHashTable(sys.argv)
 
-		env['is_configured'] = 2
+		env['is_configured'] = 3
 
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
@@ -210,9 +210,11 @@ def generate(env):
 			elif level == 'yes' or level == 'true': level = '2'
 		else:
 			if env['debug']: level = '0'
-			else: level = '1'
+			else: level = '2'
 		if level == 's' or level == 'size' or (int(level) >= 1 and int(level) <= 3):
 			print "level", level, "optimizing enabled"
+			if level != '2':
+				print "WARNING: for sync it is recommended to compile with level 2 optimization"
 			env['optimize'] = level
 			#archflags = detect.processor(gcc_version >= ['3','4','0'])
 			# -fstrict-aliasing causes constructs like:
@@ -221,7 +223,7 @@ def generate(env):
 			# Since those constructs are used in the netcode and MathTest code, we disable the optimization.
 			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe', '-fno-strict-aliasing', '-frename-registers'])
 		elif int(level) == 0:
-			print "optimizing NOT enabled,",
+			print "optimizing NOT enabled",
 			env['optimize'] = 0
 		else:
 			print "\ninvalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
@@ -237,23 +239,18 @@ def generate(env):
 			env['CCFLAGS'] += ['-fno-default-inline', '-fno-inline', '-fno-inline-functions', '-fno-inline-functions-called-once']
 
 		# It seems only gcc 4.0 and higher supports this.
-		# This breaks the backtrace() glibc function used by syncdebug, so don't add it if syncdebug is on.
-		if gcc_version >= ['4','0','0'] and not env['syncdebug']:
+		if gcc_version >= ['4','0','0']:
 			env['CCFLAGS'] += ['-fvisibility=hidden']
 
 		# Allow easy switching between 387 and SSE fpmath.
 		if env['fpmath']:
 			env['CCFLAGS'] += ['-mfpmath='+env['fpmath']]
 			if env['fpmath'] == 'sse':
+				print "WARNING: SSE math vs X87 math is unsynced!"
+				print "WARNING: Do not go online with the binary you are currently building!"
 				env['CCFLAGS'] += ['-msse', '-msse2']
 
 		env['CXXFLAGS'] = env['CCFLAGS']
-
-		# This is broken, first, scons passes it to .c files compilation too (which is an error),
-		# second, linking of a shared object fails with:
-		# /usr/bin/ld: build/tools/unitsync/unitsync.os: relocation R_X86_64_PC32 against `std::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@@GLIBCXX_3.4' can not be used when making a shared object; recompile with -fPIC
-		# Even though -fPIC was passed on compilation of each object.
-		#env['CXXFLAGS'] += ['-fvisibility-inlines-hidden']
 
 		# Do not do this anymore because it may severely mess up our carefully selected options.
 		# Print a warning and ignore them instead.
@@ -273,7 +270,6 @@ def generate(env):
 		bool_opt('strip', True)
 		bool_opt('disable_avi', True)
 		bool_opt('disable_clipboard', True)
-		bool_opt('disable_lua', False)
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
@@ -281,34 +277,31 @@ def generate(env):
 		string_opt('cachedir', None)
 
 		# Make a list of preprocessor defines.
-		defines = ['_REENTRANT', 'DIRECT_CONTROL_ALLOWED', '_SZ_ONE_DIRECTORY']
+		env.AppendUnique(CPPDEFINES = ['_REENTRANT', '_SZ_ONE_DIRECTORY'])
+		spring_defines = ['DIRECT_CONTROL_ALLOWED', 'LUA_NUMBER=float']
 
 		# Add define specifying type of floating point math to use.
 		if env['fpmath']:
 			if env['fpmath'] == 'sse':
-				defines += ['STREFLOP_SSE']
+				spring_defines += ['STREFLOP_SSE']
 			if env['fpmath'] == '387':
-				defines += ['STREFLOP_X87']
+				spring_defines += ['STREFLOP_X87']
 
 		# Add/remove SYNCDEBUG to enable/disable sync debugging.
 		if env['syncdebug']:
-			defines += ['SYNCDEBUG']
+			spring_defines += ['SYNCDEBUG']
 
 		# Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
 		# and some AIs maybe.  Just make exceptions in SConstruct.
 		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
-		if env['disable_clipboard']: defines += ['NO_CLIPBOARD']
-		if env['disable_avi']      : defines += ['NO_AVI']
-		if env['disable_lua']      : defines += ['NO_LUA']
-		if env['use_mmgr']         : defines += ['USE_MMGR']
+		if env['disable_clipboard']: spring_defines += ['NO_CLIPBOARD']
+		if env['disable_avi']      : spring_defines += ['NO_AVI']
+		if env['use_mmgr']         : spring_defines += ['USE_MMGR']
+
+		env['spring_defines'] = spring_defines
 
 		include_path = ['rts', 'rts/System']
-		if not env['disable_lua']:
-			include_path += ["lua/luabind", "lua/lua/include"]
-			defines += ['LUA_NUMBER=float']
-
-		env.AppendUnique(CPPDEFINES = defines)
-
+		include_path += ["lua/luabind", "lua/lua/include"]
 		lib_path = ['rts/lib/streflop']
 
 		if env['platform'] == 'freebsd':
@@ -355,9 +348,8 @@ def generate(env):
 	if env['builddir']:
 		for d in filelist.list_directories(env, 'rts'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
-		if not env['disable_lua']:
-			for d in filelist.list_directories(env, 'lua'):
-				env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
+		for d in filelist.list_directories(env, 'lua'):
+			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
 		env.BuildDir(os.path.join(env['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 		for d in filelist.list_directories(env, 'AI'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)

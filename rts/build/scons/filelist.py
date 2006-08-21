@@ -74,7 +74,6 @@ def get_spring_source(env):
 				'rts/System/Platform/Win',
 				'rts/System/wavread.cpp']
 		if env['disable_avi']: exclude1 += ['rts/System/Platform/Win/AVIGenerator.cpp']
-		if env['disable_lua']: exclude1 += ['rts/System/Script']
 
 	# for Windows we must add the backslash equivalents
 	exclude = []
@@ -83,8 +82,7 @@ def get_spring_source(env):
 		exclude += [f.replace('/','\\')]
 
 	source = get_source(env, 'rts', exclude_list = exclude)
-	if not env['disable_lua']:
-		source += get_source(env, 'lua')
+	source += get_source(env, 'lua')
 	
 	# HACK   compile OpenALSound instead of DxSound on Mingw
 	if not env.has_key('platform') or env['platform'] == 'windows':

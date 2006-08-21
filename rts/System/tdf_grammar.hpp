@@ -15,7 +15,6 @@
 #include <boost/spirit/iterator/position_iterator.hpp>
 #include <boost/spirit/phoenix/binders.hpp>
 #include <boost/spirit/error_handling/exceptions.hpp>
-#include "StdAfx.h"
 #include "TdfParser.h"
 
 

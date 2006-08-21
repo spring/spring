@@ -2,6 +2,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+// Because boost pulls in cmath and cmath conflicts with streflop,
+// we make sure we don't include streflop here: we don't use math functions
+// here anyway. (and we assume boost doesn't use them internally either.)
+#undef STREFLOP_X87
+
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
