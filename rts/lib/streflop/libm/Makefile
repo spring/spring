@@ -7,10 +7,7 @@ else
 TOUCH=touch
 endif
 
-TARGETS = flt-target dbl-target
-ifndef STREFLOP_SSE
-TARGETS += ldbl-target
-endif
+TARGETS = flt-target
 
 all: $(TARGETS)
 
