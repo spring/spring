@@ -50,21 +50,18 @@ struct CScript_wrapper : CScript, wrap_base
 	static void GotChatMsg_static(CScript *ptr, const string& msg, int player) { ptr->CScript::GotChatMsg(msg, player); }
 };
 
-namespace luabind 
+template<class T>
+T* get_pointer(CObject_pointer<T>& p) 
 {
-	template<class T>
-	T* get_pointer(CObject_pointer<T>& p) 
-	{
-		if (!p.held)
-			info->AddLine("Lua warning: using invalid unit reference");
-		return p.held; 
-	}
+	if (!p.held)
+		info->AddLine("Lua warning: using invalid unit reference");
+	return p.held; 
+}
 
-	template<class A>
-	CObject_pointer<const A>* get_const_holder(CObject_pointer<A>*)
-	{
-		return 0;
-	}
+template<class A>
+CObject_pointer<const A>* get_const_holder(CObject_pointer<A>*)
+{
+	return 0;
 }
 
 namespace luafunctions {
