@@ -16,7 +16,7 @@
 #warning cmath inclusion detected, include streflop.h instead!
 #endif
 
-#include "streflop.h"
+#include "lib/streflop/streflop.h"
 namespace std {
 	using namespace streflop;
 };
