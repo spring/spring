@@ -65,12 +65,6 @@ namespace luabind
 	{
 		return 0;
 	}
-
-	template<class A>
-	CObject_pointer<const A>* get_const_holder(CObject_pointer<A>&)
-	{
-		return 0;
-	}
 }
 
 namespace luafunctions {
