@@ -34,11 +34,10 @@ spring_files = filelist.get_spring_source(env)
 # the entire source if one wants to change just the install prefix (and hence the datadir).
 
 if env['platform'] != 'windows':
-	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'),
-                             CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
+	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
 	spring_files += [ufshcpp]
 
-spring = env.Program('game/spring', spring_files)
+spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 
 Alias('spring', spring)
 Default(spring)
@@ -90,8 +89,7 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 if env['platform'] == 'windows':
 	unitsync_files += ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp']
 else:
-	ufshcpp = env.SharedObject(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'),
-                             CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
+	ufshcpp = env.SharedObject(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
 	unitsync_files += ['rts/System/Platform/ConfigHandler.cpp', 'rts/System/Platform/Linux/DotfileHandler.cpp', ufshcpp]
 
 unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)

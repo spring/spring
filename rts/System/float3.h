@@ -7,8 +7,12 @@
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
-#include "lib/streflop/streflop.h"
-using namespace streflop;
+#if defined STREFLOP_X87 || defined STREFLOP_SSE
+ #include "lib/streflop/streflop.h"
+ using namespace streflop;
+#else
+ #include <math.h>
+#endif
 
 #include "creg/creg.h"
 
