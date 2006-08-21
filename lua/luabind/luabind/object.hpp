@@ -39,7 +39,6 @@
 #include <luabind/detail/convert_to_lua.hpp> // REFACTOR
 
 #include <boost/iterator/iterator_facade.hpp> // iterator
-#include <boost/python/detail/is_xxx.hpp>
 
 #include <boost/preprocessor/iteration/iterate.hpp>
 #include <boost/utility/enable_if.hpp>

@@ -6,11 +6,40 @@
 
 
 #include <stdlib.h>
+
+/*
+Uses streflop for sync. purposes, not system library
 #include <math.h>
+*/
 
 #define lmathlib_c
 
 #include "lua.h"
+
+/*
+LUA uses only a few math functions, no need to make a full-scale solution.
+See streflop_gateway for the implementation of these functions.
+*/
+extern lua_Number streflop_fabs(lua_Number);
+extern lua_Number streflop_sin(lua_Number);
+extern lua_Number streflop_cos(lua_Number);
+extern lua_Number streflop_tan(lua_Number);
+extern lua_Number streflop_asin(lua_Number);
+extern lua_Number streflop_acos(lua_Number);
+extern lua_Number streflop_atan(lua_Number);
+extern lua_Number streflop_atan2(lua_Number,lua_Number);
+extern lua_Number streflop_ceil(lua_Number);
+extern lua_Number streflop_floor(lua_Number);;
+extern lua_Number streflop_fmod(lua_Number,lua_Number);
+extern lua_Number streflop_sqrt(lua_Number);
+extern lua_Number streflop_pow(lua_Number,lua_Number);
+extern lua_Number streflop_log(lua_Number);
+extern lua_Number streflop_log10(lua_Number);
+extern lua_Number streflop_exp(lua_Number);
+extern lua_Number streflop_frexp(lua_Number, int*);
+extern lua_Number streflop_ldexp(lua_Number, int);
+extern void streflop_seed(int);
+extern lua_Number streflop_random();
 
 #include "lauxlib.h"
 #include "lualib.h"
@@ -36,82 +65,82 @@
 
 
 static int math_abs (lua_State *L) {
-  lua_pushnumber(L, fabs(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, streflop_fabs(luaL_checknumber(L, 1)));
   return 1;
 }
 
 static int math_sin (lua_State *L) {
-  lua_pushnumber(L, sin(TORAD(luaL_checknumber(L, 1))));
+  lua_pushnumber(L, streflop_sin(TORAD(luaL_checknumber(L, 1))));
   return 1;
 }
 
 static int math_cos (lua_State *L) {
-  lua_pushnumber(L, cos(TORAD(luaL_checknumber(L, 1))));
+  lua_pushnumber(L, streflop_cos(TORAD(luaL_checknumber(L, 1))));
   return 1;
 }
 
 static int math_tan (lua_State *L) {
-  lua_pushnumber(L, tan(TORAD(luaL_checknumber(L, 1))));
+  lua_pushnumber(L, streflop_tan(TORAD(luaL_checknumber(L, 1))));
   return 1;
 }
 
 static int math_asin (lua_State *L) {
-  lua_pushnumber(L, FROMRAD(asin(luaL_checknumber(L, 1))));
+  lua_pushnumber(L, FROMRAD(streflop_asin(luaL_checknumber(L, 1))));
   return 1;
 }
 
 static int math_acos (lua_State *L) {
-  lua_pushnumber(L, FROMRAD(acos(luaL_checknumber(L, 1))));
+  lua_pushnumber(L, FROMRAD(streflop_acos(luaL_checknumber(L, 1))));
   return 1;
 }
 
 static int math_atan (lua_State *L) {
-  lua_pushnumber(L, FROMRAD(atan(luaL_checknumber(L, 1))));
+  lua_pushnumber(L, FROMRAD(streflop_atan(luaL_checknumber(L, 1))));
   return 1;
 }
 
 static int math_atan2 (lua_State *L) {
-  lua_pushnumber(L, FROMRAD(atan2(luaL_checknumber(L, 1), luaL_checknumber(L, 2))));
+  lua_pushnumber(L, FROMRAD(streflop_atan2(luaL_checknumber(L, 1), luaL_checknumber(L, 2))));
   return 1;
 }
 
 static int math_ceil (lua_State *L) {
-  lua_pushnumber(L, ceil(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, streflop_ceil(luaL_checknumber(L, 1)));
   return 1;
 }
 
 static int math_floor (lua_State *L) {
-  lua_pushnumber(L, floor(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, streflop_floor(luaL_checknumber(L, 1)));
   return 1;
 }
 
 static int math_mod (lua_State *L) {
-  lua_pushnumber(L, fmod(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
+  lua_pushnumber(L, streflop_fmod(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
   return 1;
 }
 
 static int math_sqrt (lua_State *L) {
-  lua_pushnumber(L, sqrt(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, streflop_sqrt(luaL_checknumber(L, 1)));
   return 1;
 }
 
 static int math_pow (lua_State *L) {
-  lua_pushnumber(L, pow(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
+  lua_pushnumber(L, streflop_pow(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
   return 1;
 }
 
 static int math_log (lua_State *L) {
-  lua_pushnumber(L, log(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, streflop_log(luaL_checknumber(L, 1)));
   return 1;
 }
 
 static int math_log10 (lua_State *L) {
-  lua_pushnumber(L, log10(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, streflop_log10(luaL_checknumber(L, 1)));
   return 1;
 }
 
 static int math_exp (lua_State *L) {
-  lua_pushnumber(L, exp(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, streflop_exp(luaL_checknumber(L, 1)));
   return 1;
 }
 
@@ -127,13 +156,13 @@ static int math_rad (lua_State *L) {
 
 static int math_frexp (lua_State *L) {
   int e;
-  lua_pushnumber(L, frexp(luaL_checknumber(L, 1), &e));
+  lua_pushnumber(L, streflop_frexp(luaL_checknumber(L, 1), &e));
   lua_pushnumber(L, e);
   return 2;
 }
 
 static int math_ldexp (lua_State *L) {
-  lua_pushnumber(L, ldexp(luaL_checknumber(L, 1), luaL_checkint(L, 2)));
+  lua_pushnumber(L, streflop_ldexp(luaL_checknumber(L, 1), luaL_checkint(L, 2)));
   return 1;
 }
 
@@ -170,7 +199,8 @@ static int math_max (lua_State *L) {
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
-  lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
+  /*lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;*/
+  lua_Number r = streflop_random();
   switch (lua_gettop(L)) {  /* check number of arguments */
     case 0: {  /* no arguments */
       lua_pushnumber(L, r);  /* Number between 0 and 1 */
@@ -179,14 +209,14 @@ static int math_random (lua_State *L) {
     case 1: {  /* only upper limit */
       int u = luaL_checkint(L, 1);
       luaL_argcheck(L, 1<=u, 1, "interval is empty");
-      lua_pushnumber(L, (int)floor(r*u)+1);  /* int between 1 and `u' */
+      lua_pushnumber(L, (int)streflop_floor(r*u)+1);  /* int between 1 and `u' */
       break;
     }
     case 2: {  /* lower and upper limits */
       int l = luaL_checkint(L, 1);
       int u = luaL_checkint(L, 2);
       luaL_argcheck(L, l<=u, 2, "interval is empty");
-      lua_pushnumber(L, (int)floor(r*(u-l+1))+l);  /* int between `l' and `u' */
+      lua_pushnumber(L, (int)streflop_floor(r*(u-l+1))+l);  /* int between `l' and `u' */
       break;
     }
     default: return luaL_error(L, "wrong number of arguments");
@@ -194,9 +224,9 @@ static int math_random (lua_State *L) {
   return 1;
 }
 
-
 static int math_randomseed (lua_State *L) {
-  srand(luaL_checkint(L, 1));
+  /*srand(luaL_checkint(L, 1));*/
+  streflop_seed(luaL_checkint(L, 1));
   return 0;
 }
 

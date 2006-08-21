@@ -204,9 +204,6 @@ def check_headers(env, conf):
 	if not conf.CheckCXXHeader('boost/thread.hpp'):
 		print ' Cannot find Boost threading headers'
 		env.Exit(1)
-	if not conf.CheckCXXHeader('boost/filesystem/path.hpp'):
-		print ' Cannot find Boost filesystem headers'
-		env.Exit(1)
 	if not conf.CheckCXXHeader('boost/regex.hpp'):
 		print ' Cannot find Boost regex header'
 		env.Exit(1)
@@ -256,7 +253,6 @@ def check_libraries(env, conf):
 			print "You need the Boost " + lib + " library for this program"
 			env.Exit(1)
 
-	check_boost_library('filesystem', 'boost/filesystem/path.hpp')
 	check_boost_library('thread', 'boost/thread.hpp')
 	check_boost_library('regex', 'boost/regex.hpp')
 

@@ -51,8 +51,8 @@ using streflop::Extended;
     extern Simple __floorf(Simple x);
     extern Simple __ceilf(Simple x);
     extern Simple __truncf(Simple x);
-    extern Simple __ieee754_fmodf(Simple x);
-    extern Simple __ieee754_remainderf(Simple x);
+    extern Simple __ieee754_fmodf(Simple x, Simple x);
+    extern Simple __ieee754_remainderf(Simple x, Simple x);
     extern Simple __remquof(Simple x, Simple y, int *quo);
     extern Simple __rintf(Simple x);
     extern long int __lrintf(Simple x);
@@ -62,6 +62,7 @@ using streflop::Extended;
     extern long long int __llroundf(Simple x);
     extern Simple __nearbyintf(Simple x);
     extern Simple __frexpf(Simple x, int *exp);
+    extern Simple __ldexpf(Simple value, int exp);
     extern Simple __logbf(Simple x);
     extern int __ilogbf(Simple x);
     extern Simple __copysignf(Simple x);
@@ -107,8 +108,8 @@ using streflop::Extended;
     extern Double __floor(Double x);
     extern Double __ceil(Double x);
     extern Double __trunc(Double x);
-    extern Double __ieee754_fmod(Double x);
-    extern Double __ieee754_remainder(Double x);
+    extern Double __ieee754_fmod(Double x, Double x);
+    extern Double __ieee754_remainder(Double x, Double x);
     extern Double __remquo(Double x, Double y, int *quo);
     extern Double __rint(Double x);
     extern long int __lrint(Double x);
@@ -118,6 +119,7 @@ using streflop::Extended;
     extern long long int __llround(Double x);
     extern Double __nearbyint(Double x);
     extern Double __frexp(Double x, int *exp);
+    extern Double __ldexp(Double value, int exp);
     extern Double __logb(Double x);
     extern int __ilogb(Double x);
     extern Double __copysign(Double x);
@@ -159,8 +161,8 @@ using streflop::Extended;
     extern Extended __floorl(Extended x);
     extern Extended __ceill(Extended x);
     extern Extended __truncl(Extended x);
-    extern Extended __ieee754_fmodl(Extended x);
-    extern Extended __ieee754_remainderl(Extended x);
+    extern Extended __ieee754_fmodl(Extended x, Extended x);
+    extern Extended __ieee754_remainderl(Extended x, Extended x);
     extern Extended __remquol(Extended x, Extended y, int *quo);
     extern Extended __rintl(Extended x);
     extern long int __lrintl(Extended x);
@@ -170,6 +172,7 @@ using streflop::Extended;
     extern long long int __llroundl(Extended x);
     extern Extended __nearbyintl(Extended x);
     extern Extended __frexpl(Extended x, int *exp);
+    extern Extended __ldexpl(Extended value, int exp);
     extern Extended __logbl(Extended x);
     extern int __ilogbl(Extended x);
     extern Extended __copysignl(Extended x);
@@ -239,8 +242,8 @@ enum
     inline Simple floor(Simple x) {return streflop_libm::__floorf(x);}
     inline Simple ceil(Simple x) {return streflop_libm::__ceilf(x);}
     inline Simple trunc(Simple x) {return streflop_libm::__truncf(x);}
-    inline Simple fmod(Simple x) {return streflop_libm::__ieee754_fmodf(x);}
-    inline Simple remainder(Simple x) {return streflop_libm::__ieee754_remainderf(x);}
+    inline Simple fmod(Simple x, Simple y) {return streflop_libm::__ieee754_fmodf(x,y);}
+    inline Simple remainder(Simple x, Simple y) {return streflop_libm::__ieee754_remainderf(x,y);}
     inline Simple remquo(Simple x, Simple y, int *quo) {return streflop_libm::__remquof(x,y,quo);}
     inline Simple rint(Simple x) {return streflop_libm::__rintf(x);}
     inline long int lrint(Simple x) {return streflop_libm::__lrintf(x);}
@@ -251,9 +254,11 @@ enum
     inline Simple nearbyint(Simple x) {return streflop_libm::__nearbyintf(x);}
 
     inline Simple frexp(Simple x, int *exp) {return streflop_libm::__frexpf(x,exp);}
+    inline Simple ldexp(Simple value, int exp) {return streflop_libm::__ldexpf(value,exp);}
     inline Simple logb(Simple x) {return streflop_libm::__logbf(x);}
     inline int ilogb(Simple x) {return streflop_libm::__ilogbf(x);}
     inline Simple copysign(Simple x) {return streflop_libm::__copysignf(x);}
+#undef signbit
     inline int signbit (Simple x) {return streflop_libm::__signbitf(x);}
     inline Simple nextafter(Simple x, Simple y) {return streflop_libm::__nextafterf(x,y);}
 
@@ -269,13 +274,18 @@ enum
     inline Simple scalbn(Simple x, int n) {return streflop_libm::__scalbnf(x,n);}
     inline Simple scalbln(Simple x, long int n) {return streflop_libm::__scalblnf(x,n);}
 
+#undef fpclassify
     inline int fpclassify(Simple x) {return streflop_libm::__fpclassifyf(x);}
+#undef isnan
     inline int isnan(Simple x) {return streflop_libm::__isnanf(x);}
+#undef isinf
     inline int isinf(Simple x) {return streflop_libm::__isinff(x);}
+#undef isfinite
     inline int isfinite(Simple x) {return !(isnan(x) || isinf(x));}
 
     // Stolen from math.h and inlined instead of macroized.
     // Return nonzero value if X is neither zero, subnormal, Inf, nor NaN.  */
+#undef isnormal
     inline int isnormal(Simple x) {return fpclassify(x) == STREFLOP_FP_NORMAL;}
 
     // Constants user may set
@@ -344,8 +354,8 @@ enum
     inline Simple floorf(Simple x) {return floor(x);}
     inline Simple ceilf(Simple x) {return ceil(x);}
     inline Simple truncf(Simple x) {return trunc(x);}
-    inline Simple fmodf(Simple x) {return fmod(x);}
-    inline Simple remainderf(Simple x) {return remainder(x);}
+    inline Simple fmodf(Simple x, Simple y) {return fmod(x,y);}
+    inline Simple remainderf(Simple x, Simple y) {return remainder(x,y);}
     inline Simple remquof(Simple x, Simple y, int *quo) {return remquo(x, y, quo);}
     inline Simple rintf(Simple x) {return rint(x);}
     inline long int lrintf(Simple x) {return lrint(x);}
@@ -356,6 +366,7 @@ enum
     inline Simple nearbyintf(Simple x) {return nearbyint(x);}
 
     inline Simple frexpf(Simple x, int *exp) {return frexp(x, exp);}
+    inline Simple ldexpf(Simple value, int exp) {return ldexp(value,exp);}
     inline Simple logbf(Simple x) {return logb(x);}
     inline int ilogbf(Simple x) {return ilogb(x);}
     inline Simple copysignf(Simple x) {return copysign(x);}
@@ -421,8 +432,8 @@ enum
     inline Double floor(Double x) {return streflop_libm::__floor(x);}
     inline Double ceil(Double x) {return streflop_libm::__ceil(x);}
     inline Double trunc(Double x) {return streflop_libm::__trunc(x);}
-    inline Double fmod(Double x) {return streflop_libm::__ieee754_fmod(x);}
-    inline Double remainder(Double x) {return streflop_libm::__ieee754_remainder(x);}
+    inline Double fmod(Double x, Double y) {return streflop_libm::__ieee754_fmod(x,y);}
+    inline Double remainder(Double x, Double y) {return streflop_libm::__ieee754_remainder(x,y);}
     inline Double remquo(Double x, Double y, int *quo) {return streflop_libm::__remquo(x,y,quo);}
     inline Double rint(Double x) {return streflop_libm::__rint(x);}
     inline long int lrint(Double x) {return streflop_libm::__lrint(x);}
@@ -433,6 +444,7 @@ enum
     inline Double nearbyint(Double x) {return streflop_libm::__nearbyint(x);}
 
     inline Double frexp(Double x, int *exp) {return streflop_libm::__frexp(x, exp);}
+    inline Double ldexp(Double value, int exp) {return streflop_libm::__ldexp(value,exp);}
     inline Double logb(Double x) {return streflop_libm::__logb(x);}
     inline int ilogb(Double x) {return streflop_libm::__ilogb(x);}
     inline Double copysign(Double x) {return streflop_libm::__copysign(x);}
@@ -543,8 +555,8 @@ enum
     inline Extended floor(Extended x) {return streflop_libm::__floorl(x);}
     inline Extended ceil(Extended x) {return streflop_libm::__ceill(x);}
     inline Extended trunc(Extended x) {return streflop_libm::__truncl(x);}
-    inline Extended fmod(Extended x) {return streflop_libm::__ieee754_fmodl(x);}
-    inline Extended remainder(Extended x) {return streflop_libm::__ieee754_remainderl(x);}
+    inline Extended fmod(Extended x, Extended y) {return streflop_libm::__ieee754_fmodl(x,y);}
+    inline Extended remainder(Extended x, Extended y) {return streflop_libm::__ieee754_remainderl(x,y);}
     inline Extended remquo(Extended x, Extended y, int *quo) {return streflop_libm::__remquol(x,y,quo);}
     inline Extended rint(Extended x) {return streflop_libm::__rintl(x);}
     inline long int lrint(Extended x) {return streflop_libm::__lrintl(x);}
@@ -555,6 +567,7 @@ enum
     inline Extended nearbyint(Extended x) {return streflop_libm::__nearbyintl(x);}
 
     inline Extended frexp(Extended x, int *exp) {return streflop_libm::__frexpl(x,exp);}
+    inline Extended ldexp(Extended value, int exp) {return streflop_libm::__ldexpl(value,exp);}
     inline Extended logb(Extended x) {return streflop_libm::__logbl(x);}
     inline int ilogb(Extended x) {return streflop_libm::__ilogbl(x);}
     inline Extended copysign(Extended x) {return streflop_libm::__copysignl(x);}
@@ -636,8 +649,8 @@ enum
     inline Extended floorl(Extended x) {return floor(x);}
     inline Extended ceill(Extended x) {return ceil(x);}
     inline Extended truncl(Extended x) {return trunc(x);}
-    inline Extended fmodl(Extended x) {return fmod(x);}
-    inline Extended remainderl(Extended x) {return remainder(x);}
+    inline Extended fmodl(Extended x, Extended y) {return fmod(x,y);}
+    inline Extended remainderl(Extended x, Extended y) {return remainder(x,y);}
     inline Extended remquol(Extended x, Extended y, int *quo) {return remquo(x, y, quo);}
     inline Extended rintl(Extended x) {return rint(x);}
     inline long int lrintl(Extended x) {return lrint(x);}
@@ -648,6 +661,7 @@ enum
     inline Extended nearbyintl(Extended x) {return nearbyint(x);}
 
     inline Extended frexpl(Extended x, int *exp) {return frexp(x, exp);}
+    inline Extended ldexpl(Extended value, int exp) {return ldexp(value,exp);}
     inline Extended logbl(Extended x) {return logb(x);}
     inline int ilogbl(Extended x) {return ilogb(x);}
     inline Extended copysignl(Extended x) {return copysign(x);}

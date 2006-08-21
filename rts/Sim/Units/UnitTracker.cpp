@@ -9,7 +9,6 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
-#include "math.h"
 #include "mmgr.h"
 
 

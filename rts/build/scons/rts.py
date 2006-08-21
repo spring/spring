@@ -84,7 +84,7 @@ def generate(env):
 		('disable_avi',       'Set to no to turn on avi support', True),
 		('disable_clipboard', 'Set to no to turn on clipboard code', True),
 		#other ported parts
-		('disable_lua',       'Set to no to turn on Lua support', True),
+		('disable_lua',       'Set to no to turn on Lua support', False),
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
 		('cachedir',          'Cache directory (see scons manual)', None))
@@ -273,7 +273,7 @@ def generate(env):
 		bool_opt('strip', True)
 		bool_opt('disable_avi', True)
 		bool_opt('disable_clipboard', True)
-		bool_opt('disable_lua', True)
+		bool_opt('disable_lua', False)
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
@@ -301,11 +301,13 @@ def generate(env):
 		if env['disable_avi']      : defines += ['NO_AVI']
 		if env['disable_lua']      : defines += ['NO_LUA']
 		if env['use_mmgr']         : defines += ['USE_MMGR']
-		env.AppendUnique(CPPDEFINES = defines)
 
 		include_path = ['rts', 'rts/System']
 		if not env['disable_lua']:
 			include_path += ["lua/luabind", "lua/lua/include"]
+			defines += ['LUA_NUMBER=float']
+
+		env.AppendUnique(CPPDEFINES = defines)
 
 		lib_path = ['rts/lib/streflop']
 

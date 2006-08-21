@@ -1,10 +1,10 @@
 #ifndef __LUA_FUNCTIONS
 #define __LUA_FUNCTIONS
 
+#include <luabind/luabind.hpp>
+
 #include "LuaBinder.h"
 #include "Object.h"
-
-#include <luabind/object.hpp>
 
 struct Command;
 class float3;
