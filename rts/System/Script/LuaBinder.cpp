@@ -60,16 +60,14 @@ namespace luabind
 		return p.held; 
 	}
 
-	template<class T>
-	const T* get_pointer(const CObject_pointer<T>& p) 
+	template<class A>
+	CObject_pointer<const A>* get_const_holder(CObject_pointer<A>*)
 	{
-		if (!p.held)
-			info->AddLine("Lua warning: using invalid unit reference");
-		return p.held; 
+		return 0;
 	}
 
 	template<class A>
-	CObject_pointer<const A>* get_const_holder(CObject_pointer<A>*)
+	CObject_pointer<const A>* get_const_holder(CObject_pointer<A>&)
 	{
 		return 0;
 	}
