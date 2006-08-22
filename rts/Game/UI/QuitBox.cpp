@@ -123,7 +123,7 @@ void CQuitBox::Draw(void)
 	glColor4f(1,1,0.4,0.8f);
 	font->glPrintAt(box.x1+0.045,box.y1+0.47,0.7,"Do you want to ...");
 	glColor4f(1,1,1,0.8);
-	font->glPrintAt(box.x1+resignQuitBox.x1+0.025,box.y1+resignQuitBox.y1+0.005,1,"Resign and quit");
+	font->glPrintAt(box.x1+resignQuitBox.x1+0.025,box.y1+resignQuitBox.y1+0.005,1,"Quit and resign");
 	font->glPrintAt(box.x1+resignBox.x1+0.025,box.y1+resignBox.y1+0.005,1,"Resign");
 	font->glPrintAt(box.x1+giveAwayBox.x1+0.025,box.y1+giveAwayBox.y1+0.005,1,"Give everything to ...");
 	font->glPrintAt(box.x1+cancelBox.x1+0.025,box.y1+cancelBox.y1+0.005,1,"Cancel");
