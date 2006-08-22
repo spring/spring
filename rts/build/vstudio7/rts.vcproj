@@ -21,7 +21,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../../lua/lua/include;../../../lua/luabind"
-				PreprocessorDefinitions="NO_LUA;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
+				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -81,7 +81,7 @@
 				OptimizeForProcessor="3"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../../lua/lua/include;../../../lua/luabind"
-				PreprocessorDefinitions="NO_LUA;_WIN32;WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
@@ -148,7 +148,7 @@
 				OptimizeForProcessor="3"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../../lua/lua/include;../../../lua/luabind"
-				PreprocessorDefinitions="NO_LUA;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
@@ -214,7 +214,7 @@
 				OptimizeForProcessor="3"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
-				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;NO_LUA;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;NEW_GUI"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;NEW_GUI"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
@@ -2550,6 +2550,12 @@
 			</File>
 			<File
 				RelativePath="..\..\System\TdfParser.cpp">
+				<FileConfiguration
+					Name="Release with error catching|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\TdfParser.h">
@@ -3460,12 +3466,6 @@
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Script\LuaBinder.h">
@@ -3485,10 +3485,10 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release with error catching|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release with error catching|Win32">
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 				</File>
 				<File
@@ -3514,8 +3514,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3523,6 +3522,9 @@
 					</File>
 					<File
 						RelativePath="..\..\..\lua\lua\src\lapi.h">
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\include\lauxlib.h">
 					</File>
 					<File
 						RelativePath="..\..\..\lua\lua\src\lcode.c">
@@ -3541,8 +3543,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3568,8 +3569,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3595,8 +3595,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3622,8 +3621,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3646,8 +3644,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3673,8 +3670,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3700,8 +3696,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3730,8 +3725,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3757,8 +3751,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3784,8 +3777,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3811,8 +3803,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3838,8 +3829,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3865,8 +3855,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3892,8 +3881,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3919,8 +3907,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3943,8 +3930,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3952,6 +3938,12 @@
 					</File>
 					<File
 						RelativePath="..\..\..\lua\lua\src\ltm.h">
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\include\lua.h">
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\include\lualib.h">
 					</File>
 					<File
 						RelativePath="..\..\..\lua\lua\src\lundump.c">
@@ -3970,8 +3962,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3997,8 +3988,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4024,8 +4014,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4054,8 +4043,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4078,8 +4066,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4102,8 +4089,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4126,8 +4112,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4150,8 +4135,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4174,8 +4158,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4198,8 +4181,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4222,8 +4204,16 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release with error catching|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+						</File>
+						<File
+							RelativePath="..\..\..\lua\lua\src\lib\streflop_gateway.cpp">
+							<FileConfiguration
+								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4251,8 +4241,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4275,8 +4264,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4299,8 +4287,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4323,8 +4310,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4347,8 +4333,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4371,8 +4356,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4395,8 +4379,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4419,8 +4402,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4443,8 +4425,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4467,8 +4448,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4491,8 +4471,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4515,8 +4494,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4539,8 +4517,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4563,8 +4540,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4587,8 +4563,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4611,8 +4586,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4635,8 +4609,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4659,8 +4632,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4683,8 +4655,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release with error catching|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release with error catching|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5044,6 +5015,18 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\streflop\Math.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\streflop\Random.cpp">
+				<FileConfiguration
+					Name="Release with error catching|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\lib\streflop\Random.h">
 			</File>
 			<File
 				RelativePath="..\..\lib\streflop\streflop.h">
