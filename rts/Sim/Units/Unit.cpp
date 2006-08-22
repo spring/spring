@@ -631,7 +631,6 @@ void CUnit::Kill(float3& impulse) {
 
 void CUnit::Draw()
 {
-	isIcon = false;
 	glPushMatrix();
 	float3 interPos=pos+speed*gu->timeOffset;
 	

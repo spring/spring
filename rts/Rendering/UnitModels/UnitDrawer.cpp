@@ -192,7 +192,9 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 				float realIconLength=iconLength*iconDistMult*iconDistMult;
 				if(sqDist>realIconLength){
 					drawIcon.push_back(*usi);
+					(*usi)->isIcon = true;
 				} else {
+					(*usi)->isIcon = false;
 					float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
 					if(sqDist>farLength){
 						drawFar.push_back(*usi);
@@ -292,11 +294,15 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	for(list<CUnit*>::iterator usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();++usi){
 		if((gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
-			float sqDist=((*usi)->pos-camera->pos).SqLength2D();
+			float sqDist=((*usi)->pos-camera->pos).SqLength();
 			float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
 			if(sqDist<farLength){
-				if(!(*usi)->isCloaked){
-					(*usi)->Draw();
+				float iconDistMult=iconHandler->GetDistance((*usi)->unitDef->iconType);
+				float realIconLength=iconLength*iconDistMult*iconDistMult;
+				if(sqDist<realIconLength){
+					if(!(*usi)->isCloaked){
+						(*usi)->Draw();
+					}
 				}
 			}
 		}
@@ -308,7 +314,6 @@ void CUnitDrawer::DrawShadowPass(void)
 
 inline void CUnitDrawer::DrawFar(CUnit *unit)
 {
-	unit->isIcon = false;
 	float3 interPos=unit->pos+unit->speed*gu->timeOffset+UpVector*unit->model->height*0.5;
 	int snurr=-unit->heading+GetHeadingFromVector(camera->pos.x-unit->pos.x,camera->pos.z-unit->pos.z)+(0xffff>>4);
 	if(snurr<0)
@@ -327,7 +332,6 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 
 void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 {
-	unit->isIcon = true;
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	std::string iconType;
 	if(asRadarBlip){
