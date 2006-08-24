@@ -3455,8 +3455,7 @@
 				<File
 					RelativePath="..\..\System\Script\LuaBinder.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -3473,8 +3472,7 @@
 				<File
 					RelativePath="..\..\System\Script\LuaFunctions.cpp">
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -3500,8 +3498,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lapi.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3529,8 +3526,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lcode.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3555,8 +3551,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\ldebug.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3581,8 +3576,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\ldo.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3607,8 +3601,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\ldump.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3630,8 +3623,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lfunc.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3656,8 +3648,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lgc.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3682,8 +3673,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\llex.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3711,8 +3701,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lmem.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3737,8 +3726,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lobject.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3763,8 +3751,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lopcodes.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3789,8 +3776,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lparser.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3815,8 +3801,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lstate.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3841,8 +3826,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lstring.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3867,8 +3851,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\ltable.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3893,8 +3876,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\ltests.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3916,8 +3898,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\ltm.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3948,8 +3929,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lundump.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3974,8 +3954,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lvm.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4000,8 +3979,7 @@
 					<File
 						RelativePath="..\..\..\lua\lua\src\lzio.c">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4029,8 +4007,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\lauxlib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4052,8 +4029,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\lbaselib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4075,8 +4051,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\ldblib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4098,8 +4073,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\liolib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4121,8 +4095,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\lmathlib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4144,8 +4117,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\loadlib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4167,8 +4139,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\lstrlib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4190,8 +4161,7 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\ltablib.c">
 							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4213,6 +4183,12 @@
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\streflop_gateway.cpp">
 							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
 								Name="Release with error catching|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
@@ -4227,8 +4203,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\class.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4250,8 +4225,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\class_info.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4273,8 +4247,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\class_registry.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4296,8 +4269,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\class_rep.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4319,8 +4291,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\create_class.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4342,8 +4313,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\error.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4365,8 +4335,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\find_best_match.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4388,8 +4357,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\function.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4411,8 +4379,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\implicit_cast.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4434,8 +4401,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\link_compatibility.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4457,8 +4423,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\object_rep.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4480,8 +4445,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\open.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4503,8 +4467,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\overload_rep.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4526,8 +4489,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\pcall.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4549,8 +4511,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\ref.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4572,8 +4533,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\scope.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4595,8 +4555,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\stack_content_by_name.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4618,8 +4577,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\weak_ref.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4641,8 +4599,7 @@
 					<File
 						RelativePath="..\..\..\lua\luabind\src\wrapper_base.cpp">
 						<FileConfiguration
-							Name="Debug|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5018,6 +4975,12 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\streflop\Random.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
 				<FileConfiguration
 					Name="Release with error catching|Win32">
 					<Tool
