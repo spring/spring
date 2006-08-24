@@ -65,32 +65,36 @@ void CGroupHandler::TestDll(string name)
 
 	lib = SharedLib::instantiate(name);
 	if (!lib){
-		handleerror(NULL,name.c_str(),"Cant load dll",MBF_OK|MBF_EXCL);
+		info->AddLine ("Cant load dll: %s",name.c_str());
 		return;
 	}
 
 	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (!GetGroupAiVersion){
-		handleerror(NULL,name.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
+		info->AddLine("Incorrect AI dll(%s): No GetGroupAiVersion function found", name.c_str());
+		delete lib;
 		return;
 	}
 
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION){
-		handleerror(NULL,name.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
+		info->AddLine("AI dll %s has incorrect version", name.c_str());
+		delete lib;
 		return;
 	}
 
 	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 	if (!IsUnitSuited){
-		handleerror(NULL,name.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
+		info->AddLine ("No IsUnitSuited function found in AI dll %s", name.c_str());
+		delete lib;
 		return;
 	}
 	
 	GetAiName = (GETAINAME)lib->FindAddress("GetAiName");
 	if (!GetAiName){
-		handleerror(NULL,name.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
+		info->AddLine("No GetAiName function found in AI dll %s",name.c_str());
+		delete lib;
 		return;
 	}
 
@@ -126,7 +130,7 @@ void CGroupHandler::GroupCommand(int num)
 void CGroupHandler::FindDlls(void)
 {
 	std::vector<std::string> match;
-	std::string dir("aidll");
+	std::string dir("AI/Helper-libs");
 #ifdef _WIN32
 	match = filesystem.FindFiles(dir,"*.dll");
 #elif defined(__APPLE__)
@@ -197,6 +201,7 @@ map<string,string> CGroupHandler::GetSuitedAis(set<CUnit*> units)
 		}
 		if(suited)
 			suitedAis[aai->first]=aai->second;
+		delete lib;
 	}
 
 	lastSuitedAis = suitedAis;

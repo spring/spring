@@ -39,11 +39,11 @@ void CScriptHandler::LoadScripts() {
 	loaded_scripts.push_back( new CTestScript() );
 
 #ifdef WIN32
-	std::vector<std::string> f = CFileHandler::FindFiles("aidll\\globalai\\", "*.dll");
+	std::vector<std::string> f = CFileHandler::FindFiles("AI\\Bot-libs\\", "*.dll");
 #elif defined(__APPLE__)
-	std::vector<std::string> f = CFileHandler::FindFiles("aidll/globalai/", "*.dylib");
+	std::vector<std::string> f = CFileHandler::FindFiles("AI/Bot-libs/", "*.dylib");
 #else
-	std::vector<std::string> f = CFileHandler::FindFiles("aidll/globalai/", "*.so");
+	std::vector<std::string> f = CFileHandler::FindFiles("AI/Bot-libs/", "*.so");
 #endif
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
 		string name = fi->substr(fi->find_last_of('\\') + 1);
