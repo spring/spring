@@ -84,7 +84,7 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 
 	try {
 		// first call to GetInstance() initializes the VFS
-		FileSystemHandler::GetInstance();
+		FileSystemHandler::Initialize(false);
 
 		if (isServer) {
 			syncer = new CSyncServer(id);

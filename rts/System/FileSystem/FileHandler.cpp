@@ -30,8 +30,8 @@ CFileHandler::CFileHandler(std::string filename)
 
 void CFileHandler::Init(const char* filename)
 {
-	ifs=filesystem.ifstream(filename, ios::in|ios::binary);
-	if (ifs) {
+	ifs=new std::ifstream(filesystem.LocateFile(filename).c_str(), ios::in|ios::binary);
+	if (ifs && !ifs->bad() && ifs->is_open()) {
 		ifs->seekg(0, ios_base::end);
 		filesize = ifs->tellg();
 		ifs->seekg(0, ios_base::beg);

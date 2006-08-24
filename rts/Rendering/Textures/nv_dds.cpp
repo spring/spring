@@ -190,7 +190,6 @@
 #include "nv_dds.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/byteorder.h"
-#include "Platform/FileSystem.h"
 
 // Moved because of conflicts with GLEW.
 #if defined(UNIX) || defined(unix)
@@ -619,7 +618,7 @@ bool CDDSImage::save(std::string filename, bool flipImage)
         ddsh.dwCaps1 |= DDSF_COMPLEX | DDSF_MIPMAP;
 
     // open file
-    FILE *fp = filesystem.fopen(filename.c_str(), "wb");
+    FILE *fp = fopen(filename.c_str(), "wb");
     if (fp == NULL)
         return false;
 

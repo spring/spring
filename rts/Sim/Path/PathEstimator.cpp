@@ -653,18 +653,12 @@ bool CPathEstimator::ReadFile(string name)
 	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
-	CArchiveZip* pfile = NULL;
-	std::vector<std::string> filenames = filesystem.GetNativeFilenames(filename, true);
-	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
-		pfile = new CArchiveZip(*it);
-		if (pfile->IsOpen())
-			break;
-		delete pfile;
-		pfile = NULL;
-	}
+	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
 
-	if (!pfile)
+	if (!pfile || !pfile->IsOpen()) {
+		delete pfile;
 		return false;
+	}
 
 	std::auto_ptr<CArchiveZip> auto_pfile(pfile);
 	CArchiveZip& file(*pfile);
@@ -712,7 +706,7 @@ void CPathEstimator::WriteFile(string name) {
 	zipFile file;
 
 	// open file for writing in a suitable location
-	file = zipOpen(filesystem.GetNativeFilenames(filename, true).front().c_str(), APPEND_STATUS_CREATE);
+	file = zipOpen(filesystem.LocateFile(filename, FileSystem::WRITE).c_str(), APPEND_STATUS_CREATE);
 
 	if (file) {
 		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);

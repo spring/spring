@@ -274,8 +274,7 @@ bool SpringApp::Initialize ()
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 #endif
 
-	// first call to GetInstance() initializes the VFS
-	FileSystemHandler::GetInstance();
+	FileSystemHandler::Initialize(true);
 
 	if (!InitWindow ("RtsSpring"))
 	{
@@ -561,7 +560,7 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 
 	string cmdLineStr = win_lpCmdLine;
 	string::size_type offset = 0;
-	//Simply assumes that any argument coming after a argument starting with “/q” is a variable to “/q”.
+	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.
 	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/' && argv[i-1][1] == 'q')); i++){
 		offset += strlen(argv[i]);
 		offset = cmdLineStr.find_first_not_of(' ', offset);

@@ -24,14 +24,11 @@ class WinFileSystemHandler : public FileSystemHandler
 	public:
 
 		virtual ~WinFileSystemHandler();
-		WinFileSystemHandler();
+		WinFileSystemHandler(bool verbose, bool mapArchives);
 
-		virtual FILE* fopen(const std::string& file, const char* mode) const;
-		virtual std::ifstream* ifstream(const std::string& file, std::ios_base::openmode mode) const;
-		virtual std::ofstream* ofstream(const std::string& file, std::ios_base::openmode mode) const;
 		virtual bool mkdir(const std::string& dir) const;
 
-		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const;
+		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
 };
 
 #endif // !WINFILESYSTEMHANDLER_H

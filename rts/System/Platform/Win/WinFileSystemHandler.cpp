@@ -11,7 +11,6 @@
 
 #include "StdAfx.h"
 #include <boost/regex.hpp>
-#include <fstream>
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "WinFileSystemHandler.h"
@@ -29,7 +28,7 @@
 /**
  * @brief Creates the archive scanner and vfs handler
  */
-WinFileSystemHandler::WinFileSystemHandler() : FileSystemHandler('\\')
+WinFileSystemHandler::WinFileSystemHandler(bool verbose, bool mapArchives) : FileSystemHandler('\\')
 {
 	//  (same code as originally in CSpringApp::InitVFS())
 
@@ -40,43 +39,11 @@ WinFileSystemHandler::WinFileSystemHandler() : FileSystemHandler('\\')
 	archiveScanner->Scan("./base", true);
 	archiveScanner->Scan("./mods", true);
 	archiveScanner->WriteCacheData(archiveScanner->GetFilename());
-	hpiHandler = new CVFSHandler();
+	hpiHandler = new CVFSHandler(mapArchives);
 }
 
 WinFileSystemHandler::~WinFileSystemHandler()
 {
-}
-
-/**
- * @brief FILE* fp = fopen() wrapper
- */
-FILE* WinFileSystemHandler::fopen(const std::string& file, const char* mode) const
-{
-	return ::fopen(file.c_str(), mode);
-}
-
-/**
- * @brief std::ifstream* ifs = new std::ifstream() wrapper
- */
-std::ifstream* WinFileSystemHandler::ifstream(const std::string& file, std::ios_base::openmode mode) const
-{
-	std::ifstream* ifs = new std::ifstream(file.c_str(), mode);
-	if (ifs->good() && ifs->is_open())
-		return ifs;
-	delete ifs;
-	return NULL;
-}
-
-/**
- * @brief std::ofstream* ofs = new std::ofstream() wrapper
- */
-std::ofstream* WinFileSystemHandler::ofstream(const std::string& file, std::ios_base::openmode mode) const
-{
-	std::ofstream* ofs = new std::ofstream(file.c_str(), mode);
-	if (ofs->good() && ofs->is_open())
-		return ofs;
-	delete ofs;
-	return NULL;
 }
 
 /**
@@ -102,7 +69,7 @@ bool WinFileSystemHandler::mkdir(const std::string& path) const
 	return false;
 }
 
-static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, bool recurse, bool include_dirs)
+static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
 {
 	struct _finddata_t files;
 	long hFile;
@@ -119,10 +86,10 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 					matches.push_back(dir + files.name);
 			}
 			// or a directory?
-			else if (recurse) {
-				if (include_dirs && boost::regex_match(files.name, regexpattern))
+			else if (flags & FileSystem::RECURSE) {
+				if ((flags & FileSystem::INCLUDE_DIRS) && boost::regex_match(files.name, regexpattern))
 					matches.push_back(dir + files.name);
-				FindFiles(matches, dir + files.name + '\\', regexpattern, recurse, include_dirs);
+				FindFiles(matches, dir + files.name + '\\', regexpattern, flags);
 			}
 		}
 	} while (_findnext( hFile, &files ) == 0);
@@ -141,14 +108,14 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
  * Will search for a file given a particular pattern.
  * Starts from dirpath, descending down if recurse is true.
  */
-std::vector<std::string> WinFileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const
+std::vector<std::string> WinFileSystemHandler::FindFiles(const std::string& dir, const std::string &pattern, int flags) const
 {
 	assert(!dir.empty() && dir[dir.length() - 1] == '\\');
 
 	std::vector<std::string> matches;
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
 
-	::FindFiles(matches, dir, regexpattern, recurse, include_dirs);
+	::FindFiles(matches, dir, regexpattern, flags);
 
 	return matches;
 }

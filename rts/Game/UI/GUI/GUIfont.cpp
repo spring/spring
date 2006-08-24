@@ -33,15 +33,7 @@ GUIfont::GUIfont(const std::string& fontFilename,int fontsize)
 	if(FT_Init_FreeType(&library))
 		throw std::runtime_error("Failed to init freetype2 library");
 
-	bool success = false;
-	std::vector<std::string> filenames = filesystem.GetNativeFilenames(fontFilename);
-	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
-		if (!FT_New_Face(library, it->c_str(), 0, &face)) {
-			success = true;
-			break;
-		}
-	}
-	if (!success)
+	if (FT_New_Face(library, filesystem.LocateFile(fontFilename).c_str(), 0, &face))
 		throw content_error("Failed to load font "+ fontFilename);
 
 	FT_Set_Char_Size(face,fontsize << 6,fontsize << 6,96,96);

@@ -39,6 +39,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Game/CameraController.h"
 #include "Sim/ModInfo.h"
+#include "Platform/FileSystem.h"
 #include "mmgr.h"
 
 /* Cast id to unsigned to catch negative ids in the same operations,
@@ -907,9 +908,25 @@ bool CAICallback::GetValue(int id, void *data)
 		}case AIVAL_GUI_CAMERA_POS:{
 			*(float3*)data = mouse->currentCamController->GetPos();
 			return true;
-		}case AIVAL_SCRIPT_FILENAME:{
-			if (gameSetup) *((std::string*)data) = gameSetup->setupFileName;
-			else *((std::string*)data) = "";
+		}case AIVAL_SCRIPT_FILENAME_DEPRECATED:{
+			// Passing container objects across DLL boundaries is not safe on windows,
+			// So this AIVAL is deprecated in favour of AIVAL_SCRIPT_FILENAME_CSTR
+// 			if (gameSetup) *((std::string*)data) = gameSetup->setupFileName;
+// 			else *((std::string*)data) = "";
+			return false;
+		}case AIVAL_SCRIPT_FILENAME_CSTR:{
+			strcpy((char*) data, gameSetup->setupFileName.c_str());
+			return true;
+		}case AIVAL_LOCATE_FILE_R:{
+			// No need to do anything on Windows.
+			std::string f((char*) data);
+			f = filesystem.LocateFile(f);
+			strcpy((char*) data, f.c_str());
+			return true;
+		}case AIVAL_LOCATE_FILE_W:{
+			std::string f((char*) data);
+			f = filesystem.LocateFile(f, FileSystem::WRITE | FileSystem::CREATE_DIRS);
+			strcpy((char*) data, f.c_str());
 			return true;
 		}
 		default:

@@ -634,7 +634,7 @@ void CNet::CreateDemoFile()
 			}
 		}
 		demoName = buf;
-		recordDemo=filesystem.ofstream(buf, ios::out|ios::binary);
+		recordDemo=new std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
 
 		// add a TDF section containing the game version to the startup script
 		string scriptText = MakeDemoStartScript (gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
@@ -646,7 +646,7 @@ void CNet::CreateDemoFile()
 		recordDemo->write(scriptText.c_str(), scriptText.length());
 	} else {
 		demoName = "demos/test.sdf";
-		recordDemo=filesystem.ofstream(demoName.c_str(), ios::out|ios::binary);
+		recordDemo=new std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
 		char c=0;
 		recordDemo->write(&c,1);
 	}

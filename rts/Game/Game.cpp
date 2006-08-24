@@ -2303,10 +2303,9 @@ void InitCRCTable()
 
 void CGame::MakeMemDump(void)
 {
-	std::auto_ptr<std::ofstream> pfile(filesystem.ofstream(gameServer ? "memdump.txt" : "memdumpclient.txt"));
-	std::ofstream& file(*pfile);
+	std::ofstream file(gameServer ? "memdump.txt" : "memdumpclient.txt");
 
-	if (!pfile.get())
+	if (file.bad() || !file.is_open())
 		return;
 
 	file << "Frame " << gs->frameNum <<"\n";

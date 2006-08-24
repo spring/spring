@@ -12,6 +12,7 @@
 #include "StdAfx.h"
 #include <assert.h>
 #include <boost/regex.hpp>
+#include <fstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "FileSystem.h"
@@ -22,6 +23,7 @@
 #endif
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
 #define fs (FileSystemHandler::GetInstance())
@@ -41,14 +43,25 @@ FileSystemHandler* FileSystemHandler::instance;
  */
 FileSystemHandler& FileSystemHandler::GetInstance()
 {
+	if (!instance)
+		Initialize(false);
+	return *instance;
+}
+
+/**
+ * @brief initialize the data directory handler
+ */
+void FileSystemHandler::Initialize(bool verbose)
+{
+	bool mapArchives = !!configHandler.GetInt("MapArchives", 1);
+
 	if (!instance) {
 #ifdef WIN32
-		instance = new WinFileSystemHandler();
+		instance = new WinFileSystemHandler(verbose, mapArchives);
 #else
-		instance = new UnixFileSystemHandler();
+		instance = new UnixFileSystemHandler(verbose, mapArchives);
 #endif
 	}
-	return *instance;
 }
 
 void FileSystemHandler::Cleanup()
@@ -73,11 +86,6 @@ FileSystemHandler::FileSystemHandler(int native_path_sep): native_path_separator
 	instance = this;
 }
 
-bool FileSystemHandler::remove(const std::string& file) const
-{
-	return remove(file.c_str()) == 0;
-}
-
 /**
  * @brief return a writable directory
  */
@@ -91,28 +99,24 @@ std::string FileSystemHandler::GetWriteDir() const
 }
 
 /**
- * @brief get size of a file
+ * @brief return a vector of all data directories
  */
-size_t FileSystemHandler::GetFilesize(const std::string& path) const
-{
-	struct stat info;
-	if (stat(path.c_str(), &info) != 0)
-		return 0;
-	return info.st_size;
-}
-
-std::vector<std::string> FileSystemHandler::GetNativeFilenames(const std::string& file, bool write) const
-{
-	std::vector<std::string> f;
-	f.push_back(file);
-	return f;
-}
-
 std::vector<std::string> FileSystemHandler::GetDataDirectories() const
 {
 	std::vector<std::string> f;
 	f.push_back(FileSystemHandler::GetWriteDir());
 	return f;
+}
+
+/**
+ * @brief locate a file
+ *
+ * This implementation just assumes the file lives in the current working
+ * directory, so it just returns it's argument: file.
+ */
+std::string FileSystemHandler::LocateFile(const std::string& file) const
+{
+	return file;
 }
 
 ////////////////////////////////////////
@@ -198,52 +202,56 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 	return regex;
 }
 
-std::string FileSystem::GetWriteDir() const
-{
-	return fs.GetWriteDir();
-}
-
-FILE* FileSystem::fopen(std::string file, const char* mode) const
-{
-	if (!CheckFile(file) || !CheckMode(mode))
-		return NULL;
-	FixSlashes(file);
-	return fs.fopen(file, mode);
-}
-
-std::ifstream* FileSystem::ifstream(std::string file, std::ios_base::openmode mode) const
-{
-	if (!CheckFile(file))
-		return NULL;
-	FixSlashes(file);
-	return fs.ifstream(file, mode);
-}
-
-std::ofstream* FileSystem::ofstream(std::string file, std::ios_base::openmode mode) const
-{
-	if (!CheckFile(file))
-		return NULL;
-	FixSlashes(file);
-	return fs.ofstream(file, mode);
-}
-
+/**
+ * @brief get filesize
+ *
+ * @return the filesize or 0 if the file doesn't exist.
+ */
 size_t FileSystem::GetFilesize(std::string file) const
 {
 	if (!CheckFile(file))
 		return 0;
 	FixSlashes(file);
-	return fs.GetFilesize(file);
+	struct stat info;
+	if (stat(file.c_str(), &info) != 0)
+		return 0;
+	return info.st_size;
 }
 
+/**
+ * @brief create a directory
+ *
+ * Works like mkdir -p, ie. attempts to create parent directories too.
+ * Operates on the current working directory.
+ */
 bool FileSystem::CreateDirectory(std::string dir) const
 {
 	if (!CheckFile(dir))
 		return false;
-	FixSlashes(dir);
+
+	ForwardSlashes(dir);
+	size_t prev_slash = 0, slash;
+	while ((slash = dir.find('/', prev_slash + 1)) != std::string::npos) {
+		if (!fs.mkdir(dir.substr(0, slash)))
+			return false;
+		prev_slash = slash;
+	}
 	return fs.mkdir(dir);
 }
 
-std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::string& pattern, bool recurse, bool include_dirs) const
+/**
+ * @brief find files
+ *
+ * Compiles a std::vector of all files below dir that match pattern.
+ *
+ * If FileSystem::RECURSE flag is set it recurses into subdirectories.
+ * If FileSystem::INCLUDE_DIRS flag is set it includes directories in the
+ * result too, as long as they match the pattern.
+ *
+ * Note that pattern doesn't apply to the names of recursed directories,
+ * it does apply to the files inside though.
+ */
+std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::string& pattern, int flags) const
 {
 	if (!CheckFile(dir))
 		return std::vector<std::string>();
@@ -252,7 +260,7 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
 	if (dir[dir.length() - 1] != '/' && dir[dir.length() - 1] != '\\')
 		dir += '/';
 	FixSlashes(dir);
-	return fs.FindFiles(dir, pattern, recurse, include_dirs);
+	return fs.FindFiles(dir, pattern, flags);
 }
 
 /**
@@ -355,23 +363,45 @@ bool FileSystem::CheckMode(const char* mode) const
 	return true;
 }
 
-std::vector<std::string> FileSystem::GetNativeFilenames(std::string file, bool write) const
+/**
+ * @brief locate a file
+ *
+ * Attempts to locate a file.
+ *
+ * If the FileSystem::WRITE flag is set, it just returns the argument
+ * (assuming the file should come in the current working directory).
+ * If FileSystem::CREATE_DIRS is set it tries to create the subdirectory
+ * the file should live in.
+ *
+ * Otherwise (if flags == 0), it dispatches the call to
+ * FileSystemHandler::LocateFile(), which either searches for it in multiple
+ * data directories (UNIX) or just returns the argument (Windows).
+ */
+std::string FileSystem::LocateFile(std::string file, int flags) const
 {
 	if (!CheckFile(file))
-		return std::vector<std::string>();
+		return "";
 	FixSlashes(file);
-	return fs.GetNativeFilenames(file, write);
+
+	if (flags & WRITE) {
+
+		if (flags & CREATE_DIRS)
+			CreateDirectory(GetDirectory(file));
+
+		return file;
+	}
+	return fs.LocateFile(file);
 }
 
-std::vector<std::string> FileSystem::GetDataDirectories() const
-{
-	return fs.GetDataDirectories();
-}
-
+/**
+ * @brief remove a file
+ *
+ * Operates on the current working directory.
+ */
 bool FileSystem::Remove(std::string file) const
 {
 	if (!CheckFile(file))
 		return false;
 	FixSlashes(file);
-	return fs.remove(file);
+	return ::remove(file.c_str()) == 0;
 }

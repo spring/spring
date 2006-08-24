@@ -50,15 +50,7 @@ CglFont::CglFont(int start, int end)
 		throw std::runtime_error(msg);
 	}
 
-	bool success = false;
-	std::vector<std::string> filenames = filesystem.GetNativeFilenames(FONTFILE);
-	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
-		if (!FT_New_Face(library, it->c_str(), 0, &face)) {
-			success = true;
-			break;
-		}
-	}
-	if (!success) {
+	if (FT_New_Face(library, filesystem.LocateFile(FONTFILE).c_str(), 0, &face)) {
 		string msg = FONTFILE ": FT_New_Face failed: ";
 		msg += GetFTError(error);
 		throw content_error(msg);

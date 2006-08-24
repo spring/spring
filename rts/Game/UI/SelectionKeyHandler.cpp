@@ -25,8 +25,7 @@ extern Uint8 *keys;
 
 CSelectionKeyHandler::CSelectionKeyHandler(void)
 {
-	std::auto_ptr<std::ifstream> pifs(filesystem.ifstream("selectkeys.txt"));
-	std::ifstream& ifs(*pifs);
+	std::ifstream ifs(filesystem.LocateFile("selectkeys.txt").c_str());
 
 	char buf[10000];
 

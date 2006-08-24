@@ -71,8 +71,6 @@ using std::new_handler;
 
 #include "mmgr.h"
 
-#include "Platform/FileSystem.h"
-
 // ---------------------------------------------------------------------------------------------------------------------------------
 // -DOC- If you're like me, it's hard to gain trust in foreign code. This memory manager will try to INDUCE your code to crash (for
 // very good reasons... like making bugs obvious as early as possible.) Some people may be inclined to remove this memory tracking
@@ -432,7 +430,7 @@ static	void	log(const char *format, ...)
 
 	// Open the log file
 
-	FILE	*fp = filesystem.fopen("memory.log", "ab");
+	FILE	*fp = fopen("memory.log", "ab");
 
 	// If you hit this assert, then the memory logger is unable to log information to a file (can't open the file for some
 	// reason.) You can interrogate the variable 'buffer' to see what was supposed to be logged (but won't be.)
@@ -480,7 +478,7 @@ static	void	dumpLeakReport()
 {
 	// Open the report file
 
-	FILE	*fp = filesystem.fopen("memleaks.log", "w+b");
+	FILE	*fp = fopen("memleaks.log", "w+b");
 
 	// If you hit this assert, then the memory report generator is unable to log information to a file (can't open the file for
 	// some reason.)
@@ -1543,8 +1541,8 @@ void	m_dumpMemoryReport(const char *filename, const bool overwrite)
 
 	FILE	*fp = NULL;
 	
-	if (overwrite)	fp = filesystem.fopen(filename, "w+b");
-	else		fp = filesystem.fopen(filename, "ab");
+	if (overwrite)	fp = fopen(filename, "w+b");
+	else		fp = fopen(filename, "ab");
 
 	// If you hit this assert, then the memory report generator is unable to log information to a file (can't open the file for
 	// some reason.)

@@ -24,7 +24,7 @@ CArchiveDir::CArchiveDir(const string& archivename) :
 		curFileHandle(0),
 		curSearchHandle(0)
 {
-	std::vector<std::string> found = filesystem.FindFiles(archiveName, "*", true);
+	std::vector<std::string> found = filesystem.FindFiles(archiveName, "*", FileSystem::RECURSE);
 
 	// because spring expects the contents of archives to be case independent,
 	// we convert filenames to lowercase in every function, and keep a std::map
