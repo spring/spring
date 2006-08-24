@@ -12,7 +12,6 @@
 #include "StdAfx.h"
 #include <boost/regex.hpp>
 #include <dirent.h>
-#include <fstream>
 #include <sstream>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -23,38 +22,6 @@
 #include "Platform/ConfigHandler.h"
 #include "UnixFileSystemHandler.h"
 #include "mmgr.h"
-
-/**
- * @brief creates a directory
- *
- * Returns true if postcondition is that directory exists.
- * Used in UnixFileSystemHandler::mkdir() and to try to create data directories
- * if they don't yet exist.
- */
-static bool mkdir_helper(const std::string& dir, bool verbose = false)
-{
-	struct stat info;
-
-	// First check if directory exists. We'll return success if it does.
-	if (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
-		return true;
-
-	if (verbose)
-		fprintf(stderr, "WARNING: trying to create directory: %s ... ", dir.c_str());
-
-	// If it doesn't exist we try to mkdir it and return success if that succeeds.
-	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0) {
-		if (verbose)
-			fprintf(stderr, "Success\n");
-		return true;
-	}
-
-	if (verbose)
-		perror("");
-
-	// Otherwise we return false.
-	return false;
-}
 
 /**
  * @brief construct a data directory object
@@ -146,32 +113,28 @@ void UnixFileSystemHandler::DeterminePermissions(int start_at)
 			// other random writedir you didn't even remember you had added it.
 			if (!writedir && access(d->path.c_str(), W_OK) == 0) {
 				d->writable = true;
-				fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
+				if (verbose)
+					fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
 				writedir = &*d;
 			} else {
-				fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
+				if (verbose)
+					fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
 			}
 		} else {
-			fprintf(stderr, "WARNING: can not access data directory: %s\n", d->path.c_str());
-			size_t prev_slash = 0, slash;
-			bool success = true;
-			while ((slash = d->path.find('/', prev_slash + 1)) != std::string::npos) {
-				if (!mkdir_helper(d->path.substr(0, slash), true)) {
-					success = false;
-					break;
-				}
-				prev_slash = slash;
-			}
-			if (success) {
+			if (verbose)
+				fprintf(stderr, "WARNING: can not access data directory: %s\n", d->path.c_str());
+			if (filesystem.CreateDirectory(d->path)) {
 				// it didn't exist before, now it does and we just created it with rw access,
 				// so we just assume we still have read-write acces...
 				d->readable = true;
 				if (!writedir) {
-					fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
+					if (verbose)
+						fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
 					d->writable = true;
 					writedir = &*d;
 				} else {
-					fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
+					if (verbose)
+						fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
 				}
 			}
 		}
@@ -236,7 +199,8 @@ void UnixFileSystemHandler::LocateDataDirs()
 
 	if (!writedir) {
 		// add current working directory to search path & try again
-		fprintf(stderr, "WARNING: adding current working directory to search path\n");
+		if (verbose)
+			fprintf(stderr, "WARNING: adding current working directory to search path\n");
 		char buf[4096];
 		getcwd(buf, sizeof(buf));
 		buf[sizeof(buf) - 1] = 0;
@@ -251,6 +215,8 @@ void UnixFileSystemHandler::LocateDataDirs()
 
 	// for now, chdir to the datadirectory as a safety measure:
 	// all AIs still just assume it's ok to put their stuff in the current directory after all
+	// Not only safety anymore, it's just easier if other code can safely assume that
+	// writedir == current working directory
 	chdir(GetWriteDir().c_str());
 }
 
@@ -301,10 +267,10 @@ void UnixFileSystemHandler::InitVFS(bool mapArchives) const
  *
  * Locates data directories and initializes the VFS.
  */
-UnixFileSystemHandler::UnixFileSystemHandler()
+UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool mapArchives) : verbose(verbose)
 {
 	LocateDataDirs();
-	InitVFS();
+	InitVFS(mapArchives);
 }
 
 
@@ -332,39 +298,38 @@ std::string UnixFileSystemHandler::GetWriteDir() const
  * Will search for a file given a particular pattern.
  * Starts from dirpath, descending down if recurse is true.
  */
-std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const
+std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, int flags) const
 {
-	// if it's an absolute path, don't look for it in the data directories
-	if (dir[0] == '/')
-		return FindFilesSingleDir(dir, pattern, recurse, include_dirs);
+	std::vector<std::string> matches;
 
-	std::vector<std::string> match;
+	// if it's an absolute path, don't look for it in the data directories
+	if (dir[0] == '/') {
+		FindFilesSingleDir(matches, dir, pattern, flags);
+		return matches;
+	}
+
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->readable) {
-			std::vector<std::string> submatch = FindFilesSingleDir(d->path + dir, pattern, recurse, include_dirs);
-			match.insert(match.end(), submatch.begin(), submatch.end());
+			FindFilesSingleDir(matches, d->path + dir, pattern, flags);
 		}
 	}
-	return match;
+	return matches;
 }
 
-std::vector<std::string> UnixFileSystemHandler::GetNativeFilenames(const std::string& file, bool write) const
+std::string UnixFileSystemHandler::LocateFile(const std::string& file) const
 {
-	std::vector<std::string> f;
-
 	// if it's an absolute path, don't look for it in the data directories
-	if (file[0] == '/') {
-		f.push_back(file);
-		return f;
-	}
+	if (file[0] == '/')
+		return file;
 
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->readable) {
-			if (!write || d->writable)
-				f.push_back(d->path + file);
+			std::string fn(d->path + file);
+			if (access(fn.c_str(), R_OK | F_OK) == 0)
+				return fn;
 		}
 	}
-	return f;
+	return file;
 }
 
 std::vector<std::string> UnixFileSystemHandler::GetDataDirectories() const
@@ -376,90 +341,6 @@ std::vector<std::string> UnixFileSystemHandler::GetDataDirectories() const
 			f.push_back(d->path);
 	}
 	return f;
-}
-
-/**
- * @brief FILE* fp = fopen() wrapper
- *
- * Walks through all data directories until it finds one in
- * which it has sufficient privileges to open the file.
- */
-FILE* UnixFileSystemHandler::fopen(const std::string& file, const char* mode) const
-{
-	// if it's an absolute path, don't look for it in the data directories
-	if (file[0] == '/')
-		return ::fopen(file.c_str(), mode);
-
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		if ((mode[0] == 'r' && !strchr(mode, '+') && d->readable) || d->writable) {
-			FILE* f = ::fopen((d->path + file).c_str(), mode);
-			if (f)
-				return f;
-		}
-	}
-	return NULL;
-}
-
-/**
- * @brief std::ifstream* ifs = new std::ifstream() wrapper
- *
- * Walks through all data directories until it finds one in
- * which it has sufficient privileges to open the file.
- */
-std::ifstream* UnixFileSystemHandler::ifstream(const std::string& file, std::ios_base::openmode mode) const
-{
-	std::ifstream* ifs = new std::ifstream;
-
-	// if it's an absolute path, don't look for it in the data directories
-	if (file[0] == '/') {
-		ifs->open(file.c_str(), mode);
-		if (ifs->good() && ifs->is_open())
-			return ifs;
-		delete ifs;
-		return NULL;
-	}
-
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		if (d->readable) {
-			ifs->clear();
-			ifs->open((d->path + file).c_str(), mode);
-			if (ifs->good() && ifs->is_open())
-				return ifs;
-		}
-	}
-	delete ifs;
-	return NULL;
-}
-
-/**
- * @brief std::ofstream* ofs = new std::ofstream() wrapper
- *
- * Walks through all data directories until it finds one in
- * which it has sufficient privileges to open the file.
- */
-std::ofstream* UnixFileSystemHandler::ofstream(const std::string& file, std::ios_base::openmode mode) const
-{
-	std::ofstream* ofs = new std::ofstream;
-
-	// if it's an absolute path, don't look for it in the data directories
-	if (file[0] == '/') {
-		ofs->open(file.c_str(), mode);
-		if (ofs->good() && ofs->is_open())
-			return ofs;
-		delete ofs;
-		return NULL;
-	}
-
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		if (d->writable) {
-			ofs->clear();
-			ofs->open((d->path + file).c_str(), mode);
-			if (ofs->good() && ofs->is_open())
-				return ofs;
-		}
-	}
-	delete ofs;
-	return NULL;
 }
 
 /**
@@ -478,28 +359,30 @@ std::ofstream* UnixFileSystemHandler::ofstream(const std::string& file, std::ios
  */
 bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 {
-	// if it's an absolute path, don't mkdir inside the data directories
-	if (dir[0] == '/')
-		return mkdir_helper(dir);
+	struct stat info;
 
-	return mkdir_helper(GetWriteDir() + dir);
+	// First check if directory exists. We'll return success if it does.
+	if (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
+		return true;
+
+	if (verbose)
+		fprintf(stderr, "WARNING: trying to create directory: %s ... ", dir.c_str());
+
+	// If it doesn't exist we try to mkdir it and return success if that succeeds.
+	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0) {
+		if (verbose)
+			fprintf(stderr, "Success\n");
+		return true;
+	}
+
+	if (verbose)
+		perror("");
+
+	// Otherwise we return false.
+	return false;
 }
 
-/**
- * @brief removes a file from all writable data directories
- *
- * Returns true if at least one remove succeeded.
- */
-bool UnixFileSystemHandler::remove(const std::string& file) const
-{
-	// if it's an absolute path, don't remove inside the data directories
-	if (file[0] == '/')
-		return ::remove(file.c_str()) == 0;
-
-	return ::remove((GetWriteDir() + file).c_str()) == 0;
-}
-
-static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, bool recurse, bool include_dirs)
+static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
 {
 	DIR* dp;
 	struct dirent* ep;
@@ -519,10 +402,10 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 						matches.push_back(dir + ep->d_name);
 				}
 				// or a directory?
-				else if (recurse) {
-					if (include_dirs && boost::regex_match(ep->d_name, regexpattern))
+				else if (flags & FileSystem::RECURSE) {
+					if ((flags & FileSystem::INCLUDE_DIRS) && boost::regex_match(ep->d_name, regexpattern))
 						matches.push_back(dir + ep->d_name);
-					FindFiles(matches, dir + ep->d_name + '/', regexpattern, recurse, include_dirs);
+					FindFiles(matches, dir + ep->d_name + '/', regexpattern, flags);
 				}
 			}
 		}
@@ -541,14 +424,11 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
  * Will search for a file given a particular pattern.
  * Starts from dirpath, descending down if recurse is true.
  */
-std::vector<std::string> UnixFileSystemHandler::FindFilesSingleDir(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const
+void UnixFileSystemHandler::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const
 {
 	assert(!dir.empty() && dir[dir.length() - 1] == '/');
 
-	std::vector<std::string> matches;
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
 
-	::FindFiles(matches, dir, regexpattern, recurse, include_dirs);
-
-	return matches;
+	::FindFiles(matches, dir, regexpattern, flags);
 }

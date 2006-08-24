@@ -6,7 +6,6 @@
 #include "SyncTracer.h"
 #include <stdio.h>
 #include "Game/UI/InfoConsole.h"
-#include "Platform/FileSystem.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -21,7 +20,7 @@ bool CSyncTracer::init()
 	if (logfile == 0) {
 		char c[100];
 		sprintf(c, "trace%i.log", gu->myTeam);
-		logfile = filesystem.new_ofstream(c);
+		logfile = new std::ofstream(c);
 	}
 #endif
 	return logfile != 0;
@@ -49,7 +48,7 @@ void CSyncTracer::Commit()
 	if(file == 0){
 		char c[100];
 		sprintf(c, "trace%i.txt", gu->myTeam);
-		file = filesystem.new_ofstream(c);
+		file = new std::ofstream(c);
 	}
 #endif
 

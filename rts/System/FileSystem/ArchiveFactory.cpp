@@ -21,25 +21,23 @@ bool CArchiveFactory::IsArchive(const std::string& fileName)
 CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName)
 {
 	std::string ext = StringToLower(filesystem.GetExtension(fileName));
+	std::string fn = filesystem.LocateFile(fileName);
 
-	std::vector<std::string> filenames = filesystem.GetNativeFilenames(fileName);
-	for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); ++it) {
-		CArchiveBase* ret = NULL;
+	CArchiveBase* ret = NULL;
 
-		if (ext == "sd7")
-			ret = new CArchive7Zip(*it);
-		else if (ext == "sdz")
-			ret = new CArchiveZip(*it);
-		else if (ext == "sdd")
-			ret = new CArchiveDir(*it);
-		else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx"))
-			ret = new CArchiveHPI(*it);
+	if (ext == "sd7")
+		ret = new CArchive7Zip(fn);
+	else if (ext == "sdz")
+		ret = new CArchiveZip(fn);
+	else if (ext == "sdd")
+		ret = new CArchiveDir(fn);
+	else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx"))
+		ret = new CArchiveHPI(fn);
 
-		if (ret && ret->IsOpen())
-			return ret;
+	if (ret && ret->IsOpen())
+		return ret;
 
-		delete ret;
-	}
+	delete ret;
 	return NULL;
 }
 

@@ -24,17 +24,13 @@ class UnixFileSystemHandler : public FileSystemHandler
 	public:
 
 		virtual ~UnixFileSystemHandler();
-		UnixFileSystemHandler();
+		UnixFileSystemHandler(bool verbose, bool mapArchives);
 
-		virtual FILE* fopen(const std::string& file, const char* mode) const;
-		virtual std::ifstream* ifstream(const std::string& file, std::ios_base::openmode mode) const;
-		virtual std::ofstream* ofstream(const std::string& file, std::ios_base::openmode mode) const;
 		virtual bool mkdir(const std::string& dir) const;
-		virtual bool remove(const std::string& file) const;
 
 		virtual std::string GetWriteDir() const;
-		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const;
-		virtual std::vector<std::string> GetNativeFilenames(const std::string& file, bool write) const;
+		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
+		virtual std::string LocateFile(const std::string& file) const;
 		virtual std::vector<std::string> GetDataDirectories() const;
 
 	private:
@@ -52,10 +48,11 @@ class UnixFileSystemHandler : public FileSystemHandler
 		void DeterminePermissions(int start_at = 0);
 		void LocateDataDirs();
 		void InitVFS(bool mapArchives = true) const;
-		std::vector<std::string> FindFilesSingleDir(const std::string& dir, const std::string &pattern, bool recurse, bool include_dirs) const;
+		void FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const;
 
 		std::vector<DataDir> datadirs;
 		const DataDir* writedir;
+		bool verbose;
 };
 
 #endif // !UNIXFILESYSTEMHANDLER_H

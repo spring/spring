@@ -568,9 +568,9 @@ static PyObject *unitsync_GetDataDirectories(PyObject *self, PyObject *args)
 		return NULL;
 	std::vector<std::string> f;
 	if (write)
-		f.push_back(filesystem.GetWriteDir());
+		f.push_back(FileSystemHandler::GetInstance().GetWriteDir());
 	else
-		f = filesystem.GetDataDirectories();
+		f = FileSystemHandler::GetInstance().GetDataDirectories();
 	PyObject *ret = PyList_New(f.size());
 	for (unsigned i = 0; i < f.size(); ++i) {
 		PyList_SET_ITEM(ret, i, PyString_FromString(f[i].c_str()));

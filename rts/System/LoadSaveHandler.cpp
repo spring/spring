@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-#include <memory>
 #include "LoadSaveHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "SaveInterface.h"
@@ -25,15 +24,15 @@ CLoadSaveHandler::~CLoadSaveHandler(void)
 
 void CLoadSaveHandler::SaveGame(std::string file)
 {
-	std::auto_ptr<std::ofstream> ofs(filesystem.ofstream(file.c_str(), std::ios::out|std::ios::binary));
+	std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
 
 	PrintLoadMsg("Saving game");
-	if (!ofs.get() || ofs->bad() || !ofs->is_open()) {
+	if (ofs.bad() || !ofs.is_open()) {
 		handleerror(0,"Couldnt save game to file",file.c_str(),0);
 		return;
 	}
 
-	CSaveInterface save(ofs.get());
+	CSaveInterface save(&ofs);
 
 	save.lsString(stupidGlobalMapname);
 
@@ -46,7 +45,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 //this just loads the mapname and some other early stuff
 void CLoadSaveHandler::LoadGame(std::string file)
 {
-	ifs=filesystem.ifstream(file.c_str(),std::ios::in|std::ios::binary);
+	ifs=new std::ifstream(filesystem.LocateFile(file).c_str(), std::ios::in|std::ios::binary);
 	load=new CLoadInterface(ifs);
 
 	load->lsString(stupidGlobalMapname);

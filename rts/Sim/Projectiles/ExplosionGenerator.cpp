@@ -17,7 +17,6 @@
 #include "Game/UI/InfoConsole.h"
 #include "FileSystem/FileHandler.h"
 #include "creg/VarTypes.h"
-#include "Platform/FileSystem.h"
 #include <SDL_types.h>
 #include <fstream>
 #include "mmgr.h"
@@ -543,11 +542,10 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
 	const vector<creg::Class*>& classes = creg::ClassBinder::GetClasses();
-	std::auto_ptr<std::ofstream> pfs(filesystem.ofstream("projectiles.txt"));
-	std::ofstream& fs(*pfs);
+	std::ofstream fs("projectiles.txt");
 	CExplosionGeneratorHandler egh;
 
-	if (!pfs.get())
+	if (fs.bad() || !fs.is_open())
 		return;
 
 	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci)

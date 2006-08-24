@@ -10,7 +10,6 @@
 #include <string.h>
 #include <sstream>
 #include <time.h>
-#include "System/Platform/FileSystem.h"
 #include "Logger.h"
 
 #ifdef WIN32
@@ -106,7 +105,7 @@ void CLogger::FlushBuffer()
 
 	if (!logfile) {
 		assert(filename);
-		if (!(logfile = filesystem.fopen(filename, "a")))
+		if (!(logfile = fopen(filename, "a")))
 			return;
 
 		time_t t;

@@ -18,7 +18,6 @@
  
 #include "SyncTracer.h"
 #include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
 
 #include "mmgr.h"
 
@@ -43,7 +42,7 @@ CInfoConsole::CInfoConsole()
 	numLines = 7;
 
 	assert(!filelog); // multiple infologs can't exist together!
-	filelog = filesystem.ofstream("infolog.txt");
+	filelog = new std::ofstream("infolog.txt");
 }
 
 CInfoConsole::~CInfoConsole()

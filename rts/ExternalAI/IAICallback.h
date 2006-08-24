@@ -29,7 +29,10 @@ struct FeatureDef;
 #define AIVAL_GUI_SCREENY 15
 #define AIVAL_GUI_CAMERA_DIR 16
 #define AIVAL_GUI_CAMERA_POS 17
-#define AIVAL_SCRIPT_FILENAME 18 // string
+#define AIVAL_SCRIPT_FILENAME_DEPRECATED 18 // std::string, hence unsafe, don't use!
+#define AIVAL_SCRIPT_FILENAME_CSTR 19       // data points to char buffer of sufficient size
+#define AIVAL_LOCATE_FILE_R 20
+#define AIVAL_LOCATE_FILE_W 21
 
 struct PointMarker
 {

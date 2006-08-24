@@ -10,7 +10,6 @@
 #include "Game/GameVersion.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
 #include "Game/UI/InfoConsole.h"
 #include <SDL_video.h>
 #include "mmgr.h"
@@ -56,10 +55,10 @@ void LoadExtensions()
 	for (unsigned int i=0; i<s.length(); i++) 
 		if (s[i]==' ') s[i]='\n';
 
-	std::auto_ptr<std::ofstream> ofs(filesystem.ofstream("ext.txt"));
+	std::ofstream ofs("ext.txt");
 
-	if (ofs.get())
-		ofs->write(s.c_str(), s.length());
+	if (!ofs.bad() && ofs.is_open())
+		ofs.write(s.c_str(), s.length());
 }
 
 void UnloadExtensions()

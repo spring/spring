@@ -38,7 +38,7 @@ CArchiveScanner::CArchiveScanner(void) :
 CArchiveScanner::~CArchiveScanner(void)
 {
 	if (isDirty)
-		WriteCacheData(filesystem.GetWriteDir() + GetFilename());
+		WriteCacheData(filesystem.LocateFile(GetFilename(), FileSystem::WRITE));
 }
 
 std::string CArchiveScanner::GetFilename()
@@ -81,7 +81,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 {
 	isDirty = true;
 
-	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", true, true);
+	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", FileSystem::RECURSE | FileSystem::INCLUDE_DIRS);
 	struct stat info;
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
 		stat(it->c_str(),&info);
@@ -112,7 +112,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 				if (S_ISDIR(info.st_mode)) {
 					struct stat info2;
-					std::vector<std::string> sddfiles = filesystem.FindFiles(fpath, "*", true, true);
+					std::vector<std::string> sddfiles = filesystem.FindFiles(fpath, "*", FileSystem::RECURSE | FileSystem::INCLUDE_DIRS);
 					for (std::vector<std::string>::iterator sddit = found.begin(); sddit != found.end(); ++sddit) {
 						stat(sddit->c_str(), &info2);
 						if (info.st_mtime < info2.st_mtime) {
@@ -337,7 +337,7 @@ unsigned int CArchiveScanner::GetDirectoryCRC(const string& curPath)
 	unsigned int crc = 0;
 
 	// recurse but don't include directories
-	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", true, false);
+	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", FileSystem::RECURSE);
 
 	// sort because order in which find_files finds them is undetermined
 	std::sort(found.begin(), found.end());

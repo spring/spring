@@ -17,29 +17,25 @@
 
 /**
  * @brief native file system handling abstraction
- */ 
+ */
 class FileSystemHandler
 {
 	public:
 
 		static FileSystemHandler& GetInstance();
+		static void Initialize(bool verbose);
 		static void Cleanup();
 
 		virtual ~FileSystemHandler();
 		FileSystemHandler(int native_path_sep = '/');
 
 		// almost direct wrappers to system calls
-		virtual FILE* fopen(const std::string& file, const char* mode) const = 0;
-		virtual std::ifstream* ifstream(const std::string& file, std::ios_base::openmode mode) const = 0;
-		virtual std::ofstream* ofstream(const std::string& file, std::ios_base::openmode mode) const = 0;
 		virtual bool mkdir(const std::string& dir) const = 0;
-		virtual bool remove(const std::string& file) const;
 
 		// custom functions
-		virtual size_t GetFilesize(const std::string& file) const;
 		virtual std::string GetWriteDir() const;
-		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, bool recurse, bool include_dirs) const = 0;
-		virtual std::vector<std::string> GetNativeFilenames(const std::string& file, bool write) const;
+		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const = 0;
+		virtual std::string LocateFile(const std::string& file) const;
 		virtual std::vector<std::string> GetDataDirectories() const;
 
 		int GetNativePathSeparator() const { return native_path_separator; }
@@ -60,25 +56,27 @@ class FileSystem
 {
 	public:
 
+		enum {
+			// flags for FindFiles
+			RECURSE = 1,
+			INCLUDE_DIRS = 2,
+			// flags for LocateFile
+			WRITE = 1,
+			CREATE_DIRS = 2,
+		};
+
 		FileSystem() {}
 
 		// generic functions
-		std::string GetWriteDir() const;
-		std::vector<std::string> GetNativeFilenames(std::string file, bool write = false) const;
-		std::vector<std::string> GetDataDirectories() const;
+		std::string LocateFile(std::string file, int flags = 0) const;
 		bool Remove(std::string file) const;
-
-		// data read functions
-		FILE* fopen(std::string file, const char* mode) const;
-		std::ifstream* ifstream(std::string file, std::ios_base::openmode mode = std::ios_base::in) const;
-		std::ofstream* ofstream(std::string file, std::ios_base::openmode mode = std::ios_base::out) const;
 
 		// metadata read functions
 		size_t GetFilesize(std::string path) const;
 
 		// directory functions
 		bool CreateDirectory(std::string dir) const;
-		std::vector<std::string> FindFiles(std::string dir, const std::string& pattern, bool recurse = false, bool include_dirs = false) const;
+		std::vector<std::string> FindFiles(std::string dir, const std::string& pattern, int flags = 0) const;
 
 		// convenience functions
 		std::string GetDirectory (const std::string& path) const;
