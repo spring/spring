@@ -123,10 +123,9 @@ public:
 		framebuffer = instantiate_fb(gu->screenx, gu->screeny, FBO_NEED_COLOR | FBO_NEED_DEPTH); 
 		name = "_buffer";
 
-		// ATI has GL_EXT_texture_rectangle, nVidia has GL_ARB_texture_rectangle,
-		// these constants are equal so it doesn't really matter what is used
-		assert (GLEW_EXT_texture_rectangle || GLEW_ARB_texture_rectangle);
-		uint target = GL_TEXTURE_RECTANGLE_ARB;
+	// ATI has GL_EXT_texture_rectangle, but that has no support for GLSL texture2DRect
+	// nVidia: Use RECT,  ati: use NPOT
+		target = GLEW_ARB_texture_rectangle ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
 		glGenTextures(1, &id);
 		glBindTexture(target, id);
 		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
@@ -142,8 +141,9 @@ public:
 		delete framebuffer;
 		// texture is deleted by ~BaseTexture
 	}
-	bool IsRect() {	return true; }
+	bool IsRect() {	return target == GL_TEXTURE_RECTANGLE_ARB; }
 
+	uint target;
 	IFramebuffer* framebuffer;
 };
 
@@ -215,6 +215,9 @@ struct ShaderBuilder
 
 		nodeShader->wsLightDirLocation = glGetUniformLocationARB(nodeShader->program, "wsLightDir");
 		nodeShader->wsEyePosLocation = glGetUniformLocationARB(nodeShader->program, "wsEyePos");
+
+		GLint invScreenDim = glGetUniformLocationARB(nodeShader->program, "invScreenDim");
+		glUniform2fARB(invScreenDim, 1.0f/gu->screenx, 1.0f/gu->screeny);
 
 		glUseProgramObjectARB(0);
 

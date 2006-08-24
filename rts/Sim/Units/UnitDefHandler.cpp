@@ -643,9 +643,9 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 	for(int y = 0; y < def->ysize; y++)
 		for(int x = 0; x < def->xsize; x++){
 			def->yardmaps[0][x + y*def->xsize] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[1][def->ysize*(x+1)-(y+1)] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[1][(def->ysize*def->xsize)-(def->ysize*(x+1)-(y+1)+1)] = originalMap[x/2 + y/2*def->xsize/2];
 			def->yardmaps[2][(def->ysize*def->xsize)-(x + y*def->xsize+1)] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[3][(def->ysize*def->xsize)-(def->ysize*(x+1)-(y+1)+1)] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[3][def->ysize*(x+1)-(y+1)] = originalMap[x/2 + y/2*def->xsize/2];
 		}
 	delete[] originalMap;
 }
