@@ -11,6 +11,12 @@ DLL_EXPORT void GetAiName(char* name)
 	strcpy(name,AI_NAME);
 }
 
+DLL_EXPORT int IsUnitSuited(const UnitDef* unitDef)
+{
+	CGroupAI* aitemp=new CGroupAI();
+	return aitemp->IsUnitSuited(unitDef);
+}
+
 DLL_EXPORT IGroupAI* GetNewAI()
 {
 	CGroupAI* ai=new CGroupAI();

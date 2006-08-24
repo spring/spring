@@ -39,6 +39,14 @@ CGroupAI::~CGroupAI()
 	buildOptions.clear();
 }
 
+bool CGroupAI::IsUnitSuited(const UnitDef* unitDef)
+{
+	if(unitDef->buildSpeed==0) //can only use builder units
+		return false;
+	else
+		return true;
+}
+
 void CGroupAI::InitAi(IGroupAICallback* callback)
 {
 	this->callback=callback;
@@ -49,7 +57,7 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 bool CGroupAI::AddUnit(int unit)
 {
 	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(ud->buildSpeed==0){								//can only use builder units
+	if(!IsUnitSuited(ud)){
 		aicb->SendTextMsg("Cant use non builders",0);
 		return false;
 	}

@@ -29,7 +29,7 @@ CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 	SetNewAI(dllName);
 
 	int a=0;
-	for(map<string,string>::iterator aai=handler->availableAI.begin();aai!=handler->availableAI.end() && dllName!=aai->first;++aai){
+	for(map<string,string>::iterator aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && dllName!=aai->first;++aai){
 		a++;
 	}
 	currentAiNum=a;
@@ -133,8 +133,9 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	sprintf(t,"%i",currentAiNum);
 	c.params.push_back(t);
 	map<string,string>::iterator aai;
-	for(aai=handler->availableAI.begin();aai!=handler->availableAI.end();++aai){
-		c.params.push_back(aai->second.c_str());
+	map<string,string> suitedAis = handler->GetSuitedAis(units);
+	for(aai=suitedAis.begin();aai!=suitedAis.end();++aai){
+		c.params.push_back((aai->second).c_str());
 	}
 	myCommands.push_back(c);
 	return myCommands;
@@ -155,7 +156,7 @@ void CGroup::GiveCommand(Command c)
 	if(c.id==CMD_AISELECT){
 		map<string,string>::iterator aai;
 		int a=0;
-		for(aai=handler->availableAI.begin();aai!=handler->availableAI.end() && a<c.params[0];++aai){
+		for(aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && a<c.params[0];++aai){
 			a++;
 		}
 		currentAiNum=(int)c.params[0];

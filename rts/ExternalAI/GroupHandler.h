@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <set>
 class CGroup;
 
 using namespace std;
@@ -26,6 +27,9 @@ public:
 
 	vector<CGroup*> groups;
 	map<string,string> availableAI;
+
+	map<string,string> GetSuitedAis(set<CUnit*> units);
+	map<string,string> lastSuitedAis;
 
 	int team;
 protected:
