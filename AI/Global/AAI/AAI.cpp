@@ -77,7 +77,7 @@ AAI::~AAI()
 }
 
 void AAI::GotChatMsg (const char *msg, int player){
-	//cb->SendTextMsg("I don´t know how to talk yet...",0);
+	//cb->SendTextMsg("I dont know how to talk yet...",0);
 }
 
 
@@ -87,7 +87,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	cb = callback->GetAICallback();
 
 	// open log file
-	char filename[80];
+	char filename[1000];
 	char buffer[60];
 	char team_number[3];
 	
@@ -102,6 +102,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	strcat(buffer, team_number);
 	strcat(buffer, ".txt");
 	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
+	cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	file = fopen(filename,"w");
 
 	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModName());
@@ -218,7 +219,7 @@ void AAI::UnitCreated(int unit)
 	if(!cfg->initialized)
 		return;
 
-	// get unit´s id and side
+	// get units id and side
 	const UnitDef *def = cb->GetUnitDef(unit);
 	int side = bt->GetSideByID(def->id)-1;
 	UnitCategory category = bt->units_static[def->id].category;
@@ -377,7 +378,7 @@ void AAI::UnitCreated(int unit)
 
 void AAI::UnitDestroyed(int unit, int attacker) 
 {
-	// get unit´s id 
+	// get units id 
 	const UnitDef *def = cb->GetUnitDef(unit);
 	int side = bt->GetSideByID(def->id)-1;
 
@@ -652,7 +653,7 @@ void AAI::UnitFinished(int unit)
 	if(!cfg->initialized)
 		return;
 
-	// get unit´s id and side
+	// get units id and side
 	const UnitDef *def = cb->GetUnitDef(unit);
 	int side = bt->GetSideByID(def->id)-1;
 
@@ -813,7 +814,7 @@ void AAI::EnemyDestroyed (int enemy, int attacker)
 {
 	if(attacker)
 	{	
-		// get unit´s id 
+		// get units id 
 		const UnitDef *def = cb->GetUnitDef(enemy);
 		const UnitDef *def_att = cb->GetUnitDef(attacker);
 

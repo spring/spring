@@ -94,13 +94,14 @@ AAIConfig::~AAIConfig(void)
 
 void AAIConfig::LoadConfig(AAI *ai)
 {
-	char filename[100];
+	char filename[1000];
 	char buffer[120];
 	strcpy(buffer, AI_PATH);
 	strcat(buffer, MOD_CFG_PATH);
 	strcat(buffer, ai->cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
 	strcpy(cfg_file, filename);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	FILE *file = fopen(filename, "r");
 	char keyword[50];
@@ -454,6 +455,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 	strcpy(buffer, AI_PATH);
 	strcat(buffer, GENERAL_CFG_FILE);
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	file = fopen(filename, "r");
 

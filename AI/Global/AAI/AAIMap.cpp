@@ -46,13 +46,14 @@ AAIMap::~AAIMap(void)
 
 	// save map data
 	char filename[120];
-	char buffer[120];
+	char buffer[1000];
 	strcpy(buffer, AI_PATH);
 	strcat(buffer, MAP_LEARN_PATH);
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), "_");
 	strcat(filename, cb->GetModName());
-	ReplaceExtension(filename, buffer, sizeof(filename), ".dat");
+	ReplaceExtension(filename, buffer, sizeof(buffer), ".dat");
+	cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
 	FILE *save_file = fopen(buffer, "w+");
 
 	fprintf(save_file, "%s \n",MAP_FILE_VERSION);
@@ -174,12 +175,13 @@ void AAIMap::Init()
 
 	// try to read cache file
 	bool loaded = false;
-	char filename[100];
+	char filename[1000];
 	char buffer[100];
 	strcpy(buffer, AI_PATH);
 	strcat(buffer, MAP_CACHE_PATH);
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	FILE *file;
 
@@ -235,6 +237,8 @@ void AAIMap::Init()
 		DetectWater();
 
 		// save data
+		ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+		cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 		file = fopen(filename, "w+");
 
 		fprintf(file, "%s\n",  MAP_DATA_VERSION);
@@ -263,6 +267,7 @@ void AAIMap::Init()
 	strcat(buffer, MAP_CFG_PATH);
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
+	cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	if(file = fopen(filename, "r"))
 	{
@@ -336,6 +341,7 @@ void AAIMap::Init()
 		strcat(buffer, MAP_CFG_PATH);
 		strcat(buffer, cb->GetMapName());
 		ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
+		cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 		file = fopen(filename, "w+");
 		fprintf(file, "%s\n", GetMapTypeString(this->mapType));
@@ -387,7 +393,7 @@ void AAIMap::Init()
 void AAIMap::ReadMapLearnFile(bool auto_set)
 {
 	// get filename
-	char filename[120];
+	char filename[1000];
 	char buffer[120];
 
 	strcpy(buffer, AI_PATH);
@@ -397,6 +403,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 	strcpy(buffer, filename);
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	// open learning files 
 	FILE *load_file = fopen(filename, "r");
