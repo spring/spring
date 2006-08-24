@@ -918,7 +918,6 @@ bool CAICallback::GetValue(int id, void *data)
 			strcpy((char*) data, gameSetup ? gameSetup->setupFileName.c_str() : "");
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
-			// No need to do anything on Windows.
 			std::string f((char*) data);
 			f = filesystem.LocateFile(f);
 			strcpy((char*) data, f.c_str());

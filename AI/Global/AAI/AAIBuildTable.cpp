@@ -2480,12 +2480,13 @@ bool AAIBuildTable::LoadBuildTable()
 	else	// load data
 	{
 		// get filename
-		char filename[120];
+		char filename[1000];
 		char buffer[120];
 		strcpy(buffer, AI_PATH);
 		strcat(buffer, MOD_LEARN_PATH);
 		strcat(buffer, cb->GetModName());
 		ReplaceExtension (buffer, filename, sizeof(filename), ".dat");
+		cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 		FILE *load_file;
 
@@ -2626,12 +2627,13 @@ void AAIBuildTable::SaveBuildTable()
 	}
 
 	// get filename
-	char filename[120];
+	char filename[1000];
 	char buffer[120];
 	strcpy(buffer, AI_PATH);
 	strcat(buffer, MOD_LEARN_PATH);
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".dat");
+	cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	FILE *save_file = fopen(filename, "w+");
 
@@ -2761,12 +2763,13 @@ void AAIBuildTable::DebugPrint()
 
 	// for debugging
 	UnitType unitType;
-	char filename[120];
+	char filename[1000];
 	char buffer[120];
 	strcpy(buffer, AILOG_PATH);
 	strcat(buffer, "BuildTable_");
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
+	cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	FILE *file = fopen(filename, "w");
 
