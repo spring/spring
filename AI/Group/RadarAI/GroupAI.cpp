@@ -25,10 +25,19 @@ CGroupAI::CGroupAI()
 
 	#define CMD_TEXT_ALERT 		150
 	#define CMD_MINIMAP_ALERT 	155
+	#define CMD_DUMMY			156
 }
 
 CGroupAI::~CGroupAI()
 {
+}
+
+bool CGroupAI::IsUnitSuited(const UnitDef* unitDef)
+{
+	if(unitDef->radarRadius==0 && unitDef->sonarRadius==0)
+		return false;
+	else
+		return true;
 }
 
 void CGroupAI::InitAi(IGroupAICallback* callback)
@@ -41,7 +50,7 @@ bool CGroupAI::AddUnit(int unit)
 {
 	// check if it's a radar-capable unit
 	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(ud->radarRadius==0 || ud->radarRadius==0)
+	if(!IsUnitSuited(ud))
 	{
 		aicb->SendTextMsg("Cant use non-radar units",0);
 		return false;
@@ -63,6 +72,10 @@ void CGroupAI::GiveCommand(Command* c)
 		case CMD_MINIMAP_ALERT:
 			alertMinimap = !alertMinimap;
 			break;
+		case CMD_DUMMY:
+			break;
+		default:
+			aicb->SendTextMsg("Unknown command to RadarAI",0);
 	}
 }
 
@@ -109,6 +122,7 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 
 int CGroupAI::GetDefaultCmd(int unitid)
 {
+	return CMD_DUMMY;
 }
 
 

@@ -30,7 +30,6 @@ CGroupHandler::CGroupHandler(int team)
 : firstUnusedGroup(10),
 	team(team)
 {
-	availableAI["default"]="default";
 	FindDlls();
 
 	for(int a=0;a<10;++a){
@@ -57,10 +56,12 @@ void CGroupHandler::TestDll(string name)
 {
 	typedef int (* GETGROUPAIVERSION)();
 	typedef void (* GETAINAME)(char* c);
+	typedef bool (* ISUNITSUITED)(const UnitDef* unitDef);
 	
 	SharedLib *lib;
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETAINAME GetAiName;
+	ISUNITSUITED IsUnitSuited;
 
 	lib = SharedLib::instantiate(name);
 	if (!lib){
@@ -78,6 +79,12 @@ void CGroupHandler::TestDll(string name)
 
 	if (i!=AI_INTERFACE_VERSION){
 		handleerror(NULL,name.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
+		return;
+	}
+
+	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
+	if (!IsUnitSuited){
+		handleerror(NULL,name.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
 		return;
 	}
 	
@@ -161,4 +168,37 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	groups[group->id]=0;
 	freeGroups.push_back(group->id);
 	delete group;
+}
+
+map<string,string> CGroupHandler::GetSuitedAis(set<CUnit*> units)
+{
+	typedef bool (* ISUNITSUITED)(const UnitDef* unitDef);
+	ISUNITSUITED IsUnitSuited;
+
+	map<string,string> suitedAis;
+	suitedAis["default"]="default";
+
+	map<string,string>::iterator aai;
+	for(aai=availableAI.begin();aai!=availableAI.end();++aai)
+	{
+		SharedLib *lib;
+		lib = SharedLib::instantiate(aai->first);
+		IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
+		bool suited = false;
+		set<CUnit*>::iterator ui;
+		for(ui=units.begin();ui!=units.end();++ui)
+		{
+			const UnitDef* ud = (*ui)->unitDef;
+			if(IsUnitSuited(ud))
+			{
+				suited = true;
+				break;
+			}
+		}
+		if(suited)
+			suitedAis[aai->first]=aai->second;
+	}
+
+	lastSuitedAis = suitedAis;
+	return suitedAis;
 }
