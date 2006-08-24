@@ -915,7 +915,7 @@ bool CAICallback::GetValue(int id, void *data)
 // 			else *((std::string*)data) = "";
 			return false;
 		}case AIVAL_SCRIPT_FILENAME_CSTR:{
-			strcpy((char*) data, gameSetup->setupFileName.c_str());
+			strcpy((char*) data, gameSetup ? gameSetup->setupFileName.c_str() : "");
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			// No need to do anything on Windows.
