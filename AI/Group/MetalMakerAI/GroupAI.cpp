@@ -29,15 +29,6 @@ CGroupAI::~CGroupAI()
 	myUnits.clear();
 }
 
-bool CGroupAI::IsUnitSuited(const UnitDef* unitDef)
-{
-	if(!(unitDef->energyUpkeep>0.0f && (unitDef->makesMetal>0.0f || unitDef->extractsMetal>0.0f)))
-		return false;
-	else
-		return true;
-}
-
-
 void CGroupAI::InitAi(IGroupAICallback* callback)
 {
 	this->callback=callback;
@@ -47,10 +38,6 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 bool CGroupAI::AddUnit(int unit)
 {
 	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(!IsUnitSuited(ud)){
-		aicb->SendTextMsg("Can only use metal makers",0);
-		return false;
-	}
 	UnitInfo* info=new UnitInfo;
 
 	const std::vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);

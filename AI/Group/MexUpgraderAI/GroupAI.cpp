@@ -34,14 +34,6 @@ CGroupAI::~CGroupAI()
 	commandQue.clear();
 }
 
-bool CGroupAI::IsUnitSuited(const UnitDef* unitDef)
-{
-	if(unitDef->buildSpeed==0 || !unitDef->canmove)
-		return false;
-	else
-		return true;
-}
-
 void CGroupAI::Reset()
 {
 	// clear all commands and stop all units
@@ -66,12 +58,7 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 
 bool CGroupAI::AddUnit(int unit)
 {
-	// check if it's a builder
 	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(!IsUnitSuited(ud)){
-		aicb->SendTextMsg("Cant use non builders",0);
-		return false;
-	}
 
 	UnitInfo* info=new UnitInfo;
 	info->maxExtractsMetal 	= 0;

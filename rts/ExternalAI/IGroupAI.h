@@ -6,8 +6,6 @@
 
 #include "aibase.h"
 #include "Game/command.h"
-#include "StdAfx.h"
-#include "Sim/Units/UnitDef.h"
 
 class IGroupAICallback;
 class IAICallback;
@@ -17,7 +15,6 @@ class IAICallback;
 class SPRING_API IGroupAI
 {
 public:
-	virtual bool IsUnitSuited(const UnitDef* unitDef)=0;				// preliminary check to see if the unit is suited for this AI
 	virtual void InitAi(IGroupAICallback* callback)=0;
 	virtual bool AddUnit(int unit)=0;										//group should return false if it doenst want the unit for some reason
 	virtual void RemoveUnit(int unit)=0;								//no way to refuse giving up a unit
