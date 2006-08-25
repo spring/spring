@@ -434,15 +434,20 @@ static void* GetMinimapSM3(string mapName, int miplevel)
 		TdfParser tdf("Maps/" + mapName);
 		minimapFile = tdf.SGetValueDef(string(), "map\\minimap");
 	} catch (TdfParser::parse_error&) {
-		return 0;
+		memset(imgbuf,0,sizeof(imgbuf));
+		return imgbuf;
 	}
 
-	if (minimapFile.empty())
-		return 0;
+	if (minimapFile.empty()) {
+		memset(imgbuf,0,sizeof(imgbuf));
+		return imgbuf;
+	}
 
 	CBitmap bm;
-	if (!bm.Load(minimapFile))
-		return 0;
+	if (!bm.Load(minimapFile)) {
+		memset(imgbuf,0,sizeof(imgbuf));
+		return imgbuf;
+	}
 
 	if (1024 >> miplevel != bm.xsize || 1024 >> miplevel != bm.ysize) 
 		bm = bm.CreateRescaled (1024 >> miplevel, 1024 >> miplevel);
