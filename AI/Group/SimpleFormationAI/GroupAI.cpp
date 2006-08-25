@@ -58,22 +58,8 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 	commands.push_back(cd);
 };
 
-bool CGroupAI::IsUnitSuited(const UnitDef* unitDef)
-{
-	if(!unitDef->canmove)
-		return false;
-	else
-		return true;
-}
-
 bool CGroupAI::AddUnit(int unit)
 {
-	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(!IsUnitSuited(ud))
-	{
-		aicb->SendTextMsg("Cant use buildings",0);
-		return false;
-	}
 	myUnits.insert(unit);
 	unitsChanged=true;
 	return true;

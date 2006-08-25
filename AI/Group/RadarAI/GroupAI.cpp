@@ -32,14 +32,6 @@ CGroupAI::~CGroupAI()
 {
 }
 
-bool CGroupAI::IsUnitSuited(const UnitDef* unitDef)
-{
-	if(unitDef->radarRadius==0 && unitDef->sonarRadius==0)
-		return false;
-	else
-		return true;
-}
-
 void CGroupAI::InitAi(IGroupAICallback* callback)
 {
 	this->callback=callback;
@@ -48,13 +40,6 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 
 bool CGroupAI::AddUnit(int unit)
 {
-	// check if it's a radar-capable unit
-	const UnitDef* ud=aicb->GetUnitDef(unit);
-	if(!IsUnitSuited(ud))
-	{
-		aicb->SendTextMsg("Cant use non-radar units",0);
-		return false;
-	}
 	return true;
 }
 

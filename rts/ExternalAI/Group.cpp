@@ -48,7 +48,15 @@ CGroup::~CGroup()
 bool CGroup::AddUnit(CUnit *unit)
 {
 	units.insert(unit);
-	if(ai && !ai->AddUnit(unit->id)){
+	if(ai)
+	{
+		if(IsUnitSuited(unit->unitDef))
+		{
+			if(ai->AddUnit(unit->id))
+			{
+				return true;
+			}
+		}
 		units.erase(unit);
 		return false;
 	}
@@ -89,17 +97,24 @@ void CGroup::SetNewAI(string dllName)
 	
 	GetNewAI = (GETNEWAI)lib->FindAddress("GetNewAI");
 	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
+	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 
 	ai=GetNewAI();
 	ai->InitAi(callback);
 	
 	set<CUnit*> unitBackup=units;
 
-	for(set<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui){
-		if(!ai->AddUnit((*ui)->id)){
-			units.erase(*ui);
-			(*ui)->group=0;
+	for(set<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
+	{
+		if(IsUnitSuited((*ui)->unitDef))
+		{
+			if(ai->AddUnit((*ui)->id))
+			{
+				continue;
+			}
 		}
+		units.erase(*ui);
+		(*ui)->group=0;
 	}
 }
 

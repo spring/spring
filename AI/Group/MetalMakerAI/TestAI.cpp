@@ -1,5 +1,7 @@
+#include "StdAfx.h"
 #include "GroupAI.h"
 #include "ExternalAI/aibase.h"
+#include "Sim/Units/UnitDef.h"
 #include <set>
 
 DLL_EXPORT int GetGroupAiVersion()
@@ -12,10 +14,12 @@ DLL_EXPORT void GetAiName(char* name)
 	strcpy(name,AI_NAME);
 }
 
-DLL_EXPORT int IsUnitSuited(const UnitDef* unitDef)
+DLL_EXPORT bool IsUnitSuited(const UnitDef* unitDef)
 {
-	CGroupAI* aitemp=new CGroupAI();
-	return aitemp->IsUnitSuited(unitDef);
+	if(unitDef->energyUpkeep>0.0f && (unitDef->makesMetal>0.0f || unitDef->extractsMetal>0.0f))
+		return true;
+	else
+		return false;
 }
 
 DLL_EXPORT IGroupAI* GetNewAI()

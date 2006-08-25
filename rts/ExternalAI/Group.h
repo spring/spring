@@ -9,6 +9,7 @@
 #include <set>
 #include "Game/command.h"
 #include "Platform/SharedLib.h"
+#include "Sim/Units/UnitDef.h"
 class IGroupAI;
 class CUnit;
 class CFeature;
@@ -43,10 +44,12 @@ public:
 	typedef int (* GETGROUPAIVERSION)();
 	typedef IGroupAI* (* GETNEWAI)();
 	typedef void (* RELEASEAI)(IGroupAI* i);
+	typedef bool (* ISUNITSUITED)(const UnitDef* unitDef);
 	
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;
+	ISUNITSUITED IsUnitSuited;
 	int lastCommandPage;
 	int currentAiNum;
 

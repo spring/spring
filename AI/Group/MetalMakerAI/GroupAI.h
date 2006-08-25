@@ -22,7 +22,6 @@ class CGroupAI : public IGroupAI
 public:
 	CGroupAI();
 	virtual ~CGroupAI();
-	virtual bool IsUnitSuited(const UnitDef* unitDef);
 
 	virtual void InitAi(IGroupAICallback* callback);
 
