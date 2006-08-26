@@ -215,8 +215,22 @@ bool CPreGame::Update()
 				info->AddLine("Client couldn't connect");
 				return false;
 			}
-			state = WAIT_ON_SCRIPT;
-			// fall trough
+
+			// State is never WAIT_ON_ADDRESS if gameSetup was true in our constructor,
+			// so if it's true here, it means net->InitClient() just loaded a demo
+			// with gameSetup.
+			// If so, don't wait indefinitely on a script/map/mod name, but load
+			// everything from gameSetup and switch to ALL_READY state.
+			if(gameSetup) {
+				CScriptHandler::SelectScript("Commanders");
+				SelectMap(gameSetup->mapname);
+				SelectMod(gameSetup->baseMod);
+				state = ALL_READY;
+				break;
+			} else {
+				state = WAIT_ON_SCRIPT;
+				// fall trough
+			}
 
 		case WAIT_ON_SCRIPT:
 			if (showList || !server)
@@ -300,32 +314,39 @@ void CPreGame::UpdateClientNet()
 
 		case NETMSG_SCRIPT:
 			CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
-			assert(state == WAIT_ON_SCRIPT);
-			state = WAIT_ON_MAP;
+			if (mapName.empty()) state = WAIT_ON_MAP;
+			else if (modName.empty()) state = WAIT_ON_MOD;
+			else state = ALL_READY;
 			inbufpos += inbuf[inbufpos+1];
 			break;
 
 		case NETMSG_MAPNAME:
 			SelectMap((char*)(&inbuf[inbufpos+6]));
 			if (GetMapChecksum() != *(unsigned*)(&inbuf[inbufpos+2])) {
-				// shit happens
-				throw content_error("Local map archive(s) are not binary equal to host map archive(s).\n"
-						"Consider redownloading the map.");
+				char buf[256];
+				sprintf(buf, "Local map archive(s) are not binary equal to host map archive(s).\n"
+						"Make sure you installed all map dependencies & consider redownloading the map."
+						"\n\nLocal checksum = %u\nRemote checksum = %u", GetMapChecksum(), *(unsigned*)(&inbuf[inbufpos+2]));
+				throw content_error(buf);
 			}
-			assert(state == WAIT_ON_MAP);
-			state = WAIT_ON_MOD;
+			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
+			else if (modName.empty()) state = WAIT_ON_MOD;
+			else state = ALL_READY;
 			inbufpos += inbuf[inbufpos+1];
 			break;
 
 		case NETMSG_MODNAME:
 			SelectMod((char*)(&inbuf[inbufpos+6]));
 			if (GetModChecksum() != *(unsigned*)(&inbuf[inbufpos+2])) {
-				// bad stuff too
-				throw content_error("Local mod archive(s) are not binary equal to host mod archive(s).\n"
-						"Consider redownloading the mod.");
+				char buf[256];
+				sprintf(buf, "Local mod archive(s) are not binary equal to host mod archive(s).\n"
+						"Make sure you installed all mod dependencies & consider redownloading the mod."
+						"\n\nLocal checksum = %u\nRemote checksum = %u", GetModChecksum(), *(unsigned*)(&inbuf[inbufpos+2]));
+				throw content_error(buf);
 			}
-			assert(state == WAIT_ON_MOD);
-			state = ALL_READY;
+			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
+			else if (mapName.empty()) state = WAIT_ON_MAP;
+			else state = ALL_READY;
 			inbufpos += inbuf[inbufpos+1];
 
 		case NETMSG_MAPDRAW:

@@ -40,7 +40,7 @@ CSm3GroundDrawer::~CSm3GroundDrawer()
 	if (groundShadowVP)
 		glDeleteProgramsARB( 1, &groundShadowVP );
 
-	configHandler.SetInt("SM3TerrainDetail", tr->config.detailMod * 100);
+	configHandler.SetInt("SM3TerrainDetail", int(tr->config.detailMod * 100));
 }
 
 void CSm3GroundDrawer::Update()
