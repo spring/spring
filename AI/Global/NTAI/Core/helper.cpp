@@ -193,6 +193,7 @@ void Global::Update(){
 				if(s != string("")){
 					cb->SendTextMsg(s.c_str(),0);
 				}
+				cb->SendTextMsg("Please check Darkstars.co.uk for updates",0);
 			}
 			int* ax = new int[6000];
 			int anum =cb->GetFriendlyUnits(ax);
