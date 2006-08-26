@@ -59,6 +59,8 @@ public:
 
 	void GotChatMsg(const char* msg,int player);					//called when someone writes a chat msg
 
+	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
+
 	void EnemyDestroyed (int enemy, int attacker);			//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 	int HandleEvent (int msg, const void*data);
 

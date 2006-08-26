@@ -8,6 +8,7 @@ class CWind
 public:
 	CWind(void);
 	~CWind(void);
+	void LoadWind();
 	void Update();
 
 	float maxWind;

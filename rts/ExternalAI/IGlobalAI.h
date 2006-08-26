@@ -8,7 +8,7 @@
 class IGlobalAICallback;
 struct WeaponDef;
 
-#define GLOBAL_AI_INTERFACE_VERSION 16
+#define GLOBAL_AI_INTERFACE_VERSION 17
 
 #define AI_EVENT_UNITGIVEN 1    // Both use ChangeTeamEvent for data
 #define AI_EVENT_UNITCAPTURED 2
@@ -43,6 +43,7 @@ public:
 	virtual void EnemyEnterRadar(int enemy)=0;						//called when an enemy enter radar coverage (los always count as radar coverage to)
 	virtual void EnemyLeaveRadar(int enemy)=0;						//called when an enemy leave radar coverage (los always count as radar coverage to)
 	
+	virtual void EnemyDamaged(int damaged,int attacker,float damage,float3 dir)=0;	//called when an enemy inside los or radar is damaged
 	virtual void EnemyDestroyed(int enemy, int attacker)=0;		//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 
 	virtual void UnitIdle(int unit)=0;										//called when a unit go idle and is not assigned to any group

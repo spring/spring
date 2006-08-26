@@ -32,6 +32,7 @@ public:
 	void UnitCreated(CUnit* unit);
 	void UnitFinished(CUnit* unit);
 	void UnitDestroyed(CUnit* unit, CUnit *attacker);
+	void UnitDamaged(CUnit* attacked,CUnit* attacker,float damage);
 	void UnitMoveFailed(CUnit* unit);
 	void UnitTaken(CUnit* unit, int newteam);
 	void UnitGiven(CUnit* unit, int oldteam);
@@ -50,7 +51,6 @@ public:
 	void* GetAIBuffer(int team, std::string name, int length);
 	void ReleaseAIBuffer(int team, std::string name);
 	void GotChatMsg(const char* msg, int player);
-	void UnitDamaged(CUnit* attacked,CUnit* attacker,float damage);
 };
 
 extern CGlobalAIHandler* globalAI;

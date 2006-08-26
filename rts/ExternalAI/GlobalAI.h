@@ -19,6 +19,7 @@ public:
 	void PreDestroy (); // called just before all the units are destroyed
 
 	int team;
+	bool cheatevents;
 
 	IGlobalAI* ai;
 	CGlobalAICallback* callback;

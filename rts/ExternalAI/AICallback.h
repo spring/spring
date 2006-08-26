@@ -60,6 +60,9 @@ public:
 	bool UnitBeingBuilt(int unitid);			//returns true if the unit is currently being built
 	const UnitDef* GetUnitDef(int unitid);	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 	float3 GetUnitPos(int unitid);
+	int GetBuildingFacing(int unitid);		//returns building facing (0-3)
+	bool IsUnitCloaked(int unitid);
+	bool IsUnitParalyzed(int unitid);
 	bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
 
 	const UnitDef* GetUnitDef(const char* unitName);
@@ -79,6 +82,9 @@ public:
 	int GetMapWidth();
 	int GetMapHeight();
 	const float* GetHeightMap();
+	float GetMinHeight();
+	float GetMaxHeight();
+	const float* GetSlopeMap();
 	const unsigned short* GetLosMap();
 	const unsigned short* GetRadarMap();		//a square with value zero means you dont have radar to the square, this is 1/8 the resolution of the standard map
 	const unsigned short* GetJammerMap();		//a square with value zero means you dont have radar jamming on the square, this is 1/8 the resolution of the standard map
@@ -122,10 +128,10 @@ public:
 	float GetFeatureReclaimLeft (int feature);
 	float3 GetFeaturePos (int feature);
 
-
+	// future callback extensions
 	bool GetProperty(int unit, int property, void *dst);
 	bool GetValue(int id, void *dst);
-	int HandleCommand(void *data); 
+	int HandleCommand(int commandId, void *data); 
 
 	int GetFileSize (const char *name); // return -1 when the file doesn't exist
 	bool ReadFile (const char *name, void *buffer,int bufferLen); // returns false when file doesn't exist or buffer is too small

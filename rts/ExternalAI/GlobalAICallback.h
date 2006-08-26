@@ -9,11 +9,11 @@ class CAICheats;
 class CGlobalAICallback :
 	public IGlobalAICallback
 {
+	CGlobalAI* ai;
 public:
 	CGlobalAICallback(CGlobalAI* ai);
 	~CGlobalAICallback(void);
 
-	CGlobalAI* ai;
 	CAICheats* cheats;
 	bool noMessages;
 	CAICallback scb;

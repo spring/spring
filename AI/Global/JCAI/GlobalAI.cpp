@@ -500,6 +500,7 @@ void MainAI::EnemyEnterLOS(int enemy) {}
 void MainAI::EnemyLeaveLOS(int enemy) {}
 void MainAI::EnemyEnterRadar(int enemy) {}
 void MainAI::EnemyLeaveRadar(int enemy) {}
+void MainAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 void MainAI::EnemyDestroyed (int enemy, int attacker) {}
 
 void MainAI::Update()

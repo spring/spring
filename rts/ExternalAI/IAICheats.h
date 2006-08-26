@@ -4,6 +4,7 @@
 #include "aibase.h"
 #include "Game/command.h"
 #include "float3.h"
+#include "IAICallback.h"
 struct UnitDef;
 
 class SPRING_API IAICheats
@@ -26,7 +27,29 @@ public:
 	virtual int GetEnemyUnits(int *units)=0;					//returns all known enemy units
 	virtual int GetEnemyUnits(int *units,const float3& pos,float radius)=0; //returns all known enemy units within radius from pos
 
+	virtual int GetUnitTeam (int unitid)=0;
+	virtual int GetUnitAllyTeam (int unitid)=0;
+	virtual float GetUnitHealth (int unitid)=0;			//the units current health
+	virtual float GetUnitMaxHealth (int unitid)=0;		//the units max health
+	virtual float GetUnitPower(int unitid)=0;				//sort of the measure of the units overall power
+	virtual float GetUnitExperience (int unitid)=0;	//how experienced the unit is (0.0-1.0)
+	virtual bool IsUnitActivated (int unitid)=0; 
+	virtual bool UnitBeingBuilt (int unitid)=0;			//returns true if the unit is currently being built
+	virtual bool GetUnitResourceInfo (int unitid, UnitResourceInfo* resourceInfo)=0;
+	virtual const deque<Command>* GetCurrentUnitCommands(int unitid)=0;
+	
+	virtual int GetBuildingFacing(int unitid)=0;		//returns building facing (0-3)
+	virtual bool IsUnitCloaked(int unitid)=0;
+	virtual bool IsUnitParalyzed(int unitid)=0;
+
 	virtual bool OnlyPassiveCheats()=0;
+	virtual void EnableCheatEvents(bool enable)=0;
+
+	// future callback extensions
+	virtual bool GetProperty(int id, int property, void *dst)=0;
+	virtual bool GetValue(int id, void *dst)=0;
+	virtual int HandleCommand(int commandId, void *data)=0;
+
 	DECLARE_PURE_VIRTUAL(~IAICheats())
 };
 

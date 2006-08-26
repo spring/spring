@@ -9,7 +9,7 @@
 #include "mmgr.h"
 
 CGlobalAI::CGlobalAI(int team, const char* dll)
-: team(team)
+: team(team), cheatevents(false)
 {
 	ai=0;
 

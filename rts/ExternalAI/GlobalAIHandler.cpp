@@ -166,7 +166,7 @@ void CGlobalAIHandler::UnitDestroyed(CUnit* unit,CUnit* attacker)
 	if(hasAI){
 		try {
 			for(int a=0;a<gs->activeTeams;++a){
-				if(ais[a] && !gs->Ally(gs->AllyTeam(a),unit->allyteam) && (unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))
+				if(ais[a] && !gs->Ally(gs->AllyTeam(a),unit->allyteam) && (ais[a]->cheatevents || (unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR))))
 					ais[a]->ai->EnemyDestroyed(unit->id,attacker?attacker->id:0);
 			}
 			if(ais[unit->team])
@@ -242,17 +242,26 @@ void CGlobalAIHandler::GotChatMsg(const char* msg, int player)
 
 void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 {
-	if(ais[attacked->team]){
+	if(hasAI){
 		try {
-			if(attacker){
-				float3 dir=helper->GetUnitErrorPos(attacker,attacked->allyteam)-attacked->pos;
-				dir.Normalize();
-				ais[attacked->team]->ai->UnitDamaged(attacked->id,attacker->id,damage,dir);
-			} else {
-				ais[attacked->team]->ai->UnitDamaged(attacked->id,-1,damage,ZeroVector);
+			if(ais[attacked->team])
+				if(attacker){
+					float3 dir=helper->GetUnitErrorPos(attacker,attacked->allyteam)-attacked->pos;
+					dir.Normalize();
+					ais[attacked->team]->ai->UnitDamaged(attacked->id,attacker->id,damage,dir);
+				} else {
+					ais[attacked->team]->ai->UnitDamaged(attacked->id,-1,damage,ZeroVector);
+				}
+
+			if(attacker) {			
+				int a = attacker->team;
+				if(ais[attacker->team] && !gs->Ally(gs->AllyTeam(a),attacked->allyteam) && (ais[a]->cheatevents || (attacked->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))) {
+					float3 dir=attacker->pos-helper->GetUnitErrorPos(attacked,attacker->allyteam);
+					dir.Normalize();
+					ais[a]->ai->EnemyDamaged(attacked->id,attacker->id,damage,dir);
+				}
 			}
-		} 
-		HANDLE_EXCEPTION;
+		} HANDLE_EXCEPTION;
 	}
 }
 
@@ -311,7 +320,6 @@ void CGlobalAIHandler::PlayerCommandGiven(std::vector<int>& selectedunits,Comman
 			pce.player = player;
 			pce.command = c;
 			ais[gs->players[player]->team]->ai->HandleEvent(AI_EVENT_PLAYER_COMMAND,&pce);
-			//shouldn't "delete pce" be here??
 		} 
 		HANDLE_EXCEPTION;
 	}

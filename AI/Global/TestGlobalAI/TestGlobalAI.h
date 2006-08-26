@@ -35,7 +35,8 @@ public:
 
 	void EnemyEnterRadar(int enemy);				
 	void EnemyLeaveRadar(int enemy);				
-	
+
+	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
 	void EnemyDestroyed(int enemy,int attacker);							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 
 	void UnitIdle(int unit);										//called when a unit go idle and is not assigned to any group
@@ -43,6 +44,7 @@ public:
 	void GotChatMsg(const char* msg,int player);					//called when someone writes a chat msg
 
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);					//called when one of your units are damaged
+
 	void UnitMoveFailed(int unit);
 	int HandleEvent (int msg,const void *data);
 
