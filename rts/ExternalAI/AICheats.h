@@ -34,8 +34,8 @@ public:
 	bool IsUnitActivated (int unitid); 
 	bool UnitBeingBuilt (int unitid);			//returns true if the unit is currently being built
 	bool GetUnitResourceInfo (int unitid, UnitResourceInfo* resourceInfo);
-	const deque<Command>* CAICheats::GetCurrentUnitCommands(int unitid);
-	
+	const deque<Command>* GetCurrentUnitCommands(int unitid);
+
 	int GetBuildingFacing(int unitid);		//returns building facing (0-3)
 	bool IsUnitCloaked(int unitid);
 	bool IsUnitParalyzed(int unitid);
