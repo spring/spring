@@ -10,7 +10,8 @@ echo the correct .pdb can be identified!
 echo.
 pause > nul
 
-call make_gamedata_arch
+call build_code
+call pack_bitmaps
 
 echo Creating test installer
 "C:\Program Files\NSIS\makensis.exe" /V3 /DTEST_BUILD taspring.nsi 

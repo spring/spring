@@ -35,10 +35,9 @@
 ;  File "..\game\testscript.lua"
 ;  File "..\game\spawn.txt"
   
-  ; Gamedata
-  SetOutPath "$INSTDIR\gamedata"
-  File "..\game\gamedata\explosion_alias.tdf"
-  File "..\game\gamedata\resources.tdf"
+  ; Gamedata - stored in springcontent.sdz now. If it's stored on disk then mods can't override it
+  Delete "$INSTDIR\gamedata\*.tdf"
+  RmDir "$INSTDIR\gamedata"
 
   ; Bitmaps that are not from TA
  ; SetOutPath "$INSTDIR\bitmaps"
@@ -67,21 +66,21 @@
   RmDir "$INSTDIR\bitmaps"
 
   SetOutPath "$INSTDIR\startscripts"
-  File "..\game\startscripts\testscript.lua"
+  File "..\game\startscripts\*.lua"
 
   SetOutPath "$INSTDIR\shaders"
   File "..\game\shaders\*.fp"
   File "..\game\shaders\*.vp"
   
   SetOutPath "$INSTDIR\aidll"
-  File "..\game\aidll\centralbuild.dll"
-  File "..\game\aidll\mmhandler.dll"
-  File "..\game\aidll\simpleform.dll"
-  File "..\game\aidll\radar.dll"
+  File "..\game\AI\Helper-libs\centralbuild.dll"
+  File "..\game\AI\Helper-libs\mmhandler.dll"
+  File "..\game\AI\Helper-libs\simpleform.dll"
+  File "..\game\AI\Helper-libs\radar.dll"
   
   SetOverWrite ifnewer
-  SetOutPath "$INSTDIR\aidll\globalai"
-  File "..\game\aidll\globalai\emptyai.dll"
+  SetOutPath "$INSTDIR\AI\Bot-libs"
+  File "..\game\AI\Bot-libs\emptyai.dll"
   
   SetOverWrite on
   ; XTA
@@ -167,18 +166,19 @@
   RMDir "$INSTDIR\shaders"
   
   ; AI-dll's
-  Delete "$INSTDIR\aidll\globalai\jcai\*.cfg"
-  Delete "$INSTDIR\aidll\globalai\jcai\*.modcache"
-  Delete "$INSTDIR\aidll\globalai\jcai\readme.txt"
-  RmDir "$INSTDIR\aidll\globalai\jcai"
-  Delete "$INSTDIR\aidll\globalai\jcai.dll"
-  Delete "$INSTDIR\aidll\globalai\emptyai.dll"
-  RmDir "$INSTDIR\aidll\globalai"
-  Delete "$INSTDIR\aidll\centralbuild.dll"
-  Delete "$INSTDIR\aidll\mmhandler.dll"
-  Delete "$INSTDIR\aidll\simpleform.dll"
-  Delete "$INSTDIR\aidll\radar.dll"
-  RMDir "$INSTDIR\aidll"
+  Delete "$INSTDIR\AI\Bot-libs\jcai\*.cfg"
+  Delete "$INSTDIR\AI\Bot-libs\jcai\*.modcache"
+  Delete "$INSTDIR\AI\Bot-libs\jcai\readme.txt"
+  RmDir "$INSTDIR\AI\Bot-libs\jcai"
+  Delete "$INSTDIR\AI\Bot-libs\jcai.dll"
+  Delete "$INSTDIR\AI\Bot-libs\emptyai.dll"
+  RmDir "$INSTDIR\AI\Bot-libs"
+  Delete "$INSTDIR\AI\Helper-libs\centralbuild.dll"
+  Delete "$INSTDIR\AI\Helper-libs\mmhandler.dll"
+  Delete "$INSTDIR\AI\Helper-libs\simpleform.dll"
+  Delete "$INSTDIR\AI\Helper-libs\radar.dll"
+  RMDir "$INSTDIR\AI\Helper-libs"
+  RMDir "$INSTDIR\AI"
   
   ; Gamedata
   Delete "$INSTDIR\gamedata\resources.tdf"
@@ -212,8 +212,9 @@
   Delete "$INSTDIR\base\spring\springloadpictures_v061.sdz"
   Delete "$INSTDIR\base\spring\bitmaps.sdz"
   
-  RmDir "$INSTDIR\aidll\globalai"
-  RmDir "$INSTDIR\aidll"
+  RmDir "$INSTDIR\AI\Bot-libs"
+  RmDir "$INSTDIR\AI\Helper-libs"
+  RmDir "$INSTDIR\AI"
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
   RmDir "$INSTDIR\mods"
