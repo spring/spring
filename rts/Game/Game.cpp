@@ -390,8 +390,6 @@ CGame::~CGame()
 	configHandler.SetInt("ShowClock",showClock);
 	configHandler.SetInt("ShowPlayerInfo",showPlayerInfo);
 
-	CBaseGroundDrawer *gd = readmap ? readmap->GetGroundDrawer() : 0;
-	if (gd) configHandler.SetInt("GroundDetail",gd->viewRadius);
 	if (treeDrawer) configHandler.SetInt("TreeRadius",(unsigned int)(treeDrawer->baseTreeDistance*256));
 
 	ENTER_MIXED;
@@ -815,12 +813,10 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		hideInterface=!hideInterface;
 	}
 	else if (s=="increaseviewradius") {
-		gd->viewRadius+=2;
-		(*info) << "ViewRadius is now " << gd->viewRadius << "\n";
+		gd->IncreaseDetail();
 	}
 	else if (s=="decreaseviewradius") {
-		gd->viewRadius-=2;
-		(*info) << "ViewRadius is now " << gd->viewRadius << "\n";
+		gd->DecreaseDetail();
 	}
 	else if (s=="moretrees") {
 		treeDrawer->baseTreeDistance+=0.2f;

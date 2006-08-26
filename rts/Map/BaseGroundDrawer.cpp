@@ -24,8 +24,6 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 
 	infoTexAlpha=0.25f;
 	infoTex=0;
-	viewRadius=configHandler.GetInt("GroundDetail",40);
-	viewRadius+=viewRadius%2;
 
 	drawMode=drawNormal;
 	drawLineOfSight=false;

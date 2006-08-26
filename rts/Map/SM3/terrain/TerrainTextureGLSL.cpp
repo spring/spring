@@ -84,7 +84,7 @@ struct Shader
 		}
 
 		if (shaderType == GL_FRAGMENT_SHADER_ARB)
-			DebugOutput();
+			DebugOutput(shaderType);
 
 		glShaderSourceARB(handle, strings.size(), &strings.front(), &lengths.front());
 		glCompileShaderARB(handle);
@@ -100,11 +100,13 @@ struct Shader
 			throw std::runtime_error (errMsg + (shaderType == GL_VERTEX_SHADER_ARB ? "vertex shader" : "fragment shader"));
 		}
 	}
-	void DebugOutput()
+	void DebugOutput(GLenum shaderType)
 	{
 		char fn[20];
-		static int c=0;
-		sprintf (fn, "shader%d.txt", c++);
+		static int fpc=0;
+		static int vpc=0;
+		if (shaderType == GL_FRAGMENT_SHADER_ARB) sprintf (fn, "shader%dfp.txt", fpc++);
+		else sprintf (fn, "shader%dvp.txt", vpc++);
 		FILE *f = fopen(fn, "w");
 		if(f) {
 			for (list<string>::iterator i=texts.begin();i!=texts.end();++i)
@@ -247,6 +249,7 @@ struct ShaderBuilder
 
 		Shader fragmentShader;
 		if (type != P_Diffuse) fragmentShader.texts.push_back("#define UseBumpmapping\n");
+		if (GLEW_ARB_texture_rectangle) fragmentShader.texts.push_back("#define UseTextureRECT\n");
 		if (type == P_Bump) fragmentShader.texts.push_back("#define DiffuseFromBuffer\n");
 		fragmentShader.AddFile("shaders/terrainCommon.glsl");
 		fragmentShader.texts.push_back(textureSamplers);

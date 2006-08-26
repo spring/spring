@@ -22,7 +22,11 @@ public:
 	~CBFGroundDrawer(void);
 	void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0);
 
+	void IncreaseDetail();
+	void DecreaseDetail();
+
 protected:
+	int viewRadius;
 	CSmfReadMap *map;
 	CBFGroundTextures *textures;
 

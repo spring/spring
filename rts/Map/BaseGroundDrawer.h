@@ -17,6 +17,10 @@ public:
 	virtual void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0)=0;
 	virtual void DrawShadowPass(void);
 	virtual void Update()=0;
+	
+
+	virtual void IncreaseDetail()=0;
+	virtual void DecreaseDetail()=0;
 
 	enum DrawMode
 	{
@@ -60,7 +64,6 @@ public:
 	int updateTextureState;
 
 	float infoTexAlpha;
-	int viewRadius;
 
 	DrawMode drawMode;
 };
