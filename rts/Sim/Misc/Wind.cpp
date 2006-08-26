@@ -22,13 +22,14 @@ CWind::~CWind(void)
 {
 }
 
+void CWind::LoadWind()
+{
+	readmap->mapDefParser.GetDef(minWind,"5","MAP\\ATMOSPHERE\\MinWind");
+	readmap->mapDefParser.GetDef(maxWind,"25","MAP\\ATMOSPHERE\\MaxWind");
+}
+
 void CWind::Update()
 {
-	if(gs->frameNum==1){
-		readmap->mapDefParser.GetDef(minWind,"5","MAP\\ATMOSPHERE\\MinWind");
-		readmap->mapDefParser.GetDef(maxWind,"25","MAP\\ATMOSPHERE\\MaxWind");
-	}
-
 	if(status==0){
 		oldWind=curWind;
 		float ns=gs->randFloat()*(maxWind-minWind)+minWind;

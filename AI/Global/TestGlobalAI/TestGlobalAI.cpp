@@ -64,6 +64,10 @@ void TestGlobalAI::EnemyLeaveRadar(int enemy)
 
 }
 
+void TestGlobalAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir)
+{
+}
+
 void TestGlobalAI::EnemyDestroyed(int enemy,int attacker)
 {
 	enemies.erase(enemy);

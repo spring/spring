@@ -220,6 +220,11 @@ void CNTai::EnemyLeaveRadar(int enemy){
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+void CNTai::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {
+}
+
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
 void CNTai::EnemyDestroyed(int enemy,int attacker){
 	if(Good == false) return;
 #ifdef EXCEPTION

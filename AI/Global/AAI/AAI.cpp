@@ -809,6 +809,7 @@ void AAI::EnemyEnterLOS(int enemy) {}
 void AAI::EnemyLeaveLOS(int enemy) {}
 void AAI::EnemyEnterRadar(int enemy) {}
 void AAI::EnemyLeaveRadar(int enemy) {}
+void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 
 void AAI::EnemyDestroyed (int enemy, int attacker) 
 {

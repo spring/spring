@@ -245,6 +245,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 	ENTER_SYNCED;
 	ground=new CGround();
 	readmap = CReadMap::LoadMap (mapname);
+	wind.LoadWind();
 	moveinfo=new CMoveInfo();
 	groundDecals=new CGroundDecalHandler();
 	ENTER_MIXED;

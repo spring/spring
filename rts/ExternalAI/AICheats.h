@@ -25,7 +25,28 @@ public:
 	int GetEnemyUnits(int *units);					//returns all known enemy units
 	int GetEnemyUnits(int *units,const float3& pos,float radius); //returns all known enemy units within radius from pos
 
+	int GetUnitTeam (int unitid);
+	int GetUnitAllyTeam (int unitid);
+	float GetUnitHealth (int unitid);			//the units current health
+	float GetUnitMaxHealth (int unitid);		//the units max health
+	float GetUnitPower(int unitid);				//sort of the measure of the units overall power
+	float GetUnitExperience (int unitid);	//how experienced the unit is (0.0-1.0)
+	bool IsUnitActivated (int unitid); 
+	bool UnitBeingBuilt (int unitid);			//returns true if the unit is currently being built
+	bool GetUnitResourceInfo (int unitid, UnitResourceInfo* resourceInfo);
+	const deque<Command>* CAICheats::GetCurrentUnitCommands(int unitid);
+	
+	int GetBuildingFacing(int unitid);		//returns building facing (0-3)
+	bool IsUnitCloaked(int unitid);
+	bool IsUnitParalyzed(int unitid);
+
 	bool OnlyPassiveCheats();
+	void EnableCheatEvents(bool enable);
+
+	// future callback extensions
+	bool GetProperty(int unit, int property, void *dst);
+	bool GetValue(int id, void *dst);
+	int HandleCommand(int commandId, void *data); 
 };
 
 #endif

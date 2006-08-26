@@ -15,24 +15,28 @@ struct FeatureDef;
 // GetValue() constants
 #define AIVAL_NUMDAMAGETYPES 1 // int
 #define AIVAL_EXCEPTION_HANDLING 2 // bool
-#define AIVAL_DEBUG_MODE 3
-#define AIVAL_SLOPE_MAP 4
-#define AIVAL_MAX_HEIGHT 5
-#define AIVAL_MIN_HEIGHT 6
-#define AIVAL_MAX_METAL 7
-#define AIVAL_MAP_CHECKSUM 8
-#define AIVAL_GAME_MODE 10
-#define AIVAL_GAME_PAUSED 11
-#define AIVAL_GAME_SPEED_FACTOR 12
-#define AIVAL_GUI_VIEW_RANGE 13
-#define AIVAL_GUI_SCREENX 14
-#define AIVAL_GUI_SCREENY 15
-#define AIVAL_GUI_CAMERA_DIR 16
-#define AIVAL_GUI_CAMERA_POS 17
-#define AIVAL_SCRIPT_FILENAME_DEPRECATED 18 // std::string, hence unsafe, don't use!
-#define AIVAL_SCRIPT_FILENAME_CSTR 19       // data points to char buffer of sufficient size
-#define AIVAL_LOCATE_FILE_R 20
-#define AIVAL_LOCATE_FILE_W 21
+#define AIVAL_MAP_CHECKSUM 3 // unsinged int
+#define AIVAL_DEBUG_MODE 4 // bool
+#define AIVAL_GAME_MODE 5 // int
+#define AIVAL_GAME_PAUSED 6 // bool
+#define AIVAL_GAME_SPEED_FACTOR 7 // float
+#define AIVAL_GUI_VIEW_RANGE 8 // float
+#define AIVAL_GUI_SCREENX 9 // float
+#define AIVAL_GUI_SCREENY 10 // float
+#define AIVAL_GUI_CAMERA_DIR 11 // float3
+#define AIVAL_GUI_CAMERA_POS 12 // float3
+#define AIVAL_SCRIPT_FILENAME_DEPRECATED 13 // std::string, hence unsafe, don't use!
+#define AIVAL_SCRIPT_FILENAME_CSTR 14       // data points to char buffer of sufficient size
+#define AIVAL_LOCATE_FILE_R 15 // char*
+#define AIVAL_LOCATE_FILE_W 16 // char*
+
+struct UnitResourceInfo
+{
+	float metalUse;
+	float energyUse;
+	float metalMake;
+	float energyMake;
+};
 
 struct PointMarker
 {
@@ -49,38 +53,25 @@ struct LineMarker {
 
 // HandleCommand structs:
 
-const int AIHCQuerySubVersionId=0;
-struct AIHCQuerySubVersion ///< result of HandleCommand is version of this sub interface
-{
-	AIHCQuerySubVersion(): commandId(AIHCQuerySubVersionId) {}
-	int commandId; ///< equal to 0
-};
+#define AIHCQuerySubVersionId 0
+#define AIHCAddMapPointId 1
+#define AIHCAddMapLineId 2
+#define AIHCRemoveMapPointId 3
 
-// These supported in sub version 1 
-
-const int AIHCAddMapPointId=1;
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
-	AIHCAddMapPoint(): commandId(AIHCAddMapPointId) {}
-	int commandId; ///< equal to 1
 	float3 pos; ///< on this position, only x and z matter
 	char *label; ///< create this text on pos in my team color
 };
 
-const int AIHCAddMapLineId=2;
 struct AIHCAddMapLine ///< result of HandleCommand is 1 - ok supported
 {
-	AIHCAddMapLine(): commandId(AIHCAddMapLineId) {}
-	int commandId; ///< equal to 2
 	float3 posfrom; ///< draw line from this pos
 	float3 posto; ///< to this pos, again only x and z matter
 };
 
-const int AIHCRemoveMapPointId=3;
 struct AIHCRemoveMapPoint ///< result of HandleCommand is 1 - ok supported
 {
-	AIHCRemoveMapPoint(): commandId(AIHCRemoveMapPointId) {}
-	int commandId; ///< equal to 3
 	float3 pos; ///< remove map points and lines near this point (100 distance)
 };
 
@@ -88,14 +79,6 @@ struct AIHCRemoveMapPoint ///< result of HandleCommand is 1 - ok supported
 class SPRING_API IAICallback
 {
 public:
-	struct UnitResourceInfo
-	{
-		float metalUse;
-		float energyUse;
-		float metalMake;
-		float energyMake;
-	};
-
 	virtual void SendTextMsg(const char* text,int priority) = 0;
 	virtual void SetLastMsgPos(float3 pos) = 0;
 	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
@@ -138,6 +121,9 @@ public:
 	virtual bool UnitBeingBuilt(int unitid) = 0;			//returns true if the unit is currently being built
 	virtual const UnitDef* GetUnitDef(int unitid) = 0;	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 	virtual float3 GetUnitPos(int unitid) = 0;
+	virtual int GetBuildingFacing(int unitid) = 0;		//returns building facing (0-3)
+	virtual bool IsUnitCloaked(int unitid) = 0;
+	virtual bool IsUnitParalyzed(int unitid) = 0;
 	virtual bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo) = 0;
 
 	virtual const UnitDef* GetUnitDef(const char* unitName) = 0;
@@ -207,9 +193,10 @@ public:
 	virtual bool CanBuildAt(const UnitDef* unitDef,float3 pos,int facing=0) = 0;
 	virtual float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist,int facing=0) = 0;	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
+	// future callback extensions
 	virtual bool GetProperty(int id, int property, void *dst)=0;
 	virtual bool GetValue(int id, void *dst)=0;
-	virtual int HandleCommand(void *data)=0; // future callback extensions
+	virtual int HandleCommand(int commandId, void *data)=0;
 
 	virtual int GetFileSize (const char *name)=0;// return -1 when the file doesn't exist
 	virtual bool ReadFile (const char *name, void *buffer,int bufferLen)=0;// returns false when file doesn't exist or buffer is too small

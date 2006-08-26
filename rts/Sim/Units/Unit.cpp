@@ -562,8 +562,6 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	damage*=curArmorMultiple;
 
-	globalAI->UnitDamaged(this,attacker,damage);
-
 	restTime=0;
 
 	float experienceMod=1;
@@ -607,6 +605,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		}
 		ENTER_SYNCED;
 	}
+
+	globalAI->UnitDamaged(this,attacker,damage);
+
 	if(health<=0){
 		KillUnit(false,false,attacker);
 		if(isDead && attacker!=0 && !gs->Ally(allyteam,attacker->allyteam) && !beingBuilt){

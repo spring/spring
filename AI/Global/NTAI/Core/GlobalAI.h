@@ -27,6 +27,7 @@ public:
 	void EnemyLeaveLOS(int enemy);
 	void EnemyEnterRadar(int enemy);
 	void EnemyLeaveRadar(int enemy);
+	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);
 	void EnemyDestroyed(int enemy,int attacker);
 	void UnitIdle(int unit);
 	void GotChatMsg(const char* msg,int player);

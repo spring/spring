@@ -373,6 +373,39 @@ float3 CAICallback::GetUnitPos(int unitid)
 	return ZeroVector;
 }
 
+int CAICallback::GetBuildingFacing(int unitid) {
+	verify ();
+	if (CHECK_UNITID(unitid)) {
+		CUnit* unit=uh->units[unitid];
+		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+			return unit->buildFacing;
+		}
+	}
+	return 0;
+}
+
+bool CAICallback::IsUnitCloaked(int unitid) {
+	verify ();
+	if (CHECK_UNITID(unitid)) {
+		CUnit* unit=uh->units[unitid];
+		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+			return unit->isCloaked;
+		}
+	}
+	return false;
+}
+
+bool CAICallback::IsUnitParalyzed(int unitid){
+	verify ();
+	if (CHECK_UNITID(unitid)) {
+		CUnit* unit=uh->units[unitid];
+		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+			return unit->stunned;
+		}
+	}
+	return 0;
+} 
+
 int CAICallback::InitPath(float3 start,float3 end,int pathType)
 {
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType),start,end);
@@ -538,6 +571,21 @@ const float* CAICallback::GetHeightMap()
 	return readmap->centerheightmap;
 }
 
+float CAICallback::GetMinHeight()
+{
+	return readmap->minheight;
+}
+
+float CAICallback::GetMaxHeight()
+{
+	return readmap->maxheight;
+}
+
+const float* CAICallback::GetSlopeMap()
+{
+	return readmap->slopemap;
+}
+
 const unsigned short* CAICallback::GetLosMap()
 {
 	return loshandler->losMap[gs->AllyTeam(team)];
@@ -648,7 +696,6 @@ const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 
 float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing)
 {
-	//todo fix so you cant detect enemy buildings with it
 	CFeature* feature;
 	int allyteam=gs->AllyTeam(team);
 
@@ -866,18 +913,6 @@ bool CAICallback::GetValue(int id, void *data)
 		}case AIVAL_EXCEPTION_HANDLING:{
 			*(bool*)data = CGlobalAIHandler::CatchException();
 			return true;
-		}case AIVAL_SLOPE_MAP:{
-			*(float**)data = readmap->slopemap;
-			return true;
-		}case AIVAL_MAX_HEIGHT:{
-			*(float*)data = readmap->maxheight;
-			return true;
-		}case AIVAL_MIN_HEIGHT:{
-			*(float*)data = readmap->minheight;
-			return true;
-		}case AIVAL_MAX_METAL:{
-			*(float*)data = readmap->maxMetal;
-			return true;
 		}case AIVAL_MAP_CHECKSUM:{
 			*(unsigned int*)data = readmap->mapChecksum;
 			return true;
@@ -933,10 +968,9 @@ bool CAICallback::GetValue(int id, void *data)
 	}
 }
 
-int CAICallback::HandleCommand (void *data)
+int CAICallback::HandleCommand (int commandId, void *data)
 {
-	if (data==NULL) return 0;
-	switch (((AIHCQuerySubVersion *)data)->commandId)
+	switch (commandId)
 	{
 	case AIHCQuerySubVersionId:
 		return 1; // current version of Handle Command interface
