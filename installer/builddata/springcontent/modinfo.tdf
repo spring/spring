@@ -1,0 +1,9 @@
+[MOD]
+{
+	Name=Spring content v1;
+	Description=Mods can depend on this archive to get all the spring content;
+	ModType=0;
+
+	NumDependencies=1;
+	Depend0=bitmaps.sdz;
+}

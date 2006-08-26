@@ -68,13 +68,6 @@ SetCompressor lzma
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
-; Determine a suitable output name
-!ifdef TEST_BUILD
-!define SP_BASENAME "taspring_${PRODUCT_VERSION}_test"
-!else
-!define SP_BASENAME "taspring_${PRODUCT_VERSION}"
-!endif
-
 !ifdef SP_UPDATE
 !define SP_OUTSUFFIX1 "_update"
 !else
@@ -299,18 +292,18 @@ Section /o "Desktop shortcut" SEC_DESKTOP
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 SectionEnd
 
-SectionGroup "Skirmish AI plugins"
-;	Section "AAI Skirmish AI" SEC_AAI
+SectionGroup "AI opponent plugins (Bots)"
+;	Section "AAI" SEC_AAI
 ;	!define INSTALL
 ;	!include "sections\aai.nsh"
 ;	!undef INSTALL
 ;	SectionEnd
 
-	Section "NTAI Skirmish AI" SEC_NTAI
-	!define INSTALL
-	!include "sections\ntai.nsh"
-	!undef INSTALL
-	SectionEnd
+;	Section "NTAI" SEC_NTAI
+;	!define INSTALL
+;	!include "sections\ntai.nsh"
+;	!undef INSTALL
+;	SectionEnd
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
@@ -401,8 +394,8 @@ Section Uninstall
 
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
-;  !include "sections\aai.nsh"
-  !include "sections\ntai.nsh"
+  ;!include "sections\aai.nsh"
+  ;!include "sections\ntai.nsh"
   !include "sections\battleroom.nsh"
 
   Delete "$DESKTOP\TA Spring battleroom.lnk"
