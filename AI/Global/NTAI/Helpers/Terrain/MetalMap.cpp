@@ -343,11 +343,16 @@ void CMetalMap::GetMetalPoints(){
 }
 
 void CMetalMap::SaveMetalMap(){
-	string filename = ai->info->datapath + string(slash) + string("MexData") + string(slash) +  string(ai->cb->GetMapName());
+	char buffer[1000];
+	string filename = ai->info->datapath + string("/MexData/") + string(ai->cb->GetMapName());
 	filename.resize(filename.size()-3);
 	filename += string("Mv");
 	filename += string(M_CLASS_VERSION);
-	FILE *save_file = fopen(filename.c_str(), "wb");
+
+	strcpy(buffer, filename.c_str());
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+
+	FILE *save_file = fopen(buffer, "wb");
 	if(save_file){
 		fwrite(&NumSpotsFound, sizeof(int), 1, save_file);
 		//L("Spots found: " << NumSpotsFound << " AverageMetal: " << AverageMetal);
@@ -364,13 +369,18 @@ void CMetalMap::SaveMetalMap(){
 }
 
 bool CMetalMap::LoadMetalMap(){
-	string filename = ai->info->datapath + slash +  string("MexData") + slash +  string(ai->cb->GetMapName());
+	char buffer[1000];
+	string filename = ai->info->datapath + string("/MexData/") + string(ai->cb->GetMapName());
 	filename.resize(filename.size()-3);
 	filename += string("Mv");
 	filename += string(M_CLASS_VERSION);
+
+	strcpy(buffer, filename.c_str());
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
+
 	FILE *load_file;
 	// load Spots if file exists 
-	if(load_file = fopen(filename.c_str(), "rb")){
+	if(load_file = fopen(buffer, "rb")){
 		fread(&NumSpotsFound, sizeof(int), 1, load_file);
 		VectoredSpots.resize(NumSpotsFound);
 		fread(&AverageMetal, sizeof(float), 1, load_file);
