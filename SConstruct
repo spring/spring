@@ -123,7 +123,7 @@ for f in filelist.list_globalAIs(aienv):
 	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
 	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
 	Default(lib)
-	inst = Install(os.path.join(install_dir, 'globalai'), lib)
+	inst = Install(install_dir, lib)
 	Alias('install', inst)
 	Alias('install-GlobalAI', inst)
 	Alias('install-'+f, inst)
