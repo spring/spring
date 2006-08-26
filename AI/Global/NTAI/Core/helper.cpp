@@ -695,9 +695,14 @@ void tolowercase(string &str){
 }
 
 bool Global::ReadFile(string filename, string* buffer){
+	char buf[1000];
 	int ebsize= 0;
 	ifstream fp;
-	fp.open(filename.c_str(), ios::in);
+
+	strcpy(buf, filename.c_str());
+	cb->GetValue(AIVAL_LOCATE_FILE_R, buf);
+
+	fp.open(buf, ios::in);
 	if(fp.is_open() == false){
 		L.header(string(" :: error loading file :: ") + filename + endline);
 		int size = G->cb->GetFileSize(filename.c_str());
@@ -893,7 +898,10 @@ bool Global::SaveUnitData(){
 	if(L.FirstInstance() == true){
 		ofstream off;
 		string filename = info->datapath + "/learn/" + info->tdfpath +".tdf";
-		off.open(filename.c_str());
+		char buffer[1000];
+		strcpy(buffer, filename.c_str());
+		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+		off.open(buffer);
 		if(off.is_open() == true){
 			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC22 AF :: unit efficiency cache file" << endl << endl;
 			// put stuff in here;
@@ -935,11 +943,15 @@ float Global::GetTargettingWeight(string unit, string target){
 }
 
 bool Global::LoadTGA(const char *filename, STGA& tgaFile){
+	char buffer[1000];
 	FILE *file;
 	unsigned char type[4];
 	unsigned char Tinfo[6];
 
-	file = fopen(filename, "rb");
+	strcpy(buffer, filename);
+	cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
+
+	file = fopen(buffer, "rb");
 
 	if (!file){
 		L.print(":: TGA file couldn't be loaded");

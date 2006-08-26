@@ -68,6 +68,7 @@ bool Log::FirstInstance(){
 	return First;
 }
 void Log::Open(bool plain){
+	char buffer[1000];
 	if( Lmagic != 95768){
 		Lmagic = 95768;
 		First = true;
@@ -85,10 +86,12 @@ void Log::Open(bool plain){
 				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
 				now2->tm_min, G->Cached->team);
 		filename += c;
-		logFile.open(filename.c_str());
+		strcpy(buffer, filename.c_str());
+		G->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+		logFile.open(buffer);
 		if(logFile.is_open() == false){
 			logFile.close();
-			logFile.open(filename.c_str());
+			logFile.open(buffer);
 			if(logFile.is_open() == false){
 				iprint(string("Error!!! ") + filename + string(" refused to open!"));
 				verbose = true;
@@ -150,7 +153,9 @@ void Log::Open(bool plain){
 				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
 				now2->tm_min, G->Cached->team);
 		filename += c;
-		logFile.open(filename.c_str());
+		strcpy(buffer, filename.c_str());
+		G->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+		logFile.open(buffer);
 		plaintext = false;
 		string mu ="</table><style type='text/css'>\n<!--\nbody,td,th {\n	font-family: sans-serif;\n	color: #111111;\nfont-size: 12px;\n\n}\nbody {\n	background-color: #FFFFFF;\n\n}\n.c {color: #FF2222}\n.e {color: #FFCC11}\n-->\n</style>\n";
 		mu+= "<b><br><br>NTAI XE7c  Log File <br>\n<span class='c'>Programmed and maintained by AF Copyright (C) 2006 AF<br>\nReleased under the GPL 2.0 Liscence </p></span></b><br> \n<table width='98%'border='0' cellpadding='0' cellspacing='0' bordercolor='#999999'>\n";

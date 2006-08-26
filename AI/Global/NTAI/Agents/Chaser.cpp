@@ -560,10 +560,15 @@ void Chaser::FireSilos(){
 void ThreatTGA(Global* G){
 	NLOG("ThreatTGA");
 	// open file
+	char buffer[1000];
 	char c [4];
 	sprintf(c,"%i",G->Cached->team);
-	string filename = G->info->datapath + slash + string("threatdebug") + slash + string("threatmatrix") + c + string(".tga");
-	FILE *fp=fopen(filename.c_str(), "wb");
+	string filename = G->info->datapath + string("/threatdebug/threatmatrix") + c + string(".tga");
+
+	strcpy(buffer, filename.c_str());
+	G->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+
+	FILE *fp=fopen(buffer, "wb");
 	//#ifdef _MSC_VER
  	//	if(!fp)	_endthread();
 	//#else
