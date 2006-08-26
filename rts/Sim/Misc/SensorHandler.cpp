@@ -6,7 +6,14 @@ CSensorHandler* sensorHandler=0;
 
 CSensorHandler::CSensorHandler(void)
 {
-	TdfParser tdfparser("gamedata/sensors.tdf");
+	TdfParser tdfparser;
+
+	try {
+		tdfparser.LoadFile("gamedata/sensors.tdf");
+	} catch (content_error) {
+		// No need to do anything here, we just continue
+		// getting the values from the empty tdfparser.
+	}
 
 	tdfparser.GetDef(losMipLevel, "1", "Sensors\\Los\\LosMipLevel");
 	//loshandler->losMipLevel = losMipLevel;
