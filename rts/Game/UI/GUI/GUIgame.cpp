@@ -954,12 +954,12 @@ bool GUIgame::EventAction(const string& command)
 //		hideInterface=!hideInterface;
 
 	else if (id==COMMAND_increaseviewradius){
-		gd->viewRadius+=2;
+		gd->IncreaseDetail();
 	//	(*guicontroller) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
 
 	else if (id==COMMAND_decreaseviewradius){
-		gd->viewRadius-=2;
+		gd->DecreaseDetail();
 	//	(*guicontroller) << "ViewRadius is now " << gd->viewRadius << "\n";
 	}
 

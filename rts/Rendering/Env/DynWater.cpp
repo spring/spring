@@ -363,11 +363,8 @@ void CDynWater::UpdateWater(CGame* game)
 	glDepthMask(1);
 
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
-	int oldViewRadius=gd->viewRadius;
-	gd->viewRadius=int(0.7*oldViewRadius);
 	DrawRefraction(game);
 	DrawReflection(game);
-	gd->viewRadius=oldViewRadius;
 }
 
 void CDynWater::Update()

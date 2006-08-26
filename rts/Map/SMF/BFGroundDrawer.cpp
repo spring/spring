@@ -11,6 +11,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
 using namespace std;
@@ -33,6 +34,9 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap *rm)
 	}
 
 	textures=new CBFGroundTextures(map);
+
+	viewRadius=configHandler.GetInt("GroundDetail",40);
+	viewRadius+=viewRadius%2;
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
@@ -45,6 +49,8 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 		if(shadowHandler->useFPShadows)
 			glDeleteProgramsARB( 1, &groundFPShadow);
 	}
+
+	configHandler.SetInt("GroundDetail",viewRadius);
 }
 
 static bool drawWater=false;
@@ -1037,4 +1043,17 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 		}
 	}
 
+}
+
+
+void CBFGroundDrawer::IncreaseDetail()
+{
+	viewRadius+=2;
+	(*info) << "ViewRadius is now " << viewRadius << "\n";
+}
+
+void CBFGroundDrawer::DecreaseDetail()
+{
+	viewRadius-=2;
+	(*info) << "ViewRadius is now " << viewRadius << "\n";
 }
