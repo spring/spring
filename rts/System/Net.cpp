@@ -210,7 +210,9 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		lpHostEntry = gethostbyname(server);
 		if (lpHostEntry == NULL)
 		{
-			handleerror(NULL,"Error looking up server from dns.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
+			char buf[100];
+			SNPRINTF(buf, sizeof(buf), "Error looking up server \"%s\" from dns.", server);
+			handleerror(NULL, buf, "SHUTDOWN ERROR", MBF_OK | MBF_INFO);
 			exit(0);
 			return -1;
 		}
