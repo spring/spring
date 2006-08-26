@@ -1195,7 +1195,7 @@ string CUBuild::GetMETAL_MAKER(){
 	if(possibles.empty() == false){
 		srand(uint(time(NULL) +G->Cached->team +  G->Cached->randadd));
 		G->Cached->randadd++;
-		int randnum = rand()%(possibles.size()-1);
+		int randnum = rand()%possibles.size();
 		for(list<string>::iterator k = possibles.begin(); k != possibles.end(); ++k){
 			if(0 == randnum){
 				return *k;
