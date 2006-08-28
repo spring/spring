@@ -106,7 +106,7 @@ CUnitDefHandler::~CUnitDefHandler(void)
 void CUnitDefHandler::FindTABuildOpt()
 {
 	TdfParser tdfparser;
-      	tdfparser.LoadFile("gamedata/SIDEDATA.TDF");
+	tdfparser.LoadFile("gamedata/SIDEDATA.TDF");
 
 	std::vector<std::string> sideunits = tdfparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)

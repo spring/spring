@@ -237,8 +237,7 @@ float3 CMetalHandler::getNearestPatch(float3 pos, float minMetal, float depth, c
 						}else{
 							if(ud->weapons.empty()==false){
 								EnemyExtractor(*vi,e[i]);
-								delete [] e;
-								continue;;
+								continue;
 							}
 						}
 						//

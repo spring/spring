@@ -344,6 +344,12 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 		minUserSpeed=0.3;
 	}
 
+	// make sure initial game speed is within allowed range
+	if(gs->userSpeedFactor>maxUserSpeed)
+		gs->userSpeedFactor=maxUserSpeed;
+	if(gs->userSpeedFactor<minUserSpeed)
+		gs->userSpeedFactor=minUserSpeed;
+
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
 		p->playerName=configHandler.GetString("name","");
