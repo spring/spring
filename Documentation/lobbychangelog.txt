@@ -5,6 +5,9 @@
   * last open map is now restored on program start
   * fixed some graphical glitch on program start (showing distorted main window before initialization is completed)
   * can't change player settings anymore once you ready up
+  * fixed crash with mods that don't have any sides defined (like AA 2.11 A and H)
+  * added support for 16 teams / 32 players
+  * added option for battle host to force spectator mode on players
 
   *** 0.26 (20x07x06) ***
   * fixed serious bug with hosting replays not working
