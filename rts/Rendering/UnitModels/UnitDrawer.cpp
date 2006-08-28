@@ -414,7 +414,15 @@ void CUnitDrawer::CleanUpGhostDrawing ()
 void CUnitDrawer::DrawCloakedUnits(void)
 {
 	SetupForGhostDrawing ();
+
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glAlphaFunc(GL_GREATER,0.1f);
 	glColor4f(1,1,1,0.3);
+	texturehandler->SetTATexture();
+	glDepthMask(0);
 
 	//ok these isnt really cloaked but the effect is the same
 	for(std::multimap<int,TempDrawUnit>::iterator ti=tempTransparentDrawUnits.begin();ti!=tempTransparentDrawUnits.end();++ti){
@@ -447,14 +455,6 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			glEnable(GL_TEXTURE_2D);
 		}
 	}
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER,0.1f);
-	glColor4f(1,1,1,0.3);
-	texturehandler->SetTATexture();
-	glDepthMask(0);
 
 	for(vector<CUnit*>::iterator ui=drawCloaked.begin();ui!=drawCloaked.end();++ui){
 		if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
