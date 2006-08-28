@@ -6,14 +6,14 @@ CEconomy::CEconomy(Global* GL){
 }
 
 btype CEconomy::Get(bool extreme,bool factory){
+	if(BuildMaker(extreme)==true){
+		return B_METAL_MAKER;
+	}
 	if(BuildMex(extreme)==true){
 		return B_MEX;
 	}
 	if(BuildPower(extreme)==true){
 		return B_POWER;
-	}
-	if(BuildMaker(extreme)==true){
-		return B_METAL_MAKER;
 	}
 	if(factory){
 		if(BuildFactory(extreme)==true){
@@ -28,6 +28,7 @@ btype CEconomy::Get(bool extreme,bool factory){
 	}
 	return B_NA;
 }
+
 bool CEconomy::BuildFactory(bool extreme){
 	NLOG("CEconomy::BuildFactory");
 	if(extreme == true){
@@ -144,6 +145,7 @@ bool CEconomy::BuildEnergyStorage(bool extreme){
 	// for now I've used a half fudged rule I took from JCAI
 	// erm, take the amount of energy currently being used, then see how long ti would take to drain away to zero if there was no energy income and if it's smaller than a threshold then say yes, else say no
 }
+
 bool CEconomy::BuildMetalStorage(bool extreme){
 	NLOG("CEconomy::BuildMetalStorage");
 	float x = (float)atof(G->Get_mod_tdf()->SGetValueDef("0.8","ECONOMY\\RULES\\metalstorage").c_str());
