@@ -82,12 +82,12 @@ BEGIN
         BLOCK "080904b0"
         BEGIN
             VALUE "CompanyName", "AF Darkstars"
-            VALUE "FileDescription", "NTai XE9RC22 AF 2006"
+            VALUE "FileDescription", "NTai XE9.23 AF 2006"
             VALUE "FileVersion", "0, 6, 22, 0"
-            VALUE "InternalName", "NTai XE9RC22"
+            VALUE "InternalName", "NTai XE9.23"
             VALUE "LegalCopyright", "Copyright (C)  AF Darkstars 2006"
             VALUE "OriginalFilename", "NTai.dll"
-            VALUE "ProductName", " NTai XE9RC22 skirmish AI for spring"
+            VALUE "ProductName", " NTai XE9.23 skirmish AI for spring"
             VALUE "ProductVersion", "0, 6, 22, 0"
         END
     END
