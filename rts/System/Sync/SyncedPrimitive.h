@@ -3,8 +3,6 @@
 #ifndef SYNCEDPRIMITIVE_H
 #define SYNCEDPRIMITIVE_H
 
-#include <SDL_types.h>
-
 #ifdef SYNCDEBUG
 
 #include "SyncDebugger.h" // for CSyncedPrimitiveBase
@@ -169,12 +167,10 @@ typedef   signed char  SyncedSchar;
 typedef   signed short SyncedSshort;
 typedef   signed int   SyncedSint;
 typedef   signed long  SyncedSlong;
-typedef         Sint64 SyncedSint64;
 typedef unsigned char  SyncedUchar;
 typedef unsigned short SyncedUshort;
 typedef unsigned int   SyncedUint;
 typedef unsigned long  SyncedUlong;
-typedef         Uint64 SyncedUint64;
 typedef          float SyncedFloat;
 typedef         double SyncedDouble;
 typedef    long double SyncedLongDouble;
