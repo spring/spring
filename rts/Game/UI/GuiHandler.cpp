@@ -1035,7 +1035,10 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 
 	CKeySet ks(key, false);
 	const string action = keyBindings->GetAction(ks, "command");
-		
+	if (action.empty()) {
+		return false;
+	}
+	
 	int a;
 	if (action == "showcommands") {
 		for(a = 0; a < commands.size(); ++a){
@@ -1103,8 +1106,6 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					list->AddItem(pi->c_str(),"");
 				list->place=atoi(cd.params[0].c_str());
 				game->showList=list;
-				//						return;
-				inCommand=-1;
 				break;
 			}
 			case CMDTYPE_NEXT:{

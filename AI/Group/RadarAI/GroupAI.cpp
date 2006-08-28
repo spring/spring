@@ -71,6 +71,7 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 
 	cd.id=CMD_TEXT_ALERT;
 	cd.type=CMDTYPE_ICON_MODE;
+	cd.action="textalert";
 	cd.hotkey="t";
 	if(alertText)
 	{
@@ -88,6 +89,7 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.params.clear();
 	cd.id=CMD_MINIMAP_ALERT;
 	cd.type=CMDTYPE_ICON_MODE;
+	cd.action="minimapalert";
 	cd.hotkey="m";
 	if(alertMinimap)
 	{
