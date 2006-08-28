@@ -187,8 +187,8 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 	key += name;
 	/*G->Get_mod_tdf()->GetDef(emax,"3000000",key);// +300k energy per tick by default
 	if(G->Pl->GetEnergyIncome() > emax){
-		G->L.print("Factor::CBuild  emax " + name);
-		return G->Actions->RepairNearby(unit,1000);
+	G->L.print("Factor::CBuild  emax " + name);
+	return G->Actions->RepairNearby(unit,1000);
 	}*/
 	// Now sort out stuff that can only be built one at a time
 	if(G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()){
@@ -216,7 +216,7 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 		G->L.print("Factor::CBuild(2)unit finished does not exist?! Could it have been destroyed? CBuild()");		
 		return false;
 	}
-	
+
 
 	float3 pos=UpVector;
 	TCommand TCS(tc,"CBuild");
@@ -332,18 +332,18 @@ void CManufacturer::Init(){
 		G->L << "No MetaTags where defined" << endline;
 	}
 	/*if(contents != string("")){
-		vector<string> v;
-		v = bds::set_cont(v,contents.c_str());
-		if(v.empty() == false){
-			for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-				string sdg = "TAGS\\";
-				sdg += *vi;
-				
-				if(vh.empty()==false){
-					metatags[*vi]= vh;
-				}
-			}
-		}
+	vector<string> v;
+	v = bds::set_cont(v,contents.c_str());
+	if(v.empty() == false){
+	for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
+	string sdg = "TAGS\\";
+	sdg += *vi;
+
+	if(vh.empty()==false){
+	metatags[*vi]= vh;
+	}
+	}
+	}
 	}*/
 	NLOG("Registering TaskTypes");
 	RegisterTaskTypes();
@@ -446,8 +446,8 @@ void CManufacturer::UnitIdle(int uid){
 		for(vector<CBuilder>::iterator i = builders.begin(); i != builders.end(); ++i){
 			if(i->GetID() == uid){
 				/*if(G->Actions->DGunNearby(uid)==true){
-					idle = false;
-					break;
+				idle = false;
+				break;
 				}*/
 				G->L.print("CManufacturer::TaskCycle has found the unitID, issuing TaskCycle");
 				bool result = TaskCycle(&*i);
@@ -506,38 +506,38 @@ void CManufacturer::EnemyDestroyed(int eid){
 }
 
 /*bool CManufacturer::FBuild(string name, int unit, int quantity){
-	NLOG("CManufacturer::FBuild");
-	if(G->GetUnitDef(unit) == 0) return false;
-	if(G->cb->GetUnitHealth(unit)<1){
-		G->L.print("FBuild() unit finished doesnt exist?! Could it have been destroyed? :: " + name);	
-		return false;
-	}
-	const UnitDef* ud = G->GetUnitDef(name);
-	if(ud == 0){
-		G->L.print("error: a problem occurred loading this units unit def : " + name);
-		return false;
-	} else {
-		TCommand TCS(tc,"FBuild");
-		tc.c.id = -ud->id;
-		G->L.print("issuing mobile unit :: " + name);
-		tc.PushFloat3(UpVector);
-		//tc.Push(1);
-		tc.delay = 2 SECONDS;
-		tc.c.timeOut = int(ud->buildTime*4) + G->cb->GetCurrentFrame() + tc.delay;
-		tc.created = G->cb->GetCurrentFrame();
-		tc.unit = unit;
-		tc.type = B_CMD;
-		tc.clear = false;
-		tc.Priority = tc_pseudoinstant;
-		//if(tc.c.params.empty() == false){
-		for(int q=1;q==quantity;q++){
-			G->OrderRouter->GiveOrder(tc);
-		}
-		return true;
-		//}else{
-		//	return false;
-		//}
-	}
+NLOG("CManufacturer::FBuild");
+if(G->GetUnitDef(unit) == 0) return false;
+if(G->cb->GetUnitHealth(unit)<1){
+G->L.print("FBuild() unit finished doesnt exist?! Could it have been destroyed? :: " + name);	
+return false;
+}
+const UnitDef* ud = G->GetUnitDef(name);
+if(ud == 0){
+G->L.print("error: a problem occurred loading this units unit def : " + name);
+return false;
+} else {
+TCommand TCS(tc,"FBuild");
+tc.c.id = -ud->id;
+G->L.print("issuing mobile unit :: " + name);
+tc.PushFloat3(UpVector);
+//tc.Push(1);
+tc.delay = 2 SECONDS;
+tc.c.timeOut = int(ud->buildTime*4) + G->cb->GetCurrentFrame() + tc.delay;
+tc.created = G->cb->GetCurrentFrame();
+tc.unit = unit;
+tc.type = B_CMD;
+tc.clear = false;
+tc.Priority = tc_pseudoinstant;
+//if(tc.c.params.empty() == false){
+for(int q=1;q==quantity;q++){
+G->OrderRouter->GiveOrder(tc);
+}
+return true;
+//}else{
+//	return false;
+//}
+}
 }*/
 void CManufacturer::RegisterTaskPair(string name, btype type){
 	types[name] = type;
@@ -609,7 +609,7 @@ void CManufacturer::RegisterTaskTypes(){
 		RegisterTaskPair("b_wait", B_WAIT);
 		//,
 		//	,
-	//	RegisterTaskPair("")] = ;
+		//	RegisterTaskPair("")] = ;
 	}
 }
 btype CManufacturer::GetTaskType(string s){
@@ -722,16 +722,24 @@ void CManufacturer::LoadGlobalTree(){
 	}
 }
 
-bool CManufacturer::CanBuild(int uid,const UnitDef* ud, string name){
+bool CManufacturer::CanBuild(int uid, const UnitDef* ud, string name){
 	NLOG("CManufacturer::CanBuild");
-	tolowercase(name);
+	string n = name;
+	tolowercase(n);
+	trim(n);
+	if(ud == 0){
+		G->L <<"CManufacturer::CanBuild(" <<uid << ",const UnitDef* ud," <<  name << ") gave false because ud == 0" << endline;
+		return false;
+	}
 	if(ud->buildOptions.empty()){
+		G->L << "CManufacturer::CanBuild(" <<uid << ",const UnitDef* ud," <<  name << ") gave false because ud->buildOptions.empty() == true" << endline;
 		return false;
 	}else{
 		for(map<int,string>::const_iterator i = ud->buildOptions.begin(); i !=ud->buildOptions.end(); ++i){
 			string k = i->second;
 			tolowercase(k);
-			if(k==name){
+			trim(k);
+			if(k==n){
 				return true;
 			}
 		}
@@ -741,6 +749,7 @@ bool CManufacturer::CanBuild(int uid,const UnitDef* ud, string name){
 
 string CManufacturer::GetBuild(int uid, string tag, bool efficiency){
 	NLOG("CManufacturer::GetBuild");
+	G->L << "CManufacturer::GetBuild("<<uid<<","<<tag<<","<< efficiency<<")"<<endline;
 	if(metatags.empty()){
 		return string("b_metatag_failed");
 	}
@@ -748,59 +757,38 @@ string CManufacturer::GetBuild(int uid, string tag, bool efficiency){
 	if(ud == 0){
 		G->L.print("GetBuild metatag error with Builder not getting a unit def");
 		return string("b_metatag_failed");
-	}
-	map<string, vector<string> >::const_iterator ik = metatags.find(tag);
-	if(ik == metatags.end()){
-		G->L.print("Metatag error in GetBuild ik == metatags.end()");
-		return string("b_metatag_failed");
-	}
-	vector<string> v = ik->second;
-	//if(efficiency == true){
-	float best_score = 0;
-	string best = "b_metatag_failed";
-	if(v.empty() == false){
-		for(vector<string>::const_iterator is = v.begin(); is != v.end();++is){
-			string w = *is;
-			if(w == string("")) continue;
-			if(CanBuild(uid,ud,w)==false){
-				G->L.print("hmm canbuild() == false for \":"+w+"\" on the "+ud->name);
-				continue;
-			}
-			float temp = G->GetEfficiency(w);
-			if(temp > best_score){
-				best_score = temp;
-				best = w;
-			}
-		}
-		return best;
 	}else{
-		return "b_metatag_failed";
-	}
-	/*}else{
+		map<string, vector<string> >::const_iterator ik = metatags.find(tag);
+		if(ik == metatags.end()){
+			G->L.print("Meta tag error in GetBuild ik == metatags.end() for "+tag);
+			return string("b_metatag_failed");
+		}
+		vector<string> v = ik->second;
+		float best_score = 0;
+		string best = "b_metatag_failed";
 		if(v.empty() == false){
-			srand(uint(time(NULL) +G->Cached->team +  G->Cached->randadd));
-			G->Cached->randadd++;
-			int dnum = rand()%(v.size()-1);
-			int j = 0;
-			for(vector<string>::iterator k = v.begin(); k != v.end(); ++k){
-				if(CanBuild(ud,*k)==false){
-					j++;
+			for(vector<string>::const_iterator is = v.begin(); is != v.end();++is){
+				string w = *is;
+				trim(w);
+				if(w == string("")) continue;
+				if(CanBuild(uid,ud,w)==false){
+					G->L.print("hmm canbuild() == false for \""+w+"\" on the "+ud->name);
 					continue;
-				}
-				if(j == dnum){
-					return *k;
 				}else{
-					j++;
+					float temp = G->GetEfficiency(w);
+					G->L << "canbuild \""<< w << "\" efficiency == "<< temp<< endline;
+					if(temp > best_score){
+						best_score = temp;
+						best = w;
+					}
 				}
 			}
-			if(CanBuild(ud,v.front())==false){
-				return v.front();
-			}else{
-				return string("b_metatag_failed");
-			}
+			G->L << "returning \"" << best << "\""<< endline;
+			return best;
+		}else{
+			return "b_metatag_failed";
 		}
 	}
-	return string("");*/
 }
 
 bool CManufacturer::LoadBuildTree(CBuilder* ui){
@@ -906,95 +894,95 @@ bool CManufacturer::LoadBuildTree(CBuilder* ui){
 			}
 		}
 	}
-	 vector<string> v;
-	 string s = *buffer;
-	 if(s.empty() == true){
-		 G->L.print(" error loading contents of  file :: " + filename + " :: buffer empty, most likely because of an empty file");
-		 return false;
-	 }
-	 G->L.print("loaded contents of  file :: " + filename + " :: filling buildtree");
-	 tolowercase(s);
-	 trim(s);
-	 v = bds::set_cont(v,s.c_str());
-	 if(v.empty() == false){
-		 bool polate=false;
-		 bool polation = G->info->rule_extreme_interpolate;
-		 btype bt = GetTaskType(G->Get_mod_tdf()->SGetValueDef("b_rule_extreme_nofact","AI\\interpolate_tag"));
-		 if(ui->GetRole() == R_FACTORY){
-			 polation = false;
-		 }
-		 if((ui->GetUnitDef()->canfly ||ui->GetUnitDef()->movedata) &&  (ui->GetAge() < (5 SECONDS))){
-			 G->Actions->ScheduleIdle(ui->GetID());
-			 return true;
-		 }
-		 for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-			 if(polation==true){
+	vector<string> v;
+	string s = *buffer;
+	if(s.empty() == true){
+		G->L.print(" error loading contents of  file :: " + filename + " :: buffer empty, most likely because of an empty file");
+		return false;
+	}
+	G->L.print("loaded contents of  file :: " + filename + " :: filling buildtree");
+	tolowercase(s);
+	trim(s);
+	v = bds::set_cont(v,s.c_str());
+	if(v.empty() == false){
+		bool polate=false;
+		bool polation = G->info->rule_extreme_interpolate;
+		btype bt = GetTaskType(G->Get_mod_tdf()->SGetValueDef("b_rule_extreme_nofact","AI\\interpolate_tag"));
+		if(ui->GetRole() == R_FACTORY){
+			polation = false;
+		}
+		if((ui->GetUnitDef()->canfly ||ui->GetUnitDef()->movedata) &&  (ui->GetAge() < (5 SECONDS))){
+			G->Actions->ScheduleIdle(ui->GetID());
+			return true;
+		}
+		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
+			if(polation==true){
 				if(polate==true){
 					ui->AddTask(bt);
 					polate = false;
 				}else{
 					polate=true;
 				}
-			 }
-			 string q = *vi;
-			 trim(q);
-			 tolowercase(q);
-			 if(metatags.empty() ==false){
+			}
+			string q = *vi;
+			trim(q);
+			tolowercase(q);
+			if(metatags.empty() ==false){
 				if (metatags.find(q) != metatags.end()){
 					string s = "";
 					s = GetBuild(ui->GetID(),q,true);
-					if((s != *vi)&&(s != string(""))&&(s != string("b_metatag_failed"))){
-						ui->AddTask(s,true);
+					if((s != q)&&(s != string(""))&&(s != string("b_metatag_failed"))){
+						ui->AddTask(s,false);
 					}else{
 						G->L.print(" error with metatag!!!!!!! ::  "+ s + " :: " + *vi);
 					}
 					continue;
 				}
-			  }
-			 const UnitDef* uj = G->GetUnitDef(*vi);
-			 if(uj != 0){
-				  ui->AddTask(q,false);
-				  if(v.size() == 1) ui->AddTask(q,false);
-			  }else if(q == string("")){
-				 continue;
-			 } else if(q == string("is_factory")){
-				 ui->SetRole(R_FACTORY);
-			 } else if(q == string("is_builder")){
-				 ui->SetRole(R_BUILDER);
-			 } else if(q == string("repeat")){
-				 ui->SetRepeat(true);
-			 } else if(q == string("no_rule_interpolation")){
-				 polation=false;
-			 } else if(q == string("rule_interpolate")){
-				 polation=true;
-			 } else if(q == string("dont_repeat")){
-				 ui->SetRepeat(false);
-			 }else if(q == string("base_pos")){
-			 G->Map->base_positions.push_back(G->GetUnitPos(ui->GetID()));
-			  } else if(q == string("gaia")){
-				  G->info->gaia = true;
-			  } else if(q == string("not_gaia")){
-				  G->info->gaia = false;
-			  } else if(q == string("switch_gaia")){
-				  G->info->gaia = !G->info->gaia;
-			  } else{
-				  btype x = GetTaskType(q);
-				  if( x != B_NA){
-					  ui->AddTask(x);
-				  }else{
-					  G->L.iprint("error :: a value :: " + *vi +" :: was parsed in :: "+filename + " :: this does not have a valid UnitDef according to the engine, and is not a Task keyword such as repair or B_MEX");
-				  }
-			  }
-		 }
-		 if(ud->isCommander == true)	G->Map->basepos = G->GetUnitPos(ui->GetID());
-		 if((ud->isCommander== true)||(ui->GetRole() == R_FACTORY))	G->Map->base_positions.push_back(G->GetUnitPos(ui->GetID()));
-		 G->L.print("issuing scheduled idle from factor::loadbuildtree");
-		 return true;
-		 //G->Actions->ScheduleIdle(ui->GetID());
-	 } else{
-		 G->L.print(" error loading contents of  file :: " + filename + " :: buffer empty, most likely because of an empty file");
-		 return false;
-	 }
+			}
+			const UnitDef* uj = G->GetUnitDef(*vi);
+			if(uj != 0){
+				ui->AddTask(q,false);
+				if(v.size() == 1) ui->AddTask(q,false);
+			}else if(q == string("")){
+				continue;
+			} else if(q == string("is_factory")){
+				ui->SetRole(R_FACTORY);
+			} else if(q == string("is_builder")){
+				ui->SetRole(R_BUILDER);
+			} else if(q == string("repeat")){
+				ui->SetRepeat(true);
+			} else if(q == string("no_rule_interpolation")){
+				polation=false;
+			} else if(q == string("rule_interpolate")){
+				polation=true;
+			} else if(q == string("dont_repeat")){
+				ui->SetRepeat(false);
+			}else if(q == string("base_pos")){
+				G->Map->base_positions.push_back(G->GetUnitPos(ui->GetID()));
+			} else if(q == string("gaia")){
+				G->info->gaia = true;
+			} else if(q == string("not_gaia")){
+				G->info->gaia = false;
+			} else if(q == string("switch_gaia")){
+				G->info->gaia = !G->info->gaia;
+			} else{
+				btype x = GetTaskType(q);
+				if( x != B_NA){
+					ui->AddTask(x);
+				}else{
+					G->L.iprint("error :: a value :: " + *vi +" :: was parsed in :: "+filename + " :: this does not have a valid UnitDef according to the engine, and is not a Task keyword such as repair or B_MEX");
+				}
+			}
+		}
+		if(ud->isCommander == true)	G->Map->basepos = G->GetUnitPos(ui->GetID());
+		if((ud->isCommander== true)||(ui->GetRole() == R_FACTORY))	G->Map->base_positions.push_back(G->GetUnitPos(ui->GetID()));
+		G->L.print("issuing scheduled idle from factor::loadbuildtree");
+		return true;
+		//G->Actions->ScheduleIdle(ui->GetID());
+	} else{
+		G->L.print(" error loading contents of  file :: " + filename + " :: buffer empty, most likely because of an empty file");
+		return false;
+	}
 }
 
 /** unitdef->type

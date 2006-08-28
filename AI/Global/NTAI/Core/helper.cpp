@@ -187,7 +187,7 @@ void Global::Update(){
 		if(cb->GetCurrentFrame() == (1 SECOND)){
 			NLOG("STARTUP BANNER IN Global::Update()");
 			if(L.FirstInstance() == true){
-				cb->SendTextMsg(":: NTai XE9RC22 by AF",0);
+				cb->SendTextMsg(":: NTai XE9RC23 by AF",0);
 				cb->SendTextMsg(":: Copyright (C) 2006 AF",0);
 				string s = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
 				if(s != string("")){
@@ -834,7 +834,7 @@ float Global::GetEfficiency(string s){
 	if(efficiency.find(s) != efficiency.end()){
 		return efficiency[s];
 	}else{
-		L.iprint("error ::   " + s + " is missing from the efficiency array");
+		L.print("error ::   " + s + " is missing from the efficiency array");
 		return 500.0f;
 	}
 }
@@ -846,14 +846,12 @@ bool Global::LoadUnitData(){
 	const UnitDef** ulist = new const UnitDef*[unum];
 	cb->GetUnitDefList(ulist);
 	for(int i = 0; i < unum; i++){
-		float ts = 500;
-		if(ulist[i]->weapons.empty()){
-			ts += ulist[i]->health+ulist[i]->energyMake + ulist[i]->metalMake + ulist[i]->extractsMetal*50+ulist[i]->tidalGenerator*30 + ulist[i]->windGenerator*30;
-			ts *= 300;
-		}
-		efficiency[ulist[i]->name] = ts;
-		unit_names[ulist[i]->name] = ulist[i]->humanName;
-		unit_descriptions[ulist[i]->name] = ulist[i]->tooltip;
+		string eu = ulist[i]->name;
+		tolowercase(eu);
+		trim(eu);
+		efficiency[eu] = 1;
+		unit_names[eu] = ulist[i]->humanName;
+		unit_descriptions[eu] = ulist[i]->tooltip;
 	}
 	string filename = info->datapath;
 	filename += slash;
@@ -888,6 +886,19 @@ bool Global::LoadUnitData(){
 		loaded = true;
 		return true;
 	} else{
+		for(int i = 0; i < unum; i++){
+			float ts = 500;
+			if(ulist[i]->weapons.empty()){
+				ts += ulist[i]->health+ulist[i]->energyMake + ulist[i]->metalMake + ulist[i]->extractsMetal*50+ulist[i]->tidalGenerator*30 + ulist[i]->windGenerator*30;
+				ts *= 300;
+			}else{
+				ts += 20*ulist[i]->weapons.size();
+			}
+			string eu = ulist[i]->name;
+			tolowercase(eu);
+			trim(eu);
+			efficiency[eu] = ts;
+		}
 		SaveUnitData();
 		return false;
 	}
@@ -899,15 +910,12 @@ bool Global::SaveUnitData(){
 	if(L.FirstInstance() == true){
 		ofstream off;
 		string filename = info->datapath + "/learn/" + info->tdfpath +".tdf";
-		char buffer[1000];
-		strcpy(buffer, filename.c_str());
-		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
-		off.open(buffer);
+		off.open(filename.c_str());
 		if(off.is_open() == true){
-			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC22 AF :: unit efficiency cache file" << endl << endl;
+			off << "[AI]" << endl << "{" << endl << "    // NTai XE9RC23 AF :: unit efficiency cache file" << endl << endl;
 			// put stuff in here;
 			int first = firstload;
-			off << "    version=XE9RC22;" << endl;
+			off << "    version=XE9RC23;" << endl;
 			off << "    firstload=" << first << ";" << endl;
 			off << "    modname=" << G->cb->GetModName() << ";" << endl;
 			off << "    iterations=" << iterations << ";" << endl;

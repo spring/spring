@@ -20,6 +20,7 @@ void Log::Set(Global* GL){
 		int jk = 3;
 	}
 }
+
 string Log::FrameTime(){
 	char c[20];
 	int Time = G->cb->GetCurrentFrame();
@@ -29,6 +30,7 @@ string Log::FrameTime(){
 	R += " >";
 	return R;
 }
+
 string Log::GameTime(){
 	char min[4];
 	char sec[4];
@@ -67,6 +69,7 @@ string Log::GameTime(){
 bool Log::FirstInstance(){
 	return First;
 }
+
 void Log::Open(bool plain){
 	char buffer[1000];
 	if( Lmagic != 95768){
@@ -82,7 +85,7 @@ void Log::Open(bool plain){
 		string filename = G->info->datapath + slash + "Logs" + slash;
 		now2 = localtime(&now1);
 		//             DDD MMM DD HH:MM:SS YYYY_X - NTAI.log
-		sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE9RC22.log",
+		sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE9RC23.log",
 				now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
 				now2->tm_min, G->Cached->team);
 		filename += c;
@@ -98,7 +101,7 @@ void Log::Open(bool plain){
 				return;
 			}
 		}
-		header(" :: NTAI XE9RC22 Log File \n :: Programmed and maintained by AF \n :: Copyright (C) 2006 AF \n :: Released under the GPL 2.0 Liscence \n");
+		header(" :: NTAI XE9RC23 Log File \n :: Programmed and maintained by AF \n :: Copyright (C) 2006 AF \n :: Released under the GPL 2.0 Liscence \n");
 		logFile << " :: Game started: " << now2->tm_mday << "." << now2->tm_mon << "." << 1900 + now2->tm_year << "  " << now2->tm_hour << ":" << now2->tm_min << ":" << now2->tm_sec << endl << endl <<  flush;
 		TdfParser cp(G);
 		cp.LoadFile("modinfo.tdf");
