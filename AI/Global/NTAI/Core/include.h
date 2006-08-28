@@ -97,14 +97,10 @@ class Global;
 #define EXCEPTION_HANDLER(a,b,c) \
 	try{ \
 		a; \
-	}catch(exception e){\
+	}catch(const std::exception& e){\
 		c;\
 		G->L.eprint(string("error in ")+b);\
 		G->L.eprint(e.what());\
-	}catch(exception* e){\
-		c;\
-		G->L.eprint(string("error in ")+b);\
-		G->L.eprint(e->what());\
 	}catch(string s){\
 		c;\
 		G->L.eprint(string("error in ")+b);\
@@ -116,14 +112,10 @@ class Global;
 #define EXCEPTION_MULTILINE_HANDLER(a,b,c) \
 	try{ \
 	a\
-	}catch(exception e){\
+	}catch(const exception& e){\
 	c;\
 	G->L.eprint(string("error in ")+b);\
 	G->L.eprint(e.what());\
-	}catch(exception* e){\
-	c;\
-	G->L.eprint(string("error in ")+b);\
-	G->L.eprint(e->what());\
 	}catch(string s){\
 	c;\
 	G->L.eprint(string("error in ")+b);\
