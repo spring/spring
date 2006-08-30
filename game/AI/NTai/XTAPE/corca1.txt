@@ -1,1 +1,1 @@
-B_RULE_EXTREME, armrl, B_RADAR, repair, defense, repair, B_RULE, B_RULE, B_POWER, B_RULE, repair, B_FACTORY, defense, B_RADAR, repair, coraap, corap, B_RETREAT, B_GUARD_FACTORY, repeat
+B_RULE_EXTREME, armrl, B_RADAR, repair, B_MEX, B_DEFENSE, repair, B_RULE, B_RULE, B_POWER, B_RULE, repair, B_FACTORY, B_DEFENSE, B_RADAR, repair, coraap, corap, B_RETREAT, B_GUARD_FACTORY, repeat
