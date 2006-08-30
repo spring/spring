@@ -248,10 +248,10 @@ void CTextureAtlas::BindTexture()
 
 AtlasedTexture CTextureAtlas::GetTexture(std::string name)
 {
-	return textures[name];
+	return textures[StringToLower(name)];
 }
 
 AtlasedTexture* CTextureAtlas::GetTexturePtr(std::string name)
 {
-	return &textures[name];
+	return &textures[StringToLower(name)];
 }
