@@ -12,6 +12,9 @@
 extern Uint8* keys; // from System/Main.cpp
 
 
+#define DISALLOW_RELEASE_BINDINGS
+
+
 /******************************************************************************/
 //
 // CKeySet
@@ -29,6 +32,12 @@ void CKeySet::ClearModifiers()
 	modifiers &= ~(KS_ALT | KS_CTRL | KS_META | KS_SHIFT);
 }
 
+void CKeySet::SetAnyBit()
+{
+	ClearModifiers();
+	modifiers |= KS_ANYMOD;
+}
+
 
 CKeySet::CKeySet(int k, bool release)
 {
@@ -38,7 +47,9 @@ CKeySet::CKeySet(int k, bool release)
 	if (keys[SDLK_LCTRL])  { modifiers |= KS_CTRL; }		
 	if (keys[SDLK_LMETA])  { modifiers |= KS_META; }		
 	if (keys[SDLK_LSHIFT]) { modifiers |= KS_SHIFT; }
+#ifndef DISALLOW_RELEASE_BINDINGS
 	if (release)           { modifiers |= KS_RELEASE; }
+#endif
 }
 
 
@@ -50,7 +61,9 @@ string CKeySet::GetString() const
 	}
 	
 	string modstr;
+#ifndef DISALLOW_RELEASE_BINDINGS
 	if (modifiers & KS_RELEASE) { modstr += "Up+"; }
+#endif
 	if (modifiers & KS_ANYMOD)  { modstr += "Any+"; }
 	if (modifiers & KS_ALT)     { modstr += "Alt+"; }
 	if (modifiers & KS_CTRL)    { modstr += "Ctrl+"; }
@@ -94,6 +107,10 @@ bool CKeySet::Parse(const string& token)
 			break;
 		}
 	}
+
+#ifdef DISALLOW_RELEASE_BINDINGS
+	modifiers &= ~KS_RELEASE;
+#endif
 	
 	// remove ''s, if present
 	if ((s.size() >= 2) && (s[0] == '\'') && (s[s.size() - 1] == '\'')) {
@@ -122,6 +139,7 @@ bool CKeySet::Parse(const string& token)
 	if (keyCodes->IsModifier(key)) {
 		modifiers |= KS_ANYMOD;
 	}
+
 	if (AnyMod()) {
 		ClearModifiers();
 	}

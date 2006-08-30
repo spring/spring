@@ -15,6 +15,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Player.h"
 #include "GameController.h"
+#include "UI/KeyBindings.h"
 
 
 #define FRAME_HISTORY 16
@@ -26,6 +27,8 @@ class CBaseWater;
 class CAVIGenerator;
 class CConsoleHistory;
 class CWordCompletion;
+class CKeySet;
+
 
 class CGame : public CGameController
 {
@@ -43,6 +46,9 @@ public:
 	int KeyPressed(unsigned short k,bool isRepeat);
 	CGame(bool server, std::string mapname, std::string modName);
 	virtual ~CGame();
+	
+	bool ActionPressed(const CKeyBindings::Action&, const CKeySet& ks, bool isRepeat);
+	bool ActionReleased(const CKeyBindings::Action&);
 
 	unsigned int oldframenum;
 	unsigned int fps;
@@ -96,7 +102,7 @@ public:
 
 	void MakeMemDump(void);
 
-  CConsoleHistory* consoleHistory;
+	CConsoleHistory* consoleHistory;
 	CWordCompletion* wordCompletion;
 
 	bool creatingVideo;
@@ -110,8 +116,16 @@ public:
 	
 	void HandleChatMsg(std::string msg,int player);
 	unsigned  int CreateExeChecksum(void);
+	
+	void SetHotBinding(const std::string& action) { hotBinding = action; }
+
+protected:
+	void SendNetChat(const string& message);
+	std::string hotBinding;
 };
 
+
 extern CGame* game;
+
 
 #endif // __GAME_H__

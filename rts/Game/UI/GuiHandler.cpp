@@ -169,7 +169,7 @@ void CGuiHandler::LayoutIcons()
 	CSelectedUnits::AvailableCommandsStruct ac=selectedUnits.GetAvailableCommands();;
 	vector<CommandDescription> uncommands=ac.commands;
 	activePage=ac.commandPage;
-
+	
 	commands.clear();
 
 	GLfloat x0 = buttonBox.x1 + fMargin;
@@ -222,7 +222,6 @@ void CGuiHandler::LayoutIcons()
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
 
-//			(*info) << "arf" << "\n";
 			CommandDescription c;
 			c.id=CMD_INTERNAL;
 			c.action="prevmenu";
@@ -1013,6 +1012,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 	glEnable(GL_FOG);
 }
 
+
 bool CGuiHandler::KeyPressed(unsigned short key)
 {
 	if(key==SDLK_ESCAPE && activeMousePress){
@@ -1034,102 +1034,162 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 	}
 
 	CKeySet ks(key, false);
-	const string action = keyBindings->GetAction(ks, "command");
-	if (action.empty()) {
-		return false;
+	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
+
+	for (int ali = 0; ali < (int)al.size(); ++ali) {
+	
+		const CKeyBindings::Action& action = al[ali];
+
+		// only activate these build options while building
+		// (conserve the keybinding space where we can)		
+		if ((inCommand >= 0) && (inCommand < commands.size()) &&
+		    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+			if (action.command == "incbuildspacing") {
+				buildSpacing++;
+				return true;
+			}
+			else if (action.command == "decbuildspacing") {
+				if (buildSpacing > 0) {
+					buildSpacing--;
+				}
+				return true;
+			}
+		}
+		else if (action.command == "showcommands") {
+			// bonus command for debugging
+			printf("Currently Available Commands:\n");
+			for(int i = 0; i < commands.size(); ++i){
+				printf("  button: %i, id = %i, action = %s\n",
+							 i, commands[i].id, commands[i].action.c_str());
+			}
+			return true;
+		}
+		else if (action.command == "hotbind") {
+			int icon = IconAtPos(mouse->lastx, mouse->lasty);
+			if ((icon >= 0) && (icon < commands.size())) {
+				game->SetHotBinding(commands[icon].action);
+			}
+			return true;
+		}
+		else if (action.command == "hotunbind") {
+			int icon = IconAtPos(mouse->lastx, mouse->lasty);
+			if ((icon >= 0) && (icon < commands.size())) {
+				string cmd = "unbindaction " + commands[icon].action;
+				keyBindings->Command(cmd);
+				info->AddLine("%s", cmd.c_str());
+			}
+			return true;
+		}
+
+		for (int a = 0; a < commands.size(); ++a) {
+			if (commands[a].action != action.command) {
+				continue;
+			}
+			switch(commands[a].type) {
+				case CMDTYPE_ICON:{
+					Command c;
+					c.id=commands[a].id;
+					CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
+					selectedUnits.GiveCommand(c);
+					inCommand=-1;
+					break;
+				}
+				case CMDTYPE_ICON_MODE: {
+					int newMode;
+
+					if (!action.extra.empty()) {
+						newMode = atoi(action.extra.c_str());
+					} else {
+						newMode = atoi(commands[a].params[0].c_str()) + 1;
+					}
+
+					if ((newMode < 0) || (newMode > (commands[a].params.size() - 2))) {
+						newMode = 0;
+					}
+
+					char t[10];
+					SNPRINTF(t, 10, "%d", newMode);
+					commands[a].params[0] = t;
+
+					Command c;
+					c.id = commands[a].id;
+					c.params.push_back(newMode);
+					CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
+					selectedUnits.GiveCommand(c);
+					inCommand = -1;
+					break;
+				}
+				case CMDTYPE_ICON_MAP:
+				case CMDTYPE_ICON_AREA:
+				case CMDTYPE_ICON_UNIT:
+				case CMDTYPE_ICON_UNIT_OR_MAP:
+				case CMDTYPE_ICON_FRONT:
+				case CMDTYPE_ICON_UNIT_OR_AREA:
+				case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
+					inCommand=a;
+					break;
+				}
+				case CMDTYPE_ICON_BUILDING: {
+					UnitDef* ud=unitDefHandler->GetUnitByID(-commands[a].id);
+					CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
+					if(ud->extractsMetal>0 && gd->drawMode != CBaseGroundDrawer::drawMetal && autoShowMetal){
+						readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
+						showingMetal=true;
+					}
+					inCommand=a;
+					break;
+				}
+				case CMDTYPE_COMBO_BOX: {
+					CommandDescription& cd = commands[a];
+					vector<string>::iterator pi;
+					// check for an action with a specific entry binding
+					if (!action.extra.empty()) {
+						int p = 0;
+						for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
+							if (action.extra == *pi) {
+								Command c;
+								c.id = cd.id;
+								c.params.push_back(p);
+								CreateOptions(c, false);
+								selectedUnits.GiveCommand(c);
+								return true;
+							}
+							p++;
+						}
+					}
+					inCommand = a;
+					list = new CglList(cd.name.c_str(), MenuSelection);
+					for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
+						list->AddItem(pi->c_str(), "");
+					}
+					list->place = atoi(cd.params[0].c_str());
+					game->showList = list;
+					break;
+				}
+				case CMDTYPE_NEXT: {
+					++activePage;
+					if(activePage>maxPages)
+						activePage=0;
+					selectedUnits.SetCommandPage(activePage);
+					inCommand=-1;
+					break;
+				}
+				case CMDTYPE_PREV:{
+					--activePage;
+					if(activePage<0)
+						activePage=maxPages;
+					selectedUnits.SetCommandPage(activePage);
+					inCommand=-1;
+					break;
+				}
+				default:{
+					inCommand = a;
+				}
+			}
+			return true; // we used the command
+		}
 	}
 	
-	int a;
-	if (action == "showcommands") {
-		for(a = 0; a < commands.size(); ++a){
-			printf("  button: %i, id = %i, action = %s\n",
-						 a, commands[a].id, commands[a].action.c_str());
-		}
-		return true;
-	}
-
-	for(a = 0; a < commands.size(); ++a){
-		if(commands[a].action != action) {
-			continue;
-		}
-		switch(commands[a].type){
-			case CMDTYPE_ICON:{
-				Command c;
-				c.id=commands[a].id;
-				CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
-				selectedUnits.GiveCommand(c);
-				inCommand=-1;
-				break;
-			}
-			case CMDTYPE_ICON_MODE:{
-				int newMode=atoi(commands[a].params[0].c_str())+1;
-				if(newMode>commands[a].params.size()-2)
-					newMode=0;
-
-				char t[10];
-				SNPRINTF(t, 10, "%d", newMode);
-				commands[a].params[0]=t;
-
-				Command c;
-				c.id=commands[a].id;
-				c.params.push_back(newMode);
-				CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
-				selectedUnits.GiveCommand(c);
-				inCommand=-1;
-				break;
-			}
-			case CMDTYPE_ICON_MAP:
-			case CMDTYPE_ICON_AREA:
-			case CMDTYPE_ICON_UNIT:
-			case CMDTYPE_ICON_UNIT_OR_MAP:
-			case CMDTYPE_ICON_FRONT:
-			case CMDTYPE_ICON_UNIT_OR_AREA:
-			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
-				inCommand=a;
-				break;
-			}
-			case CMDTYPE_ICON_BUILDING:{
-				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[a].id);
-				CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
-				if(ud->extractsMetal>0 && gd->drawMode != CBaseGroundDrawer::drawMetal && autoShowMetal){
-					readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
-					showingMetal=true;
-				}
-				inCommand=a;
-				break;
-			}
-			case CMDTYPE_COMBO_BOX:{
-				inCommand=a;
-				CommandDescription& cd=commands[a];
-				list=new CglList(cd.name.c_str(),MenuSelection);
-				for(vector<string>::iterator pi=++cd.params.begin();pi!=cd.params.end();++pi)
-					list->AddItem(pi->c_str(),"");
-				list->place=atoi(cd.params[0].c_str());
-				game->showList=list;
-				break;
-			}
-			case CMDTYPE_NEXT:{
-				++activePage;
-				if(activePage>maxPages)
-					activePage=0;
-				selectedUnits.SetCommandPage(activePage);
-				inCommand=-1;
-				break;
-			}
-			case CMDTYPE_PREV:{
-				--activePage;
-				if(activePage<0)
-					activePage=maxPages;
-				selectedUnits.SetCommandPage(activePage);
-				inCommand=-1;
-				break;
-			}
-			default:{
-				inCommand=a;
-			}
-		}
-		return true; // we used the command
-	}
 	return false;
 }
 
@@ -1189,12 +1249,20 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 	string s;
 	int icon=IconAtPos(x,y);
 	if(icon>=0){
-		if(commands[icon].tooltip!="")
+		if(commands[icon].tooltip!=""){
 			s=commands[icon].tooltip;
-		else
+		}else{
 			s=commands[icon].name;
-		if(!commands[icon].hotkey.empty()){
-			s+="\nHotkey " + commands[icon].hotkey;
+		}
+
+		const CKeyBindings::HotkeyList& hl =
+			keyBindings->GetHotkeys(commands[icon].action);
+		if(!hl.empty()){
+			s+="\nHotkeys:";
+			for (int i = 0; i < (int)hl.size(); ++i) {
+				s+=" ";
+				s+=hl[i];
+			}
 		}
 	}
 	return s;

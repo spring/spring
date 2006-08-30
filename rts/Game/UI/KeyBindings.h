@@ -21,31 +21,54 @@ class CKeyBindings
 {
 	public:
 		CKeyBindings();
-		CKeyBindings(const string& filename);
-		virtual ~CKeyBindings();
+		~CKeyBindings();
 		
 		bool Load(const string& filename);
 		bool Save(const string& filename) const;
 		void Print() const;
 
-		string GetAction(const CKeySet& ks, const string& context) const; // FIXME
+		struct Action {
+			Action() {}
+			Action(const string& line);
+			string rawline; // includes the command, case preserved
+			string command; // first word, lowercase
+			string extra;   // everything but the first word
+		};
+		typedef vector<Action> ActionList;
+		typedef vector<string> HotkeyList;
 		
-		bool Bind(const string& keystring, const string& action, const string& context);
-		bool UnBindKeyset(const string& keystr, const string& context);
-		bool UnBindAction(const string& action, const string& context);
-		bool UnBindContext(const string& context);
+		const ActionList& GetActionList(const CKeySet& ks) const;
+		const HotkeyList& GetHotkeys(const string& action) const;
 		
-	public:
-		bool debug;
+		bool Command(const string& line);
+		
+		bool GetDebug() const { return debug; }
+		void SetDebug(bool dbg) { debug = dbg; }
 		
 	protected:
 		void LoadDefaults();
+		void Sanitize();
+		void BuildHotkeyMap();
+		bool Bind(const string& keystring, const string& action);
+		bool UnBind(const string& keystring, const string& action);
+		bool UnBindKeyset(const string& keystr);
+		bool UnBindAction(const string& action);
+		bool RemoveCommandFromList(ActionList& al, const string& command);
 
 	protected:
-		typedef map<CKeySet, string> KeyMap;
-		typedef map<string, KeyMap>  ContextKeyMap;
-		ContextKeyMap bindings;
+		typedef map<CKeySet, ActionList> KeyMap; // keyset to action
+		KeyMap bindings;
+
+		typedef map<string, HotkeyList> ActionMap; // action to keyset
+		ActionMap hotkeys;
+
+		// commands that use both Up and Down key presses		
+		set<string> statefulCommands;
+
+		bool debug;
+		bool userCommand;
 };
+
 
 extern CKeyBindings* keyBindings;
 

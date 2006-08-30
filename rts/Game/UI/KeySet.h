@@ -18,6 +18,7 @@ class CKeySet {
 		CKeySet(int key, bool release);
 
 		void Reset();
+		void SetAnyBit();
 		void ClearModifiers();
 		bool Parse(const string& token);
 
@@ -32,13 +33,18 @@ class CKeySet {
 			KS_RELEASE = (1 << 5)
 		};
 
+		int  Key()     const { return key; }
+		bool Alt()     const { return (modifiers & KS_ALT); }
+		bool Ctrl()    const { return (modifiers & KS_CTRL); }
+		bool Meta()    const { return (modifiers & KS_META); }
+		bool Shift()   const { return (modifiers & KS_SHIFT); }
+		bool AnyMod()  const { return (modifiers & KS_ANYMOD); }
+		bool Release() const { return (modifiers & KS_RELEASE); }
+
 		bool operator<(const CKeySet& ks) const
 		{
 			if (key < ks.key) { return true; }
 			if (key > ks.key) { return false; }
-			if (!Release() && ks.Release()) { return true; }
-			if (Release() && !ks.Release()) { return false; }
-			if (AnyMod() || ks.AnyMod()) { return false; }
 			if (modifiers < ks.modifiers) { return true; }
 			if (modifiers > ks.modifiers) { return false; }
 			return false;
@@ -49,13 +55,10 @@ class CKeySet {
 			return ((key == ks.key) && (modifiers == ks.modifiers));
 		}
 
-		int  Key()     const { return key; }
-		bool Alt()     const { return (modifiers & KS_ALT); }
-		bool Ctrl()    const { return (modifiers & KS_CTRL); }
-		bool Meta()    const { return (modifiers & KS_META); }
-		bool Shift()   const { return (modifiers & KS_SHIFT); }
-		bool AnyMod()  const { return (modifiers & KS_ANYMOD); }
-		bool Release() const { return (modifiers & KS_RELEASE); }
+		bool operator!=(const CKeySet& ks) const
+		{
+			return ((key != ks.key) || (modifiers != ks.modifiers));
+		}
 
 	protected:
 		bool ParseModifier(string& s, const string& token, const string& abbr);

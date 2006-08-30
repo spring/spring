@@ -22,23 +22,37 @@ void CWordCompletion::Reset()
 {
 	words.clear();
 	WordProperties wp(true, false);
+	// local commands
+	words["/clock"] = wp;
+	words["/info"] = wp;
+	words["/gameinfo"] = wp;
+	words["/bind "] = wp;
+	words["/say"] = wp;
+	words["/unbind "] = wp;
+	words["/unbindall"] = wp;
+	words["/unbindaction "] = wp;
+	words["/unbindkeyset "] = wp;
+	words["/keyload"] = wp;
+	words["/keysave"] = wp;
+	words["/keysyms"] = wp;
+	words["/keycodes"] = wp;
+	words["/keyprint"] = wp;
+	words["/keydebug"] = wp;
+	// remote commands
 	words[".atm"] = wp;
-	words[".bind "] = wp;
 	words[".cheat"] = wp;
-	words[".clock"] = wp;
 	words[".cmd "] = wp;
-	//  words[".crash"] = wp; // don't make it too easy
 	words[".give "] = wp;
-	words[".info"] = wp;
 	words[".kick "] = wp;
 	words[".nocost"] = wp;
 	words[".nopause"] = wp;
 	words[".nospectatorchat"] = wp;
-	words[".setmaxspeed"] = wp;
-	words[".setminspeed"] = wp;
+	words[".setmaxspeed "] = wp;
+	words[".setminspeed "] = wp;
 	words[".spectator"] = wp;
 	words[".take"] = wp;
 	words[".team "] = wp;
+	// words[".crash"] = wp; // don't make it too easy
 	return;
 }
 

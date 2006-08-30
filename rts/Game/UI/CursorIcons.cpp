@@ -27,6 +27,8 @@ void CCursorIcons::Draw()
 		return;
 	}
 
+	glDepthMask(GL_FALSE);
+
 	glEnable(GL_TEXTURE_2D);
 	
 	glMatrixMode(GL_PROJECTION);
@@ -61,13 +63,15 @@ void CCursorIcons::Draw()
 		}
 	}
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
-
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+
+	glDepthMask(GL_TRUE);
 
 	glViewport(0,0,gu->screenx,gu->screeny);
 
