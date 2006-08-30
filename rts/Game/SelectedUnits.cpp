@@ -177,8 +177,10 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 
 	if(c.id==CMD_GROUPCLEAR){
 		for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-			if((*ui)->group)
+			if((*ui)->group){
 				(*ui)->SetGroup(0);
+				possibleCommandsChanged=true;
+			}
 		}
 		return;
 	}
@@ -198,6 +200,7 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 		for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 			if((*ui)->group){
 				group=(*ui)->group;
+				possibleCommandsChanged=true;
 				break;
 			}
 		}
