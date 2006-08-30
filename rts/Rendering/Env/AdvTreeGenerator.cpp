@@ -33,7 +33,9 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	TdfParser resources("gamedata/resources.tdf");
 
 	CBitmap bm;
-	bm.Load("bitmaps/"+resources.SGetValueDef("Bark.bmp","resources\\graphics\\trees\\bark"));
+	std::string fn("bitmaps/"+resources.SGetValueDef("Bark.bmp","resources\\graphics\\trees\\bark"));
+	if (!bm.Load(fn) || bm.xsize != 256 || bm.ysize != 256)
+		throw content_error(fn);
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
 			tree[y][x][0]=bm.mem[(y*256+x)*4];
@@ -42,7 +44,9 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 			tree[y][x][3]=255;
 		}
 	}
-	bm.Load("bitmaps/"+resources.SGetValueDef("bleaf.bmp","resources\\graphics\\trees\\leaf"));
+	fn = "bitmaps/"+resources.SGetValueDef("bleaf.bmp","resources\\graphics\\trees\\leaf");
+	if (!bm.Load(fn))
+		throw content_error(fn);
 	bm.CreateAlpha(0,0,0);
 	//bm.Save("baseleaf.bmp");
 	bm.Renormalize(float3(0.22f,0.43f,0.18f)*1.0f);
@@ -60,7 +64,9 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 
 	glDeleteTextures (1, &leafTex);
 
-	bm.Load("bitmaps/"+resources.SGetValueDef("Bark.bmp","resources\\graphics\\trees\\bark"));
+	fn = "bitmaps/"+resources.SGetValueDef("Bark.bmp","resources\\graphics\\trees\\bark");
+	if (!bm.Load(fn) || bm.xsize != 256 || bm.ysize != 256)
+		throw content_error(fn);
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
 			tree[y][x+1024][0]=(unsigned char)(bm.mem[(y*256+x)*4]*0.6f);
