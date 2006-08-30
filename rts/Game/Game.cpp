@@ -1365,19 +1365,16 @@ bool CGame::Draw()
 	sky->DrawSun();
 	if(keys[SDLK_LSHIFT]) {
 		selectedUnits.DrawCommands();
+		cursorIcons->Draw();
 	}
+
+	mouse->Draw();
 
 #ifndef NEW_GUI
 	guihandler->DrawMapStuff();
 #endif
 
 	inMapDrawer->Draw();
-
-	if(keys[SDLK_LSHIFT]) {
-		cursorIcons->Draw();
-	}
-
-	mouse->Draw();
 
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST);
