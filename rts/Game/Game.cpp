@@ -307,7 +307,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 #ifndef NEW_GUI
 	resourceBar=new CResourceBar();
 	keyCodes=new CKeyCodes();
-	keyBindings=new CKeyBindings("uikeys.txt");
+	keyBindings=new CKeyBindings();
+	keyBindings->Load("uikeys.txt");
 #endif
 	if(!server) net->Update();	//prevent timing out during load
 
@@ -476,6 +477,23 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	// #endif
 #else
 
+	if (!hotBinding.empty()) {
+		if (k == 27) {
+			hotBinding.clear();
+		}
+		else if ((k != SDLK_LCTRL) && (k != SDLK_LMETA) &&
+		         (k != SDLK_LSHIFT) && (k != SDLK_LALT)) {
+			CKeySet ks(k, false);
+			string cmd = "bind";
+			cmd += " " + ks.GetString() ;
+			cmd += " " + hotBinding;
+			keyBindings->Command(cmd);
+			hotBinding.clear();
+			info->AddLine("%s", cmd.c_str());
+		}
+		return 0;
+	}
+
 	if(showList){					//are we currently showing a list?
 		if(k==SDLK_UP)
 			showList->UpOne();
@@ -491,7 +509,10 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		return 0;
 	}
 	
-	string fakeGuiKey("");
+	// Get the list of possible key actions
+	CKeySet ks(k, false);
+	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
+	
 	if (userWriting){
 #ifndef NO_CLIPBOARD
 		if ((k=='V') && keys[SDLK_LCTRL]){
@@ -504,38 +525,74 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			return 0;
 		}
 #endif
-		if(k==8){ //backspace
-			if(userInput.size()!=0)
-				userInput.erase(userInput.size()-1,1);
-			return 0;
-		}
-		if(k==SDLK_RETURN){
-			userWriting=false;
-			keys[k] = false;		//prevent game start when server chats
-			if (chatting && (userInput.find(".cmd") == 0)) {
-				fakeGuiKey = userInput.substr(5);
-				consoleHistory->AddLine(userInput);
-				chatting = false;
-				userInput = "";
-			} else {
+
+		// convert to the appropriate prefix if we receive a typed chat action
+		for (int i = 0; i < (int)actionList.size(); i++) {
+			const CKeyBindings::Action& action = actionList[i];
+			if (action.command == "chatswitchall") {
+				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+					userInput = userInput.substr(2);
+				}
+				userInputPrefix = "";
+				return 0;
+			}
+			else if (action.command == "chatswitchally") {
+				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+					userInput[0] = 'a';
+				} else {
+					userInput = "a:" + userInput;
+				}
+				userInputPrefix = "a:";
+				return 0;
+			}
+			else if (action.command == "chatswitchspec") {
+				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+					userInput[0] = 's';
+				} else {
+					userInput = "s:" + userInput;
+				}
+				userInputPrefix = "s:";
 				return 0;
 			}
 		}
-		if(k==27 && (chatting || inMapDrawer->wantLabel)){ // escape
+
+		if(k==8){ //backspace
+			if(userInput.size()!=0){
+				userInput.erase(userInput.size()-1,1);
+			}
+		}
+		else if(k==SDLK_RETURN){
+			userWriting=false;
+			keys[k] = false;		//prevent game start when server chats
+			if (chatting &&
+					((userInput.find(".info") == 0)  ||
+					 (userInput.find(".clock") == 0) ||
+					 (userInput[0] == '/'))) {
+				consoleHistory->AddLine(userInput);
+				string actionLine = userInput.substr(1); // strip the '/' or '.'
+				chatting = false;
+				userInput = "";
+				CKeySet ks(k, false);
+				CKeyBindings::Action fakeAction(actionLine);
+				ActionPressed(fakeAction, ks, isRepeat);
+			}
+		}
+		else if(k==27 && (chatting || inMapDrawer->wantLabel)){ // escape
+			if (chatting) {
+				consoleHistory->AddLine(userInput);
+			}
 			userWriting=false;
 			chatting=false;
 			inMapDrawer->wantLabel=false;
 			userInput="";
 		}
-		if(k==SDLK_UP) {
+		else if(k==SDLK_UP && chatting) {
 			userInput = consoleHistory->PrevLine(userInput);
-			return 0;
 		}
-		if(k==SDLK_DOWN) {
+		else if(k==SDLK_DOWN && chatting) {
 			userInput = consoleHistory->NextLine(userInput);
-			return 0;
 		}
-		if(k==SDLK_TAB) {
+		else if(k==SDLK_TAB) {
 			vector<string> partials = wordCompletion->Complete(userInput);
 			if (!partials.empty()) {
 				string msg;
@@ -546,15 +603,12 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				info->AddLine(msg);
 			}
 		}
-		if(fakeGuiKey.size() <= 0) {
-			return 0;
-		}
+		return 0;
 	}
 
+	// spectator keys for switching teams
 	if(k>='0' && k<='9' && gu->spectating){
-		int team=k-'0'-1;
-		if(team<0)
-			team=9;
+		const int team= ((k - '0') + 9) % 10; // ex: '1' -> team0
 		if(team<gs->activeTeams){
 			gu->myTeam=team;
 			gu->myAllyTeam=gs->AllyTeam(team);
@@ -562,159 +616,213 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		return 0;
 	}
 
-  std::string s;
+	// try the input receivers
   std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-  if (fakeGuiKey.size() > 0) {
-    s=fakeGuiKey;
-  } else {
-		for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-			if((*ri)->KeyPressed(k)) {
-				return 0;
-			}
+	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+		if((*ri)->KeyPressed(k)) {
+			return 0;
 		}
-		CKeySet ks(k, false);
-		s = keyBindings->GetAction(ks, "");
+	}
+	
+	// try our list of actions
+	for (int i = 0; i < (int)actionList.size(); ++i) {
+		if (ActionPressed(actionList[i], ks, isRepeat)) {
+			return 0;
+		}
 	}
 
-	// grab a gd pointer
+#endif // NEW_GUI
+
+	return 0;
+}
+
+
+//Called when a key is released by the user
+int CGame::KeyReleased(unsigned short k)
+{
+	//	keys[k] = false;
+
+#ifdef NEW_GUI
+	GUIcontroller::KeyUp(k);
+#else
+
+	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190) )){
+		return 0;
+	}
+
+	// try the input receivers
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::deque<CInputReceiver*>::iterator ri;
+	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+		if((*ri)->KeyReleased(k))
+			return 0;
+	}
+
+	// try our list of actions
+	CKeySet ks(k, true);
+	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
+	for (int i = 0; i < (int)al.size(); ++i) {
+		if (ActionReleased(al[i])) {
+			return 0;
+		}
+	}
+
+#endif // NEW_GUI
+	
+	return 0;
+}
+
+
+bool CGame::ActionPressed(const CKeyBindings::Action& action,
+                          const CKeySet& ks, bool isRepeat)
+{
+	// we may need these later
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
-	
 	static char *buildFaceDirs[] = { "South", "East", "North", "West" };
-	
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 
+	const string& cmd = action.command;
+	
 	// process the action
-	if (s.find("select:") == 0) {
-		string selectCmd(s, 7);
-		selectionKeys->DoSelection(selectCmd);
+	if (cmd == "select") {
+		selectionKeys->DoSelection(action.extra);
 	}
-	else if (s=="drawinmap") {
+	else if (cmd == "say") {
+		SendNetChat(action.extra);
+	}
+	else if (cmd == "drawinmap") {
 		inMapDrawer->keyPressed=true;
 	}
-	else if (s=="drawlabel") {
+	else if (cmd == "drawlabel") {
 		float3 pos = inMapDrawer->GetMouseMapPos();
 		if (pos.x >= 0) {
 			inMapDrawer->keyPressed = false;
 			inMapDrawer->PromptLabel(pos);
-			if ((k >= SDLK_SPACE) && (k <= SDLK_DELETE)) {
+			if ((ks.Key() >= SDLK_SPACE) && (ks.Key() <= SDLK_DELETE)) {
 				ignoreNextChar=true;
 			}
 		}
 	}
-	else if (!isRepeat && s=="mouse1") {
+	else if (!isRepeat && cmd == "mouse1") {
 		mouse->MousePress (mouse->lastx, mouse->lasty, 1);
 	}
-	else if (!isRepeat && s=="mouse2") {
+	else if (!isRepeat && cmd == "mouse2") {
 		mouse->MousePress (mouse->lastx, mouse->lasty, 2);
 	}
-	else if (!isRepeat && s=="mouse3") {
+	else if (!isRepeat && cmd == "mouse3") {
 		mouse->MousePress (mouse->lastx, mouse->lasty, 3);
 	}
-	else if (!isRepeat && s=="mouse4") {
+	else if (!isRepeat && cmd == "mouse4") {
 		mouse->MousePress (mouse->lastx, mouse->lasty, 4);
 	}
-	else if (!isRepeat && s=="mouse5") {
+	else if (!isRepeat && cmd == "mouse5") {
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 	}
-	else if (s=="viewfps") {
+	else if (cmd == "viewfps") {
 		mouse->SetCameraMode(0);
 	}
-	else if (s=="viewta") {
+	else if (cmd == "viewta") {
 		mouse->SetCameraMode(1);
 	}
-	else if (s=="viewtw") {
+	else if (cmd == "viewtw") {
 		mouse->SetCameraMode(2);
 	}
-	else if (s=="viewrot") {
+	else if (cmd == "viewrot") {
 		mouse->SetCameraMode(3);
 	}
-	else if (s=="moveforward") {
+	else if (cmd == "moveforward") {
 		camMove[0]=true;
 	}
-	else if (s=="moveback") {
+	else if (cmd == "moveback") {
 		camMove[1]=true;
 	}
-	else if (s=="moveleft") {
+	else if (cmd == "moveleft") {
 		camMove[2]=true;
 	}
-	else if (s=="moveright") {
+	else if (cmd == "moveright") {
 		camMove[3]=true;
 	}
-	else if (s=="moveup") {
+	else if (cmd == "moveup") {
 		camMove[4]=true;
 	}
-	else if (s=="movedown") {
+	else if (cmd == "movedown") {
 		camMove[5]=true;
 	}
-	else if (s=="movefast") {
+	else if (cmd == "movefast") {
 		camMove[6]=true;
 	}
-	else if (s=="moveslow") {
+	else if (cmd == "moveslow") {
 		camMove[7]=true;
 	}
-	else if (s=="group0") {
+	else if (cmd == "group0") {
 		grouphandler->GroupCommand(0);
 	}
-	else if (s=="group1") {
+	else if (cmd == "group1") {
 		grouphandler->GroupCommand(1);
 	}
-	else if (s=="group2") {
+	else if (cmd == "group2") {
 		grouphandler->GroupCommand(2);
 	}
-	else if (s=="group3") {
+	else if (cmd == "group3") {
 		grouphandler->GroupCommand(3);
 	}
-	else if (s=="group4") {
+	else if (cmd == "group4") {
 		grouphandler->GroupCommand(4);
 	}
-	else if (s=="group5") {
+	else if (cmd == "group5") {
 		grouphandler->GroupCommand(5);
 	}
-	else if (s=="group6") {
+	else if (cmd == "group6") {
 		grouphandler->GroupCommand(6);
 	}
-	else if (s=="group7") {
+	else if (cmd == "group7") {
 		grouphandler->GroupCommand(7);
 	}
-	else if (s=="group8") {
+	else if (cmd == "group8") {
 		grouphandler->GroupCommand(8);
 	}
-	else if (s=="group9") {
+	else if (cmd == "group9") {
 		grouphandler->GroupCommand(9);
 	}
-	else if (s=="lastmsgpos") {
+	else if (cmd == "deselect") {
+		selectedUnits.ClearSelected();
+	}
+	else if (cmd == "lastmsgpos") {
 		mouse->currentCamController->SetPos(info->lastMsgPos);
 		mouse->inStateTransit=true;
 		mouse->transitSpeed=0.5;
 	}
-	else if ((s=="chat") || (s=="chatall") || (s=="chatally") || (s=="chatspec")) {
-		if (s=="chatall")  { userInputPrefix = ""; }
-		if (s=="chatally") { userInputPrefix = "a:"; }
-		if (s=="chatspec") { userInputPrefix = "s:"; }
-		userWriting=true;
-		userPrompt="Say: ";
-		userInput=userInputPrefix;
-		chatting=true;
-		if(k!=SDLK_RETURN)
-			ignoreNextChar=true;
+	else if ((cmd == "chat")     || (cmd == "chatall") ||
+	         (cmd == "chatally") || (cmd == "chatspec")) {
+		if (cmd == "chatall")  { userInputPrefix = ""; }
+		if (cmd == "chatally") { userInputPrefix = "a:"; }
+		if (cmd == "chatspec") { userInputPrefix = "s:"; }
+		userWriting = true;
+		userPrompt = "Say: ";
+		userInput = userInputPrefix;
+		chatting = true;
+		if (ks.Key()!=SDLK_RETURN) {
+			ignoreNextChar = true;
+		}
 		consoleHistory->ResetPosition();
 	}
-	else if (s=="track") {
+	else if (cmd == "track") {
 		unitTracker.Track();
 	}
-	else if (s=="trackoff") {
+	else if (cmd == "trackoff") {
 		unitTracker.Disable();
 	}
-	else if (s=="trackmode") {
+	else if (cmd == "trackmode") {
 		unitTracker.IncMode();
 	}
-	else if (s=="toggleoverview") {
+	else if (cmd == "toggleoverview") {
 		mouse->ToggleOverviewCamera();
 	}
-	else if (s=="showhealthbars") {
+	else if (cmd == "showhealthbars") {
 		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
 	}
-	else if (s=="pause") {
+	else if (cmd == "pause") {
 		if(net->playbackDemo){
 			gs->paused=!gs->paused;
 		} else {
@@ -723,23 +831,23 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			lastframe = SDL_GetTicks();
 		}
 	}
-	else if (s=="singlestep") {
+	else if (cmd == "singlestep") {
 		bOneStep=true;
 	}
-	else if (s=="debug") {
+	else if (cmd == "debug") {
 		gu->drawdebug=!gu->drawdebug;
 	}
-	else if (s=="nosound") {
+	else if (cmd == "nosound") {
 		soundEnabled=!soundEnabled;
 		sound->SetVolume (soundEnabled ? gameSoundVolume : 0.0f);
 	}
-	else if (s=="savegame"){
+	else if (cmd == "savegame"){
 		CLoadSaveHandler ls;
 		ls.SaveGame("Test.ssf");
 	}
 
 #ifndef NO_AVI
-	else if (s=="createvideo") {
+	else if (cmd == "createvideo") {
 		if(creatingVideo){
 			creatingVideo=false;
 			aviGenerator->ReleaseEngine();
@@ -790,58 +898,58 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	}
 #endif
 
-	else if (s=="updatefov") {
+	else if (cmd == "updatefov") {
 		gd->updateFov=!gd->updateFov;
 	}
-	else if (s=="incbuildfacing"){
+	else if (cmd == "incbuildfacing"){
 		guihandler->buildFacing ++;
 		if (guihandler->buildFacing > 3)
 			guihandler->buildFacing = 0;
 
 		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
 	}
-	else if (s=="decbuildfacing"){
+	else if (cmd == "decbuildfacing"){
 		guihandler->buildFacing --;
 		if (guihandler->buildFacing < 0)
 			guihandler->buildFacing = 3;
 
 		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
 	}
-	else if (s=="drawtrees") {
+	else if (cmd == "drawtrees") {
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
 	}
-	else if (s=="dynamicsky") {
+	else if (cmd == "dynamicsky") {
 		sky->dynamicSky=!sky->dynamicSky;
 	}
-	else if (s=="gameinfo") {
+	else if (cmd == "gameinfo") {
 		new CGameInfo;
 	}
-	else if (s=="hideinterface") {
+	else if (cmd == "hideinterface") {
 		hideInterface=!hideInterface;
 	}
-	else if (s=="increaseviewradius") {
+	else if (cmd == "increaseviewradius") {
 		gd->IncreaseDetail();
 	}
-	else if (s=="decreaseviewradius") {
+	else if (cmd == "decreaseviewradius") {
 		gd->DecreaseDetail();
 	}
-	else if (s=="moretrees") {
+	else if (cmd == "moretrees") {
 		treeDrawer->baseTreeDistance+=0.2f;
 		(*info) << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
-	else if (s=="lesstrees") {
+	else if (cmd == "lesstrees") {
 		treeDrawer->baseTreeDistance-=0.2f;
 		(*info) << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
-	else if (s=="moreclouds") {
+	else if (cmd == "moreclouds") {
 		sky->cloudDensity*=0.95f;
 		(*info) << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
-	else if (s=="lessclouds") {
+	else if (cmd == "lessclouds") {
 		sky->cloudDensity*=1.05f;
 		(*info) << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
-	else if (s=="speedup") {
+	else if (cmd == "speedup") {
 		float speed=gs->userSpeedFactor;
 		if (speed<1) {
 			speed/=0.8;
@@ -859,7 +967,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			(*info) << "Speed " << gs->speedFactor << "\n";
 		}
 	}
-	else if (s=="slowdown") {
+	else if (cmd == "slowdown") {
 		float speed=gs->userSpeedFactor;
 		if (speed<=1) {
 			speed*=0.8;
@@ -879,7 +987,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	else if (s=="controlunit") {
+	else if (cmd == "controlunit") {
 		Command c;
 		c.id=CMD_STOP;
 		c.options=0;
@@ -888,41 +996,41 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	}
 #endif
 
-	else if (s=="showshadowmap") {
+	else if (cmd == "showshadowmap") {
 		shadowHandler->showShadowMap=!shadowHandler->showShadowMap;
 	}
-	else if (s=="showstandard") {
+	else if (cmd == "showstandard") {
 		gd->DisableExtraTexture();
 	}
-	else if (s=="showelevation") {
+	else if (cmd == "showelevation") {
 		gd->SetHeightTexture();
 	}
-	else if (s=="toggleradarandjammer"){
+	else if (cmd == "toggleradarandjammer"){
 		gd->ToggleRadarAndJammer();
 	}
-	else if (s=="showmetalmap") {
+	else if (cmd == "showmetalmap") {
 		gd->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
 	}
-	else if (s=="showpathmap") {
+	else if (cmd == "showpathmap") {
 		gd->SetPathMapTexture();
 	}
-	else if (s=="yardmap4") {
+	else if (cmd == "yardmap4") {
 		//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[3],readmap->yardmapPal,true);
 	}
-	/*	if (s=="showsupply"){
+	/*	if (cmd == "showsupply"){
 		groundDrawer->SetExtraTexture(supplyhandler->supplyLevel[gu->myTeam],supplyhandler->supplyPal);
 		}*/
-	/*	if (s=="showteam"){
+	/*	if (cmd == "showteam"){
 		groundDrawer->SetExtraTexture(readmap->teammap,cityhandler->teampal);
 		}*/
-	else if (s=="togglelos") {
+	else if (cmd == "togglelos") {
 		gd->ToggleLosTexture();
 	}
-	else if (s=="sharedialog") {
+	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
 	}
-	else if (s=="quit") {
+	else if (cmd == "quit") {
 		if(!keys[SDLK_LSHIFT]){
 			info->AddLine("Use shift-esc to quit");
 		}else{
@@ -959,13 +1067,17 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			}
 		}
 	}
-	else if (s=="incguiopacity") {
+	else if (cmd == "incguiopacity") {
 		GUIframe::SetGUIOpacity(min(GUIframe::GetGUIOpacity()+0.1f,1.f));
 	}
-	else if (s=="decguiopacity") {
+	else if (cmd == "decguiopacity") {
 		GUIframe::SetGUIOpacity(max(GUIframe::GetGUIOpacity()-0.1f,0.f));
 	}
-	else if (s=="screenshot") {
+	else if (cmd == "screenshot") {
+		const char* ext = "jpg";
+		if (action.extra == "png") {
+			ext = "png";
+		}
 		if (filesystem.CreateDirectory("screenshots")) {
 			int x=gu->screenx;
 			if(x%4)
@@ -976,16 +1088,17 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			b.ReverseYAxis();
 			char t[50];
 			for(int a=0;a<9999;++a){
-				sprintf(t,"screenshots/screen%03i.jpg",a);
+				sprintf(t,"screenshots/screen%03i.%s", a, ext);
 				CFileHandler ifs(t);
 				if(!ifs.FileExists())
 					break;
 			}
 			b.Save(t);
+			info->AddLine("Saved: %s", t);
 			delete[] buf;
 		}
 	}
-	else if (s=="grabinput") {
+	else if (cmd == "grabinput") {
 		SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 		switch (mode) {
 			case SDL_GRAB_ON: mode = SDL_GRAB_OFF; break;
@@ -993,118 +1106,109 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		}
 		SDL_WM_GrabInput(mode);
 	}
-	else if (s=="keyload") {
+	else if ((cmd == "bind") || (cmd == "unbind") || (cmd == "unbindall") ||
+	         (cmd == "unbindkeyset") || (cmd == "unbindaction")) {
+		keyBindings->Command(action.rawline);
+	}
+	else if (cmd == "keyload") {
 		keyBindings->Load("uikeys.txt");
 	}
-	else if (s=="keysave") {
+	else if (cmd == "keysave") {
 		keyBindings->Save("uikeys.tmp"); // tmp, not txt
 	}
-	else if (s=="keyprint") {
+	else if (cmd == "keyprint") {
 		keyBindings->Print();
 	}
-	else if (s=="keysyms") {
+	else if (cmd == "keysyms") {
 		keyCodes->PrintNameToCode();
 	}
-	else if (s=="keycodes") {
+	else if (cmd == "keycodes") {
 		keyCodes->PrintCodeToName();
 	}
-	else if (s=="keydebug") {
-		keyBindings->debug = !keyBindings->debug;
+	else if (cmd == "keydebug") {
+		keyBindings->SetDebug(!keyBindings->GetDebug());
+	}
+	else if (cmd == "clock") {
+		showClock = !showClock;
+	}
+	else if (cmd == "info") {
+		showPlayerInfo = !showPlayerInfo;
+	}
+	else {
+		return false;
 	}
 
-#endif // NEW_GUI
-
-	return 0;
+	return true;
 }
 
 
-//Called when a key is released by the user
-int CGame::KeyReleased(unsigned short k)
+bool CGame::ActionReleased(const CKeyBindings::Action& action)
 {
-	//	keys[k] = false;
+	const string& cmd = action.command;
 
-#ifdef NEW_GUI
-	GUIcontroller::KeyUp(k);
-
-#else
-
-	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190) )){
-		return 0;
-	}
-
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri)->KeyReleased(k))
-			return 0;
-	}
-
-	CKeySet ks(k, true);
-	const string s = keyBindings->GetAction(ks, "");
-
-	if(s=="drawinmap"){
+	if (cmd == "drawinmap"){
 		inMapDrawer->keyPressed=false;
 	}
-	else if (s=="buildfaceup") {
+	else if (cmd == "buildfaceup") {
 		guihandler->buildFacing=0;
 		info->AddLine("Buildings set to face South");
 	}
-	else if (s=="buildfaceright") {
+	else if (cmd == "buildfaceright") {
 		guihandler->buildFacing=3;
 		info->AddLine("Buildings set to face West");
 	}
-	else if (s=="buildfacedown") {
+	else if (cmd == "buildfacedown") {
 		guihandler->buildFacing=2;
 		info->AddLine("Buildings set to face North");
 	}
-	else if (s=="buildfaceleft") {
+	else if (cmd == "buildfaceleft") {
 		guihandler->buildFacing=1;
 		info->AddLine("Buildings set to face East");
 	}
-	else if (s=="moveforward") {
+	else if (cmd == "moveforward") {
 		camMove[0]=false;
 	}
-	else if (s=="moveback") {
+	else if (cmd == "moveback") {
 		camMove[1]=false;
 	}
-	else if (s=="moveleft") {
+	else if (cmd == "moveleft") {
 		camMove[2]=false;
 	}
-	else if (s=="moveright") {
+	else if (cmd == "moveright") {
 		camMove[3]=false;
 	}
-	else if (s=="moveup") {
+	else if (cmd == "moveup") {
 		camMove[4]=false;
 	}
-	else if (s=="movedown") {
+	else if (cmd == "movedown") {
 		camMove[5]=false;
 	}
-	else if (s=="movefast") {
+	else if (cmd == "movefast") {
 		camMove[6]=false;
 	}
-	else if (s=="moveslow") {
+	else if (cmd == "moveslow") {
 		camMove[7]=false;
 	}
-	else if (s=="mouse1") {
+	else if (cmd == "mouse1") {
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 1);
 	}
-	else if (s=="mouse2") {
+	else if (cmd == "mouse2") {
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 2);
 	}
-	else if (s=="mouse3") {
+	else if (cmd == "mouse3") {
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
 	}
-	else if (s=="mousestate") {
+	else if (cmd == "mousestate") {
 		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 	}
 	// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
 	// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
-// 	if (s=="mouse4")
+// 	if (cmd == "mouse4")
 // 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 4);
 
-// 	if (s=="mouse5")
+// 	if (cmd == "mouse5")
 // 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 5);
-#endif
+
 	return 0;
 }
 
@@ -1261,15 +1365,19 @@ bool CGame::Draw()
 	sky->DrawSun();
 	if(keys[SDLK_LSHIFT]) {
 		selectedUnits.DrawCommands();
-		cursorIcons->Draw();
 	}
-
-	mouse->Draw();
 
 #ifndef NEW_GUI
 	guihandler->DrawMapStuff();
 #endif
+
 	inMapDrawer->Draw();
+
+	if(keys[SDLK_LSHIFT]) {
+		cursorIcons->Draw();
+	}
+
+	mouse->Draw();
 
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST);
@@ -1358,10 +1466,33 @@ bool CGame::Draw()
 		glColor4f(1,1,1,1);
 		glTranslatef(0.1f,0.75f,0.0f);
 		glScalef(0.02f,0.028f,0.1f);
+		int startPos = 0;
+		if(chatting){
+			if((tolower(userInput[0]) == 'a') && (userInput[1] == ':')) {
+				userPrompt = "Allies: ";
+				startPos = 2;
+			}
+			else if((tolower(userInput[0]) == 's') && (userInput[1] == ':')) {
+				userPrompt = "Spectators: ";
+				startPos = 2;
+			}
+			else {
+				userPrompt = "Say: ";
+			}
+		}
 		tempstring=userPrompt;
-		tempstring+=userInput;
+		tempstring+=userInput.substr(startPos, string::npos);
 		font->glPrint("%s",tempstring.c_str());
 		glLoadIdentity();
+	}
+
+	if (!hotBinding.empty()) {
+		glColor4f(1.0f, 0.3f, 0.3f, 1.0f);
+		font->glPrintCentered(0.5f, 0.6f, 3.0f, "Hit keyset for:");
+		glColor4f(0.3f, 1.0f, 0.3f, 1.0f);
+		font->glPrintCentered(0.5f, 0.5f, 3.0f, "%s", hotBinding.c_str());
+		glColor4f(0.3f, 0.3f, 1.0f, 1.0f);
+		font->glPrintCentered(0.5f, 0.4f, 3.0f, "(or Escape)");
 	}
 
 	if(showClock){
@@ -2236,30 +2367,16 @@ void CGame::UpdateUI()
 	}
 
 	if(chatting && !userWriting){
-		if(userInput.size()>0){
-			if(userInput.size()>250)	//avoid troubles with long lines
-				userInput=userInput.substr(0,250);
-			if(userInput.find(".give") == 0 && gs->cheatEnabled) {
-				float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * 9000);
-				float3 pos = camera->pos + mouse->dir * dist;
-				char buf[100];
-				sprintf(buf, " @%.0f,%.0f,%.0f", pos.x, pos.y, pos.z);
-				userInput += buf;
-			}
-			net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, userInput);
-			if(net->playbackDemo) {
-				HandleChatMsg(userInput,gu->myPlayerNum);
-			}
-		  consoleHistory->AddLine(userInput);
-		}
+		consoleHistory->AddLine(userInput);
+		SendNetChat(userInput);
 		chatting=false;
 		userInput="";
 	}
 #ifndef NEW_GUI
 	if(inMapDrawer->wantLabel && !userWriting){
-		if(userInput.size()>200)	//avoid troubles with to long lines
+		if(userInput.size()>200){	//avoid troubles with to long lines
 			userInput=userInput.substr(0,200);
-
+		}
 		inMapDrawer->CreatePoint(inMapDrawer->waitingPoint,userInput);
 		inMapDrawer->wantLabel=false;
 		userInput="";
@@ -2526,6 +2643,28 @@ void CGame::DrawDirectControlHud(void)
 #endif
 }
 
+
+void CGame::SendNetChat(const std::string& message)
+{
+	if (message.empty()) {
+		return;
+	}
+	string msg = message;
+	if (gs->cheatEnabled && (msg.find(".give") == 0)) {
+		const float dist =
+			ground->LineGroundCol(camera->pos, camera->pos + (mouse->dir * 9000.0f));
+		const float3 pos = camera->pos + (mouse->dir * dist);
+		char buf[100];
+		sprintf(buf, " @%.0f,%.0f,%.0f", pos.x, pos.y, pos.z);
+		msg += buf;
+	}
+	net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, msg);
+	if (net->playbackDemo) {
+		HandleChatMsg(msg, gu->myPlayerNum);
+	}
+}
+
+
 void CGame::HandleChatMsg(std::string s,int player)
 {
 	globalAI->GotChatMsg(s.c_str(),player);
@@ -2712,27 +2851,6 @@ void CGame::HandleChatMsg(std::string s,int player)
 		info->AddLine("No spectator chat %i",noSpectatorChat);
 	}
 
-	if(s.find(".bind")==0 && player==gu->myPlayerNum){
-		string::size_type startKey = s.find_first_not_of(' ', 5);
-		if (startKey == string::npos) return;
-		string::size_type endKey = s.find_first_of(' ', startKey);
-		if (endKey == string::npos) return;
-		string::size_type startAction = s.find_first_not_of(' ', endKey);
-		if (startAction == string::npos) return;
-		string::size_type endAction = s.find_first_of(' ', startAction);
-		if (endAction != string::npos) return;
-		const string key = s.substr(startKey, endKey - startKey);
-		const string action = s.substr(startAction, endAction - startAction);
-		if (keyBindings->Bind(key, action, "")) {
-			info->AddLine("Bound key(%s) to action(%s)", key.c_str(), action.c_str());
-		}
-	}
-	if(s.find(".clock")==0 && player==gu->myPlayerNum){
-		showClock=!showClock;
-	}
-	if(s.find(".info")==0 && player==gu->myPlayerNum){
-		showPlayerInfo=!showPlayerInfo;
-	}
 	if(s.find(".nopause")==0 && player==0){
 		gamePausable=!gamePausable;
 	}

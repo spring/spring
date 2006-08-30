@@ -18,133 +18,163 @@ CKeyBindings* keyBindings = NULL;
 static const struct DefaultBinding {
 	const char* key;
 	const char* action;
-	const char* context;
 }
 defaultBindings[] = {
 
-	{ "esc",       "quit", "" },
-	{ "Shift+esc", "quit", "" },
+	{ "esc",       "quit"  },
+	{ "Shift+esc", "quit"  },
 
-	{ "b",     "debug",                "" },
-	{ "o",     "singlestep",           "" },
-	{ "c",     "controlunit",          "" },
-	{ "h",     "sharedialog",          "" },
-	{ "tab",   "toggleoverview",       "" },
-	{ "l",     "togglelos",            "" },
-	{ ";",     "toggleradarandjammer", "" },
+	{ "b",   "debug"                 },
+	{ "o",   "singlestep"            },
+	{ "c",   "controlunit"           },
+	{ "h",   "sharedialog"           },
+	{ "tab", "toggleoverview"        },
+	{ "l",   "togglelos"             },
+	{ ";",   "toggleradarandjammer"  },
 
-	{ "j",         "mousestate", "" },
-	{ "backspace", "mousestate", "" },
+	{ "Any+j",     "mouse2"     },
+	{ "backspace", "mousestate" },
+	{ "Ctrl+h",    "mousestate" }, // CTRL+BACKSPACE returns CTRL+h
 
-	{ "enter",       "chat",     "" },
-	{ "Alt+enter",   "chatally", "" },
-	{ "Shift+enter", "chatspec", "" },
-	{ "Ctrl+m",      "chatall",  "" }, // CTRL+ENTER returns CTRL+m
+	{ "enter",       "chat"           },
+	{ "Alt+enter",   "chatally"       },
+	{ "Alt+enter",   "chatswitchally" },
+	{ "Shift+enter", "chatspec"       },
+	{ "Shift+enter", "chatswitchspec" },
+	{ "Ctrl+m",      "chatall"        },
+	{ "Ctrl+m",      "chatswitchall"  }, // CTRL+ENTER returns CTRL+m
 
-	{ "home", "increaseViewRadius", "" },
-	{ "end",  "decreaseViewRadius", "" },
+	{ "home", "increaseViewRadius"  },
+	{ "end",  "decreaseViewRadius"  },
 
-	{ "insert",  "speedup" , "" },
-	{ "delete",  "slowdown", "" },
-	{ "=",       "speedup" , "" },
-	{ "+",       "speedup" , "" },
-	{ "Shift++", "speedup" , "" },
-	{ "-",       "slowdown", "" },
+	{ "insert",  "speedup"   },
+	{ "delete",  "slowdown"  },
+	{ "=",       "speedup"   },
+	{ "+",       "speedup"   },
+	{ "Shift++", "speedup"   },
+	{ "-",       "slowdown"  },
 
-	{ ">", "incguiopacity", "" },
-	{ "<", "decguiopacity", "" },
+	{ "Shift+>", "incguiopacity"  },
+	{ "Shift+<", "decguiopacity"  },
 
-	{ "[", "incbuildfacing", "" },
-	{ "]", "decbuildfacing", "" },
+	{ "Any+0", "group0"  },
+	{ "Any+1", "group1"  },
+	{ "Any+2", "group2"  },
+	{ "Any+3", "group3"  },
+	{ "Any+4", "group4"  },
+	{ "Any+5", "group5"  },
+	{ "Any+6", "group6"  },
+	{ "Any+7", "group7"  },
+	{ "Any+8", "group8"  },
+	{ "Any+9", "group9"  },
 
-	{ "Any+z", "mouse4", "" },
-	{ "Any+x", "mouse5", "" },
+	{ ",", "prevmenu" },
+	{ ".", "nextmenu" },
 
-	{ "Any+0", "group0", "" },
-	{ "Any+1", "group1", "" },
-	{ "Any+2", "group2", "" },
-	{ "Any+3", "group3", "" },
-	{ "Any+4", "group4", "" },
-	{ "Any+5", "group5", "" },
-	{ "Any+6", "group6", "" },
-	{ "Any+7", "group7", "" },
-	{ "Any+8", "group8", "" },
-	{ "Any+9", "group9", "" },
-
-	{ "s",       "stop",         "command" },
-	{ "w",       "wait",         "command" },
-	{ "m",       "move",         "command" },
-	{ "a",       "attack",       "command" },
-	{ "Alt+a",   "attack",       "command" },
-	{ "f",       "fight",        "command" },
-	{ "p",       "patrol",       "command" },
-	{ "g",       "guard",        "command" },
-	{ "d",       "dgun",         "command" },
-	{ "e",       "reclaim",      "command" },
-	{ "r",       "repair",       "command" },
-	{ "Ctrl+c",  "capture",      "command" },
-	{ "Ctrl+d",  "selfd",        "command" },
-	{ "l",       "loadunits",    "command" },
-	{ "u",       "unloadunits",  "command" },
-	{ "k",       "cloak",        "command" },
-	{ "x",       "onoff",        "command" },
-	{ "q",       "groupadd",     "command" },
-	{ "q",       "groupselect",  "command" },
-	{ "Shift+q", "groupclear",   "command" },
-	{ "Ctrl+q",  "aiselect",     "command" },
-
-	// FIXME
-	{ "numpad7", "prevmenu",     "command" },
-	{ "numpad8", "repeat",       "command" },
-	{ "numpad9", "nextmenu",     "command" },
-	{ "numpad4", "firestate",    "command" },
-	{ "numpad1", "movestate",    "command" },
-	{ "numpad0", "trajectory",   "command" },
-	{ "numpad3", "showcommands", "command" },
-
-	{ "t",       "track",      "" },
-	{ "Ctrl+t",  "trackoff",   "" },
-	{ "Shift+t", "trackmode",  "" },
-
-	{ "Ctrl+f1",  "viewfps",   "" },
-	{ "Ctrl+f2",  "viewta",    "" },
-	{ "Ctrl+f3",  "viewtw",    "" },
-	{ "Ctrl+f4",  "viewrot",   "" },
+	{ "Ctrl+insert", "hotbind"   },
+	{ "Ctrl+delete", "hotunbind" },
 	
-	{ "f1",  "showElevation",  "" },
-	{ "f2",  "ShowPathMap",    "" },
-	{ "f3",  "LastMsgPos",     "" },
-	{ "f4",  "ShowMetalMap",   "" },
-	{ "f5",  "hideinterface",  "" },
-	{ "f6",  "NoSound",        "" },
-	{ "f7",  "dynamicSky",     "" },
-	{ "f8",  "savegame",       "" },
-	{ "f9",  "showhealthbars", "" },
-	{ "f10", "createvideo",    "" },
-	{ "f11", "screenshot",     "" },
-	{ "f12", "screenshot",     "" },
+	{ "c", "controlunit"   },
+	
+	{ "[",     "incbuildfacing"  },
+	{ "]",     "decbuildfacing"  },
+	{ "Any+z", "incbuildspacing" },
+	{ "Any+x", "decbuildspacing" },
 
-	{ "Any+S+~",  "drawlabel", "" },
-	{    "Any+`", "drawinmap", "" },
-	{ "Up+Any+`", "drawinmap", "" },
+	{ "s",       "stop"          },
+	{ "w",       "wait"          },
+	{ "m",       "move"          },
+	{ "a",       "attack"        },
+	{ "Alt+a",   "areaattack"    },
+	{ "f",       "fight"         },
+	{ "p",       "patrol"        },
+	{ "g",       "guard"         },
+	{ "d",       "dgun"          },
+	{ "e",       "reclaim"       },
+	{ "r",       "repair"        },
+	{ "Alt+c",   "capture"       },
+	{ "Ctrl+d",  "selfd"         },
+	{ "l",       "loadunits"     },
+	{ "u",       "unloadunits"   },
+	{ "k",       "cloak"         },
+	{ "x",       "onoff"         },
 
-	{    "Any+up",       "moveforward", "" },
-	{ "Up+Any+up",       "moveforward", "" },
-	{    "Any+down",     "moveback",    "" },
-	{ "Up+Any+down",     "moveback",    "" },
-	{    "Any+right",    "moveright",   "" },
-	{ "Up+Any+right",    "moveright",   "" },
-	{    "Any+left",     "moveleft",    "" },
-	{ "Up+Any+left",     "moveleft",    "" },
-	{    "Any+pageup",   "moveup",      "" },
-	{ "Up+Any+pageup",   "moveup",      "" },
-	{    "Any+pagedown", "movedown",    "" },
-	{ "Up+Any+pagedown", "movedown",    "" },
+	{ "q",       "groupselect"   },
+	{ "q",       "groupadd"      },
+	{ "Ctrl+q",  "aiselect"      },
+	{ "Shift+q", "groupclear"    },
 
-	{    "Any+ctrl",     "moveslow",    "" },
-	{ "Up+Any+ctrl",     "moveslow",    "" },
-	{    "Any+shift",    "movefast",    "" },
-	{ "Up+Any+shift",    "movefast",    "" }
+	// for RadarAI
+	{ "m", "minimapalert" },
+	{ "t", "textalert"    },
+
+	// Numpad -> Dev Playground
+	{ "numpad0", "repeat"       },
+	{ "numpad1", "movestate 0"  },
+	{ "numpad2", "movestate 1"  },
+	{ "numpad3", "movestate 2"  },
+	{ "numpad4", "firestate 0"  },
+	{ "numpad5", "firestate 1"  },
+	{ "numpad6", "firestate 2"  },
+	{ "numpad7", "onoff"        },
+	{ "numpad8", "cloak"        },
+	{ "numpad9", "trajectory"   },
+	{ "numpad.", "showcommands" },
+	{ "C+numpad7", "aiselect Simple formation"  },
+	{ "C+numpad8", "aiselect Radar AI"          },
+	{ "C+numpad4", "aiselect MexUpgrader AI"    },
+	{ "C+numpad9", "aiselect Central build AI"  },
+	{ "C+numpad5", "aiselect default"           },
+	{ "C+numpad6", "aiselect None"              },
+	{ "C+numpad0", "groupclear"                 },
+
+	{ "t",       "track"       },
+	{ "Ctrl+t",  "trackmode"   },
+	{ "Shift+t", "trackoff"    },
+
+	{ "Ctrl+f1",  "viewfps"    },
+	{ "Ctrl+f2",  "viewta"     },
+	{ "Ctrl+f3",  "viewtw"     },
+	{ "Ctrl+f4",  "viewrot"    },
+	
+	{ "f1",  "showElevation"   },
+	{ "f2",  "ShowPathMap"     },
+	{ "f3",  "LastMsgPos"      },
+	{ "f4",  "ShowMetalMap"    },
+	{ "f5",  "hideinterface"   },
+	{ "f6",  "NoSound"         },
+	{ "f7",  "dynamicSky"      },
+	{ "f8",  "savegame"        },
+	{ "f9",  "showhealthbars"  },
+	{ "f10", "createvideo"     },
+	{ "f11", "screenshot png"  },
+	{ "f12", "screenshot"      },
+
+	{    "Alt+`", "drawlabel"  },
+	
+	// NOTE: Up bindings are currently converted to press bindings
+	//       (see KeySet.cpp / DISALLOW_RELEASE_BINDINGS)
+	
+	{    "Any+`", "drawinmap"  },
+	{ "Up+Any+`", "drawinmap"  },
+
+	{    "Any+up",       "moveforward"  },
+	{ "Up+Any+up",       "moveforward"  },
+	{    "Any+down",     "moveback"     },
+	{ "Up+Any+down",     "moveback"     },
+	{    "Any+right",    "moveright"    },
+	{ "Up+Any+right",    "moveright"    },
+	{    "Any+left",     "moveleft"     },
+	{ "Up+Any+left",     "moveleft"     },
+	{    "Any+pageup",   "moveup"       },
+	{ "Up+Any+pageup",   "moveup"       },
+	{    "Any+pagedown", "movedown"     },
+	{ "Up+Any+pagedown", "movedown"     },
+
+	{    "Any+ctrl",     "moveslow"     },
+	{ "Up+Any+ctrl",     "moveslow"     },
+	{    "Any+shift",    "movefast"     },
+	{ "Up+Any+shift",    "movefast"     }
 };
 
 
@@ -154,7 +184,7 @@ defaultBindings[] = {
 //
 
 static int lineNumber = 0;
-static bool inComment = false;
+static bool inComment = false; // /* text */ comments are not implemented
 
 
 // returns next line (without newlines)
@@ -203,7 +233,7 @@ static string GetCleanLine(CFileHandler& fh)
 }
 
 
-static vector<string> Tokenize(const string& line)
+static vector<string> Tokenize(const string& line, int minWords = 0)
 {
 	vector<string> words;
 	string::size_type start;
@@ -213,44 +243,65 @@ static vector<string> Tokenize(const string& line)
 		if (start == string::npos) {
 			break;
 		}
-		end = line.find_first_of(" \t", start);
 		string word;
-		if (end == string::npos) {
+		if ((minWords > 0) && (words.size() >= minWords)) {
 			word = line.substr(start);
-		} else {
-			word = line.substr(start, end - start);
+			end = string::npos;
+		}
+		else {
+			end = line.find_first_of(" \t", start);
+			if (end == string::npos) {
+				word = line.substr(start);
+			} else {
+				word = line.substr(start, end - start);
+			}
 		}
 		words.push_back(word);
 		if (end == string::npos) {
 			break;
 		}
 	}
+	
 	return words;
 }
 
 
-static bool CheckTokens(vector<string>& words, int min, int fullSize)
+/******************************************************************************/
+
+CKeyBindings::Action::Action(const string& line)
 {
-	if (words.size() < min) {
-		handleerror(0, "Missing command parameters", words[0].c_str(), 0);
-		return false;
+	rawline = line;
+	command = "";
+	extra = "";
+	vector<string> words = Tokenize(line, 1);
+	if (words.size() > 0) {
+		command = StringToLower(words[0]);
 	}
-	// fill in the blanks
-	for (unsigned int i = words.size(); i < fullSize; i++) {
-		words.push_back("");
+	if (words.size() > 1) {
+		extra = words[1];
 	}
-	return true;
 }
 
 
 /******************************************************************************/
 //
-// KeyBindings
+// CKeyBindings
 //
 
-CKeyBindings::CKeyBindings(const string& filename) : debug(false)
+CKeyBindings::CKeyBindings()
 {
-	Load(filename);
+	debug = false;
+	userCommand = true;
+
+	statefulCommands.insert("drawinmap");
+	statefulCommands.insert("moveforward");
+	statefulCommands.insert("moveback");
+	statefulCommands.insert("moveright");
+	statefulCommands.insert("moveleft");
+	statefulCommands.insert("moveup");
+	statefulCommands.insert("movedown");
+	statefulCommands.insert("moveslow");
+	statefulCommands.insert("movefast");
 }
 
 
@@ -261,131 +312,208 @@ CKeyBindings::~CKeyBindings()
 
 /******************************************************************************/
 
-string CKeyBindings::GetAction(const CKeySet& ks, const string& context) const
+const CKeyBindings::ActionList&
+	CKeyBindings::GetActionList(const CKeySet& ks) const
 {
+	static const ActionList empty;
+	const ActionList* alPtr = NULL;
+	
 	if (debug) {
-		printf("GetAction: %s (%i) <%s>",
-	         ks.GetString().c_str(), ks.Key(), context.c_str());
+		printf("GetAction: %s (%i)", ks.GetString().c_str(), ks.Key());
 	}
 
-	ContextKeyMap::const_iterator cit = bindings.find(context);
-	if (cit == bindings.end()) {
-		return "";
-	}
-	const KeyMap& keymap = cit->second;
-	
-	KeyMap::const_iterator kit = keymap.find(ks);
-	if (kit == keymap.end()) {
-		if (debug) {
-			printf("\n");
+	if (ks.AnyMod()) {
+		KeyMap::const_iterator it = bindings.find(ks);
+		if (it == bindings.end()) {
+			alPtr = &empty;
+		} else {
+			alPtr = &(it->second);
 		}
-		return "";
 	}
+	else {
+		// have to check for an AnyMod keyset as well as the normal one
+		CKeySet anyMod = ks;
+		anyMod.SetAnyBit();
+		KeyMap::const_iterator nit = bindings.find(ks);
+		KeyMap::const_iterator ait = bindings.find(anyMod);
+		const bool haveNormal = (nit != bindings.end());
+		const bool haveAnyMod = (ait != bindings.end());
+		if (!haveNormal && !haveAnyMod) {
+			alPtr = &empty;
+		}
+		else if (haveNormal && !haveAnyMod) {
+			alPtr = &(nit->second);
+		}
+		else if (!haveNormal && haveAnyMod) {
+			alPtr = &(ait->second);
+		}
+		else {
+			// make a union of the two lists (normal first)
+			static ActionList merged;
+			merged = nit->second;
+			const ActionList& aal = ait->second;
+			for (int i = 0; i < (int)aal.size(); ++i) {
+				merged.push_back(aal[i]);
+			}
+			alPtr = &merged;
+		}
+	}
+
 	if (debug) {
-		printf(" -> %s (%i): %s\n",
-		       kit->first.GetString().c_str(), kit->first.Key(), kit->second.c_str());
+		if (alPtr == &empty) {
+			printf("  EMPTY\n");
+		} else {	
+			printf("\n");
+			const ActionList& al = *alPtr;
+			for (int i = 0; i < (int)al.size(); ++i) {
+				printf("  %s  \"%s\"\n", al[i].command.c_str(), al[i].rawline.c_str());
+			}
+		}
 	}
-	return kit->second;
+
+	return *alPtr;
+}
+
+
+const CKeyBindings::HotkeyList&
+	CKeyBindings::GetHotkeys(const string& action) const
+{
+	ActionMap::const_iterator it = hotkeys.find(action);
+	if (it == hotkeys.end()) {
+		static HotkeyList empty;
+		return empty;
+	}
+	const HotkeyList& hl = it->second;
+	return hl;
 }
 
 
 /******************************************************************************/
 
-bool CKeyBindings::Bind(const string& keystr,
-                        const string& action,
-                        const string& context)
+bool CKeyBindings::Bind(const string& keystr, const string& line)
 {
-	string lowerKey = StringToLower(keystr);
 	CKeySet ks;
-	if (!ks.Parse(lowerKey)) {
+	if (!ks.Parse(keystr)) {
 		printf("Could not parse key: %s\n", keystr.c_str());
+		return false;
+	}
+	Action action(line);
+	if (action.command.empty()) {
+		printf("Empty action: %s\n", line.c_str());
+		return false;
+	}
+	
+	// Try to be safe, force AnyMod mode for stateful commands
+	if (statefulCommands.find(action.command) != statefulCommands.end()) {
+		ks.SetAnyBit();
 	}
 
-	string a;
-	if (action.find("select:") != 0) {
-		a = StringToLower(action);
+	KeyMap::iterator it = bindings.find(ks);
+	if (it == bindings.end()) {
+		// new entry, push it
+		ActionList& al = bindings[ks];
+		al.push_back(action);
 	} else {
-		a = action;
+		if (it->first != ks) {
+			// not a match, push it
+			ActionList& al = it->second;
+			al.push_back(action);
+		}
+		else {
+			// an exact keyset match, check the command
+			ActionList& al = it->second;
+			int i;
+			for (i = 0; i < (int)al.size(); i++) {
+				if (action.command == al[i].command) {
+					break;
+				}
+			}
+			if (i == (int)al.size()) {
+				// not a match, push it
+				al.push_back(action);
+			}
+		}
 	}
-
-	bindings[context][ks] = a;
-
+		
 	return true;
 }
 
 
-bool CKeyBindings::UnBindKeyset(const string& keystr, const string& context)
+bool CKeyBindings::UnBind(const string& keystr, const string& command)
 {
-	ContextKeyMap::iterator cit = bindings.find(context);
-	if (cit == bindings.end()) {
+	CKeySet ks;
+	if (!ks.Parse(keystr)) {
+		printf("Could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
-	KeyMap& keymap = cit->second;
-	
-	string lowerKey = StringToLower(keystr);
+	bool success = false;
+
+	KeyMap::iterator it = bindings.find(ks);
+	if (it != bindings.end()) {
+		ActionList& al = it->second;
+		success = RemoveCommandFromList(al, command);
+		if (al.size() <= 0) {
+			bindings.erase(it);
+		}
+	}
+	return success;
+}
+
+
+bool CKeyBindings::UnBindKeyset(const string& keystr)
+{
 	CKeySet ks;
-	if (!ks.Parse(lowerKey)) {
+	if (!ks.Parse(keystr)) {
 		printf("Could not parse key: %s\n", keystr.c_str());
+		return false;
 	}
 	bool success = false;
-	KeyMap::iterator kit = bindings[context].find(ks);
-	while (kit != keymap.end()) {
-		keymap.erase(kit);
-		if (keymap.empty()) {
-			bindings.erase(cit);
-			return true;
-		}
-		kit = keymap.find(ks);
+
+	KeyMap::iterator it = bindings.find(ks);
+	if (it != bindings.end()) {
+		bindings.erase(it);
 		success = true;
 	}
 	return success;
 }
 
 
-bool CKeyBindings::UnBindAction(const string& action, const string& context)
+bool CKeyBindings::UnBindAction(const string& command)
 {
-	ContextKeyMap::iterator cit = bindings.find(context);
-	if (cit == bindings.end()) {
-		return false;
-	}
-	KeyMap& keymap = cit->second;
-	
-	string a;
-	if (action.find("select:") != 0) {
-		a = StringToLower(action);
-	} else {
-		a = action;
-	}
-
 	bool success = false;
-	KeyMap::iterator kit = keymap.begin();
-	while (kit != keymap.end()) {
-		if (kit->second != a) {
-			kit++;
-		} else {
-			KeyMap::iterator it_next = kit;
-			it_next++;
-			keymap.erase(kit);
-			if (keymap.empty()) {
-				bindings.erase(cit);
-				return true;
-			}
-			kit = it_next;
+
+	KeyMap::iterator it = bindings.begin();
+	while (it != bindings.end()) {
+		ActionList& al = it->second;
+		if (RemoveCommandFromList(al, command)) {
 			success = true;
+		}
+		if (al.size() <= 0) {
+			KeyMap::iterator it_next = it;
+			it_next++;
+			bindings.erase(it);
+			it = it_next;
+		} else {
+			it++;
 		}
 	}
 	return success;
 }
 
 
-bool CKeyBindings::UnBindContext(const string& context)
+bool CKeyBindings::RemoveCommandFromList(ActionList& al, const string& command)
 {
-	ContextKeyMap::iterator cit = bindings.find(context);
-	if (cit != bindings.end()) {
-		bindings.erase(cit);
-		return true;
+	bool success = false;
+	for (int i = 0; i < (int)al.size(); ++i) {
+		if (al[i].command == command) {
+			success = true;
+			for (int j = (i + 1); j < (int)al.size(); ++j) {
+				al[j - 1] = al[j];
+			}
+			al.resize(al.size() - 1);
+		}
 	}
-	return false;
+	return success;
 }
 
 
@@ -395,10 +523,45 @@ void CKeyBindings::LoadDefaults()
 {
 	const int count = sizeof(defaultBindings) / sizeof(defaultBindings[0]);
 	for (int i = 0; i < count; ++i) {
-		Bind(defaultBindings[i].key,
-		     defaultBindings[i].action,
-		     defaultBindings[i].context);
+		Bind(defaultBindings[i].key, defaultBindings[i].action);
 	}
+}
+
+
+bool CKeyBindings::Command(const string& line)
+{
+	vector<string> words = Tokenize(line, 2);
+
+	if (words.size() <= 0) {
+		return false;
+	}
+	const string command = StringToLower(words[0]);
+	
+	if ((command == "bind") && (words.size() > 2)) {
+		if (!Bind(words[1], words[2])) { return false; }
+	}
+	else if ((command == "unbind") && (words.size() > 2)) {
+		if (!UnBind(words[1], words[2])) { return false; }
+	}
+	else if ((command == "unbindaction") && (words.size() > 1)) {
+		if (!UnBindAction(words[1])) { return false; }
+	}
+	else if ((command == "unbindkeyset") && (words.size() > 1)) {
+		if (!UnBindKeyset(words[1])) { return false; }
+	}
+	else if (command == "unbindall") {
+		bindings.clear();
+		Bind("enter", "chat"); // bare minimum
+	}
+	else {
+		return false;
+	}
+	
+	if (userCommand) {
+		Sanitize();
+	}
+
+	return false;
 }
 
 
@@ -406,8 +569,9 @@ bool CKeyBindings::Load(const string& filename)
 {
 	inComment = false;
 	lineNumber = 0;
-	
 	CFileHandler ifs(filename);
+	
+	userCommand = false; // temporarily disable Sanitize() calls
 	
 	LoadDefaults();
 	
@@ -416,43 +580,51 @@ bool CKeyBindings::Load(const string& filename)
 		if (line.empty()) {
 			break;
 		}
-		vector<string> words = Tokenize(line);
-		if (words.size() <= 0) {
-			continue;
-		}
-		const string command = StringToLower(words[0]);
+		Command(line);
+	}
+	
+	Sanitize();
+	
+	userCommand = true; // re-enable Sanitize() calls
 
-		if (command == "bind") {
-			if (CheckTokens(words, 3, 4)) {
-				Bind(words[1], words[2], words[3]);
-			}
-		}
-		else if (command == "unbindall") {
-			bindings.clear();
-		}
-		else if (command == "unbindaction") {
-			if (CheckTokens(words, 2, 3)) {
-				UnBindAction(words[1], words[2]);
-			}
-		}
-		else if (command == "unbindkeyset") {
-			if (CheckTokens(words, 2, 3)) {
-				UnBindKeyset(words[1], words[2]);
-			}
-		}
-		else if (command == "unbindcontext") {
-			if (CheckTokens(words, 2, 2)) {
-				UnBindContext(words[1]);
-			}
-		}
-		else { 
-			handleerror(0, "Could not parse control file", line.c_str(), 0);
-			return false;
-		}
-	} // End While
 	return true;
 }
 
+
+void CKeyBindings::Sanitize()
+{
+	// FIXME -- do something extra here?
+	//          (seems as though removing the Up states fixed most of the problems)
+	BuildHotkeyMap();
+}
+
+
+void CKeyBindings::BuildHotkeyMap()
+{
+	hotkeys.clear();
+
+	KeyMap::const_iterator kit;
+	for (kit = bindings.begin(); kit != bindings.end(); ++kit) {
+		const CKeySet ks = kit->first;
+		const string keystr = ks.GetString();
+		const ActionList& al = kit->second;
+		for (int i = 0; i < (int)al.size(); ++i) {
+			HotkeyList& hl = hotkeys[al[i].command];
+			int j;
+			for (j = 0; j < (int)hl.size(); ++j) {
+				if (hl[j] == keystr) {
+					break;
+				}
+			}
+			if (j == (int)hl.size()) {
+				hl.push_back(keystr);
+			}
+		}
+	}
+}
+
+
+/******************************************************************************/
 
 bool CKeyBindings::Save(const string& filename) const
 {
@@ -461,20 +633,15 @@ bool CKeyBindings::Save(const string& filename) const
 		return false;
 	}
 
-	// FIXME -- sorted by keycode? merge...
-	ContextKeyMap::const_iterator cit;
-	for (cit = bindings.begin(); cit != bindings.end(); ++cit) {
-		const KeyMap& keymap = cit->second;
-		KeyMap::const_iterator kit;
-		for (kit = keymap.begin(); kit != keymap.end(); ++kit) {
-			if (cit->first.empty()) {
-				fprintf(out, "bind %18s  %s\n",
-								kit->first.GetString().c_str(), kit->second.c_str());
-			} else {
-				fprintf(out, "bind %18s  %-20s %s\n",
-								kit->first.GetString().c_str(), kit->second.c_str(),
-								cit->first.c_str());
-			}
+	// clear the defaults
+	fprintf(out, "\nunbindall  // clear the defaults\n\n");
+
+	KeyMap::const_iterator it;
+	for (it = bindings.begin(); it != bindings.end(); ++it) {
+		const ActionList& al = it->second;
+		for (int i = 0; i < (int)al.size(); ++i) {
+			fprintf(out, "bind %18s  %s\n", 
+							it->first.GetString().c_str(), al[i].rawline.c_str());
 		}
 	}
 	fclose(out);
@@ -484,15 +651,16 @@ bool CKeyBindings::Save(const string& filename) const
 
 void CKeyBindings::Print() const
 {
-	ContextKeyMap::const_iterator cit;
-	for (cit = bindings.begin(); cit != bindings.end(); ++cit) {
-		printf("KeyContext: %s\n", cit->first.c_str());
-		const KeyMap& keymap = cit->second;
-		KeyMap::const_iterator kit;
-		for (kit = keymap.begin(); kit != keymap.end(); ++kit) {
-			printf("  Binding: %18s (%i)  to  %-20s <%s>\n",
-						 kit->first.GetString().c_str(), kit->first.Key(),
-						 kit->second.c_str(), cit->first.c_str());
+	KeyMap::const_iterator it;
+	for (it = bindings.begin(); it != bindings.end(); ++it) {
+		const ActionList& al = it->second;
+		for (int i = 0; i < (int)al.size(); ++i) {
+			printf("  Binding:  %18s (%i)  to  %s\n",
+						 it->first.GetString().c_str(), it->first.Key(),
+						 al[i].rawline.c_str());
 		}
 	}
 }
+
+
+/******************************************************************************/
