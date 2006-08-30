@@ -266,6 +266,7 @@ void CGroupAI::UpdateAvailableCommands(void)
 				cd.id=*oi;
 				cd.name=buildOptions[*oi]->name;
 				cd.type=buildOptions[*oi]->type;
+				cd.action = "buildunit_" + cd.name;
 				if(cd.type==CMDTYPE_ICON){
 					UpdateFactoryIcon(&cd,buildOptions[*oi]->numQued);
 				}
