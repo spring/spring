@@ -1,1 +1,1 @@
-B_SCOUT, corack, corack, corpyro, corpyro, corpyro, corsumo, corhrk, corhrk, corhrk, corsumo, corack, cornecro, cornecro, cornecro, corsumo, corhrk, corhrk, corhrk, repeat
+B_SCOUT, corack, corack, corpyro, B_ASSAULT, B_ASSAULT, corsumo, corhrk, B_ASSAULT, B_ASSAULT, corsumo, corack, cornecro, cornecro, cornecro, corsumo, corhrk, B_ASSAULT, B_ASSAULT, B_RAND_ASSAULT, repeat

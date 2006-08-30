@@ -1,3 +1,31 @@
+Here is every single change since I started keeping track.  I initialled by my changes, and I hope AF documents and signs his. - Lindir
+
+0.8.7 =====
+
+LTG - Increased MaxStallTimeImmobile.
+LTG - In the non-cheating commander buildlists, added 2 B_POWERS.
+LTG - In the non-cheating commander buildlists, added a B_RETREAT, B_GUARDIAN right after the middle factory/minibase set, to help prevent com-bombing.
+LTG - Added 2 B_MEXs near the beginning of r1.
+LTG - Added a B_MEX near the beginning of the level 1 constructor buildlists.
+LTG - Reduced the number of mexes in the primary level 2 buildlists.
+LTG - Fixed a few bugs due to crazy british spelling.
+LTG - In the level 2 factories, replaced many of the specific unit names with B_ASSAULT.
+LTG - Increased spacing a little.
+LTG - Decreased MaxStallTime again.
+LTG - Set a max energy for the level 1 defenses.
+
+0.8.6 =====
+
+LTG - Lowered the max energys of the level 1 factories, to facilitate the switch to level 2.
+LTG - Completely removed the dependence on the currently broken custom metatags.
+LTG - Rewrote r2.  Now it is completely focused on helping the factory that created it.
+LTG - Rewrote all the primary level 2 buildlists.
+LTG - Increased the ckfus construction repair range to facilitate the switch to level 2 infrastructure.
+LTG - Added all of the level 2 factories to solobuild.
+LTG - Fiddled with maxstalltime.
+
+0.8.5 =====
+
 LTG - Added another mohomaker earlier on in the primary lvl 2 constructors.
 LTG - In the "primary" lvl 2 constructors (vehicles and kbots) added a B_RULE to the beginning instead of a B_RULE_EXTREME.
 LTG - Replaced the factories in r1/r2 with defense.

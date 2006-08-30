@@ -7,16 +7,16 @@
 	Attackers=ARMAAS, ARMACSUB, ARMAH, ARMAMPH, ARMANAC, ARMASER, ARMBATS, ARMBRAWL, ARMBULL, ARMCROC, ARMCRUS, ARMFIDO, ARMFIG, ARMFLAK, ARMFLASH, ARMFLEA, ARMHAM, ARMHAWK, ARMJAM, ARMJETH, ARMLANCE, ARMLATNK, ARMMANNI, ARMMARK, ARMMART, ARMMAV, ARMMERLl, ARMMH, ARMMSHIP, ARMPNIX, ARMPT, ARMPW, ARMRAVEN, ARMROCK, ARMROY, ARMSAM, ARMSCRAM, ARMSEAP, ARMSFIG, ARMSH, ARMSJAM, ARMSNIPE, ARMSPID, ARMSTUMP, ARMSUB, ARMSUBK, ARMTHUND, ARMVADER, ARMWAR, ARMYORK, ARMZEUS, CORAK, CORAL, CORAMPH, CORAPE, CORARCH, CORBATS, CORCAN, CORCRASH, CORCRUS, CORETER, CORGATOR, CORGOL, CORHRK, CORHURK, CORKROG, CORLEVLR, CORMART, CORMH, CORMIST, CORMORT, CORMSHIP, CORPT, CORPYRO, CORRAID, CORREAP, CORROACH, CORROY, CORSEAL, CORSEAP, CORSENT, CORSFIG, CORSH, CORSHAD, CORSHARK, CORSJAM, CORSNAP, CORSPEC, CORSSUB, CORSTORM, CORSUB, CORSUMO, CORTHUD, CORTITAN, CORVAMP, CORVENG, CORVROCK;
 	// both=armamph, armflea, armlatnk, armpt, armsfig, armsh, armwar, corpt, corsfig, corsh; // here for reference.
 	cheap_multiplier=1.7;  // doesn't affect anything in this current buildtree.
-	defence_spacing=6;  // the units are supposed to be exactly the same size as the unit being constructed, but actually they seem to be smaller
-	power_spacing=5;
+	defence_spacing=7;  // the units are supposed to be exactly the same size as the unit being constructed, but actually they seem to be smaller
+	power_spacing=6;
 	factory_spacing=4;
 	default_spacing=5;
 	dynamic_selection=0;
 	// kamikaze=; // crashes the game
-	solobuild=CORBUZZ, ARMVULC;  // It will only build 1 at a time
+	solobuild=CORBUZZ, ARMVULC, ARMALAB, CORALAB, ARMAVP, CORAVP, ARMASY, CORASY, ARMAAP, CORAAP, CORGANT;  // It will only build 1 at a time
 	singlebuild=CORTARG, ARMTARG;  // It will only ever build 1
 	author=Lindir The Green + AF:  Send questions, comments, suggestions and/or hatemail to lindirthegreen@yahoo.com;
-	version=0.8.5;
+	version=0.8.7;
 	message=XTA buildtree by Lindir The Green and AF;
 	hard_target=0;  // unless you want to manually define every single unit and what it should target
 	AlwaysAntiStall=ARMALAB, CORALAB, CORSY, ARMSY, CORGANT, ARMAVP, CORAVP, ARMAAP, CORAAP, ARMASY, CORASY;
@@ -28,9 +28,9 @@
 	maneouvre=;  // Crazy brits spell "maneuver" wrong.  I hope both ways are accepted by NTai...
 	hold_pos=CORCOM, ARMCOM;
 	interpolate_tag=B_RULE_EXTREME_NOFACT;
-	antistall=3; // 3 and 7 are currently the only good options.
-	MaxStallTime=-7;  // Hey, it's finally used! // higher = more lenient
-	MaxStallTimeImmobile=5;
+	antistall=7; // 3 and 7 are currently the only good options.
+	MaxStallTime=-10;  // Hey, it's finally used! // higher = more lenient
+	MaxStallTimeImmobile=20; // This is for when a factory is trying to decide whether building a certain unit will cause stall.
 	[STALL_MULTIPLIERS] // not used right now...
 	{
 		energyIncome=1;
@@ -69,16 +69,15 @@
 		}
 	}
 }
-[TAGS]
+[TAGS] // These don't work anymore!
 {
-	light_fusion=ARMCKFUS, CORCKFUS;
-	heavy_fusion=ARMFUS, CORFUS, ARMUWFUS, CORUWFUS;
+	fusion=ARMCKFUS, CORCKFUS, ARMFUS, CORFUS, ARMUWFUS, CORUWFUS;
 	mohomaker=ARMMMKR, CORMMMKR;
 	mohomine=ARMMOHO, CORMOHO;
 	heavy_defense=ARMBRTHA, ARMSILO, CORDOOM, CORINT, CORSILO;
 	missle_defense=ARMAMD, CORFMD;
 	defense=ARMHLT, CORHLT, ARMAMB, CORTOAST;
-	dt=CORDRAG, ARMDRAG;  // Just in case.
+	dt=CORDRAG, ARMDRAG;  // Just in case.  Use B_FORTIFICATION.
 }
 [TASKLISTS]
 {
@@ -113,9 +112,9 @@
 		CORINT=1500;
 		ARMASY=1000; // More expensive than the others
 		CORASY=1000;
-		CORCKFUS=800; // Upper level infastructure
-		ARMCKFUS=800;
-		ARMANNI=800;
+		CORCKFUS=3000; // For the level 2 economic transition
+		ARMCKFUS=3000;
+		ARMANNI=800; // Upper level infrastructure
 		ARMALAB=800;
 		CORALAB=800;
 		ARMAVP=800;
@@ -149,14 +148,24 @@
 		CORCKFUS=3000;
 		ARMMEX=500;
 		CORMEX=500;
-		ARMLAB=75; // forcing it to go to level 2
-		CORLAB=75;
-		ARMVP=75;
-		CORVP=75;
-		ARMAP=75;
-		CORAP=75;
-		ARMSY=75;
-		CORSY=100;
+		ARMLAB=50; // forcing it to go to level 2
+		CORLAB=50;
+		ARMVP=50;
+		CORVP=50;
+		ARMAP=50;
+		CORAP=50;
+		ARMSY=50;
+		CORSY=75;
+		ARMAMB=100;
+		CORTOAST=100;
+		ARMHLT=100;
+		CORHLT=100;
+		ARMMT=100;
+		CORMT=100;
+		ARMFHLT=100;
+		CORFHLT=100;
+		ARMFMT=100;
+		CORFMT=100;
 	}
 }
 

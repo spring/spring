@@ -1,1 +1,1 @@
-B_SCOUT, armack, armack, armwar, armzeus, armzeus, armack, armfido, armfido, armfido, armraven, armraven, armack, armfark, armfark, armfark, B_ASSAULT, B_ASSAULT, repeat
+B_SCOUT, armack, armack, armwar, armzeus, B_ASSAULT, armack, armfido, B_ASSAULT, B_ASSAULT, armraven, B_ASSAULT, armack, armfark, armfark, armfark, B_ASSAULT, B_ASSAULT, B_RAND_ASSAULT, repeat
