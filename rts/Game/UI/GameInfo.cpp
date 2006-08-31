@@ -14,6 +14,29 @@
 using namespace std;
 
 
+CGameInfo* CGameInfo::instance = NULL;
+
+
+void CGameInfo::Enable()
+{
+	if (instance == NULL) {
+		instance = new CGameInfo;
+	}
+}
+
+
+void CGameInfo::Disable()
+{
+	delete instance;
+}
+
+
+bool CGameInfo::IsActive()
+{
+	return (instance != NULL);
+}
+
+
 CGameInfo::CGameInfo(void)
 {
 	box.x1=0.5;
@@ -24,6 +47,10 @@ CGameInfo::CGameInfo(void)
 
 CGameInfo::~CGameInfo(void)
 {
+	instance = NULL;
+	if (mouse->activeReceiver == this) {
+		mouse->activeReceiver = NULL;
+	}
 }
 
 
@@ -79,14 +106,36 @@ static void StringListStats(const vector<FontString>& list,
 
 /******************************************************************************/
 
-bool CGameInfo::MousePress(int x, int y, int button)
+std::string CGameInfo::GetTooltip(int x,int y)
+{
+	return "Game Information";
+}
+
+
+bool CGameInfo::IsAbove(int x, int y)
 {
 	float mx = float(x) / gu->screenx;
 	float my = (gu->screeny - float(y)) / gu->screeny;
-	if(InBox(mx, my, box)) {
-		delete this;
+	return InBox(mx, my, box);
+}
+
+
+bool CGameInfo::MousePress(int x, int y, int button)
+{
+	if (IsAbove(x, y)) {
+		return true;
 	}
 	return false;
+}
+
+
+void CGameInfo::MouseRelease(int x, int y, int button)
+{
+	if (mouse->activeReceiver == this) {
+		if (IsAbove(x, y)) {
+			delete this;
+		}
+	}
 }
 
 
@@ -199,7 +248,13 @@ void CGameInfo::Draw()
 	}
 	
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
+
+	if ((mouse->activeReceiver == this) && IsAbove(mouse->lastx, mouse->lasty)) {
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	} else {
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	}
+	
 	
 	// draw the strings
 	for (i = 0; i < (int)labels.size(); i++) {

@@ -526,7 +526,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		}
 #endif
 
-		// convert to the appropriate prefix if we receive a typed chat action
+		// convert to the appropriate prefix if we receive a chat switch action
 		for (int i = 0; i < (int)actionList.size(); i++) {
 			const CKeyBindings::Action& action = actionList[i];
 			if (action.command == "chatswitchall") {
@@ -921,8 +921,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "dynamicsky") {
 		sky->dynamicSky=!sky->dynamicSky;
 	}
-	else if (cmd == "gameinfo") {
-		new CGameInfo;
+	else if (!isRepeat && (cmd == "gameinfo")) {
+		if (!CGameInfo::IsActive()) {
+			CGameInfo::Enable();
+		} else {
+			CGameInfo::Disable();
+		}
 	}
 	else if (cmd == "hideinterface") {
 		hideInterface=!hideInterface;
@@ -1200,6 +1204,9 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 	}
 	else if (cmd == "mousestate") {
 		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
+	}
+	else if (cmd == "gameinfoclose") {
+		CGameInfo::Disable();
 	}
 	// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
 	// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
