@@ -659,14 +659,16 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 		CFileHandler bfile("unitpics/" + unitdef->name + ".pcx");
 		if(bfile.FileExists())
 		{
-			CBitmap bitmap("unitpics/" + unitdef->name + ".pcx");
+			CBitmap bitmap;
+			bitmap.Load("unitpics/" + unitdef->name + ".pcx");
 			unitdef->unitimage = bitmap.CreateTexture(false);
 		}
 		else
 		{
 			CFileHandler bfile("unitpics/" + unitdef->name + ".bmp");
 			if(bfile.FileExists()){
-				CBitmap bitmap("unitpics/" + unitdef->name + ".bmp");
+				CBitmap bitmap;
+				bitmap.Load("unitpics/" + unitdef->name + ".bmp");
 				unitdef->unitimage = bitmap.CreateTexture(false);
 			} else {
 				CBitmap bitmap;
@@ -678,7 +680,9 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 	}
 	else
 	{
-		CBitmap bitmap("unitpics/" + unitdef->buildpicname);
+		CBitmap bitmap;
+		if (!bitmap.Load("unitpics/" + unitdef->buildpicname))
+			throw content_error("Could not load unit image from file unitpics/" + unitdef->buildpicname);
 		unitdef->unitimage = bitmap.CreateTexture(false);
 	}
 	return unitdef->unitimage;
