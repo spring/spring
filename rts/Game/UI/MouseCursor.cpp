@@ -41,7 +41,9 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 		
 		if (f.FileExists()) {
 			string bmpname = namebuf;
-			CBitmap b(bmpname);
+			CBitmap b;
+			if (!b.Load(bmpname))
+				throw content_error("Could not load mouse cursor from file " + bmpname);
 			b.ReverseYAxis();
 			CBitmap *final = getAlignedBitmap(b);
 			setBitmapTransparency(*final, 84, 84, 252); 

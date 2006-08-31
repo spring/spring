@@ -71,16 +71,6 @@ CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
 	memcpy(mem,data,xsize*ysize*4);
 }
 
-CBitmap::CBitmap(string const& filename)
-: mem(0),
-  xsize(0),
-  ysize(0)
-{
-	type = BitmapTypeStandardRGBA;
-	ddsimage = 0;
-	Load(filename);
-}
-
 CBitmap& CBitmap::operator=(const CBitmap& bm)
 {
 	if( this != &bm ){

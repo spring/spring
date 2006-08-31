@@ -15,7 +15,9 @@ extern GLfloat FogLand[];
 
 CSkyBox::CSkyBox(std::string texture)
 {
-	CBitmap btex(texture);
+	CBitmap btex;
+	if (!btex.Load(texture))
+		throw content_error("Could not load skybox texture from file " + texture);
 	tex = btex.CreateTexture(0);
 
 	readmap->mapDefParser.GetDef(fogStart,"0.1","MAP\\ATMOSPHERE\\FogStart");

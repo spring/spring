@@ -1,7 +1,7 @@
 // GUIframe.cpp: implementation of the GUIframe class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#include "StdAfx.h"
 #include "GUIframe.h"
 #include <algorithm>
 //#include "Game/UI/InfoConsole.h"
@@ -350,7 +350,9 @@ string GUIframe::Tooltip()
 
 GLuint Texture(const std::string& name, const vector<paletteentry_s>* pvTransparentColors)
 {
-	CBitmap bitmap(name);
+	CBitmap bitmap;
+	if (!bitmap.Load(name))
+		throw content_error("Could not load GUIframe texture from file " + name);
 	if ( pvTransparentColors != NULL )
 	{
 		vector < paletteentry_s >::const_iterator currIter = pvTransparentColors->begin(), 

@@ -63,7 +63,9 @@ CEndGameBox::CEndGameBox(void)
 	stat1=1;
 	stat2=2;
 
-	CBitmap bm("Bitmaps\\graphPaper.bmp");
+	CBitmap bm;
+	if (!bm.Load("bitmaps/graphPaper.bmp"))
+		throw content_error("Could not load bitmaps/graphPaper.bmp");
 	graphTex=bm.CreateTexture();
 }
 
