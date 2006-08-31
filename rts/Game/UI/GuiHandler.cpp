@@ -75,18 +75,18 @@ struct active_icon {
 	int id;
 };
 
-static map<int,guiicon_data> iconmap;
+static map<int, guiicon_data> iconmap;
 
-//guiicon_data icon_data[2560];
-active_icon curricon[400];
-container_box box[20];
+static active_icon curricon[512];  // FIXME -- this should not be a fixed size
 
-container_box buttonBox;
+static container_box buttonBox;
+
 
 static void MenuSelection(std::string s)
 {
 	guihandler->MenuChoice(s);
 }
+
 
 CGuiHandler::CGuiHandler()
 : inCommand(-1),
