@@ -294,8 +294,11 @@ int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
 	tex.tex2=0;
 	if(unitDrawer->advShading){
 		CBitmap bm;
-		if (!bm.Load(string("unittextures/"+tex2)))
-			throw content_error("Could not load S3O texture from file unittextures/" + tex2);
+		// No error checking here... other code relies on an empty texture
+		// being generated if it couldn't be loaded.
+		// Also many map features specify a tex2 but don't ship it with the map,
+		// so throwing here would cause maps to break.
+		bm.Load(string("unittextures/"+tex2));
 		tex.tex2=bm.CreateTexture(true);
 	}
 	s3oTextures.push_back(tex);
