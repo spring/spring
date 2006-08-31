@@ -8,6 +8,8 @@
 #include "KeyBindings.h"
 #include "KeyCodes.h"
 #include "SDL_keysym.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -247,6 +249,11 @@ static vector<string> Tokenize(const string& line, int minWords = 0)
 		string word;
 		if ((minWords > 0) && (words.size() >= minWords)) {
 			word = line.substr(start);
+			// strip trailing whitespace
+			string::size_type pos = word.find_last_not_of(" \t");
+			if (pos != (word.size() - 1)) {
+				word.resize(pos + 1);
+			}
 			end = string::npos;
 		}
 		else {
@@ -641,8 +648,23 @@ bool CKeyBindings::Save(const string& filename) const
 	for (it = bindings.begin(); it != bindings.end(); ++it) {
 		const ActionList& al = it->second;
 		for (int i = 0; i < (int)al.size(); ++i) {
-			fprintf(out, "bind %18s  %s\n", 
-							it->first.GetString().c_str(), al[i].rawline.c_str());
+			string comment;
+			if (unitDefHandler && (al[i].command.find("buildunit_") == 0)) {
+				const string unitName = al[i].command.substr(10);
+				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+				if (unitDef) {
+					comment = "  // " + unitDef->humanName;
+				}
+			}
+			if (comment.empty()) {
+				fprintf(out, "bind %18s  %s\n", 
+				        it->first.GetString().c_str(),
+				        al[i].rawline.c_str());
+			} else {
+				fprintf(out, "bind %18s  %-20s%s\n", 
+				        it->first.GetString().c_str(),
+				        al[i].rawline.c_str(), comment.c_str());
+			}
 		}
 	}
 	fclose(out);
