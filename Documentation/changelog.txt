@@ -1,9 +1,15 @@
 TASpring change log
 
-0.next.next
+0.next
 - added transparency suport from texture2 in s3o drawing
 
-0.next
+0.73b1
+
+- added support for teamcolored nanospray (user option). Can be forced off by modder using gamedata/particles.tdf.
+- new fbi tag shownanoframe: set to 0 to disable nanoframe while the unit is being built.
+- new fbi tag shownanospray: set to 0 to disable nanospray.
+- new fbi tag nanocolor: color of the nanospray and the nanoframe in red green blue format (white = 1 1 1).
+  (These three fbi tags apply to the unit itself; not to the unit it's building.)
 
 - linux vs linux is now synced, independently of the distribution & gcc version
 - if host finishes loading before client executable is started spring no longer loses connection
@@ -112,10 +118,10 @@ TASpring change log
 - [change] Radar and jammer range is shown by default if you press 'L'.
 - [change] Radar and jammer toggle ';' happens instantly.
 
-- New weapon tdf tag rgbcolor2, used to make laser weapon have diferent color at the center, defaults to white.
+- New weapon tdf tag rgbcolor2, used to make laser weapon have different color at the center, defaults to white.
 - New weapon tdf tag corethickness, how thick the inner color of a laser is, this is a percentage value, default is 0.25
 - New weapon tdf tag laserflaresize, size of the flare for laser weapons, multiplier for thickness, default 15.
-- New weapon td tag LargeBeamLaser, if set to 1 a beamlaser uses an alternat graphics effect.
+- New weapon tdf tag LargeBeamLaser, if set to 1 a beamlaser uses an alternate graphics effect.
 	New tags usable for a LargeBeamLaser is:
 		tilelength: defines the length before the texture used is repeated (tiled).
 		scrollspeed: how fast the beam apears to be moving towards it target.
@@ -128,14 +134,14 @@ TASpring change log
 		texture2 = smoke
 	LaserProjectile:
 		texture1 = laserbeam
-		texture2 = Start and end of the beam (half of the texture used at either end.
+		texture2 = Start and end of the beam (half of the texture used at either end.)
 	BeamLaserProjectile:
 		texture1 = laserbeam
-		texture2 = Start and end of the beam (half of the texture used at either end.
+		texture2 = Start and end of the beam (half of the texture used at either end.)
 		texture3 = muzzle flare
 	LargeBeamLaserProjectile:
 		texture1 = laserbeam
-		texture2 = Start and end of the beam (half of the texture used at either end.
+		texture2 = Start and end of the beam (half of the texture used at either end.)
 		texture3 = Extra graphical effect at the start of the beam.
 		texture4 = muzzle flare
 	StarBurstProjectile (starburst weaponry, like nukes):

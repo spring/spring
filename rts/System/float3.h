@@ -252,7 +252,7 @@ public:
 	 * checking each x/y/z component individually.
 	 */
 	inline bool operator== (const float3 &f) const {
-		return fabs(x-f.x) <= 1.0E-4*x && fabs(y-f.y) <= 1.0E-4*y && fabs(z-f.z) <= 1.0E-4*z;
+		return fabs(x-f.x) <= fabs(1.0E-4*x) && fabs(y-f.y) <= fabs(1.0E-4*y) && fabs(z-f.z) <= fabs(1.0E-4*z);
 	}
 
 	/**
