@@ -5,62 +5,89 @@ TASpring change log
 - linux vs linux is now synced, independently of the distribution & gcc version
 - if host finishes loading before client executable is started spring no longer loses connection
 
+- added the "say" action  (does work with the .give command)
+
+- changed .clock and .info to local commands (/clock and /info now work as well)
+
 - replaced key binding code with a more flexible solution:
-  * can specify key for almost all commands
-  * can specify modifiers
-  * can specify direction (down by default, Up+ for key releases)
-  * can specify context   (example: "command" for unit commands)
+  * can specify key for almost all commands (including unit builds)
+  * can specify modifiers (Alt, Ctrl, Meta, Shift)
+  * can bind the same key to more then one action
+    (first available action is used, handy for build orders)
+
 - added internal default bindings  (see rts/Game/UI/KeyBindings.cpp)
-- added "unbindall"                        uikeys.txt command
-- added "unbindKeyset  <keyset> [context]" uikeys.txt command
-- added "unbindAction  <action> [context]" uikeys.txt command
-- added "unbindContext <context>"          uikeys.txt command
+- added "unbindall"                command
+- added "unbindKeyset    <keyset>" command
+- added "unbindAction    <action>" command
+- added "unbind <keyset> <action>" command
+
+- added "hotbind"   action for the control panel icons  (Ctrl+insert)
+- added "hotunbind" action for the control panel icons  (Ctrl+delete)
+
+- added /keysave and /keyload commands
+  (keysave saves to "uikeys.tmp", not "uikeys.txt")
+- added /keyprint, /keydebug, /keysyms, and /keycodes commands
+  (these commands send information to stdout)
+
+- added ability to specify item in icon mode buttons via its binding
+  (ex:  "firestate 0" binding will set firestate to hold fire)
+
+- added ability to specify item in combo box buttons via its binding
+  (ex:  "aiselect Radar AI" binding will assign the selected units to the Radar AI)
 
 - pseudo mouse actions now discard key repeats
 
 - added command queue icons
+- added build command queue directional lines
 - added AreaAttack command queue area display
 
-- added game info panel (and "gameinfo" uikeys.txt action)
+- added game info panel (with "gameinfo" and "gameinfoclose" actions)  (i)
 
 - versionned the "archivecache.txt" filename (ex: "ArchiveCacheV4.txt")
 
 - Quit and Share menus close when they receive ESC
 
-- added "drawlabel" action  (Shift+~)  (avoid the double-click, and key repeats)
+- added "drawlabel" action       (Alt+`)  (avoid the double-click, and key repeats)
 
-- added "chatally" uikeys.txt action   (Alt+enter)
-- added "chatspec" uikeys.txt action   (Shift+enter)
-- added "chatall" uikeys.txt action    (Ctrl+enter | Ctrl+m)
+- added "screenshot png" action  (F11)
 
-- added group tracking selection rotation
+- added "chatAll"        action  (Ctrl+enter) (aka: Ctrl+m)
+- added "chatSwitchAll"  action  (Ctrl+enter) (aka: Ctrl+m)
+- added "chatAlly"       action  (Alt+enter)
+- added "chatSwitchAlly" action  (Alt+enter)
+- added "chatSpec"       action  (Shift+enter)
+- added "chatSwitchSpec" action  (Shift+enter)
+
+- added tracked unit rotation
 - added Average and Extents tracking modes
-- added "trackoff" uikeys.txt action   (Shift+t)
-- added "trackmode" uikeys.txt action  (Ctrl+t)
+- added "trackoff"  action   (Shift+t)
+- added "trackmode" action   (Ctrl+t)
 
-- added "viewfps" uikeys.txt action    (Ctrl+f1)
-- added "viewta" uikeys.txt action     (Ctrl+f2)
-- added "viewtw" uikeys.txt action     (Ctrl+f3)
-- added "viewrot" uikeys.txt action    (Ctrl+f4)
+- added "viewfps" action     (Ctrl+f1)
+- added "viewta"  action     (Ctrl+f2)
+- added "viewtw"  action     (Ctrl+f3)
+- added "viewrot" action     (Ctrl+f4)
 
-- added "firestate" uikeys.txt action
-- added "movestate" uikeys.txt action
-- added "prevmenu" uikeys.txt action
-- added "nextmenu" uikeys.txt action
+- added "firestate" action
+- added "movestate" action   
+- added "prevmenu"  action   (,)
+- added "nextmenu"  action   (.)
 - added "buildunit_<name>" action
-- added "select:<selection criteria>" action  (redundant)
+- added "deselect" action
+- added "select <selection criteria>" action  (redundant)
 
 - added new water rendering mode, refracting+reflecting but without the heavy dynamic simulation.
 - Added '--quit=T', '/quit T' commandline option to auto-quit spring on game over or after T seconds.
 - Added '--minimise', '/minimise' commandline option to start spring minimised.
 - added gradual feature reclaiming, see mantis #262
 - support for rotating buildings by 90 degrees, bind to "incbuildfacing" and "decbuildfacing" (bound to ']' and '[' by default)
-- modified the ground attack command for queued attack patterns
+- modified the ground attack command for queued attack and area attack patterns
   (the last queued attack position is repeated for backwards compatibility)
 - removed the height factor from AirCAI ground attack command drawing
 - added word completion, with dot commands, player names, and unit names
-  (also does partial match reporting, ex: ".<tab>" shows all commands,
-   and the unit names are only active for .give commands)
+  (does partial match reporting, and the unit names are only active for .give commands)
+	-> "/<tab>" will show local commands
+	-> ".<tab>" will show remote commands
 - added console input history buffer
 - added [DoubleClickTime=200] config parameter
 - added [WindowEdgeMove=1], for folks who run windowed with fullscreen size
@@ -73,8 +100,6 @@ TASpring change log
 - windows users can use [VSync=-1] to use system default
 - allow selection of vsync rate
 
-- added the ".cmd <action>" command for testing guikeys
-- added the ".bind <key> <action>" command for testing guikeys
 - [feature] A new group AI, "MexUpgrader AI" has been added. See http://taspring.clan-sy.com/wiki/MexUpgrader_AI for more info.
 - [feature] Custom unit icons are supported. See http://taspring.clan-sy.com/wiki/CustomUnitIcons for more info.
 - [bugfix] 'Quit and Resign' dialog now also appears when you're hosting, and stays hidden when the game is over.
