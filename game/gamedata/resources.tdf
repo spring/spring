@@ -58,12 +58,10 @@
 			flare=flare.tga;
 			explo=explo.tga;
 			explofade=explofade.tga;
-			test=test2.tga;
 
 			muzzleside=muzzleside.tga;
 			muzzlefront=muzzlefront.tga;
 			largebeam=largelaserfalloff.tga;
-			
 
 		}
 	}

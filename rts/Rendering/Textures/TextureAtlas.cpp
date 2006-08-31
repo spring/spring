@@ -34,6 +34,7 @@ int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, Texture
 	memtex->ypos = 0;
 	memtex->texType = texType;
 	memtex->data = new char[xsize*ysize*gpp/8];
+	StringToLowerInPlace(name);
 	memtex->names.push_back(name);
 	memcpy(memtex->data, data, xsize*ysize*gpp/8);
 	memtextures.push_back(memtex);
@@ -43,21 +44,33 @@ int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, Texture
 
 int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 {
-	//if the file allready loaded, use that instead
-	if(files.find(file)!=files.end())
+	StringToLowerInPlace(name);
+
+	//if the file already loaded, use that instead
+	std::string lcfile = StringToLower(file);
+	std::map<std::string, MemTex*>::iterator it = files.find(lcfile);
+
+	if(it != files.end())
 	{
-		MemTex *memtex = files.find(file)->second;
+		MemTex *memtex = it->second;
 		memtex->names.push_back(name);
 		return 1;
 	}
-	CBitmap bitmap(file);
-	if(bitmap.type != CBitmap::BitmapTypeStandardRGBA)  //only suport rgba for now
-	{
-		info->AddLine ("Unsoported bitmap format in file " + file);
-		return -1;
-	}
 
-	return AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, bitmap.mem);
+	CBitmap bitmap;
+
+	if (!bitmap.Load(file))
+		throw content_error("Could not load texture from file " + file);
+
+	if(bitmap.type != CBitmap::BitmapTypeStandardRGBA)  //only suport rgba for now
+		throw content_error("Unsupported bitmap format in file " + file);
+
+	int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, bitmap.mem);
+
+	if (ret == 1)
+		files[lcfile] = memtextures.back();
+
+	return ret;
 }
 
 bool CTextureAtlas::Finalize()
@@ -138,7 +151,7 @@ bool CTextureAtlas::Finalize()
 	for(int i=0; i<memtextures.size(); i++)
 	{
 		AtlasedTexture tex;
-		//ajust textur coordinates by half a pixel to avoid filtering artifacts
+		//adjust texture coordinates by half a pixel to avoid filtering artifacts
 		float halfx = 1/((float)xsize*2);
 		float halfy = 1/((float)ysize*2);
 		tex.xstart = memtextures[i]->xpos/(float)xsize + halfx;
