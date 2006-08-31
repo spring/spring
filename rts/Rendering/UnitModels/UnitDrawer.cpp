@@ -649,6 +649,7 @@ void CUnitDrawer::SetupBasicS3OTexture1(void)
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, whiteTex);
 }
@@ -695,6 +696,11 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glAlphaFunc(GL_GREATER,1/255.0f);
+		glEnable(GL_ALPHA_TEST);
+
 		float t[16];
 		glGetFloatv(GL_MODELVIEW_MATRIX,t);
 
@@ -723,9 +729,9 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
-//	glAlphaFunc(GL_GREATER,0.05f);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
+
+	//glDisable(GL_ALPHA_TEST);
+	//glDisable(GL_BLEND);
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 }
@@ -752,6 +758,9 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 		glMatrixMode(GL_MODELVIEW);
@@ -765,6 +774,8 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 		CleanupBasicS3OTexture0();
 	}
 	glDisable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
 }
 
 void CUnitDrawer::CleanupBasicS3OTexture1(void)

@@ -1,5 +1,8 @@
 TASpring change log
 
+0.next.next
+- added transparency suport from texture2 in s3o drawing
+
 0.next
 
 - linux vs linux is now synced, independently of the distribution & gcc version
