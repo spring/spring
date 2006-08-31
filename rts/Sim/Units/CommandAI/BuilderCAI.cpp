@@ -1,26 +1,27 @@
 #include "StdAfx.h"
 #include "BuilderCAI.h"
-#include "Sim/Units/UnitTypes/Builder.h"
 #include "ExternalAI/Group.h"
-#include "Rendering/GL/myGL.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Rendering/Textures/TextureHandler.h"
-#include "Sim/Units/UnitLoader.h"
-#include "Game/SelectedUnits.h"
-#include "Sim/Units/UnitTypes/Building.h"
-#include "Sim/Misc/QuadField.h"
-#include "Rendering/UnitModels/3DModelParser.h"
-#include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/MoveTypes/MoveType.h"
-#include "Map/Ground.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "Game/GameHelper.h"
+#include "Game/SelectedUnits.h"
+#include "Game/Team.h"
+#include "Game/UI/CursorIcons.h"
+#include "Game/UI/InfoConsole.h"
+#include "Map/Ground.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
+#include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "Game/UI/InfoConsole.h"
-#include "Game/UI/CursorIcons.h"
-#include "Game/Team.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitTypes/Builder.h"
+#include "Sim/Units/UnitTypes/Building.h"
+#include "Sim/Units/UnitTypes/Factory.h"
 #include "myMath.h"
 #include "mmgr.h"
 
@@ -563,171 +564,177 @@ int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 
 void CBuilderCAI::DrawCommands(void)
 {
-	float3 pos=owner->midPos;
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glEnable(GL_BLEND);
 
-	if(uh->limitDgun && owner->unitDef->isCommander){
-		glColor4f(1,1,1,0.6);
-		float3 p=gs->Team(owner->team)->startPos;
-		glBegin(GL_LINE_STRIP);
-		for(int a=0;a<=40;++a){
-			float3 pos2=float3(p.x+sin(a*PI*2/40)*uh->dgunRadius,0,p.z+cos(a*PI*2/40)*uh->dgunRadius);
-			pos2.y=ground->GetHeight(pos2.x,pos2.z)+5;
-			glVertexf3(pos2);
-		}
-		glEnd();
+	if(uh->limitDgun && owner->unitDef->isCommander) {
+		glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
+		glSurfaceCircle(gs->Team(owner->team)->startPos, uh->dgunRadius, 40);
 	}
-	glColor4f(1,1,1,0.4);
+
+	float3 pos = owner->midPos;
+
 	glBegin(GL_LINE_STRIP);
+	glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
 	glVertexf3(pos);
+
 	deque<Command>::iterator ci;
-	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		bool draw=false;
-		switch(ci->id){
-		case CMD_MOVE:
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			glColor4f(0.5,1,0.5,0.4);
-			draw=true;
-			break;
-		case CMD_RECLAIM:
-		case CMD_RESURRECT:
-			if(ci->id==CMD_RECLAIM)
-				glColor4f(1,0.2,1,0.4);
-			else
-				glColor4f(0.2,0.6,1,0.4);
-
-			if(ci->params.size()==4){
-				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-				float radius=ci->params[3];
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		bool draw = false;
+		switch(ci->id) {
+			case CMD_MOVE: {
+				pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+				glColor4f(0.5f, 1.0f, 0.5f, 0.4f);
+				draw = true;
+				break;
+			}
+			case CMD_FIGHT:
+			case CMD_PATROL: {
+				pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+				glColor4f(0.5f, 0.5f, 1.0f, 0.4f);
+				draw = true;
+				break;
+			}
+			case CMD_GUARD: {
+				if (uh->units[int(ci->params[0])] != 0) {
+					pos = helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+					glColor4f(0.3f, 0.3f, 1.0f, 0.4f);
+					draw = true;
+				}
+				break;
+			}
+			case CMD_RESTORE: {
+				pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+				glColor4f(0.3f, 1.0f, 0.5f, 0.4f);
 				glVertexf3(pos);
 				glEnd();
+				glSurfaceCircle(pos, ci->params[3], 20);
 				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=20;++a){
-					float3 pos2=float3(pos.x+sin(a*PI*2/20)*radius,0,pos.z+cos(a*PI*2/20)*radius);
-					pos2.y=ground->GetHeight(pos2.x,pos2.z)+5;
-					glVertexf3(pos2);
-				}
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-			} else {
-				int id=(int) ci->params[0];
-				if(id>=MAX_UNITS){
-					if(featureHandler->features[id-MAX_UNITS])
-						pos=featureHandler->features[id-MAX_UNITS]->midPos;
+				draw = true;
+				break;
+			}
+			case CMD_ATTACK:
+			case CMD_DGUN: {
+				if (ci->params.size() == 1) {
+					if (uh->units[int(ci->params[0])] != 0) {
+						pos = helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+						glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
+						draw = true;
+					}
 				} else {
-					if(uh->units[id]!=0 && uh->units[id]!=owner)
-						pos=helper->GetUnitErrorPos(uh->units[id],owner->allyteam);
+					pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+					glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
+					draw = true;
 				}
+				break;
 			}
-			draw=true;
-			break;
-		case CMD_FIGHT:
-		case CMD_PATROL:
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			glColor4f(0.5,0.5,1,0.4);
-			draw=true;
-			break;
-		case CMD_REPAIR:
-		case CMD_CAPTURE:
-			if(ci->id==CMD_REPAIR)
-				glColor4f(0.3,1,1,0.4);
-			else
-				glColor4f(1,1,0.3,0.4);
-			if(ci->params.size()==4){
-				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-				float radius=ci->params[3];
-				glVertexf3(pos);
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=20;++a){
-					float3 pos2=float3(pos.x+sin(a*PI*2/20)*radius,0,pos.z+cos(a*PI*2/20)*radius);
-					pos2.y=ground->GetHeight(pos2.x,pos2.z);
-					glVertexf3(pos2);
+			case CMD_RECLAIM:
+			case CMD_RESURRECT: {
+				const float reclaimColor[4]   = { 1.0f, 0.2f, 1.0f, 0.4f };
+				const float resurrectColor[4] = { 0.2f, 0.6f, 1.0f, 0.4f };
+				const float* color;
+				if (ci->id == CMD_RECLAIM) {
+					color = reclaimColor;
+				} else {
+					color = resurrectColor;
 				}
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-			} else {
-				int id=(int) ci->params[0];
-				if(uh->units[id]!=0)
-					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+				if (ci->params.size() == 4) {
+					pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+					glColor4fv(color);
+					glVertexf3(pos);
+					glEnd();
+					glSurfaceCircle(pos, ci->params[3], 20);
+					glBegin(GL_LINE_STRIP);
+					draw = true;
+				} else {
+					int id = (int)ci->params[0];
+					if (id>=MAX_UNITS) {
+						if (featureHandler->features[id-MAX_UNITS]) {
+							pos = featureHandler->features[id-MAX_UNITS]->midPos;
+							glColor4fv(color);
+							draw = true;
+						}
+					} else {
+						if (uh->units[id]!=0 && uh->units[id]!=owner) {
+							pos = helper->GetUnitErrorPos(uh->units[id], owner->allyteam);
+							glColor4fv(color);
+							draw = true;
+						}
+					}
+				}
+				break;
 			}
-			draw=true;
-			break;
-		case CMD_RESTORE:{
-			glColor4f(0.3,1,0.5,0.4);
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			float radius=ci->params[3];
-			glVertexf3(pos);
-			glEnd();
-			glBegin(GL_LINE_STRIP);
-			for(int a=0;a<=20;++a){
-				float3 pos2=float3(pos.x+sin(a*PI*2/20)*radius,0,pos.z+cos(a*PI*2/20)*radius);
-				pos2.y=ground->GetHeight(pos2.x,pos2.z);
-				glVertexf3(pos2);
+			case CMD_REPAIR:
+			case CMD_CAPTURE: {
+				const float repairColor[4]  = { 0.3f, 1.0f, 1.0f, 0.4f };
+				const float captureColor[4] = { 1.0f, 1.0f, 0.3f, 0.4f };
+				const float* color;
+				if (ci->id == CMD_REPAIR) {
+					color = repairColor;
+				} else {
+					color = captureColor;
+				}
+				if (ci->params.size() == 4) {
+					pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+					glColor4fv(color);
+					glVertexf3(pos);
+					glEnd();
+					glSurfaceCircle(pos, ci->params[3], 20);
+					glBegin(GL_LINE_STRIP);
+					draw = true;
+				} else {
+					int id = (int)ci->params[0];
+					if (uh->units[id] != 0) {
+						pos = helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+						glColor4fv(color);
+						draw = true;
+					}
+				}
+				break;
 			}
-			glEnd();
-			glBegin(GL_LINE_STRIP);
-			draw=true;
-			break;}
-		case CMD_GUARD:
-			if(uh->units[int(ci->params[0])]!=0)
-				pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
-			glColor4f(0.3,0.3,1,0.4);
-			draw=true;
-			break;
-		case CMD_ATTACK:
-		case CMD_DGUN:
-			if(ci->params.size()==1){
-				if(uh->units[int(ci->params[0])]!=0)
-					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
-			} else {
-				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			}
-			glColor4f(1,0.5,0.5,0.4);
-			draw=true;
-			break;
 		}
-		map<int,string>::iterator boi;
-		if((boi=buildOptions.find(ci->id))!=buildOptions.end()){
-			BuildInfo bi;
-            bi.pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			if(ci->params.size()==4) bi.buildFacing=int(ci->params[3]);
-			bi.def = unitDefHandler->GetUnitByName(boi->second);
 
-			glColor4f(1,1,1,0.4);
-			glVertexf3(pos);
+		map<int, string>::iterator boi;
+		if ((boi = buildOptions.find(ci->id)) != buildOptions.end()) {
+			BuildInfo bi;
+			bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+			if (ci->params.size() == 4) {
+				bi.buildFacing = int(ci->params[3]);
+			}
+			bi.def = unitDefHandler->GetUnitByName(boi->second);
+			bi.pos = helper->Pos2BuildPos(bi);
+
+			// end with dark green			
+			glColor4f(0.0f, 0.5f, 0.0f, 0.4f);
+			glVertexf3(bi.pos);
 			glEnd();
 
-			bi.pos=helper->Pos2BuildPos(bi);
-
-			if(bi.def->extractRange>0){	//draw range
+			//draw extraction range
+			if (bi.def->extractRange > 0) {
 				glDisable(GL_TEXTURE_2D);
-				glColor4f(1,0.3,0.3,0.7);
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=40;++a){
-					float3 wpos(cos(a*2*PI/40)*bi.def->extractRange,0,sin(a*2*PI/40)*bi.def->extractRange);
-					wpos+=bi.pos;
-					wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
-					glVertexf3(wpos);
-				}
-				glEnd();
+				glColor4f(1.0f, 0.3f, 0.3f, 0.7f);
+				glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
 			}
 
-			glColor4f(1,1,1,0.3);
+			// draw the building (but not its base square)
+			glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 			unitDrawer->DrawBuildingSample(bi.def, owner->team, bi.pos, bi.buildFacing);
 
-			glColor4f(1,1,1,0.4);
+			// restart with white
 			glBegin(GL_LINE_STRIP);
-			draw=true;
+			glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
+			glVertexf3(bi.pos);
 		}
-		if(draw){
+
+		if (draw) {
 			glVertexf3(pos);
 			cursorIcons->AddIcon(ci->id, pos);
 		}
 	}
+
 	glEnd();
 }
+
 
 void CBuilderCAI::GiveCommand(Command& c)
 {
@@ -772,12 +779,11 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 			float xsize=bi.GetXSize()*4;
 			float ysize=bi.GetYSize()*4;
 			glColor4f(0.2,1,0.2,1);
-			glBegin(GL_LINE_STRIP);
-			glVertexf3(bi.pos+float3(xsize,1,ysize));
-			glVertexf3(bi.pos+float3(-xsize,1,ysize));
-			glVertexf3(bi.pos+float3(-xsize,1,-ysize));
-			glVertexf3(bi.pos+float3(xsize,1,-ysize));
-			glVertexf3(bi.pos+float3(xsize,1,ysize));
+			glBegin(GL_LINE_LOOP);
+			glVertexf3(bi.pos+float3(+xsize, 1, +ysize));
+			glVertexf3(bi.pos+float3(-xsize, 1, +ysize));
+			glVertexf3(bi.pos+float3(-xsize, 1, -ysize));
+			glVertexf3(bi.pos+float3(+xsize, 1, -ysize));
 			glEnd();
 		}
 	}
