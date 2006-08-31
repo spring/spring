@@ -16,7 +16,6 @@ class CBitmap
 {
 public:
 	CBitmap(unsigned char* data,int xsize,int ysize);
-	CBitmap(string const& filename);
 	CBitmap();
 	CBitmap(const CBitmap& old);
 	CBitmap& operator=(const CBitmap& bm);

@@ -459,20 +459,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 //	toBeAddedProjectile.push(p);
 }
 
-void CProjectileHandler::LoadSmoke(unsigned char tex[512][512][4],int xoffs,int yoffs,char* filename,char* alphafile)
-{
-	CBitmap TextureImage(filename);
-	CBitmap AlphaImage(alphafile);
-	for(int y=0;y<32;y++){
-		for(int x=0;x<32;x++){
-			tex[yoffs+y][xoffs+x][0]=TextureImage.mem[(y*32+x)*4];
-			tex[yoffs+y][xoffs+x][1]=TextureImage.mem[(y*32+x)*4+1];
-			tex[yoffs+y][xoffs+x][2]=TextureImage.mem[(y*32+x)*4+2];
-			tex[yoffs+y][xoffs+x][3]=AlphaImage.mem[(y*32+x)*4];
-		}
-	}
-}
-
 void CProjectileHandler::CheckUnitCol()
 {
 	Projectile_List::iterator psi;

@@ -99,7 +99,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PrintLoadMsg("Loading detail textures");
 
-	CBitmap bm(detailTexName);
+	CBitmap bm;
+	if (!bm.Load(detailTexName))
+		throw content_error("Could not load detail texture from file " + detailTexName);
 	glGenTextures(1, &detailTex);
 	glBindTexture(GL_TEXTURE_2D, detailTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);

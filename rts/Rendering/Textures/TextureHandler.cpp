@@ -287,11 +287,15 @@ int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
 	S3oTex tex;
 	tex.num=newNum;
 
-	CBitmap bm(string("unittextures/"+tex1));
+	CBitmap bm;
+	if (!bm.Load(string("unittextures/"+tex1)))
+		throw content_error("Could not load S3O texture from file unittextures/" + tex1);
 	tex.tex1=bm.CreateTexture(true);
 	tex.tex2=0;
 	if(unitDrawer->advShading){
-		CBitmap bm(string("unittextures/"+tex2));
+		CBitmap bm;
+		if (!bm.Load(string("unittextures/"+tex2)))
+			throw content_error("Could not load S3O texture from file unittextures/" + tex2);
 		tex.tex2=bm.CreateTexture(true);
 	}
 	s3oTextures.push_back(tex);

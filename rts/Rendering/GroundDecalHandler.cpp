@@ -396,7 +396,9 @@ unsigned int CGroundDecalHandler::LoadTexture(std::string name)
 	if(name.find_first_of('\\')==string::npos&&name.find_first_of('/')==string::npos)
 		name=string("bitmaps/tracks/")+name;
 
-	CBitmap bm(name);
+	CBitmap bm;
+	if (!bm.Load(name))
+		throw content_error("Could not load ground decal from file " + name);
 	for(int y=0;y<bm.ysize;++y){
 		for(int x=0;x<bm.xsize;++x){
 			bm.mem[(y*bm.xsize+x)*4+3]=bm.mem[(y*bm.xsize+x)*4+1];
@@ -476,7 +478,9 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 
 void CGroundDecalHandler::LoadScar(std::string file, unsigned char* buf, int xoffset, int yoffset)
 {
-	CBitmap bm(file);
+	CBitmap bm;
+	if (!bm.Load(file))
+		throw content_error("Could not load scar from file " + file);
 	for(int y=0;y<bm.ysize;++y){
 		for(int x=0;x<bm.xsize;++x){
 			buf[((y+yoffset)*512+x+xoffset)*4+3]=bm.mem[(y*bm.xsize+x)*4+1];
@@ -620,7 +624,9 @@ int CGroundDecalHandler::GetBuildingDecalType(std::string name)
 	}
 	BuildingDecalType* tt=new BuildingDecalType;
 	tt->name=name;
-	CBitmap bm(string("unittextures/") + name);
+	CBitmap bm;
+	if (!bm.Load(string("unittextures/") + name))
+		throw content_error("Could not load building decal from file unittextures/" + name);
 	tt->texture=bm.CreateTexture(true);
 	buildingDecalTypes.push_back(tt);
 

@@ -109,7 +109,9 @@ bool CGuiHandler::LoadCMDBitmap (int id, char* filename)
 {
 	guiicon_data icondata;
 	glGenTextures(1, &icondata.texture);
-	CBitmap TextureImage(filename);
+	CBitmap TextureImage;
+	if (!TextureImage.Load(filename))
+		throw content_error(std::string("Could not load command bitmap from file ") + filename);
 
 	// create mipmapped texture
 	glBindTexture(GL_TEXTURE_2D, icondata.texture);
@@ -325,7 +327,7 @@ void CGuiHandler::DrawButtons()
 		glEnd();
 	}
 
-	// För varje knapp (rita den)
+	// Fï¿½ varje knapp (rita den)
 	int buttonStart=max(0,(int)(min(activePage*NUMICOPAGE,(int)total_active_icons)));
 	int buttonEnd=max(0,int(min((activePage+1)*NUMICOPAGE,(int)total_active_icons)));
 
@@ -360,7 +362,7 @@ void CGuiHandler::DrawButtons()
 		//else
 		//glBegin(GL_LINE_STRIP);
 
-		// "markerad" (lägg mörkt fält över)
+		// "markerad" (lï¿½g mï¿½kt fï¿½t ï¿½er)
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(1,1,1,0.8f);
 
@@ -378,7 +380,7 @@ void CGuiHandler::DrawButtons()
 			glTexCoord2f(0,1);
 			glVertex2f(x1,y2);
 			glEnd();
-			if(!commands[nr].params.empty()){			//skriv texten i första param ovanpå
+			if(!commands[nr].params.empty()){			//skriv texten i fï¿½sta param ovanpï¿½
 				string toPrint=commands[nr].params[0];
 
 				if (toPrint.length() > 6)

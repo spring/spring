@@ -84,7 +84,9 @@ void LoadStartPicture()
 	else
 		name=jpgs[selected-bmps.size()];
 
-	CBitmap bm(name);
+	CBitmap bm;
+	if (!bm.Load(name))
+		throw content_error("Could not load startpicture from file " + name);
 
 	/* HACK Really big load pictures made a GLU choke. */
 	if (bm.xsize > gu->screenx || bm.ysize > gu->screeny)
