@@ -6,16 +6,26 @@
 class CGameInfo : public CInputReceiver
 {
 	public:
+		static void Enable();
+		static void Disable();
+		static bool IsActive();
+
+	protected:
 		CGameInfo(void);
 		~CGameInfo(void);
 
 		bool MousePress(int x, int y, int button);
+		void MouseRelease(int x, int y, int button);
 		bool KeyPressed(unsigned short key);
+		bool IsAbove(int x, int y);
+		std::string GetTooltip(int x,int y);
 		void Draw();
 
 	protected:
 		ContainerBox box;
-};
 
+	protected:
+		static CGameInfo* instance;
+};
 
 #endif /* GAMEINFO_H */
