@@ -85,7 +85,8 @@ CProjectileHandler::CProjectileHandler()
 	}
 	textureAtlas->AddTexFromMem("perlintex", 128, 128, CTextureAtlas::RGBA32, tex);
 
-	textureAtlas->Finalize();
+	if (!textureAtlas->Finalize())
+		info->AddLine("Could not finalize projectile texture atlas. Use less/smaller textures.");
 
 	flaretex = textureAtlas->GetTexture("flare");
 	explotex = textureAtlas->GetTexture("explo");
@@ -123,7 +124,9 @@ CProjectileHandler::CProjectileHandler()
 		}
 	}
 
-	groundFXAtlas->Finalize();
+	if (!groundFXAtlas->Finalize())
+		info->AddLine("Could not finalize groundFX texture atlas. Use less/smaller textures.");
+
 	groundflashtex = groundFXAtlas->GetTexture("groundflash");
 	groundringtex = groundFXAtlas->GetTexture("groundring");
 	seismictex = groundFXAtlas->GetTexture("seismic");

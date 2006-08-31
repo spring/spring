@@ -103,9 +103,6 @@ void CInfoConsole::AddLine(int priority, const char *fmt, ...)
 	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
 
-	(*filelog) << text << "\n";
-	filelog->flush();
-
 	AddLineHelper (priority,text);
 }
 
@@ -120,9 +117,6 @@ void CInfoConsole::AddLine(const char *fmt, ...)
 	va_start(ap, fmt);									// Parses The String For Variables
 	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
-
-	(*filelog) << text << "\n";
-	filelog->flush();
 
 	AddLineHelper (0,text);
 }
@@ -183,10 +177,14 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
+	(*filelog) << text << "\n";
+	filelog->flush();
+
 #ifdef WIN32
 	OutputDebugString(text);
 	OutputDebugString("\n");
 #endif
+
 	float maxWidth = 25.0f;
 	int pos=0, line_start=0;
 
