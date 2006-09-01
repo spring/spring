@@ -119,7 +119,7 @@
 //    Ctrl+insert. Spring will then ask for a keyset, which will then have the
 //    icon's command immediately appended to its list of actions. Placing the
 //    mouse cursor over an icon and hitting Ctrl+delete will delete all bindings
-//    associated with that the icon's command.
+//    associated with that icon's command.
 //
 
 
