@@ -39,12 +39,12 @@
 //
 //    bind <keyset> <action>
 //    ----------------------
-//    - appends the action to the keysets list of actions
+//    - appends the action to the keyset's list of actions
 //    - the action can be just a command, or a command with arguments
 //
 //    unbind <keyset> <action>
 //    ------------------------
-//    - removes the action from the keysets list of actions
+//    - removes the action from the keyset's list of actions
 //    - both the action and the keyset must match
 //
 //    unbindkeyset <keyset>
@@ -117,9 +117,9 @@
 //    'hotunbind' (Ctrl+delete) capabilities. Place the mouse cursor over one
 //    of the control panel icons (normal command or build command), and press
 //    Ctrl+insert. Spring will then ask for a keyset, which will then have the
-//    icon's action immediately be appended to its list of actions. Placing the
+//    icon's command immediately appended to its list of actions. Placing the
 //    mouse cursor over an icon and hitting Ctrl+delete will delete all bindings
-//    related to that command.
+//    associated with that the icon's command.
 //
 
 
@@ -240,8 +240,8 @@
 //
 //  bind                  [  incbuildfacing
 //  bind                  ]  decbuildfacing
-//  bind              Any+x  decbuildspacing
 //  bind              Any+z  incbuildspacing
+//  bind              Any+x  decbuildspacing
 //
 //  bind                  m  minimapalert
 //  bind                  t  textalert
