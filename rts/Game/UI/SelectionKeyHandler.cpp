@@ -123,12 +123,18 @@ string CSelectionKeyHandler::ReadToken(string& s)
 	return ret;
 }
 
+
 string CSelectionKeyHandler::ReadDelimiter(string& s)
 {
-	string ret=s.substr(0,1);
-	s=s.substr(1,string::npos);
+	string ret = s.substr(0, 1);
+	if (s.size() >= 1) {
+		s = s.substr(1, string::npos);
+	} else {
+		s = "";
+	}
 	return ret;
 }
+
 
 void CSelectionKeyHandler::DoSelection(string selectString)
 {
