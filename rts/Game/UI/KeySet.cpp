@@ -58,7 +58,7 @@ string CKeySet::GetString() const
 	string name = keyCodes->GetName(key);
 	if (name.empty()) {
 		char buf[16];
-		snprintf(buf, 16, "0x%03X", key);
+		SNPRINTF(buf, 16, "0x%03X", key);
 		name = buf;
 	}
 	
