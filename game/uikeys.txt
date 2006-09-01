@@ -1,15 +1,412 @@
 //
-// Using the built-in defaults
+//  DEFAULT UIKEYS.TXT FOR SPRING (0.73)
+//  ------------------------------------
 //
-// Somebody needs to document the new key binding mechanism...
-// (it'll get done once the new code is a little closer to final)
+
+
 //
-// try:
-//   .bind <keyset> <action>
-//   .cmd keydebug
-//   .cmd keyload
-//   .cmd keysave
-//   .cmd keysyms
-//   .cmd keycodes
-//   .cmd keyprint
+//  Quick Notes:
 //
+//  1. The built-in default bindings are always loaded. If you wish
+//     to override them, use the unbindall and unbind commands
+//     to delete them at the beginning of your 'uikeys.txt'.
+//
+//  2. More then one action can be bound to a specific keyset. The
+//     actions for any given keyset are tried in the order that they
+//     were bound. The first currently available command that matches
+//     an action is used.
+//
+//  3. As a slight modification to the above note, keysets that use
+//     the 'Any' modifier are tried after those that do not use it.
+//
+//  4. Ctrl+Enter     generates Ctrl+m
+//
+//  5. Ctrl+Backspace generates Ctrl+h
+//
+//  6. A keyset using the Shift modifier may require a different key
+//     symbol then the same key that isn't shifted  (ex:  '<' vs. ',')
+//
+
+
+//
+//  Commands that can be used in this file:
+//
+//    unbindall
+//    ---------
+//    - removes all bindings, and adds 'bind enter chat'
+//      (one of the other unbind commands can get rid of that one)
+//    - good for getting rid of the default bindings
+//
+//    bind <keyset> <action>
+//    ----------------------
+//    - appends the action to the keysets list of actions
+//    - the action can be just a command, or a command with arguments
+//
+//    unbind <keyset> <action>
+//    ------------------------
+//    - removes the action from the keysets list of actions
+//    - both the action and the keyset must match
+//
+//    unbindkeyset <keyset>
+//    ---------------------
+//    - removes all bindings that use the keyset
+//
+//    unbindaction <action>
+//    ---------------------
+//    - removes all bindings that use the action  (command that is, a misnomer)
+//
+//
+//  * NOTE: These commands can also be run from the chat line in-game using
+//          the slash command syntax  (/bind, /unbind, etc...)
+//
+
+
+//
+//  Keyset Format:
+//
+//    A keyset is a combination of keys, the main key and its modifiers.
+//
+//    Here are some examples:
+//
+//      bind            a  fake_action
+//      bind       Ctrl+a  fake_action
+//      bind          C+a  fake_action
+//      bind Ctrl+Shift+a  fake_action
+//      bind        C+S+a  fake_action
+//
+//    The format then goes like this:
+//
+//      [<Modifier>+]...[<Modifier>+]<keysym>
+//
+//    The modifiers (and their abbreviations), are:
+//
+//      Any   (*)
+//      Alt   (A)
+//      Ctrl  (C)
+//      Meta  (M)
+//      Shift (S)
+//
+//    The special 'Any' modifier makes it so that the keyset matches
+//    regardless of the current state of the real modifiers.
+//
+//    The known keysyms (key symbols), are listed at the end of this file.
+//    If you want to use a key that is unknown to Spring, then you may use
+//    the hexadecimal notation. Here are two equivalent bindings:
+//
+//      bind Ctrl+0x20  firestate 0  // hold fire
+//      bind Ctrl+space firestate 0  // hold fire
+//
+
+
+//
+//  Extra Run-TimeExtra Commands
+//
+//    /keyload  : loads the uikeys.txt bindings  (does not clear current bindings)
+//    /keysave  : save current bindings to 'uikeys.tmp'  (NOTE: 'tmp' vs. 'txt')
+//    /keysyms  : prints the known keysyms to standard out
+//    /keycodes : prints the known keycodes to standard out
+//    /keyprint : prints the current bindings to standard out
+//    /keydebug : prints debugging information to standard out (for each keystroke)
+//
+
+
+//
+//  Hotbinding:
+//
+//    The default bindings include the 'hotbind' (Ctrl+insert) and
+//    'hotunbind' (Ctrl+delete) capabilities. Place the mouse cursor over one
+//    of the control panel icons (normal command or build command), and press
+//    Ctrl+insert. Spring will then ask for a keyset, which will then have the
+//    icon's action immediately be appended to its list of actions. Placing the
+//    mouse cursor over an icon and hitting Ctrl+delete will delete all bindings
+//    related to that command.
+//
+
+
+//
+//  Default Bindings:
+//
+//  bind                esc  quit
+//  bind          Shift+esc  quit
+//
+//  bind              enter  chat
+//  bind          Alt+enter  chatally
+//  bind          Alt+enter  chatswitchally
+//  bind        Shift+enter  chatspec
+//  bind        Shift+enter  chatswitchspec
+//  bind             Ctrl+m  chatall
+//  bind             Ctrl+m  chatswitchall
+//
+//  bind            Ctrl+f1  viewfps
+//  bind            Ctrl+f2  viewta
+//  bind            Ctrl+f3  viewtw
+//  bind            Ctrl+f4  viewrot
+//
+//  bind              Any+0  group0
+//  bind              Any+1  group1
+//  bind              Any+2  group2
+//  bind              Any+3  group3
+//  bind              Any+4  group4
+//  bind              Any+5  group5
+//  bind              Any+6  group6
+//  bind              Any+7  group7
+//  bind              Any+8  group8
+//  bind              Any+9  group9
+//
+//  bind                  t  track
+//  bind             Ctrl+t  trackmode
+//  bind            Shift+t  trackoff
+//
+//  bind              Alt+`  drawlabel
+//  bind              Any+`  drawinmap
+//
+//  bind        Ctrl+insert  hotbind
+//  bind        Ctrl+delete  hotunbind
+//
+//  bind                tab  toggleoverview
+//  bind          backspace  mousestate
+//
+//  bind              Any+j  mouse2
+//  bind             Any+up  moveforward
+//  bind           Any+down  moveback
+//  bind          Any+right  moveright
+//  bind           Any+left  moveleft
+//  bind         Any+pageup  moveup
+//  bind       Any+pagedown  movedown
+//  bind          Any+shift  movefast
+//  bind           Any+ctrl  moveslow
+//
+//  bind                  +  speedup
+//  bind            Shift++  speedup
+//  bind             insert  speedup
+//  bind                  =  speedup
+//  bind                  -  slowdown
+//  bind             delete  slowdown
+//
+//  bind                  h  sharedialog
+//
+//  bind            Shift+<  decguiopacity
+//  bind            Shift+>  incguiopacity
+//
+//  bind               home  increaseViewRadius
+//  bind                end  decreaseViewRadius
+//
+//  bind                  l  togglelos
+//  bind                  ;  toggleradarandjammer
+//
+//  bind                 f1  showElevation
+//  bind                 f2  ShowPathMap
+//  bind                 f3  LastMsgPos
+//  bind                 f4  ShowMetalMap
+//  bind                 f5  hideinterface
+//  bind                 f6  NoSound
+//  bind                 f7  dynamicSky
+//  bind                 f8  savegame
+//  bind                 f9  showhealthbars
+//  bind                f10  createvideo
+//  bind                f11  screenshot png
+//  bind                f12  screenshot
+//
+//  bind                  b  debug
+//  bind                  o  singlestep
+//
+//  bind                  ,  prevmenu
+//  bind                  .  nextmenu
+//
+//  bind                  a  attack
+//  bind              Alt+a  areaattack
+//  bind                  c  controlunit
+//  bind              Alt+c  capture
+//  bind                  d  dgun
+//  bind             Ctrl+d  selfd
+//  bind                  e  reclaim
+//  bind                  f  fight
+//  bind                  g  guard
+//  bind             Ctrl+h  mousestate
+//  bind                  i  gameinfo
+//  bind                  k  cloak
+//  bind                  l  loadunits
+//  bind                  m  move
+//  bind                  p  patrol
+//  bind                  q  groupselect
+//  bind                  q  groupadd
+//  bind             Ctrl+q  aiselect
+//  bind            Shift+q  groupclear
+//  bind                  r  repair
+//  bind                  s  stop
+//  bind                  u  unloadunits
+//  bind                  w  wait
+//  bind                  x  onoff
+//
+//  bind                  [  incbuildfacing
+//  bind                  ]  decbuildfacing
+//  bind              Any+x  decbuildspacing
+//  bind              Any+z  incbuildspacing
+//
+//  bind                  m  minimapalert
+//  bind                  t  textalert
+//
+//  bind            numpad0  repeat
+//  bind       Ctrl+numpad0  groupclear
+//  bind            numpad1  movestate 0
+//  bind            numpad2  movestate 1
+//  bind            numpad3  movestate 2
+//  bind            numpad4  firestate 0
+//  bind            numpad5  firestate 1
+//  bind            numpad6  firestate 2
+//  bind            numpad7  onoff
+//  bind            numpad8  cloak
+//  bind            numpad9  trajectory
+//  bind            numpad.  showcommands
+//  bind       Ctrl+numpad4  aiselect MexUpgrader AI
+//  bind       Ctrl+numpad5  aiselect default
+//  bind       Ctrl+numpad6  aiselect None
+//  bind       Ctrl+numpad7  aiselect Simple formation
+//  bind       Ctrl+numpad8  aiselect Radar AI
+//  bind       Ctrl+numpad9  aiselect Central build AI
+//
+
+
+//  Key Symbol    Key Code
+//  ----------    --------
+//
+//  !             0x021
+//  "             0x022
+//  #             0x023
+//  $             0x024
+//  %             0x025
+//  &             0x026
+//  '             0x027
+//  (             0x028
+//  )             0x029
+//  *             0x02A
+//  +             0x02B
+//  ,             0x02C
+//  -             0x02D
+//  .             0x02E
+//  /             0x02F
+//  0             0x030
+//  1             0x031
+//  2             0x032
+//  3             0x033
+//  4             0x034
+//  5             0x035
+//  6             0x036
+//  7             0x037
+//  8             0x038
+//  9             0x039
+//  :             0x03A
+//  ;             0x03B
+//  <             0x03C
+//  =             0x03D
+//  >             0x03E
+//  ?             0x03F
+//  @             0x040
+//  [             0x05B
+//  \             0x05C
+//  ]             0x05D
+//  ^             0x05E
+//  _             0x05F
+//  `             0x060
+//  a             0x061
+//  alt           0x134
+//  b             0x062
+//  backspace     0x008
+//  c             0x063
+//  clear         0x00C
+//  ctrl          0x132
+//  d             0x064
+//  delete        0x07F
+//  down          0x112
+//  e             0x065
+//  end           0x117
+//  enter         0x00D
+//  esc           0x01B
+//  escape        0x01B
+//  f             0x066
+//  f1            0x11A
+//  f10           0x123
+//  f11           0x124
+//  f12           0x125
+//  f13           0x126
+//  f14           0x127
+//  f15           0x128
+//  f2            0x11B
+//  f3            0x11C
+//  f4            0x11D
+//  f5            0x11E
+//  f6            0x11F
+//  f7            0x120
+//  f8            0x121
+//  f9            0x122
+//  g             0x067
+//  h             0x068
+//  home          0x116
+//  i             0x069
+//  insert        0x115
+//  j             0x06A
+//  joy0          0x12C
+//  joy1          0x12D
+//  joy2          0x12E
+//  joy3          0x12F
+//  joy4          0x130
+//  joy5          0x131
+//  joy6          0x132
+//  joy7          0x133
+//  joydown       0x141
+//  joyleft       0x142
+//  joyright      0x143
+//  joyup         0x140
+//  joyw          0x193
+//  joyx          0x190
+//  joyy          0x191
+//  joyz          0x192
+//  k             0x06B
+//  l             0x06C
+//  left          0x114
+//  m             0x06D
+//  meta          0x136
+//  n             0x06E
+//  numpad*       0x10C
+//  numpad+       0x10E
+//  numpad-       0x10D
+//  numpad.       0x10A
+//  numpad/       0x10B
+//  numpad0       0x100
+//  numpad1       0x101
+//  numpad2       0x102
+//  numpad3       0x103
+//  numpad4       0x104
+//  numpad5       0x105
+//  numpad6       0x106
+//  numpad7       0x107
+//  numpad8       0x108
+//  numpad9       0x109
+//  numpad=       0x110
+//  numpad_enter  0x10F
+//  o             0x06F
+//  p             0x070
+//  pagedown      0x119
+//  pageup        0x118
+//  pause         0x013
+//  printscreen   0x13C
+//  q             0x071
+//  r             0x072
+//  return        0x00D
+//  right         0x113
+//  s             0x073
+//  shift         0x130
+//  space         0x020
+//  t             0x074
+//  tab           0x009
+//  u             0x075
+//  up            0x111
+//  v             0x076
+//  w             0x077
+//  x             0x078
+//  y             0x079
+//  z             0x07A
+//  {             0x07B
+//  |             0x07C
+//  }             0x07D
+//  ~             0x07E
