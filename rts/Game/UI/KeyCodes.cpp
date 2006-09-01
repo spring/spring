@@ -176,7 +176,7 @@ void CKeyCodes::PrintNameToCode() const
 {
 	map<string, int>::const_iterator it;
 	for (it = nameToCode.begin(); it != nameToCode.end(); ++it) {
-		printf("KEYNAME: %13s = %i\n", it->first.c_str(), it->second);
+		printf("KEYNAME: %13s = 0x%03X\n", it->first.c_str(), it->second);
 	}
 }
 
@@ -185,6 +185,6 @@ void CKeyCodes::PrintCodeToName() const
 {
 	map<int, string>::const_iterator it;
 	for (it = codeToName.begin(); it != codeToName.end(); ++it) {
-		printf("KEYCODE: %3i = '%s'\n", it->first, it->second.c_str());
+		printf("KEYCODE: 0x%03X = '%s'\n", it->first, it->second.c_str());
 	}
 }
