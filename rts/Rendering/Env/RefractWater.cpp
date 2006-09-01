@@ -51,12 +51,13 @@ void CRefractWater::Draw()
 	SetupWaterDepthTex();
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+
 	// GL_TEXTURE_RECTANGLE uses texcoord range 0 to width, whereas GL_TEXTURE_2D uses 0 to 1
 	if (target == GL_TEXTURE_RECTANGLE_ARB) {
-		float v[] = { 0.04f * gu->screenx, 0.04f * gu->screeny, 0.0f, 0.0f };
+		float v[] = { 10.0f * gu->screenx, 10.0f * gu->screeny, 0.0f, 0.0f };
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, v);
 	} else {
-		float v[] = { 0.04f, 0.04f, 0.0f, 0.0f };
+		float v[] = { 10.0f, 10.0f, 0.0f, 0.0f };
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, v);
 		v[0] = 1.0f / next_power_of_2(gu->screenx);
 		v[1] = 1.0f / next_power_of_2(gu->screeny);

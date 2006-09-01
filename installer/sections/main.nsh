@@ -18,6 +18,7 @@
   
   SetOverWrite on
   File "..\game\settings.exe"
+  File "..\game\settingstemplate.xml"
 ;  File "..\game\zlib.dll"
   Delete "$INSTDIR\zlib.dll"
   File "..\game\zlibwapi.dll"

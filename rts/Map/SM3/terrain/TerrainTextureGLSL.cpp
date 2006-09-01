@@ -83,8 +83,8 @@ struct Shader
 			strings[index] = i->c_str();
 		}
 
-		if (shaderType == GL_FRAGMENT_SHADER_ARB)
-			DebugOutput(shaderType);
+		//if (shaderType == GL_FRAGMENT_SHADER_ARB)
+		//	DebugOutput(shaderType);
 
 		glShaderSourceARB(handle, strings.size(), &strings.front(), &lengths.front());
 		glCompileShaderARB(handle);

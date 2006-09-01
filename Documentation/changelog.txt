@@ -177,6 +177,7 @@ TASpring change log
 - New COB "get"/"set" constant: 75 MAX_SPEED get/sets the max speed of the unit (multiplied with 64k)
 
 - New archive format (for map/mod development): *.sdd. It is a directory, but it is treated as an archive just like *.sdz and *.sd7.
+- New map format SM3, currently supported for testing purposes.
 
 
 0.72b1

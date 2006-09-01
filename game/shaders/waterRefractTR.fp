@@ -21,6 +21,7 @@ TEX waterDepth, fragment.texcoord[3], texture[3], 2D;
 # More depth gives more texture coordinate offset
 SUB temp2, {1,1,1,1}, waterDepth.a;
 MUL temp2, temp2, program.env[2];  # Texture coordinates for RECT mode are in pixels
+MUL temp2, temp2, fragment.position.w;
 MAD sstexc, temp, temp2, fragment.position;
 TEX subsurfcol, sstexc, texture[2], RECT;
 
