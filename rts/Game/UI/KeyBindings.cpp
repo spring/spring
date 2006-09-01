@@ -327,7 +327,7 @@ const CKeyBindings::ActionList&
 	const ActionList* alPtr = NULL;
 	
 	if (debug) {
-		printf("GetAction: %s (%i)", ks.GetString().c_str(), ks.Key());
+		printf("GetAction: %s (0x%03X)", ks.GetString().c_str(), ks.Key());
 	}
 
 	if (ks.AnyMod()) {
@@ -642,7 +642,10 @@ bool CKeyBindings::Save(const string& filename) const
 	}
 
 	// clear the defaults
-	fprintf(out, "\nunbindall  // clear the defaults\n\n");
+	fprintf(out, "\n");
+	fprintf(out, "unbindall          // clear the defaults\n");
+	fprintf(out, "unbind enter chat  // clear the defaults\n");
+	fprintf(out, "\n");
 
 	KeyMap::const_iterator it;
 	for (it = bindings.begin(); it != bindings.end(); ++it) {
@@ -678,7 +681,7 @@ void CKeyBindings::Print() const
 	for (it = bindings.begin(); it != bindings.end(); ++it) {
 		const ActionList& al = it->second;
 		for (int i = 0; i < (int)al.size(); ++i) {
-			printf("  Binding:  %18s (%i)  to  %s\n",
+			printf("  Binding:  %18s (0x%03X)  to  %s\n",
 						 it->first.GetString().c_str(), it->first.Key(),
 						 al[i].rawline.c_str());
 		}
