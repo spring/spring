@@ -32,7 +32,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 		shadowrc = 0;
 		groundShadowVP = 0;
 	}
-	reflectrc = tr->AddRenderContext(&reflectCam, true);
+	reflectrc = 0;
 }
 
 CSm3GroundDrawer::~CSm3GroundDrawer()
@@ -52,6 +52,12 @@ void CSm3GroundDrawer::Update()
 	cam.up = camera->up;
 	cam.pos = camera->pos;
 	cam.aspect = gu->screenx / (float)gu->screeny;
+
+	cam.right = cam.front.cross(cam.up);
+	cam.right.Normalize();
+
+	cam.up=cam.right.cross(cam.front);
+	cam.up.Normalize();
 
 	tr->Update();
 	tr->CacheTextures();
@@ -75,6 +81,11 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	terrain::RenderContext *currc;
 	if (drawWaterReflection)
 	{
+		if (!reflectrc) {
+			reflectrc = tr->AddRenderContext(&reflectCam, true);
+			tr->Update();
+		}
+
 		reflectCam.fov = PI * camera->fov / 180.0f;
 		reflectCam.front = camera->forward;
 		reflectCam.right = camera->right;
@@ -252,3 +263,4 @@ void CSm3GroundDrawer::DecreaseDetail()
 
 	info->AddLine("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
+

@@ -1069,7 +1069,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 		SetupForGhostDrawing();
 		glPushMatrix();
 		glTranslatef3(pos);
-		glRotatef((facing*1024*16)*(180.0/32768.0),0,1,0);
+		glRotatef(facing*90.0f,0,1,0);
 		model->DrawStatic();
 		CleanUpGhostDrawing();
 		glPopMatrix();

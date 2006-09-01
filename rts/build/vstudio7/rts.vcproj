@@ -3455,11 +3455,6 @@
 				<File
 					RelativePath="..\..\System\Script\LuaBinder.cpp">
 					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
 						<Tool
@@ -3471,11 +3466,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Script\LuaFunctions.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"/>
-					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">

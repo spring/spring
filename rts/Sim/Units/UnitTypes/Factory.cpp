@@ -91,7 +91,7 @@ void CFactory::Update()
 		}
 		if(canBuild){
 			quedBuild=false;
-			CUnit* b=unitLoader.LoadUnit(nextBuild,buildPos+float3(0.01,0.01,0.01),team,true,0);
+			CUnit* b=unitLoader.LoadUnit(nextBuild,buildPos+float3(0.01,0.01,0.01),team,true,buildFacing);
 			AddDeathDependence(b);
 			curBuild=b;
 

@@ -22,6 +22,7 @@ TEX waterDepth, fragment.texcoord[3], texture[3], 2D;
 # More depth gives more texture coordinate offset
 SUB temp2, {1,1,1,1}, waterDepth.a;
 MUL temp2, temp2, texOffsetScale;
+MUL temp2, temp2, fragment.position.w;
 MUL sstexc, fragment.position, windowCoordMul;
 MAD sstexc, temp, temp2, sstexc;
 TEX subsurfcol, sstexc, texture[2], 2D;

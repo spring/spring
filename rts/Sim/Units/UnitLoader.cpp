@@ -303,11 +303,11 @@ START_TIME_PROFILE;
 	unit->cob->Call(COBFN_Create);
 	unit->cob->Call("SetMaxReloadTime", relMax);
 
-	unit->Init();
-	unit->heading=facing*16*1024;
+	unit->heading = facing*16*1024;
 	unit->frontdir=GetVectorFromHeading(unit->heading);
 	unit->updir=UpVector;
 	unit->rightdir=unit->frontdir.cross(unit->updir);
+	unit->Init();
 
 	if(!build)
 		unit->FinishedBuilding();
