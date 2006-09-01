@@ -99,7 +99,7 @@
 
 
 //
-//  Extra Run-TimeExtra Commands
+//  Extra Run-Time Commands
 //
 //    /keyload  : loads the uikeys.txt bindings  (does not clear current bindings)
 //    /keysave  : save current bindings to 'uikeys.tmp'  (NOTE: 'tmp' vs. 'txt')
