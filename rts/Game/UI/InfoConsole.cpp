@@ -108,7 +108,7 @@ void CInfoConsole::AddLine(int priority, const char *fmt, ...)
 
 void CInfoConsole::AddLine(const char *fmt, ...)
 {
-	char text[500];
+	char text[1500];
 	va_list		ap;										// Pointer To List Of Arguments
 
 	if (fmt == NULL)									// If There's No Text
