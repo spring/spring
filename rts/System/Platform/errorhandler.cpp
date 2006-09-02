@@ -18,6 +18,9 @@
 #include <iostream>
 #endif
 
+// from X_MessageBox.cpp:
+void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
+
 void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 {
 	// Platform independent cleanup.
@@ -37,29 +40,9 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 	MessageBox (GetActiveWindow(), msg, caption, winFlags);
 
 #else
-	// Platform independent implementation, using std::cerr.
+	// X implementation
 
-#ifdef DEBUG
-#ifdef __GNUC__
-#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << std::dec << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
-#else
-#define DEBUGSTRING std::cerr << "  " << __FILE__ << ":" << std::dec << __LINE__ << std::endl;
-#endif
-#else
-#define DEBUGSTRING
-#endif
-
-	if (flags & MBF_INFO)
-		std::cerr << "Info: ";
-	else if (flags & MBF_EXCL)
-		std::cerr << "Warning: ";
-	else
-		std::cerr << "ERROR: ";
-	std::cerr << caption << std::endl;
-	std::cerr << "  " << msg << std::endl;
-	if (!(flags & (MBF_INFO | MBF_EXCL))) {
-		DEBUGSTRING
-	}
+	X_MessageBox(msg, caption, flags);
 
 #endif
 
