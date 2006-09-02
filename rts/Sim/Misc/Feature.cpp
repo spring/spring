@@ -15,6 +15,7 @@
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/GeoThermSmokeProjectile.h"
 #include "myMath.h"
 #include "mmgr.h"
 
@@ -54,7 +55,8 @@ CFeature::CFeature()
 	resurrectProgress(0),
 	health(0),
 	id(0),
-	finalHeight(0)
+	finalHeight(0),
+	solidOnTop(0)
 {
 	immobile=true;
 	physicalState = OnGround;
@@ -259,6 +261,14 @@ void CFeature::Kill(float3& impulse) {
 	DoDamage(damage*(health+1), 0, impulse);
 }
 
+void CFeature::DependentDied(CObject *o)
+{
+	if (o == solidOnTop)
+		solidOnTop = 0;
+
+	CSolidObject::DependentDied(o);
+}
+
 bool CFeature::Update(void)
 {
 	bool retValue=false;
@@ -297,10 +307,39 @@ bool CFeature::Update(void)
 	if(def->geoThermal){
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
-		if((ph->particleSaturation<0.7 && !(gs->frameNum&1)) || (ph->particleSaturation<1 && !(gs->frameNum&3))){
-			float3 speed=gu->usRandVector()*0.1;
-			speed.y+=1;
-			new CSmokeProjectile(pos,speed,70+gu->usRandFloat()*20,3,0.15,0,0.8);
+
+		if ((gs->frameNum+id % 30) % 30 == 0) 
+		{
+			// Find the unit closest to the geothermal
+			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);
+			float bestDist2;
+			CSolidObject *so=0;
+			for (vector<CSolidObject*>::iterator oi=objs.begin();oi!=objs.end();++oi) {
+				float dist2 = ((*oi)->pos-pos).SqLength();
+				if (!so || dist2 < bestDist2)  {
+					bestDist2 = dist2;
+					so = *oi;
+				}
+			}
+
+			if (so!=solidOnTop) {
+				if (solidOnTop) 
+					DeleteDeathDependence(solidOnTop);
+				if (so)
+					AddDeathDependence(so);
+			}
+			solidOnTop = so;
+		}
+
+		// Hide the smoke if there is a geothermal unit on the vent
+		CUnit *u = dynamic_cast<CUnit*>(solidOnTop);
+		if (!u || !u->unitDef->needGeo) {
+			if((ph->particleSaturation<0.7) || (ph->particleSaturation<1 && !(gs->frameNum&3))){
+				float3 speed=gu->usRandVector()*0.5f;
+				speed.y+=3.0f;
+				
+				new CGeoThermSmokeProjectile(gu->usRandVector()*5 + float3(pos.x,pos.y-10,pos.z),speed,30+gu->usRandFloat()*7, this);
+			}
 		}
 		POP_CODE_MODE;
 		retValue=true;

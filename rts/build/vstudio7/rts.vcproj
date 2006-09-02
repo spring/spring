@@ -1978,6 +1978,12 @@
 						RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.h">
 					</File>
 					<File
+						RelativePath="..\..\Sim\Projectiles\GeoThermSmokeProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\GeoThermSmokeProjectile.h">
+					</File>
+					<File
 						RelativePath="..\..\Sim\Projectiles\GfxProjectile.cpp">
 					</File>
 					<File

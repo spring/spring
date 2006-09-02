@@ -33,7 +33,9 @@ public:
 	int ChunkNumber(float f);
 	void DrawS3O();
 	void CalculateTransform();
-	CUnit* LastBuilder;
+	void DependentDied(CObject *o);
+
+	CUnit* lastBuilder;
 
 	std::string createdFromUnit;
 	// This flag is used to stop a potential exploit involving tripping a unit back and forth
@@ -64,6 +66,8 @@ public:
 	CFireProjectile* myFire;
 	int fireTime;
 	int emitSmokeTime;
+
+	CSolidObject *solidOnTop; // the solid object that is on top of the geothermal
 
 //	float3 addPos;
 //	float addRadius;
