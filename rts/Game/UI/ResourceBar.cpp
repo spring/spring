@@ -125,7 +125,7 @@ void CResourceBar::Draw(void)
 	font->glPrintAt(metalbarx1+metalbarlen/2.0,metaly/*+.02f*/,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->metal).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldMetalExpense)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldMetalUpkeep)).c_str());
+	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->prevMetalPull)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldMetalUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
 	font->glPrintAt(metalx+.044f,metaly+.01f,0.5,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldMetalIncome).c_str());
@@ -189,7 +189,7 @@ void CResourceBar::Draw(void)
 	font->glPrintAt(energybarx1+energybarlen/2.0,energyy/*+.02f*/,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->energy).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldEnergyExpense)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldEnergyUpkeep)).c_str());
+	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->prevEnergyPull)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldEnergyUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
 	font->glPrintAt(energyx+.044f,energyy+.01f,0.5,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldEnergyIncome).c_str());

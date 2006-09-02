@@ -177,6 +177,10 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
 				reclaimLeft = 1;
 			return true;
+		} else {
+			// update the energy and metal required counts
+			gs->Team(builder->team)->energyPullAmount += energyUse;
+			gs->Team(builder->team)->metalPullAmount += metalUse;
 		}
 		return false;
 

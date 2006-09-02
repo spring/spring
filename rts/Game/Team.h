@@ -58,6 +58,11 @@ public:
 	float metal;
 	float energy;
 
+	float metalPullAmount;
+	float energyPullAmount;
+	float prevEnergyPull;
+	float prevMetalPull;
+
 	float metalIncome,oldMetalIncome;
 	float energyIncome,oldEnergyIncome;
 	float tempMetalIncome;

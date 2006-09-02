@@ -156,6 +156,10 @@ void CWeapon::Update()
 			owner->UseEnergy(energyFireCost*p);
 			owner->UseMetal(metalFireCost*p);
 			buildPercent+=p;
+		} else {
+			// update the energy and metal required counts
+			gs->Team(owner->team)->energyPullAmount += energyFireCost*p;
+			gs->Team(owner->team)->metalPullAmount += metalFireCost*p;
 		}
 		if(buildPercent>=1){
 			buildPercent=0;
