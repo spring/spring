@@ -249,7 +249,7 @@ END_TIME_PROFILE("Projectile handler");
 }
 
 int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2){
-	if (arg1.dist >= arg2.dist)
+	if (arg1.dist <= arg2.dist)
 	   return 0;
    return 1;
 }
