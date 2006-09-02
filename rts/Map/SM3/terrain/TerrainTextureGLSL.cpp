@@ -34,6 +34,7 @@
 #include "TerrainTextureGLSL.h"
 #include "Rendering/GL/IFramebuffer.h"
 #include "FileSystem/FileHandler.h"
+#include "bitops.h"
 
 #include <fstream>
 
@@ -116,23 +117,38 @@ struct Shader
 	}
 };
 
+static int closest_pot(int i)
+{
+	int next = next_power_of_2(i);
+	return (next - i < i - next/2) ? next : next/2;
+}
+
 // A framebuffer enabled as texture
 class BufferTexture : public BaseTexture
 {
 public:
 	BufferTexture() 
 	{ 
-		framebuffer = instantiate_fb(gu->screenx, gu->screeny, FBO_NEED_COLOR | FBO_NEED_DEPTH); 
+	// ATI has GL_EXT_texture_rectangle, but that has no support for GLSL texture2DRect
+	// nVidia: Use RECT,  ati: use POT
+		width = gu->screenx;
+		height = gu->screeny;
+		if (GLEW_ARB_texture_rectangle) 
+			target = GL_TEXTURE_RECTANGLE_ARB;
+		else {
+			target = GL_TEXTURE_2D;
+			width = closest_pot(width);
+			height = closest_pot(height);
+		}
+
+		framebuffer = instantiate_fb(width, height, FBO_NEED_COLOR | FBO_NEED_DEPTH); 
 		name = "_buffer";
 
-	// ATI has GL_EXT_texture_rectangle, but that has no support for GLSL texture2DRect
-	// nVidia: Use RECT,  ati: use NPOT
-		target = GLEW_ARB_texture_rectangle ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
 		glGenTextures(1, &id);
 		glBindTexture(target, id);
 		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-		glTexImage2D(target, 0, 3, gu->screenx, gu->screeny, 0, GL_RGB, GL_INT, 0);
+		glTexImage2D(target, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
 		framebuffer->attachTexture(id, target, FBO_ATTACH_COLOR);
 
@@ -145,6 +161,7 @@ public:
 	}
 	bool IsRect() {	return target == GL_TEXTURE_RECTANGLE_ARB; }
 
+	int width, height;
 	uint target;
 	IFramebuffer* framebuffer;
 };
@@ -218,8 +235,11 @@ struct ShaderBuilder
 		nodeShader->wsLightDirLocation = glGetUniformLocationARB(nodeShader->program, "wsLightDir");
 		nodeShader->wsEyePosLocation = glGetUniformLocationARB(nodeShader->program, "wsEyePos");
 
-		GLint invScreenDim = glGetUniformLocationARB(nodeShader->program, "invScreenDim");
-		glUniform2fARB(invScreenDim, 1.0f/gu->screenx, 1.0f/gu->screeny);
+		if (buffers && !buffers->empty()) {
+			BufferTexture *bt = buffers->front();
+			GLint invScreenDim = glGetUniformLocationARB(nodeShader->program, "invScreenDim");
+			glUniform2fARB(invScreenDim, 1.0f/gu->screenx, 1.0f/gu->screeny);
+		}
 
 		glUseProgramObjectARB(0);
 
@@ -254,7 +274,7 @@ struct ShaderBuilder
 		fragmentShader.AddFile("shaders/terrainCommon.glsl");
 		fragmentShader.texts.push_back(textureSamplers);
 		char specularExponentStr[20];
-		SNPRINTF(specularExponentStr, 20, "%g", sd->specularExponent);
+		SNPRINTF(specularExponentStr, 20, "%5.3f", sd->specularExponent);
 		fragmentShader.texts.push_back(string("const float specularExponent = ") + specularExponentStr + ";\n");
 		fragmentShader.AddFile("shaders/terrainFragmentShader.glsl");
 
@@ -504,8 +524,10 @@ void NodeGLSLShader::UnbindTSM ()
 
 void NodeGLSLShader::Setup (NodeSetupParams& params)
 {
-	if (renderBuffer) // use a offscreen rendering buffer
+	if (renderBuffer) { // use a offscreen rendering buffer
 		renderBuffer->framebuffer->select();
+		glViewport(0, 0, renderBuffer->width, renderBuffer->height);
+	}
 
 	glUseProgramObjectARB(program);
 	for (int a=0;a<texUnits.size();a++) {
@@ -540,8 +562,10 @@ void NodeGLSLShader::Cleanup()
 
 	glUseProgramObjectARB(0);
 
-	if (renderBuffer)
+	if (renderBuffer) {
 		renderBuffer->framebuffer->deselect();
+		glViewport(0, 0, gu->screenx, gu->screeny);
+	}
 }
 
 std::string NodeGLSLShader::GetDebugDesc ()
@@ -584,14 +608,15 @@ void GLSLShaderHandler::BeginTexturing()
 {
 	if (!buffers.empty()) {
 		buffers.front()->framebuffer->select();
+		glViewport(0, 0, buffers.front()->width, buffers.front()->height);
 		glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 		buffers.front()->framebuffer->deselect();
+		glViewport(0, 0, gu->screenx, gu->screeny);
 	}
 }
 
 void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures)
-{
-}
+{}
 
 bool GLSLShaderHandler::SetupShader (IShaderSetup *ps, NodeSetupParams& params)
 {
