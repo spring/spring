@@ -1964,6 +1964,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Projectiles\GeoThermSmokeProjectile.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\GeoThermSmokeProjectile.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Projectiles\GfxProjectile.cpp"
 					>
 				</File>
@@ -3975,6 +3983,22 @@
 						RelativePath="..\..\Map\SM3\terrain\Textures.h"
 						>
 					</File>
+					<Filter
+						Name="shaders"
+						>
+						<File
+							RelativePath="..\..\..\game\shaders\terrainCommon.glsl"
+							>
+						</File>
+						<File
+							RelativePath="..\..\..\game\shaders\terrainFragmentShader.glsl"
+							>
+						</File>
+						<File
+							RelativePath="..\..\..\game\shaders\terrainVertexShader.glsl"
+							>
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 		</Filter>
