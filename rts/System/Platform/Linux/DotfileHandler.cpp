@@ -50,7 +50,11 @@ DotfileHandler::~DotfileHandler()
 int DotfileHandler::GetInt(const string name, const int def)
 {
 	std::map<string,string>::iterator pos = data.find(name);
-	return ( pos == data.end() ? def : atoi(data[name].c_str()) );
+	if (pos == data.end()) {
+		SetInt(name, def);
+		return def;
+	}
+	return atoi(pos->second.c_str());
 }
 
 /**
@@ -59,7 +63,11 @@ int DotfileHandler::GetInt(const string name, const int def)
 string DotfileHandler::GetString(const string name, const string def)
 {
 	std::map<string,string>::iterator pos = data.find(name);
-	return ( pos == data.end() ? def : data[name] );
+	if (pos == data.end()) {
+		SetString(name, def);
+		return def;
+	}
+	return pos->second;
 }
 
 /**
