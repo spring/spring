@@ -26,6 +26,10 @@ CTeam::CTeam()
 	energyUpkeep(0),
 	metalExpense(0),
 	energyExpense(0),
+	metalPullAmount(0),
+	energyPullAmount(0),
+	prevEnergyPull(0),
+	prevMetalPull(0),
 	oldMetalIncome(0),
 	oldEnergyIncome(0),
 	oldMetalUpkeep(0),
@@ -137,6 +141,11 @@ void CTeam::Update()
 	metalExpense=0;
 	oldEnergyExpense=energyExpense;
 	energyExpense=0;
+
+	prevEnergyPull = energyPullAmount;
+	prevMetalPull = metalPullAmount;
+	energyPullAmount = 0;
+	metalPullAmount = 0;
 
 	float eShare=0,mShare=0;
 	for(int a=0;a<gs->activeTeams;++a){

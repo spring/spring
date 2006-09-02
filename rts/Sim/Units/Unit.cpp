@@ -1087,6 +1087,10 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 					FinishedBuilding();
 				}
 				return true;
+			} else {
+				// update the energy and metal required counts
+				gs->Team(builder->team)->energyPullAmount += energyUse;
+				gs->Team(builder->team)->metalPullAmount += metalUse;
 			}
 			return false;
 		} else {
@@ -1257,6 +1261,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 
 bool CUnit::UseMetal(float metal)
 {
+	gs->Team(team)->metalPullAmount += metal;
 	if(metal<0){
 		AddMetal(-metal);
 		return true;
@@ -1279,6 +1284,7 @@ void CUnit::AddMetal(float metal)
 
 bool CUnit::UseEnergy(float energy)
 {
+	gs->Team(team)->energyPullAmount += energy;
 	if(energy<0){
 		AddEnergy(-energy);
 		return true;
