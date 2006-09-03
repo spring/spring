@@ -70,7 +70,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\..\..\..\game\aidll\globalai\"
+			OutputDirectory="..\..\..\..\game\AI\Bot-libs\"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			CharacterSet="2">
@@ -85,7 +85,7 @@
 				EnableFiberSafeOptimizations="TRUE"
 				OptimizeForProcessor="0"
 				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories="..\..\..\..\rts;..\..\..\..\rts\System;..\..\..\..\rts\ExternalAI"
+				AdditionalIncludeDirectories="..\..\..\..\rts;..\..\..\..\rts\System;..\..\..\..\rts\ExternalAI;..\..\..\..\vclibs\Boost\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;_USRDLL"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
@@ -179,9 +179,6 @@
 				Filter="">
 				<File
 					RelativePath="..\Helpers\CEconomy.cpp">
-				</File>
-				<File
-					RelativePath="..\Helpers\commented_code.cpp">
 				</File>
 				<Filter
 					Name="Units"

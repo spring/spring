@@ -1590,13 +1590,13 @@ int AAIBuildTable::GetMetalMaker(int side, float cost, float efficiency, float m
 			my_rating = 0;
 		else if(!water && unitList[*maker-1]->minWaterDepth <= 0)
 		{
-			my_rating = (pow(efficiency * units_static[*maker].efficiency[0], 1.4) + pow(metal * unitList[*maker-1]->makesMetal, 1.6))
-				/(pow(cost * units_static[*maker].cost, 1.4) + pow(urgency * unitList[*maker-1]->buildTime, 1.4));
+			my_rating = (pow(efficiency * units_static[*maker].efficiency[0], 1.4f) + pow(metal * unitList[*maker-1]->makesMetal, 1.6f))
+				/(pow(cost * units_static[*maker].cost, 1.4f) + pow(urgency * unitList[*maker-1]->buildTime, 1.4f));
 		}
 		else if(water && unitList[*maker-1]->minWaterDepth > 0)
 		{
-			my_rating = (pow(efficiency * units_static[*maker].efficiency[0], 1.4) + pow(metal * unitList[*maker-1]->makesMetal, 1.6))
-				/(pow(cost * units_static[*maker].cost, 1.4) + pow(urgency * unitList[*maker-1]->buildTime, 1.4));
+			my_rating = (pow(efficiency * units_static[*maker].efficiency[0], 1.4f) + pow(metal * unitList[*maker-1]->makesMetal, 1.6f))
+				/(pow(cost * units_static[*maker].cost, 1.4f) + pow(urgency * unitList[*maker-1]->buildTime, 1.4f));
 		}
 		else 
 			my_rating = 0;

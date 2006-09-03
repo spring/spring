@@ -73,7 +73,7 @@
   File "..\game\shaders\*.fp"
   File "..\game\shaders\*.vp"
   
-  SetOutPath "$INSTDIR\aidll"
+  SetOutPath "$INSTDIR\AI\Helper-libs"
   File "..\game\AI\Helper-libs\centralbuild.dll"
   File "..\game\AI\Helper-libs\mmhandler.dll"
   File "..\game\AI\Helper-libs\simpleform.dll"
@@ -167,11 +167,6 @@
   RMDir "$INSTDIR\shaders"
   
   ; AI-dll's
-  Delete "$INSTDIR\AI\Bot-libs\jcai\*.cfg"
-  Delete "$INSTDIR\AI\Bot-libs\jcai\*.modcache"
-  Delete "$INSTDIR\AI\Bot-libs\jcai\readme.txt"
-  RmDir "$INSTDIR\AI\Bot-libs\jcai"
-  Delete "$INSTDIR\AI\Bot-libs\jcai.dll"
   Delete "$INSTDIR\AI\Bot-libs\emptyai.dll"
   RmDir "$INSTDIR\AI\Bot-libs"
   Delete "$INSTDIR\AI\Helper-libs\centralbuild.dll"

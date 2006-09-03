@@ -684,7 +684,7 @@ namespace terrain {
 			DrawNormals (debugQuad, lowdetailhm->GetLevel (debugQuad->depth));
 
 		glPolygonMode (GL_FRONT_AND_BACK,GL_FILL);
-		frustum.Draw ();
+		//frustum.Draw ();
 	}
 
 	void Terrain::CalcRenderStats (RenderStats& stats, RenderContext *ctx)

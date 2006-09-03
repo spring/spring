@@ -1,13 +1,12 @@
 
 !ifdef INSTALL
-  SetOutPath "$INSTDIR\aidll\globalai"
-  File "..\game\aidll\globalai\ntai.dll"
-  CreateDirectory "..\game\aidll\globalai\MEXCACHE"
-  SetOutPath "$INSTDIR\aidll\globalai\NTAI"
-  File /r /x .svn "..\game\aidll\globalai\ntai\*.*"
+  SetOutPath "$INSTDIR\AI\Bot-libs"
+  File "..\game\AI\Bot-libs\ntai.dll"
+  CreateDirectory "..\AI\NTAI\MEXCACHE"
+  SetOutPath "$INSTDIR\AI\NTAI"
+  File /r /x .svn "..\game\AI\NTAI\*.*"
 !else
-  Delete "$INSTDIR\aidll\globalai\ntai.dll"
-  Delete "$INSTDIR\aidll\globalai\mexcache\*.*"
-  RMDir /r "$INSTDIR\aidll\globalai\ntai"
+  Delete "$INSTDIR\AI\Bot-libs\ntai.dll"
+  RMDir /r "$INSTDIR\AI\NTAI"
 !endif
 
