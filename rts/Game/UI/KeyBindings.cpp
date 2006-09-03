@@ -12,6 +12,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileHandler.h"
+#include "InfoConsole.h"
 
 
 CKeyBindings* keyBindings = NULL;
@@ -298,7 +299,7 @@ CKeyBindings::Action::Action(const string& line)
 
 CKeyBindings::CKeyBindings()
 {
-	debug = false;
+	debug = 0;
 	userCommand = true;
 
 	statefulCommands.insert("drawinmap");
@@ -320,15 +321,20 @@ CKeyBindings::~CKeyBindings()
 
 /******************************************************************************/
 
+void CKeyBindings::OutputDebug(const char* msg) const
+{
+	printf("%s\n", msg);
+	if (debug >= 2) {
+		info->AddLine(string(msg));
+	}
+}
+
+
 const CKeyBindings::ActionList&
 	CKeyBindings::GetActionList(const CKeySet& ks) const
 {
 	static const ActionList empty;
 	const ActionList* alPtr = NULL;
-	
-	if (debug) {
-		printf("GetAction: %s (0x%03X)", ks.GetString().c_str(), ks.Key());
-	}
 
 	if (ks.AnyMod()) {
 		KeyMap::const_iterator it = bindings.find(ks);
@@ -356,7 +362,7 @@ const CKeyBindings::ActionList&
 			alPtr = &(ait->second);
 		}
 		else {
-			// make a union of the two lists (normal first)
+			// combine the two lists (normal first)
 			static ActionList merged;
 			merged = nit->second;
 			const ActionList& aal = ait->second;
@@ -367,14 +373,21 @@ const CKeyBindings::ActionList&
 		}
 	}
 
-	if (debug) {
+	if (debug > 0) {
+		char buf[256];
+		SNPRINTF(buf, sizeof(buf), "GetAction: %s (0x%03X)",
+		         ks.GetString().c_str(), ks.Key());
 		if (alPtr == &empty) {
-			printf("  EMPTY\n");
-		} else {	
-			printf("\n");
+			strncat(buf, "  EMPTY", sizeof(buf));
+			OutputDebug(buf);
+		}
+		else {	
+			OutputDebug(buf);
 			const ActionList& al = *alPtr;
 			for (int i = 0; i < (int)al.size(); ++i) {
-				printf("  %s  \"%s\"\n", al[i].command.c_str(), al[i].rawline.c_str());
+				SNPRINTF(buf, sizeof(buf), "  %s  \"%s\"",
+				         al[i].command.c_str(), al[i].rawline.c_str());
+				OutputDebug(buf);
 			}
 		}
 	}
@@ -656,7 +669,7 @@ bool CKeyBindings::Save(const string& filename) const
 				const string unitName = al[i].command.substr(10);
 				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
 				if (unitDef) {
-					comment = "  // " + unitDef->humanName;
+					comment = "  // " + unitDef->humanName + " :: " + unitDef->tooltip;
 				}
 			}
 			if (comment.empty()) {

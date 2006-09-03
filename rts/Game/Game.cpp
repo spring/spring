@@ -1130,7 +1130,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		keyCodes->PrintCodeToName();
 	}
 	else if (cmd == "keydebug") {
-		keyBindings->SetDebug(!keyBindings->GetDebug());
+		if (!action.extra.empty()) {
+			keyBindings->SetDebug(atoi(action.extra.c_str()));
+		} else {
+			keyBindings->SetDebug((keyBindings->GetDebug() > 0) ? 0 : 2);
+		}
 	}
 	else if (cmd == "clock") {
 		showClock = !showClock;

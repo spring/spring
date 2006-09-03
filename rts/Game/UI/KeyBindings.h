@@ -42,8 +42,8 @@ class CKeyBindings
 		
 		bool Command(const string& line);
 		
-		bool GetDebug() const { return debug; }
-		void SetDebug(bool dbg) { debug = dbg; }
+		int GetDebug() const { return debug; }
+		void SetDebug(int dbg) { debug = dbg; }
 		
 	protected:
 		void LoadDefaults();
@@ -54,6 +54,7 @@ class CKeyBindings
 		bool UnBindKeyset(const string& keystr);
 		bool UnBindAction(const string& action);
 		bool RemoveCommandFromList(ActionList& al, const string& command);
+		void OutputDebug(const char* msg) const;
 
 	protected:
 		typedef map<CKeySet, ActionList> KeyMap; // keyset to action
@@ -65,7 +66,7 @@ class CKeyBindings
 		// commands that use both Up and Down key presses		
 		set<string> statefulCommands;
 
-		bool debug;
+		int debug;
 		bool userCommand;
 };
 
