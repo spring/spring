@@ -23,15 +23,15 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 
 	tr->config.detailMod = configHandler.GetInt("SM3TerrainDetail", 200) / 100.0f;
 
-	if (shadowHandler->drawShadows) {
+	/*if (shadowHandler->drawShadows) {
 		shadowrc = tr->AddRenderContext (&shadowCam,false);
 
 		groundShadowVP=LoadVertexProgram("groundshadow.vp");
 	}
-	else  {
+	else  {*/
 		shadowrc = 0;
 		groundShadowVP = 0;
-	}
+	//}
 	reflectrc = 0;
 }
 
@@ -175,7 +175,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 
 void CSm3GroundDrawer::DrawShadowPass()
 {
-	shadowCam.fov = PI * camera->fov / 180.0f;
+	/*shadowCam.fov = PI * camera->fov / 180.0f;
 	shadowCam.front = camera->forward;
 	shadowCam.right = camera->right;
 	shadowCam.up = camera->up;
@@ -199,7 +199,7 @@ void CSm3GroundDrawer::DrawShadowPass()
 	glDisable(GL_CULL_FACE);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_VERTEX_PROGRAM_ARB);
+	glDisable(GL_VERTEX_PROGRAM_ARB);*/
 }
 
 void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflection)

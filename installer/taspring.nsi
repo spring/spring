@@ -178,48 +178,6 @@ Eq:
 Done:
 FunctionEnd
 
-; Deletes test.dll if it is from an original installation
-Function UpdateTestDll
-  ClearErrors
-  FileOpen $0 "$INSTDIR\aidll\globalai\test.dll" r
-  IfErrors done
-  FileSeek $0 0 END $1
-  IntCmp $1 188416 Eq
-  Goto Neq
-
-Eq:
-  FileClose $0
-  Delete "$INSTDIR\aidll\globalai\test.dll"
-  Goto done
-
-Neq:
-  FileClose $0
-  Goto done
-
-Done:
-FunctionEnd
-
-; Deletes testscript.lua if it is from an original installation
-Function UpdateTestscript
-  ClearErrors
-  FileOpen $0 "$INSTDIR\startscripts\testscript.lua" r
-  IfErrors done
-  FileSeek $0 0 END $1
-  IntCmp $1 4215 Eq
-  Goto Neq
-
-Eq:
-  FileClose $0
-  Delete "$INSTDIR\startscripts\testscript.lua"
-  Goto done
-
-Neq:
-  FileClose $0
-  Goto done
-
-Done:
-FunctionEnd
-
 ; Only allow installation if spring.exe is from version 0.67bx
 Function CheckVersion
   ClearErrors
@@ -256,9 +214,7 @@ Section "Main application (req)" SEC_MAIN
 !endif
   Call CheckMaps
   Call UpdateSpawn
-  Call UpdateTestDll
-  Call UpdateTestscript
-  
+
   !define INSTALL
   !include "sections\main.nsh"
   !undef INSTALL
@@ -293,17 +249,17 @@ Section /o "Desktop shortcut" SEC_DESKTOP
 SectionEnd
 
 SectionGroup "AI opponent plugins (Bots)"
-;	Section "AAI" SEC_AAI
-;	!define INSTALL
-;	!include "sections\aai.nsh"
-;	!undef INSTALL
-;	SectionEnd
+	Section "AAI" SEC_AAI
+	!define INSTALL
+	!include "sections\aai.nsh"
+	!undef INSTALL
+	SectionEnd
 
-;	Section "NTAI" SEC_NTAI
-;	!define INSTALL
-;	!include "sections\ntai.nsh"
-;	!undef INSTALL
-;	SectionEnd
+	Section "NTAI" SEC_NTAI
+	!define INSTALL
+	!include "sections\ntai.nsh"
+	!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
@@ -394,8 +350,8 @@ Section Uninstall
 
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
-  ;!include "sections\aai.nsh"
-  ;!include "sections\ntai.nsh"
+  !include "sections\aai.nsh"
+  !include "sections\ntai.nsh"
   !include "sections\battleroom.nsh"
 
   Delete "$DESKTOP\TA Spring battleroom.lnk"
