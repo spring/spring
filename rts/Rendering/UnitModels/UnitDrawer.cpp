@@ -697,8 +697,8 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-		glAlphaFunc(GL_GREATER,1/255.0f);
+		//glEnable(GL_BLEND);
+		glAlphaFunc(GL_GREATER,0.5f);
 		glEnable(GL_ALPHA_TEST);
 
 		float t[16];
