@@ -553,6 +553,13 @@ public:
 	 */
 	float quitTime;
 
+	/**
+	 * @brief dual screen mode
+	 * In dual screen mode, the screen is split up between a game screen (left) and a minimap screen (right).
+	 * In this case screenx is half of the actual GL viewport width, 
+	 */
+	bool dualScreenMode;
+
 #ifdef DIRECT_CONTROL_ALLOWED
 	/**
 	 * @brief direct control

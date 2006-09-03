@@ -471,18 +471,20 @@ void SpringApp::SetVSync ()
  */
 void SpringApp::InitOpenGL ()
 {
+	gu->dualScreenMode = !!configHandler.GetInt("DualScreenMode", 0);
+	gu->screenx = screenWidth;
+	if (gu->dualScreenMode) gu->screenx /= 2;
+	gu->screeny = screenHeight;
+
 	// Setup viewport
-	glViewport (0, 0, screenWidth, screenHeight);
-	gluPerspective(45.0f,(GLfloat)screenWidth/(GLfloat)screenHeight,2.8f,MAX_VIEW_RANGE);
+	glViewport (0, 0, gu->screenx, gu->screeny);
+	gluPerspective(45.0f,(GLfloat)gu->screenx/(GLfloat)gu->screeny,2.8f,MAX_VIEW_RANGE);
 	
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-
-	gu->screenx = screenWidth;
-	gu->screeny = screenHeight;
 }
 
 /**
