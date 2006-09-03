@@ -216,7 +216,7 @@ void CWeapon::Update()
 		} else {
 			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !weaponDef->stockpile) {
 				// update the energy and metal required counts
-				const int minPeriod = (int)(reloadTime / owner->reloadSpeed);
+				const int minPeriod = max(1, (int)(reloadTime / owner->reloadSpeed));
 				const float averageFactor = 1.0f / (float)minPeriod;
 				gs->Team(owner->team)->energyPullAmount += averageFactor * energyFireCost;
 				gs->Team(owner->team)->metalPullAmount += averageFactor * metalFireCost;
