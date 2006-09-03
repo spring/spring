@@ -7,7 +7,7 @@
 
 #define SHORTINT_MAXVALUE	32767
 
-extern float3 headingToVectorTable[1024];
+extern float2 headingToVectorTable[1024];
 
 inline short int GetHeadingFromVector(float dx,float dz)
 {
@@ -107,7 +107,8 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 
 inline float3 GetVectorFromHeading(short int heading)
 {
-	return headingToVectorTable[heading/64+512];
+	float2 v = headingToVectorTable[heading/64+512];
+	return float3(v.x,0.0f,v.y);
 }
 
 float3 GetVectorFromHAndPExact(short int heading,short int pitch);

@@ -9,7 +9,7 @@ CR_REG_METADATA(float2, (CR_MEMBER(x), CR_MEMBER(y)));
 CR_BIND_STRUCT(int2);
 CR_REG_METADATA(int2, (CR_MEMBER(x),CR_MEMBER(y)));
 
-float3 headingToVectorTable[1024];
+float2 headingToVectorTable[1024];
 
 class CMyMath
 {
@@ -22,17 +22,16 @@ public:
 
 		for(int a=0;a<1024;++a){
 			float ang=(a-512)*2*PI/1024;
-			float3 v;
+			float2 v;
 			v.x=sin(ang);
-			v.y=0;
-			v.z=cos(ang);
+			v.y=cos(ang);
 			headingToVectorTable[a]=v;
 		}
 		unsigned checksum = 0;
 		for (int a = 0; a < 1024; ++a) {
-			for (int b = 0; b < 3; ++b) {
-				checksum = 33 * checksum + *(unsigned*) &headingToVectorTable[a][b];
-			}
+			checksum = 33 * checksum + *(unsigned*)&headingToVectorTable[a].x;
+			checksum *= 33;
+			checksum = 33 * checksum + *(unsigned*)&headingToVectorTable[a].y;
 		}
 // 		fprintf(stderr, "headingToVectorTable checksum: %08x\n", checksum);
 		assert(checksum == 0x617a9968);
