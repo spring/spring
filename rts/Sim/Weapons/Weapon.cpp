@@ -177,41 +177,48 @@ void CWeapon::Update()
 	&& angleGood 
 	&& subClassReady 
 	&& reloadStatus<=gs->frameNum
-	&& (weaponDef->stockpile || (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost))
 	&& (!weaponDef->stockpile || numStockpiled)
 	&& (weaponDef->waterweapon || weaponPos.y>0)
 	&& (owner->unitDef->maxFuel==0 || owner->currentFuel > 0)
 	){
-		std::vector<int> args;
-		args.push_back(0);
-		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		useWeaponPosForAim=reloadTime/16+8;
+		if ((weaponDef->stockpile || (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost))) {
+			std::vector<int> args;
+			args.push_back(0);
+			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+			relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
+			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+			useWeaponPosForAim=reloadTime/16+8;
 
-		if(TryTarget(targetPos,haveUserTarget,targetUnit)){
-			if(weaponDef->stockpile){
-				numStockpiled--;
-				owner->commandAI->StockpileChanged(this);
-			} else {
-				owner->UseEnergy(energyFireCost);
-				owner->UseMetal(metalFireCost);
-				owner->currentFuel = max(0.0f, owner->currentFuel - fuelUsage);
+			if(TryTarget(targetPos,haveUserTarget,targetUnit)){
+				if(weaponDef->stockpile){
+					numStockpiled--;
+					owner->commandAI->StockpileChanged(this);
+				} else {
+					owner->UseEnergy(energyFireCost);
+					owner->UseMetal(metalFireCost);
+					owner->currentFuel = max(0.0f, owner->currentFuel - fuelUsage);
+				}
+				if(weaponDef->stockpile)
+					reloadStatus=gs->frameNum+60;
+				else
+					reloadStatus=gs->frameNum+(int)(reloadTime/owner->reloadSpeed);
+
+				salvoLeft=salvoSize;
+				nextSalvo=gs->frameNum;
+				salvoError=gs->randVector()*(owner->isMoving?weaponDef->movingAccuracy:accuracy);
+				if(targetType==Target_Pos || (targetType==Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS)))		//area firing stuff is to effective at radar firing...
+					salvoError*=1.3;
+
+				owner->lastMuzzleFlameSize=muzzleFlareSize;
+				owner->lastMuzzleFlameDir=wantedDir;
+				owner->cob->Call(COBFN_FirePrimary+weaponNum);
+			} 
+		} else {
+			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !weaponDef->stockpile) {
+				// update the energy and metal required counts
+				gs->Team(owner->team)->energyPullAmount += energyFireCost;
+				gs->Team(owner->team)->metalPullAmount += metalFireCost;
 			}
-			if(weaponDef->stockpile)
-				reloadStatus=gs->frameNum+60;
-			else
-				reloadStatus=gs->frameNum+(int)(reloadTime/owner->reloadSpeed);
-
-			salvoLeft=salvoSize;
-			nextSalvo=gs->frameNum;
-			salvoError=gs->randVector()*(owner->isMoving?weaponDef->movingAccuracy:accuracy);
-			if(targetType==Target_Pos || (targetType==Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS)))		//area firing stuff is to effective at radar firing...
-				salvoError*=1.3;
-
-			owner->lastMuzzleFlameSize=muzzleFlareSize;
-			owner->lastMuzzleFlameDir=wantedDir;
-			owner->cob->Call(COBFN_FirePrimary+weaponNum);
 		}
 	}
 
