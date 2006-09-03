@@ -79,33 +79,47 @@ void CPlasmaRepulser::Update(void)
 	if(isEnabled){
 		for(std::list<CWeaponProjectile*>::iterator pi=incoming.begin();pi!=incoming.end();++pi){
 			float3 dif=(*pi)->pos-owner->pos;
-			if((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->damages[0] && gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse){
-				if(weaponDef->shieldRepulser){	//bounce the projectile
-					int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
-					if(type==0){
-						continue;
-					} else if (type==1){
-						owner->UseEnergy(weaponDef->shieldEnergyUse);
-						if(weaponDef->shieldPower != 0)
-							curPower-=(*pi)->damages[0];
-					} else {
-						owner->UseEnergy(weaponDef->shieldEnergyUse/30.0f);
-						if(weaponDef->shieldPower != 0)
-							curPower-=(*pi)->damages[0]/30.0f;
-					}
-					if(weaponDef->visibleShieldRepulse){
-						if(hasGfx.find(*pi)==hasGfx.end()){
-							hasGfx.insert(*pi);
-							float colorMix=min(1.f,curPower/(max(1.f,weaponDef->shieldPower)));
-							float3 color=weaponDef->shieldGoodColor*colorMix+weaponDef->shieldBadColor*(1-colorMix);
-							new CRepulseGfx(owner,*pi,radius,color);
+			if((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->damages[0]){
+				if(gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
+					if(weaponDef->shieldRepulser){	//bounce the projectile
+						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
+						if(type==0){
+							continue;
+						} else if (type==1){
+							owner->UseEnergy(weaponDef->shieldEnergyUse);
+							if(weaponDef->shieldPower != 0)
+								curPower-=(*pi)->damages[0];
+						} else {
+							owner->UseEnergy(weaponDef->shieldEnergyUse/30.0f);
+							if(weaponDef->shieldPower != 0)
+								curPower-=(*pi)->damages[0]/30.0f;
+						}
+						if(weaponDef->visibleShieldRepulse){
+							if(hasGfx.find(*pi)==hasGfx.end()){
+								hasGfx.insert(*pi);
+								float colorMix=min(1.f,curPower/(max(1.f,weaponDef->shieldPower)));
+								float3 color=weaponDef->shieldGoodColor*colorMix+weaponDef->shieldBadColor*(1-colorMix);
+								new CRepulseGfx(owner,*pi,radius,color);
+							}
+						}
+					} else {						//kill the projectile
+						if(owner->UseEnergy(weaponDef->shieldEnergyUse)){
+							if(weaponDef->shieldPower != 0)
+								curPower-=(*pi)->damages[0];
+							(*pi)->Collision();
 						}
 					}
-				} else {						//kill the projectile
-					if(owner->UseEnergy(weaponDef->shieldEnergyUse)){
-						if(weaponDef->shieldPower != 0)
-							curPower-=(*pi)->damages[0];
-						(*pi)->Collision();
+				} else {
+					// Calculate the amount of energy we wanted to pull
+					if(weaponDef->shieldRepulser) {	//bounce the projectile
+						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
+						if (type==1){
+							gs->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
+						} else {
+							gs->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse/30.0f;
+						}
+					} else {						//kill the projectile
+						gs->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
 					}
 				}
 			}
