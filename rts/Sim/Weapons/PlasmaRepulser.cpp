@@ -111,6 +111,9 @@ void CPlasmaRepulser::Update(void)
 					}
 				} else {
 					// Calculate the amount of energy we wanted to pull
+					/*
+					Domipheus: TODO Commented out for now, ShieldRepulse has side effects, design needs altering.
+					
 					if(weaponDef->shieldRepulser) {	//bounce the projectile
 						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
 						if (type==1){
@@ -120,7 +123,7 @@ void CPlasmaRepulser::Update(void)
 						}
 					} else {						//kill the projectile
 						gs->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
-					}
+					}*/
 				}
 			}
 		}
