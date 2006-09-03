@@ -2,6 +2,10 @@ TASpring change log
 
 0.next
 - added transparency suport from texture2 in s3o drawing
+- added DualScreenMode configuration flag. 
+    This causes the game view width to be one half of the screen width, so the minimap can take the other half. 
+    You will need to spread your spring window across the 2 screens.
+- geothermal vents with a geothermal unit on top will not create smoke.
 
 0.73b1
 

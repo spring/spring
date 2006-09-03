@@ -13,13 +13,14 @@ void CGeoThermSmokeProjectile::Update()
 		CSolidObject *o = geo->solidOnTop;
 
 		float3 d = pos - o->pos;
-		if(d.y < 0.0f)
+		float sql = d.SqLength();
+		if (sql > 0.0f && sql < o->radius*o->radius)
 		{
-			float sql = d.SqLength();
-			if (sql > 0.0f && sql < o->radius*o->radius)
+			d *= o->radius / sqrtf(sql);
+			pos = pos * 0.3f + (o->pos + d) * 0.7f;
+
+			if(d.y < o->radius*0.4f)
 			{
-				d *= o->radius / sqrtf(sql);
-				pos = o->pos + d;
 				float speedlen = speed.Length();
 				float3 right(d.z, 0.0f, -d.x);
 				speed = d.cross(right);
