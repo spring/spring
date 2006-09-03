@@ -56,9 +56,18 @@ CMiniMap::CMiniMap()
 	minimized(false)
 {
 	float hw=sqrt(float(gs->mapx)/gs->mapy);
-	width = (int) (width*hw);
-	height = (int) (height/hw);
-	ypos=gu->screeny-height-10;
+	if(gu->dualScreenMode) 
+	{
+		width = gu->screenx;
+		height = gu->screeny;
+		xpos = gu->screenx;
+		ypos = 0;
+	}
+	else {
+		width = (int) (width*hw);
+		height = (int) (height/hw);
+		ypos=gu->screeny-height-10;
+	}
 
 	simpleColors=!!configHandler.GetInt("SimpleMiniMapColors",0);
 	myColor[0]=(unsigned char)(0.2*255);

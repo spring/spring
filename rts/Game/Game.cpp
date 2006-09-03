@@ -2344,6 +2344,7 @@ void CGame::UpdateUI()
 		movement=float3(0,0,0);
 
     if (fullscreen || windowedEdgeMove) {
+		int screenW = gu->dualScreenMode ? gu->screenx*2 : gu->screenx;
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
 				unitTracker.Disable();
@@ -2352,7 +2353,7 @@ void CGame::UpdateUI()
 				movement.y-=gu->lastFrameTime;
 				unitTracker.Disable();
 			}
-			if (mouse->lastx > (gu->screenx - 2)){
+			if (mouse->lastx > (screenW - 2)){
 				movement.x+=gu->lastFrameTime;
 				unitTracker.Disable();
 			}
