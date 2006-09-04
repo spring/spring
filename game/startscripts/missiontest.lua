@@ -12,7 +12,7 @@ end
 
 -- Return the mapname this script wants
 function MissionTest:GetMapName()
-    return "smalldivide.smf"
+    return "SmallDivide.smf"
 end
 
 -- This function is executed every simulated frame (30 times/sec)
