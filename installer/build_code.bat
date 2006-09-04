@@ -8,6 +8,7 @@ devenv ..\AI\Group\CentralBuildAI\TestAI.sln /build Release
 devenv ..\AI\Group\MetalMakerAI\TestAI.sln /build Release
 devenv ..\AI\Group\RadarAI\TestAI.sln /build Release
 devenv ..\AI\Group\SimpleFormationAI\TestAI.sln /build Release
+devenv ..\AI\Group\MexUpgraderAI\TestAI.sln /build Release
 devenv ..\tools\unitsync\unitsync.sln /build Release
 devenv ..\tools\RtsSettings\RtsSettings.sln /build Release
 devenv ..\AI\Global\NTAI\Build\NTAI-msvs7.sln /build Release

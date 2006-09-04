@@ -78,6 +78,7 @@
   File "..\game\AI\Helper-libs\mmhandler.dll"
   File "..\game\AI\Helper-libs\simpleform.dll"
   File "..\game\AI\Helper-libs\radar.dll"
+  File "..\game\AI\Helper-libs\mexupgrade.dll"
   
   SetOverWrite ifnewer
   SetOutPath "$INSTDIR\AI\Bot-libs"
