@@ -147,3 +147,14 @@ if not 'configure' in sys.argv and not 'test' in sys.argv:
 # Use this to avoid an error message 'how to make target test ?'
 # This can be replaced for unit testing code at any time (in other branch for example).
 env.Alias('test', None)
+
+# Build gamedata zip archives
+
+# Can't use these, we can't set the working directory and putting a SConscript
+# in the respective directories doesn't work either because then the SConstript
+# ends up in the zip too... Bah. SCons sucks. Just like autoshit and everything else btw.
+#env.Zip('game/base/springcontent.sdz', filelist.list_files(env, 'installer/builddata/springcontent'))
+#env.Zip('game/base/spring/bitmaps.sdz', filelist.list_files(env, 'installer/builddata/bitmaps'))
+
+if env['platform'] != 'windows':
+	os.system("installer/make_gamedata_arch.sh")
