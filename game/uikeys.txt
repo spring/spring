@@ -55,6 +55,11 @@
 //    ---------------------
 //    - removes all bindings that use the action  (command that is, a misnomer)
 //
+//    fakemeta <keysym>
+//    -----------------
+//    - assign an auxiliary key for the Meta modifier
+//    - use 'fakemeta 0x0' to disable this feature
+//
 //
 //  * NOTE: These commands can also be run from the chat line in-game using
 //          the slash command syntax  (/bind, /unbind, etc...)

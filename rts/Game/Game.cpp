@@ -1110,8 +1110,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 		SDL_WM_GrabInput(mode);
 	}
-	else if ((cmd == "bind") || (cmd == "unbind") || (cmd == "unbindall") ||
-	         (cmd == "unbindkeyset") || (cmd == "unbindaction")) {
+	else if ((cmd == "bind")         ||
+	         (cmd == "unbind")       ||
+	         (cmd == "unbindall")    ||
+	         (cmd == "unbindkeyset") ||
+	         (cmd == "unbindaction") ||
+	         (cmd == "fakemeta")) {
 		keyBindings->Command(action.rawline);
 	}
 	else if (cmd == "keyload") {
