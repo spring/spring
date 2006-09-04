@@ -7,6 +7,18 @@ TASpring change log
     You will need to spread your spring window across the 2 screens.
 - geothermal vents with a geothermal unit on top will not create smoke.
 
+- Added the following Unit FBI tags:
+	canPatrol=1; Can the unit go on patrol
+	canGuard=1; Can the unit guard things
+	canAttack=1; Can the unit attack other units
+	Reclaimable=1; Determines if a unit can be reclaimed by other units
+	noAutoFire=0; (if set to 1, unit will fire once then switch to next target, and needs to be told to fire manually)
+	canBuild (can the unit start new construction projects)
+	canRepair (can the unit repair other things)
+	canRestore (can the unit restore deformed ground)
+	canReclaim (can the unit reclaim other things)
+	canAssist (can the unit assist construction projects already started)
+
 0.73b1
 
 - added support for teamcolored nanospray (user option). Can be forced off by modder using gamedata/particles.tdf.

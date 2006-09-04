@@ -39,13 +39,15 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip="Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
-	c.id=CMD_ATTACK;
-	c.action="attack";
-	c.type=CMDTYPE_ICON_UNIT_OR_MAP;
-	c.name="Attack";
-	c.hotkey="a";
-	c.tooltip="Attack: Attacks an unit or a position on the ground";
-	possibleCommands.push_back(c);
+	if(owner->unitDef->canAttack){
+		c.id=CMD_ATTACK;
+		c.action="attack";
+		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
+		c.name="Attack";
+		c.hotkey="a";
+		c.tooltip="Attack: Attacks an unit or a position on the ground";
+		possibleCommands.push_back(c);
+	}
 
 	if(owner->unitDef->canDGun){
 		c.id=CMD_DGUN;
@@ -79,33 +81,37 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.hotkey="";
 	nonQueingCommands.insert(CMD_SELFD);
 
-	if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
-		c.id=CMD_FIRE_STATE;
-		c.action="firestate";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Fire state";
-		c.params.push_back("2");
-		c.params.push_back("Hold fire");
-		c.params.push_back("Return fire");
-		c.params.push_back("Fire at will");
-		c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
-		possibleCommands.push_back(c);
-		nonQueingCommands.insert(CMD_FIRE_STATE);
-	}
+	if(!owner->unitDef->noAutoFire){
+		if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
+			c.id=CMD_FIRE_STATE;
+			c.action="firestate";
+			c.type=CMDTYPE_ICON_MODE;
+			c.name="Fire state";
+			c.params.push_back("2");
+			c.params.push_back("Hold fire");
+			c.params.push_back("Return fire");
+			c.params.push_back("Fire at will");
+			c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
+			possibleCommands.push_back(c);
+			nonQueingCommands.insert(CMD_FIRE_STATE);
+		}
 
-	c.params.clear();
-	c.id=CMD_MOVE_STATE;
-	c.action="movestate";
-	c.type=CMDTYPE_ICON_MODE;
-	c.name="Move state";
-	c.params.push_back("1");
-	c.params.push_back("Hold pos");
-	c.params.push_back("Maneuver");
-	c.params.push_back("Roam");
-	c.tooltip="Move State: Sets how far out of its way\n an unit will move to attack enemies";
-	possibleCommands.push_back(c);
-	owner->moveState=1;
-	nonQueingCommands.insert(CMD_MOVE_STATE);
+		c.params.clear();
+		c.id=CMD_MOVE_STATE;
+		c.action="movestate";
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Move state";
+		c.params.push_back("1");
+		c.params.push_back("Hold pos");
+		c.params.push_back("Maneuver");
+		c.params.push_back("Roam");
+		c.tooltip="Move State: Sets how far out of its way\n an unit will move to attack enemies";
+		possibleCommands.push_back(c);
+		owner->moveState=1;
+		nonQueingCommands.insert(CMD_MOVE_STATE);
+	}else{
+		owner->moveState=0;
+	}
 
 	c.params.clear();
 	c.id=CMD_REPEAT;
@@ -556,7 +562,7 @@ void CCommandAI::SlowUpdate()
 int CCommandAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 {
 	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam))
+		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam) && owner->unitDef->canAttack)
 			return CMD_ATTACK;
 	}
 	return CMD_STOP;

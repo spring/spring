@@ -144,6 +144,17 @@ struct UnitDef
 	bool activateWhenBuilt;
 	bool onoffable;
 
+	bool reclaimable;
+	bool canRestore;
+	bool canRepair;
+	bool canReclaim;
+	bool noAutoFire;
+	bool canAttack;
+	bool canPatrol;
+	bool canGuard;
+	bool canBuild;
+	bool canAssist;
+
 	//aircraft stuff
 	float wingDrag;
 	float wingAngle;
