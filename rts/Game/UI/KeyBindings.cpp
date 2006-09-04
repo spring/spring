@@ -27,6 +27,8 @@ defaultBindings[] = {
 	{ "esc",       "quit"  },
 	{ "Shift+esc", "quit"  },
 
+	{ "pause", "pause" },
+
 	{ "b",   "debug"                 },
 	{ "i",   "gameinfo"              },
 	{ "o",   "singlestep"            },
