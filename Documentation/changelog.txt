@@ -1,7 +1,10 @@
 TASpring change log
 
 0.next
-- added transparency suport from texture2 in s3o drawing
+
+0.73b1
+
+- added transparency support from alpha channel of texture2 in s3o drawing
 - added DualScreenMode configuration flag. 
     This causes the game view width to be one half of the screen width, so the minimap can take the other half. 
     You will need to spread your spring window across the 2 screens.
@@ -18,8 +21,6 @@ TASpring change log
 	canRestore (can the unit restore deformed ground)
 	canReclaim (can the unit reclaim other things)
 	canAssist (can the unit assist construction projects already started)
-
-0.73b1
 
 - added support for teamcolored nanospray (user option). Can be forced off by modder using gamedata/particles.tdf.
 - new fbi tag shownanoframe: set to 0 to disable nanoframe while the unit is being built.
