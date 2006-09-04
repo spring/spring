@@ -129,6 +129,8 @@
 //  bind                esc  quit
 //  bind          Shift+esc  quit
 //
+//  bind              pause  pause
+//
 //  bind              enter  chat
 //  bind          Alt+enter  chatally
 //  bind          Alt+enter  chatswitchally
