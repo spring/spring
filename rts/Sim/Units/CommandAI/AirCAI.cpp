@@ -25,13 +25,15 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.tooltip="Move: Commands the aircraft to fly to the location";
 	possibleCommands.push_back(c);
 
-	c.id=CMD_PATROL;
-	c.action="patrol";
-	c.type=CMDTYPE_ICON_MAP;
-	c.name="Patrol";
-	c.hotkey="p";
-	c.tooltip="Patrol: Sets the aircraft to patrol a path to one or more waypoints";
-	possibleCommands.push_back(c);
+	if(owner->unitDef->canPatrol){
+		c.id=CMD_PATROL;
+		c.action="patrol";
+		c.type=CMDTYPE_ICON_MAP;
+		c.name="Patrol";
+		c.hotkey="p";
+		c.tooltip="Patrol: Sets the aircraft to patrol a path to one or more waypoints";
+		possibleCommands.push_back(c);
+	}
 
 	c.id = CMD_FIGHT;
 	c.action="fight";
@@ -41,21 +43,25 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.tooltip = "Fight: Order the aircraft to take action while moving to a position";
 	possibleCommands.push_back(c);
 
-	c.id=CMD_AREA_ATTACK;
-	c.action="areaattack";
-	c.type=CMDTYPE_ICON_AREA;
-	c.name="Area attack";
-	c.hotkey="a";
-	c.tooltip="Sets the aircraft to attack enemy units within a circle";
-	possibleCommands.push_back(c);
+	if(owner->unitDef->canAttack){
+		c.id=CMD_AREA_ATTACK;
+		c.action="areaattack";
+		c.type=CMDTYPE_ICON_AREA;
+		c.name="Area attack";
+		c.hotkey="a";
+		c.tooltip="Sets the aircraft to attack enemy units within a circle";
+		possibleCommands.push_back(c);
+	}
 
-	c.id=CMD_GUARD;
-	c.action="guard";
-	c.type=CMDTYPE_ICON_UNIT;
-	c.name="Guard";
-	c.hotkey="g";
-	c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
-	possibleCommands.push_back(c);
+	if(owner->unitDef->canGuard){
+		c.id=CMD_GUARD;
+		c.action="guard";
+		c.type=CMDTYPE_ICON_UNIT;
+		c.name="Guard";
+		c.hotkey="g";
+		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
+		possibleCommands.push_back(c);
+	}
 
 	c.params.clear();
 	c.id=CMD_AUTOREPAIRLEVEL;

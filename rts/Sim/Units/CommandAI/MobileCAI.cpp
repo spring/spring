@@ -32,26 +32,31 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	lastPC(-1)
 {
 	lastUserGoal=owner->pos;
-
 	CommandDescription c;
-	c.id=CMD_MOVE;
-	c.action="move";
-	c.type=CMDTYPE_ICON_FRONT;
-	c.name="Move";
-	c.hotkey="m";
-	c.tooltip="Move: Order the unit to move to a position";
-	possibleCommands.push_back(c);
+	if(owner->unitDef->canmove){
+		
+		c.id=CMD_MOVE;
+		c.action="move";
+		c.type=CMDTYPE_ICON_FRONT;
+		c.name="Move";
+		c.hotkey="m";
+		c.tooltip="Move: Order the unit to move to a position";
+		possibleCommands.push_back(c);
+		c.params.clear();
+	}
 
-	c.params.clear();
-	c.id=CMD_PATROL;
-	c.action="patrol";
-	c.type=CMDTYPE_ICON_MAP;
-	c.name="Patrol";
-	c.hotkey="p";
-	c.tooltip="Patrol: Order the unit to patrol to one or more waypoints";
-	possibleCommands.push_back(c);
+	
+	if(owner->unitDef->canPatrol){
+		c.id=CMD_PATROL;
+		c.action="patrol";
+		c.type=CMDTYPE_ICON_MAP;
+		c.name="Patrol";
+		c.hotkey="p";
+		c.tooltip="Patrol: Order the unit to patrol to one or more waypoints";
+		possibleCommands.push_back(c);
+		c.params.clear();
+	}
 
-	c.params.clear();
 	c.id = CMD_FIGHT;
 	c.action="fight";
 	c.type = CMDTYPE_ICON_MAP;
@@ -60,14 +65,15 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	c.tooltip = "Fight: Order the unit to take action while moving to a position";
 	possibleCommands.push_back(c);
 
-
-	c.id=CMD_GUARD;
-	c.action="guard";
-	c.type=CMDTYPE_ICON_UNIT;
-	c.name="Guard";
-	c.hotkey="g";
-	c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
-	possibleCommands.push_back(c);
+	if(owner->unitDef->canGuard){
+		c.id=CMD_GUARD;
+		c.action="guard";
+		c.type=CMDTYPE_ICON_UNIT;
+		c.name="Guard";
+		c.hotkey="g";
+		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
+		possibleCommands.push_back(c);
+	}
 
 	if(owner->unitDef->canfly){
 		c.params.clear();
@@ -400,9 +406,9 @@ void CMobileCAI::SlowUpdate()
 int CMobileCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 {
 	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
+		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam) && owner->unitDef->canAttack){
 			return CMD_ATTACK;
-		} else {
+		} else if(owner->unitDef->canGuard) {
 			return CMD_GUARD;
 		}
 	}
@@ -529,15 +535,17 @@ void CMobileCAI::IdleCheck(void)
 		}
 	}
 	if((gs->frameNum!=lastIdleCheck+16) && owner->moveState && owner->fireState==2 && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
-		CUnit* u=helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
-		if(u && !(owner->unitDef->noChaseCategory & u->category)){
-			Command c;
-			c.id=CMD_ATTACK;
-			c.options=INTERNAL_ORDER;
-			c.params.push_back(u->id);
-			c.timeOut=gs->frameNum+140;
-			commandQue.push_front(c);
-			return;
+		if(!owner->unitDef->noAutoFire){
+			CUnit* u=helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
+			if(u && !(owner->unitDef->noChaseCategory & u->category)){
+				Command c;
+				c.id=CMD_ATTACK;
+				c.options=INTERNAL_ORDER;
+				c.params.push_back(u->id);
+				c.timeOut=gs->frameNum+140;
+				commandQue.push_front(c);
+				return;
+			}
 		}
 	}
 	lastIdleCheck=gs->frameNum;

@@ -307,17 +307,20 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 int CTransportCAI::GetDefaultCmd(CUnit* pointed,CFeature* feature)
 {
 	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
+		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)&&owner->unitDef->canAttack){
 			return CMD_ATTACK;
 		} else {
 			if(CanTransport(pointed))
 				return CMD_LOAD_UNITS;
-			else
+			else if(owner->unitDef->canGuard)
 				return CMD_GUARD;
 		}
 	}
 //	if(((CTransportUnit*)owner)->transported.empty())
+	if(owner->unitDef->canmove)
 		return CMD_MOVE;
+	else
+		return CMD_STOP;
 //	else
 //		return CMD_UNLOAD_UNITS;
 }
