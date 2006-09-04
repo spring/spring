@@ -793,7 +793,7 @@ DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 {
 	ASSERT(nameBuf, "Don't pass a NULL pointer to FindFilesVFS.");
-	ASSERT(size <= 0, "Negative or zero buffer length doesn't make sense.");
+	ASSERT(size > 0, "Negative or zero buffer length doesn't make sense.");
 	if (handle >= curFindFiles.size())
 		return 0;
 	strncpy(nameBuf, curFindFiles[handle].c_str(), size);
