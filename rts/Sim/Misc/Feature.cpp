@@ -312,7 +312,7 @@ bool CFeature::Update(void)
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
 
-		if ((gs->frameNum+id % 30) % 30 == 0) 
+		if ((gs->frameNum+id % 5) % 5 == 0) 
 		{
 			// Find the unit closest to the geothermal
 			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);

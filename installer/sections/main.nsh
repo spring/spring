@@ -132,8 +132,7 @@
   Delete "$INSTDIR\SpringClient.exe"
 
   
-  !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "taspring.demofile" "TA Spring demo file" \
-         "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
+  !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
   !insertmacro UPDATEFILEASSOC
 
 !else
