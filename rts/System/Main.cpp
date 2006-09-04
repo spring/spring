@@ -858,9 +858,7 @@ int Run(int argc, char *argv[])
 
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
-	feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 	assert(good_fpu_control_registers());
-	feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 
 // It's nice to be able to disable catching when you're debugging
 #ifndef NO_CATCH_EXCEPTIONS
