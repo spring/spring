@@ -42,6 +42,8 @@ class CKeyBindings
 		
 		bool Command(const string& line);
 		
+		int GetFakeMetaKey() const { return fakeMetaKey; }
+		
 		int GetDebug() const { return debug; }
 		void SetDebug(int dbg) { debug = dbg; }
 		
@@ -53,6 +55,7 @@ class CKeyBindings
 		bool UnBind(const string& keystring, const string& action);
 		bool UnBindKeyset(const string& keystr);
 		bool UnBindAction(const string& action);
+		bool SetFakeMetaKey(const string& keystring);
 		bool RemoveCommandFromList(ActionList& al, const string& command);
 		void OutputDebug(const char* msg) const;
 
@@ -67,6 +70,7 @@ class CKeyBindings
 		set<string> statefulCommands;
 
 		int debug;
+		int fakeMetaKey;
 		bool userCommand;
 };
 

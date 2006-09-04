@@ -18,6 +18,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Game/UI/MouseHandler.h"
+#include "Game/UI/KeyBindings.h"
 #include "MouseInput.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
@@ -765,7 +766,15 @@ int SpringApp::Run (int argc, char *argv[])
 						else if (i == SDLK_RCTRL)  i = SDLK_LCTRL;
 						else if (i == SDLK_RMETA)  i = SDLK_LMETA;
 						else if (i == SDLK_RALT)   i = SDLK_LALT;
+						
+						if (keyBindings) {
+							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
+							if (fakeMetaKey != 0) {
+								keys[SDLK_LMETA] |= keys[fakeMetaKey];
+							}
+						}
 						activeController->KeyPressed(i,isRepeat);
+
 #ifndef NEW_GUI
 						if(activeController->userWriting){ 
 							i = event.key.keysym.unicode;
@@ -798,6 +807,13 @@ int SpringApp::Run (int argc, char *argv[])
 						else if (i == SDLK_RCTRL)  i = SDLK_LCTRL;
 						else if (i == SDLK_RMETA)  i = SDLK_LMETA;
 						else if (i == SDLK_RALT)   i = SDLK_LALT;
+
+						if (keyBindings) {
+							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
+							if (fakeMetaKey != 0) {
+								keys[SDLK_LMETA] |= keys[fakeMetaKey];
+							}
+						}
 						activeController->KeyReleased(i);
 					}
         			break;

@@ -302,6 +302,7 @@ CKeyBindings::Action::Action(const string& line)
 CKeyBindings::CKeyBindings()
 {
 	debug = 0;
+	fakeMetaKey = 0;
 	userCommand = true;
 
 	statefulCommands.insert("drawinmap");
@@ -524,6 +525,18 @@ bool CKeyBindings::UnBindAction(const string& command)
 }
 
 
+bool CKeyBindings::SetFakeMetaKey(const string& keystr)
+{
+	CKeySet ks;
+	if (!ks.Parse(keystr)) {
+		printf("Could not parse key: %s\n", keystr.c_str());
+		return false;
+	}
+	fakeMetaKey = ks.Key();
+	return true;
+}
+
+
 bool CKeyBindings::RemoveCommandFromList(ActionList& al, const string& command)
 {
 	bool success = false;
@@ -575,6 +588,9 @@ bool CKeyBindings::Command(const string& line)
 	else if (command == "unbindall") {
 		bindings.clear();
 		Bind("enter", "chat"); // bare minimum
+	}
+	else if (command == "fakemeta") {
+		if (!SetFakeMetaKey(words[1])) { return false; }
 	}
 	else {
 		return false;
