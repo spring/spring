@@ -562,7 +562,7 @@ int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
 			if(owner->maxRange>0)
 				return CMD_ATTACK;
-			else if(pointed->unitDef->reclaimable)
+			else if(pointed->unitDef->reclaimable && owner->unitDef->canReclaim)
 				return CMD_RECLAIM;
 		} else {
 			if(pointed->health<pointed->maxHealth)
@@ -574,7 +574,7 @@ int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 	if(feature){
 		if(owner->unitDef->canResurrect && !feature->createdFromUnit.empty())
 			return CMD_RESURRECT;
-		else if(owner->unitDef->canReclaim &&feature->def->destructable)
+		else if(owner->unitDef->canReclaim && feature->def->destructable)
 			return CMD_RECLAIM;
 	}
 	return CMD_MOVE;
