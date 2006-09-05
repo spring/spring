@@ -77,4 +77,15 @@ void CFlameProjectile::Draw(void)
 		va->AddVertexTC(interPos-camera->right*radius+camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->yend ,col);
 }
 
+int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+{
+	float3 dir=pos-shieldPos;
+	dir.Normalize();
+	if(dir.dot(speed)<shieldMaxSpeed){
+		speed+=dir*shieldForce;
+		return 2;
+	}
+	return 0;
+}
+
 

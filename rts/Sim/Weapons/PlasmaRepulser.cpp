@@ -106,7 +106,7 @@ void CPlasmaRepulser::Update(void)
 						if(owner->UseEnergy(weaponDef->shieldEnergyUse)){
 							if(weaponDef->shieldPower != 0)
 								curPower-=(*pi)->damages[0];
-							(*pi)->Collision();
+							(*pi)->Collision(owner);
 						}
 					}
 				} else {
