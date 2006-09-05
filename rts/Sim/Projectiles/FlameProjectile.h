@@ -18,6 +18,7 @@ public:
 	void Draw(void);
 	void Collision(CUnit* unit);
 	void Collision(void);
+	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 };
 
 #endif // __FLAME_PROJECTILE_H__

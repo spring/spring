@@ -8,6 +8,7 @@
 #include "Map/Ground.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
+#include "Sim/Misc/InterceptHandler.h"
 
 CLightingCannon::CLightingCannon(CUnit* owner)
 : CWeapon(owner)
@@ -73,6 +74,13 @@ void CLightingCannon::Fire(void)
 	dir.Normalize();
 	CUnit* u=0;
 	float r=helper->TraceRay(weaponPos,dir,range,0,owner,u);
+
+	float3 newDir;
+	CPlasmaRepulser* shieldHit;
+	float shieldLength=interceptHandler.AddShieldInterceptableBeam(this,weaponPos,dir,range,newDir,shieldHit);
+	if(shieldLength<r){
+		r=shieldLength;
+		}
 
 //	if(u)
 //		u->DoDamage(damages,owner,ZeroVector);
