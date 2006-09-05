@@ -13,7 +13,7 @@ CEmgProjectile::CEmgProjectile(const float3& pos,const float3& speed,CUnit* owne
 	color(color),
 	intensity(intensity)
 {
-	SetRadius(0.5);
+	SetRadius(weaponDef->size);
 	drawRadius=weaponDef->size;
 #ifdef TRACE_SYNC
 	tracefile << "New emg: ";
