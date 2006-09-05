@@ -365,7 +365,7 @@ void CBuilderCAI::SlowUpdate()
 
 			} else {							//reclaim unit
 				CUnit* unit=uh->units[id];
-				if(unit && unit!=owner &&unit->unitDef->reclaimable && (unit->losStatus[owner->allyteam] & LOS_INRADAR)){
+				if(unit && unit!=owner && unit->unitDef->reclaimable && (unit->losStatus[owner->allyteam] & LOS_INRADAR)){
 					if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
 						StopMove();
 						owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9+unit->radius, false);
@@ -776,9 +776,12 @@ void CBuilderCAI::GiveCommand(Command& c)
 		return;
 
 	if((c.id == CMD_RECLAIM) && (c.params.size() == 1)){
-		const UnitDef* ud = unitDefHandler->GetUnitByID((int)c.params[0]);
-		if(ud && !ud->reclaimable){
-			return;
+		const int unitID = (int)c.params[0];
+		if(unitID < MAX_UNITS){ // not a feature
+			CUnit* unit = uh->units[unitID];
+			if(unit && !unit->unitDef->reclaimable){
+				return;
+			}
 		}
 	}
 
