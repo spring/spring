@@ -482,7 +482,8 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			hotBinding.clear();
 		}
 		else if ((k != SDLK_LCTRL) && (k != SDLK_LMETA) &&
-		         (k != SDLK_LSHIFT) && (k != SDLK_LALT)) {
+		         (k != SDLK_LSHIFT) && (k != SDLK_LALT) &&
+		         (k != keyBindings->GetFakeMetaKey())) {
 			CKeySet ks(k, false);
 			string cmd = "bind";
 			cmd += " " + ks.GetString() ;
