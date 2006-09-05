@@ -347,14 +347,13 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	color[3]=255;
 
 	// Calculate the icon size. It scales with:
-	//  * The square root of the camera distance.
+	//  * The camera distance (thus keeping it effectively constant size at all distances).
 	//  * The mod defined 'iconSize' (which acts a multiplier).
 	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
 	float3 pos=unit->midPos;
 	if(asRadarBlip)
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
-	float dist=sqrt((pos-camera->pos).Length());
-	float scale=icon->size*dist/2;
+	float scale=icon->size*((pos-camera->pos).Length())/200;
 	if(icon->radiusAdjust && !asRadarBlip)
 		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
 
