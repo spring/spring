@@ -241,22 +241,22 @@ CDynWater::~CDynWater(void)
 	glDeleteTextures (1, &hoverShape);
 	glDeleteTextures (1, &zeroTex);
 	glDeleteTextures (1, &fixedUpTex);
-	glDeleteProgramsARB( 1, &waterFP );
-	glDeleteProgramsARB( 1, &waterVP );
-	glDeleteProgramsARB( 1, &waveFP );
-	glDeleteProgramsARB( 1, &waveVP );
-	glDeleteProgramsARB( 1, &waveFP2 );
-	glDeleteProgramsARB( 1, &waveVP2 );
-	glDeleteProgramsARB( 1, &waveNormalFP );
-	glDeleteProgramsARB( 1, &waveNormalVP );
-	glDeleteProgramsARB( 1, &waveCopyHeightFP );
-	glDeleteProgramsARB( 1, &waveCopyHeightVP );
-	glDeleteProgramsARB( 1, &dwGroundReflectIVP );
-	glDeleteProgramsARB( 1, &dwGroundRefractVP );
-	glDeleteProgramsARB( 1, &dwDetailNormalVP );
-	glDeleteProgramsARB( 1, &dwDetailNormalFP );
-	glDeleteProgramsARB( 1, &dwAddSplashVP );
-	glDeleteProgramsARB( 1, &dwAddSplashFP );
+	glSafeDeleteProgram( waterFP );
+	glSafeDeleteProgram( waterVP );
+	glSafeDeleteProgram( waveFP );
+	glSafeDeleteProgram( waveVP );
+	glSafeDeleteProgram( waveFP2 );
+	glSafeDeleteProgram( waveVP2 );
+	glSafeDeleteProgram( waveNormalFP );
+	glSafeDeleteProgram( waveNormalVP );
+	glSafeDeleteProgram( waveCopyHeightFP );
+	glSafeDeleteProgram( waveCopyHeightVP );
+	glSafeDeleteProgram( dwGroundReflectIVP );
+	glSafeDeleteProgram( dwGroundRefractVP );
+	glSafeDeleteProgram( dwDetailNormalVP );
+	glSafeDeleteProgram( dwDetailNormalFP );
+	glSafeDeleteProgram( dwAddSplashVP );
+	glSafeDeleteProgram( dwAddSplashFP );
 	glDeleteFramebuffersEXT(1,&frameBuffer);
 }
 

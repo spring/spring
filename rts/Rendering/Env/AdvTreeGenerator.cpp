@@ -124,7 +124,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	}
 	CreateFarTex();
 
-	if(shadowHandler->drawShadows){
+	if(shadowHandler->canUseShadows){
 		treeVP=LoadVertexProgram("tree.vp");
 		treeFarVP=LoadVertexProgram("treeFar.vp");
 		treeShadowVP=LoadVertexProgram("treeShadow.vp");
@@ -142,14 +142,14 @@ CAdvTreeGenerator::~CAdvTreeGenerator()
 	glDeleteLists(leafDL,8);
 	glDeleteLists(pineDL,8);
 //	delete[] grassCol;
-	glDeleteProgramsARB( 1, &treeNSVP );
-	if(shadowHandler->drawShadows){
-		glDeleteProgramsARB( 1, &treeVP );
-		glDeleteProgramsARB( 1, &treeFarVP );
-		glDeleteProgramsARB( 1, &treeShadowVP );
-		glDeleteProgramsARB( 1, &treeFarShadowVP );
+	glSafeDeleteProgram( treeNSVP );
+	if(shadowHandler->canUseShadows){
+		glSafeDeleteProgram( treeVP );
+		glSafeDeleteProgram( treeFarVP );
+		glSafeDeleteProgram( treeShadowVP );
+		glSafeDeleteProgram( treeFarShadowVP );
 		if(shadowHandler->useFPShadows){
-			glDeleteProgramsARB( 1, &treeFPShadow );		
+			glSafeDeleteProgram( treeFPShadow );		
 		}
 	}
 }

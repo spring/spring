@@ -17,59 +17,92 @@ CShadowHandler* shadowHandler=0;
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 
+
+bool CShadowHandler::canUseShadows = false;
+bool CShadowHandler::useFPShadows  = true;  // FIXME -- this was being forced to true
+bool CShadowHandler::firstInstance = true;
+
+      
 CShadowHandler::CShadowHandler(void): fb(0)
 {
-	drawShadows=false;
-	inShadowPass=false;
-	showShadowMap=false;
-	firstDraw=true;
-	useFPShadows=false;
+	const bool tmpFirstInstance = firstInstance;
+	firstInstance = false;
 	
-	if(!configHandler.GetInt("Shadows",0))
+	drawShadows   = false;
+	inShadowPass  = false;
+	showShadowMap = false;
+	firstDraw     = true;
+	shadowTexture = 0;
+	
+	if (!tmpFirstInstance && !canUseShadows) {
 		return;
+	}
 
+	const int configValue = configHandler.GetInt("Shadows", 0);
+	if (configValue < 0) {
+		return;
+	}
+	
 	shadowMapSize=configHandler.GetInt("ShadowMapSize",DEFAULT_SHADOWMAPSIZE);
 
-	if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
-		info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
-		return;
-	}
-
-	if(!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"unit.fp")){
-		info->AddLine("Your GFX card doesnt support the fragment programs needed to run in shadowed mode");
-		return;
-	}
-
-	if(!(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
-		if(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
-			info->AddLine("Using ARB_fragment_program_shadow");
-			useFPShadows=true;
-		} else {
-			info->AddLine("You are missing an OpenGL extension needed to use shadowmaps");
+	if (tmpFirstInstance) {
+		if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
+			info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
 			return;
 		}
-	}
 
-	if(!GLEW_ARB_shadow_ambient){
-		if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
-			if(!useFPShadows)
+		if(!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"unit.fp")){
+			info->AddLine("Your GFX card doesnt support the fragment programs needed to run in shadowed mode");
+			return;
+		}
+
+		if(!(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
+			if(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 				info->AddLine("Using ARB_fragment_program_shadow");
-			useFPShadows=true;
-		} else {
-			info->AddLine("You are missing the extension ARB_shadow_ambient, this will make shadows darker than they should be");
+				useFPShadows=true; // FIXME -- always true
+			} else {
+				info->AddLine("You are missing an OpenGL extension needed to use shadowmaps");
+				return;
+			}
+		}
+
+		if(!GLEW_ARB_shadow_ambient){
+			if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
+				if(!useFPShadows){
+					info->AddLine("Using ARB_fragment_program_shadow");
+				}
+				useFPShadows = true; // FIXME -- always true
+			} else {
+				info->AddLine("You are missing the extension ARB_shadow_ambient, this will make shadows darker than they should be");
+			}
 		}
 	}
 
-	if (!InitDepthTarget())
+	if (!InitDepthTarget()) {
 		return;
+	}
 
-	drawShadows=true;
-	useFPShadows=true;
+	if (tmpFirstInstance) {
+		canUseShadows = true;
+	}
+
+	if (configValue == 0) {
+		// free any resources allocated by InitDepthTarget()
+		delete fb;
+		fb = NULL;
+		glDeleteTextures(1, &shadowTexture);
+		shadowTexture = 0;
+		return; // drawShadows is still false
+	}
+
+	drawShadows = true;
+//	useFPShadows = true; // FIXME -- why was this being forced?
 }
+
 
 bool CShadowHandler::InitDepthTarget()
 {
-	fb = instantiate_fb(shadowMapSize,shadowMapSize, FBO_NEED_DEPTH_TEXTURE);
+	fb = instantiate_fb(shadowMapSize, shadowMapSize, FBO_NEED_DEPTH_TEXTURE);
 	if (!(fb && fb->valid()))
 		return false;
 	glGenTextures(1,&shadowTexture);
@@ -80,7 +113,7 @@ bool CShadowHandler::InitDepthTarget()
 	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	fb->select();
 	glDrawBuffer(GL_NONE);

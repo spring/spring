@@ -689,6 +689,44 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	if (cmd == "select") {
 		selectionKeys->DoSelection(action.extra);
 	}
+	else if (cmd == "shadows") {
+		const int current = configHandler.GetInt("Shadows", 0);
+		if (current < 0) {
+			info->AddLine("Shadows have been disabled with %i", current);
+			info->AddLine("Change your configuration and restart to use them");
+			return true;
+		}
+		else if (!shadowHandler->canUseShadows) {
+			info->AddLine("Your hardware/driver setup does not support shadows");
+			return true;
+		}
+
+		delete shadowHandler;
+		int next = 0;
+		if (!action.extra.empty()) {
+			next = atoi(action.extra.c_str());
+		} else {
+			next = (current == 0) ? 1 : 0;
+		}
+		configHandler.SetInt("Shadows", next);
+		info->AddLine("Set Shadows to %i", next);
+		shadowHandler = new CShadowHandler();
+
+		unitDrawer->ReconfigureShaders();
+	}
+	else if (cmd == "water") {
+		delete water;
+		int next = 0;
+		if (!action.extra.empty()) {
+			next = atoi(action.extra.c_str());
+		} else {
+			const int current = configHandler.GetInt("ReflectiveWater", 3);
+			next = (max(0, current) + 1) % 4;
+		}
+		configHandler.SetInt("ReflectiveWater", next);
+		info->AddLine("Set ReflectiveWater to %i", next);
+		water = CBaseWater::GetWater();
+	}
 	else if (cmd == "say") {
 		SendNetChat(action.extra);
 	}

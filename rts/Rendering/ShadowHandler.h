@@ -17,11 +17,12 @@ public:
 	int shadowMapSize;
 	unsigned int shadowTexture;
 
+	static bool canUseShadows;
+	static bool useFPShadows;
+	
 	bool drawShadows;
 	bool inShadowPass;
 	bool showShadowMap;
-	bool firstDraw;
-	bool useFPShadows;
 
 	float3 centerPos;
 	float3 cross1;
@@ -40,6 +41,8 @@ protected:
 	void GetFrustumSide(float3& side,bool upside);
 	bool InitDepthTarget();
 	void DrawShadowPasses();
+
+protected:
 	struct fline {
 		float base;
 		float dir;
@@ -49,6 +52,9 @@ protected:
 	};
 	std::vector<fline> left;
 	IFramebuffer *fb;
+
+	bool firstDraw;
+	static bool firstInstance;
 };
 
 extern CShadowHandler* shadowHandler;

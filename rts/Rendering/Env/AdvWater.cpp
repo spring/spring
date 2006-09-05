@@ -109,7 +109,7 @@ CAdvWater::~CAdvWater()
 	glDeleteTextures (1, &reflectTexture);
 	glDeleteTextures (1, &bumpTexture);
 	glDeleteTextures (4, rawBumpTexture);
-	glDeleteProgramsARB( 1, &waterFP );
+	glSafeDeleteProgram( waterFP );
 }
 
 void CAdvWater::Draw()

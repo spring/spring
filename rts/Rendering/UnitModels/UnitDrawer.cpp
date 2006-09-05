@@ -112,16 +112,36 @@ CUnitDrawer::CUnitDrawer(void)
 	}
 }
 
+
+void CUnitDrawer::ReconfigureShaders(void)
+{
+	if(advShading) {
+		glSafeDeleteProgram( unitShadowVP );
+		glSafeDeleteProgram( unitFP );
+		glSafeDeleteProgram( units3oFP );
+		if (shadowHandler->drawShadows) {
+			unitShadowVP=LoadVertexProgram("unit_genshadow.vp");
+			unitFP=LoadFragmentProgram("unit_shadow.fp");
+			units3oFP=LoadFragmentProgram("units3o_shadow.fp");
+		} else {
+			unitShadowVP=0;
+			unitFP=LoadFragmentProgram("unit.fp");
+			units3oFP=LoadFragmentProgram("units3o.fp");
+		}
+	}
+}
+
+
 CUnitDrawer::~CUnitDrawer(void)
 {
 	glDeleteTextures(1,&whiteTex);
 
 	if(advShading){
-		if (unitShadowVP) glDeleteProgramsARB( 1, &unitShadowVP );
-		glDeleteProgramsARB( 1, &unitVP );
-		glDeleteProgramsARB( 1, &unitFP );
-		glDeleteProgramsARB( 1, &units3oVP );
-		glDeleteProgramsARB( 1, &units3oFP );
+		glSafeDeleteProgram( unitShadowVP );
+		glSafeDeleteProgram( unitVP );
+		glSafeDeleteProgram( unitFP );
+		glSafeDeleteProgram( units3oVP );
+		glSafeDeleteProgram( units3oFP );
 
 		glDeleteTextures(1,&boxtex);
 		glDeleteTextures(1,&specularTex);

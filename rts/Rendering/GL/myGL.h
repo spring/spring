@@ -33,6 +33,9 @@ bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);
 unsigned int LoadFragmentProgram(const char* filename);
 
+void glClearErrors();
+void glSafeDeleteProgram(GLuint program);
+
 void LoadExtensions();
 void UnloadExtensions();
 

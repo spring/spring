@@ -26,8 +26,10 @@ void CWordCompletion::Reset()
 	words["/clock"] = wp;
 	words["/info"] = wp;
 	words["/gameinfo"] = wp;
+	words["/say "] = wp;
+	words["/shadows "] = wp;
+	words["/water "] = wp;
 	words["/bind "] = wp;
-	words["/say"] = wp;
 	words["/unbind "] = wp;
 	words["/unbindall"] = wp;
 	words["/unbindaction "] = wp;

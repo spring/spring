@@ -162,6 +162,9 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
+	// clear any current GL errors so that the following check is valid
+	glClearErrors();
+
 	glGenProgramsARB( 1, &tempProg );
 	glBindProgramARB( target,tempProg);
 	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, VPFile.FileSize(), VPbuf);
@@ -173,7 +176,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 	glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
 	glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
 
-	glDeleteProgramsARB( 1, &tempProg);
+	glSafeDeleteProgram( tempProg);
 
 	delete[] VPbuf;
 	if ((errorPos == -1) && (isNative == 1))
@@ -212,7 +215,10 @@ static void CheckParseErrors(const char * program_type, const char * filename)
 
 static unsigned int LoadProgram(GLenum target, const char* filename, const char * program_type)
 {
-	unsigned int ret;
+	unsigned int ret = 0;
+	if (!GLEW_ARB_vertex_program) {
+		return 0;
+	}
 
 	CFileHandler VPFile(std::string("shaders/")+filename);
 	if (!VPFile.FileExists ())
@@ -241,7 +247,24 @@ unsigned int LoadVertexProgram(const char* filename)
 
 unsigned int LoadFragmentProgram(const char* filename)
 {
+	
 	return LoadProgram(GL_FRAGMENT_PROGRAM_ARB, filename, "fragment");
+}
+
+void glSafeDeleteProgram(GLuint program)
+{
+	if (!GLEW_ARB_vertex_program || (program == 0)) {
+		return;
+	}
+	glDeleteProgramsARB(1, &program);
+}
+
+void glClearErrors()
+{
+	int safety = 0;
+	while ((glGetError() != GL_NO_ERROR) && (safety < 1000)) {
+		safety++;
+	}
 }
 
 IFramebuffer::~IFramebuffer() {
