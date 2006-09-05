@@ -2,6 +2,8 @@ TASpring change log
 
 0.next
 
+- added "fakemeta" key binding command to provide another modifier
+
 - added "/water   [0-3]" to control water rendering in-game
   (the optional number is the mode; without the number, it rotates through the modes)
 - added "/shadows [0-1]" to control shadow rendering in-game
