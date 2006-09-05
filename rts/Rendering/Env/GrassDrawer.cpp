@@ -106,7 +106,7 @@ CGrassDrawer::CGrassDrawer()
 
 	CreateFarTex();
 
-	if(shadowHandler->drawShadows){
+	if(shadowHandler->canUseShadows){
 		grassVP=LoadVertexProgram("grass.vp");
 		grassFarVP=LoadVertexProgram("grassFar.vp");
 	}
@@ -128,11 +128,11 @@ CGrassDrawer::~CGrassDrawer(void)
 	glDeleteTextures(1,&grassBladeTex);
 	glDeleteTextures(1,&farTex);	
 
-	glDeleteProgramsARB( 1, &grassFarNSVP );
+	glSafeDeleteProgram( grassFarNSVP );
 
-	if(shadowHandler->drawShadows){
-		glDeleteProgramsARB( 1, &grassVP );
-		glDeleteProgramsARB( 1, &grassFarVP );
+	if(shadowHandler->canUseShadows){
+		glSafeDeleteProgram( grassVP );
+		glSafeDeleteProgram( grassFarVP );
 	}
 }
 

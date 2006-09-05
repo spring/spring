@@ -162,7 +162,7 @@ CAdvSky::~CAdvSky()
 	delete[] cloudThickness2;
 	delete[] cloudTexMem;
 
-	glDeleteProgramsARB( 1, &cloudFP );
+	glSafeDeleteProgram( cloudFP );
 }
 
 void CAdvSky::Draw()

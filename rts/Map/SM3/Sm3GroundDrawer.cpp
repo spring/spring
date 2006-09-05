@@ -37,9 +37,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 
 CSm3GroundDrawer::~CSm3GroundDrawer()
 {
-	if (groundShadowVP)
-		glDeleteProgramsARB( 1, &groundShadowVP );
-
+	glSafeDeleteProgram( groundShadowVP );
 	configHandler.SetInt("SM3TerrainDetail", int(tr->config.detailMod * 100));
 }
 

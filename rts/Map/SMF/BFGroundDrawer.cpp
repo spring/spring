@@ -26,11 +26,12 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap *rm)
 	heightData=map->heightmap;
 	heightDataX=gs->mapx+1;
 
-	if(shadowHandler->drawShadows){
+	if(shadowHandler->canUseShadows){
 		groundVP=LoadVertexProgram("ground.vp");
 		groundShadowVP=LoadVertexProgram("groundshadow.vp");
-		if(shadowHandler->useFPShadows)
+		if(shadowHandler->useFPShadows){
 			groundFPShadow=LoadFragmentProgram("groundFPshadow.fp");
+		}
 	}
 
 	textures=new CBFGroundTextures(map);
@@ -43,11 +44,12 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 {
 	delete textures;
 
-	if(shadowHandler->drawShadows){
-		glDeleteProgramsARB( 1, &groundVP );
-		glDeleteProgramsARB( 1, &groundShadowVP );
-		if(shadowHandler->useFPShadows)
-			glDeleteProgramsARB( 1, &groundFPShadow);
+	if(shadowHandler->canUseShadows){
+		glSafeDeleteProgram( groundVP );
+		glSafeDeleteProgram( groundShadowVP );
+		if(shadowHandler->useFPShadows){
+			glSafeDeleteProgram( groundFPShadow);
+		}
 	}
 
 	configHandler.SetInt("GroundDetail",viewRadius);

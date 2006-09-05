@@ -20,7 +20,8 @@ class CUnitDrawer
 public:
 	CUnitDrawer(void);
 	~CUnitDrawer(void);
-
+	void ReconfigureShaders(void);
+	
 	void Update(void);
 	void Draw(bool drawReflection,bool drawRefraction=false);
 

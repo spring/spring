@@ -131,7 +131,7 @@ CProjectileHandler::CProjectileHandler()
 	groundringtex = groundFXAtlas->GetTexture("groundring");
 	seismictex = groundFXAtlas->GetTexture("seismic");
 
-	if(shadowHandler->drawShadows){
+	if(shadowHandler->canUseShadows){
 		projectileShadowVP=LoadVertexProgram("projectileshadow.vp");
 	}
 
@@ -180,9 +180,10 @@ CProjectileHandler::~CProjectileHandler()
 		delete *gfi;
 	distlist.clear();
 
-	if(shadowHandler->drawShadows){
-		glDeleteProgramsARB( 1, &projectileShadowVP );
+	if(shadowHandler->canUseShadows){
+		glSafeDeleteProgram(projectileShadowVP);
 	}
+
 	/* Also invalidates flying3doPieces and flyings3oPieces. */
 	for(std::list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
 		FlyingPiece_List * fpl = *pti;

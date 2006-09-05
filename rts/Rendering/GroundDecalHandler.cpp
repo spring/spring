@@ -52,7 +52,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 
 	delete[] buf;
 
-	if(shadowHandler->drawShadows){
+	if(shadowHandler->canUseShadows){
 		decalVP=LoadVertexProgram("grounddecals.vp");
 		decalFP=LoadFragmentProgram("grounddecals.fp");
 	}
@@ -85,6 +85,10 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 		delete[] scarField;
 
 		glDeleteTextures(1,&scarTex);
+	}
+	if(shadowHandler->canUseShadows){
+		glSafeDeleteProgram(decalVP);
+		glSafeDeleteProgram(decalFP);
 	}
 }
 
