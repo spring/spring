@@ -758,7 +758,6 @@ void CBuilderCAI::GiveCommand(Command& c)
 {
 	if(c.id==CMD_RESURRECT && !owner->unitDef->canResurrect)
 		return;
-
 	if(c.id==CMD_CAPTURE && !owner->unitDef->canCapture)
 		return;
 	if(c.id==CMD_RECLAIM && !owner->unitDef->canReclaim)
@@ -775,21 +774,21 @@ void CBuilderCAI::GiveCommand(Command& c)
 		return;
 	if(c.id==CMD_PATROL && !owner->unitDef->canPatrol)
 		return;
-	if(c.id == CMD_RECLAIM){
-		const UnitDef* u = unitDefHandler->GetUnitByID((int)c.params[0]);
-		if(u){
-			if(!u->reclaimable){
-				return;
-			}
+
+	if((c.id == CMD_RECLAIM) && (c.params.size() == 1)){
+		const UnitDef* ud = unitDefHandler->GetUnitByID((int)c.params[0]);
+		if(ud && !ud->reclaimable){
+			return;
 		}
-	}if(c.id == CMD_REPAIR){
-		CUnit* unit=uh->units[(int)c.params[0]];
-		if(unit->beingBuilt){
-			if(!owner->unitDef->canAssist){
-				return;
-			}
+	}
+
+	if((c.id == CMD_REPAIR) && (c.params.size() == 1)){
+		CUnit* unit = uh->units[(int)c.params[0]];
+		if(unit && unit->beingBuilt && !owner->unitDef->canAssist){
+			return;
 		}
-	}//
+	}
+
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		building=false;
 		CBuilder* fac=(CBuilder*)owner;
