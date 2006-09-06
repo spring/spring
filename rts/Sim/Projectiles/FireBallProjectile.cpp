@@ -9,7 +9,7 @@
 CFireBallProjectile::CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)
 	: CWeaponProjectile(pos,speed, owner, target, targetPos, weaponDef,damages,0)
 {
-	SetRadius(weaponDef->size);
+	SetRadius(weaponDef->collisionSize);
 	drawRadius=weaponDef->size;
 }
 

@@ -21,7 +21,7 @@ CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* 
 	dir.Normalize();
 	speedf=speed.Length();
 
-	SetRadius(weaponDef->size);
+	SetRadius(weaponDef->collisionSize);
 	drawRadius=length;
 	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5;
 #ifdef TRACE_SYNC

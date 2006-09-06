@@ -13,7 +13,7 @@ TASpring change log
 
 0.73b1
 
-- added transparency support from alpha channel of texture2 in s3o drawing
+- - Added transparency suport from texture2 in s3o drawing, requires advanced shading.
 - added DualScreenMode configuration flag. 
     This causes the game view width to be one half of the screen width, so the minimap can take the other half. 
     You will need to spread your spring window across the 2 screens.
@@ -186,7 +186,8 @@ TASpring change log
 - tdf tag rgbcolor is used for EmgProjectile and ExplosiveProjectile.
 - tdf tag intensity is used for EmgProjectile and ExplosiveProjectile.
 - New weapon tdf tag soundstartvolume and soundhitvolume.
-- New weapon tdf tag size, defines the size of projectiles.
+- New weapon tdf tag size, defines the visible size of projectiles.
+- New weapon tdf tag CollisionSize, defines the physical size of projectiles.
 - New weapon tdf tag sizegrowth, defines how fast flame projectiles will grow in size.
 - New weapon tdf tag AvoidFriendly, if set to 0 units will not try to avoid friendly units in their line of fire.
 - New weapon tdf tag CollideFriendly, if set to 0 this weapon will not hit friendly units.

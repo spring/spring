@@ -60,6 +60,7 @@ struct WeaponDef
 	float edgeEffectivness;
 	float size;
 	float sizeGrowth;
+	float collisionSize;
 
 	int salvosize;
 	float salvodelay;
