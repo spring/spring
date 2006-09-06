@@ -5,22 +5,23 @@
 #include "StdAfx.h"
 #include "Game/Team.h"
 #include "SelectedUnits.h"
-#include "Sim/Units/Unit.h"
 #include <map>
 #include "Rendering/GL/myGL.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Net.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "UI/InfoConsole.h"
-#include "Camera.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
 #include "SelectedUnitsAI.h"
-#include "Sound.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Player.h"
+#include "Camera.h"
+#include "Sound.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -391,27 +392,105 @@ bool CSelectedUnits::CommandsChanged()
 	return possibleCommandsChanged;
 }
 
-int CSelectedUnits::GetDefaultCmd(CUnit *unit,CFeature* feature)
+
+/******************************************************************************/
+//
+//  GetDefaultCmd() and friends
+//
+
+static bool targetIsEnemy = false;
+static const CUnit* targetUnit = NULL;
+static const CFeature* targetFeature = NULL;
+
+
+static inline bool CanDamage(const UnitDef* ud)
 {
-	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
-		return grouphandler->groups[selectedGroup]->GetDefaultCmd(unit,feature);
-	}
-	int cmd=CMD_STOP;
-	int lowestHint=10000;//find better way to decide
-	CUnit* selected=0;
-	int i = 0;
-	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		if((!(*ui)->immobile || (i==selectedUnits.size() - 1 && lowestHint == 10000)) && (*ui)->aihint<lowestHint)
-		{
-			selected=*ui;
-			lowestHint=(*ui)->aihint;
-		}
-		i++;
-	} 	
-	if(selected)
-		cmd=selected->commandAI->GetDefaultCmd(unit,feature);
-	return cmd;
+	return ((ud->canAttack && !ud->weapons.empty()) || ud->canKamikaze);
 }
+
+
+static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
+{
+	// There is a lot more that could be done here to make better
+	// selections, but the users may prefer simplicity over smarts.
+
+	if (targetUnit) {
+		if (targetIsEnemy) {
+			const bool newCanDamage = CanDamage(newDef);
+			const bool oldCanDamage = CanDamage(oldDef);
+			if ( newCanDamage && !oldCanDamage) { return true;  }
+			if (!newCanDamage &&  oldCanDamage) { return false; }
+			if (!CanDamage(targetUnit->unitDef)) {
+				if ( newDef->canReclaim && !oldDef->canReclaim) { return true;  }
+				if (!newDef->canReclaim &&  oldDef->canReclaim) { return false; }
+			}
+		}
+		else { // targetIsAlly
+			if (targetUnit->health < targetUnit->maxHealth) {
+				if ( newDef->canRepair && !oldDef->canRepair) { return true;  }
+				if (!newDef->canRepair &&  oldDef->canRepair) { return false; }
+			}
+			const bool newCanLoad = (newDef->transportCapacity > 0);
+			const bool oldCanLoad = (oldDef->transportCapacity > 0);
+			if ( newCanLoad && !oldCanLoad) { return true;  }
+			if (!newCanLoad &&  oldCanLoad) { return false; }
+			if ( newDef->canGuard && !oldDef->canGuard) { return true;  }
+			if (!newDef->canGuard &&  oldDef->canGuard) { return false; }
+		}
+	}
+	else if (targetFeature) {
+		if (!targetFeature->createdFromUnit.empty()) {
+			if ( newDef->canResurrect && !oldDef->canResurrect) { return true;  }
+			if (!newDef->canResurrect &&  oldDef->canResurrect) { return false; }
+		}
+		if ( newDef->canReclaim && !oldDef->canReclaim) { return true;  }
+		if (!newDef->canReclaim &&  oldDef->canReclaim) { return false; }
+	}
+	
+	return (newDef->speed > oldDef->speed); // CMD_MOVE?
+}
+
+
+int CSelectedUnits::GetDefaultCmd(CUnit *unit, CFeature* feature)
+{
+	// NOTE: the unitDef->aihint value is being ignored
+	
+	if ((selectedGroup != -1) && grouphandler->groups[selectedGroup]->ai) {
+		return grouphandler->groups[selectedGroup]->GetDefaultCmd(unit, feature);
+	}
+
+	// return the default if there are no units selected
+	set<CUnit*>::const_iterator ui = selectedUnits.begin();
+	if (ui == selectedUnits.end()) {
+		return CMD_STOP;
+	}
+
+	// setup the locals for IsBetterLeader()
+	targetUnit = unit;
+	targetFeature = feature;
+	if (targetUnit) {
+		targetIsEnemy = !gs->Ally(gu->myAllyTeam, targetUnit->allyteam);
+	}
+
+	// find the best leader to pick the command
+	const CUnit* leaderUnit = *ui;
+	const UnitDef* leaderDef = leaderUnit->unitDef;
+	for (ui++; ui != selectedUnits.end(); ++ui) {
+		const CUnit* testUnit = *ui;
+		const UnitDef* testDef = testUnit->unitDef;
+		if (testDef != leaderDef) {
+			if (IsBetterLeader(testDef, leaderDef)) {
+				leaderDef = testDef;
+				leaderUnit = testUnit;
+			}
+		}
+	}
+	
+	return (leaderUnit->commandAI->GetDefaultCmd(unit, feature));
+}
+
+
+/******************************************************************************/
 
 void CSelectedUnits::AiOrder(int unitid, Command &c)
 {
