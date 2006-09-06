@@ -494,7 +494,7 @@ void CProjectileHandler::CheckUnitCol()
 				if(closeTime>1)
 					closeTime=1;
 				float3 closeVect=dif-(p->speed*closeTime);
-				if(dif.SqLength() < totalRadius*totalRadius){
+				if(closeVect.SqLength() < totalRadius*totalRadius){
 
 					if(unit->isMarkedOnBlockingMap && unit->physicalState != CSolidObject::Flying){
 						float3 closePos(p->pos+p->speed*closeTime);
@@ -502,6 +502,8 @@ void CProjectileHandler::CheckUnitCol()
 						if(readmap->groundBlockingObjectMap[square]!=unit)
 							continue;
 					}
+					//adjust projectile position so explosion happens at the correct position 
+					p->pos = p->pos + p->speed*closeTime;
 					p->Collision(*ui);
 					break;
 				}

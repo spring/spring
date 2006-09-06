@@ -24,7 +24,7 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed
 {
 	useAirLos=true;
 
-	SetRadius(weaponDef->size);
+	SetRadius(weaponDef->collisionSize);
 	drawRadius=weaponDef->size;
 
 #ifdef TRACE_SYNC

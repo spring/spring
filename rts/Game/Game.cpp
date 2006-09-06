@@ -110,7 +110,7 @@
 #endif
 
 #ifdef _MSC_VER
-#include "Platform/Win/DxSound.h"
+#include "Platform/Win/Dx3DSound.h"
 #else
 #include "Platform/Linux/OpenALSound.h"
 #endif
@@ -149,7 +149,7 @@ static CSound* CreateSoundInterface()
     return new CNullSound ();
   }
 #ifdef _MSC_VER
-	return new CDxSound ();
+	return new CDx3DSound ();
 #else
 	return new COpenALSound ();
 #endif
@@ -1693,6 +1693,12 @@ START_TIME_PROFILE
 	mapDamage->Update();
 	pathManager->Update();
 	uh->Update();
+
+START_TIME_PROFILE
+	ph->CheckUnitCol();
+	ground->CheckCol(ph);
+END_TIME_PROFILE("Collisions");
+
 	ph->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
@@ -1704,11 +1710,6 @@ START_TIME_PROFILE
 			gs->Team(a)->Update();
 	}
 //	CPathFinder::Instance()->Update();
-
-START_TIME_PROFILE
-	ground->CheckCol(ph);
-	ph->CheckUnitCol();
-END_TIME_PROFILE("Collisions");
 
 	Uint64 stopPhysics;
 	stopPhysics = SDL_GetTicks();

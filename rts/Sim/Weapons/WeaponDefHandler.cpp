@@ -339,7 +339,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	float tempsize = 2.0f+min(weaponDefs[id].damages[0]*0.0025,weaponDefs[id].areaOfEffect*0.1);
 	sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
 	sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.2", weaponname + "\\sizeGrowth");
-
+	sunparser->GetDef(weaponDefs[id].collisionSize, "0.05", weaponname + "\\CollisionSize");
+	
 	//get some weapon specific defaults
 	if(weaponDefs[id].type=="Cannon"){
 		//CExplosiveProjectile
@@ -369,7 +370,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	} else if(weaponDefs[id].type=="LaserCannon"){
 		//CLaserProjectile
 		weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
-		weaponDefs[id].visuals.texture2 = &ph->laserendtex;		
+		weaponDefs[id].visuals.texture2 = &ph->laserendtex;	
+		sunparser->GetDef(weaponDefs[id].collisionSize, "0.5", weaponname + "\\CollisionSize");
 	} else if(weaponDefs[id].type=="BeamLaser"){
 		if(weaponDefs[id].largeBeamLaser)
 		{
@@ -394,6 +396,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		sunparser->GetDef(weaponDefs[id].size, "3", weaponname + "\\size");
 	} else if(weaponDefs[id].type=="DGun"){
 		//CFireBallProjectile
+		sunparser->GetDef(weaponDefs[id].collisionSize, "10", weaponname + "\\CollisionSize");
 	} else if(weaponDefs[id].type=="StarburstLauncher"){
 		//CStarburstProjectile
 		weaponDefs[id].visuals.texture1 = &ph->flaretex;
