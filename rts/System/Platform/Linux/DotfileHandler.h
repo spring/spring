@@ -2,6 +2,7 @@
  * @file DotfileHandler.h
  * @brief linux dotfile config base
  * @author Christopher Han <xiphux@gmail.com>
+ * @author Tobi Vollebregt <tobivollebregt@gmail.com>
  *
  * DotfileHandler configuration class definition
  * Copyright (C) 2005.  Licensed under the terms of the
@@ -13,8 +14,8 @@
 
 #include "Platform/ConfigHandler.h"
 
+#include <stdio.h>
 #include <string>
-#include <fstream>
 #include <map>
 
 using std::string;
@@ -42,11 +43,12 @@ using std::string;
 class DotfileHandler: public ConfigHandler
 {
 public:
+
 	/**
 	 * @brief Constructor
 	 * @param fname path to config file
 	 */
-	DotfileHandler(string fname);
+	DotfileHandler(const std::string& fname);
 
 	/**
 	 * @brief Destructor
@@ -82,20 +84,13 @@ public:
 	 * @return integer value
 	 */
 	virtual int GetInt(std::string name, int def);
-protected:
-	/**
-	 * @brief filename
-	 *
-	 * Stores the path to the config file
-	 */
-	std::string filename;
+
+private:
 
 	/**
-	 * @brief file
-	 * 
-	 * Output stream for file
+	 * @brief config file name
 	 */
-	std::ofstream file;
+	std::string filename;
 
 	/**
 	 * @brief data map
@@ -105,16 +100,11 @@ protected:
 	 */
 	std::map<string,string> data;
 
-	/**
-	 * @brief flush file
-	 */
-	virtual void flushfile(void);
-
-	/**
-	 * @brief truncate file
-	 */
-	virtual void truncatefile(void);
-	
+	// helper functions
+	void Read(FILE* file);
+	void Write(FILE* file);
+	char* Strip(char* begin, char* end);
+	void AppendLine(char* buf);
 };
 
 #endif /* _DOTFILEHANDLER_H */
