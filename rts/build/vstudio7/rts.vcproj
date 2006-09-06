@@ -81,7 +81,7 @@
 				OptimizeForProcessor="3"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../../lua/lua/include;../../../lua/luabind"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_X87"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
@@ -3461,8 +3461,7 @@
 				<File
 					RelativePath="..\..\System\Script\LuaBinder.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -3473,8 +3472,7 @@
 				<File
 					RelativePath="..\..\System\Script\LuaFunctions.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -3500,8 +3498,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3528,8 +3525,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3553,8 +3549,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3578,8 +3573,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3603,8 +3597,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3625,8 +3618,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3650,8 +3642,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3675,8 +3666,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3703,8 +3693,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3728,8 +3717,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3753,8 +3741,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3778,8 +3765,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3803,8 +3789,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3828,8 +3813,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3853,8 +3837,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3878,8 +3861,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3900,8 +3882,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3931,8 +3912,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3956,8 +3936,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3981,8 +3960,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4009,8 +3987,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4031,8 +4008,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4053,8 +4029,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4075,8 +4050,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4097,8 +4071,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4119,8 +4092,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4141,8 +4113,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4163,8 +4134,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="TRUE">
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4180,6 +4150,12 @@
 							RelativePath="..\..\..\lua\lua\src\lib\streflop_gateway.cpp">
 							<FileConfiguration
 								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4205,8 +4181,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4227,8 +4202,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4249,8 +4223,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4271,8 +4244,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4293,8 +4265,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4315,8 +4286,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4337,8 +4307,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4359,8 +4328,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4381,8 +4349,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4403,8 +4370,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4425,8 +4391,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4447,8 +4412,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4469,8 +4433,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4491,8 +4454,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4513,8 +4475,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4535,8 +4496,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4557,8 +4517,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4579,8 +4538,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4601,8 +4559,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32"
-							ExcludedFromBuild="TRUE">
+							Name="Release|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4973,6 +4930,12 @@
 				RelativePath="..\..\lib\streflop\Random.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
