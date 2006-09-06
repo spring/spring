@@ -110,7 +110,7 @@
 #endif
 
 #ifdef _MSC_VER
-#include "Platform/Win/Dx3DSound.h"
+#include "Platform/Win/DxSound.h"
 #else
 #include "Platform/Linux/OpenALSound.h"
 #endif
@@ -149,7 +149,7 @@ static CSound* CreateSoundInterface()
     return new CNullSound ();
   }
 #ifdef _MSC_VER
-	return new CDx3DSound ();
+	return new CDxSound ();
 #else
 	return new COpenALSound ();
 #endif
@@ -946,6 +946,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			guihandler->buildFacing = 0;
 
 		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
+		info->AddLine("%d", guihandler->buildFacing);
 	}
 	else if (cmd == "decbuildfacing"){
 		guihandler->buildFacing --;
@@ -953,6 +954,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			guihandler->buildFacing = 3;
 
 		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
+		info->AddLine("%d", guihandler->buildFacing);
 	}
 	else if (cmd == "drawtrees") {
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
