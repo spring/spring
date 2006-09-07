@@ -13,6 +13,8 @@ TASpring change log
 
 0.73b1
 
+- [bugfix] Resource expendature now shows correct pull when economy is stalling.
+
 - - Added transparency suport from texture2 in s3o drawing, requires advanced shading.
 - added DualScreenMode configuration flag. 
     This causes the game view width to be one half of the screen width, so the minimap can take the other half. 
