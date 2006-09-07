@@ -7,15 +7,17 @@
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
-CFlameProjectile::CFlameProjectile(const float3& pos,const float3& speed,const float3& spread,CUnit* owner,const DamageArray& damages, WeaponDef *weaponDef, int ttl)
+CFlameProjectile::CFlameProjectile(const float3& color, const float3& color2, float intensity, const float3& pos, const float3& speed, const float3& spread, CUnit* owner, const DamageArray& damages, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
+	color(color),
+	color2(color2),
+	intensity(intensity),
 	spread(spread),
 	curTime(0)
 {
 	invttl=1.0/ttl;
-
-	//SetRadius(speed.Length()*0.9);
 	SetRadius(weaponDef->size);
+	drawRadius=weaponDef->size;
 }
 
 CFlameProjectile::~CFlameProjectile(void)
@@ -33,7 +35,6 @@ void CFlameProjectile::Collision(void)
 
 void CFlameProjectile::Collision(CUnit* unit)
 {
-//	unit->DoDamage(damages*(1-curTime*curTime),owner);
 	CWeaponProjectile::Collision(unit);
 }
 
@@ -43,6 +44,7 @@ void CFlameProjectile::Update(void)
 	speed+=spread;
 
 	SetRadius(radius+weaponDef->sizeGrowth);
+	drawRadius=(radius+weaponDef->sizeGrowth);
 
 	curTime+=invttl;
 	if(curTime>1){
@@ -55,26 +57,18 @@ void CFlameProjectile::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	if(curTime<0.33333){
-		col[0]=(unsigned char) ((1-curTime)*255);
-		col[1]=(unsigned char) ((1-curTime)*255);
-		col[2]=(unsigned char) ((1-curTime*3)*(1-curTime)*255);
-	} else if(curTime<0.66666){
-		col[0]=(unsigned char) ((1-curTime)*255);
-		col[1]=(unsigned char) ((1-(curTime-0.3333)*3)*(1-curTime)*255);
-		col[2]=0;
-	} else {
-		col[0]=(unsigned char) ((1-(curTime-0.66666)*3)*(1-curTime)*255);
-		col[1]=0;
-		col[2]=0;
-	}
-	col[3]=1;//(0.3-curTime*0.3)*255;
 
+	float3 final = color2 * curTime + color * (1.0f - curTime);
+	col[0]=(unsigned char)min(int(final.x * 255.0f), 255);
+	col[1]=(unsigned char)min(int(final.y * 255.0f), 255);
+	col[2]=(unsigned char)min(int(final.z * 255.0f), 255);
+	col[3]=(intensity*(curTime/2))*255;
+	
 	float3 interPos=pos+speed*gu->timeOffset;
-		va->AddVertexTC(interPos-camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->ystart ,col);
-		va->AddVertexTC(interPos+camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xend ,weaponDef->visuals.texture1->ystart ,col);
-		va->AddVertexTC(interPos+camera->right*radius+camera->up*radius,weaponDef->visuals.texture1->xend ,weaponDef->visuals.texture1->yend ,col);
-		va->AddVertexTC(interPos-camera->right*radius+camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->yend ,col);
+	va->AddVertexTC(interPos-camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->ystart ,col);
+	va->AddVertexTC(interPos+camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xend ,weaponDef->visuals.texture1->ystart ,col);
+	va->AddVertexTC(interPos+camera->right*radius+camera->up*radius,weaponDef->visuals.texture1->xend ,weaponDef->visuals.texture1->yend ,col);
+	va->AddVertexTC(interPos-camera->right*radius+camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->yend ,col);
 }
 
 int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -87,5 +81,3 @@ int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, fl
 	}
 	return 0;
 }
-
-
