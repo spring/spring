@@ -2,6 +2,9 @@ TASpring change log
 
 0.next
 
+- added SmoothLines and SmoothPoints config parameters
+  (0 = off,  1 = fastest,  2 = don't care,  3 = nicest)
+
 - group AI code now permits multiple AIs per dll/so. This is handled by
   identifying group AIs by a new datatype, 'AIKey', rather than using just
   the dll name. Group AI dlls should now implement GetAiNameList to return an
