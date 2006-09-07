@@ -2,6 +2,14 @@ TASpring change log
 
 0.next
 
+- group AI code now permits multiple AIs per dll/so. This is handled by
+  identifying group AIs by a new datatype, 'AIKey', rather than using just
+  the dll name. Group AI dlls should now implement GetAiNameList to return an
+  array of available AI names in string (const char*) form, terminated by NULL. 
+  The existing group AI interface functions GetNewAi, ReleaseAi, and 
+  IsUnitSuited now take an unsigned aiNumber as their first parameter: this
+  is a zero-based AI index, matching the array returned by GetAiNameList.
+
 - improved default command selection
 
 - added "fakemeta" key binding command to provide another modifier

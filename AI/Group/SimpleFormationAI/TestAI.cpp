@@ -9,12 +9,14 @@ DLL_EXPORT int GetGroupAiVersion()
 	return AI_INTERFACE_VERSION;
 }
 
-DLL_EXPORT void GetAiName(char* name)
+static const char* aiNameList[] = { AI_NAME, NULL };
+
+DLL_EXPORT const char** GetAiNameList()
 {
-	strcpy(name,AI_NAME);
+	return aiNameList;
 }
 
-DLL_EXPORT bool IsUnitSuited(const UnitDef* unitDef)
+DLL_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
 {
 	if(!unitDef->canmove)
 		return false;
@@ -22,14 +24,14 @@ DLL_EXPORT bool IsUnitSuited(const UnitDef* unitDef)
 		return true;
 }
 
-DLL_EXPORT IGroupAI* GetNewAI()
+DLL_EXPORT IGroupAI* GetNewAI(unsigned aiNumber)
 {
 	CGroupAI* ai=new CGroupAI();
 //	ais.insert(ai);
 	return ai;
 }
 
-DLL_EXPORT void ReleaseAI(IGroupAI* i)
+DLL_EXPORT void ReleaseAI(unsigned aiNumber, IGroupAI* i)
 {
 	delete i;
 //	ais.erase(i);

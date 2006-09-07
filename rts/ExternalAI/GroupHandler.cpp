@@ -30,10 +30,13 @@ CGroupHandler::CGroupHandler(int team)
 : firstUnusedGroup(10),
 	team(team)
 {
+	defaultKey.dllName="default";
+	defaultKey.aiNumber=0;
+
 	FindDlls();
 
 	for(int a=0;a<10;++a){
-		groups.push_back(new CGroup("default",a,this));
+		groups.push_back(new CGroup(defaultKey,a,this));
 	}
 }
 
@@ -55,12 +58,12 @@ END_TIME_PROFILE("Group AI");
 void CGroupHandler::TestDll(string name)
 {
 	typedef int (* GETGROUPAIVERSION)();
-	typedef void (* GETAINAME)(char* c);
-	typedef bool (* ISUNITSUITED)(const UnitDef* unitDef);
+	typedef const char ** (* GETAINAMELIST)();
+	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
 	
 	SharedLib *lib;
 	GETGROUPAIVERSION GetGroupAiVersion;
-	GETAINAME GetAiName;
+	GETAINAMELIST GetAiNameList;
 	ISUNITSUITED IsUnitSuited;
 
 	lib = SharedLib::instantiate(name);
@@ -91,17 +94,21 @@ void CGroupHandler::TestDll(string name)
 		return;
 	}
 	
-	GetAiName = (GETAINAME)lib->FindAddress("GetAiName");
-	if (!GetAiName){
-		info->AddLine("No GetAiName function found in AI dll %s",name.c_str());
+	GetAiNameList = (GETAINAMELIST)lib->FindAddress("GetAiNameList");
+	if (!GetAiNameList){
+		info->AddLine("No GetAiNameList function found in AI dll %s",name.c_str());
 		delete lib;
 		return;
 	}
 
-	char c[500];
-	GetAiName(c);
+	const char ** aiNameList=GetAiNameList();
 
-	availableAI[name]=c;
+	for(unsigned i=0;aiNameList[i]!=NULL;i++){
+		AIKey key;
+		key.dllName=name;
+		key.aiNumber=i;
+		availableAI[key]=string(aiNameList[i]);
+	}
 //	(*info) << name.c_str() << " " << c << "\n";
 	delete lib;
 }
@@ -143,10 +150,10 @@ void CGroupHandler::FindDlls(void)
 	}
 }
 
-CGroup* CGroupHandler::CreateNewGroup(string ainame)
+CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
 {
 	if(freeGroups.empty()){
-		CGroup* group=new CGroup(ainame,firstUnusedGroup++,this);
+		CGroup* group=new CGroup(aiKey,firstUnusedGroup++,this);
 		groups.push_back(group);
 		if(group!=groups[group->id]){
 			handleerror(0,"Id error when creating group","Error",0);
@@ -155,7 +162,7 @@ CGroup* CGroupHandler::CreateNewGroup(string ainame)
 	} else {
 		int id=freeGroups.back();
 		freeGroups.pop_back();
-		CGroup* group=new CGroup(ainame,id,this);
+		CGroup* group=new CGroup(aiKey,id,this);
 		groups[id]=group;
 		return group;
 	}
@@ -174,33 +181,34 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	delete group;
 }
 
-map<string,string> CGroupHandler::GetSuitedAis(set<CUnit*> units)
+map<AIKey,string> CGroupHandler::GetSuitedAis(set<CUnit*> units)
 {
-	typedef bool (* ISUNITSUITED)(const UnitDef* unitDef);
+	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
 	ISUNITSUITED IsUnitSuited;
 
-	map<string,string> suitedAis;
-	suitedAis["default"]="default";
+	map<AIKey,string> suitedAis;
+	suitedAis[defaultKey]="default";
 
-	map<string,string>::iterator aai;
+	map<AIKey,string>::iterator aai;
 	for(aai=availableAI.begin();aai!=availableAI.end();++aai)
 	{
 		SharedLib *lib;
-		lib = SharedLib::instantiate(aai->first);
+		const AIKey& aiKey = aai->first;
+		lib = SharedLib::instantiate(aiKey.dllName);
 		IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 		bool suited = false;
 		set<CUnit*>::iterator ui;
 		for(ui=units.begin();ui!=units.end();++ui)
 		{
 			const UnitDef* ud = (*ui)->unitDef;
-			if(IsUnitSuited(ud))
+			if(IsUnitSuited(aiKey.aiNumber,ud))
 			{
 				suited = true;
 				break;
 			}
 		}
 		if(suited)
-			suitedAis[aai->first]=aai->second;
+			suitedAis[aiKey]=aai->second;
 		delete lib;
 	}
 

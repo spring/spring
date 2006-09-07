@@ -120,9 +120,12 @@ void CAICallback::ReleasedSharedMemArea(char* name)
 	globalAI->ReleaseAIBuffer(team,name);
 }
 
-int CAICallback::CreateGroup(char* dll)
+int CAICallback::CreateGroup(char* dll, unsigned aiNumber)
 {
-	CGroup* g=gh->CreateNewGroup(dll);
+	AIKey key;
+	key.dllName=dll;
+	key.aiNumber=aiNumber;
+	CGroup* g=gh->CreateNewGroup(key);
 	return g->id;
 }
 
