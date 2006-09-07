@@ -422,8 +422,34 @@ bool SpringApp::SetSDLVideoMode ()
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
 
-	if (FSAA)
-		FSAA = MultisampleVerify();
+	if (FSAA) {
+ 		FSAA = MultisampleVerify();
+	}
+
+	// setup GL smoothing
+	const int defaultSmooth = 0; // FSAA ? 0 : 3;  // until a few things get fixed
+	const int lineSmoothing = configHandler.GetInt("SmoothLines", defaultSmooth);
+	if (lineSmoothing > 0) {
+		GLenum hint = GL_FASTEST;
+		if (lineSmoothing >= 3) {
+			hint = GL_NICEST;
+		} else if (lineSmoothing >= 2) {
+			hint = GL_DONT_CARE;
+		}
+		glEnable(GL_LINE_SMOOTH);
+		glHint(GL_LINE_SMOOTH_HINT, hint);
+	}
+	const int pointSmoothing = configHandler.GetInt("SmoothPoints", defaultSmooth);
+	if (pointSmoothing > 0) {
+		GLenum hint = GL_FASTEST;
+		if (pointSmoothing >= 3) {
+			hint = GL_NICEST;
+		} else if (pointSmoothing >= 2) {
+			hint = GL_DONT_CARE;
+		}
+		glEnable(GL_POINT_SMOOTH);
+		glHint(GL_POINT_SMOOTH_HINT, hint);
+	}
 
 	SetVSync();
 
