@@ -87,7 +87,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 	
 	FindTABuildOpt();
 
-  AssignTechLevels();
+	AssignTechLevels();
 }
 
 
