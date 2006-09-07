@@ -40,6 +40,7 @@ struct UnitDef
 	std::string buildpicname;
 
 	int aihint;
+	int techLevel;
 
 	float metalUpkeep;
 	float energyUpkeep;

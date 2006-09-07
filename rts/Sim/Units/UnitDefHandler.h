@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "TdfParser.h"
 #include "UnitDef.h"
@@ -24,25 +25,31 @@ public:
 
 	UnitDef *unitDefs;
 	std::map<std::string, int> unitID;
+	std::set<int> commanderIDs;
 	int numUnits;
 	
 
 	CUnitDefHandler(void);
 	~CUnitDefHandler(void);
 	void Init();
+	void AssignTechLevels();
 	UnitDef *GetUnitByName(std::string name);
 	UnitDef *GetUnitByID(int id);
 	unsigned int GetUnitImage(UnitDef *unitdef);
 
 	bool noCost;
+
 protected:
 	TdfParser soundcategory;
-
+	
 	void ParseUnit(std::string file, int id);
 
 	void ParseTAUnit(std::string file, int id);
 
 	void FindTABuildOpt();
+
+	void AssignTechLevel(UnitDef& ud, int level);
+	
 	void LoadSound(TdfParser &sunparser, GuiSound &gsound, std::string sunname);
 
 public:
