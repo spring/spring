@@ -17,7 +17,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
+CGroup::CGroup(AIKey aiKey,int id,CGroupHandler* grouphandler)
 : lastCommandPage(0),
 	id(id),
 	ai(0),
@@ -26,10 +26,10 @@ CGroup::CGroup(string dllName,int id,CGroupHandler* grouphandler)
 	lib(0)
 {
 	callback=new CGroupAICallback(this);
-	SetNewAI(dllName);
+	SetNewAI(aiKey);
 
 	int a=0;
-	for(map<string,string>::iterator aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && dllName!=aai->first;++aai){
+	for(map<AIKey,string>::iterator aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && aiKey!=aai->first;++aai){
 		a++;
 	}
 	currentAiNum=a;
@@ -39,7 +39,7 @@ CGroup::~CGroup()
 {
 	ClearUnits();			//shouldnt have any units left but just to be sure
 	if(ai)
-		ReleaseAI(ai);
+		ReleaseAI(currentAiKey.aiNumber,ai);
 	if(lib)
 		delete lib;
 	delete callback;
@@ -50,7 +50,7 @@ bool CGroup::AddUnit(CUnit *unit)
 	units.insert(unit);
 	if(ai)
 	{
-		if(IsUnitSuited(unit->unitDef))
+		if(IsUnitSuited(currentAiKey.aiNumber,unit->unitDef))
 		{
 			if(ai->AddUnit(unit->id))
 			{
@@ -70,43 +70,44 @@ void CGroup::RemoveUnit(CUnit *unit)
 	units.erase(unit);
 }
 
-void CGroup::SetNewAI(string dllName)
+void CGroup::SetNewAI(AIKey aiKey)
 {
 	if(ai)
-		ReleaseAI(ai);
+		ReleaseAI(currentAiKey.aiNumber,ai);
 	if(lib)
 		delete lib;
 
 	ai=0;
-	if(dllName=="default"){
+	if(aiKey.dllName=="default"){
 		return;
 	}
 
-	lib = SharedLib::instantiate(dllName);
+	lib = SharedLib::instantiate(aiKey.dllName);
 	if (lib==0) 
-		handleerror(NULL,dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
+		handleerror(NULL,aiKey.dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
 	
 	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (GetGroupAiVersion==0)
-		handleerror(NULL,dllName.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
+		handleerror(NULL,aiKey.dllName.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
 	
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION)
-		handleerror(NULL,dllName.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
+		handleerror(NULL,aiKey.dllName.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
 	
 	GetNewAI = (GETNEWAI)lib->FindAddress("GetNewAI");
 	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
 	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 
-	ai=GetNewAI();
+	currentAiKey=aiKey;
+	ai=GetNewAI(currentAiKey.aiNumber);
 	ai->InitAi(callback);
 	
 	set<CUnit*> unitBackup=units;
 
 	for(set<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
 	{
-		if(IsUnitSuited((*ui)->unitDef))
+		if(IsUnitSuited(currentAiKey.aiNumber,(*ui)->unitDef))
 		{
 			if(ai->AddUnit((*ui)->id))
 			{
@@ -147,8 +148,8 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	char t[50];
 	sprintf(t,"%i",currentAiNum);
 	c.params.push_back(t);
-	map<string,string>::iterator aai;
-	map<string,string> suitedAis = handler->GetSuitedAis(units);
+	map<AIKey,string>::iterator aai;
+	map<AIKey,string> suitedAis = handler->GetSuitedAis(units);
 	for(aai=suitedAis.begin();aai!=suitedAis.end();++aai){
 		c.params.push_back((aai->second).c_str());
 	}
@@ -169,7 +170,7 @@ int CGroup::GetDefaultCmd(CUnit *unit,CFeature* feature)
 void CGroup::GiveCommand(Command c)
 {
 	if(c.id==CMD_AISELECT){
-		map<string,string>::iterator aai;
+		map<AIKey,string>::iterator aai;
 		int a=0;
 		for(aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && a<c.params[0];++aai){
 			a++;

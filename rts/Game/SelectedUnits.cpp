@@ -112,8 +112,8 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 
 		c.params.push_back("0");
 		c.params.push_back("None");
-		map<string,string>::iterator aai;
-		map<string,string> suitedAis = grouphandler->GetSuitedAis(selectedUnits);
+		map<AIKey,string>::iterator aai;
+		map<AIKey,string> suitedAis = grouphandler->GetSuitedAis(selectedUnits);
 		for(aai=suitedAis.begin();aai!=suitedAis.end();++aai){
 			c.params.push_back((aai->second).c_str());
 		}
@@ -217,7 +217,7 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 
 	if(c.id==CMD_AISELECT){
 		if(c.params[0]!=0){
-			map<string,string>::iterator aai;
+			map<AIKey,string>::iterator aai;
 			int a=0;
 			for(aai=grouphandler->lastSuitedAis.begin();aai!=grouphandler->lastSuitedAis.end() && a<c.params[0]-1;++aai){
 				a++;

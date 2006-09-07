@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 #include <set>
+#include "ExternalAI/aikey.h"
+
 class CGroup;
 
 using namespace std;
@@ -22,14 +24,14 @@ public:
 
 	void Update();
 	void GroupCommand(int num);
-	CGroup* CreateNewGroup(string ainame);
+	CGroup* CreateNewGroup(AIKey aiKey);
 	void RemoveGroup(CGroup* group);
 
 	vector<CGroup*> groups;
-	map<string,string> availableAI;
+	map<AIKey,string> availableAI;
 
-	map<string,string> GetSuitedAis(set<CUnit*> units);
-	map<string,string> lastSuitedAis;
+	map<AIKey,string> GetSuitedAis(set<CUnit*> units);
+	map<AIKey,string> lastSuitedAis;
 
 	int team;
 protected:
@@ -38,6 +40,8 @@ protected:
 
 	vector<int> freeGroups;
 	int firstUnusedGroup;
+private:
+	AIKey defaultKey;
 };
 
 extern CGroupHandler* grouphandler;

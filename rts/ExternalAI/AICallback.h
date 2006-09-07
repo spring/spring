@@ -35,7 +35,7 @@ public:
 	//release your reference to a memory area.
 	void ReleasedSharedMemArea(char* name);
 
-	int CreateGroup(char* dll);											//creates a group and return the id it was given, return -1 on failure (dll didnt exist etc)
+	int CreateGroup(char* dll,unsigned aiNumber);							//creates a group and return the id it was given, return -1 on failure (dll didnt exist etc)
 	void EraseGroup(int groupid);											//erases a specified group
 	bool AddUnitToGroup(int unitid,int groupid);		//adds a unit to a specific group, if it was previously in a group its removed from that, return false if the group didnt exist or didnt accept the unit
 	bool RemoveUnitFromGroup(int unitid);						//removes a unit from its group

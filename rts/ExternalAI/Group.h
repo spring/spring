@@ -10,6 +10,7 @@
 #include "Game/command.h"
 #include "Platform/SharedLib.h"
 #include "Sim/Units/UnitDef.h"
+#include "ExternalAI/aikey.h"
 class IGroupAI;
 class CUnit;
 class CFeature;
@@ -22,11 +23,11 @@ class CGroup : public CObject
 {
 public:
 	void CommandFinished(int unit,int type);
-	CGroup(string dllName,int id,CGroupHandler* grouphandler);
+	CGroup(AIKey aiKey,int id,CGroupHandler* grouphandler);
 	virtual ~CGroup();
 
 	void Update();
-	void SetNewAI(string dllName);
+	void SetNewAI(AIKey aiKey);
 
 	void RemoveUnit(CUnit* unit);	//call setgroup(0) instead of calling this directly
 	bool AddUnit(CUnit* unit);		//dont call this directly call unit.SetGroup and let that call this
@@ -42,9 +43,9 @@ public:
 	vector<CommandDescription> myCommands;
 	SharedLib *lib;
 	typedef int (* GETGROUPAIVERSION)();
-	typedef IGroupAI* (* GETNEWAI)();
-	typedef void (* RELEASEAI)(IGroupAI* i);
-	typedef bool (* ISUNITSUITED)(const UnitDef* unitDef);
+	typedef IGroupAI* (* GETNEWAI)(unsigned aiNumber);
+	typedef void (* RELEASEAI)(unsigned aiNumber,IGroupAI* i);
+	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
 	
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETNEWAI GetNewAI;
@@ -52,6 +53,7 @@ public:
 	ISUNITSUITED IsUnitSuited;
 	int lastCommandPage;
 	int currentAiNum;
+	AIKey currentAiKey;
 
 	IGroupAI* ai;
 	CGroupAICallback* callback;
