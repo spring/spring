@@ -78,14 +78,18 @@ CUnitDefHandler::CUnitDefHandler(void)
 		unitDefs[i].buildangle=0;
 		unitDefs[i].name = unitname;
 		unitDefs[i].unitimage = 0;
+		unitDefs[i].techLevel = -1;
 		unitID[unitname] = i;
 
 		// Increase index for next unit
 		i++;
 	}
-
+	
 	FindTABuildOpt();
+
+  AssignTechLevels();
 }
+
 
 CUnitDefHandler::~CUnitDefHandler(void)
 {
@@ -103,11 +107,30 @@ CUnitDefHandler::~CUnitDefHandler(void)
 	delete weaponDefHandler;
 }
 
+
 void CUnitDefHandler::FindTABuildOpt()
 {
 	TdfParser tdfparser;
 	tdfparser.LoadFile("gamedata/SIDEDATA.TDF");
 
+	// get the commander IDs while SIDEDATA.TDF is open
+	commanderIDs.clear();
+	std::vector<std::string> sides = tdfparser.GetSectionList("");
+	for (unsigned int i=0; i<sides.size(); i++){
+		const std::string& section = sides[i];
+		if ((section.find("side") == 0) && 
+		    (section.find_first_not_of("0123456789", 4) == std::string::npos)) {
+			string commUnit = tdfparser.SGetValueDef("", section + "\\COMMANDER");
+			StringToLowerInPlace(commUnit);
+			if (!commUnit.empty()) {
+				std::map<std::string, int>::iterator it = unitID.find(commUnit);
+				if (it != unitID.end()) {
+					commanderIDs.insert(it->second);
+				}
+			}
+		}
+	}
+	
 	std::vector<std::string> sideunits = tdfparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)
 	{
@@ -168,6 +191,7 @@ void CUnitDefHandler::FindTABuildOpt()
 
 	}
 }
+
 
 void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 {
@@ -556,6 +580,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	LoadSound(tdfparser, ud.sounds.underattack, "underattack");
 }
 
+
 void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound &gsound, std::string sunname)
 {
 	soundcategory.GetDef(gsound.name, "", tdfparser.SGetValueDef("", "UNITINFO\\SoundCategory")+"\\"+sunname);
@@ -571,6 +596,7 @@ void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound &gsound, std::str
 	}
 	gsound.volume = 5.0f;
 }
+
 
 void CUnitDefHandler::ParseUnit(std::string file, int id)
 {
@@ -597,6 +623,7 @@ void CUnitDefHandler::ParseUnit(std::string file, int id)
 	}
 }
 
+
 UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 {
 	StringToLowerInPlace(name);
@@ -611,6 +638,7 @@ UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 
 	return &unitDefs[id];
 }
+
 
 UnitDef *CUnitDefHandler::GetUnitByID(int id)
 {
@@ -664,6 +692,7 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 	delete[] originalMap;
 }
 
+
 unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 {
 	if(unitdef->unitimage!=0) return unitdef->unitimage;
@@ -701,5 +730,36 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 	return unitdef->unitimage;
 }
 
-UnitDef::~UnitDef() {
+
+void CUnitDefHandler::AssignTechLevels()
+{
+	set<int>::iterator it;
+	for (it = commanderIDs.begin(); it != commanderIDs.end(); ++it) {
+		AssignTechLevel(unitDefs[*it], 0);
+	}
+}
+
+
+void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
+{
+	if ((ud.techLevel >= 0) && (ud.techLevel <= level)) {
+		return;
+	}
+
+	ud.techLevel = level;
+
+	level++;
+
+	map<int, std::string>::const_iterator bo_it;
+	for (bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
+		std::map<std::string, int>::const_iterator ud_it = unitID.find(bo_it->second);
+		if (ud_it != unitID.end()) {
+			AssignTechLevel(unitDefs[ud_it->second], level);
+		}
+	}
+}
+
+
+UnitDef::~UnitDef()
+{
 }
