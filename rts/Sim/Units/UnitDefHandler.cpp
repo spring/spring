@@ -695,8 +695,7 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 	else
 	{
 		CBitmap bitmap;
-		if (!bitmap.Load("unitpics/" + unitdef->buildpicname))
-			throw content_error("Could not load unit image from file unitpics/" + unitdef->buildpicname);
+		bitmap.Load("unitpics/" + unitdef->buildpicname);
 		unitdef->unitimage = bitmap.CreateTexture(false);
 	}
 	return unitdef->unitimage;
