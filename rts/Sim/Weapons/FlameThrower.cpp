@@ -24,7 +24,7 @@ void CFlameThrower::Fire(void)
 	float3 spread=(gs->randVector()*sprayangle+salvoError)*0.2;
 	spread-=dir*0.001;
 
-	new CFlameProjectile(weaponPos,dir*projectileSpeed,spread,owner,damages,weaponDef,(int)(range/projectileSpeed*1.2));
+	new CFlameProjectile(weaponDef->visuals.color,weaponDef->visuals.color2,weaponDef->intensity,weaponPos,dir*projectileSpeed,spread,owner,damages,weaponDef,(int)(range/projectileSpeed*1.2));
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
 }

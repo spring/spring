@@ -358,8 +358,12 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		weaponDefs[id].visuals.texture1 = &ph->perlintex;
 	} else if(weaponDefs[id].type=="flame"){
 		//CFlameProjectile
-		weaponDefs[id].visuals.texture1 = &ph->flaretex;
-		sunparser->GetTDef(weaponDefs[id].size, weaponDefs[id].projectilespeed, weaponname + "\\size");
+		weaponDefs[id].visuals.texture1 = &ph->explotex;
+		sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
+		sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.1", weaponname + "\\sizeGrowth");
+		sunparser->GetDef(weaponDefs[id].intensity, "0.4", weaponname + "\\intensity");
+		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(1.0,1,0.9),weaponname + "\\rgbcolor");
+		weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(0.025,0.0035,0.0035),weaponname + "\\rgbcolor2");
 	} else if(weaponDefs[id].type=="MissileLauncher"){
 		//CMissileProjectile
 		weaponDefs[id].visuals.texture1 = &ph->flaretex;
