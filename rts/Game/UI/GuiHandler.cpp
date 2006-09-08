@@ -963,8 +963,26 @@ void CGuiHandler::DrawMapStuff(void)
 					glEnd();
 				}
 			}
+			// draw build distance for immobile builders
+			if(unit->unitDef->builder && !unit->unitDef->canmove) {
+				const float radius = unit->unitDef->buildDistance;
+				if (radius > 0.0f) {
+					glDisable(GL_TEXTURE_2D);
+					glColor4f(0.2f, 0.8f, 0.4f, 0.7f);
+					glBegin(GL_LINE_STRIP);
+					for(int a = 0; a <= 40; ++a){
+						const float radians = a * (2.0 * PI) / 40.0f;
+						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
+						pos += unit->pos;
+						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
+			}
 		}
 	}
+
 	//draw range circles if attack orders are imminent
 	int defcmd=GetDefaultCommand(mouse->lastx,mouse->lasty);
 	if((inCommand>0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) || (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
