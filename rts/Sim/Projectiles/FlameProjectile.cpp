@@ -62,8 +62,8 @@ void CFlameProjectile::Draw(void)
 	col[0]=(unsigned char)min(int(final.x * 255.0f), 255);
 	col[1]=(unsigned char)min(int(final.y * 255.0f), 255);
 	col[2]=(unsigned char)min(int(final.z * 255.0f), 255);
-	col[3]=(intensity*(curTime/2))*255;
-	
+	col[3]=(unsigned char) ((intensity*(curTime/2))*255);
+
 	float3 interPos=pos+speed*gu->timeOffset;
 	va->AddVertexTC(interPos-camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->ystart ,col);
 	va->AddVertexTC(interPos+camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xend ,weaponDef->visuals.texture1->ystart ,col);

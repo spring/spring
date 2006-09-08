@@ -91,6 +91,7 @@ CProjectileHandler::CProjectileHandler()
 	flaretex = textureAtlas->GetTexture("flare");
 	explotex = textureAtlas->GetTexture("explo");
 	explofadetex = textureAtlas->GetTexture("explofade");
+	heatcloudtex = textureAtlas->GetTexture("heatcloud");
 	circularthingytex = textureAtlas->GetTexture("circularthingy");
 	laserendtex = textureAtlas->GetTexture("laserend");
 	laserfallofftex = textureAtlas->GetTexture("laserfalloff");
