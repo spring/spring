@@ -342,7 +342,7 @@ bool CFeature::Update(void)
 				float3 speed=gu->usRandVector()*0.5f;
 				speed.y+=2.0f;
 				
-				new CGeoThermSmokeProjectile(gu->usRandVector()*10 + float3(pos.x,pos.y-10,pos.z),speed,50+gu->usRandFloat()*7, this);
+				new CGeoThermSmokeProjectile(gu->usRandVector()*10 + float3(pos.x,pos.y-10,pos.z),speed,int(50+gu->usRandFloat()*7), this);
 			}
 		}
 		POP_CODE_MODE;

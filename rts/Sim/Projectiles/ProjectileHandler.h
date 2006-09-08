@@ -68,6 +68,7 @@ public:
 	AtlasedTexture flaretex;
 	AtlasedTexture explotex;
 	AtlasedTexture explofadetex;
+	AtlasedTexture heatcloudtex;
 	AtlasedTexture circularthingytex;
 	AtlasedTexture laserendtex;
 	AtlasedTexture laserfallofftex;

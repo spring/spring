@@ -58,6 +58,7 @@
 			flare=flare.tga;
 			explo=explo.tga;
 			explofade=explofade.tga;
+			heatcloud=explo.tga;
 
 			muzzleside=muzzleside.tga;
 			muzzlefront=muzzlefront.tga;

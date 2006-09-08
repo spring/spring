@@ -35,7 +35,7 @@ CHeatCloudProjectile::CHeatCloudProjectile()
 	heat=maxheat=heatFalloff=size=sizeGrowth=sizemod=sizemodmod=0.0f;
 	checkCol=false;
 	useAirLos=true;
-	texture = &ph->explotex;
+	texture = &ph->heatcloudtex;
 }
 
 CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,const  float temperature,const float size, CUnit* owner)
@@ -51,7 +51,7 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,c
 	SetRadius(size+sizeGrowth*heat/heatFalloff);
 	sizemod=0;
 	sizemodmod=0;
-	texture = &ph->explotex;
+	texture = &ph->heatcloudtex;
 }
 
 CHeatCloudProjectile::~CHeatCloudProjectile()
