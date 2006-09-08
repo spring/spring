@@ -6,6 +6,7 @@
 
 #pragma warning(disable:4786)
 
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -30,9 +31,10 @@ class CKeyBindings
 		struct Action {
 			Action() {}
 			Action(const string& line);
-			string rawline; // includes the command, case preserved
-			string command; // first word, lowercase
-			string extra;   // everything but the first word
+			string command;   // first word, lowercase
+			string extra;     // everything but the first word
+			string rawline;   // includes the command, case preserved
+			string boundWith; // the string that defined the bound key
 		};
 		typedef vector<Action> ActionList;
 		typedef vector<string> HotkeyList;
@@ -46,17 +48,27 @@ class CKeyBindings
 		
 		int GetDebug() const { return debug; }
 		void SetDebug(int dbg) { debug = dbg; }
+
+	public:		
+		static const char NamedKeySetChar = '&';
 		
 	protected:
 		void LoadDefaults();
 		void Sanitize();
 		void BuildHotkeyMap();
+
 		bool Bind(const string& keystring, const string& action);
 		bool UnBind(const string& keystring, const string& action);
 		bool UnBindKeyset(const string& keystr);
 		bool UnBindAction(const string& action);
 		bool SetFakeMetaKey(const string& keystring);
+		bool AddKeySymbol(const string& keysym, const string& code);
+		bool AddNamedKeySet(const string& name, const string& keyset);
+
+		bool ParseKeySet(const string& keystr, CKeySet& ks) const;
 		bool RemoveCommandFromList(ActionList& al, const string& command);
+
+		bool FileSave(FILE* file) const;
 		void OutputDebug(const char* msg) const;
 
 	protected:
@@ -65,6 +77,9 @@ class CKeyBindings
 
 		typedef map<string, HotkeyList> ActionMap; // action to keyset
 		ActionMap hotkeys;
+		
+		typedef map<string, CKeySet> NamedKeySetMap; // user defined keysets
+		NamedKeySetMap namedKeySets;
 
 		// commands that use both Up and Down key presses		
 		set<string> statefulCommands;

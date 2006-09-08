@@ -22,7 +22,7 @@ class CKeySet {
 		void ClearModifiers();
 		bool Parse(const string& token);
 
-		string GetString() const;
+		string GetString(bool useDefaultKeysym) const;
 
 		enum CKeySetModifiers {
 			KS_ALT     = (1 << 0),

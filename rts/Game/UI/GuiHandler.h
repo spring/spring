@@ -10,6 +10,8 @@
 #include "Game/command.h"
 #include "Rendering/GL/myGL.h"
 #include <map>
+#include "KeySet.h"
+#include "KeyBindings.h"
 #include "InputReceiver.h"
 
 class CglList;
@@ -25,6 +27,7 @@ public:
 	bool MousePress(int x,int y,int button);
 	void MouseRelease(int x,int y,int button);
 
+	void Update();
 	void Draw();
 	void DrawButtons();
 
@@ -59,10 +62,20 @@ public:
 	void FinishCommand(int button);
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
+	std::string GetBuildTooltip() const;
 	void DrawArea(float3 pos, float radius);
 
 private:
+	void SetCursorIcon();
+	void SetShowingMetal(bool show);
+	bool ProcessLocalActions(const CKeyBindings::Action& action);
+	
+private:
+	int actionOffset;
+	CKeySet lastKeySet;
+	
 	static const int NUMICOPAGE = 16;
+	
 public:
 	Command GetOrderPreview(void);
 	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);

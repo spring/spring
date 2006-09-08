@@ -795,7 +795,7 @@ int SpringApp::Run (int argc, char *argv[])
 						
 						if (keyBindings) {
 							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
-							if (fakeMetaKey != 0) {
+							if (fakeMetaKey >= 0) {
 								keys[SDLK_LMETA] |= keys[fakeMetaKey];
 							}
 						}
@@ -836,7 +836,7 @@ int SpringApp::Run (int argc, char *argv[])
 
 						if (keyBindings) {
 							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
-							if (fakeMetaKey != 0) {
+							if (fakeMetaKey >= 0) {
 								keys[SDLK_LMETA] |= keys[fakeMetaKey];
 							}
 						}

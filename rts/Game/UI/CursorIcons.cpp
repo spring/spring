@@ -59,7 +59,9 @@ void CCursorIcons::Draw()
 		}
 		if (currentCursor != NULL) {
 			float3 winPos = camera->CalcWindowCoordinates(it->pos);
-			currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
+			if (winPos.z <= 1.0f) {
+				currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
+			}
 		}
 	}
 

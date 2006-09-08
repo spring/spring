@@ -2,8 +2,29 @@ TASpring change log
 
 0.next
 
+- added the techLevel variable to UserDef, with automatic detection of the
+  tech levels in a mod based on the information in the sidedata.tdf file
+- added the "techlevels" action, to save the tech levels to techlevels.txt
+  (as well as sending them to stdout)
+- display a unit's TechLevel in the tooltip window when cheats are enabled
+
+- key commands now work while the GUI interface is hidden, and the default
+  command cursor icon is updated as well
+- change the control panel page when a key command accesses an off-page icon
+- change the tooltip to reflect the unit being built rather then the builder
+  while selecting the build position
+- added cycling for command actions when more then one is available
+- added "iconpos <#>" action, for positional access to control panel icons
+- added "firstmenu" action  (resets the control panel to its first page)
+
+- added "keyset" command for named keysets
+- added "keysym" command for custom key symbols
+- added "fakemeta" key binding command to provide another modifier
+
 - added SmoothLines and SmoothPoints config parameters
   (0 = off,  1 = fastest,  2 = don't care,  3 = nicest)
+
+- changed GameInfo so that it always displays map name and mod name
 
 - group AI code now permits multiple AIs per dll/so. This is handled by
   identifying group AIs by a new datatype, 'AIKey', rather than using just
@@ -15,10 +36,8 @@ TASpring change log
 
 - improved default command selection
 
-- added "fakemeta" key binding command to provide another modifier
-
 - added "/water   [0-3]" to control water rendering in-game
-  (the optional number is the mode; without the number, it rotates through the modes)
+  (the optional number is the mode; without the number, it cycles through the modes)
 - added "/shadows [0-1]" to control shadow rendering in-game
   (the optional number means off/on; without the number, it toggles)
 

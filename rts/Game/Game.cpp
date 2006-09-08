@@ -481,12 +481,10 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		if (k == 27) {
 			hotBinding.clear();
 		}
-		else if ((k != SDLK_LCTRL) && (k != SDLK_LMETA) &&
-		         (k != SDLK_LSHIFT) && (k != SDLK_LALT) &&
-		         (k != keyBindings->GetFakeMetaKey())) {
+		else if (!keyCodes->IsModifier(k) && (k != keyBindings->GetFakeMetaKey())) {
 			CKeySet ks(k, false);
 			string cmd = "bind";
-			cmd += " " + ks.GetString() ;
+			cmd += " " + ks.GetString(false) ;
 			cmd += " " + hotBinding;
 			keyBindings->Command(cmd);
 			hotBinding.clear();
@@ -1187,6 +1185,10 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "info") {
 		showPlayerInfo = !showPlayerInfo;
 	}
+	else if (cmd == "techlevels") {
+		unitDefHandler->SaveTechLevels("", modInfo->name); // stdout
+		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->name);
+	}
 	else {
 		return false;
 	}
@@ -1259,11 +1261,12 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 	}
 	// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
 	// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
-// 	if (cmd == "mouse4")
+// 	else if (cmd == "mouse4") {
 // 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 4);
-
-// 	if (cmd == "mouse5")
+//	}
+// 	else if (cmd == "mouse5") {
 // 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 5);
+//	}
 
 	return 0;
 }
@@ -1477,6 +1480,8 @@ bool CGame::Draw()
 			}
 			(*ri)->Draw();
 		}
+	} else {
+		guihandler->Update();
 	}
 #endif
 
@@ -2810,6 +2815,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 	}
 
 	if(s.find(".give")==0 && gs->cheatEnabled){
+
 		int team=gs->players[player]->team;
 		int p1 = s.rfind(" @"), p2 = s.find(",", p1+1), p3 = s.find(",", p2+1);
 		if (p1 == string::npos || p2 == string::npos || p3 == string::npos)

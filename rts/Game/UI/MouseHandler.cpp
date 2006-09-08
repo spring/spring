@@ -549,16 +549,24 @@ void CMouseHandler::DrawCursor(void)
 
 std::string CMouseHandler::GetCurrentTooltip(void)
 {
+	std::string s;
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->IsAbove(lastx,lasty)){
-			std::string s=(*ri)->GetTooltip(lastx,lasty);
+			s=(*ri)->GetTooltip(lastx,lasty);
 			if(s!="")
 				return s;
 		}
 	}
-	std::string s=selectedUnits.GetTooltip();
+
+#ifndef NEW_GUI
+	s=guihandler->GetBuildTooltip();
+	if(s!="")
+		return s;
+#endif
+
+	s=selectedUnits.GetTooltip();
 	if(s!="")
 		return s;
 
@@ -584,36 +592,41 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		feature=0;
 
 	if(unit){
-			// don't show the tooltip if it's a radar dot
-			if(!gu->spectating && gs->AllyTeam(unit->team) != gu->myAllyTeam && !loshandler->InLos(unit,gu->myAllyTeam)){
-				return "Enemy unit";
-			}
-			// show the player name instead of unit name if it has FBI tag showPlayerName
-			if(unit->unitDef->showPlayerName)
-			{
-				s=gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
-			} else {
-				s=unit->tooltip;
-			}
-			// don't show the unit health and other info if it has FBI tag hideDamage and isn't on our ally team
-			if(!(!gu->spectating && unit->unitDef->hideDamage && gs->AllyTeam(unit->team) != gu->myAllyTeam))
-			{
-				char tmp[500];
+		// don't show the tooltip if it's a radar dot
+		if(!gu->spectating && gs->AllyTeam(unit->team) != gu->myAllyTeam && !loshandler->InLos(unit,gu->myAllyTeam)){
+			return "Enemy unit";
+		}
+		// show the player name instead of unit name if it has FBI tag showPlayerName
+		if(unit->unitDef->showPlayerName){
+			s=gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
+		} else {
+			s=unit->tooltip;
+		}
+		// don't show the unit health and other info if it has FBI tag hideDamage and isn't on our ally team
+		if(!(!gu->spectating && unit->unitDef->hideDamage && gs->AllyTeam(unit->team) != gu->myAllyTeam)){
+			char tmp[500];
 
-				sprintf(tmp,"\nHealth %.0f/%.0f",unit->health,unit->maxHealth);
-				s+=tmp;
+			sprintf(tmp,"\nHealth %.0f/%.0f",unit->health,unit->maxHealth);
+			s+=tmp;
 
-				if(unit->unitDef->maxFuel>0){
-					sprintf(tmp," Fuel %.0f/%.0f",unit->currentFuel,unit->unitDef->maxFuel);
-					s+=tmp;
-				}
-
-				sprintf(tmp,"\nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
-					unit->experience,unit->metalCost+unit->energyCost/60,unit->maxRange, unit->metalMake, unit->metalUse, unit->energyMake, unit->energyUse);
+			if(unit->unitDef->maxFuel>0){
+				sprintf(tmp," Fuel %.0f/%.0f",unit->currentFuel,unit->unitDef->maxFuel);
 				s+=tmp;
 			}
+
+			sprintf(tmp,"\nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
+				unit->experience,unit->metalCost+unit->energyCost/60,unit->maxRange, unit->metalMake, unit->metalUse, unit->energyMake, unit->energyUse);
+			s+=tmp;
+		}
+
+		if (gs->cheatEnabled) {
+			char buf[32];
+			SNPRINTF(buf, 32, "\xff\xc0\xc0\xff  [TechLevel %i]", unit->unitDef->techLevel);
+			s += buf;
+		}
 		return s;
 	}
+	
 	if(feature){
 		if(feature->def->description==""){
 			s="Feature";

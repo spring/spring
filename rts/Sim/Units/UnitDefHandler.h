@@ -36,6 +36,7 @@ public:
 	UnitDef *GetUnitByName(std::string name);
 	UnitDef *GetUnitByID(int id);
 	unsigned int GetUnitImage(UnitDef *unitdef);
+	bool SaveTechLevels(const std::string& filename, const std::string& modname);
 
 	bool noCost;
 

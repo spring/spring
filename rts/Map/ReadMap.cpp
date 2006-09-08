@@ -65,6 +65,8 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	
 	if (!rm)
 		return 0;
+		
+	rm->mapName = mapname;
 
 	/* Read metal map */
 	MapBitmapInfo mbi;

@@ -10,6 +10,7 @@
 #include "Game/Team.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/ModInfo.h"
 
 using namespace std;
 
@@ -184,17 +185,17 @@ void CGameInfo::Draw()
 
 		labels.push_back("Diminishing Metal:");
 		values.push_back(gameSetup->diminishingMMs);
-
-		labels.push_back("Mod Name:");
-		values.push_back(gameSetup->baseMod);
-
-		labels.push_back("Map Name:");
-		values.push_back(gameSetup->mapname.c_str());
-
-		labels.push_back("Map Size:");
-		sprintf(buf, "%ix%i", readmap->width / 128, readmap->height / 128);
-		values.push_back(buf);
 	}
+
+	labels.push_back("Map Size:");
+	sprintf(buf, "%ix%i", readmap->width / 128, readmap->height / 128);
+	values.push_back(buf);
+	
+	labels.push_back("Map Name:");
+	values.push_back(readmap->mapName.c_str());
+
+	labels.push_back("Mod Name:");
+	values.push_back(modInfo->name.c_str());
 
 	if (gs->cheatEnabled) {
 		labels.push_back("CHEATS:");
