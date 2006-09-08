@@ -52,6 +52,8 @@ public:
 	void CalcHeightfieldData(); /// Calculates derived heightmap information such as normals, centerheightmap and slopemap
 	void ParseSettings(TdfParser& resources);
 
+	std::string mapName;
+
 	virtual float* GetHeightmap() = 0; // if you modify the heightmap, call HeightmapUpdated
 	float* orgheightmap;
 	float* centerheightmap;

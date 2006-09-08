@@ -33,9 +33,28 @@
 //
 //    unbindall
 //    ---------
-//    - removes all bindings, and adds 'bind enter chat'
+//    - removes all bindings, and adds "bind enter chat"
 //      (one of the other unbind commands can get rid of that one)
-//    - good for getting rid of the default bindings
+//    - good for deleting the default bindings
+//
+//    keysym <name> <keycode>
+//    -----------------------
+//    - add a custom key symbol  (the default key symbols can not be overriden)
+//    - name must start with a letter, and only contain letters, numbers, and '_'
+//    - the <keycode> can be a currently recognized keysym
+//      (ex:  "keysym menu 0x13F"  or  "keysym radar r")
+//
+//    keyset <name> <keyset>
+//    ----------------------
+//    - specifies a named keyset
+//    - name must start with a letter, and only contain letters, numbers, and '_'
+//    - named keysets may be accessed by prepending the '&' character to the name
+//      (ex:  "keyset myKeySet Ctrl+x"  then  "bind &myKeySet myAction" )
+//
+//    fakemeta <keysym>
+//    -----------------
+//    - assign an auxiliary key for the Meta modifier ("space" is a good choice)
+//    - use "fakemeta none" to disable this feature
 //
 //    bind <keyset> <action>
 //    ----------------------
@@ -55,11 +74,6 @@
 //    ---------------------
 //    - removes all bindings that use the action  (command that is, a misnomer)
 //
-//    fakemeta <keysym>
-//    -----------------
-//    - assign an auxiliary key for the Meta modifier
-//    - use 'fakemeta 0x0' to disable this feature
-//
 //
 //  * NOTE: These commands can also be run from the chat line in-game using
 //          the slash command syntax  (/bind, /unbind, etc...)
@@ -77,11 +91,16 @@
 //      bind       Ctrl+a  fake_action
 //      bind          C+a  fake_action
 //      bind Ctrl+Shift+a  fake_action
-//      bind        C+S+a  fake_action
+//      bind          *+a  fake_action
+//      bind   &my_keyset  fake_action
 //
 //    The format then goes like this:
 //
 //      [<Modifier>+]...[<Modifier>+]<keysym>
+//
+//        or
+//
+//      &<keyset_name>    (for named keysets)
 //
 //    The modifiers (and their abbreviations), are:
 //

@@ -53,9 +53,15 @@ CKeySet::CKeySet(int k, bool release)
 }
 
 
-string CKeySet::GetString() const
+string CKeySet::GetString(bool useDefaultKeysym) const
 {
-	string name = keyCodes->GetName(key);
+	string name;
+	if (useDefaultKeysym) {
+		name = keyCodes->GetDefaultName(key);
+	} else {
+		name = keyCodes->GetName(key);
+	}
+	
 	if (name.empty()) {
 		char buf[16];
 		SNPRINTF(buf, 16, "0x%03X", key);

@@ -566,8 +566,15 @@ std::string CSelectedUnits::GetTooltip(void)
 	}
 
 	sprintf(tmp,"\nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
-			exp/num,cost,range/num, metalMake, metalUse, energyMake, energyUse);
-	s+=tmp;
+	        exp/num,cost,range/num, metalMake, metalUse, energyMake, energyUse);
+	s += tmp;
+	
+  if (gs->cheatEnabled && (selectedUnits.size() == 1)) {
+  	CUnit* unit = *selectedUnits.begin();
+    SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
+             unit->unitDef->techLevel);
+    s += tmp;
+	}
 
 	return s;
 }

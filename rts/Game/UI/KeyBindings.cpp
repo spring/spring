@@ -302,7 +302,7 @@ CKeyBindings::Action::Action(const string& line)
 CKeyBindings::CKeyBindings()
 {
 	debug = 0;
-	fakeMetaKey = 0;
+	fakeMetaKey = -1;
 	userCommand = true;
 
 	statefulCommands.insert("drawinmap");
@@ -379,7 +379,7 @@ const CKeyBindings::ActionList&
 	if (debug > 0) {
 		char buf[256];
 		SNPRINTF(buf, sizeof(buf), "GetAction: %s (0x%03X)",
-		         ks.GetString().c_str(), ks.Key());
+		         ks.GetString(false).c_str(), ks.Key());
 		if (alPtr == &empty) {
 			strncat(buf, "  EMPTY", sizeof(buf));
 			OutputDebug(buf);
@@ -417,13 +417,14 @@ const CKeyBindings::HotkeyList&
 bool CKeyBindings::Bind(const string& keystr, const string& line)
 {
 	CKeySet ks;
-	if (!ks.Parse(keystr)) {
-		printf("Could not parse key: %s\n", keystr.c_str());
+	if (!ParseKeySet(keystr, ks)) {
+		printf("Bind: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	Action action(line);
+	action.boundWith = keystr;
 	if (action.command.empty()) {
-		printf("Empty action: %s\n", line.c_str());
+		printf("Bind: empty action: %s\n", line.c_str());
 		return false;
 	}
 	
@@ -466,8 +467,8 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 bool CKeyBindings::UnBind(const string& keystr, const string& command)
 {
 	CKeySet ks;
-	if (!ks.Parse(keystr)) {
-		printf("Could not parse key: %s\n", keystr.c_str());
+	if (!ParseKeySet(keystr, ks)) {
+		printf("UnBind: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	bool success = false;
@@ -487,8 +488,8 @@ bool CKeyBindings::UnBind(const string& keystr, const string& command)
 bool CKeyBindings::UnBindKeyset(const string& keystr)
 {
 	CKeySet ks;
-	if (!ks.Parse(keystr)) {
-		printf("Could not parse key: %s\n", keystr.c_str());
+	if (!ParseKeySet(keystr, ks)) {
+		printf("UnBindKeyset: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	bool success = false;
@@ -528,12 +529,45 @@ bool CKeyBindings::UnBindAction(const string& command)
 bool CKeyBindings::SetFakeMetaKey(const string& keystr)
 {
 	CKeySet ks;
+	if (StringToLower(keystr) == "none") {
+		fakeMetaKey = -1;
+		return true;
+	}
 	if (!ks.Parse(keystr)) {
-		printf("Could not parse key: %s\n", keystr.c_str());
+		printf("SetFakeMetaKey: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	fakeMetaKey = ks.Key();
 	return true;
+}
+
+bool CKeyBindings::AddKeySymbol(const string& keysym, const string& code)
+{
+	CKeySet ks;
+	if (!ks.Parse(code)) {
+		printf("AddKeySymbol: could not parse key: %s\n", code.c_str());
+		return false;
+	}
+	if (!keyCodes->AddKeySymbol(keysym, ks.Key())) {
+		printf("AddKeySymbol: could not add: %s\n", keysym.c_str());
+		return false;
+	}
+	return true;
+}
+
+
+bool CKeyBindings::AddNamedKeySet(const string& name, const string& keystr)
+{
+	CKeySet ks;
+	if (!ks.Parse(keystr)) {
+		printf("AddNamedKeySet: could not parse keyset: %s\n", keystr.c_str());
+		return false;
+	}
+	if ((ks.Key() < 0) || !CKeyCodes::IsValidLabel(name)) {
+		printf("AddNamedKeySet: bad custom keyset name: %s\n", name.c_str());
+		return false;
+	}
+	namedKeySets[name] = ks;
 }
 
 
@@ -550,6 +584,24 @@ bool CKeyBindings::RemoveCommandFromList(ActionList& al, const string& command)
 		}
 	}
 	return success;
+}
+
+
+bool CKeyBindings::ParseKeySet(const string& keystr, CKeySet& ks) const
+{
+	if (keystr[0] != NamedKeySetChar) {
+		return ks.Parse(keystr);
+	}
+	else {
+		const string keysetName = keystr.substr(1);
+		NamedKeySetMap::const_iterator it = namedKeySets.find(keysetName);
+		if (it !=  namedKeySets.end()) {
+			ks = it->second;
+		} else {
+			return false;
+		}
+	}
+	return true;
 }
 
 
@@ -573,7 +625,16 @@ bool CKeyBindings::Command(const string& line)
 	}
 	const string command = StringToLower(words[0]);
 	
-	if ((command == "bind") && (words.size() > 2)) {
+	if ((command == "fakemeta") && (words.size() > 1)) {
+		if (!SetFakeMetaKey(words[1])) { return false; }
+	}
+	else if ((command == "keyset") && (words.size() > 2)) {
+		if (!AddNamedKeySet(words[1], words[2])) { return false; }
+	}
+	else if ((command == "keysym") && (words.size() > 2)) {
+		if (!AddKeySymbol(words[1], words[2])) { return false; }
+	}
+	else if ((command == "bind") && (words.size() > 2)) {
 		if (!Bind(words[1], words[2])) { return false; }
 	}
 	else if ((command == "unbind") && (words.size() > 2)) {
@@ -587,10 +648,9 @@ bool CKeyBindings::Command(const string& line)
 	}
 	else if (command == "unbindall") {
 		bindings.clear();
+		keyCodes->Reset();
+		namedKeySets.clear();
 		Bind("enter", "chat"); // bare minimum
-	}
-	else if (command == "fakemeta") {
-		if (!SetFakeMetaKey(words[1])) { return false; }
 	}
 	else {
 		return false;
@@ -645,7 +705,7 @@ void CKeyBindings::BuildHotkeyMap()
 	KeyMap::const_iterator kit;
 	for (kit = bindings.begin(); kit != bindings.end(); ++kit) {
 		const CKeySet ks = kit->first;
-		const string keystr = ks.GetString();
+		const string keystr = ks.GetString(true);
 		const ActionList& al = kit->second;
 		for (int i = 0; i < (int)al.size(); ++i) {
 			HotkeyList& hl = hotkeys[al[i].command];
@@ -665,6 +725,12 @@ void CKeyBindings::BuildHotkeyMap()
 
 /******************************************************************************/
 
+void CKeyBindings::Print() const
+{
+	FileSave(stdout);
+}
+
+
 bool CKeyBindings::Save(const string& filename) const
 {
 	FILE* out = fopen(filename.c_str(), "wt");
@@ -672,19 +738,53 @@ bool CKeyBindings::Save(const string& filename) const
 		return false;
 	}
 
+	const bool success = FileSave(out);
+
+	fclose(out);
+	
+	return success;
+}
+
+
+bool CKeyBindings::FileSave(FILE* out) const
+{
+	if (out == NULL) {
+		return false;
+	}
+	
 	// clear the defaults
 	fprintf(out, "\n");
 	fprintf(out, "unbindall          // clear the defaults\n");
 	fprintf(out, "unbind enter chat  // clear the defaults\n");
 	fprintf(out, "\n");
 
+	// save the user defined key symbols
+	keyCodes->SaveUserKeySymbols(out);
+	
+	// save the fake meta key (if it has been defined)
+	if (fakeMetaKey >= 0) {
+		fprintf(out, "fakemeta  %s\n\n", keyCodes->GetName(fakeMetaKey).c_str());
+	}
+
+	// save the named keysets	
+	NamedKeySetMap::const_iterator ks_it;
+	for (ks_it = namedKeySets.begin(); ks_it != namedKeySets.end(); ++ks_it) {
+		fprintf(out, "keyset  %-15s  %s\n",
+		        ks_it->first.c_str(), ks_it->second.GetString(false).c_str());
+	}
+	if (!namedKeySets.empty()) {
+		fprintf(out, "\n");
+	}
+	
+	// save the bindings
 	KeyMap::const_iterator it;
 	for (it = bindings.begin(); it != bindings.end(); ++it) {
 		const ActionList& al = it->second;
 		for (int i = 0; i < (int)al.size(); ++i) {
+			const Action& action = al[i];
 			string comment;
-			if (unitDefHandler && (al[i].command.find("buildunit_") == 0)) {
-				const string unitName = al[i].command.substr(10);
+			if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
+				const string unitName = action.command.substr(10);
 				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
 				if (unitDef) {
 					comment = "  // " + unitDef->humanName + " :: " + unitDef->tooltip;
@@ -692,31 +792,16 @@ bool CKeyBindings::Save(const string& filename) const
 			}
 			if (comment.empty()) {
 				fprintf(out, "bind %18s  %s\n", 
-				        it->first.GetString().c_str(),
-				        al[i].rawline.c_str());
+				        action.boundWith.c_str(),
+				        action.rawline.c_str());
 			} else {
 				fprintf(out, "bind %18s  %-20s%s\n", 
-				        it->first.GetString().c_str(),
-				        al[i].rawline.c_str(), comment.c_str());
+				        action.boundWith.c_str(),
+				        action.rawline.c_str(), comment.c_str());
 			}
 		}
 	}
-	fclose(out);
 	return true;
-}
-
-
-void CKeyBindings::Print() const
-{
-	KeyMap::const_iterator it;
-	for (it = bindings.begin(); it != bindings.end(); ++it) {
-		const ActionList& al = it->second;
-		for (int i = 0; i < (int)al.size(); ++i) {
-			printf("  Binding:  %18s (0x%03X)  to  %s\n",
-						 it->first.GetString().c_str(), it->first.Key(),
-						 al[i].rawline.c_str());
-		}
-	}
 }
 
 

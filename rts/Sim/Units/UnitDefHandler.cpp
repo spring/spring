@@ -2,6 +2,7 @@
 #include "UnitDefHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "TdfParser.h"
+#include <stdio.h>
 #include <algorithm>
 #include <iostream>
 #include <locale>
@@ -757,6 +758,50 @@ void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}
 	}
+}
+
+
+bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
+                                     const std::string& modname)
+{
+	FILE* f;
+	if (filename.empty()) {
+		f = stdout;
+	} else {
+		f = fopen(filename.c_str(), "wt");
+		if (f == NULL) {
+			return false;
+		}
+	}
+
+	fprintf(f, "\nTech Levels for \"%s\"\n", modname.c_str());
+	multimap<int, string> entries;
+	std::map<std::string, int>::const_iterator uit;
+	for (uit = unitID.begin(); uit != unitID.end(); uit++) {
+		const string& unitName = uit->first;			
+		const UnitDef* ud = GetUnitByName(unitName);
+		if (ud) {
+			char buf[256];
+			SNPRINTF(buf, sizeof(buf), " %3i:  %-15s  // %s :: %s\n",
+							 ud->techLevel, unitName.c_str(),
+							 ud->humanName.c_str(), ud->tooltip.c_str());
+			entries.insert(pair<int, string>(ud->techLevel, buf));
+		}
+	}
+	int prevLevel = -2;
+	multimap<int, string>::iterator eit;
+	for (eit = entries.begin(); eit != entries.end(); ++eit) {
+		if (eit->first != prevLevel) {
+			fprintf(f, "\n");
+			prevLevel = eit->first;
+		}
+		fprintf(f, "%s", eit->second.c_str());
+	}
+
+	if (f != stdout) {
+		fclose(f);
+	}
+	return true;
 }
 
 

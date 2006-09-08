@@ -31,6 +31,54 @@ string CKeyCodes::GetName(int code) const
 }
 
 
+string CKeyCodes::GetDefaultName(int code) const
+{
+	map<int, string>::const_iterator it = defaultCodeToName.find(code);
+	if (it == defaultCodeToName.end()) {
+		return "";
+	}
+	return it->second;
+}
+
+
+bool CKeyCodes::AddKeySymbol(const string& name, int code)
+{
+	if ((code < 0) || !IsValidLabel(name)) {
+		return false;
+	}
+	
+	const string keysym = StringToLower(name);
+
+	// do not allow existing keysyms to be renamed
+	map<string, int>::const_iterator name_it = nameToCode.find(keysym);
+	if (name_it != nameToCode.end()) {
+		return false;
+	}
+	nameToCode[keysym] = code;
+
+	// assumes that the user would rather see their own names
+	codeToName[code] = keysym;
+}
+
+
+bool CKeyCodes::IsValidLabel(const string& label)
+{
+	if (label.empty()) {
+		return false;
+	}
+	if (!isalpha(label[0])) {
+		return false;
+	}
+	for (int i = 0; i < (int)label.size(); i++) {
+		const char c = label[i];
+		if (!isalnum(c) && (c != '_')) {
+			return false;
+		}
+	}
+	return true;
+}
+
+
 bool CKeyCodes::IsModifier(int code) const
 {
 	switch (code) {
@@ -57,6 +105,15 @@ void CKeyCodes::AddPair(const string& name, int code)
 
 CKeyCodes::CKeyCodes()
 {
+	Reset();
+}
+
+
+void CKeyCodes::Reset()
+{
+	nameToCode.clear();
+	codeToName.clear();
+	
 	AddPair("backspace", SDLK_BACKSPACE);
 	AddPair("tab",       SDLK_TAB);
 	AddPair("clear",     SDLK_CLEAR);
@@ -169,6 +226,10 @@ CKeyCodes::CKeyCodes()
 	AddPair("joydown",  321);
 	AddPair("joyleft",  322);
 	AddPair("joyright", 323);
+
+	// remember our defaults	
+  defaultNameToCode = nameToCode;
+  defaultCodeToName = codeToName;
 }
 
 
@@ -187,4 +248,34 @@ void CKeyCodes::PrintCodeToName() const
 	for (it = codeToName.begin(); it != codeToName.end(); ++it) {
 		printf("KEYCODE: 0x%03X = '%s'\n", it->first, it->second.c_str());
 	}
+}
+
+
+void CKeyCodes::SaveUserKeySymbols(FILE* file) const
+{
+	bool output = false;
+	map<string, int>::const_iterator user_it;
+	for (user_it = nameToCode.begin(); user_it != nameToCode.end(); ++user_it) {
+		map<string, int>::const_iterator def_it;
+		const string& keysym = user_it->first;
+		def_it = defaultNameToCode.find(keysym);
+		if (def_it == defaultNameToCode.end()) {
+			// this keysym is not standard
+			const int code = user_it->second;
+			string name = GetDefaultName(code);
+			if (name.empty()) {
+				char buf[16];
+				SNPRINTF(buf, 16, "0x%03X", code);
+				name = buf;
+			}
+			fprintf(file, "keysym  %-10s  %s\n", keysym.c_str(), name.c_str());
+			output = true;
+		}
+	}
+
+	if (output) {
+		fprintf(file, "\n");
+	}
+	
+	return;
 }

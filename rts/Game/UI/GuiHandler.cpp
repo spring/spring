@@ -5,6 +5,7 @@
 
 #include "GuiHandler.h"
 #include "KeyBindings.h"
+#include "KeyCodes.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GL/myGL.h"
 #include "MouseHandler.h"
@@ -97,7 +98,8 @@ CGuiHandler::CGuiHandler()
 	maxPages(0),
 	showingMetal(false),
 	buildSpacing(0),
-	buildFacing(0)
+	buildFacing(0),
+	actionOffset(0)
 {
 //	LoadCMDBitmap(CMD_STOP, "bitmaps\\ocean.bmp");
 	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps/armsilo1.bmp");
@@ -162,11 +164,7 @@ void CGuiHandler::LayoutIcons()
 	buttonBox.y1 = buttonBox.y2+
 		ystep*NUMICOPAGE/2;// number of buttons
 
-	if(showingMetal){
-		showingMetal=false;
-		readmap->GetGroundDrawer()->DisableExtraTexture();
-	}
-
+	SetShowingMetal(false);
 
 	CSelectedUnits::AvailableCommandsStruct ac=selectedUnits.GetAvailableCommands();;
 	vector<CommandDescription> uncommands=ac.commands;
@@ -289,20 +287,57 @@ void CGuiHandler::LayoutIcons()
 }
 
 
-void CGuiHandler::DrawButtons()
+void CGuiHandler::SetShowingMetal(bool show)
 {
-	glDisable(GL_DEPTH_TEST);
-	if(needShift && !keys[SDLK_LSHIFT]){
-		if(showingMetal){
-			showingMetal=false;
-			readmap->GetGroundDrawer()->DisableExtraTexture();
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();	
+	if (!show) {
+		if (showingMetal) {
+			gd->DisableExtraTexture();
+			showingMetal = false;
 		}
+	}
+	else {
+		if (autoShowMetal) {
+			if (gd->drawMode != CBaseGroundDrawer::drawMetal) {
+				CMetalMap* mm = readmap->metalMap;
+				gd->SetMetalTexture(mm->metalMap, mm->extractionMap, mm->metalPal, false);
+				showingMetal = true;
+			}
+		}
+	}
+}
+
+
+void CGuiHandler::Update()
+{
+	if (needShift && !keys[SDLK_LSHIFT]) {
+		SetShowingMetal(false);
 		inCommand=-1;
 		needShift=false;
 	}
 
-	if (selectedUnits.CommandsChanged()) {LayoutIcons();fadein=100;}
-	else if (fadein>0) fadein-=5;
+	if (selectedUnits.CommandsChanged()) {
+		LayoutIcons();
+		fadein = 100;
+	} else if (fadein > 0) {
+		fadein -= 5;
+	}
+	
+	SetCursorIcon();
+}
+
+
+void CGuiHandler::Draw()
+{
+	DrawButtons();
+}
+
+
+void CGuiHandler::DrawButtons()
+{
+	Update();
+	
+	glDisable(GL_DEPTH_TEST);
 
 	int mouseIcon=IconAtPos(mouse->lastx,mouse->lasty);
 
@@ -516,10 +551,15 @@ void CGuiHandler::DrawButtons()
 			font->glPrintAt(0.02,0.13,0.6,"Selected units %i",selectedUnits.selectedUnits.size());
 		}
 	}
-	if(GetReceiverAt(mouse->lastx,mouse->lasty)){
+}
+
+
+void CGuiHandler::SetCursorIcon()
+{
+	if (GetReceiverAt(mouse->lastx, mouse->lasty)) {
 			mouse->cursorText="";
 	} else {
-		if(inCommand>=0 && inCommand<commands.size()){
+		if (inCommand>=0 && inCommand<commands.size()) {
 			mouse->cursorText=commands[guihandler->inCommand].name;
 		} else {
 			int defcmd;
@@ -535,10 +575,6 @@ void CGuiHandler::DrawButtons()
 	}
 }
 
-void CGuiHandler::Draw()
-{
-	DrawButtons();
-}
 
 bool CGuiHandler::MousePress(int x,int y,int button)
 {
@@ -567,10 +603,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 		return;
 
 	if(needShift && !keys[SDLK_LSHIFT]){
-		if(showingMetal){
-			showingMetal=false;
-			readmap->GetGroundDrawer()->DisableExtraTexture();
-		}
+		SetShowingMetal(false);
 		inCommand=-1;
 		needShift=false;
 	}
@@ -585,10 +618,9 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 	}
 
 	if(icon>=0 && icon<commands.size()){
-		if(showingMetal){
-			showingMetal=false;
-			readmap->GetGroundDrawer()->DisableExtraTexture();
-		}
+		SetShowingMetal(false);
+		lastKeySet.Reset();
+		
 		switch(commands[icon].type){
 			case CMDTYPE_ICON:{
 				Command c;
@@ -625,11 +657,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 			case CMDTYPE_ICON_BUILDING:{
 				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[icon].id);
-				CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
-				if(ud->extractsMetal>0 && gd->drawMode != CBaseGroundDrawer::drawMetal && autoShowMetal){
-					readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
-					showingMetal=true;
-				}
+				SetShowingMetal(ud->extractsMetal > 0);
 				inCommand=icon;
 				break;}
 
@@ -671,10 +699,15 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 	Command c=GetCommand(x,y,button,false);
 
-	if(c.id!=CMD_STOP)	//if cmd_stop is returned it indicates that no good command could be found
-	selectedUnits.GiveCommand(c);
+	// if cmd_stop is returned it indicates that no good command could be found
+	if (c.id != CMD_STOP) {
+		selectedUnits.GiveCommand(c);
+		lastKeySet.Reset();
+	}
+	
 	FinishCommand(button);
 }
+
 
 int CGuiHandler::IconAtPos(int x, int y)
 {
@@ -1015,91 +1048,143 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 }
 
 
+bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
+{
+	// only activate the spacing options while building
+	// (conserve the keybinding space where we can)		
+	if ((inCommand >= 0) && (inCommand < commands.size()) &&
+			(commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+		if (action.command == "incbuildspacing") {
+			buildSpacing++;
+			return true;
+		}
+		else if (action.command == "decbuildspacing") {
+			if (buildSpacing > 0) {
+				buildSpacing--;
+			}
+			return true;
+		}
+	}
+
+	if (action.command == "showcommands") {
+		// bonus command for debugging
+		printf("Currently Available Commands:\n");
+		for(int i = 0; i < commands.size(); ++i){
+			printf("  button: %i, id = %i, action = %s\n",
+						 i, commands[i].id, commands[i].action.c_str());
+		}
+		return true;
+	}
+	else if (action.command == "hotbind") {
+		int icon = IconAtPos(mouse->lastx, mouse->lasty);
+		if ((icon >= 0) && (icon < commands.size())) {
+			game->SetHotBinding(commands[icon].action);
+		}
+		return true;
+	}
+	else if (action.command == "hotunbind") {
+		int icon = IconAtPos(mouse->lastx, mouse->lasty);
+		if ((icon >= 0) && (icon < commands.size())) {
+			string cmd = "unbindaction " + commands[icon].action;
+			keyBindings->Command(cmd);
+			info->AddLine("%s", cmd.c_str());
+		}
+		return true;
+	}
+	else if (action.command == "firstmenu") {
+		activePage = 0;
+		selectedUnits.SetCommandPage(activePage);
+		return true;
+	}
+
+	return false;
+}    
+    
+
 bool CGuiHandler::KeyPressed(unsigned short key)
 {
 	if(key==SDLK_ESCAPE && activeMousePress){
 		activeMousePress=false;
 		inCommand=-1;
-		if(showingMetal){
-			showingMetal=false;
-			readmap->GetGroundDrawer()->DisableExtraTexture();
-		}
+		SetShowingMetal(false);
 		return true;
 	}
 	if(key==SDLK_ESCAPE && inCommand>0){
 		inCommand=-1;
-		if(showingMetal){
-			showingMetal=false;
-			readmap->GetGroundDrawer()->DisableExtraTexture();
-		}
+		SetShowingMetal(false);
 		return true;
 	}
 
 	CKeySet ks(key, false);
 	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
 
-	for (int ali = 0; ali < (int)al.size(); ++ali) {
+	// setup actionOffset
+	int tmpActionOffset = actionOffset;
+	if ((inCommand < 0) || (lastKeySet.Key() < 0)){
+		actionOffset = 0;
+		tmpActionOffset = 0;
+		lastKeySet.Reset();
+	}
+	else if (!keyCodes->IsModifier(ks.Key()) &&
+	         (ks.Key() != keyBindings->GetFakeMetaKey())) {
+		// not a modifier
+		if ((ks == lastKeySet) && (ks.Key() >= 0)) {
+			actionOffset++;
+			tmpActionOffset = actionOffset;
+		} else {
+			tmpActionOffset = 0;
+		}
+	}
 	
-		const CKeyBindings::Action& action = al[ali];
+	for (int ali = 0; ali < (int)al.size(); ++ali) {
 
-		// only activate these build options while building
-		// (conserve the keybinding space where we can)		
-		if ((inCommand >= 0) && (inCommand < commands.size()) &&
-		    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
-			if (action.command == "incbuildspacing") {
-				buildSpacing++;
-				return true;
-			}
-			else if (action.command == "decbuildspacing") {
-				if (buildSpacing > 0) {
-					buildSpacing--;
-				}
-				return true;
-			}
-		}
-		else if (action.command == "showcommands") {
-			// bonus command for debugging
-			printf("Currently Available Commands:\n");
-			for(int i = 0; i < commands.size(); ++i){
-				printf("  button: %i, id = %i, action = %s\n",
-							 i, commands[i].id, commands[i].action.c_str());
-			}
+		const int actionIndex = (ali + tmpActionOffset) % (int)al.size();
+		const CKeyBindings::Action& action = al[actionIndex];
+		
+		if (ProcessLocalActions(action)) {
 			return true;
 		}
-		else if (action.command == "hotbind") {
-			int icon = IconAtPos(mouse->lastx, mouse->lasty);
-			if ((icon >= 0) && (icon < commands.size())) {
-				game->SetHotBinding(commands[icon].action);
+		
+		// See if we have a positional icon command
+		int iconpos = -1;
+		if (!action.extra.empty() && (action.command == "iconpos")) {
+			char* endPtr;
+			const char* startPtr = action.extra.c_str();
+			iconpos = strtol(startPtr, &endPtr, 10);
+			if ((endPtr == startPtr) || (iconpos >= NUMICOPAGE)) {
+				iconpos = -1;
+			} else {
+				iconpos += (activePage * NUMICOPAGE);
 			}
-			return true;
-		}
-		else if (action.command == "hotunbind") {
-			int icon = IconAtPos(mouse->lastx, mouse->lasty);
-			if ((icon >= 0) && (icon < commands.size())) {
-				string cmd = "unbindaction " + commands[icon].action;
-				keyBindings->Command(cmd);
-				info->AddLine("%s", cmd.c_str());
-			}
-			return true;
 		}
 
 		for (int a = 0; a < commands.size(); ++a) {
-			if (commands[a].action != action.command) {
-				continue;
+
+			if ((a != iconpos) && (commands[a].action != action.command)) {
+				continue; // not a match
 			}
-			switch(commands[a].type) {
+
+			// set the activePage
+			const int cmdType = commands[a].type;
+			if ((cmdType != CMDTYPE_NEXT) && (cmdType != CMDTYPE_PREV)) {
+				if (!commands[a].onlyKey) {
+					activePage = min(maxPages, (a / NUMICOPAGE));;
+					selectedUnits.SetCommandPage(activePage);
+				}
+			}
+			
+			switch(cmdType) {
 				case CMDTYPE_ICON:{
 					Command c;
 					c.id=commands[a].id;
 					CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
 					selectedUnits.GiveCommand(c);
-					inCommand=-1;
 					break;
 				}
 				case CMDTYPE_ICON_MODE: {
 					int newMode;
 
-					if (!action.extra.empty()) {
+					if (!action.extra.empty() && (iconpos < 0)) {
 						newMode = atoi(action.extra.c_str());
 					} else {
 						newMode = atoi(commands[a].params[0].c_str()) + 1;
@@ -1118,7 +1203,6 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					c.params.push_back(newMode);
 					CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
 					selectedUnits.GiveCommand(c);
-					inCommand = -1;
 					break;
 				}
 				case CMDTYPE_ICON_MAP:
@@ -1128,16 +1212,17 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				case CMDTYPE_ICON_FRONT:
 				case CMDTYPE_ICON_UNIT_OR_AREA:
 				case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
+					SetShowingMetal(false);
+					actionOffset = actionIndex;
+					lastKeySet = ks;
 					inCommand=a;
 					break;
 				}
 				case CMDTYPE_ICON_BUILDING: {
 					UnitDef* ud=unitDefHandler->GetUnitByID(-commands[a].id);
-					CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
-					if(ud->extractsMetal>0 && gd->drawMode != CBaseGroundDrawer::drawMetal && autoShowMetal){
-						readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
-						showingMetal=true;
-					}
+					SetShowingMetal(ud->extractsMetal > 0);
+					actionOffset = actionIndex;
+					lastKeySet = ks;
 					inCommand=a;
 					break;
 				}
@@ -1145,7 +1230,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					CommandDescription& cd = commands[a];
 					vector<string>::iterator pi;
 					// check for an action with a specific entry binding
-					if (!action.extra.empty()) {
+					if (!action.extra.empty() && (iconpos < 0)) {
 						int p = 0;
 						for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
 							if (action.extra == *pi) {
@@ -1166,6 +1251,8 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					}
 					list->place = atoi(cd.params[0].c_str());
 					game->showList = list;
+					lastKeySet.Reset();
+					SetShowingMetal(false);
 					break;
 				}
 				case CMDTYPE_NEXT: {
@@ -1173,7 +1260,6 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					if(activePage>maxPages)
 						activePage=0;
 					selectedUnits.SetCommandPage(activePage);
-					inCommand=-1;
 					break;
 				}
 				case CMDTYPE_PREV:{
@@ -1181,10 +1267,11 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					if(activePage<0)
 						activePage=maxPages;
 					selectedUnits.SetCommandPage(activePage);
-					inCommand=-1;
 					break;
 				}
 				default:{
+					lastKeySet.Reset();
+					SetShowingMetal(false);
 					inCommand = a;
 				}
 			}
@@ -1194,6 +1281,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 	
 	return false;
 }
+
 
 void CGuiHandler::MenuChoice(string s)
 {
@@ -1233,10 +1321,7 @@ void CGuiHandler::FinishCommand(int button)
 	if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
 		needShift=true;
 	} else {
-		if(showingMetal){
-			showingMetal=false;
-			readmap->GetGroundDrawer()->DisableExtraTexture();
-		}
+		SetShowingMetal(false);
 		inCommand=-1;
 	}
 }
@@ -1269,6 +1354,17 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 	}
 	return s;
 }
+
+
+std::string CGuiHandler::GetBuildTooltip() const
+{
+	if ((inCommand >= 0) && (inCommand < commands.size()) &&
+	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+		return commands[inCommand].tooltip;
+	}
+	return std::string("");
+}
+
 
 void CGuiHandler::DrawArea(float3 pos, float radius)
 {
