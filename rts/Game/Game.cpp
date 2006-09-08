@@ -1555,10 +1555,14 @@ bool CGame::Draw()
 
 	if(showClock){
 		glColor4f(1,1,1,1);
-		glTranslatef(0.94f,0.01f,0.0f);
-		glScalef(0.015f,0.015f,0.1f);
-		font->glPrint("%02i:%02i",gs->frameNum/60/30,(gs->frameNum/30)%60);
-		glLoadIdentity();
+		const int seconds = (gs->frameNum / 30);
+		if (seconds < 3600) {
+			font->glPrintRight(0.99f, 0.01f, 0.7f, "%02i:%02i",
+			                   seconds / 60, seconds % 60);
+		} else {
+			font->glPrintRight(0.99f, 0.01f, 0.7f, "%02i:%02i:%02i",
+			                   seconds / 3600, (seconds / 60) % 60, seconds % 60);
+		}
 	}
 
 	if(showPlayerInfo){
