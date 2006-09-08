@@ -2,6 +2,8 @@ TASpring change log
 
 0.next
 
+- added build range circles for immobile builders when holding shift over them
+
 - added the techLevel variable to UserDef, with automatic detection of the
   tech levels in a mod based on the information in the sidedata.tdf file
 - added the "techlevels" action, to save the tech levels to techlevels.txt
