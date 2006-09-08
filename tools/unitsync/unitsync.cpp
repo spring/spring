@@ -1,18 +1,18 @@
 #include "StdAfx.h"
 #include "unitsync.h"
 
-#include "FileSystem/VFSHandler.h"
+#include "FileSystem/ArchiveFactory.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
-#include "Platform/FileSystem.h"
-#include "TdfParser.h"
+#include "FileSystem/VFSHandler.h"
 #include "Map/SMF/mapfile.h"
-#include "FileSystem/ArchiveFactory.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/FileSystem.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "TdfParser.h"
 
 #include "Syncer.h"
 #include "SyncServer.h"
-
-#include "Rendering/Textures/Bitmap.h"
 
 #include <string>
 #include <vector>
@@ -76,6 +76,8 @@ DLL_EXPORT void __stdcall UnInit()
 		delete syncer;
 		syncer = 0;
 	}
+
+	ConfigHandler::Deallocate();
 }
 
 DLL_EXPORT int __stdcall Init(bool isServer, int id)
