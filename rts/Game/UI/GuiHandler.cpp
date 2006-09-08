@@ -832,7 +832,8 @@ void CGuiHandler::DrawMapStuff(void)
 			}
 		}
 	}
-	//draw buildings we are about to build
+
+	// draw buildings we are about to build
 	if(inCommand>=0 && inCommand<commands.size() && commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
 		if(dist>0){
@@ -853,7 +854,7 @@ void CGuiHandler::DrawMapStuff(void)
 
 				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
 				{
-					float3 pos=bpi->pos;
+					float3 buildpos = bpi->pos;
 					std::vector<Command> cv;
 					if(keys[SDLK_LSHIFT]){
 						Command c;
@@ -873,39 +874,56 @@ void CGuiHandler::DrawMapStuff(void)
 						glColor4f(1,0.5,0.5,0.4);
 
 					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, pos, bpi->buildFacing);
-					if(unitdef->weapons.size()>0){	//draw range
+					if(unitdef->weapons.size()>0){	// draw weapon range
 						glDisable(GL_TEXTURE_2D);
 						glColor4f(1,0.3,0.3,0.7);
 						glBegin(GL_LINE_STRIP);
 						for(int a=0;a<=40;++a){
-							float3 wpos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
-							wpos+=pos;
-							float dh=ground->GetHeight(wpos.x,wpos.z)-pos.y;
+							float3 pos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
+							pos+=buildpos;
+							float dh=ground->GetHeight(pos.x,pos.z)-buildpos.y;
 							float modRange=unitdef->weapons[0].def->range-dh*unitdef->weapons[0].def->heightmod;
-							wpos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
-							wpos+=pos;
-							wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
-							glVertexf3(wpos);
+							pos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
+							pos+=buildpos;
+							pos.y=ground->GetHeight(pos.x,pos.z)+8;
+							glVertexf3(pos);
 						}
 						glEnd();
 					}
-					if(unitdef->extractRange>0){	//draw range
+					if(unitdef->extractRange>0){	// draw extraction range
 						glDisable(GL_TEXTURE_2D);
 						glColor4f(1,0.3,0.3,0.7);
 						glBegin(GL_LINE_STRIP);
 						for(int a=0;a<=40;++a){
-							float3 wpos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
-							wpos+=pos;
-							wpos.y=ground->GetHeight(wpos.x,wpos.z)+8;
-							glVertexf3(wpos);
+							float3 pos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
+							pos+=buildpos;
+							pos.y=ground->GetHeight(pos.x,pos.z)+8;
+							glVertexf3(pos);
 						}
 						glEnd();
+					}
+					if (unitdef->builder && !unitdef->canmove) { // draw build range
+						const float radius = unitdef->buildDistance;
+						if (radius > 0.0f) {
+							glDisable(GL_TEXTURE_2D);
+							glColor4f(0.2f, 0.8f, 0.4f, 0.7f);
+							glBegin(GL_LINE_STRIP);
+							for(int a = 0; a <= 40; ++a){
+								const float radians = a * (2.0 * PI) / 40.0f;
+								float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
+								pos += buildpos;
+								pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
+								glVertexf3(pos);
+							}
+							glEnd();
+						}
 					}
 				}
 			}
 		}
 	}
 
+	// draw the ranges for the unit that is being pointed at
 	if(keys[SDLK_LSHIFT]){
 		CUnit* unit=0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,false);
