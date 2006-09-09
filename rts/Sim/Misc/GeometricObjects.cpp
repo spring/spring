@@ -31,7 +31,7 @@ int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, flo
 		float3 dir2=(np-old2).Normalize();
 
 		if(arrow==1 && a==19){
-			CGeoSquareProjectile* gsp=new CGeoSquareProjectile(old1,old2,dir1,dir2,width*0.7,0);
+			CGeoSquareProjectile* gsp=new CGeoSquareProjectile(old1,old2,dir1,dir2,width,0);
 			geoGroups[group].squares.push_back(gsp);
 //			info->AddLine("%f %f %f %f %f %f %f %f %f",old1.x,old1.y,old1.z,old2.x,old2.y,old2.z,np.x,np.y,np.z);
 		} else {
@@ -93,7 +93,7 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 		CGeoSquareProjectile* gsp=new CGeoSquareProjectile(start,start*0.2+end*0.8,dir,dir,width*0.5,width*0.5);
 		geoGroups[group].squares.push_back(gsp);
 
-		gsp=new CGeoSquareProjectile(start*0.2+end*0.8,end,dir,dir,width*0.7,0);
+		gsp=new CGeoSquareProjectile(start*0.2+end*0.8,end,dir,dir,width,0);
 		geoGroups[group].squares.push_back(gsp);
 
 	} else {
