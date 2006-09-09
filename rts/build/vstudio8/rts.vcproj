@@ -412,6 +412,14 @@
 				Name="UI"
 				>
 				<File
+					RelativePath="..\..\Game\UI\CommandColors.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\CommandColors.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\UI\CursorIcons.cpp"
 					>
 				</File>
@@ -1844,6 +1852,14 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Units\CommandAI\FactoryCAI.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.h"
 						>
 					</File>
 					<File
