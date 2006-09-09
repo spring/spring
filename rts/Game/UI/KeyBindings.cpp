@@ -568,6 +568,7 @@ bool CKeyBindings::AddNamedKeySet(const string& name, const string& keystr)
 		return false;
 	}
 	namedKeySets[name] = ks;
+	return true;
 }
 
 

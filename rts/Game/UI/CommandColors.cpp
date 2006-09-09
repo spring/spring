@@ -272,6 +272,7 @@ bool CCommandColors::LoadConfig(const string& filename)
 			}
 		}
 	}
+	return true;
 }
 
 
