@@ -82,6 +82,7 @@ public:
 	virtual void SendTextMsg(const char* text,int priority) = 0;
 	virtual void SetLastMsgPos(float3 pos) = 0;
 	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
+	virtual bool PosInCamera(float3 pos, float radius) = 0;	// checks if pos is within view of the current camera, using radius as a margin	
 
 	//get the current game time, there is 30 frames per second at normal speed
 	virtual int GetCurrentFrame() = 0;

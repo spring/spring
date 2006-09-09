@@ -37,6 +37,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Game/UI/MouseHandler.h"
+#include "Game/Camera.h"
 #include "Game/CameraController.h"
 #include "Sim/ModInfo.h"
 #include "Platform/FileSystem.h"
@@ -74,6 +75,10 @@ void CAICallback::SetLastMsgPos(float3 pos)
 void CAICallback::AddNotification(float3 pos, float3 color, float alpha)
 {
 	minimap->AddNotification(pos,color,alpha);
+}
+bool CAICallback::PosInCamera(float3 pos, float radius)
+{
+	return camera->InView(pos,radius);
 }
 
 // see if the AI hasn't modified any parts of this callback
