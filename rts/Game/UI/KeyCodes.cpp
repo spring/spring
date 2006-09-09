@@ -58,6 +58,7 @@ bool CKeyCodes::AddKeySymbol(const string& name, int code)
 
 	// assumes that the user would rather see their own names
 	codeToName[code] = keysym;
+	return true;
 }
 
 
