@@ -93,9 +93,9 @@ else:
 	unitsync_files += ['rts/System/Platform/ConfigHandler.cpp', 'rts/System/Platform/Linux/DotfileHandler.cpp', ufshcpp]
 
 unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)
-Alias('unitsync', unitsync)
-# HACK   disable it for now, as it is not yet needed and would just increase compilation time
-#Default(unitsync)
+unitsync2 = env.SharedLibrary('UnityLobby/unitsync', unitsync_files)
+Alias('unitsync', unitsync, unitsync2)
+Default(unitsync, unitsync2)
 
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 aienv = env.Copy(LIBS=[], LIBPATH=[])
@@ -129,7 +129,7 @@ for f in filelist.list_globalAIs(aienv):
 	Alias('install-'+f, inst)
 
 # Build streflop (which has it's own Makefile-based build system)
-if not 'configure' in sys.argv and not 'test' in sys.argv:
+if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
 	if env['fpmath'] == 'sse':
 		cmd = "STREFLOP_SSE=1 " + cmd
@@ -156,5 +156,15 @@ env.Alias('test', None)
 #env.Zip('game/base/springcontent.sdz', filelist.list_files(env, 'installer/builddata/springcontent'))
 #env.Zip('game/base/spring/bitmaps.sdz', filelist.list_files(env, 'installer/builddata/bitmaps'))
 
-if env['platform'] != 'windows':
-	os.system("installer/make_gamedata_arch.sh")
+if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
+	if env['platform'] != 'windows':
+		if env.GetOption('clean'):
+			os.system("rm -f game/base/springcontent.sdz")
+			os.system("rm -f game/base/spring/bitmaps.sdz")
+		else:
+			os.system("installer/make_gamedata_arch.sh")
+
+inst = Install(os.path.join(env.subst(env['datadir']), 'base'), 'game/base/springcontent.sdz')
+Alias('install', inst)
+inst = Install(os.path.join(env.subst(env['datadir']), 'base/spring'), 'game/base/spring/bitmaps.sdz')
+Alias('install', inst)
