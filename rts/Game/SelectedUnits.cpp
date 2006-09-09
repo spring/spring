@@ -11,6 +11,7 @@
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
+#include "UI/CommandColors.h"
 #include "UI/InfoConsole.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "SelectedUnitsAI.h"
@@ -19,6 +20,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Player.h"
 #include "Camera.h"
 #include "Sound.h"
@@ -509,6 +511,17 @@ void CSelectedUnits::DrawCommands(void)
 {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
+
+	lineDrawer.Configure(cmdColors.UseColorRestarts(),
+	                     cmdColors.UseRestartColor(),
+	                     cmdColors.restart,
+	                     cmdColors.RestartAlpha());
+	                     
+	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
+	            (GLenum)cmdColors.QueuedBlendDst());
+	            
+	glEnable(GL_BLEND);
+
 	set<CUnit*>::iterator ui;
 	if(selectedGroup!=-1){
 		for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
@@ -519,8 +532,10 @@ void CSelectedUnits::DrawCommands(void)
 			(*ui)->commandAI->DrawCommands();
 		}
 	}
+
 	glEnable(GL_DEPTH_TEST);
 }
+
 
 std::string CSelectedUnits::GetTooltip(void)
 {

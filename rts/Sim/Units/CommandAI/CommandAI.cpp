@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "CommandAI.h"
+#include "LineDrawer.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -7,9 +8,10 @@
 #include "ExternalAI/Group.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitDef.h"
-#include "Game/UI/InfoConsole.h"
-#include "Game/UI/CursorIcons.h"
 #include "Game/GameHelper.h"
+#include "Game/UI/CommandColors.h"
+#include "Game/UI/CursorIcons.h"
+#include "Game/UI/InfoConsole.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Game/SelectedUnits.h"
 #include "LoadSaveInterface.h"
@@ -576,36 +578,35 @@ void CCommandAI::DependentDied(CObject *o)
 	}
 }
 
+
 void CCommandAI::DrawCommands(void)
 {
-	float3 pos=owner->midPos;
-	glColor4f(1,1,1,0.4);
-	glBegin(GL_LINE_STRIP);
-	glVertexf3(pos);
+	lineDrawer.StartPath(owner->midPos, cmdColors.start);
+
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		bool draw=false;
 		switch(ci->id){
-		case CMD_ATTACK:
-		case CMD_DGUN:
-			if(ci->params.size()==1){
-				if(uh->units[int(ci->params[0])]!=0)
-					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
-			} else {
-				pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+			case CMD_ATTACK:
+			case CMD_DGUN:{
+				if(ci->params.size()==1){
+					if(uh->units[int(ci->params[0])]!=0){
+						const float3 endPos =
+							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					}
+				} else {
+					const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+				}
+				break;
 			}
-			glColor4f(1,0.5,0.5,0.4);
-			draw=true;
-			break;
-		default:
-			break;
-		}
-		if(draw){
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
+			default:{
+				break;
+			}
 		}
 	}
-	glEnd();
+
+	lineDrawer.FinishPath();
 }
 
 void CCommandAI::FinishCommand(void)

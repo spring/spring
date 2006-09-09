@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "TransportCAI.h"
+#include "LineDrawer.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -7,9 +8,11 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
-#include "Game/UI/InfoConsole.h"
+#include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
+#include "Game/UI/InfoConsole.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -327,94 +330,84 @@ int CTransportCAI::GetDefaultCmd(CUnit* pointed,CFeature* feature)
 
 void CTransportCAI::DrawCommands(void)
 {
-	float3 pos=owner->midPos;
-	glColor4f(1,1,1,0.4);
-	glBegin(GL_LINE_STRIP);
-	glVertexf3(pos);
+	lineDrawer.StartPath(owner->midPos, cmdColors.start);
+
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		bool draw=false;
 		switch(ci->id){
-		case CMD_MOVE:
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			glColor4f(0.5,1,0.5,0.4);
-			draw=true;
-			break;
-		case CMD_FIGHT:
-		case CMD_PATROL:
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			glColor4f(0.5,0.5,1,0.4);
-			draw=true;
-			break;
-		case CMD_ATTACK:
-			if(ci->params.size()==1){
-				if(uh->units[int(ci->params[0])]!=0)
-					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
-			} else {
-				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_MOVE:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
+				break;
 			}
-			glColor4f(1,0.5,0.5,0.4);
-			draw=true;
-			break;
-		case CMD_GUARD:
-			if(uh->units[int(ci->params[0])]!=0)
-				pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
-			glColor4f(0.3,0.3,1,0.4);
-			draw=true;
-			break;
-		case CMD_LOAD_UNITS:
-			glColor4f(0.3,1,1,0.4);
-			if(ci->params.size()==4){
-				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-				float radius=ci->params[3];
-				glVertexf3(pos);
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=20;++a){
-					float3 pos2=float3(pos.x+sin(a*PI*2/20)*radius,0,pos.z+cos(a*PI*2/20)*radius);
-					pos2.y=ground->GetHeight(pos2.x,pos2.z);
-					glVertexf3(pos2);
+			case CMD_FIGHT:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				break;
+			}
+			case CMD_PATROL:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
+				break;
+			}
+			case CMD_ATTACK:{
+				if(ci->params.size()==1){
+					if(uh->units[int(ci->params[0])]!=0) {
+						const float3 endPos =
+							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					}
+				} else {
+					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-			} else {
-				int id=(int)(ci->params[0]);
-				if(uh->units[id]!=0)
-					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+				break;
 			}
-			draw=true;
-			break;
-		case CMD_UNLOAD_UNITS:
-			glColor4f(1,1,0,0.4);
-			if(ci->params.size()==4){
-				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-				float radius=ci->params[3];
-				glVertexf3(pos);
-				glEnd();
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=20;++a){
-					float3 pos2=float3(pos.x+sin(a*PI*2/20)*radius,0,pos.z+cos(a*PI*2/20)*radius);
-					pos2.y=ground->GetHeight(pos2.x,pos2.z);
-					glVertexf3(pos2);
+			case CMD_GUARD:{
+				if(uh->units[int(ci->params[0])]!=0) {
+					const float3 endPos =
+						helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
-				glEnd();
-				glBegin(GL_LINE_STRIP);
+				break;
 			}
-			draw=true;
-			break;
-		case CMD_UNLOAD_UNIT:
-			glColor4f(1,1,0,0.4);
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			draw=true;
-			break;
-		}
-		if(draw){
-			glVertexf3(pos);	
-			cursorIcons->AddIcon(ci->id, pos);
+			case CMD_LOAD_UNITS:{
+				if(ci->params.size()==4){
+					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.load);
+					lineDrawer.Break(endPos, cmdColors.load);
+					glSurfaceCircle(endPos, ci->params[3], 20);
+					lineDrawer.RestartSameColor();
+				} else {
+					int id=(int)(ci->params[0]);
+					if(uh->units[id]!=0) {
+						const float3 endPos =
+							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.load);
+					}
+				}
+				break;
+			}
+			case CMD_UNLOAD_UNITS:{
+				if(ci->params.size()==4){
+					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
+					lineDrawer.Break(endPos, cmdColors.unload);
+					glSurfaceCircle(endPos, ci->params[3], 20);
+					lineDrawer.RestartSameColor();
+				}
+				break;
+			}
+			case CMD_UNLOAD_UNIT:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
+				break;
+			}
 		}
 	}
-	glEnd();
+	lineDrawer.FinishPath();
 }
+
 
 void CTransportCAI::FinishCommand(void)
 {
