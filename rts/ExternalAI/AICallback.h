@@ -22,6 +22,7 @@ public:
 	void SendTextMsg(const char* text,int priority);
 	void SetLastMsgPos(float3 pos);
 	void AddNotification(float3 pos, float3 color, float alpha);
+	bool PosInCamera(float3 pos, float radius);
 
 //get the current game time, there is 30 frames per second at normal speed
 	int GetCurrentFrame();
