@@ -45,16 +45,23 @@ void CGeoSquareProjectile::Draw(void)
 	float3 dir2(dif2.cross(v2));
 	dir2.Normalize();
 
+	/* FIXME this shouldn't use circularthingytex,
+	it could look fugly if mods override it (through resources.tdf) */
+
+	float u = (ph->circularthingytex.xstart + ph->circularthingytex.xend) / 2;
+	float v0 = ph->circularthingytex.ystart;
+	float v1 = ph->circularthingytex.yend;
+
 	if(w2!=0){
-		va->AddVertexTC(p1-dir1*w1,ph->laserfallofftex.xstart,ph->laserfallofftex.ystart,col);
-		va->AddVertexTC(p1+dir1*w1,ph->laserfallofftex.xstart/16,ph->laserfallofftex.yend,col);
-		va->AddVertexTC(p2+dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.yend,col);
-		va->AddVertexTC(p2-dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.ystart,col);
+		va->AddVertexTC(p1-dir1*w1,u,v1,col);
+		va->AddVertexTC(p1+dir1*w1,u,v0,col);
+		va->AddVertexTC(p2+dir2*w2,u,v0,col);
+		va->AddVertexTC(p2-dir2*w2,u,v1,col);
 	} else {
-		va->AddVertexTC(p1-dir1*w1,ph->laserfallofftex.xstart,ph->laserfallofftex.yend,col);
-		va->AddVertexTC(p1+dir1*w1,ph->laserfallofftex.xstart/16,ph->laserfallofftex.ystart,col);
-		va->AddVertexTC(p2+dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.ystart,col);
-		va->AddVertexTC(p2-dir2*w2,ph->laserfallofftex.xend/16,ph->laserfallofftex.yend,col);
+		va->AddVertexTC(p1-dir1*w1,u,v1,col);
+		va->AddVertexTC(p1+dir1*w1,u,v0,col);
+		va->AddVertexTC(p2,u,v0+(v1-v0)*0.5,col);
+		va->AddVertexTC(p2,u,v0+(v1-v0)*1.5,col);
 	}
 }
 
