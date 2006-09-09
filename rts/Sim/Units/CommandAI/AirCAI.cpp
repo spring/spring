@@ -1,14 +1,16 @@
 #include "StdAfx.h"
 #include "AirCAI.h"
+#include "LineDrawer.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Map/Ground.h"
-#include "Game/GameHelper.h"
 #include "Sim/Units/UnitHandler.h"
 #include "ExternalAI/Group.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Game/UI/InfoConsole.h"
+#include "Game/GameHelper.h"
+#include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
+#include "Game/UI/InfoConsole.h"
 #include "Sim/Units/UnitDef.h"
 #include "myMath.h"
 #include "mmgr.h"
@@ -571,60 +573,59 @@ int CAirCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 
 void CAirCAI::DrawCommands(void)
 {
-	CAirMoveType* myPlane=(CAirMoveType*)owner->moveType;
-	//CAircraft* myPlane=(CAircraft*)owner;
-	float3 pos=owner->pos;
-	glColor4f(1,1,1,0.4);
-	glBegin(GL_LINE_STRIP);
-	glVertexf3(pos);
+	lineDrawer.StartPath(owner->pos, cmdColors.start);
+
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
-		case CMD_MOVE:
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			glColor4f(0.5,1,0.5,0.4);
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
-			break;
-		case CMD_FIGHT:
-		case CMD_PATROL:
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			glColor4f(0.5,0.5,1,0.4);
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
-			break;
-		case CMD_ATTACK:
-			if(ci->params.size()==1){
-				if(uh->units[int(ci->params[0])]!=0)
-					pos=helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
-			} else {
-				pos=float3(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_MOVE:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
+				break;
 			}
-			glColor4f(1,0.5,0.5,0.4);
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
-			break;
-		case CMD_AREA_ATTACK:
-			pos=float3(ci->params[0],ci->params[1],ci->params[2]);
-			glColor4f(1,0.5,0.5,0.4);
-			glVertexf3(pos);
-			glEnd();
-			glSurfaceCircle(pos, ci->params[3], 20);
-			glBegin(GL_LINE_STRIP);
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
-			break;
-		case CMD_GUARD:
-			if(uh->units[int(ci->params[0])]!=0)
-				pos=uh->units[int(ci->params[0])]->pos;
-			glColor4f(0.3,0.3,1,0.4);
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
-			break;
+			case CMD_FIGHT:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				break;
+			}
+			case CMD_PATROL:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
+				break;
+			}
+			case CMD_ATTACK:{
+				if(ci->params.size()==1){
+					if(uh->units[int(ci->params[0])]!=0){
+						const float3 endPos =
+							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					}
+				} else {
+					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+				}
+				break;
+			}
+			case CMD_AREA_ATTACK:{
+				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+				lineDrawer.Break(endPos, cmdColors.attack);
+				glSurfaceCircle(endPos, ci->params[3], 20);
+				lineDrawer.RestartSameColor();
+				break;
+			}
+			case CMD_GUARD:{
+				if(uh->units[int(ci->params[0])]!=0){
+					const float3 endPos = uh->units[int(ci->params[0])]->pos;
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
+				}
+				break;
+			}
 		}
 	}
-	glEnd();
+	lineDrawer.FinishPath();
 }
+
 
 void CAirCAI::FinishCommand(void)
 {

@@ -1,9 +1,11 @@
 #include "StdAfx.h"
 #include "BuilderCAI.h"
+#include "LineDrawer.h"
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
+#include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/InfoConsole.h"
 #include "Map/Ground.h"
@@ -580,103 +582,86 @@ int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
 	return CMD_MOVE;
 }
 
+
 void CBuilderCAI::DrawCommands(void)
 {
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-	glEnable(GL_BLEND);
-
 	if(uh->limitDgun && owner->unitDef->isCommander) {
 		glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
 		glSurfaceCircle(gs->Team(owner->team)->startPos, uh->dgunRadius, 40);
 	}
 
-	float3 pos = owner->midPos;
-
-	glBegin(GL_LINE_STRIP);
-	glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-	glVertexf3(pos);
+	lineDrawer.StartPath(owner->midPos, cmdColors.start);
 
 	deque<Command>::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		bool draw = false;
 		switch(ci->id) {
 			case CMD_MOVE: {
-				pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-				glColor4f(0.5f, 1.0f, 0.5f, 0.4f);
-				draw = true;
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
 				break;
 			}
-			case CMD_FIGHT:
+			case CMD_FIGHT:{
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				break;
+			}
 			case CMD_PATROL: {
-				pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-				glColor4f(0.5f, 0.5f, 1.0f, 0.4f);
-				draw = true;
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
 				break;
 			}
 			case CMD_GUARD: {
 				if (uh->units[int(ci->params[0])] != 0) {
-					pos = helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
-					glColor4f(0.3f, 0.3f, 1.0f, 0.4f);
-					draw = true;
+					const float3 endPos =
+						helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
 			}
 			case CMD_RESTORE: {
-				pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-				glColor4f(0.3f, 1.0f, 0.5f, 0.4f);
-				glVertexf3(pos);
-				glEnd();
-				glSurfaceCircle(pos, ci->params[3], 20);
-				glBegin(GL_LINE_STRIP);
-				draw = true;
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.restore);
+				lineDrawer.Break(endPos, cmdColors.restore);
+				glSurfaceCircle(endPos, ci->params[3], 20);
+				lineDrawer.RestartSameColor();
 				break;
 			}
 			case CMD_ATTACK:
 			case CMD_DGUN: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				if (ci->params.size() == 1) {
 					if (uh->units[int(ci->params[0])] != 0) {
-						pos = helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
-						glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
-						draw = true;
+						const float3 endPos =
+						  helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
-					pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-					glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
-					draw = true;
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}
 				break;
 			}
 			case CMD_RECLAIM:
 			case CMD_RESURRECT: {
-				const float reclaimColor[4]   = { 1.0f, 0.2f, 1.0f, 0.4f };
-				const float resurrectColor[4] = { 0.2f, 0.6f, 1.0f, 0.4f };
-				const float* color;
-				if (ci->id == CMD_RECLAIM) {
-					color = reclaimColor;
-				} else {
-					color = resurrectColor;
-				}
+				const float* color = (ci->id == CMD_RECLAIM) ? cmdColors.reclaim
+				                                             : cmdColors.resurrect;
 				if (ci->params.size() == 4) {
-					pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-					glColor4fv(color);
-					glVertexf3(pos);
-					glEnd();
-					glSurfaceCircle(pos, ci->params[3], 20);
-					glBegin(GL_LINE_STRIP);
-					draw = true;
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
+					lineDrawer.Break(endPos, color);
+					glSurfaceCircle(endPos, ci->params[3], 20);
+					lineDrawer.RestartSameColor();
 				} else {
 					int id = (int)ci->params[0];
 					if (id>=MAX_UNITS) {
 						if (featureHandler->features[id-MAX_UNITS]) {
-							pos = featureHandler->features[id-MAX_UNITS]->midPos;
-							glColor4fv(color);
-							draw = true;
+							const float3 endPos = featureHandler->features[id-MAX_UNITS]->midPos;
+							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					} else {
 						if (uh->units[id]!=0 && uh->units[id]!=owner) {
-							pos = helper->GetUnitErrorPos(uh->units[id], owner->allyteam);
-							glColor4fv(color);
-							draw = true;
+							const float3 endPos = helper->GetUnitErrorPos(uh->units[id], owner->allyteam);
+							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					}
 				}
@@ -684,28 +669,20 @@ void CBuilderCAI::DrawCommands(void)
 			}
 			case CMD_REPAIR:
 			case CMD_CAPTURE: {
-				const float repairColor[4]  = { 0.3f, 1.0f, 1.0f, 0.4f };
-				const float captureColor[4] = { 1.0f, 1.0f, 0.3f, 0.4f };
-				const float* color;
-				if (ci->id == CMD_REPAIR) {
-					color = repairColor;
-				} else {
-					color = captureColor;
-				}
+				const float* color = (ci->id == CMD_REPAIR) ? cmdColors.repair
+				                                            : cmdColors.capture;
 				if (ci->params.size() == 4) {
-					pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-					glColor4fv(color);
-					glVertexf3(pos);
-					glEnd();
-					glSurfaceCircle(pos, ci->params[3], 20);
-					glBegin(GL_LINE_STRIP);
-					draw = true;
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
+					lineDrawer.Break(endPos, color);
+					glSurfaceCircle(endPos, ci->params[3], 20);
+					lineDrawer.RestartSameColor();
 				} else {
 					int id = (int)ci->params[0];
 					if (uh->units[id] != 0) {
-						pos = helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
-						glColor4fv(color);
-						draw = true;
+						const float3 endPos =
+							helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+						lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 					}
 				}
 				break;
@@ -722,14 +699,12 @@ void CBuilderCAI::DrawCommands(void)
 			bi.def = unitDefHandler->GetUnitByName(boi->second);
 			bi.pos = helper->Pos2BuildPos(bi);
 
-			// end with dark green			
-			glColor4f(0.0f, 0.5f, 0.0f, 0.4f);
-			glVertexf3(bi.pos);
-			glEnd();
+			// draw the line, and break the path
+			lineDrawer.DrawLine(bi.pos, cmdColors.build); // no icon
+			lineDrawer.Break(bi.pos, cmdColors.build);
 
 			//draw extraction range
 			if (bi.def->extractRange > 0) {
-				glDisable(GL_TEXTURE_2D);
 				glColor4f(1.0f, 0.3f, 0.3f, 0.7f);
 				glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
 			}
@@ -737,20 +712,16 @@ void CBuilderCAI::DrawCommands(void)
 			// draw the building (but not its base square)
 			glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 			unitDrawer->DrawBuildingSample(bi.def, owner->team, bi.pos, bi.buildFacing);
+			
+			// restore the blending function
+			glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
+			            (GLenum)cmdColors.QueuedBlendDst());
 
-			// restart with white
-			glBegin(GL_LINE_STRIP);
-			glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-			glVertexf3(bi.pos);
-		}
-
-		if (draw) {
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
+			// restart the line path
+			lineDrawer.Restart();
 		}
 	}
-
-	glEnd();
+	lineDrawer.FinishPath();
 }
 
 

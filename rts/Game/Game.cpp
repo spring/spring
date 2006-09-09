@@ -89,6 +89,7 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
+#include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
@@ -271,6 +272,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 #ifndef NEW_GUI
 #endif
 	inMapDrawer=new CInMapDraw();
+	cmdColors.LoadConfig("cmdcolors.txt");
 
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
 	std::map<std::string, int>::const_iterator uit;
@@ -1188,6 +1190,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "techlevels") {
 		unitDefHandler->SaveTechLevels("", modInfo->name); // stdout
 		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->name);
+	}
+	else if (cmd == "cmdcolors") {
+		cmdColors.LoadConfig("cmdcolors.txt");
 	}
 	else {
 		return false;

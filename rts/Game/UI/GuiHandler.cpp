@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "GuiHandler.h"
+#include "CommandColors.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
 #include "Game/SelectedUnits.h"
@@ -793,7 +794,7 @@ void CGuiHandler::DrawMapStuff(void)
 				button=SDL_BUTTON_RIGHT;
 			}
 		}
-
+		
 		if(cc>=0 && cc<commands.size()){
 			switch(commands[cc].type){
 			case CMDTYPE_ICON_FRONT:
@@ -833,6 +834,11 @@ void CGuiHandler::DrawMapStuff(void)
 		}
 	}
 
+	glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
+	            (GLenum)cmdColors.SelectedBlendDst());
+	glEnable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
+	
 	// draw buildings we are about to build
 	if(inCommand>=0 && inCommand<commands.size() && commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
@@ -874,9 +880,12 @@ void CGuiHandler::DrawMapStuff(void)
 						glColor4f(1,0.5,0.5,0.4);
 
 					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, pos, bpi->buildFacing);
-					if(unitdef->weapons.size()>0){	// draw weapon range
-						glDisable(GL_TEXTURE_2D);
-						glColor4f(1,0.3,0.3,0.7);
+
+					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
+											(GLenum)cmdColors.SelectedBlendDst());
+					
+					if(unitdef->weapons.size() > 0){	// draw weapon range
+						glColor4fv(cmdColors.rangeAttack);
 						glBegin(GL_LINE_STRIP);
 						for(int a=0;a<=40;++a){
 							float3 pos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
@@ -890,9 +899,9 @@ void CGuiHandler::DrawMapStuff(void)
 						}
 						glEnd();
 					}
-					if(unitdef->extractRange>0){	// draw extraction range
+					if(unitdef->extractRange > 0){	// draw extraction range
 						glDisable(GL_TEXTURE_2D);
-						glColor4f(1,0.3,0.3,0.7);
+						glColor4fv(cmdColors.rangeExtract);
 						glBegin(GL_LINE_STRIP);
 						for(int a=0;a<=40;++a){
 							float3 pos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
@@ -906,7 +915,7 @@ void CGuiHandler::DrawMapStuff(void)
 						const float radius = unitdef->buildDistance;
 						if (radius > 0.0f) {
 							glDisable(GL_TEXTURE_2D);
-							glColor4f(0.2f, 0.8f, 0.4f, 0.7f);
+							glColor4fv(cmdColors.rangeBuild);
 							glBegin(GL_LINE_STRIP);
 							for(int a = 0; a <= 40; ++a){
 								const float radians = a * (2.0 * PI) / 40.0f;
@@ -929,8 +938,7 @@ void CGuiHandler::DrawMapStuff(void)
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
 			if(unit->maxRange>0){
-				glDisable(GL_TEXTURE_2D);
-				glColor4f(1,0.3,0.3,0.7);
+				glColor4fv(cmdColors.rangeAttack);
 				glBegin(GL_LINE_STRIP);
 				float h=unit->pos.y;
 				for(int a=0;a<=40;++a){
@@ -944,9 +952,8 @@ void CGuiHandler::DrawMapStuff(void)
 				}
 				glEnd();
 			}
-			if(unit->unitDef->decloakDistance>0){			//draw decloak distance
-				glDisable(GL_TEXTURE_2D);
-				glColor4f(0.3,0.3,1,0.7);
+			if(unit->unitDef->decloakDistance > 0){			//draw decloak distance
+				glColor4fv(cmdColors.rangeDecloak);
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=40;++a){
 					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
@@ -956,9 +963,8 @@ void CGuiHandler::DrawMapStuff(void)
 				}
 				glEnd();
 			}
-			if(unit->unitDef->kamikazeDist>0){			//draw self destruct and damage distance
-				glDisable(GL_TEXTURE_2D);
-				glColor4f(0.8,0.8,0.1,0.7);
+			if(unit->unitDef->kamikazeDist > 0){			//draw self destruct and damage distance
+				glColor4fv(cmdColors.rangeKamikaze);
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=40;++a){
 					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
@@ -968,7 +974,7 @@ void CGuiHandler::DrawMapStuff(void)
 				}
 				glEnd();
 				if(!unit->unitDef->selfDExplosion.empty()){
-					glColor4f(0.8,0.1,0.1,0.7);
+					glColor4fv(cmdColors.rangeSelfDestruct);
 					WeaponDef* wd=weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
 
 					glBegin(GL_LINE_STRIP);
@@ -985,8 +991,7 @@ void CGuiHandler::DrawMapStuff(void)
 			if(unit->unitDef->builder && !unit->unitDef->canmove) {
 				const float radius = unit->unitDef->buildDistance;
 				if (radius > 0.0f) {
-					glDisable(GL_TEXTURE_2D);
-					glColor4f(0.2f, 0.8f, 0.4f, 0.7f);
+					glColor4fv(cmdColors.rangeBuild);
 					glBegin(GL_LINE_STRIP);
 					for(int a = 0; a <= 40; ++a){
 						const float radians = a * (2.0 * PI) / 40.0f;
@@ -1003,12 +1008,12 @@ void CGuiHandler::DrawMapStuff(void)
 
 	//draw range circles if attack orders are imminent
 	int defcmd=GetDefaultCommand(mouse->lastx,mouse->lasty);
-	if((inCommand>0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) || (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+	if((inCommand>0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
+	   (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
 		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
 			CUnit* unit=*si;
 			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
-				glDisable(GL_TEXTURE_2D);
-				glColor4f(1,0.3,0.3,0.7);
+				glColor4fv(cmdColors.rangeAttack);
 				glBegin(GL_LINE_STRIP);
 				float h=unit->pos.y;
 				for(int a=0;a<=40;++a){
@@ -1025,6 +1030,7 @@ void CGuiHandler::DrawMapStuff(void)
 		}
 	}
 }
+
 
 void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 {

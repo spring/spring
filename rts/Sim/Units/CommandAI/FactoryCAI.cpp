@@ -1,8 +1,10 @@
 #include "StdAfx.h"
 #include "FactoryCAI.h"
+#include "LineDrawer.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "ExternalAI/Group.h"
 #include "Game/SelectedUnits.h"
+#include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitHandler.h"
@@ -220,51 +222,53 @@ void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
 	selectedUnits.PossibleCommandChange(owner);
 }
 
+
 void CFactoryCAI::DrawCommands(void)
 {
-	float3 pos=owner->midPos;
-	glColor4f(1,1,1,0.4);
-	glBegin(GL_LINE_STRIP);
-	glVertexf3(pos);
+	lineDrawer.StartPath(owner->midPos, cmdColors.start);
+
 	deque<Command>::iterator ci;
 	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
-		bool draw=false;
 		switch(ci->id){
-		case CMD_MOVE:
-			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
-			glColor4f(0.5,1,0.5,0.4);
-			draw=true;
-			break;
-		case CMD_FIGHT:
-		case CMD_PATROL:
-			pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
-			glColor4f(0.5,0.5,1,0.4);
-			draw=true;
-			break;
-		case CMD_ATTACK:
-			if(ci->params.size()==1){
-				if(uh->units[int(ci->params[0])]!=0)
-					pos=uh->units[int(ci->params[0])]->pos;
-			} else {
-				pos=float3(ci->params[0],ci->params[1]+3,ci->params[2]);
+			case CMD_MOVE:{
+				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
+				break;
 			}
-			glColor4f(1,0.5,0.5,0.4);
-			draw=true;
-			break;
-		case CMD_GUARD:
-			if(uh->units[int(ci->params[0])]!=0)
-				pos=uh->units[int(ci->params[0])]->pos;
-			glColor4f(0.3,0.3,1,0.4);
-			draw=true;
-			break;
-		}
-		if(draw){
-			glVertexf3(pos);
-			cursorIcons->AddIcon(ci->id, pos);
+			case CMD_FIGHT:{
+				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				break;
+			}
+			case CMD_PATROL:{
+				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
+				break;
+			}
+			case CMD_ATTACK:{
+				if(ci->params.size()==1){
+					if(uh->units[int(ci->params[0])]!=0){
+						const float3 endPos = uh->units[int(ci->params[0])]->pos;
+						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					}
+				} else {
+					const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+				}
+				break;
+			}
+			case CMD_GUARD:{
+				if(uh->units[int(ci->params[0])]!=0){
+					const float3 endPos = uh->units[int(ci->params[0])]->pos;
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
+				}
+				break;
+			}
 		}
 	}
-	glEnd();
+	lineDrawer.FinishPath();
 }
+
 
 /**
 * @brief Finds the queued command that would be canceled by the Command c
