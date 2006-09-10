@@ -39,6 +39,9 @@ public:
 	void RemoveUnit(CUnit* unit);
 	void ClearSelected();
 
+	void ToggleBuildIconsFirst();
+	bool BuildIconsFirst() const { return buildIconsFirst; }
+
 	set<CUnit*> selectedUnits;
 
 	bool selectionChanged;
@@ -46,6 +49,7 @@ public:
 
 	vector<int> netSelected[MAX_PLAYERS];
 
+	bool buildIconsFirst;
 	int selectedGroup;
 	void PossibleCommandChange(CUnit* sender);
 	void DrawCommands(void);

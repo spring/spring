@@ -55,7 +55,6 @@ protected:
 	list<PlayingSound> playingSounds;
 	vector<int> buf2id;
 	float globalVolume;
-	bool noSound;
 
 	std::vector<LPDIRECTSOUNDBUFFER> buffers;
 

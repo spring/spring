@@ -13,6 +13,8 @@ class CSound
 public:
 	CSound() { unitReplyVolume=1.0f; }
 	virtual ~CSound();
+	
+	static CSound* GetSoundSystem();
 
 	virtual unsigned int GetWaveId(const std::string& path) = 0;
 	virtual void Update() = 0;

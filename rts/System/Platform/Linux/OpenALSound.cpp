@@ -17,37 +17,38 @@
 
 #include "OpenALSound.h"
 
+
 COpenALSound::COpenALSound()
 {
 	Sources = NULL;
 
-	maxSounds = configHandler.GetInt("MaxSounds",16);
-	noSound = (maxSounds == 0);
+	maxSounds = configHandler.GetInt("MaxSounds", 16);
+	if (maxSounds <= 0) {
+		throw content_error("Internal error, (maxSounds <= 0) in COpenALSound");
+	}
+	
 	globalVolume = 1.0f;
 
 	cur = 0;
-	if (!noSound) {
-		ALCdevice *device = alcOpenDevice(NULL);
-		if (device != NULL) {
-			ALCcontext *context = alcCreateContext(device, NULL);
-			if (context != NULL)
-				alcMakeContextCurrent(context);
-			else {
-				handleerror(0, "Could not create audio context","OpenAL error",MBF_OK);
-				noSound = true;
-				alcCloseDevice(device);
-				return;
-			}
+
+	ALCdevice *device = alcOpenDevice(NULL);
+	if (device == NULL) {
+		throw content_error("Could not create OpenAL audio device");
+	} else {
+		ALCcontext *context = alcCreateContext(device, NULL);
+		if (context != NULL) {
+			alcMakeContextCurrent(context);
 		} else {
-			handleerror(0,"Could not create audio device","OpenAL error",MBF_OK);
-			noSound = true;
-			return;
+			alcCloseDevice(device);
+			throw content_error("Could not create OpenAL audio context");
 		}
 	}
-
+	
 	// Generate sound sources
 	Sources = new ALuint[maxSounds];
-	for (int a=0;a<maxSounds;a++) Sources[a]=0;
+	for (int a=0;a<maxSounds;a++) {
+		Sources[a]=0;
+	}
 
 	// Set distance model (sound attenuation)
 	alDistanceModel (AL_INVERSE_DISTANCE);
@@ -57,14 +58,9 @@ COpenALSound::COpenALSound()
 	posScale.z = 0.02f;
 }
 
+
 COpenALSound::~COpenALSound()
 {
-	if (noSound) {
-		if (Sources != NULL) {
-			delete[] Sources;
-		}
-		return;
-	}
 	LoadedFiles.clear();
 	for (int i = 0; i < maxSounds; i++) {
 		alSourceStop(Sources[i]);
@@ -99,6 +95,7 @@ COpenALSound::~COpenALSound()
 	 */
 }
 
+
 static bool CheckError(const char* msg)
 {
 	ALenum e = alGetError();
@@ -109,29 +106,31 @@ static bool CheckError(const char* msg)
 	return true;
 }
 
+
 void COpenALSound::SetVolume (float v)
 {
 	globalVolume = v;
 }
 
+
 void COpenALSound::PlaySound(int id, float volume)
 {
-	if (noSound || !camera)
+	if (!camera) {
 		return;
+	}
 	PlaySound(id, float3(0, 0, 0), volume, true);
 }
+
 
 void COpenALSound::PlaySound(int id,const float3& p,float volume)
 {
 	PlaySound(id,p,volume,false);
 }
 
+
 void COpenALSound::PlaySound(int id,const float3& p,float volume,bool relative)
 {
 	assert(volume >= 0.0);
-
-	if (noSound)
-		return;
 
 	ALuint source;
 	alGenSources(1,&source);
@@ -166,11 +165,9 @@ void COpenALSound::PlaySound(int id,const float3& p,float volume,bool relative)
 	CheckError("COpenALSound::PlaySound");
 }
 
+
 void COpenALSound::Update()
 {
-	if (noSound)
-		return;
-
 	for (int a=0;a<maxSounds;a++) {
 		if (Sources[a]) {
 			ALint state;
@@ -186,10 +183,12 @@ void COpenALSound::Update()
 	UpdateListener();
 }
 
+
 void COpenALSound::UpdateListener()
 {
-	if (noSound || !camera)
+	if (!camera) {
 		return;
+	}
 	float3 pos = camera->pos * posScale;
 	alListener3f(AL_POSITION, pos.x,pos.y,pos.z);
 	alListener3f(AL_VELOCITY,0.0,0.0,0.0);
@@ -198,6 +197,7 @@ void COpenALSound::UpdateListener()
 	alListenerf(AL_GAIN, globalVolume);
 	CheckError("COpenALSound::UpdateListener");
 }
+
 
 #pragma pack(push, 1)
 
@@ -219,6 +219,7 @@ struct WAVHeader
 };
 
 #pragma pack(pop)
+
 
 static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 {
@@ -276,11 +277,8 @@ static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 }
 
 
-
 ALuint COpenALSound::LoadALBuffer(const string& path)
 {
-	if (noSound)
-		return 0;
 	Uint8 *buf;
 	ALuint buffer;
 	alGenBuffers(1,&buffer);
@@ -305,10 +303,9 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 	return buffer;
 }
 
+
 ALuint COpenALSound::GetWaveId(const string& path)
 {
-	if (noSound)
-		return 0;
 	int count = 0;
 	ALuint buffer;
 	for (vector<string>::iterator it = LoadedFiles.begin(); it != LoadedFiles.end(); it++,count++) {

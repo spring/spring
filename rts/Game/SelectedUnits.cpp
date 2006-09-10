@@ -21,6 +21,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "System/Platform/ConfigHandler.h"
 #include "Player.h"
 #include "Camera.h"
 #include "Sound.h"
@@ -36,7 +37,7 @@ CSelectedUnits::CSelectedUnits()
 	possibleCommandsChanged(true),
 	selectedGroup(-1)
 {
-
+	buildIconsFirst = !!configHandler.GetInt("BuildIconsFirst", 0);
 }
 
 CSelectedUnits::~CSelectedUnits()
@@ -89,34 +90,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			foundGroup2=-1;
 	}
 
-	vector<CommandDescription> commands ;
-	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
-		vector<CommandDescription>::iterator ci;
-		// build options first
-		for(ci=c->begin();ci!=c->end();++ci){
-			if(ci->id >= 0) // build options have negative id
-				continue;
-			if(ci->showUnique && selectedUnits.size()>1)
-				continue;
-			if(count[ci->id]>0){
-				commands.push_back(*ci);
-				count[ci->id]=0;
-			}
-		}
-		// other commands follow later
-		for(ci=c->begin();ci!=c->end();++ci){
-			if(ci->id<0)
-				continue;
-			if(ci->showUnique && selectedUnits.size()>1)
-				continue;
-			if(count[ci->id]>0){
-				commands.push_back(*ci);
-				count[ci->id]=0;
-			}
-		}
-	}
-
+	vector<CommandDescription> groupCommands;
 	if(foundGroup!=-2){			//create a new group
 		CommandDescription c;
 		c.id=CMD_AISELECT;
@@ -133,7 +107,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		for(aai=suitedAis.begin();aai!=suitedAis.end();++aai){
 			c.params.push_back((aai->second).c_str());
 		}
-		commands.push_back(c);
+		groupCommands.push_back(c);
 	}
 
 	if(foundGroup<0 && foundGroup2>=0){			//add the selected units to a previous group (that at least one unit is also selected from)
@@ -144,7 +118,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		c.name="Add to group";
 		c.tooltip="Adds the selected to an existing group (of which one or more units is already selected)";
 		c.hotkey="q";
-		commands.push_back(c);
+		groupCommands.push_back(c);
 	}
 
 	if(foundGroup>=0){				//select the group to which the units belong
@@ -156,7 +130,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		c.name="Select group";
 		c.tooltip="Select the group that these units belong to";
 		c.hotkey="q";
-		commands.push_back(c);
+		groupCommands.push_back(c);
 	}
 
 	if(foundGroup2!=-2){				//remove all selected units from any groups they belong to
@@ -168,13 +142,70 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		c.name="Clear group";
 		c.tooltip="Removes the units from any group they belong to";
 		c.hotkey="Shift+q";
-		commands.push_back(c);
+		groupCommands.push_back(c);
+	}
+
+	vector<CommandDescription> commands ;
+	// load the first set  (separating build and non-build commands)
+	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
+		vector<CommandDescription>::iterator ci;
+		for(ci=c->begin(); ci!=c->end(); ++ci){
+			if (buildIconsFirst) {
+				if (ci->id >= 0) { continue; }
+			} else {
+				if (ci->id < 0)  { continue; }
+			}
+			if(ci->showUnique && selectedUnits.size()>1)
+				continue;
+			if(count[ci->id]>0){
+				commands.push_back(*ci);
+				count[ci->id]=0;
+			}
+		}
+	}
+	if (!buildIconsFirst) {
+		vector<CommandDescription>::iterator ci;
+		for(ci=groupCommands.begin(); ci!=groupCommands.end(); ++ci){
+			commands.push_back(*ci);
+		}
+	}
+	
+	// load the second set  (all those that have not already been included)
+	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
+		vector<CommandDescription>::iterator ci;
+		for(ci=c->begin(); ci!=c->end(); ++ci){
+			if (buildIconsFirst) {
+				if (ci->id < 0)  { continue; }
+			} else {
+				if (ci->id >= 0) { continue; }
+			}
+			if(ci->showUnique && selectedUnits.size()>1)
+				continue;
+			if(count[ci->id]>0){
+				commands.push_back(*ci);
+				count[ci->id]=0;
+			}
+		}
+	}
+	if (buildIconsFirst) {
+		vector<CommandDescription>::iterator ci;
+		for(ci=groupCommands.begin(); ci!=groupCommands.end(); ++ci){
+			commands.push_back(*ci);
+		}
 	}
 
 	AvailableCommandsStruct ac;
 	ac.commandPage=commandPage;
 	ac.commands=commands;
 	return ac;
+}
+
+void CSelectedUnits::ToggleBuildIconsFirst()
+{
+	buildIconsFirst = !buildIconsFirst;
+	possibleCommandsChanged = true;
 }
 
 void CSelectedUnits::GiveCommand(Command c,bool fromUser)
@@ -322,13 +353,16 @@ void CSelectedUnits::SelectGroup(int num)
 
 void CSelectedUnits::Draw()
 {
-	glDisable(GL_DEPTH_TEST );
-	//glEnable(GL_BLEND);
-	//glColor4f(0,0.8f,0,0.4f);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND); // for line smoothing
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glColor3f(0,1.0f,0);
-	set<CUnit*>::iterator ui;
+	glLineWidth(cmdColors.UnitBoxLineWidth());
+
+	glColor4fv(cmdColors.unitBox);
+
 	glBegin(GL_QUADS);
+	set<CUnit*>::iterator ui;
 	if(selectedGroup!=-1){
 		for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
 			if((*ui)->isIcon)
@@ -351,9 +385,11 @@ void CSelectedUnits::Draw()
 		}
 	}
 	glEnd();
-	glEnable(GL_DEPTH_TEST );
+	
+	glLineWidth(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//glDisable(GL_BLEND);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void CSelectedUnits::DependentDied(CObject *o)
@@ -535,6 +571,8 @@ void CSelectedUnits::DrawCommands(void)
 	            (GLenum)cmdColors.QueuedBlendDst());
 	            
 	glEnable(GL_BLEND);
+	
+	glLineWidth(cmdColors.QueuedLineWidth());
 
 	set<CUnit*>::iterator ui;
 	if(selectedGroup!=-1){
@@ -546,6 +584,8 @@ void CSelectedUnits::DrawCommands(void)
 			(*ui)->commandAI->DrawCommands();
 		}
 	}
+
+	glLineWidth(1.0f);
 
 	glEnable(GL_DEPTH_TEST);
 }

@@ -43,60 +43,53 @@ CCommandColors::CCommandColors()
 	useRestartColor = true;
 	restartAlpha = 0.25f;
 
+	queuedLineWidth = 1.49f;
 	queuedBlendSrc = GL_SRC_ALPHA;
 	queuedBlendDst = GL_ONE_MINUS_SRC_ALPHA;
 
+	selectedLineWidth = 1.49f;
 	selectedBlendSrc = GL_SRC_ALPHA;
 	selectedBlendDst = GL_ONE_MINUS_SRC_ALPHA;
 
-	InitColor(colors[start_index],             1.0f, 1.0f, 1.0f, 0.5f);
-	InitColor(colors[restart_index],           0.3f, 0.3f, 0.3f, 0.5f);
-	InitColor(colors[stop_index],              0.0f, 0.0f, 0.0f, 0.5f);
-	InitColor(colors[wait_index],              0.5f, 0.5f, 0.5f, 0.5f);
-	InitColor(colors[build_index],             0.0f, 1.0f, 0.0f, 0.5f);
-	InitColor(colors[move_index],              0.5f, 1.0f, 0.5f, 0.5f);
-	InitColor(colors[attack_index],            1.0f, 0.5f, 0.5f, 0.5f);
-	InitColor(colors[fight_index],             0.5f, 0.5f, 1.0f, 0.5f);
-	InitColor(colors[guard_index],             0.3f, 0.3f, 1.0f, 0.5f);
-	InitColor(colors[patrol_index],            0.0f, 0.0f, 1.0f, 0.5f);
-	InitColor(colors[capture_index],           1.0f, 1.0f, 0.3f, 0.5f);
-	InitColor(colors[repair_index],            0.3f, 1.0f, 1.0f, 0.5f);
-	InitColor(colors[reclaim_index],           1.0f, 0.2f, 1.0f, 0.5f);
-	InitColor(colors[restore_index],           0.0f, 1.0f, 0.0f, 0.5f);
-	InitColor(colors[resurrect_index],         0.2f, 0.6f, 1.0f, 0.5f);
-	InitColor(colors[load_index],              0.3f, 1.0f, 1.0f, 0.5f);
-	InitColor(colors[unload_index],            1.0f, 1.0f, 0.0f, 0.5f);
-	InitColor(colors[rangeAttack_index],       1.0f, 0.3f, 0.3f, 0.7f);
-	InitColor(colors[rangeBuild_index],        0.3f, 1.0f, 0.3f, 0.7f);
-	InitColor(colors[rangeDecloak_index],      0.3f, 0.3f, 1.0f, 0.7f);
-	InitColor(colors[rangeExtract_index],      1.0f, 0.3f, 0.3f, 0.7f);
-	InitColor(colors[rangeKamikaze_index],     0.8f, 0.8f, 0.1f, 0.7f);
-	InitColor(colors[rangeSelfDestruct_index], 0.8f, 0.1f, 0.1f, 0.7f);
+	mouseBoxLineWidth = 1.49f;
+	mouseBoxBlendSrc = GL_SRC_ALPHA;
+	mouseBoxBlendDst = GL_ONE_MINUS_SRC_ALPHA;
+
+	unitBoxLineWidth = 1.49f;
 	
-	// setup the easy-access pointers
-	start             = colors[start_index];
-	restart           = colors[restart_index];
-	stop              = colors[stop_index];
-	wait              = colors[wait_index];
-	build             = colors[build_index];
-	move              = colors[move_index];
-	attack            = colors[attack_index];
-	fight             = colors[fight_index];
-	guard             = colors[guard_index];
-	patrol            = colors[patrol_index];
-	capture           = colors[capture_index];
-	repair            = colors[repair_index];
-	reclaim           = colors[reclaim_index];
-	restore           = colors[restore_index];
-	resurrect         = colors[resurrect_index];
-	load              = colors[load_index];
-	unload            = colors[unload_index];
-	rangeAttack       = colors[rangeAttack_index];
-	rangeBuild        = colors[rangeBuild_index];
-	rangeDecloak      = colors[rangeDecloak_index];
-	rangeExtract      = colors[rangeExtract_index];
-	rangeKamikaze     = colors[rangeKamikaze_index];
-	rangeSelfDestruct = colors[rangeSelfDestruct_index];
+#define SETUP_COLOR(name, r,g,b,a) \
+	colors[name ## _index][0] = r;   \
+	colors[name ## _index][1] = g;   \
+	colors[name ## _index][2] = b;   \
+	colors[name ## _index][3] = a;   \
+	name = colors[name ## _index];   \
+	colorNames[StringToLower(#name)] = name ## _index
+
+	SETUP_COLOR(start,             1.0f, 1.0f, 1.0f, 0.7f);
+	SETUP_COLOR(restart,           0.4f, 0.4f, 0.4f, 0.7f);
+	SETUP_COLOR(stop,              0.0f, 0.0f, 0.0f, 0.7f);
+	SETUP_COLOR(wait,              0.5f, 0.5f, 0.5f, 0.7f);
+	SETUP_COLOR(build,             0.0f, 1.0f, 0.0f, 0.7f);
+	SETUP_COLOR(move,              0.5f, 1.0f, 0.5f, 0.7f);
+	SETUP_COLOR(attack,            1.0f, 0.5f, 0.5f, 0.7f);
+	SETUP_COLOR(fight,             0.5f, 0.5f, 1.0f, 0.7f);
+	SETUP_COLOR(guard,             0.3f, 0.3f, 1.0f, 0.7f);
+	SETUP_COLOR(patrol,            0.0f, 0.0f, 1.0f, 0.7f);
+	SETUP_COLOR(capture,           1.0f, 1.0f, 0.3f, 0.7f);
+	SETUP_COLOR(repair,            0.3f, 1.0f, 1.0f, 0.7f);
+	SETUP_COLOR(reclaim,           1.0f, 0.2f, 1.0f, 0.7f);
+	SETUP_COLOR(restore,           0.0f, 1.0f, 0.0f, 0.7f);
+	SETUP_COLOR(resurrect,         0.2f, 0.6f, 1.0f, 0.7f);
+	SETUP_COLOR(load,              0.3f, 1.0f, 1.0f, 0.7f);
+	SETUP_COLOR(unload,            1.0f, 1.0f, 0.0f, 0.7f);
+	SETUP_COLOR(rangeAttack,       1.0f, 0.3f, 0.3f, 0.7f);
+	SETUP_COLOR(rangeBuild,        0.3f, 1.0f, 0.3f, 0.7f);
+	SETUP_COLOR(rangeDecloak,      0.3f, 0.3f, 1.0f, 0.7f);
+	SETUP_COLOR(rangeExtract,      1.0f, 0.3f, 0.3f, 0.7f);
+	SETUP_COLOR(rangeKamikaze,     0.8f, 0.8f, 0.1f, 0.7f);
+	SETUP_COLOR(rangeSelfDestruct, 0.8f, 0.1f, 0.1f, 0.7f);
+	SETUP_COLOR(unitBox,           0.0f, 1.0f, 0.0f, 0.9f);
+	SETUP_COLOR(mouseBox,          1.0f, 1.0f, 1.0f, 0.9f);
 }
 
 
@@ -174,37 +167,23 @@ static bool IsValidDstMode(unsigned int mode)
 }
 
 
+static bool SafeAtoF(float& var, const string& value)
+{
+	char* endPtr;
+	const char* startPtr = value.c_str();
+	const float tmp = (float)strtod(startPtr, &endPtr);
+	if (endPtr == startPtr) {
+		return false;
+	}
+	var = tmp;
+	return true;
+}
+
+
 bool CCommandColors::LoadConfig(const string& filename)
 {
 	CFileHandler ifs(filename);
 	
-	map<string, int> colorMap;
-
-	colorMap["start"]             = start_index;
-	colorMap["restart"]           = restart_index;
-	colorMap["stop"]              = stop_index;
-	colorMap["wait"]              = wait_index;
-	colorMap["build"]             = build_index;
-	colorMap["move"]              = move_index;
-	colorMap["attack"]            = attack_index;
-	colorMap["fight"]             = fight_index;
-	colorMap["guard"]             = guard_index;
-	colorMap["patrol"]            = patrol_index;
-	colorMap["capture"]           = capture_index;
-	colorMap["repair"]            = repair_index;
-	colorMap["reclaim"]           = reclaim_index;
-	colorMap["restore"]           = restore_index;
-	colorMap["resurrect"]         = resurrect_index;
-	colorMap["load"]              = load_index;
-	colorMap["unload"]            = unload_index;
-	colorMap["rangeattack"]       = rangeAttack_index;
-	colorMap["rangebuild"]        = rangeBuild_index;
-	colorMap["rangedecloak"]      = rangeDecloak_index;
-	colorMap["rangeextract"]      = rangeExtract_index;
-	colorMap["rangekamikaze"]     = rangeKamikaze_index;
-	colorMap["rangeselfdestruct"] = rangeSelfDestruct_index;
-	
-
 	while (true) {
 		const string line = GetCleanLine(ifs);
 		if (line.empty()) {
@@ -222,12 +201,10 @@ bool CCommandColors::LoadConfig(const string& filename)
 			useRestartColor = !!atoi(words[1].c_str());
 		}
 		else if ((command == "restartalpha") && (words.size() > 1)) {
-			char* endPtr;
-			const char* startPtr = words[1].c_str();
-			restartAlpha = (float)strtod(startPtr, &endPtr);
-			if (endPtr == startPtr) {
-				restartAlpha = 0.5f;
-			}
+			SafeAtoF(restartAlpha, words[1]);
+		}
+		else if ((command == "queuedlinewidth") && (words.size() > 1)) {
+			SafeAtoF(queuedLineWidth, words[1]);
 		}
 		else if ((command == "queuedblendsrc") && (words.size() > 1)) {
 			unsigned int mode;
@@ -241,6 +218,9 @@ bool CCommandColors::LoadConfig(const string& filename)
 				queuedBlendDst = mode;
 			}
 		}
+		else if ((command == "selectedlinewidth") && (words.size() > 1)) {
+			SafeAtoF(selectedLineWidth, words[1]);
+		}
 		else if ((command == "selectedblendsrc") && (words.size() > 1)) {
 			unsigned int mode;
 			if (ParseBlendMode(words[1], mode) && IsValidSrcMode(mode)) {
@@ -253,11 +233,29 @@ bool CCommandColors::LoadConfig(const string& filename)
 				selectedBlendDst = mode;
 			}
 		}
+		else if ((command == "mouseboxlinewidth") && (words.size() > 1)) {
+			SafeAtoF(mouseBoxLineWidth, words[1]);
+		}
+		else if ((command == "mouseboxblendsrc") && (words.size() > 1)) {
+			unsigned int mode;
+			if (ParseBlendMode(words[1], mode) && IsValidSrcMode(mode)) {
+				mouseBoxBlendSrc = mode;
+			}
+		}
+		else if ((command == "mouseboxblenddst") && (words.size() > 1)) {
+			unsigned int mode;
+			if (ParseBlendMode(words[1], mode) && IsValidDstMode(mode)) {
+				mouseBoxBlendDst = mode;
+			}
+		}
+		else if ((command == "unitboxlinewidth") && (words.size() > 1)) {
+			SafeAtoF(unitBoxLineWidth, words[1]);
+		}
 		else {
 			// try to parse a color
 			if (words.size() > 1) {
-				map<string, int>::iterator it = colorMap.find(command);
-				if (it != colorMap.end()) {
+				map<string, int>::iterator it = colorNames.find(command);
+				if (it != colorNames.end()) {
 					colors[it->second];
 					float tmp[4];
 					int count = sscanf(words[1].c_str(), "%f %f %f %f",

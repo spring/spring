@@ -7,13 +7,38 @@
 #pragma warning(disable:4786)
 
 
+#include <map>
+#include <string>
+
 class CCommandColors {
 	public:
 		CCommandColors();
 		~CCommandColors();
-		
+
 		bool LoadConfig(const std::string& filename);
 
+		// for command queue lines
+		float        RestartAlpha()      const { return restartAlpha; }
+		bool         UseRestartColor()   const { return useRestartColor; }
+		bool         UseColorRestarts()  const { return useColorRestarts; }
+
+		float        QueuedLineWidth()   const { return queuedLineWidth; }
+		unsigned int QueuedBlendSrc()    const { return queuedBlendSrc; }
+		unsigned int QueuedBlendDst()    const { return queuedBlendDst; }
+
+		float        SelectedLineWidth() const { return selectedLineWidth; }
+		unsigned int SelectedBlendSrc()  const { return selectedBlendSrc; }
+		unsigned int SelectedBlendDst()  const { return selectedBlendDst; }
+
+		float        MouseBoxLineWidth() const { return mouseBoxLineWidth; }
+		unsigned int MouseBoxBlendSrc()  const { return mouseBoxBlendSrc; }
+		unsigned int MouseBoxBlendDst()  const { return mouseBoxBlendDst; }
+
+		float        UnitBoxLineWidth()  const { return unitBoxLineWidth; }
+
+    // the colors		
+		const float* unitBox;
+		const float* mouseBox;
 		// for command queue rendering
 		const float* start;
 		const float* restart;
@@ -39,18 +64,11 @@ class CCommandColors {
 		const float* rangeExtract;
 		const float* rangeKamikaze;
 		const float* rangeSelfDestruct;
-		
-		unsigned int QueuedBlendSrc() const { return queuedBlendSrc; }
-		unsigned int QueuedBlendDst() const { return queuedBlendDst; }
-		
-		unsigned int SelectedBlendSrc() const { return selectedBlendSrc; }
-		unsigned int SelectedBlendDst() const { return selectedBlendDst; }
-		
-		float RestartAlpha()     const { return restartAlpha; }
-		bool  UseRestartColor()  const { return useRestartColor; }
-		bool  UseColorRestarts() const { return useColorRestarts; }
 
 	private:
+
+		std::map<std::string, int> colorNames;
+
 		enum ColorIndices {
 			start_index = 0,
 			restart_index,
@@ -75,20 +93,31 @@ class CCommandColors {
 			rangeExtract_index,
 			rangeKamikaze_index,
 			rangeSelfDestruct_index,
+			unitBox_index,
+			mouseBox_index,
 			ColorCount
 		};
 
 		float colors[ColorCount][4];
 
-		unsigned int queuedBlendSrc;
-		unsigned int queuedBlendDst;
-		unsigned int selectedBlendSrc;
-		unsigned int selectedBlendDst;
-		
 		// for command queue lines
 		float restartAlpha;
 		bool useRestartColor;
 		bool useColorRestarts;
+
+		float queuedLineWidth;
+		unsigned int queuedBlendSrc;
+		unsigned int queuedBlendDst;
+
+		float selectedLineWidth;
+		unsigned int selectedBlendSrc;
+		unsigned int selectedBlendDst;
+
+		float mouseBoxLineWidth;
+		unsigned int mouseBoxBlendSrc;
+		unsigned int mouseBoxBlendDst;
+
+		float unitBoxLineWidth;
 };
 
 
