@@ -188,7 +188,7 @@ void CGameInfo::Draw()
 	}
 
 	labels.push_back("Map Size:");
-	sprintf(buf, "%ix%i", readmap->width / 128, readmap->height / 128);
+	sprintf(buf, "%ix%i", readmap->width / 64, readmap->height / 64);
 	values.push_back(buf);
 	
 	labels.push_back("Map Name:");
