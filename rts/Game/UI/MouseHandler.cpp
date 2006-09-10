@@ -9,6 +9,7 @@
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "GuiHandler.h"
+#include "CommandColors.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
@@ -385,11 +386,12 @@ void CMouseHandler::Draw()
 		return;
 	}
 #endif
-	if(buttons[SDL_BUTTON_LEFT].pressed && buttons[SDL_BUTTON_LEFT].movement>4 && mouseHandlerMayDoSelection && ( !inMapDrawer || !inMapDrawer->keyPressed )){
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(1,1,1,0.5);
+	if(buttons[SDL_BUTTON_LEFT].pressed && buttons[SDL_BUTTON_LEFT].movement>4 &&
+	   mouseHandlerMayDoSelection && (!inMapDrawer || !inMapDrawer->keyPressed)){
 
-		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
+		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,
+		                                 buttons[SDL_BUTTON_LEFT].camPos
+		                                 + buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
 		if(dist<0)
 			dist=gu->viewRange*1.4;
 		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
@@ -410,18 +412,28 @@ void CMouseHandler::Draw()
 		float3 dir2S=camera->right*(dir2.dot(camera->right))/dir2.dot(camera->forward);
 		float3 dir2U=camera->up*(dir2.dot(camera->up))/dir2.dot(camera->forward);
 
+		glColor4fv(cmdColors.mouseBox);
+
+		glPushAttrib(GL_ENABLE_BIT);
+
 		glDisable(GL_FOG);
 		glDisable(GL_DEPTH_TEST);
-		glBegin(GL_LINE_STRIP);
+		glDisable(GL_TEXTURE_2D);
+
+		glEnable(GL_BLEND);
+		glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
+		            (GLenum)cmdColors.MouseBoxBlendDst());
+
+		glLineWidth(cmdColors.MouseBoxLineWidth());
+		glBegin(GL_LINE_LOOP);
 		glVertexf3(camera->pos+dir1U*30+dir1S*30+camera->forward*30);
 		glVertexf3(camera->pos+dir2U*30+dir1S*30+camera->forward*30);
 		glVertexf3(camera->pos+dir2U*30+dir2S*30+camera->forward*30);
 		glVertexf3(camera->pos+dir1U*30+dir2S*30+camera->forward*30);
-		glVertexf3(camera->pos+dir1U*30+dir1S*30+camera->forward*30);
 		glEnd();
-
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_FOG);
+		glLineWidth(1.0f);
+		
+		glPopAttrib();
 	}
 }
 

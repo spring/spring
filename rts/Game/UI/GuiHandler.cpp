@@ -93,7 +93,7 @@ static void MenuSelection(std::string s)
 CGuiHandler::CGuiHandler()
 : inCommand(-1),
 	activeMousePress(false),
-	defaultCmdMemory(0),
+	defaultCmdMemory(-1),
 	needShift(false),
 	activePage(0),
 	maxPages(0),
@@ -136,11 +136,15 @@ CGuiHandler::~CGuiHandler()
 }
 
 
+static const GLfloat fMargin = 0.005f;
+static const GLfloat iconXstep = .065f;
+static const GLfloat iconYstep = -.065f;
+
 
 // Ikonpositioner
 void CGuiHandler::LayoutIcons()
 {
-	defaultCmdMemory=0;
+	defaultCmdMemory=-1;
 	unsigned int nr=0;
 	unsigned int xpos=0, ypos=0;
 	GLfloat texticon_width = .06f;
@@ -152,18 +156,14 @@ void CGuiHandler::LayoutIcons()
 	//buttonBox.x2 = 0.18f;
 	//buttonBox.y2 = 0.71f;
 
-	//GLfloat xstep = .09f;
-	//GLfloat ystep = -.07f;
-
-	GLfloat fMargin = 0.005f;
-	GLfloat xstep = .065f;
-	GLfloat ystep = -.065f;
+	//GLfloat iconXstep = .09f;
+	//GLfloat iconYstep = -.07f;
 
 	buttonBox.x1 = fMargin;
-	buttonBox.x2 = fMargin*2+xstep*2;
+	buttonBox.x2 = fMargin*2+iconXstep*2;
 	buttonBox.y2 = 0.71f;
 	buttonBox.y1 = buttonBox.y2+
-		ystep*NUMICOPAGE/2;// number of buttons
+		iconYstep*NUMICOPAGE/2;// number of buttons
 
 	SetShowingMetal(false);
 
@@ -193,8 +193,8 @@ void CGuiHandler::LayoutIcons()
 			height = texticon_height;
 		}
 
-		curricon[nr].x1 = x0 + xpos*xstep;
-		curricon[nr].y1 = y0 + ypos*ystep;
+		curricon[nr].x1 = x0 + xpos*iconXstep;
+		curricon[nr].y1 = y0 + ypos*iconYstep;
 		curricon[nr].x2 = curricon[nr].x1 + width;
 		curricon[nr].y2 = curricon[nr].y1 - height;
 
@@ -208,15 +208,15 @@ void CGuiHandler::LayoutIcons()
 
 		if(nr>0 && (nr+2)%(NUMICOPAGE)==0)
 		{
-			curricon[nr].x1 = x0 + xpos*xstep;
-			curricon[nr].y1 = y0 + ypos*ystep;
+			curricon[nr].x1 = x0 + xpos*iconXstep;
+			curricon[nr].y1 = y0 + ypos*iconYstep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
 			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
-			curricon[nr].x1 = x0 + xpos*xstep;
-			curricon[nr].y1 = y0 + ypos*ystep;
+			curricon[nr].x1 = x0 + xpos*iconXstep;
+			curricon[nr].y1 = y0 + ypos*iconYstep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
 			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
@@ -244,15 +244,15 @@ void CGuiHandler::LayoutIcons()
 
 	if(nr>NUMICOPAGE && (nr)%(NUMICOPAGE)!=0)
 	{
-			curricon[nr].x1 = x0 + 0*xstep;
-			curricon[nr].y1 = y0 + 7*ystep;
+			curricon[nr].x1 = x0 + 0*iconXstep;
+			curricon[nr].y1 = y0 + 7*iconYstep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
 			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
-			curricon[nr].x1 = x0 + 1*xstep;
-			curricon[nr].y1 = y0 + 7*ystep;
+			curricon[nr].x1 = x0 + 1*iconXstep;
+			curricon[nr].y1 = y0 + 7*iconYstep;
 			curricon[nr].x2 = curricon[nr].x1 + width;
 			curricon[nr].y2 = curricon[nr].y1 - height;
 			nr++;
@@ -544,8 +544,18 @@ void CGuiHandler::DrawButtons()
 
 		glLoadIdentity();
 	}
+
 	if (total_active_icons > 0) {
-		glColor4f(1,1,1,0.6f);
+		glColor4fv(cmdColors.build);
+		if (selectedUnits.BuildIconsFirst()) {
+			const float midX = 0.5f * (buttonBox.x1 + buttonBox.x2);
+			const float midY = buttonBox.y1 - fMargin - (0.5f * iconYstep);
+			const float textSize = 1.25f;
+			const float botY = midY - (textSize * 0.5f * (font->CalcTextHeight("B") / 32.0f));
+			font->glPrintCentered(midX, botY, textSize, "B");
+		}
+
+		glColor4f(1,1,1,0.8f);
 		if(selectedUnits.selectedGroup!=-1){
 			font->glPrintAt(0.02,0.13,0.6,"Group %i selected ",selectedUnits.selectedGroup);
 		} else {
@@ -615,7 +625,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 	if (button == SDL_BUTTON_RIGHT && icon==-1) { // right click -> default cmd
 		inCommand=defaultCmdMemory;//GetDefaultCommand(x,y);
-		defaultCmdMemory=0;
+		defaultCmdMemory=-1;
 	}
 
 	if(icon>=0 && icon<commands.size()){
@@ -838,6 +848,7 @@ void CGuiHandler::DrawMapStuff(void)
 	            (GLenum)cmdColors.SelectedBlendDst());
 	glEnable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
+	glLineWidth(cmdColors.SelectedLineWidth());
 	
 	// draw buildings we are about to build
 	if(inCommand>=0 && inCommand<commands.size() && commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
@@ -1029,6 +1040,8 @@ void CGuiHandler::DrawMapStuff(void)
 			}
 		}
 	}
+	
+	glLineWidth(1.0f);
 }
 
 

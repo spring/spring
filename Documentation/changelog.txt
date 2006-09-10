@@ -2,6 +2,18 @@ TASpring change log
 
 0.next
 
+- added "cmdcolors.txt" settings file to configure control indicator rendering
+  (this includes command queue lines and ranges, highlighted unit ranges, the
+   mouse selection box, and the selected unit boxes)
+- added line width specification for items in "cmdcolors.txt"
+- added blending mode specification for items in "cmdcolors.txt"
+
+- removed "NoSound" config parameter in favour of "MaxSounds=0"
+- passthru to the NullSound driver if there is a sound driver error
+
+- added "buildiconsfirst" command to toggle the order of control panel icons
+  (also added a 'B' when the build icons are being placed first)
+
 - added build range circles for immobile builders when holding shift over them
 
 - added the techLevel variable to UserDef, with automatic detection of the

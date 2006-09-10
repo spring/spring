@@ -2,6 +2,48 @@
 #include "Sound.h"
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
+#include "Game/UI/InfoConsole.h"
+#include "Platform/ConfigHandler.h"
+
+#ifdef _MSC_VER
+#include "Platform/Win/DxSound.h"
+#else
+#include "Platform/Linux/OpenALSound.h"
+#endif
+#include "Platform/NullSound.h"
+
+
+CSound* sound = NULL;
+
+
+CSound* CSound::GetSoundSystem()
+{
+	CSound* sound = NULL;
+
+	const int maxSounds = configHandler.GetInt("MaxSounds", 16);
+	if (maxSounds <= 0) {
+		info->AddLine("Sound disabled with \"MaxSounds=%i\"", maxSounds);
+		return new CNullSound;
+	}
+
+	// try to get a real sound driver
+	try {
+#ifdef _MSC_VER
+		sound = new CDxSound();
+#else
+		sound = new COpenALSound();  
+#endif
+	}
+	catch (content_error& e) {
+		info->AddLine("Loading sound driver failed, disabling sound");
+		info->AddLine("Error: %s", e.what());
+      	
+		delete sound;
+		sound = new CNullSound;
+	}
+
+	return sound;
+}
 
 
 void CSound::PlaySound(int id,CWorldObject* p,float volume)

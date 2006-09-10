@@ -89,6 +89,7 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
+#include "System/Sound.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
@@ -110,13 +111,6 @@
 #include "Platform/Win/AVIGenerator.h"
 #endif
 
-#ifdef _MSC_VER
-#include "Platform/Win/DxSound.h"
-#else
-#include "Platform/Linux/OpenALSound.h"
-#endif
-#include "Platform/NullSound.h"
-
 #ifdef DIRECT_CONTROL_ALLOWED
 #include "myMath.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -130,31 +124,20 @@
 
 #include "mmgr.h"
 
-GLfloat LightDiffuseLand[]=	{ 0.8f, 0.8f, 0.8f, 1.0f };
-GLfloat LightAmbientLand[]=	{ 0.2f, 0.2f, 0.2f, 1.0f };
-GLfloat FogLand[]=			{ 0.7f,	0.7f, 0.8f, 0	 };
-GLfloat FogWhite[]=			{ 1.0f,	1.0f, 1.0f, 0	 };
-GLfloat FogBlack[]=			{ 0.0f,	0.0f, 0.0f, 0	 };
+GLfloat LightDiffuseLand[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+GLfloat LightAmbientLand[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+GLfloat FogLand[] =          { 0.7f, 0.7f, 0.8f, 0.0f };
+GLfloat FogWhite[] =         { 1.0f, 1.0f, 1.0f, 0.0f };
+GLfloat FogBlack[] =         { 0.0f, 0.0f, 0.0f, 0.0f };
 
-extern bool globalQuit;
-CGame* game=0;
 extern Uint8 *keys;
+extern bool globalQuit;
 extern bool fullscreen;
 extern string stupidGlobalMapname;
 
-CSound* sound = 0;
 
-static CSound* CreateSoundInterface()
-{
-  if (!!configHandler.GetInt("NoSound",0)) {
-    return new CNullSound ();
-  }
-#ifdef _MSC_VER
-	return new CDxSound ();
-#else
-	return new COpenALSound ();
-#endif
-}
+CGame* game = 0;
+
 
 CGame::CGame(bool server,std::string mapname, std::string modName)
 {
@@ -221,7 +204,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName)
 #endif
 
 	ENTER_UNSYNCED;
-	sound=CreateSoundInterface ();
+	sound=CSound::GetSoundSystem();
 	gameSoundVolume=configHandler.GetInt("SoundVolume", 60)*0.01f;
 	soundEnabled=true;
 	sound->SetVolume(gameSoundVolume);
@@ -1190,6 +1173,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "techlevels") {
 		unitDefHandler->SaveTechLevels("", modInfo->name); // stdout
 		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->name);
+	}
+	else if (cmd == "buildiconsfirst") {
+		selectedUnits.ToggleBuildIconsFirst();
 	}
 	else if (cmd == "cmdcolors") {
 		cmdColors.LoadConfig("cmdcolors.txt");

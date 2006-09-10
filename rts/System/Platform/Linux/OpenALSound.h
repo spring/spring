@@ -24,7 +24,6 @@ private:
 	ALuint LoadALBuffer(const string& path);
 	void PlaySound(int id, const float3 &p, float volume, bool relative);
 
-	bool noSound;
 	int maxSounds;
 	int cur;
 	float globalVolume;

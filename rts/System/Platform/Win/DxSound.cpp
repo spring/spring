@@ -16,6 +16,7 @@
 #include "DxSound.h"
 #include "Platform/byteorder.h"
 #include "Platform/errorhandler.h"
+#include "Platform/NullSound.h"
 #include "FileSystem/FileHandler.h"
 #include <SDL_syswm.h>
 //#include "mmgr.h"
@@ -25,48 +26,44 @@
 
 CDxSound::CDxSound()
 {
-//	noSound=true;
 	maxSounds=ConfigHandler::GetInstance().GetInt("MaxSounds",16);
+	if (maxSounds <= 0) {
+		throw content_error("Internal error, (maxSounds <= 0) in CDxSound");
+	}
+
 	curThreshhold=0.1;
 	wantedSounds=maxSounds*0.75;
 	globalVolume=1.0f;
 
-	m_pDS            = NULL;
-	m_hWnd			 = NULL;
+	m_pDS  = NULL;
+	m_hWnd = NULL;
 
-	HRESULT             hr;
+	HRESULT hr;
+
 	LPDIRECTSOUNDBUFFER pDSBPrimary = NULL;
 
 	// Get window from SDL
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version);
 	if (SDL_GetWMInfo (&wmInfo) != 1) {
-		info->AddLine ("CDxSound: Couldn't get window from SDL");
-		noSound = true;
-		return;
+		throw content_error("DxSound: Could not get window from SDL");
 	}
 	m_hWnd = wmInfo.window;
 	
 	// Initialize COM
 	hr = CoInitialize( NULL );
 	if( hr!=S_OK && hr!=S_FALSE){
-		info->AddLine("Couldnt initialize com");
-		noSound=true;
-		return;
+		throw content_error("DxSound: Could not initialize com");
 	}
 	
 	// Create IDirectSound using the primary sound device
 	if( FAILED( hr = DirectSoundCreate( NULL, &m_pDS, NULL ) ) ){
-		info->AddLine("Couldnt create direct sound object");		
-		noSound=true;
-		return;
+		throw content_error("DxSound: Could not create direct sound object");
 	}
 
     // Set coop level to DSSCL_PRIORITY
 	if( FAILED( hr = m_pDS->SetCooperativeLevel( m_hWnd, DSSCL_PRIORITY ) ) ){
-		info->AddLine("Couldnt set cooperative level");
-		noSound=true;
-		return;
+		throw content_error("DxSound: Could not set cooperative level");
 	}
 	
 	// Get the primary buffer 
@@ -78,9 +75,7 @@ CDxSound::CDxSound()
 	dsbd.lpwfxFormat   = NULL;
 	
 	if( FAILED( hr = m_pDS->CreateSoundBuffer( &dsbd, &pDSBPrimary, NULL ) ) ){
-		info->AddLine("Couldnt create primary sound buffer");
-		noSound=true;
-		return;
+		throw content_error("DxSound: Could not create primary sound buffer");
 	}
 	
 	// Set primary buffer format to 22kHz and 16-bit output.
@@ -94,26 +89,24 @@ CDxSound::CDxSound()
 	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
 	
 	if( FAILED( hr = pDSBPrimary->SetFormat(&wfx) ) ){
-		info->AddLine("Couldnt initialize primary sound format");
-		noSound=true;
-		return;
+		throw content_error("DxSound: Could not initialize primary sound format");
 	}
 	
 	SAFE_RELEASE( pDSBPrimary );
-	noSound=false;
 	waveid[""]=0;
 	SoundInfo* si=new SoundInfo;
 	loadedSounds.push_back(si);
 }
 
+
 CDxSound::~CDxSound()
 {
     // Release DirectSound interfaces
 	while(!buffers.empty()){
-		SAFE_RELEASE( buffers.back());
+		SAFE_RELEASE(buffers.back());
 		buffers.pop_back();
 	}
-	SAFE_RELEASE( m_pDS ); 
+	SAFE_RELEASE(m_pDS); 
 
 	for(vector<SoundInfo*>::iterator si=loadedSounds.begin();si!=loadedSounds.end();++si)
 		delete *si;
@@ -122,10 +115,12 @@ CDxSound::~CDxSound()
 	CoUninitialize();
 }
 
+
 int CDxSound::InitFile(const string& name)
 {
-	if((m_pDS==0) || noSound)
+	if(m_pDS==0) {
 		return -1;
+	}
 
 	// Create the sound buffer object from the wave file data
 	if( !CreateStaticBuffer(name.c_str()) )
@@ -149,10 +144,6 @@ unsigned int CDxSound::GetWaveId(const string &name)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	if(noSound){
-		POP_CODE_MODE;
-		return 0;
-	}
 	map<string,int>::iterator si;
 	if((si=waveid.find(name))==waveid.end()){
 		InitFile(name);
@@ -175,8 +166,9 @@ int CDxSound::GetBuf(int id,float volume)
 		HRESULT r=m_pDS->DuplicateSoundBuffer(buffers[s->firstBuf],&(buffers.back()));
 		if(r!=DS_OK){
 			MessageBox(0,"Couldnt duplicate sound buffer","Sound error",0);
-			noSound=true;
-			return -1;
+			sound = new CNullSound;
+			delete this;
+			return -2;
 		}
 		buf2id.push_back(id);
 		s->freebufs.push_back(buffers.size()-1);
@@ -200,17 +192,20 @@ void CDxSound::PlaySound(int id,float volume)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	if(noSound || id<=0 || id>=loadedSounds.size() || playingSounds.size()>=maxSounds){
+	if(id<=0 || id>=loadedSounds.size() || playingSounds.size()>=maxSounds){
 		POP_CODE_MODE;
 		return;
 	}
 
 	float v=1.0f-globalVolume*volume;
 
-	HRESULT hr;
-	int num=GetBuf(id,v);
+	int num = GetBuf(id,v);
+	if (num == -2) {
+		return; // shutting down
+	}
 
 	// Restore the buffers if they are lost
+	HRESULT hr;
 	if( FAILED( hr = RestoreBuffers(num) ) ){
 		POP_CODE_MODE;
 		return;
@@ -233,12 +228,11 @@ void CDxSound::PlaySound(int id,const float3& p,float volume)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	if(noSound || id<=0 || id>=loadedSounds.size()){
+	if(id<=0 || id>=loadedSounds.size()){
 		POP_CODE_MODE;
 		return;
 	}
 
-	HRESULT hr;
 	float3 dif=p - camera->pos;
 	float dl=dif.Length();
 	float pan=dif.dot(camera->right)*DSBPAN_RIGHT/dl;
@@ -257,9 +251,13 @@ void CDxSound::PlaySound(int id,const float3& p,float volume)
 		return;
 	}
 
-	int num=GetBuf(id,v);
-
+	int num = GetBuf(id,v);
+	if (num == -2) {
+		return; // shutting down
+	}
+	
 	// Restore the buffers if they are lost
+	HRESULT hr;
 	if( FAILED( hr = RestoreBuffers(num) ) )
 		return;
 	
