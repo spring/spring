@@ -92,7 +92,7 @@ bool CGameServer::Update()
 						//if the checksum really happens to be 0 we will get lots of falls positives here
 						if(!syncResponses[a]) {
 							if (!serverNet->playbackDemo)
-								info->AddLine("No sync response from %s", gs->players[a]->playerName.c_str());
+								info->AddLine("No response from %s", gs->players[a]->playerName.c_str());
 						} else
 							++freq[syncResponses[a]];
 					}
@@ -119,7 +119,7 @@ bool CGameServer::Update()
 					if(gs->players[a]->active) {
 						//if the checksum really happens to be 0 we will get lots of falls positives here
 						if(!syncResponses[a] && !serverNet->playbackDemo) {
-							info->AddLine("No sync response from %s", gs->players[a]->playerName.c_str());
+							info->AddLine("No response from %s", gs->players[a]->playerName.c_str());
 							continue;
 						}
 						if (correctSync && correctSync != syncResponses[a]) {
@@ -401,7 +401,7 @@ bool CGameServer::ServerReadNet()
 						if(outstandingSyncFrame == frame)
 							syncResponses[inbuf[inbufpos+1]] = *(CChecksum*)&inbuf[inbufpos+6];
 						else
-							info->AddLine("Delayed sync respone from %s (%i instead of %i)",
+							info->AddLine("Delayed respone from %s (%i instead of %i)",
 										  gs->players[inbuf[inbufpos+1]]->playerName.c_str(), frame, outstandingSyncFrame);
 					}
 				}
