@@ -1,5 +1,30 @@
 ////////////////////////////////////////////////////////////////
 //
+//  Selected Unit Boxes
+//
+
+unitBoxLineWidth  1.49
+unitBox           0.0  1.0  0.0  1.0
+
+
+////////////////////////////////////////////////////////////////
+//
+//  Mouse Selection Box
+//
+
+mouseBoxLineWidth  1.49
+mouseBox           1.0  1.0  1.0  1.0
+mouseBoxBlendSrc   src_alpha
+mouseBoxBlendDst   one_minus_src_alpha
+
+// best choice for non-grey maps
+//
+//mouseBoxBlendSrc   one_minus_dst_color
+//mouseBoxBlendDst   zero
+
+
+////////////////////////////////////////////////////////////////
+//
 //  Command Queue Rendering
 //
 
@@ -7,27 +32,28 @@ useColorRestarts 1
 useRestartColor  1
 restartAlpha     0.25
 
-queuedBlendSrc src_alpha
-queuedBlendDst one_minus_src_alpha
+queuedLineWidth 1.49
+queuedBlendSrc  src_alpha
+queuedBlendDst  one_minus_src_alpha
 
-start      1.0  1.0  1.0  0.5
-restart    0.3  0.3  0.3  0.5
+start      1.0  1.0  1.0  0.7
+restart    0.4  0.4  0.4  0.7
 
-stop       0.0  0.0  0.0  0.5
-wait       0.5  0.5  0.5  0.5
-build      0.0  1.0  0.0  0.5
-move       0.5  1.0  0.5  0.5
-attack     1.0  0.5  0.5  0.5
-fight      0.5  0.5  1.0  0.5
-guard      0.3  0.3  1.0  0.5
-patrol     0.0  0.0  1.0  0.5
-capture    1.0  1.0  0.3  0.5
-repair     0.3  1.0  1.0  0.5
-reclaim    1.0  0.2  1.0  0.5
-restore    0.0  1.0  0.0  0.5
-resurrect  0.2  0.6  1.0  0.5
-load       0.3  1.0  1.0  0.5
-unload     1.0  1.0  0.0  0.5
+stop       0.0  0.0  0.0  0.7
+wait       0.5  0.5  0.5  0.7
+build      0.0  1.0  0.0  0.7
+move       0.5  1.0  0.5  0.7
+attack     1.0  0.2  0.2  0.7
+fight      0.5  0.5  1.0  0.7
+guard      0.3  0.3  1.0  0.7
+patrol     0.3  0.3  1.0  0.7
+capture    1.0  1.0  0.3  0.7
+repair     0.3  1.0  1.0  0.7
+reclaim    1.0  0.2  1.0  0.7
+restore    0.0  1.0  0.0  0.7
+resurrect  0.2  0.6  1.0  0.7
+load       0.3  1.0  1.0  0.7
+unload     1.0  1.0  0.0  0.7
 
 
 ////////////////////////////////////////////////////////////////
@@ -35,8 +61,9 @@ unload     1.0  1.0  0.0  0.5
 //  Selected Range Rendering
 //
 
-selectedBlendSrc src_alpha
-selectedBlendDst one_minus_src_alpha
+selectedLineWidth 1.49
+selectedBlendSrc  src_alpha
+selectedBlendDst  one_minus_src_alpha
 
 rangeAttack        1.0  0.3  0.3  0.7
 rangeBuild         0.3  1.0  0.3  0.7
