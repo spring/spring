@@ -860,7 +860,7 @@ void CGuiHandler::DrawMapStuff(void)
 
 				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
 				{
-					float3 buildpos = bpi->pos;
+					const float3 buildpos = bpi->pos;
 					std::vector<Command> cv;
 					if(keys[SDLK_LSHIFT]){
 						Command c;
@@ -879,7 +879,7 @@ void CGuiHandler::DrawMapStuff(void)
 					else
 						glColor4f(1,0.5,0.5,0.4);
 
-					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, pos, bpi->buildFacing);
+					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
 
 					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
 											(GLenum)cmdColors.SelectedBlendDst());
