@@ -269,7 +269,7 @@ CLuaBinder::CLuaBinder(void)
 	]; 
 
 	// Define global objects
-	globals(luaState)["gs"] = gs;
+	globals(luaState)[(const char*)"gs"] = gs;
 
 	// Special override
 	lua_register(luaState, "print", SpringPrint);
