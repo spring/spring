@@ -105,7 +105,7 @@ aienv.Append(CPPPATH = ['rts/ExternalAI'])
 install_dir = os.path.join(aienv.subst(aienv['datadir']), 'AI/Helper-libs')
 
 #Build GroupAIs
-for f in filelist.list_groupAIs(aienv):
+for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
 	lib = aienv.SharedLibrary(os.path.join('game/AI/Helper-libs', f), filelist.get_groupAI_source(aienv, f))
 	Alias(f, lib)         # Allow e.g. `scons CentralBuildAI' to compile just an AI.
 	Alias('GroupAI', lib) # Allow `scons GroupAI' to compile all groupAIs.
@@ -118,7 +118,7 @@ for f in filelist.list_groupAIs(aienv):
 install_dir = os.path.join(aienv.subst(aienv['datadir']), 'AI/Bot-libs')
 
 #Build GlobalAIs
-for f in filelist.list_globalAIs(aienv):
+for f in filelist.list_globalAIs(aienv, exclude_list=['build']):
 	lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs', f), filelist.get_globalAI_source(aienv, f))
 	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
 	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
