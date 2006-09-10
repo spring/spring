@@ -71,10 +71,10 @@ CCommandColors::CCommandColors()
 	SETUP_COLOR(wait,              0.5f, 0.5f, 0.5f, 0.7f);
 	SETUP_COLOR(build,             0.0f, 1.0f, 0.0f, 0.7f);
 	SETUP_COLOR(move,              0.5f, 1.0f, 0.5f, 0.7f);
-	SETUP_COLOR(attack,            1.0f, 0.5f, 0.5f, 0.7f);
+	SETUP_COLOR(attack,            1.0f, 0.2f, 0.2f, 0.7f);
 	SETUP_COLOR(fight,             0.5f, 0.5f, 1.0f, 0.7f);
 	SETUP_COLOR(guard,             0.3f, 0.3f, 1.0f, 0.7f);
-	SETUP_COLOR(patrol,            0.0f, 0.0f, 1.0f, 0.7f);
+	SETUP_COLOR(patrol,            0.3f, 0.3f, 1.0f, 0.7f);
 	SETUP_COLOR(capture,           1.0f, 1.0f, 0.3f, 0.7f);
 	SETUP_COLOR(repair,            0.3f, 1.0f, 1.0f, 0.7f);
 	SETUP_COLOR(reclaim,           1.0f, 0.2f, 1.0f, 0.7f);
