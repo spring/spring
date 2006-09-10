@@ -93,7 +93,21 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
 		vector<CommandDescription>::iterator ci;
+		// build options first
 		for(ci=c->begin();ci!=c->end();++ci){
+			if(ci->id >= 0) // build options have negative id
+				continue;
+			if(ci->showUnique && selectedUnits.size()>1)
+				continue;
+			if(count[ci->id]>0){
+				commands.push_back(*ci);
+				count[ci->id]=0;
+			}
+		}
+		// other commands follow later
+		for(ci=c->begin();ci!=c->end();++ci){
+			if(ci->id<0)
+				continue;
 			if(ci->showUnique && selectedUnits.size()>1)
 				continue;
 			if(count[ci->id]>0){
