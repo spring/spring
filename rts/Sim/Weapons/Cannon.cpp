@@ -165,7 +165,7 @@ void CCannon::Fire(void)
 //	p->Update();
 //	p->maxheat=p->heat;
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
+		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 	if(weaponPos.y<30)
  		water->AddExplosion(weaponPos,damages[0]*0.1,sqrt(damages[0])+80);
 }

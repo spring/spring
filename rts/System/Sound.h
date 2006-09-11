@@ -18,11 +18,11 @@ public:
 
 	virtual unsigned int GetWaveId(const std::string& path) = 0;
 	virtual void Update() = 0;
-	virtual void PlaySound(int id, float volume=1) = 0;
-	virtual void PlaySound(int id,const float3& p,float volume=1) = 0;
+	virtual void PlaySample(int id, float volume=1) = 0;
+	virtual void PlaySample(int id,const float3& p,float volume=1) = 0;
 	virtual void SetVolume (float vol) = 0; // 1 = full volume
 	
-	void PlaySound(int id,CWorldObject* p,float volume=1.0f);
+	void PlaySample(int id,CWorldObject* p,float volume=1.0f);
 	void PlayUnitReply(int id, CUnit* p, float volume=1.0f, bool squashDupes=false);
 	void PlayUnitActivate(int id, CUnit* p, float volume=1.0f);
 	void NewFrame();

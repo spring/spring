@@ -57,7 +57,7 @@ void CMissileLauncher::Fire(void)
 	new CMissileProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,(int)(range/projectileSpeed+25),targetUnit, weaponDef,targetPos);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,startSpeed,owner,targetUnit, float3(0,0,0), weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
+		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
 
 bool CMissileLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)

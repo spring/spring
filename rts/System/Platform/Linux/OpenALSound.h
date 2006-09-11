@@ -14,15 +14,15 @@ class COpenALSound : public CSound
 public:
 	ALuint GetWaveId(const string& path);
 	void Update();
-	void PlaySound(int id, float volume);
-	void PlaySound(int id,const float3& p,float volume);
+	void PlaySample(int id, float volume);
+	void PlaySample(int id,const float3& p,float volume);
 	void SetVolume(float v);
 
 	COpenALSound();
 	virtual ~COpenALSound();
 private:
 	ALuint LoadALBuffer(const string& path);
-	void PlaySound(int id, const float3 &p, float volume, bool relative);
+	void PlaySample(int id, const float3 &p, float volume, bool relative);
 
 	int maxSounds;
 	int cur;

@@ -46,14 +46,14 @@ CSound* CSound::GetSoundSystem()
 }
 
 
-void CSound::PlaySound(int id,CWorldObject* p,float volume)
+void CSound::PlaySample(int id,CWorldObject* p,float volume)
 {
-	PlaySound(id,p->pos,volume);
+	PlaySample(id,p->pos,volume);
 }
 
 void CSound::PlayUnitActivate(int id, CUnit* p, float volume)
 {
-	PlaySound (id, p, volume);
+	PlaySample (id, p, volume);
 }
 
 void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
@@ -76,7 +76,7 @@ void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
 	/* Play the sound at 'full volume'. 
 	   TODO Lower the volume if it's off-screen.
 	   TODO Give it a location if it's off-screen, but don't lower the volume too much. */
-	PlaySound(id, volume * unitReplyVolume);
+	PlaySample(id, volume * unitReplyVolume);
 }
 
 void CSound::NewFrame()

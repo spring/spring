@@ -98,7 +98,7 @@ void CFactory::Update()
 			cob->Call("StartBuilding");
 
 			if(unitDef->sounds.build.id)
-				sound->PlaySound(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
+				sound->PlaySample(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
 		} else {
 			helper->BuggerOff(buildPos-float3(0.01,0,0.02),radius+8);
 		}

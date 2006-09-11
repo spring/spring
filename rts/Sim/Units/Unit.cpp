@@ -596,7 +596,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			info->AddLine("%s is being attacked",unitDef->humanName.c_str());
 			info->SetLastMsgPos(pos);
 			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
-				sound->PlaySound(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
+				sound->PlaySample(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
 			minimap->AddNotification(pos,float3(1,0.3,0.3),unitDef->isCommander?1:0.5);	//todo: make compatible with new gui
 			
 			uh->lastDamageWarning=gs->frameNum;
@@ -1227,7 +1227,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 					if (wd->soundhit.volume == -1)
 						wd->soundhit.volume = 5.0f;
 
-					sound->PlaySound(wd->soundhit.id, pos, wd->soundhit.volume);
+					sound->PlaySample(wd->soundhit.id, pos, wd->soundhit.volume);
 				}
 
 				//info->AddLine("Should play %s (%d)", wd->soundhit.name.c_str(), wd->soundhit.id); 

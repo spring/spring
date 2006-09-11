@@ -490,7 +490,7 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 	cob->Call("StartBuilding",args);
 
 	if(unitDef->sounds.build.id)
-		sound->PlaySound(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
+		sound->PlaySample(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
 }
 
 void CBuilder::HelpTerraform(CBuilder* unit)
