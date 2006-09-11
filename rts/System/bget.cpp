@@ -481,7 +481,7 @@ void* BGet::bget(bufsize requested_size)
 	int compactseq = 0;
 #endif
 
-	assert(size > 0);
+	assert(size >= 0);
 
 	if (size < SizeQ) { 	      /* Need at least room for the */
 		size = SizeQ;		      /*    queue links.  */
