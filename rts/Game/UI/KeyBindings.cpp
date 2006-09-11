@@ -82,10 +82,10 @@ defaultBindings[] = {
 	
 	{ "c", "controlunit"   },
 	
-	{ "[",     "incbuildfacing"  },
-	{ "]",     "decbuildfacing"  },
-	{ "Any+z", "incbuildspacing" },
-	{ "Any+x", "decbuildspacing" },
+	{ "[",     "buildfacing inc"  },
+	{ "]",     "buildfacing dec"  },
+	{ "Any+z", "buildspacing inc" },
+	{ "Any+x", "buildspacing dec" },
 
 	{ "s",       "stop"          },
 	{ "w",       "wait"          },

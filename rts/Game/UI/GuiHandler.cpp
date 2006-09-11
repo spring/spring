@@ -1105,18 +1105,16 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 
 bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 {
-	// only activate the spacing options while building
+	// do not process these actions if the control panel is not visible
+	if (total_active_icons <= 0) {
+		return false;
+	}
+	
+	// only process the build options while building
 	// (conserve the keybinding space where we can)		
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
 			(commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
-		if (action.command == "incbuildspacing") {
-			buildSpacing++;
-			return true;
-		}
-		else if (action.command == "decbuildspacing") {
-			if (buildSpacing > 0) {
-				buildSpacing--;
-			}
+		if (ProcessBuildActions(action)) {
 			return true;
 		}
 	}
@@ -1151,9 +1149,94 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		selectedUnits.SetCommandPage(activePage);
 		return true;
 	}
+	else if (action.command == "buildiconsfirst") {
+		activePage = 0;
+		selectedUnits.SetCommandPage(activePage);
+		selectedUnits.ToggleBuildIconsFirst();
+		const int tmpCmd = inCommand;
+		inCommand = -1;
+		// assign inCommand to its new icon location  (if possible)
+		if ((tmpCmd >= 0) && (tmpCmd < commands.size())) {
+			const bool tmpShowingMetal = showingMetal;
+			CommandDescription cmdDesc = commands[tmpCmd];
+			LayoutIcons(); // update the commands
+			for (int a = 0; a < commands.size(); ++a) {
+				if ((commands[a].id     == cmdDesc.id)     &&
+				    (commands[a].type   == cmdDesc.type)   &&
+				    (commands[a].action == cmdDesc.action) &&
+				    (commands[a].params == cmdDesc.params)) {
+					inCommand = a;
+					SetShowingMetal(tmpShowingMetal);
+// Defeats the purpose?		
+//					activePage = min(maxPages, (a / NUMICOPAGE));
+//					selectedUnits.SetCommandPage(activePage);
+				}
+			}
+		}
+		return true;
+	}
 
 	return false;
 }    
+
+
+bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
+{
+	if (action.command == "buildspacing") {
+		const string arg = StringToLower(action.extra);
+		if (arg == "inc") {
+			buildSpacing++;
+			return true;
+		}
+		else if (arg == "dec") {
+			if (buildSpacing > 0) {
+				buildSpacing--;
+			}
+			return true;
+		}
+	}
+	else if (action.command == "buildfacing") {
+		const char* buildFaceDirs[] = { "South", "East", "North", "West" };
+		const string arg = StringToLower(action.extra);
+		if (arg == "inc") {
+			buildFacing++;
+			if (buildFacing > 3) {
+				buildFacing = 0;
+			}
+			info->AddLine("Buildings set to face %s", buildFaceDirs[buildFacing]);
+			return true;
+		}
+		else if (arg == "dec") {
+			buildFacing--;
+			if (buildFacing < 0) {
+				buildFacing = 3;
+			}
+			info->AddLine("Buildings set to face %s", buildFaceDirs[buildFacing]);
+			return true;
+		}
+		else if (arg == "south") {
+			buildFacing = 0;
+			info->AddLine("Buildings set to face South");
+			return true;
+		}
+		else if (arg == "east") {
+			buildFacing = 1;
+			info->AddLine("Buildings set to face East");
+			return true;
+		}
+		else if (arg == "north") {
+			buildFacing = 2;
+			info->AddLine("Buildings set to face North");
+			return true;
+		}
+		else if (arg == "west") {
+			buildFacing = 3;
+			info->AddLine("Buildings set to face West");
+			return true;
+		}
+	}
+	return false;
+}
     
 
 bool CGuiHandler::KeyPressed(unsigned short key)
