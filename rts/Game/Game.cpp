@@ -663,7 +663,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 {
 	// we may need these later
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
-	static char *buildFaceDirs[] = { "South", "East", "North", "West" };
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 
 	const string& cmd = action.command;
@@ -923,22 +922,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "updatefov") {
 		gd->updateFov=!gd->updateFov;
 	}
-	else if (cmd == "incbuildfacing"){
-		guihandler->buildFacing ++;
-		if (guihandler->buildFacing > 3)
-			guihandler->buildFacing = 0;
-
-		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
-		info->AddLine("%d", guihandler->buildFacing);
-	}
-	else if (cmd == "decbuildfacing"){
-		guihandler->buildFacing --;
-		if (guihandler->buildFacing < 0)
-			guihandler->buildFacing = 3;
-
-		info->AddLine(string("Buildings set to face ")+buildFaceDirs[guihandler->buildFacing]);
-		info->AddLine("%d", guihandler->buildFacing);
-	}
 	else if (cmd == "drawtrees") {
 		treeDrawer->drawTrees=!treeDrawer->drawTrees;
 	}
@@ -1174,9 +1157,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		unitDefHandler->SaveTechLevels("", modInfo->name); // stdout
 		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->name);
 	}
-	else if (cmd == "buildiconsfirst") {
-		selectedUnits.ToggleBuildIconsFirst();
-	}
 	else if (cmd == "cmdcolors") {
 		cmdColors.LoadConfig("cmdcolors.txt");
 	}
@@ -1194,22 +1174,6 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 
 	if (cmd == "drawinmap"){
 		inMapDrawer->keyPressed=false;
-	}
-	else if (cmd == "buildfaceup") {
-		guihandler->buildFacing=0;
-		info->AddLine("Buildings set to face South");
-	}
-	else if (cmd == "buildfaceright") {
-		guihandler->buildFacing=3;
-		info->AddLine("Buildings set to face West");
-	}
-	else if (cmd == "buildfacedown") {
-		guihandler->buildFacing=2;
-		info->AddLine("Buildings set to face North");
-	}
-	else if (cmd == "buildfaceleft") {
-		guihandler->buildFacing=1;
-		info->AddLine("Buildings set to face East");
 	}
 	else if (cmd == "moveforward") {
 		camMove[0]=false;

@@ -264,10 +264,10 @@
 //  bind                  w  wait
 //  bind                  x  onoff
 //
-//  bind                  [  incbuildfacing
-//  bind                  ]  decbuildfacing
-//  bind              Any+z  incbuildspacing
-//  bind              Any+x  decbuildspacing
+//  bind                  [  buildfacing inc
+//  bind                  ]  buildfacing dec
+//  bind              Any+z  buildspacing inc
+//  bind              Any+x  buildspacing dec
 //
 //  bind                  m  minimapalert
 //  bind                  t  textalert

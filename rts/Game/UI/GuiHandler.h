@@ -69,6 +69,7 @@ private:
 	void SetCursorIcon();
 	void SetShowingMetal(bool show);
 	bool ProcessLocalActions(const CKeyBindings::Action& action);
+	bool ProcessBuildActions(const CKeyBindings::Action& action);
 	
 private:
 	int actionOffset;
