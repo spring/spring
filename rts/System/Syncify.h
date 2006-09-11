@@ -1,14 +1,23 @@
 #ifndef SYNCIFY_H
 #define SYNCIFY_H
 
+#include <new>
+
 //#define SYNCIFY
 
 #ifdef SYNCIFY
+
+// Not sure this is needed.
 #ifdef _WIN32
 	void	*operator new(size_t reportedSize);
 	void	*operator new[](size_t reportedSize);
 	void	operator delete(void *reportedAddress);
 	void	operator delete[](void *reportedAddress);
+#else
+	void	*operator new(size_t reportedSize) throw(std::bad_alloc);
+	void	*operator new[](size_t reportedSize) throw(std::bad_alloc);
+	void	operator delete(void *reportedAddress) throw();
+	void	operator delete[](void *reportedAddress) throw();
 #endif
 
 	namespace Syncify {
