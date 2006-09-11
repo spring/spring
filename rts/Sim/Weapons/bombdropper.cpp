@@ -101,7 +101,7 @@ void CBombDropper::Fire(void)
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
+		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
 
 void CBombDropper::Init(void)

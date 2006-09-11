@@ -89,5 +89,5 @@ void CRifle::Fire(void)
 	new CTracerProjectile(weaponPos,dir*projectileSpeed,length,owner);
 	new CSmokeProjectile(weaponPos,float3(0,0.0f,0),70,0.1,0.02,owner,0.6f);
 	if(fireSoundId)
-		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
+		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }

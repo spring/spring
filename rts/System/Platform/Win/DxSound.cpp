@@ -188,7 +188,7 @@ void CDxSound::SetVolume (float v)
 	globalVolume=v;
 }
 
-void CDxSound::PlaySound(int id,float volume)
+void CDxSound::PlaySample(int id,float volume)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
@@ -224,7 +224,7 @@ void CDxSound::PlaySound(int id,float volume)
 	POP_CODE_MODE;
 }
 
-void CDxSound::PlaySound(int id,const float3& p,float volume)
+void CDxSound::PlaySample(int id,const float3& p,float volume)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;

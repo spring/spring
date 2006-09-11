@@ -265,7 +265,7 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 
 		info->AddLine("%s added point: %s",gs->players[msg[2]]->playerName.c_str(),p.label.c_str());
 		info->SetLastMsgPos(pos);
-		sound->PlaySound(blippSound);
+		sound->PlaySample(blippSound);
 		minimap->AddNotification(pos,float3(1,1,1),1);	//todo: make compatible with new gui
 		break;}
 	case NET_ERASE:{

@@ -803,7 +803,7 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 {
 	int sid = script.sounds[snr];
 	//info->AddLine("Playing %d %d %d", snr, attr, sid);
-	sound->PlaySound(sid, unit->pos, attr);
+	sound->PlaySample(sid, unit->pos, attr);
 }
 
 void CCobInstance::ShowFlare(int piece)

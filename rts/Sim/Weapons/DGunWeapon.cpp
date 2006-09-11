@@ -48,7 +48,7 @@ void CDGunWeapon::Fire(void)
 
 	new CFireBallProjectile(weaponPos,dir*projectileSpeed,owner,0,targetPos,weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySound(fireSoundId,owner,fireSoundVolume*0.2);
+		sound->PlaySample(fireSoundId,owner,fireSoundVolume*0.2);
 }
 
 

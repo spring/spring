@@ -146,7 +146,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 
 	explosionGraphics->Explosion(pos,damages,radius,owner,gfxMod,hit);
 	groundDecals->AddExplosion(pos,damages[0],radius);
-	//sound->PlaySound(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
+	//sound->PlaySample(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
 	water->AddExplosion(pos,damages[0],radius);
 }
 

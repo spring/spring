@@ -33,6 +33,6 @@ void CMeleeWeapon::Fire(void)
 	if(targetType==Target_Unit){
 		targetUnit->DoDamage(damages,owner,ZeroVector);
 		if(fireSoundId)
-			sound->PlaySound(fireSoundId,owner,fireSoundVolume);
+			sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 	}
 }

@@ -5,6 +5,7 @@
 #include <windows.h>
 
 	#undef PlaySound
+	#define PlaySound  Use_PlaySample_instead_of_PlaySound
 
 	// std min&max are used instead of the macros
 	#ifdef min
@@ -13,7 +14,7 @@
 	#endif
 
 	#undef CreateDirectory
-	#undef PlaySound
-#endif
 
-#endif
+#endif // _WIN32
+
+#endif // WINDOWS_H_INCLUDED

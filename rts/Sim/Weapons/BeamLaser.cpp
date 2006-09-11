@@ -90,7 +90,7 @@ void CBeamLaser::Fire(void)
 	} else {
 		if(salvoLeft==salvoSize-1){
 			if(fireSoundId)
-				sound->PlaySound(fireSoundId,owner,fireSoundVolume);
+				sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 			dir=targetPos-weaponPos;
 			dir.Normalize();
 			oldDir=dir;

@@ -26,7 +26,7 @@ void CFlameThrower::Fire(void)
 
 	new CFlameProjectile(weaponDef->visuals.color,weaponDef->visuals.color2,weaponDef->intensity,weaponPos,dir*projectileSpeed,spread,owner,damages,weaponDef,(int)(range/projectileSpeed*1.2));
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySound(fireSoundId,owner,fireSoundVolume);
+		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
 
 bool CFlameThrower::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)

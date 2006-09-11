@@ -343,7 +343,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 					sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit, unit->unitDef->sounds.select.volume);
 			}
 			else if(addedunits) //more than one unit selected
-				sound->PlaySound(soundMultiselID);
+				sound->PlaySample(soundMultiselID);
 		} else {
 			CUnit* unit;
 			float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,false);

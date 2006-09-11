@@ -113,22 +113,22 @@ void COpenALSound::SetVolume (float v)
 }
 
 
-void COpenALSound::PlaySound(int id, float volume)
+void COpenALSound::PlaySample(int id, float volume)
 {
 	if (!camera) {
 		return;
 	}
-	PlaySound(id, float3(0, 0, 0), volume, true);
+	PlaySample(id, float3(0, 0, 0), volume, true);
 }
 
 
-void COpenALSound::PlaySound(int id,const float3& p,float volume)
+void COpenALSound::PlaySample(int id,const float3& p,float volume)
 {
-	PlaySound(id,p,volume,false);
+	PlaySample(id,p,volume,false);
 }
 
 
-void COpenALSound::PlaySound(int id,const float3& p,float volume,bool relative)
+void COpenALSound::PlaySample(int id,const float3& p,float volume,bool relative)
 {
 	assert(volume >= 0.0);
 
@@ -162,7 +162,7 @@ void COpenALSound::PlaySound(int id,const float3& p,float volume,bool relative)
 	alSourcei(source, AL_LOOPING, false);
 	alSourcei(source, AL_SOURCE_RELATIVE, relative);
 	alSourcePlay(source);
-	CheckError("COpenALSound::PlaySound");
+	CheckError("COpenALSound::PlaySample");
 }
 
 
