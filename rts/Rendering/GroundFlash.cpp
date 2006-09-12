@@ -4,7 +4,7 @@
 #include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "GL/VertexArray.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 CVertexArray* CGroundFlash::va=0;

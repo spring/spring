@@ -5,7 +5,7 @@
 #include "GlobalAI.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/UI/MiniMap.h"
 #include "Group.h"
 #include "Sim/Units/UnitHandler.h"
@@ -63,13 +63,13 @@ CAICallback::~CAICallback(void)
 void CAICallback::SendTextMsg(const char* text,int priority)
 {
 	if (group)
-		info->AddLine(priority, "Group%i: %s",group->id,text);
+		logOutput.Print(priority, "Group%i: %s",group->id,text);
 	else
-        info->AddLine(priority, "GlobalAI%i: %s",team,text);
+        logOutput.Print(priority, "GlobalAI%i: %s",team,text);
 }
 void CAICallback::SetLastMsgPos(float3 pos)
 {
-	info->SetLastMsgPos(pos);
+	logOutput.SetLastMsgPos(pos);
 }
 
 void CAICallback::AddNotification(float3 pos, float3 color, float alpha)
@@ -644,7 +644,7 @@ void CAICallback::DrawUnit(const char* name,float3 pos,float rotation,int lifeti
 	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef=unitDefHandler->GetUnitByName(name);
 	if(!tdu.unitdef){
-		info->AddLine("Uknown unit in CAICallback::DrawUnit %s",name);
+		logOutput.Print("Uknown unit in CAICallback::DrawUnit %s",name);
 		return;
 	}
 	tdu.pos=pos;

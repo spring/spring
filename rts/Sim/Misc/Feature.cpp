@@ -8,7 +8,7 @@
 #include "DamageArray.h"
 #include "Map/ReadMap.h"
 #include "Game/Team.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Units/Unit.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Sim/ModInfo.h"
@@ -287,7 +287,7 @@ bool CFeature::Update(void)
 			midPos.y-=0.4;
 			transMatrix[13]-=0.4;
 		}
-//		info->AddLine("feature sinking");
+//		logOutput.Print("feature sinking");
 		retValue=true;
 	}
 	if(emitSmokeTime!=0){

@@ -11,7 +11,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/COB/CobFile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
@@ -68,7 +68,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth) {
 		}
 	}
 	int nbr = neighboors.size();
-//	*info << "Neighboors found: " << nbr << "\n";		//Debug
+//	logOutput << "Neighboors found: " << nbr << "\n";		//Debug
 
 	//Calculating area of control and metalExtract.
 	//TODO: Improve this method.
@@ -91,7 +91,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth) {
 			}
 		}
 	nbr = metalAreaOfControl.size();
-//	*info << "MetalSquares of control: " << nbr << "\n";	//Debug
+//	logOutput << "MetalSquares of control: " << nbr << "\n";	//Debug
 }
 
 

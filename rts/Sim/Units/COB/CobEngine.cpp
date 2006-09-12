@@ -3,7 +3,7 @@
 #include "CobThread.h"
 #include "CobInstance.h"
 #include "CobFile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
@@ -58,7 +58,7 @@ void CCobEngine::AddThread(CCobThread *thread)
 			sleeping.push(thread);
 			break;
 		default:
-			info->AddLine("CobError: thread added to scheduler with unknown state (%d)", thread->state);
+			logOutput.Print("CobError: thread added to scheduler with unknown state (%d)", thread->state);
 			break;
 	}
 }
@@ -73,7 +73,7 @@ void CCobEngine::AddInstance(CCobInstance *instance)
 	}
 
 	if (found > 0)
-		info->AddLine("Warning: Addinstance already found %d", found); */
+		logOutput.Print("Warning: Addinstance already found %d", found); */
 
 	animating.push_front(instance);
 }
@@ -88,7 +88,7 @@ void CCobEngine::RemoveInstance(CCobInstance *instance)
 	} 
 
 	if (found > 1)
-		info->AddLine("Warning: Removeinstance found duplicates %d", found); */
+		logOutput.Print("Warning: Removeinstance found duplicates %d", found); */
 
 	//This is slow. would be better if instance was a hashlist perhaps
 	animating.remove(instance);
@@ -101,12 +101,12 @@ START_TIME_PROFILE
 	GCurrentTime += deltaTime;
 
 #if COB_DEBUG > 0
-	info->AddLine("----");
+	logOutput.Print("----");
 #endif
 
 	//Advance all running threads
 	for (list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
-		//info->AddLine("Now 1running %d: %s", GCurrentTime, (*i)->GetName().c_str());
+		//logOutput.Print("Now 1running %d: %s", GCurrentTime, (*i)->GetName().c_str());
 #ifdef _CONSOLE
 		printf("----\n");
 #endif
@@ -139,7 +139,7 @@ START_TIME_PROFILE
 
 			//Run forward again. This can quite possibly readd the thread to the sleeping array again
 			//But it will not interfere since it is guaranteed to sleep > 0 ms
-			//info->AddLine("Now 2running %d: %s", GCurrentTime, cur->GetName().c_str());
+			//logOutput.Print("Now 2running %d: %s", GCurrentTime, cur->GetName().c_str());
 #ifdef _CONSOLE
 			printf("+++\n");
 #endif
@@ -152,7 +152,7 @@ START_TIME_PROFILE
 			} else if (cur->state == CCobThread::Dead) {
 				delete cur;
 			} else {
-				info->AddLine("CobError: Sleeping thread strange state %d", cur->state);
+				logOutput.Print("CobError: Sleeping thread strange state %d", cur->state);
 			}
 			if (sleeping.size() > 0) 
 				cur = sleeping.top();
@@ -183,7 +183,7 @@ void CCobEngine::ShowScriptError(const string& msg)
 	if (curThread)
 		curThread->ShowError(msg);
 	else
-		info->AddLine("ScriptError: %s outside script execution", msg.c_str());
+		logOutput.Print("ScriptError: %s outside script execution", msg.c_str());
 }
 
 CCobFile &CCobEngine::GetCobFile(string name)

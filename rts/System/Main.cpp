@@ -22,7 +22,7 @@
 #include "MouseInput.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/GameSetup.h"
 #include "Game/CameraController.h"
 #include "Net.h"
@@ -49,6 +49,7 @@
 #ifdef _WIN32
 #ifndef __MINGW32__
 #include "CrashRpt.h"
+#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
 #endif
 #include "Platform/Win/win32.h"
 #include <winreg.h>
@@ -236,10 +237,10 @@ SpringApp::~SpringApp()
  */
 bool crashCallback(void* crState)
 {
-	info->AddLine("Spring has crashed");
+	logOutput.Print("Spring has crashed");
 
-	// Since we are going down, it's ok to delete the info console (it can't be mailed otherwise)
-	delete info;
+	// Stop writing to infolog.txt
+	logOutput.End();
 	bool wasRecording = false;
 	if (net->recordDemo) {
 		delete net->recordDemo;
@@ -273,6 +274,11 @@ bool SpringApp::Initialize ()
 #ifdef _MSC_VER
 	// Initialize crash reporting
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
+	if (!GetInstance())
+	{
+		ErrorMessageBox("Error installing crash reporter", "CrashReport error:", MBF_OK);
+		return false;
+	}
 #endif
 
 	FileSystemHandler::Initialize(true);
@@ -372,7 +378,12 @@ static bool MultisampleVerify(void)
  */
 bool SpringApp::InitWindow (const char* title)
 {
-	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1)) {
+	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
+#ifdef _MSC_VER
+	// the crash reporter should be catching the errors 
+	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
+#endif
+	if ((SDL_Init(sdlInitFlags) == -1)) {
 		handleerror(NULL,"Could not initialize SDL.","ERROR",MBF_OK|MBF_EXCL);
 		return false;
 	}
@@ -909,19 +920,20 @@ int Run(int argc, char *argv[])
 		return app.Run (argc,argv);
 	}
 	catch (const content_error& e) {
-		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 	#ifdef _MSC_VER
-		info->AddLine ("Content error: %s\n",  e.what());
+		logOutput.Print ("Content error: %s\n",  e.what());
 	#endif
+		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 		return -1;
 	}
 	catch (const std::exception& e) {
-		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
 	#ifdef _MSC_VER
-		info->AddLine ("Fatal error: %s\n",  e.what());
+		logOutput.Print ("Fatal error: %s\n",  e.what());
 		throw; // let the error handler catch it
-	#endif
+	#else
+		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
 		return -1;
+	#endif
 	}
 #else
 	SpringApp app;

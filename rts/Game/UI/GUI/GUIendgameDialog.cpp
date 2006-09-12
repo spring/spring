@@ -4,7 +4,7 @@
 #include "GUIbutton.h"
 #include "Game/Team.h"
 #include "Game/Player.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "GUImatrix.h"
 #include "GUIendgameDialog.h"
 #include "Game/Game.h"

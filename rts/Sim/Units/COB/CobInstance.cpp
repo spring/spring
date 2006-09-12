@@ -7,7 +7,7 @@
 #ifndef _CONSOLE
 
 #include "Sim/Units/Unit.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -159,7 +159,7 @@ int CCobInstance::Call(const string &fname, vector<int> &args, CBCobThreadFinish
 {
 	int fn = script.getFunctionId(fname);
 	if (fn == -1) {
-		//info->AddLine("CobError: unknown function %s called by user", fname.c_str());
+		//logOutput.Print("CobError: unknown function %s called by user", fname.c_str());
 		return -1;
 	}
 
@@ -194,7 +194,7 @@ int CCobInstance::Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1
 {
 	int fn = script.scriptIndex[id];
 	if (fn == -1) {
-		//info->AddLine("CobError: unknown function index %d called by user", id);
+		//logOutput.Print("CobError: unknown function index %d called by user", id);
 		if(cb){
 			(*cb)(0, p1, p2);	//in case the function doesnt exist the callback should still be called
 		}
@@ -213,7 +213,7 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 
 #if COB_DEBUG > 0
 	if (COB_DEBUG_FILTER)
-		info->AddLine("Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
+		logOutput.Print("Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
 #endif
 
 	int res = t->Tick(30);
@@ -278,7 +278,7 @@ int CCobInstance::TurnToward(int &cur, int dest, int speed)
 	}
 	cur %= 65536;
 
-	//info->AddLine("turning %d %d %d", cur, dest, speed);
+	//logOutput.Print("turning %d %d %d", cur, dest, speed);
 
 	return 0;
 }
@@ -304,7 +304,7 @@ int CCobInstance::DoSpin(int &cur, int dest, int &speed, int accel, int divisor)
 		}
 	}
 
-	//info->AddLine("Spinning with %d %d %d %d", dest, speed, accel, divisor);
+	//logOutput.Print("Spinning with %d %d %d %d", dest, speed, accel, divisor);
 
 	cur += speed / divisor;
 	cur %= 65536;
@@ -327,7 +327,7 @@ void CCobInstance::UnblockAll(struct AnimInfo * anim)
 			delete *li;
 		}
 		else {
-			info->AddLine("CobError: Turn/move listenener in strange state %d", (*li)->state);
+			logOutput.Print("CobError: Turn/move listenener in strange state %d", (*li)->state);
 		}
 	}
 }
@@ -435,7 +435,7 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 
 		// Check to make sure the piece exists
 		if (piece >= pieces.size()) {
-			info->AddLine("Invalid piece in anim %d (%d)", piece, pieces.size());
+			logOutput.Print("Invalid piece in anim %d (%d)", piece, pieces.size());
 		}
 	}
 	ai->speed = speed;
@@ -449,7 +449,7 @@ void CCobInstance::Spin(int piece, int axis, int speed, int accel)
 	struct AnimInfo *ai;
 	ai = FindAnim(ASpin, piece, axis);
 
-	//info->AddLine("Spin called %d %d %d %d", piece, axis, speed, accel);
+	//logOutput.Print("Spin called %d %d %d %d", piece, axis, speed, accel);
 
 	//Test of default acceleration
 	if (accel == 0)
@@ -513,7 +513,7 @@ void CCobInstance::TurnNow(int piece, int axis, int destination)
 {
 	pieces[piece].rot[axis] = destination;
 	pieces[piece].updated = true;	
-	//info->AddLine("moving %s on axis %d to %d", script.pieceNames[piece].c_str(), axis, destination);
+	//logOutput.Print("moving %s on axis %d to %d", script.pieceNames[piece].c_str(), axis, destination);
 }
 
 void CCobInstance::SetVisibility(int piece, bool visible)
@@ -590,7 +590,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 			hc->size=3;
 			break;}
 		default:
-			info->AddLine("Unknown sfx: %d", type);
+			logOutput.Print("Unknown sfx: %d", type);
 			break;
 	}
 	ENTER_SYNCED;
@@ -609,7 +609,7 @@ void CCobInstance::AttachUnit(int piece, int u)
 	CTransportUnit* tu=dynamic_cast<CTransportUnit*>(unit);
 
 	if(tu && uh->units[u]){
-		//info->AddLine("attach");
+		//logOutput.Print("attach");
 		tu->AttachUnit(uh->units[u],piece);
 	}
 #endif
@@ -656,7 +656,7 @@ void CCobInstance::Signal(int signal)
 	for (list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
 		if ((signal & (*i)->signalMask) != 0) {
 			(*i)->state = CCobThread::Dead;
-			//info->AddLine("Killing a thread %d %d", signal, (*i)->signalMask);
+			//logOutput.Print("Killing a thread %d %d", signal, (*i)->signalMask);
 		}
 	}
 }
@@ -716,7 +716,7 @@ void CCobInstance::Explode(int piece, int flags)
 		ENTER_MIXED;
 		
 		float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
-//		info->AddLine("Shattering %i %f",dl->prims.size(),pieceChance);
+//		logOutput.Print("Shattering %i %f",dl->prims.size(),pieceChance);
 
 		S3DO* dl = pieceData->original3do;
 		if(dl){
@@ -792,7 +792,7 @@ void CCobInstance::Explode(int piece, int flags)
 	}
 	else {
 		if (pieceData->original3do != NULL || pieceData->originals3o != NULL) {
-			//info->AddLine("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
+			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
 			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5);
 		}
 	}
@@ -802,7 +802,7 @@ void CCobInstance::Explode(int piece, int flags)
 void CCobInstance::PlayUnitSound(int snr, int attr)
 {
 	int sid = script.sounds[snr];
-	//info->AddLine("Playing %d %d %d", snr, attr, sid);
+	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
 	sound->PlaySample(sid, unit->pos, attr);
 }
 
@@ -877,7 +877,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return PACKXZ(u->pos.x, u->pos.z);}
 	case UNIT_Y: {
-		//info->AddLine("Unit-y %d", p1);
+		//logOutput.Print("Unit-y %d", p1);
 		if (p1 == 0)
 			return (int)(unit->pos.y * SCALE);
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
@@ -918,7 +918,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return 0;
 	default:
-		info->AddLine("CobError: Unknown get constant %d", val);
+		logOutput.Print("CobError: Unknown get constant %d", val);
 	case VETERAN_LEVEL: 
 		return (int)(100*unit->experience);
 	case CURRENT_SPEED:
@@ -973,7 +973,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 	case HEALTH:
 		break;
 	case INBUILDSTANCE:
-		//info->AddLine("buildstance %d", param);
+		//logOutput.Print("buildstance %d", param);
 		unit->inBuildStance = (param != 0);
 		break;
 	case BUSY:
@@ -1025,7 +1025,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 		unit->armoredState = (param != 0);
 		break;
 	default:
-		info->AddLine("CobError: Unknown set constant %d", val);
+		logOutput.Print("CobError: Unknown set constant %d", val);
 	case VETERAN_LEVEL: 
 		unit->experience=param*0.01f;
 		break;
@@ -1049,7 +1049,7 @@ void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, i
 	AnimInfo *ai = FindAnim(AMove, piece, axis);
 	if (ai) {
 		if (!ai->interpolated) {
-			//info->AddLine("Anim move overwrite");
+			//logOutput.Print("Anim move overwrite");
 			MoveNow(piece, axis, destination);
 			return;
 		}
@@ -1060,7 +1060,7 @@ void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, i
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
 	int speed = (dist * timeFactor) / delta;
 
-	//info->AddLine("Move %d got %d %d", cur, destination, speed);
+	//logOutput.Print("Move %d got %d %d", cur, destination, speed);
 
 	Move(piece, axis, speed, destination, true);
 }
@@ -1070,7 +1070,7 @@ void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, i
 	AnimInfo *ai = FindAnim(ATurn, piece, axis);
 	if (ai) {
 		if (!ai->interpolated) {
-			//info->AddLine("Anim turn overwrite");
+			//logOutput.Print("Anim turn overwrite");
 			TurnNow(piece, axis, destination);
 			return;
 		}
@@ -1082,7 +1082,7 @@ void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, i
 	dist = abs(dist);
 	int speed = (dist * timeFactor) / delta;
 
-	//info->AddLine("Turnx %d:%d cur %d got %d %d dist %d", piece, axis, cur, destination, speed, dist);
+	//logOutput.Print("Turnx %d:%d cur %d got %d %d dist %d", piece, axis, cur, destination, speed, dist);
 
 	Turn(piece, axis, speed, destination, true);
 }

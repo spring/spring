@@ -11,7 +11,7 @@
 #include "Game/GameHelper.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Game/SelectedUnits.h"
 #include "LoadSaveInterface.h"

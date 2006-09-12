@@ -12,7 +12,7 @@
 #include "Rendering/GL/myGL.h"
 #include "AdvTreeGenerator.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "GrassDrawer.h"
 #include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"

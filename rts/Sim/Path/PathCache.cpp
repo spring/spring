@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "PathCache.h"
 #include <algorithm>
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 using namespace std;
@@ -16,7 +16,7 @@ CPathCache::CPathCache(int blocksX,int blocksZ)
 
 CPathCache::~CPathCache(void)
 {
-	info->AddLine("Path cache hits %i %.0f%%",numCacheHits,(numCacheHits+numCacheMisses)!=0 ? float(numCacheHits)/float(numCacheHits+numCacheMisses)*100.0f : 0.0f);
+	logOutput.Print("Path cache hits %i %.0f%%",numCacheHits,(numCacheHits+numCacheMisses)!=0 ? float(numCacheHits)/float(numCacheHits+numCacheMisses)*100.0f : 0.0f);
 	for(std::map<unsigned int,CacheItem*>::iterator ci=cachedPaths.begin();ci!=cachedPaths.end();++ci)
 		delete ci->second;
 }

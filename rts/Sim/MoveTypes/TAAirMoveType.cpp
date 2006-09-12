@@ -6,7 +6,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "myMath.h"
 #include "Matrix44f.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -94,7 +94,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	if (newState == aircraftState)
 		return;
 
-	//info->AddLine("SetState %i",newState);
+	//logOutput.Print("SetState %i",newState);
 
 	//Perform cob animation
 	if (aircraftState == AIRCRAFT_LANDED)
@@ -173,7 +173,7 @@ void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 			break;
 	}
 
-	//info->AddLine("Moving to %f %f %f", pos.x, pos.y, pos.z);
+	//logOutput.Print("Moving to %f %f %f", pos.x, pos.y, pos.z);
 	SetGoal(pos, goalRadius);
 
 	breakDistance = ((maxSpeed * maxSpeed) / decRate);
@@ -181,7 +181,7 @@ void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 
 void CTAAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 {
-	//info->AddLine("airmove: Ignoring startmoving speed");
+	//logOutput.Print("airmove: Ignoring startmoving speed");
 	StartMoving(pos, goalRadius);
 }
 
@@ -193,7 +193,7 @@ void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 	//close in a little to avoid the command ai to override the pos constantly
 	distance -= 15;	
 
-//	info->AddLine("point order");
+//	logOutput.Print("point order");
 
 	//Ignore the exact same order
 	if ((aircraftState == AIRCRAFT_FLYING) && (flyState==FLY_CIRCLING || flyState==FLY_ATTACKING) && ((circlingPos-pos).SqLength2D()<64) && (goalDistance == distance))
@@ -213,13 +213,13 @@ void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 	else
 		flyState = FLY_CIRCLING;
 
-//	info->AddLine("Starting circling");	
+//	logOutput.Print("Starting circling");	
 }
 
 void CTAAirMoveType::ExecuteStop()
 {
 	wantToStop = false;
-//	info->AddLine("Executing stop");
+//	logOutput.Print("Executing stop");
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF:
 			SetState(AIRCRAFT_LANDING);
@@ -240,7 +240,7 @@ void CTAAirMoveType::ExecuteStop()
 
 void CTAAirMoveType::StopMoving()
 {
-//	info->AddLine("stop order");
+//	logOutput.Print("stop order");
 	wantToStop = true;
 	forceHeading=false;
 	owner->isMoving=false;
@@ -273,7 +273,7 @@ void CTAAirMoveType::UpdateTakeoff()
 	float h = pos.y - ground->GetHeight(pos.x, pos.z);
 
 	if (h > orgWantedHeight*0.8) {
-		//info->AddLine("Houston, we have liftoff %f %f", h, wantedHeight);
+		//logOutput.Print("Houston, we have liftoff %f %f", h, wantedHeight);
 		SetState(AIRCRAFT_FLYING);
 	}
 }
@@ -307,7 +307,7 @@ void CTAAirMoveType::UpdateFlying()
 	owner->restTime=0;
 
 	//are we there yet?
-//	info->AddLine("max drift %f %i %f %f",maxDrift,waitCounter,dir.Length2D(),fabs(ground->GetHeight(pos.x,pos.z)-pos.y+wantedHeight));
+//	logOutput.Print("max drift %f %i %f %f",maxDrift,waitCounter,dir.Length2D(),fabs(ground->GetHeight(pos.x,pos.z)-pos.y+wantedHeight));
 	bool closeToGoal=dir.SqLength2D() < maxDrift*maxDrift && fabs(ground->GetHeight(pos.x,pos.z)-pos.y+wantedHeight)<maxDrift;
 	if(flyState==FLY_ATTACKING)
 		closeToGoal=dir.SqLength2D() < 400;
@@ -327,12 +327,12 @@ void CTAAirMoveType::UpdateFlying()
 					wantedHeight=orgWantedHeight;
 					SetState(AIRCRAFT_LANDING);
 				}
-				//info->AddLine("In position, landing");
+				//logOutput.Print("In position, landing");
 				return;
 			case FLY_CIRCLING:
 				waitCounter++;
 				if (waitCounter > 100) {
-					//info->AddLine("moving circlepos");
+					//logOutput.Print("moving circlepos");
 					float3 relPos = pos - circlingPos;
 					if(relPos.x<0.0001 && relPos.x>-0.0001)
 						relPos.x=0.0001;
@@ -351,7 +351,7 @@ void CTAAirMoveType::UpdateFlying()
 				}
 				break;
 			case FLY_ATTACKING:{
-				//info->AddLine("wait is %d", waitCounter);
+				//logOutput.Print("wait is %d", waitCounter);
 				float3 relPos = pos - circlingPos;
 				if(relPos.x<0.0001 && relPos.x>-0.0001)
 					relPos.x=0.0001;
@@ -367,7 +367,7 @@ void CTAAirMoveType::UpdateFlying()
 
 				//Go there in a straight line
 				goalPos = circlingPos + newPos;
-//				info->AddLine("Changed circle pos");
+//				logOutput.Print("Changed circle pos");
 				break;}
 			case FLY_LANDING:{
 /*				//First check if we can land around here somewhere
@@ -377,7 +377,7 @@ void CTAAirMoveType::UpdateFlying()
 					bool found = FindLandingSpot(pos, newPos);
 					if (found) {
 						SetState(AIRCRAFT_FLYING);		
-						info->AddLine("Found a landingspot when cruising around");
+						logOutput.Print("Found a landingspot when cruising around");
 						goalPos = newPos;			
 						return;
 					}
@@ -412,7 +412,7 @@ void CTAAirMoveType::UpdateFlying()
 	//if in attack mode dont slow down
 	if (flyState!=FLY_ATTACKING && dist < breakDistance) {
 		realMax = dist/(speed.Length2D()+0.01) * decRate;
-		//info->AddLine("Break! %f %f %f", maxSpeed, dir.Length2D(), realMax);
+		//logOutput.Print("Break! %f %f %f", maxSpeed, dir.Length2D(), realMax);
 	}
 
 	wantedSpeed = dir.Normalize() * realMax;
@@ -442,15 +442,15 @@ void CTAAirMoveType::UpdateLanding()
 
 	//Hang around for a while so queued commands have a chance to take effect
 	if (waitCounter < 30) {
-		//info->AddLine("want to land, but.. %d", waitCounter);
+		//logOutput.Print("want to land, but.. %d", waitCounter);
 		UpdateAirPhysics();
 		return;
 	}
 
 	if(reservedLandingPos.x<0){
-//		info->AddLine("Searching for landing spot");
+//		logOutput.Print("Searching for landing spot");
 		if(CanLandAt(pos)){
-//			info->AddLine("Found landing spot");
+//			logOutput.Print("Found landing spot");
 			reservedLandingPos=pos;
 			goalPos=pos;
 			owner->physicalState = CSolidObject::OnGround;
@@ -480,7 +480,7 @@ void CTAAirMoveType::UpdateLanding()
 	float h = pos.y - ground->GetHeight(pos.x, pos.z);
 
 	if (h <= 0) {
-		//info->AddLine("Landed");
+		//logOutput.Print("Landed");
 		SetState(AIRCRAFT_LANDED);
 		pos.y = ground->GetHeight(pos.x, pos.z);
 	}
@@ -632,7 +632,7 @@ void CTAAirMoveType::UpdateMoveRate()
 	if (curRate != lastMoveRate) {
 		owner->cob->Call(COBFN_MoveRate0 + curRate);
 		lastMoveRate = curRate;
-		//info->AddLine("new moverate: %d", curRate);
+		//logOutput.Print("new moverate: %d", curRate);
 	}
 }
 

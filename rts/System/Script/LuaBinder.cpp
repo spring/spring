@@ -2,7 +2,7 @@
 #include "LuaBinder.h"
 #include "Game/StartScripts/Script.h"
 #include "float3.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -34,7 +34,7 @@ extern std::string stupidGlobalMapname;
 #define check(a) { try { a } catch(luabind::error& e) { ShowLuaError(e.state()); } }
 void ShowLuaError(lua_State* l)
 {
-	info->AddLine("Lua error: %s", lua_tostring(l, -1));
+	logOutput.Print("Lua error: %s", lua_tostring(l, -1));
 }
 
 // Wrapper class to allow lua classes to create new startscripts by subclassing Script
@@ -54,7 +54,7 @@ template<class T>
 T* get_pointer(CObject_pointer<T>& p) 
 {
 	if (!p.held)
-		info->AddLine("Lua warning: using invalid unit reference");
+		logOutput.Print("Lua warning: using invalid unit reference");
 	return p.held; 
 }
 
@@ -116,7 +116,7 @@ namespace luafunctions {
 
 	void DisabledFunction()
 	{
-		info->AddLine("Lua: Attempt to call disabled function");
+		logOutput.Print("Lua: Attempt to call disabled function");
 	}
 
 	// Redefinition of the lua standard function print to use the spring infoconsole
@@ -143,8 +143,7 @@ namespace luafunctions {
 			lua_pop(L, 1);  /* pop result */
 		}
 
-		if (info)
-			info->AddLine(tmp.c_str());
+		logOutput.Print(tmp.c_str());
 
 		return 0;
 	}

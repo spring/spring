@@ -25,7 +25,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 CInfoConsole* info=0;
-static std::ofstream* filelog;
 
 CInfoConsole::CInfoConsole()
 : lastMsgPos(0,0,0)
@@ -41,13 +40,12 @@ CInfoConsole::CInfoConsole()
 	height=0.2f;
 	numLines = 7;
 
-	assert(!filelog); // multiple infologs can't exist together!
-	filelog = new std::ofstream("infolog.txt");
+	logOutput.AddSubscriber(this);
 }
 
 CInfoConsole::~CInfoConsole()
 {
-	delete filelog;
+	logOutput.RemoveSubscriber(this);
 }
 
 void CInfoConsole::Draw()
@@ -91,84 +89,7 @@ void CInfoConsole::Update()
 }
 
 
-void CInfoConsole::AddLine(int priority, const char *fmt, ...)
-{
-	char text[500];
-	va_list		ap;										// Pointer To List Of Arguments
-
-	if (fmt == NULL)									// If There's No Text
-		return;											// Do Nothing
-
-	va_start(ap, fmt);									// Parses The String For Variables
-	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
-	va_end(ap);											// Results Are Stored In Text
-
-	AddLineHelper (priority,text);
-}
-
-void CInfoConsole::AddLine(const char *fmt, ...)
-{
-	char text[1500];
-	va_list		ap;										// Pointer To List Of Arguments
-
-	if (fmt == NULL)									// If There's No Text
-		return;											// Do Nothing
-
-	va_start(ap, fmt);									// Parses The String For Variables
-	VSNPRINTF(text, sizeof(text), fmt, ap);				// And Converts Symbols To Actual Numbers
-	va_end(ap);											// Results Are Stored In Text
-
-	AddLineHelper (0,text);
-}
-
-void CInfoConsole::AddLine (const std::string& text)
-{
-	AddLineHelper (0, text.c_str());
-}
-
-
-void CInfoConsole::AddLine (int priority, const std::string& text)
-{
-	AddLineHelper (priority, text.c_str());
-}
-
-
-CInfoConsole& CInfoConsole::operator<< (int i)
-{
-	char t[50];
-	sprintf(t,"%d ",i);
-	tempstring+=t;
-	return *this;
-}
-
-
-CInfoConsole& CInfoConsole::operator<< (float f)
-{
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-	char t[50];
-	sprintf(t,"%f ",f);
-	tempstring+=t;
-	return *this;
-}
-
-CInfoConsole& CInfoConsole::operator<< (const char* c)
-{
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-	for(unsigned int a=0;a<strlen(c);a++){
-		if(c[a]!='\n'){
-			tempstring+=c[a];
-		} else {
-			AddLine(tempstring);
-			tempstring="";
-			break;
-		}
-	}
-	return *this;
-}
-
-#ifndef NEW_GUI
- 
-void CInfoConsole::AddLineHelper (int priority, const char *text)
+void CInfoConsole::NotifyLogMsg(int priority, const char *text)
 {
 	if (priority > verboseLevel)
 		return;
@@ -176,14 +97,6 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-
-	(*filelog) << text << "\n";
-	filelog->flush();
-
-#ifdef WIN32
-	OutputDebugString(text);
-	OutputDebugString("\n");
-#endif
 
 	float maxWidth = 25.0f;
 	int pos=0, line_start=0;
@@ -226,28 +139,8 @@ void CInfoConsole::AddLineHelper (int priority, const char *text)
 	POP_CODE_MODE;
 }
 
-void CInfoConsole::SetLastMsgPos(float3 pos)
+
+void CInfoConsole::SetLastMsgPos(const float3& pos)
 {
 	lastMsgPos=pos;
 }
-
-#endif
-
-#ifdef NEW_GUI
-
-void CInfoConsole::AddLineHelper (int priority, const char *text)
-{
-	if (priority > verboseLevel)
-		return;
-
-	if (guicontroller) 
-		guicontroller->AddText(text);
-}
-
-void CInfoConsole::SetLastMsgPos(float3 pos)
-{
-	if (guicontroller)
-	guicontroller->SetLastMsgPos(pos);
-}
-
-#endif 

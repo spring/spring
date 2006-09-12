@@ -3,7 +3,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <GL/glu.h>
 #include "mapfile.h"
 #include "Platform/errorhandler.h"
@@ -50,7 +50,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 
 		CFileHandler tileFile(name);
 		if(!tileFile.FileExists()){
-			info->AddLine("Couldnt find tile file %s",name.c_str());
+			logOutput.Print("Couldnt find tile file %s",name.c_str());
 			memset(&tiles[curTile*SMALL_TILE_SIZE],0xaa,size*SMALL_TILE_SIZE);
 			curTile+=size;
 			continue;

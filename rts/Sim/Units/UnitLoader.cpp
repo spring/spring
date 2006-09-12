@@ -6,7 +6,7 @@
 #include "StdAfx.h"
 #include "UnitLoader.h"
 #include "Unit.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Weapons/Cannon.h"
 #include "Sim/Weapons/bombdropper.h"
 #include "Sim/Weapons/FlameThrower.h"
@@ -106,7 +106,7 @@ START_TIME_PROFILE;
 		unit = new CExtractorBuilding;
 		blocking = true;
 	} else {
-		(*info) << "Unknown unit type " << type.c_str() << "\n";
+		logOutput << "Unknown unit type " << type.c_str() << "\n";
 		return 0;
 	}
 
@@ -186,7 +186,7 @@ START_TIME_PROFILE;
 		mt->turnRate=ud->turnRate;
 		mt->baseTurnRate=ud->turnRate;
 		if (!mt->accRate) 
-			(*info) << "acceleration of " << ud->name.c_str() << " is zero!!\n";
+			logOutput << "acceleration of " << ud->name.c_str() << " is zero!!\n";
 		mt->moveType=ud->moveType;
 		mt->accRate=ud->maxAcc;
 		mt->floatOnWater=ud->movedata->moveType==MoveData::Hover_Move || ud->movedata->moveType==MoveData::Ship_Move;
@@ -321,7 +321,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	CWeapon* weapon;
 
 	if(!weapondef){
-		info->AddLine("Error: No weapon def?");
+		logOutput.Print("Error: No weapon def?");
 	}
 
 	if(udw->name=="NOWEAPON"){
@@ -373,7 +373,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 			((CStarburstLauncher*)weapon)->tracking=0;
 		((CStarburstLauncher*)weapon)->uptime=weapondef->uptime*30;
 	}else {
-		(*info) << "Unknown weapon type " << weapondef->type.c_str() << "\n";
+		logOutput << "Unknown weapon type " << weapondef->type.c_str() << "\n";
 		return 0;
 	}
 	weapon->weaponDef = weapondef;

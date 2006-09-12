@@ -18,7 +18,7 @@
 #include "CommandAI/BuilderCAI.h"
 #include "Game/SelectedUnits.h"
 #include "FileSystem/FileHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
@@ -188,7 +188,7 @@ START_TIME_PROFILE;
 		//debug
 		for(usi=activeUnits.begin();usi!=activeUnits.end();){
 			if(*usi==delUnit){
-				info->AddLine("Error: Duplicated unit found in active units on erase");
+				logOutput.Print("Error: Duplicated unit found in active units on erase");
 				usi=activeUnits.erase(usi);
 			} else {
 				++usi;

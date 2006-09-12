@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "SelectedUnitsAI.h"
 #include "SelectedUnits.h"
-#include "UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Net.h"
 #include "GlobalStuff.h"
 #include "Sim/MoveTypes/MoveType.h"

@@ -6,7 +6,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "MissileProjectile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 

@@ -2,7 +2,7 @@
 #include "TextureAtlas.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
 

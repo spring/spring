@@ -3,7 +3,7 @@
 #include "Sm3Map.h"
 #include "Sm3GroundDrawer.h"
 
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <GL/glew.h>
 #include <IL/il.h>
 #include <SDL_types.h>
@@ -38,7 +38,7 @@ CSm3ReadMap::~CSm3ReadMap()
 
 struct Sm3LoadCB : terrain::ILoadCallback
 {
-	void Write(const char *msg) { info->AddLine (msg); }
+	void Write(const char *msg) { logOutput.Print (msg); }
 };
 
 void CSm3ReadMap::Initialize (const char *mapname)

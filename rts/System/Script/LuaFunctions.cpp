@@ -6,7 +6,7 @@
 #include "LuaFunctions.h"
 #include "Game/StartScripts/Script.h"
 #include "float3.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"

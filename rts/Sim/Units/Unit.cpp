@@ -14,7 +14,7 @@
 #include "Game/Team.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/GameHelper.h"
 #include "SyncTracer.h"
 #include "Sim/Misc/LosHandler.h"
@@ -369,7 +369,7 @@ void CUnit::SlowUpdate()
 		}
 		ENTER_MIXED;
 		if(selfDCountdown&1 && team==gu->myTeam)
-			info->AddLine("%s: Self destruct in %i s",unitDef->humanName.c_str(),selfDCountdown/2);
+			logOutput.Print("%s: Self destruct in %i s",unitDef->humanName.c_str(),selfDCountdown/2);
 		ENTER_SYNCED;
 	}
 
@@ -539,7 +539,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	float damage=damages[armorType];
 
 	if(damage<0){
-//		info->AddLine("Negative damage");
+//		logOutput.Print("Negative damage");
 		return;
 	}
 
@@ -548,7 +548,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		adir.Normalize();
 		bonusShieldDir+=adir*bonusShieldSaved;		//not the best way to do it(but fast)
 		bonusShieldDir.Normalize();
-//		info->AddLine("shield mult %f %f %i %i", 2-adir.dot(bonusShieldDir),bonusShieldSaved,id,attacker->id);
+//		logOutput.Print("shield mult %f %f %i %i", 2-adir.dot(bonusShieldDir),bonusShieldSaved,id,attacker->id);
 		bonusShieldSaved=0;
 		damage*=1.4-adir.dot(bonusShieldDir)*0.5;
 	}
@@ -588,13 +588,13 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	recentDamage+=damage;
 
 	if(attacker!=0 && !gs->Ally(allyteam,attacker->allyteam)){
-//		info->AddLine("%s has %f/%f h attacker %s do %f d",tooltip.c_str(),health,maxHealth,attacker->tooltip.c_str(),damage);
+//		logOutput.Print("%s has %f/%f h attacker %s do %f d",tooltip.c_str(),health,maxHealth,attacker->tooltip.c_str(),damage);
 		attacker->experience+=0.1*power/attacker->power*(damage+min(0.f,health))/maxHealth*experienceMod;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
 		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum)) && team==gu->myTeam && !camera->InView(midPos,radius+50) && !gu->spectating) {
-			info->AddLine("%s is being attacked",unitDef->humanName.c_str());
-			info->SetLastMsgPos(pos);
+			logOutput.Print("%s is being attacked",unitDef->humanName.c_str());
+			logOutput.SetLastMsgPos(pos);
 			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
 				sound->PlaySample(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
 			minimap->AddNotification(pos,float3(1,0.3,0.3),unitDef->isCommander?1:0.5);	//todo: make compatible with new gui
@@ -616,7 +616,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		}
 	}
 //	if(attacker!=0 && attacker->team==team)
-//		info->AddLine("FF by %i %s on %i %s",attacker->id,attacker->tooltip.c_str(),id,tooltip.c_str());
+//		logOutput.Print("FF by %i %s on %i %s",attacker->id,attacker->tooltip.c_str(),id,tooltip.c_str());
 
 #ifdef TRACE_SYNC
 	tracefile << "Damage: ";
@@ -948,7 +948,7 @@ void CUnit::DependentDied(CObject* o)
 	if(o==transporter)
 		transporter=0;
 	if(o==lastAttacker){
-//		info->AddLine("Last attacker died %i %i",lastAttacker->id,id);
+//		logOutput.Print("Last attacker died %i %i",lastAttacker->id,id);
 		lastAttacker=0;
 	}
 	if(o==userTarget)
@@ -1230,7 +1230,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 					sound->PlaySample(wd->soundhit.id, pos, wd->soundhit.volume);
 				}
 
-				//info->AddLine("Should play %s (%d)", wd->soundhit.name.c_str(), wd->soundhit.id); 
+				//logOutput.Print("Should play %s (%d)", wd->soundhit.name.c_str(), wd->soundhit.id); 
 			}
 		}
 		if(selfDestruct)

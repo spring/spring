@@ -5,7 +5,7 @@
 #include "Game/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
@@ -62,7 +62,7 @@ int CUnitTracker::GetMode()
 void CUnitTracker::IncMode()
 {
 	trackMode = (trackMode + 1) % TrackModeCount;
-	info->AddLine("TrackMode: %s", modeNames[trackMode]);
+	logOutput.Print("TrackMode: %s", modeNames[trackMode]);
 }
 
 
@@ -75,7 +75,7 @@ void CUnitTracker::SetMode(int m)
 	} else {
 		trackMode = m;
 	}
-	info->AddLine("TrackMode: %s", modeNames[trackMode]);
+	logOutput.Print("TrackMode: %s", modeNames[trackMode]);
 }
 
 
@@ -104,7 +104,7 @@ void CUnitTracker::Track()
 		} else if (enabled) {
 			if (trackMode != TrackSingle) {
 				trackMode = TrackSingle;
-				info->AddLine("TrackMode: %s", modeNames[TrackSingle]);
+				logOutput.Print("TrackMode: %s", modeNames[TrackSingle]);
 			}
 			NextUnit();
 		}

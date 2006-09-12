@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "mmgr.h"
 

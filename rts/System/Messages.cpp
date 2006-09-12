@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "GlobalStuff.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Messages.h"
 #include "TdfParser.h"
 #include "mmgr.h"
@@ -36,7 +36,7 @@ void CMessages::Load()
 		}
 	} catch (const TdfParser::parse_error& e) {
 		// Show parse errors in the infolog.
-		info->AddLine("%s:%d: %s", e.get_filename().c_str(), e.get_line(), e.what());
+		logOutput.Print("%s:%d: %s", e.get_filename().c_str(), e.get_line(), e.what());
 	} catch (const content_error& e) {
 		// Ignore non-existant file.
 	}

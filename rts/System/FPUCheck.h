@@ -75,8 +75,8 @@ static inline bool good_fpu_control_registers()
 	           ((fenv.x87_mode & 0x1F3F) == 0x003A || (fenv.x87_mode & 0x1F3F) == 0x003F);
 #ifndef NDEBUG
 	if (!ret) {
-		info->AddLine("MXCSR: 0x%04X instead of 0x1D00 or 0x1F80", fenv.sse_mode);
-		info->AddLine("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv.x87_mode);
+		logOutput.Print("MXCSR: 0x%04X instead of 0x1D00 or 0x1F80", fenv.sse_mode);
+		logOutput.Print("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv.x87_mode);
 	}
 #endif
 	return ret;
@@ -86,7 +86,7 @@ static inline bool good_fpu_control_registers()
 	bool ret = (fenv & 0x1F3F) == 0x003A || (fenv & 0x1F3F) == 0x003F;
 #ifndef NDEBUG
 	if (!ret)
-		info->AddLine("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv);
+		logOutput.Print("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv);
 #endif
 	return ret;
 #endif

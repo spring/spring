@@ -14,7 +14,7 @@
 #include "Map/Ground.h"
 #include "Sim/Projectiles/DirtProjectile.h"
 #include "Sim/Projectiles/ExploSpikeProjectile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "creg/VarTypes.h"
 #include <SDL_types.h>
@@ -78,7 +78,7 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 		try {
 			parser.LoadFile(files[i]);
 		}catch( TdfParser::parse_error const& e) {
-			info->AddLine ("Exception: %s\n",e.what());
+			logOutput.Print ("Exception: %s\n",e.what());
 		} // non-parse exceptions are handled the normal way
 	}
 }

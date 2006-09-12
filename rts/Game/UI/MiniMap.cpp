@@ -292,7 +292,7 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 
 	float3 pos=unit->pos;
 /*	if(pos.z<0 || pos.z>gs->mapy*SQUARE_SIZE){
-		info->AddLine("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
+		logOutput.Print("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
 		return;
 	}*/
 	CIcon* icon;
@@ -429,13 +429,13 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 			return;
 		}
 		float3 pos(float(x-xpos)/width*gs->mapx*SQUARE_SIZE,500,float(y-(gu->screeny-ypos-height))/height*gs->mapx*SQUARE_SIZE);
-//		info->AddLine("x %f y %f",pos.x,pos.z);
+//		logOutput.Print("x %f y %f",pos.x,pos.z);
 		if(guihandler->inCommand!=-1){
 			FakeMousePress(pos,0);
 			return;
 		}
 		float size=0.2f/sqrt((float)width+height)*gs->mapx*SQUARE_SIZE;
-//		info->AddLine("r %f",size);
+//		logOutput.Print("r %f",size);
 		CUnit* unit=helper->GetClosestFriendlyUnit(pos,size,gu->myAllyTeam);
 		if(unit){
 		if(!keys[SDLK_LSHIFT])

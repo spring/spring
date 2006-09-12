@@ -7,7 +7,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Projectiles/ExplosiveProjectile.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "SyncTracer.h"
 #include "Sound.h"

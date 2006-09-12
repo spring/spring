@@ -6,7 +6,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Game/GameHelper.h"
 #include "myMath.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Units/UnitHandler.h"
 #include "SyncTracer.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -166,14 +166,14 @@ void CGroundMoveType::Update()
 			etaFailures+=10;
 			etaWaypoint= INT_MAX;
 			if(DEBUG_CONTROLLER)
-				info->AddLine("eta failure %i %i %i %i %i",owner->id,pathId, !atGoal,currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
+				logOutput.Print("eta failure %i %i %i %i %i",owner->id,pathId, !atGoal,currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
 		}
 		if(pathId && !atGoal && gs->frameNum > etaWaypoint2) {
 			if(owner->pos.distance2D(goal)>200 || CheckGoalFeasability()){
 				etaWaypoint2+=100;
 			} else {
 				if(DEBUG_CONTROLLER)
-					info->AddLine("Goal clogged up2 %i",owner->id);
+					logOutput.Print("Goal clogged up2 %i",owner->id);
 				Fail();
 			}
 		}
@@ -268,12 +268,12 @@ void CGroundMoveType::SlowUpdate()
 	if(progressState == Active && etaFailures>8) {
 		if(owner->pos.distance2D(goal)>200 || CheckGoalFeasability()){
 			if(DEBUG_CONTROLLER)
-				info->AddLine("Unit eta failure %i",owner->id);
+				logOutput.Print("Unit eta failure %i",owner->id);
 			StopEngine();
 			StartEngine();
 		} else {
 			if(DEBUG_CONTROLLER)
-				info->AddLine("Goal clogged up %i",owner->id);
+				logOutput.Print("Goal clogged up %i",owner->id);
 			Fail();
 		}
 	}
@@ -282,13 +282,13 @@ void CGroundMoveType::SlowUpdate()
 	//re-try-delay has passed, then start the engine.
 	if(progressState == Active && !pathId && gs->frameNum > restartDelay) {
 		if(DEBUG_CONTROLLER)
-			info->AddLine("Unit restart %i",owner->id);
+			logOutput.Print("Unit restart %i",owner->id);
 		StartEngine();
 	}
 
 	owner->pos.CheckInBounds();		//just kindly move it into the map again instead of deleteing
 /*	if(owner->pos.z<0 || owner->pos.z>(gs->mapy+1)*SQUARE_SIZE || owner->pos.x<0 || owner->pos.x>(gs->mapx+1)*SQUARE_SIZE){
-		info->AddLine("Deleting unit due to bad coord %i %f %f %f %s",owner->id,owner->pos.x,owner->pos.y,owner->pos.z,owner->unitDef->humanName.c_str());
+		logOutput.Print("Deleting unit due to bad coord %i %f %f %f %s",owner->id,owner->pos.x,owner->pos.y,owner->pos.z,owner->unitDef->humanName.c_str());
 		uh->DeleteUnit(owner);
 	}*/
 
@@ -371,7 +371,7 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 	if(DEBUG_CONTROLLER)
-		*info << "SMove: Action stopped." << " " << owner->id << "\n";
+		logOutput << "SMove: Action stopped." << " " << owner->id << "\n";
 
 	StopEngine();
 
@@ -416,7 +416,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 	float dif = wSpeed - currentSpeed;
 
 	if (!accRate) {
-		info->AddLine("Acceleration is zero on unit %s\n",owner->unitDef->name.c_str());
+		logOutput.Print("Acceleration is zero on unit %s\n",owner->unitDef->name.c_str());
 		accRate=0.01;
 	}
 
@@ -499,7 +499,7 @@ void CGroundMoveType::ImpulseAdded(void)
 		impulse-=groundNormal*impulse.dot(groundNormal);
 
 	float strength=impulse.Length();
-//	info->AddLine("strength %f",strength);
+//	logOutput.Print("strength %f",strength);
 
 	if(strength>3 || impulse.dot(groundNormal)>0.3){
 		skidding=true;
@@ -732,7 +732,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					if((owner->unitDef->movedata->moveMath->IsBlocked(*owner->unitDef->movedata, x, y) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN | CMoveMath::BLOCK_MOBILE_BUSY)) || owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, x,y)<=0.01){
 						++etaFailures;		//not reachable, force a new path to be calculated next slowupdate
 						if(DEBUG_CONTROLLER)
-							info->AddLine("Waypoint path blocked %i",owner->id);
+							logOutput.Print("Waypoint path blocked %i",owner->id);
 						break;
 					}
 				}
@@ -850,7 +850,7 @@ void CGroundMoveType::GetNewPath()
 {
 	if(owner->pos.distance2D(lastGetPathPos)<20){
 		if(DEBUG_CONTROLLER)
-			info->AddLine("Non moving failure %i %i",owner->id,nonMovingFailures);
+			logOutput.Print("Non moving failure %i %i",owner->id,nonMovingFailures);
 		nonMovingFailures++;
 		if(nonMovingFailures>10){
 			nonMovingFailures=0;
@@ -893,13 +893,13 @@ void CGroundMoveType::GetNextWaypoint()
 		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 2);
 
 		if(nextWaypoint.x != -1) {
-//			info->AddLine("New waypoint %i %f %f",owner->id,owner->pos.distance2D(newWaypoint),wantedDistanceToWaypoint);
+//			logOutput.Print("New waypoint %i %f %f",owner->id,owner->pos.distance2D(newWaypoint),wantedDistanceToWaypoint);
 			etaWaypoint = int(30.0 / (requestedSpeed*terrainSpeed+0.001)) + gs->frameNum+50;
 			etaWaypoint2 = int(25.0 / (requestedSpeed*terrainSpeed+0.001)) + gs->frameNum+10;
 			atGoal = false;
 		} else {
 			if(DEBUG_CONTROLLER)
-				info->AddLine("Path failure %i %i",owner->id,pathFailures);
+				logOutput.Print("Path failure %i %i",owner->id,pathFailures);
 			pathFailures++;
 			if(pathFailures>0){
 				pathFailures=0;
@@ -925,7 +925,7 @@ starting from given speed.
 float CGroundMoveType::BreakingDistance(float speed) 
 {
 	if (!owner->mobility->maxBreaking) {
-		(*info) << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
+		logOutput << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
 		return 0.0f;
 	}
 	return fabs(speed * speed / owner->mobility->maxBreaking);
@@ -983,10 +983,10 @@ void CGroundMoveType::StartEngine() {
 			owner->cob->Call(COBFN_StartMoving);
 		
 			if(DEBUG_CONTROLLER)
-				*info << "Engine started" << " " << owner->id << "\n";
+				logOutput << "Engine started" << " " << owner->id << "\n";
 		} else {
 			if(DEBUG_CONTROLLER)
-				*info << "Engine start failed: " << owner->id << "\n";
+				logOutput << "Engine start failed: " << owner->id << "\n";
 
 			Fail();
 		}
@@ -1011,7 +1011,7 @@ void CGroundMoveType::StopEngine() {
 		owner->cob->Call(COBFN_StopMoving);
 
 		if(DEBUG_CONTROLLER)
-			*info << "Engine stopped." << " " << owner->id << "\n";
+			logOutput << "Engine stopped." << " " << owner->id << "\n";
 	}
 	owner->isMoving=false;
 	wantedSpeed=0;
@@ -1043,7 +1043,7 @@ void CGroundMoveType::Arrived()
 		progressState = Done;
 
 		if(DEBUG_CONTROLLER)
-			*info << "Unit arrived!\n";
+			logOutput << "Unit arrived!\n";
 	}
 }
 
@@ -1054,7 +1054,7 @@ No more trials will be done before a new goal is given.
 void CGroundMoveType::Fail() 
 {
 	if(DEBUG_CONTROLLER)
-		info->AddLine("Unit failed! %i",owner->id);
+		logOutput.Print("Unit failed! %i",owner->id);
 
 	StopEngine();
 
@@ -1072,8 +1072,8 @@ void CGroundMoveType::Fail()
 			sound->PlayUnitReply(owner->unitDef->sounds.cant.id, owner, owner->unitDef->sounds.cant.volume);
 
 		if(owner->pos.distance(goal)>goalRadius+150){
-			*info << owner->unitDef->humanName.c_str() << ": Can't reach destination!\n";
-			info->SetLastMsgPos(owner->pos);
+			logOutput << owner->unitDef->humanName.c_str() << ": Can't reach destination!\n";
+			logOutput.SetLastMsgPos(owner->pos);
 		}
 	}
 	ENTER_SYNCED;
@@ -1406,7 +1406,7 @@ bool CGroundMoveType::CheckGoalFeasability(void)
 	if(numSquares>0){
 		float partBlocked=numBlocked/numSquares;
 		if(DEBUG_CONTROLLER)
-			info->AddLine("Part blocked %i %.0f%% %.0f",owner->id,partBlocked*100,goalDist);
+			logOutput.Print("Part blocked %i %.0f%% %.0f",owner->id,partBlocked*100,goalDist);
 		if(partBlocked>0.4)
 			return false;
 	}

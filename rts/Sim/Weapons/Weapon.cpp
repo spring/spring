@@ -10,7 +10,7 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "myMath.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "SyncTracer.h"
 #include "WeaponDefHandler.h"
@@ -243,7 +243,7 @@ void CWeapon::Update()
 		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
-//		info->AddLine("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
+//		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
 
 		owner->isCloaked=false;
 		owner->curCloakTimeout=gs->frameNum+owner->cloakTimeout;
@@ -489,7 +489,7 @@ void CWeapon::Init(void)
 	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-//	info->AddLine("RelPos %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
+//	logOutput.Print("RelPos %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
 
 	if(range>owner->maxRange)
 		owner->maxRange=range;

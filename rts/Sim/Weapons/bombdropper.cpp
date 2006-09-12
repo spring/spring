@@ -6,7 +6,7 @@
 #include "bombdropper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Projectiles/ExplosiveProjectile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"

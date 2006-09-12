@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/TracerProjectile.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/Unit.h"
-#include "UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Misc/QuadField.h"
 #include "SyncTracer.h"
 #include "Sim/Misc/LosHandler.h"
@@ -65,11 +65,11 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	tracefile << pos.x << " " << damages[0] <<  " " << radius << "\n";
 #endif
 /*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-		info->AddLine("Explosion outside map %.0f %.0f",pos.x,pos.z);
+		logOutput.Print("Explosion outside map %.0f %.0f",pos.x,pos.z);
 		return;
 	}
 */
-//	info->AddLine("Explosion %i",damageGround);
+//	logOutput.Print("Explosion %i",damageGround);
 	if(radius<1)
 		radius=1;
 
@@ -154,7 +154,7 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
 	
-//	info->AddLine("gl %f",groundLength);
+//	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength && groundLength>0)
 		length=groundLength;
 	
@@ -214,7 +214,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
 	
-//	info->AddLine("gl %f",groundLength);
+//	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength+200 && groundLength>0)
 		length=groundLength+200;	//need to add some cause we take the backside of the unit sphere;
 	
@@ -273,7 +273,7 @@ float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float leng
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
 	
-//	info->AddLine("gl %f",groundLength);
+//	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength && groundLength>0)
 		length=groundLength;
 	

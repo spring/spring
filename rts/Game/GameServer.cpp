@@ -3,7 +3,7 @@
 #include "Net.h"
 #include "Player.h"
 #include "Team.h"
-#include "UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game.h"
 #include "GameSetup.h"
 #include "StartScripts/ScriptHandler.h"
@@ -92,7 +92,7 @@ bool CGameServer::Update()
 						//if the checksum really happens to be 0 we will get lots of falls positives here
 						if(!syncResponses[a]) {
 							if (!serverNet->playbackDemo)
-								info->AddLine("No response from %s", gs->players[a]->playerName.c_str());
+								logOutput.Print("No response from %s", gs->players[a]->playerName.c_str());
 						} else
 							++freq[syncResponses[a]];
 					}
@@ -119,7 +119,7 @@ bool CGameServer::Update()
 					if(gs->players[a]->active) {
 						//if the checksum really happens to be 0 we will get lots of falls positives here
 						if(!syncResponses[a] && !serverNet->playbackDemo) {
-							info->AddLine("No response from %s", gs->players[a]->playerName.c_str());
+							logOutput.Print("No response from %s", gs->players[a]->playerName.c_str());
 							continue;
 						}
 						if (correctSync && correctSync != syncResponses[a]) {
@@ -172,7 +172,7 @@ bool CGameServer::Update()
 				float wantedCpu=0.35+(1-gs->speedFactor/gs->userSpeedFactor)*0.5;
 				//float speedMod=1+wantedCpu-maxCpu;
 				float newSpeed=gs->speedFactor*wantedCpu/maxCpu;
-				//info->AddLine("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
+				//logOutput.Print("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
 				newSpeed=(newSpeed+gs->speedFactor)*0.5;
 				if(newSpeed>gs->userSpeedFactor)
 					newSpeed=gs->userSpeedFactor;
@@ -185,7 +185,7 @@ bool CGameServer::Update()
 	}
 
 	if(!ServerReadNet()){
-		info->AddLine("Server read net wanted quit");
+		logOutput.Print("Server read net wanted quit");
 		return false;
 	}
 	if (game && game->playing && !serverNet->playbackDemo){
@@ -194,7 +194,7 @@ bool CGameServer::Update()
 		float timeElapsed=((float)(currentFrame - lastframe))/1000.;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
-//		info->AddLine("float value is %f",timeElapsed);
+//		logOutput.Print("float value is %f",timeElapsed);
 
 		if(gameClientUpdated){
 			gameClientUpdated=false;
@@ -238,7 +238,7 @@ bool CGameServer::ServerReadNet()
 				serverNet->SendData<unsigned char, unsigned char>(NETMSG_PLAYERLEFT, a, 0);
 			}
 		}
-		//		(*info) << serverNet->numConnected << "\n";
+		//		logOutput << serverNet->numConnected << "\n";
 
 		while(inbufpos<inbuflength){
 			thisMsg=inbuf[inbufpos];
@@ -265,7 +265,7 @@ bool CGameServer::ServerReadNet()
 
 			case NETMSG_PAUSE:
 				if(inbuf[inbufpos+2]!=a){
-					info->AddLine("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
+					logOutput.Print("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
 				} else {
 					assert(game);
 					if(game->gamePausable || a==0){
@@ -277,7 +277,7 @@ bool CGameServer::ServerReadNet()
 				break;
 
 			case NETMSG_INTERNAL_SPEED: 
-				info->AddLine("Server shouldnt get internal speed msgs?");
+				logOutput.Print("Server shouldnt get internal speed msgs?");
 				lastLength=5;
 				break;
 
@@ -346,7 +346,7 @@ bool CGameServer::ServerReadNet()
 
 			case NETMSG_SYSTEMMSG:
 				if(inbuf[inbufpos+2]!=a){
-					info->AddLine("Server: Warning got system msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
+					logOutput.Print("Server: Warning got system msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],inbuf[inbufpos+1]); //forward data
 				}
@@ -401,7 +401,7 @@ bool CGameServer::ServerReadNet()
 						if(outstandingSyncFrame == frame)
 							syncResponses[inbuf[inbufpos+1]] = *(CChecksum*)&inbuf[inbufpos+6];
 						else
-							info->AddLine("Delayed respone from %s (%i instead of %i)",
+							logOutput.Print("Delayed respone from %s (%i instead of %i)",
 										  gs->players[inbuf[inbufpos+1]]->playerName.c_str(), frame, outstandingSyncFrame);
 					}
 				}
@@ -470,13 +470,13 @@ bool CGameServer::ServerReadNet()
 				if (!lastLength)
 #endif
 				{
-					info->AddLine("Unknown net msg in server %d from %d pos %d last %d", (int)inbuf[inbufpos], a, inbufpos, lastMsg[a]);
+					logOutput.Print("Unknown net msg in server %d from %d pos %d last %d", (int)inbuf[inbufpos], a, inbufpos, lastMsg[a]);
 					lastLength=1;
 				}
 				break;
 			}
 			if(lastLength<=0){
-				info->AddLine("Server readnet got packet type %i length %i pos %i from %i??",thisMsg,lastLength,inbufpos,a);
+				logOutput.Print("Server readnet got packet type %i length %i pos %i from %i??",thisMsg,lastLength,inbufpos,a);
 				lastLength=1;
 			}
 			inbufpos+=lastLength;
@@ -485,7 +485,7 @@ bool CGameServer::ServerReadNet()
 		if(inbufpos!=inbuflength){
 			char txt[200];
 			sprintf(txt,"Wrong packet length got %d from %d instead of %d",inbufpos,a,inbuflength);
-			info->AddLine(txt);
+			logOutput.Print(txt);
 			handleerror(0,txt,"Server network error",0);
 		}
 	}
@@ -556,7 +556,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	serverframenum++;
 	if(serverNet->SendData<int>(NETMSG_NEWFRAME, serverframenum) == -1){
-		info->AddLine("Server net couldnt send new frame");
+		logOutput.Print("Server net couldnt send new frame");
 		globalQuit=true;
 	}
 }
@@ -579,7 +579,7 @@ void CGameServer::UpdateLoop()
 		{
 			boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 			if(!Update()){
-				info->AddLine("Game server experienced an error in update");
+				logOutput.Print("Game server experienced an error in update");
 				globalQuit=true;
 			}
 		}

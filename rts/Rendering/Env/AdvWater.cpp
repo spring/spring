@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
 #include "BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

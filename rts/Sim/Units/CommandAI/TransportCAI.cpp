@@ -10,7 +10,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Game/GameHelper.h"
@@ -99,7 +99,7 @@ void CTransportCAI::SlowUpdate(void)
 						am->ForceHeading(unit->heading);
 						am->SetWantedAltitude(unit->model->height);
 						am->maxDrift=1;
-						//info->AddLine("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
+						//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
 						if(owner->pos.distance(wantedPos)<4 && abs(owner->heading-unit->heading)<50 && owner->updir.dot(UpVector)>0.995){
 							am->dontCheckCol=false;
 							am->dontLand=true;

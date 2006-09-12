@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "PathManager.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/GroundMoveMath.h"
 #include "Sim/MoveTypes/MoveMath/HoverMoveMath.h"
@@ -113,7 +113,7 @@ Request a new multipath, store the result and return an handle-id to it.
 */
 unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, CPathFinderDef* peDef,float3 goalPos,CSolidObject* caller) {
 //	static int calls = 0;
-//	*info << "RequestPath() called: " << (++calls) << "\n";	//Debug
+//	logOutput << "RequestPath() called: " << (++calls) << "\n";	//Debug
 
 	START_TIME_PROFILE;
 
@@ -391,7 +391,7 @@ void CPathManager::TerrainChange(float3 upperCorner, float3 lowerCorner) {
 Tells estimators about changes in or on the map.
 */
 void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
-//	*info << "Terrain changed: (" << int(x1) << int(z1) << int(x2) << int(z2) << "\n";	//Debug
+//	logOutput << "Terrain changed: (" << int(x1) << int(z1) << int(x2) << int(z2) << "\n";	//Debug
 	pe->MapChanged(x1, z1, x2, z2);
 	pe2->MapChanged(x1, z1, x2, z2);
 }

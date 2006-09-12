@@ -13,7 +13,7 @@
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
 #include "FileSystem/FileHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Platform/errorhandler.h"
 
 using boost::spirit::parse;
@@ -144,7 +144,7 @@ void TdfParser::LoadFile(std::string const& filename)
       it !=e ; ++it ){
     std::string temp = boost::trim_copy( *it );
     if( ! temp.empty( ) ) {
-      ::info->AddLine( "Junk in "+ filename +  " :" + temp );
+      ::logOutput.Print( "Junk in "+ filename +  " :" + temp );
     }
   }
 
@@ -203,7 +203,7 @@ void TdfParser::LoadBuffer( char const* buf, std::size_t size)
       it !=e ; ++it ){
     std::string temp = boost::trim_copy( *it );
     if( ! temp.empty( ) ) {
-      ::info->AddLine( "Junk in "+ filename +  " :" + temp );
+      ::logOutput.Print( "Junk in "+ filename +  " :" + temp );
     }
   }
 
@@ -332,7 +332,7 @@ const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string co
 	if(root_section.sections.find(loclist[0]) == root_section.sections.end())
 	{
 //		handleerror(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
-		info->AddLine ("Section " + loclist[0] + " missing in file " + filename);
+		logOutput.Print ("Section " + loclist[0] + " missing in file " + filename);
 		return emptymap;
 	}
 	TdfSection *sectionptr = root_section.sections[loclist[0]];
@@ -344,7 +344,7 @@ const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string co
 		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end())
 		{
 //			handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
-			info->AddLine ("Section " + searchpath + " missing in file " + filename);
+			logOutput.Print ("Section " + searchpath + " missing in file " + filename);
 			return emptymap;
 		}
 		sectionptr = sectionptr->sections[loclist[i]];
@@ -368,7 +368,7 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location)
 			if(sectionsptr->find(loclist[i]) == sectionsptr->end())
 			{
 //				handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
-				info->AddLine ("Section " + searchpath + " missing in file " + filename);
+				logOutput.Print ("Section " + searchpath + " missing in file " + filename);
         		return returnvec;
 			}
 			sectionsptr = &sectionsptr->find(loclist[i])->second->sections;

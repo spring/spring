@@ -7,7 +7,7 @@
 #include "Sim/Units/Unit.h"
 #include "Map/Ground.h"
 #include "Sim/Units/UnitDef.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include <cctype>
 #include "Game/Camera.h"

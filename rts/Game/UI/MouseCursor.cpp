@@ -28,7 +28,7 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	curFrame = 0;
 
 	if (name.length() > 80) {
-		info->AddLine("CMouseCursor: Long name %s", name.c_str());
+		logOutput.Print("CMouseCursor: Long name %s", name.c_str());
 		return;
 	}
 
@@ -71,7 +71,7 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	}
 
 	if (frames.size() == 0) {
-		info->AddLine("No such cursor: %s", name.c_str());
+		logOutput.Print("No such cursor: %s", name.c_str());
 		return;
 	}
 

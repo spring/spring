@@ -48,3 +48,4 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 
 	exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash
 }
+

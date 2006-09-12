@@ -8,7 +8,7 @@
 #include "Game/Camera.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Platform/ConfigHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "mmgr.h"
 

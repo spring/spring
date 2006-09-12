@@ -13,7 +13,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "myMath.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Sound.h"
 #include "Map/MapDamage.h"
@@ -356,13 +356,13 @@ void CBuilder::StopBuild(bool callScript)
 	if(callScript)
 		cob->Call("StopBuilding");
 	ReleaseTempHoldFire();
-//	info->AddLine("stop build");
+//	logOutput.Print("stop build");
 }
 
 bool CBuilder::StartBuild(BuildInfo& buildInfo)
 {
 	StopBuild(false);
-//	info->AddLine("start build");
+//	logOutput.Print("start build");
 
 	buildInfo.pos=helper->Pos2BuildPos(buildInfo);
 

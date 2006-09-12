@@ -9,7 +9,7 @@
 #include "Map/Ground.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MiniMap.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "GL/IFramebuffer.h"
 
@@ -47,21 +47,21 @@ CShadowHandler::CShadowHandler(void): fb(0)
 
 	if (tmpFirstInstance) {
 		if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
-			info->AddLine("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
+			logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
 			return;
 		}
 
 		if(!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"unit.fp")){
-			info->AddLine("Your GFX card doesnt support the fragment programs needed to run in shadowed mode");
+			logOutput.Print("Your GFX card doesnt support the fragment programs needed to run in shadowed mode");
 			return;
 		}
 
 		if(!(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
 			if(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
-				info->AddLine("Using ARB_fragment_program_shadow");
+				logOutput.Print("Using ARB_fragment_program_shadow");
 				useFPShadows=true; // FIXME -- always true
 			} else {
-				info->AddLine("You are missing an OpenGL extension needed to use shadowmaps");
+				logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps");
 				return;
 			}
 		}
@@ -69,11 +69,11 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		if(!GLEW_ARB_shadow_ambient){
 			if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
 				if(!useFPShadows){
-					info->AddLine("Using ARB_fragment_program_shadow");
+					logOutput.Print("Using ARB_fragment_program_shadow");
 				}
 				useFPShadows = true; // FIXME -- always true
 			} else {
-				info->AddLine("You are missing the extension ARB_shadow_ambient, this will make shadows darker than they should be");
+				logOutput.Print("You are missing the extension ARB_shadow_ambient, this will make shadows darker than they should be");
 			}
 		}
 	}
@@ -196,7 +196,7 @@ void CShadowHandler::CreateShadows(void)
 	float maxLengthY=(y2-y1)*1.5;
 	xmid=1-(sqrt(fabs(x2))/(sqrt(fabs(x2))+sqrt(fabs(x1))));
 	ymid=1-(sqrt(fabs(y2))/(sqrt(fabs(y2))+sqrt(fabs(y1))));
-	//info->AddLine("%.0f %.0f %.2f %.0f",y1,y2,ymid,maxLengthY);
+	//logOutput.Print("%.0f %.0f %.2f %.0f",y1,y2,ymid,maxLengthY);
 
 	shadowMatrix[0]=cross1.x/maxLengthX;
 	shadowMatrix[4]=cross1.y/maxLengthX;
@@ -363,7 +363,7 @@ void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 		if(side.y>0){
 			if(b.dot(UpVector.cross(cam2->forward))<0 && upside){
 				colpoint=cam2->pos+cam2->forward*20000;
-				//info->AddLine("upward frustum");
+				//logOutput.Print("upward frustum");
 			}else
 				colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
 		}else

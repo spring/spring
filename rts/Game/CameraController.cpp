@@ -2,7 +2,7 @@
 #include "CameraController.h"
 #include "Camera.h"
 #include "Map/Ground.h"
-#include "UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "UI/MouseHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/UI/MiniMap.h"
@@ -109,7 +109,7 @@ float3 CFPSController::SwitchFrom()
 void CFPSController::SwitchTo(bool showText)
 {
 	if(showText)
-		info->AddLine("Switching to FPS style camera");
+		logOutput.Print("Switching to FPS style camera");
 }
 
 /////////////////////
@@ -240,7 +240,7 @@ float3 COverheadController::SwitchFrom()
 void COverheadController::SwitchTo(bool showText)
 {
 	if(showText)
-		info->AddLine("Switching to overhead (TA) style camera");
+		logOutput.Print("Switching to overhead (TA) style camera");
 }
 
 /////////////////////
@@ -346,7 +346,7 @@ float3 CTWController::SwitchFrom()
 void CTWController::SwitchTo(bool showText)
 {
 	if(showText)
-		info->AddLine("Switching to Total War style camera");
+		logOutput.Print("Switching to Total War style camera");
 }
 
 /////////////////////
@@ -442,7 +442,7 @@ float3 CRotOverheadController::SwitchFrom()
 void CRotOverheadController::SwitchTo(bool showText)
 {
 	if(showText)
-		info->AddLine("Switching to rotatable overhead camera");
+		logOutput.Print("Switching to rotatable overhead camera");
 }
 
 
@@ -501,7 +501,7 @@ float3 COverviewController::SwitchFrom()
 void COverviewController::SwitchTo(bool showText)
 {
 	if(showText)
-		info->AddLine("Switching to Overview style camera");
+		logOutput.Print("Switching to Overview style camera");
 
 	minimizeMinimap=minimap->minimized;
 	minimap->minimized=true;

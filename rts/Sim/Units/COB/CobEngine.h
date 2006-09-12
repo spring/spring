@@ -8,7 +8,7 @@
  */
 
 #include "CobThread.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 
 #include <list>
 #include <queue>

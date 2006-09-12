@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "CobFile.h"
 #include "FileSystem/FileHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
@@ -86,7 +86,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	// Handle errors (this is fairly fatal..)
 	if (size < 0) {
-		info->AddLine("Could not find script for unit %s", name.c_str());
+		logOutput.Print("Could not find script for unit %s", name.c_str());
 		exit(0);
 	}
 

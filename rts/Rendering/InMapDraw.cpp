@@ -11,7 +11,7 @@
 #include "glFont.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Game/Game.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sound.h"
 #include "Game/UI/MiniMap.h"
 #include "SDL_mouse.h"
@@ -263,8 +263,8 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 		int quad=int(pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
 		drawQuads[quad].points.push_back(p);
 
-		info->AddLine("%s added point: %s",gs->players[msg[2]]->playerName.c_str(),p.label.c_str());
-		info->SetLastMsgPos(pos);
+		logOutput.Print("%s added point: %s",gs->players[msg[2]]->playerName.c_str(),p.label.c_str());
+		logOutput.SetLastMsgPos(pos);
 		sound->PlaySample(blippSound);
 		minimap->AddNotification(pos,float3(1,1,1),1);	//todo: make compatible with new gui
 		break;}

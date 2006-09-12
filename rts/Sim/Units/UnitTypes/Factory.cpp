@@ -6,7 +6,7 @@
 #include "Factory.h"
 #include "Game/Team.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GameHelper.h"
 #include "Game/Camera.h"

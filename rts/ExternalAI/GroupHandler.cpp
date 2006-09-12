@@ -6,7 +6,7 @@
 #include "GroupHandler.h"
 #include "Group.h"
 #include "IGroupAI.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/SelectedUnits.h"
 #include "TimeProfiler.h"
 #include "Sim/Units/Unit.h"
@@ -68,13 +68,13 @@ void CGroupHandler::TestDll(string name)
 
 	lib = SharedLib::instantiate(name);
 	if (!lib){
-		info->AddLine ("Cant load dll: %s",name.c_str());
+		logOutput.Print ("Cant load dll: %s",name.c_str());
 		return;
 	}
 
 	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (!GetGroupAiVersion){
-		info->AddLine("Incorrect AI dll(%s): No GetGroupAiVersion function found", name.c_str());
+		logOutput.Print("Incorrect AI dll(%s): No GetGroupAiVersion function found", name.c_str());
 		delete lib;
 		return;
 	}
@@ -82,21 +82,21 @@ void CGroupHandler::TestDll(string name)
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION){
-		info->AddLine("AI dll %s has incorrect version", name.c_str());
+		logOutput.Print("AI dll %s has incorrect version", name.c_str());
 		delete lib;
 		return;
 	}
 
 	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 	if (!IsUnitSuited){
-		info->AddLine ("No IsUnitSuited function found in AI dll %s", name.c_str());
+		logOutput.Print ("No IsUnitSuited function found in AI dll %s", name.c_str());
 		delete lib;
 		return;
 	}
 	
 	GetAiNameList = (GETAINAMELIST)lib->FindAddress("GetAiNameList");
 	if (!GetAiNameList){
-		info->AddLine("No GetAiNameList function found in AI dll %s",name.c_str());
+		logOutput.Print("No GetAiNameList function found in AI dll %s",name.c_str());
 		delete lib;
 		return;
 	}
@@ -109,7 +109,7 @@ void CGroupHandler::TestDll(string name)
 		key.aiNumber=i;
 		availableAI[key]=string(aiNameList[i]);
 	}
-//	(*info) << name.c_str() << " " << c << "\n";
+//	logOutput << name.c_str() << " " << c << "\n";
 	delete lib;
 }
 
@@ -171,7 +171,7 @@ CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
 void CGroupHandler::RemoveGroup(CGroup* group)
 {
 	if(group->id<10){
-		info->AddLine("Warning trying to remove hotkey group %i",group->id);
+		logOutput.Print("Warning trying to remove hotkey group %i",group->id);
 		return;
 	}
 	if(selectedUnits.selectedGroup==group->id)

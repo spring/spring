@@ -4,7 +4,7 @@
 #include "Object.h"
 #include "CobInstance.h"
 #include <vector>
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 
 class CCobFile;
 class CCobInstance;

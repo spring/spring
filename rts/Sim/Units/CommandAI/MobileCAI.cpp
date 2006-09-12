@@ -10,7 +10,7 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -228,7 +228,7 @@ void CMobileCAI::SlowUpdate()
 		break;}
 	case CMD_PATROL:{
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got patrol cmd with less than 3 params on %s in mobilecai",
+			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in mobilecai",
 				owner->unitDef->humanName.c_str());
 			return;
 		}
@@ -252,7 +252,7 @@ void CMobileCAI::SlowUpdate()
 			tempOrder = false;
 		}
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got fight cmd with less than 3 params on %s in mobilecai",
+			logOutput.Print("Error: got fight cmd with less than 3 params on %s in mobilecai",
 				owner->unitDef->humanName.c_str());
 			return;
 		}
@@ -518,7 +518,7 @@ void CMobileCAI::FinishCommand(void)
 {
 	if(!(commandQue.front().options & INTERNAL_ORDER)){
 		lastUserGoal=owner->pos;
-//		info->AddLine("Reseting user goal");
+//		logOutput.Print("Reseting user goal");
 	}
 	CCommandAI::FinishCommand();
 }

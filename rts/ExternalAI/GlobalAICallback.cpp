@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "GlobalAICallback.h"
 #include "GlobalAI.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "GroupHandler.h"
 #include "AICheats.h"
 #include "mmgr.h"
@@ -23,7 +23,7 @@ IAICheats* CGlobalAICallback::GetCheatInterface()
 	if(cheats)
 		return cheats;
 
-	info->AddLine ("AI has enabled cheating.");
+	logOutput.Print ("AI has enabled cheating.");
 	cheats=new CAICheats(ai);
 	return cheats;
 }

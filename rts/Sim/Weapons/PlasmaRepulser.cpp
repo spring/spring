@@ -4,7 +4,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Projectiles/RepulseGfx.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"

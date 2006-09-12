@@ -14,7 +14,7 @@
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/Team.h"
 #include "Game/UI/MouseHandler.h"

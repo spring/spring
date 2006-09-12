@@ -328,7 +328,7 @@ void CKeyBindings::OutputDebug(const char* msg) const
 {
 	printf("%s\n", msg);
 	if (debug >= 2) {
-		info->AddLine(string(msg));
+		logOutput.Print(string(msg));
 	}
 }
 

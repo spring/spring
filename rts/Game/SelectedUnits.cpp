@@ -12,7 +12,7 @@
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "UI/CommandColors.h"
-#include "UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "SelectedUnitsAI.h"
 #include "Sim/Misc/Feature.h"
@@ -210,7 +210,7 @@ void CSelectedUnits::ToggleBuildIconsFirst()
 
 void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 {
-//	info->AddLine("Command given %i",c.id);
+//	logOutput.Print("Command given %i",c.id);
 	if(gu->spectating || selectedUnits.empty())
 		return;
 

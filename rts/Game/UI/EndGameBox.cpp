@@ -10,7 +10,7 @@
 #include "Game/SelectedUnits.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/UI/GUI/GUIframe.h"
 
 extern bool globalQuit;

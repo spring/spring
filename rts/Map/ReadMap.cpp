@@ -19,7 +19,7 @@
 #include "SM3/Sm3Map.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "MetalMap.h"
 #include "Sim/Path/PathManager.h"
 #include "LoadSaveInterface.h"
@@ -463,9 +463,9 @@ void CReadMap::CleanBlockingMap(CSolidObject* object) {
 		}
 
 	if(counter > 0) {
-		*info << "Dead references: " << counter << "\n";
+		logOutput << "Dead references: " << counter << "\n";
 		if(dynamic_cast<CUnit*>(object)){
-			info->AddLine("From %s",((CUnit*)object)->unitDef->humanName.c_str());
+			logOutput.Print("From %s",((CUnit*)object)->unitDef->humanName.c_str());
 		}
 	}
 }

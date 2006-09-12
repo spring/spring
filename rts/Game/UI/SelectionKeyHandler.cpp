@@ -173,7 +173,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			selection.push_back(*ui);
 		}
 	} else {
-		info->AddLine("Unknown source token %s",s.c_str());
+		logOutput.Print("Unknown source token %s",s.c_str());
 		return;
 	}
 
@@ -417,7 +417,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 
 		} else {
-			info->AddLine("Unknown token in filter %s",s.c_str());
+			logOutput.Print("Unknown token in filter %s",s.c_str());
 			return;
 		}
 	}
@@ -506,7 +506,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		selectNumber+=num;
 	} else {
-		info->AddLine("Unknown token in conclusion %s",s.c_str());
+		logOutput.Print("Unknown token in conclusion %s",s.c_str());
 		return;
 	}
 }

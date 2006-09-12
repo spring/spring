@@ -2,7 +2,7 @@
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include "RefractWater.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/ReadMap.h"
 #include "bitops.h"
 

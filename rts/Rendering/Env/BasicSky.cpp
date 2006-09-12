@@ -14,7 +14,7 @@
 #include "TimeProfiler.h"
 #include "Platform/ConfigHandler.h"
 #include "Matrix44f.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

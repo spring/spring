@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "PathEstimator.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include <fstream>
@@ -374,7 +374,7 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 
 	CPathCache::CacheItem* ci=pathCache->GetCachedPath(startBlock,goalBlock,peDef.sqGoalRadius,moveData.pathType);
 	if(ci){
-//		info->AddLine("Using cached path %i",BLOCK_SIZE);
+//		logOutput.Print("Using cached path %i",BLOCK_SIZE);
 		path=ci->path;
 /*		if(BLOCK_SIZE==8){
 			END_TIME_PROFILE("Estimater 8");
@@ -383,7 +383,7 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 		}*/
 		return ci->result;
 	}
-//	info->AddLine("----Creating new path %i",BLOCK_SIZE);
+//	logOutput.Print("----Creating new path %i",BLOCK_SIZE);
 
 	//Search
 	SearchResult result = InitSearch(moveData, peDef);
@@ -393,17 +393,17 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 		FinishSearch(moveData, path);
 		pathCache->AddPath(&path,result,startBlock,goalBlock,peDef.sqGoalRadius,moveData.pathType);		//only add succesfull paths to the cache
 		if(PATHDEBUG) {
-			*info << "PE: Search completed.\n";
-			*info << "Tested blocks: " << testedBlocks << "\n";
-			*info << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
-			*info << "Path length: " << (int)(path.path.size()) << "\n";
-			*info << "Path cost: " << path.pathCost << "\n";
+			logOutput << "PE: Search completed.\n";
+			logOutput << "Tested blocks: " << testedBlocks << "\n";
+			logOutput << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
+			logOutput << "Path length: " << (int)(path.path.size()) << "\n";
+			logOutput << "Path cost: " << path.pathCost << "\n";
 		}
 	} else {
 		if(PATHDEBUG) {
-			*info << "PE: Search failed!\n";
-			*info << "Tested blocks: " << testedBlocks << "\n";
-			*info << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
+			logOutput << "PE: Search failed!\n";
+			logOutput << "Tested blocks: " << testedBlocks << "\n";
+			logOutput << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
 		}
 	}
 /*	if(BLOCK_SIZE==8){
@@ -512,7 +512,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		return GoalOutOfRange;
 
 	//Below shall never be runned.
-	*info << "ERROR: CPathEstimator::DoSearch() - Unhandled end of search!\n";
+	logOutput << "ERROR: CPathEstimator::DoSearch() - Unhandled end of search!\n";
 	return Error;
 }
 
@@ -668,7 +668,7 @@ bool CPathEstimator::ReadFile(string name)
 	if (fh) {
 		unsigned int filehash = 0;
  		//Check hash.
-//		info->AddLine("%i",hash);
+//		logOutput.Print("%i",hash);
 		file.ReadFile(fh, &filehash, 4);
 		if(filehash != hash)
 			return false;

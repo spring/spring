@@ -105,7 +105,7 @@ S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
 	if(model->relMidPos.y<1)
 		model->relMidPos.y=1;
 
-//	info->AddLine("%s has height %f",name,model->height);
+//	logOutput.Print("%s has height %f",name,model->height);
 	fartextureHandler->CreateFarTexture(model);
 
 	model->maxx=model->rootobjects3o->maxx;
@@ -180,7 +180,7 @@ void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<st
 		lmodel->scritoa[cur] = *piecenum;
 	}
 	else {
-//		info->AddLine("CreateLocalModel: Could not map %s to script", lmodel->pieces[*piecenum].name.c_str());
+//		logOutput.Print("CreateLocalModel: Could not map %s to script", lmodel->pieces[*piecenum].name.c_str());
 	}
 
 	int thispiece = *piecenum;

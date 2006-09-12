@@ -9,7 +9,7 @@
 #include <list>
 #include "Map/ReadMap.h"
 #include "TimeProfiler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
 #include "Sim/Misc/SensorHandler.h"
@@ -489,14 +489,14 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 			toBeDeleted.push_back(instance);
 		}
 		if(instance->hashNum>=2310 || instance->hashNum<0){
-			info->AddLine("bad los");
+			logOutput.Print("bad los");
 		}
 		if(toBeDeleted.size()>500){
 			LosInstance* i=toBeDeleted.front();
 			toBeDeleted.pop_front();
-//			info->AddLine("del %i",i->hashNum);
+//			logOutput.Print("del %i",i->hashNum);
 			if(i->hashNum>=2310 || i->hashNum<0){
-				info->AddLine("bad los 2");
+				logOutput.Print("bad los 2");
 				return;
 			}
 			i->toBeDeleted=false;

@@ -7,7 +7,7 @@
 #include "Platform/ConfigHandler.h"
 #include "BFGroundTextures.h"
 #include "BFGroundDrawer.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "myMath.h"
 #include "Platform/errorhandler.h"
@@ -68,7 +68,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	gs->pwr2mapx=next_power_of_2(gs->mapx);
 	gs->pwr2mapy=next_power_of_2(gs->mapy);
 
-//	info->AddLine("%i %i",gs->mapx,gs->mapy);
+//	logOutput.Print("%i %i",gs->mapx,gs->mapy);
 	float3::maxxpos=gs->mapx*SQUARE_SIZE-1;
 	float3::maxzpos=gs->mapy*SQUARE_SIZE-1;
 
@@ -175,7 +175,7 @@ void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	int xsize=x2-x1;
 	int ysize=y2-y1;
 
-	//info->AddLine("%i %i %i %i",x1,x2,y1,y2);
+	//logOutput.Print("%i %i %i %i",x1,x2,y1,y2);
 	unsigned char* tempMem=new unsigned char[xsize*ysize*4];
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
