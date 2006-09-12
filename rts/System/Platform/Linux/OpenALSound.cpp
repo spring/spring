@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "Sound.h"
 
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Sim/Objects/WorldObject.h"
@@ -100,7 +100,7 @@ static bool CheckError(const char* msg)
 {
 	ALenum e = alGetError();
 	if (e != AL_NO_ERROR) {
-		(*info) << msg << ": " << (char*)alGetString(e) << "\n";
+		logOutput << msg << ": " << (char*)alGetString(e) << "\n";
 		return false;
 	}
 	return true;

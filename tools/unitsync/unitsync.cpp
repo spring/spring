@@ -32,27 +32,24 @@
 static CSyncer *syncer = NULL;
 
 // And the following makes the hpihandler happy
-class CInfoConsole {
+class CLogOutput {
 public:
-	void AddLine(const char *, ...);
-	void AddLine(const string& text); // HACKS FTW!   :/
+//	void AddLine(const char *, ...);
+	void Print(const string& text);
 };
+
+CLogOutput logOutput;
 
 // I'd rather not include globalstuff
 #define SQUARE_SIZE 8
 
-void CInfoConsole::AddLine(const char *, ...)
-{
-}
-void CInfoConsole::AddLine (const string& text)
-{
-}
+void CLogOutput::Print (const string& text)
+{}
 
 void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {
 	MessageBox(0,msg,capt,MB_OK);
 }
 
-class CInfoConsole *info;
 
 #ifdef WIN32
 BOOL __stdcall DllMain(HINSTANCE hInst,

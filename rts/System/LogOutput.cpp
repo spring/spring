@@ -2,6 +2,7 @@
 #include "StdAfx.h"
 #include "LogOutput.h"
 #include <fstream>
+#include <cstdarg>
 
 #ifdef _MSC_VER
 #include <windows.h>
