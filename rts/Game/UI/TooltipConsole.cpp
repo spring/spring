@@ -27,13 +27,13 @@ void CTooltipConsole::Draw(void)
 	glColor4f(0.2f,0.2f,0.2f,0.5f);
 
 	glBegin(GL_TRIANGLE_STRIP);
-		glVertex3f(0.01f,0.01f,0);
-		glVertex3f(0.41f,0.01f,0);
-		glVertex3f(0.01f,0.1f,0);
-		glVertex3f(0.41f,0.1f,0);
+		glVertex3f(0,0,0);
+		glVertex3f(0.41f,0,0);
+		glVertex3f(0,0.08f,0);
+		glVertex3f(0.41f,0.08f,0);
 	glEnd();
 
-	glTranslatef(0.015f,0.08f,0);
+	glTranslatef(0.015f,0.06f,0);
 	glScalef(0.015f,0.015f,0.015f);
 	glColor4f(1,1,1,0.8f);
 

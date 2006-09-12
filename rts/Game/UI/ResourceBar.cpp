@@ -13,9 +13,9 @@ CResourceBar* resourceBar=0;
 CResourceBar::CResourceBar(void)
 {
 	box.x1 = 0.26f;
-	box.y1 = 0.96f;
-	box.x2 = 0.98f;
-	box.y2 = 0.99f;
+	box.y1 = 0.97f;
+	box.x2 = 1;
+	box.y2 = 1;
 
 	metalBox.x1 = 0.09f;
 	metalBox.y1 = 0.01f;
@@ -134,7 +134,7 @@ void CResourceBar::Draw(void)
 	glDisable(GL_TEXTURE_2D);
 
 	//layout energy in box
-	GLfloat energyx = box.x1+0.37f;
+	GLfloat energyx = box.x1+0.4f;
 	GLfloat energyy = box.y1+0.002f;
 
 	GLfloat energybarx1 = energyx+.08f;
