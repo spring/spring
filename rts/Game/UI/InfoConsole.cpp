@@ -53,7 +53,7 @@ void CInfoConsole::Draw()
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0,0,0.5f,0.5f);
+	glColor4f(0.5f,0.5f,0.5f,0.4f);
 	if(!data.empty()){
 		glBegin(GL_TRIANGLE_STRIP);
 			glVertex3f(xpos,ypos,0);
