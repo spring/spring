@@ -226,7 +226,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	}
 	weaponDefs[id].damages.craterBoost=atof(sunparser->SGetValueDef("0", weaponname + "\\craterboost").c_str());
 
-	weaponDefs[id].areaOfEffect=atof(sunparser->SGetValueDef("8", weaponname + "\\areaofeffect").c_str())*0.5;
+	weaponDefs[id].areaOfEffect=atof(sunparser->SGetValueDef("8", weaponname + "\\areaofeffect").c_str())*0.5f;
 	weaponDefs[id].edgeEffectivness=atof(sunparser->SGetValueDef("0", weaponname + "\\edgeEffectivness").c_str());
 	weaponDefs[id].projectilespeed = atof(sunparser->SGetValueDef("0", weaponname + "\\weaponvelocity").c_str())/GAME_SPEED;
 	weaponDefs[id].startvelocity = max(0.01f,(float)atof(sunparser->SGetValueDef("0", weaponname + "\\startvelocity").c_str())/GAME_SPEED);
@@ -234,12 +234,12 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	weaponDefs[id].reload = atof(sunparser->SGetValueDef("1", weaponname + "\\reloadtime").c_str());
 	weaponDefs[id].salvodelay = atof(sunparser->SGetValueDef("0.1", weaponname + "\\burstrate").c_str());
 	sunparser->GetDef(weaponDefs[id].salvosize, "1", weaponname + "\\burst");
-	weaponDefs[id].maxAngle = atof(sunparser->SGetValueDef("3000", weaponname + "\\tolerance").c_str()) * 180.0 / 0x7fff;
+	weaponDefs[id].maxAngle = atof(sunparser->SGetValueDef("3000", weaponname + "\\tolerance").c_str()) * 180.0f / 0x7fff;
 	weaponDefs[id].restTime = 0.0f;
 	sunparser->GetDef(weaponDefs[id].metalcost, "0", weaponname + "\\metalpershot");
 	sunparser->GetDef(weaponDefs[id].energycost, "0", weaponname + "\\energypershot");
 	sunparser->GetDef(weaponDefs[id].selfExplode, "0", weaponname + "\\burnblow");
-	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01;
+	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01f;
 	weaponDefs[id].paralyzer=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\paralyzer").c_str());
 	if(weaponDefs[id].paralyzer)
 		weaponDefs[id].damages.paralyzeDamageTime=atoi(sunparser->SGetValueDef("10", weaponname + "\\paralyzetime").c_str());
@@ -267,8 +267,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].shieldPowerRegen, "0", weaponname + "\\shieldpowerregen");
 	sunparser->GetDef(weaponDefs[id].shieldPowerRegenEnergy, "0", weaponname + "\\shieldpowerregenenergy");
 	sunparser->GetDef(weaponDefs[id].shieldInterceptType, "0", weaponname + "\\shieldintercepttype");
-	weaponDefs[id].shieldGoodColor=sunparser->GetFloat3(float3(0.5,0.5,1),weaponname + "\\shieldgoodcolor");
-	weaponDefs[id].shieldBadColor=sunparser->GetFloat3(float3(1,0.5,0.5),weaponname + "\\shieldbadcolor");
+	weaponDefs[id].shieldGoodColor=sunparser->GetFloat3(float3(0.5f,0.5f,1),weaponname + "\\shieldgoodcolor");
+	weaponDefs[id].shieldBadColor=sunparser->GetFloat3(float3(1,0.5f,0.5f),weaponname + "\\shieldbadcolor");
 	sunparser->GetDef(weaponDefs[id].shieldAlpha, "0.2", weaponname + "\\shieldalpha");
 
 	int defInterceptType=0;
@@ -312,7 +312,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 
 	float3 rgbcol = hs2rgb(color/float(255), color2/float(255));
 	weaponDefs[id].visuals.color = rgbcol;
-	weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(1,1.0,1.0),weaponname + "\\rgbcolor2");
+	weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(1,1.0f,1.0f),weaponname + "\\rgbcolor2");
 
 	float3 tempCol=sunparser->GetFloat3(float3(-1,-1,-1),weaponname + "\\rgbcolor");
 	if(tempCol!=float3(-1,-1,-1))
@@ -323,7 +323,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	weaponDefs[id].turnrate = atof(sunparser->SGetValueDef("0", weaponname + "\\turnrate").c_str()) * PI / 0x7fff /30.0f;
 
 	if(weaponDefs[id].type=="AircraftBomb"){
-		if(weaponDefs[id].reload<0.5){
+		if(weaponDefs[id].reload<0.5f){
 			weaponDefs[id].salvodelay=min(0.2f,weaponDefs[id].reload);
 			weaponDefs[id].salvosize=(int)(1/weaponDefs[id].salvodelay)+1;
 			weaponDefs[id].reload=5;
@@ -333,10 +333,10 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		}
 	}
 //	if(!weaponDefs[id].turret && weaponDefs[id].type!="TorpedoLauncher")
-//		weaponDefs[id].maxAngle*=0.4;
+//		weaponDefs[id].maxAngle*=0.4f;
 
-	//2+min(damages[0]*0.0025,weaponDef->areaOfEffect*0.1)
-	float tempsize = 2.0f+min(weaponDefs[id].damages[0]*0.0025,weaponDefs[id].areaOfEffect*0.1);
+	//2+min(damages[0]*0.0025f,weaponDef->areaOfEffect*0.1f)
+	float tempsize = 2.0f+min(weaponDefs[id].damages[0]*0.0025f,weaponDefs[id].areaOfEffect*0.1f);
 	sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
 	sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.2", weaponname + "\\sizeGrowth");
 	sunparser->GetDef(weaponDefs[id].collisionSize, "0.05", weaponname + "\\CollisionSize");
@@ -362,8 +362,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
 		sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.1", weaponname + "\\sizeGrowth");
 		sunparser->GetDef(weaponDefs[id].intensity, "0.4", weaponname + "\\intensity");
-		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(1.0,1,0.9),weaponname + "\\rgbcolor");
-		weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(0.025,0.0035,0.0035),weaponname + "\\rgbcolor2");
+		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(1.0f,1,0.9f),weaponname + "\\rgbcolor");
+		weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(0.025f,0.0035f,0.0035f),weaponname + "\\rgbcolor2");
 	} else if(weaponDefs[id].type=="MissileLauncher"){
 		//CMissileProjectile
 		weaponDefs[id].visuals.texture1 = &ph->flaretex;
@@ -470,7 +470,7 @@ WeaponDef *CWeaponDefHandler::GetWeapon(const std::string weaponname2)
 
 float3 CWeaponDefHandler::hs2rgb(float h, float s)
 {
-	if(h>0.5)
+	if(h>0.5f)
 		h+=0.1f;
 	if(h>1)
 		h-=1;
@@ -479,28 +479,28 @@ float3 CWeaponDefHandler::hs2rgb(float h, float s)
 	float invSat=1-s;
 	float3 col(invSat/2,invSat/2,invSat/2);
 
-	if(h<1/6.0){
+	if(h<1/6.0f){
 		col.x+=s;
 		col.y+=s*(h*6);
-	} else if(h<1/3.0){
+	} else if(h<1/3.0f){
 		col.y+=s;
-		col.x+=s*((1/3.0-h)*6);
+		col.x+=s*((1/3.0f-h)*6);
 
-	} else if(h<1/2.0){
+	} else if(h<1/2.0f){
 		col.y+=s;
-		col.z+=s*((h-1/3.0)*6);
+		col.z+=s*((h-1/3.0f)*6);
 
-	} else if(h<2/3.0){
+	} else if(h<2/3.0f){
 		col.z+=s;
-		col.y+=s*((2/3.0-h)*6);
+		col.y+=s*((2/3.0f-h)*6);
 
-	} else if(h<5/6.0){
+	} else if(h<5/6.0f){
 		col.z+=s;
-		col.x+=s*((h-2/3.0)*6);
+		col.x+=s*((h-2/3.0f)*6);
 
 	} else {
 		col.x+=s;
-		col.z+=s*((3/3.0-h)*6);
+		col.z+=s*((3/3.0f-h)*6);
 	}
 	return col;
 }

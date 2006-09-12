@@ -12,7 +12,7 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& d
 	dir(dir),
 	age(0)
 {
-	this->pos-=dir*size*0.2;
+	this->pos-=dir*size*0.2f;
 	checkCol=false;
 	castShadow=true;
 	numFlame=1+(int)(size*3);
@@ -22,7 +22,7 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& d
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	for(int a=0;a<numSmoke;++a){
-		randSmokeDir[a]=dir+gu->usRandFloat()*0.4;
+		randSmokeDir[a]=dir+gu->usRandFloat()*0.4f;
 	}
 	POP_CODE_MODE;
 #ifdef TRACE_SYNC
@@ -55,11 +55,11 @@ void CMuzzleFlame::Draw(void)
 
 	for(int a=0;a<numSmoke;++a){
 		int tex=a%12;
-		//float xmod=0.125+(float(int(tex%6)))/16;
-		//float ymod=(int(tex/6))/16.0;
+		//float xmod=0.125f+(float(int(tex%6)))/16;
+		//float ymod=(int(tex/6))/16.0f;
 
 		float drawsize=modAge*3;
-		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4);
+		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4f);
 		float fade=std::max(0.f, std::min(1.f, (1-alpha)*(20+a)*0.1f));
 
 		col[0]=(unsigned char) (180*alpha*fade);

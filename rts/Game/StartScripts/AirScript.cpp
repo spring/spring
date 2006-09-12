@@ -46,12 +46,12 @@ void CAirScript::Update()
 		ENTER_SYNCED;
 		for(int a=0;a<10;++a){
 			CUnit* u;
-			if(gs->randFloat()<0.5)
+			if(gs->randFloat()<0.5f)
 				u=unitLoader.LoadUnit("ARMHAWK",float3(1650,300,2100+a*150),0,false);
 			else
 				u=unitLoader.LoadUnit("ARMFIG",float3(1650,300,2100+a*150),0,false);
 			u->pos.y=350;
-			u->experience=0.3;
+			u->experience=0.3f;
 			((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
 			planes.push_back(u->id);
 			Command c2;
@@ -67,14 +67,14 @@ void CAirScript::Update()
 			c.params.push_back(2560);
 			u->commandAI->GiveCommand(c);
 
-			if(gs->randFloat()<0.5){
+			if(gs->randFloat()<0.5f){
 				u=unitLoader.LoadUnit("CORVAMP",float3(3880,300,2100+a*150),1,false);
 				((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
 			}else{
 				u=unitLoader.LoadUnit("CORAPE",float3(3880,300,2100+a*150),1,false);
 			}
 			u->pos.y=350;
-			u->experience=0.3;
+			u->experience=0.3f;
 			planes.push_back(u->id);
 			u->commandAI->GiveCommand(c2);
 			c.params[0]=500;
@@ -92,8 +92,8 @@ void CAirScript::Update()
 				else
 					u=unitLoader.LoadUnit("CORVAMP",float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false);
 				u->pos.y=ground->GetHeight(1000+(num&1)*5000,2100+num*120)+350;
-				u->experience=0.3;
-				u->speed.x=2.8;
+				u->experience=0.3f;
+				u->speed.x=2.8f;
 				((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
 				*pi=u->id;
 

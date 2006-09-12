@@ -117,7 +117,7 @@ void GUIgraph::BuildList()
 		width=guifont->GetWidth(graphNames[1]);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glColor4f(0,0,0, 0.4);
+	glColor4f(0,0,0, 0.4f);
 
 	glBegin(GL_QUADS);
 		glVertex2f(w-width-15, y-5);
@@ -197,7 +197,7 @@ void GUIgraph::BuildList()
 
 		sprintf(buf, "%i", tick);
 	
-		guifont->Print(w+5, i*h/numTicks-guifont->GetHeight()/2.0, buf);
+		guifont->Print(w+5, i*h/numTicks-guifont->GetHeight()/2.0f, buf);
 	}
 
 	

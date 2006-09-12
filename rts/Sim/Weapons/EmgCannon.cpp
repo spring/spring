@@ -55,13 +55,13 @@ bool CEmgCannon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	dir/=length;
 
 	float g=ground->LineGroundCol(weaponPos,pos);
-	if(g>0 && g<length*0.9)
+	if(g>0 && g<length*0.9f)
 		return false;
 
 	if(helper->LineFeatureCol(weaponPos,dir,length))
 		return false;
 
-	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.5),owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.5f),owner->allyteam,owner))
 		return false;
 	return true;
 }
@@ -84,7 +84,7 @@ void CEmgCannon::Fire(void)
 		dir=targetPos-weaponPos;
 		dir.Normalize();
 	}
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5);
+	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
 	new CEmgProjectile(weaponPos,dir*projectileSpeed,owner,damages,weaponDef->visuals.color,weaponDef->intensity,(int)(range/projectileSpeed), weaponDef);

@@ -112,7 +112,7 @@ void CSelectedUnitsAI::CalculateGroupData(int player) {
 	float3 sumCoor = minCoor = maxCoor = float3(0, 0, 0);
 	float3 mobileSumCoor = sumCoor;
 	int mobileUnits = 0;
-	minMaxSpeed = 1e9;
+	minMaxSpeed = 1e9f;
 	for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
 		CUnit* unit=uh->units[*ui];
 		if(unit){

@@ -169,15 +169,15 @@ bool CGameServer::Update()
 			}
 
 			if (maxCpu != 0) {
-				float wantedCpu=0.35+(1-gs->speedFactor/gs->userSpeedFactor)*0.5;
+				float wantedCpu=0.35f+(1-gs->speedFactor/gs->userSpeedFactor)*0.5f;
 				//float speedMod=1+wantedCpu-maxCpu;
 				float newSpeed=gs->speedFactor*wantedCpu/maxCpu;
 				//logOutput.Print("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
-				newSpeed=(newSpeed+gs->speedFactor)*0.5;
+				newSpeed=(newSpeed+gs->speedFactor)*0.5f;
 				if(newSpeed>gs->userSpeedFactor)
 					newSpeed=gs->userSpeedFactor;
-				if(newSpeed<0.1)
-					newSpeed=0.1;
+				if(newSpeed<0.1f)
+					newSpeed=0.1f;
 				if(newSpeed!=gs->speedFactor)
 					serverNet->SendData<float>(NETMSG_INTERNAL_SPEED, newSpeed);
 			}
@@ -191,7 +191,7 @@ bool CGameServer::Update()
 	if (game && game->playing && !serverNet->playbackDemo){
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
-		float timeElapsed=((float)(currentFrame - lastframe))/1000.;
+		float timeElapsed=((float)(currentFrame - lastframe))/1000.f;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		logOutput.Print("float value is %f",timeElapsed);

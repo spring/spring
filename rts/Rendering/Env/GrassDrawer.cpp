@@ -64,7 +64,7 @@ CGrassDrawer::CGrassDrawer()
 	maxGrassDist=800+sqrt((float)detail)*240;
 	maxDetailedDist=146+detail*24;
 	detailedBlocks=(int)((maxDetailedDist-24)/(SQUARE_SIZE*grassSquareSize*grassBlockSize))+1;
-	numTurfs=3+(int)(detail*0.5);
+	numTurfs=3+(int)(detail*0.5f);
 	strawPerTurf=50+(int)sqrt((float)detail)*10;
 
 //	logOutput.Print("%f %f %i %i %i",maxGrassDist,maxDetailedDist,detailedBlocks,numTurfs,strawPerTurf);
@@ -180,7 +180,7 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 					srand((y*grassBlockSize+y2)*1025+(x*grassBlockSize+x2));
 					rand();
 					rand();
-					float3 squarePos((x*grassBlockSize+x2+0.5)*SQUARE_SIZE*grassSquareSize, 0, (y*grassBlockSize+y2+0.5)*SQUARE_SIZE*grassSquareSize);
+					float3 squarePos((x*grassBlockSize+x2+0.5f)*SQUARE_SIZE*grassSquareSize, 0, (y*grassBlockSize+y2+0.5f)*SQUARE_SIZE*grassSquareSize);
 					squarePos.y=ground->GetHeight2(squarePos.x,squarePos.z);
 					if(camera->InView(squarePos,SQUARE_SIZE*grassSquareSize)){
 						float sqdist=(camera->pos-squarePos).SqLength();
@@ -191,15 +191,15 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 								float dy=(y*grassBlockSize+y2+fRand(1))*SQUARE_SIZE*grassSquareSize;
 								float3 pos(dx,ground->GetHeight2(dx,dy),dy);
 								pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
-								float col=0.62;
+								float col=0.62f;
 								glColor3f(col,col,col);
-								if(camera->InView(pos,turfSize*0.7)){
+								if(camera->InView(pos,turfSize*0.7f)){
 									glPushMatrix();
 									glTranslatef3(pos);
 									CGrassDrawer::NearGrassStruct* ng=&nearGrass[((y*grassBlockSize+y2)&31)*32+((x*grassBlockSize+x2)&31)];
 									if(ng->square!=(y*grassBlockSize+y2)*2048+(x*grassBlockSize+x2)){
 										float3 v=squarePos-camera->pos;
-										ng->rotation=GetHeadingFromVector(v.x,v.z)*180.0/32768+180;
+										ng->rotation=GetHeadingFromVector(v.x,v.z)*180.0f/32768+180;
 										ng->square=(y*grassBlockSize+y2)*2048+(x*grassBlockSize+x2);
 									}
 									glRotatef(ng->rotation,0,1,0);
@@ -222,9 +222,9 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 		return;
 	}
 	float3 dif;
-	dif.x=camera->pos.x-((x+0.5)*SQUARE_SIZE*blockMapSize);
+	dif.x=camera->pos.x-((x+0.5f)*SQUARE_SIZE*blockMapSize);
 	dif.y=0;
-	dif.z=camera->pos.z-((y+0.5)*SQUARE_SIZE*blockMapSize);
+	dif.z=camera->pos.z-((y+0.5f)*SQUARE_SIZE*blockMapSize);
 	float dist=dif.Length2D();
 	dif/=dist;
 
@@ -243,7 +243,7 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 		}
 		if(!grass[curModSquare].va){
 			grass[curModSquare].va=new CVertexArray;;
-			grass[curModSquare].pos=float3((x+0.5)*SQUARE_SIZE*blockMapSize,ground->GetHeight2((x+0.5)*SQUARE_SIZE*blockMapSize,(y+0.5)*SQUARE_SIZE*blockMapSize),(y+0.5)*SQUARE_SIZE*blockMapSize);
+			grass[curModSquare].pos=float3((x+0.5f)*SQUARE_SIZE*blockMapSize,ground->GetHeight2((x+0.5f)*SQUARE_SIZE*blockMapSize,(y+0.5f)*SQUARE_SIZE*blockMapSize),(y+0.5f)*SQUARE_SIZE*blockMapSize);
 			va=grass[curModSquare].va;
 			va->Initialize();
 			for(int y2=0;y2<grassBlockSize;y2++){
@@ -260,10 +260,10 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 							float col=1;
 
 							pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
-							va->AddVertexTN(pos,0,0,float3(-turfSize*0.6,-turfSize*0.6,col));
-							va->AddVertexTN(pos,1/16.0,0,float3(turfSize*0.6,-turfSize*0.6,col));
-							va->AddVertexTN(pos,1/16.0,1,float3(turfSize*0.6,turfSize*0.6,col));
-							va->AddVertexTN(pos,0,1,float3(-turfSize*0.6,turfSize*0.6,col));
+							va->AddVertexTN(pos,0,0,float3(-turfSize*0.6f,-turfSize*0.6f,col));
+							va->AddVertexTN(pos,1/16.0f,0,float3(turfSize*0.6f,-turfSize*0.6f,col));
+							va->AddVertexTN(pos,1/16.0f,1,float3(turfSize*0.6f,turfSize*0.6f,col));
+							va->AddVertexTN(pos,0,1,float3(-turfSize*0.6f,turfSize*0.6f,col));
 						}
 					}
 				}
@@ -281,15 +281,15 @@ void CGrassDrawer::Draw(void)
 	if(grassOff || !readmap->GetGrassShadingTexture())
 		return;
 
-	glColor4f(0.62,0.62,0.62,1);
+	glColor4f(0.62f,0.62f,0.62f,1);
 
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
 
 	if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, grassVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, 1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, 1.0f/(gs->mapx*SQUARE_SIZE),1.0f/(gs->mapy*SQUARE_SIZE),0,1);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glEnable(GL_TEXTURE_2D);
@@ -315,7 +315,7 @@ void CGrassDrawer::Draw(void)
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1-readmap->shadowDensity);
 		
-		float texConstant[]={readmap->ambientColor.x*1.24,readmap->ambientColor.y*1.24,readmap->ambientColor.z*1.24,1};
+		float texConstant[]={readmap->ambientColor.x*1.24f,readmap->ambientColor.y*1.24f,readmap->ambientColor.z*1.24f,1};
 		glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_CONSTANT);
@@ -362,7 +362,7 @@ void CGrassDrawer::Draw(void)
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
-			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
+			SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 
 			glBindTexture(GL_TEXTURE_2D, gd->infoTex);
 			glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -372,13 +372,13 @@ void CGrassDrawer::Draw(void)
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		SetTexGen(1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,0);
+		SetTexGen(1.0f/(gs->mapx*SQUARE_SIZE),1.0f/(gs->mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
-		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
+		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture ());
 
@@ -432,8 +432,8 @@ void CGrassDrawer::Draw(void)
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, grassFarVP );
 	} else {
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, grassFarNSVP );
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12,  1.0/(gs->mapx*SQUARE_SIZE),1.0/(gs->mapy*SQUARE_SIZE),0,1);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12,  1.0f/(gs->mapx*SQUARE_SIZE),1.0f/(gs->mapy*SQUARE_SIZE),0,1);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,1);
 		glBindTexture(GL_TEXTURE_2D, farTex);
 
 		if(gd->DrawExtraTex()){
@@ -453,9 +453,9 @@ void CGrassDrawer::Draw(void)
 
 	for(std::vector<InviewGrass*>::iterator gi=drawer.inviewGrass.begin();gi!=drawer.inviewGrass.end();++gi){
 		if((*gi)->dist+128<grassDistance)
-			glColor4f(0.62,0.62,0.62,1);			
+			glColor4f(0.62f,0.62f,0.62f,1);			
 		else
-			glColor4f(0.62,0.62,0.62,1-((*gi)->dist+128-grassDistance)/128.0);			
+			glColor4f(0.62f,0.62f,0.62f,1-((*gi)->dist+128-grassDistance)/128.0f);			
 
 		float3 v=grass[(*gi)->num].pos-camera->pos;
 		v.Normalize();
@@ -466,18 +466,18 @@ void CGrassDrawer::Draw(void)
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
 		float ang=acos(v.y);
 		int texPart=min(15,(int)max(0,(int)((ang+PI/16-PI/2)/PI*30)));
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0,0,0,0.0f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0f,0,0,0.0f);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
 		grass[(*gi)->num].va->DrawArrayTN(GL_QUADS);
 		delete *gi;	
 	}
-	glColor4f(0.62,0.62,0.62,1);			
+	glColor4f(0.62f,0.62f,0.62f,1);			
 	for(std::vector<InviewNearGrass*>::iterator gi=drawer.inviewNearGrass.begin();gi!=drawer.inviewNearGrass.end();++gi){
 		int x=(*gi)->x;
 		int y=(*gi)->y;
 		if(grassMap[(y)*gs->mapx/grassSquareSize+(x)]){
 
-			float3 squarePos((x+0.5)*SQUARE_SIZE*grassSquareSize, 0, (y+0.5)*SQUARE_SIZE*grassSquareSize);
+			float3 squarePos((x+0.5f)*SQUARE_SIZE*grassSquareSize, 0, (y+0.5f)*SQUARE_SIZE*grassSquareSize);
 			squarePos.y=ground->GetHeight2(squarePos.x,squarePos.z);
 			float3 v=squarePos-camera->pos;
 			v.Normalize();
@@ -488,7 +488,7 @@ void CGrassDrawer::Draw(void)
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
 			float ang=acos(v.y);
 			int texPart=min(15,int(max(0,int((ang+PI/16-PI/2)/PI*30))));
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0,0,0,0.0f);
+			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0f,0,0,0.0f);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
 
 			srand(y*1025+x);
@@ -500,14 +500,14 @@ void CGrassDrawer::Draw(void)
 			for(int a=0;a<numGrass;a++){
 				float dx=(x+fRand(1))*SQUARE_SIZE*grassSquareSize;
 				float dy=(y+fRand(1))*SQUARE_SIZE*grassSquareSize;
-				float3 pos(dx,ground->GetHeight2(dx,dy)+0.5,dy);
+				float3 pos(dx,ground->GetHeight2(dx,dy)+0.5f,dy);
 				pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
 				float col=1;
-				if(camera->InView(pos,turfSize*0.7)){
-					va->AddVertexTN(pos,0,0,float3(-turfSize*0.6,-turfSize*0.6,col));
-					va->AddVertexTN(pos,1/16.0,0,float3(turfSize*0.6,-turfSize*0.6,col));
-					va->AddVertexTN(pos,1/16.0,1,float3(turfSize*0.6,turfSize*0.6,col));
-					va->AddVertexTN(pos,0,1,float3(-turfSize*0.6,turfSize*0.6,col));
+				if(camera->InView(pos,turfSize*0.7f)){
+					va->AddVertexTN(pos,0,0,float3(-turfSize*0.6f,-turfSize*0.6f,col));
+					va->AddVertexTN(pos,1/16.0f,0,float3(turfSize*0.6f,-turfSize*0.6f,col));
+					va->AddVertexTN(pos,1/16.0f,1,float3(turfSize*0.6f,turfSize*0.6f,col));
+					va->AddVertexTN(pos,0,1,float3(-turfSize*0.6f,turfSize*0.6f,col));
 				}
 			}
 			va->DrawArrayTN(GL_QUADS);
@@ -595,33 +595,33 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 	for(int a=0;a<strawPerTurf;++a){
 		float maxAng=fRand(PI/2);
-		float3 sideVect(fRand(1)-0.5,0,fRand(1)-0.5);
+		float3 sideVect(fRand(1)-0.5f,0,fRand(1)-0.5f);
 		sideVect.Normalize();
 		float3 forwardVect=sideVect.cross(UpVector);
-		sideVect*=0.32;
+		sideVect*=0.32f;
 
 		float3 basePos(30,0,30);
 		while(basePos.SqLength2D()>turfSize*turfSize/4)
-			basePos=float3(fRand(turfSize)-turfSize*0.5,0,fRand(turfSize)-turfSize*0.5);
+			basePos=float3(fRand(turfSize)-turfSize*0.5f,0,fRand(turfSize)-turfSize*0.5f);
 
 		float length=4+fRand(4);
 
-		int tex=(int)fRand(15.9999);
-		float xtexBase=tex*(1/16.0);
+		int tex=(int)fRand(15.9999f);
+		float xtexBase=tex*(1/16.0f);
 		int numSections=1+(int)(maxAng*5);
 		for(int b=0;b<numSections;++b){
-			float h=b*(1.0/numSections);
+			float h=b*(1.0f/numSections);
 			float ang=maxAng*h;
 			if(b==0){
-				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h-float3(0,0.1,0), xtexBase, h);
-				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h-float3(0,0.1,0), xtexBase, h);
+				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h-float3(0,0.1f,0), xtexBase, h);
+				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h-float3(0,0.1f,0), xtexBase, h);
 			} else {
 				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h, xtexBase, h);
 			}
-			va->AddVertexT(basePos-sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h, xtexBase+1.0/16, h);
+			va->AddVertexT(basePos-sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h, xtexBase+1.0f/16, h);
 		}
-		va->AddVertexT(basePos+(UpVector*cos(maxAng)+forwardVect*sin(maxAng))*length, xtexBase+1.0/32, 1);
-		va->AddVertexT(basePos+(UpVector*cos(maxAng)+forwardVect*sin(maxAng))*length, xtexBase+1.0/32, 1);
+		va->AddVertexT(basePos+(UpVector*cos(maxAng)+forwardVect*sin(maxAng))*length, xtexBase+1.0f/32, 1);
+		va->AddVertexT(basePos+(UpVector*cos(maxAng)+forwardVect*sin(maxAng))*length, xtexBase+1.0f/32, 1);
 	}
 
 	glNewList(listNum,GL_COMPILE);
@@ -631,31 +631,31 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 {
-	float3 col(0.59f+fRand(0.11),0.81f+fRand(0.08),0.57f+fRand(0.11));
+	float3 col(0.59f+fRand(0.11f),0.81f+fRand(0.08f),0.57f+fRand(0.11f));
 	for(int y=0;y<64;++y){
 		for(int x=0;x<16;++x){
-			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05))*255);
-			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05))*255);
-			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05))*255);
+			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f))*255);
+			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f))*255);
+			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f))*255);
 			buf[(y*256+x)*4+3]=1;
 		}
 	}
 	for(int y=0;y<64;++y){
 		for(int x=7;x<9;++x){
-			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05)-0.03)*255);
-			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05)-0.03)*255);
-			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05)-0.03)*255);
+			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f)-0.03f)*255);
+			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f)-0.03f)*255);
+			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f)-0.03f)*255);
 		}
 	}
 	for(int y=4;y<64;y+=4+(int)fRand(3)){
 		for(int a=0;a<7 && a+y<64;++a){
-			buf[((a+y)*256+a+9)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05)-0.03)*255);
-			buf[((a+y)*256+a+9)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05)-0.03)*255);
-			buf[((a+y)*256+a+9)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05)-0.03)*255);
+			buf[((a+y)*256+a+9)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f)-0.03f)*255);
+			buf[((a+y)*256+a+9)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f)-0.03f)*255);
+			buf[((a+y)*256+a+9)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f)-0.03f)*255);
 
-			buf[((a+y)*256+6-a)*4+0]=(unsigned char) ((col.x+y*0.0005+fRand(0.05)-0.03)*255);
-			buf[((a+y)*256+6-a)*4+1]=(unsigned char) ((col.y+y*0.0006+fRand(0.05)-0.03)*255);
-			buf[((a+y)*256+6-a)*4+2]=(unsigned char) ((col.z+y*0.0004+fRand(0.05)-0.03)*255);
+			buf[((a+y)*256+6-a)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f)-0.03f)*255);
+			buf[((a+y)*256+6-a)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f)-0.03f)*255);
+			buf[((a+y)*256+6-a)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f)-0.03f)*255);
 		}
 	}
 
@@ -698,11 +698,11 @@ void CGrassDrawer::CreateFarTex(void)
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glRotatef((a-1)*90/15.0,1,0,0);
-		glTranslatef(0,-0.5,0);
+		glRotatef((a-1)*90/15.0f,1,0,0);
+		glTranslatef(0,-0.5f,0);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(-turfSize*0.6, turfSize*0.6, -turfSize*0.6, turfSize*0.6, -turfSize, turfSize);
+		glOrtho(-turfSize*0.6f, turfSize*0.6f, -turfSize*0.6f, turfSize*0.6f, -turfSize, turfSize);
 
 		glCallList(grassDL);
 		
@@ -721,7 +721,7 @@ void CGrassDrawer::CreateFarTex(void)
 						} else {
 							float s=1;
 							if(y!=0 && y!=64*sizeMod-1 && (buf2[((y*4+y2)*256*sizeMod+x*4+x2+1)*4+1]==0 || buf2[((y*4+y2)*256*sizeMod+x*4+x2-1)*4+1]==0 || buf2[((y*4+y2+1)*256*sizeMod+x*4+x2)*4+1]==0 || buf2[((y*4+y2-1)*256*sizeMod+x*4+x2)*4+1]==0)){
-								s=0.5;
+								s=0.5f;
 							}
 							r+=s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+0];
 							g+=s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+1];

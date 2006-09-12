@@ -15,7 +15,7 @@ CFlameProjectile::CFlameProjectile(const float3& color, const float3& color2, fl
 	spread(spread),
 	curTime(0)
 {
-	invttl=1.0/ttl;
+	invttl=1.0f/ttl;
 	SetRadius(weaponDef->size);
 	drawRadius=weaponDef->size;
 }
@@ -29,8 +29,8 @@ void CFlameProjectile::Collision(void)
 	float3 norm=ground->GetNormal(pos.x,pos.z);
 	float ns=speed.dot(norm);
 	speed-=norm*ns*1;
-	pos.y+=0.05;
-	curTime+=0.05;
+	pos.y+=0.05f;
+	curTime+=0.05f;
 }
 
 void CFlameProjectile::Collision(CUnit* unit)

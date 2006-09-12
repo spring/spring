@@ -139,10 +139,10 @@ void CBuilderCAI::SlowUpdate()
 		if(inCommand){
 			if(building){
 				if(build.pos.distance2D(fac->pos)>fac->buildDistance+radius-8){
-					owner->moveType->StartMoving(build.pos, fac->buildDistance*0.5+radius);
+					owner->moveType->StartMoving(build.pos, fac->buildDistance*0.5f+radius);
 				} else {
 					StopMove();
-					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance+radius)*0.6, false);	//needed since above startmoving cancels this
+					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance+radius)*0.6f, false);	//needed since above startmoving cancels this
 				}
 				if(!fac->curBuild && !fac->terraforming){
 					building=false;
@@ -151,11 +151,11 @@ void CBuilderCAI::SlowUpdate()
 				}
 			} else {
 				build.Parse(c);
-				if(build.pos.distance2D(fac->pos)<fac->buildDistance*0.6+radius){
+				if(build.pos.distance2D(fac->pos)<fac->buildDistance*0.6f+radius){
 					StopMove();
 					if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){
 						buildRetries++;
-						owner->moveType->KeepPointingTo(build.pos, fac->buildDistance*0.7+radius, false);
+						owner->moveType->KeepPointingTo(build.pos, fac->buildDistance*0.7f+radius, false);
 						if(fac->StartBuild(build) || buildRetries>20){
 							building=true;
 						} else {
@@ -176,7 +176,7 @@ void CBuilderCAI::SlowUpdate()
 							FinishCommand();
 						}
 					}
-					SetGoal(build.pos,owner->pos, fac->buildDistance*0.4+radius);
+					SetGoal(build.pos,owner->pos, fac->buildDistance*0.4f+radius);
 				}
 			}
 		} else {		//!inCommand
@@ -226,10 +226,10 @@ void CBuilderCAI::SlowUpdate()
 				if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
 					StopMove();
 					fac->SetRepairTarget(unit);
-					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9+unit->radius, false);
+					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
 				} else {
 					if(goalPos.distance2D(unit->pos)>1)
-						SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9+unit->radius);
+						SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
 				}
 			} else {
 				StopMove();
@@ -255,10 +255,10 @@ void CBuilderCAI::SlowUpdate()
 				if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
 					StopMove();
 					fac->SetCaptureTarget(unit);
-					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9+unit->radius, false);
+					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
 				} else {
 					if(goalPos.distance2D(unit->pos)>1)
-						SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9+unit->radius);
+						SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
 				}
 			} else {
 				StopMove();
@@ -285,12 +285,12 @@ void CBuilderCAI::SlowUpdate()
 		if(guarded && guarded!=owner){
 			if(CBuilder* b=dynamic_cast<CBuilder*>(guarded)){
 				if(b->terraforming){
-					if(fac->pos.distance2D(b->terraformCenter)<fac->buildDistance*0.8+b->terraformRadius*0.7){
+					if(fac->pos.distance2D(b->terraformCenter)<fac->buildDistance*0.8f+b->terraformRadius*0.7f){
 						StopMove();
-						owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9, false);
+						owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9f, false);
 						fac->HelpTerraform(b);
 					} else {
-						SetGoal(b->terraformCenter,fac->pos,fac->buildDistance*0.7+b->terraformRadius*0.6);
+						SetGoal(b->terraformCenter,fac->pos,fac->buildDistance*0.7f+b->terraformRadius*0.6f);
 					}
 					return;
 				}
@@ -321,10 +321,10 @@ void CBuilderCAI::SlowUpdate()
 			float3 dif=guarded->pos-curPos;
 			dif.Normalize();
 			float3 goal=guarded->pos-dif*(fac->buildDistance-5);
-			if((guarded->pos-curPos).SqLength2D()<(fac->buildDistance*0.9+guarded->radius)*(fac->buildDistance*0.9+guarded->radius)){
+			if((guarded->pos-curPos).SqLength2D()<(fac->buildDistance*0.9f+guarded->radius)*(fac->buildDistance*0.9f+guarded->radius)){
 				StopMove();
 //				logOutput.Print("should point with type 3?");
-				owner->moveType->KeepPointingTo(guarded->pos, fac->buildDistance*0.9+guarded->radius, false);
+				owner->moveType->KeepPointingTo(guarded->pos, fac->buildDistance*0.9f+guarded->radius, false);
 				if(guarded->health<guarded->maxHealth)
 					fac->SetRepairTarget(guarded);
 				else
@@ -346,13 +346,13 @@ void CBuilderCAI::SlowUpdate()
 			if(id>=MAX_UNITS){		//reclaim feature
 				CFeature* feature=featureHandler->features[id-MAX_UNITS];
 				if(feature){
-					if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9+feature->radius){
+					if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
 						StopMove();
-						owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9+feature->radius, false);
+						owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
 						fac->SetReclaimTarget(feature);
 					} else {
 						if(goalPos.distance2D(feature->pos)>1){
-							SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8+feature->radius);
+							SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
 						} else {
 							if(owner->moveType->progressState==CMoveType::Failed){
 								StopMove();
@@ -370,7 +370,7 @@ void CBuilderCAI::SlowUpdate()
 				if(unit && unit!=owner && unit->unitDef->reclaimable && (unit->losStatus[owner->allyteam] & LOS_INRADAR)){
 					if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
 						StopMove();
-						owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9+unit->radius, false);
+						owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
 						fac->SetReclaimTarget(unit);
 					} else {
 						if(goalPos.distance2D(unit->pos)>1){
@@ -407,13 +407,13 @@ void CBuilderCAI::SlowUpdate()
 			if(id>=MAX_UNITS){		//resurrect feature
 				CFeature* feature=featureHandler->features[id-MAX_UNITS];
 				if(feature && feature->createdFromUnit!=""){
-					if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9+feature->radius){
+					if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
 						StopMove();
-						owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9+feature->radius, false);
+						owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
 						fac->SetResurrectTarget(feature);
 					} else {
 						if(goalPos.distance2D(feature->pos)>1){
-							SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8+feature->radius);
+							SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
 						} else {
 							if(owner->moveType->progressState==CMoveType::Failed){
 								StopMove();
@@ -545,10 +545,10 @@ void CBuilderCAI::SlowUpdate()
 			if(fac->pos.distance2D(pos)<fac->buildDistance-1){
 				StopMove();
 				fac->StartRestore(pos,radius);
-				owner->moveType->KeepPointingTo(pos, fac->buildDistance*0.9, false);
+				owner->moveType->KeepPointingTo(pos, fac->buildDistance*0.9f, false);
 				inCommand=true;
 			} else {
-				SetGoal(pos,owner->pos, fac->buildDistance*0.9);
+				SetGoal(pos,owner->pos, fac->buildDistance*0.9f);
 			}
 		}
 		return;}
@@ -797,7 +797,7 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 			
 			float xsize=bi.GetXSize()*4;
 			float ysize=bi.GetYSize()*4;
-			glColor4f(0.2,1,0.2,1);
+			glColor4f(0.2f,1,0.2f,1);
 			glBegin(GL_LINE_LOOP);
 			glVertexf3(bi.pos+float3(+xsize, 1, +ysize));
 			glVertexf3(bi.pos+float3(-xsize, 1, +ysize));

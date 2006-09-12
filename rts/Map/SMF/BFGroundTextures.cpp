@@ -135,14 +135,14 @@ void CBFGroundTextures::DrawUpdate(void)
 				dist=8000;
 
 			float wantedLevel=dist/1000;
-			if(wantedLevel>2.5)
-				wantedLevel=2.5;
+			if(wantedLevel>2.5f)
+				wantedLevel=2.5f;
 			if(wantedLevel<square->texLevel-1)
 				wantedLevel=square->texLevel-1;
 
-			float dif=square->texLevel+0.5-wantedLevel;
+			float dif=square->texLevel+0.5f-wantedLevel;
 			if(dif<0)
-				dif*=-0.5;
+				dif*=-0.5f;
 
 			if((int)wantedLevel!=square->texLevel){
 				if(dist<8)

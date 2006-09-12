@@ -326,7 +326,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 		for(int a=0;a<sp.numVertex;++a)
 			sp.normals.push_back(n);
 
-		if(n.dot(float3(0,-1,0))>0.99){			//sometimes there are more than one selection primitive (??)
+		if(n.dot(float3(0,-1,0))>0.99f){			//sometimes there are more than one selection primitive (??)
 			int ignore=true;
 			for(int a=0;a<sp.numVertex;++a)
 				if(obj->vertices[sp.vertices[a]].pos.y>0)
@@ -372,7 +372,7 @@ void C3DOParser::CalcNormals(S3DO *o)
 			S3DOVertex* vertex=&o->vertices[ps->vertices[a]];
 			float3 vnormal(0,0,0);
 			for(std::vector<int>::iterator pi=vertex->prims.begin();pi!=vertex->prims.end();++pi){
-				if(ps->normal.dot(o->prims[*pi].normal)>0.45)
+				if(ps->normal.dot(o->prims[*pi].normal)>0.45f)
 					vnormal+=o->prims[*pi].normal;
 			}
 			vnormal.Normalize();
@@ -534,7 +534,7 @@ void C3DOParser::FindCenter(S3DO *object)
 	object->miny=miny;
 	object->minz=minz;
 
-	object->relMidPos=float3((maxx+minx)*0.5,(maxy+miny)*0.5,(maxz+minz)*0.5);
+	object->relMidPos=float3((maxx+minx)*0.5f,(maxy+miny)*0.5f,(maxz+minz)*0.5f);
 
 	for(vi=object->vertices.begin();vi!=object->vertices.end();++vi){
 		maxSize=max(maxSize,object->relMidPos.distance(vi->pos));
@@ -563,7 +563,7 @@ float C3DOParser::FindRadius(S3DO *object,float3 offset)
 		maxSize=max(maxSize,(vi->pos+offset).Length());
 	}
 
-	return maxSize*0.8;
+	return maxSize*0.8f;
 }
 
 float C3DOParser::FindHeight(S3DO* object,float3 offset)

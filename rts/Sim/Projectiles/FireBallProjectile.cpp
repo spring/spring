@@ -25,7 +25,7 @@ void CFireBallProjectile::Draw()
 	float3 interPos = pos;
 	if(checkCol)
 		interPos+=speed*gu->timeOffset;
-	float size = radius*1.3;
+	float size = radius*1.3f;
 
 	int numSparks=sparks.size();
 	for(int i=0; i<numSparks; i++)
@@ -52,7 +52,7 @@ void CFireBallProjectile::Draw()
 		va->AddVertexTC(interPos+camera->right*size-camera->up*size,ph->flaretex.xend ,ph->flaretex.ystart ,col);
 		va->AddVertexTC(interPos+camera->right*size+camera->up*size,ph->flaretex.xend ,ph->flaretex.yend ,col);
 		va->AddVertexTC(interPos-camera->right*size+camera->up*size,ph->flaretex.xstart ,ph->flaretex.yend ,col);
-		interPos = interPos-speed*0.5;
+		interPos = interPos-speed*0.5f;
 	}
 }
 
@@ -89,14 +89,14 @@ void CFireBallProjectile::Update()
 		}
 		if(checkCol)
 			sparks[i].pos += sparks[i].speed;
-		sparks[i].speed *= 0.95;
+		sparks[i].speed *= 0.95f;
 	}
 }
 
 void CFireBallProjectile::EmitSpark()
 {
 	Spark spark;
-	spark.speed = speed*0.95 + float3(rand()/(float)RAND_MAX*1.0f-0.5f, rand()/(float)RAND_MAX*1.0f-0.5f, rand()/(float)RAND_MAX*1.0f-0.5f);
+	spark.speed = speed*0.95f + float3(rand()/(float)RAND_MAX*1.0f-0.5f, rand()/(float)RAND_MAX*1.0f-0.5f, rand()/(float)RAND_MAX*1.0f-0.5f);
 	spark.pos = pos-speed*(rand()/(float)RAND_MAX*1.0f+3)+spark.speed*3;
 	spark.size = 5.0f;
 	spark.ttl = 15;

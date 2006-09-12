@@ -31,13 +31,13 @@ void GUIinput::PrivateDraw()
 	glBindTexture(GL_TEXTURE_2D, tex);
 	
 	glPushAttrib(GL_CURRENT_BIT);
-	glColor4f(1, 1, 1, 0.3);	
+	glColor4f(1, 1, 1, 0.3f);	
 	DrawThemeRect(20, 128, w, h);	
 	glPopAttrib();
 
-	guifont->Print(0, (h-guifont->GetHeight())/2.0, caption);
+	guifont->Print(0, (h-guifont->GetHeight())/2.0f, caption);
 
-	guifont->Print(guifont->GetWidth(caption)+5, (h-guifont->GetHeight())/2.0, userInput);
+	guifont->Print(guifont->GetWidth(caption)+5, (h-guifont->GetHeight())/2.0f, userInput);
 }
 
 extern Uint8 *keys;

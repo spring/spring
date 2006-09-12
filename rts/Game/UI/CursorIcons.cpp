@@ -34,7 +34,7 @@ void CCursorIcons::Draw()
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+	gluOrtho2D(0.0f, 1.0f, 0.0f, 1.0f);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();

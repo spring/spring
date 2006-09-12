@@ -21,9 +21,9 @@ CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3
 	SetRadius(maxDist);
 
 	for(int y=0;y<5;++y){
-		float yp=(y/4.0-0.5);
+		float yp=(y/4.0f-0.5f);
 		for(int x=0;x<5;++x){
-			float xp=(x/4.0-0.5);
+			float xp=(x/4.0f-0.5f);
 			float d=sqrt(xp*xp+yp*yp);
 			difs[y*5+x]=(1-cos(d*2))*20;
 		}
@@ -67,7 +67,7 @@ void CRepulseGfx::Draw(void)
 	col[0]=(unsigned char)(color.x*alpha);
 	col[1]=(unsigned char)(color.y*alpha);
 	col[2]=(unsigned char)(color.z*alpha);
-	col[3]=(unsigned char)(alpha*0.2);
+	col[3]=(unsigned char)(alpha*0.2f);
 	float drawsize=10;
 	float3 interPos=pos+speed*gu->timeOffset;
 
@@ -79,14 +79,14 @@ void CRepulseGfx::Draw(void)
 
 	for(int y=0;y<4;++y){
 		float dy=y-2;
-		float ry=y*0.25;
+		float ry=y*0.25f;
 		for(int x=0;x<4;++x){
 			float dx=x-2;
-			float rx=x*0.25;
+			float rx=x*0.25f;
 			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+0)+dir*difs[y*5+x]			 ,txo+ry*txs				,tyo+(rx)*tys			,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,txo+(ry+0.25)*txs	,tyo+(rx)*tys			,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],txo+(ry+0.25)*txs	,tyo+(rx+0.25)*tys,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+0)+dir*difs[y*5+x+1]		 ,txo+ry*txs				,tyo+(rx+0.25)*tys,col);
+			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,txo+(ry+0.25f)*txs	,tyo+(rx)*tys			,col);
+			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],txo+(ry+0.25f)*txs	,tyo+(rx+0.25f)*tys,col);
+			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+0)+dir*difs[y*5+x+1]		 ,txo+ry*txs				,tyo+(rx+0.25f)*tys,col);
 		}
 	}
 	drawsize=7;
@@ -94,11 +94,11 @@ void CRepulseGfx::Draw(void)
 	col[0]=(unsigned char)(color.x*alpha);
 	col[1]=(unsigned char)(color.y*alpha);
 	col[2]=(unsigned char)(color.z*alpha);
-	col[3]=(unsigned char)(alpha*0.4);
+	col[3]=(unsigned char)(alpha*0.4f);
 
 	AtlasedTexture& ct=ph->circularthingytex;
-	float tx=(ct.xend+ct.xstart)*0.5;
-	float ty=(ct.yend+ct.ystart)*0.5;
+	float tx=(ct.xend+ct.xstart)*0.5f;
+	float ty=(ct.yend+ct.ystart)*0.5f;
 
 	unsigned char col2[4];
 	col2[0]=0;
@@ -106,23 +106,23 @@ void CRepulseGfx::Draw(void)
 	col2[2]=0;
 	col2[3]=0;
 
-	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
 	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
 	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
 	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
 	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
 	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
 	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
 	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 }

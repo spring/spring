@@ -212,7 +212,7 @@ public:
 	 * each x/y/z component by that float.
 	 */
 	inline float3 operator/ (const float f) const{
-		const float inv = (float) 1. / f;
+		const float inv = (float) 1.f / f;
 		return float3(x*inv, y*inv, z*inv);
 	}
 
@@ -237,7 +237,7 @@ public:
 	 * the new values inside this float3.
 	 */
 	inline void operator/= (const float f){
-		const float inv = (float) 1. / f;
+		const float inv = (float) 1.f / f;
 		x *= inv;
 		y *= inv;
 		z *= inv;
@@ -385,8 +385,8 @@ public:
 	inline float3& Normalize()
 	{
 		const float L = sqrt(x*x + y*y + z*z);
-		if(L != 0.){
-			const float invL = (float) 1. / L;
+		if(L != 0.f){
+			const float invL = (float) 1.f / L;
 			x *= invL;
 			y *= invL;
 			z *= invL;

@@ -46,9 +46,9 @@ CInMapDraw::CInMapDraw(void)
 	for(int y=0;y<64;y++){	//circular thingy
 		for(int x=0;x<64;x++){
 			float dist=sqrt((float)(x-32)*(x-32)+(y-32)*(y-32));
-			if (dist > 31.875) {
+			if (dist > 31.875f) {
 				// do nothing - leave transparent
-			} else if (dist > 24.5) {
+			} else if (dist > 24.5f) {
 				// black outline
 				tex[y][x][3]=255;
 			} else {
@@ -62,7 +62,7 @@ CInMapDraw::CInMapDraw(void)
 	for(int y=0;y<64;y++){	//linear falloff
 		for(int x=0;x<64;x++){
 			float dist=abs(y-32);
-			if(dist > 24.5) {
+			if(dist > 24.5f) {
 				// black outline
 				tex[y][x+64][3]=255;
 			} else {
@@ -124,20 +124,20 @@ void InMapDraw_QuadDrawer::DrawQuad (int x,int y)
 		float3 pos2=pos1;
 		pos2.y+=100;
 
-		va->AddVertexTC(pos1-dir1*size,					  0.25,0,col);
-		va->AddVertexTC(pos1+dir1*size,					  0.25,1,col);
-		va->AddVertexTC(pos1+dir1*size+dir2*size, 0.00,1,col);
-		va->AddVertexTC(pos1-dir1*size+dir2*size, 0.00,0,col);
+		va->AddVertexTC(pos1-dir1*size,					  0.25f,0,col);
+		va->AddVertexTC(pos1+dir1*size,					  0.25f,1,col);
+		va->AddVertexTC(pos1+dir1*size+dir2*size, 0.00f,1,col);
+		va->AddVertexTC(pos1-dir1*size+dir2*size, 0.00f,0,col);
 
-		va->AddVertexTC(pos1-dir1*size,0.75,0,col);
-		va->AddVertexTC(pos1+dir1*size,0.75,1,col);
-		va->AddVertexTC(pos2+dir1*size,0.75,1,col);
-		va->AddVertexTC(pos2-dir1*size,0.75,0,col);
+		va->AddVertexTC(pos1-dir1*size,0.75f,0,col);
+		va->AddVertexTC(pos1+dir1*size,0.75f,1,col);
+		va->AddVertexTC(pos2+dir1*size,0.75f,1,col);
+		va->AddVertexTC(pos2-dir1*size,0.75f,0,col);
 
-		va->AddVertexTC(pos2-dir1*size,					  0.25,0,col);
-		va->AddVertexTC(pos2+dir1*size,					  0.25,1,col);
-		va->AddVertexTC(pos2+dir1*size-dir2*size, 0.00,1,col);
-		va->AddVertexTC(pos2-dir1*size-dir2*size, 0.00,0,col);
+		va->AddVertexTC(pos2-dir1*size,					  0.25f,0,col);
+		va->AddVertexTC(pos2+dir1*size,					  0.25f,1,col);
+		va->AddVertexTC(pos2+dir1*size-dir2*size, 0.00f,1,col);
+		va->AddVertexTC(pos2-dir1*size-dir2*size, 0.00f,0,col);
 
 		if(pi->label.size()>0){
 			glPushMatrix();
@@ -196,7 +196,7 @@ void CInMapDraw::MousePress(int x, int y, int button)
 
 	switch(button){
 	case SDL_BUTTON_LEFT:
-		if(lastLeftClickTime>gu->gameTime-0.3){
+		if(lastLeftClickTime>gu->gameTime-0.3f){
 			PromptLabel(pos);
 		}
 		lastLeftClickTime=gu->gameTime;
@@ -222,7 +222,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 	if(pos.x<0)
 		return;
 
-	if(mouse->buttons[SDL_BUTTON_LEFT].pressed && lastLineTime<gu->gameTime-0.05){
+	if(mouse->buttons[SDL_BUTTON_LEFT].pressed && lastLineTime<gu->gameTime-0.05f){
 		AddLine(pos,lastPos);
 		lastLineTime=gu->gameTime;
 		lastPos=pos;
@@ -234,7 +234,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 
 float3 CInMapDraw::GetMouseMapPos(void)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 	if(dist<0){
 		return float3(-1,1,-1);
 	}

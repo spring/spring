@@ -38,7 +38,7 @@ CPathManager::CPathManager() {
 	if(waterDamage>=1000)
 		CGroundMoveMath::waterCost=0;
 	else
-		CGroundMoveMath::waterCost=1/(1.0+waterDamage*0.1);
+		CGroundMoveMath::waterCost=1/(1.0f+waterDamage*0.1f);
 
 	CHoverMoveMath::noWaterMove=waterDamage>=10000;
 

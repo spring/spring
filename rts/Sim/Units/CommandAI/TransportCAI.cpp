@@ -91,7 +91,7 @@ void CTransportCAI::SlowUpdate(void)
 					float3 fix = unit->pos;
 					SetGoal(fix,owner->pos,64);
 				}
-				if(unit->pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9){
+				if(unit->pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
 					if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
 						float3 wantedPos=unit->pos+UpVector*unit->model->height;
 						SetGoal(wantedPos,owner->pos);
@@ -100,7 +100,7 @@ void CTransportCAI::SlowUpdate(void)
 						am->SetWantedAltitude(unit->model->height);
 						am->maxDrift=1;
 						//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
-						if(owner->pos.distance(wantedPos)<4 && abs(owner->heading-unit->heading)<50 && owner->updir.dot(UpVector)>0.995){
+						if(owner->pos.distance(wantedPos)<4 && abs(owner->heading-unit->heading)<50 && owner->updir.dot(UpVector)>0.995f){
 							am->dontCheckCol=false;
 							am->dontLand=true;
 							std::vector<int> args;
@@ -189,7 +189,7 @@ void CTransportCAI::SlowUpdate(void)
 			if(goalPos.distance2D(pos)>20){
 				SetGoal(pos,owner->pos);
 			}
-			if(pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9){
+			if(pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
 				if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
 					pos.y=ground->GetHeight(pos.x,pos.z);
 					CUnit* unit=((CTransportUnit*)owner)->transported.front().unit;
@@ -197,7 +197,7 @@ void CTransportCAI::SlowUpdate(void)
 					SetGoal(wantedPos,owner->pos);
 					am->SetWantedAltitude(unit->model->height);
 					am->maxDrift=1;
-					if(owner->pos.distance(wantedPos)<8 && owner->updir.dot(UpVector)>0.99){
+					if(owner->pos.distance(wantedPos)<8 && owner->updir.dot(UpVector)>0.99f){
 						am->dontLand=false;
 						owner->cob->Call("EndTransport");
 						((CTransportUnit*)owner)->DetachUnit(unit);
@@ -253,15 +253,15 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 		for(int a=0;a<100;++a){
 			float3 delta(1,0,1);
 			while(delta.SqLength2D()>1){
-				delta.x=(gs->randFloat()-0.5)*2;
-				delta.z=(gs->randFloat()-0.5)*2;
+				delta.x=(gs->randFloat()-0.5f)*2;
+				delta.z=(gs->randFloat()-0.5f)*2;
 			}
 			float3 pos=center+delta*radius;
 			pos.y=ground->GetHeight(pos.x,pos.z);
 
 			if(ground->GetApproximateHeight(pos.x,pos.z)<-5)
 				continue;
-			if(ground->GetSlope(pos.x,pos.z)>0.05)
+			if(ground->GetSlope(pos.x,pos.z)>0.05f)
 				continue;
 			if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())
 				continue;
@@ -278,7 +278,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 			for(float x=max(0.0f,center.x-rx);x<min(float(gs->mapx*SQUARE_SIZE),center.x+rx);x+=SQUARE_SIZE){
 				if(ground->GetApproximateHeight(x,y)<-5)
 					continue;
-				if(ground->GetSlope(x,y)>0.05)
+				if(ground->GetSlope(x,y)>0.05f)
 					continue;
 				float3 pos(x,ground->GetApproximateHeight(x,y),y);
 				if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())

@@ -237,7 +237,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 #endif
 
 	if(button==SDL_BUTTON_MIDDLE){
-		if(buttons[SDL_BUTTON_MIDDLE].time>gu->gameTime-0.3)
+		if(buttons[SDL_BUTTON_MIDDLE].time>gu->gameTime-0.3f)
 			ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 		return;		
 	}
@@ -260,14 +260,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			selectedUnits.ClearSelected();
 
 		if(buttons[SDL_BUTTON_LEFT].movement>4){		//select box
-			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
+			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
 			if(dist<0)
-				dist=gu->viewRange*1.4;
+				dist=gu->viewRange*1.4f;
 			float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
+			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4f);
 			if(dist<0)
-				dist=gu->viewRange*1.4;
+				dist=gu->viewRange*1.4f;
 			float3 pos2=camera->pos+dir*dist;
 
 			float3 dir1=pos1-camera->pos;
@@ -346,7 +346,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				sound->PlaySample(soundMultiselID);
 		} else {
 			CUnit* unit;
-			float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,false);
+			float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,false);
 			if(unit && unit->team==gu->myTeam){
 				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
 					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
@@ -391,14 +391,14 @@ void CMouseHandler::Draw()
 
 		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,
 		                                 buttons[SDL_BUTTON_LEFT].camPos
-		                                 + buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
+		                                 + buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
 		if(dist<0)
-			dist=gu->viewRange*1.4;
+			dist=gu->viewRange*1.4f;
 		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
+		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4f);
 		if(dist<0)
-			dist=gu->viewRange*1.4;
+			dist=gu->viewRange*1.4f;
 		float3 pos2=camera->pos+dir*dist;
 
 		float3 dir1=pos1-camera->pos;
@@ -524,7 +524,7 @@ void CMouseHandler::UpdateCam()
 		camera->pos+=(wantedCamPos-camera->pos)*(1-pow(transitSpeed,(float)gu->lastFrameTime));
 		camera->forward+=(wantedCamDir-camera->forward)*(1-pow(transitSpeed,(float)gu->lastFrameTime));
 		camera->forward.Normalize();
-		if(camera->pos.distance(wantedCamPos)<0.01 && camera->forward.distance(wantedCamDir)<0.001)
+		if(camera->pos.distance(wantedCamPos)<0.01f && camera->forward.distance(wantedCamDir)<0.001f)
 			inStateTransit=false;
 	} else {
 		camera->pos=wantedCamPos;
@@ -591,10 +591,10 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	*/
 	CUnit* unit=0;
 	CFeature* feature=0;
-	float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,true);
-	float dist2=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4,feature);
+	float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,true);
+	float dist2=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4f,feature);
 
-	if(dist>gu->viewRange*1.4-100 && dist2>gu->viewRange*1.4-100 && unit==0){
+	if(dist>gu->viewRange*1.4f-100 && dist2>gu->viewRange*1.4f-100 && unit==0){
 		return "";
 	}
 
@@ -660,7 +660,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 		return s;
 	}
-	if(dist<gu->viewRange*1.4-100){
+	if(dist<gu->viewRange*1.4f-100){
 		float3 pos=camera->pos+dir*dist;
 		char tmp[500];
 		CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];

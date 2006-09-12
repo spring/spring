@@ -200,7 +200,7 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 	
 	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2 && dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance)){//far trees
 		tss->lastSeenFar=gs->frameNum;
-		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97){
+		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
 			va=GetVertexArray();
 			va->Initialize();
 			tss->viewVector=dif;
@@ -214,21 +214,21 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 				if(ts->type<8){
 					float3 base(ts->pos);
 					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3;
+					float width=MAX_TREE_HEIGHT*0.3f;
 
 					SetArray(0,0,base+side*width);
-					SetArray(0,0.25,base+side*width+float3(0,height,0));
-					SetArray(0.5f,0.25,base-side*width+float3(0,height,0));
+					SetArray(0,0.25f,base+side*width+float3(0,height,0));
+					SetArray(0.5f,0.25f,base-side*width+float3(0,height,0));
 					SetArray(0.5f,0,base-side*width);
 				} else {
 					float3 base(ts->pos);
 					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3;
+					float width=MAX_TREE_HEIGHT*0.3f;
 
-					SetArray(0,0.25,base+side*width);
-					SetArray(0,0.5,base+side*width+float3(0,height,0));
-					SetArray(0.25f,0.5,base-side*width+float3(0,height,0));
-					SetArray(0.25f,0.25,base-side*width);
+					SetArray(0,0.25f,base+side*width);
+					SetArray(0,0.5f,base+side*width+float3(0,height,0));
+					SetArray(0.25f,0.5f,base-side*width+float3(0,height,0));
+					SetArray(0.25f,0.25f,base-side*width);
 				}
 			}
 			glNewList(td->trees[y*treesX+x].farDisplist,GL_COMPILE);
@@ -260,43 +260,43 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 				if(ts->type<8){
 					float3 base(ts->pos);
 					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3;
+					float width=MAX_TREE_HEIGHT*0.3f;
 
 					SetArray(0,0,base+float3(width,0,0));
-					SetArray(0,0.25,base+float3(width,height,0));
-					SetArray(0.5f,0.25,base+float3(-width,height,0));
+					SetArray(0,0.25f,base+float3(width,height,0));
+					SetArray(0.5f,0.25f,base+float3(-width,height,0));
 					SetArray(0.5f,0,base+float3(-width,0,0));
 
 					SetArray(0,0,base+float3(0,0,width));
-					SetArray(0,0.25,base+float3(0,height,width));
-					SetArray(0.5f,0.25,base+float3(0,height,-width));
+					SetArray(0,0.25f,base+float3(0,height,width));
+					SetArray(0.5f,0.25f,base+float3(0,height,-width));
 					SetArray(0.5f,0,base+float3(0,0,-width));
 
 					width*=1.2f;
-					SetArray(0.5,0,base+float3(width,height*0.25,0));
-					SetArray(0.5,0.25,base+float3(0,height*0.25,-width));
-					SetArray(1,0.25,base+float3(-width,height*0.25,0));
-					SetArray(1,0,base+float3(0,height*0.25,width));
+					SetArray(0.5f,0,base+float3(width,height*0.25f,0));
+					SetArray(0.5f,0.25f,base+float3(0,height*0.25f,-width));
+					SetArray(1,0.25f,base+float3(-width,height*0.25f,0));
+					SetArray(1,0,base+float3(0,height*0.25f,width));
 				} else {
 					float3 base(ts->pos);
 					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3;
+					float width=MAX_TREE_HEIGHT*0.3f;
 
-					SetArray(0,0.25,base+float3(width,0,0));
-					SetArray(0,0.5,base+float3(width,height,0));
-					SetArray(0.25f,0.5,base+float3(-width,height,0));
-					SetArray(0.25f,0.25,base+float3(-width,0,0));
+					SetArray(0,0.25f,base+float3(width,0,0));
+					SetArray(0,0.5f,base+float3(width,height,0));
+					SetArray(0.25f,0.5f,base+float3(-width,height,0));
+					SetArray(0.25f,0.25f,base+float3(-width,0,0));
 
-					SetArray(0.25f,0.25,base+float3(0,0,width));
-					SetArray(0.25f,0.5,base+float3(0,height,width));
-					SetArray(0.5f,0.5,base+float3(0,height,-width));
-					SetArray(0.5f,0.25,base+float3(0,0,-width));
+					SetArray(0.25f,0.25f,base+float3(0,0,width));
+					SetArray(0.25f,0.5f,base+float3(0,height,width));
+					SetArray(0.5f,0.5f,base+float3(0,height,-width));
+					SetArray(0.5f,0.25f,base+float3(0,0,-width));
 
 					width*=1.2f;
-					SetArray(0.5,0.25,base+float3(width,height*0.3,0));
-					SetArray(0.5,0.5,base+float3(0,height*0.3,-width));
-					SetArray(1,0.5,base+float3(-width,height*0.3,0));
-					SetArray(1,0.25,base+float3(0,height*0.3,width));
+					SetArray(0.5f,0.25f,base+float3(width,height*0.3f,0));
+					SetArray(0.5f,0.5f,base+float3(0,height*0.3f,-width));
+					SetArray(1,0.5f,base+float3(-width,height*0.3f,0));
+					SetArray(1,0.25f,base+float3(0,height*0.3f,width));
 				}
 			}
 			glNewList(tss->displist,GL_COMPILE);

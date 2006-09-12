@@ -12,7 +12,7 @@ CBaseTreeDrawer* treeDrawer=0;
 CBaseTreeDrawer::CBaseTreeDrawer(void)
 {
 	drawTrees=true;
-	baseTreeDistance=configHandler.GetInt("TreeRadius",(unsigned int) (5.5f*256))/256.0;
+	baseTreeDistance=configHandler.GetInt("TreeRadius",(unsigned int) (5.5f*256))/256.0f;
 }
 
 CBaseTreeDrawer::~CBaseTreeDrawer(void)

@@ -401,7 +401,7 @@ void CUnit3DLoader::CreateFarTexture(UnitModel &model)
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();		
-	glOrtho(-geometry.radius,geometry.radius,-geometry.radius,geometry.radius,-geometry.radius*1.5,geometry.radius*1.5);
+	glOrtho(-geometry.radius,geometry.radius,-geometry.radius,geometry.radius,-geometry.radius*1.5f,geometry.radius*1.5f);
 	glMatrixMode(GL_MODELVIEW);
 	glClearColor(0.5f,0.5f,0.5f,0);
 	glDisable(GL_BLEND);

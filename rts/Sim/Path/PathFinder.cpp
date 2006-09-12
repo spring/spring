@@ -100,10 +100,10 @@ CPathFinder::CPathFinder()
 	moveCost[PATHOPT_LEFT] = 1;
 	moveCost[PATHOPT_UP] = 1;
 	moveCost[PATHOPT_DOWN] = 1;
-	moveCost[(PATHOPT_RIGHT | PATHOPT_UP)] = 1.42;
-	moveCost[(PATHOPT_LEFT | PATHOPT_UP)] = 1.42;
-	moveCost[(PATHOPT_RIGHT | PATHOPT_DOWN)] = 1.42;
-	moveCost[(PATHOPT_LEFT | PATHOPT_DOWN)] = 1.42;
+	moveCost[(PATHOPT_RIGHT | PATHOPT_UP)] = 1.42f;
+	moveCost[(PATHOPT_LEFT | PATHOPT_UP)] = 1.42f;
+	moveCost[(PATHOPT_RIGHT | PATHOPT_DOWN)] = 1.42f;
+	moveCost[(PATHOPT_LEFT | PATHOPT_DOWN)] = 1.42f;
 }
 
 
@@ -395,11 +395,11 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 	}
 	if(testMobile && (blockStatus & (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY))){
 		if(blockStatus & CMoveMath::BLOCK_MOVING)
-			squareSpeedMod*=0.65;
+			squareSpeedMod*=0.65f;
 		else if(blockStatus & CMoveMath::BLOCK_MOBILE)
-			squareSpeedMod*=0.35;
+			squareSpeedMod*=0.35f;
 		else
-			squareSpeedMod*=0.10;
+			squareSpeedMod*=0.10f;
 	}
 	float squareCost = moveCost[enterDirection] / squareSpeedMod;
 	float heuristicCost = pfDef.Heuristic(square.x, square.y);
@@ -454,8 +454,8 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 			if(squareState[sqr].status & PATHOPT_START)
 				break;
 			float3 cs;
-				cs.x = (square.x/2/* + 0.5*/) * SQUARE_SIZE*2+SQUARE_SIZE;
-				cs.z = (square.y/2/* + 0.5*/) * SQUARE_SIZE*2+SQUARE_SIZE;
+				cs.x = (square.x/2/* + 0.5f*/) * SQUARE_SIZE*2+SQUARE_SIZE;
+				cs.z = (square.y/2/* + 0.5f*/) * SQUARE_SIZE*2+SQUARE_SIZE;
 			cs.y = moveData.moveMath->yLevel(square.x, square.y);
 			foundPath.path.push_back(cs);
 			int2 oldSquare;
@@ -531,7 +531,7 @@ float CPathFinderDef::Heuristic(int xSquare, int zSquare) const
 		min=max;
 		max=temp;
 	}
-	return max*0.5+min*0.2;
+	return max*0.5f+min*0.2f;
 }
 
 
@@ -540,7 +540,7 @@ Tells if the goal are is unaccessable.
 If the goal area is small and blocked then it's considered blocked, else not.
 */
 bool CPathFinderDef::GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const {
-	if((sqGoalRadius < SQUARE_SIZE*SQUARE_SIZE*4 || sqGoalRadius <= (moveData.size/2)*(moveData.size/2)*1.5*SQUARE_SIZE*SQUARE_SIZE)
+	if((sqGoalRadius < SQUARE_SIZE*SQUARE_SIZE*4 || sqGoalRadius <= (moveData.size/2)*(moveData.size/2)*1.5f*SQUARE_SIZE*SQUARE_SIZE)
 	&& (moveData.moveMath->IsBlocked(moveData, goal) & moveMathOptions))
 		return true;
 	else
@@ -565,7 +565,7 @@ void CPathFinderDef::Draw() const {
 
 void CPathFinder::Draw(void)
 {
-	glColor3f(0.7,0.2,0.2);
+	glColor3f(0.7f,0.2f,0.2f);
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 	for(OpenSquare* os=openSquareBuffer;os!=openSquareBufferPointer;++os){

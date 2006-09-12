@@ -59,7 +59,7 @@ float LinePointDist(float3 l1,float3 l2,float3 p)
 	float3 dir(l2-l1);
 	float length=dir.Length();
 	if(length==0)
-		length=0.1;
+		length=0.1f;
 	dir/=length;
 
 	float a=(p-l1).dot(dir);

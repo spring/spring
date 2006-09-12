@@ -54,7 +54,7 @@ void CBombDropper::Update()
 				predict=0;
 			float3 hitpos=owner->pos+owner->speed*predict;
 			float speedf=owner->speed.Length();
-			if(hitpos.distance2D(targetPos)<(salvoSize-1)*speedf*salvoDelay*0.5+bombMoveRange){
+			if(hitpos.distance2D(targetPos)<(salvoSize-1)*speedf*salvoDelay*0.5f+bombMoveRange){
 				subClassReady=true;
 			}
 		}
@@ -95,8 +95,8 @@ void CBombDropper::Fire(void)
 		dif-=dir*dif.dot(dir);
 		dif/=max(0.01f,predict);
 		float size=dif.Length();
-		if(size>1.0)
-			dif/=size*1.0;
+		if(size>1.0f)
+			dif/=size*1.0f;
 		new CExplosiveProjectile(weaponPos,owner->speed+dif,owner,damages, weaponDef, 1000,areaOfEffect);
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);

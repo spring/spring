@@ -62,7 +62,7 @@ namespace terrain
 	static const int NUM_VERTICES=((QUAD_W+1)*(QUAD_W+1));
 
 	const float SquareSize=8.0f;
-	const float VBufMinDetail=0.25f; // at lod < 0.25, the vertex buffer is deleted
+	const float VBufMinDetail=0.25f; // at lod < 0.25f, the vertex buffer is deleted
 
 	const float AREA_TEST_RANGE=0.05f;
 

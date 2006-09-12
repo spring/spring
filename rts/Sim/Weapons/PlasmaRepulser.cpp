@@ -58,8 +58,8 @@ void CPlasmaRepulser::Init(void)
 void CPlasmaRepulser::Update(void)
 {
 	if(curPower<weaponDef->shieldPower && isEnabled){
-		if(owner->UseEnergy(weaponDef->shieldPowerRegenEnergy*(1.0/30)))
-			curPower+=weaponDef->shieldPowerRegen*(1.0/30);
+		if(owner->UseEnergy(weaponDef->shieldPowerRegenEnergy*(1.0f/30)))
+			curPower+=weaponDef->shieldPowerRegen*(1.0f/30);
 	}
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
@@ -166,7 +166,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 		closeLength=0;
 	float3 closeVect=dif-dir*closeLength;
 
-	if(closeVect.Length2D()<radius*1.5+400){
+	if(closeVect.Length2D()<radius*1.5f+400){
 		incoming.push_back(p);
 		AddDeathDependence(p);
 	}

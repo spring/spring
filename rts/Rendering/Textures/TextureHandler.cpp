@@ -344,9 +344,9 @@ TexFile* CTextureHandler::CreateTeamTex(string name, string name2,int team)
 	for(int a=0;a<bm->ysize*bm->xsize;++a){
 		if(bm->mem[a*4]==bm->mem[a*4+2] && bm->mem[a*4+1]==0){
 			float lum=bm->mem[a*4]/255.0f;
-			bm->mem[a*4+0]=(unsigned char)(min(255,int(teamCol[0]*lum*1.5)));
-			bm->mem[a*4+1]=(unsigned char)(min(255,int(teamCol[1]*lum*1.5)));
-			bm->mem[a*4+2]=(unsigned char)(min(255,int(teamCol[2]*lum*1.5)));
+			bm->mem[a*4+0]=(unsigned char)(min(255,int(teamCol[0]*lum*1.5f)));
+			bm->mem[a*4+1]=(unsigned char)(min(255,int(teamCol[1]*lum*1.5f)));
+			bm->mem[a*4+2]=(unsigned char)(min(255,int(teamCol[2]*lum*1.5f)));
 		}	
 	}
 	return tex;

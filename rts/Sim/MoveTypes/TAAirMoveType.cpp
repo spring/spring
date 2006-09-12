@@ -45,7 +45,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	lastColWarningType(0),
 	reservedLandingPos(-1,-1,-1),
 	maxDrift(1),
-	repairBelowHealth(0.30),
+	repairBelowHealth(0.30f),
 	padStatus(0),
 	reservedPad(0),
 	currentPitch(0)
@@ -272,7 +272,7 @@ void CTAAirMoveType::UpdateTakeoff()
 
 	float h = pos.y - ground->GetHeight(pos.x, pos.z);
 
-	if (h > orgWantedHeight*0.8) {
+	if (h > orgWantedHeight*0.8f) {
 		//logOutput.Print("Houston, we have liftoff %f %f", h, wantedHeight);
 		SetState(AIRCRAFT_FLYING);
 	}
@@ -334,8 +334,8 @@ void CTAAirMoveType::UpdateFlying()
 				if (waitCounter > 100) {
 					//logOutput.Print("moving circlepos");
 					float3 relPos = pos - circlingPos;
-					if(relPos.x<0.0001 && relPos.x>-0.0001)
-						relPos.x=0.0001;
+					if(relPos.x<0.0001f && relPos.x>-0.0001f)
+						relPos.x=0.0001f;
 					relPos.y = 0;
 					relPos.Normalize();
 					CMatrix44f rot;
@@ -353,15 +353,15 @@ void CTAAirMoveType::UpdateFlying()
 			case FLY_ATTACKING:{
 				//logOutput.Print("wait is %d", waitCounter);
 				float3 relPos = pos - circlingPos;
-				if(relPos.x<0.0001 && relPos.x>-0.0001)
-					relPos.x=0.0001;
+				if(relPos.x<0.0001f && relPos.x>-0.0001f)
+					relPos.x=0.0001f;
 				relPos.y = 0;
 				relPos.Normalize();
 				CMatrix44f rot;
-				if (gs->randFloat()>0.5)
-					rot.RotateY(0.6f+gs->randFloat()*0.6);
+				if (gs->randFloat()>0.5f)
+					rot.RotateY(0.6f+gs->randFloat()*0.6f);
 				else
-					rot.RotateY(-(0.6f+gs->randFloat()*0.6));
+					rot.RotateY(-(0.6f+gs->randFloat()*0.6f));
 				float3 newPos = rot.Mul(relPos);
 				newPos = newPos.Normalize() * goalDistance;
 
@@ -411,7 +411,7 @@ void CTAAirMoveType::UpdateFlying()
 	//If we are close to our goal, we should go slow enough to be able to break in time
 	//if in attack mode dont slow down
 	if (flyState!=FLY_ATTACKING && dist < breakDistance) {
-		realMax = dist/(speed.Length2D()+0.01) * decRate;
+		realMax = dist/(speed.Length2D()+0.01f) * decRate;
 		//logOutput.Print("Break! %f %f %f", maxSpeed, dir.Length2D(), realMax);
 	}
 
@@ -511,7 +511,7 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	if(aircraftState==AIRCRAFT_FLYING && flyState==FLY_ATTACKING && circlingPos.y<owner->pos.y){
 		wantedPitch=(circlingPos.y-owner->pos.y)/circlingPos.distance(owner->pos);
 	}
-	currentPitch=currentPitch*0.95+wantedPitch*0.05;
+	currentPitch=currentPitch*0.95f+wantedPitch*0.05f;
 
 	frontdir = GetVectorFromHeading(owner->heading);
 	frontdir.y=currentPitch;
@@ -521,7 +521,7 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	rightdir.Normalize();
 
 	float wantedBank = 0.0f;
-	if (!noBanking) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5;
+	if (!noBanking) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5f;
 
 	float limit=min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
 	if(wantedBank>limit)
@@ -551,13 +551,13 @@ void CTAAirMoveType::UpdateAirPhysics()
 /*
 	if(lastColWarningType==1){
 		int g=geometricObjects->AddLine(owner->pos,lastColWarning->pos,10,1,1);
-		geometricObjects->SetColor(g,0.2,1,0.2,0.6);
+		geometricObjects->SetColor(g,0.2f,1,0.2f,0.6f);
 	} else if(lastColWarningType==2){
 		int g=geometricObjects->AddLine(owner->pos,lastColWarning->pos,10,1,1);
 		if(speed.dot(lastColWarning->midPos+lastColWarning->speed*20 - owner->midPos - owner->speed*20)<0)
-			geometricObjects->SetColor(g,1,0.2,0.2,0.6);
+			geometricObjects->SetColor(g,1,0.2f,0.2f,0.6f);
 		else
-			geometricObjects->SetColor(g,1,1,0.2,0.6);
+			geometricObjects->SetColor(g,1,1,0.2f,0.6f);
 	}
 */
 	float yspeed=speed.y;
@@ -582,8 +582,8 @@ void CTAAirMoveType::UpdateAirPhysics()
 	float h = pos.y - max(ground->GetHeight(pos.x, pos.z),ground->GetHeight(pos.x+speed.x*40,pos.z+speed.z*40));
 
 	if(h<4){
-		speed.x*=0.95;
-		speed.z*=0.95;
+		speed.x*=0.95f;
+		speed.z*=0.95f;
 	}
 
 	float wh=wantedHeight;
@@ -596,11 +596,11 @@ void CTAAirMoveType::UpdateAirPhysics()
 	float ws;
 	if (h < wh){
 		ws= altitudeRate;
-		if(speed.y>0 && (wh-h)/speed.y*accRate*1.5 < speed.y)
+		if(speed.y>0 && (wh-h)/speed.y*accRate*1.5f < speed.y)
 			ws=0;
 	} else {
 		ws= -altitudeRate;
-		if(speed.y<0 && (wh-h)/speed.y*accRate*0.7 < -speed.y)
+		if(speed.y<0 && (wh-h)/speed.y*accRate*0.7f < -speed.y)
 			ws=0;
 	}
 	if(speed.y>ws)
@@ -796,7 +796,7 @@ void CTAAirMoveType::Update()
 						float colSpeed=-owner->speed.dot(dif)+u->speed.dot(dif);
 						owner->speed+=dif*colSpeed*(1-part);
 						u->speed-=dif*colSpeed*(part);
-//						float damage=(((*ui)->speed-owner->speed)*0.1).SqLength();
+//						float damage=(((*ui)->speed-owner->speed)*0.1f).SqLength();
 //						owner->DoDamage(DamageArray()*damage,0,ZeroVector);
 //						(*ui)->DoDamage(DamageArray()*damage,0,ZeroVector);
 //						owner->speed*=0.99f;
@@ -805,19 +805,19 @@ void CTAAirMoveType::Update()
 			}
 		}
 		if(pos.x<0){
-			pos.x+=0.6;
-			owner->midPos.x+=0.6;
+			pos.x+=0.6f;
+			owner->midPos.x+=0.6f;
 		}	else if(pos.x>float3::maxxpos){
-			pos.x-=0.6;
-			owner->midPos.x-=0.6;
+			pos.x-=0.6f;
+			owner->midPos.x-=0.6f;
 		}
 
 		if(pos.z<0){
-			pos.z+=0.6;
-			owner->midPos.z+=0.6;
+			pos.z+=0.6f;
+			owner->midPos.z+=0.6f;
 		}else if(pos.z>float3::maxzpos){
-			pos.z-=0.6;
-			owner->midPos.z-=0.6;
+			pos.z-=0.6f;
+			owner->midPos.z-=0.6f;
 		}
 	}
 }
@@ -929,7 +929,7 @@ void CTAAirMoveType::CheckForCollision(void)
 		if(forwardDif.SqLength()<dist*dist){
 			float frontLength=forwardDif.Length();
 			float3 ortoDif=dif-forwardDif;
-			float minOrtoDif=((*ui)->radius+owner->radius)*2+frontLength*0.05+5;		//note that the radiuses is multiplied by two since we rely on the aircrafts having to small radiuses (see unitloader)
+			float minOrtoDif=((*ui)->radius+owner->radius)*2+frontLength*0.05f+5;		//note that the radiuses is multiplied by two since we rely on the aircrafts having to small radiuses (see unitloader)
 			if(ortoDif.SqLength()<minOrtoDif*minOrtoDif){
 				dist=frontLength;
 				lastColWarning=(*ui);

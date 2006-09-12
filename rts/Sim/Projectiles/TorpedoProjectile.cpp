@@ -26,11 +26,11 @@ CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUn
 	if(target)
 		AddDeathDependence(target);
 
-	SetRadius(0.0);
+	SetRadius(0.0f);
 	drawRadius=maxSpeed*8;
 	float3 camDir=(pos-camera->pos).Normalize();
-	texx = ph->circularthingytex.xstart - (ph->circularthingytex.xend-ph->circularthingytex.xstart)*0.5;
-	texy = ph->circularthingytex.ystart - (ph->circularthingytex.yend-ph->circularthingytex.ystart)*0.5;
+	texx = ph->circularthingytex.xstart - (ph->circularthingytex.xend-ph->circularthingytex.xstart)*0.5f;
+	texy = ph->circularthingytex.ystart - (ph->circularthingytex.yend-ph->circularthingytex.ystart)*0.5f;
 #ifdef TRACE_SYNC
 	tracefile << "New projectile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -74,13 +74,13 @@ void CTorpedoProjectile::Update(void)
 		dir.Normalize();
 	} else {
 		if(pos.y-speed.y>-3){		//level out torpedo a bit when hitting water
-			dir.y*=0.5;
+			dir.y*=0.5f;
 			dir.Normalize();
 		}
 		ttl--;
 		if(ttl>0){
 			if(curSpeed<maxSpeed)
-				curSpeed+=max((float)0.2,tracking);
+				curSpeed+=max((float)0.2f,tracking);
 			if(target){
 				float3 targPos;
 				if((target->midPos-pos).SqLength()<150*150 || !owner)
@@ -91,7 +91,7 @@ void CTorpedoProjectile::Update(void)
 					targPos.y=0;
 
 				float dist=targPos.distance(pos);
-				float3 dif(targPos + target->speed*(dist/maxSpeed)*0.7 - pos);
+				float3 dif(targPos + target->speed*(dist/maxSpeed)*0.7f - pos);
 				dif.Normalize();
 				float3 dif2=dif-dir;
 				if(dif2.Length()<tracking){
@@ -105,7 +105,7 @@ void CTorpedoProjectile::Update(void)
 			}
 			speed=dir*curSpeed;
 		} else {
-			speed*=0.98;
+			speed*=0.98f;
 			speed.y+=gs->gravity;
 			dir=speed;
 			dir.Normalize();
@@ -116,11 +116,11 @@ void CTorpedoProjectile::Update(void)
 	if(pos.y<-2){
 		--nextBubble;
 		if(nextBubble==0){
-			nextBubble=1+(int)(gs->randFloat()*1.5);
+			nextBubble=1+(int)(gs->randFloat()*1.5f);
 
-			float3 pspeed=gs->randVector()*0.1;
-			pspeed.y+=0.2;
-			new CBubbleProjectile(pos+gs->randVector(),pspeed,40+gs->randFloat()*30,1+gs->randFloat()*2,0.01,owner,0.3+gs->randFloat()*0.3);
+			float3 pspeed=gs->randVector()*0.1f;
+			pspeed.y+=0.2f;
+			new CBubbleProjectile(pos+gs->randVector(),pspeed,40+gs->randFloat()*30,1+gs->randFloat()*2,0.01f,owner,0.3f+gs->randFloat()*0.3f);
 		}
 	}
 }
@@ -140,7 +140,7 @@ void CTorpedoProjectile::Draw(void)
 	col[3]=255;
 
 	float3 r=dir.cross(UpVector);
-	if(r.Length()<0.001)
+	if(r.Length()<0.001f)
 		r=float3(1,0,0);
 	r.Normalize();
 	float3 u=dir.cross(r);
@@ -169,21 +169,21 @@ void CTorpedoProjectile::Draw(void)
 
 	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
 	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
 
 	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
 	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
 
 	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
 	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
 
 	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
 	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
 }

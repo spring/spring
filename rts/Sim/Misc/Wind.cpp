@@ -41,7 +41,7 @@ void CWind::Update()
 
 		status++;
 	} else if(status<=300) {
-		float mod=status/300.0;
+		float mod=status/300.0f;
 		curWind=oldWind*(1-mod)+newWind*mod;
 		curStrength=curWind.Length();
 		curDir=curWind;

@@ -1018,14 +1018,14 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 float CAICallback::GetUnitDefRadius(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5:1,0);
+	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5f:1,0);
 	return mdl->radius;
 }
 
 float CAICallback::GetUnitDefHeight(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5:1,0);
+	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5f:1,0);
 	return mdl->height;
 }
 

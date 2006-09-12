@@ -46,7 +46,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	numCallback=new int;
 	*numCallback=0;
 	float3 camDir=(pos-camera->pos).Normalize();
-	if(camera->pos.distance(pos)*0.2+(1-fabs(camDir.dot(dir)))*3000 < 200)
+	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
 		drawTrail=false;
 	ENTER_SYNCED;
 
@@ -115,26 +115,26 @@ void CStarburstProjectile::Update(void)
 	}
 	if(uptime>0){
 		if(curSpeed<maxSpeed)
-			curSpeed+=0.1;
+			curSpeed+=0.1f;
 		dir=UpVector;
 		speed=dir*curSpeed;
 	} else if(doturn && ttl>0){
 		float3 dif(targetPos-pos);
 		dif.Normalize();
-		if(dif.dot(dir)>0.99){
+		if(dif.dot(dir)>0.99f){
 			dir=dif;
 			doturn=false;
 		} else {
 			dif=dif-dir;
 			dif-=dir*(dif.dot(dir));
 			dif.Normalize();
-			dir+=dif*0.06;
+			dir+=dif*0.06f;
 			dir.Normalize();
 		}
 		speed=dir*curSpeed;
 	} else if(ttl>0){
 		if(curSpeed<maxSpeed)
-			curSpeed+=0.1;
+			curSpeed+=0.1f;
 		float3 dif(targetPos-pos);
 		dif.Normalize();
 		if(dif.dot(dir)>maxGoodDif){
@@ -178,7 +178,7 @@ void CStarburstProjectile::Update(void)
 		if(!drawTrail){
 			ENTER_MIXED;
 			float3 camDir=(pos-camera->pos).Normalize();
-			if(camera->pos.distance(pos)*0.2+(1-fabs(camDir.dot(dir)))*3000 > 300)
+			if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 > 300)
 				drawTrail=true;
 			ENTER_SYNCED;
 		}
@@ -192,7 +192,7 @@ void CStarburstProjectile::Draw(void)
 	inArray=true;
 	float age2=(age&7)+gu->timeOffset;
 
-	float color=0.7;
+	float color=0.7f;
 	unsigned char col[4];
 	unsigned char col2[4];
 
@@ -209,7 +209,7 @@ void CStarburstProjectile::Draw(void)
 
 
 		float a1=(1-float(0)/(Smoke_Time))*255;
-		a1*=0.7+fabs(dif.dot(dir));
+		a1*=0.7f+fabs(dif.dot(dir));
 		int alpha=min(255,(int)max(0.f,a1));
 		col[0]=(unsigned char) (color*alpha);
 		col[1]=(unsigned char) (color*alpha);
@@ -217,7 +217,7 @@ void CStarburstProjectile::Draw(void)
 		col[3]=(unsigned char)alpha;
 
 		float a2=(1-float(age2)/(Smoke_Time))*255;
-		a2*=0.7+fabs(dif2.dot(oldSmokeDir));
+		a2*=0.7f+fabs(dif2.dot(oldSmokeDir));
 		if(age<8)
 			a2=0;
 		alpha=min(255,(int)max(0.f,a2));
@@ -227,19 +227,19 @@ void CStarburstProjectile::Draw(void)
 		col2[3]=(unsigned char)alpha;
 
 		float xmod=0;
-		float ymod=0.25;
+		float ymod=0.25f;
 		float size=1;
 		float size2=(1+age2*(1/Smoke_Time)*7);
 
-		float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0);//(1-age2/8.0);
+		float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0f);//(1-age2/8.0f);
 		va->AddVertexTC(interPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
 		va->AddVertexTC(interPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
 		va->AddVertexTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
 		va->AddVertexTC(oldSmoke-dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 	} else {	//draw the trail as particles
 		float dist=pos.distance(oldSmoke);
-		float3 dirpos1=pos-dir*dist*0.33;
-		float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33;
+		float3 dirpos1=pos-dir*dist*0.33f;
+		float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33f;
 
 		for(int a=0;a<numParts;++a){
 			float a1=1-float(a)/Smoke_Time;
@@ -279,19 +279,19 @@ void CStarburstProjectile::DrawCallback(void)
 		float3 odir=oldInfos[age]->dir;
 		float	ospeed=oldInfos[age]->speedf;
 		bool createAgeMods=oldInfos[age]->ageMods.empty();
-		for(float a=0;a<ospeed+0.6;a+=0.15){
+		for(float a=0;a<ospeed+0.6f;a+=0.15f){
 			float ageMod;
 			if(createAgeMods){
 				if(missileAge<20)
 					ageMod=1;
 				else
-					ageMod=0.6+rand()*0.8/RAND_MAX;
+					ageMod=0.6f+rand()*0.8f/RAND_MAX;
 				oldInfos[age]->ageMods.push_back(ageMod);
 			} else {
-				ageMod=oldInfos[age]->ageMods[(int)(a/0.15)];
+				ageMod=oldInfos[age]->ageMods[(int)(a/0.15f)];
 			}
-			float age2=((age+a/(ospeed+0.01)))*0.2;
-			float3 interPos=opos-odir*(age*0.5+a);
+			float age2=((age+a/(ospeed+0.01f)))*0.2f;
+			float3 interPos=opos-odir*(age*0.5f+a);
 			float drawsize;
 			col[3]=1;
 			if(missileAge<20){
@@ -305,7 +305,7 @@ void CStarburstProjectile::DrawCallback(void)
 				col[1]=(unsigned char) (200*alpha);
 				col[2]=(unsigned char) (150*alpha);
 			}
-			drawsize=1+age2*0.8*ageMod*7;
+			drawsize=1+age2*0.8f*ageMod*7;
 			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->ystart,col);
 			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->ystart,col);
 			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,col);

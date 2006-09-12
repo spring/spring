@@ -35,7 +35,7 @@ void CTooltipConsole::Draw(void)
 
 	glTranslatef(0.015f,0.08f,0);
 	glScalef(0.015f,0.015f,0.015f);
-	glColor4f(1,1,1,0.8);
+	glColor4f(1,1,1,0.8f);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -60,5 +60,5 @@ bool CTooltipConsole::IsAbove(int x,int y)
 	float mx=float(x)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
-	return (mx>0.01 && mx<0.41 && my>0.01 && my<0.1);
+	return (mx>0.01f && mx<0.41f && my>0.01f && my<0.1f);
 }

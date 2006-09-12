@@ -68,7 +68,7 @@ CNet::CNet()
 {
 	Uint64 t;
 	t = SDL_GetTicks();
-	curTime=float(t)/1000.;
+	curTime=float(t)/1000.f;
 	Uint16 wVersionRequested;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -179,7 +179,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 
 	Uint64 t;
 	t = SDL_GetTicks();
-	curTime=float(t)/1000.;
+	curTime=float(t)/1000.f;
 
 	if(FindDemoFile(server)){
 		onlyLocal=true;
@@ -330,7 +330,7 @@ void CNet::Update(void)
 {
 	Uint64 t;
 	t = SDL_GetTicks();
-	curTime=float(t)/1000.;
+	curTime=float(t)/1000.f;
 	if(playbackDemo)
 		ReadDemoFile();
 	if(onlyLocal){
@@ -388,14 +388,14 @@ void CNet::Update(void)
 		if(c->lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
 			SendData(NETMSG_HELLO);
 		}
-		if(c->lastSendTime<curTime-0.2 && !c->waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
+		if(c->lastSendTime<curTime-0.2f && !c->waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
 			SendData(NETMSG_HELLO);
 		}
 		if(c->lastReceiveTime < curTime-(inInitialConnect ? 40 : 30)){		//other side has timed out
 			c->active=false;
 		}
 
-		if(c->outgoingLength>0 && (c->lastSendTime < (curTime-0.2+c->outgoingLength*0.01) || c->lastSendFrame < gs->frameNum-1)){
+		if(c->outgoingLength>0 && (c->lastSendTime < (curTime-0.2f+c->outgoingLength*0.01f) || c->lastSendFrame < gs->frameNum-1)){
 			FlushConnection(a);
 		}
 	}
@@ -421,7 +421,7 @@ void CNet::ProcessRawPacket(unsigned char* data, int length, int conn)
 		hsize=13;
 		int nak=*(int*)&data[9];
 //		logOutput.Print("Got nak %i %i %i",nak,c->lastNak,c->firstUnacked);
-		if(nak!=c->lastNak || c->lastNakTime < curTime-0.1){
+		if(nak!=c->lastNak || c->lastNakTime < curTime-0.1f){
 			c->lastNak=nak;
 			c->lastNakTime=curTime;
 			for(int b=c->firstUnacked;b<=nak;++b){
@@ -688,7 +688,7 @@ bool CNet::FindDemoFile(const char* name)
 		}
 		playbackDemo->Read(&demoTimeOffset,sizeof(float));
 		demoTimeOffset=gu->modGameTime-demoTimeOffset;
-		nextDemoRead=gu->modGameTime-0.01;
+		nextDemoRead=gu->modGameTime-0.01f;
 		return true;
 	} else {
 		delete playbackDemo;
@@ -781,7 +781,7 @@ void CNet::StartDemoServer(void)
 {
 	playbackDemo->Read(&demoTimeOffset,sizeof(float));
 	demoTimeOffset=gu->modGameTime-demoTimeOffset;
-	nextDemoRead=gu->modGameTime-0.01;
+	nextDemoRead=gu->modGameTime-0.01f;
 }
 
 

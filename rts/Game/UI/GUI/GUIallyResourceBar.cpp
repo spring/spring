@@ -38,7 +38,7 @@ void GUIallyResourceBar::PrivateDraw()
 
 	glPushAttrib(GL_CURRENT_BIT);
 
-	glColor4f(0.0, 0.0, 0.0, 0.5);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	Quad(0, 0, w, h);

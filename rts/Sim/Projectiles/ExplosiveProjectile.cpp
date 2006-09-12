@@ -52,7 +52,7 @@ void CExplosiveProjectile::Collision()
 	float h=ground->GetHeight2(pos.x,pos.z);
 	if(h>pos.y){
 		float3 n=ground->GetNormal(pos.x,pos.z);
-		pos-=speed*max(0.0f,min(1.0f,float((h-pos.y)*n.y/n.dot(speed)+0.1)));
+		pos-=speed*max(0.0f,min(1.0f,float((h-pos.y)*n.y/n.dot(speed)+0.1f)));
 	}
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();
@@ -78,11 +78,11 @@ void CExplosiveProjectile::Draw(void)
 	dir.Normalize();
 
 	for(int a=0;a<5;++a){
-		col[0]=int((5-a)*0.2*weaponDef->visuals.color.x*255);
-		col[1]=int((5-a)*0.2*weaponDef->visuals.color.y*255);
-		col[2]=int((5-a)*0.2*weaponDef->visuals.color.z*255);
-		col[3]=int((5-a)*0.2*weaponDef->intensity*255);
-		float3 interPos=pos+speed*gu->timeOffset-dir*drawRadius*0.6*a;
+		col[0]=int((5-a)*0.2f*weaponDef->visuals.color.x*255);
+		col[1]=int((5-a)*0.2f*weaponDef->visuals.color.y*255);
+		col[2]=int((5-a)*0.2f*weaponDef->visuals.color.z*255);
+		col[3]=int((5-a)*0.2f*weaponDef->intensity*255);
+		float3 interPos=pos+speed*gu->timeOffset-dir*drawRadius*0.6f*a;
 		va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
 		va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
 		va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);

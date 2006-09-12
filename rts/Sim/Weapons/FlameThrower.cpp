@@ -21,10 +21,10 @@ void CFlameThrower::Fire(void)
 {
 	float3 dir=targetPos-weaponPos;
 	dir.Normalize();
-	float3 spread=(gs->randVector()*sprayangle+salvoError)*0.2;
-	spread-=dir*0.001;
+	float3 spread=(gs->randVector()*sprayangle+salvoError)*0.2f;
+	spread-=dir*0.001f;
 
-	new CFlameProjectile(weaponDef->visuals.color,weaponDef->visuals.color2,weaponDef->intensity,weaponPos,dir*projectileSpeed,spread,owner,damages,weaponDef,(int)(range/projectileSpeed*1.2));
+	new CFlameProjectile(weaponDef->visuals.color,weaponDef->visuals.color2,weaponDef->intensity,weaponPos,dir*projectileSpeed,spread,owner,damages,weaponDef,(int)(range/projectileSpeed*1.2f));
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
@@ -50,7 +50,7 @@ bool CFlameThrower::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	dir/=length;
 
 	float g=ground->LineGroundCol(weaponPos,pos);
-	if(g>0 && g<length*0.9)
+	if(g>0 && g<length*0.9f)
 		return false;
 
 	if(helper->LineFeatureCol(weaponPos,dir,length))

@@ -37,7 +37,7 @@ CBasicMapDamage::CBasicMapDamage(void)
 	neededLosUpdate=0;
 
 	for(int a=0;a<=200;++a){
-		float r=a/200.0;
+		float r=a/200.0f;
 		float d=cos((r-0.1f)*(PI+0.3f))*(1-r)*(0.5f+0.5f*cos(max(0.0f,r*3-2)*PI));
 		craterTable[a]=d;
 	}
@@ -70,7 +70,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 	if(strength<10 || radius<8)
 		return;
 
-	radius*=1.5;
+	radius*=1.5f;
 
 	Explo* e=new Explo;
 	e->pos=pos;
@@ -83,7 +83,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 
 	float* heightmap = readmap->GetHeightmap();
 	float baseStrength=-pow(strength,0.6f)*3/mapHardness;
-	float invRadius=1.0/radius;
+	float invRadius=1.0f/radius;
 	for(int y=e->y1;y<=e->y2;++y){
 		for(int x=e->x1;x<=e->x2;++x){
 			if(readmap->groundBlockingObjectMap[y*gs->mapx+x] && readmap->groundBlockingObjectMap[y*gs->mapx+x]->blockHeightChanges){			//dont change squares with building on them here
@@ -99,9 +99,9 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 //			prevDif+=dif*5;
 
 			if(prevDif*dif>0)
-				dif/=fabs(prevDif)*0.1+1;
+				dif/=fabs(prevDif)*0.1f+1;
 			e->squares.push_back(dif);
-			if(dif<-0.3 && strength>200)
+			if(dif<-0.3f && strength>200)
 				treeDrawer->RemoveGrass(x,y);
 		}
 	}
@@ -120,7 +120,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 					float prevDif=heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x];
 
 					if(prevDif*dif>0)
-						dif/=fabs(prevDif)*0.1+1;
+						dif/=fabs(prevDif)*0.1f+1;
 					totalDif+=dif;
 				}
 			}
@@ -154,7 +154,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			height+=heightmap[(y)*(gs->mapx+1)+x+1];
 			height+=heightmap[(y+1)*(gs->mapx+1)+x];
 			height+=heightmap[(y+1)*(gs->mapx+1)+x+1];
-			readmap->centerheightmap[y*gs->mapx+x]=height*0.25;
+			readmap->centerheightmap[y*gs->mapx+x]=height*0.25f;
 		}
 	}
 	
@@ -171,7 +171,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 				height += readmap->mipHeightmap[i][(x)+(y+1)*hmapx];
 				height += readmap->mipHeightmap[i][(x+1)+(y)*hmapx];
 				height += readmap->mipHeightmap[i][(x+1)+(y+1)*hmapx];
-				readmap->mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height/4.0;
+				readmap->mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height/4.0f;
 			}
 		}
 	}
@@ -219,7 +219,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			float3 n2=e2.cross(e1);
 			n2.Normalize();
 
-			readmap->slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5;
+			readmap->slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5f;
 		}
 	}
 	pathManager->TerrainChange(x1,y1,x2,y2);
@@ -291,7 +291,7 @@ START_TIME_PROFILE;
 		if(e->ttl==0){
 			float3 pos=e->pos;
 			float strength=e->strength;
-			float ds=2.5*sqrt(strength);
+			float ds=2.5f*sqrt(strength);
 			float dd=strength/ds*8;
 			RecalcArea(x1-2,x2+2,y1-2,y2+2);
 	/*		for(int y=y1>>3;y<=y2>>3;++y){
@@ -313,7 +313,7 @@ START_TIME_PROFILE;
 	}
 
 /*
-	nextRejuv+=rejuvQue.size()/300.0;
+	nextRejuv+=rejuvQue.size()/300.0f;
 	while(nextRejuv>0){
 		nextRejuv-=1;
 		int bx=rejuvQue.front().x;
@@ -326,7 +326,7 @@ START_TIME_PROFILE;
 					damaged=true;
 					if(readmap->damagemap[y*1024+x]>5){
 						int hsquare=((y+1)/2)*(gs->mapx+1)+(x+1)/2;
-						readmap->heightmap[hsquare]-=(readmap->heightmap[hsquare]-readmap->orgheightmap[hsquare])*0.003;
+						readmap->heightmap[hsquare]-=(readmap->heightmap[hsquare]-readmap->orgheightmap[hsquare])*0.003f;
 						readmap->damagemap[y*1024+x]-=4;
 					} else {
 						readmap->damagemap[y*1024+x]=0;
@@ -353,7 +353,7 @@ END_TIME_PROFILE("Map damage");
 
 void CBasicMapDamage::UpdateLos(void)
 {
-	int updateSpeed=(int)(relosSize*0.01)+1;
+	int updateSpeed=(int)(relosSize*0.01f)+1;
 
 	if(relosUnits.empty()){
 		if(relosQue.empty())

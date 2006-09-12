@@ -109,7 +109,7 @@ CUnitHandler::CUnitHandler()
 
 	slowUpdateIterator=activeUnits.end();
 
-	waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str())*(16.0/30.0);
+	waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str())*(16.0f/30.0f);
 
 	if(gameSetup)
 		maxUnits=gameSetup->maxUnits;
@@ -290,9 +290,9 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	float h=borderh/numBorder;
 
 	if(h<minh && minh<maxh)
-		h=minh+0.01;
+		h=minh+0.01f;
 	if(h>maxh && maxh>minh)
-		h=maxh-0.01;
+		h=maxh-0.01f;
 
 	return h;
 }
@@ -459,7 +459,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	if(canbuild)
 		glColor4f(0,0.8f,0,1.0f);
 	else
-		glColor4f(0.5,0.5f,0,1.0f);
+		glColor4f(0.5f,0.5f,0,1.0f);
 
 	for(unsigned int i=0; i<canbuildpos.size(); i++)
 	{
@@ -468,7 +468,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		glVertexf3(canbuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
 		glVertexf3(canbuildpos[i]+float3(0,0,SQUARE_SIZE));
 	}
-	glColor4f(0.5,0.5f,0,1.0f);
+	glColor4f(0.5f,0.5f,0,1.0f);
 	for(unsigned int i=0; i<featurepos.size(); i++)
 	{
 		glVertexf3(featurepos[i]);

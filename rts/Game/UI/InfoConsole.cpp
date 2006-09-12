@@ -62,7 +62,7 @@ void CInfoConsole::Draw()
 			glVertex3f(xpos+width,ypos-height,0);
 		glEnd();
 	}
-	glTranslatef(xpos+0.01,ypos-0.026f,0);
+	glTranslatef(xpos+0.01f,ypos-0.026f,0);
 	glScalef(0.015f,0.02f,0.02f);
 	glColor4f(1,1,1,1);
 

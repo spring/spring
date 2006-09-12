@@ -20,28 +20,28 @@ static char rcsid[] = "$NetBSD: e_expf.c,v 1.6 1996/04/08 15:43:43 phil Exp $";
 #include "math.h"
 #include "math_private.h"
 
-static const float huge = 1.0e+30;
+static const float huge = 1.0e+30f;
 
 #ifdef __STDC__
 static const float
 #else
 static float
 #endif
-one	= 1.0,
-halF[2]	= {0.5,-0.5,},
-twom100 = 7.8886090522e-31,      /* 2**-100=0x0d800000 */
-o_threshold=  8.8721679688e+01,  /* 0x42b17180 */
-u_threshold= -1.0397208405e+02,  /* 0xc2cff1b5 */
-ln2HI[2]   ={ 6.9313812256e-01,		/* 0x3f317180 */
-	     -6.9313812256e-01,},	/* 0xbf317180 */
-ln2LO[2]   ={ 9.0580006145e-06,  	/* 0x3717f7d1 */
-	     -9.0580006145e-06,},	/* 0xb717f7d1 */
-invln2 =  1.4426950216e+00, 		/* 0x3fb8aa3b */
-P1   =  1.6666667163e-01, /* 0x3e2aaaab */
-P2   = -2.7777778450e-03, /* 0xbb360b61 */
-P3   =  6.6137559770e-05, /* 0x388ab355 */
-P4   = -1.6533901999e-06, /* 0xb5ddea0e */
-P5   =  4.1381369442e-08; /* 0x3331bb4c */
+one	= 1.0f,
+halF[2]	= {0.5f,-0.5f,},
+twom100 = 7.8886090522e-31f,      /* 2**-100=0x0d800000 */
+o_threshold=  8.8721679688e+01f,  /* 0x42b17180 */
+u_threshold= -1.0397208405e+02f,  /* 0xc2cff1b5 */
+ln2HI[2]   ={ 6.9313812256e-01f,		/* 0x3f317180 */
+	     -6.9313812256e-01f,},	/* 0xbf317180 */
+ln2LO[2]   ={ 9.0580006145e-06f,  	/* 0x3717f7d1 */
+	     -9.0580006145e-06f,},	/* 0xb717f7d1 */
+invln2 =  1.4426950216e+00f, 		/* 0x3fb8aa3b */
+P1   =  1.6666667163e-01f, /* 0x3e2aaaab */
+P2   = -2.7777778450e-03f, /* 0xbb360b61 */
+P3   =  6.6137559770e-05f, /* 0x388ab355 */
+P4   = -1.6533901999e-06f, /* 0xb5ddea0e */
+P5   =  4.1381369442e-08f; /* 0x3331bb4c */
 
 #ifdef __STDC__
 	float __ieee754_expf(float x)	/* default IEEE double exp */
@@ -63,7 +63,7 @@ P5   =  4.1381369442e-08; /* 0x3331bb4c */
 	    if(hx>0x7f800000)
 		 return x+x;	 		/* NaN */
             if(hx==0x7f800000)
-		return (xsb==0)? x:0.0;		/* exp(+-inf)={inf,0} */
+		return (xsb==0)? x:0.0f;		/* exp(+-inf)={inf,0} */
 	    if(x > o_threshold) return huge*huge; /* overflow */
 	    if(x < u_threshold) return twom100*twom100; /* underflow */
 	}
@@ -88,8 +88,8 @@ P5   =  4.1381369442e-08; /* 0x3331bb4c */
     /* x is now in primary range */
 	t  = x*x;
 	c  = x - t*(P1+t*(P2+t*(P3+t*(P4+t*P5))));
-	if(k==0) 	return one-((x*c)/(c-(float)2.0)-x);
-	else 		y = one-((lo-(x*c)/((float)2.0-c))-hi);
+	if(k==0) 	return one-((x*c)/(c-(float)2.0f)-x);
+	else 		y = one-((lo-(x*c)/((float)2.0f-c))-hi);
 	if(k >= -125) {
 	    u_int32_t hy;
 	    GET_FLOAT_WORD(hy,y);

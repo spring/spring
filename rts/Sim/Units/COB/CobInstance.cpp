@@ -541,15 +541,15 @@ void CCobInstance::EmitSfx(int type, int piece)
 	float3 relPos = unit->localmodel->GetPiecePos(piece);
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 
-	float alpha = 0.3+gu->usRandFloat()*0.2;
-	float alphaFalloff = 0.004;
+	float alpha = 0.3f+gu->usRandFloat()*0.2f;
+	float alphaFalloff = 0.004f;
 	float fadeupTime=4;
 
 	//Hovers need special care
 	if (unit->unitDef->canhover) {		
 		fadeupTime=8;
-		alpha = 0.15+gu->usRandFloat()*0.2;
-		alphaFalloff = 0.008;
+		alpha = 0.15f+gu->usRandFloat()*0.2f;
+		alphaFalloff = 0.008f;
 	}
 	
 	//Make sure wakes are only emitted on water
@@ -563,30 +563,30 @@ void CCobInstance::EmitSfx(int type, int piece)
 	switch (type) {
 		case 4:
 		case 5:		{	//reverse wake
-			float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2;
+			float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4,6+gu->usRandFloat()*4,0.15+gu->usRandFloat()*0.3,unit, alpha, alphaFalloff,fadeupTime);
+			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 3:			//wake 2, in TA it lives longer..
 		case 2:		{	//regular ship wake
-			float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2;
+			float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4,6+gu->usRandFloat()*4,0.15+gu->usRandFloat()*0.3,unit, alpha, alphaFalloff,fadeupTime);
+			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 259:	{	//submarine bubble. does not provide direction through piece vertices..
-			float3 pspeed=gu->usRandVector()*0.1;
-			pspeed.y+=0.2;
-			new CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01,unit,0.3+gu->usRandFloat()*0.3);
+			float3 pspeed=gu->usRandVector()*0.1f;
+			pspeed.y+=0.2f;
+			new CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01f,unit,0.3f+gu->usRandFloat()*0.3f);
 			break;}
 		case 257:	//damaged unit smoke
-			new CSmokeProjectile(pos,gu->usRandVector()*0.5+UpVector*1.1,60,4,0.5,unit,0.5);
+			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.5f);
 		case 258:		//damaged unit smoke
-			new CSmokeProjectile(pos,gu->usRandVector()*0.5+UpVector*1.1,60,4,0.5,unit,0.6);
+			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
 			break;
 		case 0:{		//vtol
-			float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2;
+			float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * -fabs(relDir.y) + unit->rightdir * relDir.x;
-			CHeatCloudProjectile* hc=new CHeatCloudProjectile(pos, unit->speed*0.7+dir * 0.5, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
+			CHeatCloudProjectile* hc=new CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
 			hc->size=3;
 			break;}
 		default:
@@ -692,18 +692,18 @@ void CCobInstance::Explode(int piece, int flags)
 		newflags |= PP_Fall;	//if they dont fall they could live forever
 	if ((flags & 8) && ph->particleSaturation<1)
 		newflags |= PP_Smoke;
-	if ((flags & 16) && ph->particleSaturation<0.95)
+	if ((flags & 16) && ph->particleSaturation<0.95f)
 		newflags |= PP_Fire;
 
-	float3 baseSpeed=unit->speed+unit->residualImpulse*0.5;
+	float3 baseSpeed=unit->speed+unit->residualImpulse*0.5f;
 	float l=baseSpeed.Length();
 	if(l>3){
 		float l2=3+sqrt(l-3);
 		baseSpeed*=(l2/l);
 	}
-	float3 speed((0.5f-gs->randFloat())*6.0,1.2f+gs->randFloat()*5.0,(0.5f-gs->randFloat())*6.0);
+	float3 speed((0.5f-gs->randFloat())*6.0f,1.2f+gs->randFloat()*5.0f,(0.5f-gs->randFloat())*6.0f);
 	if(unit->pos.y - ground->GetApproximateHeight(unit->pos.x,unit->pos.z) > 15){
-		speed.y=(0.5f-gs->randFloat())*6.0;
+		speed.y=(0.5f-gs->randFloat())*6.0f;
 	}
 	speed+=baseSpeed;
 	if(speed.Length()>12)
@@ -793,7 +793,7 @@ void CCobInstance::Explode(int piece, int flags)
 	else {
 		if (pieceData->original3do != NULL || pieceData->originals3o != NULL) {
 			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5);
+			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
 		}
 	}
 #endif
@@ -1012,7 +1012,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 		break;
 	case BUGGER_OFF:
 		if (param != 0) {
-			helper->BuggerOff(unit->pos+unit->frontdir*unit->radius,unit->radius*1.5);
+			helper->BuggerOff(unit->pos+unit->frontdir*unit->radius,unit->radius*1.5f);
 		}
 		//yardOpen = (param != 0);
 		break;

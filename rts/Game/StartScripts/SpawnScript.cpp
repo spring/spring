@@ -69,11 +69,11 @@ void CSpawnScript::Update()
 			CFeature* feature;
 			do {
 				pos=spawnPos[num]+gs->randVector()*dist;
-				dist*=1.05;
+				dist*=1.05f;
 			} while (dist < 500 && uh->TestUnitBuildSquare(BuildInfo(curSpawn->name,pos,0),feature,team) != 2);
 
 			// Ignore unit if it really doesn't fit.
-			// (within 18 tries, 200*1.05^18 < 500 < 200*1.05^19)
+			// (within 18 tries, 200*1.05f^18 < 500 < 200*1.05f^19)
 			if (dist < 500) {
 				CUnit* u = unitLoader.LoadUnit(curSpawn->name, pos, team, false);
 

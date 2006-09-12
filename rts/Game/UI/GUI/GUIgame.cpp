@@ -56,12 +56,12 @@ bool mouseHandlerMayDoSelection=true;
 
 bool Selector::BeginSelection(const float3& dir)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4f);
 
 	isDragging=false;
 	
 	if(dist<0)
-		dist=gu->viewRange*1.4;
+		dist=gu->viewRange*1.4f;
 
 	begin=camera->pos+dir*dist;
 	end=begin;
@@ -72,10 +72,10 @@ bool Selector::BeginSelection(const float3& dir)
 
 bool Selector::UpdateSelection(const float3& dir)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4f);
 
 	if(dist<0)
-		dist=gu->viewRange*1.4;
+		dist=gu->viewRange*1.4f;
 
 	end=camera->pos+dir*dist;
 	return isDragging;
@@ -183,7 +183,7 @@ void Selector::DrawSelection()
 	glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5,1,0.5,0.5);
+	glColor4f(0.5f,1,0.5f,0.5f);
 
 	glBegin(GL_QUADS);
 		glVertexf3(camera->pos+dir1U*30+dir1S*30+camera->forward*30);
@@ -202,7 +202,7 @@ void Selector::DrawArea()
 {
 	float radius=begin.distance2D(end);
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5,1,0.5,0.5);
+	glColor4f(0.5f,1,0.5f,0.5f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
@@ -226,7 +226,7 @@ void Selector::DrawFront(float maxSize, float sizeDiv)
 	float3 pos2=end;
 
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5,1,0.5,0.5);
+	glColor4f(0.5f,1,0.5f,0.5f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
@@ -386,7 +386,7 @@ void GUIgame::PrivateDraw()
 		if(currentCommand->id<0)
 		{
 			// draw possible unit placement
-			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 			if(dist>0)
 			{
 				UnitDef *unitdef = unitDefHandler->GetUnitByID(-currentCommand->id);
@@ -418,9 +418,9 @@ void GUIgame::PrivateDraw()
 						for(int i=0; i<size; i++)
 						{
 							if(uh->ShowUnitBuildSquare(BuildInfo(unitdef, positions[i],0)))
-								glColor4f(0.7,1,1,0.4);
+								glColor4f(0.7f,1,1,0.4f);
 							else
-								glColor4f(1,0.5,0.5,0.4);
+								glColor4f(1,0.5f,0.5f,0.4f);
 
 							glPushMatrix();
 							glTranslatef3(positions[i]);
@@ -430,7 +430,7 @@ void GUIgame::PrivateDraw()
 							glPopMatrix();
 							if(unitdef->weapons.size()>0){	// Draw firerange
 							glDisable(GL_TEXTURE_2D);
-							glColor4f(1,0.3,0.3,0.7);
+							glColor4f(1,0.3f,0.3f,0.7f);
 							glBegin(GL_LINE_STRIP);
 							for(int a=0;a<=40;++a){
 								float3 wpos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
@@ -450,9 +450,9 @@ void GUIgame::PrivateDraw()
 					else
 					{
 						if(uh->ShowUnitBuildSquare(BuildInfo(unitdef,pos,0)))
-							glColor4f(0.7,1,1,0.4);
+							glColor4f(0.7f,1,1,0.4f);
 						else
-							glColor4f(1,0.5,0.5,0.4);
+							glColor4f(1,0.5f,0.5f,0.4f);
 
 						// draw single unit
 						glPushMatrix();
@@ -463,7 +463,7 @@ void GUIgame::PrivateDraw()
 						glPopMatrix();						
 						if(unitdef->weapons.size()>0){	// Draw firerange
 						glDisable(GL_TEXTURE_2D);
-						glColor4f(1,0.3,0.3,0.7);
+						glColor4f(1,0.3f,0.3f,0.7f);
 						glBegin(GL_LINE_STRIP);
 						for(int a=0;a<=40;++a){
 							float3 wpos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
@@ -479,7 +479,7 @@ void GUIgame::PrivateDraw()
 						}
 						if(unitdef->extractRange>0){	//draw range
 						glDisable(GL_TEXTURE_2D);
-						glColor4f(1,0.3,0.3,0.7);
+						glColor4f(1,0.3f,0.3f,0.7f);
 						glBegin(GL_LINE_STRIP);
 						for(int a=0;a<=40;++a){
 							float3 wpos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
@@ -530,7 +530,7 @@ void GUIgame::PrivateDraw()
 				CUnit* unit=*si;
 				if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
 					glDisable(GL_TEXTURE_2D);
-					glColor4f(1,0.3,0.3,0.7);
+					glColor4f(1,0.3f,0.3f,0.7f);
 					glBegin(GL_LINE_STRIP);
 					float h=unit->pos.y;
 					for(int a=0;a<=40;++a){
@@ -549,11 +549,11 @@ void GUIgame::PrivateDraw()
 	}
 	if(keys[SDLK_LSHIFT]){
 		CUnit* unit=0;
-		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,false);
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
 			if(unit->maxRange>0){
 				glDisable(GL_TEXTURE_2D);
-				glColor4f(1,0.3,0.3,0.7);
+				glColor4f(1,0.3f,0.3f,0.7f);
 				glBegin(GL_LINE_STRIP);
 				float h=unit->pos.y;
 				for(int a=0;a<=40;++a){
@@ -569,7 +569,7 @@ void GUIgame::PrivateDraw()
 			}
 			if(unit->unitDef->decloakDistance>0){			//draw decloak distance
 				glDisable(GL_TEXTURE_2D);
-				glColor4f(0.3,0.3,1,0.7);
+				glColor4f(0.3f,0.3f,1,0.7f);
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=40;++a){
 					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
@@ -581,7 +581,7 @@ void GUIgame::PrivateDraw()
 			}
 			if(unit->unitDef->kamikazeDist>0){			//draw self destruct distance
 				glDisable(GL_TEXTURE_2D);
-				glColor4f(0.8,0.8,0.1,0.7);
+				glColor4f(0.8f,0.8f,0.1f,0.7f);
 				glBegin(GL_LINE_STRIP);
 				for(int a=0;a<=40;++a){
 					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
@@ -709,12 +709,12 @@ bool GUIgame::DirectCommand(const float3& p, int button)
 	float3 over=float3(p.x, 8000, p.z);
 	float3 dir=float3(0, -1, 0);
 	
-	float dist=ground->LineGroundCol(over, over+dir*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(over, over+dir*gu->viewRange*1.4f);
 	
 	position=over+dir*dist;
 	
-	helper->GuiTraceRay(over,dir,gu->viewRange*1.4,unit,20,true);
-	helper->GuiTraceRayFeature(over,dir,gu->viewRange*1.4,feature);
+	helper->GuiTraceRay(over,dir,gu->viewRange*1.4f,unit,20,true);
+	helper->GuiTraceRayFeature(over,dir,gu->viewRange*1.4f,feature);
 	if (feature)
 		featureId=feature->id;
 	
@@ -735,13 +735,13 @@ bool GUIgame::MouseMoveAction(int x, int y, int xrel, int yrel, int button)
 
 	float3 dir=mouse->dir;
 
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4f);
 	
-	if(dist<gu->viewRange*1.4)
+	if(dist<gu->viewRange*1.4f)
 		position=camera->pos+dir*dist;
 
-	float dist2=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4,unit,20,true);
-	float dist3=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4,feature);
+	float dist2=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,true);
+	float dist3=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4f,feature);
 	if (feature)
 		featureId=feature->id;
 
@@ -1009,11 +1009,11 @@ bool GUIgame::EventAction(const string& command)
 	{
 		float speed=gs->userSpeedFactor;
 		if(speed<1){
-			speed/=0.8;
-			if(speed>0.99)
+			speed/=0.8f;
+			if(speed>0.99f)
 				speed=1;
 		}else 
-			speed+=0.5;
+			speed+=0.5f;
 		if(!net->playbackDemo){
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
@@ -1026,11 +1026,11 @@ bool GUIgame::EventAction(const string& command)
 	else if (id==COMMAND_slowdown){
 		float speed=gs->userSpeedFactor;
 		if(speed<=1){
-			speed*=0.8;
-			if(speed<0.1)
-				speed=0.1;
+			speed*=0.8f;
+			if(speed<0.1f)
+				speed=0.1f;
 		}else 
-			speed-=0.5;
+			speed-=0.5f;
 		if(!net->playbackDemo){
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
 		} else {
@@ -1063,7 +1063,7 @@ bool GUIgame::EventAction(const string& command)
 	else if (id==COMMAND_lastmsgpos){
 		mouse->currentCamController->SetPos(guicontroller->lastMsgPos);
 		mouse->inStateTransit=true;
-		mouse->transitSpeed=0.5;
+		mouse->transitSpeed=0.5f;
 	}
 	else if (id==COMMAND_showmetalmap){
 		gd->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);		
@@ -1571,7 +1571,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 
 	
 	CUnit* unit=0;
-	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
+	float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
 
 	if(unit && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
 		UnitDef* unitdef2=unit->unitDef;
@@ -1620,13 +1620,13 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 		}
 	} else if(keys[SDLK_LALT]){			//build a rectangle
 		float xsize=unitdef->xsize*8;
-		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
+		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4f)/xsize);
 		int xstep=(int)xsize;
 		if(start.x>end.x)
 			xstep*=-1;
 
 		float zsize=unitdef->ysize*8;
-		int znum=(int)((fabs(end.z-start.z)+zsize*1.4)/zsize);
+		int znum=(int)((fabs(end.z-start.z)+zsize*1.4f)/zsize);
 		int zstep=(int)zsize;
 		if(start.z>end.z)
 			zstep*=-1;
@@ -1655,7 +1655,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			dir/=fabs(dir.x);
 			if(keys[SDLK_LCTRL])
 				dir.z=0;
-			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step)
+			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4f;p+=dir*step)
 				ret.push_back(p);
 		} else {
 			float step=unitdef->ysize*8;
@@ -1667,7 +1667,7 @@ std::vector<float3> GUIgame::GetBuildPos(float3 start, float3 end,UnitDef* unitd
 			dir/=fabs(dir.z);
 			if(keys[SDLK_LCTRL])
 				dir.x=0;
-			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step)
+			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4f;p+=dir*step)
 				ret.push_back(p);
 		}
 	}

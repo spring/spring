@@ -119,10 +119,10 @@ void CMobileCAI::GiveCommand(Command &c)
 			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0;
 			break;
 		case 1:
-			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.3;
+			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.3f;
 			break;
 		case 2:
-			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.5;
+			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.5f;
 			break;
 		}
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
@@ -352,11 +352,11 @@ void CMobileCAI::SlowUpdate()
 			if((((owner->AttackUnit(orderTarget, c.id==CMD_DGUN) && owner->weapons.size() > 0
 			  && owner->weapons.front()->range > orderTarget->pos.distance(owner->pos))
 			  || dynamic_cast<CTAAirMoveType*>(owner->moveType))
-			  && (owner->pos-orderTarget->pos).Length2D()<owner->maxRange*0.9)
+			  && (owner->pos-orderTarget->pos).Length2D()<owner->maxRange*0.9f)
 			  || (owner->pos-orderTarget->pos).SqLength2D()<1024){
 				StopMove();
 				owner->moveType->KeepPointingTo(orderTarget->pos, min((float)(owner->losRadius*SQUARE_SIZE*2), owner->maxRange*0.9f), true);
-			} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2){
+			} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2f){
 				float3 fix=orderTarget->pos+owner->posErrorVector*128;
 				SetGoal(fix,curPos);
 			}
@@ -365,7 +365,7 @@ void CMobileCAI::SlowUpdate()
 			if((owner->AttackGround(pos,c.id==CMD_DGUN) && owner->weapons.size() > 0
 			  && (owner->pos-pos).Length()< owner->weapons.front()->range) || (owner->pos-pos).SqLength2D()<1024){
 				StopMove();
-				owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9, true);
+				owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9f, true);
 			} else if(pos.distance2D(goalPos)>10){
 				SetGoal(pos,curPos);
 			}

@@ -117,10 +117,10 @@ void CAirCAI::GiveCommand(Command &c)
 			((CAirMoveType*)owner->moveType)->repairBelowHealth=0;
 			break;
 		case 1:
-			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.3;
+			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.3f;
 			break;
 		case 2:
-			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.5;
+			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.5f;
 			break;
 		}
 		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){

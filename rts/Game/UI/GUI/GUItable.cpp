@@ -57,18 +57,18 @@ void GUItable::Select(int i,int button)
 void GUItable::PrivateDraw()
 {
 	glDisable(GL_TEXTURE_2D);
-		glColor4f(0.0, 0.0, 0.0, GUI_TRANS);	
+		glColor4f(0.0f, 0.0f, 0.0f, GUI_TRANS);	
 	glBegin(GL_QUADS);		
 		glTexCoord2d(0.0f, 0.0f);
 		glVertex3f(10, 10, 0);
-		glTexCoord2d(0.0f, 1.0);		
+		glTexCoord2d(0.0f, 1.0f);		
 		glVertex3f(10, h-10, 0);		
-		glTexCoord2d(1.0, 1.0);		
+		glTexCoord2d(1.0f, 1.0f);		
 		glVertex3d(w-10, h-10, 0);
 		glTexCoord2d(1.0f, 0.0f);		
 		glVertex3f(w-10, 10, 0);		
 	glEnd();
-	glColor3f(1.0, 1.0, 1.0);
+	glColor3f(1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
 	glCallList(displayList);
 	
@@ -77,7 +77,7 @@ void GUItable::PrivateDraw()
 	if(w<200)
 		inSet=0;
 
-	glColor4f(1.0,1.0,1.0,1.0f);
+	glColor4f(1.0f,1.0f,1.0f,1.0f);
 	
 	if(!header.empty())
 	{
@@ -94,14 +94,14 @@ void GUItable::PrivateDraw()
 		
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glBegin(GL_LINES);
-			glVertex3f(max(4., inSet/2.0), 10+rowHeight, 0);
-			glVertex3f(width-max(4., inSet/2.0), 10+rowHeight, 0);		
+			glVertex3f(max(4.f, inSet/2.0f), 10+rowHeight, 0);
+			glVertex3f(width-max(4.f, inSet/2.0f), 10+rowHeight, 0);		
 		glEnd();
 
 		for(int i=0; i<numLines && (i+position)<numEntries; i++)
 		{
 			if((i+position)==selected)
-				glColor4f(1.0,0.4f,0.4f,1.0f);
+				glColor4f(1.0f,0.4f,0.4f,1.0f);
 
 			string line=data[i+position];
 			size_t tabPos=line.find("\t");
@@ -119,7 +119,7 @@ void GUItable::PrivateDraw()
 			}
 			guifont->Print(header[j].position, (i+2)*rowHeight, line.substr(0, tabPos));
 
-			glColor4f(1.0,1.0,1.0,1.0f);
+			glColor4f(1.0f,1.0f,1.0f,1.0f);
 
 		}
 	}
@@ -128,10 +128,10 @@ void GUItable::PrivateDraw()
 		for(int i=0; i<numLines && (i+position)<numEntries; i++)
 		{
 			if((i+position)==selected)
-				glColor4f(1.0,0.4f,0.4f,1.0f);
+				glColor4f(1.0f,0.4f,0.4f,1.0f);
 
 			guifont->Print(inSet, (i+1)*rowHeight, data[i+position]);			
-			glColor4f(1.0,1.0,1.0,1.0f);
+			glColor4f(1.0f,1.0f,1.0f,1.0f);
 		}
 	}
 }

@@ -33,7 +33,7 @@ static const Simple
 #else
 static Simple
 #endif
-huge 	= 1e30,
+huge 	= 1e30f,
 one	= 1.0f,
 invsqrtpi=  5.6418961287e-01f, /* 0x3f106ebb */
 tpi      =  6.3661974669e-01f, /* 0x3f22f983 */
@@ -440,6 +440,6 @@ static Simple qS2[6] = {
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));
-	return (-(Simple).125 + r/s)/x;
+	return (-(Simple).125f + r/s)/x;
 }
 }

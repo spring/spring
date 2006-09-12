@@ -38,14 +38,14 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& po
 
 	if(!drawTrail){
 		float dist=pos1.distance(pos2);
-		dirpos1=pos1-dir1*dist*0.33;
-		dirpos2=pos2+dir2*dist*0.33;
-	} else if(dir1.dot(dir2)<0.98){
+		dirpos1=pos1-dir1*dist*0.33f;
+		dirpos2=pos2+dir2*dist*0.33f;
+	} else if(dir1.dot(dir2)<0.98f){
 		float dist=pos1.distance(pos2);
-		dirpos1=pos1-dir1*dist*0.33;
-		dirpos2=pos2+dir2*dist*0.33;
+		dirpos1=pos1-dir1*dist*0.33f;
+		dirpos2=pos2+dir2*dist*0.33f;
 		float3 mp=(pos1+pos2)/2;
-		midpos=CalcBeizer(0.5,pos1,dirpos1,dirpos2,pos2);
+		midpos=CalcBeizer(0.5f,pos1,dirpos1,dirpos2,pos2);
 		middir=(dir1+dir2).Normalize();
 		drawSegmented=true;
 	}
@@ -79,7 +79,7 @@ void CSmokeTrailProjectile::Draw()
 		float a1=(1-float(age)/(lifeTime))*255;
 		if(lastSegment)
 			a1=0;
-		a1*=0.7+fabs(dif.dot(dir1));
+		a1*=0.7f+fabs(dif.dot(dir1));
 		float alpha=min(255.f,max(0.f,a1));
 		col[0]=(unsigned char) (color*alpha);
 		col[1]=(unsigned char) (color*alpha);
@@ -90,7 +90,7 @@ void CSmokeTrailProjectile::Draw()
 		float a2=(1-float(age+8)/(lifeTime))*255;
 		if(firstSegment)
 			a2=0;
-		a2*=0.7+fabs(dif2.dot(dir2));
+		a2*=0.7f+fabs(dif2.dot(dir2));
 		alpha=min(255.f,max(0.f,a2));
 		col2[0]=(unsigned char) (color*alpha);
 		col2[1]=(unsigned char) (color*alpha);
@@ -98,27 +98,27 @@ void CSmokeTrailProjectile::Draw()
 		col2[3]=(unsigned char)alpha;
 
 		float xmod=0;
-		float ymod=0.25;
-		float size=1+(age*(1.0/lifeTime))*orgSize;
-		float size2=1+((age+8)*(1.0/lifeTime))*orgSize;
+		float ymod=0.25f;
+		float size=1+(age*(1.0f/lifeTime))*orgSize;
+		float size2=1+((age+8)*(1.0f/lifeTime))*orgSize;
 
 		if(drawSegmented){
 			float3 dif3(midpos-camera->pos2);
 			dif3.Normalize();
 			float3 odir3(dif3.cross(middir));
 			odir3.Normalize();
-			float size3=0.2+((age+4)*(1.0/lifeTime))*orgSize;
+			float size3=0.2f+((age+4)*(1.0f/lifeTime))*orgSize;
 
 			unsigned char col3[4];
 			float a2=(1-float(age+4)/(lifeTime))*255;
-			a2*=0.7+fabs(dif3.dot(middir));
+			a2*=0.7f+fabs(dif3.dot(middir));
 			alpha=min(255.f,max(0.f,a2));
 			col3[0]=(unsigned char) (color*alpha);
 			col3[1]=(unsigned char) (color*alpha);
 			col3[2]=(unsigned char) (color*alpha);
 			col3[3]=(unsigned char)alpha;
 
-			float midtexx = ph->smoketrailtex.xstart + (ph->smoketrailtex.xend - ph->smoketrailtex.xstart)*0.5;
+			float midtexx = ph->smoketrailtex.xstart + (ph->smoketrailtex.xend - ph->smoketrailtex.xstart)*0.5f;
 
 			va->AddVertexTC(pos1-odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.ystart,col);
 			va->AddVertexTC(pos1+odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.yend,col);
@@ -144,9 +144,9 @@ void CSmokeTrailProjectile::Draw()
 			col[1]=(unsigned char) (color*alpha);
 			col[2]=(unsigned char) (color*alpha);
 			col[3]=(unsigned char)alpha;
-			float size=((0.2+(age+a)*(1.0/lifeTime))*orgSize)*1.2;
+			float size=((0.2f+(age+a)*(1.0f/lifeTime))*orgSize)*1.2f;
 
-			float3 pos=CalcBeizer(a/8.0,pos1,dirpos1,dirpos2,pos2);
+			float3 pos=CalcBeizer(a/8.0f,pos1,dirpos1,dirpos2,pos2);
 			va->AddVertexTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 			va->AddVertexTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
 			va->AddVertexTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);

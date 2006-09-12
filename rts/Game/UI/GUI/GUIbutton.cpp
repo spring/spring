@@ -64,9 +64,9 @@ void GUIbutton::PrivateDraw()
 	glAlphaFunc ( GL_GREATER, 0.05f );
 
 	if(isInside)
-		glColor4f(0.7,0.7f,0.7,1.0f);
+		glColor4f(0.7f,0.7f,0.7f,1.0f);
 	else
-		glColor4f(1.0,1.0f,1.0,1.0);
+		glColor4f(1.0f,1.0f,1.0f,1.0f);
 
 	glCallList(displayList);
 
@@ -129,12 +129,12 @@ void GUIbutton::BuildList()
 	DrawThemeRect(10, 32, w, h);
 	
 	if(highlight)
-		glColor4f(1.0,0.4f,0.4f,1.0f);
+		glColor4f(1.0f,0.4f,0.4f,1.0f);
 		
 	if(centerText)
-		guifont->output((w-guifont->GetWidth(caption.c_str()))/2.0, (h-guifont->GetHeight())/2.0, caption.c_str());
+		guifont->output((w-guifont->GetWidth(caption.c_str()))/2.0f, (h-guifont->GetHeight())/2.0f, caption.c_str());
 	else
-		guifont->output(7, (h-guifont->GetHeight())/2.0, caption.c_str());
+		guifont->output(7, (h-guifont->GetHeight())/2.0f, caption.c_str());
 
 	glEndList();
 }

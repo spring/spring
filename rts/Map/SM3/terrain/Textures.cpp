@@ -195,7 +195,7 @@ namespace terrain {
 	{
 		float *nd = new float[img->w*img->h];
 
-		//3.95*(x-.5)^3+.5
+		//3.95f*(x-.5f)^3+.5
 
 		for (int y=0;y<img->h;y++) {
 			for (int x=0;x<img->w;x++) {

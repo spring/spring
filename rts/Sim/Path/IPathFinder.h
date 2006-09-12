@@ -8,8 +8,8 @@ class float3;
 class CSolidObject;
 
 //Cost constants.
-const float PATHCOST_INFINITY = 1e9;
-const float PATHCOST_BLOCKED = 1e6;
+const float PATHCOST_INFINITY = 1e9f;
+const float PATHCOST_BLOCKED = 1e6f;
 
 //Options
 const unsigned int PATHOPT_IGNORE_GROUND_BLOCKING = 1;

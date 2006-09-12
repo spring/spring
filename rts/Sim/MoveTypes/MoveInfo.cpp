@@ -40,7 +40,7 @@ CMoveInfo::CMoveInfo()
 //			logOutput.Print("class %i %s hover",num,name.c_str());
 		} else {
 			md->moveType=MoveData::Ground_Move;	
-			md->depthMod=0.1;
+			md->depthMod=0.1f;
 			md->depth=atof(parser.SGetValueDef("0",class_name+"\\MaxWaterDepth").c_str());
 			md->maxSlope=1-cos((float)atof(parser.SGetValueDef("60",class_name+"\\MaxSlope").c_str())*1.5f*PI/180);
 //			logOutput.Print("class %i %s ground",num,name.c_str());
@@ -49,7 +49,7 @@ CMoveInfo::CMoveInfo()
 			else
 				md->moveFamily=1;
 		}
-		md->slopeMod=4/(md->maxSlope+0.001);
+		md->slopeMod=4/(md->maxSlope+0.001f);
 		md->size=max(2,min(8,atoi(parser.SGetValueDef("1", class_name+"\\FootprintX").c_str())*2));//ta has only half our res so multiply size with 2
 //		logOutput.Print("%f %i",md->slopeMod,md->size);
 		moveInfoChecksum+=md->size;

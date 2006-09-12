@@ -31,8 +31,8 @@ CDxSound::CDxSound()
 		throw content_error("Internal error, (maxSounds <= 0) in CDxSound");
 	}
 
-	curThreshhold=0.1;
-	wantedSounds=maxSounds*0.75;
+	curThreshhold=0.1f;
+	wantedSounds=maxSounds*0.75f;
 	globalVolume=1.0f;
 
 	m_pDS  = NULL;
@@ -238,7 +238,7 @@ void CDxSound::PlaySample(int id,const float3& p,float volume)
 	float v=0;
 	if(volume!=0.0f)
 		v=dl/((globalVolume + 0.01f)*volume*2000);
-	if(v>0.6){
+	if(v>0.6f){
 		POP_CODE_MODE;
 		return;
 	}
@@ -436,7 +436,7 @@ HRESULT CDxSound::RestoreBuffers(int num)
 
 void CDxSound::Update()
 {
-	float total=wantedSounds*0.5;
+	float total=wantedSounds*0.5f;
 	for(std::list<PlayingSound>::iterator pi=playingSounds.begin();pi!=playingSounds.end();){
 		int num=pi->num;
 		DWORD status;
@@ -445,12 +445,12 @@ void CDxSound::Update()
 			pi=playingSounds.erase(pi);
 			loadedSounds[buf2id[num]]->freebufs.push_back(num);
 		} else {
-			total-=(0.5-pi->volume);
+			total-=(0.5f-pi->volume);
 			++pi;
 		}
 	}
 	total/=wantedSounds;
-	curThreshhold=(curThreshhold+total)*0.5;
+	curThreshhold=(curThreshhold+total)*0.5f;
 //	logOutput.Print("curt %.2f",curThreshhold);
 }
 

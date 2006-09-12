@@ -29,9 +29,9 @@ GUIminimap::GUIminimap():GUIframe(0, 0, 128, 128)
 {
 	unsigned char tex[16][16][4];
 	for(int y=0;y<16;++y){
-		float dy=y-7.5;
+		float dy=y-7.5f;
 		for(int x=0;x<16;++x){
-			float dx=x-7.5;
+			float dx=x-7.5f;
 			float dist=sqrt(dx*dx+dy*dy);
 			if(dist<6 || dist>9){
 				tex[y][x][0]=255;
@@ -107,7 +107,7 @@ void GUIminimap::PrivateDraw()
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 
-	glColor4f(0.6,0.6,0.6,1);
+	glColor4f(0.6f,0.6f,0.6f,1);
 
 	readmap->DrawMinimap ();
 
@@ -149,7 +149,7 @@ void GUIminimap::PrivateDraw()
 			}
 		}
 	}
-	glColor4f(1,1,1,0.5);
+	glColor4f(1,1,1,0.5f);
   glBegin(GL_LINES);
   for(fli=left.begin();fli!=left.end();fli++){
 		if(fli->minz<fli->maxz){
@@ -232,9 +232,9 @@ void GUIminimap::GetFrustumSide(float3& side)
 	float3 up(0,1,0);
 	
 	float3 b=up.cross(side);		//get vector for collision between frustum and horizontal plane
-	if(fabs(b.z)<0.0001)
+	if(fabs(b.z)<0.0001f)
 		b.z=0.00011f;
-	if(fabs(b.z)>0.0001){
+	if(fabs(b.z)>0.0001f){
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(side);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
@@ -344,7 +344,7 @@ bool GUIminimap::MouseMoveAction(int x, int y, int xrel, int yrel, int button)
 
 void GUIminimap::MoveView(int xpos, int ypos, int button)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*gu->viewRange*1.4f);
 	float3 dif(0,0,0);
 	if(dist>0){
 		dif=camera->forward*dist;
@@ -400,16 +400,16 @@ void GUIminimap::DrawNotes(void)
 		}
 		glColor4f(ni->color.x,ni->color.y,ni->color.z,ni->alpha);
 		for(int a=0;a<3;++a){
-			float modage=age+a*0.1;
+			float modage=age+a*0.1f;
 			float rot=modage*3;
-			float size=baseSize-modage*baseSize*0.9;
+			float size=baseSize-modage*baseSize*0.9f;
 			if(size<0){
-				if(size<-baseSize*0.4)
+				if(size<-baseSize*0.4f)
 					continue;
-				else if(size>-baseSize*0.2)
-					size=modage*baseSize*0.9-baseSize;
+				else if(size>-baseSize*0.2f)
+					size=modage*baseSize*0.9f-baseSize;
 				else
-					size=baseSize*1.4-modage*baseSize*0.9;
+					size=baseSize*1.4f-modage*baseSize*0.9f;
 			}
 			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);	
 			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);	

@@ -51,7 +51,7 @@ void CTorpedoLauncher::Fire(void)
 	float3 startSpeed=dir*weaponDef->startvelocity;
 
 //	if(onlyForward)
-//		startSpeed+=owner->speed*0.5;
+//		startSpeed+=owner->speed*0.5f;
 	new CTorpedoProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15),targetUnit, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
@@ -78,7 +78,7 @@ bool CTorpedoLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 
 	dir/=length;
 
-	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)+0.05,owner->allyteam,owner))	//+0.05 since torpedoes has an unfortunate tendency to hit own ships due to movement
+	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)+0.05f,owner->allyteam,owner))	//+0.05f since torpedoes has an unfortunate tendency to hit own ships due to movement
 		return false;
 	return true;
 }

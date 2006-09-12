@@ -569,7 +569,7 @@ void GUIcontroller::UpdateCommands()
 						if(i->type==CMDTYPE_ICON_MODE||i->type==CMDTYPE_COMBO_BOX)
 						{
 							vector<GUItable::HeaderInfo> header;
-							header.push_back(GUItable::HeaderInfo(i->name, 1.0));
+							header.push_back(GUItable::HeaderInfo(i->name, 1.0f));
 							
 							int s=atoi(i->params[0].c_str());
 							vector<string> states;
@@ -675,7 +675,7 @@ void GUIcontroller::Draw()
 
 			glBindTexture(GL_TEXTURE_2D, tex);
 					
-			glColor4f(1.0, 1.0, 1.0, 0.5);
+			glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 
 			// draw bkgnd pane for tooltip
 			glPushMatrix();
@@ -686,7 +686,7 @@ void GUIcontroller::Draw()
 			x+=10;
 			y+=5;
 
-			glColor3f(1.0, 1.0, 1.0);
+			glColor3f(1.0f, 1.0f, 1.0f);
 
 			temp=tooltip;
 			
@@ -886,8 +886,8 @@ void GUIdialogController::CreateUIElement(TdfParser & parser, GUIframe* parent, 
 
 	// scale the frame
 	{
-		#define ScaleX(a) if(a<=1.0&&a>=0.0) a*=parent->w;
-		#define ScaleY(a) if(a<=1.0&&a>=0.0) a*=parent->h;
+		#define ScaleX(a) if(a<=1.0f&&a>=0.0f) a*=parent->w;
+		#define ScaleY(a) if(a<=1.0f&&a>=0.0f) a*=parent->h;
 
 		ScaleX(x);
 		ScaleX(x2);

@@ -236,7 +236,7 @@ START_TIME_PROFILE
 		/* Note: nothing in the third clause of this loop. TODO Rewrite it as a while */
 		for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();){
 			(*pi)->pos+=(*pi)->speed;
-			(*pi)->speed*=0.996;
+			(*pi)->speed*=0.996f;
 			(*pi)->speed.y+=gs->gravity;
 			(*pi)->rot+=(*pi)->rotSpeed;
 			if((*pi)->pos.y<ground->GetApproximateHeight((*pi)->pos.x,(*pi)->pos.z)-10){
@@ -363,7 +363,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 					continue;
 				float dif=(*psi)->pos.y-camera->pos.y;
 				float3 zeroPos=camera->pos*((*psi)->pos.y/dif) + (*psi)->pos*(-camera->pos.y/dif);
-				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>3+0.5*(*psi)->drawRadius)
+				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>3+0.5f*(*psi)->drawRadius)
 					continue;
 			}
 			if(drawRefraction && (*psi)->pos.y>(*psi)->drawRadius)
@@ -392,7 +392,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	glEnable(GL_BLEND);
 	glDepthMask(0);
 	glColor4f(1,1,1,0.2f);
-	glAlphaFunc(GL_GREATER,0.0);
+	glAlphaFunc(GL_GREATER,0.0f);
 	glEnable(GL_ALPHA_TEST);
 //	glFogfv(GL_FOG_COLOR,FogLand);
 	glDisable(GL_FOG);
@@ -408,8 +408,8 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		CProjectile::DrawArray();
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
-	currentParticles=(int)(ps.size()*0.8+currentParticles*0.2);
-	currentParticles+=(int)(0.2*drawnPieces+0.3*numFlyingPieces);
+	currentParticles=(int)(ps.size()*0.8f+currentParticles*0.2f);
+	currentParticles+=(int)(0.2f*drawnPieces+0.3f*numFlyingPieces);
 	particleSaturation=(float)currentParticles/(float)maxParticles;
 //	glFogfv(GL_FOG_COLOR,FogLand);
 }
@@ -436,7 +436,7 @@ void CProjectileHandler::DrawShadowPass(void)
 	glEnable(GL_TEXTURE_2D);
 	textureAtlas->BindTexture();
 	glColor4f(1,1,1,1);
-	glAlphaFunc(GL_GREATER,0.3);
+	glAlphaFunc(GL_GREATER,0.3f);
 	glEnable(GL_ALPHA_TEST);
 	glShadeModel(GL_SMOOTH);
 
@@ -581,7 +581,7 @@ void CProjectileHandler::ConvertTex(unsigned char tex[512][512][4], int startx, 
 	for(int y=starty;y<endy;++y){
 		for(int x=startx;x<endx;++x){
 			float alpha=tex[y][x][3];
-			float mul=alpha/255.0;
+			float mul=alpha/255.0f;
 			tex[y][x][0]=(unsigned char)(mul * (float)tex[y][x][0]);
 			tex[y][x][1]=(unsigned char)(mul * (float)tex[y][x][1]);
 			tex[y][x][2]=(unsigned char)(mul * (float)tex[y][x][2]);
@@ -601,7 +601,7 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3D
 
 	fp->rotAxis=gu->usRandVector();
 	fp->rotAxis.Normalize();
-	fp->rotSpeed=gu->usRandFloat()*0.1;
+	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 
 	flying3doPieces->push_back(fp);
@@ -633,7 +633,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	/* Duplicated with AddFlyingPiece. */
 	fp->rotAxis=gu->usRandVector();
 	fp->rotAxis.Normalize();
-	fp->rotSpeed=gu->usRandFloat()*0.1;
+	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 
 	pieceList->push_back(fp);
@@ -722,7 +722,7 @@ void CProjectileHandler::UpdatePerlin()
 		va->AddVertexTC(float3(1,0,0),tsize,0,col);
 		va->DrawArrayTC(GL_QUADS);
 
-		speed*=0.6;
+		speed*=0.6f;
 		size*=2;
 	}
 /*

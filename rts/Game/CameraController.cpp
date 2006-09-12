@@ -36,7 +36,7 @@ CFPSController::CFPSController()
 : pos(2000,70,1800),
 	oldHeight(300)
 {
-	scrollSpeed=configHandler.GetInt("FPSScrollSpeed",10)*0.1;
+	scrollSpeed=configHandler.GetInt("FPSScrollSpeed",10)*0.1f;
 	enabled=!!configHandler.GetInt("FPSEnabled",1);
 }
 
@@ -51,10 +51,10 @@ void CFPSController::MouseMove(float3 move)
 	camera->rot.y -= mouseScale*move.x;
 	camera->rot.x -= mouseScale*move.y*move.z;
 
-	if(camera->rot.x>PI*0.4999)
-		camera->rot.x=PI*0.4999;
-	if(camera->rot.x<-PI*0.4999)
-		camera->rot.x=-PI*0.4999;
+	if(camera->rot.x>PI*0.4999f)
+		camera->rot.x=PI*0.4999f;
+	if(camera->rot.x<-PI*0.4999f)
+		camera->rot.x=-PI*0.4999f;
 }
 
 void CFPSController::ScreenEdgeMove(float3 move)
@@ -123,7 +123,7 @@ COverheadController::COverheadController()
 	maxHeight(10000),
 	changeAltHeight(true)
 {
-	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1;
+	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1f;
 	enabled=!!configHandler.GetInt("OverheadEnabled",1);
 }
 
@@ -152,13 +152,13 @@ void COverheadController::MouseWheelMove(float move)
 	// tilt the camera if LCTRL is pressed
 	if (keys[SDLK_LCTRL]) {
 		zscale *= 1+move * mouseScale;
-		if (zscale < 0.05) zscale = 0.05f;
+		if (zscale < 0.05f) zscale = 0.05f;
 		if (zscale > 10) zscale = 10;
 	} else { // holding down LALT uses 'instant-zoom' from here to the end of the function
 		//ZOOM IN to mouse cursor instead of mid screen
 		if(move<0){
 			float3 cpos=pos-dir*height;
-			float dif=-height * move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
+			float dif=-height * move * mouseScale*0.7f * (keys[SDLK_LSHIFT] ? 3:1);
 			if(height-dif<60)
 				dif=height-60;
 			if (keys[SDLK_LALT]) //instant-zoom: zoom in to standard view
@@ -166,7 +166,7 @@ void COverheadController::MouseWheelMove(float move)
 			float3 wantedPos= cpos + mouse->dir * dif;
 			float newHeight=ground->LineGroundCol(wantedPos,wantedPos+dir*15000);
 			if(newHeight<0)
-				newHeight=height* (1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1));
+				newHeight=height* (1+move * mouseScale*0.7f * (keys[SDLK_LSHIFT] ? 3:1));
 			if(wantedPos.y + dir.y * newHeight <0)
 				newHeight = -wantedPos.y / dir.y;
 			if(newHeight<maxHeight){
@@ -176,15 +176,15 @@ void COverheadController::MouseWheelMove(float move)
 		//ZOOM OUT from mid screen
 		} else {
 			if (keys[SDLK_LALT]) { // instant-zoom: zoom out to the max
-				if(height<maxHeight*0.5 && changeAltHeight){
+				if(height<maxHeight*0.5f && changeAltHeight){
 					oldAltHeight=height;
 					changeAltHeight=false;
 				}
 				height=maxHeight;
 				pos.x=gs->mapx*4;
-				pos.z=gs->mapy*4.8;	//somewhat longer toward bottom
+				pos.z=gs->mapy*4.8f;	//somewhat longer toward bottom
 			} else {
-				height*=1+move * mouseScale*0.7 * (keys[SDLK_LSHIFT] ? 3:1);
+				height*=1+move * mouseScale*0.7f * (keys[SDLK_LSHIFT] ? 3:1);
 			}
 		}
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
@@ -199,7 +199,7 @@ void COverheadController::MouseWheelMove(float move)
 
 float3 COverheadController::GetPos()
 {
-	maxHeight=9.5*max(gs->mapx,gs->mapy);		//map not created when constructor run
+	maxHeight=9.5f*max(gs->mapx,gs->mapy);		//map not created when constructor run
 
 	if(pos.x<0.01f)
 		pos.x=0.01f;
@@ -250,7 +250,7 @@ void COverheadController::SwitchTo(bool showText)
 CTWController::CTWController()
 : pos(2000,70,1800)
 {
-	scrollSpeed=configHandler.GetInt("TWScrollSpeed",10)*0.1;
+	scrollSpeed=configHandler.GetInt("TWScrollSpeed",10)*0.1f;
 	enabled=!!configHandler.GetInt("RotOverheadEnabled",1);
 }
 
@@ -279,7 +279,7 @@ void CTWController::MouseMove(float3 move)
 void CTWController::ScreenEdgeMove(float3 move)
 {
 	if(mouse->lasty<gu->screeny/3){
-		camera->rot.y-=move.x*gu->lastFrameTime*0.5*200;
+		camera->rot.y-=move.x*gu->lastFrameTime*0.5f*200;
 		move.x=0;
 	}
 	KeyMove(move);
@@ -287,7 +287,7 @@ void CTWController::ScreenEdgeMove(float3 move)
 
 void CTWController::MouseWheelMove(float move)
 {
-	camera->rot.x-=move*0.001;
+	camera->rot.x-=move*0.001f;
 }
 
 float3 CTWController::GetPos()
@@ -300,10 +300,10 @@ float3 CTWController::GetPos()
 		pos.x=(gs->mapx)*SQUARE_SIZE-0.01f;
 	if(pos.z>(gs->mapy)*SQUARE_SIZE-0.01f)
 		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
-	if(camera->rot.x>-0.1)
-		camera->rot.x=-0.1;
-	if(camera->rot.x<-PI*0.4)
-		camera->rot.x=-PI*0.4;
+	if(camera->rot.x>-0.1f)
+		camera->rot.x=-0.1f;
+	if(camera->rot.x<-PI*0.4f)
+		camera->rot.x=-PI*0.4f;
 
 	pos.y=ground->GetHeight(pos.x,pos.z);
 
@@ -358,7 +358,7 @@ CRotOverheadController::CRotOverheadController()
 	oldHeight(500)
 {
 	mouseScale = atof(configHandler.GetString("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE).c_str());
-	scrollSpeed=configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1;
+	scrollSpeed=configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1f;
 	enabled=!!configHandler.GetInt("TWEnabled",1);
 }
 
@@ -367,7 +367,7 @@ void CRotOverheadController::KeyMove(float3 move)
 	move*=sqrt(move.z)*400;
 
 	float3 flatForward=camera->forward;
-	if(camera->forward.y<-0.9)
+	if(camera->forward.y<-0.9f)
 		flatForward+=camera->up;
 	flatForward.y=0;
 	flatForward.Normalize();
@@ -380,10 +380,10 @@ void CRotOverheadController::MouseMove(float3 move)
 	camera->rot.y -= mouseScale*move.x;
 	camera->rot.x -= mouseScale*move.y*move.z;  
 
-	if(camera->rot.x>PI*0.4999)
-		camera->rot.x=PI*0.4999;
-	if(camera->rot.x<-PI*0.4999)
-		camera->rot.x=-PI*0.4999;
+	if(camera->rot.x>PI*0.4999f)
+		camera->rot.x=PI*0.4999f;
+	if(camera->rot.x<-PI*0.4999f)
+		camera->rot.x=-PI*0.4999f;
 }
 
 void CRotOverheadController::ScreenEdgeMove(float3 move)
@@ -480,7 +480,7 @@ float3 COverviewController::GetPos()
 
 float3 COverviewController::GetDir()
 {
-	return float3(0,-1,-0.001).Normalize();
+	return float3(0,-1,-0.001f).Normalize();
 }
 
 void COverviewController::SetPos(float3 newPos)

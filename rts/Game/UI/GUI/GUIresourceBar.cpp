@@ -30,53 +30,53 @@ void GUIresourceBar::PrivateDraw()
 {
 	glPushAttrib(GL_CURRENT_BIT);
 
-	glColor4f(0.0, 0.0, 0.0, 0.5);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	Quad(0, 0, w, h);
 	
 	const float offset=5;
-	float middle=(h-guifont->GetHeight())/2.0;
+	float middle=(h-guifont->GetHeight())/2.0f;
 	float mWidth=guifont->GetWidth("Metal")+5;
 	float eWidth=guifont->GetWidth("Energy")+5;
 	glColor3f(1, 1, 1);
 	guifont->Print(offset, middle, "Metal");
-	guifont->Print((w+offset)/2.0, middle, "Energy");
+	guifont->Print((w+offset)/2.0f, middle, "Energy");
 	
 	char buf[500];
 	
 	glColor3f(0, 1, 0);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldMetalIncome);
-	guifont->Print(offset+mWidth, middle-5, 0.8, buf);
+	guifont->Print(offset+mWidth, middle-5, 0.8f, buf);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldEnergyIncome);
-	guifont->Print((w+offset)/2.0+eWidth, middle-5, 0.8, buf);
+	guifont->Print((w+offset)/2.0f+eWidth, middle-5, 0.8f, buf);
 
-	glColor3f(1, 0.2, 0.2);
+	glColor3f(1, 0.2f, 0.2f);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldMetalExpense);
-	guifont->Print(offset+mWidth, middle+5, 0.8, buf);
+	guifont->Print(offset+mWidth, middle+5, 0.8f, buf);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->oldEnergyExpense);
-	guifont->Print((w+offset)/2.0+eWidth, middle+5, 0.8, buf);
+	guifont->Print((w+offset)/2.0f+eWidth, middle+5, 0.8f, buf);
 
 	glColor3f(0, 1, 0);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->metal);
-	guifont->Print(offset+mWidth + 30, middle, 0.8, buf);
+	guifont->Print(offset+mWidth + 30, middle, 0.8f, buf);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->energy);
-	guifont->Print((w+offset)/2.0+eWidth + 30, middle, 0.8, buf);
+	guifont->Print((w+offset)/2.0f+eWidth + 30, middle, 0.8f, buf);
 
-	glColor3f(1, 0.2, 0.2);
+	glColor3f(1, 0.2f, 0.2f);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->metalStorage);
-	guifont->Print(w/2-90, middle, 0.8, buf);
+	guifont->Print(w/2-90, middle, 0.8f, buf);
 	sprintf(buf, "%.1f", gs->Team(gu->myTeam)->energyStorage);
-	guifont->Print(w-90, middle, 0.8, buf);
+	guifont->Print(w-90, middle, 0.8f, buf);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glColor4f(1, 1, 1, 0.2);
-	float barHeight=guifont->GetHeight()/2.0;
-	middle=(h-barHeight)/2.0;
+	glColor4f(1, 1, 1, 0.2f);
+	float barHeight=guifont->GetHeight()/2.0f;
+	middle=(h-barHeight)/2.0f;
 
 	float barStart=mWidth+offset+95;
-	float barLength=w/2.0-barStart-100;
+	float barLength=w/2.0f-barStart-100;
 	
 	float metal=gs->Team(gu->myTeam)->metal;
 	float maxMetal=gs->Team(gu->myTeam)->metalStorage;
@@ -87,24 +87,24 @@ void GUIresourceBar::PrivateDraw()
 
 	Quad(barStart, middle, barLength, barHeight);
 
-	glColor4f(0, 0.5, 1, 0.8);
+	glColor4f(0, 0.5f, 1, 0.8f);
 	
 	Quad(barStart, middle, barLength*metal/maxMetal, barHeight);
 
-	glColor4f(0, 1, 0, 0.8);
+	glColor4f(0, 1, 0, 0.8f);
 	Quad(barStart, middle+barHeight, barLength*metalShared/maxMetal, 2);
 
-	glColor4f(1, 1, 1, 0.2);
-	barStart=w/2.0+eWidth+offset+95;
+	glColor4f(1, 1, 1, 0.2f);
+	barStart=w/2.0f+eWidth+offset+95;
 	barLength=w-barStart-100;
 	
 	Quad(barStart, middle, barLength, barHeight);
 	
-	glColor4f(1, 1, 0, 0.8);
+	glColor4f(1, 1, 0, 0.8f);
 	
 	Quad(barStart, middle, barLength*energy/maxEnergy, barHeight);
 	
-	glColor4f(0, 1, 0, 0.8);
+	glColor4f(0, 1, 0, 0.8f);
 	Quad(barStart, middle+barHeight, barLength*energyShared/maxEnergy, 2);
 	
 	glPopAttrib();
@@ -126,7 +126,7 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 		float eWidth=guifont->GetWidth("Energy")+5;
 
 		float barStart=mWidth+offset+95;
-		float barEnd=w/2.0-100;
+		float barEnd=w/2.0f-100;
 
 		if(x1>barStart-20&&x1<barEnd+20)
 		{
@@ -138,7 +138,7 @@ bool GUIresourceBar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int but
 					gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
 		}
 		
-		barStart=w/2.0+eWidth+offset+95;
+		barStart=w/2.0f+eWidth+offset+95;
 		barEnd=w-100;
 		if(x1>barStart-20&&x1<barEnd+20)
 		{

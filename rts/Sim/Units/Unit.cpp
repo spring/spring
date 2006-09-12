@@ -253,7 +253,7 @@ void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 	posErrorVector=gs->randVector();
-	posErrorVector.y*=0.2;
+	posErrorVector.y*=0.2f;
 #ifdef TRACE_SYNC
 	tracefile << "New unit: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
@@ -281,8 +281,8 @@ void CUnit::Update()
 
 	moveType->Update();
 
-	recentDamage*=0.9;
-	bonusShieldSaved+=0.005;
+	recentDamage*=0.9f;
+	bonusShieldSaved+=0.005f;
 
 	if(stunned)
 		return;
@@ -301,10 +301,10 @@ void CUnit::SlowUpdate()
 	--nextPosErrorUpdate;
 	if(nextPosErrorUpdate==0){
 		float3 newPosError(gs->randVector());
-		newPosError.y*=0.2;
+		newPosError.y*=0.2f;
 		if(posErrorVector.dot(newPosError)<0)
 			newPosError=-newPosError;
-		posErrorDelta=(newPosError-posErrorVector)*(1.0/256);
+		posErrorDelta=(newPosError-posErrorVector)*(1.0f/256);
 		nextPosErrorUpdate=16;
 	}
 
@@ -375,9 +375,9 @@ void CUnit::SlowUpdate()
 
 	if(beingBuilt){
 		if(lastNanoAdd<gs->frameNum-200){
-			health-=maxHealth/(buildTime*0.03);
-			buildProgress-=1/(buildTime*0.03);
-			AddMetal(metalCost/(buildTime*0.03));
+			health-=maxHealth/(buildTime*0.03f);
+			buildProgress-=1/(buildTime*0.03f);
+			AddMetal(metalCost/(buildTime*0.03f));
 			if(health<0)
 				KillUnit(false,true,0);
 		}
@@ -444,7 +444,7 @@ void CUnit::SlowUpdate()
 	}
 
 	bonusShieldSaved+=0.05f;
-	residualImpulse*=0.6;
+	residualImpulse*=0.6f;
 
 	if(wantCloak){
 		if(helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->decloakDistance,allyteam)){
@@ -453,7 +453,7 @@ void CUnit::SlowUpdate()
 		}
 		if(isCloaked || gs->frameNum>=curCloakTimeout){
 			float cloakCost=unitDef->cloakCost;
-			if(speed.SqLength()>0.2)
+			if(speed.SqLength()>0.2f)
 				cloakCost=unitDef->cloakCostMoving;
 			if(UseEnergy(cloakCost * 0.5f)){
 				isCloaked=true;
@@ -521,7 +521,7 @@ void CUnit::SlowUpdate()
 	if(moveType->progressState == CMoveType::Active)
 	{
 		if(/*physicalState == OnGround*/seismicSignature && !(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
-			new CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat()),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat())), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8,0.0,0.0));
+			new CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat()),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat())), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
 	}
 
 	CalculateTerrainType();
@@ -550,7 +550,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		bonusShieldDir.Normalize();
 //		logOutput.Print("shield mult %f %f %i %i", 2-adir.dot(bonusShieldDir),bonusShieldSaved,id,attacker->id);
 		bonusShieldSaved=0;
-		damage*=1.4-adir.dot(bonusShieldDir)*0.5;
+		damage*=1.4f-adir.dot(bonusShieldDir)*0.5f;
 	}
 	float3 hitDir = impulse;
 	hitDir.y = 0;
@@ -568,13 +568,13 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	if(damages.paralyzeDamageTime){
 		paralyzeDamage+=damage;
-		experienceMod=0.1;		//reduce experience for paralyzers
+		experienceMod=0.1f;		//reduce experience for paralyzers
 		if(health-paralyzeDamage<0){
 			if(stunned)
 				experienceMod=0;	//dont get any experience for paralyzing paralyzed enemy
 			stunned=true;
-			if(paralyzeDamage>health+(maxHealth*0.025*damages.paralyzeDamageTime)){
-				paralyzeDamage=health+(maxHealth*0.025*damages.paralyzeDamageTime);
+			if(paralyzeDamage>health+(maxHealth*0.025f*damages.paralyzeDamageTime)){
+				paralyzeDamage=health+(maxHealth*0.025f*damages.paralyzeDamageTime);
 			}
 		}
 	} else {
@@ -589,7 +589,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	if(attacker!=0 && !gs->Ally(allyteam,attacker->allyteam)){
 //		logOutput.Print("%s has %f/%f h attacker %s do %f d",tooltip.c_str(),health,maxHealth,attacker->tooltip.c_str(),damage);
-		attacker->experience+=0.1*power/attacker->power*(damage+min(0.f,health))/maxHealth*experienceMod;
+		attacker->experience+=0.1f*power/attacker->power*(damage+min(0.f,health))/maxHealth*experienceMod;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
 		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum)) && team==gu->myTeam && !camera->InView(midPos,radius+50) && !gu->spectating) {
@@ -597,7 +597,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			logOutput.SetLastMsgPos(pos);
 			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
 				sound->PlaySample(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
-			minimap->AddNotification(pos,float3(1,0.3,0.3),unitDef->isCommander?1:0.5);	//todo: make compatible with new gui
+			minimap->AddNotification(pos,float3(1,0.3f,0.3f),unitDef->isCommander?1:0.5f);	//todo: make compatible with new gui
 			
 			uh->lastDamageWarning=gs->frameNum;
 			if(unitDef->isCommander)
@@ -611,7 +611,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	if(health<=0){
 		KillUnit(false,false,attacker);
 		if(isDead && attacker!=0 && !gs->Ally(allyteam,attacker->allyteam) && !beingBuilt){
-			attacker->experience+=0.1*power/attacker->power;
+			attacker->experience+=0.1f*power/attacker->power;
 			gs->Team(attacker->team)->currentStats.unitsKilled++;
 		}
 	}
@@ -643,7 +643,7 @@ void CUnit::Draw()
 	} else if(upright || !unitDef->canmove){
 		glTranslatef3(interPos);
 		if(heading!=0)
-			glRotatef(heading*(180.0/32768.0),0,1,0);
+			glRotatef(heading*(180.0f/32768.0f),0,1,0);
 	} else {
 		float3 frontDir=GetVectorFromHeading(heading);		//making local copies of vectors
 		float3 upDir=ground->GetSmoothNormal(pos.x,pos.z);
@@ -658,18 +658,18 @@ void CUnit::Draw()
 
 	if(beingBuilt && unitDef->showNanoFrame){
 		if(shadowHandler->inShadowPass){
-			if(buildProgress>0.66)
+			if(buildProgress>0.66f)
 				localmodel->Draw();
 		} else {
 			float height=model->height;
 			float start=model->miny;
 			glEnable(GL_CLIP_PLANE0);
 			glEnable(GL_CLIP_PLANE1);
-			//float col=fabs(128.0-((gs->frameNum*4)&255))/255.0+0.5f;
+			//float col=fabs(128.0f-((gs->frameNum*4)&255))/255.0f+0.5f;
 			float3 fc;// fc frame color
 			if(gu->teamNanospray){
 				unsigned char* tcol=gs->Team(team)->color;
-				fc = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+				fc = float3(tcol[0]*(1.f/255.f),tcol[1]*(1.f/255.f),tcol[2]*(1.f/255.f));
 			}else{
 				fc = unitDef->nanoColor;
 			}
@@ -685,7 +685,7 @@ void CUnit::Draw()
 			localmodel->Draw();
 			glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
-			if(buildProgress>0.33){
+			if(buildProgress>0.33f){
 				glColorf3(fc*1.4f);
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-1)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);
@@ -697,7 +697,7 @@ void CUnit::Draw()
 			glDisable(GL_CLIP_PLANE1);
 			unitDrawer->UnitDrawingTexturesOn(model);
 			
-			if(buildProgress>0.66){
+			if(buildProgress>0.66f){
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-2)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);
 				if(shadowHandler->drawShadows && !water->drawReflection){
@@ -738,22 +738,22 @@ void CUnit::DrawStats()
 	glBegin(GL_QUADS);
 
 	float hpp = health/maxHealth;
-	float end=(0.5-(hpp))*10;
+	float end=(0.5f-(hpp))*10;
 
 	//black background for healthbar
-	glColor3f(0.0,0.0,0.0);
+	glColor3f(0.0f,0.0f,0.0f);
 	glVertexf3(interPos+(camera->up*6-camera->right*end));
 	glVertexf3(interPos+(camera->up*6+camera->right*5));
 	glVertexf3(interPos+(camera->up*4+camera->right*5));
 	glVertexf3(interPos+(camera->up*4-camera->right*end));
 
 	if(stunned){
-		glColor3f(0,0,1.0);
+		glColor3f(0,0,1.0f);
 	} else {
 		if(hpp>0.5f)
-			glColor3f(1.0f-((hpp-0.5f)*2.0f),1.0f,0.0);
+			glColor3f(1.0f-((hpp-0.5f)*2.0f),1.0f,0.0f);
 		else
-			glColor3f(1.0f,hpp*2.0f,0.0);
+			glColor3f(1.0f,hpp*2.0f,0.0f);
 	}
 	//healthbar
 	glVertexf3(interPos+(camera->up*6-camera->right*5));
@@ -812,10 +812,10 @@ void CUnit::ExperienceChange()
 	limExperience=1-(1/(experience+1));
 
 	power=unitDef->power*(1+limExperience);
-	reloadSpeed=(1+limExperience*0.4);	
+	reloadSpeed=(1+limExperience*0.4f);	
 
 	float oldMaxHealth=maxHealth;
-	maxHealth=unitDef->health*(1+limExperience*0.7);
+	maxHealth=unitDef->health*(1+limExperience*0.7f);
 	health+=(maxHealth-oldMaxHealth)*(health/oldMaxHealth);
 }
 
@@ -978,7 +978,7 @@ void CUnit::Init(void)
 {
 	relMidPos=model->relMidPos;
 	midPos=pos+frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x;
-	losHeight=relMidPos.y+radius*0.5;
+	losHeight=relMidPos.y+radius*0.5f;
 	height = model->height;		//TODO: This one would be much better to have either in Constructor or UnitLoader!//why this is always called in unitloader
 	currentFuel=unitDef->maxFuel;
 
@@ -1193,9 +1193,9 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 	if(isDead)
 		return;
 	if(dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt){
-		if(!selfDestruct && !reclaimed && gs->randFloat()>recentDamage*0.7/maxHealth+0.2){
+		if(!selfDestruct && !reclaimed && gs->randFloat()>recentDamage*0.7f/maxHealth+0.2f){
 			((CAirMoveType*)moveType)->SetState(CAirMoveType::AIRCRAFT_CRASHING);
-			health=maxHealth*0.5;
+			health=maxHealth*0.5f;
 			return;
 		}
 	}

@@ -145,7 +145,7 @@ float CGround::LineGroundCol(float3 from, float3 to)
 			// This is the best accuracy we can get with floats:
 			// add one digit and (xp*constant) reduces to xp itself
 			// This accuracy means that at (16384,16384) (lower right of 32x32 map)
-			// 1 in every 1/(16384*1e-7/8)=4883 clicks on the map will be ignored.
+			// 1 in every 1/(16384*1e-7f/8)=4883 clicks on the map will be ignored.
 			if (dx>0) xs = floor(xp*1.0000001f/SQUARE_SIZE);
 			else      xs = floor(xp*0.9999999f/SQUARE_SIZE);
 			if (dz>0) zs = floor(zp*1.0000001f/SQUARE_SIZE);
@@ -267,8 +267,8 @@ float CGround::GetHeight(float x, float y)
 	float r;
 	int sx=(int) (x/SQUARE_SIZE);
 	int sy=(int) (y/SQUARE_SIZE);
-	float dx=(x-sx*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
-	float dy=(y-sy*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
+	float dx=(x-sx*SQUARE_SIZE)*(1.0f/SQUARE_SIZE);
+	float dy=(y-sy*SQUARE_SIZE)*(1.0f/SQUARE_SIZE);
 	int hs=sx+sy*(gs->mapx+1);
 
 	float* heightmap = readmap->GetHeightmap();
@@ -302,8 +302,8 @@ float CGround::GetHeight2(float x, float y)
 	float r;
 	int sx=(int) (x/SQUARE_SIZE);
 	int sy=(int) (y/SQUARE_SIZE);
-	float dx=(x-sx*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
-	float dy=(y-sy*SQUARE_SIZE)*(1.0/SQUARE_SIZE);
+	float dx=(x-sx*SQUARE_SIZE)*(1.0f/SQUARE_SIZE);
+	float dy=(y-sy*SQUARE_SIZE)*(1.0f/SQUARE_SIZE);
 	int hs=sx+sy*(gs->mapx+1);
 	float* heightmap = readmap->GetHeightmap();
 	if(dx+dy<1){
@@ -375,21 +375,21 @@ float3 CGround::GetSmoothNormal(float x, float y)
 
 	int sy2;
 	float fy;
-	if(dy>0.5){
+	if(dy>0.5f){
 		sy2=sy+1;
-		fy=dy-0.5;
+		fy=dy-0.5f;
 	} else {
 		sy2=sy-1;
-		fy=0.5-dy;
+		fy=0.5f-dy;
 	}
 	int sx2;
 	float fx;
-	if(dx>0.5){
+	if(dx>0.5f){
 		sx2=sx+1;
-		fx=dx-0.5;
+		fx=dx-0.5f;
 	} else {
 		sx2=sx-1;
-		fx=0.5-dx;
+		fx=0.5f-dx;
 	}
 
 	float ify=1-fy;

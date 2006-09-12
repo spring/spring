@@ -79,7 +79,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth) {
 	int zEnd = min(gs->mapy/2-1,(int)((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
 	for(int x = xBegin; x <= xEnd; x++)
 		for(int z = zBegin; z <= zEnd; z++) {	//Going thru the whole (x,z)-square...
-			float3 msqrPos((x + 0.5) * METAL_MAP_SQUARE_SIZE, pos.y, (z + 0.5) * METAL_MAP_SQUARE_SIZE);	//Center of metalsquare.
+			float3 msqrPos((x + 0.5f) * METAL_MAP_SQUARE_SIZE, pos.y, (z + 0.5f) * METAL_MAP_SQUARE_SIZE);	//Center of metalsquare.
 			float sqrCenterDistance = msqrPos.distance2D(this->pos);
 			if(sqrCenterDistance < extractionRange) {	//... and add whose within the circle.
 				MetalSquareOfControl *msqr = new MetalSquareOfControl;

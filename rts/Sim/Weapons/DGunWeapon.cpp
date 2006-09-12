@@ -43,17 +43,17 @@ void CDGunWeapon::Fire(void)
 		dir=targetPos-weaponPos;
 		dir.Normalize();
 	}
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5);
+	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
 	new CFireBallProjectile(weaponPos,dir*projectileSpeed,owner,0,targetPos,weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume*0.2);
+		sound->PlaySample(fireSoundId,owner,fireSoundVolume*0.2f);
 }
 
 
 void CDGunWeapon::Init(void)
 {
 	CWeapon::Init();
-	muzzleFlareSize=1.5;
+	muzzleFlareSize=1.5f;
 }
