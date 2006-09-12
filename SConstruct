@@ -93,7 +93,7 @@ else:
 	unitsync_files += ['rts/System/Platform/ConfigHandler.cpp', 'rts/System/Platform/Linux/DotfileHandler.cpp', ufshcpp]
 
 unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)
-unitsync2 = env.SharedLibrary('UnityLobby/unitsync', unitsync_files)
+unitsync2 = env.SharedLibrary('UnityLobby/client/unitsync', unitsync_files)
 Alias('unitsync', unitsync, unitsync2)
 Default(unitsync, unitsync2)
 
