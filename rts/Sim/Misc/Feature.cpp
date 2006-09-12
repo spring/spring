@@ -163,7 +163,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return false;		// cant repair a 'fresh' feature
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
-		float part=(100-amount)*0.02/max(10.0f,(def->metal+def->energy));
+		float part=(100-amount)*0.02f/max(10.0f,(def->metal+def->energy));
 
 		// Work out how much that will cost
 		float metalUse=def->metal*part;
@@ -196,7 +196,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		if(modInfo->multiReclaim == 0 && lastReclaim == gs->frameNum) // make sure several units cant reclaim at once on a single feature
 			return true;
 		
-		float part=(100-amount)*0.02/max(10.0f,(def->metal+def->energy));
+		float part=(100-amount)*0.02f/max(10.0f,(def->metal+def->energy));
 		reclaimLeft-=part;
 		
 		// Stop the last bit giving too much resource
@@ -217,7 +217,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		else  // Chunky reclaiming
 		{
 			// Work out how many chunk boundaries we crossed
-			float chunkSize = 1.0 / modInfo->reclaimMethod;
+			float chunkSize = 1.0f / modInfo->reclaimMethod;
 			int oldChunk = ChunkNumber(oldReclaimLeft);
 			int newChunk = ChunkNumber(reclaimLeft);
 			if (oldChunk != newChunk)
@@ -253,7 +253,7 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 		blockHeightChanges=false;
 
 		if(def->drawType==DRAWTYPE_TREE){
-			if(impulse.Length2D()>0.5){
+			if(impulse.Length2D()>0.5f){
 				treeDrawer->AddFallingTree(pos,impulse,def->modelType);
 			}
 		}
@@ -279,13 +279,13 @@ bool CFeature::Update(void)
 
 	if(pos.y>finalHeight){
 		if(pos.y>0){	//fall faster when above water
-			pos.y-=0.8;
-			midPos.y-=0.8;
-			transMatrix[13]-=0.8;
+			pos.y-=0.8f;
+			midPos.y-=0.8f;
+			transMatrix[13]-=0.8f;
 		} else {
-			pos.y-=0.4;
-			midPos.y-=0.4;
-			transMatrix[13]-=0.4;
+			pos.y-=0.4f;
+			midPos.y-=0.4f;
+			transMatrix[13]-=0.4f;
 		}
 //		logOutput.Print("feature sinking");
 		retValue=true;
@@ -294,8 +294,8 @@ bool CFeature::Update(void)
 		--emitSmokeTime;
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
-		if(!(gs->frameNum+id & 3) && ph->particleSaturation<0.7){
-			new CSmokeProjectile(midPos+gu->usRandVector()*radius*0.3,gu->usRandVector()*0.3+UpVector,emitSmokeTime/6+20,6,0.4,0,0.5);
+		if(!(gs->frameNum+id & 3) && ph->particleSaturation<0.7f){
+			new CSmokeProjectile(midPos+gu->usRandVector()*radius*0.3f,gu->usRandVector()*0.3f+UpVector,emitSmokeTime/6+20,6,0.4f,0,0.5f);
 		}
 		POP_CODE_MODE;
 		retValue=true;
@@ -338,7 +338,7 @@ bool CFeature::Update(void)
 		// Hide the smoke if there is a geothermal unit on the vent
 		CUnit *u = dynamic_cast<CUnit*>(solidOnTop);
 		if (!u || !u->unitDef->needGeo) {
-			if((ph->particleSaturation<0.7) || (ph->particleSaturation<1 && !(gs->frameNum&3))){
+			if((ph->particleSaturation<0.7f) || (ph->particleSaturation<1 && !(gs->frameNum&3))){
 				float3 speed=gu->usRandVector()*0.5f;
 				speed.y+=2.0f;
 				
@@ -361,7 +361,7 @@ void CFeature::StartFire(void)
 	fireTime=200+(int)(gs->randFloat()*30);
 	featureHandler->SetFeatureUpdateable(this);
 
-	myFire=new CFireProjectile(midPos,UpVector,0,300,radius*0.8,70,20);
+	myFire=new CFireProjectile(midPos,UpVector,0,300,radius*0.8f,70,20);
 }
 
 void CFeature::DrawS3O()

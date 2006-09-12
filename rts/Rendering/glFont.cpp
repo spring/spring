@@ -214,7 +214,7 @@ CglFont::CglFont(int start, int end)
 		charHeights[ch-charstart] = g->height / 2 / texsize;		
 
 		float x = (charWidths[ch-charstart]) / 32.0f;
-		const float y = 1 - 1.0 / 64;
+		const float y = 1 - 1.0f / 64;
 		glBegin(GL_TRIANGLE_STRIP);
 			glTexCoord2f(0, y); glVertex3f(0, 0, 0);
 			glTexCoord2f(0, 0); glVertex3f(0, DRAW_SIZE, 0);
@@ -294,9 +294,9 @@ void CglFont::glPrintColor(const char* fmt, ...)
 	while((lf=temp.find("\xff"))!=string::npos) {
 		printstring(temp.substr(0, lf).c_str());
 		temp=temp.substr(lf, string::npos);
-		float r=((unsigned char)temp[1])/255.0;
-		float g=((unsigned char)temp[2])/255.0;
-		float b=((unsigned char)temp[3])/255.0;
+		float r=((unsigned char)temp[1])/255.0f;
+		float g=((unsigned char)temp[2])/255.0f;
+		float b=((unsigned char)temp[3])/255.0f;
 		glColor3f(r, g, b);
 		temp=temp.substr(4, string::npos);
 	}
@@ -308,8 +308,8 @@ void CglFont::glPrintColor(const char* fmt, ...)
 float CglFont::CalcCharWidth (char c)
 {
 	if(c < charstart || c >= chars + charstart)
-		return 0.03 + charWidths[charstart]/32.0f;
-	return 0.03 + charWidths[c-charstart]/32.0f;
+		return 0.03f + charWidths[charstart]/32.0f;
+	return 0.03f + charWidths[c-charstart]/32.0f;
 }
 
 float CglFont::CalcTextWidth (const char *text)

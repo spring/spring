@@ -329,7 +329,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 	else {
 		maxUserSpeed=3;
-		minUserSpeed=0.3;
+		minUserSpeed=0.3f;
 	}
 
 	// make sure initial game speed is within allowed range
@@ -351,7 +351,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	glFogfv(GL_FOG_COLOR,FogLand);
 	glFogf(GL_FOG_START,0);
-	glFogf(GL_FOG_END,gu->viewRange*0.98);
+	glFogf(GL_FOG_END,gu->viewRange*0.98f);
 	glFogf(GL_FOG_DENSITY,1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
 	glEnable(GL_FOG);
@@ -814,7 +814,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "lastmsgpos") {
 		mouse->currentCamController->SetPos(infoConsole->lastMsgPos);
 		mouse->inStateTransit=true;
-		mouse->transitSpeed=0.5;
+		mouse->transitSpeed=0.5f;
 	}
 	else if ((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) {
@@ -965,12 +965,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "speedup") {
 		float speed=gs->userSpeedFactor;
 		if (speed<1) {
-			speed/=0.8;
-			if (speed>0.99) {
+			speed/=0.8f;
+			if (speed>0.99f) {
 				speed=1;
 			}
 		} else {
-			speed+=0.5;
+			speed+=0.5f;
 		}
 		if (!net->playbackDemo) {
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
@@ -983,12 +983,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "slowdown") {
 		float speed=gs->userSpeedFactor;
 		if (speed<=1) {
-			speed*=0.8;
-			if (speed<0.1) {
-				speed=0.1;
+			speed*=0.8f;
+			if (speed<0.1f) {
+				speed=0.1f;
 			}
 		} else {
-			speed-=0.5;
+			speed-=0.5f;
 		}
 		if (!net->playbackDemo) {
 			net->SendData<float>(NETMSG_USER_SPEED, speed);
@@ -1239,7 +1239,7 @@ bool CGame::Update()
 	timeNow = SDL_GetTicks();
 	Uint64 difTime;
 	difTime=timeNow-lastModGameTimeMeasure;
-	float dif=float(difTime)/1000.;
+	float dif=float(difTime)/1000.f;
 	if(!gs->paused)
 		gu->modGameTime+=dif*gs->speedFactor;
 	gu->gameTime+=dif;
@@ -1315,7 +1315,7 @@ bool CGame::Draw()
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
 		startDraw = SDL_GetTicks();
-		gu->timeOffset = ((float)(startDraw - lastUpdate))/1000.*GAME_SPEED*gs->speedFactor;
+		gu->timeOffset = ((float)(startDraw - lastUpdate))/1000.f*GAME_SPEED*gs->speedFactor;
 	} else  {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
@@ -1410,13 +1410,13 @@ bool CGame::Draw()
 	glLoadIdentity();
 
 	if(mouse->locked){
-		glColor4f(1,1,1,0.5);
+		glColor4f(1,1,1,0.5f);
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
-		glVertex2f(0.5-10.0/gu->screenx,0.5);
-		glVertex2f(0.5+10.0/gu->screenx,0.5);
-		glVertex2f(0.5,0.5-10.0/gu->screeny);
-		glVertex2f(0.5,0.5+10.0/gu->screeny);
+		glVertex2f(0.5f-10.0f/gu->screenx,0.5f);
+		glVertex2f(0.5f+10.0f/gu->screenx,0.5f);
+		glVertex2f(0.5f,0.5f-10.0f/gu->screeny);
+		glVertex2f(0.5f,0.5f+10.0f/gu->screeny);
 		glEnd();
 	}
 
@@ -1451,7 +1451,7 @@ bool CGame::Draw()
 		glScalef(0.03f,0.04f,0.1f);
 
 		//skriv ut fps etc
-		font->glPrint("FPS %3.0d Frame %d Units %d Part %d(%d)",fps,gs->frameNum,uh->activeUnits.size(),ph->ps.size(),ph->currentParticles);
+		font->glPrint("FPS %3.0fd Frame %d Units %d Part %d(%d)",fps,gs->frameNum,uh->activeUnits.size(),ph->ps.size(),ph->currentParticles);
 		glPopMatrix();
 
 		if(playing){
@@ -1526,7 +1526,7 @@ bool CGame::Draw()
 		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->active){
 				glColor4ubv(gs->Team(gs->players[a]->team)->color);
-				font->glPrintAt (0.76f, 0.01f + 0.02 * a, 0.7f, "(%i) %s %3.0f%% Ping:%d ms",a,gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,(int)((gs->players[a]->ping-1)*1000/(30*gs->speedFactor)));
+				font->glPrintAt (0.76f, 0.01f + 0.02f * a, 0.7f, "(%i) %s %3.0f%% Ping:%d ms",a,gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,(int)((gs->players[a]->ping-1)*1000/(30*gs->speedFactor)));
 			}
 		}
 	}
@@ -1551,12 +1551,12 @@ bool CGame::Draw()
 
 	Uint64 start;
 	start = SDL_GetTicks();
-	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.;
+	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
 	lastMoveUpdate=start;
 
 #ifndef NO_AVI
 	if(creatingVideo){
-		gu->lastFrameTime=1.0/GAME_SPEED;
+		gu->lastFrameTime=1.0f/GAME_SPEED;
 		LPBITMAPINFOHEADER ih;
 		ih=aviGenerator->GetBitmapHeader();
 		unsigned char* buf=new unsigned char[ih->biWidth*ih->biHeight*3];
@@ -1717,8 +1717,8 @@ END_TIME_PROFILE("Sim time")
 				*/
 			}
 		} else {
-			if(dist>unit->maxRange*0.95)
-				dist=unit->maxRange*0.95;
+			if(dist>unit->maxRange*0.95f)
+				dist=unit->maxRange*0.95f;
 
 			dc->targetDist=dist;
 			dc->targetPos=pos+dc->viewDir*dc->targetDist;
@@ -1727,8 +1727,8 @@ END_TIME_PROFILE("Sim time")
 				unit->AttackGround(dc->targetPos,true);
 				for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi){
 					float d=dc->targetDist;
-					if(d>(*wi)->range*0.95)
-						d=(*wi)->range*0.95;
+					if(d>(*wi)->range*0.95f)
+						d=(*wi)->range*0.95f;
 					float3 p=pos+dc->viewDir*d;
 					(*wi)->AttackGround(p,true);
 				}
@@ -1758,7 +1758,7 @@ bool CGame::ClientReadNet()
 		inbufpos=0;
 		inbuflength=0;
 	}
-	if(inbufpos>NETWORK_BUFFER_SIZE*0.5){
+	if(inbufpos>NETWORK_BUFFER_SIZE*0.5f){
 		for(a=inbufpos;a<inbuflength;a++)
 			inbuf[a-inbufpos]=inbuf[a];
 		inbuflength-=inbufpos;
@@ -1776,7 +1776,7 @@ bool CGame::ClientReadNet()
 
 		if(timeLeft>1)
 			timeLeft--;
-		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/1000.);
+		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/1000.f);
 		lastframe=currentFrame;
 
 		que=0;
@@ -2147,7 +2147,7 @@ bool CGame::ClientReadNet()
 #ifdef PROFILE_TIME
 					profiler.profile["Sim time"].percent);
 #else
-					0.30);
+					0.30f);
 #endif
 			lastLength=5;
 			ENTER_SYNCED;
@@ -2490,21 +2490,21 @@ void CGame::DrawDirectControlHud(void)
 	glDisable(GL_TEXTURE_2D);
 
 	glPushMatrix();
-	glTranslatef(0.1,0.1,0);
-	glScalef(0.25,0.25,0.25);
+	glTranslatef(0.1f,0.1f,0);
+	glScalef(0.25f,0.25f,0.25f);
 
 	if(unit->moveType->useHeading){
 		glPushMatrix();
-		glRotatef(unit->heading*180.0/32768+180,0,0,1);
+		glRotatef(unit->heading*180.0f/32768+180,0,0,1);
 
-		glColor4d(0.3,0.9,0.3,0.4);
+		glColor4d(0.3f,0.9f,0.3f,0.4f);
 		glBegin(GL_TRIANGLE_FAN);
-		glVertex2d(-0.2,-0.3);
-		glVertex2d(-0.2,0.3);
-		glVertex2d(0,0.4);
-		glVertex2d(0.2,0.3);
-		glVertex2d(0.2,-0.3);
-		glVertex2d(-0.2,-0.3);
+		glVertex2d(-0.2f,-0.3f);
+		glVertex2d(-0.2f,0.3f);
+		glVertex2d(0,0.4f);
+		glVertex2d(0.2f,0.3f);
+		glVertex2d(0.2f,-0.3f);
+		glVertex2d(-0.2f,-0.3f);
 		glEnd();
 		glPopMatrix();
 	}
@@ -2512,11 +2512,11 @@ void CGame::DrawDirectControlHud(void)
 	glEnable(GL_DEPTH_TEST);
 	glPushMatrix();
 	if(unit->moveType->useHeading){
-		float scale=0.4/unit->radius;
+		float scale=0.4f/unit->radius;
 		glScalef(scale,scale,scale);
 		glRotatef(90,1,0,0);
 	} else {
-		float scale=0.2/unit->radius;
+		float scale=0.2f/unit->radius;
 		glScalef(scale,scale,-scale);
 		CMatrix44f m(ZeroVector,float3(camera->right.x,camera->up.x,camera->forward.x),float3(camera->right.y,camera->up.y,camera->forward.y),float3(camera->right.z,camera->up.z,camera->forward.z));
 		glMultMatrixf(m.m);
@@ -2531,17 +2531,17 @@ void CGame::DrawDirectControlHud(void)
 
 	if(unit->moveType->useHeading){
 		glPushMatrix();
-		glRotatef(GetHeadingFromVector(camera->forward.x,camera->forward.z)*180.0/32768+180,0,0,1);
-		glScalef(0.4,0.4,0.3);
+		glRotatef(GetHeadingFromVector(camera->forward.x,camera->forward.z)*180.0f/32768+180,0,0,1);
+		glScalef(0.4f,0.4f,0.3f);
 
-		glColor4d(0.4,0.4,1.0,0.6);
+		glColor4d(0.4f,0.4f,1.0f,0.6f);
 		glBegin(GL_TRIANGLE_FAN);
-		glVertex2d(-0.2,-0.3);
-		glVertex2d(-0.2,0.3);
-		glVertex2d(0,0.5);
-		glVertex2d(0.2,0.3);
-		glVertex2d(0.2,-0.3);
-		glVertex2d(-0.2,-0.3);
+		glVertex2d(-0.2f,-0.3f);
+		glVertex2d(-0.2f,0.3f);
+		glVertex2d(0,0.5f);
+		glVertex2d(0.2f,0.3f);
+		glVertex2d(0.2f,-0.3f);
+		glVertex2d(-0.2f,-0.3f);
 		glEnd();
 		glPopMatrix();
 	}
@@ -2550,33 +2550,33 @@ void CGame::DrawDirectControlHud(void)
 	glEnable(GL_TEXTURE_2D);
 
 	glPushMatrix();
-	glTranslatef(0.22,0.05,0);
-	glScalef(0.03,0.03,0.03);
-	glColor4d(0.2,0.8,0.2,0.6);
+	glTranslatef(0.22f,0.05f,0);
+	glScalef(0.03f,0.03f,0.03f);
+	glColor4d(0.2f,0.8f,0.2f,0.6f);
 	font->glPrint("Health %.0f",unit->health);
 	glPopMatrix();
 
 	if(gs->players[gu->myPlayerNum]->myControl.mouse2){
 		glPushMatrix();
-		glTranslatef(0.02,0.34,0);
-		glScalef(0.03,0.03,0.03);
-		glColor4d(0.2,0.8,0.2,0.6);
+		glTranslatef(0.02f,0.34f,0);
+		glScalef(0.03f,0.03f,0.03f);
+		glColor4d(0.2f,0.8f,0.2f,0.6f);
 		font->glPrint("Free fire mode");
 		glPopMatrix();
 	}
 	for(int a=0;a<unit->weapons.size();++a){
 		glPushMatrix();
-		glTranslatef(0.02,0.3-a*0.04,0);
-		glScalef(0.03,0.03,0.03);
+		glTranslatef(0.02f,0.3f-a*0.04f,0);
+		glScalef(0.03f,0.03f,0.03f);
 		CWeapon* w=unit->weapons[a];
 		if(w->reloadStatus>gs->frameNum){
-			glColor4d(0.8,0.2,0.2,0.6);
+			glColor4d(0.8f,0.2f,0.2f,0.6f);
 			font->glPrint("Weapon %i: Reloading",a+1);
 		} else if(!w->angleGood){
-			glColor4d(0.6,0.6,0.2,0.6);
+			glColor4d(0.6f,0.6f,0.2f,0.6f);
 			font->glPrint("Weapon %i: Aiming",a+1);
 		} else {
-			glColor4d(0.2,0.8,0.2,0.6);
+			glColor4d(0.2f,0.8f,0.2f,0.6f);
 			font->glPrint("Weapon %i: Ready",a+1);
 		}
 		glPopMatrix();
@@ -2599,13 +2599,13 @@ void CGame::DrawDirectControlHud(void)
 		}
 		switch(a){
 		case 0:
-			glColor4d(0,1,0,0.7);
+			glColor4d(0,1,0,0.7f);
 			break;
 		case 1:
-			glColor4d(1,0,0,0.7);
+			glColor4d(1,0,0,0.7f);
 			break;
 		default:
-			glColor4d(0,0,1,0.7);
+			glColor4d(0,0,1,0.7f);
 		}
 		if(w->targetType!=Target_None){
 			float3 pos=w->targetPos;
@@ -2647,7 +2647,7 @@ void CGame::DrawDirectControlHud(void)
 				glVertexf3(pos+(v2*sin(PI*-0.25f)+v3*cos(PI*-0.25f))*radius);
 				glVertexf3(pos+(v2*sin(PI*-1.25f)+v3*cos(PI*-1.25f))*radius);
 			}
-			if((w->targetPos-camera->pos).Normalize().dot(camera->forward)<0.7){
+			if((w->targetPos-camera->pos).Normalize().dot(camera->forward)<0.7f){
 				glVertexf3(w->targetPos);
 				glVertexf3(camera->pos+camera->forward*100);
 			}
@@ -2721,7 +2721,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 
 	if (s.find(".divbyzero") == 0 && gs->cheatEnabled) {
 		float a = 0;
-		logOutput.Print("Result: %f", 1.0/a);
+		logOutput.Print("Result: %f", 1.0f/a);
 	}
 
 #ifdef SYNCDEBUG

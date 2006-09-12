@@ -91,7 +91,7 @@ void CFactory::Update()
 		}
 		if(canBuild){
 			quedBuild=false;
-			CUnit* b=unitLoader.LoadUnit(nextBuild,buildPos+float3(0.01,0.01,0.01),team,true,buildFacing);
+			CUnit* b=unitLoader.LoadUnit(nextBuild,buildPos+float3(0.01f,0.01f,0.01f),team,true,buildFacing);
 			AddDeathDependence(b);
 			curBuild=b;
 
@@ -100,7 +100,7 @@ void CFactory::Update()
 			if(unitDef->sounds.build.id)
 				sound->PlaySample(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
 		} else {
-			helper->BuggerOff(buildPos-float3(0.01,0,0.02),radius+8);
+			helper->BuggerOff(buildPos-float3(0.01f,0,0.02f),radius+8);
 		}
 	}
 
@@ -133,7 +133,7 @@ void CFactory::Update()
 				float3 color= unitDef->nanoColor;
 				if(gu->teamNanospray){
 					unsigned char* tcol=gs->Team(team)->color;
-					color = float3(tcol[0]*(1./255.),tcol[1]*(1./255.),tcol[2]*(1./255.));
+					color = float3(tcol[0]*(1.f/255.f),tcol[1]*(1.f/255.f),tcol[2]*(1.f/255.f));
 				}
 				new CGfxProjectile(weaponPos,dif,(int)l,color);
 			}
@@ -224,14 +224,14 @@ void CFactory::FinishedBuilding(void)
 
 void CFactory::SendToEmptySpot(CUnit* unit)
 {
-	float r=radius*1.7+unit->radius*4;
+	float r=radius*1.7f+unit->radius*4;
 
 	float3 foundPos=pos+frontdir*r;
 
 	for(int a=0;a<20;++a){
 		float3 testPos=pos+frontdir*r*cos(a*PI/10)+rightdir*r*sin(a*PI/10);
 		testPos.y=ground->GetHeight(testPos.x,testPos.z);
-		if(qf->GetSolidsExact(testPos,unit->radius*1.5).empty()){
+		if(qf->GetSolidsExact(testPos,unit->radius*1.5f).empty()){
 			foundPos=testPos;
 			break;
 		}
@@ -247,7 +247,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 void CFactory::SlowUpdate(void)
 {
-	helper->BuggerOff(pos-float3(0.01,0,0.02),radius);
+	helper->BuggerOff(pos-float3(0.01f,0,0.02f),radius);
 
 	CBuilding::SlowUpdate();
 }

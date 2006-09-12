@@ -170,7 +170,7 @@ void CMouseCursor::Draw(int x, int y)
 	glEnd();
 
 /*	glViewport(x+10,gu->screeny-y-30,60*gu->screenx/gu->screeny,60);
-	glScalef(0.2,0.2,0.2);
+	glScalef(0.2f,0.2f,0.2f);
 	font->glPrint("%s",cursorText.c_str());
 
 	glViewport(lastx-20,gu->screeny-lasty-30,60*gu->screenx/gu->screeny,60);
@@ -213,7 +213,7 @@ void CMouseCursor::Update()
 	}
 	
 	//Advance a frame in animated cursors
-	if (gu->gameTime - lastFrameTime > 0.1) {
+	if (gu->gameTime - lastFrameTime > 0.1f) {
 		lastFrameTime = gu->gameTime;
 		curFrame = (curFrame + 1) % (int)frames.size();
 	}

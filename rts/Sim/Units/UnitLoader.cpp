@@ -152,7 +152,7 @@ START_TIME_PROFILE;
 
 	if(build){
 		unit->ChangeLos(1,1);
-		unit->health=0.1;
+		unit->health=0.1f;
 	} else {
 		unit->ChangeLos((int)(ud->losRadius),(int)(ud->airLosRadius));
 	}
@@ -247,7 +247,7 @@ START_TIME_PROFILE;
 			mt->maxBank = ud->maxBank;
 			mt->maxPitch = ud->maxPitch;
 			mt->turnRadius = ud->turnRadius;
-			mt->wantedHeight = ud->wantedHeight*1.5+(gs->randFloat()-0.3)*15*(mt->isFighter?2:1);;
+			mt->wantedHeight = ud->wantedHeight*1.5f+(gs->randFloat()-0.3f)*15*(mt->isFighter?2:1);;
 
 			mt->maxAcc = ud->maxAcc;
 			mt->maxAileron = ud->maxAileron;
@@ -270,7 +270,7 @@ START_TIME_PROFILE;
 //		unit->mainDamageType=unit->weapons.front()->damageType;
 
 	//unit->model=unitModelLoader->GetModel(ud->model.modelname,side);
-	unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->canfly?0.5:1,side); 	//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
+	unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->canfly?0.5f:1,side); 	//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
 	unit->SetRadius(unit->model->radius);
 
 	if(ud->floater)
@@ -426,7 +426,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 		if(weapon->damages[0]>50){
 			float soundVolume=sqrt(weapon->damages[0]*0.5f);
 			if(weapondef->type=="LaserCannon")
-				soundVolume*=0.5;
+				soundVolume*=0.5f;
 			float hitSoundVolume=soundVolume;
 			if((weapondef->type=="MissileLauncher" || weapondef->type=="StarburstLauncher") && soundVolume>100)
 				soundVolume=10*sqrt(soundVolume);
@@ -436,7 +436,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 			if(weapon->areaOfEffect>8)
 				soundVolume*=2;
 			if(weapondef->type=="DGun")
-				soundVolume*=0.15;
+				soundVolume*=0.15f;
 			if(weapondef->soundhit.volume==-1)
 				weapondef->soundhit.volume=soundVolume;
 		}

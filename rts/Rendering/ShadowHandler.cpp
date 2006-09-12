@@ -192,8 +192,8 @@ void CShadowHandler::CreateShadows(void)
 
 	//it should be possible to tweak a bit more shadow map resolution from this
 	float maxLength=12000;
-	float maxLengthX=(x2-x1)*1.5;
-	float maxLengthY=(y2-y1)*1.5;
+	float maxLengthX=(x2-x1)*1.5f;
+	float maxLengthY=(y2-y1)*1.5f;
 	xmid=1-(sqrt(fabs(x2))/(sqrt(fabs(x2))+sqrt(fabs(x1))));
 	ymid=1-(sqrt(fabs(y2))/(sqrt(fabs(y2))+sqrt(fabs(y1))));
 	//logOutput.Print("%.0f %.0f %.2f %.0f",y1,y2,ymid,maxLengthY);
@@ -209,7 +209,7 @@ void CShadowHandler::CreateShadows(void)
 	shadowMatrix[2]=-sundir.x/maxLength;
 	shadowMatrix[6]=-sundir.y/maxLength;
 	shadowMatrix[10]=-sundir.z/maxLength;
-	shadowMatrix[14]=(centerPos.x*sundir.x+centerPos.z*sundir.z)/maxLength+0.5;
+	shadowMatrix[14]=(centerPos.x*sundir.x+centerPos.z*sundir.z)/maxLength+0.5f;
 	glLoadMatrixf(shadowMatrix.m);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,16, xmid,ymid,0,0);	//these registers should not be overwritten by anything
 
@@ -229,7 +229,7 @@ void CShadowHandler::CreateShadows(void)
 	camera->up=oldup;
 	camera->pos2=camera->pos;
 
-	shadowMatrix[14]-=0.00001;
+	shadowMatrix[14]-=0.00001f;
 
 	glShadeModel(GL_SMOOTH);
 	glColorMask(1, 1, 1, 1);
@@ -253,13 +253,13 @@ void CShadowHandler::DrawShadowTex(void)
 	glVertex3f(0,0,1);
 
 	glTexCoord2f(0,1);
-	glVertex3f(0,0.5,1);
+	glVertex3f(0,0.5f,1);
 
 	glTexCoord2f(1,1);
-	glVertex3f(0.5,0.5,1);
+	glVertex3f(0.5f,0.5f,1);
 
 	glTexCoord2f(1,0);
-	glVertex3f(0.5,0,1);
+	glVertex3f(0.5f,0,1);
 	glEnd();
 }
 
@@ -299,10 +299,10 @@ void CShadowHandler::CalcMinMaxView(void)
 	//if someone could figure out how the frustum and nonlinear shadow transform really works (and not use the SJan trial and error method)
 	//so that we can skip this sort of fudge factors it would be good
 	float borderSize=270;
-	float maxSize=gu->viewRange*0.75;
+	float maxSize=gu->viewRange*0.75f;
 	if(shadowMapSize==1024){
-		borderSize*=1.5;
-		maxSize*=1.2;
+		borderSize*=1.5f;
+		maxSize*=1.2f;
 	}
 
 	if(!left.empty()){
@@ -352,9 +352,9 @@ void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 	fline temp;
 	
 	float3 b=UpVector.cross(side);		//get vector for collision between frustum and horizontal plane
-	if(fabs(b.z)<0.0001)
+	if(fabs(b.z)<0.0001f)
 		b.z=0.00011f;
-	if(fabs(b.z)>0.0001){
+	if(fabs(b.z)>0.0001f){
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(side);			//get vector from camera to collision line
 		c.Normalize();

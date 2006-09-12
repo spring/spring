@@ -54,13 +54,13 @@ bool CLaserCannon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 
 	if(!onlyForward){		//skip ground col testing for aircrafts
 		float g=ground->LineGroundCol(weaponPos,pos);
-		if(g>0 && g<length*0.9)
+		if(g>0 && g<length*0.9f)
 			return false;
 	}
 	if(helper->LineFeatureCol(weaponPos,dir,length))
 		return false;
 
-	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7),owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
 		return false;
 	return true;
 }
@@ -68,7 +68,7 @@ bool CLaserCannon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 void CLaserCannon::Init(void)
 {
 	CWeapon::Init();
-//	muzzleFlareSize=0.5;
+//	muzzleFlareSize=0.5f;
 }
 
 void CLaserCannon::Fire(void)
@@ -80,7 +80,7 @@ void CLaserCannon::Fire(void)
 		dir=targetPos-weaponPos;
 		dir.Normalize();
 	}
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.7);
+	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.7f);
 	dir.Normalize();
 
 	int fpsSub=0;

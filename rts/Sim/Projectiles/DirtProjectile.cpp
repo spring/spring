@@ -88,7 +88,7 @@ void CDirtProjectile::Draw()
 
 	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+gu->timeOffset*sizeExpansion;
-	float texx = texture->xstart + (texture->xend-texture->xstart)*((1-partAbove)*0.5);//0.25*(1-partAbove)
+	float texx = texture->xstart + (texture->xend-texture->xstart)*((1-partAbove)*0.5f);//0.25f*(1-partAbove)
 
 	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize*partAbove,texx,texture->ystart,col);
 	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize*partAbove,texx,texture->yend,col);

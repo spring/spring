@@ -19,7 +19,7 @@ CResourceBar::CResourceBar(void)
 
 	metalBox.x1 = 0.09f;
 	metalBox.y1 = 0.01f;
-	metalBox.x2 = (box.x2-box.x1)/2.0-.03f;
+	metalBox.x2 = (box.x2-box.x1)/2.0f-.03f;
 	metalBox.y2 = 0.024f;
 
 	energyBox.x1 = 0.45f;
@@ -72,10 +72,10 @@ void CResourceBar::Draw(void)
 
 	//layout metal in box
 	GLfloat metalx = box.x1+.01f;
-	GLfloat metaly = box.y1+.002;
+	GLfloat metaly = box.y1+.002f;
 
 	GLfloat metalbarx1 = metalx+.08f;
-	GLfloat metalbarx2 = box.x1+(box.x2-box.x1)/2.0-.03f;
+	GLfloat metalbarx2 = box.x1+(box.x2-box.x1)/2.0f-.03f;
 
 	//metal layout
 	GLfloat metalbarlen = metalbarx2-metalbarx1;
@@ -83,7 +83,7 @@ void CResourceBar::Draw(void)
 	y1=metaly+.014f;
 	x2=metalbarx2;
 	y2=metaly+.020f;
-	x=(1.0*gs->Team(gu->myTeam)->metal/gs->Team(gu->myTeam)->metalStorage)*metalbarlen;
+	x=(1.0f*gs->Team(gu->myTeam)->metal/gs->Team(gu->myTeam)->metalStorage)*metalbarlen;
 	
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
@@ -110,32 +110,32 @@ void CResourceBar::Draw(void)
 	x=gs->Team(gu->myTeam)->metalShare*metalbarlen;
 	glColor4f(0.9f,0.2f,0.2f,0.7f);
 	glBegin(GL_QUADS);
-	glVertex2f(x1+x+0.003, y1-0.003);
-	glVertex2f(x1+x+0.003, y2+0.003);
-	glVertex2f(x1+x-0.003, y2+0.003);
-	glVertex2f(x1+x-0.003, y1-0.003);
+	glVertex2f(x1+x+0.003f, y1-0.003f);
+	glVertex2f(x1+x+0.003f, y2+0.003f);
+	glVertex2f(x1+x-0.003f, y2+0.003f);
+	glVertex2f(x1+x-0.003f, y1-0.003f);
 	glEnd();
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
 	
-	font->glPrintAt(metalx-0.004,metaly+.005f,0.7f,"Metal");
+	font->glPrintAt(metalx-0.004f,metaly+.005f,0.7f,"Metal");
 
-	font->glPrintAt(metalbarx2-.01f,metaly,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->metalStorage).c_str());
-	font->glPrintAt(metalbarx1+metalbarlen/2.0,metaly/*+.02f*/,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->metal).c_str());
+	font->glPrintAt(metalbarx2-.01f,metaly,0.5f,"%s",FloatToSmallString(gs->Team(gu->myTeam)->metalStorage).c_str());
+	font->glPrintAt(metalbarx1+metalbarlen/2.0f,metaly/*+.02f*/,0.5f,"%s",FloatToSmallString(gs->Team(gu->myTeam)->metal).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->prevMetalPull)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldMetalUpkeep)).c_str());
+	font->glPrintAt(metalx+.044f,metaly-0.002f,0.5f,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->prevMetalPull)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldMetalUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
-	font->glPrintAt(metalx+.044f,metaly+.01f,0.5,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldMetalIncome).c_str());
+	font->glPrintAt(metalx+.044f,metaly+.01f,0.5f,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldMetalIncome).c_str());
 
 	// Energy
 	glDisable(GL_TEXTURE_2D);
 
 	//layout energy in box
 	GLfloat energyx = box.x1+0.37f;
-	GLfloat energyy = box.y1+0.002;
+	GLfloat energyy = box.y1+0.002f;
 
 	GLfloat energybarx1 = energyx+.08f;
 	GLfloat energybarx2 = box.x2-0.03f;
@@ -146,7 +146,7 @@ void CResourceBar::Draw(void)
 	y1=energyy+.014f;
 	x2=energybarx2;
 	y2=energyy+.020f;
-	x=(1.0*gs->Team(gu->myTeam)->energy/gs->Team(gu->myTeam)->energyStorage)*energybarlen;
+	x=(1.0f*gs->Team(gu->myTeam)->energy/gs->Team(gu->myTeam)->energyStorage)*energybarlen;
 	
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
@@ -173,26 +173,26 @@ void CResourceBar::Draw(void)
 	x=gs->Team(gu->myTeam)->energyShare*energybarlen;
 	glColor4f(0.9f,0.2f,0.2f,0.7f);
 	glBegin(GL_QUADS);
-	glVertex2f(x1+x+0.003, y1-0.003);
-	glVertex2f(x1+x+0.003, y2+0.003);
-	glVertex2f(x1+x-0.003, y2+0.003);
-	glVertex2f(x1+x-0.003, y1-0.003);
+	glVertex2f(x1+x+0.003f, y1-0.003f);
+	glVertex2f(x1+x+0.003f, y2+0.003f);
+	glVertex2f(x1+x-0.003f, y2+0.003f);
+	glVertex2f(x1+x-0.003f, y1-0.003f);
 	glEnd();
 
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,0.4,0.8f);
+	glColor4f(1,1,0.4f,0.8f);
 	
-	font->glPrintAt(energyx-0.018,energyy+.005f,0.7f,"Energy");
+	font->glPrintAt(energyx-0.018f,energyy+.005f,0.7f,"Energy");
 
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(energybarx2-.01f,energyy,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->energyStorage).c_str());
-	font->glPrintAt(energybarx1+energybarlen/2.0,energyy/*+.02f*/,0.5,"%s",FloatToSmallString(gs->Team(gu->myTeam)->energy).c_str());
+	font->glPrintAt(energybarx2-.01f,energyy,0.5f,"%s",FloatToSmallString(gs->Team(gu->myTeam)->energyStorage).c_str());
+	font->glPrintAt(energybarx1+energybarlen/2.0f,energyy/*+.02f*/,0.5f,"%s",FloatToSmallString(gs->Team(gu->myTeam)->energy).c_str());
 
 	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->prevEnergyPull)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldEnergyUpkeep)).c_str());
+	font->glPrintAt(energyx+.044f,energyy-0.002f,0.5f,"-%s(-%s)",FloatToSmallString(fabs(gs->Team(gu->myTeam)->prevEnergyPull)).c_str(),FloatToSmallString(fabs(gs->Team(gu->myTeam)->oldEnergyUpkeep)).c_str());
 
 	glColor4f(.6f,1.0f,.6f,.95f); // Income
-	font->glPrintAt(energyx+.044f,energyy+.01f,0.5,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldEnergyIncome).c_str());
+	font->glPrintAt(energyx+.044f,energyy+.01f,0.5f,"+%s",FloatToSmallString(gs->Team(gu->myTeam)->oldEnergyIncome).c_str());
 
 	glDisable(GL_TEXTURE_2D);
 
@@ -213,7 +213,7 @@ std::string CResourceBar::GetTooltip(int x, int y)
 	float mx=float(x)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
-	if(mx<box.x1+0.36)
+	if(mx<box.x1+0.36f)
 		return "Shows your stored metal as well as\nincome(green) and expidentures (red)\nClick in the bar to select your\nauto share level";
 
 	return "Shows your stored energy as well as\nincome(green) and expidentures (red)\nClick in the bar to select your\nauto share level";

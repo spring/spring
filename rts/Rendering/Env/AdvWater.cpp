@@ -58,7 +58,7 @@ CAdvWater::CAdvWater(bool loadShader)
 /*
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
-			scrap[(y*64+x)*4+0]=(sin(x*PI*2.0/64.0))*128+128;
+			scrap[(y*64+x)*4+0]=(sin(x*PI*2.0f/64.0f))*128+128;
 			scrap[(y*64+x)*4+1]=128;
 			scrap[(y*64+x)*4+2]=0;
 			scrap[(y*64+x)*4+3]=255;
@@ -72,7 +72,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	/*/
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
-			float ang=26.5*PI/180.0;
+			float ang=26.5f*PI/180.0f;
 			float pos=y*2+x;
 			scrap[(y*64+x)*4+0]=(unsigned char)((sin(pos*PI*2.0f/64.0f))*128*sin(ang))+128;
 			scrap[(y*64+x)*4+1]=(unsigned char)((sin(pos*PI*2.0f/64.0f))*128*cos(ang))+128;
@@ -85,7 +85,7 @@ CAdvWater::CAdvWater(bool loadShader)
 
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
-			float ang=-19*PI/180.0;
+			float ang=-19*PI/180.0f;
 			float pos=3*y-x;
 			scrap[(y*64+x)*4+0]=(unsigned char)((sin(pos*PI*2.0f/64.0f))*128*sin(ang))+128;
 			scrap[(y*64+x)*4+1]=(unsigned char)((sin(pos*PI*2.0f/64.0f))*128*cos(ang))+128;
@@ -188,14 +188,14 @@ void CAdvWater::Draw(bool useBlending)
 				dir.Normalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
-				col[3]=(unsigned char)((0.8+0.7*(dir.y))*255);
+				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);
 				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY-yInc,col);
 
 				dir=xbase;
 				dir.Normalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
-				col[3]=(unsigned char)((0.8+0.7*(dir.y))*255);
+				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);
 				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY,col);
 
 				xbase+=dh;
@@ -206,9 +206,9 @@ void CAdvWater::Draw(bool useBlending)
 		}
 		if(!maxReached)
 			break;
-		dv*=0.5;
-		maxY*=0.5;
-		yInc*=0.5;
+		dv*=0.5f;
+		maxY*=0.5f;
+		yInc*=0.5f;
 	}
 	va->DrawArrayTC(GL_TRIANGLE_STRIP);
 
@@ -245,70 +245,70 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	glColor3f(1,1,1);
 	glBegin(GL_QUADS);
-/*	glColor3f(0.49,0.49,0.49);
-	glTexCoord2f(0,0+gs->frameNum*0.01);glVertex3f(0,0,0);
-	glTexCoord2f(0,2+gs->frameNum*0.01);glVertex3f(0,1,0);
-	glTexCoord2f(1,2+gs->frameNum*0.01);glVertex3f(1,1,0);
-	glTexCoord2f(1,0+gs->frameNum*0.01);glVertex3f(1,0,0);
+/*	glColor3f(0.49f,0.49f,0.49f);
+	glTexCoord2f(0,0+gs->frameNum*0.01f);glVertex3f(0,0,0);
+	glTexCoord2f(0,2+gs->frameNum*0.01f);glVertex3f(0,1,0);
+	glTexCoord2f(1,2+gs->frameNum*0.01f);glVertex3f(1,1,0);
+	glTexCoord2f(1,0+gs->frameNum*0.01f);glVertex3f(1,0,0);
 /*
-	glColor3f(0.32,0.32,0.32);
-	glTexCoord2f(0,0-gs->frameNum*0.037);glVertex3f(0,0,0);
-	glTexCoord2f(0,2-gs->frameNum*0.037);glVertex3f(0,1,0);
-	glTexCoord2f(1,2-gs->frameNum*0.037);glVertex3f(1,1,0);
-	glTexCoord2f(1,0-gs->frameNum*0.037);glVertex3f(1,0,0);
+	glColor3f(0.32f,0.32f,0.32f);
+	glTexCoord2f(0,0-gs->frameNum*0.037f);glVertex3f(0,0,0);
+	glTexCoord2f(0,2-gs->frameNum*0.037f);glVertex3f(0,1,0);
+	glTexCoord2f(1,2-gs->frameNum*0.037f);glVertex3f(1,1,0);
+	glTexCoord2f(1,0-gs->frameNum*0.037f);glVertex3f(1,0,0);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
 
 	glColor3f(1,1,1);
 	glBegin(GL_QUADS);
-	glColor3f(0.45,0.45,0.45);
-	glTexCoord2f(0+gs->frameNum*0.02,0);glVertex3f(0,0,0);
-	glTexCoord2f(1+gs->frameNum*0.02,0);glVertex3f(0,1,0);
-	glTexCoord2f(1+gs->frameNum*0.02,1);glVertex3f(1,1,0);
-	glTexCoord2f(0+gs->frameNum*0.02,1);glVertex3f(1,0,0);
+	glColor3f(0.45f,0.45f,0.45f);
+	glTexCoord2f(0+gs->frameNum*0.02f,0);glVertex3f(0,0,0);
+	glTexCoord2f(1+gs->frameNum*0.02f,0);glVertex3f(0,1,0);
+	glTexCoord2f(1+gs->frameNum*0.02f,1);glVertex3f(1,1,0);
+	glTexCoord2f(0+gs->frameNum*0.02f,1);glVertex3f(1,0,0);
 
-	glColor3f(0.29,0.29,0.29);
-	glTexCoord2f(0-gs->frameNum*0.021,0);glVertex3f(0,0,0);
-	glTexCoord2f(1-gs->frameNum*0.021,0);glVertex3f(0,1,0);
-	glTexCoord2f(1-gs->frameNum*0.021,1);glVertex3f(1,1,0);
-	glTexCoord2f(0-gs->frameNum*0.021,1);glVertex3f(1,0,0);
+	glColor3f(0.29f,0.29f,0.29f);
+	glTexCoord2f(0-gs->frameNum*0.021f,0);glVertex3f(0,0,0);
+	glTexCoord2f(1-gs->frameNum*0.021f,0);glVertex3f(0,1,0);
+	glTexCoord2f(1-gs->frameNum*0.021f,1);glVertex3f(1,1,0);
+	glTexCoord2f(0-gs->frameNum*0.021f,1);glVertex3f(1,0,0);
 	glEnd();
 /*/
-	glColor3f(0.2,0.2,0.2);
-	glTexCoord2f(0,0+gs->frameNum*0.0046);glVertex3f(0,0,0);
-	glTexCoord2f(0,2+gs->frameNum*0.0046);glVertex3f(0,1,0);
-	glTexCoord2f(2,2+gs->frameNum*0.0046);glVertex3f(1,1,0);
-	glTexCoord2f(2,0+gs->frameNum*0.0046);glVertex3f(1,0,0);
+	glColor3f(0.2f,0.2f,0.2f);
+	glTexCoord2f(0,0+gs->frameNum*0.0046f);glVertex3f(0,0,0);
+	glTexCoord2f(0,2+gs->frameNum*0.0046f);glVertex3f(0,1,0);
+	glTexCoord2f(2,2+gs->frameNum*0.0046f);glVertex3f(1,1,0);
+	glTexCoord2f(2,0+gs->frameNum*0.0046f);glVertex3f(1,0,0);
 
-	glColor3f(0.2,0.2,0.2);
-	glTexCoord2f(0,0+gs->frameNum*0.0026);glVertex3f(0,0,0);
-	glTexCoord2f(0,4+gs->frameNum*0.0026);glVertex3f(0,1,0);
-	glTexCoord2f(2,4+gs->frameNum*0.0026);glVertex3f(1,1,0);
-	glTexCoord2f(2,0+gs->frameNum*0.0026);glVertex3f(1,0,0);
+	glColor3f(0.2f,0.2f,0.2f);
+	glTexCoord2f(0,0+gs->frameNum*0.0026f);glVertex3f(0,0,0);
+	glTexCoord2f(0,4+gs->frameNum*0.0026f);glVertex3f(0,1,0);
+	glTexCoord2f(2,4+gs->frameNum*0.0026f);glVertex3f(1,1,0);
+	glTexCoord2f(2,0+gs->frameNum*0.0026f);glVertex3f(1,0,0);
 
-	glTexCoord2f(0,0+gs->frameNum*0.0012);glVertex3f(0,0,0);
-	glTexCoord2f(0,8+gs->frameNum*0.0012);glVertex3f(0,1,0);
-	glTexCoord2f(2,8+gs->frameNum*0.0012);glVertex3f(1,1,0);
-	glTexCoord2f(2,0+gs->frameNum*0.0012);glVertex3f(1,0,0);
+	glTexCoord2f(0,0+gs->frameNum*0.0012f);glVertex3f(0,0,0);
+	glTexCoord2f(0,8+gs->frameNum*0.0012f);glVertex3f(0,1,0);
+	glTexCoord2f(2,8+gs->frameNum*0.0012f);glVertex3f(1,1,0);
+	glTexCoord2f(2,0+gs->frameNum*0.0012f);glVertex3f(1,0,0);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 	glBegin(GL_QUADS);
-	glColor3f(0.2,0.2,0.2);
-	glTexCoord2f(0,0+gs->frameNum*0.0036);glVertex3f(0,0,0);
-	glTexCoord2f(0,1+gs->frameNum*0.0036);glVertex3f(0,1,0);
-	glTexCoord2f(1,1+gs->frameNum*0.0036);glVertex3f(1,1,0);
-	glTexCoord2f(1,0+gs->frameNum*0.0036);glVertex3f(1,0,0);
+	glColor3f(0.2f,0.2f,0.2f);
+	glTexCoord2f(0,0+gs->frameNum*0.0036f);glVertex3f(0,0,0);
+	glTexCoord2f(0,1+gs->frameNum*0.0036f);glVertex3f(0,1,0);
+	glTexCoord2f(1,1+gs->frameNum*0.0036f);glVertex3f(1,1,0);
+	glTexCoord2f(1,0+gs->frameNum*0.0036f);glVertex3f(1,0,0);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 	glBegin(GL_QUADS);
-	glColor3f(0.2,0.2,0.2);
-	glTexCoord2f(0,0+gs->frameNum*0.0082);glVertex3f(0,0,0);
-	glTexCoord2f(0,1+gs->frameNum*0.0082);glVertex3f(0,1,0);
-	glTexCoord2f(1,1+gs->frameNum*0.0082);glVertex3f(1,1,0);
-	glTexCoord2f(1,0+gs->frameNum*0.0082);glVertex3f(1,0,0);
+	glColor3f(0.2f,0.2f,0.2f);
+	glTexCoord2f(0,0+gs->frameNum*0.0082f);glVertex3f(0,0,0);
+	glTexCoord2f(0,1+gs->frameNum*0.0082f);glVertex3f(0,1,0);
+	glTexCoord2f(1,1+gs->frameNum*0.0082f);glVertex3f(1,1,0);
+	glTexCoord2f(1,0+gs->frameNum*0.0082f);glVertex3f(1,0,0);
 	glEnd();
 /**/
 	glBindTexture(GL_TEXTURE_2D, bumpTexture);

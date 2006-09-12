@@ -21,9 +21,9 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,i
 	checkCol=false;
 
 	for(int y=0;y<5;++y){
-		float yp=(y+ypart)/16.0*PI-PI/2;
+		float yp=(y+ypart)/16.0f*PI-PI/2;
 		for(int x=0;x<5;++x){
-			float xp=(x+xpart)/32.0*2*PI;
+			float xp=(x+xpart)/32.0f*2*PI;
 			vectors[y*5+x]=float3(sin(xp)*cos(yp),sin(yp),cos(xp)*cos(yp));
 		}
 	}
@@ -31,8 +31,8 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,i
 
 	drawRadius=60;
 	alwaysVisible=true;
-	texx = ph->circularthingytex.xstart - (ph->circularthingytex.xend-ph->circularthingytex.xstart)*0.5;
-	texy = ph->circularthingytex.ystart - (ph->circularthingytex.yend-ph->circularthingytex.ystart)*0.5;
+	texx = ph->circularthingytex.xstart - (ph->circularthingytex.xend-ph->circularthingytex.xstart)*0.5f;
+	texy = ph->circularthingytex.ystart - (ph->circularthingytex.yend-ph->circularthingytex.ystart)*0.5f;
 }
 
 CSpherePartProjectile::~CSpherePartProjectile(void)
@@ -55,7 +55,7 @@ void CSpherePartProjectile::Draw(void)
 	float interSize=sphereSize+expansionSpeed*gu->timeOffset;
 	for(int y=0;y<4;++y){
 		for(int x=0;x<4;++x){
-			float alpha=baseAlpha*((float)1.0-min(float(1.0),float(age+gu->timeOffset)/ttl))*(1-fabs(y+ybase-8.0f)/8.0*1.0);
+			float alpha=baseAlpha*((float)1.0f-min(float(1.0f),float(age+gu->timeOffset)/ttl))*(1-fabs(y+ybase-8.0f)/8.0f*1.0f);
 
 			col[0]=(unsigned char) (200*alpha);
 			col[1]=(unsigned char) (200*alpha);
@@ -63,7 +63,7 @@ void CSpherePartProjectile::Draw(void)
 			col[3]=(unsigned char) (40*alpha);
 			va->AddVertexTC(centerPos+vectors[y*5+x]*interSize,texx,texy,col);
 			va->AddVertexTC(centerPos+vectors[y*5+x+1]*interSize,texx,texy,col);
-			alpha=baseAlpha*(1.0-min(float(1.0),float(age+gu->timeOffset)/ttl))*(1-fabs(y+1+ybase-8.0f)/8.0*1.0);
+			alpha=baseAlpha*(1.0f-min(float(1.0f),float(age+gu->timeOffset)/ttl))*(1-fabs(y+1+ybase-8.0f)/8.0f*1.0f);
 
 			col[0]=(unsigned char) (200*alpha);
 			col[1]=(unsigned char) (200*alpha);

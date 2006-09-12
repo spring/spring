@@ -102,7 +102,7 @@ void GUIpane::BuildList()
 	
 	glPushAttrib(GL_CURRENT_BIT);
 	
-	glColor4f(1.0, 1.0, 1.0, 0.5);
+	glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 	
 	DrawThemeRect(20, 128, w, h);
 	

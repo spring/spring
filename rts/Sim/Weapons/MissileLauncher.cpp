@@ -101,7 +101,7 @@ bool CMissileLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 
 		if(!onlyForward){		//skip ground col testing for aircrafts
 			float g=ground->LineGroundCol(weaponPos,pos);
-			if(g>0 && g<length*0.9)
+			if(g>0 && g<length*0.9f)
 				return false;
 		} else {
 			float3 goaldir=pos-owner->pos;

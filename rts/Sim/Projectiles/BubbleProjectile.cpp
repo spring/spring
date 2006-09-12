@@ -9,7 +9,7 @@ CBubbleProjectile::CBubbleProjectile(float3 pos,float3 speed,float ttl,float sta
 : CProjectile(pos,speed,owner),
 	alpha(alpha),
 	startSize(startSize),
-	size(startSize*0.4),
+	size(startSize*0.4f),
 	sizeExpansion(sizeExpansion),
 	ttl((int)ttl)
 {
@@ -28,15 +28,15 @@ void CBubbleProjectile::Update()
 	--ttl;
 	size+=sizeExpansion;
 	if(size<startSize)
-		size+=(startSize-size)*0.2;
+		size+=(startSize-size)*0.2f;
 	drawRadius=size;
 
-	if(pos.y>-size*0.7){
-		pos.y=-size*0.7;
-		alpha-=0.03;
+	if(pos.y>-size*0.7f){
+		pos.y=-size*0.7f;
+		alpha-=0.03f;
 	}
 	if(ttl<0){
-		alpha-=0.03;
+		alpha-=0.03f;
 	}
 	if(alpha<0){
 		alpha=0;

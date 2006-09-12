@@ -79,7 +79,7 @@ void GUIbuildMenu::PrivateDraw()
 	glPushAttrib(GL_CURRENT_BIT);
 
 	//glBindTexture(GL_TEXTURE_2D, 0);
-	//glColor4f(0, 0, 0, 0.2);
+	//glColor4f(0, 0, 0, 0.2f);
 	//DrawTexturedQuad(0,	0, w, h);
 
 	int perCol=(h-left->h-2*dist-2)/(buildPicSize+dist);
@@ -94,9 +94,9 @@ void GUIbuildMenu::PrivateDraw()
 		int y=(i-menuOffset)/perRow*(buildPicSize+dist);
 
 		if(i==hiliteNum&&isPressed)
-			glColor3f(0.8, 0.8, 0.8);
+			glColor3f(0.8f, 0.8f, 0.8f);
 		else
-			glColor3f(1.0, 1.0, 1.0);
+			glColor3f(1.0f, 1.0f, 1.0f);
 
 		DrawTexturedQuad(x,	y, buildPicSize, buildPicSize);
 
@@ -104,13 +104,13 @@ void GUIbuildMenu::PrivateDraw()
 		{
 			string queued="+ "+commands[i]->params[0];
 
-			x+=(int)((buildPicSize-guifont->GetWidth(queued))/2.0);
+			x+=(int)((buildPicSize-guifont->GetWidth(queued))/2.0f);
 			y+=(int)(buildPicSize-guifont->GetHeight());
 			guifont->Print(x, y, queued);
 		}
 	}
 	
-	glColor3f(1.0, 1.0, 1.0);
+	glColor3f(1.0f, 1.0f, 1.0f);
 	// fill remaining squares with empty texture
 	// disabled: as long as the empty texture is as ugly
 	// as it is now...

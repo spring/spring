@@ -19,11 +19,11 @@ CLightingProjectile::CLightingProjectile(const float3& pos,const float3& end,CUn
 
 	displacements[0]=0;
 	for(int a=1;a<10;++a)
-		displacements[a]=(gs->randFloat()-0.5)*drawRadius*0.05;
+		displacements[a]=(gs->randFloat()-0.5f)*drawRadius*0.05f;
 
 	displacements2[0]=0;
 	for(int a=1;a<10;++a)
-		displacements2[a]=(gs->randFloat()-0.5)*drawRadius*0.05;
+		displacements2[a]=(gs->randFloat()-0.5f)*drawRadius*0.05f;
 
 	if(weapon)
 		AddDeathDependence(weapon);
@@ -50,9 +50,9 @@ void CLightingProjectile::Update(void)
 		pos=weapon->weaponPos;
 	}
 	for(int a=1;a<10;++a)
-		displacements[a]+=(gs->randFloat()-0.5)*0.3;
+		displacements[a]+=(gs->randFloat()-0.5f)*0.3f;
 	for(int a=1;a<10;++a)
-		displacements2[a]+=(gs->randFloat()-0.5)*0.3;
+		displacements2[a]+=(gs->randFloat()-0.5f)*0.3f;
 }
 
 void CLightingProjectile::Draw(void)
@@ -73,7 +73,7 @@ void CLightingProjectile::Draw(void)
 	float3 tempPos=pos;
 
 	for(int a=0;a<9;++a){
-		float f=(a+1)*0.111;
+		float f=(a+1)*0.111f;
 		va->AddVertexTC(tempPos+dir1*(displacements[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
 		va->AddVertexTC(tempPos+dir1*(displacements[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 		tempPos=pos*(1-f)+endPos*f;
@@ -83,7 +83,7 @@ void CLightingProjectile::Draw(void)
 
 	tempPos=pos;
 	for(int a=0;a<9;++a){
-		float f=(a+1)*0.111;
+		float f=(a+1)*0.111f;
 		va->AddVertexTC(tempPos+dir1*(displacements2[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
 		va->AddVertexTC(tempPos+dir1*(displacements2[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 		tempPos=pos*(1-f)+endPos*f;

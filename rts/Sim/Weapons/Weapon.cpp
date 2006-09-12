@@ -117,11 +117,11 @@ void CWeapon::Update()
 			predict = 50000;
 		}
 		if(weaponDef->selfExplode){	//assumes that only flakker like units that need to hit aircrafts has this,change to a separate tag later
-			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*(0.5+predictSpeedMod*0.5)*predict;
+			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*(0.5f+predictSpeedMod*0.5f)*predict;
 		} else {
 			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*predictSpeedMod*predict;
 		}
-		targetPos+=errorVector*(weaponDef->targetMoveError*30*targetUnit->speed.Length()*(1.0-owner->limExperience));
+		targetPos+=errorVector*(weaponDef->targetMoveError*30*targetUnit->speed.Length()*(1.0f-owner->limExperience));
 		float appHeight=ground->GetApproximateHeight(targetPos.x,targetPos.z)+2;
 		if(targetPos.y < appHeight)
 			targetPos.y=appHeight;
@@ -151,7 +151,7 @@ void CWeapon::Update()
 		}
 	}
 	if(weaponDef->stockpile && numStockpileQued){
-		float p=1.0/reloadTime;
+		float p=1.0f/reloadTime;
 		if(gs->Team(owner->team)->metal>=metalFireCost*p && gs->Team(owner->team)->energy>=energyFireCost*p){
 			owner->UseEnergy(energyFireCost*p);
 			owner->UseMetal(metalFireCost*p);
@@ -207,7 +207,7 @@ void CWeapon::Update()
 				nextSalvo=gs->frameNum;
 				salvoError=gs->randVector()*(owner->isMoving?weaponDef->movingAccuracy:accuracy);
 				if(targetType==Target_Pos || (targetType==Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS)))		//area firing stuff is to effective at radar firing...
-					salvoError*=1.3;
+					salvoError*=1.3f;
 
 				owner->lastMuzzleFlameSize=muzzleFlareSize;
 				owner->lastMuzzleFlameDir=wantedDir;
@@ -314,7 +314,7 @@ bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
 		return false;
 	}
 	float3 tempTargetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
-	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0-owner->limExperience));
+	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0f-owner->limExperience));
 	float appHeight=ground->GetApproximateHeight(tempTargetPos.x,tempTargetPos.z)+2;
 	if(tempTargetPos.y < appHeight)
 		tempTargetPos.y=appHeight;
@@ -365,7 +365,7 @@ void CWeapon::SlowUpdate()
 	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
 		weaponPos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
-	predictSpeedMod=1+(gs->randFloat()-0.5)*2*(1-owner->limExperience);
+	predictSpeedMod=1+(gs->randFloat()-0.5f)*2*(1-owner->limExperience);
 
 	if((targetPos-weaponPos).SqLength() < relWeaponPos.SqLength()*16)
 		hasCloseTarget=true;
@@ -386,7 +386,7 @@ void CWeapon::SlowUpdate()
 		targetType=Target_None;
 		if(slavedTo->targetType==Target_Unit){
 			float3 tp=helper->GetUnitErrorPos(slavedTo->targetUnit,owner->allyteam);
-			tp+=errorVector*(weaponDef->targetMoveError*30*slavedTo->targetUnit->speed.Length()*(1.0-owner->limExperience));
+			tp+=errorVector*(weaponDef->targetMoveError*30*slavedTo->targetUnit->speed.Length()*(1.0f-owner->limExperience));
 			if(TryTarget(tp,false,slavedTo->targetUnit)){
 				targetType=Target_Unit;
 				targetUnit=slavedTo->targetUnit;
@@ -412,7 +412,7 @@ void CWeapon::SlowUpdate()
 				if(targetUnit && (ti->second->category & badTargetCategory))
 					continue;
 				float3 tp(ti->second->midPos);
-				tp+=errorVector*(weaponDef->targetMoveError*30*ti->second->speed.Length()*(1.0-owner->limExperience));
+				tp+=errorVector*(weaponDef->targetMoveError*30*ti->second->speed.Length()*(1.0f-owner->limExperience));
 				float appHeight=ground->GetApproximateHeight(tp.x,tp.z)+2;
 				if(tp.y < appHeight)
 					tp.y=appHeight;
@@ -494,7 +494,7 @@ void CWeapon::Init(void)
 	if(range>owner->maxRange)
 		owner->maxRange=range;
 
-	muzzleFlareSize=min(areaOfEffect*0.2,min(1500.f,damages[0])*0.003);
+	muzzleFlareSize=min(areaOfEffect*0.2f,min(1500.f,damages[0])*0.003f);
 
 	if(weaponDef->interceptor){
 		interceptHandler.AddInterceptorWeapon(this);

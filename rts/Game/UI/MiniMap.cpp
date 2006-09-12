@@ -70,17 +70,17 @@ CMiniMap::CMiniMap()
 	}
 
 	simpleColors=!!configHandler.GetInt("SimpleMiniMapColors",0);
-	myColor[0]=(unsigned char)(0.2*255);
-	myColor[1]=(unsigned char)(0.9*255);
-	myColor[2]=(unsigned char)(0.2*255);
+	myColor[0]=(unsigned char)(0.2f*255);
+	myColor[1]=(unsigned char)(0.9f*255);
+	myColor[2]=(unsigned char)(0.2f*255);
 	myColor[3]=(unsigned char)(1*255);
-	allyColor[0]=(unsigned char)(0.3*255);
-	allyColor[1]=(unsigned char)(0.3*255);
-	allyColor[2]=(unsigned char)(0.9*255);
+	allyColor[0]=(unsigned char)(0.3f*255);
+	allyColor[1]=(unsigned char)(0.3f*255);
+	allyColor[2]=(unsigned char)(0.9f*255);
 	allyColor[3]=(unsigned char)(1*255);
-	enemyColor[0]=(unsigned char)(0.9*255);
-	enemyColor[1]=(unsigned char)(0.2*255);
-	enemyColor[2]=(unsigned char)(0.2*255);
+	enemyColor[0]=(unsigned char)(0.9f*255);
+	enemyColor[1]=(unsigned char)(0.2f*255);
+	enemyColor[2]=(unsigned char)(0.2f*255);
 	enemyColor[3]=(unsigned char)(1*255);
 }
 
@@ -92,7 +92,7 @@ void CMiniMap::Draw()
 {
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	if(minimized){
-		glColor4f(1,1,1,0.5);
+		glColor4f(1,1,1,0.5f);
 		glDisable(GL_TEXTURE_2D);
 		glViewport(0,gu->screeny-10,10,10);
 		glBegin(GL_QUADS);
@@ -111,7 +111,7 @@ void CMiniMap::Draw()
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 
-	glColor4f(0.6,0.6,0.6,1);
+	glColor4f(0.6f,0.6f,0.6f,1);
 
 	readmap->DrawMinimap ();
 
@@ -150,7 +150,7 @@ void CMiniMap::Draw()
 			}
 		}
 	}
-	glColor4f(1,1,1,0.5);
+	glColor4f(1,1,1,0.5f);
   glBegin(GL_LINES);
   for(fli=left.begin();fli!=left.end();fli++){
 		if(fli->minz<fli->maxz){
@@ -216,7 +216,7 @@ void CMiniMap::Draw()
 
 	DrawNotes();
 
-	glColor4f(1,1,1,0.5);
+	glColor4f(1,1,1,0.5f);
 	glViewport(xpos,ypos,10,10);
 	glBegin(GL_QUADS);
 	glVertex2f(0,0);
@@ -261,9 +261,9 @@ void CMiniMap::GetFrustumSide(float3& side)
 	float3 up(0,1,0);
 
 	float3 b=up.cross(side);		//get vector for collision between frustum and horizontal plane
-	if(fabs(b.z)<0.0001)
+	if(fabs(b.z)<0.0001f)
 		b.z=0.00011f;
-	if(fabs(b.z)>0.0001){
+	if(fabs(b.z)>0.0001f){
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(side);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
@@ -450,7 +450,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 void CMiniMap::MoveView(int x, int y)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*gu->viewRange*1.4f);
 	float3 dif(0,0,0);
 	if(dist>0){
 		dif=camera->forward*dist;
@@ -539,16 +539,16 @@ void CMiniMap::DrawNotes(void)
 		}
 		glColor4f(ni->color.x,ni->color.y,ni->color.z,ni->alpha);
 		for(int a=0;a<3;++a){
-			float modage=age+a*0.1;
+			float modage=age+a*0.1f;
 			float rot=modage*3;
-			float size=baseSize-modage*baseSize*0.9;
+			float size=baseSize-modage*baseSize*0.9f;
 			if(size<0){
-				if(size<-baseSize*0.4)
+				if(size<-baseSize*0.4f)
 					continue;
-				else if(size>-baseSize*0.2)
-					size=modage*baseSize*0.9-baseSize;
+				else if(size>-baseSize*0.2f)
+					size=modage*baseSize*0.9f-baseSize;
 				else
-					size=baseSize*1.4-modage*baseSize*0.9;
+					size=baseSize*1.4f-modage*baseSize*0.9f;
 			}
 			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);
 			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);

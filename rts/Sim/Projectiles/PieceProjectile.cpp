@@ -115,8 +115,8 @@ void CPieceProjectile::Collision()
 	if(speed.Length()>gs->randFloat()*5+1 && pos.y>radius+2){
 		float3 norm=ground->GetNormal(pos.x,pos.z);
 		float ns=speed.dot(norm);
-		speed-=norm*ns*1.6;
-		pos+=norm*0.1;
+		speed-=norm*ns*1.6f;
+		pos+=norm*0.1f;
 	} else {
 		if (flags & PP_Explode) {
 			helper->Explosion(pos,DamageArray()*50,5,0,10,owner,false,1.0f,false,0,0);
@@ -167,12 +167,12 @@ float3 CPieceProjectile::RandomVertexPos(void)
 
 	if (piece3do != NULL) { 
 		/* 3DO */
-		int vertexNum=(int) (gu->usRandFloat()*0.99*piece3do->vertices.size());
+		int vertexNum=(int) (gu->usRandFloat()*0.99f*piece3do->vertices.size());
 		pos=piece3do->vertices[vertexNum].pos;
 	}
 	else {
 		/* S3O */
-		int vertexNum=(int) (gu->usRandFloat()*0.99*pieces3o->vertexDrawOrder.size());
+		int vertexNum=(int) (gu->usRandFloat()*0.99f*pieces3o->vertexDrawOrder.size());
 		pos=pieces3o->vertices[pieces3o->vertexDrawOrder[vertexNum]].pos;
 	}
 	
@@ -187,7 +187,7 @@ void CPieceProjectile::Update()
 	speed.z *= 0.994f;
 	if(speed.y > 0)
 		speed.y *= 0.998f;*/
-	speed*=0.997;
+	speed*=0.997f;
 	pos += speed;
 	spinPos+=spinSpeed;
 
@@ -237,7 +237,7 @@ void CPieceProjectile::Draw()
 		inArray=true;
 		float age2=(age&7)+gu->timeOffset;
 
-		float color=0.5;
+		float color=0.5f;
 		unsigned char col[4];
 
 		float3 dir=speed;
@@ -255,7 +255,7 @@ void CPieceProjectile::Draw()
 
 
 			float a1=(1-float(0)/(Smoke_Time))*255;
-			a1*=0.7+fabs(dif.dot(dir));
+			a1*=0.7f+fabs(dif.dot(dir));
 			float alpha=min(255.f,max(0.f,a1));
 			col[0]=(unsigned char) (color*alpha);
 			col[1]=(unsigned char) (color*alpha);
@@ -264,7 +264,7 @@ void CPieceProjectile::Draw()
 
 			unsigned char col2[4];
 			float a2=(1-float(age2)/(Smoke_Time))*255;
-			a2*=0.7+fabs(dif2.dot(oldSmokeDir));
+			a2*=0.7f+fabs(dif2.dot(oldSmokeDir));
 			if(age<8)
 				a2=0;
 			alpha=min(255.f,max(0.f,a2));
@@ -274,19 +274,19 @@ void CPieceProjectile::Draw()
 			col2[3]=(unsigned char) (alpha);
 
 			float xmod=0;
-			float ymod=0.25;
+			float ymod=0.25f;
 			float size=(1);
 			float size2=1+(age2*(1/Smoke_Time))*14;
 
-			float txs=ph->smoketrailtex.xstart - (ph->smoketrailtex.xend-ph->smoketrailtex.xstart)*(age2/8.0);//(1-age2/8.0);
+			float txs=ph->smoketrailtex.xstart - (ph->smoketrailtex.xend-ph->smoketrailtex.xstart)*(age2/8.0f);//(1-age2/8.0f);
 			va->AddVertexTC(interPos-dir1*size, txs, ph->smoketrailtex.ystart, col);
 			va->AddVertexTC(interPos+dir1*size, txs, ph->smoketrailtex.yend, col);
 			va->AddVertexTC(oldSmoke+dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend, col2);
 			va->AddVertexTC(oldSmoke-dir2*size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
 		} else {	//draw the trail as particles
 			float dist=pos.distance(oldSmoke);
-			float3 dirpos1=pos-dir*dist*0.33;
-			float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33;
+			float3 dirpos1=pos-dir*dist*0.33f;
+			float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33f;
 
 			int numParts=age&7;
 			for(int a=0;a<numParts;++a){
@@ -346,13 +346,13 @@ void CPieceProjectile::DrawCallback(void)
 			float3 interPos=oldInfos[age]->pos;
 			float size=oldInfos[age]->size;
 
-			float alpha=(7.5-modage)*(1.0/8);
+			float alpha=(7.5f-modage)*(1.0f/8);
 //			alpha*=alpha;
 			col[0]=(unsigned char) (255*alpha);
 			col[1]=(unsigned char) (200*alpha);
 			col[2]=(unsigned char) (150*alpha);
 			col[3]=(unsigned char) (alpha*50);
-			float drawsize=(0.5+modage)*size;
+			float drawsize=(0.5f+modage)*size;
 			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explofadetex.xstart,ph->explofadetex.ystart,col);
 			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explofadetex.xend,ph->explofadetex.ystart,col);
 			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explofadetex.xend,ph->explofadetex.yend,col);

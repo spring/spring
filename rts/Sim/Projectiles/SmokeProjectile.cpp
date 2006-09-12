@@ -57,7 +57,7 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float t
 	size(0),
 	sizeExpansion(sizeExpansion)
 {
-	ageSpeed=1.0/ttl;
+	ageSpeed=1.0f/ttl;
 	checkCol=false;
 	castShadow=true;
 	textureNum=(int)(gu->usRandFloat()*12);
@@ -78,11 +78,11 @@ CSmokeProjectile::~CSmokeProjectile()
 void CSmokeProjectile::Update()
 {
 	pos+=speed;
-	pos+=wind.curWind*age*0.05;
+	pos+=wind.curWind*age*0.05f;
 	age+=ageSpeed;
 	size+=sizeExpansion;
 	if(size<startSize)
-		size+=(startSize-size)*0.2;
+		size+=(startSize-size)*0.2f;
 	drawRadius=size;
 	if(age>1){
 		age=1;
@@ -100,8 +100,8 @@ void CSmokeProjectile::Draw()
 	col[2]=(unsigned char) (color*alpha);
 	col[3]=(unsigned char)alpha/*-alphaFalloff*gu->timeOffset*/;
 	//int frame=textureNum;
-	//float xmod=0.125+(float(int(frame%6)))/16;
-	//float ymod=(int(frame/6))/16.0;
+	//float xmod=0.125f+(float(int(frame%6)))/16;
+	//float ymod=(int(frame/6))/16.0f;
 
 	const float3 interPos(pos+speed*gu->timeOffset);
 	const float interSize=size+sizeExpansion*gu->timeOffset;

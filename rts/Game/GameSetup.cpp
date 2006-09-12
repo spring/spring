@@ -160,7 +160,7 @@ bool CGameSetup::Init(char* buf, int size)
 
 		int colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
 		colorNum%=palette.NumTeamColors();
-		float3 defaultCol(palette.teamColor[colorNum][0]/255.0,palette.teamColor[colorNum][1]/255.0,palette.teamColor[colorNum][2]/255.0);
+		float3 defaultCol(palette.teamColor[colorNum][0]/255.0f,palette.teamColor[colorNum][1]/255.0f,palette.teamColor[colorNum][2]/255.0f);
 		float3 color=file.GetFloat3(defaultCol,s+"rgbcolor");
 		for(int b=0;b<3;++b)
 			gs->Team(a)->color[b]=int(color[b]*255);
@@ -268,16 +268,16 @@ bool CGameSetup::Draw(void)
 	bool allReady=true;
 	for(int a=0;a<numPlayers;a++){
 		if(!gs->players[a]->readyToStart){
-			glColor4f(1,0.2,0.2,1);
+			glColor4f(1,0.2f,0.2f,1);
 			allReady=false;
 		} else if(!readyTeams[gs->players[a]->team]){
-			glColor4f(0.8,0.8,0.2,1);
+			glColor4f(0.8f,0.8f,0.2f,1);
 			allReady=false;
 		} else {
-			glColor4f(0.2,1,0.2,1);
+			glColor4f(0.2f,1,0.2f,1);
 		}
 		glPushMatrix();
-		glTranslatef(0.3f,0.6f-a*0.05,0.0f);
+		glTranslatef(0.3f,0.6f-a*0.05f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
 		font->glPrint("%s",gs->players[a]->playerName.c_str());
 		glPopMatrix();

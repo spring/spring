@@ -101,7 +101,7 @@ void CProjectile::Draw()
 	inArray=true;
 	unsigned char col[4];
 	col[0]=1*255;
-	col[1]=(unsigned char) (0.5*255);
+	col[1]=(unsigned char) (0.5f*255);
 	col[2]=0*255;
 	col[3]=10;
 	float3 interPos=pos+speed*gu->timeOffset;

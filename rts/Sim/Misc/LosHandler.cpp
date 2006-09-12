@@ -188,7 +188,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 		float maxAng4=-1000;
 		float r=1;
 		for(linei=line.begin();linei!=line.end();++linei){
-			float invR=1.0/r;
+			float invR=1.0f/r;
 			int square=mapSquare+linei->x+linei->y*losSizeX;
 			float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
 			float ang=dh*invR;
@@ -352,13 +352,13 @@ void CLosHandler::OutputTable(int Table)
   P.y = Radius;
   Points.push_front(P);
 //  DrawLine(0, Radius, Radius);
-  for(float i=Radius; i>=1; i-=0.5)
+  for(float i=Radius; i>=1; i-=0.5f)
 	{
     r2 = (int)(i * i);
 		
     y = (int)i;
     x = 1;
-    y = (int) (sqrt((float)r2 - 1) + 0.5);
+    y = (int) (sqrt((float)r2 - 1) + 0.5f);
     while (x < y) {
       if(!PaintTable[x+y*Radius])
 			{
@@ -376,7 +376,7 @@ void CLosHandler::OutputTable(int Table)
 			}
 			
       x += 1;
-      y = (int) (sqrt((float)r2 - x*x) + 0.5);
+      y = (int) (sqrt((float)r2 - x*x) + 0.5f);
 		}
 		if (x == y) {
 			if(!PaintTable[x+y*Radius])
@@ -470,7 +470,7 @@ void CLosHandler::DrawLine(int x, int y, int Size)
 
 int CLosHandler::Round(float Num)
 {
-  if((Num - (int)Num) <0.5)
+  if((Num - (int)Num) <0.5f)
     return (int)Num;
   else
     return (int)Num+1;

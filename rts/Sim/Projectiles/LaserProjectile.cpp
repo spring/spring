@@ -15,7 +15,7 @@ CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* 
 	length(length),
 	curLength(0),
 	intensity(intensity),
-	intensityFalloff(intensity*0.1)
+	intensityFalloff(intensity*0.1f)
 {
 	dir=speed;
 	dir.Normalize();
@@ -23,7 +23,7 @@ CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* 
 
 	SetRadius(weaponDef->collisionSize);
 	drawRadius=length;
-	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5;
+	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
 #ifdef TRACE_SYNC
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -151,7 +151,7 @@ void CLaserProjectile::Draw(void)
 		va->AddVertexTC(pos2+dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,col2);
 		va->AddVertexTC(pos2-dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,col2);
 	} else {
-		float3 pos1=pos+speed*gu->timeOffset+dir*(size*0.5);
+		float3 pos1=pos+speed*gu->timeOffset+dir*(size*0.5f);
 		float3 pos2=pos1-dir*(curLength+size);
 
 		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		col);

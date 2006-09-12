@@ -44,7 +44,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	if(target)
 		AddDeathDependence(target);
 
-	SetRadius(0.0);
+	SetRadius(0.0f);
 	if(!weaponDef->visuals.modelName.empty()){
 		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,0);
 		if(model){
@@ -55,7 +55,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	drawRadius=radius+maxSpeed*8;
 	ENTER_MIXED;
 	float3 camDir=(pos-camera->pos).Normalize();
-	if(camera->pos.distance(pos)*0.2+(1-fabs(camDir.dot(dir)))*3000 < 200)
+	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
 		drawTrail=false;
 	ENTER_SYNCED;
 	castShadow=true;
@@ -71,7 +71,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 		extraHeight=dist*weaponDef->trajectoryHeight;
 		if(dist<maxSpeed)
 			dist=maxSpeed;
-		extraHeightTime=(int)(dist/*+pos.distance(targPos+UpVector*dist))*0.5*//maxSpeed);
+		extraHeightTime=(int)(dist/*+pos.distance(targPos+UpVector*dist))*0.5f*//maxSpeed);
 		extraHeightDecay=extraHeight/extraHeightTime;
 	}
 }
@@ -139,14 +139,14 @@ void CMissileProjectile::Update(void)
 				wobbleTime=16;
 			}
 			wobbleDir+=wobbleDif;
-			dir+=wobbleDir*weaponDef->wobble*(owner?(1-owner->limExperience*0.5):1);
+			dir+=wobbleDir*weaponDef->wobble*(owner?(1-owner->limExperience*0.5f):1);
 			dir.Normalize();
 		}
 
 		float3 orgTargPos(targPos);
 		float dist=targPos.distance(pos);
 		if(dist==0)
-			dist=0.1;
+			dist=0.1f;
 		if(extraHeightTime){
 			extraHeight-=extraHeightDecay;
 			--extraHeightTime;
@@ -154,7 +154,7 @@ void CMissileProjectile::Update(void)
 			dir.y-=extraHeightDecay/dist;
 			//geometricObjects->AddLine(pos,targPos,3,1,1);
 		}
-		float3 dif(targPos + targSpeed*(dist/maxSpeed)*0.7 - pos);
+		float3 dif(targPos + targSpeed*(dist/maxSpeed)*0.7f - pos);
 		dif.Normalize();
 		float3 dif2=dif-dir;
 		float tracking=weaponDef->turnrate;
@@ -171,7 +171,7 @@ void CMissileProjectile::Update(void)
 
 		targPos=orgTargPos;
 	} else {
-		speed*=0.995;
+		speed*=0.995f;
 		speed.y+=gs->gravity;
 		dir=speed;
 		dir.Normalize();
@@ -189,7 +189,7 @@ void CMissileProjectile::Update(void)
 		if(!drawTrail){
 			ENTER_MIXED;
 			float3 camDir=(pos-camera->pos).Normalize();
-			if(camera->pos.distance(pos)*0.2+(1-fabs(camDir.dot(dir)))*3000 > 300)
+			if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 > 300)
 				drawTrail=true;
 			ENTER_SYNCED;
 		}
@@ -204,7 +204,7 @@ void CMissileProjectile::Draw(void)
 	inArray=true;
 	float age2=(age&7)+gu->timeOffset;
 
-	float color=0.6;
+	float color=0.6f;
 	unsigned char col[4];
 
 	if(drawTrail){		//draw the trail as a single quad
@@ -219,7 +219,7 @@ void CMissileProjectile::Draw(void)
 
 
 		float a1=(1-float(0)/(Smoke_Time))*255;
-		a1*=0.7+fabs(dif.dot(dir));
+		a1*=0.7f+fabs(dif.dot(dir));
 		float alpha=min((float)255,max(float(0),a1));
 		col[0]=(unsigned char) (color*alpha);
 		col[1]=(unsigned char) (color*alpha);
@@ -230,7 +230,7 @@ void CMissileProjectile::Draw(void)
 		float a2=(1-float(age2)/(Smoke_Time))*255;
 		if(age<8)
 			a2=0;
-		a2*=0.7+fabs(dif2.dot(oldDir));
+		a2*=0.7f+fabs(dif2.dot(oldDir));
 		alpha=min((float)255,max((float)0,a2));
 		col2[0]=(unsigned char) (color*alpha);
 		col2[1]=(unsigned char) (color*alpha);
@@ -238,19 +238,19 @@ void CMissileProjectile::Draw(void)
 		col2[3]=(unsigned char) alpha;
 
 		float xmod=0;
-		float ymod=0.25;
+		float ymod=0.25f;
 		float size=(1);
 		float size2=(1+(age2*(1/Smoke_Time))*7);
 
-		float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0);//(1-age2/8.0);
+		float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0f);//(1-age2/8.0f);
 		va->AddVertexTC(interPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
 		va->AddVertexTC(interPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
 		va->AddVertexTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
 		va->AddVertexTC(oldSmoke-dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 	} else {	//draw the trail as particles
 		float dist=pos.distance(oldSmoke);
-		float3 dirpos1=pos-dir*dist*0.33;
-		float3 dirpos2=oldSmoke+oldDir*dist*0.33;
+		float3 dirpos1=pos-dir*dist*0.33f;
+		float3 dirpos2=oldSmoke+oldDir*dist*0.33f;
 
 		for(int a=0;a<numParts;++a){
 			float a1=1-float(a)/Smoke_Time;
@@ -274,7 +274,7 @@ void CMissileProjectile::Draw(void)
 	col[1]=210;
 	col[2]=180;
 	col[3]=1;
-	float fsize = radius*0.4;
+	float fsize = radius*0.4f;
 	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
 	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
 	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
@@ -287,15 +287,15 @@ void CMissileProjectile::Draw(void)
 	float3 r=dir.cross(UpVector);
 	r.Normalize();
 	float3 u=dir.cross(r);
-	va->AddVertexTC(interPos+r*1.0f,1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-r*1.0f,1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0/16,1.0/16,col);
+	va->AddVertexTC(interPos+r*1.0f,1.0f/16,1.0f/16,col);
+	va->AddVertexTC(interPos-r*1.0f,1.0f/16,1.0f/16,col);
+	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);
+	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);
 
-	va->AddVertexTC(interPos+u*1.0f,1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos-u*1.0f,1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0/16,1.0/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0/16,1.0/16,col);*/
+	va->AddVertexTC(interPos+u*1.0f,1.0f/16,1.0f/16,col);
+	va->AddVertexTC(interPos-u*1.0f,1.0f/16,1.0f/16,col);
+	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);
+	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);*/
 }
 
 void CMissileProjectile::DrawUnitPart(void)
@@ -320,9 +320,9 @@ void CMissileProjectile::DrawUnitPart(void)
 	transMatrix[8]=dir.x;
 	transMatrix[9]=dir.y;
 	transMatrix[10]=dir.z;
-	transMatrix[12]=interPos.x+dir.x*radius*0.9;
-	transMatrix[13]=interPos.y+dir.y*radius*0.9;
-	transMatrix[14]=interPos.z+dir.z*radius*0.9;
+	transMatrix[12]=interPos.x+dir.x*radius*0.9f;
+	transMatrix[13]=interPos.y+dir.y*radius*0.9f;
+	transMatrix[14]=interPos.z+dir.z*radius*0.9f;
 	glMultMatrixf(&transMatrix[0]);
 
 	glCallList(modelDispList);

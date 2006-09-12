@@ -37,9 +37,9 @@ void GUIstateButton::PrivateDraw()
 		tex=Texture("bitmaps/check.bmp");
 
 	if(isInside)
-		glColor4f(0.7,0.7f,0.7,1.0f);
+		glColor4f(0.7f,0.7f,0.7f,1.0f);
 	else
-		glColor4f(1.0,1.0f,1.0,1.0);	
+		glColor4f(1.0f,1.0f,1.0f,1.0f);	
 
 	int s=w-7*states.size()-1;
 	int t=0;
@@ -56,9 +56,9 @@ void GUIstateButton::PrivateDraw()
 			glVertex2d(s, t);
 			glTexCoord2f(0, 1);
 			glVertex2d(s, t+h);
-			glTexCoord2f(0.5, 1);
+			glTexCoord2f(0.5f, 1);
 			glVertex2d(s+8, t+h);				
-			glTexCoord2f(0.5, 0);
+			glTexCoord2f(0.5f, 0);
 			glVertex2d(s+8, t);
 		glEnd();
 
@@ -67,10 +67,10 @@ void GUIstateButton::PrivateDraw()
 		{
 			glColor3fv(color);
 			glBegin(GL_QUADS);
-				glTexCoord2f(0.5, 0);
+				glTexCoord2f(0.5f, 0);
 				glVertex2d(s, t);
 
-				glTexCoord2f(0.5, 1);
+				glTexCoord2f(0.5f, 1);
 				glVertex2d(s, t+h);
 	
 				glTexCoord2f(1, 1);
@@ -81,9 +81,9 @@ void GUIstateButton::PrivateDraw()
 			glEnd();
 
 			if(isInside)
-				glColor4f(0.7,0.7f,0.7,1.0f);
+				glColor4f(0.7f,0.7f,0.7f,1.0f);
 			else
-				glColor4f(1.0,1.0f,1.0,1.0);
+				glColor4f(1.0f,1.0f,1.0f,1.0f);
 		}
 		
 		s+=7;
@@ -124,35 +124,35 @@ void GUIstateButton::BuildList()
 
 	size_t pipe=caption.find("|");
 
-	color[0]=1.0;
-	color[1]=1.0;
-	color[2]=1.0;
+	color[0]=1.0f;
+	color[1]=1.0f;
+	color[2]=1.0f;
 
 	if(pipe!=string::npos)
 	{
 		string colname=caption.substr(pipe+1, string::npos);
 		if(colname=="red")
 		{
-			color[0]=1.0;
-			color[1]=0.0;
-			color[2]=0.0;
+			color[0]=1.0f;
+			color[1]=0.0f;
+			color[2]=0.0f;
 		}
 		else if(colname=="green")
 		{
-			color[0]=0.0;
-			color[1]=1.0;
-			color[2]=0.0;
+			color[0]=0.0f;
+			color[1]=1.0f;
+			color[2]=0.0f;
 		}
 		else if(colname=="blue")
 		{
-			color[0]=0.0;
-			color[1]=0.0;
-			color[2]=1.0;
+			color[0]=0.0f;
+			color[1]=0.0f;
+			color[2]=1.0f;
 		}
-		guifont->Print(7, (h-guifont->GetHeight())/2.0+1, caption.substr(0, pipe));
+		guifont->Print(7, (h-guifont->GetHeight())/2.0f+1, caption.substr(0, pipe));
 	}
 	else
-		guifont->output(7, (h-guifont->GetHeight())/2.0+1, caption.c_str());
+		guifont->output(7, (h-guifont->GetHeight())/2.0f+1, caption.c_str());
 
 	glEndList();
 }

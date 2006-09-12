@@ -27,14 +27,14 @@ static const Simple
 #else
 static Simple
 #endif
-tiny	    = 1e-30,
+tiny	    = 1e-30f,
 half=  5.0000000000e-01f, /* 0x3F000000 */
 one =  1.0000000000e+00f, /* 0x3F800000 */
 two =  2.0000000000e+00f, /* 0x40000000 */
 	/* c = (subfloat)0.84506291151f */
 erx =  8.4506291151e-01f, /* 0x3f58560b */
 /*
- * Coefficients for approximation to  erf on [0,0.84375f]
+ * Coefficients for approximation to  erf on [0,0.84375]
  */
 efx =  1.2837916613e-01f, /* 0x3e0375d4 */
 efx8=  1.0270333290e+00f, /* 0x3f8375d4 */
@@ -84,7 +84,7 @@ sa6  =  1.0863500214e+02f, /* 0x42d9451f */
 sa7  =  6.5702495575e+00f, /* 0x40d23f7c */
 sa8  = -6.0424413532e-02f, /* 0xbd777f97 */
 /*
- * Coefficients for approximation to  erfc in [1/.35,28]
+ * Coefficients for approximation to  erfc in [1/.35f,28]
  */
 rb0  = -9.8649431020e-03f, /* 0xbc21a092 */
 rb1  = -7.9928326607e-01f, /* 0xbf4c9dd4 */
@@ -203,12 +203,12 @@ weak_alias (__erff, erff)
 	if (ix < 0x41e00000) {		/* |x|<28 */
 	    x = fabsf(x);
  	    s = one/(x*x);
-	    if(ix< 0x4036DB6D) {	/* |x| < 1/.35 ~ 2.857143f*/
+	    if(ix< 0x4036DB6D) {	/* |x| < 1/.35f ~ 2.857143f*/
 	        R=ra0+s*(ra1+s*(ra2+s*(ra3+s*(ra4+s*(
 				ra5+s*(ra6+s*ra7))))));
 	        S=one+s*(sa1+s*(sa2+s*(sa3+s*(sa4+s*(
 				sa5+s*(sa6+s*(sa7+s*sa8)))))));
-	    } else {			/* |x| >= 1/.35 ~ 2.857143f */
+	    } else {			/* |x| >= 1/.35f ~ 2.857143f */
 		if(hx<0&&ix>=0x40c00000) return two-tiny;/* x < -6 */
 	        R=rb0+s*(rb1+s*(rb2+s*(rb3+s*(rb4+s*(
 				rb5+s*rb6)))));

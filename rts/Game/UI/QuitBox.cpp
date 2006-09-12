@@ -20,35 +20,35 @@ CQuitBox::CQuitBox(void)
 	box.x2 = 0.66f;
 	box.y2 = 0.75f;
 
-	resignQuitBox.x1=0.02;
-	resignQuitBox.y1=0.42;
-	resignQuitBox.x2=0.30;
-	resignQuitBox.y2=0.46;
+	resignQuitBox.x1=0.02f;
+	resignQuitBox.y1=0.42f;
+	resignQuitBox.x2=0.30f;
+	resignQuitBox.y2=0.46f;
 
-	resignBox.x1=0.02;
-	resignBox.y1=0.38;
-	resignBox.x2=0.30;
-	resignBox.y2=0.42;
+	resignBox.x1=0.02f;
+	resignBox.y1=0.38f;
+	resignBox.x2=0.30f;
+	resignBox.y2=0.42f;
 
-	giveAwayBox.x1=0.02;
-	giveAwayBox.y1=0.34;
-	giveAwayBox.x2=0.30;
-	giveAwayBox.y2=0.38;
+	giveAwayBox.x1=0.02f;
+	giveAwayBox.y1=0.34f;
+	giveAwayBox.x2=0.30f;
+	giveAwayBox.y2=0.38f;
 
-	teamBox.x1=0.02;
-	teamBox.y1=0.11;
-	teamBox.x2=0.30;
-	teamBox.y2=0.33;
+	teamBox.x1=0.02f;
+	teamBox.y1=0.11f;
+	teamBox.x2=0.30f;
+	teamBox.y2=0.33f;
 
-	quitBox.x1=0.02;
-	quitBox.y1=0.06;
-	quitBox.x2=0.30;
-	quitBox.y2=0.10;
+	quitBox.x1=0.02f;
+	quitBox.y1=0.06f;
+	quitBox.x2=0.30f;
+	quitBox.y2=0.10f;
 
-	cancelBox.x1=0.02;
-	cancelBox.y1=0.02;
-	cancelBox.x2=0.30;
-	cancelBox.y2=0.06;
+	cancelBox.x1=0.02f;
+	cancelBox.y1=0.02f;
+	cancelBox.x2=0.30f;
+	cancelBox.y2=0.06f;
 
 
 	moveBox=false;
@@ -120,14 +120,14 @@ void CQuitBox::Draw(void)
 
 
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,0.4,0.8f);
-	font->glPrintAt(box.x1+0.045,box.y1+0.47,0.7,"Do you want to ...");
-	glColor4f(1,1,1,0.8);
-	font->glPrintAt(box.x1+resignQuitBox.x1+0.025,box.y1+resignQuitBox.y1+0.005,1,"Quit and resign");
-	font->glPrintAt(box.x1+resignBox.x1+0.025,box.y1+resignBox.y1+0.005,1,"Resign");
-	font->glPrintAt(box.x1+giveAwayBox.x1+0.025,box.y1+giveAwayBox.y1+0.005,1,"Give everything to ...");
-	font->glPrintAt(box.x1+cancelBox.x1+0.025,box.y1+cancelBox.y1+0.005,1,"Cancel");
-	font->glPrintAt(box.x1+quitBox.x1+0.025,box.y1+quitBox.y1+0.005,1,"Quit");
+	glColor4f(1,1,0.4f,0.8f);
+	font->glPrintAt(box.x1+0.045f,box.y1+0.47f,0.7f,"Do you want to ...");
+	glColor4f(1,1,1,0.8f);
+	font->glPrintAt(box.x1+resignQuitBox.x1+0.025f,box.y1+resignQuitBox.y1+0.005f,1,"Quit and resign");
+	font->glPrintAt(box.x1+resignBox.x1+0.025f,box.y1+resignBox.y1+0.005f,1,"Resign");
+	font->glPrintAt(box.x1+giveAwayBox.x1+0.025f,box.y1+giveAwayBox.y1+0.005f,1,"Give everything to ...");
+	font->glPrintAt(box.x1+cancelBox.x1+0.025f,box.y1+cancelBox.y1+0.005f,1,"Cancel");
+	font->glPrintAt(box.x1+quitBox.x1+0.025f,box.y1+quitBox.y1+0.005f,1,"Quit");
 
 	for(int team=0;team<gs->activeTeams-1;++team){
 		int actualTeam=team;
@@ -143,7 +143,7 @@ void CQuitBox::Draw(void)
 			ally="(Ally)";
 		if(gs->Team(actualTeam)->isDead)
 			dead="(Dead)";
-		font->glPrintAt(box.x1+teamBox.x1+0.002f,box.y1+teamBox.y2-0.025-team*0.025,0.7f,"Team%i (%s)%s%s",actualTeam,gs->players[gs->Team(actualTeam)->leader]->playerName.c_str(),ally.c_str(),dead.c_str());
+		font->glPrintAt(box.x1+teamBox.x1+0.002f,box.y1+teamBox.y2-0.025f-team*0.025f,0.7f,"Team%i (%s)%s%s",actualTeam,gs->players[gs->Team(actualTeam)->leader]->playerName.c_str(),ally.c_str(),dead.c_str());
 	}
 }
 
@@ -187,7 +187,7 @@ bool CQuitBox::MousePress(int x, int y, int button)
 		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+teamBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox))
 			moveBox=false;
 		if(InBox(mx,my,box+teamBox)){
-			int team=(int)((box.y1+teamBox.y2-my)/0.025);
+			int team=(int)((box.y1+teamBox.y2-my)/0.025f);
 			if(team>=gu->myTeam)
 				team++;
 			if(team<gs->activeTeams && !gs->Team(team)->isDead){
@@ -266,7 +266,7 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 		box.y2-=float(dy)/gu->screeny;
 	}
 	if(InBox(mx,my,box+teamBox)){
-		int team=(int)((box.y1+teamBox.y2-my)/0.025);
+		int team=(int)((box.y1+teamBox.y2-my)/0.025f);
 		if(team>=gu->myTeam)
 			team++;
 		if(team<gs->activeTeams && !gs->Team(team)->isDead){

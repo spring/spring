@@ -16,11 +16,11 @@ inline short int GetHeadingFromVector(float dx,float dz)
 	if(dz!=0){
 		float d=dx/dz;
 		if(d > 1){
-			h=(PI/2) - d/(d*d + 0.28);
+			h=(PI/2) - d/(d*d + 0.28f);
 		} else if (d < -1){
-			h=-(PI/2) - d/(d*d + 0.28);
+			h=-(PI/2) - d/(d*d + 0.28f);
 		}else{
-			h=d/(1 + 0.28 * d*d);
+			h=d/(1 + 0.28f * d*d);
 		}
 		if (dz<0) {
 		  if (dx>0)
@@ -74,11 +74,11 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	if(vec.z!=0){
 		float d=vec.x/vec.z;
 		if(d > 1){
-			h=(PI/2) - d/(d*d + 0.28);
+			h=(PI/2) - d/(d*d + 0.28f);
 		} else if (d < -1){
-			h=-(PI/2) - d/(d*d + 0.28);
+			h=-(PI/2) - d/(d*d + 0.28f);
 		}else{
-			h=d/(1 + 0.28 * d*d);
+			h=d/(1 + 0.28f * d*d);
 		}
 
 		if(vec.z<0)

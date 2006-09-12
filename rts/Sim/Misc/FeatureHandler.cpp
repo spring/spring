@@ -436,20 +436,20 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 
 void CFeatureHandler::DrawFar(CFeature* feature,CVertexArray* va)
 {
-	float3 interPos=feature->pos+UpVector*feature->def->model->height*0.5;
+	float3 interPos=feature->pos+UpVector*feature->def->model->height*0.5f;
 	int snurr=-feature->heading+GetHeadingFromVector(camera->pos.x-feature->pos.x,camera->pos.z-feature->pos.z)+(0xffff>>4);
 	if(snurr<0)
 		snurr+=0xffff;
 	if(snurr>0xffff)
 		snurr-=0xffff;
 	snurr=snurr>>13;
-	float tx=(feature->def->model->farTextureNum%8)*(1.0/8.0)+snurr*(1.0/64);
-	float ty=(feature->def->model->farTextureNum/8)*(1.0/64.0);
+	float tx=(feature->def->model->farTextureNum%8)*(1.0f/8.0f)+snurr*(1.0f/64);
+	float ty=(feature->def->model->farTextureNum/8)*(1.0f/64.0f);
 	float offset=0;
 	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)+camera->right*feature->radius,tx,ty,unitDrawer->camNorm);
-	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)+camera->right*feature->radius,tx,ty+(1.0/64.0),unitDrawer->camNorm);
-	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)-camera->right*feature->radius,tx+(1.0/64.0),ty+(1.0/64.0),unitDrawer->camNorm);
-	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)-camera->right*feature->radius,tx+(1.0/64.0),ty,unitDrawer->camNorm);
+	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)+camera->right*feature->radius,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
+	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)-camera->right*feature->radius,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
+	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)-camera->right*feature->radius,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
 }
 
 FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
@@ -482,7 +482,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		fd->radius=0;
 		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
 		fd->ysize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
-		fd->mass=fd->metal*0.4+fd->maxHealth*0.1;
+		fd->mass=fd->metal*0.4f+fd->maxHealth*0.1f;
 		fd->description=wreckParser.SGetValueDef("",name+"\\description");
 
 		fd->myName=name;

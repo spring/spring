@@ -193,7 +193,7 @@ void CReadMap::CalcHeightfieldData()
 				height += mipHeightmap[i][(x)+(y+1)*hmapx];
 				height += mipHeightmap[i][(x+1)+(y)*hmapx];
 				height += mipHeightmap[i][(x+1)+(y+1)*hmapx];
-				mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height/4.0;
+				mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height/4.0f;
 			}
 		}
 	}
@@ -241,7 +241,7 @@ void CReadMap::CalcHeightfieldData()
 			float3 n2=e2.cross(e1);
 			n2.Normalize();
 
-			slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5;
+			slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5f;
 		}
 	}
 
@@ -290,7 +290,7 @@ void CReadMap::ParseSettings(TdfParser& resources)
 
 	gs->gravity=-atof(mapDefParser.SGetValueDef("130","MAP\\Gravity").c_str())/(GAME_SPEED*GAME_SPEED);
 
-	float3 fogColor=mapDefParser.GetFloat3(float3(0.7,0.7,0.8),"MAP\\ATMOSPHERE\\FogColor");
+	float3 fogColor=mapDefParser.GetFloat3(float3(0.7f,0.7f,0.8f),"MAP\\ATMOSPHERE\\FogColor");
 	FogLand[0]=fogColor[0];
 	FogLand[1]=fogColor[1];
 	FogLand[2]=fogColor[2];
@@ -303,11 +303,11 @@ void CReadMap::ParseSettings(TdfParser& resources)
 	else
 	{
 		hasWaterPlane = 1;
-		waterPlaneColor = mapDefParser.GetFloat3(float3(0.0,0.4,0.0),"MAP\\WATER\\WaterPlaneColor");
+		waterPlaneColor = mapDefParser.GetFloat3(float3(0.0f,0.4f,0.0f),"MAP\\WATER\\WaterPlaneColor");
 	}
 	mapDefParser.GetDef(tidalStrength, "0", "MAP\\TidalStrength");
 
-	waterSurfaceColor=mapDefParser.GetFloat3(float3(0.75,0.8,0.85),"MAP\\WATER\\WaterSurfaceColor");
+	waterSurfaceColor=mapDefParser.GetFloat3(float3(0.75f,0.8f,0.85f),"MAP\\WATER\\WaterSurfaceColor");
 	waterAbsorb=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterAbsorb");
 	waterBaseColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterBaseColor");
 	waterMinColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterMinColor");
@@ -317,9 +317,9 @@ void CReadMap::ParseSettings(TdfParser& resources)
 	else
 		waterTexture = "maps/" + waterTexture;
 
-	ambientColor=mapDefParser.GetFloat3(float3(0.5,0.5,0.5),"MAP\\LIGHT\\GroundAmbientColor");
-	sunColor=mapDefParser.GetFloat3(float3(0.5,0.5,0.5),"MAP\\LIGHT\\GroundSunColor");
-	specularColor=mapDefParser.GetFloat3(float3(0.1,0.1,0.1),"MAP\\LIGHT\\GroundSpecularColor");
+	ambientColor=mapDefParser.GetFloat3(float3(0.5f,0.5f,0.5f),"MAP\\LIGHT\\GroundAmbientColor");
+	sunColor=mapDefParser.GetFloat3(float3(0.5f,0.5f,0.5f),"MAP\\LIGHT\\GroundSunColor");
+	specularColor=mapDefParser.GetFloat3(float3(0.1f,0.1f,0.1f),"MAP\\LIGHT\\GroundSpecularColor");
 	mapDefParser.GetDef(shadowDensity, "0.8", "MAP\\LIGHT\\GroundShadowDensity");
 
 	mapDefParser.GetDef(maxMetal,"0.02","MAP\\MaxMetal");

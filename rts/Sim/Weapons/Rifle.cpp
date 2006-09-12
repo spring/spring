@@ -61,10 +61,10 @@ bool CRifle::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	dir/=length;
 
 	float g=ground->LineGroundCol(weaponPos,pos);
-	if(g>0 && g<length*0.9)
+	if(g>0 && g<length*0.9f)
 		return false;
 
-	if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.9),owner->allyteam,owner)){
+	if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.9f),owner->allyteam,owner)){
 		return false;
 	}
 	return true;
@@ -74,7 +74,7 @@ void CRifle::Fire(void)
 {
 	float3 dir=targetPos-weaponPos;
 	dir.Normalize();
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9);
+	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
 #ifdef TRACE_SYNC
 	tracefile << "Rifle fire: ";
@@ -84,10 +84,10 @@ void CRifle::Fire(void)
 	float length=helper->TraceRay(weaponPos,dir,range,damages[0],owner,hit);
 	if(hit){
 		hit->DoDamage(damages,owner,ZeroVector);
-		new CHeatCloudProjectile(weaponPos+dir*length,hit->speed*0.9,30,1,owner);
+		new CHeatCloudProjectile(weaponPos+dir*length,hit->speed*0.9f,30,1,owner);
 	}
 	new CTracerProjectile(weaponPos,dir*projectileSpeed,length,owner);
-	new CSmokeProjectile(weaponPos,float3(0,0.0f,0),70,0.1,0.02,owner,0.6f);
+	new CSmokeProjectile(weaponPos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);
 	if(fireSoundId)
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }

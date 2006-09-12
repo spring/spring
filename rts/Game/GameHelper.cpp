@@ -90,8 +90,8 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 				continue;
 		float3 dif=(*ui)->midPos-pos;
 		float dist=dif.Length();
-		if(dist<(*ui)->radius+0.1)
-			dist=(*ui)->radius+0.1;
+		if(dist<(*ui)->radius+0.1f)
+			dist=(*ui)->radius+0.1f;
 		float dist2=dist - (*ui)->radius;
 		if((*ui)->isUnderWater && pos.y>-1){	//should make it harder to damage subs with above water weapons
 			dist2+=(*ui)->radius;
@@ -102,8 +102,8 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		float mod2=(radius-dist2)/(radius-dist2*edgeEffectivness);
 		if(mod<0)
 			mod=0;
-		dif/=dist+0.0001;
-		dif.y+=0.12;
+		dif/=dist+0.0001f;
+		dif.y+=0.12f;
 		
 		DamageArray damageDone = damages*mod2;
 		float3 addedImpulse = dif*(damages.impulseFactor*mod*(damages[0] + damages.impulseBoost)*3.2f);
@@ -198,7 +198,7 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 			float rad=(*ui)->radius;
 			float tmp = rad * rad - closeVect.SqLength();
 			if(tmp > 0 && length>closeLength+sqrt(tmp)){
-				length=closeLength-sqrt(tmp)*0.5;
+				length=closeLength-sqrt(tmp)*0.5f;
 				hit=*ui;
 			}
 /*			if(closeVect.SqLength() < (*ui)->sqRadius){
@@ -239,7 +239,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				float3 closeVect=dif-dir*closeLength;
 				float rad = ((*ui)->isIcon) ? (*ui)->iconRadius : (*ui)->radius;
 				
-				//The argument to sqrt became negative (3.5*10^-7) for some reason... so tempstoring the value
+				//The argument to sqrt became negative (3.5f*10^-7) for some reason... so tempstoring the value
 				float tmp = rad * rad - closeVect.SqLength();
 				if(tmp > 0 && length>closeLength+sqrt(tmp)){
 					length=closeLength+sqrt(tmp);		//note that we take the length to the backside of the units, this is so you can select stuff inside factories
@@ -255,7 +255,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				float3 closeVect=dif-dir*closeLength;
 				float rad=(*ui)->iconRadius;
 				
-				//The argument to sqrt became negative (3.5*10^-7) for some reason... so tempstoring the value
+				//The argument to sqrt became negative (3.5f*10^-7) for some reason... so tempstoring the value
 				float tmp = rad * rad - closeVect.SqLength();
 				if(tmp > 0 && length>closeLength+sqrt(tmp)){
 					length=closeLength+sqrt(tmp);
@@ -357,12 +357,12 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 					float modRange=radius+(aHeight-targPos.y)*heightMod;
 					if((pos-targPos).SqLength2D() <= modRange*modRange){
 						float dist2d=(pos-targPos).Length2D();
-						value*=(secDamage+(*ui)->health)*(dist2d+modRange*0.4+100)*(0.01+(*ui)->crashing)/(weapon->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7+gs->randFloat()*0.6));
+						value*=(secDamage+(*ui)->health)*(dist2d+modRange*0.4f+100)*(0.01f+(*ui)->crashing)/(weapon->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7f+gs->randFloat()*0.6f));
 						if((*ui)==lastTarget)
-							value*=0.4;
+							value*=0.4f;
 						if((*ui)->category & weapon->badTargetCategory)
 							value*=100;
-						if(paralyzer && (*ui)->health-(*ui)->paralyzeDamage<(*ui)->maxHealth*0.09)
+						if(paralyzer && (*ui)->health-(*ui)->paralyzeDamage<(*ui)->maxHealth*0.09f)
 							value*=4;
 						if((*ui)->crashing)
 							value*=10;
@@ -671,7 +671,7 @@ bool CGameHelper::TestTrajectoryCone(const float3 &from, const float3 &flatdir,f
 			newfrom.y+=(linear+quadratic*closeFlatLength)*closeFlatLength;
 			geometricObjects->AddLine(newfrom-UpVector*(spread*closeFlatLength+baseSize),newfrom+UpVector*(spread*closeFlatLength+baseSize),3,0,16);
 /**/
-			if(fabs(linear-quadratic*closeFlatLength)<0.15){		//relativly flat region -> use approximation
+			if(fabs(linear-quadratic*closeFlatLength)<0.15f){		//relativly flat region -> use approximation
 				dif.y-=(linear+quadratic*closeFlatLength)*closeFlatLength;
 
 				float3 closeVect=dif-flatdir*closeFlatLength;

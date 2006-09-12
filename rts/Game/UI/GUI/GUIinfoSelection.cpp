@@ -58,7 +58,7 @@ void GUIinfoSelection::PrivateDraw()
 
 	glPushAttrib(GL_CURRENT_BIT);
 
-	glColor4f(0.0, 0.0, 0.0, 0.5);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	Quad(0, 0, w, h);
@@ -102,18 +102,18 @@ void GUIinfoSelection::PrivateDraw()
 		i++;
 		float hpp = (float)(lsti->second.health)/(lsti->second.maxHealth);		
 		if(hpp>0.5f)
-			glColor3f(1.0f-((hpp-0.5f)*2.0f),1.0f,0.0);
+			glColor3f(1.0f-((hpp-0.5f)*2.0f),1.0f,0.0f);
 		else
-			glColor3f(1.0f,hpp*2.0f,0.0);
+			glColor3f(1.0f,hpp*2.0f,0.0f);
 		sprintf(buf,"%d x",lsti->second.number);
 		guifont->Print(13,buildPicSize*i,1,buf);
 		glBindTexture(GL_TEXTURE_2D,unitDefHandler->GetUnitImage(lsti->first));
 		int x=48;
 		int y=buildPicSize*(i-1)+buildPicSize/2;
-		glColor3f(1.0, 1.0, 1.0);
+		glColor3f(1.0f, 1.0f, 1.0f);
 		DrawTexturedQuad(x,	y, buildPicSize, buildPicSize);	
 		if (lsti->second.numStockpiled != 0 || lsti->second.numStockpileQued != 0) {
-			glColor3f(1.0f,1.0,0.0);
+			glColor3f(1.0f,1.0f,0.0f);
 			sprintf(buf,"(%d/%d)",lsti->second.numStockpiled,lsti->second.numStockpileQued);
 			guifont->Print(50,buildPicSize*i,1,buf);
 		}

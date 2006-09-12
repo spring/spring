@@ -251,7 +251,7 @@ public:
 	 * each x/y/z component by that float.
 	 */
 	inline float3 operator/ (const float f) const{
-		const float inv = (float) 1. / f;
+		const float inv = (float) 1.f / f;
 		return float3(x*inv, y*inv, z*inv);
 	}
 
@@ -281,7 +281,7 @@ public:
 	 * the new values inside this SyncedFloat3.
 	 */
 	inline void operator/= (const float f){
-		const float inv = (float) 1. / f;
+		const float inv = (float) 1.f / f;
 		x *= inv;
 		y *= inv;
 		z *= inv;
@@ -296,10 +296,10 @@ public:
 	 * checking each x/y/z component individually.
 	 */
 	inline bool operator== (const SyncedFloat3 &f) const {
-		return fabs(x-f.x) <= 1.0E-4*x && fabs(y-f.y) <= 1.0E-4*y && fabs(z-f.z) <= 1.0E-4*z;
+		return fabs(x-f.x) <= fabs(1.0E-4f*x) && fabs(y-f.y) <= fabs(1.0E-4f*y) && fabs(z-f.z) <= fabs(1.0E-4f*z);
 	}
 	inline bool operator== (const float3 &f) const {
-		return fabs(x-f.x) <= 1.0E-4*x && fabs(y-f.y) <= 1.0E-4*y && fabs(z-f.z) <= 1.0E-4*z;
+		return fabs(x-f.x) <= fabs(1.0E-4f*x) && fabs(y-f.y) <= fabs(1.0E-4f*y) && fabs(z-f.z) <= fabs(1.0E-4f*z);
 	}
 	inline friend bool operator== (const float3 &f, const SyncedFloat3 &g)  {
 		return g == f;
@@ -462,8 +462,8 @@ public:
 		// contrary to most other operations we can make this synced
 		// because the results are always written in the synced x,y,z components
 		const SyncedFloat L = sqrt(x*x + y*y + z*z);
-		if(L != 0.){
-			const SyncedFloat invL = (float) 1. / L;
+		if(L != 0.f){
+			const SyncedFloat invL = (float) 1.f / L;
 			x *= invL;
 			y *= invL;
 			z *= invL;

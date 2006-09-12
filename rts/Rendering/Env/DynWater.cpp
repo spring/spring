@@ -66,9 +66,9 @@ CDynWater::CDynWater(void)
 
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
-			temp[(y*64+x)*4+0]=(sin(x*PI*2.0f/64.0f)) + (x<32 ? -1:1)*0.3;
+			temp[(y*64+x)*4+0]=(sin(x*PI*2.0f/64.0f)) + (x<32 ? -1:1)*0.3f;
 			temp[(y*64+x)*4+1]=temp[(y*64+x)*4+0];
-			temp[(y*64+x)*4+2]=(cos(x*PI*2.0f/64.0f)) + (x<32 ? 16-x:x-48)/16.0*0.3;
+			temp[(y*64+x)*4+2]=(cos(x*PI*2.0f/64.0f)) + (x<32 ? 16-x:x-48)/16.0f*0.3f;
 			temp[(y*64+x)*4+3]=0;
 		}
 	}
@@ -141,7 +141,7 @@ CDynWater::CDynWater(void)
 	for(int y=0;y<1024;++y){
 		for(int x=0;x<1024;++x){
 			float dist=(x-500)*(x-500)+(y-450)*(y-450);
-			temp[(y*1024+x)*4+0]=0;//max(0.0f,15-sqrt(dist));//sin(y*PI*2.0/64.0)*0.5+0.5;
+			temp[(y*1024+x)*4+0]=0;//max(0.0f,15-sqrt(dist));//sin(y*PI*2.0f/64.0f)*0.5f+0.5f;
 			temp[(y*1024+x)*4+1]=0;
 			temp[(y*1024+x)*4+2]=0;
 			temp[(y*1024+x)*4+3]=0;
@@ -169,9 +169,9 @@ CDynWater::CDynWater(void)
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16F_ARB ,1024, 1024, 0,GL_RGBA, GL_FLOAT, temp);
 
 	for(int y=0;y<64;++y){
-		float dy=y-31.5;
+		float dy=y-31.5f;
 		for(int x=0;x<64;++x){
-			float dx=x-31.5;
+			float dx=x-31.5f;
 			float dist=sqrt(dx*dx+dy*dy);
 			temp[(y*64+x)*4+0]=max(0.0f,1-dist/30.f)*max(0.0f,1-dist/30.f);
 			temp[(y*64+x)*4+1]=max(0.0f,1-dist/30.f);
@@ -291,7 +291,7 @@ void CDynWater::Draw()
 	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
-	glColor4f(1,1,1,0.5);
+	glColor4f(1,1,1,0.5f);
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, waterFP );
 	glEnable( GL_FRAGMENT_PROGRAM_ARB );
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waterVP );
@@ -300,26 +300,26 @@ void CDynWater::Draw()
 	float dx=float(gu->screenx)/gu->screeny*tan(camera->fov/180/2*PI);
 	float dy=float(gu->screeny)/gu->screeny*tan(camera->fov/180/2*PI);
 
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0/(W_SIZE*256),1.0/(W_SIZE*256), 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0+0.5,-camPosZ/256.0+0.5, 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 1.0/WF_SIZE,1.0/WF_SIZE, 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/(W_SIZE*256),1.0f/(W_SIZE*256), 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f+0.5f,-camPosZ/256.0f+0.5f, 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 1.0f/WF_SIZE,1.0f/WF_SIZE, 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, -(camPosBig.x-WH_SIZE)/WF_SIZE,-(camPosBig.z-WH_SIZE)/WF_SIZE, 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
-	//	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 1.0/4096.0,1.0/4096.0,0,0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
+	//	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 1.0f/4096.0f,1.0f/4096.0f,0,0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, camera->pos.x,camera->pos.y,camera->pos.z,0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, reflectRight.x,reflectRight.y,reflectRight.z,0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, reflectUp.x,reflectUp.y,reflectUp.z,0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.5/dx,0.5/dy,1,1);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.5f/dx,0.5f/dy,1,1);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,5, reflectForward.x,reflectForward.y,reflectForward.z,0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.05, 1-0.05, 0, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.2, 0, 0, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,8, 0.5, 0.6, 0.8, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.05f, 1-0.05f, 0, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.2f, 0, 0, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,8, 0.5f, 0.6f, 0.8f, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,9, gs->sunVector.x, gs->sunVector.y, gs->sunVector.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, readmap->sunColor.x, readmap->sunColor.y, readmap->sunColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, readmap->ambientColor.x, readmap->ambientColor.y, readmap->ambientColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,12, refractRight.x,refractRight.y,refractRight.z,0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,13, refractUp.x,refractUp.y,refractUp.z,0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, 0.5/dx,0.5/dy,1,1);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, 0.5f/dx,0.5f/dy,1,1);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,15, refractForward.x,refractForward.y,refractForward.z,0);
 
 	DrawWaterSurface();
@@ -410,7 +410,7 @@ void CDynWater::DrawReflection(CGame* game)
 	camera->up.z=0;
 	camera->forward.y*=-1;
 	camera->pos.y*=-1;
-	camera->pos.y+=0.2;
+	camera->pos.y+=0.2f;
 	camera->Update(false);
 	reflectRight=camera->right;
 	reflectUp=camera->up;
@@ -418,13 +418,13 @@ void CDynWater::DrawReflection(CGame* game)
 
 	glViewport(0,0,512,512);
 
-	glClearColor(0.5,0.6,0.8,0);
+	glClearColor(0.5f,0.6f,0.8f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	sky->Draw();
 
 	glEnable(GL_CLIP_PLANE2);
-	double plane2[4]={0,-1,0,1.0};
+	double plane2[4]={0,-1,0,1.0f};
 	glClipPlane(GL_CLIP_PLANE2 ,plane2);
 	drawReflection=true;
 	bool drawShadows=shadowHandler->drawShadows;
@@ -433,7 +433,7 @@ void CDynWater::DrawReflection(CGame* game)
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
 	gd->Draw(true,false,dwGroundReflectIVP);
 
-	double plane[4]={0,1,0,1.0};
+	double plane[4]={0,1,0,1.0f};
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 
 	gd->Draw(true);
@@ -477,8 +477,8 @@ void CDynWater::DrawRefraction(CGame* game)
 	float3 oldsun=unitDrawer->unitSunColor;
 	float3 oldambient=unitDrawer->unitAmbientColor;
 
-	unitDrawer->unitSunColor*=float3(0.5,0.7,0.9);
-	unitDrawer->unitAmbientColor*=float3(0.6,0.8,1.0);
+	unitDrawer->unitSunColor*=float3(0.5f,0.7f,0.9f);
+	unitDrawer->unitAmbientColor*=float3(0.6f,0.8f,1.0f);
 
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
 	gd->Draw(false,false,dwGroundRefractVP);
@@ -535,13 +535,13 @@ void CDynWater::DrawWaves(void)
 
 
 	GLenum status;
-	float start=0.1/1024;
-	float end=1023.9/1024;
+	float start=0.1f/1024;
+	float end=1023.9f/1024;
 
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,8,  -1.0/1024, 1.0/1024, 0,0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  0, 1.0/1024, 0,0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0/1024, 1.0/1024, 0,0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, 1.0/1024, 0, 0,0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,8,  -1.0f/1024, 1.0f/1024, 0,0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  0, 1.0f/1024, 0,0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0f/1024, 1.0f/1024, 0,0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, 1.0f/1024, 0, 0,0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, float(WF_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), float(WF_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0,0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, (camPosBig.x-WH_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), (camPosBig.z-WH_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, dx/WF_SIZE, dy/WF_SIZE, 0,0);
@@ -722,12 +722,12 @@ void CDynWater::DrawHeightTex(void)
 	camPosX=int(camera->pos.x/W_SIZE);
 	camPosZ=int(camera->pos.z/W_SIZE);
 
-	float startx=(camPosX-120)/1024.0-(camPosBig.x-WH_SIZE)/WF_SIZE;
-	float startz=(camPosZ-120)/1024.0-(camPosBig.z-WH_SIZE)/WF_SIZE;
-	float endx=(camPosX+120)/1024.0-(camPosBig.x-WH_SIZE)/WF_SIZE;
-	float endz=(camPosZ+120)/1024.0-(camPosBig.z-WH_SIZE)/WF_SIZE;
-	float startv=8.0/256;
-	float endv=248.0/256;
+	float startx=(camPosX-120)/1024.0f-(camPosBig.x-WH_SIZE)/WF_SIZE;
+	float startz=(camPosZ-120)/1024.0f-(camPosBig.z-WH_SIZE)/WF_SIZE;
+	float endx=(camPosX+120)/1024.0f-(camPosBig.x-WH_SIZE)/WF_SIZE;
+	float endz=(camPosZ+120)/1024.0f-(camPosBig.z-WH_SIZE)/WF_SIZE;
+	float startv=8.0f/256;
+	float endv=248.0f/256;
 	//update 32 bit height map
 	glBegin(GL_QUADS);
 	glTexCoord2f(startx,startz);glVertex3f(startv,startv,0);
@@ -794,7 +794,7 @@ void CDynWater::UpdateCamRestraints(void)
 	camHorizontal.y=0;
 	camHorizontal.Normalize();
 	float3 b=up.cross(camHorizontal);			//get vector for collision between frustum and horizontal plane
-	if(fabs(b.z)>0.0001){
+	if(fabs(b.z)>0.0001f){
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(camHorizontal);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
@@ -1007,26 +1007,26 @@ void CDynWater::DrawDetailNormalTex(void)
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, dwDetailNormalVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
-	float swh=0.05;	//height of detail normal waves
-	float lwh=1.0;	//height of larger ambient waves
+	float swh=0.05f;	//height of detail normal waves
+	float lwh=1.0f;	//height of larger ambient waves
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 9, gs->frameNum, 0, 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 5, 0, 0, 1.0/120);			//controls the position and speed of the waves
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 14, 0, 0, 1.0/90);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 29, 0, 0, 1.0/55);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, 9, 4, 0, 1.0/100);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, -5, 14, 0, 1.0/90);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 27, 27, 0, 1.0/75);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, -3, -5, 0, 1.0/100);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, -10, 24, 0, 1.0/60);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.2*swh, 0.0*swh, 0.7*lwh, 0);		//controls the height of the waves
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.2*swh, 0.0*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.2*swh, 0.01*swh, 0.4*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.07*swh, 0.2*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,5, 0.2*swh, 0.2*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.12*swh, 0.2*swh, 0.7*lwh, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.08*swh, 0.2*swh, 0.7*lwh, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 5, 0, 0, 1.0f/120);			//controls the position and speed of the waves
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 14, 0, 0, 1.0f/90);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 29, 0, 0, 1.0f/55);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, 9, 4, 0, 1.0f/100);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, -5, 14, 0, 1.0f/90);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 27, 27, 0, 1.0f/75);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, -3, -5, 0, 1.0f/100);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, -10, 24, 0, 1.0f/60);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, 0.2f*swh, 0.0f*swh, 0.7f*lwh, 0);		//controls the height of the waves
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, 0.2f*swh, 0.0f*swh, 0.7f*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,2, 0.2f*swh, 0.0f*swh, 0.7f*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,3, 0.2f*swh, 0.01f*swh, 0.4f*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,4, 0.07f*swh, 0.2f*swh, 0.7f*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,5, 0.2f*swh, 0.2f*swh, 0.7f*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.12f*swh, 0.2f*swh, 0.7f*lwh, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.08f*swh, 0.2f*swh, 0.7f*lwh, 0);
 
 	//update detail normals
 	glBegin(GL_QUADS);
@@ -1075,7 +1075,7 @@ void CDynWater::AddShipWakes()
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_CULL_FACE);
 
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0/WF_SIZE, 1.0/WF_SIZE, 0, 1);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/WF_SIZE, 1.0f/WF_SIZE, 0, 1);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -(oldCamPosBig.x-WH_SIZE)/WF_SIZE, -(oldCamPosBig.z-WH_SIZE)/WF_SIZE, 0, 0);
 
 	CVertexArray* va=GetVertexArray();
@@ -1093,10 +1093,10 @@ void CDynWater::AddShipWakes()
 			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectating)
 				continue;
 			if(pos.y>-4 && pos.y<1){
-				float3 frontAdd=unit->frontdir*unit->radius*0.75;
-				float3 sideAdd=unit->rightdir*unit->radius*0.18;
+				float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+				float3 sideAdd=unit->rightdir*unit->radius*0.18f;
 				float depth=sqrt(sqrt(unit->mass));
-				float3 n(depth, 0.04*speedf*depth, depth);
+				float3 n(depth, 0.04f*speedf*depth, depth);
 
 				va->AddVertexTN(pos+frontAdd+sideAdd,0,0,n);
 				va->AddVertexTN(pos+frontAdd-sideAdd,1,0,n);
@@ -1111,10 +1111,10 @@ void CDynWater::AddShipWakes()
 			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectating)
 				continue;
 			if(pos.y>-4 && pos.y<4){
-				float3 frontAdd=unit->frontdir*unit->radius*0.75;
-				float3 sideAdd=unit->rightdir*unit->radius*0.75;
-				float depth=sqrt(sqrt(unit->mass))*0.4;
-				float3 n(depth, 0.05*depth, depth);
+				float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+				float3 sideAdd=unit->rightdir*unit->radius*0.75f;
+				float depth=sqrt(sqrt(unit->mass))*0.4f;
+				float3 n(depth, 0.05f*depth, depth);
 
 				va2->AddVertexTN(pos+frontAdd+sideAdd,0,0,n);
 				va2->AddVertexTN(pos+frontAdd-sideAdd,1,0,n);
@@ -1175,7 +1175,7 @@ void CDynWater::AddExplosions()
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_CULL_FACE);
 
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0/WF_SIZE, 1.0/WF_SIZE, 0, 1);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/WF_SIZE, 1.0f/WF_SIZE, 0, 1);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -(oldCamPosBig.x-WH_SIZE)/WF_SIZE, -(oldCamPosBig.z-WH_SIZE)/WF_SIZE, 0, 0);
 
 	CVertexArray* va=GetVertexArray();
@@ -1186,19 +1186,19 @@ void CDynWater::AddExplosions()
 		float3 pos=explo.pos;
 		if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
 			continue;
-		float inv=1.01;
+		float inv=1.01f;
 		if(pos.y<0){
-			if(pos.y<-explo.radius*0.5)
-				inv=0.99;
-			pos.y=pos.y*-0.5;
+			if(pos.y<-explo.radius*0.5f)
+				inv=0.99f;
+			pos.y=pos.y*-0.5f;
 		}
 
 		float size=explo.radius-pos.y;
 		if(size<8)
 			continue;
-		float strength=explo.strength * (size/explo.radius)*0.5;
+		float strength=explo.strength * (size/explo.radius)*0.5f;
 
-		float3 n(strength, strength*0.005, strength*inv);
+		float3 n(strength, strength*0.005f, strength*inv);
 
 		va->AddVertexTN(pos+float3(1,0,1)*size,0,0,n);
 		va->AddVertexTN(pos+float3(-1,0,1)*size,1,0,n);
@@ -1257,8 +1257,8 @@ void CDynWater::DrawUpdateSquare(float dx,float dy, int* resetTexs)
 
 void CDynWater::DrawSingleUpdateSquare(float startx,float starty,float endx,float endy)
 {
-	float texstart=0.1/1024;
-	float texend=1023.9/1024;
+	float texstart=0.1f/1024;
+	float texend=1023.9f/1024;
 	float texdif=texend-texstart;
 
 	CVertexArray* va=GetVertexArray();

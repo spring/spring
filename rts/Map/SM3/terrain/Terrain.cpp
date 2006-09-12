@@ -750,7 +750,7 @@ namespace terrain {
 		glMatrixMode (GL_PROJECTION);
 		glPushMatrix ();
 		glLoadIdentity ();
-		glOrtho (q->start.x, q->end.x, q->start.z, q->end.z, -10000.0, 100000.0);
+		glOrtho (q->start.x, q->end.x, q->start.z, q->end.z, -10000.0f, 100000.0f);
 		glColor3f(1.f,1.f,1.f);
 
 		if (!q->renderData)

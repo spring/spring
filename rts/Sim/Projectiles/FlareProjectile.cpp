@@ -42,8 +42,8 @@ void CFlareProjectile::Update(void)
 	}
 	if(gs->frameNum>=activateFrame){
 		pos+=speed;
-		speed*=0.95;
-		speed.y+=gs->gravity*0.3;
+		speed*=0.95f;
+		speed.y+=gs->gravity*0.3f;
 
 		if(owner && lastSub<gs->frameNum-owner->unitDef->flareSalvoDelay && numSub<owner->unitDef->flareSalvoSize){
 			subPos.push_back(owner->pos);
@@ -65,8 +65,8 @@ void CFlareProjectile::Update(void)
 		}
 		for(int a=0;a<numSub;++a){
 			subPos[a]+=subSpeed[a];
-			subSpeed[a]*=0.95;
-			subSpeed[a].y+=gs->gravity*0.3;
+			subSpeed[a]*=0.95f;
+			subSpeed[a].y+=gs->gravity*0.3f;
 		}
 	}
 
@@ -83,8 +83,8 @@ void CFlareProjectile::Draw(void)
 	unsigned char col[4];
 	float alpha=max(0.0f,1-(gs->frameNum-activateFrame)*alphaFalloff);
 	col[0]=(unsigned char)alpha*255;
-	col[1]=(unsigned char)(alpha*0.5)*255;
-	col[2]=(unsigned char)(alpha*0.2)*255;
+	col[1]=(unsigned char)(alpha*0.5f)*255;
+	col[2]=(unsigned char)(alpha*0.2f)*255;
 	col[3]=1;
 
 	for(int a=0;a<numSub;++a){

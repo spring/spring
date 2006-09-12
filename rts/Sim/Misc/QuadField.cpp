@@ -51,11 +51,11 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 	if(maxy<miny || maxx<minx)
 		return ret;
 
-	float maxSqLength=(radius+QUAD_SIZE*0.72)*(radius+QUAD_SIZE*0.72);
+	float maxSqLength=(radius+QUAD_SIZE*0.72f)*(radius+QUAD_SIZE*0.72f);
 	ret.reserve((maxy-miny)*(maxx-minx));
 	for(int y=miny;y<=maxy;++y)
 		for(int x=minx;x<=maxx;++x)
-			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5,0,y*QUAD_SIZE+QUAD_SIZE*0.5)).SqLength2D()<maxSqLength)
+			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5f,0,y*QUAD_SIZE+QUAD_SIZE*0.5f)).SqLength2D()<maxSqLength)
 				ret.push_back(y*numQuadsX+x);
 
 	return ret;
@@ -75,11 +75,11 @@ void CQuadField::GetQuads(float3 pos,float radius, vector<int> &dst)
 	if(maxy<miny || maxx<minx)
 		return;
 
-	float maxSqLength=(radius+QUAD_SIZE*0.72)*(radius+QUAD_SIZE*0.72);
+	float maxSqLength=(radius+QUAD_SIZE*0.72f)*(radius+QUAD_SIZE*0.72f);
 	dst.reserve(dst.size()+(maxy-miny)*(maxx-minx));
 	for(int y=miny;y<=maxy;++y)
 		for(int x=minx;x<=maxx;++x)
-			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5,0,y*QUAD_SIZE+QUAD_SIZE*0.5)).SqLength2D()<maxSqLength)
+			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5f,0,y*QUAD_SIZE+QUAD_SIZE*0.5f)).SqLength2D()<maxSqLength)
 				dst.push_back(y*numQuadsX+x);
 }
 
@@ -178,22 +178,22 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 
 	if(start.x<1){
 		if(dir.x==0)
-			dir.x=0.00001;
+			dir.x=0.00001f;
 		start=start+dir*((1-start.x)/dir.x);
 	}
 	if(start.x>gs->mapx*SQUARE_SIZE-1){
 		if(dir.x==0)
-			dir.x=0.00001;
+			dir.x=0.00001f;
 		start=start+dir*((gs->mapx*SQUARE_SIZE-1-start.x)/dir.x);
 	}
 	if(start.z<1){
 		if(dir.z==0)
-			dir.z=0.00001;
+			dir.z=0.00001f;
 		start=start+dir*((1-start.z)/dir.z);
 	}
 	if(start.z>gs->mapy*SQUARE_SIZE-1){
 		if(dir.z==0)
-			dir.z=0.00001;
+			dir.z=0.00001f;
 		start=start+dir*((gs->mapy*SQUARE_SIZE-1-start.z)/dir.z);
 	}
 
@@ -246,7 +246,7 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 	float xp=start.x;
 	float zp=start.z;
 	float xn,zn;
-	float invQuadSize=1.0/QUAD_SIZE;
+	float invQuadSize=1.0f/QUAD_SIZE;
 
 	if((floor(start.x*invQuadSize)==floor(to.x*invQuadSize)) && (floor(start.z*invQuadSize)==floor(to.z*invQuadSize))){
 		quads.push_back((int(start.x*invQuadSize))+(int(start.z*invQuadSize))*numQuadsX);
@@ -285,11 +285,11 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 			}
 			
 			if(xn<zn){
-				xp+=(xn+0.0001)*dx;
-				zp+=(xn+0.0001)*dz;
+				xp+=(xn+0.0001f)*dx;
+				zp+=(xn+0.0001f)*dz;
 			} else {
-				xp+=(zn+0.0001)*dx;
-				zp+=(zn+0.0001)*dz;
+				xp+=(zn+0.0001f)*dx;
+				zp+=(zn+0.0001f)*dz;
 			}
 			keepgoing=fabs(xp-start.x)<fabs(to.x-start.x) && fabs(zp-start.z)<fabs(to.z-start.z);
 

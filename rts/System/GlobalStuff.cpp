@@ -79,7 +79,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 
 	sunVector=float3(0,1,2).Normalize();
 
-	gravity = -0.1;
+	gravity = -0.1f;
 }
 
 /**

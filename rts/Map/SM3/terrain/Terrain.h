@@ -81,7 +81,7 @@ namespace terrain {
 		bool terrainNormalMaps;
 		bool useShadowMaps;  // do the terrain shaders need shadow map support
 
-		float detailMod; // acceptable range is 0.25 - 4
+		float detailMod; // acceptable range is 0.25f - 4
 
 		// (Only in case of terrainNormalMaps=true)
 		// heightmap level from which detail normal maps are generated, 

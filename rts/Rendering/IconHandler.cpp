@@ -84,7 +84,7 @@ unsigned int *CIconHandler::GetStandardTexture()
 		unsigned char si[128*128*4];
 		for(int y=0;y<128;++y){
 			for(int x=0;x<128;++x){
-				float r=sqrtf((y-64)*(y-64)+(x-64)*(x-64))/64.0;
+				float r=sqrtf((y-64)*(y-64)+(x-64)*(x-64))/64.0f;
 				if(r>1){
 					si[(y*128+x)*4+0]=0;
 					si[(y*128+x)*4+1]=0;

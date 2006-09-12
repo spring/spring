@@ -216,8 +216,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.metalStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
 	ud.energyStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
 
-	ud.autoHeal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\AutoHeal").c_str())*(16.0/30.0);
-	ud.idleAutoHeal=atof(tdfparser.SGetValueDef("10", "UNITINFO\\IdleAutoHeal").c_str())*(16.0/30.0);
+	ud.autoHeal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\AutoHeal").c_str())*(16.0f/30.0f);
+	ud.idleAutoHeal=atof(tdfparser.SGetValueDef("10", "UNITINFO\\IdleAutoHeal").c_str())*(16.0f/30.0f);
 	ud.idleTime=atoi(tdfparser.SGetValueDef("600", "UNITINFO\\IdleTime").c_str());
 
 	ud.buildangle=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\buildangle").c_str());
@@ -240,7 +240,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.losRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*sensorHandler->losMul/(SQUARE_SIZE*(1<<sensorHandler->losMipLevel));
 	ud.airLosRadius=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\AirSightDistance").c_str());
 	if(ud.airLosRadius==-1)
-		ud.airLosRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*sensorHandler->airLosMul*1.5/(SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
+		ud.airLosRadius=atof(tdfparser.SGetValueDef("0", "UNITINFO\\SightDistance").c_str())*sensorHandler->airLosMul*1.5f/(SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
 	else
 		ud.airLosRadius = ud.airLosRadius*sensorHandler->airLosMul/(SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
 
@@ -282,7 +282,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.speed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxVelocity").c_str())*30;
 	ud.maxAcc=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str());
-	ud.maxDec=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1;
+	ud.maxDec=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1f;
 	ud.turnRate=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
 	ud.buildSpeed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\WorkerTime").c_str());
 	ud.buildDistance=atof(tdfparser.SGetValueDef("64", "UNITINFO\\Builddistance").c_str());
@@ -498,7 +498,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	}
 
 	if(ud.maxAcc!=0 && ud.speed!=0)
-		ud.drag=1.0/(ud.speed/GAME_SPEED*1.1/ud.maxAcc)-ud.wingAngle*ud.wingAngle*ud.wingDrag;		//meant to set the drag such that the maxspeed becomes what it should be
+		ud.drag=1.0f/(ud.speed/GAME_SPEED*1.1f/ud.maxAcc)-ud.wingAngle*ud.wingAngle*ud.wingDrag;		//meant to set the drag such that the maxspeed becomes what it should be
 
 	std::string objectname;
 	tdfparser.GetDef(objectname, "", "UNITINFO\\Objectname");

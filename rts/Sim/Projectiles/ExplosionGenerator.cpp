@@ -146,21 +146,21 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 	bool airExplosion=pos.y-max((float)0,h2)>20;
 
 	float damage=damages[0]/20;
-	if(damage>radius*1.5) //limit the visual effects based on the radius
-		damage=radius*1.5;
+	if(damage>radius*1.5f) //limit the visual effects based on the radius
+		damage=radius*1.5f;
 	damage*=gfxMod;
 	for(int a=0;a<1;++a){
-//		float3 speed((gs->randFloat()-0.5f)*(radius*0.04),0.05+(gs->randFloat())*(radius*0.007),(gs->randFloat()-0.5)*(radius*0.04));
+//		float3 speed((gs->randFloat()-0.5f)*(radius*0.04f),0.05f+(gs->randFloat())*(radius*0.007f),(gs->randFloat()-0.5f)*(radius*0.04f));
 		float3 speed(0,0.3f,0);
 		float3 camVect=camera->pos-pos;
 		float camLength=camVect.Length();
 		camVect/=camLength;
-		float moveLength=radius*0.03;
+		float moveLength=radius*0.03f;
 		if(camLength<moveLength+2)
 			moveLength=camLength-2;
 		float3 npos=pos+camVect*moveLength;
 
-		CHeatCloudProjectile* p=new CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5,7+damage*2.8,owner);
+		CHeatCloudProjectile* p=new CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5f,7+damage*2.8f,owner);
 
 		//p->Update();
 		//p->maxheat=p->heat;
@@ -168,64 +168,64 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 	if(ph->particleSaturation<1){		//turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage=damage;
 		if(uwExplosion)
-			smokeDamage*=0.3;
+			smokeDamage*=0.3f;
 		if(airExplosion || waterExplosion)
-			smokeDamage*=0.6;
-		float invSqrtsmokeDamage=1/(sqrt(smokeDamage)*0.35);
-		for(int a=0;a<smokeDamage*0.6;++a){
-			float3 speed(-0.1f+gu->usRandFloat()*0.2,(0.1f+gu->usRandFloat()*0.3)*invSqrtsmokeDamage,-0.1f+gu->usRandFloat()*0.2);
-			float3 npos(pos+gu->usRandVector()*(smokeDamage*1.0));
+			smokeDamage*=0.6f;
+		float invSqrtsmokeDamage=1/(sqrt(smokeDamage)*0.35f);
+		for(int a=0;a<smokeDamage*0.6f;++a){
+			float3 speed(-0.1f+gu->usRandFloat()*0.2f,(0.1f+gu->usRandFloat()*0.3f)*invSqrtsmokeDamage,-0.1f+gu->usRandFloat()*0.2f);
+			float3 npos(pos+gu->usRandVector()*(smokeDamage*1.0f));
 			float h=ground->GetApproximateHeight(npos.x,npos.z);
 			if(npos.y<h)
 				npos.y=h;
-			float time=(40+sqrt(smokeDamage)*15)*(0.8+gu->usRandFloat()*0.7);
-			new CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4,owner,0.6);
+			float time=(40+sqrt(smokeDamage)*15)*(0.8f+gu->usRandFloat()*0.7f);
+			new CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4f,owner,0.6f);
 		}
 		if(!airExplosion && !uwExplosion && !waterExplosion){
-			int numDirt=(int)min(20.,damage*0.8);
-			float3 color(0.15,0.1,0.05);
+			int numDirt=(int)min(20.f,damage*0.8f);
+			float3 color(0.15f,0.1f,0.05f);
 			for(int a=0;a<numDirt;++a){
-				float3 speed((0.5-gu->usRandFloat())*1.5,1.7f+gu->usRandFloat()*1.6,(0.5-gu->usRandFloat())*1.5);
-				speed*=0.7+min((float)30,damage)/30;
-				float3 npos(pos.x-(0.5-gu->usRandFloat())*(radius*0.6),pos.y-2.0-damage*0.2,pos.z-(0.5-gu->usRandFloat())*(radius*0.6));
-				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0+sqrt(damage)*1.5,0.4,0.999f,owner,color);
+				float3 speed((0.5f-gu->usRandFloat())*1.5f,1.7f+gu->usRandFloat()*1.6f,(0.5f-gu->usRandFloat())*1.5f);
+				speed*=0.7f+min((float)30,damage)/30;
+				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.6f),pos.y-2.0f-damage*0.2f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.6f));
+				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*1.5f,0.4f,0.999f,owner,color);
 			}
 		}
 		if(!airExplosion && !uwExplosion && waterExplosion){
-			int numDirt=(int)min(40.,damage*0.8);
+			int numDirt=(int)min(40.f,damage*0.8f);
 			float3 color(1,1,1);
 			for(int a=0;a<numDirt;++a){
-				float3 speed((0.5-gu->usRandFloat())*0.2,a*0.1+gu->usRandFloat()*0.8,(0.5-gu->usRandFloat())*0.2);
-				speed*=0.7+min((float)30,damage)/30;
-				float3 npos(pos.x-(0.5-gu->usRandFloat())*(radius*0.2),pos.y-2.0-sqrt(damage)*2.0,pos.z-(0.5-gu->usRandFloat())*(radius*0.2));
-				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0+sqrt(damage)*2.0,0.3f,0.99f,owner,color);
+				float3 speed((0.5f-gu->usRandFloat())*0.2f,a*0.1f+gu->usRandFloat()*0.8f,(0.5f-gu->usRandFloat())*0.2f);
+				speed*=0.7f+min((float)30,damage)/30;
+				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.2f),pos.y-2.0f-sqrt(damage)*2.0f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.2f));
+				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*2.0f,0.3f,0.99f,owner,color);
 			}
 		}
 		if(damage>=20 && !uwExplosion && !airExplosion){
 			int numDebris=gu->usRandInt()%6;
 			if(numDebris>0)
-				numDebris+=3+(int)(damage*0.04);
+				numDebris+=3+(int)(damage*0.04f);
 			for(int a=0;a<numDebris;++a){
 				float3 speed;
 				if(height<4)
-					speed=float3((0.5f-gu->usRandFloat())*2.0,1.8f+gu->usRandFloat()*1.8,(0.5f-gu->usRandFloat())*2.0);
+					speed=float3((0.5f-gu->usRandFloat())*2.0f,1.8f+gu->usRandFloat()*1.8f,(0.5f-gu->usRandFloat())*2.0f);
 				else
 					speed=float3(gu->usRandVector()*2);
-				speed*=0.7+min((float)30,damage)/23;
-				float3 npos(pos.x-(0.5-gu->usRandFloat())*(radius*1),pos.y,pos.z-(0.5-gu->usRandFloat())*(radius*1));
+				speed*=0.7f+min((float)30,damage)/23;
+				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*1),pos.y,pos.z-(0.5f-gu->usRandFloat())*(radius*1));
 				new CWreckProjectile(npos,speed,90+damage*2,owner);
 			}
 		}
 		if(uwExplosion){
-			int numBubbles=(int)(damage*0.7);
+			int numBubbles=(int)(damage*0.7f);
 			for(int a=0;a<numBubbles;++a){
-				new CBubbleProjectile(pos+gu->usRandVector()*radius*0.5,gu->usRandVector()*0.2+float3(0,0.2,0),damage*2+gu->usRandFloat()*damage,1+gu->usRandFloat()*2,0.02,owner,0.5+gu->usRandFloat()*0.3);
+				new CBubbleProjectile(pos+gu->usRandVector()*radius*0.5f,gu->usRandVector()*0.2f+float3(0,0.2f,0),damage*2+gu->usRandFloat()*damage,1+gu->usRandFloat()*2,0.02f,owner,0.5f+gu->usRandFloat()*0.3f);
 			}
 		}
 		if(waterExplosion && !uwExplosion && !airExplosion){
-			int numWake=(int)(damage*0.5);
+			int numWake=(int)(damage*0.5f);
 			for(int a=0;a<numWake;++a){
-				new CWakeProjectile(pos+gu->usRandVector()*radius*0.2,gu->usRandVector()*radius*0.003,sqrt(damage)*4,damage*0.03,owner,0.3+gu->usRandFloat()*0.2,0.8/(sqrt(damage)*3+50+gu->usRandFloat()*90),1);
+				new CWakeProjectile(pos+gu->usRandVector()*radius*0.2f,gu->usRandVector()*radius*0.003f,sqrt(damage)*4,damage*0.03f,owner,0.3f+gu->usRandFloat()*0.2f,0.8f/(sqrt(damage)*3+50+gu->usRandFloat()*90),1);
 			}
 		}
 		if(radius>10 && damage>4){
@@ -233,30 +233,30 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 			for(int a=0;a<numSpike;++a){
 				float3 speed=gu->usRandVector();
 				speed.Normalize();
-				speed*=(8+damage*3.0)/(9+sqrt(damage)*0.7)*0.35;
+				speed*=(8+damage*3.0f)/(9+sqrt(damage)*0.7f)*0.35f;
 				if(!airExplosion && !waterExplosion && speed.y<0)
 					speed.y=-speed.y;
-				new CExploSpikeProjectile(pos+speed,speed*(0.9f+gu->usRandFloat()*0.4f),radius*0.1,radius*0.1,0.6f,0.8/(8+sqrt(damage)),owner);
+				new CExploSpikeProjectile(pos+speed,speed*(0.9f+gu->usRandFloat()*0.4f),radius*0.1f,radius*0.1f,0.6f,0.8f/(8+sqrt(damage)),owner);
 			}
 		}
 	}
 
-	if(radius>20 && damage>6 && height<radius*0.7){
+	if(radius>20 && damage>6 && height<radius*0.7f){
 		float modSize=max(radius,damage*2);
 		float circleAlpha=0;
 		float circleGrowth=0;
-		float ttl=8+sqrt(damage)*0.8;
+		float ttl=8+sqrt(damage)*0.8f;
 		if(radius>40 && damage>12){
-			circleAlpha=min(0.5,damage*0.01);
-			circleGrowth=(8+damage*2.5)/(9+sqrt(damage)*0.7)*0.55;
+			circleAlpha=min(0.5f,damage*0.01f);
+			circleGrowth=(8+damage*2.5f)/(9+sqrt(damage)*0.7f)*0.55f;
 		}
 		float flashSize=modSize;
-		float flashAlpha=min(0.8,damage*0.01);
+		float flashAlpha=min(0.8f,damage*0.01f);
 		new CStandarGroundFlash(pos,circleAlpha,flashAlpha,flashSize,circleGrowth,ttl);
 	}
 
 	if(radius>40 && damage>12){
-		CSpherePartProjectile::CreateSphere(pos,min(0.7,damage*0.02),5+(int)(sqrt(damage)*0.7),(8+damage*2.5)/(9+sqrt(damage)*0.7)*0.5,owner);	
+		CSpherePartProjectile::CreateSphere(pos,min(0.7f,damage*0.02f),5+(int)(sqrt(damage)*0.7f),(8+damage*2.5f)/(9+sqrt(damage)*0.7f)*0.5f,owner);	
 	}
 	POP_CODE_MODE;
 }

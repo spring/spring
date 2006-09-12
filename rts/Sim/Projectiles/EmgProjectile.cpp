@@ -31,7 +31,7 @@ void CEmgProjectile::Update(void)
 	ttl--;
 
 	if(ttl<0){
-		intensity-=0.1;
+		intensity-=0.1f;
 		if(intensity<=0){
 			deleteMe=true;
 			intensity=0;

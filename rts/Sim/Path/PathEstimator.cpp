@@ -199,7 +199,7 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 		for(x = 1; x < BLOCK_SIZE; x += 2) {
 			int dx=x-BLOCK_SIZE/2;
 			int dz=z-BLOCK_SIZE/2;
-			float cost=dx*dx+dz*dz+(BLOCK_SIZE*BLOCK_SIZE/8)/(0.001+moveData.moveMath->SpeedMod(moveData, lowerX+x, lowerZ+z));
+			float cost=dx*dx+dz*dz+(BLOCK_SIZE*BLOCK_SIZE/8)/(0.001f+moveData.moveMath->SpeedMod(moveData, lowerX+x, lowerZ+z));
 			if(moveData.moveMath->IsBlocked2(moveData, lowerX+x, lowerZ+z) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
 				cost+=1000000;
 			if(cost<best){
@@ -825,9 +825,9 @@ void CPathEstimator::Draw(void)
 	}
 */
 	if(BLOCK_SIZE==8)
-		glColor3f(0.2,0.7,0.2);
+		glColor3f(0.2f,0.7f,0.2f);
 	else
-		glColor3f(0.2,0.2,0.7);
+		glColor3f(0.2f,0.2f,0.7f);
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 	for(OpenBlock*  ob=openBlockBuffer;ob!=openBlockBufferPointer;++ob){
@@ -854,8 +854,8 @@ void CPathEstimator::Draw(void)
 	glEnd();
 /*	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
-	glColor4f(1,0,blue,0.7);
-	glAlphaFunc(GL_GREATER,0.05);
+	glColor4f(1,0,blue,0.7f);
+	glAlphaFunc(GL_GREATER,0.05f);
 	int a=0;
 	for(OpenBlock*  ob=openBlockBuffer;ob!=openBlockBufferPointer;++ob){
 		int blocknr = ob->blocknr;

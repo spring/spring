@@ -97,9 +97,9 @@ void GUIendgameDialog::UpdateStatistics()
 			
 			// set values for the teams statistics
 			#define FillStat(a) a[team].caption=buf; \
-								a[team].r=gs->Team(team)->color[0]/255.0; \
-								a[team].g=gs->Team(team)->color[1]/255.0; \
-								a[team].b=gs->Team(team)->color[2]/255.0; 
+								a[team].r=gs->Team(team)->color[0]/255.0f; \
+								a[team].g=gs->Team(team)->color[1]/255.0f; \
+								a[team].b=gs->Team(team)->color[2]/255.0f; 
 
 			// add a value, initializing the array if it isn't already,
 			// and setting suitable values for team name and color

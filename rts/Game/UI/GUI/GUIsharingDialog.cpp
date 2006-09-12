@@ -141,10 +141,10 @@ void GUIsharingDialog::UpdatePlayerList()
 	table->ChangeList(&teams);
 	
 	vector<GUItable::HeaderInfo> header;
-	header.push_back(GUItable::HeaderInfo("Name", 0.25));
-	header.push_back(GUItable::HeaderInfo("Leader", 0.25));
-	header.push_back(GUItable::HeaderInfo("Metal", 0.25));
-	header.push_back(GUItable::HeaderInfo("Energy", 0.25));
+	header.push_back(GUItable::HeaderInfo("Name", 0.25f));
+	header.push_back(GUItable::HeaderInfo("Leader", 0.25f));
+	header.push_back(GUItable::HeaderInfo("Metal", 0.25f));
+	header.push_back(GUItable::HeaderInfo("Energy", 0.25f));
 	
 	table->SetHeader(header);	
 }

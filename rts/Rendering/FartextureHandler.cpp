@@ -51,7 +51,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	GLfloat LightDiffuseLand2[]=	{ 0.0f, 0.0f, 0.0f, 1.0f };
 	GLfloat LightAmbientLand2[]=	{ 0.6f, 0.6f, 0.6f, 1.0f };
 	for(int a=0;a<3;++a)
-		LightAmbientLand2[a]=min(1.,unitDrawer->unitAmbientColor[a]+unitDrawer->unitSunColor[a]*0.2);
+		LightAmbientLand2[a]=min(1.f,unitDrawer->unitAmbientColor[a]+unitDrawer->unitSunColor[a]*0.2f);
 	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand2);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand2);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, LightAmbientLand2);
@@ -60,7 +60,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();		
-	glOrtho(-model->radius,model->radius,-model->radius,model->radius,-model->radius*1.5,model->radius*1.5);
+	glOrtho(-model->radius,model->radius,-model->radius,model->radius,-model->radius*1.5f,model->radius*1.5f);
 	glMatrixMode(GL_MODELVIEW);
 	glClearColor(0.5f,0.5f,0.5f,0);
 	glDisable(GL_BLEND);
@@ -87,7 +87,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 		texturehandler->SetTATexture();
 		//glCallList(model.displist);
 		glPushMatrix();
-		glTranslatef(0,-model->height*0.5,0);
+		glTranslatef(0,-model->height*0.5f,0);
 		model->DrawStatic();
 		glPopMatrix();
 		glReadPixels(0,0,16,16,GL_RGBA,GL_UNSIGNED_BYTE,buf);

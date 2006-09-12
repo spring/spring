@@ -89,7 +89,7 @@ void CCamera::Update(bool freeze)
 		cam2->up=up;
 	}
 	oldFov=fov;
-	float rangemod=1+max(0.f,pos.y-ground->GetHeight(pos.x,pos.z)-500)*0.0003;
+	float rangemod=1+max(0.f,pos.y-ground->GetHeight(pos.x,pos.z)-500)*0.0003f;
 	gu->viewRange=MAX_VIEW_RANGE*rangemod;
 
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix

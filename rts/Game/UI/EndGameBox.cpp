@@ -39,25 +39,25 @@ CEndGameBox::CEndGameBox(void)
 	box.x2 = 0.86f;
 	box.y2 = 0.8f;
 
-	exitBox.x1=0.31;
-	exitBox.y1=0.02;
-	exitBox.x2=0.41;
-	exitBox.y2=0.06;
+	exitBox.x1=0.31f;
+	exitBox.y1=0.02f;
+	exitBox.x2=0.41f;
+	exitBox.y2=0.06f;
 
-	playerBox.x1=0.05;
-	playerBox.y1=0.62;
-	playerBox.x2=0.15;
-	playerBox.y2=0.65;
+	playerBox.x1=0.05f;
+	playerBox.y1=0.62f;
+	playerBox.x2=0.15f;
+	playerBox.y2=0.65f;
 
-	sumBox.x1=0.16;
-	sumBox.y1=0.62;
-	sumBox.x2=0.26;
-	sumBox.y2=0.65;
+	sumBox.x1=0.16f;
+	sumBox.y1=0.62f;
+	sumBox.x2=0.26f;
+	sumBox.y2=0.65f;
 
-	difBox.x1=0.27;
-	difBox.y1=0.62;
-	difBox.x2=0.38;
-	difBox.y2=0.65;
+	difBox.x1=0.27f;
+	difBox.y1=0.62f;
+	difBox.x2=0.38f;
+	difBox.y2=0.65f;
 
 	dispMode=0;
 	stat1=1;
@@ -88,7 +88,7 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 			moveBox=false;
 		if(InBox(mx,my,box+difBox))
 			moveBox=false;
-		if(dispMode>0 && mx>box.x1+0.01 && mx<box.x1+0.12 && my<box.y1+0.57 && my>box.y1+0.571-stats.size()*0.02)
+		if(dispMode>0 && mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f)
 			moveBox=false;
 		return true;
 	}
@@ -129,7 +129,7 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 	}
 
 	if(dispMode>0){
-		if(mx>box.x1+0.01 && mx<box.x1+0.12 && my<box.y1+0.57 && my>box.y1+0.571-stats.size()*0.02){
+		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f){
 			int sel=(int)floor(-(my-box.y1-0.57f)*50);
 
 			if(button==1)
@@ -190,29 +190,29 @@ void CEndGameBox::Draw()
 	}
 
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,1,0.8);
-	font->glPrintAt(box.x1+exitBox.x1+0.025,box.y1+exitBox.y1+0.005,1,"Exit");
-	font->glPrintAt(box.x1+playerBox.x1+0.015,box.y1+playerBox.y1+0.005,0.7,"Player stats");
-	font->glPrintAt(box.x1+sumBox.x1+0.015,box.y1+sumBox.y1+0.005,0.7,"Team stats");
-	font->glPrintAt(box.x1+difBox.x1+0.015,box.y1+difBox.y1+0.005,0.7,"Team delta stats");
+	glColor4f(1,1,1,0.8f);
+	font->glPrintAt(box.x1+exitBox.x1+0.025f,box.y1+exitBox.y1+0.005f,1,"Exit");
+	font->glPrintAt(box.x1+playerBox.x1+0.015f,box.y1+playerBox.y1+0.005f,0.7f,"Player stats");
+	font->glPrintAt(box.x1+sumBox.x1+0.015f,box.y1+sumBox.y1+0.005f,0.7f,"Team stats");
+	font->glPrintAt(box.x1+difBox.x1+0.015f,box.y1+difBox.y1+0.005f,0.7f,"Team delta stats");
 
 	if(gs->Team(gu->myTeam)->isDead){
-		font->glPrintAt(box.x1+0.25,box.y1+0.65,1,"You lost the game");
+		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You lost the game");
 	} else {
-		font->glPrintAt(box.x1+0.25,box.y1+0.65,1,"You won the game");
+		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You won the game");
 	}
 
 	if(dispMode==0){
-		float xpos=0.01;
+		float xpos=0.01f;
 	
 		string headers[]={"Name","MC/m","MP/m","KP/m","Cmds/m","ACS"};
 
 		for(int a=0;a<6;++a){
-			font->glPrintAt(box.x1+xpos,box.y1+0.55,0.8,headers[a].c_str());
-			xpos+=0.1;
+			font->glPrintAt(box.x1+xpos,box.y1+0.55f,0.8f,headers[a].c_str());
+			xpos+=0.1f;
 		}
 
-		float ypos=0.5;
+		float ypos=0.5f;
 		for(int a=0;a<gs->activePlayers;++a){
 			if(gs->players[a]->currentStats->mousePixels==0)
 				continue;
@@ -228,13 +228,13 @@ void CEndGameBox::Draw()
 				( gs->players[a]->currentStats->unitCommands/gs->players[a]->currentStats->numCommands) :
 				( 0 ));
 			
-			float xpos=0.01;
+			float xpos=0.01f;
 			for(int a=0;a<6;++a){
-				font->glPrintAt(box.x1+xpos,box.y1+ypos,0.8,values[a]);
-				xpos+=0.1;
+				font->glPrintAt(box.x1+xpos,box.y1+ypos,0.8f,values[a]);
+				xpos+=0.1f;
 			}
 				
-			ypos-=0.02;
+			ypos-=0.02f;
 		}		
 	} else {
 		if(stats.empty())
@@ -244,14 +244,14 @@ void CEndGameBox::Draw()
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 
-		va->AddVertexT(float3(box.x1+0.15, box.y1+0.08, 0),0,0);
-		va->AddVertexT(float3(box.x1+0.69, box.y1+0.08, 0),4,0);
-		va->AddVertexT(float3(box.x1+0.69, box.y1+0.62, 0),4,4);
-		va->AddVertexT(float3(box.x1+0.15, box.y1+0.62, 0),0,4);
+		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.08f, 0),0,0);
+		va->AddVertexT(float3(box.x1+0.69f, box.y1+0.08f, 0),4,0);
+		va->AddVertexT(float3(box.x1+0.69f, box.y1+0.62f, 0),4,4);
+		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.62f, 0),0,4);
 
 		va->DrawArrayT(GL_QUADS);
 
-		if(mx>box.x1+0.01 && mx<box.x1+0.12 && my<box.y1+0.57 && my>box.y1+0.571-stats.size()*0.02){
+		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f){
 
 			int sel=(int)floor(-(my-box.y1-0.57f)*50);
 
@@ -260,19 +260,19 @@ void CEndGameBox::Draw()
 			CVertexArray* va=GetVertexArray();
 			va->Initialize();
 
-			va->AddVertex0(float3(box.x1+0.01, box.y1+0.55-sel*0.02 , 0));
-			va->AddVertex0(float3(box.x1+0.01, box.y1+0.55-sel*0.02+0.02 , 0));
-			va->AddVertex0(float3(box.x1+0.12, box.y1+0.55-sel*0.02+0.02 , 0));
-			va->AddVertex0(float3(box.x1+0.12, box.y1+0.55-sel*0.02 , 0));
+			va->AddVertex0(float3(box.x1+0.01f, box.y1+0.55f-sel*0.02f , 0));
+			va->AddVertex0(float3(box.x1+0.01f, box.y1+0.55f-sel*0.02f+0.02f , 0));
+			va->AddVertex0(float3(box.x1+0.12f, box.y1+0.55f-sel*0.02f+0.02f , 0));
+			va->AddVertex0(float3(box.x1+0.12f, box.y1+0.55f-sel*0.02f , 0));
 
 			va->DrawArray0(GL_QUADS);
 			glEnable(GL_TEXTURE_2D);		
-			glColor4f(1,1,1,0.8);
+			glColor4f(1,1,1,0.8f);
 		}
-		float ypos=0.55;
+		float ypos=0.55f;
 		for(int a=0;a<stats.size();++a){
-			font->glPrintAt(box.x1+0.01,box.y1+ypos,0.8,stats[a].name.c_str());
-			ypos-=0.02;
+			font->glPrintAt(box.x1+0.01f,box.y1+ypos,0.8f,stats[a].name.c_str());
+			ypos-=0.02f;
 		}
 		float maxy=1;
 		if(dispMode==1)
@@ -282,27 +282,27 @@ void CEndGameBox::Draw()
 
 		int numPoints=stats[0].values[0].size();
 		float scalex=0.54f/max(1.0f,numPoints-1.0f);
-		float scaley=0.54/maxy;
+		float scaley=0.54f/maxy;
 
 		for(int a=0;a<5;++a){
-			font->glPrintAt(box.x1+0.12,box.y1+0.07+a*0.135,0.8,"%s",FloatToSmallString(maxy*0.25*a).c_str());
-			font->glPrintAt(box.x1+0.135+a*0.135,box.y1+0.057,0.8,"%i:%2i",int(a*0.25*numPoints*16/60),int(a*0.25*(numPoints-1)*16)%60);
+			font->glPrintAt(box.x1+0.12f,box.y1+0.07f+a*0.135f,0.8f,"%s",FloatToSmallString(maxy*0.25f*a).c_str());
+			font->glPrintAt(box.x1+0.135f+a*0.135f,box.y1+0.057f,0.8f,"%i:%2i",int(a*0.25f*numPoints*16/60),int(a*0.25f*(numPoints-1)*16)%60);
 		}
 
-		font->glPrintAt(box.x1+0.55,box.y1+0.65,0.8,"%s",stats[stat1].name.c_str());
-		font->glPrintAt(box.x1+0.55,box.y1+0.63,0.8,"%s",stats[stat2].name.c_str());
+		font->glPrintAt(box.x1+0.55f,box.y1+0.65f,0.8f,"%s",stats[stat1].name.c_str());
+		font->glPrintAt(box.x1+0.55f,box.y1+0.63f,0.8f,"%s",stats[stat2].name.c_str());
 
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
-				glVertex3f(box.x1+0.50,box.y1+0.66,0);
-				glVertex3f(box.x1+0.55,box.y1+0.66,0);
+				glVertex3f(box.x1+0.50f,box.y1+0.66f,0);
+				glVertex3f(box.x1+0.55f,box.y1+0.66f,0);
 		glEnd();
 
 		glLineStipple(3,0x5555);
 		glEnable(GL_LINE_STIPPLE);
 		glBegin(GL_LINES);
-				glVertex3f(box.x1+0.50,box.y1+0.64,0);
-				glVertex3f(box.x1+0.55,box.y1+0.64,0);
+				glVertex3f(box.x1+0.50f,box.y1+0.64f,0);
+				glVertex3f(box.x1+0.55f,box.y1+0.64f,0);
 		glEnd();
 		glDisable(GL_LINE_STIPPLE);
 
@@ -317,7 +317,7 @@ void CEndGameBox::Draw()
 				else if(a>0)
 					value=(stats[stat1].values[team][a]-stats[stat1].values[team][a-1])/16;
 
-				glVertex3f(box.x1+0.15+a*scalex,box.y1+0.08+value*scaley,0);
+				glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
 			}
 			glEnd();
 
@@ -332,7 +332,7 @@ void CEndGameBox::Draw()
 				else if(a>0)
 					value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/16;
 
-				glVertex3f(box.x1+0.15+a*scalex,box.y1+0.08+value*scaley,0);
+				glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
 			}
 			glEnd();
 
@@ -346,10 +346,10 @@ std::string CEndGameBox::GetTooltip(int x,int y)
 	float mx=float(x)/gu->screenx;
 
 	if(dispMode==0){
-		if(mx>box.x1+0.02 && mx<box.x1+0.1*6){
+		if(mx>box.x1+0.02f && mx<box.x1+0.1f*6){
 			string tips[]={"Player Name","Mouse clicks per minute","Mouse movement in pixels per minute","Keyboard presses per minute","Unit commands per minute","Average command size (units affected per command)"};
 
-			return tips[int((mx-box.x1-0.01)*10)];
+			return tips[int((mx-box.x1-0.01f)*10)];
 		}
 	}
 

@@ -8,7 +8,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 
 CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness, float flaresize, WeaponDef *weaponDef)
-:	CWeaponProjectile((startPos+endPos)*0.5,ZeroVector, owner, 0, ZeroVector, weaponDef,damages,0), //CProjectile((startPos+endPos)*0.5,ZeroVector,owner),
+:	CWeaponProjectile((startPos+endPos)*0.5f,ZeroVector, owner, 0, ZeroVector, weaponDef,damages,0), //CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),
@@ -20,7 +20,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& 
 
 	SetRadius(pos.distance(endPos));
 
-	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5;
+	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
 	corecolstart[0]=(unsigned char)(color2.x*startAlpha);
 	corecolstart[1]=(unsigned char)(color2.y*startAlpha);
 	corecolstart[2]=(unsigned char)(color2.z*startAlpha);

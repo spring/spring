@@ -42,8 +42,8 @@ void CTimeProfiler::Draw()
 		glBegin(GL_TRIANGLE_STRIP);
 			glVertex3f(0.65f,0.99f,0);
 			glVertex3f(0.99f,0.99f,0);
-			glVertex3f(0.65f,0.99f-profile.size()*0.024-0.01,0);
-			glVertex3f(0.99f,0.99f-profile.size()*0.024-0.01,0);
+			glVertex3f(0.65f,0.99f-profile.size()*0.024f-0.01f,0);
+			glVertex3f(0.99f,0.99f-profile.size()*0.024f-0.01f,0);
 		glEnd();
 	}
 
@@ -54,7 +54,7 @@ void CTimeProfiler::Draw()
 
 	int y=0;
 	for(pi=profile.begin();pi!=profile.end();++pi,y++)
-		font->glPrintAt(0.655f, 0.960-y*0.024f, 1.0f, "%20s %6.2fs %5.2f%%",pi->first.c_str(),((float)pi->second.total)/1000.,pi->second.percent*100);
+		font->glPrintAt(0.655f, 0.960f-y*0.024f, 1.0f, "%20s %6.2fs %5.2f%%",pi->first.c_str(),((float)pi->second.total)/1000.f,pi->second.percent*100);
 
 	glTranslatef(0.655f,0.965f,0);
 	glScalef(0.015f,0.02f,0.02f);
@@ -88,8 +88,8 @@ void CTimeProfiler::Draw()
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 		for(int a=0;a<128;++a){
-			float p=((float)pi->second.frames[a])/1000.*30;
-			va->AddVertexT(float3(0.6+a*0.003,0.02+p*0.4,0),0,0);
+			float p=((float)pi->second.frames[a])/1000.f*30;
+			va->AddVertexT(float3(0.6f+a*0.003f,0.02f+p*0.4f,0),0,0);
 		}
 		glColor3f(pi->second.color.x,pi->second.color.y,pi->second.color.z);
 		va->DrawArrayT(GL_LINE_STRIP);
@@ -108,7 +108,7 @@ void CTimeProfiler::Update()
 		lastBigUpdate=gu->gameTime;
 		map<string,TimeRecord>::iterator pi;
 		for(pi=profile.begin();pi!=profile.end();++pi){
-			pi->second.percent=((float)pi->second.current)/1000.;
+			pi->second.percent=((float)pi->second.current)/1000.f;
 			pi->second.current=0;
 
 		}
@@ -164,7 +164,7 @@ bool CTimeProfiler::IsAbove(int x, int y)
 	float mx=float(x)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
-	if(!gu->drawdebug || mx<0.65 || mx>0.99 || my<0.99f-profile.size()*0.024-0.01 || my>0.99)
+	if(!gu->drawdebug || mx<0.65f || mx>0.99f || my<0.99f-profile.size()*0.024f-0.01f || my>0.99f)
 		return false;
 
 	return true;
@@ -175,10 +175,10 @@ bool CTimeProfiler::MousePress(int x, int y, int button)
 	float mx=float(x)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
-	if(!gu->drawdebug || mx<0.65 || mx>0.99 || my<0.99f-profile.size()*0.024-0.01 || my>0.99)
+	if(!gu->drawdebug || mx<0.65f || mx>0.99f || my<0.99f-profile.size()*0.024f-0.01f || my>0.99f)
 		return false;
 
-	int num=(int) ((0.99-my)/0.024);
+	int num=(int) ((0.99f-my)/0.024f);
 
 	int a=0;
 	map<string,TimeRecord>::iterator pi;

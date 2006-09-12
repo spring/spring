@@ -21,8 +21,8 @@ CSkyBox::CSkyBox(std::string texture)
 	tex = btex.CreateTexture(0);
 
 	readmap->mapDefParser.GetDef(fogStart,"0.1","MAP\\ATMOSPHERE\\FogStart");
-	if (fogStart>0.99) gu->drawFog = false;
-	skyColor=readmap->mapDefParser.GetFloat3(float3(0.1,0.15,0.7),"MAP\\ATMOSPHERE\\SkyColor");
+	if (fogStart>0.99f) gu->drawFog = false;
+	skyColor=readmap->mapDefParser.GetFloat3(float3(0.1f,0.15f,0.7f),"MAP\\ATMOSPHERE\\SkyColor");
 	sunColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\SunColor");
 	cloudColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\CloudColor");
 }

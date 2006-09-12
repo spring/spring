@@ -353,7 +353,7 @@ void CGuiHandler::DrawButtons()
 		glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
 		glBegin(GL_QUADS);
 
-		GLfloat fx = 0;//-.2f*(1-fadein/100.0)+.2f;
+		GLfloat fx = 0;//-.2f*(1-fadein/100.0f)+.2f;
 		glVertex2f(buttonBox.x1-fx, buttonBox.y1);
 		glVertex2f(buttonBox.x1-fx, buttonBox.y2);
 		glVertex2f(buttonBox.x2-fx, buttonBox.y2);
@@ -382,11 +382,11 @@ void CGuiHandler::DrawButtons()
 			glBegin(GL_QUADS);
 
 			if(mouse->buttons[SDL_BUTTON_LEFT].pressed)
-				glColor4f(0.5,0,0,0.2f);
+				glColor4f(0.5f,0,0,0.2f);
 			else if (nr == inCommand)
-				glColor4f(0.5,0,0,0.8f);
+				glColor4f(0.5f,0,0,0.8f);
 			else
-				glColor4f(0,0,0.5,0.2f);
+				glColor4f(0,0,0.5f,0.2f);
 
 			glVertex2f(x1,y1);
 			glVertex2f(x2,y1);
@@ -420,9 +420,9 @@ void CGuiHandler::DrawButtons()
 				string toPrint=commands[nr].params[0];
 
 				if (toPrint.length() > 6)
-					scalef = toPrint.length()/4.0;
+					scalef = toPrint.length()/4.0f;
 				else
-					scalef = 6.0/4.0;
+					scalef = 6.0f/4.0f;
 
 				glTranslatef(x1+.004f,y1-.039f,0.0f);
 				glScalef(0.02f/scalef,0.03f/scalef,0.1f);
@@ -517,7 +517,7 @@ void CGuiHandler::DrawButtons()
 			float fTxtLen = font->CalcTextWidth(toPrint.c_str());
 			scalef = 1.f;
 			float fIconWidth = 2.5f;
-			float fIconHeight = 2.0;
+			float fIconHeight = 2.0f;
 			if (fTxtLen>fIconWidth)
 			{
 				scalef = fTxtLen/fIconWidth;
@@ -557,9 +557,9 @@ void CGuiHandler::DrawButtons()
 
 		glColor4f(1,1,1,0.8f);
 		if(selectedUnits.selectedGroup!=-1){
-			font->glPrintAt(0.02,0.13,0.6,"Group %i selected ",selectedUnits.selectedGroup);
+			font->glPrintAt(0.02f,0.13f,0.6f,"Group %i selected ",selectedUnits.selectedGroup);
 		} else {
-			font->glPrintAt(0.02,0.13,0.6,"Selected units %i",selectedUnits.selectedUnits.size());
+			font->glPrintAt(0.02f,0.13f,0.6f,"Selected units %i",selectedUnits.selectedUnits.size());
 		}
 	}
 }
@@ -772,10 +772,10 @@ int CGuiHandler::GetDefaultCommand(int x,int y)
 
 	CUnit* unit=0;
 	CFeature* feature=0;
-	float dist=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
-	float dist2=helper->GuiTraceRayFeature(camera->pos,mouse->dir,gu->viewRange*1.4,feature);
+	float dist=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
+	float dist2=helper->GuiTraceRayFeature(camera->pos,mouse->dir,gu->viewRange*1.4f,feature);
 
-	if(dist>gu->viewRange*1.4-100 && dist2>gu->viewRange*1.4-100 && unit==0){
+	if(dist>gu->viewRange*1.4f-100 && dist2>gu->viewRange*1.4f-100 && unit==0){
 		return -1;
 	}
 
@@ -825,12 +825,12 @@ void CGuiHandler::DrawMapStuff(void)
 				if(commands[cc].params.size()==1)
 					maxRadius=atof(commands[cc].params[0].c_str());
 				if(mouse->buttons[button].movement>4){
-					float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4);
+					float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
 					if(dist<0){
 						break;
 					}
 					float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-					dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+					dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 					if(dist<0){
 						break;
 					}
@@ -852,7 +852,7 @@ void CGuiHandler::DrawMapStuff(void)
 	
 	// draw buildings we are about to build
 	if(inCommand>=0 && inCommand<commands.size() && commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
-		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 		if(dist>0){
 			string s=commands[guihandler->inCommand].name;
 			UnitDef *unitdef = unitDefHandler->GetUnitByName(s);
@@ -861,7 +861,7 @@ void CGuiHandler::DrawMapStuff(void)
 				float3 pos=camera->pos+mouse->dir*dist;
 				std::vector<BuildInfo> buildPos;
 				if(keys[SDLK_LSHIFT] && mouse->buttons[SDL_BUTTON_LEFT].pressed){
-					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
+					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
 					float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
 					buildPos=GetBuildPos(BuildInfo(unitdef, pos2,buildFacing), BuildInfo(unitdef,pos, buildFacing));
 				} else {
@@ -886,9 +886,9 @@ void CGuiHandler::DrawMapStuff(void)
 						}
 					}
 					if(uh->ShowUnitBuildSquare(*bpi, cv))
-						glColor4f(0.7,1,1,0.4);
+						glColor4f(0.7f,1,1,0.4f);
 					else
-						glColor4f(1,0.5,0.5,0.4);
+						glColor4f(1,0.5f,0.5f,0.4f);
 
 					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
 
@@ -929,7 +929,7 @@ void CGuiHandler::DrawMapStuff(void)
 							glColor4fv(cmdColors.rangeBuild);
 							glBegin(GL_LINE_STRIP);
 							for(int a = 0; a <= 40; ++a){
-								const float radians = a * (2.0 * PI) / 40.0f;
+								const float radians = a * (2.0f * PI) / 40.0f;
 								float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
 								pos += buildpos;
 								pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
@@ -946,7 +946,7 @@ void CGuiHandler::DrawMapStuff(void)
 	// draw the ranges for the unit that is being pointed at
 	if(keys[SDLK_LSHIFT]){
 		CUnit* unit=0;
-		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,false);
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
 			if(unit->maxRange>0){
 				glColor4fv(cmdColors.rangeAttack);
@@ -1005,7 +1005,7 @@ void CGuiHandler::DrawMapStuff(void)
 					glColor4fv(cmdColors.rangeBuild);
 					glBegin(GL_LINE_STRIP);
 					for(int a = 0; a <= 40; ++a){
-						const float radians = a * (2.0 * PI) / 40.0f;
+						const float radians = a * (2.0f * PI) / 40.0f;
 						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
 						pos += unit->pos;
 						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
@@ -1048,17 +1048,17 @@ void CGuiHandler::DrawMapStuff(void)
 void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 {
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5,1,0.5,0.5);
+	glColor4f(0.5f,1,0.5f,0.5f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	CMouseHandler::ButtonPress& bp=mouse->buttons[button];
 	if(bp.movement<5)
 		return;
-	float dist=ground->LineGroundCol(bp.camPos,bp.camPos+bp.dir*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(bp.camPos,bp.camPos+bp.dir*gu->viewRange*1.4f);
 	if(dist<0)
 		return;
 	float3 pos1=bp.camPos+bp.dir*dist;
-	dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+	dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 	if(dist<0)
 		return;
 	float3 pos2=camera->pos+mouse->dir*dist;
@@ -1507,7 +1507,7 @@ std::string CGuiHandler::GetBuildTooltip() const
 void CGuiHandler::DrawArea(float3 pos, float radius)
 {
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5,1,0.5,0.5);
+	glColor4f(0.5f,1,0.5f,0.5f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1567,7 +1567,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_MAP:{
-			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -1581,7 +1581,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_BUILDING:{
-			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+			float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -1596,7 +1596,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			std::vector<BuildInfo> buildPos;
 			BuildInfo bi(unitdef, pos, buildFacing);
 			if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
-				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4);
+				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
 				float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
 				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi);
 			} else 
@@ -1625,7 +1625,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			Command c;
 
 			c.id=commands[tempInCommand].id;
-			float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
+			float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
 			if (!unit){
 				return defaultRet;
 			}
@@ -1639,8 +1639,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.id=commands[tempInCommand].id;
 
 			CUnit* unit=0;
-			float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
-			if(dist2>gu->viewRange*1.4-100){
+			float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
+			if(dist2>gu->viewRange*1.4f-100){
 				return defaultRet;
 			}
 
@@ -1658,7 +1658,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		case CMDTYPE_ICON_FRONT:{
 			Command c;
 
-			float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4);
+			float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -1669,7 +1669,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(pos.z);
 
 			if(mouse->buttons[button].movement>30){		//only create the front if the mouse has moved enough
-				dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+				dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
@@ -1700,10 +1700,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(mouse->buttons[button].movement<4){
 				CUnit* unit=0;
 				CFeature* feature=0;
-				float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
-				float dist3=helper->GuiTraceRayFeature(camera->pos,mouse->dir,gu->viewRange*1.4,feature);
+				float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
+				float dist3=helper->GuiTraceRayFeature(camera->pos,mouse->dir,gu->viewRange*1.4f,feature);
 
-				if(dist2>gu->viewRange*1.4-100 && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>8900)){
+				if(dist2>gu->viewRange*1.4f-100 && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>8900)){
 					return defaultRet;
 				}
 
@@ -1719,7 +1719,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					c.params.push_back(0);//zero radius
 				}
 			} else {	//created area
-				float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4);
+				float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
@@ -1727,7 +1727,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
-				dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+				dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
@@ -1759,7 +1759,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	if(keys[SDLK_LSHIFT] && keys[SDLK_LCTRL])
 	{
 		CUnit* unit=0;
-		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4,unit,20,true);
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
 		if(unit){
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
@@ -1857,13 +1857,13 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		}
 	} else if(keys[SDLK_LALT]){			//build a rectangle
 		float xsize=startInfo.GetXSize()*8+buildSpacing*16;
-		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4)/xsize);
+		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4f)/xsize);
 		int xstep=(int)xsize;
 		if(start.x>end.x)
 			xstep*=-1;
 
 		float zsize=startInfo.GetYSize()*8+buildSpacing*16;
-		int znum=(int)((fabs(end.z-start.z)+zsize*1.4)/zsize);
+		int znum=(int)((fabs(end.z-start.z)+zsize*1.4f)/zsize);
 		int zstep=(int)zsize;
 		if(start.z>end.z)
 			zstep*=-1;
@@ -1895,7 +1895,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			dir/=fabs(dir.x);
 			if(keys[SDLK_LCTRL])
 				dir.z=0;
-			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4;p+=dir*step) {
+			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4f;p+=dir*step) {
 				bi.pos=p;
 				ret.push_back(bi);
 			}
@@ -1910,7 +1910,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			dir/=fabs(dir.z);
 			if(keys[SDLK_LCTRL])
 				dir.x=0;
-			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4;p+=dir*step) {
+			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4f;p+=dir*step) {
 				bi.pos=p;
 				ret.push_back(bi);
 			}

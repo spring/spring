@@ -92,7 +92,7 @@ static void Box(float x1, float y1, float w1, float h1)
 		glVertex3f(x1+w1,y1,0);
 	glEnd();
 	
-	glColor4f(1.0,1.0,1.0,GUI_TRANS);
+	glColor4f(1.0f,1.0f,1.0f,GUI_TRANS);
 	glBegin(GL_LINE_LOOP);
 		glVertex3f(x1,y1,0);
 		glVertex3f(x1,y1+h1,0);
@@ -111,7 +111,7 @@ void GUIscrollbar::PrivateDraw()
 	glColor4f(1, 1, 1, 1);
 	Box(2, knobY+1, 12, 9);
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1.0,1.0,1.0,1.0f);
+	glColor4f(1.0f,1.0f,1.0f,1.0f);
 }
 
 bool GUIscrollbar::MouseDownAction(int x, int y, int button)
@@ -139,7 +139,7 @@ bool GUIscrollbar::MouseMoveAction(int x1, int y1, int xrel, int yrel, int butto
 			position=min(position+1, maximum);
 		else
 		{
-			position=(int)(((float)(y1-KNOB_SIZE)/(h-(KNOB_SIZE*2)))*maximum+0.5);
+			position=(int)(((float)(y1-KNOB_SIZE)/(h-(KNOB_SIZE*2)))*maximum+0.5f);
 		}
 
 		click(position);

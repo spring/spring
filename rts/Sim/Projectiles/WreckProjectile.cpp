@@ -38,11 +38,11 @@ void CWreckProjectile::Update()
 		speed.y*=0.998f;
 	pos+=speed;
 
-	if(!(gs->frameNum&(ph->particleSaturation<0.5?1:3))){
-		CSmokeProjectile* hp=new CSmokeProjectile(pos,ZeroVector,50,4,0.3,owner,0.5);
-		hp->size+=0.1;
+	if(!(gs->frameNum&(ph->particleSaturation<0.5f?1:3))){
+		CSmokeProjectile* hp=new CSmokeProjectile(pos,ZeroVector,50,4,0.3f,owner,0.5f);
+		hp->size+=0.1f;
 	}
-	if(pos.y+0.3<ground->GetApproximateHeight(pos.x,pos.z))
+	if(pos.y+0.3f<ground->GetApproximateHeight(pos.x,pos.z))
 		deleteMe=true;
 }
 
@@ -50,9 +50,9 @@ void CWreckProjectile::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
-	col[0]=(unsigned char) (0.15*200);
-	col[1]=(unsigned char) (0.1*200);
-	col[2]=(unsigned char) (0.05*200);
+	col[0]=(unsigned char) (0.15f*200);
+	col[1]=(unsigned char) (0.1f*200);
+	col[2]=(unsigned char) (0.05f*200);
 	col[3]=200;
 
 	float3 interPos=pos+speed*gu->timeOffset;

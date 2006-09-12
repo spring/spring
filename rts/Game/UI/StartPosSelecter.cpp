@@ -13,10 +13,10 @@
 
 CStartPosSelecter::CStartPosSelecter(void)
 {
-	readyBox.x1=0.71;
-	readyBox.y1=0.72;
-	readyBox.x2=0.81;
-	readyBox.y2=0.76;
+	readyBox.x1=0.71f;
+	readyBox.y1=0.72f;
+	readyBox.x2=0.81f;
+	readyBox.y2=0.76f;
 }
 
 CStartPosSelecter::~CStartPosSelecter(void)
@@ -37,7 +37,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 		delete this;
 		return false;
 	}
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 	if(dist<0)
 		return true;
 	float3 pos=camera->pos+mouse->dir*dist;
@@ -80,7 +80,7 @@ void CStartPosSelecter::Draw()
 
 	camera->Update(true);
 
-	glColor4f(0.2,0.8,0.2,0.5);
+	glColor4f(0.2f,0.8f,0.2f,0.5f);
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 	glBegin(GL_QUADS);
@@ -151,6 +151,6 @@ void CStartPosSelecter::Draw()
 		DrawBox(readyBox);
 	}
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,1,0.8);
-	font->glPrintAt(readyBox.x1+0.025,readyBox.y1+0.005,1,"Ready");
+	glColor4f(1,1,1,0.8f);
+	font->glPrintAt(readyBox.x1+0.025f,readyBox.y1+0.005f,1,"Ready");
 }

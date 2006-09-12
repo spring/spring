@@ -214,9 +214,9 @@ void GUIfont::PrintColor(const string& text)
 		Print(temp.substr(0, lf));
 		temp=temp.substr(lf, string::npos);
 
-		float r=((unsigned char)temp[1])/255.0;
-		float g=((unsigned char)temp[2])/255.0;
-		float b=((unsigned char)temp[3])/255.0;
+		float r=((unsigned char)temp[1])/255.0f;
+		float g=((unsigned char)temp[2])/255.0f;
+		float b=((unsigned char)temp[3])/255.0f;
 
 		glColor3f(r, g, b);
 		temp=temp.substr(4, string::npos);

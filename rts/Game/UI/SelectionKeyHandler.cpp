@@ -318,7 +318,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 		} else if(s=="RelativeHealth"){
 			ReadDelimiter(selectString);
-			float minHealth=atof(ReadToken(selectString).c_str())*0.01;//convert from percent
+			float minHealth=atof(ReadToken(selectString).c_str())*0.01f;//convert from percent
 
 			list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
@@ -448,7 +448,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		selectedUnits.AddUnit(sel);
 		mouse->inStateTransit=true;
-		mouse->transitSpeed=0.7;
+		mouse->transitSpeed=0.7f;
 		if(mouse->currentCamController!=mouse->camControllers[0]){
 			mouse->currentCamController->SetPos(sel->pos);
 		} else {	//fps camera
@@ -486,7 +486,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		selectNumber+=num;
 	} else if(s=="SelectPart"){
 		ReadDelimiter(selectString);
-		float part=atof(ReadToken(selectString).c_str())*0.01;//convert from percent
+		float part=atof(ReadToken(selectString).c_str())*0.01f;//convert from percent
 		int num=(int)(selection.size()*part);
 
 		if(selection.empty())

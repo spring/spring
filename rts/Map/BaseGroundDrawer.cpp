@@ -172,7 +172,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 					//todo: fix for new gui
 					if(guihandler->inCommand>0 && guihandler->inCommand<guihandler->commands.size() && guihandler->commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
 						if(!loshandler->InLos(float3(x*16+8,0,y*16+8),gu->myAllyTeam)){
-							m=0.25;
+							m=0.25f;
 						}else{
 							UnitDef *unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
 
@@ -182,7 +182,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							else
 								m=0;
 							if(f && m)
-								m=0.5;
+								m=0.5f;
 						}
 
 					} else {

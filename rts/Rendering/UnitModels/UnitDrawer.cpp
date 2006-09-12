@@ -55,8 +55,8 @@ CUnitDrawer::CUnitDrawer(void)
 
 	whiteTex=white.CreateTexture(false);
 
-	unitAmbientColor=readmap->mapDefParser.GetFloat3(float3(0.4,0.4,0.4),"MAP\\LIGHT\\UnitAmbientColor");
-	unitSunColor=readmap->mapDefParser.GetFloat3(float3(0.7,0.7,0.7),"MAP\\LIGHT\\UnitSunColor");
+	unitAmbientColor=readmap->mapDefParser.GetFloat3(float3(0.4f,0.4f,0.4f),"MAP\\LIGHT\\UnitAmbientColor");
+	unitSunColor=readmap->mapDefParser.GetFloat3(float3(0.7f,0.7f,0.7f),"MAP\\LIGHT\\UnitSunColor");
 
 	float3 specularSunColor=readmap->mapDefParser.GetFloat3(unitSunColor,"MAP\\LIGHT\\SpecularSunColor");
 	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
@@ -265,7 +265,7 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 	glEnable(GL_ALPHA_TEST);
 	glBindTexture(GL_TEXTURE_2D,fartextureHandler->farTexture);
 	camNorm=camera->forward;
-	camNorm.y=-0.1;
+	camNorm.y=-0.1f;
 	camNorm.Normalize();
 	glColor3f(1,1,1);
 	glEnable(GL_FOG);
@@ -334,20 +334,20 @@ void CUnitDrawer::DrawShadowPass(void)
 
 inline void CUnitDrawer::DrawFar(CUnit *unit)
 {
-	float3 interPos=unit->pos+unit->speed*gu->timeOffset+UpVector*unit->model->height*0.5;
+	float3 interPos=unit->pos+unit->speed*gu->timeOffset+UpVector*unit->model->height*0.5f;
 	int snurr=-unit->heading+GetHeadingFromVector(camera->pos.x-unit->pos.x,camera->pos.z-unit->pos.z)+(0xffff>>4);
 	if(snurr<0)
 		snurr+=0xffff;
 	if(snurr>0xffff)
 		snurr-=0xffff;
 	snurr=snurr>>13;
-	float tx=(unit->model->farTextureNum%8)*(1.0/8.0)+snurr*(1.0/64);
-	float ty=(unit->model->farTextureNum/8)*(1.0/64.0);
+	float tx=(unit->model->farTextureNum%8)*(1.0f/8.0f)+snurr*(1.0f/64);
+	float ty=(unit->model->farTextureNum/8)*(1.0f/64.0f);
 	float offset=0;
 	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)+camera->right*unit->radius,tx,ty,camNorm);
-	va->AddVertexTN(interPos+(camera->up*unit->radius*1.4f+offset)+camera->right*unit->radius,tx,ty+(1.0/64.0),camNorm);
-	va->AddVertexTN(interPos+(camera->up*unit->radius*1.4f+offset)-camera->right*unit->radius,tx+(1.0/64.0),ty+(1.0/64.0),camNorm);
-	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)-camera->right*unit->radius,tx+(1.0/64.0),ty,camNorm);
+	va->AddVertexTN(interPos+(camera->up*unit->radius*1.4f+offset)+camera->right*unit->radius,tx,ty+(1.0f/64.0f),camNorm);
+	va->AddVertexTN(interPos+(camera->up*unit->radius*1.4f+offset)-camera->right*unit->radius,tx+(1.0f/64.0f),ty+(1.0f/64.0f),camNorm);
+	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)-camera->right*unit->radius,tx+(1.0f/64.0f),ty,camNorm);
 }
 
 void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
@@ -374,7 +374,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	if(asRadarBlip)
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
 	float dist=sqrt((pos-camera->pos).Length());
-	float scale=0.4*icon->size*dist;
+	float scale=0.4f*icon->size*dist;
 	if(icon->radiusAdjust && !asRadarBlip)
 		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
 
@@ -440,7 +440,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER,0.1f);
-	glColor4f(1,1,1,0.3);
+	glColor4f(1,1,1,0.3f);
 	texturehandler->SetTATexture();
 	glDepthMask(0);
 
@@ -462,7 +462,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 
 			float xsize=bi.GetXSize()*4;
 			float ysize=bi.GetYSize()*4;
-			glColor4f(0.2,1,0.2,0.7);
+			glColor4f(0.2f,1,0.2f,0.7f);
 			glDisable(GL_TEXTURE_2D);
 			glBegin(GL_LINE_STRIP);
 			glVertexf3(pos+float3(xsize,1,ysize));
@@ -471,20 +471,20 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			glVertexf3(pos+float3(xsize,1,-ysize));
 			glVertexf3(pos+float3(xsize,1,ysize));
 			glEnd();
-			glColor4f(1,1,1,0.3);
+			glColor4f(1,1,1,0.3f);
 			glEnable(GL_TEXTURE_2D);
 		}
 	}
 
 	for(vector<CUnit*>::iterator ui=drawCloaked.begin();ui!=drawCloaked.end();++ui){
 		if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
-			glColor4f(1,1,1,0.4);
+			glColor4f(1,1,1,0.4f);
 			(*ui)->Draw();
 		} else {
 			if((*ui)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
-				glColor4f(0.9,0.9,0.9,0.5);
+				glColor4f(0.9f,0.9f,0.9f,0.5f);
 			else
-				glColor4f(0.6,0.6,0.6,0.4);
+				glColor4f(0.6f,0.6f,0.6f,0.4f);
 			glPushMatrix();
 			glTranslatef3((*ui)->pos);
 			(*ui)->model->DrawStatic();
@@ -492,7 +492,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 		}
 	}
 	//go through the dead but still ghosted buildings
-	glColor4f(0.6,0.6,0.6,0.4);
+	glColor4f(0.6f,0.6f,0.6f,0.4f);
 	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
 		if(loshandler->InLos((*gbi)->pos,gu->myAllyTeam)){
 			if((*gbi)->decal)
@@ -617,7 +617,7 @@ void CUnitDrawer::SetS3OTeamColour(int team)
 {
 	if(advShading){
 		unsigned char* col=gs->Team(team)->color;
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1.f/255.f),col[1]*(1.f/255.f),col[2]*(1.f/255.f),1);
 	} else {
 		SetBasicS3OTeamColour(team);
 	}
@@ -626,7 +626,7 @@ void CUnitDrawer::SetS3OTeamColour(int team)
 void CUnitDrawer::SetBasicS3OTeamColour(int team)
 {
 	unsigned char* col=gs->Team(team)->color;
-	float texConstant[]={col[0]*(1./255.),col[1]*(1./255.),col[2]*(1./255.),1};
+	float texConstant[]={col[0]*(1.f/255.f),col[1]*(1.f/255.f),col[2]*(1.f/255.f),1};
 	glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant);
 }
 
@@ -941,12 +941,12 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 	unsigned char* buf=new unsigned char[size*size*4];
 	for(int y=0;y<size;++y){
 		for(int x=0;x<size;++x){
-			float3 vec=baseDir+(xdif*(x+0.5))/size+(ydif*(y+0.5))/size;
+			float3 vec=baseDir+(xdif*(x+0.5f))/size+(ydif*(y+0.5f))/size;
 			vec.Normalize();
 			float dot=vec.dot(sundir);
 			if(dot<0)
 				dot=0;
-			float exp=min(1.,pow(dot,exponent)+pow(dot,3)*0.25);
+			float exp=min(1.f,pow(dot,exponent)+pow(dot,3)*0.25f);
 			buf[(y*size+x)*4+0]=(unsigned char)(suncolor.x*exp*255);
 			buf[(y*size+x)*4+1]=(unsigned char)(suncolor.y*exp*255);
 			buf[(y*size+x)*4+2]=(unsigned char)(suncolor.z*exp*255);

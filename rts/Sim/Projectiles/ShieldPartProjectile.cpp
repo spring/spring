@@ -20,19 +20,19 @@ CShieldPartProjectile::CShieldPartProjectile(const float3& centerPos,int xpart,i
 	AtlasedTexture* tex= texture;
 
 	for(int y=0;y<5;++y){
-		float yp=(y+ypart)/16.0*PI-PI/2;
+		float yp=(y+ypart)/16.0f*PI-PI/2;
 		for(int x=0;x<5;++x){
-			float xp=(x+xpart)/32.0*2*PI;
+			float xp=(x+xpart)/32.0f*2*PI;
 			vectors[y*5+x]=float3(sin(xp)*cos(yp),sin(yp),cos(xp)*cos(yp));
-			texCoords[y*5+x].x=(vectors[y*5+x].x*(2-fabs(vectors[y*5+x].y)))*((tex->xend-tex->xstart)*0.25)+((tex->xstart+tex->xend)*0.5);
-			texCoords[y*5+x].y=(vectors[y*5+x].z*(2-fabs(vectors[y*5+x].y)))*((tex->yend-tex->ystart)*0.25)+((tex->ystart+tex->yend)*0.5);
+			texCoords[y*5+x].x=(vectors[y*5+x].x*(2-fabs(vectors[y*5+x].y)))*((tex->xend-tex->xstart)*0.25f)+((tex->xstart+tex->xend)*0.5f);
+			texCoords[y*5+x].y=(vectors[y*5+x].z*(2-fabs(vectors[y*5+x].y)))*((tex->yend-tex->ystart)*0.25f)+((tex->ystart+tex->yend)*0.5f);
 		}
 	}
 	pos=centerPos+vectors[12]*sphereSize;
 
 	alwaysVisible=false;
 	useAirLos=true;
-	drawRadius=sphereSize*0.4;
+	drawRadius=sphereSize*0.4f;
 
 	ph->numPerlinProjectiles++;
 }

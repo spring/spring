@@ -59,13 +59,13 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 
 	if(!onlyForward){		//skip ground col testing for aircrafts
 		float g=ground->LineGroundCol(weaponPos,pos);
-		if(g>0 && g<length*0.9)
+		if(g>0 && g<length*0.9f)
 			return false;
 	}
 	if(helper->LineFeatureCol(weaponPos,dir,length))
 		return false;
 
-	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7),owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
 		return false;
 	return true;
 }
@@ -98,13 +98,13 @@ void CBeamLaser::Fire(void)
 			dir=oldDir;
 		}
 	}
-	dir+=(salvoError)*(1-owner->limExperience*0.7);
+	dir+=(salvoError)*(1-owner->limExperience*0.7f);
 	dir.Normalize();
 
-	float rangeMod=1.3;
+	float rangeMod=1.3f;
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl)
-		rangeMod=0.95;
+		rangeMod=0.95f;
 #endif
 	float maxLength=range*rangeMod;
 	float curLength=0;
@@ -131,8 +131,8 @@ void CBeamLaser::Fire(void)
 		hitPos=curPos+dir*length;
 
 		float baseAlpha=weaponDef->intensity*255;
-		float startAlpha=(1-curLength/(range*1.3))*baseAlpha;
-		float endAlpha=(1-(curLength+length)/(range*1.3))*baseAlpha;
+		float startAlpha=(1-curLength/(range*1.3f))*baseAlpha;
+		float endAlpha=(1-(curLength+length)/(range*1.3f))*baseAlpha;
 
 		if(weaponDef->largeBeamLaser)
 			new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner,weaponDef);

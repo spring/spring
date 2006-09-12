@@ -23,9 +23,9 @@ static char rcsid[] = "$NetBSD: e_atanhf.c,v 1.4f 1995/05/10 20:44:56 jtc Exp $"
 
 namespace streflop_libm {
 #ifdef __STDC__
-static const Simple one = 1.0f, huge = 1e30;
+static const Simple one = 1.0f, huge = 1e30f;
 #else
-static Simple one = 1.0f, huge = 1e30;
+static Simple one = 1.0f, huge = 1e30f;
 #endif
 
 #ifdef __STDC__

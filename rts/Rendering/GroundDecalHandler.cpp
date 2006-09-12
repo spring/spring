@@ -100,7 +100,7 @@ void CGroundDecalHandler::Draw(void)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER,0.01);
+	glAlphaFunc(GL_GREATER,0.01f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-10,-200);
 	glDepthMask(0);
@@ -114,7 +114,7 @@ void CGroundDecalHandler::Draw(void)
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
-		SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
+		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_INTERPOLATE_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
@@ -133,8 +133,8 @@ void CGroundDecalHandler::Draw(void)
 		glEnable( GL_FRAGMENT_PROGRAM_ARB );
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, decalVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,1);
-		float3 ac=readmap->ambientColor*(210.0/255.0);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,1);
+		float3 ac=readmap->ambientColor*(210.0f/255.0f);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, ac.x,ac.y,ac.z,1);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,readmap->shadowDensity);
 	}
@@ -161,16 +161,16 @@ void CGroundDecalHandler::Draw(void)
 				{
 					color[3]=int(decal->alpha*255);
 					float* heightmap=readmap->GetHeightmap();
-					float xts=1.0/decal->xsize;
-					float yts=1.0/decal->ysize;
+					float xts=1.0f/decal->xsize;
+					float yts=1.0f/decal->ysize;
 					for(int x=0;x<decal->xsize;++x){
 						int x2=decal->posx+x;
 						for(int z=0;z<decal->ysize;++z){
 							int z2=decal->posy+z;
-							va->AddVertexTC(float3(x2*8,heightmap[(z2)*(gs->mapx+1)+x2]+0.2,z2*8),x*xts,z*yts,color);
-							va->AddVertexTC(float3(x2*8+8,heightmap[(z2)*(gs->mapx+1)+x2+1]+0.2,z2*8),(x+1)*xts,z*yts,color);
-							va->AddVertexTC(float3(x2*8+8,heightmap[(z2+1)*(gs->mapx+1)+x2+1]+0.2,z2*8+8),(x+1)*xts,(z+1)*yts,color);
-							va->AddVertexTC(float3(x2*8,heightmap[(z2+1)*(gs->mapx+1)+x2]+0.2,z2*8+8),x*xts,(z+1)*yts,color);
+							va->AddVertexTC(float3(x2*8,heightmap[(z2)*(gs->mapx+1)+x2]+0.2f,z2*8),x*xts,z*yts,color);
+							va->AddVertexTC(float3(x2*8+8,heightmap[(z2)*(gs->mapx+1)+x2+1]+0.2f,z2*8),(x+1)*xts,z*yts,color);
+							va->AddVertexTC(float3(x2*8+8,heightmap[(z2+1)*(gs->mapx+1)+x2+1]+0.2f,z2*8+8),(x+1)*xts,(z+1)*yts,color);
+							va->AddVertexTC(float3(x2*8,heightmap[(z2+1)*(gs->mapx+1)+x2]+0.2f,z2*8+8),x*xts,(z+1)*yts,color);
 						}
 					}
 				}
@@ -211,7 +211,7 @@ void CGroundDecalHandler::Draw(void)
 					(*tti)->tracks.erase(ti++);
 					continue;
 				}
-				if(camera->InView((track->parts.front().pos1+track->parts.back().pos1)*0.5,track->parts.front().pos1.distance(track->parts.back().pos1)+500)){
+				if(camera->InView((track->parts.front().pos1+track->parts.back().pos1)*0.5f,track->parts.front().pos1.distance(track->parts.back().pos1)+500)){
 					list<TrackPart>::iterator ppi=track->parts.begin();
 					color2[3]=track->trackAlpha-(int)((gs->frameNum-ppi->creationTime)*track->alphaFalloff);
 
@@ -252,7 +252,7 @@ void CGroundDecalHandler::Draw(void)
 			float ty=scar->texOffsetY;
 
 			if(scar->creationTime+10>gs->frameNum)
-				color[3]=(int)(scar->startAlpha*(gs->frameNum-scar->creationTime)*0.1);
+				color[3]=(int)(scar->startAlpha*(gs->frameNum-scar->creationTime)*0.1f);
 			else
 				color[3]=(int)(scar->startAlpha-(gs->frameNum-scar->creationTime)*scar->alphaFalloff);
 
@@ -273,10 +273,10 @@ void CGroundDecalHandler::Draw(void)
 					float tz1=min(0.5f,(pos.z-pz1)/(radius*4.0f)+0.25f);
 					float tz2=max(0.0f,(pos.z-pz2)/(radius*4.0f)+0.25f);
 
-					va->AddVertexTC(float3(px1,heightmap[(z*2)*(gs->mapx+1)+x*2]+0.5,pz1),tx1+tx,tz1+ty,color);
-					va->AddVertexTC(float3(px2,heightmap[(z*2)*(gs->mapx+1)+x*2+2]+0.5,pz1),tx2+tx,tz1+ty,color);
-					va->AddVertexTC(float3(px2,heightmap[(z*2+2)*(gs->mapx+1)+x*2+2]+0.5,pz2),tx2+tx,tz2+ty,color);
-					va->AddVertexTC(float3(px1,heightmap[(z*2+2)*(gs->mapx+1)+x*2]+0.5,pz2),tx1+tx,tz2+ty,color);
+					va->AddVertexTC(float3(px1,heightmap[(z*2)*(gs->mapx+1)+x*2]+0.5f,pz1),tx1+tx,tz1+ty,color);
+					va->AddVertexTC(float3(px2,heightmap[(z*2)*(gs->mapx+1)+x*2+2]+0.5f,pz1),tx2+tx,tz1+ty,color);
+					va->AddVertexTC(float3(px2,heightmap[(z*2+2)*(gs->mapx+1)+x*2+2]+0.5f,pz2),tx2+tx,tz2+ty,color);
+					va->AddVertexTC(float3(px1,heightmap[(z*2+2)*(gs->mapx+1)+x*2]+0.5f,pz2),tx1+tx,tz2+ty,color);
 				}
 			}
 		}
@@ -332,9 +332,9 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 	float3 pos=unit->pos+unit->frontdir*unit->unitDef->trackOffset;
 
 	TrackPart tp;
-	tp.pos1=pos+unit->rightdir*unit->unitDef->trackWidth*0.5;
+	tp.pos1=pos+unit->rightdir*unit->unitDef->trackWidth*0.5f;
 	tp.pos1.y=ground->GetHeight2(tp.pos1.x,tp.pos1.z);
-	tp.pos2=pos-unit->rightdir*unit->unitDef->trackWidth*0.5;
+	tp.pos2=pos-unit->rightdir*unit->unitDef->trackWidth*0.5f;
 	tp.pos2.y=ground->GetHeight2(tp.pos2.x,tp.pos2.z);
 	tp.creationTime=gs->frameNum;
 
@@ -352,7 +352,7 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 		--pi;
 		list<TrackPart>::iterator pi2=pi;
 		--pi;
-		if(((tp.pos1+pi->pos1)*0.5).distance(pi2->pos1)<1){
+		if(((tp.pos1+pi->pos1)*0.5f).distance(pi2->pos1)<1){
 			unit->myTrack->parts.back()=tp;
 			return;
 		}
@@ -435,8 +435,8 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 		damage=radius*30;
 
 	damage*=(radius)/(radius+height);
-	if(radius>damage*0.25)
-		radius=damage*0.25;
+	if(radius>damage*0.25f)
+		radius=damage*0.25f;
 
 	if(damage>400)
 		damage=400+sqrt(damage-399);
@@ -445,7 +445,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 
 	Scar* s=new Scar;
 	s->pos=pos;
-	s->radius=radius*1.4;
+	s->radius=radius*1.4f;
 	s->creationTime=gs->frameNum;
 	s->startAlpha=max(50.f,min(255.f,damage));
 	float lifeTime=decalLevel*(damage)*3;

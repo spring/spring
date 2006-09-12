@@ -86,7 +86,7 @@ protected:
 	int lastTrackUpdate;
 
 	float3 ObstacleAvoidance(float3 desiredDir);
-	float Distance2D(CSolidObject *object1, CSolidObject *object2, float marginal = 0.0l);
+	float Distance2D(CSolidObject *object1, CSolidObject *object2, float marginal = 0.0f);
 
 	void GetNewPath();
 	void GetNextWaypoint();

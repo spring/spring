@@ -8,7 +8,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,const float3& endPos,const float3& color, const float3& color2,CUnit* owner, WeaponDef *weaponDef)
-:	CWeaponProjectile(startPos+(endPos-startPos)*0.5,ZeroVector, owner, 0, ZeroVector, weaponDef,damages,0),//CProjectile((startPos+endPos)*0.5,ZeroVector,owner),
+:	CWeaponProjectile(startPos+(endPos-startPos)*0.5f,ZeroVector, owner, 0, ZeroVector, weaponDef,damages,0),//CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
 	startPos(startPos),
 	endPos(endPos)
 	//thickness(thickness),
@@ -26,7 +26,7 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,cons
 
 	SetRadius(pos.distance(endPos));
 
-	//midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5;
+	//midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
 	corecolstart[0]=(unsigned char)(color2.x*255);
 	corecolstart[1]=(unsigned char)(color2.y*255);
 	corecolstart[2]=(unsigned char)(color2.z*255);
@@ -162,7 +162,7 @@ void CLargeBeamLaserProjectile::Draw(void)
 		va->AddVertexTC(pos2-dir1*coresize,tex.xend,tex.ystart,		corecolstart);
 	}
 
-	//float 	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5;
+	//float 	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
 	va->AddVertexTC(pos2-dir1*size,	weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,    kocolstart);
 	va->AddVertexTC(pos2+dir1*size,	weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,kocolstart);
 	va->AddVertexTC(pos2+dir1*size+dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,kocolstart);
@@ -190,19 +190,19 @@ void CLargeBeamLaserProjectile::Draw(void)
 			kocol[i] = int(kocolstart[i]*(1-starttex));
 		}
 
-		pos1 = startPos-dir*(size*flaresize)*0.02;
+		pos1 = startPos-dir*(size*flaresize)*0.02f;
 
 		va->AddVertexTC(pos1+dir1*muzzlesize,side.xstart,side.ystart,kocol);
 		va->AddVertexTC(pos1+dir1*muzzlesize+dir*muzzlesize,side.xend,side.ystart,kocol);
 		va->AddVertexTC(pos1-dir1*muzzlesize+dir*muzzlesize,side.xend,side.yend,kocol);
 		va->AddVertexTC(pos1-dir1*muzzlesize,side.xstart,side.yend,kocol);
-		muzzlesize = muzzlesize*0.6;
+		muzzlesize = muzzlesize*0.6f;
 		va->AddVertexTC(pos1+dir1*muzzlesize,side.xstart,side.ystart,corcol);
 		va->AddVertexTC(pos1+dir1*muzzlesize+dir*muzzlesize,side.xend,side.ystart,corcol);
 		va->AddVertexTC(pos1-dir1*muzzlesize+dir*muzzlesize,side.xend,side.yend,corcol);
 		va->AddVertexTC(pos1-dir1*muzzlesize,side.xstart,side.yend,corcol);
 
-		starttex+=0.5;
+		starttex+=0.5f;
 		if(starttex>1)
 			starttex=starttex-1;
 		for(int i=0; i<3; i++)
@@ -215,7 +215,7 @@ void CLargeBeamLaserProjectile::Draw(void)
 		va->AddVertexTC(pos1+dir1*muzzlesize+dir*muzzlesize,side.xend,side.ystart,kocol);
 		va->AddVertexTC(pos1-dir1*muzzlesize+dir*muzzlesize,side.xend,side.yend,kocol);
 		va->AddVertexTC(pos1-dir1*muzzlesize,side.xstart,side.yend,kocol);
-		muzzlesize = muzzlesize*0.6;
+		muzzlesize = muzzlesize*0.6f;
 		va->AddVertexTC(pos1+dir1*muzzlesize,side.xstart,side.ystart,corcol);
 		va->AddVertexTC(pos1+dir1*muzzlesize+dir*muzzlesize,side.xend,side.ystart,corcol);
 		va->AddVertexTC(pos1-dir1*muzzlesize+dir*muzzlesize,side.xend,side.yend,corcol);

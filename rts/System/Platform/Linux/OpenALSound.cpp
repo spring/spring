@@ -130,7 +130,7 @@ void COpenALSound::PlaySample(int id,const float3& p,float volume)
 
 void COpenALSound::PlaySample(int id,const float3& p,float volume,bool relative)
 {
-	assert(volume >= 0.0);
+	assert(volume >= 0.0f);
 
 	ALuint source;
 	alGenSources(1,&source);
@@ -191,7 +191,7 @@ void COpenALSound::UpdateListener()
 	}
 	float3 pos = camera->pos * posScale;
 	alListener3f(AL_POSITION, pos.x,pos.y,pos.z);
-	alListener3f(AL_VELOCITY,0.0,0.0,0.0);
+	alListener3f(AL_VELOCITY,0.0f,0.0f,0.0f);
 	ALfloat ListenerOri[] = {camera->forward.x,camera->forward.y,camera->forward.z,camera->up.x,camera->up.y,camera->up.z};
 	alListenerfv(AL_ORIENTATION,ListenerOri);
 	alListenerf(AL_GAIN, globalVolume);

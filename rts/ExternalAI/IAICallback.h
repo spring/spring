@@ -116,7 +116,7 @@ public:
 	virtual float GetUnitMaxHealth(int unitid) = 0;		//the units max health
 	virtual float GetUnitSpeed(int unitid) = 0;				//the units max speed
 	virtual float GetUnitPower(int unitid) = 0;				//sort of the measure of the units overall power
-	virtual float GetUnitExperience(int unitid) = 0;	//how experienced the unit is (0.0-1.0)
+	virtual float GetUnitExperience(int unitid) = 0;	//how experienced the unit is (0.0f-1.0f)
 	virtual float GetUnitMaxRange(int unitid) = 0;		//the furthest any weapon of the unit can fire
 	virtual bool IsUnitActivated (int unitid) = 0; 
 	virtual bool UnitBeingBuilt(int unitid) = 0;			//returns true if the unit is currently being built

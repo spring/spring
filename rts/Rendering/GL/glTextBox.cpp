@@ -36,18 +36,18 @@ CglTextBox::CglTextBox(std::string heading,std::string intext,int autoBreakAt)
 	if(!currentLine.empty())
 		text.push_back(currentLine);
 
-	float xsize=longestLine*(0.03/64)+0.04;
-	float ysize=text.size()*0.03+0.15;
+	float xsize=longestLine*(0.03f/64)+0.04f;
+	float ysize=text.size()*0.03f+0.15f;
 
-	box.x1=0.5-xsize*0.5;
-	box.x2=0.5+xsize*0.5;
-	box.y1=0.5-ysize*0.5;
-	box.y2=0.5+ysize*0.5;
+	box.x1=0.5f-xsize*0.5f;
+	box.x2=0.5f+xsize*0.5f;
+	box.y1=0.5f-ysize*0.5f;
+	box.y2=0.5f+ysize*0.5f;
 
-	okButton.x1=0.45;
-	okButton.x2=0.55;
-	okButton.y1=box.y1+0.02;
-	okButton.y2=box.y1+0.07;
+	okButton.x1=0.45f;
+	okButton.x2=0.55f;
+	okButton.y1=box.y1+0.02f;
+	okButton.y2=box.y1+0.07f;
 }
 
 CglTextBox::~CglTextBox(void)
@@ -59,7 +59,7 @@ void CglTextBox::Draw(void)
 	float mx=float(mouse->lastx)/gu->screenx;
 	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
 
-	glColor4f(0,0,0,0.5);
+	glColor4f(0,0,0,0.5f);
 	glDisable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glBegin(GL_QUADS);
@@ -70,7 +70,7 @@ void CglTextBox::Draw(void)
 	glEnd();
 
 	if(InBox(mx,my,okButton)){
-		glColor4f(0.8,0.3,0.3,0.5);
+		glColor4f(0.8f,0.3f,0.3f,0.5f);
 		glBegin(GL_QUADS);
 		glVertex2f(okButton.x1, okButton.y1);
 		glVertex2f(okButton.x1, okButton.y2);
@@ -79,14 +79,14 @@ void CglTextBox::Draw(void)
 		glEnd();
 	}	
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,1,0.8);
-	font->glPrintAt(okButton.x1+0.04,okButton.y1+0.01,1,"Ok");
+	glColor4f(1,1,1,0.8f);
+	font->glPrintAt(okButton.x1+0.04f,okButton.y1+0.01f,1,"Ok");
 
-	font->glPrintAt(box.x1+0.02,box.y2-0.05,1.0f,heading.c_str());
+	font->glPrintAt(box.x1+0.02f,box.y2-0.05f,1.0f,heading.c_str());
 
 	int line=0;
 	for(std::vector<std::string>::iterator li=text.begin();li!=text.end();++li){
-		font->glPrintAt(box.x1+0.02,box.y2-0.08-(line++)*0.03,0.7f,(*li).c_str());
+		font->glPrintAt(box.x1+0.02f,box.y2-0.08f-(line++)*0.03f,0.7f,(*li).c_str());
 	}
 }
 

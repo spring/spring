@@ -60,7 +60,7 @@ void GUImatrix::SetValues(std::vector<std::vector<std::string> > values,std::vec
 void GUImatrix::DrawLine(int x1, int y1, int x2, int y2)
 {
 	glBindTexture(GL_TEXTURE_2D,0);
-	glColor4f(1,1,1,0.5);
+	glColor4f(1,1,1,0.5f);
 	glBegin(GL_LINES);
 		glVertex2f(x1,y1);
 		glVertex2f(x2,y2);

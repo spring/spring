@@ -70,7 +70,7 @@ CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,fl
 		useAirLos=true;
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	glowFalloff=4.5+gu->usRandFloat()*6;
+	glowFalloff=4.5f+gu->usRandFloat()*6;
 	textureNum=(int)(gu->usRandFloat()*12);
 	POP_CODE_MODE;
 }
@@ -83,15 +83,15 @@ CSmokeProjectile2::~CSmokeProjectile2()
 void CSmokeProjectile2::Update()
 {
 	wantedPos+=speed;
-	wantedPos += wind.curWind*age*0.05;
+	wantedPos += wind.curWind*age*0.05f;
 
-	pos.x+=(wantedPos.x-pos.x)*0.07;
-	pos.y+=(wantedPos.y-pos.y)*0.02;
-	pos.z+=(wantedPos.z-pos.z)*0.07;
+	pos.x+=(wantedPos.x-pos.x)*0.07f;
+	pos.y+=(wantedPos.y-pos.y)*0.02f;
+	pos.z+=(wantedPos.z-pos.z)*0.07f;
 	age+=ageSpeed;
 	size+=sizeExpansion;
 	if(size<startSize)
-		size+=(startSize-size)*0.2;
+		size+=(startSize-size)*0.2f;
 	SetRadius(size);
 	if(age>1){
 		age=1;
@@ -105,22 +105,22 @@ void CSmokeProjectile2::Draw()
 	float interAge=min(1.0f,age+ageSpeed*gu->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
-	if(interAge<0.05)
+	if(interAge<0.05f)
 		alpha=(unsigned char)(interAge*19*127);
 	else
 		alpha=(unsigned char)((1-interAge)*127);
 	float rglow=max(0.f,(1-interAge*glowFalloff)*127);
-	float gglow=max(0.,(1-interAge*glowFalloff*2.5)*127);
+	float gglow=max(0.f,(1-interAge*glowFalloff*2.5f)*127);
 	col[0]=(unsigned char)(color*alpha+rglow);
 	col[1]=(unsigned char)(color*alpha+gglow);
-	col[2]=(unsigned char)max(0.,color*alpha-gglow*0.5);
+	col[2]=(unsigned char)max(0.f,color*alpha-gglow*0.5f);
 	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
 	//int frame=textureNum;
-	//float xmod=0.125+(float(int(frame%6)))/16.0;
-	//float ymod=(int(frame/6))/16.0;
+	//float xmod=0.125f+(float(int(frame%6)))/16.0f;
+	//float ymod=(int(frame/6))/16.0f;
 	//int smokenum = frame%12;
 
-	float3 interPos=pos+(wantedPos+speed*gu->timeOffset-pos)*0.1*gu->timeOffset;
+	float3 interPos=pos+(wantedPos+speed*gu->timeOffset-pos)*0.1f*gu->timeOffset;
 	const float interSize=size+sizeExpansion*gu->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);

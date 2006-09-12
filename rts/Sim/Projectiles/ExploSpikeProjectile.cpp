@@ -49,8 +49,8 @@ void CExploSpikeProjectile::Draw(void)
 	unsigned char col[4];
 	float a=std::max(0.f,alpha-alphaDecay*gu->timeOffset)*255;
 	col[0]=(unsigned char)a;
-	col[1]=(unsigned char)(a*0.8);
-	col[2]=(unsigned char)(a*0.5);
+	col[1]=(unsigned char)(a*0.8f);
+	col[2]=(unsigned char)(a*0.5f);
 	col[3]=1;
 
 	float3 interpos=pos+speed*gu->timeOffset;

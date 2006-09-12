@@ -209,7 +209,7 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 */
 //	sky->SetCloudShadow(1);
 //	if(drawWaterReflection)
-//		treeDistance*=0.5;
+//		treeDistance*=0.5f;
 
 	if(groundDecals && !(drawWaterReflection || drawUnitReflection))
 		groundDecals->Draw();
@@ -226,7 +226,7 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 			glBindTexture(GL_TEXTURE_2D, infoTex);
-			SetTexGen(1.0/(gs->pwr2mapx*SQUARE_SIZE),1.0/(gs->pwr2mapy*SQUARE_SIZE),0,0);
+			SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		  glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 		treeDrawer->Draw(drawWaterReflection || drawUnitReflection);

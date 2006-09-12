@@ -40,10 +40,10 @@ bool CGameInfo::IsActive()
 
 CGameInfo::CGameInfo(void)
 {
-	box.x1=0.5;
-	box.y1=0.5;
-	box.x2=0.5;
-	box.y2=0.5;
+	box.x1=0.5f;
+	box.y1=0.5f;
+	box.x2=0.5f;
+	box.y2=0.5f;
 }
 
 CGameInfo::~CGameInfo(void)

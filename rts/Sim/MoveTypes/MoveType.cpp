@@ -23,7 +23,7 @@ CMoveType::~CMoveType(void)
 void CMoveType::SetWantedMaxSpeed(float speed) {
 	if(speed > maxSpeed)
 		maxWantedSpeed = maxSpeed;
-	else if(speed < 0.001)
+	else if(speed < 0.001f)
 		maxWantedSpeed = 0;
 	else
 		maxWantedSpeed = speed;

@@ -30,7 +30,7 @@ public:
 	float GetUnitHealth (int unitid);			//the units current health
 	float GetUnitMaxHealth (int unitid);		//the units max health
 	float GetUnitPower(int unitid);				//sort of the measure of the units overall power
-	float GetUnitExperience (int unitid);	//how experienced the unit is (0.0-1.0)
+	float GetUnitExperience (int unitid);	//how experienced the unit is (0.0f-1.0f)
 	bool IsUnitActivated (int unitid); 
 	bool UnitBeingBuilt (int unitid);			//returns true if the unit is currently being built
 	bool GetUnitResourceInfo (int unitid, UnitResourceInfo* resourceInfo);

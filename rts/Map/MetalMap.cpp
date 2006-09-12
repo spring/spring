@@ -21,7 +21,7 @@ CMetalMap::CMetalMap(unsigned char *map, int sizex, int sizez, float metalscale)
 	extractionMap = new float[sizex * sizez];
 	int i;
 	for(i = 0; i < (sizex * sizez); i++) {
-		extractionMap[i] = 0.0;
+		extractionMap[i] = 0.0f;
 	}
 	
 	int whichPalette = configHandler.GetInt("MetalMapPalette", 0);

@@ -186,7 +186,7 @@ void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 
 				if(height>-10){
 					float3 light = GetLightValue(x+x1,y+y1)*210.0f;
-					float wc=-height*0.1;
+					float wc=-height*0.1f;
 					tempMem[(y*xsize+x)*4+0] = (unsigned char)(waterHeightColors[h*4+0]*wc+light.x*(1-wc));
 					tempMem[(y*xsize+x)*4+1] = (unsigned char)(waterHeightColors[h*4+1]*wc+light.y*(1-wc));
 					tempMem[(y*xsize+x)*4+2] = (unsigned char)(waterHeightColors[h*4+2]*wc+light.z*(1-wc));
