@@ -3,7 +3,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 

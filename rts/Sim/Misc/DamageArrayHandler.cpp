@@ -2,7 +2,7 @@
 #include "DamageArrayHandler.h"
 #include "DamageArray.h"
 #include "TdfParser.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
@@ -22,18 +22,18 @@ CDamageArrayHandler::CDamageArrayHandler(void)
 		DamageArray::numTypes=typelist.size()+1;
 		numTypes=typelist.size()+1;
 
-		info->AddLine(1, "Number of damage types: %d", numTypes);
+		logOutput.Print(1, "Number of damage types: %d", numTypes);
 		int a=1;
 		for(std::vector<std::string>::iterator ti=typelist.begin();ti!=typelist.end();++a,++ti){
 			std::string s = StringToLower(*ti);
 			name2type[s]=a;
-	//		info->AddLine("%s has type num %i",(*ti).c_str(),a);
+	//		logOutput.Print("%s has type num %i",(*ti).c_str(),a);
 			const std::map<std::string, std::string>& units=p.GetAllValues(*ti);
 
 			for(std::map<std::string, std::string>::const_iterator ui=units.begin();ui!=units.end();++ui){
 				std::string s = StringToLower(ui->first);
 				name2type[s] = a;
-	//			info->AddLine("unit %s has type num %i",ui->first.c_str(),a);
+	//			logOutput.Print("unit %s has type num %i",ui->first.c_str(),a);
 			}
 		}
 	}

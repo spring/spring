@@ -6,7 +6,7 @@
 #include "3DOParser.h"
 #include "Rendering/GL/myGL.h"
 #include "GlobalStuff.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <vector>
 #include "Rendering/GL/VertexArray.h"
 #include "FileSystem/VFSHandler.h"
@@ -168,7 +168,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	}
 
 //	if(sideName.find("armstump.3do")!=std::string.npos){
-//		info->AddLine("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),gs->players[gs->Team(team)->leader]->playerName.c_str());
+//		logOutput.Print("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),gs->players[gs->Team(team)->leader]->playerName.c_str());
 //	}
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
@@ -229,7 +229,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 
 	model->radius = model->rootobject3do->radius * scale;		//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
 	model->height = FindHeight(model->rootobject3do,ZeroVector);
-//	info->AddLine("%s has height %f",name,model->height);
+//	logOutput.Print("%s has height %f",name,model->height);
 
 	model->maxx=model->rootobject3do->maxx;
 	model->maxy=model->rootobject3do->maxy;
@@ -305,7 +305,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 			string texture = GetText(p.OffsetToTextureName);
 			
 			if(side>9)
-				(*info) << "error: side > 9" << "\n";
+				logOutput << "error: side > 9" << "\n";
 			char chside = '0' + side;
 			StringToLowerInPlace(texture);
 			if(teamtex.find(texture) != teamtex.end())
@@ -314,7 +314,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 				sp.texture=texturehandler->GetTATexture(texture + "00",side, false);
 
 			if(sp.texture==0)
-				(*info) << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
+				logOutput << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
 		} else {
 			char t[50];
 			sprintf(t,"ta_color%i",p.PaletteEntry);
@@ -642,7 +642,7 @@ void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<st
 		lmodel->scritoa[cur] = *piecenum;
 	}
 	else {
-//		info->AddLine("CreateLocalModel: Could not map %s to script", lmodel->pieces[*piecenum].name.c_str());
+//		logOutput.Print("CreateLocalModel: Could not map %s to script", lmodel->pieces[*piecenum].name.c_str());
 	}
 
 	int thispiece = *piecenum;
@@ -749,10 +749,10 @@ float3 LocalS3DOModel::GetPiecePos(int piecenum)
 	}
 
 /*
-	info->AddLine("%f %f %f %f",mat[0],mat[4],mat[8],mat[12]);
-	info->AddLine("%f %f %f %f",mat[1],mat[5],mat[9],mat[13]);
-	info->AddLine("%f %f %f %f",mat[2],mat[6],mat[10],mat[14]);
-	info->AddLine("%f %f %f %f",mat[3],mat[7],mat[11],mat[15]);/**/
+	logOutput.Print("%f %f %f %f",mat[0],mat[4],mat[8],mat[12]);
+	logOutput.Print("%f %f %f %f",mat[1],mat[5],mat[9],mat[13]);
+	logOutput.Print("%f %f %f %f",mat[2],mat[6],mat[10],mat[14]);
+	logOutput.Print("%f %f %f %f",mat[3],mat[7],mat[11],mat[15]);/**/
 	float3 pos=mat.GetPos();
 	pos.z*=-1;
 	pos.x*=-1;
@@ -785,14 +785,14 @@ float3 LocalS3DOModel::GetPieceDirection(int piecenum)
 	if(pieces[p].original3do){
 		S3DO &orig = *pieces[p].original3do;
 		if (orig.vertices.size() < 2) {
-			//info->AddLine("Use of GetPieceDir on strange piece (%d vertices)", orig.vertices.size());
+			//logOutput.Print("Use of GetPieceDir on strange piece (%d vertices)", orig.vertices.size());
 			return float3(1,1,1);
 		}
 		else if (orig.vertices.size() > 2) {
 			//this is strange too, but probably caused by an incorrect 3rd party unit
 		}
-		//info->AddLine("Vertexes %f %f %f", orig.vertices[0].pos.x, orig.vertices[0].pos.y, orig.vertices[0].pos.z);
-		//info->AddLine("Vertexes %f %f %f", orig.vertices[1].pos.x, orig.vertices[1].pos.y, orig.vertices[1].pos.z);
+		//logOutput.Print("Vertexes %f %f %f", orig.vertices[0].pos.x, orig.vertices[0].pos.y, orig.vertices[0].pos.z);
+		//logOutput.Print("Vertexes %f %f %f", orig.vertices[1].pos.x, orig.vertices[1].pos.y, orig.vertices[1].pos.z);
 		return orig.vertices[0].pos - orig.vertices[1].pos;
 	} else {
 		SS3O &orig = *pieces[p].originals3o;
@@ -813,7 +813,7 @@ void LocalS3DO::GetPiecePosIter(CMatrix44f* mat)
 		parent->GetPiecePosIter(mat);
 
 	mat->Translate(offset.x,offset.y,-offset.z);
-//	info->AddLine("RelPosSub %f %f %f",offset.x,offset.y,offset.z);
+//	logOutput.Print("RelPosSub %f %f %f",offset.x,offset.y,offset.z);
 
 	if(anim)
 	{

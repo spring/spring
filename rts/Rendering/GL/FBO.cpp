@@ -8,7 +8,22 @@
  * GNU GPL, v2 or later.
  */
 #include <assert.h>
+#include <vector>
 #include "IFramebuffer.h"
+#include "FBO.h"
+#include "LogOutput.h"
+
+
+IFramebuffer* instantiate_fb(const int w, const int h, int requires)
+{
+	if (GLEW_EXT_framebuffer_object) {
+		logOutput.Print("Using EXT_framebuffer_object");
+		return new FBO(requires, w, h);
+	}
+	logOutput.Print("No supported pixel buffer found");
+	return NULL;
+}
+
 
 /**
  * Tests for support of the EXT_framebuffer_object

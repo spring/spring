@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "CategoryHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <algorithm>
 #include <cctype>
 #include "mmgr.h"
@@ -38,11 +38,11 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 		|| name.find("torp")!=string::npos)		//remove some categories that we dont think we need since we have too few of them
 			return 0;
 		if(firstUnused>31){
-			info->AddLine("Warning to many unit categories %i missed %s",firstUnused+1,name.c_str());
+			logOutput.Print("Warning to many unit categories %i missed %s",firstUnused+1,name.c_str());
 			return 0;
 		}
 		categories[name]=(1<<(firstUnused++));
-//		info->AddLine("New cat %s #%i",name.c_str(),firstUnused);
+//		logOutput.Print("New cat %s #%i",name.c_str(),firstUnused);
 	}
 	return categories[name];
 }

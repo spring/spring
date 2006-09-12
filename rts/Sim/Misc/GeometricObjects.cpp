@@ -2,7 +2,7 @@
 #include "GeometricObjects.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/GeoSquareProjectile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/ReadMap.h"
 #include "mmgr.h"
 
@@ -33,7 +33,7 @@ int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, flo
 		if(arrow==1 && a==19){
 			CGeoSquareProjectile* gsp=new CGeoSquareProjectile(old1,old2,dir1,dir2,width,0);
 			geoGroups[group].squares.push_back(gsp);
-//			info->AddLine("%f %f %f %f %f %f %f %f %f",old1.x,old1.y,old1.z,old2.x,old2.y,old2.z,np.x,np.y,np.z);
+//			logOutput.Print("%f %f %f %f %f %f %f %f %f",old1.x,old1.y,old1.z,old2.x,old2.y,old2.z,np.x,np.y,np.z);
 		} else {
 			CGeoSquareProjectile* gsp=new CGeoSquareProjectile(old1,old2,dir1,dir2,width*0.5,width*0.5);
 			geoGroups[group].squares.push_back(gsp);
@@ -79,7 +79,7 @@ float3 CGeometricObjects::CalcSpline(float i, const float3& p1, const float3& p2
 	float ni=1-i;
 
 	float3 res=p1*ni*ni*ni+p2*3*i*ni*ni+p3*3*i*i*ni+p4*i*i*i;
-//	info->AddLine("%f %f %f",res.x,res.y,res.z);
+//	logOutput.Print("%f %f %f",res.x,res.y,res.z);
 	return res;
 }
 

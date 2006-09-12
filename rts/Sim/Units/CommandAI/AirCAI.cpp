@@ -10,7 +10,7 @@
 #include "Game/GameHelper.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "myMath.h"
 #include "mmgr.h"
@@ -329,7 +329,7 @@ void CAirCAI::SlowUpdate()
 	case CMD_PATROL:{
 		float3 curPos=owner->pos;
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got patrol cmd with less than 3 params on %s in aircai",
+			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in aircai",
 				owner->unitDef->humanName.c_str());
 			return;
 		}
@@ -359,7 +359,7 @@ void CAirCAI::SlowUpdate()
 		}
 		commandPos1=curPos;
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got fight cmd with less than 3 params on %s in aircai",
+			logOutput.Print("Error: got fight cmd with less than 3 params on %s in aircai",
 				owner->unitDef->humanName.c_str());
 			return;
 		}

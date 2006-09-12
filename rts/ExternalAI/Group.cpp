@@ -9,7 +9,7 @@
 #include "GroupAiCallback.h"
 #include "GroupHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
 

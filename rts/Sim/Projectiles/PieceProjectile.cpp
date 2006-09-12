@@ -5,7 +5,7 @@
 #include "Map/Ground.h"
 #include "ProjectileHandler.h"
 #include "HeatCloudProjectile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
 #include "myMath.h"
@@ -82,7 +82,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS
 	spinVec=gu->usRandVector();
 	spinVec.Normalize();
 	spinSpeed=gu->usRandFloat()*20;
-	//info->AddLine("New pp with %d", dispList);
+	//logOutput.Print("New pp with %d", dispList);
 
 	for(int a=0;a<8;++a){
 		oldInfos[a]=new OldInfo;

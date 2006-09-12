@@ -25,9 +25,6 @@ public:
 	virtual bool valid(void) = 0;
 };
 
-#include "Game/UI/InfoConsole.h"
-#include "FBO.h"
-
 enum FramebufferProperties
 {
 	FBO_NEED_DEPTH, // zbuffering is needed, but only for rendering
@@ -35,14 +32,6 @@ enum FramebufferProperties
 	FBO_NEED_COLOR 
 };
 
-static inline IFramebuffer* instantiate_fb(const int w, const int h, int requires)
-{
-	if (GLEW_EXT_framebuffer_object) {
-		info->AddLine("Using EXT_framebuffer_object");
-		return new FBO(requires, w, h);
-	}
-	info->AddLine("No supported pixel buffer found");
-	return NULL;
-}
+IFramebuffer* instantiate_fb(const int w, const int h, int requires);
 
 #endif /* _IFRAMEBUFFER_H */

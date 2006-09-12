@@ -11,7 +11,7 @@
 #include "SyncTracer.h"
 #include "Sound.h"
 #include "Map/Ground.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "myMath.h"
 #include "mmgr.h"

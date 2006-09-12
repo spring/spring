@@ -6,7 +6,7 @@
 #include "Camera.h"
 
 #include "Rendering/GL/myGL.h"
-#include "UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "mmgr.h"
 

@@ -28,7 +28,7 @@ class CAVIGenerator;
 class CConsoleHistory;
 class CWordCompletion;
 class CKeySet;
-
+class CInfoConsole;
 
 class CGame : public CGameController
 {
@@ -44,7 +44,7 @@ public:
 	bool Update();
 	int KeyReleased(unsigned short k);
 	int KeyPressed(unsigned short k,bool isRepeat);
-	CGame(bool server, std::string mapname, std::string modName);
+	CGame(bool server, std::string mapname, std::string modName, CInfoConsole *infoConsole);
 	virtual ~CGame();
 	
 	bool ActionPressed(const CKeyBindings::Action&, const CKeySet& ks, bool isRepeat);
@@ -99,6 +99,8 @@ public:
 	float gameSoundVolume;
 
 	CScript* script;
+
+	CInfoConsole *infoConsole;
 
 	void MakeMemDump(void);
 

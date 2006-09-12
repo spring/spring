@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "SmfReadMap.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Units/UnitDef.h"
@@ -163,7 +163,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 			if(xtest<ex)
 				ex=(int) xtest;
 		}
-//		info->AddLine("%i %i",sx,ex);
+//		logOutput.Print("%i %i",sx,ex);
 		for(int btx=sx;btx<ex;++btx){
 			bigtexsubx=btx;
 
@@ -1051,11 +1051,11 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 void CBFGroundDrawer::IncreaseDetail()
 {
 	viewRadius+=2;
-	(*info) << "ViewRadius is now " << viewRadius << "\n";
+	logOutput << "ViewRadius is now " << viewRadius << "\n";
 }
 
 void CBFGroundDrawer::DecreaseDetail()
 {
 	viewRadius-=2;
-	(*info) << "ViewRadius is now " << viewRadius << "\n";
+	logOutput << "ViewRadius is now " << viewRadius << "\n";
 }

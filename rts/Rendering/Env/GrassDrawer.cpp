@@ -9,7 +9,7 @@
 #include <GL/glu.h>	
 #include "AdvTreeDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "myMath.h"
 #include "Platform/ConfigHandler.h"
 #include <algorithm>
@@ -67,7 +67,7 @@ CGrassDrawer::CGrassDrawer()
 	numTurfs=3+(int)(detail*0.5);
 	strawPerTurf=50+(int)sqrt((float)detail)*10;
 
-//	info->AddLine("%f %f %i %i %i",maxGrassDist,maxDetailedDist,detailedBlocks,numTurfs,strawPerTurf);
+//	logOutput.Print("%f %f %i %i %i",maxGrassDist,maxDetailedDist,detailedBlocks,numTurfs,strawPerTurf);
 
 	blocksX=gs->mapx/grassSquareSize/grassBlockSize;
 	blocksY=gs->mapy/grassSquareSize/grassBlockSize;

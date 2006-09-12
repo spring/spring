@@ -238,13 +238,13 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		}
 		// (resign and) quit, so leave the game
 		if(InBox(mx,my,box+resignQuitBox)){
-			info->AddLine("User exited");
+			logOutput.Print("User exited");
 			globalQuit=true;
 		}
 	}
 	else if(InBox(mx,my,box+quitBox))
 	{
-		info->AddLine("User exited");
+		logOutput.Print("User exited");
 		globalQuit=true;
 	}
 	// if we're still in the game, remove the resign box

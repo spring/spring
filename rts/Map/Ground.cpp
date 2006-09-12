@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "mmgr.h"

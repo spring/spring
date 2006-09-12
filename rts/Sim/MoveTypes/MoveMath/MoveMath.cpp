@@ -4,7 +4,7 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 
@@ -152,7 +152,7 @@ int CMoveMath::IsBlocked2(const MoveData& moveData, int xSquare, int zSquare)
 		break;
 
 	default:
-		info->AddLine("Unknown size in IsBlocked2 %i",moveData.size);
+		logOutput.Print("Unknown size in IsBlocked2 %i",moveData.size);
 		break;
 	};
 	return ret;

@@ -4,7 +4,7 @@
 #include "AdvWater.h"
 #include "Rendering/GL/myGL.h"
 #include "Platform/ConfigHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "DynWater.h"
 #include "RefractWater.h"
 #include "mmgr.h"
@@ -35,8 +35,8 @@ CBaseWater* CBaseWater::GetWater()
 		} catch (content_error& e) {
 			delete water;
 			water = NULL;
-			info->AddLine("Loading Dynamic Water failed");
-			info->AddLine("Error: %s", e.what());
+			logOutput.Print("Loading Dynamic Water failed");
+			logOutput.Print("Error: %s", e.what());
 		}
 		if (water) {
 			return water;
@@ -49,8 +49,8 @@ CBaseWater* CBaseWater::GetWater()
 		} catch (content_error& e) {
 			delete water;
 			water = NULL;
-			info->AddLine("Loading Refractive Water failed");
-			info->AddLine("Error: %s", e.what());
+			logOutput.Print("Loading Refractive Water failed");
+			logOutput.Print("Error: %s", e.what());
 		}
 		if (water) {
 			return water;
@@ -64,8 +64,8 @@ CBaseWater* CBaseWater::GetWater()
 		} catch (content_error& e) {
 			delete water;
 			water = NULL;
-			info->AddLine("Loading Reflective Water failed");
-			info->AddLine("Error: %s", e.what());
+			logOutput.Print("Loading Reflective Water failed");
+			logOutput.Print("Error: %s", e.what());
 		}
 		if (water) {
 			return water;

@@ -552,7 +552,7 @@ void CMouseHandler::DrawCursor(void)
 		mc = i->second;
 	}
 	else {
-		//info->AddLine("Unknown cursor: %s", cursorText.c_str());		
+		//logOutput.Print("Unknown cursor: %s", cursorText.c_str());		
 		mc = cursors[""];
 	}
 

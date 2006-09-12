@@ -3,7 +3,7 @@
 #include "Feature.h"
 #include "FileSystem/FileHandler.h"
 #include "TdfParser.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
 #include "Rendering/UnitModels/3DOParser.h"
@@ -257,7 +257,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		} else if(wreckParser.SectionExist(name)){
 			GetFeatureDef(name);
 		} else {
-			info->AddLine("Unknown feature type %s",name.c_str());
+			logOutput.Print("Unknown feature type %s",name.c_str());
 		}
 	}
 
@@ -272,7 +272,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			std::map<std::string,FeatureDef*>::iterator def = featureDefs.find(name);
 			
 			if (def == featureDefs.end()){
-				info->AddLine("Unknown feature named '%s'", name.c_str());
+				logOutput.Print("Unknown feature named '%s'", name.c_str());
 				continue;
 			}
 
@@ -296,13 +296,13 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
 	ASSERT_SYNCED_MODE;
 	vector<int> quads=qf->GetQuadsRectangle(float3(x1*SQUARE_SIZE,0,y1*SQUARE_SIZE),float3(x2*SQUARE_SIZE,0,y2*SQUARE_SIZE));
-//	info->AddLine("Checking feature pos %i",quads.size());
+//	logOutput.Print("Checking feature pos %i",quads.size());
 
 	for(vector<int>::iterator qi=quads.begin();qi!=quads.end();++qi){
 		list<CFeature*>::iterator fi;
 		for(fi=qf->baseQuads[*qi].features.begin();fi!=qf->baseQuads[*qi].features.end();++fi){
 			if((*fi)->pos.y>ground->GetHeight((*fi)->pos.x,(*fi)->pos.z)){
-//				info->AddLine("Updating feature pos %f %f %i",(*fi)->pos.y,ground->GetHeight((*fi)->pos.x,(*fi)->pos.z),(*fi)->id);
+//				logOutput.Print("Updating feature pos %f %f %i",(*fi)->pos.y,ground->GetHeight((*fi)->pos.x,(*fi)->pos.z),(*fi)->id);
 				SetFeatureUpdateable(*fi);
 			
 				if((*fi)->def->floating){
@@ -458,7 +458,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 
 	if(fi==featureDefs.end()){
 		if(!wreckParser.SectionExist(name)){
-			info->AddLine("Couldnt find wreckage info %s",name.c_str());
+			logOutput.Print("Couldnt find wreckage info %s",name.c_str());
 			return 0;
 		}
 		FeatureDef* fd=new FeatureDef;

@@ -8,7 +8,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
@@ -64,7 +64,7 @@ CBasicMapDamage::~CBasicMapDamage(void)
 void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 {
 	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-//		info->AddLine("Map damage explosion outside map %.0f %.0f",pos.x,pos.z);
+//		logOutput.Print("Map damage explosion outside map %.0f %.0f",pos.x,pos.z);
 		return;
 	}
 	if(strength<10 || radius<8)

@@ -9,7 +9,7 @@
 #include <cctype>
 #include "FileSystem/FileHandler.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sound.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -67,7 +67,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 		// Restrictions may tell us not to use this unit at all
 		if (gameSetup)
 			if (gameSetup->restrictedUnits.find(unitname) != gameSetup->restrictedUnits.end()) {
-				//info->AddLine("Not using unit %s", unitname.c_str());
+				//logOutput.Print("Not using unit %s", unitname.c_str());
 				continue;
 			}
 
@@ -185,7 +185,7 @@ void CUnitDefHandler::FindTABuildOpt()
 					int num=(menu-2)*6+button+1;
 					builder->buildOptions[num]=un2;
 				} else {
-					info->AddLine("couldnt find unit %s",un2.c_str());
+					logOutput.Print("couldnt find unit %s",un2.c_str());
 				}
 			}
 		}
@@ -289,7 +289,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.buildDistance=std::max(128.f,ud.buildDistance);
 	ud.armoredMultiple=atof(tdfparser.SGetValueDef("1", "UNITINFO\\DamageModifier").c_str());
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
-//	info->AddLine("unit %s has armor %i",ud.name.c_str(),ud.armorType);
+//	logOutput.Print("unit %s has armor %i",ud.name.c_str(),ud.armorType);
 
 	ud.radarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistance").c_str());
 	ud.sonarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistance").c_str());
@@ -368,7 +368,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.categoryString=tdfparser.SGetValueDef("", "UNITINFO\\Category");
 	ud.category=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\Category"));
 	ud.noChaseCategory=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\NoChaseCategory"));
-//	info->AddLine("Unit %s has cat %i",ud.humanName.c_str(),ud.category);
+//	logOutput.Print("Unit %s has cat %i",ud.humanName.c_str(),ud.category);
 
 	ud.iconType=tdfparser.SGetValueDef("default", "UNITINFO\\iconType");
 
@@ -389,7 +389,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 		while(ud.weapons.size()<a){
 			if(!weaponDefHandler->GetWeapon("NOWEAPON")) {
-				info->AddLine("Error: Spring requires a NOWEAPON weapon type to be present as a placeholder for missing weapons");
+				logOutput.Print("Error: Spring requires a NOWEAPON weapon type to be present as a placeholder for missing weapons");
 				break;
 			} else
 				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0,0));
@@ -483,18 +483,18 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		}
 		if(ud.canhover){
 			if(ud.movedata->moveType!=MoveData::Hover_Move){
-				info->AddLine("Inconsistant move data hover %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
+				logOutput.Print("Inconsistant move data hover %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
 			}
 		} else if(ud.floater){
 			if(ud.movedata->moveType!=MoveData::Ship_Move){
-				info->AddLine("Inconsistant move data ship %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
+				logOutput.Print("Inconsistant move data ship %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
 			}
 		} else {
 			if(ud.movedata->moveType!=MoveData::Ground_Move){
-				info->AddLine("Inconsistant move data ground %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
+				logOutput.Print("Inconsistant move data ground %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
 			}
 		}
-//		info->AddLine("%s uses movetype %i",ud.humanName.c_str(),ud.movedata->pathType);
+//		logOutput.Print("%s uses movetype %i",ud.humanName.c_str(),ud.movedata->pathType);
 	}
 
 	if(ud.maxAcc!=0 && ud.speed!=0)
@@ -514,8 +514,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.power = (ud.metalCost + ud.energyCost/60.0f);
 	// Prevent a division by zero in experience calculations.
 	if(ud.power<1e-3f){
-		info->AddLine("Unit %s is really cheap? %f",ud.humanName.c_str(),ud.power);
-		info->AddLine("This can cause a division by zero in experience calculations.");
+		logOutput.Print("Unit %s is really cheap? %f",ud.humanName.c_str(),ud.power);
+		logOutput.Print("This can cause a division by zero in experience calculations.");
 		ud.power=1e-3f;
 	}
 

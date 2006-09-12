@@ -12,8 +12,6 @@
 #ifndef FBO_H
 #define FBO_H
 
-#include <vector>
-
 /**
  * @brief FBO
  *

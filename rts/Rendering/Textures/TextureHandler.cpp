@@ -6,7 +6,7 @@
 #include "TextureHandler.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header file for the gLu32 library
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <vector>
 #include "Rendering/Textures/Bitmap.h"
 #include "TAPalette.h"
@@ -256,7 +256,7 @@ CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name,int team
 	if((tti=textures.find(name))!=textures.end()){
 		return tti->second;
 	}
-	(*info) << "Unknown texture " << name.c_str() << "\n";
+	logOutput << "Unknown texture " << name.c_str() << "\n";
 	return textures[" "];
 }
 
@@ -267,7 +267,7 @@ CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name)
 
 		return tti->second;
 	}
-	(*info) << "Unknown texture " << name.c_str() << "\n";
+	logOutput << "Unknown texture " << name.c_str() << "\n";
 	return textures[" "];
 }
 

@@ -250,7 +250,7 @@ void CSm3GroundDrawer::IncreaseDetail()
 	tr->config.detailMod *= 1.1f;
 	if (tr->config.detailMod > 12.0f)
 		tr->config.detailMod = 12.0f;
-	info->AddLine("Terrain detail changed to: %2.2f", tr->config.detailMod);
+	logOutput.Print("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
 void CSm3GroundDrawer::DecreaseDetail()
@@ -259,6 +259,6 @@ void CSm3GroundDrawer::DecreaseDetail()
 	if (tr->config.detailMod < 0.25f)
 		tr->config.detailMod = 0.25f;
 
-	info->AddLine("Terrain detail changed to: %2.2f", tr->config.detailMod);
+	logOutput.Print("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 

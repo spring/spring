@@ -5,6 +5,7 @@
 #include <string>
 
 class CglList;
+class CInfoConsole;
 
 class CPreGame : public CGameController
 {
@@ -42,6 +43,7 @@ public:
 	unsigned GetModChecksum() const;
 
 private:
+	CInfoConsole* infoConsole;
 
 	void ShowScriptList();
 	void ShowMapList();

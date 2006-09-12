@@ -7,7 +7,7 @@
 #include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
@@ -161,8 +161,8 @@ void CBuilderCAI::SlowUpdate()
 						} else {
 							ENTER_MIXED;
 							if(owner->team==gu->myTeam && !(buildRetries&7)){
-								info->AddLine("%s: Build pos blocked",owner->unitDef->humanName.c_str());
-								info->SetLastMsgPos(owner->pos);
+								logOutput.Print("%s: Build pos blocked",owner->unitDef->humanName.c_str());
+								logOutput.SetLastMsgPos(owner->pos);
 							}
 							ENTER_SYNCED;
 							helper->BuggerOff(build.pos,radius);
@@ -323,7 +323,7 @@ void CBuilderCAI::SlowUpdate()
 			float3 goal=guarded->pos-dif*(fac->buildDistance-5);
 			if((guarded->pos-curPos).SqLength2D()<(fac->buildDistance*0.9+guarded->radius)*(fac->buildDistance*0.9+guarded->radius)){
 				StopMove();
-//				info->AddLine("should point with type 3?");
+//				logOutput.Print("should point with type 3?");
 				owner->moveType->KeepPointingTo(guarded->pos, fac->buildDistance*0.9+guarded->radius, false);
 				if(guarded->health<guarded->maxHealth)
 					fac->SetRepairTarget(guarded);
@@ -459,7 +459,7 @@ void CBuilderCAI::SlowUpdate()
 		}
 		float3 curPos=owner->pos;
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got patrol cmd with less than 3 params on %s in buildercai",
+			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
 				owner->unitDef->humanName.c_str());
 			return;
 		}
@@ -483,7 +483,7 @@ void CBuilderCAI::SlowUpdate()
 			inCommand=true;
 		}
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			info->AddLine("Error: got patrol cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
+			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
 			return;
 		}
 		if(c.params.size() >= 6){

@@ -4,7 +4,7 @@
 #include "CobInstance.h"
 #include "CobEngine.h"
 
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 #ifdef _CONSOLE
@@ -26,7 +26,7 @@ CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)
 CCobThread::~CCobThread(void)
 {
 	if (callback != NULL) {
-		//info->AddLine("%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
+		//logOutput.Print("%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
 		(*callback)(retCode, cbParam1, cbParam2);
 	}
 	if(owner)
@@ -181,7 +181,7 @@ int CCobThread::POP(void)
 int CCobThread::Tick(int deltaTime)
 {
 	if (state == Sleep) {
-		info->AddLine("CobError: sleeping thread ticked!");
+		logOutput.Print("CobError: sleeping thread ticked!");
 	}
 	if (state == Dead || !owner) {
 		return -1;
@@ -201,7 +201,7 @@ int CCobThread::Tick(int deltaTime)
 
 #if COB_DEBUG > 0
 	if (COB_DEBUG_FILTER)
-		info->AddLine("Executing in %s (from %s)", script.scriptNames[callStack.back().functionId].c_str(), GetName().c_str());
+		logOutput.Print("Executing in %s (from %s)", script.scriptNames[callStack.back().functionId].c_str(), GetName().c_str());
 #endif
 
 	while (state == Run) {
@@ -214,7 +214,7 @@ int CCobThread::Tick(int deltaTime)
 
 #if COB_DEBUG > 1
 		if (COB_DEBUG_FILTER)
-			info->AddLine("PC: %x opcode: %x (%s)", PC - 1, opcode, GetOpcodeName(opcode).c_str());
+			logOutput.Print("PC: %x opcode: %x (%s)", PC - 1, opcode, GetOpcodeName(opcode).c_str());
 #endif
 
 		switch(opcode) {
@@ -231,7 +231,7 @@ int CCobThread::Tick(int deltaTime)
 
 #if COB_DEBUG > 0
 				if (COB_DEBUG_FILTER)
-					info->AddLine("%s sleeping for %d ms", script.scriptNames[callStack.back().functionId].c_str(), r1);
+					logOutput.Print("%s sleeping for %d ms", script.scriptNames[callStack.back().functionId].c_str(), r1);
 #endif
 				return 0;
 			case SPIN:
@@ -245,7 +245,7 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();				//decel
-				//info->AddLine("Stop spin of %s around %d", script.pieceNames[r1].c_str(), r2);
+				//logOutput.Print("Stop spin of %s around %d", script.pieceNames[r1].c_str(), r2);
 				owner->StopSpin(r1, r2, r3);
 				break;
 			case RETURN:
@@ -254,7 +254,7 @@ int CCobThread::Tick(int deltaTime)
 
 #if COB_DEBUG > 0
 					if (COB_DEBUG_FILTER)
-						info->AddLine("%s returned %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
+						logOutput.Print("%s returned %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
 #endif
 
 					state = Dead;
@@ -272,7 +272,7 @@ int CCobThread::Tick(int deltaTime)
 
 #if COB_DEBUG > 0
 				if (COB_DEBUG_FILTER)
-					info->AddLine("Returning to %s", script.scriptNames[callStack.back().functionId].c_str());
+					logOutput.Print("Returning to %s", script.scriptNames[callStack.back().functionId].c_str());
 #endif
 
 				break;
@@ -293,7 +293,7 @@ int CCobThread::Tick(int deltaTime)
 				r2 = GET_LONG_PC();
 
 				if (script.scriptLengths[r1] == 0) {
-					//info->AddLine("Preventing call to zero-len script %s", script.scriptNames[r1].c_str());
+					//logOutput.Print("Preventing call to zero-len script %s", script.scriptNames[r1].c_str());
 					break;
 				}
 
@@ -307,7 +307,7 @@ int CCobThread::Tick(int deltaTime)
 				PC = script.scriptOffsets[r1];
 #if COB_DEBUG > 0
 				if (COB_DEBUG_FILTER)
-					info->AddLine("Calling %s", script.scriptNames[r1].c_str());
+					logOutput.Print("Calling %s", script.scriptNames[r1].c_str());
 #endif
 
 				break;
@@ -315,7 +315,7 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				r2 = POP();
 				owner->staticVars[r1] = r2;
-				//info->AddLine("Pop static var %d val %d", r1, r2);
+				//logOutput.Print("Pop static var %d val %d", r1, r2);
 				break;
 			case POP_STACK:
 				break;
@@ -324,7 +324,7 @@ int CCobThread::Tick(int deltaTime)
 				r2 = GET_LONG_PC();
 
 				if (script.scriptLengths[r1] == 0) {
-					//info->AddLine("Preventing start of zero-len script %s", script.scriptNames[r1].c_str());
+					//logOutput.Print("Preventing start of zero-len script %s", script.scriptNames[r1].c_str());
 					break;
 				}
 
@@ -342,7 +342,7 @@ int CCobThread::Tick(int deltaTime)
 
 #if COB_DEBUG > 0
 				if (COB_DEBUG_FILTER)
-					info->AddLine("Starting %s %d", script.scriptNames[r1].c_str(), signalMask);
+					logOutput.Print("Starting %s %d", script.scriptNames[r1].c_str(), signalMask);
 #endif
 
 				break;
@@ -423,7 +423,7 @@ int CCobThread::Tick(int deltaTime)
 			case PUSH_STATIC:
 				r1 = GET_LONG_PC();
 				stack.push_back(owner->staticVars[r1]);
-				//info->AddLine("Push static %d val %d", r1, owner->staticVars[r1]);
+				//logOutput.Print("Push static %d val %d", r1, owner->staticVars[r1]);
 				break;
 			case SET_NOT_EQUAL:
 				r1 = POP();
@@ -494,7 +494,7 @@ int CCobThread::Tick(int deltaTime)
 				r1 = POP();
 				r3 = GET_LONG_PC();
 				r4 = GET_LONG_PC();
-				//info->AddLine("Turning piece %s axis %d to %d speed %d", script.pieceNames[r3].c_str(), r4, r2, r1);
+				//logOutput.Print("Turning piece %s axis %d to %d speed %d", script.pieceNames[r3].c_str(), r4, r2, r1);
 				ForceCommitAnim(1, r3, r4);
 				owner->Turn(r3, r4, r1, r2);
 				break;
@@ -526,7 +526,7 @@ int CCobThread::Tick(int deltaTime)
 					r3 = r1 / r2;
 				else {
 					r3 = 1000;	//infinity!
-					info->AddLine("CobError: division by zero");
+					logOutput.Print("CobError: division by zero");
 				}
 				stack.push_back(r3);
 				break;
@@ -551,7 +551,7 @@ int CCobThread::Tick(int deltaTime)
 					a.dest = r3;
 					delayedAnims.push_back(a);
 
-					//info->AddLine("Delayed move %s %d %d", owner->pieces[r1].name.c_str(), r2, r3);
+					//logOutput.Print("Delayed move %s %d %d", owner->pieces[r1].name.c_str(), r2, r3);
 				}
 				else {
 					owner->MoveNow(r1, r2, r3);
@@ -579,7 +579,7 @@ int CCobThread::Tick(int deltaTime)
 			case WAIT_TURN:
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				//info->AddLine("Waiting for turn on piece %s around axis %d", script.pieceNames[r1].c_str(), r2);
+				//logOutput.Print("Waiting for turn on piece %s around axis %d", script.pieceNames[r1].c_str(), r2);
 				if (owner->AddTurnListener(r1, r2, this)) {
 					state = WaitTurn;
 					GCobEngine.SetCurThread(NULL);
@@ -590,7 +590,7 @@ int CCobThread::Tick(int deltaTime)
 			case WAIT_MOVE:
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				//info->AddLine("Waiting for move on piece %s on axis %d", script.pieceNames[r1].c_str(), r2);
+				//logOutput.Print("Waiting for move on piece %s on axis %d", script.pieceNames[r1].c_str(), r2);
 				if (owner->AddMoveListener(r1, r2, this)) {
 					state = WaitMove;
 					GCobEngine.SetCurThread(NULL);
@@ -600,7 +600,7 @@ int CCobThread::Tick(int deltaTime)
 			case SET:
 				r2 = POP();
 				r1 = POP();
-				//info->AddLine("Setting unit value %d to %d", r1, r2);
+				//logOutput.Print("Setting unit value %d to %d", r1, r2);
 				owner->SetUnitVal(r1, r2);
 				break;
 			case ATTACH:
@@ -647,7 +647,7 @@ int CCobThread::Tick(int deltaTime)
 			case HIDE:
 				r1 = GET_LONG_PC();
 				owner->SetVisibility(r1, false);
-				//info->AddLine("Hiding %d", r1);
+				//logOutput.Print("Hiding %d", r1);
 				break;
 			case SHOW:{
 				r1 = GET_LONG_PC();
@@ -663,14 +663,14 @@ int CCobThread::Tick(int deltaTime)
 				else {
 					owner->SetVisibility(r1, true);
 				}
-				//info->AddLine("Showing %d", r1);
+				//logOutput.Print("Showing %d", r1);
 				break;}
 			default:
-				info->AddLine("CobError: Unknown opcode %x (in %s:%s at %x)", opcode, script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
-				info->AddLine("Exec trace:");
+				logOutput.Print("CobError: Unknown opcode %x (in %s:%s at %x)", opcode, script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
+				logOutput.Print("Exec trace:");
 				ei = execTrace.begin();
 				while (ei != execTrace.end()) {
-					info->AddLine("PC: %3x  opcode: %s", *ei, GetOpcodeName(script.code[*ei]).c_str());
+					logOutput.Print("PC: %3x  opcode: %s", *ei, GetOpcodeName(script.code[*ei]).c_str());
 					ei++;
 				}
 				state = Dead;
@@ -689,9 +689,9 @@ int CCobThread::Tick(int deltaTime)
 void CCobThread::ShowError(const string& msg)
 {
 	if (callStack.size() == 0)
-		info->AddLine("CobError: %s outside script execution (?)", msg.c_str());
+		logOutput.Print("CobError: %s outside script execution (?)", msg.c_str());
 	else 
-		info->AddLine("CobError: %s (in %s:%s at %x)", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
+		logOutput.Print("CobError: %s (in %s:%s at %x)", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
 }
 
 string CCobThread::GetOpcodeName(int opcode)
@@ -780,7 +780,7 @@ void CCobThread::CommitAnims(int deltaTime)
 		int delta = wakeTime - GCurrentTime;
 		bool smooth = (state == Sleep) && (delta < 300) && (delta > deltaTime);
 
-//		info->AddLine("Commiting %s type %d %d", owner->pieces[anim->piece].name.c_str(), smooth, anim->dest);
+//		logOutput.Print("Commiting %s type %d %d", owner->pieces[anim->piece].name.c_str(), smooth, anim->dest);
 
 		switch (anim->type) {
 			case 1:

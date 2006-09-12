@@ -44,7 +44,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	model->farTextureNum=usedFarTextures;
 
 	if(usedFarTextures>=511){
-//		info->AddLine("Out of fartextures");
+//		logOutput.Print("Out of fartextures");
 		POP_CODE_MODE;
 		return;
 	}

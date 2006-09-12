@@ -259,7 +259,7 @@ void CGuiHandler::LayoutIcons()
 			if (xpos < maxxpos) xpos++;
 			else {ypos++;xpos=0;}
 
-//		(*info) << "arf" << "\n";
+//		logOutput << "arf" << "\n";
 		CommandDescription c;
 		c.id=CMD_INTERNAL;
 		c.action="prevmenu";
@@ -284,7 +284,7 @@ void CGuiHandler::LayoutIcons()
 		commands.push_back(*cdi);
 	}
 
-//	(*info) << "LayoutIcons called" << "\n";
+//	logOutput << "LayoutIcons called" << "\n";
 }
 
 
@@ -621,7 +621,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 	int icon=IconAtPos(x,y);
 
-//	(*info) << x << " " << y << " " << mouse->lastx << " " << mouse->lasty << "\n";
+//	logOutput << x << " " << y << " " << mouse->lastx << " " << mouse->lasty << "\n";
 
 	if (button == SDL_BUTTON_RIGHT && icon==-1) { // right click -> default cmd
 		inCommand=defaultCmdMemory;//GetDefaultCommand(x,y);
@@ -761,7 +761,7 @@ void CGuiHandler::CreateOptions(Command& c,bool rmb)
 		c.options|=CONTROL_KEY;
 	if(keys[SDLK_LALT])
 		c.options|=ALT_KEY;
-	//(*info) << (int)c.options << "\n";
+	//logOutput << (int)c.options << "\n";
 }
 
 int CGuiHandler::GetDefaultCommand(int x,int y)
@@ -1140,7 +1140,7 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		if ((icon >= 0) && (icon < commands.size())) {
 			string cmd = "unbindaction " + commands[icon].action;
 			keyBindings->Command(cmd);
-			info->AddLine("%s", cmd.c_str());
+			logOutput.Print("%s", cmd.c_str());
 		}
 		return true;
 	}
@@ -1203,7 +1203,7 @@ bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
 			if (buildFacing > 3) {
 				buildFacing = 0;
 			}
-			info->AddLine("Buildings set to face %s", buildFaceDirs[buildFacing]);
+			logOutput.Print("Buildings set to face %s", buildFaceDirs[buildFacing]);
 			return true;
 		}
 		else if (arg == "dec") {
@@ -1211,27 +1211,27 @@ bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
 			if (buildFacing < 0) {
 				buildFacing = 3;
 			}
-			info->AddLine("Buildings set to face %s", buildFaceDirs[buildFacing]);
+			logOutput.Print("Buildings set to face %s", buildFaceDirs[buildFacing]);
 			return true;
 		}
 		else if (arg == "south") {
 			buildFacing = 0;
-			info->AddLine("Buildings set to face South");
+			logOutput.Print("Buildings set to face South");
 			return true;
 		}
 		else if (arg == "east") {
 			buildFacing = 1;
-			info->AddLine("Buildings set to face East");
+			logOutput.Print("Buildings set to face East");
 			return true;
 		}
 		else if (arg == "north") {
 			buildFacing = 2;
-			info->AddLine("Buildings set to face North");
+			logOutput.Print("Buildings set to face North");
 			return true;
 		}
 		else if (arg == "west") {
 			buildFacing = 3;
-			info->AddLine("Buildings set to face West");
+			logOutput.Print("Buildings set to face West");
 			return true;
 		}
 	}
@@ -1563,7 +1563,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.id=commands[tempInCommand].id;
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			if(button==SDL_BUTTON_LEFT && !preview)
-				info->AddLine("CMDTYPE_ICON left button press in incommand test? This shouldnt happen");
+				logOutput.Print("CMDTYPE_ICON left button press in incommand test? This shouldnt happen");
 			return c;}
 
 		case CMDTYPE_ICON_MAP:{

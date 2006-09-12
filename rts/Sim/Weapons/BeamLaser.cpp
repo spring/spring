@@ -7,7 +7,7 @@
 #include "Map/Ground.h"
 #include "WeaponDefHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Projectiles/BeamLaserProjectile.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/InterceptHandler.h"

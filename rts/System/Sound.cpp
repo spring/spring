@@ -2,7 +2,7 @@
 #include "Sound.h"
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 
 #ifdef _MSC_VER
@@ -22,7 +22,7 @@ CSound* CSound::GetSoundSystem()
 
 	const int maxSounds = configHandler.GetInt("MaxSounds", 16);
 	if (maxSounds <= 0) {
-		info->AddLine("Sound disabled with \"MaxSounds=%i\"", maxSounds);
+		logOutput.Print("Sound disabled with \"MaxSounds=%i\"", maxSounds);
 		return new CNullSound;
 	}
 
@@ -35,8 +35,8 @@ CSound* CSound::GetSoundSystem()
 #endif
 	}
 	catch (content_error& e) {
-		info->AddLine("Loading sound driver failed, disabling sound");
-		info->AddLine("Error: %s", e.what());
+		logOutput.Print("Loading sound driver failed, disabling sound");
+		logOutput.Print("Error: %s", e.what());
       	
 		delete sound;
 		sound = new CNullSound;

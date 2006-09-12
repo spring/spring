@@ -7,7 +7,7 @@
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Feature.h"
 #include "mmgr.h"
 
@@ -149,7 +149,7 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 {
 	vector<CUnit*> units;
 /*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-		info->AddLine("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
+		logOutput.Print("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
 		return units;
 	}*/
 
@@ -238,7 +238,7 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 		to.z=gs->mapy*SQUARE_SIZE-1;
 	}
 //	if(to.x<0){
-///		info->AddLine("error %f %f %f %f %f %f %f %f",start.x,start.z,to.x,to.z,dir.x,dir.z,dir.y,length);
+///		logOutput.Print("error %f %f %f %f %f %f %f %f",start.x,start.z,to.x,to.z,dir.x,dir.z,dir.y,length);
 //	}
 
 	float dx=to.x-start.x;
@@ -343,13 +343,13 @@ void CQuadField::RemoveFeature(CFeature* feature)
 		for(std::list<CFeature*>::iterator fi=baseQuads[a].features.begin();fi!=baseQuads[a].features.end();++fi){
 			if(*fi==feature){
 				baseQuads[a].features.erase(fi);
-				info->AddLine("Feature not removed correctly");
-				info->AddLine("Pos %.0f %.0f Radius %.0f",feature->pos.x,feature->pos.z,feature->radius);
-				info->AddLine("Pos %.0f %.0f Radius %.0f",feature->addPos.x,feature->addPos.z,feature->addRadius);
+				logOutput.Print("Feature not removed correctly");
+				logOutput.Print("Pos %.0f %.0f Radius %.0f",feature->pos.x,feature->pos.z,feature->radius);
+				logOutput.Print("Pos %.0f %.0f Radius %.0f",feature->addPos.x,feature->addPos.z,feature->addRadius);
 				for(qi=quads.begin();qi!=quads.end();++qi)
-					*info << *qi << " ";
-				*info << "\n";
-				info->AddLine("New %i",a);
+					logOutput << *qi << " ";
+				logOutput << "\n";
+				logOutput.Print("New %i",a);
 				break;
 			}
 		}
@@ -360,7 +360,7 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 {
 	vector<CFeature*> features;
 /*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-		info->AddLine("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
+		logOutput.Print("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
 		return units;
 	}*/
 
@@ -387,7 +387,7 @@ vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 {
 	vector<CSolidObject*> solids;
 /*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-		info->AddLine("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
+		logOutput.Print("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
 		return units;
 	}*/
 

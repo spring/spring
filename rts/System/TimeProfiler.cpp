@@ -6,7 +6,7 @@
 #include "TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "SDL_timer.h"
 
 #include "Rendering/GL/VertexArray.h"
@@ -141,7 +141,7 @@ void CTimeProfiler::AddTime(string name, Sint64 time)
 void CTimeProfiler::StartTimer()
 {
 	if(startTimeNum==999){
-		info->AddLine("To many timers");
+		logOutput.Print("To many timers");
 		return;
 	}
 	Uint64 starttime;

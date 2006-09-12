@@ -23,7 +23,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <algorithm>
 #include "Rendering/GL/IFramebuffer.h"
 #include "mmgr.h"
@@ -86,7 +86,7 @@ CProjectileHandler::CProjectileHandler()
 	textureAtlas->AddTexFromMem("perlintex", 128, 128, CTextureAtlas::RGBA32, tex);
 
 	if (!textureAtlas->Finalize())
-		info->AddLine("Could not finalize projectile texture atlas. Use less/smaller textures.");
+		logOutput.Print("Could not finalize projectile texture atlas. Use less/smaller textures.");
 
 	flaretex = textureAtlas->GetTexture("flare");
 	explotex = textureAtlas->GetTexture("explo");
@@ -126,7 +126,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 	if (!groundFXAtlas->Finalize())
-		info->AddLine("Could not finalize groundFX texture atlas. Use less/smaller textures.");
+		logOutput.Print("Could not finalize groundFX texture atlas. Use less/smaller textures.");
 
 	groundflashtex = groundFXAtlas->GetTexture("groundflash");
 	groundringtex = groundFXAtlas->GetTexture("groundring");
@@ -645,7 +645,7 @@ void CProjectileHandler::UpdateTextures()
 		UpdatePerlin();
 /*
 	if(gs->frameNum==300){
-		info->AddLine("Saving tex");
+		logOutput.Print("Saving tex");
 		perlinFB->select();
 		unsigned char* buf=new unsigned char[512*512*4];
 		glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,buf);

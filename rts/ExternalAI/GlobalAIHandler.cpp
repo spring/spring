@@ -3,7 +3,7 @@
 #include "GlobalAI.h"
 #include "Sim/Units/Unit.h"
 #include "IGlobalAI.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/GameHelper.h"
 #include "TimeProfiler.h"
 #include "Platform/errorhandler.h"

@@ -38,8 +38,9 @@ CPreGame::CPreGame(bool server, const string& demo):
 {
 	CommandDescription::Init();
 	
+	infoConsole = new CInfoConsole;
+
 	pregame = this; // prevent crashes if Select* is called from ctor
-	info = new CInfoConsole;
 	net = new CNet;
 	if (server)
 		gameServer = new CGameServer;
@@ -105,10 +106,10 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 {
 	if (k == SDLK_ESCAPE){
 		if(keys[SDLK_LSHIFT]){
-			info->AddLine("User exited");
+			logOutput.Print("User exited");
 			globalQuit=true;
 		} else
-			info->AddLine("Use shift-esc to quit");
+			logOutput.Print("Use shift-esc to quit");
 	}
 	if(showList){					//are we currently showing a list?
 		if(k == SDLK_UP)
@@ -169,7 +170,7 @@ bool CPreGame::Draw()
 	} else
 		PrintLoadMsg("", false); // just clear screen and set up matrices etc.
 
-	info->Draw();
+	infoConsole->Draw();
 
 	if(userWriting){
 		glColor4f(1,1,1,1);
@@ -202,7 +203,7 @@ bool CPreGame::Update()
 	switch (state) {
 
 		case UNKNOWN:
-			info->AddLine("Internal error in CPreGame");
+			logOutput.Print("Internal error in CPreGame");
 			return false;
 
 		case WAIT_ON_ADDRESS:
@@ -212,7 +213,7 @@ bool CPreGame::Update()
 			if (saveAddress)
 				configHandler.SetString("address",userInput);
 			if(net->InitClient(userInput.c_str(),8452,0)==-1){
-				info->AddLine("Client couldn't connect");
+				logOutput.Print("Client couldn't connect");
 				return false;
 			}
 
@@ -281,7 +282,9 @@ bool CPreGame::Update()
 
 			LoadStartPicture();
 
-			game=new CGame(server,mapName,modName);
+			game=new CGame(server,mapName,modName,infoConsole);
+			infoConsole = 0;
+
 			ENTER_UNSYNCED;
 			game->Update();
 			pregame=0;
@@ -357,7 +360,7 @@ void CPreGame::UpdateClientNet()
 		case NETMSG_CHAT:{
 			int player=inbuf[inbufpos+2];
 			string s=(char*)(&inbuf[inbufpos+3]);
-			info->AddLine(s);
+			logOutput.Print(s);
 			inbufpos += inbuf[inbufpos+1];	
 			break;}
 
@@ -367,7 +370,7 @@ void CPreGame::UpdateClientNet()
 
 		case NETMSG_SETPLAYERNUM:
 			gu->myPlayerNum=inbuf[inbufpos+1];
-			info->AddLine("Became player %i",gu->myPlayerNum);
+			logOutput.Print("Became player %i",gu->myPlayerNum);
 			inbufpos += 2;
 			break;
 
@@ -402,7 +405,7 @@ void CPreGame::SelectScript(std::string s)
 {
 	delete pregame->showList;
 	pregame->showList = 0;
-	(*info) << "Using script " << s.c_str() << "\n";
+	logOutput << "Using script " << s.c_str() << "\n";
 	if (pregame->server)
 		serverNet->SetScript(s);
 }
@@ -423,7 +426,7 @@ void CPreGame::SelectMap(std::string s)
 	stupidGlobalMapname = pregame->mapName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
-	(*info) << "Map: " << s.c_str() << "\n";
+	logOutput << "Map: " << s.c_str() << "\n";
 	if (pregame->server)
 		serverNet->SetMap(pregame->GetMapChecksum(), pregame->mapName);
 }
@@ -465,7 +468,7 @@ void CPreGame::SelectMod(std::string s)
 	pregame->modName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
-	(*info) << "Mod: " << s.c_str() << "\n";
+	logOutput << "Mod: " << s.c_str() << "\n";
 	if (pregame->server)
 		serverNet->SetMod(pregame->GetModChecksum(), pregame->modName);
 }

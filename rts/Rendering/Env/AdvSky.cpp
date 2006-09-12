@@ -13,7 +13,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "TimeProfiler.h"
 #include "Matrix44f.h"
 #include "mmgr.h"
@@ -783,7 +783,7 @@ void CAdvSky::CreateDetailTex(void)
 		}
 		float tSize=max(1,8>>a);
 		float c=pow(2.0f,a)*6/255.0f;
-//		info->AddLine("%f",c);
+//		logOutput.Print("%f",c);
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 

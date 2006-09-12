@@ -13,7 +13,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "SyncTracer.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 

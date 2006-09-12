@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "SyncTracer.h"
 #include <stdio.h>
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

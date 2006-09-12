@@ -11,7 +11,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "Game/Player.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -173,7 +173,7 @@ void CAirMoveType::Update(void)
 	case AIRCRAFT_FLYING:
 #ifdef DEBUG_AIRCRAFT
 	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){
-		info->AddLine("Flying %i %i %.1f %i",moveState,fireState,inefficientAttackTime,(int)isFighter);
+		logOutput.Print("Flying %i %i %.1f %i",moveState,fireState,inefficientAttackTime,(int)isFighter);
 	}
 #endif
 		owner->restTime=0;
@@ -321,7 +321,7 @@ void CAirMoveType::UpdateManeuver(void)
 {
 #ifdef DEBUG_AIRCRAFT
 	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){
-		info->AddLine("UpdataMan %i %i",maneuver,maneuverSubState);
+		logOutput.Print("UpdataMan %i %i",maneuver,maneuverSubState);
 	}
 #endif
 	float speedf=owner->speed.Length();
@@ -515,7 +515,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	}
 #ifdef DEBUG_AIRCRAFT
 	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){
-		info->AddLine("FAttack %.1f %.1f %.2f",pos.y-gHeight,goalLength,goalDir.dot(frontdir));
+		logOutput.Print("FAttack %.1f %.1f %.2f",pos.y-gHeight,goalLength,goalDir.dot(frontdir));
 	}
 #endif
 
@@ -879,8 +879,8 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 #ifdef DEBUG_AIRCRAFT
 	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){
-		info->AddLine("UpdataAP %.1f %.1f %.1f %.1f",speedf,pos.x,pos.y,pos.z);
-//		info->AddLine("Rudders %.1f %.1f %.1f %.1f",rudder,aileron,elevator,engine);
+		logOutput.Print("UpdataAP %.1f %.1f %.1f %.1f",speedf,pos.x,pos.y,pos.z);
+//		logOutput.Print("Rudders %.1f %.1f %.1f %.1f",rudder,aileron,elevator,engine);
 	}
 #endif
 }

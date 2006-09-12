@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include "FileSystem/FileHandler.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
@@ -281,7 +281,7 @@ int CNet::SendData(unsigned char *data, int length,int connection)
 		return 1;
 
 	if(length<=0)
-		info->AddLine("Errenous send length in SendData %i",length);
+		logOutput.Print("Errenous send length in SendData %i",length);
 
 	Connection* c=&connections[connection];
 	if(c->active){
@@ -289,14 +289,14 @@ int CNet::SendData(unsigned char *data, int length,int connection)
 			boost::mutex::scoped_lock scoped_lock(netMutex);
 			Connection* lc=c->localConnection;
 			if(lc->readyLength+length>=NETWORK_BUFFER_SIZE){
-				info->AddLine("Overflow when sending to local connection %i %i %i %i %i",imServer,connection,lc->readyLength,length,NETWORK_BUFFER_SIZE);
+				logOutput.Print("Overflow when sending to local connection %i %i %i %i %i",imServer,connection,lc->readyLength,length,NETWORK_BUFFER_SIZE);
 				return 0;
 			}
 			memcpy(&lc->readyData[lc->readyLength],data,length);
 			lc->readyLength+=length;
 		} else {
 			if(c->outgoingLength+length>=NETWORK_BUFFER_SIZE){
-				info->AddLine("Overflow when sending to remote connection %i %i %i %i %i",imServer,connection,c->outgoingLength,length,NETWORK_BUFFER_SIZE);
+				logOutput.Print("Overflow when sending to remote connection %i %i %i %i %i",imServer,connection,c->outgoingLength,length,NETWORK_BUFFER_SIZE);
 				return 0;
 			}
 			memcpy(&c->outgoingData[c->outgoingLength],data,length);
@@ -371,7 +371,7 @@ void CNet::Update(void)
 		std::map<int,Packet*>::iterator wpi;
 		while((wpi=c->waitingPackets.find(c->lastInOrder+1))!=c->waitingPackets.end()){		//process all in order packets that we have waiting
 			if(c->readyLength+wpi->second->length>=NETWORK_BUFFER_SIZE){
-				info->AddLine("Overflow in incoming network buffer");
+				logOutput.Print("Overflow in incoming network buffer");
 				break;
 			}
 			memcpy(&c->readyData[c->readyLength],wpi->second->data,wpi->second->length);
@@ -416,11 +416,11 @@ void CNet::ProcessRawPacket(unsigned char* data, int length, int conn)
 		c->firstUnacked++;
 	}
 //	if(!imServer)
-//		info->AddLine("Got packet %i %i %i %i %i %i",(int)imServer,packetNum,length,ack,c->lastInOrder,c->waitingPackets.size());
+//		logOutput.Print("Got packet %i %i %i %i %i %i",(int)imServer,packetNum,length,ack,c->lastInOrder,c->waitingPackets.size());
 	if(data[8]==1){
 		hsize=13;
 		int nak=*(int*)&data[9];
-//		info->AddLine("Got nak %i %i %i",nak,c->lastNak,c->firstUnacked);
+//		logOutput.Print("Got nak %i %i %i",nak,c->lastNak,c->firstUnacked);
 		if(nak!=c->lastNak || c->lastNakTime < curTime-0.1){
 			c->lastNak=nak;
 			c->lastNakTime=curTime;
@@ -466,11 +466,11 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 	int freeConn=0;
 	if(wantedNumber){
 		if(wantedNumber<0 || wantedNumber>=MAX_PLAYERS){
-			info->AddLine("Warning attempt to connect to errenous connection number");
+			logOutput.Print("Warning attempt to connect to errenous connection number");
 			wantedNumber=0;		
 		}
 		if(connections[wantedNumber].active){
-			info->AddLine("Warning attempt to connect to already active connection number");
+			logOutput.Print("Warning attempt to connect to already active connection number");
 			wantedNumber=0;
 		}
 		freeConn=wantedNumber;
@@ -673,7 +673,7 @@ bool CNet::FindDemoFile(const char* name)
 	}
 
 	if(playbackDemo->FileExists()){
-		info->AddLine("Playing demo from %s",name);
+		logOutput.Print("Playing demo from %s",name);
 		char c;
 		playbackDemo->Read(&c,1);
 		if(c){
@@ -718,10 +718,10 @@ void CNet::ReadDemoFile(void)
 			playbackDemo->Read(&nextDemoRead,sizeof(float));
 			nextDemoRead+=demoTimeOffset;
 			if(playbackDemo->Eof()){
-				info->AddLine("End of demo");
+				logOutput.Print("End of demo");
 				nextDemoRead=gu->modGameTime+4*gs->speedFactor;
 			}
-	//		info->AddLine("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
+	//		logOutput.Print("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
 		}
 	} else {
 		while(connections[0].readyLength<500 && nextDemoRead<gu->modGameTime/**/){
@@ -737,10 +737,10 @@ void CNet::ReadDemoFile(void)
 			playbackDemo->Read(&nextDemoRead,sizeof(float));
 			nextDemoRead+=demoTimeOffset;
 			if(playbackDemo->Eof()){
-				info->AddLine("End of demo");
+				logOutput.Print("End of demo");
 				nextDemoRead=gu->modGameTime+4*gs->speedFactor;
 			}
-	//		info->AddLine("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
+	//		logOutput.Print("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
 		}
 	}
 }
@@ -770,7 +770,7 @@ void CNet::CreateDemoServer(std::string demoname)
 			nextDemoRead=gu->modGameTime+100000000;
 		}
 	} else {
-		info->AddLine("Couldnt find file to use as server demo");
+		logOutput.Print("Couldnt find file to use as server demo");
 		delete playbackDemo;
 		playbackDemo=0;
 	}

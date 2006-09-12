@@ -4,7 +4,7 @@
 #include "StdAfx.h"
 #include "GUIframe.h"
 #include <algorithm>
-//#include "Game/UI/InfoConsole.h"
+//#include "LogOutput.h"
 
 GUIframe *mainFrame=NULL;
 

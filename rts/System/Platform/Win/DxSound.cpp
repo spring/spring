@@ -9,7 +9,7 @@
 	#include <windows.h>
 #endif
 
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Sim/Objects/WorldObject.h"
@@ -125,8 +125,7 @@ int CDxSound::InitFile(const string& name)
 	// Create the sound buffer object from the wave file data
 	if( !CreateStaticBuffer(name.c_str()) )
 	{   
-		if (info)
-			(*info) << "no such sound: " << name.c_str() << "\n";
+		logOutput << "no such sound: " << name.c_str() << "\n";
 		return -1;
 	}
 
@@ -244,7 +243,7 @@ void CDxSound::PlaySample(int id,const float3& p,float volume)
 		return;
 	}
 
-//	info->AddLine("%i %i %f",maxSounds,playingSounds.size(),v);
+//	logOutput.Print("%i %i %f",maxSounds,playingSounds.size(),v);
 
 	if(v>curThreshhold+(wantedSounds-playingSounds.size())/wantedSounds){
 		POP_CODE_MODE;
@@ -452,7 +451,7 @@ void CDxSound::Update()
 	}
 	total/=wantedSounds;
 	curThreshhold=(curThreshhold+total)*0.5;
-//	info->AddLine("curt %.2f",curThreshhold);
+//	logOutput.Print("curt %.2f",curThreshhold);
 }
 
 

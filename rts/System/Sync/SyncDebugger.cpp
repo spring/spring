@@ -4,7 +4,7 @@
 
 #ifdef SYNCDEBUG
 
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "System/GlobalStuff.h"
 #include "System/Net.h"
 #include "SyncDebugger.h"
@@ -286,23 +286,23 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				ClientSendBlockResponse(*(unsigned short*)&inbuf[1]);
 				logger.AddLine("Client: block response sent for block %d", *(unsigned short*)&inbuf[1]);
 				// simple progress indication
-				info->AddLine("[SD] Client: %d / %d", *(unsigned short*)&inbuf[3], *(unsigned short*)&inbuf[5]);
+				logOutput.Print("[SD] Client: %d / %d", *(unsigned short*)&inbuf[3], *(unsigned short*)&inbuf[5]);
 			}
 			length = 7;
 			break;
 		case NETMSG_SD_RESET:
 			logger.CloseSession();
-			info->AddLine("[SD] Client: Done!");
+			logOutput.Print("[SD] Client: Done!");
 // 			disable_history = false;
 			may_enable_history = true;
 			if (gu->autoQuit) {
-				info->AddLine("[SD] Client: Automatical quit enforced from commandline");
+				logOutput.Print("[SD] Client: Automatical quit enforced from commandline");
 				globalQuit = true;
 			}
 			length = 1;
 			break;
 		default:
-			info->AddLine("[SD] Client: invalid msg");
+			logOutput.Print("[SD] Client: invalid msg");
 			length = 0;
 			break;
 	}
@@ -527,7 +527,7 @@ void CSyncDebugger::ServerDumpStack()
 	serverNet->SendData(NETMSG_SD_RESET);
 	logger.AddLine("Server: Done!");
 	logger.CloseSession();
-	info->AddLine("[SD] Server: Done!");
+	logOutput.Print("[SD] Server: Done!");
 }
 
 

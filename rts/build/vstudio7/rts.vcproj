@@ -163,7 +163,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -449,6 +449,12 @@
 			<Filter
 				Name="UI"
 				Filter="">
+				<File
+					RelativePath="..\..\Game\Ui\CommandColors.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\CommandColors.h">
+				</File>
 				<File
 					RelativePath="..\..\Game\Ui\CursorIcons.cpp">
 				</File>
@@ -1880,6 +1886,12 @@
 						RelativePath="..\..\Sim\Units\CommandAI\FactoryCAI.h">
 					</File>
 					<File
+						RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.h">
+					</File>
+					<File
 						RelativePath="..\..\Sim\Units\CommandAI\MobileCAI.cpp">
 					</File>
 					<File
@@ -2310,115 +2322,33 @@
 				<File
 					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.h">
 				</File>
-				<Filter
-					Name="MoveMath"
-					Filter="">
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.cpp">
-					</File>
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.h">
-					</File>
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.cpp">
-					</File>
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.h">
-					</File>
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.cpp">
-					</File>
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.h">
-					</File>
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.cpp">
-					</File>
-					<File
-						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h">
-					</File>
-				</Filter>
 			</Filter>
 			<Filter
-				Name="Misc"
+				Name="MoveMath"
 				Filter="">
 				<File
-					RelativePath="..\..\Sim\Misc\AirBaseHandler.cpp">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\AirBaseHandler.h">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\CategoryHandler.h">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\DamageArray.h">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\DamageArrayHandler.cpp">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.h">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\DamageArrayHandler.h">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.cpp">
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\Feature.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Feature.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureDef.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\GeometricObjects.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\GeometricObjects.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\InterceptHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\InterceptHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\LosHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\LosHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\QuadField.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\QuadField.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\RadarHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\RadarHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\SensorHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\SensorHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Wind.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Wind.h">
+					RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -2454,6 +2384,12 @@
 			</File>
 			<File
 				RelativePath="..\..\System\GlobalStuff.h">
+			</File>
+			<File
+				RelativePath="..\..\System\LogOutput.cpp">
+			</File>
+			<File
+				RelativePath="..\..\System\LogOutput.h">
 			</File>
 			<File
 				RelativePath="..\..\System\Main.cpp">
@@ -3461,9 +3397,10 @@
 				<File
 					RelativePath="..\..\System\Script\LuaBinder.cpp">
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release with error catching|Win32">
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+							DisableSpecificWarnings="4675"/>
 					</FileConfiguration>
 				</File>
 				<File
@@ -3471,11 +3408,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Script\LuaFunctions.cpp">
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"/>
-					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
 						<Tool
@@ -4717,6 +4649,88 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\Upcast.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="Misc"
+				Filter="">
+				<File
+					RelativePath="..\..\Sim\Misc\AirBaseHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\AirBaseHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\CategoryHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\DamageArray.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\DamageArrayHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\DamageArrayHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Feature.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Feature.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureDef.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\GeometricObjects.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\GeometricObjects.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\InterceptHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\InterceptHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\LosHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\LosHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\QuadField.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\QuadField.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\RadarHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\RadarHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SensorHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SensorHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Wind.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Wind.h">
 				</File>
 			</Filter>
 		</Filter>

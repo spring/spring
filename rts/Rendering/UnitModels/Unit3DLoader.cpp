@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "Unit3DLoader.h"
 #include <fstream>
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
 #include "Rendering/Textures/TextureHandler.h"
@@ -320,7 +320,7 @@ int CUnit3DLoader::ParseSub(CFileHandler& ifs, UnitModel &model,const string& fi
 
 		} else {
 			if(s!="")
-				(*info) << "Unknown token " << s.c_str() << " in " << filename.c_str() << "\n";
+				logOutput << "Unknown token " << s.c_str() << " in " << filename.c_str() << "\n";
 		}
 	}
 	return 1;

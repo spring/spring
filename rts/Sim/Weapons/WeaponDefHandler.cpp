@@ -5,7 +5,7 @@
 #include "TdfParser.h"
 #include "FileSystem/FileHandler.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include <algorithm>
 #include <cctype>
 #include "Sound.h"
@@ -169,7 +169,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	else
 		weaponDefs[id].type = "Cannon";
 
-//	info->AddLine("%s as %s",weaponname.c_str(),weaponDefs[id].type.c_str());
+//	logOutput.Print("%s as %s",weaponname.c_str(),weaponDefs[id].type.c_str());
 
 	sunparser->GetDef(weaponDefs[id].firesound.name, "", weaponname + "\\soundstart");
 	sunparser->GetDef(weaponDefs[id].soundhit.name, "", weaponname + "\\soundhit");
@@ -211,7 +211,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 			damage=1;
 		if(type!=0){
 			weaponDefs[id].damages[type]=damage;
-//			info->AddLine("Weapon %s has damage %f against type %i",weaponname.c_str(),damage,type);
+//			logOutput.Print("Weapon %s has damage %f against type %i",weaponname.c_str(),damage,type);
 		}
 	}
 
@@ -290,7 +290,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	weaponDefs[id].onlyTargetCategory=0xffffffff;
 	if(atoi(sunparser->SGetValueDef("0", weaponname + "\\toairweapon").c_str())){
 		weaponDefs[id].onlyTargetCategory=CCategoryHandler::Instance()->GetCategories("VTOL");	//fix if we sometime call aircrafts otherwise
-//		info->AddLine("air only weapon %s %i",weaponname.c_str(),weaponDefs[id].onlyTargetCategory);
+//		logOutput.Print("air only weapon %s %i",weaponname.c_str(),weaponDefs[id].onlyTargetCategory);
 	}
 
 

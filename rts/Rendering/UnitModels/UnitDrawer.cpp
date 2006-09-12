@@ -24,7 +24,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Game/GameSetup.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "SDL_types.h"
@@ -63,7 +63,7 @@ CUnitDrawer::CUnitDrawer(void)
 
 	advShading=!!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program ? 1 : 0);
 	if (advShading && !GLEW_ARB_fragment_program) {
-		info->AddLine("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
+		logOutput.Print("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
 		advShading = false;
 	}
 

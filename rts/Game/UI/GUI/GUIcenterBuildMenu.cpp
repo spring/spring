@@ -7,7 +7,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Game/command.h"
 #include "GUIbuildMenu.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/SelectedUnits.h"
 #include "SDL_types.h"

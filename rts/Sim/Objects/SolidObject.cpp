@@ -3,7 +3,7 @@
 #include "Map/ReadMap.h"
 //#include "PhysicsEngine.h"
 #include "Rendering/GL/myGL.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "myMath.h"
 #include "Rendering/GL/glExtra.h"

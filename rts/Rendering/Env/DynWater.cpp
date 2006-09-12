@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -556,7 +556,7 @@ void CDynWater::DrawWaves(void)
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		info->AddLine("FBO not ready2");
+		logOutput.Print("FBO not ready2");
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D,waveTex2);
@@ -598,7 +598,7 @@ void CDynWater::DrawWaves(void)
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		info->AddLine("FBO not ready1");
+		logOutput.Print("FBO not ready1");
 
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -653,7 +653,7 @@ void CDynWater::DrawWaves(void)
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		info->AddLine("FBO not ready3");
+		logOutput.Print("FBO not ready3");
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, waveNormalFP );
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waveNormalVP );
@@ -712,7 +712,7 @@ void CDynWater::DrawHeightTex(void)
 
 	int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		info->AddLine("FBO not ready4");
+		logOutput.Print("FBO not ready4");
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, waveCopyHeightFP );
 	glEnable( GL_FRAGMENT_PROGRAM_ARB );
@@ -1000,7 +1000,7 @@ void CDynWater::DrawDetailNormalTex(void)
 
 	int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		info->AddLine("FBO not ready5");
+		logOutput.Print("FBO not ready5");
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, dwDetailNormalFP );
 	glEnable( GL_FRAGMENT_PROGRAM_ARB );
@@ -1067,7 +1067,7 @@ void CDynWater::AddShipWakes()
 	GLenum status;
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		info->AddLine("FBO not ready6");
+		logOutput.Print("FBO not ready6");
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP );
 	glEnable( GL_FRAGMENT_PROGRAM_ARB );
@@ -1167,7 +1167,7 @@ void CDynWater::AddExplosions()
 	GLenum status;
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		info->AddLine("FBO not ready7");
+		logOutput.Print("FBO not ready7");
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP );
 	glEnable( GL_FRAGMENT_PROGRAM_ARB );
