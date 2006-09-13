@@ -1,1 +1,0 @@
-B_RULE_EXTREME, armrl, B_MEX, armalab, B_DEFENSE, armrl, armlab, repair, B_RULE, B_GEO, B_RULE, B_POWER, B_GEO, B_RULE, repair, B_DEFENSE, armrl, B_FACTORY, repair, B_RULE, B_RULE, B_RULE, repair, armalab, armlab, B_DEFENSE, armrl, repair, B_RETREAT, B_GUARD_FACTORY, repeat
