@@ -1696,6 +1696,9 @@
 				RelativePath="..\..\Rendering\GroundDecalHandler.cpp">
 			</File>
 			<File
+				RelativePath="..\..\Rendering\GroundDecalHandler.h">
+			</File>
+			<File
 				RelativePath="..\..\Rendering\GroundFlash.cpp">
 			</File>
 			<File
