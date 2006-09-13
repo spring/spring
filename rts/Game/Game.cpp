@@ -1451,7 +1451,7 @@ bool CGame::Draw()
 		glScalef(0.03f,0.04f,0.1f);
 
 		//skriv ut fps etc
-		font->glPrint("FPS %3.0fd Frame %d Units %d Part %d(%d)",fps,gs->frameNum,uh->activeUnits.size(),ph->ps.size(),ph->currentParticles);
+		font->glPrint("FPS %d Frame %d Units %d Part %d(%d)",fps,gs->frameNum,uh->activeUnits.size(),ph->ps.size(),ph->currentParticles);
 		glPopMatrix();
 
 		if(playing){
