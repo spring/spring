@@ -254,12 +254,6 @@ SectionGroup "AI opponent plugins (Bots)"
 	!include "sections\aai.nsh"
 	!undef INSTALL
 	SectionEnd
-
-	Section "NTAI" SEC_NTAI
-	!define INSTALL
-	!include "sections\ntai.nsh"
-	!undef INSTALL
-	SectionEnd
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
@@ -351,7 +345,6 @@ Section Uninstall
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
   !include "sections\aai.nsh"
-  !include "sections\ntai.nsh"
   !include "sections\battleroom.nsh"
 
   Delete "$DESKTOP\TA Spring battleroom.lnk"

@@ -19,3 +19,4 @@ cd ..\..
 pkzip -add _temp.zip builddata\springcontent\modinfo.tdf
 rename _temp.zip springcontent.sdz
 move /Y springcontent.sdz ..\game\base
+cd builddata
