@@ -1,6 +1,6 @@
 TASpring change log
 
-0.next
+0.73b1
 
 - added "cmdcolors.txt" settings file to configure control indicator rendering
   (this includes command queue lines and ranges, highlighted unit ranges, the
@@ -54,8 +54,6 @@ TASpring change log
   (the optional number is the mode; without the number, it cycles through the modes)
 - added "/shadows [0-1]" to control shadow rendering in-game
   (the optional number means off/on; without the number, it toggles)
-
-0.73b1
 
 - [bugfix] Resource expendature now shows correct pull when economy is stalling.
 

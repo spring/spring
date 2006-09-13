@@ -201,7 +201,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			for(int y=starty;y<endy;++y){
 				for(int x=0;x<gs->hmapx;++x){
 					int a=y*gs->pwr2mapx/2+x;
-					if(myAirLos[(y/2)*gs->hmapx/2+x/2]) {
+					if(myAirLos[((y*2)>>loshandler->airMipLevel)*loshandler->airSizeX+((x*2)>>loshandler->airMipLevel)]) {
 						float extractDepth = extractDepthMap[y*gs->hmapx+x];
 						infoTexMem[a*4]=(unsigned char)min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
 					} else
