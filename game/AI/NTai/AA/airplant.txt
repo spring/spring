@@ -1,1 +1,0 @@
-B_SCOUT, B_SCOUT, l1constructor, l1constructor, l2constructor, l2constructor, B_FIGHTER, B_FIGHTER, B_FIGHTER, B_FIGHTER, B_BOMBER, B_BOMBER, B_GUNSHIP, B_GUNSHIP, B_GUNSHIP, repeat

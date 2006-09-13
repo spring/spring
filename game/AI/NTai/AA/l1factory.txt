@@ -1,1 +1,0 @@
-B_SCOUT, l1constructor, B_SCOUT, B_SCOUT, l1constructor, B_SCOUT, B_SCOUT, B_SCOUT, l1constructor, B_ASSAULT, B_ASSAULT, l1constructor, B_RAND_ASSAULT, B_RAND_ASSAULT, B_RAND_ASSAULT, repeat
