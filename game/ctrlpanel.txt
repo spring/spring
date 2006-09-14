@@ -90,6 +90,7 @@
 // nextPageSlot   b4
 // deadIconSlot   c4
 
+// fillOrder b3 b2 b1 b0 a3 c3 a2 c2 a1 c1 a0 c0 a4 b4 c4
 
 /////////////////////////////////////////////////////
 //
@@ -109,3 +110,5 @@
 // prevPageSlot   a4
 // nextPageSlot   b4
 // deadIconSlot   c4
+
+// fillOrder  b3 b2 b1 b0  a3 c3 a2 c2 a1 c1 a0 c0  a4 b4 c4   e3 e2 e1 e0  d3 f3 d2 f2 d1 f1 d0 f0  d4 e4 f4
