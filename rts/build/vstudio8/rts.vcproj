@@ -520,6 +520,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Game\UI\OutlineFont.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\OutlineFont.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\UI\QuitBox.cpp"
 					>
 				</File>
@@ -549,6 +557,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\ShareBox.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\SimpleParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\SimpleParser.h"
 					>
 				</File>
 				<File
@@ -2590,6 +2606,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\GlobalStuff.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\LogOutput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\LogOutput.h"
 				>
 			</File>
 			<File
