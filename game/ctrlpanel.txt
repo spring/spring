@@ -1,0 +1,111 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Spring Control Panel Configuration
+//
+
+// outlinefont  0
+
+// noSelectGaps 0
+
+
+/////////////////////////////////////////////////////
+//
+//  Default 2x8
+//
+
+// xIcons         2
+// yIcons         8
+
+// xPos           0.000
+// yPos           0.175
+
+// xSelectionPos  0.018
+// ySelectionPos  0.127
+
+// xIconSize      0.06
+// yIconSize      0.06
+
+// iconBorder     0.003
+// frameBorder    0.003
+
+// prevPageSlot   auto
+// nextPageSlot   auto
+// deadIconSlot   none
+
+
+/////////////////////////////////////////////////////
+//
+//  Extended 3x10
+//
+
+// xIcons         3
+// yIcons         10
+// prevPageSlot   j0
+// deadIconSlot   j1
+// nextPageSlot   j2
+// xIconSize      0.05
+// yIconSize      0.05
+
+// xPos           0.000
+// yPos           0.147
+// xSelectionPos  0.018
+// ySelectionPos  0.115
+
+
+/////////////////////////////////////////////////////
+//
+//  Extended 3x11
+//
+
+// xIcons         3
+// yIcons         11
+// prevPageSlot   k0
+// deadIconSlot   k1
+// nextPageSlot   k2
+// xIconSize      0.05
+// yIconSize      0.05
+
+// xPos           0.000
+// yPos           0.147
+// xSelectionPos  0.018
+// ySelectionPos  0.115
+
+
+/////////////////////////////////////////////////////
+//
+//  KeyGrid Layout
+//
+
+// xIcons         5
+// yIcons         3
+// xPos           0.00
+// yPos           0.11
+// xIconSize      0.05
+// yIconSize      0.05
+// xSelectionPos  0.297
+// ySelectionPos  0.113
+// noSelectGaps   1
+
+// prevPageSlot   a4
+// nextPageSlot   b4
+// deadIconSlot   c4
+
+
+/////////////////////////////////////////////////////
+//
+//  Dual KeyGrid Layout
+//
+
+// xIcons         5
+// yIcons         6
+// xPos           0.00
+// yPos           0.11
+// xIconSize      0.05
+// yIconSize      0.05
+// xSelectionPos  0.297
+// ySelectionPos  0.113
+// noSelectGaps   1
+
+// prevPageSlot   a4
+// nextPageSlot   b4
+// deadIconSlot   c4
