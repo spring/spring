@@ -101,6 +101,7 @@
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
 #include "UI/NewGuiDefine.h"
+#include "UI/OutlineFont.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
 #include "UI/SelectionKeyHandler.h"
@@ -1162,6 +1163,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "cmdcolors") {
 		cmdColors.LoadConfig("cmdcolors.txt");
 	}
+#ifndef NEW_GUI
+	else if (cmd == "ctrlpanel") {
+		guihandler->ReloadConfig();
+	}
+#endif
 	else {
 		return false;
 	}
@@ -1411,12 +1417,14 @@ bool CGame::Draw()
 
 	if(mouse->locked){
 		glColor4f(1,1,1,0.5f);
+		glLineWidth(1.49f);
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
 		glVertex2f(0.5f-10.0f/gu->screenx,0.5f);
 		glVertex2f(0.5f+10.0f/gu->screenx,0.5f);
 		glVertex2f(0.5f,0.5f-10.0f/gu->screeny);
 		glVertex2f(0.5f,0.5f+10.0f/gu->screeny);
+		glLineWidth(1.0f);
 		glEnd();
 	}
 
@@ -1478,9 +1486,6 @@ bool CGame::Draw()
 	}
 
 	if(userWriting){
-		glColor4f(1,1,1,1);
-		glTranslatef(0.1f,0.75f,0.0f);
-		glScalef(0.02f,0.028f,0.1f);
 		int startPos = 0;
 		if(chatting){
 			if((tolower(userInput[0]) == 'a') && (userInput[1] == ':')) {
@@ -1497,7 +1502,25 @@ bool CGame::Draw()
 		}
 		tempstring=userPrompt;
 		tempstring+=userInput.substr(startPos, string::npos);
-		font->glPrint("%s",tempstring.c_str());
+
+		const float xScale = 0.020f;
+		const float yScale = 0.028f;
+		
+		glColor4f(1,1,1,1);
+		glTranslatef(0.26f,0.73f,0.0f);
+		glScalef(xScale, yScale, 1.0f);
+
+		if (!outlineFont.IsEnabled()) {
+			font->glPrint("%s", tempstring.c_str());
+		}
+		else {
+			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
+			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+
+			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			outlineFont.print(xPixel, yPixel, white, tempstring.c_str());
+		}
+		
 		glLoadIdentity();
 	}
 
@@ -2490,8 +2513,8 @@ void CGame::DrawDirectControlHud(void)
 	glDisable(GL_TEXTURE_2D);
 
 	glPushMatrix();
-	glTranslatef(0.1f,0.1f,0);
-	glScalef(0.25f,0.25f,0.25f);
+	glTranslatef(0.1f,0.5f,0);
+	glScalef(0.25f, 0.25f * gu->aspectRatio, 0.25f);
 
 	if(unit->moveType->useHeading){
 		glPushMatrix();
@@ -2523,7 +2546,7 @@ void CGame::DrawDirectControlHud(void)
 	}
 	glTranslatef3(-unit->pos-unit->speed*gu->timeOffset);
 	glDisable(GL_BLEND);
-	unitDrawer->DrawIndividual(unit);
+	unitDrawer->DrawIndividual(unit); // draw the unit
 	glPopMatrix();
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
@@ -2550,9 +2573,9 @@ void CGame::DrawDirectControlHud(void)
 	glEnable(GL_TEXTURE_2D);
 
 	glPushMatrix();
-	glTranslatef(0.22f,0.05f,0);
+	glTranslatef(0.25f, 0.12f, 0);
 	glScalef(0.03f,0.03f,0.03f);
-	glColor4d(0.2f,0.8f,0.2f,0.6f);
+	glColor4d(0.2f,0.8f,0.2f,0.8f);
 	font->glPrint("Health %.0f",unit->health);
 	glPopMatrix();
 
@@ -2560,23 +2583,23 @@ void CGame::DrawDirectControlHud(void)
 		glPushMatrix();
 		glTranslatef(0.02f,0.34f,0);
 		glScalef(0.03f,0.03f,0.03f);
-		glColor4d(0.2f,0.8f,0.2f,0.6f);
+		glColor4d(0.2f,0.8f,0.2f,0.8f);
 		font->glPrint("Free fire mode");
 		glPopMatrix();
 	}
 	for(int a=0;a<unit->weapons.size();++a){
 		glPushMatrix();
 		glTranslatef(0.02f,0.3f-a*0.04f,0);
-		glScalef(0.03f,0.03f,0.03f);
+		glScalef(0.0225f,0.03f,0.03f);
 		CWeapon* w=unit->weapons[a];
 		if(w->reloadStatus>gs->frameNum){
-			glColor4d(0.8f,0.2f,0.2f,0.6f);
+			glColor4d(0.8f,0.2f,0.2f,0.8f);
 			font->glPrint("Weapon %i: Reloading",a+1);
 		} else if(!w->angleGood){
-			glColor4d(0.6f,0.6f,0.2f,0.6f);
+			glColor4d(0.6f,0.6f,0.2f,0.8f);
 			font->glPrint("Weapon %i: Aiming",a+1);
 		} else {
-			glColor4d(0.2f,0.8f,0.2f,0.6f);
+			glColor4d(0.2f,0.8f,0.2f,0.8f);
 			font->glPrint("Weapon %i: Ready",a+1);
 		}
 		glPopMatrix();
@@ -2589,7 +2612,6 @@ void CGame::DrawDirectControlHud(void)
 	glPushMatrix();
 	camera->Update(false);		//draw some stuff in world coordinates
 	glDisable(GL_TEXTURE_2D);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 
 	for(int a=0;a<unit->weapons.size();++a){
 		CWeapon* w=unit->weapons[a];

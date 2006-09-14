@@ -3,11 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "KeyBindings.h"
 #include <stdio.h>
 #include <cctype>
-#include "KeyBindings.h"
-#include "KeyCodes.h"
 #include "SDL_keysym.h"
+#include "KeyCodes.h"
+#include "SimpleParser.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Platform/errorhandler.h"
@@ -38,7 +39,8 @@ defaultBindings[] = {
 	{ "l",   "togglelos"             },
 	{ ";",   "toggleradarandjammer"  },
 
-	{ "Any+j",     "mouse2"     },
+//	{ "Any+j",     "mouse2"     }, // FIXME? -- used for chatall/chatswitchall  (use 'k'?)
+
 	{ "backspace", "mousestate" },
 	{ "Ctrl+h",    "mousestate" }, // CTRL+BACKSPACE returns CTRL+h
 
@@ -48,7 +50,9 @@ defaultBindings[] = {
 	{ "Shift+enter", "chatspec"       },
 	{ "Shift+enter", "chatswitchspec" },
 	{ "Ctrl+m",      "chatall"        },
-	{ "Ctrl+m",      "chatswitchall"  }, // CTRL+ENTER returns CTRL+m
+	{ "Ctrl+m",      "chatswitchall"  }, // CTRL+ENTER can return CTRL+m
+	{ "Ctrl+j",      "chatall"        },
+	{ "Ctrl+j",      "chatswitchall"  }, // CTRL+ENTER can return CTRL+j  (windows)
 
 	{ "home", "increaseViewRadius"  },
 	{ "end",  "decreaseViewRadius"  },
@@ -186,105 +190,15 @@ defaultBindings[] = {
 
 /******************************************************************************/
 //
-// Parsing Routines
+// CKeyBindings::Action
 //
-
-static int lineNumber = 0;
-static bool inComment = false; // /* text */ comments are not implemented
-
-
-// returns next line (without newlines)
-static string GetLine(CFileHandler& fh)
-{
-	lineNumber++;
-	char a;
-	string s = "";
-	while (true) {
-		a = fh.Peek();
-		if (a == EOF)  { break; }
-		fh.Read(&a, 1);
-		if (a == '\n') { break; }
-		if (a != '\r') { s += a; }
-	}
-	return s;
-}
-
-
-// returns next non-blank line (without newlines or comments)
-static string GetCleanLine(CFileHandler& fh)
-{
-	string::size_type pos;
-	while (true) {
-		if (fh.Eof()) {
-			return ""; // end of file
-		}
-		string line = GetLine(fh);
-
-		pos = line.find_first_not_of(" \t");
-		if (pos == string::npos) {
-			continue; // blank line
-		}
-
-		pos = line.find("//");
-		if (pos != string::npos) {
-			line.erase(pos);
-			pos = line.find_first_not_of(" \t");
-			if (pos == string::npos) {
-				continue; // blank line (after removing comments)
-			}
-		}
-
-		return line;
-	}
-}
-
-
-static vector<string> Tokenize(const string& line, int minWords = 0)
-{
-	vector<string> words;
-	string::size_type start;
-	string::size_type end = 0;
-	while (true) {
-		start = line.find_first_not_of(" \t", end);
-		if (start == string::npos) {
-			break;
-		}
-		string word;
-		if ((minWords > 0) && (words.size() >= minWords)) {
-			word = line.substr(start);
-			// strip trailing whitespace
-			string::size_type pos = word.find_last_not_of(" \t");
-			if (pos != (word.size() - 1)) {
-				word.resize(pos + 1);
-			}
-			end = string::npos;
-		}
-		else {
-			end = line.find_first_of(" \t", start);
-			if (end == string::npos) {
-				word = line.substr(start);
-			} else {
-				word = line.substr(start, end - start);
-			}
-		}
-		words.push_back(word);
-		if (end == string::npos) {
-			break;
-		}
-	}
-	
-	return words;
-}
-
-
-/******************************************************************************/
 
 CKeyBindings::Action::Action(const string& line)
 {
 	rawline = line;
 	command = "";
 	extra = "";
-	vector<string> words = Tokenize(line, 1);
+	vector<string> words = SimpleParser::Tokenize(line, 1);
 	if (words.size() > 0) {
 		command = StringToLower(words[0]);
 	}
@@ -619,7 +533,7 @@ void CKeyBindings::LoadDefaults()
 
 bool CKeyBindings::Command(const string& line)
 {
-	vector<string> words = Tokenize(line, 2);
+	vector<string> words = SimpleParser::Tokenize(line, 2);
 
 	if (words.size() <= 0) {
 		return false;
@@ -667,16 +581,17 @@ bool CKeyBindings::Command(const string& line)
 
 bool CKeyBindings::Load(const string& filename)
 {
-	inComment = false;
-	lineNumber = 0;
+//	inComment = false;
 	CFileHandler ifs(filename);
+
+	SimpleParser::Init();
 	
 	userCommand = false; // temporarily disable Sanitize() calls
 	
 	LoadDefaults();
 	
 	while (true) {
-		const string line = GetCleanLine(ifs);
+		const string line = SimpleParser::GetCleanLine(ifs);
 		if (line.empty()) {
 			break;
 		}

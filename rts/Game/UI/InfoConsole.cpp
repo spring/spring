@@ -4,10 +4,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "InfoConsole.h"
+#include "OutlineFont.h"
 #include "Rendering/GL/myGL.h"
 #include <fstream>
 #include "Rendering/glFont.h"
 #include "NewGuiDefine.h"
+#include "GUI/GUIframe.h"
 #ifdef NEW_GUI
 	#include "GUI/GUIcontroller.h"
 #endif
@@ -32,14 +34,15 @@ CInfoConsole::CInfoConsole()
 	lastTime=0;
 	lifetime=400;
 
-	lifetime=configHandler.GetInt("InfoMessageTime",400);
-	xpos=0.26f;
-	verboseLevel=configHandler.GetInt("VerboseLevel",0);
-	ypos=0.946f;
-	width=0.41f;
-	height=0.2f;
-	numLines = 7;
+	lifetime     = configHandler.GetInt("InfoMessageTime", 400);
+	verboseLevel = configHandler.GetInt("VerboseLevel", 0);
 
+	xpos=0.26f;
+	ypos=0.96f;
+	width=0.41f;
+	height=0.205f;
+	numLines = 8;
+	
 	logOutput.AddSubscriber(this);
 }
 
@@ -53,8 +56,9 @@ void CInfoConsole::Draw()
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5f,0.5f,0.5f,0.4f);
-	if(!data.empty()){
+	glColor4f(0.2f, 0.2f, 0.2f, GUI_TRANS);
+
+	if(!data.empty() && !outlineFont.IsEnabled()){
 		glBegin(GL_TRIANGLE_STRIP);
 			glVertex3f(xpos,ypos,0);
 			glVertex3f(xpos+width,ypos,0);
@@ -62,19 +66,39 @@ void CInfoConsole::Draw()
 			glVertex3f(xpos+width,ypos-height,0);
 		glEnd();
 	}
-	glTranslatef(xpos+0.01f,ypos-0.026f,0);
-	glScalef(0.015f,0.02f,0.02f);
-	glColor4f(1,1,1,1);
+
+	const float xScale = 0.015f;
+	const float yScale = 0.020f;
+	
+	glTranslatef(xpos + 0.01f, ypos - 0.026f, 0.0f);
+	glScalef(xScale, yScale, 1.0f);
 
 	glEnable(GL_TEXTURE_2D);
 
-	std::deque<InfoLine>::iterator ili;
-	for(ili=data.begin();ili!=data.end();ili++){
-		font->glPrint("%s",ili->text.c_str());
-		glTranslatef(0,-1.2f,0);
+	if (!outlineFont.IsEnabled()) {
+		glColor4f(1,1,1,1);
+
+		std::deque<InfoLine>::iterator ili;
+		for(ili=data.begin();ili!=data.end();ili++){
+			font->glPrint("%s", ili->text.c_str());
+			glTranslatef(0.0f, -1.2f, 0.0f);
+		}
 	}
+	else {
+		const float xPixel = 1.0f / (xScale * (float)gu->screenx);
+		const float yPixel = 1.0f / (yScale * (float)gu->screeny);
+		const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		
+		std::deque<InfoLine>::iterator ili;
+		for(ili=data.begin();ili!=data.end();ili++){
+			outlineFont.print(xPixel, yPixel, white, ili->text.c_str());
+			glTranslatef(0.0f, -1.2f, 0.0f);
+		}
+	}
+
 	glPopMatrix();
 }
+
 
 void CInfoConsole::Update()
 {

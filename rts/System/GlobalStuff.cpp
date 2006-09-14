@@ -145,6 +145,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	lastFrameTime=0;
 	screenx=100;
 	screeny=100;
+	aspectRatio=1.0f;
 	myPlayerNum=0;
 	myTeam=1;
 	myAllyTeam=1;

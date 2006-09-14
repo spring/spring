@@ -4,113 +4,275 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "GuiHandler.h"
-#include "CommandColors.h"
-#include "KeyBindings.h"
-#include "KeyCodes.h"
-#include "Game/SelectedUnits.h"
-#include "Rendering/GL/myGL.h"
-#include "MouseHandler.h"
-#include "Rendering/glFont.h"
-#include "Map/Ground.h"
-#include "Game/Camera.h"
-#include "InfoConsole.h"
 #include <map>
-#include "Sim/Units/Unit.h"
-#include "Game/GameHelper.h"
-#include "Game/Game.h"
-#include "Rendering/GL/glList.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Sim/Units/UnitLoader.h"
-//#include "Rendering/UnitModels/Unit3DLoader.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Rendering/Textures/TextureHandler.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Misc/Feature.h"
-#include "Map/BaseGroundDrawer.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
-#include "mmgr.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
+#include "CommandColors.h"
+#include "InfoConsole.h"
+#include "KeyBindings.h"
+#include "KeyCodes.h"
+#include "MouseHandler.h"
+#include "OutlineFont.h"
+#include "SimpleParser.h"
+#include "Game/Camera.h"
+#include "Game/Game.h"
+#include "Game/GameHelper.h"
+#include "Game/SelectedUnits.h"
 #include "Game/UI/GUI/GUIframe.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/glList.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/UnitModels/3DOParser.h"
+//#include "Rendering/UnitModels/Unit3DLoader.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/Weapon.h"
+#include "System/Platform/ConfigHandler.h"
+#include "mmgr.h"
+
+extern Uint8 *keys;
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+
 CGuiHandler* guihandler;
-extern Uint8 *keys;
-unsigned int total_active_icons;
-
-//unsigned int icon_texture[256];
-//bool has_bitmap[256] = {false};
-
-unsigned int maxxpos=1;
-int fadein;
-
-struct container_box {
-	GLfloat x1;
-	GLfloat y1;
-	GLfloat x2;
-	GLfloat y2;
-};
-
-struct guiicon_data {
-	unsigned int x;
-	unsigned int y;
-	GLfloat width;
-	GLfloat height;
-	bool has_bitmap;
-	unsigned int texture;
-	char* c_str;
-};
-
-struct active_icon {
-	GLfloat x1;
-	GLfloat y1;
-	GLfloat x2;
-	GLfloat y2;
-	int id;
-};
-
-static map<int, guiicon_data> iconmap;
-
-static active_icon curricon[512];  // FIXME -- this should not be a fixed size
-
-static container_box buttonBox;
-
-
-static void MenuSelection(std::string s)
-{
-	guihandler->MenuChoice(s);
-}
 
 
 CGuiHandler::CGuiHandler()
 : inCommand(-1),
-	activeMousePress(false),
-	defaultCmdMemory(-1),
-	needShift(false),
-	activePage(0),
-	maxPages(0),
-	showingMetal(false),
-	buildSpacing(0),
-	buildFacing(0),
-	actionOffset(0)
+  activeMousePress(false),
+  defaultCmdMemory(-1),
+  needShift(false),
+  maxPage(0),
+  activePage(0),
+  showingMetal(false),
+  buildSpacing(0),
+  buildFacing(0),
+  actionOffset(0)
 {
-//	LoadCMDBitmap(CMD_STOP, "bitmaps\\ocean.bmp");
+	icons = new IconInfo[16];
+	iconsSize = 16;
+	iconsCount = 0;
+	
+	LoadConfig("ctrlpanel.txt");
+	
 	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps/armsilo1.bmp");
-	readmap->mapDefParser.GetDef(autoShowMetal,"1","MAP\\autoShowMetal");
+	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
 }
+
+
+static bool SafeAtoF(float& var, const string& value)
+{
+	char* endPtr;
+	const char* startPtr = value.c_str();
+	const float tmp = (float)strtod(startPtr, &endPtr);
+	if (endPtr == startPtr) {
+		return false;
+	}
+	var = tmp;
+	return true;
+}
+
+
+void CGuiHandler::LoadDefaults()
+{
+	xIcons = 2;
+	yIcons = 8;
+
+	xPos        = 0.000f;
+	yPos        = 0.175f;
+	xIconSize   = 0.060f;
+	yIconSize   = 0.060f;
+	iconBorder  = 0.003f;
+	frameBorder = 0.003f;
+	
+	xSelectionPos = 0.018f;
+	ySelectionPos = 0.127f;
+
+	noSelectGaps = false;
+}
+
+
+bool CGuiHandler::LoadConfig(const std::string& filename)
+{
+	LoadDefaults();
+
+	CFileHandler ifs(filename);
+
+	SimpleParser::Init();
+
+	string deadStr = "";
+	string prevStr = "";
+	string nextStr = "";
+
+	while (true) {
+		const string line = SimpleParser::GetCleanLine(ifs);
+		if (line.empty()) {
+			break;   
+		}
+
+		vector<string> words = SimpleParser::Tokenize(line, 1);
+		
+		const string command = StringToLower(words[0]);
+		
+		if ((command == "noselectgaps") && (words.size() > 1)) {
+			noSelectGaps = !!atoi(words[1].c_str());
+		}
+		else if ((command == "deadiconslot") && (words.size() > 1)) {
+			deadStr = StringToLower(words[1]);
+		}
+		else if ((command == "prevpageslot") && (words.size() > 1)) {
+			prevStr = StringToLower(words[1]);
+		}
+		else if ((command == "nextpageslot") && (words.size() > 1)) {
+			nextStr = StringToLower(words[1]);
+		}
+		else if ((command == "xicons") && (words.size() > 1)) {
+			xIcons = atoi(words[1].c_str());
+		}
+		else if ((command == "yicons") && (words.size() > 1)) {
+			yIcons = atoi(words[1].c_str());
+		}
+		else if ((command == "xiconsize") && (words.size() > 1)) {
+			SafeAtoF(xIconSize, words[1]);
+		}
+		else if ((command == "yiconsize") && (words.size() > 1)) {
+			SafeAtoF(yIconSize, words[1]);
+		}
+		else if ((command == "xpos") && (words.size() > 1)) {
+			SafeAtoF(xPos, words[1]);
+		}
+		else if ((command == "ypos") && (words.size() > 1)) {
+			SafeAtoF(yPos, words[1]);
+		}
+		else if ((command == "iconborder") && (words.size() > 1)) {
+			SafeAtoF(iconBorder, words[1]);
+		}
+		else if ((command == "frameborder") && (words.size() > 1)) {
+			SafeAtoF(frameBorder, words[1]);
+		}
+		else if ((command == "xselectionpos") && (words.size() > 1)) {
+			SafeAtoF(xSelectionPos, words[1]);
+		}
+		else if ((command == "yselectionpos") && (words.size() > 1)) {
+			SafeAtoF(ySelectionPos, words[1]);
+		}
+		else if ((command == "outlinefont") && (words.size() > 1)) {
+			outlineFont.Enable(!!atoi(words[1].c_str()));
+		}
+	}
+
+	// sane clamps
+	xIcons      = max(2,      xIcons);
+	yIcons      = max(2,      yIcons);
+	xIconSize   = max(0.010f, xIconSize);
+	yIconSize   = max(0.010f, yIconSize);
+	iconBorder  = max(0.0f,   iconBorder);
+	frameBorder = max(0.0f,   frameBorder);
+	
+	xIconStep = xIconSize + (iconBorder * 2.0f);
+	yIconStep = yIconSize + (iconBorder * 2.0f);
+
+	iconsPerPage = (xIcons * yIcons);
+	
+	buttonBox.x1 = xPos;
+	buttonBox.x2 = xPos + (frameBorder * 2.0f) + (xIcons * xIconStep);
+	buttonBox.y1 = yPos;
+	buttonBox.y2 = yPos + (frameBorder * 2.0f) + (yIcons * yIconStep);
+
+	if (!deadStr.empty()) {
+		deadIconSlot = ParseIconPosSlot(deadStr);
+	}	else {
+		deadIconSlot = -1;
+	}
+
+	if (!prevStr.empty() && (prevStr != "auto")) {
+		if (prevStr == "none") {
+			prevPageSlot = -1;
+		} else {
+			prevPageSlot = ParseIconPosSlot(prevStr);
+		}
+	}	else {
+		prevPageSlot = iconsPerPage - 2;
+	}
+
+	if (!nextStr.empty() && (nextStr != "auto")) {
+		if (nextStr == "none") {
+			nextPageSlot = -1;
+		} else {
+			nextPageSlot = ParseIconPosSlot(nextStr);
+		}
+	}	else {
+		nextPageSlot = iconsPerPage - 1;
+	}
+
+	if (deadIconSlot >= 0) {	
+		const float fullBorder = frameBorder + iconBorder;
+		const float fx = (float)(deadIconSlot % xIcons);
+		const float fy = (float)(deadIconSlot / xIcons);
+		xBpos = buttonBox.x1 + (fullBorder + (0.5 * xIconSize) + (fx * xIconStep));
+		yBpos = buttonBox.y2 - (fullBorder + (0.5 * yIconSize) + (fy * yIconStep));
+	}
+	else if ((prevPageSlot >= 0) && (nextPageSlot >= 0)) {
+		// place in the middle of adjacent paging icons
+		const int delta = abs(prevPageSlot - nextPageSlot);
+		if ((delta == 1) || (delta == xIcons)) {
+			const float fullBorder = frameBorder + iconBorder;
+			const float fxp = (float)(prevPageSlot % xIcons);
+			const float fyp = (float)(prevPageSlot / xIcons);
+			const float fxn = (float)(nextPageSlot % xIcons);
+			const float fyn = (float)(nextPageSlot / xIcons);
+			const float fx = 0.5f * (fxp + fxn);
+			const float fy = 0.5f * (fyp + fyn);
+			xBpos = buttonBox.x1 + (fullBorder + (0.5 * xIconSize) + (fx * xIconStep));
+			yBpos = buttonBox.y2 - (fullBorder + (0.5 * yIconSize) + (fy * yIconStep));
+		}
+		else {
+			xBpos = yBpos = -1.0f; // off screen
+		}
+	}
+	else {
+		xBpos = yBpos = -1.0f; // off screen
+	}
+	
+	return true;
+}
+
+
+bool CGuiHandler::ReloadConfig()
+{
+	LoadConfig("ctrlpanel.txt");
+	activePage = 0;
+	selectedUnits.SetCommandPage(activePage);
+	if ((inCommand >= 0) && (inCommand < commands.size())) {
+		const CommandDescription cmdDesc = commands[inCommand];
+		LayoutIcons();
+		ResetInCommand(cmdDesc);
+	} else {
+		LayoutIcons();
+	}
+	return true;
+}
+
 
 //Ladda bitmap -> textur
 bool CGuiHandler::LoadCMDBitmap (int id, char* filename)
 {
-	guiicon_data icondata;
+	GuiIconData icondata;
 	glGenTextures(1, &icondata.texture);
 	CBitmap TextureImage;
 	if (!TextureImage.Load(filename))
@@ -123,164 +285,138 @@ bool CGuiHandler::LoadCMDBitmap (int id, char* filename)
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,TextureImage.xsize, TextureImage.ysize, GL_RGBA, GL_UNSIGNED_BYTE, TextureImage.mem);
 
 	icondata.has_bitmap = true;
-	icondata.width = .06f;
-	icondata.height = .06f;
+	icondata.width = xIconSize;
+	icondata.height = yIconSize;
 
-	iconmap[id] = icondata;
+	iconMap[id] = icondata;
+
 	return true;
 }
 
+
 CGuiHandler::~CGuiHandler()
 {
-	glDeleteTextures (1, &iconmap[0].texture);
+	delete icons;
+	glDeleteTextures (1, &iconMap[0].texture);
 }
-
-
-static const GLfloat fMargin = 0.005f;
-static const GLfloat iconXstep = .065f;
-static const GLfloat iconYstep = -.065f;
 
 
 // Ikonpositioner
 void CGuiHandler::LayoutIcons()
 {
-	defaultCmdMemory=-1;
-	unsigned int nr=0;
-	unsigned int xpos=0, ypos=0;
-	GLfloat texticon_width = .06f;
-	GLfloat texticon_height = .06f;
-	GLfloat height,width;
-
-	//buttonBox.x1 = 0.01f;
-	//buttonBox.y1 = 0.125f;
-	//buttonBox.x2 = 0.18f;
-	//buttonBox.y2 = 0.71f;
-
-	//GLfloat iconXstep = .09f;
-	//GLfloat iconYstep = -.07f;
-
-	buttonBox.x1 = fMargin;
-	buttonBox.x2 = fMargin*2+iconXstep*2;
-	buttonBox.y2 = 0.71f;
-	buttonBox.y1 = buttonBox.y2+
-		iconYstep*NUMICOPAGE/2;// number of buttons
-
-	SetShowingMetal(false);
-
-	CSelectedUnits::AvailableCommandsStruct ac=selectedUnits.GetAvailableCommands();;
-	vector<CommandDescription> uncommands=ac.commands;
-	activePage=ac.commandPage;
-	
+	// reset some of our state
 	commands.clear();
-
-	GLfloat x0 = buttonBox.x1 + fMargin;
-	GLfloat y0 = buttonBox.y2 - fMargin;
+	defaultCmdMemory = -1;
+	SetShowingMetal(false);
+	
+	// get the commands to process
+	CSelectedUnits::AvailableCommandsStruct ac;
+	ac = selectedUnits.GetAvailableCommands();
 
 	vector<CommandDescription> hidden;
-
-	vector<CommandDescription>::iterator cdi;
-	for(cdi=uncommands.begin();cdi!=uncommands.end();++cdi){
+	vector<CommandDescription>::const_iterator cdi;
+	
+	// separate the visible/hidden icons	
+	for(cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
 		if(cdi->onlyKey){
 			hidden.push_back(*cdi);
-			continue;
-		}
-
-		if (iconmap.find(cdi->id) != iconmap.end() && iconmap[cdi->id].has_bitmap) {
-			width = iconmap[cdi->id].width;
-			height = iconmap[cdi->id].height;
 		} else {
-			width = texticon_width;
-			height = texticon_height;
-		}
-
-		curricon[nr].x1 = x0 + xpos*iconXstep;
-		curricon[nr].y1 = y0 + ypos*iconYstep;
-		curricon[nr].x2 = curricon[nr].x1 + width;
-		curricon[nr].y2 = curricon[nr].y1 - height;
-
-		curricon[nr].id = cdi->id;
-
-		commands.push_back(*cdi);
-
-		nr++;
-		if (xpos < maxxpos) xpos++;
-		else {ypos++;xpos=0;}
-
-		if(nr>0 && (nr+2)%(NUMICOPAGE)==0)
-		{
-			curricon[nr].x1 = x0 + xpos*iconXstep;
-			curricon[nr].y1 = y0 + ypos*iconYstep;
-			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;
-			nr++;
-			if (xpos < maxxpos) xpos++;
-			else {ypos++;xpos=0;}
-			curricon[nr].x1 = x0 + xpos*iconXstep;
-			curricon[nr].y1 = y0 + ypos*iconYstep;
-			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;
-			nr++;
-			if (xpos < maxxpos) xpos++;
-			else {ypos++;xpos=0;}
-
-			CommandDescription c;
-			c.id=CMD_INTERNAL;
-			c.action="prevmenu";
-			c.type=CMDTYPE_PREV;
-			c.name="";
-			c.tooltip = "Previous menu";
-			commands.push_back(c);
-
-			c.id=CMD_INTERNAL;
-			c.action="nextmenu";
-			c.type=CMDTYPE_NEXT;
-			c.name="";
-			c.tooltip = "Next menu";
-			commands.push_back(c);
-
-			xpos=ypos=0;
+			commands.push_back(*cdi);
 		}
 	}
 
-	if(nr>NUMICOPAGE && (nr)%(NUMICOPAGE)!=0)
-	{
-			curricon[nr].x1 = x0 + 0*iconXstep;
-			curricon[nr].y1 = y0 + 7*iconYstep;
-			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;
-			nr++;
-			if (xpos < maxxpos) xpos++;
-			else {ypos++;xpos=0;}
-			curricon[nr].x1 = x0 + 1*iconXstep;
-			curricon[nr].y1 = y0 + 7*iconYstep;
-			curricon[nr].x2 = curricon[nr].x1 + width;
-			curricon[nr].y2 = curricon[nr].y1 - height;
-			nr++;
-			if (xpos < maxxpos) xpos++;
-			else {ypos++;xpos=0;}
+	// assign extra icons for internal commands	
+	int extraIcons = 0;
+	if (deadIconSlot >= 0) { extraIcons++; }
+	if (prevPageSlot >= 0) { extraIcons++; }
+	if (nextPageSlot >= 0) { extraIcons++; }
+	
+	const int cmdCount        = (int)commands.size();
+	const int cmdIconsPerPage = (iconsPerPage - extraIcons);
+	const int pageCount       = ((cmdCount + (cmdIconsPerPage - 1)) / cmdIconsPerPage);
 
-//		logOutput << "arf" << "\n";
+	const bool multiPage = (pageCount > 1);
+
+	const int prevPageCmd = cmdCount + 0;	
+	const int nextPageCmd = cmdCount + 1;	
+
+	maxPage    = max(0, pageCount - 1);
+	activePage = min(maxPage, ac.commandPage);
+	iconsCount = pageCount * iconsPerPage;
+	
+	// resize the icon array if required
+	int minIconsSize = iconsSize;
+	while (minIconsSize < iconsCount) {
+		minIconsSize *= 2;
+	}
+	if (iconsSize < minIconsSize) {
+		iconsSize = minIconsSize;
+		delete icons;
+		icons = new IconInfo[iconsSize];
+	}
+
+	int ci = 0; // command index
+	
+	for (int ii = 0; ii < iconsCount; ii++) {
+
+		const int slot = (ii % iconsPerPage);
+		
+		if (slot == deadIconSlot) {
+			icons[ii].commandsID = -1;
+		}
+		else if (slot == nextPageSlot) {
+			icons[ii].commandsID = multiPage ? nextPageCmd : -1;
+		}
+		else if (slot == prevPageSlot) {
+			icons[ii].commandsID = multiPage ? prevPageCmd : -1;
+		}
+		else if (ci >= cmdCount) {
+			icons[ii].commandsID = -1;
+		}
+		else {
+			icons[ii].commandsID = ci;
+			ci++;
+		}
+
+		// setup the geometry
+		if (icons[ii].commandsID >= 0) {
+			const int slot = (ii % iconsPerPage);
+			const float fx = (float)(slot % xIcons);
+			const float fy = (float)(slot / xIcons);
+			const float fullBorder = frameBorder + iconBorder;
+			icons[ii].visual.x1 = buttonBox.x1 + (fullBorder + (fx * xIconStep));
+			icons[ii].visual.x2 = icons[ii].visual.x1 + xIconSize;
+			icons[ii].visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
+			icons[ii].visual.y2 = icons[ii].visual.y1 - yIconSize;
+			const float noGap = noSelectGaps ? iconBorder : 0.0f;
+			icons[ii].selection.x1 = icons[ii].visual.x1 - noGap;
+			icons[ii].selection.x2 = icons[ii].visual.x2 + noGap;
+			icons[ii].selection.y1 = icons[ii].visual.y1 + noGap;
+			icons[ii].selection.y2 = icons[ii].visual.y2 - noGap;
+		}
+	}
+
+	// append the Prev and Next commands  (if required)
+	if (multiPage) {
 		CommandDescription c;
-		c.id=CMD_INTERNAL;
-		c.action="prevmenu";
-		c.type=CMDTYPE_PREV;
-		c.name="";
+
+		c.id = CMD_INTERNAL;
+		c.action = "prevmenu";
+		c.type = CMDTYPE_PREV;
+		c.name = "";
 		c.tooltip = "Previous menu";
 		commands.push_back(c);
 
-		c.id=CMD_INTERNAL;
-		c.action="nextmenu";
-		c.type=CMDTYPE_NEXT;
-		c.name="";
+		c.id = CMD_INTERNAL;
+		c.action = "nextmenu";
+		c.type = CMDTYPE_NEXT;
+		c.name = "";
 		c.tooltip = "Next menu";
 		commands.push_back(c);
 	}
 
-	total_active_icons = nr;
-	maxPages=max(0,(int)((total_active_icons-1)/NUMICOPAGE));
-	activePage=min(maxPages,activePage);
-
-	for(cdi=hidden.begin();cdi!=hidden.end();++cdi){
+	// append the hidden commands
+	for (cdi = hidden.begin(); cdi != hidden.end(); ++cdi) {
 		commands.push_back(*cdi);
 	}
 
@@ -340,14 +476,10 @@ void CGuiHandler::DrawButtons()
 	
 	glDisable(GL_DEPTH_TEST);
 
-	int mouseIcon=IconAtPos(mouse->lastx,mouse->lasty);
-
-	GLfloat x1,x2,y1,y2;
-	GLfloat scalef;
-
+	const int mouseIcon = IconAtPos(mouse->lastx, mouse->lasty);
 
 	// Rita "container"ruta
-	if (total_active_icons > 0) {
+	if (iconsCount > 0) {
 
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
@@ -364,29 +496,34 @@ void CGuiHandler::DrawButtons()
 	}
 
 	// F� varje knapp (rita den)
-	int buttonStart=max(0,(int)(min(activePage*NUMICOPAGE,(int)total_active_icons)));
-	int buttonEnd=max(0,int(min((activePage+1)*NUMICOPAGE,(int)total_active_icons)));
+	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
+	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
 
-	for(unsigned int nr=buttonStart;nr<buttonEnd;nr++) {
+	for (unsigned int ii = buttonStart; ii < buttonEnd; ii++) {
 
-		if(commands[nr].onlyKey)
-			continue;
-		x1 = curricon[nr].x1;
-		y1 = curricon[nr].y1;
-		x2 = curricon[nr].x2;
-		y2 = curricon[nr].y2;
+		const IconInfo& icon = icons[ii];
+		if (icon.commandsID < 0) {
+			continue; // inactive icon
+		}
+		const CommandDescription& cmdDesc = commands[icon.commandsID];
+
+		const GLfloat x1 = icon.visual.x1;
+		const GLfloat y1 = icon.visual.y1;
+		const GLfloat x2 = icon.visual.x2;
+		const GLfloat y2 = icon.visual.y2;
 
 		glDisable(GL_TEXTURE_2D);
 
-		if(mouseIcon==nr || nr ==inCommand){
+		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
 			glBegin(GL_QUADS);
 
-			if(mouse->buttons[SDL_BUTTON_LEFT].pressed)
-				glColor4f(0.5f,0,0,0.2f);
-			else if (nr == inCommand)
+			if (icon.commandsID == inCommand) {
 				glColor4f(0.5f,0,0,0.8f);
-			else
+			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
+				glColor4f(0.5f,0,0,0.2f);
+			} else {
 				glColor4f(0,0,0.5f,0.2f);
+			}
 
 			glVertex2f(x1,y1);
 			glVertex2f(x2,y1);
@@ -395,15 +532,14 @@ void CGuiHandler::DrawButtons()
 			glVertex2f(x1,y1);
 			glEnd();
 		}
-		//else
-		//glBegin(GL_LINE_STRIP);
 
 		// "markerad" (l�g m�kt f�t �er)
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(1,1,1,0.8f);
 
-		if(UnitDef *ud = unitDefHandler->GetUnitByName(commands[nr].name))
-		{
+		UnitDef* ud = unitDefHandler->GetUnitByName(cmdDesc.name);
+
+		if (ud != NULL) {
 			// unitikon
 			glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
 			glBegin(GL_QUADS);
@@ -416,23 +552,23 @@ void CGuiHandler::DrawButtons()
 			glTexCoord2f(0,1);
 			glVertex2f(x1,y2);
 			glEnd();
-			if(!commands[nr].params.empty()){			//skriv texten i f�sta param ovanp�
-				string toPrint=commands[nr].params[0];
 
-				if (toPrint.length() > 6)
-					scalef = toPrint.length()/4.0f;
-				else
-					scalef = 6.0f/4.0f;
+			if (!cmdDesc.params.empty()){			//skriv texten i f�sta param ovanp�
+				const string& toPrint = cmdDesc.params[0];
 
-				glTranslatef(x1+.004f,y1-.039f,0.0f);
-				glScalef(0.02f/scalef,0.03f/scalef,0.1f);
+				const float tHeight = font->CalcTextHeight(toPrint.c_str());
+				const float yScale = (yIconSize * 0.2f) / tHeight;
+				const float xScale = yScale / gu->aspectRatio;
+
+				glTranslatef(x1 + 0.004f, y2 + 0.004f, 0.0f);
+				glScalef(xScale, yScale, 1.0f);
 				font->glPrint("%s",toPrint.c_str());
 			}
 		}
 		else {
-			if (iconmap.find(curricon[nr].id) != iconmap.end() && iconmap[curricon[nr].id].has_bitmap) {
+			if (iconMap.find(cmdDesc.id) != iconMap.end() && iconMap[cmdDesc.id].has_bitmap) {
 				// Bitmapikon
-				glBindTexture(GL_TEXTURE_2D, iconmap[curricon[nr].id].texture);
+				glBindTexture(GL_TEXTURE_2D, iconMap[cmdDesc.id].texture);
 				glBegin(GL_QUADS);
 				glTexCoord2f(0,0);
 				glVertex2f(x1,y1);
@@ -443,9 +579,7 @@ void CGuiHandler::DrawButtons()
 				glTexCoord2f(0,1);
 				glVertex2f(x1,y2);
 				glEnd();
-			}
-			else
-			{
+			} else {
 				glPushAttrib(GL_ENABLE_BIT);
 				glDisable(GL_LIGHTING);
 				glDisable(GL_DEPTH_TEST);
@@ -457,16 +591,12 @@ void CGuiHandler::DrawButtons()
 				GLfloat yCenter = (y1+y2)/2.f;
 				GLfloat ySize = fabs(y2-y1);
 
-				if (commands[nr].type == CMDTYPE_PREV)
-				{
+				if (cmdDesc.type == CMDTYPE_PREV) {
 					glBegin(GL_POLYGON);
-					if(mouseIcon==nr || nr ==inCommand)
-					{	// selected
-						glColor4f(1.f,1.f,0.f,1.f);
-					}
-					else
-					{	// normal
-						glColor4f(0.7f,0.7f,0.7f,1.f);
+					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+						glColor4f(1.f,1.f,0.f,1.f); // selected
+					} else {
+						glColor4f(0.7f,0.7f,0.7f,1.f); // normal
 					}
 					glVertex2f(x2-xSize/6,yCenter-ySize/8);
 					glVertex2f(x1+2*xSize/6,yCenter-ySize/8);
@@ -475,16 +605,12 @@ void CGuiHandler::DrawButtons()
 					glVertex2f(x2-xSize/6,yCenter+ySize/8);
 					glEnd();
 				}
-				else if (commands[nr].type == CMDTYPE_NEXT)
-				{
+				else if (cmdDesc.type == CMDTYPE_NEXT) {
 					glBegin(GL_POLYGON);
-					if(mouseIcon==nr || nr ==inCommand)
-					{	// selected
-						glColor4f(1.f,1.f,0.f,1.f);
-					}
-					else
-					{	// normal
-						glColor4f(0.7f,0.7f,0.7f,1.f);
+					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+						glColor4f(1.f,1.f,0.f,1.f); // selected
+					} else {
+						glColor4f(0.7f,0.7f,0.7f,1.f); // normal
 					}
 					glVertex2f(x1+xSize/6,yCenter-ySize/8);
 					glVertex2f(x2-2*xSize/6,yCenter-ySize/8);
@@ -493,8 +619,7 @@ void CGuiHandler::DrawButtons()
 					glVertex2f(x1+xSize/6,yCenter+ySize/8);
 					glEnd();
 				}
-				else
-				{
+				else {
 					glBegin(GL_LINE_LOOP);
 					glColor4f(1.f,1.f,1.f,0.1f);
 					glVertex2f(x1,y1);
@@ -507,65 +632,130 @@ void CGuiHandler::DrawButtons()
 			}
 
 			// skriv text
-			string toPrint=commands[nr].name;
-			if(commands[nr].type==CMDTYPE_ICON_MODE && (atoi(commands[nr].params[0].c_str())+1)<commands[nr].params.size()){
-				toPrint=commands[nr].params[atoi(commands[nr].params[0].c_str())+1];
+			string toPrint = cmdDesc.name;
+			
+			if (cmdDesc.type==CMDTYPE_ICON_MODE) {
+				int opt = atoi(cmdDesc.params[0].c_str()) + 1;
+				if (opt < cmdDesc.params.size()) {
+					toPrint = cmdDesc.params[opt];
+				}
 			}
 
+			const float tWidth  = font->CalcTextWidth(toPrint.c_str());
+			const float tHeight = font->CalcTextHeight(toPrint.c_str());
+			float xScale = (xIconSize - 0.006f) / tWidth;
+			float yScale = (yIconSize - 0.006f) / tHeight;
 
-			float fDecX = 0.f;
-			float fTxtLen = font->CalcTextWidth(toPrint.c_str());
-			scalef = 1.f;
-			float fIconWidth = 2.5f;
-			float fIconHeight = 2.0f;
-			if (fTxtLen>fIconWidth)
-			{
-				scalef = fTxtLen/fIconWidth;
-			}
-			else
-			{
-				fDecX = (fIconWidth-fTxtLen)/2;
-				fDecX = fDecX / fIconWidth * (x2-x1);// convert to screen coords
-			}
+			const float yClamp = xScale * gu->aspectRatio;
+			yScale = min(yScale, yClamp);
+
+			const float xCenter = 0.5f * (x1 + x2);
+			const float yCenter = 0.5f * (y1 + y2);
+			const float xStart  = xCenter - (0.5f * tWidth  * xScale);
+			const float yStart  = yCenter - (0.5f * tHeight * yScale);
+			const float dShadow = 0.002f;			
 
 			glPushMatrix();
-			float dshadow = 0.003f/scalef;
-			glColor4f(0.0f,0.0f,0.f,0.8f);
-			glTranslatef(dshadow+fDecX+x1+.004f,-dshadow+y1-.039f,0.0f);
-			glScalef(0.02f/scalef,0.03f/scalef,0.1f);
+			glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+			glTranslatef(xStart + dShadow, yStart - dShadow, 0.0f);
+			glScalef(xScale, yScale, 1.0f);
 			font->glPrint("%s",toPrint.c_str());
 			glPopMatrix();
-
-			glColor4f(1.f,1.f,1.f,1.f);
-			glTranslatef(fDecX+x1+.004f,y1-.039f,0.0f);
-			glScalef(0.02f/scalef,0.03f/scalef,0.1f);
+			
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glTranslatef(xStart, yStart, 0.0f);
+			glScalef(xScale, yScale, 1.0f);
 			font->glPrint("%s",toPrint.c_str());
 		}
 
 		glLoadIdentity();
+		
+		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+			
+			if (icon.commandsID == inCommand) {
+				glColor4f(1.0f, 1.0f, 0.0f, 0.75f);
+			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
+				glColor4f(1.0f, 0.0f, 0.0f, 0.50f);
+			} else {
+				glColor4f(1.0f, 1.0f, 1.0f, 0.50f);
+			}
+
+			glPushAttrib(GL_ENABLE_BIT);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_TEXTURE_2D);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			glLineWidth(1.49f);
+
+			glBegin(GL_LINE_LOOP);
+			glVertex2f(x1,y1);
+			glVertex2f(x2,y1);
+			glVertex2f(x2,y2);
+			glVertex2f(x1,y2);
+			glEnd();
+
+			glLineWidth(1.0f);
+
+			glPopAttrib();
+		}
 	}
 
-	if (total_active_icons > 0) {
-		glColor4fv(cmdColors.build);
+	if (iconsCount > 0) {
+		char buf[64];
+
+		SNPRINTF(buf, 64, "%i", activePage + 1);
 		if (selectedUnits.BuildIconsFirst()) {
-			const float midX = 0.5f * (buttonBox.x1 + buttonBox.x2);
-			const float midY = buttonBox.y1 - fMargin - (0.5f * iconYstep);
-			const float textSize = 1.25f;
-			const float botY = midY - (textSize * 0.5f * (font->CalcTextHeight("B") / 32.0f));
-			font->glPrintCentered(midX, botY, textSize, "B");
+			glColor4fv(cmdColors.build);
+		} else {
+			glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
+		}
+		const float textSize = 1.2f;
+		const float yBbot = yBpos - (textSize * 0.5f * (font->CalcTextHeight(buf) / 32.0f));
+		font->glPrintCentered(xBpos, yBbot, textSize, buf);
+
+		if (selectedUnits.selectedGroup != -1) {
+			SNPRINTF(buf, 64, "Selected units %i  [Group %i]",
+			         selectedUnits.selectedUnits.size(),
+			         selectedUnits.selectedGroup);
+		} else {
+			SNPRINTF(buf, 64, "Selected units %i",
+			         selectedUnits.selectedUnits.size());
 		}
 
-		glColor4f(1,1,1,0.8f);
-		if(selectedUnits.selectedGroup!=-1){
-			font->glPrintAt(0.02f,0.13f,0.6f,"Group %i selected ",selectedUnits.selectedGroup);
-		} else {
-			font->glPrintAt(0.02f,0.13f,0.6f,"Selected units %i",selectedUnits.selectedUnits.size());
+		const float textScale = 0.6;
+		const float textWidth  = textScale * (font->CalcTextWidth(buf) / 48.0f);
+		const float textHeight = textScale * (font->CalcTextHeight(buf) / 24.0f);
+
+		if (!outlineFont.IsEnabled()) {
+			glDisable(GL_TEXTURE_2D);
+			glColor4f(0.2f, 0.2f, 0.2f, GUI_TRANS);
+			glRectf(xSelectionPos - frameBorder,
+							ySelectionPos - frameBorder,
+							xSelectionPos + frameBorder + textWidth,
+							ySelectionPos + frameBorder + textHeight);
+			glColor4f(1,1,1,0.8f);
+			font->glPrintAt(xSelectionPos, ySelectionPos, textScale, "%s", buf);
+		}
+		else {
+			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
+
+			const float xScale = textScale * 0.0225f;
+			const float yScale = textScale * 0.0300f;
+			glScalef(xScale, yScale, 1.0f);
+			
+			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
+			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+
+			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			outlineFont.print(xPixel, yPixel, white, buf);
 		}
 	}
 }
 
 
-void CGuiHandler::SetCursorIcon()
+void CGuiHandler::SetCursorIcon() const
 {
 	if (GetReceiverAt(mouse->lastx, mouse->lasty)) {
 			mouse->cursorText="";
@@ -600,7 +790,6 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 	if(button==SDL_BUTTON_RIGHT){
 		activeMousePress=true;
 		defaultCmdMemory=GetDefaultCommand(x,y);
-
 		return true;
 	}
 	return false;
@@ -608,49 +797,52 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 
 void CGuiHandler::MouseRelease(int x,int y,int button)
 {
-	if(activeMousePress)
-		activeMousePress=false;
-	else
+	if (activeMousePress) {
+		activeMousePress = false;
+	} else {
 		return;
-
-	if(needShift && !keys[SDLK_LSHIFT]){
-		SetShowingMetal(false);
-		inCommand=-1;
-		needShift=false;
 	}
 
-	int icon=IconAtPos(x,y);
+	if (needShift && !keys[SDLK_LSHIFT]) {
+		SetShowingMetal(false);
+		inCommand = -1;
+		needShift = false;
+	}
+
+	const int iconPos = IconAtPos(x, y);
+	const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
+	
 
 //	logOutput << x << " " << y << " " << mouse->lastx << " " << mouse->lasty << "\n";
 
-	if (button == SDL_BUTTON_RIGHT && icon==-1) { // right click -> default cmd
-		inCommand=defaultCmdMemory;//GetDefaultCommand(x,y);
-		defaultCmdMemory=-1;
+	if (button == SDL_BUTTON_RIGHT && iconCmd==-1) { // right click -> default cmd
+		inCommand = defaultCmdMemory; //GetDefaultCommand(x,y);
+		defaultCmdMemory = -1;
 	}
 
-	if(icon>=0 && icon<commands.size()){
+	if ((iconCmd >= 0) && (iconCmd < commands.size())) {
 		SetShowingMetal(false);
 		lastKeySet.Reset();
 		
-		switch(commands[icon].type){
+		switch(commands[iconCmd].type){
 			case CMDTYPE_ICON:{
 				Command c;
-				c.id=commands[icon].id;
+				c.id=commands[iconCmd].id;
 				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
 				break;}
 			case CMDTYPE_ICON_MODE:{
-				int newMode=atoi(commands[icon].params[0].c_str())+1;
-				if(newMode>commands[icon].params.size()-2)
+				int newMode=atoi(commands[iconCmd].params[0].c_str())+1;
+				if(newMode>commands[iconCmd].params.size()-2)
 					newMode=0;
 
 				char t[10];
 				SNPRINTF(t, 10, "%d", newMode);
-				commands[icon].params[0]=t;
+				commands[iconCmd].params[0]=t;
 
 				Command c;
-				c.id=commands[icon].id;
+				c.id=commands[iconCmd].id;
 				c.params.push_back(newMode);
 				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				selectedUnits.GiveCommand(c);
@@ -663,19 +855,19 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 			case CMDTYPE_ICON_FRONT:
 			case CMDTYPE_ICON_UNIT_OR_AREA:
 			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
-				inCommand=icon;
+				inCommand=iconCmd;
 				break;
 
 			case CMDTYPE_ICON_BUILDING:{
-				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[icon].id);
+				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[iconCmd].id);
 				SetShowingMetal(ud->extractsMetal > 0);
-				inCommand=icon;
+				inCommand=iconCmd;
 				break;}
 
 			case CMDTYPE_COMBO_BOX:
 				{
-					inCommand=icon;
-					CommandDescription& cd=commands[icon];
+					inCommand=iconCmd;
+					CommandDescription& cd=commands[iconCmd];
 					list=new CglList(cd.name.c_str(),MenuSelection);
 					for(vector<string>::iterator pi=++cd.params.begin();pi!=cd.params.end();++pi)
 						list->AddItem(pi->c_str(),"");
@@ -688,7 +880,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 			case CMDTYPE_NEXT:
 				{
 					++activePage;
-					if(activePage>maxPages)
+					if(activePage>maxPage)
 						activePage=0;
 				}
 				selectedUnits.SetCommandPage(activePage);
@@ -699,7 +891,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				{
 					--activePage;
 					if(activePage<0)
-						activePage=maxPages;
+						activePage=maxPage;
 				}
 				selectedUnits.SetCommandPage(activePage);
 				inCommand=-1;
@@ -722,33 +914,44 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 int CGuiHandler::IconAtPos(int x, int y)
 {
-	float fx=float(x)/gu->screenx;
-	float fy=float(gu->screeny-y)/gu->screeny;
+	const float fx = float(x) / gu->screenx;
+	const float fy = float(gu->screeny-y) / gu->screeny;
 
-	if(fx>buttonBox.x2 || fx<buttonBox.x1 || fy>buttonBox.y2 || fy<buttonBox.y1)
+	if ((fx < buttonBox.x1) || (fx > buttonBox.x2) ||
+	    (fy < buttonBox.y1) || (fy > buttonBox.y2)) {
 		return -1;
+	}
 
-	int buttonStart=max(0,min(activePage*NUMICOPAGE,(int)total_active_icons));
-	int buttonEnd=max(0,min((activePage+1)*NUMICOPAGE,(int)total_active_icons));
-	for (int a=buttonStart;a<buttonEnd;a++) {
-		if (fx>curricon[a].x1 && fy<curricon[a].y1 && fx<curricon[a].x2 && fy>curricon[a].y2)
-			return a;
+	// FIXME -- icons are now positional ... use it
+	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
+	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
+	for (int ii = buttonStart; ii < buttonEnd; ii++) {
+		if ((fx > icons[ii].selection.x1) && (fx < icons[ii].selection.x2) &&
+		    (fy > icons[ii].selection.y2) && (fy < icons[ii].selection.y1)) {
+			return ii;
+		}
 	}
 
 	return -1;
 }
 
+
 bool CGuiHandler::AboveGui(int x, int y)
 {
-	if (total_active_icons <= 0)
+	if (iconsCount <= 0) {
 		return false;
+	}
 
-	float fx=float(x)/gu->screenx;
-	float fy=float(gu->screeny-y)/gu->screeny;
-	if(fx>buttonBox.x1 && fx<buttonBox.x2 && fy>buttonBox.y1 && fy<buttonBox.y2)
+	const float fx = float(x) / gu->screenx;
+	const float fy = float(gu->screeny-y) / gu->screeny;
+	if ((fx > buttonBox.x1) && (fx < buttonBox.x2) &&
+	    (fy > buttonBox.y1) && (fy < buttonBox.y2)) {
 		return true;
-	return IconAtPos(x,y)!=-1;
+	}
+	
+	return IconAtPos(x,y) != -1;
 }
+
 
 void CGuiHandler::CreateOptions(Command& c,bool rmb)
 {
@@ -764,7 +967,7 @@ void CGuiHandler::CreateOptions(Command& c,bool rmb)
 	//logOutput << (int)c.options << "\n";
 }
 
-int CGuiHandler::GetDefaultCommand(int x,int y)
+int CGuiHandler::GetDefaultCommand(int x,int y) const
 {
 	CInputReceiver* ir=GetReceiverAt(x,y);
 	if(ir!=0)
@@ -784,9 +987,12 @@ int CGuiHandler::GetDefaultCommand(int x,int y)
 	else
 		feature=0;
 
-	int cmd_id = selectedUnits.GetDefaultCmd(unit,feature);
-	for (int c=0;c<total_active_icons;c++) {
-		if ( cmd_id == curricon[c].id ) return c;
+	// make sure the command is currently available
+	int cmd_id = selectedUnits.GetDefaultCmd(unit, feature);
+	for (int c = 0; c < (int)commands.size(); c++) {
+		if (cmd_id == commands[c].id) {
+			return c;
+		}
 	}
 	return -1;
 }
@@ -1103,10 +1309,32 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 }
 
 
+void CGuiHandler::ResetInCommand(const CommandDescription& cmdDesc)
+{
+	for (int a = 0; a < commands.size(); ++a) {
+		if (commands[a].id == cmdDesc.id) {
+			inCommand = a;
+			if (commands[a].type == CMDTYPE_ICON_BUILDING) {
+				UnitDef* ud = unitDefHandler->GetUnitByID(-commands[a].id);
+				SetShowingMetal(ud->extractsMetal > 0);
+			} else {
+				SetShowingMetal(false);
+			}
+			for (int ii = 0; ii < iconsCount; ii++) {
+				if (inCommand == icons[ii].commandsID) {
+					activePage = min(maxPage, (ii / iconsPerPage));;
+					selectedUnits.SetCommandPage(activePage);
+				}
+			}
+		}
+	}
+}
+
+
 bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 {
 	// do not process these actions if the control panel is not visible
-	if (total_active_icons <= 0) {
+	if (iconsCount <= 0) {
 		return false;
 	}
 	
@@ -1119,28 +1347,14 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		}
 	}
 
-	if (action.command == "showcommands") {
-		// bonus command for debugging
-		printf("Currently Available Commands:\n");
-		for(int i = 0; i < commands.size(); ++i){
-			printf("  button: %i, id = %i, action = %s\n",
-						 i, commands[i].id, commands[i].action.c_str());
-		}
-		return true;
-	}
-	else if (action.command == "hotbind") {
-		int icon = IconAtPos(mouse->lastx, mouse->lasty);
-		if ((icon >= 0) && (icon < commands.size())) {
-			game->SetHotBinding(commands[icon].action);
-		}
-		return true;
-	}
-	else if (action.command == "hotunbind") {
-		int icon = IconAtPos(mouse->lastx, mouse->lasty);
-		if ((icon >= 0) && (icon < commands.size())) {
-			string cmd = "unbindaction " + commands[icon].action;
-			keyBindings->Command(cmd);
-			logOutput.Print("%s", cmd.c_str());
+	if (action.command == "buildiconsfirst") {
+		activePage = 0;
+		selectedUnits.SetCommandPage(activePage);
+		selectedUnits.ToggleBuildIconsFirst();
+		if ((inCommand >= 0) && (inCommand < commands.size())) {
+			const CommandDescription cmdDesc = commands[inCommand];
+			LayoutIcons();
+			ResetInCommand(cmdDesc);
 		}
 		return true;
 	}
@@ -1149,29 +1363,30 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		selectedUnits.SetCommandPage(activePage);
 		return true;
 	}
-	else if (action.command == "buildiconsfirst") {
-		activePage = 0;
-		selectedUnits.SetCommandPage(activePage);
-		selectedUnits.ToggleBuildIconsFirst();
-		const int tmpCmd = inCommand;
-		inCommand = -1;
-		// assign inCommand to its new icon location  (if possible)
-		if ((tmpCmd >= 0) && (tmpCmd < commands.size())) {
-			const bool tmpShowingMetal = showingMetal;
-			CommandDescription cmdDesc = commands[tmpCmd];
-			LayoutIcons(); // update the commands
-			for (int a = 0; a < commands.size(); ++a) {
-				if ((commands[a].id     == cmdDesc.id)     &&
-				    (commands[a].type   == cmdDesc.type)   &&
-				    (commands[a].action == cmdDesc.action) &&
-				    (commands[a].params == cmdDesc.params)) {
-					inCommand = a;
-					SetShowingMetal(tmpShowingMetal);
-// Defeats the purpose?		
-//					activePage = min(maxPages, (a / NUMICOPAGE));
-//					selectedUnits.SetCommandPage(activePage);
-				}
-			}
+	else if (action.command == "hotbind") {
+		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
+		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
+		if ((iconCmd >= 0) && (iconCmd < commands.size())) {
+			game->SetHotBinding(commands[iconCmd].action);
+		}
+		return true;
+	}
+	else if (action.command == "hotunbind") {
+		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
+		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
+		if ((iconCmd >= 0) && (iconCmd < commands.size())) {
+			string cmd = "unbindaction " + commands[iconCmd].action;
+			keyBindings->Command(cmd);
+			logOutput.Print("%s", cmd.c_str());
+		}
+		return true;
+	}
+	else if (action.command == "showcommands") {
+		// bonus command for debugging
+		printf("Available Commands:\n");
+		for(int i = 0; i < commands.size(); ++i){
+			printf("  button: %i, id = %i, action = %s\n",
+						 i, commands[i].id, commands[i].action.c_str());
 		}
 		return true;
 	}
@@ -1182,8 +1397,8 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 
 bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
 {
+	const string arg = StringToLower(action.extra);
 	if (action.command == "buildspacing") {
-		const string arg = StringToLower(action.extra);
 		if (arg == "inc") {
 			buildSpacing++;
 			return true;
@@ -1197,7 +1412,6 @@ bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
 	}
 	else if (action.command == "buildfacing") {
 		const char* buildFaceDirs[] = { "South", "East", "North", "West" };
-		const string arg = StringToLower(action.extra);
 		if (arg == "inc") {
 			buildFacing++;
 			if (buildFacing > 3) {
@@ -1238,6 +1452,41 @@ bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
 	return false;
 }
     
+
+int CGuiHandler::ParseIconPosSlot(const std::string& text) const
+{
+	const char rowLetter = tolower(text[0]);
+	if ((rowLetter < 'a') || (rowLetter > 'z')) {
+		return -1;
+	}
+	const int row = rowLetter - 'a';
+	if (row >= yIcons) {
+		return -1;
+	}
+
+	char* endPtr;
+	const char* startPtr = text.c_str() + 1;
+	int column = strtol(startPtr, &endPtr, 10);
+	if ((endPtr == startPtr) || (column < 0) || (column >= xIcons)) {
+		return -1;
+	}
+	
+	return (row * xIcons) + column;
+}
+
+
+int CGuiHandler::GetIconPosCommand(int slot) const
+{
+	if (slot < 0) {
+		return -1;
+	}
+	const int iconPos = slot + (activePage * iconsPerPage);
+	if (iconPos < iconsCount) {
+		return icons[iconPos].commandsID;
+	}
+	return -1;
+}
+
 
 bool CGuiHandler::KeyPressed(unsigned short key)
 {
@@ -1284,45 +1533,65 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		}
 		
 		// See if we have a positional icon command
-		int iconpos = -1;
+		int iconCmd = -1;
 		if (!action.extra.empty() && (action.command == "iconpos")) {
-			char* endPtr;
-			const char* startPtr = action.extra.c_str();
-			iconpos = strtol(startPtr, &endPtr, 10);
-			if ((endPtr == startPtr) || (iconpos >= NUMICOPAGE)) {
-				iconpos = -1;
-			} else {
-				iconpos += (activePage * NUMICOPAGE);
-			}
+			const int iconSlot = ParseIconPosSlot(action.extra);
+			iconCmd = GetIconPosCommand(iconSlot);
 		}
 
 		for (int a = 0; a < commands.size(); ++a) {
 
-			if ((a != iconpos) && (commands[a].action != action.command)) {
+			if ((a != iconCmd) && (commands[a].action != action.command)) {
 				continue; // not a match
 			}
 
-			// set the activePage
 			const int cmdType = commands[a].type;
-			if ((cmdType != CMDTYPE_NEXT) && (cmdType != CMDTYPE_PREV)) {
-				if (!commands[a].onlyKey) {
-					activePage = min(maxPages, (a / NUMICOPAGE));;
-					selectedUnits.SetCommandPage(activePage);
+			
+			// set the activePage
+			if (!commands[a].onlyKey &&
+			    (((cmdType == CMDTYPE_ICON) && (commands[a].id < 0)) ||
+			     (cmdType == CMDTYPE_ICON_MODE) ||
+			     (cmdType == CMDTYPE_COMBO_BOX) ||
+			     (cmdType == CMDTYPE_ICON_BUILDING))) {
+				for (int ii = 0; ii < iconsCount; ii++) {
+					if (icons[ii].commandsID == a) {
+						activePage = min(maxPage, (ii / iconsPerPage));
+						selectedUnits.SetCommandPage(activePage);
+					}
 				}
 			}
 			
-			switch(cmdType) {
+			switch (cmdType) {
 				case CMDTYPE_ICON:{
 					Command c;
-					c.id=commands[a].id;
-					CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
+					c.id = commands[a].id;
+					if (c.id < 0) {
+						c.options = 0;
+						if (action.extra == "+5") {
+							c.options = SHIFT_KEY;
+						} else if (action.extra == "+20") {
+							c.options = CONTROL_KEY;
+						} else if (action.extra == "+100") {
+							c.options = SHIFT_KEY | CONTROL_KEY;
+						} else if (action.extra == "-1") {
+							c.options = RIGHT_MOUSE_KEY;
+						} else if (action.extra == "-5") {
+							c.options = RIGHT_MOUSE_KEY | SHIFT_KEY;
+						} else if (action.extra == "-20") {
+							c.options = RIGHT_MOUSE_KEY | CONTROL_KEY;
+						} else if (action.extra == "-100") {
+							c.options = RIGHT_MOUSE_KEY |SHIFT_KEY | CONTROL_KEY;
+						}
+					} else {
+						CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
+					}
 					selectedUnits.GiveCommand(c);
 					break;
 				}
 				case CMDTYPE_ICON_MODE: {
 					int newMode;
 
-					if (!action.extra.empty() && (iconpos < 0)) {
+					if (!action.extra.empty() && (iconCmd < 0)) {
 						newMode = atoi(action.extra.c_str());
 					} else {
 						newMode = atoi(commands[a].params[0].c_str()) + 1;
@@ -1367,8 +1636,8 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				case CMDTYPE_COMBO_BOX: {
 					CommandDescription& cd = commands[a];
 					vector<string>::iterator pi;
-					// check for an action with a specific entry binding
-					if (!action.extra.empty() && (iconpos < 0)) {
+					// check for an action bound to a specific entry
+					if (!action.extra.empty() && (iconCmd < 0)) {
 						int p = 0;
 						for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
 							if (action.extra == *pi) {
@@ -1395,7 +1664,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				}
 				case CMDTYPE_NEXT: {
 					++activePage;
-					if(activePage>maxPages)
+					if(activePage > maxPage)
 						activePage=0;
 					selectedUnits.SetCommandPage(activePage);
 					break;
@@ -1403,7 +1672,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				case CMDTYPE_PREV:{
 					--activePage;
 					if(activePage<0)
-						activePage=maxPages;
+						activePage = maxPage;
 					selectedUnits.SetCommandPage(activePage);
 					break;
 				}
@@ -1418,6 +1687,12 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 	}
 	
 	return false;
+}
+
+
+void CGuiHandler::MenuSelection(std::string s)
+{
+	guihandler->MenuChoice(s);
 }
 
 
@@ -1472,16 +1747,17 @@ bool CGuiHandler::IsAbove(int x, int y)
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
 	string s;
-	int icon=IconAtPos(x,y);
-	if(icon>=0){
-		if(commands[icon].tooltip!=""){
-			s=commands[icon].tooltip;
+	const int iconPos = IconAtPos(x, y);
+	const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
+	if ((iconCmd >= 0) && (iconCmd < (int)commands.size())) {
+		if (commands[iconCmd].tooltip != "") {
+			s = commands[iconCmd].tooltip;
 		}else{
-			s=commands[icon].name;
+			s = commands[iconCmd].name;
 		}
 
 		const CKeyBindings::HotkeyList& hl =
-			keyBindings->GetHotkeys(commands[icon].action);
+			keyBindings->GetHotkeys(commands[iconCmd].action);
 		if(!hl.empty()){
 			s+="\nHotkeys:";
 			for (int i = 0; i < (int)hl.size(); ++i) {

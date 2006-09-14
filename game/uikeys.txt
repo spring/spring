@@ -162,6 +162,8 @@
 //  bind        Shift+enter  chatswitchspec
 //  bind             Ctrl+m  chatall
 //  bind             Ctrl+m  chatswitchall
+//  bind             Ctrl+j  chatall
+//  bind             Ctrl+j  chatswitchall
 //
 //  bind            Ctrl+f1  viewfps
 //  bind            Ctrl+f2  viewta
@@ -192,7 +194,6 @@
 //  bind                tab  toggleoverview
 //  bind          backspace  mousestate
 //
-//  bind              Any+j  mouse2
 //  bind             Any+up  moveforward
 //  bind           Any+down  moveback
 //  bind          Any+right  moveright

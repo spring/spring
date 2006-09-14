@@ -1,22 +1,25 @@
 #include "StdAfx.h"
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
+#include "GUI/GUIcontroller.h"
+#include "GUI/GUIframe.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
-
 #include "mmgr.h"
 
-CTooltipConsole* tooltip=0;
+
+CTooltipConsole* tooltip = 0;
+
 
 CTooltipConsole::CTooltipConsole(void)
 {
 }
 
+
 CTooltipConsole::~CTooltipConsole(void)
 {
 }
 
-#include "GUI/GUIcontroller.h"
 
 void CTooltipConsole::Draw(void)
 {
@@ -24,18 +27,19 @@ void CTooltipConsole::Draw(void)
 
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.2f,0.2f,0.2f,0.5f);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(0.2f, 0.2f, 0.2f, GUI_TRANS);
 
 	glBegin(GL_TRIANGLE_STRIP);
-		glVertex3f(0,0,0);
-		glVertex3f(0.41f,0,0);
-		glVertex3f(0,0.08f,0);
-		glVertex3f(0.41f,0.08f,0);
+		glVertex3f(0.0f,  0.0f, 0.0f);
+		glVertex3f(0.41f, 0.0f, 0.0f);
+		glVertex3f(0.0f,  0.1f, 0.0f);
+		glVertex3f(0.41f, 0.1f, 0.0f);
 	glEnd();
 
-	glTranslatef(0.015f,0.06f,0);
-	glScalef(0.015f,0.015f,0.015f);
-	glColor4f(1,1,1,0.8f);
+	glTranslatef(0.015f, 0.08f, 0.0f);
+	glScalef(0.015f, 0.015f, 0.015f);
+	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -54,6 +58,7 @@ void CTooltipConsole::Draw(void)
 	}
 	glPopMatrix();
 }
+
 
 bool CTooltipConsole::IsAbove(int x,int y)
 {
