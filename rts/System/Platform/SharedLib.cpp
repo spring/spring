@@ -17,7 +17,7 @@
 /**
  * Used to create a platform-specific shared library handler.
  */
-SharedLib *SharedLib::instantiate(const char *filename)
+SharedLib *SharedLib::Instantiate(const char *filename)
 {
 #ifdef _WIN32
 	return new DllLib(filename);
@@ -29,10 +29,23 @@ SharedLib *SharedLib::instantiate(const char *filename)
 /**
  * Used to create a platform-specific shared library handler.
  */
-SharedLib *SharedLib::instantiate(std::string filename)
+SharedLib *SharedLib::Instantiate(std::string filename)
 {
-	return instantiate(filename.c_str());
+	return Instantiate(filename.c_str());
 }
+
+
+const char *SharedLib::GetLibExtension() 
+{
+#ifdef WIN32
+	return "dll";
+#elif defined(__APPLE__)
+	return "dylib";
+#else
+	return "so";
+#endif
+}
+
 
 SharedLib::~SharedLib() {
 }

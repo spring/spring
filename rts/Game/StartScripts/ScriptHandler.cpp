@@ -15,6 +15,7 @@
 #include "SpawnScript.h"
 #include "EmptyScript.h"
 #include "TestScript.h"
+#include "Platform/SharedLib.h"
 #ifndef NO_LUA
 #include "System/Platform/errorhandler.h"
 #endif
@@ -38,17 +39,11 @@ void CScriptHandler::LoadScripts() {
 	loaded_scripts.push_back( new CSpawnScript(true) );
 	loaded_scripts.push_back( new CTestScript() );
 
-#ifdef WIN32
-	std::vector<std::string> f = CFileHandler::FindFiles("AI\\Bot-libs\\", "*.dll");
-#elif defined(__APPLE__)
-	std::vector<std::string> f = CFileHandler::FindFiles("AI/Bot-libs/", "*.dylib");
-#else
-	std::vector<std::string> f = CFileHandler::FindFiles("AI/Bot-libs/", "*.so");
-#endif
-	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
-		string name = fi->substr(fi->find_last_of('\\') + 1);
-		loaded_scripts.push_back(new CGlobalAITestScript(name));
-	}
+	const char *path = "AI/Bot-libs/";
+	std::vector<std::string> f = CFileHandler::FindFiles(path, std::string("*.") + SharedLib::GetLibExtension());
+
+	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) 
+		loaded_scripts.push_back(new CGlobalAITestScript(*fi));
 
 	f = CFileHandler::FindFiles("", "*.ssf");
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {

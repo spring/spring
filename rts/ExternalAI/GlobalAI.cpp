@@ -18,7 +18,7 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 		return;
 	}
 
-	lib = SharedLib::instantiate(dll);
+	lib = SharedLib::Instantiate(dll);
 	
 	GetGlobalAiVersion = (GETGLOBALAIVERSION)lib->FindAddress("GetGlobalAiVersion");
 	if (GetGlobalAiVersion==0){
