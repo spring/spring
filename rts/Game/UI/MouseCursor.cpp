@@ -1,9 +1,10 @@
 #include "StdAfx.h"
 #include "MouseCursor.h"
-#include "FileSystem/FileHandler.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "CommandColors.h"
 #include "InfoConsole.h"
+#include "FileSystem/FileHandler.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "myMath.h"
 #include "bitops.h"
 #include "mmgr.h"
@@ -186,16 +187,18 @@ void CMouseCursor::DrawQuad(int x, int y)
 	if (frames.size()==0) {
 		return;
 	}
-		
+
+	const float scale = cmdColors.QueueIconScale();
+
 	const FrameData& f = frames[curFrame];
-	int xs = f.xsize;
-	int ys = f.ysize;
+	const int xs = int(float(f.xsize) * scale);  
+	const int ys = int(float(f.ysize) * scale);                      
 
 	//Center on hotspot
-	x -= xofs;
-	y -= (ys - yofs);
+	const int xp = int(float(x) - (float(xofs) * scale));
+	const int yp = int(float(y) - (float(ys) - (float(yofs) * scale)));
 
-	glViewport(x,y,xs,ys);
+	glViewport(xp, yp, xs, ys);
 
 	glBegin(GL_QUADS);
  	glTexCoord2f(0,0);glVertex3f(0,0,0);
