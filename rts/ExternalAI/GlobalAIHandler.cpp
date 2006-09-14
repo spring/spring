@@ -186,8 +186,7 @@ bool CGlobalAIHandler::CreateGlobalAI(int team, const char* dll)
 			ais[team]=0;
 		}
 
-		std::string dllPath = std::string("AI/Bot-libs/") + dll;
-		ais[team]=new CGlobalAI(team,dllPath.c_str());
+		ais[team]=new CGlobalAI(team,dll);
 
 		if(!ais[team]->ai){
 			delete ais[team];

@@ -8,13 +8,14 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "FileSystem/FileHandler.h"
+#include "Platform/FileSystem.h"
 #include "Map/ReadMap.h"
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
 
 CGlobalAITestScript::CGlobalAITestScript(std::string dll)
-: CScript(std::string("GlobalAI test (") + dll.substr(dll.rfind('/')+1) + std::string(")")),
+: CScript(std::string("GlobalAI test (") + dll.substr(dll.rfind(FileSystemHandler::GetInstance().GetNativePathSeparator())+1) + std::string(")")),
 	dllName(dll)
 {
 }

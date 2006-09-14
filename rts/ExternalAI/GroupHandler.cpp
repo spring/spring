@@ -66,7 +66,7 @@ void CGroupHandler::TestDll(string name)
 	GETAINAMELIST GetAiNameList;
 	ISUNITSUITED IsUnitSuited;
 
-	lib = SharedLib::instantiate(name);
+	lib = SharedLib::Instantiate(name);
 	if (!lib){
 		logOutput.Print ("Cant load dll: %s",name.c_str());
 		return;
@@ -138,16 +138,10 @@ void CGroupHandler::FindDlls(void)
 {
 	std::vector<std::string> match;
 	std::string dir("AI/Helper-libs");
-#ifdef _WIN32
-	match = filesystem.FindFiles(dir,"*.dll");
-#elif defined(__APPLE__)
-	match = filesystem.FindFiles(dir,"*.dylib");
-#else
-	match = filesystem.FindFiles(dir,"*.so");
-#endif
-	for (std::vector<std::string>::iterator it = match.begin(); it != match.end(); it++) {
+	match = filesystem.FindFiles(dir, std::string("*.") + SharedLib::GetLibExtension());
+
+	for (std::vector<std::string>::iterator it = match.begin(); it != match.end(); it++) 
 		TestDll(*it);
-	}
 }
 
 CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
@@ -194,7 +188,7 @@ map<AIKey,string> CGroupHandler::GetSuitedAis(set<CUnit*> units)
 	{
 		SharedLib *lib;
 		const AIKey& aiKey = aai->first;
-		lib = SharedLib::instantiate(aiKey.dllName);
+		lib = SharedLib::Instantiate(aiKey.dllName);
 		IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 		bool suited = false;
 		set<CUnit*>::iterator ui;

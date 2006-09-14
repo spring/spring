@@ -82,7 +82,7 @@ void CGroup::SetNewAI(AIKey aiKey)
 		return;
 	}
 
-	lib = SharedLib::instantiate(aiKey.dllName);
+	lib = SharedLib::Instantiate(aiKey.dllName);
 	if (lib==0) 
 		handleerror(NULL,aiKey.dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
 	

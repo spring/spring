@@ -37,14 +37,20 @@ public:
 	 * @param filename file name as a C string
 	 * @return platform-specific shared library class
 	 */
-	static SharedLib *instantiate(const char *filename);
+	static SharedLib *Instantiate(const char *filename);
 
 	/**
 	 * @brief instantiate
 	 * @param filename file name as a C++ string
 	 * @return platform-specific shared library class
 	 */
-	static SharedLib *instantiate(std::string filename);
+	static SharedLib *Instantiate(std::string filename);
+
+	/**
+	 * @brief GetLibExtension
+	 * @return "dll", "dylib" or "so" depending on OS
+	 */
+	static const char *GetLibExtension();
 
 	/**
 	 * @brief Find Address
