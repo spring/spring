@@ -273,7 +273,7 @@ void CTWController::MouseMove(float3 move)
 	flatForward.y=0;
 	flatForward.Normalize();
 
-	pos+=-(flatForward*move.y+camera->right*move.x)*scrollSpeed;
+	pos+=-(flatForward*move.y-camera->right*move.x)*scrollSpeed;
 }
 
 void CTWController::ScreenEdgeMove(float3 move)
