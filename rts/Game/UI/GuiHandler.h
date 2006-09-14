@@ -71,12 +71,13 @@ class CGuiHandler : public CInputReceiver {
 		void LoadDefaults();
 		void SanitizeConfig();
 		bool LoadConfig(const std::string& filename);
+		void ParseFillOrder(const std::string& text);
 
 		void ResetInCommand(const CommandDescription& cmdDesc);
 		bool ProcessLocalActions(const CKeyBindings::Action& action);
 		bool ProcessBuildActions(const CKeyBindings::Action& action);
 		int  GetIconPosCommand(int slot) const;
-		int  ParseIconPosSlot(const std::string& text) const;
+		int  ParseIconSlot(const std::string& text) const;
 		
 	private:
 		bool needShift;
