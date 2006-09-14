@@ -1261,11 +1261,11 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 
 bool CUnit::UseMetal(float metal)
 {
-	gs->Team(team)->metalPullAmount += metal;
 	if(metal<0){
 		AddMetal(-metal);
 		return true;
 	}
+	gs->Team(team)->metalPullAmount += metal;
 	bool canUse=gs->Team(team)->UseMetal(metal);
 	if(canUse)
 		metalUseI += metal;
@@ -1284,11 +1284,11 @@ void CUnit::AddMetal(float metal)
 
 bool CUnit::UseEnergy(float energy)
 {
-	gs->Team(team)->energyPullAmount += energy;
 	if(energy<0){
 		AddEnergy(-energy);
 		return true;
 	}
+	gs->Team(team)->energyPullAmount += energy;
 	bool canUse=gs->Team(team)->UseEnergy(energy);
 	if(canUse)
 		energyUseI += energy;
