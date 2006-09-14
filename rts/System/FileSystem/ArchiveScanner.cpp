@@ -606,8 +606,17 @@ unsigned int CArchiveScanner::GetChecksum(const string& root)
 {
 	unsigned int checksum = 0;
 	vector<string> ars = GetArchives(root);
-	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-		checksum  ^= GetArchiveChecksum(*i);
+
+	// Do not include dependencies in the checksum:
+	// it conflicts badly with the auto-updated default content files,
+	// probably because .sdz files store timestamps too, which may differ
+	// each time the file is generated.
+
+	//for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+	//	checksum  ^= GetArchiveChecksum(*i);
+
+	if (!ars.empty())
+		checksum = GetArchiveChecksum(ars.front());
 	return checksum;
 }
 
