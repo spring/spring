@@ -106,7 +106,9 @@ void CMobileCAI::GiveCommand(Command &c)
 	if(c.id == CMD_SET_WANTED_MAX_SPEED) {
 		//owner->moveType->SetWantedMaxSpeed(*c.params.begin());
 		maxWantedSpeed = *c.params.begin();
+		owner->moveType->SetMaxSpeed(maxWantedSpeed);
 		return;
+
 	}
 
 	if(c.id==CMD_AUTOREPAIRLEVEL){

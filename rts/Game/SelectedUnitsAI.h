@@ -5,19 +5,35 @@
 #include "Sim/Units/Unit.h"
 #include "float3.h"
 #include <map>
+#include <set>
 
 class CSelectedUnitsAI {
 public:
+	/* set<int> selUnits;
+	
+	void AddUnit(int unit); (And include update() in game.cpp to call every frame)
+	void RemoveUnit(int unit);
+	*/
+
 	CSelectedUnitsAI();
 	void GiveCommandNet(Command &c,int player);
-
-private:
+	float3 centerPos, rightPos;
+	int sumLength;
+	float avgLength;
+	float frontLength;
+	float addSpace;
 	void CalculateGroupData(int player);
 
 	void MakeFrontMove(Command* c,int player);
-	void CreateUnitOrder(std::multimap<float,int>& out,int player);
-	void MoveToPos(int unit, float3& basePos, int posNum,unsigned char options);
+	float3 MoveToPos(int unit, float3 nextCornerPos, float3 dir,unsigned char options);
+	void Update();
 
+
+
+private:
+	
+	void CreateUnitOrder(std::multimap<float,int>& out,int player);
+	
 	float3 minCoor, maxCoor, centerCoor;
 	float minMaxSpeed;
 
