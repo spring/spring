@@ -43,7 +43,6 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
-#include "Game/UI/GUI/GUIframe.h"
 //#include "HpiHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -100,7 +99,6 @@
 #include "UI/KeyCodes.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
-#include "UI/NewGuiDefine.h"
 #include "UI/OutlineFont.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
@@ -117,10 +115,6 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Weapons/Weapon.h"
-#endif
-
-#ifdef NEW_GUI
-#include "UI/GUI/GUIcontroller.h"
 #endif
 
 #include "mmgr.h"
@@ -243,10 +237,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	minimap=new CMiniMap();
 #endif
 
-#ifdef NEW_GUI
-	GUIcontroller::GlobalInitialize();
-#endif
-
 	ENTER_MIXED;
 	ph=new CProjectileHandler();
 
@@ -255,8 +245,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	unitDefHandler=new CUnitDefHandler();
 
 	ENTER_UNSYNCED;
-#ifndef NEW_GUI
-#endif
 	inMapDrawer=new CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
 
@@ -460,11 +448,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		gs->players[gu->myPlayerNum]->currentStats->keyPresses++;
 	//	logOutput.Print("%i",(int)k);
 
-#ifdef NEW_GUI
-	GUIcontroller::KeyDown(k);
-	// #endif
-#else
-
 	if (!hotBinding.empty()) {
 		if (k == 27) {
 			hotBinding.clear();
@@ -619,8 +602,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		}
 	}
 
-#endif // NEW_GUI
-
 	return 0;
 }
 
@@ -629,10 +610,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 int CGame::KeyReleased(unsigned short k)
 {
 	//	keys[k] = false;
-
-#ifdef NEW_GUI
-	GUIcontroller::KeyUp(k);
-#else
 
 	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190) )){
 		return 0;
@@ -655,8 +632,7 @@ int CGame::KeyReleased(unsigned short k)
 		}
 	}
 
-#endif // NEW_GUI
-	
+
 	return 0;
 }
 
@@ -1082,12 +1058,10 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "incguiopacity") {
-		GUIframe::SetGUIOpacity(min(GUIframe::GetGUIOpacity()+0.1f,1.f));
-	}
-	else if (cmd == "decguiopacity") {
-		GUIframe::SetGUIOpacity(max(GUIframe::GetGUIOpacity()-0.1f,0.f));
-	}
-	else if (cmd == "screenshot") {
+		CInputReceiver::guiAlpha = min(CInputReceiver::guiAlpha+0.1f,1.0f);
+	} else if (cmd == "decguiopacity") {
+		CInputReceiver::guiAlpha = max(CInputReceiver::guiAlpha-0.1f,0.0f);
+	} else if (cmd == "screenshot") {
 		const char* ext = "jpg";
 		if (action.extra == "png") {
 			ext = "png";
@@ -1559,10 +1533,6 @@ bool CGame::Draw()
 	if(showList)
 		showList->Draw();
 
-#ifdef NEW_GUI
-	GUIcontroller::Draw();
-#endif
-
 	mouse->DrawCursor();
 
 //	float tf[]={1,1,1,1,1,1,1,1,1};
@@ -1938,11 +1908,7 @@ bool CGame::ClientReadNet()
 				logOutput.Print("Automatical quit enforced from commandline");
 				globalQuit = true;
 			} else {
-				#ifdef NEW_GUI
-				guicontroller->Event("dialog_endgame_togglehidden");
-				#else
 				new CEndGameBox();
-				#endif
 			}
 			lastLength=1;
 			ENTER_SYNCED;

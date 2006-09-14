@@ -35,6 +35,8 @@ public:
 	};
 	bool InBox(float x, float y, const ContainerBox& box);
 	void DrawBox(ContainerBox b);
+
+	static float guiAlpha;
 };
 
 std::deque<CInputReceiver*>& GetInputReceivers();

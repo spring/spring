@@ -327,12 +327,6 @@ void CInMapDraw::AddLine(float3 pos, float3 pos2)
 }
 
 
-#ifdef NEW_GUI
-void CInMapDraw::PromptLabel (float3 pos)
-{
-}
-#else
-
 void CInMapDraw::PromptLabel (float3 pos)
 {
 	waitingPoint=pos;
@@ -342,4 +336,3 @@ void CInMapDraw::PromptLabel (float3 pos)
 	game->ignoreChar='\xA7';		//should do something better here
 }
 
-#endif // NEW_GUI

@@ -1,8 +1,6 @@
 #include "StdAfx.h"
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
-#include "GUI/GUIcontroller.h"
-#include "GUI/GUIframe.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "mmgr.h"
@@ -15,11 +13,9 @@ CTooltipConsole::CTooltipConsole(void)
 {
 }
 
-
 CTooltipConsole::~CTooltipConsole(void)
 {
 }
-
 
 void CTooltipConsole::Draw(void)
 {
@@ -28,7 +24,7 @@ void CTooltipConsole::Draw(void)
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f(0.2f, 0.2f, 0.2f, GUI_TRANS);
+	glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
 
 	glBegin(GL_TRIANGLE_STRIP);
 		glVertex3f(0.0f,  0.0f, 0.0f);

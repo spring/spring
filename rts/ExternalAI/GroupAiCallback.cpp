@@ -11,8 +11,6 @@
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/UI/GuiHandler.h"		//todo: fix some switch for new gui
-#include "Game/UI/NewGuiDefine.h"
-#include "Game/UI/GUI/GUIcontroller.h"
 #include "GroupHandler.h"
 #include "mmgr.h"
 
@@ -45,11 +43,7 @@ const Command* CGroupAICallback::GetOrderPreview()
 {
 	static Command tempcmd;
 	//todo: need to add support for new gui
-#ifdef NEW_GUI
-	tempcmd=guicontroller->GetOrderPreview();
-#else
 	tempcmd=guihandler->GetOrderPreview();
-#endif
 	return &tempcmd;
 }
 

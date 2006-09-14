@@ -3,6 +3,8 @@
 #include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
+float CInputReceiver::guiAlpha = 0.8f;
+
 std::deque<CInputReceiver*>& GetInputReceivers()
 {
 	//This construct fixes order of initialization between different

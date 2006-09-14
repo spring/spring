@@ -8,11 +8,6 @@
 #include "Rendering/GL/myGL.h"
 #include <fstream>
 #include "Rendering/glFont.h"
-#include "NewGuiDefine.h"
-#include "GUI/GUIframe.h"
-#ifdef NEW_GUI
-	#include "GUI/GUIcontroller.h"
-#endif
 
 #ifdef WIN32
 #include "Platform/Win/win32.h"
@@ -20,6 +15,7 @@
  
 #include "SyncTracer.h"
 #include "Platform/ConfigHandler.h"
+#include "InputReceiver.h"
 
 #include "mmgr.h"
 
@@ -56,7 +52,7 @@ void CInfoConsole::Draw()
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.2f, 0.2f, 0.2f, GUI_TRANS);
+	glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
 
 	if(!data.empty() && !outlineFont.IsEnabled()){
 		glBegin(GL_TRIANGLE_STRIP);

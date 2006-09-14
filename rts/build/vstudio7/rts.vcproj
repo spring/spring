@@ -66,7 +66,7 @@
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
+			Name="No debug|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
@@ -164,72 +164,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib"
-				OutputFile="../../../game/spring.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
-				GenerateDebugInformation="TRUE"
-				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../installer/spring.pdb"
-				MapExports="TRUE"
-				MapLines="TRUE"
-				SubSystem="2"
-				OptimizeReferences="0"
-				EnableCOMDATFolding="0"
-				TargetMachine="0"/>
-			<Tool
-				Name="VCMIDLTool"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
-		<Configuration
-			Name="NEW_GUI|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			CharacterSet="2">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				GlobalOptimizations="TRUE"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="3"
-				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories="../../;../../System;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;&quot;../../../vclibs/boost/Include/boost-1_33&quot;;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;NEW_GUI"
-				StringPooling="TRUE"
-				RuntimeLibrary="2"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
-				TreatWChar_tAsBuiltInType="TRUE"
-				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="3"
-				WarningLevel="1"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="2"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -594,7 +528,10 @@
 					RelativePath="..\..\Game\Ui\MouseHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\NewGuiDefine.h">
+					RelativePath="..\..\Game\Ui\OutlineFont.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\OutlineFont.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\ResourceBar.cpp">
@@ -615,6 +552,12 @@
 					RelativePath="..\..\Game\Ui\ShareBox.h">
 				</File>
 				<File
+					RelativePath="..\..\Game\Ui\SimpleParser.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\SimpleParser.h">
+				</File>
+				<File
 					RelativePath="..\..\Game\Ui\StartPosSelecter.cpp">
 				</File>
 				<File
@@ -625,985 +568,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\TooltipConsole.h">
-				</File>
-			</Filter>
-			<Filter
-				Name="New GUI"
-				Filter="">
-				<File
-					RelativePath="..\..\Game\Ui\Gui\Functor.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIallyResourceBar.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbuildMenu.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbutton.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIbutton.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcenterBuildMenu.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUICommandPool.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIconsole.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIconsole.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIcontroller.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIendgameDialog.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIfont.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIfont.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIframe.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIframe.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgame.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgame.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgraph.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIgraph.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIimage.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIimage.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinfoSelection.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinput.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIinput.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIlabel.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIlabel.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUImatrix.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUImatrix.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIminimap.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIminimap.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIpane.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIpane.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIresourceBar.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIscrollbar.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIsharingDialog.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIslider.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIslider.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIstateButton.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUIswitchBar.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItab.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItab.h">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItable.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\Gui\GUItable.h">
 				</File>
 			</Filter>
 			<Filter
@@ -1859,19 +823,13 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -1947,19 +905,13 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -2601,19 +1553,13 @@
 			<File
 				RelativePath="..\..\System\bget.cpp">
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="No debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="NEW_GUI|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -2679,19 +1625,13 @@
 						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="No debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="NEW_GUI|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
@@ -2715,19 +1655,13 @@
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="No debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="NEW_GUI|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -2850,19 +1784,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2886,19 +1814,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2922,19 +1844,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2958,19 +1874,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -2994,19 +1904,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3030,19 +1934,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3070,19 +1968,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3106,19 +1998,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3142,19 +2028,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3178,7 +2058,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
@@ -3186,13 +2066,6 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
@@ -3218,19 +2091,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3254,19 +2121,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3290,19 +2151,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3326,19 +2181,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3362,19 +2211,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3401,19 +2244,13 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release with error catching|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="NEW_GUI|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -3443,19 +2280,13 @@
 				<File
 					RelativePath="..\..\System\Platform\BaseCmd.cpp">
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -3476,19 +2307,13 @@
 				<File
 					RelativePath="..\..\System\Platform\ConfigHandler.cpp">
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -3539,19 +2364,13 @@
 					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.cpp">
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release with error catching|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="NEW_GUI|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3569,19 +2388,13 @@
 					<File
 						RelativePath="..\..\System\Platform\Win\RegHandler.cpp">
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release with error catching|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="NEW_GUI|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3602,19 +2415,13 @@
 					<File
 						RelativePath="..\..\System\Platform\Win\Win32Cmd.cpp">
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release with error catching|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="NEW_GUI|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3655,19 +2462,13 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -3753,19 +2554,13 @@
 				<File
 					RelativePath="..\..\System\creg\VarTypes.cpp">
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="3"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release with error catching|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="NEW_GUI|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="3"/>
@@ -3848,7 +2643,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3881,7 +2676,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3911,7 +2706,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3941,7 +2736,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3971,7 +2766,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -3998,7 +2793,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4028,7 +2823,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4058,7 +2853,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4091,7 +2886,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4121,7 +2916,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4151,7 +2946,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4181,7 +2976,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4211,7 +3006,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4241,7 +3036,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4271,7 +3066,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4301,7 +3096,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4328,7 +3123,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4364,7 +3159,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4394,7 +3189,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4424,7 +3219,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4457,7 +3252,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4484,7 +3279,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4511,7 +3306,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4538,7 +3333,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4565,7 +3360,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4592,7 +3387,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4619,7 +3414,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4646,7 +3441,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4673,7 +3468,7 @@
 									UsePrecompiledHeader="0"/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Release|Win32">
+								Name="No debug|Win32">
 								<Tool
 									Name="VCCLCompilerTool"
 									UsePrecompiledHeader="0"/>
@@ -4705,7 +3500,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4732,7 +3527,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4759,7 +3554,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4786,7 +3581,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4813,7 +3608,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4840,7 +3635,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4867,7 +3662,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4894,7 +3689,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4921,7 +3716,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4948,7 +3743,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -4975,7 +3770,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5002,7 +3797,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5029,7 +3824,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5056,7 +3851,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5083,7 +3878,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5110,7 +3905,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5137,7 +3932,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5164,7 +3959,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5191,7 +3986,7 @@
 								UsePrecompiledHeader="0"/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="No debug|Win32">
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"/>
@@ -5317,7 +4112,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="0"/>
@@ -5635,7 +4430,7 @@
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="No debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						PreprocessorDefinitions="LIBM_COMPILING_FLT32"
@@ -5668,7 +4463,7 @@
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="No debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -5712,7 +4507,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5747,7 +4542,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5782,7 +4577,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5817,7 +4612,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5852,7 +4647,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5887,7 +4682,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5922,7 +4717,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5957,7 +4752,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -5992,7 +4787,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6027,7 +4822,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6062,7 +4857,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6097,7 +4892,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6132,7 +4927,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6167,7 +4962,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6202,7 +4997,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6237,7 +5032,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6272,7 +5067,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6307,7 +5102,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6342,7 +5137,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6377,7 +5172,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6412,7 +5207,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6447,7 +5242,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6482,7 +5277,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6517,7 +5312,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6552,7 +5347,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6587,7 +5382,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6622,7 +5417,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6657,7 +5452,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6692,7 +5487,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6727,7 +5522,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6762,7 +5557,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6797,7 +5592,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6832,7 +5627,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6867,7 +5662,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6902,7 +5697,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6937,7 +5732,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -6972,7 +5767,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7007,7 +5802,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7042,7 +5837,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7077,7 +5872,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7112,7 +5907,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7147,7 +5942,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7182,7 +5977,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7217,7 +6012,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7252,7 +6047,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7287,7 +6082,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7322,7 +6117,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7357,7 +6152,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7392,7 +6187,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7427,7 +6222,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7462,7 +6257,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7497,7 +6292,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7532,7 +6327,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7567,7 +6362,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7602,7 +6397,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7637,7 +6432,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7672,7 +6467,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7707,7 +6502,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7742,7 +6537,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7777,7 +6572,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7812,7 +6607,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
@@ -7850,7 +6645,7 @@
 							UsePrecompiledHeader="0"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="No debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalIncludeDirectories="../../lib/streflop/libm/headers"

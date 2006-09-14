@@ -19,7 +19,6 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/GUI/GUIframe.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Rendering/glFont.h"
@@ -41,6 +40,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 
 extern Uint8 *keys;
 
@@ -549,7 +549,7 @@ void CGuiHandler::DrawButtons()
 	if (iconsCount > 0) {
 
 		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
+		glColor4f(0.2f,0.2f,0.2f,guiAlpha);
 		glBegin(GL_QUADS);
 
 		GLfloat fx = 0;//-.2f*(1-fadein/100.0f)+.2f;
@@ -620,7 +620,7 @@ void CGuiHandler::DrawButtons()
 			glVertex2f(x1,y2);
 			glEnd();
 
-			if (!cmdDesc.params.empty()){			//skriv texten i f�sta param ovanp�
+			if (!cmdDesc.params.empty()){			//skriv texten i fï¿½sta param ovanpï¿½
 				const string& toPrint = cmdDesc.params[0];
 
 				const float tHeight = font->CalcTextHeight(toPrint.c_str());
@@ -797,7 +797,7 @@ void CGuiHandler::DrawButtons()
 
 		if (!outlineFont.IsEnabled()) {
 			glDisable(GL_TEXTURE_2D);
-			glColor4f(0.2f, 0.2f, 0.2f, GUI_TRANS);
+			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
 			glRectf(xSelectionPos - frameBorder,
 							ySelectionPos - frameBorder,
 							xSelectionPos + frameBorder + textWidth,

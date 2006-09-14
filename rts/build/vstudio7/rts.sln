@@ -7,7 +7,6 @@ Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
 		Final release = Final release
-		NEW_GUI = NEW_GUI
 		No debug = No debug
 		Syncdebug = Syncdebug
 	EndGlobalSection
@@ -16,10 +15,8 @@ Global
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug.Build.0 = Debug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Final release.ActiveCfg = Release with error catching|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Final release.Build.0 = Release with error catching|Win32
-		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.NEW_GUI.ActiveCfg = NEW_GUI|Win32
-		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.NEW_GUI.Build.0 = NEW_GUI|Win32
-		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.No debug.ActiveCfg = Release|Win32
-		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.No debug.Build.0 = Release|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.No debug.ActiveCfg = No debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.No debug.Build.0 = No debug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Syncdebug.ActiveCfg = Syncdebug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Syncdebug.Build.0 = Syncdebug|Win32
 	EndGlobalSection

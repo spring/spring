@@ -6,7 +6,6 @@
 #include "Rendering/glFont.h"
 #include "Net.h"
 #include "mmgr.h"
-#include "Game/UI/GUI/GUIframe.h"
 
 CResourceBar* resourceBar=0;
 
@@ -60,7 +59,7 @@ void CResourceBar::Draw(void)
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
+	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
 
 	glBegin(GL_QUADS);
 	glVertex2f(box.x1, box.y1);
