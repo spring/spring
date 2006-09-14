@@ -7,7 +7,6 @@
 #include "Rendering/glFont.h"
 #include "Net.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/GUI/GUIframe.h"
 
 int CShareBox::lastShareTeam=0;
 
@@ -77,34 +76,34 @@ void CShareBox::Draw(void)
 	glDisable(GL_ALPHA_TEST);
 
 	// Large Box
-	glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
+	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
 	DrawBox(box);
 
 	// ok Box on mouse over
 	if(InBox(mx,my,box+okBox)){
-		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
+		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
 		DrawBox(box+okBox);
 	}
 
 	// apply Box on mouse over
 	if(InBox(mx,my,box+applyBox)){
-		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
+		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
 		DrawBox(box+applyBox);
 	}
 
 	// cancel Box on mouse over
 	if(InBox(mx,my,box+cancelBox)){
-		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
+		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
 		DrawBox(box+cancelBox);
 	}
 
-	glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
+	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
 	DrawBox(box+teamBox);
 
 	if(InBox(mx,my,box+unitBox))
-		glColor4f(0.7f,0.2f,0.2f,GUI_TRANS);
+		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
 	else
-		glColor4f(0.2f,0.2f,0.2f,GUI_TRANS);
+		glColor4f(0.2f,0.2f,0.2f,guiAlpha);
 	DrawBox(box+unitBox);
 
 	glColor4f(0.8f,0.8f,0.9f,0.7f);

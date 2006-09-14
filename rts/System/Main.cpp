@@ -41,10 +41,6 @@
 #include <SDL_syswm.h>
 #endif
 #include "mmgr.h"
-#include "Game/UI/NewGuiDefine.h"
-#ifdef NEW_GUI
-#include "Game/UI/GUI/GUIcontroller.h"
-#endif
 
 #ifdef _WIN32
 #ifndef __MINGW32__
@@ -825,11 +821,6 @@ int SpringApp::Run (int argc, char *argv[])
 						}
 #endif
 					}
-#ifdef NEW_GUI
-					i = event.key.keysym.unicode;
-					if (i > SDLK_FIRST && i <= SDLK_DELETE) /* HACK */
-						GUIcontroller::Character(char(i));
-#endif
 					break;
 				}
 				case SDL_KEYUP:

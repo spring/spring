@@ -37,11 +37,6 @@
 #include "SDL_mouse.h"
 #include "SDL_keysym.h"
 #include "SDL_events.h"
-#include "NewGuiDefine.h"
-
-#ifdef NEW_GUI
-#include "GUI/GUIcontroller.h"
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -50,7 +45,7 @@
 extern bool	fullscreen;
 extern Uint8 *keys;
 
-extern bool mouseHandlerMayDoSelection;
+bool mouseHandlerMayDoSelection=true;
 
 CMouseHandler* mouse=0;
 
@@ -136,17 +131,9 @@ void CMouseHandler::MouseMove(int x, int y)
 	if(!game->gameOver)
 		gs->players[gu->myPlayerNum]->currentStats->mousePixels+=abs(dx)+abs(dy);
 
-#ifdef NEW_GUI
-	if(dx||dy)
-		if(GUIcontroller::MouseMove(x, y, dx, dy, activeButton))
-		{
-			return;
-		}
-#else
 	if(activeReceiver){
 		activeReceiver->MouseMove(x,y,dx,dy,activeButton);
 	}
-#endif
 
 #ifndef NEW_GUI
 	if(inMapDrawer && inMapDrawer->keyPressed){
@@ -170,12 +157,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if(!game->gameOver)
 		gs->players[gu->myPlayerNum]->currentStats->mouseClicks++;
 
-#ifdef NEW_GUI
-	activeButton=button;
-	if(GUIcontroller::MouseDown(x, y, button))
-		return;
-#endif
-	
 	if(button==4){
 		if (guihandler->buildSpacing > 0)
 			guihandler->buildSpacing --;
@@ -226,15 +207,10 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 	buttons[button].pressed=false;
 
-#ifdef NEW_GUI
-	if(GUIcontroller::MouseUp(x, y, button))
-		return;
-#else
 	if(inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseRelease(x,y,button);
 		return;
 	}
-#endif
 
 	if(button==SDL_BUTTON_MIDDLE){
 		if(buttons[SDL_BUTTON_MIDDLE].time>gu->gameTime-0.3f)
