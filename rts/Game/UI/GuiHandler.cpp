@@ -106,7 +106,7 @@ void CGuiHandler::LoadDefaults()
 
 	noSelectGaps = false;
 
-	outlineFont.Enable(false);
+	outlineFont.Enable(true);
 }
 
 
