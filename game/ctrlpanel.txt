@@ -3,7 +3,7 @@
 //  Spring Control Panel Configuration
 //
 
-// outlinefont  0
+// outlinefont  1
 
 // noSelectGaps 0
 
