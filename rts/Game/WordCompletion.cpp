@@ -24,6 +24,8 @@ void CWordCompletion::Reset()
 	WordProperties wp(true, false);
 	// local commands
 	words["/clock"] = wp;
+	words["/cmdcolors"] = wp;
+	words["/ctrlpanel"] = wp;
 	words["/info"] = wp;
 	words["/gameinfo"] = wp;
 	words["/say "] = wp;
