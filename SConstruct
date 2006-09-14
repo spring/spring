@@ -168,3 +168,10 @@ inst = Install(os.path.join(env.subst(env['datadir']), 'base'), 'game/base/sprin
 Alias('install', inst)
 inst = Install(os.path.join(env.subst(env['datadir']), 'base/spring'), 'game/base/spring/bitmaps.sdz')
 Alias('install', inst)
+
+# install shaders
+shaders=os.listdir('game/shaders')
+for shader in shaders:
+	if not os.path.isdir(os.path.join('game/shaders', shader)):
+		inst = Install(os.path.join(env.subst(env['datadir']), 'shaders'), os.path.join('game/shaders', shader))
+		Alias('install', inst)
