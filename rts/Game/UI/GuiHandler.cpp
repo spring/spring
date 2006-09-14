@@ -104,6 +104,8 @@ void CGuiHandler::LoadDefaults()
 	ySelectionPos = 0.127f;
 
 	noSelectGaps = false;
+
+	outlineFont.Enable(false);
 }
 
 
