@@ -18,9 +18,12 @@ class CCommandColors {
 		bool LoadConfig(const std::string& filename);
 
 		// for command queue lines
-		float        RestartAlpha()      const { return restartAlpha; }
-		bool         UseRestartColor()   const { return useRestartColor; }
+		bool         UseQueueIcons()     const { return useQueueIcons; }
+		float        QueueIconAlpha()    const { return queueIconAlpha; }
+		float        QueueIconScale()    const { return queueIconScale; }
 		bool         UseColorRestarts()  const { return useColorRestarts; }
+		bool         UseRestartColor()   const { return useRestartColor; }
+		float        RestartAlpha()      const { return restartAlpha; }
 
 		float        QueuedLineWidth()   const { return queuedLineWidth; }
 		unsigned int QueuedBlendSrc()    const { return queuedBlendSrc; }
@@ -101,9 +104,12 @@ class CCommandColors {
 		float colors[ColorCount][4];
 
 		// for command queue lines
-		float restartAlpha;
-		bool useRestartColor;
+		float queueIconAlpha;
+		float queueIconScale;
+		bool useQueueIcons;
 		bool useColorRestarts;
+		bool useRestartColor;
+		float restartAlpha;
 
 		float queuedLineWidth;
 		unsigned int queuedBlendSrc;

@@ -31,6 +31,9 @@ static void InitColor(float color[4], float r, float g, float b, float a)
 
 CCommandColors::CCommandColors()
 {
+	useQueueIcons = true;
+	queueIconAlpha = 0.5f;
+	queueIconScale = 1.0f;
 	useColorRestarts = true;
 	useRestartColor = true;
 	restartAlpha = 0.25f;
@@ -188,7 +191,16 @@ bool CCommandColors::LoadConfig(const string& filename)
 		
 		const string command = StringToLower(words[0]);
 		
-		if ((command == "usecolorrestarts") && (words.size() > 1)) {
+		if ((command == "usequeueicons") && (words.size() > 1)) {
+			useQueueIcons = !!atoi(words[1].c_str());
+		}
+		else if ((command == "queueiconalpha") && (words.size() > 1)) {
+			SafeAtoF(queueIconAlpha, words[1]);
+		}
+		else if ((command == "queueiconscale") && (words.size() > 1)) {
+			SafeAtoF(queueIconScale, words[1]);
+		}
+		else if ((command == "usecolorrestarts") && (words.size() > 1)) {
 			useColorRestarts = !!atoi(words[1].c_str());
 		}
 		else if ((command == "userestartcolor") && (words.size() > 1)) {

@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "CursorIcons.h"
+#include "CommandColors.h"
 #include "MouseHandler.h"
 #include "../Camera.h"
 #include "../command.h"
@@ -23,7 +24,7 @@ CCursorIcons::~CCursorIcons()
 
 void CCursorIcons::Draw()
 {
-	if (icons.empty()) {
+	if (icons.empty() || !cmdColors.UseQueueIcons()) {
 		return;
 	}
 
@@ -43,7 +44,7 @@ void CCursorIcons::Draw()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER, 0.01f);
-	glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
 	
 	int currentCmd = (icons.begin()->command + 1); // force the first binding
 	CMouseCursor* currentCursor = NULL;
