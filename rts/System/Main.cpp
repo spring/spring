@@ -513,6 +513,8 @@ void SpringApp::InitOpenGL ()
 	gu->screenx = screenWidth;
 	if (gu->dualScreenMode) gu->screenx /= 2;
 	gu->screeny = screenHeight;
+	
+	gu->aspectRatio = (float)gu->screenx / (float)gu->screeny;
 
 	// Setup viewport
 	glViewport (0, 0, gu->screenx, gu->screeny);

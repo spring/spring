@@ -31,7 +31,7 @@ public:
 	int numLines;
 
 	float3 lastMsgPos;
-
+	
 private:
 	struct InfoLine {
 		std::string text;

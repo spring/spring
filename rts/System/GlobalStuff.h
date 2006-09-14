@@ -468,6 +468,13 @@ public:
 	int screeny;
 
 	/**
+	 * @brief aspect ratio
+	 * 
+	 * (float)screenx / (float)screeny
+	 */
+	float aspectRatio;
+
+	/**
 	 * @brief my player num
 	 * 
 	 * Local player's number

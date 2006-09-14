@@ -35,7 +35,7 @@ TASpring change log
 - added "keysym" command for custom key symbols
 - added "fakemeta" key binding command to provide another modifier
 
-- added SmoothLines and SmoothPoints config parameters
+- added SmoothLines and SmoothPoints config parameters  (anti-aliasing)
   (0 = off,  1 = fastest,  2 = don't care,  3 = nicest)
 
 - changed GameInfo so that it always displays map name and mod name

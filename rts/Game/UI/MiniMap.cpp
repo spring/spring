@@ -376,8 +376,12 @@ bool CMiniMap::MousePress(int x, int y, int button)
 void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 {
 	if(mouseMove){
-		xpos+=dx;
-		ypos-=dy;
+		xpos += dx;
+		ypos -= dy;
+		xpos = max(0, xpos);
+		xpos = min(gu->screenx - width, xpos);
+		ypos = min(gu->screeny - height, ypos);
+		ypos = max(0, ypos);
 		return;
 	} else  if(mouseResize){
 		ypos-=dy;

@@ -9,21 +9,13 @@
 #include <map>
 using namespace std;
 
+#include "SimpleParser.h"
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/FileHandler.h"
 
 
 /******************************************************************************/
 
-static int lineNumber = 0;
-static bool inComment = false; //  /*text*/ comments are not implemented
-
-static string GetLine(CFileHandler& fh);
-static string GetCleanLine(CFileHandler& fh);
-static vector<string> Tokenize(const string& line, int minWords = 0);
-
-
-/******************************************************************************/
 
 CCommandColors cmdColors;
 
@@ -183,14 +175,16 @@ static bool SafeAtoF(float& var, const string& value)
 bool CCommandColors::LoadConfig(const string& filename)
 {
 	CFileHandler ifs(filename);
+
+	SimpleParser::Init();
 	
 	while (true) {
-		const string line = GetCleanLine(ifs);
+		const string line = SimpleParser::GetCleanLine(ifs);
 		if (line.empty()) {
 			break;   
 		}
 
-		vector<string> words = Tokenize(line, 1);
+		vector<string> words = SimpleParser::Tokenize(line, 1);
 		
 		const string command = StringToLower(words[0]);
 		
@@ -271,96 +265,6 @@ bool CCommandColors::LoadConfig(const string& filename)
 		}
 	}
 	return true;
-}
-
-
-/******************************************************************************/
-//
-// Parsing Routines
-//
-
-
-// returns next line (without newlines)
-static string GetLine(CFileHandler& fh)
-{
-	lineNumber++;
-	char a;
-	string s = "";
-	while (true) {
-		a = fh.Peek();
-		if (a == EOF)  { break; }
-		fh.Read(&a, 1);
-		if (a == '\n') { break; }
-		if (a != '\r') { s += a; }
-	}
-	return s;
-}
-
-
-// returns next non-blank line (without newlines or comments)
-static string GetCleanLine(CFileHandler& fh)
-{
-	string::size_type pos;
-	while (true) {
-		if (fh.Eof()) {
-			return ""; // end of file
-		}
-		string line = GetLine(fh);
-
-		pos = line.find_first_not_of(" \t");
-		if (pos == string::npos) {
-			continue; // blank line
-		}
-
-		pos = line.find("//");
-		if (pos != string::npos) {
-			line.erase(pos);
-			pos = line.find_first_not_of(" \t");
-			if (pos == string::npos) {
-				continue; // blank line (after removing comments)
-			}
-		}
-
-		return line;
-	}
-}
-
-
-static vector<string> Tokenize(const string& line, int minWords)
-{
-	vector<string> words;
-	string::size_type start;
-	string::size_type end = 0;
-	while (true) {
-		start = line.find_first_not_of(" \t", end);
-		if (start == string::npos) {
-			break;
-		}
-		string word;
-		if ((minWords > 0) && (words.size() >= minWords)) {
-			word = line.substr(start);
-			// strip trailing whitespace
-			string::size_type pos = word.find_last_not_of(" \t");
-			if (pos != (word.size() - 1)) {
-				word.resize(pos + 1);
-			}
-			end = string::npos;
-		}
-		else {
-			end = line.find_first_of(" \t", start);
-			if (end == string::npos) {
-				word = line.substr(start);
-			} else {
-				word = line.substr(start, end - start);
-			}
-		}
-		words.push_back(word);
-		if (end == string::npos) {
-			break;
-		}
-	}
-	
-	return words;
 }
 
 

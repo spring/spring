@@ -7,9 +7,9 @@
 #pragma warning(disable:4786)
 
 #include <vector>
+#include <map>
 #include "Game/command.h"
 #include "Rendering/GL/myGL.h"
-#include <map>
 #include "KeySet.h"
 #include "KeyBindings.h"
 #include "InputReceiver.h"
@@ -18,70 +18,128 @@ class CglList;
 struct UnitDef;
 struct BuildInfo;
 
-class CGuiHandler : public CInputReceiver
-{
-public:
-	bool AboveGui(int x,int y);
-	int IconAtPos(int x,int y);
+class CGuiHandler : public CInputReceiver {
+	public:
+		CGuiHandler();
+		virtual ~CGuiHandler();
 
-	bool MousePress(int x,int y,int button);
-	void MouseRelease(int x,int y,int button);
+		void Update();
 
-	void Update();
-	void Draw();
-	void DrawButtons();
+		void Draw();
+		void DrawMapStuff(void);
+		
+		bool AboveGui(int x,int y);
+		bool KeyPressed(unsigned short key);
+		bool MousePress(int x,int y,int button);
+		void MouseRelease(int x,int y,int button);
+		bool IsAbove(int x, int y);
+		std::string GetTooltip(int x, int y);
+		std::string GetBuildTooltip() const;
 
-	CGuiHandler();
-	virtual ~CGuiHandler();
+		Command GetOrderPreview(void);
+		Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);
+		std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
+		                                   const BuildInfo& endInfo);
+		                                   // start.def has to be end.def
+		bool ReloadConfig();
+		
+	public:
+		vector<CommandDescription> commands;
+		int inCommand;
+		int buildFacing;
+		int buildSpacing;
 
-	
-	bool LoadCMDBitmap(int id, char* filename);
-	void LayoutIcons();
+	private:
+		void MenuChoice(string s);
+		static void MenuSelection(std::string s);
+		
+		void LayoutIcons();
+		bool LoadCMDBitmap(int id, char* filename);
 
-	vector<CommandDescription> commands;
+		int  GetDefaultCommand(int x,int y) const;
+		void CreateOptions(Command& c,bool rmb);
+		void FinishCommand(int button);
+		void SetShowingMetal(bool show);
 
-	int inCommand;
-	bool needShift;
-	bool showingMetal;
-	bool autoShowMetal;
-	bool activeMousePress;
-	int activePage;
-	int maxPages;
-	int defaultCmdMemory;
-	CglList* list;
-	int buildSpacing;
+		void DrawButtons();
+		void DrawFront(int button,float maxSize,float sizeDiv);
+		void DrawArea(float3 pos, float radius);
 
-	int buildFacing; // which side the built buildings should face?
+		int  IconAtPos(int x,int y);
+		void SetCursorIcon() const;
 
-	void CreateOptions(Command& c,bool rmb);
-	int GetDefaultCommand(int x,int y);
-	void DrawMapStuff(void);
-	void DrawFront(int button,float maxSize,float sizeDiv);
-	bool KeyPressed(unsigned short key);
-	void MenuChoice(string s);
-	void FinishCommand(int button);
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x, int y);
-	std::string GetBuildTooltip() const;
-	void DrawArea(float3 pos, float radius);
+		void LoadDefaults();
+		void SanitizeConfig();
+		bool LoadConfig(const std::string& filename);
 
-private:
-	void SetCursorIcon();
-	void SetShowingMetal(bool show);
-	bool ProcessLocalActions(const CKeyBindings::Action& action);
-	bool ProcessBuildActions(const CKeyBindings::Action& action);
-	
-private:
-	int actionOffset;
-	CKeySet lastKeySet;
-	
-	static const int NUMICOPAGE = 16;
-	
-public:
-	Command GetOrderPreview(void);
-	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);
-	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo); // start.def has to be end.def
+		void ResetInCommand(const CommandDescription& cmdDesc);
+		bool ProcessLocalActions(const CKeyBindings::Action& action);
+		bool ProcessBuildActions(const CKeyBindings::Action& action);
+		int  GetIconPosCommand(int slot) const;
+		int  ParseIconPosSlot(const std::string& text) const;
+		
+	private:
+		bool needShift;
+		bool showingMetal;
+		bool autoShowMetal;
+		bool activeMousePress;
+		int maxPage;
+		int activePage;
+		int defaultCmdMemory;
+		int fadein;
+		CglList* list;
+		
+		int actionOffset;
+		CKeySet lastKeySet;
+
+		int xIcons, yIcons;
+		float xPos, yPos;
+		float iconBorder;
+		float frameBorder;
+		float xIconSize, yIconSize;
+		float xIconStep, yIconStep;
+		float xSelectionPos, ySelectionPos;
+		int deadIconSlot;
+		int prevPageSlot;
+		int nextPageSlot;
+		bool noSelectGaps;
+		std::vector<int> fillOrder;
+
+		int iconsPerPage;
+		float xBpos, yBpos; // center of the buildIconsFirst indicator
+		
+		struct Box {
+			GLfloat x1;
+			GLfloat y1;
+			GLfloat x2;
+			GLfloat y2;
+		};
+		Box buttonBox;
+		
+		struct IconInfo {
+			int commandsID; // index into commands list (or -1)
+			Box visual;
+			Box selection;
+		};
+		IconInfo* icons;
+		int iconsSize;
+		int iconsCount;
+		int activeIcons;
+		
+		struct GuiIconData {
+			unsigned int x;
+			unsigned int y;
+			GLfloat width;
+			GLfloat height;
+			bool has_bitmap;
+			unsigned int texture;
+			char* c_str;
+		};
+		std::map<int, GuiIconData> iconMap;
 };
+
+
 extern CGuiHandler* guihandler;
+
 
 #endif /* GUIHANDLER_H */
