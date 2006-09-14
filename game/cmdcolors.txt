@@ -28,6 +28,10 @@ mouseBoxBlendDst   one_minus_src_alpha
 //  Command Queue Rendering
 //
 
+useQueueIcons    1
+queueIconAlpha   0.5   
+queueIconScale   1.0
+
 useColorRestarts 1
 useRestartColor  1
 restartAlpha     0.25
