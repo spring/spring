@@ -5,6 +5,7 @@
 
 #include "GuiHandler.h"
 #include <map>
+#include <set>
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "CommandColors.h"
@@ -120,6 +121,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	string deadStr = "";
 	string prevStr = "";
 	string nextStr = "";
+	string fillOrderStr = "";
 
 	while (true) {
 		const string line = SimpleParser::GetCleanLine(ifs);
@@ -142,6 +144,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		}
 		else if ((command == "nextpageslot") && (words.size() > 1)) {
 			nextStr = StringToLower(words[1]);
+		}
+		else if ((command == "fillorder") && (words.size() > 1)) {
+			fillOrderStr = StringToLower(words[1]);
 		}
 		else if ((command == "xicons") && (words.size() > 1)) {
 			xIcons = atoi(words[1].c_str());
@@ -197,7 +202,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	buttonBox.y2 = yPos + (frameBorder * 2.0f) + (yIcons * yIconStep);
 
 	if (!deadStr.empty()) {
-		deadIconSlot = ParseIconPosSlot(deadStr);
+		deadIconSlot = ParseIconSlot(deadStr);
 	}	else {
 		deadIconSlot = -1;
 	}
@@ -206,7 +211,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		if (prevStr == "none") {
 			prevPageSlot = -1;
 		} else {
-			prevPageSlot = ParseIconPosSlot(prevStr);
+			prevPageSlot = ParseIconSlot(prevStr);
 		}
 	}	else {
 		prevPageSlot = iconsPerPage - 2;
@@ -216,7 +221,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		if (nextStr == "none") {
 			nextPageSlot = -1;
 		} else {
-			nextPageSlot = ParseIconPosSlot(nextStr);
+			nextPageSlot = ParseIconSlot(nextStr);
 		}
 	}	else {
 		nextPageSlot = iconsPerPage - 1;
@@ -251,7 +256,61 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		xBpos = yBpos = -1.0f; // off screen
 	}
 	
+	ParseFillOrder(fillOrderStr);
+	
 	return true;
+}
+
+
+void CGuiHandler::ParseFillOrder(const std::string& text)
+{
+	// setup the default order
+	fillOrder.clear();
+	for (int i = 0; i < iconsPerPage; i++) {
+		fillOrder.push_back(i);
+	}
+
+	// split the string into slot names
+	std::vector<std::string> slotNames = SimpleParser::Tokenize(text, 0);
+	if ((int)slotNames.size() != iconsPerPage) {
+		return;
+	}
+
+	std::set<int>    slotSet;
+	std::vector<int> slotVec;
+	for (int s = 0; s < iconsPerPage; s++) {
+		const int slotNumber = ParseIconSlot(slotNames[s]);
+		if ((slotNumber < 0) || (slotNumber >= iconsPerPage) ||
+				(slotSet.find(slotNumber) != slotSet.end())) {
+			return;
+		}
+		slotSet.insert(slotNumber);
+		slotVec.push_back(slotNumber);
+	}
+	
+	fillOrder = slotVec;
+}
+
+
+int CGuiHandler::ParseIconSlot(const std::string& text) const
+{
+	const char rowLetter = tolower(text[0]);
+	if ((rowLetter < 'a') || (rowLetter > 'z')) {
+		return -1;
+	}
+	const int row = rowLetter - 'a';
+	if (row >= yIcons) {
+		return -1;
+	}
+
+	char* endPtr;
+	const char* startPtr = text.c_str() + 1;
+	int column = strtol(startPtr, &endPtr, 10);
+	if ((endPtr == startPtr) || (column < 0) || (column >= xIcons)) {
+		return -1;
+	}
+	
+	return (row * xIcons) + column;
 }
 
 
@@ -361,40 +420,46 @@ void CGuiHandler::LayoutIcons()
 	
 	for (int ii = 0; ii < iconsCount; ii++) {
 
-		const int slot = (ii % iconsPerPage);
-		
+		// map the icon order
+		const int tmpSlot = (ii % iconsPerPage);
+		const int mii = ii - tmpSlot + fillOrder[tmpSlot]; // mapped icon index
+
+		IconInfo& icon = icons[mii];
+		const int slot = (mii % iconsPerPage);
+
 		if (slot == deadIconSlot) {
-			icons[ii].commandsID = -1;
+			icon.commandsID = -1;
 		}
 		else if (slot == nextPageSlot) {
-			icons[ii].commandsID = multiPage ? nextPageCmd : -1;
+			icon.commandsID = multiPage ? nextPageCmd : -1;
 		}
 		else if (slot == prevPageSlot) {
-			icons[ii].commandsID = multiPage ? prevPageCmd : -1;
+			icon.commandsID = multiPage ? prevPageCmd : -1;
 		}
 		else if (ci >= cmdCount) {
-			icons[ii].commandsID = -1;
+			icon.commandsID = -1;
 		}
 		else {
-			icons[ii].commandsID = ci;
+			icon.commandsID = ci;
 			ci++;
 		}
 
 		// setup the geometry
-		if (icons[ii].commandsID >= 0) {
-			const int slot = (ii % iconsPerPage);
+		if (icon.commandsID >= 0) {
 			const float fx = (float)(slot % xIcons);
 			const float fy = (float)(slot / xIcons);
+
 			const float fullBorder = frameBorder + iconBorder;
-			icons[ii].visual.x1 = buttonBox.x1 + (fullBorder + (fx * xIconStep));
-			icons[ii].visual.x2 = icons[ii].visual.x1 + xIconSize;
-			icons[ii].visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
-			icons[ii].visual.y2 = icons[ii].visual.y1 - yIconSize;
+			icon.visual.x1 = buttonBox.x1 + (fullBorder + (fx * xIconStep));
+			icon.visual.x2 = icon.visual.x1 + xIconSize;
+			icon.visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
+			icon.visual.y2 = icon.visual.y1 - yIconSize;
+
 			const float noGap = noSelectGaps ? iconBorder : 0.0f;
-			icons[ii].selection.x1 = icons[ii].visual.x1 - noGap;
-			icons[ii].selection.x2 = icons[ii].visual.x2 + noGap;
-			icons[ii].selection.y1 = icons[ii].visual.y1 + noGap;
-			icons[ii].selection.y2 = icons[ii].visual.y2 - noGap;
+			icon.selection.x1 = icon.visual.x1 - noGap;
+			icon.selection.x2 = icon.visual.x2 + noGap;
+			icon.selection.y1 = icon.visual.y1 + noGap;
+			icon.selection.y2 = icon.visual.y2 - noGap;
 		}
 	}
 
@@ -1455,28 +1520,6 @@ bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
 }
     
 
-int CGuiHandler::ParseIconPosSlot(const std::string& text) const
-{
-	const char rowLetter = tolower(text[0]);
-	if ((rowLetter < 'a') || (rowLetter > 'z')) {
-		return -1;
-	}
-	const int row = rowLetter - 'a';
-	if (row >= yIcons) {
-		return -1;
-	}
-
-	char* endPtr;
-	const char* startPtr = text.c_str() + 1;
-	int column = strtol(startPtr, &endPtr, 10);
-	if ((endPtr == startPtr) || (column < 0) || (column >= xIcons)) {
-		return -1;
-	}
-	
-	return (row * xIcons) + column;
-}
-
-
 int CGuiHandler::GetIconPosCommand(int slot) const
 {
 	if (slot < 0) {
@@ -1537,7 +1580,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		// See if we have a positional icon command
 		int iconCmd = -1;
 		if (!action.extra.empty() && (action.command == "iconpos")) {
-			const int iconSlot = ParseIconPosSlot(action.extra);
+			const int iconSlot = ParseIconSlot(action.extra);
 			iconCmd = GetIconPosCommand(iconSlot);
 		}
 
