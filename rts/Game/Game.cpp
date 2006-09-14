@@ -534,17 +534,24 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		else if(k==SDLK_RETURN){
 			userWriting=false;
 			keys[k] = false;		//prevent game start when server chats
-			if (chatting &&
-					((userInput.find(".info") == 0)  ||
-					 (userInput.find(".clock") == 0) ||
-					 (userInput[0] == '/'))) {
-				consoleHistory->AddLine(userInput);
-				string actionLine = userInput.substr(1); // strip the '/' or '.'
-				chatting = false;
-				userInput = "";
-				CKeySet ks(k, false);
-				CKeyBindings::Action fakeAction(actionLine);
-				ActionPressed(fakeAction, ks, isRepeat);
+			if (chatting) {
+				string command;
+				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+					command = userInput.substr(2);
+				} else {
+					command = userInput;
+				}
+				if ((command.find(".info") == 0)  ||
+				    (command.find(".clock") == 0) ||
+				    (command[0] == '/')) {
+					consoleHistory->AddLine(command);
+					const string actionLine = command.substr(1); // strip the '/' or '.'
+					chatting = false;
+					userInput = "";
+					CKeySet ks(k, false);
+					CKeyBindings::Action fakeAction(actionLine);
+					ActionPressed(fakeAction, ks, isRepeat);
+				}
 			}
 		}
 		else if(k==27 && (chatting || inMapDrawer->wantLabel)){ // escape
@@ -1460,22 +1467,7 @@ bool CGame::Draw()
 	}
 
 	if(userWriting){
-		int startPos = 0;
-		if(chatting){
-			if((tolower(userInput[0]) == 'a') && (userInput[1] == ':')) {
-				userPrompt = "Allies: ";
-				startPos = 2;
-			}
-			else if((tolower(userInput[0]) == 's') && (userInput[1] == ':')) {
-				userPrompt = "Spectators: ";
-				startPos = 2;
-			}
-			else {
-				userPrompt = "Say: ";
-			}
-		}
-		tempstring=userPrompt;
-		tempstring+=userInput.substr(startPos, string::npos);
+		const string tempstring = userPrompt + userInput;
 
 		const float xScale = 0.020f;
 		const float yScale = 0.028f;
