@@ -32,6 +32,18 @@ void CConsoleHistory::ResetPosition()
 
 bool CConsoleHistory::AddLine(const string& msg)
 {
+	string message;
+	if ((msg.find_first_of("aAsS") == 0) && (msg[1] == ':')) {
+		message = msg.substr(2);
+	} else {
+		message = msg;
+	}
+	return AddLineRaw(message);
+}
+
+	
+bool CConsoleHistory::AddLineRaw(const string& msg)
+{
 	if (msg.empty()) {
 		return false; // do not save blank lines
 	}
@@ -56,19 +68,27 @@ bool CConsoleHistory::AddLine(const string& msg)
 
 string CConsoleHistory::NextLine(const string& current)
 {
+	string prefix, message;
+	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
+		prefix  = current.substr(0, 2);
+		message = current.substr(2);
+	} else {
+		message = current;
+	}
+	
 	if (pos == lines.end()) {
-		AddLine(current);
+		AddLineRaw(message);
 		pos = lines.end();
-		return "";
+		return prefix;
 	}
 
-	if (*pos != current) {
+	if (*pos != message) {
 		if (pos != --lines.end()) {
-			AddLine(current);
+			AddLineRaw(message);
 		} else {
-			if (AddLine(current)) {
+			if (AddLineRaw(message)) {
 				pos = lines.end();
-				return "";
+				return prefix;
 			}
 		}
 	}
@@ -76,31 +96,39 @@ string CConsoleHistory::NextLine(const string& current)
 	pos++;
 
 	if (pos == lines.end()) {
-		return "";
+		return prefix;
 	}
 
-	return *pos;
+	return prefix + *pos;
 }
 
 
 string CConsoleHistory::PrevLine(const string& current)
 {
+	string prefix, message;
+	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
+		prefix  = current.substr(0, 2);
+		message = current.substr(2);
+	} else {
+		message = current;
+	}
+	
 	if (pos == lines.begin()) {
-		if (*pos != current) {
-			AddLine(current);
+		if (*pos != message) {
+			AddLineRaw(message);
 			pos = lines.begin();
 		}
-		return "";
+		return prefix;
 	}
 
-	if ((pos == lines.end()) || (*pos != current)) {
-		AddLine(current);
+	if ((pos == lines.end()) || (*pos != message)) {
+		AddLineRaw(message);
 		if (pos == lines.begin()) {
-			return ""; // AddLine() will adjust begin() iterators when it rolls
+			return prefix; // AddLineRaw() will adjust begin() iterators when it rolls
 		}
 	}
 
 	pos--;
 
-	return *pos;
+	return prefix + *pos;
 }

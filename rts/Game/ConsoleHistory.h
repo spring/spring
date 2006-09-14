@@ -22,6 +22,9 @@ public:
 	string PrevLine(const string& current);
 	
 protected:
+	bool AddLineRaw(const string& msg);
+
+protected:
 	list<string> lines;
 	list<string>::const_iterator pos;
 	static unsigned int MaxLines;
