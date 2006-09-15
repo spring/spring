@@ -1029,7 +1029,7 @@ void CGuiHandler::CreateOptions(Command& c,bool rmb)
 		c.options|=SHIFT_KEY;
 	if(keys[SDLK_LCTRL])
 		c.options|=CONTROL_KEY;
-	if(keys[SDLK_LALT])
+	if(keys[SDLK_LALT] || keys[SDLK_LMETA])
 		c.options|=ALT_KEY;
 	//logOutput << (int)c.options << "\n";
 }
