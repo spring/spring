@@ -512,7 +512,9 @@ void SpringApp::InitOpenGL ()
 	{
 		gu->screenx /= 2;
 		gu->dualScreenMiniMapOnLeft = !!configHandler.GetInt("DualScreenMiniMapOnLeft", 0);
-	}
+	} else 
+		gu->dualScreenMiniMapOnLeft = false;
+
 	gu->screeny = screenHeight;
 	
 	gu->aspectRatio = (float)gu->screenx / (float)gu->screeny;
