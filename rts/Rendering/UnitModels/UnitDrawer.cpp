@@ -1015,7 +1015,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
 	glCopyTexSubImage2D(gltype,0,0,0,0,0,128,128);
 
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 
 	(*camera)=realCam;
 	camera->Update(false);

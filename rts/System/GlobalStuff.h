@@ -454,6 +454,13 @@ public:
 	float lastFrameTime;
 
 	/**
+	 * @brief screen x position
+	 *
+	 * X position of player's game window
+	 */
+	int screenxPos;
+
+	/**
 	 * @brief screen x
 	 * 
 	 * X size of player's game window
@@ -562,10 +569,18 @@ public:
 
 	/**
 	 * @brief dual screen mode
-	 * In dual screen mode, the screen is split up between a game screen (left) and a minimap screen (right).
+	 * In dual screen mode, the screen is split up between a game screen and a minimap screen.
 	 * In this case screenx is half of the actual GL viewport width, 
 	 */
 	bool dualScreenMode;
+
+	/**
+	 * @brief dual screen minimap on left
+	 * In dual screen mode, allow the minimap to either be shown on the left or the right display.
+	 * Minimap on the right is the default.
+	 */
+	bool dualScreenMiniMapOnLeft;
+
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	/**

@@ -564,7 +564,7 @@ void NodeGLSLShader::Cleanup()
 
 	if (renderBuffer) {
 		renderBuffer->framebuffer->deselect();
-		glViewport(0, 0, gu->screenx, gu->screeny);
+		glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
 	}
 }
 
@@ -611,7 +611,7 @@ void GLSLShaderHandler::BeginTexturing()
 		glViewport(0, 0, buffers.front()->width, buffers.front()->height);
 		glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 		buffers.front()->framebuffer->deselect();
-		glViewport(0, 0, gu->screenx, gu->screeny);
+		glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
 	}
 }
 

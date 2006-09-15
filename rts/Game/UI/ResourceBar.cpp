@@ -50,7 +50,7 @@ static string FloatToSmallString(float num,float mul=1){
 
 void CResourceBar::Draw(void)
 {
-	float mx=float(mouse->lastx)/gu->screenx;
+	float mx=float(mouse->lastx-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
 
 	GLfloat x1,y1,x2,y2,x;
@@ -76,7 +76,7 @@ void CResourceBar::Draw(void)
 	GLfloat metalbarx1 = metalx+.08f;
 	GLfloat metalbarx2 = box.x1+(box.x2-box.x1)/2.0f-.03f;
 
-	//metal layout
+	// metal layout
 	GLfloat metalbarlen = metalbarx2-metalbarx1;
 	x1=metalbarx1;
 	y1=metaly+.014f;
@@ -105,7 +105,7 @@ void CResourceBar::Draw(void)
 	glVertex2f(x1+x, y2);
 	glVertex2f(x1+x, y1);
 	glEnd();
-
+	
 	x=gs->Team(gu->myTeam)->metalShare*metalbarlen;
 	glColor4f(0.9f,0.2f,0.2f,0.7f);
 	glBegin(GL_QUADS);
@@ -200,7 +200,7 @@ void CResourceBar::Draw(void)
 
 bool CResourceBar::IsAbove(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(InBox(mx,my,box))
 		return true;
@@ -209,7 +209,7 @@ bool CResourceBar::IsAbove(int x, int y)
 
 std::string CResourceBar::GetTooltip(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	if(mx<box.x1+0.36f)
@@ -222,7 +222,7 @@ std::string CResourceBar::GetTooltip(int x, int y)
 
 bool CResourceBar::MousePress(int x, int y, int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(InBox(mx,my,box)){
 		moveBox=true;

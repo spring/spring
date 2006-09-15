@@ -60,7 +60,7 @@ CMiniMap::CMiniMap()
 	{
 		width = gu->screenx;
 		height = gu->screeny;
-		xpos = gu->screenx;
+		xpos = gu->screenx - gu->screenxPos;
 		ypos = 0;
 	}
 	else {
@@ -94,14 +94,14 @@ void CMiniMap::Draw()
 	if(minimized){
 		glColor4f(1,1,1,0.5f);
 		glDisable(GL_TEXTURE_2D);
-		glViewport(0,gu->screeny-10,10,10);
+		glViewport(gu->screenxPos,gu->screeny-10,10,10);
 		glBegin(GL_QUADS);
 		glVertex2f(0,0);
 		glVertex2f(1,0);
 		glVertex2f(1,1);
 		glVertex2f(0,1);
 		glEnd();
-		glViewport(0,0,gu->screenx,gu->screeny);
+		glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 		return;
 	}
 	glViewport(xpos,ypos,width,height);
@@ -245,7 +245,7 @@ void CMiniMap::Draw()
 	glVertex2f(1,1);
 	glVertex2f(0,1);
 	glEnd();
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 }
 
 
@@ -379,7 +379,11 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		xpos += dx;
 		ypos -= dy;
 		xpos = max(0, xpos);
-		xpos = min(gu->screenx - width, xpos);
+		if (gu->dualScreenMode) {
+			xpos = min(2*gu->screenx - width, xpos);
+		} else {
+			xpos = min(gu->screenx - width, xpos);
+		}
 		ypos = min(gu->screeny - height, ypos);
 		ypos = max(0, ypos);
 		return;
@@ -387,6 +391,12 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		ypos-=dy;
 		height+=dy;
 		width+=dx;
+		height = min(gu->screeny, height);
+		if (gu->dualScreenMode) {
+			width = min(2*gu->screenx, width);
+		} else {
+			width = min(gu->screenx, width);
+		}
 	 if(keys[SDLK_LSHIFT])
 		{
 			width = height * gs->mapx/gs->mapy;

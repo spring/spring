@@ -122,9 +122,9 @@ void CAdvWater::Draw(bool useBlending)
 	if(readmap->minheight>10)
 		return;
 	float3 dir,zpos;
-	float3 base=camera->CalcPixelDir(0,gu->screeny);
-	float3 dv=camera->CalcPixelDir(0,0)-camera->CalcPixelDir(0,gu->screeny);
-	float3 dh=camera->CalcPixelDir(gu->screenx,0)-camera->CalcPixelDir(0,0);
+	float3 base=camera->CalcPixelDir(gu->screenxPos,gu->screeny);
+	float3 dv=camera->CalcPixelDir(gu->screenxPos,0)-camera->CalcPixelDir(gu->screenxPos,gu->screeny);
+	float3 dh=camera->CalcPixelDir(gu->screenxPos+gu->screenx,0)-camera->CalcPixelDir(gu->screenxPos,0);
 
 	float3 xbase;
 	const int numDivs=20;
@@ -348,7 +348,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
 
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 
 	*camera=realCam;

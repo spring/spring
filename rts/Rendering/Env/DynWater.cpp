@@ -453,7 +453,7 @@ void CDynWater::DrawReflection(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
 
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 
 	*camera=realCam;
@@ -498,7 +498,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, refractTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,refractSize,refractSize);
 
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 
 	unitDrawer->unitSunColor=oldsun;
