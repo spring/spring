@@ -755,7 +755,7 @@ int SpringApp::Run (int argc, char *argv[])
 		ENTER_UNSYNCED;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
-				case SDL_VIDEORESIZE:
+				case SDL_VIDEORESIZE: {
 					screenWidth = event.resize.w;
 					screenHeight = event.resize.h;
 #ifndef WIN32
@@ -765,42 +765,44 @@ int SpringApp::Run (int argc, char *argv[])
 #endif
 					InitOpenGL();
 					break;
-				case SDL_QUIT:
+				}
+				case SDL_QUIT: {
 					done = true;
 					break;
-				case SDL_ACTIVEEVENT:
+				}
+				case SDL_ACTIVEEVENT: {
 					if (event.active.state & SDL_APPACTIVE) {
 						gu->active = !!event.active.gain;
 					}
 					break;
+				}
 				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
-				case SDL_SYSWMEVENT:
+				case SDL_SYSWMEVENT: {
 					mouseInput->HandleSDLMouseEvent (event);
 					break;
-				case SDL_KEYDOWN:
-				{
+				}
+				case SDL_KEYDOWN: {
 					int i = event.key.keysym.sym;
-					bool isRepeat=!!keys[i];
+					
+					const bool isRepeat = !!keys[i];
 
 					UpdateSDLKeys ();
 
-					if(activeController) {
-						int j = tolower(event.key.keysym.unicode);
-						// Don't translate 0-9 because with ctrl that maps to weird unicode characters (eg same as esc)
-						if (j > SDLK_FIRST && j <= SDLK_DELETE && (i < SDLK_0 || i > SDLK_9)) {
-							// With control+letter, the unicode field is 1-26, so convert it back to ascii.
-							if (keys[SDLK_LCTRL] && j >= 1 && j <= 26) j += SDLK_a - 1;
-							// Store the unicode value of this sym because SDL is too stupid
-							// to do Unicode translation for SDL_KEYUP events.
+					if (activeController) {
+						if (i <= SDLK_DELETE) {
+							i = tolower(i);
+						}
+						else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
+						else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
+						else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
+						else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
+						else if (event.key.keysym.unicode > 0) {
+							const int j = tolower(event.key.keysym.unicode);
 							toUnicode[i] = j;
 							i = j;
 						}
-						else if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
-						else if (i == SDLK_RCTRL)  i = SDLK_LCTRL;
-						else if (i == SDLK_RMETA)  i = SDLK_LMETA;
-						else if (i == SDLK_RALT)   i = SDLK_LALT;
 						
 						if (keyBindings) {
 							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
@@ -808,35 +810,43 @@ int SpringApp::Run (int argc, char *argv[])
 								keys[SDLK_LMETA] |= keys[fakeMetaKey];
 							}
 						}
+
 						activeController->KeyPressed(i,isRepeat);
 
 #ifndef NEW_GUI
 						if(activeController->userWriting){ 
 							i = event.key.keysym.unicode;
 							if (i >= SDLK_SPACE && i <= SDLK_DELETE)
-								if(activeController->ignoreNextChar || activeController->ignoreChar==char(i))
-									activeController->ignoreNextChar=false;
-								else
-									activeController->userInput+=char(i);
+								if (activeController->ignoreNextChar ||
+								    activeController->ignoreChar == char(i)) {
+									activeController->ignoreNextChar = false;
+								} else {
+									activeController->userInput += char(i);
+								}
 						}
 #endif
 					}
 					break;
 				}
-				case SDL_KEYUP:
-				{
+				case SDL_KEYUP: {
 					int i = event.key.keysym.sym;
 
 					UpdateSDLKeys();
 
 					if (activeController) {
-						// Retrieve the Unicode value stored in the KEYDOWN event (if any).
-						std::map<int, int>::const_iterator j = toUnicode.find(i);
-						if (j != toUnicode.end())  i = j->second;
-						else if (i == SDLK_RSHIFT) i = SDLK_LSHIFT;
-						else if (i == SDLK_RCTRL)  i = SDLK_LCTRL;
-						else if (i == SDLK_RMETA)  i = SDLK_LMETA;
-						else if (i == SDLK_RALT)   i = SDLK_LALT;
+						if (i <= SDLK_DELETE) {
+							i = tolower(i);
+						}
+						else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
+						else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
+						else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
+						else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
+						else {
+							std::map<int, int>::const_iterator j = toUnicode.find(i);
+							if (j != toUnicode.end()) {
+								i = j->second;
+							}
+						}
 
 						if (keyBindings) {
 							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
@@ -844,9 +854,10 @@ int SpringApp::Run (int argc, char *argv[])
 								keys[SDLK_LMETA] |= keys[fakeMetaKey];
 							}
 						}
+
 						activeController->KeyReleased(i);
 					}
-        			break;
+					break;
 				}
 			}
 		}

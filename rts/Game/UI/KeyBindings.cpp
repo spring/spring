@@ -35,18 +35,15 @@ defaultBindings[] = {
 	{ "Any+h",   "sharedialog"          },
 	{ "Any+l",   "togglelos"            },
 	{ "Any+;",   "toggleradarandjammer" },
-	{ "Any+:",   "toggleradarandjammer" },
+	{ "Any+:",   "toggleradarandjammer" }, // shifted ';'
 
 	{ "Any+tab", "toggleoverview"       },
-	{ "Ctrl+i",  "toggleoverview"       }, // CTRL+TAB returns CTRL+i
 
 	{ "Any+j", "mouse2" },
 
 	{ "Any+backspace", "mousestate" },
-	{ "Ctrl+h",        "mousestate" }, // CTRL+BACKSPACE returns CTRL+h
 
 	{ "Any+enter", "chat" },
-	{ "Ctrl+m",    "chat" }, // CTRL+BACKSPACE returns CTRL+m  (and also CTRL+j)
 
 	{ "Any+home", "increaseViewRadius" },
 	{ "Any+end",  "decreaseViewRadius" },
@@ -54,14 +51,14 @@ defaultBindings[] = {
 	{ "Any+insert", "speedup"  },
 	{ "Any+delete", "slowdown" },
 	{ "Any+=",      "speedup"  },
-	{ "Any++",      "speedup"  },
+	{ "Any++",      "speedup"  }, // shifted '='
 	{ "Any+-",      "slowdown" },
-	{ "Any+_",      "slowdown" },
+	{ "Any+_",      "slowdown" }, // shifted '-'
 
 	{ "Any+.", "incguiopacity" },
-	{ "Any+>", "incguiopacity" },
+	{ "Any+>", "incguiopacity" }, // shifted '.'
 	{ "Any+,", "decguiopacity" },
-	{ "Any+<", "decguiopacity" },
+	{ "Any+<", "decguiopacity" }, // shifted ','
 
 	{ "Any+0", "group0" },
 	{ "Any+1", "group1" },
@@ -77,9 +74,9 @@ defaultBindings[] = {
 	{ "Any+c", "controlunit" },
 	
 	{ "Any+[", "buildfacing inc"  },
-	{ "Any+{", "buildfacing inc"  },
+	{ "Any+{", "buildfacing inc"  }, // shifted '[' 
 	{ "Any+]", "buildfacing dec"  },
-	{ "Any+}", "buildfacing dec"  },
+	{ "Any+}", "buildfacing dec"  }, // shifted ']'
 	{ "Any+z", "buildspacing inc" },
 	{ "Any+x", "buildspacing dec" },
 
@@ -125,9 +122,9 @@ defaultBindings[] = {
 	//       (see KeySet.cpp / DISALLOW_RELEASE_BINDINGS)
 	
 	{    "Any+`",    "drawinmap"  },
+	{    "Any+~",    "drawinmap"  }, // shifted '''
 	{ "Up+Any+`",    "drawinmap"  },
-	{    "Any+~",    "drawinmap"  },
-	{ "Up+Any+~",    "drawinmap"  },
+	{ "Up+Any+~",    "drawinmap"  }, // shifted '''
 	{    "Any+0xa7", "drawinmap"  },
 	{ "Up+Any+0xa7", "drawinmap"  },
 
