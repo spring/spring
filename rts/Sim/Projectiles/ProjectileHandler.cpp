@@ -730,7 +730,7 @@ void CProjectileHandler::UpdatePerlin()
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,384,256,0,0,128,128);
 */
 	perlinFB->deselect();
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);

@@ -76,7 +76,7 @@ void CCursorIcons::Draw()
 
 	glDepthMask(GL_TRUE);
 
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 
 	// clear the list	
 	icons.clear();

@@ -58,7 +58,7 @@ void CTooltipConsole::Draw(void)
 
 bool CTooltipConsole::IsAbove(int x,int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	return (mx>0.01f && mx<0.41f && my>0.01f && my<0.1f);

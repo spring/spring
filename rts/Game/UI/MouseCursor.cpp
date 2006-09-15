@@ -178,7 +178,7 @@ void CMouseCursor::Draw(int x, int y)
 	font->glPrint("%s",cursorTextRight.c_str());
 	cursorTextRight=""; */
 
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 }
 
 

@@ -18,6 +18,10 @@
 			<Checkbox caption="Colorized elevation map" property="ColorElev" default="1" />
 			<Checkbox caption="Simplified minimap colors" property="SimpleMinimapColors" default="0" />
 			<Checkbox caption="Reflective units" hint="needs fragment_program" property="AdvUnitShading" default="0" />
+            <Row>
+                <Checkbox caption="Dual Screen Mode" hint="In dual screen mode the game screen and minimap take up half the width of the total screen, resepectively" property="DualScreenMode" default="0" />
+                <Checkbox caption="Minimap on left" hint="Place the minimap on the left hand screen in dual screen mode" property="DualScreenMiniMapOnLeft" default="0" />
+            </Row>
 		</Category>
 		<Category name="Input">
 			<Row>

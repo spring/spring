@@ -115,8 +115,8 @@ std::string CGameInfo::GetTooltip(int x,int y)
 
 bool CGameInfo::IsAbove(int x, int y)
 {
-	float mx = float(x) / gu->screenx;
-	float my = (gu->screeny - float(y)) / gu->screeny;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
+	float my=(gu->screeny-float(y))/gu->screeny;
 	return InBox(mx, my, box);
 }
 

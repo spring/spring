@@ -747,7 +747,7 @@ void CGrassDrawer::CreateFarTex(void)
 //	CBitmap bm(buf,1024*sizeMod,64*sizeMod);
 //	bm.Save("fartex.bmp");
 
-	glViewport(0,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);

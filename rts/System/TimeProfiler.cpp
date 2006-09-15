@@ -161,7 +161,7 @@ void CTimeProfiler::EndTimer(char* name)
 
 bool CTimeProfiler::IsAbove(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	if(!gu->drawdebug || mx<0.65f || mx>0.99f || my<0.99f-profile.size()*0.024f-0.01f || my>0.99f)
@@ -172,7 +172,7 @@ bool CTimeProfiler::IsAbove(int x, int y)
 
 bool CTimeProfiler::MousePress(int x, int y, int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	if(!gu->drawdebug || mx<0.65f || mx>0.99f || my<0.99f-profile.size()*0.024f-0.01f || my>0.99f)

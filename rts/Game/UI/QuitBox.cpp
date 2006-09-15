@@ -74,7 +74,7 @@ CQuitBox::~CQuitBox(void)
 
 void CQuitBox::Draw(void)
 {
-	float mx=float(mouse->lastx)/gu->screenx;
+	float mx=float(mouse->lastx-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
 
 	glDisable(GL_TEXTURE_2D);
@@ -148,7 +148,7 @@ void CQuitBox::Draw(void)
 
 bool CQuitBox::IsAbove(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(InBox(mx,my,box))
 		return true;
@@ -157,7 +157,7 @@ bool CQuitBox::IsAbove(int x, int y)
 
 std::string CQuitBox::GetTooltip(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	if(InBox(mx,my,box+resignQuitBox))
@@ -179,7 +179,7 @@ std::string CQuitBox::GetTooltip(int x, int y)
 
 bool CQuitBox::MousePress(int x, int y, int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(InBox(mx,my,box)){
 		moveBox=true;
@@ -203,7 +203,7 @@ bool CQuitBox::MousePress(int x, int y, int button)
 
 void CQuitBox::MouseRelease(int x,int y,int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
@@ -256,7 +256,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 
 void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(moveBox){
 		box.x1+=float(dx)/gu->screenx;

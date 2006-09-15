@@ -137,7 +137,7 @@ void CCamera::UpdateForward()
 
 float3 CCamera::CalcPixelDir(int x, int y)
 {
-	float dx=float(x-gu->screenx/2)/gu->screeny*tan(fov/180/2*PI)*2;
+	float dx=float(x-gu->screenxPos-gu->screenx/2)/gu->screeny*tan(fov/180/2*PI)*2;
 	float dy=float(y-gu->screeny/2)/gu->screeny*tan(fov/180/2*PI)*2;
 	float3 dir=camera->forward-camera->up*dy+camera->right*dx;
 	dir.Normalize();

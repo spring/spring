@@ -68,7 +68,7 @@ CShareBox::~CShareBox(void)
 
 void CShareBox::Draw(void)
 {
-	float mx=float(mouse->lastx)/gu->screenx;
+	float mx=float(mouse->lastx-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
 
 	glDisable(GL_TEXTURE_2D);
@@ -181,7 +181,7 @@ void CShareBox::Draw(void)
 
 bool CShareBox::IsAbove(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(InBox(mx,my,box))
 		return true;
@@ -190,7 +190,7 @@ bool CShareBox::IsAbove(int x, int y)
 
 std::string CShareBox::GetTooltip(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	if(InBox(mx,my,box+okBox))
@@ -215,7 +215,7 @@ std::string CShareBox::GetTooltip(int x, int y)
 
 bool CShareBox::MousePress(int x, int y, int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(InBox(mx,my,box)){
 		moveBox=true;
@@ -243,7 +243,7 @@ bool CShareBox::MousePress(int x, int y, int button)
 
 void CShareBox::MouseRelease(int x,int y,int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 
 	if(InBox(mx,my,box+unitBox)){
@@ -273,7 +273,7 @@ void CShareBox::MouseRelease(int x,int y,int button)
 
 void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
 {
-	float mx=float(x)/gu->screenx;
+	float mx=float(x-gu->screenxPos)/gu->screenx;
 	float my=(gu->screeny-float(y))/gu->screeny;
 	if(moveBox){
 		box.x1+=float(dx)/gu->screenx;

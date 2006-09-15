@@ -506,14 +506,25 @@ void SpringApp::SetVSync ()
 void SpringApp::InitOpenGL ()
 {
 	gu->dualScreenMode = !!configHandler.GetInt("DualScreenMode", 0);
+
 	gu->screenx = screenWidth;
-	if (gu->dualScreenMode) gu->screenx /= 2;
+	if (gu->dualScreenMode) 
+	{
+		gu->screenx /= 2;
+		gu->dualScreenMiniMapOnLeft = !!configHandler.GetInt("DualScreenMiniMapOnLeft", 0);
+	}
 	gu->screeny = screenHeight;
 	
 	gu->aspectRatio = (float)gu->screenx / (float)gu->screeny;
 
 	// Setup viewport
-	glViewport (0, 0, gu->screenx, gu->screeny);
+	gu->screenxPos = 0;
+	if (gu->dualScreenMiniMapOnLeft)
+	{
+		// move game area to right display
+		gu->screenxPos = gu->screenx;
+	}
+	glViewport (gu->screenxPos, 0, gu->screenx, gu->screeny);
 	gluPerspective(45.0f,(GLfloat)gu->screenx/(GLfloat)gu->screeny,2.8f,MAX_VIEW_RANGE);
 	
 	// Initialize some GL states

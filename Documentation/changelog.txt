@@ -58,9 +58,10 @@ TASpring change log
 - [bugfix] Resource expendature now shows correct pull when economy is stalling.
 
 - - Added transparency suport from texture2 in s3o drawing, requires advanced shading.
-- added DualScreenMode configuration flag. 
+- added DualScreenMode and DualScreenMiniMapOnLeft configuration flags. 
     This causes the game view width to be one half of the screen width, so the minimap can take the other half. 
     You will need to spread your spring window across the 2 screens.
+    Specifying DualScreenMiniMapOnLeft will place the minimap on the left hand screen, rather than the right (the default)
 - geothermal vents with a geothermal unit on top will not create smoke.
 
 - Added the following Unit FBI tags:
