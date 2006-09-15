@@ -174,7 +174,11 @@ bool CTextureAtlas::Finalize()
 
 void CTextureAtlas::CreateTexture()
 {
-	unsigned char *data = new unsigned char[xsize*ysize*4];
+
+	unsigned char *data;
+
+	data = new unsigned char[xsize*ysize*4];
+
 	for(int i=0; i<memtextures.size(); i++)
 	{
 		MemTex *tex = memtextures[i];
@@ -188,14 +192,15 @@ void CTextureAtlas::CreateTexture()
 	glGenTextures(1, &gltex);
 	glBindTexture(GL_TEXTURE_2D, gltex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR/*_MIPMAP_NEAREST*/);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	//CBitmap save(data,xsize,ysize);
-	//save.Save("textureatlas.tga");
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST_MIPMAP_LINEAR/*_MIPMAP_NEAREST*/);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
 
-	initialized=true;
+	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	delete [] data;
+
+	initialized=true;
 }
 
 int CTextureAtlas::GetBPP(TextureType texType)
