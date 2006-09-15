@@ -92,8 +92,6 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
 	}
-
-	nonQueingCommands.insert(CMD_SET_WANTED_MAX_SPEED);
 }
 
 CMobileCAI::~CMobileCAI()
@@ -103,14 +101,6 @@ CMobileCAI::~CMobileCAI()
 
 void CMobileCAI::GiveCommand(Command &c)
 {
-	if(c.id == CMD_SET_WANTED_MAX_SPEED) {
-		//owner->moveType->SetWantedMaxSpeed(*c.params.begin());
-		maxWantedSpeed = *c.params.begin();
-		owner->moveType->SetMaxSpeed(maxWantedSpeed);
-		return;
-
-	}
-
 	if(c.id==CMD_AUTOREPAIRLEVEL){
 		if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
 			return;
@@ -218,6 +208,12 @@ void CMobileCAI::SlowUpdate()
 	case CMD_STOP:{
 		StopMove();
 		CCommandAI::SlowUpdate();
+		break;}
+	case CMD_SET_WANTED_MAX_SPEED:{
+		if (!c.params.empty()) {
+			owner->moveType->SetMaxSpeed(c.params[0]);
+		}
+		FinishCommand();
 		break;}
 	case CMD_MOVE:{
 		float3 pos(c.params[0],c.params[1],c.params[2]);
