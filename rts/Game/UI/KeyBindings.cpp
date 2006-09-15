@@ -35,7 +35,6 @@ defaultBindings[] = {
 	{ "Any+h",   "sharedialog"          },
 	{ "Any+l",   "togglelos"            },
 	{ "Any+;",   "toggleradarandjammer" },
-	{ "Any+:",   "toggleradarandjammer" }, // shifted ';'
 
 	{ "Any+tab", "toggleoverview"       },
 
@@ -51,14 +50,10 @@ defaultBindings[] = {
 	{ "Any+insert", "speedup"  },
 	{ "Any+delete", "slowdown" },
 	{ "Any+=",      "speedup"  },
-	{ "Any++",      "speedup"  }, // shifted '='
 	{ "Any+-",      "slowdown" },
-	{ "Any+_",      "slowdown" }, // shifted '-'
 
 	{ "Any+.", "incguiopacity" },
-	{ "Any+>", "incguiopacity" }, // shifted '.'
 	{ "Any+,", "decguiopacity" },
-	{ "Any+<", "decguiopacity" }, // shifted ','
 
 	{ "Any+0", "group0" },
 	{ "Any+1", "group1" },
@@ -73,30 +68,45 @@ defaultBindings[] = {
 
 	{ "Any+c", "controlunit" },
 	
-	{ "Any+[", "buildfacing inc"  },
-	{ "Any+{", "buildfacing inc"  }, // shifted '[' 
-	{ "Any+]", "buildfacing dec"  },
-	{ "Any+}", "buildfacing dec"  }, // shifted ']'
-	{ "Any+z", "buildspacing inc" },
-	{ "Any+x", "buildspacing dec" },
+	{ "[",       "buildfacing inc"  },
+	{ "Shift+[", "buildfacing inc"  },
+	{ "]",       "buildfacing dec"  },
+	{ "Shift+]", "buildfacing dec"  },
+	{ "z",       "buildspacing inc" },
+	{ "x",       "buildspacing dec" },
+	{ "Shift+z", "buildspacing inc" },
+	{ "Shift+x", "buildspacing dec" },
 
 	{ "d",            "dgun"        },
 	{ "Shift+d",      "dgun"        },
 	{ "Ctrl+d",       "selfd"       },
 	{ "Ctrl+Shift+d", "selfd"       },
-	{ "Any+s",        "stop"        },
-	{ "Any+w",        "wait"        },
-	{ "Any+m",        "move"        },
-	{ "Any+a",        "attack"      },
-	{ "Any+f",        "fight"       },
-	{ "Any+p",        "patrol"      },
-	{ "Any+g",        "guard"       },
-	{ "Any+e",        "reclaim"     },
-	{ "Any+r",        "repair"      },
-	{ "Any+l",        "loadunits"   },
-	{ "Any+u",        "unloadunits" },
-	{ "Any+k",        "cloak"       },
-	{ "Any+x",        "onoff"       },
+	{ "s",            "stop"        },
+	{ "Shift+s",      "stop"        },
+	{ "w",            "wait"        },
+	{ "Shift+w",      "wait"        },
+	{ "m",            "move"        },
+	{ "Shift+m",      "move"        },
+	{ "a",            "attack"      },
+	{ "Shift+a",      "attack"      },
+	{ "f",            "fight"       },
+	{ "Shift+f",      "fight"       },
+	{ "p",            "patrol"      },
+	{ "Shift+p",      "patrol"      },
+	{ "g",            "guard"       },
+	{ "Shift+g",      "guard"       },
+	{ "e",            "reclaim"     },
+	{ "Shift+e",      "reclaim"     },
+	{ "r",            "repair"      },
+	{ "Shift+r",      "repair"      },
+	{ "l",            "loadunits"   },
+	{ "Shift+l",      "loadunits"   },
+	{ "u",            "unloadunits" },
+	{ "Shift+u",      "unloadunits" },
+	{ "k",            "cloak"       },
+	{ "Shift+k",      "cloak"       },
+	{ "x",            "onoff"       },
+	{ "Shift+x",      "onoff"       },
 
 	{ "q",       "groupselect" },
 	{ "q",       "groupadd"    },
@@ -122,9 +132,7 @@ defaultBindings[] = {
 	//       (see KeySet.cpp / DISALLOW_RELEASE_BINDINGS)
 	
 	{    "Any+`",    "drawinmap"  },
-	{    "Any+~",    "drawinmap"  }, // shifted '''
 	{ "Up+Any+`",    "drawinmap"  },
-	{ "Up+Any+~",    "drawinmap"  }, // shifted '''
 	{    "Any+0xa7", "drawinmap"  },
 	{ "Up+Any+0xa7", "drawinmap"  },
 
