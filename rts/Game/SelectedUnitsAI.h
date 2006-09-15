@@ -22,17 +22,16 @@ public:
 	float avgLength;
 	float frontLength;
 	float addSpace;
-	void CalculateGroupData(int player);
 
-	void MakeFrontMove(Command* c,int player);
-	float3 MoveToPos(int unit, float3 nextCornerPos, float3 dir,unsigned char options);
 	void Update();
 
-
-
 private:
-	
+	void CalculateGroupData(int player);
+	void MakeFrontMove(Command* c,int player);
 	void CreateUnitOrder(std::multimap<float,int>& out,int player);
+	float3 MoveToPos(int unit, float3 nextCornerPos, float3 dir,unsigned char options);
+	void AddUnitSetMaxSpeedCommand(CUnit* unit, unsigned char options);
+	void AddGroupSetMaxSpeedCommand(CUnit* unit, unsigned char options);
 	
 	float3 minCoor, maxCoor, centerCoor;
 	float minMaxSpeed;

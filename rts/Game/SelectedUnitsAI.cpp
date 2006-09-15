@@ -36,12 +36,16 @@ CSelectedUnitsAI::CSelectedUnitsAI()
 Group-AI.
 Processing commands given to selected group.
 */
-/*void CSelectedUnitsAI::AddUnit(int unit)
+
+
+/*
+void CSelectedUnitsAI::AddUnit(int unit)
 {
 	myUnits.insert(unit);
 	unitsChanged=true;
 	return true;				
 }
+
 
 void CSelectedUnitsAI::RemoveUnit(int unit)
 {
@@ -49,135 +53,148 @@ void CSelectedUnitsAI::RemoveUnit(int unit)
 	unitsChanged=true;
 }
 */
-void CSelectedUnitsAI::GiveCommandNet(Command &c,int player) {
-	int nbrOfSelectedUnits = selectedUnits.netSelected[player].size();
 
-	if(nbrOfSelectedUnits < 1)			//No units to command.
+
+inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
+                                                        unsigned char options)
+{
+	// sets the wanted speed of this unit to its max speed
+	UnitDef* ud = unit->unitDef;
+	Command c;
+	c.id = CMD_SET_WANTED_MAX_SPEED;
+	c.options = options;
+	c.params.push_back(ud->speed / 30.0f);
+	unit->commandAI->GiveCommand(c);
+}
+
+
+inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
+                                                         unsigned char options)
+{
+	// sets the wanted speed of this unit to the group minimum
+	Command c;
+	c.id = CMD_SET_WANTED_MAX_SPEED;
+	c.options = options;
+	c.params.push_back(minMaxSpeed);
+	unit->commandAI->GiveCommand(c);
+}
+
+
+void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
+{
+	const vector<int>& netSelected = selectedUnits.netSelected[player];
+	vector<int>::const_iterator ui;
+	
+	int nbrOfSelectedUnits = netSelected.size();
+
+	if (nbrOfSelectedUnits < 1) {
+		// no units to command
 		return;
+	}
 
-	if(nbrOfSelectedUnits == 1) {	//Only one single unit selected.
-		CUnit* unit=uh->units[*selectedUnits.netSelected[player].begin()];
-		if(unit){
-			UnitDef* ud=unit->unitDef;
-			
-			if(unit->moveType->maxSpeed*30<ud->speed) {
-				Command spcom;
-				spcom.id = CMD_SET_WANTED_MAX_SPEED;
-				spcom.options = c.options;
-				spcom.params.push_back(ud->speed/30);
-				unit->commandAI->GiveCommand(spcom);
-			}
-		
+	if(nbrOfSelectedUnits == 1) {
+		// a single unit selected
+		CUnit* unit = uh->units[*netSelected.begin()];
+		if(unit) {
+			AddUnitSetMaxSpeedCommand(unit, c.options);
 			unit->commandAI->GiveCommand(c);
 		}
 		return;
 	}
+	
+	// User Move Front Command:
+	//
+	//   CTRL:      Group Front/Speed  command
+	//
+	// User Move Command:
+	//
+	//   ALT:       Group Front        command
+	//   ALT+CTRL:  Group Front/Speed  command
+	//   CTRL:      Group Locked/Speed command  (maintain relative positions)
+	//
+	// User Patrol and Fight Commands:
+	//
+	//   CTRL:      Group Locked/Speed command  (maintain relative positions)
+	//   ALT+CTRL:  Group Locked       command  (maintain relative positions)
+	//
 
-
-	if(c.id==CMD_MOVE && c.params.size()==6 && (c.options & CONTROL_KEY)){
+	if ((c.id == CMD_MOVE) && (c.params.size() == 6)) {
 		CalculateGroupData(player);
-		for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
-			CUnit* unit=uh->units[*ui];
+
+		const bool groupSpeed = (c.options & CONTROL_KEY);
+		for(ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
+			CUnit* unit = uh->units[*ui];
 			if(unit){
-				//Sets the wanted speed of this unit (and the group).
-				Command uc;
-				uc.id = CMD_SET_WANTED_MAX_SPEED;
-				uc.options = c.options;
-				uc.params.push_back(minMaxSpeed);
-				unit->commandAI->GiveCommand(uc);
+				if (groupSpeed) {
+					AddGroupSetMaxSpeedCommand(unit, c.options);
+				} else {
+					AddUnitSetMaxSpeedCommand(unit, c.options);
+				}
 			}
 		}
-		MakeFrontMove(&c,player);
+
+		MakeFrontMove(&c, player);
 	}
+	else if ((c.id == CMD_MOVE) && (c.options & ALT_KEY)) {
+		CalculateGroupData(player);
 
-	else if(c.id==CMD_MOVE && c.params.size()==6){
-		for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
-			CUnit* unit=uh->units[*ui];
+		const bool groupSpeed = (c.options & CONTROL_KEY);
+		for(ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
+			CUnit* unit = uh->units[*ui];
 			if(unit){
-			UnitDef* ud=unit->unitDef;
-				if(unit->moveType->maxSpeed*30<ud->speed) {
-					Command spcom;
-					spcom.id = CMD_SET_WANTED_MAX_SPEED;
-					spcom.options = c.options;
-					spcom.params.push_back(ud->speed/30);
-					unit->commandAI->GiveCommand(spcom);
+				if (groupSpeed) {
+					AddGroupSetMaxSpeedCommand(unit, c.options);
+				} else {
+					AddUnitSetMaxSpeedCommand(unit, c.options);
 				}
 			}
 		}
-
-		CalculateGroupData(player);
-		MakeFrontMove(&c,player);
-
-	} 
-
-	else 
-		if(c.id == CMD_MOVE && (c.options & ALT_KEY)) {
-			for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
-				CUnit* unit=uh->units[*ui];
-				if(unit){
-				UnitDef* ud=unit->unitDef;
-					if(unit->moveType->maxSpeed*30<ud->speed) {
-						Command spcom;
-						spcom.id = CMD_SET_WANTED_MAX_SPEED;
-						spcom.options = c.options;
-						spcom.params.push_back(ud->speed/30);
-						unit->commandAI->GiveCommand(spcom);
-					}
-				}
-			}
-		CalculateGroupData(player);
 		
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		float3 frontdir=pos-centerCoor;										//use the vector from the middle of group to new pos as forward dir
-		frontdir.y=0;
+		// use the vector from the middle of group to new pos as forward dir
+		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		float3 frontdir = pos - centerCoor; 
+		frontdir.y = 0.0f;
 		frontdir.Normalize();
-
-		float3 sideDir=frontdir.cross(UpVector);
-
-		float length=100+sqrt((float)nbrOfSelectedUnits)*32;		//calculate so that the units form in an aproximate square
-
-		c.params.push_back(pos.x+sideDir.x*length);				//push back some extra params so it confer with a front move
-		c.params.push_back(pos.y+sideDir.y*length);
-		c.params.push_back(pos.z+sideDir.z*length);
-
-		MakeFrontMove(&c,player);
+		const float3 sideDir = frontdir.cross(UpVector);
 		
-	} else if((c.id == CMD_MOVE || c.id == CMD_PATROL || c.id == CMD_FIGHT)&& (c.options & CONTROL_KEY)) {
+		// calculate so that the units form in an aproximate square
+		float length = 100.0f + (sqrt((float)nbrOfSelectedUnits) * 32.0f);
+
+		// push back some extra params so it confer with a front move
+		c.params.push_back(pos.x + (sideDir.x * length));
+		c.params.push_back(pos.y + (sideDir.y * length));
+		c.params.push_back(pos.z + (sideDir.z * length));
+
+		MakeFrontMove(&c, player);
+	}
+	else if ((c.id == CMD_MOVE || c.id == CMD_PATROL || c.id == CMD_FIGHT) && (c.options & CONTROL_KEY)) {
 		CalculateGroupData(player);
-		for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
-			CUnit* unit=uh->units[*ui];
-			if(unit){
-				//Sets the wanted speed of this unit (and the group).
-				Command uc;
-				uc.id = CMD_SET_WANTED_MAX_SPEED;
-				uc.options = c.options;
-				if(c.options & ALT_KEY)		//ALT overrides group-speed-setting.
-					uc.params.push_back(unit->moveType->maxSpeed);
-				else
-					uc.params.push_back(minMaxSpeed);
-				unit->commandAI->GiveCommand(uc);
-				//unit->moveType->SetMaxSpeed(minMaxSpeed);
-				//Modifying the destination relative to the center of the group.
-				uc = c;
+
+		const bool groupSpeed = !(c.options & ALT_KEY);
+		for (ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
+			CUnit* unit = uh->units[*ui];
+			if (unit) {
+				if (groupSpeed) {
+					AddGroupSetMaxSpeedCommand(unit, c.options);
+				} else {
+					AddUnitSetMaxSpeedCommand(unit, c.options);
+				}
+				// Modifying the destination relative to the center of the group
+				Command uc = c;
 				uc.params[CMDPARAM_MOVE_X] += unit->midPos.x - centerCoor.x;
 				uc.params[CMDPARAM_MOVE_Y] += unit->midPos.y - centerCoor.y;
 				uc.params[CMDPARAM_MOVE_Z] += unit->midPos.z - centerCoor.z;
 				unit->commandAI->GiveCommand(uc);
-				
 			}
 		}
-	} else {
-		for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
-			CUnit* unit=uh->units[*ui];
-			if(unit){
-				UnitDef* ud=unit->unitDef;
-				if(unit->moveType->maxSpeed*30<ud->speed) {
-					Command spcom;
-					spcom.id = CMD_SET_WANTED_MAX_SPEED;
-					spcom.options = c.options;
-					spcom.params.push_back(ud->speed/30);
-					unit->commandAI->GiveCommand(spcom);
-				}
+	}
+	else {
+		for (ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
+			CUnit* unit = uh->units[*ui];
+			if (unit) {
+				// prepending a CMD_SET_WANTED_MAX_SPEED command to
+				// every command is a little bit wasteful, n'est pas?
+				AddUnitSetMaxSpeedCommand(unit, c.options);
 				unit->commandAI->GiveCommand(c);
 			}
 		}
@@ -185,9 +202,9 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player) {
 }
 
 
-/*
-Cacluate the outer limits and the center of the group coordinates.
-*/
+//
+// Calculate the outer limits and the center of the group coordinates.
+//
 void CSelectedUnitsAI::CalculateGroupData(int player) {
 	//Finding the highest, lowest and weighted central positional coordinates among the selected units.
 	float3 sumCoor = minCoor = maxCoor = float3(0, 0, 0);
@@ -231,6 +248,7 @@ void CSelectedUnitsAI::CalculateGroupData(int player) {
 	else
 		centerCoor = sumCoor / selectedUnits.netSelected[player].size();
 }
+
 
 void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 {
@@ -311,6 +329,8 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, u
 	uh->units[unit]->commandAI->GiveCommand(c);
 	return retPos;
 }
+
+
 void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 {
 	for(vector<int>::iterator ui=selectedUnits.netSelected[player].begin();ui!=selectedUnits.netSelected[player].end();++ui){
@@ -326,7 +346,7 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 	}
 }
 
+
 void CSelectedUnitsAI::Update()
 {
-
 }

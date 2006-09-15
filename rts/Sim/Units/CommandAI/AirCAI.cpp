@@ -109,6 +109,10 @@ CAirCAI::~CAirCAI(void)
 
 void CAirCAI::GiveCommand(Command &c)
 {
+	if (c.id==CMD_SET_WANTED_MAX_SPEED) {
+	  return;
+	}
+	
 	if(c.id==CMD_AUTOREPAIRLEVEL){
 		if(c.params.empty())
 			return;

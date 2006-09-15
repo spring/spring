@@ -82,6 +82,9 @@ CFactoryCAI::~CFactoryCAI()
 
 void CFactoryCAI::GiveCommand(Command& c)
 {
+	if (c.id==CMD_SET_WANTED_MAX_SPEED) {
+	  return;
+	}
 	map<int,BuildOption>::iterator boi;
 	if((boi=buildOptions.find(c.id))==buildOptions.end()){		//not a build order so que it to built units
 		if(nonQueingCommands.find(c.id)!=nonQueingCommands.end()){
