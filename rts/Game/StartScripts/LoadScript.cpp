@@ -2,13 +2,14 @@
 #include "LoadScript.h"
 #include "LoadSaveHandler.h"
 #include "FileSystem/FileHandler.h"
+#include "Platform/FileSystem.h"
 #include <vector>
 #include <iostream>
 
 extern std::string stupidGlobalMapname;
 
 CLoadScript::CLoadScript(std::string file)
-: CScript(std::string("Load ")+file),
+	: CScript(std::string("Load ") + filesystem.GetFilename(file)),
 	file(file)
 {
 }

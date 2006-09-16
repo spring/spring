@@ -15,7 +15,6 @@ CLogOutput::CLogOutput()
 {
 	assert(this == &logOutput);
 	assert(!filelog); // multiple infologs can't exist together!
-	filelog = new std::ofstream("infolog.txt");
 }
 
 CLogOutput::~CLogOutput()
@@ -31,6 +30,9 @@ void CLogOutput::End()
 
 void CLogOutput::Output(int priority, const char *str)
 {
+	if (!filelog)
+		filelog = new std::ofstream("infolog.txt");
+
 	// Output to subscribers
 	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin();lsi!=subscribers.end();++lsi)
 		(*lsi)->NotifyLogMsg(priority, str);

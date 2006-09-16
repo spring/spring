@@ -15,7 +15,7 @@
 extern std::string stupidGlobalMapname;
 
 CGlobalAITestScript::CGlobalAITestScript(std::string dll)
-: CScript(std::string("GlobalAI test (") + dll.substr(dll.rfind(FileSystemHandler::GetInstance().GetNativePathSeparator())+1) + std::string(")")),
+	: CScript(std::string("GlobalAI test (") + filesystem.GetFilename(dll) + std::string(")")),
 	dllName(dll)
 {
 }

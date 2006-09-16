@@ -4,7 +4,6 @@
 #include "SmokeProjectile.h"
 #include "Map/Ground.h"
 #include "ProjectileHandler.h"
-#include "HeatCloudProjectile.h"
 #include "LogOutput.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
