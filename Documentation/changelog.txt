@@ -55,6 +55,7 @@ TASpring change log
 - added "/shadows [0-1]" to control shadow rendering in-game
   (the optional number means off/on; without the number, it toggles)
 
+- Fix mouse-drag-move to make units spread across the front if it's big enough, also somewhat take into account unit sizes. Added CTRL-Move, CTRL-Mouse-Drag(front) move to make units move at the speed of slowest unit.  
 - [bugfix] Resource expendature now shows correct pull when economy is stalling.
 
 - - Added transparency suport from texture2 in s3o drawing, requires advanced shading.
