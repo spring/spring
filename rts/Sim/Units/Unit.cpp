@@ -736,7 +736,7 @@ void CUnit::DrawStats()
 
 	glBegin(GL_QUADS);
 
-	float hpp = health/maxHealth;
+	float hpp = max(0.0f, health/maxHealth);
 	float end=(0.5f-(hpp))*10;
 
 	//black background for healthbar
