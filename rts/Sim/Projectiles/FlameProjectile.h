@@ -15,6 +15,7 @@ public:
 	float intensity;
 	float3 spread;
 	float curTime;
+	float physLife;  //precentage of lifetime when the projectile is active and can collide
 	float invttl;
 	void Update(void);
 	void Draw(void);

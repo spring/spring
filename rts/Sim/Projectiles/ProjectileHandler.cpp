@@ -99,6 +99,8 @@ CProjectileHandler::CProjectileHandler()
 	smoketrailtex = textureAtlas->GetTexture("smoketrail");
 	waketex = textureAtlas->GetTexture("wake");
 	perlintex = textureAtlas->GetTexture("perlintex");
+	flametex = textureAtlas->GetTexture("flame");
+
 	for(int i=0; i<12; i++)
 	{
 		char num[10];

@@ -6,6 +6,7 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Rendering/Textures/ColorMap.h"
 
 CFlameProjectile::CFlameProjectile(const float3& color, const float3& color2, float intensity, const float3& pos, const float3& speed, const float3& spread, CUnit* owner, const DamageArray& damages, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
@@ -16,8 +17,9 @@ CFlameProjectile::CFlameProjectile(const float3& color, const float3& color2, fl
 	curTime(0)
 {
 	invttl=1.0f/ttl;
-	SetRadius(weaponDef->size);
+	SetRadius(weaponDef->size*weaponDef->collisionSize);
 	drawRadius=weaponDef->size;
+	physLife = 1.0f/weaponDef->duration;
 }
 
 CFlameProjectile::~CFlameProjectile(void)
@@ -43,10 +45,13 @@ void CFlameProjectile::Update(void)
 	pos+=speed;
 	speed+=spread;
 
-	SetRadius(radius+weaponDef->sizeGrowth);
-	drawRadius=(radius+weaponDef->sizeGrowth);
+	radius = radius+weaponDef->sizeGrowth;
+	sqRadius = radius*radius;
+	drawRadius = radius*weaponDef->collisionSize;
 
 	curTime+=invttl;
+	if(curTime>physLife)
+		checkCol = false;
 	if(curTime>1){
 		curTime=1;
 		deleteMe=true;
@@ -58,11 +63,7 @@ void CFlameProjectile::Draw(void)
 	inArray=true;
 	unsigned char col[4];
 
-	float3 final = color2 * curTime + color * (1.0f - curTime);
-	col[0]=(unsigned char)min(int(final.x * 255.0f), 255);
-	col[1]=(unsigned char)min(int(final.y * 255.0f), 255);
-	col[2]=(unsigned char)min(int(final.z * 255.0f), 255);
-	col[3]=(unsigned char) ((intensity*(curTime/2))*255);
+	weaponDef->visuals.colorMap->GetColor(col, curTime);
 
 	float3 interPos=pos+speed*gu->timeOffset;
 	va->AddVertexTC(interPos-camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->ystart ,col);
