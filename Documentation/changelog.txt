@@ -190,6 +190,12 @@ TASpring change log
 - [change] Radar and jammer range is shown by default if you press 'L'.
 - [change] Radar and jammer toggle ';' happens instantly.
 
+- New weapon tdf tag ColorMap, used for some weapon to define the color shift during their lifetime
+	Used in flamethrower.
+	Tag specify either a bitmap file, ex: "colormap = mycolormap.tga;"
+	or defines the color directly in the weapon file in rgba order where 1 is full brightnes, 
+	ex: "colormap=1 0 0 1 0 0 0 1" start with red color and shift to black at the end.
+
 - New weapon tdf tag rgbcolor2, used to make laser weapon have different color at the center, defaults to white.
 - New weapon tdf tag corethickness, how thick the inner color of a laser is, this is a percentage value, default is 0.25
 - New weapon tdf tag laserflaresize, size of the flare for laser weapons, multiplier for thickness, default 15.
@@ -233,8 +239,10 @@ TASpring change log
 - tdf tag intensity is used for EmgProjectile and ExplosiveProjectile.
 - New weapon tdf tag soundstartvolume and soundhitvolume.
 - New weapon tdf tag size, defines the visible size of projectiles.
-- New weapon tdf tag CollisionSize, defines the physical size of projectiles.
+- New weapon tdf tag CollisionSize, defines the physical size of projectiles, percentage of size for flamethrower and absolute value emg, plasma and laser.
 - New weapon tdf tag sizegrowth, defines how fast flame projectiles will grow in size.
+- New weapon tdf tag flamegfxtime, this makes the flame projectile stay alive as a graphical effect (doesnt do any damage) after it has reached maxrange.
+	Default is 1.2 which makes it stay alive 20% beyond maxrange.
 - New weapon tdf tag AvoidFriendly, if set to 0 units will not try to avoid friendly units in their line of fire.
 - New weapon tdf tag CollideFriendly, if set to 0 this weapon will not hit friendly units.
 - New weapon tdf tag ExplosionSpeed

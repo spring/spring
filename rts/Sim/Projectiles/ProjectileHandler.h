@@ -77,6 +77,7 @@ public:
 	AtlasedTexture waketex;
 	AtlasedTexture smoketex[12];
 	AtlasedTexture perlintex;
+	AtlasedTexture flametex;
 
 	AtlasedTexture groundflashtex;
 	AtlasedTexture groundringtex;

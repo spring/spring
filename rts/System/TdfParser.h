@@ -82,6 +82,32 @@ public:
 		*  @return returns true on success, false otherwise and error message in value.
 		*/	
 	bool SGetValue(std::string &value, std::string const& location);
+
+	/**
+		*  Treat the value as a vector and fill out vec with the items.
+		*  @param location location of value in the form "section\\section\\ ... \\name".
+		*  @param vec reference to a vector to store items in.
+		*  @return returns number of items found.
+		*/	
+	template<typename T>
+	int GetVector(std::vector<T> &vec, std::string const& location)
+	{
+		std::string vecstring;
+		std::stringstream stream;
+		SGetValue(vecstring, location);
+		stream << vecstring;
+
+		int i=0;
+		T value;
+		while(stream >> value)
+		{
+			vec.push_back(value);
+			i++;
+		}
+
+		return i;
+	}
+
 	const std::map<std::string, std::string>& GetAllValues(std::string const& location);
 	std::vector<std::string> GetSectionList(std::string const& location);
 	bool SectionExist(std::string const& location);

@@ -16,6 +16,7 @@
 #include <iostream>
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Rendering/Textures/ColorMap.h"
 
 using namespace std;
 
@@ -341,6 +342,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.2", weaponname + "\\sizeGrowth");
 	sunparser->GetDef(weaponDefs[id].collisionSize, "0.05", weaponname + "\\CollisionSize");
 	
+	weaponDefs[id].visuals.colorMap = new CColorMap();
+
 	//get some weapon specific defaults
 	if(weaponDefs[id].type=="Cannon"){
 		//CExplosiveProjectile
@@ -358,12 +361,16 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		weaponDefs[id].visuals.texture1 = &ph->perlintex;
 	} else if(weaponDefs[id].type=="flame"){
 		//CFlameProjectile
-		weaponDefs[id].visuals.texture1 = &ph->explotex;
+		weaponDefs[id].visuals.texture1 = &ph->flametex;
 		sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
-		sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.1", weaponname + "\\sizeGrowth");
-		sunparser->GetDef(weaponDefs[id].intensity, "0.4", weaponname + "\\intensity");
-		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(1.0f,1,0.9f),weaponname + "\\rgbcolor");
-		weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(0.025f,0.0035f,0.0035f),weaponname + "\\rgbcolor2");
+		sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.5", weaponname + "\\sizeGrowth");
+		sunparser->GetDef(weaponDefs[id].collisionSize, "0.5", weaponname + "\\CollisionSize");
+
+		sunparser->GetDef(weaponDefs[id].duration, "1.2", weaponname + "\\flamegfxtime");
+		weaponDefs[id].visuals.colorMap->Load12f(1.0,1.0,1,0.1,
+												0.025,0.025,0.025,0.1,
+												0.00,0.00,0.0,0.0);
+
 	} else if(weaponDefs[id].type=="MissileLauncher"){
 		//CMissileProjectile
 		weaponDefs[id].visuals.texture1 = &ph->flaretex;
@@ -423,6 +430,19 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(tmp, "", weaponname + "\\texture4");
 	if(tmp != "")
 		weaponDefs[id].visuals.texture4 = ph->textureAtlas->GetTexturePtr(tmp);
+
+	std::string colormap;
+	sunparser->GetDef(colormap, "", weaponname + "\\colormap");
+	if(colormap!="")
+	{
+		std::vector<float> vec;
+		if(sunparser->GetVector(vec, weaponname + "\\colormap"))
+			weaponDefs[id].visuals.colorMap->LoadFromFloatVector(vec);
+		else
+		{
+			weaponDefs[id].visuals.colorMap->LoadFromBitmapFile("bitmaps\\" + colormap);
+		}
+	}
 
 	std::string explgentag = sunparser->SGetValueDef(std::string(), weaponname + "\\explosiongenerator");
 	weaponDefs[id].explosionGenerator = explgentag.empty() ? 0 : explGen->LoadGenerator(explgentag);

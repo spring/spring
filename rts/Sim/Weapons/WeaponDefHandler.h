@@ -24,6 +24,7 @@
 #define WEAPON_RENDERTYPE_PLASMA 3
 #define WEAPON_RENDERTYPE_FIREBALL 4
 
+class CColorMap;
 class TdfParser;
 class CExplosionGenerator;
 struct AtlasedTexture;
@@ -129,6 +130,7 @@ struct WeaponDef
 		int renderType;
 		//bool hasmodel;
 		std::string modelName;
+		CColorMap *colorMap;
 
 		bool smokeTrail;
 		bool beamweapon;
