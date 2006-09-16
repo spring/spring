@@ -5,10 +5,4 @@
 	Name=Spring Standard data;
 	Description=Various bitmaps used by spring;
 	ModType=0;
-
-	NumReplaces=3;
-	Replace0=springdecals_v062.sdz;
-	Replace1=springbitmaps_v061.sdz;
-	Replace2=springdecals_v061.sdz;
 }
-
