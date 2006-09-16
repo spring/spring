@@ -9,6 +9,7 @@
 #endif
 
 static std::ofstream* filelog;
+static bool initialized;
 CLogOutput logOutput;
 
 CLogOutput::CLogOutput()
@@ -30,8 +31,10 @@ void CLogOutput::End()
 
 void CLogOutput::Output(int priority, const char *str)
 {
-	if (!filelog)
+	if (!initialized) {
 		filelog = new std::ofstream("infolog.txt");
+		initialized = true;
+	}
 
 	// Output to subscribers
 	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin();lsi!=subscribers.end();++lsi)
