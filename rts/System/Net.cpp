@@ -597,7 +597,9 @@ static string MakeDemoStartScript(char *startScript, int ssLen)
 	string datetime;
 	script.insert (script.begin(), startScript, startScript + last + 1);
 	script += "\n[VERSION]\n{\n\tGameVersion=" VERSION_STRING ";\n";
-	script += "\tDateTime=" + string(buff) + ";\n}\n";
+	script += "\tDateTime=" + string(buff) + ";\n";
+	sprintf(buff, "%u", currtime);
+	script += "\tUnixTime=" + string(buff) + ";\n}\n";
 	return script;
 }
 
