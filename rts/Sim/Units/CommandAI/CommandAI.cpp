@@ -203,6 +203,10 @@ void CCommandAI::GiveCommand(Command& c)
 {
 	switch(c.id)
 	{
+	case CMD_SET_WANTED_MAX_SPEED:
+		{
+			return;
+		}
 	case CMD_FIRE_STATE:
 		{
 			if(c.params.empty())
