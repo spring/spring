@@ -50,11 +50,11 @@ function MissionHelper:GotChatMsg(msg, player)
 end
 
 function MissionHelper:Help(param)
-    if string.find(param, "list") then
+    if param and string.find(param, "list") then
         print("This command formats the commands so that the unit " ..
               "references are stored in a list.")
     end
-    if string.find(param, "save") then
+    if param and string.find(param, "save") then
         print("Prints the lua commands for creating the selected " ..
               "units. Copy the contents of infolog.txt to use this.")
         print("Specify an optional team number as second parameter, " ..

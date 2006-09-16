@@ -45,7 +45,6 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Projectiles/MissileProjectile.h"
 #include "Sim/Projectiles/FlareProjectile.h"
-#include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/AirBaseHandler.h"
