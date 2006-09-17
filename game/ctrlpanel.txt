@@ -3,9 +3,9 @@
 //  Spring Control Panel Configuration
 //
 
-// outlinefont  1
-
-// noSelectGaps 0
+// outlinefont    0
+// noSelectGaps   1
+// useOptionLEDs  1
 
 
 /////////////////////////////////////////////////////
@@ -25,6 +25,7 @@
 // xIconSize      0.06
 // yIconSize      0.06
 
+// textBorder     0.003
 // iconBorder     0.003
 // frameBorder    0.003
 

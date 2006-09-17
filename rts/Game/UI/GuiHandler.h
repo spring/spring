@@ -60,8 +60,11 @@ class CGuiHandler : public CInputReceiver {
 		void CreateOptions(Command& c,bool rmb);
 		void FinishCommand(int button);
 		void SetShowingMetal(bool show);
+		
+		struct IconInfo;
 
 		void DrawButtons();
+		void DrawOptionLEDs(const IconInfo& icon);
 		void DrawFront(int button,float maxSize,float sizeDiv);
 		void DrawArea(float3 pos, float radius);
 
@@ -95,18 +98,20 @@ class CGuiHandler : public CInputReceiver {
 
 		int xIcons, yIcons;
 		float xPos, yPos;
+		float textBorder;
 		float iconBorder;
 		float frameBorder;
 		float xIconSize, yIconSize;
-		float xIconStep, yIconStep;
 		float xSelectionPos, ySelectionPos;
 		int deadIconSlot;
 		int prevPageSlot;
 		int nextPageSlot;
 		bool noSelectGaps;
+		bool useOptionLEDs;
 		std::vector<int> fillOrder;
 
 		int iconsPerPage;
+		float xIconStep, yIconStep;
 		float xBpos, yBpos; // center of the buildIconsFirst indicator
 		
 		struct Box {
