@@ -988,6 +988,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Textures\ColorMap.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\ColorMap.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Textures\nv_dds.cpp"
 					>
 					<FileConfiguration

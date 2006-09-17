@@ -279,6 +279,9 @@ void CS3OParser::FindMinMax(SS3O *object)
 
 void CS3OParser::DrawSub(SS3O* o)
 {
+	if (o->vertexDrawOrder.empty()) 
+		return;
+
 	glVertexPointer(3,GL_FLOAT,sizeof(SS3OVertex),&o->vertices[0].pos.x);
 	glTexCoordPointer(2,GL_FLOAT,sizeof(SS3OVertex),&o->vertices[0].textureX);
 	glNormalPointer(GL_FLOAT,sizeof(SS3OVertex),&o->vertices[0].normal.x);
