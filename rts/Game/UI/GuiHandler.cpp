@@ -138,7 +138,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		if ((command == "noselectgaps") && (words.size() > 1)) {
 			noSelectGaps = !!atoi(words[1].c_str());
 		}
-		if ((command == "useoptionleds") && (words.size() > 1)) {
+		else if ((command == "useoptionleds") && (words.size() > 1)) {
 			useOptionLEDs = !!atoi(words[1].c_str());
 		}
 		else if ((command == "deadiconslot") && (words.size() > 1)) {
