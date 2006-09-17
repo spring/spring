@@ -3,14 +3,18 @@
 #include "LogOutput.h"
 #include <fstream>
 #include <cstdarg>
+#include <boost/thread/recursive_mutex.hpp>
+
 
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
 
-static std::ofstream* filelog;
-static bool initialized;
+static std::ofstream* filelog = 0;
+static bool initialized = false;
 CLogOutput logOutput;
+static boost::recursive_mutex tempstrMutex;
+static std::string tempstr;
 
 CLogOutput::CLogOutput()
 {
@@ -116,7 +120,8 @@ CLogOutput& CLogOutput::operator<< (int i)
 {
 	char t[50];
 	sprintf(t,"%d ",i);
-	Output(0, t);
+	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
+	tempstr += t;
 	return *this;
 }
 
@@ -125,12 +130,20 @@ CLogOutput& CLogOutput::operator<< (float f)
 {
 	char t[50];
 	sprintf(t,"%f ",f);
-	Output(0, t);
+	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
+	tempstr += t;
 	return *this;
 }
 
 CLogOutput& CLogOutput::operator<< (const char* c)
 {
-	Output(0, c);
+	for(int a=0;c[a];a++) {
+		if (c[a] == '\n') {
+			Output(0, tempstr.c_str());
+			tempstr.clear();
+			break;
+		} else 
+			tempstr += c[a];
+	}
 	return *this;
 }
