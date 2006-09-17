@@ -19,12 +19,8 @@
 //  3. As a slight modification to the above note, keysets that use
 //     the 'Any' modifier are tried after those that do not use it.
 //
-//  4. Ctrl+Enter     generates Ctrl+m
-//
-//  5. Ctrl+Backspace generates Ctrl+h
-//
-//  6. A keyset using the Shift modifier may require a different key
-//     symbol then the same key that isn't shifted  (ex:  '<' vs. ',')
+//  4. A keyset using the Shift modifier should be bound with its
+//     unshifted key  (ex: bind  "Shift+."  instead of  "Shift+>" )
 //
 
 
@@ -150,147 +146,101 @@
 //
 //  Default Bindings:
 //
-//  bind                esc  quit
-//  bind          Shift+esc  quit
-//
-//  bind              pause  pause
-//
-//  bind              enter  chat
-//  bind          Alt+enter  chatally
-//  bind          Alt+enter  chatswitchally
-//  bind        Shift+enter  chatspec
-//  bind        Shift+enter  chatswitchspec
-//  bind             Ctrl+m  chatall
-//  bind             Ctrl+m  chatswitchall
-//  bind             Ctrl+j  chatall
-//  bind             Ctrl+j  chatswitchall
-//
-//  bind            Ctrl+f1  viewfps
-//  bind            Ctrl+f2  viewta
-//  bind            Ctrl+f3  viewtw
-//  bind            Ctrl+f4  viewrot
-//
-//  bind              Any+0  group0
-//  bind              Any+1  group1
-//  bind              Any+2  group2
-//  bind              Any+3  group3
-//  bind              Any+4  group4
-//  bind              Any+5  group5
-//  bind              Any+6  group6
-//  bind              Any+7  group7
-//  bind              Any+8  group8
-//  bind              Any+9  group9
-//
-//  bind                  t  track
-//  bind             Ctrl+t  trackmode
-//  bind            Shift+t  trackoff
-//
-//  bind              Alt+`  drawlabel
-//  bind              Any+`  drawinmap
-//
-//  bind        Ctrl+insert  hotbind
-//  bind        Ctrl+delete  hotunbind
-//
-//  bind                tab  toggleoverview
-//  bind          backspace  mousestate
-//
-//  bind             Any+up  moveforward
-//  bind           Any+down  moveback
-//  bind          Any+right  moveright
-//  bind           Any+left  moveleft
-//  bind         Any+pageup  moveup
-//  bind       Any+pagedown  movedown
-//  bind          Any+shift  movefast
-//  bind           Any+ctrl  moveslow
-//
-//  bind                  +  speedup
-//  bind            Shift++  speedup
-//  bind             insert  speedup
-//  bind                  =  speedup
-//  bind                  -  slowdown
-//  bind             delete  slowdown
-//
-//  bind                  h  sharedialog
-//
-//  bind            Shift+<  decguiopacity
-//  bind            Shift+>  incguiopacity
-//
-//  bind               home  increaseViewRadius
-//  bind                end  decreaseViewRadius
-//
-//  bind                  l  togglelos
-//  bind                  ;  toggleradarandjammer
-//
-//  bind                 f1  showElevation
-//  bind                 f2  ShowPathMap
-//  bind                 f3  LastMsgPos
-//  bind                 f4  ShowMetalMap
-//  bind                 f5  hideinterface
-//  bind                 f6  NoSound
-//  bind                 f7  dynamicSky
-//  bind                 f8  savegame
-//  bind                 f9  showhealthbars
-//  bind                f10  createvideo
-//  bind                f11  screenshot png
-//  bind                f12  screenshot
-//
-//  bind                  b  debug
-//  bind                  o  singlestep
-//
-//  bind                  ,  prevmenu
-//  bind                  .  nextmenu
-//
-//  bind                  a  attack
-//  bind              Alt+a  areaattack
-//  bind                  c  controlunit
-//  bind              Alt+c  capture
-//  bind                  d  dgun
-//  bind             Ctrl+d  selfd
-//  bind                  e  reclaim
-//  bind                  f  fight
-//  bind                  g  guard
-//  bind             Ctrl+h  mousestate
-//  bind                  i  gameinfo
-//  bind                  k  cloak
-//  bind                  l  loadunits
-//  bind                  m  move
-//  bind                  p  patrol
-//  bind                  q  groupselect
-//  bind                  q  groupadd
-//  bind             Ctrl+q  aiselect
-//  bind            Shift+q  groupclear
-//  bind                  r  repair
-//  bind                  s  stop
-//  bind                  u  unloadunits
-//  bind                  w  wait
-//  bind                  x  onoff
-//
-//  bind                  [  buildfacing inc
-//  bind                  ]  buildfacing dec
-//  bind              Any+z  buildspacing inc
-//  bind              Any+x  buildspacing dec
-//
-//  bind                  m  minimapalert
-//  bind                  t  textalert
-//
-//  bind            numpad0  repeat
-//  bind       Ctrl+numpad0  groupclear
-//  bind            numpad1  movestate 0
-//  bind            numpad2  movestate 1
-//  bind            numpad3  movestate 2
-//  bind            numpad4  firestate 0
-//  bind            numpad5  firestate 1
-//  bind            numpad6  firestate 2
-//  bind            numpad7  onoff
-//  bind            numpad8  cloak
-//  bind            numpad9  trajectory
-//  bind            numpad.  showcommands
-//  bind       Ctrl+numpad4  aiselect MexUpgrader AI
-//  bind       Ctrl+numpad5  aiselect default
-//  bind       Ctrl+numpad6  aiselect None
-//  bind       Ctrl+numpad7  aiselect Simple formation
-//  bind       Ctrl+numpad8  aiselect Radar AI
-//  bind       Ctrl+numpad9  aiselect Central build AI
+// bind      Any+backspace  mousestate
+// bind            Any+tab  toggleoverview
+// bind          Any+enter  chat
+// bind          Any+pause  pause
+// bind            Any+esc  quit
+// bind              Any+,  decguiopacity
+// bind              Any+-  slowdown
+// bind              Any+.  incguiopacity
+// bind              Any+0  group0
+// bind              Any+1  group1
+// bind              Any+2  group2
+// bind              Any+3  group3
+// bind              Any+4  group4
+// bind              Any+5  group5
+// bind              Any+6  group6
+// bind              Any+7  group7
+// bind              Any+8  group8
+// bind              Any+9  group9
+// bind              Any+;  toggleradarandjammer
+// bind              Any+=  speedup
+// bind                  [  buildfacing inc
+// bind            Shift+[  buildfacing inc
+// bind                  ]  buildfacing dec
+// bind            Shift+]  buildfacing dec
+// bind              Any+`  drawinmap
+// bind                  a  attack
+// bind            Shift+a  attack
+// bind              Any+b  debug
+// bind              Any+c  controlunit
+// bind                  d  dgun
+// bind             Ctrl+d  selfd
+// bind            Shift+d  dgun
+// bind       Ctrl+Shift+d  selfd
+// bind                  e  reclaim
+// bind            Shift+e  reclaim
+// bind                  f  fight
+// bind            Shift+f  fight
+// bind                  g  guard
+// bind            Shift+g  guard
+// bind              Any+h  sharedialog
+// bind              Any+j  mouse2
+// bind                  k  cloak
+// bind            Shift+k  cloak
+// bind                  l  loadunits
+// bind            Shift+l  loadunits
+// bind              Any+l  togglelos
+// bind                  m  move
+// bind            Shift+m  move
+// bind              Any+o  singlestep
+// bind                  p  patrol
+// bind            Shift+p  patrol
+// bind                  q  groupselect
+// bind                  q  groupadd
+// bind             Ctrl+q  aiselect
+// bind            Shift+q  groupclear
+// bind                  r  repair
+// bind            Shift+r  repair
+// bind                  s  stop
+// bind            Shift+s  stop
+// bind              Any+t  track
+// bind                  u  unloadunits
+// bind            Shift+u  unloadunits
+// bind                  w  wait
+// bind            Shift+w  wait
+// bind                  x  buildspacing dec
+// bind                  x  onoff
+// bind            Shift+x  buildspacing dec
+// bind            Shift+x  onoff
+// bind                  z  buildspacing inc
+// bind            Shift+z  buildspacing inc
+// bind         Any+delete  slowdown
+// bind           Any+0xa7  drawinmap
+// bind             Any+up  moveforward
+// bind           Any+down  moveback
+// bind          Any+right  moveright
+// bind           Any+left  moveleft
+// bind         Any+insert  speedup
+// bind           Any+home  increaseViewRadius
+// bind            Any+end  decreaseViewRadius
+// bind         Any+pageup  moveup
+// bind       Any+pagedown  movedown
+// bind             Any+f1  showElevation
+// bind             Any+f2  ShowPathMap
+// bind             Any+f3  LastMsgPos
+// bind             Any+f4  ShowMetalMap
+// bind             Any+f5  hideinterface
+// bind             Any+f6  NoSound
+// bind             Any+f7  dynamicSky
+// bind             Any+f8  savegame
+// bind             Any+f9  showhealthbars
+// bind            Any+f10  createvideo
+// bind            Any+f11  screenshot
+// bind            Any+f12  screenshot
+// bind          Any+shift  movefast
+// bind           Any+ctrl  moveslow
 //
 
 
