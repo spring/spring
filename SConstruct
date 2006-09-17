@@ -65,6 +65,7 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	'rts/System/FileSystem/ArchiveZip.cpp',
 	'rts/System/FileSystem/FileHandler.cpp',
 	'rts/System/FileSystem/VFSHandler.cpp',
+	'rts/System/Platform/ConfigHandler.cpp',
 	'rts/System/Platform/FileSystem.cpp',
 	'rts/lib/7zip/7zAlloc.c',
 	'rts/lib/7zip/7zBuffer.c',
@@ -87,15 +88,20 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	'rts/lib/minizip/zip.c']
 
 if env['platform'] == 'windows':
-	unitsync_files += ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp']
+	unitsync_files += ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/Platform/Win/RegHandler.cpp']
 else:
 	ufshcpp = env.SharedObject(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
-	unitsync_files += ['rts/System/Platform/ConfigHandler.cpp', 'rts/System/Platform/Linux/DotfileHandler.cpp', ufshcpp]
+	unitsync_files += ['rts/System/Platform/Linux/DotfileHandler.cpp', ufshcpp]
 
 unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)
 unitsync2 = env.SharedLibrary('UnityLobby/client/unitsync', unitsync_files)
 Alias('unitsync', unitsync, unitsync2)
-Default(unitsync, unitsync2)
+
+# Somehow unitsync fails to build with mingw:
+#  "build\tools\unitsync\pybind.o(.text+0x129d): In function `initunitsync':
+#   pybind.cpp:663: undefined reference to `_imp__Py_InitModule4TraceRefs'"
+if env['platform'] != 'windows':
+	Default(unitsync, unitsync2)
 
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 aienv = env.Copy(LIBS=[], LIBPATH=[])
