@@ -98,6 +98,7 @@ void CGuiHandler::LoadDefaults()
 	yPos        = 0.175f;
 	xIconSize   = 0.060f;
 	yIconSize   = 0.060f;
+	textBorder  = 0.003f;
 	iconBorder  = 0.003f;
 	frameBorder = 0.003f;
 	
@@ -105,8 +106,9 @@ void CGuiHandler::LoadDefaults()
 	ySelectionPos = 0.127f;
 
 	noSelectGaps = false;
+	useOptionLEDs = true;
 
-	outlineFont.Enable(true);
+	outlineFont.Enable(false);
 }
 
 
@@ -135,6 +137,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		
 		if ((command == "noselectgaps") && (words.size() > 1)) {
 			noSelectGaps = !!atoi(words[1].c_str());
+		}
+		if ((command == "useoptionleds") && (words.size() > 1)) {
+			useOptionLEDs = !!atoi(words[1].c_str());
 		}
 		else if ((command == "deadiconslot") && (words.size() > 1)) {
 			deadStr = StringToLower(words[1]);
@@ -165,6 +170,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		}
 		else if ((command == "ypos") && (words.size() > 1)) {
 			SafeAtoF(yPos, words[1]);
+		}
+		else if ((command == "textborder") && (words.size() > 1)) {
+			SafeAtoF(textBorder, words[1]);
 		}
 		else if ((command == "iconborder") && (words.size() > 1)) {
 			SafeAtoF(iconBorder, words[1]);
@@ -378,8 +386,8 @@ void CGuiHandler::LayoutIcons()
 	vector<CommandDescription>::const_iterator cdi;
 
 	// separate the visible/hidden icons	
-	for(cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
-		if(cdi->onlyKey){
+	for (cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
+		if (cdi->onlyKey) {
 			hidden.push_back(*cdi);
 		} else {
 			commands.push_back(*cdi);
@@ -409,12 +417,12 @@ void CGuiHandler::LayoutIcons()
 	int minIconsSize = iconsSize;
 	while (minIconsSize < iconsCount) {
 		minIconsSize *= 2;
-		}
+	}
 	if (iconsSize < minIconsSize) {
 		iconsSize = minIconsSize;
 		delete icons;
 		icons = new IconInfo[iconsSize];
-		}
+	}
 
 	int ci = 0; // command index
 
@@ -483,7 +491,7 @@ void CGuiHandler::LayoutIcons()
 	}
 
 	// append the hidden commands
-	for(cdi=hidden.begin();cdi!=hidden.end();++cdi){
+	for (cdi = hidden.begin(); cdi != hidden.end(); ++cdi) {
 		commands.push_back(*cdi);
 	}
 
@@ -585,11 +593,11 @@ void CGuiHandler::DrawButtons()
 			glBegin(GL_QUADS);
 
 			if (icon.commandsID == inCommand) {
-				glColor4f(0.5f,0,0,0.8f);
+				glColor4f(0.5f, 0, 0, 0.8f);
 			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
-				glColor4f(0.5f,0,0,0.2f);
+				glColor4f(0.5f, 0, 0, 0.2f);
 			} else {
-				glColor4f(0,0,0.5f,0.2f);
+				glColor4f(0, 0, 0.5f, 0.2f);
 			}
 
 			glVertex2f(x1,y1);
@@ -620,6 +628,7 @@ void CGuiHandler::DrawButtons()
 			glVertex2f(x1,y2);
 			glEnd();
 
+			// build count text
 			if (!cmdDesc.params.empty()){			//skriv texten i fï¿½sta param ovanpï¿½
 				const string& toPrint = cmdDesc.params[0];
 
@@ -629,7 +638,7 @@ void CGuiHandler::DrawButtons()
 
 				glTranslatef(x1 + 0.004f, y2 + 0.004f, 0.0f);
 				glScalef(xScale, yScale, 1.0f);
-				font->glPrint("%s",toPrint.c_str());
+				font->glPrint("%s", toPrint.c_str());
 			}
 		}
 		else {
@@ -646,7 +655,8 @@ void CGuiHandler::DrawButtons()
 				glTexCoord2f(0,1);
 				glVertex2f(x1,y2);
 				glEnd();
-			} else {
+			}
+			else {
 				glPushAttrib(GL_ENABLE_BIT);
 				glDisable(GL_LIGHTING);
 				glDisable(GL_DEPTH_TEST);
@@ -661,9 +671,9 @@ void CGuiHandler::DrawButtons()
 				if (cmdDesc.type == CMDTYPE_PREV) {
 					glBegin(GL_POLYGON);
 					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
-						glColor4f(1.f,1.f,0.f,1.f); // selected
+						glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // selected
 					} else {
-						glColor4f(0.7f,0.7f,0.7f,1.f); // normal
+						glColor4f(0.7f, 0.7f, 0.7f, 1.0f); // normal
 					}
 					glVertex2f(x2-xSize/6,yCenter-ySize/8);
 					glVertex2f(x1+2*xSize/6,yCenter-ySize/8);
@@ -675,9 +685,9 @@ void CGuiHandler::DrawButtons()
 				else if (cmdDesc.type == CMDTYPE_NEXT) {
 					glBegin(GL_POLYGON);
 					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
-						glColor4f(1.f,1.f,0.f,1.f); // selected
+						glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // selected
 					} else {
-						glColor4f(0.7f,0.7f,0.7f,1.f); // normal
+						glColor4f(0.7f, 0.7f, 0.7f, 1.0f); // normal
 					}
 					glVertex2f(x1+xSize/6,yCenter-ySize/8);
 					glVertex2f(x2-2*xSize/6,yCenter-ySize/8);
@@ -688,7 +698,7 @@ void CGuiHandler::DrawButtons()
 				}
 				else {
 					glBegin(GL_LINE_LOOP);
-					glColor4f(1.f,1.f,1.f,0.1f);
+					glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
 					glVertex2f(x1,y1);
 					glVertex2f(x2,y1);
 					glVertex2f(x2,y2);
@@ -705,16 +715,24 @@ void CGuiHandler::DrawButtons()
 				int opt = atoi(cmdDesc.params[0].c_str()) + 1;
 				if (opt < cmdDesc.params.size()) {
 					toPrint = cmdDesc.params[opt];
-			}
+				}
 			}
 
 			const float tWidth  = font->CalcTextWidth(toPrint.c_str());
 			const float tHeight = font->CalcTextHeight(toPrint.c_str());
-			float xScale = (xIconSize - 0.006f) / tWidth;
-			float yScale = (yIconSize - 0.006f) / tHeight;
+			const float textBorder2 = (2.0f * textBorder);
+			float xScale = (xIconSize - textBorder2) / tWidth;
+			float yScale = (yIconSize - textBorder2) / tHeight;
 
-			const float yClamp = xScale * gu->aspectRatio;
-			yScale = min(yScale, yClamp);
+			const float yRatio = xScale * gu->aspectRatio;
+			if (yRatio < yScale) {
+				yScale = yRatio;
+			} else {
+				const float xRatio = yScale / gu->aspectRatio;
+				if (xRatio < xScale) {
+					xScale = xRatio;
+				}
+			}
 
 			const float xCenter = 0.5f * (x1 + x2);
 			const float yCenter = 0.5f * (y1 + y2);
@@ -733,6 +751,11 @@ void CGuiHandler::DrawButtons()
 			glTranslatef(xStart, yStart, 0.0f);
 			glScalef(xScale, yScale, 1.0f);
 			font->glPrint("%s",toPrint.c_str());
+
+			// draw the mode indicators
+			if (useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE)) {
+				DrawOptionLEDs(icon);
+			}
 		}
 
 		glLoadIdentity();
@@ -745,7 +768,7 @@ void CGuiHandler::DrawButtons()
 				glColor4f(1.0f, 0.0f, 0.0f, 0.50f);
 			} else {
 				glColor4f(1.0f, 1.0f, 1.0f, 0.50f);
-	}
+			}
 
 			glPushAttrib(GL_ENABLE_BIT);
 			glDisable(GL_LIGHTING);
@@ -774,7 +797,7 @@ void CGuiHandler::DrawButtons()
 
 		SNPRINTF(buf, 64, "%i", activePage + 1);
 		if (selectedUnits.BuildIconsFirst()) {
-		glColor4fv(cmdColors.build);
+			glColor4fv(cmdColors.build);
 		} else {
 			glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
 		}
@@ -804,7 +827,7 @@ void CGuiHandler::DrawButtons()
 							ySelectionPos + frameBorder + textHeight);
 			glColor4f(1,1,1,0.8f);
 			font->glPrintAt(xSelectionPos, ySelectionPos, textScale, "%s", buf);
-	}
+		}
 		else {
 			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
 
@@ -817,8 +840,72 @@ void CGuiHandler::DrawButtons()
 
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			outlineFont.print(xPixel, yPixel, white, buf);
-}
+		}
 	}
+}
+
+
+void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
+{
+	const CommandDescription& cmdDesc = commands[icon.commandsID];
+
+	const int pCount = (int)cmdDesc.params.size() - 1;
+	if (pCount < 2) {
+		return;
+	}
+	const int option = atoi(cmdDesc.params[0].c_str());
+
+	glLoadIdentity();
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	const float xs = xIconSize / float(1 + (pCount * 2));
+	const float ys = yIconSize * 0.125f;
+	const float x1 = icon.visual.x1;
+	const float y1 = icon.visual.y1;
+	const float x2 = icon.visual.x2;
+	const float y2 = icon.visual.y2;
+	const float yp = 1.0f / float(gu->screeny);
+	
+	for (int x = 0; x < pCount; x++) {
+		if (x != option) {
+			glColor4f(0.25f, 0.25f, 0.25f, 0.50f); // dark
+		} else {
+			if (pCount == 2) {
+				if (option == 0) {
+					glColor4f(1.0f, 0.0f, 0.0f, 0.75f); // red
+				} else {
+					glColor4f(0.0f, 1.0f, 0.0f, 0.75f); // green
+				}
+			} else if (pCount == 3) {
+				if (option == 0) {
+					glColor4f(1.0f, 0.0f, 0.0f, 0.75f); // red
+				} else if (option == 1) {
+					glColor4f(1.0f, 1.0f, 0.0f, 0.75f); // yellow
+				} else {
+					glColor4f(0.0f, 1.0f, 0.0f, 0.75f); // green
+				}
+			} else {
+				glColor4f(0.75f, 0.75f, 0.75f, 0.75f); // light
+			}
+		}
+
+		const float startx = x1 + (xs * float(1 + (2 * x)));
+		const float starty = y2 + (3.0f * yp);
+
+		glRectf(startx, starty, startx + xs, starty + ys);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+		glRectf(startx, starty, startx + xs, starty + ys);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	glPopAttrib();
 }
 
 
@@ -996,7 +1083,7 @@ int CGuiHandler::IconAtPos(int x, int y)
 		if ((fx > icons[ii].selection.x1) && (fx < icons[ii].selection.x2) &&
 		    (fy > icons[ii].selection.y2) && (fy < icons[ii].selection.y1)) {
 			return ii;
-	}
+		}
 	}
 
 	return -1;
@@ -1059,7 +1146,7 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 	for (int c = 0; c < (int)commands.size(); c++) {
 		if (cmd_id == commands[c].id) {
 			return c;
-	}
+		}
 	}
 	return -1;
 }
@@ -1454,7 +1541,7 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		for(int i = 0; i < commands.size(); ++i){
 			printf("  button: %i, id = %i, action = %s\n",
 						 i, commands[i].id, commands[i].action.c_str());
-	}
+		}
 		return true;
 	}
 
@@ -1582,7 +1669,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 		if (!action.extra.empty() && (action.command == "iconpos")) {
 			const int iconSlot = ParseIconSlot(action.extra);
 			iconCmd = GetIconPosCommand(iconSlot);
-			}
+		}
 
 		for (int a = 0; a < commands.size(); ++a) {
 
@@ -1601,9 +1688,9 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				for (int ii = 0; ii < iconsCount; ii++) {
 					if (icons[ii].commandsID == a) {
 						activePage = min(maxPage, (ii / iconsPerPage));
-					selectedUnits.SetCommandPage(activePage);
+						selectedUnits.SetCommandPage(activePage);
+					}
 				}
-			}
 			}
 			
 			switch(cmdType) {
@@ -1628,7 +1715,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 							c.options = RIGHT_MOUSE_KEY |SHIFT_KEY | CONTROL_KEY;
 						}
 					} else {
-					CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
+						CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
 					}
 					selectedUnits.GiveCommand(c);
 					break;
@@ -1745,20 +1832,15 @@ void CGuiHandler::MenuChoice(string s)
 {
 	game->showList=0;
 	delete list;
-	if(inCommand>=0 && inCommand<commands.size())
-	{
+	if (inCommand>=0 && inCommand<commands.size()) {
 		CommandDescription& cd=commands[inCommand];
-		switch(cd.type)
-		{
-		case CMDTYPE_COMBO_BOX:
-			{
+		switch (cd.type) {
+			case CMDTYPE_COMBO_BOX: {
 				inCommand=-1;
 				vector<string>::iterator pi;
 				int a=0;
-				for(pi=++cd.params.begin();pi!=cd.params.end();++pi)
-				{
-					if(*pi==s)
-					{
+				for (pi=++cd.params.begin();pi!=cd.params.end();++pi) {
+					if (*pi==s) {
 						Command c;
 						c.id=cd.id;
 						c.params.push_back(a);
@@ -1768,11 +1850,12 @@ void CGuiHandler::MenuChoice(string s)
 					}
 					++a;
 				}
-			}
 				break;
+			}
 		}
 	}
 }
+
 
 void CGuiHandler::FinishCommand(int button)
 {
