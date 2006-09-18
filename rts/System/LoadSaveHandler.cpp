@@ -34,7 +34,8 @@ void CLoadSaveHandler::SaveGame(std::string file)
 
 	CSaveInterface save(&ofs);
 
-	save.lsString(stupidGlobalMapname);
+	save.lsString(mapName);
+	save.lsString(modName);
 
 	//load,load2 border
 	readmap->LoadSaveMap(&save,false);
@@ -48,7 +49,8 @@ void CLoadSaveHandler::LoadGame(std::string file)
 	ifs=new std::ifstream(filesystem.LocateFile(file).c_str(), std::ios::in|std::ios::binary);
 	load=new CLoadInterface(ifs);
 
-	load->lsString(stupidGlobalMapname);
+	load->lsString(mapName);
+	load->lsString(modName);
 }
 
 //this should be called on frame 0 when the game has started

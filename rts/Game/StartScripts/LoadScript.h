@@ -13,6 +13,7 @@ public:
 	~CLoadScript(void);
 	void Update(void);
 	std::string GetMapName(void);
+	std::string GetModName(void);
 
 	CLoadSaveHandler loader;
 	std::string file;

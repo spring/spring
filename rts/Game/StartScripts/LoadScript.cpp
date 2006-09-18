@@ -29,5 +29,11 @@ std::string CLoadScript::GetMapName(void)
 {
 	loader.LoadGame(file);		//this is the first time we get called after getting choosen
 	loadGame=true;
-	return stupidGlobalMapname;
+	return loader.mapName;
+}
+
+std::string CLoadScript::GetModName(void)
+{
+	//this is the second time we get called after getting choosen
+	return loader.modName;
 }
