@@ -201,14 +201,14 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 
 void CCommandAI::GiveCommand(Command& c)
 {
-	switch(c.id)
-	{
-	case CMD_SET_WANTED_MAX_SPEED:
-		{
-			return;
+	switch (c.id) {
+		case CMD_SET_WANTED_MAX_SPEED: {
+			if (!CanSetMaxSpeed()) {
+				return;
+			}
+			break;
 		}
-	case CMD_FIRE_STATE:
-		{
+		case CMD_FIRE_STATE: {
 			if(c.params.empty())
 				return;
 			owner->fireState=(int)c.params[0];
@@ -222,8 +222,7 @@ void CCommandAI::GiveCommand(Command& c)
 			}
 			return;
 		}
-	case CMD_MOVE_STATE:
-		{
+		case CMD_MOVE_STATE: {
 			if(c.params.empty())
 				return;
 			owner->moveState=(int)c.params[0];
@@ -237,8 +236,7 @@ void CCommandAI::GiveCommand(Command& c)
 			}
 			return;
 		}
-	case CMD_REPEAT:
-		{
+		case CMD_REPEAT: {
 			if(c.params.empty())
 				return;
 			repeatOrders=!!c.params[0];
@@ -252,8 +250,7 @@ void CCommandAI::GiveCommand(Command& c)
 			}
 			return;
 		}
-	case CMD_TRAJECTORY:
-		{
+		case CMD_TRAJECTORY: {
 			if(c.params.empty() || owner->unitDef->highTrajectoryType<2)
 				return;
 			owner->useHighTrajectory=!!c.params[0];
@@ -267,63 +264,67 @@ void CCommandAI::GiveCommand(Command& c)
 			}
 			return;
 		}
-	case CMD_ONOFF:{
-		if(c.params.empty() || !owner->unitDef->onoffable || owner->beingBuilt)
-			return;
-		if(c.params[0]==1){
-			owner->Activate();
-		} else if(c.params[0]==0) {
-			owner->Deactivate();
-		}
-		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
-			if(cdi->id==CMD_ONOFF){
-				char t[10];
-				SNPRINTF(t, 10, "%d", (int)c.params[0]);
-				cdi->params[0]=t;
-				break;
+		case CMD_ONOFF: {
+			if(c.params.empty() || !owner->unitDef->onoffable || owner->beingBuilt)
+				return;
+			if(c.params[0]==1){
+				owner->Activate();
+			} else if(c.params[0]==0) {
+				owner->Deactivate();
 			}
-		}
-		return; }
-	case CMD_CLOAK:{
-		if(c.params.empty() || !owner->unitDef->canCloak)
-			return;
-		if(c.params[0]==1){
-			owner->wantCloak=true;
-		} else if(c.params[0]==0) {
-			owner->wantCloak=false;
-			owner->curCloakTimeout=gs->frameNum+owner->cloakTimeout;
-		}
-		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
-			if(cdi->id==CMD_CLOAK){
-				char t[10];
-				SNPRINTF(t, 10, "%d", (int)c.params[0]);
-				cdi->params[0]=t;
-				break;
+			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
+				if(cdi->id==CMD_ONOFF){
+					char t[10];
+					SNPRINTF(t, 10, "%d", (int)c.params[0]);
+					cdi->params[0]=t;
+					break;
+				}
 			}
-		}
-		return; }
-	case CMD_STOCKPILE:{
-		if(!stockpileWeapon)
 			return;
-		int change=1;
-		if(c.options & RIGHT_MOUSE_KEY)
-			change*=-1;
-		if(c.options & CONTROL_KEY)
-			change*=20;
-		if(c.options & SHIFT_KEY)
-			change*=5;
-		stockpileWeapon->numStockpileQued+=change;
-		if(stockpileWeapon->numStockpileQued<0)
-			stockpileWeapon->numStockpileQued=0;
-		UpdateStockpileIcon();
-		return; }
-	case CMD_SELFD:{
-		if(owner->selfDCountdown){
-			owner->selfDCountdown=0;
-		} else {
-			owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
 		}
-		return;}
+		case CMD_CLOAK: {
+			if(c.params.empty() || !owner->unitDef->canCloak)
+				return;
+			if(c.params[0]==1){
+				owner->wantCloak=true;
+			} else if(c.params[0]==0) {
+				owner->wantCloak=false;
+				owner->curCloakTimeout=gs->frameNum+owner->cloakTimeout;
+			}
+			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
+				if(cdi->id==CMD_CLOAK){
+					char t[10];
+					SNPRINTF(t, 10, "%d", (int)c.params[0]);
+					cdi->params[0]=t;
+					break;
+				}
+			}
+			return;
+		}
+		case CMD_STOCKPILE: {
+			if(!stockpileWeapon)
+				return;
+			int change=1;
+			if(c.options & RIGHT_MOUSE_KEY)
+				change*=-1;
+			if(c.options & CONTROL_KEY)
+				change*=20;
+			if(c.options & SHIFT_KEY)
+				change*=5;
+			stockpileWeapon->numStockpileQued+=change;
+			if(stockpileWeapon->numStockpileQued<0)
+				stockpileWeapon->numStockpileQued=0;
+			UpdateStockpileIcon();
+			return;
+		}
+		case CMD_SELFD: {
+			if(owner->selfDCountdown){
+				owner->selfDCountdown=0;
+			} else {
+				owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
+			}
+			return;
+		}
 	}
     
 	if(!(c.options & SHIFT_KEY)){
@@ -345,6 +346,7 @@ void CCommandAI::GiveCommand(Command& c)
 			orderTarget=0;
 		}
 	}
+
 	if(c.id == CMD_PATROL){
 		std::deque<Command>::iterator ci = commandQue.begin();
 		for(; ci != commandQue.end() && ci->id!=CMD_PATROL; ci++);
@@ -380,6 +382,7 @@ void CCommandAI::GiveCommand(Command& c)
 			}
 		}
 	}
+
 	std::deque<Command>::iterator ci = CCommandAI::GetCancelQueued(c);
 	if(c.id<0 && ci != commandQue.end()){
 		do{
@@ -408,10 +411,13 @@ void CCommandAI::GiveCommand(Command& c)
 		ci = CCommandAI::GetCancelQueued(c);
 		return;
 	}
+
 	if(!this->GetOverlapQueued(c).empty()){
 		return;
 	}
-	if(c.id==CMD_ATTACK && owner->weapons.empty() && owner->unitDef->canKamikaze==false){		//avoid weaponless units moving to 0 distance when given attack order
+
+	//avoid weaponless units moving to 0 distance when given attack order
+	if(c.id==CMD_ATTACK && owner->weapons.empty() && owner->unitDef->canKamikaze==false){
 		Command c2;
 		c2.id=CMD_STOP;
 		commandQue.push_back(c2);
@@ -423,6 +429,7 @@ void CCommandAI::GiveCommand(Command& c)
 		SlowUpdate();
 }
 
+
 /**
 * @brief Determins if c will cancel a queued command
 * @return true if c will cancel a queued command
@@ -431,6 +438,7 @@ bool CCommandAI::WillCancelQueued(Command &c)
 {
 	return this->GetCancelQueued(c) != this->commandQue.end();
 }
+
 
 /**
 * @brief Finds the queued command that would be canceled by the Command c
@@ -454,12 +462,11 @@ std::deque<Command>::iterator CCommandAI::GetCancelQueued(Command &c){
 						UnitDef* u2 = unitDefHandler->GetUnitByID(-ci->id);
 						if(u1 && u2
 							&& fabs(cpos.x-cipos.x)*2 <= max(u1->xsize, u2->xsize)*SQUARE_SIZE
-							&& fabs(cpos.z-cipos.z)*2 <= max(u1->ysize, u2->ysize)*SQUARE_SIZE)
-						{
+							&& fabs(cpos.z-cipos.z)*2 <= max(u1->ysize, u2->ysize)*SQUARE_SIZE) {
 							return ci;
 						}
 					} else {
-                        if((cpos-cipos).SqLength2D()<17*17){
+						if((cpos-cipos).SqLength2D()<17*17){
 							return ci;
 						}
 					}

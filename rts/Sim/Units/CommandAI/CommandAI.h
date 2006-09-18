@@ -30,8 +30,10 @@ public:
 	virtual void BuggerOff(float3 pos, float radius);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	virtual bool WillCancelQueued(Command &c);
+	virtual bool CanSetMaxSpeed() const { return false; }
 	std::deque<Command>::iterator GetCancelQueued(Command &c);
 	std::vector<Command> GetOverlapQueued(Command &c);
+
 
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
