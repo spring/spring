@@ -1539,9 +1539,19 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		// bonus command for debugging
 		printf("Available Commands:\n");
 		for(int i = 0; i < commands.size(); ++i){
-			printf("  button: %i, id = %i, action = %s\n",
+			printf("  command: %i, id = %i, action = %s\n",
 						 i, commands[i].id, commands[i].action.c_str());
 		}
+		// show the icon/command linkage
+		printf("Icon Linkage:\n");
+		for(int ii = 0; ii < iconsCount; ++ii){
+			printf("  icon: %i, commandsID = %i\n", ii, icons[ii].commandsID);
+		}
+		printf("maxPage         = %i\n", maxPage);
+		printf("activePage      = %i\n", activePage);
+		printf("iconsSize       = %i\n", iconsSize);
+		printf("iconsCount      = %i\n", iconsCount);
+		printf("commands.size() = %i\n", commands.size());
 		return true;
 	}
 
