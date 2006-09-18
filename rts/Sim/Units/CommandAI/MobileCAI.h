@@ -20,6 +20,7 @@ public:
 	void NonMoving(void);
 	void FinishCommand(void);
 	void IdleCheck(void);
+	bool CanSetMaxSpeed() const { return true; }
 	Command GetReturnFight(Command c);
 
 	float3 goalPos;
