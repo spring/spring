@@ -76,7 +76,7 @@ unsigned char* CColorMap::GetColor(unsigned char *color, float pos)
 	float fposn = pos*nxsize;
 	int iposn = (int)fposn;
 	float fracn = fposn-iposn;
-	int aa = fracn*256;
+	int aa = int(fracn*256);
 	int ia = 256-aa;
 
 	unsigned char *col1 = (unsigned char*)&map[iposn*4];
@@ -103,7 +103,7 @@ void CColorMap::LoadFromFloatVector(std::vector<float> &vec)
 
 	for(int i=0; i<xsize*4; i++)
 	{
-		lmap[i] = vec[i]*255;
+		lmap[i] = int(vec[i]*255);
 	}
 	LoadMap(lmap, xsize*4);
 	delete [] lmap;

@@ -52,7 +52,6 @@ class UnixFileSystemHandler : public FileSystemHandler
 
 		std::vector<DataDir> datadirs;
 		const DataDir* writedir;
-		bool verbose;
 };
 
 #endif // !UNIXFILESYSTEMHANDLER_H

@@ -166,6 +166,7 @@
 // bind              Any+9  group9
 // bind              Any+;  toggleradarandjammer
 // bind              Any+=  speedup
+// bind              Any++  speedup
 // bind                  [  buildfacing inc
 // bind            Shift+[  buildfacing inc
 // bind                  ]  buildfacing dec

@@ -36,6 +36,7 @@ class CLogOutput {
 public:
 //	void AddLine(const char *, ...);
 	void Print(const string& text);
+	void Print(const char* fmt, ...);
 };
 
 CLogOutput logOutput;
@@ -44,6 +45,9 @@ CLogOutput logOutput;
 #define SQUARE_SIZE 8
 
 void CLogOutput::Print (const string& text)
+{}
+
+void CLogOutput::Print(const char* fmt, ...)
 {}
 
 void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {

@@ -6,6 +6,13 @@ LogOutput - global object to write log info to.
 #ifndef LOGOUTPUT_H
 #define LOGOUTPUT_H
 
+// format string error checking 
+#ifdef __GNUC__
+#define FORMATSTRING(n) __attribute__((format(printf, n, n + 1)))
+#else
+#define FORMATSTRING(n)
+#endif
+
 class float3;
 
 class ILogSubscriber
@@ -22,8 +29,8 @@ public:
 	CLogOutput();
 	~CLogOutput();
 
-	void Print(int priority, const char *fmt, ...);
-	void Print(const char *fmt, ...); // priority 0
+	void Print(int priority, const char *fmt, ...) FORMATSTRING(3);
+	void Print(const char *fmt, ...) FORMATSTRING(2); // priority 0
 	void Print(const std::string& text);
 	void Print(int priority, const std::string& text);
 
@@ -50,5 +57,7 @@ protected:
 
 
 extern CLogOutput logOutput;
+
+#undef FORMATSTRING
 
 #endif // LOGOUTPUT_H
