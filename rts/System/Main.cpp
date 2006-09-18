@@ -937,13 +937,15 @@ int Run(int argc, char *argv[])
 		return app.Run (argc,argv);
 	}
 	catch (const content_error& e) {
-	#ifdef _MSC_VER
+		SDL_Quit();
+		logOutput.RemoveAllSubscribers();
 		logOutput.Print ("Content error: %s\n",  e.what());
-	#endif
 		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 		return -1;
 	}
 	catch (const std::exception& e) {
+		SDL_Quit();
+		logOutput.RemoveAllSubscribers();
 	#ifdef _MSC_VER
 		logOutput.Print ("Fatal error: %s\n",  e.what());
 		throw; // let the error handler catch it
