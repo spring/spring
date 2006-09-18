@@ -50,6 +50,7 @@ defaultBindings[] = {
 	{ "Any+insert", "speedup"  },
 	{ "Any+delete", "slowdown" },
 	{ "Any+=",      "speedup"  },
+	{ "Any++",      "speedup"  },
 	{ "Any+-",      "slowdown" },
 
 	{ "Any+.", "incguiopacity" },

@@ -13,10 +13,10 @@
 #include <boost/regex.hpp>
 #include <dirent.h>
 #include <sstream>
-#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "LogOutput.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "Platform/ConfigHandler.h"
@@ -113,28 +113,16 @@ void UnixFileSystemHandler::DeterminePermissions(int start_at)
 			// other random writedir you didn't even remember you had added it.
 			if (!writedir && access(d->path.c_str(), W_OK) == 0) {
 				d->writable = true;
-				if (verbose)
-					fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
 				writedir = &*d;
-			} else {
-				if (verbose)
-					fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
 			}
 		} else {
-			if (verbose)
-				fprintf(stderr, "WARNING: can not access data directory: %s\n", d->path.c_str());
 			if (filesystem.CreateDirectory(d->path)) {
 				// it didn't exist before, now it does and we just created it with rw access,
 				// so we just assume we still have read-write acces...
 				d->readable = true;
 				if (!writedir) {
-					if (verbose)
-						fprintf(stderr, "using read-write data directory: %s\n", d->path.c_str());
 					d->writable = true;
 					writedir = &*d;
-				} else {
-					if (verbose)
-						fprintf(stderr, "using read-only  data directory: %s\n", d->path.c_str());
 				}
 			}
 		}
@@ -194,18 +182,18 @@ void UnixFileSystemHandler::LocateDataDirs()
 	datadirs.push_back(SubstEnvVars(SPRING_DATADIR));
 
 	// Figure out permissions of all datadirs
+	bool cwdWarning = false;
 
 	DeterminePermissions();
 
 	if (!writedir) {
 		// add current working directory to search path & try again
-		if (verbose)
-			fprintf(stderr, "WARNING: adding current working directory to search path\n");
 		char buf[4096];
 		getcwd(buf, sizeof(buf));
 		buf[sizeof(buf) - 1] = 0;
 		datadirs.push_back(DataDir(buf));
 		DeterminePermissions(datadirs.size() - 1);
+		cwdWarning = true;
 	}
 
 	if (!writedir) {
@@ -218,6 +206,10 @@ void UnixFileSystemHandler::LocateDataDirs()
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writedir == current working directory
 	chdir(GetWriteDir().c_str());
+
+	// delayed warning message (needs to go after chdir otherwise log file ends up in wrong directory)
+	if (cwdWarning)
+		logOutput.Print("Warning: Adding current working directory to search path.");
 }
 
 /**
@@ -267,10 +259,19 @@ void UnixFileSystemHandler::InitVFS(bool mapArchives) const
  *
  * Locates data directories and initializes the VFS.
  */
-UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool mapArchives) : verbose(verbose)
+UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool mapArchives)
 {
 	LocateDataDirs();
 	InitVFS(mapArchives);
+
+	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+		if (d->readable) {
+			if (d->writable)
+				logOutput.Print("Using read-write data directory: %s", d->path.c_str());
+			else
+				logOutput.Print("Using read-only  data directory: %s", d->path.c_str());
+		}
+	}
 }
 
 
@@ -365,18 +366,9 @@ bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 	if (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
 		return true;
 
-	if (verbose)
-		fprintf(stderr, "WARNING: trying to create directory: %s ... ", dir.c_str());
-
 	// If it doesn't exist we try to mkdir it and return success if that succeeds.
-	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0) {
-		if (verbose)
-			fprintf(stderr, "Success\n");
+	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
 		return true;
-	}
-
-	if (verbose)
-		perror("");
 
 	// Otherwise we return false.
 	return false;
