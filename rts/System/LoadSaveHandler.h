@@ -16,6 +16,8 @@ public:
 
 	std::ifstream* ifs;
 	CLoadInterface* load;
+	std::string mapName;
+	std::string modName;
 };
 
 

@@ -850,6 +850,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "savegame"){
 		CLoadSaveHandler ls;
+		ls.mapName = stupidGlobalMapname;
+		ls.modName = modInfo->name;
 		ls.SaveGame("Test.ssf");
 	}
 
