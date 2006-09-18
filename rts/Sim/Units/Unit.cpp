@@ -1102,7 +1102,7 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 			return false;
 		}
 	} else {	//reclaim
-		if(health<0)
+		if(isDead)
 			return false;
 		restTime=0;
 		float part=amount/buildTime;
