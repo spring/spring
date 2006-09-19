@@ -172,7 +172,7 @@ void CGroup::GiveCommand(Command c)
 	if(c.id==CMD_AISELECT){
 		map<AIKey,string>::iterator aai;
 		int a=0;
-		for(aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && a<c.params[0];++aai){
+		for(aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && a<c.params[0]-1;++aai){
 			a++;
 		}
 		currentAiNum=(int)c.params[0];
