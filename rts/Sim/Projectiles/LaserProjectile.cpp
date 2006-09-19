@@ -65,9 +65,11 @@ void CLaserProjectile::Collision(CUnit* unit)
 	CWeaponProjectile::Collision(unit);
 
 	deleteMe=false;	//we will fade out over some time
-	checkCol=false;
-	speed=ZeroVector;
-	pos=oldPos;
+	if (!weaponDef->noExplode) {
+		checkCol=false;
+		speed=ZeroVector;
+		pos=oldPos;
+	}
 }
 
 void CLaserProjectile::Collision(CFeature* feature)
@@ -76,9 +78,11 @@ void CLaserProjectile::Collision(CFeature* feature)
 	CWeaponProjectile::Collision(feature);
 
 	deleteMe=false;	//we will fade out over some time
-	checkCol=false;
-	speed=ZeroVector;
-	pos=oldPos;
+	if (!weaponDef->noExplode) {
+		checkCol=false;
+		speed=ZeroVector;
+		pos=oldPos;
+	}
 }
 
 void CLaserProjectile::Collision()
@@ -87,9 +91,11 @@ void CLaserProjectile::Collision()
 	CWeaponProjectile::Collision();
 
 	deleteMe=false;	//we will fade out over some time
-	checkCol=false;
-	speed=ZeroVector;
-	pos=oldPos;
+	if (!weaponDef->noExplode) {
+		checkCol=false;
+		speed=ZeroVector;
+		pos=oldPos;
+	}
 }
 
 
