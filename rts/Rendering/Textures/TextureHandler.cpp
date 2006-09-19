@@ -298,8 +298,10 @@ int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
 		// being generated if it couldn't be loaded.
 		// Also many map features specify a tex2 but don't ship it with the map,
 		// so throwing here would cause maps to break.
-		if(!bm.Load(string("unittextures/"+tex2)))
-			bm.mem[4] = 255;//file not found, set alpha to white so unit is visible
+		if(!bm.Load(string("unittextures/"+tex2))) {
+			bm.Alloc(1,1);
+			bm.mem[3] = 255;//file not found, set alpha to white so unit is visible
+		}
 		tex.tex2=bm.CreateTexture(true);
 	}
 	s3oTextures.push_back(tex);

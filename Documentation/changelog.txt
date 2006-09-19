@@ -2,6 +2,8 @@ TASpring change log
 
 0.73b1
 
+- fixed reclaim exploit where extra metal was gained if you destroyed the building just before it would finish reclaiming.
+
 - added "cmdcolors.txt" settings file to configure control indicator rendering
   (this includes command queue lines and ranges, highlighted unit ranges, the
    mouse selection box, and the selected unit boxes)

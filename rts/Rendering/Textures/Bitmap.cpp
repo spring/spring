@@ -96,6 +96,7 @@ void CBitmap::Alloc (int w,int h)
 	ysize=h;
 	type=BitmapTypeStandardRGBA;
 	mem=new unsigned char[w*h*4];
+	memset(mem, 0, w*h*4);
 }
 
 bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
@@ -115,10 +116,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	CFileHandler file(filename);
 	if(file.FileExists() == false)
 	{
-		xsize = 1;
-		ysize = 1;
-		mem=new unsigned char[4];
-		memset(mem, 0, 4);
+		Alloc(1,1);
 		return false;
 	}
 
