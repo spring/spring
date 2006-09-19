@@ -72,12 +72,15 @@ void CGroup::RemoveUnit(CUnit *unit)
 
 void CGroup::SetNewAI(AIKey aiKey)
 {
-	if(ai)
+	if(ai) {
 		ReleaseAI(currentAiKey.aiNumber,ai);
-	if(lib)
+		ai = 0;
+	}
+	if(lib) {
 		delete lib;
+		lib = 0;
+	}
 
-	ai=0;
 	if(aiKey.dllName=="default"){
 		return;
 	}
@@ -146,8 +149,9 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	c.hotkey="Ctrl+q";
 
 	char t[50];
-	sprintf(t,"%i",currentAiNum);
+	sprintf(t,"%i",currentAiNum+1);
 	c.params.push_back(t);
+	c.params.push_back("None");
 	map<AIKey,string>::iterator aai;
 	map<AIKey,string> suitedAis = handler->GetSuitedAis(units);
 	for(aai=suitedAis.begin();aai!=suitedAis.end();++aai){
@@ -170,14 +174,16 @@ int CGroup::GetDefaultCmd(CUnit *unit,CFeature* feature)
 void CGroup::GiveCommand(Command c)
 {
 	if(c.id==CMD_AISELECT){
-		map<AIKey,string>::iterator aai;
-		int a=0;
-		for(aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && a<c.params[0]-1;++aai){
-			a++;
+		if (c.params[0]!=0) {
+			map<AIKey,string>::iterator aai;
+			int a=0;
+			for(aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && a<c.params[0]-1;++aai){
+				a++;
+			}
+			currentAiNum=a;
+			SetNewAI(aai->first);
+			selectedUnits.PossibleCommandChange(0);
 		}
-		currentAiNum=(int)c.params[0];
-		SetNewAI(aai->first);
-		selectedUnits.PossibleCommandChange(0);
 	} else {
 		if(ai)
 			ai->GiveCommand(&c);
