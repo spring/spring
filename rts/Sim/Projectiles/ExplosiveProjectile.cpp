@@ -45,14 +45,21 @@ void CExplosiveProjectile::Update()
 
 	if(!--ttl)
 		Collision();
+
+	if(weaponDef->noExplode) {
+		if(TraveledRange())
+			CProjectile::Collision();
+	}
 }
 
 void CExplosiveProjectile::Collision()
 {
-	float h=ground->GetHeight2(pos.x,pos.z);
-	if(h>pos.y){
-		float3 n=ground->GetNormal(pos.x,pos.z);
-		pos-=speed*max(0.0f,min(1.0f,float((h-pos.y)*n.y/n.dot(speed)+0.1f)));
+	if (!weaponDef->noExplode) {
+		float h=ground->GetHeight2(pos.x,pos.z);
+		if(h>pos.y){
+			float3 n=ground->GetNormal(pos.x,pos.z);
+			pos-=speed*max(0.0f,min(1.0f,float((h-pos.y)*n.y/n.dot(speed)+0.1f)));
+		}
 	}
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();

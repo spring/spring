@@ -72,7 +72,9 @@ void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 			const char* type = "--error";
 
 			if (session && !strcmp(session, "gnome")) {
-				if (flags & MBF_EXCL) type = "--warning";
+				// --warning shows 2 buttons, so it should only be used with a true _warning_
+				// ie. one which allows you to continue/cancel execution
+// 				if (flags & MBF_EXCL) type = "--warning";
 				if (flags & MBF_INFO) type = "--info";
 				execlp("zenity", "zenity", "--title", caption2, type, "--text", msg2, (char*)NULL);
 			}
