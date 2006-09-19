@@ -2685,6 +2685,10 @@ void CGame::HandleChatMsg(std::string s,int player)
 		*a=0;
 	}
 
+	if (s.find(".exception") == 0 && gs->cheatEnabled) {
+		throw std::runtime_error("Exception test");
+	}
+
 	if (s.find(".divbyzero") == 0 && gs->cheatEnabled) {
 		float a = 0;
 		logOutput.Print("Result: %f", 1.0f/a);
