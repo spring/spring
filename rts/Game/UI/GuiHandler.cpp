@@ -1102,8 +1102,8 @@ bool CGuiHandler::AboveGui(int x, int y)
 	    (fy > buttonBox.y1) && (fy < buttonBox.y2)) {
 		return true;
 	}
-	
-	return IconAtPos(x,y)!=-1;
+
+	return (IconAtPos(x,y) >= 0);
 }
 
 
@@ -1691,7 +1691,9 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 			
 			// set the activePage
 			if (!commands[a].onlyKey &&
-			    (((cmdType == CMDTYPE_ICON) && (commands[a].id < 0)) ||
+			    (((cmdType == CMDTYPE_ICON) && 
+			       ((commands[a].id < 0) ||
+			        (commands[a].id == CMD_STOCKPILE))) ||
 			     (cmdType == CMDTYPE_ICON_MODE) ||
 			     (cmdType == CMDTYPE_COMBO_BOX) ||
 			     (cmdType == CMDTYPE_ICON_BUILDING))) {
@@ -1707,7 +1709,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				case CMDTYPE_ICON:{
 					Command c;
 					c.id=commands[a].id;
-					if (c.id < 0) {
+					if ((c.id < 0) || (c.id == CMD_STOCKPILE)) {
 						c.options = 0;
 						if (action.extra == "+5") {
 							c.options = SHIFT_KEY;
