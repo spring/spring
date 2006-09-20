@@ -307,23 +307,29 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 	return best;
 }
 
-int CTransportCAI::GetDefaultCmd(CUnit* pointed,CFeature* feature)
+int CTransportCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
-	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)&&owner->unitDef->canAttack){
-			return CMD_ATTACK;
+	if (pointed) {
+		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+			if (owner->unitDef->canAttack) {
+				return CMD_ATTACK;
+			} else if (CanTransport(pointed)) {
+				return CMD_LOAD_UNITS; // comm napping?
+			}
 		} else {
-			if(CanTransport(pointed))
+			if (CanTransport(pointed)) {
 				return CMD_LOAD_UNITS;
-			else if(owner->unitDef->canGuard)
+			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;
+			}
 		}
 	}
 //	if(((CTransportUnit*)owner)->transported.empty())
-	if(owner->unitDef->canmove)
+	if (owner->unitDef->canmove) {
 		return CMD_MOVE;
-	else
+	} else {
 		return CMD_STOP;
+	}
 //	else
 //		return CMD_UNLOAD_UNITS;
 }

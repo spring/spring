@@ -92,7 +92,10 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
 	}
+
+	nonQueingCommands.insert(CMD_SET_WANTED_MAX_SPEED);
 }
+
 
 CMobileCAI::~CMobileCAI()
 {
@@ -403,13 +406,17 @@ void CMobileCAI::SlowUpdate()
 	}
 }
 
-int CMobileCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
+int CMobileCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
-	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam) && owner->unitDef->canAttack){
-			return CMD_ATTACK;
-		} else if(owner->unitDef->canGuard) {
-			return CMD_GUARD;
+	if (pointed) {
+		if (!gs->Ally(gu->myAllyTeam,pointed->allyteam)) {
+			if (owner->unitDef->canAttack) {
+				return CMD_ATTACK;
+			}
+		} else {
+			if (owner->unitDef->canGuard) {
+				return CMD_GUARD;
+			}
 		}
 	}
 	return CMD_MOVE;
