@@ -66,8 +66,7 @@ class CKeyBindings
 		bool SetFakeMetaKey(const string& keystring);
 		bool AddKeySymbol(const string& keysym, const string& code);
 		bool AddNamedKeySet(const string& name, const string& keyset);
-		bool ParseTypeBind(CFileHandler& file, const string& line,
-											 CKeyAutoBinder& autoBinder);
+		bool ParseTypeBind(CFileHandler& file, const string& line);
 		
 		bool ParseKeySet(const string& keystr, CKeySet& ks) const;
 		bool RemoveCommandFromList(ActionList& al, const string& command);
@@ -99,6 +98,8 @@ class CKeyBindings
 		int debug;
 		int fakeMetaKey;
 		bool userCommand;
+		
+		CKeyAutoBinder* autoBinder;
 };
 
 

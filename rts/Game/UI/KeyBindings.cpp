@@ -214,11 +214,14 @@ CKeyBindings::CKeyBindings()
 	statefulCommands.insert("movedown");
 	statefulCommands.insert("moveslow");
 	statefulCommands.insert("movefast");
+
+	autoBinder = NULL;
 }
 
 
 CKeyBindings::~CKeyBindings()
 {
+	delete autoBinder;
 }
 
 
@@ -570,7 +573,6 @@ bool CKeyBindings::Load(const string& filename)
 {
 //	inComment = false;
 	CFileHandler ifs(filename);
-	CKeyAutoBinder autoBinder;
 	
 	SimpleParser::Init();
 	
@@ -584,7 +586,7 @@ bool CKeyBindings::Load(const string& filename)
 			break;
 		}
 		if (!Command(line)) {
-			ParseTypeBind(ifs, line, autoBinder);
+			ParseTypeBind(ifs, line);
 		}
 	}
 	
@@ -592,12 +594,14 @@ bool CKeyBindings::Load(const string& filename)
 	
 	userCommand = true; // re-enable Sanitize() calls
 
+	delete autoBinder;
+	autoBinder = NULL;
+
 	return true;
 }
 
 
-bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line,
-                                 CKeyAutoBinder& autoBinder)
+bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line)
 {
 	BuildTypeBinding btb;
 
@@ -639,8 +643,13 @@ bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line,
 
 	typeBindings.push_back(btb);
 
-	if (!autoBinder.BindBuildType(btb.keystr,
-	                              btb.reqs, btb.sorts, btb.chords)) {
+	if (autoBinder == NULL) {
+		// only create the autoBinder if it is required
+		autoBinder = new CKeyAutoBinder();
+	}	
+
+	if (!autoBinder->BindBuildType(btb.keystr,
+	                               btb.reqs, btb.sorts, btb.chords)) {
 		return false;
 	}
 
