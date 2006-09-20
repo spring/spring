@@ -1114,6 +1114,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "keyload") {
 		keyBindings->Load("uikeys.txt");
 	}
+	else if (cmd == "keyreload") {
+		keyBindings->Command("unbindall");
+		keyBindings->Command("unbind enter chat");
+		keyBindings->Load("uikeys.txt");
+	}
 	else if (cmd == "keysave") {
 		keyBindings->Save("uikeys.tmp"); // tmp, not txt
 	}
@@ -1484,7 +1489,6 @@ bool CGame::Draw()
 		else {
 			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
 			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
-
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			outlineFont.print(xPixel, yPixel, white, tempstring.c_str());
 		}
@@ -1501,26 +1505,61 @@ bool CGame::Draw()
 		font->glPrintCentered(0.5f, 0.4f, 3.0f, "(or Escape)");
 	}
 
-	if(showClock){
-		glColor4f(1,1,1,1);
+	if (showClock) {
+		char buf[32];
 		const int seconds = (gs->frameNum / 30);
 		if (seconds < 3600) {
-			font->glPrintRight(0.99f, 0.01f, 0.7f, "%02i:%02i",
-			                   seconds / 60, seconds % 60);
+			SNPRINTF(buf, sizeof(buf), "%02i:%02i", seconds / 60, seconds % 60);
 		} else {
-			font->glPrintRight(0.99f, 0.01f, 0.7f, "%02i:%02i:%02i",
-			                   seconds / 3600, (seconds / 60) % 60, seconds % 60);
+			SNPRINTF(buf, sizeof(buf), "%02i:%02i:%02i", seconds / 3600,
+			                                 (seconds / 60) % 60, seconds % 60);
 		}
+		const float xScale = 0.015f;
+		const float yScale = 0.020f;
+		const float tWidth = font->CalcTextWidth(buf) * xScale;
+		glTranslatef(0.99f - tWidth, 0.01f, 1.0f);
+		glScalef(xScale, yScale, 1.0f);
+		glColor4f(1,1,1,1);
+		if (!outlineFont.IsEnabled()) {
+			font->glPrint("%s", buf);
+		} else {
+			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
+			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			outlineFont.print(xPixel, yPixel, white, buf);
+		}
+		glLoadIdentity();
 	}
 
 	if(showPlayerInfo){
-		for(int a=0;a<gs->activePlayers;++a){
-			if(gs->players[a]->active){
+		char buf[128];
+		const float xScale = 0.015f;
+		const float yScale = 0.020f;
+		const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
+		const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+		for (int a=0; a<gs->activePlayers; ++a) {
+			if (gs->players[a]->active) {
+				SNPRINTF(buf, sizeof(buf), "(%i) %s %3.0f%% Ping:%d ms", a,
+				         gs->players[a]->playerName.c_str(), gs->players[a]->cpuUsage*100,
+				         (int)((gs->players[a]->ping-1)*1000/(30*gs->speedFactor)));
+				glTranslatef(0.76f, 0.01f + (0.02f * a), 1.0f);
+				glScalef(xScale, yScale, 1.0f);
 				glColor4ubv(gs->Team(gs->players[a]->team)->color);
-				font->glPrintAt (0.76f, 0.01f + 0.02f * a, 0.7f, "(%i) %s %3.0f%% Ping:%d ms",a,gs->players[a]->playerName.c_str(),gs->players[a]->cpuUsage*100,(int)((gs->players[a]->ping-1)*1000/(30*gs->speedFactor)));
+				if (!outlineFont.IsEnabled()) {
+					font->glPrint("%s", buf);
+				} else {
+					const unsigned char* bColor = gs->Team(gs->players[a]->team)->color;
+					const float color[4] = { (float)bColor[0] / 255.0f,
+					                         (float)bColor[1] / 255.0f,
+					                         (float)bColor[2] / 255.0f,
+					                         (float)bColor[3] / 255.0f };
+					outlineFont.print(xPixel, yPixel, color, buf);
+				}
+				glLoadIdentity();
 			}
 		}
 	}
+
 	if(!hideInterface)
 		infoConsole->Draw();
 
