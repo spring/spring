@@ -21,7 +21,7 @@ extern "C" {
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
-
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 static string IntToString(int value);
 static string BoolToString(bool value);
@@ -88,7 +88,7 @@ bool CKeyAutoBinder::LoadInfo()
 	luaopen_table(L);
 	
 	const string endlStr = "\n";
-	string code = MakeGameInfo() + MakeUnitDefInfo();
+	string code = MakeGameInfo() + MakeWeaponDefInfo() + MakeUnitDefInfo();
 
 	// handy sorting comparison routine
 	code += "function compare(a, b)"                     + endlStr;
@@ -148,6 +148,8 @@ string CKeyAutoBinder::MakeGameInfo()
 }
 
 
+/******************************************************************************/
+
 string CKeyAutoBinder::MakeUnitDefInfo()
 {
 	const string endlStr = "\n";
@@ -196,17 +198,44 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 		ADD_BOOL(isMetalExtractor, ud.type == "MetalExtractor"); // CUSTOM
 
 		ADD_BOOL(isFeature, ud.isFeature);
+
+		// weapons info		
+		float maxRange = 0.0f;
+		bool hasShield = false;
+		bool canParalyze = false;
+		bool canStockpile = false;
+		bool canAttackWater = false;
+		const int weaponCount = (int)ud.weapons.size();
+		code += def + ".weapons = {}" + endlStr;
+		int wCount = 0;
+		for (int w = 0; w < weaponCount; w++) {
+			const WeaponDef* weapon = ud.weapons[w].def;
+			if (weapon) {
+				maxRange = max(maxRange, weapon->range);
+				hasShield = hasShield || weapon->isShield;
+				canParalyze = canParalyze || weapon->paralyzer;
+				canStockpile = canStockpile || weapon->stockpile;
+				canAttackWater = canAttackWater || weapon->waterweapon;
+				code += def + ".weapons[" + IntToString(wCount) + "] = "
+				            + "weaponDefs[" + IntToString(weapon->id) + "]" + endlStr;
+				wCount++;
+			}
+		}
+		ADD_INT(weaponCount,     weaponCount);    // CUSTOM
+		ADD_FLOAT(maxRange,      maxRange);       // CUSTOM
+		ADD_BOOL(hasShield,      hasShield);      // CUSTOM
+		ADD_BOOL(canParalyze,    canParalyze);    // CUSTOM
+		ADD_BOOL(canStockpile,   canStockpile);   // CUSTOM
+		ADD_BOOL(canAttackWater, canAttackWater); // CUSTOM
+		
+		// FIXME:  canShootAir
+		
 		
 		ADD_BOOL(builder,        ud.builder); 
 		ADD_FLOAT(buildSpeed,    ud.buildSpeed);
 		ADD_FLOAT(buildDistance, ud.buildDistance);
 		ADD_INT(builderCount,    ud.buildOptions.size()); // CUSTOM
 
-		ADD_INT(weaponCount,  ud.weapons.size()); // CUSTOM
-		
-		// NEEDED: maxRange, canShootAir, canShootWater, canParalyze
-		
-		
 		ADD_INT(selfDCountdown, ud.selfDCountdown);
 
 		ADD_FLOAT(buildTime,  ud.buildTime); 
@@ -226,6 +255,9 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 		ADD_FLOAT(energyUpkeep,   ud.energyUpkeep);
 		ADD_FLOAT(metalUpkeep,    ud.metalUpkeep);
 
+		ADD_BOOL(needGeo,         ud.needGeo);
+		ADD_BOOL(isMetalMaker,    ud.isMetalMaker);
+
 		// FIXME -- is this right?		
 		const float basicEnergy = (ud.energyMake - ud.energyUpkeep);
 		const float tidalEnergy = (ud.tidalGenerator * readmap->tidalStrength);
@@ -234,9 +266,6 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 			windEnergy = (0.25f * (wind.minWind + wind.maxWind));
 		}
 		ADD_FLOAT(totalEnergyOut, basicEnergy + tidalEnergy + windEnergy); // CUSTOM
-
-		ADD_BOOL(needGeo,         ud.needGeo);
-		ADD_BOOL(isMetalMaker,    ud.isMetalMaker);
 
 		ADD_FLOAT(autoHeal,     ud.autoHeal);
 		ADD_FLOAT(idleAutoHeal, ud.idleAutoHeal);
@@ -393,6 +422,8 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 }
 
 
+/******************************************************************************/
+
 string CKeyAutoBinder::MakeWeaponDefInfo()
 {
 	const string endlStr = "\n";
@@ -400,8 +431,134 @@ string CKeyAutoBinder::MakeWeaponDefInfo()
 
 	code += endlStr;
 	code += "weaponDefs = {}" + endlStr;
+
+	const std::map<std::string, int>& weaponMap = weaponDefHandler->weaponID;
+	std::map<std::string, int>::const_iterator wit;
+	for (wit = weaponMap.begin(); wit != weaponMap.end(); wit++) {
+		const WeaponDef& wd = weaponDefHandler->weaponDefs[wit->second];
+
+		const string def = "weaponDefs[" + IntToString(wit->second) + "]";
+
+		code += endlStr;
+		code += def + " = {}" + endlStr;
+
+#define ADD_W_INT(name, value)    \
+	code += def + "." #name " = " + IntToString(value) + endlStr
+#define ADD_W_BOOL(name, value)   \
+	code += def + "." #name " = " + BoolToString(value) + endlStr
+#define ADD_W_FLOAT(name, value)  \
+	code += def + "." #name " = " + FloatToString(value) + endlStr
+#define ADD_W_STRING(name, value) \
+	code += def + "." #name " = " + SafeString(value) + endlStr
+
+		ADD_W_STRING(name, wd.name);
+		ADD_W_STRING(type, wd.type);
+		
+		// FIXME -- bool the types
+
+		ADD_W_INT(id, wd.id);
+
+		ADD_W_FLOAT(range,           wd.range);
+		ADD_W_FLOAT(heightmod,       wd.heightmod);
+		ADD_W_FLOAT(accuracy,        wd.accuracy);
+		ADD_W_FLOAT(sprayangle,      wd.sprayangle);
+		ADD_W_FLOAT(movingAccuracy,  wd.movingAccuracy);
+		ADD_W_FLOAT(targetMoveError, wd.targetMoveError);
+
+		//DamageArray damages;
+
+		ADD_W_FLOAT(areaOfEffect,     wd.areaOfEffect);
+		ADD_W_BOOL(noSelfDamage,      wd.noSelfDamage);
+		ADD_W_FLOAT(fireStarter,      wd.fireStarter);
+		ADD_W_FLOAT(edgeEffectivness, wd.edgeEffectivness);
+		ADD_W_FLOAT(size,             wd.size);
+		ADD_W_FLOAT(sizeGrowth,       wd.sizeGrowth);
+		ADD_W_FLOAT(collisionSize,    wd.collisionSize);
+
+		ADD_W_INT(salvoSize,    wd.salvosize);
+		ADD_W_FLOAT(salvoDelay, wd.salvodelay);
+		ADD_W_FLOAT(reload,     wd.reload);
+		ADD_W_FLOAT(beamTime,   wd.beamtime);
+
+		ADD_W_FLOAT(maxAngle, wd.maxAngle);
+		ADD_W_FLOAT(restTime, wd.restTime);
+
+		ADD_W_FLOAT(uptime, wd.uptime);
+
+		ADD_W_FLOAT(metalCost,  wd.metalcost);
+		ADD_W_FLOAT(energyCost, wd.energycost);
+		ADD_W_FLOAT(supplyCost, wd.supplycost);
+
+		ADD_W_BOOL(turret,      wd.turret);
+		ADD_W_BOOL(onlyForward, wd.onlyForward);
+		ADD_W_BOOL(waterweapon, wd.waterweapon);
+		ADD_W_BOOL(tracks,      wd.tracks);
+		ADD_W_BOOL(dropped,     wd.dropped);
+		ADD_W_BOOL(paralyzer,   wd.paralyzer);
+
+		ADD_W_BOOL(noAutoTarget,   wd.noAutoTarget);			//cant target stuff (for antinuke,dgun)
+		ADD_W_BOOL(manualFire,     wd.manualfire);			//use dgun button
+		ADD_W_INT(interceptor,     wd.interceptor);				//anti nuke
+		ADD_W_INT(targetable,      wd.targetable);				//nuke (can be shot by interceptor)
+		ADD_W_BOOL(stockpile,      wd.stockpile);					
+		ADD_W_FLOAT(coverageRange, wd.coverageRange);		//range of anti nuke
+
+		ADD_W_FLOAT(intensity,      wd.intensity);
+		ADD_W_FLOAT(thickness,      wd.thickness);
+		ADD_W_FLOAT(laserFlareSize, wd.laserflaresize);
+		ADD_W_FLOAT(coreThickness,  wd.corethickness);
+		ADD_W_FLOAT(duration,       wd.duration);
+
+		ADD_W_INT(graphicsType, wd.graphicsType);
+		ADD_W_BOOL(soundTrigger, wd.soundTrigger);
+
+		ADD_W_BOOL(selfExplode,         wd.selfExplode);
+		ADD_W_BOOL(gravityAffected,     wd.gravityAffected);
+		ADD_W_BOOL(twoPhase,            wd.twophase);
+		ADD_W_BOOL(guided,              wd.guided);
+		ADD_W_BOOL(vlaunch,             wd.vlaunch);
+		ADD_W_BOOL(selfProp,            wd.selfprop);
+		ADD_W_BOOL(noExplode,           wd.noExplode);
+		ADD_W_FLOAT(startVelocity,      wd.startvelocity);
+		ADD_W_FLOAT(weaponAcceleration, wd.weaponacceleration);
+		ADD_W_FLOAT(turnRate,           wd.turnrate);
+		ADD_W_FLOAT(maxVelocity,        wd.maxvelocity);
+
+		ADD_W_FLOAT(projectileSpeed, wd.projectilespeed);
+		ADD_W_FLOAT(explosionSpeed,  wd.explosionSpeed);
+
+		ADD_W_INT(onlyTargetCategory, (int)wd.onlyTargetCategory);
+
+		// missiles
+		ADD_W_FLOAT(wobble, wd.wobble);						//how much the missile will wobble around its course
+		ADD_W_FLOAT(trajectoryHeight, wd.trajectoryHeight);			//how high trajectory missiles will try to fly in
+
+		ADD_W_BOOL(largeBeamLaser, wd.largeBeamLaser);
+
+		// shields
+		ADD_W_BOOL(isShield,                wd.isShield);
+		ADD_W_BOOL(shieldRepulser,          wd.shieldRepulser);
+		ADD_W_BOOL(smartShield,             wd.smartShield);
+		ADD_W_BOOL(exteriorShield,          wd.exteriorShield);
+		ADD_W_BOOL(visibleShield,           wd.visibleShield);
+		ADD_W_BOOL(visibleShieldRepulse,    wd.visibleShieldRepulse);
+		ADD_W_FLOAT(shieldEnergyUse,        wd.shieldEnergyUse);
+		ADD_W_FLOAT(shieldRadius,           wd.shieldRadius);
+		ADD_W_FLOAT(shieldForce,            wd.shieldForce);
+		ADD_W_FLOAT(shieldMaxSpeed,         wd.shieldMaxSpeed);
+		ADD_W_FLOAT(shieldPower,            wd.shieldPower);
+		ADD_W_FLOAT(shieldPowerRegen,       wd.shieldPowerRegen);
+		ADD_W_FLOAT(shieldPowerRegenEnergy, wd.shieldPowerRegenEnergy);
+		ADD_W_FLOAT(shieldAlpha,            wd.shieldAlpha);
+
+		ADD_W_INT(shieldInterceptType,     (int)wd.shieldInterceptType);
+		ADD_W_INT(interceptedByShieldType, (int)wd.interceptedByShieldType);
+
+		ADD_W_BOOL(avoidFriendly, wd.avoidFriendly);
+		ADD_W_INT(collisionFlags, (int)wd.collisionFlags);
+	}
 	
-	// FIXME -- kinda empty right now...
+	return code;
 }
 
 
