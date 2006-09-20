@@ -37,6 +37,7 @@ void CWordCompletion::Reset()
 	words["/unbindaction "] = wp;
 	words["/unbindkeyset "] = wp;
 	words["/keyload"] = wp;
+	words["/keyreload"] = wp;
 	words["/keysave"] = wp;
 	words["/keysyms"] = wp;
 	words["/keycodes"] = wp;
