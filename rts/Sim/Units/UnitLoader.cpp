@@ -149,6 +149,9 @@ START_TIME_PROFILE;
 	
 	if(ud->highTrajectoryType==1)
 		unit->useHighTrajectory=true;
+		
+	if(ud->noAutoFire)
+		unit->fireState=0;
 
 	if(build){
 		unit->ChangeLos(1,1);
