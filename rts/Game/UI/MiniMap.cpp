@@ -245,6 +245,19 @@ void CMiniMap::Draw()
 	glVertex2f(1,1);
 	glVertex2f(0,1);
 	glEnd();
+
+	// outline
+	glLineWidth(1.51f);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glViewport(xpos - 1, ypos - 1, width + 2, height + 2);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+	glViewport(xpos - 2, ypos - 2, width + 4, height + 4);
+	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glLineWidth(1.0f);
+	
 	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 }
 
