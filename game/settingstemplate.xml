@@ -25,7 +25,7 @@
 						<ListItemSettingAssigner assignto="scrheight" value="1200"/>
 					</ListItem>
 				</Listbox> 
-				<Indent minwidth="100"/>
+				<Checkbox caption="Fullscreen?" property="Fullscreen" hint="Run in windowed or fullscreen mode"/>
 			</Row>
 			<Row>
 				<Label caption="Screen width:"/>
@@ -36,7 +36,7 @@
 				<Label caption="Screen height:"/>
 				<Editbox tag="scrheight" hint="Screen height in pixels" property="YResolution" default="600"/>
 				<Indent minwidth="100"/>
-			</Row>			
+			</Row>
 		</Category>
 		<Category name="Rendering">
 			<Row>
