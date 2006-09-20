@@ -8,6 +8,8 @@
 #include <cctype>
 #include "SDL_keysym.h"
 #include "KeyCodes.h"
+#include "KeySet.h"
+#include "KeyAutoBinder.h"
 #include "SimpleParser.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -25,27 +27,31 @@ static const struct DefaultBinding {
 }
 defaultBindings[] = {
 
-	{ "Any+esc",    "quit"  },
+	{ "Any+esc", "quit"  },
 
-	{ "Any+pause",  "pause" },
+	{ "Any+pause", "pause" },
 
-	{ "Any+b",   "debug"                },
-	{ "Any+o",   "singlestep"           },
-	{ "Any+c",   "controlunit"          },
-	{ "Any+h",   "sharedialog"          },
-	{ "Any+l",   "togglelos"            },
-	{ "Any+;",   "toggleradarandjammer" },
+	{ "Any+b", "debug"                },
+	{ "Any+o", "singlestep"           },
+	{ "Any+c", "controlunit"          },
+	{ "Any+h", "sharedialog"          },
+	{ "Any+l", "togglelos"            },
+	{ "Any+;", "toggleradarandjammer" },
 
 	{ "Any+tab", "toggleoverview"       },
 
-	{ "Any+j", "mouse2" },
-
+	{ "Any+j",         "mouse2" },
 	{ "Any+backspace", "mousestate" },
+
+	{ "Any+i", "gameinfo" },
 
 	{ "Any+enter", "chat" },
 
 	{ "Any+home", "increaseViewRadius" },
 	{ "Any+end",  "decreaseViewRadius" },
+
+	{ "Ctrl+insert", "hotbind"   },
+	{ "Ctrl+delete", "hotunbind" },
 
 	{ "Any+insert", "speedup"  },
 	{ "Any+delete", "slowdown" },
@@ -53,8 +59,10 @@ defaultBindings[] = {
 	{ "Any++",      "speedup"  },
 	{ "Any+-",      "slowdown" },
 
-	{ "Any+.", "incguiopacity" },
-	{ "Any+,", "decguiopacity" },
+	{       ",", "prevmenu" },
+	{       ".", "nextmenu" },
+	{ "Shift+,", "decguiopacity" },
+	{ "Shift+.", "incguiopacity" },
 
 	{ "Any+0", "group0" },
 	{ "Any+1", "group1" },
@@ -69,71 +77,80 @@ defaultBindings[] = {
 
 	{ "Any+c", "controlunit" },
 	
-	{ "[",       "buildfacing inc"  },
+	{       "[", "buildfacing inc"  },
 	{ "Shift+[", "buildfacing inc"  },
-	{ "]",       "buildfacing dec"  },
+	{       "]", "buildfacing dec"  },
 	{ "Shift+]", "buildfacing dec"  },
-	{ "z",       "buildspacing inc" },
-	{ "x",       "buildspacing dec" },
+	{       "z", "buildspacing inc" },
+	{       "x", "buildspacing dec" },
 	{ "Shift+z", "buildspacing inc" },
 	{ "Shift+x", "buildspacing dec" },
 
-	{ "d",            "dgun"        },
-	{ "Shift+d",      "dgun"        },
-	{ "Ctrl+d",       "selfd"       },
+	{            "d", "dgun"        },
+	{      "Shift+d", "dgun"        },
+	{       "Ctrl+d", "selfd"       },
 	{ "Ctrl+Shift+d", "selfd"       },
-	{ "s",            "stop"        },
-	{ "Shift+s",      "stop"        },
-	{ "w",            "wait"        },
-	{ "Shift+w",      "wait"        },
-	{ "m",            "move"        },
-	{ "Shift+m",      "move"        },
-	{ "a",            "attack"      },
-	{ "Shift+a",      "attack"      },
-	{ "f",            "fight"       },
-	{ "Shift+f",      "fight"       },
-	{ "p",            "patrol"      },
-	{ "Shift+p",      "patrol"      },
-	{ "g",            "guard"       },
-	{ "Shift+g",      "guard"       },
-	{ "e",            "reclaim"     },
-	{ "Shift+e",      "reclaim"     },
-	{ "r",            "repair"      },
-	{ "Shift+r",      "repair"      },
-	{ "l",            "loadunits"   },
-	{ "Shift+l",      "loadunits"   },
-	{ "u",            "unloadunits" },
-	{ "Shift+u",      "unloadunits" },
-	{ "k",            "cloak"       },
-	{ "Shift+k",      "cloak"       },
-	{ "x",            "onoff"       },
-	{ "Shift+x",      "onoff"       },
+	{            "s", "stop"        },
+	{      "Shift+s", "stop"        },
+	{            "w", "wait"        },
+	{      "Shift+w", "wait"        },
+	{            "m", "move"        },
+	{      "Shift+m", "move"        },
+	{            "a", "attack"      },
+	{      "Shift+a", "attack"      },
+	{        "Alt+a", "areaattack"  },
+	{  "Alt+Shift+a", "areaattack"  },
+	{            "f", "fight"       },
+	{      "Shift+f", "fight"       },
+	{            "p", "patrol"      },
+	{      "Shift+p", "patrol"      },
+	{            "g", "guard"       },
+	{      "Shift+g", "guard"       },
+	{            "e", "reclaim"     },
+	{      "Shift+e", "reclaim"     },
+	{            "r", "repair"      },
+	{      "Shift+r", "repair"      },
+	{            "l", "loadunits"   },
+	{      "Shift+l", "loadunits"   },
+	{            "u", "unloadunits" },
+	{      "Shift+u", "unloadunits" },
+	{            "k", "cloak"       },
+	{      "Shift+k", "cloak"       },
+	{            "x", "onoff"       },
+	{      "Shift+x", "onoff"       },
 
-	{ "q",       "groupselect" },
-	{ "q",       "groupadd"    },
-	{ "Ctrl+q",  "aiselect"    },
+	{       "q", "groupselect" },
+	{       "q", "groupadd"    },
+	{  "Ctrl+q", "aiselect"    },
 	{ "Shift+q", "groupclear"  },
 
 	{ "Any+t", "track" },
 
-	{ "Any+f1",  "showElevation"   },
-	{ "Any+f2",  "ShowPathMap"     },
-	{ "Any+f3",  "LastMsgPos"      },
-	{ "Any+f4",  "ShowMetalMap"    },
-	{ "Any+f5",  "hideinterface"   },
-	{ "Any+f6",  "NoSound"         },
-	{ "Any+f7",  "dynamicSky"      },
-	{ "Any+f8",  "savegame"        },
-	{ "Any+f9",  "showhealthbars"  },
-	{ "Any+f10", "createvideo"     },
-	{ "Any+f11", "screenshot"      },
-	{ "Any+f12", "screenshot"      },
+	{ "Ctrl+f1", "viewfps" },
+	{ "Ctrl+f2", "viewta"  },
+	{ "Ctrl+f3", "viewtw"  },
+	{ "Ctrl+f4", "viewrot" },
+
+	{ "Any+f1",  "showElevation"  },
+	{ "Any+f2",  "ShowPathMap"    },
+	{ "Any+f3",  "LastMsgPos"     },
+	{ "Any+f4",  "ShowMetalMap"   },
+	{ "Any+f5",  "hideinterface"  },
+	{ "Any+f6",  "NoSound"        },
+	{ "Any+f7",  "dynamicSky"     },
+	{ "Any+f8",  "savegame"       },
+	{ "Any+f9",  "showhealthbars" },
+	{ "Any+f10", "createvideo"    },
+	{ "Any+f11", "screenshot"     },
+	{ "Any+f12", "screenshot"     },
 
 	// NOTE: Up bindings are currently converted to press bindings
 	//       (see KeySet.cpp / DISALLOW_RELEASE_BINDINGS)
 	
 	{    "Any+`",    "drawinmap"  },
 	{ "Up+Any+`",    "drawinmap"  },
+	{    "Any+\\",   "drawinmap"  },
+	{ "Up+Any+\\",   "drawinmap"  },
 	{    "Any+0xa7", "drawinmap"  },
 	{ "Up+Any+0xa7", "drawinmap"  },
 
@@ -502,7 +519,7 @@ void CKeyBindings::LoadDefaults()
 
 bool CKeyBindings::Command(const string& line)
 {
-	vector<string> words = SimpleParser::Tokenize(line, 2);
+	const vector<string> words = SimpleParser::Tokenize(line, 2);
 
 	if (words.size() <= 0) {
 		return false;
@@ -534,6 +551,7 @@ bool CKeyBindings::Command(const string& line)
 		bindings.clear();
 		keyCodes->Reset();
 		namedKeySets.clear();
+		typeBindings.clear();
 		Bind("enter", "chat"); // bare minimum
 	}
 	else {
@@ -552,7 +570,8 @@ bool CKeyBindings::Load(const string& filename)
 {
 //	inComment = false;
 	CFileHandler ifs(filename);
-
+	CKeyAutoBinder autoBinder;
+	
 	SimpleParser::Init();
 	
 	userCommand = false; // temporarily disable Sanitize() calls
@@ -564,12 +583,81 @@ bool CKeyBindings::Load(const string& filename)
 		if (line.empty()) {
 			break;
 		}
-		Command(line);
+		if (!Command(line)) {
+			ParseTypeBind(ifs, line, autoBinder);
+		}
 	}
 	
 	Sanitize();
 	
 	userCommand = true; // re-enable Sanitize() calls
+
+	return true;
+}
+
+
+bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line,
+                                 CKeyAutoBinder& autoBinder)
+{
+	BuildTypeBinding btb;
+
+	const vector<string> words = SimpleParser::Tokenize(line, 2);
+	if ((words.size() == 3) &&
+			(words[2] == "{") && (StringToLower(words[0]) == "bindbuildtype")) {
+		btb.keystr = words[1];
+	} else {
+		return false;
+	}
+
+	while (true) {
+		const string line = SimpleParser::GetCleanLine(ifs);
+		if (line.empty()) {
+			return false;
+		}
+
+		const vector<string> words = SimpleParser::Tokenize(line, 1);
+		if ((words.size() == 1) && (words[0] == "}")) {
+			break;
+		}
+
+		const string command = StringToLower(words[0]);
+
+		if ((command == "req") || (command == "require")) {
+			btb.reqs.push_back(words[1]);
+		}
+		else if (command == "sort") {
+			btb.sorts.push_back(words[1]);
+		}
+		else if (command == "chords") {
+			// split them up, tack them on  (in order)
+			const vector<string> chords = SimpleParser::Tokenize(line, 0);
+			for (int i = 1; i < (int)chords.size(); i++) {
+				btb.chords.push_back(chords[i]);
+			}
+		}
+	}
+
+/*
+	printf("bindbuildtype %s {\n", btb.keystr.c_str());
+	int i;
+	for (int i = 0; i < (int)btb.reqs.size(); i++) {
+		printf("  req     %s\n", btb.reqs[i].c_str());
+	}
+	for (int i = 0; i < (int)btb.sorts.size(); i++) {
+		printf("  sort    %s\n", btb.sorts[i].c_str());
+	}
+	for (int i = 0; i < (int)btb.chords.size(); i++) {
+		printf("  chords  %s\n", btb.chords[i].c_str());
+	}
+	printf("}\n", btb.keystr.c_str());
+*/
+
+	typeBindings.push_back(btb);
+
+	if (!autoBinder.BindBuildType(btb.keystr,
+	                              btb.reqs, btb.sorts, btb.chords)) {
+		return false;
+	}
 
 	return true;
 }

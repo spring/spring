@@ -16,6 +16,8 @@ using namespace std;
 
 
 class CUnit;
+class CFileHandler;
+class CKeyAutoBinder;
 
 
 class CKeyBindings
@@ -64,7 +66,9 @@ class CKeyBindings
 		bool SetFakeMetaKey(const string& keystring);
 		bool AddKeySymbol(const string& keysym, const string& code);
 		bool AddNamedKeySet(const string& name, const string& keyset);
-
+		bool ParseTypeBind(CFileHandler& file, const string& line,
+											 CKeyAutoBinder& autoBinder);
+		
 		bool ParseKeySet(const string& keystr, CKeySet& ks) const;
 		bool RemoveCommandFromList(ActionList& al, const string& command);
 
@@ -81,6 +85,14 @@ class CKeyBindings
 		typedef map<string, CKeySet> NamedKeySetMap; // user defined keysets
 		NamedKeySetMap namedKeySets;
 
+		struct BuildTypeBinding {
+			string keystr;         // principal keyset
+			vector<string> reqs;   // requirements
+			vector<string> sorts;  // sorting criteria
+			vector<string> chords; // enumerated keyset chords
+		};
+		vector<BuildTypeBinding> typeBindings;
+		
 		// commands that use both Up and Down key presses		
 		set<string> statefulCommands;
 
