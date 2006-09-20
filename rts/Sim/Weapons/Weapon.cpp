@@ -229,9 +229,10 @@ void CWeapon::Update()
 		nextSalvo=gs->frameNum+salvoDelay;
 		owner->lastFireWeapon=gs->frameNum;
 		
-		// add a shot count if it helps to end the current 'attack ground' command
-		// (the 'salvoLeft' check is done because the positions may already have been adjusted)
-		if ((salvoLeft == (salvoSize - 1)) &&
+		// add to the commandShotCount if this is the last salvo,
+		// and it is being directed towards the current target
+		// (helps when deciding if a queued ground attack order has been completed)
+		if ((salvoLeft == 0) &&
 		    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos)) ||
 				((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
 			owner->commandShotCount++;
