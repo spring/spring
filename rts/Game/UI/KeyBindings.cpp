@@ -637,21 +637,6 @@ bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line,
 		}
 	}
 
-/*
-	printf("bindbuildtype %s {\n", btb.keystr.c_str());
-	int i;
-	for (int i = 0; i < (int)btb.reqs.size(); i++) {
-		printf("  req     %s\n", btb.reqs[i].c_str());
-	}
-	for (int i = 0; i < (int)btb.sorts.size(); i++) {
-		printf("  sort    %s\n", btb.sorts[i].c_str());
-	}
-	for (int i = 0; i < (int)btb.chords.size(); i++) {
-		printf("  chords  %s\n", btb.chords[i].c_str());
-	}
-	printf("}\n", btb.keystr.c_str());
-*/
-
 	typeBindings.push_back(btb);
 
 	if (!autoBinder.BindBuildType(btb.keystr,
