@@ -558,26 +558,29 @@ void CBuilderCAI::SlowUpdate()
 	CMobileCAI::SlowUpdate();
 }
 
-int CBuilderCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
+int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
-	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
-			if(owner->maxRange>0)
+	if (pointed) {
+		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+			if (owner->unitDef->canAttack && (owner->maxRange > 0)) {
 				return CMD_ATTACK;
-			else if(pointed->unitDef->reclaimable && owner->unitDef->canReclaim)
+			} else if (owner->unitDef->canReclaim && pointed->unitDef->reclaimable) {
 				return CMD_RECLAIM;
+			}
 		} else {
-			if(pointed->health<pointed->maxHealth)
+			if (owner->unitDef->canRepair && (pointed->health < pointed->maxHealth)) {
 				return CMD_REPAIR;
-			else
+			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;
+			}
 		}
 	}
-	if(feature){
-		if(owner->unitDef->canResurrect && !feature->createdFromUnit.empty())
+	if (feature) {
+		if (owner->unitDef->canResurrect && !feature->createdFromUnit.empty()) {
 			return CMD_RESURRECT;
-		else if(owner->unitDef->canReclaim && feature->def->destructable)
+		} else if(owner->unitDef->canReclaim && feature->def->destructable) {
 			return CMD_RECLAIM;
+		}
 	}
 	return CMD_MOVE;
 }

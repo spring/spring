@@ -563,13 +563,17 @@ void CAirCAI::SlowUpdate()
 	}
 }
 
-int CAirCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
+int CAirCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
-	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam)){
-			return CMD_ATTACK;
+	if (pointed) {
+		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+			if (owner->unitDef->canAttack) {
+				return CMD_ATTACK;
+			}
 		} else {
-			return CMD_MOVE;
+			if (owner->unitDef->canGuard) {
+				return CMD_GUARD;
+			}
 		}
 	}
 	return CMD_MOVE;

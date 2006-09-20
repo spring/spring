@@ -97,24 +97,24 @@ CCommandAI::CCommandAI(CUnit* owner)
 			possibleCommands.push_back(c);
 			nonQueingCommands.insert(CMD_FIRE_STATE);
 		}
-
-		c.params.clear();
-		c.id=CMD_MOVE_STATE;
-		c.action="movestate";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Move state";
-		c.params.push_back("1");
-		c.params.push_back("Hold pos");
-		c.params.push_back("Maneuver");
-		c.params.push_back("Roam");
-		c.tooltip="Move State: Sets how far out of its way\n an unit will move to attack enemies";
-		possibleCommands.push_back(c);
-		owner->moveState=1;
-		nonQueingCommands.insert(CMD_MOVE_STATE);
-	}else{
-		owner->moveState=0;
+	} else{
+		owner->fireState=0;
 	}
 
+	c.params.clear();
+	c.id=CMD_MOVE_STATE;
+	c.action="movestate";
+	c.type=CMDTYPE_ICON_MODE;
+	c.name="Move state";
+	c.params.push_back("1");
+	c.params.push_back("Hold pos");
+	c.params.push_back("Maneuver");
+	c.params.push_back("Roam");
+	c.tooltip="Move State: Sets how far out of its way\n an unit will move to attack enemies";
+	possibleCommands.push_back(c);
+	owner->moveState=1;
+	nonQueingCommands.insert(CMD_MOVE_STATE);
+ 
 	c.params.clear();
 	c.id=CMD_REPEAT;
 	c.action="repeat";
@@ -209,8 +209,9 @@ void CCommandAI::GiveCommand(Command& c)
 			break;
 		}
 		case CMD_FIRE_STATE: {
-			if(c.params.empty())
+			if (c.params.empty() || owner->unitDef->noAutoFire) {
 				return;
+			}
 			owner->fireState=(int)c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_FIRE_STATE){
@@ -326,20 +327,30 @@ void CCommandAI::GiveCommand(Command& c)
 			return;
 		}
 	}
-    
-	if(!(c.options & SHIFT_KEY)){
+
+	// bail early, do not check for overlaps or queue cancelling 
+	if (c.id == CMD_SET_WANTED_MAX_SPEED) {    
+		commandQue.push_back(c);
+		if(commandQue.size()==1 && !owner->beingBuilt) {
+			SlowUpdate();
+		}
+		return;
+	}
+	
+	if(!(c.options & SHIFT_KEY)) {
 		if(!commandQue.empty()){
-			if(commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_AREA_ATTACK
-				|| commandQue.front().id==CMD_DGUN)
-			{
+			if ((commandQue.front().id == CMD_ATTACK)      ||
+			    (commandQue.front().id == CMD_AREA_ATTACK) ||
+			    (commandQue.front().id == CMD_DGUN)) {
 				owner->AttackUnit(0,true);
 			}
 
-			if((c.id==CMD_STOP || c.id==CMD_WAIT) && commandQue.front().id==CMD_WAIT)
- 				commandQue.pop_front();
- 			else
+			if((c.id==CMD_STOP || c.id==CMD_WAIT) && commandQue.front().id==CMD_WAIT) {
+				commandQue.pop_front();
+			} else {
 				commandQue.clear();
- 		}
+			}
+		}
 		inCommand=false;
 		if(orderTarget){
 			DeleteDeathDependence(orderTarget);
@@ -348,6 +359,9 @@ void CCommandAI::GiveCommand(Command& c)
 	}
 
 	if(c.id == CMD_PATROL){
+		if(!owner->unitDef->canPatrol){
+			return;
+		}
 		std::deque<Command>::iterator ci = commandQue.begin();
 		for(; ci != commandQue.end() && ci->id!=CMD_PATROL; ci++);
 		if(ci==commandQue.end()){
@@ -572,11 +586,14 @@ void CCommandAI::SlowUpdate()
 	}
 }
 
-int CCommandAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
+int CCommandAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
-	if(pointed){
-		if(!gs->Ally(gu->myAllyTeam,pointed->allyteam) && owner->unitDef->canAttack)
-			return CMD_ATTACK;
+	if (pointed) {
+		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+			if (owner->unitDef->canAttack) {
+				return CMD_ATTACK;
+			}
+		}
 	}
 	return CMD_STOP;
 }

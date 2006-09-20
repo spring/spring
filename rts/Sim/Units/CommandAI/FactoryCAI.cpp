@@ -203,8 +203,15 @@ void CFactoryCAI::SlowUpdate()
 	return;
 }
 
-int CFactoryCAI::GetDefaultCmd(CUnit *pointed,CFeature* feature)
+int CFactoryCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
+	if (pointed) {
+		if (gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+			if (owner->unitDef->canGuard) {
+				return CMD_GUARD;
+			}
+		}
+	}
 	return CMD_MOVE;
 }
 
