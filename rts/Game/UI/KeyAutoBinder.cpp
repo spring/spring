@@ -105,7 +105,7 @@ bool CKeyAutoBinder::LoadInfo()
 	code += "  return 0.0"                               + endlStr;
 	code += "end"                                        + endlStr;
 
-	if (keyBindings->GetDebug()) {
+	if (keyBindings->GetDebug() > 0) {
 		printf("%s", code.c_str());
 	}
 
@@ -430,7 +430,7 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	const string reqCall = MakeRequirementCall(requirements);
 	const string sortCall = MakeSortCriteriaCall(sortCriteria);
 
-	if (keyBindings->GetDebug()) {  
+	if (keyBindings->GetDebug() > 0) {  
 		printf("reqCall(%s):\n%s\n", keystr.c_str(), reqCall.c_str());
 		printf("sortCall(%s):\n%s\n", keystr.c_str(), sortCall.c_str());
 	}
@@ -468,7 +468,7 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 		if ((i < chords.size()) && (StringToLower(chords[i]) != "none")) {
 			keyBindings->Command(bindStr + " " + chords[i] + " " + action);
 		}
-		if (keyBindings->GetDebug()) {  
+		if (keyBindings->GetDebug() > 0) {  
 			printf("%s\n", string(bindStr + " " + keystr + " " + action).c_str());
 		}
 	}
