@@ -76,6 +76,13 @@ CGuiHandler::CGuiHandler()
 }
 
 
+CGuiHandler::~CGuiHandler()
+{
+	delete icons;
+	glDeleteTextures (1, &iconMap[0].texture);
+}
+
+
 static bool SafeAtoF(float& var, const string& value)
 {
 	char* endPtr;
@@ -360,13 +367,6 @@ bool CGuiHandler::LoadCMDBitmap (int id, char* filename)
 	iconMap[id] = icondata;
 
 	return true;
-}
-
-
-CGuiHandler::~CGuiHandler()
-{
-	delete icons;
-	glDeleteTextures (1, &iconMap[0].texture);
 }
 
 
@@ -1557,27 +1557,6 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		printf("iconsSize       = %i\n", iconsSize);
 		printf("iconsCount      = %i\n", iconsCount);
 		printf("commands.size() = %i\n", commands.size());
-
-		FILE* f = fopen("showcommands.txt", "wt");
-		if (f) {
-			// bonus command for debugging
-			fprintf(f, "Available Commands:\n");
-			for(int i = 0; i < commands.size(); ++i){
-				fprintf(f, "  command: %i, id = %i, action = %s\n",
-							 i, commands[i].id, commands[i].action.c_str());
-			}
-			// show the icon/command linkage
-			fprintf(f, "Icon Linkage:\n");
-			for(int ii = 0; ii < iconsCount; ++ii){
-				fprintf(f, "  icon: %i, commandsID = %i\n", ii, icons[ii].commandsID);
-			}
-			fprintf(f, "maxPage         = %i\n", maxPage);
-			fprintf(f, "activePage      = %i\n", activePage);
-			fprintf(f, "iconsSize       = %i\n", iconsSize);
-			fprintf(f, "iconsCount      = %i\n", iconsCount);
-			fprintf(f, "commands.size() = %i\n", commands.size());
-			fclose(f);
-		}
 		return true;
 	}
 
@@ -1734,9 +1713,9 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 			switch(cmdType) {
 				case CMDTYPE_ICON:{
 					Command c;
-					c.id=commands[a].id;
+					c.options = 0;
+					c.id = commands[a].id;
 					if ((c.id < 0) || (c.id == CMD_STOCKPILE)) {
-						c.options = 0;
 						if (action.extra == "+5") {
 							c.options = SHIFT_KEY;
 						} else if (action.extra == "+20") {
@@ -1752,8 +1731,6 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 						} else if (action.extra == "-100") {
 							c.options = RIGHT_MOUSE_KEY |SHIFT_KEY | CONTROL_KEY;
 						}
-					} else {
-						CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
 					}
 					selectedUnits.GiveCommand(c);
 					break;
@@ -1776,9 +1753,9 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					commands[a].params[0] = t;
 
 					Command c;
+					c.options = 0;
 					c.id = commands[a].id;
 					c.params.push_back(newMode);
-					CreateOptions(c, false); //(button==SDL_BUTTON_LEFT?0:1));
 					selectedUnits.GiveCommand(c);
 					break;
 				}
@@ -1812,9 +1789,9 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 						for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
 							if (action.extra == *pi) {
 								Command c;
+								c.options = 0;
 								c.id = cd.id;
 								c.params.push_back(p);
-								CreateOptions(c, false);
 								selectedUnits.GiveCommand(c);
 								return true;
 							}
