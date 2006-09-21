@@ -469,6 +469,11 @@ void CGuiHandler::LayoutIcons()
 			icon.selection.y1 = icon.visual.y1 + noGap;
 			icon.selection.y2 = icon.visual.y2 - noGap;
 		}
+		else {
+			// make sure this icon does not get selected
+			icon.selection.x1 = icon.selection.x2 = -1.0f;
+			icon.selection.y1 = icon.selection.y2 = -1.0f;
+		}
 	}
 
 	// append the Prev and Next commands  (if required)
