@@ -184,6 +184,7 @@
 //  bind              Any+t  track
 //
 //  bind              Any+`  drawinmap
+//  bind              Any+\  drawinmap
 //  bind           Any+0xa7  drawinmap
 //
 //  bind           Any+home  increaseViewRadius
