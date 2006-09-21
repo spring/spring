@@ -40,10 +40,18 @@ CSelectedUnits::CSelectedUnits()
 	buildIconsFirst = !!configHandler.GetInt("BuildIconsFirst", 0);
 }
 
+
 CSelectedUnits::~CSelectedUnits()
 {
-
 }
+
+
+void CSelectedUnits::ToggleBuildIconsFirst()
+{
+	buildIconsFirst = !buildIconsFirst;
+	possibleCommandsChanged = true;
+}
+
 
 CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 {
@@ -202,13 +210,8 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	return ac;
 }
 
-void CSelectedUnits::ToggleBuildIconsFirst()
-{
-	buildIconsFirst = !buildIconsFirst;
-	possibleCommandsChanged = true;
-}
 
-void CSelectedUnits::GiveCommand(Command c,bool fromUser)
+void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 {
 //	logOutput.Print("Command given %i",c.id);
 	if(gu->spectating || selectedUnits.empty())
@@ -223,7 +226,7 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 		}
 	}
 
-	if(c.id==CMD_GROUPCLEAR){
+	if (c.id == CMD_GROUPCLEAR) {
 		for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 			if((*ui)->group){
 				(*ui)->SetGroup(0);
@@ -232,18 +235,11 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 		}
 		return;
 	}
-
-	if(selectedGroup!=-1 && (grouphandler->groups[selectedGroup]->ai || c.id==CMD_AISELECT)){
-		grouphandler->groups[selectedGroup]->GiveCommand(c);
-		return;
-	}
-
-	if(c.id==CMD_GROUPSELECT){
+	else if (c.id == CMD_GROUPSELECT) {
 		SelectGroup((*selectedUnits.begin())->group->id);
 		return;
 	}
-
-	if(c.id==CMD_GROUPADD){
+	else if (c.id == CMD_GROUPADD) {
 		CGroup* group=0;
 		for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 			if((*ui)->group){
@@ -261,8 +257,7 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 		}
 		return;
 	}
-
-	if(c.id==CMD_AISELECT){
+	else if (c.id == CMD_AISELECT) {
 		if(c.params[0]!=0){
 			map<AIKey,string>::iterator aai;
 			int a=0;
@@ -278,7 +273,13 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 		}
 		return;
 	}
-//	selectedUnitsAI.GiveCommand(c);
+
+//	FIXME:  selectedUnitsAI.GiveCommand(c);
+
+	if ((selectedGroup != -1) && grouphandler->groups[selectedGroup]->ai) {
+		grouphandler->groups[selectedGroup]->GiveCommand(c);
+		return;
+	}
 
 	SendCommand(c);
 
@@ -288,6 +289,7 @@ void CSelectedUnits::GiveCommand(Command c,bool fromUser)
 			sound->PlayUnitReply((*ui)->unitDef->sounds.ok.id, (*ui), (*ui)->unitDef->sounds.ok.volume, true);
 	}
 }
+
 
 void CSelectedUnits::AddUnit(CUnit* unit)
 {
@@ -303,6 +305,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 	POP_CODE_MODE;
 }
 
+
 void CSelectedUnits::RemoveUnit(CUnit* unit)
 {
 	selectedUnits.erase(unit);
@@ -315,6 +318,7 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 	unit->commandAI->selected=false;
 	POP_CODE_MODE;
 }
+
 
 void CSelectedUnits::ClearSelected()
 {
@@ -331,6 +335,7 @@ void CSelectedUnits::ClearSelected()
 	possibleCommandsChanged=true;
 	selectedGroup=-1;
 }
+
 
 void CSelectedUnits::SelectGroup(int num)
 {
@@ -350,6 +355,7 @@ void CSelectedUnits::SelectGroup(int num)
 	possibleCommandsChanged=true;
 	selectionChanged=true;
 }
+
 
 void CSelectedUnits::Draw()
 {
@@ -392,6 +398,7 @@ void CSelectedUnits::Draw()
 	glEnable(GL_DEPTH_TEST);
 }
 
+
 void CSelectedUnits::DependentDied(CObject *o)
 {
 	selectedUnits.erase((CUnit*)o);
@@ -399,10 +406,12 @@ void CSelectedUnits::DependentDied(CObject *o)
 	possibleCommandsChanged=true;
 }
 
+
 void CSelectedUnits::NetSelect(vector<int>& s,int player)
 {
-	netSelected[player]=s;
+	netSelected[player] = s;
 }
+
 
 void CSelectedUnits::NetOrder(Command &c, int player)
 {
@@ -438,6 +447,7 @@ void CSelectedUnits::NetOrder(Command &c, int player)
 		}
 	}*/
 }
+
 
 bool CSelectedUnits::CommandsChanged()
 {
@@ -557,6 +567,7 @@ void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 		possibleCommandsChanged=true;
 }
 
+
 void CSelectedUnits::DrawCommands(void)
 {
 	glDisable(GL_TEXTURE_2D);
@@ -648,6 +659,7 @@ std::string CSelectedUnits::GetTooltip(void)
 	return s;
 }
 
+
 void CSelectedUnits::SetCommandPage(int page)
 {
 	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
@@ -656,6 +668,7 @@ void CSelectedUnits::SetCommandPage(int page)
 	if(!selectedUnits.empty())
 		(*selectedUnits.begin())->commandAI->lastSelectedCommandPage=page;
 }
+
 
 void CSelectedUnits::SendSelection(void)
 {
@@ -667,6 +680,7 @@ void CSelectedUnits::SendSelection(void)
 	net->SendSTLData<unsigned char, std::vector<short> >(NETMSG_SELECT, gu->myPlayerNum, selectedUnitIDs);
 	selectionChanged=false;
 }
+
 
 void CSelectedUnits::SendCommand(Command& c)
 {
