@@ -1552,6 +1552,27 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		printf("iconsSize       = %i\n", iconsSize);
 		printf("iconsCount      = %i\n", iconsCount);
 		printf("commands.size() = %i\n", commands.size());
+
+		FILE* f = fopen("showcommands.txt", "wt");
+		if (f) {
+			// bonus command for debugging
+			fprintf(f, "Available Commands:\n");
+			for(int i = 0; i < commands.size(); ++i){
+				fprintf(f, "  command: %i, id = %i, action = %s\n",
+							 i, commands[i].id, commands[i].action.c_str());
+			}
+			// show the icon/command linkage
+			fprintf(f, "Icon Linkage:\n");
+			for(int ii = 0; ii < iconsCount; ++ii){
+				fprintf(f, "  icon: %i, commandsID = %i\n", ii, icons[ii].commandsID);
+			}
+			fprintf(f, "maxPage         = %i\n", maxPage);
+			fprintf(f, "activePage      = %i\n", activePage);
+			fprintf(f, "iconsSize       = %i\n", iconsSize);
+			fprintf(f, "iconsCount      = %i\n", iconsCount);
+			fprintf(f, "commands.size() = %i\n", commands.size());
+			fclose(f);
+		}
 		return true;
 	}
 
