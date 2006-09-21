@@ -15,6 +15,11 @@ function MissionTest:GetMapName()
     return "SmallDivide.smf"
 end
 
+-- Return the modname this script wants
+function MissionTest:GetModName()
+    return "xtape.sd7"
+end
+
 -- This function is executed every simulated frame (30 times/sec)
 function MissionTest:Update()
 
