@@ -24,6 +24,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "Platform/ConfigHandler.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 #define fs (FileSystemHandler::GetInstance())
@@ -154,7 +155,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 		char c = *i;
 #ifdef DEBUG
 		if (braces>=5)
-			fprintf(stderr,"glob_to_regex warning: braces nested too deeply\n%s\n", glob.c_str());
+			logOutput.Print("glob_to_regex warning: braces nested too deeply\n%s", glob.c_str());
 #endif
 		switch (c) {
 			case '*':
@@ -170,7 +171,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 			case '}':
 #ifdef DEBUG
 				if (!braces)
-					fprintf(stderr,"glob_to_regex warning: closing brace without an equivalent opening brace\n%s\n", glob.c_str());
+					logOutput.Print("glob_to_regex warning: closing brace without an equivalent opening brace\n%s", glob.c_str());
 #endif
 				regex+=')';
 				braces--;
@@ -184,7 +185,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 			case '\\':
 #ifdef DEBUG
 				if (++i==glob.end())
-					fprintf(stderr,"glob_to_regex warning: pattern ends with backslash\n%s\n", glob.c_str());
+					logOutput.Print("glob_to_regex warning: pattern ends with backslash\n%s", glob.c_str());
 #else
 				++i;
 #endif
@@ -197,7 +198,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 	}
 #ifdef DEBUG
 	if (braces)
-		fprintf(stderr,"glob_to_regex warning: unterminated brace expression\n%s\n", glob.c_str());
+		logOutput.Print("glob_to_regex warning: unterminated brace expression\n%s", glob.c_str());
 #endif
 	return regex;
 }

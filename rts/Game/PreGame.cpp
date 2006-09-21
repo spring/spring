@@ -266,7 +266,7 @@ bool CPreGame::Update()
 			// Map all required archives depending on selected mod(s)
 			vector<string> ars = archiveScanner->GetArchives(modName);
 			if (ars.empty())
-				fprintf(stderr, "Warning: mod archive \"%s\" is missing?\n", modName.c_str());
+				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", modName.c_str());
 			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 				hpiHandler->AddArchive(*i, false);
 
@@ -274,6 +274,8 @@ bool CPreGame::Update()
 			CFileHandler* f = new CFileHandler("maps/" + mapName);
 			if (!f->FileExists()) {
 				vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+				if (ars.empty())
+					logOutput.Print("Warning: map archive \"%s\" is missing?\n", mapName.c_str());
 				for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 					hpiHandler->AddArchive(*i, false);
 				}

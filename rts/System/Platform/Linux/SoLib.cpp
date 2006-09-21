@@ -7,6 +7,8 @@
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
  */
+#include <vector>
+#include "LogOutput.h"
 #include "SoLib.h"
 #include <dlfcn.h>
 
@@ -18,7 +20,7 @@ SoLib::SoLib(const char *filename)
 {
 	so = dlopen(filename,RTLD_LAZY);
 	if (so == NULL)
-		fprintf(stderr, "%s:%d: SoLib::SoLib: %s\n", __FILE__, __LINE__, dlerror());
+		logOutput.Print("%s:%d: SoLib::SoLib: %s", __FILE__, __LINE__, dlerror());
 }
 
 /**
@@ -36,6 +38,6 @@ void *SoLib::FindAddress(const char *symbol)
 {
 	void* p = dlsym(so,symbol);
 	if (p == NULL)
-		fprintf(stderr, "%s:%d: SoLib::FindAddress: %s\n", __FILE__, __LINE__, dlerror());
+		logOutput.Print("%s:%d: SoLib::FindAddress: %s", __FILE__, __LINE__, dlerror());
 	return p;
 }

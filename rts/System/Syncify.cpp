@@ -8,6 +8,7 @@
 #include <string.h>
 #include "bget.h"
 #include "Platform/errorhandler.h"
+#include "LogOutput.h"
 
 #ifndef _WIN32
 #include <sys/mman.h>
@@ -165,8 +166,8 @@ namespace Syncify{
 		// int munmap (void *ADDR, size_t LENGTH);
 		munmap(SyncedMem,   SUPER_BLOCK_SIZE);
 		munmap(UnsyncedMem, SUPER_BLOCK_SIZE);
-		fprintf(stderr, "Max synced memory usage   : %uM\n", commitedSynced/(1024*1024));
-		fprintf(stderr, "Max unsynced memory usage : %uM\n", commitedUnsynced/(1024*1024));
+		logOutput.Print("Max synced memory usage   : %uM", commitedSynced/(1024*1024));
+		logOutput.Print("Max unsynced memory usage : %uM", commitedUnsynced/(1024*1024));
 #endif
 		syncifyInitialized=false;
 	}
