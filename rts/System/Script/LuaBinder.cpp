@@ -46,6 +46,8 @@ struct CScript_wrapper : CScript, wrap_base
 	static void Update_static(CScript *ptr) { ptr->CScript::Update(); }
 	virtual string GetMapName() { string x; check( x = call<string>("GetMapName"); ); return x; }
 	static string GetMapName_static(CScript *ptr) { return ptr->CScript::GetMapName(); }
+	virtual string GetModName() { string x; check( x = call<string>("GetModName"); ); return x; }
+	static string GetModName_static(CScript *ptr) { return ptr->CScript::GetModName(); }
 	virtual void GotChatMsg(const string& msg, int player) { check( call<void>("GotChatMsg", msg, player); ); }
 	static void GotChatMsg_static(CScript *ptr, const string& msg, int player) { ptr->CScript::GotChatMsg(msg, player); }
 };
