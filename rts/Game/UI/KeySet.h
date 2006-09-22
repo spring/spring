@@ -34,12 +34,12 @@ class CKeySet {
 		};
 
 		int  Key()     const { return key; }
-		bool Alt()     const { return (modifiers & KS_ALT); }
-		bool Ctrl()    const { return (modifiers & KS_CTRL); }
-		bool Meta()    const { return (modifiers & KS_META); }
-		bool Shift()   const { return (modifiers & KS_SHIFT); }
-		bool AnyMod()  const { return (modifiers & KS_ANYMOD); }
-		bool Release() const { return (modifiers & KS_RELEASE); }
+		bool Alt()     const { return !!(modifiers & KS_ALT); }
+		bool Ctrl()    const { return !!(modifiers & KS_CTRL); }
+		bool Meta()    const { return !!(modifiers & KS_META); }
+		bool Shift()   const { return !!(modifiers & KS_SHIFT); }
+		bool AnyMod()  const { return !!(modifiers & KS_ANYMOD); }
+		bool Release() const { return !!(modifiers & KS_RELEASE); }
 
 		bool operator<(const CKeySet& ks) const
 		{

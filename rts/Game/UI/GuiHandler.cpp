@@ -1137,7 +1137,7 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 	float dist=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
 	float dist2=helper->GuiTraceRayFeature(camera->pos,mouse->dir,gu->viewRange*1.4f,feature);
 
-	if(dist>gu->viewRange*1.4f-100 && dist2>gu->viewRange*1.4f-100 && unit==0){
+	if(dist>gu->viewRange*1.4f-300 && dist2>gu->viewRange*1.4f-300 && unit==0){
 		return -1;
 	}
 
@@ -2059,7 +2059,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 			CUnit* unit=0;
 			float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
-			if(dist2>gu->viewRange*1.4f-100){
+			if(dist2>gu->viewRange*1.4f-300){
 				return defaultRet;
 			}
 
@@ -2122,7 +2122,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
 				float dist3=helper->GuiTraceRayFeature(camera->pos,mouse->dir,gu->viewRange*1.4f,feature);
 
-				if(dist2>gu->viewRange*1.4f-100 && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>8900)){
+				if(dist2>gu->viewRange*1.4f-300 && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>gu->viewRange*1.4f-300)){
 					return defaultRet;
 				}
 
