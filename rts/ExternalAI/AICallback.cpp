@@ -747,12 +747,12 @@ float CAICallback::GetMetal()
 
 float CAICallback::GetMetalIncome()
 {
-	return gs->Team(team)->oldMetalIncome;
+	return gs->Team(team)->prevMetalIncome;
 }
 
 float CAICallback::GetMetalUsage()
 {
-	return gs->Team(team)->oldMetalExpense;	
+	return gs->Team(team)->prevMetalExpense;	
 }
 
 float CAICallback::GetMetalStorage()
@@ -767,12 +767,12 @@ float CAICallback::GetEnergy()
 
 float CAICallback::GetEnergyIncome()
 {
-	return gs->Team(team)->oldEnergyIncome;
+	return gs->Team(team)->prevEnergyIncome;
 }
 
 float CAICallback::GetEnergyUsage()
 {
-	return gs->Team(team)->oldEnergyExpense;	
+	return gs->Team(team)->prevEnergyExpense;	
 }
 
 float CAICallback::GetEnergyStorage()

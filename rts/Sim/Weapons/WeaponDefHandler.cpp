@@ -83,7 +83,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(collideFriendly, "1", weaponname + "\\CollideFriendly");
 	sunparser->GetDef(collideFeature, "1", weaponname + "\\CollideFeature");
 	if(!collideFriendly)
-		weaponDefs[id].collisionFlags+=COLLISION_NOFRIEDNLY;
+		weaponDefs[id].collisionFlags+=COLLISION_NOFRIENDLY;
 	if(!collideFeature)
 		weaponDefs[id].collisionFlags+=COLLISION_NOFEATURE;
 

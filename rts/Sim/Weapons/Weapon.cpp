@@ -158,8 +158,8 @@ void CWeapon::Update()
 			buildPercent+=p;
 		} else {
 			// update the energy and metal required counts
-			gs->Team(owner->team)->energyPullAmount += energyFireCost*p;
-			gs->Team(owner->team)->metalPullAmount += metalFireCost*p;
+			gs->Team(owner->team)->energyPull += energyFireCost*p;
+			gs->Team(owner->team)->metalPull += metalFireCost*p;
 		}
 		if(buildPercent>=1){
 			buildPercent=0;
@@ -218,8 +218,8 @@ void CWeapon::Update()
 				// update the energy and metal required counts
 				const int minPeriod = max(1, (int)(reloadTime / owner->reloadSpeed));
 				const float averageFactor = 1.0f / (float)minPeriod;
-				gs->Team(owner->team)->energyPullAmount += averageFactor * energyFireCost;
-				gs->Team(owner->team)->metalPullAmount += averageFactor * metalFireCost;
+				gs->Team(owner->team)->energyPull += averageFactor * energyFireCost;
+				gs->Team(owner->team)->metalPull += averageFactor * metalFireCost;
 			}
 		}
 	}

@@ -483,7 +483,7 @@ void CProjectileHandler::CheckUnitCol()
 
 			for(vector<CUnit*>::iterator ui(units.begin());ui!=units.end();++ui){
 				CUnit* unit=*ui;
-				if(p->owner == unit || ((p->collisionFlags&COLLISION_NOFRIEDNLY) && p->owner && (unit->allyteam==p->owner->allyteam)) )
+				if(p->owner == unit || ((p->collisionFlags&COLLISION_NOFRIENDLY) && p->owner && (unit->allyteam==p->owner->allyteam)) )
 					continue;
 
 				float ispeedf=1.0f/speedf;
