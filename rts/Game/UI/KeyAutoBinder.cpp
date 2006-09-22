@@ -19,6 +19,7 @@ extern "C" {
 #include "Game/Team.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -234,6 +235,14 @@ bool CKeyAutoBinder::LoadUnitDefInfo()
 		code += def + ".springCategories = "
 		            + GetCategoryTableFromBits(ud.category) + endlStr;
 
+		// damage type IDs are offset by 1
+		const int damageID = damageArrayHandler->GetTypeFromName(ud.name);
+		if (damageID > 0) {
+			ADD_STRING(armorType, damageArrayHandler->typeList[damageID - 1]);
+		} else {
+			ADD_STRING(armorType, "");
+		}
+
 		ADD_STRING(type,           ud.type);
 		ADD_BOOL(isBomber,         ud.type == "Bomber");         // CUSTOM
 		ADD_BOOL(isFighter,        ud.type == "Fighter");        // CUSTOM
@@ -258,15 +267,25 @@ bool CKeyAutoBinder::LoadUnitDefInfo()
 		code += def + ".weapons = {}" + endlStr;
 		int wCount = 0;
 		for (int w = 0; w < weaponCount; w++) {
-			const WeaponDef* weapon = ud.weapons[w].def;
+			const UnitDef::UnitDefWeapon& udw = ud.weapons[w];
+			const WeaponDef* weapon = udw.def;
 			if (weapon) {
 				maxRange = max(maxRange, weapon->range);
 				hasShield = hasShield || weapon->isShield;
 				canParalyze = canParalyze || weapon->paralyzer;
 				canStockpile = canStockpile || weapon->stockpile;
 				canAttackWater = canAttackWater || weapon->waterweapon;
-				code += def + ".weapons[" + IntToString(wCount) + "] = "
-				            + "weaponDefs[" + IntToString(weapon->id) + "]" + endlStr;
+
+				const string wdef = def + ".weapons[" + IntToString(wCount) + "]";
+				code += wdef + " = {}" + endlStr;
+				code += wdef + ".weaponDef = "
+				             + "weaponDefs[" + IntToString(weapon->id) + "]" + endlStr;
+				code += wdef + ".fuelUsage = "
+				             + FloatToString(udw.fuelUsage) + endlStr;
+				code += wdef + ".badTargets = "
+				             + GetCategoryTableFromBits(udw.badTargetCat) + endlStr;
+				code += wdef + ".onlyTargets = "
+				             + GetCategoryTableFromBits(udw.onlyTargetCat) + endlStr;
 				wCount++;
 			}
 		}
@@ -403,7 +422,6 @@ bool CKeyAutoBinder::LoadUnitDefInfo()
 
 		ADD_FLOAT(maxWaterDepth,   ud.maxWaterDepth);
 		ADD_FLOAT(armoredMultiple, ud.armoredMultiple);
-		ADD_INT(armorType,         ud.armorType);
 
 		//aircraft stuff
 		ADD_FLOAT(wingDrag,     ud.wingDrag); 
@@ -567,8 +585,26 @@ bool CKeyAutoBinder::LoadWeaponDefInfo()
 		ADD_W_FLOAT(movingAccuracy,  wd.movingAccuracy);
 		ADD_W_FLOAT(targetMoveError, wd.targetMoveError);
 
-		// FIXME: DamageArray damages;
-
+		code += def + ".damages = {";
+		const std::vector<std::string>& typeList = damageArrayHandler->typeList;
+		const int damageTypeCount = (int)typeList.size();
+		for (int dt = 0; dt < damageTypeCount; dt++) {
+			// types IDs are offset by 1
+			code += " [" + SafeString(typeList[dt]) + "] = " +
+			        FloatToString(wd.damages.damages[dt + 1]);
+			if (dt != (damageTypeCount - 1)) {
+				code += ",";
+			} else {
+				code += " ";
+			}
+		}
+		code += "}" + endlStr;
+		ADD_W_INT(paralyzeDamageTime, wd.damages.paralyzeDamageTime);
+		ADD_W_FLOAT(impulseFactor,    wd.damages.impulseFactor);
+		ADD_W_FLOAT(impulseBoost,     wd.damages.impulseBoost);
+		ADD_W_FLOAT(craterMult,       wd.damages.craterMult);
+		ADD_W_FLOAT(craterBoost,      wd.damages.craterBoost);
+		
 		ADD_W_FLOAT(areaOfEffect,     wd.areaOfEffect);
 		ADD_W_BOOL(noSelfDamage,      wd.noSelfDamage);
 		ADD_W_FLOAT(fireStarter,      wd.fireStarter);
@@ -651,11 +687,9 @@ bool CKeyAutoBinder::LoadWeaponDefInfo()
 		ADD_W_FLOAT(shieldPowerRegenEnergy, wd.shieldPowerRegenEnergy);
 		ADD_W_FLOAT(shieldAlpha,            wd.shieldAlpha);
 
-		// FIXME: shield bits?
-		code += def + ".shieldInterceptType = "
-		            + GetCategoryTableFromBits(wd.shieldInterceptType) + endlStr;
-		code += def + ".interceptedByShieldType = "
-		            + GetCategoryTableFromBits(wd.interceptedByShieldType) + endlStr;
+		// bitfields
+		ADD_W_INT(shieldInterceptType,     (int)wd.shieldInterceptType);
+		ADD_W_INT(interceptedByShieldType, (int)wd.interceptedByShieldType);
 
 		const bool collisionNoFeature =
 			(wd.collisionFlags & COLLISION_NOFEATURE) == 0;

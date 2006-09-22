@@ -627,10 +627,14 @@ bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line)
 		const string command = StringToLower(words[0]);
 
 		if ((command == "req") || (command == "require")) {
-			btb.reqs.push_back(words[1]);
+			if (words.size() > 1) {
+				btb.reqs.push_back(words[1]);
+			}
 		}
 		else if (command == "sort") {
-			btb.sorts.push_back(words[1]);
+			if (words.size() > 1) {
+				btb.sorts.push_back(words[1]);
+			}
 		}
 		else if (command == "chords") {
 			// split them up, tack them on  (in order)
