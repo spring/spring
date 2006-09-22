@@ -2,6 +2,15 @@ TASpring change log
 
 0.73b1
 
+- added "ctrlpanel.txt" configuration file to control how the Control Panel
+  is rendered (x/y icons counts, sizes, positions, prev/next menu icon
+  locations, etc...)
+- added an option in "ctrlpanel.txt" to render some of the screen text with
+  an outlined font. This is a hack, and can cause FPS decreases on slower
+  computers (main factor is blended fill-rate)
+
+- added an outline around the minimap
+
 - fixed reclaim exploit where extra metal was gained if you destroyed the building just before it would finish reclaiming.
 
 - added "cmdcolors.txt" settings file to configure control indicator rendering
@@ -13,8 +22,10 @@ TASpring change log
 - removed "NoSound" config parameter in favour of "MaxSounds=0"
 - passthru to the NullSound driver if there is a sound driver error
 
+- added a page number to the control panel
 - added "buildiconsfirst" command to toggle the order of control panel icons
-  (also added a 'B' when the build icons are being placed first)
+  (also set the control panel page number to the cmdcolors.txt build color
+   when the build icons are being placed first)
 
 - added build range circles for immobile builders when holding shift over them
 
@@ -103,6 +114,7 @@ TASpring change log
 - added "unbindKeyset    <keyset>" command
 - added "unbindAction    <action>" command
 - added "unbind <keyset> <action>" command
+- added "bindbuildtype ..."        command  (aka: auto-binder)
 
 - added "hotbind"   action for the control panel icons  (Ctrl+insert)
 - added "hotunbind" action for the control panel icons  (Ctrl+delete)
@@ -130,21 +142,21 @@ TASpring change log
 
 - Quit and Share menus close when they receive ESC
 
-- added "drawlabel" action       (Alt+`)  (avoid the double-click, and key repeats)
+- added "drawlabel" action  (avoid the double-click, and key repeats)
 
-- added "screenshot png" action  (F11)
+- added "screenshot png" action
 
-- added "chatAll"        action  (Ctrl+enter) (aka: Ctrl+m)
-- added "chatSwitchAll"  action  (Ctrl+enter) (aka: Ctrl+m)
-- added "chatAlly"       action  (Alt+enter)
-- added "chatSwitchAlly" action  (Alt+enter)
-- added "chatSpec"       action  (Shift+enter)
-- added "chatSwitchSpec" action  (Shift+enter)
+- added "chatAll"        action
+- added "chatSwitchAll"  action
+- added "chatAlly"       action
+- added "chatSwitchAlly" action
+- added "chatSpec"       action
+- added "chatSwitchSpec" action
 
 - added tracked unit rotation
 - added Average and Extents tracking modes
-- added "trackoff"  action   (Shift+t)
-- added "trackmode" action   (Ctrl+t)
+- added "trackoff"  action
+- added "trackmode" action
 
 - added "viewfps" action     (Ctrl+f1)
 - added "viewta"  action     (Ctrl+f2)
