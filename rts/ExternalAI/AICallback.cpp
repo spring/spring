@@ -722,8 +722,8 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 			bool good=true;
 			int xsize=bi.GetXSize();
 			int ysize=bi.GetYSize();
-			for(int z2=max(0,zs-ysize/2-minDist);z2<min(gs->mapy,zs+ysize+minDist);++z2){
-				for(int x2=max(0,xs-xsize/2-minDist);x2<min(gs->mapx,xs+xsize+minDist);++x2){
+			for(int z2=max(0,zs-ysize/2-minDist);z2<min(gs->mapy,zs+(ysize+1)/2+minDist);++z2){
+				for(int x2=max(0,xs-xsize/2-minDist);x2<min(gs->mapx,xs+(xsize+1)/2+minDist);++x2){
 					CSolidObject* so=readmap->groundBlockingObjectMap[z2*gs->mapx+x2];
 					if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
 						good=false;
