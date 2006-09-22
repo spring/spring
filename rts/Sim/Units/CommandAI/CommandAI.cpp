@@ -101,19 +101,26 @@ CCommandAI::CCommandAI(CUnit* owner)
 		owner->fireState=0;
 	}
 
-	c.params.clear();
-	c.id=CMD_MOVE_STATE;
-	c.action="movestate";
-	c.type=CMDTYPE_ICON_MODE;
-	c.name="Move state";
-	c.params.push_back("1");
-	c.params.push_back("Hold pos");
-	c.params.push_back("Maneuver");
-	c.params.push_back("Roam");
-	c.tooltip="Move State: Sets how far out of its way\n an unit will move to attack enemies";
-	possibleCommands.push_back(c);
-	owner->moveState=1;
-	nonQueingCommands.insert(CMD_MOVE_STATE);
+	if(owner->unitDef->canmove)
+	{
+		c.params.clear();
+		c.id=CMD_MOVE_STATE;
+		c.action="movestate";
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Move state";
+		c.params.push_back("1");
+		c.params.push_back("Hold pos");
+		c.params.push_back("Maneuver");
+		c.params.push_back("Roam");
+		c.tooltip="Move State: Sets how far out of its way\n an unit will move to attack enemies";
+		possibleCommands.push_back(c);
+		owner->moveState=1;
+		nonQueingCommands.insert(CMD_MOVE_STATE);
+	}
+	else
+	{
+		owner->moveState=0;
+	}
  
 	c.params.clear();
 	c.id=CMD_REPEAT;
