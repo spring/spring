@@ -1128,6 +1128,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	/* Push out the polygons. */
 	glPushMatrix();
 	glTranslatef3(pos);
+	glRotatef(facing*90.0f,0,1,0);
 
 	model->DrawStatic();
 	glPopMatrix();
