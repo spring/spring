@@ -235,12 +235,12 @@ std::string CResourceBar::GetTooltip(int x, int y)
 
 	if (mx < (box.x1 + 0.36f)) {
 		return "Shows your stored metal as well as\n"
-		       "income(green) and expidentures (red)\n"
+		       "income(green) and expenditures (red)\n"
 		       "Click in the bar to select your\n"
 		       "auto share level";
 	}
 	return "Shows your stored energy as well as\n"
-	       "income(green) and expidentures (red)\n"
+	       "income(green) and expenditures (red)\n"
 	       "Click in the bar to select your\n"
 	       "auto share level";
 }

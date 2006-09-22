@@ -2,6 +2,7 @@
 #define __DAMAGE_ARRAY_HANDLER_H__
 
 #include <string>
+#include <vector>
 #include <map>
 
 class CDamageArrayHandler
@@ -13,6 +14,7 @@ public:
 
 	int numTypes;
 	std::map<std::string,int> name2type;
+	std::vector<std::string> typeList;
 };
 
 extern CDamageArrayHandler* damageArrayHandler;
