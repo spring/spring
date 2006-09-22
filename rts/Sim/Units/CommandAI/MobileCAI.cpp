@@ -208,12 +208,13 @@ void CMobileCAI::SlowUpdate()
 	
 	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
 	// to the current command  (and ignore them when it's their turn)
-	if (commandQue.size() > 1) {
+	if (commandQue.size() >= 2) {
 		deque<Command>::iterator it = commandQue.begin();
 		it++;
-		if (it->id == CMD_SET_WANTED_MAX_SPEED) {
+		const Command& c = *it;
+		if ((c.id == CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
 			const float defMaxSpeed = (owner->unitDef->speed / 30.0f);
-			const float newMaxSpeed = min(it->params[0], defMaxSpeed);
+			const float newMaxSpeed = min(c.params[0], defMaxSpeed);
 			owner->moveType->SetMaxSpeed(newMaxSpeed);
 		}
 	}	 
@@ -225,7 +226,12 @@ void CMobileCAI::SlowUpdate()
 		CCommandAI::SlowUpdate();
 		break;}
 	case CMD_SET_WANTED_MAX_SPEED:{
-		FinishCommand(); // skip it
+	  if (repeatOrders && (commandQue.size() >= 2) &&
+	      (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
+	  	commandQue.push_back(commandQue.front());
+		}
+		commandQue.pop_front();
+		SlowUpdate();
 		break;}
 	case CMD_MOVE:{
 		float3 pos(c.params[0],c.params[1],c.params[2]);
@@ -347,9 +353,12 @@ void CMobileCAI::SlowUpdate()
 			}
 		}
 		else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
-			StopMove();
-			FinishCommand();
-			break;
+			// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
+			if ((commandQue.size() != 2) || (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
+				StopMove();
+				FinishCommand();
+				break;
+			}
 		}
 
 		if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[owner->allyteam] & LOS_INRADAR))){
