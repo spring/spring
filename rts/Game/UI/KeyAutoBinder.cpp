@@ -983,7 +983,7 @@ static string GetCategoryTable(const vector<string> cats)
 
 static string GetCategoryTableFromBits(unsigned int bits)
 {
-	vector<string> cats = categoryHandler->GetCategoryNames(bits);
+	vector<string> cats = CCategoryHandler::Instance()->GetCategoryNames(bits);
 	return GetCategoryTable(cats);
 }
 
