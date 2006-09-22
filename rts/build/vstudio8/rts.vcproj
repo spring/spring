@@ -468,6 +468,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Game\UI\KeyAutoBinder.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\KeyAutoBinder.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\UI\KeyBindings.cpp"
 					>
 				</File>
