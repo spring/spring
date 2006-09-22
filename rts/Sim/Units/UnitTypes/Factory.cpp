@@ -110,7 +110,7 @@ void CFactory::Update()
 		int buildPiece = GetBuildPiece();
 		CMatrix44f mat=localmodel->GetPieceMatrix(buildPiece);
 		int h=GetHeadingFromVector(mat[2],mat[10]);
-		curBuild->heading=h;
+		curBuild->heading = (h + buildFacing*16*1024) & 65535;
 
 		float3 buildPos = curBuild->pos = CalcBuildPos(buildPiece);
 		if(curBuild->floatOnWater)
