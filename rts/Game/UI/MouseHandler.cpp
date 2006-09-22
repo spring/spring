@@ -570,7 +570,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,true);
 	float dist2=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4f,feature);
 
-	if(dist>gu->viewRange*1.4f-100 && dist2>gu->viewRange*1.4f-100 && unit==0){
+	if(dist>gu->viewRange*1.4f-300 && dist2>gu->viewRange*1.4f-300 && unit==0){
 		return "";
 	}
 

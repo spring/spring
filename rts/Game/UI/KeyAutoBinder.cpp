@@ -115,7 +115,7 @@ bool CKeyAutoBinder::LoadGameInfo()
 
 	code += "game = {}" + endlStr;
 
-	code += "game.commEnds = "  + BoolToString(gs->gameMode) + endlStr;
+	code += "game.commEnds = "  + BoolToString(!!gs->gameMode) + endlStr;
 	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
 	code += "game.gravity = "   + FloatToString(gravity) + endlStr;
 	code += "game.tidal = "     + FloatToString(readmap->tidalStrength) + endlStr;
@@ -918,7 +918,7 @@ bool CKeyAutoBinder::HasRequirements(int unitDefID)
 		lua_pop(L, 1);
 		return false;
 	}
-	const bool value = lua_toboolean(L, -1);
+	const bool value = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -935,7 +935,7 @@ bool CKeyAutoBinder::IsBetter(int thisDefID, int thatDefID)
 		lua_pop(L, 1);
 		return false;
 	}
-	const bool value = lua_toboolean(L, -1);
+	const bool value = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
