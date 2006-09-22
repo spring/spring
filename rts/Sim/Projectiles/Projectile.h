@@ -17,7 +17,7 @@ class CFeature;
 class CVertexArray;
 struct S3DOModel;
 
-#define COLLISION_NOFRIEDNLY		1
+#define COLLISION_NOFRIENDLY		1
 #define COLLISION_NOFEATURE			2
 
 class CProjectile : public CWorldObject

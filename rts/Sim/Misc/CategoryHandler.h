@@ -2,6 +2,7 @@
 #define __CATEGORY_HANDLER_H__
 
 #include <string>
+#include <vector>
 #include <map>
 
 class CCategoryHandler;
@@ -17,6 +18,7 @@ public:
 
 	unsigned int GetCategory(std::string name);
 	unsigned int GetCategories(std::string names);
+	std::vector<std::string> GetCategoryNames(unsigned int bits) const;
 
 	int firstUnused;
 

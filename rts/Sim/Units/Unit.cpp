@@ -1088,8 +1088,8 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 				return true;
 			} else {
 				// update the energy and metal required counts
-				gs->Team(builder->team)->energyPullAmount += energyUse;
-				gs->Team(builder->team)->metalPullAmount += metalUse;
+				gs->Team(builder->team)->energyPull += energyUse;
+				gs->Team(builder->team)->metalPull += metalUse;
 			}
 			return false;
 		} else {
@@ -1264,7 +1264,7 @@ bool CUnit::UseMetal(float metal)
 		AddMetal(-metal);
 		return true;
 	}
-	gs->Team(team)->metalPullAmount += metal;
+	gs->Team(team)->metalPull += metal;
 	bool canUse=gs->Team(team)->UseMetal(metal);
 	if(canUse)
 		metalUseI += metal;
@@ -1287,7 +1287,7 @@ bool CUnit::UseEnergy(float energy)
 		AddEnergy(-energy);
 		return true;
 	}
-	gs->Team(team)->energyPullAmount += energy;
+	gs->Team(team)->energyPull += energy;
 	bool canUse=gs->Team(team)->UseEnergy(energy);
 	if(canUse)
 		energyUseI += energy;

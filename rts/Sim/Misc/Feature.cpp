@@ -179,8 +179,8 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return true;
 		} else {
 			// update the energy and metal required counts
-			gs->Team(builder->team)->energyPullAmount += energyUse;
-			gs->Team(builder->team)->metalPullAmount += metalUse;
+			gs->Team(builder->team)->energyPull += energyUse;
+			gs->Team(builder->team)->metalPull += metalUse;
 		}
 		return false;
 

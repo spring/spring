@@ -20,27 +20,22 @@ CTeam::CTeam()
 : active(false),
 	metal(200000),
 	energy(900000),
-	metalIncome(0),
-	energyIncome(0),
-	metalUpkeep(0),
-	energyUpkeep(0),
-	metalExpense(0),
-	energyExpense(0),
-	metalPullAmount(0),
-	energyPullAmount(0),
-	prevEnergyPull(0),
-	prevMetalPull(0),
-	oldMetalIncome(0),
-	oldEnergyIncome(0),
-	oldMetalUpkeep(0),
-	oldEnergyUpkeep(0),
-	oldMetalExpense(0),
-	oldEnergyExpense(0),
+	metalPull(0),     prevMetalPull(0),
+	metalIncome(0),   prevMetalIncome(0),
+	metalExpense(0),  prevMetalExpense(0),
+	metalUpkeep(0),   prevMetalUpkeep(0),
+	energyPull(0),    prevEnergyPull(0),
+	energyIncome(0),  prevEnergyIncome(0),
+	energyExpense(0), prevEnergyExpense(0),
+	energyUpkeep(0),  prevEnergyUpkeep(0),
 	metalStorage(1000000),
 	energyStorage(1000000),
 	metalShare(0.99f),
 	energyShare(0.95f),
-	tempMetalIncome(0),
+	metalSent(0),
+	metalReceived(0),
+	energySent(0),
+	energyReceived(0),
 	side("arm"),
 	startPos(100,100,100),
 	handicap(1),
@@ -60,7 +55,7 @@ CTeam::~CTeam()
 
 bool CTeam::UseMetal(float amount)
 {
-	if(metal-oldMetalUpkeep*10>=amount){
+	if(metal-prevMetalUpkeep*10>=amount){
 		metal-=amount;
 		metalExpense+=amount;
 		return true;
@@ -70,7 +65,7 @@ bool CTeam::UseMetal(float amount)
 
 bool CTeam::UseEnergy(float amount)
 {
-	if(energy-oldEnergyUpkeep*10>=amount){
+	if(energy-prevEnergyUpkeep*10>=amount){
 		energy-=amount;
 		energyExpense+=amount;
 		return true;
@@ -124,38 +119,44 @@ void CTeam::AddEnergy(float amount)
 
 void CTeam::Update()
 {
-	currentStats.metalProduced+=metalIncome;
-	currentStats.energyProduced+=energyIncome;
-	currentStats.metalUsed+=metalUpkeep+metalExpense;
-	currentStats.energyUsed+=energyUpkeep+energyExpense;
+	currentStats.metalProduced  += metalIncome;
+	currentStats.energyProduced += energyIncome;
+	currentStats.metalUsed  += metalUpkeep + metalExpense;
+	currentStats.energyUsed += energyUpkeep + energyExpense;
 
-	oldMetalIncome=metalIncome;
-	metalIncome=0;
-	oldEnergyIncome=energyIncome;
-	energyIncome=0;
-	oldMetalUpkeep=metalUpkeep;
-	metalUpkeep=0;
-	oldEnergyUpkeep=energyUpkeep;
-	energyUpkeep=0;
-	oldMetalExpense=metalExpense;
-	metalExpense=0;
-	oldEnergyExpense=energyExpense;
-	energyExpense=0;
+	prevMetalPull     = metalPull;
+	prevMetalIncome   = metalIncome;
+	prevMetalExpense  = metalExpense;
+	prevMetalUpkeep   = metalUpkeep;
+	prevEnergyPull    = energyPull;
+	prevEnergyIncome  = energyIncome;
+	prevEnergyExpense = energyExpense;
+	prevEnergyUpkeep  = energyUpkeep;
 
-	prevEnergyPull = energyPullAmount;
-	prevMetalPull = metalPullAmount;
-	energyPullAmount = 0;
-	metalPullAmount = 0;
+	metalPull = 0;
+	metalIncome = 0;
+	metalExpense = 0;
+	metalUpkeep = 0;
+	energyPull = 0;
+	energyIncome = 0;
+	energyExpense = 0;
+	energyUpkeep = 0;
+	
+	metalSent = 0;
+	energySent = 0;
+	metalReceived = 0;
+	energyReceived = 0;
 
 	float eShare=0,mShare=0;
-	for(int a=0;a<gs->activeTeams;++a){
-		if(a!=teamNum && gs->AlliedTeams(teamNum,a)){
-			eShare+=max(0.0f,gs->Team(a)->energyStorage*0.9f-gs->Team(a)->energy);
-			mShare+=max(0.0f,gs->Team(a)->metalStorage*0.9f-gs->Team(a)->metal);
+	for(int a=0; a < gs->activeTeams; ++a){
+		if((a != teamNum) && gs->AlliedTeams(teamNum,a)){
+			CTeam* team = gs->Team(a);
+			eShare += max(0.0f, (team->energyStorage * 0.9f) - team->energy);
+			mShare += max(0.0f, (team->metalStorage  * 0.9f) - team->metal);
 		}
 	}
-	float eExcess=max(0.0f,energy-energyStorage*energyShare);
-	float mExcess=max(0.0f,metal-metalStorage*metalShare);
+	const float eExcess = max(0.0f, energy - (energyStorage * energyShare));
+	const float mExcess = max(0.0f, metal  - (metalStorage  * metalShare));
 	
 	float de=0,dm=0;
 	if(eShare>0)
@@ -163,18 +164,25 @@ void CTeam::Update()
 	if(mShare>0)
 		dm=min(1.0f,mExcess/mShare);
 
-	for(int a=0;a<gs->activeTeams;++a){
-		if(a!=teamNum && gs->AlliedTeams(teamNum,a)){
-			float edif=max(0.0f,gs->Team(a)->energyStorage*0.9f-gs->Team(a)->energy)*de;
-			gs->Team(a)->energy+=edif;
-			energy-=edif;
-			currentStats.energySent+=edif;
-			gs->Team(a)->currentStats.energyReceived+=edif;
-			float mdif=max(0.0f,gs->Team(a)->metalStorage*0.9f-gs->Team(a)->metal)*dm;
-			gs->Team(a)->metal+=mdif;
-			metal-=mdif;
-			currentStats.metalSent+=mdif;
-			gs->Team(a)->currentStats.metalReceived+=mdif;
+	for(int a=0; a < gs->activeTeams; ++a){
+		if((a != teamNum) && gs->AlliedTeams(teamNum,a)){
+			CTeam* team = gs->Team(a);
+
+			const float edif = max(0.0f, (team->energyStorage * 0.9f) - team->energy) * de;
+			energy -= edif;
+			energySent += edif;
+			currentStats.energySent += edif;
+			team->energy += edif;
+			team->energyReceived += edif;
+			team->currentStats.energyReceived += edif;
+
+			const float mdif = max(0.0f, (team->metalStorage * 0.9f) - team->metal) * dm;
+			metal -= mdif;
+			metalSent += mdif;
+			currentStats.metalSent += mdif;
+			team->metal += mdif;
+			team->metalReceived += mdif;
+			team->currentStats.metalReceived += mdif;
 		}
 	}
 

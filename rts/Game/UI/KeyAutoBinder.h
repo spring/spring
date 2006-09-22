@@ -34,9 +34,10 @@ class CKeyAutoBinder {
 	private:
 		bool LoadCode(const string& code, const string& debug);
 		bool LoadInfo();
-		string MakeGameInfo();
-		string MakeUnitDefInfo();
-		string MakeWeaponDefInfo();
+		bool LoadGameInfo();
+		bool LoadCompareFunc();
+		bool LoadUnitDefInfo();
+		bool LoadWeaponDefInfo();
 		string MakeRequirementCall(const vector<string>& requirements);
 		string MakeSortCriteriaCall(const vector<string>& sortCriteria);
 		string AddUnitDefPrefix(const string& text, const string& pre) const;

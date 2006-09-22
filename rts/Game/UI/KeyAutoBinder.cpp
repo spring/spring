@@ -14,13 +14,16 @@ extern "C" {
 }
 
 #include "KeyBindings.h"
+#include "SimpleParser.h"
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
 #include "Map/ReadMap.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
 static string IntToString(int value);
@@ -29,11 +32,17 @@ static string FloatToString(float value);
 static string SafeString(const string& text);
 static string StringReplace(const string& text,
                             const string& from, const string& to);
+static string GetCategoryTableFromBits(unsigned int bits);
+static string GetCategoryTableFromString(const string& text);
 
 
 // FIXME -- use 'em
-static const string ReqFuncName = "hasReqs";
-static const string SortFuncName = "isBetter";
+static const string GameInfoName    = "game";
+static const string UnitDefsName    = "unitDefs";
+static const string WeaponDefsName  = "weaponDefs";
+static const string ReqFuncName     = "hasReqs";
+static const string SortFuncName    = "isBetter";
+static const string CompareFuncName = "compare";
 
 
 /******************************************************************************/
@@ -87,8 +96,58 @@ bool CKeyAutoBinder::LoadInfo()
 	luaopen_string(L);
 	luaopen_table(L);
 	
+	if (!LoadGameInfo()      ||
+	    !LoadWeaponDefInfo() ||
+	    !LoadUnitDefInfo()   ||
+	    !LoadCompareFunc()) {
+		return false;
+	}
+
+	return true;
+}
+
+
+bool CKeyAutoBinder::LoadGameInfo()
+{
 	const string endlStr = "\n";
-	string code = MakeGameInfo() + MakeWeaponDefInfo() + MakeUnitDefInfo();
+	string code = "";
+
+	code += "game = {}" + endlStr;
+
+	code += "game.commEnds = "  + BoolToString(gs->gameMode) + endlStr;
+	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
+	code += "game.gravity = "   + FloatToString(gravity) + endlStr;
+	code += "game.tidal = "     + FloatToString(readmap->tidalStrength) + endlStr;
+	code += "game.windMin = "   + FloatToString(wind.minWind) + endlStr;
+	code += "game.windMax = "   + FloatToString(wind.maxWind) + endlStr;
+	code += "game.mapX = "      + IntToString(readmap->width / 64) + endlStr;
+	code += "game.mapY = "      + IntToString(readmap->height / 64) + endlStr;
+	code += "game.mapName = \"" + readmap->mapName + "\"" + endlStr;
+	code += "game.modName = \"" + modInfo->name + "\"" + endlStr;
+	
+	const bool limitDGun      = gameSetup ? gameSetup->limitDgun      : false;
+	const bool diminishingMMs = gameSetup ? gameSetup->diminishingMMs : false;
+	code += "game.limitDGun = "        + BoolToString(limitDGun) + endlStr;
+	code += "game.diminishingMetal = " + BoolToString(diminishingMMs) + endlStr;
+	
+	code += "game.springCategories = " + GetCategoryTableFromBits(~0) + endlStr;
+
+	if (keyBindings->GetDebug() > 0) {
+		printf("%s", code.c_str());
+	}
+
+	if (!LoadCode(code, "gameInfo")) {
+		return false;
+	}
+	
+	return true;	
+}
+
+
+bool CKeyAutoBinder::LoadCompareFunc()
+{
+	const string endlStr = "\n";
+	string code = endlStr;
 
 	// handy sorting comparison routine
 	code += "function compare(a, b)"                     + endlStr;
@@ -109,8 +168,7 @@ bool CKeyAutoBinder::LoadInfo()
 		printf("%s", code.c_str());
 	}
 
-	// load and run the init code
-	if (!LoadCode(code, "AutoBindInfo")) {
+	if (!LoadCode(code, "compare()")) {
 		return false;
 	}
 	
@@ -118,55 +176,36 @@ bool CKeyAutoBinder::LoadInfo()
 }
 
 
-string CKeyAutoBinder::MakeGameInfo()
-{
-	const string endlStr = "\n";
-	string code = "";
-
-	code += "game = {}" + endlStr;
-
-	code += "game.commEnds = "  + BoolToString(gs->gameMode) + endlStr;
-	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
-	code += "game.gravity = "   + FloatToString(gravity) + endlStr;
-	code += "game.tidal = "     + FloatToString(readmap->tidalStrength) + endlStr;
-	code += "game.windMin = "   + FloatToString(wind.minWind) + endlStr;
-	code += "game.windMax = "   + FloatToString(wind.maxWind) + endlStr;
-	code += "game.mapX = "      + IntToString(readmap->width / 64) + endlStr;
-	code += "game.mapY = "      + IntToString(readmap->height / 64) + endlStr;
-	code += "game.mapName = \"" + readmap->mapName + "\"" + endlStr;
-	code += "game.modName = \"" + modInfo->name + "\"" + endlStr;
-	
-	if (gameSetup) {
-		code += "game.limitDGun = "        + BoolToString(gameSetup->limitDgun) + endlStr;
-		code += "game.diminishingMetal = " + BoolToString(gameSetup->diminishingMMs) + endlStr;
-	} else {
-		code += "game.limitDGun = false"        + endlStr;
-		code += "game.diminishingMetal = false" + endlStr;
-	}
-
-	return code;	
-}
-
-
 /******************************************************************************/
 
-string CKeyAutoBinder::MakeUnitDefInfo()
+bool CKeyAutoBinder::LoadUnitDefInfo()
 {
+	bool success = true;
 	const string endlStr = "\n";
-	string code = "";
+	string code = endlStr;
 
-	code += endlStr;
 	code += "unitDefs = {}" + endlStr;
+
+	LoadCode(code, "unitDefs");
+	if (keyBindings->GetDebug() > 0) {
+		printf("%s", code.c_str());
+	}
+	code.clear();
 	
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
 	std::map<std::string, int>::const_iterator uit;
+	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
+		const UnitDef& ud = *(unitDefHandler->GetUnitByID(uit->second));
+		const string def = "unitDefs[" + IntToString(uit->second) + "]";
+		code += def + " = {}" + endlStr;
+	}
+
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
 		const UnitDef& ud = *(unitDefHandler->GetUnitByID(uit->second));
 
 		const string def = "unitDefs[" + IntToString(uit->second) + "]";
 
 		code += endlStr;
-		code += def + " = {}" + endlStr;
 
 #define ADD_INT(name, value)    \
 	unitDefParams.insert(#name);  \
@@ -186,6 +225,14 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 		ADD_STRING(filename,  ud.filename);
 
 		ADD_INT(techLevel, ud.techLevel);
+		
+		ADD_STRING(TEDClass,       ud.TEDClassString);
+		ADD_STRING(iconType,       ud.iconType);
+
+		code += def + ".modCategories = "
+		            + GetCategoryTableFromString(ud.categoryString) + endlStr;
+		code += def + ".springCategories = "
+		            + GetCategoryTableFromBits(ud.category) + endlStr;
 
 		ADD_STRING(type,           ud.type);
 		ADD_BOOL(isBomber,         ud.type == "Bomber");         // CUSTOM
@@ -205,7 +252,9 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 		bool canParalyze = false;
 		bool canStockpile = false;
 		bool canAttackWater = false;
+
 		const int weaponCount = (int)ud.weapons.size();
+		ADD_INT(weaponCount, weaponCount); // CUSTOM
 		code += def + ".weapons = {}" + endlStr;
 		int wCount = 0;
 		for (int w = 0; w < weaponCount; w++) {
@@ -221,20 +270,43 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 				wCount++;
 			}
 		}
-		ADD_INT(weaponCount,     weaponCount);    // CUSTOM
 		ADD_FLOAT(maxRange,      maxRange);       // CUSTOM
 		ADD_BOOL(hasShield,      hasShield);      // CUSTOM
 		ADD_BOOL(canParalyze,    canParalyze);    // CUSTOM
 		ADD_BOOL(canStockpile,   canStockpile);   // CUSTOM
 		ADD_BOOL(canAttackWater, canAttackWater); // CUSTOM
-		
+
 		// FIXME:  canShootAir
 		
+		// explosion weapons
+		const WeaponDef* deathExp = weaponDefHandler->GetWeapon(ud.deathExplosion);
+		if (deathExp) {
+			code += def + ".deathExplosion = weaponDefs["
+			            + IntToString(deathExp->id) + "]" + endlStr; 
+		}
+		const WeaponDef* selfdExp = weaponDefHandler->GetWeapon(ud.selfDExplosion);
+		if (selfdExp) {
+			code += def + ".selfDExplosion = weaponDefs["
+			            + IntToString(selfdExp->id) + "]" + endlStr; 
+		}
 		
 		ADD_BOOL(builder,        ud.builder); 
 		ADD_FLOAT(buildSpeed,    ud.buildSpeed);
 		ADD_FLOAT(buildDistance, ud.buildDistance);
-		ADD_INT(builderCount,    ud.buildOptions.size()); // CUSTOM
+
+		ADD_INT(buildOptionsCount, ud.buildOptions.size()); // CUSTOM
+		code += def + ".buildOptions = {}" + endlStr;
+		std::map<int, std::string>::const_iterator bo_it;
+		int bCount = 0;
+		for (bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
+			std::map<std::string, int>::const_iterator um_it =
+				unitMap.find(bo_it->second);
+			if (um_it != unitMap.end()) {
+				code += def + ".buildOptions[" + IntToString(bCount) + "] = "
+										+ "unitDefs[" + IntToString(um_it->second) + "]" + endlStr;
+				bCount++;
+			}
+		}
 
 		ADD_INT(selfDCountdown, ud.selfDCountdown);
 
@@ -382,15 +454,14 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 
 		ADD_INT(highTrajectoryType, ud.highTrajectoryType); //0=low, 1=high, 2=choose
 
-//  unsigned int noChaseCategory;
-		ADD_INT(noChaseCategory, ud.noChaseCategory);
+		code += def + ".noChaseCategory = "
+		            + GetCategoryTableFromBits(ud.noChaseCategory) + endlStr;
 		
 		ADD_BOOL(canDropFlare, ud.canDropFlare);
 		ADD_FLOAT(flareReloadTime, ud.flareReloadTime);
 		ADD_FLOAT(flareEfficieny, ud.flareEfficieny); 
 		ADD_FLOAT(flareDelay, ud.flareDelay);
 
-//  float3 flareDropVector;
 		ADD_FLOAT(flareDropVectorX, ud.flareDropVector.x);
 		ADD_FLOAT(flareDropVectorY, ud.flareDropVector.y);
 		ADD_FLOAT(flareDropVectorZ, ud.flareDropVector.z);
@@ -416,21 +487,38 @@ string CKeyAutoBinder::MakeUnitDefInfo()
 		ADD_FLOAT(nanoColorR, ud.nanoColor.x);
 		ADD_FLOAT(nanoColorG, ud.nanoColor.y);
 		ADD_FLOAT(nanoColorB, ud.nanoColor.z);
+
+		if (keyBindings->GetDebug() > 0) {
+			printf("%s", code.c_str());
+		}
+
+		// load the code
+		if (!LoadCode(code, def)) {
+			success = false;
+		}
+
+		code.clear();
 	}
 	
-	return code;
+	return success;
 }
 
 
 /******************************************************************************/
 
-string CKeyAutoBinder::MakeWeaponDefInfo()
+bool CKeyAutoBinder::LoadWeaponDefInfo()
 {
+	bool success = true;
 	const string endlStr = "\n";
-	string code = "";
+	string code = endlStr;
 
-	code += endlStr;
 	code += "weaponDefs = {}" + endlStr;
+
+	LoadCode(code, "weaponDefs");
+	if (keyBindings->GetDebug() > 0) {
+		printf("%s", code.c_str());
+	}
+	code.clear();
 
 	const std::map<std::string, int>& weaponMap = weaponDefHandler->weaponID;
 	std::map<std::string, int>::const_iterator wit;
@@ -452,12 +540,26 @@ string CKeyAutoBinder::MakeWeaponDefInfo()
 	code += def + "." #name " = " + SafeString(value) + endlStr
 
 		ADD_W_STRING(name, wd.name);
-		ADD_W_STRING(type, wd.type);
-		
-		// FIXME -- bool the types
 
 		ADD_W_INT(id, wd.id);
 
+		code += def + ".onlyTargetCategory = "
+		            + GetCategoryTableFromBits(wd.onlyTargetCategory) + endlStr;
+
+		ADD_W_STRING(type,              wd.type);
+		ADD_W_BOOL(isAircraftBomb,      wd.type == "AircraftBomb");
+		ADD_W_BOOL(isStarburstLauncher, wd.type == "StarburstLauncher");
+		ADD_W_BOOL(isBeamLaser,         wd.type == "BeamLaser");
+		ADD_W_BOOL(isShield,            wd.type == "Shield");
+		ADD_W_BOOL(isTorpedoLauncher,   wd.type == "TorpedoLauncher");
+		ADD_W_BOOL(isDGun,              wd.type == "DGun");
+		ADD_W_BOOL(isLightingCannon,    wd.type == "LightingCannon");
+		ADD_W_BOOL(isLaserCannon,       wd.type == "LaserCannon");
+		ADD_W_BOOL(isMissileLauncher,   wd.type == "MissileLauncher");
+		ADD_W_BOOL(isEmgCannon,         wd.type == "EmgCannon");
+		ADD_W_BOOL(isFlame,             wd.type == "flame");
+		ADD_W_BOOL(isCannon,            wd.type == "Cannon");
+		
 		ADD_W_FLOAT(range,           wd.range);
 		ADD_W_FLOAT(heightmod,       wd.heightmod);
 		ADD_W_FLOAT(accuracy,        wd.accuracy);
@@ -465,7 +567,7 @@ string CKeyAutoBinder::MakeWeaponDefInfo()
 		ADD_W_FLOAT(movingAccuracy,  wd.movingAccuracy);
 		ADD_W_FLOAT(targetMoveError, wd.targetMoveError);
 
-		//DamageArray damages;
+		// FIXME: DamageArray damages;
 
 		ADD_W_FLOAT(areaOfEffect,     wd.areaOfEffect);
 		ADD_W_BOOL(noSelfDamage,      wd.noSelfDamage);
@@ -496,12 +598,12 @@ string CKeyAutoBinder::MakeWeaponDefInfo()
 		ADD_W_BOOL(dropped,     wd.dropped);
 		ADD_W_BOOL(paralyzer,   wd.paralyzer);
 
-		ADD_W_BOOL(noAutoTarget,   wd.noAutoTarget);			//cant target stuff (for antinuke,dgun)
-		ADD_W_BOOL(manualFire,     wd.manualfire);			//use dgun button
-		ADD_W_INT(interceptor,     wd.interceptor);				//anti nuke
-		ADD_W_INT(targetable,      wd.targetable);				//nuke (can be shot by interceptor)
+		ADD_W_BOOL(noAutoTarget,   wd.noAutoTarget);  //cant target stuff (for antinuke,dgun)
+		ADD_W_BOOL(manualFire,     wd.manualfire);    //use dgun button
+		ADD_W_INT(interceptor,     wd.interceptor);   //anti nuke
+		ADD_W_INT(targetable,      wd.targetable);    //nuke (can be shot by interceptor)
 		ADD_W_BOOL(stockpile,      wd.stockpile);					
-		ADD_W_FLOAT(coverageRange, wd.coverageRange);		//range of anti nuke
+		ADD_W_FLOAT(coverageRange, wd.coverageRange); //range of anti nuke
 
 		ADD_W_FLOAT(intensity,      wd.intensity);
 		ADD_W_FLOAT(thickness,      wd.thickness);
@@ -527,11 +629,9 @@ string CKeyAutoBinder::MakeWeaponDefInfo()
 		ADD_W_FLOAT(projectileSpeed, wd.projectilespeed);
 		ADD_W_FLOAT(explosionSpeed,  wd.explosionSpeed);
 
-		ADD_W_INT(onlyTargetCategory, (int)wd.onlyTargetCategory);
-
 		// missiles
-		ADD_W_FLOAT(wobble, wd.wobble);						//how much the missile will wobble around its course
-		ADD_W_FLOAT(trajectoryHeight, wd.trajectoryHeight);			//how high trajectory missiles will try to fly in
+		ADD_W_FLOAT(wobble, wd.wobble);
+		ADD_W_FLOAT(trajectoryHeight, wd.trajectoryHeight);
 
 		ADD_W_BOOL(largeBeamLaser, wd.largeBeamLaser);
 
@@ -551,17 +651,38 @@ string CKeyAutoBinder::MakeWeaponDefInfo()
 		ADD_W_FLOAT(shieldPowerRegenEnergy, wd.shieldPowerRegenEnergy);
 		ADD_W_FLOAT(shieldAlpha,            wd.shieldAlpha);
 
-		ADD_W_INT(shieldInterceptType,     (int)wd.shieldInterceptType);
-		ADD_W_INT(interceptedByShieldType, (int)wd.interceptedByShieldType);
+		// FIXME: shield bits?
+		code += def + ".shieldInterceptType = "
+		            + GetCategoryTableFromBits(wd.shieldInterceptType) + endlStr;
+		code += def + ".interceptedByShieldType = "
+		            + GetCategoryTableFromBits(wd.interceptedByShieldType) + endlStr;
+
+		const bool collisionNoFeature =
+			(wd.collisionFlags & COLLISION_NOFEATURE) == 0;
+		const bool collisionNoFriendly =
+			(wd.collisionFlags & COLLISION_NOFRIENDLY) == 0;
+		ADD_W_BOOL(collisionNoFeature,  collisionNoFeature);  // CUSTOM
+		ADD_W_BOOL(collisionNoFriendly, collisionNoFriendly); // CUSTOM
 
 		ADD_W_BOOL(avoidFriendly, wd.avoidFriendly);
-		ADD_W_INT(collisionFlags, (int)wd.collisionFlags);
+
+		if (keyBindings->GetDebug() > 0) {
+			printf("%s", code.c_str());
+		}
+
+		// load the code
+		if (!LoadCode(code, def)) {
+			success = false;
+		}
+
+		code.clear();
 	}
 	
-	return code;
+	return success;
 }
 
 
+/******************************************************************************/
 /******************************************************************************/
 
 static CKeyAutoBinder* thisBinder = NULL;
@@ -839,6 +960,38 @@ static string StringReplace(const string& text,
 		working = tmp;
 	}
 	return working;
+}
+
+
+static string GetCategoryTable(const vector<string> cats)
+{
+	string table = "{";
+	const int catCount = (int)cats.size();
+	for (int i = 0; i < catCount; i++) {
+		table += " ";
+		table += SafeString(StringToLower(cats[i]));
+		if (i != (catCount - 1)) {
+			table += ",";
+		} else {
+			table += " ";
+		}
+	}
+	table += "}";
+	return table;
+}
+
+
+static string GetCategoryTableFromBits(unsigned int bits)
+{
+	vector<string> cats = categoryHandler->GetCategoryNames(bits);
+	return GetCategoryTable(cats);
+}
+
+
+static string GetCategoryTableFromString(const string& text)
+{
+	vector<string> cats = SimpleParser::Tokenize(text, 0);
+	return GetCategoryTable(cats);
 }
 
 

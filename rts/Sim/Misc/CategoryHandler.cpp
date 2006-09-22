@@ -47,6 +47,7 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 	return categories[name];
 }
 
+
 unsigned int CCategoryHandler::GetCategories(std::string names)
 {
 	StringToLowerInPlace(names);
@@ -66,4 +67,22 @@ unsigned int CCategoryHandler::GetCategories(std::string names)
 		ret|=GetCategory(name);
 	}
 	return ret;
+}
+
+
+std::vector<std::string> CCategoryHandler::GetCategoryNames(unsigned int bits) const
+{
+	std::vector<std::string> names;
+	unsigned int bit;
+	for (bit = 1; bit = (bit << 1);  bit != 0) {
+		if ((bit & bits) != 0) {
+			std::map<std::string,unsigned int>::const_iterator it;
+			for (it = categories.begin(); it != categories.end(); ++it) {
+				if (it->second == bit) {
+					names.push_back(it->first);
+				}
+			}
+		}
+	}
+	return names;
 }

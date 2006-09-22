@@ -58,32 +58,34 @@ public:
 	float metal;
 	float energy;
 
-	float metalPullAmount;
-	float energyPullAmount;
-	float prevEnergyPull;
-	float prevMetalPull;
+	float metalPull,    prevMetalPull;
+	float metalIncome,  prevMetalIncome;
+	float metalExpense, prevMetalExpense;
+	float metalUpkeep,  prevMetalUpkeep;
 
-	float metalIncome,oldMetalIncome;
-	float energyIncome,oldEnergyIncome;
-	float tempMetalIncome;
+	float energyPull,    prevEnergyPull;
+	float energyIncome,  prevEnergyIncome;
+	float energyExpense, prevEnergyExpense;
+	float energyUpkeep,  prevEnergyUpkeep;
+	
+	float metalStorage, energyStorage;
 
-	float metalUpkeep,oldMetalUpkeep;
-	float energyUpkeep,oldEnergyUpkeep;
+	float metalShare, energyShare;
+	
+	float metalSent;
+	float metalReceived;
+	float energySent;
+	float energyReceived;
 
-	float metalExpense,oldMetalExpense;
-	float energyExpense,oldEnergyExpense;
-
-	float metalStorage,energyStorage;
-
-	float metalShare,energyShare;
 
 	struct Statistics {
-		float metalUsed,energyUsed;
-		float metalProduced,energyProduced;
-		float metalExcess,energyExcess;
-		float metalReceived,energyReceived;					//received from allies
-		float metalSent,energySent;									//sent to allies
-		float damageDealt,damageReceived;				// Damage taken and dealt to enemy units
+		float metalUsed,     energyUsed;
+		float metalProduced, energyProduced;
+		float metalExcess,   energyExcess;
+		float metalReceived, energyReceived; //received from allies
+		float metalSent,     energySent;     //sent to allies
+
+		float damageDealt,   damageReceived; // Damage taken and dealt to enemy units
 
 		int unitsProduced;
 		int unitsDied;
