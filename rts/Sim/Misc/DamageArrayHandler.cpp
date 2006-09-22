@@ -17,14 +17,14 @@ CDamageArrayHandler::CDamageArrayHandler(void)
 	{
 		TdfParser p("Armor.txt");
 
-		std::vector<std::string> typelist = p.GetSectionList("");
+		typeList = p.GetSectionList("");
 
-		DamageArray::numTypes=typelist.size()+1;
-		numTypes=typelist.size()+1;
+		DamageArray::numTypes=typeList.size()+1;
+		numTypes=typeList.size()+1;
 
 		logOutput.Print(1, "Number of damage types: %d", numTypes);
 		int a=1;
-		for(std::vector<std::string>::iterator ti=typelist.begin();ti!=typelist.end();++a,++ti){
+		for(std::vector<std::string>::iterator ti=typeList.begin();ti!=typeList.end();++a,++ti){
 			std::string s = StringToLower(*ti);
 			name2type[s]=a;
 	//		logOutput.Print("%s has type num %i",(*ti).c_str(),a);
