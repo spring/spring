@@ -59,12 +59,15 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
                                                         unsigned char options)
 {
 	// sets the wanted speed of this unit to its max speed
-	UnitDef* ud = unit->unitDef;
-	Command c;
-	c.id = CMD_SET_WANTED_MAX_SPEED;
-	c.options = options;
-	c.params.push_back(ud->speed / 30.0f);
-	unit->commandAI->GiveCommand(c);
+	CCommandAI* cai = unit->commandAI;
+	if (cai->CanSetMaxSpeed()) {
+		UnitDef* ud = unit->unitDef;
+		Command c;
+		c.id = CMD_SET_WANTED_MAX_SPEED;
+		c.options = options;
+		c.params.push_back(ud->speed / 30.0f);
+		cai->GiveCommand(c);
+	}
 }
 
 
@@ -72,11 +75,14 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
                                                          unsigned char options)
 {
 	// sets the wanted speed of this unit to the group minimum
-	Command c;
-	c.id = CMD_SET_WANTED_MAX_SPEED;
-	c.options = options;
-	c.params.push_back(minMaxSpeed);
-	unit->commandAI->GiveCommand(c);
+	CCommandAI* cai = unit->commandAI;
+	if (cai->CanSetMaxSpeed()) {
+		Command c;
+		c.id = CMD_SET_WANTED_MAX_SPEED;
+		c.options = options;
+		c.params.push_back(minMaxSpeed / 30.0f);
+		cai->GiveCommand(c);
+	}
 }
 
 
@@ -96,8 +102,8 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		// a single unit selected
 		CUnit* unit = uh->units[*netSelected.begin()];
 		if(unit) {
-			AddUnitSetMaxSpeedCommand(unit, c.options);
 			unit->commandAI->GiveCommand(c);
+			AddUnitSetMaxSpeedCommand(unit, c.options);
 		}
 		return;
 	}
@@ -121,6 +127,8 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 	if ((c.id == CMD_MOVE) && (c.params.size() == 6)) {
 		CalculateGroupData(player);
 
+		MakeFrontMove(&c, player);
+
 		const bool groupSpeed = (c.options & CONTROL_KEY);
 		for(ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
 			CUnit* unit = uh->units[*ui];
@@ -132,23 +140,9 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 				}
 			}
 		}
-
-		MakeFrontMove(&c, player);
 	}
 	else if ((c.id == CMD_MOVE) && (c.options & ALT_KEY)) {
 		CalculateGroupData(player);
-
-		const bool groupSpeed = (c.options & CONTROL_KEY);
-		for(ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
-			CUnit* unit = uh->units[*ui];
-			if(unit){
-				if (groupSpeed) {
-					AddGroupSetMaxSpeedCommand(unit, c.options);
-				} else {
-					AddUnitSetMaxSpeedCommand(unit, c.options);
-				}
-			}
-		}
 		
 		// use the vector from the middle of group to new pos as forward dir
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
@@ -166,6 +160,18 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		c.params.push_back(pos.z + (sideDir.z * length));
 
 		MakeFrontMove(&c, player);
+
+		const bool groupSpeed = (c.options & CONTROL_KEY);
+		for(ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
+			CUnit* unit = uh->units[*ui];
+			if(unit){
+				if (groupSpeed) {
+					AddGroupSetMaxSpeedCommand(unit, c.options);
+				} else {
+					AddUnitSetMaxSpeedCommand(unit, c.options);
+				}
+			}
+		}
 	}
 	else if ((c.id == CMD_MOVE || c.id == CMD_PATROL || c.id == CMD_FIGHT) && (c.options & CONTROL_KEY)) {
 		CalculateGroupData(player);
@@ -174,17 +180,17 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		for (ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
 			CUnit* unit = uh->units[*ui];
 			if (unit) {
-				if (groupSpeed) {
-					AddGroupSetMaxSpeedCommand(unit, c.options);
-				} else {
-					AddUnitSetMaxSpeedCommand(unit, c.options);
-				}
 				// Modifying the destination relative to the center of the group
 				Command uc = c;
 				uc.params[CMDPARAM_MOVE_X] += unit->midPos.x - centerCoor.x;
 				uc.params[CMDPARAM_MOVE_Y] += unit->midPos.y - centerCoor.y;
 				uc.params[CMDPARAM_MOVE_Z] += unit->midPos.z - centerCoor.z;
 				unit->commandAI->GiveCommand(uc);
+				if (groupSpeed) {
+					AddGroupSetMaxSpeedCommand(unit, c.options);
+				} else {
+					AddUnitSetMaxSpeedCommand(unit, c.options);
+				}
 			}
 		}
 	}
@@ -192,10 +198,10 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		for (ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
 			CUnit* unit = uh->units[*ui];
 			if (unit) {
-				// prepending a CMD_SET_WANTED_MAX_SPEED command to
+				// appending a CMD_SET_WANTED_MAX_SPEED command to
 				// every command is a little bit wasteful, n'est pas?
-				AddUnitSetMaxSpeedCommand(unit, c.options);
 				unit->commandAI->GiveCommand(c);
+				AddUnitSetMaxSpeedCommand(unit, c.options);
 			}
 		}
 	}
@@ -232,11 +238,12 @@ void CSelectedUnitsAI::CalculateGroupData(int player) {
 			else if(unitPos.z > maxCoor.z)
 				maxCoor.z = unitPos.z;
 			sumCoor += unitPos;
-			if(unit->mobility && !unit->mobility->canFly) {
+			if(unit->commandAI->CanSetMaxSpeed()) {
 				mobileUnits++;
 				mobileSumCoor += unitPos;
-				if(unit->mobility->maxSpeed < minMaxSpeed) {
-					minMaxSpeed = unit->mobility->maxSpeed;
+				const float maxSpeed = unit->unitDef->speed;
+				if(maxSpeed < minMaxSpeed) {
+					minMaxSpeed = maxSpeed;
 				}
 			}
 		}

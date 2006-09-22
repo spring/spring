@@ -205,6 +205,18 @@ void CMobileCAI::SlowUpdate()
 	}
 
 	float3 curPos=owner->pos;
+	
+	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
+	// to the current command  (and ignore them when it's their turn)
+	if (commandQue.size() > 1) {
+		deque<Command>::iterator it = commandQue.begin();
+		it++;
+		if (it->id == CMD_SET_WANTED_MAX_SPEED) {
+			const float defMaxSpeed = (owner->unitDef->speed / 30.0f);
+			const float newMaxSpeed = min(it->params[0], defMaxSpeed);
+			owner->moveType->SetMaxSpeed(newMaxSpeed);
+		}
+	}	 
 
 	Command& c=commandQue.front();
 	switch(c.id){
@@ -213,10 +225,7 @@ void CMobileCAI::SlowUpdate()
 		CCommandAI::SlowUpdate();
 		break;}
 	case CMD_SET_WANTED_MAX_SPEED:{
-		if (!c.params.empty()) {
-			owner->moveType->SetMaxSpeed(c.params[0]);
-		}
-		FinishCommand();
+		FinishCommand(); // skip it
 		break;}
 	case CMD_MOVE:{
 		float3 pos(c.params[0],c.params[1],c.params[2]);
