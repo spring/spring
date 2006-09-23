@@ -44,13 +44,18 @@ void CLogOutput::Output(int priority, const char *str)
 	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin();lsi!=subscribers.end();++lsi)
 		(*lsi)->NotifyLogMsg(priority, str);
 
+	int nl = strlen(str) - 1;
+
 #ifdef _MSC_VER
 	OutputDebugString(str);
-	OutputDebugString("\n");
+	if (nl < 0 || str[nl] != '\n')
+		OutputDebugString("\n");
 #endif
 
 	if (filelog) {
-		(*filelog) << str << "\n";
+		(*filelog) << str;
+		if (nl < 0 || str[nl] != '\n')
+			(*filelog) << "\n";
 		filelog->flush();
 	}
 }
