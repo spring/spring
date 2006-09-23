@@ -147,10 +147,12 @@
 //
 //  Default Bindings:
 //
-//  bind            Any+esc  quit
-//  bind          Any+pause  pause
+//  bind                esc  quitwarn
+//  bind          Shift+esc  quit
 //
 //  bind          Any+enter  chat
+//
+//  bind          Any+pause  pause
 //
 //  bind              Any+j  mouse2
 //  bind      Any+backspace  mousestate

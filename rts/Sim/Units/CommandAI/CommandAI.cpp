@@ -1,21 +1,22 @@
 #include "StdAfx.h"
 #include "CommandAI.h"
 #include "LineDrawer.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Weapons/Weapon.h"
+#include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
-#include "Rendering/GL/myGL.h"
-#include "Sim/Units/UnitDef.h"
 #include "Game/GameHelper.h"
+#include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "LogOutput.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Game/SelectedUnits.h"
+#include "Sim/Weapons/Weapon.h"
 #include "LoadSaveInterface.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 CCommandAI::CCommandAI(CUnit* owner)
@@ -209,12 +210,6 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 void CCommandAI::GiveCommand(Command& c)
 {
 	switch (c.id) {
-		case CMD_SET_WANTED_MAX_SPEED: {
-			if (!CanSetMaxSpeed()) {
-				return;
-			}
-			break;
-		}
 		case CMD_FIRE_STATE: {
 			if (c.params.empty() || owner->unitDef->noAutoFire) {
 				return;
@@ -333,30 +328,62 @@ void CCommandAI::GiveCommand(Command& c)
 			}
 			return;
 		}
+	  case CMD_SET_WANTED_MAX_SPEED: {    
+			if (CanSetMaxSpeed() &&
+			    (commandQue.empty() ||
+			     (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED))) {
+				// bail early, do not check for overlaps or queue cancelling
+				commandQue.push_back(c);
+				if(commandQue.size()==1 && !owner->beingBuilt) {
+					SlowUpdate();
+				}
+			}
+			return;
+		}
+	  case CMD_WAIT: {
+	  	if (commandQue.empty()) {
+  			commandQue.push_back(c);
+			}
+	  	else if ((c.options & SHIFT_KEY) != 0) {
+	  		if (commandQue.back().id == CMD_WAIT) {
+  				commandQue.pop_back();
+				} else {
+	  			commandQue.push_back(c);
+				}
+			}
+			else if (commandQue.front().id == CMD_WAIT) {
+				commandQue.pop_front();
+			}
+			else {
+				// shutdown the current order
+				owner->AttackUnit(0, true);
+				StopMove();
+				inCommand = false;
+				targetDied = false;
+				unimportantMove = false;
+				if (owner->group) {
+					owner->group->CommandFinished(owner->id, commandQue.front().id);
+				} else {
+					if (commandQue.empty()) {
+						globalAI->UnitIdle(owner);
+					}
+				}
+				// push the wait order
+				commandQue.push_front(c);
+			}
+			return;
+		}
 	}
 
-	// bail early, do not check for overlaps or queue cancelling 
-	if (c.id == CMD_SET_WANTED_MAX_SPEED) {    
-		commandQue.push_back(c);
-		if(commandQue.size()==1 && !owner->beingBuilt) {
-			SlowUpdate();
-		}
-		return;
-	}
-	
+	// flush the queue for immediate commands	
 	if(!(c.options & SHIFT_KEY)) {
-		if(!commandQue.empty()){
-			if ((commandQue.front().id == CMD_ATTACK)      ||
-			    (commandQue.front().id == CMD_AREA_ATTACK) ||
-			    (commandQue.front().id == CMD_DGUN)) {
+		if (!commandQue.empty()) {
+			if ((commandQue.front().id == CMD_DGUN)      ||
+			    (commandQue.front().id == CMD_ATTACK)    ||
+			    (commandQue.front().id == CMD_AREA_ATTACK)) {
 				owner->AttackUnit(0,true);
 			}
-
-			if((c.id==CMD_STOP || c.id==CMD_WAIT) && commandQue.front().id==CMD_WAIT) {
-				commandQue.pop_front();
-			} else {
-				commandQue.clear();
-			}
+			commandQue.clear();
 		}
 		inCommand=false;
 		if(orderTarget){
@@ -621,6 +648,10 @@ void CCommandAI::DrawCommands(void)
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
 			case CMD_ATTACK:
 			case CMD_DGUN:{
 				if(ci->params.size()==1){

@@ -816,9 +816,12 @@ string CKeyAutoBinder::AddUnitDefPrefix(const string& text,
 		while ((c[0] != 0) && (isalnum(c[0]) || (c[0] == '_'))) { c++; }
 		string word(start, c - start);
 		if (unitDefParams.find(word) != unitDefParams.end()) {
+			result += prefix + "." + word;
+		} else if ((word == "custom") && (c[0] == '.')) {
 			result += prefix;
+		} else {
+			result += word;
 		}
-		result += word;
 		end = c;
 	}
 		
@@ -863,7 +866,7 @@ string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 	}
 	code += endlStr + "end" + endlStr;
 	
-	return ConvertBooleanSymbols(AddUnitDefPrefix(code, "this."));
+	return ConvertBooleanSymbols(AddUnitDefPrefix(code, "this"));
 }
 
 
@@ -895,11 +898,10 @@ string CKeyAutoBinder::MakeSortCriteriaCall(const vector<string>& sortCriteria)
 	
 	for (int i = 0; i < count; i++) {
 		const string natural = ConvertBooleanSymbols(sortCriteria[i]);
-		const string thisStr = AddUnitDefPrefix(natural, "this.");
-		const string thatStr = AddUnitDefPrefix(natural, "that.");
+		const string thisStr = AddUnitDefPrefix(natural, "this");
+		const string thatStr = AddUnitDefPrefix(natural, "that");
 		code += "local test = compare(" + thisStr + ", " + thatStr + ")" + endlStr;
-		code += "if     (test ==  1.0) then return true" + endlStr;
-		code += "elseif (test == -1.0) then return false; end" + endlStr;
+		code += "if (test ~=  0.0) then return (test > 0.0) end" + endlStr;
 	}
 	code += "return false" + endlStr;
 	code += "end" + endlStr;

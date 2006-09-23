@@ -594,10 +594,14 @@ void CBuilderCAI::DrawCommands(void)
 	}
 
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
-
+	
 	deque<Command>::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		switch(ci->id) {
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
 			case CMD_MOVE: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);

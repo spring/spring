@@ -31,6 +31,7 @@ public:
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	virtual bool WillCancelQueued(Command &c);
 	virtual bool CanSetMaxSpeed() const { return false; }
+	virtual void StopMove() { return; }
 	std::deque<Command>::iterator GetCancelQueued(Command &c);
 	std::vector<Command> GetOverlapQueued(Command &c);
 
