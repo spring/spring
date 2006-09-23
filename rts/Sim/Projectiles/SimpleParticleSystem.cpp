@@ -1,6 +1,6 @@
 #include "StdAfx.h"
-#include ".\simpleparticlesystem.h"
-#include "globalstuff.h"
+#include "SimpleParticleSystem.h"
+#include "GlobalStuff.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "ProjectileHandler.h"
