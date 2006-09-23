@@ -43,7 +43,7 @@ public:
 	CExplosionGenerator();
 	virtual ~CExplosionGenerator();
 
-	virtual void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit) = 0;
+	virtual void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir) = 0;
 	virtual void Load(CExplosionGeneratorHandler* loader, const std::string& tag) = 0;
 };
 
@@ -55,7 +55,7 @@ public:
 	CStdExplosionGenerator();
 	virtual ~CStdExplosionGenerator();
 
-	void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit);
+	void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir);
 	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);
 };
 
@@ -89,7 +89,7 @@ protected:
 	bool useDefaultExplosions;
 	std::vector<ProjectileSpawnInfo*> projectileSpawn;
 	void ParseExplosionCode(ProjectileSpawnInfo *psi, int baseOffset, creg::IType *type, const std::string& script, std::string& code);
-	void ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex);
+	void ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex, const float3 &dir);
 
 public:
 	CCustomExplosionGenerator();
@@ -97,8 +97,9 @@ public:
 	static void OutputProjectileClassInfo();
 
 	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
-	void Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit);
+	void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit, const float3 &dir);
 };
 
+extern CExplosionGeneratorHandler* explGenHandler;
 
 #endif 

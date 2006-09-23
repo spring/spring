@@ -28,6 +28,9 @@
 #include "SDL_types.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "mmgr.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 #endif
 
@@ -590,9 +593,52 @@ void CCobInstance::EmitSfx(int type, int piece)
 			hc->size=3;
 			break;}
 		default:
-			logOutput.Print("Unknown sfx: %d", type);
+			//logOutput.Print("Unknown sfx: %d", type);
+			if(type&1024)	//emit defined explosiongenerator
+			{
+				float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
+				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
+				dir.Normalize();
+				unit->unitDef->sfxExplGens[type-1024]->Explosion(pos, 1, 1, unit, 0, 0, dir);
+			}
+			else if(type&2048)  //make a weapon fire from the piece
+			{
+				if(unit->localmodel->GetPieceVertCount(piece)<2) //piece have less than 2 vertexes, make a weapon detonation directly
+				{
+					WeaponDef *weaponDef = unit->weapons[type-2048]->weaponDef;
+					sound->PlaySample(weaponDef->soundhit.id,unit,weaponDef->soundhit.volume);
+					helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0));
+				}
+				else	//more than 2 vertexes, fire the weapon at the direction of the piece
+				{
+					//this is very hackish and probably has a lot of side effects, but might be usefull for something
+					float3 relDir =-unit->localmodel->GetPieceDirection(piece);
+					float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
+					dir.Normalize();
+
+					float3 targetPos = unit->weapons[type-2048]->targetPos;
+					float3 weaponPos = unit->weapons[type-2048]->weaponPos;
+
+					unit->weapons[type-2048]->targetPos = pos+dir;
+					unit->weapons[type-2048]->weaponPos = pos;
+
+					unit->weapons[type-2048]->Fire();
+					
+					unit->weapons[type-2048]->targetPos = targetPos;
+					unit->weapons[type-2048]->weaponPos = weaponPos;
+				}
+			}
 			break;
 	}
+
+			//if(type==2)	//emit defined explosiongenerator
+			//{
+			//	float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			//	float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
+			//	dir.Normalize();
+			//	unit->unitDef->sfxExplGens[0]->Explosion(pos, 1, 1, unit, 0, 0, dir);
+			//}
+
 	ENTER_SYNCED;
 #endif
 }

@@ -2,6 +2,14 @@ TASpring change log
 
 0.73b1
 
+- Added keyword "dir" to explosiongenerator, this is a vector and can be diferent depending on what created the explosion.
+  If created at a weapon impac it is the direction of the impact.
+
+- Added the abillity to call explosiongenerators and weaponfire from within script via emit-sfx command.
+  Explosiongenerators to be called via script are defined in the unit TDF file in a section called SFXTypes, with tags explosiongenerator+n=some_explosion
+  and then called via emit-sfx 1024+n.  
+  Weaponfire are called via emit-sfx 2048+weapon_to_fire.
+
 - added "ctrlpanel.txt" configuration file to control how the Control Panel
   is rendered (x/y icons counts, sizes, positions, prev/next menu icon
   locations, etc...)

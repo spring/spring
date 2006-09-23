@@ -774,6 +774,24 @@ CMatrix44f LocalS3DOModel::GetPieceMatrix(int piecenum)
 	return mat;
 }
 
+//gets the number of vertices in the piece
+int LocalS3DOModel::GetPieceVertCount(int piecenum)
+{
+	int p=scritoa[piecenum];
+
+	if(p==-1)
+		return 0;
+
+	if(pieces[p].original3do){
+		S3DO &orig = *pieces[p].original3do;
+		return orig.vertices.size();
+
+	} else {
+		SS3O &orig = *pieces[p].originals3o;
+		return orig.vertices.size();
+	}
+}
+
 //Only useful for special pieces used for emit-sfx
 float3 LocalS3DOModel::GetPieceDirection(int piecenum)
 {

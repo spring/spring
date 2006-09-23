@@ -105,6 +105,8 @@
 #include "UI/SelectionKeyHandler.h"
 #include "UI/ShareBox.h"
 #include "UI/TooltipConsole.h"
+#include "Rendering/Textures/ColorMap.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 
 #ifndef NO_AVI
 #include "Platform/Win/AVIGenerator.h"
@@ -219,6 +221,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	helper=new CGameHelper(this);
 	//	physicsEngine = new CPhysicsEngine();
 	ENTER_UNSYNCED;
+	explGenHandler = new CExplosionGeneratorHandler();
 	shadowHandler=new CShadowHandler();
 
 	modInfo=new CModInfo(modName.c_str());
@@ -438,6 +441,8 @@ CGame::~CGame()
 	delete infoConsole;
 	delete consoleHistory;
 	delete wordCompletion;
+	delete explGenHandler;
+	CColorMap::DeleteColormaps();
 }
 
 

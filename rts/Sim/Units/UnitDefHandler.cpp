@@ -22,6 +22,7 @@
 #include "Game/Team.h"
 #include "mmgr.h"
 #include "Sim/Misc/SensorHandler.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 
 CR_BIND(UnitDef);
 
@@ -569,6 +570,24 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			ud.seismicSignature = sqrt(ud.mass/(float)100);
 		else 
 			ud.seismicSignature = 0;
+	}
+
+	if(tdfparser.SectionExist("UNITINFO\\SFXTypes"))
+	{
+		int num=0;
+        while(num!=-1)
+		{
+			char cnum[16];
+			std::string expsfx = tdfparser.SGetValueDef("", "UNITINFO\\SFXTypes\\explosiongenerator" + std::string(itoa(num, cnum, 10)));
+			if(expsfx!="")
+			{
+				ud.sfxExplGens.push_back(explGenHandler->LoadGenerator(expsfx));
+				num++;
+			}
+			else
+				num=-1;
+		}
+
 	}
 
 	LoadSound(tdfparser, ud.sounds.ok, "ok1");

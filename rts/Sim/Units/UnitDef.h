@@ -9,6 +9,7 @@
 
 struct MoveData;
 struct WeaponDef;
+class CExplosionGenerator;
 
 const int MAX_UNITS=5000;
 
@@ -265,6 +266,8 @@ struct UnitDef
 	float maxFuel;					//max flight time in seconds before the aircraft needs to return to a air repair bay to refuel
 	float refuelTime;				//time to fully refuel unit
 	float minAirBasePower;	//min build power for airbases that this aircraft can land on
+
+	std::vector<CExplosionGenerator*>  sfxExplGens;  //list of explosiongenerators for use in scripts
 };
 
 struct Command;

@@ -555,8 +555,10 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	hitDir.y = 0;
 	hitDir = -hitDir.Normalize();
 	std::vector<int> hitAngles;
+	
 	hitAngles.push_back((int)(500 * hitDir.z));
 	hitAngles.push_back((int)(500 * hitDir.x));
+
 	cob->Call(COBFN_HitByWeapon, hitAngles);	
 
 	damage*=curArmorMultiple;
@@ -1216,7 +1218,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 		if(!exp.empty()){
 			WeaponDef* wd=weaponDefHandler->GetWeapon(exp);
 			if(wd){
-				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,wd->edgeEffectivness,wd->explosionSpeed,this,true,wd->damages[0]>500?1:2,false,wd->explosionGenerator,0);
+				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,wd->edgeEffectivness,wd->explosionSpeed,this,true,wd->damages[0]>500?1:2,false,wd->explosionGenerator,0, ZeroVector);
 
 				// Play explosion sound
 				CWeaponDefHandler::LoadSound(wd->soundhit);
