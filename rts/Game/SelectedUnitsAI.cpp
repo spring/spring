@@ -86,6 +86,23 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 }
 
 
+inline bool MayRequireSetMaxSpeedCommand(const Command &c)
+{
+	switch (c.id) {
+		// this is not a complete list
+		case CMD_STOP:
+		case CMD_WAIT:
+		case CMD_FIRE_STATE:
+		case CMD_MOVE_STATE:
+		case CMD_ONOFF:
+		case CMD_REPEAT: {
+			return false;
+		}
+	}
+	return true;
+}
+
+
 void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 {
 	const vector<int>& netSelected = selectedUnits.netSelected[player];
@@ -103,7 +120,9 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		CUnit* unit = uh->units[*netSelected.begin()];
 		if(unit) {
 			unit->commandAI->GiveCommand(c);
-			AddUnitSetMaxSpeedCommand(unit, c.options);
+			if (MayRequireSetMaxSpeedCommand(c)) {
+				AddUnitSetMaxSpeedCommand(unit, c.options);
+			}
 		}
 		return;
 	}
@@ -201,20 +220,8 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 				// appending a CMD_SET_WANTED_MAX_SPEED command to
 				// every command is a little bit wasteful, n'est pas?
 				unit->commandAI->GiveCommand(c);
-				switch (c.id) {
-					// this is not a complete list
-					case CMD_STOP:
-					case CMD_WAIT:
-					case CMD_FIRE_STATE:
-					case CMD_MOVE_STATE:
-					case CMD_ONOFF:
-					case CMD_REPEAT: {
-						// do nothing
-						break;
-					}
-					default: {
-						AddUnitSetMaxSpeedCommand(unit, c.options);
-					}
+				if (MayRequireSetMaxSpeedCommand(c)) {
+					AddUnitSetMaxSpeedCommand(unit, c.options);
 				}
 			}
 		}
