@@ -240,6 +240,10 @@ void CFactoryCAI::DrawCommands(void)
 	deque<Command>::iterator ci;
 	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
 		switch(ci->id){
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);

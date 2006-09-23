@@ -20,6 +20,7 @@ public:
 	void AddUnit(CUnit* unit);
 	void FinishCommand(void);
 	void BuggerOff(float3 pos, float radius);
+	void StopMove();
 
 	float3 goalPos;
 	float3 patrolGoal;

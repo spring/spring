@@ -225,7 +225,7 @@ void CAirCAI::SlowUpdate()
 			}
 		}
 	}
-
+	
 	if(commandQue.empty()){
 		if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_FLYING && !owner->unitDef->DontLand ())
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
@@ -261,21 +261,32 @@ void CAirCAI::SlowUpdate()
 		return;
 	}
 
-	if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_LANDED && commandQue.front().id!=CMD_STOP){
-		myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
+	Command& c = commandQue.front();
+	
+	if (c.id == CMD_WAIT) {
+		if ((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
+		    && !owner->unitDef->DontLand()) {
+			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
+		}
+		return;
 	}
 
-	if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_LANDING && commandQue.front().id!=CMD_STOP){
-		myPlane->SetState(CAirMoveType::AIRCRAFT_FLYING);
+	if (c.id != CMD_STOP) {
+		if (myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED) {
+			myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
+		}
+		if (myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDING) {
+			myPlane->SetState(CAirMoveType::AIRCRAFT_FLYING);
+		}
 	}
 
 	float3 curPos=owner->pos;
 
-	Command& c=commandQue.front();
 	switch(c.id){
 	case CMD_STOP:{
 		CCommandAI::SlowUpdate();
-		break;}
+		break;
+	}
 	case CMD_MOVE:{
 		if(tempOrder){
 			tempOrder=false;
@@ -586,6 +597,10 @@ void CAirCAI::DrawCommands(void)
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
@@ -634,6 +649,14 @@ void CAirCAI::DrawCommands(void)
 	lineDrawer.FinishPath();
 }
 
+void CAirCAI::StopMove()
+{
+	CAirMoveType* myPlane = (CAirMoveType*)owner->moveType;
+	if((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
+	   && !owner->unitDef->DontLand()) {
+		myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
+	}
+}
 
 void CAirCAI::FinishCommand(void)
 {

@@ -201,7 +201,21 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 				// appending a CMD_SET_WANTED_MAX_SPEED command to
 				// every command is a little bit wasteful, n'est pas?
 				unit->commandAI->GiveCommand(c);
-				AddUnitSetMaxSpeedCommand(unit, c.options);
+				switch (c.id) {
+					// this is not a complete list
+					case CMD_STOP:
+					case CMD_WAIT:
+					case CMD_FIRE_STATE:
+					case CMD_MOVE_STATE:
+					case CMD_ONOFF:
+					case CMD_REPEAT: {
+						// do nothing
+						break;
+					}
+					default: {
+						AddUnitSetMaxSpeedCommand(unit, c.options);
+					}
+				}
 			}
 		}
 	}

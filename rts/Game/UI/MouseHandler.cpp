@@ -78,6 +78,7 @@ CMouseHandler::CMouseHandler()
 	cursors["Reclaim"] = new CMouseCursor("cursorreclamate", CMouseCursor::Center);
 	cursors["Resurrect"] = new CMouseCursor("cursorrevive", CMouseCursor::Center);
 	cursors["Capture"] = new CMouseCursor("cursorcapture", CMouseCursor::Center);
+	cursors["Wait"] = new CMouseCursor("cursorwait", CMouseCursor::Center);
 
 	SDL_ShowCursor(SDL_DISABLE);
 

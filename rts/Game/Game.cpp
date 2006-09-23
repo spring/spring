@@ -1034,41 +1034,45 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
 	}
+	else if (cmd == "quitwarn") {
+		const CKeyBindings::HotkeyList hkl = keyBindings->GetHotkeys("quit");
+		if (hkl.empty()) {
+			logOutput.Print("How odd, you appear to be lacking a \"quit\" binding");
+		} else {
+			logOutput.Print("Use %s to quit", hkl[0].c_str());
+		}
+	}
 	else if (cmd == "quit") {
-		if(!keys[SDLK_LSHIFT]){
-			logOutput.Print("Use shift-esc to quit");
+		//The user wants to quit. Do we let him?
+		bool userMayQuit=false;
+		// Six cases when he may quit:
+		//  * If the game isn't started players are free to leave.
+		//  * If the game is over
+		//  * If his team is dead.
+		//  * If he's a spectator.
+		//  * If there are other active players on his team.
+		//  * If there are no other players
+		if(!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating || (net->onlyLocal && !gameServer)) {
+			userMayQuit=true;
 		}else{
-			//The user wants to quit. Do we let him?
-			bool userMayQuit=false;
-			// Six cases when he may quit:
-			//  * If the game isn't started players are free to leave.
-			//  * If the game is over
-			//  * If his team is dead.
-			//  * If he's a spectator.
-			//  * If there are other active players on his team.
-			//  * If there are no other players
-			if(!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating || (net->onlyLocal && !gameServer)) {
-				userMayQuit=true;
-			}else{
-				// Check if there are more active players on his team.
-				for(int a=0;a<MAX_PLAYERS;++a){
-					if(gs->players[a]->active && gs->players[a]->team==gu->myTeam && a!=gu->myPlayerNum){
-						userMayQuit=true;
-						break;
-					}
+			// Check if there are more active players on his team.
+			for(int a=0;a<MAX_PLAYERS;++a){
+				if(gs->players[a]->active && gs->players[a]->team==gu->myTeam && a!=gu->myPlayerNum){
+					userMayQuit=true;
+					break;
 				}
-			} // .. if(!playing||isDead||spectating)
-
-			// User may not quit if he is the only player in his still active team.
-			// Present him with the options given in CQuitBox.
-			if(!userMayQuit){
-				if(!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front())==0){
-					new CQuitBox();
-				}
-			} else {
-				logOutput.Print("User exited");
-				globalQuit=true;
 			}
+		} // .. if(!playing||isDead||spectating)
+
+		// User may not quit if he is the only player in his still active team.
+		// Present him with the options given in CQuitBox.
+		if(!userMayQuit){
+			if(!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front())==0){
+				new CQuitBox();
+			}
+		} else {
+			logOutput.Print("User exited");
+			globalQuit=true;
 		}
 	}
 	else if (cmd == "incguiopacity") {

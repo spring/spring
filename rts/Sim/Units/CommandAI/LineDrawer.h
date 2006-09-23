@@ -15,6 +15,7 @@ class CLineDrawer {
 		void FinishPath();
 		void DrawLine(const float3& endPos, const float* color);
 		void DrawLineAndIcon(int cmdID, const float3& endPos, const float* color);
+		void DrawIconAtLastPos(int cmdID);
 		void Break(const float3& endPos, const float* color);
 		void Restart();
 		void RestartSameColor();
@@ -56,10 +57,8 @@ inline void CLineDrawer::FinishPath()
 
 inline void CLineDrawer::Break(const float3& endPos, const float* color)
 {
-	if (!useColorRestarts) {
-		lastPos = endPos;
-		lastColor = color;
-	}
+	lastPos = endPos;
+	lastColor = color;
 	glEnd();
 }
 
@@ -109,9 +108,9 @@ inline void CLineDrawer::DrawLine(const float3& endPos, const float* color)
 		glVertexf3(lastPos);
 		glColor4fv(color);
 		glVertexf3(endPos);
-		lastPos = endPos;
-		lastColor = color;
 	}
+	lastPos = endPos;
+	lastColor = color;
 }
 
 
@@ -120,6 +119,12 @@ inline void CLineDrawer::DrawLineAndIcon(
 {
 	cursorIcons->AddIcon(cmdID, endPos);
 	DrawLine(endPos, color);
+}
+
+
+inline void CLineDrawer::DrawIconAtLastPos(int cmdID)
+{
+	cursorIcons->AddIcon(cmdID, lastPos);
 }
 
 

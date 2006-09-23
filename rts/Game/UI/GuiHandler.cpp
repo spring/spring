@@ -1732,6 +1732,11 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 							c.options = RIGHT_MOUSE_KEY |SHIFT_KEY | CONTROL_KEY;
 						}
 					}
+					else if (c.id == CMD_WAIT) {
+						if (action.extra == "queued") {
+							c.options = SHIFT_KEY;
+						}
+					}
 					selectedUnits.GiveCommand(c);
 					break;
 				}

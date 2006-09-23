@@ -221,10 +221,14 @@ void CMobileCAI::SlowUpdate()
 
 	Command& c=commandQue.front();
 	switch(c.id){
+	case CMD_WAIT:{
+		break;
+	}
 	case CMD_STOP:{
 		StopMove();
 		CCommandAI::SlowUpdate();
-		break;}
+		break;
+	}
 	case CMD_SET_WANTED_MAX_SPEED:{
 	  if (repeatOrders && (commandQue.size() >= 2) &&
 	      (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
@@ -232,7 +236,8 @@ void CMobileCAI::SlowUpdate()
 		}
 		commandQue.pop_front();
 		SlowUpdate();
-		break;}
+		break;
+	}
 	case CMD_MOVE:{
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		if(!(pos==goalPos)){
@@ -241,7 +246,8 @@ void CMobileCAI::SlowUpdate()
 		if((curPos-goalPos).SqLength2D()<1024 || owner->moveType->progressState==CMoveType::Failed){
 			FinishCommand();
 		}
-		break;}
+		break;
+	}
 	case CMD_PATROL:{
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
 			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in mobilecai",
@@ -261,7 +267,8 @@ void CMobileCAI::SlowUpdate()
 			owner->group->CommandFinished(owner->id,CMD_PATROL);
 		}
 		SlowUpdate();
-		return;}
+		return;
+	}
 	case CMD_FIGHT:{
 		if(tempOrder){
 			inCommand = true;
@@ -316,7 +323,8 @@ void CMobileCAI::SlowUpdate()
 		if((curPos-goalPos).SqLength2D()<4096 || owner->moveType->progressState==CMoveType::Failed){
 			FinishCommand();
 		}
-		return;}
+		return;
+	}
 	case CMD_DGUN:
 		if(uh->limitDgun && owner->unitDef->isCommander
 		  && owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
@@ -462,6 +470,10 @@ void CMobileCAI::DrawCommands(void)
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		bool draw=false;
 		switch(ci->id){
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
