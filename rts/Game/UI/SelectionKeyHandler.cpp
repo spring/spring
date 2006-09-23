@@ -382,6 +382,21 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 					selection.erase(prev);
 				}
 			}
+		} else if(s=="Waiting"){
+			list<CUnit*>::iterator ui=selection.begin();
+			while(ui!=selection.end()){
+				bool filterTrue=false;
+				if(!(*ui)->commandAI->commandQue.empty() &&
+				   ((*ui)->commandAI->commandQue.front().id == CMD_WAIT)){
+					filterTrue=true;
+				}
+				if(filterTrue ^ _not){
+					++ui;
+				} else {
+					list<CUnit*>::iterator prev=ui++;
+					selection.erase(prev);
+				}
+			}
 		} else if(s=="Radar"){
 			list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
