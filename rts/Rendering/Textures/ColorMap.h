@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <map>
 
 //Simple class to interpolate between 32bit RGBA colors
 //Do not delete an instance of this class created by any Load function, they are deleted automaticly

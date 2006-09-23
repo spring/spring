@@ -575,10 +575,11 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(tdfparser.SectionExist("UNITINFO\\SFXTypes"))
 	{
 		int num=0;
-        while(num!=-1)
+		while(num!=-1)
 		{
 			char cnum[16];
-			std::string expsfx = tdfparser.SGetValueDef("", "UNITINFO\\SFXTypes\\explosiongenerator" + std::string(itoa(num, cnum, 10)));
+			SNPRINTF(cnum, sizeof(cnum), "%i", num);
+			std::string expsfx = tdfparser.SGetValueDef("", "UNITINFO\\SFXTypes\\explosiongenerator" + std::string(cnum));
 			if(expsfx!="")
 			{
 				ud.sfxExplGens.push_back(explGenHandler->LoadGenerator(expsfx));
