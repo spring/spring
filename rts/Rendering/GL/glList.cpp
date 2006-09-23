@@ -152,7 +152,7 @@ void CglList::KeyPress(int k)
 	if (k == SDLK_BACKSPACE) {
 		query = query.substr(0, query.length() - 1);
 		Filter(true);
-	} else if ((k & 0xFF) != k) {
+	} else if ((k & ~0xFF) != 0) {
 		// This prevents isalnum from asserting on msvc debug crt
 		// We don't actually need to process the key tho;)
 	} else if (isalnum(k)) {
