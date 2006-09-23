@@ -611,13 +611,13 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3D
 
 void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts){
 	FlyingPiece_List * pieceList = NULL;
-	
+
 	while(flyings3oPieces.size()<=textureType)
 		flyings3oPieces.push_back(std::vector<FlyingPiece_List*>());
-	
+
 	while(flyings3oPieces[textureType].size()<=team){
-		printf("Creating piece list %d %d.\n", textureType, flyings3oPieces[textureType].size());
-		
+		logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
+
 		FlyingPiece_List * fpl = new FlyingPiece_List;
 		flyings3oPieces[textureType].push_back(fpl);
 		flyingPieces.push_back(fpl);
