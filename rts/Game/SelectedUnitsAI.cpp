@@ -86,7 +86,7 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 }
 
 
-inline bool MayRequireSetMaxSpeedCommand(const Command &c)
+static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 {
 	switch (c.id) {
 		// this is not a complete list
