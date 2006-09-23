@@ -5,6 +5,11 @@
 #include "FileSystem/FileHandler.h"
 #include <sstream>
 
+std::vector<CColorMap *> CColorMap::colorMaps;
+std::map<std::string, CColorMap *> CColorMap::colorMapsMap;
+
+CR_BIND(CColorMap);
+
 CColorMap::CColorMap(void)
 {
 	map = 0;
@@ -13,13 +18,42 @@ CColorMap::CColorMap(void)
 CColorMap::CColorMap(std::vector<float> &vec)
 {
 	map=0;
-	LoadFromFloatVector(vec);
+
+	if(vec.size()<8) //needs at least two colors
+		throw content_error("To few colors in colormap.");
+
+	unsigned char *lmap = new unsigned char[vec.size() - vec.size()%4];
+	xsize = (vec.size() - vec.size()%4)/4;
+	ysize = 1;
+	nxsize = xsize-1;
+	nysize = ysize-1;
+
+	for(int i=0; i<xsize*4; i++)
+	{
+		lmap[i] = int(vec[i]*255);
+	}
+	LoadMap(lmap, xsize*4);
+	delete [] lmap;
 }
 
 CColorMap::CColorMap(std::string filename)
 {
 	map=0;
-	LoadFromBitmapFile(filename);
+
+	CBitmap bitmap;
+
+	if (!bitmap.Load(filename))
+		throw content_error("Could not load texture from file " + filename);
+
+	if(bitmap.type != CBitmap::BitmapTypeStandardRGBA || (bitmap.xsize<2))
+		throw content_error("Unsupported bitmap format in file " + filename);
+
+	xsize = bitmap.xsize;
+	ysize = bitmap.ysize;
+	nxsize = xsize-1;
+	nysize = ysize-1;
+
+	LoadMap(bitmap.mem, xsize*ysize*4);
 }
 
 CColorMap::CColorMap(const unsigned char *buf, int num)
@@ -38,6 +72,15 @@ CColorMap::~CColorMap(void)
 		delete [] map;
 }
 
+void CColorMap::DeleteColormaps()
+{
+	for(int i=0; i<colorMaps.size(); i++)
+	{
+		delete colorMaps.back();
+		colorMaps.pop_back();
+	}
+}
+
 void CColorMap::LoadMap(const unsigned char *buf, int num)
 {
 	if(map)
@@ -47,22 +90,94 @@ void CColorMap::LoadMap(const unsigned char *buf, int num)
 	memcpy(map, buf, num);
 }
 
-void CColorMap::LoadFromBitmapFile(std::string filename)
+CColorMap* CColorMap::LoadFromBitmapFile(std::string filename)
 {
-	CBitmap bitmap;
+	std::string lowfilename = filename;
+	StringToLowerInPlace(lowfilename);
+	CColorMap *map;
+	if(colorMapsMap.find(lowfilename)==colorMapsMap.end())
+	{
+		map = new CColorMap(filename);
+		colorMapsMap[lowfilename] = map;
+	}
+	else
+	{
+		map = colorMapsMap.find(lowfilename)->second;
+	}
+	colorMaps.push_back(map);
+	return map;
+}
 
-	if (!bitmap.Load(filename))
-		throw content_error("Could not load texture from file " + filename);
+CColorMap* CColorMap::LoadFromFloatVector(std::vector<float> &vec)
+{
+	CColorMap *map = new CColorMap(vec);
+	colorMaps.push_back(map);
+	return map;
+}
 
-	if(bitmap.type != CBitmap::BitmapTypeStandardRGBA || (bitmap.xsize<2))
-		throw content_error("Unsupported bitmap format in file " + filename);
+CColorMap* CColorMap::LoadFromFloatString(std::string fstring)
+{
+	std::stringstream stream;
+	stream << fstring;
+	std::vector<float> vec;
 
-	xsize = bitmap.xsize;
-	ysize = bitmap.ysize;
-	nxsize = xsize-1;
-	nysize = ysize-1;
+	float value;
+	while(stream >> value)
+	{
+		vec.push_back(value);
+	}
 
-	LoadMap(bitmap.mem, xsize*ysize*4);
+	return CColorMap::LoadFromFloatVector(vec);
+}
+
+CColorMap* CColorMap::LoadFromDefString(std::string dstring)
+{
+	std::stringstream stream;
+	stream << dstring;
+	std::vector<float> vec;
+
+	float value;
+	while(stream >> value)
+	{
+		vec.push_back(value);
+	}
+
+	if(vec.size()>0)
+		return CColorMap::LoadFromFloatVector(vec);
+	else
+		return CColorMap::LoadFromBitmapFile("bitmaps\\" + dstring);
+}
+
+CColorMap* CColorMap::Load8f(float r1,float g1,float b1,float a1,float r2,float g2,float b2,float a2)
+{
+	std::vector<float> vec;
+	vec.push_back(r1);
+	vec.push_back(g1);
+	vec.push_back(b1);
+	vec.push_back(a1);
+	vec.push_back(r2);
+	vec.push_back(g2);
+	vec.push_back(b2);
+	vec.push_back(a2);
+	return CColorMap::LoadFromFloatVector(vec);
+}
+
+CColorMap* CColorMap::Load12f(float r1,float g1,float b1,float a1,float r2,float g2,float b2,float a2,float r3,float g3,float b3,float a3)
+{
+	std::vector<float> vec;
+	vec.push_back(r1);
+	vec.push_back(g1);
+	vec.push_back(b1);
+	vec.push_back(a1);
+	vec.push_back(r2);
+	vec.push_back(g2);
+	vec.push_back(b2);
+	vec.push_back(a2);
+	vec.push_back(r3);
+	vec.push_back(g3);
+	vec.push_back(b3);
+	vec.push_back(a3);
+	return CColorMap::LoadFromFloatVector(vec);
 }
 
 unsigned char* CColorMap::GetColor(unsigned char *color, float pos)
@@ -88,70 +203,4 @@ unsigned char* CColorMap::GetColor(unsigned char *color, float pos)
 	color[3] = (col1[3]*ia + col2[3]*aa)>>8;
 
 	return color;
-}
-
-void CColorMap::LoadFromFloatVector(std::vector<float> &vec)
-{
-	if(vec.size()<8) //needs at least two colors
-		throw content_error("To few colors in colormap.");
-
-	unsigned char *lmap = new unsigned char[vec.size() - vec.size()%4];
-	xsize = (vec.size() - vec.size()%4)/4;
-	ysize = 1;
-	nxsize = xsize-1;
-	nysize = ysize-1;
-
-	for(int i=0; i<xsize*4; i++)
-	{
-		lmap[i] = int(vec[i]*255);
-	}
-	LoadMap(lmap, xsize*4);
-	delete [] lmap;
-}
-
-void CColorMap::LoadFromFloatString(std::string fstring)
-{
-	std::stringstream stream;
-	stream << fstring;
-	std::vector<float> vec;
-
-	float value;
-	while(stream >> value)
-	{
-		vec.push_back(value);
-	}
-
-	LoadFromFloatVector(vec);
-}
-
-void CColorMap::Load8f(float r1,float g1,float b1,float a1,float r2,float g2,float b2,float a2)
-{
-	std::vector<float> vec;
-	vec.push_back(r1);
-	vec.push_back(g1);
-	vec.push_back(b1);
-	vec.push_back(a1);
-	vec.push_back(r2);
-	vec.push_back(g2);
-	vec.push_back(b2);
-	vec.push_back(a2);
-	LoadFromFloatVector(vec);
-}
-
-void CColorMap::Load12f(float r1,float g1,float b1,float a1,float r2,float g2,float b2,float a2,float r3,float g3,float b3,float a3)
-{
-	std::vector<float> vec;
-	vec.push_back(r1);
-	vec.push_back(g1);
-	vec.push_back(b1);
-	vec.push_back(a1);
-	vec.push_back(r2);
-	vec.push_back(g2);
-	vec.push_back(b2);
-	vec.push_back(a2);
-	vec.push_back(r3);
-	vec.push_back(g3);
-	vec.push_back(b3);
-	vec.push_back(a3);
-	LoadFromFloatVector(vec);
 }

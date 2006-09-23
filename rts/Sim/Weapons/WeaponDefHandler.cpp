@@ -44,7 +44,6 @@ CWeaponDefHandler::CWeaponDefHandler(void)
 
 	std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
 
-	explGen = new CExplosionGeneratorHandler();
 	weaponDefs = new WeaponDef[weaponlist.size()+1];
 	for(std::size_t taid=0; taid<weaponlist.size(); taid++)
 	{
@@ -55,7 +54,6 @@ CWeaponDefHandler::CWeaponDefHandler(void)
 CWeaponDefHandler::~CWeaponDefHandler(void)
 {
 	delete[] weaponDefs;
-	delete explGen;
 }
 
 void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id)
@@ -342,7 +340,13 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.2", weaponname + "\\sizeGrowth");
 	sunparser->GetDef(weaponDefs[id].collisionSize, "0.05", weaponname + "\\CollisionSize");
 	
-	weaponDefs[id].visuals.colorMap = new CColorMap();
+	weaponDefs[id].visuals.colorMap = 0;
+	std::string colormap;
+	colormap = sunparser->SGetValueDef("", weaponname + "\\colormap");
+	if(colormap!="")
+	{
+		weaponDefs[id].visuals.colorMap = CColorMap::LoadFromDefString(colormap);
+	}
 
 	//get some weapon specific defaults
 	if(weaponDefs[id].type=="Cannon"){
@@ -367,9 +371,13 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		sunparser->GetDef(weaponDefs[id].collisionSize, "0.5", weaponname + "\\CollisionSize");
 
 		sunparser->GetDef(weaponDefs[id].duration, "1.2", weaponname + "\\flamegfxtime");
-		weaponDefs[id].visuals.colorMap->Load12f(1.0,1.0,1,0.1,
-												0.025,0.025,0.025,0.1,
-												0.00,0.00,0.0,0.0);
+
+		if(weaponDefs[id].visuals.colorMap==0)
+		{
+			weaponDefs[id].visuals.colorMap = CColorMap::Load12f(1.0,1.0,1,0.1,
+													0.025,0.025,0.025,0.1,
+													0.00,0.00,0.0,0.0);
+		}
 
 	} else if(weaponDefs[id].type=="MissileLauncher"){
 		//CMissileProjectile
@@ -431,21 +439,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	if(tmp != "")
 		weaponDefs[id].visuals.texture4 = ph->textureAtlas->GetTexturePtr(tmp);
 
-	std::string colormap;
-	sunparser->GetDef(colormap, "", weaponname + "\\colormap");
-	if(colormap!="")
-	{
-		std::vector<float> vec;
-		if(sunparser->GetVector(vec, weaponname + "\\colormap"))
-			weaponDefs[id].visuals.colorMap->LoadFromFloatVector(vec);
-		else
-		{
-			weaponDefs[id].visuals.colorMap->LoadFromBitmapFile("bitmaps\\" + colormap);
-		}
-	}
-
 	std::string explgentag = sunparser->SGetValueDef(std::string(), weaponname + "\\explosiongenerator");
-	weaponDefs[id].explosionGenerator = explgentag.empty() ? 0 : explGen->LoadGenerator(explgentag);
+	weaponDefs[id].explosionGenerator = explgentag.empty() ? 0 : explGenHandler->LoadGenerator(explgentag);
 
 	float gd=max(30.f,weaponDefs[id].damages[0]/20);
 	weaponDefs[id].explosionSpeed = (8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f;

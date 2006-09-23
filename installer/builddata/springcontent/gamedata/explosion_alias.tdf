@@ -31,6 +31,8 @@
 	wake=CWakeProjectile;
 	heatcloud=CHeatCloudProjectile;
 	gfx=CGfxProjectile;
+	SimpleParticleSystem=CSimpleParticleSystem;
+	BitmapMuzzleFlame=CBitmapMuzzleFlame;
 }
 [generators]
 {

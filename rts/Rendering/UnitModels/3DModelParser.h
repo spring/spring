@@ -59,6 +59,7 @@ struct LocalS3DOModel
 	float3 GetPiecePos(int piecenum);
 	CMatrix44f GetPieceMatrix(int piecenum);
 	float3 GetPieceDirection(int piecenum);
+	int GetPieceVertCount(int piecenum);
 };
 
 class C3DModelParser

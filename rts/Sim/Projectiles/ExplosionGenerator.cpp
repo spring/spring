@@ -20,9 +20,11 @@
 #include <SDL_types.h>
 #include <fstream>
 #include "mmgr.h"
+#include "Rendering/Textures/ColorMap.h"
 
 using namespace std;
 
+CExplosionGeneratorHandler* explGenHandler=0;
 // -------------------------------------------------------------------------------
 // ClassAliasList: Finds C++ classes with class aliases
 // -------------------------------------------------------------------------------
@@ -131,7 +133,7 @@ CStdExplosionGenerator::~CStdExplosionGenerator()
 void CStdExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::string& tag)
 {}
 
-void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit)
+void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit, const float3 &dir)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
@@ -145,7 +147,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, const DamageArray& dam
 	bool uwExplosion=pos.y<-15;
 	bool airExplosion=pos.y-max((float)0,h2)>20;
 
-	float damage=damages[0]/20;
+	damage=damage/20;
 	if(damage>radius*1.5f) //limit the visual effects based on the radius
 		damage=radius*1.5f;
 	damage*=gfxMod;
@@ -295,8 +297,9 @@ CCustomExplosionGenerator::~CCustomExplosionGenerator()
 #define OP_INDEX  7
 #define OP_LOADP  8 // load a void* into the pointer register
 #define OP_STOREP 9 // store the pointer register into a void*
+#define OP_DIR	  10 //stor the float3 direction
 
-void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex)
+void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex,const float3 &dir)
 {
 	float val = 0.0f;
 	void* ptr = NULL;
@@ -349,6 +352,11 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 			*(void**)(instance + offset) = ptr;
 			ptr = NULL;
 			break;}
+		case OP_DIR:{
+			Uint16 offset = *(Uint16*)code;
+			code += 2;
+			*(float3*)(instance + offset) = dir;
+			}
 		}
 	}
 }
@@ -357,7 +365,19 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	CCustomExplosionGenerator::ProjectileSpawnInfo *psi, 
 	int offset, creg::IType *type, const std::string& script, std::string& code)
 {
-	if (dynamic_cast<creg::BasicType*>(type)) {
+
+	string::size_type end = script.find(';', 0);
+	std::string vastr = script.substr(0, end);
+
+	
+	if(vastr == "dir") //first see if we can match any keywords
+	{
+		//if the user uses a keyword assume he knows that it is put on the right datatype for now
+		code += OP_DIR;
+		Uint16 ofs = offset;
+		code.append ((char*)&ofs, (char*)&ofs + 2);          
+	}
+	else if (dynamic_cast<creg::BasicType*>(type)) {
 		creg::BasicType *bt = (creg::BasicType*)type;
 
 		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar)
@@ -433,6 +453,17 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			Uint16 ofs = offset;
 			code.append ((char*)&ofs, (char*)&ofs + 2);
 		}
+		else if(type->GetName()=="CColorMap*")
+		{
+			string::size_type end = script.find(';', 0);
+			std::string colorstring = script.substr(0, end);
+			void* colormap = CColorMap::LoadFromDefString(colorstring);
+			code += OP_LOADP;
+			code.append((char*)(&colormap), ((char*)(&colormap)) + sizeof(void*));
+			code += OP_STOREP;
+			Uint16 ofs = offset;
+			code.append ((char*)&ofs, (char*)&ofs + 2);
+		}
 	}
 }
 
@@ -504,7 +535,7 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 }
 
 
-void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& damages, float radius, CUnit *owner,float gfxMod, CUnit *hit)
+void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir)
 {
 	float h2=ground->GetHeight2(pos.x,pos.z);
 
@@ -527,7 +558,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 		{
 			CProjectile *projectile = (CProjectile*)psi->projectileClass->CreateInstance ();
 
-			ExecuteExplosionCode (&psi->code[0], damages.damages[0], (char*)projectile, c);
+			ExecuteExplosionCode (&psi->code[0], damage, (char*)projectile, c, dir);
 			projectile->Init(pos, owner);
 		}
 	}
@@ -536,7 +567,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, const DamageArray& 
 		new CStandarGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
 
 	if (useDefaultExplosions)
-		CStdExplosionGenerator::Explosion(pos, damages, radius, owner, gfxMod, hit);
+		CStdExplosionGenerator::Explosion(pos, damage, radius, owner, gfxMod, hit, dir);
 }
 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()

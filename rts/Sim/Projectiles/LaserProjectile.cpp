@@ -6,6 +6,7 @@
 #include "LogOutput.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "SimpleParticleSystem.h"
 
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
@@ -96,6 +97,20 @@ void CLaserProjectile::Collision()
 		speed=ZeroVector;
 		pos=oldPos;
 	}
+
+	//CSimpleParticleSystem *ps = new CSimpleParticleSystem();
+	//ps->particleLife = 30*3;
+	//ps->particleLifeSpread = 30*3;
+	//ps->particleSize = 6;
+	//ps->particleSizeSpread = 2;
+	//ps->emitVector = float3(0,0,0);
+	//ps->emitSpread = float3(4,1,4).Normalize();
+	//ps->pos = pos;
+	//ps->numParticles = 2000;
+	//ps->airdrag = 0.85f;
+	//ps->speed = 30.0f;
+	//ps->speedSpread = 8.0f;
+	//ps->Init();
 }
 
 

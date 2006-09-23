@@ -191,8 +191,6 @@ public:
 protected:
 	void ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id);
 	float3 hs2rgb(float h, float s);
-
-	CExplosionGeneratorHandler* explGen;
 };
 
 extern CWeaponDefHandler* weaponDefHandler;

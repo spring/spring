@@ -85,7 +85,11 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 void CWeaponProjectile::Collision()
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator,0);
+	{
+		float3 impactDir = speed;
+		impactDir.Normalize();
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator,0,impactDir);
+	}
 		
 	if(weaponDef->soundhit.id)
 		sound->PlaySample(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
@@ -111,7 +115,11 @@ void CWeaponProjectile::Collision(CFeature* feature)
 void CWeaponProjectile::Collision(CUnit* unit)
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode,weaponDef->explosionGenerator,unit);
+	{
+		float3 impactDir = speed;
+		impactDir.Normalize();
+		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode,weaponDef->explosionGenerator,unit,impactDir);
+	}
 
 	if(weaponDef->soundhit.id)
 		sound->PlaySample(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
