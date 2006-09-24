@@ -72,7 +72,6 @@ class CKeyBindings
 		bool RemoveCommandFromList(ActionList& al, const string& command);
 
 		bool FileSave(FILE* file) const;
-		void OutputDebug(const char* msg) const;
 
 	protected:
 		typedef map<CKeySet, ActionList> KeyMap; // keyset to action

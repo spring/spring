@@ -26,6 +26,7 @@ extern "C" {
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/LogOutput.h"
 
 static string IntToString(int value);
 static string BoolToString(bool value);
@@ -73,13 +74,15 @@ bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
-		printf("error = %i, %s, %s\n", error, debug.c_str(), lua_tostring(L, -1));
+		logOutput.Print("ERROR: KeyAutoBinder: Loading: %s\n",
+		                lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
 	error = lua_pcall(L, 0, 0, 0);
 	if (error != 0) {
-		printf("error = %i, %s, %s\n", error, debug.c_str(), lua_tostring(L, -1));
+		logOutput.Print("ERROR: KeyAutoBinder: Running: %s\n",
+		                lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -133,11 +136,11 @@ bool CKeyAutoBinder::LoadGameInfo()
 	
 	code += "game.springCategories = " + GetCategoryTableFromBits(~0) + endlStr;
 
-	if (keyBindings->GetDebug() > 0) {
-		printf("%s", code.c_str());
+	if (keyBindings->GetDebug() > 1) {
+		logOutput.Print(code);
 	}
 
-	if (!LoadCode(code, "gameInfo")) {
+	if (!LoadCode(code, "game[]")) {
 		return false;
 	}
 	
@@ -165,8 +168,8 @@ bool CKeyAutoBinder::LoadCompareFunc()
 	code += "  return 0.0"                               + endlStr;
 	code += "end"                                        + endlStr;
 
-	if (keyBindings->GetDebug() > 0) {
-		printf("%s", code.c_str());
+	if (keyBindings->GetDebug() > 1) {
+		logOutput.Print(code);
 	}
 
 	if (!LoadCode(code, "compare()")) {
@@ -187,9 +190,9 @@ bool CKeyAutoBinder::LoadUnitDefInfo()
 
 	code += "unitDefs = {}" + endlStr;
 
-	LoadCode(code, "unitDefs");
-	if (keyBindings->GetDebug() > 0) {
-		printf("%s", code.c_str());
+	LoadCode(code, "unitDefs[]");
+	if (keyBindings->GetDebug() > 1) {
+		logOutput.Print(code);
 	}
 	code.clear();
 	
@@ -506,8 +509,8 @@ bool CKeyAutoBinder::LoadUnitDefInfo()
 		ADD_FLOAT(nanoColorG, ud.nanoColor.y);
 		ADD_FLOAT(nanoColorB, ud.nanoColor.z);
 
-		if (keyBindings->GetDebug() > 0) {
-			printf("%s", code.c_str());
+		if (keyBindings->GetDebug() > 1) {
+			logOutput.Print(code);
 		}
 
 		// load the code
@@ -532,9 +535,9 @@ bool CKeyAutoBinder::LoadWeaponDefInfo()
 
 	code += "weaponDefs = {}" + endlStr;
 
-	LoadCode(code, "weaponDefs");
-	if (keyBindings->GetDebug() > 0) {
-		printf("%s", code.c_str());
+	LoadCode(code, "weaponDefs[]");
+	if (keyBindings->GetDebug() > 1) {
+		logOutput.Print(code);
 	}
 	code.clear();
 
@@ -700,8 +703,8 @@ bool CKeyAutoBinder::LoadWeaponDefInfo()
 
 		ADD_W_BOOL(avoidFriendly, wd.avoidFriendly);
 
-		if (keyBindings->GetDebug() > 0) {
-			printf("%s", code.c_str());
+		if (keyBindings->GetDebug() > 1) {
+			logOutput.Print(code);
 		}
 
 		// load the code
@@ -742,13 +745,15 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	const string reqCall = MakeRequirementCall(requirements);
 	const string sortCall = MakeSortCriteriaCall(sortCriteria);
 
-	if (keyBindings->GetDebug() > 0) {  
-		printf("reqCall(%s):\n%s\n", keystr.c_str(), reqCall.c_str());
-		printf("sortCall(%s):\n%s\n", keystr.c_str(), sortCall.c_str());
+	if (keyBindings->GetDebug() > 1) {  
+		logOutput.Print("--reqCall(%s):\n", keystr.c_str());
+		logOutput.Print(reqCall);
+		logOutput.Print("--sortCall(%s):\n", keystr.c_str());
+		logOutput.Print(sortCall);
 	}
-	
-	if (!LoadCode(reqCall,  "Load_hasReqs") ||
-	    !LoadCode(sortCall, "Load_isBetter")) {
+
+	if (!LoadCode(reqCall,  keystr + ":hasReqs()") ||
+	    !LoadCode(sortCall, keystr + ":isBetter()")) {
 		return false;
 	}
 	
@@ -780,8 +785,10 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 		if ((i < chords.size()) && (StringToLower(chords[i]) != "none")) {
 			keyBindings->Command(bindStr + " " + chords[i] + " " + action);
 		}
-		if (keyBindings->GetDebug() > 0) {  
-			printf("%s\n", string(bindStr + " " + keystr + " " + action).c_str());
+		if (keyBindings->GetDebug() > 0) {
+			string msg = "auto-";
+			msg += bindStr + " " + keystr + " " + action;
+			logOutput.Print(msg);
 		}
 	}
 	
@@ -916,7 +923,8 @@ bool CKeyAutoBinder::HasRequirements(int unitDefID)
 	lua_pushnumber(L, unitDefID);
 	const int error = lua_pcall(L, 1, 1, 0);
 	if (error != 0) {
-		printf("error = %i, %s, %s\n", error, "Call_hasReqs", lua_tostring(L, -1));
+		logOutput.Print("ERROR: KeyAutoBinder: Running hasReqs(%i)\n  %s\n",
+		                unitDefID, lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -933,7 +941,8 @@ bool CKeyAutoBinder::IsBetter(int thisDefID, int thatDefID)
 	lua_pushnumber(L, thatDefID);
 	const int error = lua_pcall(L, 2, 1, 0);
 	if (error != 0) {
-		printf("error = %i, %s, %s\n", error, "Call_isBetter", lua_tostring(L, -1));
+		logOutput.Print("ERROR: KeyAutoBinder: Running isBetter(%i, %i)\n  %s\n",
+		                thisDefID, thatDefID, lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
