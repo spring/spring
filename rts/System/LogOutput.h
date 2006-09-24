@@ -48,6 +48,8 @@ public:
 
 	void AddSubscriber(ILogSubscriber *ls);
 	void RemoveSubscriber(ILogSubscriber *ls);
+	
+	void SetMirrorToStdout(bool);
 
 protected:
 	void Output(int priority, const char *str);

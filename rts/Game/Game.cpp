@@ -1144,7 +1144,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (!action.extra.empty()) {
 			keyBindings->SetDebug(atoi(action.extra.c_str()));
 		} else {
-			keyBindings->SetDebug((keyBindings->GetDebug() > 0) ? 0 : 2);
+			keyBindings->SetDebug((keyBindings->GetDebug() > 0) ? 0 : 1);
 		}
 	}
 	else if (cmd == "clock") {

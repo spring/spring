@@ -9,6 +9,8 @@
 #include "SDL_types.h"
 #include <stdlib.h>
 
+#include "System/LogOutput.h"
+
 extern Uint8* keys; // from System/Main.cpp
 
 
@@ -31,6 +33,7 @@ void CKeySet::ClearModifiers()
 {
 	modifiers &= ~(KS_ALT | KS_CTRL | KS_META | KS_SHIFT);
 }
+
 
 void CKeySet::SetAnyBit()
 {
@@ -131,7 +134,7 @@ bool CKeySet::Parse(const string& token)
 		key = strtol(start, &end, 16);
 		if (end == start) {
 			Reset();
-			printf("Bad hex value: %s\n", s.c_str());
+			logOutput.Print("Bad hex value: %s\n", s.c_str());
 			return false;
 		}
 	}
@@ -139,7 +142,7 @@ bool CKeySet::Parse(const string& token)
 		key = keyCodes->GetCode(s);
 		if (key < 0) {
 			Reset();
-			printf("Bad keysym: %s\n", s.c_str());
+			logOutput.Print("Bad keysym: %s\n", s.c_str());
 			return false;
 		}
 	}

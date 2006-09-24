@@ -12,9 +12,12 @@
 
 static std::ofstream* filelog = 0;
 static bool initialized = false;
+static bool stdoutDebug = false;
 CLogOutput logOutput;
 static boost::recursive_mutex tempstrMutex;
 static std::string tempstr;
+
+static const int bufferSize = 2048;
 
 CLogOutput::CLogOutput()
 {
@@ -31,6 +34,11 @@ void CLogOutput::End()
 {
 	delete filelog;
 	filelog = 0;
+}
+
+void CLogOutput::SetMirrorToStdout(bool value)
+{
+	stdoutDebug = value;
 }
 
 void CLogOutput::Output(int priority, const char *str)
@@ -57,6 +65,14 @@ void CLogOutput::Output(int priority, const char *str)
 		if (nl < 0 || str[nl] != '\n')
 			(*filelog) << "\n";
 		filelog->flush();
+	}
+
+	if (stdoutDebug) {
+		fputs(str, stdout);
+		if (nl < 0 || str[nl] != '\n') {
+			putchar('\n');
+		}
+		fflush(stdout);
 	}
 }
 
@@ -87,7 +103,7 @@ void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 
 void CLogOutput::Print(int priority, const char *fmt, ...)
 {
-	char text[500];
+	char text[bufferSize];
 	va_list	ap;
 
 	va_start(ap, fmt);
@@ -99,7 +115,7 @@ void CLogOutput::Print(int priority, const char *fmt, ...)
 
 void CLogOutput::Print(const char *fmt, ...)
 {
-	char text[1500];
+	char text[bufferSize];
 	va_list	ap;	
 
 	va_start(ap, fmt);

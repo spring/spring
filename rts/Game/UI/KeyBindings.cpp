@@ -15,6 +15,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
 #include "InfoConsole.h"
 
 
@@ -228,15 +229,6 @@ CKeyBindings::~CKeyBindings()
 
 /******************************************************************************/
 
-void CKeyBindings::OutputDebug(const char* msg) const
-{
-	printf("%s\n", msg);
-	if (debug >= 2) {
-		logOutput.Print(string(msg));
-	}
-}
-
-
 const CKeyBindings::ActionList&
 	CKeyBindings::GetActionList(const CKeySet& ks) const
 {
@@ -286,15 +278,15 @@ const CKeyBindings::ActionList&
 		         ks.GetString(false).c_str(), ks.Key());
 		if (alPtr == &empty) {
 			strncat(buf, "  EMPTY", sizeof(buf));
-			OutputDebug(buf);
+			logOutput.Print(buf);
 		}
 		else {	
-			OutputDebug(buf);
+			logOutput.Print(buf);
 			const ActionList& al = *alPtr;
 			for (int i = 0; i < (int)al.size(); ++i) {
 				SNPRINTF(buf, sizeof(buf), "  %s  \"%s\"",
 				         al[i].command.c_str(), al[i].rawline.c_str());
-				OutputDebug(buf);
+				logOutput.Print(buf);
 			}
 		}
 	}
@@ -322,13 +314,13 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 {
 	CKeySet ks;
 	if (!ParseKeySet(keystr, ks)) {
-		printf("Bind: could not parse key: %s\n", keystr.c_str());
+		logOutput.Print("Bind: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	Action action(line);
 	action.boundWith = keystr;
 	if (action.command.empty()) {
-		printf("Bind: empty action: %s\n", line.c_str());
+		logOutput.Print("Bind: empty action: %s\n", line.c_str());
 		return false;
 	}
 	
@@ -372,7 +364,7 @@ bool CKeyBindings::UnBind(const string& keystr, const string& command)
 {
 	CKeySet ks;
 	if (!ParseKeySet(keystr, ks)) {
-		printf("UnBind: could not parse key: %s\n", keystr.c_str());
+		logOutput.Print("UnBind: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	bool success = false;
@@ -393,7 +385,7 @@ bool CKeyBindings::UnBindKeyset(const string& keystr)
 {
 	CKeySet ks;
 	if (!ParseKeySet(keystr, ks)) {
-		printf("UnBindKeyset: could not parse key: %s\n", keystr.c_str());
+		logOutput.Print("UnBindKeyset: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	bool success = false;
@@ -438,7 +430,7 @@ bool CKeyBindings::SetFakeMetaKey(const string& keystr)
 		return true;
 	}
 	if (!ks.Parse(keystr)) {
-		printf("SetFakeMetaKey: could not parse key: %s\n", keystr.c_str());
+		logOutput.Print("SetFakeMetaKey: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
 	fakeMetaKey = ks.Key();
@@ -449,11 +441,11 @@ bool CKeyBindings::AddKeySymbol(const string& keysym, const string& code)
 {
 	CKeySet ks;
 	if (!ks.Parse(code)) {
-		printf("AddKeySymbol: could not parse key: %s\n", code.c_str());
+		logOutput.Print("AddKeySymbol: could not parse key: %s\n", code.c_str());
 		return false;
 	}
 	if (!keyCodes->AddKeySymbol(keysym, ks.Key())) {
-		printf("AddKeySymbol: could not add: %s\n", keysym.c_str());
+		logOutput.Print("AddKeySymbol: could not add: %s\n", keysym.c_str());
 		return false;
 	}
 	return true;
@@ -464,11 +456,11 @@ bool CKeyBindings::AddNamedKeySet(const string& name, const string& keystr)
 {
 	CKeySet ks;
 	if (!ks.Parse(keystr)) {
-		printf("AddNamedKeySet: could not parse keyset: %s\n", keystr.c_str());
+		logOutput.Print("AddNamedKeySet: could not parse keyset: %s\n", keystr.c_str());
 		return false;
 	}
 	if ((ks.Key() < 0) || !CKeyCodes::IsValidLabel(name)) {
-		printf("AddNamedKeySet: bad custom keyset name: %s\n", name.c_str());
+		logOutput.Print("AddNamedKeySet: bad custom keyset name: %s\n", name.c_str());
 		return false;
 	}
 	namedKeySets[name] = ks;
