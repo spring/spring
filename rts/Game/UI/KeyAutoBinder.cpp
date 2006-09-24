@@ -908,7 +908,7 @@ string CKeyAutoBinder::MakeSortCriteriaCall(const vector<string>& sortCriteria)
 		const string thisStr = AddUnitDefPrefix(natural, "this");
 		const string thatStr = AddUnitDefPrefix(natural, "that");
 		code += "local test = compare(" + thisStr + ", " + thatStr + ")" + endlStr;
-		code += "if (test ~=  0.0) then return (test > 0.0) end" + endlStr;
+		code += "if (test ~= 0.0) then return (test > 0.0) end" + endlStr;
 	}
 	code += "return false" + endlStr;
 	code += "end" + endlStr;
