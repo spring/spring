@@ -102,7 +102,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		owner->fireState=0;
 	}
 
-	if(owner->unitDef->canmove)
+	if(owner->unitDef->canmove || owner->unitDef->builder)
 	{
 		c.params.clear();
 		c.id=CMD_MOVE_STATE;
