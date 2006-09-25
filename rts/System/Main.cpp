@@ -261,7 +261,7 @@ bool crashCallback(void* crState)
  */
 bool SpringApp::Initialize ()
 {
-	logOutput.SetMirrorToStdout(configHandler.GetInt("StdoutDebug",0));
+	logOutput.SetMirrorToStdout(!!configHandler.GetInt("StdoutDebug",0));
 	
 	// Initialize class system
 	creg::ClassBinder::InitializeClasses ();
