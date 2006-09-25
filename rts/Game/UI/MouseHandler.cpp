@@ -555,10 +555,6 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return s;
 #endif
 
-	s=selectedUnits.GetTooltip();
-	if(s!="")
-		return s;
-
 	/*
 	NOTE:
 	The code below (up untill "if(unit)...") is exactly the same as
@@ -637,6 +633,11 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 		return s;
 	}
+
+	s=selectedUnits.GetTooltip();
+	if(s!="")
+		return s;
+
 	if(dist<gu->viewRange*1.4f-100){
 		float3 pos=camera->pos+dir*dist;
 		char tmp[500];
@@ -645,6 +646,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		sprintf(tmp,"Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\nSpeeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",pos.x,pos.z,pos.y,ttype.c_str(),tt->tankSpeed,tt->kbotSpeed,tt->hoverSpeed,tt->shipSpeed,tt->hardness*mapDamage->mapHardness,readmap->metalMap->getMetalAmount((int)(pos.x/16),(int)(pos.z/16)));
 		return tmp;
 	}
+
 	return "";
 }
 
