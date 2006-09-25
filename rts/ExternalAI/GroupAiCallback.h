@@ -22,6 +22,7 @@ public:
 	void UpdateIcons();
 	const Command* GetOrderPreview();
 	bool IsSelected();
+	int GetGroupId();
 
 	IAICallback *GetAICallback ();
 	int GetUnitLastUserOrder (int unitid);

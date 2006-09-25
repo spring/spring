@@ -51,6 +51,10 @@ bool CGroupAICallback::IsSelected()
 {
 	return selectedUnits.selectedGroup==group->id;
 }
+int CGroupAICallback::GetGroupId()
+{
+	return group->id;
+}
 
 int CGroupAICallback::GetUnitLastUserOrder(int unitid)
 {

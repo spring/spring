@@ -13,6 +13,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleFormationAI", "Simple
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReportIdleAI", "ReportIdleAI.vcproj", "{2332D79B-0836-4574-B8CB-33AEF99AAF1A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EconomyAI", "EconomyAI.vcproj", "{2F9CA5BF-ADCB-4775-B830-385BF5E9D32D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rts", "..\..\..\..\rts\build\vstudio8\rts.vcproj", "{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -43,6 +47,14 @@ Global
 		{2332D79B-0836-4574-B8CB-33AEF99AAF1A}.Debug|Win32.Build.0 = Debug|Win32
 		{2332D79B-0836-4574-B8CB-33AEF99AAF1A}.Release|Win32.ActiveCfg = Release|Win32
 		{2332D79B-0836-4574-B8CB-33AEF99AAF1A}.Release|Win32.Build.0 = Release|Win32
+		{2F9CA5BF-ADCB-4775-B830-385BF5E9D32D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2F9CA5BF-ADCB-4775-B830-385BF5E9D32D}.Debug|Win32.Build.0 = Debug|Win32
+		{2F9CA5BF-ADCB-4775-B830-385BF5E9D32D}.Release|Win32.ActiveCfg = Release|Win32
+		{2F9CA5BF-ADCB-4775-B830-385BF5E9D32D}.Release|Win32.Build.0 = Release|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug|Win32.Build.0 = Debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release|Win32.ActiveCfg = Release|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
