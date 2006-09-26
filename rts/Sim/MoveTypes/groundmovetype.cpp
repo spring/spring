@@ -25,6 +25,7 @@
 #include "MoveMath/MoveMath.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
@@ -196,7 +197,7 @@ void CGroundMoveType::Update()
 		if(desiredVelocity != ZeroVector){
 			ChangeHeading(GetHeadingFromVector(desiredVelocity.x, desiredVelocity.z));
 		} else {
-			this->SetMainHeading();
+			SetMainHeading();
 		}
 
 		if(nextDeltaSpeedUpdate<=gs->frameNum){
@@ -209,7 +210,7 @@ void CGroundMoveType::Update()
 			SetDeltaSpeed();
 		}
 	} else {
-		this->SetMainHeading();
+		SetMainHeading();
 	}
 
 	if(wantedSpeed>0 || currentSpeed>0) {
@@ -345,7 +346,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 
 	//Sets the new goal.
 	goal = moveGoalPos;
-	this->goalRadius = goalRadius;
+	goalRadius = goalRadius;
 	requestedSpeed = min(speed, maxSpeed*2);
 	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
@@ -375,7 +376,7 @@ void CGroundMoveType::StopMoving() {
 
 	StopEngine();
 
-	this->useMainHeading = false;
+	useMainHeading = false;
 	if(progressState != Done)
 		progressState = Done;
 }
@@ -1419,20 +1420,50 @@ void CGroundMoveType::LeaveTransport(void)
 }
 
 void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive){
-	this->mainHeadingPos = pos;
-	this->useMainHeading = aggressive;
-	if(this->useMainHeading && !this->owner->weapons.empty()){
-		float3 dir1 = this->owner->weapons.front()->mainDir;
+	mainHeadingPos = pos;
+	useMainHeading = aggressive;
+	if(useMainHeading && !owner->weapons.empty()){
+		if(!owner->weapons[0]->weaponDef->waterweapon && mainHeadingPos.y <= 1){
+			mainHeadingPos.y = 1;
+		}
+		float3 dir1 = owner->weapons.front()->mainDir;
 		dir1.y = 0;
 		dir1.Normalize();
-		float3 dir2 = this->mainHeadingPos-this->owner->pos;
+		float3 dir2 = mainHeadingPos-owner->pos;
 		dir2.y = 0;
 		dir2.Normalize();
 		if(dir2 != ZeroVector){
-			short heading = GetHeadingFromVector(dir2.x,dir2.z) - GetHeadingFromVector(dir1.x,dir1.z);
-			if(this->owner->heading != heading
-			  && !this->owner->weapons.front()->TryTarget(this->mainHeadingPos, true,0)){
-				this->progressState = Active;
+			short heading = GetHeadingFromVector(dir2.x,dir2.z)
+				- GetHeadingFromVector(dir1.x,dir1.z);
+			if(owner->heading != heading
+					&& !(owner->weapons.front()->TryTarget(
+					mainHeadingPos, true, 0))){
+				progressState = Active;
+			}
+		}
+	}
+}
+
+void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive){
+	mainHeadingPos = unit->pos;
+	useMainHeading = aggressive;
+	if(useMainHeading
+			&& !owner->weapons.empty()
+			&& (this-owner->weapons[0]->weaponDef->waterweapon
+			|| mainHeadingPos.y >= 0)){
+		float3 dir1 = owner->weapons.front()->mainDir;
+		dir1.y = 0;
+		dir1.Normalize();
+		float3 dir2 = mainHeadingPos-owner->pos;
+		dir2.y = 0;
+		dir2.Normalize();
+		if(dir2 != ZeroVector){
+			short heading = GetHeadingFromVector(dir2.x,dir2.z)
+				- GetHeadingFromVector(dir1.x,dir1.z);
+			if(owner->heading != heading
+					&& !(owner->weapons.front()->TryTarget(
+					mainHeadingPos, true, 0))){
+				progressState = Active;
 			}
 		}
 	}
@@ -1442,27 +1473,37 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 * @brief Orients owner so that weapon[0]'s arc includes mainHeadingPos
 */
 void CGroundMoveType::SetMainHeading(){
-	if(this->useMainHeading && !this->owner->weapons.empty()){
-		float3 dir1 = this->owner->weapons.front()->mainDir;
+	if(useMainHeading && !owner->weapons.empty()){
+		float3 dir1 = owner->weapons.front()->mainDir;
 		dir1.y = 0;
 		dir1.Normalize();
-		float3 dir2 = this->mainHeadingPos-this->owner->pos;
+		float3 dir2 = mainHeadingPos-owner->pos;
 		dir2.y = 0;
 		dir2.Normalize();
 		if(dir2 != ZeroVector){
-			short heading = GetHeadingFromVector(dir2.x,dir2.z) - GetHeadingFromVector(dir1.x,dir1.z);
-			if(this->progressState == Active && this->owner->heading == heading){
-				this->owner->cob->Call(COBFN_StopMoving);
-				this->progressState = Done;
-			} else if(this->progressState == Active){
-				this->ChangeHeading(heading);
-			} else if(this->progressState != Active
-			  && this->owner->heading != heading
-			  && !this->owner->weapons.front()->TryTarget(this->mainHeadingPos, true,0)){
-				this->progressState = Active;
-				this->owner->cob->Call(COBFN_StartMoving);
-				this->ChangeHeading(heading);
+			short heading = GetHeadingFromVector(dir2.x,dir2.z)
+				- GetHeadingFromVector(dir1.x,dir1.z);
+
+			if(progressState == Active && owner->heading == heading){
+				//logOutput.Print("Stop turning");
+				owner->cob->Call(COBFN_StopMoving);
+				progressState = Done;
+			} else if(progressState == Active){
+				ChangeHeading(heading);
+				//logOutput.Print("Test headding: %d,  Real headding: %d", heading,
+				//	owner->heading);
+			} else if(progressState != Active
+			  && owner->heading != heading
+			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true,0)){
+				progressState = Active;
+				owner->cob->Call(COBFN_StartMoving);
+				ChangeHeading(heading);
+				//logOutput.Print("Start Moving");
+			} else {
+				//logOutput.Print("No set main headding");
 			}
+		} else {
+			//logOutput.Print("Zero Vector");
 		}
 	}
 }

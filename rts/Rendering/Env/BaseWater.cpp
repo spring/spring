@@ -26,7 +26,7 @@ CBaseWater::~CBaseWater(void)
 CBaseWater* CBaseWater::GetWater()
 {
 	CBaseWater* water = NULL;
-	const int configValue = configHandler.GetInt("ReflectiveWater",3);
+	const int configValue = configHandler.GetInt("ReflectiveWater",1);
 	
 	if(configValue==2 && GLEW_ARB_fragment_program && GLEW_ARB_texture_float &&
 	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterDyn.fp")) {

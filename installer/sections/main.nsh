@@ -79,6 +79,8 @@
   File "..\game\AI\Helper-libs\simpleform.dll"
   File "..\game\AI\Helper-libs\radar.dll"
   File "..\game\AI\Helper-libs\mexupgrade.dll"
+  File "..\game\AI\Helper-libs\economy.dll"
+  File "..\game\AI\Helper-libs\reportidle.dll"
   
   SetOverWrite ifnewer
   SetOutPath "$INSTDIR\AI\Bot-libs"
@@ -173,6 +175,8 @@
   Delete "$INSTDIR\AI\Helper-libs\mmhandler.dll"
   Delete "$INSTDIR\AI\Helper-libs\simpleform.dll"
   Delete "$INSTDIR\AI\Helper-libs\radar.dll"
+  Delete "$INSTDIR\AI\Helper-libs\economy.dll"
+  Delete "$INSTDIR\AI\Helper-libs\reportidle.dll"
   RMDir "$INSTDIR\AI\Helper-libs"
   RMDir "$INSTDIR\AI"
   
