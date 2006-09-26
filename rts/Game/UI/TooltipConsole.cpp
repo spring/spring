@@ -33,8 +33,11 @@ void CTooltipConsole::Draw(void)
 		glVertex3f(0.41f, 0.1f, 0.0f);
 	glEnd();
 
-	glTranslatef(0.015f, 0.08f, 0.0f);
-	glScalef(0.015f, 0.015f, 0.015f);
+	const float yScale = 0.015f;
+	const float xScale = (yScale / gu->aspectRatio) * 1.2f;
+	
+	glTranslatef(0.01f, 0.08f, 0.0f);
+	glScalef(xScale, yScale, 1.0f);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 
 	glEnable(GL_TEXTURE_2D);
@@ -44,13 +47,12 @@ void CTooltipConsole::Draw(void)
 		std::string s2;
 		int pos=0;
 		for(int a=0;a<420;++a){
-
 			s2+=s[p];
 			if(s[p++]=='\n' || p>=s.size())
 				break;
 		}
 		font->glPrintColor("%s",s2.c_str());
-		glTranslatef(0,-1.2f,0);
+		glTranslatef(0, -1.2f, 0);
 	}
 	glPopMatrix();
 }
