@@ -44,3 +44,7 @@ void CMoveType::SlowUpdate()
 void CMoveType::LeaveTransport(void)
 {
 }
+
+void CMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive) {
+	KeepPointingTo(float3(unit->pos), distance, aggressive);
+};

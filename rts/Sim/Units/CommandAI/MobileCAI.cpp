@@ -304,7 +304,7 @@ void CMobileCAI::SlowUpdate()
 				  || LinePointDist(commandPos1,commandPos2,enemy->pos)
 				  < 300+max(owner->maxRange, (float)owner->losRadius)){
 					Command c2,c3;
-					c3 = this->GetReturnFight(c);
+					c3 = GetReturnFight(c);
 					c2.id=CMD_ATTACK;
 					c2.options=c.options|INTERNAL_ORDER;
 					c2.params.push_back(enemy->id);
@@ -376,13 +376,19 @@ void CMobileCAI::SlowUpdate()
 		}
 		if(orderTarget){
 			//note that we handle aircrafts slightly differently
-			if((((owner->AttackUnit(orderTarget, c.id==CMD_DGUN) && owner->weapons.size() > 0
-			  && owner->weapons.front()->range > orderTarget->pos.distance(owner->pos))
-			  || dynamic_cast<CTAAirMoveType*>(owner->moveType))
-			  && (owner->pos-orderTarget->pos).Length2D()<owner->maxRange*0.9f)
-			  || (owner->pos-orderTarget->pos).SqLength2D()<1024){
+			if((((owner->AttackUnit(orderTarget, c.id==CMD_DGUN)
+					&& owner->weapons.size() > 0 
+					&& owner->weapons.front()->range -
+						owner->weapons.front()->relWeaponPos.Length() >
+						orderTarget->pos.distance(owner->pos))
+					|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
+					&& (owner->pos-orderTarget->pos).Length2D() <
+						owner->maxRange*0.9f)
+					|| (owner->pos-orderTarget->pos).SqLength2D()<1024){
 				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget->pos, min((float)(owner->losRadius*SQUARE_SIZE*2), owner->maxRange*0.9f), true);
+				owner->moveType->KeepPointingTo(orderTarget,
+					min((float)(owner->losRadius*SQUARE_SIZE*2),
+					owner->maxRange*0.9f), true);
 			} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2f){
 				float3 fix=orderTarget->pos+owner->posErrorVector*128;
 				SetGoal(fix,curPos);
@@ -390,7 +396,10 @@ void CMobileCAI::SlowUpdate()
 		} else {
 			float3 pos(c.params[0],c.params[1],c.params[2]);
 			if((owner->AttackGround(pos,c.id==CMD_DGUN) && owner->weapons.size() > 0
-			  && (owner->pos-pos).Length()< owner->weapons.front()->range) || (owner->pos-pos).SqLength2D()<1024){
+					&& (owner->pos-pos).Length() < 
+						owner->weapons.front()->range -
+						owner->weapons.front()->relWeaponPos.Length())
+					|| (owner->pos-pos).SqLength2D()<1024){
 				StopMove();
 				owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9f, true);
 			} else if(pos.distance2D(goalPos)>10){
@@ -614,7 +623,7 @@ Command CMobileCAI::GetReturnFight(Command c){
 	Command c3;
 	c3.id = CMD_FIGHT; //keep it from being pulled too far off the path
 	float3 pos = float3(c.params[0],c.params[1],c.params[2]);
-	const float3 &curPos = this->owner->pos;
+	const float3 &curPos = owner->pos;
 	float3 dir = pos-curPos;
 	dir.Normalize();
 	dir*=sqrtf(abs(1024+owner->xsize*owner->xsize+owner->ysize*owner->ysize));

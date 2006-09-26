@@ -251,7 +251,7 @@ CTWController::CTWController()
 : pos(2000,70,1800)
 {
 	scrollSpeed=configHandler.GetInt("TWScrollSpeed",10)*0.1f;
-	enabled=!!configHandler.GetInt("RotOverheadEnabled",1);
+	enabled=!!configHandler.GetInt("TWEnabled",1);
 }
 
 void CTWController::KeyMove(float3 move)
@@ -359,7 +359,7 @@ CRotOverheadController::CRotOverheadController()
 {
 	mouseScale = atof(configHandler.GetString("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE).c_str());
 	scrollSpeed=configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1f;
-	enabled=!!configHandler.GetInt("TWEnabled",1);
+	enabled=!!configHandler.GetInt("RotOverheadEnabled",1);
 }
 
 void CRotOverheadController::KeyMove(float3 move)

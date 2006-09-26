@@ -31,6 +31,7 @@ public:
 	void ImpulseAdded(void);
 	
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
+	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
 	//float baseSpeed;		//Not used
 	//float maxSpeed;		//Moved to CMoveType, by Lars 04-08-23

@@ -25,7 +25,7 @@
 						<ListItemSettingAssigner assignto="scrheight" value="1200"/>
 					</ListItem>
 				</Listbox> 
-				<Checkbox caption="Fullscreen?" property="Fullscreen" hint="Run in windowed or fullscreen mode"/>
+				<Indent minwidth="100"/>
 			</Row>
 			<Row>
 				<Label caption="Screen width:"/>
@@ -37,6 +37,10 @@
 				<Editbox tag="scrheight" hint="Screen height in pixels" property="YResolution" default="600"/>
 				<Indent minwidth="100"/>
 			</Row>
+			<Checkbox caption="Fullscreen?" property="Fullscreen" hint="Run in windowed or fullscreen mode"/>
+			<Label/>
+			<Checkbox caption="Dual Screen Mode" hint="In dual screen mode the game screen and minimap take up half the width of the total screen, resepectively" property="DualScreenMode" default="0" />
+			<Checkbox caption="Minimap on left (in dual screen mode)" hint="Place the minimap on the left hand screen in dual screen mode" property="DualScreenMiniMapOnLeft" default="0" />
 		</Category>
 		<Category name="Rendering">
 			<Row>
@@ -76,11 +80,9 @@
 			<Label/>
 			<Row>
 				<Checkbox caption="3D Trees" hint="Needs Vertex_Program" property="3DTrees" default="1" />
-				<Checkbox caption="Dual Screen Mode" hint="In dual screen mode the game screen and minimap take up half the width of the total screen, resepectively" property="DualScreenMode" default="0" />
 			</Row>
 	            <Row>
 				<Checkbox caption="Reflective units" hint="needs fragment_program" property="AdvUnitShading" default="0" />
-				<Checkbox caption="Minimap on left (in dual screen mode)" hint="Place the minimap on the left hand screen in dual screen mode" property="DualScreenMiniMapOnLeft" default="0" />
 	            </Row>
 		</Category>	
 		<Category name="Input">

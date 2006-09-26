@@ -14,6 +14,7 @@ public:
 	virtual void StartMoving(float3 pos, float goalRadius){};
 	virtual void StartMoving(float3 pos, float goalRadius, float speed){};
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) {};
+	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 	virtual void StopMoving(){};
 	virtual void Idle(unsigned int frames){};
 	virtual void Idle(){};
