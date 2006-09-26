@@ -616,7 +616,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 		flyings3oPieces.push_back(std::vector<FlyingPiece_List*>());
 
 	while(flyings3oPieces[textureType].size()<=team){
-		logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
+		//logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
 
 		FlyingPiece_List * fpl = new FlyingPiece_List;
 		flyings3oPieces[textureType].push_back(fpl);

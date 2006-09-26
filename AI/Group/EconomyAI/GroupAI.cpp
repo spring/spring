@@ -131,7 +131,7 @@ void CGroupAI::FindNewBuildTask()
 	{
 		string name = (*boi)->name;
 		// check if we have enough resource to build it
-		int buildFrames = (int) (*boi)->buildTime / max(1,totalBuildSpeed);
+		int buildFrames = (int) (*boi)->buildTime / max(1.0f,totalBuildSpeed);
 		float metalEnd	= aicb->GetMetal() + buildFrames * aicb->GetMetalIncome();
 		float energyEnd	= aicb->GetEnergy() + buildFrames * aicb->GetEnergyIncome();
 		if(metalEnd < (*boi)->metalCost || energyEnd < (*boi)->energyCost)
@@ -190,14 +190,14 @@ void CGroupAI::AddBuildOptions(const UnitDef* unitDef)
 		info->energyCost	= ud->energyCost;
 		info->metalCost		= ud->metalCost;
 		info->buildTime		= ud->buildTime; // this is always 1 or bigger
-		info->totalCost		= max(1,(info->energyCost * helper->mmkrME) + info->metalCost);
+		info->totalCost		= max(1.0f,(info->energyCost * helper->mmkrME) + info->metalCost);
 		info->isMex			= (ud->type=="MetalExtractor") ? true : false;
 		info->isGeo			= (ud->needGeo) ? true : false;
 
 		info->mp = ud->extractsMetal*avgMetal + ud->metalMake + ud->makesMetal - ud->metalUpkeep;
 		info->ep = ud->energyMake - ud->energyUpkeep + ud->tidalGenerator*tidalStrength + min(ud->windGenerator,avgWind);
-		info->me = info->mp / max(ud->energyUpkeep,1);
-		info->em = info->ep / max(ud->metalUpkeep,1);
+		info->me = info->mp / max(ud->energyUpkeep,1.0f);
+		info->em = info->ep / max(ud->metalUpkeep,1.0f);
 
 		allBO[info->name] = info;
 
