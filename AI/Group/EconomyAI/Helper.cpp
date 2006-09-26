@@ -2,6 +2,7 @@
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include "Helper.h"
+#include <stdarg.h>
 
 CHelper::CHelper(IAICallback* aicb)
 {
@@ -33,7 +34,7 @@ CHelper::CHelper(IAICallback* aicb)
 		const UnitDef* ud = boi->second;
 		if(ud->isMetalMaker)
 		{
-			float tempMmkrME = ud->makesMetal / max(1,ud->energyUpkeep);
+			float tempMmkrME = ud->makesMetal / max(1.0f,ud->energyUpkeep);
 			if(tempMmkrME > mmkrME)
 				mmkrME = tempMmkrME;
 		}
