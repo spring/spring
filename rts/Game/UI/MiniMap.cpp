@@ -45,8 +45,8 @@ CMiniMap* minimap;
 extern Uint8 *keys;
 
 CMiniMap::CMiniMap()
-: xpos(0),
-	ypos(gu->screeny),
+: xpos(2),
+	ypos(gu->screeny - 2),
 	height(200),
 	width(200),
 	mouseMove(false),
@@ -66,7 +66,7 @@ CMiniMap::CMiniMap()
 	else {
 		width = (int) (width*hw);
 		height = (int) (height/hw);
-		ypos=gu->screeny-height;
+		ypos = gu->screeny - height - 2;
 	}
 
 	simpleColors=!!configHandler.GetInt("SimpleMiniMapColors",0);
