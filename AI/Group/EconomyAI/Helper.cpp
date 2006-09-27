@@ -194,16 +194,8 @@ bool CHelper::IsMetalSpotAvailable(float3 spot,float extraction)
 	return true;
 }
 
-void CHelper::NewLocation(float3 centerPos, float radius, bool reset)
+void CHelper::NewLocation(float3 centerPos, float radius)
 {
-	if(reset)
-	{
-		for(vector<location*>::iterator li=locations.begin();li!=locations.end();++li)
-		{
-			delete *li;
-		}
-		locations.clear();
-	}
 	location* loc = new location;
 	loc->centerPos	= centerPos;
 	loc->radius		= radius;
@@ -260,6 +252,13 @@ void CHelper::NewLocation(float3 centerPos, float radius, bool reset)
 	locations.push_back(loc);
 }
 
+void CHelper::ResetLocations()
+{
+	for(vector<location*>::iterator li=locations.begin();li!=locations.end();++li)
+		delete *li;
+	locations.clear();
+}
+
 int CHelper::FindMetalSpots(float3 pos, float radius, vector<float3>* mexSpots)
 {
 	int numSpotsFound = 0;
@@ -297,7 +296,7 @@ void CHelper::AssignMetalMakerAI()
 					continue;
 				}
 			}
-			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/MetalMakerAI.dll",99);
+			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/mmhandler.dll",99);
 			aicb->AddUnitToGroup(unit,metalMakerAIid);
 		}
 	}

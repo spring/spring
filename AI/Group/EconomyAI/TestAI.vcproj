@@ -164,6 +164,9 @@
 				RelativePath=".\MetalMap.cpp">
 			</File>
 			<File
+				RelativePath=".\BoHandler.cpp">
+			</File>
+			<File
 				RelativePath=".\TestAI.cpp">
 			</File>
 		</Filter>
@@ -178,6 +181,9 @@
 			</File>
 			<File
 				RelativePath=".\MetalMap.h">
+			</File>
+			<File
+				RelativePath=".\BoHandler.h">
 			</File>
 			<File
 				RelativePath=".\TestAI.h">

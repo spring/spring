@@ -12,6 +12,7 @@
 #include <deque>
 #include "float3.h"
 #include "Helper.h"
+#include "BoHandler.h"
 
 struct UnitDef;
 class IGroupAICallback;
@@ -39,21 +40,17 @@ public:
 
 	virtual void Update();
 
-	virtual void AddBuildOptions(const UnitDef* unitDef);
+	virtual void FindNewBuildTask();
 	virtual void CalculateCurrentME();
 	virtual void CalculateIdealME();
-	virtual void FindNewBuildTask();
 	virtual void SetUnitGuarding(int unit);
+	virtual bool ValidCurrentBuilder();
 
 	vector<CommandDescription> commands;
 	deque<Command> commandQue;
 
 	IGroupAICallback* callback;
 	IAICallback* aicb;
-
-	map<string,BOInfo*> allBO;	// all build options
-	vector<BOInfo*> bestMetal;	// ordered buildoptions for best metal production
-	vector<BOInfo*> bestEnergy;	// ordered buildoptions for best energy production
 
 	float idealME;				// ideal Metal / Energy ratio
 	float currentME;			// current effective M / E ratio
@@ -62,17 +59,15 @@ public:
 	int currentBuilder;			// the id of the current main builder
 	float totalBuildSpeed;		// sum of all the buildspeeds
 
-	float tidalStrength;
-	float avgWind;
-	float avgMetal;
-
 	CHelper* helper;
+	CBoHandler* boHandler;
 
-	bool BOchanged;
 	bool unitRemoved;
 
 	bool newBuildTaskNeeded;
 	int newBuildTaskFrame;
+
+	bool initialized;
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)
