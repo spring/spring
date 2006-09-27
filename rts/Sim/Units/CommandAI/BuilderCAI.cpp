@@ -786,8 +786,23 @@ void CBuilderCAI::GiveCommand(Command& c)
 		bi.def = unitDefHandler->GetUnitByName(boi->second);
 		bi.pos=helper->Pos2BuildPos(bi);
 		CFeature* feature;
-		if(!uh->TestUnitBuildSquare(bi,feature,owner->allyteam))
+		if(!uh->TestUnitBuildSquare(bi,feature,owner->allyteam)) {
+			if (!feature && owner->unitDef->canAssist) {
+				int yardxpos=int(bi.pos.x+4)/SQUARE_SIZE;
+				int yardypos=int(bi.pos.z+4)/SQUARE_SIZE;
+				CSolidObject* s;
+				CUnit* u;
+				if((s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)) && (u=dynamic_cast<CUnit*>(s)) && u->beingBuilt && u->buildProgress == 0.0f) {
+					Command c2;
+					c2.id = CMD_REPAIR;
+					c2.params.push_back(u->id);
+					c2.options = c.options | INTERNAL_ORDER;
+					CMobileCAI::GiveCommand(c2);
+					CMobileCAI::GiveCommand(c);
+				}
+			}
 			return;
+		}
 	}
 	CMobileCAI::GiveCommand(c);
 }

@@ -117,7 +117,6 @@ START_TIME_PROFILE;
 	unit->xsize = (facing&1)==0 ? ud->xsize : ud->ysize;
 	unit->ysize = (facing&1)==1 ? ud->xsize : ud->ysize;
 	unit->buildFacing = facing;
-	unit->yardMap = ud->yardmaps[facing];
 	unit->power=ud->power;
 	unit->maxHealth=ud->health;
 	unit->health=ud->health;
@@ -311,6 +310,8 @@ START_TIME_PROFILE;
 	unit->updir=UpVector;
 	unit->rightdir=unit->frontdir.cross(unit->updir);
 	unit->Init();
+
+	unit->yardMap = ud->yardmaps[facing];
 
 	if(!build)
 		unit->FinishedBuilding();
