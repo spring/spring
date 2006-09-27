@@ -693,7 +693,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (!action.extra.empty()) {
 			next = atoi(action.extra.c_str());
 		} else {
-			const int current = configHandler.GetInt("ReflectiveWater", 3);
+			const int current = configHandler.GetInt("ReflectiveWater", 1);
 			next = (max(0, current) + 1) % 4;
 		}
 		configHandler.SetInt("ReflectiveWater", next);
