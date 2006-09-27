@@ -10,6 +10,7 @@
 
 #define CMD_SET_AREA	 	150
 #define CMD_START			160
+#define CMD_SET_PERCENTAGE	170
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -22,36 +23,8 @@ CGroupAI::CGroupAI()
 	unitRemoved		= false;
 	newBuildTaskNeeded = false;
 	newBuildTaskFrame = 0;
+	maxResourcePercentage = 0.75f;
 	initialized		= false;
-
-	CommandDescription cd;
-
-	cd.id=CMD_SET_AREA;
-	cd.type=CMDTYPE_ICON_AREA;
-	cd.name="Set area";
-	cd.action="repair";
-	cd.hotkey="a";
-	cd.tooltip="Set area: define an area where the Economy AI can build";
-	commands.push_back(cd);
-
-	cd.params.clear();
-	cd.id=CMD_STOP;
-	cd.type=CMDTYPE_ICON;
-	cd.name="Stop";
-	cd.action="stop";
-	cd.hotkey="s";
-	cd.tooltip="Stop all units and remove all buildings sites";
-	commands.push_back(cd);
-
-	cd.params.clear();
-	cd.id=CMD_START;
-	cd.type=CMDTYPE_ICON;
-	cd.name="Start";
-	cd.action="onoff";
-	cd.hotkey="x";
-	cd.tooltip="Begin building resources on the current building sites";
-	commands.push_back(cd);
-
 }
 
 CGroupAI::~CGroupAI()
@@ -117,10 +90,60 @@ void CGroupAI::GiveCommand(Command* c)
 			aicb->GiveOrder(ui->first, &c);
 		helper->ResetLocations();
 	}
+	if(c->id==CMD_SET_PERCENTAGE)
+	{
+		maxResourcePercentage = 1.0f - 0.25 * c->params[0];
+	}
 }
 
 const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 {
+	commands.clear();
+
+	CommandDescription cd;
+
+	cd.id=CMD_SET_AREA;
+	cd.type=CMDTYPE_ICON_AREA;
+	cd.name="Set area";
+	cd.action="repair";
+	cd.hotkey="r";
+	cd.tooltip="Set area: define an area where the Economy AI can build";
+	commands.push_back(cd);
+
+	cd.params.clear();
+	cd.id=CMD_STOP;
+	cd.type=CMDTYPE_ICON;
+	cd.name="Stop";
+	cd.action="stop";
+	cd.hotkey="s";
+	cd.tooltip="Stop all units and remove all buildings sites";
+	commands.push_back(cd);
+
+	cd.params.clear();
+	cd.id=CMD_START;
+	cd.type=CMDTYPE_ICON;
+	cd.name="Start";
+	cd.action="onoff";
+	cd.hotkey="x";
+	cd.tooltip="Begin building resources on the current building sites";
+	commands.push_back(cd);
+
+	cd.params.clear();
+	cd.id=CMD_SET_PERCENTAGE;
+	cd.type=CMDTYPE_ICON_MODE;
+	cd.name="Max resource usage";
+	cd.action="reclaim";
+	cd.hotkey="e";
+	int stateInt = int((1.0f - maxResourcePercentage) / 0.25f);
+	char stateChar[1];
+	sprintf(stateChar,"%i",stateInt);
+	cd.params.push_back(stateChar);
+	cd.params.push_back("100%");
+	cd.params.push_back("75%");
+	cd.params.push_back("50%");
+	cd.params.push_back("25%");
+	cd.tooltip="Maximum percentage of available resources that may be used";
+	commands.push_back(cd);
 	return commands;
 }
 
@@ -204,8 +227,8 @@ void CGroupAI::FindNewBuildTask()
 
 		// check if we have enough resource to build it
 		int buildFrames = (int) (*boi)->buildTime / max(1.0f,totalBuildSpeed);
-		float metalEnd	= aicb->GetMetal() + buildFrames * aicb->GetMetalIncome();
-		float energyEnd	= aicb->GetEnergy() + buildFrames * aicb->GetEnergyIncome();
+		float metalEnd	= maxResourcePercentage * (aicb->GetMetal() + buildFrames * aicb->GetMetalIncome());
+		float energyEnd	= maxResourcePercentage * (aicb->GetEnergy() + buildFrames * aicb->GetEnergyIncome());
 		if(metalEnd < (*boi)->metalCost || energyEnd < (*boi)->energyCost)
 			continue;
 

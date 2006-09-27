@@ -17,9 +17,6 @@ CHelper::CHelper(IAICallback* aicb)
 	metalMap = new CMetalMap(aicb,false);
 	metalMap->Init();
 
-	AssignMetalMakerAI();
-
-
 	// get the best M / E ratio for metalmakers and get a unitdef for a geo
 	mmkrME	= 0;
 	geoDef	= 0;
