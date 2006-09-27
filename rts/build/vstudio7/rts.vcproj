@@ -1137,6 +1137,12 @@
 						RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.h">
 					</File>
 					<File
+						RelativePath="..\..\Sim\Projectiles\BitmapMuzzleFlame.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\BitmapMuzzleFlame.h">
+					</File>
+					<File
 						RelativePath="..\..\Sim\Projectiles\BubbleProjectile.cpp">
 					</File>
 					<File
@@ -1267,6 +1273,12 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SimpleParticleSystem.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\SimpleParticleSystem.h">
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\SmokeProjectile.cpp">

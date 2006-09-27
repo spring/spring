@@ -176,6 +176,43 @@ void CTextureAtlas::CreateTexture()
 {
 
 	unsigned char *data;
+	//for(int i=0,xmip=0,ymip=0; (xsize>>i) || (ysize>>i); i++)
+	//{
+	//	data[i] = new unsigned char[(xsize>>xmip)*(ysize>>ymip)*4];
+
+	//	xmip = (xsize>>i)>1 ? xmip+=1 : xmip;
+	//	ymip = (ysize>>i)>1 ? ymip+=1 : ymip;
+	//}
+
+	//for(int i=0; i<memtextures.size(); i++)
+	//{
+	//	MemTex *tex = memtextures[i];
+	//	for(int mip=0,xmip=0,ymip=0; (tex->xsize>>mip) || (tex->ysize>>mip); mip++)
+	//	{
+	//		unsigned char *mipcell;
+
+	//		if(mip==0)
+	//			mipcell = (unsigned char*)tex->data;
+	//		else
+	//		{
+	//			mipcell = new unsigned char[(tex->xsize>>xmip)*(tex->ysize>>ymip)*4];
+	//			gluScaleImage(GL_RGBA, tex->xsize, tex->ysize, GL_UNSIGNED_BYTE, tex->data, (tex->xsize>>xmip), (tex->ysize>>ymip), GL_UNSIGNED_BYTE, mipcell);
+	//		}
+
+	//		for(int x=0; x<tex->xsize>>xmip; x++)
+	//		{
+	//			for(int y=0; y<tex->ysize>>ymip; y++)
+	//			{
+	//				((int*)data[mip])[(tex->xpos>>xmip)+x+((tex->ypos>>ymip)+y)*(xsize>>mip)] = ((int*)mipcell)[x+y*(tex->xsize>>xmip)];
+	//			}
+	//		}
+
+	//		if(mip)
+	//			delete [] mipcell;
+	//		xmip = (xsize>>mip)>1 ? xmip+=1 : xmip;
+	//		ymip = (ysize>>mip)>1 ? ymip+=1 : ymip;
+	//	}
+	//}
 
 	data = new unsigned char[xsize*ysize*4];
 
@@ -189,16 +226,31 @@ void CTextureAtlas::CreateTexture()
 			}
 	}
 
+	//CBitmap save(data,xsize,ysize);
+	//save.Save("textureatlas1.tga");
+	//CBitmap save2(data[1],xsize>>1,ysize>>1);
+	//save2.Save("textureatlas2.tga");
+	//CBitmap save3(data[2],xsize>>2,ysize>>2);
+	//save3.Save("textureatlas3.tga");
+
+
 	glGenTextures(1, &gltex);
 	glBindTexture(GL_TEXTURE_2D, gltex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST_MIPMAP_LINEAR/*_MIPMAP_NEAREST*/);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,/*GL_NEAREST_MIPMAP_LINEAR*/GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
 
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	delete [] data;
+
+	//for(int i=0; (xsize>>i) || (ysize>>i); i++)
+	//{
+	//	glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, xsize>>i, ysize>>i, 0, GL_RGBA, GL_UNSIGNED_BYTE, data[i]);
+	//	delete [] data[i];
+	//}
+	
 
 	initialized=true;
 }

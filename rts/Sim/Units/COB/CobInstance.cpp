@@ -536,7 +536,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 
 #ifndef _CONSOLE
 	ENTER_MIXED;
-	if(ph->particleSaturation>1){		//skip adding particles when we have to many (make sure below can be unsynced)
+	if(ph->particleSaturation>1 && type<1024){		//skip adding particles when we have to many (make sure below can be unsynced)
 		ENTER_SYNCED;
 		return;
 	}
@@ -631,13 +631,6 @@ void CCobInstance::EmitSfx(int type, int piece)
 			break;
 	}
 
-			//if(type==2)	//emit defined explosiongenerator
-			//{
-			//	float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
-			//	float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			//	dir.Normalize();
-			//	unit->unitDef->sfxExplGens[0]->Explosion(pos, 1, 1, unit, 0, 0, dir);
-			//}
 
 	ENTER_SYNCED;
 #endif
