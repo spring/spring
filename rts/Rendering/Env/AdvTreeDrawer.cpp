@@ -237,6 +237,8 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
 
+	glEnable(GL_ALPHA_TEST);
+
 	if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
@@ -478,6 +480,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
+	glDisable(GL_ALPHA_TEST);
 
 	//clean out squares from memory that are no longer visible
 	int startClean=lastListClean*20%(treesX*treesY);

@@ -480,6 +480,12 @@
 					RelativePath="..\..\Game\Ui\GuiHandler.h">
 				</File>
 				<File
+					RelativePath="..\..\Game\Ui\IconLayoutHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\IconLayoutHandler.h">
+				</File>
+				<File
 					RelativePath="..\..\Game\Ui\InfoConsole.cpp">
 				</File>
 				<File
@@ -514,6 +520,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\KeySet.h">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\LuaState.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\LuaState.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\MiniMap.cpp">
@@ -1568,6 +1580,88 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="Misc"
+				Filter="">
+				<File
+					RelativePath="..\..\Sim\Misc\AirBaseHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\AirBaseHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\CategoryHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\DamageArray.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\DamageArrayHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\DamageArrayHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Feature.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Feature.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureDef.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\GeometricObjects.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\GeometricObjects.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\InterceptHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\InterceptHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\LosHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\LosHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\QuadField.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\QuadField.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\RadarHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\RadarHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SensorHandler.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SensorHandler.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Wind.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Wind.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -4177,88 +4271,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\Upcast.h">
-				</File>
-			</Filter>
-			<Filter
-				Name="Misc"
-				Filter="">
-				<File
-					RelativePath="..\..\Sim\Misc\AirBaseHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\AirBaseHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\CategoryHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\DamageArray.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\DamageArrayHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\DamageArrayHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Feature.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Feature.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureDef.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\GeometricObjects.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\GeometricObjects.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\InterceptHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\InterceptHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\LosHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\LosHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\QuadField.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\QuadField.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\RadarHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\RadarHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\SensorHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\SensorHandler.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Wind.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Wind.h">
 				</File>
 			</Filter>
 		</Filter>

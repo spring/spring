@@ -320,8 +320,8 @@ namespace terrain {
 				if (rs->passes.size () > maxPasses)
 					maxPasses = rs->passes.size();
 
-				rs->shaderDef.Output();
-				rs->DebugOutput();
+			//	rs->shaderDef.Output();
+			//	rs->DebugOutput();
 			}
 			texNodeSetup.push_back (mi->second);
 		}
@@ -514,14 +514,14 @@ namespace terrain {
 		shaderHandler->EndTexturing ();
 	}
 	void TerrainTexture::BeginTexturing()
-	{
+	{/*
 		static bool z_last=false, x_last;
 		if(keys[SDLK_z] && !z_last) 
 			DebugEvent("t_prev_shader");
 		if(keys[SDLK_x] && !x_last)
-			DebugEvent ("t_next_shader");
+			DebugEvent("t_next_shader");
 		z_last=!!keys[SDLK_z];
-		x_last=!!keys[SDLK_x];
+		x_last=!!keys[SDLK_x];*/
 
 		shaderHandler->BeginTexturing();
 	}

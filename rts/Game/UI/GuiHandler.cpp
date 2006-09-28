@@ -2399,6 +2399,9 @@ void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 void CGuiHandler::DrawButtons()
 {
 	Update();
+
+	if(!iconsCount)
+		return;
 	
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
@@ -2409,18 +2412,16 @@ void CGuiHandler::DrawButtons()
 	const int mouseIcon = IconAtPos(mouse->lastx, mouse->lasty);
 
 	// Rita "container"ruta
-	if (iconsCount > 0) {
-		const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
-		glColor4f(0.2f, 0.2f, 0.2f, alpha);
-		glBegin(GL_QUADS);
-		const GLfloat fx = 0.0f; //-.2f*(1-fadein/100.0f)+.2f;
-		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
-		glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
-		glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
-		glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
-		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
-		glEnd();
-	}
+	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
+	glColor4f(0.2f, 0.2f, 0.2f, alpha);
+	glBegin(GL_QUADS);
+	const GLfloat fx = 0.0f; //-.2f*(1-fadein/100.0f)+.2f;
+	glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
+	glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
+	glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
+	glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
+	glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
+	glEnd();
 
 	// F� varje knapp (rita den)
 	const int buttonStart = min(iconsCount, activePage * iconsPerPage);

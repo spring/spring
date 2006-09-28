@@ -41,21 +41,26 @@ CSm3GroundDrawer::~CSm3GroundDrawer()
 	configHandler.SetInt("SM3TerrainDetail", int(tr->config.detailMod * 100));
 }
 
-void CSm3GroundDrawer::Update()
+static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 {
 	// Copy camera settings
-	cam.fov = camera->fov;
-	cam.front = camera->forward;
-	cam.right = camera->right;
-	cam.up = camera->up;
-	cam.pos = camera->pos;
-	cam.aspect = gu->screenx / (float)gu->screeny;
+	tc.fov = sc.fov;
+	tc.front = sc.forward;
+	tc.right = sc.right;
+	tc.up = sc.up;
+	tc.pos = sc.pos;
+	tc.aspect = gu->screenx / (float)gu->screeny;
 
-	cam.right = cam.front.cross(cam.up);
-	cam.right.Normalize();
+	tc.right = tc.front.cross(tc.up);
+	tc.right.Normalize();
 
-	cam.up=cam.right.cross(cam.front);
-	cam.up.Normalize();
+	tc.up=tc.right.cross(tc.front);
+	tc.up.Normalize();
+}
+
+void CSm3GroundDrawer::Update()
+{
+	SpringCamToTerrainCam(*camera, cam);
 
 	tr->Update();
 	tr->CacheTextures();
@@ -84,12 +89,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 			tr->Update();
 		}
 
-		reflectCam.fov = PI * camera->fov / 180.0f;
-		reflectCam.front = camera->forward;
-		reflectCam.right = camera->right;
-		reflectCam.up = camera->up;
-		reflectCam.pos = camera->pos;
-		reflectCam.aspect = 1.0f;
+		SpringCamToTerrainCam(*camera, reflectCam);
 		currc = reflectrc;
 	} else 
 		currc = rc;
@@ -165,9 +165,11 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	glDisable(GL_CULL_FACE);
 
 	glColor3ub(255,255,255);
-	glDisable(GL_TEXTURE_2D);
 
 	DrawObjects(drawWaterReflection, drawUnitReflection);
+
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glDisable(GL_TEXTURE_2D);
 }
 
 

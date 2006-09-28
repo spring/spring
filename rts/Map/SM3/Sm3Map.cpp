@@ -13,6 +13,9 @@
 #include "Platform/byteorder.h"
 #include "FileSystem/FileHandler.h"
 
+#include "terrain/TerrainNode.h"
+#include "Game/Camera.h"
+
 #include <stdexcept>
 #include <fstream>
 #include "bitops.h"
@@ -237,7 +240,7 @@ const char *CSm3ReadMap::GetFeatureType (int typeID)
 
 void CSm3ReadMap::LoadFeatureData()
 {
-	 // returns MapFeatureInfo[GetNumFeatures()]
+		// returns MapFeatureInfo[GetNumFeatures()]
 	std::string fd = mapDefParser.SGetValueDef(std::string(),"map\\featuredata");
 	if (!fd.empty()) {
 		CFileHandler fh(fd);
@@ -267,7 +270,21 @@ void CSm3ReadMap::LoadFeatureData()
 			fi.pos.z = swabfloat(fi.pos.z);
 			fi.rotation = swabfloat(fi.rotation);
 		}
-	}
+	}/* //testing features...
+	else {
+		featureTypes.push_back(new std::string("TreeType0"));
+
+		numFeatures = 1000;
+		featureInfo = new MapFeatureInfo[numFeatures];
+
+		for (int a=0;a<numFeatures;a++) {
+			MapFeatureInfo& fi = featureInfo[a];
+			fi.featureType = featureTypes.size()-1;
+			fi.pos.x = gs->randFloat() * width * SQUARE_SIZE;
+			fi.pos.z = gs->randFloat() * height * SQUARE_SIZE;
+			fi.rotation = 0.0f;
+		}
+	}*/
 }
 
 CSm3ReadMap::InfoMap::InfoMap () {
@@ -309,3 +326,37 @@ void CSm3ReadMap::FreeInfoMap (const std::string& name, unsigned char *data)
 	infoMaps.erase (name);
 }
 
+struct DrawGridParms
+{
+	int quadSize;
+	CSm3ReadMap::IQuadDrawer *cb;
+	float maxdist;
+	Frustum *frustum;
+};
+
+static void DrawGrid(terrain::TQuad *tq, DrawGridParms *param)
+{
+	if (tq->InFrustum(param->frustum)) {
+		if (tq->width == param->quadSize)
+			param->cb->DrawQuad(tq->qmPos.x, tq->qmPos.y);
+		else if (tq->width < param->quadSize)
+			return;
+		else {
+			for (int a=0;a<4;a++)
+				DrawGrid(tq->childs[a],param);
+		}
+	}
+}
+
+void CSm3ReadMap::GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize)
+{
+	float aspect = cam->viewport[2]/(float)cam->viewport[3];
+	tmpFrustum.CalcCameraPlanes(&cam->pos, &cam->right, &cam->up, &cam->forward, cam->fov, aspect);
+
+	DrawGridParms dgp;
+	dgp.cb = cb;
+	dgp.maxdist = maxdist;
+	dgp.quadSize = quadSize;
+	dgp.frustum = &tmpFrustum;
+	DrawGrid(renderer->GetQuadTree(), &dgp);
+}

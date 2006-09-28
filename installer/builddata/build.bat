@@ -5,6 +5,7 @@ echo Creating bitmaps.sdz
 del /Q ..\..\base\spring\bitmaps.sdz
 cd bitmaps
 ..\..\pkzip -add -dir=current ..\..\_temp.zip bitmaps\*
+..\..\pkzip -add -dir=current ..\..\_temp.zip Anims\*
 cd ..\..
 pkzip -add _temp.zip builddata\bitmaps\modinfo.tdf
 rename _temp.zip bitmaps.sdz

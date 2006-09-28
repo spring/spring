@@ -519,6 +519,7 @@ void CGrassDrawer::Draw(void)
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 	glDepthMask(true);
 	glEnable(GL_FOG);
+	glDisable(GL_ALPHA_TEST);
 
 	if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
 		glActiveTextureARB(GL_TEXTURE0_ARB);
