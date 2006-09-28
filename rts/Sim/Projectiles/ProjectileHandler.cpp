@@ -567,7 +567,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 	std::vector<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
-		if (gu->spectating || loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
+		if ((*gfi)->alwaysVisible || gu->spectating || loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
 			(*gfi)->Draw();
 	}
 	CGroundFlash::va->DrawArrayTC(GL_QUADS);
