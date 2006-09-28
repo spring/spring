@@ -126,6 +126,8 @@ CSimpleGroundFlash::CSimpleGroundFlash(float3 pos, AtlasedTexture texture, int t
 	ttl(ttl),
 	fade(fade)
 {
+	alwaysVisible = true;
+
 	for (int a=0;a<3;a++)
 		color[a] = (unsigned char)(col[a]*255.0f);
 

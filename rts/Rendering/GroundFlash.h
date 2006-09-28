@@ -8,11 +8,12 @@ class CVertexArray;
 class CGroundFlash
 {
 public:
-	CGroundFlash(const float3& p) : pos(p) {};
+	CGroundFlash(const float3& p) : pos(p), alwaysVisible(false) {};
 	virtual ~CGroundFlash(){};
 	virtual void Draw() = 0;
 	virtual bool Update()= 0; // returns false when it should be deleted
 
+	bool alwaysVisible;
 	float3 pos;
 
 	static CVertexArray* va;
@@ -41,6 +42,8 @@ public:
 };
 
 //a simple groundflash only creating one quad with specified texture
+//also this one sets alwaysVisible=true (because it's used by the seismic effect)
+// so don't use it (or fix it) for things that should be affected by LOS.
 class CSimpleGroundFlash : public CGroundFlash
 {
 public:
