@@ -4,8 +4,11 @@
 //
 
 // outlinefont    0
+// dropShadows    1
 // noSelectGaps   1
 // useOptionLEDs  1
+// textureAlpha   0.8
+// frameAlpha    -1.0  // use the GUI alpha if < 0.0
 
 
 /////////////////////////////////////////////////////

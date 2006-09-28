@@ -403,7 +403,7 @@ void CommandDescription::Init()
 	c.name="0/0";
 	c.hotkey="";
 	c.tooltip="Stockpile: Queue up ammunition for later use";
-	c.iconname="bitmaps/flare.bmp";
+	c.iconname="bitmaps/armsilo1.bmp";
 	idToCommandDescription[c.id] = c;
 	c.iconname="";
 

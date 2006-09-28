@@ -315,7 +315,9 @@ bool SpringApp::Initialize ()
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
 	// Initialize font
-	font = new CglFont(32,223);
+	font = new CglFont(configHandler.GetInt("FontCharFirst", 32),
+	                   configHandler.GetInt("FontCharLast", 223),
+	                   configHandler.GetString("FontFile", "Luxi.ttf").c_str());
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();

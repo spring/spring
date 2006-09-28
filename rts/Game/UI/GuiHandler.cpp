@@ -9,6 +9,7 @@
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "CommandColors.h"
+#include "IconLayoutHandler.h"
 #include "InfoConsole.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
@@ -27,7 +28,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
-//#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/LosHandler.h"
@@ -54,16 +54,19 @@ CGuiHandler* guihandler;
 
 
 CGuiHandler::CGuiHandler()
-: inCommand(-1),
-	activeMousePress(false),
-	defaultCmdMemory(-1),
-	needShift(false),
+: firstLayout(true),
+  inCommand(-1),
+  activeMousePress(false),
+	forceLayoutUpdate(false),
+  defaultCmdMemory(-1),
+  needShift(false),
   maxPage(0),
-	activePage(0),
-	showingMetal(false),
-	buildSpacing(0),
-	buildFacing(0),
-	actionOffset(0)
+  activePage(0),
+  showingMetal(false),
+  buildSpacing(0),
+  buildFacing(0),
+  actionOffset(0),
+  layoutHandler(NULL)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -71,28 +74,19 @@ CGuiHandler::CGuiHandler()
 	
 	LoadConfig("ctrlpanel.txt");
 	
-	LoadCMDBitmap(CMD_STOCKPILE, "bitmaps/armsilo1.bmp");
-	readmap->mapDefParser.GetDef(autoShowMetal,"1","MAP\\autoShowMetal");
+	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
 }
 
 
 CGuiHandler::~CGuiHandler()
 {
 	delete icons;
-	glDeleteTextures (1, &iconMap[0].texture);
-}
+	delete layoutHandler;
 
-
-static bool SafeAtoF(float& var, const string& value)
-{
-	char* endPtr;
-	const char* startPtr = value.c_str();
-	const float tmp = (float)strtod(startPtr, &endPtr);
-	if (endPtr == startPtr) {
-		return false;
+	std::map<std::string, unsigned int>::iterator it;
+	for (it = textureMap.begin(); it != textureMap.end(); ++it) {
+		glDeleteTextures (1, &(it->second));
 	}
-	var = tmp;
-	return true;
 }
 
 
@@ -112,10 +106,29 @@ void CGuiHandler::LoadDefaults()
 	xSelectionPos = 0.018f;
 	ySelectionPos = 0.127f;
 
+	frameAlpha = -1.0f;
+	textureAlpha = 0.8f;
+
+	dropShadows = true;	
 	noSelectGaps = false;
 	useOptionLEDs = true;
+	
+	menuName = "";
 
 	outlineFont.Enable(false);
+}
+
+
+static bool SafeAtoF(float& var, const string& value)
+{
+	char* endPtr;
+	const char* startPtr = value.c_str();
+	const float tmp = (float)strtod(startPtr, &endPtr);
+	if (endPtr == startPtr) {
+		return false;
+	}
+	var = tmp;
+	return true;
 }
 
 
@@ -142,7 +155,10 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		
 		const string command = StringToLower(words[0]);
 		
-		if ((command == "noselectgaps") && (words.size() > 1)) {
+		if ((command == "dropshadows") && (words.size() > 1)) {
+			dropShadows = !!atoi(words[1].c_str());
+		}
+		else if ((command == "noselectgaps") && (words.size() > 1)) {
 			noSelectGaps = !!atoi(words[1].c_str());
 		}
 		else if ((command == "useoptionleds") && (words.size() > 1)) {
@@ -192,6 +208,12 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		}
 		else if ((command == "yselectionpos") && (words.size() > 1)) {
 			SafeAtoF(ySelectionPos, words[1]);
+		}
+		else if ((command == "framealpha") && (words.size() > 1)) {
+			SafeAtoF(frameAlpha, words[1]);
+		}
+		else if ((command == "texturealpha") && (words.size() > 1)) {
+			SafeAtoF(textureAlpha, words[1]);
 		}
 		else if ((command == "outlinefont") && (words.size() > 1)) {
 			outlineFont.Enable(!!atoi(words[1].c_str()));
@@ -334,49 +356,120 @@ bool CGuiHandler::ReloadConfig()
 	LoadConfig("ctrlpanel.txt");
 	activePage = 0;
 	selectedUnits.SetCommandPage(activePage);
-	if ((inCommand >= 0) && (inCommand < commands.size())) {
-		const CommandDescription cmdDesc = commands[inCommand];
-		LayoutIcons();
-		ResetInCommand(cmdDesc);
-	} else {
-		LayoutIcons();
+	LayoutIcons(false);
+	return true;
+}
+
+
+void CGuiHandler::ResizeIconArray(unsigned int size)
+{
+	int minIconsSize = iconsSize;
+	while (minIconsSize < size) {
+		minIconsSize *= 2;
 	}
-	return true;
+	if (iconsSize < minIconsSize) {
+		iconsSize = minIconsSize;
+		delete icons;
+		icons = new IconInfo[iconsSize];
+	}
 }
 
 
-//Ladda bitmap -> textur
-bool CGuiHandler::LoadCMDBitmap (int id, char* filename)
+void CGuiHandler::AppendPrevAndNext(vector<CommandDescription>& cmds)
 {
-	GuiIconData icondata;
-	glGenTextures(1, &icondata.texture);
-	CBitmap TextureImage;
-	if (!TextureImage.Load(filename))
-		throw content_error(std::string("Could not load command bitmap from file ") + filename);
+	CommandDescription cd;
 
-	// create mipmapped texture
-	glBindTexture(GL_TEXTURE_2D, icondata.texture);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,TextureImage.xsize, TextureImage.ysize, GL_RGBA, GL_UNSIGNED_BYTE, TextureImage.mem);
+	cd.id=CMD_INTERNAL;
+	cd.action="prevmenu";
+	cd.type=CMDTYPE_PREV;
+	cd.name="";
+	cd.tooltip = "Previous menu";
+	cmds.push_back(cd);
 
-	icondata.has_bitmap = true;
-	icondata.width = xIconSize;
-	icondata.height = yIconSize;
-
-	iconMap[id] = icondata;
-
-	return true;
+	cd.id=CMD_INTERNAL;
+	cd.action="nextmenu";
+	cd.type=CMDTYPE_NEXT;
+	cd.name="";
+	cd.tooltip = "Next menu";
+	cmds.push_back(cd);
 }
 
 
-// Ikonpositioner
-void CGuiHandler::LayoutIcons()
+int CGuiHandler::FindInCommandPage()
 {
+	if ((inCommand < 0) || (inCommand >= commands.size())) {
+		return -1;
+	}
+	for (int ii = 0; ii < iconsCount; ii++) {
+		const IconInfo& icon = icons[ii];
+		if (icon.commandsID == inCommand) {
+			return (ii / iconsPerPage);
+		}
+	}
+	return -1;
+}
+
+
+void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
+                                  bool samePage)
+{
+	for (int a = 0; a < commands.size(); ++a) {
+		if (commands[a].id == cmdDesc.id) {
+			inCommand = a;
+			if (commands[a].type == CMDTYPE_ICON_BUILDING) {
+				UnitDef* ud = unitDefHandler->GetUnitByID(-commands[a].id);
+				SetShowingMetal(ud->extractsMetal > 0);
+			} else {
+				SetShowingMetal(false);
+			}
+			if (samePage) {
+				for (int ii = 0; ii < iconsCount; ii++) {
+					if (inCommand == icons[ii].commandsID) {
+						activePage = min(maxPage, (ii / iconsPerPage));;
+						selectedUnits.SetCommandPage(activePage);
+					}
+				}
+			}
+			return;
+		}
+	}
+}
+
+
+void CGuiHandler::LayoutIcons(bool useSelectionPage)
+{
+	// copy the current command state	
+	const bool validInCommand = (inCommand >= 0) && (inCommand < commands.size());
+	CommandDescription cmdDesc;
+	if (validInCommand) {
+		cmdDesc = commands[inCommand];
+	}
+	const bool samePage = validInCommand && (activePage == FindInCommandPage());
+	useSelectionPage = useSelectionPage && !samePage;
+	
 	// reset some of our state
+	inCommand = -1;
 	commands.clear();
-	defaultCmdMemory=-1;
-	SetShowingMetal(false);
+	forceLayoutUpdate = false;
+
+	// try using the custom layout handler
+	if (firstLayout) {
+		firstLayout = false;
+		layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+	}
+	if (layoutHandler != NULL) {
+		if (LayoutCustomIcons(useSelectionPage)) {
+			if (validInCommand) {
+				RevertToCmdDesc(cmdDesc, samePage);
+			}
+			return; // we're done here
+		}
+		else {
+			delete layoutHandler;
+			layoutHandler = NULL;
+			LoadConfig("ctrlpanel.txt");
+		}
+	}
 
 	// get the commands to process
 	CSelectedUnits::AvailableCommandsStruct ac;
@@ -393,7 +486,7 @@ void CGuiHandler::LayoutIcons()
 			commands.push_back(*cdi);
 		}
 	}
-
+	
 	// assign extra icons for internal commands	
 	int extraIcons = 0;
 	if (deadIconSlot >= 0) { extraIcons++; }
@@ -410,19 +503,10 @@ void CGuiHandler::LayoutIcons()
 	const int nextPageCmd = cmdCount + 1;	
 
 	maxPage    = max(0, pageCount - 1);
-	activePage = min(maxPage, ac.commandPage);
 	iconsCount = pageCount * iconsPerPage;
 
 	// resize the icon array if required
-	int minIconsSize = iconsSize;
-	while (minIconsSize < iconsCount) {
-		minIconsSize *= 2;
-	}
-	if (iconsSize < minIconsSize) {
-		iconsSize = minIconsSize;
-		delete icons;
-		icons = new IconInfo[iconsSize];
-	}
+	ResizeIconArray(iconsCount);
 
 	int ci = 0; // command index
 
@@ -463,7 +547,7 @@ void CGuiHandler::LayoutIcons()
 			icon.visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
 			icon.visual.y2 = icon.visual.y1 - yIconSize;
 
-			const float noGap = noSelectGaps ? iconBorder : 0.0f;
+			const float noGap = (noSelectGaps ? (iconBorder + 0.001f) : 0.0f);
 			icon.selection.x1 = icon.visual.x1 - noGap;
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
@@ -478,21 +562,7 @@ void CGuiHandler::LayoutIcons()
 
 	// append the Prev and Next commands  (if required)
 	if (multiPage) {
-		CommandDescription c;
-
-		c.id=CMD_INTERNAL;
-		c.action="prevmenu";
-		c.type=CMDTYPE_PREV;
-		c.name="";
-		c.tooltip = "Previous menu";
-		commands.push_back(c);
-
-		c.id=CMD_INTERNAL;
-		c.action="nextmenu";
-		c.type=CMDTYPE_NEXT;
-		c.name="";
-		c.tooltip = "Next menu";
-		commands.push_back(c);
+		AppendPrevAndNext(commands);
 	}
 
 	// append the hidden commands
@@ -500,7 +570,231 @@ void CGuiHandler::LayoutIcons()
 		commands.push_back(*cdi);
 	}
 
-//	logOutput << "LayoutIcons called" << "\n";
+	// try to setup the old command state
+	// (inCommand, activePage, showingMetal)	
+	if (validInCommand) {
+		RevertToCmdDesc(cmdDesc, samePage);
+	} else if (useSelectionPage) {
+		activePage = min(maxPage, ac.commandPage);
+	}
+	activePage = min(maxPage, activePage);
+}
+
+
+bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
+{
+	if (layoutHandler == NULL) {
+		return false;
+	}
+	
+	// get the commands to process
+	CSelectedUnits::AvailableCommandsStruct ac;
+	ac = selectedUnits.GetAvailableCommands();
+	vector<CommandDescription> cmds = ac.commands;
+	if (cmds.size() > 0) {
+		AppendPrevAndNext(cmds);
+	}
+
+	// call for a custom layout
+	int tmpXicons = xIcons;
+	int tmpYicons = yIcons;
+	vector<int> removeCmds;
+	vector<CommandDescription> customCmds;
+	vector<int> onlyTextureCmds;
+	vector<CIconLayoutHandler::ReStringPair> reTextureCmds;
+	vector<CIconLayoutHandler::ReStringPair> reNamedCmds;
+	vector<CIconLayoutHandler::ReStringPair> reTooltipCmds;
+	vector<CIconLayoutHandler::ReParamsPair> reParamsCmds;
+	map<int, int> iconMap;
+	
+	if (!layoutHandler->LayoutIcons(tmpXicons, tmpYicons, cmds,
+	                                removeCmds, customCmds,
+	                                onlyTextureCmds, reTextureCmds,
+	                                reNamedCmds, reTooltipCmds, reParamsCmds,
+	                                iconMap, menuName)) {
+		logOutput.Print("LayoutCustomIcons() lua call failed\n");
+		return false;
+	}
+
+	if ((tmpXicons < 2) || (tmpYicons < 2)) {
+		logOutput.Print("LayoutCustomIcons() bad xIcons or yIcons (%i, %i\n",
+		                xIcons, yIcons);
+		return false;
+	}
+	
+	unsigned int i;
+	const int tmpIconsPerPage = (tmpXicons * tmpYicons);
+
+	// build a set to better find unwanted commands
+	set<int> removeIDs;
+	for (i = 0; i < removeCmds.size(); i++) {
+		const int index = removeCmds[i];
+		if ((index >= 0) || (index < cmds.size())) {
+			removeIDs.insert(index);
+		} else {
+			logOutput.Print("LayoutCustomIcons() skipping bad removeCmd (%i)\n",
+			                index);
+		}
+	}
+	// remove unwanted commands  (and mark all as onlyKey)
+	vector<CommandDescription> tmpCmds;
+	for (i = 0; i < cmds.size(); i++) {
+		if (removeIDs.find(i) == removeIDs.end()) {
+			cmds[i].onlyKey = true;
+			tmpCmds.push_back(cmds[i]);
+		}
+	}
+	cmds = tmpCmds;
+
+	// add the custom commands
+	for (i = 0; i < customCmds.size(); i++) {
+		cmds.push_back(customCmds[i]);
+	}
+	const int cmdCount = (int)cmds.size();
+
+	// set commands to onlyTexture
+	for (i = 0; i < onlyTextureCmds.size(); i++) {
+		const int index = onlyTextureCmds[i];
+		if ((index >= 0) && (index < cmdCount)) {
+			cmds[index].onlyTexture = true;
+		} else {
+			logOutput.Print("LayoutCustomIcons() skipping bad onlyTexture (%i)\n",
+			                index);
+		}
+	}
+
+	// retexture commands
+	for (i = 0; i < reTextureCmds.size(); i++) {
+		const int index = reTextureCmds[i].cmdIndex;
+		if ((index >= 0) && (index < cmdCount)) {
+			cmds[index].iconname = reTextureCmds[i].texture;
+		} else {
+			logOutput.Print("LayoutCustomIcons() skipping bad reTexture (%i)\n",
+			                index);
+		}
+	}
+	
+	// reNamed commands
+	for (i = 0; i < reNamedCmds.size(); i++) {
+		const int index = reNamedCmds[i].cmdIndex;
+		if ((index >= 0) && (index < cmdCount)) {
+			cmds[index].name = reNamedCmds[i].texture;
+		} else {
+			logOutput.Print("LayoutCustomIcons() skipping bad reNamed (%i)\n",
+			                index);
+		}
+	}
+	
+	// reTooltip commands
+	for (i = 0; i < reTooltipCmds.size(); i++) {
+		const int index = reTooltipCmds[i].cmdIndex;
+		if ((index >= 0) && (index < cmdCount)) {
+			cmds[index].tooltip = reTooltipCmds[i].texture;
+		} else {
+			logOutput.Print("LayoutCustomIcons() skipping bad reNamed (%i)\n",
+			                index);
+		}
+	}
+	
+	// reParams commands
+	for (i = 0; i < reParamsCmds.size(); i++) {
+		const int index = reParamsCmds[i].cmdIndex;
+		if ((index >= 0) && (index < cmdCount)) {
+			const map<int, string>& params = reParamsCmds[i].params;
+			map<int, string>::const_iterator pit;
+			for (pit = params.begin(); pit != params.end(); ++pit) {
+				const int p = pit->first;
+				if ((p >= 0) && (p < (int)cmds[index].params.size())) {
+					cmds[index].params[p] = pit->second;
+				}
+			}
+		} else {
+			logOutput.Print("LayoutCustomIcons() skipping bad reParams (%i)\n",
+			                index);
+		}
+	}
+	
+	// build the iconList from the map
+	vector<int> iconList;
+	int nextPos = 0;
+	map<int, int>::iterator mit;
+	for (mit = iconMap.begin(); mit != iconMap.end(); ++mit) {
+		const int iconPos = mit->first;
+		if (iconPos < nextPos) {
+			continue;
+		}
+		else if (iconPos > nextPos) {
+			// fill in the blanks
+			for (int p = nextPos; p < iconPos; p++) {
+				iconList.push_back(-1);
+			}
+		}
+		iconList.push_back(mit->second); // cmdIndex
+		nextPos = iconPos + 1;
+	}
+
+	const int iconListCount = (int)iconList.size();	
+	const int pageCount = ((iconListCount + (tmpIconsPerPage - 1)) / tmpIconsPerPage);
+	const int tmpIconsCount = (pageCount * tmpIconsPerPage);
+	
+	// resize the icon array if required
+	ResizeIconArray(tmpIconsCount);
+	
+	// build the iconList
+	for (int ii = 0; ii < tmpIconsCount; ii++) {
+		IconInfo& icon = icons[ii];
+
+		const int index = (ii < (int)iconList.size()) ? iconList[ii] : -1;
+
+		if ((index >= 0) && (index < cmdCount)) {
+
+			icon.commandsID = index;
+			cmds[index].onlyKey = false;
+			
+			const int slot = (ii % tmpIconsPerPage);
+			const float fx = (float)(slot % tmpXicons);
+			const float fy = (float)(slot / tmpXicons);
+
+			const float fullBorder = frameBorder + iconBorder;
+			icon.visual.x1 = buttonBox.x1 + (fullBorder + (fx * xIconStep));
+			icon.visual.x2 = icon.visual.x1 + xIconSize;
+			icon.visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
+			icon.visual.y2 = icon.visual.y1 - yIconSize;
+
+			const float noGap = noSelectGaps ? iconBorder : 0.0f;
+			icon.selection.x1 = icon.visual.x1 - noGap;
+			icon.selection.x2 = icon.visual.x2 + noGap;
+			icon.selection.y1 = icon.visual.y1 + noGap;
+			icon.selection.y2 = icon.visual.y2 - noGap;
+		}
+		else {
+			// make sure this icon does not get selected
+			icon.commandsID = -1;
+			icon.selection.x1 = icon.selection.x2 = -1.0f;
+			icon.selection.y1 = icon.selection.y2 = -1.0f;
+		}
+	}
+	
+	commands = cmds;
+
+	xIcons       = tmpXicons;
+	yIcons       = tmpYicons;
+	iconsCount   = tmpIconsCount;
+	iconsPerPage = tmpIconsPerPage;
+
+	maxPage = max(0, pageCount - 1);
+	if (useSelectionPage) {
+		activePage = min(maxPage, ac.commandPage);
+	} else {
+		activePage = min(maxPage, activePage);
+	}
+
+	buttonBox.x1 = xPos;
+	buttonBox.x2 = xPos + (frameBorder * 2.0f) + (xIcons * xIconStep);
+	buttonBox.y1 = yPos;
+	buttonBox.y2 = yPos + (frameBorder * 2.0f) + (yIcons * yIconStep);
+	
+	return true;
 }
 
 
@@ -532,11 +826,30 @@ void CGuiHandler::Update()
 		inCommand=-1;
 		needShift=false;
 	}
-
+	
 	if (selectedUnits.CommandsChanged()) {
-		LayoutIcons();
+		defaultCmdMemory = -1;
+		SetShowingMetal(false);
+		LayoutIcons(true);
 		fadein = 100;
-	} else if (fadein > 0) {
+	}
+	else if (forceLayoutUpdate) {
+		LayoutIcons(false);
+	}
+	else {
+		bool handlerUpdate = false;
+		if (layoutHandler != NULL) {
+			if (!layoutHandler->UpdateLayout(handlerUpdate, activePage)) {
+				delete layoutHandler;
+				layoutHandler = NULL;
+			}
+		}
+		if (handlerUpdate) {
+			LayoutIcons(false);
+		}
+	}
+
+	if (fadein > 0) {
 		fadein -= 5;
 	}
 	
@@ -544,375 +857,8 @@ void CGuiHandler::Update()
 }
 
 
-void CGuiHandler::Draw()
-{
-	DrawButtons();
-}
-
-
-void CGuiHandler::DrawButtons()
-{
-	Update();
-	
-	glDisable(GL_DEPTH_TEST);
-
-	const int mouseIcon = IconAtPos(mouse->lastx, mouse->lasty);
-
-	// Rita "container"ruta
-	if (iconsCount > 0) {
-
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.2f,0.2f,0.2f,guiAlpha);
-		glBegin(GL_QUADS);
-
-		GLfloat fx = 0;//-.2f*(1-fadein/100.0f)+.2f;
-		glVertex2f(buttonBox.x1-fx, buttonBox.y1);
-		glVertex2f(buttonBox.x1-fx, buttonBox.y2);
-		glVertex2f(buttonBox.x2-fx, buttonBox.y2);
-		glVertex2f(buttonBox.x2-fx, buttonBox.y1);
-		glVertex2f(buttonBox.x1-fx, buttonBox.y1);
-
-		glEnd();
-	}
-
-	// F� varje knapp (rita den)
-	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
-	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
-
-	for (unsigned int ii = buttonStart; ii < buttonEnd; ii++) {
-
-		const IconInfo& icon = icons[ii];
-		if (icon.commandsID < 0) {
-			continue; // inactive icon
-		}
-		const CommandDescription& cmdDesc = commands[icon.commandsID];
-
-		const GLfloat x1 = icon.visual.x1;
-		const GLfloat y1 = icon.visual.y1;
-		const GLfloat x2 = icon.visual.x2;
-		const GLfloat y2 = icon.visual.y2;
-
-		glDisable(GL_TEXTURE_2D);
-
-		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
-			glBegin(GL_QUADS);
-
-			if (icon.commandsID == inCommand) {
-				glColor4f(0.5f, 0, 0, 0.8f);
-			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
-				glColor4f(0.5f, 0, 0, 0.2f);
-			} else {
-				glColor4f(0, 0, 0.5f, 0.2f);
-			}
-
-			glVertex2f(x1,y1);
-			glVertex2f(x2,y1);
-			glVertex2f(x2,y2);
-			glVertex2f(x1,y2);
-			glVertex2f(x1,y1);
-			glEnd();
-		}
-
-		// "markerad" (l�g m�kt f�t �er)
-		glEnable(GL_TEXTURE_2D);
-		glColor4f(1,1,1,0.8f);
-
-		UnitDef* ud = unitDefHandler->GetUnitByName(cmdDesc.name);
-
-		if (ud != NULL) {
-			// unitikon
-			glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
-			glBegin(GL_QUADS);
-			glTexCoord2f(0,0);
-			glVertex2f(x1,y1);
-			glTexCoord2f(1,0);
-			glVertex2f(x2,y1);
-			glTexCoord2f(1,1);
-			glVertex2f(x2,y2);
-			glTexCoord2f(0,1);
-			glVertex2f(x1,y2);
-			glEnd();
-
-			// build count text
-			if (!cmdDesc.params.empty()){			//skriv texten i fï¿½sta param ovanpï¿½
-				const string& toPrint = cmdDesc.params[0];
-
-				const float tHeight = font->CalcTextHeight(toPrint.c_str());
-				const float yScale = (yIconSize * 0.2f) / tHeight;
-				const float xScale = yScale / gu->aspectRatio;
-
-				glTranslatef(x1 + 0.004f, y2 + 0.004f, 0.0f);
-				glScalef(xScale, yScale, 1.0f);
-				font->glPrint("%s", toPrint.c_str());
-			}
-		}
-		else {
-			if (iconMap.find(cmdDesc.id) != iconMap.end() && iconMap[cmdDesc.id].has_bitmap) {
-				// Bitmapikon
-				glBindTexture(GL_TEXTURE_2D, iconMap[cmdDesc.id].texture);
-				glBegin(GL_QUADS);
-				glTexCoord2f(0,0);
-				glVertex2f(x1,y1);
-				glTexCoord2f(1,0);
-				glVertex2f(x2,y1);
-				glTexCoord2f(1,1);
-				glVertex2f(x2,y2);
-				glTexCoord2f(0,1);
-				glVertex2f(x1,y2);
-				glEnd();
-			}
-			else {
-				glPushAttrib(GL_ENABLE_BIT);
-				glDisable(GL_LIGHTING);
-				glDisable(GL_DEPTH_TEST);
-				glDisable(GL_TEXTURE_2D);
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-				GLfloat xSize = fabs(x2-x1);
-				GLfloat yCenter = (y1+y2)/2.f;
-				GLfloat ySize = fabs(y2-y1);
-
-				if (cmdDesc.type == CMDTYPE_PREV) {
-					glBegin(GL_POLYGON);
-					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
-						glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // selected
-					} else {
-						glColor4f(0.7f, 0.7f, 0.7f, 1.0f); // normal
-					}
-					glVertex2f(x2-xSize/6,yCenter-ySize/8);
-					glVertex2f(x1+2*xSize/6,yCenter-ySize/8);
-					glVertex2f(x1+xSize/6,yCenter);
-					glVertex2f(x1+2*xSize/6,yCenter+ySize/8);
-					glVertex2f(x2-xSize/6,yCenter+ySize/8);
-					glEnd();
-				}
-				else if (cmdDesc.type == CMDTYPE_NEXT) {
-					glBegin(GL_POLYGON);
-					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
-						glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // selected
-					} else {
-						glColor4f(0.7f, 0.7f, 0.7f, 1.0f); // normal
-					}
-					glVertex2f(x1+xSize/6,yCenter-ySize/8);
-					glVertex2f(x2-2*xSize/6,yCenter-ySize/8);
-					glVertex2f(x2-xSize/6,yCenter);
-					glVertex2f(x2-2*xSize/6,yCenter+ySize/8);
-					glVertex2f(x1+xSize/6,yCenter+ySize/8);
-					glEnd();
-				}
-				else {
-					glBegin(GL_LINE_LOOP);
-					glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
-					glVertex2f(x1,y1);
-					glVertex2f(x2,y1);
-					glVertex2f(x2,y2);
-					glVertex2f(x1,y2);
-					glEnd();
-				}
-				glPopAttrib();
-			}
-
-			// skriv text
-			string toPrint = cmdDesc.name;
-
-			if (cmdDesc.type==CMDTYPE_ICON_MODE) {
-				int opt = atoi(cmdDesc.params[0].c_str()) + 1;
-				if (opt < cmdDesc.params.size()) {
-					toPrint = cmdDesc.params[opt];
-				}
-			}
-
-			const float tWidth  = font->CalcTextWidth(toPrint.c_str());
-			const float tHeight = font->CalcTextHeight(toPrint.c_str());
-			const float textBorder2 = (2.0f * textBorder);
-			float xScale = (xIconSize - textBorder2) / tWidth;
-			float yScale = (yIconSize - textBorder2) / tHeight;
-
-			const float yRatio = xScale * gu->aspectRatio;
-			if (yRatio < yScale) {
-				yScale = yRatio;
-			} else {
-				const float xRatio = yScale / gu->aspectRatio;
-				if (xRatio < xScale) {
-					xScale = xRatio;
-				}
-			}
-
-			const float xCenter = 0.5f * (x1 + x2);
-			const float yCenter = 0.5f * (y1 + y2);
-			const float xStart  = xCenter - (0.5f * tWidth  * xScale);
-			const float yStart  = yCenter - (0.5f * tHeight * yScale);
-			const float dShadow = 0.002f;			
-
-			glPushMatrix();
-			glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
-			glTranslatef(xStart + dShadow, yStart - dShadow, 0.0f);
-			glScalef(xScale, yScale, 1.0f);
-			font->glPrint("%s",toPrint.c_str());
-			glPopMatrix();
-
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			glTranslatef(xStart, yStart, 0.0f);
-			glScalef(xScale, yScale, 1.0f);
-			font->glPrint("%s",toPrint.c_str());
-
-			// draw the mode indicators
-			if (useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE)) {
-				DrawOptionLEDs(icon);
-			}
-		}
-
-		glLoadIdentity();
-		
-		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
-			
-			if (icon.commandsID == inCommand) {
-				glColor4f(1.0f, 1.0f, 0.0f, 0.75f);
-			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
-				glColor4f(1.0f, 0.0f, 0.0f, 0.50f);
-			} else {
-				glColor4f(1.0f, 1.0f, 1.0f, 0.50f);
-			}
-
-			glPushAttrib(GL_ENABLE_BIT);
-			glDisable(GL_LIGHTING);
-			glDisable(GL_DEPTH_TEST);
-			glDisable(GL_TEXTURE_2D);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-			glLineWidth(1.49f);
-
-			glBegin(GL_LINE_LOOP);
-			glVertex2f(x1,y1);
-			glVertex2f(x2,y1);
-			glVertex2f(x2,y2);
-			glVertex2f(x1,y2);
-			glEnd();
-
-			glLineWidth(1.0f);
-
-			glPopAttrib();
-		}
-	}
-
-	if (iconsCount > 0) {
-		char buf[64];
-
-		SNPRINTF(buf, 64, "%i", activePage + 1);
-		if (selectedUnits.BuildIconsFirst()) {
-			glColor4fv(cmdColors.build);
-		} else {
-			glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
-		}
-		const float textSize = 1.2f;
-		const float yBbot = yBpos - (textSize * 0.5f * (font->CalcTextHeight(buf) / 32.0f));
-		font->glPrintCentered(xBpos, yBbot, textSize, buf);
-
-		if(selectedUnits.selectedGroup!=-1){
-			SNPRINTF(buf, 64, "Selected units %i  [Group %i]",
-			         selectedUnits.selectedUnits.size(),
-			         selectedUnits.selectedGroup);
-		} else {
-			SNPRINTF(buf, 64, "Selected units %i",
-			         selectedUnits.selectedUnits.size());
-		}
-
-		const float textScale = 0.6;
-		const float textWidth  = textScale * (font->CalcTextWidth(buf) / 48.0f);
-		const float textHeight = textScale * (font->CalcTextHeight(buf) / 24.0f);
-
-		if (!outlineFont.IsEnabled()) {
-			glDisable(GL_TEXTURE_2D);
-			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
-			glRectf(xSelectionPos - frameBorder,
-							ySelectionPos - frameBorder,
-							xSelectionPos + frameBorder + textWidth,
-							ySelectionPos + frameBorder + textHeight);
-			glColor4f(1,1,1,0.8f);
-			font->glPrintAt(xSelectionPos, ySelectionPos, textScale, "%s", buf);
-		}
-		else {
-			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
-
-			const float xScale = textScale * 0.0225f;
-			const float yScale = textScale * 0.0300f;
-			glScalef(xScale, yScale, 1.0f);
-			
-			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
-
-			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			outlineFont.print(xPixel, yPixel, white, buf);
-		}
-	}
-}
-
-
-void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
-{
-	const CommandDescription& cmdDesc = commands[icon.commandsID];
-
-	const int pCount = (int)cmdDesc.params.size() - 1;
-	if (pCount < 2) {
-		return;
-	}
-	const int option = atoi(cmdDesc.params[0].c_str());
-
-	glLoadIdentity();
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	const float xs = xIconSize / float(1 + (pCount * 2));
-	const float ys = yIconSize * 0.125f;
-	const float x1 = icon.visual.x1;
-	const float y1 = icon.visual.y1;
-	const float x2 = icon.visual.x2;
-	const float y2 = icon.visual.y2;
-	const float yp = 1.0f / float(gu->screeny);
-	
-	for (int x = 0; x < pCount; x++) {
-		if (x != option) {
-			glColor4f(0.25f, 0.25f, 0.25f, 0.50f); // dark
-		} else {
-			if (pCount == 2) {
-				if (option == 0) {
-					glColor4f(1.0f, 0.0f, 0.0f, 0.75f); // red
-				} else {
-					glColor4f(0.0f, 1.0f, 0.0f, 0.75f); // green
-				}
-			} else if (pCount == 3) {
-				if (option == 0) {
-					glColor4f(1.0f, 0.0f, 0.0f, 0.75f); // red
-				} else if (option == 1) {
-					glColor4f(1.0f, 1.0f, 0.0f, 0.75f); // yellow
-				} else {
-					glColor4f(0.0f, 1.0f, 0.0f, 0.75f); // green
-				}
-			} else {
-				glColor4f(0.75f, 0.75f, 0.75f, 0.75f); // light
-			}
-		}
-
-		const float startx = x1 + (xs * float(1 + (2 * x)));
-		const float starty = y2 + (3.0f * yp);
-
-		glRectf(startx, starty, startx + xs, starty + ys);
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-		glRectf(startx, starty, startx + xs, starty + ys);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-
-	glPopAttrib();
-}
-
+/******************************************************************************/
+/******************************************************************************/
 
 void CGuiHandler::SetCursorIcon() const
 {
@@ -954,6 +900,7 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 	return false;
 }
 
+
 void CGuiHandler::MouseRelease(int x,int y,int button)
 {
 	if (activeMousePress) {
@@ -992,10 +939,12 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				inCommand=-1;
 				break;}
 			case CMDTYPE_ICON_MODE:{
-				int newMode=atoi(commands[iconCmd].params[0].c_str())+1;
-				if(newMode>commands[iconCmd].params.size()-2)
-					newMode=0;
+				int newMode = atoi(commands[iconCmd].params[0].c_str())+1;
+				if (newMode>commands[iconCmd].params.size()-2) {
+					newMode = 0;
+				}
 
+				// not really required
 				char t[10];
 				SNPRINTF(t, 10, "%d", newMode);
 				commands[iconCmd].params[0]=t;
@@ -1006,6 +955,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
+				forceLayoutUpdate = true;
 				break;}
 			case CMDTYPE_ICON_MAP:
 			case CMDTYPE_ICON_AREA:
@@ -1055,6 +1005,11 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				selectedUnits.SetCommandPage(activePage);
 				inCommand=-1;
 				break;
+
+			case CMDTYPE_CUSTOM:
+				const bool rmb = (button == SDL_BUTTON_LEFT)? false : true;
+				RunCustomCommands(commands[iconCmd].params, rmb);
+				break;
 		}
 		return;
 	}
@@ -1081,17 +1036,135 @@ int CGuiHandler::IconAtPos(int x, int y)
 		return -1;
 	}
 
-	// FIXME -- icons are now positional ... use it
-	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
-	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
-	for (int ii = buttonStart; ii < buttonEnd; ii++) {
+	int xSlot = int((fx - (buttonBox.x1 + frameBorder)) / xIconStep);
+	int ySlot = int(((buttonBox.y2 - frameBorder) - fy) / yIconStep);
+	xSlot = min(max(xSlot, 0), xIcons - 1);
+	ySlot = min(max(ySlot, 0), yIcons - 1);
+  const int ii = (activePage * iconsPerPage) + (ySlot * xIcons) + xSlot;
+  if ((ii >= 0) && (ii < iconsCount)) {
 		if ((fx > icons[ii].selection.x1) && (fx < icons[ii].selection.x2) &&
-		    (fy > icons[ii].selection.y2) && (fy < icons[ii].selection.y1)) {
+				(fy > icons[ii].selection.y2) && (fy < icons[ii].selection.y1)) {
 			return ii;
 		}
 	}
 
 	return -1;
+}
+
+
+enum ModState {
+	DontCare, Required, Forbidden
+};
+
+struct ModGroup {
+	ModGroup()
+	: alt(DontCare),
+	  ctrl(DontCare),
+	  meta(DontCare),
+	  shift(DontCare),
+	  right(DontCare) {}
+	ModState alt, ctrl, meta, shift, right;
+};
+
+
+static bool ParseCustomCmdMods(string& cmd, ModGroup& in, ModGroup& out)
+{
+	const char* c = cmd.c_str();
+	if (*c != '@') {
+		return false;
+	}
+	c++;
+	bool neg = false;
+	while ((*c != 0) && (*c != '@')) {
+		char ch = *c;
+		if (ch == '-') {
+			neg = true;
+		}
+		else if (ch == '+') {
+			neg = false;
+		}
+		else if (ch == 'a') { in.alt    = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'c') { in.ctrl   = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'm') { in.meta   = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 's') { in.shift  = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'r') { in.right  = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'A') { out.alt   = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'C') { out.ctrl  = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'M') { out.meta  = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'S') { out.shift = neg ? Forbidden : Required; neg = false; }
+		else if (ch == 'R') { out.right = neg ? Forbidden : Required; neg = false; }
+
+		c++;
+	}
+
+	if (*c == 0) {
+		return false;
+	}
+	cmd = cmd.substr((c + 1) - cmd.c_str());	
+
+	return true;
+}
+
+
+static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
+{
+	if (((inMods.alt   == Required)  && !keys[SDLK_LALT])   ||
+	    ((inMods.alt   == Forbidden) &&  keys[SDLK_LALT])   ||
+	    ((inMods.ctrl  == Required)  && !keys[SDLK_LCTRL])  ||
+	    ((inMods.ctrl  == Forbidden) &&  keys[SDLK_LCTRL])  ||
+	    ((inMods.meta  == Required)  && !keys[SDLK_LMETA])  ||
+	    ((inMods.meta  == Forbidden) &&  keys[SDLK_LMETA])  ||
+	    ((inMods.shift == Required)  && !keys[SDLK_LSHIFT]) ||
+	    ((inMods.shift == Forbidden) &&  keys[SDLK_LSHIFT]) ||
+	    ((inMods.right == Required)  && !rmb)               ||
+	    ((inMods.right == Forbidden) &&  rmb)) {
+		return false;	
+	}
+	return true;	
+}
+
+
+void CGuiHandler::RunCustomCommands(const vector<string>& cmds, bool rmb)
+{
+	static int depth = 0;
+	if (depth > 8) {
+		return; // recursion protection
+	}
+	depth++;
+	
+	for (int p = 0; p < (int)cmds.size(); p++) {
+		string copy = cmds[p];
+		ModGroup inMods;  // must match for the action to execute
+		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
+		if (ParseCustomCmdMods(copy, inMods, outMods)) {
+			if (CheckCustomCmdMods(rmb, inMods)) {
+				const bool tmpAlt   = keys[SDLK_LALT];
+				const bool tmpCtrl  = keys[SDLK_LCTRL];
+				const bool tmpMeta  = keys[SDLK_LMETA];
+				const bool tmpShift = keys[SDLK_LSHIFT];
+				if (outMods.alt   == Required)  { keys[SDLK_LALT]   = 1; }
+				if (outMods.alt   == Forbidden) { keys[SDLK_LALT]   = 0; }
+				if (outMods.ctrl  == Required)  { keys[SDLK_LCTRL]  = 1; }
+				if (outMods.ctrl  == Forbidden) { keys[SDLK_LCTRL]  = 0; }
+				if (outMods.meta  == Required)  { keys[SDLK_LMETA]  = 1; }
+				if (outMods.meta  == Forbidden) { keys[SDLK_LMETA]  = 0; }
+				if (outMods.shift == Required)  { keys[SDLK_LSHIFT] = 1; }
+				if (outMods.shift == Forbidden) { keys[SDLK_LSHIFT] = 0; }
+
+				CKeyBindings::Action action(copy);
+				if (!ProcessLocalActions(action)) {
+					CKeySet ks;
+					game->ActionPressed(action, ks, false /*isRepeat*/);
+				}
+
+				keys[SDLK_LALT]   = tmpAlt;       
+				keys[SDLK_LCTRL]  = tmpCtrl;
+				keys[SDLK_LMETA]  = tmpMeta;
+				keys[SDLK_LSHIFT] = tmpShift;
+			}
+		}
+	}
+	depth--;
 }
 
 
@@ -1156,339 +1229,6 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 	return -1;
 }
 
-void CGuiHandler::DrawMapStuff(void)
-{
-	if(activeMousePress){
-		int cc=-1;
-		int button=SDL_BUTTON_LEFT;
-		if(inCommand!=-1){
-			cc=inCommand;
-		} else {
-			if(mouse->buttons[SDL_BUTTON_RIGHT].pressed && mouse->activeReceiver==this){
-				cc=defaultCmdMemory;//GetDefaultCommand(mouse->lastx,mouse->lasty);
-				button=SDL_BUTTON_RIGHT;
-			}
-		}
-		
-		if(cc>=0 && cc<commands.size()){
-			switch(commands[cc].type){
-			case CMDTYPE_ICON_FRONT:
-				if(mouse->buttons[button].movement>30){
-					if(commands[cc].params.size()>0)
-						if(commands[cc].params.size()>1)
-							DrawFront(button,atoi(commands[cc].params[0].c_str()),atof(commands[cc].params[1].c_str()));
-						else
-							DrawFront(button,atoi(commands[cc].params[0].c_str()),0);
-					else
-						DrawFront(button,1000,0);
-				}
-				break;
-			case CMDTYPE_ICON_UNIT_OR_AREA:
-			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
-			case CMDTYPE_ICON_AREA:{
-				float maxRadius=100000;
-				if(commands[cc].params.size()==1)
-					maxRadius=atof(commands[cc].params[0].c_str());
-				if(mouse->buttons[button].movement>4){
-					float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
-					if(dist<0){
-						break;
-					}
-					float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-					dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
-					if(dist<0){
-						break;
-					}
-					float3 pos2=camera->pos+mouse->dir*dist;
-					DrawArea(pos,min(maxRadius,pos.distance2D(pos2)));
-				}
-				break;}
-			default:
-				break;
-			}
-		}
-	}
-
-	glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-	            (GLenum)cmdColors.SelectedBlendDst());
-	glEnable(GL_BLEND);
-	glDisable(GL_TEXTURE_2D);
-	glLineWidth(cmdColors.SelectedLineWidth());
-	
-	// draw buildings we are about to build
-	if(inCommand>=0 && inCommand<commands.size() && commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
-		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
-		if(dist>0){
-			string s=commands[guihandler->inCommand].name;
-			UnitDef *unitdef = unitDefHandler->GetUnitByName(s);
-
-			if(unitdef){
-				float3 pos=camera->pos+mouse->dir*dist;
-				std::vector<BuildInfo> buildPos;
-				if(keys[SDLK_LSHIFT] && mouse->buttons[SDL_BUTTON_LEFT].pressed){
-					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
-					float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
-					buildPos=GetBuildPos(BuildInfo(unitdef, pos2,buildFacing), BuildInfo(unitdef,pos, buildFacing));
-				} else {
-					BuildInfo bi(unitdef, pos, buildFacing);
-					buildPos=GetBuildPos(bi,bi);
-				}
-
-				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
-				{
-					const float3 buildpos = bpi->pos;
-					std::vector<Command> cv;
-					if(keys[SDLK_LSHIFT]){
-						Command c;
-						bpi->FillCmd(c);
-						std::vector<Command> temp;
-						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-						for(; ui != selectedUnits.selectedUnits.end(); ui++){
-							temp = (*ui)->commandAI->GetOverlapQueued(c);
-							std::vector<Command>::iterator ti = temp.begin();
-							for(; ti != temp.end(); ti++)
-								cv.insert(cv.end(),*ti);
-						}
-					}
-					if(uh->ShowUnitBuildSquare(*bpi, cv))
-						glColor4f(0.7f,1,1,0.4f);
-					else
-						glColor4f(1,0.5f,0.5f,0.4f);
-
-					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
-
-					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-											(GLenum)cmdColors.SelectedBlendDst());
-					
-					if(unitdef->weapons.size() > 0){	// draw weapon range
-						glColor4fv(cmdColors.rangeAttack);
-						glBegin(GL_LINE_STRIP);
-						for(int a=0;a<=40;++a){
-							float3 pos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
-							pos+=buildpos;
-							float dh=ground->GetHeight(pos.x,pos.z)-buildpos.y;
-							float modRange=unitdef->weapons[0].def->range-dh*unitdef->weapons[0].def->heightmod;
-							pos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
-							pos+=buildpos;
-							pos.y=ground->GetHeight(pos.x,pos.z)+8;
-							glVertexf3(pos);
-						}
-						glEnd();
-					}
-					if(unitdef->extractRange > 0){	// draw extraction range
-						glDisable(GL_TEXTURE_2D);
-						glColor4fv(cmdColors.rangeExtract);
-						glBegin(GL_LINE_STRIP);
-						for(int a=0;a<=40;++a){
-							float3 pos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
-							pos+=buildpos;
-							pos.y=ground->GetHeight(pos.x,pos.z)+8;
-							glVertexf3(pos);
-						}
-						glEnd();
-					}
-					if (unitdef->builder && !unitdef->canmove) { // draw build range
-						const float radius = unitdef->buildDistance;
-						if (radius > 0.0f) {
-							glDisable(GL_TEXTURE_2D);
-							glColor4fv(cmdColors.rangeBuild);
-							glBegin(GL_LINE_STRIP);
-							for(int a = 0; a <= 40; ++a){
-								const float radians = a * (2.0f * PI) / 40.0f;
-								float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
-								pos += buildpos;
-								pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
-								glVertexf3(pos);
-							}
-							glEnd();
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// draw the ranges for the unit that is being pointed at
-	if(keys[SDLK_LSHIFT]){
-		CUnit* unit=0;
-		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
-		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
-			if(unit->maxRange>0){
-				glColor4fv(cmdColors.rangeAttack);
-				glBegin(GL_LINE_STRIP);
-				float h=unit->pos.y;
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
-					pos+=unit->pos;
-					float dh=ground->GetHeight(pos.x,pos.z)-h;
-					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
-			}
-			if(unit->unitDef->decloakDistance > 0){			//draw decloak distance
-				glColor4fv(cmdColors.rangeDecloak);
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
-			}
-			if(unit->unitDef->kamikazeDist > 0){			//draw self destruct and damage distance
-				glColor4fv(cmdColors.rangeKamikaze);
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
-				if(!unit->unitDef->selfDExplosion.empty()){
-					glColor4fv(cmdColors.rangeSelfDestruct);
-					WeaponDef* wd=weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
-
-					glBegin(GL_LINE_STRIP);
-					for(int a=0;a<=40;++a){
-						float3 pos(cos(a*2*PI/40)*wd->areaOfEffect,0,sin(a*2*PI/40)*wd->areaOfEffect);
-						pos+=unit->pos;
-						pos.y=ground->GetHeight(pos.x,pos.z)+8;
-						glVertexf3(pos);
-					}
-					glEnd();
-				}
-			}
-			// draw build distance for immobile builders
-			if(unit->unitDef->builder && !unit->unitDef->canmove) {
-				const float radius = unit->unitDef->buildDistance;
-				if (radius > 0.0f) {
-					glColor4fv(cmdColors.rangeBuild);
-					glBegin(GL_LINE_STRIP);
-					for(int a = 0; a <= 40; ++a){
-						const float radians = a * (2.0f * PI) / 40.0f;
-						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
-						pos += unit->pos;
-						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
-						glVertexf3(pos);
-					}
-					glEnd();
-				}
-			}
-		}
-	}
-
-	//draw range circles if attack orders are imminent
-	int defcmd=GetDefaultCommand(mouse->lastx,mouse->lasty);
-	if((inCommand>0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
-	   (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
-		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
-			CUnit* unit=*si;
-			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
-				glColor4fv(cmdColors.rangeAttack);
-				glBegin(GL_LINE_STRIP);
-				float h=unit->pos.y;
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
-					pos+=unit->pos;
-					float dh=ground->GetHeight(pos.x,pos.z)-h;
-					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
-			}
-		}
-	}
-	
-	glLineWidth(1.0f);
-}
-
-
-void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
-{
-	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5f,1,0.5f,0.5f);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	CMouseHandler::ButtonPress& bp=mouse->buttons[button];
-	if(bp.movement<5)
-		return;
-	float dist=ground->LineGroundCol(bp.camPos,bp.camPos+bp.dir*gu->viewRange*1.4f);
-	if(dist<0)
-		return;
-	float3 pos1=bp.camPos+bp.dir*dist;
-	dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
-	if(dist<0)
-		return;
-	float3 pos2=camera->pos+mouse->dir*dist;
-	float3 forward=(pos1-pos2).cross(UpVector);
-	forward.Normalize();
-	float3 side=forward.cross(UpVector);
-	if(pos1.distance2D(pos2)>maxSize){
-		pos2=pos1+side*maxSize;
-		pos2.y=ground->GetHeight(pos2.x,pos2.z);
-	}
-
-	glDisable(GL_DEPTH_TEST);
-	glBegin(GL_QUADS);
-		glVertexf3(pos1+side*25);
-		glVertexf3(pos1-side*25);
-		glVertexf3(pos1-side*25+forward*50);
-		glVertexf3(pos1+side*25+forward*50);
-
-		glVertexf3(pos1+side*40+forward*50);
-		glVertexf3(pos1-side*40+forward*50);
-		glVertexf3(pos1+forward*100);
-		glVertexf3(pos1+forward*100);
-	glEnd();
-	glEnable(GL_DEPTH_TEST);
-
-
-	pos1+=pos1-pos2;
-	glDisable(GL_FOG);
-	glBegin(GL_QUADS);
-		glVertexf3(pos1-float3(0,-100,0));
-		glVertexf3(pos1+float3(0,-100,0));
-		glVertexf3(pos2+float3(0,-100,0));
-		glVertexf3(pos2-float3(0,-100,0));
-	glEnd();
-
-	if(sizeDiv!=0){
-		char c[40];
-		SNPRINTF(c, 40, "%d", (int)(pos1.distance2D(pos2)/sizeDiv) );
-		mouse->cursorTextRight=c;
-	}
-	glEnable(GL_FOG);
-}
-
-
-void CGuiHandler::ResetInCommand(const CommandDescription& cmdDesc)
-{
-	for (int a = 0; a < commands.size(); ++a) {
-		if (commands[a].id == cmdDesc.id) {
-			inCommand = a;
-			if (commands[a].type == CMDTYPE_ICON_BUILDING) {
-				UnitDef* ud = unitDefHandler->GetUnitByID(-commands[a].id);
-				SetShowingMetal(ud->extractsMetal > 0);
-			} else {
-				SetShowingMetal(false);
-			}
-			for (int ii = 0; ii < iconsCount; ii++) {
-				if (inCommand == icons[ii].commandsID) {
-					activePage = min(maxPage, (ii / iconsPerPage));;
-					selectedUnits.SetCommandPage(activePage);
-				}
-			}
-		}
-	}
-}
-
 
 bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 {
@@ -1510,11 +1250,7 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		activePage = 0;
 		selectedUnits.SetCommandPage(activePage);
 		selectedUnits.ToggleBuildIconsFirst();
-		if ((inCommand >= 0) && (inCommand < commands.size())) {
-			const CommandDescription cmdDesc = commands[inCommand];
-			LayoutIcons();
-			ResetInCommand(cmdDesc);
-		}
+		LayoutIcons(false);
 		return true;
 	}
 	else if (action.command == "firstmenu") {
@@ -1550,7 +1286,8 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		// show the icon/command linkage
 		logOutput.Print("Icon Linkage:\n");
 		for(int ii = 0; ii < iconsCount; ++ii){
-			logOutput.Print("  icon: %i, commandsID = %i\n", ii, icons[ii].commandsID);
+			logOutput.Print("  icon: %i, commandsID = %i\n",
+			                ii, icons[ii].commandsID);
 		}
 		logOutput.Print("maxPage         = %i\n", maxPage);
 		logOutput.Print("activePage      = %i\n", activePage);
@@ -1559,9 +1296,56 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		logOutput.Print("commands.size() = %i\n", commands.size());
 		return true;
 	}
+	else if (action.command == "nextmenu") {
+		activePage++;
+		if (activePage > maxPage) {
+			activePage = 0;
+		}
+		selectedUnits.SetCommandPage(activePage);
+		return true;
+	}
+	else if (action.command == "prevmenu") {
+		activePage--;
+		if (activePage < 0) {
+			activePage = maxPage;
+		}
+		selectedUnits.SetCommandPage(activePage);
+		return true;
+	}
+	else if (action.command == "layout") {
+		RunLayoutCommand(action.extra);
+		return true;
+	}
 
 	return false;
 }    
+
+
+void CGuiHandler::RunLayoutCommand(const string& command)
+{
+	if (command == "reload") {
+		if (layoutHandler == NULL) {
+			logOutput.Print("Loading \"ctrlpanel.lua\"\n");
+			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+		} else {
+			logOutput.Print("Reloading \"ctrlpanel.lua\"\n");
+			delete layoutHandler;
+			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+			if (layoutHandler == NULL) {
+				LoadConfig("ctrlpanel.txt");
+			}
+		}
+	} else {
+		if (layoutHandler == NULL) {
+			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+		}
+		layoutHandler->ConfigCommand(command);
+	}
+
+	LayoutIcons(false);
+
+	return;
+}
 
 
 bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
@@ -1753,6 +1537,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 						newMode = 0;
 					}
 
+					// not really required
 					char t[10];
 					SNPRINTF(t, 10, "%d", newMode);
 					commands[a].params[0] = t;
@@ -1762,6 +1547,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					c.id = commands[a].id;
 					c.params.push_back(newMode);
 					selectedUnits.GiveCommand(c);
+					forceLayoutUpdate = true;
 					break;
 				}
 				case CMDTYPE_ICON_MAP:
@@ -1828,6 +1614,10 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					selectedUnits.SetCommandPage(activePage);
 					break;
 				}
+				case CMDTYPE_CUSTOM: {
+					RunCustomCommands(commands[iconCmd].params, false);
+					break;
+				}
 				default:{
 					lastKeySet.Reset();
 					SetShowingMetal(false);
@@ -1887,10 +1677,12 @@ void CGuiHandler::FinishCommand(int button)
 	}
 }
 
+
 bool CGuiHandler::IsAbove(int x, int y)
 {
 	return AboveGui(x,y);
 }
+
 
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
@@ -1928,32 +1720,11 @@ std::string CGuiHandler::GetBuildTooltip() const
 }
 
 
-void CGuiHandler::DrawArea(float3 pos, float radius)
-{
-	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5f,1,0.5f,0.5f);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_FOG);
-	glBegin(GL_TRIANGLE_FAN);
-		glVertexf3(pos);
-		for(int a=0;a<=40;++a){
-			float3 p(cos(a*2*PI/40)*radius,0,sin(a*2*PI/40)*radius);
-			p+=pos;
-			p.y=ground->GetHeight(p.x,p.z);
-			glVertexf3(p);
-		}
-	glEnd();
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_FOG);
-}
-
 Command CGuiHandler::GetOrderPreview(void)
 {
 	return GetCommand(mouse->lastx,mouse->lasty,-1,true);
 }
+
 
 Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool preview)
 {
@@ -2009,8 +1780,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(dist<0){
 				return defaultRet;
 			}
-			string s=commands[guihandler->inCommand].name;
-			UnitDef *unitdef = unitDefHandler->GetUnitByName(s);
+			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
 
 			if(!unitdef){
 				return defaultRet;
@@ -2170,6 +1940,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 	}
 	return defaultRet;
 }
+
 
 // Assuming both builds have the same unitdef
 std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo)
@@ -2342,3 +2113,979 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	}
 	return ret;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CGuiHandler::Draw()
+{
+	DrawButtons();
+}
+
+
+bool CGuiHandler::BindNamedTexture(const std::string& texName)
+{
+	if (texName.empty()) {
+		return false;
+	}
+
+	std::map<std::string, unsigned int>::iterator it = textureMap.find(texName);
+	if (it != textureMap.end()) {
+		const GLuint texID = it->second;
+		if (texID == 0) {
+			glBindTexture(GL_TEXTURE_2D, 0);
+			return false;
+		} else {
+			glBindTexture(GL_TEXTURE_2D, it->second);
+			return true;
+		}
+	}
+
+	// strip off the qualifiers
+	string filename = texName;
+	bool nearest = false;
+	if (filename.find(":n:") == 0) {
+		nearest = true;
+		filename = filename.substr(strlen(":n:"));
+	}
+
+	// get the image
+	CBitmap bitmap;
+	if (!bitmap.Load(filename)) {
+		textureMap[texName] = 0;
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return false;
+	}
+	
+	// make the texture
+	GLuint texID;
+	glGenTextures(1, &texID);
+	glBindTexture(GL_TEXTURE_2D, texID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	if (nearest) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		if (GLEW_ARB_texture_non_power_of_two) {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+			             bitmap.xsize, bitmap.ysize, 0,
+			             GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		} else {
+			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+			                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		}
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+											GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+	}
+
+	textureMap[texName] = texID;
+	
+	return true;
+}
+
+
+static string FindCornerText(const string& corner, const vector<string>& params)
+{
+	for (int p = 0; p < (int)params.size(); p++) {
+		if (params[p].find(corner) == 0) {
+			return params[p].substr(corner.length());
+		}
+	}
+	return string("");
+}
+
+
+void CGuiHandler::DrawCustomButton(const IconInfo& icon)
+{
+	const CommandDescription& cmdDesc = commands[icon.commandsID];
+
+	bool usedTexture = false;
+	if (!cmdDesc.iconname.empty()) {
+		if (cmdDesc.iconname[0] == '#') {
+			const int unitDefID = atoi(cmdDesc.iconname.c_str() + 1);
+			usedTexture = DrawUnitBuildIcon(icon, unitDefID);
+		}
+		else {
+			usedTexture = DrawTexture(icon, cmdDesc.iconname);
+		}
+	}
+
+	if (!usedTexture || !cmdDesc.onlyTexture) {
+		DrawName(icon, cmdDesc.name);
+	}
+
+	DrawNWtext(icon, FindCornerText("$nw$", cmdDesc.params));
+	DrawSWtext(icon, FindCornerText("$sw$", cmdDesc.params));
+	DrawNEtext(icon, FindCornerText("$ne$", cmdDesc.params));
+	DrawSEtext(icon, FindCornerText("$se$", cmdDesc.params));
+
+	if (!usedTexture) {
+		glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
+		DrawIconFrame(icon);
+	}
+}
+
+
+bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
+{
+	// UnitDefHandler's array size is (numUnits + 1)
+	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnits)) {
+		return false;
+	}
+	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	if (ud != NULL) {
+		const Box& b = icon.visual;
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
+		glEnd();
+		return true;
+	}
+	return false;
+}
+
+
+bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
+{
+	if (BindNamedTexture(texName)) {
+		const Box& b = icon.visual;
+		glEnable(GL_TEXTURE_2D);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
+		glEnd();
+		return true;
+	}
+	return false;
+}
+
+
+void CGuiHandler::DrawIconFrame(const IconInfo& icon)
+{
+	const Box& b = icon.visual;
+	glDisable(GL_TEXTURE_2D);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(b.x1, b.y1);
+	glVertex2f(b.x2, b.y1);
+	glVertex2f(b.x2, b.y2);
+	glVertex2f(b.x1, b.y2);
+	glEnd();
+}
+
+
+void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text)
+{
+	if (text.empty()) {
+		return;
+	}
+	const Box& b = icon.visual;
+
+	const float tWidth  = font->CalcTextWidth(text.c_str());
+	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float textBorder2 = (2.0f * textBorder);
+	float xScale = (xIconSize - textBorder2) / tWidth;
+	float yScale = (yIconSize - textBorder2) / tHeight;
+
+	const float yRatio = xScale * gu->aspectRatio;
+	if (yRatio < yScale) {
+		yScale = yRatio;
+	} else {
+		const float xRatio = yScale / gu->aspectRatio;
+		if (xRatio < xScale) {
+			xScale = xRatio;
+		}
+	}
+
+	const float xCenter = 0.5f * (b.x1 + b.x2);
+	const float yCenter = 0.5f * (b.y1 + b.y2);
+	const float xStart  = xCenter - (0.5f * tWidth  * xScale);
+	const float yStart  = yCenter - (0.5f * tHeight * yScale);
+	const float dShadow = 0.002f;			
+
+	if (dropShadows) {
+		glPushMatrix();
+		glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+		glTranslatef(xStart + dShadow, yStart - dShadow, 0.0f);
+		glScalef(xScale, yScale, 1.0f);
+		font->glPrint("%s",text.c_str());
+		glPopMatrix();
+	}
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glTranslatef(xStart, yStart, 0.0f);
+	glScalef(xScale, yScale, 1.0f);
+	font->glPrintColor("%s",text.c_str());
+	
+	glLoadIdentity();
+}
+
+
+void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
+{
+	if (text.empty()) {
+		return;
+	}
+	const Box& b = icon.visual;
+	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float yScale = (yIconSize * 0.2f) / tHeight;
+	const float xScale = yScale / gu->aspectRatio;
+	glTranslatef(b.x1 + 0.004f, b.y1 - 0.008f - (yScale * tHeight), 0.0f);
+	glScalef(xScale, yScale, 1.0f);
+	font->glPrintColor("%s", text.c_str());
+	glLoadIdentity();
+}
+
+
+void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
+{
+	if (text.empty()) {
+		return;
+	}
+	const Box& b = icon.visual;
+	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float yScale = (yIconSize * 0.2f) / tHeight;
+	const float xScale = yScale / gu->aspectRatio;
+	glTranslatef(b.x1 + 0.004f, b.y2 + 0.004f, 0.0f);
+	glScalef(xScale, yScale, 1.0f);
+	font->glPrintColor("%s", text.c_str());
+	glLoadIdentity();
+}
+
+
+void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
+{
+	if (text.empty()) {
+		return;
+	}
+	const Box& b = icon.visual;
+	const float tWidth = font->CalcTextWidth(text.c_str());
+	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float yScale = (yIconSize * 0.2f) / tHeight;
+	const float xScale = yScale / gu->aspectRatio;
+	glTranslatef(b.x2 - 0.004f - (xScale * tWidth),
+	             b.y1 - 0.008f - (yScale * tHeight), 0.0f);
+	glScalef(xScale, yScale, 1.0f);
+	font->glPrintColor("%s", text.c_str());
+	glLoadIdentity();
+}
+
+
+void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
+{
+	if (text.empty()) {
+		return;
+	}
+	const Box& b = icon.visual;
+	const float tWidth = font->CalcTextWidth(text.c_str());
+	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float yScale = (yIconSize * 0.2f) / tHeight;
+	const float xScale = yScale / gu->aspectRatio;
+	glTranslatef(b.x2 - 0.004f - (xScale * tWidth), b.y2 + 0.004f, 0.0f);
+	glScalef(xScale, yScale, 1.0f);
+	font->glPrintColor("%s", text.c_str());
+	glLoadIdentity();
+}
+
+
+void CGuiHandler::DrawButtons()
+{
+	Update();
+	
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	const int mouseIcon = IconAtPos(mouse->lastx, mouse->lasty);
+
+	// Rita "container"ruta
+	if (iconsCount > 0) {
+		const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
+		glColor4f(0.2f, 0.2f, 0.2f, alpha);
+		glBegin(GL_QUADS);
+		const GLfloat fx = 0.0f; //-.2f*(1-fadein/100.0f)+.2f;
+		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
+		glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
+		glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
+		glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
+		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
+		glEnd();
+	}
+
+	// F� varje knapp (rita den)
+	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
+	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
+
+	for (int ii = buttonStart; ii < buttonEnd; ii++) {
+
+		const IconInfo& icon = icons[ii];
+		if (icon.commandsID < 0) {
+			continue; // inactive icon
+		}
+		const CommandDescription& cmdDesc = commands[icon.commandsID];
+		
+		const GLfloat x1 = icon.visual.x1;
+		const GLfloat y1 = icon.visual.y1;
+		const GLfloat x2 = icon.visual.x2;
+		const GLfloat y2 = icon.visual.y2;
+
+		glDisable(GL_TEXTURE_2D);
+
+		// highlight background
+		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+			if (icon.commandsID == inCommand) {
+				glColor4f(0.5f, 0, 0, 0.8f);
+			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
+				glColor4f(0.5f, 0, 0, 0.2f);
+			} else {
+				glColor4f(0, 0, 0.5f, 0.2f);
+			}
+			glBegin(GL_QUADS);
+			glVertex2f(x1,y1);
+			glVertex2f(x2,y1);
+			glVertex2f(x2,y2);
+			glVertex2f(x1,y2);
+			glVertex2f(x1,y1);
+			glEnd();
+		}
+
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
+		
+		if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM)) {
+			DrawCustomButton(icon);
+		}
+		else {
+			bool usedTexture = false;
+			bool onlyTexture = cmdDesc.onlyTexture;
+
+			if (BindNamedTexture(cmdDesc.iconname)) {
+				glBegin(GL_QUADS);
+				glTexCoord2f(0.0f, 0.0f); glVertex2f(x1, y1);
+				glTexCoord2f(1.0f, 0.0f); glVertex2f(x2, y1);
+				glTexCoord2f(1.0f, 1.0f); glVertex2f(x2, y2);
+				glTexCoord2f(0.0f, 1.0f); glVertex2f(x1, y2);
+				glEnd();
+				usedTexture = true;
+			}
+
+			if (!usedTexture) {
+				if (cmdDesc.id < 0) {
+					UnitDef* ud = unitDefHandler->GetUnitByID(-cmdDesc.id);
+					if (ud != NULL) {
+						DrawUnitBuildIcon(icon, -cmdDesc.id);
+						// build count text
+						if (!cmdDesc.params.empty()) {
+							DrawSWtext(icon, cmdDesc.params[0]);
+						}
+						usedTexture = true;
+						onlyTexture = true;
+					}
+				}
+			}
+			
+			if (!usedTexture || !onlyTexture) {
+				if ((cmdDesc.type == CMDTYPE_PREV) || (cmdDesc.type == CMDTYPE_NEXT)) {
+					// pick the color for the arrow
+					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+						glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // selected
+					} else {
+						glColor4f(0.7f, 0.7f, 0.7f, 1.0f); // normal
+					}
+					if (cmdDesc.type == CMDTYPE_PREV) {
+						DrawPrevArrow(icon);
+					} else {
+						DrawNextArrow(icon);
+					}
+				}
+				else {
+					// no texture, no arrow, ... draw a frame
+					glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
+					DrawIconFrame(icon);
+				}
+			}
+
+			if (!usedTexture || !onlyTexture) {
+				// command name (or parameter)
+				string toPrint = cmdDesc.name;
+				if (cmdDesc.type == CMDTYPE_ICON_MODE) {
+					const int opt = atoi(cmdDesc.params[0].c_str()) + 1;
+					if (opt < cmdDesc.params.size()) {
+						toPrint = cmdDesc.params[opt];
+					}
+				}
+				DrawName(icon, toPrint);
+			}
+
+			// draw the mode indicators
+			if (useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE)) {
+				DrawOptionLEDs(icon);
+			}
+		}
+
+		// highlight outline
+		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+			if (icon.commandsID == inCommand) {
+				glColor4f(1.0f, 1.0f, 0.0f, 0.75f);
+			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
+				glColor4f(1.0f, 0.0f, 0.0f, 0.50f);
+			} else {
+				glColor4f(1.0f, 1.0f, 1.0f, 0.50f);
+			}
+			glLineWidth(1.49f);
+			DrawIconFrame(icon);
+			glLineWidth(1.0f);
+		}
+	}
+
+	// active page indicator
+	if (layoutHandler == NULL) {
+		char buf[64];
+		SNPRINTF(buf, 64, "%i", activePage + 1);
+		if (selectedUnits.BuildIconsFirst()) {
+			glColor4fv(cmdColors.build);
+		} else {
+			glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
+		}
+		const float textSize = 1.2f;
+		const float yBbot =
+			yBpos - (textSize * 0.5f * (font->CalcTextHeight(buf) / 32.0f));
+		font->glPrintCentered(xBpos, yBbot, textSize, buf);
+	}
+
+	DrawMenuName();
+	
+	DrawSelectionInfo();	
+}
+
+
+void CGuiHandler::DrawMenuName()
+{
+	if (!menuName.empty() && (iconsCount > 0)) {
+		const char* text = menuName.c_str();
+
+		const float xScale = 0.0225f;
+		const float yScale = xScale * gu->aspectRatio;
+		const float textWidth  = xScale * font->CalcTextWidth(text);
+		const float textHeight = yScale * font->CalcTextHeight(text);
+		const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2 - textWidth);  
+		const float yp = buttonBox.y2 + (yIconSize * 0.125f);
+
+		if (!outlineFont.IsEnabled()) {
+			glDisable(GL_TEXTURE_2D);
+			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
+			glRectf(buttonBox.x1,
+							buttonBox.y2,
+							buttonBox.x2,
+							buttonBox.y2 + (textHeight * 1.25f) + (yIconSize * 0.250f));
+			glTranslatef(xp, yp, 0.0f);
+			glScalef(xScale, yScale, 1.0f);
+			font->glPrintColor("%s", text);
+		}
+		else {
+			glTranslatef(xp, yp, 0.0f);
+			glScalef(xScale, yScale, 1.0f);
+			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
+			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+			// use (alpha == 0.0) so that we only get the outline
+			const float white[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
+			outlineFont.print(xPixel, yPixel, white, text);
+			font->glPrintColor("%s", text); // draw with color
+		}
+		glLoadIdentity();
+	}
+
+}
+
+
+void CGuiHandler::DrawSelectionInfo()
+{
+	if (!selectedUnits.selectedUnits.empty()) {
+		char buf[64];
+
+		if(selectedUnits.selectedGroup!=-1){
+			SNPRINTF(buf, 64, "Selected units %i  [Group %i]",
+			         selectedUnits.selectedUnits.size(),
+			         selectedUnits.selectedGroup);
+		} else {
+			SNPRINTF(buf, 64, "Selected units %i",
+			         selectedUnits.selectedUnits.size());
+		}
+
+		const float xScale = 0.015f;
+		const float yScale = xScale * gu->aspectRatio;
+		const float textWidth  = xScale * font->CalcTextWidth(buf);
+		const float textHeight = yScale * font->CalcTextHeight(buf);
+
+		if (!outlineFont.IsEnabled()) {
+			glDisable(GL_TEXTURE_2D);
+			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
+			glRectf(xSelectionPos - frameBorder,
+							ySelectionPos - frameBorder,
+							xSelectionPos + frameBorder + textWidth,
+							ySelectionPos + frameBorder + (textHeight * 1.2f));
+			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
+			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
+			glScalef(xScale, yScale, 1.0f);
+			font->glPrint("%s", buf);
+		}
+		else {
+			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
+			glScalef(xScale, yScale, 1.0f);
+			
+			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
+			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+
+			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			outlineFont.print(xPixel, yPixel, white, buf);
+		}
+		glLoadIdentity();
+	}
+}
+
+
+void CGuiHandler::DrawPrevArrow(const IconInfo& icon)
+{
+	const Box& b = icon.visual;
+	const float yCenter = 0.5f * (b.y1 + b.y2);
+	const float xSize = 0.166f * fabs(b.x2 - b.x1);
+	const float ySize = 0.125f * fabs(b.y2 - b.y1);
+	const float xSiz2 = 2.0f * xSize;
+	glDisable(GL_TEXTURE_2D);
+	glBegin(GL_POLYGON);
+	glVertex2f(b.x2 - xSize, yCenter - ySize);
+	glVertex2f(b.x1 + xSiz2, yCenter - ySize);
+	glVertex2f(b.x1 + xSize, yCenter);
+	glVertex2f(b.x1 + xSiz2, yCenter + ySize);
+	glVertex2f(b.x2 - xSize, yCenter + ySize);
+	glEnd();
+}
+
+
+void CGuiHandler::DrawNextArrow(const IconInfo& icon)
+{
+	const Box& b = icon.visual;
+	const float yCenter = 0.5f * (b.y1 + b.y2);
+	const float xSize = 0.166f * fabs(b.x2 - b.x1);
+	const float ySize = 0.125f * fabs(b.y2 - b.y1);
+	const float xSiz2 = 2.0f * xSize;
+	glDisable(GL_TEXTURE_2D);
+	glBegin(GL_POLYGON);
+	glVertex2f(b.x1 + xSize, yCenter - ySize);
+	glVertex2f(b.x2 - xSiz2, yCenter - ySize);
+	glVertex2f(b.x2 - xSize, yCenter);
+	glVertex2f(b.x2 - xSiz2, yCenter + ySize);
+	glVertex2f(b.x1 + xSize, yCenter + ySize);
+	glEnd();
+}
+
+
+void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
+{
+	const CommandDescription& cmdDesc = commands[icon.commandsID];
+
+	const int pCount = (int)cmdDesc.params.size() - 1;
+	if (pCount < 2) {
+		return;
+	}
+	const int option = atoi(cmdDesc.params[0].c_str());
+
+	glLoadIdentity();
+
+	glDisable(GL_TEXTURE_2D);
+
+	const float xs = xIconSize / float(1 + (pCount * 2));
+	const float ys = yIconSize * 0.125f;
+	const float x1 = icon.visual.x1;
+	const float y1 = icon.visual.y1;
+	const float x2 = icon.visual.x2;
+	const float y2 = icon.visual.y2;
+	const float yp = 1.0f / float(gu->screeny);
+	
+	for (int x = 0; x < pCount; x++) {
+		if (x != option) {
+			glColor4f(0.25f, 0.25f, 0.25f, 0.50f); // dark
+		} else {
+			if (pCount == 2) {
+				if (option == 0) {
+					glColor4f(1.0f, 0.0f, 0.0f, 0.75f); // red
+				} else {
+					glColor4f(0.0f, 1.0f, 0.0f, 0.75f); // green
+				}
+			} else if (pCount == 3) {
+				if (option == 0) {
+					glColor4f(1.0f, 0.0f, 0.0f, 0.75f); // red
+				} else if (option == 1) {
+					glColor4f(1.0f, 1.0f, 0.0f, 0.75f); // yellow
+				} else {
+					glColor4f(0.0f, 1.0f, 0.0f, 0.75f); // green
+				}
+			} else {
+				glColor4f(0.75f, 0.75f, 0.75f, 0.75f); // light
+			}
+		}
+
+		const float startx = x1 + (xs * float(1 + (2 * x)));
+		const float starty = y2 + (3.0f * yp);
+
+		glRectf(startx, starty, startx + xs, starty + ys);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+		glRectf(startx, starty, startx + xs, starty + ys);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CGuiHandler::DrawMapStuff(void)
+{
+	if(activeMousePress){
+		int cc=-1;
+		int button=SDL_BUTTON_LEFT;
+		if(inCommand!=-1){
+			cc=inCommand;
+		} else {
+			if(mouse->buttons[SDL_BUTTON_RIGHT].pressed && mouse->activeReceiver==this){
+				cc=defaultCmdMemory;//GetDefaultCommand(mouse->lastx,mouse->lasty);
+				button=SDL_BUTTON_RIGHT;
+			}
+		}
+		
+		if(cc>=0 && cc<commands.size()){
+			switch(commands[cc].type){
+			case CMDTYPE_ICON_FRONT:
+				if(mouse->buttons[button].movement>30){
+					if(commands[cc].params.size()>0)
+						if(commands[cc].params.size()>1)
+							DrawFront(button,atoi(commands[cc].params[0].c_str()),atof(commands[cc].params[1].c_str()));
+						else
+							DrawFront(button,atoi(commands[cc].params[0].c_str()),0);
+					else
+						DrawFront(button,1000,0);
+				}
+				break;
+			case CMDTYPE_ICON_UNIT_OR_AREA:
+			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
+			case CMDTYPE_ICON_AREA:{
+				float maxRadius=100000;
+				if(commands[cc].params.size()==1)
+					maxRadius=atof(commands[cc].params[0].c_str());
+				if(mouse->buttons[button].movement>4){
+					float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
+					if(dist<0){
+						break;
+					}
+					float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
+					dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+					if(dist<0){
+						break;
+					}
+					float3 pos2=camera->pos+mouse->dir*dist;
+					DrawArea(pos,min(maxRadius,pos.distance2D(pos2)));
+				}
+				break;}
+			default:
+				break;
+			}
+		}
+	}
+
+	glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
+	            (GLenum)cmdColors.SelectedBlendDst());
+	glEnable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
+	glLineWidth(cmdColors.SelectedLineWidth());
+	
+	// draw buildings we are about to build
+	if ((inCommand >= 0) && (inCommand < commands.size()) &&
+	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+	
+		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+		if(dist>0){
+			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
+
+			if(unitdef){
+				float3 pos=camera->pos+mouse->dir*dist;
+				std::vector<BuildInfo> buildPos;
+				if(keys[SDLK_LSHIFT] && mouse->buttons[SDL_BUTTON_LEFT].pressed){
+					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
+					float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
+					buildPos=GetBuildPos(BuildInfo(unitdef, pos2,buildFacing), BuildInfo(unitdef,pos, buildFacing));
+				} else {
+					BuildInfo bi(unitdef, pos, buildFacing);
+					buildPos=GetBuildPos(bi,bi);
+				}
+
+				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
+				{
+					const float3 buildpos = bpi->pos;
+					std::vector<Command> cv;
+					if(keys[SDLK_LSHIFT]){
+						Command c;
+						bpi->FillCmd(c);
+						std::vector<Command> temp;
+						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+						for(; ui != selectedUnits.selectedUnits.end(); ui++){
+							temp = (*ui)->commandAI->GetOverlapQueued(c);
+							std::vector<Command>::iterator ti = temp.begin();
+							for(; ti != temp.end(); ti++)
+								cv.insert(cv.end(),*ti);
+						}
+					}
+					if(uh->ShowUnitBuildSquare(*bpi, cv))
+						glColor4f(0.7f,1,1,0.4f);
+					else
+						glColor4f(1,0.5f,0.5f,0.4f);
+
+					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+
+					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
+											(GLenum)cmdColors.SelectedBlendDst());
+					
+					if(unitdef->weapons.size() > 0){	// draw weapon range
+						glColor4fv(cmdColors.rangeAttack);
+						glBegin(GL_LINE_STRIP);
+						for(int a=0;a<=40;++a){
+							float3 pos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
+							pos+=buildpos;
+							float dh=ground->GetHeight(pos.x,pos.z)-buildpos.y;
+							float modRange=unitdef->weapons[0].def->range-dh*unitdef->weapons[0].def->heightmod;
+							pos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
+							pos+=buildpos;
+							pos.y=ground->GetHeight(pos.x,pos.z)+8;
+							glVertexf3(pos);
+						}
+						glEnd();
+					}
+					if(unitdef->extractRange > 0){	// draw extraction range
+						glDisable(GL_TEXTURE_2D);
+						glColor4fv(cmdColors.rangeExtract);
+						glBegin(GL_LINE_STRIP);
+						for(int a=0;a<=40;++a){
+							float3 pos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
+							pos+=buildpos;
+							pos.y=ground->GetHeight(pos.x,pos.z)+8;
+							glVertexf3(pos);
+						}
+						glEnd();
+					}
+					if (unitdef->builder && !unitdef->canmove) { // draw build range
+						const float radius = unitdef->buildDistance;
+						if (radius > 0.0f) {
+							glDisable(GL_TEXTURE_2D);
+							glColor4fv(cmdColors.rangeBuild);
+							glBegin(GL_LINE_STRIP);
+							for(int a = 0; a <= 40; ++a){
+								const float radians = a * (2.0f * PI) / 40.0f;
+								float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
+								pos += buildpos;
+								pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
+								glVertexf3(pos);
+							}
+							glEnd();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// draw the ranges for the unit that is being pointed at
+	if(keys[SDLK_LSHIFT]){
+		CUnit* unit=0;
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
+		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
+			if(unit->maxRange>0){
+				glColor4fv(cmdColors.rangeAttack);
+				glBegin(GL_LINE_STRIP);
+				float h=unit->pos.y;
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
+					pos+=unit->pos;
+					float dh=ground->GetHeight(pos.x,pos.z)-h;
+					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			if(unit->unitDef->decloakDistance > 0){			//draw decloak distance
+				glColor4fv(cmdColors.rangeDecloak);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			if(unit->unitDef->kamikazeDist > 0){			//draw self destruct and damage distance
+				glColor4fv(cmdColors.rangeKamikaze);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+				if(!unit->unitDef->selfDExplosion.empty()){
+					glColor4fv(cmdColors.rangeSelfDestruct);
+					WeaponDef* wd=weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
+
+					glBegin(GL_LINE_STRIP);
+					for(int a=0;a<=40;++a){
+						float3 pos(cos(a*2*PI/40)*wd->areaOfEffect,0,sin(a*2*PI/40)*wd->areaOfEffect);
+						pos+=unit->pos;
+						pos.y=ground->GetHeight(pos.x,pos.z)+8;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
+			}
+			// draw build distance for immobile builders
+			if(unit->unitDef->builder && !unit->unitDef->canmove) {
+				const float radius = unit->unitDef->buildDistance;
+				if (radius > 0.0f) {
+					glColor4fv(cmdColors.rangeBuild);
+					glBegin(GL_LINE_STRIP);
+					for(int a = 0; a <= 40; ++a){
+						const float radians = a * (2.0f * PI) / 40.0f;
+						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
+						pos += unit->pos;
+						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
+			}
+		}
+	}
+
+	//draw range circles if attack orders are imminent
+	int defcmd=GetDefaultCommand(mouse->lastx,mouse->lasty);
+	if((inCommand>0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
+	   (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
+			CUnit* unit=*si;
+			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
+				glColor4fv(cmdColors.rangeAttack);
+				glBegin(GL_LINE_STRIP);
+				float h=unit->pos.y;
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
+					pos+=unit->pos;
+					float dh=ground->GetHeight(pos.x,pos.z)-h;
+					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+		}
+	}
+	
+	glLineWidth(1.0f);
+}
+
+
+void CGuiHandler::DrawArea(float3 pos, float radius)
+{
+	glDisable(GL_TEXTURE_2D);
+	glColor4f(0.5f,1,0.5f,0.5f);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_FOG);
+	glBegin(GL_TRIANGLE_FAN);
+		glVertexf3(pos);
+		for(int a=0;a<=40;++a){
+			float3 p(cos(a*2*PI/40)*radius,0,sin(a*2*PI/40)*radius);
+			p+=pos;
+			p.y=ground->GetHeight(p.x,p.z);
+			glVertexf3(p);
+		}
+	glEnd();
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_FOG);
+}
+
+
+void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
+{
+	glDisable(GL_TEXTURE_2D);
+	glColor4f(0.5f,1,0.5f,0.5f);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	CMouseHandler::ButtonPress& bp=mouse->buttons[button];
+	if(bp.movement<5)
+		return;
+	float dist=ground->LineGroundCol(bp.camPos,bp.camPos+bp.dir*gu->viewRange*1.4f);
+	if(dist<0)
+		return;
+	float3 pos1=bp.camPos+bp.dir*dist;
+	dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+	if(dist<0)
+		return;
+	float3 pos2=camera->pos+mouse->dir*dist;
+	float3 forward=(pos1-pos2).cross(UpVector);
+	forward.Normalize();
+	float3 side=forward.cross(UpVector);
+	if(pos1.distance2D(pos2)>maxSize){
+		pos2=pos1+side*maxSize;
+		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+	}
+
+	glDisable(GL_DEPTH_TEST);
+	glBegin(GL_QUADS);
+		glVertexf3(pos1+side*25);
+		glVertexf3(pos1-side*25);
+		glVertexf3(pos1-side*25+forward*50);
+		glVertexf3(pos1+side*25+forward*50);
+
+		glVertexf3(pos1+side*40+forward*50);
+		glVertexf3(pos1-side*40+forward*50);
+		glVertexf3(pos1+forward*100);
+		glVertexf3(pos1+forward*100);
+	glEnd();
+	glEnable(GL_DEPTH_TEST);
+
+
+	pos1+=pos1-pos2;
+	glDisable(GL_FOG);
+	glBegin(GL_QUADS);
+		glVertexf3(pos1-float3(0,-100,0));
+		glVertexf3(pos1+float3(0,-100,0));
+		glVertexf3(pos2+float3(0,-100,0));
+		glVertexf3(pos2-float3(0,-100,0));
+	glEnd();
+
+	if(sizeDiv!=0){
+		char c[40];
+		SNPRINTF(c, 40, "%d", (int)(pos1.distance2D(pos2)/sizeDiv) );
+		mouse->cursorTextRight=c;
+	}
+	glEnable(GL_FOG);
+}
+
+
+/******************************************************************************/
+

@@ -49,6 +49,8 @@ void COutlineFont::print(float xps, float yps,
 	glTranslatef(0.0f, +yps, 0.0f); font->glPrint("%s", text);
 	glTranslatef(0.0f, +yps, 0.0f); font->glPrint("%s", text);
 	glTranslatef(+xps, -yps, 0.0f);
-	glColor4fv(color);
-	font->glPrint("%s", text);
+	if (color[3] > 0.0f) {
+		glColor4fv(color);
+		font->glPrint("%s", text);
+	}
 }

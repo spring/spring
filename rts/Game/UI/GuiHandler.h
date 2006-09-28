@@ -15,6 +15,7 @@
 #include "InputReceiver.h"
 
 class CglList;
+class CIconLayoutHandler;
 struct UnitDef;
 struct BuildInfo;
 
@@ -43,6 +44,12 @@ class CGuiHandler : public CInputReceiver {
 		                                   // start.def has to be end.def
 		bool ReloadConfig();
 		
+		int GetMaxPage()    const { return maxPage; }
+		int GetActivePage() const { return activePage; }
+		
+		void RunLayoutCommand(const string& command);
+		void RunCustomCommands(const vector<string>& cmds, bool rmb);
+		
 	public:
 		vector<CommandDescription> commands;
 		int inCommand;
@@ -53,8 +60,13 @@ class CGuiHandler : public CInputReceiver {
 		void MenuChoice(string s);
 		static void MenuSelection(std::string s);
 		
-		void LayoutIcons();
-		bool LoadCMDBitmap(int id, char* filename);
+		void LayoutIcons(bool useSelectionPage);
+		bool LayoutCustomIcons(bool useSelectionPage);
+		void ResizeIconArray(unsigned int size);
+		void AppendPrevAndNext(vector<CommandDescription>& cmds);
+
+		int  FindInCommandPage();
+		void RevertToCmdDesc(const CommandDescription& cmdDesc, bool samePage);
 
 		int  GetDefaultCommand(int x,int y) const;
 		void CreateOptions(Command& c,bool rmb);
@@ -64,9 +76,24 @@ class CGuiHandler : public CInputReceiver {
 		struct IconInfo;
 
 		void DrawButtons();
+		void DrawCustomButton(const IconInfo& icon);
+		bool DrawUnitBuildIcon(const IconInfo& icon, int unitDefID);
+		bool DrawTexture(const IconInfo& icon, const std::string& texName);
+		void DrawName(const IconInfo& icon, const std::string& text);
+		void DrawNWtext(const IconInfo& icon, const std::string& text);
+		void DrawSWtext(const IconInfo& icon, const std::string& text);
+		void DrawNEtext(const IconInfo& icon, const std::string& text);
+		void DrawSEtext(const IconInfo& icon, const std::string& text);
+		void DrawPrevArrow(const IconInfo& icon);
+		void DrawNextArrow(const IconInfo& icon);
+		void DrawIconFrame(const IconInfo& icon);
 		void DrawOptionLEDs(const IconInfo& icon);
+		void DrawMenuName();
+		void DrawSelectionInfo();
 		void DrawFront(int button,float maxSize,float sizeDiv);
 		void DrawArea(float3 pos, float radius);
+
+		bool BindNamedTexture(const std::string& texName);
 
 		int  IconAtPos(int x,int y);
 		void SetCursorIcon() const;
@@ -76,17 +103,18 @@ class CGuiHandler : public CInputReceiver {
 		bool LoadConfig(const std::string& filename);
 		void ParseFillOrder(const std::string& text);
 
-		void ResetInCommand(const CommandDescription& cmdDesc);
 		bool ProcessLocalActions(const CKeyBindings::Action& action);
 		bool ProcessBuildActions(const CKeyBindings::Action& action);
 		int  GetIconPosCommand(int slot) const;
 		int  ParseIconSlot(const std::string& text) const;
 		
 	private:
+		bool firstLayout;
 		bool needShift;
 		bool showingMetal;
 		bool autoShowMetal;
 		bool activeMousePress;
+		bool forceLayoutUpdate;
 		int maxPage;
 		int activePage;
 		int defaultCmdMemory;
@@ -95,7 +123,10 @@ class CGuiHandler : public CInputReceiver {
 		
 		int actionOffset;
 		CKeySet lastKeySet;
+		
+		CIconLayoutHandler* layoutHandler;
 
+		std::string menuName;
 		int xIcons, yIcons;
 		float xPos, yPos;
 		float textBorder;
@@ -106,8 +137,11 @@ class CGuiHandler : public CInputReceiver {
 		int deadIconSlot;
 		int prevPageSlot;
 		int nextPageSlot;
+		bool dropShadows;
 		bool noSelectGaps;
 		bool useOptionLEDs;
+		float frameAlpha;
+		float textureAlpha;
 		std::vector<int> fillOrder;
 
 		int iconsPerPage;
@@ -132,16 +166,7 @@ class CGuiHandler : public CInputReceiver {
 		int iconsCount;
 		int activeIcons;
 		
-		struct GuiIconData {
-			unsigned int x;
-			unsigned int y;
-			GLfloat width;
-			GLfloat height;
-			bool has_bitmap;
-			unsigned int texture;
-			char* c_str;
-		};
-		std::map<int, GuiIconData> iconMap;
+		std::map<std::string, unsigned int> textureMap; // filename, glTextureID
 };
 
 

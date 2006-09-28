@@ -665,8 +665,11 @@ void CSelectedUnits::SetCommandPage(int page)
 	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
 		grouphandler->groups[selectedGroup]->lastCommandPage=page;
 	}
-	if(!selectedUnits.empty())
-		(*selectedUnits.begin())->commandAI->lastSelectedCommandPage=page;
+
+	std::set<CUnit*>::iterator ui;
+	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
+		(*ui)->commandAI->lastSelectedCommandPage = page;
+	}
 }
 
 

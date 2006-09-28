@@ -8,6 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Game/GameHelper.h"
+#include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "LogOutput.h"
@@ -135,6 +136,7 @@ void CAirCAI::GiveCommand(Command &c)
 				break;
 			}
 		}
+		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
 	if(c.id==CMD_LOOPBACKATTACK){
@@ -156,6 +158,7 @@ void CAirCAI::GiveCommand(Command &c)
 				break;
 			}
 		}
+		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){

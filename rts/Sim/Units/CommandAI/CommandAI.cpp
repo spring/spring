@@ -162,8 +162,8 @@ CCommandAI::CCommandAI(CUnit* owner)
 		else
 			c.params.push_back("0");
 
-		c.params.push_back("Off");
-		c.params.push_back("On");
+		c.params.push_back(" Off ");
+		c.params.push_back(" On ");
 
 		c.tooltip="Active State: Sets the active state of the unit to on or off";
 		possibleCommands.push_back(c);
@@ -223,6 +223,7 @@ void CCommandAI::GiveCommand(Command& c)
 					break;
 				}
 			}
+			selectedUnits.PossibleCommandChange(owner);
 			return;
 		}
 		case CMD_MOVE_STATE: {
@@ -237,6 +238,7 @@ void CCommandAI::GiveCommand(Command& c)
 					break;
 				}
 			}
+			selectedUnits.PossibleCommandChange(owner);
 			return;
 		}
 		case CMD_REPEAT: {
@@ -251,6 +253,7 @@ void CCommandAI::GiveCommand(Command& c)
 					break;
 				}
 			}
+			selectedUnits.PossibleCommandChange(owner);
 			return;
 		}
 		case CMD_TRAJECTORY: {
@@ -265,6 +268,7 @@ void CCommandAI::GiveCommand(Command& c)
 					break;
 				}
 			}
+			selectedUnits.PossibleCommandChange(owner);
 			return;
 		}
 		case CMD_ONOFF: {
@@ -283,6 +287,7 @@ void CCommandAI::GiveCommand(Command& c)
 					break;
 				}
 			}
+			selectedUnits.PossibleCommandChange(owner);
 			return;
 		}
 		case CMD_CLOAK: {
@@ -302,6 +307,7 @@ void CCommandAI::GiveCommand(Command& c)
 					break;
 				}
 			}
+			selectedUnits.PossibleCommandChange(owner);
 			return;
 		}
 		case CMD_STOCKPILE: {
@@ -707,7 +713,7 @@ void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
 	c.type=CMDTYPE_ICON;
 	c.name="0/0";
 	c.tooltip="Stockpile: Queue up ammunition for later use";
-	c.iconname="bitmaps/flare.bmp";
+	c.iconname="bitmaps/armsilo1.bmp";
 	possibleCommands.push_back(c);
 }
 
