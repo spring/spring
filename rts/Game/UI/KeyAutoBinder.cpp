@@ -45,6 +45,13 @@ static const string SortFuncName    = "IsBetter";
 static const string CompareFuncName = "Compare";
 
 
+#ifndef _WIN32
+static const string endlStr = "\n";
+#else
+static const string endlStr = "\r\n";
+#endif
+
+
 /******************************************************************************/
 
 CKeyAutoBinder::CKeyAutoBinder()
@@ -86,7 +93,6 @@ bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 
 bool CKeyAutoBinder::LoadCompareFunc()
 {
-	const string endlStr = "\n";
 	string code = endlStr;
 
 	// handy sorting comparison routine
@@ -239,7 +245,6 @@ string CKeyAutoBinder::AddUnitDefPrefix(const string& text,
 
 string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 {
-	const string endlStr = "\n";
 	string code = "";
 
 	code += "function HasReqs(thisID)" + endlStr;
@@ -280,7 +285,6 @@ string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 
 string CKeyAutoBinder::MakeSortCriteriaCall(const vector<string>& sortCriteria)
 {
-	const string endlStr = "\n";
 	string code = "";
 
 	code += "function IsBetter(thisID, thatID)" + endlStr;

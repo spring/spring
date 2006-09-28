@@ -617,8 +617,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	}
 
 	if ((tmpXicons < 2) || (tmpYicons < 2)) {
-		logOutput.Print("LayoutCustomIcons() bad xIcons or yIcons (%i, %i\n",
-		                xIcons, yIcons);
+		logOutput.Print("LayoutCustomIcons() bad xIcons or yIcons (%i, %i)\n",
+		                tmpXicons, tmpYicons);
 		return false;
 	}
 	
@@ -1327,17 +1327,25 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 		if (layoutHandler == NULL) {
 			logOutput.Print("Loading \"ctrlpanel.lua\"\n");
 			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+			if (layoutHandler == NULL) {
+				logOutput.Print("Loading failed\n");
+			}
 		} else {
 			logOutput.Print("Reloading \"ctrlpanel.lua\"\n");
 			delete layoutHandler;
 			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
 			if (layoutHandler == NULL) {
+				logOutput.Print("Reloading failed\n");
 				LoadConfig("ctrlpanel.txt");
 			}
 		}
 	} else {
 		if (layoutHandler == NULL) {
+			logOutput.Print("Loading \"ctrlpanel.lua\"\n");
 			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+			if (layoutHandler == NULL) {
+				logOutput.Print("Loading failed\n");
+			}
 		}
 		layoutHandler->ConfigCommand(command);
 	}
@@ -2399,10 +2407,11 @@ void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 void CGuiHandler::DrawButtons()
 {
 	Update();
-
-	if(!iconsCount)
-		return;
 	
+	if (iconsCount <= 0) {
+		return;
+	}
+
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
@@ -2411,7 +2420,7 @@ void CGuiHandler::DrawButtons()
 
 	const int mouseIcon = IconAtPos(mouse->lastx, mouse->lasty);
 
-	// Rita "container"ruta
+	// frame box
 	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
 	glColor4f(0.2f, 0.2f, 0.2f, alpha);
 	glBegin(GL_QUADS);
@@ -2423,7 +2432,6 @@ void CGuiHandler::DrawButtons()
 	glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
 	glEnd();
 
-	// F� varje knapp (rita den)
 	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
 	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
 

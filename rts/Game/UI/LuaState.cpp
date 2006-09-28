@@ -44,6 +44,13 @@ static const string UnitDefsName    = "UnitDefs";
 static const string WeaponDefsName  = "WeaponDefs";
 
 
+#ifndef _WIN32
+static const string endlStr = "\n";
+#else
+static const string endlStr = "\r\n";
+#endif
+
+
 /******************************************************************************/
 
 CLuaState& CLuaState::GetSingleton()
@@ -132,7 +139,6 @@ bool CLuaState::LoadInfo()
 
 bool CLuaState::LoadGameInfo()
 {
-	const string endlStr = "\n";
 	string code = "";
 
 	code += "Game = {}" + endlStr;
@@ -172,7 +178,6 @@ bool CLuaState::LoadGameInfo()
 bool CLuaState::LoadUnitDefInfo()
 {
 	bool success = true;
-	const string endlStr = "\n";
 	string code = endlStr;
 
 	code += "UnitDefs = {}" + endlStr;
@@ -517,7 +522,6 @@ bool CLuaState::LoadUnitDefInfo()
 bool CLuaState::LoadWeaponDefInfo()
 {
 	bool success = true;
-	const string endlStr = "\n";
 	string code = endlStr;
 
 	code += "WeaponDefs = {}" + endlStr;
