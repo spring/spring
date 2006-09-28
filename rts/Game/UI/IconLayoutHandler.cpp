@@ -728,7 +728,7 @@ static int SetConfigString(lua_State* L)
 
 
 static void PackUnitsSet(lua_State* L, const set<CUnit*>& unitSet,
-                         bool groupIdValues)
+                         bool groupIdValues, bool teamIdValues)
 {
 	map<int, vector<CUnit*> > unitDefMap;
 	set<CUnit*>::const_iterator uit;
@@ -752,6 +752,9 @@ static void PackUnitsSet(lua_State* L, const set<CUnit*>& unitSet,
 				const int gID = (unit->group == NULL) ? -1 : unit->group->id;
 				lua_pushnumber(L, unit->id);
 				lua_pushnumber(L, gID);
+			} else if (teamIdValues) {
+				lua_pushnumber(L, unit->id);
+				lua_pushnumber(L, unit->team);
 			} else {
 				lua_pushnumber(L, unit->id);
 				lua_pushnumber(L, unit->unitDef->id); // convenience
@@ -778,7 +781,7 @@ static int GetMyTeamUnits(lua_State* L)
 		lua_pushstring(L, "GetMyTeamUnits() takes no arguments");
 		lua_error(L);
 	}
-	PackUnitsSet(L, gs->Team(gu->myTeam)->units, false);
+	PackUnitsSet(L, gs->Team(gu->myTeam)->units, false, false);
 	return 1;
 }
 
@@ -795,7 +798,7 @@ static int GetAlliedUnits(lua_State* L)
 	for (int t = 0; t < MAX_TEAMS; t++) {
 		if (gs->AlliedTeams(t, gu->myTeam)) {
 			lua_pushnumber(L, t);
-			PackUnitsSet(L, gs->Team(t)->units, false);
+			PackUnitsSet(L, gs->Team(t)->units, false, true);
 			lua_rawset(L, -3);
 			count++;			
 		}
