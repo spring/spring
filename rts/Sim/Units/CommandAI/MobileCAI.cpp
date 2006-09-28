@@ -1,20 +1,21 @@
 #include "StdAfx.h"
 #include "MobileCAI.h"
 #include "LineDrawer.h"
-#include "Map/Ground.h"
-#include "Game/GameHelper.h"
-#include "Sim/Units/UnitHandler.h"
 #include "ExternalAI/Group.h"
-#include "Rendering/GL/myGL.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/MoveTypes/MoveType.h"
+#include "Game/GameHelper.h"
+#include "Game/SelectedUnits.h"
+#include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "LogOutput.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Weapons/Weapon.h"
+#include "Map/Ground.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Game/Team.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/Weapon.h"
+#include "System/LogOutput.h"
 #include "myMath.h"
 #include "mmgr.h"
 
@@ -128,6 +129,7 @@ void CMobileCAI::GiveCommand(Command &c)
 				break;
 			}
 		}
+		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
 

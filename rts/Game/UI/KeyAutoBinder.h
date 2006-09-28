@@ -12,13 +12,8 @@
 using namespace std;
 
 
-extern "C" {
-	#include "lua.h"
-}
-
-
 struct UnitDef;
-
+struct lua_State;
 
 class CKeyAutoBinder {
 
@@ -33,23 +28,15 @@ class CKeyAutoBinder {
 		
 	private:
 		bool LoadCode(const string& code, const string& debug);
-		bool LoadInfo();
-		bool LoadGameInfo();
 		bool LoadCompareFunc();
-		bool LoadUnitDefInfo();
-		bool LoadWeaponDefInfo();
 		string MakeRequirementCall(const vector<string>& requirements);
 		string MakeSortCriteriaCall(const vector<string>& sortCriteria);
 		string AddUnitDefPrefix(const string& text, const string& pre) const;
 		string ConvertBooleanSymbols(const string& text) const;
-		bool HasRequirements(int unitDefID);
-		bool IsBetter(int thisDefID, int thatDefID);
+		bool HasRequirements(lua_State* L, int unitDefID);
+		bool IsBetter(lua_State* L, int thisDefID, int thatDefID);
 		
 	private:
-		lua_State* L;
-		
-		set<string> unitDefParams;
-		
 		class UnitDefHolder {
 			public:
 				bool operator<(const UnitDefHolder&) const;

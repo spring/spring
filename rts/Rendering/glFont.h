@@ -17,14 +17,20 @@ public:
 	float CalcTextWidth (const char *txt);
 	float CalcCharWidth (char c);
 	float CalcTextHeight(const char *text);
-	CglFont(int start, int end);
+
+	CglFont(int start, int end, const char* fontfile);
 	~CglFont();
+	
+	int GetCharStart() const { return charstart; }
+	int GetCharEnd()   const { return charend; }
+	
 private:
-	void printstring(const char *text);
+	void printstring(const unsigned char *text);
 	void WorldChar(char c);
 	const char* GetFTError (FT_Error e);
 	int chars;
 	int charstart;
+	int charend;
 	int charheight;
 	GLuint *textures;
 	GLuint listbase;

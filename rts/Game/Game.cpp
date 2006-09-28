@@ -104,6 +104,7 @@
 #include "UI/ResourceBar.h"
 #include "UI/SelectionKeyHandler.h"
 #include "UI/ShareBox.h"
+#include "UI/SimpleParser.h"
 #include "UI/TooltipConsole.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -134,6 +135,9 @@ extern string stupidGlobalMapname;
 
 
 CGame* game = 0;
+
+
+static void SelectUnits(const string& line); // FIXME -- move into class
 
 
 CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
@@ -232,8 +236,10 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	wind.LoadWind();
 	moveinfo=new CMoveInfo();
 	groundDecals=new CGroundDecalHandler();
+
 	ENTER_MIXED;
 	if(!server) net->Update();	//prevent timing out during load
+
 	ENTER_UNSYNCED;
 #ifndef NEW_GUI
 	guihandler=new CGuiHandler();
@@ -258,16 +264,20 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 
 	geometricObjects=new CGeometricObjects();
+
 	ENTER_SYNCED;
 	qf=new CQuadField();
+
 	ENTER_MIXED;
 	featureHandler=new CFeatureHandler();
+
 	ENTER_SYNCED;
 	mapDamage=IMapDamage::GetMapDamage();
 	sensorHandler=new CSensorHandler();
 	loshandler=new CLosHandler();
 	radarhandler=new CRadarHandler(false);
 	if(!server) net->Update();	//prevent timing out during load
+
 	ENTER_MIXED;
 	uh=new CUnitHandler();
 	iconHandler=new CIconHandler();
@@ -275,12 +285,14 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	fartextureHandler = new CFartextureHandler();
 	if(!server) net->Update();	//prevent timing out during load
 	modelParser = new C3DModelParser();
+
  	ENTER_SYNCED;
  	if(!server) net->Update();	//prevent timing out during load
  	featureHandler->LoadFeaturesFromMap(CScriptHandler::Instance().chosenScript->loadGame);
  	if(!server) net->Update();	//prevent timing out during load
  	pathManager = new CPathManager();
  	if(!server) net->Update();	//prevent timing out during load
+
 	ENTER_UNSYNCED;
 	sky=CBaseSky::GetSky();
 #ifndef NEW_GUI
@@ -662,6 +674,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	if (cmd == "select") {
 		selectionKeys->DoSelection(action.extra);
 	}
+	else if (cmd == "selectunits") {
+		SelectUnits(action.extra);
+	}
 	else if (cmd == "shadows") {
 		const int current = configHandler.GetInt("Shadows", 0);
 		if (current < 0) {
@@ -702,6 +717,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "say") {
 		SendNetChat(action.extra);
+	}
+	else if (cmd == "echo") {
+		logOutput.Print(action.extra);
 	}
 	else if (cmd == "drawinmap") {
 		inMapDrawer->keyPressed=true;
@@ -1165,6 +1183,28 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		guihandler->ReloadConfig();
 	}
 #endif
+	else if (cmd == "font") {
+		CglFont* newFont = NULL;
+		try {
+			newFont = new CglFont(font->GetCharStart(), font->GetCharEnd(),
+			                      action.extra.c_str());
+		} catch (std::exception e) {
+			delete newFont;
+			newFont = NULL;
+			logOutput.Print(string("font error: ") + e.what());
+		}
+		if (newFont != NULL) {
+			delete font;
+			font = newFont;
+			logOutput.Print("Loaded font: %s\n", action.extra.c_str());
+			configHandler.SetString("FontFile", action.extra);
+		}
+	}
+	else if (cmd == "layout") {
+		if (guihandler != NULL) {
+			guihandler->RunLayoutCommand(action.extra);
+		}
+	}
 	else {
 		return false;
 	}
@@ -2685,7 +2725,7 @@ void CGame::SendNetChat(const std::string& message)
 		return;
 	}
 	string msg = message;
-	if (gs->cheatEnabled && (msg.find(".give") == 0)) {
+	if (msg.find(".give") == 0) {
 		const float dist =
 			ground->LineGroundCol(camera->pos, camera->pos + (mouse->dir * 9000.0f));
 		const float3 pos = camera->pos + (mouse->dir * dist);
@@ -2706,12 +2746,18 @@ void CGame::HandleChatMsg(std::string s,int player)
 	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
 
 	if(s.find(".cheat")==0 && player==0){
-		if (gs->cheatEnabled){
-			gs->cheatEnabled=false;
-			logOutput.Print("No more cheating");
-		}else{
-			gs->cheatEnabled=true;
+		char* end;
+		const char* start = s.c_str() + strlen(".cheat");
+		const int num = strtol(start, &end, 10);
+		if (end != start) {
+			gs->cheatEnabled = (num != 0);
+		} else {
+			gs->cheatEnabled = !gs->cheatEnabled; 
+		}
+		if (gs->cheatEnabled) {
 			logOutput.Print("Cheating!");
+		} else {
+			logOutput.Print("No more cheating");
 		}
 	}
 
@@ -2968,4 +3014,42 @@ unsigned  int CGame::CreateExeChecksum(void)
 	delete[] buf;
 	return ret;*/
 	return 0;
+}
+
+
+static void SelectUnits(const string& line)
+{
+	vector<string> args = SimpleParser::Tokenize(line, 0);
+	for (int i = 0; i < (int)args.size(); i++) {
+		const string& arg = args[i];
+		if (arg == "clear") {
+			selectedUnits.ClearSelected();
+		}
+		else if ((arg[0] == '+') || (arg[0] == '-')) {
+			char* endPtr;
+			const char* startPtr = arg.c_str() + 1;
+			const int unitIndex = strtol(startPtr, &endPtr, 10);
+			if (endPtr == startPtr) {
+				continue; // bad number
+			}
+			if ((unitIndex < 0) || (unitIndex >= MAX_UNITS)) {
+				continue; // bad index
+			}
+			CUnit* unit = uh->units[unitIndex];
+			if (unit == NULL) {
+				continue; // bad pointer
+			}
+			const set<CUnit*>* teamUnits = &gs->Team(gu->myTeam)->units;
+			if (teamUnits->find(unit) == teamUnits->end()) {
+				continue; // not mine to select
+			}
+
+			// perform the selection
+			if (arg[0] == '+') {
+				selectedUnits.AddUnit(unit);
+			} else {
+				selectedUnits.RemoveUnit(unit);
+			}
+		}
+	}
 }
