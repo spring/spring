@@ -8,23 +8,24 @@ class CVertexArray;
 class CGroundFlash
 {
 public:
-	CGroundFlash(){};
+	CGroundFlash(const float3& p) : pos(p) {};
 	virtual ~CGroundFlash(){};
 	virtual void Draw() = 0;
 	virtual bool Update()= 0; // returns false when it should be deleted
 
+	float3 pos;
+
 	static CVertexArray* va;
 };
 
-class CStandarGroundFlash : public CGroundFlash
+class CStandardGroundFlash : public CGroundFlash
 {
 public:
-	CStandarGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 color=float3(1.0f,1.0f,0.7f));
-	~CStandarGroundFlash();
+	CStandardGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 color=float3(1.0f,1.0f,0.7f));
+	~CStandardGroundFlash();
 	void Draw();
 	bool Update(); // returns false when it should be deleted
 
-	float3 pos;
 	float3 side1,side2;
 
 	float flashSize;
@@ -48,7 +49,6 @@ public:
 	void Draw();
 	bool Update(); // returns false when it should be deleted
 
-	float3 pos;
 	float3 side1,side2;
 
 	AtlasedTexture texture;

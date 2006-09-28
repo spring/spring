@@ -70,6 +70,10 @@ public:
 		pos.CheckInBounds();
 		return !!losMap[allyteam][((int)(pos.z*invLosDiv))*losSizeX+((int)(pos.x*invLosDiv))];
 	}
+	inline bool InAirLos(float3 pos, int allyteam){
+		pos.CheckInBounds();
+		return !!airLosMap[allyteam][((int)(pos.z*invAirDiv))*airSizeX+((int)(pos.x*invAirDiv))];
+	}
 	CLosHandler();
 	virtual ~CLosHandler();
 

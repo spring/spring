@@ -359,7 +359,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	Projectile_List::iterator psi;
 	distlist.clear();
 	for(psi=ps.begin();psi != ps.end();++psi){
-		if(camera->InView((*psi)->pos,(*psi)->drawRadius) && (loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectating || ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
+		if(camera->InView((*psi)->pos,(*psi)->drawRadius) && (gu->spectating || loshandler->InLos(*psi,gu->myAllyTeam) || ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
 			if(drawReflection){
 				if((*psi)->pos.y < -(*psi)->drawRadius)
 					continue;
@@ -567,7 +567,8 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 	std::vector<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
-		(*gfi)->Draw();
+		if (gu->spectating || loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
+			(*gfi)->Draw();
 	}
 	CGroundFlash::va->DrawArrayTC(GL_QUADS);
 
