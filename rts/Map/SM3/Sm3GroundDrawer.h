@@ -30,5 +30,6 @@ protected:
 	Frustum frustum;
 
 	unsigned int groundShadowVP;
+	friend class CSm3ReadMap;
 };
 

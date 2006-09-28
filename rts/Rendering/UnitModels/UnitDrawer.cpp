@@ -429,6 +429,7 @@ void CUnitDrawer::CleanUpGhostDrawing ()
 	glPopAttrib ();
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
+	glDisable(GL_ALPHA_TEST);
 }
 
 void CUnitDrawer::DrawCloakedUnits(void)
@@ -440,6 +441,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER,0.1f);
+	glEnable(GL_ALPHA_TEST);
 	glColor4f(1,1,1,0.3f);
 	texturehandler->SetTATexture();
 	glDepthMask(0);

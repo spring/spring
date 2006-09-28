@@ -6,6 +6,7 @@
 #include "terrain/TerrainBase.h"
 #include "terrain/Terrain.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Frustum.h"
 
 class CSm3GroundDrawer;
 
@@ -39,7 +40,7 @@ public:
 	unsigned char *GetInfoMap (const std::string& name, MapBitmapInfo* bm);
 	void FreeInfoMap(const std::string& name, unsigned char *data);
 
-	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize) {}
+	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize);
 
 protected:
 	CSm3GroundDrawer *groundDrawer;
@@ -61,6 +62,8 @@ protected:
 	MapFeatureInfo *featureInfo;
 	unsigned int numFeatures;
 	void LoadFeatureData();
+
+	Frustum tmpFrustum;
 };
 
 

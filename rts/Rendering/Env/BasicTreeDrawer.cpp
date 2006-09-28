@@ -313,6 +313,7 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 {
 	glBindTexture(GL_TEXTURE_2D, treetex);
+	glEnable(GL_ALPHA_TEST);
 
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 	int cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
@@ -363,6 +364,7 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		}
 	}
 	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
 }
 
 void CBasicTreeDrawer::Update()

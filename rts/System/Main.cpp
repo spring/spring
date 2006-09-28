@@ -233,6 +233,7 @@ SpringApp::~SpringApp()
  */
 bool crashCallback(void* crState)
 {
+	logOutput.RemoveAllSubscribers();
 	logOutput.Print("Spring has crashed");
 
 	// Stop writing to infolog.txt
