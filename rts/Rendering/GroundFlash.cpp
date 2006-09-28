@@ -9,8 +9,9 @@
 
 CVertexArray* CGroundFlash::va=0;
 
-CStandarGroundFlash::CStandarGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 col)
-: circleAlpha(circleAlpha),
+CStandardGroundFlash::CStandardGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 col)
+	: CGroundFlash(pos),
+	circleAlpha(circleAlpha),
 	flashAlpha(flashAlpha),
 	flashSize(flashSize),
 	circleGrowth(circleSpeed),
@@ -18,8 +19,7 @@ CStandarGroundFlash::CStandarGroundFlash(float3 pos,float circleAlpha,float flas
 	flashAge(0),
 	ttl((int)ttl),
 	circleAlphaDec(circleAlpha/ttl),
-	flashAgeSpeed(1.0f/ttl),
-	pos(pos)
+	flashAgeSpeed(1.0f/ttl)
 {
 	for (int a=0;a<3;a++)
 		color[a] = (unsigned char)(col[a]*255.0f);
@@ -53,11 +53,11 @@ CStandarGroundFlash::CStandarGroundFlash(float3 pos,float circleAlpha,float flas
 	ph->AddGroundFlash(this);
 }
 
-CStandarGroundFlash::~CStandarGroundFlash()
+CStandardGroundFlash::~CStandardGroundFlash()
 {
 }
 
-bool CStandarGroundFlash::Update()
+bool CStandardGroundFlash::Update()
 {
 	circleSize+=circleGrowth;
 	circleAlpha-=circleAlphaDec;
@@ -65,7 +65,7 @@ bool CStandarGroundFlash::Update()
 	return --ttl>0;
 }
 
-void CStandarGroundFlash::Draw()
+void CStandardGroundFlash::Draw()
 {
 	float iAlpha=circleAlpha-circleAlphaDec*gu->timeOffset;
 	if (iAlpha > 1.0f) iAlpha = 1.0f;
@@ -118,13 +118,13 @@ void CStandarGroundFlash::Draw()
 }
 
 CSimpleGroundFlash::CSimpleGroundFlash(float3 pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, float3 col)
-: 	sizeGrowth(sizeGrowth),
+	: CGroundFlash(pos),
+	sizeGrowth(sizeGrowth),
 	size(size),
 	texture(texture),
 	alpha(alpha),
 	ttl(ttl),
-	fade(fade),
-	pos(pos)
+	fade(fade)
 {
 	for (int a=0;a<3;a++)
 		color[a] = (unsigned char)(col[a]*255.0f);
