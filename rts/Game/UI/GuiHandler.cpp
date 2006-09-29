@@ -2458,8 +2458,6 @@ void CGuiHandler::DrawButtons()
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GEQUAL, 0.005f);
 
-	const int mouseIcon = IconAtPos(mouse->lastx, mouse->lasty);
-
 	// frame box
 	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
 	glColor4f(0.2f, 0.2f, 0.2f, alpha);
@@ -2472,6 +2470,7 @@ void CGuiHandler::DrawButtons()
 	glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
 	glEnd();
 
+	const int mouseIcon   = IconAtPos(mouse->lastx, mouse->lasty);
 	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
 	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
 
