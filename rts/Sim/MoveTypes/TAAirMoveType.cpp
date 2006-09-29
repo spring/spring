@@ -847,7 +847,7 @@ void CTAAirMoveType::SlowUpdate(void)
 		float h=owner->pos.y-ground->GetApproximateHeight(owner->pos.x,owner->pos.z);
 		owner->losHeight=h+5;
 		loshandler->MoveUnit(owner,false);
-		if(owner->radarRadius || owner->jammerRadius || owner->sonarRadius)
+		if(owner->hasRadarCapacity)
 			radarhandler->MoveUnit(owner);
 
 		owner->losHeight=oldlh;
