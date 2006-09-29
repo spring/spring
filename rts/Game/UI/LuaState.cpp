@@ -732,8 +732,8 @@ static string BoolToString(bool value)
 
 static string FloatToString(float value)
 {
-	char buf[16];
-	SNPRINTF(buf, 16, "%f", value);
+	char buf[32];
+	SNPRINTF(buf, 32, "%f", value);
 	return string(buf);
 }
 

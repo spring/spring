@@ -452,6 +452,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Game\UI\IconLayoutHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\IconLayoutHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\Ui\InfoConsole.cpp"
 					>
 				</File>
@@ -497,6 +505,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\UI\KeySet.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\LuaState.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\LuaState.h"
 					>
 				</File>
 				<File
