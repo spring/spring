@@ -56,6 +56,7 @@ static int GetTeamList(lua_State* L);
 static int GetTeamInfo(lua_State* L);
 static int GetPlayerInfo(lua_State* L);
 static int GetMyTeam(lua_State* L);
+static int GetMyAllyteam(lua_State* L); // FIXME ?
 static int GetMyPlayerID(lua_State* L);
 static int AreTeamsAllied(lua_State* L);
 static int ArePlayersAllied(lua_State* L);
@@ -818,6 +819,8 @@ static int GetSelectedUnits(lua_State* L)
 		lua_error(L);
 	}
 	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	PackUnitsSet(L, selectedUnits.selectedUnits, true, false);
+/*
 	lua_newtable(L);
 	set<CUnit*>::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
@@ -832,6 +835,7 @@ static int GetSelectedUnits(lua_State* L)
 		lua_rawset(L, -3);
 		lua_rawset(L, -3);
 	}
+*/
 	lua_pushnumber(L, selUnits.size());
 	lua_pushnumber(L, selectedUnits.selectedGroup);
 	return 3; // { [unitID] = { "unitDefID" = unitDefID, "groupID" = groupID }},
@@ -882,6 +886,8 @@ static int GetGroupUnits(lua_State* L)
 		return 0; // nils
 	}
 	const set<CUnit*>& units = groups[groupID]->units;
+	PackUnitsSet(L, groups[groupID]->units, false, false);
+/*
 	lua_newtable(L);
 	set<CUnit*>::const_iterator uit;
 	for (uit = units.begin(); uit != units.end(); ++uit) {
@@ -889,6 +895,7 @@ static int GetGroupUnits(lua_State* L)
 		lua_pushnumber(L, (*uit)->unitDef->id);
 		lua_rawset(L, -3);
 	}
+*/
 	lua_pushnumber(L, units.size());
 	return 2; // { [unitID] = unitDefID }, count
 }

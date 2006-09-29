@@ -138,8 +138,9 @@ class CGuiHandler : public CInputReceiver {
 		int prevPageSlot;
 		int nextPageSlot;
 		bool dropShadows;
-		bool noSelectGaps;
 		bool useOptionLEDs;
+		bool selectGaps;
+		bool selectThrough;
 		float frameAlpha;
 		float textureAlpha;
 		std::vector<int> fillOrder;
