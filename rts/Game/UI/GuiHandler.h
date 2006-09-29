@@ -76,7 +76,7 @@ class CGuiHandler : public CInputReceiver {
 		struct IconInfo;
 
 		void DrawButtons();
-		void DrawCustomButton(const IconInfo& icon);
+		void DrawCustomButton(const IconInfo& icon, bool highlight);
 		bool DrawUnitBuildIcon(const IconInfo& icon, int unitDefID);
 		bool DrawTexture(const IconInfo& icon, const std::string& texName);
 		void DrawName(const IconInfo& icon, const std::string& text);
@@ -86,6 +86,7 @@ class CGuiHandler : public CInputReceiver {
 		void DrawSEtext(const IconInfo& icon, const std::string& text);
 		void DrawPrevArrow(const IconInfo& icon);
 		void DrawNextArrow(const IconInfo& icon);
+		void DrawHilightQuad(const IconInfo& icon);
 		void DrawIconFrame(const IconInfo& icon);
 		void DrawOptionLEDs(const IconInfo& icon);
 		void DrawMenuName();

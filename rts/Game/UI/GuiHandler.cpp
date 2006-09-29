@@ -552,7 +552,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			icon.visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
 			icon.visual.y2 = icon.visual.y1 - yIconSize;
 
-			const float noGap = selectGaps ? 0.0f : (iconBorder + 0.001f);
+			const float noGap = selectGaps ? 0.0f : (iconBorder + 0.0005f);
 			icon.selection.x1 = icon.visual.x1 - noGap;
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
@@ -766,7 +766,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			icon.visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
 			icon.visual.y2 = icon.visual.y1 - yIconSize;
 
-			const float noGap = selectGaps ? 0.0f : (iconBorder + 0.001f);
+			const float noGap = selectGaps ? 0.0f : (iconBorder + 0.0005f);
 			icon.selection.x1 = icon.visual.x1 - noGap;
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
@@ -2212,7 +2212,7 @@ static string FindCornerText(const string& corner, const vector<string>& params)
 }
 
 
-void CGuiHandler::DrawCustomButton(const IconInfo& icon)
+void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 {
 	const CommandDescription& cmdDesc = commands[icon.commandsID];
 
@@ -2225,6 +2225,11 @@ void CGuiHandler::DrawCustomButton(const IconInfo& icon)
 		else {
 			usedTexture = DrawTexture(icon, cmdDesc.iconname);
 		}
+	}
+
+	// highlight overlay before text is applied
+	if (highlight) {
+		DrawHilightQuad(icon);
 	}
 
 	if (!usedTexture || !cmdDesc.onlyTexture) {
@@ -2253,6 +2258,7 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 	if (ud != NULL) {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
+		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
 		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
@@ -2271,6 +2277,7 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 	if (BindNamedTexture(texName)) {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
+		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
 		glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
@@ -2409,6 +2416,29 @@ void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 }
 
 
+void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
+{
+	if (icon.commandsID == inCommand) {
+		glColor4f(0.3f, 0.0f, 0.0f, 1.0f);
+	} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
+		glColor4f(0.2f, 0.0f, 0.0f, 1.0f);
+	} else {
+		glColor4f(0.0f, 0.0f, 0.2f, 1.0f);
+	}
+	const Box& b = icon.visual;
+	glDisable(GL_TEXTURE_2D);
+	glBlendFunc(GL_ONE, GL_ONE); // additive blending
+	glBegin(GL_QUADS);
+	glVertex2f(b.x1, b.y1);
+	glVertex2f(b.x2, b.y1);
+	glVertex2f(b.x2, b.y2);
+	glVertex2f(b.x1, b.y2);
+	glVertex2f(b.x1, b.y1);
+	glEnd();
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+
 void CGuiHandler::DrawButtons()
 {
 	Update();
@@ -2417,11 +2447,16 @@ void CGuiHandler::DrawButtons()
 		return;
 	}
 
+	glPushAttrib(GL_ENABLE_BIT);
+	
+  glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GEQUAL, 0.005f);
 
 	const int mouseIcon = IconAtPos(mouse->lastx, mouse->lasty);
 
@@ -2447,52 +2482,21 @@ void CGuiHandler::DrawButtons()
 			continue; // inactive icon
 		}
 		const CommandDescription& cmdDesc = commands[icon.commandsID];
-		
-		const GLfloat x1 = icon.visual.x1;
-		const GLfloat y1 = icon.visual.y1;
-		const GLfloat x2 = icon.visual.x2;
-		const GLfloat y2 = icon.visual.y2;
-
-		glDisable(GL_TEXTURE_2D);
-
-		// highlight background
-		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
-			if (icon.commandsID == inCommand) {
-				glColor4f(0.5f, 0, 0, 0.8f);
-			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
-				glColor4f(0.5f, 0, 0, 0.2f);
-			} else {
-				glColor4f(0, 0, 0.5f, 0.2f);
-			}
-			glBegin(GL_QUADS);
-			glVertex2f(x1,y1);
-			glVertex2f(x2,y1);
-			glVertex2f(x2,y2);
-			glVertex2f(x1,y2);
-			glVertex2f(x1,y1);
-			glEnd();
-		}
-
-		glEnable(GL_TEXTURE_2D);
-		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
+		const bool highlight = (mouseIcon == ii) || (icon.commandsID == inCommand);
 		
 		if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM)) {
-			DrawCustomButton(icon);
+			DrawCustomButton(icon, highlight);
 		}
 		else {
 			bool usedTexture = false;
 			bool onlyTexture = cmdDesc.onlyTexture;
 
-			if (BindNamedTexture(cmdDesc.iconname)) {
-				glBegin(GL_QUADS);
-				glTexCoord2f(0.0f, 0.0f); glVertex2f(x1, y1);
-				glTexCoord2f(1.0f, 0.0f); glVertex2f(x2, y1);
-				glTexCoord2f(1.0f, 1.0f); glVertex2f(x2, y2);
-				glTexCoord2f(0.0f, 1.0f); glVertex2f(x1, y2);
-				glEnd();
+			// specified texture
+			if (DrawTexture(icon, cmdDesc.iconname)) {
 				usedTexture = true;
 			}
 
+			// unit buildpic
 			if (!usedTexture) {
 				if (cmdDesc.id < 0) {
 					UnitDef* ud = unitDefHandler->GetUnitByID(-cmdDesc.id);
@@ -2508,10 +2512,16 @@ void CGuiHandler::DrawButtons()
 				}
 			}
 			
+			// highlight background before text is applied
+			if (highlight) {
+				DrawHilightQuad(icon);
+			}
+
+			// draw arrows, or a frame for text
 			if (!usedTexture || !onlyTexture) {
 				if ((cmdDesc.type == CMDTYPE_PREV) || (cmdDesc.type == CMDTYPE_NEXT)) {
 					// pick the color for the arrow
-					if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+					if (highlight) {
 						glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // selected
 					} else {
 						glColor4f(0.7f, 0.7f, 0.7f, 1.0f); // normal
@@ -2529,6 +2539,7 @@ void CGuiHandler::DrawButtons()
 				}
 			}
 
+			// draw the text
 			if (!usedTexture || !onlyTexture) {
 				// command name (or parameter)
 				string toPrint = cmdDesc.name;
@@ -2548,7 +2559,7 @@ void CGuiHandler::DrawButtons()
 		}
 
 		// highlight outline
-		if ((mouseIcon == ii) || (icon.commandsID == inCommand)) {
+		if (highlight) {
 			if (icon.commandsID == inCommand) {
 				glColor4f(1.0f, 1.0f, 0.0f, 0.75f);
 			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
@@ -2579,7 +2590,9 @@ void CGuiHandler::DrawButtons()
 
 	DrawMenuName();
 	
-	DrawSelectionInfo();	
+	DrawSelectionInfo();
+	
+	glPopAttrib();
 }
 
 
