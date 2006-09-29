@@ -2328,8 +2328,8 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text)
 
 	const float xCenter = 0.5f * (b.x1 + b.x2);
 	const float yCenter = 0.5f * (b.y1 + b.y2);
-	const float xStart  = xCenter - (0.5f * tWidth  * xScale);
-	const float yStart  = yCenter - (0.5f * tHeight * yScale);
+	const float xStart  = xCenter - (0.5f * xScale * tWidth);
+	const float yStart  = yCenter - (0.5f * yScale * (1.25f * tHeight));
 	const float dShadow = 0.002f;			
 
 	if (dropShadows) {
