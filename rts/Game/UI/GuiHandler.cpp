@@ -110,8 +110,10 @@ void CGuiHandler::LoadDefaults()
 	textureAlpha = 0.8f;
 
 	dropShadows = true;	
-	noSelectGaps = false;
 	useOptionLEDs = true;
+	
+	selectGaps = true;
+	selectThrough = false;
 	
 	menuName = "";
 
@@ -158,11 +160,14 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		if ((command == "dropshadows") && (words.size() > 1)) {
 			dropShadows = !!atoi(words[1].c_str());
 		}
-		else if ((command == "noselectgaps") && (words.size() > 1)) {
-			noSelectGaps = !!atoi(words[1].c_str());
-		}
 		else if ((command == "useoptionleds") && (words.size() > 1)) {
 			useOptionLEDs = !!atoi(words[1].c_str());
+		}
+		else if ((command == "selectgaps") && (words.size() > 1)) {
+			selectGaps = !!atoi(words[1].c_str());
+		}
+		else if ((command == "selectthrough") && (words.size() > 1)) {
+			selectThrough = !!atoi(words[1].c_str());
 		}
 		else if ((command == "deadiconslot") && (words.size() > 1)) {
 			deadStr = StringToLower(words[1]);
@@ -547,7 +552,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			icon.visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
 			icon.visual.y2 = icon.visual.y1 - yIconSize;
 
-			const float noGap = (noSelectGaps ? (iconBorder + 0.001f) : 0.0f);
+			const float noGap = selectGaps ? 0.0f : (iconBorder + 0.001f);
 			icon.selection.x1 = icon.visual.x1 - noGap;
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
@@ -761,7 +766,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			icon.visual.y1 = buttonBox.y2 - (fullBorder + (fy * yIconStep));
 			icon.visual.y2 = icon.visual.y1 - yIconSize;
 
-			const float noGap = noSelectGaps ? iconBorder : 0.0f;
+			const float noGap = selectGaps ? 0.0f : (iconBorder + 0.001f);
 			icon.selection.x1 = icon.visual.x1 - noGap;
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
@@ -1173,14 +1178,14 @@ bool CGuiHandler::AboveGui(int x, int y)
 	if (iconsCount <= 0) {
 		return false;
 	}
-
-	const float fx = float(x - gu->screenxPos) / gu->screenx;
-	const float fy = float(gu->screeny - y) / gu->screeny;
-	if ((fx > buttonBox.x1) && (fx < buttonBox.x2) &&
-	    (fy > buttonBox.y1) && (fy < buttonBox.y2)) {
-		return true;
+	if (!selectThrough) {
+		const float fx = float(x - gu->screenxPos) / gu->screenx;
+		const float fy = float(gu->screeny - y) / gu->screeny;
+		if ((fx > buttonBox.x1) && (fx < buttonBox.x2) &&
+				(fy > buttonBox.y1) && (fy < buttonBox.y2)) {
+			return true;
+		}
 	}
-
 	return (IconAtPos(x,y) >= 0);
 }
 
