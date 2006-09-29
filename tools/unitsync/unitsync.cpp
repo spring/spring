@@ -282,7 +282,8 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
 
 			hpiHandler = new CVFSHandler(false);
-			hpiHandler->AddArchive(ars[0], false);
+			for (vector<string>::iterator it = ars.begin(); it != ars.end(); ++it)
+				hpiHandler->AddArchive(*it, false);
 		}
 	}
 
