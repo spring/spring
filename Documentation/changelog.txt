@@ -2,6 +2,10 @@ TASpring change log
 
 0.73b1
 
+
+- added the ability to layout the control panel widget layout with a LUA script
+  (uses a file called "ctrlpanel.lua")
+
 - Map packs (ie. multiple maps in one archive) are officially unsupported now because of technical reasons.
 
 - Added keyword "dir" to explosiongenerator, this is a vector and can be diferent depending on what created the explosion.

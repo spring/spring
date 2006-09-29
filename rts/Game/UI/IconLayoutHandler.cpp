@@ -1008,11 +1008,7 @@ static int GetAllyteamList(lua_State* L)
 					    (gs->players[p]->active) &&
 					    (gs->players[p]->team == team)) {
 						lua_pushnumber(L, p);
-						bool isAI = false;
-						if ((globalAI != NULL) && (globalAI->ais[team] != NULL)) {
-							isAI = true;
-						}
-						lua_pushboolean(L, isAI);
+						lua_pushstring(L, gs->players[p]->playerName.c_str());
 						lua_rawset(L, -3);
 					}
 				}
@@ -1044,18 +1040,24 @@ static int GetTeamInfo(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
+
+	bool isAiTeam = false;
+	if ((globalAI != NULL) && (globalAI->ais[teamID] != NULL)) {
+		isAiTeam = true;
+	}
 	
 	lua_pushnumber(L, team->teamNum);
 	lua_pushnumber(L, team->leader);
 	lua_pushboolean(L, team->active);
 	lua_pushboolean(L, team->isDead);
+	lua_pushboolean(L, isAiTeam);
 	lua_pushstring(L, team->side.c_str());
 	lua_pushnumber(L, team->color[0]);
 	lua_pushnumber(L, team->color[1]);
 	lua_pushnumber(L, team->color[2]);
 	lua_pushnumber(L, team->color[3]);
 	
-	return 9;
+	return 10;
 }
 
 
