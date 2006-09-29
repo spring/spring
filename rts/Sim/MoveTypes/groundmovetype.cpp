@@ -311,7 +311,7 @@ void CGroundMoveType::SlowUpdate()
 			owner->mapSquare=newmapSquare;
 
 			loshandler->MoveUnit(owner,false);
-			if(owner->radarRadius || owner->jammerRadius || owner->sonarRadius)
+			if(owner->hasRadarCapacity)
 				radarhandler->MoveUnit(owner);
 
 //			owner->UnBlock();
