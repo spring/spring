@@ -1048,7 +1048,7 @@ static int GetTeamInfo(lua_State* L)
 
 	const int teamID = (int)lua_tonumber(L, -1);
 	lua_pop(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_PLAYERS)) {
+	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		return 0;
 	}
 
