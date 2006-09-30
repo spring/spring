@@ -19,8 +19,8 @@
 
 static const float Smoke_Time=60;
 
-CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos)
-: CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,damages,0),
+CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos)
+: CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,0),
 	ttl(ttl),
 	maxSpeed(maxSpeed),
 	target(target),

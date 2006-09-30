@@ -8,8 +8,8 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Rendering/Textures/ColorMap.h"
 
-CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread, CUnit* owner, const DamageArray& damages, WeaponDef *weaponDef, int ttl)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
+CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread, CUnit* owner, WeaponDef *weaponDef, int ttl)
+: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0),
 	color(color),
 	color2(color2),
 	intensity(intensity),

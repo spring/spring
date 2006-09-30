@@ -54,7 +54,7 @@ void CMissileLauncher::Fire(void)
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType))
 		startSpeed+=owner->speed;
 
-	new CMissileProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,(int)(range/projectileSpeed+25),targetUnit, weaponDef,targetPos);
+	new CMissileProjectile(weaponPos,startSpeed,owner,areaOfEffect,projectileSpeed,(int)(range/projectileSpeed+25),targetUnit, weaponDef,targetPos);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,startSpeed,owner,targetUnit, float3(0,0,0), weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);

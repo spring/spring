@@ -85,7 +85,7 @@ void CBombDropper::Fire(void)
 			speed.Normalize();
 			speed*=5;
 		}
-		new CTorpedoProjectile(weaponPos,speed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15+predict),targetUnit, weaponDef);
+		new CTorpedoProjectile(weaponPos,speed,owner,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15+predict),targetUnit, weaponDef);
 	} else {
 		float3 dif=targetPos-weaponPos;		//fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		dif.y=0;
@@ -97,7 +97,7 @@ void CBombDropper::Fire(void)
 		float size=dif.Length();
 		if(size>1.0f)
 			dif/=size*1.0f;
-		new CExplosiveProjectile(weaponPos,owner->speed+dif,owner,damages, weaponDef, 1000,areaOfEffect);
+		new CExplosiveProjectile(weaponPos,owner->speed+dif,owner, weaponDef, 1000,areaOfEffect);
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))

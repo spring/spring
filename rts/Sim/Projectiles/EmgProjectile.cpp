@@ -7,8 +7,8 @@
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
-CEmgProjectile::CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,const float3& color,float intensity, int ttl, WeaponDef *weaponDef)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector, weaponDef,damages,0),
+CEmgProjectile::CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const float3& color,float intensity, int ttl, WeaponDef *weaponDef)
+: CWeaponProjectile(pos,speed,owner,0,ZeroVector, weaponDef,0),
 	ttl(ttl),
 	color(color),
 	intensity(intensity)

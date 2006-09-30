@@ -8,7 +8,7 @@ class CTorpedoProjectile :
 	public CWeaponProjectile
 {
 public:
-	CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef);
+	CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef);
 	~CTorpedoProjectile(void);
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);

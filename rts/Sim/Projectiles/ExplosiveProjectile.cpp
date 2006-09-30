@@ -17,8 +17,8 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages, WeaponDef *weaponDef, int ttl,float areaOfEffect)
-: CWeaponProjectile(pos,speed,owner, 0,ZeroVector,weaponDef,damages,0),
+CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner, WeaponDef *weaponDef, int ttl,float areaOfEffect)
+: CWeaponProjectile(pos,speed,owner, 0,ZeroVector,weaponDef,0),
 	ttl(ttl),
 	areaOfEffect(areaOfEffect)
 {

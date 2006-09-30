@@ -14,6 +14,10 @@ struct DamageArray
 
 	inline void operator=(const DamageArray& other){
 		paralyzeDamageTime=other.paralyzeDamageTime;
+		impulseFactor=other.impulseFactor;
+		impulseBoost=other.impulseBoost;
+		craterMult=other.craterMult;
+		craterBoost=other.craterBoost;
 		for(int a=0;a<numTypes;++a)
 			damages[a]=other.damages[a];
 	};
