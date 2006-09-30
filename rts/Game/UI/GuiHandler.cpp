@@ -2202,6 +2202,21 @@ bool CGuiHandler::BindNamedTexture(const std::string& texName)
 }
 
 
+static string StripColorCodes(const string& text)
+{
+	std::string nocolor;
+	const int len = (int)text.size();
+	for (int i = 0; i < len; i++) {
+		if ((unsigned char)text[i] == 255) {
+			i = i + 3;
+		} else {
+			nocolor += text[i];
+		}
+	}
+	return nocolor;
+}
+
+
 static string FindCornerText(const string& corner, const vector<string>& params)
 {
 	for (int p = 0; p < (int)params.size(); p++) {
@@ -2405,7 +2420,7 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 		glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
 		glTranslatef(xStart + dShadow, yStart - dShadow, 0.0f);
 		glScalef(xScale, yScale, 1.0f);
-		font->glPrint("%s",text.c_str());
+		font->glPrint("%s", StripColorCodes(text).c_str());
 		glPopMatrix();
 	}
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -2705,7 +2720,7 @@ void CGuiHandler::DrawMenuName()
 			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
 			// use (alpha == 0.0) so that we only get the outline
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
-			outlineFont.print(xPixel, yPixel, white, text);
+			outlineFont.print(xPixel, yPixel, white, StripColorCodes(text).c_str());
 			font->glPrintColor("%s", text); // draw with color
 		}
 		glLoadIdentity();
