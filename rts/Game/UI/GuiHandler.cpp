@@ -2225,7 +2225,7 @@ void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 	}
 
 	if (!usedTexture || !cmdDesc.onlyTexture) {
-		DrawName(icon, cmdDesc.name);
+		DrawName(icon, cmdDesc.name, false);
 	}
 
 	DrawNWtext(icon, FindCornerText("$nw$", cmdDesc.params));
@@ -2368,18 +2368,21 @@ void CGuiHandler::DrawIconFrame(const IconInfo& icon)
 }
 
 
-void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text)
+void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
+                           bool offsetForLEDs)
 {
 	if (text.empty()) {
 		return;
 	}
 	const Box& b = icon.visual;
+	
+	const float yShrink = offsetForLEDs ? (0.125f * yIconSize) : 0.0f;
 
 	const float tWidth  = font->CalcTextWidth(text.c_str());
 	const float tHeight = font->CalcTextHeight(text.c_str());
 	const float textBorder2 = (2.0f * textBorder);
 	float xScale = (xIconSize - textBorder2) / tWidth;
-	float yScale = (yIconSize - textBorder2) / tHeight;
+	float yScale = (yIconSize - textBorder2 - yShrink) / tHeight;
 
 	const float yRatio = xScale * gu->aspectRatio;
 	if (yRatio < yScale) {
@@ -2392,7 +2395,7 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text)
 	}
 
 	const float xCenter = 0.5f * (b.x1 + b.x2);
-	const float yCenter = 0.5f * (b.y1 + b.y2);
+	const float yCenter = 0.5f * (b.y1 + (b.y2 + yShrink));
 	const float xStart  = xCenter - (0.5f * xScale * tWidth);
 	const float yStart  = yCenter - (0.5f * yScale * (1.25f * tHeight));
 	const float dShadow = 0.002f;			
@@ -2613,6 +2616,8 @@ void CGuiHandler::DrawButtons()
 				}
 			}
 
+			const bool useLEDs = useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE);
+			
 			// draw the text
 			if (!usedTexture || !onlyTexture) {
 				// command name (or parameter)
@@ -2623,11 +2628,11 @@ void CGuiHandler::DrawButtons()
 						toPrint = cmdDesc.params[opt];
 					}
 				}
-				DrawName(icon, toPrint);
+				DrawName(icon, toPrint, useLEDs);
 			}
 
 			// draw the mode indicators
-			if (useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE)) {
+			if (useLEDs) {
 				DrawOptionLEDs(icon);
 			}
 		}
@@ -2837,7 +2842,7 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 		}
 
 		const float startx = x1 + (xs * float(1 + (2 * x)));
-		const float starty = y2 + (3.0f * yp);
+		const float starty = y2 + (3.0f * yp) + textBorder;
 
 		glRectf(startx, starty, startx + xs, starty + ys);
 
