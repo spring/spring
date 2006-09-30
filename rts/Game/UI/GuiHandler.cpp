@@ -2423,7 +2423,9 @@ void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 	const float tHeight = font->CalcTextHeight(text.c_str());
 	const float yScale = (yIconSize * 0.2f) / tHeight;
 	const float xScale = yScale / gu->aspectRatio;
-	glTranslatef(b.x1 + 0.004f, b.y1 - 0.008f - (yScale * tHeight), 0.0f);
+	const float xPos = b.x1 + textBorder + 0.002f;
+	const float yPos = b.y1 - textBorder - (yScale * tHeight) - 0.006f;
+	glTranslatef(xPos, yPos, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	font->glPrintColor("%s", text.c_str());
 	glLoadIdentity();
@@ -2439,7 +2441,9 @@ void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 	const float tHeight = font->CalcTextHeight(text.c_str());
 	const float yScale = (yIconSize * 0.2f) / tHeight;
 	const float xScale = yScale / gu->aspectRatio;
-	glTranslatef(b.x1 + 0.004f, b.y2 + 0.004f, 0.0f);
+	const float xPos = b.x1 + textBorder + 0.002f;
+	const float yPos = b.y2 + textBorder + 0.002f;
+	glTranslatef(xPos, yPos, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	font->glPrintColor("%s", text.c_str());
 	glLoadIdentity();
@@ -2456,8 +2460,9 @@ void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 	const float tHeight = font->CalcTextHeight(text.c_str());
 	const float yScale = (yIconSize * 0.2f) / tHeight;
 	const float xScale = yScale / gu->aspectRatio;
-	glTranslatef(b.x2 - 0.004f - (xScale * tWidth),
-	             b.y1 - 0.008f - (yScale * tHeight), 0.0f);
+	const float xPos = b.x2 - textBorder - (xScale * tWidth) - 0.002f;
+	const float yPos = b.y1 - textBorder - (yScale * tHeight) - 0.006f;
+	glTranslatef(xPos, yPos, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	font->glPrintColor("%s", text.c_str());
 	glLoadIdentity();
@@ -2474,7 +2479,9 @@ void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 	const float tHeight = font->CalcTextHeight(text.c_str());
 	const float yScale = (yIconSize * 0.2f) / tHeight;
 	const float xScale = yScale / gu->aspectRatio;
-	glTranslatef(b.x2 - 0.004f - (xScale * tWidth), b.y2 + 0.004f, 0.0f);
+	const float xPos = b.x2 - textBorder - (xScale * tWidth) - 0.002f;
+	const float yPos = b.y2 + textBorder + 0.002f;
+	glTranslatef(xPos, yPos, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	font->glPrintColor("%s", text.c_str());
 	glLoadIdentity();
