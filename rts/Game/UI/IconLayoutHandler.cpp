@@ -35,6 +35,7 @@ extern Uint8 *keys;
 static int SendCommands(lua_State* L);
 
 static int GetFPS(lua_State* L);
+static int GetGameSeconds(lua_State* L);
 static int GetInCommand(lua_State* L);
 
 static int GetConfigInt(lua_State* L);
@@ -136,6 +137,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SendCommands);
  	REGISTER_LUA_CFUNC(GetFPS);
+ 	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetInCommand);
 	REGISTER_LUA_CFUNC(GetConfigInt);
 	REGISTER_LUA_CFUNC(SetConfigInt);
@@ -639,6 +641,18 @@ static int GetFPS(lua_State* L)
 	return 1;
 }
 
+
+static int GetGameSeconds(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetGameSeconds() takes no arguments");
+		lua_error(L);
+	}
+	const int seconds = (gs->frameNum / 30);
+	lua_pushnumber(L, seconds);
+	return 1;
+}
 
 static int GetInCommand(lua_State* L)
 {
