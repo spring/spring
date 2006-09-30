@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "OutlineFont.h"
+#include <string>
 #include "Rendering/glFont.h"
 
 
@@ -31,6 +32,18 @@ void COutlineFont::print(float xps, float yps,
 		font->glPrint("%s", text);
 		return;
 	}
+
+	// strip any color codes
+	std::string nocolor;
+	const int len = (int)strlen(text);
+	for (int i = 0; i < len; i++) {
+		if ((unsigned char)text[i] == 255) {
+			i = i + 3;
+		} else {
+			nocolor += text[i];
+		}
+	}
+	text = nocolor.c_str();
 
 	const float luminance = (color[0] * 0.299f) +
 	                        (color[1] * 0.587f) +
