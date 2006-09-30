@@ -15,7 +15,7 @@ public:
 
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
-	void GiveCommand(Command &c);
+	void GiveCommand(const Command &c);
 	void DrawCommands(void);
 	void AddUnit(CUnit* unit);
 	void FinishCommand(void);

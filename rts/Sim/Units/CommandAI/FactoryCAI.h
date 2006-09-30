@@ -21,10 +21,10 @@ public:
 	~CFactoryCAI(void);
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
-	void GiveCommand(Command& c);
+	void GiveCommand(const Command& c);
 	void DrawCommands(void);
 	void UpdateIconName(int id,BuildOption& bo);
-	std::deque<Command>::iterator GetCancelQueued(Command &c);
+	std::deque<Command>::iterator GetCancelQueued(const Command &c);
 
 	std::deque<Command> newUnitCommands;
 

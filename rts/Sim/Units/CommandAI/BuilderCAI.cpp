@@ -191,12 +191,19 @@ void CBuilderCAI::SlowUpdate()
 
 			uh->TestUnitBuildSquare(bi,f,owner->allyteam);
 			if(f){
-				Command c2;
-				c2.id=CMD_RECLAIM;
-				c2.options=0;
-				c2.params.push_back(f->id+MAX_UNITS);
-				commandQue.push_front(c2);
-				SlowUpdate();										//this assumes that the reclaim command can never return directly without having reclaimed the target
+				if (!owner->unitDef->canReclaim || !f->def->destructable) {
+					// FIXME user shouldn't be able to queue buildings on top of features
+					// in the first place (in this case).
+					StopMove();
+					FinishCommand();
+				} else {
+					Command c2;
+					c2.id=CMD_RECLAIM;
+					c2.options=0;
+					c2.params.push_back(f->id+MAX_UNITS);
+					commandQue.push_front(c2);
+					SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
+				}
 			} else {
 				inCommand=true;
 				SlowUpdate();
@@ -210,9 +217,7 @@ void CBuilderCAI::SlowUpdate()
 		fac->StopBuild();
 		break;
 	case CMD_REPAIR:{
-		if(!owner->unitDef->canRepair){
-			return;
-		}
+		assert(owner->unitDef->canRepair || owner->unitDef->canAssist);
 		if(c.params.size()==1){		//repair unit
 			CUnit* unit=uh->units[(int)c.params[0]];
 			if(tempOrder && owner->moveState==1){		//limit how far away we go
@@ -249,6 +254,7 @@ void CBuilderCAI::SlowUpdate()
 		}
 		return;}
 	case CMD_CAPTURE:{
+		assert(owner->unitDef->canCapture);
 		if(c.params.size()==1){		//capture unit
 			CUnit* unit=uh->units[(int)c.params[0]];
 			if(unit && unit->team!=owner->team){
@@ -278,9 +284,7 @@ void CBuilderCAI::SlowUpdate()
 		}
 		return;}
 	case CMD_GUARD:{
-		if(!owner->unitDef->canGuard){
-			return;
-		}
+		assert(owner->unitDef->canGuard);
 		CUnit* guarded=uh->units[(int)c.params[0]];
 		if(guarded && guarded!=owner){
 			if(CBuilder* b=dynamic_cast<CBuilder*>(guarded)){
@@ -294,7 +298,7 @@ void CBuilderCAI::SlowUpdate()
 					}
 					return;
 				}
-				if(b->curBuild){
+				if (b->curBuild && ((b->curBuild->beingBuilt && owner->unitDef->canAssist) || (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 					Command nc;
 					nc.id=CMD_REPAIR;
 					nc.options=c.options;
@@ -306,7 +310,7 @@ void CBuilderCAI::SlowUpdate()
 				}
 			}
 			if(CFactory* f=dynamic_cast<CFactory*>(guarded)){
-				if(f->curBuild){
+				if (f->curBuild && ((f->curBuild->beingBuilt && owner->unitDef->canAssist) || (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 					Command nc;
 					nc.id=CMD_REPAIR;
 					nc.options=c.options;
@@ -325,7 +329,7 @@ void CBuilderCAI::SlowUpdate()
 				StopMove();
 //				logOutput.Print("should point with type 3?");
 				owner->moveType->KeepPointingTo(guarded->pos, fac->buildDistance*0.9f+guarded->radius, false);
-				if(guarded->health<guarded->maxHealth)
+				if(guarded->health<guarded->maxHealth && ((guarded->beingBuilt && owner->unitDef->canAssist) || (!guarded->beingBuilt && owner->unitDef->canRepair)))
 					fac->SetRepairTarget(guarded);
 				else
 					NonMoving();
@@ -338,9 +342,7 @@ void CBuilderCAI::SlowUpdate()
 		}
 		return;}
 	case CMD_RECLAIM:{
-		if(!owner->unitDef->canReclaim){
-			return;
-		}
+		assert(owner->unitDef->canReclaim);
 		if(c.params.size()==1){
 			int id=(int) c.params[0];
 			if(id>=MAX_UNITS){		//reclaim feature
@@ -402,6 +404,7 @@ void CBuilderCAI::SlowUpdate()
 		}
 		return;}
 	case CMD_RESURRECT:{
+		assert(owner->unitDef->canResurrect);
 		if(c.params.size()==1){
 			int id=(int)c.params[0];
 			if(id>=MAX_UNITS){		//resurrect feature
@@ -422,7 +425,7 @@ void CBuilderCAI::SlowUpdate()
 						}
 					}
 				} else {
-					if(fac->lastResurrected && uh->units[fac->lastResurrected]&& owner->unitDef->canRepair){	//resurrection finished, start repair
+					if(fac->lastResurrected && uh->units[fac->lastResurrected] && owner->unitDef->canRepair){	//resurrection finished, start repair
 						c.id=CMD_REPAIR;		//kind of hackery to overwrite the current order i suppose
 						c.params.clear();
 						c.params.push_back(fac->lastResurrected);
@@ -454,9 +457,7 @@ void CBuilderCAI::SlowUpdate()
 		}
 		return;}
 	case CMD_PATROL:{
-		if(!owner->unitDef->canPatrol){
-			return;
-		}
+		assert(owner->unitDef->canPatrol);
 		float3 curPos=owner->pos;
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
 			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
@@ -478,6 +479,7 @@ void CBuilderCAI::SlowUpdate()
 		SlowUpdate();
 		return;}
 	case CMD_FIGHT:{
+		assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 		if(tempOrder){
 			tempOrder=false;
 			inCommand=true;
@@ -501,7 +503,7 @@ void CBuilderCAI::SlowUpdate()
 		if(!(patrolGoal==goalPos)){
 			SetGoal(patrolGoal,curPos);
 		}
-		if(FindRepairTargetAndRepair(curPos,300*owner->moveState+fac->buildDistance-8,c.options,true)){
+		if((owner->unitDef->canRepair || owner->unitDef->canAssist) && FindRepairTargetAndRepair(curPos,300*owner->moveState+fac->buildDistance-8,c.options,true)){
 			CUnit* target=uh->units[(int)commandQue.front().params[0]];
 			if(owner->moveState==2 || LinePointDist(commandPos1,commandPos2,target->pos) < 300){
 				tempOrder=true;
@@ -515,7 +517,7 @@ void CBuilderCAI::SlowUpdate()
 				commandQue.pop_front();
 			}
 		}
-		if(FindReclaimableFeatureAndReclaim(owner->pos,300,c.options,false)){
+		if(owner->unitDef->canReclaim && FindReclaimableFeatureAndReclaim(owner->pos,300,c.options,false)){
 			tempOrder=true;
 			inCommand=false;
 			if(lastPC2!=gs->frameNum){	//avoid infinite loops
@@ -535,6 +537,7 @@ void CBuilderCAI::SlowUpdate()
 		}
 		return;}
 	case CMD_RESTORE:{
+		assert(owner->unitDef->canRestore);
 		if(inCommand){
 			if(!fac->terraforming){
 				FinishCommand();
@@ -568,7 +571,7 @@ int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 				return CMD_RECLAIM;
 			}
 		} else {
-			if (owner->unitDef->canRepair && (pointed->health < pointed->maxHealth)) {
+			if ((pointed->health < pointed->maxHealth) && ((pointed->beingBuilt && owner->unitDef->canAssist) || (!pointed->beingBuilt && owner->unitDef->canRepair))) {
 				return CMD_REPAIR;
 			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;
@@ -732,43 +735,10 @@ void CBuilderCAI::DrawCommands(void)
 }
 
 
-void CBuilderCAI::GiveCommand(Command& c)
+void CBuilderCAI::GiveCommand(const Command& c)
 {
-	if(c.id==CMD_RESURRECT && !owner->unitDef->canResurrect)
+	if (!AllowedCommand(c))
 		return;
-	if(c.id==CMD_CAPTURE && !owner->unitDef->canCapture)
-		return;
-	if(c.id==CMD_RECLAIM && !owner->unitDef->canReclaim)
-		return;
-	if(c.id==CMD_RESTORE && !owner->unitDef->canRestore)
-		return;
-	if(c.id==CMD_GUARD && !owner->unitDef->canGuard)
-		return;
-	if(c.id==CMD_REPAIR && !owner->unitDef->canRepair)
-		return;
-	if(c.id==CMD_MOVE && !owner->unitDef->canmove)
-		return;
-	if(c.id==CMD_ATTACK && !owner->unitDef->canAttack)
-		return;
-	if(c.id==CMD_PATROL && !owner->unitDef->canPatrol)
-		return;
-
-	if((c.id == CMD_RECLAIM) && (c.params.size() == 1)){
-		const int unitID = (int)c.params[0];
-		if(unitID < MAX_UNITS){ // not a feature
-			CUnit* unit = uh->units[unitID];
-			if(unit && !unit->unitDef->reclaimable){
-				return;
-			}
-		}
-	}
-
-	if((c.id == CMD_REPAIR) && (c.params.size() == 1)){
-		CUnit* unit = uh->units[(int)c.params[0]];
-		if(unit && unit->beingBuilt && !owner->unitDef->canAssist){
-			return;
-		}
-	}
 
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		building=false;
@@ -899,7 +869,9 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius,unsigned ch
 	int myAllyteam=owner->allyteam;
 	for(std::vector<CUnit*>::iterator ui=cu.begin();ui!=cu.end();++ui){
 		if(gs->Ally(owner->allyteam,(*ui)->allyteam) && (*ui)->health<(*ui)->maxHealth && (*ui)!=owner){
-			if((*ui)->mobility && (*ui)->beingBuilt && owner->moveState<2)		//dont help factories produce units unless set on roam
+			if((*ui)->mobility && (*ui)->beingBuilt && owner->moveState<2)	//dont help factories produce units unless set on roam
+				continue;
+			if (!((*ui)->beingBuilt && owner->unitDef->canAssist) && !(!(*ui)->beingBuilt && owner->unitDef->canRepair))
 				continue;
 			Command nc;
 			if(attackEnemy){
@@ -910,7 +882,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius,unsigned ch
 			nc.params.push_back((*ui)->id);
 			commandQue.push_front(nc);
 			return true;
-		} else if(attackEnemy && owner->maxRange>0 && !gs->Ally(owner->allyteam,(*ui)->allyteam)){
+		} else if(owner->unitDef->canAttack || attackEnemy && owner->maxRange>0 && !gs->Ally(owner->allyteam,(*ui)->allyteam)){
 			Command nc;
 			commandQue.push_front(this->GetReturnFight(this->commandQue.front()));
 			nc.id=CMD_ATTACK;

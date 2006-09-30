@@ -8,6 +8,8 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -42,7 +44,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip="Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
-	if(owner->unitDef->canAttack){
+	if(owner->unitDef->canAttack && (!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory")) {
 		c.id=CMD_ATTACK;
 		c.action="attack";
 		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
@@ -122,18 +124,20 @@ CCommandAI::CCommandAI(CUnit* owner)
 	{
 		owner->moveState=0;
 	}
- 
-	c.params.clear();
-	c.id=CMD_REPEAT;
-	c.action="repeat";
-	c.type=CMDTYPE_ICON_MODE;
-	c.name="Repeat";
-	c.params.push_back("0");
-	c.params.push_back("Repeat off");
-	c.params.push_back("Repeat on");
-	c.tooltip="Repeat: If on the unit will continously\n push finished orders to the end of its\n order que";
-	possibleCommands.push_back(c);
-	nonQueingCommands.insert(CMD_REPEAT);
+
+	if (owner->unitDef->canRepeat) {
+		c.params.clear();
+		c.id=CMD_REPEAT;
+		c.action="repeat";
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Repeat";
+		c.params.push_back("0");
+		c.params.push_back("Repeat off");
+		c.params.push_back("Repeat on");
+		c.tooltip="Repeat: If on the unit will continously\n push finished orders to the end of its\n order que";
+		possibleCommands.push_back(c);
+		nonQueingCommands.insert(CMD_REPEAT);
+	}
 
 	if(owner->unitDef->highTrajectoryType>1){
 		c.params.clear();
@@ -207,13 +211,78 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 	return possibleCommands;
 }
 
-void CCommandAI::GiveCommand(Command& c)
+bool CCommandAI::AllowedCommand(const Command& c)
+{
+	if(c.id==CMD_RESURRECT && !owner->unitDef->canResurrect)
+		return false;
+	if(c.id==CMD_CAPTURE && !owner->unitDef->canCapture)
+		return false;
+	if(c.id==CMD_RECLAIM && !owner->unitDef->canReclaim)
+		return false;
+	if(c.id==CMD_RESTORE && !owner->unitDef->canRestore)
+		return false;
+	if(c.id==CMD_GUARD && !owner->unitDef->canGuard)
+		return false;
+	if(c.id==CMD_REPAIR && !owner->unitDef->canRepair && !owner->unitDef->canAssist)
+		return false;
+	if(c.id==CMD_MOVE && !owner->unitDef->canmove)
+		return false;
+	if(c.id==CMD_ATTACK && (!owner->unitDef->canAttack || (owner->unitDef->weapons.empty() && owner->unitDef->type!="Factory")))
+		return false;
+	if(c.id==CMD_PATROL && !owner->unitDef->canPatrol)
+		return false;
+	if(c.id==CMD_FIGHT && !owner->unitDef->canFight)
+		return false;
+
+	if((c.id == CMD_RECLAIM) && (c.params.size() == 1)){
+		const int unitID = (int)c.params[0];
+		if(unitID < MAX_UNITS){ // not a feature
+			CUnit* unit = uh->units[unitID];
+			if(unit && !unit->unitDef->reclaimable)
+				return false;
+		} else {
+			CFeature* feature = featureHandler->features[unitID - MAX_UNITS];
+			if (feature && !feature->def->destructable)
+				return false;
+		}
+	}
+
+	if((c.id == CMD_REPAIR) && (c.params.size() == 1)){
+		CUnit* unit = uh->units[(int)c.params[0]];
+		if (unit && ((unit->beingBuilt && !owner->unitDef->canAssist) || (!unit->beingBuilt && !owner->unitDef->canRepair)))
+			return false;
+	}
+
+	if (c.id == CMD_FIRE_STATE && (c.params.empty() || owner->unitDef->noAutoFire || (owner->unitDef->weapons.empty() && owner->unitDef->type!="Factory")))
+		return false;
+	if (c.id == CMD_MOVE_STATE && (c.params.empty() || (!owner->unitDef->canmove && !owner->unitDef->builder)))
+		return false;
+	if (c.id == CMD_REPEAT && (c.params.empty() || !owner->unitDef->canRepeat))
+		return false;
+	if (c.id == CMD_TRAJECTORY && (c.params.empty() || owner->unitDef->highTrajectoryType<2))
+		return false;
+	if (c.id == CMD_ONOFF && (c.params.empty() || !owner->unitDef->onoffable || owner->beingBuilt))
+		return false;
+	if (c.id == CMD_CLOAK && (c.params.empty() || !owner->unitDef->canCloak))
+		return false;
+	if(c.id == CMD_STOCKPILE && !stockpileWeapon)
+		return false;
+
+	return true;
+}
+
+void CCommandAI::GiveCommand(const Command& c)
+{
+	if (!AllowedCommand(c))
+		return;
+
+	GiveAllowedCommand(c);
+}
+
+void CCommandAI::GiveAllowedCommand(const Command& c)
 {
 	switch (c.id) {
 		case CMD_FIRE_STATE: {
-			if (c.params.empty() || owner->unitDef->noAutoFire) {
-				return;
-			}
 			owner->fireState=(int)c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_FIRE_STATE){
@@ -227,8 +296,6 @@ void CCommandAI::GiveCommand(Command& c)
 			return;
 		}
 		case CMD_MOVE_STATE: {
-			if(c.params.empty())
-				return;
 			owner->moveState=(int)c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_MOVE_STATE){
@@ -242,8 +309,6 @@ void CCommandAI::GiveCommand(Command& c)
 			return;
 		}
 		case CMD_REPEAT: {
-			if(c.params.empty())
-				return;
 			repeatOrders=!!c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_REPEAT){
@@ -257,8 +322,6 @@ void CCommandAI::GiveCommand(Command& c)
 			return;
 		}
 		case CMD_TRAJECTORY: {
-			if(c.params.empty() || owner->unitDef->highTrajectoryType<2)
-				return;
 			owner->useHighTrajectory=!!c.params[0];
 			for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
 				if(cdi->id==CMD_TRAJECTORY){
@@ -272,8 +335,6 @@ void CCommandAI::GiveCommand(Command& c)
 			return;
 		}
 		case CMD_ONOFF: {
-			if(c.params.empty() || !owner->unitDef->onoffable || owner->beingBuilt)
-				return;
 			if(c.params[0]==1){
 				owner->Activate();
 			} else if(c.params[0]==0) {
@@ -291,8 +352,6 @@ void CCommandAI::GiveCommand(Command& c)
 			return;
 		}
 		case CMD_CLOAK: {
-			if(c.params.empty() || !owner->unitDef->canCloak)
-				return;
 			if(c.params[0]==1){
 				owner->wantCloak=true;
 			} else if(c.params[0]==0) {
@@ -311,8 +370,6 @@ void CCommandAI::GiveCommand(Command& c)
 			return;
 		}
 		case CMD_STOCKPILE: {
-			if(!stockpileWeapon)
-				return;
 			int change=1;
 			if(c.options & RIGHT_MOUSE_KEY)
 				change*=-1;
@@ -399,9 +456,6 @@ void CCommandAI::GiveCommand(Command& c)
 	}
 
 	if(c.id == CMD_PATROL){
-		if(!owner->unitDef->canPatrol){
-			return;
-		}
 		std::deque<Command>::iterator ci = commandQue.begin();
 		for(; ci != commandQue.end() && ci->id!=CMD_PATROL; ci++);
 		if(ci==commandQue.end()){
@@ -498,7 +552,7 @@ bool CCommandAI::WillCancelQueued(Command &c)
 * @brief Finds the queued command that would be canceled by the Command c
 * @return An iterator located at the command, or commandQue.end() if no such queued command exsists
 **/
-std::deque<Command>::iterator CCommandAI::GetCancelQueued(Command &c){
+std::deque<Command>::iterator CCommandAI::GetCancelQueued(const Command &c){
 	if(!commandQue.empty()){
 		std::deque<Command>::iterator ci=commandQue.end();
 		do{
@@ -535,7 +589,7 @@ std::deque<Command>::iterator CCommandAI::GetCancelQueued(Command &c){
 * @brief Returns commands that overlap c, but will not be canceled by c
 * @return a vector containing commands that overlap c
 */
-std::vector<Command> CCommandAI::GetOverlapQueued(Command &c){
+std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c){
 	std::deque<Command>::iterator ci = commandQue.end();
 	std::vector<Command> v;
 	BuildInfo buildInfo(c);
@@ -592,6 +646,7 @@ void CCommandAI::SlowUpdate()
 		break;};
 	case CMD_ATTACK:
 	case CMD_DGUN:
+		assert(owner->unitDef->canAttack);
 		if(inCommand){
 			if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[owner->allyteam] & LOS_INRADAR))){
 				FinishCommand();
