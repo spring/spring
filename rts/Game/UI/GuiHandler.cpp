@@ -831,27 +831,27 @@ void CGuiHandler::Update()
 		inCommand=-1;
 		needShift=false;
 	}
+
+	const bool commandsChanged = selectedUnits.CommandsChanged();
+
+	bool handlerUpdate = false;
+	if (layoutHandler != NULL) {
+		if (!layoutHandler->UpdateLayout(handlerUpdate,
+		                                 commandsChanged, activePage)) {
+			delete layoutHandler;
+			layoutHandler = NULL;
+			handlerUpdate = false;
+		}
+	}
 	
-	if (selectedUnits.CommandsChanged()) {
+	if (commandsChanged) {
 		defaultCmdMemory = -1;
 		SetShowingMetal(false);
 		LayoutIcons(true);
 		fadein = 100;
 	}
-	else if (forceLayoutUpdate) {
+	else if (forceLayoutUpdate || handlerUpdate) {
 		LayoutIcons(false);
-	}
-	else {
-		bool handlerUpdate = false;
-		if (layoutHandler != NULL) {
-			if (!layoutHandler->UpdateLayout(handlerUpdate, activePage)) {
-				delete layoutHandler;
-				layoutHandler = NULL;
-			}
-		}
-		if (handlerUpdate) {
-			LayoutIcons(false);
-		}
 	}
 
 	if (fadein > 0) {

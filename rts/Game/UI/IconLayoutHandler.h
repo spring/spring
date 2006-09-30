@@ -41,7 +41,7 @@ class CIconLayoutHandler {
 
 		bool ConfigCommand(const string& command);
 		
-		bool UpdateLayout(bool& forceLayout, int activePage);
+		bool UpdateLayout(bool& forceLayout, bool commandsChanged, int activePage);
 		
 		struct ReStringPair {
 			int cmdIndex;

@@ -203,7 +203,8 @@ bool CIconLayoutHandler::ConfigCommand(const string& command)
 }
 
 
-bool CIconLayoutHandler::UpdateLayout(bool& forceLayout, int activePage)
+bool CIconLayoutHandler::UpdateLayout(bool& forceLayout,
+                                      bool commandsChanged, int activePage)
 {
 	forceLayout = false;
 
@@ -215,12 +216,13 @@ bool CIconLayoutHandler::UpdateLayout(bool& forceLayout, int activePage)
 	lua_pop(L, lua_gettop(L));
 	
 	lua_getglobal(L, "UpdateLayout");
+	lua_pushboolean(L, commandsChanged);
 	lua_pushnumber(L,  activePage);
 	lua_pushboolean(L, keys[SDLK_LALT]);
 	lua_pushboolean(L, keys[SDLK_LCTRL]);
 	lua_pushboolean(L, keys[SDLK_LMETA]);
 	lua_pushboolean(L, keys[SDLK_LSHIFT]);
-	const int error = lua_pcall(L, 5, 1, 0);
+	const int error = lua_pcall(L, 6, 1, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
 		                "Call_UpdateLayout", lua_tostring(L, -1));
