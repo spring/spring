@@ -715,8 +715,8 @@ bool CLuaState::LoadWeaponDefInfo()
 
 static string IntToString(int value)
 {
-	char buf[16];
-	SNPRINTF(buf, 16, "%i", value);
+	char buf[32];
+	SNPRINTF(buf, sizeof(buf), "%i", value);
 	return string(buf);
 }
 
@@ -733,7 +733,7 @@ static string BoolToString(bool value)
 static string FloatToString(float value)
 {
 	char buf[32];
-	SNPRINTF(buf, 32, "%f", value);
+	SNPRINTF(buf, sizeof(buf), "%f", value);
 	return string(buf);
 }
 
