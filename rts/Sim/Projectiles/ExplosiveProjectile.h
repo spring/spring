@@ -11,7 +11,7 @@
 class CExplosiveProjectile : public CWeaponProjectile  
 {
 public:
-	CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages, WeaponDef *weaponDef, int ttl=100000,float areaOfEffect=8);
+	CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner, WeaponDef *weaponDef, int ttl=100000,float areaOfEffect=8);
 	virtual ~CExplosiveProjectile();
 	virtual void Update();
 	void Draw(void);

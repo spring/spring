@@ -8,7 +8,7 @@ class CEmgProjectile :
 	public CWeaponProjectile
 {
 public:
-	CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,const float3& color,float intensity, int ttl, WeaponDef *weaponDef);
+	CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const float3& color,float intensity, int ttl, WeaponDef *weaponDef);
 	virtual ~CEmgProjectile();
 	void Update(void);
 	void Draw(void);

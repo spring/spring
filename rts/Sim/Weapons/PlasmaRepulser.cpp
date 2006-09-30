@@ -79,7 +79,7 @@ void CPlasmaRepulser::Update(void)
 	if(isEnabled){
 		for(std::list<CWeaponProjectile*>::iterator pi=incoming.begin();pi!=incoming.end();++pi){
 			float3 dif=(*pi)->pos-owner->pos;
-			if((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->damages[0]){
+			if((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->weaponDef->damages[0]){
 				if(gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
 					if(weaponDef->shieldRepulser){	//bounce the projectile
 						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
@@ -88,11 +88,11 @@ void CPlasmaRepulser::Update(void)
 						} else if (type==1){
 							owner->UseEnergy(weaponDef->shieldEnergyUse);
 							if(weaponDef->shieldPower != 0)
-								curPower-=(*pi)->damages[0];
+								curPower-=(*pi)->weaponDef->damages[0];
 						} else {
 							owner->UseEnergy(weaponDef->shieldEnergyUse/30.0f);
 							if(weaponDef->shieldPower != 0)
-								curPower-=(*pi)->damages[0]/30.0f;
+								curPower-=(*pi)->weaponDef->damages[0]/30.0f;
 						}
 						if(weaponDef->visibleShieldRepulse){
 							if(hasGfx.find(*pi)==hasGfx.end()){
@@ -105,7 +105,7 @@ void CPlasmaRepulser::Update(void)
 					} else {						//kill the projectile
 						if(owner->UseEnergy(weaponDef->shieldEnergyUse)){
 							if(weaponDef->shieldPower != 0)
-								curPower-=(*pi)->damages[0];
+								curPower-=(*pi)->weaponDef->damages[0];
 							(*pi)->Collision(owner);
 						}
 					}

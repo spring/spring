@@ -8,8 +8,8 @@
 #include "ProjectileHandler.h"
 #include "SimpleParticleSystem.h"
 
-CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,damages,0),
+CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)
+: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0),
 	ttl(ttl),
 	color(color),
 	color2(color2),

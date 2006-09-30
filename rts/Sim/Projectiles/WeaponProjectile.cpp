@@ -26,15 +26,14 @@ CWeaponProjectile::CWeaponProjectile()
 	interceptTarget=0;
 }
 
-CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,const DamageArray& damages,CWeaponProjectile* interceptTarget) : 
+CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget) : 
 	CProjectile(pos,speed,owner),
 	weaponDef(weaponDef),
 	target(target),
 	targetPos(targetPos),
 	startpos(pos),
 	targeted(false),
-	interceptTarget(interceptTarget),
-	damages(damages)
+	interceptTarget(interceptTarget)
 {
 	if(target)
 		AddDeathDependence(target);
@@ -69,7 +68,7 @@ CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,c
 	switch(weaponDef->visuals.renderType)
 	{
 	case WEAPON_RENDERTYPE_LASER:
-		return new CLaserProjectile(pos, speed, owner, weaponDef->damages, 30, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
+		return new CLaserProjectile(pos, speed, owner, 30, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
 		break;
 	case WEAPON_RENDERTYPE_PLASMA:
 		break;

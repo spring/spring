@@ -52,7 +52,7 @@ void CTorpedoLauncher::Fire(void)
 
 //	if(onlyForward)
 //		startSpeed+=owner->speed*0.5f;
-	new CTorpedoProjectile(weaponPos,startSpeed,owner,damages,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15),targetUnit, weaponDef);
+	new CTorpedoProjectile(weaponPos,startSpeed,owner,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15),targetUnit, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }

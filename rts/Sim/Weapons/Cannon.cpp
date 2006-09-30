@@ -157,7 +157,7 @@ void CCannon::Fire(void)
 	int ttl=10000;
 	if(selfExplode)
 		ttl=(int)(predict+gs->randFloat()*2.5f-0.5f);
-	new CExplosiveProjectile(weaponPos,dir*projectileSpeed,owner,damages,weaponDef, ttl,areaOfEffect);
+	new CExplosiveProjectile(weaponPos,dir*projectileSpeed,owner,weaponDef, ttl,areaOfEffect);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,owner->speed,owner, NULL, float3(0,0,0), weaponDef);
 
 //	new CSmokeProjectile(weaponPos,dir*0.01f,90,0.1f,0.02f,owner,0.6f);

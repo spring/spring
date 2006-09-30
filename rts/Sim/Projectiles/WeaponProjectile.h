@@ -13,7 +13,7 @@ class CWeaponProjectile : public CProjectile
 {
 public:
 	CWeaponProjectile();
-	CWeaponProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef,const DamageArray& damages,CWeaponProjectile* interceptTarget);
+	CWeaponProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget);
 	virtual ~CWeaponProjectile();
 
 	virtual void Collision();
@@ -28,7 +28,7 @@ public:
 	WeaponDef *weaponDef;
 	CUnit *target;
 	float3 targetPos;
-	DamageArray damages;
+	//DamageArray damages;
 protected:
 	float3 startpos;
 	int ttl;

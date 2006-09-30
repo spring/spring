@@ -11,7 +11,7 @@ class CStarburstProjectile :
 	public CWeaponProjectile
 {
 public:
-	CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,const DamageArray& damages,float areaOfEffect, float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget);
+	CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,float areaOfEffect, float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget);
 	~CStarburstProjectile(void);
 	void Collision(CUnit* unit);
 	void Collision();

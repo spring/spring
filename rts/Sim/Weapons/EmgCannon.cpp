@@ -87,7 +87,7 @@ void CEmgCannon::Fire(void)
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
-	new CEmgProjectile(weaponPos,dir*projectileSpeed,owner,damages,weaponDef->visuals.color,weaponDef->intensity,(int)(range/projectileSpeed), weaponDef);
+	new CEmgProjectile(weaponPos,dir*projectileSpeed,owner,weaponDef->visuals.color,weaponDef->intensity,(int)(range/projectileSpeed), weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }

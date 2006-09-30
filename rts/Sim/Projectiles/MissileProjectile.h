@@ -10,7 +10,7 @@ class CMissileProjectile :
 	public CWeaponProjectile
 {
 public:
-	CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,const DamageArray& damages,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos);
+	CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos);
 	~CMissileProjectile(void);
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
