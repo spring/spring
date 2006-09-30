@@ -841,6 +841,7 @@ void CGuiHandler::Update()
 			delete layoutHandler;
 			layoutHandler = NULL;
 			handlerUpdate = false;
+			LoadConfig("ctrlpanel.txt");
 		}
 	}
 	
@@ -2216,16 +2217,7 @@ void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 {
 	const CommandDescription& cmdDesc = commands[icon.commandsID];
 
-	bool usedTexture = false;
-	if (!cmdDesc.iconname.empty()) {
-		if (cmdDesc.iconname[0] == '#') {
-			const int unitDefID = atoi(cmdDesc.iconname.c_str() + 1);
-			usedTexture = DrawUnitBuildIcon(icon, unitDefID);
-		}
-		else {
-			usedTexture = DrawTexture(icon, cmdDesc.iconname);
-		}
-	}
+	const bool usedTexture = DrawTexture(icon, cmdDesc.iconname);
 
 	// highlight overlay before text is applied
 	if (highlight) {
@@ -2274,7 +2266,77 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 
 bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 {
-	if (BindNamedTexture(texName)) {
+	if (texName.empty()) {
+		return false;
+	}
+
+	// plain texture
+	if (texName[0] != '#') {
+		if (BindNamedTexture(texName)) {
+			const Box& b = icon.visual;
+			glEnable(GL_TEXTURE_2D);
+			glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
+			glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
+			glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
+			glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
+			glEnd();
+			return true;
+		}
+		return false;
+	}
+
+	// unit build picture
+	char* endPtr;
+	const char* startPtr = texName.c_str() + 1; // skip the '#'
+	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+	if (endPtr == startPtr) {
+		return false; // bad unitID spec
+	}
+	if (endPtr[0] == '\0') {
+		return DrawUnitBuildIcon(icon, unitDefID);
+	}
+
+	// texture and unit build picture
+	if (endPtr[0] != ',') {
+		return false;
+	}
+	startPtr = endPtr + 1; // skip the ','
+	const float xscale = (float)strtod(startPtr, &endPtr);
+	if (endPtr == startPtr) {
+		return false;
+	}
+	
+	float yscale;
+	if (endPtr[0] == ',') {
+		endPtr++; // setup for the texture name
+		yscale = xscale;
+	}
+	else if (endPtr[0] != 'x') {
+		return false;
+	}
+	else {
+		startPtr = endPtr + 1;
+		yscale = (float)strtod(startPtr, &endPtr);
+		if ((endPtr == startPtr) || (endPtr[0] != ',')) {
+			return false;
+		}
+		endPtr++; // setup for the texture name
+	}
+
+	const Box& iv = icon.visual;
+	IconInfo tmpIcon;
+	Box& tv = tmpIcon.visual;
+	tv.x1 = iv.x1 + (xIconSize * xscale);
+	tv.x2 = iv.x2 - (xIconSize * xscale);
+	tv.y1 = iv.y1 - (yIconSize * yscale);
+	tv.y2 = iv.y2 + (yIconSize * yscale);
+
+	if (!BindNamedTexture(endPtr)) {
+		return DrawUnitBuildIcon(icon, unitDefID);
+	}
+	else {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
@@ -2284,9 +2346,11 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 		glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
 		glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
 		glEnd();
-		return true;
+
+		return DrawUnitBuildIcon(tmpIcon, unitDefID);
 	}
-	return false;
+
+	return false; // safety
 }
 
 
@@ -2295,10 +2359,11 @@ void CGuiHandler::DrawIconFrame(const IconInfo& icon)
 	const Box& b = icon.visual;
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINE_LOOP);
-	glVertex2f(b.x1, b.y1);
-	glVertex2f(b.x2, b.y1);
-	glVertex2f(b.x2, b.y2);
-	glVertex2f(b.x1, b.y2);
+	const float fudge = 0.001f; // avoids getting creamed if iconBorder == 0.0
+	glVertex2f(b.x1 + fudge, b.y1 - fudge);
+	glVertex2f(b.x2 - fudge, b.y1 - fudge);
+	glVertex2f(b.x2 - fudge, b.y2 + fudge);
+	glVertex2f(b.x1 + fudge, b.y2 + fudge);
 	glEnd();
 }
 
@@ -2531,7 +2596,7 @@ void CGuiHandler::DrawButtons()
 						DrawNextArrow(icon);
 					}
 				}
-				else {
+				else if (!usedTexture) {
 					// no texture, no arrow, ... draw a frame
 					glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
 					DrawIconFrame(icon);
