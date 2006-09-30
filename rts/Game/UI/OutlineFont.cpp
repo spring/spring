@@ -33,18 +33,6 @@ void COutlineFont::print(float xps, float yps,
 		return;
 	}
 
-	// strip any color codes
-	std::string nocolor;
-	const int len = (int)strlen(text);
-	for (int i = 0; i < len; i++) {
-		if ((unsigned char)text[i] == 255) {
-			i = i + 3;
-		} else {
-			nocolor += text[i];
-		}
-	}
-	text = nocolor.c_str();
-
 	const float luminance = (color[0] * 0.299f) +
 	                        (color[1] * 0.587f) +
 	                        (color[2] * 0.114f);
