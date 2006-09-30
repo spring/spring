@@ -117,9 +117,12 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		CalcHeightfieldData();
 
 		if (mapDefParser.SectionExist("map\\featuretypes")) {
-			const std::map<std::string, std::string>& ftypes = mapDefParser.GetAllValues ("map\\featuretypes");
-			for (std::map<std::string, std::string>::const_iterator i=ftypes.begin();i != ftypes.end(); ++i)
-				featureTypes.push_back (new std::string(i->first));
+			int numTypes = atoi(mapDefParser.SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
+			for (int a=0;a<numTypes;a++) {
+				char loc[40];
+				SNPRINTF(loc, 16, "map\\featuretypes\\type%d", a);
+				featureTypes.push_back (new std::string(mapDefParser.SGetValueDef("TreeType0", loc)));
+			}
 		}
 		LoadFeatureData();
 
