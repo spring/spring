@@ -361,8 +361,8 @@ bool CKeyAutoBinder::IsBetter(lua_State* L, int thisDefID, int thatDefID)
 
 static string IntToString(int value)
 {
-	char buf[16];
-	SNPRINTF(buf, 16, "%i", value);
+	char buf[32];
+	SNPRINTF(buf, sizeof(buf), "%i", value);
 	return string(buf);
 }
 
@@ -378,8 +378,8 @@ static string BoolToString(bool value)
 
 static string FloatToString(float value)
 {
-	char buf[16];
-	SNPRINTF(buf, 16, "%f", value);
+	char buf[32];
+	SNPRINTF(buf, sizeof(buf), "%f", value);
 	return string(buf);
 }
 
