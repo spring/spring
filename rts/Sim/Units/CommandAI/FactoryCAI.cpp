@@ -18,6 +18,9 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	building(false)
 {
 	CommandDescription c;
+
+	// can't check for canmove here because it should be possible to assign rallypoint
+	// with a non-moving factory.
 	c.id=CMD_MOVE;
 	c.action="move";
 	c.type=CMDTYPE_ICON_MAP;
@@ -26,29 +29,35 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	c.tooltip="Move: Order ready built units to move to a position";
 	possibleCommands.push_back(c);
 
-	c.id=CMD_PATROL;
-	c.action="patrol";
-	c.type=CMDTYPE_ICON_MAP;
-	c.name="Patrol";
-	c.hotkey="p";
-	c.tooltip="Patrol: Order ready built units to patrol to one or more waypoints";
-	possibleCommands.push_back(c);
+	if (owner->unitDef->canPatrol) {
+		c.id=CMD_PATROL;
+		c.action="patrol";
+		c.type=CMDTYPE_ICON_MAP;
+		c.name="Patrol";
+		c.hotkey="p";
+		c.tooltip="Patrol: Order ready built units to patrol to one or more waypoints";
+		possibleCommands.push_back(c);
+	}
 
-	c.id = CMD_FIGHT;
-	c.action="fight";
-	c.type = CMDTYPE_ICON_MAP;
-	c.name = "Fight";
-	c.hotkey = "f";
-	c.tooltip = "Fight: Order ready built units to take action while moving to a position";
-	possibleCommands.push_back(c);
+	if (owner->unitDef->canFight) {
+		c.id = CMD_FIGHT;
+		c.action="fight";
+		c.type = CMDTYPE_ICON_MAP;
+		c.name = "Fight";
+		c.hotkey = "f";
+		c.tooltip = "Fight: Order ready built units to take action while moving to a position";
+		possibleCommands.push_back(c);
+	}
 
-	c.id=CMD_GUARD;
-	c.action="guard";
-	c.type=CMDTYPE_ICON_UNIT;
-	c.name="Guard";
-	c.hotkey="g";
-	c.tooltip="Guard: Order ready built units to guard another unit and attack units attacking it";
-	possibleCommands.push_back(c);
+	if (owner->unitDef->canGuard) {
+		c.id=CMD_GUARD;
+		c.action="guard";
+		c.type=CMDTYPE_ICON_UNIT;
+		c.name="Guard";
+		c.hotkey="g";
+		c.tooltip="Guard: Order ready built units to guard another unit and attack units attacking it";
+		possibleCommands.push_back(c);
+	}
 
 	CFactory* fac=(CFactory*)owner;
 
@@ -80,15 +89,16 @@ CFactoryCAI::~CFactoryCAI()
 
 }
 
-void CFactoryCAI::GiveCommand(Command& c)
+void CFactoryCAI::GiveCommand(const Command& c)
 {
-	if (c.id==CMD_SET_WANTED_MAX_SPEED) {
-	  return;
-	}
+	//move is always allowed for factories (passed to units it produces)
+	if (c.id == CMD_SET_WANTED_MAX_SPEED || (c.id != CMD_MOVE && !AllowedCommand(c)))
+		return;
+
 	map<int,BuildOption>::iterator boi;
 	if((boi=buildOptions.find(c.id))==buildOptions.end()){		//not a build order so que it to built units
 		if(nonQueingCommands.find(c.id)!=nonQueingCommands.end()){
-			CCommandAI::GiveCommand(c);
+			CCommandAI::GiveAllowedCommand(c);
 			return;
 		}
 
@@ -288,7 +298,7 @@ void CFactoryCAI::DrawCommands(void)
 * @brief Finds the queued command that would be canceled by the Command c
 * @return An iterator located at the command, or commandQue.end() if no such queued command exsists
 **/
-std::deque<Command>::iterator CFactoryCAI::GetCancelQueued(Command &c){
+std::deque<Command>::iterator CFactoryCAI::GetCancelQueued(const Command &c){
 	if(!newUnitCommands.empty()){
 		std::deque<Command>::iterator ci=newUnitCommands.end();
 		do{

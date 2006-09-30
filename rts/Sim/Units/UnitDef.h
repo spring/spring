@@ -153,9 +153,11 @@ struct UnitDef
 	bool noAutoFire;
 	bool canAttack;
 	bool canPatrol;
+	bool canFight;
 	bool canGuard;
 	bool canBuild;
 	bool canAssist;
+	bool canRepeat;
 
 	//aircraft stuff
 	float wingDrag;
@@ -277,7 +279,7 @@ struct BuildInfo
 	BuildInfo() { def=0; buildFacing=0; }
 	BuildInfo(const UnitDef *def, const float3& p, int facing) :
 		def(def), pos(p), buildFacing(facing) {}
-	BuildInfo(Command& c) { Parse(c); }
+	BuildInfo(const Command& c) { Parse(c); }
 	BuildInfo(const std::string& name, const float3& p, int facing);
 
 	int GetXSize() const { return (buildFacing&1)==0 ? def->xsize : def->ysize; }

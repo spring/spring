@@ -253,8 +253,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.reclaimable, "1", "UNITINFO\\reclaimable");
 	tdfparser.GetDef(ud.noAutoFire,"0","UNITINFO\\noautofire");
 	tdfparser.GetDef(ud.canAttack,"1","UNITINFO\\canattack");
+	tdfparser.GetDef(ud.canFight,"1","UNITINFO\\canfight");
 	tdfparser.GetDef(ud.canPatrol,"1","UNITINFO\\canpatrol");
 	tdfparser.GetDef(ud.canGuard,"1","UNITINFO\\canguard");
+	tdfparser.GetDef(ud.canRepeat,"1","UNITINFO\\canrepeat");
 
 	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
 	string x = "0";

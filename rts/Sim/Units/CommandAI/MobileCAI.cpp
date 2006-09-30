@@ -36,8 +36,8 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 {
 	lastUserGoal=owner->pos;
 	CommandDescription c;
-	if(owner->unitDef->canmove){
-		
+
+	if (owner->unitDef->canmove) {
 		c.id=CMD_MOVE;
 		c.action="move";
 		c.type=CMDTYPE_ICON_FRONT;
@@ -48,7 +48,6 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.params.clear();
 	}
 
-	
 	if(owner->unitDef->canPatrol){
 		c.id=CMD_PATROL;
 		c.action="patrol";
@@ -60,13 +59,15 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.params.clear();
 	}
 
-	c.id = CMD_FIGHT;
-	c.action="fight";
-	c.type = CMDTYPE_ICON_MAP;
-	c.name = "Fight";
-	c.hotkey = "f";
-	c.tooltip = "Fight: Order the unit to take action while moving to a position";
-	possibleCommands.push_back(c);
+	if (owner->unitDef->canFight) {
+		c.id = CMD_FIGHT;
+		c.action="fight";
+		c.type = CMDTYPE_ICON_MAP;
+		c.name = "Fight";
+		c.hotkey = "f";
+		c.tooltip = "Fight: Order the unit to take action while moving to a position";
+		possibleCommands.push_back(c);
+	}
 
 	if(owner->unitDef->canGuard){
 		c.id=CMD_GUARD;
@@ -103,9 +104,12 @@ CMobileCAI::~CMobileCAI()
 
 }
 
-void CMobileCAI::GiveCommand(Command &c)
+void CMobileCAI::GiveCommand(const Command &c)
 {
-	if(c.id==CMD_AUTOREPAIRLEVEL){
+	if (!AllowedCommand(c))
+		return;
+
+	if(owner->unitDef->canfly && c.id==CMD_AUTOREPAIRLEVEL){
 		if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
 			return;
 		if(c.params.empty())
@@ -136,7 +140,7 @@ void CMobileCAI::GiveCommand(Command &c)
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		tempOrder=false;
 	}
-	CCommandAI::GiveCommand(c);
+	CCommandAI::GiveAllowedCommand(c);
 }
 
 void CMobileCAI::SlowUpdate()
@@ -251,6 +255,7 @@ void CMobileCAI::SlowUpdate()
 		break;
 	}
 	case CMD_PATROL:{
+		assert(owner->unitDef->canPatrol);
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
 			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in mobilecai",
 				owner->unitDef->humanName.c_str());
@@ -272,6 +277,7 @@ void CMobileCAI::SlowUpdate()
 		return;
 	}
 	case CMD_FIGHT:{
+		assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 		if(tempOrder){
 			inCommand = true;
 			tempOrder = false;
@@ -297,7 +303,7 @@ void CMobileCAI::SlowUpdate()
 			SetGoal(pos,curPos);
 		}
 
-		if(owner->fireState==2){
+		if(owner->unitDef->canAttack && owner->fireState==2){
 			CUnit* enemy=helper->GetClosestEnemyUnit(
 				curPos, owner->maxRange+100*owner->moveState*owner->moveState, owner->allyteam);
 			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
@@ -336,6 +342,7 @@ void CMobileCAI::SlowUpdate()
 		}
 		//no break
 	case CMD_ATTACK:
+		assert(owner->unitDef->canAttack);
 		if(tempOrder && owner->moveState<2){		//limit how far away we fly
 			if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500+owner->maxRange){
 				StopMove();
@@ -410,9 +417,10 @@ void CMobileCAI::SlowUpdate()
 		}
 		break;
 	case CMD_GUARD:
+		assert(owner->unitDef->canGuard);
 		if(uh->units[int(c.params[0])]!=0){
 			CUnit* guarded=uh->units[int(c.params[0])];
-			if(guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum
+			if(owner->unitDef->canAttack && guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum
 			  && (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
 				Command nc;
 				nc.id=CMD_ATTACK;
@@ -571,7 +579,7 @@ void CMobileCAI::FinishCommand(void)
 
 void CMobileCAI::IdleCheck(void)
 {
-	if(owner->moveState && owner->fireState && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
+	if(owner->unitDef->canAttack && owner->moveState && owner->fireState && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
 		if(owner->lastAttacker && owner->lastAttack+100>gs->frameNum && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
 			float3 apos=owner->lastAttacker->pos;
 			float dist=apos.distance2D(owner->pos);
@@ -586,7 +594,7 @@ void CMobileCAI::IdleCheck(void)
 			}
 		}
 	}
-	if((gs->frameNum!=lastIdleCheck+16) && owner->moveState && owner->fireState==2 && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
+	if(owner->unitDef->canAttack && (gs->frameNum!=lastIdleCheck+16) && owner->moveState && owner->fireState==2 && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
 		if(!owner->unitDef->noAutoFire){
 			CUnit* u=helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
 			if(u && !(owner->unitDef->noChaseCategory & u->category)){

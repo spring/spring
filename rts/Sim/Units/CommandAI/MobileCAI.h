@@ -14,7 +14,7 @@ public:
 	void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
-	void GiveCommand(Command &c);
+	void GiveCommand(const Command &c);
 	void DrawCommands(void);
 	void BuggerOff(float3 pos, float radius);
 	void NonMoving(void);

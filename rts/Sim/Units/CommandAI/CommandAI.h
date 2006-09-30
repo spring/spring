@@ -22,7 +22,7 @@ public:
 	void DependentDied(CObject* o);
 	virtual int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	virtual void SlowUpdate();
-	virtual void GiveCommand(Command& c);
+	virtual void GiveCommand(const Command& c);
 	virtual vector<CommandDescription>& GetPossibleCommands();
 	virtual void DrawCommands(void);
 	virtual void FinishCommand(void);
@@ -32,9 +32,8 @@ public:
 	virtual bool WillCancelQueued(Command &c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
-	std::deque<Command>::iterator GetCancelQueued(Command &c);
-	std::vector<Command> GetOverlapQueued(Command &c);
-
+	std::deque<Command>::iterator GetCancelQueued(const Command &c);
+	std::vector<Command> GetOverlapQueued(const Command &c);
 
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
@@ -57,6 +56,10 @@ public:
 	bool repeatOrders;
 	int lastSelectedCommandPage;
 	bool unimportantMove;
+
+protected:
+	bool AllowedCommand(const Command &c);
+	void GiveAllowedCommand(const Command& c);
 };
 
 #endif // __COMMAND_AI_H__

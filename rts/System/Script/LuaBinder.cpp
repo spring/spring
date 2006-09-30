@@ -225,6 +225,7 @@ CLuaBinder::CLuaBinder(void)
 				value("WAIT", CMD_WAIT),
 				value("MOVE", CMD_MOVE),
 				value("PATROL", CMD_PATROL),
+				value("FIGHT", CMD_FIGHT),
 				value("ATTACK", CMD_ATTACK),
 				value("AREA_ATTACK", CMD_AREA_ATTACK),
 				value("GUARD", CMD_GUARD),
