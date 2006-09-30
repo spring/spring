@@ -71,9 +71,9 @@ CGuiHandler::CGuiHandler()
 	icons = new IconInfo[16];
 	iconsSize = 16;
 	iconsCount = 0;
-	
+
 	LoadConfig("ctrlpanel.txt");
-	
+
 	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
 }
 
@@ -102,7 +102,7 @@ void CGuiHandler::LoadDefaults()
 	textBorder  = 0.003f;
 	iconBorder  = 0.003f;
 	frameBorder = 0.003f;
-	
+
 	xSelectionPos = 0.018f;
 	ySelectionPos = 0.127f;
 
@@ -111,10 +111,10 @@ void CGuiHandler::LoadDefaults()
 
 	dropShadows = true;	
 	useOptionLEDs = true;
-	
+
 	selectGaps = true;
 	selectThrough = false;
-	
+
 	menuName = "";
 
 	outlineFont.Enable(false);
@@ -154,9 +154,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		}
 
 		vector<string> words = SimpleParser::Tokenize(line, 1);
-		
+
 		const string command = StringToLower(words[0]);
-		
+
 		if ((command == "dropshadows") && (words.size() > 1)) {
 			dropShadows = !!atoi(words[1].c_str());
 		}
@@ -232,12 +232,12 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	yIconSize   = max(0.010f, yIconSize);
 	iconBorder  = max(0.0f,   iconBorder);
 	frameBorder = max(0.0f,   frameBorder);
-	
+
 	xIconStep = xIconSize + (iconBorder * 2.0f);
 	yIconStep = yIconSize + (iconBorder * 2.0f);
 
 	iconsPerPage = (xIcons * yIcons);
-	
+
 	buttonBox.x1 = xPos;
 	buttonBox.x2 = xPos + (frameBorder * 2.0f) + (xIcons * xIconStep);
 	buttonBox.y1 = yPos;
@@ -297,9 +297,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	else {
 		xBpos = yBpos = -1.0f; // off screen
 	}
-	
+
 	ParseFillOrder(fillOrderStr);
-	
+
 	return true;
 }
 
@@ -329,7 +329,7 @@ void CGuiHandler::ParseFillOrder(const std::string& text)
 		slotSet.insert(slotNumber);
 		slotVec.push_back(slotNumber);
 	}
-	
+
 	fillOrder = slotVec;
 }
 
@@ -351,7 +351,7 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 	if ((endPtr == startPtr) || (column < 0) || (column >= xIcons)) {
 		return -1;
 	}
-	
+
 	return (row * xIcons) + column;
 }
 
@@ -451,7 +451,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	}
 	const bool samePage = validInCommand && (activePage == FindInCommandPage());
 	useSelectionPage = useSelectionPage && !samePage;
-	
+
 	// reset some of our state
 	inCommand = -1;
 	commands.clear();
@@ -491,7 +491,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			commands.push_back(*cdi);
 		}
 	}
-	
+
 	// assign extra icons for internal commands	
 	int extraIcons = 0;
 	if (deadIconSlot >= 0) { extraIcons++; }
@@ -501,7 +501,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	const int cmdCount        = (int)commands.size();
 	const int cmdIconsPerPage = (iconsPerPage - extraIcons);
 	const int pageCount       = ((cmdCount + (cmdIconsPerPage - 1)) / cmdIconsPerPage);
-	
+
 	const bool multiPage = (pageCount > 1);
 
 	const int prevPageCmd = cmdCount + 0;	
@@ -591,7 +591,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	if (layoutHandler == NULL) {
 		return false;
 	}
-	
+
 	// get the commands to process
 	CSelectedUnits::AvailableCommandsStruct ac;
 	ac = selectedUnits.GetAvailableCommands();
@@ -611,7 +611,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	vector<CIconLayoutHandler::ReStringPair> reTooltipCmds;
 	vector<CIconLayoutHandler::ReParamsPair> reParamsCmds;
 	map<int, int> iconMap;
-	
+
 	if (!layoutHandler->LayoutIcons(tmpXicons, tmpYicons, cmds,
 	                                removeCmds, customCmds,
 	                                onlyTextureCmds, reTextureCmds,
@@ -626,7 +626,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		                tmpXicons, tmpYicons);
 		return false;
 	}
-	
+
 	unsigned int i;
 	const int tmpIconsPerPage = (tmpXicons * tmpYicons);
 
@@ -678,7 +678,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			                index);
 		}
 	}
-	
+
 	// reNamed commands
 	for (i = 0; i < reNamedCmds.size(); i++) {
 		const int index = reNamedCmds[i].cmdIndex;
@@ -689,7 +689,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			                index);
 		}
 	}
-	
+
 	// reTooltip commands
 	for (i = 0; i < reTooltipCmds.size(); i++) {
 		const int index = reTooltipCmds[i].cmdIndex;
@@ -700,7 +700,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			                index);
 		}
 	}
-	
+
 	// reParams commands
 	for (i = 0; i < reParamsCmds.size(); i++) {
 		const int index = reParamsCmds[i].cmdIndex;
@@ -718,7 +718,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			                index);
 		}
 	}
-	
+
 	// build the iconList from the map
 	vector<int> iconList;
 	int nextPos = 0;
@@ -741,10 +741,10 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	const int iconListCount = (int)iconList.size();	
 	const int pageCount = ((iconListCount + (tmpIconsPerPage - 1)) / tmpIconsPerPage);
 	const int tmpIconsCount = (pageCount * tmpIconsPerPage);
-	
+
 	// resize the icon array if required
 	ResizeIconArray(tmpIconsCount);
-	
+
 	// build the iconList
 	for (int ii = 0; ii < tmpIconsCount; ii++) {
 		IconInfo& icon = icons[ii];
@@ -755,7 +755,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 			icon.commandsID = index;
 			cmds[index].onlyKey = false;
-			
+
 			const int slot = (ii % tmpIconsPerPage);
 			const float fx = (float)(slot % tmpXicons);
 			const float fy = (float)(slot / tmpXicons);
@@ -779,7 +779,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			icon.selection.y1 = icon.selection.y2 = -1.0f;
 		}
 	}
-	
+
 	commands = cmds;
 
 	xIcons       = tmpXicons;
@@ -798,7 +798,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	buttonBox.x2 = xPos + (frameBorder * 2.0f) + (xIcons * xIconStep);
 	buttonBox.y1 = yPos;
 	buttonBox.y2 = yPos + (frameBorder * 2.0f) + (yIcons * yIconStep);
-	
+
 	return true;
 }
 
@@ -844,7 +844,7 @@ void CGuiHandler::Update()
 			LoadConfig("ctrlpanel.txt");
 		}
 	}
-	
+
 	if (commandsChanged) {
 		defaultCmdMemory = -1;
 		SetShowingMetal(false);
@@ -858,7 +858,7 @@ void CGuiHandler::Update()
 	if (fadein > 0) {
 		fadein -= 5;
 	}
-	
+
 	SetCursorIcon();
 }
 
@@ -935,7 +935,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 	if ((iconCmd >= 0) && (iconCmd < commands.size())) {
 		SetShowingMetal(false);
 		lastKeySet.Reset();
-		
+
 		switch(commands[iconCmd].type){
 			case CMDTYPE_ICON:{
 				Command c;
@@ -1027,7 +1027,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 		selectedUnits.GiveCommand(c);
 		lastKeySet.Reset();
 	}
-	
+
 	FinishCommand(button);
 }
 
@@ -1137,7 +1137,7 @@ void CGuiHandler::RunCustomCommands(const vector<string>& cmds, bool rmb)
 		return; // recursion protection
 	}
 	depth++;
-	
+
 	for (int p = 0; p < (int)cmds.size(); p++) {
 		string copy = cmds[p];
 		ModGroup inMods;  // must match for the action to execute
@@ -1242,7 +1242,7 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 	if (iconsCount <= 0) {
 		return false;
 	}
-	
+
 	// only process the build options while building
 	// (conserve the keybinding space where we can)		
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
@@ -1467,16 +1467,16 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 			tmpActionOffset = 0;
 		}
 	}
-	
+
 	for (int ali = 0; ali < (int)al.size(); ++ali) {
 
 		const int actionIndex = (ali + tmpActionOffset) % (int)al.size();
 		const CKeyBindings::Action& action = al[actionIndex];
-		
+
 		if (ProcessLocalActions(action)) {
 			return true;
 		}
-		
+
 		// See if we have a positional icon command
 		int iconCmd = -1;
 		if (!action.extra.empty() && (action.command == "iconpos")) {
@@ -1491,7 +1491,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 			}
 
 			const int cmdType = commands[a].type;
-			
+
 			// set the activePage
 			if (!commands[a].onlyKey &&
 			    (((cmdType == CMDTYPE_ICON) && 
@@ -1507,7 +1507,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					}
 				}
 			}
-			
+
 			switch(cmdType) {
 				case CMDTYPE_ICON:{
 					Command c;
@@ -1641,7 +1641,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 			return true; // we used the command
 		}
 	}
-	
+
 	return false;
 }
 
@@ -2171,7 +2171,7 @@ bool CGuiHandler::BindNamedTexture(const std::string& texName)
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return false;
 	}
-	
+
 	// make the texture
 	GLuint texID;
 	glGenTextures(1, &texID);
@@ -2197,7 +2197,7 @@ bool CGuiHandler::BindNamedTexture(const std::string& texName)
 	}
 
 	textureMap[texName] = texID;
-	
+
 	return true;
 }
 
@@ -2307,7 +2307,7 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 	if (endPtr == startPtr) {
 		return false;
 	}
-	
+
 	float yscale;
 	if (endPtr[0] == ',') {
 		endPtr++; // setup for the texture name
@@ -2409,7 +2409,7 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text)
 	glTranslatef(xStart, yStart, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	font->glPrintColor("%s",text.c_str());
-	
+
 	glLoadIdentity();
 }
 
@@ -2507,13 +2507,13 @@ void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
 void CGuiHandler::DrawButtons()
 {
 	Update();
-	
+
 	if (iconsCount <= 0) {
 		return;
 	}
 
 	glPushAttrib(GL_ENABLE_BIT);
-	
+
   glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
@@ -2547,7 +2547,7 @@ void CGuiHandler::DrawButtons()
 		}
 		const CommandDescription& cmdDesc = commands[icon.commandsID];
 		const bool highlight = (mouseIcon == ii) || (icon.commandsID == inCommand);
-		
+
 		if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM)) {
 			DrawCustomButton(icon, highlight);
 		}
@@ -2566,19 +2566,20 @@ void CGuiHandler::DrawButtons()
 					UnitDef* ud = unitDefHandler->GetUnitByID(-cmdDesc.id);
 					if (ud != NULL) {
 						DrawUnitBuildIcon(icon, -cmdDesc.id);
-						// build count text
-						if (!cmdDesc.params.empty()) {
-							DrawSWtext(icon, cmdDesc.params[0]);
-						}
 						usedTexture = true;
 						onlyTexture = true;
 					}
 				}
 			}
-			
+
 			// highlight background before text is applied
 			if (highlight) {
 				DrawHilightQuad(icon);
+			}
+
+			// build count text
+			if ((cmdDesc.id < 0) && !cmdDesc.params.empty()) {
+				DrawSWtext(icon, cmdDesc.params[0]);
 			}
 
 			// draw arrows, or a frame for text
@@ -2653,9 +2654,9 @@ void CGuiHandler::DrawButtons()
 	}
 
 	DrawMenuName();
-	
+
 	DrawSelectionInfo();
-	
+
 	glPopAttrib();
 }
 
@@ -2733,7 +2734,7 @@ void CGuiHandler::DrawSelectionInfo()
 		else {
 			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
 			glScalef(xScale, yScale, 1.0f);
-			
+
 			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
 			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
 
@@ -2802,7 +2803,7 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 	const float x2 = icon.visual.x2;
 	const float y2 = icon.visual.y2;
 	const float yp = 1.0f / float(gu->screeny);
-	
+
 	for (int x = 0; x < pCount; x++) {
 		if (x != option) {
 			glColor4f(0.25f, 0.25f, 0.25f, 0.50f); // dark
@@ -2855,7 +2856,7 @@ void CGuiHandler::DrawMapStuff(void)
 				button=SDL_BUTTON_RIGHT;
 			}
 		}
-		
+
 		if(cc>=0 && cc<commands.size()){
 			switch(commands[cc].type){
 			case CMDTYPE_ICON_FRONT:
@@ -2900,11 +2901,11 @@ void CGuiHandler::DrawMapStuff(void)
 	glEnable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(cmdColors.SelectedLineWidth());
-	
+
 	// draw buildings we are about to build
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
-	
+
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 		if(dist>0){
 			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
@@ -2946,7 +2947,7 @@ void CGuiHandler::DrawMapStuff(void)
 
 					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
 											(GLenum)cmdColors.SelectedBlendDst());
-					
+
 					if(unitdef->weapons.size() > 0){	// draw weapon range
 						glColor4fv(cmdColors.rangeAttack);
 						glBegin(GL_LINE_STRIP);
@@ -3092,7 +3093,7 @@ void CGuiHandler::DrawMapStuff(void)
 			}
 		}
 	}
-	
+
 	glLineWidth(1.0f);
 }
 
