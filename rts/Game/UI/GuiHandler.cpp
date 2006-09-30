@@ -2532,15 +2532,17 @@ void CGuiHandler::DrawButtons()
 
 	// frame box
 	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
-	glColor4f(0.2f, 0.2f, 0.2f, alpha);
-	glBegin(GL_QUADS);
-	const GLfloat fx = 0.0f; //-.2f*(1-fadein/100.0f)+.2f;
-	glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
-	glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
-	glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
-	glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
-	glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
-	glEnd();
+	if (alpha > 0.0f) {
+		glColor4f(0.2f, 0.2f, 0.2f, alpha);
+		glBegin(GL_QUADS);
+		const GLfloat fx = 0.0f; //-.2f*(1-fadein/100.0f)+.2f;
+		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
+		glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
+		glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
+		glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
+		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
+		glEnd();
+	}
 
 	const int mouseIcon   = IconAtPos(mouse->lastx, mouse->lasty);
 	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
