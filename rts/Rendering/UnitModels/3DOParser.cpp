@@ -812,6 +812,7 @@ void LocalS3DOModel::GetEmitDirPos(int piecenum, float3 &pos, float3 &dir)
 		if(orig.vertices.size()==0)
 		{
 			pos = mat.GetPos()*invAxis;
+			dir = mat.Mul(float3(0,0,-1))*invAxis - pos;
 		}
 		else if(orig.vertices.size()==1)
 		{
@@ -835,6 +836,7 @@ void LocalS3DOModel::GetEmitDirPos(int piecenum, float3 &pos, float3 &dir)
 		if(orig.vertices.size()==0)
 		{
 			pos = mat.GetPos()*invAxis;
+			dir = mat.Mul(float3(0,0,-1))*invAxis - pos;
 		}
 		else if(orig.vertices.size()==1)
 		{
