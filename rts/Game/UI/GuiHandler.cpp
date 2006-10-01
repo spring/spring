@@ -2573,9 +2573,13 @@ void CGuiHandler::DrawButtons()
 			continue; // inactive icon
 		}
 		const CommandDescription& cmdDesc = commands[icon.commandsID];
-		const bool highlight = (mouseIcon == ii) || (icon.commandsID == inCommand);
+		const bool customCommand = (cmdDesc.id == CMD_INTERNAL) &&
+		                           (cmdDesc.type == CMDTYPE_CUSTOM);
+		const bool highlight = ((mouseIcon == ii) ||
+		                        (icon.commandsID == inCommand)) &&
+		                       (!customCommand || !cmdDesc.params.empty());
 
-		if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM)) {
+		if (customCommand) {
 			DrawCustomButton(icon, highlight);
 		}
 		else {
