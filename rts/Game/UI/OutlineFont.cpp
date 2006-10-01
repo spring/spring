@@ -36,7 +36,7 @@ void COutlineFont::print(float xps, float yps,
 	const float luminance = (color[0] * 0.299f) +
 	                        (color[1] * 0.587f) +
 	                        (color[2] * 0.114f);
-	if (luminance > 0.4f) {
+	if (luminance > 0.25f) {
 		glColor4f(0.25f, 0.25f, 0.25f, 0.8f);
 	} else {
 		glColor4f(0.85f, 0.85f, 0.85f, 0.8f);
