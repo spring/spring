@@ -45,7 +45,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip="Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
-	if(owner->unitDef->canAttack && (!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory")) {
+	if(owner->unitDef->canAttack && isAttackCapable()) {
 		c.id=CMD_ATTACK;
 		c.action="attack";
 		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
@@ -228,7 +228,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		return false;
 	if(c.id==CMD_MOVE && !owner->unitDef->canmove)
 		return false;
-	if(c.id==CMD_ATTACK && (!owner->unitDef->canAttack || (owner->unitDef->weapons.empty() && owner->unitDef->type!="Factory")))
+	if(c.id==CMD_ATTACK && !isAttackCapable())
 		return false;
 	if(c.id==CMD_PATROL && !owner->unitDef->canPatrol)
 		return false;
@@ -686,7 +686,7 @@ int CCommandAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
 		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
-			if (owner->unitDef->canAttack) {
+			if (owner->unitDef->canAttack && isAttackCapable()) {
 				return CMD_ATTACK;
 			}
 		}
@@ -830,6 +830,14 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 		}
 	}
 }
+
+
+bool CCommandAI::isAttackCapable() const
+{
+	const UnitDef* ud = owner->unitDef;
+	return (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory"));
+}
+
 
 /**
  * @brief gets the command that keeps the unit close to the path
