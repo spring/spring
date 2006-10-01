@@ -727,7 +727,8 @@ void CCommandAI::DependentDied(CObject *o)
 
 bool CCommandAI::isTrackable(const CUnit* unit) const
 {
-	return ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0);
+	return ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0) ||
+	       (unit->unitDef->speed <= 0.0f);
 }
   
 
