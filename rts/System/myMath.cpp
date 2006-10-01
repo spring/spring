@@ -54,7 +54,7 @@ float3 GetVectorFromHAndPExact(short int heading,short int pitch)
 	return ret;
 }
 
-float LinePointDist(float3 l1,float3 l2,float3 p)
+float LinePointDist(const float3& l1, const float3& l2, const float3& p)
 {
 	float3 dir(l2-l1);
 	float length=dir.Length();
@@ -70,6 +70,23 @@ float LinePointDist(float3 l1,float3 l2,float3 p)
 
 	float3 p2=p-dir*a;
 	return p2.distance(l1);
+}
+
+/**
+ * @brief calculate closest point on linepiece from l1 to l2
+ * Note, this clamps the returned point to a position between l1 and l2.
+ */
+float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
+{
+	float3 dir(l2-l1);
+	float3 pdir(p-l1);
+	float length = dir.Length();
+	if (fabs(length) < 1e-4f)
+		return l1;
+	float c = dir.dot(pdir) / length;
+	if (c < 0) c = 0;
+	if (c > length) c = length;
+	return l1 + dir * (c / length);
 }
 
 CMyMath dummyMathObject;

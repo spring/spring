@@ -24,7 +24,6 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 //	patrolTime(0),
 	goalPos(-1,-1,-1),
 	tempOrder(false),
-	patrolGoal(1,1,1),
 	lastBuggerOffTime(-200),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
@@ -292,7 +291,15 @@ void CMobileCAI::SlowUpdate()
 				commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
 			}
 		} else {
-			commandPos1 = curPos;
+			// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
+			// rotated (only shortened) if we reach this because the previous return
+			// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64)){'
+			// condition, but is actually updated correctly if you click somewhere
+			// outside the area close to the line (for a new command).
+			commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, curPos);
+			if ((curPos-commandPos1).SqLength2D()>(96*96)) {
+				commandPos1 = curPos;
+			}
 		}
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		if(!inCommand){
@@ -304,31 +311,27 @@ void CMobileCAI::SlowUpdate()
 		}
 
 		if(owner->unitDef->canAttack && owner->fireState==2){
+			float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, curPos);
 			CUnit* enemy=helper->GetClosestEnemyUnit(
-				curPos, owner->maxRange+100*owner->moveState*owner->moveState, owner->allyteam);
+				curPosOnLine, owner->maxRange+100*owner->moveState*owner->moveState, owner->allyteam);
 			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
-			  && !(owner->unitDef->noChaseCategory & enemy->category) && !owner->weapons.empty()){	//todo: make sure they dont stray to far from path
-				if(owner->moveState!=1 
-				  || LinePointDist(commandPos1,commandPos2,enemy->pos)
-				  < 300+max(owner->maxRange, (float)owner->losRadius)){
-					Command c2,c3;
-					c3 = GetReturnFight(c);
-					c2.id=CMD_ATTACK;
-					c2.options=c.options|INTERNAL_ORDER;
-					c2.params.push_back(enemy->id);
-					commandQue.push_front(c3);
-					commandQue.push_front(c2);
-					inCommand=false;
-					tempOrder=true;
-					if(lastPC!=gs->frameNum){	//avoid infinite loops
-						lastPC=gs->frameNum;
-						SlowUpdate();
-					}
-					return;
+						&& !(owner->unitDef->noChaseCategory & enemy->category) && !owner->weapons.empty()){
+				Command c2;
+				c2.id=CMD_ATTACK;
+				c2.options=c.options|INTERNAL_ORDER;
+				c2.params.push_back(enemy->id);
+				PushOrUpdateReturnFight();
+				commandQue.push_front(c2);
+				inCommand=false;
+				tempOrder=true;
+				if(lastPC!=gs->frameNum){	//avoid infinite loops
+					lastPC=gs->frameNum;
+					SlowUpdate();
 				}
+				return;
 			}
 		}
-		if((curPos-goalPos).SqLength2D()<4096 || owner->moveType->progressState==CMoveType::Failed){
+		if((curPos-goalPos).SqLength2D()<(64*64) || owner->moveType->progressState==CMoveType::Failed){
 			FinishCommand();
 		}
 		return;
@@ -621,35 +624,4 @@ void CMobileCAI::IdleCheck(void)
 	} else {
 		NonMoving();
 	}
-}
-
-/**
-* @brief gets the command that keeps the unit close to the path
-* @return a Fight Command with 6 arguments, the first three being where to return to (the current position of the
-*	unit), and the second being the location of the origional command.
-* @param c the command to return to
-**/
-Command CMobileCAI::GetReturnFight(Command c){
-	Command c3;
-	c3.id = CMD_FIGHT; //keep it from being pulled too far off the path
-	float3 pos = float3(c.params[0],c.params[1],c.params[2]);
-	const float3 &curPos = owner->pos;
-	float3 dir = pos-curPos;
-	dir.Normalize();
-	dir*=sqrtf(abs(1024+owner->xsize*owner->xsize+owner->ysize*owner->ysize));
-	dir+=curPos;
-	c3.params.push_back(dir.x);
-	c3.params.push_back(dir.y);
-	c3.params.push_back(dir.z);
-	if(c.params.size() >= 6){
-		c3.params.push_back(c.params[3]);
-		c3.params.push_back(c.params[4]);
-		c3.params.push_back(c.params[5]);
-	} else {
-		c3.params.push_back(c.params[0]);
-		c3.params.push_back(c.params[1]);
-		c3.params.push_back(c.params[2]);
-	}
-	c3.options = c.options|INTERNAL_ORDER;
-	return c3;
 }

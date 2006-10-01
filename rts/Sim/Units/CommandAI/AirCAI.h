@@ -23,7 +23,6 @@ public:
 	void StopMove();
 
 	float3 goalPos;
-	float3 patrolGoal;
 
 	float3 basePos;
 	float3 baseDir;
@@ -39,6 +38,11 @@ public:
 
 	float3 commandPos1;		//used to limit how far away stuff can fly from path
 	float3 commandPos2;
+
+protected:
+	void PushOrUpdateReturnFight() {
+		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
+	}
 };
 
 #endif // __AIR_CAI_H__

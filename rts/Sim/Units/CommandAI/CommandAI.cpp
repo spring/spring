@@ -19,6 +19,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "LoadSaveInterface.h"
 #include "LogOutput.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CCommandAI::CCommandAI(CUnit* owner)
@@ -827,5 +828,33 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 			}
 			file->lsFloat(c.params[b]);
 		}
+	}
+}
+
+/**
+ * @brief gets the command that keeps the unit close to the path
+ * @return a Fight Command with 6 arguments, the first three being where to return to (the current position of the
+ *	unit), and the second being the location of the origional command.
+ * @param c the command to return to
+ **/
+void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2){
+	float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
+	Command& c(commandQue.front());
+	assert(c.id == CMD_FIGHT && c.params.size() >= 3);
+	if (c.params.size() >= 6) {
+		c.params[0] = pos.x;
+		c.params[1] = pos.y;
+		c.params[2] = pos.z;
+	} else {
+		Command c2;
+		c2.id = CMD_FIGHT;
+		c2.params.push_back(pos.x);
+		c2.params.push_back(pos.y);
+		c2.params.push_back(pos.z);
+		c2.params.push_back(c.params[0]);
+		c2.params.push_back(c.params[1]);
+		c2.params.push_back(c.params[2]);
+		c2.options = c.options|INTERNAL_ORDER;
+		commandQue.push_front(c2);
 	}
 }

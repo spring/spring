@@ -381,85 +381,78 @@ void CAirCAI::SlowUpdate()
 			tempOrder=false;
 			inCommand=true;
 		}
+		if(c.params.size()<3){		//this shouldnt happen but anyway ...
+			logOutput.Print("Error: got fight cmd with less than 3 params on %s in AirCAI", owner->unitDef->humanName.c_str());
+			return;
+		}
+		if(c.params.size() >= 6){
+			if(!inCommand){
+				commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
+			}
+		} else {
+			// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
+			// rotated (only shortened) if we reach this because the previous return
+			// fight command finished by the 'if((curPos-pos).SqLength2D()<(127*127)){'
+			// condition, but is actually updated correctly if you click somewhere
+			// outside the area close to the line (for a new command).
+			commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, curPos);
+			if ((curPos-commandPos1).SqLength2D()>(150*150)) {
+				commandPos1 = curPos;
+			}
+		}
 		goalPos=float3(c.params[0],c.params[1],c.params[2]);
 		if(!inCommand){
+			inCommand = true;
 			commandPos2=goalPos;
-			inCommand=true;
-		}
-		commandPos1=curPos;
-		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			logOutput.Print("Error: got fight cmd with less than 3 params on %s in aircai",
-				owner->unitDef->humanName.c_str());
-			return;
 		}
 
 		// CMD_FIGHT is pretty useless if !canAttack but we try to honour the modders wishes anyway...
-		if (owner->unitDef->canAttack) {
+		if (owner->unitDef->canAttack && owner->fireState == 2 && owner->moveState != 0 && owner->maxRange > 0) {
+			float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos+owner->speed*10);
 			float testRad=1000*owner->moveState;
-			CUnit* enemy = helper->GetClosestEnemyAircraft(owner->pos+owner->speed*10,testRad,owner->allyteam);
-			if(owner->fireState==2 && owner->moveState!=0 && owner->maxRange>0){
-				if(myPlane->isFighter
-					&& enemy && !enemy->crashing
-					&& (owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 1000))
+			CUnit* enemy = helper->GetClosestEnemyAircraft(curPosOnLine,testRad,owner->allyteam);
+			if(myPlane->isFighter
+				&& enemy && !enemy->crashing
+				&& (owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 1000))
+			{
+				Command nc;
+				nc.id=CMD_ATTACK;
+				nc.params.push_back(enemy->id);
+				nc.options=c.options|INTERNAL_ORDER;
+				commandQue.push_front(nc);
+				tempOrder=true;
+				inCommand=false;
+				if(lastPC1!=gs->frameNum){	//avoid infinite loops
+					lastPC1=gs->frameNum;
+					SlowUpdate();
+				}
+				return;
+			} else {
+				float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos+owner->speed*20);
+				float testRad=500*owner->moveState;
+				enemy=helper->GetClosestEnemyUnit(curPosOnLine,testRad,owner->allyteam);
+				if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)  && !enemy->crashing
+					&& (myPlane->isFighter || !enemy->unitDef->canfly))
 				{
-					Command nc,c3;
-					c3.id = CMD_MOVE; //keep it from being pulled too far off the path
-					float3 dir = goalPos-curPos;
-					dir.Normalize();
-					dir*=sqrtf(1024+owner->xsize*owner->xsize+owner->ysize*owner->ysize);
-					dir+=curPos;
-					c3.params.push_back(dir.x);
-					c3.params.push_back(dir.y);
-					c3.params.push_back(dir.z);
-					c3.options = c.options|INTERNAL_ORDER;
+					Command nc;
 					nc.id=CMD_ATTACK;
 					nc.params.push_back(enemy->id);
 					nc.options=c.options|INTERNAL_ORDER;
+					PushOrUpdateReturnFight();
 					commandQue.push_front(nc);
 					tempOrder=true;
 					inCommand=false;
-					if(lastPC1!=gs->frameNum){	//avoid infinite loops
-						lastPC1=gs->frameNum;
+					if(lastPC2!=gs->frameNum){	//avoid infinite loops
+						lastPC2=gs->frameNum;
 						SlowUpdate();
 					}
 					return;
-				} else if(owner->maxRange>0){
-					float testRad=500*owner->moveState;
-					enemy=helper->GetClosestEnemyUnit(owner->pos+owner->speed*20,testRad,owner->allyteam);
-					if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)  && !enemy->crashing
-						&& (myPlane->isFighter || !enemy->unitDef->canfly))
-					{
-						if(owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 1000){
-							Command nc,c3;
-							c3.id = CMD_MOVE; //keep it from being pulled too far off the path
-							float3 dir = goalPos-curPos;
-							dir.Normalize();
-							dir*=sqrtf(1024+owner->xsize*owner->xsize+owner->ysize*owner->ysize);
-							dir+=curPos;
-							c3.params.push_back(dir.x);
-							c3.params.push_back(dir.y);
-							c3.params.push_back(dir.z);
-							c3.options = c.options|INTERNAL_ORDER;
-							nc.id=CMD_ATTACK;
-							nc.params.push_back(enemy->id);
-							nc.options=c.options|INTERNAL_ORDER;
-							commandQue.push_front(c3);
-							commandQue.push_front(nc);
-							tempOrder=true;
-							inCommand=false;
-							if(lastPC2!=gs->frameNum){	//avoid infinite loops
-								lastPC2=gs->frameNum;
-								SlowUpdate();
-							}
-							return;
-						}
-					}
 				}
 			}
 		}
 		myPlane->goalPos=goalPos;
 
-		if((owner->pos-goalPos).SqLength2D()<16000 || (owner->pos+owner->speed*8-goalPos).SqLength2D()<16000){
+		if((owner->pos-goalPos).SqLength2D()<(127*127) || (owner->pos+owner->speed*8-goalPos).SqLength2D()<(127*127)){
 			FinishCommand();
 		}
 		return;}

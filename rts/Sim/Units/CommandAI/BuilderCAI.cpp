@@ -458,7 +458,6 @@ void CBuilderCAI::SlowUpdate()
 		return;}
 	case CMD_PATROL:{
 		assert(owner->unitDef->canPatrol);
-		float3 curPos=owner->pos;
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
 			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
 				owner->unitDef->humanName.c_str());
@@ -485,7 +484,7 @@ void CBuilderCAI::SlowUpdate()
 			inCommand=true;
 		}
 		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
+			logOutput.Print("Error: got fight cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
 			return;
 		}
 		if(c.params.size() >= 6){
@@ -493,31 +492,36 @@ void CBuilderCAI::SlowUpdate()
 				commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
 			}
 		} else {
-			commandPos1 = curPos;
-		}
-		patrolGoal=float3(c.params[0],c.params[1],c.params[2]);
-		if(!inCommand){
-			inCommand = true;
-			commandPos2=patrolGoal;
-		}
-		if(!(patrolGoal==goalPos)){
-			SetGoal(patrolGoal,curPos);
-		}
-		if((owner->unitDef->canRepair || owner->unitDef->canAssist) && FindRepairTargetAndRepair(curPos,300*owner->moveState+fac->buildDistance-8,c.options,true)){
-			CUnit* target=uh->units[(int)commandQue.front().params[0]];
-			if(owner->moveState==2 || LinePointDist(commandPos1,commandPos2,target->pos) < 300){
-				tempOrder=true;
-				inCommand=false;
-				if(lastPC1!=gs->frameNum){	//avoid infinite loops
-					lastPC1=gs->frameNum;
-					SlowUpdate();
-				}
-				return;
-			} else {
-				commandQue.pop_front();
+			// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
+			// rotated (only shortened) if we reach this because the previous return
+			// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64)){'
+			// condition, but is actually updated correctly if you click somewhere
+			// outside the area close to the line (for a new command).
+			commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, curPos);
+			if ((curPos-commandPos1).SqLength2D()>(96*96)) {
+				commandPos1 = curPos;
 			}
 		}
-		if(owner->unitDef->canReclaim && FindReclaimableFeatureAndReclaim(owner->pos,300,c.options,false)){
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		if(!inCommand){
+			inCommand = true;
+			commandPos2=pos;
+		}
+		if(!(pos==goalPos)){
+			SetGoal(pos,curPos);
+		}
+		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, curPos);
+		if((owner->unitDef->canRepair || owner->unitDef->canAssist) && FindRepairTargetAndRepair(curPosOnLine,300*owner->moveState+fac->buildDistance-8,c.options,true)){
+			CUnit* target=uh->units[(int)commandQue.front().params[0]];
+			tempOrder=true;
+			inCommand=false;
+			if(lastPC1!=gs->frameNum){	//avoid infinite loops
+				lastPC1=gs->frameNum;
+				SlowUpdate();
+			}
+			return;
+		}
+		if(owner->unitDef->canReclaim && FindReclaimableFeatureAndReclaim(curPosOnLine,300,c.options,false)){
 			tempOrder=true;
 			inCommand=false;
 			if(lastPC2!=gs->frameNum){	//avoid infinite loops
@@ -526,7 +530,7 @@ void CBuilderCAI::SlowUpdate()
 			}
 			return;
 		}
-		if((curPos-patrolGoal).SqLength2D()<4096){
+		if((curPos-pos).SqLength2D()<(64*64)){
 			FinishCommand();
 			return;
 		}
@@ -597,7 +601,7 @@ void CBuilderCAI::DrawCommands(void)
 	}
 
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
-	
+
 	deque<Command>::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		switch(ci->id) {
@@ -819,7 +823,7 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsi
 	if(best){
 		Command c2;
 		if(!recAny){
-			commandQue.push_front(this->GetReturnFight(commandQue.front()));
+			PushOrUpdateReturnFight();
 		}
 		c2.options=options | INTERNAL_ORDER;
 		c2.id=CMD_RECLAIM;
@@ -875,16 +879,16 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius,unsigned ch
 				continue;
 			Command nc;
 			if(attackEnemy){
-				commandQue.push_front(this->GetReturnFight(this->commandQue.front()));
+				PushOrUpdateReturnFight();
 			}
 			nc.id=CMD_REPAIR;
 			nc.options=options | INTERNAL_ORDER;
 			nc.params.push_back((*ui)->id);
 			commandQue.push_front(nc);
 			return true;
-		} else if(owner->unitDef->canAttack || attackEnemy && owner->maxRange>0 && !gs->Ally(owner->allyteam,(*ui)->allyteam)){
+		} else if(attackEnemy && owner->unitDef->canAttack && owner->maxRange>0 && !gs->Ally(owner->allyteam,(*ui)->allyteam)){
 			Command nc;
-			commandQue.push_front(this->GetReturnFight(this->commandQue.front()));
+			PushOrUpdateReturnFight();
 			nc.id=CMD_ATTACK;
 			nc.options=options | INTERNAL_ORDER;
 			nc.params.push_back((*ui)->id);

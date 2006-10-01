@@ -21,10 +21,8 @@ public:
 	void FinishCommand(void);
 	void IdleCheck(void);
 	bool CanSetMaxSpeed() const { return true; }
-	Command GetReturnFight(Command c);
 
 	float3 goalPos;
-	float3 patrolGoal;
 	float3 lastUserGoal;
 
 	int lastIdleCheck;
@@ -42,6 +40,11 @@ public:
 
 	float3 commandPos1;			//used to avoid stuff in maneuvre mode moving to far away from patrol path
 	float3 commandPos2;
+
+protected:
+	void PushOrUpdateReturnFight() {
+		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
+	}
 };
 
 
