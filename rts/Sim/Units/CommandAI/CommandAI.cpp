@@ -641,8 +641,6 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c){
 
 int CCommandAI::UpdateTargetLostTimer(int unitid)
 {
-	Command& c=commandQue.front();
-
 	if (targetLostTimer)
 		--targetLostTimer;
 
