@@ -646,7 +646,7 @@ int CCommandAI::UpdateTargetLostTimer(int unitid)
 	if (targetLostTimer)
 		--targetLostTimer;
 
-	if (uh->units[unitid] && (uh->units[unitid]->losStatus[owner->allyteam] & (LOS_INRADAR | LOS_PREVLOS)))
+	if (uh->units[unitid] && (uh->units[unitid]->losStatus[owner->allyteam] & LOS_INRADAR))
 		targetLostTimer = TARGET_LOST_TIMER;
 
 	return targetLostTimer;
