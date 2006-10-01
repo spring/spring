@@ -60,6 +60,9 @@ struct LocalS3DOModel
 	CMatrix44f GetPieceMatrix(int piecenum);
 	float3 GetPieceDirection(int piecenum);
 	int GetPieceVertCount(int piecenum);
+
+	//helper function for emit-sfx, get position and direction for a specific piece
+	void GetEmitDirPos(int piecenum, float3 &pos, float3 &dir);
 };
 
 class C3DModelParser
