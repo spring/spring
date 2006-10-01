@@ -1,16 +1,17 @@
 #include "StdAfx.h"
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
-#include "Sim/Units/UnitTypes/Factory.h"
 #include "ExternalAI/Group.h"
+#include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Game/Team.h"
+#include "Sim/Units/UnitTypes/Factory.h"
 #include "mmgr.h"
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
@@ -271,8 +272,10 @@ void CFactoryCAI::DrawCommands(void)
 			}
 			case CMD_ATTACK:{
 				if(ci->params.size()==1){
-					if(uh->units[int(ci->params[0])]!=0){
-						const float3 endPos = uh->units[int(ci->params[0])]->pos;
+					const CUnit* unit = uh->units[int(ci->params[0])];
+					if((unit != NULL) && isTrackable(unit)) {
+						const float3 endPos =
+							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
@@ -282,8 +285,10 @@ void CFactoryCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_GUARD:{
-				if(uh->units[int(ci->params[0])]!=0){
-					const float3 endPos = uh->units[int(ci->params[0])]->pos;
+				const CUnit* unit = uh->units[int(ci->params[0])];
+				if((unit != NULL) && isTrackable(unit)) {
+					const float3 endPos =
+						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;

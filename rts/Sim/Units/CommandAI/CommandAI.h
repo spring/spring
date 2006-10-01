@@ -58,6 +58,7 @@ public:
 	bool unimportantMove;
 
 protected:
+	bool isTrackable(const CUnit* unit) const;
 	bool isAttackCapable() const;
 	bool AllowedCommand(const Command &c);
 	void GiveAllowedCommand(const Command& c);
@@ -68,5 +69,6 @@ private:
 	int targetLostTimer; // continously set to some non-zero value while target is in radar
 	                     // decremented every frame, command is canceled if it reaches 0
 };
+
 
 #endif // __COMMAND_AI_H__

@@ -590,7 +590,7 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 	return nearHit;
 }
 
-float3 CGameHelper::GetUnitErrorPos(CUnit* unit, int allyteam)
+float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 {
 	float3 pos=unit->midPos;
 	if(gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)){

@@ -725,6 +725,12 @@ void CCommandAI::DependentDied(CObject *o)
 }
 
 
+bool CCommandAI::isTrackable(const CUnit* unit) const
+{
+	return ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0);
+}
+  
+
 void CCommandAI::DrawCommands(void)
 {
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
@@ -739,9 +745,10 @@ void CCommandAI::DrawCommands(void)
 			case CMD_ATTACK:
 			case CMD_DGUN:{
 				if(ci->params.size()==1){
-					if(uh->units[int(ci->params[0])]!=0){
+					const CUnit* unit = uh->units[int(ci->params[0])];
+					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
-							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
