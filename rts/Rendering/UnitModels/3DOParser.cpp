@@ -792,6 +792,69 @@ int LocalS3DOModel::GetPieceVertCount(int piecenum)
 	}
 }
 
+void LocalS3DOModel::GetEmitDirPos(int piecenum, float3 &pos, float3 &dir)
+{
+	int p=scritoa[piecenum];
+
+	if(p==-1)
+		return;
+
+	CMatrix44f mat;
+	pieces[p].GetPiecePosIter(&mat);
+
+	//hm...
+	static const float3 invAxis(-1, 1, -1);
+	static const float3 invVertAxis(1, 1, -1);
+
+	if(pieces[p].original3do){
+		S3DO &orig = *pieces[p].original3do;
+
+		if(orig.vertices.size()==0)
+		{
+			pos = mat.GetPos()*invAxis;
+		}
+		else if(orig.vertices.size()==1)
+		{
+			pos = mat.GetPos()*invAxis;
+			dir = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis - pos;
+
+		}
+		else
+		{
+			float3 p1 = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis;
+
+			float3 p2 = mat.Mul(orig.vertices[1].pos*invVertAxis)*invAxis;
+
+			pos = p1;
+			dir = p2-p1;
+		}
+
+	} else {
+		SS3O &orig = *pieces[p].originals3o;
+
+		if(orig.vertices.size()==0)
+		{
+			pos = mat.GetPos()*invAxis;
+		}
+		else if(orig.vertices.size()==1)
+		{
+			pos = mat.GetPos()*invAxis;
+			dir = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis - pos;
+
+		}
+		else
+		{
+
+			float3 p1 = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis;
+
+			float3 p2 = mat.Mul(orig.vertices[1].pos*invVertAxis)*invAxis;
+
+			pos = p1;
+			dir = p2-p1;
+		}
+	}
+}
+
 //Only useful for special pieces used for emit-sfx
 float3 LocalS3DOModel::GetPieceDirection(int piecenum)
 {

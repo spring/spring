@@ -120,7 +120,6 @@ CMatrix44f CMatrix44f::Mul(const CMatrix44f& m2) const
 	return res;
 }
 
-//Only uses the 3x3 matrix :)
 float3 CMatrix44f::Mul(const float3& vect) const
 {
 /*	float3 res;
@@ -134,9 +133,13 @@ float3 CMatrix44f::Mul(const float3& vect) const
 
 	return res;
 /*/	const float v0(vect[0]), v1(vect[1]), v2(vect[2]);
-	return float3(	v0*m[0] + v1*m[1] + v2*m[2],
-					v0*m[4] + v1*m[5] + v2*m[6],
-					v0*m[8] + v1*m[9] + v2*m[10]);/**/
+	//return float3(	v0*m[0] + v1*m[1] + v2*m[2] + m[3],
+	//				v0*m[4] + v1*m[5] + v2*m[6] + m[7],
+	//				v0*m[8] + v1*m[9] + v2*m[10] + m[11]);/**/
+
+	return float3(	v0*m[0] + v1*m[4] + v2*m[8] + m[12],
+					v0*m[1] + v1*m[5] + v2*m[9] + m[13],
+					v0*m[2] + v1*m[6] + v2*m[10] + m[14]);/**/
 }
 
 void CMatrix44f::SetUpVector(float3& up)
@@ -180,4 +183,3 @@ void CMatrix44f::Rotate(float rad, float3& axis)
 
 	
 }
-

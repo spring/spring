@@ -541,7 +541,12 @@ void CCobInstance::EmitSfx(int type, int piece)
 		return;
 	}
 
-	float3 relPos = unit->localmodel->GetPiecePos(piece);
+	float3 relPos;
+	float3 relDir(0,1,0);
+	unit->localmodel->GetEmitDirPos(piece, relPos, relDir);
+	//relPos = unit->localmodel->GetPiecePos(piece);
+//float3 relPos = unit->localmodel->GetPiecePos(piece);
+
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 
 	float alpha = 0.3f+gu->usRandFloat()*0.2f;
@@ -566,13 +571,15 @@ void CCobInstance::EmitSfx(int type, int piece)
 	switch (type) {
 		case 4:
 		case 5:		{	//reverse wake
-			float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			//float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 3:			//wake 2, in TA it lives longer..
 		case 2:		{	//regular ship wake
-			float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			//float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
@@ -587,7 +594,8 @@ void CCobInstance::EmitSfx(int type, int piece)
 			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
 			break;
 		case 0:{		//vtol
-			float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			//relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * -fabs(relDir.y) + unit->rightdir * relDir.x;
 			CHeatCloudProjectile* hc=new CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
 			hc->size=3;
@@ -596,7 +604,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 			//logOutput.Print("Unknown sfx: %d", type);
 			if(type&1024)	//emit defined explosiongenerator
 			{
-				float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
+				//float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 				dir.Normalize();
 				unit->unitDef->sfxExplGens[type-1024]->Explosion(pos, 1, 1, unit, 0, 0, dir);
@@ -612,7 +620,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 				else	//more than 2 vertexes, fire the weapon at the direction of the piece
 				{
 					//this is very hackish and probably has a lot of side effects, but might be usefull for something
-					float3 relDir =-unit->localmodel->GetPieceDirection(piece);
+					//float3 relDir =-unit->localmodel->GetPieceDirection(piece);
 					float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 					dir.Normalize();
 
