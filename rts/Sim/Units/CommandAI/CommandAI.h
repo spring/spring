@@ -60,6 +60,7 @@ public:
 protected:
 	bool AllowedCommand(const Command &c);
 	void GiveAllowedCommand(const Command& c);
+	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 };
 
 #endif // __COMMAND_AI_H__
