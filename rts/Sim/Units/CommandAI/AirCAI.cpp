@@ -631,9 +631,10 @@ void CAirCAI::DrawCommands(void)
 			}
 			case CMD_ATTACK:{
 				if(ci->params.size()==1){
-					if(uh->units[int(ci->params[0])]!=0){
+					const CUnit* unit = uh->units[int(ci->params[0])];
+					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
-							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
@@ -651,8 +652,10 @@ void CAirCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_GUARD:{
-				if(uh->units[int(ci->params[0])]!=0){
-					const float3 endPos = uh->units[int(ci->params[0])]->pos;
+				const CUnit* unit = uh->units[int(ci->params[0])];
+				if((unit != NULL) && isTrackable(unit)) {
+					const float3 endPos =
+						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;

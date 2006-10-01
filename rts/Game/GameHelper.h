@@ -48,7 +48,10 @@ public:
 	void Update(void);
 
 	bool LineFeatureCol(const float3& start, const float3& dir,float length);
-	float3 GetUnitErrorPos(CUnit* unit, int allyteam);	//get the position of a unit + eventuall error due to lack of los
+
+	//get the position of a unit + eventuall error due to lack of los
+	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
+
 	CGame *game;
 
 protected:

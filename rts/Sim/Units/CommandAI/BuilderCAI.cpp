@@ -625,9 +625,10 @@ void CBuilderCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_GUARD: {
-				if (uh->units[int(ci->params[0])] != 0) {
+				const CUnit* unit = uh->units[int(ci->params[0])];
+				if((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos =
-						helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
@@ -642,11 +643,11 @@ void CBuilderCAI::DrawCommands(void)
 			}
 			case CMD_ATTACK:
 			case CMD_DGUN: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				if (ci->params.size() == 1) {
-					if (uh->units[int(ci->params[0])] != 0) {
+					const CUnit* unit = uh->units[int(ci->params[0])];
+					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
-						  helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+						  helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
@@ -667,14 +668,17 @@ void CBuilderCAI::DrawCommands(void)
 					lineDrawer.RestartSameColor();
 				} else {
 					int id = (int)ci->params[0];
-					if (id>=MAX_UNITS) {
-						if (featureHandler->features[id-MAX_UNITS]) {
-							const float3 endPos = featureHandler->features[id-MAX_UNITS]->midPos;
+					if (id >= MAX_UNITS) {
+						if (featureHandler->features[id - MAX_UNITS]) {
+							const float3 endPos =
+								featureHandler->features[id - MAX_UNITS]->midPos;
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					} else {
-						if (uh->units[id]!=0 && uh->units[id]!=owner) {
-							const float3 endPos = helper->GetUnitErrorPos(uh->units[id], owner->allyteam);
+						const CUnit* unit = uh->units[id];
+						if((unit != NULL) && (unit != owner) && isTrackable(unit)) {
+							const float3 endPos =
+								helper->GetUnitErrorPos(unit, owner->allyteam);
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					}
@@ -692,10 +696,10 @@ void CBuilderCAI::DrawCommands(void)
 					glSurfaceCircle(endPos, ci->params[3], 20);
 					lineDrawer.RestartSameColor();
 				} else {
-					int id = (int)ci->params[0];
-					if (uh->units[id] != 0) {
+					const CUnit* unit = uh->units[int(ci->params[0])];
+					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
-							helper->GetUnitErrorPos(uh->units[int(ci->params[0])], owner->allyteam);
+							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 					}
 				}

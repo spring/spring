@@ -362,9 +362,10 @@ void CTransportCAI::DrawCommands(void)
 			}
 			case CMD_ATTACK:{
 				if(ci->params.size()==1){
-					if(uh->units[int(ci->params[0])]!=0) {
+					const CUnit* unit = uh->units[int(ci->params[0])];
+					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
-							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
@@ -374,9 +375,10 @@ void CTransportCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_GUARD:{
-				if(uh->units[int(ci->params[0])]!=0) {
+				const CUnit* unit = uh->units[int(ci->params[0])];
+				if((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos =
-						helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
@@ -389,10 +391,10 @@ void CTransportCAI::DrawCommands(void)
 					glSurfaceCircle(endPos, ci->params[3], 20);
 					lineDrawer.RestartSameColor();
 				} else {
-					int id=(int)(ci->params[0]);
-					if(uh->units[id]!=0) {
+					const CUnit* unit = uh->units[int(ci->params[0])];
+					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
-							helper->GetUnitErrorPos(uh->units[int(ci->params[0])],owner->allyteam);
+							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.load);
 					}
 				}

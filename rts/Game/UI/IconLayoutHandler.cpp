@@ -749,6 +749,7 @@ enum UnitExtraParam {
 	UnitTeamId
 };
 
+
 static void PackUnitsSet(lua_State* L, const set<CUnit*>& unitSet,
                          UnitExtraParam extraParam)
 {
@@ -772,9 +773,9 @@ static void PackUnitsSet(lua_State* L, const set<CUnit*>& unitSet,
 			CUnit* unit = v[i];
 			switch (extraParam) {
 				case UnitGroupId: {
-					const int gID = (unit->group == NULL) ? -1 : unit->group->id;
+					const int groupID = (unit->group == NULL) ? -1 : unit->group->id;
 					lua_pushnumber(L, unit->id);
-					lua_pushnumber(L, gID);
+					lua_pushnumber(L, groupID);
 					break;
 				}
 				case UnitTeamId: {
@@ -784,7 +785,7 @@ static void PackUnitsSet(lua_State* L, const set<CUnit*>& unitSet,
 				}
 				default: { // UnitDefId
 					lua_pushnumber(L, unit->id);
-					lua_pushnumber(L, unit->unitDef->id); // convenience
+					lua_pushnumber(L, unit->unitDef->id);
 					break;
 				}
 			}
