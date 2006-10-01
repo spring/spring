@@ -22,7 +22,7 @@
 #include "myMath.h"
 #include "mmgr.h"
 
-#define TARGET_LOST_TIMER 25	// in calls to SlowUpdate() (approx. once every second)
+#define TARGET_LOST_TIMER 120	// in calls to SlowUpdate() (approx. once every second)
 
 CCommandAI::CCommandAI(CUnit* owner)
 :	lastUserCommand(-1000),
