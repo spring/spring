@@ -212,6 +212,14 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 	return possibleCommands;
 }
 
+
+bool CCommandAI::isAttackCapable() const
+{
+	const UnitDef* ud = owner->unitDef;
+	return (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory"));
+}
+
+
 bool CCommandAI::AllowedCommand(const Command& c)
 {
 	if(c.id==CMD_RESURRECT && !owner->unitDef->canResurrect)
@@ -829,13 +837,6 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 			file->lsFloat(c.params[b]);
 		}
 	}
-}
-
-
-bool CCommandAI::isAttackCapable() const
-{
-	const UnitDef* ud = owner->unitDef;
-	return (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory"));
 }
 
 
