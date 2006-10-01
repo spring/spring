@@ -381,7 +381,7 @@ void CMobileCAI::SlowUpdate()
 			}
 		}
 
-		if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[owner->allyteam] & LOS_INRADAR))){
+		if(targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
 			StopMove();		//cancel keeppointingto
 			FinishCommand();
 			break;
@@ -421,7 +421,7 @@ void CMobileCAI::SlowUpdate()
 		break;
 	case CMD_GUARD:
 		assert(owner->unitDef->canGuard);
-		if(uh->units[int(c.params[0])]!=0){
+		if(uh->units[int(c.params[0])]!=0 && UpdateTargetLostTimer(int(c.params[0]))){
 			CUnit* guarded=uh->units[int(c.params[0])];
 			if(owner->unitDef->canAttack && guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum
 			  && (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){

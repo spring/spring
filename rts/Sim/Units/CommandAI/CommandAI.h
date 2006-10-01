@@ -62,6 +62,11 @@ protected:
 	bool AllowedCommand(const Command &c);
 	void GiveAllowedCommand(const Command& c);
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
+	int UpdateTargetLostTimer(int unitid);
+
+private:
+	int targetLostTimer; // continously set to some non-zero value while target is in radar
+	                     // decremented every frame, command is canceled if it reaches 0
 };
 
 #endif // __COMMAND_AI_H__

@@ -227,7 +227,7 @@ void CBuilderCAI::SlowUpdate()
 					break;
 				}
 			}
-			if(unit && unit->health<unit->maxHealth && unit!=owner){
+			if(unit && unit->health<unit->maxHealth && unit!=owner && UpdateTargetLostTimer((int)c.params[0])){
 				if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
 					StopMove();
 					fac->SetRepairTarget(unit);
@@ -257,7 +257,7 @@ void CBuilderCAI::SlowUpdate()
 		assert(owner->unitDef->canCapture);
 		if(c.params.size()==1){		//capture unit
 			CUnit* unit=uh->units[(int)c.params[0]];
-			if(unit && unit->team!=owner->team){
+			if(unit && unit->team!=owner->team && UpdateTargetLostTimer((int)c.params[0])){
 				if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
 					StopMove();
 					fac->SetCaptureTarget(unit);
@@ -286,7 +286,7 @@ void CBuilderCAI::SlowUpdate()
 	case CMD_GUARD:{
 		assert(owner->unitDef->canGuard);
 		CUnit* guarded=uh->units[(int)c.params[0]];
-		if(guarded && guarded!=owner){
+		if(guarded && guarded!=owner && UpdateTargetLostTimer((int)c.params[0])){
 			if(CBuilder* b=dynamic_cast<CBuilder*>(guarded)){
 				if(b->terraforming){
 					if(fac->pos.distance2D(b->terraformCenter)<fac->buildDistance*0.8f+b->terraformRadius*0.7f){
@@ -369,7 +369,7 @@ void CBuilderCAI::SlowUpdate()
 
 			} else {							//reclaim unit
 				CUnit* unit=uh->units[id];
-				if(unit && unit!=owner && unit->unitDef->reclaimable && (unit->losStatus[owner->allyteam] & LOS_INRADAR)){
+				if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id)){
 					if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
 						StopMove();
 						owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
