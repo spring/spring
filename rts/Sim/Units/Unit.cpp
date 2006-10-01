@@ -666,7 +666,7 @@ void CUnit::Draw()
 			float start=model->miny;
 			glEnable(GL_CLIP_PLANE0);
 			glEnable(GL_CLIP_PLANE1);
-			//float col=fabs(128.0f-((gs->frameNum*4)&255))/255.0f+0.5f;
+			float col=fabs(128.0f-((gs->frameNum*4)&255))/255.0f+0.5f;
 			float3 fc;// fc frame color
 			if(gu->teamNanospray){
 				unsigned char* tcol=gs->Team(team)->color;
@@ -674,7 +674,7 @@ void CUnit::Draw()
 			}else{
 				fc = unitDef->nanoColor;
 			}
-			glColorf3(fc);
+			glColorf3(fc*col);
 
 			unitDrawer->UnitDrawingTexturesOff(model);
 			
@@ -687,7 +687,7 @@ void CUnit::Draw()
 			glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
 			if(buildProgress>0.33f){
-				glColorf3(fc*1.4f);
+				glColorf3(fc*(1.5f-col));
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-1)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);
 				double plane2[4]={0,1,0,-start-height*(buildProgress*3-2)};
