@@ -80,7 +80,7 @@ void CTransportCAI::SlowUpdate(void)
 				return;
 			}
 			CUnit* unit=uh->units[(int)c.params[0]];
-			if(unit && CanTransport(unit)){
+			if(unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))){
 				toBeTransportedUnitId=unit->id;
 				unit->toBeTransported=true;
 				if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass){

@@ -22,6 +22,8 @@
 #include "myMath.h"
 #include "mmgr.h"
 
+#define TARGET_LOST_TIMER 25	// in calls to SlowUpdate() (approx. once every second)
+
 CCommandAI::CCommandAI(CUnit* owner)
 :	lastUserCommand(-1000),
 	orderTarget(0),
@@ -33,7 +35,8 @@ CCommandAI::CCommandAI(CUnit* owner)
 	lastSelectedCommandPage(0),
 	repeatOrders(false),
 	lastFinishCommand(0),
-	unimportantMove(false)
+	unimportantMove(false),
+	targetLostTimer(TARGET_LOST_TIMER)
 {
 	owner->commandAI=this;
 	CommandDescription c;
@@ -636,6 +639,19 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c){
 	return v;
 }
 
+int CCommandAI::UpdateTargetLostTimer(int unitid)
+{
+	Command& c=commandQue.front();
+
+	if (targetLostTimer)
+		--targetLostTimer;
+
+	if (uh->units[unitid] && (uh->units[unitid]->losStatus[owner->allyteam] & (LOS_INRADAR | LOS_PREVLOS)))
+		targetLostTimer = TARGET_LOST_TIMER;
+
+	return targetLostTimer;
+}
+
 void CCommandAI::SlowUpdate()
 {
 	if(commandQue.empty())
@@ -657,7 +673,7 @@ void CCommandAI::SlowUpdate()
 	case CMD_DGUN:
 		assert(owner->unitDef->canAttack);
 		if(inCommand){
-			if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[owner->allyteam] & LOS_INRADAR))){
+			if(targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
 				FinishCommand();
 				break;
 			}

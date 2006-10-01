@@ -477,7 +477,7 @@ void CAirCAI::SlowUpdate()
 			}
 		}
 		if(inCommand){
-			if(targetDied || (c.params.size() == 1 && uh->units[int(c.params[0])] && !(uh->units[int(c.params[0])]->losStatus[owner->allyteam] & LOS_INRADAR))){
+			if(targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
 				FinishCommand();
 				break;
 			}
@@ -485,7 +485,7 @@ void CAirCAI::SlowUpdate()
 				owner->AttackUnit(0,true); 
 				FinishCommand();
 			  break;
-			}    
+			}
 			if(orderTarget && orderTarget->unitDef->canfly && orderTarget->crashing){
 				owner->SetUserTarget(0);
 				FinishCommand();
@@ -556,7 +556,7 @@ void CAirCAI::SlowUpdate()
 		break;}
 	case CMD_GUARD:
 		assert(owner->unitDef->canGuard);
-		if(uh->units[int(c.params[0])]!=0){
+		if(uh->units[int(c.params[0])]!=0 && UpdateTargetLostTimer(int(c.params[0]))) {
 			CUnit* guarded=uh->units[int(c.params[0])];
 			if(owner->unitDef->canAttack && guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum && owner->maxRange>0 && (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
 				Command nc;
