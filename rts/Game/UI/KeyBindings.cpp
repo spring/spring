@@ -83,10 +83,8 @@ defaultBindings[] = {
 	{ "Shift+[", "buildfacing inc"  },
 	{       "]", "buildfacing dec"  },
 	{ "Shift+]", "buildfacing dec"  },
-	{       "z", "buildspacing inc" },
-	{       "x", "buildspacing dec" },
-	{ "Shift+z", "buildspacing inc" },
-	{ "Shift+x", "buildspacing dec" },
+	{   "Any+z", "buildspacing inc" },
+	{   "Any+x", "buildspacing dec" },
 
 	{            "d", "dgun"        },
 	{      "Shift+d", "dgun"        },

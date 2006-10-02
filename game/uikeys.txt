@@ -212,10 +212,8 @@
 //  bind              Any+8  group8
 //  bind              Any+9  group9
 //
-//  bind                  z  buildspacing inc
-//  bind            Shift+z  buildspacing inc
-//  bind                  x  buildspacing dec
-//  bind            Shift+x  buildspacing dec
+//  bind              Any+z  buildspacing inc
+//  bind              Any+x  buildspacing dec
 //
 //  bind                  [  buildfacing inc
 //  bind            Shift+[  buildfacing inc
