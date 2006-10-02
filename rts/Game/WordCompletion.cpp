@@ -26,8 +26,10 @@ void CWordCompletion::Reset()
 	words["/clock"] = wp;
 	words["/cmdcolors"] = wp;
 	words["/ctrlpanel"] = wp;
+	words["/echo "] = wp;
 	words["/info"] = wp;
 	words["/gameinfo"] = wp;
+	words["/layout "] = wp;
 	words["/say "] = wp;
 	words["/shadows "] = wp;
 	words["/water "] = wp;
