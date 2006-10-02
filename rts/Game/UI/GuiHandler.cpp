@@ -1345,15 +1345,27 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 				LoadConfig("ctrlpanel.txt");
 			}
 		}
-	} else {
-		if (layoutHandler == NULL) {
+	}
+	else if (command == "disable") {
+		if (layoutHandler != NULL) {
+			delete layoutHandler;
+			layoutHandler = NULL;
+			LoadConfig("ctrlpanel.txt");
+			logOutput.Print("Disabled layout handler\n");
+		}
+	}
+	else {
+		if (layoutHandler != NULL) {
+			layoutHandler->ConfigCommand(command);
+		} else {
 			logOutput.Print("Loading \"ctrlpanel.lua\"\n");
 			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
 			if (layoutHandler == NULL) {
 				logOutput.Print("Loading failed\n");
+			} else {
+				layoutHandler->ConfigCommand(command);
 			}
 		}
-		layoutHandler->ConfigCommand(command);
 	}
 
 	LayoutIcons(false);
