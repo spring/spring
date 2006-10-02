@@ -18,6 +18,7 @@ public:
 
 	float3 color;
 	float3 oldDir;
+	float damageMul;
 };
 
 #endif

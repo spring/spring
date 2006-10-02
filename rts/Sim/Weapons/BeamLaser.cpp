@@ -75,7 +75,7 @@ void CBeamLaser::Init(void)
 	salvoDelay=0;
 	salvoSize=(int)(weaponDef->beamtime*30);
 	if (salvoSize <= 0) salvoSize = 1;
-	damages=damages*(1.0f/salvoSize);		//restate the damage from damage per salvo to damage per frame (shot)
+	damageMul = 1.0f/(float)salvoSize;		//multiply damage with this on each shot so the toal damage done is correct
 
 	CWeapon::Init();
 
@@ -145,5 +145,5 @@ void CBeamLaser::Fire(void)
 	}
 	float	intensity=1-(curLength)/(range*2);
 	if(curLength<maxLength)
-		helper->Explosion(hitPos,weaponDef->damages*intensity,areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner, true, 1.0f, false,weaponDef->explosionGenerator,hit,dir);
+		helper->Explosion(hitPos,weaponDef->damages*(intensity*damageMul),areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,owner, true, 1.0f, false,weaponDef->explosionGenerator,hit,dir);
 }
