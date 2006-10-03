@@ -13,7 +13,7 @@ if [ ! -x /usr/bin/svn ]; then
 fi
 
 version=$1
-svnbase=svn://svn.berlios.de/taspring-linux
+svnbase=https://taspring.clan-sy.com/svn/spring
 svnurl=$svnbase/tags/taspring_$version
 dir=taspring_$version
 tar=taspring_${version}_src.tar.bz2
