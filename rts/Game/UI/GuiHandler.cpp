@@ -2170,10 +2170,23 @@ bool CGuiHandler::BindNamedTexture(const std::string& texName)
 
 	// strip off the qualifiers
 	string filename = texName;
+	bool border = false;
+	bool clamped = false;
 	bool nearest = false;
-	if (filename.find(":n:") == 0) {
-		nearest = true;
-		filename = filename.substr(strlen(":n:"));
+	if (filename[0] == ':') {
+		int p;
+		for (p = 1; p < (int)filename.size(); p++) {
+			const char ch = filename[p];
+			if (ch == ':')      { break; }
+			else if (ch == 'b') { border = true;  }
+			else if (ch == 'c') { clamped = true; }
+			else if (ch == 'n') { nearest = true; }
+		}
+		if (p < (int)filename.size()) {
+			filename = filename.substr(p + 1);
+		} else {
+			filename.clear();
+		}
 	}
 
 	// get the image
@@ -2188,14 +2201,20 @@ bool CGuiHandler::BindNamedTexture(const std::string& texName)
 	GLuint texID;
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	if (clamped) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
 	if (nearest) {
+		if (border) {
+			GLfloat white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, white);
+		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		if (GLEW_ARB_texture_non_power_of_two) {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-			             bitmap.xsize, bitmap.ysize, 0,
+			             bitmap.xsize, bitmap.ysize, border ? 1 : 0,
 			             GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 		} else {
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,

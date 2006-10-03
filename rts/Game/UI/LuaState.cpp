@@ -93,6 +93,8 @@ void CLuaState::Init()
 
 bool CLuaState::LoadCode(const string& code, const string& debug)
 {
+	lua_pop(L, lua_gettop(L));
+
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
