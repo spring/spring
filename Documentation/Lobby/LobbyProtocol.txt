@@ -107,6 +107,8 @@
   will be ignored - client should resend LOGIN command once user has agreed to
   the agreement or disconnect from the server if user has rejected the agreement).
   <password> should be sent in encoded form (MD5 hash in base-64 form).
+  Note that when server is running in lan mode, you can specify any username and password
+  (password will be ignored, but you must send some string anyway - you mustn't ommit it!)
 
   * ACCEPTED username
   Sent by server to the client if login was successful.
@@ -416,6 +418,9 @@
   * CLIENTSTATUS username status
   Sent by server to all registered clients indicating that client's status changed.
   See MYSTATUS command for possible values of status parameter.
+  Note that client's status is considered 0 if not said otherwise (for example,
+  when you logon, server sends only statuses of those clients whose statuses differ
+  from 0, to save the bandwidth).
 
   * MYBATTLESTATUS battlestatus myteamcolor
   Sent by a client to the server telling him his status in the battle changed. 
@@ -436,7 +441,7 @@
   b28..b31 = undefined (reserved for future use)
   <myteamcolor> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
   where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
-  B = blue, G = green, R  = red).
+  B = blue, G = green, R = red).
 
   * CLIENTBATTLESTATUS username battlestatus teamcolor
   Sent by server to users participating in a battle when one of the clients changes his
@@ -471,11 +476,15 @@
   to <allyno>. Server will update client's battle status automatically. 
 
   * FORCETEAMCOLOR username color
-  Sent by founder of battle when he is trying to force some other clients' team color
+  Sent by founder of battle when he is trying to force some other client's team color
   to <color>. Server will update client's battle status automatically.
   <color> should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
   where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
   B = blue, G = green, R  = red).
+
+  * FORCESPECTATORMODE username
+  Sent by founder of battle when he is trying to force some other client's mode
+  to spectator. Server will update client's battle status automatically.
 
   * DISABLEUNITS unitname1 unitname2 ...
   - Sent by founder of the battle to server telling him he disabled one or more units.
@@ -545,6 +554,8 @@
   B = blue, G = green, R  = red).
 
   * ADDSTARTRECT allyno left top right bottom
+  "left", "top", "right" and "bottom" refer to a virtual rectangle that is 200x200 in size,
+  where coordinates should be in interval [0, 200].
   - Sent by host of the battle adding a start rectangle for allyno. See client implementation
     and Spring docs for more info on this one.
   - Sent by server to clients participating in a battle (except for the host).
