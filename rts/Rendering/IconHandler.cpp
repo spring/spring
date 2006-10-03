@@ -109,6 +109,15 @@ unsigned int *CIconHandler::GetStandardTexture()
 		CBitmap standardIcon(si,128,128);
 		standardTexture=standardIcon.CreateTexture(false);
 		standardTextureGenerated=true;
+
+		glBindTexture(GL_TEXTURE_2D, standardTexture);
+		if (GLEW_EXT_texture_edge_clamp) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		}
 	}
 	return &standardTexture;
 }
