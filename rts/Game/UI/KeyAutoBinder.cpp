@@ -71,6 +71,8 @@ bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 	if (L == NULL) {
 		return false;
 	}
+	lua_pop(L, lua_gettop(L));
+
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
@@ -146,6 +148,7 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	if (L == NULL) {
 		return false;
 	}
+	lua_pop(L, lua_gettop(L));
 
 	const string reqCall = MakeRequirementCall(requirements);
 	const string sortCall = MakeSortCriteriaCall(sortCriteria);

@@ -166,6 +166,8 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 bool CIconLayoutHandler::LoadCode(lua_State* L,
                                   const string& code, const string& debug)
 {
+  lua_pop(L, lua_gettop(L));
+
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
@@ -190,8 +192,8 @@ bool CIconLayoutHandler::ConfigCommand(const string& command)
 	if (L == NULL) {
 		return false;
 	}
-
 	lua_pop(L, lua_gettop(L));
+	
 	lua_getglobal(L, "ConfigureLayout");
 	lua_pushstring(L, command.c_str());
 	const int error = lua_pcall(L, 1, 0, 0);
@@ -214,7 +216,6 @@ bool CIconLayoutHandler::UpdateLayout(bool& forceLayout,
 	if (L == NULL) {
 		return false;
 	}
-
 	lua_pop(L, lua_gettop(L));
 	
 	lua_getglobal(L, "UpdateLayout");
@@ -257,7 +258,8 @@ bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
 	if (L == NULL) {
 		return false;
 	}
-	
+	lua_pop(L, lua_gettop(L));
+
 	customCmds.clear();
 	removeCmds.clear();
 	reTextureCmds.clear();
@@ -266,8 +268,6 @@ bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
 	onlyTextureCmds.clear();
 	iconList.clear();
 	menuName = "";
-
-	lua_pop(L, lua_gettop(L));
 
 	lua_getglobal(L, "LayoutIcons");
 	lua_pushnumber(L, xIcons);
