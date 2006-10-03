@@ -34,7 +34,7 @@ CIconHandler::CIconHandler()
 			std::string bitmapLocation=tdfparser.SGetValueDef("", "icontypes\\" + *it + "\\bitmap");
 			unsigned int texture;
 			if(bitmap.Load(bitmapLocation)){
-				texture = bitmap.CreateTexture(true);
+				texture = bitmap.CreateTexture(false);
 			} else {
 				texture = *GetStandardTexture();
 			}
@@ -99,7 +99,7 @@ unsigned int *CIconHandler::GetStandardTexture()
 			}
 		}
 		CBitmap standardIcon(si,128,128);
-		standardTexture=standardIcon.CreateTexture(true);
+		standardTexture=standardIcon.CreateTexture(false);
 		standardTextureGenerated=true;
 	}
 	return &standardTexture;
