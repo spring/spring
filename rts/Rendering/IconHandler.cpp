@@ -34,7 +34,10 @@ CIconHandler::CIconHandler()
 			std::string bitmapLocation=tdfparser.SGetValueDef("", "icontypes\\" + *it + "\\bitmap");
 			unsigned int texture;
 			if(bitmap.Load(bitmapLocation)){
-				texture = bitmap.CreateTexture(false);
+				texture = bitmap.CreateTexture(true);
+				glBindTexture(GL_TEXTURE_2D, texture);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			} else {
 				texture = *GetStandardTexture();
 			}
