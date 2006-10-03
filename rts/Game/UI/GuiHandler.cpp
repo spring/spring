@@ -1302,22 +1302,6 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		logOutput.Print("commands.size() = %i\n", commands.size());
 		return true;
 	}
-	else if (action.command == "nextmenu") {
-		activePage++;
-		if (activePage > maxPage) {
-			activePage = 0;
-		}
-		selectedUnits.SetCommandPage(activePage);
-		return true;
-	}
-	else if (action.command == "prevmenu") {
-		activePage--;
-		if (activePage < 0) {
-			activePage = maxPage;
-		}
-		selectedUnits.SetCommandPage(activePage);
-		return true;
-	}
 	else if (action.command == "layout") {
 		RunLayoutCommand(action.extra);
 		return true;
