@@ -1494,7 +1494,6 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 			       ((commands[a].id < 0) ||
 			        (commands[a].id == CMD_STOCKPILE))) ||
 			     (cmdType == CMDTYPE_ICON_MODE) ||
-			     (cmdType == CMDTYPE_COMBO_BOX) ||
 			     (cmdType == CMDTYPE_ICON_BUILDING))) {
 				for (int ii = 0; ii < iconsCount; ii++) {
 					if (icons[ii].commandsID == a) {
