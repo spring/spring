@@ -19,6 +19,7 @@ error: ISO C++ says that these are ambiguous, even though the worst conversion
 note: candidate 1: operator==(int, int) <built-in>
 note: candidate 2: bool operator==(T, SyncedPrimitive) [with T = short unsigned int]
 */
+#ifdef UPCAST_USE_64_BIT_TYPES
 #define FOR_EACH_PRIMITIVE_TYPE \
 	DO(signed char) \
 	DO(signed short) \
@@ -34,6 +35,21 @@ note: candidate 2: bool operator==(T, SyncedPrimitive) [with T = short unsigned 
 	DO(double) \
 	DO(long double) \
 	DO(bool)
+#else // UPCAST_USE_64_BIT_TYPES
+#define FOR_EACH_PRIMITIVE_TYPE \
+	DO(signed char) \
+	DO(signed short) \
+	DO(signed int) \
+	DO(signed long) \
+	DO(unsigned char) \
+	DO(unsigned short) \
+	DO(unsigned int) \
+	DO(unsigned long) \
+	DO(float) \
+	DO(double) \
+	DO(long double) \
+	DO(bool)
+#endif // !UPCAST_USE_64_BIT_TYPES
 
 /** \p SyncedPrimitive class. Variables of this type are automagically
 downcasted to their value_type, preventing them to be implicitly used for
@@ -150,18 +166,23 @@ typedef SyncedPrimitive<   signed char  > SyncedSchar;
 typedef SyncedPrimitive<   signed short > SyncedSshort;
 typedef SyncedPrimitive<   signed int   > SyncedSint;
 typedef SyncedPrimitive<   signed long  > SyncedSlong;
-typedef SyncedPrimitive<         Sint64 > SyncedSint64;
 typedef SyncedPrimitive< unsigned char  > SyncedUchar;
 typedef SyncedPrimitive< unsigned short > SyncedUshort;
 typedef SyncedPrimitive< unsigned int   > SyncedUint;
 typedef SyncedPrimitive< unsigned long  > SyncedUlong;
-typedef SyncedPrimitive<         Uint64 > SyncedUint64;
 typedef SyncedPrimitive<          float > SyncedFloat;
 typedef SyncedPrimitive<         double > SyncedDouble;
 typedef SyncedPrimitive<    long double > SyncedLongDouble;
 
+#ifdef UPCAST_USE_64_BIT_TYPES
+typedef SyncedPrimitive<         Sint64 > SyncedSint64;
+typedef SyncedPrimitive<         Uint64 > SyncedUint64;
+#endif // UPCAST_USE_64_BIT_TYPES
+
 #else // SYNCDEBUG
 
+// 64 bit types are missing here because they made AIs depend on SDL
+// (SDL_types.h specifically)
 typedef          bool  SyncedBool;
 typedef   signed char  SyncedSchar;
 typedef   signed short SyncedSshort;
@@ -175,6 +196,6 @@ typedef          float SyncedFloat;
 typedef         double SyncedDouble;
 typedef    long double SyncedLongDouble;
 
-#endif // SYNCDEBUG
+#endif // !SYNCDEBUG
 
 #endif // SYNCEDPRIMITIVE_H
