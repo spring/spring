@@ -341,7 +341,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 		weapon=new CBombDropper(owner,false);
 	} else if(weapondef->type=="Shield"){
 		weapon=new CPlasmaRepulser(owner);
-	} else if(weapondef->type=="flame"){
+	} else if(weapondef->type=="Flame"){
 		weapon=new CFlameThrower(owner);
 	} else if(weapondef->type=="MissileLauncher"){
 		weapon=new CMissileLauncher(owner);
