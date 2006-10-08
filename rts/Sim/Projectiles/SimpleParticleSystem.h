@@ -18,14 +18,17 @@ public:
 	virtual void Init(const float3& explosionPos, CUnit *owner);
 
 	float3 emitVector;
-	float3 emitSpread;
 	float3 emitMul;
 	float3 gravity;
 	float particleSpeed;
 	float particleSpeedSpread;
 
+	float emitRot;
+	float emitRotSpread;
+
 	AtlasedTexture *texture;
 	CColorMap *colorMap;
+	bool directional;
 
 	float particleLife;
 	float particleLifeSpread;
@@ -38,14 +41,14 @@ public:
 	struct Particle
 	{
         float3 pos;
-		float3 speed;
-		float size;
 		float life;
+		float3 speed;
 		float decayrate;
+		float size;
 	};
 
 protected:
-	Particle *particles;
+	 Particle *particles;
 };
 
 #endif

@@ -159,7 +159,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		else if(rendertype == 4 && color == 2)
 			weaponDefs[id].type = "EmgCannon";
 		else if(rendertype == 5)
-			weaponDefs[id].type = "flame";
+			weaponDefs[id].type = "Flame";
 	//	else if(rendertype == 1)
 	//		weaponDefs[id].type = "MissileLauncher";
 		else
@@ -167,6 +167,11 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	}
 	else
 		weaponDefs[id].type = "Cannon";
+
+	std::string ttype;
+	sunparser->GetDef(ttype, "", weaponname + "\\WeaponType");
+	if(ttype!="")
+		weaponDefs[id].type = ttype;
 
 //	logOutput.Print("%s as %s",weaponname.c_str(),weaponDefs[id].type.c_str());
 
@@ -363,7 +368,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 		weaponDefs[id].visuals.texture1 = &ph->circularthingytex;
 	} else if(weaponDefs[id].type=="Shield"){
 		weaponDefs[id].visuals.texture1 = &ph->perlintex;
-	} else if(weaponDefs[id].type=="flame"){
+	} else if(weaponDefs[id].type=="Flame"){
 		//CFlameProjectile
 		weaponDefs[id].visuals.texture1 = &ph->flametex;
 		sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");

@@ -380,7 +380,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	else if (dynamic_cast<creg::BasicType*>(type)) {
 		creg::BasicType *bt = (creg::BasicType*)type;
 
-		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar)
+		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar && bt->id != creg::crBool)
 		{
 			throw content_error("Projectile properties other than int, float and uchar, are not supported (" + script + ")");
 			return;
@@ -407,6 +407,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 		switch (bt->id) {
 			case creg::crInt: code.push_back (OP_STOREI); break;
+			case creg::crBool: code.push_back (OP_STOREI); break;
 			case creg::crFloat: code.push_back (OP_STOREF); break;
 			case creg::crUChar: code.push_back (OP_STOREC); break;
 		}
