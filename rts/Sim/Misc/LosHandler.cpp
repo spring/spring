@@ -573,6 +573,10 @@ void CLosHandler::LosAddAir(LosInstance* instance)
 	int ey=min(airSizeY-1,by+instance->airLosSize);
 
 	int rr=instance->airLosSize*instance->airLosSize;
+
+	if (instance->allyteam < 0)
+		return;
+
 	for(int y=sy;y<=ey;++y){
 		int rrx=rr-(by-y)*(by-y);
 		for(int x=sx;x<=ex;++x){

@@ -1553,34 +1553,34 @@
 				<File
 					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.h">
 				</File>
-			</Filter>
-			<Filter
-				Name="MoveMath"
-				Filter="">
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.h">
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h">
-				</File>
+				<Filter
+					Name="MoveMath"
+					Filter="">
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\GroundMoveMath.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\HoverMoveMath.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\MoveMath.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\MoveTypes\MoveMath\ShipMoveMath.h">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Misc"
