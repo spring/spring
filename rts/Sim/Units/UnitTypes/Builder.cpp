@@ -201,7 +201,7 @@ void CBuilder::Update()
 			{
 				// This corpse has been reclaimed a little, need to restore the resources
 				// before we can let the player resurrect it.
-				curReclaim->AddBuildPower(buildSpeed,this);
+				curResurrect->AddBuildPower(buildSpeed,this);
 			}
 			else
 			{
