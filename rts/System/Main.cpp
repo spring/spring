@@ -171,13 +171,6 @@ protected:
 	int screenHeight;
 
 	/**
-	 * @brief active
-	 * 
-	 * Whether game is active
-	 */
-	bool active;
-
-	/**
 	 * @brief FSAA
 	 * 
 	 * Level of fullscreen anti-aliasing
@@ -206,7 +199,6 @@ SpringApp::SpringApp ()
 	screenWidth = screenHeight = 0;
 	keys = 0;
 
-	active = true;
 	fullscreen = true;
 	FSAA = false;
 }
@@ -295,6 +287,11 @@ bool SpringApp::Initialize ()
 	gs=new CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
+
+	if (cmdline->result("minimise")) {
+		gu->active = false;
+		SDL_WM_IconifyWindow();
+	}
 
 	// Enable auto quit?
 	int quit_time;
@@ -464,9 +461,6 @@ bool SpringApp::SetSDLVideoMode ()
 	}
 
 	SetVSync();
-
-	if (cmdline->result("minimise"))
-		SDL_WM_IconifyWindow();
 
 	// there must be a way to see if this is necessary, compare old/new context pointers?
 	if (!!configHandler.GetInt("FixAltTab", 0)) {
@@ -882,7 +876,7 @@ int SpringApp::Run (int argc, char *argv[])
 		if (globalQuit) 
 			break;
 	
-		if (!Update() && active)
+		if (!Update())
 			break;
 	}
 	ENTER_MIXED;
