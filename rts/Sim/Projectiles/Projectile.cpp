@@ -56,7 +56,8 @@ CProjectile::CProjectile(const float3& pos,const float3& speed,CUnit* owner)
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
-	s3domodel(0)
+	s3domodel(0),
+	collisionFlags(0)
 {
 	SetRadius(1.7f);
 	ph->AddProjectile(this);
