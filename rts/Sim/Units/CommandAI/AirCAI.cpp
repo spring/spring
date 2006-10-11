@@ -556,7 +556,7 @@ void CAirCAI::SlowUpdate()
 		break;}
 	case CMD_GUARD:
 		assert(owner->unitDef->canGuard);
-		if(uh->units[int(c.params[0])]!=0 && UpdateTargetLostTimer(int(c.params[0]))) {
+		if (int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL && UpdateTargetLostTimer(int(c.params[0]))) {
 			CUnit* guarded=uh->units[int(c.params[0])];
 			if(owner->unitDef->canAttack && guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum && owner->maxRange>0 && (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
 				Command nc;
