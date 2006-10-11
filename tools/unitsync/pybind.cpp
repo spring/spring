@@ -216,7 +216,7 @@ static PyObject *unitsync_GetArchiveChecksum(PyObject *self, PyObject *args)
 	const char* arname;
 	if (!PyArg_ParseTuple(args, "s", &arname))
 		return NULL;
-	return Py_BuildValue("i", GetArchiveChecksum(arname));
+	return Py_BuildValue("I", GetArchiveChecksum(arname));
 }
 
 static PyObject *unitsync_GetMapCount(PyObject *self, PyObject *args)
@@ -352,7 +352,7 @@ static PyObject *unitsync_GetMapChecksum(PyObject *self, PyObject *args)
 	int index;
 	if (!PyArg_ParseTuple(args, "i", &index))
 		return NULL;
-	return Py_BuildValue("i", GetMapChecksum(index));
+	return Py_BuildValue("I", GetMapChecksum(index));
 }
 
 static PyObject *unitsync_GetPrimaryModCount(PyObject *self, PyObject *args)
@@ -407,7 +407,7 @@ static PyObject *unitsync_GetPrimaryModChecksum(PyObject *self, PyObject *args)
 	int index;
 	if (!PyArg_ParseTuple(args, "i", &index))
 		return NULL;
-	return Py_BuildValue("i", GetPrimaryModChecksum(index));
+	return Py_BuildValue("I", GetPrimaryModChecksum(index));
 }
 
 static PyObject *unitsync_GetSideCount(PyObject *self, PyObject *args)
