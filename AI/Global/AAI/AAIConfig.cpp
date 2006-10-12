@@ -1,7 +1,14 @@
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
+
 #include "AAIConfig.h"
-
 #include "AAI.h"
-
 
 AAIConfig::AAIConfig(void)
 {
@@ -31,8 +38,10 @@ AAIConfig::AAIConfig(void)
 	MIN_ASSISTANCE_BUILDSPEED = 20;
 	MAX_BASE_SIZE = 9;
 	SCOUT_SPEED = 95.0;
-	MOBILE_ARTY_RANGE = 900.0;
-	STATIONARY_ARTY_RANGE = 1500;
+	GROUND_ARTY_RANGE = 1000.0;
+	SEA_ARTY_RANGE = 1300.0;
+	HOVER_ARTY_RANGE = 1000.0;
+	STATIONARY_ARTY_RANGE = 2000;
 	AIR_DEFENCE = 8;
 	MIN_ENERGY_STORAGE = 500;
 	MIN_METAL_STORAGE = 100;
@@ -44,7 +53,7 @@ AAIConfig::AAIConfig(void)
 	FAST_UNITS_RATE = 5;
 	METAL_ENERGY_RATIO = 25;
 	MAX_DEFENCES = 12;
-	MIN_SECTOR_THREAT = 0.5;
+	MIN_SECTOR_THREAT = 9;
 	MAX_STAT_ARTY = 3;
 	MAX_STORAGE = 6;
 	MAX_AIR_BASE = 1;
@@ -57,8 +66,9 @@ AAIConfig::AAIConfig(void)
 	MIN_FACTORIES_FOR_STORAGE = 2;
 	MIN_FACTORIES_FOR_RADAR_JAMMER = 2;
 	MIN_AIR_SUPPORT_EFFICIENCY = 2.5;
-	UNIT_SPEED_SUBGROUPS = 4;
+	UNIT_SPEED_SUBGROUPS = 3;
 	MIN_SUBMARINE_WATERLINE = 15;
+	MAX_ATTACKS = 5;
 
 	MAX_COST_LIGHT_ASSAULT = 0.025;
 	MAX_COST_MEDIUM_ASSAULT = 0.13;
@@ -76,6 +86,8 @@ AAIConfig::AAIConfig(void)
 	SCOUT_UPDATE_FREQUENCY = 127;
 	WATER_MAP_RATIO = 0.8;
 	LAND_WATER_MAP_RATIO = 0.3;
+
+	strcpy(AI_PATH, MAIN_PATH);
 	
 	initialized = false;
 }
@@ -94,14 +106,17 @@ AAIConfig::~AAIConfig(void)
 
 void AAIConfig::LoadConfig(AAI *ai)
 {
-	char filename[1000];
-	char buffer[120];
+	// get path to writable dir
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, AI_PATH); 
+
+	char filename[500];
+	char buffer[500];
+
 	strcpy(buffer, AI_PATH);
 	strcat(buffer, MOD_CFG_PATH);
 	strcat(buffer, ai->cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
-	strcpy(cfg_file, filename);
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+	strcpy(cfg_file, filename);	
 
 	FILE *file = fopen(filename, "r");
 	char keyword[50];
@@ -298,10 +313,20 @@ void AAIConfig::LoadConfig(AAI *ai)
 				fscanf(file, "%f", &fval);
 				SCOUT_SPEED = fval;
 			}
-			else if(!strcmp(keyword, "MOBILE_ARTY_RANGE"))
+			else if(!strcmp(keyword, "GROUND_ARTY_RANGE"))
 			{
 				fscanf(file, "%f", &fval);
-				MOBILE_ARTY_RANGE = fval;
+				GROUND_ARTY_RANGE = fval;
+			}
+			else if(!strcmp(keyword, "SEA_ARTY_RANGE"))
+			{
+				fscanf(file, "%f", &fval);
+				SEA_ARTY_RANGE = fval;
+			}
+			else if(!strcmp(keyword, "HOVER_ARTY_RANGE"))
+			{
+				fscanf(file, "%f", &fval);
+				HOVER_ARTY_RANGE = fval;
 			}
 			else if(!strcmp(keyword, "STATIONARY_ARTY_RANGE"))
 			{
@@ -423,6 +448,11 @@ void AAIConfig::LoadConfig(AAI *ai)
 				fscanf(file, "%i", &ival);
 				MIN_SUBMARINE_WATERLINE = ival;
 			}
+			else if(!strcmp(keyword, "MAX_ATTACKS"))
+			{
+				fscanf(file, "%i", &ival);
+				MAX_ATTACKS = ival;
+			}
 			else
 			{
 				error = true;
@@ -455,7 +485,6 @@ void AAIConfig::LoadConfig(AAI *ai)
 	strcpy(buffer, AI_PATH);
 	strcat(buffer, GENERAL_CFG_FILE);
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	file = fopen(filename, "r");
 

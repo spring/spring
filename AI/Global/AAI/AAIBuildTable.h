@@ -39,7 +39,7 @@ public:
 	// randomness == 1 means no randomness at all; never set randomnes to zero -> crash 
 	// ******************************************************************************************************
 	// returns power plant
-	int GetPowerPlant(int side, float cost, float urgency, float max_power, float current_energy, float comparison, bool water, bool geo, bool canBuild);
+	int GetPowerPlant(int side, float cost, float urgency, float max_power, float current_energy, bool water, bool geo, bool canBuild);
 
 	// returns a extractor from the list based on certain factors
 	int GetMex(int side, float cost, float effiency, bool armed, bool water, bool canBuild);
@@ -47,7 +47,7 @@ public:
 	int GetBiggestMex();
 
 	// return defence buildings to counter a certain category
-	int GetDefenceBuilding(int side, float efficiency, float cost, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float urgency, float range, int randomness, bool water, bool canBuild);
+	int GetDefenceBuilding(int side, float efficiency, float combat_power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float urgency, float range, int randomness, bool water, bool canBuild);
 
 	// returns a metal maker
 	int GetMetalMaker(int side, float cost, float efficiency, float metal, float urgency, bool water, bool canBuild);
@@ -178,6 +178,10 @@ public:
 	// AAI unit defs (static things like id, side, etc.)
 	static UnitTypeStatic *units_static;
 
+	// storage for def. building selection
+	static float **def_power;
+	static float *max_pplant_eff;
+
 	//
 	//	non static variales
 	//
@@ -223,6 +227,3 @@ private:
 		
 	FILE *file;
 };
-
-
-

@@ -1,3 +1,12 @@
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
+
 #include "AAIBuilder.h"
 
 #include "AAI.h"
@@ -13,7 +22,7 @@ AAIBuilder::AAIBuilder(AAI *ai, int unit_id, int def_id)
 
 	building_def_id = 0;
 	building_unit_id = -1;
-	task = IDLE;
+	task = UNIT_IDLE;
 	task_importance = 0;
 
 	assistance = -1;
@@ -94,7 +103,7 @@ void AAIBuilder::Update()
 			}
 		}
 	}
-	else if(task == IDLE)
+	else if(task == UNIT_IDLE)
 	{
 		float3 pos = cb->GetUnitPos(unit_id);
 
@@ -105,18 +114,21 @@ void AAIBuilder::Update()
 
 			if(x >= 0 && y >= 0 && x < ai->map->xSectors && y < ai->map->ySectors)
 			{
-				//cb->SendTextMsg("reclaiming",0);
-				pos = ai->map->sector[x][y].GetCenter();
+				if(ai->map->sector[x][y].distance_to_base < 2)
+				{
+					pos = ai->map->sector[x][y].GetCenter();
 
-				Command c;
-				c.id = CMD_RECLAIM;
-				c.params.resize(4);
-				c.params[0] = pos.x;
-				c.params[1] = cb->GetElevation(pos.x, pos.z);
-				c.params[2] = pos.z;
-				c.params[3] = 1000.0;
+					Command c;
+					c.id = CMD_RECLAIM;
+					c.params.resize(4);
+					c.params[0] = pos.x;
+					c.params[1] = cb->GetElevation(pos.x, pos.z);
+					c.params[2] = pos.z;
+					c.params[3] = 500.0;
 
-				cb->GiveOrder(unit_id, &c);
+					cb->GiveOrder(unit_id, &c);
+					task = RECLAIMING;
+				}
 			}
 		}
 	}
@@ -217,7 +229,7 @@ void AAIBuilder::TakeOverConstruction(AAIBuildTask *task)
 		assistance = -1;
 	}
 
-	this->task = BUILDING;
+	
 	task_importance = 10;
 	order_tick = task->order_tick;
 
@@ -230,12 +242,13 @@ void AAIBuilder::TakeOverConstruction(AAIBuildTask *task)
 	c.id = CMD_REPAIR;
 	c.params.push_back(task->unit_id);
 
+	this->task = BUILDING;
 	cb->GiveOrder(unit_id, &c);
 }
 
 void AAIBuilder::BuildingFinished()
 {
-	task = IDLE;
+	task = UNIT_IDLE;
 
 	task_importance = 0;
 	build_pos = ZeroVector;
@@ -275,7 +288,7 @@ void AAIBuilder::AssistFactory(int factory, int importance)
 
 void AAIBuilder::ReleaseAssistant()
 {
-	task = IDLE;
+	task = UNIT_IDLE;
 	assistance = -1;
 	task_importance = 0;
 }
@@ -386,10 +399,53 @@ void AAIBuilder::Idle()
 	}
 	else if(task != UNIT_KILLED)
 	{
-		task = IDLE;
+		task = UNIT_IDLE;
 		task_importance = 0;
 		assistance = -1;
 
 		ReleaseAllAssistants();
+	}
+}
+
+void AAIBuilder::Retreat(UnitCategory attacked_by)
+{
+	if(this->task != UNIT_KILLED)
+	{
+		// attacked by scout
+		if(ai->bt->IsScout(attacked_by))
+		{
+			// dont flee from scouts in your own base
+			float3 pos = cb->GetUnitPos(unit_id);
+
+			int x = pos.x / ai->map->xSectorSize;
+			int y =  pos.z / ai->map->ySectorSize;
+
+			if(x >= 0 && y >= 0 && x < ai->map->xSectors && y < ai->map->ySectors)
+			{
+				// builder is within base
+				if(ai->map->sector[x][y].distance_to_base == 0)
+					return;
+				// dont flee outside of the base if health is > 50%
+				else
+				{
+					if(cb->GetUnitHealth(unit_id) > ai->bt->unitList[def_id-1]->health / 2.0)
+						return;
+				}
+			}
+		}
+
+		// get safe position
+		float3 pos = ai->execute->GetSafePos(def_id);
+
+		if(pos.x > 0)
+		{
+			Command c;
+			c.id = CMD_MOVE;
+			c.params.push_back(pos.x);
+			c.params.push_back(cb->GetElevation(pos.x, pos.z));
+			c.params.push_back(pos.z);
+
+			cb->GiveOrder(unit_id, &c);
+		}
 	}
 }

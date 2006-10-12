@@ -6,6 +6,7 @@
 // 
 // Released under GPL license: see LICENSE.html for more information.
 //-------------------------------------------------------------------------
+
 #include "aidef.h"
 #include "Platform/Win/win32.h"
 #include "AAI.h"

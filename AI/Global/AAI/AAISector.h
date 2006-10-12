@@ -61,12 +61,18 @@ public:
 	// returns the defence power vs a certain unit category, -1 if failed
 	float GetDefencePowerVs(UnitCategory category);
 
-	// returns threat by a certain category
-	float GetThreat(UnitCategory category, float learned, float current);
+	// returns threatzo the sector by a certain category
+	float GetThreatBy(UnitCategory category, float learned, float current);
 	float GetOverallThreat(float learned, float current);
+
+	// returns threat by the sector to categories
+	float GetThreatTo(float ground, float air, float hover, float sea, float submarine);
 
 	// updates threat map
 	void UpdateThreatValues(UnitCategory unit, UnitCategory attacker);
+
+	// returns lost units in that sector
+	float GetLostUnits(float ground, float air, float hover, float sea, float submarine);
 
 	// returns center of the sector
 	float3 GetCenter();			
@@ -80,6 +86,7 @@ public:
 
 	float enemy_structures; 
 	float own_structures;
+	float allied_structures;
 
 	list<AAIDefence> defences;
 
@@ -98,8 +105,13 @@ public:
 	float *combats[2];
 
 	// how many units of certain type recently lost in that sector
-	float *threat_against; // 0 ground, 1 air, 2 sea
 	float *lost_units;
+
+	float *threat_against; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine
+
+
+	// combat.eff of all enemy units in this sector (0 if safe sector)
+	float threat;
 
 	// how efficiently stationary arty worked when placed in that sector
 	float arty_efficiency[2];
@@ -125,4 +137,3 @@ public:
 	// internal for def. placement
 	DefenceCoverage defCoverage[4];
 };
-

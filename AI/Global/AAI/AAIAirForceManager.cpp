@@ -1,3 +1,12 @@
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
+
 #include "AAIAirForceManager.h"
 
 #include "AAI.h"
@@ -37,61 +46,76 @@ void AAIAirForceManager::CheckTarget(int unit, const UnitDef *def)
 		int y = pos.z/map->ySectorSize;
 
 		// check if unit is within the map
-		if(x > map->xSectors && x < 0 && y < 0 && y > map->ySectors)
-			return;
-
-		// check for anti air defences
-		if(map->sector[x][y].lost_units[AIR_ASSAULT] > 1.4)
-			return;
-
-		AAIGroup *group;
-		int max_groups;
-
-		UnitCategory category = bt->units_static[def->id].category;
-
-		if(bt->unitList[def->id-1]->health > 8000)
-			max_groups = 3;
-		else if(bt->unitList[def->id-1]->health > 4000)
-			max_groups = 2;
-		else
-			max_groups = 1;
-
-		for(int i = 0; i < max_groups; ++i)
+		if(x >= 0 && x < map->xSectors && y >= 0 && y < map->ySectors)
 		{
-			if(category == AIR_ASSAULT)
-				group = GetAirGroup(100.0, ANTI_AIR_UNIT);
-			else if(category == STATIONARY_DEF)
-				group = GetAirGroup(100.0, BOMBER_UNIT);
-			else
-				// todo: change to gunship 
-				group = GetAirGroup(100.0, BOMBER_UNIT);
+			// check for anti air defences
+			if(map->sector[x][y].lost_units[AIR_ASSAULT] > 3)
+				return;
+	
+			AAIGroup *group;
+			int max_groups;
 
-			if(group)
+			UnitCategory category = bt->units_static[def->id].category;
+
+			if(bt->unitList[def->id-1]->health > 8000)
+				max_groups = 3;
+			else if(bt->unitList[def->id-1]->health > 4000)
+				max_groups = 2;
+			else
+				max_groups = 1;
+			
+
+			for(int i = 0; i < max_groups; ++i)
 			{
-				if(bt->units_static[def->id].category <= METAL_MAKER)
+				if(category == AIR_ASSAULT)
+					group = GetAirGroup(100.0, ANTI_AIR_UNIT);
+				else if(category <= METAL_MAKER)
 				{
-					//cb->SendTextMsg("Air support on the way",0);
-					group->BombTarget(unit, 110);
+					group = GetAirGroup(100.0, BOMBER_UNIT);
+
+					if(!group)
+						group = GetAirGroup(100.0, ASSAULT_UNIT);
 				}
 				else
-					group->AirRaidTarget(unit, 110);
+					group = GetAirGroup(100.0, ASSAULT_UNIT);
+
+				if(group)
+				{
+					if(group->group_type == BOMBER_UNIT || category <= METAL_MAKER)
+					{
+						Command c;
+						c.id = CMD_ATTACK;
+						c.params.push_back(pos.x);
+						c.params.push_back(pos.y);
+						c.params.push_back(pos.z);
+
+						group->GiveOrder(&c, 110, UNIT_ATTACKING);
+
+						group->task_importance = 110;
+
+						// add enemy to target list
+						ai->ut->AssignGroupToEnemy(unit, group);
+					
+					}	
+					else if(group->group_type == ASSAULT_UNIT)
+					{
+						Command c;
+						c.id = CMD_PATROL;
+						c.params.push_back(pos.x);
+						c.params.push_back(pos.y);
+						c.params.push_back(pos.z);
+
+						group->GiveOrder(&c, 110, UNIT_ATTACKING);
+
+						group->task_importance = 110;
+
+						// add enemy to target list
+						ai->ut->AssignGroupToEnemy(unit, group);
+					}
+				}
 			}
 		}
 	}
-}
-
-void AAIAirForceManager::CheckTarget(AAIAirTarget *target)
-{
-	//
-	/*if(bt->units_static[target->def_id].efficiency[1] < 2.3)
-	{
-		AAIGroup *group = GetAirGroup(100.0);
-
-		if(group)
-		{
-			group->BombTarget(target->pos, 120);
-		}
-	}*/
 }
 
 void AAIAirForceManager::AddTarget(float3 pos, int def_id, float cost, float health, UnitCategory category)
@@ -134,28 +158,9 @@ void AAIAirForceManager::AddTarget(float3 pos, int def_id, float cost, float hea
 	cb->SendTextMsg(c ,0);*/
 }
 
-void AAIAirForceManager::BombUnitsOfCategory(UnitCategory category)
-{
-	/*for(int i = 0; i < cfg->MAX_AIR_TARGETS; i++)
-	{
-		if(targets[i].category == category)
-		{
-			AAIGroup *group = GetAirGroup(100.0);
-
-			if(group)
-			{
-				group->BombTarget(targets[i].pos, 115);
-				targets[i].category = UNKNOWN;
-			}
-			
-			return;
-		}
-	}*/
-}
-
 void AAIAirForceManager::BombBestUnit(float cost, float danger)
 {
-	float best = 0, current;
+	/*float best = 0, current;
 	int best_target = -1;
 	int x, y, i;
 
@@ -182,24 +187,31 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 
 		if(group)
 		{
-			/*char c[100];
+			char c[100];
 			sprintf(c, "Target: %f %f", targets[i].pos.x, targets[i].pos.z);
-			cb->SendTextMsg(c ,0);*/
+			cb->SendTextMsg(c ,0);
 			//group->BombTarget(targets[i].pos, 110);
 			targets[i].category = UNKNOWN;
 		}
-	}
+	}*/
 }
 
 AAIGroup* AAIAirForceManager::GetAirGroup(float importance, UnitType group_type)
 {
-	for(list<AAIGroup*>::iterator group = air_groups->begin(); group != air_groups->end(); ++group)
+	if(cfg->AIR_ONLY_MOD)
 	{
-		if((*group)->task_importance < importance && group_type == (*group)->group_type)
+		for(list<AAIGroup*>::iterator group = air_groups->begin(); group != air_groups->end(); ++group)
 		{
-			if(cfg->AIR_ONLY_MOD && (*group)->units.size() > cfg->MAX_GROUP_SIZE/2)
+			if((*group)->task_importance < importance && group_type == (*group)->group_type  && (*group)->units.size() > (*group)->maxSize/2)
 				return *group;
-			else if((*group)->units.size() > cfg->MAX_GROUP_SIZE/4)
+		}
+	}
+	else
+	{
+		
+		for(list<AAIGroup*>::iterator group = air_groups->begin(); group != air_groups->end(); ++group)
+		{
+			if((*group)->task_importance < importance && group_type == (*group)->group_type && (*group)->units.size() >= (*group)->maxSize)
 				return *group;
 		}
 	}

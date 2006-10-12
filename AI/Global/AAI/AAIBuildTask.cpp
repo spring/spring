@@ -1,5 +1,13 @@
-#include "AAIBuildTask.h"
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
 
+#include "AAIBuildTask.h"
 #include "AAI.h"
 #include "AAIBuilder.h"
 

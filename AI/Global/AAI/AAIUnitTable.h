@@ -45,6 +45,12 @@ public:
 	AAIBuilder* FindClosestBuilder(int building, float3 pos, bool commander, int importance);
 	AAIBuilder* FindAssistBuilder(float3 pos, int importance, bool water = false, bool floater = false);
 
+	void EnemyKilled(int unit);
+
+	void SetUnitStatus(int unit, UnitTask status);
+
+	void AssignGroupToEnemy(int unit, AAIGroup *group);
+
 	bool IsUnitCommander(int unit_id);
 	bool IsDefCommander(int def_id);
 
@@ -53,6 +59,7 @@ public:
 	IAICallback* cb;
 
 	AAIUnit *units;
+	// units[i].unitId = -1 -> not used , -2 -> enemy unit
 
 	// commanders id
 	int cmdr;

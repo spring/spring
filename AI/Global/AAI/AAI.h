@@ -1,3 +1,13 @@
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
+
+
 #pragma once
 
 #include "aidef.h"
@@ -12,6 +22,7 @@
 #include "AAIUnitTable.h"
 #include "AAIMap.h"
 #include "AAIAirForceManager.h"
+#include "AAIAttackManager.h"
 #include <math.h>
 
 using namespace std;
@@ -41,11 +52,11 @@ public:
 
 	void GotChatMsg(const char* msg,int player);	//called when someone writes a chat msg
 
+	
 	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
+	void EnemyDestroyed(int enemy, int attacker);
 
-	void EnemyDestroyed (int enemy, int attacker);
-
-	int HandleEvent (int msg, const void *data);
+	int HandleEvent(int msg, const void *data);
 
 	// called every frame
 	void Update();
@@ -80,6 +91,7 @@ public:
 	AAIBuildTable *bt;			// buildtable for the different units
 	AAIMap *map;				// keeps track of all constructed buildings and searches new constr. sites
 	AAIAirForceManager *af;		// coordinates the airforce
+	AAIAttackManager *am;		// coordinates combat forces
 
 	list<AAIGroup*> *group_list;  // unit groups
 
@@ -87,4 +99,3 @@ public:
 
 	FILE *file;
 };
-
