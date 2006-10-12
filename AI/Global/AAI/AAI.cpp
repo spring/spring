@@ -1,3 +1,12 @@
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
+
 #include "AAI.h"
 #include <math.h>
 #include <stdio.h>
@@ -14,6 +23,7 @@ AAI::AAI()
 	ut = 0;
 	map = 0;
 	af = 0;
+	am = 0;
 	
 	side = 0;
 
@@ -40,6 +50,12 @@ AAI::~AAI()
 	{
 		fprintf(file, "%-20s: %i / %i\n", bt->GetCategoryString2((UnitCategory)i), activeUnits[i], futureUnits[i]); 
 	}
+
+	fprintf(file, "\nGround Groups:    %i\n", group_list[GROUND_ASSAULT].size());
+	fprintf(file, "\nAir Groups:       %i\n", group_list[AIR_ASSAULT].size());
+	fprintf(file, "\nHover Groups:     %i\n", group_list[HOVER_ASSAULT].size());
+	fprintf(file, "\nSea Groups:       %i\n", group_list[SEA_ASSAULT].size());
+	fprintf(file, "\nSubmarine Groups: %i\n", group_list[SUBMARINE_ASSAULT].size());
 	
 	fprintf(file, "\nFuture metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
 	fprintf(file, "Future metal/energy supply:  %i / %i\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
@@ -55,6 +71,7 @@ AAI::~AAI()
 	// save mod learning data
 	bt->SaveBuildTable();
 
+	delete am;
 	delete brain;
 	delete execute;
 	delete ut;
@@ -77,8 +94,10 @@ AAI::~AAI()
 }
 
 void AAI::GotChatMsg (const char *msg, int player){
-	//cb->SendTextMsg("I dont know how to talk yet...",0);
+	//cb->SendTextMsg("I don´t know how to talk yet...",0);
 }
+
+void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 
 
 void AAI::InitAI(IGlobalAICallback* callback, int team)
@@ -87,8 +106,8 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	cb = callback->GetAICallback();
 
 	// open log file
-	char filename[1000];
-	char buffer[60];
+	char filename[500];
+	char buffer[500];
 	char team_number[3];
 	
 	#ifdef WIN32
@@ -97,12 +116,13 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 		snprintf(team_number,10,"%d",team);
 	#endif
 	
-	strcpy(buffer, AILOG_PATH);
+	strcpy(buffer, cfg->AI_PATH);
+	strcat(buffer, AILOG_PATH);
 	strcat(buffer, "AAI_log_team_");
 	strcat(buffer, team_number);
 	strcat(buffer, ".txt");
 	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
-	cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+
 	file = fopen(filename,"w");
 
 	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModName());
@@ -139,6 +159,9 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	// init airforce manager
 	af = new AAIAirForceManager(this, cb, bt);
 
+	// init attack manager
+	am = new AAIAttackManager(this, cb, bt);
+
 	cb->SendTextMsg("AAI loaded",0);
 }
 
@@ -174,25 +197,26 @@ void AAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
 		{
 			att_cat = bt->units_static[att_def->id].category;
 
-			if(bt->IsScout(att_cat))
-				return;
-			else if(att_cat == AIR_ASSAULT)
+			// retreat builders
+			if(bt->IsBuilder(cat))
 			{
-				// building has been attacked
-				if(cat <= METAL_MAKER)
-					execute->DefendVSAir(damaged, 115);
-				// unit
-				else
-					execute->DefendVSAir(damaged, 108);
-			}	
-			else if(att_cat >= GROUND_ASSAULT && att_cat <= SUBMARINE_ASSAULT)
-			{
-				// building has been attacked
-				if(cat <= METAL_MAKER)
-					execute->DefendVS(att_cat, cb->GetUnitPos(attacker), 115);
-				else if(bt->IsBuilder(cat))
-					execute->DefendVS(att_cat, cb->GetUnitPos(attacker), 110);
+				if(ut->units[damaged].builder)
+					ut->units[damaged].builder->Retreat(att_cat);
 			}
+			
+			if(att_cat >= GROUND_ASSAULT && att_cat <= SUBMARINE_ASSAULT)
+			{
+				// building has been attacked
+				if(cat <= METAL_MAKER)
+					execute->DefendUnitVS(damaged, def, att_cat, cb->GetUnitPos(attacker), 115);
+				// builder
+				else if(bt->IsBuilder(cat))
+					execute->DefendUnitVS(damaged, def, att_cat, cb->GetUnitPos(attacker), 110);
+				// normal units
+				else 
+					execute->DefendUnitVS(damaged, def, att_cat, cb->GetUnitPos(attacker), 105);
+			}
+		
 		}
 	}
 	// unknown attacker
@@ -206,11 +230,18 @@ void AAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
 		else
 			att_cat = SEA_ASSAULT;
 
+		// retreat builders
+		if(bt->IsBuilder(cat))
+		{
+			if(ut->units[damaged].builder)
+				ut->units[damaged].builder->Retreat(att_cat);
+		}
+
 		// building has been attacked
 		if(cat <= METAL_MAKER)
-			execute->DefendVS(att_cat, cb->GetUnitPos(damaged), 115);
+			execute->DefendUnitVS(damaged, def, att_cat, ZeroVector, 115);
 		else if(bt->IsBuilder(cat))
-			execute->DefendVS(att_cat, cb->GetUnitPos(damaged), 110);
+			execute->DefendUnitVS(damaged, def, att_cat, ZeroVector, 110);
 	}
 }
 
@@ -219,7 +250,7 @@ void AAI::UnitCreated(int unit)
 	if(!cfg->initialized)
 		return;
 
-	// get units id and side
+	// get unit´s id and side
 	const UnitDef *def = cb->GetUnitDef(unit);
 	int side = bt->GetSideByID(def->id)-1;
 	UnitCategory category = bt->units_static[def->id].category;
@@ -325,7 +356,17 @@ void AAI::UnitCreated(int unit)
 	else if(category <= METAL_MAKER && category > UNKNOWN)
 	{
 		// create new buildtask
-		AAIBuildTask *task = new AAIBuildTask(this, unit, def->id, cb->GetUnitPos(unit), cb->GetCurrentFrame());
+		AAIBuildTask *task;
+		
+		try
+		{
+			task = new AAIBuildTask(this, unit, def->id, cb->GetUnitPos(unit), cb->GetCurrentFrame());
+		}
+		catch(...) 
+		{
+			fprintf(file, "Exception thrown when allocating memory for buildtask");
+		}
+
 		build_tasks.push_back(task);
 
 		float3 pos = cb->GetUnitPos(unit);
@@ -378,7 +419,7 @@ void AAI::UnitCreated(int unit)
 
 void AAI::UnitDestroyed(int unit, int attacker) 
 {
-	// get units id 
+	// get unit´s id 
 	const UnitDef *def = cb->GetUnitDef(unit);
 	int side = bt->GetSideByID(def->id)-1;
 
@@ -542,7 +583,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 				--bt->units_dynamic[def->id].active;
 				
 				// speed up reconstruction
-				execute->urgency[category] += 0.3;
+				execute->urgency[category] += 1.5;
 		
 				// clear buildmap
 				map->Pos2BuildMapPos(&pos, def);
@@ -624,14 +665,28 @@ void AAI::UnitDestroyed(int unit, int attacker)
 						break;
 					}
 				}
+
+				// add building to sector
+				if(validSector && map->sector[x][y].distance_to_base > 0)
+					map->sector[x][y].enemy_structures += 5;
+				
 			}
 			// assault units 
 			else if(category == GROUND_ASSAULT || category == AIR_ASSAULT || category == HOVER_ASSAULT || category == SEA_ASSAULT)
 			{
+				// look for a safer rallypoint if units get killed on their way 
+				if(ut->units[unit].status == HEADING_TO_RALLYPOINT)
+				{
+					float3 pos = execute->GetRallyPoint(category);
+
+					if(pos.x > 0)
+						ut->units[unit].group->rally_point = pos;
+				}
+
 				if(ut->units[unit].group)
 					ut->units[unit].group->RemoveUnit(unit, attacker);
 				else
-					cb->SendTextMsg("Error: group not found",0);
+					fprintf(file, "ERROR: tried to remove %s but group not found\n", bt->unitList[def->id-1]->name.c_str());		
 			}
 			// builder 
 			else if(bt->IsBuilder(category))
@@ -653,7 +708,7 @@ void AAI::UnitFinished(int unit)
 	if(!cfg->initialized)
 		return;
 
-	// get units id and side
+	// get unit´s id and side
 	const UnitDef *def = cb->GetUnitDef(unit);
 	int side = bt->GetSideByID(def->id)-1;
 
@@ -730,6 +785,8 @@ void AAI::UnitFinished(int unit)
 		if(category == GROUND_ASSAULT || category == AIR_ASSAULT || category == HOVER_ASSAULT || category == SEA_ASSAULT)
 		{
 			execute->AddUnitToGroup(unit, def->id, (UnitCategory) category);
+
+			ut->SetUnitStatus(unit, HEADING_TO_RALLYPOINT);
 		}
 		// scout
 		else if(bt->IsScout(category))
@@ -753,9 +810,14 @@ void AAI::UnitFinished(int unit)
 
 void AAI::UnitIdle(int unit)
 {
+	ut->SetUnitStatus(unit, UNIT_IDLE);
+
 	// if factory is idle, start construction of further units
 	if(ut->units[unit].factory)
 		ut->units[unit].factory->Update();
+	// idle combat units will report to their groups
+	else if(ut->units[unit].group)
+		ut->units[unit].group->UnitIdle(unit);
 	else if(ut->units[unit].builder)
 	{
 		ut->units[unit].builder->Idle();
@@ -809,13 +871,15 @@ void AAI::EnemyEnterLOS(int enemy) {}
 void AAI::EnemyLeaveLOS(int enemy) {}
 void AAI::EnemyEnterRadar(int enemy) {}
 void AAI::EnemyLeaveRadar(int enemy) {}
-void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 
-void AAI::EnemyDestroyed (int enemy, int attacker) 
+void AAI::EnemyDestroyed(int enemy, int attacker) 
 {
+	// remove enemy from unittable
+	ut->EnemyKilled(enemy);
+
 	if(attacker)
 	{	
-		// get units id 
+		// get unit´s id 
 		const UnitDef *def = cb->GetUnitDef(enemy);
 		const UnitDef *def_att = cb->GetUnitDef(attacker);
 
@@ -877,10 +941,10 @@ void AAI::Update()
 		brain->BuildUnits();
 	}
 
-	if(!(tick%611))
+	if(!(tick%811))
 	{
 		// check attack
-		execute->UpdateAttack();
+		am->Update();
 		//af->BombBestUnit(4, 4);
 	}
 

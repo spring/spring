@@ -1,3 +1,13 @@
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
+
+
 #pragma once
 
 #include "aidef.h"
@@ -25,7 +35,10 @@ public:
 	void RemoveProducer(list<ProductionRequest> builders, int builder_id);   
 
 	// returns dest attack sector
-	AAISector* GetAttackDest(UnitCategory category, AttackType type);
+	AAISector* GetAttackDest(bool land, bool water, AttackType type);
+
+	// returns a sector to proceed with attack
+	AAISector* GetNextAttackDest(AAISector *current_sector, bool land, bool water);
 
 	// checks for new neighbours (and removes old ones if necessary)
 	void UpdateNeighbouringSectors(); 

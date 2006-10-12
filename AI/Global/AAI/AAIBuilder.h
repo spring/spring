@@ -25,6 +25,8 @@ public:
 
 	void Idle();
 
+	void Retreat(UnitCategory attacked_by);
+
 	// assisting and stop assisting factories or other builders
 	void AssistConstruction(int builder, int target_unit, int importance = 5);
 	void AssistFactory(int factory, int importance = 5);

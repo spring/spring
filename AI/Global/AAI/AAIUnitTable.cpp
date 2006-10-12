@@ -1,5 +1,13 @@
-#include "AAIUnitTable.h"
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
 
+#include "AAIUnitTable.h"
 #include "AAI.h"
 
 AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
@@ -18,6 +26,7 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 		units[i].group = 0;
 		units[i].builder = 0;
 		units[i].factory = 0;
+		units[i].status = UNIT_KILLED;
 	}
 
 	cmdr = -1;
@@ -45,11 +54,19 @@ bool AAIUnitTable::AddUnit(int unit_id, int def_id, AAIGroup *group, AAIBuilder 
 {
 	if(unit_id <= cfg->MAX_UNITS)
 	{
+		// clear possible enemies that are still listed (since they had been killed outside of los)
+		if(units[unit_id].status == ENEMY_UNIT)
+		{
+			if(units[unit_id].group)
+				units[unit_id].group->TargetUnitKilled();
+		}
+
 		units[unit_id].unit_id = unit_id;
 		units[unit_id].def_id = def_id;
 		units[unit_id].group = group;
 		units[unit_id].builder = builder;
 		units[unit_id].factory = factory;
+		units[unit_id].status = UNIT_IDLE;
 		return true;
 	}
 	else
@@ -68,6 +85,7 @@ void AAIUnitTable::RemoveUnit(int unit_id)
 		units[unit_id].group = 0;
 		units[unit_id].builder = 0;
 		units[unit_id].factory = 0;
+		units[unit_id].status = UNIT_KILLED;
 	}
 	else
 	{
@@ -77,7 +95,18 @@ void AAIUnitTable::RemoveUnit(int unit_id)
 
 void AAIUnitTable::AddBuilder(int unit_id, int def_id)
 {
-	AAIBuilder *builder = new AAIBuilder(ai, unit_id, def_id);
+	
+	AAIBuilder *builder;  
+	
+	try
+	{
+		builder = new AAIBuilder(ai, unit_id, def_id);
+	}
+	catch(...) 
+	{
+		fprintf(ai->file, "Exception thrown when allocating memory for builder");
+		return;
+	}
 	
 	builders.insert(unit_id);
 	units[unit_id].builder = builder;
@@ -109,7 +138,18 @@ void AAIUnitTable::AddFactory(int unit_id, int def_id)
 	ai->execute->futureRequestedMetal -= bt->units_static[def_id].efficiency[0];
 	ai->execute->futureRequestedEnergy -= bt->units_static[def_id].efficiency[1];
 
-	AAIFactory *factory = new AAIFactory(ai, unit_id, def_id);
+	AAIFactory *factory;
+	
+	try
+	{
+		factory = new AAIFactory(ai, unit_id, def_id);
+	}
+	catch(...) 
+	{
+		fprintf(ai->file, "Exception thrown when allocating memory for factory");
+		return;
+	}
+
 	factories.insert(unit_id);
 	units[unit_id].factory = factory;
 
@@ -262,7 +302,7 @@ AAIBuilder* AAIUnitTable::FindBuilder(int building, bool commander, int importan
 		builder = units[*i].builder;
 
 		// find unit that can directly build that building 
-		if(builder->task != UNIT_KILLED && importance > builder->task_importance && bt->CanBuildUnit(builder->def_id, building))
+		if(!builder->build_task && importance > builder->task_importance && bt->CanBuildUnit(builder->def_id, building))
 		{
 			// filter out commander (if not allowed)
 			if(!commander)
@@ -291,12 +331,10 @@ AAIBuilder* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool comm
 		builder = units[*i].builder;
 
 		// find idle or assisting builder, who can build this building
-		if(bt->CanBuildUnit(builder->def_id, building) && importance > builder->task_importance)
+		if(!builder->build_task && bt->CanBuildUnit(builder->def_id, building) && importance > builder->task_importance)
 		{
-			// filter out commander/non water builders
+			// filter out commander
 			if(!commander &&  bt->units_static[builder->def_id].category == COMMANDER)
-				my_dist = 1000000;
-			else if(builder->task == UNIT_KILLED)
 				my_dist = 1000000;
 			else
 			{
@@ -306,7 +344,7 @@ AAIBuilder* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool comm
 				{
 					my_dist = sqrt(pow(builder_pos.x - pos.x, 2)+pow(builder_pos.z - pos.z, 2));
 					
-					if(my_dist / bt->unitList[builder->def_id-1]->speed > 0)
+					if(bt->unitList[builder->def_id-1]->speed > 0)
 						my_dist /= bt->unitList[builder->def_id-1]->speed;
 				}
 				else
@@ -339,7 +377,7 @@ AAIBuilder* AAIUnitTable::FindAssistBuilder(float3 pos, int importance,  bool wa
 	{
 		builder = units[*i].builder;
 
-		if(builder->task != UNIT_KILLED && builder->task_importance < importance)
+		if(!builder->build_task && builder->task_importance < importance)
 		{
 			category = bt->units_static[builder->def_id].category;
 			suitable = false;
@@ -398,4 +436,25 @@ bool AAIUnitTable::IsDefCommander(int def_id)
 	}
 
 	return false;
+}
+
+void AAIUnitTable::EnemyKilled(int unit)
+{
+	if(units[unit].group)
+		units[unit].group->TargetUnitKilled();
+
+	RemoveUnit(unit);
+}
+
+void AAIUnitTable::AssignGroupToEnemy(int unit, AAIGroup *group)
+{
+	units[unit].unit_id = unit;
+	units[unit].group = group;
+	units[unit].status = ENEMY_UNIT;
+}
+
+
+void AAIUnitTable::SetUnitStatus(int unit, UnitTask status)
+{
+	units[unit].status = status;
 }

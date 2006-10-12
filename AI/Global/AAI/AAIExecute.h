@@ -30,7 +30,9 @@ public:
 
 	void UpdateRecon(); 
 
-	void UpdateAttack();
+	// returns a position to retreat unit of certain type
+	float3 GetSafePos(int def_id);
+	float3 GetSafePos(bool land, bool water);
 
 	// updates average ressource usage
 	void UpdateRessources();
@@ -86,8 +88,7 @@ public:
 	BuildOrderStatus BuildStationaryDefenceVS(UnitCategory category, AAISector *dest);
 
 	// tries to call support vs air (returns true if succesful)
-	bool DefendVSAir(int unit, int importance);
-	bool DefendVS(UnitCategory category, float3 pos, int importance);
+	void DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 enemy_pos, int importance);
 
 	// returns true if succesfully assisting power plant construction
 	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);

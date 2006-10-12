@@ -1,3 +1,13 @@
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
+
+
 #pragma once
 
 #include "aidef.h"
@@ -15,7 +25,6 @@ public:
 
 	// checks if a certain unit is worth bombing it and tries to order air units to do it
 	void CheckTarget(int unit, const UnitDef *def);
-	void CheckTarget(AAIAirTarget *target);
 
 	// erases old targets and adds new ones
 	void AddTarget(float3 pos, int def_id, float cost, float health, UnitCategory category);

@@ -45,7 +45,9 @@ public:
 	int MIN_ASSISTANCE_BUILDSPEED;
 	int MAX_BASE_SIZE;
 	float SCOUT_SPEED;
-	float MOBILE_ARTY_RANGE;
+	float GROUND_ARTY_RANGE;
+	float SEA_ARTY_RANGE;
+	float HOVER_ARTY_RANGE;
 	float STATIONARY_ARTY_RANGE;
 	int AIR_DEFENCE;
 	int AIRCRAFT_RATE;
@@ -85,6 +87,7 @@ public:
 	float HEAVY_ASSAULT_RATIO;
 	float SUPER_HEAVY_ASSAULT_RATIO;
 	int MIN_SUBMARINE_WATERLINE;
+	int MAX_ATTACKS;
 
 	// internal
 	float CLIFF_SLOPE;  // cells with greater slope will be considered to be cliffs
@@ -97,4 +100,5 @@ public:
 	int LEARN_RATE;
 	float WATER_MAP_RATIO;
 	float LAND_WATER_MAP_RATIO;
+	char AI_PATH[500];
 };

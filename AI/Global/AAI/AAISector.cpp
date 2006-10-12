@@ -1,5 +1,13 @@
-#include "AAISector.h"
+//-------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+//-------------------------------------------------------------------------
 
+#include "AAISector.h"
 #include "AAI.h"
 #include "AAIMap.h"
 
@@ -17,6 +25,7 @@ AAISector::AAISector()
 	// nothing sighted in that sector
 	enemy_structures = 0;
 	own_structures = 0;
+	allied_structures = 0;
 
 	// set pointers to zero and wait for init later
 	lost_units = 0;
@@ -25,6 +34,7 @@ AAISector::AAISector()
 	combats[0] = 0;
 	combats[1] = 0;
 	threat_against = 0;
+	threat = 0;
 	
 	for(int i = 0; i < 4; i++)
 	{
@@ -283,12 +293,6 @@ float3 AAISector::GetBuildsite(int building, bool water)
 
 float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, bool water)
 {
-	if(building < 1)
-	{
-		fprintf(ai->file, "ERROR: Invalid building def id %i passed to AAISector::GetDefenceBuildsite()\n", building);
-		return ZeroVector;
-	}
-
 	float3 pos;
 	const UnitDef *def = ai->bt->unitList[building-1];
 
@@ -300,16 +304,16 @@ float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, bool 
 	if(true)
 	{	
 		// filter out frontiers to other base sectors
-		if(x > 0 && map->sector[x-1][y].distance_to_base > 0 )
+		if(x > 0 && map->sector[x-1][y].distance_to_base > 0 && map->sector[x-1][y].allied_structures < 500)
 			directions.push_back(WEST);
 	
-		if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0)
+		if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0 && map->sector[x+1][y].allied_structures < 500)
 			directions.push_back(EAST);
 
-		if(y > 0 && map->sector[x][y-1].distance_to_base > 0)
+		if(y > 0 && map->sector[x][y-1].distance_to_base > 0 && map->sector[x][y-1].allied_structures < 500)
 			directions.push_back(NORTH);
 	
-		if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0)
+		if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0 && map->sector[x][y+1].allied_structures < 500)
 			directions.push_back(SOUTH);
 	}
 
@@ -556,7 +560,7 @@ UnitCategory AAISector::GetWeakestCategory()
 	{
 		for(list<UnitCategory>::iterator cat = ai->bt->assault_categories.begin(); cat != ai->bt->assault_categories.end(); ++cat)
 		{
-			importance = GetThreat(*cat, learned, current)/GetDefencePowerVs(*cat);
+			importance = GetThreatBy(*cat, learned, current)/GetDefencePowerVs(*cat);
 
 			if(importance > most_important)
 			{	
@@ -569,7 +573,7 @@ UnitCategory AAISector::GetWeakestCategory()
 	return weakest;
 }
 
-float AAISector::GetThreat(UnitCategory category, float learned, float current)
+float AAISector::GetThreatBy(UnitCategory category, float learned, float current)
 {
 	if(category == GROUND_ASSAULT)
 		return 1 + 2 * (learned * attacked_by[1][0] + current * attacked_by[0][0] ) / (learned + current);
@@ -581,6 +585,18 @@ float AAISector::GetThreat(UnitCategory category, float learned, float current)
 		return 1 + 2 * (learned * attacked_by[1][3] + current * attacked_by[0][3] ) / (learned + current);
 	else
 		return -1;
+}
+
+float AAISector::GetThreatTo(float ground, float air, float hover, float sea, float submarine)
+{
+	return (ground * threat_against[0] + air * threat_against[1] + hover * threat_against[2] + sea * threat_against[3] + submarine * threat_against[4]);
+}
+
+float AAISector::GetLostUnits(float ground, float air, float hover, float sea, float submarine)
+{
+	return (ground * lost_units[GROUND_ASSAULT-COMMANDER] + air * lost_units[AIR_ASSAULT-COMMANDER] 
+		  + hover * lost_units[HOVER_ASSAULT-COMMANDER] + sea * lost_units[SEA_ASSAULT-COMMANDER] 
+		  + submarine * lost_units[SUBMARINE_ASSAULT-COMMANDER]);
 }
 
 float AAISector::GetOverallThreat(float learned, float current)
