@@ -1,0 +1,471 @@
+ID: 1   ARMAAP           Adv. Aircraft Plant                      ground factory            Arm
+ID: 2   ARMAAS           Archer                                   sea assault               Arm      naval assault unit
+ID: 3   ARMACA           Adv. Construction Aircraft               air builder               Arm
+ID: 4   ARMACK           Adv. Construction Kbot                   ground builder            Arm
+ID: 5   ARMACSUB         Advanced Construction Sub                sea builder               Arm
+ID: 6   ARMACV           Adv. Construction Vehicle                ground builder            Arm
+ID: 7   ARMAH            Swatter                                  hover assault             Arm      assault unit
+ID: 8   ARMALAB          Adv. Kbot Lab                            ground factory            Arm
+ID: 9   ARMAMB           Ambusher                                 defence building          Arm
+ID: 10  ARMAMD           Protector                                stationary launcher       Arm
+ID: 11  ARMAMPH          Pelican                                  hover assault             Arm      assault unit
+ID: 12  ARMANAC          Anaconda                                 hover assault             Arm      assault unit
+ID: 13  ARMANNI          Annihilator                              defence building          Arm
+ID: 14  ARMAP            Aircraft Plant                           ground factory            Arm
+ID: 15  ARMARAD          Advanced Radar Tower                     stationary radar/sonar    Arm
+ID: 16  ARMASER          Eraser                                   mobile jammer             Arm
+ID: 17  ARMASON          Advanced Sonar Station                   unknown                   Arm
+ID: 18  ARMASP           Air Repair Pad                           air base                  Arm
+ID: 19  ARMASY           Adv. Shipyard                            water factory             Arm
+ID: 20  ARMATL           Advanced Torpedo Launcher                defence building          Arm
+ID: 21  ARMATLAS         Atlas                                    unknown                   Arm
+ID: 22  ARMAVP           Adv. Vehicle Plant                       ground factory            Arm
+ID: 23  ARMAWAC          Eagle                                    air scout                 Arm
+ID: 24  ARMBATS          Millenium                                naval artillery           Arm
+ID: 25  ARMBEAC          Alien Beacon                             unknown                   Neutral
+ID: 26  ARMBRAWL         Brawler                                  air assault               Arm      gunship
+ID: 27  ARMBRTHA         Big Bertha                               stationary arty           Arm
+ID: 28  ARMBULL          Bulldog                                  ground assault            Arm      assault unit
+ID: 29  ARMCA            Construction Aircraft                    air builder               Arm
+ID: 30  ARMCARRY         Colossus                                 unknown                   Arm
+ID: 31  ARMCH            Construction Hovercraft                  sea builder               Arm
+ID: 32  ARMCK            Construction KBot                        ground builder            Arm
+ID: 33  ARMCKFUS         Cloakable Fusion Reactor                 power plant               Arm
+ID: 34  ARMCOM           Commander                                commander                 Arm
+ID: 35  ARMCROC          Triton                                   ground assault            Arm      assault unit
+ID: 36  ARMCRUS          Conqueror                                sea assault               Arm      naval assault unit
+ID: 37  ARMCS            Construction Ship                        sea builder               Arm
+ID: 38  ARMCSA           Construction Seaplane                    air builder               Arm
+ID: 39  ARMCV            Construction Vehicle                     ground builder            Arm
+ID: 40  ARMDECOM         Commander                                ground builder            Arm
+ID: 41  ARMDEV1          Implosion Device                         unknown                   Neutral
+ID: 42  ARMDRAG          Dragon's Teeth                           unknown                   Arm
+ID: 43  ARMEMP           Stunner                                  stationary arty           Arm
+ID: 44  ARMESTOR         Energy Storage                           storage                   Arm
+ID: 45  ARMFARK          FARK                                     ground builder            Arm
+ID: 46  ARMFAST          Zipper                                   ground scout              Arm
+ID: 47  ARMFAV           Jeffy                                    ground scout              Arm
+ID: 48  ARMFDRAG         Floating Dragon's Teeth                  unknown                   Arm
+ID: 49  ARMFHLT          Stingray                                 defence building          Arm
+ID: 50  ARMFIDO          Fido                                     ground assault            Arm      assault unit
+ID: 51  ARMFIG           Freedom Fighter                          air assault               Arm      gunship
+ID: 52  ARMFLAK          Flakker                                  defence building          Arm
+ID: 53  ARMFLASH         Flash                                    ground assault            Arm      assault unit
+ID: 54  ARMFLEA          Flea                                     ground scout              Arm
+ID: 55  ARMFMKR          Floating Metal Maker                     metal maker               Arm
+ID: 56  ARMFORT          Fortification Wall                       unknown                   Arm
+ID: 57  ARMFRT           Defender - NS                            defence building          Arm
+ID: 58  ARMFUS           Fusion Reactor                           power plant               Arm
+ID: 59  ARMGATE          Galactic Gate                            unknown                   Neutral
+ID: 60  ARMGEO           Geothermal Powerplant                    power plant               Arm
+ID: 61  ARMGUARD         Guardian                                 defence building          Arm
+ID: 62  ARMHAM           Hammer                                   ground assault            Arm      assault unit
+ID: 63  ARMHAWK          Hawk                                     air assault               Arm      gunship
+ID: 64  ARMHLT           Sentinel                                 defence building          Arm
+ID: 65  ARMHP            Hovercraft Platform                      ground factory            Arm
+ID: 66  ARMJAM           Jammer                                   mobile jammer             Arm
+ID: 67  ARMJETH          Jethro                                   ground assault            Arm      assault unit
+ID: 68  ARMLAB           Kbot Lab                                 ground factory            Arm
+ID: 69  ARMLANCE         Lancet                                   air assault               Arm      bomber
+ID: 70  ARMLATNK         Panther                                  ground assault            Arm      assault unit
+ID: 71  ARMLLT           L.L.T.                                   defence building          Arm
+ID: 72  ARMMAKR          Metal Maker                              metal maker               Arm
+ID: 73  ARMMANNI         Penetrator                               ground assault            Arm      assault unit
+ID: 74  ARMMARK          Marky                                    unknown                   Arm
+ID: 75  ARMMART          Luger                                    ground artillery          Arm
+ID: 76  ARMMAV           Maverick                                 ground assault            Arm      assault unit
+ID: 77  ARMMERL          Merl                                     ground artillery          Arm
+ID: 78  ARMMEX           Metal Extractor                          metal extractor           Arm
+ID: 79  ARMMFUS          Mobile Fusion                            unknown                   Arm
+ID: 80  ARMMH            Wombat                                   hover artillery           Arm
+ID: 81  ARMMINE1         Fart Mine                                unknown                   Arm
+ID: 82  ARMMINE2         Mini mine                                unknown                   Arm
+ID: 83  ARMMINE3         Popper Mine                              unknown                   Arm
+ID: 84  ARMMINE4         Kaboom Mine                              unknown                   Arm
+ID: 85  ARMMINE5         Ooomph mine                              unknown                   Arm
+ID: 86  ARMMINE6         Surprise mine                            unknown                   Arm
+ID: 87  ARMMLV           Podger                                   ground builder            Arm
+ID: 88  ARMMMKR          Moho Metal Maker                         metal maker               Arm
+ID: 89  ARMMOHO          Moho Mine                                metal extractor           Arm
+ID: 90  ARMMSHIP         Ranger                                   sea assault               Arm      naval assault unit
+ID: 91  ARMMSTOR         Metal Storage                            storage                   Arm
+ID: 92  ARMPEEP          Peeper                                   air scout                 Arm
+ID: 93  ARMPLAT          Seaplane Platform                        water factory             Arm
+ID: 94  ARMPNIX          Phoenix                                  air assault               Arm      bomber
+ID: 95  ARMPT            Skeeter                                  sea scout                 Arm
+ID: 96  ARMPW            Peewee                                   ground assault            Arm      assault unit
+ID: 97  ARMRAD           Radar Tower                              stationary radar/sonar    Arm
+ID: 98  ArmRaven         Raven                                    ground artillery          Arm
+ID: 99  ARMRL            Defender                                 defence building          Arm
+ID: 100 ARMROCK          Rocko                                    ground assault            Arm      assault unit
+ID: 101 ARMROY           Crusader                                 sea assault               Arm      naval assault unit
+ID: 102 ARMSAM           Samson                                   ground assault            Arm      assault unit
+ID: 103 ARMSCAB          Scarab                                   mobile launcher           Arm
+ID: 104 ARMSCORP         Scorpion                                 unknown                   Neutral
+ID: 105 ARMSCRAM         Fibber                                   mobile jammer             Arm
+ID: 106 ARMSEAP          Albatross                                air assault               Arm      gunship
+ID: 107 ARMSEER          Seer                                     unknown                   Arm
+ID: 108 ARMSEHAK         Seahawk                                  unknown                   Arm
+ID: 109 ARMSFIG          Tornado                                  air assault               Arm      gunship
+ID: 110 ARMSH            Skimmer                                  hover scout               Arm
+ID: 111 ARMSILO          Retaliator                               stationary launcher       Arm
+ID: 112 ARMSJAM          Escort                                   mobile jammer             Arm
+ID: 113 ARMSNIPE         Shooter                                  ground artillery          Arm
+ID: 114 ARMSOLAR         Solar Collector                          power plant               Arm
+ID: 115 ARMSONAR         Sonar Station                            stationary radar/sonar    Arm
+ID: 116 ARMSPID          Spider                                   ground assault            Arm      assault unit
+ID: 117 ARMSPY           Infiltrator                              unknown                   Arm
+ID: 118 ARMSS            Sea Serpent                              unknown                   Neutral
+ID: 119 ARMSTUMP         Stumpy                                   ground assault            Arm      assault unit
+ID: 120 ARMSUB           Lurker                                   submarine assault         Arm
+ID: 121 ARMSUBK          Piranha                                  submarine assault         Arm
+ID: 122 ARMSY            Shipyard                                 water factory             Arm
+ID: 123 ARMTARG          Targeting Facility                       unknown                   Arm
+ID: 124 ARMTHOVR         Bear                                     unknown                   Arm
+ID: 125 ARMTHUND         Thunder                                  air assault               Arm      bomber
+ID: 126 ARMTIDE          Tidal Generator                          power plant               Arm
+ID: 127 ARMTL            Torpedo Launcher                         defence building          Arm
+ID: 128 ARMTSHIP         Hulk                                     unknown                   Arm
+ID: 129 ARMUWES          Underwater Energy Storage                storage                   Arm
+ID: 130 ARMUWFUS         Underwater Fusion Plant                  power plant               Arm
+ID: 131 ARMUWMEX         Underwater Metal Extractor               metal extractor           Arm
+ID: 132 ARMUWMS          Underwater Metal Storage                 storage                   Arm
+ID: 133 ARMVADER         Invader                                  mobile jammer             Arm
+ID: 134 ARMVP            Vehicle Plant                            ground factory            Arm
+ID: 135 ARMVULC          Vulcan                                   stationary arty           Arm
+ID: 136 ARMWAR           Warrior                                  ground assault            Arm      assault unit
+ID: 137 ARMWIN           Wind Generator                           unknown                   Arm
+ID: 138 ARMYORK          Phalanx                                  ground assault            Arm      assault unit
+ID: 139 ARMZEUS          Zeus                                     ground assault            Arm      assault unit
+ID: 140 CORAAP           Adv. Aircraft Plant                      ground factory            Core
+ID: 141 CORACA           Adv. Construction Aircraft               air builder               Core
+ID: 142 CORACK           Adv. Construction Kbot                   ground builder            Core
+ID: 143 CORACSUB         Advanced Construction Sub                sea builder               Core
+ID: 144 CORACV           Adv. Construction Vehicle                ground builder            Core
+ID: 145 CORAH            Slinger                                  hover assault             Core     assault unit
+ID: 146 CORAK            A.K.                                     ground assault            Core     assault unit
+ID: 147 CORALAB          Adv. Kbot Lab                            ground factory            Core
+ID: 148 CORAMPH          Gimp                                     ground assault            Core     assault unit
+ID: 149 CORAP            Aircraft Plant                           ground factory            Core
+ID: 150 CORAPE           Rapier                                   air assault               Core     gunship
+ID: 151 CORARAD          Advanced Radar Tower                     stationary radar/sonar    Core
+ID: 152 CORARCH          Shredder                                 sea assault               Core     naval assault unit
+ID: 153 CORASON          Advanced Sonar Station                   stationary radar/sonar    Core
+ID: 154 CORASP           Air Repair Pad                           air base                  Core
+ID: 155 CORASY           Adv. Shipyard                            water factory             Core
+ID: 156 CORATL           Advanced Torpedo Launcher                defence building          Core
+ID: 157 CORAVP           Adv. Vehicle Plant                       ground factory            Core
+ID: 158 CORAWAC          Vulture                                  air scout                 Core
+ID: 159 CORBATS          Warlord                                  naval artillery           Core
+ID: 160 CORBEAC          Alien Beacon                             unknown                   Neutral
+ID: 161 CORBUILD         Hydration Plant                          unknown                   Neutral
+ID: 162 CORBUZZ          Buzzsaw                                  stationary arty           Core
+ID: 163 CORCA            Construction Aircraft                    air builder               Core
+ID: 164 CORCAN           The Can                                  ground assault            Core     assault unit
+ID: 165 CORCARRY         Hive                                     unknown                   Core
+ID: 166 CORCH            Construction Hovercraft                  sea builder               Core
+ID: 167 CORCK            Construction Kbot                        ground builder            Core
+ID: 168 CORCKFUS         Cloakable Fusion Reactor                 power plant               Core
+ID: 169 CORCOM           Commander                                commander                 Core
+ID: 170 CORCRASH         Crasher                                  ground assault            Core     assault unit
+ID: 171 CORCRUS          Executioner                              sea assault               Core     naval assault unit
+ID: 172 CORCS            Construction Ship                        sea builder               Core
+ID: 173 CORCSA           Construction Seaplane                    air builder               Core
+ID: 174 CORCV            Construction Vehicle                     ground builder            Core
+ID: 175 CORDECOM         Commander                                ground builder            Core
+ID: 176 CORDEV1          Implosion Device                         unknown                   Neutral
+ID: 177 CORDOOM          Doomsday Machine                         defence building          Core
+ID: 178 CORDRAG          Dragon's Teeth                           unknown                   Core
+ID: 179 CORESTOR         Energy Storage                           storage                   Core
+ID: 180 CORETER          Deleter                                  mobile jammer             Core
+ID: 181 CORFAST          Freaker                                  ground scout              Core
+ID: 182 CORFAV           Weasel                                   ground scout              Core
+ID: 183 CORFDRAG         Floating Dragon's Teeth                  unknown                   Core
+ID: 184 CORFHLT          Thunderbolt                              defence building          Core
+ID: 185 CORFINK          Fink                                     air scout                 Core
+ID: 186 CORFLAK          Cobra                                    defence building          Core
+ID: 187 CORFMD           Fortitude Missile Defense                stationary launcher       Core
+ID: 188 CORFMKR          Floating Metal Maker                     metal maker               Core
+ID: 189 CORFORT          Fortification Wall                       unknown                   Core
+ID: 190 CORFRT           Stinger                                  defence building          Core
+ID: 191 CORFUS           Fusion Power Plant                       power plant               Core
+ID: 192 CORGANT          Krogoth Gantry                           ground factory            Core
+ID: 193 CORGATE          Galactic Gate                            unknown                   Neutral
+ID: 194 CORGATOR         Instigator                               ground assault            Core     assault unit
+ID: 195 CORGEO           Geothermal Powerplant                    power plant               Core
+ID: 196 CORGOL           Goliath                                  ground assault            Core     assault unit
+ID: 197 CORHLT           Gaat Gun                                 defence building          Core
+ID: 198 CORHP            Hovercraft Platform                      ground factory            Core
+ID: 199 CORHRK           Dominator                                ground artillery          Core
+ID: 200 CORHUNT          Hunter                                   unknown                   Core
+ID: 201 CORHURC          Hurricane                                air assault               Core     bomber
+ID: 202 CORINT           Intimidator                              stationary arty           Core
+ID: 203 CORKROG          Krogoth                                  ground assault            Core     assault unit
+ID: 204 CORLAB           Kbot Lab                                 ground factory            Core
+ID: 205 CORLEVLR         Leveler                                  ground assault            Core     assault unit
+ID: 206 CORLLT           Light Laser Tower                        defence building          Core
+ID: 207 CORMABM          Hedgehog                                 mobile launcher           Core
+ID: 208 CORMAKR          Metal Maker                              metal maker               Core
+ID: 209 CORMART          Mobile Artillery                         ground artillery          Core
+ID: 210 CORMEX           Metal Extractor                          metal extractor           Core
+ID: 211 CORMH            Nixer                                    hover artillery           Core
+ID: 212 CORMINE1         Nugget                                   unknown                   Core
+ID: 213 CORMINE2         Muffin                                   unknown                   Core
+ID: 214 CORMINE3         Marshmallow                              unknown                   Core
+ID: 215 CORMINE4         Mazarin                                  unknown                   Core
+ID: 216 CORMINE5         Donut                                    unknown                   Core
+ID: 217 CORMINE6         Shock mine                               unknown                   Core
+ID: 218 CORMIST          Slasher                                  ground assault            Core     assault unit
+ID: 219 CORMLV           Spoiler                                  ground builder            Core
+ID: 220 CORMMKR          Moho Metal Maker                         metal maker               Core
+ID: 221 CORMOHO          Moho Mine                                metal extractor           Core
+ID: 222 CORMORT          Morty                                    ground assault            Core     assault unit
+ID: 223 CORMSHIP         Missile Frigate                          sea assault               Core     naval assault unit
+ID: 224 CORMSTOR         Metal Storage                            storage                   Core
+ID: 225 CORNECRO         Resurrection Kbot                        ground builder            Core
+ID: 226 CORPLAS          Immolator                                defence building          Core
+ID: 227 CORPLAT          Seaplane Platform                        water factory             Core
+ID: 228 CORPT            Searcher                                 sea scout                 Core
+ID: 229 CORPUN           Punisher                                 defence building          Core
+ID: 230 CORPYRO          Pyro                                     ground assault            Core     assault unit
+ID: 231 CORRAD           Radar Tower                              stationary radar/sonar    Core
+ID: 232 CORRAID          Raider                                   ground assault            Core     assault unit
+ID: 233 CORREAP          Reaper                                   ground assault            Core     assault unit
+ID: 234 CORRL            Pulverizer                               defence building          Core
+ID: 235 CORROACH         Roach                                    mobile jammer             Core
+ID: 236 CORROY           Enforcer                                 sea assault               Core     naval assault unit
+ID: 237 CORSCORP         Scorpion                                 unknown                   Neutral
+ID: 238 CORSEAL          Crock                                    ground assault            Core     assault unit
+ID: 239 CORSEAP          Typhoon                                  air assault               Core     gunship
+ID: 240 CORSENT          Copperhead                               ground assault            Core     assault unit
+ID: 241 CORSFIG          Voodoo                                   air assault               Core     gunship
+ID: 242 CORSH            Scrubber                                 hover scout               Core
+ID: 243 CORSHAD          Shadow                                   air assault               Core     bomber
+ID: 244 CORSHARK         Shark                                    submarine assault         Core
+ID: 245 CORSILO          Silencer                                 stationary launcher       Core
+ID: 246 CORSJAM          Phantom                                  mobile jammer             Core
+ID: 247 CORSNAP          Snapper                                  hover assault             Core     assault unit
+ID: 248 CORSOLAR         Solar Collector                          power plant               Core
+ID: 249 CORSONAR         Sonar Station                            stationary radar/sonar    Core
+ID: 250 CORSPEC          Spectre                                  mobile jammer             Core
+ID: 251 CORSPY           Parasite                                 unknown                   Core
+ID: 252 CORSS            Sea Serpent                              unknown                   Neutral
+ID: 253 CORSSUB          Leviathan                                submarine assault         Core
+ID: 254 CORSTORM         Storm                                    ground assault            Core     assault unit
+ID: 255 CORSUB           Snake                                    submarine assault         Core
+ID: 256 CORSUMO          Sumo                                     ground assault            Core     assault unit
+ID: 257 CORSY            Shipyard                                 water factory             Core
+ID: 258 CORTARG          Targeting Facility                       unknown                   Core
+ID: 259 CORTHOVR         Turtle                                   hover scout               Core
+ID: 260 CORTHUD          Thud                                     ground assault            Core     assault unit
+ID: 261 CORTIDE          Tidal Generator                          power plant               Core
+ID: 262 CORTITAN         Titan                                    air assault               Core     bomber
+ID: 263 CORTL            Torpedo Launcher                         defence building          Core
+ID: 264 CORTOAST         Toaster                                  defence building          Core
+ID: 265 CORTRON          Neutron                                  stationary arty           Core
+ID: 266 CORTRUCK         Truck                                    unknown                   Neutral
+ID: 267 CORTSHIP         Envoy                                    unknown                   Core
+ID: 268 CORUWES          Underwater Energy Storage                storage                   Core
+ID: 269 CORUWFUS         Underwater Fusion Plant                  power plant               Core
+ID: 270 CORUWMEX         Underwater Metal Extractor               metal extractor           Core
+ID: 271 CORUWMS          Underwater Metal Storage                 storage                   Core
+ID: 272 CORVALK          Valkyrie                                 unknown                   Core
+ID: 273 CORVAMP          Vamp                                     air assault               Core     gunship
+ID: 274 CORVENG          Avenger                                  air assault               Core     gunship
+ID: 275 CORVIPE          Viper                                    defence building          Core
+ID: 276 CORVOYR          Voyeur                                   unknown                   Core
+ID: 277 CORVP            Vehicle Plant                            ground factory            Core
+ID: 278 CORVRAD          Informer                                 unknown                   Core
+ID: 279 CORVROC          Diplomat                                 ground artillery          Core
+ID: 280 CORWIN           Wind Generator                           unknown                   Core
+ID: 281 x1corminifus     Light Fusion Power Plant                 power plant               Core
+ID: 282 x1daARMFLAKNAVAL Naval Flakker                            defence building          Arm
+ID: 283 x1eaCORFLAKNAVAL Naval Cobra                              defence building          Core
+ID: 284 x1ebcorjtorn     Radar Tower                              stationary jammer         Core
+ID: 285 x1ecarmjtorn     Radar Jamming Tower                      stationary jammer         Arm
+
+defence building Arm:
+Ambusher    Annihilator    Advanced Torpedo Launcher    Stingray    Flakker    Defender - NS    Guardian    Sentinel    L.L.T.    Defender    Torpedo Launcher    Naval Flakker    
+
+stationary arty Arm:
+Big Bertha    Stunner    Vulcan    
+
+storage Arm:
+Energy Storage    Metal Storage    Underwater Energy Storage    Underwater Metal Storage    
+
+ground factory Arm:
+Adv. Aircraft Plant    Adv. Kbot Lab    Aircraft Plant    Adv. Vehicle Plant    Hovercraft Platform    Kbot Lab    Vehicle Plant    
+
+water factory Arm:
+Adv. Shipyard    Seaplane Platform    Shipyard    
+
+air base Arm:
+Air Repair Pad    
+
+stationary radar/sonar Arm:
+Advanced Radar Tower    Radar Tower    Sonar Station    
+
+stationary jammer Arm:
+Radar Jamming Tower    
+
+stationary launcher Arm:
+Protector    Retaliator    
+
+power plant Arm:
+Cloakable Fusion Reactor    Fusion Reactor    Geothermal Powerplant    Solar Collector    Tidal Generator    Underwater Fusion Plant    
+
+metal extractor Arm:
+Metal Extractor    Moho Mine    Underwater Metal Extractor    
+
+metal maker Arm:
+Floating Metal Maker    Metal Maker    Moho Metal Maker    
+
+commander Arm:
+Commander    
+
+ground assault Arm:
+Bulldog    Triton    Fido    Flash    Hammer    Jethro    Panther    Penetrator    Maverick    Peewee    Rocko    Samson    Spider    Stumpy    Warrior    Phalanx    Zeus    
+
+air assault Arm:
+Brawler    Freedom Fighter    Hawk    Lancet    Phoenix    Albatross    Tornado    Thunder    
+
+hover assault Arm:
+Swatter    Pelican    Anaconda    
+
+sea assault Arm:
+Archer    Conqueror    Ranger    Crusader    
+
+submarine assault Arm:
+Lurker    Piranha    
+
+ground artillery Arm:
+Luger    Merl    Raven    Shooter    
+
+naval artillery Arm:
+Millenium    
+
+hover artillery Arm:
+Wombat    
+
+ground scout Arm:
+Zipper    Jeffy    Flea    
+
+air scout Arm:
+Eagle    Peeper    
+
+hover scout Arm:
+Skimmer    
+
+sea scout Arm:
+Skeeter    
+
+mobile jammer Arm:
+Eraser    Jammer    Fibber    Escort    Invader    
+
+mobile launcher Arm:
+Scarab    
+
+ground builder Arm:
+Adv. Construction Kbot    Adv. Construction Vehicle    Construction KBot    Commander    Construction Vehicle    Commander    FARK    Podger    
+
+air builder Arm:
+Adv. Construction Aircraft    Construction Aircraft    Construction Seaplane    
+
+hover builder Arm:
+Construction Hovercraft    
+
+sea builder Arm:
+Advanced Construction Sub    Construction Hovercraft    Construction Ship    
+
+defence building Core:
+Advanced Torpedo Launcher    Doomsday Machine    Thunderbolt    Cobra    Stinger    Gaat Gun    Light Laser Tower    Immolator    Punisher    Pulverizer    Torpedo Launcher    Toaster    Viper    Naval Cobra    
+
+stationary arty Core:
+Buzzsaw    Intimidator    Neutron    
+
+storage Core:
+Energy Storage    Metal Storage    Underwater Energy Storage    Underwater Metal Storage    
+
+ground factory Core:
+Adv. Aircraft Plant    Adv. Kbot Lab    Aircraft Plant    Adv. Vehicle Plant    Krogoth Gantry    Hovercraft Platform    Kbot Lab    Vehicle Plant    
+
+water factory Core:
+Adv. Shipyard    Seaplane Platform    Shipyard    
+
+air base Core:
+Air Repair Pad    
+
+stationary radar/sonar Core:
+Advanced Radar Tower    Advanced Sonar Station    Radar Tower    Sonar Station    
+
+stationary jammer Core:
+Radar Tower    
+
+stationary launcher Core:
+Fortitude Missile Defense    Silencer    
+
+power plant Core:
+Cloakable Fusion Reactor    Fusion Power Plant    Geothermal Powerplant    Solar Collector    Tidal Generator    Underwater Fusion Plant    Light Fusion Power Plant    
+
+metal extractor Core:
+Metal Extractor    Moho Mine    Underwater Metal Extractor    
+
+metal maker Core:
+Floating Metal Maker    Metal Maker    Moho Metal Maker    
+
+commander Core:
+Commander    
+
+ground assault Core:
+A.K.    Gimp    The Can    Crasher    Instigator    Goliath    Krogoth    Leveler    Slasher    Morty    Pyro    Raider    Reaper    Crock    Copperhead    Storm    Sumo    Thud    
+
+air assault Core:
+Rapier    Hurricane    Typhoon    Voodoo    Shadow    Titan    Vamp    Avenger    
+
+hover assault Core:
+Slinger    Snapper    
+
+sea assault Core:
+Shredder    Executioner    Missile Frigate    Enforcer    
+
+submarine assault Core:
+Shark    Leviathan    Snake    
+
+ground artillery Core:
+Dominator    Mobile Artillery    Diplomat    
+
+naval artillery Core:
+Warlord    
+
+hover artillery Core:
+Nixer    
+
+ground scout Core:
+Freaker    Weasel    
+
+air scout Core:
+Vulture    Fink    
+
+hover scout Core:
+Scrubber    Turtle    
+
+sea scout Core:
+Searcher    
+
+mobile jammer Core:
+Deleter    Roach    Phantom    Spectre    
+
+mobile launcher Core:
+Hedgehog    
+
+ground builder Core:
+Adv. Construction Kbot    Adv. Construction Vehicle    Construction Kbot    Commander    Construction Vehicle    Commander    Spoiler    Resurrection Kbot    
+
+air builder Core:
+Adv. Construction Aircraft    Construction Aircraft    Construction Seaplane    
+
+hover builder Core:
+Construction Hovercraft    
+
+sea builder Core:
+Advanced Construction Sub    Construction Hovercraft    Construction Ship    

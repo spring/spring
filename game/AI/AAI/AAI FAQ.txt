@@ -6,6 +6,10 @@ Questions:
 
 - The message "AAI not properly initialized, please view ai log for further information" appears
 
+- How do i add support for other mods?
+
+- A new version of a mod has been released
+
 - How does water map support work?
 
 - AAI crashes right at the beginning on map x
@@ -26,9 +30,11 @@ Questions:
 
 - AAI places metal extractors ineffectively/everywhere
 
-- How do i add support for other mods?
+- What kind of information is stored in mod learning files?
 
 - Is it possible to play on water maps?
+
+- AAI does not build enough stationary artillery/builds to much stat. artillery
 
 - Why is it called 'AAI'?
 
@@ -45,7 +51,32 @@ A: 	This means that AAI has not been set up properly and will not work. This may
 	(such as misspelled keyword, non existing unit names, etc.)
 	Have a look at the AI log (in the main AAI folder) - it may provide you with further information about what 
 	went wrong. 
- 
+
+--------------------------------------------------------------------------------------------------------------------
+
+Q: 	How do i add support for other mods?
+
+A: 	At first you have to figure out the internal names (e.g. ARMCOM) of the starting units of all sides 
+	and create a cfg file in the cfg-subfolder. The filename is the name of the mod-file, replace its 
+	ending with ".cfg". In case you are not sure about the filename try to run AAI with that mod. It will fail 
+	to load and print the desired cfg filename in its logfile (look at /aai/log/).
+
+	You will have to specify the number of different sides, their names and starting units. All other statements
+	are optional. You will find a complete list of all statements as well as their default values in the 
+	/aai/cfg/help/example mod.cfg) 
+	
+--------------------------------------------------------------------------------------------------------------------
+
+Q: 	A new version of a mod has been released
+
+A:	(a) Minor release (only minor tweaks/balances)
+	    AAI should adapt to minor changes concerning speed/damage etc. rather quickly. You may port your old mod 
+	    learning file by renaming it. Do not forget to rename the cfg file as well
+
+	(b) Major release (new units, different roles of existing units, changes concerning buildoptions)
+	    In this case AAI must create a new mod learning file. Just rename the cfg file and let AAI create a new 
+	    mod leraning file 
+
 --------------------------------------------------------------------------------------------------------------------
 
 Q: 	How does water map support work
@@ -142,11 +173,28 @@ A: 	This is most likely the result of bug in the mex spot finding algorithm wher
 
 --------------------------------------------------------------------------------------------------------------------
 
-Q: 	How do i add support for other mods?
+Q: 	What kind of information is stored in mod learning files?
 
-A: 	At first, you have to figure out the internal names (e.g. ARMCOM) of the starting units of all sides 
-	and create a cfg file in the cfg-subfolder. The filename is the name of the mod-file, replace its 
-	ending with ".cfg". For further information on cfg-files look at example.cfg 
+A: 	Mod learning files suit several purposes:
+	
+	- They provide AAI with a complete buildtree (which unit builds what) 
+	
+	- They store a lot of information about all units (category (e.g. power plant, mex, aircraft builder), cost,
+	  speed, buildtime, special ratings) that have been calculated in a special way  
+	
+	- They store a lot of precached data that help AAI selecting units/buildings (like min/max buildtime, cost, 
+	  weapons range, etc. of the categories)
+	
+	- They store the learning data of all combat units/stationary defences 
+
+	
+	Therefore mod learning files must be created again if
+	
+	- units have been added/removed
+
+	- buildoptions of a certain unit have been added/removed
+
+	- movement type (ground, air, sea, hover, building) of units changed
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -154,6 +202,14 @@ Q: 	Is it possible to play on water maps?
 
 A: 	Since AAI v0.60 there is basic naval support. However AAI may have difficulties detecting the correct map 
 	type. Look some questions above for further information
+
+--------------------------------------------------------------------------------------------------------------------
+
+Q: 	AAI does not build enough stationary artillery/builds to much stat. artillery
+
+A: 	You can easily adjust the maximum number of stationary artillery in the mod.cfg file (look for MAX_STAT_ARTY 
+	statement - if it is not set, the default value will be 3). You may also disable stationary artillery 
+	completly by setting this to 0
 
 --------------------------------------------------------------------------------------------------------------------
 

@@ -1,0 +1,391 @@
+ID: 1   fnulav           Puma                                     unknown                   Neutral
+ID: 2   fnutalon         Talon                                    unknown                   Neutral
+ID: 3   fnutank          Leopard                                  unknown                   Neutral
+ID: 4   gdaaat           Pamir IAA                                defence building          GD
+ID: 5   gdaaatamh        Svestol IAA                              defence building          GD
+ID: 6   gdadvhfact       Medium Helicopter Pad                    ground factory            GD
+ID: 7   gdadvmex         Advanced Metal Processor                 metal extractor           GD
+ID: 8   gdadvrad         Radar Tower                              stationary radar/sonar    GD
+ID: 9   gdadvreact       GD Super Heavy Nuclear Reactor           power plant               GD
+ID: 10  gdadvsfact       Heavy Shipyard                           water factory             GD
+ID: 11  gdadvtfact       Medium Vehicle Factory                   ground factory            GD
+ID: 12  gdakula          Akula                                    sea assault               GD       naval assault unit
+ID: 13  gdamht           Svestepol                                defence building          GD
+ID: 14  gdartyt          Pamir                                    defence building          GD
+ID: 15  gdcom            GD Mobile Command                        commander                 GD
+ID: 16  gdewdt           Light Wall East/West                     unknown                   GD
+ID: 17  gdeye            GD Perimeter Camera                      unknown                   GD
+ID: 18  gdgeo            Geo Processsing Plant                    power plant               GD
+ID: 19  gdhaaat          Pamir IIIAA                              defence building          GD
+ID: 20  gdhartyt         Varimir                                  stationary arty           GD
+ID: 21  gdhct            Vaiyvr                                   defence building          GD
+ID: 22  gdhfact          Light Helicopter Pad                     ground factory            GD
+ID: 23  gdhhelib         Yavrsk                                   air assault               GD       gunship
+ID: 24  gdhhelir         Svmpest                                  air assault               GD       gunship
+ID: 25  gdhhelit         Thor                                     air assault               GD       gunship
+ID: 26  gdhlb            Karsk III                                defence building          GD
+ID: 27  gdhrt            Danivich                                 defence building          GD
+ID: 28  gdhshipa         Ioilevir                                 naval artillery           GD
+ID: 29  gdhshipl         Petrkutkz                                sea assault               GD       naval assault unit
+ID: 30  gdhshipr         Kievir                                   sea assault               GD       naval assault unit
+ID: 31  gdhtanka         Caucaus                                  ground artillery          GD
+ID: 32  gdhtankc         Ural                                     ground assault            GD       assault unit
+ID: 33  gdhtankcamh      Caspian                                  ground assault            GD       assault unit
+ID: 34  gdhtankcon       Dguriyz IIG                              ground builder            GD
+ID: 35  gdhtanki         Chechnia                                 ground assault            GD       assault unit
+ID: 36  gdhtankl         Ursk                                     ground assault            GD       assault unit
+ID: 37  gdhtankna        Chernobyl                                mobile launcher           GD
+ID: 38  gdhtankr         Okhotsk                                  ground assault            GD       assault unit
+ID: 39  gdhtankramh      Bajin                                    ground assault            GD       assault unit
+ID: 40  gdhtanktacn      Cherynob                                 mobile launcher           GD
+ID: 41  gdjam            Field Jammer                             stationary jammer         GD
+ID: 42  gdlct            Kaitush                                  defence building          GD
+ID: 43  gdlhelim         Cossack                                  air assault               GD       gunship
+ID: 44  gdlhelimg        Khan                                     air scout                 GD
+ID: 45  gdlhelis         Doppler                                  unknown                   GD
+ID: 46  gdlhelit         Grund                                    unknown                   GD
+ID: 47  gdllt            Han                                      unknown                   Neutral
+ID: 48  gdlmgt           Ilvic                                    defence building          GD
+ID: 49  gdlrt            Pytaitusk                                defence building          GD
+ID: 50  gdlshipaaa       Irukzt                                   sea assault               GD       naval assault unit
+ID: 51  gdlshipl         Irkutsk                                  sea assault               GD       naval assault unit
+ID: 52  gdlshippt        Volgograd                                unknown                   Neutral
+ID: 53  gdlshipr         Volgograd                                sea assault               GD       naval assault unit
+ID: 54  gdltanka         Pavost                                   ground artillery          GD
+ID: 55  gdltankaaa       Pavost AAI                               ground assault            GD       anti air unit
+ID: 56  gdltankc         Vladost                                  ground assault            GD       assault unit
+ID: 57  gdltankcon       Gruz                                     ground builder            GD
+ID: 58  gdltanki         Tchernia LT                              ground assault            GD       assault unit
+ID: 59  gdltankl         Taiga                                    ground assault            GD       assault unit
+ID: 60  gdltankr         Petra                                    ground assault            GD       assault unit
+ID: 61  gdltankrad       Vladost IIC                              ground assault            GD       assault unit
+ID: 62  gdltanks         Kamir I                                  ground scout              GD
+ID: 63  gdmaaab          Pamir IIAA                               defence building          GD
+ID: 64  gdmct            Kaityvr                                  defence building          GD
+ID: 65  gdmex            Metal Processor                          metal extractor           GD
+ID: 66  gdmexamh         Floating Metal Proccessor                metal extractor           GD
+ID: 67  gdmhelib         Orsk                                     air assault               GD       gunship
+ID: 68  gdmhelimg        Zoukov                                   air assault               GD       gunship
+ID: 69  gdmhelipt        Murmansk                                 air assault               GD       gunship
+ID: 70  gdmhelir         Kharkov                                  air assault               GD       gunship
+ID: 71  gdmine1          KV-238e "Kavarst"                        unknown                   GD
+ID: 72  gdmine2          M-352 "Petvor"                           unknown                   GD
+ID: 73  gdmlb            Karsk                                    defence building          GD
+ID: 74  gdmrt            Dannov                                   defence building          GD
+ID: 75  gdmshipc         Iosef                                    naval artillery           GD
+ID: 76  gdmshipcon       Grazniy                                  sea builder               GD
+ID: 77  gdmshipl         Petrkutkz                                sea assault               GD       naval assault unit
+ID: 78  gdmshipr         Petrosk                                  sea assault               GD       naval assault unit
+ID: 79  gdmshiprad       Klvast II                                sea assault               GD       naval assault unit
+ID: 80  gdmshipt         Olemec                                   unknown                   GD
+ID: 81  gdmtanka         Aurora                                   ground artillery          GD
+ID: 82  gdmtankaaa       Yatioa                                   ground artillery          GD
+ID: 83  gdmtankaaamh     Yatioa IAMP                              ground artillery          GD
+ID: 84  gdmtankc         Kruszchev                                ground assault            GD       assault unit
+ID: 85  gdmtankcamh      Kruszchev IAMP                           ground assault            GD       assault unit
+ID: 86  gdmtankcon       Duriyz                                   ground builder            GD
+ID: 87  gdmtanki         Tchernia                                 ground assault            GD       assault unit
+ID: 88  gdmtankj         Yakovich                                 ground assault            GD       assault unit
+ID: 89  gdmtankl         Kirovich                                 ground assault            GD       assault unit
+ID: 90  gdmtankmly       Vaikovic                                 ground builder            GD
+ID: 91  gdmtankr         Irvanguz                                 ground assault            GD       assault unit
+ID: 92  gdmtankramh      Irvanguz IIAMP                           ground assault            GD       assault unit
+ID: 93  gdmtanktamh      Kruszt IAMPT                             ground assault            GD       assault unit
+ID: 94  gdnsdt           Light Wall North/South                   unknown                   GD
+ID: 95  gdnukesilo       Silo                                     stationary launcher       GD
+ID: 96  gdrad            Field Radar                              stationary radar/sonar    GD
+ID: 97  gdradamh         Sensor Buoy                              stationary radar/sonar    GD
+ID: 98  gdreact          GD Nuclear Reactor                       power plant               GD
+ID: 99  gdsfact          Shipyard                                 water factory             GD
+ID: 100 gdsilo           GD Supply Center                         storage                   GD
+ID: 101 gdsilocontrol    Nuclear Missile Control Center           ground factory            GD
+ID: 102 gdsrad           Scout Radar                              stationary radar/sonar    GD
+ID: 103 gdtfact          Light Vehicle Factory                    ground factory            GD
+ID: 104 gdtidal          GD Tidal Reactor                         power plant               GD
+ID: 105 gdtrans          GD Energy Proccessor                     storage                   GD
+ID: 106 gdturbine        GD Gas Turbine                           power plant               GD
+ID: 107 gdtyphoon        Typhoon                                  mobile launcher           GD
+ID: 108 gduniquemex      Armed Metal Processor                    metal extractor           GD
+ID: 109 gdvadvhfact      Heavy Helicopter Pad                     ground factory            GD
+ID: 110 gdvadvtfact      Heavy Vehicle Factory                    ground factory            GD
+ID: 111 niadvhfact       Medium Hovercraft Factory                unknown                   Neutral
+ID: 112 niadvmex         Advanced Metal Extractor                 unknown                   Neutral
+ID: 113 niafact          Light Aircraft Factory                   unknown                   Neutral
+ID: 114 nicom            NI Tactical Command                      unknown                   Neutral
+ID: 115 nicratera        Nova                                     unknown                   Neutral
+ID: 116 nicratercon      Medium MC                                unknown                   Neutral
+ID: 117 nicraterl        Crater                                   unknown                   Neutral
+ID: 118 nicraterr        Impact                                   unknown                   Neutral
+ID: 119 nicratersc       Harmony II                               unknown                   Neutral
+ID: 120 nicrushercon     Heavy MC                                 unknown                   Neutral
+ID: 121 nicrusherl       Crusher                                  unknown                   Neutral
+ID: 122 nicrusherr       Impulse                                  unknown                   Neutral
+ID: 123 nigeo            Geo Processing Plant                     unknown                   Neutral
+ID: 124 nihfact          Light Hovercraft Factory                 unknown                   Neutral
+ID: 125 nilaalt          Erie                                     unknown                   Neutral
+ID: 126 nilaaltamh       Erie                                     unknown                   Neutral
+ID: 127 nillt            Nest                                     unknown                   Neutral
+ID: 128 nilrt            Perch                                    unknown                   Neutral
+ID: 129 nilunaraal       Nebula                                   unknown                   Neutral
+ID: 130 nilunarcon       Light MC                                 unknown                   Neutral
+ID: 131 nilunarr         Lunar                                    unknown                   Neutral
+ID: 132 nilunarrad       Surveyor                                 unknown                   Neutral
+ID: 133 nimeteorm        Pisces                                   unknown                   Neutral
+ID: 134 nimeteorr        Meteor                                   unknown                   Neutral
+ID: 135 nimeteors        Argos                                    unknown                   Neutral
+ID: 136 nimeteortower    Meteor Targetter                         unknown                   Neutral
+ID: 137 nimex            Metal Extractor                          unknown                   Neutral
+ID: 138 nimexamh         Floating Metal Extractor                 unknown                   Neutral
+ID: 139 nimexunique      Automated Metal Extractor                unknown                   Neutral
+ID: 140 nimoona          Comet                                    unknown                   Neutral
+ID: 141 nimoonl          Moon                                     unknown                   Neutral
+ID: 142 nimoonsc         Harmony                                  unknown                   Neutral
+ID: 143 nipartyt         Den                                      unknown                   Neutral
+ID: 144 niplutos         Pluto                                    unknown                   Neutral
+ID: 145 nirad            Field Radar                              unknown                   Neutral
+ID: 146 niradamh         Field Radar                              unknown                   Neutral
+ID: 147 niradcks         Scout Radar                              unknown                   Neutral
+ID: 148 nisilo           NI Storage Tower                         unknown                   Neutral
+ID: 149 nisolar          NI Solar Panel                           unknown                   Neutral
+ID: 150 nisolaramh       Floating Solar Panel                     unknown                   Neutral
+ID: 151 nistorml         Storm                                    unknown                   Neutral
+ID: 152 nitrans          NI Battery Tower                         unknown                   Neutral
+ID: 153 nivadvhfact      Heavy Hovercraft Factory                 unknown                   Neutral
+ID: 154 reconpole        Perimeter Recon Pole                     unknown                   URC
+ID: 155 urcadvafact      Medium VTOL Plant                        ground factory            URC
+ID: 156 urcadvckfact     Medium Stealth Factory                   ground factory            URC
+ID: 157 urcadvmex        Advanced Metal Extractor                 metal extractor           URC
+ID: 158 urcadvmfact      Medium Mech Factory                      ground factory            URC
+ID: 159 urcadvrad        Radar Tower                              stationary radar/sonar    URC
+ID: 160 urcadvreact      URC Heavy Reactor                        power plant               URC
+ID: 161 urcadvsfact      Heavy Shipyard                           water factory             URC
+ID: 162 urcafact         Light VTOL Plant                         ground factory            URC
+ID: 163 urcamht          Barnicle                                 defence building          URC
+ID: 164 urcbatb          Wyvern                                   air assault               URC      gunship
+ID: 165 urcbatp          Dragon                                   air assault               URC      gunship
+ID: 166 urcbatpt         Dragonfly                                air assault               URC      gunship
+ID: 167 urcbatr          Drake                                    air assault               URC      gunship
+ID: 168 urcbatt          Draken                                   unknown                   URC
+ID: 169 urccom           URC Mobile Command                       commander                 URC
+ID: 170 urcdragonb       Hellkite                                 air assault               URC      gunship
+ID: 171 urcdragonp       Raven                                    air assault               URC      gunship
+ID: 172 urcdragonr       Falcon                                   air assault               URC      gunship
+ID: 173 urcdt            Dragon's Teeth                           unknown                   URC
+ID: 174 urceye           URC Perimeter Camera                     unknown                   URC
+ID: 175 urcfortress      Fortress                                 defence building          URC
+ID: 176 urcgargoylem     Griffin                                  air assault               URC      gunship
+ID: 177 urcgargoylep     Gargoyle                                 air scout                 URC
+ID: 178 urcgargoyles     Eagle                                    unknown                   URC
+ID: 179 urcgeo           Geo Processing Plant                     power plant               URC
+ID: 180 urchaapt         Limestone                                defence building          URC
+ID: 181 urchpt           Shale                                    defence building          URC
+ID: 182 urchrt           Limestone                                defence building          URC
+ID: 183 urchydrag        Kraken                                   naval artillery           URC
+ID: 184 urchydrap        Hydra                                    sea assault               URC      naval assault unit
+ID: 185 urchydrar        Leviathan                                sea assault               URC      naval assault unit
+ID: 186 urcjaguarc       Cougar                                   ground assault            URC      assault unit
+ID: 187 urcjaguarm       Lion                                     ground assault            URC      assault unit
+ID: 188 urcjaguarp       Jaguar                                   ground assault            URC      assault unit
+ID: 189 urcjaguarr       Mammoth                                  ground artillery          URC
+ID: 190 urcjam           Jamming Tower                            stationary jammer         URC
+ID: 191 urclaapt         Rock IP                                  defence building          URC
+ID: 192 urclaaptamh      Barnicle IP                              defence building          URC
+ID: 193 urclpt           Rock                                     defence building          URC
+ID: 194 urclrmt          LRRL Tower                               stationary arty           URC
+ID: 195 urclrpc          Emplaced LRPC                            stationary launcher       URC
+ID: 196 urclrpccontrol   Plasma Cannon Control Center             ground factory            URC
+ID: 197 urclrt           Defender                                 defence building          URC
+ID: 198 urcmaapt         Stalagmite                               defence building          URC
+ID: 199 urcmakoc         Devilfish                                naval artillery           URC
+ID: 200 urcmakocon       Coral                                    sea builder               URC
+ID: 201 urcmakop         Mako                                     sea assault               URC      naval assault unit
+ID: 202 urcmakor         Thresher                                 sea assault               URC      naval assault unit
+ID: 203 urcmakorad       Cuddlefish                               mobile jammer             URC
+ID: 204 urcmakot         Turtle                                   unknown                   URC
+ID: 205 urcmex           Metal Extractor                          metal extractor           URC
+ID: 206 urcmexamh        Floating Metal Extractor                 metal extractor           URC
+ID: 207 urcmexunique     Covert Metal Extractor                   metal extractor           URC
+ID: 208 urcmfact         Light Mech Factory                       ground factory            URC
+ID: 209 urcmine1         M-119 "Impact"                           unknown                   URC
+ID: 210 urcmine2         M-118 "Popper"                           unknown                   URC
+ID: 211 urcmine3         M-131 "Thumper"                          unknown                   URC
+ID: 212 urcmortt         Punisher                                 defence building          URC
+ID: 213 urcmpt           Granite                                  defence building          URC
+ID: 214 urcmrt           Slate                                    defence building          URC
+ID: 215 urcpiranha       Piranha                                  sea assault               URC      naval assault unit
+ID: 216 urcrad           Field Radar                              stationary radar/sonar    URC
+ID: 217 urcradamh        Sensor Buoy                              stationary radar/sonar    URC
+ID: 218 urcreact         URC Light Reactor                        power plant               URC
+ID: 219 urcsfact         Shipyard                                 water factory             URC
+ID: 220 urcsharkaap      Barracuda                                sea assault               URC      naval assault unit
+ID: 221 urcsharkp        Shark                                    sea scout                 URC
+ID: 222 urcsharkpt       Squid                                    unknown                   Neutral
+ID: 223 urcsharkr        Skate                                    sea scout                 URC
+ID: 224 urcsilo          URC Silo                                 storage                   URC
+ID: 225 urcspider2aap    Wasp                                     ground artillery          URC
+ID: 226 urcspider2aapck  Scarab                                   ground artillery          URC
+ID: 227 urcspider2atvt   Ant Worker                               ground assault            URC      assault unit
+ID: 228 urcspider2ckj    Ghost Crab                               mobile jammer             URC
+ID: 229 urcspider2g      Whip-Scorpion                            ground artillery          URC
+ID: 230 urcspider2pamh   Diving Beetle                            ground assault            URC      assault unit
+ID: 231 urcspider2pck    Scorpion                                 ground assault            URC      assault unit
+ID: 232 urcspider2rck    Beetle                                   ground assault            URC      assault unit
+ID: 233 urcspider2smly   Cockroach                                ground builder            URC
+ID: 234 urcspider2tamh   Water Strider                            ground assault            URC      assault unit
+ID: 235 urcspider3atvt   Ant Queen                                ground assault            URC      assault unit
+ID: 236 urcspider3con    HFC Mech                                 ground builder            URC
+ID: 237 urcspider3fck    Termite                                  ground assault            URC      assault unit
+ID: 238 urcspider3pck    Emperor Scorpion                         ground assault            URC      assault unit
+ID: 239 urcspider3rck    Mantis                                   ground assault            URC      assault unit
+ID: 240 urcspideraap     Reaver II                                ground assault            URC      anti air unit
+ID: 241 urcspidercon     LC Mech                                  ground builder            URC
+ID: 242 urcspiderf       Ravenger                                 ground assault            URC      assault unit
+ID: 243 urcspiderg       Raiden                                   ground artillery          URC
+ID: 244 urcspiderp       Reaver                                   ground assault            URC      assault unit
+ID: 245 urcspiderpck     Wraith                                   ground assault            URC      assault unit
+ID: 246 urcspiderr       Reaper                                   ground assault            URC      assault unit
+ID: 247 urcspiderrad     Shadow                                   mobile jammer             URC
+ID: 248 urcspiders       Spider                                   ground scout              URC
+ID: 249 urcspidershield  Shelter                                  unknown                   Neutral
+ID: 250 urctidal         URC Tidal Reactor                        power plant               URC
+ID: 251 urctigerc        Bobcat                                   ground assault            URC      assault unit
+ID: 252 urctigercon      MFC Mech                                 ground builder            URC
+ID: 253 urctigerp        Tiger                                    ground assault            URC      assault unit
+ID: 254 urctigerR        Panther                                  ground assault            URC      assault unit
+ID: 255 urctrans         URC Transformer                          storage                   URC
+ID: 256 urcvadvafact     Heavy VTOL Plant                         ground factory            URC
+ID: 257 urcvadvckfact    Heavy Stealth Factory                    ground factory            URC
+ID: 258 urcvadvmfact     Heavy Mech Factory                       ground factory            URC
+ID: 259 urcwhaleshark    Whaleshark                               mobile launcher           URC
+
+defence building URC:
+Barnicle    Fortress    Limestone    Shale    Limestone    Rock IP    Barnicle IP    Rock    Defender    Stalagmite    Punisher    Granite    Slate    
+
+stationary arty URC:
+LRRL Tower    
+
+storage URC:
+URC Silo    URC Transformer    
+
+ground factory URC:
+Medium VTOL Plant    Medium Stealth Factory    Medium Mech Factory    Light VTOL Plant    Plasma Cannon Control Center    Light Mech Factory    Heavy VTOL Plant    Heavy Stealth Factory    Heavy Mech Factory    
+
+water factory URC:
+Heavy Shipyard    Shipyard    
+
+stationary radar/sonar URC:
+Radar Tower    Field Radar    Sensor Buoy    
+
+stationary jammer URC:
+Jamming Tower    
+
+stationary launcher URC:
+Emplaced LRPC    
+
+power plant URC:
+URC Heavy Reactor    Geo Processing Plant    URC Light Reactor    URC Tidal Reactor    
+
+metal extractor URC:
+Advanced Metal Extractor    Metal Extractor    Floating Metal Extractor    Covert Metal Extractor    
+
+commander URC:
+URC Mobile Command    
+
+ground assault URC:
+Cougar    Lion    Jaguar    Ant Worker    Diving Beetle    Scorpion    Beetle    Water Strider    Ant Queen    Termite    Emperor Scorpion    Mantis    Reaver II    Ravenger    Reaver    Wraith    Reaper    Bobcat    Tiger    Panther    
+
+air assault URC:
+Wyvern    Dragon    Dragonfly    Drake    Hellkite    Raven    Falcon    Griffin    
+
+sea assault URC:
+Hydra    Leviathan    Mako    Thresher    Piranha    Barracuda    
+
+ground artillery URC:
+Mammoth    Wasp    Scarab    Whip-Scorpion    Raiden    
+
+naval artillery URC:
+Kraken    Devilfish    
+
+ground scout URC:
+Spider    
+
+air scout URC:
+Gargoyle    
+
+sea scout URC:
+Shark    Skate    
+
+mobile jammer URC:
+Cuddlefish    Ghost Crab    Shadow    
+
+mobile launcher URC:
+Whaleshark    
+
+ground builder URC:
+URC Mobile Command    Cockroach    HFC Mech    LC Mech    MFC Mech    
+
+sea builder URC:
+Coral    
+
+defence building GD:
+Pamir IAA    Svestol IAA    Svestepol    Pamir    Pamir IIIAA    Vaiyvr    Karsk III    Danivich    Kaitush    Ilvic    Pytaitusk    Pamir IIAA    Kaityvr    Karsk    Dannov    
+
+stationary arty GD:
+Varimir    
+
+storage GD:
+GD Supply Center    GD Energy Proccessor    
+
+ground factory GD:
+Medium Helicopter Pad    Medium Vehicle Factory    Light Helicopter Pad    Nuclear Missile Control Center    Light Vehicle Factory    Heavy Helicopter Pad    Heavy Vehicle Factory    
+
+water factory GD:
+Heavy Shipyard    Shipyard    
+
+stationary radar/sonar GD:
+Radar Tower    Field Radar    Sensor Buoy    Scout Radar    
+
+stationary jammer GD:
+Field Jammer    
+
+stationary launcher GD:
+Silo    
+
+power plant GD:
+GD Super Heavy Nuclear Reactor    Geo Processsing Plant    GD Nuclear Reactor    GD Tidal Reactor    GD Gas Turbine    
+
+metal extractor GD:
+Advanced Metal Processor    Metal Processor    Floating Metal Proccessor    Armed Metal Processor    
+
+commander GD:
+GD Mobile Command    
+
+ground assault GD:
+Ural    Caspian    Chechnia    Ursk    Okhotsk    Bajin    Pavost AAI    Vladost    Tchernia LT    Taiga    Petra    Vladost IIC    Kruszchev    Kruszchev IAMP    Tchernia    Yakovich    Kirovich    Irvanguz    Irvanguz IIAMP    Kruszt IAMPT    
+
+air assault GD:
+Yavrsk    Svmpest    Thor    Cossack    Orsk    Zoukov    Murmansk    Kharkov    
+
+sea assault GD:
+Akula    Petrkutkz    Kievir    Irukzt    Irkutsk    Volgograd    Petrkutkz    Petrosk    Klvast II    
+
+ground artillery GD:
+Caucaus    Pavost    Aurora    Yatioa    Yatioa IAMP    
+
+naval artillery GD:
+Ioilevir    Iosef    
+
+ground scout GD:
+Kamir I    
+
+air scout GD:
+Khan    
+
+mobile launcher GD:
+Chernobyl    Cherynob    Typhoon    
+
+ground builder GD:
+GD Mobile Command    Dguriyz IIG    Gruz    Duriyz    Vaikovic    
+
+sea builder GD:
+Grazniy    
