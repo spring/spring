@@ -911,7 +911,6 @@ bool AAIExecute::BuildPowerPlant()
 	bool checkWater, checkGround;
 	float urgency;
 	float max_power;
-	float comparison;
 	float eff;
 	float energy = cb->GetEnergyIncome()+1;
 
@@ -924,7 +923,7 @@ bool AAIExecute::BuildPowerPlant()
 	}
 	else
 	{
-		max_power = 0.5 + pow((float) ai->activeUnits[POWER_PLANT], 0.7f);
+		max_power = 0.5 + pow((float) ai->activeUnits[POWER_PLANT], 0.8f);
 		eff = 0.5 + 1.5f / (brain->Affordable() + 0.5f);
 		urgency = 0.5 + GetEnergyUrgency()/1.5f;
 	}
@@ -3111,6 +3110,9 @@ AAIGroup* AAIExecute::GetClosestGroupOfCategory(UnitCategory category, UnitType 
 
 void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 enemy_pos, int importance)
 {
+	if(unit < 0)
+		return;
+
 	float3 pos = cb->GetUnitPos(unit);
 
 	int x = pos.x/map->xSectorSize;

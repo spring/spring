@@ -63,7 +63,7 @@ Mod Support:	AAI must know the internal names of the starting units of the diffe
 		- KuroTA 0.47
 		- Star Wars 1.0
 		- TLL 1.04
-		- FF 1.18 		(attacking temporarily not supported)
+		- FF 1.18 		
 		- Gundam Annihilation 
 		- Expand & Exterminate 0.163
 		- Spring 1944
@@ -104,6 +104,13 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- All other testers who are not listed here
 		
 		- All other people who gave some feedback 
+
+
+
+
+AAI 0.76	- Fixed the most common crashbugs in release mode
+
+		- Added basic attack behaviour for air only mods
 
 
 

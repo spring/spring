@@ -67,25 +67,33 @@ void AAIAttackManager::LaunchAttack()
 	else 
 		a_type = BASE_ATTACK;
 
-	if(map->mapType == LAND_MAP)
+	if(cfg->AIR_ONLY_MOD)
 	{
 		land = true;
-		water = false;
-	}
-	else if(map->mapType == LAND_WATER_MAP)
-	{
-		land = true;
-		water = true;
-	}
-	else if(map->mapType == WATER_MAP)
-	{
-		land = false;
 		water = true;
 	}
 	else
 	{
-		land = true;
-		water = false;
+		if(map->mapType == LAND_MAP)
+		{
+			land = true;
+			water = false;
+		}
+		else if(map->mapType == LAND_WATER_MAP)
+		{
+			land = true;
+			water = true;
+		}
+		else if(map->mapType == WATER_MAP)
+		{
+			land = false;
+			water = true;
+		}
+		else
+		{
+			land = true;
+			water = false;
+		}
 	}
 	
 	// get target sector
@@ -93,106 +101,155 @@ void AAIAttackManager::LaunchAttack()
 
 	if(dest)
 	{
-		list<AAIGroup*> combat_available;
-		list<AAIGroup*> aa_available;
+		if(cfg->AIR_ONLY_MOD)
+		{
+			list<AAIGroup*> combat_available;
 
-		// todo: improve by checking how to reach that sector
-		if(dest->water_ratio > 0.65)
-		{
-			land = false;
-			water = true;
-		}
-		else 
-		{
-			water = false;
-			land = true;
-		}
-
-		// get all combat/aa groups suitable to attack
-		for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
-		{
-			for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
+			// get all combat groups suitable to attack
+			for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
 			{
-				// check movement type first
+				for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
+				{		
+					if(!(*group)->attack && (*group)->SufficientAttackPower())
+						combat_available.push_back(*group);
+				}
+			}
 
-				suitable = true;
-
-				if(land && (*group)->move_type == SEA)
-					suitable = false;
-
-				if(water && (*group)->move_type == GROUND)
-					suitable = false;
-
-				if(suitable)
+			// possible groups found
+			if(!combat_available.empty())
+			{
+				// todo: check if enough att power
+				AAIAttack *attack;
+			
+				try
 				{
-					if((*group)->group_type == ASSAULT_UNIT)
+					attack = new AAIAttack(ai);
+				}
+				catch(...)
+				{
+					fprintf(ai->file, "Exception thrown when allocating memory for AAIAttack");
+					return;
+				}
+
+				attacks.push_back(attack);
+
+				attack->land = land;
+				attack->water = water;
+
+				// add combat groups
+				for(list<AAIGroup*>::iterator group = combat_available.begin(); group != combat_available.end(); ++group)
+					attack->AddGroup(*group);
+
+				// start the attack
+				attack->AttackSector(dest, a_type);
+			}
+
+			// clean up
+			combat_available.clear();
+		}
+		else
+		{
+			list<AAIGroup*> combat_available;
+			list<AAIGroup*> aa_available;
+
+			// todo: improve by checking how to reach that sector
+			if(dest->water_ratio > 0.65)
+			{
+				land = false;
+				water = true;
+			}
+			else 
+			{
+				water = false;
+				land = true;
+			}
+
+			// get all combat/aa groups suitable to attack
+			for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
+			{
+				for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
+				{
+					// check movement type first
+
+					suitable = true;
+	
+					if(land && (*group)->move_type == SEA)
+						suitable = false;
+
+					if(water && (*group)->move_type == GROUND)
+						suitable = false;
+
+					if(suitable)
 					{
-						if(!(*group)->attack && (*group)->SufficientAttackPower())
-							combat_available.push_back(*group);
-					}
-					else if((*group)->group_type == ANTI_AIR_UNIT)
-					{
-						if(!(*group)->attack && (*group)->task == GROUP_IDLE)
-							aa_available.push_back(*group);
+						if((*group)->group_type == ASSAULT_UNIT)
+						{
+							if(!(*group)->attack && (*group)->SufficientAttackPower())
+								combat_available.push_back(*group);
+						}
+						else if((*group)->group_type == ANTI_AIR_UNIT)
+						{
+							if(!(*group)->attack && (*group)->task == GROUP_IDLE)
+								aa_available.push_back(*group);
+						}
 					}
 				}
 			}
-		}
 
-		// possible groups found
-		if(!combat_available.empty())
-		{
-			// todo: check if enough att power
-
-			AAIAttack *attack;
-			
-			try
+			// possible groups found
+			if(!combat_available.empty())
 			{
+				// todo: check if enough att power
+
+				AAIAttack *attack;
+			
+				try
+				{
 				attack = new AAIAttack(ai);
-			}
-			catch(...)
-			{
-				fprintf(ai->file, "Exception thrown when allocating memory for AAIAttack");
-				return;
-			}
+				}
+				catch(...)
+				{
+					fprintf(ai->file, "Exception thrown when allocating memory for AAIAttack");
+					return;
+				}
 
-			attacks.push_back(attack);
+				attacks.push_back(attack);
 
-			attack->land = land;
-			attack->water = water;
+				attack->land = land;
+				attack->water = water;
 
-			// add combat groups
-			for(list<AAIGroup*>::iterator group = combat_available.begin(); group != combat_available.end(); ++group)
-				attack->AddGroup(*group);
+				// add combat groups
+				for(list<AAIGroup*>::iterator group = combat_available.begin(); group != combat_available.end(); ++group)
+					attack->AddGroup(*group);
 			
-			// add some aa
-			int aa_added = 0, max_aa;
+				// add some aa
+				int aa_added = 0, max_aa;
 
-			// check how much aa sensible
-			if(brain->max_units_spotted[1] < 0.2)
-				max_aa = 0;
-			else 
-				max_aa = 1;
+				// check how much aa sensible
+				if(brain->max_units_spotted[1] < 0.2)
+					max_aa = 0;
+				else 
+					max_aa = 1;
 
 
-			for(list<AAIGroup*>::iterator group = aa_available.begin(); group != aa_available.end(); ++group)
-			{
-				attack->AddGroup(*group);
+				for(list<AAIGroup*>::iterator group = aa_available.begin(); group != aa_available.end(); ++group)
+				{
+					attack->AddGroup(*group);
 
-				++aa_added;
+					++aa_added;
 
-				if(aa_added >= max_aa)
-					break;
+					if(aa_added >= max_aa)
+						break;
+				}
+
+				// start the attack
+				attack->AttackSector(dest, a_type);
+
 			}
 
-			// start the attack
-			attack->AttackSector(dest, a_type);
-
+			// clean up
+			aa_available.clear();
+			combat_available.clear();
 		}
-
-		// clean up
-		aa_available.clear();
-		combat_available.clear();
 	}
 }
 

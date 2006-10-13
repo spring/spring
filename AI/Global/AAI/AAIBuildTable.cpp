@@ -1510,7 +1510,7 @@ int AAIBuildTable::GetPowerPlant(int side, float cost, float urgency, float powe
 
 			//
 			if(unit->cost >= max_cost[POWER_PLANT][side-1])
-				my_ranking -= (cost + urgency + power);
+				my_ranking -= (cost + urgency + power)/2.0f;
 
 			//fprintf(ai->file, "%-20s: %f\n", unitList[*pplant-1]->humanName.c_str(), my_ranking);
 		}
@@ -2125,7 +2125,7 @@ int AAIBuildTable::GetHoverAssault(int side, float gr_eff, float air_eff, float 
 							+ sea_eff * max_eff[2][3] + stat_eff * max_eff[2][5];
 
 	if(total_efficiency <= 0)
-		total_efficiency = 1;
+		return 0;
 	
 	UnitTypeStatic *unit;
 
@@ -2185,6 +2185,9 @@ int AAIBuildTable::GetAirAssault(int side, float gr_eff, float air_eff, float ho
 
 	double total_efficiency = gr_eff * max_eff[1][0] + air_eff * max_eff[1][1] + hover_eff * max_eff[1][2] 
 							+ sea_eff * max_eff[1][3] + stat_eff * max_eff[1][5];
+
+	if(total_efficiency <= 0)
+		return 0;
 	
 	UnitTypeStatic *unit;
 
@@ -2305,7 +2308,7 @@ int AAIBuildTable::GetSubmarineAssault(int side, float sea_eff, float submarine_
 	double total_efficiency = sea_eff * max_eff[4][3] + submarine_eff * max_eff[4][4] + stat_eff * max_eff[4][5];
 
 	if(total_efficiency <= 0)
-		total_efficiency = 1;
+		return 0;
 
 	UnitTypeStatic *unit;
 
@@ -2449,17 +2452,17 @@ void AAIBuildTable::UpdateMinMaxAvgEfficiency(int side)
 				}
 				else
 				{
-					this->max_eff[i][j] = 0;
-					this->min_eff[i][j] = 0;
-					this->avg_eff[i][j] = 0;
+					this->max_eff[i][j] = 1;
+					this->min_eff[i][j] = 1;
+					this->avg_eff[i][j] = 1;
 					total_eff[i][j] = 1;
 				}
 			}
 			else
 			{
-				this->max_eff[i][j] = 0;
-				this->min_eff[i][j] = 0;
-				this->avg_eff[i][j] = 0;
+				this->max_eff[i][j] = 1;
+				this->min_eff[i][j] = 1;
+				this->avg_eff[i][j] = 1;
 				total_eff[i][j] = 1;
 			}
 		}
