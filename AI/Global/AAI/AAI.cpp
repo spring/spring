@@ -165,8 +165,11 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	cb->SendTextMsg("AAI loaded",0);
 }
 
-void AAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
+void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 {
+	if(damaged < 0)
+		return;
+
 	const UnitDef *def, *att_def;
 	UnitCategory att_cat, cat;
 	

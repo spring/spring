@@ -1037,7 +1037,7 @@ void AAIBrain::BuildUnitOfCategory(UnitCategory category, float cost, float grou
 				speed = 4;
 		}
 		else
-			speed = 0.25;
+			speed = 0.2;
 
 		if(rand()%cfg->HIGH_RANGE_UNITS_RATE == 1)
 		{
@@ -1048,7 +1048,7 @@ void AAIBrain::BuildUnitOfCategory(UnitCategory category, float cost, float grou
 
 		}
 		else
-			range = 0.25;
+			range = 0.2;
 
 		execute->BuildUnit(category, speed, cost, range, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
 	}
