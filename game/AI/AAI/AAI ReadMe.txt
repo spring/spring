@@ -1,32 +1,161 @@
 
-
 Author: 	Alexander 'submarine' Seizinger		icq: 138100896		alexander.seizinger@gmx.net
 
 
-Installation: 	Please delete older version than AAI 0.60 of AAI before installing AAI 0.62!
+Installation: 	Windows users:
 
-		Simply copy aai.ddl into your /aidll/globalai/ folder and make sure, the following subfolders exist:
-		\globalai\aai		-> readme, faq and different logs 
-		\globalai\aai\cache	-> map data (metal spots, water, etc)
-		\globalai\aai\cfg\map	-> map config files
-		\globalai\aai\cfg\mod	-> mod config files
-		\globalai\aai\learn\map	-> map learn files
-		\globalai\aai\learn\mod	-> mod learn files
-		\globalai\aai\log	-> log files 
+		Simply extract the archive into your spring\ai\ folder and make sure, the following subfolders exist:
+		
+		\ai\aai			-> readme, faq and different logs 
+		\ai\aai\cache		-> map data (metal spots, water, etc)
+		\ai\aai\cfg\map		-> map config files
+		\ai\aai\cfg\mod		-> mod config files
+		\ai\aai\learn\map	-> map learn files
+		\ai\aai\learn\mod	-> mod learn files
+		\ai\aai\log		-> log files 
 
-		If these folders do not exist, AAI will crash!
+		\ai\bot-libs\aai.dll 	-> main ai dll
+
+		If one of these folders does not exist, AAI will crash!
+
+		
+		Linux users: 
+
+		AAI will get the path of a writable directory from spring and load/save its files there
+		e.g.  /usr/local/games/taspring 
+
+		Apart from that the structure is the same as for windows users.
+
+
 
 		Please note, that there are hardly any buildtables included in this release. AAI should make better 
 		unit choices after a while. For further information, have a look at the AAI FAQ.
 
-		Furthermore i want to emphasize that there are quite some opportunities to change/improve AAI's way of
+		Furthermore I want to emphasize that there are quite some opportunities to change/improve AAI's way of
 		playing the game. Have a look at the cfg/help/mod.cfg for further information. If you think you created 
-		a cfg file which makes AAI playing much better than with the default ones, i'd appreciate if you send 
-		it to me to include it in future releases.
+		a cfg file which makes AAI play a certain much better than the default one mail it to me to include it 
+		in future releases.
+
+
+
+License:	Since AAI v0.70 all files have been released under the GPL
+
+
+
+Mod Support:	AAI must know the internal names of the starting units of the different sides (e.g. ARMCOM 
+		and CORCOM for most TA-mods). There are also some constants you may want to play with, so 
+		AAI tries to load the config from a file in the aai subfolder. The name must be the same as 
+		the modname, with ".cfg" extension (e.g. xta_se_v066.cfg for XTA mod). If you are not sure 
+		about the correct filename, just start a game running that mod. AAI will complain about 
+		missing cfg files and put the desired cfg filename in the log files.
+
+		See example.cfg for more information.
+		
+		By default, AAI has cfg files to support the following mods:
+		- XTA 0.66
+		- XTA Pimped Edition V7
+		- TA:WD 5.65
+		- AA 2.21 Standard
+		- AA 2.21 Forge
+		- OTA Shiny 5.5
+		- OTA Classic 5.5
+		- BoTA 1.3
+		- KuroTA 0.47
+		- Star Wars 1.0
+		- TLL 1.04
+		- FF 1.18 		(attacking temporarily not supported)
+		- Gundam Annihilation 
+		- Expand & Exterminate 0.163
+		- Spring 1944
+		- TA Battle Fleet
+
+
+
+		
+	!!!	Remember due to updates of these mods the filenames might change as well, so you have	!!!
+	!!!	to rename the mod.cfg file yourself							!!!
+
+
+
+
+Known bugs/	- AAI sometimes suffers from a bug in the pathfinding (units sometimes get stuck when close 
+Limitations:	  to buildings/objects)
+
+		- Game crashes when ai units get captured
+
+		- AAI does not use nukes, antinukes, emp missiles
+
+
+
+Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, lots of help with debugging
+
+		- TA Spring devs for creating the best open source rts game i know
+
+		- Jelmer 'Zaphod' Cnossen for some functions and a lot of helpful discussions
+
+		- Krogothe for his mex spot algorithm
+
+		- AccidUK for debugging and some coding suggestions
+
+		- Tournesol and Firenu for helping me getting debugging to work
+
+		- Yuritch for testing and providing me with improved mod config file 
+		
+		- All other testers who are not listed here
+		
+		- All other people who gave some feedback 
+
+
+
+AAI v0.75	- Completly redone attack system: AAI will now attack more elaborately 
+		  (attackers move on if are cleared, bombers returning to base when target destroyed, attack groups now 
+		  retreat under several circumstances, combat groups are guarded by aa units - however it still tends 
+		  to send in streams of attackers - will be adressed in one of the next versions ) Please not that at the 
+		  moment the new attack system does not work with air only mods such as FF at all. AAI will build a base 
+		  as well as combat units and react to the actions of the player but it will not attack in a proper way
+
+		
+		- Added MAX_ATTACKS statement to mod.cfg which determines the max number of independent attack waves at
+		  the same time (set to 4 by default)
+
+		- Modified artillery sorting in preparation of artillery support in one of the next versions.
+		  Added GROUND_ARTY_RANGE, SEA_ARTY_RANGE and HOVER_ARTY_RANGE statement to mod cfg. These replace the
+		  former MOBILE_ARTY_RANGE statement (it's no longer valid, remove from old cfg files)
+
+		- For linux users: AAI will now store its files in the only writable datadirectory automatically (where 
+		  spring saves all its other files) 
+
+		- AAI now tries to get a safer rally point if combat units are killed en route 
+
+		- Builders now try to flee when attacked 
+
+		- AAI now takes allied buildings into account when expanding its base (to prevent AAI from building within
+ 		  the base of someone else)	
+
+		- Improved AAI's building placement at the beginning of the game (buildings will not be spread out 
+		  that much anymore to reduce walking time of commander (thx to Accid_UK for the idea - should have been 
+		  already implemented in 0.70 but has somehow been commented out)   
+
+		- Tweaked economy/factory/defence building placement and selection
+
+		- Fixed a bug that prevented AAI from building naval power plants
+
+		- Fixed a bug which sometimes caused builders to leave their construction site
+
+		- Fixed a bug that caused AAI to temporarily run out of scouts when requesting several scouts it could 
+		  not build at that time 
+
+		- Fixed a bug that caused serious confusion concerning unit speeds (unfortunately mod learning file 
+		  version had to be changed)
+
+		- Fixed a very rare crashbug in the building placement algorithm
+
+		- Fixed a possible crash bug in the airforce handling (thx to Nicklas Marcusson for reporting it)
+
 
 
 AAI v0.70	- AAI now handles anti air/assault units, bombers and fighters with different groups 
-		  (requieres a little bit of learning to work properly)
+		  (requires a little bit of learning to work properly)
 
 		- Added new category SUBMARINE_ASSAULT to improve AAI's behaviour on water maps 
 
@@ -38,9 +167,9 @@ AAI v0.70	- AAI now handles anti air/assault units, bombers and fighters with di
 		- Added different sub-groups for air only mods (light, medium, heavy & super heavy air assault)
 
 		- Added a message being displayed from time to time when AAI has not been loaded succesfully
-	
+
 		- Completly new combat unit selection (in theory, aai should react more dynamically to its 
-		  opponent's behaviour - requieres some learning to work porperly)
+		  opponent's behaviour - requires some learning to work porperly)
 
 		- Improved/fixed building of stationary defences - only terporary, defence placement will be reworked 
 		  within the next versions (MIN_SECTOR_THREAT statement added to mod.cfg)
@@ -49,14 +178,11 @@ AAI v0.70	- AAI now handles anti air/assault units, bombers and fighters with di
 
 		- Improved unit detection a bit (some bogus weapons like mobile jammers in aa will not be considered 
 		  being combat units anymore, static mobile units (like dragons claw) will be filtered out as well)		 
-
+		
 		- Improved assistance management e.g. factories will now call assisters both based on buildque length 
 		  and buildtime of single units (thx to accid_uk for his suggestion)
 
 		- Added MIN_ASSISTANCE_BUILDSPEED statement to mod cfg
-
-		- Improved AAI's building placement at the beginning of the game (buildings will not be spread out 
-		  that much anymore to reduce wlaking time of commander (thx to acid uk for the idea)
 
 		- AAI now takes the position of its base into account when placing stationary defences for 
 		  extractors outside of its base
@@ -166,7 +292,7 @@ AAI v0.55:	- AAI is now compatible with the modified ai interface of spring 0.70
 
 
 
-AAI v0.50:	- Completly new ressource management system (will be further improved in the next versions)
+AAI v0.50:	- Completly new ressource management system (will be further improved in future versions)
 
 		- Buildtable will now be shared by all instances of AAI (this mainly reduces aai's memory usage as well as 
 		  a slight increase in loading time when running more than one aai-player at the same time) 
@@ -248,60 +374,8 @@ AAI v0.10: 	(internal version)
 
 
 
-Known bugs/	- AAI sometimes suffers from a bug in the pathfinding (units sometimes get stuck when close 
-Limitations:	  to buildings/objects)
-
-		- Game crashes when ai units get captured
-
-		- No support for water maps
-
-		- AAI does not use nukes, antinukes, emp missiles
 
 
 
-Thanks to: 	- TA Spring devs for creating the best open source rts game i know
-
-		- Jelmer 'Zaphod' Cnossen for some functions and a lot of helpful discussions
-
-		- Krogothe for his mex spot algorithm
-
-		- Nicklas Marcusson for porting/compiling the linux version of AAI, lots of help with debugging
-
-		- AccidUK for debugging and some coding suggestions
-
-		- Tournesol and Firenu for helping me getting debugging to work
-
-		- Yuritch for testing and providing me with improved mod config file 
-		
-		- All other testers who are not listed here
-		
-		- All other people who gave some feedback 
 
 
-
-Mod Support:	AAI must know the internal names of the starting units of the different sides 
-		(e.g. ARMCOM and CORCOM for most TA-mods). There are also some constants you 
-		want to play with, so AAI tries to load the config from a file in the aai subfolder. 
-		The name must be the same as the modname, with ".cfg" extension (e.g. xta_se_v066.cfg 
-		for XTA mod). If no config file is found, aai will use its standard values.
-		See example.cfg for more information.
-		
-		By default, AAI has cfg files to support the following mods:
-		- XTA 0.66
-		- XTA Pimped Edition V7
-		- TA:WD 5.65
-		- AA 2.11 Standard
-		- AA 2.11 Forge
-		- AA 2.11 HoverCraft mod
-		- OTA Shiny 5.5
-		- OTA Classic 5.5
-		- BoTA 1.3
-		- KuroTA 0.47
-		- Star Wars 1.0
-		- TLL 1.04
-		- FF 1.17 
-		- Gundam Annihilation 0.98
-		- Expand & Exterminate 0.162
-		
-		Remember due to updates of these mods the filenames might change as well, so you have
-		to rename the .cfg files.

@@ -1,0 +1,297 @@
+ID: 1   ACSS             ADV. CONSTRUCTION STARSHIP               unknown                   Neutral
+ID: 2   AMGEO            Gas-Powerplant                           power plant               Arm
+ID: 3   ARCLIGHT         ARCLIGHT                                 heavy air assault         Arm
+ID: 4   ARMACSS          ADV. CONSTRUCTION STARSHIP               air builder               Arm
+ID: 5   ARMADVSOL        ADVANCED SOLAR ARRAY                     power plant               Arm
+ID: 6   ARMASP           Orbital Repair Pad                       air base                  Arm
+ID: 7   ARMBB            THUNDERLANCE                             super heavy air assault   Arm
+ID: 8   ARMBOP2          BIRD OF PREY                             light air assault         Arm
+ID: 9   ARMBS            BROADSIDE                                super heavy air assault   Arm
+ID: 10  ARMBSTAT         OLYMPUS                                  unknown                   Arm
+ID: 11  ARMCCRUS         COMMAND CRUISER                          commander                 Arm
+ID: 12  ARMCSC           LIGHT                                    air builder               Arm
+ID: 13  ARMELFIG         BEARCAT                                  light air assault         Arm
+ID: 14  ARMEMEX          ARMOURED METAL EXTRACTOR                 metal extractor           Arm
+ID: 15  ARMEMT           NEUTRALISER                              defence building          Arm
+ID: 16  ARMFLAG          VICTORY                                  heavy air assault         Arm
+ID: 17  ARMFLTSUP        SUPER CONSTRUCTION CRUISER               air builder               Arm
+ID: 18  ARMFTLDRIVE      UNDERTAKER                               unknown                   Arm
+ID: 19  ARMFURY          FURY                                     defence building          Arm
+ID: 20  ARMFUS           MEGA FUSION REACTOR                      power plant               Arm
+ID: 21  ARMGLT           CUTTER                                   defence building          Arm
+ID: 22  ARMHEMT          NOVA                                     defence building          Arm
+ID: 23  ARMHHAWK         HELL HAWK                                unknown                   Neutral
+ID: 24  ARMHODS          GLAIVE                                   air assault               Arm
+ID: 25  ARMHODS2tele     SLAYER                                   heavy air assault         Arm
+ID: 26  ARMHODS          GLAIVE                                   heavy air assault         Arm
+ID: 27  ARMION           MAULER                                   defence building          Arm
+ID: 28  ARMLTSEN         SMALL SENSOR ARRAY                       stationary radar/sonar    Arm
+ID: 29  ARMMOHO          Moho Mine                                metal extractor           Arm
+ID: 30  ARMMSLCRUS       LONGBOW                                  heavy air assault         Arm
+ID: 31  ARMNHAWK         NIGHTHAWK                                air assault               Arm
+ID: 32  ARMNTOW          Nanolathe Tower                          power plant               Arm
+ID: 33  ARMODS           SIDEARM                                  air assault               Arm
+ID: 34  ARMODS2          PULSAR                                   light air assault         Arm
+ID: 35  ARMODS2          PULSAR                                   light air assault         Arm
+ID: 36  ARMODS           SIDEARM                                  air assault               Arm
+ID: 37  ARMOMKR          ORBITAL METAL MAKER                      metal maker               Arm
+ID: 38  ARMPROBE         Light                                    unknown                   Neutral
+ID: 39  ARMPFUS          POCKET FUSION REACTOR                    power plant               Arm
+ID: 40  ARMPLASMA        SLUGGER                                  defence building          Arm
+ID: 41  ARMPOD           SPY PROBE                                unknown                   Arm
+ID: 42  ARMPROBE         LIGHT                                    air scout                 Arm
+ID: 43  ARMRD            REPAIR DRONE                             unknown                   Arm
+ID: 44  ARMRJT           HAZE                                     stationary jammer         Arm
+ID: 45  ARMRSS           LAZARUS                                  heavy air assault         Arm
+ID: 46  ARMSEN           SENSOR ARRAY                             stationary radar/sonar    Arm
+ID: 47  ARMSPYLAB        COVERT OPS CENTRE                        ground factory            Arm
+ID: 48  ARMTARG          TARGETING FACILITY                       unknown                   Arm
+ID: 49  ARMTELE          ET-S15J                                  ground factory            Arm
+ID: 50  ATTLA            SLICER                                   defence building          Core
+ID: 51  BATTLEANGEL      BATTLEANGEL                              light air assault         Core
+ID: 52  BEE              IRON ANGEL                               unknown                   Neutral
+ID: 53  blaster          Experimental Antimatterblaster           power plant               Core
+ID: 54  ARMCCRUS         COMMAND CRUISER                          unknown                   Neutral
+ID: 55  CMGEO            Gas-Powerplant                           power plant               Core
+ID: 56  COLLATOR         COLLATOR                                 unknown                   Arm
+ID: 57  CORACSS          ADV. CONSTRUCTION STARSHIP               air builder               Core
+ID: 58  CORADVSOL        ADVANCED SOLAR COLLECTOR                 power plant               Core
+ID: 59  CORASP           Orbital Repair Pad                       air base                  Core
+ID: 60  CORBIGSYARD      TITAN ORBITAL STARSHIP YARD              ground factory            Core
+ID: 61  CORBSTAT         ACHERON                                  unknown                   Core
+ID: 62  CORCCRUS         COMMAND CRUISER                          commander                 Core
+ID: 63  CORCSC           LIGHT                                    air builder               Core
+ID: 64  CORDH            DEATHHAND                                heavy air assault         Core
+ID: 65  COREMEX          ARMOURED METAL EXTRACTOR                 metal extractor           Core
+ID: 66  COREMT           FREEZER                                  defence building          Core
+ID: 67  CORFLAG          ARCHON                                   air assault               Core
+ID: 68  CORFLTSUP        SUPER CONSTRUCTION CRUISER               air builder               Core
+ID: 69  CORFTLDRIVE      HYPERION                                 unknown                   Core
+ID: 70  CORFUS           Mega Fusion Reactor                      power plant               Core
+ID: 71  CORGZSAM         SHAKER                                   defence building          Core
+ID: 72  CORHEMT          BLIGHT                                   defence building          Core
+ID: 73  CORHODS          RAZORBACK                                light air assault         Core
+ID: 74  CORIFIR          IFRIT                                    light air assault         Core
+ID: 75  CORION           RAVAGER                                  defence building          Core
+ID: 76  CORLAN           LANCE                                    air assault               Core
+ID: 77  CORLTSEN         SMALL SENSOR ARRAY                       stationary radar/sonar    Core
+ID: 78  CORLTYARD        ORBITAL STARSHIP YARD                    ground factory            Core
+ID: 79  CORMOHO          Moho Mine                                metal extractor           Core
+ID: 80  CORNOX           NOX                                      light air assault         Core
+ID: 81  CORNTOW          Nanolathe Tower                          unknown                   Core
+ID: 82  CORODS           SHARD                                    light air assault         Core
+ID: 83  CORODS2          QUASAR                                   light air assault         Core
+ID: 84  COROMKR          ORBITAL METAL MAKER                      metal maker               Core
+ID: 85  ARMPROBE         Light                                    unknown                   Neutral
+ID: 86  CORPFUS          POCKET FUSION REACTOR                    power plant               Core
+ID: 87  CORPLASMA        REAVER                                   defence building          Core
+ID: 88  CORPOD           SPY PROBE                                unknown                   Core
+ID: 89  CORPROBE         LIGHT                                    air scout                 Core
+ID: 90  CORRD            REPAIR DRONE                             unknown                   Core
+ID: 91  CORRJT           VEIL                                     stationary jammer         Core
+ID: 92  CORRSS           REANIMATOR                               light air assault         Core
+ID: 93  CORSCYTHE        SCYTHE                                   defence building          Core
+ID: 94  CORSEN           SENSOR ARRAY                             stationary radar/sonar    Core
+ID: 95  CORSPORT         ORBITAL SPACECRAFT PLANT                 ground factory            Core
+ID: 96  CORSPYLAB        COVERT OPS CENTRE                        ground factory            Core
+ID: 97  CORSYARD         ADV. ORBITAL STARSHIP YARD               ground factory            Core
+ID: 98  CORTARG          TARGETING FACILITY                       unknown                   Core
+ID: 99  CORUNDIN         UNDINE                                   unknown                   Neutral
+ID: 100 CSC              LIGHT                                    unknown                   Neutral
+ID: 101 DEVASTATOR       DEVASTATOR                               super heavy air assault   Core
+ID: 102 DIABLO           DIABLO                                   light air assault         Core
+ID: 103 DRONFRIG         TRIAGE                                   air assault               Arm
+ID: 104 ECLIPSE          ECLIPSE                                  air assault               Arm
+ID: 105 ELDRITCH         ELDRITCH                                 air assault               Arm
+ID: 106 ESTORE           ENERGY STORAGE                           unknown                   Neutral
+ID: 107 FIREANGEL        PILEDRIVER                               heavy air assault         Core
+ID: 108 FIRESTORM        FIRESTORM                                unknown                   Core
+ID: 109 FirstStrike      FirstStrike                              heavy air assault         Arm
+ID: 110 HERETIC          HERETIC                                  light air assault         Core
+ID: 111 HEXEN            MORNING STAR                             unknown                   Neutral
+ID: 112 ARMODS2          Hercules                                 unknown                   Neutral
+ID: 113 HORNET           HORNET                                   unknown                   Neutral
+ID: 114 HORROR           HORROR                                   unknown                   Neutral
+ID: 115 ICARUS           ICARUS                                   air assault               Arm
+ID: 116 IMPACT           IMPACT                                   unknown                   Arm
+ID: 117 ION              QUAKE                                    unknown                   Neutral
+ID: 118 THUMPER          WYVER                                    unknown                   Neutral
+ID: 119 IRONANGEL        IRON ANGEL                               light air assault         Core
+ID: 120 LIBERTY          LIBERTY                                  unknown                   Neutral
+ID: 121 LIGHTNINGTOWER   DOUBLE-TESLA                             unknown                   Neutral
+ID: 122 LTSEN            SMALL SENSOR ARRAY                       unknown                   Neutral
+ID: 123 LTYARD           ORBITAL STARSHIP YARD                    ground factory            Arm
+ID: 124 MEGAFUS          MEGA FUSION REACTOR                      unknown                   Neutral
+ID: 125 METALION         METALION                                 light air assault         Arm
+ID: 126 MEX              ARMOURED METAL EXTRACTOR                 unknown                   Neutral
+ID: 127 MIRAGE           FURY                                     unknown                   Neutral
+ID: 128 XMMK             MOHO METAL MAKER                         unknown                   Neutral
+ID: 129 MSTAR            MORNING STAR                             air assault               Arm
+ID: 130 MSTORE           METAL STORAGE                            unknown                   Neutral
+ID: 131 NEMESIS          STARBURST                                unknown                   Neutral
+ID: 132 NIGHTMARE        INVINCIBLE                               air assault               Core
+ID: 133 NORTONCOMMANDO   DRAGON                                   light air assault         Core
+ID: 134 NTOW             Nanolathe Tower                          unknown                   Neutral
+ID: 135 ODS              Blocker                                  unknown                   Neutral
+ID: 136 ODS2             Dwarf                                    unknown                   Neutral
+ID: 137 OMK              ORBITAL METAL MAKER                      unknown                   Neutral
+ID: 138 ORION            ORION                                    unknown                   Neutral
+ID: 139 ORION            ORION                                    unknown                   Neutral
+ID: 140 PERCEPTOR        PERCEPTOR                                unknown                   Core
+ID: 141 PFUS             POCKET FUSION REACTOR                    unknown                   Neutral
+ID: 142 PHOBOS           PHOBOS                                   air assault               Arm
+ID: 143 PLASMA           TESLA                                    unknown                   Neutral
+ID: 144 PREDATOR         PREDATOR                                 light air assault         Core
+ID: 145 PROBE            LIGHT                                    unknown                   Neutral
+ID: 146 REPULSE          EXETER                                   heavy air assault         Arm
+ID: 147 RESILIENT        RESILIENT                                air assault               Arm
+ID: 148 REVENGE          REVENGE                                  air assault               Core
+ID: 149 RJT              CLOUD                                    unknown                   Neutral
+ID: 150 CORNOX           NOX                                      unknown                   Neutral
+ID: 151 SEN              SENSOR ARRAY                             unknown                   Neutral
+ID: 152 SERIOUS          MORNING STAR                             unknown                   Neutral
+ID: 153 SIL              SILHOUETTE                               light air assault         Arm
+ID: 154 SIXPACK          PROWLER                                  light air assault         Core
+ID: 155 SLASHER          SLASHER                                  unknown                   Neutral
+ID: 156 SLEDGE           SLEDGEHAMMER                             light air assault         Core
+ID: 157 SLIVER           SLIVER                                   light air assault         Core
+ID: 158 ARMODS2          Hercules                                 unknown                   Neutral
+ID: 159 SOLAR            ADVANCED SOLAR ARRAY                     unknown                   Neutral
+ID: 160 SPORT            ORBITAL SPACECRAFT PLANT                 ground factory            Arm
+ID: 161 STARBURST        STARBURST                                air assault               Core
+ID: 162 STARCRUSHER      STARCRUSHER                              unknown                   Neutral
+ID: 163 STIL             STILETTO                                 light air assault         Arm
+ID: 164 STORMBRINGER     STORMBRINGER                             air assault               Core
+ID: 165 SYARD            ADV. ORBITAL STARSHIP YARD               ground factory            Arm
+ID: 166 THUMPER          THUMPER                                  defence building          Arm
+ID: 167 VENGEANCE        VENGEANCE                                unknown                   Neutral
+ID: 168 WARCAT           MAJESTIC                                 heavy air assault         Arm
+ID: 169 WARHAWK          WARHAWK                                  light air assault         Arm
+ID: 170 WARLOCK          WARLOCK MKII                             heavy air assault         Arm
+ID: 171 WARSPITE         WARSPITE                                 air assault               Core
+ID: 172 WASP             WASP                                     unknown                   Neutral
+ID: 173 WILDCAT          WILDCAT                                  light air assault         Arm
+ID: 174 WISP             WISP                                     light air assault         Core
+ID: 175 WRAITH           WRAITH                                   light air assault         Core
+ID: 176 XARMASP          DOCKING BAY                              unknown                   Neutral
+ID: 177 XARMESTOR        ENERGY STORAGE                           storage                   Arm
+ID: 178 XARMFLAK         FLAKKER                                  defence building          Arm
+ID: 179 XARMFUS          ORBITAL ENERGY CENTRE                    power plant               Arm
+ID: 180 XARMMMKR         MOHO METAL MAKER                         metal maker               Arm
+ID: 181 XARMMOHO         ASTEROID MINE                            metal extractor           Arm
+ID: 182 XARMMSTOR        METAL STORAGE                            storage                   Arm
+ID: 183 XBSTAT           Excalibur                                unknown                   Neutral
+ID: 184 ARMCCRUS         COMMAND CRUISER                          unknown                   Neutral
+ID: 185 XCORASP          DOCKING BAY                              unknown                   Neutral
+ID: 186 XCORESTOR        ENERGY STORAGE                           storage                   Core
+ID: 187 XCORFLAK         COBRA                                    defence building          Core
+ID: 188 XCORFUS          ORBITAL RESOURCE CENTRE                  power plant               Core
+ID: 189 XCORMMKR         MOHO METAL MAKER                         metal maker               Core
+ID: 190 XCORMOHO         ASTEROID MINE                            metal extractor           Core
+ID: 191 XCORMSTOR        METAL STORAGE                            storage                   Core
+ID: 192 XFLAK            SIGMA                                    unknown                   Neutral
+ID: 193 ARMFLTSUP        SUPER CONSTRUCTION CRUISER               unknown                   Neutral
+ID: 194 XFUS             ORBITAL ENERGY CENTRE                    unknown                   Neutral
+ID: 195 XGEO             Gas-Powerplant                           unknown                   Neutral
+ID: 196 XLTYARD2         ORBITAL STARSHIP YARD                    unknown                   Neutral
+ID: 197 XMOHO            ASTEROID MINE                            unknown                   Neutral
+ID: 198 XMOHOLVL3        Moho Mine                                unknown                   Neutral
+ID: 199 XSPORT2          ORBITAL SPACECRAFT PLANT                 unknown                   Neutral
+ID: 200 XSPYLAB          ORBITAL ODS PLATFORM                     unknown                   Neutral
+ID: 201 XSYARD2          ADV. ORBITAL STARSHIP YARD               unknown                   Neutral
+
+defence building Arm:
+NEUTRALISER    FURY    CUTTER    NOVA    MAULER    SLUGGER    THUMPER    FLAKKER    
+
+storage Arm:
+ENERGY STORAGE    METAL STORAGE    
+
+ground factory Arm:
+COVERT OPS CENTRE    ET-S15J    ORBITAL STARSHIP YARD    ORBITAL SPACECRAFT PLANT    ADV. ORBITAL STARSHIP YARD    
+
+air base Arm:
+Orbital Repair Pad    
+
+stationary radar/sonar Arm:
+SMALL SENSOR ARRAY    SENSOR ARRAY    
+
+stationary jammer Arm:
+HAZE    
+
+power plant Arm:
+Gas-Powerplant    ADVANCED SOLAR ARRAY    MEGA FUSION REACTOR    Nanolathe Tower    POCKET FUSION REACTOR    ORBITAL ENERGY CENTRE    
+
+metal extractor Arm:
+ARMOURED METAL EXTRACTOR    Moho Mine    ASTEROID MINE    
+
+metal maker Arm:
+ORBITAL METAL MAKER    MOHO METAL MAKER    
+
+commander Arm:
+COMMAND CRUISER    
+
+light air assault Arm:
+BIRD OF PREY    BEARCAT    PULSAR    PULSAR    METALION    SILHOUETTE    STILETTO    WARHAWK    WILDCAT    
+
+air assault Arm:
+GLAIVE    NIGHTHAWK    SIDEARM    SIDEARM    TRIAGE    ECLIPSE    ELDRITCH    ICARUS    MORNING STAR    PHOBOS    RESILIENT    
+
+heavy air assault Arm:
+ARCLIGHT    VICTORY    SLAYER    GLAIVE    LONGBOW    LAZARUS    FirstStrike    EXETER    MAJESTIC    WARLOCK MKII    
+
+super heavy air assault Arm:
+THUNDERLANCE    BROADSIDE    
+
+air scout Arm:
+LIGHT    
+
+air builder Arm:
+ADV. CONSTRUCTION STARSHIP    COMMAND CRUISER    LIGHT    SUPER CONSTRUCTION CRUISER    
+
+defence building Core:
+SLICER    FREEZER    SHAKER    BLIGHT    RAVAGER    REAVER    SCYTHE    COBRA    
+
+storage Core:
+ENERGY STORAGE    METAL STORAGE    
+
+ground factory Core:
+TITAN ORBITAL STARSHIP YARD    ORBITAL STARSHIP YARD    ORBITAL SPACECRAFT PLANT    COVERT OPS CENTRE    ADV. ORBITAL STARSHIP YARD    
+
+air base Core:
+Orbital Repair Pad    
+
+stationary radar/sonar Core:
+SMALL SENSOR ARRAY    SENSOR ARRAY    
+
+stationary jammer Core:
+VEIL    
+
+power plant Core:
+Experimental Antimatterblaster    Gas-Powerplant    ADVANCED SOLAR COLLECTOR    Mega Fusion Reactor    POCKET FUSION REACTOR    ORBITAL RESOURCE CENTRE    
+
+metal extractor Core:
+ARMOURED METAL EXTRACTOR    Moho Mine    ASTEROID MINE    
+
+metal maker Core:
+ORBITAL METAL MAKER    MOHO METAL MAKER    
+
+commander Core:
+COMMAND CRUISER    
+
+light air assault Core:
+BATTLEANGEL    RAZORBACK    IFRIT    NOX    SHARD    QUASAR    REANIMATOR    DIABLO    HERETIC    IRON ANGEL    DRAGON    PREDATOR    PROWLER    SLEDGEHAMMER    SLIVER    WISP    WRAITH    
+
+air assault Core:
+ARCHON    LANCE    INVINCIBLE    REVENGE    STARBURST    STORMBRINGER    WARSPITE    
+
+heavy air assault Core:
+DEATHHAND    PILEDRIVER    
+
+super heavy air assault Core:
+DEVASTATOR    
+
+air scout Core:
+LIGHT    
+
+air builder Core:
+ADV. CONSTRUCTION STARSHIP    COMMAND CRUISER    LIGHT    SUPER CONSTRUCTION CRUISER    
