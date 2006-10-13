@@ -313,7 +313,7 @@ void CUnit::SlowUpdate()
 			if(!(losStatus[a]&LOS_INLOS)){
 				int prevLosStatus = losStatus[a];	
 			
-				if(mobility || beingBuilt){
+				if(beingBuilt){
 					losStatus[a]|=(LOS_INLOS | LOS_INRADAR);
 				} else {
 					losStatus[a]|=(LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);	

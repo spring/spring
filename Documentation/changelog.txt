@@ -1,5 +1,13 @@
 TASpring change log
 
+0.next
+
+- The icontype of enemy units is remembered if they are under continuous radar coverage.
+- Ghosted buildings under continuous radar coverage don't have an error vector in their position anymore.
+- Ghosted buildings also turn into unit icons when far away.
+
+- Improved clickability of unit icons.
+
 0.73b1
 
 

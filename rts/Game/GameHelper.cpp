@@ -30,6 +30,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Rendering/Env/BaseWater.h"
 #include "mmgr.h"
+#include "Game/GameSetup.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -229,8 +230,15 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
 			if((*ui)==exclude)
 				continue;
-			if((*ui)->allyteam==gu->myAllyTeam || ((*ui)->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) || gu->spectating){
-				float3 dif=(*ui)->midPos-start;
+			if((*ui)->allyteam==gu->myAllyTeam || ((*ui)->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) || (useRadar && radarhandler->InRadar(*ui,gu->myAllyTeam)) || gu->spectating){
+				float3 pos=GetUnitErrorPos(*ui,gu->myAllyTeam);
+				if((*ui)->isIcon)
+				{
+					float h=ground->GetHeight(pos.x,pos.z);
+					if(pos.y<h+(*ui)->iconRadius)
+						pos.y=h+(*ui)->iconRadius;
+				}
+				float3 dif=pos-start;
 				float closeLength=dif.dot(dir);
 				if(closeLength<0)
 					continue;
@@ -243,22 +251,6 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				float tmp = rad * rad - closeVect.SqLength();
 				if(tmp > 0 && length>closeLength+sqrt(tmp)){
 					length=closeLength+sqrt(tmp);		//note that we take the length to the backside of the units, this is so you can select stuff inside factories
-					hit=*ui;
-				}
-			} else if(useRadar && radarhandler->InRadar(*ui,gu->myAllyTeam)){
-				float3 dif=(*ui)->midPos+(*ui)->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam]-start;
-				float closeLength=dif.dot(dir);
-				if(closeLength<0)
-					continue;
-				if(closeLength>length)
-					closeLength=length;
-				float3 closeVect=dif-dir*closeLength;
-				float rad=(*ui)->iconRadius;
-				
-				//The argument to sqrt became negative (3.5f*10^-7) for some reason... so tempstoring the value
-				float tmp = rad * rad - closeVect.SqLength();
-				if(tmp > 0 && length>closeLength+sqrt(tmp)){
-					length=closeLength+sqrt(tmp);
 					hit=*ui;
 				}
 			}
@@ -594,6 +586,9 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 {
 	float3 pos=unit->midPos;
 	if(gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)){
+		// ^ it's one of our own, or it's in LOS, so don't add an error ^
+	} else if((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) && (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR) && !unit->mobility){
+		// ^ this is a ghosted building, so don't add an error ^
 	} else if((unit->losStatus[allyteam] & LOS_INRADAR)){
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[allyteam];
 	} else {
