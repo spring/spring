@@ -234,11 +234,24 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 					}
 				}
 			} else if((*usi)->losStatus[gu->myAllyTeam] & LOS_PREVLOS){
-				if (!gameSetup || gameSetup->ghostedBuildings)
-					drawCloaked.push_back(*usi);
-
-				if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR) && !((*usi)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)){
-					drawRadarIcon.push_back(*usi);
+				(*usi)->isIcon = true;
+				if ((!gameSetup || gameSetup->ghostedBuildings) && !((*usi)->mobility))
+				{
+					// it's a building we've had LOS on once
+					float sqDist=((*usi)->pos-camera->pos).SqLength();
+					float iconDistMult=iconHandler->GetDistance((*usi)->unitDef->iconType);
+					float realIconLength=iconLength*iconDistMult*iconDistMult;
+					if(sqDist<realIconLength){
+						drawCloaked.push_back(*usi);
+						(*usi)->isIcon = false;
+					}
+				}
+				if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
+					if(!((*usi)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)){
+						drawRadarIcon.push_back(*usi);
+					} else if((*usi)->isIcon){ // this prevents us from drawing icons on top of ghosted buildings
+						drawIcon.push_back(*usi);
+					}
 				}
 			} else if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
 				drawRadarIcon.push_back(*usi);
@@ -370,9 +383,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	//  * The square root of the camera distance.
 	//  * The mod defined 'iconSize' (which acts a multiplier).
 	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-	float3 pos=unit->midPos;
-	if(asRadarBlip)
-		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
+	float3 pos=helper->GetUnitErrorPos(unit,gu->myAllyTeam);
 	float dist=sqrt((pos-camera->pos).Length());
 	float scale=0.4f*icon->size*dist;
 	if(icon->radiusAdjust && !asRadarBlip)

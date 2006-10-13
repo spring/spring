@@ -303,13 +303,13 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 	if(unit->lastDamage>gs->frameNum-90 && gs->frameNum&8)
 		return;
 
-	float3 pos=unit->pos;
+	float3 pos=helper->GetUnitErrorPos(unit,gu->myAllyTeam);
 /*	if(pos.z<0 || pos.z>gs->mapy*SQUARE_SIZE){
 		logOutput.Print("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
 		return;
 	}*/
 	CIcon* icon;
-	if(unit->allyteam==gu->myAllyTeam || (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)
+	if(unit->allyteam==gu->myAllyTeam || (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || ((unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS)&&(unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) || gu->spectating)
 	{
 		icon=iconHandler->GetIcon(unit->unitDef->iconType);
 		if(icon->radiusAdjust)
@@ -318,8 +318,6 @@ void CMiniMap::DrawUnit(CUnit* unit,float size)
 	else if((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR))
 	{
 		icon=iconHandler->GetIcon("default");
-		pos+=unit->posErrorVector*radarhandler->radarErrorSize[gu->myAllyTeam];
-
 	}
 	else
 	{
