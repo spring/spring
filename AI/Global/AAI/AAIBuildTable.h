@@ -179,8 +179,8 @@ public:
 	static UnitTypeStatic *units_static;
 
 	// storage for def. building selection
-	static float **def_power;
-	static float *max_pplant_eff;
+	static double **def_power;
+	static double *max_pplant_eff;
 
 	//
 	//	non static variales

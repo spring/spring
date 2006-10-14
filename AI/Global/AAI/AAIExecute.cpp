@@ -925,7 +925,7 @@ bool AAIExecute::BuildPowerPlant()
 	{
 		max_power = 0.5 + pow((float) ai->activeUnits[POWER_PLANT], 0.8f);
 		eff = 0.5 + 1.5f / (brain->Affordable() + 0.5f);
-		urgency = 0.5 + GetEnergyUrgency()/1.5f;
+		urgency = 0.5 + GetEnergyUrgency();
 	}
 
 	// sort sectors according to threat level
