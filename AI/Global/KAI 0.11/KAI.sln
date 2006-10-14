@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KAI", "TestAI.vcproj", "{9E0389D1-EA85-471D-A3E1-35335E5038E5}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+		Secondary Debug = Secondary Debug
+		Secondary Release = Secondary Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Debug.ActiveCfg = Debug|Win32
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Debug.Build.0 = Debug|Win32
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Release.ActiveCfg = Release|Win32
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Release.Build.0 = Release|Win32
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Secondary Debug.ActiveCfg = Secondary Debug|Win32
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Secondary Debug.Build.0 = Secondary Debug|Win32
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Secondary Release.ActiveCfg = Secondary Release|Win32
+		{9E0389D1-EA85-471D-A3E1-35335E5038E5}.Secondary Release.Build.0 = Secondary Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
