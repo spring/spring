@@ -106,6 +106,9 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- All other people who gave some feedback 
 
 
+AAI 0.7?	- Fixed some more possible crash bugs 
+
+
 
 
 AAI 0.76	- Fixed the most common crashbugs in release mode

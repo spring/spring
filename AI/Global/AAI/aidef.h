@@ -29,7 +29,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.75"
+#define AAI_VERSION "0.761"
 #define MAP_FILE_VERSION "MAP_LEARN_0_68"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_75"
 #define MAP_DATA_VERSION "MAP_DATA_0_60"
@@ -45,7 +45,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 	#define MAP_CACHE_PATH "cache\\"
 	#define MAP_LEARN_PATH "learn\\map\\"
 #else
-	#define MAIN_PATH "AI/AAI/"
+	#define MAIN_PATH "AI/aai/"
 	#define AILOG_PATH "log/"
 	#define MOD_CFG_PATH "cfg/mod/"
 	#define GENERAL_CFG_FILE "cfg/general.cfg"

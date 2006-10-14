@@ -30,8 +30,8 @@ float**	AAIBuildTable::max_speed;
 float**	AAIBuildTable::group_speed;
 float*** AAIBuildTable::mod_usefulness;
 UnitTypeStatic* AAIBuildTable::units_static = 0;
-float** AAIBuildTable::def_power = 0;
-float* AAIBuildTable::max_pplant_eff = 0;
+double** AAIBuildTable::def_power = 0;
+double* AAIBuildTable::max_pplant_eff = 0;
 
 AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 {
@@ -944,14 +944,14 @@ void AAIBuildTable::Init()
 	{
 		float temp;
 
-		def_power = new float*[numOfSides];
-		max_pplant_eff = new float[numOfSides];
+		def_power = new double*[numOfSides];
+		max_pplant_eff = new double[numOfSides];
 
 		for(int s = 0; s < numOfSides; ++s)
 		{
 			UpdateMinMaxAvgEfficiency(s);
 		
-			def_power[s] = new float[units_of_category[STATIONARY_DEF][s].size()];
+			def_power[s] = new double[units_of_category[STATIONARY_DEF][s].size()];
 
 			// power plant max eff
 		
@@ -1669,11 +1669,11 @@ int AAIBuildTable::GetDefenceBuilding(int side, float efficiency, float combat_p
 	float max_buildtime = this->max_buildtime[STATIONARY_DEF][side]*256.0;
 	float max_range = max_value[STATIONARY_DEF][side];
 
-	float my_power;
-	float total_power = ground_eff + air_eff + hover_eff + sea_eff + submarine_eff;
+	double my_power;
+	double total_power = ground_eff + air_eff + hover_eff + sea_eff + submarine_eff;
 
 	// determine max_eff
-	float max_powercost = 0;
+	double max_powercost = 0;
 
 	int k = 0;
 	
@@ -1692,7 +1692,7 @@ int AAIBuildTable::GetDefenceBuilding(int side, float efficiency, float combat_p
 		def_power[side][k] = my_power;
 
 		// calculate eff
-		my_power *= max_cost[STATIONARY_DEF][side] / unit->cost;
+		my_power *= (max_cost[STATIONARY_DEF][side] / unit->cost);
 
 		if(my_power > max_powercost)
 			max_powercost = my_power;
