@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SURVEILLANCEHANDLER_H
+#define SURVEILLANCEHANDLER_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 
@@ -76,3 +78,5 @@ private:
 	int* myUnitsUnitsOfType; // Dont know the size yet*/
 	
 };
+
+#endif /* SURVEILLANCEHANDLER_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PATHFINDER_H
+#define PATHFINDER_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 using namespace micropather;
@@ -68,3 +70,5 @@ private:
 	AIClasses *ai;	
 
 };
+
+#endif /* PATHFINDER_H */

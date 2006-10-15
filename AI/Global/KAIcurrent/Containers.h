@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CONTAINERS_H
+#define CONTAINERS_H
+/*pragma once removed*/
 
 class	IAICallback;
 class	IAICheats;
@@ -220,3 +222,5 @@ public:
 	float BuidPower;
 	float AverageSpeed;
 };
+
+#endif /* CONTAINERS_H */

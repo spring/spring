@@ -1,4 +1,6 @@
-#pragma once
+#ifndef AREAMANAGER_H
+#define AREAMANAGER_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 class CAreaManager
@@ -15,3 +17,5 @@ private:
 
 
 };
+
+#endif /* AREAMANAGER_H */

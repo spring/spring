@@ -1,4 +1,6 @@
-#pragma once
+#ifndef DEFINITIONS_H
+#define DEFINITIONS_H
+/*pragma once removed*/
 
 
 // Logger
@@ -164,3 +166,5 @@ enum {CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER, CAT_BUILDER, CAT_ESTOR, CAT_MST
 // SpotFinder stuff
 #define CACHEFACTOR			8
 
+
+#endif /* DEFINITIONS_H */

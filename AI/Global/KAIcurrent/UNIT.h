@@ -1,4 +1,6 @@
-#pragma once
+#ifndef UNIT_H
+#define UNIT_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 class CUNIT
@@ -91,3 +93,5 @@ private:
 	Command* MakeIntCommand(int id, int number, int maxnum);
 	Command* MakeIntCommand(int id, int number);
 };
+
+#endif /* UNIT_H */

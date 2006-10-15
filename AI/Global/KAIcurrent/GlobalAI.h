@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GLOBALAI_H
+#define GLOBALAI_H
+/*pragma once removed*/
 
 
 #include "Include.h"
@@ -70,3 +72,5 @@ public:
 };
 
 
+
+#endif /* GLOBALAI_H */

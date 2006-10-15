@@ -1,6 +1,8 @@
+#ifndef METALMAKER_H
+#define METALMAKER_H
 #if !defined(somethinglong945867948579687)
 #define somethinglong945867948579687
-#pragma once
+/*pragma once removed*/
 #include "ExternalAI/IGroupAI.h"
 #include <map>
 #include <set>
@@ -30,3 +32,5 @@ public:
 
 };
 #endif
+
+#endif /* METALMAKER_H */
