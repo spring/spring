@@ -50,7 +50,7 @@ public:
 	AIClasses *ai;
 	vector<CUNIT> MyUnits;
 
-	char c[512];
+	char c[1024];
 
 
 

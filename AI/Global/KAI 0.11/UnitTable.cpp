@@ -783,7 +783,8 @@ void CUnitTable::DebugPrint()
 	if(!unitList)
 		return;
 	// for debugging
-	char filename[80]=ROOTFOLDER"CUnitTable Debug.log";	
+	char filename[1000]=ROOTFOLDER"CUnitTable Debug.log";
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE *file = fopen(filename, "w");
 	for(int i = 1; i <= numOfUnits; i++)
 	{
