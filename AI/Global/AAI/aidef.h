@@ -45,7 +45,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 	#define MAP_CACHE_PATH "cache\\"
 	#define MAP_LEARN_PATH "learn\\map\\"
 #else
-	#define MAIN_PATH "AI/aai/"
+	#define MAIN_PATH "AI/AAI/"
 	#define AILOG_PATH "log/"
 	#define MOD_CFG_PATH "cfg/mod/"
 	#define GENERAL_CFG_FILE "cfg/general.cfg"
