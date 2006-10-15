@@ -109,7 +109,7 @@ void CUnitHandler::IdleUnitUpdate()
 							AIHCAddMapPoint amp;
 							amp.label = text;
 							amp.pos = pos;
-							ai->cb->HandleCommand(&amp);
+							ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 						}
 						//ai->debug->MakeMapPoint(&pos, string("builder ") << (*i)->builderID << "VerifyOrder failed"));
 						
@@ -142,7 +142,7 @@ void CUnitHandler::IdleUnitUpdate()
 						AIHCAddMapPoint amp;
 						amp.label = text;
 						amp.pos = pos;
-						ai->cb->HandleCommand(&amp);
+						ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 						IdleUnitAdd((*i)->builderID);
 						(*i)->idleStartFrame =  ai->cb->GetCurrentFrame(); // Just to cut down on the spam, if its not idle
 					}
@@ -170,7 +170,7 @@ void CUnitHandler::IdleUnitUpdate()
 						AIHCAddMapPoint amp;
 						amp.label = text;
 						amp.pos = pos;
-						ai->cb->HandleCommand(&amp);
+						ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 					}
 				}
 				* /
@@ -432,7 +432,7 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 			AIHCAddMapPoint amp;
 			amp.label = text;
 			amp.pos = buildTask->pos;
-			ai->cb->HandleCommand(&amp);
+			ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 		}
 		if(buildTask->builderTrackers.size() > 1)
 		{
@@ -459,7 +459,7 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 			AIHCAddMapPoint amp;
 			amp.label = text;
 			amp.pos = taskPlan->pos;
-			ai->cb->HandleCommand(&amp);
+			ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 		}
 		ai->dm->MaskBadBuildSpot(taskPlan->pos);
 		// TODO: fix this:  Remove all builders from this plan.
@@ -488,7 +488,7 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 			AIHCAddMapPoint amp;
 			amp.label = text;
 			amp.pos = ai->cb->GetUnitPos(builderTracker->factoryId);
-			ai->cb->HandleCommand(&amp);
+			ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 		}
 		FactoryBuilderRemoved(builderTracker);
 	}
@@ -505,7 +505,7 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 		//AIHCAddMapPoint amp;
 		//amp.label = text;
 		//amp.pos = ai->cb->GetUnitPos(builderTracker->builderID);
-		//ai->cb->HandleCommand(&amp);
+		//ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 		builderTracker->customOrderId = 0;
 	}
 	assert(builderTracker->buildTaskId == 0);
@@ -542,7 +542,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 			AIHCAddMapPoint amp;
 			amp.label = text;
 			amp.pos = ai->cb->GetUnitPos(builderTracker->builderID);
-			ai->cb->HandleCommand(&amp);
+			ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 		}
 		if(c->id < 0) // Its building a unit
 		{
@@ -780,7 +780,7 @@ void CUnitHandler::BuildTaskCreate(int id)
 				AIHCAddMapPoint amp;
 				amp.label = text;
 				amp.pos = pos;
-				ai->cb->HandleCommand(&amp);
+				ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 			}
 			// Try to find workers that nearby:
 			int num = BuilderTrackers.size();
@@ -859,7 +859,7 @@ void CUnitHandler::BuildTaskCreate(int id)
 								AIHCAddMapPoint amp2;
 								amp2.label = text;
 								amp2.pos = ai->cb->GetUnitPos(builderTracker->builderID);
-								ai->cb->HandleCommand(&amp2);
+								ai->cb->HandleCommand(AIHCAddMapPointId, &amp2);
 							}
 						} else
 						{

@@ -106,7 +106,7 @@ void CEconomyTracker::frameUpdate()
 			// Hmmm
 			// If the unit is a builder then we track its resource usage already
 			// if its useing more then its weapon fire or upkeep
-			IAICallback::UnitResourceInfo resourceInfo;
+			UnitResourceInfo resourceInfo;
 			bool isAlive = ai->cb->GetUnitResourceInfo(bt->economyUnitId, &resourceInfo);
 			assert(isAlive);
 			
@@ -474,7 +474,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 	{
 		//int builder = *i;
 		BuilderTracker* builderTracker = *i;
-		IAICallback::UnitResourceInfo resourceInfo;
+		UnitResourceInfo resourceInfo;
 		//bool isAlive = ai->cb->GetUnitResourceInfo(builder, &resourceInfo);
 		bool isAlive = ai->cb->GetUnitResourceInfo(builderTracker->builderID, &resourceInfo);
 		assert(isAlive); // TODO comment this back in

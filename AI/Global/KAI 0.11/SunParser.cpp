@@ -92,11 +92,10 @@ void CSunParser::LoadRealFile(string filename)
         return;
     }
 
+    RealFile.seekg(0, ios_base::end);
+    int size = RealFile.tellg();
+    RealFile.seekg(0, ios_base::beg);
 
-
-    _finddata_t FD;
-    _findfirst(filename.c_str(), &FD);
-    int size = FD.size;
     ////L("Size = " << size);
 	char *filebuf = new char[size+1];
     RealFile.get(filebuf, size, '\0');

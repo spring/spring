@@ -39,21 +39,15 @@ CGlobalAI::~CGlobalAI()
 
 void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 {
-	// Create folders if theyre not there already
 	int timetaken = clock();
-	_mkdir(ROOTFOLDER);
-	_mkdir(LOGFOLDER);
-	_mkdir(METALFOLDER);
-	_mkdir(TGAFOLDER);
-
 
 	// Initialize Log filename
 	string mapname = string(callback->GetAICallback()->GetMapName());
 	mapname.resize(mapname.size()-4);
 	time_t now1;
-    time(&now1);
-    struct tm *now2;
-    now2 = localtime(&now1);
+	time(&now1);
+	struct tm *now2;
+	now2 = localtime(&now1);
 	// Date logfile name
 	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",string(LOGFOLDER).c_str(),
             mapname.c_str(),now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900,
@@ -189,6 +183,10 @@ void CGlobalAI::EnemyEnterRadar(int enemy)
 void CGlobalAI::EnemyLeaveRadar(int enemy)
 {
 
+}
+
+void CGlobalAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir)
+{
 }
 
 void CGlobalAI::EnemyDestroyed(int enemy,int attacker)
