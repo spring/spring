@@ -41,7 +41,7 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos)
 	ai->math->StartTimer(getDefensePosTime);
 	ai->ut->UpdateChokePointArray();  // TODO: UpdateChokePointArray() needs fixing.
 	int f3multiplier = 8*THREATRES;
-	int Range = ai->ut->GetMaxRange(def) / f3multiplier;
+	int Range = int(ai->ut->GetMaxRange(def) / f3multiplier);
 
 	//super hack by firenu (shouldnt happen anyway):
 	if (Range <= 0) {
@@ -244,7 +244,7 @@ void CDefenseMatrix::AddDefense(float3 pos, const UnitDef* def)
 {
 	
 	int f3multiplier = 8*THREATRES;
-	int Range = ai->ut->GetMaxRange(def) / f3multiplier;
+	int Range = int(ai->ut->GetMaxRange(def) / f3multiplier);
 	int squarerange = Range * Range;
 	int x,y;
 	ai->math->F32XY(pos,&x,&y,8);
@@ -254,7 +254,7 @@ void CDefenseMatrix::AddDefense(float3 pos, const UnitDef* def)
 	for (int myx = x - Range; myx <= x + Range; myx++){
 		if (myx >= 0 && myx < ai->pather->PathMapXSize){
 			for (int myy = y - Range; myy <= y + Range; myy++){
-				int distance = (x - myx)*(x - myx) + (y - myy)*(y - myy) - 0.5;
+				int distance = int((x - myx)*(x - myx) + (y - myy)*(y - myy) - 0.5);
 				if (myy >= 0 && myy < ai->pather->PathMapYSize && (distance) <= squarerange){
 					for(int i = 0; i != ChokeMapsByMovetype.size();i++){
 						ChokeMapsByMovetype[i][myy * ai->pather->PathMapXSize + myx] /= 2;
@@ -273,7 +273,7 @@ void CDefenseMatrix::AddDefense(float3 pos, const UnitDef* def)
 void CDefenseMatrix::RemoveDefense(float3 pos, const UnitDef* def)
 {
 	int f3multiplier = 8*THREATRES;
-	int Range = ai->ut->GetMaxRange(def) / f3multiplier;
+	int Range = int(ai->ut->GetMaxRange(def) / f3multiplier);
 	int squarerange = Range * Range;
 	int x,y;
 	ai->math->F32XY(pos,&x,&y,8);
@@ -282,7 +282,7 @@ void CDefenseMatrix::RemoveDefense(float3 pos, const UnitDef* def)
 	for (int myx = x - Range; myx <= x + Range; myx++){
 		if (myx >= 0 && myx < ai->pather->PathMapXSize){
 			for (int myy = y - Range; myy <= y + Range; myy++){
-				int distance = (x - myx)*(x - myx) + (y - myy)*(y - myy) - 0.5;
+				int distance = int((x - myx)*(x - myx) + (y - myy)*(y - myy) - 0.5);
 				if (myy >= 0 && myy < ai->pather->PathMapYSize && (distance) <= squarerange){
 					for(int i = 0; i != ChokeMapsByMovetype.size();i++){
 						ChokeMapsByMovetype[i][myy * ai->pather->PathMapXSize + myx] *= 2;

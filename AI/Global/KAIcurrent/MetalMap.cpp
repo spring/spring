@@ -15,7 +15,7 @@ CMetalMap::CMetalMap(AIClasses* ai)
 	MetalMapHeight =ai->cb->GetMapHeight() / 2; //metal map has 1/2 resolution of normal map
 	MetalMapWidth =ai->cb->GetMapWidth() / 2;
 	TotalCells = MetalMapHeight * MetalMapWidth;
-	XtractorRadius =ai->cb->GetExtractorRadius()/ 16;
+	XtractorRadius = int(ai->cb->GetExtractorRadius() / 16);
 	DoubleRadius = XtractorRadius * 2;
 	SquareRadius = XtractorRadius * XtractorRadius; //used to speed up loops so no recalculation needed
 	DoubleSquareRadius = DoubleRadius * DoubleRadius; // same as above 
@@ -116,8 +116,8 @@ int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor)
 
 float CMetalMap::GetMetalAtThisPoint(float3 pos)
 {
-	int x = (pos.x - 7) / METALMAP2POS;
-	int y = (pos.z - 7) / METALMAP2POS;
+	int x = int((pos.x - 7) / METALMAP2POS);
+	int y = int((pos.z - 7) / METALMAP2POS);
 	return MexArrayD[y * MetalMapWidth + x] * ai->cb->GetMaxMetal();
 }
 
@@ -146,7 +146,7 @@ void CMetalMap::GetMetalPoints()
 	for (int a=0;a<DoubleRadius+1;a++){ 
 		float z=a-XtractorRadius;
 		float floatsqrradius = SquareRadius;
-		xend[a]=sqrt(floatsqrradius-z*z);
+		xend[a]=int(sqrtf(floatsqrradius-z*z));
 	}
 	//Load up the metal Values in each pixel
 	const unsigned char *metalMapArray = ai->cb->GetMetalMap();

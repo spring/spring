@@ -840,7 +840,7 @@ void CUnitTable::Init()
 		if(me->side == -1){// filter out neutral units
 		}	
 		else{			
-			int UnitCost = me->def->metalCost * METAL2ENERGY + me->def->energyCost;
+			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
 			
 			//L("name: " << me->def->name << ", : " << me->def->humanName);
 			//CSunParser* attackerparser = new CSunParser(ai);

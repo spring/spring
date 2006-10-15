@@ -904,7 +904,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	for (int a=0;a<2*radius+1;a++){ 
 		float z=a-radius;
 		float floatsqrradius = radius*radius;
-		xend[a]=sqrt(floatsqrradius-z*z);
+		xend[a]=int(sqrtf(floatsqrradius-z*z));
 		
 		int xStart = x - xend[a];
 		int xEnd = x + xend[a];

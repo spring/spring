@@ -352,7 +352,8 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 		//ai->cb->SendTextMsg("AG: group retreating to base", 0);
 		//L("AG: found no defense targets, pathing back to base. group:" << groupID);
         pathToTarget.clear();
-		float costToTarget = ai->pather->FindBestPathToRadius(&pathToTarget, &groupPosition, THREATRES*8, &ai->ah->GetClosestBaseSpot(groupPosition)); //TODO: GetKBaseMeans() for support of multiple islands/movetypes //TODO: this doesnt need to be to radius >_>
+		float3 closestBaseSpot = ai->ah->GetClosestBaseSpot(groupPosition);
+		float costToTarget = ai->pather->FindBestPathToRadius(&pathToTarget, &groupPosition, THREATRES*8, &closestBaseSpot); //TODO: GetKBaseMeans() for support of multiple islands/movetypes //TODO: this doesnt need to be to radius >_>
 		if (costToTarget == 0 && pathToTarget.size() <= 2) {
 			isMoving = false;
 			if(ai->ah->DistanceToBase(groupPosition) > 500){
@@ -490,7 +491,8 @@ void CAttackGroup::Update()
 							//needs to be a point ON the perifery circle, not INSIDE it - fixed
 							//maybe include the height parameter in the search? probably not possible
 							//TODO: OBS doesnt this mean pathing might happen every second? outer limit should be more harsh than inner
-							float dist = ai->pather->FindBestPathToRadius(&tempPath, &myPos, myRange, &ai->cheat->GetUnitPos(unitArray[enemySelected]));
+							float3 unitPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
+							float dist = ai->pather->FindBestPathToRadius(&tempPath, &myPos, myRange, &unitPos);
 							if (tempPath.size() > 0) {
 								float3 moveHere = tempPath.back();
 								dist = myPos.distance2D(moveHere);
@@ -500,7 +502,7 @@ void CAttackGroup::Update()
 								//is the position between the proposed destination and the enemy higher than the average of mine and his height?
 								bool losHack = ((moveHere.y + enemyPos.y)/2.0f) + UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP > ai->cb->GetElevation((moveHere.x+enemyPos.x)/2, (moveHere.z+enemyPos.z)/2);
 								//im here assuming the pathfinder returns correct Y values
-								if (dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myRange), UNIT_MIN_MANEUVER_DISTANCE)
+								if (dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myRange), float(UNIT_MIN_MANEUVER_DISTANCE))
 									&& losHack) { //(enemyPos.y - moveHere.y) < UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP) {
 									debug2 = true;
 									//ai->cb->SendTextMsg("AG: maneuvering", 0);
@@ -673,7 +675,8 @@ void CAttackGroup::Update()
 					//findbestpath to perifery of circle around mypos, distance 2x resolution or somesuch
 					//dont reset counter, that would make it loop manuever attempts.
 					vector<float3> tempPath;
-					float dist = ai->pather->FindBestPathToRadius(&tempPath, &u->pos(), UNIT_STUCK_MANEUVER_DISTANCE, &u->pos()); //500 = hack
+					float3 upos = u->pos();
+					float dist = ai->pather->FindBestPathToRadius(&tempPath, &upos, UNIT_STUCK_MANEUVER_DISTANCE, &upos); //500 = hack
 					//float dist = ai->pather->FindBestPathToRadius(&tempPath, &ai->cb->GetUnitPos(unit), myRange, &ai->cheat->GetUnitPos(enemies[enemySelected]));
 					if (tempPath.size() > 0) {
 						float3 moveHere = tempPath.back();

@@ -109,7 +109,7 @@ void CSpotFinder::SetRadius(int radius)
 		for (int a=0;a<DoubleRadius+1;a++){ 
 			float z=a-radius;
 			float floatsqrradius = SquareRadius;
-			xend[a]=sqrt(floatsqrradius-z*z);
+			xend[a]=int(sqrtf(floatsqrradius-z*z));
 		}
 		
 	}

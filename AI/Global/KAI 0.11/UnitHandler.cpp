@@ -529,7 +529,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 		}
 		if(c->id == CMD_REPAIR)  // Its repairing    ( || c.id == CMD_GUARD)
 		{
-			int guardingID = c->params[0];
+			int guardingID = int(c->params[0]);
 			// Find the unit its repairng
 			int category = ai->ut->GetCategory(guardingID);
 			if(category == -1)

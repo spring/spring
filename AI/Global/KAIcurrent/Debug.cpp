@@ -71,12 +71,12 @@ void CDebug::OutputBWTGA(float* array,int xsize,int ysize,string filename,float 
 		if(curve == 1){
 			topvalue = pow(topvalue, float(curve));
     		for(int i = 0; i < totalsize; i++){
-				TGAArray[i] = (pow(array[i],float(curve))*255) / topvalue;
+				TGAArray[i] = int((pow(array[i],float(curve))*255) / topvalue);
 			}
 		}
 		else if(curve != 0){
 			for(int i = 0; i < totalsize; i++){
-				TGAArray[i] = (array[i]*255) / topvalue;
+				TGAArray[i] = int((array[i]*255) / topvalue);
 			}
 		}	
 	}

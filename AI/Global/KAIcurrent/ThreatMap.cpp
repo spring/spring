@@ -53,8 +53,8 @@ void CThreatMap::AddEnemyUnit (int unitid)
 {
 	if(!ai->cb->UnitBeingBuilt(unitid) && ai->cheat->GetUnitDef(unitid)->weapons.size()){
 		float3 pos = ai->cheat->GetUnitPos(unitid);
-		int posx = pos.x / (8*ThreatResolution);
-		int posy = pos.z / (8*ThreatResolution);
+		int posx = int(pos.x / (8*ThreatResolution));
+		int posy = int(pos.z / (8*ThreatResolution));
 		const UnitDef* Def = ai->cheat->GetUnitDef(unitid);
 		float Range = (ai->ut->GetMaxRange(Def))/(8*ThreatResolution)+2.5; //edited for slack
 		float SQRange = Range * Range;
@@ -62,9 +62,9 @@ void CThreatMap::AddEnemyUnit (int unitid)
 		if(DPS > 2000)
 			DPS = 2000;
 		//ai->math->TimerStart();
-		for (int myx = posx - Range; myx < posx + Range; myx++){
+		for (int myx = int(posx - Range); myx < posx + Range; myx++){
 			if (myx >= 0 && myx < ThreatMapWidth){
-				for (int myy = posy - Range; myy < posy + Range; myy++){
+				for (int myy = int(posy - Range); myy < posy + Range; myy++){
 					if (myy >= 0 && myy < ThreatMapHeight && ((posx - myx)*(posx - myx) + (posy - myy)*(posy - myy) - 0.5) <= SQRange){
 						ThreatArray[myy * ThreatMapWidth + myx] += DPS;
 					}
@@ -102,15 +102,15 @@ void CThreatMap::AddEnemyUnit (int unitid)
 void CThreatMap::RemoveEnemyUnit (int unitid)
 {
 	float3 pos = ai->cheat->GetUnitPos(unitid);
-	int posx = pos.x / (8*ThreatResolution);
-	int posy = pos.z / (8*ThreatResolution);
+	int posx = int(pos.x / (8*ThreatResolution));
+	int posy = int(pos.z / (8*ThreatResolution));
 	const UnitDef* Def = ai->cheat->GetUnitDef(unitid);
 	float Range = ai->ut->GetMaxRange(Def)/(8*ThreatResolution) ;
 	float SQRange = Range * Range;
 	float DPS = ai->ut->unittypearray[Def->id].AverageDPS;
-	for (int myx = posx - Range; myx < posx + Range; myx++){
+	for (int myx = int(posx - Range); myx < posx + Range; myx++){
 		if (myx >= 0 && myx < ThreatMapWidth){
-			for (int myy = posy - Range; myy < posy + Range; myy++){
+			for (int myy = int(posy - Range); myy < posy + Range; myy++){
 				if (myy >= 0 && myy < ThreatMapHeight && ((posx - myx)*(posx - myx) + (posy - myy)*(posy - myy)) <= SQRange){
 					ThreatArray[myy * ThreatMapWidth + myx] -= DPS;
 				}

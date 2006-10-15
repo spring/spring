@@ -40,6 +40,9 @@
 #else
 #include <sys/time.h>
 #define LARGE_INTEGER struct timeval
+static inline void itoa(int i, char* buf, int size) {
+        snprintf(buf, size, "%d", i);
+}
 #endif
 
 
