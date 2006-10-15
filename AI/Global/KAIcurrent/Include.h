@@ -54,23 +54,23 @@
 #include "ExternalAI/IAICheats.h"				// AI Cheat Interface
 
 // KAI
-#include "containers.h"							// All KAI containers
-#include "definitions.h"						// Definition declarations
+#include "Containers.h"							// All KAI containers
+#include "Definitions.h"						// Definition declarations
 #include "mtrand.h"								// Mersenne Twister RNG
 #include "SurveillanceHandler.h"
 #include "SpotFinder.h"
 #include "micropather.h"
-#include "maths.h"
-#include "sunparser.h"
-#include "metalmap.h"
-#include "debug.h"
-#include "pathfinder.h"
-#include "unittable.h"
+#include "Maths.h"
+#include "SunParser.h"
+#include "MetalMap.h"
+#include "Debug.h"
+#include "PathFinder.h"
+#include "UnitTable.h"
 #include "ThreatMap.h"
-#include "unithandler.h"
-#include "unit.h"
+#include "UnitHandler.h"
+#include "UNIT.h"
 #include "EconomyTracker.h"						// Temp only
-#include "defensematrix.h"
+#include "DefenseMatrix.h"
 #include "BuildUp.h"
 #include "AttackHandler.h"
 #include "AttackGroup.h"

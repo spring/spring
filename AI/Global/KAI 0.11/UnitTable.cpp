@@ -1,6 +1,6 @@
 //Based on Submarine's BuildTable Class from AAI. Thanks sub!
 
-#include "unittable.h"
+#include "UnitTable.h"
 
 CUnitTable::CUnitTable(AIClasses* ai)
 {
