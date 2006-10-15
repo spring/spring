@@ -15,7 +15,7 @@ public:
 	
 	// Temp stuff:
 	void Init_nr2();
-	const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefullnes);
+	const UnitDef* GetBestEconomyBuilding(int builder, float minUsefullnes);
 	// Temp end
 
 	// returns true, if a builder can build a certain unit (use UnitDef.id)
@@ -90,7 +90,7 @@ private:
 	void MakeGlobalNormalizationScore();
 	
 	// a comperator function for MakeGlobalNormalizationScore
-	bool static CUnitTable::pairCMP(const std::pair<float,UnitType*> &a, const std::pair<float,UnitType*> &b);
+	bool static pairCMP(const std::pair<float,UnitType*> &a, const std::pair<float,UnitType*> &b);
 
 
 	/**

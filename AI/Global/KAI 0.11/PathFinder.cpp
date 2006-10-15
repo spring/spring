@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once removed*/
 #include "PathFinder.h"
 
 CPathFinder::CPathFinder(AIClasses *ai)

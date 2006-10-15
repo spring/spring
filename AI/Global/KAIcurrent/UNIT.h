@@ -12,7 +12,7 @@ public:
 	//-----------|Miscellaneous Info|----------//
 	float3 pos();
 	float Health();
-	float CUNIT::MaxHealth();
+	float MaxHealth();
 	int category();
 	const UnitDef* def();
 	int myid;
@@ -22,12 +22,12 @@ public:
 	int groupID; // the attackgroup that the unit might belong to
 	bool CanAttack(int otherUnit);
 	bool CanAttackMe(int otherUnit);
-	float CUNIT::GetMyDPSvsUnit(int otherUnit);
-	float CUNIT::GetUnitDPSvsMe(int otherUnit);
-	float CUNIT::GetAverageDPS();
-	unsigned CUNIT::GetMoveType();
-	unsigned CUNIT::GetMoveSlopeType();
-	unsigned CUNIT::GetMoveDepthType();
+	float GetMyDPSvsUnit(int otherUnit);
+	float GetUnitDPSvsMe(int otherUnit);
+	float GetAverageDPS();
+	unsigned GetMoveType();
+	unsigned GetMoveSlopeType();
+	unsigned GetMoveDepthType();
 
 	// used in groups when units dont respond to move orders:
 	int stuckCounter; 

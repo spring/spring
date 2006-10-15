@@ -19,19 +19,19 @@ public:
 	unsigned Pos2Node_U(float3* pos);
 
 //remade the pathfinder interface, edit other functions as appropriate (there are duplicates):
-	float CPathFinder::PathToPos(vector<float3>* pathToPos, float3 startPos, float3 target);
-	float CPathFinder::PathToPosRadius(vector<float3>* pathToPos, float3 startPos, float3 target, float radius);
-	float CPathFinder::PathToSet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets);
-	float CPathFinder::PathToSet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float threatCutoff);
-	float CPathFinder::PathToSetRadius(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float radius);
-	float CPathFinder::PathToSetRadius(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float radius, float threatCutoff);
-	bool  CPathFinder::PathExists(float3 startPos, float3 target);
-	bool CPathFinder::PathExistsToAny(float3 startPos, vector<float3> targets);
-	float CPathFinder::ManeuverToPos(float3* destination, float3 startPos, float3 target);
-	float CPathFinder::ManeuverToPosRadius(float3* destination, float3 startPos, float3 target, float radius);
-	float CPathFinder::ManeuverToPosRadiusAndCanFire(float3* destination, float3 startPos, float3 target, float radius);
-	float CPathFinder::PathToPrioritySet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets);
-	float CPathFinder::PathToPrioritySet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float threatCutoff);
+	float PathToPos(vector<float3>* pathToPos, float3 startPos, float3 target);
+	float PathToPosRadius(vector<float3>* pathToPos, float3 startPos, float3 target, float radius);
+	float PathToSet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets);
+	float PathToSet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float threatCutoff);
+	float PathToSetRadius(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float radius);
+	float PathToSetRadius(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float radius, float threatCutoff);
+	bool  PathExists(float3 startPos, float3 target);
+	bool PathExistsToAny(float3 startPos, vector<float3> targets);
+	float ManeuverToPos(float3* destination, float3 startPos, float3 target);
+	float ManeuverToPosRadius(float3* destination, float3 startPos, float3 target, float radius);
+	float ManeuverToPosRadiusAndCanFire(float3* destination, float3 startPos, float3 target, float radius);
+	float PathToPrioritySet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets);
+	float PathToPrioritySet(vector<float3>* pathToPos, float3 startPos, vector<float3>* possibleTargets, float threatCutoff);
 	void CreateDefenseMatrix();
 
 	MicroPather* micropather;

@@ -11,11 +11,13 @@ CMaths::CMaths(AIClasses *ai)
 	MTRandInt.seed(time(NULL));
 	MTRandFloat.seed(MTRandInt());
 
+#ifdef WIN32
 	QueryPerformanceFrequency(&ticksPerSecond);
 	ticksPerSecondDivisor = float(ticksPerSecond.QuadPart);
+#endif
 	groupNumberCounter = 0;
 	GetNewTimerGroupNumber("Total time");
-}	
+}
 CMaths::~CMaths()
 {
 }
@@ -190,23 +192,40 @@ unsigned int CMaths::RandInt()
 
 void CMaths::TimerStart()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_start);
 	tick_laststop = tick_start;
+#else
+	gettimeofday(&tick_start, NULL);
+	tick_laststop = tick_start;
+#endif
 }
 
 int	CMaths::TimerTicks()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_end);
 	tick_laststop = tick_end;
 	return tick_end.QuadPart - tick_start.QuadPart;
+#else
+	getttimeofday(&tick_end, NULL);
+	tick_laststop = tick_end;
+	return (tick_end.tv_sec - tick_start.tv_sec) * 1000000 + (tick_end.tv_usec - tick_start.tv_usec);
+#endif
 }
 
 
 float CMaths::TimerSecs()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_end);
 	tick_laststop = tick_end;
 	return (float(tick_end.QuadPart) - float(tick_start.QuadPart))/float(ticksPerSecond.QuadPart);
+#else
+	gettimeofday(&tick_end, NULL);
+	tick_laststop = tick_end;
+	return (tick_end.tv_sec - tick_start.tv_sec) + (tick_end.tv_usec - tick_start.tv_usec) * 1.0e-6f;
+#endif
 }
 
 int CMaths::GetNewTimerGroupNumber(string timerName)
@@ -218,22 +237,6 @@ int CMaths::GetNewTimerGroupNumber(string timerName)
 		groupNumberCounter++;
 	return num;
 }
-/*
-void CMaths::StartTimer(int groupNumber)
-{
-	QueryPerformanceCounter(&(timerStruct[groupNumber].tickStart));
-	//sumTimeList[groupNumber].tickStart = 0;
-}
-*/
-/*
-float CMaths::StopTimer(int groupNumber)
-{
-	QueryPerformanceCounter(&tick_temp);
-	float time = (float(tick_temp.QuadPart - timerStruct[groupNumber].tickStart.QuadPart)) / ticksPerSecondDivisor;
-	timerStruct[groupNumber].sumTime += time;
-	return time;
-}
-*/
 
 void CMaths::PrintAllTimes()
 {

@@ -20,7 +20,7 @@ class CBuildUp
 	/*
 	Returns the factory that is needed most (globaly).
 	*/
-	const UnitDef* CBuildUp::GetBestFactoryThatCanBeBuilt(float3 builderPos);
+	const UnitDef* GetBestFactoryThatCanBeBuilt(float3 builderPos);
 
 	const UnitDef* GetBestMexThatCanBeBuilt();
 

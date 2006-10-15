@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once removed*/
 #include "ThreatMap.h"
 
 int* xend;

@@ -15,7 +15,7 @@ public:
 	
 	// Temp stuff:
 	void Init_nr2();
-	const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefullnes);
+	const UnitDef* GetBestEconomyBuilding(int builder, float minUsefullnes);
 	// Temp end
 
 

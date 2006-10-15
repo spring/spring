@@ -22,11 +22,9 @@
 //#include <set>
 //#include <string>		// String container
 //#include <vector>		// Vector containers
-#include <direct.h>		// Folder manipulation
 #include <sstream>
 //#include <math.h>
 #include <stdarg.h>
-#include <io.h>
 //#include <map>
 #include <functional>
 #include <memory.h>
@@ -34,7 +32,15 @@
 //#include <list>
 #include <assert.h>
 #include <float.h>
-#include <windows.h>
+
+#ifdef WIN32
+#include <direct.h>		// Folder manipulation
+#include <io.h>
+//#include <windows.h>
+#else
+#include <sys/time.h>
+#define LARGE_INTEGER struct timeval
+#endif
 
 
 // Spring Standard Header

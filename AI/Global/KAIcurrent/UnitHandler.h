@@ -40,7 +40,7 @@ public:
 	void TaskPlanAdd (TaskPlan* taskPlan, BuilderTracker* builderTracker);
 	TaskPlan* GetTaskPlan(int taskPlanId);
 	
-	BuilderTracker* CUnitHandler::GetBuilderTracker(int builder);
+	BuilderTracker* GetBuilderTracker(int builder);
 
 	void FactoryAdd (int id);
 	void FactoryLost (int id);

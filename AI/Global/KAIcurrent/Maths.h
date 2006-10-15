@@ -59,17 +59,28 @@ public:
 	int GetNewTimerGroupNumber(string timerName);
 	inline void StartTimer(int groupNumber)
 	{
+#ifdef WIN32
 		QueryPerformanceCounter(&(timerStruct[groupNumber].tickStart));
+#else
+		gettimeofday(&(timerStruct[groupNumber].tickStart), NULL);
+#endif
 	}
 	inline float StopTimer(int groupNumber)
 	{
+#ifdef WIN32
 		QueryPerformanceCounter(&tick_temp);
 		float time = (float(tick_temp.QuadPart - timerStruct[groupNumber].tickStart.QuadPart)) / ticksPerSecondDivisor;
 		timerStruct[groupNumber].sumTime += time;
 		return time;
+#else
+		gettimeofday(&tick_temp, NULL);
+		float time = (tick_temp.tv_sec - timerStruct[groupNumber].tickStart.tv_sec) + (tick_temp.tv_usec - timerStruct[groupNumber].tickStart.tv_usec) * 1.0e-6f;
+		timerStruct[groupNumber].sumTime += time;
+		return time;
+#endif
 	}
 	void PrintAllTimes();
-	
+
 
 
 
