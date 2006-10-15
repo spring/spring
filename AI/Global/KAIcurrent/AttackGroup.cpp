@@ -364,7 +364,7 @@ ai->math->StopTimer(ai->ah->ah_timer_NeedsNewTarget);
 			return true;
 		}
 		//if we're supposed to have a target but theres no enemies in the target area
-		if (!isFleeing && isMoving && ai->cheat->GetEnemyUnits(this->unitArray, pathToTarget.back(), max(highestAttackRange, max(this->attackRadius, MIN_DEFENSE_RADIUS))) == 0){
+		if (!isFleeing && isMoving && ai->cheat->GetEnemyUnits(this->unitArray, pathToTarget.back(), max(highestAttackRange, max(this->attackRadius, float(MIN_DEFENSE_RADIUS)))) == 0){
 ai->math->StopTimer(ai->ah->ah_timer_NeedsNewTarget);
 			return true;
 		}
@@ -388,7 +388,7 @@ bool CAttackGroup::ConfirmPathToTargetIsOK()
 	int stopPoint = (int)pathToTarget.size();//it should only path to lowest range anyway - (lowestAttackRange/THREATRES);
 	int startPoint = this->pathIterator;
 	if (isFleeing) {
-		startPoint += ceil((lowestUnitSpeed*FLEE_MIN_PATH_RECALC_SECONDS)/THREATRES);
+		startPoint += int(ceilf((lowestUnitSpeed*FLEE_MIN_PATH_RECALC_SECONDS)/THREATRES));
 //		L(" CAttackGroup::ConfirmPathToTargetIsOK startpoint: " << startPoint);
 	}
 	for (int i = startPoint; i < stopPoint; i++) {
@@ -618,7 +618,8 @@ store these things in the target selection process
 				float3 vectorUsToEnemy = enemyPos - groupPos;
 				//TODO: maybe averagerange? hmm
 				float distanceToEnemy = groupPos.distance2D(enemyPos);
-				float distanceCheckPoint = max (distanceToEnemy - this->lowestAttackRange, 0); //shouldnt be behind our current pos
+				float distanceCheckPoint = max (distanceToEnemy - this->lowestAttackRange, 0.0f); //shouldnt be behind our current 
+pos
 				float factor = distanceCheckPoint/distanceToEnemy;
 				float3 pointAtRange = groupPos + (vectorUsToEnemy*factor);
 				float threatAtRange = ai->tm->ThreatAtThisPoint(pointAtRange) - ai->tm->GetUnmodifiedAverageThreat();
@@ -693,13 +694,13 @@ ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 									//get threat info:
 									float currentThreat = ai->tm->ThreatAtThisPoint(myPos);
 									float newThreat = ai->tm->ThreatAtThisPoint(moveHere);
-	//								if (newThreat <= currentThreat && dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myRange), UNIT_MIN_MANEUVER_DISTANCE)
-									if (newThreat < currentThreat && dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myMinRange), UNIT_MIN_MANEUVER_DISTANCE)
+	//								if (newThreat <= currentThreat && dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myRange), float(UNIT_MIN_MANEUVER_DISTANCE))
+									if (newThreat < currentThreat && dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myMinRange), float(UNIT_MIN_MANEUVER_DISTANCE))
 										&& losHack) { //(enemyPos.y - moveHere.y) < UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP) {
 										debug2 = true;
 										//Draw where it would move:
 										if (ai->ah->debugDraw) ai->cb->CreateLineFigure(myPos, moveHere, 80, 1, frameSpread, RANDINT%1000000);
-										myUnitReference->maneuverCounter = ceil(max((float)UNIT_MIN_MANEUVER_TIME/frameSpread, (dist/myUnitDef->speed)));
+										myUnitReference->maneuverCounter = int(ceilf(max((float)UNIT_MIN_MANEUVER_TIME/frameSpread, (dist/myUnitDef->speed))));
 	//									L("AG maneuver debug, maneuverCounter set to " << ai->MyUnits[unit]->maneuverCounter << " and cost:" << cost << " speed:" << ai->MyUnits[unit]->def()->speed << " frameSpread:" << frameSpread << " dist/speed:" << (dist/ai->MyUnits[unit]->def()->speed) << " its a " << ai->MyUnits[unit]->def()->humanName);
 										myUnitReference->Move(moveHere);
 									}
@@ -737,7 +738,7 @@ ai->math->StartTimer(ai->ah->ah_timer_MoveOrderUpdate);
 	if (!isShooting && isMoving && frameNr % frameSpread == 0 && pathToTarget.size() > 2) {
 		//do the moving
 		float distPerStep = pathToTarget[0].distance2D(pathToTarget[1]);
-		const int maxStepsAhead = max(1, ceil(frameSpread/30 * this->highestUnitSpeed/distPerStep));
+		const int maxStepsAhead = int(max(1.0f, ceilf(frameSpread/30 * this->highestUnitSpeed/distPerStep)));
 		int pathMaxIndex = (int)pathToTarget.size()-1;
 		int step1 = min(this->pathIterator + maxStepsAhead, pathMaxIndex);
 		int step2 = min(this->pathIterator + maxStepsAhead*2, pathMaxIndex);

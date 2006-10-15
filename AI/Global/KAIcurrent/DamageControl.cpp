@@ -299,7 +299,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 						//L("Is ballistic! Gravity: " << gravity);						
 						//L("u = " << u << " distancetravelled*gravity)/(u*u) = " << (distancetravelled*gravity)/(u*u));
 						float sinoid = (distancetravelled*gravity)/(u*u);
-						sinoid = min(sinoid,1);
+						sinoid = min(sinoid,1.0f);
 						firingangle = asin(sinoid)/2;
 						if(unit->highTrajectoryType == 1){
 							firingangle = (PI/2) - firingangle;

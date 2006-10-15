@@ -168,10 +168,10 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 //	//L("FindSafeSpot called at " << ai->cb->GetCurrentFrame());
 //	//L("kMeansK:" << kMeansK << " myPos.x:" << myPos.x << " minSafety:" << minSafety << " maxSafety:" << maxSafety);
 	//find a safe spot
-	int startIndex = (minSafety * this->kMeansK);
+	int startIndex = int(minSafety * this->kMeansK);
 	if (startIndex < 0) startIndex = 0;
 //	if (startIndex >= kMeansK) startIndex = kMeansK-1;
-	int endIndex = (maxSafety * this->kMeansK);
+	int endIndex = int(maxSafety * this->kMeansK);
 	if (endIndex < 0) startIndex = 0;
 //	if (endIndex >= kMeansK) endIndex = kMeansK-1;
 	if (startIndex > endIndex) startIndex = endIndex;
@@ -392,7 +392,7 @@ void CAttackHandler::UpdateKMeans() {
 			else friendlyPositions.push_back(float3(RANDINT % (ai->cb->GetMapWidth()*8), 1000, RANDINT % (ai->cb->GetMapHeight()*8))); //when everything is dead
 		}
 		//calculate a new K. change the formula to adjust max K, needs to be 1 minimum.
-		this->kMeansK = min(KMEANS_BASE_MAX_K, 1.0f + sqrt((float)numFriendlies+0.01f));
+		this->kMeansK = int(min((float)(KMEANS_BASE_MAX_K), 1.0f + sqrtf((float)numFriendlies+0.01f)));
 		//iterate k-means algo over these positions and move the means
 		this->kMeansBase = KMeansIteration(this->kMeansBase, friendlyPositions, this->kMeansK);
 		//now, draw these means on the map
@@ -423,7 +423,7 @@ void CAttackHandler::UpdateKMeans() {
 		else enemyPositions.push_back(float3(RANDINT % (ai->cb->GetMapWidth()*8), 1000, RANDINT % (ai->cb->GetMapHeight()*8))); //when everything is dead
 	}
 	//calculate a new K. change the formula to adjust max K, needs to be 1 minimum.
-	this->kMeansEnemyK = min(KMEANS_ENEMY_MAX_K, 1.0f + sqrt((float)numEnemies+0.01f));
+	this->kMeansEnemyK = int(min(float(KMEANS_ENEMY_MAX_K), 1.0f + sqrtf((float)numEnemies+0.01f)));
 //		//L("AttackHandler: doing k-means k:" << kMeansK << " numPositions=" << numFriendlies);
 	//iterate k-means algo over these positions and move the means
 	this->kMeansEnemyBase = KMeansIteration(this->kMeansEnemyBase, enemyPositions, this->kMeansEnemyK);

@@ -11,7 +11,7 @@ A GPL licence can be obtained if needed.
 */
 
 
-#include "globalstuff.h"
+#include "GlobalStuff.h"
 #include "MyNode.h"
 
 

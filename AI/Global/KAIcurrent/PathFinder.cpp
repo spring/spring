@@ -6,8 +6,8 @@ CPathFinder::CPathFinder(AIClasses *ai)
 {
 	this->ai=ai;
 	resmodifier = THREATRES; // 8 = speed, 2 = precision
-	PathMapXSize =ai->cb->GetMapWidth() /resmodifier;
-	PathMapYSize =ai->cb->GetMapHeight() /resmodifier;
+	PathMapXSize = int(ai->cb->GetMapWidth() / resmodifier);
+	PathMapYSize = int(ai->cb->GetMapHeight() / resmodifier);
 	totalcells = PathMapXSize*PathMapYSize;
 	micropather = new MicroPather(ai, totalcells);
 	HeightMap = new float[totalcells];
@@ -135,21 +135,21 @@ void CPathFinder::Init()
 		float maxslope = 0;
 		float tempslope;
 		if(i+1 < totalcells && (i + 1) % PathMapXSize){	
-			tempslope = abs(HeightMap[i] - HeightMap[i+1]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i+1]);
 				maxslope = max(tempslope,maxslope);
 		}
 		/*
 		if(i - 1 >= 0 && i % PathMapXSize){
-			tempslope = abs(HeightMap[i] - HeightMap[i-1]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i-1]);
 			maxslope = max(tempslope,maxslope);
 		}
 		if(i+PathMapXSize < totalcells){
-			tempslope = abs(HeightMap[i] - HeightMap[i+PathMapXSize]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i+PathMapXSize]);
 			maxslope = max(tempslope,maxslope);
 		}
 		*/
 		if(i-PathMapXSize >= 0){
-			tempslope = abs(HeightMap[i] - HeightMap[i-PathMapXSize]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i-PathMapXSize]);
 			maxslope = max(tempslope,maxslope);
 		}
 		
@@ -162,10 +162,10 @@ void CPathFinder::Init()
 		unsigned myslope = 0; 
 		if(SlopeMap[i] < 0.01){
 			//SlopeMap[i] = 0.01;
-			myslope = 0.01 * RAD2DEG;
+			myslope = (unsigned)(0.01 * RAD2DEG);
 		}
 		else
-			 myslope = SlopeMap[i] * RAD2DEG; // get the cumulative amount of pixels of each slope
+			 myslope = (unsigned)(SlopeMap[i] * RAD2DEG); // get the cumulative amount of pixels of each slope
 		if(myslope >= CumulativeSlopeMeterFast.size()){
 			//CumulativeSlopeMeter.resize(myslope+1,0);
 			CumulativeSlopeMeterFast.resize(myslope+1,0);
@@ -417,7 +417,7 @@ void CPathFinder::CreateDefenseMatrix(){
 	ai->debug->MakeBWTGA(SlopeMap,PathMapXSize,PathMapYSize,string("SlopeMap"));
 	//ai->debug->MakeBWTGA(TestMoveArray,PathMapXSize,PathMapYSize,string("Plane Move Array"));
 
-	int Range = sqrt(float(PathMapXSize*PathMapYSize))/ THREATRES / 3;
+	int Range = int(sqrt(float(PathMapXSize*PathMapYSize))/ THREATRES / 3);
 	L("Range: " << Range);
 	int squarerange = Range*Range;
 	int maskwidth = (2*Range+1);
@@ -633,7 +633,7 @@ void CPathFinder::Node2XY_U(unsigned node, int* x, int* y)
 float3 CPathFinder::Node2Pos_U(unsigned node)
 {
 	float3 pos;
-	int multiplier = 8 * resmodifier;
+	int multiplier = int(8 * resmodifier);
 	pos.z = (node / PathMapXSize) * multiplier; /////////////////////OPTiMIZE
 	pos.x = (node - ((node / PathMapXSize) * PathMapXSize)) * multiplier;
 	return pos;
@@ -658,7 +658,7 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 	//ClearPath();
 	// Make a list with the points that will count as end nodes.
 	static vector<unsigned> endNodes;
-	int radius = myMaxRange / (8 *resmodifier);
+	int radius = int(myMaxRange / (8 *resmodifier));
 	int offsetSize = 0;
 	endNodes.resize(0);
 	endNodes.reserve(possibleTargets->size() * (radius) * 10);
@@ -675,7 +675,7 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 		for (int a=0;a<DoubleRadius+1;a++){ 
 			float z=a-radius;
 			float floatsqrradius = SquareRadius;
-			xend[a]=sqrt(floatsqrradius-z*z);
+			xend[a]=int(sqrt(floatsqrradius-z*z));
 		}
 		//L("2");
 		offsets = new pair<int, int>[DoubleRadius*5];
