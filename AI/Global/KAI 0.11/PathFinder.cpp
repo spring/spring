@@ -5,8 +5,8 @@ CPathFinder::CPathFinder(AIClasses *ai)
 {
 	this->ai=ai;
 	resmodifier = THREATRES; // 8 = speed, 2 = precision
-	PathMapXSize =ai->cb->GetMapWidth() /resmodifier;
-	PathMapYSize =ai->cb->GetMapHeight() /resmodifier;
+	PathMapXSize = int(ai->cb->GetMapWidth() / resmodifier);
+	PathMapYSize = int(ai->cb->GetMapHeight() / resmodifier);
 	totalcells = PathMapXSize*PathMapYSize;
 	micropather = new MicroPather( this, ai, totalcells);
 	HeightMap = new float[totalcells];
@@ -42,19 +42,19 @@ void CPathFinder::Init()
 		float maxslope = 0;
 		float tempslope;
 		if(i+1 < totalcells && (i + 1) % PathMapXSize){	
-			tempslope = abs(HeightMap[i] - HeightMap[i+1]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i+1]);
 				maxslope = max(tempslope,maxslope);
 		}
 		if(i - 1 >= 0 && i % PathMapXSize){
-			tempslope = abs(HeightMap[i] - HeightMap[i-1]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i-1]);
 			maxslope = max(tempslope,maxslope);
 		}
 		if(i+PathMapXSize < totalcells){
-			tempslope = abs(HeightMap[i] - HeightMap[i+PathMapXSize]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i+PathMapXSize]);
 			maxslope = max(tempslope,maxslope);
 		}
 		if(i-PathMapXSize >= 0){
-			tempslope = abs(HeightMap[i] - HeightMap[i-PathMapXSize]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i-PathMapXSize]);
 			maxslope = max(tempslope,maxslope);
 		}
 		SlopeMap[i]=maxslope*6/resmodifier; 
@@ -149,7 +149,7 @@ void CPathFinder::CreateDefenseMatrix(){
 	//ai->debug->MakeBWTGA(SlopeMap,PathMapXSize,PathMapYSize,string("SlopeMap"));
 	//ai->debug->MakeBWTGA(TestMoveArray,PathMapXSize,PathMapYSize,string("Plane Move Array"));
 
-	int Range = sqrt(float(PathMapXSize*PathMapYSize))/ THREATRES / 3;
+	int Range = int(sqrtf(float(PathMapXSize*PathMapYSize))/ THREATRES / 3);
 	int squarerange = Range*Range;
 	int maskwidth = (2*Range+1);
 	float* costmask = new float[maskwidth*maskwidth];
@@ -315,7 +315,7 @@ void CPathFinder::Node2XY(void* node, int* x, int* y)
 float3 CPathFinder::Node2Pos(void*node)
 {
 	float3 pos;
-	int multiplier = 8 * resmodifier;
+	int multiplier = int(8 * resmodifier);
 	int index = (int)node;
 	pos.z = (index / PathMapXSize) * multiplier; /////////////////////OPTiMIZE
 	pos.x = (index - ((index / PathMapXSize) * PathMapXSize)) * multiplier;
@@ -342,11 +342,11 @@ float CPathFinder::MakePath(vector<float3> *posPath, float3 *startPos, float3 *e
 	int sx,sy,ex,ey;
 	ai->math->F3MapBound(startPos);
 	ai->math->F3MapBound(endPos);
-	ex = endPos->x / (8 *resmodifier);
-	ey = endPos->z / (8 *resmodifier);
-	sy = startPos->z / (8 *resmodifier);
-	sx = startPos->x / (8 *resmodifier);
-	radius /= (8 *resmodifier);
+	ex = int(endPos->x / (8 *resmodifier));
+	ey = int(endPos->z / (8 *resmodifier));
+	sy = int(startPos->z / (8 *resmodifier));
+	sx = int(startPos->x / (8 *resmodifier));
+	radius /= int(8 *resmodifier);
 	////L("StartPos : " << startPos->x << "," << startPos->z << " End Pos: " << endPos->x << "," << endPos->z);
 		if(micropather->FindBestPathToPointOnRadius(XY2Node(sx,sy),XY2Node(ex,ey),&path,&totalcost, radius) == MicroPather::SOLVED){
 			////L("attack solution solved! Path size = " << path.size());
@@ -377,7 +377,7 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 	ClearPath();
 	// Make a list with the points that will count as end nodes.
 	static vector<void*> endNodes;
-	int radius = myMaxRange / (8 *resmodifier);
+	int radius = int(myMaxRange / (8 *resmodifier));
 	int offsetSize = 0;
 	endNodes.resize(0);
 	endNodes.reserve(possibleTargets->size() * radius * 10);
@@ -393,7 +393,7 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 		for (int a=0;a<DoubleRadius+1;a++){ 
 			float z=a-radius;
 			float floatsqrradius = SquareRadius;
-			xend[a]=sqrt(floatsqrradius-z*z);
+			xend[a]=int(sqrt(floatsqrradius-z*z));
 		}
 		////L("2");
 		offsets = new pair<int, int>[DoubleRadius*5];

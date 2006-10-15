@@ -152,7 +152,7 @@ void CEconomyTracker::frameUpdate()
 	//if(frame % 30 == 0)
 	//	L("energy:         " << ai->cb->GetEnergy() << ", metal:     " << ai->cb->GetMetal());
 	//L("myCalcEnergy: " << myCalcEnergy <<        ", myCalcMetal: " << myCalcMetal);
-	if(abs(deltaEnergy) > 0.001 || abs(deltaMetal) > 0.001)
+	if(fabs(deltaEnergy) > 0.001 || fabs(deltaMetal) > 0.001)
 		L("deltaEnergy:  " << deltaEnergy <<         ", deltaMetal:  " << deltaMetal);
 	if(frame % 32 == 0)
 		L("constructionEnergy: " << constructionEnergy << ", constructionMetal: " << constructionMetal);
@@ -567,7 +567,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 			//deltaHP -= 0.1;
 			if(!bt->buildTask)
 			{
-				bt->etaFrame = eta2 + frame;
+				bt->etaFrame = int(eta2 + frame);
 				L("First eta for (factory made) " << unitDef->humanName << ": " << bt->etaFrame);
 			}
 			
@@ -593,7 +593,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 				longDeltaHP = 0.000001; // The builder must have been pushed away and spring says it still builds
 			//assert(longDeltaHP > 0);
 			float longEta = endHp * (1.0 - builtRatio) / (longDeltaHP / 16.0);
-			bt->etaFrame = longEta + frame + 1;
+			bt->etaFrame = int(longEta + frame + 1);
 			if(bt->startedRealBuildingFrame +16 == frame)
 			{
 				L("First eta for " << unitDef->humanName << ": " << bt->etaFrame);
@@ -742,8 +742,8 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTr
 	if(economyUnitTracker->unitDef->windGenerator > 0)
 	{
 		// It makes (some) power from wind
-		int minWind = ai->cb->GetMinWind();
-		int maxWind = ai->cb->GetMaxWind();
+		int minWind = int(ai->cb->GetMinWind());
+		int maxWind = int(ai->cb->GetMaxWind());
 		energyProduction += ((minWind + maxWind) / 2.0);
 	}
 	// tidalGenerator ?

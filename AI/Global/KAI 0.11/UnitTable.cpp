@@ -191,7 +191,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 						////L("Is ballistic! Gravity: " << gravity);						
 						////L("u = " << u << " distancetravelled*gravity)/(u*u) = " << (distancetravelled*gravity)/(u*u));
 						float sinoid = (distancetravelled*gravity)/(u*u);
-						sinoid = min(sinoid,1);
+						sinoid = min(sinoid,1.0f);
 						firingangle = asin(sinoid)/2;
 						if(unit->highTrajectoryType == 1){
 							firingangle = (PI/2) - firingangle;
@@ -650,7 +650,7 @@ void CUnitTable::Init()
 		if(me->side == -1){// filter out neutral units
 		}	
 		else{			
-			int UnitCost = me->def->metalCost * METAL2ENERGY + me->def->energyCost;
+			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
 			
 			//L("name: " << me->def->name << ", : " << me->def->humanName);
 			CSunParser* attackerparser = new  CSunParser(ai);

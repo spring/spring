@@ -26,7 +26,7 @@ void CEconomyManager::UpdateNeed4Def(float firingtime) // Very early sketch, don
 	float Need4Def = 0;
 	for(int i = 1; i <= ai->cb->GetNumUnitDefs(); i++){
 		if(ai->dc->MyDefences[i].Damage > 0 && ai->dc->TheirArmy[i].Hitpoints > 0){			
-			Need4Def += max(ai->dc->TheirArmy[i].Hitpoints - (ai->dc->MyDefences[i].Damage * firingtime),0);
+			Need4Def += max(ai->dc->TheirArmy[i].Hitpoints - (ai->dc->MyDefences[i].Damage * firingtime),0.0f);
 			//L("TheirArmor: " << ai->dc->TheirArmy[i].Hitpoints << " MyDamage" << ai->dc->MyDefences[i].Damage);
 		}
 	}

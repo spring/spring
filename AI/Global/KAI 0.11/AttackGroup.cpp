@@ -506,7 +506,7 @@ void CAttackGroup::Update()
 									//ai->cb->SendTextMsg("AG: maneuvering", 0);
 									//Draw where it would move:
 									//ai->cb->CreateLineFigure(myPos, moveHere, 80, 1, frameSpread, RANDINT%1000000);
-									ai->MyUnits[unit]->maneuverCounter = ceil(max((float)UNIT_MIN_MANEUVER_TIME/frameSpread, (dist/ai->MyUnits[unit]->def()->speed)));
+									ai->MyUnits[unit]->maneuverCounter = int(ceilf(max((float)UNIT_MIN_MANEUVER_TIME/frameSpread, (dist/ai->MyUnits[unit]->def()->speed))));
 									//L("AG maneuver debug, maneuverCounter set to " << ai->MyUnits[unit]->maneuverCounter << " and dist:" << dist << " speed:" << ai->MyUnits[unit]->def()->speed << " frameSpread:" << frameSpread << " dist/speed:" << (dist/ai->MyUnits[unit]->def()->speed) << " its a " << ai->MyUnits[unit]->def()->humanName);
 									ai->MyUnits[unit]->Move(moveHere);
 									//REMEMBER that this will suck for planes (which is why i wont add them to this group)

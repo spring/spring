@@ -40,8 +40,8 @@ float3 CMaths::F3Randomize(float3 pos, float radius)
 
 void  CMaths::F32XY(float3 pos, int* x, int* y, int resolution)
 {
-	*x = pos.x / 8 / resolution;
-	*y = pos.z / 8 / resolution;
+	*x = int(pos.x / 8 / resolution);
+	*y = int(pos.z / 8 / resolution);
 }
 
 float3  CMaths::XY2F3(int x ,int y, int resolution)
@@ -175,7 +175,7 @@ float CMaths::RandNormal(float m, float s, bool positiveonly)
   if(!positiveonly)
 	return normal_x1 * s + m;
   else
-	return max(0,normal_x1 * s + m);
+	return max(0.0f,normal_x1 * s + m);
 }
 
 float CMaths::RandFloat()
