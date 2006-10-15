@@ -62,7 +62,7 @@ bool CUNIT::CanAttack(int otherUnit)
 	if (ud_mine && ud_other)
 		{//L("CanAttack: GUD returned on the second unit: " << ud_other);
 		//L("types: " << ud_mine->humanName << " to " << ud_other->humanName);
-		assert(otherUnit != NULL);
+		assert(otherUnit != 0);
 		//float CUnitTable::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 		float dps;
 //		if (ud_other->canmove) //GetDPSvsUnit crashes on buildings
