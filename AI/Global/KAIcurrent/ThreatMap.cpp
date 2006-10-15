@@ -1,7 +1,6 @@
 /*#pragma once removed*/
 #include "ThreatMap.h"
 
-int* xend;
 CThreatMap::CThreatMap(AIClasses *ai)
 {
 	this->ai=ai;

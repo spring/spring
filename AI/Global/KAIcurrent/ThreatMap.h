@@ -25,7 +25,8 @@ public:
 private:
 	float AverageThreat;
 	int TotalCells;
-	AIClasses *ai;	
+	AIClasses *ai;
+	int* xend;
 
 
 };
