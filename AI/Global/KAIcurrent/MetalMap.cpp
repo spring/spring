@@ -449,10 +449,13 @@ void CMetalMap::SaveMetalMap()
 	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
 	filename.resize(filename.size()-3);
 	filename += string("Metal");
-	FILE *save_file = fopen(filename.c_str(), "wb");
-    fwrite(&NumSpotsFound, sizeof(int), 1, save_file);
+	char filename_buf[1000];
+	strcpy(filename_buf, filename.c_str());
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename_buf);
+	FILE *save_file = fopen(filename_buf, "wb");
+	fwrite(&NumSpotsFound, sizeof(int), 1, save_file);
 	L("Spots found: " << NumSpotsFound << " AverageMetal: " << AverageMetal);
-    fwrite(&AverageMetal, sizeof(float), 1, save_file);
+	fwrite(&AverageMetal, sizeof(float), 1, save_file);
 	for(int i = 0; i < NumSpotsFound; i++){
 		//L("Loaded i: " << i << ", x; " << VectoredSpots[i].x << ", y; " << VectoredSpots[i].z << ", value: " << VectoredSpots[i].y );
 		fwrite(&VectoredSpots[i], sizeof(float3), 1, save_file);
@@ -466,9 +469,12 @@ bool CMetalMap::LoadMetalMap()
 	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
 	filename.resize(filename.size()-3);
 	filename += string("Metal");
+	char filename_buf[1000];
+	strcpy(filename_buf, filename.c_str());
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
 	FILE *load_file;
 	// load Spots if file exists 
-	if(load_file = fopen(filename.c_str(), "rb")){
+	if(load_file = fopen(filename_buf, "rb")){
 		fread(&NumSpotsFound, sizeof(int), 1, load_file);
 		VectoredSpots.resize(NumSpotsFound);
 		fread(&AverageMetal, sizeof(float), 1, load_file);
@@ -480,5 +486,5 @@ bool CMetalMap::LoadMetalMap()
 		ai->cb->SendTextMsg("Metal Spots loaded from file",0);
 		return true;
 	}
-		return false;
+	return false;
 }

@@ -60,6 +60,8 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 	ai->cb			= callback->GetAICallback();
 	ai->cheat		= callback->GetCheatInterface();
 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, c);
+
 	MyUnits.reserve(MAXUNITS);
 	ai->MyUnits.reserve(MAXUNITS);
 	for (int i = 0; i < MAXUNITS;i++){		

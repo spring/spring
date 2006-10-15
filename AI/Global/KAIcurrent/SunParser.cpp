@@ -76,16 +76,19 @@ void CSunParser::LoadVirtualFile(string filename)
 void CSunParser::LoadRealFile(string filename)
 {
     //L("CSunParser::LoadRealFile(" << filename << ")" << endl);
-	this->filename = filename;
+	char filename_buf[1000];
+	strcpy(filename_buf, filename.c_str());
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
+	this->filename = filename_buf;
     /*
-	FILE *RealFile = fopen(filename.c_str(), "r");
+	FILE *RealFile = fopen(filename_buf, "r");
 	if(RealFile == NULL)
     {
     	//L("Sun Parsing Error: File " << filename << " not found" << endl);
         return;
     }
     */
-    ifstream RealFile(filename.c_str());
+    ifstream RealFile(filename_buf);
     if(RealFile.fail())
     {
     	//L("Sun Parsing Error: File " << filename << " not found" << endl);
