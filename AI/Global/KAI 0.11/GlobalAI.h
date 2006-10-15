@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "include.h"
+#include "Include.h"
 
 const char AI_NAME[]="KAI";
 

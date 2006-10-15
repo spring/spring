@@ -29,7 +29,7 @@ Take care when you use it!
 
 This notice may not be removed or altered from any source
 */
-#include "globalai.h"
+#include "GlobalAI.h"
 
 #ifndef GRINNINGLIZARD_MICROPATHER_INCLUDED
 #define GRINNINGLIZARD_MICROPATHER_INCLUDED

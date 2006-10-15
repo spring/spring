@@ -1,6 +1,6 @@
 #pragma once
 
-#include "globalai.h"
+#include "GlobalAI.h"
 #include "MetalMaker.h"
 
 class CUnitHandler

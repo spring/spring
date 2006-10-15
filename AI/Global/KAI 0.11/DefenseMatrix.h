@@ -1,6 +1,6 @@
 #pragma once
 
-#include "globalai.h"
+#include "GlobalAI.h"
 class CSpotFinder;
 
 class CDefenseMatrix
