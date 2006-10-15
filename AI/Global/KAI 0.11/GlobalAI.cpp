@@ -73,7 +73,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 
 	ai->debug		= new CDebug(ai);
 	ai->math		= new CMaths(ai);
-	//ai->LOGGER		= new std::ofstream(c);
+	ai->LOGGER		= NULL; //new std::ofstream(c);
 	ai->parser		= new CSunParser(ai);
 	ai->ut			= new CUnitTable(ai);
 	ai->mm			= new CMetalMap(ai);
