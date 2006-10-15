@@ -11,7 +11,9 @@ CMaths::CMaths(AIClasses *ai)
 	MTRandInt.seed(time(NULL));
 	MTRandFloat.seed(MTRandInt());
 
+#ifdef WIN32
 	QueryPerformanceFrequency(&ticksPerSecond);
+#endif
 }	
 CMaths::~CMaths()
 {
@@ -187,21 +189,38 @@ unsigned int CMaths::RandInt()
 
 void CMaths::TimerStart()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_start);
 	tick_laststop = tick_start;
+#else
+	gettimeofday(&tick_start, NULL);
+	tick_laststop = tick_start;
+#endif
 }
 
 int	CMaths::TimerTicks()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_end);
 	tick_laststop = tick_end;
 	return tick_end.QuadPart - tick_start.QuadPart;
+#else
+	gettimeofday(&tick_end, NULL);
+	tick_laststop = tick_end;
+	return (tick_end.tv_sec - tick_start.tv_sec) * 1000000 + (tick_end.tv_usec - tick_start.tv_usec);
+#endif
 }
 
 
 float CMaths::TimerSecs()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_end);
 	tick_laststop = tick_end;
 	return (float(tick_end.QuadPart) - float(tick_start.QuadPart))/float(ticksPerSecond.QuadPart);
+#else
+	gettimeofday(&tick_end, NULL);
+	tick_laststop = tick_end;
+	return (tick_end.tv_sec - tick_start.tv_sec) + (tick_end.tv_usec - tick_start.tv_usec) * 1.0e-6f;
+#endif
 }

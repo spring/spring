@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once removed*/
 #include "UNIT.h"
 
 static Command nullParamsCommand;
