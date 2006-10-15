@@ -572,7 +572,7 @@ float CUnitTable::GetNonNormalizationGlobalScore(const UnitType* unitType, unsig
 	}
 	if(Benefit == 0)
 	{
-		assert(false);
+		//assert(false);
 	}
 	//L("Benefit: " << Benefit);
 	//L("Unit: " << unit->humanName << " Has a score of : " << Benefit);
