@@ -602,7 +602,8 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		list<int> takenEnemies;// = group->GetAssignedEnemies();
 		for (list<CAttackGroup>::iterator groupIt = attackGroups.begin(); groupIt != attackGroups.end(); groupIt++) {
 			if (!groupIt->defending && groupIt->GetGroupID() != group_in->GetGroupID()) { // TODO when caching, fix this
-				takenEnemies.merge(groupIt->GetAssignedEnemies());
+				list<int> assignedEnemies = groupIt->GetAssignedEnemies();
+				takenEnemies.merge(assignedEnemies);
 			}
 		}
 		for (vector<int>::iterator enemy = allEligibleEnemies.begin(); enemy != allEligibleEnemies.end(); enemy++) {

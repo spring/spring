@@ -184,12 +184,12 @@ int CAttackGroup::PopStuckUnit() {
 				AIHCAddMapPoint amp;
 				amp.label = text;
 				amp.pos = ai->cb->GetUnitPos(id);
-				ai->cb->HandleCommand(&amp);
+				ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 
 				sprintf(text, "humanName:%s", ai->MyUnits[*it]->def()->humanName.c_str());
 				amp.label = text;
 				amp.pos = ai->cb->GetUnitPos(id) + float3(0, 0, 30);
-				ai->cb->HandleCommand(&amp);
+				ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 			}
 			ai->MyUnits[id]->stuckCounter = 0;
 			//units.erase(it);
@@ -506,7 +506,7 @@ ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 			AIHCAddMapLine aml;
 			aml.posfrom = groupPosition;
 			aml.posto = selectedEnemyPosition;
-			ai->cb->HandleCommand(&aml);
+			ai->cb->HandleCommand(AIHCAddMapLineId, &aml);
 */			
 			//lets make the actual path
 			
@@ -618,8 +618,7 @@ store these things in the target selection process
 				float3 vectorUsToEnemy = enemyPos - groupPos;
 				//TODO: maybe averagerange? hmm
 				float distanceToEnemy = groupPos.distance2D(enemyPos);
-				float distanceCheckPoint = max (distanceToEnemy - this->lowestAttackRange, 0.0f); //shouldnt be behind our current 
-pos
+				float distanceCheckPoint = max (distanceToEnemy - this->lowestAttackRange, 0.0f); //shouldnt be behind our current pos
 				float factor = distanceCheckPoint/distanceToEnemy;
 				float3 pointAtRange = groupPos + (vectorUsToEnemy*factor);
 				float threatAtRange = ai->tm->ThreatAtThisPoint(pointAtRange) - ai->tm->GetUnmodifiedAverageThreat();
@@ -820,7 +819,7 @@ void CAttackGroup::StuckUnitFix() {
 						AIHCAddMapPoint amp;
 						amp.label = "stuck-fix";
 						amp.pos = u->pos();
-						ai->cb->HandleCommand(&amp);
+						ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 					}
 					//findbestpath to perifery of circle around mypos, distance 2x resolution or somesuch
 					vector<float3> tempPath;

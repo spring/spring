@@ -184,7 +184,7 @@ bool CAttackHandler::CanTravelToEnemyBase(float3 pos) //TODO add movetype
 			amp.label = "NOT CanTravelToEnemyBase";
 		}
 		amp.pos = pos;
-		ai->cb->HandleCommand(&amp);
+		ai->cb->HandleCommand(AIHCAddMapPointId, &amp);
 	}
 	ai->math->StopTimer(ai->ah->ah_timer_totalTime);
 	return res;

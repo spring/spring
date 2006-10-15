@@ -20,11 +20,11 @@
 #define TIMER_TICKS		ai->math->TimerTicks()
 #define TIMER_SECS		ai->math->TimerSecs()
 // Folders
-#define ROOTFOLDER		"aidll\\globalai\\KAI\\"
+#define ROOTFOLDER		"AI/KAI/"
 
-#define LOGFOLDER		ROOTFOLDER"Logs\\"
-#define	METALFOLDER		ROOTFOLDER"Metal\\"
-#define TGAFOLDER		ROOTFOLDER"TGAs\\"
+#define LOGFOLDER		ROOTFOLDER"Logs/"
+#define	METALFOLDER		ROOTFOLDER"Metal/"
+#define TGAFOLDER		ROOTFOLDER"TGAs/"
 
 // KAI version to be appended to files generated. If older, remove them
 #define KAIVERSION		1
