@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MATHS_H
+#define MATHS_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 struct TimerStruct
@@ -90,3 +92,5 @@ private:
 	
 	string sumTimeNameList[1000]; // Guessing that it wont be used more than 1000 times in the code
 };
+
+#endif /* MATHS_H */

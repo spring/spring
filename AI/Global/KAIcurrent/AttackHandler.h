@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ATTACKHANDLER_H
+#define ATTACKHANDLER_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 class CAttackGroup;
@@ -70,3 +72,5 @@ private:
 	vector<float3> kMeansEnemyBase;
 	int kMeansEnemyK;
 };
+
+#endif /* ATTACKHANDLER_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ECONOMYTRACKER_H
+#define ECONOMYTRACKER_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 struct EconomyUnitTracker;
@@ -224,3 +226,5 @@ class CEconomyTracker
 
 
 
+
+#endif /* ECONOMYTRACKER_H */

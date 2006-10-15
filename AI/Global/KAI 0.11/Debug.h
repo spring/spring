@@ -1,4 +1,6 @@
-#pragma once
+#ifndef DEBUG_H
+#define DEBUG_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 class CDebug
@@ -20,3 +22,5 @@ private:
 	AIClasses *ai;	
 	void OutputBWTGA(float* array,int xsize,int ysize,string filename,float curve);
 };
+
+#endif /* DEBUG_H */

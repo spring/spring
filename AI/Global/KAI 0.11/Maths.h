@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MATHS_H
+#define MATHS_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 class CMaths
@@ -53,3 +55,5 @@ private:
 	int mapfloat3height,mapfloat3width;
 
 };
+
+#endif /* MATHS_H */

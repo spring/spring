@@ -1,4 +1,6 @@
-#pragma once
+#ifndef UNITHANDLER_H
+#define UNITHANDLER_H
+/*pragma once removed*/
 
 #include "GlobalAI.h"
 #include "MetalMaker.h"
@@ -72,3 +74,5 @@ private:
 	int taskPlanCounter;
 	bool debugPoints;
 };
+
+#endif /* UNITHANDLER_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ATTACKGROUP_H
+#define ATTACKGROUP_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 
@@ -58,3 +60,5 @@ class CAttackGroup
 	int movementCounterForStuckChecking;
 
 };
+
+#endif /* ATTACKGROUP_H */

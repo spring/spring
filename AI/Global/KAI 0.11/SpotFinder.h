@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SPOTFINDER_H
+#define SPOTFINDER_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 
@@ -57,3 +59,5 @@ private:
 	AIClasses *ai;
 	CachePoint *cachePoints;
 };
+
+#endif /* SPOTFINDER_H */

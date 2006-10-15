@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ATTACKGROUP_H
+#define ATTACKGROUP_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 
@@ -89,3 +91,5 @@ class CAttackGroup
 	void CAttackGroup::RecalcAssignedEnemies();
 	list<int> assignedEnemies;
 };
+
+#endif /* ATTACKGROUP_H */

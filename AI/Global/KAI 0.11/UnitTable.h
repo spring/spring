@@ -1,4 +1,6 @@
-#pragma once
+#ifndef UNITTABLE_H
+#define UNITTABLE_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 
@@ -86,3 +88,5 @@ private:
 
 
 
+
+#endif /* UNITTABLE_H */

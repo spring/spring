@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INCLUDE_H
+#define INCLUDE_H
+/*pragma once removed*/
 
 
 
@@ -81,3 +83,5 @@
             
 
 
+
+#endif /* INCLUDE_H */
