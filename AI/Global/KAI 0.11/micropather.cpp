@@ -472,7 +472,7 @@ float MicroPather::LeastCostEstimateLocal( int nodeStartIndex)
 
 void MicroPather::FixStartEndNode( void** startNode, void** endNode )
 {
-	unsigned long index = (unsigned long)*startNode;
+	long index = (long)*startNode;
 	int y = index / mapSizeX;
 	int x = index - y * mapSizeX;
 	
@@ -489,7 +489,7 @@ void MicroPather::FixStartEndNode( void** startNode, void** endNode )
 	
 	*startNode = (void*)(y*mapSizeX+x);
 	
-	index = (unsigned long)*endNode;
+	index = (long)*endNode;
 	y = index / mapSizeX;
 	x = index - y * mapSizeX;
 	
@@ -510,7 +510,7 @@ void MicroPather::FixStartEndNode( void** startNode, void** endNode )
 
 void MicroPather::FixNode( void** Node)
 {
-	unsigned long index = (unsigned long)*Node;
+	long index = (long)*Node;
 	int y = index / mapSizeX;
 	int x = index - y * mapSizeX;
 	
@@ -547,13 +547,13 @@ int MicroPather::Solve( void* startNode, void* endNode, vector< void* >* path, f
 	
 	{
 		FixStartEndNode(&startNode, &endNode);
-		if(!canMoveArray[(unsigned long)startNode])
+		if(!canMoveArray[(long)startNode])
 		{
 			// Cant move from the start ???
 			// Dont do anything...
 			//L("Pather: trying to move from a blokked start pos");
 		}
-		if(!canMoveArray[(unsigned long)endNode])
+		if(!canMoveArray[(long)endNode])
 		{
 			// Cant move into the endNode
 			// Just fail fast
@@ -704,7 +704,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 		
 		void* endNode = endNodes[0];
 		FixStartEndNode(&startNode, &endNode);
-		if(!canMoveArray[(unsigned long)startNode])
+		if(!canMoveArray[(long)startNode])
 		{
 			// Cant move from the start ???
 			// Dont do anything...
@@ -866,7 +866,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	
 	{
 		FixStartEndNode(&startNode, &endNode);
-		if(!canMoveArray[(unsigned long)startNode])
+		if(!canMoveArray[(long)startNode])
 		{
 			// Cant move from the start ???
 			// Dont do anything...
@@ -894,7 +894,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	
 	// Make the radius
 	
-	unsigned long indexEnd = (unsigned long) endNode;
+	long indexEnd = (long) endNode;
 	int y = indexEnd / mapSizeX;
 	int x = indexEnd - y * mapSizeX;
 	
@@ -914,7 +914,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	}
 	
 	/*  Add this test for all border nodes ??
-	if(!canMoveArray[(unsigned long)endNode])
+	if(!canMoveArray[(long)endNode])
 	{
 		// Cant move into the endNode
 		// Just fail fast
@@ -928,7 +928,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	for (int a=0;a<2*radius+1;a++){ 
 		float3 pos;
 		int multiplier = 8 * 8;
-		unsigned long indexStart = (unsigned long)endNode;
+		long indexStart = (long)endNode;
 		int ystart = indexStart / mapSizeX;
 		int xstart = indexStart - ystart * mapSizeX;
 		

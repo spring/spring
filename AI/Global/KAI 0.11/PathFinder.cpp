@@ -307,7 +307,7 @@ void* CPathFinder::XY2Node(int x, int y)
 
 void CPathFinder::Node2XY(void* node, int* x, int* y)
 {
-	int index = (int)node;
+	long index = (long)node;
 	*y = index / PathMapXSize;
 	*x = index - *y * PathMapXSize;
 }
@@ -316,7 +316,7 @@ float3 CPathFinder::Node2Pos(void*node)
 {
 	float3 pos;
 	int multiplier = int(8 * resmodifier);
-	int index = (int)node;
+	long index = (long)node;
 	pos.z = (index / PathMapXSize) * multiplier; /////////////////////OPTiMIZE
 	pos.x = (index - ((index / PathMapXSize) * PathMapXSize)) * multiplier;
 	return pos;
