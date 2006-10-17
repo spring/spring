@@ -419,7 +419,7 @@ void MicroPather::GoalReached( PathNode* node, unsigned start, unsigned end, vec
 
 		while ( it->parent )
 		{
-			path[count] = (((unsigned)it)-((unsigned)pathNodeMem)) / sizeof(PathNode);
+			path[count] = (((unsigned long)it)-((unsigned long)pathNodeMem)) / sizeof(PathNode);
 			it = it->parent;
 			--count;
 		}
@@ -621,7 +621,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( unsigned startNode, vector<unsigne
 	if(foundNode != NULL)
 	{
 		// Make the path now:
-		GoalReached( foundNode, startNode, (((unsigned)foundNode)-((unsigned)pathNodeMem)) / sizeof(PathNode), path );
+		GoalReached( foundNode, startNode, (((unsigned long)foundNode)-((unsigned long)pathNodeMem)) / sizeof(PathNode), path );
 		cost = foundNode->costFromStart;
 		hasStartedARun = false;
 		return SOLVED;	
@@ -678,7 +678,7 @@ PathNode* MicroPather::FindBestPathStandard()
 		//ai->math->StartTimer(popTime);
 		PathNode* node = open.Pop();
 		//ai->math->StopTimer(popTime);
-		unsigned indexStart = (((unsigned)node)-((unsigned)pathNodeMem)) / sizeof(PathNode);
+		unsigned long indexStart = (((unsigned long)node)-((unsigned long)pathNodeMem)) / sizeof(PathNode);
 		if ( node->isEndNode )
 		{
 			//ai->math->StopTimer(loopTime);
@@ -777,7 +777,7 @@ PathNode* MicroPather::FindBestPathUndirected()
 		//ai->math->StartTimer(popTime);
 		PathNode* node = open.Pop();
 		//ai->math->StopTimer(popTime);
-		unsigned indexStart = (((unsigned)node)-((unsigned)pathNodeMem)) / sizeof(PathNode);
+		unsigned long indexStart = (((unsigned long)node)-((unsigned long)pathNodeMem)) / sizeof(PathNode);
 		if ( node->isEndNode )
 		{
 			//ai->math->StopTimer(loopTime);
@@ -876,7 +876,7 @@ PathNode* MicroPather::FindBestPathUndirectedCutoff(float cutoff)
 		//ai->math->StartTimer(popTime);
 		PathNode* node = open.Pop();
 		//ai->math->StopTimer(popTime);
-		unsigned indexStart = (((unsigned)node)-((unsigned)pathNodeMem)) / sizeof(PathNode);
+		unsigned long indexStart = (((unsigned long)node)-((unsigned long)pathNodeMem)) / sizeof(PathNode);
 		if ( node->isEndNode )
 		{
 			//ai->math->StopTimer(loopTime);
