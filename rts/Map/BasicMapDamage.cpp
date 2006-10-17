@@ -165,8 +165,8 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			readmap->mipHeightmap[1][y*gs->hmapx+x]=heightmap[(y*2+1)*(gs->mapx+1)+(x*2+1)];*/
 	for(int i=0; i<readmap->numHeightMipMaps-1; i++){
 		int hmapx = gs->mapx>>i;
-		for(int y=y1>>i;y<y2>>i;y+=2){
-			for(int x=x1>>i;x<x2>>i;x+=2){
+		for(int y=(y1>>i)&(~1);y<y2>>i;y+=2){
+			for(int x=(x1>>i)&(~1);x<x2>>i;x+=2){
 				float height = readmap->mipHeightmap[i][(x)+(y)*hmapx];
 				height += readmap->mipHeightmap[i][(x)+(y+1)*hmapx];
 				height += readmap->mipHeightmap[i][(x+1)+(y)*hmapx];
