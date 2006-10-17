@@ -421,7 +421,7 @@ void MicroPather::GoalReached( PathNode* node, void* start, void* end, vector< v
 
 		while ( it->parent )
 		{
-			(*path)[count] = (void*) ((((unsigned)it)-((unsigned)pathNodeMem)) / sizeof(PathNode));
+			(*path)[count] = (void*) ((((unsigned long)it)-((unsigned long)pathNodeMem)) / sizeof(PathNode));
 			it = it->parent;
 			--count;
 		}
@@ -472,7 +472,7 @@ float MicroPather::LeastCostEstimateLocal( int nodeStartIndex)
 
 void MicroPather::FixStartEndNode( void** startNode, void** endNode )
 {
-	int index = (int)*startNode;
+	unsigned long index = (unsigned long)*startNode;
 	int y = index / mapSizeX;
 	int x = index - y * mapSizeX;
 	
@@ -489,7 +489,7 @@ void MicroPather::FixStartEndNode( void** startNode, void** endNode )
 	
 	*startNode = (void*)(y*mapSizeX+x);
 	
-	index = (int)*endNode;
+	index = (unsigned long)*endNode;
 	y = index / mapSizeX;
 	x = index - y * mapSizeX;
 	
@@ -510,7 +510,7 @@ void MicroPather::FixStartEndNode( void** startNode, void** endNode )
 
 void MicroPather::FixNode( void** Node)
 {
-	int index = (int)*Node;
+	unsigned long index = (unsigned long)*Node;
 	int y = index / mapSizeX;
 	int x = index - y * mapSizeX;
 	
@@ -547,13 +547,13 @@ int MicroPather::Solve( void* startNode, void* endNode, vector< void* >* path, f
 	
 	{
 		FixStartEndNode(&startNode, &endNode);
-		if(!canMoveArray[(int)startNode])
+		if(!canMoveArray[(unsigned long)startNode])
 		{
 			// Cant move from the start ???
 			// Dont do anything...
 			//L("Pather: trying to move from a blokked start pos");
 		}
-		if(!canMoveArray[(int)endNode])
+		if(!canMoveArray[(unsigned long)endNode])
 		{
 			// Cant move into the endNode
 			// Just fail fast
@@ -572,15 +572,15 @@ int MicroPather::Solve( void* startNode, void* endNode, vector< void* >* path, f
 	OpenQueueBH open(ai, heapArrayMem);
 
 	{
-		PathNode* tempStartNode = &pathNodeMem[(unsigned)startNode];
-		float estToGoal = LeastCostEstimateLocal( (unsigned)startNode );
+		PathNode* tempStartNode = &pathNodeMem[(unsigned long)startNode];
+		float estToGoal = LeastCostEstimateLocal( (unsigned long)startNode );
 		tempStartNode->Reuse( frame );
 		tempStartNode->costFromStart = 0;
 		tempStartNode->totalCost = estToGoal;
 		open.Push( tempStartNode );
 	}
 	
-	PathNode *endPathNode = &(pathNodeMem[(unsigned)endNode]);
+	PathNode *endPathNode = &(pathNodeMem[(unsigned long)endNode]);
 	while ( !open.Empty() )
 	{
 		PathNode* node = open.Pop();
@@ -596,7 +596,7 @@ int MicroPather::Solve( void* startNode, void* endNode, vector< void* >* path, f
 		{
 			// We have not reached the goal - add the neighbors.
 			// emulate GetNodeNeighbors:
-			int indexStart = (((unsigned)node)-((unsigned)pathNodeMem)) / sizeof(PathNode);
+			int indexStart = (((unsigned long)node)-((unsigned long)pathNodeMem)) / sizeof(PathNode);
 			#ifdef USE_ASSERTIONS
 			int ystart = indexStart / mapSizeX;
 			int xstart = indexStart - ystart * mapSizeX;
@@ -704,7 +704,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 		
 		void* endNode = endNodes[0];
 		FixStartEndNode(&startNode, &endNode);
-		if(!canMoveArray[(int)startNode])
+		if(!canMoveArray[(unsigned long)startNode])
 		{
 			// Cant move from the start ???
 			// Dont do anything...
@@ -722,8 +722,8 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 	OpenQueueBH open(ai, heapArrayMem);
 	
 	{
-		PathNode* tempStartNode = &pathNodeMem[(unsigned)startNode];
-		float estToGoal = LeastCostEstimateLocal( (unsigned)startNode);
+		PathNode* tempStartNode = &pathNodeMem[(unsigned long)startNode];
+		float estToGoal = LeastCostEstimateLocal( (unsigned long)startNode);
 		tempStartNode->Reuse( frame );
 		tempStartNode->costFromStart = 0;
 		tempStartNode->totalCost = estToGoal;
@@ -735,7 +735,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 	for(unsigned i = 0; i < endNodes.size(); i++)
 	{
 		FixNode(&endNodes[i]);
-		PathNode* tempEndNode = &pathNodeMem[(unsigned)endNodes[i]];
+		PathNode* tempEndNode = &pathNodeMem[(unsigned long)endNodes[i]];
 		
 		//assert(tempEndNode->isEndNode == 0);
 		tempEndNode->isEndNode = 1;
@@ -747,7 +747,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 		
 		if ( node->isEndNode )
 		{
-			void* theEndNode = (void *) ((((unsigned)node)-((unsigned)pathNodeMem)) / sizeof(PathNode));
+			void* theEndNode = (void *) ((((unsigned long)node)-((unsigned long)pathNodeMem)) / sizeof(PathNode));
 			GoalReached( node, startNode, theEndNode, path );
 			*cost = node->costFromStart;
 			hasStartedARun = false;
@@ -755,7 +755,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 			// Unmark the endNodes
 			for(unsigned i = 0; i < endNodes.size(); i++)
 			{
-				PathNode* tempEndNode = &pathNodeMem[(unsigned)endNodes[i]];
+				PathNode* tempEndNode = &pathNodeMem[(unsigned long)endNodes[i]];
 				tempEndNode->isEndNode = 0;
 			}
 			
@@ -765,7 +765,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 		{
 			// We have not reached the goal - add the neighbors.
 			// emulate GetNodeNeighbors:
-			int indexStart = (((unsigned)node)-((unsigned)pathNodeMem)) / sizeof(PathNode);
+			int indexStart = (((unsigned long)node)-((unsigned long)pathNodeMem)) / sizeof(PathNode);
 			#ifdef USE_ASSERTIONS
 			int ystart = indexStart / mapSizeX;
 			int xstart = indexStart - ystart * mapSizeX;
@@ -843,7 +843,7 @@ int MicroPather::FindBestPathToAnyGivenPoint( void* startNode, vector<void*> end
 	// Unmark the endNodes
 	for(unsigned i = 0; i < endNodes.size(); i++)
 	{
-		PathNode* tempEndNode = &pathNodeMem[(unsigned)endNodes[i]];
+		PathNode* tempEndNode = &pathNodeMem[(unsigned long)endNodes[i]];
 		tempEndNode->isEndNode = 0;
 	}
 	hasStartedARun = false;
@@ -866,7 +866,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	
 	{
 		FixStartEndNode(&startNode, &endNode);
-		if(!canMoveArray[(int)startNode])
+		if(!canMoveArray[(unsigned long)startNode])
 		{
 			// Cant move from the start ???
 			// Dont do anything...
@@ -884,8 +884,8 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	OpenQueueBH open(ai, heapArrayMem);
 
 	{
-		PathNode* tempStartNode = &pathNodeMem[(unsigned)startNode];
-		float estToGoal = LeastCostEstimateLocal( (unsigned)startNode);
+		PathNode* tempStartNode = &pathNodeMem[(unsigned long)startNode];
+		float estToGoal = LeastCostEstimateLocal( (unsigned long)startNode);
 		tempStartNode->Reuse( frame );
 		tempStartNode->costFromStart = 0;
 		tempStartNode->totalCost = estToGoal;
@@ -894,7 +894,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	
 	// Make the radius
 	
-	int indexEnd = (int) endNode;
+	unsigned long indexEnd = (unsigned long) endNode;
 	int y = indexEnd / mapSizeX;
 	int x = indexEnd - y * mapSizeX;
 	
@@ -914,7 +914,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	}
 	
 	/*  Add this test for all border nodes ??
-	if(!canMoveArray[(int)endNode])
+	if(!canMoveArray[(unsigned long)endNode])
 	{
 		// Cant move into the endNode
 		// Just fail fast
@@ -928,7 +928,7 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	for (int a=0;a<2*radius+1;a++){ 
 		float3 pos;
 		int multiplier = 8 * 8;
-		int indexStart = (int)endNode;
+		unsigned long indexStart = (unsigned long)endNode;
 		int ystart = indexStart / mapSizeX;
 		int xstart = indexStart - ystart * mapSizeX;
 		
@@ -951,13 +951,13 @@ int MicroPather::FindBestPathToPointOnRadius( void* startNode, void* endNode, ve
 	
 	////L(".");
 	////L("yEndNode: " << yEndNode << ", xEndNode: " << xEndNode);
-	PathNode *endPathNode = &(pathNodeMem[(unsigned)endNode]);
+	PathNode *endPathNode = &(pathNodeMem[(unsigned long)endNode]);
 	
 	while ( !open.Empty() )
 	{
 		PathNode* node = open.Pop();
 		
-		int indexStart = (((unsigned)node)-((unsigned)pathNodeMem)) / sizeof(PathNode);
+		int indexStart = (((unsigned long)node)-((unsigned long)pathNodeMem)) / sizeof(PathNode);
 		int ystart = indexStart / mapSizeX;
 		int xstart = indexStart - ystart * mapSizeX;
 		////L("counter: " << counter << ", ystart: " << ystart << ", xstart: " << xstart);
