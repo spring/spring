@@ -181,3 +181,9 @@ for shader in shaders:
 	if not os.path.isdir(os.path.join('game/shaders', shader)):
 		inst = Install(os.path.join(env.subst(env['datadir']), 'shaders'), os.path.join('game/shaders', shader))
 		Alias('install', inst)
+
+# install menu entry & icon
+inst = Install(os.path.join(env['prefix'], 'share/pixmaps'), 'rts/spring.png')
+Alias('install', inst)
+inst = Install(os.path.join(env['prefix'], 'share/applications'), 'rts/spring.desktop')
+Alias('install', inst)
