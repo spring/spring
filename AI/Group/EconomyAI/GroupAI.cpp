@@ -23,7 +23,7 @@ CGroupAI::CGroupAI()
 	unitRemoved		= false;
 	newBuildTaskNeeded = false;
 	newBuildTaskFrame = 0;
-	maxResourcePercentage = 0.75f;
+	maxResourcePercentage = 1.0f;
 	initialized		= false;
 }
 
@@ -216,9 +216,25 @@ void CGroupAI::FindNewBuildTask()
 	boHandler->SortBuildOptions();
 
 	// do we want to build energy or metal?
-	CalculateIdealME();
-	CalculateCurrentME();
-	vector<BOInfo*>* bestBO = (currentME > idealME) ? &(boHandler->bestEnergy) : &(boHandler->bestMetal);
+	bool buildMetal = false; // true: build metal, false: build energy
+	// check if we're wasting metal
+	if(aicb->GetMetalIncome() > (1.1 * aicb->GetMetalUsage()) && (1.2 * aicb->GetMetal()) > aicb->GetMetalStorage())
+	{
+		buildMetal = false;
+	}
+	// check if we're wasting energy
+	else if(aicb->GetEnergyIncome() > (1.1 * aicb->GetEnergyUsage()) && (1.2 * aicb->GetEnergy()) > aicb->GetEnergyStorage())
+	{
+		buildMetal = true;
+	}
+	else
+	{
+		CalculateIdealME();
+		CalculateCurrentME();
+		if(currentME < idealME)
+			buildMetal = true;
+	}
+	vector<BOInfo*>* bestBO = buildMetal ? &(boHandler->bestMetal) : &(boHandler->bestEnergy);
 
 	// find a unit to build
 	for(vector<BOInfo*>::iterator boi=bestBO->begin();boi!=bestBO->end();++boi)
@@ -227,8 +243,8 @@ void CGroupAI::FindNewBuildTask()
 
 		// check if we have enough resource to build it
 		int buildFrames = (int) (*boi)->buildTime / max(1.0f,totalBuildSpeed);
-		float metalEnd	= maxResourcePercentage * (aicb->GetMetal() + buildFrames * aicb->GetMetalIncome());
-		float energyEnd	= maxResourcePercentage * (aicb->GetEnergy() + buildFrames * aicb->GetEnergyIncome());
+		float metalEnd	= maxResourcePercentage * (aicb->GetMetal() + buildFrames * (aicb->GetMetalIncome() - aicb->GetMetalUsage()));
+		float energyEnd	= maxResourcePercentage * (aicb->GetEnergy() + buildFrames * (aicb->GetEnergyIncome() - aicb->GetEnergyUsage()));
 		if(metalEnd < (*boi)->metalCost || energyEnd < (*boi)->energyCost)
 			continue;
 
