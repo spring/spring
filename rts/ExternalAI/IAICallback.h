@@ -11,6 +11,7 @@ struct FeatureDef;
 // GetProperty() constants
                             // Data buffer will be filled with this:
 #define AIVAL_UNITDEF		1  // const UnitDef*
+#define AIVAL_CURRENT_FUEL	2  // float
 
 // GetValue() constants
 #define AIVAL_NUMDAMAGETYPES 1 // int

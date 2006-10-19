@@ -519,8 +519,21 @@ void CUnit::SlowUpdate()
 
 	if(moveType->progressState == CMoveType::Active)
 	{
-		if(/*physicalState == OnGround*/seismicSignature && !(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
-			new CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat()),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-gu->usRandFloat())), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
+		if(seismicSignature)
+		{
+			float rx = gs->randFloat();
+			float rz = gs->randFloat();
+			if(!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
+				new CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rx),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rz)), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
+
+			for(int a=0;a<gs->activeAllyTeams;++a){
+                if(radarhandler->InSeismicDistance(this, a))
+				{
+					globalAI->SeismicPing(a, this, pos + float3(radarhandler->radarErrorSize[a]*(0.5f-rx),0,radarhandler->radarErrorSize[a]*(0.5f-rz)), seismicSignature);
+				}
+			}
+
+		}
 	}
 
 	CalculateTerrainType();

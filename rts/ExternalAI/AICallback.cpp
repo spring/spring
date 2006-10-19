@@ -1034,15 +1034,19 @@ bool CAICallback::GetProperty(int id, int property, void *data)
 {
 	verify ();
 	if (CHECK_UNITID(id)) {
+		CUnit *unit = uh->units[id];
+		if (!(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS))) { 
+			return false;  //return if the unit doesn't exist or cant be seen
+		}
+
 		switch (property) {
 		case AIVAL_UNITDEF:{
-			CUnit *unit = uh->units[id];
-			if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
 				(*(const UnitDef**)data) = unit->unitDef;
 				return true;
 			}
-			break;
-		}
+		case AIVAL_CURRENT_FUEL:
+			(*(float*)data) = unit->currentFuel;
+			return true;
 		}
 	}
 	return false;
