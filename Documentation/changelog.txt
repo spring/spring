@@ -1,7 +1,8 @@
 TASpring change log
 
 0.next
-
+- AIs can query a unit current fuelstorage via GetProperty() with property AIVAL_CURRENT_FUEL (2).
+- AIs receive seismic pings via HandleEvent() function with message AI_EVENT_SEISMIC_PING (5).
 - The icontype of enemy units is remembered if they are under continuous radar coverage.
 - Ghosted buildings under continuous radar coverage don't have an error vector in their position anymore.
 - Ghosted buildings also turn into unit icons when far away.

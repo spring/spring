@@ -324,3 +324,18 @@ void CGlobalAIHandler::PlayerCommandGiven(std::vector<int>& selectedunits,Comman
 		HANDLE_EXCEPTION;
 	}
 }
+
+void CGlobalAIHandler::SeismicPing(int allyteam, CUnit *unit, const float3 &pos, float strength)
+{
+	if(hasAI){
+		for(int a=0;a<gs->activeTeams;++a){
+			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
+				try {
+					IGlobalAI::SeismicPingEvent spe;
+					spe.pos = pos;
+					spe.strength = strength;
+					ais[a]->ai->HandleEvent(AI_EVENT_SEISMIC_PING,&spe);
+				} HANDLE_EXCEPTION;
+		}
+	}
+}

@@ -27,6 +27,7 @@ public:
 	void UnitLeftLos(CUnit* unit,int allyteam);
 	void UnitEnteredRadar(CUnit* unit,int allyteam);
 	void UnitLeftRadar(CUnit* unit,int allyteam);
+	void SeismicPing(int allyteam, CUnit *unit, const float3 &pos, float strength);
 
 	void UnitIdle(CUnit* unit);
 	void UnitCreated(CUnit* unit);

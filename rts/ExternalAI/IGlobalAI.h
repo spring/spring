@@ -14,6 +14,7 @@ struct WeaponDef;
 #define AI_EVENT_UNITCAPTURED 2
 #define AI_EVENT_WEAPON_FIRED 3
 #define AI_EVENT_PLAYER_COMMAND 4
+#define AI_EVENT_SEISMIC_PING	5
 
 class SPRING_API IGlobalAI
 {
@@ -29,6 +30,10 @@ public:
 		std::vector<int> units;
 		Command command;
  		int player;
+	};
+	struct SeismicPingEvent{
+		float3 pos;
+		float strength;
 	};
 
 	virtual void InitAI(IGlobalAICallback* callback, int team)=0;
