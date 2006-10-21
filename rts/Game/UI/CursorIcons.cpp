@@ -104,6 +104,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_DGUN:            cursorName = "DGun"; break;
 		case CMD_RESURRECT:       cursorName = "Resurrect"; break;
 		case CMD_CAPTURE:         cursorName = "Capture"; break;
+		case CMD_SELFD:           cursorName = "SelfD"; break;
 /*
 		case CMD_STOP:
 		case CMD_AISELECT:
@@ -114,7 +115,6 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_MOVE_STATE:
 		case CMD_SETBASE:
 		case CMD_INTERNAL:
-		case CMD_SELFD:
 		case CMD_SET_WANTED_MAX_SPEED:
 		case CMD_ONOFF:
 		case CMD_CLOAK:

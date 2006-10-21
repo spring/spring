@@ -42,6 +42,7 @@ public:
 
 	struct ButtonPress{
 		bool pressed;
+		bool chorded;
 		int x;
 		int y;
 		float3 camPos;

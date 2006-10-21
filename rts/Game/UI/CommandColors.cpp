@@ -31,6 +31,8 @@ static void InitColor(float color[4], float r, float g, float b, float a)
 
 CCommandColors::CCommandColors()
 {
+	alwaysDrawQueue = false;
+
 	useQueueIcons = true;
 	queueIconAlpha = 0.5f;
 	queueIconScale = 1.0f;
@@ -45,6 +47,7 @@ CCommandColors::CCommandColors()
 	selectedLineWidth = 1.49f;
 	selectedBlendSrc = GL_SRC_ALPHA;
 	selectedBlendDst = GL_ONE_MINUS_SRC_ALPHA;
+	buildBoxesOnShift = true;
 
 	mouseBoxLineWidth = 1.49f;
 	mouseBoxBlendSrc = GL_SRC_ALPHA;
@@ -191,7 +194,10 @@ bool CCommandColors::LoadConfig(const string& filename)
 		
 		const string command = StringToLower(words[0]);
 		
-		if ((command == "usequeueicons") && (words.size() > 1)) {
+		if ((command == "alwaysdrawqueue") && (words.size() > 1)) {
+			alwaysDrawQueue = !!atoi(words[1].c_str());
+		}
+		else if ((command == "usequeueicons") && (words.size() > 1)) {
 			useQueueIcons = !!atoi(words[1].c_str());
 		}
 		else if ((command == "queueiconalpha") && (words.size() > 1)) {
@@ -238,6 +244,9 @@ bool CCommandColors::LoadConfig(const string& filename)
 			if (ParseBlendMode(words[1], mode) && IsValidDstMode(mode)) {
 				selectedBlendDst = mode;
 			}
+		}
+		else if ((command == "buildboxesonshift") && (words.size() > 1)) {
+			buildBoxesOnShift = !!atoi(words[1].c_str());
 		}
 		else if ((command == "mouseboxlinewidth") && (words.size() > 1)) {
 			SafeAtoF(mouseBoxLineWidth, words[1]);

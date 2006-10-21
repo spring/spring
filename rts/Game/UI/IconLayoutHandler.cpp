@@ -24,6 +24,7 @@ extern "C" {
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/LogOutput.h"
 
@@ -50,11 +51,14 @@ static int GetGroupUnits(lua_State* L);
 static int GetMyTeamUnits(lua_State* L);
 static int GetAlliedUnits(lua_State* L);
 
+static int GetUnitHealth(lua_State* L);
+static int GetCommandQueue(lua_State* L);
 static int GetFullBuildQueue(lua_State* L);
 static int GetRealBuildQueue(lua_State* L);
 
 static int GetAllyteamList(lua_State* L);
 static int GetTeamInfo(lua_State* L);
+static int GetTeamResources(lua_State* L);
 
 static int GetPlayerInfo(lua_State* L);
 static int GetMyPlayerID(lua_State* L);
@@ -110,17 +114,16 @@ CIconLayoutHandler::~CIconLayoutHandler()
 string CIconLayoutHandler::LoadFile(const string& filename)
 {
 	string code;
-	
-	FILE* f = fopen(filename.c_str(), "rt");
-	if (f == NULL) {
-		return code;
-	}
 
-	char buf[1024];
-	while (fgets(buf, sizeof(buf), f) != NULL) {
-		code += buf;
+	CFileHandler fh(filename); 
+
+	if (fh.FileExists()) {
+		char c;
+		while (fh.Peek() != EOF) {
+			fh.Read(&c, 1);
+			code += c;
+		}
 	}
-	fclose(f);
 	
 	return code;
 }
@@ -148,10 +151,13 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroupUnits);
 	REGISTER_LUA_CFUNC(GetMyTeamUnits);
 	REGISTER_LUA_CFUNC(GetAlliedUnits);
+	REGISTER_LUA_CFUNC(GetUnitHealth);
+	REGISTER_LUA_CFUNC(GetCommandQueue);
 	REGISTER_LUA_CFUNC(GetFullBuildQueue);
 	REGISTER_LUA_CFUNC(GetRealBuildQueue);
 	REGISTER_LUA_CFUNC(GetAllyteamList);
 	REGISTER_LUA_CFUNC(GetTeamInfo);
+	REGISTER_LUA_CFUNC(GetTeamResources);
 	REGISTER_LUA_CFUNC(GetPlayerInfo);
 	REGISTER_LUA_CFUNC(GetMyPlayerID);
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
@@ -907,6 +913,89 @@ static int GetAlliedUnits(lua_State* L)
 }
 
 
+static int GetUnitHealth(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, -1)) {
+		lua_pushstring(L, "Incorrect arguments to GetUnitHealth(unitID)");
+		lua_error(L);
+	}
+	const int unitID = (int)lua_tonumber(L, -1);
+	lua_pop(L, 1);
+
+	// get the unit info
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		return 0;
+	}
+	const CUnit* unit = uh->units[unitID];
+	if ((unit == NULL) || (unit->allyteam != gu->myAllyTeam)) {
+		return 0;
+	}
+	
+	lua_pushnumber(L, unit->health);
+	lua_pushnumber(L, unit->maxHealth);
+	lua_pushnumber(L, unit->paralyzeDamage);
+	lua_pushnumber(L, unit->captureProgress);
+	lua_pushnumber(L, unit->buildProgress);
+	
+	return 5;
+}
+
+
+static int GetCommandQueue(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1) ||
+	    ((args == 2) && !lua_isnumber(L, 2)) || (args > 2)) {
+		lua_pushstring(L, "Incorrect arguments to GetCommandQueue(unitID [, count])");
+		lua_error(L);
+	}
+	const int unitID = (int)lua_tonumber(L, 1);
+
+	// get the unit info
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		return 0;
+	}
+	const CUnit* unit = uh->units[unitID];
+	if ((unit == NULL) || (unit->allyteam != gu->myAllyTeam)) {
+		return 0;
+	}
+	const CCommandAI* commandAI = unit->commandAI;
+	if (commandAI == NULL) {
+		return 0;
+	}
+ 	const deque<Command>& commandQue = commandAI->commandQue;
+
+	// get the desired number of commands to return
+	int count = -1;
+	if (args > 1) {
+ 		count = (int)lua_tonumber(L, 2);
+	}
+	if (count < 0) {
+		count = (int)commandQue.size();
+	}
+ 
+	lua_newtable(L);
+	
+	int i = 0;
+	deque<Command>::const_iterator it;
+	for (it = commandQue.begin(); it != commandQue.end(); it++) {
+		if (i >= count) {
+			break;
+		}
+		i++;
+		lua_pushnumber(L, i);
+		lua_pushnumber(L, it->id);
+		lua_rawset(L, -3);
+	}
+	lua_pushliteral(L, "n");
+	lua_pushnumber(L, i);
+	lua_rawset(L, -3);
+
+	return 1;
+}
+
+
 static int GetBuildQueue(lua_State* L, bool canBuild)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -916,23 +1005,26 @@ static int GetBuildQueue(lua_State* L, bool canBuild)
 	}
 	const int unitID = (int)lua_tonumber(L, 1);
 	lua_pop(L, 1);
-	if ((unitID < 0) || (unitID >= MAX_UNITS) || (uh->units[unitID] == NULL)) {
-		char buf[128];
-		SNPRINTF(buf, sizeof(buf), "GetBuildQueue(%i) bad unitID", unitID);
-		lua_pushstring(L, buf);
-		return 1;
+
+	// get the unit info
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		return 0;
 	}
 	const CUnit* unit = uh->units[unitID];
-	if (unit == NULL) { return 0; }
+	if ((unit == NULL) || (unit->allyteam != gu->myAllyTeam)) {
+		return 0;
+	}
 	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) { return 0; }
+	if (commandAI == NULL) {
+		return 0;
+	}
+	const deque<Command>& commandQue = commandAI->commandQue;
 
 	lua_newtable(L);
 	
 	int entry = 0;
 	int currentType = -1;
 	int currentCount = 0;
-	const deque<Command>& commandQue = commandAI->commandQue;
 	deque<Command>::const_iterator it;
 	for (it = commandQue.begin(); it != commandQue.end(); it++) {
 		if (it->id < 0) { // a build command
@@ -1077,6 +1169,46 @@ static int GetTeamInfo(lua_State* L)
 	return 10;
 }
 
+
+static int GetTeamResources(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, -1)) {
+		lua_pushstring(L, "Incorrect arguments to GetTeamResources(teamID)");
+		lua_error(L);
+	}
+
+	const int teamID = (int)lua_tonumber(L, -1);
+	lua_pop(L, 1);
+	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+		return 0;
+	}
+	const CTeam* team = gs->Team(teamID);
+	if ((team == NULL) || !gs->AlliedTeams(gu->myTeam, teamID)) {
+		return 0;
+	}
+	
+	lua_pushnumber(L, team->metal);
+	lua_pushnumber(L, team->metalStorage);
+	lua_pushnumber(L, team->prevMetalPull);
+	lua_pushnumber(L, team->prevMetalIncome);
+	lua_pushnumber(L, team->prevMetalExpense);
+	lua_pushnumber(L, team->metalShare);
+	lua_pushnumber(L, team->metalSent);
+	lua_pushnumber(L, team->metalReceived);
+
+	lua_pushnumber(L, team->energy);
+	lua_pushnumber(L, team->energyStorage);
+	lua_pushnumber(L, team->prevEnergyPull);
+	lua_pushnumber(L, team->prevEnergyIncome);
+	lua_pushnumber(L, team->prevEnergyExpense);
+	lua_pushnumber(L, team->energyShare);
+	lua_pushnumber(L, team->energySent);
+	lua_pushnumber(L, team->energyReceived);
+	
+	return 16;
+}
+	
 
 static int GetPlayerInfo(lua_State* L)
 {
