@@ -602,10 +602,15 @@ void CBuilderCAI::DrawCommands(void)
 
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
 
+	if (owner->selfDCountdown != 0) {
+		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
+	}
+
 	deque<Command>::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		switch(ci->id) {
-			case CMD_WAIT:{
+			case CMD_WAIT:
+ 			case CMD_SELFD:{
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
@@ -729,7 +734,9 @@ void CBuilderCAI::DrawCommands(void)
 
 			// draw the building (but not its base square)
 			glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
+			glEnable(GL_DEPTH_TEST);
 			unitDrawer->DrawBuildingSample(bi.def, owner->team, bi.pos, bi.buildFacing);
+			glDisable(GL_DEPTH_TEST);
 			
 			// restore the blending function
 			glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
@@ -788,25 +795,23 @@ void CBuilderCAI::GiveCommand(const Command& c)
 
 void CBuilderCAI::DrawQuedBuildingSquares(void)
 {
-	deque<Command>::iterator ci;
-	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		map<int,string>::iterator boi;
-		if((boi=buildOptions.find(ci->id))!=buildOptions.end()){
+	deque<Command>::const_iterator ci;
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		if (buildOptions.find(ci->id) != buildOptions.end()) {
 			BuildInfo bi(*ci);
-			bi.pos=helper->Pos2BuildPos(bi);
-			
-			float xsize=bi.GetXSize()*4;
-			float ysize=bi.GetYSize()*4;
-			glColor4f(0.2f,1,0.2f,1);
+			bi.pos = helper->Pos2BuildPos(bi);
+			const float xsize = bi.GetXSize()*4;
+			const float ysize = bi.GetYSize()*4;
 			glBegin(GL_LINE_LOOP);
-			glVertexf3(bi.pos+float3(+xsize, 1, +ysize));
-			glVertexf3(bi.pos+float3(-xsize, 1, +ysize));
-			glVertexf3(bi.pos+float3(-xsize, 1, -ysize));
-			glVertexf3(bi.pos+float3(+xsize, 1, -ysize));
+			glVertexf3(bi.pos + float3(+xsize, 1, +ysize));
+			glVertexf3(bi.pos + float3(-xsize, 1, +ysize));
+			glVertexf3(bi.pos + float3(-xsize, 1, -ysize));
+			glVertexf3(bi.pos + float3(+xsize, 1, -ysize));
 			glEnd();
 		}
 	}
 }
+
 
 bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsigned char options, bool recAny)
 {

@@ -386,9 +386,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 CGame::~CGame()
 {
-	configHandler.SetInt("ShowClock",showClock);
-	configHandler.SetInt("ShowPlayerInfo",showPlayerInfo);
-
 	if (treeDrawer) configHandler.SetInt("TreeRadius",(unsigned int)(treeDrawer->baseTreeDistance*256));
 
 	ENTER_MIXED;
@@ -1167,9 +1164,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "clock") {
 		showClock = !showClock;
+    configHandler.SetInt("ShowClock", showClock ? 1 : 0);
 	}
 	else if (cmd == "info") {
 		showPlayerInfo = !showPlayerInfo;
+    configHandler.SetInt("ShowPlayerInfo", showPlayerInfo ? 1 : 0);
 	}
 	else if (cmd == "techlevels") {
 		unitDefHandler->SaveTechLevels("", modInfo->name); // stdout
@@ -1422,7 +1421,7 @@ bool CGame::Draw()
 	unitDrawer->DrawCloakedUnits();
 	ph->Draw(false);
 	sky->DrawSun();
-	if(keys[SDLK_LSHIFT]) {
+	if(cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
 		cursorIcons->Draw();
 	}

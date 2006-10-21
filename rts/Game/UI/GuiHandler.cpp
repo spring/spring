@@ -74,6 +74,8 @@ CGuiHandler::CGuiHandler()
 
 	LoadConfig("ctrlpanel.txt");
 
+  invertQueueKey = !!configHandler.GetInt("InvertQueueKey", 0);
+  
 	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
 }
 
@@ -87,6 +89,13 @@ CGuiHandler::~CGuiHandler()
 	for (it = textureMap.begin(); it != textureMap.end(); ++it) {
 		glDeleteTextures (1, &(it->second));
 	}
+}
+
+
+bool CGuiHandler::GetQueueKeystate() const
+{
+	return (!invertQueueKey && keys[SDLK_LSHIFT]) ||
+	       (invertQueueKey && !keys[SDLK_LSHIFT]);
 }
 
 
@@ -826,7 +835,7 @@ void CGuiHandler::SetShowingMetal(bool show)
 
 void CGuiHandler::Update()
 {
-	if (needShift && !keys[SDLK_LSHIFT]) {
+	if (needShift && !GetQueueKeystate()) {
 		SetShowingMetal(false);
 		inCommand=-1;
 		needShift=false;
@@ -915,7 +924,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 		return;
 	}
 
-	if(needShift && !keys[SDLK_LSHIFT]){
+	if(needShift && !GetQueueKeystate()){
 		SetShowingMetal(false);
 		inCommand=-1;
 		needShift=false;
@@ -941,6 +950,9 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				Command c;
 				c.id=commands[iconCmd].id;
 				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+				if (invertQueueKey && (c.id < 0)) {
+					c.options = c.options ^ SHIFT_KEY;
+				}
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
 				break;}
@@ -1193,15 +1205,25 @@ bool CGuiHandler::AboveGui(int x, int y)
 
 void CGuiHandler::CreateOptions(Command& c,bool rmb)
 {
-	c.options=0;
-	if(rmb)
-		c.options|=RIGHT_MOUSE_KEY;
-	if(keys[SDLK_LSHIFT])
-		c.options|=SHIFT_KEY;
-	if(keys[SDLK_LCTRL])
-		c.options|=CONTROL_KEY;
-	if(keys[SDLK_LALT] || keys[SDLK_LMETA])
-		c.options|=ALT_KEY;
+	c.options = 0;
+	if (rmb) {
+		c.options |= RIGHT_MOUSE_KEY;
+	}
+	if (GetQueueKeystate()) {
+		// allow mouse button 'rocker' movements to force
+		// immediate mode (when queuing is the default mode)
+		if (!invertQueueKey ||
+		    (!mouse->buttons[SDL_BUTTON_LEFT].pressed &&
+		     !mouse->buttons[SDL_BUTTON_RIGHT].pressed)) {
+			c.options |= SHIFT_KEY;
+		}
+	}
+	if (keys[SDLK_LCTRL]) {
+		c.options |= CONTROL_KEY;
+	}
+	if (keys[SDLK_LALT] || keys[SDLK_LMETA]) {
+		c.options |= ALT_KEY;
+	}
 	//logOutput << (int)c.options << "\n";
 }
 
@@ -1304,6 +1326,15 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 	}
 	else if (action.command == "layout") {
 		RunLayoutCommand(action.extra);
+		return true;
+	}
+	else if (action.command == "invqueuekey") {
+		if (action.extra.empty()) {
+			invertQueueKey = !invertQueueKey;
+		} else {
+			invertQueueKey = !!atoi(action.extra.c_str());
+		}
+		configHandler.SetInt("InvertQueueKey", invertQueueKey ? 1 : 0);
 		return true;
 	}
 
@@ -1522,10 +1553,10 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 						} else if (action.extra == "-20") {
 							c.options = RIGHT_MOUSE_KEY | CONTROL_KEY;
 						} else if (action.extra == "-100") {
-							c.options = RIGHT_MOUSE_KEY |SHIFT_KEY | CONTROL_KEY;
+							c.options = RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY;
 						}
 					}
-					else if (c.id == CMD_WAIT) {
+					else if ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)) {
 						if (action.extra == "queued") {
 							c.options = SHIFT_KEY;
 						}
@@ -1678,7 +1709,7 @@ void CGuiHandler::MenuChoice(string s)
 
 void CGuiHandler::FinishCommand(int button)
 {
-	if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
+	if(GetQueueKeystate() && button==SDL_BUTTON_LEFT){
 		needShift=true;
 	} else {
 		SetShowingMetal(false);
@@ -1798,7 +1829,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			float3 pos=camera->pos+mouse->dir*dist;
 			std::vector<BuildInfo> buildPos;
 			BuildInfo bi(unitdef, pos, buildFacing);
-			if(keys[SDLK_LSHIFT] && button==SDL_BUTTON_LEFT){
+			if(GetQueueKeystate() && button==SDL_BUTTON_LEFT){
 				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
 				float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
 				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi);
@@ -1960,7 +1991,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	float3 end=helper->Pos2BuildPos(endInfo);
 
 	BuildInfo other; // the unit around which buildings can be circled
-	if(keys[SDLK_LSHIFT] && keys[SDLK_LCTRL])
+	if(GetQueueKeystate() && keys[SDLK_LCTRL])
 	{
 		CUnit* unit=0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
@@ -1979,7 +2010,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		}
 	}
 
-	if(other.def && keys[SDLK_LSHIFT] && keys[SDLK_LCTRL]){		//circle build around building
+	if(other.def && GetQueueKeystate() && keys[SDLK_LCTRL]){		//circle build around building
 		Command c;
 
 		start=end=helper->Pos2BuildPos(other);
@@ -2960,7 +2991,7 @@ void CGuiHandler::DrawMapStuff(void)
 			if(unitdef){
 				float3 pos=camera->pos+mouse->dir*dist;
 				std::vector<BuildInfo> buildPos;
-				if(keys[SDLK_LSHIFT] && mouse->buttons[SDL_BUTTON_LEFT].pressed){
+				if(GetQueueKeystate() && mouse->buttons[SDL_BUTTON_LEFT].pressed){
 					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
 					float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
 					buildPos=GetBuildPos(BuildInfo(unitdef, pos2,buildFacing), BuildInfo(unitdef,pos, buildFacing));
@@ -2973,7 +3004,7 @@ void CGuiHandler::DrawMapStuff(void)
 				{
 					const float3 buildpos = bpi->pos;
 					std::vector<Command> cv;
-					if(keys[SDLK_LSHIFT]){
+					if(GetQueueKeystate()){
 						Command c;
 						bpi->FillCmd(c);
 						std::vector<Command> temp;
@@ -3044,7 +3075,7 @@ void CGuiHandler::DrawMapStuff(void)
 	}
 
 	// draw the ranges for the unit that is being pointed at
-	if(keys[SDLK_LSHIFT]){
+	if(GetQueueKeystate()){
 		CUnit* unit=0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range

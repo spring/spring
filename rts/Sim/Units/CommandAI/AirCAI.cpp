@@ -606,11 +606,16 @@ int CAirCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 void CAirCAI::DrawCommands(void)
 {
 	lineDrawer.StartPath(owner->pos, cmdColors.start);
+	
+	if (owner->selfDCountdown != 0) {
+		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
+	}
 
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
-			case CMD_WAIT:{
+			case CMD_WAIT:
+			case CMD_SELFD:{
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}

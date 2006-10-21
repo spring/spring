@@ -227,7 +227,7 @@
 //  bind                  d  dgun
 //  bind            Shift+d  dgun
 //  bind             Ctrl+d  selfd
-//  bind       Ctrl+Shift+d  selfd
+//  bind       Ctrl+Shift+d  selfd queued
 //  bind                  e  reclaim
 //  bind            Shift+e  reclaim
 //  bind                  f  fight
@@ -249,7 +249,7 @@
 //  bind                  u  unloadunits
 //  bind            Shift+u  unloadunits
 //  bind                  w  wait
-//  bind            Shift+w  wait
+//  bind            Shift+w  wait queued
 //  bind                  x  onoff
 //  bind            Shift+x  onoff
 //

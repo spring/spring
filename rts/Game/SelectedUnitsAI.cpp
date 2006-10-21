@@ -92,6 +92,7 @@ static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 		// this is not a complete list
 		case CMD_STOP:
 		case CMD_WAIT:
+		case CMD_SELFD:
 		case CMD_FIRE_STATE:
 		case CMD_MOVE_STATE:
 		case CMD_ONOFF:

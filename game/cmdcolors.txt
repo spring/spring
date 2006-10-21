@@ -28,13 +28,16 @@ mouseBoxBlendDst   one_minus_src_alpha
 //  Command Queue Rendering
 //
 
-useQueueIcons    1
-queueIconAlpha   0.5   
-queueIconScale   1.0
+alwaysDrawQueue   0
+buildBoxesOnShift 1
 
-useColorRestarts 1
-useRestartColor  1
-restartAlpha     0.25
+useQueueIcons     1
+queueIconAlpha    0.5   
+queueIconScale    1.0
+
+useColorRestarts  1
+useRestartColor   1
+restartAlpha      0.25
 
 queuedLineWidth 1.49
 queuedBlendSrc  src_alpha
@@ -65,9 +68,9 @@ unload     1.0  1.0  0.0  0.7
 //  Selected Range Rendering
 //
 
-selectedLineWidth 1.49
-selectedBlendSrc  src_alpha
-selectedBlendDst  one_minus_src_alpha
+selectedLineWidth  1.49
+selectedBlendSrc   src_alpha
+selectedBlendDst   one_minus_src_alpha
 
 rangeAttack        1.0  0.3  0.3  0.7
 rangeBuild         0.3  1.0  0.3  0.7

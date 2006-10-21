@@ -1,41 +1,38 @@
 #include "StdAfx.h"
 #include "UnitDrawer.h"
-#include "Rendering/GL/myGL.h"
+#include "myMath.h"
+#include "LogOutput.h"
 #include "3DModelParser.h"
 #include "Game/Camera.h"
-#include "myMath.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Rendering/ShadowHandler.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Game/GameHelper.h"
+#include "Game/GameSetup.h"
+#include "Game/SelectedUnits.h"
+#include "Game/Team.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
+#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/BaseWater.h"
+#include "Rendering/FartextureHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/IconHandler.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/TextureHandler.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/RadarHandler.h"
+#include "Sim/Units/CommandAI/BuilderCAI.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Map/ReadMap.h"
-#include "Map/Ground.h"
-#include "Sim/Units/UnitDef.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/FartextureHandler.h"
-#include "Sim/Misc/RadarHandler.h"
-#include "Game/Team.h"
-#include "Game/SelectedUnits.h"
-#include "Sim/Units/CommandAI/BuilderCAI.h"
-#include "Game/GameHelper.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Rendering/Env/BaseSky.h"
-#include "Rendering/Textures/TextureHandler.h"
-#include "Game/GameSetup.h"
-#include "LogOutput.h"
-#include "Map/BaseGroundDrawer.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "SDL_types.h"
-#include "SDL_keysym.h"
 #include "mmgr.h"
-#include "Sim/Units/UnitDefHandler.h"
-#include "Rendering/IconHandler.h"
 
 CUnitDrawer* unitDrawer;
 using namespace std;
-extern Uint8 *keys;
 
 CUnitDrawer::CUnitDrawer(void)
 :	showHealthBars(true),
@@ -300,14 +297,6 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 		glDisable(GL_TEXTURE_2D);
 		for(vector<CUnit*>::iterator usi=drawStat.begin();usi!=drawStat.end();usi++){
 			(*usi)->DrawStats();
-		}
-
-		if(keys[SDLK_LSHIFT] && !selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->buildSpeed>0){
-			for(set<CBuilderCAI*>::iterator bi=uh->builderCAIs.begin();bi!=uh->builderCAIs.end();++bi){
-				if((*bi)->owner->team==gu->myTeam){
-					(*bi)->DrawQuedBuildingSquares();
-				}
-			}
 		}
 	}
 	glDisable(GL_TEXTURE_2D);

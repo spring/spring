@@ -488,11 +488,16 @@ void CMobileCAI::DrawCommands(void)
 {
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
 
+	if (owner->selfDCountdown != 0) {
+		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
+	}
+
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		bool draw=false;
 		switch(ci->id){
-			case CMD_WAIT:{
+			case CMD_WAIT:
+			case CMD_SELFD:{
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}

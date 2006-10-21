@@ -76,6 +76,7 @@ CCommandAI::CCommandAI(CUnit* owner)
  	c.onlyKey=true;
  	c.tooltip="Wait: Tells the unit to wait until another units handles him";
  	possibleCommands.push_back(c);
+//	nonQueingCommands.insert(CMD_WAIT);
 
 	c.id=CMD_SELFD;
 	c.action="selfd";
@@ -85,10 +86,10 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.onlyKey=true;
 	c.tooltip="SelfD: Tells the unit to self destruct";
 	possibleCommands.push_back(c);
+//	nonQueingCommands.insert(CMD_SELFD);
 
 	c.onlyKey=false;
 	c.hotkey="";
-	nonQueingCommands.insert(CMD_SELFD);
 
 	if(!owner->unitDef->noAutoFire){
 		if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
@@ -396,10 +397,19 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			return;
 		}
 		case CMD_SELFD: {
-			if(owner->selfDCountdown){
-				owner->selfDCountdown=0;
-			} else {
-				owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
+			if (!(c.options & SHIFT_KEY) || commandQue.empty()) {
+				if(owner->selfDCountdown != 0){
+					owner->selfDCountdown=0;
+				} else {
+					owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
+				}
+			}
+			else {
+	  		if (commandQue.back().id == CMD_SELFD) {
+  				commandQue.pop_back();
+				} else {
+	  			commandQue.push_back(c);
+				}
 			}
 			return;
 		}
@@ -660,6 +670,14 @@ void CCommandAI::SlowUpdate()
 	switch(c.id){
 	case CMD_WAIT:
 		break;
+	case CMD_SELFD:{
+		if(owner->selfDCountdown != 0){
+			owner->selfDCountdown=0;
+		} else {
+			owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
+		}
+		FinishCommand();
+		break;}
 	case CMD_STOP:{
 		owner->AttackUnit(0,true);
 		std::vector<CWeapon*>::iterator wi;
@@ -735,11 +753,16 @@ bool CCommandAI::isTrackable(const CUnit* unit) const
 void CCommandAI::DrawCommands(void)
 {
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
+	
+	if (owner->selfDCountdown != 0) {
+		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
+	}
 
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
-			case CMD_WAIT:{
+			case CMD_WAIT:
+			case CMD_SELFD:{
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}

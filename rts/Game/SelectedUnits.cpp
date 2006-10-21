@@ -6,12 +6,15 @@
 #include "Game/Team.h"
 #include "SelectedUnits.h"
 #include <map>
+#include <SDL_types.h>
+#include <SDL_keysym.h>
 #include "Rendering/GL/myGL.h"
 #include "Net.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "UI/CommandColors.h"
+#include "UI/GuiHandler.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "SelectedUnitsAI.h"
@@ -19,6 +22,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "System/Platform/ConfigHandler.h"
@@ -26,6 +30,9 @@
 #include "Camera.h"
 #include "Sound.h"
 #include "mmgr.h"
+
+extern Uint8 *keys;
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -391,6 +398,21 @@ void CSelectedUnits::Draw()
 		}
 	}
 	glEnd();
+	
+	// highlight queued build sites if we are about to build something
+	// (or old-style, whenever the shift key is being held down)	
+	if (!selectedUnits.empty() &&
+	    ((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
+	     ((guihandler->inCommand >= 0) &&
+	      (guihandler->inCommand < guihandler->commands.size()) &&
+	      (guihandler->commands[guihandler->inCommand].id < 0)))) {
+		set<CBuilderCAI*>::const_iterator bi;
+		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
+			if ((*bi)->owner->team == gu->myTeam) {
+				(*bi)->DrawQuedBuildingSquares();
+			}
+		}  
+	}
 	
 	glLineWidth(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

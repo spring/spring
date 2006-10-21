@@ -79,6 +79,7 @@ CMouseHandler::CMouseHandler()
 	cursors["Resurrect"] = new CMouseCursor("cursorrevive", CMouseCursor::Center);
 	cursors["Capture"] = new CMouseCursor("cursorcapture", CMouseCursor::Center);
 	cursors["Wait"] = new CMouseCursor("cursorwait", CMouseCursor::Center);
+	cursors["SelfD"] = new CMouseCursor("cursorselfd", CMouseCursor::Center);
 
 	SDL_ShowCursor(SDL_DISABLE);
 
@@ -168,13 +169,16 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	buttons[button].pressed=true;
+ 	buttons[button].chorded = buttons[SDL_BUTTON_LEFT].pressed ||
+ 	                          buttons[SDL_BUTTON_RIGHT].pressed;
+	buttons[button].pressed = true;
 	buttons[button].time=gu->gameTime;
 	buttons[button].x=x;
 	buttons[button].y=y;
 	buttons[button].camPos=camera->pos;
 	buttons[button].dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
 	buttons[button].movement=0;
+
 	activeButton=button;
 
 	if(inMapDrawer &&  inMapDrawer->keyPressed){
@@ -232,7 +236,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	}
 #endif
 
-	if(button==SDL_BUTTON_LEFT && mouseHandlerMayDoSelection){
+	if(button==SDL_BUTTON_LEFT && !buttons[button].chorded && mouseHandlerMayDoSelection){
 		if(!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL])
 			selectedUnits.ClearSelected();
 
@@ -363,7 +367,8 @@ void CMouseHandler::Draw()
 		return;
 	}
 #endif
-	if(buttons[SDL_BUTTON_LEFT].pressed && buttons[SDL_BUTTON_LEFT].movement>4 &&
+	if(buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_LEFT].chorded &&
+	   (buttons[SDL_BUTTON_LEFT].movement > 4) &&
 	   mouseHandlerMayDoSelection && (!inMapDrawer || !inMapDrawer->keyPressed)){
 
 		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,

@@ -18,6 +18,7 @@ class CCommandColors {
 		bool LoadConfig(const std::string& filename);
 
 		// for command queue lines
+		bool         AlwaysDrawQueue()   const { return alwaysDrawQueue; }
 		bool         UseQueueIcons()     const { return useQueueIcons; }
 		float        QueueIconAlpha()    const { return queueIconAlpha; }
 		float        QueueIconScale()    const { return queueIconScale; }
@@ -32,6 +33,7 @@ class CCommandColors {
 		float        SelectedLineWidth() const { return selectedLineWidth; }
 		unsigned int SelectedBlendSrc()  const { return selectedBlendSrc; }
 		unsigned int SelectedBlendDst()  const { return selectedBlendDst; }
+		bool         BuildBoxesOnShift() const { return buildBoxesOnShift; }
 
 		float        MouseBoxLineWidth() const { return mouseBoxLineWidth; }
 		unsigned int MouseBoxBlendSrc()  const { return mouseBoxBlendSrc; }
@@ -104,6 +106,7 @@ class CCommandColors {
 		float colors[ColorCount][4];
 
 		// for command queue lines
+		bool alwaysDrawQueue;
 		float queueIconAlpha;
 		float queueIconScale;
 		bool useQueueIcons;
@@ -118,6 +121,7 @@ class CCommandColors {
 		float selectedLineWidth;
 		unsigned int selectedBlendSrc;
 		unsigned int selectedBlendDst;
+		bool buildBoxesOnShift;
 
 		float mouseBoxLineWidth;
 		unsigned int mouseBoxBlendSrc;

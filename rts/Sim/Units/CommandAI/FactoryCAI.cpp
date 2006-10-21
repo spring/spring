@@ -85,37 +85,65 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	}
 }
 
+
 CFactoryCAI::~CFactoryCAI()
 {
-
 }
+
 
 void CFactoryCAI::GiveCommand(const Command& c)
 {
-	//move is always allowed for factories (passed to units it produces)
-	if (c.id == CMD_SET_WANTED_MAX_SPEED || (c.id != CMD_MOVE && !AllowedCommand(c)))
+	// move is always allowed for factories (passed to units it produces)
+	if ((c.id == CMD_SET_WANTED_MAX_SPEED) ||
+	    ((c.id != CMD_MOVE) && !AllowedCommand(c))) {
 		return;
+	}
 
-	map<int,BuildOption>::iterator boi;
-	if((boi=buildOptions.find(c.id))==buildOptions.end()){		//not a build order so que it to built units
-		if(nonQueingCommands.find(c.id)!=nonQueingCommands.end()){
+	map<int, BuildOption>::iterator boi = buildOptions.find(c.id);
+
+	// not a build order so queue it to built units
+	if (boi == buildOptions.end()) {
+		if ((nonQueingCommands.find(c.id) != nonQueingCommands.end()) ||
+		    (!(c.options & SHIFT_KEY) && ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)))) {
 			CCommandAI::GiveAllowedCommand(c);
 			return;
 		}
 
-		if(!(c.options & SHIFT_KEY)){
+		if (!(c.options & SHIFT_KEY)) {
 			newUnitCommands.clear();
 		}
-		if(c.id!=CMD_STOP){
-			std::deque<Command>::iterator ci = GetCancelQueued(c);
-			if(ci == this->newUnitCommands.end()){
-				newUnitCommands.push_back(c);
-			} else {
-				this->newUnitCommands.erase(ci);
+
+		if (c.id != CMD_STOP) {
+			if ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)) {
+				if (!newUnitCommands.empty() && (newUnitCommands.back().id == c.id)) {
+					newUnitCommands.pop_back();
+				} else {
+					newUnitCommands.push_back(c);
+				}
+			}
+			else {
+				std::deque<Command>::iterator ci = GetCancelQueued(c);
+				if (ci == newUnitCommands.end()) {
+					newUnitCommands.push_back(c);
+				} else {
+					this->newUnitCommands.erase(ci);
+				}
 			}
 		}
+
+		// the first new-unit build order can not be WAIT or SELFD
+		while (!newUnitCommands.empty()) {
+			const int id = newUnitCommands.front().id;
+			if ((id == CMD_WAIT) || (id == CMD_SELFD)) {
+				newUnitCommands.pop_front();
+			} else {
+				break;
+			}
+		}
+
 		return;
 	}
+
 	BuildOption &bo=boi->second;
 
 	int numItems=1;
@@ -248,10 +276,19 @@ void CFactoryCAI::DrawCommands(void)
 {
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
 
+	if (owner->selfDCountdown != 0) {
+		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
+	}
+
+	if (!commandQue.empty() && (commandQue.front().id == CMD_WAIT)) {
+		lineDrawer.DrawIconAtLastPos(CMD_WAIT);
+	}
+
 	deque<Command>::iterator ci;
 	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
 		switch(ci->id){
-			case CMD_WAIT:{
+			case CMD_WAIT:
+ 			case CMD_SELFD:{
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}

@@ -49,6 +49,10 @@ class CGuiHandler : public CInputReceiver {
 		
 		void RunLayoutCommand(const string& command);
 		void RunCustomCommands(const vector<string>& cmds, bool rmb);
+
+ 		bool GetInvertQueueKey() const { return invertQueueKey; }
+ 		void SetInvertQueueKey(bool value) { invertQueueKey = value; }
+ 		bool GetQueueKeystate() const;
 		
 	public:
 		vector<CommandDescription> commands;
@@ -115,6 +119,7 @@ class CGuiHandler : public CInputReceiver {
 		bool needShift;
 		bool showingMetal;
 		bool autoShowMetal;
+		bool invertQueueKey;
 		bool activeMousePress;
 		bool forceLayoutUpdate;
 		int maxPage;
