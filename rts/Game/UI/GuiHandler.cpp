@@ -662,6 +662,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 	// add the custom commands
 	for (i = 0; i < customCmds.size(); i++) {
+		customCmds[i].onlyKey = true;
 		cmds.push_back(customCmds[i]);
 	}
 	const int cmdCount = (int)cmds.size();
@@ -950,7 +951,7 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				Command c;
 				c.id=commands[iconCmd].id;
 				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
-				if (invertQueueKey && (c.id < 0)) {
+				if (invertQueueKey && ((c.id < 0) || (c.id == CMD_STOCKPILE))) {
 					c.options = c.options ^ SHIFT_KEY;
 				}
 				selectedUnits.GiveCommand(c);
@@ -1655,7 +1656,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					break;
 				}
 				case CMDTYPE_CUSTOM: {
-					RunCustomCommands(commands[iconCmd].params, false);
+					RunCustomCommands(commands[a].params, false);
 					break;
 				}
 				default:{
