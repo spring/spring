@@ -618,6 +618,9 @@ void CSelectedUnits::DrawCommands(void)
 		}
 	}
 
+	// draw the commands from AIs
+	grouphandler->DrawCommands();
+
 	glLineWidth(1.0f);
 
 	glEnable(GL_DEPTH_TEST);

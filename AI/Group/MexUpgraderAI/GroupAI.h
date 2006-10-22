@@ -35,7 +35,8 @@ public:
 	virtual int GetDefaultCmd(int unitid);
 	virtual void CommandFinished(int unitid,int type);
 
-	virtual void Update();
+	virtual void Update(){};
+	virtual void DrawCommands();
 
 	void AutoFindMex(int unitid);			// finds the next upgradable mex for unit "unitid"
 	void ManualFindMex();					// finds the next upgradable mex for the moho builder
@@ -84,6 +85,8 @@ public:
 
 	int myTeam;
 	int* friendlyUnits;
+	float drawColorPath[4];
+	float drawColorCircle[4];
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)

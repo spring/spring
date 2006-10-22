@@ -41,6 +41,7 @@
 #include "Game/CameraController.h"
 #include "Sim/ModInfo.h"
 #include "Platform/FileSystem.h"
+#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "mmgr.h"
 
 /* Cast id to unsigned to catch negative ids in the same operations,
@@ -617,6 +618,46 @@ const unsigned char* CAICallback::GetMetalMap()
 float CAICallback::GetElevation(float x,float z)
 {
 	return ground->GetHeight(x,z);
+}
+
+void CAICallback::LineDrawerStartPath(const float3& pos, const float* color)
+{
+	lineDrawer.StartPath(pos, color);
+}
+
+void CAICallback::LineDrawerFinishPath()
+{
+	lineDrawer.FinishPath();
+}
+
+void CAICallback::LineDrawerDrawLine(const float3& endPos, const float* color)
+{
+	lineDrawer.DrawLine(endPos,color);
+}
+
+void CAICallback::LineDrawerDrawLineAndIcon(int cmdID, const float3& endPos, const float* color)
+{
+	lineDrawer.DrawLineAndIcon(cmdID,endPos,color);
+}
+
+void CAICallback::LineDrawerDrawIconAtLastPos(int cmdID)
+{
+	lineDrawer.DrawIconAtLastPos(cmdID);
+}
+
+void CAICallback::LineDrawerBreak(const float3& endPos, const float* color)
+{
+	lineDrawer.Break(endPos,color);
+}
+
+void CAICallback::LineDrawerRestart()
+{
+	lineDrawer.Restart();
+}
+
+void CAICallback::LineDrawerRestartSameColor()
+{
+	lineDrawer.RestartSameColor();
 }
 
 int CAICallback::CreateSplineFigure(float3 pos1,float3 pos2,float3 pos3,float3 pos4,float width,int arrow,int lifetime,int group)

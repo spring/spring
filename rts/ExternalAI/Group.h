@@ -27,6 +27,7 @@ public:
 	virtual ~CGroup();
 
 	void Update();
+	void DrawCommands();
 	void SetNewAI(AIKey aiKey);
 
 	void RemoveUnit(CUnit* unit);	//call setgroup(0) instead of calling this directly
