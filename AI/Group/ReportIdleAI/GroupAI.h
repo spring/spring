@@ -36,6 +36,7 @@ public:
 	virtual void CommandFinished(int unitid,int type);
 
 	virtual void Update();
+	virtual void DrawCommands(){};
 
 	vector<CommandDescription> commands;
 

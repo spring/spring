@@ -23,6 +23,7 @@ public:
 	virtual ~CGroupHandler();
 
 	void Update();
+	void DrawCommands();
 	void GroupCommand(int num);
 	CGroup* CreateNewGroup(AIKey aiKey);
 	void RemoveGroup(CGroup* group);

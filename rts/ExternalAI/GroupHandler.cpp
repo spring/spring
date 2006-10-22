@@ -55,6 +55,13 @@ START_TIME_PROFILE;
 END_TIME_PROFILE("Group AI");
 }
 
+void CGroupHandler::DrawCommands()
+{
+	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
+		if((*ai)!=0)
+			(*ai)->DrawCommands();
+}
+
 void CGroupHandler::TestDll(string name)
 {
 	typedef int (* GETGROUPAIVERSION)();

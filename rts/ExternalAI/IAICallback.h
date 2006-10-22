@@ -177,6 +177,18 @@ public:
 	virtual float GetTidalStrength()=0;
 	virtual float GetGravity()=0;
 
+	// the linedrawer interface.
+	// this allows you to draw command-like lines and figures.
+	// use these only from within CGroupAI::DrawCommands()
+	virtual void LineDrawerStartPath(const float3& pos, const float* color)=0;
+	virtual void LineDrawerFinishPath()=0;
+	virtual void LineDrawerDrawLine(const float3& endPos, const float* color)=0;
+	virtual void LineDrawerDrawLineAndIcon(int cmdID, const float3& endPos, const float* color)=0;
+	virtual void LineDrawerDrawIconAtLastPos(int cmdID)=0;
+	virtual void LineDrawerBreak(const float3& endPos, const float* color)=0;
+	virtual void LineDrawerRestart()=0;
+	virtual void LineDrawerRestartSameColor()=0;
+
 	//the following functions allow the ai to draw figures in the world
 	//each figure is part of a group
 	//when creating figures use 0 as group to get a new one, the return value is the new group

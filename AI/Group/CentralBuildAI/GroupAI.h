@@ -35,6 +35,7 @@ public:
 	virtual int GetDefaultCmd(int unitid);
 	virtual void CommandFinished(int squad,int type);
 	virtual void Update();
+	virtual void DrawCommands(){};
 
 	void UpdateAvailableCommands(void);
 

@@ -23,6 +23,16 @@ CGroupAI::CGroupAI()
 	mohoBuilderId	= -1;
 	unitsChanged 	= false;
 	friendlyUnits	= new int[MAX_UNITS];
+
+	drawColorPath[0] = 1.0f; // R
+	drawColorPath[1] = 1.0f; // G
+	drawColorPath[2] = 0.1f; // B
+	drawColorPath[3] = 0.9f; // A
+
+	drawColorCircle[0] = 1.0f;
+	drawColorCircle[1] = 1.0f;
+	drawColorCircle[2] = 1.0f;
+	drawColorCircle[3] = 0.7f;
 }
 
 CGroupAI::~CGroupAI()
@@ -144,6 +154,9 @@ void CGroupAI::GiveCommand(Command* c)
 	}
 	if(c->id==CMD_AREA_UPGRADE && c->params.size()==4)
 	{
+		if(!(c->options& SHIFT_KEY))
+			commandQue.clear();
+
 		Command c2;
 		c2.id = CMD_RECLAIM;
 		c2.params.push_back(c->params[0]);
@@ -401,38 +414,33 @@ void CGroupAI::ReclaimMex(int unit, int mex)
 	aicb->GiveOrder(unit,&c);
 }
 
-void CGroupAI::Update()
+void CGroupAI::DrawCommands()
 {
 	// draw the queued-up commands if the group is selected
 	if(mode==manual && callback->IsSelected())
 	{
-		int g = 0 ;
-		float3 pos1, pos2, pos3, pos4;
-		deque<Command>::const_iterator ci, prev;
+		float3 pos1, pos2;
+		deque<Command>::const_iterator ci;
+
+		aicb->LineDrawerStartPath(aicb->GetUnitPos(mohoBuilderId), drawColorPath);
+		for(ci=commandQue.begin();ci!=commandQue.end();++ci)
+			aicb->LineDrawerDrawLine(float3(ci->params[0],ci->params[1],ci->params[2]),drawColorPath);
+		aicb->LineDrawerFinishPath();
+
 		for(ci=commandQue.begin();ci!=commandQue.end();++ci)
 		{
-			if(ci==commandQue.begin())
-			{
-				pos1 = aicb->GetUnitPos(mohoBuilderId);
-			}
-			else
-			{
-				prev = ci;
-				--prev;
-				pos1 = float3(prev->params[0],prev->params[1],prev->params[2]);
-			}
-			pos2 = float3(ci->params[0],ci->params[1],ci->params[2]);
-			g = aicb->CreateLineFigure(pos1,pos2,2.0f,0,1,g);
-			float radius=ci->params[3];
+			float radius	= ci->params[3];
+			float3 pos1		= float3(ci->params[0],ci->params[1],ci->params[2]);
 			for(int a=0;a<=20;++a)
 			{
-				pos3=float3(pos2.x+sin(a*PI*2/20)*radius,0,pos2.z+cos(a*PI*2/20)*radius);
-				pos3.y=aicb->GetElevation(pos3.x,pos3.z)+5;
-				if(a>0)
-					g = aicb->CreateLineFigure(pos3,pos4,2.0f,0,1,g);
-				pos4 = pos3;
+				pos2	= float3(pos1.x+sin(a*PI*2/20)*radius,0,pos1.z+cos(a*PI*2/20)*radius);
+				pos2.y	= aicb->GetElevation(pos2.x,pos2.z)+5;
+				if(a==0)
+					aicb->LineDrawerStartPath(pos2,drawColorCircle);
+				else
+					aicb->LineDrawerDrawLine(pos2,drawColorCircle);
 			}
-			aicb->SetFigureColor(g,1.0f,1.0f,1.0f,1.0f);
+			aicb->LineDrawerFinishPath();
 		}
 	}
 }

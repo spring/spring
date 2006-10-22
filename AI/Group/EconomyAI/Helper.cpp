@@ -13,6 +13,10 @@ CHelper::CHelper(IAICallback* aicb)
 	extractorRadius	= aicb->GetExtractorRadius();
 	metalMakerAIid	= 0;
 	maxPartitionRadius = 100;
+	drawColor[0] = 1.0f;
+	drawColor[1] = 1.0f;
+	drawColor[2] = 1.0f;
+	drawColor[3] = 0.7f;
 
 	metalMap = new CMetalMap(aicb,false);
 	metalMap->Init();
@@ -301,33 +305,32 @@ void CHelper::AssignMetalMakerAI()
 
 void CHelper::DrawBuildArea()
 {
-	if(!(aicb->GetCurrentFrame() & 3))
+	float3 pos;
+	for(vector<location*>::iterator li=locations.begin();li!=locations.end();++li)
 	{
-		int g = 0;
-		float3 pos1,pos2;
-		for(vector<location*>::iterator li=locations.begin();li!=locations.end();++li)
+		location* loc = *li;
+		for(int a=0;a<=20;++a)
 		{
-			location* loc = *li;
+			pos=float3(loc->centerPos.x+sin(a*PI*2/20)*loc->radius,0,loc->centerPos.z+cos(a*PI*2/20)*loc->radius);
+			pos.y=aicb->GetElevation(pos.x,pos.z)+5;
+			if(a==0)
+				aicb->LineDrawerStartPath(pos,drawColor);
+			else
+				aicb->LineDrawerDrawLine(pos,drawColor);
+		}
+		aicb->LineDrawerFinishPath();
+		for(int i=0;i<loc->numPartitions;i++)
+		{
 			for(int a=0;a<=20;++a)
 			{
-				pos1=float3(loc->centerPos.x+sin(a*PI*2/20)*loc->radius,0,loc->centerPos.z+cos(a*PI*2/20)*loc->radius);
-				pos1.y=aicb->GetElevation(pos1.x,pos1.z)+5;
-				if(a>0)
-					g = aicb->CreateLineFigure(pos1,pos2,2.0f,0,4,g);
-				pos2 = pos1;
+				pos=float3(loc->partitions[i].pos.x+sin(a*PI*2/20)*loc->partitionRadius,0,loc->partitions[i].pos.z+cos(a*PI*2/20)*loc->partitionRadius);
+				pos.y=aicb->GetElevation(pos.x,pos.z)+5;
+				if(a==0)
+					aicb->LineDrawerStartPath(pos,drawColor);
+				else
+					aicb->LineDrawerDrawLine(pos,drawColor);
 			}
-			for(int i=0;i<loc->numPartitions;i++)
-			{
-				for(int a=0;a<=20;++a)
-				{
-					pos1=float3(loc->partitions[i].pos.x+sin(a*PI*2/20)*loc->partitionRadius,0,loc->partitions[i].pos.z+cos(a*PI*2/20)*loc->partitionRadius);
-					pos1.y=aicb->GetElevation(pos1.x,pos1.z)+5;
-					if(a>0)
-						g = aicb->CreateLineFigure(pos1,pos2,2.0f,0,4,g);
-					pos2 = pos1;
-				}
-			}
-			aicb->SetFigureColor(g,1.0f,1.0f,1.0f,1.0f);
+			aicb->LineDrawerFinishPath();
 		}
 	}
 }

@@ -35,6 +35,7 @@ public:
 	virtual void CommandFinished(int squad,int type){};
 
 	virtual void Update();
+	virtual void DrawCommands(){};
 
 	struct UnitInfo{
 		float energyUse;

@@ -39,6 +39,7 @@ public:
 	virtual void CommandFinished(int squad,int type){};
 
 	virtual void Update();
+	virtual void DrawCommands(){};
 
 	set<int> myUnits;
 

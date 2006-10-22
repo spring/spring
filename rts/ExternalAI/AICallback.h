@@ -102,6 +102,15 @@ public:
 
 	float GetElevation(float x,float z);
 
+	void LineDrawerStartPath(const float3& pos, const float* color);
+	void LineDrawerFinishPath();
+	void LineDrawerDrawLine(const float3& endPos, const float* color);
+	void LineDrawerDrawLineAndIcon(int cmdID, const float3& endPos, const float* color);
+	void LineDrawerDrawIconAtLastPos(int cmdID);
+	void LineDrawerBreak(const float3& endPos, const float* color);
+	void LineDrawerRestart();
+	void LineDrawerRestartSameColor();
+
 	int CreateSplineFigure(float3 pos1,float3 pos2,float3 pos3,float3 pos4,float width,int arrow,int lifetime,int group);
 	int CreateLineFigure(float3 pos1,float3 pos2,float width,int arrow,int lifetime,int group);
 	void SetFigureColor(int group,float red,float green,float blue,float alpha);

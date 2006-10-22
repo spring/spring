@@ -48,5 +48,6 @@ class CHelper
 		float maxPartitionRadius;
 		int metalMakerAIid;
 		const UnitDef* geoDef;
+		float drawColor[4];
 };
 

@@ -180,7 +180,10 @@ void CGroupAI::Update()
 {
 	if(newBuildTaskNeeded && aicb->GetCurrentFrame() > newBuildTaskFrame + 60)
 		FindNewBuildTask();
+}
 
+void CGroupAI::DrawCommands()
+{
 	if(callback->IsSelected())
 		helper->DrawBuildArea();
 }
