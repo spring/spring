@@ -205,11 +205,13 @@ void CHelper::NewLocation(float3 centerPos, float radius)
 	int squarePartitions	= (int) floor(radius / maxPartitionRadius);
 	if(squarePartitions <= 1)
 	{
-		loc->numPartitions = 0;
+		loc->numPartitions		= 0;
+		loc->squarePartitions	= 0;
 	}
 	else
 	{
 		loc->numPartitions		= squarePartitions * squarePartitions;
+		loc->squarePartitions	= squarePartitions;
 		loc->partitionRadius	= radius / squarePartitions;
 		float xOffset		= centerPos.x - radius;
 		float zOffset		= centerPos.z - radius;
@@ -265,10 +267,13 @@ int CHelper::FindMetalSpots(float3 pos, float radius, vector<float3>* mexSpots)
 	int numSpotsFound = 0;
 	if(!metalMap->IsMetalMap)
 	{
-		float sqRadius	= radius*radius;
+		float xMin = pos.x - radius;
+		float zMin = pos.z - radius;
+		float xMax = pos.x + radius;
+		float zMax = pos.z + radius;
 		for(vector<float3>::const_iterator mi=metalMap->VectoredSpots.begin();mi!=metalMap->VectoredSpots.end();++mi)
 		{
-			if((pos-(*mi)).SqLength2D() < sqRadius)
+			if((*mi).x < xMax && (*mi).x > xMin && (*mi).z < zMax && (*mi).z > zMin)
 			{
 				float3 spot = *mi;
 				spot.y = aicb->GetElevation(spot.x,spot.z);
@@ -305,31 +310,61 @@ void CHelper::AssignMetalMakerAI()
 
 void CHelper::DrawBuildArea()
 {
-	float3 pos;
+	float3 pos1,pos2,pos3,pos4,pos5,pos6,pos7,pos8;
 	for(vector<location*>::iterator li=locations.begin();li!=locations.end();++li)
 	{
 		location* loc = *li;
-		for(int a=0;a<=20;++a)
-		{
-			pos=float3(loc->centerPos.x+sin(a*PI*2/20)*loc->radius,0,loc->centerPos.z+cos(a*PI*2/20)*loc->radius);
-			pos.y=aicb->GetElevation(pos.x,pos.z)+5;
-			if(a==0)
-				aicb->LineDrawerStartPath(pos,drawColor);
-			else
-				aicb->LineDrawerDrawLine(pos,drawColor);
-		}
+
+		pos1.x = loc->centerPos.x - loc->radius;
+		pos1.z = loc->centerPos.z - loc->radius;
+		pos1.y = loc->centerPos.y;
+
+		pos2.x = loc->centerPos.x - loc->radius;
+		pos2.z = loc->centerPos.z + loc->radius;
+		pos2.y = loc->centerPos.y;
+
+		pos3.x = loc->centerPos.x + loc->radius;
+		pos3.z = loc->centerPos.z + loc->radius;
+		pos3.y = loc->centerPos.y;
+
+		pos4.x = loc->centerPos.x + loc->radius;
+		pos4.z = loc->centerPos.z - loc->radius;
+		pos4.y = loc->centerPos.y;
+
+		pos5.z = pos1.z;
+		pos5.y = pos1.y;
+
+		pos6.z = pos2.z;
+		pos6.y = pos2.y;
+
+		pos7.x = pos1.x;
+		pos7.y = pos1.y;
+
+		pos8.x = pos4.x;
+		pos8.y = pos4.y;
+
+		aicb->LineDrawerStartPath(pos1,drawColor);
+		aicb->LineDrawerDrawLine(pos2,drawColor);
+		aicb->LineDrawerDrawLine(pos3,drawColor);
+		aicb->LineDrawerDrawLine(pos4,drawColor);
+		aicb->LineDrawerDrawLine(pos1,drawColor);
 		aicb->LineDrawerFinishPath();
-		for(int i=0;i<loc->numPartitions;i++)
+
+		for(int i=1;i<loc->squarePartitions;i++)
 		{
-			for(int a=0;a<=20;++a)
-			{
-				pos=float3(loc->partitions[i].pos.x+sin(a*PI*2/20)*loc->partitionRadius,0,loc->partitions[i].pos.z+cos(a*PI*2/20)*loc->partitionRadius);
-				pos.y=aicb->GetElevation(pos.x,pos.z)+5;
-				if(a==0)
-					aicb->LineDrawerStartPath(pos,drawColor);
-				else
-					aicb->LineDrawerDrawLine(pos,drawColor);
-			}
+			float distance = 2*loc->radius/loc->squarePartitions;
+			pos5.x = i*distance + pos1.x;
+			pos6.x = i*distance + pos2.x;
+		
+			aicb->LineDrawerStartPath(pos5,drawColor);
+			aicb->LineDrawerDrawLine(pos6,drawColor);
+			aicb->LineDrawerFinishPath();
+
+			pos7.z = i*distance + pos1.z;
+			pos8.z = i*distance + pos4.z;
+		
+			aicb->LineDrawerStartPath(pos7,drawColor);
+			aicb->LineDrawerDrawLine(pos8,drawColor);
 			aicb->LineDrawerFinishPath();
 		}
 	}

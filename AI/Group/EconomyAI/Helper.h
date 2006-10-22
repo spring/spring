@@ -41,6 +41,7 @@ class CHelper
 			float radius;
 			float partitionRadius;
 			int numPartitions;
+			int squarePartitions;
 			vector<float3> mexSpots;
 			vector<partition> partitions;
 		};

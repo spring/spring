@@ -221,14 +221,14 @@ void CGroupAI::FindNewBuildTask()
 	// do we want to build energy or metal?
 	bool buildMetal = false; // true: build metal, false: build energy
 	// check if we're wasting metal
-	if(aicb->GetMetalIncome() > (1.1 * aicb->GetMetalUsage()) && (1.2 * aicb->GetMetal()) > aicb->GetMetalStorage())
-	{
-		buildMetal = false;
-	}
-	// check if we're wasting energy
-	else if(aicb->GetEnergyIncome() > (1.1 * aicb->GetEnergyUsage()) && (1.2 * aicb->GetEnergy()) > aicb->GetEnergyStorage())
+	if(aicb->GetEnergyIncome() > (1.1 * aicb->GetEnergyUsage()) && (1.2 * aicb->GetEnergy()) > aicb->GetEnergyStorage())
 	{
 		buildMetal = true;
+	}
+	// check if we're wasting energy
+	else if(aicb->GetMetalIncome() > (1.1 * aicb->GetMetalUsage()) && (1.2 * aicb->GetMetal()) > aicb->GetMetalStorage())
+	{
+		buildMetal = false;
 	}
 	else
 	{
