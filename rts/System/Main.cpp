@@ -237,7 +237,6 @@ bool crashCallback(void* crState)
 	}
 
 	AddFile("infolog.txt", "Spring information log");
-	AddFile("test.sdf", "Spring game demo");
 
 	if (wasRecording)
 		AddFile(net->demoName.c_str(), "Spring game demo");
