@@ -20,6 +20,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 
 	for(int b=0;b<xsize*ysize;++b){
 		commonJammerMap[b]=0;
+		commonSonarJammerMap[b]=0;
 	}
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
