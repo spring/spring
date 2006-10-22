@@ -661,7 +661,11 @@ void CNet::CreateDemoFile()
 		// is possible without them corrupting the demo file.
 		// (because both springs are writing to the same file)
 		char buf[500] = "demos/XXXXXX";
+#ifndef _WIN32
+		mktemp(buf);
+#else
 		_mktemp(buf);
+#endif
 		demoName = buf;
 		recordDemo=new std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
 		char c=0;
