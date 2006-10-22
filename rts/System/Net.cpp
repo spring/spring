@@ -119,7 +119,11 @@ CNet::~CNet()
 	WSACleanup();
 #endif
 
-	delete recordDemo;
+	if (recordDemo) {
+		delete recordDemo;
+		if (!gameSetup)
+			rename(demoName.c_str(), "demos/test.sdf");
+	}
 	delete playbackDemo;
 
 	for (int a=0;a<gs->activePlayers;a++){
@@ -649,7 +653,13 @@ void CNet::CreateDemoFile()
 		recordDemo->write((char*)&len, sizeof(int));
 		recordDemo->write(scriptText.c_str(), scriptText.length());
 	} else {
-		demoName = "demos/test.sdf";
+		// Write demo to a temporary file which is renamed to test.sdf in ~CNet.
+		// This way running multiple instances of spring in same data directory
+		// is possible without them corrupting the demo file.
+		// (because both springs are writing to the same file)
+		char buf[500] = "demos/XXXXXX";
+		mktemp(buf);
+		demoName = buf;
 		recordDemo=new std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
 		char c=0;
 		recordDemo->write(&c,1);
