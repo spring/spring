@@ -184,7 +184,7 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 	|| xSquare >= gs->mapx || zSquare >= gs->mapy)
 		return true;
 
-	CSolidObject* obstacle = readmap->GroundBlocked(xSquare + zSquare * gs->mapx);
+	CSolidObject* obstacle = readmap->GroundBlockedUnsafe(xSquare + zSquare * gs->mapx);
 	if(obstacle) {
 		if(obstacle->mobility) {
 			if(obstacle->isMoving){

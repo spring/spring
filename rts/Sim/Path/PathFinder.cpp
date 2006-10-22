@@ -483,8 +483,9 @@ void CPathFinder::ResetSearch() {
 //	while(!openSquares.empty())
 //		openSquares.pop();
 	while(!dirtySquares.empty()){
-		squareState[dirtySquares.back()].status = 0;
-		squareState[dirtySquares.back()].cost = PATHCOST_INFINITY;
+		int lsquare = dirtySquares.back();
+		squareState[lsquare].status = 0;
+		squareState[lsquare].cost = PATHCOST_INFINITY;
 		dirtySquares.pop_back();
 	}
 	testedNodes = 0;
