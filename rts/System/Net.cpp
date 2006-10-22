@@ -121,8 +121,10 @@ CNet::~CNet()
 
 	if (recordDemo) {
 		delete recordDemo;
-		if (!gameSetup)
+		if (!gameSetup) {
+			remove("demos/test.sdf");
 			rename(demoName.c_str(), "demos/test.sdf");
+		}
 	}
 	delete playbackDemo;
 
