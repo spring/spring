@@ -523,8 +523,11 @@ void CUnit::SlowUpdate()
 		{
 			float rx = gs->randFloat();
 			float rz = gs->randFloat();
+
+#ifndef SYNCDEBUG
 			if(!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
 				new CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rx),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rz)), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
+#endif
 
 			for(int a=0;a<gs->activeAllyTeams;++a){
                 if(radarhandler->InSeismicDistance(this, a))

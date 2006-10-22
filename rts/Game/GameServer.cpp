@@ -135,7 +135,7 @@ bool CGameServer::Update()
 #endif
 #ifdef SYNCDEBUG
 				if (err || fakeDesync) {
-					CSyncDebugger::GetInstance()->TriggerSyncErrorHandling(serverframenum);
+					CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
 					fakeDesync = false;
 				}
 #endif

@@ -19,7 +19,7 @@ public:
 	virtual ~CWorldObject();
 	virtual void DrawS3O(){};
 
-	float3 pos;
+	SyncedFloat3 pos;
 	float radius;					//used for collisions
 	float sqRadius;				
 

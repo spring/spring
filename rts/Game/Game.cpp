@@ -2802,7 +2802,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 				break;
 			}
 		}
-		logOutput.Print("Desyncing.");
+		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
 	}
 	if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer && serverNet) {
 		gameServer->fakeDesync = true;
