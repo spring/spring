@@ -43,6 +43,7 @@ public:
 	void CloseBlockingYard(CSolidObject *yard);
 	CSolidObject* GroundBlocked(float3 pos);
 	CSolidObject* GroundBlocked(int mapSquare);
+	inline CSolidObject* GroundBlockedUnsafe(int mapSquare){return groundBlockingObjectMap[mapSquare];} //simple version of GroundBlocked without error checking
 	void CleanBlockingMap(CSolidObject* object);	//Debug
 
 	static std::string GetTDFName (const std::string& mapname);

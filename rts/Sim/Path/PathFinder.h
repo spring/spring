@@ -125,7 +125,8 @@ private:
 	myPQ openSquares;
 
 	SquareState* squareState;		//Map of all squares on map.
-	list<int> dirtySquares;			//Squares tested by search.
+	//list<int> dirtySquares;			//Squares tested by search.
+	vector<int> dirtySquares;
 
 	int2 directionVector[16];		//Unit square-movement in given direction.
 	float moveCost[16];				//The cost of moving in given direction.
