@@ -82,7 +82,7 @@ CGuiHandler::CGuiHandler()
 
 CGuiHandler::~CGuiHandler()
 {
-	delete icons;
+	delete[] icons;
 	delete layoutHandler;
 
 	std::map<std::string, unsigned int>::iterator it;
@@ -383,7 +383,7 @@ void CGuiHandler::ResizeIconArray(unsigned int size)
 	}
 	if (iconsSize < minIconsSize) {
 		iconsSize = minIconsSize;
-		delete icons;
+		delete[] icons;
 		icons = new IconInfo[iconsSize];
 	}
 }
