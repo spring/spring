@@ -139,7 +139,7 @@ void CFactory::Update()
 			}
 		} else {
 			if(!curBuild->beingBuilt){
-				if(group)
+				if(group && curBuild->group==0)
 					curBuild->SetGroup(group);
 				Command c;
 				c.id=CMD_MOVE_STATE;
