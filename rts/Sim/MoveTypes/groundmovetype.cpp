@@ -528,7 +528,7 @@ void CGroundMoveType::ImpulseAdded(void)
 void CGroundMoveType::UpdateSkid(void)
 {
 	float3& speed=owner->speed;
-	float3& pos=owner->pos;
+	SyncedFloat3& pos=owner->pos;
 	SyncedFloat3& midPos=owner->midPos;
 
 	if(flying){
@@ -603,7 +603,7 @@ void CGroundMoveType::UpdateSkid(void)
 
 void CGroundMoveType::CheckCollisionSkid(void)
 {
-	float3& pos=owner->pos;
+	SyncedFloat3& pos=owner->pos;
 	SyncedFloat3& midPos=owner->midPos;
 
 	vector<CUnit*> nearUnits=qf->GetUnitsExact(midPos,owner->radius);

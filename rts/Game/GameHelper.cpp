@@ -593,7 +593,7 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 		pos+=unit->posErrorVector*radarhandler->radarErrorSize[allyteam];
 	} else {
 		pos+=unit->posErrorVector*radarhandler->baseRadarErrorSize*2;
-	}	
+	}
 	return pos;
 }
 

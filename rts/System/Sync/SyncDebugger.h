@@ -51,13 +51,14 @@ class CSyncDebugger {
 		 */
 		struct HistItemWithBacktrace: public HistItem {
 			const char* op;      ///< Pointer to short static string giving operator type (e.g. "+=").
+			unsigned frameNum;   ///< gs->frameNum at the time this entry was committed.
 			unsigned bt_size;    ///< Number of entries in the stacktrace.
 			void* bt[MAX_STACK]; ///< The stacktrace (frame pointers).
 		};
 
 	private:
 
-		// client
+		// client thread
 
 		/**
 		 * @brief the history on clients
@@ -96,7 +97,7 @@ class CSyncDebugger {
 		bool may_enable_history;       ///< Is it safe already to set disable_history = false?
 		Uint64 flop;                   ///< Current (local) operation number.
 
-		// server
+		// server thread
 
 		std::vector<unsigned>* checksumResponses;    ///< Received checksums after a checkum request.
 		Uint64* remoteFlop;                          ///< Received operation number.
@@ -125,7 +126,7 @@ class CSyncDebugger {
 	public:
 
 		void Initialize(bool useBacktrace);
-		void TriggerSyncErrorHandling(int serverframenum);
+		void ServerTriggerSyncErrorHandling(int serverframenum);
 		int ServerReceived(const unsigned char* inbuf);
 		void ServerHandlePendingBlockRequests();
 		int ClientReceived(const unsigned char* inbuf);

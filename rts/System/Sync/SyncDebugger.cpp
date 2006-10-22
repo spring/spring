@@ -85,7 +85,7 @@ CSyncDebugger::~CSyncDebugger()
  * @brief initialize
  *
  * Initialize the sync debugger. Pass true for a server (this requires approx.
- * 128 megabytes on 32 bit systems and 224 megabytes on 64 bit systems) and
+ * 144 megabytes on 32 bit systems and 240 megabytes on 64 bit systems) and
  * false for a client (requires only 16 megabytes extra).
  */
 void CSyncDebugger::Initialize(bool useBacktrace)
@@ -133,19 +133,22 @@ void CSyncDebugger::Initialize(bool useBacktrace)
  */
 void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 {
+	if (!history && !historybt)
+		return;
+
 	HistItem* h = &history[historyIndex];
 
 #ifdef HAVE_BACKTRACE
 	if (historybt) {
-		// dirty hack to skip the uppermost 2 frames without memcpy'ing the whole backtrace...
-		// note that 2 frames is the max because of the members of HistItem and HistItemWithBacktrace
-		historybt[historyIndex].bt_size = backtrace(historybt[historyIndex].bt - 2, MAX_STACK + 2) - 2;
+		// dirty hack to skip the uppermost 2 or 4 (32 resp. 64 bit) frames without memcpy'ing the whole backtrace...
+		const int frameskip = (12 + sizeof(void*)) / sizeof(void*);
+		historybt[historyIndex].bt_size = backtrace(historybt[historyIndex].bt - frameskip, MAX_STACK + frameskip) - frameskip;
 		historybt[historyIndex].op = op;
+		historybt[historyIndex].frameNum = gs->frameNum;
 		h = &historybt[historyIndex];
 	}
 #endif
 
-	// If it crashes here you probably forgot to call Initialize().
 	unsigned i = 0;
 	h->chk = 0;
 	for (; i < (size & ~3); i += 4)
@@ -314,9 +317,9 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
  * @brief first step after desync
  *
  * Called by server to trigger sync error handling.
- * It sets up some variables and sends a checksum request to all clients.
+ * It pauses the game and sends a checksum request to all clients.
  */
-void CSyncDebugger::TriggerSyncErrorHandling(int serverframenum)
+void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
 	if (!disable_history) {
 		//this will set disable_history = true once received so only one sync errors is handled at a time.
@@ -491,7 +494,7 @@ void CSyncDebugger::ServerDumpStack()
 						checksumToIndex[checksum] = curBacktrace;
 						indexToHistPos[curBacktrace] = histPos;
 					}
-					logger.AddLine("Server: chk %08X, %15.8e instead of %08X, %15.8e, backtrace %u in \"%s\"", remoteHistory[j][i], *(float*)&remoteHistory[j][i], correctChecksum, *(float*)&correctChecksum, checksumToIndex[checksum], historybt[histPos].op);
+					logger.AddLine("Server: chk %08X, %15.8e instead of %08X, %15.8e, frame %06u, backtrace %u in \"%s\"", remoteHistory[j][i], *(float*)&remoteHistory[j][i], correctChecksum, *(float*)&correctChecksum, historybt[histPos].frameNum, checksumToIndex[checksum], historybt[histPos].op);
 				} else {
 					logger.AddLine("Server: chk %08X, %15.8e instead of %08X, %15.8e", remoteHistory[j][i], *(float*)&remoteHistory[j][i], correctChecksum, *(float*)&correctChecksum);
 				}
@@ -560,6 +563,8 @@ int CSyncDebugger::GetMessageLength(const unsigned char* inbuf) const
  *
  * Restart the sync debugger lifecycle, so it can be used again (if the sync
  * errors are resolved somehow or you were just testing it using .fakedesync).
+ *
+ * Called after typing '.reset' in chat area.
  */
 void CSyncDebugger::Reset()
 {
