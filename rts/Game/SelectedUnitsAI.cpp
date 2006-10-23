@@ -11,6 +11,7 @@
 #include "LogOutput.h"
 #include "Net.h"
 #include "GlobalStuff.h"
+#include "Map/Ground.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -320,10 +321,7 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	CreateUnitOrder(orderedUnits,player);
 	
 	for(multimap<float,int>::iterator oi=orderedUnits.begin();oi!=orderedUnits.end();++oi){	
-
-		
-		nextPos = MoveToPos(oi->second,nextPos,sd,c->options);	
-
+		nextPos = MoveToPos(oi->second, nextPos, sd, c->options);	
 	}
 }
 
@@ -338,22 +336,25 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, u
 		nextCornerPos.x=0; nextCornerPos.z-=avgLength*2*8;
 	}
 	int unitSize=16;
-	CUnit* u=uh->units[unit];
-		if(u){
-			UnitDef* ud=u->unitDef;
-			unitSize = (int)((ud->xsize + ud->ysize)/2);
-		}
+	CUnit* u = uh->units[unit];
+	if (u) {
+		UnitDef* ud=u->unitDef;
+		unitSize = (int)((ud->xsize + ud->ysize)/2);
+	}
 	float3 retPos(nextCornerPos.x+unitSize*8*2+addSpace, 0, nextCornerPos.z);
 	float3 movePos(nextCornerPos.x+unitSize*8+addSpace, 0, nextCornerPos.z); //posit in coordinates of "front"
-	if(nextCornerPos.x==0) { movePos.x=unitSize*8; retPos.x -= addSpace ;}
-	float3 pos(rightPos.x + movePos.x*(dir.x/dir.y) - movePos.z*(dir.z/dir.y), 0, rightPos.z + movePos.x*(dir.z/dir.y) + movePos.z*(dir.x/dir.y));//posit in real coord
+	if (nextCornerPos.x==0) { movePos.x=unitSize*8; retPos.x -= addSpace ;}
+	float3 pos;
+	pos.x = rightPos.x + (movePos.x * (dir.x / dir.y)) - (movePos.z * (dir.z/dir.y));
+	pos.z = rightPos.z + (movePos.x * (dir.z / dir.y)) + (movePos.z * (dir.x/dir.y));
+	pos.y = ground->GetHeight(pos.x, pos.z);
 
 	Command c;
-	c.id=CMD_MOVE;
+	c.id = CMD_MOVE;
 	c.params.push_back(pos.x);
 	c.params.push_back(pos.y);
 	c.params.push_back(pos.z);
-	c.options=options;
+	c.options = options;
 
 	uh->units[unit]->commandAI->GiveCommand(c);
 	return retPos;
