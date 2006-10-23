@@ -140,6 +140,19 @@ void CGroupHandler::GroupCommand(int num)
 		}
 		return;
 	}
+	else if (keys[SDLK_LALT] || keys[SDLK_LMETA])  {
+		// do not select the group, just toggle its members with the current selection
+		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		std::set<CUnit*>::const_iterator gi;
+		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
+			if (selUnits.find(*gi) == selUnits.end()) {
+				selectedUnits.AddUnit(*gi);
+			} else {
+				selectedUnits.RemoveUnit(*gi);
+			}
+		}
+		return;
+	}
 	
 	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
 		float3 p(0,0,0);
