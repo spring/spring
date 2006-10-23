@@ -611,30 +611,29 @@ void CCobInstance::EmitSfx(int type, int piece)
 			}
 			else if(type&2048)  //make a weapon fire from the piece
 			{
-				if(unit->localmodel->GetPieceVertCount(piece)<2) //piece have less than 2 vertexes, make a weapon detonation directly
-				{
-					WeaponDef *weaponDef = unit->weapons[type-2048]->weaponDef;
-					sound->PlaySample(weaponDef->soundhit.id,unit,weaponDef->soundhit.volume);
-					helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0));
-				}
-				else	//more than 2 vertexes, fire the weapon at the direction of the piece
-				{
-					//this is very hackish and probably has a lot of side effects, but might be usefull for something
-					//float3 relDir =-unit->localmodel->GetPieceDirection(piece);
-					float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-					dir.Normalize();
+				//this is very hackish and probably has a lot of side effects, but might be usefull for something
+				//float3 relDir =-unit->localmodel->GetPieceDirection(piece);
+				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
+				dir.Normalize();
 
-					float3 targetPos = unit->weapons[type-2048]->targetPos;
-					float3 weaponPos = unit->weapons[type-2048]->weaponPos;
+				float3 targetPos = unit->weapons[type-2048]->targetPos;
+				float3 weaponPos = unit->weapons[type-2048]->weaponPos;
 
-					unit->weapons[type-2048]->targetPos = pos+dir;
-					unit->weapons[type-2048]->weaponPos = pos;
+				unit->weapons[type-2048]->targetPos = pos+dir;
+				unit->weapons[type-2048]->weaponPos = pos;
 
-					unit->weapons[type-2048]->Fire();
-					
-					unit->weapons[type-2048]->targetPos = targetPos;
-					unit->weapons[type-2048]->weaponPos = weaponPos;
-				}
+				unit->weapons[type-2048]->Fire();
+				
+				unit->weapons[type-2048]->targetPos = targetPos;
+				unit->weapons[type-2048]->weaponPos = weaponPos;
+
+			}
+			else if(type&4096)  //detonate weapon from piece
+			{
+				WeaponDef *weaponDef = unit->weapons[type-4096]->weaponDef;
+				sound->PlaySample(weaponDef->soundhit.id,unit,weaponDef->soundhit.volume);
+				helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0));
+
 			}
 			break;
 	}
