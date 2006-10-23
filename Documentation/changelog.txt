@@ -2,6 +2,11 @@ TASpring change log
 
 0.next
 
+- added Shift and Alt/Meta group selection modifier features
+  (Shift adds members to current selection, Alt/Meta toggles them)
+
+- added "selectcycle [restore]" action 
+
 - corrected queue build rendering (GL_DEPTH_TEST)
 
 - added GetUnitHealth(), GetTeamResources(), and GetCommandQueue() to the lua GUI interface
