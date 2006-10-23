@@ -25,6 +25,7 @@ TASpring change log
 
 - Improved clickability of unit icons.
 
+- Calling emit-sfx 2048 from a script will now allways fire the weapon. Emit-sfx 4096 will now take over the previous behavior of detonating the weapon at the piece position.
 
 0.73b1
 ------
