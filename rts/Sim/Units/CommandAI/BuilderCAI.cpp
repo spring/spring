@@ -754,6 +754,11 @@ void CBuilderCAI::GiveCommand(const Command& c)
 {
 	if (!AllowedCommand(c))
 		return;
+		
+	if ((c.id == CMD_GUARD) &&
+	    (c.params.size() == 1) && ((int)c.params[0] == owner->id)) {
+		return;
+	}
 
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		building=false;
