@@ -122,14 +122,25 @@ void CGroupHandler::TestDll(string name)
 
 void CGroupHandler::GroupCommand(int num)
 {
-	if(keys[SDLK_LCTRL]){
-		if(!keys[SDLK_LSHIFT])
+	if (keys[SDLK_LCTRL]) {
+		if (!keys[SDLK_LSHIFT]) {
 			groups[num]->ClearUnits();
+		}
+		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
 		set<CUnit*>::iterator ui;
-		for(ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui){
+		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			(*ui)->SetGroup(groups[num]);
 		}
 	}
+	else if (keys[SDLK_LSHIFT])  {
+		// do not select the group, just add its members to the current selection
+		std::set<CUnit*>::const_iterator gi;
+		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
+			selectedUnits.AddUnit(*gi);
+		}
+		return;
+	}
+	
 	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
 		float3 p(0,0,0);
 		for(std::set<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
@@ -138,6 +149,7 @@ void CGroupHandler::GroupCommand(int num)
 		p/=groups[num]->units.size();
 		mouse->currentCamController->SetPos(p);
 	}
+	
 	selectedUnits.SelectGroup(num);
 }
 
