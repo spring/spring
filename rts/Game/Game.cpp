@@ -137,7 +137,8 @@ extern string stupidGlobalMapname;
 CGame* game = 0;
 
 
-static void SelectUnits(const string& line); // FIXME -- move into class
+static void SelectUnits(const string& line);    // FIXME -- move into class
+static void SelectCycle(const string& command); // FIXME -- move into class
 
 
 CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
@@ -674,6 +675,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "selectunits") {
 		SelectUnits(action.extra);
 	}
+	else if (cmd == "selectcycle") {
+		SelectCycle(action.extra);
+	}
 	else if (cmd == "shadows") {
 		const int current = configHandler.GetInt("Shadows", 0);
 		if (current < 0) {
@@ -757,6 +761,18 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "viewrot") {
 		mouse->SetCameraMode(3);
+	}
+	else if (cmd == "viewselection") {
+		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		if (!selUnits.empty()) {
+			float3 pos(0.0f, 0.0f, 0.0f);
+			set<CUnit*>::const_iterator it;
+			for (it = selUnits.begin(); it != selUnits.end(); it++) {
+				pos += (*it)->midPos;
+			}
+			pos /= (float)selUnits.size();
+			mouse->currentCamController->SetPos(pos);
+		}
 	}
 	else if (cmd == "moveforward") {
 		camMove[0]=true;
@@ -3050,5 +3066,69 @@ static void SelectUnits(const string& line)
 				selectedUnits.RemoveUnit(unit);
 			}
 		}
+	}
+}
+
+
+static void SelectCycle(const string& command)
+{
+	static set<int> unitIDs;
+	static int lastID = -1;
+		
+	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	
+	if (command == "restore") {
+		selectedUnits.ClearSelected();
+		set<int>::const_iterator it;
+		for (it = unitIDs.begin(); it != unitIDs.end(); ++it) {
+			CUnit* unit = uh->units[*it];
+			if (unit != NULL) {
+				selectedUnits.AddUnit(unit);
+			}
+		}
+		return;
+	}
+	
+	if (selUnits.size() >= 2) {
+		// assign the cycle units
+		unitIDs.clear();
+		set<CUnit*>::const_iterator it;
+		for (it = selUnits.begin(); it != selUnits.end(); ++it) {
+			unitIDs.insert((*it)->id);
+		}
+		selectedUnits.ClearSelected();
+		lastID = *unitIDs.begin();
+		selectedUnits.AddUnit(uh->units[lastID]);
+		return;
+	}
+	
+	// clean the list
+	set<int> tmpSet;
+	set<int>::const_iterator it;
+	for (it = unitIDs.begin(); it != unitIDs.end(); ++it) {
+		if (uh->units[*it] != NULL) {
+			tmpSet.insert(*it);
+		}
+	}
+	unitIDs = tmpSet;
+	if ((lastID >= 0) && (uh->units[lastID] == NULL)) {
+		lastID = -1;
+	}
+
+	// selectedUnits size is 0 or 1
+	selectedUnits.ClearSelected();
+	if (!unitIDs.empty()) {
+		set<int>::const_iterator fit = unitIDs.find(lastID);
+		if (fit == unitIDs.end()) {
+			lastID = *unitIDs.begin();
+		} else {
+			fit++;
+			if (fit != unitIDs.end()) {
+				lastID = *fit;
+			} else {
+				lastID = *unitIDs.begin();
+			}
+		}
+		selectedUnits.AddUnit(uh->units[lastID]);
 	}
 }
