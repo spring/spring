@@ -36,6 +36,7 @@ CSimpleParticleSystem::CSimpleParticleSystem(void)
 	checkCol=false;
 	useAirLos=true;
 	particles=0;
+	emitMul = float3(1,1,1);
 }
 
 CSimpleParticleSystem::~CSimpleParticleSystem(void)
@@ -137,7 +138,7 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 		particles[i].size = particleSize + gu->usRandFloat()*particleSizeSpread;
 		particles[i].pos = pos;
 
-		particles[i].speed = (up*cos(ay)-(right*cos(az)-forward*sin(az))*sin(ay)) * (particleSpeed + gu->usRandFloat()*particleSpeedSpread);
+		particles[i].speed = ((up*emitMul.y)*cos(ay)-((right*emitMul.x)*cos(az)-(forward*emitMul.z)*sin(az))*sin(ay)) * (particleSpeed + gu->usRandFloat()*particleSpeedSpread);
 	}
 
 	drawRadius = (particleSpeed+particleSpeedSpread)*(particleLife*particleLifeSpread);
