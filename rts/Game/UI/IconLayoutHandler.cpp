@@ -68,8 +68,8 @@ static int GetMyPlayerID(lua_State* L);
 static int AreTeamsAllied(lua_State* L);
 static int ArePlayersAllied(lua_State* L);
 
-static int GetCameraPosition(lua_State* L);
-static int SetCameraPosition(lua_State* L);
+static int GetCameraState(lua_State* L);
+static int SetCameraState(lua_State* L);
 
 
 /******************************************************************************/
@@ -167,8 +167,8 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMyPlayerID);
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
-	REGISTER_LUA_CFUNC(GetCameraPosition);
-	REGISTER_LUA_CFUNC(SetCameraPosition);
+	REGISTER_LUA_CFUNC(GetCameraState);
+	REGISTER_LUA_CFUNC(SetCameraState);
 
 	lua_setglobal(L, "Spring");
 	
@@ -1301,35 +1301,53 @@ static int ArePlayersAllied(lua_State* L)
 }
 
 
-static int GetCameraPosition(lua_State* L)
+static int GetCameraState(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 0) {
-		lua_pushstring(L, "GetCameraPosition() takes no arguments");
+		lua_pushstring(L, "GetCameraState() takes no arguments");
 		lua_error(L);
 	}
 	const float3& pos = mouse->currentCamController->SwitchFrom();
-	lua_pushnumber(L, pos.x);
-	lua_pushnumber(L, pos.y);
-	lua_pushnumber(L, pos.z);
-	return 3;
+	lua_newtable(L);
+	lua_pushstring(L, "x"); lua_pushnumber(L, pos.x); lua_rawset(L, -3);
+	lua_pushstring(L, "y"); lua_pushnumber(L, pos.y); lua_rawset(L, -3);
+	lua_pushstring(L, "z"); lua_pushnumber(L, pos.z); lua_rawset(L, -3);
+	return 1;
 }
 
 
-static int SetCameraPosition(lua_State* L)
+static bool GetFloatField(lua_State* L, const string& name, float& val)
+{
+	lua_pushstring(L, name.c_str());
+	lua_gettable(L, -2);
+	if (!lua_isnumber(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	val = (float)lua_tonumber(L, -1);
+	lua_pop(L, 1);
+	return true;
+}
+
+
+static int SetCameraState(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		lua_pushstring(L, "Incorrect arguments to SetCameraPosition(x, y, z)");
+	if ((args != 1) || !lua_istable(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to SetCameraState(table)");
 		lua_error(L);
 	}
 	float3 pos;
-	pos.x = (float)lua_tonumber(L, 1);
-	pos.y = (float)lua_tonumber(L, 2);
-	pos.z = (float)lua_tonumber(L, 3);
+	if (!GetFloatField(L, "x", pos.x) ||
+	    !GetFloatField(L, "y", pos.y) ||
+	    !GetFloatField(L, "z", pos.z)) {
+		lua_pushboolean(L, 0);
+		return 1;
+	}
 	mouse->currentCamController->SetPos(pos);
-	return 0;
+	lua_pushboolean(L, 1);
+	return 1;
 }
 
 
