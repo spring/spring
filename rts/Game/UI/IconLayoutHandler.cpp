@@ -15,10 +15,12 @@ extern "C" {
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
+#include "Game/CameraController.h"
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "Game/UI/GuiHandler.h"
+#include "Game/UI/MouseHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -65,6 +67,9 @@ static int GetMyPlayerID(lua_State* L);
 
 static int AreTeamsAllied(lua_State* L);
 static int ArePlayersAllied(lua_State* L);
+
+static int GetCameraPosition(lua_State* L);
+static int SetCameraPosition(lua_State* L);
 
 
 /******************************************************************************/
@@ -162,6 +167,8 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMyPlayerID);
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
+	REGISTER_LUA_CFUNC(GetCameraPosition);
+	REGISTER_LUA_CFUNC(SetCameraPosition);
 
 	lua_setglobal(L, "Spring");
 	
@@ -1291,6 +1298,38 @@ static int ArePlayersAllied(lua_State* L)
 	}
 	lua_pushboolean(L, gs->AlliedTeams(p1->team, p2->team));
 	return 1;
+}
+
+
+static int GetCameraPosition(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetCameraPosition() takes no arguments");
+		lua_error(L);
+	}
+	const float3& pos = mouse->currentCamController->SwitchFrom();
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+	return 3;
+}
+
+
+static int SetCameraPosition(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L, "Incorrect arguments to SetCameraPosition(x, y, z)");
+		lua_error(L);
+	}
+	float3 pos;
+	pos.x = (float)lua_tonumber(L, 1);
+	pos.y = (float)lua_tonumber(L, 2);
+	pos.z = (float)lua_tonumber(L, 3);
+	mouse->currentCamController->SetPos(pos);
+	return 0;
 }
 
 
