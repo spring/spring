@@ -1,6 +1,8 @@
 #ifndef __CAMERA_CONTROLLER_H__
 #define __CAMERA_CONTROLLER_H__
 
+#include <vector>
+
 class CCameraController
 {
 public:
@@ -18,6 +20,9 @@ public:
 	virtual void SetPos(float3 newPos)=0;
 	virtual float3 SwitchFrom()=0;			//return pos that to send to new controllers SetPos
 	virtual void SwitchTo(bool showText=true)=0;
+	
+	virtual std::vector<float> GetState() const = 0;
+	virtual bool SetState(const std::vector<float>& fv) = 0;
 	
 	float mouseScale;
 	float scrollSpeed;
@@ -41,6 +46,9 @@ public:
 	float3 SwitchFrom();
 	void SwitchTo(bool showText);
 
+	std::vector<float> GetState() const;
+	bool SetState(const std::vector<float>& fv);
+
 	float3 pos;
 	float oldHeight;
 
@@ -63,6 +71,9 @@ public:
 	void SetPos(float3 newPos);
 	float3 SwitchFrom();
 	void SwitchTo(bool showText);
+
+	std::vector<float> GetState() const;
+	bool SetState(const std::vector<float>& fv);
 
 	float zscale;
 	float3 pos;
@@ -90,6 +101,9 @@ public:
 	float3 SwitchFrom();
 	void SwitchTo(bool showText);
 
+	std::vector<float> GetState() const;
+	bool SetState(const std::vector<float>& fv);
+
 	float3 pos;
 };
 
@@ -109,6 +123,9 @@ public:
 	void SetPos(float3 newPos);
 	float3 SwitchFrom();
 	void SwitchTo(bool showText);
+
+	std::vector<float> GetState() const;
+	bool SetState(const std::vector<float>& fv);
 
 	float3 pos;
 	float oldHeight;
@@ -132,6 +149,9 @@ public:
 	void SetPos(float3 newPos);
 	float3 SwitchFrom();
 	void SwitchTo(bool showText);
+
+	std::vector<float> GetState() const;
+	bool SetState(const std::vector<float>& fv);
 
 	float3 pos;
 	bool minimizeMinimap;

@@ -112,6 +112,42 @@ void CFPSController::SwitchTo(bool showText)
 		logOutput.Print("Switching to FPS style camera");
 }
 
+std::vector<float> CFPSController::GetState() const
+{
+	std::vector<float> fv;
+	fv.push_back(1.0f);
+	fv.push_back(pos.x);
+	fv.push_back(pos.y);
+	fv.push_back(pos.z);
+	fv.push_back(dir.x);
+	fv.push_back(dir.y);
+	fv.push_back(dir.z);
+	fv.push_back(oldHeight);
+	fv.push_back(camera->rot.x);
+	fv.push_back(camera->rot.y);
+	fv.push_back(camera->rot.z);
+	return fv;
+}
+
+bool CFPSController::SetState(const std::vector<float>& fv)
+{
+	if ((fv.size() != 11) || (fv[0] != 1.0f)) {
+		return false;
+	}
+	pos.x = fv[1];
+	pos.y = fv[2];
+	pos.z = fv[3];
+	dir.x = fv[4];
+	dir.y = fv[5];
+	dir.z = fv[6];
+	oldHeight = fv[7];
+	camera->rot.x = fv[8];
+	camera->rot.y = fv[9];
+	camera->rot.z = fv[10];
+	return true;
+}
+
+
 /////////////////////
 //Overhead Controller
 /////////////////////
@@ -243,6 +279,38 @@ void COverheadController::SwitchTo(bool showText)
 		logOutput.Print("Switching to overhead (TA) style camera");
 }
 
+std::vector<float> COverheadController::GetState() const
+{
+	std::vector<float> fv;
+	fv.push_back(2.0f);
+	fv.push_back(pos.x);
+	fv.push_back(pos.y);
+	fv.push_back(pos.z);
+	fv.push_back(dir.x);
+	fv.push_back(dir.y);
+	fv.push_back(dir.z);
+	fv.push_back(height);
+	fv.push_back(zscale);
+	return fv;
+}
+
+bool COverheadController::SetState(const std::vector<float>& fv)
+{
+	if ((fv.size() != 9) || (fv[0] != 2.0f)) {
+		return false;
+	}
+	pos.x = fv[1];
+	pos.y = fv[2];
+	pos.z = fv[3];
+	dir.x = fv[4];
+	dir.y = fv[5];
+	dir.z = fv[6];
+	height = fv[7];
+	zscale = fv[8];
+	return true;
+}
+
+
 /////////////////////
 //Total war Controller
 /////////////////////
@@ -349,6 +417,34 @@ void CTWController::SwitchTo(bool showText)
 		logOutput.Print("Switching to Total War style camera");
 }
 
+std::vector<float> CTWController::GetState() const
+{
+	std::vector<float> fv;
+	fv.push_back(3.0f);
+	fv.push_back(pos.x);
+	fv.push_back(pos.y);
+	fv.push_back(pos.z);
+	fv.push_back(camera->rot.x);
+	fv.push_back(camera->rot.y);
+	fv.push_back(camera->rot.z);
+	return fv;
+}
+
+bool CTWController::SetState(const std::vector<float>& fv)
+{
+	if ((fv.size() != 7) || (fv[0] != 3.0f)) {
+		return false;
+	}
+	pos.x = fv[1];
+	pos.y = fv[2];
+	pos.z = fv[3];
+	camera->rot.x = fv[4];
+	camera->rot.y = fv[5];
+	camera->rot.z = fv[6];
+	return true;
+}
+
+
 /////////////////////
 //Rotating Overhead Controller
 /////////////////////
@@ -445,6 +541,41 @@ void CRotOverheadController::SwitchTo(bool showText)
 		logOutput.Print("Switching to rotatable overhead camera");
 }
 
+std::vector<float> CRotOverheadController::GetState() const
+{
+	std::vector<float> fv;
+	fv.push_back(4.0f);
+	fv.push_back(pos.x);
+	fv.push_back(pos.y);
+	fv.push_back(pos.z);
+	fv.push_back(dir.x);
+	fv.push_back(dir.y);
+	fv.push_back(dir.z);
+	fv.push_back(oldHeight);
+	fv.push_back(camera->rot.x);
+	fv.push_back(camera->rot.y);
+	fv.push_back(camera->rot.z);
+	return fv;
+}
+
+bool CRotOverheadController::SetState(const std::vector<float>& fv)
+{
+	if ((fv.size() != 11) || (fv[0] != 4.0f)) {
+		return false;
+	}
+	pos.x = fv[1];
+	pos.y = fv[2];
+	pos.z = fv[3];
+	dir.x = fv[4];
+	dir.y = fv[5];
+	dir.z = fv[6];
+	oldHeight = fv[7];
+	camera->rot.x = fv[8];
+	camera->rot.y = fv[9];
+	camera->rot.z = fv[10];
+	return true;
+}
+
 
 /////////////////////
 //Overview Controller
@@ -506,3 +637,26 @@ void COverviewController::SwitchTo(bool showText)
 	minimizeMinimap=minimap->minimized;
 	minimap->minimized=true;
 }
+
+std::vector<float> COverviewController::GetState() const
+{
+	std::vector<float> fv;
+	fv.push_back(5.0f);
+	fv.push_back(pos.x);
+	fv.push_back(pos.y);
+	fv.push_back(pos.z);
+	return fv;
+}
+
+bool COverviewController::SetState(const std::vector<float>& fv)
+{
+	if ((fv.size() != 4) || (fv[0] != 5.0f)) {
+		return false;
+	}
+	pos.x = fv[1];
+	pos.y = fv[2];
+	pos.z = fv[3];
+	return true;
+}
+
+

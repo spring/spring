@@ -500,7 +500,6 @@ void CMouseHandler::UpdateCam()
 	float3 wantedCamPos=currentCamController->GetPos();
 	float3 wantedCamDir=currentCamController->GetDir();
 
-
 	if(inStateTransit){
 		transitSpeed=transitSpeed*pow(0.00003f,(float)gu->lastFrameTime)/*-gu->lastFrameTime*/;
 		camera->pos+=(wantedCamPos-camera->pos)*(1-pow(transitSpeed,(float)gu->lastFrameTime));
