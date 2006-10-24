@@ -1308,44 +1308,79 @@ static int GetCameraState(lua_State* L)
 		lua_pushstring(L, "GetCameraState() takes no arguments");
 		lua_error(L);
 	}
-	const float3& pos = mouse->currentCamController->SwitchFrom();
+
+	const bool overview =
+		(mouse->currentCamController == mouse->overviewController);
+
 	lua_newtable(L);
-	lua_pushstring(L, "x"); lua_pushnumber(L, pos.x); lua_rawset(L, -3);
-	lua_pushstring(L, "y"); lua_pushnumber(L, pos.y); lua_rawset(L, -3);
-	lua_pushstring(L, "z"); lua_pushnumber(L, pos.z); lua_rawset(L, -3);
-	return 1;
-}
-
-
-static bool GetFloatField(lua_State* L, const string& name, float& val)
-{
-	lua_pushstring(L, name.c_str());
-	lua_gettable(L, -2);
-	if (!lua_isnumber(L, -1)) {
-		lua_pop(L, 1);
-		return false;
+	
+	lua_pushstring(L, "mode");
+	lua_pushnumber(L, overview ? -100 : mouse->currentCamControllerNum);
+	lua_rawset(L, -3);
+	
+	vector<float> camState = mouse->currentCamController->GetState();
+	for (int i = 0; i < (int)camState.size(); i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushnumber(L, camState[i]);
+		lua_rawset(L, -3);
 	}
-	val = (float)lua_tonumber(L, -1);
-	lua_pop(L, 1);
-	return true;
+
+	return 1;
 }
 
 
 static int SetCameraState(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_istable(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to SetCameraState(table)");
+	if ((args != 2) || !lua_istable(L, 1) || !lua_isnumber(L, 2)) {
+		lua_pushstring(L, "Incorrect arguments to SetCameraState(table, speed)");
 		lua_error(L);
 	}
-	float3 pos;
-	if (!GetFloatField(L, "x", pos.x) ||
-	    !GetFloatField(L, "y", pos.y) ||
-	    !GetFloatField(L, "z", pos.z)) {
-		lua_pushboolean(L, 0);
-		return 1;
+	
+	const float speed = (float)lua_tonumber(L, 2);
+	lua_pop(L, 1);
+
+	lua_pushstring(L, "mode");
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		const int camNum = (int)lua_tonumber(L, -1);
+		if ((camNum == -100) ||
+		    ((camNum >= 0) && (camNum < mouse->camControllers.size()) &&
+		     mouse->camControllers[camNum]->enabled)) {
+			const int oldNum = mouse->currentCamControllerNum;
+			const float3 dummy = mouse->currentCamController->SwitchFrom();
+			if (camNum >= 0) {
+				mouse->currentCamControllerNum = camNum;
+				mouse->currentCamController = mouse->camControllers[camNum];
+			} else {
+				mouse->currentCamController = mouse->overviewController;
+			}
+			const bool showMode = (oldNum != camNum) && (camNum != -100);
+			mouse->currentCamController->SwitchTo(showMode);
+			mouse->inStateTransit = true;
+			mouse->transitSpeed = speed;
+		}
 	}
-	mouse->currentCamController->SetPos(pos);
+	lua_pop(L, 1);
+	
+	vector<float> camState;
+	int index = 1;
+	while (true) {
+		lua_pushnumber(L, index);
+		lua_gettable(L, -2);
+		if (!lua_isnumber(L, -1)) {
+			lua_pop(L, 1);
+			break;
+		}
+		else {
+			camState.push_back((float)lua_tonumber(L, -1));
+			lua_pop(L, 1);
+			index++;
+		}
+	}
+	
+	mouse->currentCamController->SetState(camState);
+
 	lua_pushboolean(L, 1);
 	return 1;
 }

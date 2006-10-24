@@ -949,10 +949,12 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 		switch(commands[iconCmd].type){
 			case CMDTYPE_ICON:{
 				Command c;
-				c.id=commands[iconCmd].id;
-				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
-				if (invertQueueKey && ((c.id < 0) || (c.id == CMD_STOCKPILE))) {
-					c.options = c.options ^ SHIFT_KEY;
+				c.id = commands[iconCmd].id;
+				if (c.id != CMD_STOP) {
+					CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+					if (invertQueueKey && ((c.id < 0) || (c.id == CMD_STOCKPILE))) {
+						c.options = c.options ^ SHIFT_KEY;
+					}
 				}
 				selectedUnits.GiveCommand(c);
 				inCommand=-1;
