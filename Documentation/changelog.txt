@@ -7,20 +7,20 @@ TASpring change log
 
 - added "selectcycle [restore]" action 
 
-- corrected queue build rendering (GL_DEPTH_TEST)
+- fixed queue build rendering (GL_DEPTH_TEST)
 
 - added GetUnitHealth(), GetTeamResources(), and GetCommandQueue() to the lua GUI interface
-- enabled loading the ctrlpanel.lua file from the VFS
+- enabled loading the "ctrlpanel.lua" file from the VFS
 
-- added 'wait queued' and 'selfd queued' to the default key bindings
-- corrected WAIT behaviour for factories
+- added "wait queued" and "selfd queued" to the default key bindings
+- fixed WAIT behaviour for factories
 - enabled queuing of Self Destruction commands
 - added a pathetic SELFD cursor
 
-- added 'alwaysDrawQueue' and 'buildBoxesOnShift' to cmdcolors.txt
+- added "alwaysDrawQueue" and "buildBoxesOnShift" to cmdcolors.txt
 
-- added the 'invqueuekey [0|1]' action, and [InvertQueueKey=0] config parameter
-- added mouse chording for immediate mode access when using inverted queue keying
+- added the "invqueuekey [0|1]" action, and [InvertQueueKey=0] config parameter
+- added mouse rocker gestures for immediate mode access when using inverted queue keying
 
 - AIs can query a unit current fuelstorage via GetProperty() with property AIVAL_CURRENT_FUEL (2).
 - AIs receive seismic pings via HandleEvent() function with message AI_EVENT_SEISMIC_PING (5).
@@ -32,8 +32,8 @@ TASpring change log
 
 - Calling emit-sfx 2048 from a script will now allways fire the weapon. Emit-sfx 4096 will now take over the previous behavior of detonating the weapon at the piece position.
 
+
 0.73b1
-------
 
 - added the ability to layout the control panel widget layout with a LUA script
   (uses a file called "ctrlpanel.lua")
