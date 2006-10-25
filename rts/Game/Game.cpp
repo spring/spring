@@ -700,8 +700,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		configHandler.SetInt("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);
 		shadowHandler = new CShadowHandler();
-
-		unitDrawer->ReconfigureShaders();
 	}
 	else if (cmd == "water") {
 		delete water;

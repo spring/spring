@@ -66,18 +66,20 @@ CUnitDrawer::CUnitDrawer(void)
 
 	if (advShading)
 	{
-		if(shadowHandler->drawShadows){
-			unitShadowVP=LoadVertexProgram("unit_genshadow.vp");
-			unitFP=LoadFragmentProgram("unit_shadow.fp");
-			units3oFP=LoadFragmentProgram("units3o_shadow.fp");
-		} else {
-			unitShadowVP=0;
-			unitFP=LoadFragmentProgram("unit.fp");
-			units3oFP=LoadFragmentProgram("units3o.fp");
-		}
+		unitVP = LoadVertexProgram("unit.vp");
+		unitFP = LoadFragmentProgram("unit.fp");
+		unitS3oVP = LoadVertexProgram("units3o.vp");
+		unitS3oFP = LoadFragmentProgram("units3o.fp");
 
-		unitVP=LoadVertexProgram("unit.vp");
-		units3oVP=LoadVertexProgram("units3o.vp");
+		if (shadowHandler->canUseShadows) {
+			unitShadowFP    = LoadFragmentProgram("unit_shadow.fp");
+			unitShadowS3oFP = LoadFragmentProgram("units3o_shadow.fp");
+			unitShadowGenVP = LoadVertexProgram("unit_genshadow.vp");
+		} else {
+			unitShadowFP = 0;
+			unitShadowS3oFP = 0;
+			unitShadowGenVP = 0;
+		}
 
 		glGenTextures(1,&boxtex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
@@ -110,38 +112,21 @@ CUnitDrawer::CUnitDrawer(void)
 }
 
 
-void CUnitDrawer::ReconfigureShaders(void)
-{
-	if(advShading) {
-		glSafeDeleteProgram( unitShadowVP );
-		glSafeDeleteProgram( unitFP );
-		glSafeDeleteProgram( units3oFP );
-		if (shadowHandler->drawShadows) {
-			unitShadowVP=LoadVertexProgram("unit_genshadow.vp");
-			unitFP=LoadFragmentProgram("unit_shadow.fp");
-			units3oFP=LoadFragmentProgram("units3o_shadow.fp");
-		} else {
-			unitShadowVP=0;
-			unitFP=LoadFragmentProgram("unit.fp");
-			units3oFP=LoadFragmentProgram("units3o.fp");
-		}
-	}
-}
-
-
 CUnitDrawer::~CUnitDrawer(void)
 {
 	glDeleteTextures(1,&whiteTex);
 
 	if(advShading){
-		glSafeDeleteProgram( unitShadowVP );
-		glSafeDeleteProgram( unitVP );
-		glSafeDeleteProgram( unitFP );
-		glSafeDeleteProgram( units3oVP );
-		glSafeDeleteProgram( units3oFP );
+		glSafeDeleteProgram(unitVP);
+		glSafeDeleteProgram(unitFP);
+		glSafeDeleteProgram(unitShadowFP);
+		glSafeDeleteProgram(unitS3oVP);
+		glSafeDeleteProgram(unitS3oFP);
+		glSafeDeleteProgram(unitShadowS3oFP);
+		glSafeDeleteProgram(unitShadowGenVP);
 
-		glDeleteTextures(1,&boxtex);
-		glDeleteTextures(1,&specularTex);
+		glDeleteTextures(1, &boxtex);
+		glDeleteTextures(1, &specularTex);
 	}
 	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
 		if((*gbi)->decal)
@@ -309,8 +294,8 @@ void CUnitDrawer::DrawShadowPass(void)
 	glDisable(GL_TEXTURE_2D);
 //	glEnable(GL_TEXTURE_2D);
 //	texturehandler->SetTexture();
-	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitShadowVP );
-	glEnable( GL_VERTEX_PROGRAM_ARB );
+	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitShadowGenVP);
+	glEnable(GL_VERTEX_PROGRAM_ARB);
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -520,10 +505,15 @@ void CUnitDrawer::DrawCloakedUnits(void)
 void CUnitDrawer::SetupForUnitDrawing(void)
 {
 	if(advShading && !water->drawReflection){		//standard doesnt seem to support vertex program+clipplanes at once
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitVP );
-		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitFP );
-		glEnable( GL_FRAGMENT_PROGRAM_ARB );
+
+		glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitVP);
+		glEnable(GL_VERTEX_PROGRAM_ARB);
+		if (shadowHandler->drawShadows) {
+			glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, unitShadowFP);
+		} else {
+			glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, unitFP);
+		}
+		glEnable(GL_FRAGMENT_PROGRAM_ARB);
 
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, gs->sunVector.x,gs->sunVector.y,gs->sunVector.z,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, unitAmbientColor.x,unitAmbientColor.y,unitAmbientColor.z,1);
@@ -679,10 +669,14 @@ void CUnitDrawer::SetupBasicS3OTexture1(void)
 
 void CUnitDrawer::SetupForS3ODrawing(void)
 {
-	if(advShading && !water->drawReflection){		//standard doesnt seem to support vertex program+clipplanes at once
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, units3oVP );
+	if (advShading && !water->drawReflection) { //standard doesnt seem to support vertex program+clipplanes at once
+		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitS3oVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, units3oFP );
+		if (shadowHandler->drawShadows) {
+			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitShadowS3oFP );
+		} else {
+			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitS3oFP );
+		}
 		glEnable( GL_FRAGMENT_PROGRAM_ARB );
 
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, gs->sunVector.x,gs->sunVector.y,gs->sunVector.z,0);

@@ -122,7 +122,7 @@ void CFeatureHandler::Draw()
 void CFeatureHandler::DrawShadowPass()
 {
 	ASSERT_UNSYNCED_MODE;
-	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowVP );
+	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowGenVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
