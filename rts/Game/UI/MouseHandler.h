@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <string>
+#include <vector>
 #include <map>
 
 #include "MouseCursor.h"
@@ -30,6 +31,9 @@ public:
 	void MouseMove(int x,int y);
 	CMouseHandler();
 	virtual ~CMouseHandler();
+
+	void SaveView(const std::string& name);
+	bool LoadView(const std::string& name);
 
 	int lastx;  
 	int lasty;  
@@ -71,8 +75,19 @@ public:
 	std::vector<CCameraController*> camControllers;
 	int currentCamControllerNum;
 	CCameraController* overviewController;
+	struct ViewData {
+		bool operator==(const ViewData& vd) const {
+			return (mode == vd.mode) && (state == vd.state);
+		}
+		int mode;
+		std::vector<float> state;
+	};
+	ViewData tmpView;
+	std::map<std::string, ViewData> views;
+
 protected:
 	int soundMultiselID;
+
 public:
 	void EmptyMsgQueUpdate(void);
 
