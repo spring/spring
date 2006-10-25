@@ -127,7 +127,7 @@ void CGroupHandler::GroupCommand(int num)
 			groups[num]->ClearUnits();
 		}
 		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		set<CUnit*>::iterator ui;
+		set<CUnit*>::const_iterator ui;
 		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			(*ui)->SetGroup(groups[num]);
 		}
