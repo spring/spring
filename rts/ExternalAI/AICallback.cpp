@@ -505,7 +505,7 @@ int CAICallback::GetFriendlyUnits(int *units,const float3& pos,float radius)
 	int a=0;
 
 	for(ui=unit.begin();ui!=unit.end();++ui){
-		if((*ui)->team==gu->myTeam){
+		if(gs->Ally((*ui)->allyteam,gs->AllyTeam(team))){
 			units[a]=(*ui)->id;
 			++a;
 		}
