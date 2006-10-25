@@ -5,6 +5,9 @@ TASpring change log
 - added Shift and Alt/Meta group selection modifier features
   (Shift adds members to current selection, Alt/Meta toggles them)
 
+- added the  "viewsave <name>"  and  "viewload <name>"  actions
+- added the GetCameraState() and SetCameraState() to the lua GUI interface
+
 - added "selectcycle [restore]" action 
 
 - fixed queue build rendering (GL_DEPTH_TEST)
