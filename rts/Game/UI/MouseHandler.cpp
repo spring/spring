@@ -743,6 +743,10 @@ bool CMouseHandler::LoadView(const std::string& name)
 		effective = saved;
 	}
 	
+	if (effective.state.size() <= 0) {
+		return false;
+	}
+	
 	if ((effective.mode == -1) ||
 			((effective.mode >= 0) && (effective.mode < camControllers.size()) &&
 			 camControllers[effective.mode]->enabled)) {
