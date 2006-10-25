@@ -20,7 +20,6 @@ class CUnitDrawer
 public:
 	CUnitDrawer(void);
 	~CUnitDrawer(void);
-	void ReconfigureShaders(void);
 	
 	void Update(void);
 	void Draw(bool drawReflection,bool drawRefraction=false);
@@ -41,11 +40,13 @@ public:
 	bool advShading;
 
 	unsigned int unitVP;
-	unsigned int unitShadowVP;
 	unsigned int unitFP;
+	unsigned int unitShadowFP;
+	unsigned int unitS3oVP;
+	unsigned int unitS3oFP;
+	unsigned int unitShadowS3oFP;
+	unsigned int unitShadowGenVP;
 	unsigned int boxtex;
-	unsigned int units3oVP;
-	unsigned int units3oFP;
 	unsigned int specularTex;
 
 	float unitDrawDist;
