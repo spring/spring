@@ -1379,9 +1379,8 @@ static int SetCameraState(lua_State* L)
 		}
 	}
 	
-	mouse->currentCamController->SetState(camState);
-
-	lua_pushboolean(L, 1);
+	lua_pushboolean(L, mouse->currentCamController->SetState(camState));
+	
 	return 1;
 }
 

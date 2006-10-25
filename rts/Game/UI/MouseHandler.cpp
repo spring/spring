@@ -672,6 +672,7 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 	mouseInput->SetPos (int2(lastx,lasty));
 }
 
+
 void CMouseHandler::ToggleOverviewCamera(void)
 {
 	if(currentCamController==overviewController){
@@ -688,3 +689,75 @@ void CMouseHandler::ToggleOverviewCamera(void)
 }
 
 
+void CMouseHandler::SaveView(const std::string& name)
+{
+	if (name.empty()) {
+		return;
+	}
+	ViewData vd;
+	if (currentCamController == overviewController) {
+		vd.mode = -1;
+	} else {
+		vd.mode = currentCamControllerNum;
+	}
+	vd.state = currentCamController->GetState();
+	views[name] = vd;
+	logOutput.Print("Saved view: " + name);
+	return;
+}
+
+
+bool CMouseHandler::LoadView(const std::string& name)
+{
+	if (name.empty()) {
+		return false;
+	}
+	
+	std::map<std::string, ViewData>::const_iterator it = views.find(name);
+	if (it == views.end()) {
+		return false;
+	}
+	const ViewData& saved = it->second;
+
+	ViewData current;
+	current.state = currentCamController->GetState();
+	if (currentCamController == overviewController) {
+		current.mode = -1;
+	} else {
+		current.mode = currentCamControllerNum;
+	}
+	
+	for (it = views.begin(); it != views.end(); ++it) {
+		if (it->second == current) {
+			break;
+		}
+	}
+	if (it == views.end()) {
+		tmpView = current;
+	}
+	
+	ViewData effective;
+	if (saved == current) {
+		effective = tmpView;
+	} else {
+		effective = saved;
+	}
+	
+	if ((effective.mode == -1) ||
+			((effective.mode >= 0) && (effective.mode < camControllers.size()) &&
+			 camControllers[effective.mode]->enabled)) {
+		const float3 dummy = currentCamController->SwitchFrom();
+		if (effective.mode >= 0) {
+			currentCamControllerNum = effective.mode;
+			currentCamController = camControllers[effective.mode];
+		} else {
+			currentCamController = overviewController;
+		}
+		const bool showMode = (current.mode != effective.mode);
+		currentCamController->SwitchTo(showMode);
+		inStateTransit = true;
+		transitSpeed = 1.0f;
+	}
+	
+	return currentCamController->SetState(effective.state);;
+}

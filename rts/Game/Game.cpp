@@ -762,6 +762,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "viewrot") {
 		mouse->SetCameraMode(3);
 	}
+	else if (cmd == "viewsave") {
+		mouse->SaveView(action.extra);
+	}
+	else if (cmd == "viewload") {
+		mouse->LoadView(action.extra);
+	}
 	else if (cmd == "viewselection") {
 		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
 		if (!selUnits.empty()) {
