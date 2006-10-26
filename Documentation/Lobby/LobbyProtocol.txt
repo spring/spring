@@ -580,3 +580,6 @@
   format as MAPGRADES command sent by the client, containing hash code of the map followed by
   the avarage grade (real number with "." as decimal separator in range [1.0, 10.0], or 0 if
   noone has graded it yet) and number of votes (integer).
+  
+  * MAPGRADESFAILED {reason}
+  Sent by server if it could not respond to MAPGRADES command for some reason.

@@ -40,9 +40,12 @@ Administrator commands:
 
 removeaccount <username>
 stopserver
-  kills the server (but first saves accounts info to disk)
-writeaccountsinfo 
-  saves accounts info to disk
+  stops the server gracefully (but first saves accounts info to disk).
+forcestopserver
+  stops the server by calling closeServerAndExit() method, which calls System.exit().
+saveaccounts 
+  saves accounts info to disk. No need to call this manually - accounts are saved automatically
+  on fixed time intervals.
 changeaccountpass <username> <new password>
   changes password to "new password". Note that TASClient encodes password with md5 and sends
   base64 representation of md5 hash rather than raw password.
@@ -64,11 +67,8 @@ redirectoff
   will disable "redirection mode". Also see "redirect" command.
 getaccountcount
   will return number of accounts registered on this server.
-findaccount <username>
-  will return account's index from accounts array. You need this index with some commands like
-  "getaccountinfo".
-getaccountinfo <account_id>
-  will return some account info. You can get account_id using "findaccount" command.
+getaccountinfo <username>
+  will return full account info.
 forgemsg <username> <msg>
   forces server to send message <msg> to user. This command is used for debugging purposes only!
 forgereversemsg <username> <msg>
@@ -102,3 +102,7 @@ launchprocess <process name + parameters>
   Warning: any process you lunch must terminate immediately or at least before server
   stops, or else server process won't terminate properly (it will remain ghosted until
   all of its child processes are terminated).
+getsendbuffersize <username>
+  will return this socket's send buffer size of this user. 
+  This command is used for debugging purposes only!
+    
