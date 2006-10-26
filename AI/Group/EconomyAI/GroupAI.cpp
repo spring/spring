@@ -302,6 +302,8 @@ void CGroupAI::CalculateIdealME()
 	int size = aicb->GetFriendlyUnits(helper->friendlyUnits);
 	for(int i=0;i<size;i++)
 	{
+		if(helper->myTeam != aicb->GetUnitTeam(helper->friendlyUnits[i]))
+			continue;
 		const UnitDef* ud=aicb->GetUnitDef(helper->friendlyUnits[i]);
 		if(ud==0)
 			continue;
@@ -334,6 +336,8 @@ void CGroupAI::CalculateCurrentME()
 	for(int i=0;i<size;i++)
 	{
 		int unit = helper->friendlyUnits[i];
+		if(helper->myTeam != aicb->GetUnitTeam(unit))
+			continue;
 		const UnitDef* ud=aicb->GetUnitDef(unit);
 		if(ud==0)
 			continue;
