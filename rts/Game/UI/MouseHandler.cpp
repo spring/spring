@@ -99,7 +99,7 @@ CMouseHandler::CMouseHandler()
 	currentCamControllerNum=mode;
 
 	cameraTimeFactor   = atof(configHandler.GetString("CamTimeFactor", "1.0").c_str());
-	cameraTimeFactor   = max(0.1f, cameraTimeFactor);
+	cameraTimeFactor   = max(0.0f, cameraTimeFactor);
 	cameraTimeExponent = atof(configHandler.GetString("CamTimeExponent", "4.0").c_str());
 	cameraTimeExponent = max(0.1f, cameraTimeExponent);
 }
@@ -525,7 +525,7 @@ void CMouseHandler::UpdateCam()
 
 		const float3 deltaPos = wantedCamPos - camera->pos;
 		const float3 deltaDir = wantedCamDir - camera->forward;
-		camera->pos += deltaPos * ratio;
+		camera->pos     += deltaPos * ratio;
 		camera->forward += deltaDir * ratio;
 		camera->forward.Normalize();
 	}
