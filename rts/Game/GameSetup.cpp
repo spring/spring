@@ -294,8 +294,7 @@ bool CGameSetup::Draw(void)
 			mouse->currentCamController=mouse->camControllers[mode];
 			mouse->currentCamControllerNum=mode;
 			mouse->currentCamController->SetPos(gs->Team(gu->myTeam)->startPos);
-			mouse->inStateTransit=true;
-			mouse->transitSpeed=1;
+			mouse->CameraTransition(1.0f);
 		}
 		readyTime+=gu->lastFrameTime;
 	} else {

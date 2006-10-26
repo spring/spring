@@ -461,8 +461,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			sel=*ui;
 
 		selectedUnits.AddUnit(sel);
-		mouse->inStateTransit=true;
-		mouse->transitSpeed=0.7f;
+		mouse->CameraTransition(0.8f);
 		if(mouse->currentCamController!=mouse->camControllers[0]){
 			mouse->currentCamController->SetPos(sel->pos);
 		} else {	//fps camera

@@ -39,10 +39,14 @@ public:
 	int lasty;  
 	bool hide;
 	bool locked;
-	bool inStateTransit;
 	bool invertMouse;
 	float doubleClickTime;
-	float transitSpeed;
+	
+	void CameraTransition(float time);
+	float cameraTime;
+	float cameraTimeLeft;
+	float cameraTimeFactor;
+	float cameraTimeExponent;
 
 	struct ButtonPress{
 		bool pressed;
