@@ -11,6 +11,7 @@ CHelper::CHelper(IAICallback* aicb)
 	errorPos		= float3(-1.0f,0.0f,0.0f);
 	friendlyUnits	= new int[MAX_UNITS];
 	extractorRadius	= aicb->GetExtractorRadius();
+	myTeam			= aicb->GetMyTeam();
 	metalMakerAIid	= 0;
 	maxPartitionRadius = 100;
 	drawColor[0] = 1.0f;
@@ -28,6 +29,8 @@ CHelper::CHelper(IAICallback* aicb)
 	int size = aicb->GetFriendlyUnits(friendlyUnits);
 	for(int i=0;i<size;i++)
 	{
+		if(myTeam != aicb->GetUnitTeam(friendlyUnits[i]))
+			continue;
 		ParseBuildOptions(targetBO,aicb->GetUnitDef(friendlyUnits[i]),true);
 	}
 	for(map<string,const UnitDef*>::iterator boi=targetBO.begin();boi!=targetBO.end();++boi)
@@ -290,6 +293,8 @@ void CHelper::AssignMetalMakerAI()
 	for(int i=0;i<size;i++)
 	{
 		int unit = friendlyUnits[i];
+		if(myTeam != aicb->GetUnitTeam(unit))
+			continue;
 		const UnitDef* ud=aicb->GetUnitDef(unit);
 		if(ud==0)
 			continue;

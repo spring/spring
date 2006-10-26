@@ -21,6 +21,7 @@ class CHelper
 		float3	errorPos;
 		CMetalMap* metalMap;
 		int* friendlyUnits;
+		int myTeam;
 		float extractorRadius;
 		float mmkrME;						// metalmaker M / E ratio
 	private:
