@@ -33,6 +33,7 @@ FBO::FBO(int requires, int w, int h)
 {
 	this->requires = requires;
 	frameBuffer = 0;
+	depthRenderBuffer = 0;
 	if (!GLEW_EXT_framebuffer_object)
 		return;
 	assert(glGenFramebuffersEXT != 0);
