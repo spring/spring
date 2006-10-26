@@ -52,8 +52,8 @@ CMouseHandler* mouse=0;
 CMouseHandler::CMouseHandler()
 : locked(false),
 	activeReceiver(0),
-	transitSpeed(0),
-	inStateTransit(false)
+	cameraTime(0.0f),
+	cameraTimeLeft(0.0f)
 {
 	lastx=300;
 	lasty=200;
@@ -97,6 +97,11 @@ CMouseHandler::CMouseHandler()
 	int mode=configHandler.GetInt("CamMode",1);
 	currentCamController=camControllers[mode];
 	currentCamControllerNum=mode;
+
+	cameraTimeFactor   = atof(configHandler.GetString("CamTimeFactor", "1.0").c_str());
+	cameraTimeFactor   = max(0.1f, cameraTimeFactor);
+	cameraTimeExponent = atof(configHandler.GetString("CamTimeExponent", "4.0").c_str());
+	cameraTimeExponent = max(0.1f, cameraTimeExponent);
 }
 
 CMouseHandler::~CMouseHandler()
@@ -450,8 +455,7 @@ void CMouseHandler::SetCameraMode(int mode)
 	}
 
 	currentCamControllerNum = mode;
-	inStateTransit = true;
-	transitSpeed = 1;
+	CameraTransition(1.0f);
 
 	CCameraController* oldc = currentCamController;
 	currentCamController = camControllers[currentCamControllerNum];
@@ -471,8 +475,7 @@ void CMouseHandler::ToggleState(bool shift)
 			HideMouse();
 		}
 	} else {
-		inStateTransit=true;
-		transitSpeed=1;
+		CameraTransition(1.0f);
 
 		CCameraController* oldc=currentCamController;
 		currentCamControllerNum++;
@@ -490,28 +493,44 @@ void CMouseHandler::ToggleState(bool shift)
 	}
 }
 
+
+void CMouseHandler::CameraTransition(float time)
+{
+	time = max(time, 0.0f) * cameraTimeFactor;
+	cameraTime = time;
+	cameraTimeLeft = time;
+}
+
+
 void CMouseHandler::UpdateCam()
 {
-	camera->up.x=0;
-	camera->up.y=1;
-	camera->up.z=0;
-	camera->fov=45;
+	camera->up.x = 0.0f;
+	camera->up.y = 1.0f;
+	camera->up.z = 0.0f;
+	camera->fov = 45.0f;
 
-	float3 wantedCamPos=currentCamController->GetPos();
-	float3 wantedCamDir=currentCamController->GetDir();
+	const float3 wantedCamPos = currentCamController->GetPos();
+	const float3 wantedCamDir = currentCamController->GetDir();
 
-	if(inStateTransit){
-		transitSpeed=transitSpeed*pow(0.00003f,(float)gu->lastFrameTime)/*-gu->lastFrameTime*/;
-		camera->pos+=(wantedCamPos-camera->pos)*(1-pow(transitSpeed,(float)gu->lastFrameTime));
-		camera->forward+=(wantedCamDir-camera->forward)*(1-pow(transitSpeed,(float)gu->lastFrameTime));
-		camera->forward.Normalize();
-		if(camera->pos.distance(wantedCamPos)<0.01f && camera->forward.distance(wantedCamDir)<0.001f)
-			inStateTransit=false;
-	} else {
-		camera->pos=wantedCamPos;
-		camera->forward=wantedCamDir;
+	if (cameraTimeLeft <= 0.0f) {
+		camera->pos = wantedCamPos;
+		camera->forward = wantedCamDir;
 	}
-	dir=(hide ? camera->forward : camera->CalcPixelDir(lastx,lasty));
+	else {
+		const float currTime = cameraTimeLeft;
+		cameraTimeLeft = max(0.0f, (cameraTimeLeft - gu->lastFrameTime));
+		const float nextTime = cameraTimeLeft;
+		const float exp = cameraTimeExponent;
+		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);
+
+		const float3 deltaPos = wantedCamPos - camera->pos;
+		const float3 deltaDir = wantedCamDir - camera->forward;
+		camera->pos += deltaPos * ratio;
+		camera->forward += deltaDir * ratio;
+		camera->forward.Normalize();
+	}
+	
+	dir = (hide ? camera->forward : camera->CalcPixelDir(lastx,lasty));
 }
 
 void CMouseHandler::UpdateCursors()
@@ -684,8 +703,7 @@ void CMouseHandler::ToggleOverviewCamera(void)
 		currentCamController=overviewController;
 		overviewController->SwitchTo(false);
 	}
-	inStateTransit=true;
-	transitSpeed=1;
+	CameraTransition(1.0f);
 }
 
 
@@ -759,8 +777,7 @@ bool CMouseHandler::LoadView(const std::string& name)
 		}
 		const bool showMode = (current.mode != effective.mode);
 		currentCamController->SwitchTo(showMode);
-		inStateTransit = true;
-		transitSpeed = 1.0f;
+		CameraTransition(1.0f);
 	}
 	
 	return currentCamController->SetState(effective.state);;

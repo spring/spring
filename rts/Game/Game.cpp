@@ -837,8 +837,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "lastmsgpos") {
 		mouse->currentCamController->SetPos(infoConsole->lastMsgPos);
-		mouse->inStateTransit=true;
-		mouse->transitSpeed=0.5f;
+		mouse->CameraTransition(0.6f);
 	}
 	else if ((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) {
@@ -2313,8 +2312,7 @@ bool CGame::ClientReadNet()
 							/* currentCamControllerNum isn't touched; it's used to
 							   switch back to the old camera. */
 							mouse->currentCamController=mouse->camControllers[0];	//set fps mode
-							mouse->inStateTransit=true;
-							mouse->transitSpeed=1;
+							mouse->CameraTransition(1.0f);
 							((CFPSController*)mouse->camControllers[0])->pos=unit->midPos;
 							mouse->wasLocked = mouse->locked;
 							if(!mouse->locked){

@@ -1333,11 +1333,11 @@ static int SetCameraState(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_istable(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to SetCameraState(table, speed)");
+		lua_pushstring(L, "Incorrect arguments to SetCameraState(table, camTime)");
 		lua_error(L);
 	}
 	
-	const float speed = (float)lua_tonumber(L, 2);
+	const float camTime = (float)lua_tonumber(L, 2);
 	lua_pop(L, 1);
 
 	lua_pushstring(L, "mode");
@@ -1357,8 +1357,7 @@ static int SetCameraState(lua_State* L)
 			}
 			const bool showMode = (oldNum != camNum) && (camNum != -100);
 			mouse->currentCamController->SwitchTo(showMode);
-			mouse->inStateTransit = true;
-			mouse->transitSpeed = speed;
+			mouse->CameraTransition(camTime);
 		}
 	}
 	lua_pop(L, 1);

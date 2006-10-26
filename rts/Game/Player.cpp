@@ -67,8 +67,7 @@ void CPlayer::StopControllingUnit()
 		/* Switch back to the camera we were using before. */
 		mouse->currentCamController=mouse->camControllers[mouse->currentCamControllerNum];
 		mouse->currentCamController->SetPos(camera->pos);
-		mouse->inStateTransit=true;
-		mouse->transitSpeed=1;
+		mouse->CameraTransition(1.0f);
 		
 		if (mouse->locked && !mouse->wasLocked){
 			mouse->locked = false;
