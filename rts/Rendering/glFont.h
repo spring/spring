@@ -16,7 +16,7 @@ public:
 	void glPrintCentered (float x,float y, float s, const char *fmt,...);
 	void glPrintOutlined(const unsigned char* text, float shiftX, float shiftY,
 	                     const float* normalColor, const float* outlineColor);
-float CalcTextWidth (const char *txt);
+	float CalcTextWidth (const char *txt);
 	float CalcCharWidth (char c);
 	float CalcTextHeight(const char *text);
 
