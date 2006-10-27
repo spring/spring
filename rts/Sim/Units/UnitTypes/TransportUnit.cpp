@@ -130,9 +130,12 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			unit->Block();
 			loshandler->MoveUnit(unit,false);
 			unit->moveType->LeaveTransport();
-			Command c;
-			c.id=CMD_STOP;
-			unit->commandAI->GiveCommand(c);
+			const deque<Command>& queue = unit->commandAI->commandQue;
+			if (queue.empty() || (queue.front().id != CMD_WAIT)) {
+				Command c;
+				c.id=CMD_STOP;
+				unit->commandAI->GiveCommand(c);
+			}
 			transportCapacityUsed-=ti->size;
 			transportMassUsed-=ti->mass;
 			transported.erase(ti);
