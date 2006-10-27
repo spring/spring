@@ -240,7 +240,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		return false;
 	if(c.id==CMD_MOVE && !owner->unitDef->canmove)
 		return false;
-	if(c.id==CMD_ATTACK && !isAttackCapable())
+	if(c.id==CMD_ATTACK && (!owner->unitDef->canAttack || !isAttackCapable()))
 		return false;
 	if(c.id==CMD_PATROL && !owner->unitDef->canPatrol)
 		return false;
