@@ -70,7 +70,8 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 	charHeights = new int[chars];
 	textures = new GLuint[chars];
 
-	listbase = glGenLists(chars);
+	listbase        = glGenLists(chars);
+	listbaseNoshift = glGenLists(chars);
 	glGenTextures(chars, textures);
 	
 	StoredGlyph * glyphs = new StoredGlyph[chars];
@@ -209,14 +210,14 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 			0, GL_RGBA, 
 			texsize, texsize, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, tex);
 		
+		charWidths[ch - charstart] = g->advance_x / 2 / texsize;		
+		charHeights[ch - charstart] = g->height / 2 / texsize;		
+		const float x = (charWidths[ch - charstart]) / 32.0f;
+		const float y = 1 - 1.0f / 64;
+		
 		/* Upload drawing instructions for the glyph. */
 		glNewList(listbase + (ch - charstart), GL_COMPILE);
 		glBindTexture(GL_TEXTURE_2D, textures[ch - charstart]);
-		charWidths[ch - charstart] = g->advance_x / 2 / texsize;		
-		charHeights[ch - charstart] = g->height / 2 / texsize;		
-
-		float x = (charWidths[ch - charstart]) / 32.0f;
-		const float y = 1 - 1.0f / 64;
 		glBegin(GL_TRIANGLE_STRIP);
 			glTexCoord2f(0, y); glVertex3f(0, 0, 0);
 			glTexCoord2f(0, 0); glVertex3f(0, DRAW_SIZE, 0);
@@ -224,7 +225,17 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 			glTexCoord2f(x, 0); glVertex3f(DRAW_SIZE * x, DRAW_SIZE, 0);
 		glEnd();
 		glTranslatef(DRAW_SIZE * (x + 0.02f), 0, 0);
-		glEndList();		
+		glEndList();
+		
+		/* Upload drawing instructions for the glyph, without the translation or texture binding */
+		glNewList(listbaseNoshift + (ch - charstart), GL_COMPILE);
+		glBegin(GL_TRIANGLE_STRIP);
+			glTexCoord2f(0, y); glVertex3f(0, 0, 0);
+			glTexCoord2f(0, 0); glVertex3f(0, DRAW_SIZE, 0);
+			glTexCoord2f(x, y); glVertex3f(DRAW_SIZE * x, 0, 0);
+			glTexCoord2f(x, 0); glVertex3f(DRAW_SIZE * x, DRAW_SIZE, 0);
+		glEnd();
+		glEndList();
 		
 		delete[] g->bitmap_buffer;
 		g->bitmap_buffer = NULL;
@@ -240,6 +251,7 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 CglFont::~CglFont()
 {
 	glDeleteLists(listbase, chars);
+	glDeleteLists(listbaseNoshift, chars);
 	glDeleteTextures(chars, textures);
 	delete[] textures;
 	delete[] charWidths;
@@ -264,6 +276,44 @@ void CglFont::printstring(const unsigned char *text)
 	}
 	glPopAttrib();
 }
+
+
+void CglFont::glPrintOutlined(const unsigned char* text,
+                              float shiftX, float shiftY,
+                              const float* normalColor,
+                              const float* outlineColor)
+{
+	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	for (int i = 0; i < strlen((const char*)text); i++) {
+		const unsigned int ch = (unsigned char)text[i];
+		if ((ch >= charstart) && (ch <= charend)) {
+			glBindTexture(GL_TEXTURE_2D, textures[ch - charstart]);
+			const GLuint nsList = (ch - charstart) + listbaseNoshift;
+			glColor4fv(outlineColor);
+			glTranslatef(0.0f, +shiftY, 0.0f); glCallList(nsList);
+			glTranslatef(+shiftX, 0.0f, 0.0f); glCallList(nsList);
+			glTranslatef(0.0f, -shiftY, 0.0f); glCallList(nsList);
+			glTranslatef(0.0f, -shiftY, 0.0f); glCallList(nsList);
+			glTranslatef(-shiftX, 0.0f, 0.0f); glCallList(nsList);
+			glTranslatef(-shiftX, 0.0f, 0.0f); glCallList(nsList);
+			glTranslatef(0.0f, +shiftY, 0.0f); glCallList(nsList);
+			glTranslatef(0.0f, +shiftY, 0.0f); glCallList(nsList);
+			glTranslatef(+shiftX, -shiftY, 0.0f);
+			glColor4fv(normalColor);
+			glCallList((ch - charstart) + listbase);
+		}
+	}
+	glPopMatrix();
+	glPopAttrib();
+}
+
 
 void CglFont::glPrint(const char *fmt, ...)
 {

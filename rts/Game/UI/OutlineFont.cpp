@@ -7,7 +7,6 @@
 #include <string>
 #include "Rendering/glFont.h"
 
-
 /******************************************************************************/
 
 
@@ -36,22 +35,17 @@ void COutlineFont::print(float xps, float yps,
 	const float luminance = (color[0] * 0.299f) +
 	                        (color[1] * 0.587f) +
 	                        (color[2] * 0.114f);
+	                        
+	const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
+	const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
+
+	const float* outlineColor;
 	if (luminance > 0.25f) {
-		glColor4f(0.25f, 0.25f, 0.25f, 0.8f);
+		outlineColor = darkOutline;
 	} else {
-		glColor4f(0.85f, 0.85f, 0.85f, 0.8f);
+		outlineColor = lightOutline;
 	}
-	glTranslatef(0.0f, +yps, 0.0f); font->glPrint("%s", text);
-	glTranslatef(+xps, 0.0f, 0.0f); font->glPrint("%s", text);
-	glTranslatef(0.0f, -yps, 0.0f); font->glPrint("%s", text);
-	glTranslatef(0.0f, -yps, 0.0f); font->glPrint("%s", text);
-	glTranslatef(-xps, 0.0f, 0.0f); font->glPrint("%s", text);
-	glTranslatef(-xps, 0.0f, 0.0f); font->glPrint("%s", text);
-	glTranslatef(0.0f, +yps, 0.0f); font->glPrint("%s", text);
-	glTranslatef(0.0f, +yps, 0.0f); font->glPrint("%s", text);
-	glTranslatef(+xps, -yps, 0.0f);
-	if (color[3] > 0.0f) {
-		glColor4fv(color);
-		font->glPrint("%s", text);
-	}
+
+	font->glPrintOutlined((const unsigned char*)text,
+												xps, yps, color, outlineColor);
 }

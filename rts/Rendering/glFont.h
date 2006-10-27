@@ -12,9 +12,11 @@ public:
 	void glPrintColor(const char* fmt, ...);
 	void glWorldPrint(const char* fmt, ...);
 	void glPrintAt(GLfloat x, GLfloat y, float s, const char* fmt, ...);
-	void glPrintRight (float x,float y, float s,const char *fmt,...);
-	void glPrintCentered (float x,float y, float s,const char *fmt,...);
-	float CalcTextWidth (const char *txt);
+	void glPrintRight (float x,float y, float s, const char *fmt,...);
+	void glPrintCentered (float x,float y, float s, const char *fmt,...);
+	void glPrintOutlined(const unsigned char* text, float shiftX, float shiftY,
+	                     const float* normalColor, const float* outlineColor);
+float CalcTextWidth (const char *txt);
 	float CalcCharWidth (char c);
 	float CalcTextHeight(const char *text);
 
@@ -34,6 +36,7 @@ private:
 	int charheight;
 	GLuint *textures;
 	GLuint listbase;
+	GLuint listbaseNoshift;
 	int *charWidths;
 	int *charHeights;
 };
