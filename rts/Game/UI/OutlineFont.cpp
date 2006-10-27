@@ -47,5 +47,5 @@ void COutlineFont::print(float xps, float yps,
 	}
 
 	font->glPrintOutlined((const unsigned char*)text,
-												xps, yps, color, outlineColor);
+	                      xps, yps, color, outlineColor);
 }
