@@ -125,6 +125,12 @@ CUnitHandler::CUnitHandler()
 			diminishingMetalMakers=true;
 	}
 	airBaseHandler=new CAirBaseHandler;
+
+	for(int i=0; i<MAX_TEAMS; i++)
+	{
+		unitsType[i] = new unsigned int[unitDefHandler->numUnits];
+		memset(unitsType[i], 0, unitDefHandler->numUnits *  sizeof(int));
+	}
 }
 
 CUnitHandler::~CUnitHandler()
@@ -134,6 +140,11 @@ CUnitHandler::~CUnitHandler()
 		delete (*usi);
 
 	delete airBaseHandler;
+
+	for(int i=0; i<MAX_TEAMS; i++)
+	{
+		delete unitsType[i];
+	}
 }
 
 int CUnitHandler::AddUnit(CUnit *unit)
@@ -155,6 +166,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	}
 	units[id]=unit;
 	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
+	unitsType[unit->team][unit->unitDef->id]++;
 	return id;
 }
 
@@ -162,6 +174,7 @@ void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	ASSERT_SYNCED_MODE;
 	toBeRemoved.push(unit);
+	unitsType[unit->team][unit->unitDef->id]--;
 }
 
 void CUnitHandler::Update()
@@ -591,4 +604,14 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	Command c;
 	c.id = 0;
 	return c;
+}
+
+bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
+{
+	if(gs->Team(team)->units.size()>=uh->maxUnits)
+		return false;
+	if(unitsType[team][unitdef->id]>=unitdef->maxThisUnit)
+		return false;
+
+	return true;
 }

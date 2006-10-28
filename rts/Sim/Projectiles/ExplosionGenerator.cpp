@@ -523,6 +523,15 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		groundFlash->circleGrowth = atof(parser.SGetValueDef ("0",location + "circleGrowth" ).c_str());
 		groundFlash->color = parser.GetFloat3 (float3(1.0f,1.0f,1.0f), location + "color");
 
+		unsigned int flags = SPW_GROUND;
+		if(!!atoi(parser.SGetValueDef ("0", location + "ground").c_str()))     flags |= SPW_GROUND;
+		if(!!atoi(parser.SGetValueDef ("0", location + "water").c_str()))      flags |= SPW_WATER;
+		if(!!atoi(parser.SGetValueDef ("0", location + "air").c_str()))        flags |= SPW_AIR;
+		if(!!atoi(parser.SGetValueDef ("0", location + "underwater").c_str())) flags |= SPW_UNDERWATER;
+		if(!!atoi(parser.SGetValueDef ("0", location + "unit").c_str())) flags |= SPW_UNIT;
+		if(!!atoi(parser.SGetValueDef ("0", location + "nounit").c_str())) flags |= SPW_NO_UNIT;
+		groundFlash->flags = flags;
+
 		string color = parser.SGetValueDef("1,1,0.8",location + "color");
 		string::size_type start = 0;
 		for (unsigned int i=0; i < 3; i++) {

@@ -54,12 +54,17 @@ public:
 	int  ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command> &cv);
 	int  TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature, int allyteam); //test a single mapsquare for build possibility
 
+	//return true if a unit of type unitID can be build, false otherwise
+	bool CanBuildUnit(const UnitDef* unitdef, int team);
+
 	void AddBuilderCAI(CBuilderCAI*);
 	void RemoveBuilderCAI(CBuilderCAI*);
 	float GetBuildHeight(float3 pos, const UnitDef* unitdef);
 
 	void LoadSaveUnits(CLoadSaveInterface* file, bool loading);
 	Command GetBuildCommand(float3 pos, float3 dir);
+
+	unsigned int *unitsType[MAX_TEAMS];  //how many units of each type exist currently in game for each player
 
 	std::list<CUnit*> activeUnits;				//used to get all active units
 	std::deque<int> freeIDs;

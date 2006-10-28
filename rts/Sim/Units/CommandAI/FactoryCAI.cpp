@@ -13,10 +13,12 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "mmgr.h"
+#include "LogOutput.h"
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
 : CCommandAI(owner),
-	building(false)
+	building(false),
+	lastRestrictedWarning(0)
 {
 	CommandDescription c;
 
@@ -220,7 +222,22 @@ void CFactoryCAI::SlowUpdate()
 					FinishCommand();
 				}
 			} else {
-				if(uh->maxUnits>gs->Team(owner->team)->units.size()){
+				const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
+				if(uh->unitsType[owner->team][def->id]>=def->maxThisUnit){ //unit restricted?
+					if(!repeatOrders)
+					{
+						boi->second.numQued--;
+						if(lastRestrictedWarning+100<gs->frameNum)
+						{
+							logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
+							logOutput.SetLastMsgPos(owner->pos);
+							lastRestrictedWarning = gs->frameNum;
+						}
+					}
+					UpdateIconName(c.id,boi->second);
+					FinishCommand();
+				}
+				else if(uh->maxUnits>gs->Team(owner->team)->units.size()){  //max unitlimit reached?
 					fac->StartBuild(boi->second.fullName);
 					building=true;
 				}
