@@ -36,7 +36,7 @@ CAttackGroup::CAttackGroup(AIClasses* ai, int groupID_in)
 	this->movementCounterForStuckChecking = 0;
 	this->defending = false;
 	this->isMoving = false;
-	//L("AG: constructor sets isMoving to false.");
+	L("AG: constructor sets isMoving to false.");
 	this->isShooting = false;
 	this->attackPosition = ZEROVECTOR;
 	this->attackRadius = 1;
@@ -49,13 +49,13 @@ CAttackGroup::~CAttackGroup()
 
 void CAttackGroup::Log() {
 	int temp = 0;
-	//L("AG: logging contents of group " << groupID << ":");
+	L("AG: logging contents of group " << groupID << ":");
 	for (vector<int>::iterator it = units.begin(); it != units.end(); it++) {
 		temp++;
 		if (ai->cb->GetUnitDef(*it)) {
-			//L("" << temp << ": " << *it << " type:" << ai->cb->GetUnitDef(*it)->humanName);
+			L("" << temp << ": " << *it << " type:" << ai->cb->GetUnitDef(*it)->humanName);
 		} else {
-			//L("" << temp << ": " << *it << " ILLEGAL UNIT - has no unit def (wtf?)");
+			L("" << temp << ": " << *it << " ILLEGAL UNIT - has no unit def (wtf?)");
 		}
 	}
 }
@@ -82,17 +82,17 @@ bool CAttackGroup::RemoveUnit(int unitID) {
 	for (it = units.begin(); it != units.end(); it++) {
 		if (*it == unitID) {
 			found = true;
-			//L("AttackGroup: erasing unit with id:" << unitID);
+			L("AttackGroup: erasing unit with id:" << unitID);
 			break;
 		}
 	}
 	if (found) {
 		units.erase(it);
-//		//L("AttackGroup: about to attempt to reset the group ID of a removed unit");
+//		L("AttackGroup: about to attempt to reset the group ID of a removed unit");
 		if( ai->cb->GetUnitDef(unitID) != NULL) {
 			ai->MyUnits[unitID]->groupID = 0;
-			//L("AttackGroup: groupid = 0 --> success");
-//			//L("AttackGroup: by the way, this unit's stuck counter was " << ai->MyUnits[unitID]->stuckCounter);
+			L("AttackGroup: groupid = 0 --> success");
+//			L("AttackGroup: by the way, this unit's stuck counter was " << ai->MyUnits[unitID]->stuckCounter);
 		}
 	}
 	assert(found);
@@ -130,7 +130,7 @@ int CAttackGroup::Size()
 		}
 	}
 	if (numUnits != unitCounter) {
-		//L("AttackGroup:Size doublecheck error, size mismatch in group:" << groupID << " .size()="<<numUnits<<" units with unitdef:" << unitCounter << " last invalid unit:" << invalid);
+		L("AttackGroup:Size doublecheck error, size mismatch in group:" << groupID << " .size()="<<numUnits<<" units with unitdef:" << unitCounter << " last invalid unit:" << invalid);
 	}
 	return units.size();
 }
@@ -169,16 +169,16 @@ int CAttackGroup::PopStuckUnit() {
 			AIHCAddMapPoint amp;
 			amp.label = text;
 			amp.pos = ai->cb->GetUnitPos(id);
-			//ai->cb->HandleCommand(&amp);
+			ai->cb->HandleCommand(&amp);
 
 
 			//sprintf(c,"Made unit %s",  ai->cb->GetUnitDef(unit)->humanName.c_str());
 
-			//L("AttackGroup debug: about to do crap that i think will crash (popstuckunit amp)");
+			L("AttackGroup debug: about to do crap that i think will crash (popstuckunit amp)");
 			sprintf(text, "humanName:%s", ai->MyUnits[*it]->def()->humanName.c_str());
 			amp.label = text;
 			amp.pos = ai->cb->GetUnitPos(id) + float3(0, 0, 30);
-			//ai->cb->HandleCommand(&amp);
+			ai->cb->HandleCommand(&amp);
 
 			ai->MyUnits[*it]->stuckCounter = 0;
 			units.erase(it);
@@ -208,10 +208,10 @@ float3 CAttackGroup::GetGroupPos() {
 		}
 		else {
 			//if (this->RemoveUnit(unit)) {
-			//	//L("AttackGroup: internally removed unit " << unit);
+			//	L("AttackGroup: internally removed unit " << unit);
             //    i--;
 			//} else {
-			//	//L("case of illegal unit in attackgroup. unitid:" << unit << " had no position. (groupPos calc).");
+			//	L("case of illegal unit in attackgroup. unitid:" << unit << " had no position. (groupPos calc).");
 			//}
 		}
 	}
@@ -234,14 +234,14 @@ float3 CAttackGroup::GetGroupPos() {
 		groupPosition = ai->cb->GetUnitPos(closestUnitID);
 		//draw arrow pointing to the group center:
 		if (!defending) {
-			//ai->cb->CreateLineFigure(groupPosition + float3(0,140,0), groupPosition + float3(0,20,0),48,1,15,groupID);
+			ai->cb->CreateLineFigure(groupPosition + float3(0,140,0), groupPosition + float3(0,20,0),48,1,15,groupID);
 			ai->cb->SetFigureColor(groupID, 65535.0f, 0.1f, FLT_MAX, 1); //hack to change def group color
 		} else {
-			//ai->cb->CreateLineFigure(groupPosition + float3(0,80,0), groupPosition + float3(0,20,0),96,1,15,groupID);
+			ai->cb->CreateLineFigure(groupPosition + float3(0,80,0), groupPosition + float3(0,20,0),96,1,15,groupID);
 			//ai->cb->SetFigureColor(groupID, 1.0f, 1.0f, 1.0f, 1);
 		}
 	} else {
-		//L("AttackGroup: empty attack group when calcing group pos!");
+		L("AttackGroup: empty attack group when calcing group pos!");
 		return ERRORVECTOR; //<-----------------
 	}
 	return groupPosition;
@@ -269,12 +269,12 @@ void CAttackGroup::AssignTarget(vector<float3> path, float3 position, float radi
 	this->pathIterator = 0;
 	this->defending = false;
 
-	//L("AG: drawing the assigned path to the assigned target:");
+	L("AG: drawing the assigned path to the assigned target:");
 	ai->cb->DeleteFigureGroup(groupID+100);
 	for (int i = 1; i < (int)pathToTarget.size(); i++) {
-		//ai->cb->CreateLineFigure(pathToTarget[i-1] + float3(0,50,0), pathToTarget[i] + float3(0,50,0), 8, 0, 150, (groupID+100));
+		ai->cb->CreateLineFigure(pathToTarget[i-1] + float3(0,50,0), pathToTarget[i] + float3(0,50,0), 8, 0, 150, (groupID+100));
 	}
-	//L("AG: target assigning complete. path size: " << pathToTarget.size() << " targetx:" << attackPosition.x << " targety:" << attackPosition.y << " radius:" << attackRadius << " isMoving:" << isMoving << " frame:" << ai->cb->GetCurrentFrame() << " groupID:" << groupID);
+	L("AG: target assigning complete. path size: " << pathToTarget.size() << " targetx:" << attackPosition.x << " targety:" << attackPosition.y << " radius:" << attackRadius << " isMoving:" << isMoving << " frame:" << ai->cb->GetCurrentFrame() << " groupID:" << groupID);
 }
 
 void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
@@ -285,7 +285,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 	char tx[500];
 	sprintf(tx, "AG:running find-new-target, group %i, frame %i, numUnits %i", this->groupID, frameNr, this->units.size());
 //		ai->cb->SendTextMsg(tx,0);
-	//L(tx);
+	L(tx);
 	//the attack routine
 	//the "find new enemy" part
 	//int enemies[MAXUNITS];
@@ -313,7 +313,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 					//TODO: remove currently cloaked units, 
 					//remove units not reachable by my unit type and position (how? - the pathfinder does it itself but the radius based search thing is problematic)
 					enemyPositions.push_back(enemyPos);
-					////L("added enemy position to the list being sent to path finder x"<<enemyPos.x<<" y"<<enemyPos.y<<" z"<<enemyPos.z<<" ");
+					//L("added enemy position to the list being sent to path finder x"<<enemyPos.x<<" y"<<enemyPos.y<<" z"<<enemyPos.z<<" ");
 				}
 			}
 		}
@@ -332,16 +332,16 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 		float costToTarget = ai->pather->FindBestPath(&pathToTarget, &groupPosition, lowestAttackRange, &enemyPositions);
 		//draw the path
 //		for (int i = 1; i < (int)pathToTarget.size(); i++) {
-//				//ai->cb->CreateLineFigure(pathToTarget[i-1] + float3(0,50,0), pathToTarget[i] + float3(0,50,0), 8, 0, frameSpread, (groupID+100));
+//				ai->cb->CreateLineFigure(pathToTarget[i-1] + float3(0,50,0), pathToTarget[i] + float3(0,50,0), 8, 0, frameSpread, (groupID+100));
 //		}
 
-//		//L("AttackGroup debug: findbestpath run to all enemies, resulting cost:" << costToTarget);
+//		L("AttackGroup debug: findbestpath run to all enemies, resulting cost:" << costToTarget);
 
 		//assert(costToTarget > 0);
 		if (costToTarget == 0 && pathToTarget.size() <= 2) {
 			//myEnemy = -1;
 			isMoving = false;
-			//L("AG: FindNewTarget sets isMoving to false.");
+			L("AG: FindNewTarget sets isMoving to false.");
 			//if this happens then isshooting will take care of it (there are enemies but cost is 0 = something is in range)
 		} else {
 			isMoving = true;
@@ -350,14 +350,13 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 	} else { //endif there are enemies
 		//attempt to path back to base if there are no targets
 		//ai->cb->SendTextMsg("AG: group retreating to base", 0);
-		//L("AG: found no defense targets, pathing back to base. group:" << groupID);
+		L("AG: found no defense targets, pathing back to base. group:" << groupID);
         pathToTarget.clear();
-		float3 closestBaseSpot = ai->ah->GetClosestBaseSpot(groupPosition);
-		float costToTarget = ai->pather->FindBestPathToRadius(&pathToTarget, &groupPosition, THREATRES*8, &closestBaseSpot); //TODO: GetKBaseMeans() for support of multiple islands/movetypes //TODO: this doesnt need to be to radius >_>
+		float costToTarget = ai->pather->FindBestPathToRadius(&pathToTarget, &groupPosition, THREATRES*8, &ai->ah->GetClosestBaseSpot(groupPosition)); //TODO: GetKBaseMeans() for support of multiple islands/movetypes //TODO: this doesnt need to be to radius >_>
 		if (costToTarget == 0 && pathToTarget.size() <= 2) {
 			isMoving = false;
 			if(ai->ah->DistanceToBase(groupPosition) > 500){
-				//L("AG: group " << groupID << " couldnt path back to closest base spot!");
+				L("AG: group " << groupID << " couldnt path back to closest base spot!");
 			}
 		} else {
 			isMoving = true;
@@ -366,7 +365,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 	}
 	if (!isShooting && !isMoving) {
 		//ai->cb->SendTextMsg("AttackGroup couldnt path to my enemy or have no enemy!", 0);
-		//L("AttackGroup: There are no accessible enemies and we're idling. groupid:" << this->groupID << " we are defending: " << this->defending);
+		L("AttackGroup: There are no accessible enemies and we're idling. groupid:" << this->groupID << " we are defending: " << this->defending);
 	}
 }
 
@@ -393,11 +392,11 @@ void CAttackGroup::Update()
 {
 	int frameNr = ai->cb->GetCurrentFrame();
 
-	////L("AG: Update-start. isShooting:" << isShooting << " isMoving:" << isMoving << " frame:" << frameNr << " groupID:" << groupID << " path size:" << pathToTarget.size());
+	//L("AG: Update-start. isShooting:" << isShooting << " isMoving:" << isMoving << " frame:" << frameNr << " groupID:" << groupID << " path size:" << pathToTarget.size());
 
 	int numUnits = (int)units.size();
 	if(!numUnits) {
-		//L("updated an empty AttackGroup!");
+		L("updated an empty AttackGroup!");
 		return;
 	}
 	int frameSpread; // variable used as a varying "constant" for determining how often a part of the update scheme is done
@@ -406,22 +405,22 @@ void CAttackGroup::Update()
 	if(groupPosition == ERRORVECTOR) return;
 
 	//debug line:
-	//	//ai->cb->CreateLineFigure(groupPosition + float3(0,100,50), groupPosition + float3(5+(unitCounter*20),100,50),20,0,2,groupID+1500);
+	//	ai->cb->CreateLineFigure(groupPosition + float3(0,100,50), groupPosition + float3(5+(unitCounter*20),100,50),20,0,2,groupID+1500);
 
 	//sets the isShooting variable. - this part of the code checks for nearby enemies and does focus fire/maneuvering
 	frameSpread = 30; 
 	if (/*myEnemy == -1 && */frameNr % frameSpread == (groupID*4) % frameSpread) {
-//		//L("AG: isShooting start");
+//		L("AG: isShooting start");
 		this->isShooting = false;
 //		int enemies[MAXUNITS];
 		//get all enemies within attack range:
 		float range = this->highestAttackRange + 100.0f;//(this->highestAttackRange+200.0f)*2.0f;
 		int numEnemies = ai->cheat->GetEnemyUnits(unitArray, groupPosition, range);
-//		//L("this is the isShooting setting procedure, numEnemies=" << numEnemies << " range checked: " << range << " and the position of the group is (" << groupPosition.x << " " << groupPosition.y << " " << groupPosition.z << ") numUnits:" << numUnits);
+//		L("this is the isShooting setting procedure, numEnemies=" << numEnemies << " range checked: " << range << " and the position of the group is (" << groupPosition.x << " " << groupPosition.y << " " << groupPosition.z << ") numUnits:" << numUnits);
 		//assert(numEnemies > 0);
 		if(numEnemies > 0) {
-			////L("this is the isShooting setting procedure, numEnemies=" << numEnemies << " range checked: " << range << " and the position of the group is (" << groupPosition.x << " " << groupPosition.y << " " << groupPosition.z << ") numUnits:" << numUnits);
-//			//L("this is the isShooting setting and numEnemies was more than 0 : " << numEnemies);
+			//L("this is the isShooting setting procedure, numEnemies=" << numEnemies << " range checked: " << range << " and the position of the group is (" << groupPosition.x << " " << groupPosition.y << " " << groupPosition.z << ") numUnits:" << numUnits);
+//			L("this is the isShooting setting and numEnemies was more than 0 : " << numEnemies);
 			//ai->cb->SendTextMsg("attackgroup : Im not sure that this happens, ever", 0);
 			//selecting one of the enemies
 			int enemySelected = -1;
@@ -443,23 +442,23 @@ void CAttackGroup::Update()
 					shortestDistanceFound = temp;
 				}
 //				enemyPos = ai->cheat->GetUnitPos(unitArray[i]);
-//				//ai->cb->CreateLineFigure(enemyPos + float3(-xSize,heightOffset,0), enemyPos + float3(xSize,heightOffset,0), 5, 0, frameSpread/2, 6000+(groupID*6000 + i));
-//				//ai->cb->CreateLineFigure(enemyPos + float3(0,heightOffset,-xSize), enemyPos + float3(0,heightOffset,xSize), 5, 0, frameSpread/2, 6000+(groupID*6000 + numEnemies + i));
+//				ai->cb->CreateLineFigure(enemyPos + float3(-xSize,heightOffset,0), enemyPos + float3(xSize,heightOffset,0), 5, 0, frameSpread/2, 6000+(groupID*6000 + i));
+//				ai->cb->CreateLineFigure(enemyPos + float3(0,heightOffset,-xSize), enemyPos + float3(0,heightOffset,xSize), 5, 0, frameSpread/2, 6000+(groupID*6000 + numEnemies + i));
 			}
 //			enemyPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
 			//X marks the target
-//			//ai->cb->CreateLineFigure(enemyPos + float3(-xSize,heightOffset,-xSize), enemyPos + float3(xSize,heightOffset,xSize), 5, 0, frameSpread, lineGroupID);
-//			//ai->cb->CreateLineFigure(enemyPos + float3(-xSize,heightOffset,xSize), enemyPos + float3(xSize,heightOffset,-xSize), 5, 0, frameSpread, lineGroupID);
+//			ai->cb->CreateLineFigure(enemyPos + float3(-xSize,heightOffset,-xSize), enemyPos + float3(xSize,heightOffset,xSize), 5, 0, frameSpread, lineGroupID);
+//			ai->cb->CreateLineFigure(enemyPos + float3(-xSize,heightOffset,xSize), enemyPos + float3(xSize,heightOffset,-xSize), 5, 0, frameSpread, lineGroupID);
 			//tiny line from there to groupPosition
-//			//ai->cb->CreateLineFigure(enemyPos, groupPosition, 5, 0, frameSpread, lineGroupID);
+//			ai->cb->CreateLineFigure(enemyPos, groupPosition, 5, 0, frameSpread, lineGroupID);
 
 			//for every unit, pathfind to enemy perifery(with personal range-10) then if distance to that last point in the path is < 10 or cost is 0, attack
 			// hack: just attack it
-			////L("index of the best enemy: " << enemySelected << " its distance: " << shortestDistanceFound << " its id:" << enemies[enemySelected] << " humanName:" << ai->cheat->GetUnitDef(enemies[enemySelected])->humanName);
+			//L("index of the best enemy: " << enemySelected << " its distance: " << shortestDistanceFound << " its id:" << enemies[enemySelected] << " humanName:" << ai->cheat->GetUnitDef(enemies[enemySelected])->humanName);
 			//TODO: can enemy id be 0
 			//GIVING ATTACK ORDER:
 			if (enemySelected != -1) {
-				//L("AG:isShooting: YES");
+				L("AG:isShooting: YES");
 				float3 enemyPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
 				assert (CloakedFix(unitArray[enemySelected]));
 				this->isShooting = true;
@@ -491,8 +490,7 @@ void CAttackGroup::Update()
 							//needs to be a point ON the perifery circle, not INSIDE it - fixed
 							//maybe include the height parameter in the search? probably not possible
 							//TODO: OBS doesnt this mean pathing might happen every second? outer limit should be more harsh than inner
-							float3 unitPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
-							float dist = ai->pather->FindBestPathToRadius(&tempPath, &myPos, myRange, &unitPos);
+							float dist = ai->pather->FindBestPathToRadius(&tempPath, &myPos, myRange, &ai->cheat->GetUnitPos(unitArray[enemySelected]));
 							if (tempPath.size() > 0) {
 								float3 moveHere = tempPath.back();
 								dist = myPos.distance2D(moveHere);
@@ -502,37 +500,37 @@ void CAttackGroup::Update()
 								//is the position between the proposed destination and the enemy higher than the average of mine and his height?
 								bool losHack = ((moveHere.y + enemyPos.y)/2.0f) + UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP > ai->cb->GetElevation((moveHere.x+enemyPos.x)/2, (moveHere.z+enemyPos.z)/2);
 								//im here assuming the pathfinder returns correct Y values
-								if (dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myRange), float(UNIT_MIN_MANEUVER_DISTANCE))
+								if (dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myRange), UNIT_MIN_MANEUVER_DISTANCE)
 									&& losHack) { //(enemyPos.y - moveHere.y) < UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP) {
 									debug2 = true;
 									//ai->cb->SendTextMsg("AG: maneuvering", 0);
 									//Draw where it would move:
-									//ai->cb->CreateLineFigure(myPos, moveHere, 80, 1, frameSpread, RANDINT%1000000);
-									ai->MyUnits[unit]->maneuverCounter = int(ceilf(max((float)UNIT_MIN_MANEUVER_TIME/frameSpread, (dist/ai->MyUnits[unit]->def()->speed))));
-									//L("AG maneuver debug, maneuverCounter set to " << ai->MyUnits[unit]->maneuverCounter << " and dist:" << dist << " speed:" << ai->MyUnits[unit]->def()->speed << " frameSpread:" << frameSpread << " dist/speed:" << (dist/ai->MyUnits[unit]->def()->speed) << " its a " << ai->MyUnits[unit]->def()->humanName);
+									ai->cb->CreateLineFigure(myPos, moveHere, 80, 1, frameSpread, RANDINT%1000000);
+									ai->MyUnits[unit]->maneuverCounter = ceil(max((float)UNIT_MIN_MANEUVER_TIME/frameSpread, (dist/ai->MyUnits[unit]->def()->speed)));
+									L("AG maneuver debug, maneuverCounter set to " << ai->MyUnits[unit]->maneuverCounter << " and dist:" << dist << " speed:" << ai->MyUnits[unit]->def()->speed << " frameSpread:" << frameSpread << " dist/speed:" << (dist/ai->MyUnits[unit]->def()->speed) << " its a " << ai->MyUnits[unit]->def()->humanName);
 									ai->MyUnits[unit]->Move(moveHere);
 									//REMEMBER that this will suck for planes (which is why i wont add them to this group)
 								}
 							}
 							if (debug1 && !debug2) {
-								//L("AG: maneuver: pathfinder run but path not used");
+								L("AG: maneuver: pathfinder run but path not used");
 							}
 						} else if (!ai->cb->GetUnitDef(unit)->canfly || myPos.y < ai->cb->GetElevation(myPos.x, myPos.z) + 25){
-							//L("AttackGroup: this unit is an air unit: " << ai->cb->GetUnitDef(unit)->humanName);
+							L("AttackGroup: this unit is an air unit: " << ai->cb->GetUnitDef(unit)->humanName);
 						}//endif our unit exists && we arent currently maneuvering
 					} else {
-						////L("isShooting: OUR unit is dead. or something. Shouldnt happen ever. or maneuvering.");
+						//L("isShooting: OUR unit is dead. or something. Shouldnt happen ever. or maneuvering.");
 					}
 					//if cant attack, stop with the others, assuming someone was able to attack something
 				}
 			}
 		}
-//		//L("AG: isShooting end");
+//		L("AG: isShooting end");
 	}
 
 	if (frameNr % 30 == 0 && !defending) {
 		//drawing the target region:
-		//L("AG update: drawing target region (attacking)");
+		L("AG update: drawing target region (attacking)");
 		int heightOffset = 50;
 		vector<float3> circleHack;
 		float diagonalHack = attackRadius * (2.0f/3.0f);
@@ -546,12 +544,12 @@ void CAttackGroup::Update()
 		circleHack[6] += float3(-diagonalHack,heightOffset,diagonalHack);
 		circleHack[7] += float3(-attackRadius,heightOffset,0);
 		for(int i = 0; i < 8; i++) {
-			//ai->cb->CreateLineFigure(circleHack[i], circleHack[(i+1)%8], 5, 0, 300, GetGroupID()+6000);
+			ai->cb->CreateLineFigure(circleHack[i], circleHack[(i+1)%8], 5, 0, 300, GetGroupID()+6000);
 		}
 		//from pos to circle center
-		//ai->cb->CreateLineFigure(groupPosition+float3(0,heightOffset,0), attackPosition+float3(0,heightOffset,0), 5, 1, 30, GetGroupID()+6000);
+		ai->cb->CreateLineFigure(groupPosition+float3(0,heightOffset,0), attackPosition+float3(0,heightOffset,0), 5, 1, 30, GetGroupID()+6000);
 		ai->cb->SetFigureColor(GetGroupID() + 6000, 0, 0, 0, 1.0f);
-		//L("AG update: done drawing stuff");
+		L("AG update: done drawing stuff");
 	}
 
 	//TODO: if arrived and not isShooting, set defending? already done in ismoving-end
@@ -563,21 +561,21 @@ void CAttackGroup::Update()
 	// GIVE MOVE ORDERS TO UNITS ALONG PATHTOTARGET
 	frameSpread = 60;
 	if (!isShooting && isMoving && frameNr % frameSpread == (groupID*5) % frameSpread) {
-		//L("AG: start of move order part before loop");
+		L("AG: start of move order part before loop");
 		//do the moving
 		const int maxStepsAhead = 8;
 		int pathMaxIndex = (int)pathToTarget.size()-1;
 		int step1 = min(this->pathIterator + maxStepsAhead/2, pathMaxIndex);
 		int step2 = min(this->pathIterator + maxStepsAhead, pathMaxIndex);
-		//L("AG: picking stuff out of pathToTarget");
-		//L("AG: pathtotarget size: " << pathToTarget.size());
+		L("AG: picking stuff out of pathToTarget");
+		L("AG: pathtotarget size: " << pathToTarget.size());
 		float3 moveToHereFirst = this->pathToTarget[step1];
 		float3 moveToHere = this->pathToTarget[step2];
 		
 		//drawing destination
-//		//ai->cb->CreateLineFigure(groupPosition + float3(0,50,0), pathToTarget[pathMaxIndex] + float3(0,50,0),8,1,frameSpread,groupID+1200);
+//		ai->cb->CreateLineFigure(groupPosition + float3(0,50,0), pathToTarget[pathMaxIndex] + float3(0,50,0),8,1,frameSpread,groupID+1200);
 		
-		//L("AG: move order still before loop");
+		L("AG: move order still before loop");
 		
         //if we aint there yet
 		if (groupPosition.distance2D(pathToTarget[pathMaxIndex]) > GROUP_DESTINATION_SLACK) {
@@ -590,25 +588,25 @@ void CAttackGroup::Update()
 					//if the single unit aint there yet
 					if (ai->cb->GetUnitPos(unit).distance2D(pathToTarget[pathMaxIndex]) > UNIT_DESTINATION_SLACK) {
 						ai->MyUnits[unit]->Move(moveToHereFirst);
-//						//ai->cb->CreateLineFigure(ai->cb->GetUnitPos(unit) + float3(0,50,0), moveToHereFirst + float3(0,50,0),15,1,10,groupID+50000);
+//						ai->cb->CreateLineFigure(ai->cb->GetUnitPos(unit) + float3(0,50,0), moveToHereFirst + float3(0,50,0),15,1,10,groupID+50000);
 						if (moveToHere != moveToHereFirst) {
 							ai->MyUnits[unit]->MoveShift(moveToHere);
-//							//ai->cb->CreateLineFigure(moveToHereFirst + float3(0,50,0), moveToHere + float3(0,50,0),15,1,10,groupID+50000);
+//							ai->cb->CreateLineFigure(moveToHereFirst + float3(0,50,0), moveToHere + float3(0,50,0),15,1,10,groupID+50000);
 						}
 						//TODO: give a spring group the order instead of each unit
 						//draw thin line from unit to groupPos
-						//ai->cb->CreateLineFigure(ai->cb->GetUnitPos(unit) + float3(0,50,0), groupPosition + float3(0,50,0),4,0,frameSpread,groupID+500);
+						ai->cb->CreateLineFigure(ai->cb->GetUnitPos(unit) + float3(0,50,0), groupPosition + float3(0,50,0),4,0,frameSpread,groupID+500);
 					} else {
 						AIHCAddMapPoint amp;
 						amp.label = "case-sua";
 						amp.pos = groupPosition;
-//						//ai->cb->HandleCommand(&amp);
+//						ai->cb->HandleCommand(&amp);
 					}
 				}
 			}
 			//if group is as close as the pathiterator-indicated target is to the end of the path, increase pathIterator
 			
-			//L("AG: after move order, about to adjust stuff");
+			L("AG: after move order, about to adjust stuff");
 
 /*			
 			float3 endOfPathPos = pathToTarget[pathMaxIndex];
@@ -619,7 +617,7 @@ void CAttackGroup::Update()
 			}
 			
 			if (groupDistanceToEnemy > (pathIteratorTargetDistanceToEnemy*3.0f)) {
-				//L("AG: path iterator reset bug thing");
+				L("AG: path iterator reset bug thing");
 				//this->pathIterator = min(pathIterator + maxStepsAhead/2, pathMaxIndex);
 				this->pathIterator = 1;
 			}
@@ -636,21 +634,21 @@ void CAttackGroup::Update()
 			pathIterator = min(pathIterator, pathMaxIndex);
 			
 		} else {
-			//L("AG: group thinks it has arrived at the destination:" << groupID);
+			L("AG: group thinks it has arrived at the destination:" << groupID);
 //			AIHCAddMapPoint amp;
 //			amp.label = "group thinks it has arrived at the destination.";
 //			amp.pos = groupPosition;
-//			//ai->cb->HandleCommand(&amp);
+//			ai->cb->HandleCommand(&amp);
 			this->ClearTarget();
 		}
-		//L("AG: done updating move stuff (yay)");
+		L("AG: done updating move stuff (yay)");
 
 	}//endif move
 	
 	//stuck fix stuff. disabled because the spring one works now and thats not taken into consideration yet.
 	frameSpread = 60;
 	if (false && isMoving && !isShooting && frameNr % frameSpread == 0) {
-		//L("AG: unit stuck checking start");
+		L("AG: unit stuck checking start");
 		//stuck unit counter update. (at a 60 frame modulo)
 		//TODO: if one unit has completed the path, it wont be given any new orders, but this will still happen
 		//so there might be false positives here :<
@@ -667,20 +665,19 @@ void CAttackGroup::Update()
 				u->earlierPosition = u->pos();
 				//hack for slight maneuvering around buildings, spring fails at this sometimes
 				if (u->stuckCounter == UNIT_STUCK_COUNTER_MANEUVER_LIMIT) {
-					//L("AG: attempting unit unstuck manuevering for " << unit << " at pos " << u->pos().x << " " << u->pos().y << " " << u->pos().z);
+					L("AG: attempting unit unstuck manuevering for " << unit << " at pos " << u->pos().x << " " << u->pos().y << " " << u->pos().z);
 					AIHCAddMapPoint amp;
 					amp.label = "stuck-fix";
 					amp.pos = u->pos();
-					//ai->cb->HandleCommand(&amp);
+					ai->cb->HandleCommand(&amp);
 					//findbestpath to perifery of circle around mypos, distance 2x resolution or somesuch
 					//dont reset counter, that would make it loop manuever attempts.
 					vector<float3> tempPath;
-					float3 upos = u->pos();
-					float dist = ai->pather->FindBestPathToRadius(&tempPath, &upos, UNIT_STUCK_MANEUVER_DISTANCE, &upos); //500 = hack
+					float dist = ai->pather->FindBestPathToRadius(&tempPath, &u->pos(), UNIT_STUCK_MANEUVER_DISTANCE, &u->pos()); //500 = hack
 					//float dist = ai->pather->FindBestPathToRadius(&tempPath, &ai->cb->GetUnitPos(unit), myRange, &ai->cheat->GetUnitPos(enemies[enemySelected]));
 					if (tempPath.size() > 0) {
 						float3 moveHere = tempPath.back();
-						//ai->cb->CreateLineFigure(u->pos(), moveHere, 14, 1, frameSpread, RANDINT%1000000);
+						ai->cb->CreateLineFigure(u->pos(), moveHere, 14, 1, frameSpread, RANDINT%1000000);
 						u->Move(moveHere);
 					}
 				}

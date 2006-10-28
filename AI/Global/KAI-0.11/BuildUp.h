@@ -1,6 +1,4 @@
-#ifndef BUILDUP_H
-#define BUILDUP_H
-/*pragma once removed*/
+#pragma once
 #include "GlobalAI.h"
 
 
@@ -23,5 +21,3 @@ class CBuildUp
 
 	AIClasses* ai;
 };
-
-#endif /* BUILDUP_H */

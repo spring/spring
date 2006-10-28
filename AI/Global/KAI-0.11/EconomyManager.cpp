@@ -12,31 +12,31 @@ CEconomyManager::~CEconomyManager()
 
 /*float CEconomyManager::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 ground attackers, 4 defenses, 5 builders
 {
-	////L("Getting Score for: " << unit->humanName);
+	//L("Getting Score for: " << unit->humanName);
 	
 	//float EProductionNeed = unit->energyCost - ai->cb->GetEnergy();//ai->cb->GetEnergy() - unit->energyCost;
 	//float EProduction = ai->cb->GetEnergyIncome() - ai->cb->GetEnergyUsage();
 	//if(EProduction < 1)
 	//	EProduction = 1;
-	////L("EProductionNeed: " << EProductionNeed);
-	////L("EProduction: " << EProduction);
+	//L("EProductionNeed: " << EProductionNeed);
+	//L("EProduction: " << EProduction);
 	//float MProductionNeed = unit->metalCost - ai->cb->GetMetal();//ai->cb->GetMetal() - unit->metalCost;
 	//float MProduction = ai->cb->GetMetalIncome() - ai->cb->GetMetalUsage();
 	//if(MProduction < 1)
 	//	MProduction = 1;
-	////L("MProductionNeed: " << MProductionNeed);
-	////L("MProduction: " << MProduction);
+	//L("MProductionNeed: " << MProductionNeed);
+	//L("MProduction: " << MProduction);
 	//float timeToBuild = max (EProductionNeed / EProduction, MProductionNeed / MProduction);
 	//if(timeToBuild < 1)
 	//	timeToBuild = 1; // It can be built right now...  Make something more costly instead?
-	////L("timeToBuild: " << timeToBuild);
+	//L("timeToBuild: " << timeToBuild);
 	//float METAL2ENERGY_current = ai->cb->GetEnergy() (ai->cb->GetEnergyIncome()*0.9 - ai->cb->GetEnergyUsage())
 	//float buildtime = //unit->buildTime / builder->buildSpeed;
 	// Take the buildtime, and use it smart.
 	// Make a ratio of unit->buildTime / timeToBuild ???:
 	// This realy needs to know its creators build speed.
 	//float buildTimeRatio =  unit->buildTime / timeToBuild;
-	////L("buildTimeRatio: " << buildTimeRatio);
+	//L("buildTimeRatio: " << buildTimeRatio);
 	//float buildTimeFix = unit->buildTime / 100;
 
 	// Ignore the cost now :P
@@ -90,7 +90,7 @@ CEconomyManager::~CEconomyManager()
 			Benefit *= 0.7; //slight reduction to the feasability of air
 		break;
 	case CAT_DEFENCE:
-		////L("Getting DEFENCE SCORE FOR: " << unit->humanName);
+		//L("Getting DEFENCE SCORE FOR: " << unit->humanName);
 		Benefit = pow((unit->weapons.front().def->areaOfEffect + 80),float(1))
 				* pow(GetMaxRange(unit),float(2))
 				* pow(GetCurrentDamageScore(unit),float(1.5))
@@ -100,9 +100,9 @@ CEconomyManager::~CEconomyManager()
 				* pow(Cost,float(-1));
 		break;
 	case CAT_BUILDER:
-		////L("Getting Score For Builder");
+		//L("Getting Score For Builder");
 		for(int i = 0; i != unittypearray[unit->id].canBuildList.size(); i++){
-			////L("category: " << unittypearray[unittypearray[unit->id].canBuildList[i]].category);
+			//L("category: " << unittypearray[unittypearray[unit->id].canBuildList[i]].category);
 			if(unittypearray[unittypearray[unit->id].canBuildList[i]].category == CAT_FACTORY){
 				candevelop = true;
 			}
@@ -128,13 +128,13 @@ CEconomyManager::~CEconomyManager()
 		//else
 		//	buildTimeRatio *= 0.5;
 		
-		////L("CAT_FACTORY: " << unit->humanName << " Has a sum score of : " << Benefit);
+		//L("CAT_FACTORY: " << unit->humanName << " Has a sum score of : " << Benefit);
 		
 		if(unitcounter > 0)
 			Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unit->id]->size() + 1),float(3)));
 		else
 			Benefit = 0;
-		////L("Factory: " << unit->humanName << " Has a score of: " << Benefit);
+		//L("Factory: " << unit->humanName << " Has a score of: " << Benefit);
 		break;
 	case CAT_MSTOR:
 		Benefit = pow((unit->metalStorage),float(1))
@@ -162,26 +162,26 @@ CEconomyManager::~CEconomyManager()
 		// This will be slow... Do a cut off.
 		buildTimeRatio *= 0.001;
 	}
-	////L("buildTimeRatio: " << buildTimeRatio);
+	//L("buildTimeRatio: " << buildTimeRatio);
 	
 	
-	////L("Benefit: " << Benefit);
-	////L("Unit: " << unit->humanName << " Has a score of : " << Benefit);
+	//L("Benefit: " << Benefit);
+	//L("Unit: " << unit->humanName << " Has a score of : " << Benefit);
 	float EScore = Benefit/(Cost+CurrentIncome);
 	//float EScore = Benefit * pow(buildTimeRatio,float(4));
-	////L("EScore: " << EScore);
+	//L("EScore: " << EScore);
 	return EScore;
 }
 const UnitDef* CEconomyManager::GetUnitByScore(int builder, int category)//0 energy, 1 mex, 2mmaker, 3 ground attackers, 4 defenses, 5 builders
 {
 	ai->math->TimerStart();
-	////L("Getting Score for category:" << category << " Builder: " << ai->cb->GetUnitDef(builder)->humanName);
+	//L("Getting Score for category:" << category << " Builder: " << ai->cb->GetUnitDef(builder)->humanName);
 	vector<int>* templist;
 	const UnitDef* tempunit;
 	int side = GetSide(builder);
 	float tempscore = 0;
 	float bestscore = 0;
-	////L("vars set");
+	//L("vars set");
 	switch (category){
 		case CAT_ENERGY:
 			templist = ground_energy;
@@ -211,27 +211,27 @@ const UnitDef* CEconomyManager::GetUnitByScore(int builder, int category)//0 ene
 			templist = energy_storages;
 			break;
 	}
-	////L("Switch done, side: " << side);
+	//L("Switch done, side: " << side);
 	for(int i = 0; i != templist[side].size(); i++){
 		if(CanBuildUnit(ai->cb->GetUnitDef(builder)->id, templist[side][i])){
 			tempscore = GetScore(unittypearray[templist[side][i]].def);
 			if (bestscore < tempscore){
-				////L("Better Score found");
+				//L("Better Score found");
 				bestscore = tempscore;
 				tempunit = unittypearray[templist[side][i]].def;
 			}
 		}
 	}
-	////L("Loop calculated");
+	//L("Loop calculated");
 	if(!bestscore){
-		//L("no scores found for unit!");
+		L("no scores found for unit!");
 		for(int i = 0; i != unittypearray[ai->cb->GetUnitDef(builder)->id].canBuildList.size(); i++){
 				if(unittypearray[unittypearray[ai->cb->GetUnitDef(builder)->id].canBuildList[i]].category != -1){
 					return unittypearray[unittypearray[ai->cb->GetUnitDef(builder)->id].canBuildList.front()].def;
 				}
 		}
 	}
-	////L("Time taken for getunitbyscore: " << ai->math->TimerSecs() << "s.");
+	//L("Time taken for getunitbyscore: " << ai->math->TimerSecs() << "s.");
 	return tempunit;
 }*/
 

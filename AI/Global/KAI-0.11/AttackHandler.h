@@ -1,6 +1,4 @@
-#ifndef ATTACKHANDLER_H
-#define ATTACKHANDLER_H
-/*pragma once removed*/
+#pragma once
 #include "GlobalAI.h"
 
 class CAttackGroup;
@@ -12,48 +10,48 @@ class CAttackHandler
 
 	virtual ~CAttackHandler();
 
-	void AddUnit(int unitID);
-	void Update();
-	void UnitDestroyed(int unitID);
+	void CAttackHandler::AddUnit(int unitID);
+	void CAttackHandler::Update();
+	void CAttackHandler::UnitDestroyed(int unitID);
 	
 
 	//the kmeans is placed here for now =)
-	vector<float3> KMeansIteration(vector<float3> means, vector<float3> unitPositions, int newK);
-	float DistanceToBase(float3 pos);
-	float3 GetClosestBaseSpot(float3 pos);
-	bool PlaceIdleUnit(int unit);
+	vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<float3> unitPositions, int newK);
+	float CAttackHandler::DistanceToBase(float3 pos);
+	float3 CAttackHandler::GetClosestBaseSpot(float3 pos);
+	bool CAttackHandler::PlaceIdleUnit(int unit);
 
 	//for use for builders
-	bool IsSafeBuildSpot(float3 mypos);
-	bool IsVerySafeBuildSpot(float3 mypos);
+	bool CAttackHandler::IsSafeBuildSpot(float3 mypos);
+	bool CAttackHandler::IsVerySafeBuildSpot(float3 mypos);
 
-//	float3 FindSafeArea();
-//	float3 FindVerySafeArea();
-//	float3 FindSafeSpot();
+//	float3 CAttackHandler::FindSafeArea();
+//	float3 CAttackHandler::FindVerySafeArea();
+//	float3 CAttackHandler::FindSafeSpot();
 //	float3 CAttackHandler::FindVerySafeSpot();
 
-	float3 FindSafeSpot(float3 myPos, float minSafety, float maxSafety);
-	float3 FindSafeArea(float3 pos);
-	float3 FindVerySafeArea(float3 pos);
-	float3 FindUnsafeArea(float3 pos);
+	float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafety);
+	float3 CAttackHandler::FindSafeArea(float3 pos);
+	float3 CAttackHandler::FindVerySafeArea(float3 pos);
+	float3 CAttackHandler::FindUnsafeArea(float3 pos);
 
 
 
-	void UpdateKMeans();
+	void CAttackHandler::UpdateKMeans();
 
-	void UpdateAir();
+	void CAttackHandler::UpdateAir();
 
-	void AssignTargets();
-	void AssignTarget(CAttackGroup* group);
+	void CAttackHandler::AssignTargets();
+	void CAttackHandler::AssignTarget(CAttackGroup* group);
 
 	//bool CAttackHandler::IsReadyToAttack(int unit);
 
-	bool UnitGroundAttackFilter(int unit);
-	//bool UnitBuildingFilter(int unit);
-	bool UnitBuildingFilter(const UnitDef *ud);
-	bool UnitReadyFilter(int unit);
+	bool CAttackHandler::UnitGroundAttackFilter(int unit);
+	//bool CAttackHandler::UnitBuildingFilter(int unit);
+	bool CAttackHandler::UnitBuildingFilter(const UnitDef *ud);
+	bool CAttackHandler::UnitReadyFilter(int unit);
 
-	void CombineGroups();
+	void CAttackHandler::CombineGroups();
 
 private:
 	AIClasses *ai;	
@@ -81,5 +79,3 @@ private:
 	vector<float3> kMeansEnemyBase;
 	int kMeansEnemyK;
 };
-
-#endif /* ATTACKHANDLER_H */

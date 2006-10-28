@@ -19,13 +19,13 @@ CSunParser::CSunParser(AIClasses* ai)
 }
 CSunParser::~CSunParser()
 {
-    ////L("CSunParser::~CSunParser()");
+    //L("CSunParser::~CSunParser()");
 	DeleteSection(&sections);
-	////L("~");
+	//L("~");
 }
 void CSunParser::DeleteSection(map<string,SSection*> *section)
 {
-    ////L("CSunParser::DeleteSection(" << section << ")" << endl);
+    //L("CSunParser::DeleteSection(" << section << ")" << endl);
 	map<string, SSection*>::iterator ui;
 	for(ui=section->begin();ui!=section->end();ui++)
 	{
@@ -35,7 +35,7 @@ void CSunParser::DeleteSection(map<string,SSection*> *section)
 }
 void CSunParser::LoadVirtualFile(string filename)
 {
-    ////L("CSunParser::LoadVirtualFile(" << filename << ")" << endl);
+    //L("CSunParser::LoadVirtualFile(" << filename << ")" << endl);
 	//DeleteSection(&sections);
 
 	this->filename = filename;
@@ -52,7 +52,7 @@ void CSunParser::LoadVirtualFile(string filename)
     int size = ai->cb->GetFileSize(filename.c_str());
     if(size == -1)
     {
-    	////L("Sun Parsing Error: File " << filename << " not found" << endl);
+    	//L("Sun Parsing Error: File " << filename << " not found" << endl);
         return;
     }
 	char *filebuf = new char[size+1];
@@ -68,39 +68,36 @@ void CSunParser::LoadVirtualFile(string filename)
 	catch(...)
 	{
 		// MessageBox(hWnd, ("error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
-        ////L("Sun Parsing Error: Error parsing virtual file " << filename << endl);
+        //L("Sun Parsing Error: Error parsing virtual file " << filename << endl);
 	}
 
 	delete[] filebuf;
 }
 void CSunParser::LoadRealFile(string filename)
 {
-    ////L("CSunParser::LoadRealFile(" << filename << ")" << endl);
-	char filename_buf[1000];
-	strcpy(filename_buf, filename.c_str());
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
-
-	this->filename = filename_buf;
+    //L("CSunParser::LoadRealFile(" << filename << ")" << endl);
+	this->filename = filename;
     /*
-	FILE *RealFile = fopen(filename_buf, "r");
+	FILE *RealFile = fopen(filename.c_str(), "r");
 	if(RealFile == NULL)
     {
-    	////L("Sun Parsing Error: File " << filename << " not found" << endl);
+    	//L("Sun Parsing Error: File " << filename << " not found" << endl);
         return;
     }
     */
-    ifstream RealFile(filename_buf);
+    ifstream RealFile(filename.c_str());
     if(RealFile.fail())
     {
-    	////L("Sun Parsing Error: File " << filename << " not found" << endl);
+    	//L("Sun Parsing Error: File " << filename << " not found" << endl);
         return;
     }
 
-    RealFile.seekg(0, ios_base::end);
-    int size = RealFile.tellg();
-    RealFile.seekg(0, ios_base::beg);
 
-    ////L("Size = " << size);
+
+    _finddata_t FD;
+    _findfirst(filename.c_str(), &FD);
+    int size = FD.size;
+    //L("Size = " << size);
 	char *filebuf = new char[size+1];
     RealFile.get(filebuf, size, '\0');
     RealFile.close();
@@ -113,14 +110,14 @@ void CSunParser::LoadRealFile(string filename)
 	catch(...)
 	{
 		// MessageBox(hWnd, ("error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
-        ////L("Sun Parsing Error: Error parsing file " << filename << endl);
+        //L("Sun Parsing Error: Error parsing file " << filename << endl);
 	}
 
 	delete[] filebuf;
 }
 void CSunParser::LoadBuffer(char* buf, int size)
 {
-    ////L("CSunParser::LoadBuffer(" << &buf << ", " << size << ")" << endl);
+    //L("CSunParser::LoadBuffer(" << &buf << ", " << size << ")" << endl);
     this->filename = "\'Buffer\'";
 	try
 	{
@@ -129,12 +126,12 @@ void CSunParser::LoadBuffer(char* buf, int size)
 	catch(...)
 	{
 		//MessageBox(hWnd, ("error parsing file " + filename).c_str(), "Sun parsing error", MB_OK);
-        ////L("Sun Parsing Error: Error parsing file " << filename << endl);
+        //L("Sun Parsing Error: Error parsing file " << filename << endl);
 	}
 }
 void CSunParser::Parse(char *buf, int size)
 {
-    ////L("CSunParser::Parse(buf, " << size << ")" << endl);
+    //L("CSunParser::Parse(buf, " << size << ")" << endl);
 	string thissection;
 	SSection *section = NULL;
 
@@ -181,7 +178,7 @@ void CSunParser::Parse(char *buf, int size)
 			map<string, SSection*>::iterator ui=sections.find(thissection);
 			if(ui!=sections.end()){
 //				MessageBox(0,"Overwrote earlier section in sunparser",thissection.c_str(),0);
-                ////L("Sun Parsing Error: Overwrote earlier section in sunparser: " << thissection << endl);
+                //L("Sun Parsing Error: Overwrote earlier section in sunparser: " << thissection << endl);
 				DeleteSection(&ui->second->sections);
 				delete ui->second;
 			}
@@ -194,11 +191,11 @@ void CSunParser::Parse(char *buf, int size)
 		if (buf <= endptr)
 			buf++;
 	}
-	////L("Finished Parsing" << endl);
+	//L("Finished Parsing" << endl);
 }
 char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 {
-    ////L("CSunParser::ParseSection(buf, " << size << ", " << section << ")" << endl);
+    //L("CSunParser::ParseSection(buf, " << size << ", " << section << ")" << endl);
 	string thissection;
 
 	int se = 0; //for section start/end errorchecking
@@ -241,7 +238,7 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 			map<string, SSection*>::iterator ui=section->sections.find(thissection);
 			if(ui!=section->sections.end()){
 //				MessageBox(0,"Overwrote earlier section in sunparser",thissection.c_str(),0);
-                ////L("Sun Parsing Error: Overwrote earlier section in sunparser: " << thissection << endl);
+                //L("Sun Parsing Error: Overwrote earlier section in sunparser: " << thissection << endl);
 				DeleteSection(&ui->second->sections);
 				delete ui->second;
 			}
@@ -270,9 +267,9 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 				buf++;
 			}
 			transform(name.begin(), name.end(), name.begin(), (int (*)(int))tolower);
-			////L("Attempting " << name << " = " << value << endl);
+			//L("Attempting " << name << " = " << value << endl);
 			section->values[name] = value;
-			////L(name << " = " << value << endl);
+			//L(name << " = " << value << endl);
 		}
 
 		buf++;
@@ -283,7 +280,7 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
 //find value, display messagebox if no such value found
 string CSunParser::SGetValueMSG(string location)
 {
-    ////L("CSunParser::SGetValueMSG(" << location << ")" << endl);
+    //L("CSunParser::SGetValueMSG(" << location << ")" << endl);
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	string value;
 
@@ -292,14 +289,14 @@ string CSunParser::SGetValueMSG(string location)
 	if(!found)
 	{
 //        MessageBox(hWnd, value.c_str(), "Sun parsing error", MB_OK);
-        ////L("Sun Parsing Error: Value " << value << " not found" << endl);
+        //L("Sun Parsing Error: Value " << value << " not found" << endl);
 	}
 	return value;
 }
 //find value, return default value if no such value found
 string CSunParser::SGetValueDef(string defaultvalue, string location)
 {
-    ////L("CSunParser::SGetValueDef(" << defaultvalue << ", " << location << "): ");
+    //L("CSunParser::SGetValueDef(" << defaultvalue << ", " << location << "): ");
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	string value;
 
@@ -307,7 +304,7 @@ string CSunParser::SGetValueDef(string defaultvalue, string location)
 
 	if(!found)
 	{
-		////L("Using Default: ");
+		//L("Using Default: ");
 		value = defaultvalue;
 	}
 	return value;
@@ -315,7 +312,7 @@ string CSunParser::SGetValueDef(string defaultvalue, string location)
 //finds a value in the file, if not found returns false, and errormessages is returned in value
 bool CSunParser::GetValue(string &value, ...)
 {
-    ////L("CSunParser::GetValue(" << value << ")" << endl);
+    //L("CSunParser::GetValue(" << value << ")" << endl);
 
 	string searchpath; //for errormessages
 
@@ -364,7 +361,7 @@ bool CSunParser::GetValue(string &value, ...)
 }
 void CSunParser::Test()
 {
-    ////L("CSunParser::Test()" << endl);
+    //L("CSunParser::Test()" << endl);
 	SSection *unitinfo = sections["UNITINFO"];
 	SSection *weapons = unitinfo->sections["WEAPONS"];
 
@@ -374,7 +371,7 @@ void CSunParser::Test()
 //location of value is sent as a string "section\section\value"
 bool CSunParser::SGetValue(string &value, string location)
 {
-    ////L("CSunParser::SGetValue(" << value << ", " << location << ")" << endl);
+    //L("CSunParser::SGetValue(" << value << ", " << location << ")" << endl);
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	string searchpath; //for errormessages
 
@@ -422,7 +419,7 @@ bool CSunParser::SGetValue(string &value, string location)
 //return a map with all values in section
 const map<string, string> CSunParser::GetAllValues(string location)
 {
-    ////L("CSunParser::GetAllValues(" << location << ")" << endl);
+    //L("CSunParser::GetAllValues(" << location << ")" << endl);
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	map<string, string> emptymap;
 	string searchpath; //for errormessages
@@ -433,7 +430,7 @@ const map<string, string> CSunParser::GetAllValues(string location)
 	if(sections.find(loclist[0]) == sections.end())
 	{
 //		MessageBox(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
-        ////L("Sun Parsing Error: Section " << loclist[0] << " missing in file " << filename << endl);
+        //L("Sun Parsing Error: Section " << loclist[0] << " missing in file " << filename << endl);
 		return emptymap;
 	}
 	SSection *sectionptr = sections[loclist[0]];
@@ -446,7 +443,7 @@ const map<string, string> CSunParser::GetAllValues(string location)
 		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end())
 		{
 //			MessageBox(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
-            ////L("Sun Parsing Error: Section " << searchpath << " missing in file " << filename << endl);
+            //L("Sun Parsing Error: Section " << searchpath << " missing in file " << filename << endl);
 			return emptymap;
 		}
 
@@ -458,7 +455,7 @@ const map<string, string> CSunParser::GetAllValues(string location)
 //return vector with all section names in it
 vector<string> CSunParser::GetSectionList(string location)
 {
-    ////L("CSunParser::GetSectionList(" << location << ")" << endl);
+    //L("CSunParser::GetSectionList(" << location << ")" << endl);
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	vector<string> loclist = GetLocationVector(location);
 
@@ -476,7 +473,7 @@ vector<string> CSunParser::GetSectionList(string location)
 			if(sectionsptr->find(loclist[i]) == sectionsptr->end())
 			{
 //				MessageBox(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MB_OK);
-                ////L("Sun Parsing Error: Section " << searchpath << " missing in file " << filename << endl);
+                //L("Sun Parsing Error: Section " << searchpath << " missing in file " << filename << endl);
 				return returnvec;
 			}
 
@@ -497,7 +494,7 @@ vector<string> CSunParser::GetSectionList(string location)
 }
 bool CSunParser::SectionExist(string location)
 {
-    ////L("CSunParser::SectionExist(" << location << ")" << endl);
+    //L("CSunParser::SectionExist(" << location << ")" << endl);
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	vector<string> loclist = GetLocationVector(location);
 
@@ -520,7 +517,7 @@ bool CSunParser::SectionExist(string location)
 }
 vector<string> CSunParser::GetLocationVector(string location)
 {
-    ////L("CSunParser::GetLocationVector(" << location << ")" << endl);
+    //L("CSunParser::GetLocationVector(" << location << ")" << endl);
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	vector<string> loclist;
 	int start = 0;
@@ -560,7 +557,7 @@ void CSunParser::GetDef(T& value, const string& key, const string& defvalue)
 	}*/
 float3 CSunParser::GetFloat3(float3 def, string location)
 {
-  /*  ////L("CSunParser::GetFloat3((" << def.x << ", " << def.y << ", " << def.z << "), " << location << ")" << endl);
+  /*  //L("CSunParser::GetFloat3((" << def.x << ", " << def.y << ", " << def.z << "), " << location << ")" << endl);
 	string s=SGetValueDef("",location);
 	if(s.empty())
 		return def;

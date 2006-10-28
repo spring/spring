@@ -1,5 +1,3 @@
-#ifndef SUNPARSER_H
-#define SUNPARSER_H
 // SunParser.h: interface for the CSunParser class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,7 +6,7 @@
 #define AFX_SUNPARSER_H__3B578919_AC8F_438C_81EC_AAC59B692324__INCLUDED_
 
 #if _MSC_VER > 1000
-/*pragma once removed*/
+#pragma once
 #endif // _MSC_VER > 1000
 
 //#pragma warning(disable:4786)
@@ -94,7 +92,7 @@ public:
 	template<typename T>
 	void GetDef(T& value, const string& defvalue, const string& key)
 	{
-//		////L("CSunParser::GetDef(" << (T)value << ", " << defvalue << ", " << key << ")" << endl);
+//		//L("CSunParser::GetDef(" << (T)value << ", " << defvalue << ", " << key << ")" << endl);
 		string str;
 		str = SGetValueDef(defvalue, key);
 
@@ -124,5 +122,3 @@ public:
 	AIClasses* ai;
 };
 #endif // !defined(AFX_SUNPARSER_H__3B578919_AC8F_438C_81EC_AAC59B692324__INCLUDED_)
-
-#endif /* SUNPARSER_H */

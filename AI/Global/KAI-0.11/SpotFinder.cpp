@@ -31,7 +31,7 @@ CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width)
 	haveTheBestSpotReady = false;
 	isValid = false;
 	radius = 0;
-	//L("SpotFinder class");
+	L("SpotFinder class");
 }
 
 CSpotFinder::~CSpotFinder()
@@ -109,7 +109,7 @@ void CSpotFinder::SetRadius(int radius)
 		for (int a=0;a<DoubleRadius+1;a++){ 
 			float z=a-radius;
 			float floatsqrradius = SquareRadius;
-			xend[a]=int(sqrtf(floatsqrradius-z*z));
+			xend[a]=sqrt(floatsqrradius-z*z);
 		}
 		
 	}
@@ -142,7 +142,7 @@ void CSpotFinder::MakeCachePoints()
 			float sum = TempAverage[y * MapWidth + x];
 			
 			int cacheIndex = cacheY * MapWidth/CACHEFACTOR + cacheX;
-			////L("cacheIndex: " << cacheIndex << ", maxValueInBox: " << cachePoints[cacheIndex].maxValueInBox << ", sum: " << sum << ", x: " << x << ", y: " << y);
+			//L("cacheIndex: " << cacheIndex << ", maxValueInBox: " << cachePoints[cacheIndex].maxValueInBox << ", sum: " << sum << ", x: " << x << ", y: " << y);
 			
 			if(cachePoints[cacheIndex].maxValueInBox < sum)
 			{
@@ -150,7 +150,7 @@ void CSpotFinder::MakeCachePoints()
 				cachePoints[cacheIndex].maxValueInBox = sum;
 				cachePoints[cacheIndex].x = x;
 				cachePoints[cacheIndex].y = y;
-				////L("cacheIndex: " << cacheIndex << ", sum: " << sum << ", x: " << x << ", y: " << y);
+				//L("cacheIndex: " << cacheIndex << ", sum: " << sum << ", x: " << x << ", y: " << y);
 			}
 		}
 	}
@@ -161,7 +161,7 @@ CachePoint * CSpotFinder::GetBestCachePoint(int x, int y)
 	int cacheY = y;// / CACHEFACTOR;
 	int cacheX = x;// / CACHEFACTOR;
 	int cacheIndex = cacheY * MapWidth/CACHEFACTOR + cacheX;
-	////L("GetBestCachePoint: cacheIndex: " << cacheIndex);
+	//L("GetBestCachePoint: cacheIndex: " << cacheIndex);
 	if(!cachePoints[cacheIndex].isValid)
 	{
 		// temp:
@@ -180,7 +180,7 @@ Makes the array with the sumes of all points inside the radius of that point.
 */
 float* CSpotFinder::MakeSumMap()
 {
-	//L("Starting MakeSumMap");
+	L("Starting MakeSumMap");
 	isValid = true;
 	int XtractorRadius = radius;
 	int DoubleRadius = XtractorRadius * 2;
@@ -414,7 +414,7 @@ void CSpotFinder::UpdateSumMapArea(int cacheX, int cacheY)
 				currentBest = TotalMetal;
 				currentBestX = x;
 				currentBestY = y;
-				////L("cacheIndex: " << cacheIndex << ", sum: " << sum << ", x: " << x << ", y: " << y);
+				//L("cacheIndex: " << cacheIndex << ", sum: " << sum << ", x: " << x << ", y: " << y);
 			}
 			// end
 		}
@@ -804,7 +804,7 @@ void CSpotFinder::GetMetalPoints()
 		ai->cb->SendTextMsg("Metal Map Found",0);
 		NumSpotsFound = 0; //no point in saving spots if the map is a metalmap
 	}
-	//L("Time taken to generate spots: " << ai->math->TimerSecs() << " seconds.");
+	L("Time taken to generate spots: " << ai->math->TimerSecs() << " seconds.");
 	//ai->cb->SendTextMsg(c,0);
 	
 }

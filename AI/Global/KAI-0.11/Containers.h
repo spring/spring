@@ -1,6 +1,4 @@
-#ifndef CONTAINERS_H
-#define CONTAINERS_H
-/*pragma once removed*/
+#pragma once
 
 class	IAICallback;
 class	IAICheats;
@@ -129,5 +127,3 @@ struct Factory
 
 
 
-
-#endif /* CONTAINERS_H */
