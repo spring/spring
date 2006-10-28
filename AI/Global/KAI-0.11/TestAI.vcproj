@@ -307,6 +307,9 @@
 				RelativePath=".\BuildUp.h">
 			</File>
 			<File
+				RelativePath=".\DamageControl.h">
+			</File>
+			<File
 				RelativePath=".\DefenseMatrix.h">
 			</File>
 			<File
@@ -388,6 +391,9 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
+				RelativePath=".\AreaManager.cpp">
+			</File>
+			<File
 				RelativePath=".\AttackGroup.cpp">
 			</File>
 			<File
@@ -395,6 +401,9 @@
 			</File>
 			<File
 				RelativePath=".\BuildUp.cpp">
+			</File>
+			<File
+				RelativePath=".\DamageControl.cpp">
 			</File>
 			<File
 				RelativePath=".\DefenseMatrix.cpp">
@@ -425,6 +434,9 @@
 			</File>
 			<File
 				RelativePath=".\SpotFinder.cpp">
+			</File>
+			<File
+				RelativePath=".\SurveillanceHandler.cpp">
 			</File>
 			<File
 				RelativePath=".\ThreatMap.cpp">

@@ -1,6 +1,4 @@
-#ifndef INCLUDE_H
-#define INCLUDE_H
-/*pragma once removed*/
+#pragma once
 
 
 
@@ -22,9 +20,11 @@
 //#include <set>
 //#include <string>		// String container
 //#include <vector>		// Vector containers
+#include <direct.h>		// Folder manipulation
 #include <sstream>
 //#include <math.h>
 #include <stdarg.h>
+#include <io.h>
 //#include <map>
 #include <functional>
 #include <memory.h>
@@ -32,18 +32,7 @@
 //#include <list>
 #include <assert.h>
 #include <float.h>
-
-#ifdef WIN32
-#include <direct.h>		// Folder manipulation
-#include <io.h>
 #include <windows.h>
-#else
-#include <sys/time.h>
-#define LARGE_INTEGER struct timeval
-static inline void itoa(int i, char* buf, int size) {
-	snprintf(buf, size, "%d", i);
-}
-#endif
 
 
 // Spring Standard Header
@@ -65,22 +54,22 @@ static inline void itoa(int i, char* buf, int size) {
 #include "ExternalAI/IAICheats.h"				// AI Cheat Interface
 
 // KAI
-#include "Containers.h"							// All KAI containers
-#include "Definitions.h"						// Definition declarations
+#include "containers.h"							// All KAI containers
+#include "definitions.h"						// Definition declarations
 #include "mtrand.h"								// Mersenne Twister RNG
 #include "SpotFinder.h"
 #include "micropather.h"
-#include "Maths.h"
-#include "SunParser.h"
-#include "MetalMap.h"
-#include "Debug.h"
-#include "PathFinder.h"
-#include "UnitTable.h"
+#include "maths.h"
+#include "sunparser.h"
+#include "metalmap.h"
+#include "debug.h"
+#include "pathfinder.h"
+#include "unittable.h"
 #include "ThreatMap.h"
-#include "UnitHandler.h"
-#include "UNIT.h"
+#include "unithandler.h"
+#include "unit.h"
 #include "EconomyTracker.h"						// Temp only
-#include "DefenseMatrix.h"
+#include "defensematrix.h"
 #include "BuildUp.h"
 #include "AttackHandler.h"
 #include "AttackGroup.h"
@@ -92,5 +81,3 @@ static inline void itoa(int i, char* buf, int size) {
             
 
 
-
-#endif /* INCLUDE_H */

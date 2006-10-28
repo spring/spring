@@ -1,8 +1,6 @@
-#ifndef DEFENSEMATRIX_H
-#define DEFENSEMATRIX_H
-/*pragma once removed*/
+#pragma once
 
-#include "GlobalAI.h"
+#include "globalai.h"
 class CSpotFinder;
 
 class CDefenseMatrix
@@ -27,5 +25,3 @@ private:
 	AIClasses *ai;
 	
 };
-
-#endif /* DEFENSEMATRIX_H */

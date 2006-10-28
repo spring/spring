@@ -1,6 +1,4 @@
-#ifndef ATTACKGROUP_H
-#define ATTACKGROUP_H
-/*pragma once removed*/
+#pragma once
 #include "GlobalAI.h"
 
 
@@ -11,37 +9,37 @@ class CAttackGroup
 
 	virtual ~CAttackGroup();
 
-	void AddUnit(int unitID);
-	void Update();
-	void MoveTo(float3 newPosition);
-	int Size();
-	int GetGroupID();
-	float3 GetGroupPos();
-	bool RemoveUnit(int unitID);
-	int PopStuckUnit();
+	void CAttackGroup::AddUnit(int unitID);
+	void CAttackGroup::Update();
+	void CAttackGroup::MoveTo(float3 newPosition);
+	int CAttackGroup::Size();
+	int CAttackGroup::GetGroupID();
+	float3 CAttackGroup::GetGroupPos();
+	bool CAttackGroup::RemoveUnit(int unitID);
+	int CAttackGroup::PopStuckUnit();
 
-	float Power();
-	void Log();
+	float CAttackGroup::Power();
+	void CAttackGroup::Log();
 
 	//hack to fix them suiciding on mexes in EE
-	bool CloakedFix(int enemy);
+	bool CAttackGroup::CloakedFix(int enemy);
 
 	bool defending;
 	float3 attackPosition;
 	float attackRadius;
 	vector<float3> pathToTarget;
 
-	void FindDefenseTarget(float3 groupPosition);
+	void CAttackGroup::FindDefenseTarget(float3 groupPosition);
 
-	int GetWorstMoveType();
+	int CAttackGroup::GetWorstMoveType();
 
-	vector<int>* GetAllUnits(); // for combining
+	vector<int>* CAttackGroup::GetAllUnits(); // for combining
 
-	list<int> GetAssignedEnemies();
-	void ClearTarget();
+	list<int> CAttackGroup::GetAssignedEnemies();
+	void CAttackGroup::ClearTarget();
 
-	bool NeedsNewTarget();
-	void AssignTarget(vector<float3> path, float3 target, float radius);
+	bool CAttackGroup::NeedsNewTarget();
+	void CAttackGroup::AssignTarget(vector<float3> path, float3 target, float radius);
 
 
 	private:
@@ -60,5 +58,3 @@ class CAttackGroup
 	int movementCounterForStuckChecking;
 
 };
-
-#endif /* ATTACKGROUP_H */

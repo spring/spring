@@ -1,6 +1,4 @@
-#ifndef UNIT_H
-#define UNIT_H
-/*pragma once removed*/
+#pragma once
 #include "GlobalAI.h"
 
 class CUNIT
@@ -79,5 +77,3 @@ private:
 	Command MakePosCommand(int id,float3 pos, float radius = 0);
 	Command MakeIntCommand(int id,int number,int maxnum = 4999);
 };
-
-#endif /* UNIT_H */

@@ -1,6 +1,4 @@
-#ifndef ECONOMYTRACKER_H
-#define ECONOMYTRACKER_H
-/*pragma once removed*/
+#pragma once
 #include "GlobalAI.h"
 
 struct EconomyUnitTracker;
@@ -192,7 +190,7 @@ class CEconomyTracker
 	void UnitCreated(int unit);
 	void UnitFinished(int unit);
 	void UnitDestroyed(int unit);
-	void UnitDamaged(int unit, float damage);
+	void CEconomyTracker::UnitDamaged(int unit, float damage);
 	
 
 	private:
@@ -203,9 +201,9 @@ class CEconomyTracker
 	list<EconomyUnitTracker*> underConstructionEconomyUnitTrackers;
 	
 	AIClasses* ai;
-	void updateUnitUnderConstruction(BuildingTracker * bt);
-	void SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTracker);
-	TotalEconomyState makePrediction(int targetFrame);
+	void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt);
+	void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTracker);
+	TotalEconomyState CEconomyTracker::makePrediction(int targetFrame);
 	
 	bool trackerOff;
 	
@@ -226,5 +224,3 @@ class CEconomyTracker
 
 
 
-
-#endif /* ECONOMYTRACKER_H */

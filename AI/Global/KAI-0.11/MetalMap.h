@@ -1,6 +1,4 @@
-#ifndef METALMAP_H
-#define METALMAP_H
-/*pragma once removed*/
+#pragma once
 #include "GlobalAI.h"
 
 
@@ -44,5 +42,3 @@ private:
 	int* TempAverage;
 	AIClasses *ai;
 };
-
-#endif /* METALMAP_H */

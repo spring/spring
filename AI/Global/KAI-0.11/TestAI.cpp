@@ -1,9 +1,9 @@
 #include "GlobalAI.h"
 
+
 /////////////////////////////////////////////////////////////////////////////
 
 std::set<IGlobalAI*> ais;
-
 
 DLL_EXPORT int GetGlobalAiVersion()
 {
@@ -12,18 +12,18 @@ DLL_EXPORT int GetGlobalAiVersion()
 
 DLL_EXPORT void GetAiName(char* name)
 {
-	strcpy(name, AI_NAME);
+	strcpy(name,AI_NAME);
 }
 
 DLL_EXPORT IGlobalAI* GetNewAI()
 {
-	CGlobalAI* ai = new CGlobalAI();
+	CGlobalAI* ai=new CGlobalAI;
 	ais.insert(ai);
 	return ai;
 }
 
 DLL_EXPORT void ReleaseAI(IGlobalAI* i)
 {
-	ais.erase(i);
 	delete (CGlobalAI*)i;
+	ais.erase(i);
 }

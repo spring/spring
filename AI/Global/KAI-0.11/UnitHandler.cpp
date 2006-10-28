@@ -1,4 +1,4 @@
-#include "UnitHandler.h"
+#include "unithandler.h"
 #include "MetalMaker.h"
 
 
@@ -48,10 +48,10 @@ void CUnitHandler::IdleUnitUpdate()
 			i->y = i->y - 1;
 		}
 		else{
-			//L("adding unit to idle units: " << i->x);
+			L("adding unit to idle units: " << i->x);
 			if(ai->cb->GetUnitDef(i->x) == NULL)
 			{
-				//L(" Removeing dead unit... ");
+				L(" Removeing dead unit... ");
 				
 			}
 			else
@@ -77,7 +77,7 @@ void CUnitHandler::IdleUnitUpdate()
 			// The new test:
 			if((*i)->idleStartFrame != -2) // The brand new builders must be filtered still
 			{
-				//L("VerifyOrder");
+				L("VerifyOrder");
 				bool ans = VerifyOrder(*i);
 				const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
 				Command c;
@@ -96,7 +96,7 @@ void CUnitHandler::IdleUnitUpdate()
 						AIHCAddMapPoint amp;
 						amp.label = text;
 						amp.pos = pos;
-						////ai->cb->HandleCommand(&amp);
+						ai->cb->HandleCommand(&amp);
 						
 						ClearOrder(*i, false);
 						if(!mycommands->empty())
@@ -120,14 +120,14 @@ void CUnitHandler::IdleUnitUpdate()
 				{
 					if(((*i)->idleStartFrame + 90) < ai->cb->GetCurrentFrame())
 					{
-						//L("Idle unit command force: " << (*i)->builderID);
+						L("Idle unit command force: " << (*i)->builderID);
 						char text[512];
 						float3 pos = ai->cb->GetUnitPos((*i)->builderID);
 						sprintf(text, "builder %i without tasks and not in the idle list (idle forced)", (*i)->builderID);
 						AIHCAddMapPoint amp;
 						amp.label = text;
 						amp.pos = pos;
-						////ai->cb->HandleCommand(&amp);
+						ai->cb->HandleCommand(&amp);
 						IdleUnitAdd((*i)->builderID);
 						(*i)->idleStartFrame =  ai->cb->GetCurrentFrame(); // Just to cut down on the spam, if its not idle
 					}
@@ -136,7 +136,7 @@ void CUnitHandler::IdleUnitUpdate()
 			{
 			*/
 			/*
-				//L("VerifyOrder");
+				L("VerifyOrder");
 				bool ans = VerifyOrder(*i);
 				const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
 				Command c;
@@ -155,7 +155,7 @@ void CUnitHandler::IdleUnitUpdate()
 						AIHCAddMapPoint amp;
 						amp.label = text;
 						amp.pos = pos;
-						////ai->cb->HandleCommand(&amp);
+						ai->cb->HandleCommand(&amp);
 					}
 				}
 				* /
@@ -174,10 +174,10 @@ void CUnitHandler::UnitCreated(int unit)
 	int category = ai->ut->GetCategory(unit);
 	const UnitDef* newUnitDef = ai->cb->GetUnitDef(unit);
 	if(category != -1){
-		//L("Unit " << unit << " created, ID : " << newUnitDef->id << " Cat: " << category);
+		L("Unit " << unit << " created, ID : " << newUnitDef->id << " Cat: " << category);
 		AllUnitsByCat[category]->push_back(unit);
 		AllUnitsByType[newUnitDef->id]->push_back(unit);
-		////L("push sucessful");
+		//L("push sucessful");
 		if(category == CAT_FACTORY){
 			FactoryAdd(unit);
 		}
@@ -249,7 +249,7 @@ void CUnitHandler::UnitDestroyed(int unit)
 
 void CUnitHandler::IdleUnitAdd(int unit)
 {	
-	//L("IdleUnitAdd: " << unit);
+	L("IdleUnitAdd: " << unit);
 	int category = ai->ut->GetCategory(unit);
 	if(category != -1){
 		const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(unit);
@@ -258,7 +258,7 @@ void CUnitHandler::IdleUnitAdd(int unit)
 			if(category == CAT_BUILDER)
 			{
 				BuilderTracker* builderTracker = GetBuilderTracker(unit);
-				//L("it was a builder");
+				L("it was a builder");
 				
 				// Add clear here
 				ClearOrder(builderTracker, true);
@@ -278,7 +278,7 @@ void CUnitHandler::IdleUnitAdd(int unit)
 			}
 
 			integer2 myunit(unit,LIMBOTIME);
-			//L("Adding unit : " << myunit.x << " To Limbo " << myunit.y);
+			L("Adding unit : " << myunit.x << " To Limbo " << myunit.y);
 			Limbo.remove(myunit);
 			//IdleUnitRemove(unit);  // This might be a better idea, but its over the edge (possible assertion)
 			Limbo.push_back(myunit);
@@ -318,9 +318,9 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker)
 			c = &mycommands->back();
 		}
 		
-		////L("idle builder: " << builderTracker->builderID);
-		////L("c.id: " << c.id);
-		////L("c.params[0]: " <<  c.params[0]);
+		//L("idle builder: " << builderTracker->builderID);
+		//L("c.id: " << c.id);
+		//L("c.params[0]: " <<  c.params[0]);
 		bool hit = false;
 		if(builderTracker->buildTaskId != 0)
 		{
@@ -397,14 +397,14 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 	{
 		// Hmm, why is this builder idle ???
 		hit = true;
-		//L("builder " << builderTracker->builderID << " was idle, but it is on buildTaskId : " << builderTracker->buildTaskId);
+		L("builder " << builderTracker->builderID << " was idle, but it is on buildTaskId : " << builderTracker->buildTaskId);
 		BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
 		char text[512];
 		sprintf(text, "builder %i: was idle, but it is on buildTaskId: %i  (stuck?)", builderTracker->builderID, builderTracker->buildTaskId);
 		AIHCAddMapPoint amp;
 		amp.label = text;
 		amp.pos = buildTask->pos;
-		////ai->cb->HandleCommand(&amp);
+		ai->cb->HandleCommand(&amp);
 		if(buildTask->builderTrackers.size() > 1)
 		{
 			BuildTaskRemove(builderTracker);
@@ -423,13 +423,13 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 		// Hmm, why is this builder idle ???
 		// 
 		TaskPlan* taskPlan = GetTaskPlan(builderTracker->taskPlanId);
-		//L("builder " << builderTracker->builderID << " was idle, but it is on taskPlanId : " << taskPlan->def->humanName << " (masking this spot)");
+		L("builder " << builderTracker->builderID << " was idle, but it is on taskPlanId : " << taskPlan->def->humanName << " (masking this spot)");
 		char text[512];
 		sprintf(text, "builder %i: was idle, but it is on taskPlanId: %s (masking this spot)", builderTracker->builderID, taskPlan->def->humanName.c_str());
 		AIHCAddMapPoint amp;
 		amp.label = text;
 		amp.pos = taskPlan->pos;
-		////ai->cb->HandleCommand(&amp);
+		ai->cb->HandleCommand(&amp);
 		ai->dm->MaskBadBuildSpot(taskPlan->pos);
 		// TODO: fix this:  Remove all builders from this plan.
 		if(reportError)
@@ -450,13 +450,13 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 		assert(!hit);
 		hit = true;
 		// Hmm, why is this builder idle ???
-		//L("builder " << builderTracker->builderID << " was idle, but it is on factoryId : " << builderTracker->factoryId) << " (removing the builder from the job)";
+		L("builder " << builderTracker->builderID << " was idle, but it is on factoryId : " << builderTracker->factoryId) << " (removing the builder from the job)";
 		char text[512];
 		sprintf(text, "builder %i: was idle, but it is on factoryId: %i (removing the builder from the job)", builderTracker->builderID, builderTracker->factoryId);
 		AIHCAddMapPoint amp;
 		amp.label = text;
 		amp.pos = ai->cb->GetUnitPos(builderTracker->factoryId);
-		////ai->cb->HandleCommand(&amp);
+		ai->cb->HandleCommand(&amp);
 		FactoryBuilderRemove(builderTracker);
 	}
 	if(builderTracker->customOrderId != 0)
@@ -465,14 +465,14 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 		hit = true;
 		// Hmm, why is this builder idle ?
 		// No tracking of custom orders yet... 
-		//L("builder " << builderTracker->builderID << " was idle, but it is on customOrderId : " << builderTracker->customOrderId << " (removing the builder from the job)");
+		L("builder " << builderTracker->builderID << " was idle, but it is on customOrderId : " << builderTracker->customOrderId << " (removing the builder from the job)");
 		
 		//char text[512];
 		//sprintf(text, "builder %i: was idle, but it is on customOrderId: %i (removing the builder from the job)", unit, builderTracker->customOrderId);
 		//AIHCAddMapPoint amp;
 		//amp.label = text;
 		//amp.pos = ai->cb->GetUnitPos(builderTracker->builderID);
-		//////ai->cb->HandleCommand(&amp);
+		//ai->cb->HandleCommand(&amp);
 		builderTracker->customOrderId = 0;
 	}
 	assert(builderTracker->buildTaskId == 0);
@@ -500,15 +500,15 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 		}
 		
 		
-		//L("idle builder: " << builderTracker->builderID);
-		//L("c->id: " << c->id);
-		//L("c->params[0]: " <<  c->params[0]);
+		L("idle builder: " << builderTracker->builderID);
+		L("c->id: " << c->id);
+		L("c->params[0]: " <<  c->params[0]);
 		char text[512];
 		sprintf(text, "builder %i: was clamed idle, but it have a command c->id: %i, c->params[0]: %i", builderTracker->builderID, c->id, c->params[0]);
 		AIHCAddMapPoint amp;
 		amp.label = text;
 		amp.pos = ai->cb->GetUnitPos(builderTracker->builderID);
-		////ai->cb->HandleCommand(&amp);
+		ai->cb->HandleCommand(&amp);
 		if(c->id < 0) // Its building a unit
 		{
 			float3 newUnitPos;
@@ -529,7 +529,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 		}
 		if(c->id == CMD_REPAIR)  // Its repairing    ( || c.id == CMD_GUARD)
 		{
-			int guardingID = int(c->params[0]);
+			int guardingID = c->params[0];
 			// Find the unit its repairng
 			int category = ai->ut->GetCategory(guardingID);
 			if(category == -1)
@@ -576,7 +576,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 						builderTracker->customOrderId = 0;
 					}
 					BuildTask* bt = &*i;
-					//L("Adding builder to BuildTask " << bt->id << ": " << ai->cb->GetUnitDef(bt->id)->humanName);
+					L("Adding builder to BuildTask " << bt->id << ": " << ai->cb->GetUnitDef(bt->id)->humanName);
 					BuildTaskAddBuilder(bt, builderTracker);
 					found = true;
 				}
@@ -584,7 +584,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 			if(found == false)
 			{
 				// Not found, just make a custom order
-				//L("Not found, just make a custom order");
+				L("Not found, just make a custom order");
 				builderTracker->customOrderId = taskPlanCounter++;
 				builderTracker->idleStartFrame = -1; // Its in use now
 			}
@@ -593,7 +593,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 	else
 	{
 		// Error: this function needs a builder with orders
-		//L("Error: this function needs a builder with orders");
+		L("Error: this function needs a builder with orders");
 		assert(false);
 	}
 }
@@ -602,8 +602,8 @@ void CUnitHandler::IdleUnitRemove(int unit)
 {
 	int category = ai->ut->GetCategory(unit);
 	if(category != -1){
-		////L("removing unit");
-		//L("IdleUnitRemove(): " << unit);
+		//L("removing unit");
+		L("IdleUnitRemove(): " << unit);
 		IdleUnits[category]->remove(unit);
 		if(category == CAT_BUILDER)
 		{
@@ -612,7 +612,7 @@ void CUnitHandler::IdleUnitRemove(int unit)
 			if(builderTracker->commandOrderPushFrame == -2)
 			{
 				// bad
-				////L("bad");
+				//L("bad");
 			}
 			
 			builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame(); // Update the order start frame...
@@ -620,32 +620,32 @@ void CUnitHandler::IdleUnitRemove(int unit)
 			//assert(builderTracker->taskPlanId == 0);
 			//assert(builderTracker->factoryId == 0);
 		}
-		////L("removed from list");
+		//L("removed from list");
 		list<integer2>::iterator tempunit;
 		bool foundit = false;
 		for(list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++){
 			if(i->x == unit){
 				tempunit = i;
 				foundit=true;
-				//L("foundit=true;");
+				L("foundit=true;");
 			}
 		}
 		if(foundit)
 			Limbo.erase(tempunit);
-		////L("removed from limbo");
+		//L("removed from limbo");
 	}
 }
 int CUnitHandler::GetIU(int category)
 {
 	assert(category >= 0 && category < LASTCATEGORY);
 	assert(IdleUnits[category]->size() > 0);
-	//L("GetIU(int category): " << IdleUnits[category]->front());
+	L("GetIU(int category): " << IdleUnits[category]->front());
 	return IdleUnits[category]->front();
 }
 int CUnitHandler::NumIdleUnits(int category)
 {
 	//for(list<int>::iterator i = IdleUnits[category]->begin(); i != IdleUnits[category]->end();i++)
-		////L("Idle Unit: " << *i);
+		//L("Idle Unit: " << *i);
 	assert(category >= 0 && category < LASTCATEGORY);
 	IdleUnits[category]->sort();
 	IdleUnits[category]->unique();
@@ -693,7 +693,7 @@ void CUnitHandler::BuildTaskCreate(int id)
 				list<BuilderTracker*> moveList;
 				for(list<BuilderTracker*>::iterator builder = i->builderTrackers.begin(); builder != i->builderTrackers.end(); builder++) {
 					moveList.push_back(*builder);
-					//L("Marking builder " << (*builder)->builderID << " for removal, from plan " << i->def->humanName);
+					L("Marking builder " << (*builder)->builderID << " for removal, from plan " << i->def->humanName);
 				}
 				for(list<BuilderTracker*>::iterator builder = moveList.begin(); builder != moveList.end(); builder++) {
 					TaskPlanRemove(*builder);
@@ -707,7 +707,7 @@ void CUnitHandler::BuildTaskCreate(int id)
 			}
 		}
 		if(bt.id == -1){
-			//L("*******BuildTask Creation Error!*********");
+			L("*******BuildTask Creation Error!*********");
 			// This can happen.
 			// Either a builder manges to restart a dead building, or a human have taken control...
 			// Make a BuildTask anyway
@@ -722,14 +722,14 @@ void CUnitHandler::BuildTaskCreate(int id)
 			AIHCAddMapPoint amp;
 			amp.label = text;
 			amp.pos = pos;
-			////ai->cb->HandleCommand(&amp);
+			ai->cb->HandleCommand(&amp);
 			// Try to find workers that nearby:
 			int num = BuilderTrackers.size();
 			
 			if(num == 0)
 			{
 				// Well what now ??? 
-				//L("Didnt find any friendly builders");
+				L("Didnt find any friendly builders");
 			} else
 			{
 				// Iterate over the list and find the builders
@@ -742,9 +742,9 @@ void CUnitHandler::BuildTaskCreate(int id)
 					{
 						// It have orders
 						Command c = mycommands->front();
-						//L("builder: " << builderTracker->builderID);
-						//L("c.id: " << c.id);
-						//L("c.params[0]: " <<  c.params[0]);
+						L("builder: " << builderTracker->builderID);
+						L("c.id: " << c.id);
+						L("c.params[0]: " <<  c.params[0]);
 						if( (c.id == -newUnitDef->id && c.params[0] == pos.x && c.params[2] == pos.z) // Its at this pos
 							|| (c.id == CMD_REPAIR  && c.params[0] == id)  // Its at this unit (id)
 							|| (c.id == CMD_GUARD  && c.params[0] == id) ) // Its at this unit (id)
@@ -792,13 +792,13 @@ void CUnitHandler::BuildTaskCreate(int id)
 							if(builderTracker->idleStartFrame == -2)
 								IdleUnitRemove(builderTracker->builderID); // It was in the idle list
 							// Add it to this task
-							//L("Added builder " << builderTracker->builderID << " to this new unit buildTask");
+							L("Added builder " << builderTracker->builderID << " to this new unit buildTask");
 							BuildTaskAddBuilder(&bt, builderTracker);
 							sprintf(text, "Added builder %i: to buildTaskId: %i (human order?)", builderTracker->builderID, builderTracker->buildTaskId);
 							AIHCAddMapPoint amp2;
 							amp2.label = text;
 							amp2.pos = ai->cb->GetUnitPos(builderTracker->builderID);
-							////ai->cb->HandleCommand(&amp2);
+							ai->cb->HandleCommand(&amp2);
 						} else
 						{
 							// This builder have other orders.
@@ -826,7 +826,7 @@ void CUnitHandler::BuildTaskCreate(int id)
 }
 void CUnitHandler::BuildTaskRemove(int id)
 {
-	//L("BuildTaskRemove start");
+	L("BuildTaskRemove start");
 	int category = ai->ut->GetCategory(id);
 	// TODO: Hack fix
 	if(category == -1)
@@ -856,7 +856,7 @@ void CUnitHandler::BuildTaskRemove(int id)
 			list<BuilderTracker*> removeList;
 			for(list<BuilderTracker*>::iterator builder = killtask->builderTrackers.begin(); builder != killtask->builderTrackers.end(); builder++) {
 				removeList.push_back(*builder);
-				//L("Marking builder " << (*builder)->builderID << " for removal, from task " << killtask->id);
+				L("Marking builder " << (*builder)->builderID << " for removal, from task " << killtask->id);
 			}
 			for(list<BuilderTracker*>::iterator builder = removeList.begin(); builder != removeList.end(); builder++) {
 				BuildTaskRemove(*builder);
@@ -865,7 +865,7 @@ void CUnitHandler::BuildTaskRemove(int id)
 			BuildTasks[category]->erase(killtask);
 		}
 	}
-	//L("BuildTaskRemove end");
+	L("BuildTaskRemove end");
 }
 
 BuilderTracker* CUnitHandler::GetBuilderTracker(int builder)
@@ -984,7 +984,7 @@ BuildTask* CUnitHandler::BuildTaskExist(float3 pos,const UnitDef* builtdef)
 
 bool CUnitHandler::BuildTaskAddBuilder (int builder, int category)
 {
-	//L("BuildTaskAddBuilder: " << builder);
+	L("BuildTaskAddBuilder: " << builder);
 	assert(category >= 0);
 	assert(category < LASTCATEGORY);
 	assert(builder >= 0);
@@ -1016,7 +1016,7 @@ bool CUnitHandler::BuildTaskAddBuilder (int builder, int category)
 	// HACK^2    Korgothe...   this thing dont exist...
 	if(TaskPlans[category]->size())
 	{
-			//L("TaskPlans[category]->size()");
+			L("TaskPlans[category]->size()");
 			float largestime = 0;
 			list<TaskPlan>::iterator besttask;
 			int units[5000];
@@ -1024,7 +1024,7 @@ bool CUnitHandler::BuildTaskAddBuilder (int builder, int category)
 			for(list<TaskPlan>::iterator i = TaskPlans[category]->begin(); i != TaskPlans[category]->end(); i++){
 				float timebuilding = (i->def->buildTime / i->currentBuildPower ) - ai->math->ETA(builder,i->pos);
 				
-				////L("timebuilding: " << timebuilding << " of " << i->def->humanName);
+				//L("timebuilding: " << timebuilding << " of " << i->def->humanName);
 				// Must test if this builder can make this unit/building too
 				if(timebuilding > largestime){
 					const UnitDef *buildeDef = ai->cb->GetUnitDef(builder);
@@ -1048,13 +1048,13 @@ bool CUnitHandler::BuildTaskAddBuilder (int builder, int category)
 				int num = ai->cb->GetFriendlyUnits(units, i->pos,200); //returns all friendly units within radius from pos
 				for(int j = 0; j < num; j++)
 				{
-					////L("Found unit at spot");
+					//L("Found unit at spot");
 					
 					if((ai->cb->GetUnitDef(units[j]) == i->def) && (ai->cb->GetUnitPos(units[j]).distance2D(i->pos)) < 1 )
 					{
 						// HACK !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-						//L("if((ai->cb->GetUnitDef(units[j]) == i->def) && (ai->cb->GetUnitPos(units[j]).distance2D(i->pos)) < 1 )");
-						//L("TODO: Kill this TaskPlan -- this is BAD -- its on a spot where a building is");
+						L("if((ai->cb->GetUnitDef(units[j]) == i->def) && (ai->cb->GetUnitPos(units[j]).distance2D(i->pos)) < 1 )");
+						L("TODO: Kill this TaskPlan -- this is BAD -- its on a spot where a building is");
 						// TODO: Kill this TaskPlan
 						// But not here... as that will mess up the iterator
 						
@@ -1067,10 +1067,10 @@ bool CUnitHandler::BuildTaskAddBuilder (int builder, int category)
 				}
 				
 			}
-			//L("largestime: " << largestime);
+			L("largestime: " << largestime);
 			
 			if(largestime > 10){
-				//L("joining the building of " << besttask->def->humanName);
+				L("joining the building of " << besttask->def->humanName);
 				
 				assert(builder >= 0);
 				assert(ai->MyUnits[builder] !=  NULL);
@@ -1168,7 +1168,7 @@ void CUnitHandler::TaskPlanRemove (BuilderTracker* builderTracker)
 			for(list<BuilderTracker*>::iterator i = killplan->builderTrackers.begin(); i != killplan->builderTrackers.end(); i++){
 				if(builderTracker == *i)
 				{
-					//L("Removing builder " << builder << ", from plan " << killplan->def->humanName);
+					L("Removing builder " << builder << ", from plan " << killplan->def->humanName);
 					builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame(); // Give it time to change command
 					killplan->builderTrackers.erase(i);
 					break;
@@ -1178,7 +1178,7 @@ void CUnitHandler::TaskPlanRemove (BuilderTracker* builderTracker)
 			killplan->builders.erase(killBuilder);
 			if(killplan->builders.size() == 0)
 			{
-				//L("The TaskPlans lost all its workers, removeing it");
+				L("The TaskPlans lost all its workers, removeing it");
 				if(ai->ut->GetCategory(killplan->def) == CAT_DEFENCE)  // Removeing this is ok ?
 					ai->dm->RemoveDefense(killplan->pos,killplan->def);
 				TaskPlans[k]->erase(killplan);
@@ -1194,7 +1194,7 @@ void CUnitHandler::TaskPlanRemove (BuilderTracker* builderTracker)
 	}
 	if(!found)
 	{
-		//L("Failed to removing builder " << builder);
+		L("Failed to removing builder " << builder);
 		assert(false);
 	}
 }

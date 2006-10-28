@@ -1,5 +1,5 @@
-/*#pragma once removed*/
-#include "UNIT.h"
+#pragma once
+#include "unit.h"
 
 
 CUNIT::CUNIT(AIClasses *ai)
@@ -56,13 +56,13 @@ int CUNIT::category()
 bool CUNIT::CanAttack(int otherUnit)
 {
 	//currently doesnt do what i want it to do: to see if sending me vs other is a good idea, like peewee vs bomber (not)
-	//L("doing CanAttack from " << this->myid << " to " << otherUnit);
+	L("doing CanAttack from " << this->myid << " to " << otherUnit);
 	const UnitDef *ud_mine = ai->cb->GetUnitDef(this->myid);
 	const UnitDef *ud_other = ai->cheat->GetUnitDef(otherUnit);
 	if (ud_mine && ud_other)
-		{//L("CanAttack: GUD returned on the second unit: " << ud_other);
-		//L("types: " << ud_mine->humanName << " to " << ud_other->humanName);
-		assert(otherUnit != 0);
+		{L("CanAttack: GUD returned on the second unit: " << ud_other);
+		L("types: " << ud_mine->humanName << " to " << ud_other->humanName);
+		assert(otherUnit != NULL);
 		//float CUnitTable::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 		float dps;
 //		if (ud_other->canmove) //GetDPSvsUnit crashes on buildings
@@ -72,7 +72,7 @@ bool CUNIT::CanAttack(int otherUnit)
 //		} else {
 //			dps = this->ai->ut->GetDPS(ud_mine);
 //		}
-		////L("part-result in CUNIT::CanAttack dps: " << dps);
+		//L("part-result in CUNIT::CanAttack dps: " << dps);
 		return dps > 5.0f;
 	}
 	return false; //might be a false negative
@@ -94,7 +94,7 @@ bool CUNIT::CanAttackMe(int otherUnit) {
 	float dy = cos(random) *100;
 	
 	float3 randomPos = pos + float3(dx,0,dy);
-	//L("dx: " << dx << ", dy: " << dy);
+	L("dx: " << dx << ", dy: " << dy);
 	
 	while(buildpos.x == -1)
 	{
@@ -107,19 +107,19 @@ bool CUNIT::CanAttackMe(int otherUnit) {
 		if(startRadius > radius * 3)
 			break;
 	}
-	//L("errorCount: " << errorCount << ", startRadius: " << startRadius);
+	L("errorCount: " << errorCount << ", startRadius: " << startRadius);
 
-	//L("Closestbuildsite(" << unitdef->name << ",(" << pos.x
+	L("Closestbuildsite(" << unitdef->name << ",(" << pos.x
 		<< "," << pos.y << "," << pos.z << ")," << radius 
 		<< "," << separation << "); Result: (" << buildpos.x 
 		<< "," << buildpos.y << "," << buildpos.z << ")");
-	//ai->cb->CreateLineFigure(pos,buildpos,20,0,10000,1);
+	ai->cb->CreateLineFigure(pos,buildpos,20,0,10000,1);
 	if(buildpos.x != -1){
-		//L("Site found, building");
+		L("Site found, building");
 		Build(buildpos, unitdef);
-		//L("command sent");
+		L("command sent");
 		ai->uh->IdleUnitRemove(myid);
-		//L("idle unit removed");
+		L("idle unit removed");
         return true;
 	}
 	return false;
@@ -139,17 +139,17 @@ bool CUNIT::Build_ClosestSite(const UnitDef* unitdef,float3 pos,int separation, 
 	
 	buildpos = ai->cb->ClosestBuildSite(unitdef,randomPos,startRadius,separation);
 	
-	//L("Closestbuildsite(" << unitdef->name << ",(" << pos.x
+	L("Closestbuildsite(" << unitdef->name << ",(" << pos.x
 		<< "," << pos.y << "," << pos.z << ")," << radius 
 		<< "," << separation << "); Result: (" << buildpos.x 
 		<< "," << buildpos.y << "," << buildpos.z << ")");
-	//ai->cb->CreateLineFigure(pos,buildpos,20,0,10000,1);
+	ai->cb->CreateLineFigure(pos,buildpos,20,0,10000,1);
 	if(buildpos.x != -1){
-		//L("Site found, building");
+		L("Site found, building");
 		Build(buildpos, unitdef);
-		//L("command sent");
+		L("command sent");
 		ai->uh->IdleUnitRemove(myid);
-		//L("idle unit removed");
+		L("idle unit removed");
         return true;
 	}
 	return false;
@@ -161,13 +161,16 @@ bool CUNIT::Build_ClosestSite(const UnitDef* unitdef,float3 targetpos,int separa
 	float3 buildpos;
 	buildpos = ai->cb->ClosestBuildSite(unitdef,targetpos,radius,separation);
 
-
+	L("Closestbuildsite(" << unitdef->name << ",(" << targetpos.x
+		<< "," << targetpos.y << "," << targetpos.z << ")," << radius 
+		<< "," << separation << "); Result: (" << buildpos.x 
+		<< "," << buildpos.y << "," << buildpos.z << ")");
 	targetpos.y += 20;
 	buildpos.y +=20;
 	if(buildpos.x != -1){
-		//L("Site found, building");
+		L("Site found, building");
 		Build(buildpos, unitdef);
-		//L("command sent");
+		L("command sent");
         return true;
 	}
 	else
@@ -265,7 +268,7 @@ Command CUNIT::MakePosCommand(int id,float3 pos, float radius){
 	}
 	*/
 	ai->uh->IdleUnitRemove(myid);
-	////L("idle unit removed");
+	//L("idle unit removed");
 	return c;
 
 
@@ -291,7 +294,7 @@ Command CUNIT::MakeIntCommand(int id,int number,int maxnum){
 	}
 	*/
 	ai->uh->IdleUnitRemove(myid);
-	////L("idle unit removed");
+	//L("idle unit removed");
 	return c;
 }
 
