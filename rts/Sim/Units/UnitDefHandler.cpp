@@ -69,7 +69,8 @@ CUnitDefHandler::CUnitDefHandler(void)
 		if (gameSetup)
 			if (gameSetup->restrictedUnits.find(unitname) != gameSetup->restrictedUnits.end()) {
 				//logOutput.Print("Not using unit %s", unitname.c_str());
-				continue;
+				if(gameSetup->restrictedUnits.find(unitname)->second == 0) //unit disabled
+					continue;
 			}
 
 		// Seems ok, load it
@@ -366,6 +367,15 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.maxFuel, "0", "UNITINFO\\maxfuel");						//max flight time in seconds before aircraft must return to base
 	tdfparser.GetDef(ud.refuelTime, "5", "UNITINFO\\refueltime");
 	tdfparser.GetDef(ud.minAirBasePower, "0", "UNITINFO\\minairbasepower");
+
+	tdfparser.GetTDef(ud.maxThisUnit, MAX_UNITS, "UNITINFO\\UnitRestricted");
+	if (gameSetup)
+	{
+		string lname = StringToLower(ud.name);
+		if (gameSetup->restrictedUnits.find(lname) != gameSetup->restrictedUnits.end()) {
+			ud.maxThisUnit = min(ud.maxThisUnit, gameSetup->restrictedUnits.find(lname)->second);
+		}
+	}
 
 
 	ud.categoryString=tdfparser.SGetValueDef("", "UNITINFO\\Category");

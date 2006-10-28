@@ -270,6 +270,8 @@ struct UnitDef
 	float minAirBasePower;	//min build power for airbases that this aircraft can land on
 
 	std::vector<CExplosionGenerator*>  sfxExplGens;  //list of explosiongenerators for use in scripts
+
+	int maxThisUnit;	//number of units of this type allowed simultaniously in the game
 };
 
 struct Command;

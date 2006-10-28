@@ -84,6 +84,7 @@ protected:
 		float circleAlpha;
 		int ttl;
 		float3 color;
+		unsigned int flags;
 	} *groundFlash;
 
 	bool useDefaultExplosions;

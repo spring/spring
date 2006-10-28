@@ -31,6 +31,8 @@ public:
 	map<int,BuildOption> buildOptions;
 
 	bool building;
+
+	int lastRestrictedWarning;
 };
 
 #endif // __FACTORY_AI_H__
