@@ -115,7 +115,7 @@ void CHelper::ParseBuildOptions(map<string,const UnitDef*> &targetBO, const Unit
 	}
 }
 
-float3 CHelper::FindBuildPos(string name, bool isMex, bool isGeo, int builder)
+float3 CHelper::FindBuildPos(string name, bool isMex, bool isGeo, float distance, int builder)
 {
 	const UnitDef* ud = aicb->GetUnitDef(name.c_str());
 	if(ud==0)
@@ -160,7 +160,7 @@ float3 CHelper::FindBuildPos(string name, bool isMex, bool isGeo, int builder)
 				{
 					if(!lpi->taken && !(!lpi->empty && lpi->name != name))
 					{
-						float3 buildPos2 = aicb->ClosestBuildSite(ud,lpi->pos,loc->partitionRadius,0);
+						float3 buildPos2 = aicb->ClosestBuildSite(ud,lpi->pos,loc->partitionRadius,distance);
 						if(buildPos2!=errorPos)
 						{
 							lpi->name = name;
@@ -173,7 +173,7 @@ float3 CHelper::FindBuildPos(string name, bool isMex, bool isGeo, int builder)
 			else
 			{
 				// the buildinglocation is not divided into partitions or we have a geo
-				float3 buildPos1 = aicb->ClosestBuildSite(ud,loc->centerPos,loc->radius,0);
+				float3 buildPos1 = aicb->ClosestBuildSite(ud,loc->centerPos,loc->radius,distance);
 				if(buildPos1!=errorPos)
 					return buildPos1;
 			}

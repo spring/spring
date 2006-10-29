@@ -12,6 +12,8 @@ struct BOInfo
 	bool isMex;
 	bool isGeo;
 
+	float spacing;
+
 	float metalCost;
 	float energyCost;
 	float totalCost;
@@ -49,7 +51,7 @@ struct compareEnergy
 class CBoHandler
 {
 	public:
-		CBoHandler(IAICallback* aicb,float mmkrME,float avgMetal);
+		CBoHandler(IAICallback* aicb,float mmkrME,float avgMetal,float maxPartitionRadius);
 		virtual ~CBoHandler();
 
 		void ClearBuildOptions();
@@ -68,4 +70,5 @@ class CBoHandler
 		float tidalStrength;
 		float avgWind;
 		float avgMetal;
+		float maxPartitionRadius;
 };

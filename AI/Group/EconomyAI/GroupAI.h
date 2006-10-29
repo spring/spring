@@ -71,6 +71,7 @@ public:
 	bool initialized;
 
 	float maxResourcePercentage;
+	float totalMMenergyUpkeep;
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)
