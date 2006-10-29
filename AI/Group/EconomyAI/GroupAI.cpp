@@ -43,7 +43,7 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 	aicb=callback->GetAICallback();
 	
 	helper		= new CHelper(aicb);
-	boHandler	= new CBoHandler(aicb,helper->mmkrME,helper->metalMap->AverageMetalPerSpot);
+	boHandler	= new CBoHandler(aicb,helper->mmkrME,helper->metalMap->AverageMetalPerSpot,helper->maxPartitionRadius);
 
 	initialized = true;
 }
@@ -170,7 +170,10 @@ void CGroupAI::CommandFinished(int unit,int type)
 		// if the unit is the currentBuilder, we have to find a new build task
 		if(unit==currentBuilder && aicb->GetCurrentUnitCommands(unit)->empty())
 		{
-			FindNewBuildTask();
+			// wait 2 seconds before actually finding a new build task
+			// (because some buildings take a few seconds to get online, e.g. solars)
+			newBuildTaskFrame = aicb->GetCurrentFrame();
+			newBuildTaskNeeded = true;
 		}
 	}
 }
@@ -179,7 +182,9 @@ void CGroupAI::CommandFinished(int unit,int type)
 void CGroupAI::Update()
 {
 	if(newBuildTaskNeeded && aicb->GetCurrentFrame() > newBuildTaskFrame + 60)
+	{
 		FindNewBuildTask();
+	}
 }
 
 void CGroupAI::DrawCommands()
@@ -190,16 +195,7 @@ void CGroupAI::DrawCommands()
 
 void CGroupAI::FindNewBuildTask()
 {
-	// wait 2 seconds before actually finding a new build task
-	// (because some buildings take a few seconds to get online, e.g. solars)
-	if(!newBuildTaskNeeded)
-	{
-		newBuildTaskFrame = aicb->GetCurrentFrame();
-		newBuildTaskNeeded = true;
-		return;
-	}
-	if(newBuildTaskNeeded && aicb->GetCurrentFrame() > newBuildTaskFrame + 60)
-		newBuildTaskNeeded = false;
+	newBuildTaskNeeded = false;
 
 	// if there's a unit removed from our group, we have to reset all build options
 	if(unitRemoved)
@@ -218,6 +214,7 @@ void CGroupAI::FindNewBuildTask()
 
 	boHandler->SortBuildOptions();
 
+	CalculateCurrentME();
 	// do we want to build energy or metal?
 	bool buildMetal = false; // true: build metal, false: build energy
 	// check if we're wasting metal
@@ -233,7 +230,6 @@ void CGroupAI::FindNewBuildTask()
 	else
 	{
 		CalculateIdealME();
-		CalculateCurrentME();
 		if(currentME < idealME)
 			buildMetal = true;
 	}
@@ -244,10 +240,10 @@ void CGroupAI::FindNewBuildTask()
 	{
 		string name = (*boi)->name;
 
-		// check if we have enough resource to build it
+		// check if we have enough resources to build it
 		int buildFrames = (int) (*boi)->buildTime / max(1.0f,totalBuildSpeed);
 		float metalEnd	= maxResourcePercentage * (aicb->GetMetal() + buildFrames * (aicb->GetMetalIncome() - aicb->GetMetalUsage()));
-		float energyEnd	= maxResourcePercentage * (aicb->GetEnergy() + buildFrames * (aicb->GetEnergyIncome() - aicb->GetEnergyUsage()));
+		float energyEnd	= maxResourcePercentage * (aicb->GetEnergy() + buildFrames * (aicb->GetEnergyIncome() - aicb->GetEnergyUsage() + totalMMenergyUpkeep));
 		if(metalEnd < (*boi)->metalCost || energyEnd < (*boi)->energyCost)
 			continue;
 
@@ -266,7 +262,7 @@ void CGroupAI::FindNewBuildTask()
 		// find a build position if it isn't build in a factory
 		if(commandPair.second!=CMDTYPE_ICON)
 		{
-			float3 pos = helper->FindBuildPos(name,(*boi)->isMex, (*boi)->isGeo,currentBuilder);
+			float3 pos = helper->FindBuildPos(name,(*boi)->isMex, (*boi)->isGeo,(*boi)->spacing,currentBuilder);
 			if(pos==helper->errorPos)
 				continue;
 			c.params.push_back(pos.x);
@@ -331,6 +327,7 @@ void CGroupAI::CalculateCurrentME()
 {
 	float totalEnergyUpkeep	= 0.0f;
 	float totalMetalUpkeep	= 0.0f;
+	totalMMenergyUpkeep = 0.0f;
 	// parse through every unit to get the total energy and metal upkeep
 	int size = aicb->GetFriendlyUnits(helper->friendlyUnits);
 	for(int i=0;i<size;i++)
@@ -341,8 +338,18 @@ void CGroupAI::CalculateCurrentME()
 		const UnitDef* ud=aicb->GetUnitDef(unit);
 		if(ud==0)
 			continue;
-		if(ud->energyUpkeep > 0)	totalEnergyUpkeep	+= ud->energyUpkeep;
-		if(ud->metalUpkeep > 0)		totalMetalUpkeep	+= ud->metalUpkeep;
+		if(ud->energyUpkeep > 0)
+		{
+			if(ud->isMetalMaker && aicb->IsUnitActivated(unit))
+			{
+				totalMMenergyUpkeep += ud->energyUpkeep;
+			}
+			totalEnergyUpkeep	+= ud->energyUpkeep;
+		}
+		if(ud->metalUpkeep > 0)
+		{
+			totalMetalUpkeep	+= ud->metalUpkeep;
+		}
 	}
 	float effMetal	= aicb->GetMetalIncome() - totalMetalUpkeep;
 	float effEnergy = aicb->GetEnergyIncome() - totalEnergyUpkeep;
