@@ -42,6 +42,7 @@
 #include "Sim/ModInfo.h"
 #include "Platform/FileSystem.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "mmgr.h"
 
 /* Cast id to unsigned to catch negative ids in the same operations,
@@ -1183,6 +1184,11 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 		}
 	}
 	return a;
+}
+
+const WeaponDef* CAICallback::GetWeapon(const char* weaponname)
+{
+	return weaponDefHandler->GetWeapon(weaponname);
 }
 
 IMPLEMENT_PURE_VIRTUAL(IAICallback::~IAICallback())
