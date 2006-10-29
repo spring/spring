@@ -156,6 +156,8 @@ public:
 
 	float GetUnitDefRadius(int def);
 	float GetUnitDefHeight(int def);
+
+	const WeaponDef* GetWeapon(const char* weaponname);
 };
 
 #endif /* AICALLBACK_H */

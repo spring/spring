@@ -8,6 +8,7 @@
 #include "Game/command.h"
 struct UnitDef;
 struct FeatureDef;
+struct WeaponDef;
 // GetProperty() constants
                             // Data buffer will be filled with this:
 #define AIVAL_UNITDEF		1  // const UnitDef*
@@ -242,6 +243,9 @@ public:
 	virtual void GetUnitDefList (const UnitDef** list) = 0;
 	virtual float GetUnitDefHeight(int def) = 0; // forces loading of the unit model
 	virtual float GetUnitDefRadius(int def) = 0; // forces loading of the unit model
+
+	virtual const WeaponDef* GetWeapon(const char* weaponname) = 0;
+
 	DECLARE_PURE_VIRTUAL(~IAICallback())
 };
 
