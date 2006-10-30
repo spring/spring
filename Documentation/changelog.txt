@@ -2,6 +2,10 @@ TASpring change log
 
 0.next
 
+- numbers in .info list are now team numbers, so they match with '.team X' commands.
+- names are now prefixed with 's:' 'a:' or 'e:' for respectively spectators, allies and enemies.
+- if spectating, an arrow is displayed in front of the team you are currently watching.
+
 - added Shift and Alt/Meta group selection modifier features
   (Shift adds members to current selection, Alt/Meta toggles them)
 
