@@ -37,10 +37,18 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	int maxysize = 0;
 
 	for (int frameNum = 0; ; ++frameNum) {
-                sprintf(namebuf, "Anims/%s_%d.bmp", name.c_str(), frameNum);
-		CFileHandler f(namebuf);
-		
-		if (f.FileExists()) {
+        sprintf(namebuf, "Anims/%s_%d.tga", name.c_str(), frameNum);
+		CFileHandler *f;
+		f = new CFileHandler(namebuf);
+		if(!f->FileExists())
+		{
+			//try to load as bmp if no tga exist
+			sprintf(namebuf, "Anims/%s_%d.bmp", name.c_str(), frameNum);
+			delete f;
+			f = new CFileHandler(namebuf);
+		}
+
+		if (f->FileExists()) {
 			string bmpname = namebuf;
 			CBitmap b;
 			if (!b.Load(bmpname))
@@ -67,8 +75,10 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 			delete final;
 		}
 		else {
+			delete f;
 			break;
 		}
+		delete f;
 	}
 
 	if (frames.size() == 0) {
