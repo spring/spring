@@ -13,6 +13,10 @@ def exists(env):
 # HACK   Oh noes, msvcrt doesn't support arbitrary lenght commandlines :/
 # source: http://www.scons.org/cgi-sys/cgiwrap/scons/moin.cgi/LongCmdLinesOnWin32
 def fix_windows_spawn(env):
+	# for cross compilation
+	if sys.platform != 'win32':
+		return
+
 	if env['platform'] == 'windows':
 		import win32file
 		import win32event
@@ -317,8 +321,8 @@ def generate(env):
 			env['SHLINKFLAGS'] = '$LINKFLAGS -dynamic'
 			env['SHLIBSUFFIX'] = '.dylib'
 		elif env['platform'] == 'windows':
-			include_path += ['mingwlibs\\include']
-			lib_path += ['mingwlibs\\lib']
+			include_path += [os.path.join('mingwlibs', 'include')]
+			lib_path += [os.path.join('mingwlibs', 'lib')]
 			if os.environ.has_key('MINGDIR'):
 				include_path += [os.path.join(os.environ['MINGDIR'], 'include')]
 				lib_path += [os.path.join(os.environ['MINGDIR'], 'lib')]
