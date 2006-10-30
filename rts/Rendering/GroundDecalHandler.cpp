@@ -157,7 +157,7 @@ void CGroundDecalHandler::Draw(void)
 					continue;
 				}
 				if(camera->InView(decal->pos,decal->radius) && 
-					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS))))
+					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectating))
 				{
 					color[3]=int(decal->alpha*255);
 					float* heightmap=readmap->GetHeightmap();

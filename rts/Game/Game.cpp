@@ -611,7 +611,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	}
 
 	// try the input receivers
-  std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if((*ri)->KeyPressed(k)) {
@@ -1617,20 +1617,33 @@ bool CGame::Draw()
 		const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
 		for (int a=0; a<gs->activePlayers; ++a) {
 			if (gs->players[a]->active) {
-				SNPRINTF(buf, sizeof(buf), "(%i) %s %3.0f%% Ping:%d ms", a,
+				float color[4];
+				const char* prefix;
+				if (gs->players[a]->spectator) {
+					color[0] = 1.0f;
+					color[1] = 1.0f;
+					color[2] = 1.0f;
+					color[3] = 1.0f;
+					prefix = "s:";
+				} else {
+					const unsigned char* bColor = gs->Team(gs->players[a]->team)->color;
+					color[0] = (float)bColor[0] / 255.0f;
+					color[1] = (float)bColor[1] / 255.0f;
+					color[2] = (float)bColor[2] / 255.0f;
+					color[3] = (float)bColor[3] / 255.0f;
+					prefix = gu->myAllyTeam == gs->AllyTeam(gs->players[a]->team) ? "a:" : "e:";
+				}
+				SNPRINTF(buf, sizeof(buf), "%s(%i) %s%s %3.0f%% Ping:%d ms",
+				         gu->spectating && gu->myTeam == gs->players[a]->team ? ">> " : "",
+				         gs->players[a]->team, prefix,
 				         gs->players[a]->playerName.c_str(), gs->players[a]->cpuUsage*100,
 				         (int)((gs->players[a]->ping-1)*1000/(30*gs->speedFactor)));
 				glTranslatef(0.76f, 0.01f + (0.02f * a), 1.0f);
 				glScalef(xScale, yScale, 1.0f);
-				glColor4ubv(gs->Team(gs->players[a]->team)->color);
+				glColor4fv(color);
 				if (!outlineFont.IsEnabled()) {
 					font->glPrint("%s", buf);
 				} else {
-					const unsigned char* bColor = gs->Team(gs->players[a]->team)->color;
-					const float color[4] = { (float)bColor[0] / 255.0f,
-					                         (float)bColor[1] / 255.0f,
-					                         (float)bColor[2] / 255.0f,
-					                         (float)bColor[3] / 255.0f };
 					outlineFont.print(xPixel, yPixel, color, buf);
 				}
 				glLoadIdentity();
