@@ -53,7 +53,10 @@ class CGuiHandler : public CInputReceiver {
  		bool GetInvertQueueKey() const { return invertQueueKey; }
  		void SetInvertQueueKey(bool value) { invertQueueKey = value; }
  		bool GetQueueKeystate() const;
-		
+ 		
+ 		bool GetDefaultToRally() const { return defaultToRally; }
+ 		void SetDefaultToRally(bool value) { defaultToRally = value; }
+ 		
 	public:
 		vector<CommandDescription> commands;
 		int inCommand;
@@ -68,6 +71,7 @@ class CGuiHandler : public CInputReceiver {
 		bool LayoutCustomIcons(bool useSelectionPage);
 		void ResizeIconArray(unsigned int size);
 		void AppendPrevAndNext(vector<CommandDescription>& cmds);
+ 		void ConvertCommands(vector<CommandDescription>&);
 
 		int  FindInCommandPage();
 		void RevertToCmdDesc(const CommandDescription& cmdDesc, bool samePage);
@@ -76,6 +80,7 @@ class CGuiHandler : public CInputReceiver {
 		void CreateOptions(Command& c,bool rmb);
 		void FinishCommand(int button);
 		void SetShowingMetal(bool show);
+		float GetNumberInput(const CommandDescription& cmdDesc) const;
 		
 		struct IconInfo;
 
@@ -98,6 +103,7 @@ class CGuiHandler : public CInputReceiver {
 		void DrawSelectionInfo();
 		void DrawFront(int button,float maxSize,float sizeDiv);
 		void DrawArea(float3 pos, float radius);
+		void DrawSelectBox(const float3& start, const float3& end);
 
 		bool BindNamedTexture(const std::string& texName);
 
@@ -151,6 +157,9 @@ class CGuiHandler : public CInputReceiver {
 		float frameAlpha;
 		float textureAlpha;
 		std::vector<int> fillOrder;
+
+		bool newAttackMode;
+		bool defaultToRally;
 
 		int iconsPerPage;
 		float xIconStep, yIconStep;

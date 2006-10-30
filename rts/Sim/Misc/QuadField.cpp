@@ -172,6 +172,34 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 	return units;
 }
 
+vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
+{
+	vector<CUnit*> units;
+
+	vector<int> quads = GetQuadsRectangle(mins, maxs);
+	
+	int tempNum = gs->tempNum++;
+
+	vector<int>::iterator qi;
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		list<CUnit*>& quadUnits = baseQuads[*qi].units;
+		list<CUnit*>::iterator ui;
+		for (ui = quadUnits.begin(); ui != quadUnits.end(); ++ui) {
+			CUnit* unit = *ui;
+			const float3& pos = unit->midPos;
+			if ((pos.x > mins.x) && (pos.x < maxs.x) &&
+			    (pos.z > mins.z) && (pos.z < maxs.z)) {
+				if(unit->tempNum!=tempNum){
+					unit->tempNum = tempNum;
+					units.push_back(unit);
+				}
+			}
+		}
+	}
+
+	return units;
+}
+
 vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 {
 	vector<int> quads;

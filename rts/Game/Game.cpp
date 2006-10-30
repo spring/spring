@@ -34,6 +34,7 @@
 #include "SyncTracer.h"
 #include "Team.h"
 #include "TimeProfiler.h"
+#include "WaitCommandsAI.h"
 #include "WordCompletion.h"
 #ifdef _WIN32
 #include "winerror.h"
@@ -479,17 +480,18 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		return 0;
 	}
 
-	if(showList){					//are we currently showing a list?
-		if(k==SDLK_UP)
+	if (showList) {					//are we currently showing a list?
+		if (k == SDLK_UP) {
 			showList->UpOne();
-		if(k==SDLK_DOWN)
+		} else if (k == SDLK_DOWN) {
 			showList->DownOne();
-		if(k==SDLK_RETURN){
+		} else if (k == SDLK_RETURN) {
 			showList->Select();
 			showList=0;
-		}
-		if(k==27 && playing){
+		} else if ((k == 27) && playing) { 
 			showList=0;
+		} else {
+			showList->KeyPress(k);
 		}
 		return 0;
 	}
@@ -1223,6 +1225,15 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			guihandler->RunLayoutCommand(action.extra);
 		}
 	}
+	else if (cmd == "rallydefault") {
+		if (guihandler != NULL) {
+			if (action.extra.empty()) {
+				guihandler->SetDefaultToRally(!guihandler->GetDefaultToRally());
+			} else {
+				guihandler->SetDefaultToRally(atoi(action.extra.c_str()));
+			}
+		}
+	}
 	else {
 		return false;
 	}
@@ -1699,6 +1710,7 @@ void CGame::SimFrame()
 	gs->frameNum++;
 
 	ENTER_UNSYNCED;
+	waitCommandsAI.Update();
 	infoConsole->Update();
 	geometricObjects->Update();
 	if(!(gs->frameNum & 7))
@@ -3056,8 +3068,8 @@ static void SelectUnits(const string& line)
 			if (unit == NULL) {
 				continue; // bad pointer
 			}
-			const set<CUnit*>* teamUnits = &gs->Team(gu->myTeam)->units;
-			if (teamUnits->find(unit) == teamUnits->end()) {
+			const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+			if (teamUnits.find(unit) == teamUnits.end()) {
 				continue; // not mine to select
 			}
 

@@ -25,6 +25,7 @@ public:
 	vector<int> GetQuadsOnRay(float3 start, float3 dir,float length);
 	vector<CUnit*> GetUnits(const float3& pos,float radius);
 	vector<CUnit*> GetUnitsExact(const float3& pos,float radius);
+	vector<CUnit*> GetUnitsExact(const float3& mins, const float3& maxs);
 	void MovedUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	void AddFeature(CFeature* feature);

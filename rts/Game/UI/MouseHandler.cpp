@@ -65,21 +65,24 @@ CMouseHandler::CMouseHandler()
 		buttons[a].movement=0;
 	}
 
-	cursors[""] = new CMouseCursor("cursornormal", CMouseCursor::TopLeft);
-	cursors["Move"] = new CMouseCursor("cursormove", CMouseCursor::Center);
-	cursors["Guard"] = new CMouseCursor("cursordefend", CMouseCursor::Center);
-	cursors["Attack"] = new CMouseCursor("cursorattack", CMouseCursor::Center);
-	cursors["DGun"] = new CMouseCursor("cursorattack", CMouseCursor::Center);
-	cursors["Patrol"] = new CMouseCursor("cursorpatrol", CMouseCursor::Center);
-	cursors["Fight"] = new CMouseCursor("cursorattack", CMouseCursor::Center);
-	cursors["Repair"] = new CMouseCursor("cursorrepair", CMouseCursor::Center);
-	cursors["Load units"] = new CMouseCursor("cursorpickup", CMouseCursor::Center);
-	cursors["Unload units"] = new CMouseCursor("cursorunload", CMouseCursor::Center);	
-	cursors["Reclaim"] = new CMouseCursor("cursorreclamate", CMouseCursor::Center);
-	cursors["Resurrect"] = new CMouseCursor("cursorrevive", CMouseCursor::Center);
-	cursors["Capture"] = new CMouseCursor("cursorcapture", CMouseCursor::Center);
-	cursors["Wait"] = new CMouseCursor("cursorwait", CMouseCursor::Center);
-	cursors["SelfD"] = new CMouseCursor("cursorselfd", CMouseCursor::Center);
+	cursors[""]             = new CMouseCursor("cursornormal",    CMouseCursor::TopLeft);
+	cursors["Attack"]       = new CMouseCursor("cursorattack",    CMouseCursor::Center);
+	cursors["Capture"]      = new CMouseCursor("cursorcapture",   CMouseCursor::Center);
+	cursors["DeathWatch"]   = new CMouseCursor("cursordwatch",    CMouseCursor::Center);
+	cursors["DGun"]         = new CMouseCursor("cursorattack",    CMouseCursor::Center);
+	cursors["Fight"]        = new CMouseCursor("cursorattack",    CMouseCursor::Center);
+	cursors["Guard"]        = new CMouseCursor("cursordefend",    CMouseCursor::Center);
+	cursors["Load units"]   = new CMouseCursor("cursorpickup",    CMouseCursor::Center);
+	cursors["Move"]         = new CMouseCursor("cursormove",      CMouseCursor::Center);
+	cursors["Patrol"]       = new CMouseCursor("cursorpatrol",    CMouseCursor::Center);
+	cursors["RallyPoint"]   = new CMouseCursor("cursorrally",     CMouseCursor::Center);
+	cursors["Reclaim"]      = new CMouseCursor("cursorreclamate", CMouseCursor::Center);
+	cursors["Repair"]       = new CMouseCursor("cursorrepair",    CMouseCursor::Center);
+	cursors["Resurrect"]    = new CMouseCursor("cursorrevive",    CMouseCursor::Center);
+	cursors["SelfD"]        = new CMouseCursor("cursorselfd",     CMouseCursor::Center);
+	cursors["TimeWait"]     = new CMouseCursor("cursortimewait",  CMouseCursor::Center);
+	cursors["Unload units"] = new CMouseCursor("cursorunload",    CMouseCursor::Center);	
+	cursors["Wait"]         = new CMouseCursor("cursorwait",      CMouseCursor::Center);
 
 	SDL_ShowCursor(SDL_DISABLE);
 

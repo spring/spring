@@ -26,12 +26,18 @@ public:
 	void Update();
 
 private:
-	void CalculateGroupData(int player);
+	void CalculateGroupData(int player, bool queueing);
 	void MakeFrontMove(Command* c,int player);
 	void CreateUnitOrder(std::multimap<float,int>& out,int player);
 	float3 MoveToPos(int unit, float3 nextCornerPos, float3 dir,unsigned char options);
 	void AddUnitSetMaxSpeedCommand(CUnit* unit, unsigned char options);
 	void AddGroupSetMaxSpeedCommand(CUnit* unit, unsigned char options);
+	void SelectBoxAttack(const Command& cmd, int player);
+	void SelectAttackUnits(const float3& pos, float radius,
+	                       vector<int>& units, int player);
+	void SelectAttackUnits(const float3& pos0, const float3& pos1,
+	                       vector<int>& units, int player);
+	float3 LastQueuePosition(CUnit* unit);
 	
 	float3 minCoor, maxCoor, centerCoor;
 	float minMaxSpeed;
