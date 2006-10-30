@@ -54,7 +54,7 @@ def check_debian_powerpc(env, conf):
 def guess_include_path(env, conf, name, subdir):
 	print "  Guessing", name, "include path...",
 	if env['platform'] == 'windows':
-		path = [os.path.join('mingwlibs\\include', subdir)]
+		path = [os.path.join(os.path.join('mingwlibs', 'include'), subdir)]
 		if os.environ.has_key('MINGDIR'):
 			path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
 	elif env['platform'] == 'darwin':
@@ -73,6 +73,10 @@ def check_freetype2(env, conf):
 	because the latter returns a garbage freetype version on (at least) my system --tvo """
 
 	print "  Checking for freetype-config...",
+	# put this here for crosscompiling
+	if env['platform'] == 'windows':
+		guess_include_path(env, conf, 'Freetype2', 'freetype2')
+		return
 	freetypecfg = env.WhereIs("freetype-config")
 	if freetypecfg:
 		print freetypecfg
@@ -121,6 +125,10 @@ def check_freetype2(env, conf):
 def check_sdl(env, conf):
 	print "Checking for SDL..."
 	print "  Checking for sdl-config...",
+	# put this here for crosscompiling
+	if env['platform'] == 'windows':
+		guess_include_path(env, conf, 'SDL', 'SDL')
+		return
 	sdlcfg = env.WhereIs("sdl-config")
 	if not sdlcfg: # for FreeBSD
 		sdlcfg = env.WhereIs("sdl11-config")
@@ -147,6 +155,10 @@ def check_sdl(env, conf):
 def check_openal(env, conf):
 	print "Checking for OpenAL..."
 	print "  Checking for openal-config...",
+	# put this here for crosscompiling
+	if env['platform'] == 'windows':
+		guess_include_path(env, conf, 'OpenAL', 'AL')
+		return
 	openalcfg = env.WhereIs("openal-config")
 	if openalcfg:
 		print openalcfg
@@ -159,6 +171,7 @@ def check_openal(env, conf):
 def check_python(env, conf):
 	print "Checking for Python 2.4...",
 	if env['platform'] == 'windows':
+		#TODO check this for crosscompiling
 		# On windows, guess the python install location by looking at sys.executable,
 		# which holds the full path to the python interpreter running this code.
 		p1 = sys.executable.rfind('python')
@@ -237,10 +250,14 @@ def check_libraries(env, conf):
 	if not conf.CheckLib('openal') and not conf.CheckLib('openal32'):
 		print 'OpenAL is required for this program'
 		env.Exit(1)
-	# second check for Windows.
-	if not conf.CheckLib('python2.4') and not conf.CheckLib('python24'):
-		print 'python is required for this program'
-		env.Exit(1)
+
+	#FIXME unitsync doesn't compile on mingw, also this breaks current mingwlibs when crosscompiling..
+	if env['platform'] != 'windows':
+		# second check for Windows.
+		if not conf.CheckLib('python2.4') and not conf.CheckLib('python24'):
+			print 'python is required for this program'
+			env.Exit(1)
+
 	# second check for Windows.
 	if not (conf.CheckLib('GLEW') or conf.CheckLib('glew32')):
 		print "You need GLEW to compile this program"

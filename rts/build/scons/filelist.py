@@ -7,6 +7,17 @@ import os, re
 ###############################################
 
 
+def fix_path(path):
+	pieces = path.split('/')
+	newpath = None
+	for p in pieces:
+		if newpath:
+			newpath = os.path.join(newpath, p)
+		else:
+			newpath = p
+	return newpath
+
+
 def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	path_stack = [path]
 	#walk through dir tree
@@ -83,13 +94,14 @@ def get_spring_source(env):
 
 	source = get_source(env, 'rts', exclude_list = exclude)
 	source += get_source(env, 'lua')
-	
+
 	# HACK   compile OpenALSound instead of DxSound on Mingw
 	if not env.has_key('platform') or env['platform'] == 'windows':
+		bla = fix_path('rts/System/Platform/Linux/OpenALSound.cpp')
 		if env.has_key('builddir'):
-			source += [os.path.join(env['builddir'], 'rts\\System\\Platform\\Linux\\OpenALSound.cpp')]
+			source += [os.path.join(env['builddir'], bla)]
 		else:
-			source += ['rts\\System\\Platform\\Linux\\OpenALSound.cpp']
+			source += [bla]
 	return source
 
 
