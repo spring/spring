@@ -231,7 +231,13 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 			if((*ui)==exclude)
 				continue;
 			if((*ui)->allyteam==gu->myAllyTeam || ((*ui)->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) || (useRadar && radarhandler->InRadar(*ui,gu->myAllyTeam)) || gu->spectating){
-				float3 pos=GetUnitErrorPos(*ui,gu->myAllyTeam);
+				float3 pos;
+
+				if (gu->spectating)
+					pos = (*ui)->midPos;
+				else
+					pos = GetUnitErrorPos(*ui,gu->myAllyTeam);
+
 				if((*ui)->isIcon)
 				{
 					float h=ground->GetHeight(pos.x,pos.z);
