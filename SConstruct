@@ -37,7 +37,13 @@ if env['platform'] != 'windows':
 	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
 	spring_files += [ufshcpp]
 
-spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
+# Fix the extension when crosscompiling
+if env['platform'] == 'windows' and sys.platform != 'win32':
+	exe = 'game/spring.exe'
+else:
+	exe = 'game/spring'
+
+spring = env.Program(exe, spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 
 Alias('spring', spring)
 Default(spring)
