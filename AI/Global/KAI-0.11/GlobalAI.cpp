@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "GlobalAI.h"
-#include "unit.h"
+#include "UNIT.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -39,21 +39,15 @@ CGlobalAI::~CGlobalAI()
 
 void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 {
-	// Create folders if theyre not there already
 	int timetaken = clock();
-	_mkdir(ROOTFOLDER);
-	_mkdir(LOGFOLDER);
-	_mkdir(METALFOLDER);
-	_mkdir(TGAFOLDER);
-
 
 	// Initialize Log filename
 	string mapname = string(callback->GetAICallback()->GetMapName());
 	mapname.resize(mapname.size()-4);
 	time_t now1;
-    time(&now1);
-    struct tm *now2;
-    now2 = localtime(&now1);
+	time(&now1);
+	struct tm *now2;
+	now2 = localtime(&now1);
 	// Date logfile name
 	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",string(LOGFOLDER).c_str(),
             mapname.c_str(),now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900,
@@ -66,6 +60,8 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 	ai->cb			= callback->GetAICallback();
 	ai->cheat		= callback->GetCheatInterface();
 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, c);
+
 	MyUnits.reserve(MAXUNITS);
 	ai->MyUnits.reserve(MAXUNITS);
 	for (int i = 0; i < MAXUNITS;i++){		
@@ -77,7 +73,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 
 	ai->debug		= new CDebug(ai);
 	ai->math		= new CMaths(ai);
-	ai->LOGGER		= new std::ofstream(c);
+	ai->LOGGER		= NULL; //new std::ofstream(c);
 	ai->parser		= new CSunParser(ai);
 	ai->ut			= new CUnitTable(ai);
 	ai->mm			= new CMetalMap(ai);
@@ -88,7 +84,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 	ai->econTracker = new CEconomyTracker(ai); // This is a temp only
 	ai->bu			= new CBuildUp(ai);
 	ai->ah			= new CAttackHandler(ai);
-	L("All Class pointers initialized");	
+	//L("All Class pointers initialized");	
 
 
 
@@ -113,7 +109,7 @@ void CGlobalAI::UnitFinished(int unit)
 		//attackHandler->AddUnit(unit);
 		ai->ah->AddUnit(unit);
 	}
-	else if((ai->cb->GetCurrentFrame() < 2 || ai->cb->GetUnitDef(unit)->speed <= 0)) {//Add comm at begginning of game and factories when theyre built
+	else if((ai->cb->GetCurrentFrame() < 20 || ai->cb->GetUnitDef(unit)->speed <= 0)) {//Add comm at begginning of game and factories when theyre built
 		ai->uh->IdleUnitAdd(unit);
 	}
 	ai->uh->BuildTaskRemove(unit);
@@ -121,7 +117,7 @@ void CGlobalAI::UnitFinished(int unit)
 
 void CGlobalAI::UnitDestroyed(int unit,int attacker)
 {
-//	L("GlobalAI::UnitDestroyed is called on unit:" << unit <<". its groupid:" << GUG(unit));
+//	//L("GlobalAI::UnitDestroyed is called on unit:" << unit <<". its groupid:" << GUG(unit));
 	ai->econTracker->UnitDestroyed(unit);
 	if(GUG(unit) != -1) {
 		//attackHandler->UnitDestroyed(unit);
@@ -172,6 +168,11 @@ void CGlobalAI::GotChatMsg(const char* msg,int player)
 void CGlobalAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
 {
 	ai->econTracker->UnitDamaged(damaged, damage);
+}
+
+void CGlobalAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir)
+{
+
 }
 
 void CGlobalAI::UnitMoveFailed(int unit)

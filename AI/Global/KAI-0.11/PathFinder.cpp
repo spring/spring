@@ -1,12 +1,12 @@
-#pragma once
+/*#pragma once removed*/
 #include "PathFinder.h"
 
 CPathFinder::CPathFinder(AIClasses *ai)
 {
 	this->ai=ai;
 	resmodifier = THREATRES; // 8 = speed, 2 = precision
-	PathMapXSize =ai->cb->GetMapWidth() /resmodifier;
-	PathMapYSize =ai->cb->GetMapHeight() /resmodifier;
+	PathMapXSize = int(ai->cb->GetMapWidth() / resmodifier);
+	PathMapYSize = int(ai->cb->GetMapHeight() / resmodifier);
 	totalcells = PathMapXSize*PathMapYSize;
 	micropather = new MicroPather( this, ai, totalcells);
 	HeightMap = new float[totalcells];
@@ -42,19 +42,19 @@ void CPathFinder::Init()
 		float maxslope = 0;
 		float tempslope;
 		if(i+1 < totalcells && (i + 1) % PathMapXSize){	
-			tempslope = abs(HeightMap[i] - HeightMap[i+1]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i+1]);
 				maxslope = max(tempslope,maxslope);
 		}
 		if(i - 1 >= 0 && i % PathMapXSize){
-			tempslope = abs(HeightMap[i] - HeightMap[i-1]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i-1]);
 			maxslope = max(tempslope,maxslope);
 		}
 		if(i+PathMapXSize < totalcells){
-			tempslope = abs(HeightMap[i] - HeightMap[i+PathMapXSize]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i+PathMapXSize]);
 			maxslope = max(tempslope,maxslope);
 		}
 		if(i-PathMapXSize >= 0){
-			tempslope = abs(HeightMap[i] - HeightMap[i-PathMapXSize]);
+			tempslope = fabs(HeightMap[i] - HeightMap[i-PathMapXSize]);
 			maxslope = max(tempslope,maxslope);
 		}
 		SlopeMap[i]=maxslope*6/resmodifier; 
@@ -65,7 +65,7 @@ void CPathFinder::Init()
 	//ai->debug->MakeBWTGA(HeightMap,PathMapXSize,PathMapYSize,"HeightMap");
 	
 	// Get all the different movetypes
-	L("Getting Movearrays");
+	//L("Getting Movearrays");
 	vector<int> moveslopes;
 	vector<int> maxwaterdepths;
 	vector<int>	minwaterdepths;
@@ -73,24 +73,24 @@ void CPathFinder::Init()
 	string errorstring = "-1";
 	string Valuestring = "0";
 	char k [50];
-	//L("Loading sidedata");
+	////L("Loading sidedata");
 	ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf");
-	//L("Starting Loop");
+	////L("Starting Loop");
 	while(Valuestring != errorstring){
-		//L("Run Number: " << NumOfMoveTypes);
+		////L("Run Number: " << NumOfMoveTypes);
 		sprintf(k,"%i",NumOfMoveTypes);
 		ai->parser->GetDef(Valuestring,errorstring,string(sectionstring + k + "\\Name"));
-		L("Movetype: " << Valuestring);
+		//L("Movetype: " << Valuestring);
 		if(Valuestring != errorstring){
 			ai->parser->GetDef(Valuestring,string("10000"),string(sectionstring + k + "\\MaxWaterDepth"));
 			maxwaterdepths.push_back(atoi(Valuestring.c_str()));
-			L("Max water depth: " << Valuestring);
+			//L("Max water depth: " << Valuestring);
 			ai->parser->GetDef(Valuestring,string("-10000"),string(sectionstring + k + "\\MinWaterDepth"));
 			minwaterdepths.push_back(atoi(Valuestring.c_str()));
-			L("minwaterdepths: " << Valuestring);
+			//L("minwaterdepths: " << Valuestring);
 			ai->parser->GetDef(Valuestring,string("10000"),string(sectionstring + k + "\\MaxSlope"));
 			moveslopes.push_back(atoi(Valuestring.c_str()));
-			L("moveslopes: " << Valuestring);
+			//L("moveslopes: " << Valuestring);
 		NumOfMoveTypes++;
 		}
 	}
@@ -111,7 +111,7 @@ void CPathFinder::Init()
 			{
 				MoveArrays[m][i] = false;
 				TestMoveArray[i] = true;
-				//L("false");
+				////L("false");
 
 			}
 			else{
@@ -141,7 +141,7 @@ void CPathFinder::Init()
 }
 	
 void CPathFinder::CreateDefenseMatrix(){
-	//L("Starting pathing");
+	////L("Starting pathing");
 	ai->math->TimerStart();
 	int enemycomms[16];
 	float3 enemyposes[16];
@@ -149,7 +149,7 @@ void CPathFinder::CreateDefenseMatrix(){
 	//ai->debug->MakeBWTGA(SlopeMap,PathMapXSize,PathMapYSize,string("SlopeMap"));
 	//ai->debug->MakeBWTGA(TestMoveArray,PathMapXSize,PathMapYSize,string("Plane Move Array"));
 
-	int Range = sqrt(float(PathMapXSize*PathMapYSize))/ THREATRES / 3;
+	int Range = int(sqrtf(float(PathMapXSize*PathMapYSize))/ THREATRES / 3);
 	int squarerange = Range*Range;
 	int maskwidth = (2*Range+1);
 	float* costmask = new float[maskwidth*maskwidth];
@@ -168,7 +168,7 @@ void CPathFinder::CreateDefenseMatrix(){
 	for(int m = 0; m < 	NumOfMoveTypes;m++){	
 		int numberofenemyplayers = ai->cheat->GetEnemyUnits(enemycomms);
 		for(int i = 0; i < numberofenemyplayers; i++){
-			L("Enemy comm: " << enemycomms[i]);
+			//L("Enemy comm: " << enemycomms[i]);
 			enemyposes[i] = ai->cheat->GetUnitPos(enemycomms[i]);
 		}
 		float3 mypos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER]->front());
@@ -188,7 +188,7 @@ void CPathFinder::CreateDefenseMatrix(){
 
 		if(numberofenemyplayers > 0 && m == PATHTOUSE){ // HACK
 			for(int r = 0; r < reruns; r++){
-				//L("reruns: " << r);
+				////L("reruns: " << r);
 				for(int startpos = 0; startpos < numberofenemyplayers; startpos++){
 					if(micropather->Solve(Pos2Node(enemyposes[startpos]), Pos2Node(mypos), &path, &totalcost) == MicroPather::SOLVED){							
 						for(int i = 12; i < int(path.size()-12); i++){
@@ -199,8 +199,8 @@ void CPathFinder::CreateDefenseMatrix(){
 								float3 pos2 =  Node2Pos(path[i]);
 								pos1.y = 100 + ai->cb->GetElevation(pos1.x ,pos1.z);
 								pos2.y = 100 + ai->cb->GetElevation(pos2.x ,pos2.z);
-								L("Line: " << pos1.x << "," << pos1.z << ", pos2: " << pos2.x << "," << pos2.z);
-								ai->cb->CreateLineFigure(pos1,pos2,10,1,100000000,457);*/
+								//L("Line: " << pos1.x << "," << pos1.z << ", pos2: " << pos2.x << "," << pos2.z);
+								//ai->cb->CreateLineFigure(pos1,pos2,10,1,100000000,457);*/
 								for (int myx = -Range; myx <= Range; myx++){
 									int actualx = x + myx;
 									if (actualx >= 0 && actualx < PathMapXSize){
@@ -217,15 +217,15 @@ void CPathFinder::CreateDefenseMatrix(){
 						}
 						runcounter++;
 					}
-					//L("Enemy Pos " << startpos << " Cost: " << totalcost);
+					////L("Enemy Pos " << startpos << " Cost: " << totalcost);
 					pathCostSum += totalcost;
-					//L("Time Taken: " << clock() - timetaken);
+					////L("Time Taken: " << clock() - timetaken);
 				}			
 			}
 
-		//L("pathCostSum:  " << pathCostSum);	
+		////L("pathCostSum:  " << pathCostSum);	
 		
-		//L("paths calculated, resmodifier: " << resmodifier );
+		////L("paths calculated, resmodifier: " << resmodifier );
 
 		
 
@@ -257,20 +257,20 @@ void CPathFinder::CreateDefenseMatrix(){
 			pos1.y = 100 + ai->cb->GetElevation(pos1.x, pos1.z);
 			float3 pos2 = senterPos + float3(dx2,0,dy2);
 			pos2.y = 100 + ai->cb->GetElevation(pos2.x, pos2.z);
-			//L("Line: " << pos1.x << "," << pos1.z << ", pos2: " << pos2.x << "," << pos2.z);
-			ai->cb->CreateLineFigure(pos1,pos2,20,0,100000000,456);
+			////L("Line: " << pos1.x << "," << pos1.z << ", pos2: " << pos2.x << "," << pos2.z);
+			//ai->cb->CreateLineFigure(pos1,pos2,20,0,100000000,456);
 		}
 		
 		micropather->FindBestPathToPointOnRadius(startNode, senterNode, &path, &totalcost, radius);
-		L("totalcost: " << totalcost << ", path.size(): " << path.size());
+		//L("totalcost: " << totalcost << ", path.size(): " << path.size());
 		for(int i = 1; i < path.size(); i++)
 		{
 			float3 pos1 = Node2Pos(path[i-1]);
 			float3 pos2 =  Node2Pos(path[i]);
 			pos1.y = 100 + ai->cb->GetElevation(pos1.x ,pos1.z);
 			pos2.y = 100 + ai->cb->GetElevation(pos2.x ,pos2.z);
-			//L("Line: " << pos1.x << "," << pos1.z << ", pos2: " << pos2.x << "," << pos2.z);
-			ai->cb->CreateLineFigure(pos1,pos2,10,1,100000000,457);
+			////L("Line: " << pos1.x << "," << pos1.z << ", pos2: " << pos2.x << "," << pos2.z);
+			//ai->cb->CreateLineFigure(pos1,pos2,10,1,100000000,457);
 		}*/
 
 		}
@@ -279,13 +279,13 @@ void CPathFinder::CreateDefenseMatrix(){
 	char c[500];
 	sprintf(c,"Time Taken to create chokepoints: %f",ai->math->TimerSecs());
 	ai->cb->SendTextMsg(c,0);
-	L(c);
+	//L(c);
 
 }
 
 void CPathFinder::PrintData(string s)
 {
-	L(s);
+	//L(s);
 }
 
 void CPathFinder::ClearPath()
@@ -307,7 +307,7 @@ void* CPathFinder::XY2Node(int x, int y)
 
 void CPathFinder::Node2XY(void* node, int* x, int* y)
 {
-	int index = (int)node;
+	long index = (long)node;
 	*y = index / PathMapXSize;
 	*x = index - *y * PathMapXSize;
 }
@@ -315,8 +315,8 @@ void CPathFinder::Node2XY(void* node, int* x, int* y)
 float3 CPathFinder::Node2Pos(void*node)
 {
 	float3 pos;
-	int multiplier = 8 * resmodifier;
-	int index = (int)node;
+	int multiplier = int(8 * resmodifier);
+	long index = (long)node;
 	pos.z = (index / PathMapXSize) * multiplier; /////////////////////OPTiMIZE
 	pos.x = (index - ((index / PathMapXSize) * PathMapXSize)) * multiplier;
 	return pos;
@@ -325,7 +325,7 @@ float3 CPathFinder::Node2Pos(void*node)
 
 void* CPathFinder::Pos2Node(float3 pos)
 {
-	//L("pos.x = " << pos.x << " pos.z= " << pos.z << " node: " << (pos.z/(8*THREATRES)) * PathMapXSize +  (pos.x / (8*THREATRES)));
+	////L("pos.x = " << pos.x << " pos.z= " << pos.z << " node: " << (pos.z/(8*THREATRES)) * PathMapXSize +  (pos.x / (8*THREATRES)));
 	return (void*)(int(pos.z/8/THREATRES) * PathMapXSize + int((pos.x / 8/THREATRES)));
 }
 
@@ -335,24 +335,24 @@ returns the path cost.
 */
 float CPathFinder::MakePath(vector<float3> *posPath, float3 *startPos, float3 *endPos, int radius)
 {
-	//L("Makepath radius Started");
+	////L("Makepath radius Started");
 	ai->math->TimerStart();
 	float totalcost;
 	ClearPath();
 	int sx,sy,ex,ey;
 	ai->math->F3MapBound(startPos);
 	ai->math->F3MapBound(endPos);
-	ex = endPos->x / (8 *resmodifier);
-	ey = endPos->z / (8 *resmodifier);
-	sy = startPos->z / (8 *resmodifier);
-	sx = startPos->x / (8 *resmodifier);
-	radius /= (8 *resmodifier);
-	//L("StartPos : " << startPos->x << "," << startPos->z << " End Pos: " << endPos->x << "," << endPos->z);
+	ex = int(endPos->x / (8 *resmodifier));
+	ey = int(endPos->z / (8 *resmodifier));
+	sy = int(startPos->z / (8 *resmodifier));
+	sx = int(startPos->x / (8 *resmodifier));
+	radius /= int(8 *resmodifier);
+	////L("StartPos : " << startPos->x << "," << startPos->z << " End Pos: " << endPos->x << "," << endPos->z);
 		if(micropather->FindBestPathToPointOnRadius(XY2Node(sx,sy),XY2Node(ex,ey),&path,&totalcost, radius) == MicroPather::SOLVED){
-			//L("attack solution solved! Path size = " << path.size());
+			////L("attack solution solved! Path size = " << path.size());
             posPath->reserve(path.size());
 			for(unsigned i = 0; i < path.size();i++)	{
-					//L("adding path point");
+					////L("adding path point");
 					float3 mypos = Node2Pos(path[i]);
 					mypos.y = ai->cb->GetElevation(mypos.x, mypos.z);
 					posPath->push_back(mypos);
@@ -362,7 +362,7 @@ float CPathFinder::MakePath(vector<float3> *posPath, float3 *startPos, float3 *e
 			//ai->cb->SendTextMsg(c,0);
 		}
 		else{
-			L("MakePath: path failed");
+			//L("MakePath: path failed");
 			//ai->cb->SendTextMsg("ATTACK FAILED!",0);
 		}
 	return totalcost;
@@ -370,54 +370,54 @@ float CPathFinder::MakePath(vector<float3> *posPath, float3 *startPos, float3 *e
 
 float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float myMaxRange, vector<float3> *possibleTargets)
 {
-	//L("FindBestPath Started");
-	//L("startPos: x: " << startPos->x << ", z: " << startPos->z);
+	////L("FindBestPath Started");
+	////L("startPos: x: " << startPos->x << ", z: " << startPos->z);
 	ai->math->TimerStart();
 	float totalcost;
 	ClearPath();
 	// Make a list with the points that will count as end nodes.
 	static vector<void*> endNodes;
-	int radius = myMaxRange / (8 *resmodifier);
+	int radius = int(myMaxRange / (8 *resmodifier));
 	int offsetSize = 0;
 	endNodes.resize(0);
 	endNodes.reserve(possibleTargets->size() * radius * 10);
-	//L("possibleTargets->size(): " << possibleTargets->size());
+	////L("possibleTargets->size(): " << possibleTargets->size());
 	pair<int, int> * offsets;
 	{
 		
-		//L("radius: " << radius);
+		////L("radius: " << radius);
 		int DoubleRadius = radius * 2;
 		int SquareRadius = radius * radius; //used to speed up loops so no recalculation needed
 		int * xend = new int[DoubleRadius+1]; 
-		//L("1");
+		////L("1");
 		for (int a=0;a<DoubleRadius+1;a++){ 
 			float z=a-radius;
 			float floatsqrradius = SquareRadius;
-			xend[a]=sqrt(floatsqrradius-z*z);
+			xend[a]=int(sqrt(floatsqrradius-z*z));
 		}
-		//L("2");
+		////L("2");
 		offsets = new pair<int, int>[DoubleRadius*5];
 		int index = 0;
 		int startPos = 0;
-		//L("3");
+		////L("3");
 		offsets[index].first = 0;
-		//L("offsets[index].first: " << offsets[index].first);
+		////L("offsets[index].first: " << offsets[index].first);
 		offsets[index].second = 0;
-		//L("offsets[index].second: " << offsets[index].second);
+		////L("offsets[index].second: " << offsets[index].second);
 		index++;
 		
 		for (int a=1;a<radius+1;a++){ 
-			//L("a: " << a);
+			////L("a: " << a);
 			int endPos = xend[a];
 			int startPos = xend[a-1];
-			//L("endPos: " << endPos);
+			////L("endPos: " << endPos);
 			while(startPos <= endPos)
 			{
-				//L("startPos: " << startPos);
+				////L("startPos: " << startPos);
 				offsets[index].first = startPos;
-				//L("offsets[index].first: " << offsets[index].first);
+				////L("offsets[index].first: " << offsets[index].first);
 				offsets[index].second = a;
-				//L("offsets[index].second: " << offsets[index].second);
+				////L("offsets[index].second: " << offsets[index].second);
 				startPos++;
 				index++;
 			}
@@ -427,27 +427,27 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 		for (int a=0;a<index2-2;a++)
 		{
 			offsets[index].first = offsets[a].first;
-			//L("offsets[index].first: " << offsets[index].first);
+			////L("offsets[index].first: " << offsets[index].first);
 			offsets[index].second = DoubleRadius - ( offsets[a].second);
-			//L("offsets[index].second: " << offsets[index].second);
+			////L("offsets[index].second: " << offsets[index].second);
 			index++;
 		}
 		index2 = index;
-		//L("3.7");
+		////L("3.7");
 		for (int a=0;a<index2;a++)
 		{
 			offsets[index].first =  - ( offsets[a].first);
-			//L("offsets[index].first: " << offsets[index].first);
+			////L("offsets[index].first: " << offsets[index].first);
 			offsets[index].second = offsets[a].second;
-			//L("offsets[index].second: " << offsets[index].second);
+			////L("offsets[index].second: " << offsets[index].second);
 			index++;
 		}
 		for (int a=0;a<index;a++)
 		{
 			offsets[a].first = offsets[a].first;// + radius;
-			//L("offsets[index].first: " << offsets[a].first);
+			////L("offsets[index].first: " << offsets[a].first);
 			offsets[a].second = offsets[a].second - radius;
-			//L("offsets[index].second: " << offsets[a].second);
+			////L("offsets[index].second: " << offsets[a].second);
 
 		}
 		offsetSize = index;
@@ -458,7 +458,7 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 	{
 		float3 f = (*possibleTargets)[i];
 		int x, y;
-		//L("Added: x: " << f.x << ", z: " << f.z);
+		////L("Added: x: " << f.x << ", z: " << f.z);
 		// TODO: Make the circle here:
 		
 		ai->math->F3MapBound(&f);
@@ -473,34 +473,34 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 		}
 		
 		
-		//L("node: " << ((int) node) << ", x: " << x << ", y: " << y);
+		////L("node: " << ((int) node) << ", x: " << x << ", y: " << y);
 		//endNodes.push_back(node);
 	}
 	ai->math->F3MapBound(startPos);
-	//L("endNodes.size(): " << endNodes.size());
+	////L("endNodes.size(): " << endNodes.size());
 	delete [] offsets;
 	
 	if(micropather->FindBestPathToAnyGivenPoint( Pos2Node(*startPos), endNodes, &path, &totalcost) == MicroPather::SOLVED)
 	{
 		// Solved
-		//L("attack solution solved! Path size = " << path.size());
+		////L("attack solution solved! Path size = " << path.size());
         posPath->reserve(path.size());
 		for(unsigned i = 0; i < path.size(); i++) {
-			//L("adding path point");
+			////L("adding path point");
 			int x, y;
 			Node2XY(path[i], &x, &y);
-			//L("node: " << ((int) path[i]) << ". x: " << x << ", y: " << y);
+			////L("node: " << ((int) path[i]) << ". x: " << x << ", y: " << y);
 			float3 mypos = Node2Pos(path[i]);
-			//L("mypos: x: " << mypos.x << ", z: " << mypos.z);
+			////L("mypos: x: " << mypos.x << ", z: " << mypos.z);
 			mypos.y = ai->cb->GetElevation(mypos.x, mypos.z);
 			posPath->push_back(mypos);
 		}
 		//char c[500];
 		//sprintf(c,"Time Taken: %f Total Cost %i",ai->math->TimerSecs(), int(totalcost));
-		//L(c);
+		////L(c);
 	}
 	else
-		L("FindBestPath: path failed!");
+		//L("FindBestPath: path failed!");
 	return totalcost;
 }
 

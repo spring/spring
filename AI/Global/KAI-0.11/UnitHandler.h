@@ -1,6 +1,8 @@
-#pragma once
+#ifndef UNITHANDLER_H
+#define UNITHANDLER_H
+/*pragma once removed*/
 
-#include "globalai.h"
+#include "GlobalAI.h"
 #include "MetalMaker.h"
 
 class CUnitHandler
@@ -38,7 +40,7 @@ public:
 	void TaskPlanAdd (TaskPlan* taskPlan, BuilderTracker* builderTracker);
 	TaskPlan* GetTaskPlan(int taskPlanId);
 	
-	BuilderTracker* CUnitHandler::GetBuilderTracker(int builder);
+	BuilderTracker* GetBuilderTracker(int builder);
 
 	void FactoryAdd (int id);
 	void FactoryRemove (int id);
@@ -71,3 +73,5 @@ private:
 	AIClasses* ai;
 	int taskPlanCounter;
 };
+
+#endif /* UNITHANDLER_H */

@@ -49,7 +49,7 @@ void CEconomyTracker::frameUpdate()
 	if(trackerOff)
 		return;
 	int frame=ai->cb->GetCurrentFrame();
-	L(frame);
+	//L(frame);
 	// Iterate over all the BuildTasks:
 	/*
 	for(int category = 0; category < LASTCATEGORY; category++ )
@@ -84,7 +84,7 @@ void CEconomyTracker::frameUpdate()
 			assert(bt->alive);
 			activeEconomyUnitTrackers.push_back(bt);
 			removeList.push_back(bt);
-			L("Moved "  << bt->unitDef->humanName << " to activeEconomyUnitTrackers");
+			//L("Moved "  << bt->unitDef->humanName << " to activeEconomyUnitTrackers");
 		}
 	}
 	// Remove them from newEconomyUnitTrackers: 
@@ -102,11 +102,11 @@ void CEconomyTracker::frameUpdate()
 		for(list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++){
 			EconomyUnitTracker *bt = *i; // This is bad, but needed
 			assert(bt->alive);
-			//L("Adding "  << bt->unitDef->humanName << " UnitResourceInfo....");
+			////L("Adding "  << bt->unitDef->humanName << " UnitResourceInfo....");
 			// Hmmm
 			// If the unit is a builder then we track its resource usage already
 			// if its useing more then its weapon fire or upkeep
-			IAICallback::UnitResourceInfo resourceInfo;
+			UnitResourceInfo resourceInfo;
 			bool isAlive = ai->cb->GetUnitResourceInfo(bt->economyUnitId, &resourceInfo);
 			assert(isAlive);
 			
@@ -141,32 +141,32 @@ void CEconomyTracker::frameUpdate()
 			myCalcEnergy = ai->cb->GetEnergyStorage();
 		if(myCalcMetal > ai->cb->GetMetalStorage())
 			myCalcMetal = ai->cb->GetMetalStorage();
-		L("energy:         " << ai->cb->GetEnergy() << ", metal:     " << ai->cb->GetMetal());
-		L("myCalcEnergy: " << myCalcEnergy <<        ", myCalcMetal: " << myCalcMetal);
-		L("energyProduction: " << energyProduction << ", energyUsage: " << energyUsage);
-		L("metalProduction: " << metalProduction << ", metalUsage: " << metalUsage);
+		//L("energy:         " << ai->cb->GetEnergy() << ", metal:     " << ai->cb->GetMetal());
+		//L("myCalcEnergy: " << myCalcEnergy <<        ", myCalcMetal: " << myCalcMetal);
+		//L("energyProduction: " << energyProduction << ", energyUsage: " << energyUsage);
+		//L("metalProduction: " << metalProduction << ", metalUsage: " << metalUsage);
 		
 		makePrediction(frame + 320 + 160);
 		
 	}
 	//if(frame % 30 == 0)
-	//	L("energy:         " << ai->cb->GetEnergy() << ", metal:     " << ai->cb->GetMetal());
-	//L("myCalcEnergy: " << myCalcEnergy <<        ", myCalcMetal: " << myCalcMetal);
-	if(abs(deltaEnergy) > 0.001 || abs(deltaMetal) > 0.001)
-		L("deltaEnergy:  " << deltaEnergy <<         ", deltaMetal:  " << deltaMetal);
+	//	//L("energy:         " << ai->cb->GetEnergy() << ", metal:     " << ai->cb->GetMetal());
+	////L("myCalcEnergy: " << myCalcEnergy <<        ", myCalcMetal: " << myCalcMetal);
+	if(fabs(deltaEnergy) > 0.001 || fabs(deltaMetal) > 0.001)
+		//L("deltaEnergy:  " << deltaEnergy <<         ", deltaMetal:  " << deltaMetal);
 	if(frame % 32 == 0)
-		L("constructionEnergy: " << constructionEnergy << ", constructionMetal: " << constructionMetal);
+		//L("constructionEnergy: " << constructionEnergy << ", constructionMetal: " << constructionMetal);
 	if(frame % 32 == 0)
 	{
-		L("constructionEnergySum: " << constructionEnergySum << ", constructionMetalSum: " << constructionMetalSum);
+		//L("constructionEnergySum: " << constructionEnergySum << ", constructionMetalSum: " << constructionMetalSum);
 	}
 	oldEnergy = energy;
 	oldMetal = metal;
 	constructionEnergy = 0;
 	constructionMetal = 0;
 	
-	L(frame << ", end");
-	L("");
+	//L(frame << ", end");
+	//L("");
 }
 
 
@@ -275,7 +275,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame)
 				char c[500];
 				int time = (preFrame - frame) / 30;
 				sprintf(c,"Staling detected in : %i seconds", time);
-				L(c);
+				//L(c);
 				ai->cb->SendTextMsg(c,0);
 				printedStalingMessage = true;
 				//break;
@@ -384,11 +384,11 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame)
 	char c[500];
 	int time = (targetFrame - frame) / 30;
 	sprintf(c,"1 %is: e: %i, %3.1f, m: %i, %3.1f", time, (int)state.energyStored, (state.energyMake - state.energyUsage)*2, (int)state.metalStored, (state.metalMake - state.metalUsage)*2);
-	L(c);
+	//L(c);
 	ai->cb->SendTextMsg(c,0);
 	
 	sprintf(c,"2 %is: e: %i, %3.1f, m: %i, %3.1f", time, (int)state2.energyStored, (state2.energyMake - state2.energyUsage)*2, (int)state2.metalStored, (state2.metalMake - state2.metalUsage)*2);
-	L(c);
+	//L(c);
 	ai->cb->SendTextMsg(c,0);
 	
 	
@@ -419,14 +419,14 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 			{
 				builderList = &i->builders;
 				found = true;
-				//L("Found the builderList");
+				////L("Found the builderList");
 				break;
 			}
 		}
 		if(!found)
 		{
 			// This is needed.... ()
-			L("Didnt find the buildGroup of unit " << unitDef->humanName << ", id: " << bt->unitUnderConstruction);
+			//L("Didnt find the buildGroup of unit " << unitDef->humanName << ", id: " << bt->unitUnderConstruction);
 			//return;
 		}
 		assert(found);
@@ -446,17 +446,17 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 		if(!found)
 		{
 			// This is needed.... ()
-			L("Didnt find the factory of unit " << unitDef->humanName << ", id: " << bt->unitUnderConstruction << "... factory id: " << bt->factory);
+			//L("Didnt find the factory of unit " << unitDef->humanName << ", id: " << bt->unitUnderConstruction << "... factory id: " << bt->factory);
 			return;
 		}
 		//assert(found);
 	}
-	//L("builderList: " << builderList);
+	////L("builderList: " << builderList);
 	assert(builderList != NULL);
 	int numBuilders = builderList->size();
 	if(frame % 30 == 2)
 	{
-		L("Looking at " << unitDef->humanName << ", it have " << numBuilders << " builders");
+		//L("Looking at " << unitDef->humanName << ", it have " << numBuilders << " builders");
 	}
 	
 	
@@ -467,7 +467,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 	for(list<int>::iterator i = builderList->begin(); i != builderList->end(); i++)
 	{
 		int builder = *i;
-		IAICallback::UnitResourceInfo resourceInfo;
+		UnitResourceInfo resourceInfo;
 		bool isAlive = ai->cb->GetUnitResourceInfo(builder, &resourceInfo);
 		//assert(isAlive); // TODO comment this back in
 		if(!isAlive)
@@ -484,11 +484,11 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 		assert(ai->cb->GetUnitDef(bt->factory) != NULL); // This will fail
 		maxAssignedBuildPower += ai->cb->GetUnitDef(bt->factory)->buildSpeed;
 		maxBuildPower += ai->cb->GetUnitDef(bt->factory)->buildSpeed;
-		//L("maxAssignedBuildPower: " << maxAssignedBuildPower);
-		//L("maxBuildPower: " << maxBuildPower);
+		////L("maxAssignedBuildPower: " << maxAssignedBuildPower);
+		////L("maxBuildPower: " << maxBuildPower);
 	}
-	//L("maxAssignedBuildPower: " << maxAssignedBuildPower);
-	//L("maxBuildPower: " << maxBuildPower);
+	////L("maxAssignedBuildPower: " << maxAssignedBuildPower);
+	////L("maxBuildPower: " << maxBuildPower);
 	bt->assignedTotalBuildPower = maxAssignedBuildPower;
 	bt->maxTotalBuildPower = maxBuildPower;
 	// Remove the factory from factory->supportbuilders (if it was added)
@@ -508,7 +508,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 	/*
 	if(currentBuildPower != currentBuildPower2)
 	{
-		L("currentBuildPower: " << currentBuildPower << ", currentBuildPower2: " << currentBuildPower2);
+		//L("currentBuildPower: " << currentBuildPower << ", currentBuildPower2: " << currentBuildPower2);
 	}*/
 	
 	//if(currentBuildPower == 0)
@@ -523,17 +523,17 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 		// The Unit was made this frame
 		assert(maxAssignedBuildPower > 0);
 		float minTimeNeeded =  buildTime / maxAssignedBuildPower;    //seconds
-		L("Looking at " << unitDef->humanName << ", it have " << numBuilders << " builders");
-		L("The Unit was made this frame");
-		L("hp: " << hp << ", minTimeNeeded: " << minTimeNeeded << ", maxAssignedBuildPower: " << maxAssignedBuildPower);
-		L("endHp: " << endHp << ", buildTime: " << buildTime);
+		//L("Looking at " << unitDef->humanName << ", it have " << numBuilders << " builders");
+		//L("The Unit was made this frame");
+		//L("hp: " << hp << ", minTimeNeeded: " << minTimeNeeded << ", maxAssignedBuildPower: " << maxAssignedBuildPower);
+		//L("endHp: " << endHp << ", buildTime: " << buildTime);
 		//oldHP = hp;
 	}
 	
 	if(hp > 0.11 && maxBuildPower > 0)
 	{
 		// Building have started (temp)
-		//L("hp > 0.105     : " << hp);
+		////L("hp > 0.105     : " << hp);
 		float minTimeNeeded =  buildTime / maxBuildPower;    //seconds
 		assert(minTimeNeeded > 0);
 		float currentMaxE_usage = eNeed / minTimeNeeded;
@@ -559,12 +559,12 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 			//deltaHP -= 0.1;
 			if(!bt->buildTask)
 			{
-				bt->etaFrame = eta2 + frame;
-				L("First eta for (factory made) " << unitDef->humanName << ": " << bt->etaFrame);
+				bt->etaFrame = int(eta2 + frame);
+				//L("First eta for (factory made) " << unitDef->humanName << ": " << bt->etaFrame);
 			}
 			
 			//bt->etaFrame = eta2;
-			//L("First eta for " << unitDef->humanName << ": " << bt->etaFrame);
+			////L("First eta for " << unitDef->humanName << ": " << bt->etaFrame);
 		}
 		assert(eNeed > 0);
 		assert(mNeed > 0);
@@ -585,13 +585,13 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 				longDeltaHP = 0.000001; // The builder must have been pushed away and spring says it still builds
 			//assert(longDeltaHP > 0);
 			float longEta = endHp * (1.0 - builtRatio) / (longDeltaHP / 16.0);
-			bt->etaFrame = longEta + frame + 1;
+			bt->etaFrame = int(longEta + frame + 1);
 			if(bt->startedRealBuildingFrame +16 == frame)
 			{
-				L("First eta for " << unitDef->humanName << ": " << bt->etaFrame);
+				//L("First eta for " << unitDef->humanName << ": " << bt->etaFrame);
 			}
-			L("bt->startedRealBuildingFrame: " << bt->startedRealBuildingFrame);
-			L("longDeltaHP at frame: " << frame << ", eta: " << bt->etaFrame);
+			//L("bt->startedRealBuildingFrame: " << bt->startedRealBuildingFrame);
+			//L("longDeltaHP at frame: " << frame << ", eta: " << bt->etaFrame);
 			bt->hpSomeTimeAgo = hp;
 			bt->energyUsage =  longDeltaHP / endHp * eNeed;
 			bt->metalUsage =  longDeltaHP / endHp * mNeed;
@@ -604,13 +604,13 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 		
 		if(frame % 30 == 2)
 		{
-			//L("maxAssignedBuildPower: " << maxAssignedBuildPower);
-			//L("maxBuildPower: " << maxBuildPower);
-			L("maxBuildPower: " << maxBuildPower << ", maxAssignedBuildPower: " << maxAssignedBuildPower  << ", currentBuildPower: " << currentBuildPower);
-			L("usedM: " << usedM << ", usedE: " << usedE);
-			L("deltaHP: " << deltaHP << ", usedE_ThisFrame: " << usedE_ThisFrame << ", usedM_ThisFrame: " << usedM_ThisFrame);
-			L("spring metalUsage: " << metalUsage << ", energyUsage: " << energyUsage << ", builtRatio: " << builtRatio << ", hp: " << hp);
-			L("eta2: " << (eta2+ frame) << ", bt->etaFrame: " << bt->etaFrame << ", time: " << ((eta2+ frame) / 30));
+			////L("maxAssignedBuildPower: " << maxAssignedBuildPower);
+			////L("maxBuildPower: " << maxBuildPower);
+			//L("maxBuildPower: " << maxBuildPower << ", maxAssignedBuildPower: " << maxAssignedBuildPower  << ", currentBuildPower: " << currentBuildPower);
+			//L("usedM: " << usedM << ", usedE: " << usedE);
+			//L("deltaHP: " << deltaHP << ", usedE_ThisFrame: " << usedE_ThisFrame << ", usedM_ThisFrame: " << usedM_ThisFrame);
+			//L("spring metalUsage: " << metalUsage << ", energyUsage: " << energyUsage << ", builtRatio: " << builtRatio << ", hp: " << hp);
+			//L("eta2: " << (eta2+ frame) << ", bt->etaFrame: " << bt->etaFrame << ", time: " << ((eta2+ frame) / 30));
 		}
 	} else
 	{
@@ -644,7 +644,7 @@ void CEconomyTracker::UnitCreated(int unit)
 	underConstructionEconomyUnitTrackers.push_back(economyUnitTracker);
 	
 	
-	L("Started to make an " << ai->cb->GetUnitDef(unit)->humanName);
+	//L("Started to make an " << ai->cb->GetUnitDef(unit)->humanName);
 	// Find it (slow++)
 	bool found = false;
 	for(int category = 0; category < LASTCATEGORY; category++ )
@@ -677,7 +677,7 @@ void CEconomyTracker::UnitCreated(int unit)
 			// This is bad, no easy way to get the factory of the unit...
 			float3 factoryPos = ai->cb->GetUnitPos(factoryId);
 			float distance = factoryPos.distance2D(unitPos);
-			L("factory distance: " << distance);
+			//L("factory distance: " << distance);
 			if(distance < 100)
 			{
 				BuildingTracker tracker;
@@ -692,33 +692,33 @@ void CEconomyTracker::UnitCreated(int unit)
 			}
 		}
 	}
-	if(!found)
-		L("Unit constructor not found !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	
+	if(!found){
+		//L("Unit constructor not found !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	}
 	/*
 	float EProductionNeed = unit->energyCost - ai->cb->GetEnergy();//ai->cb->GetEnergy() - unit->energyCost;
 	float EProduction = ai->cb->GetEnergyIncome() - ai->cb->GetEnergyUsage();
 	if(EProduction < 1)
 		EProduction = 1;
-	//L("EProductionNeed: " << EProductionNeed);
-	//L("EProduction: " << EProduction);
+	////L("EProductionNeed: " << EProductionNeed);
+	////L("EProduction: " << EProduction);
 	float MProductionNeed = unit->metalCost - ai->cb->GetMetal();//ai->cb->GetMetal() - unit->metalCost;
 	float MProduction = ai->cb->GetMetalIncome() - ai->cb->GetMetalUsage();
 	if(MProduction < 1)
 		MProduction = 1;
-	//L("MProductionNeed: " << MProductionNeed);
-	//L("MProduction: " << MProduction);
+	////L("MProductionNeed: " << MProductionNeed);
+	////L("MProduction: " << MProduction);
 	float timeToBuild = max (EProductionNeed / EProduction, MProductionNeed / MProduction);
 	if(timeToBuild < 1)
 		timeToBuild = 1; // It can be built right now...  Make something more costly instead?
-	//L("timeToBuild: " << timeToBuild);
+	////L("timeToBuild: " << timeToBuild);
 	//float METAL2ENERGY_current = ai->cb->GetEnergy() (ai->cb->GetEnergyIncome()*0.9 - ai->cb->GetEnergyUsage())
 	//float buildtime = //unit->buildTime / builder->buildSpeed;
 	// Take the buildtime, and use it smart.
 	// Make a ratio of unit->buildTime / timeToBuild ???:
 	// This realy needs to know its creators build speed.
 	float buildTimeRatio =  unit->buildTime / timeToBuild;
-	//L("buildTimeRatio: " << buildTimeRatio);
+	////L("buildTimeRatio: " << buildTimeRatio);
 	float buildTimeFix = unit->buildTime / 100;
 	*/
 }
@@ -734,8 +734,8 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTr
 	if(economyUnitTracker->unitDef->windGenerator > 0)
 	{
 		// It makes (some) power from wind
-		int minWind = ai->cb->GetMinWind();
-		int maxWind = ai->cb->GetMaxWind();
+		int minWind = int(ai->cb->GetMinWind());
+		int maxWind = int(ai->cb->GetMaxWind());
 		energyProduction += ((minWind + maxWind) / 2.0);
 	}
 	// tidalGenerator ?
@@ -767,7 +767,7 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTr
 			{
 				float metalMakeFromThisSpot = i->y;
 				metalMakeFromThisSpot *= economyUnitTracker->unitDef->extractsMetal;
-				//L("i->y: " << (i->y) << ", metalMakeFromThisSpot: " << metalMakeFromThisSpot);
+				////L("i->y: " << (i->y) << ", metalMakeFromThisSpot: " << metalMakeFromThisSpot);
 				metalProduction += metalMakeFromThisSpot;
 				foundMexSpot = true;
 				break;
@@ -779,8 +779,8 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTr
 	}
 	economyUnitTracker->estimateEnergyChangeFromDefWhileOn = energyProduction / 2;;
 	economyUnitTracker->estimateMetalChangeFromDefWhileOn = metalProduction / 2;;
-	L("off energy: " << economyUnitTracker->estimateEnergyChangeFromDefWhileOff << ", on " << economyUnitTracker->estimateEnergyChangeFromDefWhileOn);
-	L("off metal: " << economyUnitTracker->estimateMetalChangeFromDefWhileOff << ", on " << economyUnitTracker->estimateMetalChangeFromDefWhileOn);
+	//L("off energy: " << economyUnitTracker->estimateEnergyChangeFromDefWhileOff << ", on " << economyUnitTracker->estimateEnergyChangeFromDefWhileOn);
+	//L("off metal: " << economyUnitTracker->estimateMetalChangeFromDefWhileOff << ", on " << economyUnitTracker->estimateMetalChangeFromDefWhileOn);
 	
 	
 }
@@ -818,7 +818,7 @@ void CEconomyTracker::UnitFinished(int unit)
 			assert(bt->alive);
 			newEconomyUnitTrackers.push_back(bt);
 			removeList.push_back(bt);
-			L("Moved "  << bt->unitDef->humanName << " to newEconomyUnitTrackers");
+			//L("Moved "  << bt->unitDef->humanName << " to newEconomyUnitTrackers");
 			found = true;
 			break;
 		}
@@ -829,7 +829,7 @@ void CEconomyTracker::UnitFinished(int unit)
 		underConstructionEconomyUnitTrackers.remove(*i);
 	}
 	
-	L("Finished a " << ai->cb->GetUnitDef(unit)->humanName);
+	//L("Finished a " << ai->cb->GetUnitDef(unit)->humanName);
 	int category = ai->ut->GetCategory(unit);
 	found = false;
 	if(category != -1)
@@ -843,8 +843,9 @@ void CEconomyTracker::UnitFinished(int unit)
 				break;
 			}
 		}
-	if(!found)
-		L("This unit was not in a BuildingTracker!!!!!!!!!");
+		if(!found){
+		//L("This unit was not in a BuildingTracker!!!!!!!!!");
+		}
 }
 
 void CEconomyTracker::UnitDestroyed(int unit)
@@ -865,8 +866,8 @@ void CEconomyTracker::UnitDestroyed(int unit)
 			bt->dieFrame = frame;
 			deadEconomyUnitTrackers.push_back(bt);
 			activeEconomyUnitTrackers.remove(bt);
-			L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
-			L("It was alive for " << (frame - bt->createFrame) << " frames");
+			//L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
+			//L("It was alive for " << (frame - bt->createFrame) << " frames");
 			found = true;
 			break;
 		}
@@ -882,8 +883,8 @@ void CEconomyTracker::UnitDestroyed(int unit)
 				bt->dieFrame = frame;
 				deadEconomyUnitTrackers.push_back(bt);
 				underConstructionEconomyUnitTrackers.remove(bt);
-				L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
-				L("It was still under construction");
+				//L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
+				//L("It was still under construction");
 				found = true;
 				break;
 			}
@@ -899,8 +900,8 @@ void CEconomyTracker::UnitDestroyed(int unit)
 				bt->dieFrame = frame;
 				deadEconomyUnitTrackers.push_back(bt);
 				newEconomyUnitTrackers.remove(bt);
-				L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
-				L("It was alive for " << (frame - bt->createFrame) << " frames, and never managed to do anything....");
+				//L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
+				//L("It was alive for " << (frame - bt->createFrame) << " frames, and never managed to do anything....");
 				found = true;
 				break;
 			}
@@ -909,7 +910,7 @@ void CEconomyTracker::UnitDestroyed(int unit)
 	// If the unit was being built, remove it
 	if(ai->cb->UnitBeingBuilt(unit))
 	{
-		L("Lost a " << ai->cb->GetUnitDef(unit)->humanName);
+		//L("Lost a " << ai->cb->GetUnitDef(unit)->humanName);
 		int category = ai->ut->GetCategory(unit);
 		bool found = false;
 		if(category != -1)
@@ -923,8 +924,9 @@ void CEconomyTracker::UnitDestroyed(int unit)
 					break;
 				}
 			}
-		if(!found)
-			L("This unit was not in a BuildingTracker!!!!!!!!!");
+			if(!found){
+			//L("This unit was not in a BuildingTracker!!!!!!!!!");
+			}
 	}
 }
 
@@ -934,7 +936,7 @@ void CEconomyTracker::UnitDamaged(int unit, float damage)
 		return;
 	if(ai->cb->UnitBeingBuilt(unit))
 	{
-		L("Damage to " << ai->cb->GetUnitDef(unit)->humanName);
+		//L("Damage to " << ai->cb->GetUnitDef(unit)->humanName);
 		int category = ai->ut->GetCategory(unit);
 		bool found = false;
 		if(category != -1)
@@ -948,8 +950,9 @@ void CEconomyTracker::UnitDamaged(int unit, float damage)
 					break;
 				}
 			}
-		if(!found)
-			L("This unit was not in a BuildingTracker!!!!!!!!!");
+			if(!found){
+			//L("This unit was not in a BuildingTracker!!!!!!!!!");
+			}
 	}
 }
 
