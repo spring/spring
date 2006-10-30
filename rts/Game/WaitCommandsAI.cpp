@@ -225,7 +225,7 @@ void CWaitCommandsAI::Wait::SendCommand(const Command& cmd,
   }
     
   UnitSet tmpSet = selUnits;
-  UnitSet::iterator it;
+  UnitSet::const_iterator it;
 
   selectedUnits.ClearSelected();
   for (it = unitSet.begin(); it != unitSet.end(); ++it) {
@@ -698,7 +698,7 @@ void CWaitCommandsAI::DeathWatch::Draw() const
 {
   const UnitSet& selUnits = selectedUnits.selectedUnits;
   UnitSet drawSet;
-  UnitSet::iterator it;
+  UnitSet::const_iterator it;
   for (it = waitUnits.begin(); it != waitUnits.end(); ++it) {
     CUnit* unit = *it;
     if (IsWaitingOn(unit) && (selUnits.find(unit) != selUnits.end())) {
