@@ -80,7 +80,8 @@ CMouseHandler::CMouseHandler()
 	cursors["Repair"]       = new CMouseCursor("cursorrepair",    CMouseCursor::Center);
 	cursors["Resurrect"]    = new CMouseCursor("cursorrevive",    CMouseCursor::Center);
 	cursors["SelfD"]        = new CMouseCursor("cursorselfd",     CMouseCursor::Center);
-	cursors["TimeWait"]     = new CMouseCursor("cursortimewait",  CMouseCursor::Center);
+	cursors["SquadWait"]    = new CMouseCursor("cursornumber",    CMouseCursor::Center);
+	cursors["TimeWait"]     = new CMouseCursor("cursortime",      CMouseCursor::Center);
 	cursors["Unload units"] = new CMouseCursor("cursorunload",    CMouseCursor::Center);	
 	cursors["Wait"]         = new CMouseCursor("cursorwait",      CMouseCursor::Center);
 

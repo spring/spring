@@ -85,7 +85,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "TimeWait: Wait for a period of time before continuing";
-	c.params.push_back("0");  // min
+	c.params.push_back("1");  // min
 	c.params.push_back("60"); // max
 	possibleCommands.push_back(c);
 	c.params.clear();

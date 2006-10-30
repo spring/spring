@@ -32,6 +32,19 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	c.tooltip="Move: Order ready built units to move to a position";
 	possibleCommands.push_back(c);
 
+	c.id = CMD_SQUADWAIT;
+	c.action = "squadwait";
+	c.type = CMDTYPE_NUMBER;
+	c.name = "SquadWait";
+	c.hotkey = "";
+	c.onlyKey = true;
+	c.tooltip = "SquadWait: Wait for a number of units to be built before continuing";
+	c.params.push_back("2");   // min
+	c.params.push_back("100"); // max
+	possibleCommands.push_back(c);
+	c.params.clear();
+	c.onlyKey = false;
+
 	if (owner->unitDef->canPatrol) {
 		c.id=CMD_PATROL;
 		c.action="patrol";

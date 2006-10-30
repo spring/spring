@@ -2266,18 +2266,6 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 void CGuiHandler::Draw()
 {
 	DrawButtons();
-
-	// draw the value for CMDTYPE_NUMBER commands
-	if ((inCommand >= 0) && (inCommand < commands.size())) {
-		const CommandDescription& cd = commands[inCommand];
-		if (cd.type == CMDTYPE_NUMBER) {
-			const float value = GetNumberInput(cd);
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			const float mouseX = (float)mouse->lastx / (float)gu->screenx; 
-			const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->screeny;
-			font->glPrintCentered (mouseX, mouseY, 2.0f, "%3.1f", value);
-		}
-	}
 }
 
 
@@ -2851,6 +2839,8 @@ void CGuiHandler::DrawButtons()
 	DrawMenuName();
 
 	DrawSelectionInfo();
+	
+	DrawNumberInput();
 
 	glPopAttrib();
 }
@@ -2937,6 +2927,39 @@ void CGuiHandler::DrawSelectionInfo()
 			outlineFont.print(xPixel, yPixel, white, buf);
 		}
 		glLoadIdentity();
+	}
+}
+
+
+void CGuiHandler::DrawNumberInput()
+{
+	// draw the value for CMDTYPE_NUMBER commands
+	if ((inCommand >= 0) && (inCommand < commands.size())) {
+		const CommandDescription& cd = commands[inCommand];
+		if (cd.type == CMDTYPE_NUMBER) {
+			const float value = GetNumberInput(cd);
+			glDisable(GL_TEXTURE_2D);
+			glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
+			const float mouseX = (float)mouse->lastx / (float)gu->screenx; 
+			const float slideX = min(max(mouseX, 0.25f), 0.75f);
+			const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->screeny;
+			glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
+			glRectf(0.22f, 0.45f, 0.25f, 0.55f);
+			glRectf(0.75f, 0.45f, 0.78f, 0.55f);
+			glColor4f(0.0f, 0.0f, 1.0f, 0.9f);
+			glRectf(0.25f, 0.49f, 0.75f, 0.51f);
+			glBegin(GL_TRIANGLES);
+			glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
+			glVertex2f(slideX + 0.015f, 0.55f);
+			glVertex2f(slideX - 0.015f, 0.55f);
+			glVertex2f(slideX, 0.50f);
+			glVertex2f(slideX - 0.015f, 0.45f);
+			glVertex2f(slideX + 0.015f, 0.45f);
+			glVertex2f(slideX, 0.50f);
+			glEnd();
+			glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
+			font->glPrintCentered(slideX, 0.56f, 2.0f, "%i", (int)value);
+		}
 	}
 }
 

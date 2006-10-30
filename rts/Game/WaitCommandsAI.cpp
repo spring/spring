@@ -12,6 +12,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/UnitTypes/Factory.h"
 #include "System/GlobalStuff.h"
 #include "System/Object.h"
 #include "UI/CommandColors.h"
@@ -20,9 +21,6 @@
 
 CWaitCommandsAI waitCommandsAI;
 
-const float CWaitCommandsAI::timeWaitCode   = 1.0f;
-const float CWaitCommandsAI::deathWatchCode = 2.0f;
-const float CWaitCommandsAI::rallyPointCode = 3.0f;
 
 const int maxNetDelay = 60;  // in frames  (2 seconds)
 
@@ -84,6 +82,15 @@ void CWaitCommandsAI::AddTimeWait(const Command& cmd)
 }
 
 
+void CWaitCommandsAI::AddSquadWait(const Command& cmd)
+{
+  SquadWait* sw = SquadWait::New(cmd);
+  if (sw != NULL)  {
+    waitSet.insert(sw);
+  }
+}
+
+
 void CWaitCommandsAI::AddDeathWatch(const Command& cmd)
 {
   DeathWatch* tw = DeathWatch::New(cmd);
@@ -102,6 +109,39 @@ void CWaitCommandsAI::AddRallyPoint(const Command& cmd)
 }
 
 
+void CWaitCommandsAI::NewUnit(CUnit* unit, const CUnit* builder)
+{
+  const deque<Command>& dq = unit->commandAI->commandQue;
+  deque<Command>::const_iterator qit;
+  for (qit = dq.begin(); qit != dq.end(); ++qit) {
+    const Command& cmd = *qit;
+    if ((cmd.id == CMD_WAIT) && (cmd.params.size() == 2)) {
+      WaitSet::iterator wit;
+      for (wit = waitSet.begin(); wit != waitSet.end(); ++wit) {
+        Wait* wait = *wit;
+        if ((cmd.params[0] == wait->GetCode()) &&
+            (cmd.params[1] == wait->GetKey())) {
+          const float code = cmd.params[0];
+          if (code == CMD_WAITCODE_TIMEWAIT) {
+            const int duration = ((TimeWait*)wait)->GetDuration();
+            TimeWait* tw = TimeWait::New(duration, unit);
+            if (tw != NULL)  {
+              waitSet.insert(tw);
+              // FIXME -- const_cast<Command&>(cmd).params[1] = tw->GetKey();
+            }
+          }
+          else if ((code == CMD_WAITCODE_SQUADWAIT) ||
+                   (code == CMD_WAITCODE_DEATHWATCH)) {
+            wait->AddUnit(unit);
+          }
+          // CMD_WAITCODE_RALLYPOINT can not accept new units
+        }
+      }
+    }
+  }
+}
+
+
 void CWaitCommandsAI::DeleteWaitObject(Wait* wait)
 {
   WaitSet::iterator it = waitSet.find(wait);
@@ -116,6 +156,14 @@ void CWaitCommandsAI::DeleteWaitObject(Wait* wait)
 //  Wait Base Class
 //
 
+CWaitCommandsAI::Wait::Wait(float _code)
+: code(_code)
+{
+  key = 0.0f; // invalid key
+  deadFrame = (gs->frameNum + maxNetDelay);
+}
+
+
 CWaitCommandsAI::Wait::~Wait()
 {
   waitCommandsAI.DeleteWaitObject(this);
@@ -123,12 +171,11 @@ CWaitCommandsAI::Wait::~Wait()
 
 
 CWaitCommandsAI::Wait::WaitState
-  CWaitCommandsAI::Wait::GetWaitState(
-    const CUnit* unit, float code, float key, int frame) const
+  CWaitCommandsAI::Wait::GetWaitState(const CUnit* unit) const
 {
   const deque<Command>& dq = unit->commandAI->commandQue;
   if (dq.empty()) {
-    return (frame < gs->frameNum) ? Missing : Queued;
+    return (deadFrame < gs->frameNum) ? Missing : Queued;
   }
   const Command& cmd = dq.front();
   if ((cmd.id == CMD_WAIT) && (cmd.params.size() == 2) &&
@@ -145,12 +192,11 @@ CWaitCommandsAI::Wait::WaitState
       return Queued;
     }
   }
-  return (frame < gs->frameNum) ? Missing : Queued;
+  return (deadFrame < gs->frameNum) ? Missing : Queued;
 }
 
 
-bool CWaitCommandsAI::Wait::IsWaitingOn(const CUnit* unit,
-                                        float code, float key) const
+bool CWaitCommandsAI::Wait::IsWaitingOn(const CUnit* unit) const
 {
   const deque<Command>& dq = unit->commandAI->commandQue;
   if (dq.empty()) {
@@ -165,13 +211,20 @@ bool CWaitCommandsAI::Wait::IsWaitingOn(const CUnit* unit,
 }
 
 
-void CWaitCommandsAI::Wait::SendWaitCommand(const UnitSet& unitSet)
+void CWaitCommandsAI::Wait::SendCommand(const Command& cmd,
+                                        const UnitSet& unitSet)
 {
   if (unitSet.empty()) {
     return;
   }
-
-  UnitSet tmpSet = selectedUnits.selectedUnits;
+  
+  const UnitSet& selUnits = selectedUnits.selectedUnits;
+  if (unitSet == selUnits) {
+    selectedUnits.GiveCommand(cmd, false);
+    return;
+  }
+    
+  UnitSet tmpSet = selUnits;
   UnitSet::iterator it;
 
   selectedUnits.ClearSelected();
@@ -179,14 +232,20 @@ void CWaitCommandsAI::Wait::SendWaitCommand(const UnitSet& unitSet)
     selectedUnits.AddUnit(*it);
   }
 
-  Command waitCmd;
-  waitCmd.id = CMD_WAIT;
-  selectedUnits.GiveCommand(waitCmd, false);
+  selectedUnits.GiveCommand(cmd, false);
 
   selectedUnits.ClearSelected();
   for (it = tmpSet.begin(); it != tmpSet.end(); ++it) {
     selectedUnits.AddUnit(*it);
   }
+}
+
+
+void CWaitCommandsAI::Wait::SendWaitCommand(const UnitSet& unitSet)
+{
+  Command waitCmd;
+  waitCmd.id = CMD_WAIT;
+  SendCommand(waitCmd, unitSet);
 }
 
 
@@ -220,10 +279,22 @@ CWaitCommandsAI::TimeWait*
 }
 
 
+CWaitCommandsAI::TimeWait*
+  CWaitCommandsAI::TimeWait::New(int duration, CUnit* unit)
+{
+  TimeWait* tw = new TimeWait(duration, unit);
+  if (tw->key == 0.0f) {
+    delete tw;
+    return NULL;
+  }
+  return tw;
+}
+
+
 CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
+: Wait(CMD_WAITCODE_TIMEWAIT)
 {
   key = 0.0f; // the invalid key
-  deleteMe = false;
   
   if (cmd.params.size() != 1) {
     return;
@@ -231,17 +302,16 @@ CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
 
   key = keySource;
   keySource += 1.0f;
-  deadFrame = (gs->frameNum + maxNetDelay);  
 
   unit = _unit;
   enabled = false;
   endFrame = 0;
-  duration = (int)(30.0f * cmd.params[0]);
+  duration = 30 * (int)cmd.params[0];
 
   Command waitCmd;
   waitCmd.id = CMD_WAIT;
   waitCmd.options = cmd.options;
-  waitCmd.params.push_back(timeWaitCode);
+  waitCmd.params.push_back(code);
   waitCmd.params.push_back(key);
 
   selectedUnits.ClearSelected();
@@ -254,6 +324,21 @@ CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
 }
 
 
+CWaitCommandsAI::TimeWait::TimeWait(int _duration, CUnit* _unit)
+: Wait(CMD_WAITCODE_TIMEWAIT)
+{
+  key = keySource;
+  keySource += 1.0f;
+  
+  unit = _unit;
+  enabled = false;
+  endFrame = 0;
+  duration = _duration;
+  
+  AddDeathDependence((CObject*)unit);
+}
+
+
 CWaitCommandsAI::TimeWait::~TimeWait()
 {
 }
@@ -261,19 +346,24 @@ CWaitCommandsAI::TimeWait::~TimeWait()
 
 void CWaitCommandsAI::TimeWait::DependentDied(CObject* object)
 {
-  assert(unit == (CUnit*)object);
-  deleteMe = true;
+  unit = NULL;
+}
+
+
+void CWaitCommandsAI::TimeWait::AddUnit(CUnit* unit)
+{
+  // do nothing
 }
 
 
 void CWaitCommandsAI::TimeWait::Update()
 {
-  if (deleteMe) {
+  if (unit == NULL) {
     delete this;
     return;
   }
   
-  WaitState state = GetWaitState(unit, timeWaitCode, key, deadFrame);
+  WaitState state = GetWaitState(unit);
   if (state == Active) {
     if (!enabled) {
       enabled = true;
@@ -300,6 +390,156 @@ void CWaitCommandsAI::TimeWait::Update()
 
 void CWaitCommandsAI::TimeWait::Draw() const
 {
+  if (unit == NULL) {
+    delete this;
+    return;
+  }
+}
+
+
+/******************************************************************************/
+//
+//  SquadWait
+//
+
+float CWaitCommandsAI::SquadWait::keySource = 1.0f;
+
+
+CWaitCommandsAI::SquadWait*
+  CWaitCommandsAI::SquadWait::New(const Command& cmd)
+{
+  SquadWait* sw = new SquadWait(cmd);
+  if (sw->key == 0.0f) {
+    delete sw;
+    return NULL;
+  }
+  return sw;
+}
+
+
+CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
+: Wait(CMD_WAITCODE_SQUADWAIT)
+{
+  key = 0.0f; // the invalid key
+  
+  if (cmd.params.size() != 1) {
+    return;
+  }
+
+  squadCount = (int)cmd.params[0];
+  if (squadCount < 2) {
+    return;
+  }
+
+  const UnitSet& selUnits = selectedUnits.selectedUnits;
+  UnitSet::const_iterator it;
+  for (it = selUnits.begin(); it != selUnits.end(); ++it) {
+    CUnit* unit = *it;
+    if (dynamic_cast<CFactory*>(unit)) {
+      buildUnits.insert(unit);
+    }
+  }
+  if (buildUnits.empty()) {
+    return;
+  }
+  
+  key = keySource;
+  keySource += 1.0f;
+
+  Command waitCmd;
+  waitCmd.id = CMD_WAIT;
+  waitCmd.options = cmd.options;
+  waitCmd.params.push_back(code);
+  waitCmd.params.push_back(key);
+  
+  SendCommand(waitCmd, buildUnits);
+
+  for (it = buildUnits.begin(); it != buildUnits.end(); ++it) {
+    AddDeathDependence((CObject*)(*it));
+  }
+
+  return;
+}
+
+
+CWaitCommandsAI::SquadWait::~SquadWait()
+{
+}
+
+
+void CWaitCommandsAI::SquadWait::DependentDied(CObject* object)
+{
+  CUnit* unit = (CUnit*)object;
+
+  UnitSet::iterator bit = buildUnits.find(unit);
+  if (bit != buildUnits.end()) {
+    buildUnits.erase(bit);
+  }
+  if (buildUnits.empty()) {
+    return;
+  }
+
+  UnitSet::iterator wit = waitUnits.find(unit);
+  if (wit != waitUnits.end()) {
+    waitUnits.erase(wit);
+  }
+}
+
+
+void CWaitCommandsAI::SquadWait::AddUnit(CUnit* unit)
+{
+  waitUnits.insert(unit);
+  AddDeathDependence((CObject*)unit);
+}
+
+
+void CWaitCommandsAI::SquadWait::Update()
+{
+  if (buildUnits.empty()) {
+    delete this;
+    return;
+  }
+
+  if ((int)waitUnits.size() >= squadCount) {
+    UnitSet unblockSet;
+    UnitSet::iterator it = waitUnits.begin();
+    while (it != waitUnits.end()) {
+      WaitState state = GetWaitState(*it);
+      if (state == Active) {
+        unblockSet.insert(*it);
+        if ((int)unblockSet.size() >= squadCount) {
+          break; // we've got our squad
+        }
+      }
+      else if (state == Queued) {
+      }
+      else if (state == Missing) {
+        DeleteDeathDependence(*it);
+        it = RemoveUnit(it, waitUnits);
+        continue;
+      }
+      it++;
+    }
+    if ((int)unblockSet.size() >= squadCount) {
+      // FIXME -- rebuild the order queue so
+      //          that formations are created?
+      SendWaitCommand(unblockSet);
+      for (it = unblockSet.begin(); it != unblockSet.end(); ++it) {
+        waitUnits.erase(*it);
+        DeleteDeathDependence(*it);
+      }
+    }
+  }
+  // FIXME -- clean builders
+}
+
+
+void CWaitCommandsAI::SquadWait::Draw() const
+{
+  if (buildUnits.empty()) {
+    delete this;
+    return;
+  }
 }
 
 
@@ -324,9 +564,11 @@ CWaitCommandsAI::DeathWatch*
 
 
 CWaitCommandsAI::DeathWatch::DeathWatch(const Command& cmd)
+: Wait(CMD_WAITCODE_DEATHWATCH)
 {
   key = 0.0f; // the invalid key
-  deleteMe = false;
+  
+  const UnitSet& selUnits = selectedUnits.selectedUnits;
   
   if (cmd.params.size() == 1) {
     const int unitID = (int)cmd.params[0];
@@ -337,12 +579,22 @@ CWaitCommandsAI::DeathWatch::DeathWatch(const Command& cmd)
     if (unit == NULL) {
       return;
     }
+    if (selUnits.find(unit) != selUnits.end()) {
+      return;
+    }
     deathUnits.insert(unit);
   }
   else if (cmd.params.size() == 6) {
     const float3 pos0(cmd.params[0], cmd.params[1], cmd.params[2]);
     const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
-    SelectAreaUnits(pos0, pos1, deathUnits, false);
+    UnitSet tmpSet;
+    SelectAreaUnits(pos0, pos1, tmpSet, false);
+    UnitSet::iterator it;
+    for (it = tmpSet.begin(); it != tmpSet.end(); ++it) {
+      if (selUnits.find(*it) == selUnits.end()) {
+        deathUnits.insert(*it);
+      }
+    }
     if (deathUnits.empty()) {
       return;
     }
@@ -351,18 +603,17 @@ CWaitCommandsAI::DeathWatch::DeathWatch(const Command& cmd)
     return; // unknown param config
   }
     
-  waitUnits = selectedUnits.selectedUnits;
+  waitUnits = selUnits;
   
   key = keySource;
   keySource += 1.0f;
-  deadFrame = (gs->frameNum + maxNetDelay);  
 
   Command waitCmd;
   waitCmd.id = CMD_WAIT;
   waitCmd.options = cmd.options;
-  waitCmd.params.push_back(deathWatchCode);
+  waitCmd.params.push_back(code);
   waitCmd.params.push_back(key);
-  selectedUnits.GiveCommand(waitCmd);
+  selectedUnits.GiveCommand(waitCmd); // FIXME -- remove selUnits first?
   
   UnitSet::iterator it;
   for (it = waitUnits.begin(); it != waitUnits.end(); ++it) {
@@ -390,7 +641,6 @@ void CWaitCommandsAI::DeathWatch::DependentDied(CObject* object)
     waitUnits.erase(wit);
   }
   if (waitUnits.empty()) {
-    deleteMe = true;
     return;
   }
 
@@ -401,9 +651,16 @@ void CWaitCommandsAI::DeathWatch::DependentDied(CObject* object)
 }
 
 
+void CWaitCommandsAI::DeathWatch::AddUnit(CUnit* unit)
+{
+  waitUnits.insert(unit);
+  AddDeathDependence((CObject*)unit);
+}
+
+
 void CWaitCommandsAI::DeathWatch::Update()
 {
-  if (deleteMe) {
+  if (waitUnits.empty()) {
     delete this;
     return;
   }
@@ -412,7 +669,7 @@ void CWaitCommandsAI::DeathWatch::Update()
     UnitSet unblockSet;
     UnitSet::iterator it = waitUnits.begin();
     while (it != waitUnits.end()) {
-      WaitState state = GetWaitState(*it, deathWatchCode, key, deadFrame);
+      WaitState state = GetWaitState(*it);
       if (state == Active) {
         unblockSet.insert(*it);
         DeleteDeathDependence(*it);
@@ -444,8 +701,7 @@ void CWaitCommandsAI::DeathWatch::Draw() const
   UnitSet::iterator it;
   for (it = waitUnits.begin(); it != waitUnits.end(); ++it) {
     CUnit* unit = *it;
-    if ((selUnits.find(unit) != selUnits.end()) &&
-        IsWaitingOn(unit, deathWatchCode, key)) {
+    if (IsWaitingOn(unit) && (selUnits.find(unit) != selUnits.end())) {
       drawSet.insert(*it);
     }
   }
@@ -454,15 +710,21 @@ void CWaitCommandsAI::DeathWatch::Draw() const
   }
 
   for (it = deathUnits.begin(); it != deathUnits.end(); ++it) {
-    cursorIcons->AddIcon(CMD_DEATHWATCH, (*it)->midPos);
+    const CUnit* unit = *it;
+    if (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) {
+      cursorIcons->AddIcon(CMD_DEATHWATCH, (*it)->midPos);
+    }
   }
   
   if (drawSet.size() == 1) {
     const float3& midPos = (*drawSet.begin())->midPos;
     for (it = deathUnits.begin(); it != deathUnits.end(); ++it) {
-      lineDrawer.StartPath(midPos, cmdColors.start);
-      lineDrawer.DrawLine((*it)->midPos, cmdColors.deathWatch);
-      lineDrawer.FinishPath();
+      const CUnit* unit = *it;
+      if (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) {
+        lineDrawer.StartPath(midPos, cmdColors.start);
+        lineDrawer.DrawLine(unit->midPos, cmdColors.deathWatch);
+        lineDrawer.FinishPath();
+      }
     }
   }
 }
@@ -513,9 +775,9 @@ CWaitCommandsAI::RallyPoint*
 
 
 CWaitCommandsAI::RallyPoint::RallyPoint(const Command& cmd)
+: Wait(CMD_WAITCODE_RALLYPOINT)
 {
   key = 0.0f; // the invalid key
-  deleteMe = false;
   
   if ((cmd.params.size() != 3) && (cmd.params.size() != 6)) {
     return;
@@ -531,12 +793,11 @@ CWaitCommandsAI::RallyPoint::RallyPoint(const Command& cmd)
 
   key = keySource;
   keySource += 1.0f;
-  deadFrame = (gs->frameNum + maxNetDelay);  
 
   Command waitCmd;
   waitCmd.id = CMD_WAIT;
   waitCmd.options = SHIFT_KEY;
-  waitCmd.params.push_back(rallyPointCode);
+  waitCmd.params.push_back(code);
   waitCmd.params.push_back(key);
   selectedUnits.GiveCommand(waitCmd, false);
   
@@ -564,23 +825,25 @@ void CWaitCommandsAI::RallyPoint::DependentDied(CObject* object)
   if (it != waitUnits.end()) {
     waitUnits.erase(it);
   }
-  if (waitUnits.empty()) {
-    deleteMe = true;
-    return;
-  }
+}
+
+
+void CWaitCommandsAI::RallyPoint::AddUnit(CUnit* unit)
+{
+  // do nothing
 }
 
 
 void CWaitCommandsAI::RallyPoint::Update()
 {
-  if (deleteMe) {
+  if (waitUnits.empty()) {
     delete this;
     return;
   }
   
   UnitSet::iterator it = waitUnits.begin();
   while (it != waitUnits.end()) {
-    WaitState state = GetWaitState(*it, rallyPointCode, key, deadFrame);
+    WaitState state = GetWaitState(*it);
     if (state == Queued) {
       return;
     }

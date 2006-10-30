@@ -10,6 +10,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/GameHelper.h"
 #include "Game/Camera.h"
+#include "Game/WaitCommandsAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -157,6 +158,7 @@ void CFactory::Update()
 						for(std::deque<Command>::iterator ci=((CFactoryCAI*)commandAI)->newUnitCommands.begin();ci!=((CFactoryCAI*)commandAI)->newUnitCommands.end();++ci)
 							curBuild->commandAI->GiveCommand(*ci);
 					}
+					waitCommandsAI.NewUnit(curBuild, this);
 				}
 				StopBuild();
 			}
