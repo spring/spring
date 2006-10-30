@@ -446,7 +446,7 @@ void CSelectedUnitsAI::SelectBoxAttack(const Command& cmd, int player)
 		DistInfo di;
 		di.unitID = targets[t];
 		CUnit* unit = uh->units[di.unitID];
-		const float3 unitPos = queueing ? LastQueuePosition(unit) : unit->midPos;
+		const float3 unitPos = queueing ? LastQueuePosition(unit) : float3(unit->midPos);
 		di.dist = (unitPos - midPos).SqLength2D();
 		distVec.push_back(di);
 	}
