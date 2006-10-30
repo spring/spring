@@ -1,4 +1,6 @@
-#pragma once
+#ifndef THREATMAP_H
+#define THREATMAP_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 class CThreatMap
@@ -25,3 +27,5 @@ private:
 
 
 };
+
+#endif /* THREATMAP_H */

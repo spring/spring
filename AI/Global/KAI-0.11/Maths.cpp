@@ -11,7 +11,9 @@ CMaths::CMaths(AIClasses *ai)
 	MTRandInt.seed(time(NULL));
 	MTRandFloat.seed(MTRandInt());
 
+#ifdef WIN32
 	QueryPerformanceFrequency(&ticksPerSecond);
+#endif
 }	
 CMaths::~CMaths()
 {
@@ -38,8 +40,8 @@ float3 CMaths::F3Randomize(float3 pos, float radius)
 
 void  CMaths::F32XY(float3 pos, int* x, int* y, int resolution)
 {
-	*x = pos.x / 8 / resolution;
-	*y = pos.z / 8 / resolution;
+	*x = int(pos.x / 8 / resolution);
+	*y = int(pos.z / 8 / resolution);
 }
 
 float3  CMaths::XY2F3(int x ,int y, int resolution)
@@ -143,7 +145,7 @@ float CMaths::ETT(BuildTask bt)
 	if(buildpower > 0){
 		return (ai->cb->GetUnitDef(bt.id)->buildTime / buildpower) * (1-percentdone);
 	}
-	L("Error, buildpower <= 0");
+	//L("Error, buildpower <= 0");
 	return 1000000000000000000.0; // Just to make shure other maths dont fail
 }
 
@@ -173,7 +175,7 @@ float CMaths::RandNormal(float m, float s, bool positiveonly)
   if(!positiveonly)
 	return normal_x1 * s + m;
   else
-	return max(0,normal_x1 * s + m);
+	return max(0.0f,normal_x1 * s + m);
 }
 
 float CMaths::RandFloat()
@@ -187,21 +189,38 @@ unsigned int CMaths::RandInt()
 
 void CMaths::TimerStart()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_start);
 	tick_laststop = tick_start;
+#else
+	gettimeofday(&tick_start, NULL);
+	tick_laststop = tick_start;
+#endif
 }
 
 int	CMaths::TimerTicks()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_end);
 	tick_laststop = tick_end;
 	return tick_end.QuadPart - tick_start.QuadPart;
+#else
+	gettimeofday(&tick_end, NULL);
+	tick_laststop = tick_end;
+	return (tick_end.tv_sec - tick_start.tv_sec) * 1000000 + (tick_end.tv_usec - tick_start.tv_usec);
+#endif
 }
 
 
 float CMaths::TimerSecs()
 {
+#ifdef WIN32
 	QueryPerformanceCounter(&tick_end);
 	tick_laststop = tick_end;
 	return (float(tick_end.QuadPart) - float(tick_start.QuadPart))/float(ticksPerSecond.QuadPart);
+#else
+	gettimeofday(&tick_end, NULL);
+	tick_laststop = tick_end;
+	return (tick_end.tv_sec - tick_start.tv_sec) + (tick_end.tv_usec - tick_start.tv_usec) * 1.0e-6f;
+#endif
 }

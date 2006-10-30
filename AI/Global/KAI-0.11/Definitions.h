@@ -1,4 +1,6 @@
-#pragma once
+#ifndef DEFINITIONS_H
+#define DEFINITIONS_H
+/*pragma once removed*/
 
 
 // Logger
@@ -18,11 +20,11 @@
 #define TIMER_TICKS		ai->math->TimerTicks()
 #define TIMER_SECS		ai->math->TimerSecs()
 // Folders
-#define ROOTFOLDER		"aidll\\globalai\\KAI\\"
+#define ROOTFOLDER		"AI/KAI/"
 
-#define LOGFOLDER		ROOTFOLDER"Logs\\"
-#define	METALFOLDER		ROOTFOLDER"Metal\\"
-#define TGAFOLDER		ROOTFOLDER"TGAs\\"
+#define LOGFOLDER		ROOTFOLDER"Logs/"
+#define	METALFOLDER		ROOTFOLDER"Metal/"
+#define TGAFOLDER		ROOTFOLDER"TGAs/"
 
 // KAI version to be appended to files generated. If older, remove them
 #define KAIVERSION		1
@@ -85,3 +87,5 @@ enum {CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER, CAT_BUILDER, CAT_ESTOR, CAT_MST
 // SpotFinder stuff
 #define CACHEFACTOR			8
 
+
+#endif /* DEFINITIONS_H */

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef UNITTABLE_H
+#define UNITTABLE_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 
@@ -13,7 +15,7 @@ public:
 	
 	// Temp stuff:
 	void Init_nr2();
-	const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefullnes);
+	const UnitDef* GetBestEconomyBuilding(int builder, float minUsefullnes);
 	// Temp end
 
 
@@ -86,3 +88,5 @@ private:
 
 
 
+
+#endif /* UNITTABLE_H */

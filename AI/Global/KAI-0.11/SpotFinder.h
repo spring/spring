@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SPOTFINDER_H
+#define SPOTFINDER_H
+/*pragma once removed*/
 #include "GlobalAI.h"
 
 
@@ -26,7 +28,7 @@ public:
 	void InvalidateSumMap(int coordx, int coordy, int clearRadius);
 	void SetRadius(int radius);
 	void BackingArrayChanged();
-	CachePoint * CSpotFinder::GetBestCachePoint(int x, int y);
+	CachePoint * GetBestCachePoint(int x, int y);
 private:
 	//void GetMetalPoints();
 	float* MakeSumMap();
@@ -57,3 +59,5 @@ private:
 	AIClasses *ai;
 	CachePoint *cachePoints;
 };
+
+#endif /* SPOTFINDER_H */

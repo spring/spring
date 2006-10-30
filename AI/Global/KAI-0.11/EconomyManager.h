@@ -1,5 +1,7 @@
-#pragma once
-#include "globalai.h"
+#ifndef ECONOMYMANAGER_H
+#define ECONOMYMANAGER_H
+/*pragma once removed*/
+#include "GlobalAI.h"
 
 class CEconomyManager
 {
@@ -17,3 +19,5 @@ private:
 
 	AIClasses* ai;
 };
+
+#endif /* ECONOMYMANAGER_H */

@@ -67,22 +67,25 @@ void CDebug::OutputBWTGA(float* array,int xsize,int ysize,string filename,float 
 			topvalue = array[i];
 		}
 	}
-	if(topvalue != 0){
+	if(topvalue != +0.0f && topvalue != -0.0f){
 		if(curve == 1){
 			topvalue = pow(topvalue, float(curve));
     		for(int i = 0; i < totalsize; i++){
-				TGAArray[i] = (pow(array[i],float(curve))*255) / topvalue;
+				TGAArray[i] = int((pow(array[i],float(curve))*255) / topvalue);
 			}
 		}
 		else if(curve != 0){
 			for(int i = 0; i < totalsize; i++){
-				TGAArray[i] = (array[i]*255) / topvalue;
+				TGAArray[i] = int((array[i]*255) / topvalue);
 			}
 		}	
 	}
 	string fullpath = string(TGAFOLDER) + filename + ".tga";
+	char fullpath_buf[1000];
+	strcpy(fullpath_buf, fullpath.c_str());
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, fullpath_buf);
 	// open file
-	FILE *fp=fopen(fullpath.c_str(), "wb");
+	FILE *fp=fopen(fullpath_buf, "wb");
 	// fill & write header
 	char Header[18];
 	memset(Header, 0, sizeof(Header));

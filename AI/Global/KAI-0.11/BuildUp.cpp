@@ -16,10 +16,10 @@ void CBuildUp::Update()
 {
 	int frame=ai->cb->GetCurrentFrame();
 	if(frame % 15 == 0){
-		//L("Frame: " << frame);
+		////L("Frame: " << frame);
 		ai->tm->Create();
 		Buildup();			
-		//L("Idle builders: " << ai->uh->NumIdleUnits(CAT_BUILDER) << " factorycounter: " << factorycounter << " Builder counter: " << buildercounter);
+		////L("Idle builders: " << ai->uh->NumIdleUnits(CAT_BUILDER) << " factorycounter: " << factorycounter << " Builder counter: " << buildercounter);
 		if(ai->cb->GetMetal() > ai->cb->GetMetalStorage() * 0.9 && ai->cb->GetEnergyIncome() > ai->cb->GetEnergyUsage() * 1.3 
 			&& ai->cb->GetMetalIncome() > ai->cb->GetMetalUsage() * 1.3
 			&& buildercounter > 0
@@ -29,7 +29,7 @@ void CBuildUp::Update()
 			}
 		if(storagecounter > 0)
 			storagecounter--;
-		//L("Storage Counter : " << storagecounter);
+		////L("Storage Counter : " << storagecounter);
 	}
 }
 
@@ -37,7 +37,7 @@ void CBuildUp::Buildup()
 {
 	int NumberofidleBuilders = ai->uh->NumIdleUnits(CAT_BUILDER);
 	if(NumberofidleBuilders > 1)
-		L("Number of idle builders: " << NumberofidleBuilders);
+		//L("Number of idle builders: " << NumberofidleBuilders);
 	if(NumberofidleBuilders){
 	//	for(int i = 0; i < NumberofidleBuilders; i++){
 			int builder = ai->uh->GetIU(CAT_BUILDER);
@@ -49,7 +49,7 @@ void CBuildUp::Buildup()
 			if(ai->cb->GetUnitDef(builder) == NULL)
 			{
 				// Its dead..
-				L(" Its dead... ");
+				//L(" Its dead... ");
 				ai->uh->UnitDestroyed(builder);
 			} 
 			//else if(ai->cb->GetUnitDef(builder)->isCommander && (ai->cb->GetCurrentFrame() > 30*60*15) && ai->uh->FactoryBuilderAdd(builder))
@@ -60,7 +60,7 @@ void CBuildUp::Buildup()
 				//assert(false);
 				//factorycounter += 2; // Dont start a new factory in 2 sec or so
 				//buildercounter = 0; // Make sure it makes one more builder
-				//L("Added the commander to help the factory, so that it dont wander off");
+				////L("Added the commander to help the factory, so that it dont wander off");
 			//}
 			else
 //			if(ai->cb->GetMetal() < ai->cb->GetMetalStorage() * 0.4 
@@ -77,20 +77,20 @@ void CBuildUp::Buildup()
 					const UnitDef* mex = ai->ut->GetUnitByScore(builder,CAT_MEX);
 					float3 mexpos = ai->mm->GetNearestMetalSpot(builder,mex);
 					if(mexpos != ERRORVECTOR){
-						L("trying to build mex at: " << mexpos.x << mexpos.z);
+						//L("trying to build mex at: " << mexpos.x << mexpos.z);
 						if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX))
 							ai->MyUnits[builder]->Build(mexpos,mex);
 					}
 					else if (ai->cb->GetEnergyStorage() / (ai->cb->GetEnergyIncome() + 0.01) < STORAGETIME && ai->ut->energy_storages->size() && !storagecounter){
 						if(!ai->uh->BuildTaskAddBuilder(builder,CAT_ESTOR)){
-							L("Trying to build Estorage");
+							//L("Trying to build Estorage");
 							ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder,CAT_ESTOR),ai->cb->GetUnitPos(builder));//MyUnits[builder].pos());
 							storagecounter += 90;
 						}
 					}
 					else if (ai->ut->metal_makers->size() && ai->cb->GetEnergyIncome() > ai->cb->GetEnergyUsage() * 1.5 && RANDINT%10==0){
 						if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MMAKER))
-							L("Trying to build CAT_MMAKER");
+							//L("Trying to build CAT_MMAKER");
 							ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder,CAT_MMAKER),ai->cb->GetUnitPos(builder));//MyUnits[builder].pos());
 					}
 				}
@@ -99,7 +99,7 @@ void CBuildUp::Buildup()
 					//|| ai->cb->GetEnergy() < ai->cb->GetEnergyStorage() * 0.7 // Better make sure the bank is full too
 					|| !ai->math->EFeasibleConstruction(ai->cb->GetUnitDef(builder),factory)){	
 				if(!ai->uh->BuildTaskAddBuilder(builder,CAT_ENERGY)){
-					L("Trying to build CAT_ENERGY");
+					//L("Trying to build CAT_ENERGY");
 					//Find a safe position to build this at
 					ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder,CAT_ENERGY),ai->cb->GetUnitPos(builder));//MyUnits[builder].pos());
 				}
@@ -110,7 +110,7 @@ void CBuildUp::Buildup()
 				if(ai->uh->AllUnitsByCat[CAT_FACTORY]->size() > ai->uh->AllUnitsByCat[CAT_DEFENCE]->size() / DEFENSEFACTORYRATIO){
 					if (ai->cb->GetMetalStorage() / (ai->cb->GetMetalIncome() + 0.01) < STORAGETIME * 2 && ai->ut->metal_storages->size() && !storagecounter && ai->uh->AllUnitsByCat[CAT_FACTORY]->size()){
 						if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MSTOR)){
-							L("Trying to build CAT_MSTOR");
+							//L("Trying to build CAT_MSTOR");
 							ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder,CAT_MSTOR),ai->MyUnits[builder]->pos());
 							storagecounter += 90;
 						}
@@ -118,8 +118,8 @@ void CBuildUp::Buildup()
 					else{						
 						if(!ai->uh->BuildTaskAddBuilder(builder,CAT_DEFENCE)){
 							const UnitDef* Defense = ai->ut->GetUnitByScore(builder,CAT_DEFENCE);
-							L("trying to build def " << Defense->humanName);
-							L("Trying to build CAT_DEFENCE");
+							//L("trying to build def " << Defense->humanName);
+							//L("Trying to build CAT_DEFENCE");
 							if(ai->MyUnits[builder]->Build_ClosestSite(Defense,ai->dm->GetDefensePos(Defense,ai->MyUnits[builder]->pos()),2)){
 							}
 						}
@@ -129,7 +129,7 @@ void CBuildUp::Buildup()
 					
 					if(!ai->uh->BuildTaskAddBuilder(builder,CAT_FACTORY)){
 						if(!ai->uh->FactoryBuilderAdd(builder)){
-							L("trying to build Factory: " << factory->humanName);
+							//L("trying to build Factory: " << factory->humanName);
 							if(ai->MyUnits[builder]->Build_ClosestSite(factory,ai->cb->GetUnitPos(builder))){//MyUnits[builder].pos())){
 							}
 						}
@@ -140,14 +140,14 @@ void CBuildUp::Buildup()
 			}
 		}	
 	//}
-	//L("starting Factory Cycle");
+	////L("starting Factory Cycle");
 	int NumberofidleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
 	if(NumberofidleFactories  && ai->cb->GetEnergy() > ai->cb->GetEnergyStorage() * 0.8 && ai->cb->GetMetal() > ai->cb->GetMetalStorage() * 0.2){
-		L("starting Factory Cycle");
+		//L("starting Factory Cycle");
 		for(int i = 0; i < NumberofidleFactories; i++){
 			int producedcat;
-			L("buildercounter: " << buildercounter);
-			L("ai->uh->NumIdleUnits(CAT_BUILDER): " << ai->uh->NumIdleUnits(CAT_BUILDER));
+			//L("buildercounter: " << buildercounter);
+			//L("ai->uh->NumIdleUnits(CAT_BUILDER): " << ai->uh->NumIdleUnits(CAT_BUILDER));
 			int factory = ai->uh->GetIU(CAT_FACTORY);
 			if(buildercounter > 0 || ai->uh->NumIdleUnits(CAT_BUILDER) > 2){
 				producedcat = CAT_G_ATTACK;
@@ -175,14 +175,14 @@ void CBuildUp::Buildup()
 						}
 					}
 				}
-				L("leastBuiltBuilder: " << leastBuiltBuilder->humanName << ": " << leastBuiltBuilderCount);
+				//L("leastBuiltBuilder: " << leastBuiltBuilder->humanName << ": " << leastBuiltBuilderCount);
 				
 				// Find the the builder type this factory makes:
 				const UnitDef* builder_unit = ai->ut->GetUnitByScore(factory,CAT_BUILDER);
 				// See if it is the least built builder, if it is then make one.
 				if(builder_unit == leastBuiltBuilder)
 				{
-					L("Can build it");
+					//L("Can build it");
 					producedcat = CAT_BUILDER;
 					buildercounter +=4;
 				}
@@ -194,7 +194,7 @@ void CBuildUp::Buildup()
 				}
 			}
 			
-			L("Trying to build unit: " << producedcat);
+			//L("Trying to build unit: " << producedcat);
 			ai->MyUnits[factory]->FactoryBuild(ai->ut->GetUnitByScore(factory,producedcat));
 		}
 	}

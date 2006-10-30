@@ -1,7 +1,9 @@
-#pragma once
+#ifndef GLOBALAI_H
+#define GLOBALAI_H
+/*pragma once removed*/
 
 
-#include "include.h"
+#include "Include.h"
 
 const char AI_NAME[]="KAI";
 
@@ -36,6 +38,8 @@ public:
 	void GotChatMsg(const char* msg,int player);					//called when someone writes a chat msg
 
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);					//called when one of your units are damaged
+	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
+
 	void UnitMoveFailed(int unit);
 	int HandleEvent (int msg,const void *data);
 
@@ -46,10 +50,12 @@ public:
 	AIClasses *ai;
 	vector<CUNIT> MyUnits;
 
-	char c[512];
+	char c[1024];
 
 
 
 };
 
 
+
+#endif /* GLOBALAI_H */
