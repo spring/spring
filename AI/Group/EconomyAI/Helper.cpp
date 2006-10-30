@@ -307,7 +307,12 @@ void CHelper::AssignMetalMakerAI()
 					continue;
 				}
 			}
+#ifdef _WIN32
 			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/mmhandler.dll",99);
+#else
+			// FIXME -- still does not work
+			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/MetalMakerAI.so",99);
+#endif
 			aicb->AddUnitToGroup(unit,metalMakerAIid);
 		}
 	}

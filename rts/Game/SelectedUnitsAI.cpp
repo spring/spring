@@ -11,7 +11,9 @@
 #include "LogOutput.h"
 #include "Net.h"
 #include "GlobalStuff.h"
+#include "Player.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -117,7 +119,12 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		return;
 	}
 
-	if(nbrOfSelectedUnits == 1) {
+	if ((c.id == CMD_ATTACK) && (c.params.size() == 6)) {
+		SelectBoxAttack(c, player);
+		return;
+	}
+	
+	if (nbrOfSelectedUnits == 1) {
 		// a single unit selected
 		CUnit* unit = uh->units[*netSelected.begin()];
 		if(unit) {
@@ -146,7 +153,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 	//
 
 	if ((c.id == CMD_MOVE) && (c.params.size() == 6)) {
-		CalculateGroupData(player);
+		CalculateGroupData(player, (c.options & SHIFT_KEY));
 
 		MakeFrontMove(&c, player);
 
@@ -163,7 +170,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		}
 	}
 	else if ((c.id == CMD_MOVE) && (c.options & ALT_KEY)) {
-		CalculateGroupData(player);
+		CalculateGroupData(player, (c.options & SHIFT_KEY));
 		
 		// use the vector from the middle of group to new pos as forward dir
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
@@ -195,7 +202,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		}
 	}
 	else if ((c.id == CMD_MOVE || c.id == CMD_PATROL || c.id == CMD_FIGHT) && (c.options & CONTROL_KEY)) {
-		CalculateGroupData(player);
+		CalculateGroupData(player, (c.options & SHIFT_KEY));
 
 		const bool groupSpeed = !(c.options & ALT_KEY);
 		for (ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
@@ -203,9 +210,15 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 			if (unit) {
 				// Modifying the destination relative to the center of the group
 				Command uc = c;
-				uc.params[CMDPARAM_MOVE_X] += unit->midPos.x - centerCoor.x;
-				uc.params[CMDPARAM_MOVE_Y] += unit->midPos.y - centerCoor.y;
-				uc.params[CMDPARAM_MOVE_Z] += unit->midPos.z - centerCoor.z;
+				float3 midPos;
+				if (c.options & SHIFT_KEY) {
+					midPos = LastQueuePosition(unit);
+				} else {
+					midPos = unit->midPos;
+				}
+				uc.params[CMDPARAM_MOVE_X] += midPos.x - centerCoor.x;
+				uc.params[CMDPARAM_MOVE_Y] += midPos.y - centerCoor.y;
+				uc.params[CMDPARAM_MOVE_Z] += midPos.z - centerCoor.z;
 				unit->commandAI->GiveCommand(uc);
 				if (groupSpeed) {
 					AddGroupSetMaxSpeedCommand(unit, c.options);
@@ -234,7 +247,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 //
 // Calculate the outer limits and the center of the group coordinates.
 //
-void CSelectedUnitsAI::CalculateGroupData(int player) {
+void CSelectedUnitsAI::CalculateGroupData(int player, bool queueing) {
 	//Finding the highest, lowest and weighted central positional coordinates among the selected units.
 	float3 sumCoor = minCoor = maxCoor = float3(0, 0, 0);
 	float3 mobileSumCoor = sumCoor;
@@ -247,7 +260,12 @@ void CSelectedUnitsAI::CalculateGroupData(int player) {
 			UnitDef* ud=unit->unitDef;
 			sumLength += (int)((ud->xsize + ud->ysize)/2);
 
-			float3 unitPos = unit->midPos;
+			float3 unitPos;
+			if (queueing) {
+				unitPos = LastQueuePosition(unit);
+			} else {
+				unitPos = unit->midPos;
+			}
 			if(unitPos.x < minCoor.x)
 				minCoor.x = unitPos.x;
 			else if(unitPos.x > maxCoor.x)
@@ -360,6 +378,176 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, u
 	return retPos;
 }
 
+
+struct DistInfo {
+	bool operator<(const DistInfo& di) const { return dist < di.dist; }
+	float dist;
+	int unitID;
+};
+
+void CSelectedUnitsAI::SelectBoxAttack(const Command& cmd, int player)
+{
+	vector<int> targets;
+	const float3 pos0(cmd.params[0], cmd.params[1], cmd.params[2]);
+	const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
+	SelectAttackUnits(pos0, pos1, targets, player);
+	const int targetsCount = (int)targets.size();
+	if (targets.size() <= 0) {
+		return;
+	}
+	
+	const vector<int>& selected = selectedUnits.netSelected[player];
+	const int selectedCount = (int)selected.size();
+	if (selectedCount <= 0) {
+		return;
+	}
+	
+	Command attackCmd;
+	attackCmd.id = CMD_ATTACK;
+	attackCmd.options = cmd.options;
+	attackCmd.params.push_back(0.0f); // dummy
+	
+	// delete the attack commands and bail for CONTROL_KEY
+	if (cmd.options & CONTROL_KEY) {
+		attackCmd.options |= SHIFT_KEY;
+		for (int s = 0; s < selectedCount; s++) {
+			CUnit* unit = uh->units[selected[s]];
+			CCommandAI* commandAI = uh->units[selected[s]]->commandAI;
+			for (int t = 0; t < targetsCount; t++) {
+				attackCmd.params[0] = targets[t];
+				if (commandAI->WillCancelQueued(attackCmd)) {
+					commandAI->GiveCommand(attackCmd);
+				}
+			}
+		}
+		return;
+	}
+	
+	const bool queueing = (cmd.options & SHIFT_KEY);
+
+	// get the group center
+	float3 midPos(0.0f, 0.0f, 0.0f);	
+	for (int s = 0; s < selectedCount; s++) {
+		CUnit* unit = uh->units[selected[s]];
+		if (queueing) {
+			midPos += LastQueuePosition(unit);
+		} else {
+			midPos += unit->midPos;
+		}
+	}
+	midPos /= (float)selectedCount;
+
+	// sort the targets
+	vector<DistInfo> distVec;
+	int t;	
+	for (t = 0; t < targetsCount; t++) {
+		DistInfo di;
+		di.unitID = targets[t];
+		CUnit* unit = uh->units[di.unitID];
+		const float3 unitPos = queueing ? LastQueuePosition(unit) : unit->midPos;
+		di.dist = (unitPos - midPos).SqLength2D();
+		distVec.push_back(di);
+	}
+	sort(distVec.begin(), distVec.end());
+
+	// give the commands
+	for (int s = 0; s < selectedCount; s++) {
+		if (!queueing) {
+			// clear it for the first command
+			attackCmd.options &= ~SHIFT_KEY;
+		}
+		CUnit* unit = uh->units[selected[s]];
+		CCommandAI* commandAI = unit->commandAI;
+		for (t = 0; t < targetsCount; t++) {
+			attackCmd.params[0] = distVec[t].unitID;
+			if (!queueing || !commandAI->WillCancelQueued(attackCmd)) {
+				commandAI->GiveCommand(attackCmd);
+				AddUnitSetMaxSpeedCommand(unit, attackCmd.options);
+				// following commands are always queued
+				attackCmd.options |= SHIFT_KEY;
+			}
+		}
+	}
+}
+
+
+void CSelectedUnitsAI::SelectAttackUnits(const float3& pos, float radius,
+                                         vector<int>& units, int player)
+{
+  units.clear();
+
+  if ((player < 0) || (player >= MAX_PLAYERS)) {
+  	return;
+	}
+	const CPlayer* p = gs->players[player];
+	if (p == NULL) {
+		return;
+	}
+  const int allyTeam = gs->AllyTeam(p->team);
+  
+  const float radiusSqr = (radius * radius);
+  vector<CUnit*> tmpUnits = qf->GetUnits(pos, radius);
+
+  const int count = (int)tmpUnits.size();
+  for (int i = 0; i < count; i++) {
+    CUnit* unit = tmpUnits[i];
+    if ((unit->allyteam == allyTeam) ||
+        !(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR))) {
+      continue;
+    }
+    const float dx = (pos.x - unit->midPos.x);
+    const float dz = (pos.z - unit->midPos.z);
+    if (((dx * dx) + (dz * dz)) <= radiusSqr) {
+      units.push_back(unit->id);
+    }
+  }
+}
+  
+  
+void CSelectedUnitsAI::SelectAttackUnits(const float3& pos0, const float3& pos1,
+                                         vector<int>& units, int player)
+{
+  units.clear();
+  
+  if ((player < 0) || (player >= MAX_PLAYERS)) {
+  	return;
+	}
+	const CPlayer* p = gs->players[player];
+	if (p == NULL) {
+		return;
+	}
+  const int allyTeam = gs->AllyTeam(p->team);
+  
+  const float3 mins(min(pos0.x, pos1.x), 0.0f, min(pos0.z, pos1.z));
+  const float3 maxs(max(pos0.x, pos1.x), 0.0f, max(pos0.z, pos1.z));
+  
+  vector<CUnit*> tmpUnits = qf->GetUnitsExact(mins, maxs);
+
+  const int count = (int)tmpUnits.size();
+  for (int i = 0; i < count; i++) {
+    CUnit* unit = tmpUnits[i];
+    if ((unit->allyteam == allyTeam) ||
+        !(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR))) {
+      continue;
+    }
+    units.push_back(unit->id);
+  }
+}
+  
+  
+float3 CSelectedUnitsAI::LastQueuePosition(CUnit* unit)
+{
+	const std::deque<Command>& queue = unit->commandAI->commandQue;
+	std::deque<Command>::const_reverse_iterator it;
+	for (it = queue.rbegin(); it != queue.rend(); ++it) {
+		const Command& cmd = *it;
+		if (cmd.params.size() >= 3) {
+			return float3(cmd.params[0], cmd.params[1], cmd.params[2]);
+		}
+	}
+	return unit->midPos;
+}
+  
 
 void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 {

@@ -13,6 +13,9 @@ using namespace std;
 // cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
 #define CMD_WAIT                   5
+#define CMD_TIMEWAIT               6  // generates a WAIT
+#define CMD_DEATHWATCH             7  // generates a WAIT
+#define CMD_RALLYPOINT             8  // generates a MOVE + WAIT
 #define CMD_MOVE                  10
 #define CMD_PATROL                15
 #define CMD_FIGHT                 16
@@ -60,6 +63,11 @@ using namespace std;
 #define CMDTYPE_ICON_UNIT_FEATURE_OR_AREA  19  // expect 1 parameter in return (unitid or featureid+MAX_UNITS (id>MAX_UNITS=feature)) or 4 parameters in return (mappos+radius)
 #define CMDTYPE_ICON_BUILDING              20  // expect 3 parameters in return (mappos)
 #define CMDTYPE_CUSTOM                     21  // used with CMD_INTERNAL
+#define CMDTYPE_ICON_UNIT_OR_RECTANGLE     22  // expect 1 parameter in return (unitid)
+                                               //     or 3 parameters in return (mappos)
+                                               //     or 6 parameters in return (startpos+endpos)
+#define CMDTYPE_NUMBER                     23  // expect 1 parameter in return (number)
+
 
 //bits for the option field of Command
 #define INTERNAL_ORDER  (1 << 3) // 8

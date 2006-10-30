@@ -105,6 +105,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_RESURRECT:       cursorName = "Resurrect"; break;
 		case CMD_CAPTURE:         cursorName = "Capture"; break;
 		case CMD_SELFD:           cursorName = "SelfD"; break;
+		case CMD_DEATHWATCH:      cursorName = "DeathWatch"; break;
 /*
 		case CMD_STOP:
 		case CMD_AISELECT:

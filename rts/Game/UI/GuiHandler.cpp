@@ -66,7 +66,8 @@ CGuiHandler::CGuiHandler()
   buildSpacing(0),
   buildFacing(0),
   actionOffset(0),
-  layoutHandler(NULL)
+  layoutHandler(NULL),
+  defaultToRally(false)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -125,8 +126,10 @@ void CGuiHandler::LoadDefaults()
 	selectThrough = false;
 
 	menuName = "";
-
+	
 	outlineFont.Enable(false);
+
+	newAttackMode = false;
 }
 
 
@@ -231,6 +234,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		}
 		else if ((command == "outlinefont") && (words.size() > 1)) {
 			outlineFont.Enable(!!atoi(words[1].c_str()));
+		}
+		else if ((command == "newattackmode") && (words.size() > 1)) {
+			newAttackMode = !!atoi(words[1].c_str());
 		}
 	}
 
@@ -488,6 +494,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	// get the commands to process
 	CSelectedUnits::AvailableCommandsStruct ac;
 	ac = selectedUnits.GetAvailableCommands();
+	ConvertCommands(ac.commands);
 
 	vector<CommandDescription> hidden;
 	vector<CommandDescription>::const_iterator cdi;
@@ -606,6 +613,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	ac = selectedUnits.GetAvailableCommands();
 	vector<CommandDescription> cmds = ac.commands;
 	if (cmds.size() > 0) {
+		ConvertCommands(cmds);
 		AppendPrevAndNext(cmds);
 	}
 
@@ -813,6 +821,20 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 }
 
 
+void CGuiHandler::ConvertCommands(vector<CommandDescription>& cmds)
+{
+	if (newAttackMode) {
+		const int count = (int)cmds.size();
+		for (int i = 0; i < count; i++) {
+			CommandDescription& cd = cmds[i];
+			if ((cd.id == CMD_ATTACK) && (cd.type == CMDTYPE_ICON_UNIT_OR_MAP)) {
+				cd.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
+			}
+		}
+	}
+}
+
+
 void CGuiHandler::SetShowingMetal(bool show)
 {
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();	
@@ -978,12 +1000,14 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				inCommand=-1;
 				forceLayoutUpdate = true;
 				break;}
+			case CMDTYPE_NUMBER:
 			case CMDTYPE_ICON_MAP:
 			case CMDTYPE_ICON_AREA:
 			case CMDTYPE_ICON_UNIT:
 			case CMDTYPE_ICON_UNIT_OR_MAP:
 			case CMDTYPE_ICON_FRONT:
 			case CMDTYPE_ICON_UNIT_OR_AREA:
+			case CMDTYPE_ICON_UNIT_OR_RECTANGLE:
 			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
 				inCommand=iconCmd;
 				break;
@@ -1230,6 +1254,22 @@ void CGuiHandler::CreateOptions(Command& c,bool rmb)
 	//logOutput << (int)c.options << "\n";
 }
 
+
+float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
+{
+	float minV = 0.0f;
+	float maxV = 100.0f;
+	if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
+	if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
+	const int minX = (gu->screenx * 1) / 4;
+	const int maxX = (gu->screenx * 3) / 4;
+	const int effX = max(min(mouse->lastx, maxX), minX);
+	const float factor = float(effX - minX) / float(maxX - minX);
+
+	return (minV + (factor * (maxV - minV)));
+}
+
+
 int CGuiHandler::GetDefaultCommand(int x,int y) const
 {
 	CInputReceiver* ir=GetReceiverAt(x,y);
@@ -1254,6 +1294,13 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 	int cmd_id = selectedUnits.GetDefaultCmd(unit,feature);
 	for (int c = 0; c < (int)commands.size(); c++) {
 		if (cmd_id == commands[c].id) {
+			if (defaultToRally && (cmd_id == CMD_MOVE)) {
+				for (int c = 0; c < (int)commands.size(); c++) {
+					if (commands[c].id == CMD_RALLYPOINT) {
+						return c;
+					}
+				}
+			}
 			return c;
 		}
 	}
@@ -1537,7 +1584,7 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 				}
 			}
 
-			switch(cmdType) {
+			switch (cmdType) {
 				case CMDTYPE_ICON:{
 					Command c;
 					c.options = 0;
@@ -1593,12 +1640,14 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					forceLayoutUpdate = true;
 					break;
 				}
+				case CMDTYPE_NUMBER:
 				case CMDTYPE_ICON_MAP:
 				case CMDTYPE_ICON_AREA:
 				case CMDTYPE_ICON_UNIT:
 				case CMDTYPE_ICON_UNIT_OR_MAP:
 				case CMDTYPE_ICON_FRONT:
 				case CMDTYPE_ICON_UNIT_OR_AREA:
+				case CMDTYPE_ICON_UNIT_OR_RECTANGLE:
 				case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
 					SetShowingMetal(false);
 					actionOffset = actionIndex;
@@ -1796,6 +1845,14 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 	if(tempInCommand>=0 && tempInCommand<commands.size()){
 		switch(commands[tempInCommand].type){
 
+		case CMDTYPE_NUMBER:{
+			const float value = GetNumberInput(commands[tempInCommand]);
+			Command c;
+			c.id = commands[tempInCommand].id;;
+			c.params.push_back(value);
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+			return c;}
+
 		case CMDTYPE_ICON:{
 			Command c;
 			c.id=commands[tempInCommand].id;
@@ -1970,6 +2027,51 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				}
 				float3 pos2=camera->pos+mouse->dir*dist;
 				c.params.push_back(min(maxRadius,pos.distance2D(pos2)));
+			}
+			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+			return c;}
+
+		case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
+			Command c;
+			c.id=commands[tempInCommand].id;
+
+			if(mouse->buttons[button].movement<16){
+				CUnit* unit=0;
+				CFeature* feature=0;
+				float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
+				float dist3=helper->GuiTraceRayFeature(camera->pos,mouse->dir,gu->viewRange*1.4f,feature);
+
+				if(dist2>gu->viewRange*1.4f-300 && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>gu->viewRange*1.4f-300)){
+					return defaultRet;
+				}
+
+				if (feature!=0 && dist3<dist2 && commands[tempInCommand].type==CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) {  // clicked on feature
+					c.params.push_back(MAX_UNITS+feature->id);
+				} else if (unit!=0 && commands[tempInCommand].type!=CMDTYPE_ICON_AREA) {  // clicked on unit
+					c.params.push_back(unit->id);
+				} else { // clicked in map
+					float3 pos=camera->pos+mouse->dir*dist2;
+					c.params.push_back(pos.x);
+					c.params.push_back(pos.y);
+					c.params.push_back(pos.z);
+				}
+			} else {	//created rectangle
+				float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
+				if(dist<0){
+					return defaultRet;
+				}
+				float3 startPos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
+				dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+				if(dist<0){
+					return defaultRet;
+				}
+				float3 endPos=camera->pos+mouse->dir*dist;
+				c.params.push_back(startPos.x);
+				c.params.push_back(startPos.y);
+				c.params.push_back(startPos.z);
+				c.params.push_back(endPos.x);
+				c.params.push_back(endPos.y);
+				c.params.push_back(endPos.z);
 			}
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
@@ -2164,6 +2266,18 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 void CGuiHandler::Draw()
 {
 	DrawButtons();
+
+	// draw the value for CMDTYPE_NUMBER commands
+	if ((inCommand >= 0) && (inCommand < commands.size())) {
+		const CommandDescription& cd = commands[inCommand];
+		if (cd.type == CMDTYPE_NUMBER) {
+			const float value = GetNumberInput(cd);
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			const float mouseX = (float)mouse->lastx / (float)gu->screenx; 
+			const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->screeny;
+			font->glPrintCentered (mouseX, mouseY, 2.0f, "%3.1f", value);
+		}
+	}
 }
 
 
@@ -2971,6 +3085,21 @@ void CGuiHandler::DrawMapStuff(void)
 					DrawArea(pos,min(maxRadius,pos.distance2D(pos2)));
 				}
 				break;}
+			case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
+				if(mouse->buttons[button].movement>=16){
+					float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
+					if(dist<0){
+						break;
+					}
+					float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
+					dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+					if(dist<0){
+						break;
+					}
+					float3 pos2=camera->pos+mouse->dir*dist;
+					DrawSelectBox(pos, pos2);
+				}
+				break;}
 			default:
 				break;
 			}
@@ -3198,6 +3327,98 @@ void CGuiHandler::DrawArea(float3 pos, float radius)
 		}
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_FOG);
+}
+
+
+static void DrawMinMaxBox(const float3& mins, const float3& maxs)
+{
+	glBegin(GL_QUADS);
+		// the top
+		glVertex3f(mins.x, maxs.y, mins.z);
+		glVertex3f(maxs.x, maxs.y, mins.z);
+		glVertex3f(maxs.x, maxs.y, maxs.z);
+		glVertex3f(mins.x, maxs.y, maxs.z);
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+		// the sides
+		glVertex3f(mins.x, mins.y, mins.z);
+		glVertex3f(mins.x, maxs.y, mins.z);
+		glVertex3f(mins.x, mins.y, maxs.z);
+		glVertex3f(mins.x, maxs.y, maxs.z);
+		glVertex3f(maxs.x, mins.y, maxs.z);
+		glVertex3f(maxs.x, maxs.y, maxs.z);
+		glVertex3f(maxs.x, mins.y, mins.z);
+		glVertex3f(maxs.x, maxs.y, mins.z);
+		glVertex3f(mins.x, mins.y, mins.z);
+		glVertex3f(mins.x, maxs.y, mins.z);
+	glEnd();
+}
+
+void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
+{
+	const float yd = 10000.0f;
+	const float3 mins(min(pos0.x, pos1.x), -yd, min(pos0.z, pos1.z));
+	const float3 maxs(max(pos0.x, pos1.x), +yd, max(pos0.z, pos1.z));
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_FOG);
+	glDisable(GL_BLEND);
+
+	glDepthMask(GL_FALSE);
+	glEnable(GL_CULL_FACE);
+
+	// could use the stencil for fancier graphics, but this will do
+	glLogicOp(GL_INVERT);
+	glEnable(GL_COLOR_LOGIC_OP);
+
+	// invert the color for objects within the box	
+	glCullFace(GL_FRONT); DrawMinMaxBox(mins, maxs);
+	glCullFace(GL_BACK);  DrawMinMaxBox(mins, maxs);
+
+	glDisable(GL_CULL_FACE);
+
+	// do a full screen inversion if the camera is within the box	
+	if ((camera->pos.x > mins.x) && (camera->pos.x < maxs.x) &&
+	    (camera->pos.y > mins.y) && (camera->pos.y < maxs.y) &&
+	    (camera->pos.z > mins.z) && (camera->pos.z < maxs.z)) {
+		glDisable(GL_DEPTH_TEST);
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();	
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glPushMatrix();
+		glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();	
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();	
+		glEnable(GL_DEPTH_TEST);
+	}
+	glDisable(GL_COLOR_LOGIC_OP);
+
+	// draw the corner lines
+	const float3 lineVector(0.0f, 128.0f, 0.0f);
+	const float3 corner0(pos0.x, ground->GetHeight(pos0.x, pos0.z), pos0.z);
+	const float3 corner1(pos1.x, ground->GetHeight(pos1.x, pos1.z), pos1.z);
+	const float3 corner2(pos0.x, ground->GetHeight(pos0.x, pos1.z), pos1.z);
+	const float3 corner3(pos1.x, ground->GetHeight(pos1.x, pos0.z), pos0.z);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glLineWidth(2.0f);	
+	glBegin(GL_LINES);
+		glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
+		glVertexf3(corner0); glVertexf3(corner0 + lineVector);
+		glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
+		glVertexf3(corner1); glVertexf3(corner1 + lineVector);
+		glColor4f(0.0f, 0.0f, 1.0f, 0.9f);
+		glVertexf3(corner2); glVertexf3(corner2 + lineVector);
+		glVertexf3(corner3); glVertexf3(corner3 + lineVector);
+	glEnd();
+	glLineWidth(1.0f);	
+
+	glDepthMask(GL_TRUE);
 	glEnable(GL_FOG);
 }
 

@@ -62,6 +62,7 @@ class CCommandColors {
 		const float* resurrect;
 		const float* load;
 		const float* unload;
+		const float* deathWatch;
 		// for selected unit range rendering
 		const float* rangeAttack;
 		const float* rangeBuild;
@@ -92,6 +93,7 @@ class CCommandColors {
 			resurrect_index,
 			load_index,
 			unload_index,
+			deathWatch_index,
 			rangeAttack_index,
 			rangeBuild_index,
 			rangeDecloak_index,

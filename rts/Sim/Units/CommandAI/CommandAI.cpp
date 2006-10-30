@@ -78,6 +78,28 @@ CCommandAI::CCommandAI(CUnit* owner)
  	possibleCommands.push_back(c);
 //	nonQueingCommands.insert(CMD_WAIT);
 
+	c.id = CMD_TIMEWAIT;
+	c.action = "timewait";
+	c.type = CMDTYPE_NUMBER;
+	c.name = "TimeWait";
+	c.hotkey = "";
+	c.onlyKey = true;
+	c.tooltip = "TimeWait: Wait for a period of time before continuing";
+	c.params.push_back("0");  // min
+	c.params.push_back("60"); // max
+	possibleCommands.push_back(c);
+	c.params.clear();
+
+	// only for games with 2 ally teams  --  checked later
+	c.id = CMD_DEATHWATCH;
+	c.action = "deathwatch";
+	c.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
+	c.name = "DeathWatch";
+	c.hotkey = "";
+	c.onlyKey = true;
+	c.tooltip = "DeathWatch: Wait until die before continuing";
+	possibleCommands.push_back(c);
+
 	c.id=CMD_SELFD;
 	c.action="selfd";
 	c.type=CMDTYPE_ICON;

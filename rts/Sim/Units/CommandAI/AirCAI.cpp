@@ -30,6 +30,15 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.tooltip="Move: Commands the aircraft to fly to the location";
 	possibleCommands.push_back(c);
 
+	c.id = CMD_RALLYPOINT;
+	c.action = "rallypoint";
+	c.type = CMDTYPE_ICON_FRONT; // the same as MOVE
+	c.name = "RallyPoint";
+	c.tooltip = "RallyPoint: Wait until all units arrive before continuing";
+	c.hotkey = "";
+	c.onlyKey = true;
+	possibleCommands.push_back(c);
+	
 	if(owner->unitDef->canPatrol){
 		c.id=CMD_PATROL;
 		c.action="patrol";

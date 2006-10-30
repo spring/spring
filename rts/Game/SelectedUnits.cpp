@@ -8,6 +8,7 @@
 #include <map>
 #include <SDL_types.h>
 #include <SDL_keysym.h>
+#include "WaitCommandsAI.h"
 #include "Rendering/GL/myGL.h"
 #include "Net.h"
 #include "ExternalAI/GroupHandler.h"
@@ -159,7 +160,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		c.hotkey="Shift+q";
 		groupCommands.push_back(c);
 	}
-
+	
 	vector<CommandDescription> commands ;
 	// load the first set  (separating build and non-build commands)
 	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
@@ -210,7 +211,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			commands.push_back(*ci);
 		}
 	}
-
+	
 	AvailableCommandsStruct ac;
 	ac.commandPage=commandPage;
 	ac.commands=commands;
@@ -278,6 +279,22 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 			}
 			SelectGroup(group->id);
 		}
+		return;
+	}
+	else if (c.id == CMD_TIMEWAIT) {
+		waitCommandsAI.AddTimeWait(c);
+		return;
+	}
+	else if (c.id == CMD_DEATHWATCH) {
+		if (gs->activeAllyTeams <= 2) {
+			waitCommandsAI.AddDeathWatch(c);
+		} else {
+			logOutput.Print("DeathWatch can only be used when there are less then 3 Ally Teams");
+		}
+		return;
+	}
+	else if (c.id == CMD_RALLYPOINT) {
+		waitCommandsAI.AddRallyPoint(c);
 		return;
 	}
 
@@ -620,6 +637,7 @@ void CSelectedUnits::DrawCommands(void)
 
 	// draw the commands from AIs
 	grouphandler->DrawCommands();
+	waitCommandsAI.DrawCommands();
 
 	glLineWidth(1.0f);
 
