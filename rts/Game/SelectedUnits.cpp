@@ -285,11 +285,15 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		waitCommandsAI.AddTimeWait(c);
 		return;
 	}
+	else if (c.id == CMD_SQUADWAIT) {
+		waitCommandsAI.AddSquadWait(c);
+		return;
+	}
 	else if (c.id == CMD_DEATHWATCH) {
 		if (gs->activeAllyTeams <= 2) {
 			waitCommandsAI.AddDeathWatch(c);
 		} else {
-			logOutput.Print("DeathWatch can only be used when there are less then 3 Ally Teams");
+			logOutput.Print("DeathWatch can only be used when there are 2 Ally Teams");
 		}
 		return;
 	}

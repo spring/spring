@@ -53,6 +53,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.hotkey = "";
 		c.onlyKey = true;
 		possibleCommands.push_back(c);
+		c.onlyKey = false;
 	}
 
 	if(owner->unitDef->canPatrol){

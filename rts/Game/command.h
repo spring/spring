@@ -14,8 +14,9 @@ using namespace std;
 #define CMD_STOP                   0
 #define CMD_WAIT                   5
 #define CMD_TIMEWAIT               6  // generates a WAIT
-#define CMD_DEATHWATCH             7  // generates a WAIT
-#define CMD_RALLYPOINT             8  // generates a MOVE + WAIT
+#define CMD_SQUADWAIT              7  // generates a WAIT
+#define CMD_DEATHWATCH             8  // generates a WAIT
+#define CMD_RALLYPOINT             9  // generates a MOVE + WAIT
 #define CMD_MOVE                  10
 #define CMD_PATROL                15
 #define CMD_FIGHT                 16
@@ -69,7 +70,14 @@ using namespace std;
 #define CMDTYPE_NUMBER                     23  // expect 1 parameter in return (number)
 
 
-//bits for the option field of Command
+// wait codes
+#define CMD_WAITCODE_TIMEWAIT    1.0f
+#define CMD_WAITCODE_SQUADWAIT   2.0f
+#define CMD_WAITCODE_DEATHWATCH  3.0f
+#define CMD_WAITCODE_RALLYPOINT  4.0f
+
+
+// bits for the option field of Command
 #define INTERNAL_ORDER  (1 << 3) // 8
 #define RIGHT_MOUSE_KEY (1 << 4) // 16
 #define SHIFT_KEY       (1 << 5) // 32
