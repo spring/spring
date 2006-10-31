@@ -10,6 +10,9 @@
 #include "mmgr.h"
 
 
+static const float frameLength = 0.100f;  // in seconds
+
+
 CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 {
 	// FIXME: not used, yet
@@ -238,7 +241,7 @@ void CMouseCursor::Update()
 	}
 	
 	//Advance a frame in animated cursors
-	if (gu->gameTime - lastFrameTime > 0.1f) {
+	if ((gu->gameTime - lastFrameTime) > frameLength) {
 		lastFrameTime = gu->gameTime;
 		curFrame = (curFrame + 1) % (int)frames.size();
 	}

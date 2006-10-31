@@ -12,6 +12,7 @@
 #include "Net.h"
 #include "GlobalStuff.h"
 #include "Player.h"
+#include "WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -132,6 +133,14 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 			if (MayRequireSetMaxSpeedCommand(c)) {
 				AddUnitSetMaxSpeedCommand(unit, c.options);
 			}
+			if (c.id == CMD_WAIT) {
+				PUSH_CODE_MODE
+				ENTER_MIXED
+				if (player == gu->myPlayerNum) {
+					waitCommandsAI.AcknowledgeCommand(c);
+				}
+				POP_CODE_MODE
+			}
 		}
 		return;
 	}
@@ -201,7 +210,8 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 			}
 		}
 	}
-	else if ((c.id == CMD_MOVE || c.id == CMD_PATROL || c.id == CMD_FIGHT) && (c.options & CONTROL_KEY)) {
+	else if ((c.options & CONTROL_KEY) &&
+	         ((c.id == CMD_MOVE) || (c.id == CMD_PATROL) || (c.id == CMD_FIGHT))) {
 		CalculateGroupData(player, (c.options & SHIFT_KEY));
 
 		const bool groupSpeed = !(c.options & ALT_KEY);
@@ -239,6 +249,14 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 					AddUnitSetMaxSpeedCommand(unit, c.options);
 				}
 			}
+		}
+		if (c.id == CMD_WAIT) {
+			PUSH_CODE_MODE
+			ENTER_MIXED
+			if (player == gu->myPlayerNum) {
+				waitCommandsAI.AcknowledgeCommand(c);
+			}
+			POP_CODE_MODE
 		}
 	}
 }
@@ -346,6 +364,23 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 }
 
 
+void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
+{
+	const vector<int>& netUnits = selectedUnits.netSelected[player];
+	for(vector<int>::const_iterator ui = netUnits.begin(); ui != netUnits.end(); ++ui){
+		CUnit* unit=uh->units[*ui];
+		if(unit){
+			UnitDef* ud=unit->unitDef;
+			float range=unit->maxRange;
+			if(range<1)
+				range=2000;		//give weaponless units a long range to make them go to the back
+			float value=(ud->metalCost*60+ud->energyCost)/unit->maxHealth*range;
+			out.insert(pair<float,int>(value,*ui));
+		}
+	}
+}
+
+
 float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, unsigned char options)
 {
 	//int lineNum=posNum/numColumns;
@@ -386,6 +421,7 @@ struct DistInfo {
 	float dist;
 	int unitID;
 };
+
 
 void CSelectedUnitsAI::SelectBoxAttack(const Command& cmd, int player)
 {
@@ -550,22 +586,6 @@ float3 CSelectedUnitsAI::LastQueuePosition(CUnit* unit)
 	return unit->midPos;
 }
   
-
-void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
-{
-	for(vector<int>::iterator ui=selectedUnits.netSelected[player].begin();ui!=selectedUnits.netSelected[player].end();++ui){
-		CUnit* unit=uh->units[*ui];
-		if(unit){
-			UnitDef* ud=unit->unitDef;
-			float range=unit->maxRange;
-			if(range<1)
-				range=2000;		//give weaponless units a long range to make them go to the back
-			float value=(ud->metalCost*60+ud->energyCost)/unit->maxHealth*range;
-			out.insert(pair<float,int>(value,*ui));
-		}
-	}
-}
-
 
 void CSelectedUnitsAI::Update()
 {

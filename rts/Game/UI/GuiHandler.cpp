@@ -1640,7 +1640,29 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					forceLayoutUpdate = true;
 					break;
 				}
-				case CMDTYPE_NUMBER:
+				case CMDTYPE_NUMBER:{
+					if (!action.extra.empty()) {
+						const CommandDescription& cd = commands[a];
+						float value = atof(action.extra.c_str());
+						float minV = 0.0f;
+						float maxV = 100.0f;
+						if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
+						if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
+						value = max(min(value, maxV), minV);
+						Command c;
+						c.options = 0;
+						if (action.extra.find("queued") != string::npos) {
+							c.options = SHIFT_KEY;
+						}
+						c.id = cd.id;
+						c.params.push_back(value);
+						selectedUnits.GiveCommand(c);
+						break;
+					}
+					else {
+						// fall through
+					}
+				}
 				case CMDTYPE_ICON_MAP:
 				case CMDTYPE_ICON_AREA:
 				case CMDTYPE_ICON_UNIT:
@@ -2939,17 +2961,17 @@ void CGuiHandler::DrawNumberInput()
 		if (cd.type == CMDTYPE_NUMBER) {
 			const float value = GetNumberInput(cd);
 			glDisable(GL_TEXTURE_2D);
-			glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
+			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 			const float mouseX = (float)mouse->lastx / (float)gu->screenx; 
 			const float slideX = min(max(mouseX, 0.25f), 0.75f);
 			const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->screeny;
-			glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
-			glRectf(0.22f, 0.45f, 0.25f, 0.55f);
-			glRectf(0.75f, 0.45f, 0.78f, 0.55f);
-			glColor4f(0.0f, 0.0f, 1.0f, 0.9f);
+			glColor4f(1.0f, 1.0f, 0.0f, 0.8f);
+			glRectf(0.235f, 0.45f, 0.25f, 0.55f);
+			glRectf(0.75f, 0.45f, 0.765f, 0.55f);
+			glColor4f(0.0f, 0.0f, 1.0f, 0.8f);
 			glRectf(0.25f, 0.49f, 0.75f, 0.51f);
 			glBegin(GL_TRIANGLES);
-			glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
+			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
 			glVertex2f(slideX + 0.015f, 0.55f);
 			glVertex2f(slideX - 0.015f, 0.55f);
 			glVertex2f(slideX, 0.50f);
@@ -3063,6 +3085,8 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 
 void CGuiHandler::DrawMapStuff(void)
 {
+	glEnable(GL_DEPTH_TEST);
+	
 	if(activeMousePress){
 		int cc=-1;
 		int button=SDL_BUTTON_LEFT;
@@ -3377,6 +3401,7 @@ static void DrawMinMaxBox(const float3& mins, const float3& maxs)
 		glVertex3f(mins.x, maxs.y, mins.z);
 	glEnd();
 }
+
 
 void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
 {

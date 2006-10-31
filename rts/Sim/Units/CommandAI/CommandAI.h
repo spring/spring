@@ -64,11 +64,26 @@ protected:
 	void GiveAllowedCommand(const Command& c);
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 	int UpdateTargetLostTimer(int unitid);
+	inline int PickWaitIcon(const Command& cmd) const;
 
 private:
 	int targetLostTimer; // continously set to some non-zero value while target is in radar
 	                     // decremented every frame, command is canceled if it reaches 0
 };
+
+
+inline int CCommandAI::PickWaitIcon(const Command& cmd) const
+{
+	const vector<float>& p = cmd.params;
+	if (p.size() != 2) {
+		return CMD_WAIT;
+	}
+	else if (p[0] == CMD_WAITCODE_TIMEWAIT)   { return CMD_TIMEWAIT; }
+	else if (p[0] == CMD_WAITCODE_SQUADWAIT)  { return CMD_SQUADWAIT; }
+	else if (p[0] == CMD_WAITCODE_DEATHWATCH) { return CMD_DEATHWATCH; }
+	else if (p[0] == CMD_WAITCODE_RALLYPOINT) { return CMD_RALLYPOINT; }
+	return CMD_WAIT;
+}
 
 
 #endif // __COMMAND_AI_H__

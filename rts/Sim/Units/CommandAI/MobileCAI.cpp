@@ -505,11 +505,6 @@ void CMobileCAI::DrawCommands(void)
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		bool draw=false;
 		switch(ci->id){
-			case CMD_WAIT:
-			case CMD_SELFD:{
-				lineDrawer.DrawIconAtLastPos(ci->id);
-				break;
-			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
@@ -547,6 +542,14 @@ void CMobileCAI::DrawCommands(void)
 						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
+				break;
+			}
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				break;
+			}
+			case CMD_SELFD:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
 		}

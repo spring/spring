@@ -78,10 +78,10 @@ using namespace std;
 
 
 // bits for the option field of Command
-#define INTERNAL_ORDER  (1 << 3) // 8
-#define RIGHT_MOUSE_KEY (1 << 4) // 16
-#define SHIFT_KEY       (1 << 5) // 32
-#define CONTROL_KEY     (1 << 6) // 64
+#define INTERNAL_ORDER  (1 << 3) //   8
+#define RIGHT_MOUSE_KEY (1 << 4) //  16
+#define SHIFT_KEY       (1 << 5) //  32
+#define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
 
 
