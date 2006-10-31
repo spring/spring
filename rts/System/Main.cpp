@@ -258,9 +258,6 @@ bool SpringApp::Initialize ()
 	// Initialize class system
 	creg::ClassBinder::InitializeClasses ();
 
-	if (!ParseCmdLine ())
-		return false;
-
 #ifdef _MSC_VER
 	// Initialize crash reporting
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
@@ -272,6 +269,9 @@ bool SpringApp::Initialize ()
 #endif
 
 	FileSystemHandler::Initialize(true);
+
+	if (!ParseCmdLine ())
+		return false;
 
 	if (!InitWindow ("RtsSpring"))
 	{
