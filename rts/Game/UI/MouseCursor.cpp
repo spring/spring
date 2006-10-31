@@ -37,15 +37,23 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	int maxysize = 0;
 
 	for (int frameNum = 0; ; ++frameNum) {
-        sprintf(namebuf, "Anims/%s_%d.tga", name.c_str(), frameNum);
-		CFileHandler *f;
-		f = new CFileHandler(namebuf);
+		bool codedAlpha = false;
+		sprintf(namebuf, "Anims/%s_%d.png", name.c_str(), frameNum);
+		CFileHandler* f = new CFileHandler(namebuf);
+		if(!f->FileExists())
+		{
+			//try to load as tga if no png exist
+			delete f;
+			sprintf(namebuf, "Anims/%s_%d.tga", name.c_str(), frameNum);
+			f = new CFileHandler(namebuf);
+		}
 		if(!f->FileExists())
 		{
 			//try to load as bmp if no tga exist
-			sprintf(namebuf, "Anims/%s_%d.bmp", name.c_str(), frameNum);
 			delete f;
+			sprintf(namebuf, "Anims/%s_%d.bmp", name.c_str(), frameNum);
 			f = new CFileHandler(namebuf);
+			codedAlpha = true; // BMP has no alpha channel
 		}
 
 		if (f->FileExists()) {
@@ -55,7 +63,9 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 				throw content_error("Could not load mouse cursor from file " + bmpname);
 			b.ReverseYAxis();
 			CBitmap *final = getAlignedBitmap(b);
-			setBitmapTransparency(*final, 84, 84, 252); 
+			if (codedAlpha) {
+				setBitmapTransparency(*final, 84, 84, 252);
+			}
 
 			unsigned int cursorTex = 0;
 			glGenTextures(1, &cursorTex);
@@ -137,8 +147,8 @@ void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 	for(int y=0;y<bm.ysize;++y){
 		for(int x=0;x<bm.xsize;++x){
 			if ((bm.mem[(y*bm.xsize+x)*4 + 0] == r) &&
-				(bm.mem[(y*bm.xsize+x)*4 + 1] == g) &&
-				(bm.mem[(y*bm.xsize+x)*4 + 2] == b)) 
+			    (bm.mem[(y*bm.xsize+x)*4 + 1] == g) &&
+			    (bm.mem[(y*bm.xsize+x)*4 + 2] == b)) 
 			{
 				bm.mem[(y*bm.xsize+x)*4 + 3] = 0;
 			}
