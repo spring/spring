@@ -783,11 +783,6 @@ void CCommandAI::DrawCommands(void)
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
-			case CMD_WAIT:
-			case CMD_SELFD:{
-				lineDrawer.DrawIconAtLastPos(ci->id);
-				break;
-			}
 			case CMD_ATTACK:
 			case CMD_DGUN:{
 				if(ci->params.size()==1){
@@ -801,6 +796,14 @@ void CCommandAI::DrawCommands(void)
 					const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}
+				break;
+			}
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				break;
+			}
+			case CMD_SELFD:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
 			default:{

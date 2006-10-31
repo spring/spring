@@ -614,11 +614,6 @@ void CBuilderCAI::DrawCommands(void)
 	deque<Command>::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		switch(ci->id) {
-			case CMD_WAIT:
- 			case CMD_SELFD:{
-				lineDrawer.DrawIconAtLastPos(ci->id);
-				break;
-			}
 			case CMD_MOVE: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
@@ -715,40 +710,29 @@ void CBuilderCAI::DrawCommands(void)
 				}
 				break;
 			}
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				break;
+			}
+			case CMD_SELFD:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
 		}
-
-		map<int, string>::iterator boi;
-		if ((boi = buildOptions.find(ci->id)) != buildOptions.end()) {
-			BuildInfo bi;
-			bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-			if (ci->params.size() == 4) {
-				bi.buildFacing = int(ci->params[3]);
+		if (ci->id < 0) {
+			map<int, string>::const_iterator boi = buildOptions.find(ci->id);
+			if (boi != buildOptions.end()) {
+				BuildInfo bi;
+				bi.def = unitDefHandler->GetUnitByID(-(ci->id));
+				if (ci->params.size() == 4) {
+					bi.buildFacing = int(ci->params[3]);
+				}
+				bi.pos = float3(ci->params[0], ci->params[2], ci->params[2]);
+				bi.pos = helper->Pos2BuildPos(bi);
+				cursorIcons->AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
+				
+				lineDrawer.DrawLine(bi.pos, cmdColors.build);
 			}
-			bi.def = unitDefHandler->GetUnitByName(boi->second);
-			bi.pos = helper->Pos2BuildPos(bi);
-
-			// draw the line, and break the path
-			lineDrawer.DrawLine(bi.pos, cmdColors.build); // no icon
-			lineDrawer.Break(bi.pos, cmdColors.build);
-
-			//draw extraction range
-			if (bi.def->extractRange > 0) {
-				glColor4f(1.0f, 0.3f, 0.3f, 0.7f);
-				glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
-			}
-
-			// draw the building (but not its base square)
-			glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
-			glEnable(GL_DEPTH_TEST);
-			unitDrawer->DrawBuildingSample(bi.def, owner->team, bi.pos, bi.buildFacing);
-			glDisable(GL_DEPTH_TEST);
-			
-			// restore the blending function
-			glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
-			            (GLenum)cmdColors.QueuedBlendDst());
-
-			// restart the line path
-			lineDrawer.Restart();
 		}
 	}
 	lineDrawer.FinishPath();

@@ -6,6 +6,7 @@
 
 #pragma warning(disable:4786)
 
+#include <time.h>
 #include <map>
 #include <set>
 using namespace std;
@@ -24,23 +25,30 @@ class CWaitCommandsAI {
 		~CWaitCommandsAI();
 
 		void Update();
-		void DrawCommands();
+		void DrawCommands() const;
 
 		// called from SelectedUnits
 		void AddTimeWait(const Command& cmd);
 		void AddSquadWait(const Command& cmd);
 		void AddDeathWatch(const Command& cmd);
 		void AddRallyPoint(const Command& cmd);
+		
+		void AcknowledgeCommand(const Command& cmd);
 
 		void NewUnit(CUnit* unit, const CUnit* builder);
 
 	private:
 		class Wait;
-		void DeleteWaitObject(Wait*);
+		void RemoveWaitObject(Wait*);
 
 	private:
 		typedef set<CUnit*> UnitSet;
 
+		typedef map<float, Wait*> WaitMap;
+		WaitMap waitMap;
+		WaitMap unackedMap;
+
+	private:
 		// Wait Base Class
 		class Wait : public CObject {
 			public:
@@ -51,6 +59,7 @@ class CWaitCommandsAI {
 				virtual void Draw() const = 0;
 				float GetKey() const { return key; }
 				float GetCode() const { return code; }
+				time_t GetDeadTime() const { return deadTime; }
 			protected:
 				Wait(float code);
 				enum WaitState {
@@ -64,10 +73,12 @@ class CWaitCommandsAI {
 			protected:
 				const float code;
 				float key;
-				int deadFrame;
+				time_t deadTime;
+			protected:
+				static float GetNewKey();
+			private:
+				static float keySource;
 		};
-		typedef set<Wait*> WaitSet;
-		WaitSet waitSet;
 
 		// TimeWait				
 		class TimeWait : public Wait {
@@ -88,7 +99,7 @@ class CWaitCommandsAI {
 				bool enabled;
 				int duration;
 				int endFrame;
-				static float keySource;
+				bool factory;
 		};
 
 		// SquadWait				
@@ -106,7 +117,6 @@ class CWaitCommandsAI {
 				int squadCount;
 				UnitSet buildUnits;
 				UnitSet waitUnits;
-				static float keySource;
 		};
 
 		// DeathWatch
@@ -125,7 +135,6 @@ class CWaitCommandsAI {
 			private:
 				UnitSet waitUnits;
 				UnitSet deathUnits;
-				static float keySource;
 		};
 
 		// RallyPoint
@@ -141,11 +150,7 @@ class CWaitCommandsAI {
 				RallyPoint(const Command& cmd);
 			private:
 				UnitSet waitUnits;
-				static float keySource;
 		};
-
-	private:
-		WaitSet::iterator RemoveWait(WaitSet::iterator, WaitSet&);
 };
 
 

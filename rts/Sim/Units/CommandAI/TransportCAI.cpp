@@ -345,11 +345,6 @@ void CTransportCAI::DrawCommands(void)
 	deque<Command>::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
-			case CMD_WAIT:
-			case CMD_SELFD:{
-				lineDrawer.DrawIconAtLastPos(ci->id);
-				break;
-			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
@@ -418,6 +413,14 @@ void CTransportCAI::DrawCommands(void)
 			case CMD_UNLOAD_UNIT:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
+				break;
+			}
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				break;
+			}
+			case CMD_SELFD:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
 		}

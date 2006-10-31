@@ -8,6 +8,8 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -38,7 +40,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	c.name = "SquadWait";
 	c.hotkey = "";
 	c.onlyKey = true;
-	c.tooltip = "SquadWait: Wait for a number of units to be built before continuing";
+	c.tooltip = "SquadWait: Wait for a number of units to arrive before continuing";
 	c.params.push_back("2");   // min
 	c.params.push_back("100"); // max
 	possibleCommands.push_back(c);
@@ -317,11 +319,6 @@ void CFactoryCAI::DrawCommands(void)
 	deque<Command>::iterator ci;
 	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
 		switch(ci->id){
-			case CMD_WAIT:
- 			case CMD_SELFD:{
-				lineDrawer.DrawIconAtLastPos(ci->id);
-				break;
-			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
@@ -360,6 +357,27 @@ void CFactoryCAI::DrawCommands(void)
 				}
 				break;
 			}
+			case CMD_WAIT:{
+				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				break;
+			}
+			case CMD_SELFD:{
+				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
+		}
+		
+		if ((ci->id < 0) && (ci->params.size() >= 3)) {
+			BuildInfo bi;
+			bi.def = unitDefHandler->GetUnitByID(-(ci->id));
+			if (ci->params.size() == 4) {
+				bi.buildFacing = int(ci->params[3]);
+			}
+			bi.pos = float3(ci->params[0], ci->params[2], ci->params[2]);
+			bi.pos = helper->Pos2BuildPos(bi);
+			cursorIcons->AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
+			
+			lineDrawer.DrawLine(bi.pos, cmdColors.build);
 		}
 	}
 	lineDrawer.FinishPath();
