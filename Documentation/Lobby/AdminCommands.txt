@@ -103,6 +103,16 @@ launchprocess <process name + parameters>
   stops, or else server process won't terminate properly (it will remain ghosted until
   all of its child processes are terminated).
 getsendbuffersize <username>
-  will return this socket's send buffer size of this user. 
+  will return socket's send buffer size of the specified user. 
   This command is used for debugging purposes only!
+memoryavailable
+  will return Runtime.getRuntime().freeMemory().
+  This command is used for debugging purposes only!
+callgarbagecollector
+  will invoke garbage collector. 
+  This command is used for debugging purposes only!
+  Note that any invocation of this command is unnecessary since garbage collector
+  frees memory automatically on-the-fly (when needed). Also, invoking this command 
+  will block main server thread until System.gc() call returns, which may impact 
+  server performance considerably.
     
