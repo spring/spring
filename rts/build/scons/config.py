@@ -170,20 +170,8 @@ def check_openal(env, conf):
 
 def check_python(env, conf):
 	print "Checking for Python 2.4...",
-	if env['platform'] == 'windows':
-		#TODO check this for crosscompiling
-		# On windows, guess the python install location by looking at sys.executable,
-		# which holds the full path to the python interpreter running this code.
-		p1 = sys.executable.rfind('python')
-		p2 = sys.executable.rfind('Python')
-		p3 = sys.executable.rfind('PYTHON')
-		path = sys.executable[:max(p1, p2, p3)] # Assume at least one exists
-		print path
-		env.AppendUnique(CPPPATH = [os.path.join(path, 'include')])
-		env.AppendUnique(LIBPATH = [os.path.join(path, 'libs')])
-	else:
-		print ""
-		guess_include_path(env, conf, 'Python', 'python2.4')
+	print ""
+	guess_include_path(env, conf, 'Python', 'python2.4')
 
 
 def check_headers(env, conf):
@@ -252,11 +240,10 @@ def check_libraries(env, conf):
 		env.Exit(1)
 
 	#FIXME unitsync doesn't compile on mingw, also this breaks current mingwlibs when crosscompiling..
-	if env['platform'] != 'windows':
-		# second check for Windows.
-		if not conf.CheckLib('python2.4') and not conf.CheckLib('python24'):
-			print 'python is required for this program'
-			env.Exit(1)
+	# second check for Windows.
+	if not conf.CheckLib('python2.4') and not conf.CheckLib('python24'):
+		print 'python is required for this program'
+		env.Exit(1)
 
 	# second check for Windows.
 	if not (conf.CheckLib('GLEW') or conf.CheckLib('glew32')):

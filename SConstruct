@@ -37,13 +37,7 @@ if env['platform'] != 'windows':
 	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
 	spring_files += [ufshcpp]
 
-# Fix the extension when crosscompiling
-if env['platform'] == 'windows' and sys.platform != 'win32':
-	exe = 'game/spring.exe'
-else:
-	exe = 'game/spring'
-
-spring = env.Program(exe, spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
+spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 
 Alias('spring', spring)
 Default(spring)
@@ -169,7 +163,7 @@ env.Alias('test', None)
 #env.Zip('game/base/spring/bitmaps.sdz', filelist.list_files(env, 'installer/builddata/bitmaps'))
 
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
-	if env['platform'] != 'windows':
+	if sys.platform != 'win32':
 		if env.GetOption('clean'):
 			os.system("rm -f game/base/springcontent.sdz")
 			os.system("rm -f game/base/spring/bitmaps.sdz")

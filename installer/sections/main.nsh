@@ -9,7 +9,7 @@
   Delete "$INSTDIR\bagge.fnt"
   Delete "$INSTDIR\hpiutil.dll"
   File "..\game\luxi.ttf"
-  File "..\game\selectioneditor.exe"
+  File "..\game\SelectionEditor.exe"
   
   ; Can be nice and not overwrite these. or not
   SetOverWrite on
@@ -19,20 +19,33 @@
   SetOverWrite on
   File "..\game\settings.exe"
   File "..\game\settingstemplate.xml"
+
+  ; DLLs
 ;  File "..\game\zlib.dll"
   Delete "$INSTDIR\zlib.dll"
-  File "..\game\zlibwapi.dll"
   ; File "..\game\7zxa.dll"
   Delete "$INSTDIR\7zxa.dll"
+!ifdef MINGW
+  File "..\game\eaxac3.dll"
+  File "..\game\freetype6.dll"
+  File "..\game\glew32.dll"
+  File "..\game\IL.dll"
+  File "..\game\openal32.dll"
+  File "..\game\SDL.dll"
+  File "..\game\zlib1.dll"
+!else
+  File "..\game\zlibwapi.dll"
   File "..\game\crashrpt.dll"
   File "..\game\dbghelp.dll"
   File "..\game\devil.dll"
   File "..\game\SDL.dll"
   File "..\game\msvcp71.dll"
   File "..\game\msvcr71.dll"
+!endif
+
 ;  File "..\game\tower.sdu"
   Delete "$INSTDIR\tower.sdu"
-  File "..\game\palette.pal"
+  File "..\game\PALETTE.PAL"
 ;  File "..\game\testscript.lua"
 ;  File "..\game\spawn.txt"
   
@@ -74,6 +87,16 @@
   File "..\game\shaders\*.vp"
   
   SetOutPath "$INSTDIR\AI\Helper-libs"
+; Someone fix the vc projects so this can be merged to one block please.
+!ifdef MINGW
+  File "..\game\AI\Helper-libs\CentralBuildAI.dll"
+  File "..\game\AI\Helper-libs\MetalMakerAI.dll"
+  File "..\game\AI\Helper-libs\SimpleFormationAI.dll"
+  File "..\game\AI\Helper-libs\RadarAI.dll"
+  File "..\game\AI\Helper-libs\MexUpgraderAI.dll"
+  File "..\game\AI\Helper-libs\EconomyAI.dll"
+  File "..\game\AI\Helper-libs\ReportIdleAI.dll"
+!else
   File "..\game\AI\Helper-libs\centralbuild.dll"
   File "..\game\AI\Helper-libs\mmhandler.dll"
   File "..\game\AI\Helper-libs\simpleform.dll"
@@ -81,10 +104,16 @@
   File "..\game\AI\Helper-libs\mexupgrade.dll"
   File "..\game\AI\Helper-libs\economy.dll"
   File "..\game\AI\Helper-libs\reportidle.dll"
+!endif
   
   SetOverWrite ifnewer
   SetOutPath "$INSTDIR\AI\Bot-libs"
-  File "..\game\AI\Bot-libs\emptyai.dll"
+; same applies here (see above)
+!ifdef MINGW
+  File "..\game\AI\Bot-libs\TestGlobalAI.dll"
+!else
+  File "..\game\AI\Bot-libs\EmptyAI.dll"
+!endif
   
   SetOverWrite on
   ; XTA
@@ -135,7 +164,10 @@
 
   
   !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
+ ;FIXME
+ !ifndef MINGW
   !insertmacro UPDATEFILEASSOC
+ !endif
 
 !else
 
@@ -145,8 +177,8 @@
   Delete "$INSTDIR\bagge.fnt"
   Delete "$INSTDIR\hpiutil.dll"
   Delete "$INSTDIR\luxi.ttf"
-  Delete "$INSTDIR\palette.pal"
-  Delete "$INSTDIR\selectioneditor.exe"
+  Delete "$INSTDIR\PALETTE.PAL"
+  Delete "$INSTDIR\SelectionEditor.exe"
   Delete "$INSTDIR\selectkeys.txt"
   Delete "$INSTDIR\uikeys.txt"
   Delete "$INSTDIR\settings.exe"
@@ -159,6 +191,15 @@
   Delete "$INSTDIR\SDL.dll"
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
+
+  ; extra DLLs for mingw build
+  Delete "$INSTDIR\eaxac3.dll"
+  Delete "$INSTDIR\freetype6.dll"
+  Delete "$INSTDIR\glew32.dll"
+  Delete "$INSTDIR\IL.dll"
+  Delete "$INSTDIR\openal32.dll"
+  Delete "$INSTDIR\zlib1.dll"
+
   Delete "$INSTDIR\tower.sdu"
   Delete "$INSTDIR\palette.pal"
 ;  Delete "$INSTDIR\spawn.txt"
@@ -169,7 +210,8 @@
   RMDir "$INSTDIR\shaders"
   
   ; AI-dll's
-  Delete "$INSTDIR\AI\Bot-libs\emptyai.dll"
+  Delete "$INSTDIR\AI\Bot-libs\EmptyAI.dll"
+  Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
   RmDir "$INSTDIR\AI\Bot-libs"
   Delete "$INSTDIR\AI\Helper-libs\centralbuild.dll"
   Delete "$INSTDIR\AI\Helper-libs\mmhandler.dll"
@@ -177,6 +219,16 @@
   Delete "$INSTDIR\AI\Helper-libs\radar.dll"
   Delete "$INSTDIR\AI\Helper-libs\economy.dll"
   Delete "$INSTDIR\AI\Helper-libs\reportidle.dll"
+
+  ; AI-dlls for mingw installer
+  Delete "$INSTDIR\AI\Helper-libs\CentralBuildAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\MetalMakerAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\SimpleFormationAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\RadarAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\MexUpgraderAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\EconomyAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\ReportIdleAI.dll"
+
   RMDir "$INSTDIR\AI\Helper-libs"
   RMDir "$INSTDIR\AI"
   

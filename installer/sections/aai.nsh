@@ -1,10 +1,10 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR\AI\Bot-libs"
-  File "..\game\AI\Bot-libs\aai.dll"
+  File "..\game\AI\Bot-libs\AAI.dll"
 
-  SetOutPath "$INSTDIR\AI\aai"
-  File /r /x .svn "..\game\AI\aai\*.*"
+  SetOutPath "$INSTDIR\AI\AAI"
+  File /r /x .svn "..\game\AI\AAI\*.*"
 !else
-  Delete "$INSTDIR\AI\Bot-libs\aai.dll"
-  RMDir /r "$INSTDIR\AI\aai"
+  Delete "$INSTDIR\AI\Bot-libs\AAI.dll"
+  RMDir /r "$INSTDIR\AI\AAI"
 !endif
