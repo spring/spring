@@ -1,7 +1,7 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR\docs"
   Delete "$INSTDIR\docs\readme.html"
-  File "..\license.html"
+  File "..\LICENSE.html"
   File "..\Documentation\changelog.txt"
   File "..\Documentation\xtachanges.txt"
 
@@ -13,7 +13,7 @@
 !else
   ; Documentation
   Delete "$INSTDIR\docs\readme.html"
-  Delete "$INSTDIR\docs\license.html"
+  Delete "$INSTDIR\docs\LICENSE.html"
   Delete "$INSTDIR\docs\changelog.txt"
   Delete "$INSTDIR\docs\xtachanges.txt"
   Delete "$INSTDIR\docs\Q&A.html"
@@ -23,4 +23,3 @@
   Delete "$INSTDIR\docs\More Info.html"
   RMDir "$INSTDIR\docs"
 !endif
-  

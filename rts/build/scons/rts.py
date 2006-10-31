@@ -342,6 +342,11 @@ def generate(env):
 		usropts.Save(usrcachefile, env)
 		intopts.Save(intcachefile, env)
 
+	# Fix up some suffices for mingw crosscompile.
+	if env['platform'] == 'windows':
+		env['SHLIBSUFFIX'] = '.dll'
+		env['PROGSUFFIX'] = '.exe'
+
 	#Should we strip the exe?
 	if env.has_key('strip') and env['strip'] and not env['debug'] and not env['profile'] and not env.GetOption('clean'):
 		env['strip'] = True
