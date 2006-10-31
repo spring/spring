@@ -35,26 +35,28 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 
 	int maxxsize = 0;
 	int maxysize = 0;
-
-	for (int frameNum = 0; ; ++frameNum) {
-		bool codedAlpha = false;
-		sprintf(namebuf, "Anims/%s_%d.png", name.c_str(), frameNum);
+	
+	// find the image file type to use
+	const char* ext = "";
+	const char* exts[] = { "png", "tga", "bmp" };
+	const int extCount = sizeof(exts) / sizeof(exts[0]);
+	for (int e = 0; e < extCount; e++) {
+		ext = exts[e];
+		sprintf(namebuf, "Anims/%s_%d.%s", name.c_str(), 0, ext);
 		CFileHandler* f = new CFileHandler(namebuf);
-		if(!f->FileExists())
-		{
-			//try to load as tga if no png exist
+		if (f->FileExists()) {
 			delete f;
-			sprintf(namebuf, "Anims/%s_%d.tga", name.c_str(), frameNum);
-			f = new CFileHandler(namebuf);
+			break;
 		}
-		if(!f->FileExists())
-		{
-			//try to load as bmp if no tga exist
-			delete f;
-			sprintf(namebuf, "Anims/%s_%d.bmp", name.c_str(), frameNum);
-			f = new CFileHandler(namebuf);
-			codedAlpha = true; // BMP has no alpha channel
-		}
+		delete f;
+	}
+	
+	const bool codedAlpha = (string(ext) == "bmp");
+
+	for (int frameNum = 0; /* no test */; ++frameNum) {
+
+		sprintf(namebuf, "Anims/%s_%d.%s", name.c_str(), frameNum, ext);
+		CFileHandler* f = new CFileHandler(namebuf);
 
 		if (f->FileExists()) {
 			string bmpname = namebuf;
