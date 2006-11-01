@@ -13,6 +13,7 @@ fi
 exitstatus=0
 
 # Zip & put exe online
+echo "Creating spring-r$1.zip containing spring.exe"
 cd game
 if zip "spring-r$1.zip" "spring.exe"; then
 	chmod 644 "spring-r$1.zip"
@@ -22,6 +23,8 @@ else
 	exitstatus=1
 fi
 cd ..
+echo Done
+echo
 
 # Build installer & put online
 if installer/make_test_installer.sh "$1"; then
