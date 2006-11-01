@@ -184,6 +184,7 @@
   Delete "$INSTDIR\cmdcolors.txt"
   Delete "$INSTDIR\ctrlpanel.txt"
   Delete "$INSTDIR\settings.exe"
+  Delete "$INSTDIR\settingstemplate.xml"
 ;  Delete "$INSTDIR\zlib.dll"
   Delete "$INSTDIR\zlibwapi.dll"
 ;  Delete "$INSTDIR\7zxa.dll"
@@ -240,6 +241,9 @@
 
   ; Startscript
   Delete "$INSTDIR\startscripts\testscript.lua"
+  Delete "$INSTDIR\startscripts\cmdrscript.lua"
+  Delete "$INSTDIR\startscripts\missionhelper.lua"
+  Delete "$INSTDIR\startscripts\missiontest.lua"
   RmDir "$INSTDIR\startscripts"
 
   ; Maps
@@ -275,8 +279,9 @@
 ; Generated stuff from the installer
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
   Delete "$INSTDIR\uninst.exe"
-  
+
   ; Generated stuff from running spring
+  Delete "$INSTDIR\ArchiveCacheV4.txt"
   Delete "$INSTDIR\infolog.txt"
   Delete "$INSTDIR\ext.txt"
 ;  Delete "$INSTDIR\config.dat"
