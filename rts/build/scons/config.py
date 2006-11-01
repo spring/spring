@@ -261,7 +261,7 @@ def check_libraries(env, conf):
 	check_boost_library('regex', 'boost/regex.hpp')
 
 	# second check for Windows.
-	if not conf.CheckLib('IL') and not conf.CheckLib('devil'):
+	if not conf.CheckLib('IL') and not conf.CheckLib('devil') and not conf.CheckLib('DevIL'):
 		print "You need the DevIL image library for this program"
 		env.Exit(1)
 
