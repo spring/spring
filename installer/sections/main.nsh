@@ -15,6 +15,8 @@
   SetOverWrite on
   File "..\game\selectkeys.txt"
   File "..\game\uikeys.txt"
+  File "..\game\cmdcolors.txt"
+  File "..\game\ctrlpanel.txt"
   
   SetOverWrite on
   File "..\game\settings.exe"
@@ -181,6 +183,8 @@
   Delete "$INSTDIR\SelectionEditor.exe"
   Delete "$INSTDIR\selectkeys.txt"
   Delete "$INSTDIR\uikeys.txt"
+  Delete "$INSTDIR\cmdcolors.txt"
+  Delete "$INSTDIR\ctrlpanel.txt"
   Delete "$INSTDIR\settings.exe"
 ;  Delete "$INSTDIR\zlib.dll"
   Delete "$INSTDIR\zlibwapi.dll"
