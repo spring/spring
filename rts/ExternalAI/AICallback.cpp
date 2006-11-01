@@ -1191,4 +1191,9 @@ const WeaponDef* CAICallback::GetWeapon(const char* weaponname)
 	return weaponDefHandler->GetWeapon(weaponname);
 }
 
+bool CAICallback::CanBuildUnit(int unitDefID)
+{
+	return uh->CanBuildUnit(unitDefHandler->GetUnitByID(unitDefID), team);
+}
+
 IMPLEMENT_PURE_VIRTUAL(IAICallback::~IAICallback())

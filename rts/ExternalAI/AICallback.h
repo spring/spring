@@ -158,6 +158,8 @@ public:
 	float GetUnitDefHeight(int def);
 
 	const WeaponDef* GetWeapon(const char* weaponname);
+
+	bool CanBuildUnit(int unitDefID);  //return false if a unit cannot currently be created
 };
 
 #endif /* AICALLBACK_H */
