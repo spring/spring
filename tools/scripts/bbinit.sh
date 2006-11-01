@@ -28,17 +28,16 @@ if [ "x$quit" != "x0" ]; then
 	exit 1
 fi
 
-# Extract files only if the list of files doesn't exist (which we use to touch them,
-# so they dont get killed by cleanup scripts)
-if [ ! -f files ]; then
-	root="/home/tvo/Buildbot/spring_slave"
-	# Libs/includes needed for crosscompilation
-	7z x -y "$root/mingwlibs.exe" | grep 'Extracting  ' | sed 's/Extracting  //g' | tee files
-	# Files needed for installer building
-	tar xzfv "$root/extracontent.tar.gz" | tee -a files
-fi
+# Extract files
+root="/home/tvo/Buildbot/spring_slave"
+# Libs/includes needed for crosscompilation
+7z x -y "$root/mingwlibs.exe" | grep 'Extracting  ' | sed 's/Extracting  //g' | tee files
+# Files needed for installer building
+tar xzfv "$root/extracontent.tar.gz" | tee -a files
 
 # touch files so the cleanup scripts dont kill them
+# (note how it can still happen that cleanup scripts kill the files just between
+# extracting and touching them, no clue how to solve that....)
 cat files | xargs touch
 
 # Update version

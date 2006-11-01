@@ -33,17 +33,16 @@
   File "..\game\glew32.dll"
   File "..\game\IL.dll"
   File "..\game\openal32.dll"
-  File "..\game\SDL.dll"
   File "..\game\zlib1.dll"
 !else
   File "..\game\zlibwapi.dll"
   File "..\game\crashrpt.dll"
   File "..\game\dbghelp.dll"
   File "..\game\devil.dll"
-  File "..\game\SDL.dll"
   File "..\game\msvcp71.dll"
-  File "..\game\msvcr71.dll"
 !endif
+  File "..\game\SDL.dll"
+  File "..\game\msvcr71.dll"
 
 ;  File "..\game\tower.sdu"
   Delete "$INSTDIR\tower.sdu"
