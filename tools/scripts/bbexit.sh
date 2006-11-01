@@ -25,8 +25,8 @@ cd ..
 
 # Build installer & put online
 if installer/make_test_installer.sh "$1"; then
-	chmod 644 "spring_r$1_nightly.exe"
-	mv "spring_r$1_nightly.exe" "/home/tvo/public_html/spring/installer/"
+	chmod 644 "installer/spring_r$1_nightly.exe"
+	mv "installer/spring_r$1_nightly.exe" "/home/tvo/public_html/spring/installer/"
 else
 	echo "failed to build installer"
 	exitstatus=1
