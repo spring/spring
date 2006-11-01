@@ -15,6 +15,10 @@ fi
 if [ ! -f files ]; then
 	root="/home/tvo/Buildbot/spring_slave"
 	# Libs/includes needed for crosscompilation
+	if [ "x$(which 7z)" = "x" ]; then
+		echo 7z not found
+		exit 1
+	fi
 	7z x -y "$root/mingwlibs.exe" | grep 'Extracting  ' | sed 's/Extracting  //g' | tee files
 	# Files needed for installer building
 	tar xzfv "$root/extracontent.tar.gz" | tee -a files
