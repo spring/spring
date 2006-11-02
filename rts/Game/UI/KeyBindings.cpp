@@ -66,6 +66,27 @@ defaultBindings[] = {
 	{ "Shift+,", "decguiopacity" },
 	{ "Shift+.", "incguiopacity" },
 
+	{      "1", "specteam 0"  },
+	{      "2", "specteam 1"  },
+	{      "3", "specteam 2"  },
+	{      "4", "specteam 3"  },
+	{      "5", "specteam 4"  },
+	{      "6", "specteam 5"  },
+	{      "7", "specteam 6"  },
+	{      "8", "specteam 7"  },
+	{      "9", "specteam 8"  },
+	{      "0", "specteam 9"  },
+	{ "Ctrl+1", "specteam 10" },
+	{ "Ctrl+2", "specteam 11" },
+	{ "Ctrl+3", "specteam 12" },
+	{ "Ctrl+4", "specteam 13" },
+	{ "Ctrl+5", "specteam 14" },
+	{ "Ctrl+6", "specteam 15" },
+	{ "Ctrl+7", "specteam 16" },
+	{ "Ctrl+8", "specteam 17" },
+	{ "Ctrl+9", "specteam 18" },
+	{ "Ctrl+0", "specteam 19" },
+
 	{ "Any+0", "group0" },
 	{ "Any+1", "group1" },
 	{ "Any+2", "group2" },
@@ -76,7 +97,7 @@ defaultBindings[] = {
 	{ "Any+7", "group7" },
 	{ "Any+8", "group8" },
 	{ "Any+9", "group9" },
-
+	
 	{ "Any+c", "controlunit" },
 	
 	{       "[", "buildfacing inc"  },

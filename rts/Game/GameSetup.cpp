@@ -279,7 +279,7 @@ bool CGameSetup::Draw(void)
 		glPushMatrix();
 		glTranslatef(0.3f,0.6f-a*0.05f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
-		font->glPrint("%s",gs->players[a]->playerName.c_str());
+		font->glPrintRaw(gs->players[a]->playerName.c_str());
 		glPopMatrix();
 	}
 	if(gu->myPlayerNum==0 && keys[SDLK_RETURN] && keys[SDLK_LCTRL]){

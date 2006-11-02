@@ -5,6 +5,7 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
@@ -770,6 +771,12 @@ bool CCommandAI::isTrackable(const CUnit* unit) const
 	return ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0) ||
 	       (unit->unitDef->speed <= 0.0f);
 }
+
+
+void CCommandAI::DrawWaitIcon(const Command& cmd) const
+{
+	waitCommandsAI.AddIcon(cmd, lineDrawer.GetLastPos());
+}
   
 
 void CCommandAI::DrawCommands(void)
@@ -799,7 +806,7 @@ void CCommandAI::DrawCommands(void)
 				break;
 			}
 			case CMD_WAIT:{
-				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				DrawWaitIcon(*ci);
 				break;
 			}
 			case CMD_SELFD:{

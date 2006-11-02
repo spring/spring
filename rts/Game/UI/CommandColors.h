@@ -18,30 +18,33 @@ class CCommandColors {
 		bool LoadConfig(const std::string& filename);
 
 		// for command queue lines
-		bool         AlwaysDrawQueue()   const { return alwaysDrawQueue; }
-		bool         UseQueueIcons()     const { return useQueueIcons; }
-		float        QueueIconAlpha()    const { return queueIconAlpha; }
-		float        QueueIconScale()    const { return queueIconScale; }
-		bool         UseColorRestarts()  const { return useColorRestarts; }
-		bool         UseRestartColor()   const { return useRestartColor; }
-		float        RestartAlpha()      const { return restartAlpha; }
+		bool         AlwaysDrawQueue()   const { return alwaysDrawQueue;   }
+		bool         UseQueueIcons()     const { return useQueueIcons;     }
+		float        QueueIconAlpha()    const { return queueIconAlpha;    }
+		float        QueueIconScale()    const { return queueIconScale;    }
+		bool         UseColorRestarts()  const { return useColorRestarts;  }
+		bool         UseRestartColor()   const { return useRestartColor;   }
+		float        RestartAlpha()      const { return restartAlpha;      }
 
-		float        QueuedLineWidth()   const { return queuedLineWidth; }
-		unsigned int QueuedBlendSrc()    const { return queuedBlendSrc; }
-		unsigned int QueuedBlendDst()    const { return queuedBlendDst; }
+		float        QueuedLineWidth()   const { return queuedLineWidth;   }
+		unsigned int QueuedBlendSrc()    const { return queuedBlendSrc;    }
+		unsigned int QueuedBlendDst()    const { return queuedBlendDst;    }
+		unsigned int StipplePattern()    const { return stipplePattern;    }
+		unsigned int StippleFactor()     const { return stippleFactor;     }
+		float        StippleSpeed()      const { return stippleSpeed;      }
 
 		float        SelectedLineWidth() const { return selectedLineWidth; }
-		unsigned int SelectedBlendSrc()  const { return selectedBlendSrc; }
-		unsigned int SelectedBlendDst()  const { return selectedBlendDst; }
+		unsigned int SelectedBlendSrc()  const { return selectedBlendSrc;  }
+		unsigned int SelectedBlendDst()  const { return selectedBlendDst;  }
 		bool         BuildBoxesOnShift() const { return buildBoxesOnShift; }
 
 		float        MouseBoxLineWidth() const { return mouseBoxLineWidth; }
-		unsigned int MouseBoxBlendSrc()  const { return mouseBoxBlendSrc; }
-		unsigned int MouseBoxBlendDst()  const { return mouseBoxBlendDst; }
+		unsigned int MouseBoxBlendSrc()  const { return mouseBoxBlendSrc;  }
+		unsigned int MouseBoxBlendDst()  const { return mouseBoxBlendDst;  }
 
-		float        UnitBoxLineWidth()  const { return unitBoxLineWidth; }
+		float        UnitBoxLineWidth()  const { return unitBoxLineWidth;  }
 
-    // the colors		
+		// the colors		
 		const float* unitBox;
 		const float* mouseBox;
 		// for command queue rendering
@@ -108,24 +111,27 @@ class CCommandColors {
 		float colors[ColorCount][4];
 
 		// for command queue lines
-		bool alwaysDrawQueue;
+		bool  alwaysDrawQueue;
 		float queueIconAlpha;
 		float queueIconScale;
-		bool useQueueIcons;
-		bool useColorRestarts;
-		bool useRestartColor;
+		bool  useQueueIcons;
+		bool  useColorRestarts;
+		bool  useRestartColor;
 		float restartAlpha;
 
-		float queuedLineWidth;
+		float        queuedLineWidth;
 		unsigned int queuedBlendSrc;
 		unsigned int queuedBlendDst;
+		unsigned int stipplePattern;
+		unsigned int stippleFactor;
+		float        stippleSpeed;
 
-		float selectedLineWidth;
+		float        selectedLineWidth;
 		unsigned int selectedBlendSrc;
 		unsigned int selectedBlendDst;
-		bool buildBoxesOnShift;
+		bool         buildBoxesOnShift;
 
-		float mouseBoxLineWidth;
+		float        mouseBoxLineWidth;
 		unsigned int mouseBoxBlendSrc;
 		unsigned int mouseBoxBlendDst;
 

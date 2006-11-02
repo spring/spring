@@ -76,7 +76,7 @@ void CInfoConsole::Draw()
 
 		std::deque<InfoLine>::iterator ili;
 		for(ili=data.begin();ili!=data.end();ili++){
-			font->glPrint("%s", ili->text.c_str());
+			font->glPrintRaw(ili->text.c_str());
 			glTranslatef(0.0f, -1.2f, 0.0f);
 		}
 	}

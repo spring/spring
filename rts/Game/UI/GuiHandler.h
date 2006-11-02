@@ -105,6 +105,7 @@ class CGuiHandler : public CInputReceiver {
 		void DrawFront(int button,float maxSize,float sizeDiv);
 		void DrawArea(float3 pos, float radius);
 		void DrawSelectBox(const float3& start, const float3& end);
+		void DrawSelectCircle(const float3& pos, float radius);
 
 		bool BindNamedTexture(const std::string& texName);
 

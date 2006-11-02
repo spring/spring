@@ -616,25 +616,39 @@ void CSelectedUnits::DrawCommands(void)
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 
-	lineDrawer.Configure(cmdColors.UseColorRestarts(),
+	// line stipple animation
+	unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
+	const bool useStipple = ((stipPat != 0xffff) && (stipPat != 0x0000));
+	if (useStipple) {
+		static float stippleTimer = 0.0f;
+		const unsigned int fullPat = (stipPat << 16) | (stipPat & 0x0000ffff);
+		stippleTimer += (gu->lastFrameTime * cmdColors.StippleSpeed());
+		stippleTimer = fmodf(stippleTimer, (16.0f / 20.0f));
+		const int shiftBits = 15 - (int(stippleTimer * 20.0f) % 16);
+		glLineStipple(cmdColors.StippleFactor(), (fullPat >> shiftBits));
+	}
+                     
+	lineDrawer.Configure(useStipple,
+	                     cmdColors.UseColorRestarts(),
 	                     cmdColors.UseRestartColor(),
 	                     cmdColors.restart,
 	                     cmdColors.RestartAlpha());
-	                     
+                     
 	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
 	            (GLenum)cmdColors.QueuedBlendDst());
-	            
+
 	glEnable(GL_BLEND);
-	
+
 	glLineWidth(cmdColors.QueuedLineWidth());
 
 	set<CUnit*>::iterator ui;
-	if(selectedGroup!=-1){
-		for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
+	if (selectedGroup != -1) {
+		set<CUnit*>& groupUnits = grouphandler->groups[selectedGroup]->units;
+		for(ui = groupUnits.begin(); ui != groupUnits.end(); ++ui) {
 			(*ui)->commandAI->DrawCommands();
 		}
 	} else {
-		for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+		for(ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 			(*ui)->commandAI->DrawCommands();
 		}
 	}

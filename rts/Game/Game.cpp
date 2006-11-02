@@ -218,7 +218,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	camera=new CCamera();
 	cam2=new CCamera();
 	mouse=new CMouseHandler();
-	cursorIcons=new CCursorIcons();
 	selectionKeys=new CSelectionKeyHandler();
 	tooltip=new CTooltipConsole();
 
@@ -435,7 +434,6 @@ CGame::~CGame()
 		delete guihandler;
 	delete selectionKeys;
 	delete mouse;
-	delete cursorIcons;
 	delete helper;
 	delete shadowHandler;
 	delete moveinfo;
@@ -601,6 +599,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	}
 
 	// spectator keys for switching teams
+	/* FIXME -- replaced by "specteam" action
 	if(k>='0' && k<='9' && gu->spectating){
 		const int team= ((k - '0') + 9) % 10; // ex: '1' -> team0
 		if(team<gs->activeTeams){
@@ -609,6 +608,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		}
 		return 0;
 	}
+	*/
 
 	// try the input receivers
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
@@ -803,6 +803,13 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "moveslow") {
 		camMove[7]=true;
+	}
+	else if ((cmd == "specteam") && (gu->spectating)) {
+		const int team = atoi(action.extra.c_str());
+		if ((team >= 0) && (team < gs->activeTeams)) {
+			gu->myTeam = team;
+			gu->myAllyTeam = gs->AllyTeam(team);
+		}
 	}
 	else if (cmd == "group0") {
 		grouphandler->GroupCommand(0);
@@ -1387,7 +1394,8 @@ bool CGame::Draw()
 	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
 		startDraw = SDL_GetTicks();
-		gu->timeOffset = ((float)(startDraw - lastUpdate))/1000.f*GAME_SPEED*gs->speedFactor;
+		gu->timeOffset = ((float)(startDraw - lastUpdate) * 0.001f)
+		                 * (GAME_SPEED * gs->speedFactor);
 	} else  {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
@@ -1453,7 +1461,7 @@ bool CGame::Draw()
 	sky->DrawSun();
 	if(cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
-		cursorIcons->Draw();
+		cursorIcons.Draw();
 	}
 
 	mouse->Draw();
@@ -1562,7 +1570,7 @@ bool CGame::Draw()
 		glScalef(xScale, yScale, 1.0f);
 
 		if (!outlineFont.IsEnabled()) {
-			font->glPrint("%s", tempstring.c_str());
+			font->glPrintRaw(tempstring.c_str());
 		}
 		else {
 			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
@@ -1599,7 +1607,7 @@ bool CGame::Draw()
 		glScalef(xScale, yScale, 1.0f);
 		glColor4f(1,1,1,1);
 		if (!outlineFont.IsEnabled()) {
-			font->glPrint("%s", buf);
+			font->glPrintRaw(buf);
 		} else {
 			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
 			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
@@ -1642,7 +1650,7 @@ bool CGame::Draw()
 				glScalef(xScale, yScale, 1.0f);
 				glColor4fv(color);
 				if (!outlineFont.IsEnabled()) {
-					font->glPrint("%s", buf);
+					font->glPrintRaw(buf);
 				} else {
 					outlineFont.print(xPixel, yPixel, color, buf);
 				}
