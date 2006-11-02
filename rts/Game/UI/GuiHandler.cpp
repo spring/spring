@@ -3144,19 +3144,23 @@ void CGuiHandler::DrawMapStuff(void)
 						break;
 					}
 					float3 pos2=camera->pos+mouse->dir*dist;
+					const float* color;
 					switch (commands[cc].id) {
-						case CMD_AREA_ATTACK:  { glColor4fv(cmdColors.attack);      break; }
-						case CMD_REPAIR:       { glColor4fv(cmdColors.repair);      break; }
-						case CMD_RECLAIM:      { glColor4fv(cmdColors.reclaim);     break; }
-						case CMD_RESTORE:      { glColor4fv(cmdColors.restore);     break; }
-						case CMD_RESURRECT:    { glColor4fv(cmdColors.resurrect);   break; }
-						case CMD_LOAD_UNITS:   { glColor4fv(cmdColors.load);        break; } 
-						case CMD_UNLOAD_UNIT:  { glColor4fv(cmdColors.unload);      break; }
-						case CMD_UNLOAD_UNITS: { glColor4fv(cmdColors.unload);      break; }
-						case CMD_CAPTURE:      { glColor4fv(cmdColors.capture);     break; }
-						default:               { glColor4f(0.5f, 0.5f, 0.5f, 0.4f); break; }
+						case CMD_AREA_ATTACK:  { color = cmdColors.attack;      break; }
+						case CMD_REPAIR:       { color = cmdColors.repair;      break; }
+						case CMD_RECLAIM:      { color = cmdColors.reclaim;     break; }
+						case CMD_RESTORE:      { color = cmdColors.restore;     break; }
+						case CMD_RESURRECT:    { color = cmdColors.resurrect;   break; }
+						case CMD_LOAD_UNITS:   { color = cmdColors.load;        break; } 
+						case CMD_UNLOAD_UNIT:  { color = cmdColors.unload;      break; }
+						case CMD_UNLOAD_UNITS: { color = cmdColors.unload;      break; }
+						case CMD_CAPTURE:      { color = cmdColors.capture;     break; }
+						default: {
+							static const float grey[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
+							color = grey;
+						}
 					}
-					DrawArea(pos,min(maxRadius,pos.distance2D(pos2)));
+					DrawArea(pos, min(maxRadius, pos.distance2D(pos2)), color);
 				}
 				break;}
 			case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
@@ -3420,16 +3424,17 @@ void CGuiHandler::DrawMapStuff(void)
 }
 
 
-void CGuiHandler::DrawArea(float3 pos, float radius)
+void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 {
 	if (useStencil) {
-		DrawSelectCircle(pos, radius);
+		DrawSelectCircle(pos, radius, color);
 		return;
 	}
 	
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(color[0], color[1], color[2], 0.25f);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_FOG);
@@ -3586,6 +3591,7 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1)
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 	
 	DrawSurface(DrawBoxShape, &boxData);
 
@@ -3729,7 +3735,8 @@ static void DrawCylinderShape(const void* data)
 }
 
 
-void CGuiHandler::DrawSelectCircle(const float3& p, float radius)
+void CGuiHandler::DrawSelectCircle(const float3& p, float radius,
+                                   const float* color)
 {
 	const float yd = 10000.0f;
 	const float3 pos = float3(p.x, yd, p.z);
@@ -3743,6 +3750,7 @@ void CGuiHandler::DrawSelectCircle(const float3& p, float radius)
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glColor4f(color[0], color[1], color[2], 0.25f);
 	
 	DrawSurface(DrawCylinderShape, &cylData);
 	
