@@ -162,6 +162,10 @@ public:
 	virtual int GetMapWidth()=0;
 	virtual int GetMapHeight()=0;
 	virtual const float* GetHeightMap()=0;						//this is the height for the center of the squares, this differs slightly from the drawn map since it uses the height at the corners
+	virtual float GetMinHeight()=0; // readmap->minHeight
+	virtual float GetMaxHeight()=0; // readmap->maxHeight
+	virtual const float* GetSlopeMap()=0; // slopemap, half the resolution of the standard map
+	//the values are 1 minus the y component of the (average) facenormal of the square.
 	virtual const unsigned short* GetLosMap()=0;			//a square with value zero means you dont have los to the square, this is half the resolution of the standard map
 	virtual const unsigned short* GetRadarMap()=0;		//a square with value zero means you dont have radar to the square, this is 1/8 the resolution of the standard map
 	virtual const unsigned short* GetJammerMap()=0;		//a square with value zero means you dont have radar jamming on the square, this is 1/8 the resolution of the standard map
