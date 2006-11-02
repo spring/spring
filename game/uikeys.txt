@@ -201,6 +201,27 @@
 //  bind          Any+shift  movefast
 //  bind           Any+ctrl  moveslow
 //
+//  bind                  1  specteam 0  
+//  bind                  2  specteam 1
+//  bind                  3  specteam 2
+//  bind                  4  specteam 3
+//  bind                  5  specteam 4
+//  bind                  6  specteam 5
+//  bind                  7  specteam 6
+//  bind                  8  specteam 7
+//  bind                  9  specteam 8
+//  bind                  0  specteam 9
+//  bind             Ctrl+1  specteam 10
+//  bind             Ctrl+2  specteam 11
+//  bind             Ctrl+3  specteam 12
+//  bind             Ctrl+4  specteam 13
+//  bind             Ctrl+5  specteam 14
+//  bind             Ctrl+6  specteam 15
+//  bind             Ctrl+7  specteam 16
+//  bind             Ctrl+8  specteam 17
+//  bind             Ctrl+9  specteam 18
+//  bind             Ctrl+0  specteam 19
+//
 //  bind              Any+0  group0
 //  bind              Any+1  group1
 //  bind              Any+2  group2
