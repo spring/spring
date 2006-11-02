@@ -143,6 +143,7 @@ void CGuiHandler::LoadDefaults()
 	
 	outlineFont.Enable(false);
 
+	xorSelect = false;
 	newAttackMode = false;
 }
 
@@ -248,6 +249,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		}
 		else if ((command == "outlinefont") && (words.size() > 1)) {
 			outlineFont.Enable(!!atoi(words[1].c_str()));
+		}
+		else if ((command == "xorselect") && (words.size() > 1)) {
+			xorSelect = !!atoi(words[1].c_str());
 		}
 		else if ((command == "newattackmode") && (words.size() > 1)) {
 			newAttackMode = !!atoi(words[1].c_str());
@@ -3579,7 +3583,8 @@ static void DrawCornerPosts(const float3& pos0, const float3& pos1)
 }
 
 
-static void StencilDrawSelectBox(const float3& pos0, const float3& pos1)
+static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
+                                 bool xorSelect)
 {
 	BoxData boxData;
 	boxData.mins = float3(min(pos0.x, pos1.x),  -1000.0f, min(pos0.z, pos1.z));
@@ -3591,8 +3596,15 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-	
-	DrawSurface(DrawBoxShape, &boxData);
+
+	if (!xorSelect) {
+		DrawSurface(DrawBoxShape, &boxData);
+	} else {
+		glEnable(GL_COLOR_LOGIC_OP);
+		glLogicOp(GL_OR_REVERSE);
+		DrawSurface(DrawBoxShape, &boxData);
+		glDisable(GL_COLOR_LOGIC_OP);
+	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	DrawCornerPosts(pos0, pos1);	
@@ -3645,7 +3657,7 @@ static void DrawMinMaxBox(const float3& mins, const float3& maxs)
 void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
 {
 	if (useStencil) {
-		StencilDrawSelectBox(pos0, pos1);
+		StencilDrawSelectBox(pos0, pos1, xorSelect);
 		return;
 	}
 	
@@ -3751,7 +3763,7 @@ void CGuiHandler::DrawSelectCircle(const float3& p, float radius,
 	glColor4f(color[0], color[1], color[2], 0.25f);
 	
 	DrawSurface(DrawCylinderShape, &cylData);
-	
+
 	// draw the center line
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1.0f, 0.0f, 0.0f, 0.9f);

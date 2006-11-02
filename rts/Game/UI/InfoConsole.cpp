@@ -76,7 +76,9 @@ void CInfoConsole::Draw()
 
 		std::deque<InfoLine>::iterator ili;
 		for(ili=data.begin();ili!=data.end();ili++){
+			glPushMatrix();
 			font->glPrintRaw(ili->text.c_str());
+			glPopMatrix();
 			glTranslatef(0.0f, -1.2f, 0.0f);
 		}
 	}

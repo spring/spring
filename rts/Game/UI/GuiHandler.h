@@ -161,6 +161,7 @@ class CGuiHandler : public CInputReceiver {
 		float textureAlpha;
 		std::vector<int> fillOrder;
 
+		bool xorSelect;
 		bool newAttackMode;
 		bool defaultToRally;
 
