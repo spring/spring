@@ -3581,10 +3581,9 @@ static void DrawCornerPosts(const float3& pos0, const float3& pos1)
 
 static void StencilDrawSelectBox(const float3& pos0, const float3& pos1)
 {
-	const float yd = 10000.0f;
 	BoxData boxData;
-	boxData.mins = float3(min(pos0.x, pos1.x), -yd, min(pos0.z, pos1.z));
-	boxData.maxs = float3(max(pos0.x, pos1.x), +yd, max(pos0.z, pos1.z));
+	boxData.mins = float3(min(pos0.x, pos1.x),  -1000.0f, min(pos0.z, pos1.z));
+	boxData.maxs = float3(max(pos0.x, pos1.x), +10000.0f, max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
@@ -3650,9 +3649,8 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
 		return;
 	}
 	
-	const float yd = 10000.0f;
-	const float3 mins(min(pos0.x, pos1.x), -yd, min(pos0.z, pos1.z));
-	const float3 maxs(max(pos0.x, pos1.x), +yd, max(pos0.z, pos1.z));
+	const float3 mins(min(pos0.x, pos1.x),  -1000.0f, min(pos0.z, pos1.z));
+	const float3 maxs(max(pos0.x, pos1.x), +10000.0f, max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
@@ -3694,42 +3692,39 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
 /******************************************************************************/
 
 struct CylinderData {
-	float3 pos;
-	float radius;
 	int divs;
+	float xc, zc, yp, yn;
+	float radius;
 };
 
 static void DrawCylinderShape(const void* data)
 {
-	const CylinderData* cylData = (const CylinderData*)data;
-	const float3& pos  = cylData->pos;
-	const float radius = cylData->radius;
-	const int divs     = cylData->divs;
+	const CylinderData& cyl = *((const CylinderData*)data);
 	int i;
 	glBegin(GL_QUAD_STRIP); // the sides
 	float xPrev, zPrev;
-	for (i = 0; i <= divs; i++) {
-		const float radians = float(2.0 * PI) * float(i) / (float)divs;
-		const float xp = pos.x + (radius * sin(radians));
-		const float zp = pos.z + (radius * cos(radians));
-		glVertex3f(xp, +pos.y, zp);
-		glVertex3f(xp, -pos.y, zp);
+	for (i = 0; i <= cyl.divs; i++) {
+		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
+		const float x = cyl.xc + (cyl.radius * sin(radians));
+		const float z = cyl.zc + (cyl.radius * cos(radians));
+		glVertex3f(x, cyl.yp, z);
+		glVertex3f(x, cyl.yn, z);
 	}
 	glEnd();
 	glBegin(GL_TRIANGLE_FAN); // the top
-	for (i = 0; i < divs; i++) {
-		const float radians = float(2.0 * PI) * float(i) / (float)divs;
-		const float xp = pos.x + (radius * sin(+radians));
-		const float zp = pos.z + (radius * cos(+radians));
-		glVertex3f(xp, +pos.y, zp);
+	for (i = 0; i < cyl.divs; i++) {
+		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
+		const float x = cyl.xc + (cyl.radius * sin(+radians));
+		const float z = cyl.zc + (cyl.radius * cos(+radians));
+		glVertex3f(x, cyl.yp, z);
 	}
 	glEnd();
 	glBegin(GL_TRIANGLE_FAN); // the bottom
-	for (i = 0; i < divs; i++) {
-		const float radians = float(2.0 * PI) * float(i) / (float)divs;
-		const float xp = pos.x + (radius * sin(-radians));
-		const float zp = pos.z + (radius * cos(-radians));
-		glVertex3f(xp, -pos.y, zp);
+	for (i = 0; i < cyl.divs; i++) {
+		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
+		const float x = cyl.xc + (cyl.radius * sin(-radians));
+		const float z = cyl.zc + (cyl.radius * cos(-radians));
+		glVertex3f(x, cyl.yn, z);
 	}
 	glEnd();
 }
@@ -3741,7 +3736,10 @@ void CGuiHandler::DrawSelectCircle(const float3& p, float radius,
 	const float yd = 10000.0f;
 	const float3 pos = float3(p.x, yd, p.z);
 	CylinderData cylData;
-	cylData.pos = pos;
+	cylData.xc = pos.x;
+	cylData.zc = pos.z;
+	cylData.yp = +10000.0f;
+	cylData.yn =  -1000.0f;
 	cylData.radius = radius;
 	cylData.divs = 40;
 
