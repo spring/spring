@@ -3594,14 +3594,14 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 	glDisable(GL_FOG);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 
 	if (!xorSelect) {
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 		DrawSurface(DrawBoxShape, &boxData);
 	} else {
 		glEnable(GL_COLOR_LOGIC_OP);
-		glLogicOp(GL_OR_REVERSE);
+		glLogicOp(GL_INVERT);
 		DrawSurface(DrawBoxShape, &boxData);
 		glDisable(GL_COLOR_LOGIC_OP);
 	}
@@ -3742,11 +3742,9 @@ static void DrawCylinderShape(const void* data)
 }
 
 
-void CGuiHandler::DrawSelectCircle(const float3& p, float radius,
+void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
                                    const float* color)
 {
-	const float yd = 10000.0f;
-	const float3 pos = float3(p.x, yd, p.z);
 	CylinderData cylData;
 	cylData.xc = pos.x;
 	cylData.zc = pos.z;
@@ -3768,9 +3766,10 @@ void CGuiHandler::DrawSelectCircle(const float3& p, float radius,
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
 	glLineWidth(2.0f);	
+	const float3 base(pos.x, ground->GetHeight(pos.x, pos.z), pos.z);
 	glBegin(GL_LINES);
-		glVertexf3(p);
-		glVertexf3(p + float3(0.0f, 128.0f, 0.0f));
+		glVertexf3(base);
+		glVertexf3(base + float3(0.0f, 128.0f, 0.0f));
 	glEnd();
 	glLineWidth(1.0f);	
 
