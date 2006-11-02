@@ -43,6 +43,9 @@ CCommandColors::CCommandColors()
 	queuedLineWidth = 1.49f;
 	queuedBlendSrc = GL_SRC_ALPHA;
 	queuedBlendDst = GL_ONE_MINUS_SRC_ALPHA;
+	stipplePattern = 0xffffffff;
+  stippleFactor = 1;
+	stippleSpeed = 1.0f;
 
 	selectedLineWidth = 1.49f;
 	selectedBlendSrc = GL_SRC_ALPHA;
@@ -179,6 +182,19 @@ static bool SafeAtoF(float& var, const string& value)
 }
 
 
+static bool SafeAtoI(unsigned int& var, const string& value)
+{
+	char* endPtr;
+	const char* startPtr = value.c_str();
+	const unsigned int tmp = (unsigned int)strtol(startPtr, &endPtr, 0);
+	if (endPtr == startPtr) {
+		return false;
+	}
+	var = tmp;
+	return true;
+}
+
+
 bool CCommandColors::LoadConfig(const string& filename)
 {
 	CFileHandler ifs(filename);
@@ -230,6 +246,15 @@ bool CCommandColors::LoadConfig(const string& filename)
 			if (ParseBlendMode(words[1], mode) && IsValidDstMode(mode)) {
 				queuedBlendDst = mode;
 			}
+		}
+		else if ((command == "stipplepattern") && (words.size() > 1)) {
+			SafeAtoI(stipplePattern, words[1]);
+		}
+		else if ((command == "stipplefactor") && (words.size() > 1)) {
+			SafeAtoI(stippleFactor, words[1]);
+		}
+		else if ((command == "stipplespeed") && (words.size() > 1)) {
+			SafeAtoF(stippleSpeed, words[1]);
 		}
 		else if ((command == "selectedlinewidth") && (words.size() > 1)) {
 			SafeAtoF(selectedLineWidth, words[1]);

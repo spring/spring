@@ -711,7 +711,7 @@ void CBuilderCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_WAIT:{
-				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				DrawWaitIcon(*ci);
 				break;
 			}
 			case CMD_SELFD:{
@@ -729,7 +729,7 @@ void CBuilderCAI::DrawCommands(void)
 				}
 				bi.pos = float3(ci->params[0], ci->params[2], ci->params[2]);
 				bi.pos = helper->Pos2BuildPos(bi);
-				cursorIcons->AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
+				cursorIcons.AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
 				
 				lineDrawer.DrawLine(bi.pos, cmdColors.build);
 			}

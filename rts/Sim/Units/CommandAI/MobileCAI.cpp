@@ -545,7 +545,7 @@ void CMobileCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_WAIT:{
-				lineDrawer.DrawIconAtLastPos(PickWaitIcon(*ci));
+				DrawWaitIcon(*ci);
 				break;
 			}
 			case CMD_SELFD:{

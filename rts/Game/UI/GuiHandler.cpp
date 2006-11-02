@@ -32,6 +32,7 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -43,6 +44,8 @@
 #include "mmgr.h"
 
 extern Uint8 *keys;
+
+static bool useStencil = false; // FIXME
 
 
 //////////////////////////////////////////////////////////////////////
@@ -78,6 +81,17 @@ CGuiHandler::CGuiHandler()
   invertQueueKey = !!configHandler.GetInt("InvertQueueKey", 0);
   
 	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
+	
+	useStencil = false;
+	if (GLEW_NV_depth_clamp) {
+		GLint stencilBits;
+		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+		if (stencilBits >= 1) {
+			useStencil = true;
+			glClearStencil(0);
+			glClear(GL_STENCIL_BUFFER_BIT);
+		}
+	}
 }
 
 
@@ -2592,7 +2606,7 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 		glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
 		glTranslatef(xStart + dShadow, yStart - dShadow, 0.0f);
 		glScalef(xScale, yScale, 1.0f);
-		font->glPrint("%s", StripColorCodes(text).c_str());
+		font->glPrintRaw(StripColorCodes(text).c_str());
 		glPopMatrix();
 	}
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -2936,7 +2950,7 @@ void CGuiHandler::DrawSelectionInfo()
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
 			glScalef(xScale, yScale, 1.0f);
-			font->glPrint("%s", buf);
+			font->glPrintRaw(buf);
 		}
 		else {
 			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
@@ -3086,6 +3100,7 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 void CGuiHandler::DrawMapStuff(void)
 {
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
 	
 	if(activeMousePress){
 		int cc=-1;
@@ -3129,6 +3144,18 @@ void CGuiHandler::DrawMapStuff(void)
 						break;
 					}
 					float3 pos2=camera->pos+mouse->dir*dist;
+					switch (commands[cc].id) {
+						case CMD_AREA_ATTACK:  { glColor4fv(cmdColors.attack);      break; }
+						case CMD_REPAIR:       { glColor4fv(cmdColors.repair);      break; }
+						case CMD_RECLAIM:      { glColor4fv(cmdColors.reclaim);     break; }
+						case CMD_RESTORE:      { glColor4fv(cmdColors.restore);     break; }
+						case CMD_RESURRECT:    { glColor4fv(cmdColors.resurrect);   break; }
+						case CMD_LOAD_UNITS:   { glColor4fv(cmdColors.load);        break; } 
+						case CMD_UNLOAD_UNIT:  { glColor4fv(cmdColors.unload);      break; }
+						case CMD_UNLOAD_UNITS: { glColor4fv(cmdColors.unload);      break; }
+						case CMD_CAPTURE:      { glColor4fv(cmdColors.capture);     break; }
+						default:               { glColor4f(0.5f, 0.5f, 0.5f, 0.4f); break; }
+					}
 					DrawArea(pos,min(maxRadius,pos.distance2D(pos2)));
 				}
 				break;}
@@ -3159,15 +3186,122 @@ void CGuiHandler::DrawMapStuff(void)
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(cmdColors.SelectedLineWidth());
 
+	// draw the ranges for the unit that is being pointed at
+	CUnit* pointedAt = 0;
+	if(GetQueueKeystate()){
+		CUnit* unit = 0;
+		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
+		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
+			pointedAt = unit;
+			//draw weapon range
+			if(unit->maxRange>0){
+				glColor4fv(cmdColors.rangeAttack);
+				glBegin(GL_LINE_STRIP);
+				float h=unit->pos.y;
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
+					pos+=unit->pos;
+					float dh=ground->GetHeight(pos.x,pos.z)-h;
+					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			//draw decloak distance
+			if(unit->unitDef->decloakDistance > 0){
+				glColor4fv(cmdColors.rangeDecloak);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+			}
+			//draw self destruct and damage distance
+			if(unit->unitDef->kamikazeDist > 0){
+				glColor4fv(cmdColors.rangeKamikaze);
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<=40;++a){
+					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
+					pos+=unit->pos;
+					pos.y=ground->GetHeight(pos.x,pos.z)+8;
+					glVertexf3(pos);
+				}
+				glEnd();
+				if(!unit->unitDef->selfDExplosion.empty()){
+					glColor4fv(cmdColors.rangeSelfDestruct);
+					WeaponDef* wd=weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
+
+					glBegin(GL_LINE_STRIP);
+					for(int a=0;a<=40;++a){
+						float3 pos(cos(a*2*PI/40)*wd->areaOfEffect,0,sin(a*2*PI/40)*wd->areaOfEffect);
+						pos+=unit->pos;
+						pos.y=ground->GetHeight(pos.x,pos.z)+8;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
+			}
+			// draw build distance for immobile builders
+			if(unit->unitDef->builder && !unit->unitDef->canmove) {
+				const float radius = unit->unitDef->buildDistance;
+				if (radius > 0.0f) {
+					glColor4fv(cmdColors.rangeBuild);
+					glBegin(GL_LINE_STRIP);
+					for(int a = 0; a <= 40; ++a){
+						const float radians = a * (2.0f * PI) / 40.0f;
+						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
+						pos += unit->pos;
+						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
+			}
+		}
+	}
+
 	// draw buildings we are about to build
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+
+		// draw build distance for all immobile builders during build commands
+		set<CBuilderCAI*>::const_iterator bi;
+		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {	    
+			const CUnit* unit = (*bi)->owner;
+			if (unit == pointedAt) {
+				continue;
+			}
+			const UnitDef* unitdef = unit->unitDef;
+			if (unitdef->builder && !unitdef->canmove) {
+				const float radius = unitdef->buildDistance;
+				if (radius > 0.0f) {
+					glDisable(GL_TEXTURE_2D);
+					const float* color = cmdColors.rangeBuild;
+					glColor4f(color[0], color[1], color[2], color[3] * 0.333f);
+					glBegin(GL_LINE_LOOP);
+					for(int a = 0; a < 40; ++a){
+						const float radians = a * (2.0f * PI) / 40.0f;
+						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
+						pos += unit->pos;
+						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
+						glVertexf3(pos);
+					}
+					glEnd();
+				}
+			}
+		}
 
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 		if(dist>0){
 			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
 
 			if(unitdef){
+				// get the build information
 				float3 pos=camera->pos+mouse->dir*dist;
 				std::vector<BuildInfo> buildPos;
 				if(GetQueueKeystate() && mouse->buttons[SDL_BUTTON_LEFT].pressed){
@@ -3181,30 +3315,8 @@ void CGuiHandler::DrawMapStuff(void)
 
 				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
 				{
-					const float3 buildpos = bpi->pos;
-					std::vector<Command> cv;
-					if(GetQueueKeystate()){
-						Command c;
-						bpi->FillCmd(c);
-						std::vector<Command> temp;
-						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-						for(; ui != selectedUnits.selectedUnits.end(); ui++){
-							temp = (*ui)->commandAI->GetOverlapQueued(c);
-							std::vector<Command>::iterator ti = temp.begin();
-							for(; ti != temp.end(); ti++)
-								cv.insert(cv.end(),*ti);
-						}
-					}
-					if(uh->ShowUnitBuildSquare(*bpi, cv))
-						glColor4f(0.7f,1,1,0.4f);
-					else
-						glColor4f(1,0.5f,0.5f,0.4f);
-
-					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
-
-					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-											(GLenum)cmdColors.SelectedBlendDst());
-
+					const float3& buildpos = bpi->pos;
+				
 					if(unitdef->weapons.size() > 0){	// draw weapon range
 						glColor4fv(cmdColors.rangeAttack);
 						glBegin(GL_LINE_STRIP);
@@ -3248,80 +3360,29 @@ void CGuiHandler::DrawMapStuff(void)
 							glEnd();
 						}
 					}
-				}
-			}
-		}
-	}
 
-	// draw the ranges for the unit that is being pointed at
-	if(GetQueueKeystate()){
-		CUnit* unit=0;
-		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
-		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){		//draw weapon range
-			if(unit->maxRange>0){
-				glColor4fv(cmdColors.rangeAttack);
-				glBegin(GL_LINE_STRIP);
-				float h=unit->pos.y;
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
-					pos+=unit->pos;
-					float dh=ground->GetHeight(pos.x,pos.z)-h;
-					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
-			}
-			if(unit->unitDef->decloakDistance > 0){			//draw decloak distance
-				glColor4fv(cmdColors.rangeDecloak);
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
-			}
-			if(unit->unitDef->kamikazeDist > 0){			//draw self destruct and damage distance
-				glColor4fv(cmdColors.rangeKamikaze);
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
-				if(!unit->unitDef->selfDExplosion.empty()){
-					glColor4fv(cmdColors.rangeSelfDestruct);
-					WeaponDef* wd=weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
+					std::vector<Command> cv;
+					if(GetQueueKeystate()){
+						Command c;
+						bpi->FillCmd(c);
+						std::vector<Command> temp;
+						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+						for(; ui != selectedUnits.selectedUnits.end(); ui++){
+							temp = (*ui)->commandAI->GetOverlapQueued(c);
+							std::vector<Command>::iterator ti = temp.begin();
+							for(; ti != temp.end(); ti++)
+								cv.insert(cv.end(),*ti);
+						}
+					}
+					if(uh->ShowUnitBuildSquare(*bpi, cv))
+						glColor4f(0.7f,1,1,0.4f);
+					else
+						glColor4f(1,0.5f,0.5f,0.4f);
 
-					glBegin(GL_LINE_STRIP);
-					for(int a=0;a<=40;++a){
-						float3 pos(cos(a*2*PI/40)*wd->areaOfEffect,0,sin(a*2*PI/40)*wd->areaOfEffect);
-						pos+=unit->pos;
-						pos.y=ground->GetHeight(pos.x,pos.z)+8;
-						glVertexf3(pos);
-					}
-					glEnd();
-				}
-			}
-			// draw build distance for immobile builders
-			if(unit->unitDef->builder && !unit->unitDef->canmove) {
-				const float radius = unit->unitDef->buildDistance;
-				if (radius > 0.0f) {
-					glColor4fv(cmdColors.rangeBuild);
-					glBegin(GL_LINE_STRIP);
-					for(int a = 0; a <= 40; ++a){
-						const float radians = a * (2.0f * PI) / 40.0f;
-						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
-						pos += unit->pos;
-						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
-						glVertexf3(pos);
-					}
-					glEnd();
+					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+
+					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
+											(GLenum)cmdColors.SelectedBlendDst());
 				}
 			}
 		}
@@ -3329,10 +3390,13 @@ void CGuiHandler::DrawMapStuff(void)
 
 	//draw range circles if attack orders are imminent
 	int defcmd=GetDefaultCommand(mouse->lastx,mouse->lasty);
-	if((inCommand>0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
+	if((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 	   (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
 		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
-			CUnit* unit=*si;
+			CUnit* unit = *si;
+			if (unit == pointedAt) {
+				continue;
+			}
 			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
 				glColor4fv(cmdColors.rangeAttack);
 				glBegin(GL_LINE_STRIP);
@@ -3341,7 +3405,8 @@ void CGuiHandler::DrawMapStuff(void)
 					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
 					pos+=unit->pos;
 					float dh=ground->GetHeight(pos.x,pos.z)-h;
-					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
+					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod), 0,
+					           sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
 					pos+=unit->pos;
 					pos.y=ground->GetHeight(pos.x,pos.z)+8;
 					glVertexf3(pos);
@@ -3357,8 +3422,12 @@ void CGuiHandler::DrawMapStuff(void)
 
 void CGuiHandler::DrawArea(float3 pos, float radius)
 {
+	if (useStencil) {
+		DrawSelectCircle(pos, radius);
+		return;
+	}
+	
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5f,1,0.5f,0.5f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
@@ -3374,99 +3443,6 @@ void CGuiHandler::DrawArea(float3 pos, float radius)
 		}
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_FOG);
-}
-
-
-static void DrawMinMaxBox(const float3& mins, const float3& maxs)
-{
-	glBegin(GL_QUADS);
-		// the top
-		glVertex3f(mins.x, maxs.y, mins.z);
-		glVertex3f(maxs.x, maxs.y, mins.z);
-		glVertex3f(maxs.x, maxs.y, maxs.z);
-		glVertex3f(mins.x, maxs.y, maxs.z);
-	glEnd();
-	glBegin(GL_QUAD_STRIP);
-		// the sides
-		glVertex3f(mins.x, mins.y, mins.z);
-		glVertex3f(mins.x, maxs.y, mins.z);
-		glVertex3f(mins.x, mins.y, maxs.z);
-		glVertex3f(mins.x, maxs.y, maxs.z);
-		glVertex3f(maxs.x, mins.y, maxs.z);
-		glVertex3f(maxs.x, maxs.y, maxs.z);
-		glVertex3f(maxs.x, mins.y, mins.z);
-		glVertex3f(maxs.x, maxs.y, mins.z);
-		glVertex3f(mins.x, mins.y, mins.z);
-		glVertex3f(mins.x, maxs.y, mins.z);
-	glEnd();
-}
-
-
-void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
-{
-	const float yd = 10000.0f;
-	const float3 mins(min(pos0.x, pos1.x), -yd, min(pos0.z, pos1.z));
-	const float3 maxs(max(pos0.x, pos1.x), +yd, max(pos0.z, pos1.z));
-
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_FOG);
-	glDisable(GL_BLEND);
-
-	glDepthMask(GL_FALSE);
-	glEnable(GL_CULL_FACE);
-
-	// could use the stencil for fancier graphics, but this will do
-	glLogicOp(GL_INVERT);
-	glEnable(GL_COLOR_LOGIC_OP);
-
-	// invert the color for objects within the box	
-	glCullFace(GL_FRONT); DrawMinMaxBox(mins, maxs);
-	glCullFace(GL_BACK);  DrawMinMaxBox(mins, maxs);
-
-	glDisable(GL_CULL_FACE);
-
-	// do a full screen inversion if the camera is within the box	
-	if ((camera->pos.x > mins.x) && (camera->pos.x < maxs.x) &&
-	    (camera->pos.y > mins.y) && (camera->pos.y < maxs.y) &&
-	    (camera->pos.z > mins.z) && (camera->pos.z < maxs.z)) {
-		glDisable(GL_DEPTH_TEST);
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();	
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glPushMatrix();
-		glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();	
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();	
-		glEnable(GL_DEPTH_TEST);
-	}
-	glDisable(GL_COLOR_LOGIC_OP);
-
-	// draw the corner lines
-	const float3 lineVector(0.0f, 128.0f, 0.0f);
-	const float3 corner0(pos0.x, ground->GetHeight(pos0.x, pos0.z), pos0.z);
-	const float3 corner1(pos1.x, ground->GetHeight(pos1.x, pos1.z), pos1.z);
-	const float3 corner2(pos0.x, ground->GetHeight(pos0.x, pos1.z), pos1.z);
-	const float3 corner3(pos1.x, ground->GetHeight(pos1.x, pos0.z), pos0.z);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glLineWidth(2.0f);	
-	glBegin(GL_LINES);
-		glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
-		glVertexf3(corner0); glVertexf3(corner0 + lineVector);
-		glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
-		glVertexf3(corner1); glVertexf3(corner1 + lineVector);
-		glColor4f(0.0f, 0.0f, 1.0f, 0.9f);
-		glVertexf3(corner2); glVertexf3(corner2 + lineVector);
-		glVertexf3(corner3); glVertexf3(corner3 + lineVector);
-	glEnd();
-	glLineWidth(1.0f);	
-
-	glDepthMask(GL_TRUE);
 	glEnable(GL_FOG);
 }
 
@@ -3531,3 +3507,315 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 
 /******************************************************************************/
 
+typedef void (*DrawShapeFunc)(const void* data);
+static void DrawSurface(DrawShapeFunc drawShapeFunc, void* data);
+
+
+/******************************************************************************/
+
+struct BoxData {
+	float3 mins;
+	float3 maxs;
+};
+
+static void DrawBoxShape(const void* data)
+{
+	const BoxData* boxData = (const BoxData*)data;
+	const float3& mins = boxData->mins;
+	const float3& maxs = boxData->maxs;
+	glBegin(GL_QUADS);
+		// the top
+		glVertex3f(mins.x, maxs.y, mins.z);
+		glVertex3f(mins.x, maxs.y, maxs.z);
+		glVertex3f(maxs.x, maxs.y, maxs.z);
+		glVertex3f(maxs.x, maxs.y, mins.z);
+		// the bottom
+		glVertex3f(mins.x, mins.y, mins.z);
+		glVertex3f(maxs.x, mins.y, mins.z);
+		glVertex3f(maxs.x, mins.y, maxs.z);
+		glVertex3f(mins.x, mins.y, maxs.z);
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+		// the sides
+		glVertex3f(mins.x, maxs.y, mins.z);
+		glVertex3f(mins.x, mins.y, mins.z);
+		glVertex3f(mins.x, maxs.y, maxs.z);
+		glVertex3f(mins.x, mins.y, maxs.z);
+		glVertex3f(maxs.x, maxs.y, maxs.z);
+		glVertex3f(maxs.x, mins.y, maxs.z);
+		glVertex3f(maxs.x, maxs.y, mins.z);
+		glVertex3f(maxs.x, mins.y, mins.z);
+		glVertex3f(mins.x, maxs.y, mins.z);
+		glVertex3f(mins.x, mins.y, mins.z);
+	glEnd();
+}
+
+
+static void DrawCornerPosts(const float3& pos0, const float3& pos1)
+{
+	const float3 lineVector(0.0f, 128.0f, 0.0f);
+	const float3 corner0(pos0.x, ground->GetHeight(pos0.x, pos0.z), pos0.z);
+	const float3 corner1(pos1.x, ground->GetHeight(pos1.x, pos1.z), pos1.z);
+	const float3 corner2(pos0.x, ground->GetHeight(pos0.x, pos1.z), pos1.z);
+	const float3 corner3(pos1.x, ground->GetHeight(pos1.x, pos0.z), pos0.z);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glLineWidth(2.0f);	
+	glBegin(GL_LINES);
+		glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
+		glVertexf3(corner0); glVertexf3(corner0 + lineVector);
+		glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
+		glVertexf3(corner1); glVertexf3(corner1 + lineVector);
+		glColor4f(0.0f, 0.0f, 1.0f, 0.9f);
+		glVertexf3(corner2); glVertexf3(corner2 + lineVector);
+		glVertexf3(corner3); glVertexf3(corner3 + lineVector);
+	glEnd();
+	glLineWidth(1.0f);	
+}
+
+
+static void StencilDrawSelectBox(const float3& pos0, const float3& pos1)
+{
+	const float yd = 10000.0f;
+	BoxData boxData;
+	boxData.mins = float3(min(pos0.x, pos1.x), -yd, min(pos0.z, pos1.z));
+	boxData.maxs = float3(max(pos0.x, pos1.x), +yd, max(pos0.z, pos1.z));
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_FOG);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	
+	DrawSurface(DrawBoxShape, &boxData);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	DrawCornerPosts(pos0, pos1);	
+
+	glEnable(GL_FOG);
+}
+
+
+static void FullScreenDraw()
+{
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();	
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glPushMatrix();
+	glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();	
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();	
+}
+
+
+static void DrawMinMaxBox(const float3& mins, const float3& maxs)
+{
+	glBegin(GL_QUADS);
+		// the top
+		glVertex3f(mins.x, maxs.y, mins.z);
+		glVertex3f(maxs.x, maxs.y, mins.z);
+		glVertex3f(maxs.x, maxs.y, maxs.z);
+		glVertex3f(mins.x, maxs.y, maxs.z);
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+		// the sides
+		glVertex3f(mins.x, mins.y, mins.z);
+		glVertex3f(mins.x, maxs.y, mins.z);
+		glVertex3f(mins.x, mins.y, maxs.z);
+		glVertex3f(mins.x, maxs.y, maxs.z);
+		glVertex3f(maxs.x, mins.y, maxs.z);
+		glVertex3f(maxs.x, maxs.y, maxs.z);
+		glVertex3f(maxs.x, mins.y, mins.z);
+		glVertex3f(maxs.x, maxs.y, mins.z);
+		glVertex3f(mins.x, mins.y, mins.z);
+		glVertex3f(mins.x, maxs.y, mins.z);
+	glEnd();
+}
+
+
+void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
+{
+	if (useStencil) {
+		StencilDrawSelectBox(pos0, pos1);
+		return;
+	}
+	
+	const float yd = 10000.0f;
+	const float3 mins(min(pos0.x, pos1.x), -yd, min(pos0.z, pos1.z));
+	const float3 maxs(max(pos0.x, pos1.x), +yd, max(pos0.z, pos1.z));
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_FOG);
+	glDisable(GL_BLEND);
+
+	glDepthMask(GL_FALSE);
+	glEnable(GL_CULL_FACE);
+
+	// could use the stencil for fancier graphics, but this will do
+	glEnable(GL_COLOR_LOGIC_OP);
+	glLogicOp(GL_INVERT);
+
+	// invert the color for objects within the box	
+	glCullFace(GL_FRONT); DrawMinMaxBox(mins, maxs);
+	glCullFace(GL_BACK);  DrawMinMaxBox(mins, maxs);
+
+	glDisable(GL_CULL_FACE);
+
+	// do a full screen inversion if the camera is within the box	
+	if ((camera->pos.x > mins.x) && (camera->pos.x < maxs.x) &&
+	    (camera->pos.y > mins.y) && (camera->pos.y < maxs.y) &&
+	    (camera->pos.z > mins.z) && (camera->pos.z < maxs.z)) {
+		glDisable(GL_DEPTH_TEST);
+		FullScreenDraw();
+		glEnable(GL_DEPTH_TEST);
+	}
+
+	glDisable(GL_COLOR_LOGIC_OP);
+	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	DrawCornerPosts(pos0, pos1);
+
+//	glDepthMask(GL_TRUE);
+	glEnable(GL_FOG);
+}
+
+
+/******************************************************************************/
+
+struct CylinderData {
+	float3 pos;
+	float radius;
+	int divs;
+};
+
+static void DrawCylinderShape(const void* data)
+{
+	const CylinderData* cylData = (const CylinderData*)data;
+	const float3& pos  = cylData->pos;
+	const float radius = cylData->radius;
+	const int divs     = cylData->divs;
+	int i;
+	glBegin(GL_QUAD_STRIP); // the sides
+	float xPrev, zPrev;
+	for (i = 0; i <= divs; i++) {
+		const float radians = float(2.0 * PI) * float(i) / (float)divs;
+		const float xp = pos.x + (radius * sin(radians));
+		const float zp = pos.z + (radius * cos(radians));
+		glVertex3f(xp, +pos.y, zp);
+		glVertex3f(xp, -pos.y, zp);
+	}
+	glEnd();
+	glBegin(GL_TRIANGLE_FAN); // the top
+	for (i = 0; i < divs; i++) {
+		const float radians = float(2.0 * PI) * float(i) / (float)divs;
+		const float xp = pos.x + (radius * sin(+radians));
+		const float zp = pos.z + (radius * cos(+radians));
+		glVertex3f(xp, +pos.y, zp);
+	}
+	glEnd();
+	glBegin(GL_TRIANGLE_FAN); // the bottom
+	for (i = 0; i < divs; i++) {
+		const float radians = float(2.0 * PI) * float(i) / (float)divs;
+		const float xp = pos.x + (radius * sin(-radians));
+		const float zp = pos.z + (radius * cos(-radians));
+		glVertex3f(xp, -pos.y, zp);
+	}
+	glEnd();
+}
+
+
+void CGuiHandler::DrawSelectCircle(const float3& p, float radius)
+{
+	const float yd = 10000.0f;
+	const float3 pos = float3(p.x, yd, p.z);
+	CylinderData cylData;
+	cylData.pos = pos;
+	cylData.radius = radius;
+	cylData.divs = 40;
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_FOG);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	
+	DrawSurface(DrawCylinderShape, &cylData);
+	
+	// draw the center line
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
+	glLineWidth(2.0f);	
+	glBegin(GL_LINES);
+		glVertexf3(p);
+		glVertexf3(p + float3(0.0f, 128.0f, 0.0f));
+	glEnd();
+	glLineWidth(1.0f);	
+
+	glEnable(GL_FOG);
+}
+
+
+/******************************************************************************/
+
+static void DrawSurface(DrawShapeFunc drawShapeFunc, void* data)
+{
+	glDepthMask(GL_FALSE);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_CLAMP_NV);
+
+//	glClearStencil(0); // FIXME -- unnecessary
+//	glClear(GL_STENCIL_BUFFER_BIT);
+	
+	glEnable(GL_STENCIL_TEST);
+	
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	
+	// using zfail method to avoid doing the inside check
+	if (false && GLEW_EXT_stencil_two_side && GL_EXT_stencil_wrap) {
+		glDisable(GL_CULL_FACE);
+		glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+		glActiveStencilFaceEXT(GL_BACK);
+		glStencilMask(~0);
+		glStencilOp(GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+		glStencilFunc(GL_ALWAYS, 0, ~0);
+		glActiveStencilFaceEXT(GL_FRONT);
+		glStencilMask(~0);
+		glStencilOp(GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+    glStencilFunc(GL_ALWAYS, 0, ~0);
+		drawShapeFunc(data); // draw
+		glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+	} else {
+		glEnable(GL_CULL_FACE);
+		glStencilMask(~0);
+		glStencilFunc(GL_ALWAYS, 0, ~0);
+		glCullFace(GL_FRONT);
+		glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+		drawShapeFunc(data); // draw
+		glCullFace(GL_BACK);
+		glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
+		drawShapeFunc(data); // draw
+		glDisable(GL_CULL_FACE);
+	}
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_CLAMP_NV);
+	
+	glStencilFunc(GL_NOTEQUAL, 0, ~0);
+	glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // clear as we go
+
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+	drawShapeFunc(data);   // draw
+
+	glDisable(GL_STENCIL_TEST);	
+
+	glEnable(GL_DEPTH_TEST);
+}
+
+
+/******************************************************************************/

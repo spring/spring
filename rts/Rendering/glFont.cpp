@@ -278,7 +278,7 @@ void CglFont::printstring(const unsigned char *text)
 }
 
 
-void CglFont::glPrintOutlined(const unsigned char* text,
+void CglFont::glPrintOutlined(const char* text,
                               float shiftX, float shiftY,
                               const float* normalColor,
                               const float* outlineColor)
@@ -291,7 +291,7 @@ void CglFont::glPrintOutlined(const unsigned char* text,
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	for (int i = 0; i < strlen((const char*)text); i++) {
+	for (int i = 0; i < strlen(text); i++) {
 		const unsigned int ch = (unsigned char)text[i];
 		if ((ch >= charstart) && (ch <= charend)) {
 			glBindTexture(GL_TEXTURE_2D, textures[ch - charstart]);

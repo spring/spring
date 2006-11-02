@@ -2,6 +2,8 @@
 #define CURSORICONS_H
 
 #include <set>
+#include <string>
+using std::string;
 #include "float3.h"
 
 class CMouseCursor;
@@ -13,10 +15,12 @@ class CCursorIcons
 		~CCursorIcons();
 
 		inline void AddIcon(int cmd, const float3& pos);
+		inline void AddIconText(const string& text, const float3& pos);
 		inline void AddBuildIcon(int cmd, const float3& pos, int team, int facing);
 
 		void Draw(); // also clears the list
 		void DrawCursors();
+		void DrawTexts();
 		void DrawBuilds();
 
 	protected:
@@ -42,6 +46,24 @@ class CCursorIcons
 				return false;
 			}
 			int cmd;
+			float3 pos;
+		};
+
+		struct IconText {
+			IconText(const string& t, const float3& p)
+			: text(t), pos(p) {}
+
+			bool operator<(const IconText& i) const
+			{
+				if (pos.x < i.pos.x) return true;
+				if (pos.x > i.pos.x) return false;
+				if (pos.y < i.pos.y) return true;
+				if (pos.y > i.pos.y) return false;
+				if (pos.z < i.pos.z) return true;
+				if (pos.z > i.pos.z) return false;
+				return (text < i.text);
+			}
+			string text;
 			float3 pos;
 		};
 
@@ -75,6 +97,7 @@ class CCursorIcons
 		// same command
 
 		std::set<Icon> icons;
+		std::set<IconText> texts;
 		std::set<BuildIcon> buildIcons;
 };
 
@@ -86,6 +109,13 @@ inline void CCursorIcons::AddIcon(int cmd, const float3& pos)
 }
 
 
+inline void CCursorIcons::AddIconText(const string& text, const float3& pos)
+{
+	IconText iconText(text, pos);
+	texts.insert(iconText);
+}
+
+
 inline void CCursorIcons::AddBuildIcon(int cmd, const float3& pos,
                                        int team, int facing)
 {
@@ -94,7 +124,7 @@ inline void CCursorIcons::AddBuildIcon(int cmd, const float3& pos,
 }
 
 
-extern CCursorIcons* cursorIcons;
+extern CCursorIcons cursorIcons;
 
 
 #endif /* CURSORICONS_H */

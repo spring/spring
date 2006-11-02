@@ -197,10 +197,10 @@ void CMouseCursor::Draw(int x, int y)
 
 /*	glViewport(x+10,gu->screeny-y-30,60*gu->screenx/gu->screeny,60);
 	glScalef(0.2f,0.2f,0.2f);
-	font->glPrint("%s",cursorText.c_str());
+	font->glPrintRaw(cursorText.c_str());
 
 	glViewport(lastx-20,gu->screeny-lasty-30,60*gu->screenx/gu->screeny,60);
-	font->glPrint("%s",cursorTextRight.c_str());
+	font->glPrintRaw(cursorTextRight.c_str());
 	cursorTextRight=""; */
 
 	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);

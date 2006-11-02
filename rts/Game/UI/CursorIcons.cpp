@@ -5,6 +5,8 @@
 #include "Game/command.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/UI/OutlineFont.h"
+#include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/UnitDef.h"
@@ -13,7 +15,7 @@
 #include <algorithm>
 
 
-CCursorIcons* cursorIcons = NULL;
+CCursorIcons cursorIcons;
 
 
 CCursorIcons::CCursorIcons()
@@ -44,6 +46,7 @@ void CCursorIcons::Draw()
 
 	// clear the lists
 	icons.clear();
+	texts.clear();
 	buildIcons.clear();
 }
 
@@ -67,9 +70,9 @@ void CCursorIcons::DrawCursors()
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
 	CMouseCursor* currentCursor = NULL;
 	
-	std::set<Icon>::iterator cit;
-	for (cit = icons.begin(); cit != icons.end(); ++cit) {
-		const int command = cit->cmd;
+	std::set<Icon>::iterator it;
+	for (it = icons.begin(); it != icons.end(); ++it) {
+		const int command = it->cmd;
 		if (command != currentCmd) {
 			currentCmd = command;
 			currentCursor = GetCursor(currentCmd);
@@ -78,12 +81,14 @@ void CCursorIcons::DrawCursors()
 			}
 		}
 		if (currentCursor != NULL) {
-			const float3 winPos = camera->CalcWindowCoordinates(cit->pos);
+			const float3 winPos = camera->CalcWindowCoordinates(it->pos);
 			if (winPos.z <= 1.0f) {
 				currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
 			}
 		}
 	}
+	
+	DrawTexts(); // use the same transformation
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -91,6 +96,42 @@ void CCursorIcons::DrawCursors()
 	glPopMatrix();
 }
 
+
+void CCursorIcons::DrawTexts()
+{
+	glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+	glColor4f(1.0f,  1.0f, 1.0f, 1.0f);
+
+	const float yScale = 20.0f / (float)gu->screenx;
+	const float xScale = yScale / gu->aspectRatio;
+	const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
+	const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+	const float yOffset = -50.0f / (float)gu->screenx;
+	
+	std::set<IconText>::iterator it;
+	for (it = texts.begin(); it != texts.end(); ++it) {
+		const float3 winPos = camera->CalcWindowCoordinates(it->pos);
+		if (winPos.z <= 1.0f) {
+			const char* text = it->text.c_str();
+			const float tWidth  = xScale * font->CalcTextWidth(text);
+			const float tHeight = yScale * font->CalcTextHeight(text);
+			const float x = (winPos.x / (float)gu->screenx) - (0.5f * tWidth);
+			const float y = (winPos.y / (float)gu->screeny) + tHeight + yOffset;
+
+			glPushMatrix();
+			glTranslatef(x, y, 0.0f);
+			glScalef(xScale, yScale, 1.0f);
+			if (outlineFont.IsEnabled()) {
+				const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+				const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+				font->glPrintOutlined(text, xPixel, yPixel, white, black);
+			} else {
+				font->glPrintRaw(text);
+			}
+			glPopMatrix();
+		}
+	}
+}
 
 
 void CCursorIcons::DrawBuilds()
@@ -100,10 +141,10 @@ void CCursorIcons::DrawBuilds()
 	glEnable(GL_DEPTH_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 	
-	std::set<BuildIcon>::iterator bit;
-	for (bit = buildIcons.begin() ; bit != buildIcons.end(); ++bit) {
-		const UnitDef* unitDef = unitDefHandler->GetUnitByID(-(bit->cmd));
-		unitDrawer->DrawBuildingSample(unitDef, bit->team, bit->pos, bit->facing);
+	std::set<BuildIcon>::iterator it;
+	for (it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
+		const UnitDef* unitDef = unitDefHandler->GetUnitByID(-(it->cmd));
+		unitDrawer->DrawBuildingSample(unitDef, it->team, it->pos, it->facing);
 	}
 
 	glDisable(GL_DEPTH_TEST);

@@ -178,7 +178,7 @@ bool CPreGame::Draw()
 		glScalef(0.03f,0.04f,0.1f);
 		std::string tempstring=userPrompt;
 		tempstring+=userInput;
-		font->glPrint("%s",tempstring.c_str());
+		font->glPrintRaw(tempstring.c_str());
 		glLoadIdentity();
 	}	
 
@@ -191,7 +191,7 @@ bool CPreGame::Draw()
 		glColor4f(1,1,1,1);
 		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
-		font->glPrint("%s",text);
+		font->glPrintRaw(text);
 		glLoadIdentity();
 	}
 	return true;

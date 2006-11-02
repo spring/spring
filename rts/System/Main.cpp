@@ -410,12 +410,15 @@ bool SpringApp::SetSDLVideoMode ()
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+
 #ifdef __APPLE__
 	const int defaultDepthSize = 32;
 #else
 	const int defaultDepthSize = 16;
 #endif
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, configHandler.GetInt("DepthBufferBits", defaultDepthSize));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.GetInt("StencilBufferBits", 0));
+
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	FSAA = MultisampleTest();
@@ -469,6 +472,14 @@ bool SpringApp::SetSDLVideoMode ()
 		// initialize any GL resources that were lost
 		GLContext::Init();
 	}
+
+	// initialize the stencil
+	glClearStencil(0);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	SDL_GL_SwapBuffers();
+	glClearStencil(0);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	SDL_GL_SwapBuffers();
 
 	return true;
 }

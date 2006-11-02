@@ -28,7 +28,7 @@ void COutlineFont::print(float xps, float yps,
 {
 	if (!enabled) {
 		glColor4fv(color);
-		font->glPrint("%s", text);
+		font->glPrintRaw(text);
 		return;
 	}
 
@@ -46,6 +46,5 @@ void COutlineFont::print(float xps, float yps,
 		outlineColor = lightOutline;
 	}
 
-	font->glPrintOutlined((const unsigned char*)text,
-	                      xps, yps, color, outlineColor);
+	font->glPrintOutlined(text, xps, yps, color, outlineColor);
 }

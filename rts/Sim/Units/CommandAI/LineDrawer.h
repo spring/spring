@@ -9,7 +9,8 @@ class CLineDrawer {
 		CLineDrawer() {};
 		~CLineDrawer() {};
 
-		void Configure(bool useColorRestarts, bool useRestartColor,
+		void Configure(bool lineStipple,
+		               bool useColorRestarts, bool useRestartColor,
 		               const float* restartColor, float restartAlpha);
 		void StartPath(const float3& pos, const float* color);
 		void FinishPath();
@@ -19,8 +20,10 @@ class CLineDrawer {
 		void Break(const float3& endPos, const float* color);
 		void Restart();
 		void RestartSameColor();
+		const float3& GetLastPos() const { return lastPos; }
 
 	private:
+		bool lineStipple;
 		bool useColorRestarts;
 		bool useRestartColor;
 		float restartAlpha;
@@ -39,9 +42,10 @@ extern CLineDrawer lineDrawer;
 //  Inlines
 //
 
-inline void CLineDrawer::Configure(bool ucr, bool urc,
+inline void CLineDrawer::Configure(bool ls, bool ucr, bool urc,
                                    const float* rc, float ra)
 {
+	lineStipple = ls;
 	restartAlpha = ra;
 	restartColor = rc;
 	useRestartColor = urc;
@@ -52,6 +56,9 @@ inline void CLineDrawer::Configure(bool ucr, bool urc,
 inline void CLineDrawer::FinishPath()
 {
 	glEnd();
+	if (lineStipple) {
+		glDisable(GL_LINE_STIPPLE);
+	}
 }
 
 
@@ -60,11 +67,17 @@ inline void CLineDrawer::Break(const float3& endPos, const float* color)
 	lastPos = endPos;
 	lastColor = color;
 	glEnd();
+	if (lineStipple) {
+		glDisable(GL_LINE_STIPPLE);
+	}
 }
 
 
 inline void CLineDrawer::Restart()
 {
+	if (lineStipple) {
+		glEnable(GL_LINE_STIPPLE);
+	}
 	if (!useColorRestarts) {
 		glBegin(GL_LINE_STRIP);
 		glColor4fv(lastColor);
@@ -77,6 +90,9 @@ inline void CLineDrawer::Restart()
 
 inline void CLineDrawer::RestartSameColor()
 {
+	if (lineStipple) {
+		glEnable(GL_LINE_STIPPLE);
+	}
 	if (!useColorRestarts) {
 		glBegin(GL_LINE_STRIP);
 		glVertexf3(lastPos);
@@ -117,14 +133,14 @@ inline void CLineDrawer::DrawLine(const float3& endPos, const float* color)
 inline void CLineDrawer::DrawLineAndIcon(
                          int cmdID, const float3& endPos, const float* color)
 {
-	cursorIcons->AddIcon(cmdID, endPos);
+	cursorIcons.AddIcon(cmdID, endPos);
 	DrawLine(endPos, color);
 }
 
 
 inline void CLineDrawer::DrawIconAtLastPos(int cmdID)
 {
-	cursorIcons->AddIcon(cmdID, lastPos);
+	cursorIcons.AddIcon(cmdID, lastPos);
 }
 
 

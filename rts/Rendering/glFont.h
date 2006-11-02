@@ -14,7 +14,7 @@ public:
 	void glPrintAt(GLfloat x, GLfloat y, float s, const char* fmt, ...);
 	void glPrintRight (float x,float y, float s, const char *fmt,...);
 	void glPrintCentered (float x,float y, float s, const char *fmt,...);
-	void glPrintOutlined(const unsigned char* text, float shiftX, float shiftY,
+	void glPrintOutlined(const char* text, float shiftX, float shiftY,
 	                     const float* normalColor, const float* outlineColor);
 	float CalcTextWidth (const char *txt);
 	float CalcCharWidth (char c);
@@ -25,6 +25,10 @@ public:
 	
 	int GetCharStart() const { return charstart; }
 	int GetCharEnd()   const { return charend; }
+
+	void glPrintRaw(const char* text) {
+		printstring((const unsigned char*)text);
+	}
 	
 private:
 	void printstring(const unsigned char *text);
