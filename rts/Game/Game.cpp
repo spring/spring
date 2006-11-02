@@ -598,18 +598,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		return 0;
 	}
 
-	// spectator keys for switching teams
-	/* FIXME -- replaced by "specteam" action
-	if(k>='0' && k<='9' && gu->spectating){
-		const int team= ((k - '0') + 9) % 10; // ex: '1' -> team0
-		if(team<gs->activeTeams){
-			gu->myTeam=team;
-			gu->myAllyTeam=gs->AllyTeam(team);
-		}
-		return 0;
-	}
-	*/
-
 	// try the input receivers
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
