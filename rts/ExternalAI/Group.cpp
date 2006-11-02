@@ -144,13 +144,47 @@ void CGroup::DrawCommands()
 
 const vector<CommandDescription>& CGroup::GetPossibleCommands()
 {
+	CommandDescription c;
+
+	myCommands.clear();
+
 	if(ai){
-		myCommands=ai->GetPossibleCommands();
-	} else {
-		myCommands.clear();
+		/*
+		We deepcopy the vector member-by-member, because relying on copy
+		constructors, as in 'myCommands=ai->GetPossibleCommands();', would mean
+		marshalling of container objects (std::string particularly) over DLL
+		boundaries.
+
+		On MinGW (at least) this caused a crash when clearing the last Group AI:
+		When the code here was executed, the std::string implementation did not
+		copy the strings, but it incremented a reference counter and stored
+		a pointer to the data in the DLL. When the last group AI was cleared
+		the DLL was unloaded from memory.
+		Then, after CGroup::~CGroup() execution finished, the myCommands destructor
+		would be called, which would call all the std::string destructors, which
+		would try to decrement a reference counter in inaccesible (DLL) memory ->
+		segfault
+		*/
+		const vector<CommandDescription>& aipc=ai->GetPossibleCommands();
+		for (vector<CommandDescription>::const_iterator i = aipc.begin(); i != aipc.end(); ++i) {
+			c.id   = i->id;
+			c.type = i->type;
+			c.action    = i->action.c_str();
+			c.hotkey    = i->hotkey.c_str();
+			c.name      = i->name.c_str();
+			c.iconname  = i->iconname.c_str();
+			c.mouseicon = i->mouseicon.c_str();
+			c.tooltip   = i->tooltip.c_str();
+			c.showUnique  = i->showUnique;
+			c.onlyKey     = i->onlyKey;
+			c.onlyTexture = i->onlyTexture;
+			for (vector<string>::const_iterator j = i->params.begin(); j != i->params.end(); ++j)
+				c.params.push_back(j->c_str());
+			myCommands.push_back(c);
+			c.params.clear();
+		}
 	}
 
-	CommandDescription c;
 	c.id=CMD_AISELECT;
 	c.type=CMDTYPE_COMBO_BOX;
 	c.name="Select AI";
