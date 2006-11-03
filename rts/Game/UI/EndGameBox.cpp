@@ -75,8 +75,8 @@ CEndGameBox::~CEndGameBox(void)
 
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(InBox(mx,my,box)){
 		moveBox=true;
 		if(InBox(mx,my,box+exitBox))
@@ -96,20 +96,20 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 
 void CEndGameBox::MouseMove(int x, int y, int dx,int dy, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(moveBox){
-		box.x1+=float(dx)/gu->screenx;
-		box.x2+=float(dx)/gu->screenx;
-		box.y1-=float(dy)/gu->screeny;
-		box.y2-=float(dy)/gu->screeny;
+		box.x1+=MouseMoveX(dx);
+		box.x2+=MouseMoveX(dx);
+		box.y1+=MouseMoveY(dy);
+		box.y2+=MouseMoveY(dy);
 	}
 }
 
 void CEndGameBox::MouseRelease(int x, int y, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 
 	if(InBox(mx,my,box+exitBox)){
 		delete this;
@@ -142,8 +142,8 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 bool CEndGameBox::IsAbove(int x, int y)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(InBox(mx,my,box))
 		return true;
 	return false;
@@ -151,8 +151,8 @@ bool CEndGameBox::IsAbove(int x, int y)
 
 void CEndGameBox::Draw()
 {
-	float mx=float(mouse->lastx-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
+	float mx=MouseX(mouse->lastx);
+	float my=MouseY(mouse->lasty);
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -342,7 +342,7 @@ void CEndGameBox::Draw()
 
 std::string CEndGameBox::GetTooltip(int x,int y)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
+	float mx=MouseX(x);
 
 	if(dispMode==0){
 		if(mx>box.x1+0.02f && mx<box.x1+0.1f*6){

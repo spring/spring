@@ -1037,14 +1037,17 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 				break;}
 
 			case CMDTYPE_COMBO_BOX:
-				{
+				if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
 					inCommand=iconCmd;
 					CommandDescription& cd=commands[iconCmd];
 					list=new CglList(cd.name.c_str(),MenuSelection);
+					list->cancelPlace = 0;
+					list->tooltip = "Choose the AI you want to assign to this group.\n"
+							"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
+							"assigned.";
 					for(vector<string>::iterator pi=++cd.params.begin();pi!=cd.params.end();++pi)
 						list->AddItem(pi->c_str(),"");
 					list->place=atoi(cd.params[0].c_str());
-					game->showList=list;
 					return;
 				}
 				inCommand=-1;
@@ -1091,8 +1094,8 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 
 int CGuiHandler::IconAtPos(int x, int y)
 {
-	const float fx = float(x - gu->screenxPos) / gu->screenx;
-	const float fy = float(gu->screeny - y) / gu->screeny;
+	const float fx = MouseX(x);
+	const float fy = MouseY(y);
 
 	if ((fx < buttonBox.x1) || (fx > buttonBox.x2) ||
 	    (fy < buttonBox.y1) || (fy > buttonBox.y2)) {
@@ -1237,8 +1240,8 @@ bool CGuiHandler::AboveGui(int x, int y)
 		return false;
 	}
 	if (!selectThrough) {
-		const float fx = float(x - gu->screenxPos) / gu->screenx;
-		const float fy = float(gu->screeny - y) / gu->screeny;
+		const float fx = MouseX(x);
+		const float fy = MouseY(y);
 		if ((fx > buttonBox.x1) && (fx < buttonBox.x2) &&
 				(fy > buttonBox.y1) && (fy < buttonBox.y2)) {
 			return true;
@@ -1703,7 +1706,8 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					inCommand=a;
 					break;
 				}
-				case CMDTYPE_COMBO_BOX: {
+				case CMDTYPE_COMBO_BOX:
+				if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
 					CommandDescription& cd = commands[a];
 					vector<string>::iterator pi;
 					// check for an action bound to a specific entry
@@ -1723,11 +1727,14 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 					}
 					inCommand = a;
 					list = new CglList(cd.name.c_str(), MenuSelection);
+					list->cancelPlace = 0;
+					list->tooltip = "Choose the AI you want to assign to this group.\n"
+							"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
+							"assigned.";
 					for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
 						list->AddItem(pi->c_str(), "");
 					}
 					list->place = atoi(cd.params[0].c_str());
-					game->showList = list;
 					lastKeySet.Reset();
 					SetShowingMetal(false);
 					break;
@@ -1772,7 +1779,6 @@ void CGuiHandler::MenuSelection(std::string s)
 
 void CGuiHandler::MenuChoice(string s)
 {
-	game->showList=0;
 	delete list;
 	if (inCommand>=0 && inCommand<commands.size()) {
 		CommandDescription& cd=commands[inCommand];
@@ -2729,7 +2735,7 @@ void CGuiHandler::DrawButtons()
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-  glDisable(GL_FOG);
+	glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);

@@ -24,6 +24,22 @@ CInputReceiver::~CInputReceiver(void)
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
 		if(*ri==this){
+			// we may be deleted while there are still iterators active
+			//inputReceivers.erase(ri);
+			*ri = NULL;
+			break;
+		}
+	}
+}
+
+void CInputReceiver::CollectGarbage(void)
+{
+	// erase one NULL element each call (should be enough for now)
+	// called once every sec from CGame::Update
+	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::deque<CInputReceiver*>::iterator ri;
+	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+		if (*ri == NULL) {
 			inputReceivers.erase(ri);
 			break;
 		}
@@ -35,7 +51,7 @@ CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri)->IsAbove(x,y))
+		if((*ri) && (*ri)->IsAbove(x,y))
 			return *ri;
 	}
 	return 0;
@@ -48,9 +64,11 @@ bool CInputReceiver::InBox(float x, float y,const ContainerBox& box)
 	return false;
 }
 
-void CInputReceiver::DrawBox(ContainerBox box)
+void CInputReceiver::DrawBox(const ContainerBox& box, int how)
 {
-	glBegin(GL_QUADS);
+	if (how == -1)
+		how = GL_QUADS;
+	glBegin(how);
 	glVertex2f(box.x1, box.y1);
 	glVertex2f(box.x1, box.y2);
 	glVertex2f(box.x2, box.y2);

@@ -6,19 +6,28 @@
 
 #pragma warning(disable:4786)
 
+#include "Game/UI/InputReceiver.h"
 #include <string>
 #include <vector>
 
 typedef void (* ListSelectCallback) (std::string selected);
 
-class CglList  
+class CglList : public CInputReceiver
 {
 public:
-	void KeyPress(int k);
-	void Select();
-	void DownOne();
-	void UpOne();
+
+	// CInputReceiver implementation
+	bool KeyPressed(unsigned short k);
+// 	bool KeyReleased(unsigned short key);
+	bool MousePress(int x, int y, int button);
+	void MouseMove(int x, int y, int dx,int dy, int button);
+	void MouseRelease(int x, int y, int button);
+	bool IsAbove(int x, int y);
 	void Draw();
+	std::string GetTooltip(int x,int y) { return tooltip; }
+
+	// CglList functions
+	void Select();
 	void AddItem(const char* name,const char* description);
 	CglList(const char* name, ListSelectCallback callback, int id = 0);
 	virtual ~CglList();
@@ -28,11 +37,25 @@ public:
 
 	std::string lastChoosen;
 	ListSelectCallback callback;
+	// when attempting to cancel (by pressing escape, clicking outside a button)
+	// place is set to cancelPlace (if it's positive) and Select is called.
+	int cancelPlace;
+	std::string tooltip;
 
 private:
-	void Filter(bool reset);
+	bool Filter(bool reset);
+	void DownOne();
+	void UpOne();
+	bool MouseUpdate(int x, int y);
 
+	// GUI
+	ContainerBox box;
+	bool activeMousePress;
+
+	// used to save default to configHandler
 	int id;
+
+	// for filtering 
 	std::string query;
 	std::vector<std::string>* filteredItems;
 	std::vector<std::string> temp1;
