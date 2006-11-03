@@ -20,7 +20,6 @@
 
 #define FRAME_HISTORY 16
 
-class CglList;
 class CNet;
 class CScript;
 class CBaseWater;
@@ -87,7 +86,6 @@ public:
 
 	Uint64 lastModGameTimeMeasure;
 
-	CglList* showList;
 	Uint64 lastframe;
 	float totalGameTime;			//time in seconds, stops at game end
 

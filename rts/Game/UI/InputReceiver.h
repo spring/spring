@@ -22,6 +22,7 @@ public:
 	virtual void Draw(){};
 	virtual std::string GetTooltip(int x,int y){return "No tooltip defined";};
 
+	static void CollectGarbage();
 	static CInputReceiver* GetReceiverAt(int x,int y);
 
 	struct ContainerBox {
@@ -34,7 +35,14 @@ public:
 		float y2;
 	};
 	bool InBox(float x, float y, const ContainerBox& box);
-	void DrawBox(ContainerBox b);
+	void DrawBox(const ContainerBox& b, int how = -1);
+
+	// transform from mouse (x,y) to opengl (x,y) (first in screen pixels,
+	// second in orthogonal projection 0-1 left-right, bottom-top)
+	static float MouseX(int x) { return float(x-gu->screenxPos)/gu->screenx; }
+	static float MouseY(int y) { return float(gu->screeny-y)/gu->screeny; }
+	static float MouseMoveX(int x) { return float(x)/gu->screenx; }
+	static float MouseMoveY(int y) { return -float(y)/gu->screeny; }
 
 	static float guiAlpha;
 };

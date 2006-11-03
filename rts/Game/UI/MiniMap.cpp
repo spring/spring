@@ -133,7 +133,7 @@ void CMiniMap::Draw()
 	GetFrustumSide(cam2->leftside);
 
 	std::vector<fline>::iterator fli,fli2;
-  for(fli=left.begin();fli!=left.end();fli++){
+	for(fli=left.begin();fli!=left.end();fli++){
 	  for(fli2=left.begin();fli2!=left.end();fli2++){
 			if(fli==fli2)
 				continue;
@@ -151,8 +151,8 @@ void CMiniMap::Draw()
 		}
 	}
 	glColor4f(1,1,1,0.5f);
-  glBegin(GL_LINES);
-  for(fli=left.begin();fli!=left.end();fli++){
+	glBegin(GL_LINES);
+	for(fli=left.begin();fli!=left.end();fli++){
 		if(fli->minz<fli->maxz){
 			DrawInMap(float3(fli->base+fli->dir*fli->minz,0,fli->minz));
 			DrawInMap(float3(fli->base+fli->dir*fli->maxz,0,fli->maxz));

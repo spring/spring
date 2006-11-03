@@ -74,8 +74,8 @@ CQuitBox::~CQuitBox(void)
 
 void CQuitBox::Draw(void)
 {
-	float mx=float(mouse->lastx-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
+	float mx=MouseX(mouse->lastx);
+	float my=MouseY(mouse->lasty);
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -148,8 +148,8 @@ void CQuitBox::Draw(void)
 
 bool CQuitBox::IsAbove(int x, int y)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(InBox(mx,my,box))
 		return true;
 	return false;
@@ -157,8 +157,8 @@ bool CQuitBox::IsAbove(int x, int y)
 
 std::string CQuitBox::GetTooltip(int x, int y)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 
 	if(InBox(mx,my,box+resignQuitBox))
 		return "Resign the match, and quit the game. Units will self-destruct";
@@ -179,8 +179,8 @@ std::string CQuitBox::GetTooltip(int x, int y)
 
 bool CQuitBox::MousePress(int x, int y, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(InBox(mx,my,box)){
 		moveBox=true;
 		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+teamBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox))
@@ -203,8 +203,8 @@ bool CQuitBox::MousePress(int x, int y, int button)
 
 void CQuitBox::MouseRelease(int x,int y,int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 
 	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
 		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
@@ -256,13 +256,13 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 
 void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(moveBox){
-		box.x1+=float(dx)/gu->screenx;
-		box.x2+=float(dx)/gu->screenx;
-		box.y1-=float(dy)/gu->screeny;
-		box.y2-=float(dy)/gu->screeny;
+		box.x1+=MouseMoveX(dx);
+		box.x2+=MouseMoveX(dx);
+		box.y1+=MouseMoveY(dy);
+		box.y2+=MouseMoveY(dy);
 	}
 	if(InBox(mx,my,box+teamBox)){
 		int team=(int)((box.y1+teamBox.y2-my)/0.025f);

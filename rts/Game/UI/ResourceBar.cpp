@@ -55,8 +55,8 @@ static string FloatToSmallString(float num,float mul=1){
 
 void CResourceBar::Draw(void)
 {
-	const float mx=float(mouse->lastx - gu->screenxPos) / gu->screenx;
-	const float my=(gu->screeny - float(mouse->lasty)) / gu->screeny;
+	const float mx=MouseX(mouse->lastx);
+	const float my=MouseY(mouse->lasty);
 
 	const CTeam* myTeam = gs->Team(gu->myTeam);
 
@@ -220,8 +220,8 @@ void CResourceBar::Draw(void)
 
 bool CResourceBar::IsAbove(int x, int y)
 {
-	const float mx=float(x - gu->screenxPos) / gu->screenx;
-	const float my=(gu->screeny - float(y)) / gu->screeny;
+	const float mx=MouseX(x);
+	const float my=MouseY(y);
 	if(InBox(mx,my,box))
 		return true;
 	return false;
@@ -230,8 +230,8 @@ bool CResourceBar::IsAbove(int x, int y)
 
 std::string CResourceBar::GetTooltip(int x, int y)
 {
-	const float mx=float(x-gu->screenxPos)/gu->screenx;
-	const float my=(gu->screeny-float(y))/gu->screeny;
+	const float mx=MouseX(x);
+	const float my=MouseY(y);
 
 	if (mx < (box.x1 + 0.36f)) {
 		return "Shows your stored metal as well as\n"
@@ -248,8 +248,8 @@ std::string CResourceBar::GetTooltip(int x, int y)
 
 bool CResourceBar::MousePress(int x, int y, int button)
 {
-	const float mx=float(x - gu->screenxPos) / gu->screenx;
-	const float my=(gu->screeny - float(y)) / gu->screeny;
+	const float mx=MouseX(x);
+	const float my=MouseY(y);
 
 
 	if(InBox(mx,my,box)){

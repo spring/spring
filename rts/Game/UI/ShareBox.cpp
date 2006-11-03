@@ -68,8 +68,8 @@ CShareBox::~CShareBox(void)
 
 void CShareBox::Draw(void)
 {
-	float mx=float(mouse->lastx-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
+	float mx=MouseX(mouse->lastx);
+	float my=MouseY(mouse->lasty);
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -181,8 +181,8 @@ void CShareBox::Draw(void)
 
 bool CShareBox::IsAbove(int x, int y)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(InBox(mx,my,box))
 		return true;
 	return false;
@@ -190,8 +190,8 @@ bool CShareBox::IsAbove(int x, int y)
 
 std::string CShareBox::GetTooltip(int x, int y)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 
 	if(InBox(mx,my,box+okBox))
 		return "Shares the selected stuff and close dialog";
@@ -215,8 +215,8 @@ std::string CShareBox::GetTooltip(int x, int y)
 
 bool CShareBox::MousePress(int x, int y, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(InBox(mx,my,box)){
 		moveBox=true;
 		if(InBox(mx,my,box+okBox) || InBox(mx,my,box+applyBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+unitBox) || InBox(mx,my,box+metalBox) || InBox(mx,my,box+energyBox) || InBox(mx,my,box+teamBox))
@@ -243,8 +243,8 @@ bool CShareBox::MousePress(int x, int y, int button)
 
 void CShareBox::MouseRelease(int x,int y,int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 
 	if(InBox(mx,my,box+unitBox)){
 		shareUnits=!shareUnits;
@@ -273,13 +273,13 @@ void CShareBox::MouseRelease(int x,int y,int button)
 
 void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(moveBox){
-		box.x1+=float(dx)/gu->screenx;
-		box.x2+=float(dx)/gu->screenx;
-		box.y1-=float(dy)/gu->screeny;
-		box.y2-=float(dy)/gu->screeny;
+		box.x1+=MouseMoveX(dx);
+		box.x2+=MouseMoveX(dx);
+		box.y1+=MouseMoveY(dy);
+		box.y2+=MouseMoveY(dy);
 	}
 	if(metalMove){
 		metalShare=max(0.f,min(1.f,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));

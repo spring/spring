@@ -24,8 +24,8 @@ CStartPosSelecter::~CStartPosSelecter(void)
 
 bool CStartPosSelecter::MousePress(int x, int y, int button)
 {
-	float mx=float(x-gu->screenxPos)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=MouseX(x);
+	float my=MouseY(y);
 	if(InBox(mx,my,readyBox) && gs->Team(gu->myTeam)->startPos.y!=-500){
 		gameSetup->readyTeams[gu->myTeam]=true;
 		net->SendData<unsigned char, unsigned char, float, float, float>(

@@ -147,7 +147,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	infoConsole = ic;
 
 	script = NULL;
-	showList = NULL;
 
 	time(&starttime);
 	lastTick=clock();
@@ -321,8 +320,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,0);
 	}
 
-	showList=0;
-
 	logOutput.Print("TA Spring %s",VERSION_STRING);
 
 	if(!server)
@@ -478,22 +475,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		return 0;
 	}
 
-	if (showList) {					//are we currently showing a list?
-		if (k == SDLK_UP) {
-			showList->UpOne();
-		} else if (k == SDLK_DOWN) {
-			showList->DownOne();
-		} else if (k == SDLK_RETURN) {
-			showList->Select();
-			showList=0;
-		} else if ((k == 27) && playing) { 
-			showList=0;
-		} else {
-			showList->KeyPress(k);
-		}
-		return 0;
-	}
-	
 	// Get the list of possible key actions
 	CKeySet ks(k, false);
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
@@ -602,11 +583,11 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri)->KeyPressed(k)) {
+		if((*ri) && (*ri)->KeyPressed(k)) {
 			return 0;
 		}
 	}
-	
+
 	// try our list of actions
 	for (int i = 0; i < (int)actionList.size(); ++i) {
 		if (ActionPressed(actionList[i], ks, isRepeat)) {
@@ -631,7 +612,7 @@ int CGame::KeyReleased(unsigned short k)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri)->KeyReleased(k))
+		if((*ri) && (*ri)->KeyReleased(k))
 			return 0;
 	}
 
@@ -1336,6 +1317,7 @@ bool CGame::Update()
 		tracefile.DeleteInterval();
 		tracefile.NewInterval();
 #endif
+		CInputReceiver::CollectGarbage();
 	}
 
 	UpdateUI();
@@ -1497,15 +1479,20 @@ bool CGame::Draw()
 
 	glEnable(GL_TEXTURE_2D);
 
+	if(!hideInterface)
+		infoConsole->Draw();
+
 #ifndef NEW_GUI
 	if(!hideInterface) {
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (!inputReceivers.empty()){
 			std::deque<CInputReceiver*>::iterator ri;
 			for(ri=--inputReceivers.end();ri!=inputReceivers.begin();--ri){
-				(*ri)->Draw();
+				if (*ri)
+					(*ri)->Draw();
 			}
-			(*ri)->Draw();
+			if (*ri)
+				(*ri)->Draw();
 		}
 	} else {
 		guihandler->Update();
@@ -1646,12 +1633,6 @@ bool CGame::Draw()
 			}
 		}
 	}
-
-	if(!hideInterface)
-		infoConsole->Draw();
-
-	if(showList)
-		showList->Draw();
 
 	mouse->DrawCursor();
 

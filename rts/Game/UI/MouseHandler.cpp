@@ -33,10 +33,10 @@
 #include "Game/CameraController.h"
 #include "Map/MapDamage.h"
 #include "mmgr.h"
-#include "SDL_types.h"
-#include "SDL_mouse.h"
-#include "SDL_keysym.h"
-#include "SDL_events.h"
+#include <SDL_types.h>
+#include <SDL_mouse.h>
+#include <SDL_keysym.h>
+#include <SDL_events.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -203,7 +203,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri)->MousePress(x,y,button)){
+		if((*ri) && (*ri)->MousePress(x,y,button)){
 			activeReceiver=*ri;
 			return;
 		}
@@ -569,7 +569,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri)->IsAbove(lastx,lasty)){
+		if((*ri) && (*ri)->IsAbove(lastx,lasty)){
 			s=(*ri)->GetTooltip(lastx,lasty);
 			if(s!="")
 				return s;

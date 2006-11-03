@@ -112,13 +112,7 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 			logOutput.Print("Use shift-esc to quit");
 	}
 	if(showList){					//are we currently showing a list?
-		if(k == SDLK_UP)
-			showList->UpOne();
-		if(k == SDLK_DOWN)
-			showList->DownOne();
-		if(k == SDLK_RETURN)
-			showList->Select();
-		showList->KeyPress(k);
+		showList->KeyPressed(k);
 		return 0;
 	}
 
