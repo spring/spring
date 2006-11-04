@@ -1278,6 +1278,8 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 
 bool CGame::Update()
 {
+	assert(good_fpu_control_registers("CGame::Update"));
+
 	mouse->EmptyMsgQueUpdate();
 	script = CScriptHandler::Instance().chosenScript;
 	assert(script);
@@ -1682,7 +1684,7 @@ void CGame::SimFrame()
 {
 	// Enable trapping of NaNs and divisions by zero to make debugging easier.
 	feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
-	assert(good_fpu_control_registers());
+	assert(good_fpu_control_registers("CGame::SimFrame"));
 
 	ASSERT_SYNCED_MODE;
 //	logOutput.Print("New frame %i %i %i",gs->frameNum,gs->randInt(),uh->CreateChecksum());

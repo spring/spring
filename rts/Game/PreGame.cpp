@@ -23,6 +23,7 @@
 #include <SDL_types.h>
 #include <SDL_keysym.h>
 #include "GameServer.h"
+#include "FPUCheck.h"
 #include "mmgr.h"
 
 CPreGame* pregame=0;
@@ -194,6 +195,8 @@ bool CPreGame::Draw()
 
 bool CPreGame::Update()
 {
+	assert(good_fpu_control_registers("CPreGame::Update"));
+
 	switch (state) {
 
 		case UNKNOWN:

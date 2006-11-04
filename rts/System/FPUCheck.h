@@ -64,7 +64,7 @@ MaskRsvd: 0    0    0  1  1  1  1  1   0    0   1  1  1  1  1  1 = 0x1F3F
 
 	Source: Intel Architecture Software Development Manual, Volume 1, Basic Architecture
 */
-static inline bool good_fpu_control_registers()
+static inline bool good_fpu_control_registers(const char* text = NULL)
 {
 	// We are paranoid.
 	// We don't trust the enumeration constants from streflop / (g)libc.
@@ -77,6 +77,8 @@ static inline bool good_fpu_control_registers()
 	if (!ret) {
 		logOutput.Print("MXCSR: 0x%04X instead of 0x1D00 or 0x1F80", fenv.sse_mode);
 		logOutput.Print("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv.x87_mode);
+		if (text)
+			logOutput.Print("debug text: \"%s\"", text);
 	}
 #endif
 	return ret;
@@ -85,8 +87,11 @@ static inline bool good_fpu_control_registers()
 	fegetenv(&fenv);
 	bool ret = (fenv & 0x1F3F) == 0x003A || (fenv & 0x1F3F) == 0x003F;
 #ifndef NDEBUG
-	if (!ret)
+	if (!ret) {
 		logOutput.Print("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv);
+		if (text)
+			logOutput.Print("debug text: \"%s\"", text);
+	}
 #endif
 	return ret;
 #endif
