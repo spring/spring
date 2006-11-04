@@ -11,6 +11,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
 #include "LogOutput.h"
+#include "FPUCheck.h"
 #include <SDL_video.h>
 #include "mmgr.h"
 
@@ -106,6 +107,10 @@ void UnloadStartPicture()
 
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
+	// this is just a practical place to check this, as this function is
+	// called on regular intervals during loading.
+	assert(good_fpu_control_registers(text));
+
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
