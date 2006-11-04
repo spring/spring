@@ -772,10 +772,23 @@ int SpringApp::Run (int argc, char *argv[])
 	SDL_Event event;
 	bool done=false;
 	std::map<int, int> toUnicode; // maps keysym.sym to keysym.unicode
+#ifndef NDEBUG
+	int loopCounter = 0;
+#endif
+
+	assert(good_fpu_control_registers("SpringApp::Run - before mainloop"));
 
 	while (!done) {
 		ENTER_UNSYNCED;
 		while (SDL_PollEvent(&event)) {
+#ifndef NDEBUG
+			{
+				// TODO this debugging code can be simplified once mantis #320 is fixed.
+				char buf[100];
+				SNPRINTF(buf, sizeof(buf), "SpringApp::Run - SDL_PollEvent in loop %d", loopCounter++);
+				assert(good_fpu_control_registers(buf));
+			}
+#endif // !NDEBUG
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {
 					screenWidth = event.resize.w;
@@ -786,6 +799,7 @@ int SpringApp::Run (int argc, char *argv[])
 					SetSDLVideoMode();
 #endif
 					InitOpenGL();
+					assert(good_fpu_control_registers("SpringApp::Run - SDL_VIDEORESIZE"));
 					break;
 				}
 				case SDL_QUIT: {
