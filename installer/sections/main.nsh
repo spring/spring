@@ -33,11 +33,20 @@
   File "..\game\glew32.dll"
   File "..\game\openal32.dll"
   File "..\game\zlib1.dll"
+  Delete "$INSTDIR\zlibwapi.dll"
+  Delete "$INSTDIR\crashrpt.dll"
+  Delete "$INSTDIR\dbghelp.dll"
+  Delete "$INSTDIR\msvcp71.dll"
 !else
   File "..\game\zlibwapi.dll"
   File "..\game\crashrpt.dll"
   File "..\game\dbghelp.dll"
   File "..\game\msvcp71.dll"
+  Delete "$INSTDIR\eaxac3.dll"
+  Delete "$INSTDIR\freetype6.dll"
+  Delete "$INSTDIR\glew32.dll"
+  Delete "$INSTDIR\openal32.dll"
+  Delete "$INSTDIR\zlib1.dll"
 !endif
   File "..\game\DevIL.dll"
   File "..\game\SDL.dll"
@@ -96,6 +105,13 @@
   File "..\game\AI\Helper-libs\MexUpgraderAI.dll"
   File "..\game\AI\Helper-libs\EconomyAI.dll"
   File "..\game\AI\Helper-libs\ReportIdleAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\centralbuild.dll"
+  Delete "$INSTDIR\AI\Helper-libs\mmhandler.dll"
+  Delete "$INSTDIR\AI\Helper-libs\simpleform.dll"
+  Delete "$INSTDIR\AI\Helper-libs\radar.dll"
+  Delete "$INSTDIR\AI\Helper-libs\mexupgrade.dll"
+  Delete "$INSTDIR\AI\Helper-libs\economy.dll"
+  Delete "$INSTDIR\AI\Helper-libs\reportidle.dll"
 !else
   File "..\game\AI\Helper-libs\centralbuild.dll"
   File "..\game\AI\Helper-libs\mmhandler.dll"
@@ -104,6 +120,13 @@
   File "..\game\AI\Helper-libs\mexupgrade.dll"
   File "..\game\AI\Helper-libs\economy.dll"
   File "..\game\AI\Helper-libs\reportidle.dll"
+  Delete "$INSTDIR\AI\Helper-libs\CentralBuildAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\MetalMakerAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\SimpleFormationAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\RadarAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\MexUpgraderAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\EconomyAI.dll"
+  Delete "$INSTDIR\AI\Helper-libs\ReportIdleAI.dll"
 !endif
   
   SetOverWrite ifnewer
