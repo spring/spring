@@ -94,6 +94,7 @@
   SetOutPath "$INSTDIR\shaders"
   File "..\game\shaders\*.fp"
   File "..\game\shaders\*.vp"
+  File "..\game\shaders\*.glsl"
   
   SetOutPath "$INSTDIR\AI\Helper-libs"
 ; Someone fix the vc projects so this can be merged to one block please.
@@ -145,6 +146,7 @@
 
 ;  File "..\game\base\tatextures.sdz"
   Delete "$INSTDIR\base\tatextures.sdz"
+!ifndef NO_TOTALA
   File "..\game\base\tatextures_v062.sdz"
 
 ;  File "..\game\base\tacontent.sdz"
@@ -154,6 +156,7 @@
   File "..\game\base\otacontent.sdz"
 !endif
   File "..\game\base\tacontent_v2.sdz"
+!endif
   File "..\game\base\springcontent.sdz"
   SetOutPath "$INSTDIR\base\spring"
   Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
@@ -163,7 +166,10 @@
   File "..\game\base\spring\bitmaps.sdz"
 
   SetOutPath "$INSTDIR\mods"
+!ifdef NO_TOTALA
+  File "..\game\mods\nanoblobs.sd7"
   File "..\game\mods\xtape.sd7"
+!endif
 
   Delete "$INSTDIR\mods\xtapev3.sd7"
   Delete "$INSTDIR\mods\xta_se_v065.sdz"
@@ -186,7 +192,7 @@
   Delete "$INSTDIR\SpringClient.exe"
 
   
-  !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "taspring.demofile" "TA Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
+  !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
  ;FIXME
  !ifndef MINGW
   !insertmacro UPDATEFILEASSOC
