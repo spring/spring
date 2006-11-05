@@ -44,8 +44,10 @@ public:
 
 private:
 	bool Filter(bool reset);
-	void DownOne();
 	void UpOne();
+	void DownOne();
+	void UpPage();
+	void DownPage();
 	bool MouseUpdate(int x, int y);
 
 	// GUI
