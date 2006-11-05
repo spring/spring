@@ -436,7 +436,8 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 	float3 mapPos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(mapPos);
 	if (unit) {
-		mapPos = float3(unit->pos.x, mapPos.y, unit->pos.z);
+		mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+		mapPos.y = readmap->maxheight + 1000.0f;
 	}
 
 	CMouseHandler::ButtonPress& bp = mouse->buttons[button];
@@ -455,7 +456,8 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 	float3 mapPos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(mapPos);
 	if (unit) {
-		mapPos = float3(unit->pos.x, mapPos.y, unit->pos.z);
+		mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+		mapPos.y = readmap->maxheight + 1000.0f;
 	}
 
 	mouse->dir = float3(0.0f, -1.0f, 0.0f);
