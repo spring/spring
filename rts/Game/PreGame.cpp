@@ -1,5 +1,7 @@
 #include "StdAfx.h"
 #include "PreGame.h"
+#include <map>
+#include <set>
 #include "UI/MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>			// Header File For The GLu32 Library
@@ -20,6 +22,7 @@
 #include "GameVersion.h"
 #include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
+#include <SDL_timer.h>
 #include <SDL_types.h>
 #include <SDL_keysym.h>
 #include "GameServer.h"
@@ -147,6 +150,11 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 
 bool CPreGame::Draw()
 {
+	if (!gu->active) {
+		SDL_Delay(10); // milliseconds
+		return true;
+	}
+	
 	if (!showList) {
 		switch (state) {
 			case WAIT_ON_SCRIPT:
@@ -440,13 +448,20 @@ void CPreGame::ShowMapList()
 		handleerror(0, "Couldn't find any map files", "PreGame error", 0);
 		return;
 	}
-	list->AddItem("Random map", "Random map");
+
+	std::set<std::string> mapSet; // use a set to sort them
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
 		std::string fn(filesystem.GetFilename(*it));
-		list->AddItem(fn.c_str(),fn.c_str());
+		mapSet.insert(fn.c_str());
 	}
-	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++)
-		list->AddItem((*it).c_str(), (*it).c_str());
+	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++) {
+		mapSet.insert((*it).c_str());
+	}
+
+	list->AddItem("Random map", "Random map"); // always first
+	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
+		list->AddItem(sit->c_str(), sit->c_str());
+	}
 	showList = list;
 }
 
@@ -481,9 +496,17 @@ void CPreGame::ShowModList()
 		handleerror(0, "Couldn't find any mod files", "PreGame error", 0);
 		return;
 	}
-	list->AddItem("Random mod", "Random mod");
-	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it)
-		list->AddItem(it->name.c_str(), it->description.c_str());
+
+	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
+	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+		modMap[it->name] = it->description;
+	}
+	
+	list->AddItem("Random mod", "Random mod"); // always first
+	std::map<std::string, std::string>::iterator mit;
+	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
+		list->AddItem(mit->first.c_str(), mit->second.c_str());
+	}
 	showList = list;
 }
 

@@ -475,11 +475,8 @@ bool SpringApp::SetSDLVideoMode ()
 
 	// initialize the stencil
 	glClearStencil(0);
-	glClear(GL_STENCIL_BUFFER_BIT);
-	SDL_GL_SwapBuffers();
-	glClearStencil(0);
-	glClear(GL_STENCIL_BUFFER_BIT);
-	SDL_GL_SwapBuffers();
+	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
+	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 
 	return true;
 }
@@ -800,6 +797,13 @@ int SpringApp::Run (int argc, char *argv[])
 #endif
 					InitOpenGL();
 					assert(good_fpu_control_registers("SpringApp::Run - SDL_VIDEORESIZE"));
+					break;
+				}
+				case SDL_VIDEOEXPOSE: {
+					// re-initialize the stencil
+					glClearStencil(0);
+					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
+					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 					break;
 				}
 				case SDL_QUIT: {

@@ -195,7 +195,7 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	char t[50];
 	sprintf(t,"%i",currentAiNum+1);
 	c.params.push_back(t);
-	c.params.push_back("None");
+	c.params.push_back("Cancel");
 	map<AIKey,string>::iterator aai;
 	map<AIKey,string> suitedAis = handler->GetSuitedAis(units);
 	for(aai=suitedAis.begin();aai!=suitedAis.end();++aai){

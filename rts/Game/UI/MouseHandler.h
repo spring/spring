@@ -48,7 +48,7 @@ public:
 	float cameraTimeFactor;
 	float cameraTimeExponent;
 
-	struct ButtonPress{
+	struct ButtonPress {
 		bool pressed;
 		bool chorded;
 		int x;
@@ -69,10 +69,12 @@ public:
 	unsigned int cursorTex;
 	std::string cursorText;
 	std::string cursorTextRight;
+	float cursorScale;	
 	void DrawCursor(void);
 	std::string GetCurrentTooltip(void);
 
-	map<std::string, CMouseCursor *> cursors;
+	std::map<std::string, CMouseCursor*> cursorFileMap;
+	std::map<std::string, CMouseCursor*> cursorCommandMap;
 	//CMouseCursor *mc;
 
 	CCameraController* currentCamController;
@@ -89,9 +91,15 @@ public:
 	ViewData tmpView;
 	std::map<std::string, ViewData> views;
 
-protected:
 	int soundMultiselID;
 
+protected:
+	void LoadCursorFile(const std::string& filename, CMouseCursor::HotSpot);
+	void AttachCursorCommand(const std::string& commandName,
+	                         const std::string& filename);
+	void AttachCursorCommand(const std::string& commandName,
+	                         const std::string& filename1,
+	                         const std::string& filename2);
 public:
 	void EmptyMsgQueUpdate(void);
 

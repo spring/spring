@@ -18,6 +18,7 @@ extern "C" {
 }
 
 
+struct Command;
 struct lua_State;
 struct CommandDescription;
 
@@ -64,6 +65,8 @@ class CIconLayoutHandler {
 		                 vector<ReParamsPair>& reParamsCmds,
 		                 map<int, int>& iconList,
 		                 string& menuName);
+
+		bool CommandNotify(const Command& cmd);
 		
 	private:
 		CIconLayoutHandler();

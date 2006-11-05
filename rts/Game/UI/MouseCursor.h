@@ -16,9 +16,11 @@ public:
 	CMouseCursor(const string &name, HotSpot hs);
 	~CMouseCursor(void);
 	void Update();
-	void Draw(int x, int y);
+	void Draw(int x, int y, float scale);
 	void DrawQuad(int x, int y);
 	void BindTexture();
+	int GetMaxSizeX() const { return xmaxsize; }
+	int GetMaxSizeY() const { return ymaxsize; }
 protected:	
 	CBitmap* getAlignedBitmap(const CBitmap &orig);
 	void setBitmapTransparency(CBitmap &bm, int r, int g, int b);
@@ -33,6 +35,8 @@ protected:
 	float lastFrameTime;
 	int curFrame;
 	int xofs, yofs;			//Describes where the center of the cursor is. Calculated after the largest cursor if animated
+	int xmaxsize;
+	int ymaxsize;
 };
 
 

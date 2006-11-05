@@ -92,15 +92,36 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.params.clear();
 
 	// only for games with 2 ally teams  --  checked later
-	c.id = CMD_DEATHWATCH;
-	c.action = "deathwatch";
+	c.id = CMD_DEATHWAIT;
+	c.action = "deathwait";
 	c.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
-	c.name = "DeathWatch";
+	c.name = "DeathWait";
 	c.hotkey = "";
 	c.onlyKey = true;
-	c.tooltip = "DeathWatch: Wait until die before continuing";
+	c.tooltip = "DeathWait: Wait until units die before continuing";
 	possibleCommands.push_back(c);
 
+	c.id = CMD_SQUADWAIT;
+	c.action = "squadwait";
+	c.type = CMDTYPE_NUMBER;
+	c.name = "SquadWait";
+	c.hotkey = "";
+	c.onlyKey = true;
+	c.tooltip = "SquadWait: Wait for a number of units to arrive before continuing";
+	c.params.push_back("2");   // min
+	c.params.push_back("100"); // max
+	possibleCommands.push_back(c);
+	c.params.clear();
+
+	c.id = CMD_GATHERWAIT;
+	c.action = "gatherwait";
+	c.type = CMDTYPE_ICON;
+	c.name = "GatherWait";
+	c.hotkey = "";
+	c.onlyKey = true;
+	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
+	possibleCommands.push_back(c);
+	
 	c.id=CMD_SELFD;
 	c.action="selfd";
 	c.type=CMDTYPE_ICON;
@@ -454,12 +475,14 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			}
 	  	else if ((c.options & SHIFT_KEY) != 0) {
 	  		if (commandQue.back().id == CMD_WAIT) {
+	  			waitCommandsAI.RemoveWaitCommand(owner, commandQue.back());
   				commandQue.pop_back();
 				} else {
 	  			commandQue.push_back(c);
 				}
 			}
 			else if (commandQue.front().id == CMD_WAIT) {
+  			waitCommandsAI.RemoveWaitCommand(owner, commandQue.front());
 				commandQue.pop_front();
 			}
 			else {
@@ -491,6 +514,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			    (commandQue.front().id == CMD_AREA_ATTACK)) {
 				owner->AttackUnit(0,true);
 			}
+ 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
 			commandQue.clear();
 		}
 		inCommand=false;

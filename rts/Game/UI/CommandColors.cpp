@@ -83,7 +83,7 @@ CCommandColors::CCommandColors()
 	SETUP_COLOR(resurrect,         0.2f, 0.6f, 1.0f, 0.7f);
 	SETUP_COLOR(load,              0.3f, 1.0f, 1.0f, 0.7f);
 	SETUP_COLOR(unload,            1.0f, 1.0f, 0.0f, 0.7f);
-	SETUP_COLOR(deathWatch,        0.5f, 0.5f, 0.5f, 0.7f);
+	SETUP_COLOR(deathWait,         0.5f, 0.5f, 0.5f, 0.7f);
 	SETUP_COLOR(rangeAttack,       1.0f, 0.3f, 0.3f, 0.7f);
 	SETUP_COLOR(rangeBuild,        0.3f, 1.0f, 0.3f, 0.7f);
 	SETUP_COLOR(rangeDecloak,      0.3f, 0.3f, 1.0f, 0.7f);

@@ -15,9 +15,8 @@ static const float frameLength = 0.100f;  // in seconds
 
 CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 {
-	// FIXME: not used, yet
 	CMouseCursor* c = new CMouseCursor(name, hs);
-	if (c->frames.size() == 0) {
+	if (c->frames.size() <= 0) {
 		delete c;
 		return NULL;
 	}
@@ -36,8 +35,8 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 		return;
 	}
 
-	int maxxsize = 0;
-	int maxysize = 0;
+	xmaxsize = 0;
+	ymaxsize = 0;
 	
 	// find the image file type to use
 	const char* ext = "";
@@ -84,8 +83,8 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 			FrameData frame(cursorTex, final->xsize, final->ysize);
 			frames.push_back(frame);
 
-			maxxsize = max(b.xsize, maxxsize);
-			maxysize = max(b.ysize, maxysize);
+			xmaxsize = max(b.xsize, xmaxsize);
+			ymaxsize = max(b.ysize, ymaxsize);
 
 			delete final;
 		}
@@ -107,11 +106,11 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 			yofs = 0;
 			break;
 		case Center:
-			xofs = maxxsize / 2;
-			yofs = maxysize / 2;
+			xofs = xmaxsize / 2;
+			yofs = ymaxsize / 2;
 			break;
 	}
-
+	
 	lastFrameTime = gu->gameTime;
 }
 
@@ -162,46 +161,38 @@ void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 }
 
 
-void CMouseCursor::Draw(int x, int y)
+void CMouseCursor::Draw(int x, int y, float scale)
 {
-	if (frames.size()==0)
+	if (frames.size() <= 0) {
 		return;
-
-	//Center on hotspot
-	x -= xofs;
-	y -= yofs;
+	}
 
 	const FrameData& f = frames[curFrame];
 	unsigned int cursorTex = f.texture;
-	int xs = f.xsize;
-	int ys = f.ysize;
+	const int xs = int(float(f.xsize) * scale);  
+	const int ys = int(float(f.ysize) * scale);                      
+
+	//Center on hotspot
+	const int xp = int(float(x) - (float(xofs) * scale));
+	const int yp = int(float(y) + (float(ys) - (float(yofs) * scale)));
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,cursorTex);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER,0.01f);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAlphaFunc(GL_GREATER, 0.01f);
 	glColor4f(1,1,1,1);
 
-	glViewport(x,gu->screeny - y - ys,xs,ys);
+	glViewport(xp, gu->screeny - yp, xs, ys);
+//	glViewport(x,gu->screeny - y - ys,xs,ys);
 
 	glBegin(GL_QUADS);
-
- 	glTexCoord2f(0,0);glVertex3f(0,0,0);
- 	glTexCoord2f(0,1);glVertex3f(0,1,0);
- 	glTexCoord2f(1,1);glVertex3f(1,1,0);
- 	glTexCoord2f(1,0);glVertex3f(1,0,0);
-
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 1.0f, 0.0f);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 0.0f, 0.0f);
 	glEnd();
-
-/*	glViewport(x+10,gu->screeny-y-30,60*gu->screenx/gu->screeny,60);
-	glScalef(0.2f,0.2f,0.2f);
-	font->glPrintRaw(cursorText.c_str());
-
-	glViewport(lastx-20,gu->screeny-lasty-30,60*gu->screenx/gu->screeny,60);
-	font->glPrintRaw(cursorTextRight.c_str());
-	cursorTextRight=""; */
 
 	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
 }
@@ -209,7 +200,7 @@ void CMouseCursor::Draw(int x, int y)
 
 void CMouseCursor::DrawQuad(int x, int y)
 {
-	if (frames.size()==0) {
+	if (frames.size() <= 0) {
 		return;
 	}
 
@@ -226,17 +217,17 @@ void CMouseCursor::DrawQuad(int x, int y)
 	glViewport(xp, yp, xs, ys);
 
 	glBegin(GL_QUADS);
- 	glTexCoord2f(0,0);glVertex3f(0,0,0);
- 	glTexCoord2f(0,1);glVertex3f(0,1,0);
- 	glTexCoord2f(1,1);glVertex3f(1,1,0);
- 	glTexCoord2f(1,0);glVertex3f(1,0,0);
+	 	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
+	 	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 1.0f, 0.0f);
+	 	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
+	 	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 0.0f, 0.0f);
 	glEnd();
 }
 
 
 void CMouseCursor::Update()
 {
-	if (frames.size() == 0) {
+	if (frames.size() <= 0) {
 		return;
 	}
 	
@@ -250,7 +241,7 @@ void CMouseCursor::Update()
 
 void CMouseCursor::BindTexture()
 {
-	if (frames.size() == 0) {
+	if (frames.size() <= 0) {
 		return;
 	}
 	unsigned int cursorTex = frames[curFrame].texture;

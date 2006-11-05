@@ -9,6 +9,7 @@
 #include <time.h>
 #include <map>
 #include <set>
+#include <deque>
 #include <string>
 using namespace std;
 
@@ -30,12 +31,15 @@ class CWaitCommandsAI {
 
 		// called from SelectedUnits
 		void AddTimeWait(const Command& cmd);
+		void AddDeathWait(const Command& cmd);
 		void AddSquadWait(const Command& cmd);
-		void AddDeathWatch(const Command& cmd);
-		void AddRallyPoint(const Command& cmd);
-		
+		void AddGatherWait(const Command& cmd);
+
 		void AcknowledgeCommand(const Command& cmd);
 
+		void ClearUnitQueue(CUnit* unit, const deque<Command>& queue);
+		void RemoveWaitCommand(CUnit* unit, const Command& cmd);
+		
 		void NewUnit(CUnit* unit, const CUnit* builder);
 		
 		void AddIcon(const Command& cmd, const float3& pos) const;
@@ -60,6 +64,7 @@ class CWaitCommandsAI {
 				virtual ~Wait();
 				virtual void DependentDied(CObject* o) = 0; // from CObject
 				virtual void AddUnit(CUnit* unit) = 0;
+				virtual void RemoveUnit(CUnit* unit) = 0;
 				virtual void Update() = 0;
 				virtual void Draw() const { return; }
 				virtual const string& GetStateText() const { return noText; }
@@ -79,7 +84,7 @@ class CWaitCommandsAI {
 				bool IsWaitingOn(const CUnit* unit) const;
 				void SendCommand(const Command& cmd, const UnitSet& unitSet);
 				void SendWaitCommand(const UnitSet& unitSet);
-				UnitSet::iterator RemoveUnit(UnitSet::iterator, UnitSet&);
+				UnitSet::iterator RemoveUnitFromSet(UnitSet::iterator, UnitSet&);
 			protected:
 				const float code;
 				KeyType key;
@@ -100,6 +105,7 @@ class CWaitCommandsAI {
 				~TimeWait();
 				void DependentDied(CObject* o);
 				void AddUnit(CUnit* unit);
+				void RemoveUnit(CUnit* unit);
 				void Update();
 				void Draw() const;
 				const string& GetStateText() const;
@@ -115,6 +121,25 @@ class CWaitCommandsAI {
 				bool factory;
 		};
 
+		// DeathWait
+		class DeathWait : public Wait {
+			public:
+				static DeathWait* New(const Command& cmd);
+				~DeathWait();
+				void DependentDied(CObject* o);
+				void AddUnit(CUnit* unit);
+				void RemoveUnit(CUnit* unit);
+				void Update();
+				void Draw() const;
+			private:
+				DeathWait(const Command& cmd);
+				void SelectAreaUnits(const float3& pos0, const float3& pos1,
+				                     UnitSet& units, bool enemies);
+			private:
+				UnitSet waitUnits;
+				UnitSet deathUnits;
+		};
+
 		// SquadWait				
 		class SquadWait : public Wait {
 			public:
@@ -122,6 +147,7 @@ class CWaitCommandsAI {
 				~SquadWait();
 				void DependentDied(CObject* o);
 				void AddUnit(CUnit* unit);
+				void RemoveUnit(CUnit* unit);
 				void Update();
 				void Draw() const;
 				const string& GetStateText() const { return stateText; }
@@ -135,34 +161,17 @@ class CWaitCommandsAI {
 				string stateText;
 		};
 
-		// DeathWatch
-		class DeathWatch : public Wait {
+		// GatherWait
+		class GatherWait : public Wait {
 			public:
-				static DeathWatch* New(const Command& cmd);
-				~DeathWatch();
-				void DependentDied(CObject* o);
-				void AddUnit(CUnit* unit);
-				void Update();
-				void Draw() const;
-			private:
-				DeathWatch(const Command& cmd);
-				void SelectAreaUnits(const float3& pos0, const float3& pos1,
-				                     UnitSet& units, bool enemies);
-			private:
-				UnitSet waitUnits;
-				UnitSet deathUnits;
-		};
-
-		// RallyPoint
-		class RallyPoint : public Wait {
-			public:
-				static RallyPoint* New(const Command& cmd);
-				~RallyPoint();
+				static GatherWait* New(const Command& cmd);
+				~GatherWait();
 				void DependentDied(CObject * o);
 				void AddUnit(CUnit* unit);
+				void RemoveUnit(CUnit* unit);
 				void Update();
 			private:
-				RallyPoint(const Command& cmd);
+				GatherWait(const Command& cmd);
 			private:
 				UnitSet waitUnits;
 		};

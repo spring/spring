@@ -13,10 +13,10 @@ using namespace std;
 // cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
 #define CMD_WAIT                   5
-#define CMD_TIMEWAIT               6  // generates a WAIT
-#define CMD_SQUADWAIT              7  // generates a WAIT
-#define CMD_DEATHWATCH             8  // generates a WAIT
-#define CMD_RALLYPOINT             9  // generates a MOVE + WAIT
+#define CMD_TIMEWAIT               6
+#define CMD_DEATHWAIT              7
+#define CMD_SQUADWAIT              8
+#define CMD_GATHERWAIT             9
 #define CMD_MOVE                  10
 #define CMD_PATROL                15
 #define CMD_FIGHT                 16
@@ -72,9 +72,9 @@ using namespace std;
 
 // wait codes
 #define CMD_WAITCODE_TIMEWAIT    1.0f
-#define CMD_WAITCODE_SQUADWAIT   2.0f
-#define CMD_WAITCODE_DEATHWATCH  3.0f
-#define CMD_WAITCODE_RALLYPOINT  4.0f
+#define CMD_WAITCODE_DEATHWAIT   2.0f
+#define CMD_WAITCODE_SQUADWAIT   3.0f
+#define CMD_WAITCODE_GATHERWAIT  4.0f
 
 
 // bits for the option field of Command

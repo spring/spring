@@ -634,7 +634,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
                           const CKeySet& ks, bool isRepeat)
 {
 	// we may need these later
-	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 
 	const string& cmd = action.command;
@@ -648,6 +648,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "selectcycle") {
 		SelectCycle(action.extra);
+	}
+	else if (cmd == "deselect") {
+		selectedUnits.ClearSelected();
 	}
 	else if (cmd == "shadows") {
 		const int current = configHandler.GetInt("Shadows", 0);
@@ -809,9 +812,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "group9") {
 		grouphandler->GroupCommand(9);
-	}
-	else if (cmd == "deselect") {
-		selectedUnits.ClearSelected();
 	}
 	else if (cmd == "lastmsgpos") {
 		mouse->currentCamController->SetPos(infoConsole->lastMsgPos);
@@ -1089,9 +1089,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "incguiopacity") {
 		CInputReceiver::guiAlpha = min(CInputReceiver::guiAlpha+0.1f,1.0f);
-	} else if (cmd == "decguiopacity") {
+	}
+	else if (cmd == "decguiopacity") {
 		CInputReceiver::guiAlpha = max(CInputReceiver::guiAlpha-0.1f,0.0f);
-	} else if (cmd == "screenshot") {
+	}
+	else if (cmd == "screenshot") {
 		const char* ext = "jpg";
 		if (action.extra == "png") {
 			ext = "png";
@@ -1196,17 +1198,33 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			configHandler.SetString("FontFile", action.extra);
 		}
 	}
+	else if (cmd == "aiselect") {
+		map<AIKey, string>::iterator aai;
+		map<AIKey, string> suitedAis =
+			grouphandler->GetSuitedAis(selectedUnits.selectedUnits);
+		int i = 0;
+		for (aai = suitedAis.begin(); aai != suitedAis.end(); ++aai) {
+			i++;
+			if (action.extra == aai->second) {
+				Command cmd;
+				cmd.id = CMD_AISELECT;
+				cmd.params.push_back((float)i);
+				selectedUnits.GiveCommand(cmd);
+				break;
+			}
+		}
+	}
 	else if (cmd == "layout") {
 		if (guihandler != NULL) {
 			guihandler->RunLayoutCommand(action.extra);
 		}
 	}
-	else if (cmd == "rallydefault") {
+	else if (cmd == "gathermode") {
 		if (guihandler != NULL) {
 			if (action.extra.empty()) {
-				guihandler->SetDefaultToRally(!guihandler->GetDefaultToRally());
+				guihandler->SetGatherMode(!guihandler->GetGatherMode());
 			} else {
-				guihandler->SetDefaultToRally(atoi(action.extra.c_str()));
+				guihandler->SetGatherMode(atoi(action.extra.c_str()));
 			}
 		}
 	}
@@ -1396,7 +1414,7 @@ bool CGame::Draw()
 	if(playing && (hideInterface || script->wantCameraControl))
 		script->SetCamera();
 
-	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	gd->Update(); // let it update before shadows have to be drawn
 
 	if(shadowHandler->drawShadows)
@@ -2747,11 +2765,12 @@ void CGame::SendNetChat(const std::string& message)
 	}
 	string msg = message;
 	if (msg.find(".give") == 0) {
-		const float dist =
-			ground->LineGroundCol(camera->pos, camera->pos + (mouse->dir * 9000.0f));
-		const float3 pos = camera->pos + (mouse->dir * dist);
-		char buf[100];
-		sprintf(buf, " @%.0f,%.0f,%.0f", pos.x, pos.y, pos.z);
+		const float3& pos = camera->pos;
+		const float3& dir = mouse->dir;
+		const float dist = ground->LineGroundCol(pos, pos + (dir * 9000.0f));
+		const float3 p = pos + (dir * dist);
+		char buf[128];
+		SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
 		msg += buf;
 	}
 	net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, msg);
