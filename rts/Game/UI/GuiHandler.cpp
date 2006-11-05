@@ -3564,7 +3564,7 @@ void CGuiHandler::DrawMiniMapCursor()
 	const float groundLevel = ground->GetHeight(camera->pos.x, camera->pos.z);
 
 	static float spinTime = 0.0f;
-	spinTime = (float)fmod(spinTime + gu->lastFrameTime, 60.0);
+	spinTime = fmodf(spinTime + gu->lastFrameTime, 60.0f);
 
 	glPushMatrix();
 	glTranslatef(camera->pos.x, groundLevel, camera->pos.z);
