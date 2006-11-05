@@ -10,7 +10,7 @@
 #include "Platform/errorhandler.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
-#include "SDL_timer.h"
+#include <SDL_timer.h>
 
 CGameServer* gameServer=0;
 
@@ -65,6 +65,11 @@ CGameServer::CGameServer()
 #ifdef SYNCDEBUG
 	fakeDesync = false;
 #endif
+
+	// Something in CGameServer::CGameServer borks the FPU control word
+	// maybe the threading, or something in CNet::InitServer() ??
+	// Set single precision floating point math.
+	streflop_init<streflop::Simple>();
 }
 
 CGameServer::~CGameServer()
