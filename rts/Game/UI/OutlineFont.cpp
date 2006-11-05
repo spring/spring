@@ -13,7 +13,7 @@
 COutlineFont outlineFont;
 
 
-COutlineFont::COutlineFont() : enabled(false)
+COutlineFont::COutlineFont() : enabled(true)
 {
 }
 
