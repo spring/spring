@@ -41,13 +41,17 @@ CPreGame::CPreGame(bool server, const string& demo):
 		saveAddress(true)
 {
 	CommandDescription::Init();
-	
 	infoConsole = new CInfoConsole;
+	assert(good_fpu_control_registers());
 
 	pregame = this; // prevent crashes if Select* is called from ctor
 	net = new CNet;
-	if (server)
+	assert(good_fpu_control_registers());
+
+	if (server) {
 		gameServer = new CGameServer;
+		assert(good_fpu_control_registers());
+	}
 
 	//hpiHandler=new CHpiHandler();
 
