@@ -12,15 +12,19 @@ extern "C" {
 	#include "lauxlib.h"
 }
 #include "LuaState.h"
+#include "CursorIcons.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
+#include "Game/command.h"
 #include "Game/CameraController.h"
 #include "Game/Game.h"
+#include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "Game/UI/GuiHandler.h"
 #include "Game/UI/MouseHandler.h"
+#include "Map/Ground.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -54,6 +58,8 @@ static int GetMyTeamUnits(lua_State* L);
 static int GetAlliedUnits(lua_State* L);
 
 static int GetUnitHealth(lua_State* L);
+static int GetUnitStates(lua_State* L);
+static int GetUnitPosition(lua_State* L);
 static int GetCommandQueue(lua_State* L);
 static int GetFullBuildQueue(lua_State* L);
 static int GetRealBuildQueue(lua_State* L);
@@ -70,6 +76,15 @@ static int ArePlayersAllied(lua_State* L);
 
 static int GetCameraState(lua_State* L);
 static int SetCameraState(lua_State* L);
+
+static int GiveOrder(lua_State* L);
+
+static int GetMapHeight(lua_State* L);
+static int TestBuildOrder(lua_State* L);
+
+static int DrawMapIcon(lua_State* L);
+static int DrawMapText(lua_State* L);
+static int DrawMapUnit(lua_State* L);
 
 
 /******************************************************************************/
@@ -157,6 +172,8 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMyTeamUnits);
 	REGISTER_LUA_CFUNC(GetAlliedUnits);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
+	REGISTER_LUA_CFUNC(GetUnitStates);
+	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetCommandQueue);
 	REGISTER_LUA_CFUNC(GetFullBuildQueue);
 	REGISTER_LUA_CFUNC(GetRealBuildQueue);
@@ -169,6 +186,11 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
 	REGISTER_LUA_CFUNC(GetCameraState);
 	REGISTER_LUA_CFUNC(SetCameraState);
+	REGISTER_LUA_CFUNC(GiveOrder);
+	REGISTER_LUA_CFUNC(GetMapHeight);
+	REGISTER_LUA_CFUNC(DrawMapIcon);
+	REGISTER_LUA_CFUNC(DrawMapText);
+	REGISTER_LUA_CFUNC(DrawMapUnit);
 
 	lua_setglobal(L, "Spring");
 	
@@ -255,6 +277,67 @@ bool CIconLayoutHandler::UpdateLayout(bool& forceLayout,
 }
 
 
+bool CIconLayoutHandler::CommandNotify(const Command& cmd)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+	
+	lua_getglobal(L, "CommandNotify");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call was not implemented
+	}
+
+	// push the command id	
+	lua_pushnumber(L, cmd.id);
+
+	// push the params list
+	lua_newtable(L);
+	for (int p = 0; p < (int)cmd.params.size(); p++) {
+		lua_pushnumber(L, p + 1);		
+		lua_pushnumber(L, cmd.params[p]);		
+		lua_rawset(L, -3);
+	}
+	
+	// push the options table
+	lua_newtable(L);
+	lua_pushstring(L, "alt");
+	lua_pushboolean(L, cmd.options & ALT_KEY);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "ctrl");
+	lua_pushboolean(L, cmd.options & CONTROL_KEY);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "shift");
+	lua_pushboolean(L, cmd.options & SHIFT_KEY);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "right");
+	lua_pushboolean(L, cmd.options & RIGHT_MOUSE_KEY);
+	lua_rawset(L, -3);
+	
+	// call the function
+	const int error = lua_pcall(L, 3, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_CommandNotify", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("CommandNotify() bad return value (%i)\n", args);
+		lua_pop(L, args);
+		return true;
+	}
+	
+	return !!lua_toboolean(L, -1);
+}
+
+
 bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
                                      const vector<CommandDescription>& cmds,
                                      vector<int>& removeCmds,
@@ -296,7 +379,7 @@ bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
 	const int error = lua_pcall(L, 4, LUA_MULTRET, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_ConfigureLayout", lua_tostring(L, -1));
+		                "Call_LayoutIcons", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -920,6 +1003,57 @@ static int GetAlliedUnits(lua_State* L)
 }
 
 
+static int GetUnitStates(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, -1)) {
+		lua_pushstring(L, "Incorrect arguments to GetUnitStates(unitID)");
+		lua_error(L);
+	}
+	const int unitID = (int)lua_tonumber(L, -1);
+	lua_pop(L, 1);
+
+	// get the unit info
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		return 0;
+	}
+	const CUnit* unit = uh->units[unitID];
+	if ((unit == NULL) || (unit->allyteam != gu->myAllyTeam)) {
+		return 0;
+	}
+	
+	lua_newtable(L);
+	lua_pushstring(L, "firestate");
+	lua_pushnumber(L, unit->fireState);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "movestate");
+	lua_pushnumber(L, unit->moveState);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "repeat");
+	lua_pushboolean(L, unit->commandAI->repeatOrders);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "cloak");
+	lua_pushboolean(L, unit->wantCloak);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "active");
+	lua_pushboolean(L, unit->activated);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "trajectory");
+	lua_pushboolean(L, unit->useHighTrajectory);
+	lua_rawset(L, -3);
+/*	
+	// FIXME -- finish these
+	lua_pushstring(L, "autorepairlevel");
+	lua_pushnumber(L, unit->);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "loopbackattack");
+	lua_pushnumber(L, unit->);
+	lua_rawset(L, -3);
+*/
+	return 1;	
+}
+
+
 static int GetUnitHealth(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -946,6 +1080,33 @@ static int GetUnitHealth(lua_State* L)
 	lua_pushnumber(L, unit->buildProgress);
 	
 	return 5;
+}
+
+
+static int GetUnitPosition(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, -1)) {
+		lua_pushstring(L, "Incorrect arguments to GetUnitPosition(unitID)");
+		lua_error(L);
+	}
+	const int unitID = (int)lua_tonumber(L, -1);
+	lua_pop(L, 1);
+
+	// get the unit info
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		return 0;
+	}
+	const CUnit* unit = uh->units[unitID];
+	if ((unit == NULL) || (unit->allyteam != gu->myAllyTeam)) {
+		return 0;
+	}
+	
+	lua_pushnumber(L, unit->pos[0]);
+	lua_pushnumber(L, unit->pos[1]);
+	lua_pushnumber(L, unit->pos[2]);
+	
+	return 3;
 }
 
 
@@ -1381,6 +1542,273 @@ static int SetCameraState(lua_State* L)
 	lua_pushboolean(L, mouse->currentCamController->SetState(camState));
 	
 	return 1;
+}
+
+
+/******************************************************************************/
+
+static int GiveOrder(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) || !lua_isnumber(L, -3) ||
+	    !lua_istable(L, -2) || !lua_istable(L, -1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to GiveOrder(id, params[], options[])");
+		lua_error(L);
+	}
+
+	Command cmd;
+
+	// options
+	const int optionTable = lua_gettop(L);
+	lua_pushnil(L);
+	while (lua_next(L, optionTable) != 0) {
+		if (!lua_isstring(L, -1)) {
+			lua_pushstring(L,
+				"Incorrect option table in GiveOrder(id, params[], options[])");
+			lua_error(L);
+		}
+		const string key = lua_tostring(L, -1);
+		if (key == "right") {
+			cmd.options |= RIGHT_MOUSE_KEY;
+		} else if (key == "alt") {
+			cmd.options |= ALT_KEY;
+		} else if (key == "ctrl") {
+			cmd.options |= CONTROL_KEY;
+		} else if (key == "shift") {
+			cmd.options |= SHIFT_KEY;
+		}	
+		lua_pop(L, 1); // pop the value, leave the key for the next iteration
+	}
+	lua_pop(L, 1); // pop the table
+
+	// params
+	const int paramTable = lua_gettop(L);
+	lua_pushnil(L);
+	while (lua_next(L, paramTable) != 0) {
+		if (!lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
+			lua_pushstring(L,
+				"Incorrect param table in GiveOrder(id, params[], options[])");
+			lua_error(L);
+		}
+		const float value = (float)lua_tonumber(L, -1);
+		cmd.params.push_back(value);
+		lua_pop(L, 1); // pop the value, leave the key for the next iteration
+	}
+	lua_pop(L, 1); // pop the table
+
+	// id	
+	cmd.id = (int)lua_tonumber(L, 1);
+	lua_pop(L, 1); // pop the id
+
+	selectedUnits.GiveCommand(cmd);
+	
+	lua_pushboolean(L, true);
+
+	return 1;
+
+
+	// FIXME -- do some basic checks
+	printf("LUA: GiveCommand %i\n", cmd.id);
+	for (int i = 0; i < cmd.params.size(); i++) {
+		printf("%f\n", cmd.params[i]);
+	}
+	printf("%s%s%s%s\n",
+	       (cmd.options & RIGHT_MOUSE_KEY) ? " right" : "",
+	       (cmd.options & ALT_KEY)         ? " alt" : "",
+	       (cmd.options & CONTROL_KEY)     ? " ctrl" : "",
+	       (cmd.options & SHIFT_KEY)       ? " shift" : "");
+	
+	int type1 = -1;
+	int type2 = -1;
+
+	switch (cmd.id) {
+		case CMD_STOP:
+		case CMD_WAIT:
+		case CMD_SELFD:
+		case CMD_STOCKPILE: 
+		case CMD_GATHERWAIT: {
+			type1 = CMDTYPE_ICON;
+			break;
+		}
+		case CMD_TIMEWAIT:
+		case CMD_SQUADWAIT: {
+			type1 = CMDTYPE_NUMBER;
+			break;
+		}
+		case CMD_DEATHWAIT: {
+			type1 = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
+			break;
+		}
+		case CMD_DGUN:
+		case CMD_ATTACK: {
+			type1 = CMDTYPE_ICON_UNIT_OR_MAP;
+			break;
+		}
+		case CMD_ONOFF:
+		case CMD_CLOAK:
+		case CMD_REPEAT:
+		case CMD_FIRE_STATE:
+		case CMD_MOVE_STATE:
+		case CMD_TRAJECTORY:
+		case CMD_LOOPBACKATTACK:
+		case CMD_AUTOREPAIRLEVEL: {
+			type1 = CMDTYPE_ICON_MODE;
+			break;
+		}
+		case CMD_MOVE: {
+			type2 = CMDTYPE_ICON_FRONT;
+			// fallthru
+		}
+		case CMD_PATROL:
+		case CMD_FIGHT: {
+			type1 = CMDTYPE_ICON_MAP;
+			break;
+		}
+		case CMD_RESTORE:
+		case CMD_AREA_ATTACK:
+		case CMD_UNLOAD_UNITS: {
+			type1 = CMDTYPE_ICON_AREA;
+			break;
+		}
+		case CMD_GUARD: {
+			type1 = CMDTYPE_ICON_UNIT;
+			break;
+		}
+		case CMD_AISELECT: {
+			type1 = CMDTYPE_COMBO_BOX;
+			break;
+		}
+		case CMD_REPAIR:
+		case CMD_CAPTURE:
+		case CMD_LOAD_UNITS: {
+			type1 = CMDTYPE_ICON_UNIT_OR_AREA;
+			break;
+		}
+		case CMD_RECLAIM:
+		case CMD_RESURRECT: {
+			type1 = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
+			break;
+		}
+
+//		case CMD_GROUPSELECT:
+//		case CMD_GROUPADD:
+//		case CMD_GROUPCLEAR:
+//		case CMD_SETBASE:
+//		case CMD_INTERNAL:
+//		case CMD_SET_WANTED_MAX_SPEED:
+//		case CMD_UNLOAD_UNIT:
+
+	}
+	
+	lua_pushboolean(L, true);
+
+	return 1;
+}
+
+
+static int GetMapHeight(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, -2)) {
+		lua_pushstring(L, "Incorrect arguments to GetMapHeight(x, y");
+		lua_error(L);
+	}
+	const float x = lua_tonumber(L, 1);
+	const float y = lua_tonumber(L, 2);
+	lua_pushnumber(L, ground->GetHeight(x, y));
+	return 1;
+}
+
+
+static int TestBuildOrder(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 5) || !lua_isnumber(L, 1) ||
+	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
+	    !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
+		lua_pushstring(L,
+			"Incorrect arguments to TestBuildOrder(unitDefID, x, y, z, facing");
+		lua_error(L);
+	}
+	const int unitDefID = (int)lua_tonumber(L, 1);
+	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
+		lua_pushboolean(L, 0);
+		return 1;
+	}
+	
+	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
+	const int facing = (int)lua_tonumber(L, 5);
+
+	BuildInfo bi;
+	bi.buildFacing = facing;
+	bi.def = unitDefHandler->GetUnitByID(unitDefID);
+	bi.pos = helper->Pos2BuildPos(bi);
+	CFeature* feature;
+	if(!uh->TestUnitBuildSquare(bi, feature, gu->myAllyTeam)) {
+		lua_pushboolean(L, 0);
+	} else {
+		lua_pushboolean(L, 1);
+	}
+	return 1;		
+}
+
+
+static int DrawMapIcon(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 4) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
+	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		lua_pushstring(L, "Incorrect arguments to DrawMapIcon(id, x, y, z");
+		lua_error(L);
+	}
+	const int cmdID = (int)lua_tonumber(L, 1);
+	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
+	cursorIcons.AddIcon(cmdID, pos);
+	return 0;
+}
+
+
+static int DrawMapText(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 4) ||
+	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
+	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		lua_pushstring(L, "Incorrect arguments to DrawMapIcon(text, x, y, z");
+		lua_error(L);
+	}
+	const string text = lua_tostring(L, 1);
+	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
+	cursorIcons.AddIconText(text, pos);
+	return 0;
+}
+
+
+static int DrawMapUnit(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 6) ||
+	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
+	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
+	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawMapUnit(unitDefID, x, y, z, team, facing");
+		lua_error(L);
+	}
+	const int unitDefID = (int)lua_tonumber(L, 1);
+	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
+		return 0;
+	}
+	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
+	const int team = (int)lua_tonumber(L, 5);
+	if ((team < 0) || (team >= gs->activeTeams)) {
+		return 0;
+	}
+	const int facing = (int)lua_tonumber(L, 6);
+	cursorIcons.AddBuildIcon(-unitDefID, pos, team, facing);
+	return 0;
 }
 
 

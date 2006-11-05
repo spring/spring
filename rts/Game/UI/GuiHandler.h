@@ -28,6 +28,7 @@ class CGuiHandler : public CInputReceiver {
 
 		void Draw();
 		void DrawMapStuff(void);
+		void DrawCentroidCursor(void);
 		
 		bool AboveGui(int x,int y);
 		bool KeyPressed(unsigned short key);
@@ -54,8 +55,8 @@ class CGuiHandler : public CInputReceiver {
  		void SetInvertQueueKey(bool value) { invertQueueKey = value; }
  		bool GetQueueKeystate() const;
  		
- 		bool GetDefaultToRally() const { return defaultToRally; }
- 		void SetDefaultToRally(bool value) { defaultToRally = value; }
+ 		bool GetGatherMode() const { return gatherMode; }
+ 		void SetGatherMode(bool value) { gatherMode = value; }
  		
 	public:
 		vector<CommandDescription> commands;
@@ -64,6 +65,8 @@ class CGuiHandler : public CInputReceiver {
 		int buildSpacing;
 
 	private:
+		void GiveCommand(const Command& cmd) const;
+
 		void MenuChoice(string s);
 		static void MenuSelection(std::string s);
 		
@@ -102,11 +105,15 @@ class CGuiHandler : public CInputReceiver {
 		void DrawMenuName();
 		void DrawSelectionInfo();
 		void DrawNumberInput();
+		void DrawMiniMapCursor();
 		void DrawFront(int button,float maxSize,float sizeDiv);
 		void DrawArea(float3 pos, float radius, const float* color);
 		void DrawSelectBox(const float3& start, const float3& end);
 		void DrawSelectCircle(const float3& pos, float radius,
 		                      const float* color);
+
+		void DrawStencilCone(const float3& pos, float radius, float height);
+		void DrawStencilRange(const float3& pos, float radius);
 
 		bool BindNamedTexture(const std::string& texName);
 
@@ -162,8 +169,9 @@ class CGuiHandler : public CInputReceiver {
 		std::vector<int> fillOrder;
 
 		bool xorSelect;
+		bool gatherMode;
 		bool newAttackMode;
-		bool defaultToRally;
+		bool miniMapMarker;
 
 		int iconsPerPage;
 		float xIconStep, yIconStep;

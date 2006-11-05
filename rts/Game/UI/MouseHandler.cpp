@@ -4,34 +4,34 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "MouseHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "Map/Ground.h"
-#include "Game/Game.h"
-#include "Game/Camera.h"
-#include "GuiHandler.h"
 #include "CommandColors.h"
-#include "Game/GameHelper.h"
-#include "Game/SelectedUnits.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Misc/Feature.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Game/Team.h"
 #include "InfoConsole.h"
-#include "MiniMap.h"
 #include "InputReceiver.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Rendering/glFont.h"
-#include "Sim/Units/UnitHandler.h"
+#include "GuiHandler.h"
+#include "MiniMap.h"
 #include "MouseCursor.h"
 #include "MouseInput.h"
-#include "Sound.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Misc/FeatureDef.h"
 #include "ExternalAI/Group.h"
-#include "Platform/ConfigHandler.h"
-#include "Rendering/InMapDraw.h"
 #include "Game/CameraController.h"
+#include "Game/Camera.h"
+#include "Game/Game.h"
+#include "Game/GameHelper.h"
+#include "Game/SelectedUnits.h"
+#include "Game/Team.h"
+#include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Platform/ConfigHandler.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/InMapDraw.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Sim/Misc/FeatureDef.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sound.h"
 #include "mmgr.h"
 #include <SDL_types.h>
 #include <SDL_mouse.h>
@@ -49,6 +49,7 @@ bool mouseHandlerMayDoSelection=true;
 
 CMouseHandler* mouse=0;
 
+
 CMouseHandler::CMouseHandler()
 : locked(false),
 	activeReceiver(0),
@@ -64,26 +65,58 @@ CMouseHandler::CMouseHandler()
 		buttons[a].lastRelease=-20;
 		buttons[a].movement=0;
 	}
+	
+	cursorScale = 1.0f;
 
-	cursors[""]             = new CMouseCursor("cursornormal",    CMouseCursor::TopLeft);
-	cursors["Attack"]       = new CMouseCursor("cursorattack",    CMouseCursor::Center);
-	cursors["Capture"]      = new CMouseCursor("cursorcapture",   CMouseCursor::Center);
-	cursors["DeathWatch"]   = new CMouseCursor("cursordwatch",    CMouseCursor::Center);
-	cursors["DGun"]         = new CMouseCursor("cursorattack",    CMouseCursor::Center);
-	cursors["Fight"]        = new CMouseCursor("cursorattack",    CMouseCursor::Center);
-	cursors["Guard"]        = new CMouseCursor("cursordefend",    CMouseCursor::Center);
-	cursors["Load units"]   = new CMouseCursor("cursorpickup",    CMouseCursor::Center);
-	cursors["Move"]         = new CMouseCursor("cursormove",      CMouseCursor::Center);
-	cursors["Patrol"]       = new CMouseCursor("cursorpatrol",    CMouseCursor::Center);
-	cursors["RallyPoint"]   = new CMouseCursor("cursorrally",     CMouseCursor::Center);
-	cursors["Reclaim"]      = new CMouseCursor("cursorreclamate", CMouseCursor::Center);
-	cursors["Repair"]       = new CMouseCursor("cursorrepair",    CMouseCursor::Center);
-	cursors["Resurrect"]    = new CMouseCursor("cursorrevive",    CMouseCursor::Center);
-	cursors["SelfD"]        = new CMouseCursor("cursorselfd",     CMouseCursor::Center);
-	cursors["SquadWait"]    = new CMouseCursor("cursornumber",    CMouseCursor::Center);
-	cursors["TimeWait"]     = new CMouseCursor("cursortime",      CMouseCursor::Center);
-	cursors["Unload units"] = new CMouseCursor("cursorunload",    CMouseCursor::Center);	
-	cursors["Wait"]         = new CMouseCursor("cursorwait",      CMouseCursor::Center);
+	cursorFileMap["cursornormal"] =    // default, can not be NULL
+		new CMouseCursor("cursornormal", CMouseCursor::TopLeft);
+	LoadCursorFile("cursorareaattack", CMouseCursor::Center);
+	LoadCursorFile("cursorattack",     CMouseCursor::Center);
+	LoadCursorFile("cursorbuildbad",   CMouseCursor::Center);
+	LoadCursorFile("cursorbuildgood",  CMouseCursor::Center);
+	LoadCursorFile("cursorcapture",    CMouseCursor::Center);
+	LoadCursorFile("cursorcentroid",   CMouseCursor::Center);
+	LoadCursorFile("cursordgun",       CMouseCursor::Center);
+	LoadCursorFile("cursordefend",     CMouseCursor::Center);
+	LoadCursorFile("cursordwatch",     CMouseCursor::Center);
+	LoadCursorFile("cursorfight",      CMouseCursor::Center);
+	LoadCursorFile("cursormove",       CMouseCursor::Center);
+	LoadCursorFile("cursornumber",     CMouseCursor::Center);
+	LoadCursorFile("cursorpatrol",     CMouseCursor::Center);
+	LoadCursorFile("cursorpickup",     CMouseCursor::Center);
+	LoadCursorFile("cursorgather",     CMouseCursor::Center);
+	LoadCursorFile("cursorreclamate",  CMouseCursor::Center);
+	LoadCursorFile("cursorrepair",     CMouseCursor::Center);
+	LoadCursorFile("cursorrevive",     CMouseCursor::Center);
+	LoadCursorFile("cursorselfd",      CMouseCursor::Center);
+	LoadCursorFile("cursortime",       CMouseCursor::Center);
+	LoadCursorFile("cursorunload",     CMouseCursor::Center);	
+	LoadCursorFile("cursorwait",       CMouseCursor::Center);
+
+	cursorCommandMap[""] = cursorFileMap["cursornormal"];	
+	AttachCursorCommand("Area attack",  "cursorareaattack", "cursorattack");
+	AttachCursorCommand("Attack",       "cursorattack");
+	AttachCursorCommand("BuildBad",     "cursorbuildbad");
+	AttachCursorCommand("BuildGood",    "cursorbuildgood");
+	AttachCursorCommand("Capture",      "cursorcapture");
+	AttachCursorCommand("Centroid",     "cursorcentroid");
+	AttachCursorCommand("DeathWait",    "cursordwatch",     "cursorwait");
+	AttachCursorCommand("DGun",         "cursordgun",       "cursorattack");
+	AttachCursorCommand("Fight",        "cursorfight",      "cursorattack");
+	AttachCursorCommand("GatherWait",   "cursorgather",     "cursorwait");
+	AttachCursorCommand("Guard",        "cursordefend");
+	AttachCursorCommand("Load units",   "cursorpickup");
+	AttachCursorCommand("Move",         "cursormove");
+	AttachCursorCommand("Patrol",       "cursorpatrol");
+	AttachCursorCommand("Reclaim",      "cursorreclamate");
+	AttachCursorCommand("Repair",       "cursorrepair");
+	AttachCursorCommand("Resurrect",    "cursorrevive",     "cursorrepair");
+	AttachCursorCommand("Restore",      "cursorrestore",    "cursorrepair");
+	AttachCursorCommand("SelfD",        "cursorselfd");
+	AttachCursorCommand("SquadWait",    "cursornumber",     "cursorwait");
+	AttachCursorCommand("TimeWait",     "cursortime",       "cursorwait");
+	AttachCursorCommand("Unload units", "cursorunload");
+	AttachCursorCommand("Wait",         "cursorwait");
 
 	SDL_ShowCursor(SDL_DISABLE);
 
@@ -92,7 +125,8 @@ CMouseHandler::CMouseHandler()
 	invertMouse=!!configHandler.GetInt("InvertMouse",1);
   doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
-	camControllers.push_back(new CFPSController);				//fps camera must always be the first one in the list
+	//fps camera must always be the first one in the list
+	camControllers.push_back(new CFPSController);
 	camControllers.push_back(new COverheadController);
 	camControllers.push_back(new CTWController);
 	camControllers.push_back(new CRotOverheadController);
@@ -111,8 +145,9 @@ CMouseHandler::CMouseHandler()
 CMouseHandler::~CMouseHandler()
 {
 	SDL_ShowCursor(SDL_ENABLE);
-	for (map<string, CMouseCursor *>::iterator i = cursors.begin(); i != cursors.end(); ++i) {
-		delete i->second;
+	map<string, CMouseCursor*>::iterator ci;
+	for (ci = cursorFileMap.begin(); ci != cursorFileMap.end(); ++ci) {
+		delete ci->second;
 	}
 
 	while(!camControllers.empty()){
@@ -120,6 +155,9 @@ CMouseHandler::~CMouseHandler()
 		camControllers.pop_back();
 	}
 }
+
+
+/******************************************************************************/
 
 void CMouseHandler::MouseMove(int x, int y)
 {
@@ -152,12 +190,14 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 #endif
 
-	if(buttons[SDL_BUTTON_MIDDLE].pressed){
+	if (buttons[SDL_BUTTON_MIDDLE].pressed &&
+	    !((minimap != NULL) && (activeReceiver == minimap))) {
 		float cameraSpeed = 1.0f;
 		currentCamController->MouseMove(float3(dx * cameraSpeed, dy * cameraSpeed, invertMouse ? -1 : 1));
 		return;
 	} 
 }
+
 
 void CMouseHandler::MousePress(int x, int y, int button)
 {
@@ -195,7 +235,12 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	if(button==SDL_BUTTON_MIDDLE){
+	if (button==SDL_BUTTON_MIDDLE){
+		if ((minimap != NULL) && minimap->fullProxy && !locked) {
+			if (minimap->MousePress(x, y, button)) {
+				activeReceiver = minimap;
+			}
+		}
 		return;
 	}
 
@@ -212,6 +257,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 }
 
+
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
 	if (button > NUM_BUTTONS) return;
@@ -222,13 +268,19 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	buttons[button].pressed=false;
 
 	if(inMapDrawer && inMapDrawer->keyPressed){
-		inMapDrawer->MouseRelease(x,y,button);
+		inMapDrawer->MouseRelease(x, y, button);
 		return;
 	}
 
-	if(button==SDL_BUTTON_MIDDLE){
-		if(buttons[SDL_BUTTON_MIDDLE].time>gu->gameTime-0.3f)
+	if (button == SDL_BUTTON_MIDDLE) {
+		if ((minimap != NULL) && (activeReceiver == minimap)) {
+			minimap->MouseRelease(x, y, button);
+			activeReceiver = 0;
+			return;
+		}
+		if (buttons[SDL_BUTTON_MIDDLE].time>gu->gameTime-0.3f) {
 			ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
+		}
 		return;		
 	}
 
@@ -344,13 +396,19 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 					} else {
 						selectedUnits.AddUnit(unit);
 					}
-				} else {												//double click
-					if(unit->group){									//select the current units group if it has one
+				}
+				else {
+					//double click
+					if (unit->group && !keys[SDLK_LCTRL]) {
+						//select the current unit's group if it has one
 						selectedUnits.SelectGroup(unit->group->id);
-					} else {														//select all units of same type on screen
+					} else {
+						//select all units of same type (on screen, unless CTRL is pressed)
 						set<CUnit*>::iterator ui;
-						for(ui=gs->Team(gu->myTeam)->units.begin();ui!=gs->Team(gu->myTeam)->units.end();++ui){
-							if((*ui)->aihint==unit->aihint && camera->InView((*ui)->midPos)){
+						set<CUnit*>& myTeamUnits = gs->Team(gu->myTeam)->units;
+						for (ui = myTeamUnits.begin(); ui != myTeamUnits.end(); ++ui) {
+							if (((*ui)->aihint == unit->aihint) &&
+							    (camera->InView((*ui)->midPos) || keys[SDLK_LCTRL])) {
 								selectedUnits.AddUnit(*ui);
 							}
 						}
@@ -359,11 +417,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				buttons[button].lastRelease=gu->gameTime;
 
 				if(unit->unitDef->sounds.select.id)
-					sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit, unit->unitDef->sounds.select.volume);
+					sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit,
+					                     unit->unitDef->sounds.select.volume);
 			}
 		}
 	}
 }
+
 
 void CMouseHandler::Draw()
 {
@@ -424,6 +484,7 @@ void CMouseHandler::Draw()
 		glEnd();
 		glLineWidth(1.0f);
 		
+		
 		glPopAttrib();
 	}
 }
@@ -448,120 +509,6 @@ void CMouseHandler::HideMouse()
 	}
 }
 
-
-void CMouseHandler::SetCameraMode(int mode)
-{
-	if ((mode < 0)
-	 || (mode >= camControllers.size())
-	 || (mode == currentCamControllerNum)
-	 || (!camControllers[currentCamControllerNum]->enabled)) {
-		return;
-	}
-
-	currentCamControllerNum = mode;
-	CameraTransition(1.0f);
-
-	CCameraController* oldc = currentCamController;
-	currentCamController = camControllers[currentCamControllerNum];
-	currentCamController->SetPos(oldc->SwitchFrom());
-	currentCamController->SwitchTo();
-}
-
-
-void CMouseHandler::ToggleState(bool shift)
-{
-	if(!shift){
-		if(locked){
-			locked=false;
-			ShowMouse();
-		} else {
-			locked=true;
-			HideMouse();
-		}
-	} else {
-		CameraTransition(1.0f);
-
-		CCameraController* oldc=currentCamController;
-		currentCamControllerNum++;
-		if(currentCamControllerNum>=camControllers.size())
-			currentCamControllerNum=0;
-		int a=0;
-		while(a<4 && !camControllers[currentCamControllerNum]->enabled){
-			currentCamControllerNum++;
-			if(currentCamControllerNum>=camControllers.size())
-				currentCamControllerNum=0;
-		}
-		currentCamController=camControllers[currentCamControllerNum];
-		currentCamController->SetPos(oldc->SwitchFrom());
-		currentCamController->SwitchTo();
-	}
-}
-
-
-void CMouseHandler::CameraTransition(float time)
-{
-	time = max(time, 0.0f) * cameraTimeFactor;
-	cameraTime = time;
-	cameraTimeLeft = time;
-}
-
-
-void CMouseHandler::UpdateCam()
-{
-	camera->up.x = 0.0f;
-	camera->up.y = 1.0f;
-	camera->up.z = 0.0f;
-	camera->fov = 45.0f;
-
-	const float3 wantedCamPos = currentCamController->GetPos();
-	const float3 wantedCamDir = currentCamController->GetDir();
-
-	if (cameraTimeLeft <= 0.0f) {
-		camera->pos = wantedCamPos;
-		camera->forward = wantedCamDir;
-	}
-	else {
-		const float currTime = cameraTimeLeft;
-		cameraTimeLeft = max(0.0f, (cameraTimeLeft - gu->lastFrameTime));
-		const float nextTime = cameraTimeLeft;
-		const float exp = cameraTimeExponent;
-		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);
-
-		const float3 deltaPos = wantedCamPos - camera->pos;
-		const float3 deltaDir = wantedCamDir - camera->forward;
-		camera->pos     += deltaPos * ratio;
-		camera->forward += deltaDir * ratio;
-		camera->forward.Normalize();
-	}
-	
-	dir = (hide ? camera->forward : camera->CalcPixelDir(lastx,lasty));
-}
-
-void CMouseHandler::UpdateCursors()
-{
-	map<string, CMouseCursor *>::iterator i;
-	for (i = cursors.begin(); i != cursors.end(); ++i) {
-		i->second->Update();
-	}
-}
-
-void CMouseHandler::DrawCursor(void)
-{
-	if (hide)
-		return;
-
-	CMouseCursor *mc;
-	map<string, CMouseCursor *>::iterator i;
-	if ((i = cursors.find(cursorText)) != cursors.end()) {
-		mc = i->second;
-	}
-	else {
-		//logOutput.Print("Unknown cursor: %s", cursorText.c_str());		
-		mc = cursors[""];
-	}
-
-	mc->Draw(lastx, lasty);
-}
 
 std::string CMouseHandler::GetCurrentTooltip(void)
 {
@@ -677,6 +624,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	return "";
 }
 
+
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
 	if (!hide)
@@ -696,6 +644,97 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 }
 
 
+/******************************************************************************/
+
+void CMouseHandler::UpdateCam()
+{
+	camera->up.x = 0.0f;
+	camera->up.y = 1.0f;
+	camera->up.z = 0.0f;
+	camera->fov = 45.0f;
+
+	const float3 wantedCamPos = currentCamController->GetPos();
+	const float3 wantedCamDir = currentCamController->GetDir();
+
+	if (cameraTimeLeft <= 0.0f) {
+		camera->pos = wantedCamPos;
+		camera->forward = wantedCamDir;
+	}
+	else {
+		const float currTime = cameraTimeLeft;
+		cameraTimeLeft = max(0.0f, (cameraTimeLeft - gu->lastFrameTime));
+		const float nextTime = cameraTimeLeft;
+		const float exp = cameraTimeExponent;
+		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);
+
+		const float3 deltaPos = wantedCamPos - camera->pos;
+		const float3 deltaDir = wantedCamDir - camera->forward;
+		camera->pos     += deltaPos * ratio;
+		camera->forward += deltaDir * ratio;
+		camera->forward.Normalize();
+	}
+	
+	dir = (hide ? camera->forward : camera->CalcPixelDir(lastx,lasty));
+}
+
+
+void CMouseHandler::SetCameraMode(int mode)
+{
+	if ((mode < 0)
+	 || (mode >= camControllers.size())
+	 || (mode == currentCamControllerNum)
+	 || (!camControllers[currentCamControllerNum]->enabled)) {
+		return;
+	}
+
+	currentCamControllerNum = mode;
+	CameraTransition(1.0f);
+
+	CCameraController* oldc = currentCamController;
+	currentCamController = camControllers[currentCamControllerNum];
+	currentCamController->SetPos(oldc->SwitchFrom());
+	currentCamController->SwitchTo();
+}
+
+
+void CMouseHandler::CameraTransition(float time)
+{
+	time = max(time, 0.0f) * cameraTimeFactor;
+	cameraTime = time;
+	cameraTimeLeft = time;
+}
+
+
+void CMouseHandler::ToggleState(bool shift)
+{
+	if(!shift){
+		if(locked){
+			locked=false;
+			ShowMouse();
+		} else {
+			locked=true;
+			HideMouse();
+		}
+	} else {
+		CameraTransition(1.0f);
+
+		CCameraController* oldc=currentCamController;
+		currentCamControllerNum++;
+		if(currentCamControllerNum>=camControllers.size())
+			currentCamControllerNum=0;
+		int a=0;
+		while(a<4 && !camControllers[currentCamControllerNum]->enabled){
+			currentCamControllerNum++;
+			if(currentCamControllerNum>=camControllers.size())
+				currentCamControllerNum=0;
+		}
+		currentCamController=camControllers[currentCamControllerNum];
+		currentCamController->SetPos(oldc->SwitchFrom());
+		currentCamController->SwitchTo();
+	}
+}
+
+
 void CMouseHandler::ToggleOverviewCamera(void)
 {
 	if(currentCamController==overviewController){
@@ -710,6 +749,8 @@ void CMouseHandler::ToggleOverviewCamera(void)
 	CameraTransition(1.0f);
 }
 
+
+/******************************************************************************/
 
 void CMouseHandler::SaveView(const std::string& name)
 {
@@ -786,3 +827,90 @@ bool CMouseHandler::LoadView(const std::string& name)
 	
 	return currentCamController->SetState(effective.state);;
 }
+
+
+/******************************************************************************/
+
+void CMouseHandler::UpdateCursors()
+{
+	map<string, CMouseCursor *>::iterator it;
+	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
+		if (it->second != NULL) {
+			it->second->Update();
+		}
+	}
+}
+
+
+void CMouseHandler::DrawCursor(void)
+{
+
+	if (guihandler) {
+		guihandler->DrawCentroidCursor();
+	}
+	
+	if (hide)
+		return;
+
+	CMouseCursor* mc;
+	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cursorText);
+	if (it != cursorCommandMap.end()) {
+		mc = it->second;
+	} else {
+		mc = cursorFileMap["cursornormal"];
+	}
+
+	if (cursorScale >= 0.0f) {
+		mc->Draw(lastx, lasty, cursorScale);
+	}
+	else {
+		CMouseCursor* nc = cursorFileMap["cursornormal"];
+		nc->Draw(lastx, lasty, 1.0f);
+		if (mc != nc) {
+			mc->Draw(lastx + nc->GetMaxSizeX(),
+			         lasty + nc->GetMaxSizeY(), -cursorScale);
+		}
+	}
+}
+
+
+void CMouseHandler::LoadCursorFile(const std::string& filename,
+                                   CMouseCursor::HotSpot hotspot)
+{
+	if (cursorFileMap.find(filename) == cursorFileMap.end()) {
+		cursorFileMap[filename] = CMouseCursor::New(filename, hotspot);
+	}
+}
+
+
+void CMouseHandler::AttachCursorCommand(const std::string& commandName,
+                                        const std::string& filename)
+{
+	std::map<std::string, CMouseCursor*>::iterator it;
+	it = cursorFileMap.find(filename);
+	if ((it != cursorFileMap.end()) && (it->second != NULL)) {
+		cursorCommandMap[commandName] = it->second;
+		return;
+	}
+}
+
+
+void CMouseHandler::AttachCursorCommand(const std::string& commandName,
+                                        const std::string& filename1,
+                                        const std::string& filename2)
+{
+	std::map<std::string, CMouseCursor*>::iterator it;
+	it = cursorFileMap.find(filename1);
+	if ((it != cursorFileMap.end()) && (it->second != NULL)) {
+		cursorCommandMap[commandName] = it->second;
+		return;
+	}
+	it = cursorFileMap.find(filename2);
+	if ((it != cursorFileMap.end()) && (it->second != NULL)) {
+		cursorCommandMap[commandName] = it->second;
+		return;
+	}
+}
+
+
+/******************************************************************************/

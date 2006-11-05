@@ -285,20 +285,20 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		waitCommandsAI.AddTimeWait(c);
 		return;
 	}
+	else if (c.id == CMD_DEATHWAIT) {
+		if (gs->activeAllyTeams <= 2) {
+			waitCommandsAI.AddDeathWait(c);
+		} else {
+			logOutput.Print("DeathWait can only be used when there are 2 Ally Teams");
+		}
+		return;
+	}
 	else if (c.id == CMD_SQUADWAIT) {
 		waitCommandsAI.AddSquadWait(c);
 		return;
 	}
-	else if (c.id == CMD_DEATHWATCH) {
-		if (gs->activeAllyTeams <= 2) {
-			waitCommandsAI.AddDeathWatch(c);
-		} else {
-			logOutput.Print("DeathWatch can only be used when there are 2 Ally Teams");
-		}
-		return;
-	}
-	else if (c.id == CMD_RALLYPOINT) {
-		waitCommandsAI.AddRallyPoint(c);
+	else if (c.id == CMD_GATHERWAIT) {
+		waitCommandsAI.AddGatherWait(c);
 		return;
 	}
 
@@ -634,10 +634,9 @@ void CSelectedUnits::DrawCommands(void)
 	                     cmdColors.restart,
 	                     cmdColors.RestartAlpha());
                      
+	glEnable(GL_BLEND);
 	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
 	            (GLenum)cmdColors.QueuedBlendDst());
-
-	glEnable(GL_BLEND);
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 

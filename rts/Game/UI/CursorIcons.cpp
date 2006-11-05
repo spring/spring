@@ -160,13 +160,13 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_WAIT:            cursorName = "Wait";         break;
 		case CMD_TIMEWAIT:        cursorName = "TimeWait";     break;
 		case CMD_SQUADWAIT:       cursorName = "SquadWait";    break;
-		case CMD_DEATHWATCH:      cursorName = "DeathWatch";   break;
-		case CMD_RALLYPOINT:      cursorName = "RallyPoint";   break;
+		case CMD_DEATHWAIT:       cursorName = "DeathWait";    break;
+		case CMD_GATHERWAIT:      cursorName = "GatherWait";   break;
 		case CMD_MOVE:            cursorName = "Move";         break;
 		case CMD_PATROL:          cursorName = "Patrol";       break;
 		case CMD_FIGHT:           cursorName = "Fight";        break;
 		case CMD_ATTACK:          cursorName = "Attack";       break;
-		case CMD_AREA_ATTACK:     cursorName = "Attack";       break;
+		case CMD_AREA_ATTACK:     cursorName = "Area attack";  break;
 		case CMD_LOOPBACKATTACK:  cursorName = "Attack";       break;
 		case CMD_GUARD:           cursorName = "Guard";        break;
 		case CMD_REPAIR:          cursorName = "Repair";       break;
@@ -201,8 +201,8 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 	}
 
 	map<std::string, CMouseCursor *>::const_iterator it;
-	it = mouse->cursors.find(cursorName);
-	if (it != mouse->cursors.end()) {
+	it = mouse->cursorCommandMap.find(cursorName);
+	if (it != mouse->cursorCommandMap.end()) {
 		return it->second;
 	}
 	

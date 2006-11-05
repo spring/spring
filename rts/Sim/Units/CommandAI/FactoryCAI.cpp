@@ -5,6 +5,7 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
+#include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
@@ -33,19 +34,6 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	c.hotkey="m";
 	c.tooltip="Move: Order ready built units to move to a position";
 	possibleCommands.push_back(c);
-
-	c.id = CMD_SQUADWAIT;
-	c.action = "squadwait";
-	c.type = CMDTYPE_NUMBER;
-	c.name = "SquadWait";
-	c.hotkey = "";
-	c.onlyKey = true;
-	c.tooltip = "SquadWait: Wait for a number of units to arrive before continuing";
-	c.params.push_back("2");   // min
-	c.params.push_back("100"); // max
-	possibleCommands.push_back(c);
-	c.params.clear();
-	c.onlyKey = false;
 
 	if (owner->unitDef->canPatrol) {
 		c.id=CMD_PATROL;
@@ -127,12 +115,16 @@ void CFactoryCAI::GiveCommand(const Command& c)
 		}
 
 		if (!(c.options & SHIFT_KEY)) {
+ 			waitCommandsAI.ClearUnitQueue(owner, newUnitCommands);
 			newUnitCommands.clear();
 		}
 
 		if (c.id != CMD_STOP) {
 			if ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)) {
 				if (!newUnitCommands.empty() && (newUnitCommands.back().id == c.id)) {
+					if (c.id == CMD_WAIT) {
+						waitCommandsAI.RemoveWaitCommand(owner, c);
+					}
 					newUnitCommands.pop_back();
 				} else {
 					newUnitCommands.push_back(c);
@@ -152,6 +144,9 @@ void CFactoryCAI::GiveCommand(const Command& c)
 		while (!newUnitCommands.empty()) {
 			const int id = newUnitCommands.front().id;
 			if ((id == CMD_WAIT) || (id == CMD_SELFD)) {
+				if (c.id == CMD_WAIT) {
+					waitCommandsAI.RemoveWaitCommand(owner, c);
+				}
 				newUnitCommands.pop_front();
 			} else {
 				break;
@@ -313,7 +308,7 @@ void CFactoryCAI::DrawCommands(void)
 	}
 
 	if (!commandQue.empty() && (commandQue.front().id == CMD_WAIT)) {
-		lineDrawer.DrawIconAtLastPos(CMD_WAIT);
+		DrawWaitIcon(commandQue.front());
 	}
 
 	deque<Command>::iterator ci;

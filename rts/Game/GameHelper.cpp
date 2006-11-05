@@ -381,15 +381,23 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 
 CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 {
-	float closeDist=radius;
+	float closeDist=radius*radius;
 	CUnit* closeUnit=0;
-	vector<CUnit*> units=qf->GetUnits(pos,radius);
-	vector<CUnit*>::iterator ui;
-	for(ui=units.begin();ui!=units.end();++ui){
-		float dist=(*ui)->midPos.distance(pos);
-		if(dist<closeDist){
-			closeDist=dist;
-			closeUnit=*ui;
+	vector<int> quads=qf->GetQuads(pos,radius);
+
+	int tempNum=gs->tempNum++;
+	vector<int>::iterator qi;
+	for(qi=quads.begin();qi!=quads.end();++qi){
+		list<CUnit*>::iterator ui;
+		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
+			if((*ui)->tempNum!=tempNum) {
+				(*ui)->tempNum=tempNum;
+				float sqDist=(pos-(*ui)->midPos).SqLength2D();
+				if(sqDist <= closeDist){
+					closeDist=sqDist;
+					closeUnit=*ui;
+				}
+			}
 		}
 	}
 	return closeUnit;
