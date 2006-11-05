@@ -1709,7 +1709,6 @@ bool CGuiHandler::KeyPressed(unsigned short key)
 							c.options = SHIFT_KEY;
 						}
 					}
-					printf("CMDTYPE_ICON: %s :: %s\n", action.command.c_str(), action.extra.c_str());
 					GiveCommand(c);
 					break;
 				}
