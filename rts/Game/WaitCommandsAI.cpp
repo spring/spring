@@ -714,7 +714,7 @@ void CWaitCommandsAI::DeathWait::AddUnit(CUnit* unit)
 
 void CWaitCommandsAI::DeathWait::RemoveUnit(CUnit* unit)
 {
-	UnitSet::const_iterator it = waitUnits.find(unit);
+	UnitSet::iterator it = waitUnits.find(unit);
 	if (it != waitUnits.end()) {
 		DeleteDeathDependence(*it);
 		waitUnits.erase(it);
@@ -860,7 +860,7 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 			waitUnits.insert(unit);
 		}
 	}
-	if (buildUnits.empty() && (waitUnits.size() < squadCount)) {
+	if (buildUnits.empty() && ((int)waitUnits.size() < squadCount)) {
 		return;
 	}
 	
@@ -919,12 +919,12 @@ void CWaitCommandsAI::SquadWait::AddUnit(CUnit* unit)
 
 void CWaitCommandsAI::SquadWait::RemoveUnit(CUnit* unit)
 {
-	UnitSet::const_iterator bit = buildUnits.find(unit);
+	UnitSet::iterator bit = buildUnits.find(unit);
 	if (bit != buildUnits.end()) {
 		DeleteDeathDependence(*bit);
 		buildUnits.erase(bit);
 	}
-	UnitSet::const_iterator wit = waitUnits.find(unit);
+	UnitSet::iterator wit = waitUnits.find(unit);
 	if (wit != waitUnits.end()) {
 		DeleteDeathDependence(*wit);
 		waitUnits.erase(wit);
@@ -934,7 +934,7 @@ void CWaitCommandsAI::SquadWait::RemoveUnit(CUnit* unit)
 
 void CWaitCommandsAI::SquadWait::Update()
 {
-	if (buildUnits.empty() && (waitUnits.size() < squadCount)) {
+	if (buildUnits.empty() && ((int)waitUnits.size() < squadCount)) {
 		// FIXME -- unblock remaining waitUnits ?
 		delete this;
 		return;
@@ -1075,7 +1075,7 @@ void CWaitCommandsAI::GatherWait::AddUnit(CUnit* unit)
 
 void CWaitCommandsAI::GatherWait::RemoveUnit(CUnit* unit)
 {
-	UnitSet::const_iterator it = waitUnits.find(unit);
+	UnitSet::iterator it = waitUnits.find(unit);
 	if (it != waitUnits.end()) {
 		DeleteDeathDependence(*it);
 		waitUnits.erase(it);
