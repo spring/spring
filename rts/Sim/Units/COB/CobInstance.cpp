@@ -83,6 +83,8 @@ class CUnit;
 #define UNIT_BUILD_PERCENT_LEFT	73
 #define UNIT_ALLIED				74
 #define MAX_SPEED					75
+#define CLOAKED					76
+#define WANT_CLOAK				77
 
 CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 : script(script)
@@ -994,6 +996,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return int(unit->moveType->maxSpeed*SCALE);
 		}
 		break;
+	case CLOAKED:
+		return !!unit->isCloaked;
+	case WANT_CLOAK:
+		return !!unit->wantCloak;
 	}
 #endif
 
@@ -1078,6 +1084,12 @@ void CCobInstance::SetUnitVal(int val, int param)
 		if(unit->moveType){
 			unit->moveType->SetMaxSpeed(param/(float)SCALE);
 		}
+		break;
+	case CLOAKED:
+		unit->wantCloak = !!param;
+		break;
+	case WANT_CLOAK:
+		unit->wantCloak = !!param;
 		break;
 	}
 #endif
