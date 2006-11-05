@@ -264,6 +264,22 @@ void CglList::DownOne()
 		place=0;
 }
 
+void CglList::UpPage()
+{
+	place -= 12;
+	if(place<0)
+		place=0;
+}
+
+void CglList::DownPage()
+{
+	place += 12;
+	if(place>=(int)filteredItems->size())
+		place=filteredItems->size()-1;
+	if(place<0)
+		place=0;
+}
+
 void CglList::Select()
 {
 	if (!filteredItems->empty())
@@ -283,6 +299,12 @@ bool CglList::KeyPressed(unsigned short k)
 		return true;
 	} else if (k == SDLK_DOWN) {
 		DownOne();
+		return true;
+	} else if (k == SDLK_PAGEUP) {
+		UpPage();
+		return true;
+	} else if (k == SDLK_PAGEDOWN) {
+		DownPage();
 		return true;
 	} else if (k == SDLK_RETURN) {
 		Select();
