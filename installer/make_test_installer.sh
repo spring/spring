@@ -36,7 +36,7 @@ else
 fi
 
 echo .
-makensis -V3 -DMINGW $defines installer/taspring.nsi || exit 1
+makensis -V3 -DNO_TOTALA -DMINGW $defines installer/taspring.nsi || exit 1
 
 echo .
 echo All done.. 

@@ -1,6 +1,3 @@
-; can't crosscompile lobby anyway, so we can aswell exclude it
-!ifndef MINGW
-
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
 
@@ -35,5 +32,3 @@
   Delete "$INSTDIR\lobby\sidepics\tll.bmp"
 
 !endif ; !INSTALL
-
-!endif ; !MINGW

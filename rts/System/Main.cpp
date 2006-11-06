@@ -278,17 +278,14 @@ bool SpringApp::Initialize ()
 		SDL_Quit ();
 		return false;
 	}
-	assert(good_fpu_control_registers());
 
 	mouseInput = IMouseInput::Get ();
-	assert(good_fpu_control_registers());
 
 	// Global structures
 	ENTER_SYNCED;
 	gs=new CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
 	gu=new CGlobalUnsyncedStuff();
-	assert(good_fpu_control_registers());
 
 	if (cmdline->result("minimise")) {
 		gu->active = false;
@@ -303,10 +300,7 @@ bool SpringApp::Initialize ()
 	}
 
 	InitOpenGL();
-	assert(good_fpu_control_registers());
-
 	palette.Init();
-	assert(good_fpu_control_registers());
 
 	// Initialize keyboard
 	SDL_EnableUNICODE(1);
@@ -315,26 +309,22 @@ bool SpringApp::Initialize ()
 	
 	keys = new Uint8[SDLK_LAST];
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
-	assert(good_fpu_control_registers());
 
 	// Initialize font
 	font = new CglFont(configHandler.GetInt("FontCharFirst", 32),
 	                   configHandler.GetInt("FontCharLast", 223),
 	                   configHandler.GetString("FontFile", "Luxi.ttf").c_str());
-	assert(good_fpu_control_registers());
 
 	// Initialize GLEW
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
-	assert(good_fpu_control_registers());
 
 	// Initialize ScriptHandler / LUA
 	CScriptHandler::Instance().StartLua();
-	assert(good_fpu_control_registers());
 
+	// Create CGameSetup and CPreGame objects
 	CreateGameSetup ();
-	assert(good_fpu_control_registers());
 
 	return true;
 }
@@ -783,12 +773,9 @@ int SpringApp::Run (int argc, char *argv[])
 	bool done=false;
 	std::map<int, int> toUnicode; // maps keysym.sym to keysym.unicode
 
-	assert(good_fpu_control_registers());
-
 	while (!done) {
 		ENTER_UNSYNCED;
 		while (SDL_PollEvent(&event)) {
-			assert(good_fpu_control_registers());
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {
 					screenWidth = event.resize.w;
@@ -799,7 +786,6 @@ int SpringApp::Run (int argc, char *argv[])
 					SetSDLVideoMode();
 #endif
 					InitOpenGL();
-					assert(good_fpu_control_registers());
 					break;
 				}
 				case SDL_VIDEOEXPOSE: {
