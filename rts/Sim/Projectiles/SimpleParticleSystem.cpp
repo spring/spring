@@ -27,6 +27,8 @@ CR_REG_METADATA(CSimpleParticleSystem,
 		CR_MEMBER(emitRot),
 		CR_MEMBER(emitRotSpread),
 		CR_MEMBER(directional),
+		CR_MEMBER(sizeGrowth),
+		CR_MEMBER(sizeMod),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
@@ -67,10 +69,10 @@ void CSimpleParticleSystem::Draw()
 				colorMap->GetColor(color, particles[i].life);
 				float3 interPos=particles[i].pos+particles[i].speed*gu->timeOffset;
 				float size = particles[i].size;
-				va->AddVertexTC(interPos-dir1*particleSize-dir2*particleSize,texture->xstart,texture->ystart,color);
-				va->AddVertexTC(interPos-dir1*particleSize+dir2*particleSize,texture->xend ,texture->ystart,color);
-				va->AddVertexTC(interPos+dir1*particleSize+dir2*particleSize,texture->xend ,texture->yend ,color);
-				va->AddVertexTC(interPos+dir1*particleSize-dir2*particleSize,texture->xstart,texture->yend ,color);
+				va->AddVertexTC(interPos-dir1*size-dir2*size,texture->xstart,texture->ystart,color);
+				va->AddVertexTC(interPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
+				va->AddVertexTC(interPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
+				va->AddVertexTC(interPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
 			}
 		}
 	}
@@ -86,10 +88,10 @@ void CSimpleParticleSystem::Draw()
 				float3 interPos=particles[i].pos+particles[i].speed*gu->timeOffset;
 				float size = particles[i].size;
 
-				va->AddVertexTC(interPos-camera->right*particleSize-camera->up*particleSize,texture->xstart,texture->ystart,color);
-				va->AddVertexTC(interPos+camera->right*particleSize-camera->up*particleSize,texture->xend ,texture->ystart,color);
-				va->AddVertexTC(interPos+camera->right*particleSize+camera->up*particleSize,texture->xend ,texture->yend ,color);
-				va->AddVertexTC(interPos-camera->right*particleSize+camera->up*particleSize,texture->xstart,texture->yend ,color);
+				va->AddVertexTC(interPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
+				va->AddVertexTC(interPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
+				va->AddVertexTC(interPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
+				va->AddVertexTC(interPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
 			}
 		}
 	}
@@ -103,13 +105,13 @@ void CSimpleParticleSystem::Update()
 	{
 		if(particles[i].life<1.0f)
 		{
-
-
 			particles[i].pos += particles[i].speed;
 			particles[i].life += particles[i].decayrate;
 			particles[i].speed += gravity;
 
 			particles[i].speed *= airdrag;
+
+			particles[i].size = particles[i].size*sizeMod + sizeGrowth;
 
 			deleteMe = false;
 		}

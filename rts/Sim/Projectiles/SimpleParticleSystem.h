@@ -35,6 +35,8 @@ public:
 	float particleSize;
 	float particleSizeSpread;
 	float airdrag;
+	float sizeGrowth;
+	float sizeMod;
 
 	int numParticles;
 
@@ -45,6 +47,9 @@ public:
 		float3 speed;
 		float decayrate;
 		float size;
+	float sizeGrowth;
+	float sizeMod;
+
 	};
 
 protected:

@@ -467,6 +467,17 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			Uint16 ofs = offset;
 			code.append ((char*)&ofs, (char*)&ofs + 2);
 		}
+		else if(type->GetName()=="CExplosionGenerator*")
+		{
+			string::size_type end = script.find(';', 0);
+			std::string name = script.substr(0, end);
+			void* explgen = explGenHandler->LoadGenerator(name);
+			code += OP_LOADP;
+			code.append((char*)(&explgen), ((char*)(&explgen)) + sizeof(void*));
+			code += OP_STOREP;
+			Uint16 ofs = offset;
+			code.append ((char*)&ofs, (char*)&ofs + 2);
+		}
 	}
 }
 
