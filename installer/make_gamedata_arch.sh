@@ -17,8 +17,16 @@ done
 
 echo Updating bitmaps.sdz
 cd installer/builddata/bitmaps
-zip -qu ../../../game/base/spring/bitmaps.sdz modinfo.tdf bitmaps/* bitmaps/*/* Anims/*
+zip -qu ../../../game/base/spring/bitmaps.sdz modinfo.tdf
+zip -qu ../../../game/base/spring/bitmaps.sdz bitmaps/*
+zip -qu ../../../game/base/spring/bitmaps.sdz bitmaps/*/*
+
 echo Updating springcontent.sdz
 cd ../springcontent
-zip -qu ../../../game/base/springcontent.sdz modinfo.tdf gamedata/* gamedata/*/*
+zip -qu ../../../game/base/springcontent.sdz modinfo.tdf
+zip -qu ../../../game/base/springcontent.sdz gamedata/*
+zip -qu ../../../game/base/springcontent.sdz gamedata/*/*
+zip -qu ../../../game/base/springcontent.sdz bitmaps/*
+zip -qu ../../../game/base/springcontent.sdz bitmaps/*/*
+zip -qu ../../../game/base/springcontent.sdz anims/*
 cd ../../..
