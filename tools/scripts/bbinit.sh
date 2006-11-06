@@ -43,5 +43,5 @@ cat files | xargs touch
 # Update version
 if [ "$#" != "0" ]; then
 	echo "updating GameVersion.h to revision $1"
-	sed -i "/VERSION_STRING/s,\"[^\"]*\",\"$1\",g" rts/Game/GameVersion.h || exit 1
+	sed -i "/VERSION_STRING/s,\"[^\"]*\",\"r$1\",g" rts/Game/GameVersion.h || exit 1
 fi

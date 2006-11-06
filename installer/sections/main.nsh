@@ -135,8 +135,10 @@
 ; same applies here (see above)
 !ifdef MINGW
   File "..\game\AI\Bot-libs\TestGlobalAI.dll"
+  Delete "$INSTDIR\AI\Bot-libs\EmptyAI.dll"
 !else
   File "..\game\AI\Bot-libs\EmptyAI.dll"
+  Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
 !endif
   
   SetOverWrite on
@@ -168,6 +170,7 @@
   SetOutPath "$INSTDIR\mods"
 !ifdef NO_TOTALA
   File "..\game\mods\nanoblobs.sd7"
+!else
   File "..\game\mods\xtape.sd7"
 !endif
 
@@ -178,20 +181,20 @@
   Delete "$INSTDIR\mods\xta_se_v062.sdz"
   Delete "$INSTDIR\mods\xta_se_v061.sdz"
   Delete "$INSTDIR\mods\xta_se_v060.sdz"
-  
+
   ; Stuff to always clean up (from old versions etc)
   Delete "$INSTDIR\taenheter.ccx"
   Delete "$INSTDIR\Utility.dll"
   Delete "$INSTDIR\SpringClient.pdb"
   Delete "$INSTDIR\test.sdf"
-  
+
   Delete "$INSTDIR\maps\*.pe"
   Delete "$INSTDIR\maps\*.pe2"
   
   Delete "$INSTDIR\ClientControls.dll"
   Delete "$INSTDIR\SpringClient.exe"
 
-  
+
   !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
  ;FIXME
  !ifndef MINGW

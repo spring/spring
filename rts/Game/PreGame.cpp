@@ -42,13 +42,12 @@ CPreGame::CPreGame(bool server, const string& demo):
 {
 	CommandDescription::Init();
 	infoConsole = new CInfoConsole;
-	assert(good_fpu_control_registers());
 
 	pregame = this; // prevent crashes if Select* is called from ctor
 	net = new CNet;
-	assert(good_fpu_control_registers());
 
 	if (server) {
+		assert(good_fpu_control_registers());
 		gameServer = new CGameServer;
 		assert(good_fpu_control_registers());
 	}

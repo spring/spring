@@ -221,11 +221,13 @@ Section "Main application (req)" SEC_MAIN
 SectionEnd
 
 
+!ifndef NIGHTLY_BUILD
 Section "Multiplayer battleroom" SEC_BATTLEROOM
   !define INSTALL
   !include "sections\battleroom.nsh"
   !undef INSTALL
 SectionEnd
+!endif
 
 
 !ifndef SP_UPDATE
@@ -242,11 +244,13 @@ Section "Start menu shortcuts" SEC_START
   !undef INSTALL
 SectionEnd
 
+!ifndef NIGHTLY_BUILD
 Section /o "Desktop shortcut" SEC_DESKTOP
   SetOutPath "$INSTDIR"
 
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 SectionEnd
+!endif
 
 SectionGroup "AI opponent plugins (Bots)"
 	Section "AAI" SEC_AAI
