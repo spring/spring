@@ -169,7 +169,7 @@
 
   SetOutPath "$INSTDIR\mods"
 !ifdef NO_TOTALA
-  File "..\game\mods\nanoblobs.sd7"
+  File "..\game\mods\nanoblobs.sdz"
 !else
   File "..\game\mods\xtape.sd7"
 !endif
