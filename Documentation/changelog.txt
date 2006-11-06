@@ -41,6 +41,7 @@ TASpring change log
 
 - Added unit FBI tag UnitRestricted to limit the number of a unit type allowed in a game.
 
+- Added CLOAKED (76) and WANT_CLOAK (77) to get/set in cob script.
 
 0.73b1
 

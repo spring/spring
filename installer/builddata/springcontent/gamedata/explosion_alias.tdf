@@ -33,6 +33,7 @@
 	gfx=CGfxProjectile;
 	SimpleParticleSystem=CSimpleParticleSystem;
 	BitmapMuzzleFlame=CBitmapMuzzleFlame;
+	DelaySpawner=CExpGenSpawner;
 }
 [generators]
 {
