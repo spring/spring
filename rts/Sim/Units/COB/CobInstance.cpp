@@ -1083,6 +1083,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 	case MAX_SPEED:
 		if(unit->moveType){
 			unit->moveType->SetMaxSpeed(param/(float)SCALE);
+			unit->maxSpeed = param/(float)SCALE;
 		}
 		break;
 	case CLOAKED:
