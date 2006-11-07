@@ -264,6 +264,8 @@ public:
 	bool isIcon;
 	float iconRadius;
 
+	float maxSpeed;  //max speed of the unit
+
 protected:
 	void ExperienceChange();
 public:

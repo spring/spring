@@ -206,6 +206,7 @@ START_TIME_PROFILE;
 		unit->mobility->maxSpeed = ud->speed / GAME_SPEED;
 		unit->mobility->maxTurnRate = (short int) ud->turnRate;
 		unit->mobility->moveData = ud->movedata;
+		unit->maxSpeed = ud->speed/30.0;
 
 	} else if(ud->canfly){
 		//Air-mobility

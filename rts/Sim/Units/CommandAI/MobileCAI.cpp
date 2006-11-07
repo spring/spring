@@ -217,7 +217,7 @@ void CMobileCAI::SlowUpdate()
 		it++;
 		const Command& c = *it;
 		if ((c.id == CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
-			const float defMaxSpeed = (owner->unitDef->speed / 30.0f);
+			const float defMaxSpeed = owner->maxSpeed;
 			const float newMaxSpeed = min(c.params[0], defMaxSpeed);
 			owner->moveType->SetMaxSpeed(newMaxSpeed);
 		}
