@@ -33,6 +33,9 @@ int RegHandler::GetInt(string name, int def)
 
 	if(RegQueryValueEx(regkey,name.c_str(),0,&regType,regbuf,&regLength)==ERROR_SUCCESS)
 		return *((int*)regbuf);
+	else
+		SetInt(name, def);
+		
 	return def;
 }
 
@@ -44,6 +47,9 @@ string RegHandler::GetString(string name, string def)
 
 	if(RegQueryValueEx(regkey,name.c_str(),0,&regType,regbuf,&regLength)==ERROR_SUCCESS)
 		return string((char*)regbuf);
+	else
+		SetString(name, def);
+		
 	return def;
 }
 

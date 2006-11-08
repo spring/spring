@@ -236,7 +236,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	}
 
 	if (button==SDL_BUTTON_MIDDLE){
-		if ((minimap != NULL) && minimap->fullProxy && !locked) {
+		if ((minimap != NULL) && minimap->FullProxy() && !locked) {
 			if (minimap->MousePress(x, y, button)) {
 				activeReceiver = minimap;
 			}
@@ -892,6 +892,8 @@ void CMouseHandler::AttachCursorCommand(const std::string& commandName,
 		cursorCommandMap[commandName] = it->second;
 		return;
 	}
+	logOutput.Print("No cursor available for command: %s",
+	                commandName.c_str());
 }
 
 
@@ -910,6 +912,8 @@ void CMouseHandler::AttachCursorCommand(const std::string& commandName,
 		cursorCommandMap[commandName] = it->second;
 		return;
 	}
+	logOutput.Print("No cursor available for command: %s",
+	                commandName.c_str());
 }
 
 

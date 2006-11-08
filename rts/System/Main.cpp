@@ -420,7 +420,7 @@ bool SpringApp::SetSDLVideoMode ()
 	const int defaultDepthSize = 16;
 #endif
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, configHandler.GetInt("DepthBufferBits", defaultDepthSize));
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.GetInt("StencilBufferBits", 0));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.GetInt("StencilBufferBits", 1));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -786,6 +786,7 @@ int SpringApp::Run (int argc, char *argv[])
 					SetSDLVideoMode();
 #endif
 					InitOpenGL();
+					activeController->ResizeEvent();
 					break;
 				}
 				case SDL_VIDEOEXPOSE: {

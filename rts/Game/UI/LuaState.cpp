@@ -601,13 +601,13 @@ bool CLuaState::LoadWeaponDefInfo()
 		ADD_W_FLOAT(craterMult,       wd.damages.craterMult);
 		ADD_W_FLOAT(craterBoost,      wd.damages.craterBoost);
 		
-		ADD_W_FLOAT(areaOfEffect,     wd.areaOfEffect);
-		ADD_W_BOOL(noSelfDamage,      wd.noSelfDamage);
-		ADD_W_FLOAT(fireStarter,      wd.fireStarter);
-		ADD_W_FLOAT(edgeEffectiveness,wd.edgeEffectiveness);
-		ADD_W_FLOAT(size,             wd.size);
-		ADD_W_FLOAT(sizeGrowth,       wd.sizeGrowth);
-		ADD_W_FLOAT(collisionSize,    wd.collisionSize);
+		ADD_W_BOOL(noSelfDamage,       wd.noSelfDamage);
+		ADD_W_FLOAT(areaOfEffect,      wd.areaOfEffect);
+		ADD_W_FLOAT(fireStarter,       wd.fireStarter);
+		ADD_W_FLOAT(edgeEffectiveness, wd.edgeEffectiveness);
+		ADD_W_FLOAT(size,              wd.size);
+		ADD_W_FLOAT(sizeGrowth,        wd.sizeGrowth);
+		ADD_W_FLOAT(collisionSize,     wd.collisionSize);
 
 		ADD_W_INT(salvoSize,    wd.salvosize);
 		ADD_W_FLOAT(salvoDelay, wd.salvodelay);

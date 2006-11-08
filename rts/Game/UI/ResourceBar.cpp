@@ -11,7 +11,7 @@
 CResourceBar* resourceBar=0;
 
 
-CResourceBar::CResourceBar(void)
+CResourceBar::CResourceBar(void) : disabled(false)
 {
 	box.x1 = 0.26f;
 	box.y1 = 0.97f;
@@ -55,6 +55,10 @@ static string FloatToSmallString(float num,float mul=1){
 
 void CResourceBar::Draw(void)
 {
+	if (disabled) {
+		return;
+	}
+	
 	const float mx=MouseX(mouse->lastx);
 	const float my=MouseY(mouse->lasty);
 
@@ -220,6 +224,10 @@ void CResourceBar::Draw(void)
 
 bool CResourceBar::IsAbove(int x, int y)
 {
+	if (disabled) {
+		return false;
+	}
+	
 	const float mx=MouseX(x);
 	const float my=MouseY(y);
 	if(InBox(mx,my,box))
@@ -248,9 +256,12 @@ std::string CResourceBar::GetTooltip(int x, int y)
 
 bool CResourceBar::MousePress(int x, int y, int button)
 {
+	if (disabled) {
+		return false;
+	}
+	
 	const float mx=MouseX(x);
 	const float my=MouseY(y);
-
 
 	if(InBox(mx,my,box)){
 		moveBox=true;
@@ -276,6 +287,10 @@ bool CResourceBar::MousePress(int x, int y, int button)
 
 void CResourceBar::MouseMove(int x, int y, int dx,int dy, int button)
 {
+	if (disabled) {
+		return;
+	}
+	
 	if(moveBox){
 		box.x1+=float(dx)/gu->screenx;
 		box.x2+=float(dx)/gu->screenx;

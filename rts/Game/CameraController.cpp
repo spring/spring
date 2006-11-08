@@ -623,7 +623,7 @@ float3 COverviewController::SwitchFrom()
 	float length=ground->LineGroundCol(pos,pos+dir*50000);
 	float3 rpos=pos+dir*length;
 
-	minimap->minimized=minimizeMinimap;
+	minimap->SetMinimized(minimizeMinimap);
 
 	return rpos;
 }
@@ -633,8 +633,8 @@ void COverviewController::SwitchTo(bool showText)
 	if(showText)
 		logOutput.Print("Switching to Overview style camera");
 
-	minimizeMinimap=minimap->minimized;
-	minimap->minimized=true;
+	minimizeMinimap = minimap->GetMinimized();
+	minimap->SetMinimized(true);
 }
 
 std::vector<float> COverviewController::GetState() const

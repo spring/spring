@@ -52,7 +52,7 @@ public:
 	bool buildIconsFirst;
 	int selectedGroup;
 	void PossibleCommandChange(CUnit* sender);
-	void DrawCommands(void);
+	void DrawCommands();
 	std::string GetTooltip(void);
 	void SetCommandPage(int page);
 	void SendSelection(void);

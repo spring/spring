@@ -6,12 +6,15 @@
 
 class CLineDrawer {
 	public:
-		CLineDrawer() {};
+		CLineDrawer();
 		~CLineDrawer() {};
 
-		void Configure(bool lineStipple,
-		               bool useColorRestarts, bool useRestartColor,
+		void Configure(bool useColorRestarts, bool useRestartColor,
 		               const float* restartColor, float restartAlpha);
+
+		void SetupLineStipple();
+		void UpdateLineStipple();
+		               
 		void StartPath(const float3& pos, const float* color);
 		void FinishPath();
 		void DrawLine(const float3& endPos, const float* color);
@@ -31,6 +34,8 @@ class CLineDrawer {
 		
 		float3 lastPos;
 		const float* lastColor;
+		
+		float stippleTimer;
 };
 
 
@@ -42,10 +47,9 @@ extern CLineDrawer lineDrawer;
 //  Inlines
 //
 
-inline void CLineDrawer::Configure(bool ls, bool ucr, bool urc,
+inline void CLineDrawer::Configure(bool ucr, bool urc,
                                    const float* rc, float ra)
 {
-	lineStipple = ls;
 	restartAlpha = ra;
 	restartColor = rc;
 	useRestartColor = urc;

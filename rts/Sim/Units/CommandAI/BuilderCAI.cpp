@@ -238,8 +238,9 @@ void CBuilderCAI::SlowUpdate()
 					fac->SetRepairTarget(unit);
 					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
 				} else {
-					if(goalPos.distance2D(unit->pos)>1)
+					if (goalPos.distance2D(unit->pos)>1) {
 						SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
+					}
 				}
 			} else {
 				StopMove();
@@ -870,15 +871,27 @@ void CBuilderCAI::FinishCommand(void)
 	CMobileCAI::FinishCommand();
 }
 
-bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius,unsigned char options, bool attackEnemy)
+bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned char options, bool attackEnemy)
 {
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
 	int myAllyteam=owner->allyteam;
 	for(std::vector<CUnit*>::iterator ui=cu.begin();ui!=cu.end();++ui){
-		if(gs->Ally(owner->allyteam,(*ui)->allyteam) && (*ui)->health<(*ui)->maxHealth && (*ui)!=owner){
-			if((*ui)->mobility && (*ui)->beingBuilt && owner->moveState<2)	//dont help factories produce units unless set on roam
+		CUnit* unit = *ui;
+		if(gs->Ally(owner->allyteam,unit->allyteam) && unit->health<unit->maxHealth && unit!=owner){
+			// dont lock-on to units outside of our reach (for immobile builders)
+			if (!owner->unitDef->canmove) {
+				const CBuilder* builder = (CBuilder*)owner;
+				const float distSqr = (owner->pos - unit->pos).SqLength2D();
+				const float maxRange = builder->buildDistance + unit->radius - 9.0f;
+				if (distSqr > (maxRange * maxRange)) {
+					continue;
+				}
+			}
+			// dont help factories produce units unless set on roam
+			if(unit->mobility && unit->beingBuilt && owner->moveState<2)
 				continue;
-			if (!((*ui)->beingBuilt && owner->unitDef->canAssist) && !(!(*ui)->beingBuilt && owner->unitDef->canRepair))
+			if (!(unit->beingBuilt && owner->unitDef->canAssist) &&
+			    !(!unit->beingBuilt && owner->unitDef->canRepair))
 				continue;
 			Command nc;
 			if(attackEnemy){
@@ -886,15 +899,16 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius,unsigned ch
 			}
 			nc.id=CMD_REPAIR;
 			nc.options=options | INTERNAL_ORDER;
-			nc.params.push_back((*ui)->id);
+			nc.params.push_back(unit->id);
 			commandQue.push_front(nc);
 			return true;
-		} else if(attackEnemy && owner->unitDef->canAttack && owner->maxRange>0 && !gs->Ally(owner->allyteam,(*ui)->allyteam)){
+		} else if(attackEnemy && owner->unitDef->canAttack && owner->maxRange>0 &&
+		          !gs->Ally(owner->allyteam,unit->allyteam)){
 			Command nc;
 			PushOrUpdateReturnFight();
 			nc.id=CMD_ATTACK;
 			nc.options=options | INTERNAL_ORDER;
-			nc.params.push_back((*ui)->id);
+			nc.params.push_back(unit->id);
 			commandQue.push_front(nc);
 			return true;
 		}
@@ -907,11 +921,12 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(float3 pos, float radius,unsigned 
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
 	int myAllyteam=owner->allyteam;
 	for(std::vector<CUnit*>::iterator ui=cu.begin();ui!=cu.end();++ui){
-		if(!gs->Ally(myAllyteam,(*ui)->allyteam) && (*ui)!=owner && !(*ui)->beingBuilt){
+		CUnit* unit = *ui;
+		if(!gs->Ally(myAllyteam,unit->allyteam) && unit!=owner && !unit->beingBuilt){
 			Command nc;
 			nc.id=CMD_CAPTURE;
 			nc.options=options | INTERNAL_ORDER;
-			nc.params.push_back((*ui)->id);
+			nc.params.push_back(unit->id);
 			commandQue.push_front(nc);
 			return true;
 		}
