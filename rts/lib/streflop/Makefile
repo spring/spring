@@ -43,6 +43,7 @@ streflop.a: Math.o Random.o ${USE_SOFT_BINARY}
 	@rm -f streflop.a
 ifdef MINGDIR
 	@$(CXX:g++=ar) rs streflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
+	@$(CXX:g++=ranlib) streflop.a
 	@copy streflop.a libstreflop.a
 else
 	@ar rs streflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
