@@ -41,10 +41,11 @@ SoftFloatWrapperExtended.o: SoftFloatWrapper.cpp SoftFloatWrapper.h Makefile FPU
 streflop.a: Math.o Random.o ${USE_SOFT_BINARY}
 	$(MAKE) -C libm
 	@rm -f streflop.a
-	@$(CXX:g++=ar) rs streflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
 ifdef MINGDIR
+	@$(CXX:g++=ar) rs streflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
 	@copy streflop.a libstreflop.a
 else
+	@ar rs streflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
 	@ln -fs streflop.a libstreflop.a
 endif
 

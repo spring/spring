@@ -59,7 +59,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectivness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics, CUnit *hit,const float3 &impactDir)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics, CUnit *hit,const float3 &impactDir)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -99,8 +99,8 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 			if(dist2>radius)
 				dist2=radius;
 		}
-		float mod=(radius-dist)/(radius-dist*edgeEffectivness);
-		float mod2=(radius-dist2)/(radius-dist2*edgeEffectivness);
+		float mod=(radius-dist)/(radius-dist*edgeEffectiveness);
+		float mod2=(radius-dist2)/(radius-dist2*edgeEffectiveness);
 		if(mod<0)
 			mod=0;
 		dif/=dist+0.0001f;

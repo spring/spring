@@ -58,7 +58,7 @@ struct WeaponDef
 	float areaOfEffect;
 	bool noSelfDamage;
 	float fireStarter;
-	float edgeEffectivness;
+	float edgeEffectiveness;
 	float size;
 	float sizeGrowth;
 	float collisionSize;
