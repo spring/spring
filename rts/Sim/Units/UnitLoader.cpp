@@ -145,7 +145,8 @@ START_TIME_PROFILE;
 	unit->category=ud->category;
 	unit->armorType=ud->armorType;
 	unit->floatOnWater = ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) || (ud->movedata->moveType == MoveData::Ship_Move)));
-	
+	unit->maxSpeed = ud->speed/30.0;
+
 	if(ud->highTrajectoryType==1)
 		unit->useHighTrajectory=true;
 		
@@ -206,7 +207,6 @@ START_TIME_PROFILE;
 		unit->mobility->maxSpeed = ud->speed / GAME_SPEED;
 		unit->mobility->maxTurnRate = (short int) ud->turnRate;
 		unit->mobility->moveData = ud->movedata;
-		unit->maxSpeed = ud->speed/30.0;
 
 	} else if(ud->canfly){
 		//Air-mobility
