@@ -634,7 +634,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 			{
 				WeaponDef *weaponDef = unit->weapons[type-4096]->weaponDef;
 				sound->PlaySample(weaponDef->soundhit.id,unit,weaponDef->soundhit.volume);
-				helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectivness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0));
+				helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0));
 
 			}
 			break;
