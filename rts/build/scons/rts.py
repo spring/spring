@@ -151,8 +151,12 @@ def generate(env):
 
 		if os.environ.has_key('CC'):
 			env['CC'] = os.environ['CC']
+		else:
+			env['CC'] = 'gcc'
 		if os.environ.has_key('CXX'):
 			env['CXX'] = os.environ['CXX']
+		else:
+			env['CXX'] = 'g++'
 
 		gcc_version = config.check_gcc_version(env)
 
@@ -227,7 +231,7 @@ def generate(env):
 			#    float f = 10.0f; int x = *(int*)&f;
 			# to break.
 			# Since those constructs are used in the netcode and MathTest code, we disable the optimization.
-			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe', '-fno-strict-aliasing', '-frename-registers'])
+			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe', '-fno-strict-aliasing'])
 		elif int(level) == 0:
 			print "optimizing NOT enabled",
 			env['optimize'] = 0
