@@ -14,7 +14,6 @@
 
 CGameServer* gameServer=0;
 
-extern string stupidGlobalMapname;
 extern bool globalQuit;
 
 static Uint32 GameServerThreadProc(void* lpParameter)
@@ -211,7 +210,7 @@ bool CGameServer::Update()
 
 		timeLeft+=GAME_SPEED*gs->speedFactor*timeElapsed;
 		lastframe=currentFrame;
-		
+
 		while((timeLeft>0) && (!gs->paused || game->bOneStep)){
 			if(!game->creatingVideo){
 				game->bOneStep=false;

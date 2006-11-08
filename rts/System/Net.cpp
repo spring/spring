@@ -182,7 +182,7 @@ void CNet::StopListening()
 
 int CNet::InitClient(const char *server, int portnum,int sourceport,bool localConnect)
 {
-  LPHOSTENT lpHostEntry;
+	LPHOSTENT lpHostEntry;
 
 	Uint64 t;
 	t = SDL_GetTicks();
