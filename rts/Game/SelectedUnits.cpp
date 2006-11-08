@@ -611,28 +611,16 @@ void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 }
 
 
-void CSelectedUnits::DrawCommands(void)
+void CSelectedUnits::DrawCommands()
 {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 
-	// line stipple animation
-	unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
-	const bool useStipple = ((stipPat != 0xffff) && (stipPat != 0x0000));
-	if (useStipple) {
-		static float stippleTimer = 0.0f;
-		const unsigned int fullPat = (stipPat << 16) | (stipPat & 0x0000ffff);
-		stippleTimer += (gu->lastFrameTime * cmdColors.StippleSpeed());
-		stippleTimer = fmodf(stippleTimer, (16.0f / 20.0f));
-		const int shiftBits = 15 - (int(stippleTimer * 20.0f) % 16);
-		glLineStipple(cmdColors.StippleFactor(), (fullPat >> shiftBits));
-	}
-                     
-	lineDrawer.Configure(useStipple,
-	                     cmdColors.UseColorRestarts(),
+	lineDrawer.Configure(cmdColors.UseColorRestarts(),
 	                     cmdColors.UseRestartColor(),
 	                     cmdColors.restart,
 	                     cmdColors.RestartAlpha());
+	lineDrawer.SetupLineStipple();
                      
 	glEnable(GL_BLEND);
 	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),

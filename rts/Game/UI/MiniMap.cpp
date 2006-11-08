@@ -8,9 +8,9 @@
 #include "MiniMap.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
-#include "SDL_keysym.h"
-#include "SDL_mouse.h"
-#include "SDL_types.h"
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+#include <SDL_types.h>
 #include "CommandColors.h"
 #include "GuiHandler.h"
 #include "InfoConsole.h"
@@ -29,17 +29,19 @@
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/IconHandler.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/Sound.h"
 #include "mmgr.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -64,46 +66,120 @@ CMiniMap::CMiniMap()
 	mouseLook(false),
 	maximized(false),
 	minimized(false),
+	showButtons(false),
 	useIcons(true)
 {
-	float hw=sqrt(float(gs->mapx)/gs->mapy);
-	if(gu->dualScreenMode) {
+	lastWindowSizeX = gu->screenx;
+	lastWindowSizeY = gu->screeny;
+	
+	float hw = sqrt(float(gs->mapx) / float(gs->mapy));
+	if (gu->dualScreenMode) {
 		width = gu->screenx;
 		height = gu->screeny;
-		xpos = gu->screenx - gu->screenxPos;
+		xpos = (gu->screenx - gu->screenxPos);
 		ypos = 0;
-	}
-	else {
-		width = (int) (width*hw);
-		height = (int) (height/hw);
+	} else {
+		width = (int)(width * hw);
+		height = (int)(height / hw);
 		ypos = gu->screeny - height - 2;
 	}
 
-	fullProxy = !!configHandler.GetInt("MiniMapFullProxy", 0);
+	fullProxy = !!configHandler.GetInt("MiniMapFullProxy", 1);
+	
+	buttonSize = configHandler.GetInt("MiniMapButtonSize", 16);
+	
+	unitBaseSize =
+		atof(configHandler.GetString("MiniMapUnitSize", "2.5").c_str());
+	unitBaseSize = max(0.0f, unitBaseSize);
+
+	unitExponent =
+		atof(configHandler.GetString("MiniMapUnitExp", "0.25").c_str());
 
 	cursorScale =
 		atof(configHandler.GetString("MiniMapCursorScale", "-0.5").c_str());
 
 	useIcons = !!configHandler.GetInt("MiniMapIcons", 1);
 	
-	simpleColors=!!configHandler.GetInt("SimpleMiniMapColors", 0);
-	myColor[0]   =(unsigned char)(0.2f*255);
-	myColor[1]   =(unsigned char)(0.9f*255);
-	myColor[2]   =(unsigned char)(0.2f*255);
-	myColor[3]   =(unsigned char)(1.0f*255);
-	allyColor[0] =(unsigned char)(0.3f*255);
-	allyColor[1] =(unsigned char)(0.3f*255);
-	allyColor[2] =(unsigned char)(0.9f*255);
-	allyColor[3] =(unsigned char)(1.0f*255);
-	enemyColor[0]=(unsigned char)(0.9f*255);
-	enemyColor[1]=(unsigned char)(0.2f*255);
-	enemyColor[2]=(unsigned char)(0.2f*255);
-	enemyColor[3]=(unsigned char)(1.0f*255);
+	drawCommands = !!configHandler.GetInt("MiniMapDrawCommands", 0);
+	
+	simpleColors = !!configHandler.GetInt("SimpleMiniMapColors", 0);
+
+	myColor[0]    = (unsigned char)(0.2f * 255);
+	myColor[1]    = (unsigned char)(0.9f * 255);
+	myColor[2]    = (unsigned char)(0.2f * 255);
+	myColor[3]    = (unsigned char)(1.0f * 255);
+	allyColor[0]  = (unsigned char)(0.3f * 255);
+	allyColor[1]  = (unsigned char)(0.3f * 255);
+	allyColor[2]  = (unsigned char)(0.9f * 255);
+	allyColor[3]  = (unsigned char)(1.0f * 255);
+	enemyColor[0] = (unsigned char)(0.9f * 255);
+	enemyColor[1] = (unsigned char)(0.2f * 255);
+	enemyColor[2] = (unsigned char)(0.2f * 255);
+	enemyColor[3] = (unsigned char)(1.0f * 255);
+
+	UpdateGeometry();
+	
+	circleLists = glGenLists(circleListsCount);
+	for (int cl = 0; cl < circleListsCount; cl++) {
+		glNewList(circleLists + cl, GL_COMPILE);
+		glBegin(GL_LINE_LOOP);
+		const int divs = (1 << (cl + 3));
+		for (int d = 0; d < divs; d++) {
+			const float rads = float(2.0 * PI) * float(d) / float(divs);
+			glVertex2f(sin(rads), cos(rads));
+		}
+		glEnd();
+		glEndList();
+	}
+
+	// setup the buttons' texture and texture coordinates
+	buttonsTexture = 0;
+	CBitmap bitmap;
+	bool unfiltered = false;
+	if (bitmap.Load("bitmaps/minimapbuttons.png")) {
+		if ((bitmap.ysize == buttonSize) && (bitmap.xsize == (buttonSize * 4))) {
+			unfiltered = true;
+		}
+		glGenTextures(1, &buttonsTexture);
+		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+								 bitmap.xsize, bitmap.ysize, 0,
+								 GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		if (unfiltered) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		}
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	const float xshift = unfiltered ? 0.0f : (0.5f / bitmap.xsize);
+	const float yshift = unfiltered ? 0.0f : (0.5f / bitmap.ysize);
+	    moveBox.xminTx = 0.50f + xshift;
+	    moveBox.xmaxTx = 0.75f - xshift;
+	  resizeBox.xminTx = 0.75f + xshift;
+	  resizeBox.xmaxTx = 1.00f - xshift;
+	minimizeBox.xminTx = 0.00f + xshift;
+	minimizeBox.xmaxTx = 0.25f - xshift;
+	maximizeBox.xminTx = 0.25f + xshift;
+	maximizeBox.xmaxTx = 0.50f - xshift;
+	    moveBox.yminTx = 1.00f - yshift;
+	  resizeBox.yminTx = 1.00f - yshift;
+	minimizeBox.yminTx = 1.00f - yshift;
+	maximizeBox.yminTx = 1.00f - yshift;
+	    moveBox.ymaxTx = 0.00f + yshift;
+	  resizeBox.ymaxTx = 0.00f + yshift;
+	minimizeBox.ymaxTx = 0.00f + yshift;
+	maximizeBox.ymaxTx = 0.00f + yshift;
 }
 
 
 CMiniMap::~CMiniMap()
 {
+	glDeleteLists(circleLists, circleListsCount);
 }
 
 
@@ -112,7 +188,7 @@ CMiniMap::~CMiniMap()
 bool CMiniMap::MousePress(int x, int y, int button)
 {
 	if (minimized) {
-		if (x<10 && y<10) {
+		if ((x < buttonSize) && (y < buttonSize)) {
 			minimized = false;
 			return true;
 		} else {
@@ -120,40 +196,50 @@ bool CMiniMap::MousePress(int x, int y, int button)
 		}
 	}
 
-	if ((x <= xpos) || (x >= (xpos + width)) ||
-	    (y <= (gu->screeny - ypos - height)) || (y >= (gu->screeny - ypos))) {
-		return false; // outside the box
+	const bool inMap = mapBox.Inside(x, y);
+	const bool inButtons = buttonBox.Inside(x, y);
+	
+	if (!inMap && !inButtons) {
+		return false;
 	}
 	
-	if (button == SDL_BUTTON_LEFT){
-		if (guihandler->inCommand >= 0) {
+	if (button == SDL_BUTTON_LEFT) {
+		if (inMap && (guihandler->inCommand >= 0)) {
 			proxyMode = true;
 			ProxyMousePress(x, y, button);
 			return true;
 		}
-		else if ((x > (xpos + width - 10)) && (y > (gu->screeny - ypos - 10))) {
-			mouseResize = true;
-			return true;
+		if (showButtons && inButtons) {
+			if (moveBox.Inside(x, y)) {
+				mouseMove = true;
+				return true;
+			}
+			else if (resizeBox.Inside(x, y)) {
+				mouseResize = true;
+				return true;
+			}
+			else if (minimizeBox.Inside(x, y) ||
+			         maximizeBox.Inside(x, y)) {
+				return true;
+			}
 		}
-		else if ((x < (xpos + 10)) && (y < (gu->screeny - ypos - height + 10))) {
-			mouseMove = true;
-			return true;
-		}
-		else if (!mouse->buttons[SDL_BUTTON_LEFT].chorded) {
+		if (inMap && !mouse->buttons[SDL_BUTTON_LEFT].chorded) {
 			selecting = true;
 			return true;
 		}
 	}
-	else if ((fullProxy && (button == SDL_BUTTON_MIDDLE)) ||
-					 (!fullProxy && (button == SDL_BUTTON_RIGHT))) {
-		MoveView(x, y);
-		mouseLook = true;
-		return true;
-	}
-	else if (fullProxy && (button == SDL_BUTTON_RIGHT)) {
-		proxyMode = true;
-		ProxyMousePress(x, y, button);
-		return true;
+	else if (inMap) {
+		if ((fullProxy && (button == SDL_BUTTON_MIDDLE)) ||
+				(!fullProxy && (button == SDL_BUTTON_RIGHT))) {
+			MoveView(x, y);
+			mouseLook = true;
+			return true;
+		}
+		else if (fullProxy && (button == SDL_BUTTON_RIGHT)) {
+			proxyMode = true;
+			ProxyMousePress(x, y, button);
+			return true;
+		}
 	}
 	
 	return false;
@@ -171,32 +257,33 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		} else {
 			xpos = min(gu->screenx - width, xpos);
 		}
-		ypos = min(gu->screeny - height, ypos);
-		ypos = max(0, ypos);
+		ypos = max(5, min(gu->screeny - height, ypos));
+		UpdateGeometry();
 		return;
 	}
 
 	if (mouseResize) {
-		ypos-=dy;
-		height+=dy;
-		width+=dx;
+		ypos   -= dy;
+		width  += dx;
+		height += dy;
 		height = min(gu->screeny, height);
 		if (gu->dualScreenMode) {
-			width = min(2*gu->screenx, width);
+			width = min(2 * gu->screenx, width);
 		} else {
 			width = min(gu->screenx, width);
 		}
 		if (keys[SDLK_LSHIFT]) {
 			width = (height * gs->mapx) / gs->mapy;
 		}
+		width = max(5, width);
+		height = max(5, height);
+		ypos = min(gu->screeny - height, ypos);
+		UpdateGeometry();
 		return;
 	}
 	
-	if (mouseLook) {
-		if ((x > xpos) && (x < (xpos + width)) &&
-		    (y > (gu->screeny - ypos - height)) && (y < (gu->screeny - ypos))) {
+	if (mouseLook && mapBox.Inside(x, y)) {
 			MoveView(x,y);
-		}
 		return;
 	}
 }
@@ -224,7 +311,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 	}
 
 	if (button == SDL_BUTTON_LEFT) {
-		if (x>xpos+width-10 && y<gu->screeny-ypos-height+10){
+		if (showButtons && maximizeBox.Inside(x, y)) {
 			if (maximized) {
 				maximized = false;
 				xpos = oldxpos;
@@ -237,18 +324,119 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 				oldypos = ypos;
 				oldwidth = width;
 				oldheight = height;
-				width = height;
 				height = gu->screeny;
+				width = height;
 				xpos = (gu->screenx - gu->screeny) / 2;
 				ypos = 0;
 			}
+			UpdateGeometry();
 			return;
 		}
 
-		if((x < (xpos + 10)) && (y > (gu->screeny - ypos - 10))){
+		if (showButtons && minimizeBox.Inside(x, y)) {
 			minimized = true;
 			return;
 		}
+	}
+}
+
+
+void CMiniMap::UpdateGeometry()
+{
+	// try to keep the same distance to the top
+	ypos -= (lastWindowSizeY - gu->screeny);
+	if (!maximized && (gu->screenx >= gu->screeny) && !(gu->dualScreenMode)) {
+		ypos = max(buttonSize, ypos);
+		ypos = min(gu->screeny - height, ypos);
+		xpos = max(0, min(gu->screenx - width, xpos));
+	}
+	lastWindowSizeX = gu->screenx;
+	lastWindowSizeY = gu->screeny;
+
+	// setup the unit scaling	
+	const float w = float(width);
+	const float h = float(height);
+	const float mapx = float(gs->mapx * SQUARE_SIZE);
+	const float mapy = float(gs->mapy * SQUARE_SIZE);
+	const float ref  = unitBaseSize / powf((200.f * 200.0f), unitExponent);
+	const float dpr  = ref * powf((w * h), unitExponent);
+
+	unitSizeX = dpr * (mapx / w);
+	unitSizeY = dpr * (mapy / h);
+	unitSelectRadius = sqrtf(unitSizeX * unitSizeY);
+
+	// in mouse coordinates
+	mapBox.xmin = xpos;
+	mapBox.xmax = mapBox.xmin + width - 1;
+	mapBox.ymin = gu->screeny - (ypos + height);
+	mapBox.ymax = mapBox.ymin + height - 1;
+
+	if (gu->dualScreenMode) {
+		moveBox.xmin = mapBox.xmin;
+		moveBox.xmax = mapBox.xmin + (buttonSize - 1);
+		minimizeBox.xmin = moveBox.xmin;
+		minimizeBox.xmax = moveBox.xmax;
+		maximizeBox.xmin = mapBox.xmax - (buttonSize - 1);
+		maximizeBox.xmax = mapBox.xmax;
+		resizeBox.xmin   = maximizeBox.xmin;
+		resizeBox.xmax   = maximizeBox.xmax;
+
+		moveBox.ymin     = mapBox.ymin;
+		moveBox.ymax     = mapBox.ymin + (buttonSize - 1);
+		maximizeBox.ymin = moveBox.ymin;
+		maximizeBox.ymax = moveBox.ymax;
+		minimizeBox.ymin = mapBox.ymax - (buttonSize - 1);
+		minimizeBox.ymax = mapBox.ymax;
+		resizeBox.ymin   = minimizeBox.ymin;
+		resizeBox.ymax   = minimizeBox.ymax;
+
+		buttonBox = mapBox;
+
+		return;
+	}
+		
+	if (!maximized || (gu->screeny > gu->screenx)) {
+//		resizeBox.xmax   = mapBox.xmin + (buttonSize * 4) - 1;  FIXME (start on the left)?
+		// right to left
+		resizeBox.xmax   = mapBox.xmax;
+		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
+		moveBox.xmax     = resizeBox.xmax   - buttonSize;
+		moveBox.xmin     = resizeBox.xmin   - buttonSize;
+		maximizeBox.xmax = moveBox.xmax     - buttonSize;
+		maximizeBox.xmin = moveBox.xmin     - buttonSize;
+		minimizeBox.xmax = maximizeBox.xmax - buttonSize;
+		minimizeBox.xmin = maximizeBox.xmin - buttonSize;
+
+		const int ymin = (mapBox.ymax + 1) + 3; // 3 for the white|black|white
+		const int ymax = ymin + (buttonSize - 1);
+		resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
+		resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
+
+		buttonBox.xmin = minimizeBox.xmin;
+		buttonBox.xmax = resizeBox.xmax;
+		buttonBox.ymin = ymin - 3;
+		buttonBox.ymax = ymax;
+	}
+	else {
+		// top to bottom
+		resizeBox.ymin   = mapBox.ymin;
+		resizeBox.ymax   = mapBox.ymin + (buttonSize - 1);
+		moveBox.ymin     = resizeBox.ymin   + buttonSize;
+		moveBox.ymax     = resizeBox.ymax   + buttonSize;
+		maximizeBox.ymin = moveBox.ymin     + buttonSize;
+		maximizeBox.ymax = moveBox.ymax     + buttonSize;
+		minimizeBox.ymin = maximizeBox.ymin + buttonSize;
+		minimizeBox.ymax = maximizeBox.ymax + buttonSize;
+
+		const int xmax = (mapBox.xmin - 1) - 3; // // 3 for the white|black|white
+		const int xmin = xmax - (buttonSize - 1);
+		resizeBox.xmin = moveBox.xmin = maximizeBox.xmin = minimizeBox.xmin = xmin;
+		resizeBox.xmax = moveBox.xmax = maximizeBox.xmax = minimizeBox.xmax = xmax;
+
+		buttonBox.xmin = xmin;
+		buttonBox.xmax = xmax + 3;
+		buttonBox.ymin = resizeBox.ymin;
+		buttonBox.ymax = minimizeBox.ymax;
 	}
 }
 
@@ -257,58 +445,18 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 void CMiniMap::MoveView(int x, int y)
 {
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+camera->forward*gu->viewRange*1.4f);
+	const float3& pos = camera->pos;
+	const float3& dir = camera->forward;
+	float dist = ground->LineGroundCol(pos, pos + (dir * gu->viewRange * 1.4f));
 	float3 dif(0,0,0);
-	if(dist>0){
-		dif=camera->forward*dist;
+	if (dist > 0) {
+		dif = dir * dist;
 	}
-	float camHeight=camera->pos.y-ground->GetHeight(camera->pos.x,camera->pos.z);
+	float camHeight = pos.y - ground->GetHeight(pos.x, pos.z);
 	float3 clickPos;
-	clickPos.x=(float(x-xpos))/width*gs->mapx*8;
-	clickPos.z=(float(y-(gu->screeny-ypos-height)))/height*gs->mapy*8;
+	clickPos.x = (float(x - xpos)) / width * gs->mapx * 8;
+	clickPos.z = (float(y - (gu->screeny - ypos - height))) / height * gs->mapy * 8;
 	mouse->currentCamController->SetPos(clickPos);
-}
-
-
-void CMiniMap::SelectUnit(CUnit* unit, int button) const
-{
-	CMouseHandler::ButtonPress& press = mouse->buttons[button];
-
-	if(!keys[SDLK_LSHIFT]) {
-		selectedUnits.ClearSelected();
-	}
-
-	if(press.lastRelease < (gu->gameTime - mouse->doubleClickTime)){
-		if(keys[SDLK_LCTRL] &&
-		   (selectedUnits.selectedUnits.find(unit) !=
-		    selectedUnits.selectedUnits.end())) {
-			selectedUnits.RemoveUnit(unit);
-		} else {
-			selectedUnits.AddUnit(unit);
-		}
-	} else {
-		//double click
-		if (unit->group && !keys[SDLK_LCTRL]){
-			//select the current unit's group if it has one
-			selectedUnits.SelectGroup(unit->group->id);
-		} else {
-			//select all units of same type
-			set<CUnit*>::iterator ui;
-			set<CUnit*>& myTeamUnits = gs->Team(gu->myTeam)->units;
-			for (ui = myTeamUnits.begin(); ui != myTeamUnits.end(); ++ui) {
-				if ((*ui)->aihint == unit->aihint) {
-					selectedUnits.AddUnit(*ui);
-				}
-			}
-		}
-	}
-
-	press.lastRelease = gu->gameTime;
-
-	if (unit->unitDef->sounds.select.id) {
-		sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit,
-		                     unit->unitDef->sounds.select.volume);
-	}
 }
 
 
@@ -361,8 +509,8 @@ void CMiniMap::SelectUnits(int x, int y) const
 	}
 	else {
 		// Single unit
-		float size = 0.2f / sqrt((float)(width + height)) * gs->mapx * SQUARE_SIZE;
-		float3 pos = GetMapPosition(x, y);
+		const float size = unitSelectRadius;
+		const float3 pos = GetMapPosition(x, y);
 		CUnit* unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
 
 		set<CUnit*>::iterator ui;
@@ -405,9 +553,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 CUnit* CMiniMap::GetSelectUnit(const float3& pos) const
 {
-	const float mapX = gs->mapx * SQUARE_SIZE;
-	const float size = 0.2f / sqrt((float)(width + height)) * mapX;
-	CUnit* unit = helper->GetClosestUnit(pos, size);
+	CUnit* unit = helper->GetClosestUnit(pos, unitSelectRadius);
 	if (unit != NULL) {
 		const int losMask = (LOS_INLOS | LOS_INRADAR);
 		if ((unit->losStatus[gu->myAllyTeam] & losMask) || gu->spectating) {
@@ -475,13 +621,17 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 
 bool CMiniMap::IsAbove(int x, int y)
 {
-	if(minimized && x<10 && y<10){
+	if (minimized) {
+		if ((x < buttonSize) && (y < buttonSize)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	else if (mapBox.Inside(x, y)) {
 		return true;
 	}
-	if(minimized)
-		return false;
-
-	if((x>xpos) && (x<xpos+width) && (y>gu->screeny-ypos-height) && (y<gu->screeny-ypos)){
+	else if (showButtons && buttonBox.Inside(x, y)) {
 		return true;
 	}
 	return false;
@@ -490,20 +640,28 @@ bool CMiniMap::IsAbove(int x, int y)
 
 std::string CMiniMap::GetTooltip(int x, int y)
 {
-	if(minimized)
+	if (minimized) {
 		return "Unminimize map";
+	}
 
-	if(x<xpos+10 && y>gu->screeny-ypos-10)
-		return "Minimize map";
-
-	if(x>xpos+width-10 && y<gu->screeny-ypos-height+10)
-		return "Maximize map";
-
-	if(x>xpos+width-10 && y>gu->screeny-ypos-10)
-		return "Resize map";
-
-	if (x<xpos+10 && y<gu->screeny-ypos-height+10)
-		return "Move map";
+	if (buttonBox.Inside(x, y)) {
+		if (resizeBox.Inside(x, y)) {
+			return "Resize map\n(SHIFT to maintain aspect ratio)";
+		}
+		if (moveBox.Inside(x, y)) {
+			return "Move map";
+		}
+		if (maximizeBox.Inside(x, y)) {
+			if (!maximized) {
+				return "Maximize map";
+			} else {
+				return "Unmaximize map";
+			}
+		}
+		if (minimizeBox.Inside(x, y)) {
+			return "Minimize map";
+		}
+	}
 
 	const string buildTip = guihandler->GetBuildTooltip();
 	if (!buildTip.empty()) {
@@ -529,7 +687,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		// FBI tag hideDamage and isn't on our ally team
 		if(!(!gu->spectating && unit->unitDef->hideDamage &&
 		     (gs->AllyTeam(unit->team) != gu->myAllyTeam))){
-			char tmp[500];
+			char tmp[512];
 
 			sprintf(tmp,"\nHealth %.0f/%.0f",unit->health,unit->maxHealth);
 			s+=tmp;
@@ -554,7 +712,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	
 	float3 pos(float(x-xpos)/width*gs->mapx*SQUARE_SIZE,500,float(y-(gu->screeny-ypos-height))/height*gs->mapx*SQUARE_SIZE);
 
-	char tmp[500];
+	char tmp[512];
 
 	CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
 	string ttype=tt->name;
@@ -574,10 +732,12 @@ std::string CMiniMap::GetTooltip(int x, int y)
 void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 {
 	Notification n;
-	n.pos=pos;
-	n.color=color;
-	n.alpha=alpha;
-	n.creationTime=gu->gameTime;
+	n.pos = pos;
+	n.color[0] = color.x;
+	n.color[1] = color.y;
+	n.color[2] = color.z;
+	n.color[3] = alpha;
+	n.creationTime = gu->gameTime;
 
 	notes.push_back(n);
 }
@@ -585,66 +745,113 @@ void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 
 /******************************************************************************/
 
-inline void CMiniMap::DrawInMap(const float3& pos)
+inline void DrawInMap2D(float x, float z)
 {
-	glVertex2f(pos.x/(gs->mapx*SQUARE_SIZE),1-pos.z/(gs->mapy*SQUARE_SIZE));
+	glVertex2f(x, z);
+}
+
+
+void CMiniMap::DrawCircle(float x, float z, float radius)
+{
+	glPushMatrix();
+	glTranslatef(x, z, 0.0f);
+	glScalef(radius, radius, 1.0f);
+	
+	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
+	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
+	const int divs = max(8, (int)(1.5f * min(xPixels, yPixels)));
+	
+	glCallList(circleLists + 3); // FIXME
+
+	glPopMatrix();
 }
 
 
 void CMiniMap::Draw()
 {
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	if(minimized){
-		glColor4f(1,1,1,0.5f);
-		glDisable(GL_TEXTURE_2D);
-		glViewport(gu->screenxPos,gu->screeny-10,10,10);
-		glBegin(GL_QUADS);
-		glVertex2f(0,0);
-		glVertex2f(1,0);
-		glVertex2f(1,1);
-		glVertex2f(0,1);
-		glEnd();
-		glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	if (minimized) {
+		const int bs = buttonSize + 0;
+		glViewport(gu->screenxPos + 1, gu->screeny - bs - 1, bs, bs);
+		if (!buttonsTexture) {
+			glDisable(GL_TEXTURE_2D);
+			glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+		} else {
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, buttonsTexture);
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			const IntBox& mb = minimizeBox;
+			glBegin(GL_QUADS);
+				glTexCoord2f(mb.xminTx, mb.yminTx); glVertex2f(0.0f, 0.0f);
+				glTexCoord2f(mb.xmaxTx, mb.yminTx); glVertex2f(1.0f, 0.0f);
+				glTexCoord2f(mb.xmaxTx, mb.ymaxTx); glVertex2f(1.0f, 1.0f);
+				glTexCoord2f(mb.xminTx, mb.ymaxTx); glVertex2f(0.0f, 1.0f);
+			glEnd();
+			glDisable(GL_TEXTURE_2D);
+		}
+		// highlight
+		if ((mouse->lastx < buttonSize) && (mouse->lasty < buttonSize)) {
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
+			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+		// outline
+		glViewport(gu->screenxPos, gu->screeny - bs - 2, bs + 2, bs + 2);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glLineWidth(1.51f);
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+		glLineWidth(1.0f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
 		return;
 	}
 
-	glViewport(xpos,ypos,width,height);
-	glLoadIdentity();             // Reset The Current Modelview Matrix
-	glMatrixMode(GL_PROJECTION);  // Select The Projection Matrix
-	glLoadIdentity();             // Reset The Projection Matrix
-	gluOrtho2D(0,1,0,1);
-	glMatrixMode(GL_MODELVIEW);   // Select The Modelview Matrix
+	glViewport(xpos, ypos, width, height);
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, 1.0, 0.0, 1.0, -1.0e6, +1.0e6);
+	glMatrixMode(GL_MODELVIEW);
 
-	glColor4f(0.6f,0.6f,0.6f,1);
+	glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
 
+	// draw the map
+	glDisable(GL_BLEND);
 	readmap->DrawMinimap();
-
 	glEnable(GL_BLEND);
-	float size=0.25f/sqrt((float)width+height);
 
+	// move some of the transform to the GPU
+	glTranslatef(0.0f, +1.0f, 0.0f);
+	glScalef(+1.0f / (gs->mapx * SQUARE_SIZE), -1.0f / (gs->mapy * SQUARE_SIZE), 1.0);
+	
 	// draw the units
 	list<CUnit*>::iterator ui;
 	for(ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();ui++){
-		DrawUnit(*ui, size);
+		DrawUnit(*ui);
 	}
 	
 	// highlight the selected unit
 	CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 	if (unit != NULL) {
-		DrawUnitHighlight(unit, size);
+		DrawUnitHighlight(unit);
 	}
 
 	glDisable(GL_TEXTURE_2D);
 
 	left.clear();
 
-	//Add restraints for camera sides
+	// add restraints for camera sides
 	GetFrustumSide(cam2->bottom);
 	GetFrustumSide(cam2->top);
 	GetFrustumSide(cam2->rightside);
 	GetFrustumSide(cam2->leftside);
 
+	// draw the camera lines
 	std::vector<fline>::iterator fli,fli2;
 	for(fli=left.begin();fli!=left.end();fli++){
 	  for(fli2=left.begin();fli2!=left.end();fli2++){
@@ -665,65 +872,67 @@ void CMiniMap::Draw()
 	}
 	glColor4f(1,1,1,0.5f);
 	glBegin(GL_LINES);
-	for(fli=left.begin();fli!=left.end();fli++){
-		if(fli->minz<fli->maxz){
-			DrawInMap(float3(fli->base+fli->dir*fli->minz,0,fli->minz));
-			DrawInMap(float3(fli->base+fli->dir*fli->maxz,0,fli->maxz));
+	for(fli = left.begin(); fli != left.end(); fli++) {
+		if(fli->minz < fli->maxz) {
+			DrawInMap2D(fli->base + (fli->dir * fli->minz), fli->minz);
+			DrawInMap2D(fli->base + (fli->dir * fli->maxz), fli->maxz);
 		}
 	}
 	glEnd();
 
+	// draw the projectiles
+	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
+
 	glColor4f(1,1,1,0.0002f*(width+height));
 	glBegin(GL_POINTS);
-		Projectile_List::iterator psi;
-		for(psi=ph->ps.begin();psi != ph->ps.end();++psi){
-			CProjectile* p=*psi;
-			if((p->owner && p->owner->allyteam==gu->myAllyTeam) || loshandler->InLos(p,gu->myAllyTeam)){
-				DrawInMap((*psi)->pos);
-			}
+	Projectile_List::iterator psi;
+	for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
+		CProjectile* p=*psi;
+		if((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
+		   loshandler->InLos(p, gu->myAllyTeam)) {
+			glVertexf3((*psi)->pos);
 		}
+	}
 	glEnd();
 
-	for(set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
-		if((*si)->radarRadius && !(*si)->beingBuilt && (*si)->activated){
-			glColor3f(0.3f,1,0.3f);
-			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrt((float)height)*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
-			for(int a=0;a<=numSegments;++a){
-				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->radarRadius*(SQUARE_SIZE*RADAR_SIZE));
-			}
-			glEnd();
+	// draw the queued commands
+	if (drawCommands && guihandler->GetQueueKeystate()) {
+	  // NOTE: this needlessly adds to the CursorIcons list, but at least
+	  //       they are not drawn  (because the input receivers are drawn
+	  //       after the command queues)
+	  selectedUnits.DrawCommands();
+	  glDisable(GL_DEPTH_TEST);
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	
+	glRotatef(+90.0f, +1.0f, 0.0f, 0.0f); // revert to the 2d xform
+
+	// draw unit ranges
+	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
+	set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	for(set<CUnit*>::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
+		CUnit* unit = *si;
+		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
+			glColor3f(0.3f,1.0f,0.3f);
+			DrawCircle(unit->pos.x, unit->pos.z, (unit->radarRadius * radarSquare));
 		}
-		if((*si)->sonarRadius && !(*si)->beingBuilt && (*si)->activated){
-			glColor3f(0.3f,1,0.3f);
-			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrt((float)height)*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
-			for(int a=0;a<=numSegments;++a){
-				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->sonarRadius*(SQUARE_SIZE*RADAR_SIZE));
-			}
-			glEnd();
+		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
+			glColor3f(0.3f,1.0f,0.3f);
+			DrawCircle(unit->pos.x, unit->pos.z, (unit->sonarRadius * radarSquare));
 		}
-		if((*si)->jammerRadius && !(*si)->beingBuilt && (*si)->activated){
+		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
 			glColor3f(1.0f,0.2f,0.2f);
-			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrt((float)height)*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE)/2000)+8;
-			for(int a=0;a<=numSegments;++a){
-				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*(*si)->jammerRadius*(SQUARE_SIZE*RADAR_SIZE));
-			}
-			glEnd();
+			DrawCircle(unit->pos.x, unit->pos.z, (unit->jammerRadius * radarSquare));
 		}
-		if((*si)->stockpileWeapon && (*si)->stockpileWeapon->weaponDef->interceptor){		//change if someone someday create a non stockpiled interceptor
-			CWeapon* w=(*si)->stockpileWeapon;
-			if(w->numStockpiled)
+		// change if someone someday create a non stockpiled interceptor
+		if(unit->stockpileWeapon && unit->stockpileWeapon->weaponDef->interceptor) {
+			CWeapon* w = unit->stockpileWeapon;
+			if (w->numStockpiled) {
 				glColor4f(1.0f,1.0f,1.0f,1.0f);
-			else
+			} else {
 				glColor4f(0.0f,0.0f,0.0f,0.6f);
-			glBegin(GL_LINE_STRIP);
-			int numSegments=(int)(sqrt((float)height)*w->weaponDef->coverageRange/2000)+8;
-			for(int a=0;a<=numSegments;++a){
-				DrawInMap((*si)->pos+float3(sin(a*2*PI/numSegments),0,cos(a*2*PI/numSegments))*w->weaponDef->coverageRange);
 			}
-			glEnd();
+			DrawCircle(unit->pos.x, unit->pos.z, w->weaponDef->coverageRange);
 		}
 	}
 
@@ -738,10 +947,10 @@ void CMiniMap::Draw()
 		            (GLenum)cmdColors.MouseBoxBlendDst());
 		glLineWidth(cmdColors.MouseBoxLineWidth());
 		glBegin(GL_LINE_LOOP);
-			DrawInMap(float3(oldPos.x, 0.0f, oldPos.z));
-			DrawInMap(float3(newPos.x, 0.0f, oldPos.z));
-			DrawInMap(float3(newPos.x, 0.0f, newPos.z));
-			DrawInMap(float3(oldPos.x, 0.0f, newPos.z));
+			DrawInMap2D(oldPos.x, oldPos.z);
+			DrawInMap2D(newPos.x, oldPos.z);
+			DrawInMap2D(newPos.x, newPos.z);
+			DrawInMap2D(oldPos.x, newPos.z);
 		glEnd();
 		glLineWidth(1.0f);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -749,36 +958,10 @@ void CMiniMap::Draw()
 	
 	DrawNotes();
 
-	glColor4f(1,1,1,0.5f);
-	glViewport(xpos,ypos,10,10);
-	glBegin(GL_QUADS);
-	glVertex2f(0,0);
-	glVertex2f(1,0);
-	glVertex2f(1,1);
-	glVertex2f(0,1);
-	glEnd();
-	glViewport(xpos+width-10,ypos,10,10);
-	glBegin(GL_QUADS);
-	glVertex2f(0,0);
-	glVertex2f(1,0);
-	glVertex2f(1,1);
-	glVertex2f(0,1);
-	glEnd();
-	glViewport(xpos+width-10,ypos+height-10,10,10);
-	glBegin(GL_QUADS);
-	glVertex2f(0,0);
-	glVertex2f(1,0);
-	glVertex2f(1,1);
-	glVertex2f(0,1);
-	glEnd();
-	glViewport(xpos,ypos+height-10,10,10);
-	glBegin(GL_QUADS);
-	glVertex2f(0,0);
-	glVertex2f(1,0);
-	glVertex2f(1,1);
-	glVertex2f(0,1);
-	glEnd();
-
+	glLoadIdentity(); // reset the modelview
+	
+	DrawButtons();
+	
 	// outline
 	glLineWidth(1.51f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -791,7 +974,117 @@ void CMiniMap::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glLineWidth(1.0f);
 	
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+}
+
+
+void CMiniMap::IntBox::DrawBox() const
+{
+	glViewport(xmin, gu->screeny - ymax - 1,
+	           (xmax - xmin) + 1, (ymax - ymin) + 1);
+	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+}
+
+
+void CMiniMap::IntBox::DrawTextureBox() const
+{
+	glViewport(xmin, gu->screeny - ymax - 1,
+	           (xmax - xmin) + 1, (ymax - ymin) + 1);
+	glBegin(GL_QUADS);
+		glTexCoord2f(xminTx, yminTx); glVertex2f(0.0f, 0.0f);
+		glTexCoord2f(xmaxTx, yminTx); glVertex2f(1.0f, 0.0f);
+		glTexCoord2f(xmaxTx, ymaxTx); glVertex2f(1.0f, 1.0f);
+		glTexCoord2f(xminTx, ymaxTx); glVertex2f(0.0f, 1.0f);
+	glEnd();
+}
+
+
+void CMiniMap::DrawButtons()
+{
+	const int x = mouse->lastx;
+	const int y = mouse->lasty;
+	
+	// update the showButtons state
+	if (!showButtons) {
+		if (mapBox.Inside(x, y) && (buttonSize > 0)) {
+			showButtons = true;
+		} else {
+			return;
+		}
+	}	else if (!mouseMove && !mouseResize &&
+	           !mapBox.Inside(x, y)&& !buttonBox.Inside(x, y)) {
+		showButtons = false;
+		return;
+	}
+
+	if (buttonsTexture) {
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		resizeBox.DrawTextureBox();
+		moveBox.DrawTextureBox();
+		maximizeBox.DrawTextureBox();
+		minimizeBox.DrawTextureBox();
+		glDisable(GL_TEXTURE_2D);
+	} else {
+		glColor4f(0.1f, 0.1f, 0.8f, 0.8f); resizeBox.DrawBox();   // blue
+		glColor4f(0.0f, 0.8f, 0.0f, 0.8f); moveBox.DrawBox();     // green
+		glColor4f(0.8f, 0.8f, 0.0f, 0.8f); maximizeBox.DrawBox(); // yellow
+		glColor4f(0.8f, 0.0f, 0.0f, 0.8f); minimizeBox.DrawBox(); // red
+	}
+
+	// highlight
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
+	if (mouseResize || (!mouseMove && resizeBox.Inside(x, y))) {
+		if (!buttonsTexture) { glColor4f(0.3f, 0.4f, 1.0f, 0.9f); }
+		resizeBox.DrawBox();
+	}
+	else if (mouseMove || (!mouseResize && moveBox.Inside(x, y))) {
+		if (!buttonsTexture) { glColor4f(1.0f, 1.0f, 1.0f, 0.3f); }
+		moveBox.DrawBox();
+	}
+	else if (!mouseMove && !mouseResize) {
+		if (minimizeBox.Inside(x, y)) {
+			if (!buttonsTexture) { glColor4f(1.0f, 0.2f, 0.2f, 0.6f); }
+			minimizeBox.DrawBox();
+		} else if (maximizeBox.Inside(x, y)) {
+			if (!buttonsTexture) { glColor4f(1.0f, 1.0f, 1.0f, 0.3f); }
+			maximizeBox.DrawBox();
+		}
+	}
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// outline the button box
+	if (!gu->dualScreenMode) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glLineWidth(1.51f);
+		if (!maximized || (gu->screeny > gu->screenx)) {
+			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+			glViewport(buttonBox.xmin - 2, (gu->screeny - buttonBox.ymax - 1) - 2,
+			           (buttonBox.xmax - buttonBox.xmin + 1) + 4,
+			           (buttonBox.ymax - buttonBox.ymin + 1) + 4 - 3);
+			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glViewport(buttonBox.xmin - 1, (gu->screeny - buttonBox.ymax - 1) - 1,
+			           (buttonBox.xmax - buttonBox.xmin + 1) + 2,
+			           (buttonBox.ymax - buttonBox.ymin + 1) + 2 - 3);
+			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+		} else {
+			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+			glViewport(buttonBox.xmin - 2, (gu->screeny - buttonBox.ymax - 1) - 2,
+			           (buttonBox.xmax - buttonBox.xmin + 1) + 4 - 3,
+			           (buttonBox.ymax - buttonBox.ymin + 1) + 4);
+			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glViewport(buttonBox.xmin - 1, (gu->screeny - buttonBox.ymax - 1) - 1,
+			           (buttonBox.xmax - buttonBox.xmin + 1) + 2 - 3,
+			           (buttonBox.ymax - buttonBox.ymin + 1) + 2);
+			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+		}
+		glLineWidth(1.0f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 }
 
 
@@ -800,13 +1093,13 @@ void CMiniMap::GetFrustumSide(float3& side)
 	fline temp;
 	float3 up(0,1,0);
 
-	float3 b=up.cross(side);		//get vector for collision between frustum and horizontal plane
+	float3 b=up.cross(side);  // get vector for collision between frustum and horizontal plane
 	if(fabs(b.z)<0.0001f)
 		b.z=0.00011f;
 	if(fabs(b.z)>0.0001f){
-		temp.dir=b.x/b.z;				//set direction to that
-		float3 c=b.cross(side);			//get vector from camera to collision line
-		float3 colpoint;				//a point on the collision line
+		temp.dir=b.x/b.z;       // set direction to that
+		float3 c=b.cross(side); // get vector from camera to collision line
+		float3 colpoint;        // a point on the collision line
 
 		if(side.y>0)
 			colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
@@ -828,6 +1121,8 @@ void CMiniMap::GetFrustumSide(float3& side)
 
 inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 {
+	scale = 1.0f;
+	
 	if (!useIcons) {
 		if (unit->losStatus[gu->myAllyTeam] & LOS_INRADAR) {
 			return iconHandler->GetIcon("default");
@@ -839,8 +1134,7 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 	if ((unit->allyteam == gu->myAllyTeam) ||
 	    (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
 	    ((unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) &&
-	     (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) ||
-	    gu->spectating) {
+	     (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) || gu->spectating) {
 		CIcon* icon = iconHandler->GetIcon(unit->unitDef->iconType);
 		if (icon->radiusAdjust) {
 			scale *= (unit->radius / 30.0f);
@@ -856,29 +1150,29 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 }
 
 
-void CMiniMap::DrawUnit(CUnit* unit, float size)
+void CMiniMap::DrawUnit(CUnit* unit)
 {
-	if(unit->lastDamage>gs->frameNum-90 && gs->frameNum&8)
+	if ((unit->lastDamage > (gs->frameNum - 90)) && (gs->frameNum & 8)) {
 		return;
+	}
 
-	float3 pos=helper->GetUnitErrorPos(unit,gu->myAllyTeam);
+	const float3 pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
 /*	if(pos.z<0 || pos.z>gs->mapy*SQUARE_SIZE){
-		logOutput.Print("Errenous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
+		logOutput.Print("Erroneous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
 		return;
 	}*/
 
-	CIcon* icon = GetUnitIcon(unit, size);
+	float iconScale;
+	CIcon* icon = GetUnitIcon(unit, iconScale);
 	if (icon == NULL) {
 		return;
 	}
 
-	size *= icon->size;
-
-	if(unit->commandAI->selected) {
-		glColor3f(1,1,1);
+	if (unit->commandAI->selected) {
+		glColor3f(1.0f, 1.0f, 1.0f);
 	} else {
-		if(simpleColors){
-			if(unit->team==gu->myTeam){
+		if (simpleColors) {
+			if(unit->team==gu->myTeam) {
 				glColor3ubv(myColor);
 			} else if (gs->Ally(gu->myAllyTeam,unit->allyteam)){
 				glColor3ubv(allyColor);
@@ -890,38 +1184,40 @@ void CMiniMap::DrawUnit(CUnit* unit, float size)
 		}
 	}
 
-	float x=pos.x/(gs->mapx*SQUARE_SIZE);
-	float y=1-pos.z/(gs->mapy*SQUARE_SIZE);
-
-	float aspectRatio=float(width)/float(height);
-
-	glBindTexture(GL_TEXTURE_2D,icon->texture);
+	const float sizeX = (iconScale * unitSizeX);
+	const float sizeY = (iconScale * unitSizeY);
+	
+	glBindTexture(GL_TEXTURE_2D, icon->texture);
 	glBegin(GL_QUADS);
-	glTexCoord2f(1,0);
-	glVertex2f(x+size,y+size*aspectRatio);
-	glTexCoord2f(1,1);
-	glVertex2f(x+size,y-size*aspectRatio);
-	glTexCoord2f(0,1);
-	glVertex2f(x-size,y-size*aspectRatio);
-	glTexCoord2f(0,0);
-	glVertex2f(x-size,y+size*aspectRatio);
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(pos.x + sizeX, pos.z + sizeY);
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(pos.x + sizeX, pos.z - sizeY);
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(pos.x - sizeX, pos.z - sizeY);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(pos.x - sizeX, pos.z + sizeY);
 	glEnd();
 }
 
 
-void CMiniMap::DrawUnitHighlight(CUnit* unit, float size)
+void CMiniMap::DrawUnitHighlight(CUnit* unit)
 {
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.1f);
 	glEnable(GL_COLOR_LOGIC_OP);
 	glLogicOp(GL_COPY_INVERTED);
+	
+	const float origX = unitSizeX;
+	const float origY = unitSizeY;
+	unitSizeX *= 2.0f;
+	unitSizeY *= 2.0f;
 
-	DrawUnit(unit, size * 2.0f);
+	DrawUnit(unit);
 
+	unitSizeX = origX;
+	unitSizeY = origY;
+	
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_COLOR_LOGIC_OP);
 
-	DrawUnit(unit, size);
+	DrawUnit(unit);
 
 	return;
 }
@@ -929,38 +1225,40 @@ void CMiniMap::DrawUnitHighlight(CUnit* unit, float size)
 
 void CMiniMap::DrawNotes(void)
 {
-	float baseSize=gs->mapx*SQUARE_SIZE;
+	const float baseSize = gs->mapx * SQUARE_SIZE;
 	glBegin(GL_LINES);
-	for(list<Notification>::iterator ni=notes.begin();ni!=notes.end();){
-		float age=gu->gameTime-ni->creationTime;
-		if(age>2){
-			ni=notes.erase(ni);
+	list<Notification>::iterator ni = notes.begin();
+	while (ni != notes.end()) {
+		const float age = gu->gameTime - ni->creationTime;
+		if (age > 2) {
+			ni = notes.erase(ni);
 			continue;
 		}
-		glColor4f(ni->color.x,ni->color.y,ni->color.z,ni->alpha);
-		for(int a=0;a<3;++a){
-			float modage=age+a*0.1f;
-			float rot=modage*3;
-			float size=baseSize-modage*baseSize*0.9f;
-			if(size<0){
-				if(size<-baseSize*0.4f)
+		glColor4fv(ni->color);
+		for (int a = 0; a < 3; ++a) {
+			const float modage = age + a * 0.1f;
+			const float rot = modage * 3;
+			float size = baseSize - modage * baseSize * 0.9f;
+			if (size < 0){
+				if (size < -baseSize * 0.4f) {
 					continue;
-				else if(size>-baseSize*0.2f)
-					size=modage*baseSize*0.9f-baseSize;
-				else
-					size=baseSize*1.4f-modage*baseSize*0.9f;
+				} else if (size > -baseSize * 0.2f) {
+					size = modage * baseSize * 0.9f - baseSize;
+				} else {
+					size = baseSize * 1.4f - modage * baseSize * 0.9f;
+				}
 			}
-			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);
-			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);
+			const float sinSize = sin(rot) * size;
+			const float cosSize = cos(rot) * size;
 
-			DrawInMap(ni->pos+float3(cos(rot),0,-sin(rot))*size);
-			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);
-
-			DrawInMap(ni->pos+float3(-sin(rot),0,-cos(rot))*size);
-			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);
-
-			DrawInMap(ni->pos+float3(-cos(rot),0,sin(rot))*size);
-			DrawInMap(ni->pos+float3(sin(rot),0,cos(rot))*size);
+			DrawInMap2D(ni->pos.x + sinSize, ni->pos.z + cosSize);
+			DrawInMap2D(ni->pos.x + cosSize, ni->pos.z - sinSize);
+			DrawInMap2D(ni->pos.x + cosSize, ni->pos.z - sinSize);
+			DrawInMap2D(ni->pos.x - sinSize, ni->pos.z - cosSize);
+			DrawInMap2D(ni->pos.x - sinSize, ni->pos.z - cosSize);
+			DrawInMap2D(ni->pos.x - cosSize, ni->pos.z + sinSize);
+			DrawInMap2D(ni->pos.x - cosSize, ni->pos.z + sinSize);
+			DrawInMap2D(ni->pos.x + sinSize, ni->pos.z + cosSize);
 		}
 		++ni;
 	}

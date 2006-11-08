@@ -32,8 +32,9 @@ class CGuiHandler : public CInputReceiver {
 		
 		bool AboveGui(int x,int y);
 		bool KeyPressed(unsigned short key);
-		bool MousePress(int x,int y,int button);
-		void MouseRelease(int x,int y,int button);
+		bool MousePress(int x, int y, int button);
+		void MouseMove(int x, int y, int dx, int dy, int button);
+		void MouseRelease(int x, int y, int button);
 		bool IsAbove(int x, int y);
 		std::string GetTooltip(int x, int y);
 		std::string GetBuildTooltip() const;
@@ -43,7 +44,8 @@ class CGuiHandler : public CInputReceiver {
 		std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
 		                                   const BuildInfo& endInfo);
 		                                   // start.def has to be end.def
-		bool ReloadConfig();
+
+		bool ReloadConfig(const string& filename);
 		
 		int GetMaxPage()    const { return maxPage; }
 		int GetActivePage() const { return activePage; }
@@ -58,6 +60,8 @@ class CGuiHandler : public CInputReceiver {
  		bool GetGatherMode() const { return gatherMode; }
  		void SetGatherMode(bool value) { gatherMode = value; }
  		
+		bool BindNamedTexture(const std::string& texName);
+		
 	public:
 		vector<CommandDescription> commands;
 		int inCommand;
@@ -65,7 +69,7 @@ class CGuiHandler : public CInputReceiver {
 		int buildSpacing;
 
 	private:
-		void GiveCommand(const Command& cmd) const;
+		void GiveCommand(const Command& cmd, bool fromUser = true) const;
 
 		void MenuChoice(string s);
 		static void MenuSelection(std::string s);
@@ -105,7 +109,7 @@ class CGuiHandler : public CInputReceiver {
 		void DrawMenuName();
 		void DrawSelectionInfo();
 		void DrawNumberInput();
-		void DrawMiniMapCursor();
+		void DrawMiniMapMarker();
 		void DrawFront(int button,float maxSize,float sizeDiv);
 		void DrawArea(float3 pos, float radius, const float* color);
 		void DrawSelectBox(const float3& start, const float3& end);
@@ -115,7 +119,6 @@ class CGuiHandler : public CInputReceiver {
 		void DrawStencilCone(const float3& pos, float radius, float height);
 		void DrawStencilRange(const float3& pos, float radius);
 
-		bool BindNamedTexture(const std::string& texName);
 
 		int  IconAtPos(int x,int y);
 		void SetCursorIcon() const;
@@ -146,8 +149,9 @@ class CGuiHandler : public CInputReceiver {
 		
 		int actionOffset;
 		CKeySet lastKeySet;
-		
+
 		CIconLayoutHandler* layoutHandler;
+		bool layoutHandlerClick;		
 
 		std::string menuName;
 		int xIcons, yIcons;

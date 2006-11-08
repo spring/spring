@@ -48,6 +48,8 @@ extern Uint8 *keys;
 
 static bool useStencil = false; // FIXME
 
+static const char* luaLayoutFile = "gui.lua";
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -71,6 +73,7 @@ CGuiHandler::CGuiHandler()
   buildFacing(0),
   actionOffset(0),
   layoutHandler(NULL),
+  layoutHandlerClick(false),
   gatherMode(false)
 {
 	icons = new IconInfo[16];
@@ -85,8 +88,9 @@ CGuiHandler::CGuiHandler()
   
 	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
 	
+	
 	useStencil = false;
-	if (GLEW_NV_depth_clamp) {
+	if (GLEW_NV_depth_clamp && !!configHandler.GetInt("StencilBufferBits", 1)) {
 		GLint stencilBits;
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);
@@ -388,9 +392,9 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 }
 
 
-bool CGuiHandler::ReloadConfig()
+bool CGuiHandler::ReloadConfig(const string& filename)
 {
-	LoadConfig("ctrlpanel.txt");
+	LoadConfig(filename);
 	activePage = 0;
 	selectedUnits.SetCommandPage(activePage);
 	LayoutIcons(false);
@@ -492,7 +496,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	// try using the custom layout handler
 	if (firstLayout) {
 		firstLayout = false;
-		layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+		layoutHandler = CIconLayoutHandler::GetHandler(luaLayoutFile);
 	}
 	if (layoutHandler != NULL) {
 		if (LayoutCustomIcons(useSelectionPage)) {
@@ -651,7 +655,6 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	                                onlyTextureCmds, reTextureCmds,
 	                                reNamedCmds, reTooltipCmds, reParamsCmds,
 	                                iconMap, menuName)) {
-		logOutput.Print("LayoutCustomIcons() lua call failed\n");
 		return false;
 	}
 
@@ -838,7 +841,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 }
 
 
-void CGuiHandler::GiveCommand(const Command& cmd) const
+void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 {
 	if (layoutHandler != NULL) {
 		if (!layoutHandler->CommandNotify(cmd)) {
@@ -846,12 +849,12 @@ void CGuiHandler::GiveCommand(const Command& cmd) const
 		}
 	}
 
-	selectedUnits.GiveCommand(cmd);
+	selectedUnits.GiveCommand(cmd, fromUser);
 
 	if (gatherMode && (cmd.id == CMD_MOVE) || (cmd.id == CMD_FIGHT)) {
 		Command gatherCmd;
 		gatherCmd.id = CMD_GATHERWAIT;
-		GiveCommand(gatherCmd);
+		GiveCommand(gatherCmd, false);
 	}
 }
 
@@ -944,11 +947,11 @@ void CGuiHandler::SetCursorIcon() const
 	}
 
 	if (ir == minimap) {
-		mouse->cursorScale = minimap->cursorScale;
+		mouse->cursorScale = minimap->CursorScale();
 	}
 	
 	const bool useMinimap =
-		(minimap->proxyMode ||
+		(minimap->ProxyMode() ||
 		 ((mouse->activeReceiver != this) && (ir == minimap)));
 		  
 	if ((inCommand >= 0) && (inCommand<commands.size())) {
@@ -972,10 +975,10 @@ void CGuiHandler::SetCursorIcon() const
 			}
 		}
 	}
-	else if (!useMinimap || minimap->fullProxy) {
+	else if (!useMinimap || minimap->FullProxy()) {
 		int defcmd;
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-				((mouse->activeReceiver == this) || (minimap->proxyMode))) {
+				((mouse->activeReceiver == this) || (minimap->ProxyMode()))) {
 			defcmd = defaultCmdMemory;
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
@@ -993,6 +996,13 @@ void CGuiHandler::SetCursorIcon() const
 
 bool CGuiHandler::MousePress(int x,int y,int button)
 {
+	if (layoutHandler) {
+		layoutHandlerClick = layoutHandler->MousePress(x, y, button);
+		if (layoutHandlerClick) {
+			return true;
+		}
+	}
+	
 	if (button < 0) {
 		// fake click from the minimap
 		button = -button;
@@ -1025,8 +1035,24 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 }
 
 
+void CGuiHandler::MouseMove(int x, int y, int dx, int dy, int button)
+{
+	if (layoutHandler) {
+		layoutHandler->MouseMove(x, y, dx, dy, button);
+	}
+}
+	
+
 void CGuiHandler::MouseRelease(int x,int y,int button)
 {
+	if (layoutHandlerClick) {
+		if (layoutHandler) {
+			layoutHandler->MouseRelease(x, y, button);
+		}
+		layoutHandlerClick = false;
+		return;
+	}
+	
 	if (activeMousePress) {
 		activeMousePress=false;
 	} else {
@@ -1374,7 +1400,7 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
 
-	if ((ir == minimap) && (minimap->fullProxy)) {
+	if ((ir == minimap) && (minimap->FullProxy())) {
 		unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 	}
 	else {
@@ -1482,6 +1508,7 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		} else {
 			invertQueueKey = !!atoi(action.extra.c_str());
 		}
+		needShift = false;
 		configHandler.SetInt("InvertQueueKey", invertQueueKey ? 1 : 0);
 		return true;
 	}
@@ -1494,15 +1521,15 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 {
 	if (command == "reload") {
 		if (layoutHandler == NULL) {
-			logOutput.Print("Loading \"ctrlpanel.lua\"\n");
-			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+			logOutput.Print("Loading: \"%s\"\n", luaLayoutFile);
+			layoutHandler = CIconLayoutHandler::GetHandler(luaLayoutFile);
 			if (layoutHandler == NULL) {
 				logOutput.Print("Loading failed\n");
 			}
 		} else {
-			logOutput.Print("Reloading \"ctrlpanel.lua\"\n");
+			logOutput.Print("Reloading: \"%s\"\n", luaLayoutFile);
 			delete layoutHandler;
-			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+			layoutHandler = CIconLayoutHandler::GetHandler(luaLayoutFile);
 			if (layoutHandler == NULL) {
 				logOutput.Print("Reloading failed\n");
 				LoadConfig("ctrlpanel.txt");
@@ -1521,8 +1548,8 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 		if (layoutHandler != NULL) {
 			layoutHandler->ConfigCommand(command);
 		} else {
-			logOutput.Print("Loading \"ctrlpanel.lua\"\n");
-			layoutHandler = CIconLayoutHandler::GetHandler("ctrlpanel.lua");
+			logOutput.Print("Loading: \"%s\"\n", luaLayoutFile);
+			layoutHandler = CIconLayoutHandler::GetHandler(luaLayoutFile);
 			if (layoutHandler == NULL) {
 				logOutput.Print("Loading failed\n");
 			} else {
@@ -2973,6 +3000,10 @@ void CGuiHandler::DrawButtons()
 	
 	DrawNumberInput();
 
+	if (layoutHandler) {
+		layoutHandler->DrawScreenItems();
+	}
+
 	glPopAttrib();
 }
 
@@ -3203,7 +3234,7 @@ void CGuiHandler::DrawMapStuff(void)
 	// setup for minimap proxying
 	float3 tmpCamPos, tmpMouseDir;
 	const bool useMinimap =
-		(minimap->proxyMode ||
+		(minimap->ProxyMode() ||
 		 ((mouse->activeReceiver != this) &&
 		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
 	if (useMinimap) {
@@ -3211,8 +3242,8 @@ void CGuiHandler::DrawMapStuff(void)
 		tmpMouseDir = mouse->dir;
 		camera->pos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 		mouse->dir = float3(0.0f, -1.0f, 0.0f);
-		if (minimap->fullProxy && miniMapMarker) {
-			DrawMiniMapCursor();
+		if (miniMapMarker && minimap->FullProxy() && !minimap->GetMinimized()) {
+			DrawMiniMapMarker();
 		}
 	}
 	
@@ -3223,7 +3254,7 @@ void CGuiHandler::DrawMapStuff(void)
 			cc=inCommand;
 		} else {
 			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-			    ((mouse->activeReceiver == this) || (minimap->proxyMode))) {
+			    ((mouse->activeReceiver == this) || (minimap->ProxyMode()))) {
 				cc = defaultCmdMemory;
 				button = SDL_BUTTON_RIGHT;
 			}
@@ -3535,6 +3566,10 @@ void CGuiHandler::DrawMapStuff(void)
 	}
 
 	glLineWidth(1.0f);
+	
+	if (layoutHandler) {
+		layoutHandler->DrawMapItems();
+	}
 
 	if (useMinimap) {
 		camera->pos = tmpCamPos;
@@ -3543,7 +3578,7 @@ void CGuiHandler::DrawMapStuff(void)
 }
 
 
-void CGuiHandler::DrawMiniMapCursor()
+void CGuiHandler::DrawMiniMapMarker()
 {
 	const float w = 10.0f;
 	const float h = 30.0f;
@@ -3572,10 +3607,7 @@ void CGuiHandler::DrawMiniMapCursor()
 
 	glEnable(GL_BLEND);
 	glShadeModel(GL_FLAT);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);//FIXME
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	glEnable(GL_CULL_FACE);
-	glColor4f(1,1,1,1);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glBegin(GL_TRIANGLE_FAN);
 		                       glVertex3f(0.0f, 0.0f, 0.0f);
 		                       glVertex3f(  +w,   +h, 0.0f);
@@ -3592,7 +3624,6 @@ void CGuiHandler::DrawMiniMapCursor()
 		glColor4fv(colors[1]); glVertex3f(0.0f,   +h,   +w);
 		glColor4fv(colors[0]); glVertex3f(  +w,   +h, 0.0f);
 	glEnd();
-//	glDisable(GL_CULL_FACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glShadeModel(GL_SMOOTH);
 	glPopMatrix();
@@ -3612,7 +3643,7 @@ void CGuiHandler::DrawCentroidCursor()
 	} else {
 		int defcmd;
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-				((mouse->activeReceiver == this) || (minimap->proxyMode))) {
+				((mouse->activeReceiver == this) || (minimap->ProxyMode()))) {
 			defcmd = defaultCmdMemory;
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);

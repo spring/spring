@@ -68,6 +68,17 @@ class CIconLayoutHandler {
 
 		bool CommandNotify(const Command& cmd);
 		
+		bool DrawMapItems();
+		bool DrawScreenItems();
+
+		bool MouseMove(int x, int y, int dx, int dy, int button);
+		bool MousePress(int x, int y, int button);
+		bool MouseRelease(int x, int y, int button);
+		
+		bool UnitCreated(int id);
+		bool UnitFinished(int id);
+		bool UnitDestroyed(int id);
+		
 	private:
 		CIconLayoutHandler();
 

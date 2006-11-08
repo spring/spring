@@ -33,10 +33,17 @@ CInfoConsole::CInfoConsole()
 	lifetime     = configHandler.GetInt("InfoMessageTime", 400);
 	verboseLevel = configHandler.GetInt("VerboseLevel", 0);
 
-	xpos=0.26f;
-	ypos=0.96f;
-	width=0.41f;
-	height=0.205f;
+	const std::string geo = configHandler.GetString("InfoConsoleGeometry",
+                                                  "0.26 0.96 0.41 0.205");
+	const int vars = sscanf(geo.c_str(), "%f %f %f %f",
+	                        &xpos, &ypos, &width, &height);
+	if (vars != 4) {
+		xpos = 0.26f;
+		ypos = 0.96f;
+		width = 0.41f;
+		height = 0.205f;
+	}
+
 	numLines = 8;
 	
 	logOutput.AddSubscriber(this);

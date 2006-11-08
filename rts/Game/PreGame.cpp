@@ -153,8 +153,8 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 
 bool CPreGame::Draw()
 {
+	SDL_Delay(10); // milliseconds
 	if (!gu->active) {
-		SDL_Delay(10); // milliseconds
 		return true;
 	}
 	

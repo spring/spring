@@ -86,6 +86,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitTracker.h"
+#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
@@ -449,6 +450,14 @@ CGame::~CGame()
 	delete wordCompletion;
 	delete explGenHandler;
 	CColorMap::DeleteColormaps();
+}
+
+
+void CGame::ResizeEvent()
+{
+	if (minimap != NULL) {
+		minimap->UpdateGeometry();
+	}
 }
 
 
@@ -1174,11 +1183,15 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->name);
 	}
 	else if (cmd == "cmdcolors") {
-		cmdColors.LoadConfig("cmdcolors.txt");
+		const string name = action.extra.empty() ? "cmdcolors.txt" : action.extra;
+		cmdColors.LoadConfig(name);
+		logOutput.Print("Reloaded cmdcolors with: " + name);
 	}
 #ifndef NEW_GUI
 	else if (cmd == "ctrlpanel") {
-		guihandler->ReloadConfig();
+		const string name = action.extra.empty() ? "ctrlpanel.txt" : action.extra;
+		guihandler->ReloadConfig(name);
+		logOutput.Print("Reloaded ctrlpanel with: " + name);
 	}
 #endif
 	else if (cmd == "font") {
@@ -1214,6 +1227,24 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 		}
 	}
+	else if (cmd == "resbar") {
+		if (resourceBar) {
+			if (action.extra.empty()) {
+				resourceBar->disabled = !resourceBar->disabled;
+			} else {
+				resourceBar->disabled = !atoi(action.extra.c_str());
+			}
+		}
+	}
+	else if (cmd == "tooltip") {
+		if (tooltip) {
+			if (action.extra.empty()) {
+				tooltip->disabled = !tooltip->disabled;
+			} else {
+				tooltip->disabled = !atoi(action.extra.c_str());
+			}
+		}
+	}
 	else if (cmd == "layout") {
 		if (guihandler != NULL) {
 			guihandler->RunLayoutCommand(action.extra);
@@ -1224,7 +1255,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			if (action.extra.empty()) {
 				guihandler->SetGatherMode(!guihandler->GetGatherMode());
 			} else {
-				guihandler->SetGatherMode(atoi(action.extra.c_str()));
+				guihandler->SetGatherMode(!!atoi(action.extra.c_str()));
 			}
 		}
 	}
@@ -1449,6 +1480,8 @@ bool CGame::Draw()
 	unitDrawer->DrawCloakedUnits();
 	ph->Draw(false);
 	sky->DrawSun();
+
+	lineDrawer.UpdateLineStipple();
 	if(cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
 		cursorIcons.Draw();

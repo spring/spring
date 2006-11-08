@@ -12,6 +12,7 @@ public:
 	virtual bool Update(void);
 	virtual int KeyPressed(unsigned short k,bool isRepeat);
 	virtual int KeyReleased(unsigned short k);
+	virtual void ResizeEvent() { return; }
 
 	bool userWriting;						//true if user is writing
 	bool ignoreNextChar;

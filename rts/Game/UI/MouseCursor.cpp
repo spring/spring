@@ -96,7 +96,6 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	}
 
 	if (frames.size() == 0) {
-		logOutput.Print("No such cursor: %s", name.c_str());
 		return;
 	}
 

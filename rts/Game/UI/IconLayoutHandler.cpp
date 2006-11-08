@@ -25,19 +25,24 @@ extern "C" {
 #include "Game/UI/GuiHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/glFont.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "System/LogOutput.h"
+#include "System/Net.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/ConfigHandler.h"
-#include "System/LogOutput.h"
 
 extern Uint8 *keys;
 
 
 // LUA C functions  (placed in the Spring table)
+
+static int LoadTextVFS(lua_State* L);
 
 static int SendCommands(lua_State* L);
 
@@ -85,6 +90,14 @@ static int TestBuildOrder(lua_State* L);
 static int DrawMapIcon(lua_State* L);
 static int DrawMapText(lua_State* L);
 static int DrawMapUnit(lua_State* L);
+static int DrawShape(lua_State* L);
+static int DrawText(lua_State* L);
+
+static int SetShareLevel(lua_State* L);
+
+
+static bool drawingEnabled = false;
+static bool screenTransform = false;
 
 
 /******************************************************************************/
@@ -138,10 +151,10 @@ string CIconLayoutHandler::LoadFile(const string& filename)
 	CFileHandler fh(filename); 
 
 	if (fh.FileExists()) {
-		char c;
 		while (fh.Peek() != EOF) {
+			int c;
 			fh.Read(&c, 1);
-			code += c;
+			code += (char)c;
 		}
 	}
 	
@@ -151,16 +164,17 @@ string CIconLayoutHandler::LoadFile(const string& filename)
 
 bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 {
+	lua_newtable(L);
+
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 	
-	lua_newtable(L);
-
+	REGISTER_LUA_CFUNC(LoadTextVFS);
 	REGISTER_LUA_CFUNC(SendCommands);
- 	REGISTER_LUA_CFUNC(GetFPS);
- 	REGISTER_LUA_CFUNC(GetGameSeconds);
+	REGISTER_LUA_CFUNC(GetFPS);
+	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetInCommand);
 	REGISTER_LUA_CFUNC(GetConfigInt);
 	REGISTER_LUA_CFUNC(SetConfigInt);
@@ -188,10 +202,14 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(SetCameraState);
 	REGISTER_LUA_CFUNC(GiveOrder);
 	REGISTER_LUA_CFUNC(GetMapHeight);
+	REGISTER_LUA_CFUNC(TestBuildOrder);
+	REGISTER_LUA_CFUNC(SetShareLevel);
 	REGISTER_LUA_CFUNC(DrawMapIcon);
 	REGISTER_LUA_CFUNC(DrawMapText);
 	REGISTER_LUA_CFUNC(DrawMapUnit);
-
+	REGISTER_LUA_CFUNC(DrawShape);
+	REGISTER_LUA_CFUNC(DrawText);
+	
 	lua_setglobal(L, "Spring");
 	
 	return true;
@@ -230,6 +248,11 @@ bool CIconLayoutHandler::ConfigCommand(const string& command)
 	lua_pop(L, lua_gettop(L));
 	
 	lua_getglobal(L, "ConfigureLayout");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call was not implemented
+	}
+
 	lua_pushstring(L, command.c_str());
 	const int error = lua_pcall(L, 1, 0, 0);
 	if (error != 0) {
@@ -252,8 +275,14 @@ bool CIconLayoutHandler::UpdateLayout(bool& forceLayout,
 		return false;
 	}
 	lua_pop(L, lua_gettop(L));
-	
+
 	lua_getglobal(L, "UpdateLayout");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		forceLayout = false;
+		return true; // the call was not implemented, no forced updates
+	}
+
 	lua_pushboolean(L, commandsChanged);
 	lua_pushnumber(L,  activePage);
 	lua_pushboolean(L, keys[SDLK_LALT]);
@@ -338,6 +367,190 @@ bool CIconLayoutHandler::CommandNotify(const Command& cmd)
 }
 
 
+bool CIconLayoutHandler::DrawMapItems()
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "DrawMapItems");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call was not implemented
+	}
+
+	drawingEnabled = true;
+
+	lua_pushnumber(L, gu->screenx);	// FIXME -- better input
+	lua_pushnumber(L, gu->screeny);	
+	
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	// call the routine
+	const int error = lua_pcall(L, 2, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_DrawMapItems", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+	
+	drawingEnabled = false;
+	
+	return true;
+}
+
+
+bool CIconLayoutHandler::DrawScreenItems()
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "DrawScreenItems");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call was not implemented
+	}
+
+	drawingEnabled = true;
+	screenTransform = true;
+
+	lua_pushnumber(L, gu->screenx);	
+	lua_pushnumber(L, gu->screeny);	
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	// call the routine
+	const int error = lua_pcall(L, 2, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_DrawScreenItems", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+	
+	screenTransform = false;
+	drawingEnabled = false;
+	
+	return true;
+}
+
+
+bool CIconLayoutHandler::MouseMove(int x, int y, int dx, int dy, int button)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "MouseMove");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call was not implemented, do not take the event
+	}
+
+	lua_pushnumber(L, x);
+	lua_pushnumber(L, gu->screeny - y - 1);
+	lua_pushnumber(L, dx);
+	lua_pushnumber(L, -dy);
+	lua_pushnumber(L, button);
+
+	// call the function
+	const int error = lua_pcall(L, 5, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_MouseMove", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
+	}
+
+	return false;
+}
+
+
+bool CIconLayoutHandler::MousePress(int x, int y, int button)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "MousePress");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call was not implemented, do not take the event
+	}
+
+	lua_pushnumber(L, x);
+	lua_pushnumber(L, gu->screeny - y - 1);
+	lua_pushnumber(L, button);
+
+	// call the function
+	const int error = lua_pcall(L, 3, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_MousePress", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
+	}
+
+	return false;
+}
+
+
+bool CIconLayoutHandler::MouseRelease(int x, int y, int button)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "MouseRelease");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call was not implemented, do not take the event
+	}
+
+	lua_pushnumber(L, x);
+	lua_pushnumber(L, gu->screeny - y - 1);
+	lua_pushnumber(L, button);
+
+	// call the function
+	const int error = lua_pcall(L, 3, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_MouseRelease", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
+	}
+
+	return false;
+}
+
+
 bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
                                      const vector<CommandDescription>& cmds,
                                      vector<int>& removeCmds,
@@ -366,6 +579,12 @@ bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
 	menuName = "";
 
 	lua_getglobal(L, "LayoutIcons");
+	if (!lua_isfunction(L, -1)) {
+		logOutput.Print("Error: missing LayoutIcons() lua function\n");
+		lua_pop(L, lua_gettop(L));
+		return false;
+	}
+	
 	lua_pushnumber(L, xIcons);
 	lua_pushnumber(L, yIcons);
 	lua_pushnumber(L, cmds.size());
@@ -386,7 +605,12 @@ bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
 
 	// get the results
 	const int args = lua_gettop(L);
-	if (args != 11) {
+	
+	if ((args == 1) && (lua_isstring(L, -1)) &&
+	    (string(lua_tostring(L, -1)) == "disabled")) {
+		return false; // no warnings
+	}
+	else if (args != 11) {
 		logOutput.Print("LayoutIcons() bad number of return values (%i)\n", args);
 		lua_pop(L, args);
 		return false;
@@ -694,6 +918,31 @@ bool CIconLayoutHandler::GetLuaCmdDescList(lua_State* L,
 // Lua Callbacks
 //
 
+static int LoadTextVFS(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, -1)) {
+		lua_pushstring(L, "Incorrect arguments to LoadTextVFS(filename)");
+		lua_error(L);
+	}
+	const string& filename = lua_tostring(L, -1);
+	CFileHandler fh(filename);
+	if (!fh.FileExists()) {
+		return 0;
+	}
+	
+	string buf;
+	while (fh.Peek() != EOF) {
+		int c;
+		fh.Read(&c, 1);
+		buf += (char)c;
+	}
+	lua_pushstring(L, buf.c_str());
+
+	return 1;
+}
+
+
 static int SendCommands(lua_State* L)
 {
 	if (guihandler == NULL) {
@@ -745,10 +994,11 @@ static int GetGameSeconds(lua_State* L)
 		lua_pushstring(L, "GetGameSeconds() takes no arguments");
 		lua_error(L);
 	}
-	const int seconds = (gs->frameNum / 30);
+	const float seconds = ((float)gs->frameNum / 30.0f);
 	lua_pushnumber(L, seconds);
 	return 1;
 }
+
 
 static int GetInCommand(lua_State* L)
 {
@@ -1754,6 +2004,36 @@ static int TestBuildOrder(lua_State* L)
 }
 
 
+/******************************************************************************/
+
+static int SetShareLevel(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isstring(L, 1) || !lua_isnumber(L, 2)) {
+		lua_pushstring(L, "Incorrect arguments to SetShareLevels(metal, energy");
+		lua_error(L);
+	}
+	
+	const string shareType = lua_tostring(L, 1);
+	const float shareLevel = max(0.0f, min(1.0f, (float)lua_tonumber(L, 2)));
+	
+	if (shareType == "metal") {
+		net->SendData<unsigned char, float, float>(NETMSG_SETSHARE,
+			gu->myTeam, shareLevel, gs->Team(gu->myTeam)->energyShare);
+	}
+	else if (shareType == "energy") {
+		net->SendData<unsigned char, float, float>(NETMSG_SETSHARE,
+			gu->myTeam, gs->Team(gu->myTeam)->metalShare, shareLevel);
+	}
+	else {
+		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
+	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
 static int DrawMapIcon(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -1808,6 +2088,244 @@ static int DrawMapUnit(lua_State* L)
 	}
 	const int facing = (int)lua_tonumber(L, 6);
 	cursorIcons.AddBuildIcon(-unitDefID, pos, team, facing);
+	return 0;
+}
+
+
+/******************************************************************************/
+
+static int DrawText(lua_State* L)
+{
+	if (!drawingEnabled || !screenTransform) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) ||
+	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L,
+			"Incorrect arguments to "
+			"DrawText(msg, x, y [,size] [,face] [,color]");
+		lua_error(L);
+	}
+	const string text = lua_tostring(L, 1);
+	const float x     = lua_tonumber(L, 2);
+	const float y     = lua_tonumber(L, 3);
+	
+	float size = 12.0f;
+	bool right = false;
+	bool center = false;
+	bool outline = false;
+	
+	if ((args >= 4) && lua_isnumber(L, 4)) {
+		size = lua_tonumber(L, 4);
+	}
+	if ((args >= 5) && lua_isstring(L, 5)) {
+		const string opts = lua_tostring(L, 5);
+		if (strstr(opts.c_str(), "r") != NULL) { right = true; }
+		if (strstr(opts.c_str(), "c") != NULL) { center = true; }
+		if (strstr(opts.c_str(), "o") != NULL) { outline = true; }
+	}
+
+	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float yScale = (size / (float)gu->screeny) / tHeight;
+	const float xScale = yScale / gu->aspectRatio;
+	float xr = x;
+	if (right) {
+		xr -= (font->CalcTextWidth(text.c_str()) / xScale);
+	} else if (center) {
+		xr -= (font->CalcTextWidth(text.c_str()) / xScale) * 0.5f;
+	}
+	const float xPos = xr / float(gu->screenx);
+	const float yPos = y / float(gu->screeny);
+	glPushMatrix();
+	glTranslatef(xPos, yPos, 0.0f);
+	glScalef(xScale, yScale, 1.0f);
+	if (!outline) {
+		font->glPrintColor("%s", text.c_str());
+	} else {
+		const float dark[4] = { 0.25f, 0.25f, 0.25f, 0.8f };
+		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		const float xPixel = 1.0f / (xScale * (float)gu->screenx);
+		const float yPixel = 1.0f / (yScale * (float)gu->screeny);
+		font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, dark);
+		font->glPrintColor("%s", text.c_str());
+	}
+	glPopMatrix();
+
+	return 0;	
+}
+
+
+/******************************************************************************/
+
+struct VertexData {
+	float vert[3];
+	float norm[3];
+	float txcd[2];
+	float color[4];
+	bool hasVert;
+	bool hasNorm;
+	bool hasTxcd;
+	bool hasColor;
+};
+
+
+static bool ParseFloatArray(lua_State* L, float* array, int size)
+{
+	if (!lua_istable(L, -1)) {
+		return false;
+	}
+	int index = 0;
+	const int table = lua_gettop(L);
+	lua_pushnil(L);
+	while (lua_next(L, table) != 0) {
+		if (!lua_isnumber(L, -1)) {
+			logOutput.Print("DrawShape: bad array value\n");
+			lua_pop(L, 3); // pop the value, key, and table
+			return false;
+		}
+		if (index < size) {
+			array[index] = (float)lua_tonumber(L, -1);
+			index++;
+		}
+		lua_pop(L, 1); // pop the value, leave the key for the next iteration
+	}
+	lua_pop(L, 1); // pop the table
+	return true;
+}
+
+
+static bool ParseVertexData(lua_State* L, VertexData& vd)
+{
+	if (!lua_istable(L, -1)) {
+		return false;
+	}
+	
+	vd.hasVert = vd.hasNorm = vd.hasTxcd = vd.hasColor = false;
+
+	const int table = lua_gettop(L);
+	lua_pushnil(L);
+	while (lua_next(L, table) != 0) {
+		if (!lua_istable(L, -1) || !lua_isstring(L, -2)) {
+			logOutput.Print("DrawShape: bad vertex data row\n");
+			lua_pop(L, 3); // pop the value, key, and table
+			return false;
+		}
+
+		const string key = lua_tostring(L, -2);
+
+		if ((key == "v") || (key == "vertex")) {
+			vd.vert[0] = 0.0f; vd.vert[1] = 0.0f; vd.vert[2] = 0.0f;
+			if (ParseFloatArray(L, vd.vert, 3)) {
+				vd.hasVert = true;
+			} else {
+				logOutput.Print("DrawShape: bad vertex array\n");
+				lua_pop(L, 3); // pop the value, key, and table
+				return false;
+			}
+			if (screenTransform) {
+				vd.vert[0] /= float(gu->screenx);
+				vd.vert[1] /= float(gu->screeny);
+			}
+		}
+		else if ((key == "n") || (key == "normal")) {
+			vd.norm[0] = 0.0f; vd.norm[1] = 1.0f; vd.norm[2] = 0.0f;
+			if (ParseFloatArray(L, vd.norm, 3)) {
+				vd.hasNorm = true;
+			} else {
+				logOutput.Print("DrawShape: bad normal array\n");
+				lua_pop(L, 3); // pop the value, key, and table
+				return false;
+			}
+		}
+		else if ((key == "t") || (key == "texcoord")) {
+			vd.txcd[0] = 0.0f; vd.txcd[1] = 0.0f;
+			if (ParseFloatArray(L, vd.txcd, 2)) {
+				vd.hasTxcd = true;
+			} else {
+				logOutput.Print("DrawShape: bad texcoord array\n");
+				lua_pop(L, 3); // pop the value, key, and table
+				return false;
+			}
+		}
+		else if ((key == "c") || (key == "color")) {
+			vd.color[0] = 1.0f; vd.color[1] = 1.0f;
+			vd.color[2] = 1.0f; vd.color[3] = 1.0f;
+			if (ParseFloatArray(L, vd.color, 4)) {
+				vd.hasColor = true;
+			} else {
+				logOutput.Print("DrawShape: bad color array\n");
+				lua_pop(L, 3); // pop the value, key, and table
+				return false;
+			}
+		}
+		else {
+			lua_pop(L, 1); // pop the value
+		}
+	}
+	lua_pop(L, 1); // pop the table
+
+	return vd.hasVert;
+}
+
+
+static int DrawShape(lua_State* L)
+{	
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) ||
+	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_istable(L, 3)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawShape(type, texture, verts[]");
+		lua_error(L);
+	}
+
+	const string texture = lua_tostring(L, 2);
+	if (texture.empty()) {
+		glDisable(GL_TEXTURE_2D);
+	} else {
+		if (!guihandler->BindNamedTexture(texture)) {
+			return 0;
+		}
+		glEnable(GL_TEXTURE_2D);
+	}
+
+	const GLuint type = (GLuint)lua_tonumber(L, 1);
+	switch (type) {
+		case GL_POINTS:
+		case GL_LINES:
+		case GL_LINE_STRIP:
+		case GL_LINE_LOOP:
+		case GL_TRIANGLES:
+		case GL_TRIANGLE_STRIP:
+		case GL_TRIANGLE_FAN:
+		case GL_QUADS:
+		case GL_QUAD_STRIP:
+		case GL_POLYGON:{
+			glBegin(type);
+			break;
+		}
+		default: { return 0; }
+	}
+	const int table = lua_gettop(L);
+	lua_pushnil(L);
+	while (lua_next(L, table) != 0) {
+		VertexData vd;
+		if (!ParseVertexData(L, vd)) {
+			logOutput.Print("DrawShape: bad vertex data\n");
+			break;
+		}
+		if (vd.hasColor) { glColor4fv(vd.color);   }
+		if (vd.hasTxcd)  { glTexCoord2fv(vd.txcd); }
+		if (vd.hasNorm)  { glNormal3fv(vd.norm);   }
+		if (vd.hasVert)  { glVertex3fv(vd.vert);   } // always last
+	}
+
+	glEnd();
+
 	return 0;
 }
 

@@ -5,83 +5,127 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <vector>
-
 #include "InputReceiver.h"
+
 class CUnit;
 class CIcon;
 
-class CMiniMap : public CInputReceiver
-{
-public:
-	void DrawUnit(CUnit* unit, float size);
-	void DrawUnitHighlight(CUnit* unit, float size);
-	CIcon* GetUnitIcon(CUnit* unit, float& scale) const;
 
-	struct fline {
-		float base;
-		float dir;
-		int left;
-		float minz;
-		float maxz;
-	};
-	std::vector<fline> left;
-	void GetFrustumSide(float3& side);
-	void DrawInMap(const float3& pos);
-	void Draw();
-	CMiniMap();
-	virtual ~CMiniMap();
+class CMiniMap : public CInputReceiver {
+	public:
+		CMiniMap();
+		virtual ~CMiniMap();
 
-	int xpos,ypos;
-	int height,width;
-	int oldxpos,oldypos;
-	int oldheight,oldwidth;
-	
-	bool fullProxy;
+		bool MousePress(int x, int y, int button);
+		void MouseMove(int x, int y, int dx,int dy, int button);
+		void MouseRelease(int x, int y, int button);
+		void MoveView(int x, int y);
+		bool IsAbove(int x, int y);
+		void Draw();
+		std::string GetTooltip(int x, int y);
 
-	bool proxyMode;
-	bool selecting;
-	bool maximized;
-	bool minimized;
-	bool mouseMove;
-	bool mouseResize;
-	bool mouseLook;
-	
-	CUnit* pointedAt;
-	
-	float cursorScale;
+		float3 GetMapPosition(int x, int y) const;
+		CUnit* GetSelectUnit(const float3& pos) const;
+		
+		void UpdateGeometry();
 
-	bool MousePress(int x, int y, int button);
-	void MouseMove(int x, int y, int dx,int dy, int button);
-	void MouseRelease(int x, int y, int button);
-	void MoveView(int x, int y);
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x, int y);
+		void AddNotification(float3 pos, float3 color, float alpha);
 
-	void SelectUnit(CUnit* unit, int button) const;
-	void SelectUnits(int x, int y) const;
-	void ProxyMousePress(int x, int y, int button);
-	void ProxyMouseRelease(int x, int y, int button);
-	float3 GetMapPosition(int x, int y) const;
-	CUnit* GetSelectUnit(const float3& pos) const;
-	
-	void AddNotification(float3 pos, float3 color, float alpha);
+		bool  FullProxy()   const { return fullProxy; }
+		bool  ProxyMode()   const { return proxyMode; }
+		float CursorScale() const { return cursorScale; }
 
-	struct Notification {
-		float creationTime;
-		float3 pos;
-		float3 color;
-		float alpha;
-	};
+		void SetMinimized(bool state) { minimized = state; }
+		bool GetMinimized() const { return minimized; }
+		
+	protected:
+		void SelectUnits(int x, int y) const;
+		void ProxyMousePress(int x, int y, int button);
+		void ProxyMouseRelease(int x, int y, int button);
+		
+		void DrawNotes(void);
+		void DrawButtons();
+		void DrawUnit(CUnit* unit);
+		void DrawUnitHighlight(CUnit* unit);
+		void DrawCircle(float x, float z, float radius);
+		CIcon* GetUnitIcon(CUnit* unit, float& scale) const;
+		void GetFrustumSide(float3& side);
+		
+	protected:
+		int xpos, ypos;
+		int height, width;
+		int oldxpos, oldypos;
+		int oldheight, oldwidth;
 
-	std::list<Notification> notes;
-	void DrawNotes(void);
+		float unitBaseSize;
+		float unitExponent;
+		float unitSizeX;
+		float unitSizeY;
+		float unitSelectRadius;
 
-	bool useIcons;
-	bool simpleColors;
-	unsigned char myColor[4];
-	unsigned char allyColor[4];
-	unsigned char enemyColor[4];
+		bool fullProxy;
+
+		bool proxyMode;
+		bool selecting;
+		bool maximized;
+		bool minimized;
+		bool mouseLook;
+		bool mouseMove;
+		bool mouseResize;
+
+		struct IntBox {
+			bool Inside(int x, int y) const {
+				return ((x >= xmin) && (x <= xmax) && (y >= ymin) && (y <= ymax));
+			}
+			void DrawBox() const;
+			void DrawTextureBox() const;
+			int xmin, xmax, ymin, ymax;
+			float xminTx, xmaxTx, yminTx, ymaxTx;  // texture coordinates
+		};
+
+		int buttonSize;
+		bool showButtons;
+		IntBox mapBox;
+		IntBox buttonBox;
+		IntBox moveBox;
+		IntBox resizeBox;
+		IntBox minimizeBox;
+		IntBox maximizeBox;
+		int lastWindowSizeX;
+		int lastWindowSizeY;
+		
+		bool useIcons;
+		bool drawCommands;
+		float cursorScale;
+		
+		bool simpleColors;
+		unsigned char myColor[4];
+		unsigned char allyColor[4];
+		unsigned char enemyColor[4];
+
+		unsigned int buttonsTexture;
+		unsigned int circleLists; // 8 - 256 divs
+		static const int circleListsCount = 6;
+				
+		struct fline {
+			float base;
+			float dir;
+			int left;
+			float minz;
+			float maxz;
+		};
+		std::vector<fline> left;
+
+		struct Notification {
+			float creationTime;
+			float3 pos;
+			float color[4];
+		};
+		std::list<Notification> notes;
 };
+
+
 extern CMiniMap* minimap;
+
 
 #endif /* MINIMAP_H */

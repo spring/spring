@@ -26,12 +26,6 @@ COutlineFont::~COutlineFont()
 void COutlineFont::print(float xps, float yps,
                          const float color[4], const char* text) const
 {
-	if (!enabled) {
-		glColor4fv(color);
-		font->glPrintRaw(text);
-		return;
-	}
-
 	const float luminance = (color[0] * 0.299f) +
 	                        (color[1] * 0.587f) +
 	                        (color[2] * 0.114f);
