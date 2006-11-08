@@ -56,13 +56,13 @@ void CBoHandler::AddBuildOptions(const UnitDef* unitDef)
 			{
 				info->spacing = 0;
 			}
-			else if(wd->edgeEffectivness > 0.9) // the deathexplosion has almost 100% effect over its radius
+			else if(wd->edgeEffectiveness > 0.9) // the deathexplosion has almost 100% effect over its radius
 			{
 				info->spacing = wd->areaOfEffect;
 			}
 			else // calculate the allowed spacing
 			{
-				info->spacing = wd->areaOfEffect * (maxDamage - maxLoss) / (maxDamage - maxLoss * wd->edgeEffectivness);
+				info->spacing = wd->areaOfEffect * (maxDamage - maxLoss) / (maxDamage - maxLoss * wd->edgeEffectiveness);
 				info->spacing = max(info->spacing, 0.0f);
 			}
 			info->spacing = min(info->spacing, 0.5 * maxPartitionRadius);
