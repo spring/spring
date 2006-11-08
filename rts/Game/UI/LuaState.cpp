@@ -604,7 +604,7 @@ bool CLuaState::LoadWeaponDefInfo()
 		ADD_W_FLOAT(areaOfEffect,     wd.areaOfEffect);
 		ADD_W_BOOL(noSelfDamage,      wd.noSelfDamage);
 		ADD_W_FLOAT(fireStarter,      wd.fireStarter);
-		ADD_W_FLOAT(edgeEffectivness, wd.edgeEffectivness);
+		ADD_W_FLOAT(edgeEffectiveness,wd.edgeEffectiveness);
 		ADD_W_FLOAT(size,             wd.size);
 		ADD_W_FLOAT(sizeGrowth,       wd.sizeGrowth);
 		ADD_W_FLOAT(collisionSize,    wd.collisionSize);
