@@ -288,8 +288,10 @@ bool CGameSetup::Update()
 	for(int a=0;a<numPlayers;a++){
 		if(!gs->players[a]->readyToStart){
 			allReady=false;
+			break;
 		} else if(!readyTeams[gs->players[a]->team]){
 			allReady=false;
+			break;
 		}
 	}
 	if(gu->myPlayerNum==0 && keys[SDLK_RETURN] && keys[SDLK_LCTRL]){
@@ -306,6 +308,8 @@ bool CGameSetup::Update()
 			mouse->CameraTransition(1.0f);
 		}
 		readyTime+=gu->lastFrameTime;
+		if (!gu->active) // dirty hack to get readyTime updated when minimised
+			++readyTime;
 	} else {
 		readyTime=0;
 	}
