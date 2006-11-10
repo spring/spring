@@ -67,6 +67,7 @@ class CWaitCommandsAI {
 				virtual void RemoveUnit(CUnit* unit) = 0;
 				virtual void Update() = 0;
 				virtual void Draw() const { return; }
+				virtual void AddUnitPosition(const float3& pos) const { return; }
 				virtual const string& GetStateText() const { return noText; }
 			public:
 				time_t GetDeadTime() const { return deadTime; }
@@ -131,6 +132,7 @@ class CWaitCommandsAI {
 				void RemoveUnit(CUnit* unit);
 				void Update();
 				void Draw() const;
+				void AddUnitPosition(const float3& pos) const;
 			private:
 				DeathWait(const Command& cmd);
 				void SelectAreaUnits(const float3& pos0, const float3& pos1,
@@ -138,6 +140,7 @@ class CWaitCommandsAI {
 			private:
 				UnitSet waitUnits;
 				UnitSet deathUnits;
+				mutable vector<float3> unitPos; // FIXME -- laziness
 		};
 
 		// SquadWait				

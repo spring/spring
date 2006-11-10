@@ -36,6 +36,7 @@ extern "C" {
 #include "System/Net.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/ConfigHandler.h"
+#include "System/Sound.h"
 
 extern Uint8 *keys;
 
@@ -87,11 +88,22 @@ static int GiveOrder(lua_State* L);
 static int GetMapHeight(lua_State* L);
 static int TestBuildOrder(lua_State* L);
 
-static int DrawMapIcon(lua_State* L);
-static int DrawMapText(lua_State* L);
-static int DrawMapUnit(lua_State* L);
+static int AddMapIcon(lua_State* L);
+static int AddMapText(lua_State* L);
+static int AddMapUnit(lua_State* L);
+
+static int DrawState(lua_State* L);
 static int DrawShape(lua_State* L);
 static int DrawText(lua_State* L);
+static int DrawTranslate(lua_State* L);
+static int DrawScale(lua_State* L);
+static int DrawRotate(lua_State* L);
+static int DrawPushMatrix(lua_State* L);
+static int DrawPopMatrix(lua_State* L);
+static int DrawListCreate(lua_State* L);
+static int DrawListRun(lua_State* L);
+
+static int PlaySoundFile(lua_State* L);
 
 static int SetShareLevel(lua_State* L);
 
@@ -99,6 +111,10 @@ static int SetShareLevel(lua_State* L);
 static bool drawingEnabled = false;
 static bool screenTransform = false;
 
+static int matrixDepth = 0;
+static const int maxMatrixDepth = 16;
+
+static vector<unsigned int> displayLists;
 
 /******************************************************************************/
 
@@ -141,6 +157,9 @@ CIconLayoutHandler::CIconLayoutHandler()
 
 CIconLayoutHandler::~CIconLayoutHandler()
 {
+	for (int i = 0; i < (int)displayLists.size(); i++) {
+		glDeleteLists(displayLists[i], 1);
+	}
 }
 
 
@@ -204,12 +223,21 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMapHeight);
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(SetShareLevel);
-	REGISTER_LUA_CFUNC(DrawMapIcon);
-	REGISTER_LUA_CFUNC(DrawMapText);
-	REGISTER_LUA_CFUNC(DrawMapUnit);
+	REGISTER_LUA_CFUNC(AddMapIcon);
+	REGISTER_LUA_CFUNC(AddMapText);
+	REGISTER_LUA_CFUNC(AddMapUnit);
+	REGISTER_LUA_CFUNC(DrawState);
 	REGISTER_LUA_CFUNC(DrawShape);
 	REGISTER_LUA_CFUNC(DrawText);
-	
+	REGISTER_LUA_CFUNC(DrawListCreate);
+	REGISTER_LUA_CFUNC(DrawListRun);
+	REGISTER_LUA_CFUNC(PlaySoundFile);
+	REGISTER_LUA_CFUNC(DrawTranslate);
+	REGISTER_LUA_CFUNC(DrawScale);
+	REGISTER_LUA_CFUNC(DrawRotate);
+	REGISTER_LUA_CFUNC(DrawPushMatrix);
+	REGISTER_LUA_CFUNC(DrawPopMatrix);
+
 	lua_setglobal(L, "Spring");
 	
 	return true;
@@ -374,7 +402,7 @@ bool CIconLayoutHandler::DrawMapItems()
 		return false;
 	}
 	lua_pop(L, lua_gettop(L));
-
+	
 	lua_getglobal(L, "DrawMapItems");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
@@ -388,6 +416,9 @@ bool CIconLayoutHandler::DrawMapItems()
 	
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
+	glPushMatrix();
+	matrixDepth = 0;
+
 	// call the routine
 	const int error = lua_pcall(L, 2, 0, 0);
 	if (error != 0) {
@@ -396,6 +427,15 @@ bool CIconLayoutHandler::DrawMapItems()
 		lua_pop(L, 1);
 		return false;
 	}
+	
+	if (matrixDepth != 0) {
+		logOutput.Print("DrawMapItems: matrix mismatch");
+	}
+	while (matrixDepth > 0) {
+		glPopMatrix();
+		matrixDepth--;
+	}
+	glPopMatrix();
 	
 	drawingEnabled = false;
 	
@@ -425,6 +465,12 @@ bool CIconLayoutHandler::DrawScreenItems()
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
+	glPushMatrix();
+	matrixDepth = 0;
+	
+	// setup the screen transformation
+	glScalef(1.0f / float(gu->screenx), 1.0f / float(gu->screeny), 1.0f);
+	
 	// call the routine
 	const int error = lua_pcall(L, 2, 0, 0);
 	if (error != 0) {
@@ -433,6 +479,15 @@ bool CIconLayoutHandler::DrawScreenItems()
 		lua_pop(L, 1);
 		return false;
 	}
+	
+	if (matrixDepth != 0) {
+		logOutput.Print("DrawScreenItems: matrix mismatch");
+	}
+	while (matrixDepth > 0) {
+		glPopMatrix();
+		matrixDepth--;
+	}
+	glPopMatrix();
 	
 	screenTransform = false;
 	drawingEnabled = false;
@@ -2034,13 +2089,13 @@ static int SetShareLevel(lua_State* L)
 
 /******************************************************************************/
 
-static int DrawMapIcon(lua_State* L)
+static int AddMapIcon(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 4) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to DrawMapIcon(id, x, y, z");
+		lua_pushstring(L, "Incorrect arguments to AddMapIcon(id, x, y, z");
 		lua_error(L);
 	}
 	const int cmdID = (int)lua_tonumber(L, 1);
@@ -2050,13 +2105,13 @@ static int DrawMapIcon(lua_State* L)
 }
 
 
-static int DrawMapText(lua_State* L)
+static int AddMapText(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 4) ||
 	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to DrawMapIcon(text, x, y, z");
+		lua_pushstring(L, "Incorrect arguments to AddMapIcon(text, x, y, z");
 		lua_error(L);
 	}
 	const string text = lua_tostring(L, 1);
@@ -2066,7 +2121,7 @@ static int DrawMapText(lua_State* L)
 }
 
 
-static int DrawMapUnit(lua_State* L)
+static int AddMapUnit(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 6) ||
@@ -2074,7 +2129,7 @@ static int DrawMapUnit(lua_State* L)
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		lua_pushstring(L,
-			"Incorrect arguments to DrawMapUnit(unitDefID, x, y, z, team, facing");
+			"Incorrect arguments to AddMapUnit(unitDefID, x, y, z, team, facing");
 		lua_error(L);
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
@@ -2096,7 +2151,7 @@ static int DrawMapUnit(lua_State* L)
 
 static int DrawText(lua_State* L)
 {
-	if (!drawingEnabled || !screenTransform) {
+	if (!drawingEnabled) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
@@ -2127,26 +2182,24 @@ static int DrawText(lua_State* L)
 	}
 
 	const float tHeight = font->CalcTextHeight(text.c_str());
-	const float yScale = (size / (float)gu->screeny) / tHeight;
-	const float xScale = yScale / gu->aspectRatio;
-	float xr = x;
+	const float yScale = size / tHeight;
+	const float xScale = yScale;
+	float xj = x; // justified position
 	if (right) {
-		xr -= (font->CalcTextWidth(text.c_str()) / xScale);
+		xj -= xScale * font->CalcTextWidth(text.c_str());
 	} else if (center) {
-		xr -= (font->CalcTextWidth(text.c_str()) / xScale) * 0.5f;
+		xj -= xScale * font->CalcTextWidth(text.c_str()) * 0.5f;
 	}
-	const float xPos = xr / float(gu->screenx);
-	const float yPos = y / float(gu->screeny);
 	glPushMatrix();
-	glTranslatef(xPos, yPos, 0.0f);
+	glTranslatef(xj, y, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	if (!outline) {
 		font->glPrintColor("%s", text.c_str());
 	} else {
 		const float dark[4] = { 0.25f, 0.25f, 0.25f, 0.8f };
 		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		const float xPixel = 1.0f / (xScale * (float)gu->screenx);
-		const float yPixel = 1.0f / (yScale * (float)gu->screeny);
+		const float xPixel = 1.0f / xScale;
+		const float yPixel = 1.0f / yScale;
 		font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, dark);
 		font->glPrintColor("%s", text.c_str());
 	}
@@ -2170,28 +2223,25 @@ struct VertexData {
 };
 
 
-static bool ParseFloatArray(lua_State* L, float* array, int size)
+static int ParseFloatArray(lua_State* L, float* array, int size)
 {
 	if (!lua_istable(L, -1)) {
-		return false;
+		return -1;
 	}
 	int index = 0;
 	const int table = lua_gettop(L);
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -1)) {
 			logOutput.Print("DrawShape: bad array value\n");
-			lua_pop(L, 3); // pop the value, key, and table
-			return false;
+			lua_pop(L, 2); // pop the value and the key
+			return -1;
 		}
 		if (index < size) {
 			array[index] = (float)lua_tonumber(L, -1);
 			index++;
 		}
-		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
-	lua_pop(L, 1); // pop the table
-	return true;
+	return index;
 }
 
 
@@ -2204,11 +2254,10 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 	vd.hasVert = vd.hasNorm = vd.hasTxcd = vd.hasColor = false;
 
 	const int table = lua_gettop(L);
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_istable(L, -1) || !lua_isstring(L, -2)) {
 			logOutput.Print("DrawShape: bad vertex data row\n");
-			lua_pop(L, 3); // pop the value, key, and table
+			lua_pop(L, 2); // pop the value and key
 			return false;
 		}
 
@@ -2216,54 +2265,46 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 
 		if ((key == "v") || (key == "vertex")) {
 			vd.vert[0] = 0.0f; vd.vert[1] = 0.0f; vd.vert[2] = 0.0f;
-			if (ParseFloatArray(L, vd.vert, 3)) {
+			if (ParseFloatArray(L, vd.vert, 3) >= 2) {
 				vd.hasVert = true;
 			} else {
 				logOutput.Print("DrawShape: bad vertex array\n");
-				lua_pop(L, 3); // pop the value, key, and table
+				lua_pop(L, 2); // pop the value and key
 				return false;
-			}
-			if (screenTransform) {
-				vd.vert[0] /= float(gu->screenx);
-				vd.vert[1] /= float(gu->screeny);
 			}
 		}
 		else if ((key == "n") || (key == "normal")) {
 			vd.norm[0] = 0.0f; vd.norm[1] = 1.0f; vd.norm[2] = 0.0f;
-			if (ParseFloatArray(L, vd.norm, 3)) {
+			if (ParseFloatArray(L, vd.norm, 3) == 3) {
 				vd.hasNorm = true;
 			} else {
 				logOutput.Print("DrawShape: bad normal array\n");
-				lua_pop(L, 3); // pop the value, key, and table
+				lua_pop(L, 2); // pop the value and key
 				return false;
 			}
 		}
 		else if ((key == "t") || (key == "texcoord")) {
 			vd.txcd[0] = 0.0f; vd.txcd[1] = 0.0f;
-			if (ParseFloatArray(L, vd.txcd, 2)) {
+			if (ParseFloatArray(L, vd.txcd, 2) == 2) {
 				vd.hasTxcd = true;
 			} else {
 				logOutput.Print("DrawShape: bad texcoord array\n");
-				lua_pop(L, 3); // pop the value, key, and table
+				lua_pop(L, 2); // pop the value and key
 				return false;
 			}
 		}
 		else if ((key == "c") || (key == "color")) {
 			vd.color[0] = 1.0f; vd.color[1] = 1.0f;
 			vd.color[2] = 1.0f; vd.color[3] = 1.0f;
-			if (ParseFloatArray(L, vd.color, 4)) {
+			if (ParseFloatArray(L, vd.color, 4) >= 0) {
 				vd.hasColor = true;
 			} else {
 				logOutput.Print("DrawShape: bad color array\n");
-				lua_pop(L, 3); // pop the value, key, and table
+				lua_pop(L, 2); // pop the value and key
 				return false;
 			}
 		}
-		else {
-			lua_pop(L, 1); // pop the value
-		}
 	}
-	lua_pop(L, 1); // pop the table
 
 	return vd.hasVert;
 }
@@ -2279,7 +2320,7 @@ static int DrawShape(lua_State* L)
 	if ((args != 3) ||
 	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_istable(L, 3)) {
 		lua_pushstring(L,
-			"Incorrect arguments to DrawShape(type, texture, verts[]");
+			"Incorrect arguments to DrawShape(type, texture, verts[])");
 		lua_error(L);
 	}
 
@@ -2311,8 +2352,7 @@ static int DrawShape(lua_State* L)
 		default: { return 0; }
 	}
 	const int table = lua_gettop(L);
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		VertexData vd;
 		if (!ParseVertexData(L, vd)) {
 			logOutput.Print("DrawShape: bad vertex data\n");
@@ -2327,6 +2367,333 @@ static int DrawShape(lua_State* L)
 	glEnd();
 
 	return 0;
+}
+
+
+/******************************************************************************/
+
+static int DrawState(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_istable(L, 1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawState(table[])");
+		lua_error(L);
+	}
+	
+	const int table = lua_gettop(L);
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_isstring(L, -2)) { // the key
+			logOutput.Print("DrawState: bad state type\n");
+			break;
+		}
+		const string key = lua_tostring(L, -2);
+
+		if (key == "reset") {
+			if (screenTransform) {
+				glDisable(GL_DEPTH_TEST);
+			} else {
+				glEnable(GL_DEPTH_TEST);
+			}
+			glDepthMask(GL_FALSE);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glDisable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, 0.5f);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_COLOR_LOGIC_OP);
+			glLogicOp(GL_INVERT);
+			glDisable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+		}
+		else if (key == "depthmask") {
+			if (!lua_isboolean(L, -1)) {
+			} else {
+				glDepthMask(lua_toboolean(L, -1) ? GL_TRUE : GL_FALSE);
+			}
+		}
+		else if (key == "depthtest") {
+			if (!lua_isboolean(L, -1)) {
+			} else {
+				if (lua_toboolean(L, -1)) {
+					glEnable(GL_DEPTH_TEST);
+				} else {
+					glDisable(GL_DEPTH_TEST);
+				}
+			}
+		}
+		else if (key == "lighting") {
+			if (!lua_isboolean(L, -1)) {
+			} else {
+				if (lua_toboolean(L, -1)) {
+					glEnable(GL_LIGHTING);
+				} else {
+					glDisable(GL_LIGHTING);
+				}
+			}
+		}
+		else if (key == "blending") {
+			float values[2];
+			const int count = ParseFloatArray(L, values, 2);
+			if (count == 0) {
+				glDisable(GL_BLEND);
+			}
+			else if (count == 2) {
+				glEnable(GL_BLEND);
+				glBlendFunc((GLenum)values[0], (GLenum)values[1]);
+			}
+			else {
+			}
+		}
+		else if (key == "culling") {
+			float face;
+			const int count = ParseFloatArray(L, &face, 1);
+			if (count == 0) {
+				glDisable(GL_CULL_FACE);
+			}
+			else if (count == 1) {
+				glEnable(GL_CULL_FACE);
+				glCullFace((GLenum)face);
+			}
+			else {
+			}
+		}
+		else if (key == "alphatest") {
+			float values[2];
+			const int count = ParseFloatArray(L, values, 2);
+			if (count == 0) {
+				glDisable(GL_ALPHA_TEST);
+			}
+			else if (count == 2) {
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc((GLenum)values[0], values[1]);
+			}
+			else {
+			}
+		}
+		else if (key == "logicop") {
+			float op;
+			const int count = ParseFloatArray(L, &op, 1);
+			if (count == 0) {
+				glDisable(GL_COLOR_LOGIC_OP);
+			}
+			else if (count == 1) {
+				glEnable(GL_COLOR_LOGIC_OP);
+				glLogicOp((GLenum)op);
+			}
+			else {
+			}
+		}
+		else {
+			logOutput.Print("DrawState: unknown state type: %s\n", key.c_str());
+		}
+	}
+	
+	return 0;
+}
+
+/******************************************************************************/
+
+static int DrawTranslate(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L, "Incorrect arguments to DrawTranslate(x, y, z)");
+		lua_error(L);
+	}
+	const float x = (float)lua_tonumber(L, 1);
+	const float y = (float)lua_tonumber(L, 2);
+	const float z = (float)lua_tonumber(L, 3);
+	glTranslatef(x, y, z);
+	return 0;
+}
+
+
+static int DrawScale(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L, "Incorrect arguments to DrawScale(x, y, z)");
+		lua_error(L);
+	}
+	const float x = (float)lua_tonumber(L, 1);
+	const float y = (float)lua_tonumber(L, 2);
+	const float z = (float)lua_tonumber(L, 3);
+	glScalef(x, y, z);
+	return 0;
+}
+
+
+static int DrawRotate(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 4) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
+	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		lua_pushstring(L, "Incorrect arguments to DrawRotate(r, x, y, z)");
+		lua_error(L);
+	}
+	const float r = (float)lua_tonumber(L, 1);
+	const float x = (float)lua_tonumber(L, 2);
+	const float y = (float)lua_tonumber(L, 3);
+	const float z = (float)lua_tonumber(L, 4);
+	glRotatef(r, x, y, z);
+	return 0;
+}
+
+
+/******************************************************************************/
+
+static int DrawPushMatrix(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "DrawPushMatrix takes no arguments");
+		lua_error(L);
+	}
+
+	if (matrixDepth >= maxMatrixDepth) {
+		lua_pushstring(L, "DrawPushMatrix: matrix overflow");
+		lua_error(L);
+	}
+		
+	glPushMatrix();
+	matrixDepth++;			
+
+	return 0;
+}
+
+
+static int DrawPopMatrix(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "DrawPopMatrix takes no arguments");
+		lua_error(L);
+	}
+
+	if (matrixDepth <= 0) {
+		lua_pushstring(L, "DrawPopMatrix: matrix underflow");
+		lua_error(L);
+	}
+		
+	glPopMatrix();
+	matrixDepth--;			
+
+	return 0;
+}
+
+/******************************************************************************/
+
+static int DrawListCreate(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isfunction(L, 1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawListRun(func [, arg1, arg2])");
+		lua_error(L);
+	}
+	const bool origDrawingEnabled = drawingEnabled;
+	drawingEnabled = true;
+
+	const GLuint list = glGenLists(1);
+	glNewList(list, GL_COMPILE);
+	const int error = lua_pcall(L, args - 1, 0, 0);
+	glEndList();
+
+	if (error != 0) {
+		glDeleteLists(list, 1);
+		logOutput.Print("DrawListCreate: error = %s\n", lua_tostring(L, -1));
+		lua_pushnumber(L, -1);
+	} else {
+		displayLists.push_back(list);
+		lua_pushnumber(L, displayLists.size() - 1);
+	}
+	
+	drawingEnabled = origDrawingEnabled;
+	
+	return 1;
+}
+
+
+static int DrawListRun(lua_State* L)
+{
+	if (!drawingEnabled) {
+		
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawListRun(list)");
+		lua_error(L);
+	}
+	const GLuint listIndex = (GLuint)lua_tonumber(L, 1);
+	if (listIndex < displayLists.size()) {
+		glCallList(displayLists[listIndex]);
+	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
+static int PlaySoundFile(lua_State* L)
+{
+	static map<string, unsigned int> soundMap;
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to PlaySoundFile(soundname [,volume])");
+		lua_error(L);
+	}
+	const string soundName = lua_tostring(L, 1);
+	unsigned int soundID = 0;
+	
+	map<string, unsigned int>::const_iterator it = soundMap.find(soundName);
+	if (it != soundMap.end()) {
+		soundID = it->second;
+	} else {
+		CFileHandler fh(soundName);
+		if (fh.FileExists()) {
+			soundID = sound->GetWaveId(soundName);
+		} else {
+			soundID = 0;
+		}
+		soundMap[soundName] = soundID;
+	}
+	if (soundID > 0) {
+		float volume = 1.0f;
+		if (args >= 2) {
+			volume = (float)lua_tonumber(L, 2);
+		}
+		sound->PlaySample(soundID, volume);
+		lua_pushboolean(L, 1);
+	} else {
+		lua_pushboolean(L, 0);
+	}
+	return 1;
 }
 
 

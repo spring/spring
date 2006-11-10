@@ -621,9 +621,10 @@ void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound &gsound, std::str
 		gsound.id = 0;
 	else
 	{
-		CFileHandler file("sounds/"+gsound.name+".wav");
+		const string soundFile = "sounds/" + gsound.name + ".wav";
+		CFileHandler file(soundFile);
 		if(file.FileExists())
-			gsound.id = sound->GetWaveId(gsound.name+".wav");
+			gsound.id = sound->GetWaveId(soundFile);
 		else
 			gsound.id = 0;
 	}

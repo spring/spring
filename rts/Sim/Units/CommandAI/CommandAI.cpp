@@ -537,7 +537,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 				c2.options = c.options;
 				commandQue.push_back(c2);
 			} else {
-				do{
+				do {
 					ci--;
 					if(ci->params.size() >=3){
 						Command c2;
@@ -555,41 +555,25 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 						c2.options = c.options;
 						commandQue.push_back(c2);
 					}
-				}while(ci!=commandQue.begin());
+				} while(ci!=commandQue.begin());
 			}
 		}
 	}
 
-	std::deque<Command>::iterator ci = CCommandAI::GetCancelQueued(c);
-	if(c.id<0 && ci != commandQue.end()){
-		do{
-			if(ci == commandQue.begin()){
-				commandQue.erase(ci);
-				Command c2;
-				c2.id = CMD_STOP;
-				commandQue.push_front(c2);
-				SlowUpdate();
-			} else {
-				commandQue.erase(ci);
-			}
-			ci = CCommandAI::GetCancelQueued(c);
-		}while(ci != commandQue.end());
-		return;
-	} else if(ci != commandQue.end()){
-		if(ci == commandQue.begin()){
-			commandQue.erase(ci);
-			Command c2;
-			c2.id = CMD_STOP;
-			commandQue.push_front(c2);
+	// cancel duplicated commands
+	bool first;
+	if (CancelCommands(c, commandQue, first) > 0) {
+		if (first) {
+			Command stopCommand;
+			stopCommand.id = CMD_STOP;
+			commandQue.push_front(stopCommand);
 			SlowUpdate();
-		} else {
-			commandQue.erase(ci);
 		}
-		ci = CCommandAI::GetCancelQueued(c);
 		return;
 	}
 
-	if(!this->GetOverlapQueued(c).empty()){
+	// do not allow overlapping commands
+	if (!GetOverlapQueued(c).empty()) {
 		return;
 	}
 
@@ -613,7 +597,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 **/
 bool CCommandAI::WillCancelQueued(Command &c)
 {
-	return this->GetCancelQueued(c) != this->commandQue.end();
+	return (this->GetCancelQueued(c, commandQue) != this->commandQue.end());
 }
 
 
@@ -621,80 +605,148 @@ bool CCommandAI::WillCancelQueued(Command &c)
 * @brief Finds the queued command that would be canceled by the Command c
 * @return An iterator located at the command, or commandQue.end() if no such queued command exsists
 **/
-std::deque<Command>::iterator CCommandAI::GetCancelQueued(const Command &c){
-	if(!commandQue.empty()){
-		std::deque<Command>::iterator ci=commandQue.end();
-		do{
-			--ci;			//iterate from the end and dont check the current order
-			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
-				if(c.params.size()==1){			//we assume the param is a unit of feature id
-					if(ci->params[0]==c.params[0]){
+std::deque<Command>::iterator CCommandAI::GetCancelQueued(const Command &c,
+                                                          std::deque<Command>& q)
+{
+	std::deque<Command>::iterator ci = q.end();
+
+	while (ci != q.begin()) {
+
+		ci--; //iterate from the end and dont check the current order
+		const Command& t = *ci;
+		
+		if (((c.id == t.id) || ((c.id < 0) && (t.id < 0))) &&
+		    (t.params.size() == c.params.size())) {
+			if (c.params.size() == 1) { 
+			  // assume the param is a unit of feature id
+				if ((t.params[0] == c.params[0]) &&
+				    (t.id != CMD_SET_WANTED_MAX_SPEED)) {
+					return ci;
+				}
+			}
+			else if (c.params.size() >= 3) {
+				// assume this means that the first 3 makes a position
+				float3 cp(c.params[0], c.params[1], c.params[2]);
+				float3 tp(t.params[0], t.params[1], t.params[2]);
+				if (c.id < 0) {
+					UnitDef* cu = unitDefHandler->GetUnitByID(-c.id);
+					UnitDef* tu = unitDefHandler->GetUnitByID(-t.id);
+					if (cu && tu
+					    && fabs(cp.x - tp.x) * 2 <= max(cu->xsize, tu->xsize) * SQUARE_SIZE
+					    && fabs(cp.z - tp.z) * 2 <= max(cu->ysize, tu->ysize) * SQUARE_SIZE) {
 						return ci;
 					}
-				} else if(c.params.size()>=3){		//we assume this means that the first 3 makes a position
-					float3 cpos(c.params[0],c.params[1],c.params[2]);
-					float3 cipos(ci->params[0],ci->params[1],ci->params[2]);
-					if(c.id < 0){
-						UnitDef* u1 = unitDefHandler->GetUnitByID(-c.id);
-						UnitDef* u2 = unitDefHandler->GetUnitByID(-ci->id);
-						if(u1 && u2
-							&& fabs(cpos.x-cipos.x)*2 <= max(u1->xsize, u2->xsize)*SQUARE_SIZE
-							&& fabs(cpos.z-cipos.z)*2 <= max(u1->ysize, u2->ysize)*SQUARE_SIZE) {
-							return ci;
-						}
-					} else {
-						if((cpos-cipos).SqLength2D()<17*17){
-							return ci;
-						}
+				} else {
+					if ((cp - tp).SqLength2D() < (17.0f * 17.0f)) {
+						return ci;
 					}
 				}
 			}
-		}while(ci!=commandQue.begin());
+		}
 	}
-	return commandQue.end();
+	return q.end();
 }
+
+
+int CCommandAI::CancelCommands(const Command &c, std::deque<Command>& q,
+                               bool& first)
+{
+	first = false;
+	int cancelCount = 0;
+
+	while (true) {
+		std::deque<Command>::iterator next, ci = GetCancelQueued(c, q);
+		if (ci == q.end()) {
+			return cancelCount;
+		}
+		
+		first = (ci == q.begin());
+
+		next = ci;
+		next++;
+		q.erase(ci);
+		cancelCount++;
+		
+		if ((next != q.end()) && (next->id == CMD_SET_WANTED_MAX_SPEED)) {
+			ci = next;
+			ci++;
+			q.erase(next);
+			cancelCount++;
+			next = ci;
+		}
+
+		if ((next != q.end()) && (next->id == CMD_WAIT)) {
+  		waitCommandsAI.RemoveWaitCommand(owner, *next);
+			q.erase(next);
+			cancelCount++;
+		}
+		
+		if (c.id >= 0) {
+			return cancelCount; // only delete one non-build order
+		}
+	}	
+
+	return cancelCount;
+}
+
 
 /**
 * @brief Returns commands that overlap c, but will not be canceled by c
 * @return a vector containing commands that overlap c
 */
-std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c){
-	std::deque<Command>::iterator ci = commandQue.end();
+std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c)
+{
+	return GetOverlapQueued(c, commandQue);
+}
+
+
+std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c,
+                                                  std::deque<Command>& q)
+{
+	std::deque<Command>::iterator ci = q.end();
 	std::vector<Command> v;
-	BuildInfo buildInfo(c);
+	BuildInfo cbi(c);
 
-	if(ci != commandQue.begin()){
-		do{
-			--ci;			//iterate from the end and dont check the current order
-			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
-				if(c.params.size()==1) //we assume the param is a unit or feature id
-				{			
-					if(ci->params[0]==c.params[0])
-						v.push_back(*ci);
+	if (ci != q.begin()){
+		do {
+			ci--; //iterate from the end and dont check the current order
+			const Command& t = *ci;
+
+			if (((t.id == c.id) || ((c.id < 0) && (t.id < 0))) &&
+			    (t.params.size() == c.params.size())){
+				if (c.params.size()==1) {
+					// assume the param is a unit or feature id
+					if (t.params[0] == c.params[0]) {
+						v.push_back(t);
+					}
 				}
-				else if(c.params.size()>=3)		//we assume this means that the first 3 makes a position
-				{
-					BuildInfo other;
-
-					if(other.Parse(*ci)){
-						if(buildInfo.def && other.def
-							&& (fabs(buildInfo.pos.x-other.pos.x)*2 > max(buildInfo.GetXSize(), other.GetXSize())*SQUARE_SIZE
-							|| fabs(buildInfo.pos.z-other.pos.z)*2 > max(buildInfo.GetYSize(), other.GetYSize())*SQUARE_SIZE)
-							&& fabs(buildInfo.pos.x-other.pos.x)*2 < (buildInfo.GetXSize() + other.GetXSize())*SQUARE_SIZE
-							&& fabs(buildInfo.pos.z-other.pos.z)*2 < (buildInfo.GetYSize() + other.GetYSize())*SQUARE_SIZE)
-						{
-							v.push_back(*ci);
+				else if (c.params.size() >= 3) {
+					// assume this means that the first 3 makes a position
+					BuildInfo tbi;
+					if (tbi.Parse(t)) {
+						const float dist2X = 2.0f * fabs(cbi.pos.x - tbi.pos.x);
+						const float dist2Z = 2.0f * fabs(cbi.pos.z - tbi.pos.z);
+						const float addSizeX = SQUARE_SIZE * (cbi.GetXSize() + tbi.GetXSize());
+						const float addSizeZ = SQUARE_SIZE * (cbi.GetYSize() + tbi.GetYSize());
+						const float maxSizeX = SQUARE_SIZE * max(cbi.GetXSize(), tbi.GetXSize());
+						const float maxSizeZ = SQUARE_SIZE * max(cbi.GetYSize(), tbi.GetYSize());
+						if (cbi.def && tbi.def &&
+						    ((dist2X > maxSizeX) || (dist2Z > maxSizeZ)) &&
+						    ((dist2X < addSizeX) && (dist2Z < addSizeZ))) {
+							v.push_back(t);
 						}
 					} else {
-						if((buildInfo.pos-other.pos).SqLength2D()<17*17)
-							v.push_back(*ci);
+						if ((cbi.pos - tbi.pos).SqLength2D() < (17.0f * 17.0f)) {
+							v.push_back(t);
+						}
 					}
 				}
 			}
-		}while(ci!=commandQue.begin());
+		} while (ci != q.begin());
 	}
 	return v;
 }
+
 
 int CCommandAI::UpdateTargetLostTimer(int unitid)
 {

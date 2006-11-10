@@ -24,7 +24,6 @@ public:
 	void GiveCommand(const Command& c);
 	void DrawCommands(void);
 	void UpdateIconName(int id,BuildOption& bo);
-	std::deque<Command>::iterator GetCancelQueued(const Command &c);
 
 	std::deque<Command> newUnitCommands;
 
