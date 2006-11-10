@@ -353,7 +353,7 @@ void CMiniMap::UpdateGeometry()
 	}
 	else if (!maximized && (gu->screenx >= gu->screeny)) {
 		width = min(width, gu->screenx);
-		height = min(width, gu->screeny);
+		height = min(height, gu->screeny);
 		ypos = max(buttonSize, ypos);
 		ypos = min(gu->screeny - height, ypos);
 		xpos = max(0, min(gu->screenx - width, xpos));
