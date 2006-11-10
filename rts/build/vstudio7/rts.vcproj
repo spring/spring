@@ -399,12 +399,6 @@
 				RelativePath="..\..\Game\GameVersion.h">
 			</File>
 			<File
-				RelativePath="..\..\System\Messages.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\Messages.h">
-			</File>
-			<File
 				RelativePath="..\..\Game\Player.cpp">
 			</File>
 			<File
@@ -415,12 +409,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\PreGame.h">
-			</File>
-			<File
-				RelativePath="..\..\Game\Ui\QuitBox.cpp">
-			</File>
-			<File
-				RelativePath="..\..\Game\Ui\QuitBox.h">
 			</File>
 			<File
 				RelativePath="..\..\Game\SelectedUnits.cpp">
@@ -439,6 +427,12 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\Team.h">
+			</File>
+			<File
+				RelativePath="..\..\Game\WaitCommandsAI.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Game\WaitCommandsAI.h">
 			</File>
 			<File
 				RelativePath="..\..\Game\WordCompletion.cpp">
@@ -550,6 +544,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\OutlineFont.h">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\QuitBox.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\QuitBox.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\ResourceBar.cpp">
@@ -1670,27 +1670,15 @@
 			Filter="">
 			<File
 				RelativePath="..\..\System\bget.cpp">
-				<FileConfiguration
-					Name="No debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\bget.h">
+			</File>
+			<File
+				RelativePath="..\..\System\bitops.h">
+			</File>
+			<File
+				RelativePath="..\..\System\FPUCheck.h">
 			</File>
 			<File
 				RelativePath="..\..\System\GlobalStuff.cpp">
@@ -1714,6 +1702,18 @@
 				RelativePath="..\..\System\MemPool.h">
 			</File>
 			<File
+				RelativePath="..\..\System\Messages.cpp">
+			</File>
+			<File
+				RelativePath="..\..\System\Messages.h">
+			</File>
+			<File
+				RelativePath="..\..\System\mmgr.cpp">
+			</File>
+			<File
+				RelativePath="..\..\System\mmgr.h">
+			</File>
+			<File
 				RelativePath="..\..\System\MouseInput.cpp">
 			</File>
 			<File
@@ -1726,6 +1726,9 @@
 				RelativePath="..\..\System\Net.h">
 			</File>
 			<File
+				RelativePath="..\..\System\nommgr.h">
+			</File>
+			<File
 				RelativePath="..\..\System\Object.cpp">
 			</File>
 			<File
@@ -1736,60 +1739,12 @@
 			</File>
 			<File
 				RelativePath="..\..\System\StdAfx.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\StdAfx.h">
 			</File>
 			<File
 				RelativePath="..\..\System\Syncify.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\Syncify.h">
@@ -1805,18 +1760,6 @@
 			</File>
 			<File
 				RelativePath="..\..\System\TdfParser.cpp">
-				<FileConfiguration
-					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\TdfParser.h">
