@@ -120,7 +120,7 @@ CMouseHandler::CMouseHandler()
 
 	SDL_ShowCursor(SDL_DISABLE);
 
-	soundMultiselID = sound->GetWaveId("button9.wav");
+	soundMultiselID = sound->GetWaveId("sounds/button9.wav");
 
 	invertMouse=!!configHandler.GetInt("InvertMouse",1);
   doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;

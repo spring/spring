@@ -32,8 +32,14 @@ public:
 	virtual bool WillCancelQueued(Command &c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
-	std::deque<Command>::iterator GetCancelQueued(const Command &c);
+
+	int CancelCommands(const Command &c, std::deque<Command>& queue,
+	                   bool& first);
+	std::deque<Command>::iterator GetCancelQueued(const Command &c,
+	                                              std::deque<Command>& queue);
 	std::vector<Command> GetOverlapQueued(const Command &c);
+	std::vector<Command> GetOverlapQueued(const Command &c,
+	                                      std::deque<Command>& queue);
 
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);

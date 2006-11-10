@@ -456,26 +456,25 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 
 void CWeaponDefHandler::LoadSound(GuiSound &gsound)
 {
-	//gsound.volume = 5.0f;
-	if(gsound.name.compare("")==0)
-	{
+	// gsound.volume = 5.0f;
+	if (gsound.name.compare("") == 0) {
 		gsound.id = 0;
 		return;
 	}
 
-	if(gsound.name.find(".wav") == -1)
+	if (gsound.name.find(".wav") == -1) {
 		gsound.name = gsound.name + ".wav";
+	}
 
-	CFileHandler sfile("sounds/" + gsound.name);
-	if(!sfile.FileExists())
-	{
+	const string soundPath = "sounds/" + gsound.name;
+	CFileHandler sfile(soundPath);
+	if (!sfile.FileExists()) {
 		gsound.id = 0;
 		return;
 	}
-
-	gsound.id = sound->GetWaveId(gsound.name);
-
+	gsound.id = sound->GetWaveId(soundPath);
 }
+
 
 WeaponDef *CWeaponDefHandler::GetWeapon(const std::string weaponname2)
 {

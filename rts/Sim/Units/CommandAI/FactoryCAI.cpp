@@ -131,11 +131,15 @@ void CFactoryCAI::GiveCommand(const Command& c)
 				}
 			}
 			else {
-				std::deque<Command>::iterator ci = GetCancelQueued(c);
-				if (ci == newUnitCommands.end()) {
-					newUnitCommands.push_back(c);
+				bool dummy;
+				if (CancelCommands(c, newUnitCommands, dummy) > 0) {
+					return;
 				} else {
-					this->newUnitCommands.erase(ci);
+					if (GetOverlapQueued(c, newUnitCommands).empty()) {
+						newUnitCommands.push_back(c);
+					} else {
+						return;
+					}
 				}
 			}
 		}
@@ -157,7 +161,7 @@ void CFactoryCAI::GiveCommand(const Command& c)
 	}
 
 	BuildOption &bo=boi->second;
-
+	
 	int numItems=1;
 	if(c.options& SHIFT_KEY)
 		numItems*=5;
@@ -376,33 +380,4 @@ void CFactoryCAI::DrawCommands(void)
 		}
 	}
 	lineDrawer.FinishPath();
-}
-
-
-/**
-* @brief Finds the queued command that would be canceled by the Command c
-* @return An iterator located at the command, or commandQue.end() if no such queued command exsists
-**/
-std::deque<Command>::iterator CFactoryCAI::GetCancelQueued(const Command &c){
-	if(!newUnitCommands.empty()){
-		std::deque<Command>::iterator ci=newUnitCommands.end();
-		do{
-			--ci;			//iterate from the end and dont check the current order
-			if((ci->id==c.id || (c.id<0 && ci->id<0)) && ci->params.size()==c.params.size()){
-				if(c.params.size()==1){			//we assume the param is a unit of feature id
-					if(ci->params[0]==c.params[0]){
-						return ci;
-					}
-				} else if(c.params.size()>=3){		//we assume this means that the first 3 makes a position
-					float3 cpos(c.params[0],c.params[1],c.params[2]);
-					float3 cipos(ci->params[0],ci->params[1],ci->params[2]);
-
-					if((cpos-cipos).SqLength2D()<17*17){
-						return ci;
-					}
-				}
-			}
-		}while(ci!=newUnitCommands.begin());
-	}
-	return newUnitCommands.end();
 }

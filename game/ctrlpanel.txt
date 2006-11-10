@@ -10,7 +10,8 @@
 // frameAlpha     -1.0  // use the GUI alpha if < 0.0
 // selectGaps        1
 // selectThrough     0
-// newAttackMode     0  // enable attack selection box
+// newAttackMode     1  // enable attack selection box
+// xorSelect         1
 
 
 ////////////////////////////////////////////////////////////////////////////////

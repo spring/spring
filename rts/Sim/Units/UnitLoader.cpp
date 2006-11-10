@@ -404,25 +404,6 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->metalFireCost=weapondef->metalcost;
 	weapon->energyFireCost=weapondef->energycost;
 
-	/*CFileHandler ffile("sounds/"+weapondef->sfiresound);
-	if(ffile.FileExists())
-	{
-		weapondef->firesound = sound->GetWaveId(weapondef->sfiresound);
-		weapon->fireSoundId = weapondef->firesoundId;
-	}
-	else
-	{
-		weapondef->firesoundId = 0;
-		weapon->fireSoundId = 0;
-	}
-	if(weapondef->ssoundhit!="none.wav")
-	{
-		weapondef->soundhitId = sound->GetWaveId(weapondef->ssoundhit);
-	}
-	else
-	{
-		weapondef->soundhitId = 0;
-	}*/
 	CWeaponDefHandler::LoadSound(weapondef->firesound);
 	CWeaponDefHandler::LoadSound(weapondef->soundhit);
 

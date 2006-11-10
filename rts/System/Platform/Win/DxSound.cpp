@@ -340,7 +340,7 @@ bool CDxSound::CreateStaticBuffer(const string& path)
 	
 	// Open the wav file and copy it to a buffer	
 	Uint8 *buf = 0;
-	CFileHandler file("Sounds/"+path);
+	CFileHandler file(path);
 	int fileSize = file.FileSize();
 	if(file.FileExists()){
 		buf = new Uint8[fileSize];

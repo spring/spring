@@ -147,7 +147,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 			string s = &cobdata[ofs];
 
 			// Load the wave file and store the ID for future use
-			s = s + ".wav";
+			s = "sounds/" + s + ".wav";
 			sounds.push_back(sound->GetWaveId(s));
 		}
 	}

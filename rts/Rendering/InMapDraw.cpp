@@ -79,7 +79,7 @@ CInMapDraw::CInMapDraw(void)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
-	blippSound=sound->GetWaveId("beep6.wav");
+	blippSound=sound->GetWaveId("sounds/beep6.wav");
 }
 
 CInMapDraw::~CInMapDraw(void)

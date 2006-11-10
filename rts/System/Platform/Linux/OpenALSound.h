@@ -4,6 +4,7 @@
 // CSound interface definition
 #include "Sound.h"
 
+#include <map>
 #include <vector>
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -30,8 +31,8 @@ private:
 
 	void UpdateListener();
 	void Enqueue(ALuint src);
-	vector<string> LoadedFiles;
-	vector<ALuint> Buffers;
+	
+	map<string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
 	ALuint *Sources;
 };

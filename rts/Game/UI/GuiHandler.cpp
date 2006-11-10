@@ -146,8 +146,8 @@ void CGuiHandler::LoadDefaults()
 	
 	outlineFont.Enable(false);
 
-	xorSelect = false;
-	newAttackMode = false;
+	xorSelect = true;
+	newAttackMode = true;
 }
 
 

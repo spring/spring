@@ -371,7 +371,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 #endif
 	activeController=this;
 
-	chatSound=sound->GetWaveId("beep4.wav");
+	chatSound=sound->GetWaveId("sounds/beep4.wav");
 
 	if(gameServer)
 		gameServer->gameLoading=false;

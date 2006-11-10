@@ -61,15 +61,14 @@ COpenALSound::COpenALSound()
 
 COpenALSound::~COpenALSound()
 {
-	LoadedFiles.clear();
 	for (int i = 0; i < maxSounds; i++) {
 		alSourceStop(Sources[i]);
 		alDeleteSources(1,&Sources[i]);
 	}
 	delete[] Sources;
-	while (!Buffers.empty()) {
-		alDeleteBuffers(1,&Buffers.back());
-		Buffers.pop_back();
+	map<string, ALuint>::iterator it;
+	for (it = soundMap.begin(); it != soundMap.end(); ++it) {
+		alDeleteBuffers(1, &it->second);
 	}
 	ALCcontext *curcontext = alcGetCurrentContext();
 	ALCdevice *curdevice = alcGetContextsDevice(curcontext);
@@ -284,7 +283,7 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 	alGenBuffers(1,&buffer);
 	if (!CheckError("error generating OpenAL sound buffer"))
 		return 0;
-	CFileHandler file("Sounds/"+path);
+	CFileHandler file(path);
 	if(file.FileExists()){
 		buf = new Uint8[file.FileSize()];
 		file.Read(buf, file.FileSize());
@@ -306,14 +305,11 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 
 ALuint COpenALSound::GetWaveId(const string& path)
 {
-	int count = 0;
-	ALuint buffer;
-	for (vector<string>::iterator it = LoadedFiles.begin(); it != LoadedFiles.end(); it++,count++) {
-		if (*it == path)
-			return Buffers.at(count);
+	map<string, ALuint>::const_iterator it = soundMap.find(path);
+	if (it != soundMap.end()) {
+		return it->second;
 	}
-	buffer = LoadALBuffer(path);
-	Buffers.push_back(buffer);
-	LoadedFiles.push_back(path);
+	const ALuint buffer = LoadALBuffer(path);
+	soundMap[path] = buffer;
 	return buffer;
 }

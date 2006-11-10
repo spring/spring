@@ -283,6 +283,7 @@ void CWaitCommandsAI::AddIcon(const Command& cmd, const float3& pos) const
 	}
 	else if (code == CMD_WAITCODE_DEATHWAIT) {
 		lineDrawer.DrawIconAtLastPos(CMD_DEATHWAIT);
+    it->second->AddUnitPosition(pos);
 	}
 	else if (code == CMD_WAITCODE_GATHERWAIT) {
 		lineDrawer.DrawIconAtLastPos(CMD_GATHERWAIT);
@@ -766,34 +767,43 @@ void CWaitCommandsAI::DeathWait::Draw() const
 	const UnitSet& selUnits = selectedUnits.selectedUnits;
 	UnitSet drawSet;
 	UnitSet::const_iterator it;
-	for (it = waitUnits.begin(); it != waitUnits.end(); ++it) {
-		CUnit* unit = *it;
-		if (IsWaitingOn(unit) && (selUnits.find(unit) != selUnits.end())) {
-			drawSet.insert(*it);
-		}
-	}
-	if (drawSet.empty()) {
+	
+	if (unitPos.empty()) {
 		return;
+	}
+	
+	float3 midPos(0.0f, 0.0f, 0.0f);
+	for (int i = 0; i < (int)unitPos.size(); i++) {
+		midPos += unitPos[i];
+	}
+	midPos /= (float)unitPos.size();
+
+	cursorIcons.AddIcon(CMD_DEATHWAIT, midPos);
+
+	for (int i = 0; i < (int)unitPos.size(); i++) {
+		lineDrawer.StartPath(unitPos[i], cmdColors.start);
+		lineDrawer.DrawLine(midPos, cmdColors.deathWait);
+		lineDrawer.FinishPath();
 	}
 
 	for (it = deathUnits.begin(); it != deathUnits.end(); ++it) {
 		const CUnit* unit = *it;
 		if (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) {
 			cursorIcons.AddIcon(CMD_SELFD, (*it)->midPos);
+			lineDrawer.StartPath(midPos, cmdColors.start);
+			lineDrawer.DrawLine(unit->midPos, cmdColors.deathWait);
+			lineDrawer.FinishPath();
 		}
 	}
-	
-	if (drawSet.size() == 1) {
-		const float3& midPos = (*drawSet.begin())->midPos;
-		for (it = deathUnits.begin(); it != deathUnits.end(); ++it) {
-			const CUnit* unit = *it;
-			if (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) {
-				lineDrawer.StartPath(midPos, cmdColors.start);
-				lineDrawer.DrawLine(unit->midPos, cmdColors.deathWait);
-				lineDrawer.FinishPath();
-			}
-		}
-	}
+
+	unitPos.clear();
+}
+
+
+void CWaitCommandsAI::DeathWait::AddUnitPosition(const float3& pos) const
+{
+	unitPos.push_back(pos);
+	return;
 }
 
 
@@ -1085,7 +1095,7 @@ void CWaitCommandsAI::GatherWait::RemoveUnit(CUnit* unit)
 
 void CWaitCommandsAI::GatherWait::Update()
 {
-	if (waitUnits.empty()) {
+	if (waitUnits.size() < 2) {
 		delete this;
 		return;
 	}

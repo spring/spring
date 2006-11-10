@@ -345,7 +345,15 @@ void CMiniMap::UpdateGeometry()
 {
 	// try to keep the same distance to the top
 	ypos -= (lastWindowSizeY - gu->screeny);
-	if (!maximized && (gu->screenx >= gu->screeny) && !(gu->dualScreenMode)) {
+	if (gu->dualScreenMode) {
+		width = gu->screenx;
+		height = gu->screeny;
+		xpos = (gu->screenx - gu->screenxPos);
+		ypos = 0;
+	}
+	else if (!maximized && (gu->screenx >= gu->screeny)) {
+		width = min(width, gu->screenx);
+		height = min(width, gu->screeny);
 		ypos = max(buttonSize, ypos);
 		ypos = min(gu->screeny - height, ypos);
 		xpos = max(0, min(gu->screenx - width, xpos));
@@ -1006,13 +1014,13 @@ void CMiniMap::DrawButtons()
 	
 	// update the showButtons state
 	if (!showButtons) {
-		if (mapBox.Inside(x, y) && (buttonSize > 0)) {
+		if (mapBox.Inside(x, y) && (buttonSize > 0) && !gu->dualScreenMode) {
 			showButtons = true;
 		} else {
 			return;
 		}
 	}	else if (!mouseMove && !mouseResize &&
-	           !mapBox.Inside(x, y)&& !buttonBox.Inside(x, y)) {
+	           !mapBox.Inside(x, y) && !buttonBox.Inside(x, y)) {
 		showButtons = false;
 		return;
 	}
