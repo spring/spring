@@ -2868,7 +2868,6 @@ void CGame::HandleChatMsg(std::string s,int player)
 		logOutput.Print("Result: %f", 1.0f/a);
 	}
 
-#ifdef SYNCDEBUG
 	if (s.find(".desync") == 0 && gs->cheatEnabled) {
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
@@ -2885,6 +2884,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		}
 		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
 	}
+#ifdef SYNCDEBUG
 	if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer && serverNet) {
 		gameServer->fakeDesync = true;
 		logOutput.Print("Fake desyncing.");

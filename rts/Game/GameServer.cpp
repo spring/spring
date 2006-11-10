@@ -142,7 +142,10 @@ bool CGameServer::Update()
 					CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
 					fakeDesync = false;
 				}
-#endif
+#else // SYNCDEBUG
+				if (err && gu->autoQuit)
+					serverNet->SendData(NETMSG_QUIT);
+#endif // !SYNCDEBUG
 			}
 			for(int a=0;a<gs->activePlayers;++a)
 				syncResponses[a]=0;
