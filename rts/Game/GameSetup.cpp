@@ -28,7 +28,7 @@ extern Uint8 *keys;
 
 extern string stupidGlobalMapname;
 
-CGameSetup::CGameSetup(void)
+CGameSetup::CGameSetup()
 {
 	readyTime=0;
 	gameSetupText=0;
@@ -38,7 +38,7 @@ CGameSetup::CGameSetup(void)
 	forceReady=false;
 }
 
-CGameSetup::~CGameSetup(void)
+CGameSetup::~CGameSetup()
 {
 	delete[] gameSetupText;
 }
@@ -243,16 +243,14 @@ bool CGameSetup::Init(char* buf, int size)
 	return true;
 }
 
-bool CGameSetup::Draw(void)
+void CGameSetup::Draw()
 {
-
 	glColor4f(1,1,1,1);
 	glPushMatrix();
 	glTranslatef(0.3f,0.7f,0.0f);
 	glScalef(0.03f,0.04f,0.1f);
 	if(!serverNet && net->inInitialConnect){
 		font->glPrint("Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastReceiveTime));
-		return false;
 	}else if(readyTime>0)
 		font->glPrint("Starting in %i",3-(int)readyTime);
 	else if(!readyTeams[gu->myTeam])
@@ -265,14 +263,11 @@ bool CGameSetup::Draw(void)
 
 	glPopMatrix();
 	glPushMatrix();
-	bool allReady=true;
 	for(int a=0;a<numPlayers;a++){
 		if(!gs->players[a]->readyToStart){
 			glColor4f(1,0.2f,0.2f,1);
-			allReady=false;
 		} else if(!readyTeams[gs->players[a]->team]){
 			glColor4f(0.8f,0.8f,0.2f,1);
-			allReady=false;
 		} else {
 			glColor4f(0.2f,1,0.2f,1);
 		}
@@ -282,8 +277,22 @@ bool CGameSetup::Draw(void)
 		font->glPrintRaw(gs->players[a]->playerName.c_str());
 		glPopMatrix();
 	}
-	if(gu->myPlayerNum==0 && keys[SDLK_RETURN] && keys[SDLK_LCTRL]){
+	glPopMatrix();
+}
 
+bool CGameSetup::Update()
+{
+	bool allReady=true;
+	if(!serverNet && net->inInitialConnect)
+		return false;
+	for(int a=0;a<numPlayers;a++){
+		if(!gs->players[a]->readyToStart){
+			allReady=false;
+		} else if(!readyTeams[gs->players[a]->team]){
+			allReady=false;
+		}
+	}
+	if(gu->myPlayerNum==0 && keys[SDLK_RETURN] && keys[SDLK_LCTRL]){
 		forceReady=true;
 	}
 	if(forceReady)
@@ -300,7 +309,5 @@ bool CGameSetup::Draw(void)
 	} else {
 		readyTime=0;
 	}
-	glPopMatrix();
 	return readyTime>3;
 }
-

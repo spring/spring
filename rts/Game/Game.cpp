@@ -1393,6 +1393,18 @@ bool CGame::Update()
 		}
 	}
 
+	if(gameSetup && !playing) {
+		allReady=gameSetup->Update();
+	} else if( gameServer && serverNet->waitOnCon) {
+		allReady=true;
+		for(int a=0;a<gs->activePlayers;a++) {
+			if(gs->players[a]->active && !gs->players[a]->readyToStart) {
+				allReady=false;
+				break;
+			}
+		}
+	}
+
 	if(gameServer && serverNet->waitOnCon && allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)){
 		chatting=false;
 		userWriting=false;
@@ -1574,13 +1586,8 @@ bool CGame::Draw()
 	}
 
 	if(gameSetup && !playing){
-		allReady=gameSetup->Draw();
+		gameSetup->Draw();
 	} else if( gameServer && serverNet->waitOnCon){
-		allReady=true;
-		for(a=0;a<gs->activePlayers;a++)
-			if(gs->players[a]->active && !gs->players[a]->readyToStart)
-				allReady=false;
-
 		if (allReady) {
 			glColor3f(1.0f, 1.0f, 1.0f);
 			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");

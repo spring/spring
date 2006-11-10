@@ -10,9 +10,10 @@ class CGameSetup
 {
 public:
 	CGameSetup();
-	~CGameSetup(void);
+	~CGameSetup();
 	bool Init(std::string setupFile);
-	bool Draw(void);
+	void Draw();
+	bool Update();
 
 	TdfParser file;
 	std::string setupFileName;
