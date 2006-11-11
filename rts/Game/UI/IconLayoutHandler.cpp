@@ -32,6 +32,7 @@ extern "C" {
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
 #include "System/Net.h"
 #include "System/FileSystem/FileHandler.h"
@@ -72,6 +73,7 @@ static int GetUnitTeam(lua_State* L);
 static int GetUnitAllyTeam(lua_State* L);
 static int GetUnitHealth(lua_State* L);
 static int GetUnitStates(lua_State* L);
+static int GetUnitStockpile(lua_State* L);
 static int GetUnitPosition(lua_State* L);
 static int GetUnitHeading(lua_State* L);
 static int GetUnitBuildFacing(lua_State* L);
@@ -222,6 +224,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
 	REGISTER_LUA_CFUNC(GetUnitStates);
+	REGISTER_LUA_CFUNC(GetUnitStockpile);
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitHeading);
 	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
@@ -1551,6 +1554,21 @@ static int GetUnitStates(lua_State* L)
 	lua_rawset(L, -3);
 */
 	return 1;	
+}
+
+
+static int GetUnitStockpile(lua_State* L)
+{
+	CUnit* unit = AlliedUnit(L, __FUNCTION__);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (unit->stockpileWeapon == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->stockpileWeapon->numStockpiled);
+	lua_pushnumber(L, unit->stockpileWeapon->numStockpileQued);
+	return 2;
 }
 
 
