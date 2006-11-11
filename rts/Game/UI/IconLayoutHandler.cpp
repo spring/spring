@@ -304,7 +304,7 @@ bool CIconLayoutHandler::ConfigCommand(const string& command)
 	lua_getglobal(L, "ConfigureLayout");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call was not implemented
+		return true; // the call is not defined
 	}
 
 	lua_pushstring(L, command.c_str());
@@ -334,7 +334,7 @@ bool CIconLayoutHandler::UpdateLayout(bool& forceLayout,
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
 		forceLayout = false;
-		return true; // the call was not implemented, no forced updates
+		return true; // the call is not defined, no forced updates
 	}
 
 	lua_pushboolean(L, commandsChanged);
@@ -371,7 +371,7 @@ bool CIconLayoutHandler::CommandNotify(const Command& cmd)
 	lua_getglobal(L, "CommandNotify");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call was not implemented
+		return true; // the call is not defined
 	}
 
 	// push the command id	
@@ -436,7 +436,7 @@ bool CIconLayoutHandler::UnitCreated(CUnit* unit)
 	lua_getglobal(L, "UnitCreated");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call was not implemented
+		return true; // the call is not defined
 	}
 
 	lua_pushnumber(L, unit->id);	
@@ -470,7 +470,7 @@ bool CIconLayoutHandler::UnitReady(CUnit* unit, CUnit* builder)
 	lua_getglobal(L, "UnitReady");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call was not implemented
+		return true; // the call is not defined
 	}
 
 	lua_pushnumber(L, unit->id);	
@@ -506,7 +506,7 @@ bool CIconLayoutHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 	lua_getglobal(L, "UnitDestroyed");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call was not implemented
+		return true; // the call is not defined
 	}
 
 	lua_pushnumber(L, victim->id);	
@@ -536,7 +536,7 @@ bool CIconLayoutHandler::DrawMapItems()
 	lua_getglobal(L, "DrawMapItems");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call was not implemented
+		return true; // the call is not defined
 	}
 
 	drawingEnabled = true;
@@ -584,7 +584,7 @@ bool CIconLayoutHandler::DrawScreenItems()
 	lua_getglobal(L, "DrawScreenItems");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call was not implemented
+		return true; // the call is not defined
 	}
 
 	drawingEnabled = true;
@@ -637,7 +637,7 @@ bool CIconLayoutHandler::MouseMove(int x, int y, int dx, int dy, int button)
 	lua_getglobal(L, "MouseMove");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return false; // the call was not implemented, do not take the event
+		return false; // the call is not defined, do not take the event
 	}
 
 	lua_pushnumber(L, x);
@@ -675,7 +675,7 @@ bool CIconLayoutHandler::MousePress(int x, int y, int button)
 	lua_getglobal(L, "MousePress");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return false; // the call was not implemented, do not take the event
+		return false; // the call is not defined, do not take the event
 	}
 
 	lua_pushnumber(L, x);
@@ -711,7 +711,7 @@ bool CIconLayoutHandler::MouseRelease(int x, int y, int button)
 	lua_getglobal(L, "MouseRelease");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return false; // the call was not implemented, do not take the event
+		return false; // the call is not defined, do not take the event
 	}
 
 	lua_pushnumber(L, x);
@@ -1930,13 +1930,12 @@ static int GetTeamInfo(lua_State* L)
 static int GetTeamResources(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, -1)) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamResources(teamID)");
+	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
+		lua_pushstring(L, "Incorrect arguments to GetTeamResources(teamID, \"type\")");
 		lua_error(L);
 	}
 
-	const int teamID = (int)lua_tonumber(L, -1);
-	lua_pop(L, 1);
+	const int teamID = (int)lua_tonumber(L, 1);
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		return 0;
 	}
@@ -1944,26 +1943,33 @@ static int GetTeamResources(lua_State* L)
 	if ((team == NULL) || !gs->AlliedTeams(gu->myTeam, teamID)) {
 		return 0;
 	}
+	const string type = lua_tostring(L, 2);
 	
-	lua_pushnumber(L, team->metal);
-	lua_pushnumber(L, team->metalStorage);
-	lua_pushnumber(L, team->prevMetalPull);
-	lua_pushnumber(L, team->prevMetalIncome);
-	lua_pushnumber(L, team->prevMetalExpense);
-	lua_pushnumber(L, team->metalShare);
-	lua_pushnumber(L, team->metalSent);
-	lua_pushnumber(L, team->metalReceived);
+	if (type == "metal") {
+		lua_pushnumber(L, team->metal);
+		lua_pushnumber(L, team->metalStorage);
+		lua_pushnumber(L, team->prevMetalPull);
+		lua_pushnumber(L, team->prevMetalIncome);
+		lua_pushnumber(L, team->prevMetalExpense);
+		lua_pushnumber(L, team->metalShare);
+		lua_pushnumber(L, team->metalSent);
+		lua_pushnumber(L, team->metalReceived);
+		return 8;
+	}
 
-	lua_pushnumber(L, team->energy);
-	lua_pushnumber(L, team->energyStorage);
-	lua_pushnumber(L, team->prevEnergyPull);
-	lua_pushnumber(L, team->prevEnergyIncome);
-	lua_pushnumber(L, team->prevEnergyExpense);
-	lua_pushnumber(L, team->energyShare);
-	lua_pushnumber(L, team->energySent);
-	lua_pushnumber(L, team->energyReceived);
+	if (type == "energy") {
+		lua_pushnumber(L, team->energy);
+		lua_pushnumber(L, team->energyStorage);
+		lua_pushnumber(L, team->prevEnergyPull);
+		lua_pushnumber(L, team->prevEnergyIncome);
+		lua_pushnumber(L, team->prevEnergyExpense);
+		lua_pushnumber(L, team->energyShare);
+		lua_pushnumber(L, team->energySent);
+		lua_pushnumber(L, team->energyReceived);
+		return 8;
+	}
 	
-	return 16;
+	return 0;
 }
 	
 
@@ -2347,7 +2353,7 @@ static int SetShareLevel(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isstring(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to SetShareLevels(metal, energy");
+		lua_pushstring(L, "Incorrect arguments to SetShareLevel(\"type\", level");
 		lua_error(L);
 	}
 	
@@ -2897,25 +2903,32 @@ static int DrawListCreate(lua_State* L)
 			"Incorrect arguments to DrawListCreate(func [, arg1, arg2, etc ...])");
 		lua_error(L);
 	}
-	
+
+	// generate the list id
+	const GLuint list = glGenLists(1);
+	if (list == 0) {
+		lua_pushnumber(L, 0);
+		return 1;
+	}
+		
 	// save the current state
 	const bool origDrawingEnabled = drawingEnabled;
 	drawingEnabled = true;
 	const int	origMatrixDepth = matrixDepth;
 	matrixDepth = 0;
 	
-	const GLuint list = glGenLists(1);
+	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
-	const int error = lua_pcall(L, args - 1, 0, 0);
+	const int error = lua_pcall(L, (args - 1), 0, 0);
 	glEndList();
 
 	if (error != 0) {
 		glDeleteLists(list, 1);
+		lua_pushnumber(L, 0);
 		logOutput.Print("DrawListCreate: error = %s\n", lua_tostring(L, -1));
-		lua_pushnumber(L, -1);
 	} else {
 		displayLists.push_back(list);
-		lua_pushnumber(L, displayLists.size() - 1);
+		lua_pushnumber(L, displayLists.size());
 	}
 
 	// restore the state	
@@ -2937,9 +2950,9 @@ static int DrawListRun(lua_State* L)
 			"Incorrect arguments to DrawListRun(list)");
 		lua_error(L);
 	}
-	const GLuint listIndex = (GLuint)lua_tonumber(L, 1);
-	if (listIndex < displayLists.size()) {
-		glCallList(displayLists[listIndex]);
+	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
+	if ((listIndex > 0) && (listIndex <= displayLists.size())) {
+		glCallList(displayLists[listIndex - 1]);
 	}
 	return 0;
 }
@@ -2956,10 +2969,10 @@ static int DrawListDelete(lua_State* L)
 			"Incorrect arguments to DrawListDelete(list)");
 		lua_error(L);
 	}
-	const GLuint listIndex = (GLuint)lua_tonumber(L, 1);
-	if (listIndex < displayLists.size()) {
-		glDeleteLists(displayLists[listIndex], 1);
-		displayLists[listIndex] = 0;
+	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
+	if ((listIndex > 0) && (listIndex <= displayLists.size())) {
+		glDeleteLists(displayLists[listIndex - 1], 1);
+		displayLists[listIndex - 1] = 0;
 	}
 	return 0;
 }

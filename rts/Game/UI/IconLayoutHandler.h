@@ -30,21 +30,6 @@ class CIconLayoutHandler {
 		
 		~CIconLayoutHandler();
 
-		struct IconData {
-			enum { Command, Action, Dead } type;
-			int cmdIndex;
-			string action;
-			string label;
-			string cursor;
-			string texture;
-			string tooltip;
-		};
-		typedef vector<IconData> IconDataList;
-
-		bool ConfigCommand(const string& command);
-		
-		bool UpdateLayout(bool& forceLayout, bool commandsChanged, int activePage);
-		
 		struct ReStringPair {
 			int cmdIndex;
 			string texture;
@@ -67,6 +52,10 @@ class CIconLayoutHandler {
 		                 map<int, int>& iconList,
 		                 string& menuName);
 
+		bool ConfigCommand(const string& command);
+		
+		bool UpdateLayout(bool& forceLayout, bool commandsChanged, int activePage);
+		
 		bool CommandNotify(const Command& cmd);
 		
 		bool DrawMapItems();

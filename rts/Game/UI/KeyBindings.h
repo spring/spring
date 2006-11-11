@@ -36,7 +36,7 @@ class CKeyBindings
 			string command;   // first word, lowercase
 			string extra;     // everything but the first word
 			string rawline;   // includes the command, case preserved
-			string boundWith; // the string that defined the bound key
+			string boundWith; // the string that defined the binding keyset
 		};
 		typedef vector<Action> ActionList;
 		typedef vector<string> HotkeyList;

@@ -177,10 +177,11 @@ class CGuiHandler : public CInputReceiver {
 		float textureAlpha;
 		std::vector<int> fillOrder;
 
-		bool xorSelect;
 		bool gatherMode;
-		bool newAttackMode;
 		bool miniMapMarker;
+		bool newAttackMode;
+		bool attackRect;
+		bool invColorSelect;
 
 		bool useStencil;
 

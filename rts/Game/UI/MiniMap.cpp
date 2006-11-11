@@ -54,23 +54,32 @@ extern Uint8* keys;
 
 
 CMiniMap::CMiniMap()
-: xpos(2),
-	ypos(gu->screeny - 2),
-	height(200),
-	width(200),
-	fullProxy(false),
-	proxyMode(false),
-	selecting(false),
-	mouseMove(false),
-	mouseResize(false),
-	mouseLook(false),
-	maximized(false),
-	minimized(false),
-	showButtons(false),
-	useIcons(true)
+: fullProxy(false),
+  proxyMode(false),
+  selecting(false),
+  mouseMove(false),
+  mouseResize(false),
+  mouseLook(false),
+  maximized(false),
+  minimized(false),
+  showButtons(false),
+  useIcons(true)
 {
 	lastWindowSizeX = gu->screenx;
 	lastWindowSizeY = gu->screeny;
+	
+	const std::string geo = configHandler.GetString("MiniMapGeometry",
+	                                                "2 2 200 200");
+	const int vars = sscanf(geo.c_str(), "%i %i %i %i",
+	                        &xpos, &ypos, &width, &height);
+	if (vars != 4) {
+		xpos = 2;
+		ypos = 2;
+		width = 200;
+		height = 200;
+	}
+	ypos = gu->screeny - ypos;
+	
 	
 	float hw = sqrt(float(gs->mapx) / float(gs->mapy));
 	if (gu->dualScreenMode) {
@@ -1213,12 +1222,12 @@ void CMiniMap::DrawUnitHighlight(CUnit* unit)
 
 	DrawUnit(unit);
 
-	unitSizeX = origX;
-	unitSizeY = origY;
-	
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_COLOR_LOGIC_OP);
 
+	unitSizeX = origX;
+	unitSizeY = origY;
+	
 	DrawUnit(unit);
 
 	return;
