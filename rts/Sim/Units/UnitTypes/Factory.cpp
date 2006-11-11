@@ -11,6 +11,7 @@
 #include "Game/GameHelper.h"
 #include "Game/Camera.h"
 #include "Game/WaitCommandsAI.h"
+#include "Game/UI/GuiHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -159,6 +160,9 @@ void CFactory::Update()
 							curBuild->commandAI->GiveCommand(*ci);
 					}
 					waitCommandsAI.NewUnit(curBuild, this);
+					if (guihandler) {
+						guihandler->UnitReady(curBuild, this);
+					}
 				}
 				StopBuild();
 			}

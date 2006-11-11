@@ -14,6 +14,7 @@
 #include "KeyBindings.h"
 #include "InputReceiver.h"
 
+class CUnit;
 class CglList;
 class CIconLayoutHandler;
 struct UnitDef;
@@ -61,6 +62,10 @@ class CGuiHandler : public CInputReceiver {
  		void SetGatherMode(bool value) { gatherMode = value; }
  		
 		bool BindNamedTexture(const std::string& texName);
+		
+		void UnitCreated(CUnit* unit);
+		void UnitReady(CUnit* unit, CUnit* builder);
+		void UnitDestroyed(CUnit* victim, CUnit* attacker);
 		
 	public:
 		vector<CommandDescription> commands;
