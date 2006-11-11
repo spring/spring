@@ -1131,23 +1131,17 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
 	
-	if (!useIcons) {
-		if (unit->losStatus[gu->myAllyTeam] & LOS_INRADAR) {
-			return iconHandler->GetIcon("default");
-		} else {
-			return NULL;
+	if (useIcons) {
+		if ((unit->allyteam == gu->myAllyTeam) ||
+				(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
+				((unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) &&
+				 (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) || gu->spectating) {
+			CIcon* icon = iconHandler->GetIcon(unit->unitDef->iconType);
+			if (icon->radiusAdjust) {
+				scale *= (unit->radius / 30.0f);
+			}
+			return icon;
 		}
-	}
-
-	if ((unit->allyteam == gu->myAllyTeam) ||
-	    (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
-	    ((unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) &&
-	     (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) || gu->spectating) {
-		CIcon* icon = iconHandler->GetIcon(unit->unitDef->iconType);
-		if (icon->radiusAdjust) {
-			scale *= (unit->radius / 30.0f);
-		}
-		return icon;
 	}
 
 	if (unit->losStatus[gu->myAllyTeam] & LOS_INRADAR) {
@@ -1192,6 +1186,7 @@ void CMiniMap::DrawUnit(CUnit* unit)
 		}
 	}
 
+	iconScale *= icon->size;
 	const float sizeX = (iconScale * unitSizeX);
 	const float sizeY = (iconScale * unitSizeY);
 	
