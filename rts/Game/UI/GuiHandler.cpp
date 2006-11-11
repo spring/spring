@@ -46,10 +46,6 @@
 
 extern Uint8 *keys;
 
-static bool useStencil = false; // FIXME
-
-static const char* luaLayoutFile = "gui.lua";
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -57,6 +53,9 @@ static const char* luaLayoutFile = "gui.lua";
 
 
 CGuiHandler* guihandler;
+
+
+const char* CGuiHandler::luaLayoutFile = "gui.lua";
 
 
 CGuiHandler::CGuiHandler()
@@ -4085,9 +4084,6 @@ static void DrawSurface(DrawShapeFunc drawShapeFunc, const void* data)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEPTH_CLAMP_NV);
 
-//	glClearStencil(0); // FIXME -- unnecessary
-//	glClear(GL_STENCIL_BUFFER_BIT);
-	
 	glEnable(GL_STENCIL_TEST);
 	
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);

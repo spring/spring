@@ -404,7 +404,6 @@ void CMiniMap::UpdateGeometry()
 	}
 		
 	if (!maximized || (gu->screeny > gu->screenx)) {
-//		resizeBox.xmax   = mapBox.xmin + (buttonSize * 4) - 1;  FIXME (start on the left)?
 		// right to left
 		resizeBox.xmax   = mapBox.xmax;
 		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
@@ -767,9 +766,9 @@ void CMiniMap::DrawCircle(float x, float z, float radius)
 	
 	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
 	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
-	const int divs = max(8, (int)(1.5f * min(xPixels, yPixels)));
-	
-	glCallList(circleLists + 3); // FIXME
+	const int lod = (int)(0.25 * log2(1.0f + (xPixels * yPixels)));
+	const int lodClamp = max(0, min(circleListsCount - 1, lod));
+	glCallList(circleLists + lodClamp);
 
 	glPopMatrix();
 }
