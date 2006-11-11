@@ -59,6 +59,7 @@ class CMiniMap : public CInputReceiver {
 
 		float unitBaseSize;
 		float unitExponent;
+
 		float unitSizeX;
 		float unitSizeY;
 		float unitSelectRadius;

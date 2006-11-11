@@ -182,6 +182,8 @@ class CGuiHandler : public CInputReceiver {
 		bool newAttackMode;
 		bool miniMapMarker;
 
+		bool useStencil;
+
 		int iconsPerPage;
 		float xIconStep, yIconStep;
 		float xBpos, yBpos; // center of the buildIconsFirst indicator
@@ -205,6 +207,8 @@ class CGuiHandler : public CInputReceiver {
 		int activeIcons;
 		
 		std::map<std::string, unsigned int> textureMap; // filename, glTextureID
+		
+		static const char* luaLayoutFile;
 };
 
 

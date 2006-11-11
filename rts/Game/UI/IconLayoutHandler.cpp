@@ -5,7 +5,8 @@
 
 #include "IconLayoutHandler.h"
 #include <cctype>
-#include "SDL_keysym.h"
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
 extern "C" {
 	#include "lua.h"
 	#include "lualib.h"
@@ -48,14 +49,15 @@ extern Uint8 *keys;
 
 static int LoadTextVFS(lua_State* L);
 
-static int GetFPS(lua_State* L);
-static int GetGameSeconds(lua_State* L);
-static int GetInCommand(lua_State* L);
-
 static int GetConfigInt(lua_State* L);
 static int SetConfigInt(lua_State* L);
 static int GetConfigString(lua_State* L);
 static int SetConfigString(lua_State* L);
+
+static int GetFPS(lua_State* L);
+static int GetGameSeconds(lua_State* L);
+static int GetInCommand(lua_State* L);
+static int GetMouseState(lua_State* L);
 
 static int SendCommands(lua_State* L);
 static int GiveOrder(lua_State* L);
@@ -113,6 +115,7 @@ static int DrawPushMatrix(lua_State* L);
 static int DrawPopMatrix(lua_State* L);
 static int DrawListCreate(lua_State* L);
 static int DrawListRun(lua_State* L);
+static int DrawListDelete(lua_State* L);
 
 static int PlaySoundFile(lua_State* L);
 
@@ -209,6 +212,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFPS);
 	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetInCommand);
+	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetConfigInt);
 	REGISTER_LUA_CFUNC(SetConfigInt);
 	REGISTER_LUA_CFUNC(GetConfigString);
@@ -252,6 +256,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(DrawText);
 	REGISTER_LUA_CFUNC(DrawListCreate);
 	REGISTER_LUA_CFUNC(DrawListRun);
+	REGISTER_LUA_CFUNC(DrawListDelete);
 	REGISTER_LUA_CFUNC(DrawTranslate);
 	REGISTER_LUA_CFUNC(DrawScale);
 	REGISTER_LUA_CFUNC(DrawRotate);
@@ -1206,6 +1211,22 @@ static int GetInCommand(lua_State* L)
 		}
 	}
 	return 0;
+}
+
+
+static int GetMouseState(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetMouseState() takes no arguments");
+		lua_error(L);
+	}
+	lua_pushnumber(L, mouse->lastx);
+	lua_pushnumber(L, gu->screeny - mouse->lasty - 1);
+	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
+	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
+	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
+	return 5;
 }
 
 
@@ -2873,7 +2894,7 @@ static int DrawListCreate(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isfunction(L, 1)) {
 		lua_pushstring(L,
-			"Incorrect arguments to DrawListRun(func [, arg1, arg2, etc ...])");
+			"Incorrect arguments to DrawListCreate(func [, arg1, arg2, etc ...])");
 		lua_error(L);
 	}
 	
@@ -2924,6 +2945,26 @@ static int DrawListRun(lua_State* L)
 }
 
 
+static int DrawListDelete(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawListDelete(list)");
+		lua_error(L);
+	}
+	const GLuint listIndex = (GLuint)lua_tonumber(L, 1);
+	if (listIndex < displayLists.size()) {
+		glDeleteLists(displayLists[listIndex], 1);
+		displayLists[listIndex] = 0;
+	}
+	return 0;
+}
+
+
 /******************************************************************************/
 
 static int PlaySoundFile(lua_State* L)
@@ -2934,8 +2975,8 @@ static int PlaySoundFile(lua_State* L)
 			"Incorrect arguments to PlaySoundFile(soundname [,volume])");
 		lua_error(L);
 	}
-	const string soundName = lua_tostring(L, 1);
-	unsigned int soundID = sound->GetWaveId(soundName);
+	const string soundFile = lua_tostring(L, 1);
+	const unsigned int soundID = sound->GetWaveId(soundFile);
 	if (soundID > 0) {
 		float volume = 1.0f;
 		if (args >= 2) {

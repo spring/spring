@@ -115,6 +115,14 @@ bool CLuaState::LoadCode(const string& code, const string& debug)
 }
 
 
+static int LuaWriter(lua_State *L, const void* data, size_t size, void* userData)
+{
+	printf("Dumping %i bytes\n", size);
+	fwrite(data, 1, size, (FILE*)userData);
+	return 0;
+}
+
+
 bool CLuaState::LoadInfo()
 {
 	// load some basic lua libs
@@ -132,6 +140,15 @@ bool CLuaState::LoadInfo()
 	    !LoadUnitDefInfo()) {
 		return false;
 	}
+
+	/* FIXME	
+	string outfile = "lua_dump_" + modInfo->name;
+	FILE* f = fopen(outfile.c_str(), "w");
+	if (f != NULL) {
+		lua_dump(L, LuaWriter, f);
+		fclose(f);
+	}
+	*/
 
 	return true;
 }
