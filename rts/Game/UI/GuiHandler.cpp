@@ -169,8 +169,9 @@ void CGuiHandler::LoadDefaults()
 	
 	outlineFont.Enable(false);
 
-	xorSelect = true;
+	attackRect = true;
 	newAttackMode = true;
+	invColorSelect = true;
 }
 
 
@@ -276,11 +277,14 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		else if ((command == "outlinefont") && (words.size() > 1)) {
 			outlineFont.Enable(!!atoi(words[1].c_str()));
 		}
-		else if ((command == "xorselect") && (words.size() > 1)) {
-			xorSelect = !!atoi(words[1].c_str());
+		else if ((command == "attackrect") && (words.size() > 1)) {
+			attackRect = !!atoi(words[1].c_str());
 		}
 		else if ((command == "newattackmode") && (words.size() > 1)) {
 			newAttackMode = !!atoi(words[1].c_str());
+		}
+		else if ((command == "invcolorselect") && (words.size() > 1)) {
+			invColorSelect = !!atoi(words[1].c_str());
 		}
 	}
 
@@ -889,7 +893,11 @@ void CGuiHandler::ConvertCommands(vector<CommandDescription>& cmds)
 		for (int i = 0; i < count; i++) {
 			CommandDescription& cd = cmds[i];
 			if ((cd.id == CMD_ATTACK) && (cd.type == CMDTYPE_ICON_UNIT_OR_MAP)) {
-				cd.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
+				if (attackRect) {
+					cd.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
+				} else {
+					cd.type = CMDTYPE_ICON_UNIT_OR_AREA;
+				}
 			}
 		}
 	}
@@ -3324,13 +3332,14 @@ void CGuiHandler::DrawMapStuff(void)
 					float3 pos2=camera->pos+mouse->dir*dist;
 					const float* color;
 					switch (commands[cc].id) {
+						case CMD_ATTACK:
 						case CMD_AREA_ATTACK:  { color = cmdColors.attack;      break; }
 						case CMD_REPAIR:       { color = cmdColors.repair;      break; }
 						case CMD_RECLAIM:      { color = cmdColors.reclaim;     break; }
 						case CMD_RESTORE:      { color = cmdColors.restore;     break; }
 						case CMD_RESURRECT:    { color = cmdColors.resurrect;   break; }
 						case CMD_LOAD_UNITS:   { color = cmdColors.load;        break; } 
-						case CMD_UNLOAD_UNIT:  { color = cmdColors.unload;      break; }
+						case CMD_UNLOAD_UNIT:
 						case CMD_UNLOAD_UNITS: { color = cmdColors.unload;      break; }
 						case CMD_CAPTURE:      { color = cmdColors.capture;     break; }
 						default: {
@@ -3876,7 +3885,7 @@ static void DrawCornerPosts(const float3& pos0, const float3& pos1)
 
 
 static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
-                                 bool xorSelect)
+                                 bool invColorSelect)
 {
 	BoxData boxData;
 	boxData.mins = float3(min(pos0.x, pos1.x), readmap->minheight - 250.0f,
@@ -3889,7 +3898,7 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 
 	glEnable(GL_BLEND);
 
-	if (!xorSelect) {
+	if (!invColorSelect) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 		DrawSurface(DrawBoxShape, &boxData);
@@ -3954,7 +3963,7 @@ static void DrawMinMaxBox(const float3& mins, const float3& maxs)
 void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
 {
 	if (useStencil) {
-		StencilDrawSelectBox(pos0, pos1, xorSelect);
+		StencilDrawSelectBox(pos0, pos1, invColorSelect);
 		return;
 	}
 	

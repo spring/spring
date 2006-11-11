@@ -120,8 +120,9 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		return;
 	}
 
-	if ((c.id == CMD_ATTACK) && (c.params.size() == 6)) {
-		SelectBoxAttack(c, player);
+	if ((c.id == CMD_ATTACK) &&
+	    ((c.params.size() == 4) || (c.params.size() == 6))) {
+		SelectAttack(c, player);
 		return;
 	}
 	
@@ -423,12 +424,16 @@ struct DistInfo {
 };
 
 
-void CSelectedUnitsAI::SelectBoxAttack(const Command& cmd, int player)
+void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 {
 	vector<int> targets;
 	const float3 pos0(cmd.params[0], cmd.params[1], cmd.params[2]);
-	const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
-	SelectAttackUnits(pos0, pos1, targets, player);
+	if (cmd.params.size() == 4) {
+	  SelectCircleUnits(pos0, cmd.params[3], targets, player);
+  } else {
+	  const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
+	  SelectRectangleUnits(pos0, pos1, targets, player);
+  }
 	const int targetsCount = (int)targets.size();
 	if (targets.size() <= 0) {
 		return;
@@ -509,7 +514,7 @@ void CSelectedUnitsAI::SelectBoxAttack(const Command& cmd, int player)
 }
 
 
-void CSelectedUnitsAI::SelectAttackUnits(const float3& pos, float radius,
+void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
                                          vector<int>& units, int player)
 {
   units.clear();
@@ -523,9 +528,9 @@ void CSelectedUnitsAI::SelectAttackUnits(const float3& pos, float radius,
 	}
   const int allyTeam = gs->AllyTeam(p->team);
   
-  const float radiusSqr = (radius * radius);
   vector<CUnit*> tmpUnits = qf->GetUnits(pos, radius);
 
+  const float radiusSqr = (radius * radius);
   const int count = (int)tmpUnits.size();
   for (int i = 0; i < count; i++) {
     CUnit* unit = tmpUnits[i];
@@ -542,8 +547,9 @@ void CSelectedUnitsAI::SelectAttackUnits(const float3& pos, float radius,
 }
   
   
-void CSelectedUnitsAI::SelectAttackUnits(const float3& pos0, const float3& pos1,
-                                         vector<int>& units, int player)
+void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
+                                            const float3& pos1,
+                                            vector<int>& units, int player)
 {
   units.clear();
   
