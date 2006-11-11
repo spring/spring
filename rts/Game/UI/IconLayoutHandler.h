@@ -18,6 +18,7 @@ extern "C" {
 }
 
 
+class CUnit;
 struct Command;
 struct lua_State;
 struct CommandDescription;
@@ -75,9 +76,9 @@ class CIconLayoutHandler {
 		bool MousePress(int x, int y, int button);
 		bool MouseRelease(int x, int y, int button);
 		
-		bool UnitCreated(int id);
-		bool UnitFinished(int id);
-		bool UnitDestroyed(int id);
+		bool UnitCreated(CUnit* unit);
+		bool UnitReady(CUnit* unit, CUnit* builder);
+		bool UnitDestroyed(CUnit* victim, CUnit* attacker);
 		
 	private:
 		CIconLayoutHandler();

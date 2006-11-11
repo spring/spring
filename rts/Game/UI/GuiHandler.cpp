@@ -110,6 +110,30 @@ CGuiHandler::~CGuiHandler()
 }
 
 
+void CGuiHandler::UnitCreated(CUnit* unit)
+{
+	if (layoutHandler) {
+		layoutHandler->UnitCreated(unit);
+	}
+}
+
+
+void CGuiHandler::UnitReady(CUnit* unit, CUnit* builder)
+{
+	if (layoutHandler) {
+		layoutHandler->UnitReady(unit, builder);
+	}
+}
+
+
+void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
+{
+	if (layoutHandler) {
+		layoutHandler->UnitDestroyed(victim, attacker);
+	}
+}
+
+
 bool CGuiHandler::GetQueueKeystate() const
 {
 	return (!invertQueueKey && keys[SDLK_LSHIFT]) ||
@@ -957,7 +981,11 @@ void CGuiHandler::SetCursorIcon() const
 	if ((inCommand >= 0) && (inCommand<commands.size())) {
 		const CommandDescription& cmdDesc = commands[inCommand];
 
-		mouse->cursorText = cmdDesc.name;
+		if (!cmdDesc.mouseicon.empty()) {
+			mouse->cursorText = cmdDesc.mouseicon;
+		} else {
+			mouse->cursorText = cmdDesc.name;
+		}
 
 		if (useMinimap && (cmdDesc.id < 0)) {
 			BuildInfo bi;
@@ -984,7 +1012,12 @@ void CGuiHandler::SetCursorIcon() const
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 		}
 		if ((defcmd >= 0) && (defcmd < commands.size())) {
-			mouse->cursorText = commands[defcmd].name;
+			const CommandDescription& cmdDesc = commands[defcmd];
+			if (!cmdDesc.mouseicon.empty()) {
+				mouse->cursorText = cmdDesc.mouseicon;
+			} else {
+				mouse->cursorText = cmdDesc.name;
+			}
 		}
 	}
 

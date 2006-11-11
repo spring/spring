@@ -6,55 +6,55 @@
 
 #include "StdAfx.h"
 #include "Unit.h"
-#include "UnitHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "CommandAI/CommandAI.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Misc/QuadField.h"
-#include "Game/Team.h"
-#include "Map/Ground.h"
-#include "Map/ReadMap.h"
-#include "LogOutput.h"
-#include "Game/GameHelper.h"
-#include "SyncTracer.h"
-#include "Sim/Misc/LosHandler.h"
-//#include "Rendering/UnitModels/Unit3DLoader.h"
-#include "Game/Camera.h"
-#include "Rendering/glFont.h"
-#include "ExternalAI/Group.h"
-#include "myMath.h"
-#include "Rendering/UnitModels/3DModelParser.h"
-#include "COB/CobInstance.h"
-#include "COB/CobFile.h"
-#include "Sim/Misc/FeatureHandler.h"
 #include "UnitDef.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/MoveTypes/MoveType.h"
-#include "Matrix44f.h"
-#include "Map/MetalMap.h"
-#include "Sim/Misc/Wind.h"
-#include "Sound.h"
-#include "Sim/Misc/RadarHandler.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "UnitTypes/Building.h"
-#include "Rendering/ShadowHandler.h"
-#include "Game/Player.h"
-#include "LoadSaveInterface.h"
-#include "Rendering/Env/BaseWater.h"
+#include "UnitHandler.h"
+#include "COB/CobFile.h"
+#include "COB/CobInstance.h"
+#include "CommandAI/CommandAI.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "Sim/Misc/Feature.h"
-#include "Sim/Projectiles/MissileProjectile.h"
-#include "Sim/Projectiles/FlareProjectile.h"
+#include "ExternalAI/Group.h"
+#include "Game/Camera.h"
+#include "Game/GameHelper.h"
+#include "Game/Player.h"
+#include "Game/SelectedUnits.h"
+#include "Game/Team.h"
+#include "Game/UI/GuiHandler.h"
 #include "Game/UI/MiniMap.h"
+#include "Map/Ground.h"
+#include "Map/MetalMap.h"
+#include "Map/ReadMap.h"
+#include "Rendering/Env/BaseWater.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GroundFlash.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitModels/3DModelParser.h"
+//#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/AirBaseHandler.h"
-#include "UnitTypes/TransportUnit.h"
-#include "Game/SelectedUnits.h"
-#include "mmgr.h"
-#include "Rendering/GroundFlash.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/Wind.h"
+#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Projectiles/FlareProjectile.h"
+#include "Sim/Projectiles/MissileProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/Weapon.h"
+#include "System/myMath.h"
+#include "System/LoadSaveInterface.h"
+#include "System/LogOutput.h"
+#include "System/Matrix44f.h"
+#include "System/Sound.h"
+#include "System/SyncTracer.h"
+#include "UnitTypes/Building.h"
+#include "UnitTypes/TransportUnit.h"
 #include "Game/GameSetup.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CUnit, CSolidObject);
 
@@ -1021,6 +1021,9 @@ void CUnit::Init(void)
 	UpdateTerrainType();
 
 	globalAI->UnitCreated(this);
+	if (guihandler) {
+		guihandler->UnitCreated(this);
+	}
 }
 
 void CUnit::UpdateTerrainType()
@@ -1219,6 +1222,9 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 	isDead=true;
 
 	globalAI->UnitDestroyed(this,attacker);
+	if (guihandler) {
+		guihandler->UnitDestroyed(this, attacker);
+	}
 
 	blockHeightChanges=false;
 	if(unitDef->isCommander)

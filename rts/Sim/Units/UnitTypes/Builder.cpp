@@ -5,22 +5,23 @@
 
 #include "Builder.h"
 #include "Building.h"
-#include "Sim/Units/UnitLoader.h"
-#include "Sim/ModInfo.h"
-#include "Sim/Projectiles/GfxProjectile.h"
-#include "Game/GameHelper.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Sim/Units/COB/CobInstance.h"
 #include "myMath.h"
-#include "LogOutput.h"
-#include "Map/Ground.h"
 #include "Sound.h"
+#include "LogOutput.h"
+#include "Game/GameHelper.h"
+#include "Game/Team.h"
+#include "Game/UI/GuiHandler.h"
+#include "Map/Ground.h"
 #include "Map/MapDamage.h"
-#include "Sim/Units/UnitDefHandler.h"
+#include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
-#include "Game/Team.h"
+#include "Sim/ModInfo.h"
+#include "Sim/Projectiles/GfxProjectile.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitLoader.h"
 #include "mmgr.h"
 #include <assert.h>
 #include <algorithm>
@@ -182,6 +183,9 @@ void CBuilder::Update()
 				CreateNanoParticle(curBuild->midPos,curBuild->radius*0.5f,false);
 			} else {
 				if(!curBuild->beingBuilt && curBuild->health>=curBuild->maxHealth){
+					if (guihandler) {
+						guihandler->UnitReady(curBuild, this);
+					}
 					StopBuild();
 				}
 			}
