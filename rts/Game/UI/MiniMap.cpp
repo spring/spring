@@ -91,7 +91,7 @@ CMiniMap::CMiniMap()
 		if ((scanned != 4) || (geo == geodef)) {
 			width = (int)(width * hw);
 			height = (int)(height / hw);
-			ypos = gu->screeny - height - ypos;
+			ypos = gu->screeny - height - 2;
 		}
 	}
 
