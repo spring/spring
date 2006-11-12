@@ -1044,7 +1044,7 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 	}
 	
 	if (button < 0) {
-		// fake click from the minimap
+		// proxied click from the minimap
 		button = -button;
 		activeMousePress=true;
 	}
@@ -1105,12 +1105,17 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 		needShift=false;
 	}
 	
-	const int iconPos = IconAtPos(x, y);
-	const int iconCmd = (button < 0) ? -1 // fake click from the minimap
-	                    : (iconPos >= 0) ? icons[iconPos].commandsID : -1;
-	
-	if (button < 0) { // fake click from the minimap
-		button = -button;
+	int iconCmd = -1;
+
+	if (button < 0) {
+		button = -button; // proxied click from the minimap
+	} else {
+		if (!game->hideInterface) {
+			const int iconPos = IconAtPos(x, y);
+			if (iconPos >= 0) {
+				iconCmd = icons[iconPos].commandsID;
+			}
+		}
 	}
 
 //	logOutput << x << " " << y << " " << mouse->lastx << " " << mouse->lasty << "\n";
