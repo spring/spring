@@ -68,17 +68,17 @@ CMiniMap::CMiniMap()
 	lastWindowSizeX = gu->screenx;
 	lastWindowSizeY = gu->screeny;
 	
-	const std::string geo = configHandler.GetString("MiniMapGeometry",
-	                                                "2 2 200 200");
-	const int vars = sscanf(geo.c_str(), "%i %i %i %i",
-	                        &xpos, &ypos, &width, &height);
-	if (vars != 4) {
+	const std::string geodef = "2 2 200 200";
+	const std::string geo = configHandler.GetString("MiniMapGeometry", geodef);
+	const int scanned = sscanf(geo.c_str(), "%i %i %i %i",
+	                           &xpos, &ypos, &width, &height);
+	if (scanned != 4) {
 		xpos = 2;
 		ypos = 2;
 		width = 200;
 		height = 200;
 	}
-	ypos = gu->screeny - ypos;
+	ypos = gu->screeny - height - ypos;
 	
 	
 	float hw = sqrt(float(gs->mapx) / float(gs->mapy));
@@ -88,9 +88,11 @@ CMiniMap::CMiniMap()
 		xpos = (gu->screenx - gu->screenxPos);
 		ypos = 0;
 	} else {
-		width = (int)(width * hw);
-		height = (int)(height / hw);
-		ypos = gu->screeny - height - 2;
+		if ((scanned != 4) || (geo == geodef)) {
+			width = (int)(width * hw);
+			height = (int)(height / hw);
+			ypos = gu->screeny - height - ypos;
+		}
 	}
 
 	fullProxy = !!configHandler.GetInt("MiniMapFullProxy", 1);
