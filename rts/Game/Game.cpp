@@ -826,8 +826,10 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		mouse->currentCamController->SetPos(infoConsole->lastMsgPos);
 		mouse->CameraTransition(0.6f);
 	}
-	else if ((cmd == "chat")     || (cmd == "chatall") ||
-	         (cmd == "chatally") || (cmd == "chatspec")) {
+	else if (((cmd == "chat")     || (cmd == "chatall") ||
+	         (cmd == "chatally") || (cmd == "chatspec")) &&
+	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
+	         (ks.Key() != SDLK_RETURN || !(gameServer && serverNet->waitOnCon && allReady))) {
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
 		if (cmd == "chatspec") { userInputPrefix = "s:"; }
