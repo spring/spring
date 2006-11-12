@@ -247,10 +247,16 @@ void CMouseHandler::MousePress(int x, int y, int button)
 #ifndef NEW_GUI
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri) && (*ri)->MousePress(x,y,button)){
-			activeReceiver=*ri;
-			return;
+	if (!game->hideInterface) {
+		for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+			if((*ri) && (*ri)->MousePress(x,y,button)){
+				activeReceiver=*ri;
+				return;
+			}
+		}
+	} else if (guihandler) {
+		if (guihandler->MousePress(x,y,button)) {
+			activeReceiver = guihandler;
 		}
 	}
 #endif
