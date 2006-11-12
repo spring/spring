@@ -604,3 +604,36 @@
   
   * MAPGRADESFAILED {reason}
   Sent by server if it could not respond to MAPGRADES command for some reason.
+  
+  * SCRIPTSTART
+  Sent by client who is hosting a battle replay game indicating he is now sending us the game script
+  used in original replay. Server will then forward this script to all other participants in his battle.
+  Correct sequence of commands when sending the script file is this:
+  1) SCRIPTSTART command
+  2) multiple SCRIPT commands
+  3) SCRIPTEND command
+
+  * SCRIPTSTART
+  Sent by server to clients participating in a battle replay indicating that server will now begin
+  sending game script from the original replay file (also see SCRIPTSTART comments when sent by the
+  client).
+
+  * SCRIPT {line}
+  Sent by client who previously sent SCRIPTSTART command. Multiple commands of this type are expected
+  after SCRIPTSTART command, ending with SCRIPTEND command as the last command in the sequence
+  (also see SCRIPTSTART comments when sent by the client).
+  <line> is a line read from the replay script file (use 1 SCRIPT command for each line!).
+
+  * SCRIPT {line}
+  Sent by server after sending SCRIPTSTART command. Multiple commands of this type are expected
+  after SCRIPTSTART command, ending with SCRIPTEND command as the last command in the sequence
+  (also see comments for SCRIPTSTART command when sent by the client).
+  <line> is a line read from the replay script file (1 line per 1 SCRIPT command).
+
+  * SCRIPTEND
+  Seny by client indicating he has finished sending us the game script from the battle replay
+  (also see comments for SCRIPTSTART command).
+
+  * SCRIPTEND
+  Seny by server indicating he has finished sending the game script from the battle replay
+  (also see comments for SCRIPTSTART command).
