@@ -32,8 +32,8 @@ CSelectedUnitsAI selectedUnitsAI;
 
 CSelectedUnitsAI::CSelectedUnitsAI()
 {
-	columnDist=64;
-	lineDist=64;
+	columnDist = 64;
+	lineDist = 64;
 }
 
 /*
@@ -60,7 +60,7 @@ void CSelectedUnitsAI::RemoveUnit(int unit)
 
 
 inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
-																												unsigned char options)
+                                                        unsigned char options)
 {
 	// sets the wanted speed of this unit to its max speed
 	CCommandAI* cai = unit->commandAI;
@@ -76,7 +76,7 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
 
 
 inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
-																												 unsigned char options)
+                                                         unsigned char options)
 {
 	// sets the wanted speed of this unit to the group minimum
 	CCommandAI* cai = unit->commandAI;
@@ -212,7 +212,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		}
 	}
 	else if ((c.options & CONTROL_KEY) &&
-					 ((c.id == CMD_MOVE) || (c.id == CMD_PATROL) || (c.id == CMD_FIGHT))) {
+	         ((c.id == CMD_MOVE) || (c.id == CMD_PATROL) || (c.id == CMD_FIGHT))) {
 		CalculateGroupData(player, (c.options & SHIFT_KEY));
 
 		const bool groupSpeed = !(c.options & ALT_KEY);
@@ -515,7 +515,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 
 
 void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
-																				 vector<int>& units, int player)
+                                         vector<int>& units, int player)
 {
 	units.clear();
 
@@ -548,8 +548,8 @@ void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
 
 
 void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
-																						const float3& pos1,
-																						vector<int>& units, int player)
+                                            const float3& pos1,
+                                            vector<int>& units, int player)
 {
 	units.clear();
 
