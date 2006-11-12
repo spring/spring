@@ -972,7 +972,11 @@ void CGuiHandler::SetCursorIcon() const
 	mouse->cursorText = "";
 	mouse->cursorScale = 1.0f;
 	
-	CInputReceiver* ir = GetReceiverAt(mouse->lastx, mouse->lasty);
+	CInputReceiver* ir = NULL;
+	if (!game->hideInterface) {
+		ir = GetReceiverAt(mouse->lastx, mouse->lasty);
+	}
+	
 	if ((ir != NULL) && (ir != minimap)) {
 		return;
 	}
@@ -1437,7 +1441,11 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 
 int CGuiHandler::GetDefaultCommand(int x,int y) const
 {
-	CInputReceiver* ir = GetReceiverAt(x,y);
+	CInputReceiver* ir = NULL;
+	if (!game->hideInterface) {
+		ir = GetReceiverAt(x, y);
+	}
+	
 	if ((ir != NULL) && (ir != minimap)) {
 		return -1;
 	}
@@ -3280,7 +3288,7 @@ void CGuiHandler::DrawMapStuff(void)
 	float3 tmpCamPos, tmpMouseDir;
 	const bool useMinimap =
 		(minimap->ProxyMode() ||
-		 ((mouse->activeReceiver != this) &&
+		 ((mouse->activeReceiver != this) && !game->hideInterface &&
 		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
 	if (useMinimap) {
 		tmpCamPos = camera->pos;
