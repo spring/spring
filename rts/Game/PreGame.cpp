@@ -296,7 +296,6 @@ bool CPreGame::Update()
 			infoConsole = 0;
 
 			ENTER_UNSYNCED;
-			game->Update();
 			pregame=0;
 			delete this;
 			return true;
