@@ -12,7 +12,7 @@
 // selectThrough     0
 
 // newAttackMode     1  // enable attack by area selection
-// attactRect        1  // use a rectangular selection
+// attackRect        1  // use a rectangular selection
 // invColorSelect    1  // use color inversion instead of tinting
 
 

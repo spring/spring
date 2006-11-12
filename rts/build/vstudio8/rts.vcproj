@@ -401,6 +401,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\WaitCommandsAI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\WaitCommandsAI.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\WordCompletion.cpp"
 				>
 			</File>
