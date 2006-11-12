@@ -115,4 +115,6 @@ callgarbagecollector
   frees memory automatically on-the-fly (when needed). Also, invoking this command 
   will block main server thread until System.gc() call returns, which may impact 
   server performance considerably.
+updateip2country
+  will update local IP2Country database from the internet in a background thread.
     

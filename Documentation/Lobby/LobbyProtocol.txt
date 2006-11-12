@@ -112,9 +112,23 @@
 
   * ACCEPTED username
   Sent by server to the client if login was successful.
+  After sending the info on clients and battles, server will send LOGININFOEND
+  command indicating it has finished sending the login info.
 
   * DENIED {reason}
   Sent by server if login failed.
+  
+  * LOGININFOEND
+  Sent by server indicating that it has finished sending the login info (which is sent
+  immediately after accepting the LOGIN command). This way client can figure out when
+  server has finished updating clients and battles info and can tell the user that
+  the login sequence is finished.
+  Note that sending login info consist of 4 phases:
+  - sending MOTD
+  - sending list of all users currently logged on the server
+  - sending info currently active battles
+  - sending statuses of all users
+  LOGININFOEND command is sent when server has finished sending this info.
 
   * AGREEMENT {agreement}
   Sent by server upon receiving LOGIN command, if client has not yet agreed to server's
@@ -234,17 +248,17 @@
 
   * CLIENTS channame {clients}
   Sent by server to a client who just joined the channel. WARNING: Multiple commands of this
-  kind can be sent in a row. Server takes the list of client in a channel and separates
+  kind can be sent in a row. Server takes the list of clients in a channel and separates
   it into several lines and sends each line seperately. This ensures no line is too long,
   because client may have some limit set on the maximum length of the line and it could
   ignore it if it was too long. WARNING 2: The client itself (his username) is sent in this
   list too! So when client receives JOIN command he should not add his name in the clients
-  list of a channel - he should wait for CLIENTS command which will contain his name too
+  list of the channel - he should wait for CLIENTS command which will contain his name too
   and he will add himself then automatically.
 
   * JOINED channame username
   Sent by server to all clients in a channel (except the new client) when a new client
-  joined a channel.
+  joins a channel.
 
   * LEAVE channame
   Sent by client when he is trying to leave a channel. When client is disconnected, he is
@@ -253,9 +267,8 @@
   * LEFT channame username [{reason}]
   Sent by server to all clients in a channel when some client left this channel.
   WARNING: Server does not send this command to a client that has just left a channel,
-  because there is no need to (client who has left the channel knows that he left,
-  it was he who told us that that)! Client that was kicked from the channel is
-  notified about it via FORCELEAVECHANNEL command.
+  because there is no need to (client who has left the channel knows that already).
+  Client that was kicked from the channel is notified about it via FORCELEAVECHANNEL command.
 
   * FORCELEAVECHANNEL channame username [{reason}]
   Sent by client (moderator) requsting <username> to be removed from the channel.
@@ -272,7 +285,7 @@
 
   * SAY channame {message}
   Sent by client when he is trying to say something in a specific channel. Client must
-  first join the channel before he can receive or send messages to channel.
+  first join the channel before he can receive or send messages to the channel.
 
   * SAID channame username {message}
   Sent by server when one of the clients in the channel sent a message to it.
@@ -374,14 +387,22 @@
   Sent by server to all clients participating in a battle when some of the battle's "inside"
   parameters change. See also UPDATEBATTLEINFO command!
   "startpos" can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
-  "gameendcondition" can only be 0 or 1 (0=game continues, 1=game ends /if commander dies/)
+  "gameendcondition" can only be 0 or 1 (0=game continues, 1=game ends /if commander dies/).
+  "maxunits" is between 10 and 5000.
+  "startingmetal" is between 0 and 10000.
+  "startingenergy" is between 0 and 10000.
 
   * UPDATEBATTLEDETAILS startingmetal startingenergy maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings
-  Seny by founder of the battle to server telling him some of the "inside" parameters
+  Sent by founder of the battle to server telling him some of the "inside" parameters
   of the battle changed. Even if only one of the parameters changed, all must be sent.
-  This does create some more overhead, but it simplifies the communication between server
-  and clients and vice-versa. Since this command is not often used and it is only sent
-  to clients parcticipating in the battle, this does not raise a problem.
+  This does create some more overhead, but it simplifies communication between the server
+  and the clients. Note that this command is broadcasted to all the clients in the battle,
+  including the founder.
+  "startpos" must be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+  "gameendcondition" must be 0 or 1 (0=game continues, 1=game ends /if commander dies/).
+  "maxunits" must be between 10 and 5000.
+  "startingmetal" must be between 0 and 10000.
+  "startingenergy" must be between 0 and 10000.
 
   * SAYBATTLE {message}
   Sent by client who is participating in a battle to server, who forwards this message
