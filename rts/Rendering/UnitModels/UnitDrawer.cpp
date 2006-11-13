@@ -1011,7 +1011,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
 	glCopyTexSubImage2D(gltype,0,0,0,0,0,128,128);
 
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 
 	(*camera)=realCam;
 	camera->Update(false);
@@ -1143,4 +1143,57 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	glPopAttrib ();
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
+}
+
+
+void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
+{
+	S3DOModel* model =
+		modelParser->Load3DO(unitDef->model.modelpath.c_str(), 1, team);
+
+	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
+	glEnable(GL_TEXTURE_2D);
+		
+	if (model->textureType == 0) {
+		// 3DO model
+		texturehandler->SetTATexture();
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+
+		model->DrawStatic();
+	}
+	else {
+		// get the team-coloured texture constructed by unit 0
+		SetBasicS3OTeamColour(team);
+		SetupBasicS3OTexture0();
+		texturehandler->SetS3oTexture(model->textureType);
+
+		// tint it with the current glColor in unit 1
+		SetupBasicS3OTexture1();
+
+		// use the alpha given by glColor for the outgoing alpha.
+		// (might need to change this if we ever have transparent bits on units?)
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
+
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+
+		model->DrawStatic();
+
+		// reset texture1 state
+		CleanupBasicS3OTexture1();
+
+		// also reset the alpha generation
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
+
+		// reset texture0 state
+		CleanupBasicS3OTexture0();
+	}
+	
+	glPopAttrib ();
 }

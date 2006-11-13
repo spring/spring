@@ -98,6 +98,7 @@ public:
 
 	void SetS3OTeamColour(int team);
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing=0);
+	void DrawUnitDef(const UnitDef* unitDef, int team);
 
 	/* CUnit::Draw */
 	void UnitDrawingTexturesOff(S3DOModel *model);
@@ -105,6 +106,7 @@ public:
 
 	/* CGame::DrawDirectControlHud,  */
 	void DrawIndividual(CUnit * unit);
+
 private:
 	void SetBasicS3OTeamColour(int team);
 	void SetupBasicS3OTexture0(void);

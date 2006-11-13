@@ -350,7 +350,7 @@ void CAdvTreeGenerator::CreateFarTex()
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_ALPHA_TEST);
 	
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -820,7 +820,7 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 		}
 	}
 
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);

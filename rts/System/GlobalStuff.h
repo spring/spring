@@ -453,31 +453,30 @@ public:
 	 */
 	float lastFrameTime;
 
-	/**
-	 * @brief screen x position
-	 *
-	 * X position of player's game window
-	 */
-	int screenxPos;
+	// the screen size in pixels	
+	int screenSizeX;
+	int screenSizeY;
 
-	/**
-	 * @brief screen x
-	 * 
-	 * X size of player's game window
-	 */
-	int screenx;
+	// the window position relative to the screen's bottom-left corner
+	int winPosX;
+	int winPosY;
 
-	/**
-	 * @brief screen y
-	 * 
-	 * Y size of player's game window
-	 */
-	int screeny;
+	// the window size in pixels
+	int winSizeX;
+	int winSizeY;
+
+	// the viewport position relative to the window's bottom-left corner
+	int viewPosX;
+	int viewPosY;
+
+	// the viewport size in pixels
+	int viewSizeX;
+	int viewSizeY;
 
 	/**
 	 * @brief aspect ratio
 	 * 
-	 * (float)screenx / (float)screeny
+	 * (float)viewSizeX / (float)viewSizeY
 	 */
 	float aspectRatio;
 
@@ -570,7 +569,7 @@ public:
 	/**
 	 * @brief dual screen mode
 	 * In dual screen mode, the screen is split up between a game screen and a minimap screen.
-	 * In this case screenx is half of the actual GL viewport width, 
+	 * In this case viewSizeX is half of the actual GL viewport width, 
 	 */
 	bool dualScreenMode;
 

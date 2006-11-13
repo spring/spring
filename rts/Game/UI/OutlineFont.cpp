@@ -39,6 +39,5 @@ void COutlineFont::print(float xps, float yps,
 	} else {
 		outlineColor = lightOutline;
 	}
-
 	font->glPrintOutlined(text, xps, yps, color, outlineColor);
 }

@@ -138,8 +138,8 @@ void CStartPosSelecter::Draw()
 	glPopMatrix();
 	glDisable(GL_DEPTH_TEST);
 
-	float mx=float(mouse->lastx)/gu->screenx;
-	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
+	float mx=float(mouse->lastx)/gu->viewSizeX;
+	float my=(gu->viewSizeY-float(mouse->lasty))/gu->viewSizeY;
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);

@@ -90,9 +90,9 @@ void LoadStartPicture()
 		throw content_error("Could not load startpicture from file " + name);
 
 	/* HACK Really big load pictures made a GLU choke. */
-	if (bm.xsize > gu->screenx || bm.ysize > gu->screeny)
+	if (bm.xsize > gu->viewSizeX || bm.ysize > gu->viewSizeY)
 	{
-		bm = bm.CreateRescaled(gu->screenx, gu->screeny);
+		bm = bm.CreateRescaled(gu->viewSizeX, gu->viewSizeY);
 	}
 
 	startupTexture=bm.CreateTexture(false);

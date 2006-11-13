@@ -183,8 +183,8 @@ void CMouseCursor::Draw(int x, int y, float scale)
 	glAlphaFunc(GL_GREATER, 0.01f);
 	glColor4f(1,1,1,1);
 
-	glViewport(xp, gu->screeny - yp, xs, ys);
-//	glViewport(x,gu->screeny - y - ys,xs,ys);
+	glViewport(xp, gu->viewSizeY - yp, xs, ys);
+//	glViewport(x,gu->viewSizeY - y - ys,xs,ys);
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
@@ -193,7 +193,7 @@ void CMouseCursor::Draw(int x, int y, float scale)
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 0.0f, 0.0f);
 	glEnd();
 
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 }
 
 

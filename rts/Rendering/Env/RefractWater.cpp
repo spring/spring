@@ -24,10 +24,10 @@ void CRefractWater::LoadGfx()
 	glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 	glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 	if(target == GL_TEXTURE_RECTANGLE_ARB) {
-		glTexImage2D(target, 0, 3, gu->screenx, gu->screeny, 0, GL_RGB, GL_INT, 0);
+		glTexImage2D(target, 0, 3, gu->viewSizeX, gu->viewSizeY, 0, GL_RGB, GL_INT, 0);
 		waterFP = LoadFragmentProgram("waterRefractTR.fp");
 	} else{
-		glTexImage2D(target, 0, 3, next_power_of_2(gu->screenx), next_power_of_2(gu->screeny), 0, GL_RGB, GL_INT, 0);
+		glTexImage2D(target, 0, 3, next_power_of_2(gu->viewSizeX), next_power_of_2(gu->viewSizeY), 0, GL_RGB, GL_INT, 0);
 		waterFP = LoadFragmentProgram("waterRefractT2D.fp");
 	}
 }
@@ -46,7 +46,7 @@ void CRefractWater::Draw()
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glBindTexture(target, subSurfaceTex);
 	glEnable(target);
-	glCopyTexSubImage2D(target, 0, 0, 0, 0, 0, gu->screenx, gu->screeny);
+	glCopyTexSubImage2D(target, 0, 0, 0, 0, 0, gu->viewSizeX, gu->viewSizeY);
 
 	SetupWaterDepthTex();
 
@@ -54,13 +54,13 @@ void CRefractWater::Draw()
 
 	// GL_TEXTURE_RECTANGLE uses texcoord range 0 to width, whereas GL_TEXTURE_2D uses 0 to 1
 	if (target == GL_TEXTURE_RECTANGLE_ARB) {
-		float v[] = { 10.0f * gu->screenx, 10.0f * gu->screeny, 0.0f, 0.0f };
+		float v[] = { 10.0f * gu->viewSizeX, 10.0f * gu->viewSizeY, 0.0f, 0.0f };
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, v);
 	} else {
 		float v[] = { 10.0f, 10.0f, 0.0f, 0.0f };
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, v);
-		v[0] = 1.0f / next_power_of_2(gu->screenx);
-		v[1] = 1.0f / next_power_of_2(gu->screeny);
+		v[0] = 1.0f / next_power_of_2(gu->viewSizeX);
+		v[1] = 1.0f / next_power_of_2(gu->viewSizeY);
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 3, v);
 	}
 	CAdvWater::Draw(false);
