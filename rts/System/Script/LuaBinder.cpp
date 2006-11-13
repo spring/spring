@@ -10,6 +10,9 @@
 #include "LuaFunctions.h"
 #include "Game/command.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureDef.h"
 
 extern "C"
 {
@@ -208,6 +211,20 @@ CLuaBinder::CLuaBinder(void)
 			.def("ChangeTeam", &CUnit::ChangeTeam)
 			.def("IsValid", &UnitPointerIsValid),
 
+		class_<CFeature, bases<CWorldObject>, CObject_pointer<CFeature> >("Feature")
+		    .def_readonly("id", &CFeature::id )
+		    .def_readonly("definition", &CFeature::def )
+			.def("remainingmetal", &CFeature::RemainingMetal )
+			.def("remainingenergy", &CFeature::RemainingEnergy )
+			.def_readonly("health", &CFeature::health )
+			.def_readonly("reclaimleft", &CFeature::reclaimLeft ),
+
+		class_<FeatureDef>("FeatureDef")
+		     .def_readonly("name", &FeatureDef::myName )
+			 .def_readonly("metal", &FeatureDef::metal )
+			 .def_readonly("energy", &FeatureDef::energy )
+			 .def_readonly("maxhealth", &FeatureDef::maxHealth ),
+
 		class_<UnitDef>("UnitDef")
 			.def_readonly("name", &UnitDef::name),
 
@@ -247,6 +264,11 @@ CLuaBinder::CLuaBinder(void)
 			def("GetAt", &GetUnitsAt, raw(_1)),
 			def("GetSelected", &GetSelectedUnits, raw(_1)),
 			def("SendSelection", &SendSelectedUnits)
+		],
+
+		namespace_("features")
+		[
+			def("GetAt", &GetFeaturesAt, raw(_1))
 		],
 
 		namespace_("map")

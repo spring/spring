@@ -30,6 +30,7 @@ namespace luafunctions
 	CObject_pointer<CUnit>* UnitGetTransporter(CObject_pointer<CUnit>* u);
 	void CommandAddParam(Command* c, float p);
 	CObject_pointer<CUnit>* UnitLoaderLoadUnit(std::string name, float3 pos, int team, bool buil);
+	luabind::object GetFeaturesAt(lua_State* L, const float3& pos, float radius);
 	int GetNumUnitsAt(const float3& pos, float radius);
 	luabind::object GetUnitsAt(lua_State* L, const float3& pos, float radius);
 	std::string MapGetTDFName();
