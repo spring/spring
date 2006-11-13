@@ -1,0 +1,142 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9903B69D-F900-4D99-B9F2-484AB7F3E435}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CSAI</RootNamespace>
+    <AssemblyName>CSAI</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CSAIInterfaces, Version=0.0.0.0, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\bin\games\taspring\Application\TASpring\CSAIInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="basictypes\AdvancedFloat3.cs" />
+    <Compile Include="basictypes\ArrayIndexer.cs" />
+    <Compile Include="basictypes\CustomCollections.cs" />
+    <Compile Include="basictypes\Float3Helper.cs" />
+    <Compile Include="basictypes\UnitDefHashtable.cs" />
+    <Compile Include="commanders\BuildWar.cs" />
+    <Compile Include="BuildTable.cs" />
+    <Compile Include="BuildTree.cs" />
+    <Compile Include="commanders\Level2BuildEconomy.cs" />
+    <Compile Include="squadcontrollers\Builder.cs" />
+    <Compile Include="squadcontrollers\CommanderController.cs" />
+    <Compile Include="squadcontrollers\ConstructorController.cs" />
+    <Compile Include="CSAI.cs" />
+    <Compile Include="CSAIUserInteraction.cs" />
+    <Compile Include="EnemyController.cs" />
+    <Compile Include="squadcontrollers\EnemySelector.cs" />
+    <Compile Include="EnergyController.cs" />
+    <Compile Include="Factory.cs" />
+    <Compile Include="squadcontrollers\FactoryController.cs" />
+    <Compile Include="FriendlyUnitPositions.cs" />
+    <Compile Include="IController.cs" />
+    <Compile Include="IFactory.cs" />
+    <Compile Include="IFactoryController.cs" />
+    <Compile Include="IRadarController.cs" />
+    <Compile Include="IStrategy.cs" />
+    <Compile Include="IUnitOrder.cs" />
+    <Compile Include="IUnitRequester.cs" />
+    <Compile Include="Ownership.cs" />
+    <Compile Include="win32\User32.cs" />
+    <Compile Include="utils\LogFile.cs" />
+    <Compile Include="mapping\BuildMap.cs" />
+    <Compile Include="mapping\BuildPlanner.cs" />
+    <Compile Include="mapping\EnemyMap.cs" />
+    <Compile Include="mapping\LosMap.cs" />
+    <Compile Include="mapping\Metal.cs" />
+    <Compile Include="mapping\MovementMaps.cs" />
+    <Compile Include="mapping\SlopeMap.cs" />
+    <Compile Include="MetalController.cs" />
+    <Compile Include="packcoordinators\AttackPackCoordinator.cs" />
+    <Compile Include="packcoordinators\AttackPackCoordinatorUseGroup.cs" />
+    <Compile Include="packcoordinators\GuardPackCoordinator.cs" />
+    <Compile Include="packcoordinators\IPackCoordinator.cs" />
+    <Compile Include="packcoordinators\MoveToPackCoordinator.cs" />
+    <Compile Include="packcoordinators\PackCoordinatorSelector.cs" />
+    <Compile Include="packcoordinators\SpreadSearchPackCoordinator.cs" />
+    <Compile Include="packcoordinators\SpreadSearchPackCoordinatorWithSearchGrid.cs" />
+    <Compile Include="playstyles\DefendOnlyPlayStyle.cs" />
+    <Compile Include="playstyles\IPlayStyle.cs" />
+    <Compile Include="playstyles\LoadPlayStyles.cs" />
+    <Compile Include="playstyles\PlayStyle.cs" />
+    <Compile Include="playstyles\PlayStyleManager.cs" />
+    <Compile Include="playstyles\RaiderPlayStyle.cs" />
+    <Compile Include="playstyles\TankRushPlayStyle.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="squadcontrollers\RadarController.cs" />
+    <Compile Include="squadcontrollers\ScoutControllerRaider.cs" />
+    <Compile Include="squadcontrollers\ScoutControllerRandomSearch.cs" />
+    <Compile Include="commanders\LoadStrategies.cs" />
+    <Compile Include="commanders\Level1TankRush.cs" />
+    <Compile Include="StrategyController.cs" />
+    <Compile Include="squadcontrollers\TankController.cs" />
+    <Compile Include="ControlPanel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ControlPanel.Designer.cs">
+      <DependentUpon>ControlPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="testing\RunTests.cs" />
+    <Compile Include="testing\TestDrawing.cs" />
+    <Compile Include="testing\TestMaps.cs" />
+    <Compile Include="UnitController.cs" />
+    <Compile Include="UnitDefHelp.cs" />
+    <Compile Include="utils\DrawingUtils.cs" />
+    <Compile Include="XmlHelper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ControlPanel.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ControlPanel.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="tankrush.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DefendOnlyPlayStyle\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup>
+    <PostBuildEvent>copy /y $(TargetDir)$(TargetName).dll H:\bin\games\taspring\Application\TASpring\AI\CSAI\CSAI.dll
+copy /y $(TargetDir)$(TargetName).pdb h:\bin\games\taspring\application\taspring\AI\CSAI\CSAI.pdb
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>
