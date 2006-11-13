@@ -3308,6 +3308,7 @@ void CGuiHandler::DrawMapStuff(void)
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_ALPHA_TEST);
 	
 	// setup for minimap proxying
 	float3 tmpCamPos, tmpMouseDir;
@@ -3617,7 +3618,7 @@ void CGuiHandler::DrawMapStuff(void)
 	}
 
 	//draw range circles if attack orders are imminent
-	int defcmd = GetDefaultCommand(mouse->lastx,mouse->lasty);
+	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 	if((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 	   (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
 		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
@@ -4136,7 +4137,7 @@ static void DrawSurface(DrawShapeFunc drawShapeFunc, const void* data)
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	
 	// using zfail method to avoid doing the inside check
-	if (false && GLEW_EXT_stencil_two_side && GL_EXT_stencil_wrap) {
+	if (GLEW_EXT_stencil_two_side && GL_EXT_stencil_wrap) {
 		glDisable(GL_CULL_FACE);
 		glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
 		glActiveStencilFaceEXT(GL_BACK);
