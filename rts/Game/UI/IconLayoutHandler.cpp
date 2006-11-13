@@ -110,6 +110,7 @@ static int AddMapIcon(lua_State* L);
 static int AddMapText(lua_State* L);
 static int AddMapUnit(lua_State* L);
 
+static int DrawScreenGeometry(lua_State* L);
 static int DrawState(lua_State* L);
 static int DrawColor(lua_State* L);
 static int DrawShape(lua_State* L);
@@ -135,6 +136,9 @@ static int PlaySoundFile(lua_State* L);
 
 static bool drawingEnabled = false;
 static bool screenTransform = false;
+
+static float screenWidth = 0.36f;
+static float screenDistance = 0.60f;
 
 static int matrixDepth = 0;
 static const int maxMatrixDepth = 16;
@@ -261,6 +265,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(AddMapIcon);
 	REGISTER_LUA_CFUNC(AddMapText);
 	REGISTER_LUA_CFUNC(AddMapUnit);
+	REGISTER_LUA_CFUNC(DrawScreenGeometry);
 	REGISTER_LUA_CFUNC(DrawState);
 	REGISTER_LUA_CFUNC(DrawColor);
 	REGISTER_LUA_CFUNC(DrawShape);
@@ -602,8 +607,8 @@ static void SetupScreenTransform()
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	const float dist   = 0.60f;                  // eye-to-screen (meters)
-	const float width  = 0.36f;                  // screen width (meters)
+	const float dist   = screenDistance;         // eye-to-screen (meters)
+	const float width  = screenWidth;            // screen width (meters)
 	const float vppx   = float(gu->winPosX + gu->viewPosX); // view pixel pos x
 	const float vppy   = float(gu->winPosY + gu->viewPosY); // view pixel pos y
 	const float vpsx   = float(gu->viewSizeX);   // view pixel size x
@@ -3064,6 +3069,23 @@ static int DrawColor(lua_State* L)
 			logOutput.Print("DrawColor: unknown color type: %s\n", key.c_str());
 		}
 	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
+static int DrawScreenGeometry(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawScreenProperties(width, dist)");
+		lua_error(L);
+	}
+	screenWidth = lua_tonumber(L, 1);
+	screenDistance = lua_tonumber(L, 2);
+	
 	return 0;
 }
 
