@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<project name="AllCSAI" default="buildcsai" basedir=".">
+   <description>Builds CSAI.dll, CSAIInterfaces.dll and CSAILoader.dll; and deploys them to Spring</description>
+
+   <description>PLEASE MODIFY taspring.applicationdirectory to point to the directory containing spring.exe</description> 
+   <property name="taspring.applicationdirectory" value="h:\bin\games\taspring\application\taspring" />
+   
+   <description>If you wish to modify CSAIInterfaces.dll or CSAILoader.dll, you will need to setup the following three properties:</description> 
+   <property name="taspring.sourcecodedirectory" value="h:\bin\games\taspring\taspring_0.73b1_src\taspring_0.73b1" />
+   
+   <property name="platformsdk.include" value="h:\bin\microsoft platform sdk for windows xp sp2\include" />
+   <property name="platformsdk.lib" value="h:\bin\microsoft platform sdk for windows xp sp2\lib" />
+
+
+   <property name="nant.settings.currentframework" value="net-1.1" />
+
+   <target name="buildcsaiinterfaces">
+      <nant>
+         <buildfiles>
+            <include name="CSAIInterfaces/CSAIInterfaces.build" />
+         </buildfiles>
+      </nant>
+    </target>
+      
+   <target name="buildcsai" depends="buildcsaiinterfaces">
+      <nant>
+         <buildfiles>
+            <include name="CSAILoader/CSAILoader.build" />
+            <include name="CSAI/CSAI.build" />
+         </buildfiles>
+      </nant>
+   </target>
+   
+</project>
