@@ -49,7 +49,7 @@ static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 	tc.right = sc.right;
 	tc.up = sc.up;
 	tc.pos = sc.pos;
-	tc.aspect = gu->screenx / (float)gu->screeny;
+	tc.aspect = gu->viewSizeX / (float)gu->viewSizeY;
 
 	tc.right = tc.front.cross(tc.up);
 	tc.right.Normalize();

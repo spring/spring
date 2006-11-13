@@ -112,7 +112,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	glDisable(GL_TEXTURE_2D);
 
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand);		// Setup The Ambient Light
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand);		// Setup The Diffuse Light
 	glLightfv(GL_LIGHT1, GL_SPECULAR, LightAmbientLand);		// Setup The Diffuse Light

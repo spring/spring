@@ -37,7 +37,7 @@ CDynWater::CDynWater(void)
 	firstDraw=true;
 	drawSolid=true;
 	camPosBig=float3(2048,0,2048);
-	refractSize=gu->screeny>=1024 ? 1024:512;
+	refractSize=gu->viewSizeY>=1024 ? 1024:512;
 
 	glGenTextures(1, &reflectTexture);
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
@@ -297,8 +297,8 @@ void CDynWater::Draw()
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waterVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
-	float dx=float(gu->screenx)/gu->screeny*tan(camera->fov/180/2*PI);
-	float dy=float(gu->screeny)/gu->screeny*tan(camera->fov/180/2*PI);
+	float dx=float(gu->viewSizeX)/gu->viewSizeY*tan(camera->fov/180/2*PI);
+	float dy=float(gu->viewSizeY)/gu->viewSizeY*tan(camera->fov/180/2*PI);
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/(W_SIZE*256),1.0f/(W_SIZE*256), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f+0.5f,-camPosZ/256.0f+0.5f, 0, 0);
@@ -453,7 +453,7 @@ void CDynWater::DrawReflection(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
 
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 
 	*camera=realCam;
@@ -498,7 +498,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, refractTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,refractSize,refractSize);
 
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 
 	unitDrawer->unitSunColor=oldsun;

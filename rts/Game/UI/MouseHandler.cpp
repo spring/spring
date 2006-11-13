@@ -507,8 +507,8 @@ void CMouseHandler::ShowMouse()
 void CMouseHandler::HideMouse()
 {
 	if(!hide){
-		lastx = gu->screenx/2;  
-		lasty = gu->screeny/2;  
+		lastx = gu->viewSizeX/2;  
+		lasty = gu->viewSizeY/2;  
 	    SDL_ShowCursor(SDL_DISABLE);
 		mouseInput->SetPos (int2(lastx,lasty));
 		hide=true;
@@ -636,9 +636,9 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 	if (!hide)
 		return;
 
-	int dx = lastx-gu->screenx/2;
-	int dy = lasty-gu->screeny/2;
-	lastx = gu->screenx/2; lasty = gu->screeny/2;
+	int dx = lastx-gu->viewSizeX/2;
+	int dy = lasty-gu->viewSizeY/2;
+	lastx = gu->viewSizeX/2; lasty = gu->viewSizeY/2;
 
 	float3 move;
 	move.x=dx;
@@ -850,13 +850,13 @@ void CMouseHandler::UpdateCursors()
 
 void CMouseHandler::DrawCursor(void)
 {
-
 	if (guihandler) {
 		guihandler->DrawCentroidCursor();
 	}
 	
-	if (hide)
+	if (hide || (cursorText == "none")) {
 		return;
+	}
 
 	CMouseCursor* mc;
 	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cursorText);

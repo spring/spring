@@ -99,14 +99,14 @@ void CCursorIcons::DrawCursors()
 
 void CCursorIcons::DrawTexts()
 {
-	glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	glColor4f(1.0f,  1.0f, 1.0f, 1.0f);
 
-	const float yScale = 20.0f / (float)gu->screenx;
+	const float yScale = 20.0f / (float)gu->viewSizeX;
 	const float xScale = yScale / gu->aspectRatio;
-	const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-	const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
-	const float yOffset = -50.0f / (float)gu->screenx;
+	const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+	const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
+	const float yOffset = -50.0f / (float)gu->viewSizeX;
 	
 	std::set<IconText>::iterator it;
 	for (it = texts.begin(); it != texts.end(); ++it) {
@@ -115,8 +115,8 @@ void CCursorIcons::DrawTexts()
 			const char* text = it->text.c_str();
 			const float tWidth  = xScale * font->CalcTextWidth(text);
 			const float tHeight = yScale * font->CalcTextHeight(text);
-			const float x = (winPos.x / (float)gu->screenx) - (0.5f * tWidth);
-			const float y = (winPos.y / (float)gu->screeny) + tHeight + yOffset;
+			const float x = (winPos.x / (float)gu->viewSizeX) - (0.5f * tWidth);
+			const float y = (winPos.y / (float)gu->viewSizeY) + tHeight + yOffset;
 
 			glPushMatrix();
 			glTranslatef(x, y, 0.0f);
@@ -136,7 +136,7 @@ void CCursorIcons::DrawTexts()
 
 void CCursorIcons::DrawBuilds()
 {
-	glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
 	glEnable(GL_DEPTH_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);

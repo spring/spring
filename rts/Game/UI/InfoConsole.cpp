@@ -5,6 +5,7 @@
 
 #include "InfoConsole.h"
 #include "OutlineFont.h"
+#include "GuiHandler.h"
 #include "Rendering/GL/myGL.h"
 #include <fstream>
 #include "Rendering/glFont.h"
@@ -22,11 +23,13 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-CInfoConsole* info=0;
 
 CInfoConsole::CInfoConsole()
 : lastMsgPos(0,0,0)
 {
+	data.clear();
+	
+	
 	lastTime=0;
 	lifetime=400;
 
@@ -57,6 +60,7 @@ CInfoConsole::~CInfoConsole()
 void CInfoConsole::Draw()
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
@@ -82,7 +86,7 @@ void CInfoConsole::Draw()
 		glColor4f(1,1,1,1);
 
 		std::deque<InfoLine>::iterator ili;
-		for(ili=data.begin();ili!=data.end();ili++){
+		for (ili = data.begin(); ili != data.end(); ili++) {
 			glPushMatrix();
 			font->glPrintRaw(ili->text.c_str());
 			glPopMatrix();
@@ -90,12 +94,12 @@ void CInfoConsole::Draw()
 		}
 	}
 	else {
-		const float xPixel = 1.0f / (xScale * (float)gu->screenx);
-		const float yPixel = 1.0f / (yScale * (float)gu->screeny);
+		const float xPixel = 1.0f / (xScale * (float)gu->viewSizeX);
+		const float yPixel = 1.0f / (yScale * (float)gu->viewSizeY);
 		const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		
+
 		std::deque<InfoLine>::iterator ili;
-		for(ili=data.begin();ili!=data.end();ili++){
+		for (ili = data.begin(); ili != data.end(); ili++) {
 			outlineFont.print(xPixel, yPixel, white, ili->text.c_str());
 			glTranslatef(0.0f, -1.2f, 0.0f);
 		}
@@ -120,12 +124,17 @@ void CInfoConsole::Update()
 
 void CInfoConsole::NotifyLogMsg(int priority, const char *text)
 {
-	if (priority > verboseLevel)
+	if (priority > verboseLevel) {
 		return;
-
+	}
+	
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+
+	if (guihandler) {
+		guihandler->AddConsoleLine(text, priority);
+	}
 
 	float maxWidth = 25.0f;
 	int pos=0, line_start=0;
@@ -165,6 +174,7 @@ void CInfoConsole::NotifyLogMsg(int priority, const char *text)
 		data.back().time=lifetime-lastTime;
 		lastTime=lifetime;
 	}
+	
 	POP_CODE_MODE;
 }
 

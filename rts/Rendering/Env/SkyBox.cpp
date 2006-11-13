@@ -52,9 +52,9 @@ void CSkyBox::Draw()
 	glDisable(GL_DEPTH_TEST);
 
 	float3 v1 = camera->CalcPixelDir(0,0);
-	float3 v2 = camera->CalcPixelDir(gu->screenx,0);
-	float3 v3 = camera->CalcPixelDir(gu->screenx,gu->screeny);
-	float3 v4 = camera->CalcPixelDir(0,gu->screeny);
+	float3 v2 = camera->CalcPixelDir(gu->viewSizeX,0);
+	float3 v3 = camera->CalcPixelDir(gu->viewSizeX,gu->viewSizeY);
+	float3 v4 = camera->CalcPixelDir(0,gu->viewSizeY);
 
 	glBegin(GL_QUADS);
 			

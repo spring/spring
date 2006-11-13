@@ -56,8 +56,8 @@ CglTextBox::~CglTextBox(void)
 
 void CglTextBox::Draw(void)
 {
-	float mx=float(mouse->lastx)/gu->screenx;
-	float my=(gu->screeny-float(mouse->lasty))/gu->screeny;
+	float mx=float(mouse->lastx)/gu->viewSizeX;
+	float my=(gu->viewSizeY-float(mouse->lasty))/gu->viewSizeY;
 
 	glColor4f(0,0,0,0.5f);
 	glDisable(GL_TEXTURE_2D);
@@ -92,8 +92,8 @@ void CglTextBox::Draw(void)
 
 bool CglTextBox::MousePress(int x, int y, int button)
 {
-	float mx=float(x)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=float(x)/gu->viewSizeX;
+	float my=(gu->viewSizeY-float(y))/gu->viewSizeY;
 
 	if(InBox(mx,my,box))
 		return true;
@@ -102,8 +102,8 @@ bool CglTextBox::MousePress(int x, int y, int button)
 
 void CglTextBox::MouseRelease(int x, int y,int button)
 {
-	float mx=float(x)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=float(x)/gu->viewSizeX;
+	float my=(gu->viewSizeY-float(y))/gu->viewSizeY;
 
 	if(InBox(mx,my,okButton)){
 		delete this;
@@ -113,8 +113,8 @@ void CglTextBox::MouseRelease(int x, int y,int button)
 
 bool CglTextBox::IsAbove(int x, int y)
 {
-	float mx=float(x)/gu->screenx;
-	float my=(gu->screeny-float(y))/gu->screeny;
+	float mx=float(x)/gu->viewSizeX;
+	float my=(gu->viewSizeY-float(y))/gu->viewSizeY;
 
 	if(InBox(mx,my,box))
 		return true;

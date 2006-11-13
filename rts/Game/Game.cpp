@@ -902,11 +902,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				if(!ifs.FileExists())
 					break;
 			}
-			int x=gu->screenx;
-			x-=gu->screenx%4;
+			int x=gu->viewSizeX;
+			x-=gu->viewSizeX%4;
 
-			int y=gu->screeny;
-			y-=gu->screeny%4;
+			int y=gu->viewSizeY;
+			y-=gu->viewSizeY%4;
 
 			BITMAPINFOHEADER bih;
 			bih.biSize=sizeof(BITMAPINFOHEADER);
@@ -1110,12 +1110,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			ext = "png";
 		}
 		if (filesystem.CreateDirectory("screenshots")) {
-			int x=gu->screenx;
+			int x=gu->viewSizeX;
 			if(x%4)
 				x+=4-x%4;
-			unsigned char* buf=new unsigned char[x*gu->screeny*4];
-			glReadPixels(0,0,x,gu->screeny,GL_RGBA,GL_UNSIGNED_BYTE,buf);
-			CBitmap b(buf,x,gu->screeny);
+			unsigned char* buf=new unsigned char[x*gu->viewSizeY*4];
+			glReadPixels(0,0,x,gu->viewSizeY,GL_RGBA,GL_UNSIGNED_BYTE,buf);
+			CBitmap b(buf,x,gu->viewSizeY);
 			b.ReverseYAxis();
 			char t[50];
 			for(int a=0;a<9999;++a){
@@ -1531,10 +1531,10 @@ bool CGame::Draw()
 		glLineWidth(1.49f);
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
-		glVertex2f(0.5f-10.0f/gu->screenx,0.5f);
-		glVertex2f(0.5f+10.0f/gu->screenx,0.5f);
-		glVertex2f(0.5f,0.5f-10.0f/gu->screeny);
-		glVertex2f(0.5f,0.5f+10.0f/gu->screeny);
+		glVertex2f(0.5f-10.0f/gu->viewSizeX,0.5f);
+		glVertex2f(0.5f+10.0f/gu->viewSizeX,0.5f);
+		glVertex2f(0.5f,0.5f-10.0f/gu->viewSizeY);
+		glVertex2f(0.5f,0.5f+10.0f/gu->viewSizeY);
 		glLineWidth(1.0f);
 		glEnd();
 	}
@@ -1610,8 +1610,8 @@ bool CGame::Draw()
 			font->glPrintRaw(tempstring.c_str());
 		}
 		else {
-			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			outlineFont.print(xPixel, yPixel, white, tempstring.c_str());
 		}
@@ -1646,8 +1646,8 @@ bool CGame::Draw()
 		if (!outlineFont.IsEnabled()) {
 			font->glPrintRaw(buf);
 		} else {
-			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			outlineFont.print(xPixel, yPixel, white, buf);
 		}
@@ -1658,8 +1658,8 @@ bool CGame::Draw()
 		char buf[128];
 		const float xScale = 0.015f;
 		const float yScale = 0.020f;
-		const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-		const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+		const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+		const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 		for (int a=0; a<gs->activePlayers; ++a) {
 			if (gs->players[a]->active) {
 				float color[4];
@@ -2496,12 +2496,12 @@ void CGame::UpdateUI()
 		movement=float3(0,0,0);
 
     if (fullscreen || windowedEdgeMove) {
-		int screenW = gu->dualScreenMode ? gu->screenx*2 : gu->screenx;
+		int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
 				unitTracker.Disable();
 			}
-			if (mouse->lasty > (gu->screeny - 2)){
+			if (mouse->lasty > (gu->viewSizeY - 2)){
 				movement.y-=gu->lastFrameTime;
 				unitTracker.Disable();
 			}

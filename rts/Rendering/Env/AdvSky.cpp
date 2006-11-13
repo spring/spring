@@ -811,7 +811,7 @@ void CAdvSky::CreateDetailTex(void)
 //	SwapBuffers(hDC);
 //	SleepEx(500,true);
 
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glEnable(GL_DEPTH_TEST);
 }
 

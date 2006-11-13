@@ -166,14 +166,14 @@ COverheadController::COverheadController()
 void COverheadController::KeyMove(float3 move)
 {
 	move*=sqrt(move.z)*200;
-	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
+	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->viewSizeY*height*2;
 	pos.x+=move.x*pixelsize*2*scrollSpeed;	
 	pos.z-=move.y*pixelsize*2*scrollSpeed;
 }
 
 void COverheadController::MouseMove(float3 move)
 {
-	float pixelsize=100*mouseScale*tan(camera->fov/180/2*PI)*2/gu->screeny*height*2;
+	float pixelsize=100*mouseScale*tan(camera->fov/180/2*PI)*2/gu->viewSizeY*height*2;
 	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;	
 	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
 }
@@ -334,7 +334,7 @@ void CTWController::KeyMove(float3 move)
 void CTWController::MouseMove(float3 move)
 {
 	float dist=-camera->rot.x*1500;
-	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->screeny*dist*2;
+	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->viewSizeY*dist*2;
 	move*=(1+keys[SDLK_LSHIFT]*3)*pixelsize;
 	float3 flatForward=camera->forward;
 	flatForward.y=0;
@@ -345,7 +345,7 @@ void CTWController::MouseMove(float3 move)
 
 void CTWController::ScreenEdgeMove(float3 move)
 {
-	if(mouse->lasty<gu->screeny/3){
+	if(mouse->lasty<gu->viewSizeY/3){
 		camera->rot.y-=move.x*gu->lastFrameTime*0.5f*200;
 		move.x=0;
 	}
@@ -602,7 +602,7 @@ void COverviewController::MouseWheelMove(float move)
 
 float3 COverviewController::GetPos()
 {
-	float height=10*max(gs->mapx*gu->screeny/gu->screenx,gs->mapy);		//map not created when constructor run
+	float height=10*max(gs->mapx*gu->viewSizeY/gu->viewSizeX,gs->mapy);		//map not created when constructor run
 
 	pos=float3(gs->mapx*4,ground->GetHeight(gs->mapx*4,gs->mapy*4)+height,gs->mapy*4);
 	return pos;

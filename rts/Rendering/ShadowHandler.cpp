@@ -235,7 +235,7 @@ void CShadowHandler::CreateShadows(void)
 	glColorMask(1, 1, 1, 1);
 
 	fb->deselect();
-	glViewport(gu->screenxPos,0,gu->screenx,gu->screeny);
+	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 }
 
 

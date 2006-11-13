@@ -65,7 +65,7 @@ void CCamera::Update(bool freeze)
 	up=right.cross(forward);
 	up.Normalize();
 
-	float viewx=(float)tan(float(gu->screenx)/gu->screeny*PI/4*fov/90);
+	float viewx=(float)tan(float(gu->viewSizeX)/gu->viewSizeY*PI/4*fov/90);
 	float viewy=(float)tan(PI/4*fov/90);
 
 	bottom=-forward*viewy-up;
@@ -94,7 +94,7 @@ void CCamera::Update(bool freeze)
 
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
 	glLoadIdentity();									// Reset The Projection Matrix
-	gluPerspective(fov,(GLfloat)gu->screenx/(GLfloat)gu->screeny,NEAR_PLANE*rangemod,gu->viewRange);
+	gluPerspective(fov,(GLfloat)gu->viewSizeX/(GLfloat)gu->viewSizeY,NEAR_PLANE*rangemod,gu->viewRange);
 	glGetDoublev(GL_PROJECTION_MATRIX, projection);
 
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
@@ -104,8 +104,8 @@ void CCamera::Update(bool freeze)
 	
 	viewport[0] = 0;
 	viewport[1] = 0;
-	viewport[2] = gu->screenx;
-	viewport[3] = gu->screeny;
+	viewport[2] = gu->viewSizeX;
+	viewport[3] = gu->viewSizeY;
 }
 
 bool CCamera::InView(const float3 &p,float radius)
@@ -137,8 +137,8 @@ void CCamera::UpdateForward()
 
 float3 CCamera::CalcPixelDir(int x, int y)
 {
-	float dx=float(x-gu->screenxPos-gu->screenx/2)/gu->screeny*tan(fov/180/2*PI)*2;
-	float dy=float(y-gu->screeny/2)/gu->screeny*tan(fov/180/2*PI)*2;
+	float dx=float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY*tan(fov/180/2*PI)*2;
+	float dy=float(y-gu->viewSizeY/2)/gu->viewSizeY*tan(fov/180/2*PI)*2;
 	float3 dir=camera->forward-camera->up*dy+camera->right*dx;
 	dir.Normalize();
 	return dir;

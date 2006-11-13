@@ -63,7 +63,12 @@ class CIconLayoutHandler {
 
 		bool MouseMove(int x, int y, int dx, int dy, int button);
 		bool MousePress(int x, int y, int button);
-		bool MouseRelease(int x, int y, int button);
+		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
+
+		bool IsAbove(int x, int y);
+		string GetTooltip(int x, int y);
+		
+		bool AddConsoleLine(const string& line, int priority);
 		
 		bool UnitCreated(CUnit* unit);
 		bool UnitReady(CUnit* unit, CUnit* builder);

@@ -48,7 +48,7 @@
 //////////////////////////////////////////////////////////////////////
 
 
-CMiniMap* minimap;
+CMiniMap* minimap = NULL;
 
 extern Uint8* keys;
 
@@ -65,34 +65,50 @@ CMiniMap::CMiniMap()
   showButtons(false),
   useIcons(true)
 {
-	lastWindowSizeX = gu->screenx;
-	lastWindowSizeY = gu->screeny;
-	
-	const std::string geodef = "2 2 200 200";
-	const std::string geo = configHandler.GetString("MiniMapGeometry", geodef);
-	const int scanned = sscanf(geo.c_str(), "%i %i %i %i",
-	                           &xpos, &ypos, &width, &height);
-	if (scanned != 4) {
-		xpos = 2;
-		ypos = 2;
-		width = 200;
-		height = 200;
-	}
-	ypos = gu->screeny - height - ypos;
-	
-	
-	float hw = sqrt(float(gs->mapx) / float(gs->mapy));
+	lastWindowSizeX = gu->viewSizeX;
+	lastWindowSizeY = gu->viewSizeY;
+
 	if (gu->dualScreenMode) {
-		width = gu->screenx;
-		height = gu->screeny;
-		xpos = (gu->screenx - gu->screenxPos);
+		width = gu->viewSizeX;
+		height = gu->viewSizeY;
+		xpos = (gu->viewSizeX - gu->viewPosX);
 		ypos = 0;
-	} else {
-		if ((scanned != 4) || (geo == geodef)) {
-			width = (int)(width * hw);
-			height = (int)(height / hw);
-			ypos = gu->screeny - height - 2;
+	}
+	else {
+		const std::string geodef = "2 2 200 200";
+		const std::string geo = configHandler.GetString("MiniMapGeometry", geodef);
+		const int scanned = sscanf(geo.c_str(), "%i %i %i %i",
+															 &xpos, &ypos, &width, &height);
+		const bool userGeo = ((scanned != 4) || (geo != geodef));
+
+		if (!userGeo) {
+			xpos = 2;
+			ypos = 2;
+			width = -200;
+			height = -200;
+		} else {
+			if (width <= 0) {
+				width = -200;
+			}
+			if (height <= 0) {
+				height = -200;
+			}
 		}
+		
+		if ((width <= 0) && (height <= 0)) {
+			const float hw = sqrt(float(gs->mapx) / float(gs->mapy));
+			width = (int)(-width * hw);
+			height = (int)(-height / hw);
+		}
+		else if (width <= 0) {
+			width = (int)(float(height) * float(gs->mapx) / float(gs->mapy));
+		}
+		else if (height <= 0) {
+			height = (int)(float(width) * float(gs->mapy) / float(gs->mapx));
+		}
+	
+		// convert to GL coords with a top-left corner affinity
+		ypos = gu->viewSizeY - height - ypos;
 	}
 
 	fullProxy = !!configHandler.GetInt("MiniMapFullProxy", 1);
@@ -264,11 +280,11 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		ypos -= dy;
 		xpos = max(0, xpos);
 		if (gu->dualScreenMode) {
-			xpos = min((2 * gu->screenx) - width, xpos);
+			xpos = min((2 * gu->viewSizeX) - width, xpos);
 		} else {
-			xpos = min(gu->screenx - width, xpos);
+			xpos = min(gu->viewSizeX - width, xpos);
 		}
-		ypos = max(5, min(gu->screeny - height, ypos));
+		ypos = max(5, min(gu->viewSizeY - height, ypos));
 		UpdateGeometry();
 		return;
 	}
@@ -277,18 +293,18 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		ypos   -= dy;
 		width  += dx;
 		height += dy;
-		height = min(gu->screeny, height);
+		height = min(gu->viewSizeY, height);
 		if (gu->dualScreenMode) {
-			width = min(2 * gu->screenx, width);
+			width = min(2 * gu->viewSizeX, width);
 		} else {
-			width = min(gu->screenx, width);
+			width = min(gu->viewSizeX, width);
 		}
 		if (keys[SDLK_LSHIFT]) {
 			width = (height * gs->mapx) / gs->mapy;
 		}
 		width = max(5, width);
 		height = max(5, height);
-		ypos = min(gu->screeny - height, ypos);
+		ypos = min(gu->viewSizeY - height, ypos);
 		UpdateGeometry();
 		return;
 	}
@@ -335,9 +351,9 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 				oldypos = ypos;
 				oldwidth = width;
 				oldheight = height;
-				height = gu->screeny;
+				height = gu->viewSizeY;
 				width = height;
-				xpos = (gu->screenx - gu->screeny) / 2;
+				xpos = (gu->viewSizeX - gu->viewSizeY) / 2;
 				ypos = 0;
 			}
 			UpdateGeometry();
@@ -355,22 +371,22 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 void CMiniMap::UpdateGeometry()
 {
 	// try to keep the same distance to the top
-	ypos -= (lastWindowSizeY - gu->screeny);
+	ypos -= (lastWindowSizeY - gu->viewSizeY);
 	if (gu->dualScreenMode) {
-		width = gu->screenx;
-		height = gu->screeny;
-		xpos = (gu->screenx - gu->screenxPos);
+		width = gu->viewSizeX;
+		height = gu->viewSizeY;
+		xpos = (gu->viewSizeX - gu->viewPosX);
 		ypos = 0;
 	}
-	else if (!maximized && (gu->screenx >= gu->screeny)) {
-		width = min(width, gu->screenx);
-		height = min(height, gu->screeny);
+	else if (!maximized && (gu->viewSizeX >= gu->viewSizeY)) {
+		width = max(1, min(width, gu->viewSizeX));
+		height = max(1, min(height, gu->viewSizeY));
 		ypos = max(buttonSize, ypos);
-		ypos = min(gu->screeny - height, ypos);
-		xpos = max(0, min(gu->screenx - width, xpos));
+		ypos = min(gu->viewSizeY - height, ypos);
+		xpos = max(0, min(gu->viewSizeX - width, xpos));
 	}
-	lastWindowSizeX = gu->screenx;
-	lastWindowSizeY = gu->screeny;
+	lastWindowSizeX = gu->viewSizeX;
+	lastWindowSizeY = gu->viewSizeY;
 
 	// setup the unit scaling	
 	const float w = float(width);
@@ -387,7 +403,7 @@ void CMiniMap::UpdateGeometry()
 	// in mouse coordinates
 	mapBox.xmin = xpos;
 	mapBox.xmax = mapBox.xmin + width - 1;
-	mapBox.ymin = gu->screeny - (ypos + height);
+	mapBox.ymin = gu->viewSizeY - (ypos + height);
 	mapBox.ymax = mapBox.ymin + height - 1;
 
 	if (gu->dualScreenMode) {
@@ -414,7 +430,7 @@ void CMiniMap::UpdateGeometry()
 		return;
 	}
 		
-	if (!maximized || (gu->screeny > gu->screenx)) {
+	if (!maximized || (gu->viewSizeY > gu->viewSizeX)) {
 		// right to left
 		resizeBox.xmax   = mapBox.xmax;
 		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
@@ -473,7 +489,7 @@ void CMiniMap::MoveView(int x, int y)
 	float camHeight = pos.y - ground->GetHeight(pos.x, pos.z);
 	float3 clickPos;
 	clickPos.x = (float(x - xpos)) / width * gs->mapx * 8;
-	clickPos.z = (float(y - (gu->screeny - ypos - height))) / height * gs->mapy * 8;
+	clickPos.z = (float(y - (gu->viewSizeY - ypos - height))) / height * gs->mapy * 8;
 	mouse->currentCamController->SetPos(clickPos);
 }
 
@@ -590,7 +606,7 @@ float3 CMiniMap::GetMapPosition(int x, int y) const
 	const float mapX = gs->mapx * SQUARE_SIZE;
 	const float mapY = gs->mapy * SQUARE_SIZE;
 	const float3 pos(mapX * float(x - xpos) / width, mapHeight,
-	                 mapY * float(y - (gu->screeny - ypos - height)) / height);
+	                 mapY * float(y - (gu->viewSizeY - ypos - height)) / height);
 	return pos;
 }
 
@@ -728,7 +744,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return s;
 	}
 	
-	float3 pos(float(x-xpos)/width*gs->mapx*SQUARE_SIZE,500,float(y-(gu->screeny-ypos-height))/height*gs->mapx*SQUARE_SIZE);
+	float3 pos(float(x-xpos)/width*gs->mapx*SQUARE_SIZE,500,float(y-(gu->viewSizeY-ypos-height))/height*gs->mapx*SQUARE_SIZE);
 
 	char tmp[512];
 
@@ -792,7 +808,7 @@ void CMiniMap::Draw()
 
 	if (minimized) {
 		const int bs = buttonSize + 0;
-		glViewport(gu->screenxPos + 1, gu->screeny - bs - 1, bs, bs);
+		glViewport(gu->viewPosX + 1, gu->viewSizeY - bs - 1, bs, bs);
 		if (!buttonsTexture) {
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
@@ -818,14 +834,14 @@ void CMiniMap::Draw()
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 		// outline
-		glViewport(gu->screenxPos, gu->screeny - bs - 2, bs + 2, bs + 2);
+		glViewport(gu->viewPosX, gu->viewSizeY - bs - 2, bs + 2, bs + 2);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glLineWidth(1.51f);
 		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 		glLineWidth(1.0f);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+		glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 		return;
 	}
 
@@ -992,13 +1008,13 @@ void CMiniMap::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glLineWidth(1.0f);
 	
-	glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 }
 
 
 void CMiniMap::IntBox::DrawBox() const
 {
-	glViewport(xmin, gu->screeny - ymax - 1,
+	glViewport(xmin, gu->viewSizeY - ymax - 1,
 	           (xmax - xmin) + 1, (ymax - ymin) + 1);
 	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 }
@@ -1006,7 +1022,7 @@ void CMiniMap::IntBox::DrawBox() const
 
 void CMiniMap::IntBox::DrawTextureBox() const
 {
-	glViewport(xmin, gu->screeny - ymax - 1,
+	glViewport(xmin, gu->viewSizeY - ymax - 1,
 	           (xmax - xmin) + 1, (ymax - ymin) + 1);
 	glBegin(GL_QUADS);
 		glTexCoord2f(xminTx, yminTx); glVertex2f(0.0f, 0.0f);
@@ -1077,25 +1093,25 @@ void CMiniMap::DrawButtons()
 	if (!gu->dualScreenMode) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glLineWidth(1.51f);
-		if (!maximized || (gu->screeny > gu->screenx)) {
+		if (!maximized || (gu->viewSizeY > gu->viewSizeX)) {
 			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-			glViewport(buttonBox.xmin - 2, (gu->screeny - buttonBox.ymax - 1) - 2,
+			glViewport(buttonBox.xmin - 2, (gu->viewSizeY - buttonBox.ymax - 1) - 2,
 			           (buttonBox.xmax - buttonBox.xmin + 1) + 4,
 			           (buttonBox.ymax - buttonBox.ymin + 1) + 4 - 3);
 			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			glViewport(buttonBox.xmin - 1, (gu->screeny - buttonBox.ymax - 1) - 1,
+			glViewport(buttonBox.xmin - 1, (gu->viewSizeY - buttonBox.ymax - 1) - 1,
 			           (buttonBox.xmax - buttonBox.xmin + 1) + 2,
 			           (buttonBox.ymax - buttonBox.ymin + 1) + 2 - 3);
 			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 		} else {
 			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-			glViewport(buttonBox.xmin - 2, (gu->screeny - buttonBox.ymax - 1) - 2,
+			glViewport(buttonBox.xmin - 2, (gu->viewSizeY - buttonBox.ymax - 1) - 2,
 			           (buttonBox.xmax - buttonBox.xmin + 1) + 4 - 3,
 			           (buttonBox.ymax - buttonBox.ymin + 1) + 4);
 			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			glViewport(buttonBox.xmin - 1, (gu->screeny - buttonBox.ymax - 1) - 1,
+			glViewport(buttonBox.xmin - 1, (gu->viewSizeY - buttonBox.ymax - 1) - 1,
 			           (buttonBox.xmax - buttonBox.xmin + 1) + 2 - 3,
 			           (buttonBox.ymax - buttonBox.ymin + 1) + 2);
 			glRectf(0.0f, 0.0f, 1.0f, 1.0f);

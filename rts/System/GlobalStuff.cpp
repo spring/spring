@@ -143,8 +143,8 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	modGameTime=0;
 	gameTime=0;
 	lastFrameTime=0;
-	screenx=100;
-	screeny=100;
+	viewSizeX=100;
+	viewSizeY=100;
 	aspectRatio=1.0f;
 	myPlayerNum=0;
 	myTeam=1;

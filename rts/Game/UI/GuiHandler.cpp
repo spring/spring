@@ -52,7 +52,7 @@ extern Uint8 *keys;
 //////////////////////////////////////////////////////////////////////
 
 
-CGuiHandler* guihandler;
+CGuiHandler* guihandler = NULL;
 
 
 const char* CGuiHandler::luaLayoutFile = "gui.lua";
@@ -129,6 +129,14 @@ void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 {
 	if (layoutHandler) {
 		layoutHandler->UnitDestroyed(victim, attacker);
+	}
+}
+
+
+void CGuiHandler::AddConsoleLine(const std::string& line, int priority)
+{
+	if (layoutHandler) {
+		layoutHandler->AddConsoleLine(line, priority);
 	}
 }
 
@@ -1057,7 +1065,7 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 		return true;
 	}
 
-	if(inCommand>=0){
+	if (inCommand >= 0) {
 		if (invertQueueKey && (button == SDL_BUTTON_RIGHT) &&
 		    !mouse->buttons[SDL_BUTTON_LEFT].pressed) { // for rocker gestures
 			SetShowingMetal(false);
@@ -1065,13 +1073,13 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 			needShift = false;
 			return false;
 		}
-		activeMousePress=true;
+		activeMousePress = true;
 		return true;
 	}
 
-	if(button==SDL_BUTTON_RIGHT){
-		activeMousePress=true;
-		defaultCmdMemory=GetDefaultCommand(x,y);
+	if (button == SDL_BUTTON_RIGHT) {
+		activeMousePress = true;
+		defaultCmdMemory = GetDefaultCommand(x, y);
 		return true;
 	}
 
@@ -1087,14 +1095,20 @@ void CGuiHandler::MouseMove(int x, int y, int dx, int dy, int button)
 }
 	
 
-void CGuiHandler::MouseRelease(int x,int y,int button)
+void CGuiHandler::MouseRelease(int x, int y, int button)
 {
+	int iconCmd = -1;
+	
 	if (layoutHandlerClick) {
-		if (layoutHandler) {
-			layoutHandler->MouseRelease(x, y, button);
-		}
 		layoutHandlerClick = false;
-		return;
+		if (layoutHandler) {
+			iconCmd = layoutHandler->MouseRelease(x, y, button);
+		}
+		if ((iconCmd < 0) || (iconCmd >= commands.size())) {
+			return;
+		} else {
+			activeMousePress = true;
+		}
 	}
 	
 	if (activeMousePress) {
@@ -1108,13 +1122,12 @@ void CGuiHandler::MouseRelease(int x,int y,int button)
 		inCommand=-1;
 		needShift=false;
 	}
-	
-	int iconCmd = -1;
 
 	if (button < 0) {
 		button = -button; // proxied click from the minimap
 	} else {
-		if (!game->hideInterface) {
+		// setup iconCmd	
+		if ((iconCmd < 0) && !game->hideInterface) {
 			const int iconPos = IconAtPos(x, y);
 			if (iconPos >= 0) {
 				iconCmd = icons[iconPos].commandsID;
@@ -1430,8 +1443,8 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 	float maxV = 100.0f;
 	if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
 	if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
-	const int minX = (gu->screenx * 1) / 4;
-	const int maxX = (gu->screenx * 3) / 4;
+	const int minX = (gu->viewSizeX * 1) / 4;
+	const int maxX = (gu->viewSizeX * 3) / 4;
 	const int effX = max(min(mouse->lastx, maxX), minX);
 	const float factor = float(effX - minX) / float(maxX - minX);
 
@@ -1975,13 +1988,25 @@ void CGuiHandler::FinishCommand(int button)
 
 bool CGuiHandler::IsAbove(int x, int y)
 {
-	return AboveGui(x,y);
+	if (layoutHandler) {
+		if (layoutHandler->IsAbove(x, y)) {
+			return true;
+		}
+	}
+	return AboveGui(x, y);
 }
 
 
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
 	string s;
+	if (layoutHandler) {
+		s = layoutHandler->GetTooltip(x, y);
+		if (!s.empty()) {
+			return s;
+		}
+	}
+	
 	const int iconPos = IconAtPos(x, y);
 	const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
 	if ((iconCmd >= 0) && (iconCmd < (int)commands.size())) {
@@ -3087,8 +3112,8 @@ void CGuiHandler::DrawMenuName()
 		else {
 			glTranslatef(xp, yp, 0.0f);
 			glScalef(xScale, yScale, 1.0f);
-			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 			// use (alpha == 0.0) so that we only get the outline
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
 			outlineFont.print(xPixel, yPixel, white, StripColorCodes(text).c_str());
@@ -3135,8 +3160,8 @@ void CGuiHandler::DrawSelectionInfo()
 			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
 			glScalef(xScale, yScale, 1.0f);
 
-			const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-			const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			outlineFont.print(xPixel, yPixel, white, buf);
@@ -3155,9 +3180,9 @@ void CGuiHandler::DrawNumberInput()
 			const float value = GetNumberInput(cd);
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-			const float mouseX = (float)mouse->lastx / (float)gu->screenx; 
+			const float mouseX = (float)mouse->lastx / (float)gu->viewSizeX; 
 			const float slideX = min(max(mouseX, 0.25f), 0.75f);
-			const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->screeny;
+			const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->viewSizeY;
 			glColor4f(1.0f, 1.0f, 0.0f, 0.8f);
 			glRectf(0.235f, 0.45f, 0.25f, 0.55f);
 			glRectf(0.75f, 0.45f, 0.765f, 0.55f);
@@ -3235,7 +3260,7 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 	const float y1 = icon.visual.y1;
 	const float x2 = icon.visual.x2;
 	const float y2 = icon.visual.y2;
-	const float yp = 1.0f / float(gu->screeny);
+	const float yp = 1.0f / float(gu->viewSizeY);
 
 	for (int x = 0; x < pCount; x++) {
 		if (x != option) {
@@ -3733,7 +3758,7 @@ void CGuiHandler::DrawCentroidCursor()
 			CMouseCursor* mc = mcit->second;
 			if (mc != NULL) {
 				glDisable(GL_DEPTH_TEST);
-				mc->Draw((int)winPos.x, gu->screeny - (int)winPos.y, 1.0f);
+				mc->Draw((int)winPos.x, gu->viewSizeY - (int)winPos.y, 1.0f);
 				glEnable(GL_DEPTH_TEST);
 			}
 		}

@@ -982,10 +982,10 @@ bool CAICallback::GetValue(int id, void *data)
 			*(float*)data = gu->viewRange;
 			return true;
 		}case AIVAL_GUI_SCREENX:{
-			*(float*)data = gu->screenx;
+			*(float*)data = gu->viewSizeX;
 			return true;
 		}case AIVAL_GUI_SCREENY:{
-			*(float*)data = gu->screeny;
+			*(float*)data = gu->viewSizeY;
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
 			*(float3*)data = mouse->currentCamController->GetDir();

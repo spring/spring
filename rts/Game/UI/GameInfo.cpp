@@ -216,8 +216,8 @@ void CGameInfo::Draw()
 	const float height = rowHeight * (float)(labels.size());
 
 	// in screen fractions
-	const float sx = (float)gu->screenx;
-	const float sy = (float)gu->screeny;
+	const float sx = (float)gu->viewSizeX;
+	const float sy = (float)gu->viewSizeY;
 	const float dy = (height / sy) / (float)labels.size();
 	const float xBorder = border / sx;
 	const float yBorder = border / sy;

@@ -18,6 +18,7 @@ extern "C" {
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Game/command.h"
+#include "Game/Camera.h"
 #include "Game/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
@@ -26,8 +27,9 @@ extern "C" {
 #include "Game/UI/GuiHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -41,6 +43,8 @@ extern "C" {
 #include "System/Sound.h"
 
 extern Uint8 *keys;
+extern GLfloat LightDiffuseLand[];
+extern GLfloat LightAmbientLand[];
 
 
 /******************************************************************************/
@@ -100,14 +104,17 @@ static int SetCameraState(lua_State* L);
 
 static int GetMapHeight(lua_State* L);
 static int TestBuildOrder(lua_State* L);
+static int Pos2BuildPos(lua_State* L);
 
 static int AddMapIcon(lua_State* L);
 static int AddMapText(lua_State* L);
 static int AddMapUnit(lua_State* L);
 
 static int DrawState(lua_State* L);
+static int DrawColor(lua_State* L);
 static int DrawShape(lua_State* L);
 static int DrawText(lua_State* L);
+static int DrawUnitDef(lua_State* L);
 static int DrawTranslate(lua_State* L);
 static int DrawScale(lua_State* L);
 static int DrawRotate(lua_State* L);
@@ -116,6 +123,8 @@ static int DrawPopMatrix(lua_State* L);
 static int DrawListCreate(lua_State* L);
 static int DrawListRun(lua_State* L);
 static int DrawListDelete(lua_State* L);
+
+static int GetTextWidth(lua_State* L);
 
 static int PlaySoundFile(lua_State* L);
 
@@ -248,12 +257,15 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrder);
 	REGISTER_LUA_CFUNC(GetMapHeight);
 	REGISTER_LUA_CFUNC(TestBuildOrder);
+	REGISTER_LUA_CFUNC(Pos2BuildPos);
 	REGISTER_LUA_CFUNC(AddMapIcon);
 	REGISTER_LUA_CFUNC(AddMapText);
 	REGISTER_LUA_CFUNC(AddMapUnit);
 	REGISTER_LUA_CFUNC(DrawState);
+	REGISTER_LUA_CFUNC(DrawColor);
 	REGISTER_LUA_CFUNC(DrawShape);
 	REGISTER_LUA_CFUNC(DrawText);
+	REGISTER_LUA_CFUNC(DrawUnitDef);
 	REGISTER_LUA_CFUNC(DrawListCreate);
 	REGISTER_LUA_CFUNC(DrawListRun);
 	REGISTER_LUA_CFUNC(DrawListDelete);
@@ -262,6 +274,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(DrawRotate);
 	REGISTER_LUA_CFUNC(DrawPushMatrix);
 	REGISTER_LUA_CFUNC(DrawPopMatrix);
+	REGISTER_LUA_CFUNC(GetTextWidth);
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 
 	lua_setglobal(L, "Spring");
@@ -541,35 +554,144 @@ bool CIconLayoutHandler::DrawMapItems()
 
 	drawingEnabled = true;
 
-	lua_pushnumber(L, gu->screenx);	// FIXME -- better input
-	lua_pushnumber(L, gu->screeny);	
-	
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
+	
+	// push the current GL state
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_LIGHTING_BIT);
+	
 	glPushMatrix();
+
 	matrixDepth = 0;
 
+	lua_pushnumber(L, gu->viewSizeX);	// FIXME -- better input
+	lua_pushnumber(L, gu->viewSizeY);	
+	
 	// call the routine
+	bool retval = true;
 	const int error = lua_pcall(L, 2, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
 		                "Call_DrawMapItems", lua_tostring(L, -1));
 		lua_pop(L, 1);
-		return false;
+		retval = false;
 	}
-	
-	if (matrixDepth != 0) {
+	else if (matrixDepth != 0) {
 		logOutput.Print("DrawMapItems: matrix mismatch");
+		while (matrixDepth > 0) {
+			glPopMatrix();
+			matrixDepth--;
+		}
 	}
-	while (matrixDepth > 0) {
-		glPopMatrix();
-		matrixDepth--;
-	}
+
+
 	glPopMatrix();
+	
+	// pop the GL state
+	glPopAttrib();
 	
 	drawingEnabled = false;
 	
-	return true;
+	return retval;
+}
+
+
+static void SetupScreenTransform()
+{
+	glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	const float dist   = 0.60f;                  // eye-to-screen (meters)
+	const float width  = 0.36f;                  // screen width (meters)
+	const float vppx   = float(gu->winPosX + gu->viewPosX); // view pixel pos x
+	const float vppy   = float(gu->winPosY + gu->viewPosY); // view pixel pos y
+	const float vpsx   = float(gu->viewSizeX);   // view pixel size x
+	const float vpsy   = float(gu->viewSizeY);   // view pixel size y
+	const float spsx   = float(gu->screenSizeX); // screen pixel size x
+	const float spsy   = float(gu->screenSizeY); // screen pixel size x
+	const float halfSX = 0.5f * spsx;            // half screen pixel size x
+	const float halfSY = 0.5f * spsy;            // half screen pixel size y
+
+	const float zplane = dist * (spsx / width);
+	const float znear  = zplane * 0.5;
+	const float zfar   = zplane * 2.0;
+	const float factor = (znear / zplane);
+	const float left   = (vppx - halfSX) * factor;
+	const float bottom = (vppy - halfSY) * factor;
+	const float right  = ((vppx + vpsx) - halfSX) * factor;
+	const float top    = ((vppy + vpsy) - halfSY) * factor;
+	glFrustum(left, right, bottom, top, znear, zfar);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	// translate so that (0,0,0) is on the zplane,
+	// on the window's bottom left corner
+	const float distAdj = (zplane / znear);
+	glTranslatef(left * distAdj, bottom * distAdj, -zplane);
+	// setup the scale for placement at (z = -dist)
+//	const float scale = (width / spsx);
+//	glScalef(scale, scale, scale);
+
+	// back light
+	const float backLightPos[4]  = { 1.0f, 2.0f, 2.0f, 0.0f };
+	const float backLightAmbt[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	const float backLightDiff[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
+	const float backLightSpec[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glLightfv(GL_LIGHT0, GL_POSITION, backLightPos);
+	glLightfv(GL_LIGHT0, GL_AMBIENT,  backLightAmbt);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE,  backLightDiff);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, backLightSpec);
+
+	// sun light -- needs the camera transformation
+	glPushMatrix();
+	glLoadMatrixd(camera->modelview);
+	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
+
+	
+	const float sunFactor = 1.0f;
+	const float sf = sunFactor;
+	const float* la = LightAmbientLand;
+	const float* ld = LightDiffuseLand;
+
+	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
+	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
+	const float sunLightSpec[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
+	glLightfv(GL_LIGHT1, GL_AMBIENT,  sunLightAmbt);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE,  sunLightDiff);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLightSpec);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
+	glPopMatrix();
+
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+
+	//		glColor4f(1, 0, 0, 1);
+
+	const float grey[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
+	const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, grey);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+
+	glEnable(GL_NORMALIZE);
+}
+
+
+static void RevertScreenTransform()
+{
+	glDisable(GL_NORMALIZE);
+
+	glDisable(GL_LIGHT1);
+	glDisable(GL_LIGHT0);
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
 }
 
 
@@ -590,39 +712,47 @@ bool CIconLayoutHandler::DrawScreenItems()
 	drawingEnabled = true;
 	screenTransform = true;
 
-	lua_pushnumber(L, gu->screenx);	
-	lua_pushnumber(L, gu->screeny);	
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-	glPushMatrix();
-	matrixDepth = 0;
+	// push the current GL state
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_LIGHTING_BIT);
 	
 	// setup the screen transformation
-	glScalef(1.0f / float(gu->screenx), 1.0f / float(gu->screeny), 1.0f);
+	SetupScreenTransform();
 	
+	matrixDepth = 0;
+	
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	lua_pushnumber(L, gu->viewSizeX);	
+	lua_pushnumber(L, gu->viewSizeY);	
+
 	// call the routine
+	bool retval = true;
 	const int error = lua_pcall(L, 2, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
 		                "Call_DrawScreenItems", lua_tostring(L, -1));
 		lua_pop(L, 1);
-		return false;
+		retval = false;
+	}
+	else if (matrixDepth != 0) {
+		logOutput.Print("DrawScreenItems: matrix mismatch");
+		while (matrixDepth > 0) {
+			glPopMatrix();
+			matrixDepth--;
+		}
 	}
 	
-	if (matrixDepth != 0) {
-		logOutput.Print("DrawScreenItems: matrix mismatch");
-	}
-	while (matrixDepth > 0) {
-		glPopMatrix();
-		matrixDepth--;
-	}
-	glPopMatrix();
+	
+	// revert the screen transform
+	RevertScreenTransform();
+
+	// pop the GL state
+	glPopAttrib();
 	
 	screenTransform = false;
 	drawingEnabled = false;
-	
-	return true;
+
+	return retval;
 }
 
 
@@ -640,8 +770,8 @@ bool CIconLayoutHandler::MouseMove(int x, int y, int dx, int dy, int button)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, x);
-	lua_pushnumber(L, gu->screeny - y - 1);
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
 	lua_pushnumber(L, dx);
 	lua_pushnumber(L, -dy);
 	lua_pushnumber(L, button);
@@ -678,8 +808,8 @@ bool CIconLayoutHandler::MousePress(int x, int y, int button)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, x);
-	lua_pushnumber(L, gu->screeny - y - 1);
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
 	lua_pushnumber(L, button);
 
 	// call the function
@@ -700,7 +830,7 @@ bool CIconLayoutHandler::MousePress(int x, int y, int button)
 }
 
 
-bool CIconLayoutHandler::MouseRelease(int x, int y, int button)
+int CIconLayoutHandler::MouseRelease(int x, int y, int button)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -714,8 +844,8 @@ bool CIconLayoutHandler::MouseRelease(int x, int y, int button)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, x);
-	lua_pushnumber(L, gu->screeny - y - 1);
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
 	lua_pushnumber(L, button);
 
 	// call the function
@@ -728,11 +858,111 @@ bool CIconLayoutHandler::MouseRelease(int x, int y, int button)
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
+	if ((args == 1) && lua_isnumber(L, -1)) {
+		return (int)lua_tonumber(L, -1);
+	}
+
+	return -1;
+}
+
+
+bool CIconLayoutHandler::IsAbove(int x, int y)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "IsAbove");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call is not defined
+	}
+
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
+
+	// call the function
+	const int error = lua_pcall(L, 2, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_IsAbove", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, 1)) {
+		return !!lua_toboolean(L, 1);
 	}
 
 	return false;
+}
+
+
+string CIconLayoutHandler::GetTooltip(int x, int y)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return "";
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "GetTooltip");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return ""; // the call is not defined
+	}
+
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
+
+	// call the function
+	const int error = lua_pcall(L, 2, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_GetTooltip", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return "";
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isstring(L, 1)) {
+		return string(lua_tostring(L, 1));
+	}
+
+	return "";
+}
+
+
+bool CIconLayoutHandler::AddConsoleLine(const string& line, int priority)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "AddConsoleLine");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call is not defined
+	}
+
+	lua_pushstring(L, line.c_str());
+	lua_pushnumber(L, priority);
+
+	// call the function
+	const int error = lua_pcall(L, 2, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_AddConsoleLine", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	return true;
 }
 
 
@@ -1222,7 +1452,7 @@ static int GetMouseState(lua_State* L)
 		lua_error(L);
 	}
 	lua_pushnumber(L, mouse->lastx);
-	lua_pushnumber(L, gu->screeny - mouse->lasty - 1);
+	lua_pushnumber(L, gu->viewSizeY - mouse->lasty - 1);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
@@ -2347,6 +2577,37 @@ static int TestBuildOrder(lua_State* L)
 }
 
 
+static int Pos2BuildPos(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 4) || !lua_isnumber(L, 1) ||
+	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		lua_pushstring(L,
+			"Incorrect arguments to Pos2BuildPos(unitDefID, x, y, z)");
+		lua_error(L);
+	}
+	const int unitDefID = (int)lua_tonumber(L, 1);
+	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
+		return 0;
+	}
+	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	if (ud == NULL) {
+		return 0;
+	}
+	const float3 pos((float)lua_tonumber(L, 2),
+	                 (float)lua_tonumber(L, 3),
+	                 (float)lua_tonumber(L, 4));
+
+	const float3 buildPos = helper->Pos2BuildPos(pos, ud);
+	
+	lua_pushnumber(L, buildPos.x);
+	lua_pushnumber(L, buildPos.y);
+	lua_pushnumber(L, buildPos.z);
+	
+	return 3;
+}
+
+
 /******************************************************************************/
 
 static int SetShareLevel(lua_State* L)
@@ -2497,6 +2758,52 @@ static int DrawText(lua_State* L)
 }
 
 
+static int GetTextWidth(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetTextWidth(\"text\")");
+		lua_error(L);
+	}
+	const string text = lua_tostring(L, 1);
+	const float scale = 1.0f / font->CalcTextHeight(text.c_str());
+	const float width = scale * font->CalcTextWidth(text.c_str());
+	lua_pushnumber(L, width);
+	return 1;
+}
+
+
+/******************************************************************************/
+
+static int DrawUnitDef(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+		lua_pushstring(L, "Incorrect arguments to DrawUnitDef(unitDefID, team)");
+		lua_error(L);
+	}
+	const int unitDefID = (int)lua_tonumber(L, 1);
+	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
+		return 0;
+	}
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	if (ud == NULL) {
+		return 0;
+	}
+	const int teamID = (int)lua_tonumber(L, 2);
+	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+		return 0;
+	}
+
+	unitDrawer->DrawUnitDef(ud, teamID);
+	
+	return 0;	
+}
+
+
 /******************************************************************************/
 
 struct VertexData {
@@ -2608,18 +2915,44 @@ static int DrawShape(lua_State* L)
 	if ((args != 3) ||
 	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_istable(L, 3)) {
 		lua_pushstring(L,
-			"Incorrect arguments to DrawShape(type, texture, verts[])");
+			"Incorrect arguments to DrawShape(type, \"texture\", verts[])");
 		lua_error(L);
 	}
 
 	const string texture = lua_tostring(L, 2);
 	if (texture.empty()) {
 		glDisable(GL_TEXTURE_2D);
-	} else {
-		if (!guihandler->BindNamedTexture(texture)) {
+	}
+	else if (texture[0] != '#') {
+		if ((guihandler == NULL) || !guihandler->BindNamedTexture(texture)) {
+			logOutput.Print(
+				"DrawShape: could not load texture: %s\n", texture.c_str());
 			return 0;
 		}
 		glEnable(GL_TEXTURE_2D);
+	}
+	else {
+		// unit build picture
+		char* endPtr;
+		const char* startPtr = texture.c_str() + 1; // skip the '#'
+		int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+		// UnitDefHandler's array size is (numUnits + 1)
+		if ((endPtr != startPtr) &&
+				(unitDefID > 0) && (unitDefID <= unitDefHandler->numUnits)) {
+			UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+			if (ud != NULL) {
+				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
+				glEnable(GL_TEXTURE_2D);
+			} else {
+				logOutput.Print(
+					"DrawShape: couln not load texture: %s\n", texture.c_str());
+				return 0;
+			}
+		} else {
+			logOutput.Print(
+				"DrawShape: couln not load texture: %s\n", texture.c_str());
+			return 0;
+		}
 	}
 
 	const GLuint type = (GLuint)lua_tonumber(L, 1);
@@ -2660,6 +2993,83 @@ static int DrawShape(lua_State* L)
 
 /******************************************************************************/
 
+static int DrawColor(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_istable(L, 1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawColor(table)");
+		lua_error(L);
+	}
+
+	float color[4];
+
+	const int table = lua_gettop(L);
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_isnumber(L, -2)) { // the key
+			const int count = ParseFloatArray(L, color, 4);
+			if (count >= 4) {
+			  glColor4fv(color);
+			} else if (count >= 3) {
+			  glColor3fv(color);
+			}
+			continue;
+		}
+		else if (!lua_isstring(L, -2)) { // the key
+			logOutput.Print("DrawColor: bad state type\n");
+			break;
+		}
+
+		const string key = lua_tostring(L, -2);
+		const int count = ParseFloatArray(L, color, 4);
+		if (count == 3) {
+			color[3] = 1.0f;
+		}
+
+		if (key == "ambidiff") {
+			if (count >= 3) {
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+			}
+		}
+		else if (key == "ambient") {
+			if (count >= 3) {
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+			}
+		}
+		else if (key == "diffuse") {
+			if (count >= 3) {
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+			}
+		}
+		else if (key == "specular") {
+			if (count >= 3) {
+				glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+			}
+		}
+		else if (key == "emission") {
+			if (count >= 3) {
+				glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
+			}
+		}
+		else if (key == "shininess") {
+			if (count >= 1) {
+				glMaterialf(GL_FRONT_AND_BACK, GL_EMISSION, color[0]);
+			}
+		}
+		else {
+			logOutput.Print("DrawColor: unknown color type: %s\n", key.c_str());
+		}
+	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
 static int DrawState(lua_State* L)
 {
 	if (!drawingEnabled) {
@@ -2682,11 +3092,7 @@ static int DrawState(lua_State* L)
 		const string key = lua_tostring(L, -2);
 
 		if (key == "reset") {
-			if (screenTransform) {
-				glDisable(GL_DEPTH_TEST);
-			} else {
-				glEnable(GL_DEPTH_TEST);
-			}
+			glDisable(GL_DEPTH_TEST);
 			glDepthMask(GL_FALSE);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2697,17 +3103,46 @@ static int DrawState(lua_State* L)
 			glLogicOp(GL_INVERT);
 			glDisable(GL_CULL_FACE);
 			glCullFace(GL_BACK);
+			glShadeModel(GL_SMOOTH);
+		}
+		else if (key == "blending") {
+			if (lua_isboolean(L, -1)) {
+				if (lua_toboolean(L, -1)) {
+					glEnable(GL_BLEND);
+				} else {
+					glDisable(GL_BLEND);
+				}
+			}
+			else {
+				float values[2];
+				const int count = ParseFloatArray(L, values, 2);
+				if (count == 0) {
+					glDisable(GL_BLEND);
+				}
+				else if (count == 2) {
+					glEnable(GL_BLEND);
+					glBlendFunc((GLenum)values[0], (GLenum)values[1]);
+				}
+			}
 		}
 		else if (key == "depthmask") {
-			if (!lua_isboolean(L, -1)) {
-			} else {
+			if (lua_isboolean(L, -1)) {
 				glDepthMask(lua_toboolean(L, -1) ? GL_TRUE : GL_FALSE);
 			}
 		}
 		else if (key == "depthtest") {
-			if (!lua_isboolean(L, -1)) {
-			} else {
+			if (lua_isboolean(L, -1)) {
 				if (lua_toboolean(L, -1)) {
+					glEnable(GL_DEPTH_TEST);
+				} else {
+					glDisable(GL_DEPTH_TEST);
+				}
+			}
+			else {
+				float depthFunc;
+				const int count = ParseFloatArray(L, &depthFunc, 1);
+				if (count >= 1) {
+					glDepthFunc((GLenum)depthFunc);
 					glEnable(GL_DEPTH_TEST);
 				} else {
 					glDisable(GL_DEPTH_TEST);
@@ -2715,8 +3150,7 @@ static int DrawState(lua_State* L)
 			}
 		}
 		else if (key == "lighting") {
-			if (!lua_isboolean(L, -1)) {
-			} else {
+			if (lua_isboolean(L, -1)) {
 				if (lua_toboolean(L, -1)) {
 					glEnable(GL_LIGHTING);
 				} else {
@@ -2724,56 +3158,92 @@ static int DrawState(lua_State* L)
 				}
 			}
 		}
-		else if (key == "blending") {
-			float values[2];
-			const int count = ParseFloatArray(L, values, 2);
-			if (count == 0) {
-				glDisable(GL_BLEND);
-			}
-			else if (count == 2) {
-				glEnable(GL_BLEND);
-				glBlendFunc((GLenum)values[0], (GLenum)values[1]);
-			}
-			else {
-			}
-		}
 		else if (key == "culling") {
-			float face;
-			const int count = ParseFloatArray(L, &face, 1);
-			if (count == 0) {
-				glDisable(GL_CULL_FACE);
-			}
-			else if (count == 1) {
-				glEnable(GL_CULL_FACE);
-				glCullFace((GLenum)face);
+			if (lua_isboolean(L, -1)) {
+				if (lua_toboolean(L, -1)) {
+					glEnable(GL_CULL_FACE);
+				} else {
+					glDisable(GL_CULL_FACE);
+				}
 			}
 			else {
+				float face;
+				const int count = ParseFloatArray(L, &face, 1);
+				if (count == 0) {
+					glDisable(GL_CULL_FACE);
+				}
+				else if (count == 1) {
+					glEnable(GL_CULL_FACE);
+					glCullFace((GLenum)face);
+				}
 			}
 		}
 		else if (key == "alphatest") {
-			float values[2];
-			const int count = ParseFloatArray(L, values, 2);
-			if (count == 0) {
-				glDisable(GL_ALPHA_TEST);
-			}
-			else if (count == 2) {
-				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc((GLenum)values[0], values[1]);
+			if (lua_isboolean(L, -1)) {
+				if (lua_toboolean(L, -1)) {
+					glEnable(GL_ALPHA_TEST);
+				} else {
+					glDisable(GL_ALPHA_TEST);
+				}
 			}
 			else {
+				float values[2];
+				const int count = ParseFloatArray(L, values, 2);
+				if (count == 0) {
+					glDisable(GL_ALPHA_TEST);
+				}
+				else if (count == 2) {
+					glEnable(GL_ALPHA_TEST);
+					glAlphaFunc((GLenum)values[0], values[1]);
+				}
 			}
 		}
 		else if (key == "logicop") {
-			float op;
-			const int count = ParseFloatArray(L, &op, 1);
-			if (count == 0) {
-				glDisable(GL_COLOR_LOGIC_OP);
-			}
-			else if (count == 1) {
-				glEnable(GL_COLOR_LOGIC_OP);
-				glLogicOp((GLenum)op);
+			if (lua_isboolean(L, -1)) {
+				if (lua_toboolean(L, -1)) {
+					glEnable(GL_COLOR_LOGIC_OP);
+				} else {
+					glDisable(GL_COLOR_LOGIC_OP);
+				}
 			}
 			else {
+				float op;
+				const int count = ParseFloatArray(L, &op, 1);
+				if (count == 0) {
+					glDisable(GL_COLOR_LOGIC_OP);
+				}
+				else if (count == 1) {
+					glEnable(GL_COLOR_LOGIC_OP);
+					glLogicOp((GLenum)op);
+				}
+			}
+		}
+		else if (key == "shademodel") {
+			float mode;
+			const int count = ParseFloatArray(L, &mode, 1);
+			if (count == 1) {
+				glShadeModel((GLenum)mode);
+			}
+		}
+		else if ((key == "clear") && screenTransform) {
+			float values[5];
+			const int count = ParseFloatArray(L, values, 5);
+			const GLbitfield bits = (count >= 1) ? (GLbitfield)values[0] : 0;
+			if ((count >= 5) && (bits == GL_COLOR_BUFFER_BIT)) {
+				glClearColor(values[1], values[2], values[3], values[4]);
+			}
+			else if ((count >= 5) && (bits == GL_ACCUM_BUFFER_BIT)) {
+				glClearAccum(values[1], values[2], values[3], values[4]);
+			}
+			else if ((count >= 2) && (bits == GL_DEPTH_BUFFER_BIT)) {
+				glClearDepth(values[1]);
+			}
+			else if ((count >= 2) && (bits == GL_STENCIL_BUFFER_BIT)) {
+				glClearStencil((GLint)values[1]);
+			}
+
+			if (count >= 1) {
+				glClear(bits);
 			}
 		}
 		else {

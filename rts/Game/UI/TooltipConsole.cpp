@@ -67,8 +67,8 @@ void CTooltipConsole::Draw(void)
 
 	const float yScale = 0.015f;
 	const float xScale = (yScale / gu->aspectRatio) * 1.2f;
-	const float xPixel  = 1.0f / (xScale * (float)gu->screenx);
-	const float yPixel  = 1.0f / (yScale * (float)gu->screeny);
+	const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+	const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 	
 	glTranslatef(x + 0.01f, y + 0.08f, 0.0f);
 	glScalef(xScale, yScale, 1.0f);

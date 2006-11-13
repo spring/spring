@@ -41,6 +41,7 @@ CPreGame::CPreGame(bool server, const string& demo):
 		saveAddress(true)
 {
 	CommandDescription::Init();
+
 	infoConsole = new CInfoConsole;
 
 	pregame = this; // prevent crashes if Select* is called from ctor
@@ -157,7 +158,7 @@ bool CPreGame::Draw()
 	if (!gu->active) {
 		return true;
 	}
-	
+
 	if (!showList) {
 		switch (state) {
 			case WAIT_ON_SCRIPT:
@@ -173,9 +174,10 @@ bool CPreGame::Draw()
 				PrintLoadMsg("", false); // just clear screen and set up matrices etc.
 				break;
 		}
-	} else
+	} else {
 		PrintLoadMsg("", false); // just clear screen and set up matrices etc.
-
+	}
+	
 	infoConsole->Draw();
 
 	if(userWriting){
@@ -292,7 +294,8 @@ bool CPreGame::Update()
 
 			LoadStartPicture();
 
-			game=new CGame(server,mapName,modName,infoConsole);
+			game = new CGame(server, mapName, modName, infoConsole);
+
 			infoConsole = 0;
 
 			ENTER_UNSYNCED;

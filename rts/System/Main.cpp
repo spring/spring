@@ -37,9 +37,7 @@
 #include "FPUCheck.h"
 #include <SDL.h>
 #include <SDL_main.h>
-#ifdef WIN32
 #include <SDL_syswm.h>
-#endif
 #include "mmgr.h"
 
 #ifdef _WIN32
@@ -50,7 +48,6 @@
 #include "Platform/Win/win32.h"
 #include <winreg.h>
 #include <direct.h>
-#include <SDL_syswm.h>
 #endif
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
@@ -134,6 +131,8 @@ protected:
 	int Update (); 					//!< Run simulation and draw
 	void UpdateSDLKeys (); 				//!< Update SDL key array
 	void SetVSync ();				//!< Enable or disable VSync based on the "VSync" config option
+	bool GetDisplayGeometry();
+	void SetupViewportGeometry();
 
 	/**
 	 * @brief command line
@@ -509,34 +508,122 @@ void SpringApp::SetVSync ()
 #endif
 }
 
+
+// origin for our coordinates is the bottom left corner
+#ifndef _WIN32
+bool SpringApp::GetDisplayGeometry()
+{
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	if (!SDL_GetWMInfo(&info)) {
+		return false;
+	}
+
+	info.info.x11.lock_func();
+	{
+		Display* display = info.info.x11.display;
+		Window   window  = info.info.x11.window;
+		XSync(display, False);
+		XWindowAttributes attrs;
+
+		XGetWindowAttributes(display, DefaultRootWindow(display), &attrs);
+		gu->screenSizeX = attrs.width;
+		gu->screenSizeY = attrs.height;
+
+		XGetWindowAttributes(display, window, &attrs);
+		gu->winSizeX = attrs.width;
+		gu->winSizeY = attrs.height;
+
+		Window tmp;
+		int xp, yp;
+		XTranslateCoordinates(display, window, attrs.root, 0, 0, &xp, &yp, &tmp);
+		gu->winPosX = xp;
+		gu->winPosY = gu->screenSizeY - gu->winSizeY - yp;
+	}
+	info.info.x11.unlock_func();
+
+	return true;
+}		
+#else
+bool SpringApp::GetDisplayGeometry()
+{
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	if (!SDL_GetWMInfo(&info)) {
+		return false;
+	}
+
+	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
+	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
+	
+	LPRECT rect;
+	if (!GetWindowRect(info.window, &rect)) {
+		return false;
+	} else {
+		gu->winSizeX = rect.left - rect.right + 1;
+		gu->winSizeY = rect.bottom - rect.top + 1;
+		gu->winPosX = rect.left;
+		gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
+	}
+	
+	return true;
+}
+#endif // _WIN32
+
+
+void SpringApp::SetupViewportGeometry()
+{
+	if (!GetDisplayGeometry()) {
+		gu->screenSizeX = screenWidth;
+		gu->screenSizeY = screenHeight;
+		gu->winSizeX = screenWidth;
+		gu->winSizeY = screenHeight;
+		gu->winPosX = 0;
+		gu->winPosY = 0;
+	}
+		
+	gu->dualScreenMode = !!configHandler.GetInt("DualScreenMode", 0);
+	if (gu->dualScreenMode) {
+		gu->dualScreenMiniMapOnLeft =
+			!!configHandler.GetInt("DualScreenMiniMapOnLeft", 0);
+	} else {
+		gu->dualScreenMiniMapOnLeft = false;
+	}
+
+	if (!gu->dualScreenMode) {
+		gu->viewSizeX = gu->winSizeX;
+		gu->viewSizeY = gu->winSizeY;
+		gu->viewPosX = 0;
+		gu->viewPosY = 0;
+	}
+	else {
+		gu->viewSizeX = gu->winSizeX / 2;
+		gu->viewSizeY = gu->winSizeY;
+		if (gu->dualScreenMiniMapOnLeft) {
+			gu->viewPosX = gu->winSizeX / 2;
+			gu->viewPosY = 0;
+		} else {
+			gu->viewPosX = 0;
+			gu->viewPosY = 0;
+		}
+	}
+	
+	// NOTE:  gu->viewPosY is not currently used
+	
+	gu->aspectRatio = (float)gu->viewSizeX / (float)gu->viewSizeY;
+}
+
+
 /**
  * Initializes OpenGL
  */
 void SpringApp::InitOpenGL ()
 {
-	gu->dualScreenMode = !!configHandler.GetInt("DualScreenMode", 0);
-
-	gu->screenx = screenWidth;
-	if (gu->dualScreenMode) 
-	{
-		gu->screenx /= 2;
-		gu->dualScreenMiniMapOnLeft = !!configHandler.GetInt("DualScreenMiniMapOnLeft", 0);
-	} else 
-		gu->dualScreenMiniMapOnLeft = false;
-
-	gu->screeny = screenHeight;
+	SetupViewportGeometry();
 	
-	gu->aspectRatio = (float)gu->screenx / (float)gu->screeny;
+	glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
 
-	// Setup viewport
-	gu->screenxPos = 0;
-	if (gu->dualScreenMiniMapOnLeft)
-	{
-		// move game area to right display
-		gu->screenxPos = gu->screenx;
-	}
-	glViewport (gu->screenxPos, 0, gu->screenx, gu->screeny);
-	gluPerspective(45.0f,(GLfloat)gu->screenx/(GLfloat)gu->screeny,2.8f,MAX_VIEW_RANGE);
+	gluPerspective(45.0f, (GLfloat)gu->viewSizeX / (GLfloat)gu->viewSizeY, 2.8f, MAX_VIEW_RANGE);
 	
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
@@ -794,6 +881,7 @@ int SpringApp::Run (int argc, char *argv[])
 					glClearStencil(0);
 					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
+					SetupViewportGeometry();
 					break;
 				}
 				case SDL_QUIT: {

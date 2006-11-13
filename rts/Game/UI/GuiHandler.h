@@ -66,6 +66,7 @@ class CGuiHandler : public CInputReceiver {
 		void UnitCreated(CUnit* unit);
 		void UnitReady(CUnit* unit, CUnit* builder);
 		void UnitDestroyed(CUnit* victim, CUnit* attacker);
+		void AddConsoleLine(const std::string& line, int priority);
 		
 	public:
 		vector<CommandDescription> commands;

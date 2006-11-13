@@ -292,10 +292,10 @@ void CResourceBar::MouseMove(int x, int y, int dx,int dy, int button)
 	}
 	
 	if(moveBox){
-		box.x1+=float(dx)/gu->screenx;
-		box.x2+=float(dx)/gu->screenx;
-		box.y1-=float(dy)/gu->screeny;
-		box.y2-=float(dy)/gu->screeny;
+		box.x1+=float(dx)/gu->viewSizeX;
+		box.x2+=float(dx)/gu->viewSizeX;
+		box.y1-=float(dy)/gu->viewSizeY;
+		box.y2-=float(dy)/gu->viewSizeY;
 		if (box.x1 < 0.0f) {
 			box.x1 = 0.0f;
 			box.x2 = 0.74f;

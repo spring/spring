@@ -131,8 +131,8 @@ public:
 	{ 
 	// ATI has GL_EXT_texture_rectangle, but that has no support for GLSL texture2DRect
 	// nVidia: Use RECT,  ati: use POT
-		width = gu->screenx;
-		height = gu->screeny;
+		width = gu->viewSizeX;
+		height = gu->viewSizeY;
 		if (GLEW_ARB_texture_rectangle) 
 			target = GL_TEXTURE_RECTANGLE_ARB;
 		else {
@@ -238,7 +238,7 @@ struct ShaderBuilder
 		if (buffers && !buffers->empty()) {
 			BufferTexture *bt = buffers->front();
 			GLint invScreenDim = glGetUniformLocationARB(nodeShader->program, "invScreenDim");
-			glUniform2fARB(invScreenDim, 1.0f/gu->screenx, 1.0f/gu->screeny);
+			glUniform2fARB(invScreenDim, 1.0f/gu->viewSizeX, 1.0f/gu->viewSizeY);
 		}
 
 		glUseProgramObjectARB(0);
@@ -564,7 +564,7 @@ void NodeGLSLShader::Cleanup()
 
 	if (renderBuffer) {
 		renderBuffer->framebuffer->deselect();
-		glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+		glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	}
 }
 
@@ -611,7 +611,7 @@ void GLSLShaderHandler::BeginTexturing()
 		glViewport(0, 0, buffers.front()->width, buffers.front()->height);
 		glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 		buffers.front()->framebuffer->deselect();
-		glViewport(gu->screenxPos, 0, gu->screenx, gu->screeny);
+		glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	}
 }
 
