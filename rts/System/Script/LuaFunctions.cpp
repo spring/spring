@@ -20,6 +20,9 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Map/ReadMap.h"
 #include "Game/SelectedUnits.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureDef.h"
 
 using namespace std;
 using namespace luabind;
@@ -82,6 +85,22 @@ namespace luafunctions
 		for (vector<CUnit*>::iterator i = x.begin(); i != x.end(); ++i)
 			o[count++] = new CObject_pointer<CUnit>(*i);
 		
+		return o;
+	}
+
+	object GetFeaturesAt(lua_State* L, const float3& pos, float radius)
+	{
+		vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
+	
+		object o = newtable(L);
+
+		int count = 1;
+		for (int a=0;a<ft.size();a++)
+		{
+			CFeature *f = ft[a];
+			o[count++] = new CObject_pointer<CFeature>(f);
+		}
+
 		return o;
 	}
 
