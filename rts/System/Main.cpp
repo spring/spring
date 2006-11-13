@@ -425,7 +425,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 	FSAA = MultisampleTest();
 
-	SDL_Surface *screen = SDL_SetVideoMode(screenWidth,screenHeight,0,sdlflags);
+	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, 0, sdlflags);
 	if (!screen) {
 		handleerror(NULL,"Could not set video mode","ERROR",MBF_OK|MBF_EXCL);
 		return false;
@@ -523,14 +523,12 @@ bool SpringApp::GetDisplayGeometry()
 	{
 		Display* display = info.info.x11.display;
 		Window   window  = info.info.x11.window;
-		XSync(display, False);
+
 		XWindowAttributes attrs;
-
-		XGetWindowAttributes(display, DefaultRootWindow(display), &attrs);
-		gu->screenSizeX = attrs.width;
-		gu->screenSizeY = attrs.height;
-
 		XGetWindowAttributes(display, window, &attrs);
+		const Screen* screen = attrs.screen;
+		gu->screenSizeX = WidthOfScreen(screen);
+		gu->screenSizeY = HeightOfScreen(screen);
 		gu->winSizeX = attrs.width;
 		gu->winSizeY = attrs.height;
 
@@ -559,13 +557,13 @@ bool SpringApp::GetDisplayGeometry()
 	RECT rect;
 	if (!GetWindowRect(info.window, &rect)) {
 		return false;
-	} else {
-		gu->winSizeX = rect.left - rect.right + 1;
-		gu->winSizeY = rect.bottom - rect.top + 1;
+	}
+	else {
+		gu->winSizeX = rect.right - rect.left;
+		gu->winSizeY = rect.bottom - rect.top;
 		gu->winPosX = rect.left;
 		gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
 	}
-	
 	return true;
 }
 #endif // _WIN32
@@ -672,8 +670,8 @@ bool SpringApp::ParseCmdLine()
 	else if (cmdline->result("fullscreen"))
 		fullscreen = true;
 
-	screenWidth = configHandler.GetInt("XResolution",XRES_DEFAULT);
-	screenHeight = configHandler.GetInt("YResolution",YRES_DEFAULT);
+	screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
+	screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
 
 	return true;
 }
