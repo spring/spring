@@ -292,6 +292,9 @@ bool CPreGame::Update()
 			}
 			delete f;
 
+			// always load springcontent.sdz
+			hpiHandler->AddArchive("base/springcontent.sdz", false);
+
 			LoadStartPicture();
 
 			game = new CGame(server, mapName, modName, infoConsole);
@@ -418,7 +421,7 @@ void CPreGame::SelectScript(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Using script " << s.c_str() << "\n";
-	if (pregame->server)
+	if (pregame->server && !gameSetup)
 		serverNet->SetScript(s);
 }
 
@@ -439,7 +442,7 @@ void CPreGame::SelectMap(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Map: " << s.c_str() << "\n";
-	if (pregame->server)
+	if (pregame->server && !gameSetup)
 		serverNet->SetMap(pregame->GetMapChecksum(), pregame->mapName);
 }
 
@@ -473,6 +476,7 @@ void CPreGame::ShowMapList()
 /** Called by the mod-selecting CglList. */
 void CPreGame::SelectMod(std::string s)
 {
+	std::string origName = s;
 	if (s == "Random mod") {
 		s = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
 	}
@@ -487,9 +491,9 @@ void CPreGame::SelectMod(std::string s)
 	pregame->modName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
-	logOutput << "Mod: " << s.c_str() << "\n";
-	if (pregame->server)
-		serverNet->SetMod(pregame->GetModChecksum(), pregame->modName);
+	logOutput << "Mod: \"" << origName.c_str() << "\" from " << s.c_str() << "\n";
+	if (pregame->server && !gameSetup)
+		serverNet->SetMod(pregame->GetModChecksum(), origName);
 }
 
 /** Create a CglList for selecting the mod. */
