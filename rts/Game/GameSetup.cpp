@@ -77,6 +77,7 @@ bool CGameSetup::Init(char* buf, int size)
 		return false;
 
 	mapname=file.SGetValueDef("","GAME\\mapname");
+	scriptName=file.SGetValueDef("Commanders","GAME\\scriptname");
 	baseMod=file.SGetValueDef(MOD_FILE,"GAME\\Gametype");
 	file.GetDef(hostip,"0","GAME\\HostIP");
 	file.GetDef(hostport,"0","GAME\\HostPort");

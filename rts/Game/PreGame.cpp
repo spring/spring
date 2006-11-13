@@ -69,7 +69,7 @@ CPreGame::CPreGame(bool server, const string& demo):
 
 	if(server){
 		if(gameSetup){
-			CScriptHandler::SelectScript("Commanders");
+			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectMap(gameSetup->mapname);
 			SelectMod(gameSetup->baseMod);
 			state = ALL_READY;
@@ -84,7 +84,7 @@ CPreGame::CPreGame(bool server, const string& demo):
 				handleerror(0,"Client couldn't connect","PreGame error",0);
 				exit(-1);
 			}
-			CScriptHandler::SelectScript("Commanders");
+			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectMap(gameSetup->mapname);
 			SelectMod(gameSetup->baseMod);
 			state = ALL_READY;

@@ -21,6 +21,7 @@ public:
 	int numPlayers;				//the expected amount of players
 	std::string mapname;
 	std::string baseMod;
+	std::string scriptName;
 
 	std::string hostip;
 	int hostport;
