@@ -556,7 +556,7 @@ bool SpringApp::GetDisplayGeometry()
 	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
 	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
 	
-	LPRECT rect;
+	RECT rect;
 	if (!GetWindowRect(info.window, &rect)) {
 		return false;
 	} else {
