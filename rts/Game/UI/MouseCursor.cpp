@@ -103,7 +103,7 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 			}
 			else {
 				ImageData image;
-				if (LoadImage(imageName, image)) {
+				if (LoadCursorImage(imageName, image)) {
 					imageIndexMap[imageName] = images.size();
 					images.push_back(image);
 					FrameData frame(image, length);
@@ -156,7 +156,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%d.%s",
 		         name.c_str(), frames.size(), ext);
 		ImageData image;
-		if (!LoadImage(namebuf, image)) {
+		if (!LoadCursorImage(namebuf, image)) {
 			break;
 		}
 		images.push_back(image);
@@ -168,7 +168,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 }
 
 
-bool CMouseCursor::LoadImage(const string& name, ImageData& image)
+bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 {
 	CFileHandler* f = new CFileHandler(name);
 	if (!f->FileExists()) {
@@ -334,4 +334,3 @@ void CMouseCursor::BindTexture()
 	const FrameData& frame = frames[currentFrame];
 	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
 }
-
