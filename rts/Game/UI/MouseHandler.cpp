@@ -68,8 +68,10 @@ CMouseHandler::CMouseHandler()
 	
 	cursorScale = 1.0f;
 
-	cursorFileMap["cursornormal"] =    // default, can not be NULL
-		new CMouseCursor("cursornormal", CMouseCursor::TopLeft);
+	cursorFileMap["cursornormal"] = // must always be loaded
+		CMouseCursor::New("cursornormal", CMouseCursor::TopLeft);
+
+	LoadCursorFile("cursornormal",     CMouseCursor::TopLeft);
 	LoadCursorFile("cursorareaattack", CMouseCursor::Center);
 	LoadCursorFile("cursorattack",     CMouseCursor::Center);
 	LoadCursorFile("cursorbuildbad",   CMouseCursor::Center);
@@ -93,7 +95,7 @@ CMouseHandler::CMouseHandler()
 	LoadCursorFile("cursorunload",     CMouseCursor::Center);	
 	LoadCursorFile("cursorwait",       CMouseCursor::Center);
 
-	cursorCommandMap[""] = cursorFileMap["cursornormal"];	
+	AttachCursorCommand("",             "cursornormal");
 	AttachCursorCommand("Area attack",  "cursorareaattack", "cursorattack");
 	AttachCursorCommand("Attack",       "cursorattack");
 	AttachCursorCommand("BuildBad",     "cursorbuildbad");
@@ -865,16 +867,25 @@ void CMouseHandler::DrawCursor(void)
 	} else {
 		mc = cursorFileMap["cursornormal"];
 	}
+	
+	if (mc == NULL) {
+		return;
+	}
 
 	if (cursorScale >= 0.0f) {
 		mc->Draw(lastx, lasty, cursorScale);
 	}
 	else {
 		CMouseCursor* nc = cursorFileMap["cursornormal"];
-		nc->Draw(lastx, lasty, 1.0f);
-		if (mc != nc) {
-			mc->Draw(lastx + nc->GetMaxSizeX(),
-			         lasty + nc->GetMaxSizeY(), -cursorScale);
+		if (nc == NULL) {
+			mc->Draw(lastx, lasty, -cursorScale);
+		}
+		else {
+			nc->Draw(lastx, lasty, 1.0f);
+			if (mc != nc) {
+				mc->Draw(lastx + nc->GetMaxSizeX(),
+								 lasty + nc->GetMaxSizeY(), -cursorScale);
+			}
 		}
 	}
 }
