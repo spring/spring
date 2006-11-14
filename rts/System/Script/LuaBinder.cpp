@@ -268,7 +268,8 @@ CLuaBinder::CLuaBinder(void)
 
 		namespace_("features")
 		[
-			def("GetAt", &GetFeaturesAt, raw(_1))
+			def("GetAt", &GetFeaturesAt, raw(_1)),
+			def("Load", &FeatureLoaderLoadFeature, adopt(result))
 		],
 
 		namespace_("map")
