@@ -25,7 +25,7 @@ class CKeyBindings
 	public:
 		CKeyBindings();
 		~CKeyBindings();
-		
+
 		bool Load(const string& filename);
 		bool Save(const string& filename) const;
 		void Print() const;
@@ -40,20 +40,19 @@ class CKeyBindings
 		};
 		typedef vector<Action> ActionList;
 		typedef vector<string> HotkeyList;
-		
+
 		const ActionList& GetActionList(const CKeySet& ks) const;
 		const HotkeyList& GetHotkeys(const string& action) const;
-		
+
 		bool Command(const string& line);
-		
+
 		int GetFakeMetaKey() const { return fakeMetaKey; }
-		
+
 		int GetDebug() const { return debug; }
-		void SetDebug(int dbg) { debug = dbg; }
 
 	public:		
 		static const char NamedKeySetChar = '&';
-		
+
 	protected:
 		void LoadDefaults();
 		void Sanitize();
@@ -67,7 +66,7 @@ class CKeyBindings
 		bool AddKeySymbol(const string& keysym, const string& code);
 		bool AddNamedKeySet(const string& name, const string& keyset);
 		bool ParseTypeBind(CFileHandler& file, const string& line);
-		
+
 		bool ParseKeySet(const string& keystr, CKeySet& ks) const;
 		bool RemoveCommandFromList(ActionList& al, const string& command);
 
@@ -79,7 +78,7 @@ class CKeyBindings
 
 		typedef map<string, HotkeyList> ActionMap; // action to keyset
 		ActionMap hotkeys;
-		
+
 		typedef map<string, CKeySet> NamedKeySetMap; // user defined keysets
 		NamedKeySetMap namedKeySets;
 
@@ -90,14 +89,14 @@ class CKeyBindings
 			vector<string> chords; // enumerated keyset chords
 		};
 		vector<BuildTypeBinding> typeBindings;
-		
+
 		// commands that use both Up and Down key presses		
 		set<string> statefulCommands;
 
 		int debug;
 		int fakeMetaKey;
 		bool userCommand;
-		
+
 		CKeyAutoBinder* autoBinder;
 };
 
