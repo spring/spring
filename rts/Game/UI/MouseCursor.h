@@ -44,7 +44,7 @@ class CMouseCursor {
 
 	protected:	
 		CMouseCursor(const string &name, HotSpot hs);
-		bool LoadImage(const string& name, struct ImageData& image);
+		bool LoadCursorImage(const string& name, struct ImageData& image);
 		bool BuildFromSpecFile(const string& name);
 		bool BuildFromFileNames(const string& name, int lastFrame);
 		CBitmap* getAlignedBitmap(const CBitmap &orig);
