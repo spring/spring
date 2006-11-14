@@ -1902,7 +1902,7 @@ static int GetUnitStates(lua_State* L)
 	lua_pushstring(L, "movestate");
 	lua_pushnumber(L, unit->moveState);
 	lua_rawset(L, -3);
-	lua_pushstring(L, "repeat");
+	lua_pushstring(L, "repeating");
 	lua_pushboolean(L, unit->commandAI->repeatOrders);
 	lua_rawset(L, -3);
 	lua_pushstring(L, "cloak");
