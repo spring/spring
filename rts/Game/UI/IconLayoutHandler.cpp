@@ -39,7 +39,9 @@ extern "C" {
 #include "System/LogOutput.h"
 #include "System/Net.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/ConfigHandler.h"
+#include "System/Platform/FileSystem.h"
 #include "System/Sound.h"
 
 extern Uint8 *keys;
@@ -52,6 +54,8 @@ extern GLfloat LightAmbientLand[];
 // LUA C functions  (placed in the "Spring" table)
 
 static int LoadTextVFS(lua_State* L);
+static int GetDirListVFS(lua_State* L);
+static int GetDirList(lua_State* L);
 
 static int GetConfigInt(lua_State* L);
 static int SetConfigInt(lua_State* L);
@@ -91,6 +95,7 @@ static int GetRealBuildQueue(lua_State* L);
 static int GetAllyteamList(lua_State* L);
 static int GetTeamInfo(lua_State* L);
 static int GetTeamResources(lua_State* L);
+static int GetTeamUnitStats(lua_State* L);
 static int SetShareLevel(lua_State* L);
 
 static int GetPlayerInfo(lua_State* L);
@@ -101,6 +106,21 @@ static int ArePlayersAllied(lua_State* L);
 
 static int GetCameraState(lua_State* L);
 static int SetCameraState(lua_State* L);
+static int GetCameraDir(lua_State* L);
+static int GetCameraPos(lua_State* L);
+static int GetCameraFOV(lua_State* L);
+
+static int MapToScreenCoords(lua_State* L);
+static int ScreenToMapCoords(lua_State* L);
+
+static int GetMapAtCursor(lua_State* L);
+static int GetUnitAtCursor(lua_State* L);
+static int GetFeatureAtCursor(lua_State* L);
+
+static int GetUnitsInVolume(lua_State* L);
+static int GetAllyUnitsInVolume(lua_State* L);
+static int GetEnemyUnitsInVolume(lua_State* L);
+static int GetFeaturesInVolume(lua_State* L);
 
 static int GetMapHeight(lua_State* L);
 static int TestBuildOrder(lua_State* L);
@@ -110,24 +130,26 @@ static int AddMapIcon(lua_State* L);
 static int AddMapText(lua_State* L);
 static int AddMapUnit(lua_State* L);
 
+static int PlaySoundFile(lua_State* L);
+
 static int DrawScreenGeometry(lua_State* L);
 static int DrawState(lua_State* L);
 static int DrawColor(lua_State* L);
-static int DrawShape(lua_State* L);
-static int DrawText(lua_State* L);
-static int DrawUnitDef(lua_State* L);
+
 static int DrawTranslate(lua_State* L);
 static int DrawScale(lua_State* L);
 static int DrawRotate(lua_State* L);
 static int DrawPushMatrix(lua_State* L);
 static int DrawPopMatrix(lua_State* L);
+
+static int DrawShape(lua_State* L);
+static int DrawUnitDef(lua_State* L);
+static int DrawText(lua_State* L);
+static int GetTextWidth(lua_State* L);
+
 static int DrawListCreate(lua_State* L);
 static int DrawListRun(lua_State* L);
 static int DrawListDelete(lua_State* L);
-
-static int GetTextWidth(lua_State* L);
-
-static int PlaySoundFile(lua_State* L);
 
 
 /******************************************************************************/
@@ -221,6 +243,8 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	lua_rawset(L, -3)
 	
 	REGISTER_LUA_CFUNC(LoadTextVFS);
+	REGISTER_LUA_CFUNC(GetDirListVFS);
+	REGISTER_LUA_CFUNC(GetDirList);
 	REGISTER_LUA_CFUNC(SendCommands);
 	REGISTER_LUA_CFUNC(GetFPS);
 	REGISTER_LUA_CFUNC(GetGameSeconds);
@@ -251,6 +275,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetAllyteamList);
 	REGISTER_LUA_CFUNC(GetTeamInfo);
 	REGISTER_LUA_CFUNC(GetTeamResources);
+	REGISTER_LUA_CFUNC(GetTeamUnitStats);
 	REGISTER_LUA_CFUNC(SetShareLevel);
 	REGISTER_LUA_CFUNC(GetPlayerInfo);
 	REGISTER_LUA_CFUNC(GetMyPlayerID);
@@ -265,22 +290,31 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(AddMapIcon);
 	REGISTER_LUA_CFUNC(AddMapText);
 	REGISTER_LUA_CFUNC(AddMapUnit);
-	REGISTER_LUA_CFUNC(DrawScreenGeometry);
-	REGISTER_LUA_CFUNC(DrawState);
-	REGISTER_LUA_CFUNC(DrawColor);
-	REGISTER_LUA_CFUNC(DrawShape);
-	REGISTER_LUA_CFUNC(DrawText);
-	REGISTER_LUA_CFUNC(DrawUnitDef);
-	REGISTER_LUA_CFUNC(DrawListCreate);
-	REGISTER_LUA_CFUNC(DrawListRun);
-	REGISTER_LUA_CFUNC(DrawListDelete);
-	REGISTER_LUA_CFUNC(DrawTranslate);
-	REGISTER_LUA_CFUNC(DrawScale);
-	REGISTER_LUA_CFUNC(DrawRotate);
-	REGISTER_LUA_CFUNC(DrawPushMatrix);
-	REGISTER_LUA_CFUNC(DrawPopMatrix);
-	REGISTER_LUA_CFUNC(GetTextWidth);
 	REGISTER_LUA_CFUNC(PlaySoundFile);
+
+#define REGISTER_LUA_DRAW_CFUNC(x) \
+	lua_pushstring(L, #x);           \
+	lua_pushcfunction(L, Draw ## x); \
+	lua_rawset(L, -3)
+	
+	lua_pushstring(L, "Draw");
+	lua_newtable(L);
+	REGISTER_LUA_DRAW_CFUNC(ScreenGeometry);
+	REGISTER_LUA_DRAW_CFUNC(State);
+	REGISTER_LUA_DRAW_CFUNC(Color);
+	REGISTER_LUA_DRAW_CFUNC(Shape);
+	REGISTER_LUA_DRAW_CFUNC(Text);
+	REGISTER_LUA_DRAW_CFUNC(UnitDef);
+	REGISTER_LUA_DRAW_CFUNC(ListCreate);
+	REGISTER_LUA_DRAW_CFUNC(ListRun);
+	REGISTER_LUA_DRAW_CFUNC(ListDelete);
+	REGISTER_LUA_DRAW_CFUNC(Translate);
+	REGISTER_LUA_DRAW_CFUNC(Scale);
+	REGISTER_LUA_DRAW_CFUNC(Rotate);
+	REGISTER_LUA_DRAW_CFUNC(PushMatrix);
+	REGISTER_LUA_DRAW_CFUNC(PopMatrix);
+	REGISTER_LUA_CFUNC(GetTextWidth);
+	lua_rawset(L, -3); // add the Draw table
 
 	lua_setglobal(L, "Spring");
 	
@@ -1348,7 +1382,7 @@ static int LoadTextVFS(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isstring(L, -1)) {
-		lua_pushstring(L, "Incorrect arguments to LoadTextVFS(filename)");
+		lua_pushstring(L, "Incorrect arguments to LoadTextVFS(\"filename\")");
 		lua_error(L);
 	}
 	const string& filename = lua_tostring(L, -1);
@@ -1364,6 +1398,86 @@ static int LoadTextVFS(lua_State* L)
 		buf += (char)c;
 	}
 	lua_pushstring(L, buf.c_str());
+
+	return 1;
+}
+
+
+static int GetDirListVFS(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetDirListVFS(\"dir\")");
+		lua_error(L);
+	}
+	const string dir = lua_tostring(L, 1);
+	vector<string> filenames = hpiHandler->GetFilesInDir(dir);
+
+	lua_newtable(L);
+	for (int i = 0; i < filenames.size(); i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushstring(L, filenames[i].c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, filenames.size());
+	lua_rawset(L, -3);
+
+	return 1;
+}
+
+
+static int GetDirList(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1) ||
+	    ((args >= 2) && !lua_isstring(L, 2)) ||
+	    ((args >= 3) && !lua_isstring(L, 3))) {
+		lua_pushstring(L, "Incorrect arguments to "
+			"GetDirList(\"dir\", [\"pattern\" [,\"opts\"]])");
+		lua_error(L);
+	}
+
+	// keep searches within the Spring directory
+	const string dir = lua_tostring(L, 1);
+	if ((dir[0] == '/') || (dir[0] == '\\') ||
+	    (strstr(dir.c_str(), "..") != NULL) ||
+	    ((dir.size() > 0) && (dir[1] == ':'))) {
+		const string errmsg = "Invalid GetDirList() access: " + dir;
+		lua_pushstring(L, errmsg.c_str());
+		lua_error(L);
+	}
+
+	string pat = "*";
+	if (args >= 2) {
+		pat = lua_tostring(L, 2);
+		if (pat.empty()) {
+			pat = "*"; // the FindFiles() croaks on empty strings
+		}
+	}
+
+	int opts = 0;
+	if ((args >= 3) && lua_isstring(L, 3)) {
+		const string optstr = lua_tostring(L, 3);
+		if (strstr(optstr.c_str(), "r") != NULL) {
+			opts |= FileSystem::RECURSE;
+		}
+		if (strstr(optstr.c_str(), "d") != NULL) {
+			opts |= FileSystem::INCLUDE_DIRS;
+		}
+	}
+
+	vector<string> filenames = filesystem.FindFiles(dir, pat, opts);
+
+	lua_newtable(L);
+	for (int i = 0; i < filenames.size(); i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushstring(L, filenames[i].c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, filenames.size());
+	lua_rawset(L, -3);
 
 	return 1;
 }
@@ -2153,10 +2267,10 @@ static int GetTeamInfo(lua_State* L)
 	lua_pushboolean(L, team->isDead);
 	lua_pushboolean(L, isAiTeam);
 	lua_pushstring(L, team->side.c_str());
-	lua_pushnumber(L, team->color[0]);
-	lua_pushnumber(L, team->color[1]);
-	lua_pushnumber(L, team->color[2]);
-	lua_pushnumber(L, team->color[3]);
+	lua_pushnumber(L, (float)team->color[0] / 255.0f);
+	lua_pushnumber(L, (float)team->color[1] / 255.0f);
+	lua_pushnumber(L, (float)team->color[2] / 255.0f);
+	lua_pushnumber(L, (float)team->color[3] / 255.0f);
 	
 	return 10;
 }
@@ -2205,6 +2319,34 @@ static int GetTeamResources(lua_State* L)
 	}
 	
 	return 0;
+}
+	
+
+static int GetTeamUnitStats(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetTeamUnitStats(teamID)");
+		lua_error(L);
+	}
+
+	const int teamID = (int)lua_tonumber(L, 1);
+	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+		return 0;
+	}
+	const CTeam* team = gs->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+	
+	lua_pushnumber(L, team->currentStats.unitsKilled);
+	lua_pushnumber(L, team->currentStats.unitsDied);
+	lua_pushnumber(L, team->currentStats.unitsCaptured);
+	lua_pushnumber(L, team->currentStats.unitsOutCaptured);
+	lua_pushnumber(L, team->currentStats.unitsReceived);
+	lua_pushnumber(L, team->currentStats.unitsSent);
+	
+	return 6;
 }
 	
 
@@ -2643,6 +2785,32 @@ static int SetShareLevel(lua_State* L)
 
 /******************************************************************************/
 
+static int PlaySoundFile(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L,
+			"Incorrect arguments to PlaySoundFile(soundname [,volume])");
+		lua_error(L);
+	}
+	const string soundFile = lua_tostring(L, 1);
+	const unsigned int soundID = sound->GetWaveId(soundFile);
+	if (soundID > 0) {
+		float volume = 1.0f;
+		if (args >= 2) {
+			volume = (float)lua_tonumber(L, 2);
+		}
+		sound->PlaySample(soundID, volume);
+		lua_pushboolean(L, 1);
+	} else {
+		lua_pushboolean(L, 0);
+	}
+	return 1;
+}
+
+
+/******************************************************************************/
+
 static int AddMapIcon(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -2713,7 +2881,7 @@ static int DrawText(lua_State* L)
 	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
 		lua_pushstring(L,
 			"Incorrect arguments to "
-			"DrawText(msg, x, y [,size] [,face] [,color]");
+			"DrawText(msg, x, y [,size] [,\"options\"]");
 		lua_error(L);
 	}
 	const string text = lua_tostring(L, 1);
@@ -2771,7 +2939,7 @@ static int GetTextWidth(lua_State* L)
 		lua_error(L);
 	}
 	const string text = lua_tostring(L, 1);
-	const float scale = 1.0f / font->CalcTextHeight(text.c_str());
+	const float scale = font->CalcTextHeight(text.c_str());
 	const float width = scale * font->CalcTextWidth(text.c_str());
 	lua_pushnumber(L, width);
 	return 1;
@@ -2832,7 +3000,7 @@ static int ParseFloatArray(lua_State* L, float* array, int size)
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -1)) {
-			logOutput.Print("DrawShape: bad array value\n");
+			logOutput.Print("LUA: error parsing numeric array\n");
 			lua_pop(L, 2); // pop the value and the key
 			return -1;
 		}
@@ -3467,32 +3635,6 @@ static int DrawListDelete(lua_State* L)
 		displayLists[listIndex - 1] = 0;
 	}
 	return 0;
-}
-
-
-/******************************************************************************/
-
-static int PlaySoundFile(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to PlaySoundFile(soundname [,volume])");
-		lua_error(L);
-	}
-	const string soundFile = lua_tostring(L, 1);
-	const unsigned int soundID = sound->GetWaveId(soundFile);
-	if (soundID > 0) {
-		float volume = 1.0f;
-		if (args >= 2) {
-			volume = (float)lua_tonumber(L, 2);
-		}
-		sound->PlaySample(soundID, volume);
-		lua_pushboolean(L, 1);
-	} else {
-		lua_pushboolean(L, 0);
-	}
-	return 1;
 }
 
 
