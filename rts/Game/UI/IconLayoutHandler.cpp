@@ -1434,7 +1434,7 @@ static int GetDirList(lua_State* L)
 	    ((args >= 2) && !lua_isstring(L, 2)) ||
 	    ((args >= 3) && !lua_isstring(L, 3))) {
 		lua_pushstring(L, "Incorrect arguments to "
-			"GetDirList(\"dir\", [\"pattern\" [,\"opts\"]])");
+			"GetDirList(\"dir\" [,\"pattern\" [,\"opts\"]])");
 		lua_error(L);
 	}
 
@@ -1452,12 +1452,12 @@ static int GetDirList(lua_State* L)
 	if (args >= 2) {
 		pat = lua_tostring(L, 2);
 		if (pat.empty()) {
-			pat = "*"; // the FindFiles() croaks on empty strings
+			pat = "*"; // FindFiles() croaks on empty strings
 		}
 	}
 
 	int opts = 0;
-	if ((args >= 3) && lua_isstring(L, 3)) {
+	if (args >= 3) {
 		const string optstr = lua_tostring(L, 3);
 		if (strstr(optstr.c_str(), "r") != NULL) {
 			opts |= FileSystem::RECURSE;
