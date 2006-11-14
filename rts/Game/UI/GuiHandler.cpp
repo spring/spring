@@ -886,10 +886,12 @@ void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 
 	selectedUnits.GiveCommand(cmd, fromUser);
 
-	if (gatherMode && (cmd.id == CMD_MOVE) || (cmd.id == CMD_FIGHT)) {
-		Command gatherCmd;
-		gatherCmd.id = CMD_GATHERWAIT;
-		GiveCommand(gatherCmd, false);
+	if (gatherMode) {
+		if ((cmd.id == CMD_MOVE) || (cmd.id == CMD_FIGHT)) {
+			Command gatherCmd;
+			gatherCmd.id = CMD_GATHERWAIT;
+			GiveCommand(gatherCmd, false);
+		}
 	}
 }
 
@@ -3856,7 +3858,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 /******************************************************************************/
 
 typedef void (*DrawShapeFunc)(const void* data);
-static void DrawSurface(DrawShapeFunc drawShapeFunc, const void* data);
+static void DrawVolume(DrawShapeFunc drawShapeFunc, const void* data);
 
 
 /******************************************************************************/
@@ -3940,11 +3942,11 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 	if (!invColorSelect) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-		DrawSurface(DrawBoxShape, &boxData);
+		DrawVolume(DrawBoxShape, &boxData);
 	} else {
 		glEnable(GL_COLOR_LOGIC_OP);
 		glLogicOp(GL_INVERT);
-		DrawSurface(DrawBoxShape, &boxData);
+		DrawVolume(DrawBoxShape, &boxData);
 		glDisable(GL_COLOR_LOGIC_OP);
 	}
 
@@ -4107,7 +4109,7 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glColor4f(color[0], color[1], color[2], 0.25f);
 	
-	DrawSurface(DrawCylinderShape, &cylData);
+	DrawVolume(DrawCylinderShape, &cylData);
 
 	// draw the center line
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -4126,7 +4128,7 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 
 /******************************************************************************/
 
-static void DrawSurface(DrawShapeFunc drawShapeFunc, const void* data)
+static void DrawVolume(DrawShapeFunc drawShapeFunc, const void* data)
 {
 	glDepthMask(GL_FALSE);
 	glEnable(GL_DEPTH_TEST);
