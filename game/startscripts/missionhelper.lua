@@ -3,7 +3,7 @@
 class 'MissionHelper' (Script)
 
 -- Pass the script name to be displayed to the parent constructor
-function MissionHelper:__init() super('LUA missionbuilder')
+function MissionHelper:__init() super('LUA missionbuilder2')
     self.state = 0
     self.team = 0
     
@@ -15,6 +15,7 @@ function MissionHelper:__init() super('LUA missionbuilder')
     self.commands[".help"] = self.Help
     self.commands[".savesel"] = self.SaveSelected
     self.commands[".savelist"] = self.SaveList
+    self.commands[".savefeatures"] = self.SaveFeatures
 end
 
 -- This function is executed every simulated frame (30 times/sec)
@@ -61,7 +62,7 @@ function MissionHelper:Help(param)
               "the created units will belong to that team.")
     else
         print("These commands are available:")
-        print(".help .savesel [team] .savelist [team]")
+        print(".help .savesel [team] .savelist [team] .savefeatures")
         print("Type .help <command> for more info")
     end
 end
@@ -72,6 +73,27 @@ end
 
 function MissionHelper:SaveList(param)
     self:Save(param, true)
+end
+
+function MissionHelper:SaveFeatures(param)
+    print("--- cut here ---")
+    local list = features.GetAt( float3( 0, 0, 0 ), 10000 )
+    prefix = ""
+    suffix = ""
+    for i = 1, table.getn(list) do
+       local def = list[i].definition
+       if string.sub(def.name, 1, 4 ) ~= "Tree" then
+           local pos = string.format("%.1f, %.1f, %.1f", list[i].pos.x,
+                                      list[i].pos.y, list[i].pos.z)
+            if tab and i == table.getn(list) then
+                suffix = ""
+            end
+    
+            print(prefix .. "features.Load(\"" .. def.name .. "\", float3(" ..
+                  pos .. "), 1 )" .. suffix)
+        end
+    end
+    print("--- cut here ---")
 end
 
 function MissionHelper:Save(param, tab)
