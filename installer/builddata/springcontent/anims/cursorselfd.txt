@@ -1,0 +1,5 @@
+
+frame  anims/cursorselfd_0.png  0.100
+frame  anims/cursorselfd_1.png  0.100
+frame  anims/cursorselfd_2.png  0.100
+

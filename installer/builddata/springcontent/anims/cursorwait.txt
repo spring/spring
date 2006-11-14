@@ -1,0 +1,8 @@
+
+frame  anims/cursorwait_0.png  0.100
+frame  anims/cursorwait_1.png  0.100
+frame  anims/cursorwait_2.png  0.100
+frame  anims/cursorwait_3.png  0.100
+frame  anims/cursorwait_2.png  0.100
+frame  anims/cursorwait_1.png  0.100
+
