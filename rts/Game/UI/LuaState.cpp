@@ -16,6 +16,7 @@ extern "C" {
 #include "KeyBindings.h"
 #include "SimpleParser.h"
 #include "Game/GameSetup.h"
+#include "Game/GameVersion.h"
 #include "Game/Team.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CategoryHandler.h"
@@ -162,6 +163,7 @@ bool CLuaState::LoadGameInfo()
 
 	code += "Game = {}" + endlStr;
 
+	code += "Game.version = "   + SafeString(VERSION_STRING) + endlStr;
 	code += "Game.commEnds = "  + BoolToString(!!gs->gameMode) + endlStr;
 	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
 	code += "Game.gravity = "   + FloatToString(gravity) + endlStr;

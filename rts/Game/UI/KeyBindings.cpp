@@ -541,7 +541,14 @@ bool CKeyBindings::Command(const string& line)
 	}
 	const string command = StringToLower(words[0]);
 	
-	if ((command == "fakemeta") && (words.size() > 1)) {
+	if (command == "keydebug") {
+		if (words.size() == 1) {
+			debug = (debug <= 0) ? 1 : 0;
+		} else if (words.size() >= 2) {
+			debug = atoi(words[1].c_str());
+		}
+	}
+	else if ((command == "fakemeta") && (words.size() > 1)) {
 		if (!SetFakeMetaKey(words[1])) { return false; }
 	}
 	else if ((command == "keyset") && (words.size() > 2)) {

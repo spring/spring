@@ -1142,6 +1142,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	         (cmd == "unbindall")    ||
 	         (cmd == "unbindkeyset") ||
 	         (cmd == "unbindaction") ||
+	         (cmd == "keydebug")     ||
 	         (cmd == "fakemeta")) {
 		keyBindings->Command(action.rawline);
 	}
@@ -1164,13 +1165,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "keycodes") {
 		keyCodes->PrintCodeToName();
-	}
-	else if (cmd == "keydebug") {
-		if (!action.extra.empty()) {
-			keyBindings->SetDebug(atoi(action.extra.c_str()));
-		} else {
-			keyBindings->SetDebug((keyBindings->GetDebug() > 0) ? 0 : 1);
-		}
 	}
 	else if (cmd == "clock") {
 		showClock = !showClock;
