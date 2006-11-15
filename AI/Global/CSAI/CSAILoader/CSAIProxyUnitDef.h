@@ -31,7 +31,10 @@ using namespace System::Runtime::InteropServices;
 
 #include "Sim/Units/UnitDef.h"
 
-#include "MoveDataProxy.h"
+#include "CSAIProxyMoveData.h"
+
+#include "AbicUnitDefWrapper.h"
+#include "AbicMoveDataWrapper.h"
 
 // This is a managed class that we can use to pass unitdefs to C#
 // Since unitdefs are very large, and often passed in arrays, we dont copy by value
@@ -48,34 +51,38 @@ using namespace System::Runtime::InteropServices;
 __gc class UnitDefForCSharp : public CSharpAI::IUnitDef
 {    
 public:
-    const ::UnitDef *actualunitdef;
+    AbicUnitDefWrapper *self;
 
-    UnitDefForCSharp( const ::UnitDef *actualunitdef )
+    UnitDefForCSharp( const AbicUnitDefWrapper *actualunitdef )
     {
-        this->actualunitdef = actualunitdef;
+        this->self = ( AbicUnitDefWrapper * )actualunitdef;
     }
     
-    CSharpAI::BuildOption *get_buildOptions()[]
-    {
-        ArrayList *buildoptionarraylist = new ArrayList();
-        for(map<int, string>::const_iterator j = actualunitdef->buildOptions.begin(); j != actualunitdef->buildOptions.end(); j++)
-        {
-            CSharpAI::BuildOption *buildoption = new CSharpAI::BuildOption( j->first, new System::String( j->second.c_str() ) );
-            buildoptionarraylist->Add( buildoption );
-		}
-        
-        return dynamic_cast< CSharpAI::BuildOption*[] >( buildoptionarraylist->ToArray( __typeof( CSharpAI::BuildOption ) ) );
-    }
+    // please use GetBuildOption( const UnitDef *self, int index ); // assumes map is really a vector where the int is a contiguous index starting from 1
+    //CSharpAI::BuildOption *get_buildOptions()[]
+    //{
+      //  ArrayList *buildoptionarraylist = new ArrayList();
+        //for(map<int, string>::const_iterator j = actualunitdef->buildOptions.begin(); j != actualunitdef->buildOptions.end(); j++)
+        //{
+          //  CSharpAI::BuildOption *buildoption = new CSharpAI::BuildOption( j->first, new System::String( j->second.c_str() ) );
+            //buildoptionarraylist->Add( buildoption );
+		//}
+       // 
+        //return dynamic_cast< CSharpAI::BuildOption*[] >( buildoptionarraylist->ToArray( __typeof( CSharpAI::BuildOption ) ) );
+    //}
     
     CSharpAI::IMoveData *get_movedata()
     {
-        if( actualunitdef->movedata != 0 )
+        if( self->get_movedata() != 0 )
         {
-            return new MoveDataProxy( actualunitdef->movedata );
+            return new MoveDataProxy( self->get_movedata() ); 
         }
         return 0;
     }
     
+    #include "CSAIProxyIUnitDef_generated.h"
+    
+    /*
     // Following is auto-generated:
    System::String *get_name(){ return new System::String( actualunitdef->name.c_str() ); }
    System::String *get_humanName(){ return new System::String( actualunitdef->humanName.c_str() ); }
@@ -227,6 +234,7 @@ public:
    double get_maxFuel(){ return actualunitdef->maxFuel; }
    double get_refuelTime(){ return actualunitdef->refuelTime; }
    double get_minAirBasePower(){ return actualunitdef->minAirBasePower; }
+   */
 };
 
 #endif

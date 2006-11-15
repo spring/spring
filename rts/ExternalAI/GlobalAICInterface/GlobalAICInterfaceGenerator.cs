@@ -315,7 +315,7 @@ class GenerateCode
     }
     
     string deffilename;
-    int nextdefnum;
+    //int nextdefnum;
     
     StreamWriter deffile;
     
@@ -333,8 +333,9 @@ class GenerateCode
         deffile.WriteLine("EXPORTS");
         
         // Parameters: typename in CSAIInterfaces, native Spring typename, methods to ignore
-        GenerateFor( typeof( IAICallback ), "IAICallback", new string[]{"UnitIsBusy", "IsGamePaused" } );
-        GenerateFor( typeof( IUnitDef ), "UnitDef", new string[]{} );
+        GenerateFor( typeof( IAICallback ), "IAICallback", new string[]{
+            "UnitIsBusy", "IsGamePaused","GetUnitDefByTypeId" } );
+        GenerateFor( typeof( IUnitDef ), "UnitDef", new string[]{"GetNumBuildOptions","GetBuildOption"} );
         GenerateFor( typeof( IMoveData ), "MoveData", new string[]{} );
         GenerateFor( typeof( IFeatureDef ), "FeatureDef", new string[]{} );
             

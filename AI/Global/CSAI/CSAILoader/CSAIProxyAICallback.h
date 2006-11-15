@@ -32,25 +32,29 @@
 
 #using <mscorlib.dll>
 #include <vcclr.h>
-using namespace System;
-using namespace System::Runtime::InteropServices;    
+
+// Need to not add the usings, otherwise there are conflicts with platform SDK global variables
+//using namespace System;
+//using namespace System::Runtime::InteropServices;    
     
 #include "ExternalAI/IAICallback.h"
 #include "ExternalAI/AICallback.h"
     
-#include "UnitDefProxy.h"
-#include "FeatureDefProxy.h"
+#include "CSAIProxyUnitDef.h"
+#include "CSAIProxyFeatureDef.h"
+
+#include "AbicAICallbackWrapper.h"
 
 void WriteLine( System::String *Message );
 
 __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
 {
-    ::IAICallback *callbacktorts;
+    AbicAICallbackWrapper *self;
     
     public:
-    AICallbackToGiveToCS( ::IAICallback *callbacktorts )
+    AICallbackToGiveToCS( const AbicAICallbackWrapper *callbacktorts )
     {
-        this->callbacktorts = callbacktorts;
+        this->self = ( AbicAICallbackWrapper * )callbacktorts;
     }
 
     void CSFloat3ToCppFloat3( float3 &cppfloat3, CSharpAI::Float3 *csfloat3 )
@@ -87,13 +91,23 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     void SendTextMsg( System::String* text, int priority )
     {
         char* messageansi = (char*)(void*)Marshal::StringToHGlobalAnsi(text);
-        callbacktorts->SendTextMsg( messageansi, priority );
+        self->SendTextMsg( messageansi, priority );
         Marshal::FreeHGlobal(messageansi);
     }    
+    
+    CSharpAI::IUnitDef* GetUnitDefByTypeId( int unittypeid )
+    {
+        const AbicUnitDefWrapper *unitdef = self->GetUnitDefByTypeId( unittypeid );
+        if( unitdef != 0 )
+        {
+            return new UnitDefForCSharp( unitdef );
+        }
+        return 0;
+    }
 
     CSharpAI::IUnitDef* GetUnitDef(int unitid)
     {
-        const ::UnitDef *unitdef = callbacktorts->GetUnitDef( unitid );
+        const AbicUnitDefWrapper *unitdef = self->GetUnitDef( unitid );
         if( unitdef != 0 )
         {
             return new UnitDefForCSharp( unitdef );
@@ -101,16 +115,17 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         return 0;
     }
     
+    /*
     void AddMapPoint( CSharpAI::Float3 *pos, System::String *label )
     {
         AIHCAddMapPoint aihcaddmappoint;
         CSFloat3ToCppFloat3( aihcaddmappoint.pos, pos );
         char* labelansi = (char*)(void*)Marshal::StringToHGlobalAnsi(label);
         sprintf( aihcaddmappoint.label, labelansi );
-        callbacktorts->HandleCommand( AIHCAddMapPointId, &aihcaddmappoint );
+        self->HandleCommand( AIHCAddMapPointId, &aihcaddmappoint );
         Marshal::FreeHGlobal(labelansi);        
     }
-    
+    */
     int GiveOrder( int unit, CSharpAI::Command *command )
     {
         ::Command *commandtorts = new ::Command();
@@ -120,14 +135,15 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         {
             commandtorts->params[ i ] = command->parameters[ i ];
         }
-        return callbacktorts->GiveOrder( unit, commandtorts );
+        return self->GiveOrder( unit, commandtorts );
     }
     
+    /*
     CSharpAI::IUnitDef *GetUnitDefList() []
     {
-        int numOfUnits = callbacktorts->GetNumUnitDefs();    
+        int numOfUnits = self->GetNumUnitDefs();    
         const UnitDef **unitList = new const UnitDef*[numOfUnits];
-        callbacktorts->GetUnitDefList(unitList);
+        self->GetUnitDefList(unitList);
         UnitDefForCSharp *unitlistforcs[] = new UnitDefForCSharp*[ numOfUnits ];
         for( int i = 0; i < numOfUnits; i++ )
         {
@@ -135,10 +151,11 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         }
         return unitlistforcs;
     }
+    */
     
     CSharpAI::Float3 *GetUnitPos( int unitid )
     {
-        return CppFloat3ToCSFloat3( callbacktorts->GetUnitPos( unitid ) );
+        return CppFloat3ToCSFloat3( self->GetUnitPos( unitid ) );
     }
     
     CSharpAI::Float3 *ClosestBuildSite( CSharpAI::IUnitDef *unittobuilddef, CSharpAI::Float3 *targetpos, double searchRadius, int minDistance )
@@ -146,8 +163,8 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         float3 targetposforcpp;
         CSFloat3ToCppFloat3( targetposforcpp, targetpos );
         CSharpAI::Float3 *result = CppFloat3ToCSFloat3(
-            callbacktorts->ClosestBuildSite(
-                ( dynamic_cast< UnitDefForCSharp * >( unittobuilddef ) )->actualunitdef, 
+            self->ClosestBuildSite(
+                ( dynamic_cast< UnitDefForCSharp * >( unittobuilddef ) )->self, 
                 targetposforcpp, searchRadius, minDistance ) );
         return result;
     }
@@ -158,7 +175,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         
         float3 targetposforcpp;
         CSFloat3ToCppFloat3( targetposforcpp, pos );
-        callbacktorts->DrawUnit( nameansi, targetposforcpp, rotation, lifetime, team, transparent, drawBorder );
+        self->DrawUnit( nameansi, targetposforcpp, rotation, lifetime, team, transparent, drawBorder );
         
         Marshal::FreeHGlobal(nameansi);
     }
@@ -168,7 +185,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     System::Byte GetMetalMap()[]
     {     
         
-        const unsigned char*mapfromrts = callbacktorts->GetMetalMap();
+        const unsigned char*mapfromrts = self->GetMetalMap();
         int width = GetMapWidth() / 2;//metal map has 1/2 resolution of normal map // WHY???? THIS TOOK SOOOO LONG TO DEBUG </rant>
         int height = GetMapHeight() / 2;
         int numbercells = width * height;
@@ -185,7 +202,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     
     System::Boolean GetLosMap()[]
     {
-        const unsigned short*losmapfromrts = callbacktorts->GetLosMap();
+        const unsigned short*losmapfromrts = self->GetLosMap();
         int width = GetMapWidth() / 2;
         int height = GetMapHeight() / 2;
         int numbercells = width * height;
@@ -210,7 +227,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
 
     System::Boolean GetRadarMap()[]
     {
-        const unsigned short*mapfromrts = callbacktorts->GetRadarMap();
+        const unsigned short*mapfromrts = self->GetRadarMap();
         int width = GetMapWidth() / 8;
         int height = GetMapHeight() / 8;
         int numbercells = width * height;
@@ -244,7 +261,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     
     double GetCentreHeightMap() __gc []
     {
-        const float *mapfromrts = callbacktorts->GetHeightMap();
+        const float *mapfromrts = self->GetHeightMap();
         int width = GetMapWidth();
         int height = GetMapHeight();
         int numbercells = width * height;
@@ -255,11 +272,11 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         }
         return mapforcs;
     }
-
+/*
     CSharpAI::MapPoint *GetMapPoints()[]
     {
         PointMarker pointmarkers[1000];
-        int numpoints = callbacktorts->GetMapPoints(pointmarkers, 1000);
+        int numpoints = self->GetMapPoints(pointmarkers, 1000);
         char messagebuffer[1024];
         CSharpAI::MapPoint *mappointsforcs[] = new CSharpAI::MapPoint *[ numpoints ];
         for( int i = 0 ; i < numpoints; i++ )
@@ -271,23 +288,23 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         }
         return mappointsforcs;
     }
-    
-    System::String *GetMapName()
-    {
-        return new System::String( callbacktorts->GetMapName() );
+    */
+    //System::String *GetMapName()
+    //{
+      //  return new System::String( self->GetMapName() );
        // return new System::String( "TESTING 0.2" );
-    }
+    //}
     
-    System::String *GetModName()
-    {
-        return new System::String( callbacktorts->GetModName() );
-    }
+    //System::String *GetModName()
+    //{
+      //  return new System::String( self->GetModName() );
+    //}
     
     bool CanBuildAt( CSharpAI::IUnitDef *unitDef, CSharpAI::Float3 *pos )
     {
         float3 targetposforcpp;
         CSFloat3ToCppFloat3( targetposforcpp, pos );
-        return callbacktorts->CanBuildAt( ( dynamic_cast< UnitDefForCSharp * >( unitDef ) )->actualunitdef,
+        return self->CanBuildAt( ( dynamic_cast< UnitDefForCSharp * >( unitDef ) )->self,
             targetposforcpp );
     }
     
@@ -295,7 +312,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     {
         // how to find out how big to make this array???? Edit: documentation says maximum 10000
         int units[10000];
-        int numunits = callbacktorts->GetFriendlyUnits( units );
+        int numunits = self->GetFriendlyUnits( units );
         System::Int32 unitsforcs[] = new System::Int32[ numunits ];
         for( int i = 0; i < numunits; i++ )
         {
@@ -308,7 +325,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     {
         // how to find out how big to make this array???? Edit: documentation says maximum 10000
         int units[10000];
-        int numunits = callbacktorts->GetEnemyUnitsInRadarAndLos( units );
+        int numunits = self->GetEnemyUnitsInRadarAndLos( units );
         System::Int32 unitsforcs[] = new System::Int32[ numunits ];
         for( int i = 0; i < numunits; i++ )
         {
@@ -320,7 +337,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
 /*    
     CSharpAI::Command *GetCurrentUnitCommands(int unitid)[]
     {
-        const deque<::Command> *commands = callbacktorts->GetCurrentUnitCommands( unitid );    
+        const deque<::Command> *commands = self->GetCurrentUnitCommands( unitid );    
         CSharpAI::Command *commandsforcs[] = new CSharpAI::Command*[ commands.size() ];
         for( int i = 0; i < commands.size(); i++ )
         {
@@ -334,7 +351,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     // simplified/fast version of GetCurrentUnitCommands
     bool UnitIsBusy( int unitid )
     {
-        if( callbacktorts->GetCurrentUnitCommands( unitid )->empty() )
+        if( self->GetCurrentUnitCommandsCount( unitid ) == 0 )
         {
             return false;
         }
@@ -344,53 +361,46 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     int CreateGroup( System::String *dll, int aiNumber)							//creates a group and return the id it was given, return -1 on failure (dll didnt exist etc)
     {
         char* dllansi = (char*)(void*)Marshal::StringToHGlobalAnsi(dll);
-        int groupid = callbacktorts->CreateGroup( dllansi, aiNumber );
+        int groupid = self->CreateGroup( dllansi, aiNumber );
         Marshal::FreeHGlobal(dllansi);
         return groupid;
     }
     
-    void EraseGroup(int groupid)										//erases a specified group
-    {
-        return callbacktorts->EraseGroup( groupid );
-    }
-    
     //const std::vector<CommandDescription>* GetGroupCommands(int unitid);	//the commands that this unit can understand, other commands will be ignored
-    
+    /*
     int GiveGroupOrder(int unitid, CSharpAI::Command *c)
     {
-        return callbacktorts->GiveGroupOrder( unitid, CsCommandToCppCommand( c ) );
+        return self->GiveGroupOrder( unitid, CsCommandToCppCommand( c ) );
     }
-    
+    */
     int CreateLineFigure(CSharpAI::Float3 *pos1,CSharpAI::Float3 *pos2,double width,bool arrow,int lifetime,int group)
     {
         float3 targetposforcpp1;
         CSFloat3ToCppFloat3( targetposforcpp1, pos1 );
         float3 targetposforcpp2;
         CSFloat3ToCppFloat3( targetposforcpp2, pos2 );
-        return callbacktorts->CreateLineFigure( targetposforcpp1, targetposforcpp2, width, arrow, lifetime, group );
+        return self->CreateLineFigure( targetposforcpp1, targetposforcpp2, width, arrow, lifetime, group );
     }
     
-    void SetFigureColor(int group,double red,double green,double blue,double alpha)
-    {
-        callbacktorts->SetFigureColor( group, red, green, blue, alpha );
-    }
+    //void SetFigureColor(int group,double red,double green,double blue,double alpha)
+    //{
+      //  self->SetFigureColor( group, red, green, blue, alpha );
+    //}
     
-    void DeleteFigureGroup(int group)
-    {
-        callbacktorts->DeleteFigureGroup( group );
-    }
+    //void DeleteFigureGroup(int group)
+    //{
+      //  self->DeleteFigureGroup( group );
+    //}
     
     bool IsGamePaused()
     {
-        bool gameispaused;
-        callbacktorts->GetValue( AIVAL_GAME_PAUSED, &gameispaused );
-        return gameispaused;
+        return self->IsGamePaused();
     }
     
     int GetFeatures () __gc []
     {
         int features[10000];
-        int numfeatures = callbacktorts->GetFeatures( features, 10000 );
+        int numfeatures = self->GetFeatures( features, 10000 );
         int csfeatures __gc [] = new int __gc[numfeatures];
         for( int i = 0; i < numfeatures; i++ )
         {
@@ -404,7 +414,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
         int features[10000];
         float3 targetposforcpp;
         CSFloat3ToCppFloat3( targetposforcpp, pos );
-        int numfeatures = callbacktorts->GetFeatures( features, 10000, targetposforcpp, radius );
+        int numfeatures = self->GetFeaturesAt( features, 10000, targetposforcpp, radius );
         int csfeatures __gc [] = new int __gc[numfeatures];
         for( int i = 0; i < numfeatures; i++ )
         {
@@ -415,7 +425,7 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
     
     CSharpAI::IFeatureDef *GetFeatureDef (int feature) 
     {
-        const ::FeatureDef *featuredef = callbacktorts->GetFeatureDef( feature );
+        const AbicFeatureDefWrapper *featuredef = self->GetFeatureDef( feature );
         if( featuredef != 0 )
         {
             return new FeatureDefForCSharp( featuredef );
@@ -425,227 +435,231 @@ __gc class AICallbackToGiveToCS : public CSharpAI::IAICallback
 
     CSharpAI::Float3 *GetFeaturePos (int feature)
     {
-        return CppFloat3ToCSFloat3( callbacktorts->GetFeaturePos( feature ) );
+        return CppFloat3ToCSFloat3( self->GetFeaturePos( feature ) );
     }
+    
+    #include "CSAIProxyIAICallback_generated.h"
 
+    /*
     // **********************************************************************************************************************
     // all beyond this point was auto-generated by GenerateIACallbackClasses, then copy and pasted in:
     // **********************************************************************************************************************
     
     int GetCurrentFrame(  )
     {
-        return callbacktorts->GetCurrentFrame(  );
+        return self->GetCurrentFrame(  );
     }
 
     int GetMyTeam(  )
     {
-        return callbacktorts->GetMyTeam(  );
+        return self->GetMyTeam(  );
     }
 
     int GetMyAllyTeam(  )
     {
-        return callbacktorts->GetMyAllyTeam(  );
+        return self->GetMyAllyTeam(  );
     }
 
     int GetPlayerTeam( int player )
     {
-        return callbacktorts->GetPlayerTeam( player );
+        return self->GetPlayerTeam( player );
     }
 
     bool AddUnitToGroup( int unitid, int groupid )
     {
-        return callbacktorts->AddUnitToGroup( unitid, groupid );
+        return self->AddUnitToGroup( unitid, groupid );
     }
 
     bool RemoveUnitFromGroup( int unitid )
     {
-        return callbacktorts->RemoveUnitFromGroup( unitid );
+        return self->RemoveUnitFromGroup( unitid );
     }
 
     int GetUnitGroup( int unitid )
     {
-        return callbacktorts->GetUnitGroup( unitid );
+        return self->GetUnitGroup( unitid );
     }
 
     int GetUnitAiHint( int unitid )
     {
-        return callbacktorts->GetUnitAiHint( unitid );
+        return self->GetUnitAiHint( unitid );
     }
 
     int GetUnitTeam( int unitid )
     {
-        return callbacktorts->GetUnitTeam( unitid );
+        return self->GetUnitTeam( unitid );
     }
 
     int GetUnitAllyTeam( int unitid )
     {
-        return callbacktorts->GetUnitAllyTeam( unitid );
+        return self->GetUnitAllyTeam( unitid );
     }
 
     double GetUnitHealth( int unitid )
     {
-        return callbacktorts->GetUnitHealth( unitid );
+        return self->GetUnitHealth( unitid );
     }
 
     double GetUnitMaxHealth( int unitid )
     {
-        return callbacktorts->GetUnitMaxHealth( unitid );
+        return self->GetUnitMaxHealth( unitid );
     }
 
     double GetUnitSpeed( int unitid )
     {
-        return callbacktorts->GetUnitSpeed( unitid );
+        return self->GetUnitSpeed( unitid );
     }
 
     double GetUnitPower( int unitid )
     {
-        return callbacktorts->GetUnitPower( unitid );
+        return self->GetUnitPower( unitid );
     }
 
     double GetUnitExperience( int unitid )
     {
-        return callbacktorts->GetUnitExperience( unitid );
+        return self->GetUnitExperience( unitid );
     }
 
     double GetUnitMaxRange( int unitid )
     {
-        return callbacktorts->GetUnitMaxRange( unitid );
+        return self->GetUnitMaxRange( unitid );
     }
 
     bool IsUnitActivated( int unitid )
     {
-        return callbacktorts->IsUnitActivated( unitid );
+        return self->IsUnitActivated( unitid );
     }
 
     bool UnitBeingBuilt( int unitid )
     {
-        return callbacktorts->UnitBeingBuilt( unitid );
+        return self->UnitBeingBuilt( unitid );
     }
 
     int GetBuildingFacing( int unitid )
     {
-        return callbacktorts->GetBuildingFacing( unitid );
+        return self->GetBuildingFacing( unitid );
     }
 
     bool IsUnitCloaked( int unitid )
     {
-        return callbacktorts->IsUnitCloaked( unitid );
+        return self->IsUnitCloaked( unitid );
     }
 
     bool IsUnitParalyzed( int unitid )
     {
-        return callbacktorts->IsUnitParalyzed( unitid );
+        return self->IsUnitParalyzed( unitid );
     }
 
     int GetMapWidth(  )
     {
-        return callbacktorts->GetMapWidth(  );
+        return self->GetMapWidth(  );
     }
 
     int GetMapHeight(  )
     {
-        return callbacktorts->GetMapHeight(  );
+        return self->GetMapHeight(  );
     }
 
     double GetMaxMetal(  )
     {
-        return callbacktorts->GetMaxMetal(  );
+        return self->GetMaxMetal(  );
     }
 
     double GetExtractorRadius(  )
     {
-        return callbacktorts->GetExtractorRadius(  );
+        return self->GetExtractorRadius(  );
     }
 
     double GetMinWind(  )
     {
-        return callbacktorts->GetMinWind(  );
+        return self->GetMinWind(  );
     }
 
     double GetMaxWind(  )
     {
-        return callbacktorts->GetMaxWind(  );
+        return self->GetMaxWind(  );
     }
 
     double GetTidalStrength(  )
     {
-        return callbacktorts->GetTidalStrength(  );
+        return self->GetTidalStrength(  );
     }
 
     double GetGravity(  )
     {
-        return callbacktorts->GetGravity(  );
+        return self->GetGravity(  );
     }
 
     double GetElevation( double x, double z )
     {
-        return callbacktorts->GetElevation( x, z );
+        return self->GetElevation( x, z );
     }
 
     double GetMetal(  )
     {
-        return callbacktorts->GetMetal(  );
+        return self->GetMetal(  );
     }
 
     double GetMetalIncome(  )
     {
-        return callbacktorts->GetMetalIncome(  );
+        return self->GetMetalIncome(  );
     }
 
     double GetMetalUsage(  )
     {
-        return callbacktorts->GetMetalUsage(  );
+        return self->GetMetalUsage(  );
     }
 
     double GetMetalStorage(  )
     {
-        return callbacktorts->GetMetalStorage(  );
+        return self->GetMetalStorage(  );
     }
 
     double GetEnergy(  )
     {
-        return callbacktorts->GetEnergy(  );
+        return self->GetEnergy(  );
     }
 
     double GetEnergyIncome(  )
     {
-        return callbacktorts->GetEnergyIncome(  );
+        return self->GetEnergyIncome(  );
     }
 
     double GetEnergyUsage(  )
     {
-        return callbacktorts->GetEnergyUsage(  );
+        return self->GetEnergyUsage(  );
     }
 
     double GetEnergyStorage(  )
     {
-        return callbacktorts->GetEnergyStorage(  );
+        return self->GetEnergyStorage(  );
     }
 
     double GetFeatureHealth( int feature )
     {
-        return callbacktorts->GetFeatureHealth( feature );
+        return self->GetFeatureHealth( feature );
     }
 
     double GetFeatureReclaimLeft( int feature )
     {
-        return callbacktorts->GetFeatureReclaimLeft( feature );
+        return self->GetFeatureReclaimLeft( feature );
     }
 
     int GetNumUnitDefs(  )
     {
-        return callbacktorts->GetNumUnitDefs(  );
+        return self->GetNumUnitDefs(  );
     }
 
     double GetUnitDefRadius( int def )
     {
-        return callbacktorts->GetUnitDefRadius( def );
+        return self->GetUnitDefRadius( def );
     }
 
     double GetUnitDefHeight( int def )
     {
-        return callbacktorts->GetUnitDefHeight( def );
+        return self->GetUnitDefHeight( def );
     }
+    */
 };
 
 #endif // _AICALLBACKFORCS_H

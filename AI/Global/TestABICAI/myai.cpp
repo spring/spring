@@ -57,7 +57,7 @@ public:
     
         if( UnitDef_get_isCommander( unitdef ) )
         {
-            int numbuildoptions = UnitDef_GetNumBuildOtions( unitdef );
+            int numbuildoptions = UnitDef_GetNumBuildOptions( unitdef );
             sprintf( buffer, "Build options: " );
             for( int i = 0; i < numbuildoptions; i++ )
             {

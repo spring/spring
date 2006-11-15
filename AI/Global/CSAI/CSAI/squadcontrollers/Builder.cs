@@ -36,8 +36,8 @@ namespace CSharpAI
         
         public Hashtable FactoryUnitDefByDeployedId = new Hashtable();
         public Hashtable FactoriesByTypeName = new Hashtable(); // deployedid of factories hashed by typename (eg "armvp")
-        
-        public FactoryController( IPlayStyle playstyle )
+
+        public Builder(IPlayStyle playstyle)
         {
             this.playstyle = playstyle;
             

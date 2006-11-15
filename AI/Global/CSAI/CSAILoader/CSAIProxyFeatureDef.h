@@ -31,16 +31,21 @@ using namespace System::Runtime::InteropServices;
 
 #include "Sim/Misc/FeatureDef.h"
 
+#include "AbicFeatureDefWrapper.h"
+
 __gc class FeatureDefForCSharp : public CSharpAI::IFeatureDef
 {    
 public:
-    const ::FeatureDef *actualfeaturedef;
+    AbicFeatureDefWrapper *self;
 
-    FeatureDefForCSharp( const ::FeatureDef *actualfeaturedef )
+    FeatureDefForCSharp( const AbicFeatureDefWrapper *actualfeaturedef )
     {
-        this->actualfeaturedef = actualfeaturedef;
+        this->self = ( AbicFeatureDefWrapper *) actualfeaturedef;
     }
+
+    #include "CSAIProxyIFeatureDef_generated.h"
     
+    /*
     System::String *get_myName(){ return new System::String( actualfeaturedef->myName.c_str() ); }
     System::String *get_description(){ return new System::String( actualfeaturedef->description.c_str() ); }
 
@@ -70,6 +75,7 @@ public:
     int get_ysize(){ return actualfeaturedef->ysize; }	
     
     // Following is auto-generated (so none):
+    */
 };
 
 #endif // _FEATUREDEFFORCSHARP_H

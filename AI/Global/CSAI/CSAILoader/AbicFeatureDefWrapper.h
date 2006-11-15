@@ -19,39 +19,26 @@
 // http://www.opensource.org/licenses/gpl-license.php
 //
 // ======================================================================================
+//
 
-#ifndef _MOVEDATAPROXY_H
-#define _MOVEDATAPROXY_H
+// this class wraps the ABIC FeatureDef functions
 
-#using <mscorlib.dll>
-#include <vcclr.h>
-using namespace System;
-using namespace System::Collections;
-using namespace System::Runtime::InteropServices;    
+#ifndef _ABICFEATUREDEFWRAPPER_H
+#define _ABICFEATUREDEFWRAPPER_H
 
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "ExternalAI/GlobalAICInterface/AbicAICallback.h"
 
-__gc class MoveDataProxy : public CSharpAI::IMoveData
-{    
+class AbicFeatureDefWrapper
+{
+    FeatureDef *self;
+        
 public:
-    const ::MoveData *actualmovedata;
-
-    MoveDataProxy( const ::MoveData *actualmovedata )
+    AbicFeatureDefWrapper( const FeatureDef *self )
     {
-        this->actualmovedata = actualmovedata;
+        this->self = ( FeatureDef *)self;
     }
     
-    CSharpAI::MoveType get_moveType(){ return (CSharpAI::MoveType)actualmovedata->moveType; }
-	int get_size(){ return actualmovedata->size; }
-	double get_depth(){ return actualmovedata->depth; }
-	double get_maxSlope(){ return actualmovedata->maxSlope; }
-	double get_slopeMod(){ return actualmovedata->slopeMod; }
-	double get_depthMod(){ return actualmovedata->depthMod; }
-
-	int get_pathType(){ return actualmovedata->pathType; }
-	//CMoveMath* moveMath;
-	double get_crushStrength(){ return actualmovedata->crushStrength; }
-	int get_moveFamily(){ return actualmovedata->moveFamily; }
+    #include "AbicIFeatureDefWrapper_generated.h"
 };
 
-#endif // _MOVEDATAPROXY_H
+#endif

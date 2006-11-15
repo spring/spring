@@ -30,7 +30,7 @@
   <ItemGroup>
     <Reference Include="CSAIInterfaces, Version=0.0.0.0, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\bin\games\taspring\Application\TASpring\CSAIInterfaces.dll</HintPath>
+      <HintPath>..\..\..\..\game\CSAIInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

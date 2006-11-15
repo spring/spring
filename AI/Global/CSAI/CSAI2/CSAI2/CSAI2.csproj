@@ -1,0 +1,111 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{1F8E343B-8848-461B-B30C-001E9732DE4C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CSharpAI</RootNamespace>
+    <AssemblyName>CSAI</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>.\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="GlobalAIInterfaces, Version=0.0.0.0, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\rts\ExternalAI\GlobalAIInterfaces\GlobalAIInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="basicttypes\AdvancedFloat3.cs" />
+    <Compile Include="basicttypes\ArrayIndexer.cs" />
+    <Compile Include="basicttypes\CustomCollections.cs" />
+    <Compile Include="basicttypes\Float3Helper.cs" />
+    <Compile Include="basicttypes\OOPCommand.cs" />
+    <Compile Include="basicttypes\UnitDefHashtable.cs" />
+    <Compile Include="BuildTanks.cs" />
+    <Compile Include="EnemySelector2.cs" />
+    <Compile Include="mapping\ReclaimHelper.cs" />
+    <Compile Include="unitdata\BuildTable.cs" />
+    <Compile Include="unitdata\BuildTree.cs" />
+    <Compile Include="CSAI.cs" />
+    <Compile Include="EnemyController.cs" />
+    <Compile Include="EnemySelector.cs" />
+    <Compile Include="EnergyController.cs" />
+    <Compile Include="FriendlyUnitPositions.cs" />
+    <Compile Include="BuildEconomy.cs" />
+    <Compile Include="GiveOrderWrapper.cs" />
+    <Compile Include="mapping\LosHelper.cs" />
+    <Compile Include="MobileFusionController.cs" />
+    <Compile Include="Ownership.cs" />
+    <Compile Include="ScoutControllerRaider.cs" />
+    <Compile Include="TankController.cs" />
+    <Compile Include="unitdata\CommanderList.cs" />
+    <Compile Include="unitdata\HelicopterList.cs" />
+    <Compile Include="unitdata\StartPosition.cs" />
+    <Compile Include="unitdata\TankList.cs" />
+    <Compile Include="unitdata\UnitCommandCache.cs" />
+    <Compile Include="unitdata\Level1ConstructorList.cs" />
+    <Compile Include="mapping\BuildMap.cs" />
+    <Compile Include="mapping\BuildPlanner.cs" />
+    <Compile Include="mapping\EnemyMap.cs" />
+    <Compile Include="mapping\LosMap.cs" />
+    <Compile Include="mapping\Metal.cs" />
+    <Compile Include="mapping\MovementMaps.cs" />
+    <Compile Include="mapping\SlopeMap.cs" />
+    <Compile Include="MetalController.cs" />
+    <Compile Include="packcoordinators\AttackPackCoordinator.cs" />
+    <Compile Include="packcoordinators\GuardPackCoordinator.cs" />
+    <Compile Include="packcoordinators\IPackCoordinator.cs" />
+    <Compile Include="packcoordinators\MoveToPackCoordinator.cs" />
+    <Compile Include="packcoordinators\PackCoordinatorSelector.cs" />
+    <Compile Include="packcoordinators\SpreadSearchPackCoordinator.cs" />
+    <Compile Include="packcoordinators\SpreadSearchPackCoordinatorWithSearchGrid.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UnitController.cs" />
+    <Compile Include="unitdata\Level1FactoryList.cs" />
+    <Compile Include="utils\TimeHelper.cs" />
+    <Compile Include="utils\UnitDefHelp.cs" />
+    <Compile Include="utils\DrawingUtils.cs" />
+    <Compile Include="utils\LogFile.cs" />
+    <Compile Include="utils\XmlHelper.cs" />
+    <Compile Include="Workflow.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Todo.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup>
+    <PostBuildEvent>if not exist $(SolutionDir)..\..\..\..\..\game\AI\CSAI mkdir $(SolutionDir)..\..\..\..\..\game\AI\CSAI
+copy /y $(TargetDir)$(TargetName).dll $(SolutionDir)..\..\..\..\..\game\AI\CSAI\$(TargetName).dll
+copy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\..\..\game\AI\CSAI\$(TargetName).pdb
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>

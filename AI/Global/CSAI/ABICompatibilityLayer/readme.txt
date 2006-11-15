@@ -1,3 +1,9 @@
+Update: this functionality is directly integrated into Spring.
+
+Please see rts/ExternalAI/GlobalAICInterface
+
+======================================
+
 This is a prototype ABI compatibility layer for spring
 
 It builds with msvc at the moment
