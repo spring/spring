@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+#include "StdAfx.h"
 
 //#include "ExternalAI/aibase.h" // for DLL_EXPORT definition
 
