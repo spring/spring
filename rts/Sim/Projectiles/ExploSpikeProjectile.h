@@ -6,7 +6,9 @@
 class CExploSpikeProjectile :
 	public CProjectile
 {
+	CR_DECLARE(CExploSpikeProjectile);
 public:
+	CExploSpikeProjectile();
 	CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner);
 	~CExploSpikeProjectile(void);
 	void Update(void);
@@ -18,6 +20,9 @@ public:
 	float alphaDecay;
 	float lengthGrowth;
 	float3 dir;
+	float3 color;
+
+	virtual void Init(const float3& pos, CUnit *owner);
 };
 
 #endif
