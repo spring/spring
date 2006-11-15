@@ -453,6 +453,9 @@ void AAIConfig::LoadConfig(AAI *ai)
 				fscanf(file, "%i", &ival);
 				MAX_ATTACKS = ival;
 			}
+			else if (keyword[0] == 0) {
+				// empty string (happens just before EOF on crosscompiled MinGW builds)
+			}
 			else
 			{
 				error = true;
