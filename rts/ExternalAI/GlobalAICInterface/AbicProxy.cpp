@@ -21,7 +21,7 @@
 // ======================================================================================
 //
 
-#include "stdafx.h"
+#include "StdAfx.h"
 
 #include "AbicProxy.h"
 #include "ExternalAI/IGlobalAICallback.h"

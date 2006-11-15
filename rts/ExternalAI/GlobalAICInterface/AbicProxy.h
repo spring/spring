@@ -36,6 +36,8 @@
 #include <set>
 #include <stdio.h>
 
+#include "LogOutput.h"
+
 #include "Platform/SharedLib.h"
 
 // #include "AICallbackProxy.h"
@@ -59,7 +61,7 @@ public:
 	void InitAI(const char *dllname, IGlobalAICallback* callback, int team);
 	void InitAI(IGlobalAICallback* callback, int team)
 	{
-		assert("shouldnt be here");
+        logOutput << "WARNING: Call to AbicProxy::InitAI( callback, team ).  This function should never be called, should use InitAI( dllname, callback, team\n";
 	}
 
 	void UnitCreated(int unit);									//called when a new unit is created on ai team
