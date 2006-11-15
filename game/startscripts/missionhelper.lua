@@ -3,7 +3,7 @@
 class 'MissionHelper' (Script)
 
 -- Pass the script name to be displayed to the parent constructor
-function MissionHelper:__init() super('LUA missionbuilder2')
+function MissionHelper:__init() super('LUA missionbuilder')
     self.state = 0
     self.team = 0
     
@@ -16,6 +16,7 @@ function MissionHelper:__init() super('LUA missionbuilder2')
     self.commands[".savesel"] = self.SaveSelected
     self.commands[".savelist"] = self.SaveList
     self.commands[".savefeatures"] = self.SaveFeatures
+    --self.commands[".dumpavailableunitnames"] = self.DumpAvailableUnitNames
 end
 
 -- This function is executed every simulated frame (30 times/sec)
@@ -62,8 +63,9 @@ function MissionHelper:Help(param)
               "the created units will belong to that team.")
     else
         print("These commands are available:")
-        print(".help .savesel [team] .savelist [team] .savefeatures")
+        print(".help .savesel [team] .savelist [team] .savefeatures .dumpavailableunitnames")
         print("Type .help <command> for more info")
+        print("Hint: use .cheat and .give to quickly create items");
     end
 end
 
@@ -73,6 +75,18 @@ end
 
 function MissionHelper:SaveList(param)
     self:Save(param, true)
+end
+
+-- in progress; lacking appropriate functions within spring for now
+function MissionHelper:DumpAvailableUnitNames(param)
+    local numtypes = unitdefhandler.GetNumUnitDefs()
+    print("Number available unit types:" .. numtypes)
+    local def = unitdefhandler.GetUnitDefById( 1 )
+   --local list = units.GetUnitDefList()
+    --for i = 1, table.getn(list) do
+      -- local def = list[i].definition
+      -- print( "   " .. def.name .. " " .. def.humanname )
+    --end   
 end
 
 function MissionHelper:SaveFeatures(param)

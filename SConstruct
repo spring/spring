@@ -2,11 +2,14 @@
 
 # see rts/build/scons/*.py for the core of the build system
 
+import os
+
 """ Available targets.
 Each target has an equivalent install target. E.g. `CentralBuildAI' has
 `install-CentralBuildAI' and the default target has `install'.
 
 [default]
+
 	spring
 	unitsync
 	GroupAI
@@ -25,8 +28,10 @@ import os, sys
 sys.path.append('rts/build/scons')
 import filelist
 
-
-env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
+if sys.platform == 'win32':
+    env = Environment(tools = ['mingw', 'rts'], toolpath = ['.', 'rts/build/scons']) # force to mingw, otherwise picks up msvc
+else:
+    env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
 spring_files = filelist.get_spring_source(env)
 
@@ -36,8 +41,9 @@ spring_files = filelist.get_spring_source(env)
 if env['platform'] != 'windows':
 	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
 	spring_files += [ufshcpp]
-
-spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
+	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
+else: # create import library and .def file on Windows
+    spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'], LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--output-def,game/spring.def', '-Wl,--kill-at', '--add-stdcall-alias','-Wl,--out-implib,game/spring.a'] )    
 
 Alias('spring', spring)
 Default(spring)
@@ -124,7 +130,7 @@ for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
 install_dir = os.path.join(aienv.subst(aienv['datadir']), 'AI/Bot-libs')
 
 #Build GlobalAIs
-for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI']):
+for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI','TestABICAI']):
 	lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs', f), filelist.get_globalAI_source(aienv, f))
 	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
 	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
@@ -133,6 +139,15 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI']):
 	Alias('install', inst)
 	Alias('install-GlobalAI', inst)
 	Alias('install-'+f, inst)
+
+# build TestABICAI
+lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['AI/Global/TestABICAI/myaimingw.cpp','game/spring.a'], CPPDEFINES = env['CPPDEFINES'] + ['BUILDING_AI'] )
+Alias('TestABICAI', lib)
+Default(lib)
+inst = Install(install_dir, lib)
+Alias('install', inst)
+Alias('install-GlobalAI', inst)
+Alias('install-TestABICAI', inst)
 
 # Build streflop (which has it's own Makefile-based build system)
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
