@@ -29,5 +29,19 @@ public:
 	static void CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner);
 };
 
+//class to make a spherepartprojectile via the explosiongenerator
+class CSpherePartSpawner : CProjectile
+{
+	CR_DECLARE(CSpherePartSpawner);
+public:
+	float alpha;
+	int ttl;
+	float expansionSpeed;
+
+	CSpherePartSpawner();
+	~CSpherePartSpawner();
+
+	virtual void Init(const float3& pos, CUnit *owner);
+};
 
 #endif /* SPHEREPARTPROJECTILE_H */
