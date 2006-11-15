@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="rts"
 	ProjectGUID="{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
 	RootNamespace="rts"
@@ -154,6 +154,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
 				IgnoreDefaultLibraryNames="LIBC.lib"
+				ModuleDefinitionFile="$(ProjectDir)\..\..\ExternalAI\GlobalAICInterface\def_generated.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -280,6 +281,130 @@
 				RelativePath="..\..\ExternalAI\IGroupAiCallback.h"
 				>
 			</File>
+			<Filter
+				Name="GlobalAICInterface"
+				>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicAICallback.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicAICallback.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicProxy.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicProxy.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\def_generated.def"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\dllbuild.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IAICallback_generated.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IAICallback_generated.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IFeatureDef_generated.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IFeatureDef_generated.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IMoveData_generated.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IMoveData_generated.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IUnitDef_generated.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\GlobalAICInterface\IUnitDef_generated.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Game"

@@ -21,16 +21,20 @@ public:
 	int team;
 	bool cheatevents;
 
+	bool IsCInterface;
+
 	IGlobalAI* ai;
 	CGlobalAICallback* callback;
 	CGroupHandler* gh;
 
 	SharedLib *lib;
 
+	typedef bool (* ISCINTERFACE)();
 	typedef int (* GETGLOBALAIVERSION)();
 	typedef IGlobalAI* (* GETNEWAI)();
 	typedef void (* RELEASEAI)(IGlobalAI* i);
 	
+	ISCINTERFACE _IsCInterface;
 	GETGLOBALAIVERSION GetGlobalAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;
