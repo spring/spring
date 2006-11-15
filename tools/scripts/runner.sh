@@ -280,8 +280,8 @@ for S in $SPRING_SERVER; do
 			run_spring "$S" "$C"  "$@"
 		else
 			echo -n "(cached) "
-			grep "$S vs $C" "$MASTERLOG" | sed 's/<br>//g'
-			[ "$C" != "$S" ] && grep "$C vs $S" "$MASTERLOG" | sed 's/<br>//g'
+			grep "$S vs $C" "$MASTERLOG" | sed 's/<[^>]\+>//g'
+			[ "$C" != "$S" ] && grep "$C vs $S" "$MASTERLOG" | sed 's/<[^>]\+>//g'
 		fi
 	done
 done
