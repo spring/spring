@@ -143,11 +143,13 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 # build TestABICAI
 lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['AI/Global/TestABICAI/myaimingw.cpp','game/spring.a'], CPPDEFINES = env['CPPDEFINES'] + ['BUILDING_AI'] )
 Alias('TestABICAI', lib)
-Default(lib)
-inst = Install(install_dir, lib)
-Alias('install', inst)
-Alias('install-GlobalAI', inst)
 Alias('install-TestABICAI', inst)
+if sys.platform == 'win32':
+	Alias('GlobalAI', lib)
+	Default(lib)
+	inst = Install(install_dir, lib)
+	Alias('install', inst)
+	Alias('install-GlobalAI', inst)
 
 # Build streflop (which has it's own Makefile-based build system)
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
