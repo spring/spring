@@ -77,7 +77,7 @@ CSelectionKeyHandler::~CSelectionKeyHandler(void)
 {
 }
 
-bool CSelectionKeyHandler::KeyPressed(unsigned short key)
+bool CSelectionKeyHandler::KeyPressed(unsigned short key, bool isRepeat)
 {
 	// TODO: sort the vector, and do key-based fast lookup
 	for(vector<HotKey>::iterator hi=hotkeys.begin();hi!=hotkeys.end();++hi){

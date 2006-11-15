@@ -16,7 +16,7 @@
 
 class CUnit;
 class CglList;
-class CIconLayoutHandler;
+class CLuaUI;
 struct UnitDef;
 struct BuildInfo;
 
@@ -32,7 +32,8 @@ class CGuiHandler : public CInputReceiver {
 		void DrawCentroidCursor(void);
 		
 		bool AboveGui(int x,int y);
-		bool KeyPressed(unsigned short key);
+		bool KeyPressed(unsigned short key, bool isRepeat);
+		bool KeyReleased(unsigned short key);
 		bool MousePress(int x, int y, int button);
 		void MouseMove(int x, int y, int dx, int dy, int button);
 		void MouseRelease(int x, int y, int button);
@@ -156,8 +157,8 @@ class CGuiHandler : public CInputReceiver {
 		int actionOffset;
 		CKeySet lastKeySet;
 
-		CIconLayoutHandler* layoutHandler;
-		bool layoutHandlerClick;		
+		CLuaUI* luaUI;
+		bool luaUIClick;		
 
 		std::string menuName;
 		int xIcons, yIcons;

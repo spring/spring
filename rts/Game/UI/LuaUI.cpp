@@ -1,9 +1,9 @@
 #include "StdAfx.h"
-// IconLayoutHandler.cpp: implementation of the CIconLayoutHandler class.
+// LuaUI.cpp: implementation of the CLuaUI class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "IconLayoutHandler.h"
+#include "LuaUI.h"
 #include <cctype>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -13,7 +13,6 @@ extern "C" {
 	#include "lauxlib.h"
 }
 #include "LuaState.h"
-#include "CursorIcons.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
@@ -24,7 +23,11 @@ extern "C" {
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
+#include "Game/UI/CursorIcons.h"
 #include "Game/UI/GuiHandler.h"
+#include "Game/UI/KeyCodes.h"
+#include "Game/UI/KeySet.h"
+#include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Rendering/glFont.h"
@@ -35,6 +38,7 @@ extern "C" {
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
 #include "System/Net.h"
@@ -67,6 +71,11 @@ static int GetGameSeconds(lua_State* L);
 static int GetInCommand(lua_State* L);
 static int GetMouseState(lua_State* L);
 
+static int GetKeyCode(lua_State* L);
+static int GetKeySymbol(lua_State* L);
+static int GetKeyBindings(lua_State* L);
+static int GetActionHotKeys(lua_State* L);
+
 static int SendCommands(lua_State* L);
 static int GiveOrder(lua_State* L);
 
@@ -98,8 +107,8 @@ static int GetTeamResources(lua_State* L);
 static int GetTeamUnitStats(lua_State* L);
 static int SetShareLevel(lua_State* L);
 
-static int GetPlayerInfo(lua_State* L);
 static int GetMyPlayerID(lua_State* L);
+static int GetPlayerInfo(lua_State* L);
 
 static int AreTeamsAllied(lua_State* L);
 static int ArePlayersAllied(lua_State* L);
@@ -110,11 +119,11 @@ static int GetCameraDir(lua_State* L);
 static int GetCameraPos(lua_State* L);
 static int GetCameraFOV(lua_State* L);
 
-static int MapToScreenCoords(lua_State* L);
-static int ScreenToMapCoords(lua_State* L);
+static int WorldToScreenCoords(lua_State* L);
+static int ScreenToWorldCoords(lua_State* L);
 
-static int GetMapAtCursor(lua_State* L);
 static int GetUnitAtCursor(lua_State* L);
+static int GetGroundAtCursor(lua_State* L);
 static int GetFeatureAtCursor(lua_State* L);
 
 static int GetUnitsInVolume(lua_State* L);
@@ -122,15 +131,15 @@ static int GetAllyUnitsInVolume(lua_State* L);
 static int GetEnemyUnitsInVolume(lua_State* L);
 static int GetFeaturesInVolume(lua_State* L);
 
-static int GetMapHeight(lua_State* L);
+static int GetGroundHeight(lua_State* L);
 static int TestBuildOrder(lua_State* L);
 static int Pos2BuildPos(lua_State* L);
 
-static int AddMapIcon(lua_State* L);
-static int AddMapText(lua_State* L);
-static int AddMapUnit(lua_State* L);
-
 static int PlaySoundFile(lua_State* L);
+
+static int AddWorldIcon(lua_State* L);
+static int AddWorldText(lua_State* L);
+static int AddWorldUnit(lua_State* L);
 
 static int DrawScreenGeometry(lua_State* L);
 static int DrawState(lua_State* L);
@@ -170,9 +179,9 @@ static vector<unsigned int> displayLists;
 
 /******************************************************************************/
 
-CIconLayoutHandler* CIconLayoutHandler::GetHandler(const string& filename)
+CLuaUI* CLuaUI::GetHandler(const string& filename)
 {
-	CIconLayoutHandler* layout = new CIconLayoutHandler();
+	CLuaUI* layout = new CLuaUI();
 
 	const string code = layout->LoadFile(filename);
 	if (code.empty()) {
@@ -202,12 +211,12 @@ CIconLayoutHandler* CIconLayoutHandler::GetHandler(const string& filename)
 
 /******************************************************************************/
 
-CIconLayoutHandler::CIconLayoutHandler()
+CLuaUI::CLuaUI()
 {
 }
 
 
-CIconLayoutHandler::~CIconLayoutHandler()
+CLuaUI::~CLuaUI()
 {
 	for (int i = 0; i < (int)displayLists.size(); i++) {
 		glDeleteLists(displayLists[i], 1);
@@ -215,7 +224,7 @@ CIconLayoutHandler::~CIconLayoutHandler()
 }
 
 
-string CIconLayoutHandler::LoadFile(const string& filename)
+string CLuaUI::LoadFile(const string& filename)
 {
 	string code;
 
@@ -233,7 +242,7 @@ string CIconLayoutHandler::LoadFile(const string& filename)
 }
 
 
-bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
+bool CLuaUI::LoadCFunctions(lua_State* L)
 {
 	lua_newtable(L);
 
@@ -250,6 +259,10 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetInCommand);
 	REGISTER_LUA_CFUNC(GetMouseState);
+	REGISTER_LUA_CFUNC(GetKeyCode);
+	REGISTER_LUA_CFUNC(GetKeySymbol);
+	REGISTER_LUA_CFUNC(GetKeyBindings);
+	REGISTER_LUA_CFUNC(GetActionHotKeys);
 	REGISTER_LUA_CFUNC(GetConfigInt);
 	REGISTER_LUA_CFUNC(SetConfigInt);
 	REGISTER_LUA_CFUNC(GetConfigString);
@@ -284,12 +297,12 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCameraState);
 	REGISTER_LUA_CFUNC(SetCameraState);
 	REGISTER_LUA_CFUNC(GiveOrder);
-	REGISTER_LUA_CFUNC(GetMapHeight);
+	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
-	REGISTER_LUA_CFUNC(AddMapIcon);
-	REGISTER_LUA_CFUNC(AddMapText);
-	REGISTER_LUA_CFUNC(AddMapUnit);
+	REGISTER_LUA_CFUNC(AddWorldIcon);
+	REGISTER_LUA_CFUNC(AddWorldText);
+	REGISTER_LUA_CFUNC(AddWorldUnit);
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 
 #define REGISTER_LUA_DRAW_CFUNC(x) \
@@ -322,7 +335,7 @@ bool CIconLayoutHandler::LoadCFunctions(lua_State* L)
 }
 
 
-bool CIconLayoutHandler::LoadCode(lua_State* L,
+bool CLuaUI::LoadCode(lua_State* L,
                                   const string& code, const string& debug)
 {
   lua_pop(L, lua_gettop(L));
@@ -345,7 +358,7 @@ bool CIconLayoutHandler::LoadCode(lua_State* L,
 }
 
 
-bool CIconLayoutHandler::ConfigCommand(const string& command)
+bool CLuaUI::ConfigCommand(const string& command)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -371,7 +384,7 @@ bool CIconLayoutHandler::ConfigCommand(const string& command)
 }
 
 
-bool CIconLayoutHandler::UpdateLayout(bool& forceLayout,
+bool CLuaUI::UpdateLayout(bool& forceLayout,
                                       bool commandsChanged, int activePage)
 {
 	forceLayout = false;
@@ -412,7 +425,7 @@ bool CIconLayoutHandler::UpdateLayout(bool& forceLayout,
 }
 
 
-bool CIconLayoutHandler::CommandNotify(const Command& cmd)
+bool CLuaUI::CommandNotify(const Command& cmd)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -473,7 +486,7 @@ bool CIconLayoutHandler::CommandNotify(const Command& cmd)
 }
 
 
-bool CIconLayoutHandler::UnitCreated(CUnit* unit)
+bool CLuaUI::UnitCreated(CUnit* unit)
 {
 	if (unit->allyteam != gu->myAllyTeam) {
 		return false;
@@ -507,7 +520,7 @@ bool CIconLayoutHandler::UnitCreated(CUnit* unit)
 }
 
 
-bool CIconLayoutHandler::UnitReady(CUnit* unit, CUnit* builder)
+bool CLuaUI::UnitReady(CUnit* unit, CUnit* builder)
 {
 	if (unit->allyteam != gu->myAllyTeam) {
 		return false;
@@ -543,7 +556,7 @@ bool CIconLayoutHandler::UnitReady(CUnit* unit, CUnit* builder)
 }
 
 
-bool CIconLayoutHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
+bool CLuaUI::UnitDestroyed(CUnit* victim, CUnit* attacker)
 {
 	if (victim->allyteam != gu->myAllyTeam) {
 		return false;
@@ -577,7 +590,7 @@ bool CIconLayoutHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 }
 
 
-bool CIconLayoutHandler::DrawMapItems()
+bool CLuaUI::DrawWorldItems()
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -585,7 +598,7 @@ bool CIconLayoutHandler::DrawMapItems()
 	}
 	lua_pop(L, lua_gettop(L));
 	
-	lua_getglobal(L, "DrawMapItems");
+	lua_getglobal(L, "DrawWorldItems");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
 		return true; // the call is not defined
@@ -610,12 +623,12 @@ bool CIconLayoutHandler::DrawMapItems()
 	const int error = lua_pcall(L, 2, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_DrawMapItems", lua_tostring(L, -1));
+		                "Call_DrawWorldItems", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		retval = false;
 	}
 	else if (matrixDepth != 0) {
-		logOutput.Print("DrawMapItems: matrix mismatch");
+		logOutput.Print("DrawWorldItems: matrix mismatch");
 		while (matrixDepth > 0) {
 			glPopMatrix();
 			matrixDepth--;
@@ -734,7 +747,7 @@ static void RevertScreenTransform()
 }
 
 
-bool CIconLayoutHandler::DrawScreenItems()
+bool CLuaUI::DrawScreenItems()
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -795,7 +808,7 @@ bool CIconLayoutHandler::DrawScreenItems()
 }
 
 
-bool CIconLayoutHandler::MouseMove(int x, int y, int dx, int dy, int button)
+bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -833,7 +846,7 @@ bool CIconLayoutHandler::MouseMove(int x, int y, int dx, int dy, int button)
 }
 
 
-bool CIconLayoutHandler::MousePress(int x, int y, int button)
+bool CLuaUI::MousePress(int x, int y, int button)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -869,7 +882,7 @@ bool CIconLayoutHandler::MousePress(int x, int y, int button)
 }
 
 
-int CIconLayoutHandler::MouseRelease(int x, int y, int button)
+int CLuaUI::MouseRelease(int x, int y, int button)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -905,7 +918,105 @@ int CIconLayoutHandler::MouseRelease(int x, int y, int button)
 }
 
 
-bool CIconLayoutHandler::IsAbove(int x, int y)
+bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "KeyPress");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, key);
+
+	lua_newtable(L);
+	lua_pushstring(L, "alt");
+	lua_pushboolean(L, keys[SDLK_LALT]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "ctrl");
+	lua_pushboolean(L, keys[SDLK_LCTRL]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "meta");
+	lua_pushboolean(L, keys[SDLK_LMETA]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "shift");
+	lua_pushboolean(L, keys[SDLK_LSHIFT]);
+	lua_rawset(L, -3);
+
+	lua_pushboolean(L, isRepeat);
+
+	// call the function
+	const int error = lua_pcall(L, 3, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_KeyPress", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
+	}
+
+	return false;
+}
+
+
+bool CLuaUI::KeyRelease(unsigned short key)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "KeyRelease");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, key);
+
+	lua_newtable(L);
+	lua_pushstring(L, "alt");
+	lua_pushboolean(L, keys[SDLK_LALT]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "ctrl");
+	lua_pushboolean(L, keys[SDLK_LCTRL]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "meta");
+	lua_pushboolean(L, keys[SDLK_LMETA]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "shift");
+	lua_pushboolean(L, keys[SDLK_LSHIFT]);
+	lua_rawset(L, -3);
+
+	// call the function
+	const int error = lua_pcall(L, 2, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_KeyRelease", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
+	}
+
+	return false;
+}
+
+
+bool CLuaUI::IsAbove(int x, int y)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -932,15 +1043,15 @@ bool CIconLayoutHandler::IsAbove(int x, int y)
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, 1)) {
-		return !!lua_toboolean(L, 1);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
 	}
 
 	return false;
 }
 
 
-string CIconLayoutHandler::GetTooltip(int x, int y)
+string CLuaUI::GetTooltip(int x, int y)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -975,7 +1086,7 @@ string CIconLayoutHandler::GetTooltip(int x, int y)
 }
 
 
-bool CIconLayoutHandler::AddConsoleLine(const string& line, int priority)
+bool CLuaUI::AddConsoleLine(const string& line, int priority)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -1005,7 +1116,7 @@ bool CIconLayoutHandler::AddConsoleLine(const string& line, int priority)
 }
 
 
-bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
+bool CLuaUI::LayoutIcons(int& xIcons, int& yIcons,
                                      const vector<CommandDescription>& cmds,
                                      vector<int>& removeCmds,
                                      vector<CommandDescription>& customCmds,
@@ -1139,7 +1250,7 @@ bool CIconLayoutHandler::LayoutIcons(int& xIcons, int& yIcons,
 }
 
 
-bool CIconLayoutHandler::BuildCmdDescTable(lua_State* L,
+bool CLuaUI::BuildCmdDescTable(lua_State* L,
                                            const vector<CommandDescription>& cmds)
 {
 	lua_newtable(L);
@@ -1181,7 +1292,7 @@ bool CIconLayoutHandler::BuildCmdDescTable(lua_State* L,
 }
 
 
-bool CIconLayoutHandler::GetLuaIntMap(lua_State* L, map<int, int>& intMap)
+bool CLuaUI::GetLuaIntMap(lua_State* L, map<int, int>& intMap)
 {
 	const int table = lua_gettop(L);
 	if (!lua_istable(L, table)) {
@@ -1204,7 +1315,7 @@ bool CIconLayoutHandler::GetLuaIntMap(lua_State* L, map<int, int>& intMap)
 }
 
 
-bool CIconLayoutHandler::GetLuaIntList(lua_State* L, vector<int>& intList)
+bool CLuaUI::GetLuaIntList(lua_State* L, vector<int>& intList)
 {
 	const int table = lua_gettop(L);
 	if (!lua_istable(L, table)) {
@@ -1226,7 +1337,7 @@ bool CIconLayoutHandler::GetLuaIntList(lua_State* L, vector<int>& intList)
 }
 
 
-bool CIconLayoutHandler::GetLuaReStringList(lua_State* L,
+bool CLuaUI::GetLuaReStringList(lua_State* L,
                                             vector<ReStringPair>& reStringList)
 {
 	const int table = lua_gettop(L);
@@ -1252,7 +1363,7 @@ bool CIconLayoutHandler::GetLuaReStringList(lua_State* L,
 }
 
 
-bool CIconLayoutHandler::GetLuaReParamsList(lua_State* L,
+bool CLuaUI::GetLuaReParamsList(lua_State* L,
                                             vector<ReParamsPair>& reParamsCmds)
 {
 	const int table = lua_gettop(L);
@@ -1289,7 +1400,7 @@ bool CIconLayoutHandler::GetLuaReParamsList(lua_State* L,
 }
 
 
-bool CIconLayoutHandler::GetLuaCmdDescList(lua_State* L,
+bool CLuaUI::GetLuaCmdDescList(lua_State* L,
                                            vector<CommandDescription>& cmdDescs)
 {
 	const int table = lua_gettop(L);
@@ -1576,6 +1687,86 @@ static int GetMouseState(lua_State* L)
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
 	return 5;
+}
+
+
+static int GetKeyCode(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetKeyCode(\"keysym\")");
+		lua_error(L);
+	}
+	const string keysym = lua_tostring(L, 1);
+	lua_pushnumber(L, keyCodes->GetCode(keysym));
+	return 1;
+}
+
+
+static int GetKeySymbol(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetKeySymbol(keycode)");
+		lua_error(L);
+	}
+	const int keycode = (int)lua_tonumber(L, 1);
+	lua_pushstring(L, keyCodes->GetName(keycode).c_str());
+	lua_pushstring(L, keyCodes->GetDefaultName(keycode).c_str());
+	return 2;
+}
+
+
+static int GetKeyBindings(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetKeyBindings(\"keyset\")");
+		lua_error(L);
+	}
+	const string keysetStr = lua_tostring(L, 1);
+	CKeySet ks;
+	if (!ks.Parse(keysetStr)) {
+		return 0;
+	}
+	const CKeyBindings::ActionList&	actions = keyBindings->GetActionList(ks);
+	lua_newtable(L);
+	for (int i = 0; i < (int)actions.size(); i++) {
+		const CKeyBindings::Action& action = actions[i];
+		lua_pushnumber(L, i + 1);
+		lua_newtable(L);
+		lua_pushstring(L, action.command.c_str());
+		lua_pushstring(L, action.extra.c_str());
+		lua_rawset(L, -3);
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, actions.size());
+	lua_rawset(L, -3);
+	return 1;	
+}
+
+
+static int GetActionHotKeys(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetActionHotKeys(\"command\")");
+		lua_error(L);
+	}
+	const string command = lua_tostring(L, 1);
+	const CKeyBindings::HotkeyList&	hotkeys = keyBindings->GetHotkeys(command);
+	lua_newtable(L);
+	for (int i = 0; i < (int)hotkeys.size(); i++) {
+		const string& hotkey = hotkeys[i];
+		lua_pushnumber(L, i + 1);
+		lua_pushstring(L, hotkey.c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, hotkeys.size());
+	lua_rawset(L, -3);
+	return 1;	
 }
 
 
@@ -2027,37 +2218,13 @@ static int GetUnitBuildFacing(lua_State* L)
 }
 
 
-static int GetCommandQueue(lua_State* L)
+static int PackCommandQueue(lua_State* L, const deque<Command>& q, int count)
 {
-	CUnit* unit = AlliedUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args >= 2) && !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to GetCommandQueue(unitID [, count])");
-		lua_error(L);
-	}
-	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) {
-		return 0;
-	}
- 	const deque<Command>& commandQue = commandAI->commandQue;
-
-	// get the desired number of commands to return
-	int count = -1;
-	if (args > 1) {
- 		count = (int)lua_tonumber(L, 2);
-	}
-	if (count < 0) {
-		count = (int)commandQue.size();
-	}
- 
 	lua_newtable(L);
 	
 	int i = 0;
 	deque<Command>::const_iterator it;
-	for (it = commandQue.begin(); it != commandQue.end(); it++) {
+	for (it = q.begin(); it != q.end(); it++) {
 		if (i >= count) {
 			break;
 		}
@@ -2112,7 +2279,48 @@ static int GetCommandQueue(lua_State* L)
 }
 
 
-static int GetBuildQueue(lua_State* L, bool canBuild, const char* caller)
+static int GetCommandQueue(lua_State* L)
+{
+	CUnit* unit = AlliedUnit(L, __FUNCTION__);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args >= 2) && !lua_isnumber(L, 2)) {
+		lua_pushstring(L,
+			"Incorrect arguments to GetCommandQueue(unitID [, count])");
+		lua_error(L);
+	}
+	const CCommandAI* commandAI = unit->commandAI;
+	if (commandAI == NULL) {
+		return 0;
+	}
+
+	// send the new unit commands for factories, otherwise the normal commands
+	const deque<Command>* queue;
+	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
+	if (factoryCAI == NULL) {
+		queue = &commandAI->commandQue;
+	} else {
+		queue = &factoryCAI->newUnitCommands;
+	}
+
+	// get the desired number of commands to return
+	int count = -1;
+	if (args > 1) {
+ 		count = (int)lua_tonumber(L, 2);
+	}
+	if (count < 0) {
+		count = (int)queue->size();
+	}
+	
+	PackCommandQueue(L, *queue, count);
+
+	return 1;
+}
+
+
+static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 {
 	CUnit* unit = AlliedUnit(L, caller);
 	if (unit == NULL) {
@@ -2191,13 +2399,13 @@ static int GetBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 static int GetFullBuildQueue(lua_State* L)
 {
-	return GetBuildQueue(L, false, __FUNCTION__);
+	return PackBuildQueue(L, false, __FUNCTION__);
 }
 
 
 static int GetRealBuildQueue(lua_State* L)
 {
-	return GetBuildQueue(L, true, __FUNCTION__);
+	return PackBuildQueue(L, true, __FUNCTION__);
 }
 
 
@@ -2350,6 +2558,18 @@ static int GetTeamUnitStats(lua_State* L)
 }
 	
 
+static int GetMyPlayerID(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetMyPlayerID() takes no arguments");
+		lua_error(L);
+	}
+	lua_pushnumber(L, gu->myPlayerNum);
+	return 1;
+}
+
+
 static int GetPlayerInfo(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -2378,18 +2598,6 @@ static int GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, player->cpuUsage);
 
 	return 7;
-}
-
-
-static int GetMyPlayerID(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetMyPlayerID() takes no arguments");
-		lua_error(L);
-	}
-	lua_pushnumber(L, gu->myPlayerNum);
-	return 1;
 }
 
 
@@ -2677,11 +2885,11 @@ static int GiveOrder(lua_State* L)
 }
 
 
-static int GetMapHeight(lua_State* L)
+static int GetGroundHeight(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, -2)) {
-		lua_pushstring(L, "Incorrect arguments to GetMapHeight(x, y");
+		lua_pushstring(L, "Incorrect arguments to GetGroundHeight(x, y");
 		lua_error(L);
 	}
 	const float x = lua_tonumber(L, 1);
@@ -2811,13 +3019,13 @@ static int PlaySoundFile(lua_State* L)
 
 /******************************************************************************/
 
-static int AddMapIcon(lua_State* L)
+static int AddWorldIcon(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 4) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to AddMapIcon(id, x, y, z");
+		lua_pushstring(L, "Incorrect arguments to AddWorldIcon(id, x, y, z");
 		lua_error(L);
 	}
 	const int cmdID = (int)lua_tonumber(L, 1);
@@ -2827,13 +3035,13 @@ static int AddMapIcon(lua_State* L)
 }
 
 
-static int AddMapText(lua_State* L)
+static int AddWorldText(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 4) ||
 	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to AddMapIcon(text, x, y, z");
+		lua_pushstring(L, "Incorrect arguments to AddWorldIcon(text, x, y, z");
 		lua_error(L);
 	}
 	const string text = lua_tostring(L, 1);
@@ -2843,7 +3051,7 @@ static int AddMapText(lua_State* L)
 }
 
 
-static int AddMapUnit(lua_State* L)
+static int AddWorldUnit(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 6) ||
@@ -2851,7 +3059,7 @@ static int AddMapUnit(lua_State* L)
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		lua_pushstring(L,
-			"Incorrect arguments to AddMapUnit(unitDefID, x, y, z, team, facing");
+			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing");
 		lua_error(L);
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);

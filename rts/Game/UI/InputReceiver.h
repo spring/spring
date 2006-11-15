@@ -12,7 +12,7 @@ public:
 	CInputReceiver(void);
 	virtual ~CInputReceiver(void);
 
-	virtual bool KeyPressed(unsigned short key){return false;};
+	virtual bool KeyPressed(unsigned short key, bool isRepeat){return false;};
 	virtual bool KeyReleased(unsigned short key){return false;};
 
 	virtual bool MousePress(int x, int y, int button){return false;};

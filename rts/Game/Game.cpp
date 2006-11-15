@@ -592,7 +592,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri) && (*ri)->KeyPressed(k)) {
+		if((*ri) && (*ri)->KeyPressed(k, isRepeat)) {
 			return 0;
 		}
 	}

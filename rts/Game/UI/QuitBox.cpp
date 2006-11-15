@@ -278,7 +278,7 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 }
 
 
-bool CQuitBox::KeyPressed(unsigned short key)
+bool CQuitBox::KeyPressed(unsigned short key, bool isRepeat)
 {
 	if (key == 27) { // escape
 		delete this;
