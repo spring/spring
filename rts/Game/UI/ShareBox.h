@@ -18,7 +18,7 @@ public:
 	bool MousePress(int x, int y, int button);
 	void MouseRelease(int x,int y,int button);
 	void MouseMove(int x, int y, int dx,int dy, int button);
-	bool KeyPressed(unsigned short key);
+	bool KeyPressed(unsigned short key, bool isRepeat);
 
 	ContainerBox box;
 

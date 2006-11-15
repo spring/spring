@@ -12,7 +12,7 @@ class CSelectionKeyHandler :
 public:
 	CSelectionKeyHandler(void);
 	~CSelectionKeyHandler(void);
-	bool KeyPressed(unsigned short key);
+	bool KeyPressed(unsigned short key, bool isRepeat);
 	bool KeyReleased(unsigned short key);
 	string ReadToken(string& s);
 	string ReadDelimiter(string& s);

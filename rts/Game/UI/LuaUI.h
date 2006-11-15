@@ -1,6 +1,6 @@
-#ifndef ICON_LAYOUT_HANDLER_H
-#define ICON_LAYOUT_HANDLER_H
-// IconLayoutHandler.h: interface for the CIconLayoutHandler class.
+#ifndef LUA_UI_H
+#define LUA_UI_H
+// LuaUI.h: interface for the CLuaUI class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -24,11 +24,11 @@ struct lua_State;
 struct CommandDescription;
 
 
-class CIconLayoutHandler {
+class CLuaUI {
 	public:
-		static CIconLayoutHandler* GetHandler(const string& filename);
+		static CLuaUI* GetHandler(const string& filename);
 		
-		~CIconLayoutHandler();
+		~CLuaUI();
 
 		struct ReStringPair {
 			int cmdIndex;
@@ -58,13 +58,14 @@ class CIconLayoutHandler {
 		
 		bool CommandNotify(const Command& cmd);
 		
-		bool DrawMapItems();
+		bool DrawWorldItems();
 		bool DrawScreenItems();
 
+		bool KeyPress(unsigned short key, bool isRepeat);
+		bool KeyRelease(unsigned short key);
 		bool MouseMove(int x, int y, int dx, int dy, int button);
 		bool MousePress(int x, int y, int button);
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
-
 		bool IsAbove(int x, int y);
 		string GetTooltip(int x, int y);
 		
@@ -75,7 +76,7 @@ class CIconLayoutHandler {
 		bool UnitDestroyed(CUnit* victim, CUnit* attacker);
 		
 	private:
-		CIconLayoutHandler();
+		CLuaUI();
 
 		string LoadFile(const string& filename);
 		
@@ -101,4 +102,4 @@ class CIconLayoutHandler {
 };
 
 
-#endif /* ICON_LAYOUT_HANDLER_H */
+#endif /* LUA_UI_H */

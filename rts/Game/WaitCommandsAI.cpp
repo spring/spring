@@ -188,6 +188,7 @@ void CWaitCommandsAI::NewUnit(CUnit* unit, const CUnit* builder)
 	if ((unit->team != gu->myTeam) || waitMap.empty()) {
 		return;
 	}
+
 	const deque<Command>& dq = unit->commandAI->commandQue;
 	deque<Command>::const_iterator qit;
 	for (qit = dq.begin(); qit != dq.end(); ++qit) {
