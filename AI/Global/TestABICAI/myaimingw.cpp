@@ -35,6 +35,21 @@ public:
         const FeatureDef *featuredef = IAICallback_GetFeatureDef( aicallback, features[0] );
         sprintf( buffer, "First feature: %s", FeatureDef_get_myName( featuredef ) );
         IAICallback_SendTextMsg( aicallback, buffer, 0 );    
+        
+        const UnitDef *unitdef = IAICallback_GetUnitDefByTypeId( aicallback, 34 );
+        sprintf( buffer, "type id 34 is %s %s %i", UnitDef_get_name( unitdef ), 
+            UnitDef_get_humanName( unitdef ), UnitDef_get_id( unitdef ) );
+        IAICallback_SendTextMsg( aicallback, buffer, 0 );    
+        
+        const MoveData *movedata = UnitDef_get_movedata( unitdef );
+        sprintf( buffer, "movedata is null? %i", movedata == 0 );
+        IAICallback_SendTextMsg( aicallback, buffer, 0 );    
+        
+        sprintf( buffer, "movetype: %i" + MoveData_get_movetype( movedata ) );        
+        IAICallback_SendTextMsg( aicallback, buffer, 0 );    
+        
+        sprintf( buffer, "maxslope: %f", MoveData_get_maxSlope( movedata ) );        
+        IAICallback_SendTextMsg( aicallback, buffer, 0 );    
     }
     
     void UnitCreated( int unit)									//called when a new unit is created on ai team
@@ -57,7 +72,7 @@ public:
     
         if( UnitDef_get_isCommander( unitdef ) )
         {
-            int numbuildoptions = UnitDef_GetNumBuildOtions( unitdef );
+            int numbuildoptions = UnitDef_GetNumBuildOptions( unitdef );
             sprintf( buffer, "Build options: " );
             for( int i = 0; i < numbuildoptions; i++ )
             {
@@ -118,6 +133,11 @@ public:
         char buffer[1024];
         sprintf( buffer, "Unit move failed: %i", unit );
         IAICallback_SendTextMsg( aicallback, buffer, 0 );
+    }
+    
+    void Update()
+    {
+        // IAICallback_SendTextMsg( aicallback, "update", 0 );
     }
 
 private:
@@ -201,5 +221,6 @@ DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
 //called every frame
 DLL_EXPORT void Update(void *ai )
 {
+    ( ( MyAI *)ai )->Update();
 }
     

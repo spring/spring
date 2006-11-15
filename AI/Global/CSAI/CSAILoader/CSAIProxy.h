@@ -33,15 +33,17 @@
 #include <vcclr.h>
 //#using <CSAIInterfaces.dll>
 
-#include "ExternalAI/IGlobalAI.h"
-#include "ExternalAI/IAICallback.h"
+//#include "ExternalAI/IGlobalAI.h"
+//#include "ExternalAI/IAICallback.h"
 #include <map>
 #include <set>
 #include <stdio.h>
 
-#include "AICallbackProxy.h"
+#include "CSAIProxyAICallback.h"
 
-const char AI_NAME[]="Test global AI";
+#include "AbicAICallbackWrapper.h"
+
+const char AI_NAME[]=".Net Interface";
 
 using namespace std;
 
@@ -51,13 +53,17 @@ using namespace std;
 	#define AILOG_PATH "AI/Bot-libs/"
 #endif
 
-class CSAIProxy : public ::IGlobalAI  
+struct AbicAICallbackWrapper;
+
+class CSAIProxy
 {
 public:
 	CSAIProxy();
 	virtual ~CSAIProxy();
 
-	void InitAI(IGlobalAICallback* callback, int team);
+    static const char *GetAiName(){ return AI_NAME; } // note to self: probably best to forward this to underlying AI
+
+	void InitAI(AbicAICallbackWrapper *callback, int team);
 
 	void UnitCreated(int unit);									//called when a new unit is created on ai team
 	void UnitFinished(int unit);								//called when an unit has finished building
@@ -84,13 +90,9 @@ public:
 	//called every frame
 	void Update();
 
-	::IGlobalAICallback* globalaicallback;
-	::IAICallback* aicallback;
-
-	set<int> myUnits;
-	set<int> enemies;
-    
 private:
+	AbicAICallbackWrapper *aicallback;
+
   //  FILE *logfile;
     int team;
 

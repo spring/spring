@@ -15,9 +15,6 @@ set CL=/EHsc /GR /D_WIN32_WINNT=0x0500 /D "WIN32" /D "_WINDOWS" /I"%PLATFORMSDK%
 
 set LINK=/LIBPATH:"%VISUALCPPDIRECTORY%\lib" /LIBPATH:"%PLATFORMSDK%\lib"
 
-rem cl /MD /D BUILDING_AI /c myai.cpp
-rem link /dll myai.obj %SPRINGAPPLICATION%\Spring.lib
-
 link /lib /machine:i386 /def:%SPRINGAPPLICATION%\Spring.def /OUT:spring.lib /NAME:spring.exe
 cl /LD /D BUILDING_AI myai.cpp spring.lib
 

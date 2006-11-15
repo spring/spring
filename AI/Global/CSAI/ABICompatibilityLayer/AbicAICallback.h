@@ -34,7 +34,7 @@ AICALLBACK_API const MoveData *UnitDef_get_movedata( const UnitDef *self  );
 AICALLBACK_API const FeatureDef *IAICallback_GetFeatureDef( const IAICallback *self, int featuredef  );
 AICALLBACK_API int IAICallback_GetFeatures( const IAICallback *self, int *features, int max );
 AICALLBACK_API int IAICallback_GetFeaturesAt(const IAICallback *self, int *features, int max, float posx, float posy, float posz, float radius);
-
+AICALLBACK_API void IAICallback_GetFeaturePos( const IAICallback *self, float &posx, float&posy, float&posz, int featureid);
 AICALLBACK_API void IAICallback_GetUnitDefList (const IAICallback *self, const UnitDef** list);
 AICALLBACK_API void IAICallback_GetUnitPos( const IAICallback *self, float &posx, float&posy, float&posz, int unitid);
 AICALLBACK_API int IAICallback_GiveOrder( const IAICallback *self, int unitid, int commandid, int numparams, float param1, float param2, float param3, float param4 );

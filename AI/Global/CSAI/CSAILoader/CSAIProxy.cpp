@@ -51,7 +51,11 @@ using namespace System::Xml;
 #include "Sim/Units/UnitDef.h"
 #include <vector>
 
-#include "AICallbackProxy.h"
+#include "AbicAICallbackWrapper.h"
+#include "AbicUnitDefWrapper.h"
+#include "AbicMoveDataWrapper.h"
+
+#include "CSAIProxyAICallback.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -159,13 +163,13 @@ CSAIProxy::~CSAIProxy()
     //delete csai;
 }
 
-void CSAIProxy::InitAI(IGlobalAICallback* callback, int team)
+void CSAIProxy::InitAI(AbicAICallbackWrapper *aicallback, int team)
 {
     this->team = team;
-	globalaicallback = callback;
-    WriteLine("getting callback...");
-	aicallback = globalaicallback->GetAICallback();
-    WriteLine("... got callback");
+	this->aicallback = aicallback;
+
+    // -- test stuff here --    
+    // -- end test stuff --    
 
     // we need to provide a managed class to C#, so we create one: AICallbackToGiveToCS
     // we store the unmanaged callback inside this class, so we can use it later
