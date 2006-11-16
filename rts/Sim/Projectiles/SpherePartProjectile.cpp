@@ -7,7 +7,7 @@ using namespace std;
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
-CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner)
+CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner, float3 &color)
 : CProjectile(centerPos,ZeroVector,owner),
 	centerPos(centerPos),
 	expansionSpeed(expansionSpeed),
@@ -16,7 +16,8 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,i
 	ttl(ttl),
 	baseAlpha(alpha),
 	xbase(xpart),
-	ybase(ypart)
+	ybase(ypart),
+	color(color)
 {
 	checkCol=false;
 
@@ -57,17 +58,17 @@ void CSpherePartProjectile::Draw(void)
 		for(int x=0;x<4;++x){
 			float alpha=baseAlpha*((float)1.0f-min(float(1.0f),float(age+gu->timeOffset)/(float)ttl))*(1-fabs(y+ybase-8.0f)/8.0f*1.0f);
 
-			col[0]=(unsigned char) (200*alpha);
-			col[1]=(unsigned char) (200*alpha);
-			col[2]=(unsigned char) (150*alpha);
+			col[0]=(unsigned char) (color.x*255.0f*alpha);
+			col[1]=(unsigned char) (color.y*255.0f*alpha);
+			col[2]=(unsigned char) (color.z*255.0f*alpha);
 			col[3]=((unsigned char) (40*alpha))+1;
 			va->AddVertexTC(centerPos+vectors[y*5+x]*interSize,texx,texy,col);
 			va->AddVertexTC(centerPos+vectors[y*5+x+1]*interSize,texx,texy,col);
 			alpha=baseAlpha*(1.0f-min(float(1.0f),float(age+gu->timeOffset)/(float)ttl))*(1-fabs(y+1+ybase-8.0f)/8.0f*1.0f);
 
-			col[0]=(unsigned char) (200*alpha);
-			col[1]=(unsigned char) (200*alpha);
-			col[2]=(unsigned char) (150*alpha);
+			col[0]=(unsigned char) (color.x*255.0f*alpha);
+			col[1]=(unsigned char) (color.y*255.0f*alpha);
+			col[2]=(unsigned char) (color.z*255.0f*alpha);
 			col[3]=((unsigned char) (40*alpha))+1;
 			va->AddVertexTC(centerPos+vectors[(y+1)*5+x+1]*interSize,texx,texy,col);
 			va->AddVertexTC(centerPos+vectors[(y+1)*5+x]*interSize,texx,texy,col);
@@ -76,11 +77,11 @@ void CSpherePartProjectile::Draw(void)
 }
 
 
-void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner)
+void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner, float3 color)
 {
 	for(int y=0;y<16;y+=4){
 		for(int x=0;x<32;x+=4){
-			new CSpherePartProjectile(pos,x,y,expansionSpeed,alpha,ttl,owner);
+			new CSpherePartProjectile(pos,x,y,expansionSpeed,alpha,ttl,owner,color);
 		}
 	}
 }
@@ -101,12 +102,13 @@ CR_REG_METADATA(CSpherePartSpawner,
 		CR_MEMBER(alpha),
 		CR_MEMBER(ttl),
 		CR_MEMBER(expansionSpeed),
+		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
 void CSpherePartSpawner::Init(const float3& pos, CUnit *owner)
 {
 	deleteMe = true;
-	CSpherePartProjectile::CreateSphere(pos + this->pos, alpha, ttl, expansionSpeed, owner);
+	CSpherePartProjectile::CreateSphere(pos + this->pos, alpha, ttl, expansionSpeed, owner, color);
 
 }
