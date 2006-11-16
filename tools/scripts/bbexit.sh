@@ -15,7 +15,7 @@ exitstatus=0
 # Zip & put exe online
 echo "Creating spring-r$1.zip containing spring.exe"
 cd game
-if zip "spring-r$1.zip" "spring.exe"; then
+if zip "spring-r$1.zip" "spring.exe" "spring.def"; then
 	chmod 644 "spring-r$1.zip"
 	mv "spring-r$1.zip" "/home/tvo/public_html/spring/"
 else
