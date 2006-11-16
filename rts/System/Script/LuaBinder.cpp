@@ -13,6 +13,7 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 
 extern "C"
 {
@@ -226,7 +227,10 @@ CLuaBinder::CLuaBinder(void)
 			 .def_readonly("maxhealth", &FeatureDef::maxHealth ),
 
 		class_<UnitDef>("UnitDef")
-			.def_readonly("name", &UnitDef::name),
+			.def_readonly("name", &UnitDef::name)
+			.def_readonly("humanname", &UnitDef::humanName)
+			.def_readwrite("metalstorage", &UnitDef::metalStorage) // readwrite so we can set commander's metalstorage at start of game
+			.def_readwrite("energystorage", &UnitDef::energyStorage), // readwrite so we can set commander's energystorage at start of game
 
 		class_<TdfParser>("TdfParser")
 			.def(constructor<>())
@@ -265,6 +269,17 @@ CLuaBinder::CLuaBinder(void)
 			def("GetSelected", &GetSelectedUnits, raw(_1)),
 			def("SendSelection", &SendSelectedUnits)
 		],
+
+		namespace_("unitdefhandler")
+		[
+			def("GetNumUnitDefs", &luafunctions::GetNumUnitDefs )
+		//	def("GetUnitDefById", &luafunctions::GetUnitDefById )
+		],
+        
+        namespace_("AIs")
+        [
+            def("CreateGlobalAI", &luafunctions::CreateGlobalAI )
+        ],
 
 		namespace_("features")
 		[

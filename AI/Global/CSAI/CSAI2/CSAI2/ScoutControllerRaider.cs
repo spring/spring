@@ -139,6 +139,7 @@ namespace CSharpAI
             {
                 logfile.WriteLine( "ScoutControllerRaider: new scout added " + unitid );
                 ScoutUnitDefsById.Add( unitid, unitdef );
+                searchcoordinator.ExploreWith(unitid);
                 //ExploreWith( unitid );
             }
         }

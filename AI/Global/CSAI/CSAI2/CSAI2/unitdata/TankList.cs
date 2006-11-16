@@ -10,7 +10,7 @@ namespace CSharpAI
         public static TankList GetInstance() { return instance; }
 
         List<string> unitnames = new List<string>(new string[] { "armsam", "armstump", "armrock", "armjeth", "armkam", "armanac", "armsfig", "armmh", "armah", 
-            "armbull", "armmart", "armmav", "armyork" });
+            "armbull", "armmart", "armmav", "armyork", "corak" });
 
         public Dictionary<int, IUnitDef> defbyid = new Dictionary<int, IUnitDef>();
 

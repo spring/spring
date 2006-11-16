@@ -10,6 +10,7 @@ struct Command;
 class float3;
 class CUnit;
 class CFeature;
+struct UnitDef;
 
 // This class is meant to contain COBject and its descendants only..
 template<class A>
@@ -26,10 +27,14 @@ public:
 
 namespace luafunctions 
 {
+    void CreateGlobalAI( int teamnumber, std::string dllname );
 	void EndGame();
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c);
 	CObject_pointer<CUnit>* UnitGetTransporter(CObject_pointer<CUnit>* u);
 	void CommandAddParam(Command* c, float p);
+	//luabind::object GetUnitDefList( lua_State* L );
+	int GetNumUnitDefs();
+	//CObject_pointer<UnitDef>* GetUnitDefById( int id );
 	CObject_pointer<CUnit>* UnitLoaderLoadUnit(std::string name, float3 pos, int team, bool buil);
 	CObject_pointer<CFeature>* FeatureLoaderLoadFeature( std::string name, float3 pos, int team );
 	luabind::object GetFeaturesAt(lua_State* L, const float3& pos, float radius);
