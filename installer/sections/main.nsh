@@ -4,6 +4,7 @@
 
   ; Main stuff
   File "..\game\spring.exe"
+  File "..\game\spring.def"
 ;  File "..\game\armor.txt"
   Delete "$INSTDIR\armor.txt"
   Delete "$INSTDIR\bagge.fnt"
@@ -205,6 +206,7 @@
 
   ; Main files
   Delete "$INSTDIR\spring.exe"
+  Delete "$INSTDIR\spring.def"
 ;  Delete "$INSTDIR\armor.txt"
   Delete "$INSTDIR\bagge.fnt"
   Delete "$INSTDIR\hpiutil.dll"
