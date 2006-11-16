@@ -23,6 +23,8 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureDef.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "ExternalAI/GlobalAIHandler.h"
 
 using namespace std;
 using namespace luabind;
@@ -39,6 +41,11 @@ namespace luafunctions
 		game->gameOver = true;
 	}
 
+    void CreateGlobalAI( int teamnumber, std::string dllname )
+    {
+        globalAI->CreateGlobalAI( teamnumber, dllname.c_str() );
+    }
+    
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c)
 	{
 		if (!u->held)
@@ -111,6 +118,38 @@ namespace luafunctions
 
 		return o;
 	}
+
+	int GetNumUnitDefs()
+	{
+		return unitDefHandler->numUnits;
+	}
+
+	// This doesnt work, not sure why; Spring crashes
+	//CObject_pointer<UnitDef>* GetUnitDefById( int id )
+	//{
+	//	UnitDef *def = unitDefHandler->GetUnitByID (id);
+	//	return new CObject_pointer<UnitDef>(def);
+	//}
+
+	/* This doesnt work, not sure why; Spring crashes
+	object GetUnitDefList( lua_State* L )
+	{
+		object o = newtable(L);
+		//UnitDef *def = unitDefHandler->GetUnitByID (1);
+		UnitDef *def = unitDefHandler->GetUnitByName ("ARMCOM");
+		o[1] = new CObject_pointer<UnitDef>(def);
+		return o;
+
+		int count = 1;
+		for (int a=0;a<unitDefHandler->numUnits && a < 10;a++)
+		{
+			UnitDef *def = unitDefHandler->GetUnitByID (a+1);
+			o[count++] = new CObject_pointer<UnitDef>(def);
+		}
+
+		return o;
+	}
+	*/
 
 	object GetSelectedUnits(lua_State* L, int player)
 	{

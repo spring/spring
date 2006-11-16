@@ -40,6 +40,7 @@ namespace CSharpAI
 
         TankController tankcontroller;
         TankController helicoptercontroller;
+        ScoutControllerRaider scoutcontroller;
 
         public void Activate()
         {
@@ -63,7 +64,8 @@ namespace CSharpAI
             tankcontroller.Activate();
             helicoptercontroller = new TankController(HelicopterList.GetInstance().defbyid, BuildTable.GetInstance().UnitDefByName["armbrawl"]);
             helicoptercontroller.Activate();
-            new ScoutControllerRaider().Activate();
+            scoutcontroller = new ScoutControllerRaider();
+            scoutcontroller.Activate();
 
             UnitController.GetInstance().LoadExistingUnits();
             EnemyController.GetInstance().LoadExistingUnits();
