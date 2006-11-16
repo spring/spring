@@ -558,12 +558,15 @@ bool SpringApp::GetDisplayGeometry()
 	if (!GetClientRect(info.window, &rect)) {
 		return false;
 	}
-	else {
-		gu->winSizeX = rect.right - rect.left;
-		gu->winSizeY = rect.bottom - rect.top;
-		gu->winPosX = rect.left;
-		gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
-	}
+
+	gu->winSizeX = rect.right - rect.left;
+	gu->winSizeY = rect.bottom - rect.top;
+
+	// translate to client coords to screen coords
+	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
+	gu->winPosX = rect.left;
+	gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
+	
 	return true;
 }
 #endif // _WIN32
