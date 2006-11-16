@@ -16,11 +16,16 @@ set PATH=%PATH%;%VISUALCPPDIRECTORY%\bin;%FRAMEWORKDOTNET%
 set CL=/EHsc /GR /D_WIN32_WINNT=0x0500 /D "WIN32" /D "_WINDOWS" 
 set CL=%CL% /I"%PLATFORMSDK%\include" /I"%VISUALCPPDIRECTORY%\include"
 set CL=%CL% /I"%SPRINGSOURCE%\rts\System" /I"%SPRINGSOURCE%\rts"
+set CL=%CL% /I..\AbicWrappers
 set LINK=/LIBPATH:"%VISUALCPPDIRECTORY%\lib" /LIBPATH:"%PLATFORMSDK%\lib"
 
-copy /y %SPRINGSOURCE%\rts\ExternalAI\GlobalAIInterfaces\GlobalAIInterfaces.dll .
-csc /debug AbicWrapperGenerator.cs /reference:GlobalAIInterfaces.dll
-AbicWrapperGenerator.exe
+cd ..\AbicWrappers
+call generate
+cd ..\CSAILoader
+
+rem copy /y %SPRINGSOURCE%\rts\ExternalAI\GlobalAIInterfaces\GlobalAIInterfaces.dll .
+rem csc /debug AbicWrapperGenerator.cs /reference:GlobalAIInterfaces.dll
+rem AbicWrapperGenerator.exe
 
 csc /debug CSAIProxyGenerator.cs /reference:GlobalAIInterfaces.dll
 CSAIProxyGenerator.exe
