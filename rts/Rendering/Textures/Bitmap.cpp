@@ -266,10 +266,10 @@ void CBitmap::Save(string const& filename)
 		Duplicated with ReverseYAxis. */
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
-			buf[((ysize-1-y)*xsize+x)*4+0]=mem[((y)*xsize+x)*4+0];
-			buf[((ysize-1-y)*xsize+x)*4+1]=mem[((y)*xsize+x)*4+1];
-			buf[((ysize-1-y)*xsize+x)*4+2]=mem[((y)*xsize+x)*4+2];
-			buf[((ysize-1-y)*xsize+x)*4+3]=mem[((y)*xsize+x)*4+3];
+			buf[((ysize-1-y)*xsize+x)*4+0] = mem[((y)*xsize+x)*4+0];
+			buf[((ysize-1-y)*xsize+x)*4+1] = mem[((y)*xsize+x)*4+1];
+			buf[((ysize-1-y)*xsize+x)*4+2] = mem[((y)*xsize+x)*4+2];
+			buf[((ysize-1-y)*xsize+x)*4+3] = 0xff; // mem[((y)*xsize+x)*4+3];
 		}
 	}
 
