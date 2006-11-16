@@ -2,6 +2,14 @@
 // 
 // standard headers 
 
+#ifndef AIDEF_H
+#define AIDEF_H
+
+#include <set>
+#include <list>
+#include <stdio.h>
+#include <time.h>
+#include <string>
 #include "ExternalAI/IAICheats.h"
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
@@ -13,11 +21,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "AAIConfig.h"
-#include <set>
-#include <list>
-#include <stdio.h>
-#include <time.h>
-#include <string>
 
 
 #ifdef _MSC_VER
@@ -25,9 +28,6 @@
 #endif 
 
 void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
-
-#ifndef AIDEF_H
-#define AIDEF_H
 
 #define AAI_VERSION "0.761"
 #define MAP_FILE_VERSION "MAP_LEARN_0_68"
