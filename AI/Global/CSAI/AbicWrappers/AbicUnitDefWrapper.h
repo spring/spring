@@ -28,6 +28,8 @@
 
 #include "ExternalAI/GlobalAICInterface/AbicAICallback.h"
 
+#include "AbicMoveDataWrapper.h"
+
 class AbicUnitDefWrapper
 {        
 public:

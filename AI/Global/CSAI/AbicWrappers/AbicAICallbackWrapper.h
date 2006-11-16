@@ -28,6 +28,9 @@
 
 #include "ExternalAI/GlobalAICInterface/AbicAICallback.h"
 
+#include "AbicUnitDefWrapper.h"
+#include "AbicFeatureDefWrapper.h"
+
 struct IAICallback;
 
 class AbicAICallbackWrapper
