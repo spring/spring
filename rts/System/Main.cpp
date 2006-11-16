@@ -562,7 +562,7 @@ bool SpringApp::GetDisplayGeometry()
 	gu->winSizeX = rect.right - rect.left;
 	gu->winSizeY = rect.bottom - rect.top;
 
-	// translate to client coords to screen coords
+	// translate from client coords to screen coords
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 	gu->winPosX = rect.left;
 	gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
