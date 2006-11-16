@@ -26,7 +26,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"
@@ -272,6 +272,12 @@
 			Name="External AI"
 			Filter="">
 			<File
+				RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicProxy.cpp">
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicProxy.h">
+			</File>
+			<File
 				RelativePath="..\..\ExternalAI\AICallback.cpp">
 			</File>
 			<File
@@ -474,12 +480,6 @@
 					RelativePath="..\..\Game\Ui\GuiHandler.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\IconLayoutHandler.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\IconLayoutHandler.h">
-				</File>
-				<File
 					RelativePath="..\..\Game\Ui\InfoConsole.cpp">
 				</File>
 				<File
@@ -520,6 +520,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\LuaState.h">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\LuaUI.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Game\Ui\LuaUI.h">
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\MiniMap.cpp">
@@ -1171,6 +1177,12 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\EmgProjectile.h">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ExpGenSpawner.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\ExpGenSpawner.h">
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.cpp">
