@@ -433,8 +433,11 @@
   b2-b4 = rank (see Account class implementation for description of rank) - client is not
           allowed to change rank bits himself (only server may set them).
   b5 = access status (tells us whether this client is a server moderator or not) - client is not
-      allowed to change this bit himself (only server may set them).
-  Client must check founder's status to see if battle is "in game".
+       allowed to change this bit himself (only server may set them).
+  b6 = bot mode (0 - normal user, 1 - automated bot). This bit is copied from user's account
+       and can not be changed by the client himself. Bots differ from human players in that
+       they are fully automated and that some anti-flood limitations do not apply to them.
+  To figure out if battle is "in-game", client must check in-game status of the host.
 
   * CLIENTSTATUS username status
   Sent by server to all registered clients indicating that client's status changed.
