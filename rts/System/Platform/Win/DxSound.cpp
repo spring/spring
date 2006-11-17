@@ -210,7 +210,7 @@ void CDxSound::PlaySample(int id,float volume)
 		return;
 	}
 	
-	buffers[num]->SetVolume(DSBVOLUME_MIN*v);
+	buffers[num]->SetVolume(int(DSBVOLUME_MIN*v));
 	buffers[num]->SetPan(0);
 //	if(reset)
 //		buffers[num]->SetCurrentPosition( 0L );    
@@ -260,8 +260,8 @@ void CDxSound::PlaySample(int id,const float3& p,float volume)
 	if( FAILED( hr = RestoreBuffers(num) ) )
 		return;
 	
-	buffers[num]->SetVolume(DSBVOLUME_MIN*v-100);
-	buffers[num]->SetPan(pan);
+	buffers[num]->SetVolume(int(DSBVOLUME_MIN*v-100));
+	buffers[num]->SetPan(int(pan));
 
 	if( FAILED( hr = buffers[num]->Play( 0, 0, 0/*dwLooped*/ ) ) ){
 
