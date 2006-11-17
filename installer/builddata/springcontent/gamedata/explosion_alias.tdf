@@ -36,6 +36,7 @@
 	DelaySpawner=CExpGenSpawner;
 	ExplosionSphere=CSpherePartSpawner;
 	ExplosionSpike=CExploSpikeProjectile;
+	SimpleParticleSpawner=CSphereParticleSpawner;
 }
 [generators]
 {
