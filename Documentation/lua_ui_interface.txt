@@ -1,0 +1,688 @@
+--
+--  General Notes
+--
+--
+--  * Spring 0.73b2 uses Lua 5.0
+--
+--  * All of the standard lua libraries are available
+--    (base, io, math, string, table, debug)
+--
+--  * The Game[], UnitDefs[], and WeaponDefs[] tables are available.
+--    These tables can be printed into the infolog.txt be adding
+--    "keydebug 2" in the uikeys.txt file.
+--
+--  * Screen origin is left-bottom (0, 0)
+--    (this is used for both mouse and screen drawing coordinates)
+--  
+--
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-INS
+--
+--  Call-ins are functions that the lua code can provide that will
+--  be called from the Spring executable when appropriate. All of
+--  the call-ins are optional, except for LayoutButtons().
+--
+
+  LayoutButtons()
+
+  UpdateLayout()
+
+  ConfigCommand()
+  CommandNotify()
+
+  DrawWorldItems()
+  DrawScreenItems()
+
+  KeyPress()
+  KeyRelease()
+  MouseMove()
+  MousePress()
+  MouseRelease()
+
+  IsAbove()
+  GetTooltip()
+
+  UnitCreated()
+  UnitReady()
+  UnitDestroyed()
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-OUTS
+--
+--  Call-outs are the functions which may be used from within the LUA code.
+--  They are all placed in the Spring[] table  (ex: use Spring.LoadTextVFS()
+--  or Spring.Draw.Text())
+--
+
+  LoadTextVFS()
+  GetDirListVFS()
+  GetDirList()
+
+  GetFPS()
+  GetGameSeconds()
+  GetInCommand()
+  GetMouseState()
+
+  GetKeyCode()
+  GetKeySymbol()
+  GetKeyBindings()
+  GetActionHotKeys()
+
+  Spring.GetConfigInt()
+  Spring.SetConfigInt()
+  GetConfigString()
+  SetConfigString()
+
+  GetSelectedGroup()
+  GetGroupList()
+  GetGroupAIName()
+  GetGroupAIList()
+
+  GetSelectedUnits()
+  GetGroupUnits()
+  GetMyTeamUnits()
+  GetAlliedUnits()
+
+  GetUnitDefID()
+  GetUnitTeam()
+  GetUnitAllyTeam()
+  GetUnitHealth()
+  GetUnitStates()
+  GetUnitStockpile()
+  GetUnitPosition()
+  GetUnitHeading()
+  GetUnitBuildFacing()
+
+  GetCommandQueue()
+  GetFullBuildQueue()
+  GetRealBuildQueue()
+
+  GetAllyteamList()
+  GetTeamInfo()
+  GetTeamResources()
+  GetTeamUnitStats()    
+  SetShareLevel()
+
+  GetMyPlayerID()
+  GetPlayerInfo()
+
+  AreTeamsAllied()
+  ArePlayersAllied()
+
+  GetCameraState()
+  SetCameraState()
+
+  SendCommands()
+  GiveOrder()
+
+  GetGroundHeight()
+  TestBuildOrder()
+  Pos2BuildPos()
+
+  PlaySoundFile()
+
+  AddWorldIcon()
+  AddWorldText()
+  AddWorldUnit()
+
+  Draw.State()
+
+  Draw.Shape()
+  Draw.UnitDef()
+  Draw.Text()
+  Draw.GetTextWidth()
+
+  Draw.Translate()
+  Draw.Scale()
+  Draw.Rotate()
+
+  Draw.PushMatrix()
+  Draw.PopMatrix()
+
+  Draw.ListCreate()
+  Draw.ListRun()
+  Draw.ListDelete()
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-INS, in detail
+--
+
+--
+--  Called whenever the active commands changed, or if forced
+--
+LayoutButtons(number xButtons, number yButtons, number cmdCount,
+              commands = {  --  the list of commands that are currently available
+                [0] = { id = number,
+                        type = number,
+                        action = string,
+                        hidden = boolean,
+                        params = { string "param1", string "param2", etc...}
+                      },
+                [1] = { ... },
+                [2] = { ... },
+                etc...
+              }) ->
+  string menuName,
+  number xButtons,
+  number yButtons,
+  removeCmds = {
+    [1] = number cmdIndex1,  etc...
+  },
+  customCmds = {                 -- all parameters are optional
+    [1] = {
+      id        = number,
+      type      = number,
+      action    = string,
+      iconname  = string,
+      mouseicon = string,
+      tooltip   = string,
+      nwtext    = string,
+      netext    = string,
+      swtext    = string,
+      setext    = string,
+      actions = { string "action1", string "action2",  etc...}
+    },
+    etc...
+  }
+  onlyTextureCmds = {
+    [1] = number cmdIndex1,  etc...
+  },
+  reTextureCmds = {
+    [number cmdIndex1] = string "texture1",  etc...
+  },
+  reNamedCmds = {
+    [number cmdIndex1] = string "name1",  etc...
+  },
+  reTooltipCmds = {
+    [number cmdIndex1] = string "tooltip1",  etc...
+  },
+  reParamsCmds = {
+    -- paramNum starts at 0
+    [number cmdIndex1] = { [number paramNum] = string "value", etc... },  etc...
+  },
+  buttonList = {
+    -- buttonSlots start at 0
+    [number buttonSlot] = number cmdIndex1,  etc...
+  }
+
+
+--
+--  Called every frame. Return 'true' if you wish to force a re-layout
+--  (ex: if you need to change the appearance of a custom button)
+--
+UpdateLayout(
+  boolean commandsChanged,
+  number page,
+  boolean alt,
+  boolean ctrl,
+  boolean meta,
+  booleanshift
+) -> boolean forceLayout
+
+
+--
+--  Called from the "/luaui <command>" in-game command
+--
+ConfigCommand(string "command") -> nil
+
+
+--
+--  Called whenever the user produces a new command. If the
+--  returned value is true, then the command is not sent.
+--
+CommandNotify(
+  number commandID,
+  params  = { string "param1", string "param2", etc... },
+  options = { boolean alt, boolean ctrl, boolean shift, boolean right }
+) -> boolean takeCommand
+
+
+--
+--  Called every frame
+--
+DrawWorldItems() -> nil
+
+DrawScreenItems(number width, number height) -> nil
+
+
+--
+--  The following are called when the associated user input is given
+--
+KeyPress(unsigned short key, bool isRepeat) -> boolean takeEvent
+
+KeyRelease(unsigned short key) -> boolean takeEvent
+
+
+MouseMove(int x, int y, int dx, int dy, int button) -> boolean takeEvent
+
+MousePress(int x, int y, int button) -> boolean takeEvent
+
+MouseRelease(int x, int y, int button) -> number commandIndex
+
+
+--
+--  Called be Spring to find out if the cursor is over the
+--  any part of the user interface. This is used to determine
+--  the current tooltip, whether or not to execute a default
+--  command, etc...
+--
+IsAbove(int x, int y) -> boolean above
+
+--
+--  Called when Spring thinks the user interface owns the tooltip
+--
+GetTooltip(int x, int y) -> string "tooltip"
+
+
+--
+--  Called when a unit is created
+--
+UnitCreated(number unitID, number unitDefID) -> nil
+
+
+--
+--  Called when a unit first reaches 100% health
+--
+UnitReady(number unitID,    number unitDefID,
+          number builderID, number builderUnitDefID) -> nil
+
+--
+--  Called when a unit is destroyed
+--
+UnitDestroyed(number unitID, number unitDefID) -> nil
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-OUTS, in detail
+--
+--  Call-outs are the functions which may be used from within the LUA
+--  code. They are bound to the lua workspace before the 
+--
+--  The calls in the Spring.Draw table are based on OpenGL functions.
+--  You may wish to read the documentation on the following OpenGL
+--  functions to better understand them:
+--    * glBegin()        
+--    * glEnable()       
+--    * glAlphaFunc()
+--    * glBlendFunc()
+--    * glDepthFunc()
+--    * glLogicOp()
+--    * glCullFace()
+--    * glShadeModel()
+--    * glGenLists()
+--    * glNewList()
+--    * glDeleteLists()
+--
+
+LoadTextVFS(string "filename") -> nil | string "filecontents"
+
+GetDirListVFS(string "dir") ->
+  vfsFiles = {
+    [1] = string "filename",
+    etc...
+  }
+
+-- options characters are:
+--   "d" - include directories
+--   "r" - recursive search
+GetDirList(string "dir", string "pattern", string "options") ->
+  normalFiles = {
+    [1] = string "filename",
+    etc...
+  }
+
+
+GetFPS()         -> number fps
+
+GetGameSeconds() -> number seconds
+
+GetInCommand()   -> number inCommand
+
+GetMouseState()  ->
+  number x,
+  number y,
+  boolean leftButton,
+  boolean middleButton,
+  boolean rightButton
+
+
+GetKeyCode(string "keysym") -> number keycode
+
+GetKeySymbol(number keycode) -> string "defKeySym", string "userKeySym"
+
+GetKeyBindings(string "keyset") ->
+  bindings = {
+    [1] = { string "command" = string "arguments" },
+    etc...
+  }
+
+GetActionHotKeys(string "command") ->
+  hotkeys = {
+    [1] = string "hotkey1",
+    etc...
+  }
+
+
+GetConfigInt(string varname [,number default])    -> number value
+
+SetConfigInt(string varname, number)              -> nil
+
+GetConfigString(string varname [,string default]) -> string value
+
+SetConfigString(string varname, string value)     -> nil
+
+
+GetSelectedGroup() -> number groupID
+
+GetGroupList() ->
+  groups = {
+     [number groupID] = number groupCount,
+     etc...
+  }
+
+GetGroupAIName(number groupID) ->
+  nil | string "aiName"
+
+GetGroupAIList() ->
+  aiList = {
+    [1] = string "aiName",
+    etc...
+  }
+
+
+GetSelectedUnits(["raw"]) ->
+  if "raw":
+    unitTable = {
+      [1] = unitID,
+      etc...
+    }
+  else:
+    unitDefTable = {
+      [number unitDefID] = {
+        [number unitID] = number unitDefID,
+        etc...
+      },
+      etc...
+    }
+
+GetGroupUnits(["raw"]) ->
+  if "raw":
+    unitTable = {
+      [1] = unitID,
+      etc...
+    }
+  else:
+    unitDefTable = {
+      [number unitDefID] = {
+        [number unitID] = number groupID,
+        etc...
+      },
+      etc...
+    }
+
+GetMyTeamUnits(["raw"]) ->
+  if "raw":
+    unitTable = {
+      [1] = unitID,
+      etc...
+    }
+  else:
+    unitDefTable = {
+      [number unitDefID] = {
+        [number unitID] = number unitDefID,
+        etc...
+      },
+      etc...
+    }
+
+GetAlliedUnits(["raw"]) -- FIXME
+  if "raw":
+    teamTable = {
+      [number teamID] = {
+        [1] = unitID,
+        etc...
+      },
+      etc...
+    }
+  else:
+    teamTable = {
+      [number teamID] = {
+        [number unitDefID] = {
+          [number unitID] = number teamID,
+          etc...
+        },
+        etc...
+      },
+      etc...
+    }
+
+
+GetUnitDefID(number unitID) ->
+  nil | number unitDefID
+
+GetUnitTeam(number unitID) ->
+  nil | number teamID
+
+GetUnitAllyTeam(number unitID) ->
+  nil | number allyTeamID
+
+GetUnitHealth(number unitID) ->
+  nil | number health,
+        number maxHealth,
+        number paralyzeDamage,
+        number captureProgress,
+        number buildProgress
+
+GetUnitStates(number unitID) ->
+  nil | states = {
+          firestate  = number,
+          movestate  = number,
+          repeating  = boolean,
+          cloak      = boolean,
+          active     = boolean,
+          trajectory = boolean
+        }
+
+GetUnitStockpile(number unitID) ->
+  nil | number currentStockpile,
+        number queuedStockpile
+
+GetUnitPosition(number unitID) ->
+  nil | number x,
+        number y,
+        number z
+
+GetUnitHeading(number unitID) ->
+  nil | number x,
+        number y,
+        number z
+
+GetUnitBuildFacing(number unitID) ->
+  nil | number buildFacing
+
+
+GetCommandQueue(number unitID [, number maxCommands]) ->
+  nil | commands = {
+    [1] = {
+            id = number,
+            params = { number, number, etc... },
+            options = {
+              boolean alt,
+              boolean ctrl,
+              boolean shift,
+              boolean right,
+              boolean internal
+            }
+          },
+          etc...
+        }
+
+GetFullBuildQueue(number unitID) ->
+  nil | buildOrders = {
+          [1] = { [number unitDefID] = number count },  etc...
+        }
+
+GetRealBuildQueue(number unitID) ->
+  nil | buildOrders = {
+          [1] = { [number unitDefID] = number count },  etc...
+        }
+
+GetAllyteamList() ->
+  allegianceTable = {
+    [number allyTeamID] = {
+      [number teamID] = {
+        [number playerID] = string "playerName",
+        etc...
+      },
+      etc...
+    },
+    etc...
+  }
+
+GetTeamInfo(number teamID) ->
+  nil | number teamNum,
+        number leader,
+        boolean active,
+        boolean isDead,
+        string  "side",
+        number  colorRed,
+        number  colorGreen,
+        number  colorBlue,
+        number  colorAlpha
+
+GetTeamResources(string "metal" | "energy", number teamID) ->
+  nil | number currentLevel,
+        number storage,
+        number pull,
+        number income,
+        number expense,
+        number share,
+        number sent,
+        number received
+
+GetTeamUnitStats(number teamID) ->
+  nil | number killed,
+        number died,
+        number capturedBy,
+        number capturedFrom,
+        number received,
+        number sent
+
+SetShareLevel(string "metal" | "energy", number fraction) -> nil
+
+
+GetMyPlayerID() -> number playerID
+
+GetPlayerInfo(number playerID) ->
+  nil | string "name",
+        boolean active,
+        boolean spectator,
+        number teamID,
+        number allyTeamID,
+        number pingTime,
+        number cpuUsage
+  
+
+AreTeamsAllied(number teamID1, number teamID2) -> nil | boolean allied
+
+ArePlayersAllied(number playerID1, number playerID2) -> nil | boolean allied
+
+
+GetCameraState() -> table[] camstate  (opaque handle)
+
+SetCameraState(table[] camstate) -> nil
+
+
+SendCommands(commands = { string "cmd1", string "cmd2", string "cmd3", ... }) -> nil
+
+GiveOrder(number cmdID,
+          params = {number, number, number},
+          options = {"alt", "ctrl", "shift", "right"}) -> nil
+
+
+GetGroundHeight(number x, number y) -> number z
+
+TestBuildOrder(number unitDefID,
+               number x, number y, number z
+               number facing) -> boolean willBuild
+
+Pos2BuildPos(number unitDefID, number x, number y, number z) ->
+  nil | number x,
+        number y,
+        number z
+
+
+PlaySoundFile(string "filename") -> nil
+
+
+AddWorldIcon(number cmdID, number x, number y, number z) -> nil
+
+AddWorldText(string "text", number x, number y, number z) -> nil
+
+AddWorldUnit(number unitDefID,
+             number x, number y, number z,
+             number team, number facing) -> nil
+
+
+----------------------
+--  Draw sub-table  --
+----------------------
+
+Draw.State(stateTable = {
+  reset = true,  -- value is ignored  (note: settings are not ordered)
+  lighting   = boolean enable,
+  depthmask  = boolean enable,
+  depthtest  = boolean enable | number func,
+  logicop    = boolean enable | number func,
+  culling    = boolean enable | number face,
+  blending   = boolean enable | { number srcmode, number dstmode },
+  alphatest  = boolean enable | { number func, number threshold },
+  shademodel = number mode
+}) -> nil
+
+Draw.Shape(
+  number GLtype,
+  string "texture" | boolean enable | nil,  -- nil value for no state modification
+  elements = {
+    [1] = { v | vertex   = { number x, number y, number z },           -- required
+            n | normal   = { number x, number y, number z },           -- optional
+            t | texcoord = { number x, number y },                     -- optional
+            c | color    = { number r, number g, number b, number a }  -- optional
+    },
+    etc ...
+  }
+) -> nil
+
+Draw.UnitDef(number unitDefID, number teamID) -> nil
+
+-- the text option characters are:
+--   "o" - outline
+--   "r" - right justify
+--   "c" - center justify
+Draw.Text(string "text", number x, number y, number size, string "options") -> nil
+Draw.GetTextWidth(string "text") -> number width  --  in pixels, with a font size of 1.0
+
+Draw.Translate(number x, number y, number z) -> nil
+Draw.Scale(number x, number y, number z) -> nil
+Draw.Rotate(number angle, number x, number y, number z) -> nil
+
+Draw.PushMatrix() -> nil
+Draw.PopMatrix()  -> nil
+
+Draw.ListCreate(function [,arg1 [,arg2...]]) -> number listID  -- 0 is an invalid list
+Draw.ListRun(number listID) -> nil
+Draw.ListDelete(number listID) -> nil
+
