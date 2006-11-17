@@ -222,6 +222,19 @@ start_spring()
 	_start_spring "$LOG" "$EXEC" "$SPRINGFLAGS" "$SCRIPTFILE"
 }
 
+# Usage: kill_spring exec_name_1 [exec_name_2 [exec_name_3 [etc]]]
+kill_spring()
+{
+	for EXEC; do
+		PID="$(ps --no-headers -f | grep "$(basename "$EXEC")" | grep -v 'grep' | awk '{print $2}')"
+		if [ ! -z "$PID" ]; then
+			echo "killing $EXEC ($PID)..."
+			/bin/kill -9 $PID
+			sleep 5
+		fi
+	done
+}
+
 # Usage: run_spring server_spring client_spring [files]
 # Starts 2 instances of spring, waits till both are finished.
 # Logfiles are put in log/datetime.log, where datetime is the current date&time.
@@ -243,9 +256,16 @@ run_spring()
 	start_spring "$EXEC2" "1" "$LOG2" "$@"; sleep 5
 
 	# sleep till they're finished
-	while [ ! -z "$(ps --no-headers -f | egrep "$(basename "$EXEC1")|$(basename "$EXEC2")")" ]; do
+	while [ ! -z "$(ps --no-headers -f | grep "$(basename "$EXEC1")" | grep -v 'grep')" ] && \
+	      [ ! -z "$(ps --no-headers -f | grep "$(basename "$EXEC2")" | grep -v 'grep')" ]; do
 		sleep 1
 	done
+
+	# give some time so both have the chance to quit correctly.
+	# kill them if they're still alive after this timeout.
+	# (after regetting the PIDs to prevent chance for PID collision)
+	sleep 5
+	kill_spring "$EXEC1" "$EXEC2"
 
 	# show summary
 	if [ ! -z "$(grep "Sync error" "$LOG1" "$LOG2")" ]; then
