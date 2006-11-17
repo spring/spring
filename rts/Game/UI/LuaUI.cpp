@@ -81,6 +81,8 @@ static int GiveOrder(lua_State* L);
 
 static int GetGroupList(lua_State* L);
 static int GetSelectedGroup(lua_State* L);
+static int GetGroupAIName(lua_State* L);
+static int GetGroupAIList(lua_State* L);
 
 static int GetSelectedUnits(lua_State* L);
 static int GetGroupUnits(lua_State* L);
@@ -154,7 +156,7 @@ static int DrawPopMatrix(lua_State* L);
 static int DrawShape(lua_State* L);
 static int DrawUnitDef(lua_State* L);
 static int DrawText(lua_State* L);
-static int GetTextWidth(lua_State* L);
+static int DrawGetTextWidth(lua_State* L);
 
 static int DrawListCreate(lua_State* L);
 static int DrawListRun(lua_State* L);
@@ -269,6 +271,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(SetConfigString);
 	REGISTER_LUA_CFUNC(GetGroupList);
 	REGISTER_LUA_CFUNC(GetSelectedGroup);
+	REGISTER_LUA_CFUNC(GetGroupAIName);
+	REGISTER_LUA_CFUNC(GetGroupAIList);
 	REGISTER_LUA_CFUNC(GetSelectedUnits);
 	REGISTER_LUA_CFUNC(GetGroupUnits);
 	REGISTER_LUA_CFUNC(GetMyTeamUnits);
@@ -326,7 +330,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(Rotate);
 	REGISTER_LUA_DRAW_CFUNC(PushMatrix);
 	REGISTER_LUA_DRAW_CFUNC(PopMatrix);
-	REGISTER_LUA_CFUNC(GetTextWidth);
+	REGISTER_LUA_DRAW_CFUNC(GetTextWidth);
 	lua_rawset(L, -3); // add the Draw table
 
 	lua_setglobal(L, "Spring");
@@ -384,11 +388,8 @@ bool CLuaUI::ConfigCommand(const string& command)
 }
 
 
-bool CLuaUI::UpdateLayout(bool& forceLayout,
-                                      bool commandsChanged, int activePage)
+bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 {
-	forceLayout = false;
-
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
 		return false;
@@ -398,8 +399,7 @@ bool CLuaUI::UpdateLayout(bool& forceLayout,
 	lua_getglobal(L, "UpdateLayout");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		forceLayout = false;
-		return true; // the call is not defined, no forced updates
+		return false; // the call is not defined
 	}
 
 	lua_pushboolean(L, commandsChanged);
@@ -419,9 +419,9 @@ bool CLuaUI::UpdateLayout(bool& forceLayout,
 		logOutput.Print("UpdateLayout() expects a boolean return value\n");
 		return false;
 	}
-	forceLayout = !!lua_toboolean(L, -1);
+	bool forceLayout = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
-	return true;
+	return forceLayout;
 }
 
 
@@ -436,7 +436,7 @@ bool CLuaUI::CommandNotify(const Command& cmd)
 	lua_getglobal(L, "CommandNotify");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
+		return false; // the call is not defined
 	}
 
 	// push the command id	
@@ -479,7 +479,7 @@ bool CLuaUI::CommandNotify(const Command& cmd)
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("CommandNotify() bad return value (%i)\n", args);
 		lua_pop(L, args);
-		return true;
+		return false;
 	}
 	
 	return !!lua_toboolean(L, -1);
@@ -682,9 +682,6 @@ static void SetupScreenTransform()
 	// on the window's bottom left corner
 	const float distAdj = (zplane / znear);
 	glTranslatef(left * distAdj, bottom * distAdj, -zplane);
-	// setup the scale for placement at (z = -dist)
-//	const float scale = (width / spsx);
-//	glScalef(scale, scale, scale);
 
 	// back light
 	const float backLightPos[4]  = { 1.0f, 2.0f, 2.0f, 0.0f };
@@ -700,7 +697,6 @@ static void SetupScreenTransform()
 	glPushMatrix();
 	glLoadMatrixd(camera->modelview);
 	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
-
 	
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
@@ -718,8 +714,6 @@ static void SetupScreenTransform()
 
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
-
-	//		glColor4f(1, 0, 0, 1);
 
 	const float grey[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 	const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -1116,17 +1110,17 @@ bool CLuaUI::AddConsoleLine(const string& line, int priority)
 }
 
 
-bool CLuaUI::LayoutIcons(int& xIcons, int& yIcons,
-                                     const vector<CommandDescription>& cmds,
-                                     vector<int>& removeCmds,
-                                     vector<CommandDescription>& customCmds,
-                                     vector<int>& onlyTextureCmds,
-                                     vector<ReStringPair>& reTextureCmds,
-                                     vector<ReStringPair>& reNamedCmds,
-                                     vector<ReStringPair>& reTooltipCmds,
-                                     vector<ReParamsPair>& reParamsCmds,
-                                     map<int, int>& iconList,
-                                     string& menuName)
+bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
+                           const vector<CommandDescription>& cmds,
+                           vector<int>& removeCmds,
+                           vector<CommandDescription>& customCmds,
+                           vector<int>& onlyTextureCmds,
+                           vector<ReStringPair>& reTextureCmds,
+                           vector<ReStringPair>& reNamedCmds,
+                           vector<ReStringPair>& reTooltipCmds,
+                           vector<ReParamsPair>& reParamsCmds,
+                           map<int, int>& iconList,
+                           string& menuName)
 {
 	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
@@ -1143,15 +1137,15 @@ bool CLuaUI::LayoutIcons(int& xIcons, int& yIcons,
 	iconList.clear();
 	menuName = "";
 
-	lua_getglobal(L, "LayoutIcons");
+	lua_getglobal(L, "LayoutButtons");
 	if (!lua_isfunction(L, -1)) {
-		logOutput.Print("Error: missing LayoutIcons() lua function\n");
+		logOutput.Print("Error: missing LayoutButtons() lua function\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 	
-	lua_pushnumber(L, xIcons);
-	lua_pushnumber(L, yIcons);
+	lua_pushnumber(L, xButtons);
+	lua_pushnumber(L, yButtons);
 	lua_pushnumber(L, cmds.size());
 	
 	if (!BuildCmdDescTable(L, cmds)) {
@@ -1163,7 +1157,7 @@ bool CLuaUI::LayoutIcons(int& xIcons, int& yIcons,
 	const int error = lua_pcall(L, 4, LUA_MULTRET, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_LayoutIcons", lua_tostring(L, -1));
+		                "Call_LayoutButtons", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -1176,70 +1170,70 @@ bool CLuaUI::LayoutIcons(int& xIcons, int& yIcons,
 		return false; // no warnings
 	}
 	else if (args != 11) {
-		logOutput.Print("LayoutIcons() bad number of return values (%i)\n", args);
+		logOutput.Print("LayoutButtons() bad number of return values (%i)\n", args);
 		lua_pop(L, args);
 		return false;
 	}
 	
 	if (!GetLuaIntMap(L, iconList)) {
-		logOutput.Print("LayoutIcons() bad iconList table\n");
+		logOutput.Print("LayoutButtons() bad iconList table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!GetLuaReParamsList(L, reParamsCmds)) {
-		logOutput.Print("LayoutIcons() bad reParams table\n");
+		logOutput.Print("LayoutButtons() bad reParams table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, reTooltipCmds)) {
-		logOutput.Print("LayoutIcons() bad reTooltip table\n");
+		logOutput.Print("LayoutButtons() bad reTooltip table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, reNamedCmds)) {
-		logOutput.Print("LayoutIcons() bad reNamed table\n");
+		logOutput.Print("LayoutButtons() bad reNamed table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, reTextureCmds)) {
-		logOutput.Print("LayoutIcons() bad reTexture table\n");
+		logOutput.Print("LayoutButtons() bad reTexture table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!GetLuaIntList(L, onlyTextureCmds)) {
-		logOutput.Print("LayoutIcons() bad onlyTexture table\n");
+		logOutput.Print("LayoutButtons() bad onlyTexture table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!GetLuaCmdDescList(L, customCmds)) {
-		logOutput.Print("LayoutIcons() bad customCommands table\n");
+		logOutput.Print("LayoutButtons() bad customCommands table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!GetLuaIntList(L, removeCmds)) {
-		logOutput.Print("LayoutIcons() bad removeCommands table\n");
+		logOutput.Print("LayoutButtons() bad removeCommands table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
 	if (!lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
-		logOutput.Print("LayoutIcons() bad xIcons or yIcons values\n");
+		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
 		lua_pop(L, args);
 		return false;
 	}
-	xIcons = (int)lua_tonumber(L, -2);
-	yIcons = (int)lua_tonumber(L, -1);
+	xButtons = (int)lua_tonumber(L, -2);
+	yButtons = (int)lua_tonumber(L, -1);
 	lua_pop(L, 2);
 	
 	if (!lua_isstring(L, -1)) {
-		logOutput.Print("LayoutIcons() bad xIcons or yIcons values\n");
+		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
 		lua_pop(L, args);
 		return false;
 	}
@@ -1874,6 +1868,61 @@ static int GetSelectedGroup(lua_State* L)
 		lua_error(L);
 	}
 	lua_pushnumber(L, selectedUnits.selectedGroup);
+	return 1;
+}
+
+
+static int GetGroupAIList(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetGroupAIList() takes no arguments");
+		lua_error(L);
+	}
+	lua_newtable(L);
+	const map<AIKey, string>& availableAI = grouphandler->availableAI;
+	map<AIKey, string>::const_iterator it;
+	int count = 0;
+	for (it = availableAI.begin(); it != availableAI.end(); ++it) {
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+	return 1;
+}
+
+
+static int GetGroupAIName(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetGroupAIName(groupID)");
+		lua_error(L);
+	}
+
+	const int groupID = (int)lua_tonumber(L, 1);
+	if ((groupID < 0) || (groupID >= (int)grouphandler->groups.size())) {
+		return 0; // bad group
+	}
+
+	const CGroup* group = grouphandler->groups[groupID];
+	if (group->ai == NULL) {
+		lua_pushstring(L, "");
+		return 1;
+	}
+
+	const AIKey& aikey = group->currentAiKey;
+	const map<AIKey, string>& availableAI = grouphandler->availableAI;
+	map<AIKey, string>::const_iterator fit = availableAI.find(aikey);
+	if (fit == availableAI.end()) {
+		lua_pushstring(L, ""); // should not happen?
+	} else {
+		lua_pushstring(L, fit->second.c_str());
+	}
 	return 1;
 }
 
@@ -3139,11 +3188,11 @@ static int DrawText(lua_State* L)
 }
 
 
-static int GetTextWidth(lua_State* L)
+static int DrawGetTextWidth(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetTextWidth(\"text\")");
+		lua_pushstring(L, "Incorrect arguments to DrawGetTextWidth(\"text\")");
 		lua_error(L);
 	}
 	const string text = lua_tostring(L, 1);
@@ -3286,29 +3335,36 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 }
 
 
-static int DrawShape(lua_State* L)
-{	
-	if (!drawingEnabled) {
-		return 0;
+static bool ParseShapeTexture(lua_State* L, int index)
+{
+	if (lua_isnil(L, index)) {
+		return true;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_istable(L, 3)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawShape(type, \"texture\", verts[])");
-		lua_error(L);
+	if (lua_isboolean(L, index)) {
+		if (lua_toboolean(L, index)) {
+			glEnable(GL_TEXTURE_2D);
+		} else {
+			glDisable(GL_TEXTURE_2D);
+		}
+		return true;
 	}
-
-	const string texture = lua_tostring(L, 2);
+	
+	if (!lua_isstring(L, index)) {
+		logOutput.Print(
+			"DrawShape: invalid texture parameter\n");
+		return false; // invalid format
+	}
+	
+	const string texture = lua_tostring(L, index);
 	if (texture.empty()) {
-		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_2D); // equivalent to 'false'
 	}
 	else if (texture[0] != '#') {
 		if ((guihandler == NULL) || !guihandler->BindNamedTexture(texture)) {
 			logOutput.Print(
 				"DrawShape: could not load texture: %s\n", texture.c_str());
-			return 0;
+			return false;
 		}
 		glEnable(GL_TEXTURE_2D);
 	}
@@ -3327,13 +3383,35 @@ static int DrawShape(lua_State* L)
 			} else {
 				logOutput.Print(
 					"DrawShape: couln not load texture: %s\n", texture.c_str());
-				return 0;
+				return false;
 			}
 		} else {
 			logOutput.Print(
 				"DrawShape: couln not load texture: %s\n", texture.c_str());
-			return 0;
+			return false;
 		}
+	}
+	return true;
+}
+
+
+static int DrawShape(lua_State* L)
+{	
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) || !lua_isnumber(L, 1) ||
+	    (!lua_isstring(L, 2) && !lua_isboolean(L, 2) && !lua_isnil(L, 2)) ||
+	    !lua_istable(L, 3)) {
+		lua_pushstring(L,
+			"Incorrect arguments to DrawShape(type, <nil|\"texture\">, verts[])");
+		lua_error(L);
+	}
+	
+	if (!ParseShapeTexture(L, 2)) {
+		return 0;
 	}
 
 	const GLuint type = (GLuint)lua_tonumber(L, 1);
@@ -3476,8 +3554,7 @@ static int DrawState(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_istable(L, 1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawState(table)");
+		lua_pushstring(L, "Incorrect arguments to DrawState(table[])");
 		lua_error(L);
 	}
 	
@@ -3521,11 +3598,17 @@ static int DrawState(lua_State* L)
 					glEnable(GL_BLEND);
 					glBlendFunc((GLenum)values[0], (GLenum)values[1]);
 				}
+				else {
+					logOutput.Print("DrawState: bad blending params\n");
+				}
 			}
 		}
 		else if (key == "depthmask") {
 			if (lua_isboolean(L, -1)) {
 				glDepthMask(lua_toboolean(L, -1) ? GL_TRUE : GL_FALSE);
+			}
+			else {
+				logOutput.Print("DrawState: bad depthmask param\n");
 			}
 		}
 		else if (key == "depthtest") {
@@ -3536,15 +3619,12 @@ static int DrawState(lua_State* L)
 					glDisable(GL_DEPTH_TEST);
 				}
 			}
+			else if (lua_isnumber(L, -1)) {
+				glEnable(GL_DEPTH_TEST);
+				glDepthFunc((GLenum)lua_tonumber(L, -1));
+			}
 			else {
-				float depthFunc;
-				const int count = ParseFloatArray(L, &depthFunc, 1);
-				if (count >= 1) {
-					glDepthFunc((GLenum)depthFunc);
-					glEnable(GL_DEPTH_TEST);
-				} else {
-					glDisable(GL_DEPTH_TEST);
-				}
+				logOutput.Print("DrawState: bad depthtest param\n");
 			}
 		}
 		else if (key == "lighting") {
@@ -3555,6 +3635,9 @@ static int DrawState(lua_State* L)
 					glDisable(GL_LIGHTING);
 				}
 			}
+			else {
+				logOutput.Print("DrawState: bad lighting param\n");
+			}
 		}
 		else if (key == "culling") {
 			if (lua_isboolean(L, -1)) {
@@ -3564,16 +3647,12 @@ static int DrawState(lua_State* L)
 					glDisable(GL_CULL_FACE);
 				}
 			}
+			else if (lua_isnumber(L, -1)) {
+				glEnable(GL_CULL_FACE);
+				glCullFace((GLenum)lua_tonumber(L, -1));
+			}
 			else {
-				float face;
-				const int count = ParseFloatArray(L, &face, 1);
-				if (count == 0) {
-					glDisable(GL_CULL_FACE);
-				}
-				else if (count == 1) {
-					glEnable(GL_CULL_FACE);
-					glCullFace((GLenum)face);
-				}
+				logOutput.Print("DrawState: bad culling param\n");
 			}
 		}
 		else if (key == "alphatest") {
@@ -3594,6 +3673,9 @@ static int DrawState(lua_State* L)
 					glEnable(GL_ALPHA_TEST);
 					glAlphaFunc((GLenum)values[0], values[1]);
 				}
+				else {
+					logOutput.Print("DrawState: bad alphatest params\n");
+				}
 			}
 		}
 		else if (key == "logicop") {
@@ -3604,23 +3686,12 @@ static int DrawState(lua_State* L)
 					glDisable(GL_COLOR_LOGIC_OP);
 				}
 			}
-			else {
-				float op;
-				const int count = ParseFloatArray(L, &op, 1);
-				if (count == 0) {
-					glDisable(GL_COLOR_LOGIC_OP);
-				}
-				else if (count == 1) {
-					glEnable(GL_COLOR_LOGIC_OP);
-					glLogicOp((GLenum)op);
-				}
+			else if (lua_isnumber(L, -1)) {
+				glEnable(GL_COLOR_LOGIC_OP);
+				glLogicOp((GLenum)lua_tonumber(L, -1));
 			}
-		}
-		else if (key == "shademodel") {
-			float mode;
-			const int count = ParseFloatArray(L, &mode, 1);
-			if (count == 1) {
-				glShadeModel((GLenum)mode);
+			else {
+				logOutput.Print("DrawState: bad logicop param\n");
 			}
 		}
 		else if ((key == "clear") && screenTransform) {

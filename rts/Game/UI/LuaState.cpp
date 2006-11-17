@@ -132,6 +132,7 @@ bool CLuaState::LoadInfo()
 	luaopen_math(L);
 	luaopen_string(L);
 	luaopen_table(L);
+	luaopen_debug(L);
 
 	// flush the return values
 	lua_pop(L, lua_gettop(L));

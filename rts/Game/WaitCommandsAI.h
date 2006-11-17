@@ -36,6 +36,7 @@ class CWaitCommandsAI {
 		void AddGatherWait(const Command& cmd);
 
 		void AcknowledgeCommand(const Command& cmd);
+		void AddUnits(const Command& cmd, const vector<int>& unitIDs);
 
 		void ClearUnitQueue(CUnit* unit, const deque<Command>& queue);
 		void RemoveWaitCommand(CUnit* unit, const Command& cmd);
