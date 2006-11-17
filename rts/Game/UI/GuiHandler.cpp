@@ -9,10 +9,10 @@
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "CommandColors.h"
-#include "LuaUI.h"
 #include "InfoConsole.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
+#include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
 #include "OutlineFont.h"
@@ -111,7 +111,7 @@ CGuiHandler::~CGuiHandler()
 
 void CGuiHandler::UnitCreated(CUnit* unit)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUI->UnitCreated(unit);
 	}
 }
@@ -119,7 +119,7 @@ void CGuiHandler::UnitCreated(CUnit* unit)
 
 void CGuiHandler::UnitReady(CUnit* unit, CUnit* builder)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUI->UnitReady(unit, builder);
 	}
 }
@@ -127,7 +127,7 @@ void CGuiHandler::UnitReady(CUnit* unit, CUnit* builder)
 
 void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUI->UnitDestroyed(victim, attacker);
 	}
 }
@@ -135,7 +135,7 @@ void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 
 void CGuiHandler::AddConsoleLine(const std::string& line, int priority)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUI->AddConsoleLine(line, priority);
 	}
 }
@@ -685,11 +685,11 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	vector<CLuaUI::ReParamsPair> reParamsCmds;
 	map<int, int> iconMap;
 
-	if (!luaUI->LayoutIcons(tmpXicons, tmpYicons, cmds,
-	                                removeCmds, customCmds,
-	                                onlyTextureCmds, reTextureCmds,
-	                                reNamedCmds, reTooltipCmds, reParamsCmds,
-	                                iconMap, menuName)) {
+	if (!luaUI->LayoutButtons(tmpXicons, tmpYicons, cmds,
+	                          removeCmds, customCmds,
+	                          onlyTextureCmds, reTextureCmds,
+	                          reNamedCmds, reTooltipCmds, reParamsCmds,
+	                          iconMap, menuName)) {
 		return false;
 	}
 
@@ -879,7 +879,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 {
 	if (luaUI != NULL) {
-		if (!luaUI->CommandNotify(cmd)) {
+		if (luaUI->CommandNotify(cmd)) {
 			return;
 		}
 	}
@@ -947,13 +947,7 @@ void CGuiHandler::Update()
 
 	bool handlerUpdate = false;
 	if (luaUI != NULL) {
-		if (!luaUI->UpdateLayout(handlerUpdate,
-		                                 commandsChanged, activePage)) {
-			delete luaUI;
-			luaUI = NULL;
-			handlerUpdate = false;
-			LoadConfig("ctrlpanel.txt");
-		}
+		handlerUpdate = luaUI->UpdateLayout(commandsChanged, activePage);
 	}
 
 	if (commandsChanged) {
@@ -1050,7 +1044,7 @@ void CGuiHandler::SetCursorIcon() const
 
 bool CGuiHandler::MousePress(int x,int y,int button)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUIClick = luaUI->MousePress(x, y, button);
 		if (luaUIClick) {
 			return true;
@@ -1091,7 +1085,7 @@ bool CGuiHandler::MousePress(int x,int y,int button)
 
 void CGuiHandler::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUI->MouseMove(x, y, dx, dy, button);
 	}
 }
@@ -1103,7 +1097,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 	
 	if (luaUIClick) {
 		luaUIClick = false;
-		if (luaUI) {
+		if (luaUI != NULL) {
 			iconCmd = luaUI->MouseRelease(x, y, button);
 		}
 		if ((iconCmd < 0) || (iconCmd >= commands.size())) {
@@ -1566,7 +1560,7 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 		logOutput.Print("commands.size() = %i\n", commands.size());
 		return true;
 	}
-	else if (action.command == "layout") {
+	else if (action.command == "luaui") {
 		RunLayoutCommand(action.extra);
 		return true;
 	}
@@ -1705,7 +1699,7 @@ int CGuiHandler::GetIconPosCommand(int slot) const
 
 bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		if (luaUI->KeyPress(key, isRepeat)) {
 			return true;
 		}
@@ -1951,7 +1945,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 
 bool CGuiHandler::KeyReleased(unsigned short key)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		return luaUI->KeyRelease(key);
 	}
 	return false;
@@ -2005,7 +1999,7 @@ void CGuiHandler::FinishCommand(int button)
 
 bool CGuiHandler::IsAbove(int x, int y)
 {
-	if (luaUI) {
+	if (luaUI != NULL) {
 		if (luaUI->IsAbove(x, y)) {
 			return true;
 		}
@@ -2017,7 +2011,7 @@ bool CGuiHandler::IsAbove(int x, int y)
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
 	string s;
-	if (luaUI) {
+	if (luaUI != NULL) {
 		s = luaUI->GetTooltip(x, y);
 		if (!s.empty()) {
 			return s;
@@ -3095,7 +3089,7 @@ void CGuiHandler::DrawButtons()
 	
 	DrawNumberInput();
 
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUI->DrawScreenItems();
 	}
 
@@ -3664,7 +3658,7 @@ void CGuiHandler::DrawMapStuff(void)
 
 	glLineWidth(1.0f);
 	
-	if (luaUI) {
+	if (luaUI != NULL) {
 		luaUI->DrawWorldItems();
 	}
 

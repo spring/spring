@@ -178,6 +178,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_RESURRECT:       cursorName = "Resurrect";    break;
 		case CMD_CAPTURE:         cursorName = "Capture";      break;
 		case CMD_SELFD:           cursorName = "SelfD";        break;
+		case CMD_RESTORE:         cursorName = "Restore";      break;
 /*
 		case CMD_STOP:
 		case CMD_AISELECT:
@@ -192,7 +193,6 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_ONOFF:
 		case CMD_CLOAK:
 		case CMD_STOCKPILE:
-		case CMD_RESTORE:
 		case CMD_REPEAT:
 		case CMD_TRAJECTORY:
 		case CMD_AUTOREPAIRLEVEL:

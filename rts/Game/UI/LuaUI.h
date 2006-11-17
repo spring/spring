@@ -40,21 +40,21 @@ class CLuaUI {
 			map<int, string> params;
 		};
 
-		bool LayoutIcons(int& xIcons, int& yIcons,
-		                 const vector<CommandDescription>& cmds,
-		                 vector<int>& removeCmds,
-		                 vector<CommandDescription>& customCmds,
-		                 vector<int>& onlyTextureCmds,
-		                 vector<ReStringPair>& reTextureCmds,
-		                 vector<ReStringPair>& reNamedCmds,
-		                 vector<ReStringPair>& reTooltipCmds,
-		                 vector<ReParamsPair>& reParamsCmds,
-		                 map<int, int>& iconList,
-		                 string& menuName);
+		bool LayoutButtons(int& xButtons, int& yButtons,
+		                   const vector<CommandDescription>& cmds,
+		                   vector<int>& removeCmds,
+		                   vector<CommandDescription>& customCmds,
+		                   vector<int>& onlyTextureCmds,
+		                   vector<ReStringPair>& reTextureCmds,
+		                   vector<ReStringPair>& reNamedCmds,
+		                   vector<ReStringPair>& reTooltipCmds,
+		                   vector<ReParamsPair>& reParamsCmds,
+		                   map<int, int>& iconList,
+		                   string& menuName);
 
 		bool ConfigCommand(const string& command);
 		
-		bool UpdateLayout(bool& forceLayout, bool commandsChanged, int activePage);
+		bool UpdateLayout(bool commandsChanged, int activePage);
 		
 		bool CommandNotify(const Command& cmd);
 		

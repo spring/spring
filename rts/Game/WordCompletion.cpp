@@ -29,7 +29,7 @@ void CWordCompletion::Reset()
 	words["/echo "] = wp;
 	words["/info"] = wp;
 	words["/gameinfo"] = wp;
-	words["/layout "] = wp;
+	words["/luaui "] = wp;
 	words["/say "] = wp;
 	words["/shadows "] = wp;
 	words["/water "] = wp;
