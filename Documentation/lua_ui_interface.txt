@@ -75,8 +75,8 @@
   GetKeyBindings()
   GetActionHotKeys()
 
-  Spring.GetConfigInt()
-  Spring.SetConfigInt()
+  GetConfigInt()
+  SetConfigInt()
   GetConfigString()
   SetConfigString()
 
