@@ -56,4 +56,20 @@ protected:
 	 Particle *particles;
 };
 
+//same behaviour as CSimpleParticleSystem but spawn the particles as independant objects
+class CSphereParticleSpawner : public CSimpleParticleSystem
+{
+	CR_DECLARE(CSphereParticleSpawner);
+
+public:
+	CSphereParticleSpawner();
+	~CSphereParticleSpawner();
+
+	void Draw(){};
+	void Update(){};
+
+	virtual void Init(const float3& explosionPos, CUnit *owner);
+
+};
+
 #endif

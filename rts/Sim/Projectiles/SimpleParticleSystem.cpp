@@ -5,6 +5,7 @@
 #include "Game/Camera.h"
 #include "ProjectileHandler.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "GenericParticleProjectile.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile);
 
@@ -144,4 +145,55 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 	}
 
 	drawRadius = (particleSpeed+particleSpeedSpread)*(particleLife*particleLifeSpread);
+}
+
+
+CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem);
+
+CR_REG_METADATA(CSphereParticleSpawner, 
+(
+	CR_MEMBER_BEGINFLAG(CM_Config),
+	CR_MEMBER_ENDFLAG(CM_Config)
+));
+
+CSphereParticleSpawner::CSphereParticleSpawner()
+{
+}
+
+CSphereParticleSpawner::~CSphereParticleSpawner()
+{
+}
+
+void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit *owner)
+{
+	float3 up = emitVector;
+	float3 right = up.cross(float3(up.y,up.z,-up.x));
+	float3 forward = up.cross(right);
+
+	for(int i=0; i<numParticles; i++)
+	{
+
+		float az = gu->usRandFloat()*2*PI;
+		float ay = (emitRot + emitRotSpread*gu->usRandFloat())*(PI/180.0);
+
+		float3 pspeed = ((up*emitMul.y)*cos(ay)-((right*emitMul.x)*cos(az)-(forward*emitMul.z)*sin(az))*sin(ay)) * (particleSpeed + gu->usRandFloat()*particleSpeedSpread);
+
+		CGenericParticleProjectile *particle = new CGenericParticleProjectile(pos+explosionPos, pspeed, owner);
+
+		particle->decayrate = 1.0f/(particleLife + gu->usRandFloat()*particleLifeSpread);
+		particle->life = 0;
+		particle->size = particleSize + gu->usRandFloat()*particleSizeSpread;
+
+		particle->texture = texture;
+		particle->colorMap = colorMap;
+
+		particle->airdrag = airdrag;
+		particle->sizeGrowth = sizeGrowth;
+		particle->sizeMod = sizeMod;
+
+		particle->directional = directional;
+		particle->SetRadius(particle->size + sizeGrowth*particleLife);
+	}
+
+	deleteMe = true;
 }

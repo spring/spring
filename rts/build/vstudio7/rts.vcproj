@@ -1221,6 +1221,12 @@
 						RelativePath="..\..\Sim\Projectiles\FlareProjectile.h">
 					</File>
 					<File
+						RelativePath="..\..\Sim\Projectiles\GenericParticleProjectile.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\GenericParticleProjectile.h">
+					</File>
+					<File
 						RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.cpp">
 					</File>
 					<File
