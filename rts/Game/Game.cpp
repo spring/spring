@@ -2986,7 +2986,18 @@ void CGame::HandleChatMsg(std::string s,int player)
 		}
 	}
 
-	if(s.find(".kick")==0 && player==0 && gameServer && serverNet){
+	if (s.find(".kickbynum") == 0 && player == 0 && gameServer && serverNet) {
+		int a = atoi(s.substr(11, string::npos).c_str());
+		if (a != 0 && gs->players[a]->active) {
+			unsigned char c=NETMSG_QUIT;
+			serverNet->SendData(&c,1,a);
+			serverNet->FlushConnection(a);
+
+			serverNet->connections[a].readyData[0]=NETMSG_QUIT; //this will rather ungracefully close the connection from our side
+			serverNet->connections[a].readyLength=1;            //so if the above was lost in packetlos etc it will never be resent
+		}
+	}
+	else if (s.find(".kick") == 0 && player == 0 && gameServer && serverNet){
 		string name=s.substr(6,string::npos);
 		if(!name.empty()){
 			StringToLowerInPlace(name);
@@ -2995,13 +3006,13 @@ void CGame::HandleChatMsg(std::string s,int player)
 				if(gs->players[a]->active){
 					string p = StringToLower(gs->players[a]->playerName);
 
-					if(p.find(name)==0){			//can kick on substrings of name
+					if(p.find(name)==0){               //can kick on substrings of name
 						unsigned char c=NETMSG_QUIT;
 						serverNet->SendData(&c,1,a);
 						serverNet->FlushConnection(a);
 
-						serverNet->connections[a].readyData[0]=NETMSG_QUIT;		//this will rather ungracefully close the connection from our side
-						serverNet->connections[a].readyLength=1;							//so if the above was lost in packetlos etc it will never be resent
+						serverNet->connections[a].readyData[0]=NETMSG_QUIT; //this will rather ungracefully close the connection from our side
+						serverNet->connections[a].readyLength=1;            //so if the above was lost in packetlos etc it will never be resent
 					}
 				}
 			}
