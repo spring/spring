@@ -5,8 +5,8 @@ rem - TASpring
 rem - TASpring sourcecode (taspring website )
 
 rem modify the following four paths for your environment:
-set MINGWDIR=h:\bin\mingw
-set MONODIR=h:\bin\Mono-1.1.18
+set MINGWDIR=g:\bin\mingw
+set MONODIR=g:\bin\Mono-1.1.18
 set SPRINGSOURCE=..\..\..\..
 set SPRINGAPPLICATION=..\..\..\..\game
 
@@ -16,7 +16,11 @@ copy /y %SPRINGSOURCE%\rts\ExternalAI\GlobalAIInterfaces\GlobalAIInterfaces.dll 
 call gmcs -debug -reference:GlobalAIInterfaces.dll MonoABICInterfaceGenerator.cs
 call mono --debug MonoABICInterfaceGenerator.exe
 
-call gmcs -debug -target:library -out:CSAIMono.dll CSAICInterface.cs ABICInterface_generated.cs
+call gmcs -debug -reference:GlobalAIInterfaces.dll MonoAbicWrappersGenerator.cs
+call mono --debug MonoAbicWrappersGenerator.exe
+
+set WRAPPERS=AbicIAICallbackWrapper_generated.cs AbicIFeatureDefWrapper_generated.cs AbicIMoveDataWrapper_generated.cs AbicIUnitDefWrapper_generated.cs
+call gmcs -debug -target:library -reference:GlobalAIInterfaces.dll -out:CSAIMono.dll CSAICInterface.cs ABICInterface_generated.cs %WRAPPERS%
 copy /y CSAIMono.dll %SPRINGAPPLICATION%
 copy /y CSAIMono.dll.mdb %SPRINGAPPLICATION%
 

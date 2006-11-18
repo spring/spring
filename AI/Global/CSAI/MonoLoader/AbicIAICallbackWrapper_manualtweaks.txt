@@ -1,0 +1,56 @@
+
+      //public void SendTextMsg( string message, int priority )
+      //{
+      //     ABICInterface.IAICallback_SendTextMsg( self, message, priority );
+      //}
+
+
+public UnitDef GetUnitDefByTypeId( int unitdeftypeid )
+{
+   IntPtr unitdefptr = ABICInterface.IAICallback_GetUnitDefByTypeId( self, unitdeftypeid );
+   if( unitdefptr == IntPtr.Zero )
+   {
+      return null;
+   }
+   return new UnitDef( unitdefptr );
+}
+
+public UnitDef GetUnitDef( int deployedid )
+{
+   IntPtr unitdefptr = ABICInterface.IAICallback_GetUnitDef( self, deployedid );
+   if( unitdefptr == IntPtr.Zero )
+   {
+      return null;
+   }
+   return new UnitDef( unitdefptr );
+}
+
+public Float3 GetUnitPos( int unitid )
+{
+   float x = 0; float y = 0; float z = 0;
+   ABICInterface.IAICallback_GetUnitPos( self, ref x, ref y, ref z, unitid );
+   return new Float3( x, y, z );
+}
+
+public Float3 ClosestBuildSite( UnitDef thisunitdef, Float3 pos, double searchradius, int mindistance )
+{
+   float x = 0; float y = 0; float z = 0;
+   ABICInterface.IAICallback_ClosestBuildSite( self, ref x, ref y, ref z, thisunitdef.self, (float)pos.x, (float)pos.y, (float)pos.z, (float)searchradius, mindistance, 0 );
+   return new Float3( x, y, z );    
+}
+
+public void DrawUnit( string name, Float3 pos, double rotation, int lifetime, int team,bool transparent, bool drawborder )
+{
+   ABICInterface.IAICallback_DrawUnit( self, name, (float)pos.x, (float)pos.y, (float)pos.z, (float)rotation, lifetime, team, transparent, drawborder, 0 );
+}
+
+public void GiveOrder( int unit, Command c )
+{
+   int numparams = c.parameters.GetUpperBound(0) + 1;
+   if( numparams == 0 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 0,0,0,0,0 ); }
+   if( numparams == 1 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 1,(float)c.parameters[0],0,0,0 ); }
+   if( numparams == 2 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 2,(float)c.parameters[0],(float)c.parameters[1],0,0 ); }
+   if( numparams == 3 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 3,(float)c.parameters[0],(float)c.parameters[1],(float)c.parameters[2],0 ); }
+   if( numparams == 4 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 4,(float)c.parameters[0],(float)c.parameters[1],(float)c.parameters[2],(float)c.parameters[3] ); }
+}
+

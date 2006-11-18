@@ -1,3 +1,25 @@
+// Copyright Jelmer Cnossen, Hugh Perkins 2006
+// hughperkins@gmail.com http://manageddreams.com
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURVector3E. See the GNU General Public License for
+//  more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program in the file licence.txt; if not, write to the
+// Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-
+// 1307 USA
+// You can find the licence also on the web at:
+// http://www.opensource.org/licenses/gpl-license.php
+//
+// ======================================================================================
+//
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -6,9 +28,97 @@ using System.IO;
 
 namespace CSharpAI
 {
+    public class CSAI
+    {
+        AICallback aicallback;
+        int team;
+        
+        public void InitAI( AICallback aicallback, int team )
+        {
+            this.aicallback = aicallback;
+            this.team = team;
+            aicallback.SendTextMsg( "Hello from Mono AbicWrappers", 0 );
+            aicallback.SendTextMsg( "The map name is: " + aicallback.GetMapName(), 0 );
+            aicallback.SendTextMsg( "Our ally team is: " + aicallback.GetMyTeam(), 0 );
+            
+            //int features[10000 + 1];
+            //int numfeatures = IAICallback_GetFeatures( aicallback, features, 10000 );
+            //sprintf( buffer, "Num features is: %i", numfeatures );
+            //IAICallback_SendTextMsg( aicallback, buffer, 0 );
+            
+            //const FeatureDef *featuredef = IAICallback_GetFeatureDef( aicallback, features[0] );
+            //sprintf( buffer, "First feature: %s", FeatureDef_get_myName( featuredef ) );
+            //IAICallback_SendTextMsg( aicallback, buffer, 0 );    
+            
+            UnitDef unitdef = aicallback.GetUnitDefByTypeId( 34 );
+            aicallback.SendTextMsg( "gotunitdef", 0 );
+            aicallback.SendTextMsg( "type id 34 is " + unitdef.name, 0 );
+            aicallback.SendTextMsg( "human name: " + unitdef.humanName, 0 );
+            aicallback.SendTextMsg( "id: " + unitdef.id, 0 );
+            
+            MoveData movedata = unitdef.movedata;
+            //IAICallback_SendTextMsg( aicallback, "movedata is null? " + ( movedata == 0 );
+            //IAICallback_SendTextMsg( aicallback, buffer, 0 );    
+            
+            //IAICallback_SendTextMsg( aicallback, "movetype: %i" + MoveData_get_movetype( movedata ) );        
+            //IAICallback_SendTextMsg( aicallback, buffer, 0 );    
+            
+            aicallback.SendTextMsg( "maxslope: " + movedata.maxSlope, 0 );
+        }
+        
+        public void UnitCreated( int unit )
+        {
+            aicallback.SendTextMsg(  "Unit created: " + unit, 0 );
+        
+            UnitDef unitdef = aicallback.GetUnitDef( unit );
+            aicallback.SendTextMsg(  "Unit created: " + unitdef.name, 0 );
+        
+            MoveData movedata = unitdef.movedata;
+            if( movedata != null )
+            {
+                aicallback.SendTextMsg(  "Max Slope: " + movedata.maxSlope, 0 );
+            }
+        
+            if( unitdef.isCommander )
+            {
+                int numbuildoptions = unitdef.GetNumBuildOptions();
+                string buildoptionsstring = "Build options: ";
+                for( int i = 0; i < numbuildoptions; i++ )
+                {
+                    buildoptionsstring += unitdef.GetBuildOption( i );            
+                }
+                aicallback.SendTextMsg( buildoptionsstring, 0 );
+        
+                Float3 commanderpos = aicallback.GetUnitPos( unit );
+                aicallback.SendTextMsg( "Commanderpos: " + commanderpos.ToString(), 0 );
+                
+                int numunitdefs = aicallback.GetNumUnitDefs();
+                aicallback.SendTextMsg( "Num unit defs: " + numunitdefs, 0 );
+                
+                for( int i = 1; i <= numunitdefs; i++ )
+                {
+                    UnitDef thisunitdef = aicallback.GetUnitDefByTypeId( i );
+                    if( thisunitdef.name == "ARMSOLAR" )
+                    {
+                        aicallback.SendTextMsg( "Found solar collector def: " + thisunitdef.id, 0 );
+
+                        Float3 nearestbuildpos = aicallback.ClosestBuildSite( thisunitdef, commanderpos, 1400,2  );
+                        aicallback.SendTextMsg( "Closest build site: " + nearestbuildpos.ToString(), 0 );
+                        
+                        aicallback.DrawUnit( "ARMSOLAR", nearestbuildpos,0,
+                            200, aicallback.GetMyAllyTeam(),true,true );
+        
+                        aicallback.GiveOrder( unit, new Command( -  thisunitdef.id, nearestbuildpos.ToDoubleArray() ) );
+                    }
+                }
+            }
+        }
+    }
+    
     public class CSAICInterface
     {
         IntPtr aicallback;
+        CSAI ai;
         
 		public delegate void _InitAI( IntPtr aicallback, int team );
         IntPtr InitAIInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
@@ -56,7 +166,15 @@ namespace CSharpAI
             {
                 sw.WriteLine( "CSAICInterface.InitAI >>>" );
                 sw.Flush();
+                
+                ai = new CSAI();
+                
                 this.aicallback = aicallback;
+                
+                ai.InitAI( new AICallback( aicallback ), team );
+                
+                /*
+                
                 ABICInterface.IAICallback_SendTextMsg( aicallback, "Hello world from C# Mono 0.2!", 0 );
                 
                 ABICInterface.IAICallback_SendTextMsg( aicallback, "The map name is: " + ABICInterface.IAICallback_GetMapName( aicallback ), 0 );
@@ -89,6 +207,7 @@ namespace CSharpAI
                 
                 sw.WriteLine( "CSAICInterface.InitAI <<<" );
                 sw.Flush();
+                */
             }
             catch(Exception e )
             {
@@ -100,6 +219,8 @@ namespace CSharpAI
         
         public void UnitCreated( int unit)									//called when a new unit is created on ai team
         {
+            ai.UnitCreated( unit );
+            /*
             ABICInterface.IAICallback_SendTextMsg( aicallback,  "Unit created: " + unit, 0 );
         
             IntPtr unitdef = ABICInterface.IAICallback_GetUnitDef( aicallback, unit );
@@ -148,6 +269,7 @@ namespace CSharpAI
                     }
                 }
             }
+            */
         }
         
         public void UnitFinished(int unit)							//called when an unit has finished building
