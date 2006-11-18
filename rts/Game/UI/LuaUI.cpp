@@ -3478,6 +3478,14 @@ static int DrawColor(lua_State* L)
 		}
 
 		const string key = lua_tostring(L, -2);
+		if (key == "shininess") {
+			if (lua_isnumber(L, -1)) {
+				const GLfloat specExp = (GLfloat)lua_tonumber(L, -1);
+				glMaterialf(GL_FRONT_AND_BACK, GL_EMISSION, specExp);
+			}
+			continue;
+		}
+
 		const int count = ParseFloatArray(L, color, 4);
 		if (count == 3) {
 			color[3] = 1.0f;
@@ -3506,11 +3514,6 @@ static int DrawColor(lua_State* L)
 		else if (key == "emission") {
 			if (count >= 3) {
 				glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
-			}
-		}
-		else if (key == "shininess") {
-			if (count >= 1) {
-				glMaterialf(GL_FRONT_AND_BACK, GL_EMISSION, color[0]);
 			}
 		}
 		else {
@@ -3891,7 +3894,7 @@ static int DrawClear(lua_State* L)
 		}
 	}
 	else if (args == 2) {
-		if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		if (!lua_isnumber(L, 2)) {
 			lua_pushstring(L, "Incorrect arguments to DrawClear()");
 			lua_error(L);
 		}
