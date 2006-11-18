@@ -129,7 +129,7 @@ void CWaitCommandsAI::AddGatherWait(const Command& cmd)
 }
 
 
-inline void CWaitCommandsAI::AcknowledgeCommand(const Command& cmd)
+void CWaitCommandsAI::AcknowledgeCommand(const Command& cmd)
 {
 	if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
 		return;
@@ -145,15 +145,6 @@ inline void CWaitCommandsAI::AcknowledgeCommand(const Command& cmd)
 		unackedMap.erase(key);
 		waitMap[key] = wait;
 	}
-}
-
-
-void CWaitCommandsAI::AddUnits(const Command& cmd, const vector<int>& unitIDs)
-{
-	if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
-		return;
-	}
-	AcknowledgeCommand(cmd);
 }
 
 
