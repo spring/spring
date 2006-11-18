@@ -149,6 +149,7 @@ static int AddWorldUnit(lua_State* L);
 
 static int DrawScreenGeometry(lua_State* L);
 static int DrawResetState(lua_State* L);
+static int DrawClear(lua_State* L);
 static int DrawLighting(lua_State* L);
 static int DrawShadeModel(lua_State* L);
 static int DrawDepthMask(lua_State* L);
@@ -158,7 +159,7 @@ static int DrawLogicOp(lua_State* L);
 static int DrawBlending(lua_State* L);
 static int DrawAlphaTest(lua_State* L);
 static int DrawTexture(lua_State* L);
-static int DrawClear(lua_State* L);
+static int DrawMaterial(lua_State* L);
 static int DrawColor(lua_State* L);
 
 static int DrawTranslate(lua_State* L);
@@ -176,6 +177,12 @@ static int DrawListCreate(lua_State* L);
 static int DrawListRun(lua_State* L);
 static int DrawListDelete(lua_State* L);
 
+
+/******************************************************************************/
+
+// Miscellaneous Local Routines
+
+static void ResetGLState();
 
 /******************************************************************************/
 
@@ -237,6 +244,7 @@ CLuaUI::~CLuaUI()
 	for (int i = 0; i < (int)displayLists.size(); i++) {
 		glDeleteLists(displayLists[i], 1);
 	}
+	displayLists.clear();
 }
 
 
@@ -336,6 +344,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	lua_newtable(L);
 	REGISTER_LUA_DRAW_CFUNC(ScreenGeometry);
 	REGISTER_LUA_DRAW_CFUNC(ResetState);
+	REGISTER_LUA_DRAW_CFUNC(Clear);
 	REGISTER_LUA_DRAW_CFUNC(Lighting);
 	REGISTER_LUA_DRAW_CFUNC(ShadeModel);
 	REGISTER_LUA_DRAW_CFUNC(DepthMask);
@@ -345,7 +354,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(Blending);
 	REGISTER_LUA_DRAW_CFUNC(AlphaTest);
 	REGISTER_LUA_DRAW_CFUNC(Texture);
-	REGISTER_LUA_DRAW_CFUNC(Clear);
+	REGISTER_LUA_DRAW_CFUNC(Material);
 	REGISTER_LUA_DRAW_CFUNC(Color);
 
 	REGISTER_LUA_DRAW_CFUNC(Shape);
@@ -643,6 +652,9 @@ bool CLuaUI::DrawWorldItems()
 	
 	// push the current GL state
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_LIGHTING_BIT);
+
+	// setup a known state
+	ResetGLState();
 	
 	glPushMatrix();
 
@@ -793,7 +805,10 @@ bool CLuaUI::DrawScreenItems()
 
 	// push the current GL state
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_LIGHTING_BIT);
-	
+
+	// setup a known state
+	ResetGLState();
+		
 	// setup the screen transformation
 	SetupScreenTransform();
 	
@@ -3453,9 +3468,66 @@ static int DrawColor(lua_State* L)
 	}
 
 	const int args = lua_gettop(L); // number of arguments
+	if (args < 1) {
+		lua_pushstring(L, "Incorrect arguments to DrawColor()");
+		lua_error(L);
+	}
+	
+	float color[4];
+
+	if (args == 1) {
+		if (!lua_istable(L, 1)) {
+			lua_pushstring(L, "Incorrect arguments to DrawColor()");
+			lua_error(L);
+		}
+		const int count = ParseFloatArray(L, color, 4);
+		if (count < 3) {
+			lua_pushstring(L, "Incorrect arguments to DrawColor()");
+			lua_error(L);
+		}
+		if (count == 3) {
+			color[3] = 1.0f;
+		}
+	}
+	else if (args >= 3) {
+		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+			lua_pushstring(L, "Incorrect arguments to DrawColor()");
+			lua_error(L);
+		}
+		color[0] = (GLfloat)lua_tonumber(L, 1);
+		color[1] = (GLfloat)lua_tonumber(L, 2);
+		color[2] = (GLfloat)lua_tonumber(L, 3);
+		if (args < 4) {
+			color[3] = 1.0f;
+		} else {
+			if (!lua_isnumber(L, 4)) {
+				lua_pushstring(L, "Incorrect arguments to DrawColor()");
+				lua_error(L);
+			}
+			color[3] = (GLfloat)lua_tonumber(L, 4);
+		}
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawColor()");
+		lua_error(L);
+	}
+
+	glColor4fv(color);
+
+	return 0;
+}
+
+
+static int DrawMaterial(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_istable(L, 1)) {
 		lua_pushstring(L,
-			"Incorrect arguments to DrawColor(table)");
+			"Incorrect arguments to DrawMaterial(table)");
 		lua_error(L);
 	}
 
@@ -3463,21 +3535,12 @@ static int DrawColor(lua_State* L)
 
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) { // the key
-			const int count = ParseFloatArray(L, color, 4);
-			if (count >= 4) {
-			  glColor4fv(color);
-			} else if (count >= 3) {
-			  glColor3fv(color);
-			}
-			continue;
-		}
-		else if (!lua_isstring(L, -2)) { // the key
-			logOutput.Print("DrawColor: bad state type\n");
+		if (!lua_isstring(L, -2)) { // the key
+			logOutput.Print("DrawMaterial: bad state type\n");
 			break;
 		}
-
 		const string key = lua_tostring(L, -2);
+		
 		if (key == "shininess") {
 			if (lua_isnumber(L, -1)) {
 				const GLfloat specExp = (GLfloat)lua_tonumber(L, -1);
@@ -3517,7 +3580,7 @@ static int DrawColor(lua_State* L)
 			}
 		}
 		else {
-			logOutput.Print("DrawColor: unknown color type: %s\n", key.c_str());
+			logOutput.Print("DrawMaterial: unknown material type: %s\n", key.c_str());
 		}
 	}
 	return 0;

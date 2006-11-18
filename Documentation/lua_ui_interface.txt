@@ -149,6 +149,7 @@
   Draw.Blending()
   Draw.AlphaTest() 
   Draw.Texture() 
+  Draw.Material()
   Draw.Color()
 
   Draw.Shape()
@@ -688,15 +689,17 @@ Draw.AlphaTest (boolean enabled | number func, number threshold) -> nil
 Draw.Blending  (boolean enabled | number srcmode, number dstmode) -> nil
 Draw.Texture   (boolean enabled | string "filename") -> boolean success
 
-Draw.Color({number r, number g, number b[, number a]} | {
-    ambidiff  = {number r, number g, number b[, number a]},
+Draw.Material({
     ambient   = {number r, number g, number b[, number a]},
     diffuse   = {number r, number g, number b[, number a]},
-    specular  = {number r, number g, number b[, number a]},
+    ambidiff  = {number r, number g, number b[, number a]},
     emission  = {number r, number g, number b[, number a]},
+    specular  = {number r, number g, number b[, number a]},
     shininess = number specularExponent
   }) -> nil
 
+Draw.Color({ number r, number g, number b[, number a] } |
+             number r, number g, number b[, number a]) -> nil
 
 Draw.Shape(
   number GLtype,
