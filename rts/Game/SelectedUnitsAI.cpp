@@ -138,7 +138,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 				PUSH_CODE_MODE
 				ENTER_MIXED
 				if (player == gu->myPlayerNum) {
-					waitCommandsAI.AddUnits(c, netSelected);
+					waitCommandsAI.AcknowledgeCommand(c);
 				}
 				POP_CODE_MODE
 			}
@@ -255,7 +255,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 			PUSH_CODE_MODE
 			ENTER_MIXED
 			if (player == gu->myPlayerNum) {
-				waitCommandsAI.AddUnits(c, netSelected);
+				waitCommandsAI.AcknowledgeCommand(c);
 			}
 			POP_CODE_MODE
 		}
