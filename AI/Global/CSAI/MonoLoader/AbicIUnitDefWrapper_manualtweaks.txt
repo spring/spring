@@ -1,6 +1,6 @@
 
 
-public MoveData movedata
+public IMoveData movedata
 {
    get
    {
@@ -12,3 +12,4 @@ public MoveData movedata
         return new MoveData( movedataptr );
    }
 }
+

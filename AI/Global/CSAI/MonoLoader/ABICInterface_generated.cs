@@ -31,11 +31,54 @@ namespace CSharpAI
 		public extern static void IAICallback_ClosestBuildSite( IntPtr aicallback, ref float nx, ref float ny, ref float nz, IntPtr unitdef, float x, float y, float z, float searchRadius, int minDistance, int facing );
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void IAICallback_GiveOrder( IntPtr aicallback, int id, int commandid, int numparams, float p1, float p2, float p3, float p4 );
+		public extern static int IAICallback_GiveOrder( IntPtr aicallback, int id, int commandid, int numparams, float p1, float p2, float p3, float p4 );
         
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		public extern static void IAICallback_DrawUnit( IntPtr aicallback, string name, float x, float y, float z,float rotation,
                             int lifetime, int team,bool transparent,bool drawBorder,int facing);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static byte[] IAICallback_GetMetalMap( IntPtr aicallback );
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static bool[] IAICallback_GetRadarMap( IntPtr aicallback );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static bool[] IAICallback_GetLosMap( IntPtr aicallback );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static double[] IAICallback_GetCentreHeightMap( IntPtr aicallback );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static void IAICallback_GetFeaturePos( IntPtr aicallback, ref double posx, ref double posy, ref double posz, int featureid );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static IntPtr IAICallback_GetFeatureDef( IntPtr aicallback, int featureid );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static bool IAICallback_CanBuildAt( IntPtr aicallback, IntPtr unitdef, double posx, double posy, double posz );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static int[] IAICallback_GetFeatures( IntPtr aicallback );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static int[] IAICallback_GetFeaturesAt( IntPtr aicallback, double posx, double posy, double posz, double radius );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static int[] IAICallback_GetFriendlyUnits( IntPtr aicallback );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		public extern static int[] IAICallback_GetEnemyUnitsInRadarAndLos( IntPtr aicallback );
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern static int IAICallback_CreateLineFigure(IntPtr aicallback, double pos1x, double pos1y, double pos1z,double pos2x, double pos2y, double pos2z,double width,bool arrow,int lifetime,int group);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern static int IAICallback_GetCurrentUnitCommandsCount(IntPtr aicallback, int unitid);
+
+      [MethodImpl(MethodImplOptions.InternalCall)]
+      public extern static System.Int32 IMoveData_get_moveType( IntPtr movedata );
+
       [MethodImpl(MethodImplOptions.InternalCall)]
       public extern static System.Void IAICallback_SendTextMsg( IntPtr self, System.String text, System.Int32 priority );
 

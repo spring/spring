@@ -305,8 +305,8 @@ class GenerateCode
         csfile.WriteLine( "" );
         csfile.WriteLine( "namespace CSharpAI" );
         csfile.WriteLine( "{");
-        //csfile.WriteLine( "    public class " + csbasetypename + " : " + typename );
-        csfile.WriteLine( "    public class " + csbasetypename );
+        csfile.WriteLine( "    public class " + csbasetypename + " : " + typename );
+        //csfile.WriteLine( "    public class " + csbasetypename );
         csfile.WriteLine( "    {" );
         csfile.WriteLine( "        public IntPtr self = IntPtr.Zero;" );
         csfile.WriteLine( "        public " + csbasetypename + "( IntPtr self )" );

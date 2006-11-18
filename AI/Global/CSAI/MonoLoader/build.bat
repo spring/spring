@@ -5,8 +5,8 @@ rem - TASpring
 rem - TASpring sourcecode (taspring website )
 
 rem modify the following four paths for your environment:
-set MINGWDIR=g:\bin\mingw
-set MONODIR=g:\bin\Mono-1.1.18
+set MINGWDIR=h:\bin\mingw
+set MONODIR=h:\bin\Mono-1.1.18
 set SPRINGSOURCE=..\..\..\..
 set SPRINGAPPLICATION=..\..\..\..\game
 
