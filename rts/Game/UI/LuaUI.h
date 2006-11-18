@@ -87,17 +87,17 @@ class CLuaUI {
 		bool BuildCmdDescTable(lua_State* L,
 		                       const vector<CommandDescription>& cmds);
 
-		bool GetLuaIntMap(lua_State* L, map<int, int>& intList);
+		bool GetLuaIntMap(lua_State* L, int index, map<int, int>& intList);
 
-		bool GetLuaIntList(lua_State* L, vector<int>& intList);
+		bool GetLuaIntList(lua_State* L, int index, vector<int>& intList);
 
-		bool GetLuaReStringList(lua_State* L,
+		bool GetLuaReStringList(lua_State* L, int index,
 		                        vector<ReStringPair>& reStringCmds);
 
-		bool GetLuaReParamsList(lua_State* L,
+		bool GetLuaReParamsList(lua_State* L, int index,
 		                        vector<ReParamsPair>& reParamsCmds);
 
-		bool GetLuaCmdDescList(lua_State* L,
+		bool GetLuaCmdDescList(lua_State* L, int index,
 		                       vector<CommandDescription>& customCmds);
 };
 

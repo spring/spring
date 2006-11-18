@@ -362,6 +362,8 @@ bool CLuaUI::LoadCode(lua_State* L,
 }
 
 
+/******************************************************************************/
+
 bool CLuaUI::ConfigCommand(const string& command)
 {
 	lua_State* L = LUASTATE.GetL();
@@ -419,7 +421,7 @@ bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 		logOutput.Print("UpdateLayout() expects a boolean return value\n");
 		return false;
 	}
-	bool forceLayout = !!lua_toboolean(L, -1);
+	const bool forceLayout = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return forceLayout;
 }
@@ -788,7 +790,6 @@ bool CLuaUI::DrawScreenItems()
 		}
 	}
 	
-	
 	// revert the screen transform
 	RevertScreenTransform();
 
@@ -799,6 +800,104 @@ bool CLuaUI::DrawScreenItems()
 	drawingEnabled = false;
 
 	return retval;
+}
+
+
+bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "KeyPress");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, key);
+
+	lua_newtable(L);
+	lua_pushstring(L, "alt");
+	lua_pushboolean(L, keys[SDLK_LALT]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "ctrl");
+	lua_pushboolean(L, keys[SDLK_LCTRL]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "meta");
+	lua_pushboolean(L, keys[SDLK_LMETA]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "shift");
+	lua_pushboolean(L, keys[SDLK_LSHIFT]);
+	lua_rawset(L, -3);
+
+	lua_pushboolean(L, isRepeat);
+
+	// call the function
+	const int error = lua_pcall(L, 3, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_KeyPress", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
+	}
+
+	return false;
+}
+
+
+bool CLuaUI::KeyRelease(unsigned short key)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "KeyRelease");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, key);
+
+	lua_newtable(L);
+	lua_pushstring(L, "alt");
+	lua_pushboolean(L, keys[SDLK_LALT]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "ctrl");
+	lua_pushboolean(L, keys[SDLK_LCTRL]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "meta");
+	lua_pushboolean(L, keys[SDLK_LMETA]);
+	lua_rawset(L, -3);
+	lua_pushstring(L, "shift");
+	lua_pushboolean(L, keys[SDLK_LSHIFT]);
+	lua_rawset(L, -3);
+
+	// call the function
+	const int error = lua_pcall(L, 2, 1, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_KeyRelease", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, -1)) {
+		return !!lua_toboolean(L, -1);
+	}
+
+	return false;
 }
 
 
@@ -912,104 +1011,6 @@ int CLuaUI::MouseRelease(int x, int y, int button)
 }
 
 
-bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
-{
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "KeyPress");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return false; // the call is not defined, do not take the event
-	}
-
-	lua_pushnumber(L, key);
-
-	lua_newtable(L);
-	lua_pushstring(L, "alt");
-	lua_pushboolean(L, keys[SDLK_LALT]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "ctrl");
-	lua_pushboolean(L, keys[SDLK_LCTRL]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "meta");
-	lua_pushboolean(L, keys[SDLK_LMETA]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "shift");
-	lua_pushboolean(L, keys[SDLK_LSHIFT]);
-	lua_rawset(L, -3);
-
-	lua_pushboolean(L, isRepeat);
-
-	// call the function
-	const int error = lua_pcall(L, 3, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_KeyPress", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
-	}
-
-	return false;
-}
-
-
-bool CLuaUI::KeyRelease(unsigned short key)
-{
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "KeyRelease");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return false; // the call is not defined, do not take the event
-	}
-
-	lua_pushnumber(L, key);
-
-	lua_newtable(L);
-	lua_pushstring(L, "alt");
-	lua_pushboolean(L, keys[SDLK_LALT]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "ctrl");
-	lua_pushboolean(L, keys[SDLK_LCTRL]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "meta");
-	lua_pushboolean(L, keys[SDLK_LMETA]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "shift");
-	lua_pushboolean(L, keys[SDLK_LSHIFT]);
-	lua_rawset(L, -3);
-
-	// call the function
-	const int error = lua_pcall(L, 2, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_KeyRelease", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
-	}
-
-	return false;
-}
-
-
 bool CLuaUI::IsAbove(int x, int y)
 {
 	lua_State* L = LUASTATE.GetL();
@@ -1119,7 +1120,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
                            vector<ReStringPair>& reNamedCmds,
                            vector<ReStringPair>& reTooltipCmds,
                            vector<ReParamsPair>& reParamsCmds,
-                           map<int, int>& iconList,
+                           map<int, int>& buttonList,
                            string& menuName)
 {
 	lua_State* L = LUASTATE.GetL();
@@ -1134,7 +1135,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	reNamedCmds.clear();
 	reTooltipCmds.clear();
 	onlyTextureCmds.clear();
-	iconList.clear();
+	buttonList.clear();
 	menuName = "";
 
 	lua_getglobal(L, "LayoutButtons");
@@ -1175,77 +1176,75 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 		return false;
 	}
 	
-	if (!GetLuaIntMap(L, iconList)) {
-		logOutput.Print("LayoutButtons() bad iconList table\n");
-		lua_pop(L, lua_gettop(L));
+	if (!lua_isstring(L, 1)) {
+		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
+		lua_pop(L, args);
 		return false;
 	}
-
-	if (!GetLuaReParamsList(L, reParamsCmds)) {
-		logOutput.Print("LayoutButtons() bad reParams table\n");
-		lua_pop(L, lua_gettop(L));
+	menuName = lua_tostring(L, 1);
+	
+	if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
+		lua_pop(L, args);
 		return false;
 	}
-
-	if (!GetLuaReStringList(L, reTooltipCmds)) {
-		logOutput.Print("LayoutButtons() bad reTooltip table\n");
-		lua_pop(L, lua_gettop(L));
-		return false;
-	}
-
-	if (!GetLuaReStringList(L, reNamedCmds)) {
-		logOutput.Print("LayoutButtons() bad reNamed table\n");
-		lua_pop(L, lua_gettop(L));
-		return false;
-	}
-
-	if (!GetLuaReStringList(L, reTextureCmds)) {
-		logOutput.Print("LayoutButtons() bad reTexture table\n");
-		lua_pop(L, lua_gettop(L));
-		return false;
-	}
-
-	if (!GetLuaIntList(L, onlyTextureCmds)) {
-		logOutput.Print("LayoutButtons() bad onlyTexture table\n");
-		lua_pop(L, lua_gettop(L));
-		return false;
-	}
-
-	if (!GetLuaCmdDescList(L, customCmds)) {
-		logOutput.Print("LayoutButtons() bad customCommands table\n");
-		lua_pop(L, lua_gettop(L));
-		return false;
-	}
-
-	if (!GetLuaIntList(L, removeCmds)) {
+	xButtons = (int)lua_tonumber(L, 2);
+	yButtons = (int)lua_tonumber(L, 3);
+	
+	if (!GetLuaIntList(L, 4, removeCmds)) {
 		logOutput.Print("LayoutButtons() bad removeCommands table\n");
 		lua_pop(L, lua_gettop(L));
 		return false;
 	}
 
-	if (!lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
-		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
-		lua_pop(L, args);
+	if (!GetLuaCmdDescList(L, 5, customCmds)) {
+		logOutput.Print("LayoutButtons() bad customCommands table\n");
+		lua_pop(L, lua_gettop(L));
 		return false;
 	}
-	xButtons = (int)lua_tonumber(L, -2);
-	yButtons = (int)lua_tonumber(L, -1);
-	lua_pop(L, 2);
-	
-	if (!lua_isstring(L, -1)) {
-		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
-		lua_pop(L, args);
+
+	if (!GetLuaIntList(L, 6, onlyTextureCmds)) {
+		logOutput.Print("LayoutButtons() bad onlyTexture table\n");
+		lua_pop(L, lua_gettop(L));
 		return false;
 	}
-	menuName = lua_tostring(L, -1);
-	lua_pop(L, 1);
+
+	if (!GetLuaReStringList(L, 7, reTextureCmds)) {
+		logOutput.Print("LayoutButtons() bad reTexture table\n");
+		lua_pop(L, lua_gettop(L));
+		return false;
+	}
+
+	if (!GetLuaReStringList(L, 8, reNamedCmds)) {
+		logOutput.Print("LayoutButtons() bad reNamed table\n");
+		lua_pop(L, lua_gettop(L));
+		return false;
+	}
+
+	if (!GetLuaReStringList(L, 9, reTooltipCmds)) {
+		logOutput.Print("LayoutButtons() bad reTooltip table\n");
+		lua_pop(L, lua_gettop(L));
+		return false;
+	}
+
+	if (!GetLuaReParamsList(L, 10, reParamsCmds)) {
+		logOutput.Print("LayoutButtons() bad reParams table\n");
+		lua_pop(L, lua_gettop(L));
+		return false;
+	}
+
+	if (!GetLuaIntMap(L, 11, buttonList)) {
+		logOutput.Print("LayoutButtons() bad buttonList table\n");
+		lua_pop(L, lua_gettop(L));
+		return false;
+	}
 
 	return true;
 }
 
 
 bool CLuaUI::BuildCmdDescTable(lua_State* L,
-                                           const vector<CommandDescription>& cmds)
+                               const vector<CommandDescription>& cmds)
 {
 	lua_newtable(L);
 
@@ -1286,9 +1285,9 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 }
 
 
-bool CLuaUI::GetLuaIntMap(lua_State* L, map<int, int>& intMap)
+bool CLuaUI::GetLuaIntMap(lua_State* L, int index, map<int, int>& intMap)
 {
-	const int table = lua_gettop(L);
+	const int table = index;
 	if (!lua_istable(L, table)) {
 		return false;
 	}
@@ -1303,15 +1302,13 @@ bool CLuaUI::GetLuaIntMap(lua_State* L, map<int, int>& intMap)
 		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 	
-	lua_pop(L, 1); // pop the table
-	
 	return true;
 }
 
 
-bool CLuaUI::GetLuaIntList(lua_State* L, vector<int>& intList)
+bool CLuaUI::GetLuaIntList(lua_State* L, int index, vector<int>& intList)
 {
-	const int table = lua_gettop(L);
+	const int table = index;
 	if (!lua_istable(L, table)) {
 		return false;
 	}
@@ -1325,16 +1322,14 @@ bool CLuaUI::GetLuaIntList(lua_State* L, vector<int>& intList)
 		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 	
-	lua_pop(L, 1); // pop the table
-	
 	return true;
 }
 
 
-bool CLuaUI::GetLuaReStringList(lua_State* L,
-                                            vector<ReStringPair>& reStringList)
+bool CLuaUI::GetLuaReStringList(lua_State* L, int index,
+                                vector<ReStringPair>& reStringList)
 {
-	const int table = lua_gettop(L);
+	const int table = index;
 	if (!lua_istable(L, table)) {
 		return false;
 	}
@@ -1351,16 +1346,14 @@ bool CLuaUI::GetLuaReStringList(lua_State* L,
 		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 	
-	lua_pop(L, 1); // pop the table
-	
 	return true;
 }
 
 
-bool CLuaUI::GetLuaReParamsList(lua_State* L,
-                                            vector<ReParamsPair>& reParamsCmds)
+bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
+                                vector<ReParamsPair>& reParamsCmds)
 {
-	const int table = lua_gettop(L);
+	const int table = index;
 	if (!lua_istable(L, table)) {
 		return false;
 	}
@@ -1388,16 +1381,14 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L,
 		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 	
-	lua_pop(L, 1); // pop the table
-	
 	return true;
 }
 
 
-bool CLuaUI::GetLuaCmdDescList(lua_State* L,
-                                           vector<CommandDescription>& cmdDescs)
+bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
+                               vector<CommandDescription>& cmdDescs)
 {
-	const int table = lua_gettop(L);
+	const int table = index;
 	if (!lua_istable(L, table)) {
 		return false;
 	}
@@ -1470,8 +1461,6 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L,
 
 		cmdDescs.push_back(cd);
 	}
-
-	lua_pop(L, 1); // pop the table
 
 	return true;
 }
