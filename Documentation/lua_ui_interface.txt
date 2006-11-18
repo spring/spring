@@ -694,7 +694,7 @@ Draw.Color({number r, number g, number b[, number a]} | {
     diffuse   = {number r, number g, number b[, number a]},
     specular  = {number r, number g, number b[, number a]},
     emission  = {number r, number g, number b[, number a]},
-    shininess = {number specularExponent}
+    shininess = number specularExponent
   }) -> nil
 
 
