@@ -2,6 +2,38 @@ TASpring change log
 
 0.next
 
+- Added minimap commands (two modes, see the MiniMapFullProxy config param)
+
+- Added "MiniMapGeometry" config parametery
+- Added "TooltipGeometry" config parametery
+- Added "TooltipOutlineFont" config parametery
+- Added "InfoConsoleGeometry" config parametery
+
+- Added "/resbar [0|1]" action
+- Added "/tooltip [0|1]" action
+- Added "/specteam <number>" action  (sets the spectator team)
+
+- Added "newAttackMode" and friends to "ctrlpanel.txt"
+
+- Added animated line stippling for queue rendering  (see cmdcolors.txt)
+
+- Cursors can now use TGA and PNG file formats
+- Added an optional cursor control file for easier timing/frame control
+
+- Renamed the /layout command to /luaui
+- Renamed the "ctrlpanel.lua" file to "gui.lua"
+
+- Added "timewait [seconds] ["queued"]" action
+- Added "deathwait ["queued"]" action
+- Added "squadwait [count] ["queued"]" action
+- Added "gatherwait" action
+- Added "gathermode [0|1]" action
+
+- Added a number of features to the LuaUI
+  (see Documentation/lua_ui_interface.txt)
+
+- Improved the outline font rendering speed
+
 - numbers in .info list are now team numbers, so they match with '.team X' commands.
 - names are now prefixed with 's:' 'a:' or 'e:' for respectively spectators, allies and enemies.
 - if spectating, an arrow is displayed in front of the team you are currently watching.
