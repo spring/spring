@@ -136,7 +136,7 @@
   AddWorldText()
   AddWorldUnit()
 
-	Draw.ScreenGeometry()
+  Draw.ScreenGeometry()
   Draw.ResetState()
   Draw.Lighting()
   Draw.ShadeModel()
@@ -660,6 +660,7 @@ Draw.ScreenGeometry(number width, number dist) -> nil
 
 Draw.ResetState() -> nil
 -- ShadeModel = GL_SMOOTH
+-- Texture    = false
 -- DepthMask  = false
 -- DepthTest  = false  (GL_LEQUAL)
 -- Culling    = false  (GL_BACK)
@@ -675,13 +676,14 @@ Draw.Culling   (boolean enabled | number func) -> nil
 Draw.LogicOp   (boolean enabled | number func) -> nil  
 Draw.AlphaTest (boolean enabled | number func, number threshold) -> nil 
 Draw.Blending  (boolean enabled | number srcmode, number dstmode) -> nil
-Draw.Clear() -> nil    -- FIXME
+Draw.Texture   (boolean enabled | string "filename") -> boolean success
+
+               Draw.Clear() -> nil    -- FIXME
 Draw.Color() -> nil    -- FIXME
 
 
 Draw.Shape(
   number GLtype,
-  string "texture" | boolean enable | nil,  -- nil value for no state modification
   elements = {
     [1] = { v | vertex   = { number x, number y, number z },           -- required
             n | normal   = { number x, number y, number z },           -- optional

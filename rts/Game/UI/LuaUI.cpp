@@ -157,6 +157,7 @@ static int DrawCulling(lua_State* L);
 static int DrawLogicOp(lua_State* L);
 static int DrawBlending(lua_State* L);
 static int DrawAlphaTest(lua_State* L);
+static int DrawTexture(lua_State* L);
 static int DrawClear(lua_State* L);
 static int DrawColor(lua_State* L);
 
@@ -343,6 +344,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(LogicOp);
 	REGISTER_LUA_DRAW_CFUNC(Blending);
 	REGISTER_LUA_DRAW_CFUNC(AlphaTest);
+	REGISTER_LUA_DRAW_CFUNC(Texture);
 	REGISTER_LUA_DRAW_CFUNC(Clear);
 	REGISTER_LUA_DRAW_CFUNC(Color);
 
@@ -3393,66 +3395,6 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 }
 
 
-static bool ParseShapeTexture(lua_State* L, int index)
-{
-	if (lua_isnil(L, index)) {
-		return true;
-	}
-
-	if (lua_isboolean(L, index)) {
-		if (lua_toboolean(L, index)) {
-			glEnable(GL_TEXTURE_2D);
-		} else {
-			glDisable(GL_TEXTURE_2D);
-		}
-		return true;
-	}
-	
-	if (!lua_isstring(L, index)) {
-		logOutput.Print(
-			"DrawShape: invalid texture parameter\n");
-		return false; // invalid format
-	}
-	
-	const string texture = lua_tostring(L, index);
-	if (texture.empty()) {
-		glDisable(GL_TEXTURE_2D); // equivalent to 'false'
-	}
-	else if (texture[0] != '#') {
-		if ((guihandler == NULL) || !guihandler->BindNamedTexture(texture)) {
-			logOutput.Print(
-				"DrawShape: could not load texture: %s\n", texture.c_str());
-			return false;
-		}
-		glEnable(GL_TEXTURE_2D);
-	}
-	else {
-		// unit build picture
-		char* endPtr;
-		const char* startPtr = texture.c_str() + 1; // skip the '#'
-		int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		// UnitDefHandler's array size is (numUnits + 1)
-		if ((endPtr != startPtr) &&
-				(unitDefID > 0) && (unitDefID <= unitDefHandler->numUnits)) {
-			UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-			if (ud != NULL) {
-				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
-				glEnable(GL_TEXTURE_2D);
-			} else {
-				logOutput.Print(
-					"DrawShape: couln not load texture: %s\n", texture.c_str());
-				return false;
-			}
-		} else {
-			logOutput.Print(
-				"DrawShape: couln not load texture: %s\n", texture.c_str());
-			return false;
-		}
-	}
-	return true;
-}
-
-
 static int DrawShape(lua_State* L)
 {	
 	if (!drawingEnabled) {
@@ -3460,18 +3402,11 @@ static int DrawShape(lua_State* L)
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) || !lua_isnumber(L, 1) ||
-	    (!lua_isstring(L, 2) && !lua_isboolean(L, 2) && !lua_isnil(L, 2)) ||
-	    !lua_istable(L, 3)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawShape(type, <nil|\"texture\">, verts[])");
+	if ((args != 2) || !lua_isnumber(L, 1) || !lua_istable(L, 2)) {
+		lua_pushstring(L, "Incorrect arguments to DrawShape(type, elements[])");
 		lua_error(L);
 	}
 	
-	if (!ParseShapeTexture(L, 2)) {
-		return 0;
-	}
-
 	const GLuint type = (GLuint)lua_tonumber(L, 1);
 	switch (type) {
 		case GL_POINTS:
@@ -3489,6 +3424,7 @@ static int DrawShape(lua_State* L)
 		}
 		default: { return 0; }
 	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		VertexData vd;
@@ -3607,6 +3543,7 @@ static int DrawScreenGeometry(lua_State* L)
 static void ResetGLState()
 {
 	glDisable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -3618,6 +3555,7 @@ static void ResetGLState()
 	glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glShadeModel(GL_SMOOTH);
+	glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -3847,7 +3785,7 @@ static int DrawAlphaTest(lua_State* L)
 			lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
 			lua_error(L);
 		}
-		glEnable(GL_BLEND);
+		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc((GLenum)lua_tonumber(L, 1), (GLfloat)lua_tonumber(L, 2));
 	}
 	else {
@@ -3855,6 +3793,72 @@ static int DrawAlphaTest(lua_State* L)
 		lua_error(L);
 	}
 	return 0;
+}
+
+
+static int DrawTexture(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1) {
+		lua_pushstring(L, "Incorrect arguments to DrawTexture()");
+		lua_error(L);
+	}
+
+	if (lua_isboolean(L, 1)) {
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_TEXTURE_2D);
+		} else {
+			glDisable(GL_TEXTURE_2D);
+		}
+		lua_pushboolean(L, 1);
+		return 1;
+	}
+		
+	if (!lua_isstring(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawTexture()");
+		lua_error(L);
+	}
+	
+	const string texture = lua_tostring(L, 1);
+	if (texture.empty()) {
+		glDisable(GL_TEXTURE_2D); // equivalent to 'false'
+		lua_pushboolean(L, 1);
+		return 1;
+	}
+	else if (texture[0] != '#') {
+		if ((guihandler == NULL) || !guihandler->BindNamedTexture(texture)) {
+			lua_pushboolean(L, 0);
+			return 1;
+		}
+		glEnable(GL_TEXTURE_2D);
+	}
+	else {
+		// unit build picture
+		char* endPtr;
+		const char* startPtr = texture.c_str() + 1; // skip the '#'
+		int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+		// UnitDefHandler's array size is (numUnits + 1)
+		if ((endPtr != startPtr) &&
+				(unitDefID > 0) && (unitDefID <= unitDefHandler->numUnits)) {
+			UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+			if (ud != NULL) {
+				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
+				glEnable(GL_TEXTURE_2D);
+			} else {
+				lua_pushboolean(L, 0);
+				return 1;
+			}
+		} else {
+			lua_pushboolean(L, 0);
+			return 1;
+		}
+	}
+	lua_pushboolean(L, 1);
+	return 1;
 }
 
 
