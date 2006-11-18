@@ -5,7 +5,7 @@
       //}
 
 
-public UnitDef GetUnitDefByTypeId( int unitdeftypeid )
+public IUnitDef GetUnitDefByTypeId( int unitdeftypeid )
 {
    IntPtr unitdefptr = ABICInterface.IAICallback_GetUnitDefByTypeId( self, unitdeftypeid );
    if( unitdefptr == IntPtr.Zero )
@@ -15,7 +15,7 @@ public UnitDef GetUnitDefByTypeId( int unitdeftypeid )
    return new UnitDef( unitdefptr );
 }
 
-public UnitDef GetUnitDef( int deployedid )
+public IUnitDef GetUnitDef( int deployedid )
 {
    IntPtr unitdefptr = ABICInterface.IAICallback_GetUnitDef( self, deployedid );
    if( unitdefptr == IntPtr.Zero )
@@ -25,6 +25,16 @@ public UnitDef GetUnitDef( int deployedid )
    return new UnitDef( unitdefptr );
 }
 
+public IFeatureDef GetFeatureDef( int featureid )
+{
+   IntPtr defptr = ABICInterface.IAICallback_GetFeatureDef( self, featureid );
+   if( defptr == IntPtr.Zero )
+   {
+      return null;
+   }
+   return new FeatureDef( defptr );
+}
+
 public Float3 GetUnitPos( int unitid )
 {
    float x = 0; float y = 0; float z = 0;
@@ -32,10 +42,10 @@ public Float3 GetUnitPos( int unitid )
    return new Float3( x, y, z );
 }
 
-public Float3 ClosestBuildSite( UnitDef thisunitdef, Float3 pos, double searchradius, int mindistance )
+public Float3 ClosestBuildSite( IUnitDef thisunitdef, Float3 pos, double searchradius, int mindistance )
 {
    float x = 0; float y = 0; float z = 0;
-   ABICInterface.IAICallback_ClosestBuildSite( self, ref x, ref y, ref z, thisunitdef.self, (float)pos.x, (float)pos.y, (float)pos.z, (float)searchradius, mindistance, 0 );
+   ABICInterface.IAICallback_ClosestBuildSite( self, ref x, ref y, ref z, ( thisunitdef as UnitDef).self, (float)pos.x, (float)pos.y, (float)pos.z, (float)searchradius, mindistance, 0 );
    return new Float3( x, y, z );    
 }
 
@@ -44,13 +54,76 @@ public void DrawUnit( string name, Float3 pos, double rotation, int lifetime, in
    ABICInterface.IAICallback_DrawUnit( self, name, (float)pos.x, (float)pos.y, (float)pos.z, (float)rotation, lifetime, team, transparent, drawborder, 0 );
 }
 
-public void GiveOrder( int unit, Command c )
+public int GiveOrder( int unit, Command c )
 {
    int numparams = c.parameters.GetUpperBound(0) + 1;
-   if( numparams == 0 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 0,0,0,0,0 ); }
-   if( numparams == 1 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 1,(float)c.parameters[0],0,0,0 ); }
-   if( numparams == 2 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 2,(float)c.parameters[0],(float)c.parameters[1],0,0 ); }
-   if( numparams == 3 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 3,(float)c.parameters[0],(float)c.parameters[1],(float)c.parameters[2],0 ); }
-   if( numparams == 4 ){ ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 4,(float)c.parameters[0],(float)c.parameters[1],(float)c.parameters[2],(float)c.parameters[3] ); }
+   if( numparams == 0 ){ return ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 0,0,0,0,0 ); }
+   if( numparams == 1 ){ return ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 1,(float)c.parameters[0],0,0,0 ); }
+   if( numparams == 2 ){ return ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 2,(float)c.parameters[0],(float)c.parameters[1],0,0 ); }
+   if( numparams == 3 ){ return ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 3,(float)c.parameters[0],(float)c.parameters[1],(float)c.parameters[2],0 ); }
+   if( numparams == 4 ){ return ABICInterface.IAICallback_GiveOrder( self, unit, c.id, 4,(float)c.parameters[0],(float)c.parameters[1],(float)c.parameters[2],(float)c.parameters[3] ); }
+   return 0;
+}
+
+public byte[] GetMetalMap()
+{
+    return ABICInterface.IAICallback_GetMetalMap( self );
+}
+
+public bool[] GetRadarMap()
+{
+    return ABICInterface.IAICallback_GetRadarMap( self );
+}
+
+public bool[] GetLosMap()
+{
+    return ABICInterface.IAICallback_GetLosMap( self );
+}
+
+public double[] GetCentreHeightMap()
+{
+    return ABICInterface.IAICallback_GetCentreHeightMap( self );
+}
+
+public bool CanBuildAt( IUnitDef unitdef, Float3 pos )
+{
+    return ABICInterface.IAICallback_CanBuildAt( self, ( unitdef as UnitDef ).self, pos.x , pos.y, pos.z );
+}
+
+public bool UnitIsBusy( int unitid )
+{
+    return ABICInterface.IAICallback_GetCurrentUnitCommandsCount( self, unitid ) > 0;
+}
+
+public Float3 GetFeaturePos( int featureid )
+{
+   Float3 pos = new Float3();
+   ABICInterface.IAICallback_GetFeaturePos( self, ref pos.x, ref pos.y, ref pos.z, featureid );
+   return pos;
+}
+
+public int[] GetFeatures()
+{
+    return ABICInterface.IAICallback_GetFeatures( self );
+}
+
+public int[] GetFeatures( Float3 pos, double radius )
+{
+    return ABICInterface.IAICallback_GetFeaturesAt( self, pos.x, pos.y, pos.z, radius );
+}
+
+public int[] GetFriendlyUnits( )
+{
+    return ABICInterface.IAICallback_GetFriendlyUnits( self );
+}
+
+public int[] GetEnemyUnitsInRadarAndLos( )
+{
+    return ABICInterface.IAICallback_GetEnemyUnitsInRadarAndLos( self );
+}
+
+public int CreateLineFigure(Float3 pos1,Float3 pos2,double width,bool arrow,int lifetime,int group)
+{
+    return ABICInterface.IAICallback_CreateLineFigure( self, pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, width, arrow, lifetime, group );
 }
 

@@ -11,7 +11,7 @@ using System.IO;
 
 namespace CSharpAI
 {
-    public class UnitDef
+    public class UnitDef : IUnitDef
     {
         public IntPtr self = IntPtr.Zero;
         public UnitDef( IntPtr self )
@@ -784,7 +784,7 @@ namespace CSharpAI
 
 
 
-public MoveData movedata
+public IMoveData movedata
 {
    get
    {
@@ -796,5 +796,6 @@ public MoveData movedata
         return new MoveData( movedataptr );
    }
 }
+
     }
 }

@@ -87,12 +87,38 @@ void WriteLine( std::string message )
 
 typedef void( PLATFORMCALLINGCONVENTION *INITAI)( void *, int );
 typedef void( PLATFORMCALLINGCONVENTION *UNITCREATED)( int );
+typedef void( PLATFORMCALLINGCONVENTION *UNITFINISHED)( int );
+typedef void( PLATFORMCALLINGCONVENTION *UNITDESTROYED)( int, int );
+typedef void( PLATFORMCALLINGCONVENTION *ENEMYENTERLOS)( int );
+typedef void( PLATFORMCALLINGCONVENTION *ENEMYLEAVELOS)( int );
+typedef void( PLATFORMCALLINGCONVENTION *ENEMYENTERRADAR)( int );
+typedef void( PLATFORMCALLINGCONVENTION *ENEMYLEAVERADAR)( int );
+typedef void( PLATFORMCALLINGCONVENTION *ENEMYDAMAGED)( int damaged,int attacker,float damage, float dirx, float diry, float dirz );
+typedef void( PLATFORMCALLINGCONVENTION *ENEMYDESTROYED)( int enemy,int attacker);
+typedef void( PLATFORMCALLINGCONVENTION *UNITIDLE)( int );
+typedef void( PLATFORMCALLINGCONVENTION *GOTCHATMSG)( MonoString* msg,int player);
+typedef void( PLATFORMCALLINGCONVENTION *UNITDAMAGED)(int damaged,int attacker,float damage, float dirx, float diry, float dirz );
+typedef void( PLATFORMCALLINGCONVENTION *UNITMOVEFAILED)( int );
+typedef void( PLATFORMCALLINGCONVENTION *UPDATE)();
 
 class AIProxy
 {
 public:
     INITAI InitAI;
     UNITCREATED UnitCreated;
+    UNITFINISHED UnitFinished;
+    UNITDESTROYED UnitDestroyed;
+    ENEMYENTERLOS EnemyEnterLOS;
+    ENEMYLEAVELOS EnemyLeaveLOS;
+    ENEMYENTERRADAR EnemyEnterRadar;
+    ENEMYLEAVERADAR EnemyLeaveRadar;
+    ENEMYDAMAGED EnemyDamaged;
+    ENEMYDESTROYED EnemyDestroyed;
+    UNITIDLE UnitIdle;
+    GOTCHATMSG GotChatMsg;
+    UNITDAMAGED UnitDamaged;
+    UNITMOVEFAILED UnitMoveFailed;
+    UPDATE Update;
 };
 
 static AIProxy *thisaiproxy = 0; // used to ensure callbacks go to right place, and to avoid passing parameters to Bind
@@ -105,6 +131,22 @@ void SetInitAICallback( void *fnpointer )
 }
 
 void SetUnitCreatedCallback( void *fnpointer ){ thisaiproxy->UnitCreated = (UNITCREATED)fnpointer; }
+
+#define SETCALLBACKMACRO( delegatename, callbackname ) void Set ## callbackname ## Callback( void *fnpointer ){ thisaiproxy->callbackname = ( delegatename )fnpointer; }
+
+SETCALLBACKMACRO( UNITFINISHED, UnitFinished );
+SETCALLBACKMACRO( UNITDESTROYED, UnitDestroyed );
+SETCALLBACKMACRO( ENEMYENTERLOS, EnemyEnterLOS );
+SETCALLBACKMACRO( ENEMYLEAVELOS, EnemyLeaveLOS );
+SETCALLBACKMACRO( ENEMYENTERRADAR, EnemyEnterRadar );
+SETCALLBACKMACRO( ENEMYLEAVERADAR, EnemyLeaveRadar );
+SETCALLBACKMACRO( ENEMYDAMAGED, EnemyDamaged );
+SETCALLBACKMACRO( ENEMYDESTROYED, EnemyDestroyed );
+SETCALLBACKMACRO( UNITIDLE, UnitIdle );
+SETCALLBACKMACRO( GOTCHATMSG, GotChatMsg );
+SETCALLBACKMACRO( UNITDAMAGED, UnitDamaged );
+SETCALLBACKMACRO( UNITMOVEFAILED, UnitMoveFailed );
+SETCALLBACKMACRO( UPDATE, Update );
 
 // Functionwrappers=============================================================
 
@@ -138,9 +180,9 @@ void _IAICallback_ClosestBuildSite( void *aicallback, float &nx, float &ny, floa
     IAICallback_ClosestBuildSite( ( IAICallback *)aicallback, nx, ny, nz, (UnitDef *)unitdef, x, y, z,searchRadius, minDist, facing );
 }
         
-void _IAICallback_GiveOrder( void * aicallback, int id, int commandid, int numparams, float p1, float p2, float p3, float p4 )
+int _IAICallback_GiveOrder( void * aicallback, int id, int commandid, int numparams, float p1, float p2, float p3, float p4 )
 {
-    IAICallback_GiveOrder( ( IAICallback *)aicallback, id, commandid, numparams, p1, p2, p3, p4 );
+    return IAICallback_GiveOrder( ( IAICallback *)aicallback, id, commandid, numparams, p1, p2, p3, p4 );
 }
         
 void _IAICallback_DrawUnit( void * aicallback, MonoString *name, float x, float y, float z,float rotation,
@@ -149,6 +191,142 @@ void _IAICallback_DrawUnit( void * aicallback, MonoString *name, float x, float 
     char *name_utf8string = mono_string_to_utf8(name );
     IAICallback_DrawUnit( ( IAICallback *)aicallback, name_utf8string, x, y, z, rotation, lifetime, team, transparent, drawBorder, facing );
     g_free( name_utf8string );
+}
+
+MonoArray* _IAICallback_GetMetalMap( void * aicallback )
+{
+    const unsigned char*map = IAICallback_GetMetalMap( ( IAICallback *)aicallback );
+      int width = IAICallback_GetMapWidth( ( IAICallback *)aicallback ) / 2;//metal map has 1/2 resolution of normal map // WHY???? THIS TOOK SOOOO LONG TO DEBUG </rant>
+        int height = IAICallback_GetMapHeight( ( IAICallback *)aicallback ) / 2;
+        int numbercells = width * height;
+    MonoArray *array = mono_array_new(domain, mono_get_byte_class(), numbercells);
+    for( int i = 0; i < numbercells; i++ )
+    {
+        mono_array_set( array, unsigned char, i, map[i] );
+    }
+    return array;
+}
+
+MonoArray *_IAICallback_GetLosMap(void * aicallback)
+{
+    const unsigned short*losmapfromrts = IAICallback_GetLosMap( ( IAICallback *)aicallback );
+    int width = IAICallback_GetMapWidth( ( IAICallback *)aicallback ) / 2;
+    int height = IAICallback_GetMapHeight( ( IAICallback *)aicallback ) / 2;
+    int numbercells = width * height;
+    
+    MonoArray *array = mono_array_new(domain, mono_get_boolean_class(), numbercells);
+    for( int i = 0; i < numbercells; i++ )
+    {
+            if( losmapfromrts[ i ] != 0 )
+            {
+                mono_array_set( array, bool, i, true );
+            }
+            else
+            {
+                mono_array_set( array, bool, i, false );
+            }
+    }
+    return array;
+}
+
+MonoArray *_IAICallback_GetRadarMap(void * aicallback)
+{
+    const unsigned short*losmapfromrts = IAICallback_GetRadarMap( ( IAICallback *)aicallback );
+    int width = IAICallback_GetMapWidth( ( IAICallback *)aicallback ) / 8;
+    int height = IAICallback_GetMapHeight( ( IAICallback *)aicallback ) / 8;
+    int numbercells = width * height;
+    
+    MonoArray *array = mono_array_new(domain, mono_get_boolean_class(), numbercells);
+    for( int i = 0; i < numbercells; i++ )
+    {
+            if( losmapfromrts[ i ] != 0 )
+            {
+                mono_array_set( array, bool, i, true );
+            }
+            else
+            {
+                mono_array_set( array, bool, i, false );
+            }
+    }
+    return array;
+}
+
+MonoArray *_IAICallback_GetCentreHeightMap(void * aicallback)
+{
+    const float *mapfromrts = IAICallback_GetHeightMap( ( IAICallback *)aicallback );
+    int width = IAICallback_GetMapWidth( ( IAICallback *)aicallback );
+    int height = IAICallback_GetMapHeight( ( IAICallback *)aicallback );
+    int numbercells = width * height;
+    
+    MonoArray *array = mono_array_new(domain, mono_get_double_class(), numbercells);
+    for( int i = 0; i < numbercells; i++ )
+    {
+        mono_array_set( array, double, i, mapfromrts[i] );
+    }
+    return array;
+}
+
+MonoArray *_IAICallback_GetFeatures( void *aicallback )
+{
+    int features[10000];
+    int numfeatures = IAICallback_GetFeatures( ( IAICallback *)aicallback, features, 10000 );
+    MonoArray *array = mono_array_new(domain, mono_get_int32_class(), numfeatures);
+    for( int i = 0; i < numfeatures; i++ )
+    {
+        mono_array_set( array, int, i, features[i] );
+    }
+    return array;
+}
+
+MonoArray *_IAICallback_GetFeaturesAt( void *aicallback, double x, double y, double z, double radius )
+{
+    int features[10000];
+    int numfeatures = IAICallback_GetFeaturesAt( ( IAICallback *)aicallback, features, 10000, x,y,z, radius );
+    MonoArray *array = mono_array_new(domain, mono_get_int32_class(), numfeatures);
+    for( int i = 0; i < numfeatures; i++ )
+    {
+        mono_array_set( array, int, i, features[i] );
+    }
+    return array;
+}
+
+MonoArray *_IAICallback_GetFriendlyUnits( void *aicallback)
+{
+    int units[10000];
+    int numunits = IAICallback_GetFriendlyUnits( ( IAICallback *)aicallback, units );
+    MonoArray *array = mono_array_new(domain, mono_get_int32_class(), numunits);
+    for( int i = 0; i < numunits; i++ )
+    {
+        mono_array_set( array, int, i, units[i] );
+    }
+    return array;
+}
+
+MonoArray *_IAICallback_GetEnemyUnitsInRadarAndLos( void *aicallback)
+{
+    int units[10000];
+    int numunits = IAICallback_GetEnemyUnitsInRadarAndLos( ( IAICallback *)aicallback, units );
+    MonoArray *array = mono_array_new(domain, mono_get_int32_class(), numunits);
+    for( int i = 0; i < numunits; i++ )
+    {
+        mono_array_set( array, int, i, units[i] );
+    }
+    return array;
+}
+
+int _IAICallback_CreateLineFigure(void *aicallback, double pos1x, double pos1y, double pos1z,double pos2x, double pos2y,double pos2z,double width,bool arrow,int lifetime,int group)
+{
+    return IAICallback_CreateLineFigure( ( IAICallback *)aicallback, pos1x, pos1y, pos1z, pos2x, pos2y, pos2z, width, arrow, lifetime, group );
+}
+
+int  _IAICallback_GetCurrentUnitCommandsCount(void *aicallback, int unitid)
+{
+    return IAICallback_GetCurrentUnitCommandsCount( ( IAICallback *)aicallback, unitid );
+}
+
+int _IMoveData_get_moveType( void *movedata )
+{
+    return MoveData_get_movetype( ( MoveData *)movedata );
 }
 
 // Monostuff=============================================================
@@ -196,11 +374,29 @@ void InitMono(const char *monoDir, const char *dll, const char *namespacename, c
         
         image = mono_assembly_get_image(assembly);
     
+        
         // register native methods callable by managed code
     #define PREFIX "CSharpAI.CSAICInterface::"
         mono_add_internal_call(PREFIX "SetInitAICallback", (void*)SetInitAICallback);
         mono_add_internal_call(PREFIX "SetUnitCreatedCallback", (void*)SetUnitCreatedCallback);
+        mono_add_internal_call(PREFIX "SetUnitFinishedCallback", (void*)SetUnitFinishedCallback);
     #undef PREFIX 
+
+#define SETCALLBACKBINDING( delegate, functionname ) mono_add_internal_call( "CSharpAI.CSAICInterface::Set" #functionname "Callback", (void*)Set ## functionname ## Callback);
+        
+//SETCALLBACKBINDING( UNITFINISHED, UnitFinished );
+SETCALLBACKBINDING( UNITDESTROYED, UnitDestroyed );
+SETCALLBACKBINDING( ENEMYENTERLOS, EnemyEnterLOS );
+SETCALLBACKBINDING( ENEMYLEAVELOS, EnemyLeaveLOS );
+SETCALLBACKBINDING( ENEMYENTERRADAR, EnemyEnterRadar );
+SETCALLBACKBINDING( ENEMYLEAVERADAR, EnemyLeaveRadar );
+SETCALLBACKBINDING( ENEMYDAMAGED, EnemyDamaged );
+SETCALLBACKBINDING( ENEMYDESTROYED, EnemyDestroyed );
+SETCALLBACKBINDING( UNITIDLE, UnitIdle );
+SETCALLBACKBINDING( GOTCHATMSG, GotChatMsg );
+SETCALLBACKBINDING( UNITDAMAGED, UnitDamaged );
+SETCALLBACKBINDING( UNITMOVEFAILED, UnitMoveFailed );
+SETCALLBACKBINDING( UPDATE, Update );
         
     #define PREFIX "CSharpAI.ABICInterface::"
         #include "IAICallbackbindings_generated.gpp"
@@ -215,9 +411,20 @@ void InitMono(const char *monoDir, const char *dll, const char *namespacename, c
         mono_add_internal_call(PREFIX "IAICallback_ClosestBuildSite", (void*)_IAICallback_ClosestBuildSite);
         mono_add_internal_call(PREFIX "IAICallback_GiveOrder", (void*)_IAICallback_GiveOrder);
         mono_add_internal_call(PREFIX "IAICallback_DrawUnit", (void*)_IAICallback_DrawUnit);
+        mono_add_internal_call(PREFIX "IAICallback_GetMetalMap", (void*)_IAICallback_GetMetalMap);
+        mono_add_internal_call(PREFIX "IAICallback_GetRadarMap", (void*)_IAICallback_GetRadarMap);
+        mono_add_internal_call(PREFIX "IAICallback_GetLosMap", (void*)_IAICallback_GetLosMap);
+        mono_add_internal_call(PREFIX "IAICallback_GetCentreHeightMap", (void*)_IAICallback_GetCentreHeightMap);
+        mono_add_internal_call(PREFIX "IAICallback_GetFeatures", (void*)_IAICallback_GetFeatures);
+        mono_add_internal_call(PREFIX "IAICallback_GetFeaturesAt", (void*)_IAICallback_GetFeaturesAt);
+        mono_add_internal_call(PREFIX "IAICallback_GetEnemyUnitsInRadarAndLos", (void*)_IAICallback_GetEnemyUnitsInRadarAndLos);
+        mono_add_internal_call(PREFIX "IAICallback_GetFriendlyUnits", (void*)_IAICallback_GetFriendlyUnits);
+        mono_add_internal_call(PREFIX "IAICallback_CreateLineFigure", (void*)_IAICallback_CreateLineFigure);
+        mono_add_internal_call(PREFIX "IAICallback_GetCurrentUnitCommandsCount", (void*)_IAICallback_GetCurrentUnitCommandsCount);
         mono_add_internal_call(PREFIX "UnitDef_get_movedata", (void*)_UnitDef_get_movedata);
+        mono_add_internal_call(PREFIX "IMoveData_get_moveType", (void*)_IMoveData_get_moveType);
     #undef PREFIX 
-    
+
         // create an instance of the launcher class
         launcherClass = mono_class_from_name(image, namespacename, classname);
         if (!launcherClass)
@@ -287,50 +494,62 @@ DLL_EXPORT void UnitCreated( void *ai, int unit)									//called when a new uni
 
 DLL_EXPORT void UnitFinished(void *ai, int unit)							//called when an unit has finished building
 {
+    ( (AIProxy *)ai )->UnitFinished( unit );
 }
 
 DLL_EXPORT void UnitDestroyed(void *ai, int unit,int attacker)								//called when a unit is destroyed
 {
+    ( (AIProxy *)ai )->UnitDestroyed( unit, attacker );
 }
 
 DLL_EXPORT void EnemyEnterLOS(void *ai, int enemy)
 {
+    ( (AIProxy *)ai )->EnemyEnterLOS( enemy );
 }
 
 DLL_EXPORT void EnemyLeaveLOS(void *ai, int enemy)
 {
+    ( (AIProxy *)ai )->EnemyLeaveLOS( enemy );
 }
 
 DLL_EXPORT void EnemyEnterRadar(void *ai, int enemy)		
 {
+    ( (AIProxy *)ai )->EnemyEnterRadar(enemy );
 }
 
 DLL_EXPORT void EnemyLeaveRadar(void *ai, int enemy)
 {
+    ( (AIProxy *)ai )->EnemyLeaveRadar( enemy );
 }
 
 DLL_EXPORT void EnemyDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)	//called when an enemy inside los or radar is damaged
 {
+    ( (AIProxy *)ai )->EnemyDamaged( damaged, attacker, damage, dirx, diry, dirz );
 }
 
 DLL_EXPORT void EnemyDestroyed(void *ai, int enemy,int attacker)							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 {
+    ( (AIProxy *)ai )->EnemyDestroyed( enemy, attacker );
 }
 
 DLL_EXPORT void UnitIdle(void *ai, int unit)										//called when a unit go idle and is not assigned to any group
 {
+    ( (AIProxy *)ai )->UnitIdle( unit );
 }
 
 DLL_EXPORT void GotChatMsg(void *ai, const char* msg,int player)					//called when someone writes a chat msg
 {
+    ( (AIProxy *)ai )->GotChatMsg( mono_string_new_wrapper( msg ), player );
 }
 
 DLL_EXPORT void UnitDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)					//called when one of your units are damaged
 {
+    ( (AIProxy *)ai )->UnitDamaged( damaged, attacker, damage, dirx, diry, dirz );
 }
 
 DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
 {
+    ( (AIProxy *)ai )->UnitMoveFailed( unit );
 }
 
 //int HandleEvent (int msg,const void *data); // todo
@@ -338,4 +557,5 @@ DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
 //called every frame
 DLL_EXPORT void Update(void *ai )
 {
+    ( (AIProxy *)ai )->Update(  );
 }

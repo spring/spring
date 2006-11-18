@@ -11,7 +11,7 @@ using System.IO;
 
 namespace CSharpAI
 {
-    public class MoveData
+    public class MoveData : IMoveData
     {
         public IntPtr self = IntPtr.Zero;
         public MoveData( IntPtr self )
@@ -59,6 +59,16 @@ namespace CSharpAI
       }
 
 #line 0 "AbicIMoveDataWrapper_manualtweaks.txt"
+
+
+public MoveType moveType
+{
+    get
+    {
+        return (MoveType)ABICInterface.IMoveData_get_moveType( self );
+    }
+}
+
 
     }
 }
