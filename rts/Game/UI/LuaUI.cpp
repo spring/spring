@@ -33,6 +33,7 @@ extern "C" {
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -93,6 +94,10 @@ static int GetMyTeamUnitsSorted(lua_State* L);
 static int GetAlliedUnits(lua_State* L);
 static int GetAlliedUnitsSorted(lua_State* L);
 
+static int GetUnitsInBox(lua_State* L);
+static int GetUnitsInPlanes(lua_State* L);
+static int GetUnitsInCylinder(lua_State* L);
+
 static int GetUnitDefID(lua_State* L);
 static int GetUnitTeam(lua_State* L);
 static int GetUnitAllyTeam(lua_State* L);
@@ -121,21 +126,10 @@ static int ArePlayersAllied(lua_State* L);
 
 static int GetCameraState(lua_State* L);
 static int SetCameraState(lua_State* L);
-static int GetCameraDir(lua_State* L);
 static int GetCameraPos(lua_State* L);
-static int GetCameraFOV(lua_State* L);
-
+static int GetCameraVectors(lua_State* L);
 static int WorldToScreenCoords(lua_State* L);
-static int ScreenToWorldCoords(lua_State* L);
-
-static int GetUnitAtCursor(lua_State* L);
-static int GetGroundAtCursor(lua_State* L);
-static int GetFeatureAtCursor(lua_State* L);
-
-static int GetUnitsInVolume(lua_State* L);
-static int GetAllyUnitsInVolume(lua_State* L);
-static int GetEnemyUnitsInVolume(lua_State* L);
-static int GetFeaturesInVolume(lua_State* L);
+static int TraceScreenRay(lua_State* L);
 
 static int GetGroundHeight(lua_State* L);
 static int TestBuildOrder(lua_State* L);
@@ -150,6 +144,7 @@ static int AddWorldUnit(lua_State* L);
 static int DrawScreenGeometry(lua_State* L);
 static int DrawResetState(lua_State* L);
 static int DrawClear(lua_State* L);
+
 static int DrawLighting(lua_State* L);
 static int DrawShadeModel(lua_State* L);
 static int DrawDepthMask(lua_State* L);
@@ -162,16 +157,16 @@ static int DrawTexture(lua_State* L);
 static int DrawMaterial(lua_State* L);
 static int DrawColor(lua_State* L);
 
+static int DrawShape(lua_State* L);
+static int DrawUnitDef(lua_State* L);
+static int DrawText(lua_State* L);
+static int DrawGetTextWidth(lua_State* L);
+
 static int DrawTranslate(lua_State* L);
 static int DrawScale(lua_State* L);
 static int DrawRotate(lua_State* L);
 static int DrawPushMatrix(lua_State* L);
 static int DrawPopMatrix(lua_State* L);
-
-static int DrawShape(lua_State* L);
-static int DrawUnitDef(lua_State* L);
-static int DrawText(lua_State* L);
-static int DrawGetTextWidth(lua_State* L);
 
 static int DrawListCreate(lua_State* L);
 static int DrawListRun(lua_State* L);
@@ -183,6 +178,8 @@ static int DrawListDelete(lua_State* L);
 // Miscellaneous Local Routines
 
 static void ResetGLState();
+static int ParseFloatArray(lua_State* L, float* array, int size);
+
 
 /******************************************************************************/
 
@@ -279,6 +276,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDirListVFS);
 	REGISTER_LUA_CFUNC(GetDirList);
 	REGISTER_LUA_CFUNC(SendCommands);
+	REGISTER_LUA_CFUNC(GiveOrder);
 	REGISTER_LUA_CFUNC(GetFPS);
 	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetInCommand);
@@ -303,6 +301,9 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMyTeamUnitsSorted);
 	REGISTER_LUA_CFUNC(GetAlliedUnits);
 	REGISTER_LUA_CFUNC(GetAlliedUnitsSorted);
+	REGISTER_LUA_CFUNC(GetUnitsInBox);
+	REGISTER_LUA_CFUNC(GetUnitsInPlanes);
+	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
@@ -326,7 +327,10 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
 	REGISTER_LUA_CFUNC(GetCameraState);
 	REGISTER_LUA_CFUNC(SetCameraState);
-	REGISTER_LUA_CFUNC(GiveOrder);
+	REGISTER_LUA_CFUNC(GetCameraPos);
+	REGISTER_LUA_CFUNC(GetCameraVectors);
+	REGISTER_LUA_CFUNC(WorldToScreenCoords);
+	REGISTER_LUA_CFUNC(TraceScreenRay);
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
@@ -2183,6 +2187,141 @@ static int GetAlliedUnitsSorted(lua_State* L)
 
 /******************************************************************************/
 
+static int GetUnitsInBox(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 6) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
+	    !lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
+		lua_pushstring(L,
+			"Incorrect arguments to GetUnitsInBox(minx,miny,minz, maxx,maxy,maxz");
+		lua_error(L);
+	}
+	const float minx = (float)lua_tonumber(L, 1);
+	const float miny = (float)lua_tonumber(L, 2);
+	const float minz = (float)lua_tonumber(L, 3);
+	const float maxx = (float)lua_tonumber(L, 4);
+	const float maxy = (float)lua_tonumber(L, 5);
+	const float maxz = (float)lua_tonumber(L, 6);
+	
+	lua_newtable(L);
+	int count = 0;
+	const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+	set<CUnit*>::const_iterator it;
+	for (it = teamUnits.begin(); it != teamUnits.end(); ++it) {
+		const CUnit* unit = (*it);
+		const float r = unit->radius;
+		const float3& p = unit->midPos;
+		if (((p.x + r) < minx) || ((p.y + r) < miny) || ((p.z + r) < minz) ||
+		    ((p.x - r) > maxx) || ((p.y - r) > maxy) || ((p.z - r) > maxz)) {
+			continue;
+		}
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, unit->id);
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+	return 1;
+}
+
+
+static int GetUnitsInCylinder(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L, "Incorrect arguments to GetUnitsInCylinder(x,z,r)");
+		lua_error(L);
+	}
+	const float x = (float)lua_tonumber(L, 1);
+	const float z = (float)lua_tonumber(L, 2);
+	const float radius = (float)lua_tonumber(L, 3);
+
+	lua_newtable(L);
+	int count = 0;
+	const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+	set<CUnit*>::const_iterator it;
+	for (it = teamUnits.begin(); it != teamUnits.end(); ++it) {
+		const CUnit* unit = (*it);
+		const float3& pos = unit->midPos;
+		const float dx = x - pos.x;
+		const float dz = z - pos.z;
+		const float dist = sqrtf((dx * dx) + (dz * dz));
+		if ((dist - unit->radius) > radius) {
+			continue;
+		}
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, unit->id);
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+	return 1;
+}
+
+
+typedef struct Plane {
+	float x, y, z, d;  // ax + by + cz + d = 0
+};
+
+static int GetUnitsInPlanes(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_istable(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetUnitsInPlanes()");
+		lua_error(L);
+	}
+	
+	vector<Plane> planes;
+	const int table = lua_gettop(L);
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_istable(L, -1)) {
+			float values[4];
+			const int v = ParseFloatArray(L, values, 4);
+			if (v == 4) {
+				Plane plane = { values[0], values[1], values[2], values[3] };
+				planes.push_back(plane);
+			}
+		}
+	}
+
+	lua_newtable(L);
+	int count = 0;
+	const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+	set<CUnit*>::const_iterator it;
+	for (it = teamUnits.begin(); it != teamUnits.end(); ++it) {
+		const CUnit* unit = (*it);
+		const float3& pos = unit->midPos;
+		int i;
+		for (i = 0; i < (int)planes.size(); i++) {
+			const Plane& p = planes[i];
+			const float dist = (pos.x * p.x) + (pos.y * p.y) + (pos.z * p.z) + p.d;
+			if ((dist - unit->radius) > 0.0f) {
+				break; // outside
+			}
+		}
+		if (i != (int)planes.size()) {
+			continue;
+		}
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, unit->id);
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+	return 1;
+}
+
+
+/******************************************************************************/
+
 static CUnit* AlliedUnit(lua_State* L, const char* caller)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -2846,6 +2985,127 @@ static int SetCameraState(lua_State* L)
 	lua_pushboolean(L, mouse->currentCamController->SetState(camState));
 	
 	return 1;
+}
+
+
+static int GetCameraPos(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetCameraPos() takes no arguments");
+		lua_error(L);
+	}
+	lua_pushnumber(L, camera->pos.x);
+	lua_pushnumber(L, camera->pos.y);
+	lua_pushnumber(L, camera->pos.z);
+	return 3;
+}
+
+
+static int GetCameraVectors(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetCameraVectors() takes no arguments");
+		lua_error(L);
+	}
+
+	const CCamera* cam = camera;
+	
+#define PACK_CAMERA_VECTOR(n) \
+	lua_pushstring(L, #n);      \
+	lua_newtable(L);            \
+	lua_pushnumber(L, 1); lua_pushnumber(L, cam-> n .x); lua_rawset(L, -3); \
+	lua_pushnumber(L, 2); lua_pushnumber(L, cam-> n .y); lua_rawset(L, -3); \
+	lua_pushnumber(L, 3); lua_pushnumber(L, cam-> n .z); lua_rawset(L, -3); \
+	lua_rawset(L, -3)
+
+	lua_newtable(L);
+	PACK_CAMERA_VECTOR(forward);
+	PACK_CAMERA_VECTOR(up);
+	PACK_CAMERA_VECTOR(right);
+	PACK_CAMERA_VECTOR(top);
+	PACK_CAMERA_VECTOR(bottom);
+	PACK_CAMERA_VECTOR(leftside);
+	PACK_CAMERA_VECTOR(rightside);
+	
+	return 1;
+}
+
+
+static int WorldToScreenCoords(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L, "Incorrect arguments to WorldToScreenCoords(x,y,z)");
+		lua_error(L);
+	}
+	const float3 worldPos(lua_tonumber(L, 1),
+	                      lua_tonumber(L, 2),
+	                      lua_tonumber(L, 3));
+	const float3 winPos = camera->CalcWindowCoordinates(worldPos);
+	lua_pushnumber(L, winPos.x);
+	lua_pushnumber(L, winPos.y);
+	lua_pushnumber(L, winPos.z);
+	return 3;
+}
+
+
+static int TraceScreenRay(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+		lua_pushstring(L, "Incorrect arguments to TraceScreenRay(x, y)");
+		lua_error(L);
+	}
+
+	// window coordinates	
+	const int wx = (int)lua_tonumber(L, 1);
+	const int wy = gu->viewSizeY - 1 - (int)lua_tonumber(L, 2);
+	if ((wx < gu->viewPosX) || (wx >= (gu->viewSizeX + gu->viewPosX)) ||
+	    (wy < gu->viewPosY) || (wy >= (gu->viewSizeY + gu->viewPosY))) {
+		return 0;
+	}
+	
+	CUnit* unit = NULL;
+	CFeature* feature = NULL;
+	const float range = gu->viewRange * 1.4f;
+	const float3& pos = camera->pos;
+	const float3 dir = camera->CalcPixelDir(wx, wy);
+
+	const float udist = helper->GuiTraceRay(pos, dir, range, unit, 20.0f, true);
+	const float fdist = helper->GuiTraceRayFeature(pos, dir, range,feature);
+	
+	const float badRange = (range - 300.0f);
+	if ((udist > badRange) && (fdist > badRange) && (unit == NULL)) {
+		return 0;
+	}
+	
+	if (udist > fdist) {
+		unit = NULL;
+	}
+	
+	if (unit != NULL) {
+		lua_pushstring(L, "unit");
+		lua_pushnumber(L, unit->id);
+		return 2;
+	}
+
+	if (feature != NULL) {
+		lua_pushstring(L, "feature");
+		lua_pushnumber(L, feature->id);
+		return 2;
+	}
+
+	const float3 groundPos = pos + (dir * udist);
+	lua_pushstring(L, "ground");
+	lua_newtable(L);
+	lua_pushnumber(L, 1); lua_pushnumber(L, groundPos.x); lua_rawset(L, -3);
+	lua_pushnumber(L, 2); lua_pushnumber(L, groundPos.y); lua_rawset(L, -3);
+	lua_pushnumber(L, 3); lua_pushnumber(L, groundPos.z); lua_rawset(L, -3);
+
+	return 2;
 }
 
 

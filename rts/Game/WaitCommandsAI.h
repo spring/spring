@@ -35,13 +35,14 @@ class CWaitCommandsAI {
 		void AddSquadWait(const Command& cmd);
 		void AddGatherWait(const Command& cmd);
 
-		void AcknowledgeCommand(const Command& cmd);
+		// add units to a specific wait command
 		void AddUnits(const Command& cmd, const vector<int>& unitIDs);
+		
+		// search a new unit's queue and add it to its wait commands
+		void AddLocalUnit(CUnit* unit, const CUnit* builder);
 
 		void ClearUnitQueue(CUnit* unit, const deque<Command>& queue);
 		void RemoveWaitCommand(CUnit* unit, const Command& cmd);
-		
-		void NewUnit(CUnit* unit, const CUnit* builder);
 		
 		void AddIcon(const Command& cmd, const float3& pos) const;
 
@@ -49,6 +50,7 @@ class CWaitCommandsAI {
 		class Wait;
 		bool InsertWaitObject(Wait*);
 		void RemoveWaitObject(Wait*);
+		void AcknowledgeCommand(const Command& cmd);
 
 	private:
 		typedef int KeyType;
