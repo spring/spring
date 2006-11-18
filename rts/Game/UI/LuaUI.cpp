@@ -85,9 +85,13 @@ static int GetGroupAIName(lua_State* L);
 static int GetGroupAIList(lua_State* L);
 
 static int GetSelectedUnits(lua_State* L);
+static int GetSelectedUnitsSorted(lua_State* L);
 static int GetGroupUnits(lua_State* L);
+static int GetGroupUnitsSorted(lua_State* L);
 static int GetMyTeamUnits(lua_State* L);
+static int GetMyTeamUnitsSorted(lua_State* L);
 static int GetAlliedUnits(lua_State* L);
+static int GetAlliedUnitsSorted(lua_State* L);
 
 static int GetUnitDefID(lua_State* L);
 static int GetUnitTeam(lua_State* L);
@@ -144,7 +148,16 @@ static int AddWorldText(lua_State* L);
 static int AddWorldUnit(lua_State* L);
 
 static int DrawScreenGeometry(lua_State* L);
-static int DrawState(lua_State* L);
+static int DrawResetState(lua_State* L);
+static int DrawLighting(lua_State* L);
+static int DrawShadeModel(lua_State* L);
+static int DrawDepthMask(lua_State* L);
+static int DrawDepthTest(lua_State* L);
+static int DrawCulling(lua_State* L);
+static int DrawLogicOp(lua_State* L);
+static int DrawBlending(lua_State* L);
+static int DrawAlphaTest(lua_State* L);
+static int DrawClear(lua_State* L);
 static int DrawColor(lua_State* L);
 
 static int DrawTranslate(lua_State* L);
@@ -274,9 +287,13 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroupAIName);
 	REGISTER_LUA_CFUNC(GetGroupAIList);
 	REGISTER_LUA_CFUNC(GetSelectedUnits);
+	REGISTER_LUA_CFUNC(GetSelectedUnitsSorted);
 	REGISTER_LUA_CFUNC(GetGroupUnits);
+	REGISTER_LUA_CFUNC(GetGroupUnitsSorted);
 	REGISTER_LUA_CFUNC(GetMyTeamUnits);
+	REGISTER_LUA_CFUNC(GetMyTeamUnitsSorted);
 	REGISTER_LUA_CFUNC(GetAlliedUnits);
+	REGISTER_LUA_CFUNC(GetAlliedUnitsSorted);
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
@@ -317,20 +334,32 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	lua_pushstring(L, "Draw");
 	lua_newtable(L);
 	REGISTER_LUA_DRAW_CFUNC(ScreenGeometry);
-	REGISTER_LUA_DRAW_CFUNC(State);
+	REGISTER_LUA_DRAW_CFUNC(ResetState);
+	REGISTER_LUA_DRAW_CFUNC(Lighting);
+	REGISTER_LUA_DRAW_CFUNC(ShadeModel);
+	REGISTER_LUA_DRAW_CFUNC(DepthMask);
+	REGISTER_LUA_DRAW_CFUNC(DepthTest);
+	REGISTER_LUA_DRAW_CFUNC(Culling);
+	REGISTER_LUA_DRAW_CFUNC(LogicOp);
+	REGISTER_LUA_DRAW_CFUNC(Blending);
+	REGISTER_LUA_DRAW_CFUNC(AlphaTest);
+	REGISTER_LUA_DRAW_CFUNC(Clear);
 	REGISTER_LUA_DRAW_CFUNC(Color);
+
 	REGISTER_LUA_DRAW_CFUNC(Shape);
-	REGISTER_LUA_DRAW_CFUNC(Text);
 	REGISTER_LUA_DRAW_CFUNC(UnitDef);
+	REGISTER_LUA_DRAW_CFUNC(Text);
+	REGISTER_LUA_DRAW_CFUNC(GetTextWidth);
+
 	REGISTER_LUA_DRAW_CFUNC(ListCreate);
 	REGISTER_LUA_DRAW_CFUNC(ListRun);
 	REGISTER_LUA_DRAW_CFUNC(ListDelete);
+
 	REGISTER_LUA_DRAW_CFUNC(Translate);
 	REGISTER_LUA_DRAW_CFUNC(Scale);
 	REGISTER_LUA_DRAW_CFUNC(Rotate);
 	REGISTER_LUA_DRAW_CFUNC(PushMatrix);
 	REGISTER_LUA_DRAW_CFUNC(PopMatrix);
-	REGISTER_LUA_DRAW_CFUNC(GetTextWidth);
 	lua_rawset(L, -3); // add the Draw table
 
 	lua_setglobal(L, "Spring");
@@ -2007,15 +2036,23 @@ static void PackUnitsSet(lua_State* L, const set<CUnit*>& unitSet,
 static int GetSelectedUnits(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args > 0) && !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetSelectedUnits([\"raw\"])");
+	if (args != 0) {
+		lua_pushstring(L, "GetSelectedUnits() takes no arguments");
 		lua_error(L);
 	}
-	UnitSetFormat format = SortedUnitSet;
-	if ((args >= 1) && (string(lua_tostring(L, 1)) == "raw")) {
-		format = UnsortedUnitSet;
+	PackUnitsSet(L, selectedUnits.selectedUnits, UnitGroupId, UnsortedUnitSet);
+	return 1;
+}
+
+
+static int GetSelectedUnitsSorted(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetSelectedUnitsSorted() takes no arguments");
+		lua_error(L);
 	}
-	PackUnitsSet(L, selectedUnits.selectedUnits, UnitGroupId, format);
+	PackUnitsSet(L, selectedUnits.selectedUnits, UnitGroupId, SortedUnitSet);
 	return 1;
 }
 
@@ -2023,10 +2060,8 @@ static int GetSelectedUnits(lua_State* L)
 static int GetGroupUnits(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1) ||
-	    ((args >= 2) && !lua_isstring(L, 2))) {
-		lua_pushstring(L,
-			"Incorrect arguments to GetGroupUnits(groupID [, \"raw\"])");
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetGroupUnits(groupID)");
 		lua_error(L);
 	}
 	const int groupID = (int)lua_tonumber(L, 1);
@@ -2035,11 +2070,25 @@ static int GetGroupUnits(lua_State* L)
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
-	UnitSetFormat format = SortedUnitSet;
-	if ((args >= 2) && (string(lua_tostring(L, 2)) == "raw")) {
-		format = UnsortedUnitSet;
+	PackUnitsSet(L, groups[groupID]->units, UnitDefId, UnsortedUnitSet);
+	return 1;
+}
+
+
+static int GetGroupUnitsSorted(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetGroupUnitsSorted(groupID)");
+		lua_error(L);
 	}
-	PackUnitsSet(L, groups[groupID]->units, UnitDefId, format);
+	const int groupID = (int)lua_tonumber(L, 1);
+	const vector<CGroup*>& groups = grouphandler->groups;
+	if ((groupID < 0) || (groupID >= groups.size()) ||
+	    (groups[groupID] == NULL)) {
+		return 0; // nils
+	}
+	PackUnitsSet(L, groups[groupID]->units, UnitDefId, SortedUnitSet);
 	return 1;
 }
 
@@ -2047,31 +2096,29 @@ static int GetGroupUnits(lua_State* L)
 static int GetMyTeamUnits(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args >= 1) && !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetMyTeamUnits([\"raw\"])");
+	if (args != 0) {
+		lua_pushstring(L, "GetMyTeamUnits() takes no arguments");
 		lua_error(L);
 	}
-	UnitSetFormat format = SortedUnitSet;
-	if ((args >= 1) && (string(lua_tostring(L, 1)) == "raw")) {
-		format = UnsortedUnitSet;
-	}
-	PackUnitsSet(L, gs->Team(gu->myTeam)->units, UnitDefId, format);
+	PackUnitsSet(L, gs->Team(gu->myTeam)->units, UnitDefId, UnsortedUnitSet);
 	return 1;
 }
 
 
-static int GetAlliedUnits(lua_State* L)
+static int GetMyTeamUnitsSorted(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args >= 1) && !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetAlliedUnits([\"raw\"])");
+	if (args != 0) {
+		lua_pushstring(L, "GetMyTeamUnitsSorted() takes no arguments");
 		lua_error(L);
 	}
-	UnitSetFormat format = SortedUnitSet;
-	if ((args >= 1) && (string(lua_tostring(L, 1)) == "raw")) {
-		format = UnsortedUnitSet;
-	}
+	PackUnitsSet(L, gs->Team(gu->myTeam)->units, UnitDefId, SortedUnitSet);
+	return 1;
+}
 
+
+static int PackAlliedUnits(lua_State* L, UnitSetFormat format)
+{
 	int unitCount = 0;
 
 	lua_newtable(L);
@@ -2092,6 +2139,28 @@ static int GetAlliedUnits(lua_State* L)
 	lua_pushnumber(L, unitCount);
 
 	return 2;
+}
+
+
+static int GetAlliedUnits(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetAlliedUnits() takes no arguments");
+		lua_error(L);
+	}
+	return PackAlliedUnits(L, UnsortedUnitSet);
+}
+
+
+static int GetAlliedUnitsSorted(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetAlliedUnitsSorted() takes no arguments");
+		lua_error(L);
+	}
+	return PackAlliedUnits(L, SortedUnitSet);
 }
 
 
@@ -3535,180 +3604,303 @@ static int DrawScreenGeometry(lua_State* L)
 
 /******************************************************************************/
 
-static int DrawState(lua_State* L)
+static void ResetGLState()
+{
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.5f);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_COLOR_LOGIC_OP);
+	glLogicOp(GL_INVERT);
+	glDisable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glShadeModel(GL_SMOOTH);
+}
+
+
+static int DrawResetState(lua_State* L)
 {
 	if (!drawingEnabled) {
 		return 0;
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_istable(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawState(table[])");
+	if (args != 0) {
+		lua_pushstring(L, "DrawResetState takes no arguments");
+		lua_error(L);
+	}
+
+	ResetGLState();
+
+	return 0;
+}
+
+
+static int DrawLighting(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isboolean(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawLighting()");
+		lua_error(L);
+	}
+	if (lua_toboolean(L, 1)) {
+		glEnable(GL_LIGHTING);
+	} else {
+		glDisable(GL_LIGHTING);
+	}
+	return 0;
+}
+
+
+static int DrawShadeModel(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawShadeModel()");
+		lua_error(L);
+	}
+
+	glShadeModel((GLenum)lua_tonumber(L, 1));
+
+	return 0;
+}
+
+
+static int DrawDepthMask(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isboolean(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawDepthMask()");
+		lua_error(L);
+	}
+	if (lua_toboolean(L, 1)) {
+		glDepthMask(GL_TRUE);
+	} else {
+		glDepthMask(GL_FALSE);
+	}
+	return 0;
+}
+
+
+static int DrawDepthTest(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1) {
+		lua_pushstring(L, "Incorrect arguments to DrawDepthTest()");
+		lua_error(L);
+	}
+
+	if (lua_isboolean(L, 1)) {
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_DEPTH_TEST);
+		} else {
+			glDisable(GL_DEPTH_TEST);
+		}
+	}
+	else if (lua_isnumber(L, 1)) {
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc((GLenum)lua_tonumber(L, 1));
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawDepthTest()");
+		lua_error(L);
+	}
+	return 0;
+}
+
+
+static int DrawCulling(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1) {
+		lua_pushstring(L, "Incorrect arguments to DrawCulling()");
+		lua_error(L);
+	}
+
+	if (lua_isboolean(L, 1)) {
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_CULL_FACE);
+		} else {
+			glDisable(GL_CULL_FACE);
+		}
+	}
+	else if (lua_isnumber(L, 1)) {
+		glEnable(GL_CULL_FACE);
+		glCullFace((GLenum)lua_tonumber(L, 1));
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawCulling()");
+		lua_error(L);
+	}
+	return 0;
+}
+
+
+static int DrawLogicOp(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1) {
+		lua_pushstring(L, "Incorrect arguments to DrawLogicOp()");
+		lua_error(L);
+	}
+
+	if (lua_isboolean(L, 1)) {
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_COLOR_LOGIC_OP);
+		} else {
+			glDisable(GL_COLOR_LOGIC_OP);
+		}
+	}
+	else if (lua_isnumber(L, 1)) {
+		glEnable(GL_COLOR_LOGIC_OP);
+		glLogicOp((GLenum)lua_tonumber(L, 1));
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawLogicOp()");
+		lua_error(L);
+	}
+	return 0;
+}
+
+
+static int DrawBlending(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args == 1) {
+		if (!lua_isboolean(L, 1)) {
+			lua_pushstring(L, "Incorrect arguments to DrawBlending()");
+			lua_error(L);
+		}
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_BLEND);
+		} else {
+			glDisable(GL_BLEND);
+		}
+	}
+	else if (args == 2) {
+		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+			lua_pushstring(L, "Incorrect arguments to DrawBlending()");
+			lua_error(L);
+		}
+		glEnable(GL_BLEND);
+		glBlendFunc((GLenum)lua_tonumber(L, 1), (GLenum)lua_tonumber(L, 2));
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawBlending()");
+		lua_error(L);
+	}
+	return 0;
+}
+
+
+static int DrawAlphaTest(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args == 1) {
+		if (!lua_isboolean(L, 1)) {
+			lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
+			lua_error(L);
+		}
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_ALPHA_TEST);
+		} else {
+			glDisable(GL_ALPHA_TEST);
+		}
+	}
+	else if (args == 2) {
+		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+			lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
+			lua_error(L);
+		}
+		glEnable(GL_BLEND);
+		glAlphaFunc((GLenum)lua_tonumber(L, 1), (GLfloat)lua_tonumber(L, 2));
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
+		lua_error(L);
+	}
+	return 0;
+}
+
+
+static int DrawClear(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawClear()");
 		lua_error(L);
 	}
 	
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2)) { // the key
-			logOutput.Print("DrawState: bad state type\n");
-			break;
+	const GLbitfield bits = (GLbitfield)lua_tonumber(L, 1);
+	if (args == 5) {
+		if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
+		    !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
+			lua_pushstring(L, "Incorrect arguments to DrawClear()");
+			lua_error(L);
 		}
-		const string key = lua_tostring(L, -2);
-
-		if (key == "reset") {
-			glDisable(GL_DEPTH_TEST);
-			glDepthMask(GL_FALSE);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, 0.5f);
-			glDisable(GL_LIGHTING);
-			glDisable(GL_COLOR_LOGIC_OP);
-			glLogicOp(GL_INVERT);
-			glDisable(GL_CULL_FACE);
-			glCullFace(GL_BACK);
-			glShadeModel(GL_SMOOTH);
+		if (bits == GL_COLOR_BUFFER_BIT) {
+			glClearColor((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3),
+			             (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5));
 		}
-		else if (key == "blending") {
-			if (lua_isboolean(L, -1)) {
-				if (lua_toboolean(L, -1)) {
-					glEnable(GL_BLEND);
-				} else {
-					glDisable(GL_BLEND);
-				}
-			}
-			else {
-				float values[2];
-				const int count = ParseFloatArray(L, values, 2);
-				if (count == 0) {
-					glDisable(GL_BLEND);
-				}
-				else if (count == 2) {
-					glEnable(GL_BLEND);
-					glBlendFunc((GLenum)values[0], (GLenum)values[1]);
-				}
-				else {
-					logOutput.Print("DrawState: bad blending params\n");
-				}
-			}
-		}
-		else if (key == "depthmask") {
-			if (lua_isboolean(L, -1)) {
-				glDepthMask(lua_toboolean(L, -1) ? GL_TRUE : GL_FALSE);
-			}
-			else {
-				logOutput.Print("DrawState: bad depthmask param\n");
-			}
-		}
-		else if (key == "depthtest") {
-			if (lua_isboolean(L, -1)) {
-				if (lua_toboolean(L, -1)) {
-					glEnable(GL_DEPTH_TEST);
-				} else {
-					glDisable(GL_DEPTH_TEST);
-				}
-			}
-			else if (lua_isnumber(L, -1)) {
-				glEnable(GL_DEPTH_TEST);
-				glDepthFunc((GLenum)lua_tonumber(L, -1));
-			}
-			else {
-				logOutput.Print("DrawState: bad depthtest param\n");
-			}
-		}
-		else if (key == "lighting") {
-			if (lua_isboolean(L, -1)) {
-				if (lua_toboolean(L, -1)) {
-					glEnable(GL_LIGHTING);
-				} else {
-					glDisable(GL_LIGHTING);
-				}
-			}
-			else {
-				logOutput.Print("DrawState: bad lighting param\n");
-			}
-		}
-		else if (key == "culling") {
-			if (lua_isboolean(L, -1)) {
-				if (lua_toboolean(L, -1)) {
-					glEnable(GL_CULL_FACE);
-				} else {
-					glDisable(GL_CULL_FACE);
-				}
-			}
-			else if (lua_isnumber(L, -1)) {
-				glEnable(GL_CULL_FACE);
-				glCullFace((GLenum)lua_tonumber(L, -1));
-			}
-			else {
-				logOutput.Print("DrawState: bad culling param\n");
-			}
-		}
-		else if (key == "alphatest") {
-			if (lua_isboolean(L, -1)) {
-				if (lua_toboolean(L, -1)) {
-					glEnable(GL_ALPHA_TEST);
-				} else {
-					glDisable(GL_ALPHA_TEST);
-				}
-			}
-			else {
-				float values[2];
-				const int count = ParseFloatArray(L, values, 2);
-				if (count == 0) {
-					glDisable(GL_ALPHA_TEST);
-				}
-				else if (count == 2) {
-					glEnable(GL_ALPHA_TEST);
-					glAlphaFunc((GLenum)values[0], values[1]);
-				}
-				else {
-					logOutput.Print("DrawState: bad alphatest params\n");
-				}
-			}
-		}
-		else if (key == "logicop") {
-			if (lua_isboolean(L, -1)) {
-				if (lua_toboolean(L, -1)) {
-					glEnable(GL_COLOR_LOGIC_OP);
-				} else {
-					glDisable(GL_COLOR_LOGIC_OP);
-				}
-			}
-			else if (lua_isnumber(L, -1)) {
-				glEnable(GL_COLOR_LOGIC_OP);
-				glLogicOp((GLenum)lua_tonumber(L, -1));
-			}
-			else {
-				logOutput.Print("DrawState: bad logicop param\n");
-			}
-		}
-		else if ((key == "clear") && screenTransform) {
-			float values[5];
-			const int count = ParseFloatArray(L, values, 5);
-			const GLbitfield bits = (count >= 1) ? (GLbitfield)values[0] : 0;
-			if ((count >= 5) && (bits == GL_COLOR_BUFFER_BIT)) {
-				glClearColor(values[1], values[2], values[3], values[4]);
-			}
-			else if ((count >= 5) && (bits == GL_ACCUM_BUFFER_BIT)) {
-				glClearAccum(values[1], values[2], values[3], values[4]);
-			}
-			else if ((count >= 2) && (bits == GL_DEPTH_BUFFER_BIT)) {
-				glClearDepth(values[1]);
-			}
-			else if ((count >= 2) && (bits == GL_STENCIL_BUFFER_BIT)) {
-				glClearStencil((GLint)values[1]);
-			}
-
-			if (count >= 1) {
-				glClear(bits);
-			}
-		}
-		else {
-			logOutput.Print("DrawState: unknown state type: %s\n", key.c_str());
+		else if (bits == GL_ACCUM_BUFFER_BIT) {
+			glClearAccum((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3),
+			             (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5));
 		}
 	}
-	
+	else if (args == 2) {
+		if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+			lua_pushstring(L, "Incorrect arguments to DrawClear()");
+			lua_error(L);
+		}
+		if (bits == GL_DEPTH_BUFFER_BIT) {
+			glClearDepth((GLfloat)lua_tonumber(L, 2));
+		}
+		else if (bits == GL_STENCIL_BUFFER_BIT) {
+			glClearStencil((GLint)lua_tonumber(L, 2));
+		}
+	}
+
+	glClear(bits);
+
 	return 0;
 }
 

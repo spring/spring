@@ -86,9 +86,13 @@
   GetGroupAIList()
 
   GetSelectedUnits()
+  GetSelectedUnitsSorted()
   GetGroupUnits()
+  GetGroupUnitsSorted()
   GetMyTeamUnits()
+  GetMyTeamUnitsSorted()
   GetAlliedUnits()
+  GetAlliedUnitsSorted()
 
   GetUnitDefID()
   GetUnitTeam()
@@ -132,7 +136,18 @@
   AddWorldText()
   AddWorldUnit()
 
-  Draw.State()
+	Draw.ScreenGeometry()
+  Draw.ResetState()
+  Draw.Lighting()
+  Draw.ShadeModel()
+  Draw.DepthMask()
+  Draw.DepthTest()   
+  Draw.Culling()
+  Draw.LogicOp()  
+  Draw.Blending()
+  Draw.AlphaTest() 
+  Draw.Clear()
+  Draw.Color()
 
   Draw.Shape()
   Draw.UnitDef()
@@ -191,6 +206,25 @@ LayoutButtons(number xButtons, number yButtons, number cmdCount,
       swtext    = string,
       setext    = string,
       actions = { string "action1", string "action2",  etc...}
+      -- Actions can have a key modifier specification prefix that
+      -- will control when they are enabled, and what the effective
+      -- key modifiers will be when they are executed. Here's an
+      -- example:    actions = { "@-c+s+R-A+M@togglelos" }
+      -- The lower case letters control when the action is enabled.
+      -- A '+' before the letter means that the modifier key must
+      -- be active for the action to execute. A '-' before the letter
+      -- means that the modifier key must not be active for the
+      -- action to execute. The same pattens holds for the effective
+      -- state of the modifiers during execution. A '+' enables the
+      -- modifier, and a '-' disables it. Manipulating the effective
+      -- state of the modifiers can be useful for actions such as
+      -- "group1", "group2", etc...
+      --
+      --   a/A:  ALT KEY
+      --   c/C:  CONTROL KEY
+      --   m/M:  META KEY
+      --   s/S:  SHIFT KEY
+      --   r/R:  RIGHT MOUSE BUTTON
     },
     etc...
   }
@@ -267,7 +301,7 @@ MouseMove(int x, int y, int dx, int dy, int button) -> boolean takeEvent
 
 MousePress(int x, int y, int button) -> boolean takeEvent
 
-MouseRelease(int x, int y, int button) -> number commandIndex
+MouseRelease(int x, int y, int button) -> number commandIndex  (-1 for no command)
 
 
 --
@@ -403,71 +437,52 @@ GetGroupAIList() ->
   }
 
 
-GetSelectedUnits(["raw"]) ->
-  if "raw":
-    unitTable = {
-      [1] = unitID,
-      etc...
-    }
-  else:
-    unitDefTable = {
-      [number unitDefID] = {
-        [number unitID] = number unitDefID,
-        etc...
-      },
-      etc...
-    }
+GetSelectedUnits() -> unitTable = { [1] = unitID, etc... }
 
-GetGroupUnits(["raw"]) ->
-  if "raw":
-    unitTable = {
-      [1] = unitID,
+GetSelectedUnitsSorted() ->
+  unitDefTable = {
+    [number unitDefID] = {
+      [number unitID] = number unitDefID,
       etc...
-    }
-  else:
-    unitDefTable = {
-      [number unitDefID] = {
-        [number unitID] = number groupID,
-        etc...
-      },
-      etc...
-    }
+    },
+    etc...
+  }
 
-GetMyTeamUnits(["raw"]) ->
-  if "raw":
-    unitTable = {
-      [1] = unitID,
-      etc...
-    }
-  else:
-    unitDefTable = {
-      [number unitDefID] = {
-        [number unitID] = number unitDefID,
-        etc...
-      },
-      etc...
-    }
+GetGroupUnits() -> unitTable = { [1] = unitID, etc... }
 
-GetAlliedUnits(["raw"]) -- FIXME
-  if "raw":
-    teamTable = {
-      [number teamID] = {
-        [1] = unitID,
+GetGroupUnitsSorted() ->
+  unitDefTable = {
+    [number unitDefID] = {
+      [number unitID] = number groupID,
+      etc...
+    },
+    etc...
+  }
+
+GetMyTeamUnits() -> unitTable = { [1] = unitID, etc... }
+
+GetMyTeamUnitsSorted() -> unitTable = { [1] = unitID, etc... }
+  unitDefTable = {
+    [number unitDefID] = {
+      [number unitID] = number unitDefID,
+      etc...
+    },
+    etc...
+  }
+
+GetAlliedUnits() -> teamTable = { [number teamID] = { [1] = unitID, etc... }, etc... }
+
+GetAlliedUnitsSorted() ->
+  teamTable = {
+    [number teamID] = {
+      [number unitDefID] = {
+        [number unitID] = number teamID,
         etc...
       },
       etc...
-    }
-  else:
-    teamTable = {
-      [number teamID] = {
-        [number unitDefID] = {
-          [number unitID] = number teamID,
-          etc...
-        },
-        etc...
-      },
-      etc...
-    }
+    },
+    etc...
+  }
 
 
 GetUnitDefID(number unitID) ->
@@ -641,17 +656,28 @@ AddWorldUnit(number unitDefID,
 --  Draw sub-table  --
 ----------------------
 
-Draw.State(stateTable = {
-  reset = true,  -- value is ignored  (note: settings are not ordered)
-  lighting   = boolean enable,
-  depthmask  = boolean enable,
-  depthtest  = boolean enable | number func,
-  logicop    = boolean enable | number func,
-  culling    = boolean enable | number face,
-  blending   = boolean enable | { number srcmode, number dstmode },
-  alphatest  = boolean enable | { number func, number threshold },
-  shademodel = number mode
-}) -> nil
+Draw.ScreenGeometry(number width, number dist) -> nil
+
+Draw.ResetState() -> nil
+-- ShadeModel = GL_SMOOTH
+-- DepthMask  = false
+-- DepthTest  = false  (GL_LEQUAL)
+-- Culling    = false  (GL_BACK)
+-- LogicOp    = false  (GL_INVERT)
+-- AlphaTest  = false  (GL_GREATER, 0.5f)
+-- Blending   = GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+
+Draw.ShadeModel(number mode) -> nil
+Draw.Lighting  (boolean enabled) -> nil
+Draw.DepthMask (boolean enabled) -> nil
+Draw.DepthTest (boolean enabled | number func) -> nil
+Draw.Culling   (boolean enabled | number func) -> nil
+Draw.LogicOp   (boolean enabled | number func) -> nil  
+Draw.AlphaTest (boolean enabled | number func, number threshold) -> nil 
+Draw.Blending  (boolean enabled | number srcmode, number dstmode) -> nil
+Draw.Clear() -> nil    -- FIXME
+Draw.Color() -> nil    -- FIXME
+
 
 Draw.Shape(
   number GLtype,
@@ -675,6 +701,7 @@ Draw.UnitDef(number unitDefID, number teamID) -> nil
 Draw.Text(string "text", number x, number y, number size, string "options") -> nil
 Draw.GetTextWidth(string "text") -> number width  --  in pixels, with a font size of 1.0
 
+
 Draw.Translate(number x, number y, number z) -> nil
 Draw.Scale(number x, number y, number z) -> nil
 Draw.Rotate(number angle, number x, number y, number z) -> nil
@@ -682,7 +709,8 @@ Draw.Rotate(number angle, number x, number y, number z) -> nil
 Draw.PushMatrix() -> nil
 Draw.PopMatrix()  -> nil
 
+
 Draw.ListCreate(function [,arg1 [,arg2...]]) -> number listID  -- 0 is an invalid list
-Draw.ListRun(number listID) -> nil
+Draw.ListRun(number listID)    -> nil
 Draw.ListDelete(number listID) -> nil
 
