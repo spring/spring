@@ -129,7 +129,7 @@ void CWaitCommandsAI::AddGatherWait(const Command& cmd)
 }
 
 
-void CWaitCommandsAI::AcknowledgeCommand(const Command& cmd)
+inline void CWaitCommandsAI::AcknowledgeCommand(const Command& cmd)
 {
 	if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
 		return;
@@ -144,6 +144,69 @@ void CWaitCommandsAI::AcknowledgeCommand(const Command& cmd)
 		// move into the acknowledged pool
 		unackedMap.erase(key);
 		waitMap[key] = wait;
+	}
+}
+
+
+void CWaitCommandsAI::AddUnits(const Command& cmd, const vector<int>& unitIDs)
+{
+	if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
+		return;
+	}
+	AcknowledgeCommand(cmd);
+}
+
+
+void CWaitCommandsAI::AddLocalUnit(CUnit* unit, const CUnit* builder)
+{
+	// NOTE: the wait keys will link the right units to
+	//       the correct player (for multi-player teams)
+	if ((unit->team != gu->myTeam) || waitMap.empty()) {
+		return;
+	}
+
+	const deque<Command>& dq = unit->commandAI->commandQue;
+	deque<Command>::const_iterator qit;
+	for (qit = dq.begin(); qit != dq.end(); ++qit) {
+		const Command& cmd = *qit;
+		if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
+			continue;
+		}
+
+		const KeyType key = Wait::GetKeyFromFloat(cmd.params[1]);
+		WaitMap::iterator wit = waitMap.find(key);
+		if (wit == waitMap.end()) {
+			continue;
+		}
+
+		Wait* wait = wit->second;
+		if (cmd.params[0] != wait->GetCode()) {
+			continue;
+		}
+
+		const float code = cmd.params[0];
+		if (code != CMD_WAITCODE_TIMEWAIT) {
+			wait->AddUnit(unit);
+		}
+		else {
+			// add a unit-specific TimeWait
+			// (straight into the waitMap, no net ack required)
+			const int duration = ((TimeWait*)wait)->GetDuration();
+			TimeWait* tw = TimeWait::New(duration, unit);
+			if (tw != NULL) {
+				if (waitMap.find(tw->GetKey()) != waitMap.end()) {
+					delete tw;
+				} else {
+					waitMap[tw->GetKey()] = tw;
+					PUSH_CODE_MODE;
+					ENTER_MIXED;
+					// should not affect the sync state
+					const_cast<Command&>(cmd).params[1] =
+						Wait::GetFloatFromKey(tw->GetKey());
+					POP_CODE_MODE;
+				}
+			}
+		}
 	}
 }
 
@@ -175,54 +238,6 @@ void CWaitCommandsAI::ClearUnitQueue(CUnit* unit, const deque<Command>& queue)
 			WaitMap::iterator wit = waitMap.find(key);
 			if (wit != waitMap.end()) {
 				wit->second->RemoveUnit(unit);
-			}
-		}
-	}
-}
-
-
-void CWaitCommandsAI::NewUnit(CUnit* unit, const CUnit* builder)
-{
-	// NOTE: the wait keys will link the right units to
-	//       the correct player (for multi-player teams)
-	if ((unit->team != gu->myTeam) || waitMap.empty()) {
-		return;
-	}
-
-	const deque<Command>& dq = unit->commandAI->commandQue;
-	deque<Command>::const_iterator qit;
-	for (qit = dq.begin(); qit != dq.end(); ++qit) {
-		const Command& cmd = *qit;
-		if ((cmd.id == CMD_WAIT) && (cmd.params.size() == 2)) {
-			const KeyType key = Wait::GetKeyFromFloat(cmd.params[1]);
-			WaitMap::iterator wit = waitMap.find(key);
-			if (wit != waitMap.end()) {
-				Wait* wait = wit->second;
-				if (cmd.params[0] == wait->GetCode()) {
-					const float code = cmd.params[0];
-					if (code != CMD_WAITCODE_TIMEWAIT) {
-						wait->AddUnit(unit);
-					}
-					else {
-						// add a unit-specific TimeWait
-						// (straight into the waitMap, no net ack required)
-						const int duration = ((TimeWait*)wait)->GetDuration();
-						TimeWait* tw = TimeWait::New(duration, unit);
-						if (tw != NULL) {
-							if (waitMap.find(tw->GetKey()) != waitMap.end()) {
-								delete tw;
-							} else {
-								waitMap[tw->GetKey()] = tw;
-								PUSH_CODE_MODE;
-								ENTER_MIXED;
-								// should not affect the sync state
-								const_cast<Command&>(cmd).params[1] =
-									Wait::GetFloatFromKey(tw->GetKey());
-								POP_CODE_MODE;
-							}
-						}
-					}
-				}
 			}
 		}
 	}

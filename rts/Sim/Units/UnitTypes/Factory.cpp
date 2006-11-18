@@ -159,7 +159,7 @@ void CFactory::Update()
 						for(std::deque<Command>::iterator ci=((CFactoryCAI*)commandAI)->newUnitCommands.begin();ci!=((CFactoryCAI*)commandAI)->newUnitCommands.end();++ci)
 							curBuild->commandAI->GiveCommand(*ci);
 					}
-					waitCommandsAI.NewUnit(curBuild, this);
+					waitCommandsAI.AddLocalUnit(curBuild, this);
 					if (guihandler) {
 						guihandler->UnitReady(curBuild, this);
 					}
