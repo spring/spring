@@ -303,13 +303,14 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 		if(p.OffsetToTextureName!=0)
 		{
 			string texture = GetText(p.OffsetToTextureName);
-			
-			if(side>9)
-				logOutput << "error: side > 9" << "\n";
-			char chside = '0' + side;
+
+			char chside[3];
+			chside[0] = '0' + (side / 10);
+			chside[1] = '0' + (side % 10);
+			chside[2] = 0;
 			StringToLowerInPlace(texture);
 			if(teamtex.find(texture) != teamtex.end())
-				sp.texture=texturehandler->GetTATexture(texture + "0" + chside,side, false);
+				sp.texture=texturehandler->GetTATexture(texture + chside, side, false);
 			else
 				sp.texture=texturehandler->GetTATexture(texture + "00",side, false);
 
