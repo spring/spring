@@ -110,6 +110,7 @@ void AbicProxy::InitAI(IGlobalAICallback* callback, int team)
     _Update =  (UPDATE)lib->FindAddress("Update");
 
     // call initai in loaded dll
+    WriteLine("Calling _InitAI...");
     ai = _InitAI( aicallback, team );
     
     WriteLine("ai initialized");

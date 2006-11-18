@@ -1,4 +1,3 @@
-@echo off
 if .%2==. goto :usage
 goto :run
 
@@ -17,35 +16,39 @@ rem - Microsoft Platform SDK (microsoft.com, free beer )
 rem - TASpring sourcecode (taspring website )
 
 rem modify the following five paths for your environment:
-set VISUALCPPDIRECTORY=h:\bin\microsoft visual C++ toolkit 2003
-set PLATFORMSDK=h:\bin\microsoft platform sdk for windows xp sp2
-set SPRINGSOURCE=H:\bin\games\taspring\taspring_src_svn
-set SPRINGAPPLICATION=h:\bin\games\taspring\application\taspring
-set FRAMEWORKDIRECTORY=c:\windows\microsoft.net\framework\v2.0.50727
+rem set VISUALCPPDIRECTORY=g:\bin\microsoft visual C++ toolkit 2003
+rem set PLATFORMSDK=g:\bin\microsoft platform sdk for windows xp sp2
+set SPRINGSOURCE=..\..\..\..
+set SPRINGAPPLICATION=..\..\..\..\game
+rem set FRAMEWORKDIRECTORY=c:\windows\microsoft.net\framework\v2.0.50727
+set MONODIR=g:\bin\Mono-1.1.18
+set MINGDIR=g:\bin\dev-cpp
 
-set PATH=%PATH%;%VISUALCPPDIRECTORY%\bin;%FRAMEWORKDIRECTORY%
+set PATH=%PATH%;%MINGDIR%\bin;%MONODIR%\bin
 
-set CL=/EHsc /GR /D_WIN32_WINNT=0x0500 /D "WIN32" /D "_WINDOWS" /I"%PLATFORMSDK%\include" /I"%VISUALCPPDIRECTORY%\include" /I"%SPRINGSOURCE%\rts\System" /I"%SPRINGSOURCE%\rts"
+rem set CL=/EHsc /GR /D_WIN32_WINNT=0x0500 /D "WIN32" /D "_WINDOWS" /I"%PLATFORMSDK%\include" /I"%VISUALCPPDIRECTORY%\include" /I"%SPRINGSOURCE%\rts\System" /I"%SPRINGSOURCE%\rts"
 
-set LINK=/LIBPATH:"%VISUALCPPDIRECTORY%\lib" /LIBPATH:"%PLATFORMSDK%\lib"
+rem set LINK=/LIBPATH:"%VISUALCPPDIRECTORY%\lib" /LIBPATH:"%PLATFORMSDK%\lib"
 
 rem generate generated files
-copy /y ..\CSAIInterfaces\CSAIInterfaces.dll .
-csc /debug ABICCodeGenerator.cs /reference:CSAIInterfaces.dll
-ABICCodeGenerator
+copy /y %SPRINGSOURCE%\rts\ExternalAI\GlobalAIInterfaces\GlobalAIInterfaces.dll .
+call gmcs -debug GlobalAICInterfaceGenerator.cs -reference:GlobalAIInterfaces.dll
+mono --debug GlobalAICInterfaceGenerator.exe
+
+set CCOPTIONS=-I"%SPRINGSOURCE%\rts\System" -I"%SPRINGSOURCE%\rts"
 
 rem define BUILDING_ABIC to setup dll exports correctly (see dllbuild.h)
-cl /MD /D BUILDING_ABIC /c AbicAICallback.cpp
-cl /MD /D BUILDING_ABIC /c AbicLoader.cpp
+gcc -c %CCOPTIONS% -DBUILDING_ABIC AbicAICallback.cpp
+gcc -c %CCOPTIONS% -DBUILDING_ABIC AbicLoader.cpp
 
-cl /MD /D BUILDING_ABIC /c Platform\SharedLib.cpp
-cl /MD /D BUILDING_ABIC /c Platform\Win\DllLib.cpp
-
-set OBJECTS=AbicLoader.obj AbicProxy.obj AbicAICallback.obj SharedLib.obj DllLib.obj
+gcc -c %CCOPTIONS% -DBUILDING_ABIC Platform\SharedLib.cpp
+gcc -c %CCOPTIONS% -DBUILDING_ABIC Platform\Win\DllLib.cpp
 
 rem AIDLLNAME defines the dll that the ABIC dll will try to load at runtime
-cl /MD /D BUILDING_ABIC /DAIDLLNAME=%AIDLLNAME% /c AbicProxy.cpp
-link /dll /out:%ABICDLLNAME% %OBJECTS%
+gcc -c %CCOPTIONS% -DBUILDING_ABIC -DAIDLLNAME=%AIDLLNAME% AbicProxy.cpp
 
-copy /y CSAIInterfaces.dll %SPRINGAPPLICATION%
+set OBJECTS=AbicLoader.o AbicProxy.o AbicAICallback.o SharedLib.o DllLib.o
+dllwrap --driver-name g++ --dllname %ABICDLLNAME% %OBJECTS%
+
+copy /y GlobalAIInterfaces.dll %SPRINGAPPLICATION%
 copy /y %ABICDLLNAME% "%SPRINGAPPLICATION%\AI\Bot-libs"

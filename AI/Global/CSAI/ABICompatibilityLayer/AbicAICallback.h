@@ -4,24 +4,22 @@
 #include "dllbuild.h"
 
 #ifdef BUILDING_AI
-// declare these as opaque pointers
-struct UnitDef;
-struct MoveData;
-struct FeatureDef;
-struct IAICallback;
-#endif
+	// declare these as opaque pointers
+	struct UnitDef;
+	struct MoveData;
+	struct FeatureDef;
+	struct IAICallback;
+#else
+	#include <map>
+	#include <set>
+	#include <stdio.h>
+	#include "float3.h"
 
-#ifdef BUILDING_ABIC
-#include <map>
-#include <set>
-#include <stdio.h>
-#include "float3.h"
-
-#include "ExternalAI/IGlobalAICallback.h"
-#include "ExternalAI/IAICallback.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Misc/FeatureDef.h"
-#include "Sim/MoveTypes/MoveInfo.h" // for MoveData struct
+	#include "ExternalAI/IGlobalAICallback.h"
+	#include "ExternalAI/IAICallback.h"
+	#include "Sim/Units/UnitDef.h"
+	#include "Sim/Misc/FeatureDef.h"
+	#include "Sim/MoveTypes/MoveInfo.h" // for MoveData struct
 #endif
 
 // Add generated headers:
@@ -30,12 +28,15 @@ struct IAICallback;
 #include "IMoveData_generated.h"
 #include "IUnitDef_generated.h"
 
+#define GLOBALAI_C_INTERFACE_VERSION 2
+    
 AICALLBACK_API const MoveData *UnitDef_get_movedata( const UnitDef *self  );
 AICALLBACK_API const FeatureDef *IAICallback_GetFeatureDef( const IAICallback *self, int featuredef  );
 AICALLBACK_API int IAICallback_GetFeatures( const IAICallback *self, int *features, int max );
 AICALLBACK_API int IAICallback_GetFeaturesAt(const IAICallback *self, int *features, int max, float posx, float posy, float posz, float radius);
 AICALLBACK_API void IAICallback_GetFeaturePos( const IAICallback *self, float &posx, float&posy, float&posz, int featureid);
-AICALLBACK_API void IAICallback_GetUnitDefList (const IAICallback *self, const UnitDef** list);
+AICALLBACK_API void IAICallback_GetUnitDefList (const IAICallback *self, const UnitDef** list); // This function is deprecated, please use IAICallback_GetUnitDefByTypeId
+AICALLBACK_API const UnitDef *IAICallback_GetUnitDefByTypeId (const IAICallback *self, int unittypeid);
 AICALLBACK_API void IAICallback_GetUnitPos( const IAICallback *self, float &posx, float&posy, float&posz, int unitid);
 AICALLBACK_API int IAICallback_GiveOrder( const IAICallback *self, int unitid, int commandid, int numparams, float param1, float param2, float param3, float param4 );
 AICALLBACK_API bool IAICallback_CanBuildAt( const IAICallback *self, const UnitDef* unitDef, float posx, float posy, float posz,int facing );
@@ -49,7 +50,7 @@ AICALLBACK_API const unsigned short* IAICallback_GetJammerMap( const IAICallback
 AICALLBACK_API const unsigned char* IAICallback_GetMetalMap( const IAICallback *self );			//this map shows the metal density on the map, this is half the resolution of the standard map
 
 AICALLBACK_API int IAICallback_GetCurrentUnitCommandsCount( const IAICallback *self, int unitid );
-AICALLBACK_API int UnitDef_GetNumBuildOtions( const UnitDef *self );
+AICALLBACK_API int UnitDef_GetNumBuildOptions( const UnitDef *self );
 AICALLBACK_API const char *UnitDef_GetBuildOption( const UnitDef *self, int index ); // assumes map is really a vector where the int is a contiguous index starting from 1
 AICALLBACK_API int IAICallback_CreateLineFigure( const IAICallback *self, float pos1x, float pos1y, float pos1z,float pos2x, float pos2y, float pos2z,
     float width,int arrow,int lifetime,int group);

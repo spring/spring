@@ -1,0 +1,18 @@
+You'll need the following in your taspring directory:
+
+from bin/:
+iconv.dll
+libglib-2.0-0.dll
+mono.dll
+intl.dll
+libgmodule-2.0-0.dll
+libgthread-2.0-0.dll
+
+lib/mono/1.0:
+mscorlib.dll
+mscorlib.dll.mdb
+
+lib/mono/2.0:
+mscorlib.dll
+mscorlib.dll.mdb
+

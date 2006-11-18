@@ -5,7 +5,7 @@ using System.IO;
 
 using CSharpAI;
 
-// The goal of this generator is to generator the bulk of the function calls for AICallback, UnitDef and MoveData
+// The goal of this generator is to generator the bulk of the function calls for AICallback, UnitDef and MoveData.  It will also create a .def file for them
 //
 // You can define which types are targeted for generation in the Go() method right at the bottom of the file
 //
@@ -237,7 +237,7 @@ class GenerateCode
 // {
 //     return self->id;
 // }
-        StreamWriter cppfile = new StreamWriter( basefilename + ".cpp", false );        
+        StreamWriter cppfile = new StreamWriter( basefilename + ".gpp", false );        
         WriteHeaderComments( cppfile );    
         foreach( MemberInfo memberinfo in targettype.GetMembers() )
         {
@@ -253,9 +253,11 @@ class GenerateCode
                         // this needs to be atomic, so that we always have both header declaration + cpp definition, or neither
                         string cppdeclaration = declarationstring + "\n";
                         cppdeclaration += "{\n";
+                        string defmethodname = "";
                         if( memberinfo.MemberType == MemberTypes.Property )
                         {
                             PropertyInfo pi = targettype.GetProperty( memberinfo.Name );
+                            defmethodname = basetypename + "_get_" + memberinfo.Name;
                             cppdeclaration += "   return ( ( " + basetypename + " *) self)->" + memberinfo.Name; // we can assume a property wont return void
                             if( pi.PropertyType == typeof( string ) )
                             {
@@ -265,6 +267,7 @@ class GenerateCode
                         }
                         else if( memberinfo.MemberType == MemberTypes.Method )
                         {
+                            defmethodname = basetypename + "_" + memberinfo.Name;
                             MethodInfo methodinfo = memberinfo as MethodInfo;
                             if( methodinfo.ReturnType != typeof( void ) )
                             {
@@ -292,6 +295,8 @@ class GenerateCode
                         
                         headerfile.WriteLine( declarationstring + ";" );
                         cppfile.WriteLine( cppdeclaration );
+                        //deffile.WriteLine( nextdefnum + "\t" + defmethodname );
+                        deffile.WriteLine( defmethodname );
                     }
                 }
                 catch( ExceptionCsTypeNotHandled e )
@@ -309,6 +314,11 @@ class GenerateCode
         cppfile.Close();
     }
     
+    string deffilename;
+    //int nextdefnum;
+    
+    StreamWriter deffile;
+    
     public void Go()
     {
         // analyze gives you information on a type; useful during development
@@ -316,11 +326,20 @@ class GenerateCode
          // Analyze( typeof( IUnitDef ) );
          //Analyze( typeof( IMoveData ) );
         
+        deffilename = "def_generated.def";
+        //nextdefnum = 1; // can change this to begin def numbering at different number
+        
+        deffile = new StreamWriter( deffilename, false );
+        deffile.WriteLine("EXPORTS");
+        
         // Parameters: typename in CSAIInterfaces, native Spring typename, methods to ignore
-        GenerateFor( typeof( IAICallback ), "IAICallback", new string[]{"UnitIsBusy", "IsGamePaused" } );
-        GenerateFor( typeof( IUnitDef ), "UnitDef", new string[]{} );
+        GenerateFor( typeof( IAICallback ), "IAICallback", new string[]{
+            "UnitIsBusy", "IsGamePaused","GetUnitDefByTypeId" } );
+        GenerateFor( typeof( IUnitDef ), "UnitDef", new string[]{"GetNumBuildOptions","GetBuildOption"} );
         GenerateFor( typeof( IMoveData ), "MoveData", new string[]{} );
         GenerateFor( typeof( IFeatureDef ), "FeatureDef", new string[]{} );
+            
+        deffile.Close();
     }
 }
     
