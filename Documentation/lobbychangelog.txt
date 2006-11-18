@@ -1,5 +1,12 @@
   ------ CHANGELOG ------
 
+  *** 0.31 (??x??x??) ***
+  * fixed crash bug when re-joining battle for which you don't have the right map
+  * workaround for problem with windows disappearing from the screen on program crash and some other occasions
+  * added "bot mode" indicator
+  * /ring can now be used on battle hosts as well
+  * fixed slowdown problem when re-sorting maps
+
   *** 0.30 (03x10x06) ***
   * added new map list with some new options (map grading, custom comments, online grades, ...)
   * last open map is now restored on program start
@@ -10,6 +17,7 @@
   * added option for battle host to force spectator mode on players
   * temporaly changed map and mod links to unknown-files.net
   * added option to disable all sounds
+  * skinned most of the components and added some free skins
 
   *** 0.26 (20x07x06) ***
   * fixed serious bug with hosting replays not working
