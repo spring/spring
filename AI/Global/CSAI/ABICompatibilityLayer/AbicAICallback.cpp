@@ -1,17 +1,20 @@
 
+#include "StdAfx.h"
+
 //#include "ExternalAI/aibase.h" // for DLL_EXPORT definition
 
 #include "AbicAICallback.h"
 
 #include "ExternalAI/IAICallback.h"
+#include "Sim/Units/UnitDefHandler.h"
 
 //extern ::IAICallback* aicallback;
 
 // Add generated definitions:
-#include "IAICallback_generated.cpp"
-#include "IFeatureDef_generated.cpp"
-#include "IMoveData_generated.cpp"
-#include "IUnitDef_generated.cpp"
+#include "IAICallback_generated.gpp"
+#include "IFeatureDef_generated.gpp"
+#include "IMoveData_generated.gpp"
+#include "IUnitDef_generated.gpp"
 
 //todo (ie, exist in CSAIInterfaces)
 //(givegrouporder)
@@ -26,8 +29,14 @@ AICALLBACK_API int IAICallback_GetCurrentUnitCommandsCount( const IAICallback *s
     return commands->size();
 }
 
+AICALLBACK_API const UnitDef *IAICallback_GetUnitDefByTypeId (const IAICallback *self, int unittypeid)
+{
+    //return unitDefHandler->GetUnitByID (unittypeid); // *cross fingers that dont have to add/subtract 1 to unittypeid
+    return 0; // placeholder
+}
+
 // for reference, here is the definition of buildOptions: std::map<int,std::string> buildOptions;
-AICALLBACK_API int UnitDef_GetNumBuildOtions( const UnitDef *self )
+AICALLBACK_API int UnitDef_GetNumBuildOptions( const UnitDef *self )
 {
     return ( (UnitDef *)self )->buildOptions.size();
 }
@@ -91,6 +100,7 @@ AICALLBACK_API void IAICallback_GetFeaturePos ( const IAICallback *self, float &
     posz = pos.z;
 }
 
+ // This function is deprecated, please use IAICallback_GetUnitDefByTypeId
 AICALLBACK_API void IAICallback_GetUnitDefList (const IAICallback *self, const UnitDef** list)
 {
     ( ( IAICallback *)self )->GetUnitDefList( list );
