@@ -14,7 +14,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\game\</OutputPath>
+    <OutputPath>.\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -35,9 +35,11 @@
   <ItemGroup>
     <Compile Include="Command.cs" />
     <Compile Include="Float3.cs" />
+    <Compile Include="GlobalAIProxy.cs" />
     <Compile Include="IAICallback.cs" />
     <Compile Include="IFeatureDef.cs" />
     <Compile Include="IGlobalAI.cs" />
+    <Compile Include="IMonoLoaderProxy.cs" />
     <Compile Include="IMoveData.cs" />
     <Compile Include="IUnitDef.cs" />
   </ItemGroup>
@@ -52,4 +54,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>copy /y $(TargetPath) ..\..\..\game
+</PostBuildEvent>
+  </PropertyGroup>
 </Project>

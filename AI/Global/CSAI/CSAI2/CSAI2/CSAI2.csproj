@@ -30,7 +30,7 @@
   <ItemGroup>
     <Reference Include="GlobalAIInterfaces, Version=0.0.0.0, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\rts\ExternalAI\GlobalAIInterfaces\GlobalAIInterfaces.dll</HintPath>
+      <HintPath>..\..\..\..\..\game\GlobalAIInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

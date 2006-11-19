@@ -23,9 +23,12 @@
 
 // This class ported from Command class in TASpring project
 
+using System;
+
 namespace CSharpAI
 {
     // command object, for giving orders, via aicallback.GiveOrder()
+    [Serializable]
     public class Command
     {
         public const int CMD_STOP                 =  0;

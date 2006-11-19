@@ -50,19 +50,19 @@ namespace CSharpAI
 		public extern static double[] IAICallback_GetCentreHeightMap( IntPtr aicallback );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void IAICallback_GetFeaturePos( IntPtr aicallback, ref double posx, ref double posy, ref double posz, int featureid );
+		public extern static void IAICallback_GetFeaturePos( IntPtr aicallback, ref float posx, ref float posy, ref float posz, int featureid );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
 		public extern static IntPtr IAICallback_GetFeatureDef( IntPtr aicallback, int featureid );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static bool IAICallback_CanBuildAt( IntPtr aicallback, IntPtr unitdef, double posx, double posy, double posz );
+		public extern static bool IAICallback_CanBuildAt( IntPtr aicallback, IntPtr unitdef, float posx, float posy, float posz );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
 		public extern static int[] IAICallback_GetFeatures( IntPtr aicallback );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static int[] IAICallback_GetFeaturesAt( IntPtr aicallback, double posx, double posy, double posz, double radius );
+		public extern static int[] IAICallback_GetFeaturesAt( IntPtr aicallback, float posx, float posy, float posz, float radius );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
 		public extern static int[] IAICallback_GetFriendlyUnits( IntPtr aicallback );
@@ -71,7 +71,7 @@ namespace CSharpAI
 		public extern static int[] IAICallback_GetEnemyUnitsInRadarAndLos( IntPtr aicallback );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public extern static int IAICallback_CreateLineFigure(IntPtr aicallback, double pos1x, double pos1y, double pos1z,double pos2x, double pos2y, double pos2z,double width,bool arrow,int lifetime,int group);
+        public extern static int IAICallback_CreateLineFigure(IntPtr aicallback, float pos1x, float pos1y, float pos1z,float pos2x, float pos2y, float pos2z,float width,bool arrow,int lifetime,int group);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public extern static int IAICallback_GetCurrentUnitCommandsCount(IntPtr aicallback, int unitid);
@@ -80,862 +80,862 @@ namespace CSharpAI
       public extern static System.Int32 IMoveData_get_moveType( IntPtr movedata );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Void IAICallback_SendTextMsg( IntPtr self, System.String text, System.Int32 priority );
+      public extern static void IAICallback_SendTextMsg( IntPtr self, string text, int priority );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_CreateGroup( IntPtr self, System.String dll, System.Int32 aiNumber );
+      public extern static int IAICallback_CreateGroup( IntPtr self, string dll, int aiNumber );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Void IAICallback_EraseGroup( IntPtr self, System.Int32 groupid );
+      public extern static void IAICallback_EraseGroup( IntPtr self, int groupid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String IAICallback_GetModName( IntPtr self );
+      public extern static string IAICallback_GetModName( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String IAICallback_GetMapName( IntPtr self );
+      public extern static string IAICallback_GetMapName( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Void IAICallback_SetFigureColor( IntPtr self, System.Int32 group, System.Double red, System.Double green, System.Double blue, System.Double alpha );
+      public extern static void IAICallback_SetFigureColor( IntPtr self, int group, float red, float green, float blue, float alpha );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Void IAICallback_DeleteFigureGroup( IntPtr self, System.Int32 group );
+      public extern static void IAICallback_DeleteFigureGroup( IntPtr self, int group );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean IAICallback_IsGamePaused( IntPtr self );
+      public extern static bool IAICallback_IsGamePaused( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetCurrentFrame( IntPtr self );
+      public extern static int IAICallback_GetCurrentFrame( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetMyTeam( IntPtr self );
+      public extern static int IAICallback_GetMyTeam( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetMyAllyTeam( IntPtr self );
+      public extern static int IAICallback_GetMyAllyTeam( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetPlayerTeam( IntPtr self, System.Int32 player );
+      public extern static int IAICallback_GetPlayerTeam( IntPtr self, int player );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean IAICallback_AddUnitToGroup( IntPtr self, System.Int32 unitid, System.Int32 groupid );
+      public extern static bool IAICallback_AddUnitToGroup( IntPtr self, int unitid, int groupid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean IAICallback_RemoveUnitFromGroup( IntPtr self, System.Int32 unitid );
+      public extern static bool IAICallback_RemoveUnitFromGroup( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetUnitGroup( IntPtr self, System.Int32 unitid );
+      public extern static int IAICallback_GetUnitGroup( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetUnitAiHint( IntPtr self, System.Int32 unitid );
+      public extern static int IAICallback_GetUnitAiHint( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetUnitTeam( IntPtr self, System.Int32 unitid );
+      public extern static int IAICallback_GetUnitTeam( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetUnitAllyTeam( IntPtr self, System.Int32 unitid );
+      public extern static int IAICallback_GetUnitAllyTeam( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitHealth( IntPtr self, System.Int32 unitid );
+      public extern static float IAICallback_GetUnitHealth( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitMaxHealth( IntPtr self, System.Int32 unitid );
+      public extern static float IAICallback_GetUnitMaxHealth( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitSpeed( IntPtr self, System.Int32 unitid );
+      public extern static float IAICallback_GetUnitSpeed( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitPower( IntPtr self, System.Int32 unitid );
+      public extern static float IAICallback_GetUnitPower( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitExperience( IntPtr self, System.Int32 unitid );
+      public extern static float IAICallback_GetUnitExperience( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitMaxRange( IntPtr self, System.Int32 unitid );
+      public extern static float IAICallback_GetUnitMaxRange( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean IAICallback_IsUnitActivated( IntPtr self, System.Int32 unitid );
+      public extern static bool IAICallback_IsUnitActivated( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean IAICallback_UnitBeingBuilt( IntPtr self, System.Int32 unitid );
+      public extern static bool IAICallback_UnitBeingBuilt( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetBuildingFacing( IntPtr self, System.Int32 unitid );
+      public extern static int IAICallback_GetBuildingFacing( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean IAICallback_IsUnitCloaked( IntPtr self, System.Int32 unitid );
+      public extern static bool IAICallback_IsUnitCloaked( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean IAICallback_IsUnitParalyzed( IntPtr self, System.Int32 unitid );
+      public extern static bool IAICallback_IsUnitParalyzed( IntPtr self, int unitid );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetMapWidth( IntPtr self );
+      public extern static int IAICallback_GetMapWidth( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetMapHeight( IntPtr self );
+      public extern static int IAICallback_GetMapHeight( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetMaxMetal( IntPtr self );
+      public extern static float IAICallback_GetMaxMetal( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetExtractorRadius( IntPtr self );
+      public extern static float IAICallback_GetExtractorRadius( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetMinWind( IntPtr self );
+      public extern static float IAICallback_GetMinWind( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetMaxWind( IntPtr self );
+      public extern static float IAICallback_GetMaxWind( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetTidalStrength( IntPtr self );
+      public extern static float IAICallback_GetTidalStrength( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetGravity( IntPtr self );
+      public extern static float IAICallback_GetGravity( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetElevation( IntPtr self, System.Double x, System.Double z );
+      public extern static float IAICallback_GetElevation( IntPtr self, float x, float z );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetMetal( IntPtr self );
+      public extern static float IAICallback_GetMetal( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetMetalIncome( IntPtr self );
+      public extern static float IAICallback_GetMetalIncome( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetMetalUsage( IntPtr self );
+      public extern static float IAICallback_GetMetalUsage( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetMetalStorage( IntPtr self );
+      public extern static float IAICallback_GetMetalStorage( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetEnergy( IntPtr self );
+      public extern static float IAICallback_GetEnergy( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetEnergyIncome( IntPtr self );
+      public extern static float IAICallback_GetEnergyIncome( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetEnergyUsage( IntPtr self );
+      public extern static float IAICallback_GetEnergyUsage( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetEnergyStorage( IntPtr self );
+      public extern static float IAICallback_GetEnergyStorage( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetFeatureHealth( IntPtr self, System.Int32 feature );
+      public extern static float IAICallback_GetFeatureHealth( IntPtr self, int feature );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetFeatureReclaimLeft( IntPtr self, System.Int32 feature );
+      public extern static float IAICallback_GetFeatureReclaimLeft( IntPtr self, int feature );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 IAICallback_GetNumUnitDefs( IntPtr self );
+      public extern static int IAICallback_GetNumUnitDefs( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitDefRadius( IntPtr self, System.Int32 def );
+      public extern static float IAICallback_GetUnitDefRadius( IntPtr self, int def );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double IAICallback_GetUnitDefHeight( IntPtr self, System.Int32 def );
+      public extern static float IAICallback_GetUnitDefHeight( IntPtr self, int def );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_GetNumBuildOptions( IntPtr self );
+      public extern static int UnitDef_GetNumBuildOptions( IntPtr self );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_GetBuildOption( IntPtr self, System.Int32 index );
+      public extern static string UnitDef_GetBuildOption( IntPtr self, int index );
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_name( IntPtr self );
+      public extern static string UnitDef_get_name( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_humanName( IntPtr self );
+      public extern static string UnitDef_get_humanName( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_filename( IntPtr self );
+      public extern static string UnitDef_get_filename( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_loaded( IntPtr self );
+      public extern static bool UnitDef_get_loaded( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_id( IntPtr self );
+      public extern static int UnitDef_get_id( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_buildpicname( IntPtr self );
+      public extern static string UnitDef_get_buildpicname( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_aihint( IntPtr self );
+      public extern static int UnitDef_get_aihint( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_techLevel( IntPtr self );
+      public extern static int UnitDef_get_techLevel( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_metalUpkeep( IntPtr self );
+      public extern static float UnitDef_get_metalUpkeep( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_energyUpkeep( IntPtr self );
+      public extern static float UnitDef_get_energyUpkeep( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_metalMake( IntPtr self );
+      public extern static float UnitDef_get_metalMake( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_makesMetal( IntPtr self );
+      public extern static float UnitDef_get_makesMetal( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_energyMake( IntPtr self );
+      public extern static float UnitDef_get_energyMake( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_metalCost( IntPtr self );
+      public extern static float UnitDef_get_metalCost( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_energyCost( IntPtr self );
+      public extern static float UnitDef_get_energyCost( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_buildTime( IntPtr self );
+      public extern static float UnitDef_get_buildTime( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_extractsMetal( IntPtr self );
+      public extern static float UnitDef_get_extractsMetal( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_extractRange( IntPtr self );
+      public extern static float UnitDef_get_extractRange( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_windGenerator( IntPtr self );
+      public extern static float UnitDef_get_windGenerator( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_tidalGenerator( IntPtr self );
+      public extern static float UnitDef_get_tidalGenerator( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_metalStorage( IntPtr self );
+      public extern static float UnitDef_get_metalStorage( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_energyStorage( IntPtr self );
+      public extern static float UnitDef_get_energyStorage( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_autoHeal( IntPtr self );
+      public extern static float UnitDef_get_autoHeal( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_idleAutoHeal( IntPtr self );
+      public extern static float UnitDef_get_idleAutoHeal( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_idleTime( IntPtr self );
+      public extern static int UnitDef_get_idleTime( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_power( IntPtr self );
+      public extern static float UnitDef_get_power( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_health( IntPtr self );
+      public extern static float UnitDef_get_health( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_speed( IntPtr self );
+      public extern static float UnitDef_get_speed( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_turnRate( IntPtr self );
+      public extern static float UnitDef_get_turnRate( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_moveType( IntPtr self );
+      public extern static int UnitDef_get_moveType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_upright( IntPtr self );
+      public extern static bool UnitDef_get_upright( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_controlRadius( IntPtr self );
+      public extern static float UnitDef_get_controlRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_losRadius( IntPtr self );
+      public extern static float UnitDef_get_losRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_airLosRadius( IntPtr self );
+      public extern static float UnitDef_get_airLosRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_losHeight( IntPtr self );
+      public extern static float UnitDef_get_losHeight( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_radarRadius( IntPtr self );
+      public extern static int UnitDef_get_radarRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_sonarRadius( IntPtr self );
+      public extern static int UnitDef_get_sonarRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_jammerRadius( IntPtr self );
+      public extern static int UnitDef_get_jammerRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_sonarJamRadius( IntPtr self );
+      public extern static int UnitDef_get_sonarJamRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_seismicRadius( IntPtr self );
+      public extern static int UnitDef_get_seismicRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_seismicSignature( IntPtr self );
+      public extern static float UnitDef_get_seismicSignature( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_stealth( IntPtr self );
+      public extern static bool UnitDef_get_stealth( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_buildSpeed( IntPtr self );
+      public extern static float UnitDef_get_buildSpeed( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_buildDistance( IntPtr self );
+      public extern static float UnitDef_get_buildDistance( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_mass( IntPtr self );
+      public extern static float UnitDef_get_mass( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxSlope( IntPtr self );
+      public extern static float UnitDef_get_maxSlope( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxHeightDif( IntPtr self );
+      public extern static float UnitDef_get_maxHeightDif( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_minWaterDepth( IntPtr self );
+      public extern static float UnitDef_get_minWaterDepth( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_waterline( IntPtr self );
+      public extern static float UnitDef_get_waterline( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxWaterDepth( IntPtr self );
+      public extern static float UnitDef_get_maxWaterDepth( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_armoredMultiple( IntPtr self );
+      public extern static float UnitDef_get_armoredMultiple( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_armorType( IntPtr self );
+      public extern static int UnitDef_get_armorType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_type( IntPtr self );
+      public extern static string UnitDef_get_type( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_tooltip( IntPtr self );
+      public extern static string UnitDef_get_tooltip( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_wreckName( IntPtr self );
+      public extern static string UnitDef_get_wreckName( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_deathExplosion( IntPtr self );
+      public extern static string UnitDef_get_deathExplosion( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_selfDExplosion( IntPtr self );
+      public extern static string UnitDef_get_selfDExplosion( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_TEDClassString( IntPtr self );
+      public extern static string UnitDef_get_TEDClassString( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_categoryString( IntPtr self );
+      public extern static string UnitDef_get_categoryString( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String UnitDef_get_iconType( IntPtr self );
+      public extern static string UnitDef_get_iconType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_selfDCountdown( IntPtr self );
+      public extern static int UnitDef_get_selfDCountdown( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canfly( IntPtr self );
+      public extern static bool UnitDef_get_canfly( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canmove( IntPtr self );
+      public extern static bool UnitDef_get_canmove( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canhover( IntPtr self );
+      public extern static bool UnitDef_get_canhover( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_floater( IntPtr self );
+      public extern static bool UnitDef_get_floater( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_builder( IntPtr self );
+      public extern static bool UnitDef_get_builder( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_activateWhenBuilt( IntPtr self );
+      public extern static bool UnitDef_get_activateWhenBuilt( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_onoffable( IntPtr self );
+      public extern static bool UnitDef_get_onoffable( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_reclaimable( IntPtr self );
+      public extern static bool UnitDef_get_reclaimable( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canRestore( IntPtr self );
+      public extern static bool UnitDef_get_canRestore( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canRepair( IntPtr self );
+      public extern static bool UnitDef_get_canRepair( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canReclaim( IntPtr self );
+      public extern static bool UnitDef_get_canReclaim( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_noAutoFire( IntPtr self );
+      public extern static bool UnitDef_get_noAutoFire( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canAttack( IntPtr self );
+      public extern static bool UnitDef_get_canAttack( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canPatrol( IntPtr self );
+      public extern static bool UnitDef_get_canPatrol( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canFight( IntPtr self );
+      public extern static bool UnitDef_get_canFight( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canGuard( IntPtr self );
+      public extern static bool UnitDef_get_canGuard( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canBuild( IntPtr self );
+      public extern static bool UnitDef_get_canBuild( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canAssist( IntPtr self );
+      public extern static bool UnitDef_get_canAssist( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canRepeat( IntPtr self );
+      public extern static bool UnitDef_get_canRepeat( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_wingDrag( IntPtr self );
+      public extern static float UnitDef_get_wingDrag( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_wingAngle( IntPtr self );
+      public extern static float UnitDef_get_wingAngle( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_drag( IntPtr self );
+      public extern static float UnitDef_get_drag( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_frontToSpeed( IntPtr self );
+      public extern static float UnitDef_get_frontToSpeed( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_speedToFront( IntPtr self );
+      public extern static float UnitDef_get_speedToFront( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_myGravity( IntPtr self );
+      public extern static float UnitDef_get_myGravity( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxBank( IntPtr self );
+      public extern static float UnitDef_get_maxBank( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxPitch( IntPtr self );
+      public extern static float UnitDef_get_maxPitch( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_turnRadius( IntPtr self );
+      public extern static float UnitDef_get_turnRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_wantedHeight( IntPtr self );
+      public extern static float UnitDef_get_wantedHeight( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_hoverAttack( IntPtr self );
+      public extern static bool UnitDef_get_hoverAttack( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_dlHoverFactor( IntPtr self );
+      public extern static float UnitDef_get_dlHoverFactor( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxAcc( IntPtr self );
+      public extern static float UnitDef_get_maxAcc( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxDec( IntPtr self );
+      public extern static float UnitDef_get_maxDec( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxAileron( IntPtr self );
+      public extern static float UnitDef_get_maxAileron( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxElevator( IntPtr self );
+      public extern static float UnitDef_get_maxElevator( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxRudder( IntPtr self );
+      public extern static float UnitDef_get_maxRudder( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_xsize( IntPtr self );
+      public extern static int UnitDef_get_xsize( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_ysize( IntPtr self );
+      public extern static int UnitDef_get_ysize( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_buildangle( IntPtr self );
+      public extern static int UnitDef_get_buildangle( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_loadingRadius( IntPtr self );
+      public extern static float UnitDef_get_loadingRadius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_transportCapacity( IntPtr self );
+      public extern static int UnitDef_get_transportCapacity( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_transportSize( IntPtr self );
+      public extern static int UnitDef_get_transportSize( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_isAirBase( IntPtr self );
+      public extern static bool UnitDef_get_isAirBase( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_transportMass( IntPtr self );
+      public extern static float UnitDef_get_transportMass( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canCloak( IntPtr self );
+      public extern static bool UnitDef_get_canCloak( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_startCloaked( IntPtr self );
+      public extern static bool UnitDef_get_startCloaked( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_cloakCost( IntPtr self );
+      public extern static float UnitDef_get_cloakCost( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_cloakCostMoving( IntPtr self );
+      public extern static float UnitDef_get_cloakCostMoving( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_decloakDistance( IntPtr self );
+      public extern static float UnitDef_get_decloakDistance( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canKamikaze( IntPtr self );
+      public extern static bool UnitDef_get_canKamikaze( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_kamikazeDist( IntPtr self );
+      public extern static float UnitDef_get_kamikazeDist( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_targfac( IntPtr self );
+      public extern static bool UnitDef_get_targfac( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canDGun( IntPtr self );
+      public extern static bool UnitDef_get_canDGun( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_needGeo( IntPtr self );
+      public extern static bool UnitDef_get_needGeo( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_isFeature( IntPtr self );
+      public extern static bool UnitDef_get_isFeature( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_hideDamage( IntPtr self );
+      public extern static bool UnitDef_get_hideDamage( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_isCommander( IntPtr self );
+      public extern static bool UnitDef_get_isCommander( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_showPlayerName( IntPtr self );
+      public extern static bool UnitDef_get_showPlayerName( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canResurrect( IntPtr self );
+      public extern static bool UnitDef_get_canResurrect( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canCapture( IntPtr self );
+      public extern static bool UnitDef_get_canCapture( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_highTrajectoryType( IntPtr self );
+      public extern static int UnitDef_get_highTrajectoryType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_leaveTracks( IntPtr self );
+      public extern static bool UnitDef_get_leaveTracks( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_trackWidth( IntPtr self );
+      public extern static float UnitDef_get_trackWidth( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_trackOffset( IntPtr self );
+      public extern static float UnitDef_get_trackOffset( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_trackStrength( IntPtr self );
+      public extern static float UnitDef_get_trackStrength( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_trackStretch( IntPtr self );
+      public extern static float UnitDef_get_trackStretch( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_trackType( IntPtr self );
+      public extern static int UnitDef_get_trackType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canDropFlare( IntPtr self );
+      public extern static bool UnitDef_get_canDropFlare( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_flareReloadTime( IntPtr self );
+      public extern static float UnitDef_get_flareReloadTime( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_flareEfficieny( IntPtr self );
+      public extern static float UnitDef_get_flareEfficieny( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_flareDelay( IntPtr self );
+      public extern static float UnitDef_get_flareDelay( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_flareTime( IntPtr self );
+      public extern static int UnitDef_get_flareTime( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_flareSalvoSize( IntPtr self );
+      public extern static int UnitDef_get_flareSalvoSize( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_flareSalvoDelay( IntPtr self );
+      public extern static int UnitDef_get_flareSalvoDelay( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_smoothAnim( IntPtr self );
+      public extern static bool UnitDef_get_smoothAnim( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_isMetalMaker( IntPtr self );
+      public extern static bool UnitDef_get_isMetalMaker( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_canLoopbackAttack( IntPtr self );
+      public extern static bool UnitDef_get_canLoopbackAttack( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_levelGround( IntPtr self );
+      public extern static bool UnitDef_get_levelGround( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_useBuildingGroundDecal( IntPtr self );
+      public extern static bool UnitDef_get_useBuildingGroundDecal( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_buildingDecalType( IntPtr self );
+      public extern static int UnitDef_get_buildingDecalType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_buildingDecalSizeX( IntPtr self );
+      public extern static int UnitDef_get_buildingDecalSizeX( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 UnitDef_get_buildingDecalSizeY( IntPtr self );
+      public extern static int UnitDef_get_buildingDecalSizeY( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_buildingDecalDecaySpeed( IntPtr self );
+      public extern static float UnitDef_get_buildingDecalDecaySpeed( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_isfireplatform( IntPtr self );
+      public extern static bool UnitDef_get_isfireplatform( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_showNanoFrame( IntPtr self );
+      public extern static bool UnitDef_get_showNanoFrame( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean UnitDef_get_showNanoSpray( IntPtr self );
+      public extern static bool UnitDef_get_showNanoSpray( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_maxFuel( IntPtr self );
+      public extern static float UnitDef_get_maxFuel( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_refuelTime( IntPtr self );
+      public extern static float UnitDef_get_refuelTime( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double UnitDef_get_minAirBasePower( IntPtr self );
+      public extern static float UnitDef_get_minAirBasePower( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 MoveData_get_size( IntPtr self );
+      public extern static int MoveData_get_size( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double MoveData_get_depth( IntPtr self );
+      public extern static float MoveData_get_depth( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double MoveData_get_maxSlope( IntPtr self );
+      public extern static float MoveData_get_maxSlope( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double MoveData_get_slopeMod( IntPtr self );
+      public extern static float MoveData_get_slopeMod( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double MoveData_get_depthMod( IntPtr self );
+      public extern static float MoveData_get_depthMod( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 MoveData_get_pathType( IntPtr self );
+      public extern static int MoveData_get_pathType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double MoveData_get_crushStrength( IntPtr self );
+      public extern static float MoveData_get_crushStrength( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 MoveData_get_moveFamily( IntPtr self );
+      public extern static int MoveData_get_moveFamily( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String FeatureDef_get_myName( IntPtr self );
+      public extern static string FeatureDef_get_myName( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String FeatureDef_get_description( IntPtr self );
+      public extern static string FeatureDef_get_description( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double FeatureDef_get_metal( IntPtr self );
+      public extern static float FeatureDef_get_metal( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double FeatureDef_get_energy( IntPtr self );
+      public extern static float FeatureDef_get_energy( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double FeatureDef_get_maxHealth( IntPtr self );
+      public extern static float FeatureDef_get_maxHealth( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double FeatureDef_get_radius( IntPtr self );
+      public extern static float FeatureDef_get_radius( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Double FeatureDef_get_mass( IntPtr self );
+      public extern static float FeatureDef_get_mass( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean FeatureDef_get_upright( IntPtr self );
+      public extern static bool FeatureDef_get_upright( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 FeatureDef_get_drawType( IntPtr self );
+      public extern static int FeatureDef_get_drawType( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean FeatureDef_get_destructable( IntPtr self );
+      public extern static bool FeatureDef_get_destructable( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean FeatureDef_get_blocking( IntPtr self );
+      public extern static bool FeatureDef_get_blocking( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean FeatureDef_get_burnable( IntPtr self );
+      public extern static bool FeatureDef_get_burnable( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean FeatureDef_get_floating( IntPtr self );
+      public extern static bool FeatureDef_get_floating( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Boolean FeatureDef_get_geoThermal( IntPtr self );
+      public extern static bool FeatureDef_get_geoThermal( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.String FeatureDef_get_deathFeature( IntPtr self );
+      public extern static string FeatureDef_get_deathFeature( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 FeatureDef_get_xsize( IntPtr self );
+      public extern static int FeatureDef_get_xsize( IntPtr self );
 
 
       [MethodImpl(MethodImplOptions.InternalCall)]
-      public extern static System.Int32 FeatureDef_get_ysize( IntPtr self );
+      public extern static int FeatureDef_get_ysize( IntPtr self );
 
 
     }

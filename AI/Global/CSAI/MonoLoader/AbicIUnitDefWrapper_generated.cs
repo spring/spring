@@ -11,7 +11,7 @@ using System.IO;
 
 namespace CSharpAI
 {
-    public class UnitDef : IUnitDef
+    public class UnitDef : MarshalByRefObject, IUnitDef
     {
         public IntPtr self = IntPtr.Zero;
         public UnitDef( IntPtr self )

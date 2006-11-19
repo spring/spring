@@ -85,68 +85,17 @@ void WriteLine( std::string message )
 
 // callbacks/GlobalAI events=============================================================
 
-typedef void( PLATFORMCALLINGCONVENTION *INITAI)( void *, int );
-typedef void( PLATFORMCALLINGCONVENTION *UNITCREATED)( int );
-typedef void( PLATFORMCALLINGCONVENTION *UNITFINISHED)( int );
-typedef void( PLATFORMCALLINGCONVENTION *UNITDESTROYED)( int, int );
-typedef void( PLATFORMCALLINGCONVENTION *ENEMYENTERLOS)( int );
-typedef void( PLATFORMCALLINGCONVENTION *ENEMYLEAVELOS)( int );
-typedef void( PLATFORMCALLINGCONVENTION *ENEMYENTERRADAR)( int );
-typedef void( PLATFORMCALLINGCONVENTION *ENEMYLEAVERADAR)( int );
-typedef void( PLATFORMCALLINGCONVENTION *ENEMYDAMAGED)( int damaged,int attacker,float damage, float dirx, float diry, float dirz );
-typedef void( PLATFORMCALLINGCONVENTION *ENEMYDESTROYED)( int enemy,int attacker);
-typedef void( PLATFORMCALLINGCONVENTION *UNITIDLE)( int );
-typedef void( PLATFORMCALLINGCONVENTION *GOTCHATMSG)( MonoString* msg,int player);
-typedef void( PLATFORMCALLINGCONVENTION *UNITDAMAGED)(int damaged,int attacker,float damage, float dirx, float diry, float dirz );
-typedef void( PLATFORMCALLINGCONVENTION *UNITMOVEFAILED)( int );
-typedef void( PLATFORMCALLINGCONVENTION *UPDATE)();
+#include "typedefs_generated.h"
 
 class AIProxy
 {
 public:
-    INITAI InitAI;
-    UNITCREATED UnitCreated;
-    UNITFINISHED UnitFinished;
-    UNITDESTROYED UnitDestroyed;
-    ENEMYENTERLOS EnemyEnterLOS;
-    ENEMYLEAVELOS EnemyLeaveLOS;
-    ENEMYENTERRADAR EnemyEnterRadar;
-    ENEMYLEAVERADAR EnemyLeaveRadar;
-    ENEMYDAMAGED EnemyDamaged;
-    ENEMYDESTROYED EnemyDestroyed;
-    UNITIDLE UnitIdle;
-    GOTCHATMSG GotChatMsg;
-    UNITDAMAGED UnitDamaged;
-    UNITMOVEFAILED UnitMoveFailed;
-    UPDATE Update;
+    #include "cpointerinstances_generated.h"
 };
 
 static AIProxy *thisaiproxy = 0; // used to ensure callbacks go to right place, and to avoid passing parameters to Bind
 
-void SetInitAICallback( void *fnpointer )
-{
-    WriteLine( "SetInitAICallback() >>>" );
-	thisaiproxy->InitAI = (INITAI)fnpointer;
-    WriteLine( "SetInitAICallback() <<<" );
-}
-
-void SetUnitCreatedCallback( void *fnpointer ){ thisaiproxy->UnitCreated = (UNITCREATED)fnpointer; }
-
-#define SETCALLBACKMACRO( delegatename, callbackname ) void Set ## callbackname ## Callback( void *fnpointer ){ thisaiproxy->callbackname = ( delegatename )fnpointer; }
-
-SETCALLBACKMACRO( UNITFINISHED, UnitFinished );
-SETCALLBACKMACRO( UNITDESTROYED, UnitDestroyed );
-SETCALLBACKMACRO( ENEMYENTERLOS, EnemyEnterLOS );
-SETCALLBACKMACRO( ENEMYLEAVELOS, EnemyLeaveLOS );
-SETCALLBACKMACRO( ENEMYENTERRADAR, EnemyEnterRadar );
-SETCALLBACKMACRO( ENEMYLEAVERADAR, EnemyLeaveRadar );
-SETCALLBACKMACRO( ENEMYDAMAGED, EnemyDamaged );
-SETCALLBACKMACRO( ENEMYDESTROYED, EnemyDestroyed );
-SETCALLBACKMACRO( UNITIDLE, UnitIdle );
-SETCALLBACKMACRO( GOTCHATMSG, GotChatMsg );
-SETCALLBACKMACRO( UNITDAMAGED, UnitDamaged );
-SETCALLBACKMACRO( UNITMOVEFAILED, UnitMoveFailed );
-SETCALLBACKMACRO( UPDATE, Update );
+#include "csetpointerfunctions_generated.h"
 
 // Functionwrappers=============================================================
 
@@ -377,27 +326,9 @@ void InitMono(const char *monoDir, const char *dll, const char *namespacename, c
         
         // register native methods callable by managed code
     #define PREFIX "CSharpAI.CSAICInterface::"
-        mono_add_internal_call(PREFIX "SetInitAICallback", (void*)SetInitAICallback);
-        mono_add_internal_call(PREFIX "SetUnitCreatedCallback", (void*)SetUnitCreatedCallback);
-        mono_add_internal_call(PREFIX "SetUnitFinishedCallback", (void*)SetUnitFinishedCallback);
+        #include "cbind_generated.h"
     #undef PREFIX 
 
-#define SETCALLBACKBINDING( delegate, functionname ) mono_add_internal_call( "CSharpAI.CSAICInterface::Set" #functionname "Callback", (void*)Set ## functionname ## Callback);
-        
-//SETCALLBACKBINDING( UNITFINISHED, UnitFinished );
-SETCALLBACKBINDING( UNITDESTROYED, UnitDestroyed );
-SETCALLBACKBINDING( ENEMYENTERLOS, EnemyEnterLOS );
-SETCALLBACKBINDING( ENEMYLEAVELOS, EnemyLeaveLOS );
-SETCALLBACKBINDING( ENEMYENTERRADAR, EnemyEnterRadar );
-SETCALLBACKBINDING( ENEMYLEAVERADAR, EnemyLeaveRadar );
-SETCALLBACKBINDING( ENEMYDAMAGED, EnemyDamaged );
-SETCALLBACKBINDING( ENEMYDESTROYED, EnemyDestroyed );
-SETCALLBACKBINDING( UNITIDLE, UnitIdle );
-SETCALLBACKBINDING( GOTCHATMSG, GotChatMsg );
-SETCALLBACKBINDING( UNITDAMAGED, UnitDamaged );
-SETCALLBACKBINDING( UNITMOVEFAILED, UnitMoveFailed );
-SETCALLBACKBINDING( UPDATE, Update );
-        
     #define PREFIX "CSharpAI.ABICInterface::"
         #include "IAICallbackbindings_generated.gpp"
         #include "IFeatureDefbindings_generated.gpp"
@@ -465,6 +396,7 @@ DLL_EXPORT void *InitAI( struct IAICallback *aicallback, int team)
 
     launcher = mono_object_new (domain, launcherClass);
     mono_runtime_object_init(launcher);
+    mono_gchandle_new(launcher, true); // 8 hours of crashes went into the absence of this statement.  You need this ;-)    
 
     WriteLine( "InitAI invoking bind..." );
     IAICallback_SendTextMsg( aicallback, "test message 2", 0 );
@@ -472,6 +404,9 @@ DLL_EXPORT void *InitAI( struct IAICallback *aicallback, int team)
     IAICallback_SendTextMsg( aicallback, "test message 3", 0 );
     WriteLine( "InitAI calling initai..." );
     aiproxy->InitAI( aicallback, team );
+            
+    aiproxy->GotChatMsg( "test message 3 from cslm", 0 );
+            
         numexec++;
     WriteLine( "InitAI <<<" );
         }
@@ -494,7 +429,9 @@ DLL_EXPORT void UnitCreated( void *ai, int unit)									//called when a new uni
 
 DLL_EXPORT void UnitFinished(void *ai, int unit)							//called when an unit has finished building
 {
+    WriteLine( "UnitFinished >>>" );
     ( (AIProxy *)ai )->UnitFinished( unit );
+    WriteLine( "UnitFinished <<<" );
 }
 
 DLL_EXPORT void UnitDestroyed(void *ai, int unit,int attacker)								//called when a unit is destroyed
@@ -534,12 +471,17 @@ DLL_EXPORT void EnemyDestroyed(void *ai, int enemy,int attacker)							//will be
 
 DLL_EXPORT void UnitIdle(void *ai, int unit)										//called when a unit go idle and is not assigned to any group
 {
+    WriteLine( "UnitIdle >>>" );
     ( (AIProxy *)ai )->UnitIdle( unit );
+    WriteLine( "UnitIdle <<<" );
 }
 
 DLL_EXPORT void GotChatMsg(void *ai, const char* msg,int player)					//called when someone writes a chat msg
 {
-    ( (AIProxy *)ai )->GotChatMsg( mono_string_new_wrapper( msg ), player );
+    WriteLine( "GotChatMsg >>>" );
+    WriteLine( msg );
+    ( (AIProxy *)ai )->GotChatMsg( msg, player );
+    WriteLine( "GotChatMsg <<<" );
 }
 
 DLL_EXPORT void UnitDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)					//called when one of your units are damaged
@@ -557,5 +499,7 @@ DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
 //called every frame
 DLL_EXPORT void Update(void *ai )
 {
+  //  WriteLine( "Update >>>" );
     ( (AIProxy *)ai )->Update(  );
+  //  WriteLine( "Update <<<" );
 }

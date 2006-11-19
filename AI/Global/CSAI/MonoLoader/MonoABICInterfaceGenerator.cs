@@ -63,7 +63,7 @@ class GenerateCode
         }
     }
     
-    string CsTypeToCppTypeString( Type CsType, bool IsReturnType )
+    string InterfaceTypeToCsType( Type CsType, bool IsReturnType )
     {
         if( CsType == typeof( int ) )
         {
@@ -71,7 +71,43 @@ class GenerateCode
         }
         if( CsType == typeof( double ) )
         {
-            return "float";
+            return "float"; // the key reason for this function
+        }
+        if( CsType == typeof( string ) )
+        {
+            //return "const char *";
+            if( IsReturnType )
+            {
+                return "string";
+            }
+            return "string";
+            // return "std::string";
+        }
+        if( CsType == typeof( bool ) )
+        {
+            return "bool";
+        }
+        //if( CsType == typeof( IUnitDef ) )
+       // {
+        //    return "const UnitDef *";
+        //}
+        if( CsType == typeof( void ) )
+        {
+            return "void";
+        }
+        
+        throw new ExceptionCsTypeNotHandled("type " + CsType.ToString() + " not handled");
+    }
+    
+    string InterfaceTypeToCppType( Type CsType, bool IsReturnType )
+    {
+        if( CsType == typeof( int ) )
+        {
+            return "int";
+        }
+        if( CsType == typeof( double ) )
+        {
+            return "float"; // the key reason for this function
         }
         if( CsType == typeof( string ) )
         {
@@ -160,7 +196,7 @@ class GenerateCode
         {
             PropertyInfo pi = targettype.GetProperty( memberinfo.Name );
             string csstring = "      [MethodImpl(MethodImplOptions.InternalCall)]\n";
-            csstring += "      public extern static " + pi.PropertyType.ToString() + " " + basetypename + "_get_" + memberinfo.Name + "( IntPtr self );\n";
+            csstring += "      public extern static " + InterfaceTypeToCsType( pi.PropertyType, true ) + " " + basetypename + "_get_" + memberinfo.Name + "( IntPtr self );\n";
             return csstring;
         }
         else if( memberinfo.MemberType == MemberTypes.Method )
@@ -171,14 +207,14 @@ class GenerateCode
                 MethodInfo methodinfo = memberinfo as MethodInfo;
                 ParameterInfo[] parameterinfos = methodbase.GetParameters();
                 string csstring = "      [MethodImpl(MethodImplOptions.InternalCall)]\n";
-                csstring += "      public extern static " + methodinfo.ReturnType.ToString() + " " + basetypename + "_" + memberinfo.Name + "( IntPtr self";
+                csstring += "      public extern static " + InterfaceTypeToCsType( methodinfo.ReturnType, true ) + " " + basetypename + "_" + memberinfo.Name + "( IntPtr self";
                 for( int i = 0; i < parameterinfos.GetUpperBound(0) + 1; i++ )
                 {
                     if( i < parameterinfos.GetUpperBound(0) + 1 )
                     {
                         csstring += ", ";
                     }
-                    csstring += parameterinfos[i].ParameterType.ToString() + " " + parameterinfos[i].Name;
+                    csstring += InterfaceTypeToCsType( parameterinfos[i].ParameterType, false ) + " " + parameterinfos[i].Name;
                 }
                 csstring += " );";
                 return csstring;
@@ -204,7 +240,7 @@ class GenerateCode
         {
             PropertyInfo pi = targettype.GetProperty( memberinfo.Name );
             string csstring = "";
-            csstring +=  CsTypeToCppTypeString( pi.PropertyType, true ) + " _" + basetypename + "_get_" + memberinfo.Name + "( void *self )\n";
+            csstring +=  InterfaceTypeToCppType( pi.PropertyType, true ) + " _" + basetypename + "_get_" + memberinfo.Name + "( void *self )\n";
             return csstring;
         }
         else if( memberinfo.MemberType == MemberTypes.Method )
@@ -215,14 +251,14 @@ class GenerateCode
                 MethodInfo methodinfo = memberinfo as MethodInfo;
                 ParameterInfo[] parameterinfos = methodbase.GetParameters();
                 string csstring = "";
-                csstring +=  CsTypeToCppTypeString( methodinfo.ReturnType, true ) + " _" + basetypename + "_" + memberinfo.Name + "( void *self";
+                csstring +=  InterfaceTypeToCppType( methodinfo.ReturnType, true ) + " _" + basetypename + "_" + memberinfo.Name + "( void *self";
                 for( int i = 0; i < parameterinfos.GetUpperBound(0) + 1; i++ )
                 {
                     if( i < parameterinfos.GetUpperBound(0) + 1 )
                     {
                         csstring += ", ";
                     }
-                    csstring += CsTypeToCppTypeString( parameterinfos[i].ParameterType, false ) + " " + parameterinfos[i].Name;
+                    csstring += InterfaceTypeToCppType( parameterinfos[i].ParameterType, false ) + " " + parameterinfos[i].Name;
                 }
                 csstring += " )";
                 return csstring;

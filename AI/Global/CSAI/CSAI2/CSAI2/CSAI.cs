@@ -95,9 +95,10 @@ namespace CSharpAI
         
         public void InitAI( IAICallback aicallback, int team)
         {
+
+            this.aicallback = aicallback;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-GB");
             
-            this.aicallback = aicallback;
             try{
                 Directory.CreateDirectory(AIDirectoryPath);
                 this.Team = team;
@@ -117,7 +118,30 @@ namespace CSharpAI
                 }
                 
                 InitCache();
+                /*
+                IUnitDef unitdef = aicallback.GetUnitDefByTypeId(34);
+                aicallback.SendTextMsg(unitdef.name,0);
+                aicallback.SendTextMsg(unitdef.id.ToString(), 0);
+                aicallback.SendTextMsg(unitdef.humanName, 0);
+                aicallback.SendTextMsg(unitdef.movedata.moveType.ToString(), 0);
+                aicallback.SendTextMsg(unitdef.movedata.maxSlope.ToString(), 0);
+                aicallback.GetMetalMap();
+                aicallback.GetLosMap();
+                aicallback.GetRadarMap();
+                aicallback.GetFriendlyUnits();
+                aicallback.GetFeatures();
+                aicallback.GetEnemyUnitsInRadarAndLos();
 
+                Metal.GetInstance();
+                */
+                //aicallback.GetElevation(300,300);
+                //new SlopeMap().GetSlopeMap();
+                //double[,] _SlopeMap = new double[256, 256];
+                //LosMap.GetInstance();
+                //MovementMaps.GetInstance();
+                //BuildMap.GetInstance().Init();
+
+                //return;
                 // -- test stuff here --
                 logfile.WriteLine("Is game paused? : " + aicallback.IsGamePaused());
                 // -- end test stuff --

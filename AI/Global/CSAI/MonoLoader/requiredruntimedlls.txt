@@ -16,3 +16,7 @@ lib/mono/2.0:
 mscorlib.dll
 mscorlib.dll.mdb
 
+everything in lib/mono/gac/System
+everything in lib/mono/gac/System.Xml
+(if you dont have the last ones you get wierd unexplained crashes)
+
