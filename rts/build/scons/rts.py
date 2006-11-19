@@ -266,7 +266,7 @@ def generate(env):
 			env['CCFLAGS'] += ['-fno-default-inline', '-fno-inline', '-fno-inline-functions', '-fno-inline-functions-called-once']
 
 		# It seems only gcc 4.0 and higher supports this.
-		if gcc_version >= ['4','0','0']:
+		if gcc_version >= ['4','0','0'] and env['platform'] != 'windows':
 			env['CCFLAGS'] += ['-fvisibility=hidden']
 
 		# Allow easy switching between 387 and SSE fpmath.
