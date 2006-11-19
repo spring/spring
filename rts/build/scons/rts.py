@@ -50,6 +50,16 @@ def fix_windows_spawn(env):
 
 
 def generate(env):
+	# Fix scons & gcc borkedness (scons not looking in PATH for gcc
+	# and mingw gcc 4.1 linker crashing if TMP or TEMP isn't set).
+	env['ENV']['PATH'] = os.environ['PATH']
+	if os.environ.has_key('MINGDIR'):
+		env['ENV']['MINGDIR'] = os.environ['MINGDIR']
+	if os.environ.has_key('TMP'):
+		env['ENV']['TMP'] = os.environ['TMP']
+	if os.environ.has_key('TEMP'):
+		env['ENV']['TEMP'] = os.environ['TEMP']
+
 	# We break unitsync if the filename of the shared object has a 'lib' prefix.
 	# It is also nicer for the AI shared objects.
 	env['LIBPREFIX'] = ''
@@ -80,6 +90,8 @@ def generate(env):
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
 		('optimize',          'Enable processor optimizations during compilation', 1),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
+		('cpppath',           'Set path to extra header files', []),
+		('libpath',           'Set path to extra libraries', []),
 		('fpmath',            'Set to 387 or SSE on i386 and AMD64 architectures', '387'),
 		('prefix',            'Install prefix', '/usr/local'),
 		('datadir',           'Data directory', '$prefix/games/taspring'),
@@ -122,7 +134,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
+		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
 			'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 
 			'spring_defines']:
 			if env.has_key(key): env.__delitem__(key)
@@ -175,6 +187,11 @@ def generate(env):
 		def string_opt(key, default):
 			if args.has_key(key):
 				env[key] = args[key]
+			else: env[key] = default
+
+		def stringarray_opt(key, default):
+			if args.has_key(key):
+				env[key] = args[key].split(';')
 			else: env[key] = default
 
 		# Use single precision constants only.
@@ -310,9 +327,12 @@ def generate(env):
 
 		env['spring_defines'] = spring_defines
 
-		include_path = ['rts', 'rts/System']
-		include_path += ["lua/luabind", "lua/lua/include"]
-		lib_path = ['rts/lib/streflop']
+		stringarray_opt('cpppath', [])
+		stringarray_opt('libpath', [])
+
+		include_path = env['cpppath'] + ['rts', 'rts/System']
+		include_path += ['lua/luabind', 'lua/lua/include']
+		lib_path = env['libpath'] + ['rts/lib/streflop']
 
 		if env['platform'] == 'freebsd':
 			include_path += ['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
