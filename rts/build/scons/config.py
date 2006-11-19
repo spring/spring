@@ -297,9 +297,6 @@ def check_libraries(env, conf):
 def configure(env, conf_dir):
 	print "\nChecking configure scripts"
 	conf = env.Configure(conf_dir = conf_dir)
-	if env['platform'] == 'darwin':
-		# Hackery to support Darwinports configure scripts
-		env['ENV']['PATH'] = os.environ['PATH']
 	check_debian_powerpc(env, conf)
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
