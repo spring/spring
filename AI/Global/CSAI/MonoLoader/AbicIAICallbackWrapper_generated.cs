@@ -11,7 +11,7 @@ using System.IO;
 
 namespace CSharpAI
 {
-    public class AICallback : IAICallback
+    public class AICallback : MarshalByRefObject, IAICallback
     {
         public IntPtr self = IntPtr.Zero;
         public AICallback( IntPtr self )
@@ -51,7 +51,7 @@ namespace CSharpAI
       public System.Void SetFigureColor(System.Int32 group, System.Double red, System.Double green, System.Double blue, System.Double alpha )
 
       {
-         ABICInterface.IAICallback_SetFigureColor( self, group, red, green, blue, alpha );
+         ABICInterface.IAICallback_SetFigureColor( self, group, (float)red, (float)green, (float)blue, (float)alpha );
       }
 
       public System.Void DeleteFigureGroup(System.Int32 group )
@@ -243,7 +243,7 @@ namespace CSharpAI
       public System.Double GetElevation(System.Double x, System.Double z )
 
       {
-         return ABICInterface.IAICallback_GetElevation( self, x, z );
+         return ABICInterface.IAICallback_GetElevation( self, (float)x, (float)z );
       }
 
       public System.Double GetMetal( )
@@ -415,7 +415,7 @@ public double[] GetCentreHeightMap()
 
 public bool CanBuildAt( IUnitDef unitdef, Float3 pos )
 {
-    return ABICInterface.IAICallback_CanBuildAt( self, ( unitdef as UnitDef ).self, pos.x , pos.y, pos.z );
+    return ABICInterface.IAICallback_CanBuildAt( self, ( unitdef as UnitDef ).self, (float)pos.x , (float)pos.y, (float)pos.z );
 }
 
 public bool UnitIsBusy( int unitid )
@@ -425,9 +425,9 @@ public bool UnitIsBusy( int unitid )
 
 public Float3 GetFeaturePos( int featureid )
 {
-   Float3 pos = new Float3();
-   ABICInterface.IAICallback_GetFeaturePos( self, ref pos.x, ref pos.y, ref pos.z, featureid );
-   return pos;
+   float x = 0; float y = 0; float z = 0;
+   ABICInterface.IAICallback_GetFeaturePos( self, ref x, ref y, ref z, featureid );
+   return new Float3( x, y, z );
 }
 
 public int[] GetFeatures()
@@ -437,7 +437,7 @@ public int[] GetFeatures()
 
 public int[] GetFeatures( Float3 pos, double radius )
 {
-    return ABICInterface.IAICallback_GetFeaturesAt( self, pos.x, pos.y, pos.z, radius );
+    return ABICInterface.IAICallback_GetFeaturesAt( self, (float)pos.x, (float)pos.y, (float)pos.z, (float)radius );
 }
 
 public int[] GetFriendlyUnits( )
@@ -452,7 +452,7 @@ public int[] GetEnemyUnitsInRadarAndLos( )
 
 public int CreateLineFigure(Float3 pos1,Float3 pos2,double width,bool arrow,int lifetime,int group)
 {
-    return ABICInterface.IAICallback_CreateLineFigure( self, pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, width, arrow, lifetime, group );
+    return ABICInterface.IAICallback_CreateLineFigure( self,(float)pos1.x,(float)pos1.y, (float)pos1.z, (float)pos2.x, (float)pos2.y, (float)pos2.z, (float)width, arrow, lifetime, group );
 }
 
     }

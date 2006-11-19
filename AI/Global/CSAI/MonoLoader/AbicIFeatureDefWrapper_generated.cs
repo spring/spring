@@ -11,7 +11,7 @@ using System.IO;
 
 namespace CSharpAI
 {
-    public class FeatureDef : IFeatureDef
+    public class FeatureDef : MarshalByRefObject, IFeatureDef
     {
         public IntPtr self = IntPtr.Zero;
         public FeatureDef( IntPtr self )

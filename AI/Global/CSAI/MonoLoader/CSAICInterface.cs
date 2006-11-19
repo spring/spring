@@ -21,20 +21,26 @@
 // ======================================================================================
 //
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
 using System.IO;
+using System.Reflection;
+using System.Xml;
 
 namespace CSharpAI
 {
     // note: no longer used; links directly to CSAI.dll
-    public class _CSAI
+    public class _CSAI : CSharpAI.IGlobalAI
     {
-        AICallback aicallback;
+        IAICallback aicallback;
         int team;
         
-        public void InitAI( AICallback aicallback, int team )
+        double[,]largebuffer = new double[ 1000, 1000];
+        
+        public void InitAI( IAICallback aicallback, int team )
         {
             this.aicallback = aicallback;
             this.team = team;
@@ -163,9 +169,17 @@ namespace CSharpAI
         }
         
         //int HandleEvent (int msg,const void *data); // todo
+        public int HandleEvent( int msg, object data )
+        {
+            return 0;
+        }
         
         //called every frame
         public void Update()
+        {
+        }
+        
+        public void Shutdown()
         {
         }
     }
@@ -173,194 +187,329 @@ namespace CSharpAI
     public class CSAICInterface
     {
         IntPtr aicallback;
-        CSAI ai;
+        CSharpAI.IGlobalAI ai;
         
-		public delegate void _InitAI( IntPtr aicallback, int team );
-        IntPtr InitAIInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
+          public delegate void _InitAI( IntPtr aicallback,int team);
+          IntPtr InitAIInstancePointer;
+          _InitAI initai;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetInitAICallback( IntPtr callback );
+          
+          public delegate void _Update( );
+          IntPtr UpdateInstancePointer;
+          _Update update;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetUpdateCallback( IntPtr callback );
+          
+          public delegate void _GotChatMsg( string msg,int priority);
+          IntPtr GotChatMsgInstancePointer;
+          _GotChatMsg gotchatmsg;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetGotChatMsgCallback( IntPtr callback );
+          
+          public delegate void _UnitCreated( int unit);
+          IntPtr UnitCreatedInstancePointer;
+          _UnitCreated unitcreated;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetUnitCreatedCallback( IntPtr callback );
+          
+          public delegate void _UnitFinished( int unit);
+          IntPtr UnitFinishedInstancePointer;
+          _UnitFinished unitfinished;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetUnitFinishedCallback( IntPtr callback );
+          
+          public delegate void _UnitIdle( int unit);
+          IntPtr UnitIdleInstancePointer;
+          _UnitIdle unitidle;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetUnitIdleCallback( IntPtr callback );
+          
+          public delegate void _UnitMoveFailed( int unit);
+          IntPtr UnitMoveFailedInstancePointer;
+          _UnitMoveFailed unitmovefailed;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetUnitMoveFailedCallback( IntPtr callback );
+          
+          public delegate void _UnitDamaged( int damaged,int attacker,float damage,float dirx,float diry,float dirz);
+          IntPtr UnitDamagedInstancePointer;
+          _UnitDamaged unitdamaged;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetUnitDamagedCallback( IntPtr callback );
+          
+          public delegate void _UnitDestroyed( int enemy,int attacker);
+          IntPtr UnitDestroyedInstancePointer;
+          _UnitDestroyed unitdestroyed;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetUnitDestroyedCallback( IntPtr callback );
+          
+          public delegate void _EnemyEnterLOS( int unit);
+          IntPtr EnemyEnterLOSInstancePointer;
+          _EnemyEnterLOS enemyenterlos;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetEnemyEnterLOSCallback( IntPtr callback );
+          
+          public delegate void _EnemyLeaveLOS( int unit);
+          IntPtr EnemyLeaveLOSInstancePointer;
+          _EnemyLeaveLOS enemyleavelos;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetEnemyLeaveLOSCallback( IntPtr callback );
+          
+          public delegate void _EnemyEnterRadar( int unit);
+          IntPtr EnemyEnterRadarInstancePointer;
+          _EnemyEnterRadar enemyenterradar;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetEnemyEnterRadarCallback( IntPtr callback );
+          
+          public delegate void _EnemyLeaveRadar( int unit);
+          IntPtr EnemyLeaveRadarInstancePointer;
+          _EnemyLeaveRadar enemyleaveradar;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetEnemyLeaveRadarCallback( IntPtr callback );
+          
+          public delegate void _EnemyDamaged( int damaged,int attacker,float damage,float dirx,float diry,float dirz);
+          IntPtr EnemyDamagedInstancePointer;
+          _EnemyDamaged enemydamaged;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetEnemyDamagedCallback( IntPtr callback );
+          
+          public delegate void _EnemyDestroyed( int enemy,int attacker);
+          IntPtr EnemyDestroyedInstancePointer;
+          _EnemyDestroyed enemydestroyed;
+          [MethodImpl(MethodImplOptions.InternalCall)]
+          public extern static void SetEnemyDestroyedCallback( IntPtr callback );
+          
         
-		public delegate void _UnitCreated( int unit );
-        IntPtr UnitCreatedInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _UnitFinished( int unit );
-        IntPtr UnitFinishedInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _UnitDestroyed( int unit,int attacker );
-        IntPtr UnitDestroyedInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _EnemyEnterLOS( int unit );
-        IntPtr EnemyEnterLOSInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _EnemyLeaveLOS( int unit );
-        IntPtr EnemyLeaveLOSInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _EnemyEnterRadar( int unit );
-        IntPtr EnemyEnterRadarInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _EnemyLeaveRadar( int unit );
-        IntPtr EnemyLeaveRadarInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _EnemyDamaged( int damaged,int attacker,float damage, float dirx, float diry, float dirz);
-        IntPtr EnemyDamagedInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _EnemyDestroyed( int enemy,int attacker);
-        IntPtr EnemyDestroyedInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _UnitIdle( int unit );
-        IntPtr UnitIdleInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-        
-		public delegate void _GotChatMsg( string msg, int player );
-        IntPtr GotChatMsgInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _UnitDamaged(  int damaged,int attacker,float damage, float dirx, float diry, float dirz);
-        IntPtr UnitDamagedInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _UnitMoveFailed( int unit );
-        IntPtr UnitMoveFailedInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		public delegate void _Update( );
-        IntPtr UpdateInstancePointer; // need to keep this as class instance so it doesnt get garbage-collected
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetInitAICallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetUnitCreatedCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetUnitFinishedCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetUnitDestroyedCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetEnemyEnterLOSCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetEnemyLeaveLOSCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetEnemyEnterRadarCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetEnemyLeaveRadarCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetEnemyDamagedCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetEnemyDestroyedCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetUnitIdleCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetGotChatMsgCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetUnitDamagedCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetUnitMoveFailedCallback( IntPtr initai );
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void SetUpdateCallback( IntPtr initai );
-
         // start point, called by invoke
         public void Bind()
         {
-            StreamWriter sw = new StreamWriter( "outo.txt", false );
             try
             {
-                sw.WriteLine( "CSAICInterface.Bind >>>" );
-                sw.Flush();
+                //WriteLine( "CSAICInterface.Bind >>>" );
                 
-                //InitAIInstance = new _InitAI( InitAI );
-                InitAIInstancePointer = Marshal.GetFunctionPointerForDelegate( new _InitAI( InitAI ) );
+                initai = new _InitAI( InitAI );
+                InitAIInstancePointer = Marshal.GetFunctionPointerForDelegate( initai );
                 SetInitAICallback( InitAIInstancePointer );
                 
-                UnitCreatedInstancePointer = Marshal.GetFunctionPointerForDelegate( new _UnitCreated( UnitCreated ) );
-                SetUnitCreatedCallback( UnitCreatedInstancePointer );
-                
-                UnitFinishedInstancePointer = Marshal.GetFunctionPointerForDelegate( new _UnitFinished( UnitFinished ) );
-                SetUnitFinishedCallback( UnitFinishedInstancePointer );
-                
-                UnitDestroyedInstancePointer = Marshal.GetFunctionPointerForDelegate( new _UnitDestroyed( UnitDestroyed ) );
-                SetUnitDestroyedCallback( UnitDestroyedInstancePointer );
-                
-                EnemyEnterLOSInstancePointer = Marshal.GetFunctionPointerForDelegate( new _EnemyEnterLOS( EnemyEnterLOS ) );
-                SetEnemyEnterLOSCallback( EnemyEnterLOSInstancePointer );
-                
-                EnemyLeaveLOSInstancePointer = Marshal.GetFunctionPointerForDelegate( new _EnemyLeaveLOS( EnemyLeaveLOS ) );
-                SetEnemyLeaveLOSCallback( EnemyLeaveLOSInstancePointer );
-                
-                EnemyEnterRadarInstancePointer = Marshal.GetFunctionPointerForDelegate( new _EnemyEnterRadar( EnemyEnterRadar ) );
-                SetEnemyEnterRadarCallback( EnemyEnterRadarInstancePointer );
-                
-                EnemyLeaveRadarInstancePointer = Marshal.GetFunctionPointerForDelegate( new _EnemyLeaveRadar( EnemyLeaveRadar ) );
-                SetEnemyLeaveRadarCallback( EnemyLeaveRadarInstancePointer );
-                
-                EnemyDamagedInstancePointer = Marshal.GetFunctionPointerForDelegate( new _EnemyDamaged( EnemyDamaged ) );
-                SetEnemyDamagedCallback( EnemyDamagedInstancePointer );
-                
-                EnemyDestroyedInstancePointer = Marshal.GetFunctionPointerForDelegate( new _EnemyDestroyed( EnemyDestroyed ) );
-                SetEnemyDestroyedCallback( EnemyDestroyedInstancePointer );
-                
-                UnitIdleInstancePointer = Marshal.GetFunctionPointerForDelegate( new _UnitIdle( UnitIdle ) );
-                SetUnitIdleCallback( UnitIdleInstancePointer );
-                
-                GotChatMsgInstancePointer = Marshal.GetFunctionPointerForDelegate( new _GotChatMsg( GotChatMsg ) );
-                SetGotChatMsgCallback( UnitCreatedInstancePointer );
-                
-                UnitDamagedInstancePointer = Marshal.GetFunctionPointerForDelegate( new _UnitDamaged( UnitDamaged ) );
-                SetUnitDamagedCallback( UnitDamagedInstancePointer );
-                
-                UnitMoveFailedInstancePointer = Marshal.GetFunctionPointerForDelegate( new _UnitMoveFailed( UnitMoveFailed ) );
-                SetUnitMoveFailedCallback( UnitMoveFailedInstancePointer );
-                
-                UpdateInstancePointer = Marshal.GetFunctionPointerForDelegate( new _Update( Update ) );
+                update = new _Update( Update );
+                UpdateInstancePointer = Marshal.GetFunctionPointerForDelegate( update );
                 SetUpdateCallback( UpdateInstancePointer );
                 
-                sw.WriteLine( "CSAICInterface.Bind <<<" );
-                sw.Flush();
+                gotchatmsg = new _GotChatMsg( GotChatMsg );
+                GotChatMsgInstancePointer = Marshal.GetFunctionPointerForDelegate( gotchatmsg );
+                SetGotChatMsgCallback( GotChatMsgInstancePointer );
+                
+                unitcreated = new _UnitCreated( UnitCreated );
+                UnitCreatedInstancePointer = Marshal.GetFunctionPointerForDelegate( unitcreated );
+                SetUnitCreatedCallback( UnitCreatedInstancePointer );
+                
+                unitfinished = new _UnitFinished( UnitFinished );
+                UnitFinishedInstancePointer = Marshal.GetFunctionPointerForDelegate( unitfinished );
+                SetUnitFinishedCallback( UnitFinishedInstancePointer );
+                
+                unitidle = new _UnitIdle( UnitIdle );
+                UnitIdleInstancePointer = Marshal.GetFunctionPointerForDelegate( unitidle );
+                SetUnitIdleCallback( UnitIdleInstancePointer );
+                
+                unitmovefailed = new _UnitMoveFailed( UnitMoveFailed );
+                UnitMoveFailedInstancePointer = Marshal.GetFunctionPointerForDelegate( unitmovefailed );
+                SetUnitMoveFailedCallback( UnitMoveFailedInstancePointer );
+                
+                unitdamaged = new _UnitDamaged( UnitDamaged );
+                UnitDamagedInstancePointer = Marshal.GetFunctionPointerForDelegate( unitdamaged );
+                SetUnitDamagedCallback( UnitDamagedInstancePointer );
+                
+                unitdestroyed = new _UnitDestroyed( UnitDestroyed );
+                UnitDestroyedInstancePointer = Marshal.GetFunctionPointerForDelegate( unitdestroyed );
+                SetUnitDestroyedCallback( UnitDestroyedInstancePointer );
+                
+                enemyenterlos = new _EnemyEnterLOS( EnemyEnterLOS );
+                EnemyEnterLOSInstancePointer = Marshal.GetFunctionPointerForDelegate( enemyenterlos );
+                SetEnemyEnterLOSCallback( EnemyEnterLOSInstancePointer );
+                
+                enemyleavelos = new _EnemyLeaveLOS( EnemyLeaveLOS );
+                EnemyLeaveLOSInstancePointer = Marshal.GetFunctionPointerForDelegate( enemyleavelos );
+                SetEnemyLeaveLOSCallback( EnemyLeaveLOSInstancePointer );
+                
+                enemyenterradar = new _EnemyEnterRadar( EnemyEnterRadar );
+                EnemyEnterRadarInstancePointer = Marshal.GetFunctionPointerForDelegate( enemyenterradar );
+                SetEnemyEnterRadarCallback( EnemyEnterRadarInstancePointer );
+                
+                enemyleaveradar = new _EnemyLeaveRadar( EnemyLeaveRadar );
+                EnemyLeaveRadarInstancePointer = Marshal.GetFunctionPointerForDelegate( enemyleaveradar );
+                SetEnemyLeaveRadarCallback( EnemyLeaveRadarInstancePointer );
+                
+                enemydamaged = new _EnemyDamaged( EnemyDamaged );
+                EnemyDamagedInstancePointer = Marshal.GetFunctionPointerForDelegate( enemydamaged );
+                SetEnemyDamagedCallback( EnemyDamagedInstancePointer );
+                
+                enemydestroyed = new _EnemyDestroyed( EnemyDestroyed );
+                EnemyDestroyedInstancePointer = Marshal.GetFunctionPointerForDelegate( enemydestroyed );
+                SetEnemyDestroyedCallback( EnemyDestroyedInstancePointer );
+                            
+               // WriteLine( "CSAICInterface.Bind <<<" );
             }
             catch(Exception e )
             {
-                sw.WriteLine( e.ToString() );
+                sw = new StreamWriter("outbind.log", false );
+                WriteLine( e.ToString() );
                 sw.Flush();
+                sw.Close();
             }
-            sw.Close();
         }
         
+        // lastline debug only
+        StreamWriter sw;
+        void WriteLine( string message )
+        {
+        //    StreamWriter sw = new StreamWriter( "outo.txt", true );
+            sw.WriteLine( message );
+            sw.Flush();
+           // sw.Close();
+        }
+
+        
+        byte[] ReadFile( string filename )
+        {
+            FileStream fs = new FileStream( filename, FileMode.Open );
+            BinaryReader br = new BinaryReader( fs );
+            byte[] bytes = br.ReadBytes( (int)fs.Length );
+            br.Close();
+            fs.Close();
+            return bytes;
+        }
+        
+        Assembly a = null;
+        object getResult( string assemblyfilepath, byte[] assemblybytes, string targettypename, string methodname )
+        {
+            a = Assembly.Load( assemblybytes );
+               // a = Assembly.Load( assemblyfilepath );
+            Type t = a.GetType( targettypename );
+            MethodInfo mi = t.GetMethod( methodname );    
+            object result = mi.Invoke( 0, null);
+            WriteLine( result.GetType().ToString() );
+            return result;
+        }
+        
+        byte[] assemblybytes = null;
+        
+        object DynLoad( string assemblyfilename, string pdbfilename, string targettypename, string methodname )
+        {
+            WriteLine( "reading assembly [" + assemblyfilename + "]..." );
+            assemblybytes = ReadFile( assemblyfilename );
+            WriteLine( "... assembly read" );
+            
+            return getResult( assemblyfilename, assemblybytes, targettypename, methodname );
+        }
+        
+        void WriteSomething()
+        {
+            WriteLine("blah");
+        }
+        
+        static int nextappdomainref = 0;
+        string appdomainname;
+        AppDomain ourappdomain;
+        // DynLoadInAppDomain loads the AI dll in a separate appdomain, one per AI
+        // This is absolutely lagtastic.  So dont do that.
+        CSharpAI.GlobalAIProxy DynLoadInAppDomain( string dllpath, string classname, string methodname )
+        {
+            appdomainname = "csai" + nextappdomainref;
+            nextappdomainref++;
+            WriteLine( "appdomain name: " + appdomainname );
+            //Evidence baseEvidence = AppDomain.CurrentDomain.Evidence;
+            //WriteLine( "got base evidence" );
+            //Evidence evidence = new Evidence(baseEvidence); 
+            Evidence evidence = new Evidence(); 
+            WriteLine( "created new evidence" );
+            ourappdomain = AppDomain.CreateDomain( appdomainname, evidence );
+            WriteLine( "domain created" );
+              IMonoLoaderProxy monoloaderproxy = ourappdomain.CreateInstanceAndUnwrap( "MonoLoaderProxy, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", "CSharpAI.MonoLoaderProxy" ) as IMonoLoaderProxy;
+            WriteLine( "got monoloaderproxy" );
+              GlobalAIProxy globalaiproxy = monoloaderproxy.DynLoad(dllpath, "", classname, methodname);
+            WriteLine( "back from dynload" );
+            return globalaiproxy;
+        }
+        
+        CSharpAI.IGlobalAI LoadCSAI()
+        {
+            WriteLine( "LoadCSAI" );
+            WriteLine( "Codebase: " + Assembly.GetCallingAssembly().CodeBase );
+            string configfilename = Assembly.GetCallingAssembly().CodeBase.Replace( ".dll", ".xml" ); // on linux, just append xml to end of filename will work, or tweak this
+            WriteLine( "configfile: [" + configfilename + "]" );
+            XmlDocument configdom = new XmlDocument();
+            
+            configdom.Load( configfilename );
+            WriteLine("loaded dom" );
+            XmlElement configelement = configdom.SelectSingleNode( "/root/config" ) as XmlElement;
+            WriteLine("loaded dom" );
+            string CSAIDirectory = configelement.GetAttribute("csaidirectory" );
+            string CSAIDllName = configelement.GetAttribute("csaidllname" );
+            string PdbName = CSAIDllName.Replace( ".dll", ".pdb" );
+            string CSAIClassName = configelement.GetAttribute("csaiclassname" );
+            WriteLine("got attributes" );
+            
+            string dllpath = Path.Combine( CSAIDirectory, CSAIDllName );
+            string pdbpath = Path.Combine( CSAIDirectory, PdbName );
+            WriteLine(dllpath );
+            WriteLine(pdbpath );
+            WriteLine(CSAIClassName );
+            object aiexecobject = DynLoad( dllpath, pdbpath,  CSAIClassName, "GetInstance" );
+            //object aiexecobject = DynLoadInAppDomain( dllpath, CSAIClassName, "GetInstance" );
+            WriteLine("Did load" );
+            //WriteLine( aiexecobject->GetType()->ToString() );
+            return aiexecobject as CSharpAI.IGlobalAI;
+            
+            //return null;
+        }
+        
+        int team;
+        static int numais = 0;
 		public void InitAI(IntPtr aicallback, int team )
 		{
-            StreamWriter sw = new StreamWriter( "outo.txt", true );
             try
             {
-                sw.WriteLine( "CSAICInterface.InitAI >>>" );
-                sw.Flush();
+                sw = new StreamWriter( "outo_" + team + ".log", false );
+                WriteLine( "CSAICInterface.InitAI >>>" );
                 
-                ai = new CSAI();
+                this.team = team;
+                    //ai = LoadCSAI();
+                if( numais == 0 )
+                {
+                    ai = LoadCSAI();
+                    //ai = new _CSAI();
+                }
+                else
+                {
+                    //ai = LoadCSAI();
+                    ABICInterface.IAICallback_SendTextMsg( aicallback, "Only one Mono AI allowed per game", 0 );
+                    ai = new _CSAI();
+                }
+                numais++;
                 
                 this.aicallback = aicallback;
                 
                 ai.InitAI( new AICallback( aicallback ), team );                
+                WriteLine( "CSAICInterface.InitAI <<<" );
             }
             catch(Exception e )
             {
-                sw.WriteLine( e.ToString() );
-                sw.Flush();
+                WriteLine( e.ToString() );
             }
-            sw.Close();
 		}        
         
         public void UnitCreated( int unit)									//called when a new unit is created on ai team
         {
+                WriteLine( "CSAICInterface.UnitCreated >>>" );
             ai.UnitCreated( unit );
+                WriteLine( "CSAICInterface.UnitCreated <<<" );
         }
         
         public void UnitFinished(int unit)							//called when an unit has finished building
         {
+                WriteLine( "CSAICInterface.UnitFinished >>>" );
             ai.UnitFinished( unit );
+                WriteLine( "CSAICInterface.UnitFinished <<<" );
         }
         
         public void UnitDestroyed( int unit,int attacker)								//called when a unit is destroyed
@@ -400,12 +549,30 @@ namespace CSharpAI
         
         public void UnitIdle( int unit)										//called when a unit go idle and is not assigned to any group
         {
+                WriteLine( "CSAICInterface.UnitIdle >>>" );
             ai.UnitIdle( unit );
+                WriteLine( "CSAICInterface.UnitIdle <<<" );
         }
         
         public void GotChatMsg( string msg,int player)					//called when someone writes a chat msg
         {
+                WriteLine( "CSAICInterface.GotChatMsg >>> " + msg );
+            // ABICInterface.IAICallback_SendTextMsg( aicallback,"GotChatMsg: " + msg, 0 );
+            // update on reloadai: doesnt work with Mono, unless you use appdomains which are sllllooooowwwwww
+            // if( msg == ".reloadai" ) // unsure if this works with Mono, linux etc.  If it crashes, dont use it ;-)
+            // {
+                // WriteLine( "shutting down old ai..." );
+                // ai.Shutdown(); // release logfile lock, any threads, etc...
+                // WriteLine( "unloading appdomain..." );
+                // AppDomain.Unload( ourappdomain ); // unload assembly
+                // WriteLine( "loading new ai..." );
+                // ai = LoadCSAI();                
+                // WriteLine( "calling initai..." );
+                // ai.InitAI( new AICallback( aicallback ), team );
+            // }
+            
             ai.GotChatMsg( msg, player );
+                WriteLine( "CSAICInterface.GotChatMsg <<<" );
         }
         
         public void UnitDamaged( int damaged,int attacker,float damage, float dirx, float diry, float dirz)					//called when one of your units are damaged
@@ -423,7 +590,9 @@ namespace CSharpAI
         //called every frame
         public void Update()
         {
+                //WriteLine( "CSAICInterface.Update >>>" );
             ai.Update(  );
+                //WriteLine( "CSAICInterface.Update <<<" );
         }
     }
 }

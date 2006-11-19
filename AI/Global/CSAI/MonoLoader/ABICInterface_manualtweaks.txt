@@ -36,19 +36,19 @@
 		public extern static double[] IAICallback_GetCentreHeightMap( IntPtr aicallback );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static void IAICallback_GetFeaturePos( IntPtr aicallback, ref double posx, ref double posy, ref double posz, int featureid );
+		public extern static void IAICallback_GetFeaturePos( IntPtr aicallback, ref float posx, ref float posy, ref float posz, int featureid );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
 		public extern static IntPtr IAICallback_GetFeatureDef( IntPtr aicallback, int featureid );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static bool IAICallback_CanBuildAt( IntPtr aicallback, IntPtr unitdef, double posx, double posy, double posz );
+		public extern static bool IAICallback_CanBuildAt( IntPtr aicallback, IntPtr unitdef, float posx, float posy, float posz );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
 		public extern static int[] IAICallback_GetFeatures( IntPtr aicallback );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-		public extern static int[] IAICallback_GetFeaturesAt( IntPtr aicallback, double posx, double posy, double posz, double radius );
+		public extern static int[] IAICallback_GetFeaturesAt( IntPtr aicallback, float posx, float posy, float posz, float radius );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
 		public extern static int[] IAICallback_GetFriendlyUnits( IntPtr aicallback );
@@ -57,7 +57,7 @@
 		public extern static int[] IAICallback_GetEnemyUnitsInRadarAndLos( IntPtr aicallback );
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public extern static int IAICallback_CreateLineFigure(IntPtr aicallback, double pos1x, double pos1y, double pos1z,double pos2x, double pos2y, double pos2z,double width,bool arrow,int lifetime,int group);
+        public extern static int IAICallback_CreateLineFigure(IntPtr aicallback, float pos1x, float pos1y, float pos1z,float pos2x, float pos2y, float pos2z,float width,bool arrow,int lifetime,int group);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public extern static int IAICallback_GetCurrentUnitCommandsCount(IntPtr aicallback, int unitid);

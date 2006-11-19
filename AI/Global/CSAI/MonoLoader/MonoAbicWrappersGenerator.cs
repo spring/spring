@@ -259,6 +259,10 @@ class GenerateCode
                     {
                         csstring += ", ";
                     }
+                    if( parameterinfos[i].ParameterType == typeof(double ) )
+                    {
+                        csstring += "(float)";
+                    }
                     csstring += parameterinfos[i].Name;
                 }
                 csstring += " );\n";
@@ -305,7 +309,7 @@ class GenerateCode
         csfile.WriteLine( "" );
         csfile.WriteLine( "namespace CSharpAI" );
         csfile.WriteLine( "{");
-        csfile.WriteLine( "    public class " + csbasetypename + " : " + typename );
+        csfile.WriteLine( "    public class " + csbasetypename + " : MarshalByRefObject, " + typename );
         //csfile.WriteLine( "    public class " + csbasetypename );
         csfile.WriteLine( "    {" );
         csfile.WriteLine( "        public IntPtr self = IntPtr.Zero;" );

@@ -1,12 +1,14 @@
 rem you'll need:
 rem - mingw
-rem - Mono 1.1.18 (1.2 will NOT work, at least not on Windows)
+rem - Mono 1.1.18 (or maybe 1.2)
 rem - TASpring
 rem - TASpring sourcecode (taspring website )
+rem - the appropriate dlls in your taspring directory
 
 rem modify the following four paths for your environment:
 set MINGWDIR=h:\bin\mingw
-set MONODIR=h:\bin\Mono-1.1.18
+rem set MONODIR=h:\bin\Mono-1.1.18
+set MONODIR=h:\bin\Mono-1.2
 set SPRINGSOURCE=..\..\..\..
 set SPRINGAPPLICATION=..\..\..\..\game
 
@@ -19,10 +21,19 @@ call mono --debug MonoABICInterfaceGenerator.exe
 call gmcs -debug -reference:GlobalAIInterfaces.dll MonoAbicWrappersGenerator.cs
 call mono --debug MonoAbicWrappersGenerator.exe
 
+call gmcs -debug generatebindingspaste.cs
+call mono --debug generatebindingspaste.exe
+
+rem MonoLoaderProxy is lagtastic, so dont use
+rem call gmcs -debug -target:library -reference:GlobalAIInterfaces.dll MonoLoaderProxy.cs
+rem copy /y MonoLoaderProxy.dll %SPRINGAPPLICATION%
+rem copy /y MonoLoaderProxy.dll.mdb %SPRINGAPPLICATION%
+
 set WRAPPERS=AbicIAICallbackWrapper_generated.cs AbicIFeatureDefWrapper_generated.cs AbicIMoveDataWrapper_generated.cs AbicIUnitDefWrapper_generated.cs
 call gmcs -debug -target:library -reference:GlobalAIInterfaces.dll -out:CSAIMono.dll CSAICInterface.cs ABICInterface_generated.cs %WRAPPERS%
 copy /y CSAIMono.dll %SPRINGAPPLICATION%
 copy /y CSAIMono.dll.mdb %SPRINGAPPLICATION%
+copy /y CSAIMono.xml %SPRINGAPPLICATION%
 
 set CCOPTIONS=-I"%SPRINGSOURCE%\rts\System" -I"%SPRINGSOURCE%\rts"
 set CCOPTIONS=%CCOPTIONS% -I"%MONODIR%\include" -I"%MONODIR%\lib\glib-2.0\include" -I"%MONODIR%\include\glib-2.0"
@@ -33,6 +44,5 @@ g++ -DBUILDING_AI -DSTREFLOP_X87=1 %CCOPTIONS% -c CSAILoaderMono.cpp
 dllwrap --driver-name g++ -o csailoadermono.dll CSAILoaderMono.o %SPRINGAPPLICATION%\Spring.a %LINKOPTIONS%
 
 copy /y CSAILoaderMono.dll "%SPRINGAPPLICATION%\AI\Bot-libs"
-rem copy /y CSAILoaderMono.dll "%SPRINGAPPLICATION%"
 
 

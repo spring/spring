@@ -56,8 +56,8 @@ namespace CSharpAI
             double[,]HeightMap = new double[ mapwidth + 1, mapheight + 1 ];
             
             //double[]heightmap = aicallback.GetHeightMap();  // cant use heightmap, it is centre heightmap, we need cornermap
-            
-            
+
+
             for( int x = 0; x < mapwidth + 1; x++ )
             {
                 for( int y = 0; y < mapheight + 1; y++ )
@@ -65,10 +65,11 @@ namespace CSharpAI
                     HeightMap[ x, y ] = aicallback.GetElevation( x * squaresize, y * squaresize );
                 }
             }
-            
+
             // ArrayIndexer heightmapindexer = new ArrayIndexer( mapwidth + 1, mapheight + 1 );
-            
             logfile.WriteLine("calculating slopes..." );
+            logfile.WriteLine("mapwidth: " + slopemapwidth + " " + slopemapheight);
+                        
             double[,]SlopeMap = new double[ slopemapwidth, slopemapheight ];
             for(int y = 2; y < mapheight - 2; y+= 2)
             {
@@ -76,17 +77,17 @@ namespace CSharpAI
                 {
                     AdvancedFloat3 e1 = new AdvancedFloat3( -squaresize*4, HeightMap[ x - 1, y - 1 ] - HeightMap[ x + 3, y - 1 ] , 0 );
                     AdvancedFloat3 e2 = new AdvancedFloat3( 0, HeightMap[ x - 1, y - 1 ] - HeightMap[ x - 1, y + 3 ], -squaresize * 4 );
-                    
-                    AdvancedFloat3 n=e2.Cross( e1 );
-                    
-                    n.Normalize();
         
+                    AdvancedFloat3 n=e2.Cross( e1 );
+        
+                    n.Normalize();
+
                     e1 = new AdvancedFloat3( squaresize * 4, HeightMap[ x + 3, y + 3 ] - HeightMap[ x - 1, y + 3 ], 0 );
                     e2 = new AdvancedFloat3( 0, HeightMap[ x + 3, y + 3 ] - HeightMap[ x + 3, y - 1 ], squaresize * 4 );
-                    
+        
                     AdvancedFloat3 n2 = e2.Cross(e1);
                     n2.Normalize();
-        
+
                     SlopeMap[ x / 2, y / 2 ]= 1 - ( n.y + n2.y ) * 0.5;
                 }
             }

@@ -11,7 +11,7 @@ using System.IO;
 
 namespace CSharpAI
 {
-    public class MoveData : IMoveData
+    public class MoveData : MarshalByRefObject, IMoveData
     {
         public IntPtr self = IntPtr.Zero;
         public MoveData( IntPtr self )
