@@ -32,7 +32,6 @@
   File "..\game\eaxac3.dll"
   File "..\game\freetype6.dll"
   File "..\game\glew32.dll"
-  File "..\game\openal32.dll"
   File "..\game\zlib1.dll"
   Delete "$INSTDIR\zlibwapi.dll"
   Delete "$INSTDIR\crashrpt.dll"

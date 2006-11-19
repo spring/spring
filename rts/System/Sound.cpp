@@ -5,7 +5,7 @@
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include "Platform/Win/DxSound.h"
 #else
 #include "Platform/Linux/OpenALSound.h"
@@ -28,7 +28,7 @@ CSound* CSound::GetSoundSystem()
 
 	// try to get a real sound driver
 	try {
-#ifdef _MSC_VER
+#ifdef _WIN32
 		sound = new CDxSound();
 #else
 		sound = new COpenALSound();  
