@@ -1,6 +1,11 @@
 TASpring change log
 
-0.next
+0.74b1
+
+- Linux vs Windows is now synced if binaries are built using gcc 4.0 or higher.
+
+- Games with more then 10 players now work properly.
+- Several improvements and fixes for autohosting, including a .kickbynum command.
 
 - Added minimap commands (two modes, see the MiniMapFullProxy config param)
 
