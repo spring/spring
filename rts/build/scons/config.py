@@ -266,6 +266,9 @@ def check_libraries(env, conf):
 		env.Exit(1)
 
 	if env['platform'] == 'windows':
+		if not conf.CheckLib('dsound'):
+			print "On windows you need the dsound library for this program"
+			env.Exit(1)
 		if not conf.CheckLib('gdi32'):
 			print "On windows you need the gdi32 library for this program"
 			env.Exit(1)
@@ -274,6 +277,9 @@ def check_libraries(env, conf):
 			env.Exit(1)
 		if not conf.CheckLib('wsock32'):
 			print "On windows you need the wsock32 library for this program"
+			env.Exit(1)
+		if not conf.CheckLib('ole32'):
+			print "On windows you need the ole32 library for this program"
 			env.Exit(1)
 		if not conf.CheckLib('mingw32'):
 			print "On windows you need the mingw32 library for this program"
@@ -300,7 +306,8 @@ def configure(env, conf_dir):
 	check_debian_powerpc(env, conf)
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
-	check_openal(env, conf)
+	if env['platform'] != 'windows':
+		check_openal(env, conf)
 	check_python(env, conf)
 	check_headers(env, conf)
 	check_libraries(env, conf)

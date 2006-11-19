@@ -76,8 +76,8 @@ def get_spring_source(env):
 		if env['platform'] == 'windows':
 			exclude1 += [
 				'rts/System/Platform/Linux',
-				'rts/Rendering/GL/GLXPBuffer.cpp',
-				'rts/System/Platform/Win/DxSound.cpp']
+				'rts/Rendering/GL/GLXPBuffer.cpp']
+				#'rts/System/Platform/Win/DxSound.cpp']
 		else:
 			exclude1 += [
 				'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?
@@ -94,14 +94,6 @@ def get_spring_source(env):
 
 	source = get_source(env, 'rts', exclude_list = exclude)
 	source += get_source(env, 'lua')
-
-	# HACK   compile OpenALSound instead of DxSound on Mingw
-	if not env.has_key('platform') or env['platform'] == 'windows':
-		bla = fix_path('rts/System/Platform/Linux/OpenALSound.cpp')
-		if env.has_key('builddir'):
-			source += [os.path.join(env['builddir'], bla)]
-		else:
-			source += [bla]
 	return source
 
 
