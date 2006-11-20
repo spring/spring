@@ -1241,7 +1241,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 		}
 	}
-	else if (cmd == "layout") {
+	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 			guihandler->RunLayoutCommand(action.extra);
 		}
