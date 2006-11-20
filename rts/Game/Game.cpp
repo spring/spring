@@ -1737,7 +1737,7 @@ void CGame::StartPlaying()
 void CGame::SimFrame()
 {
 	// Enable trapping of NaNs and divisions by zero to make debugging easier.
-	feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+	//feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 	assert(good_fpu_control_registers("CGame::SimFrame"));
 
 	ASSERT_SYNCED_MODE;
@@ -1875,7 +1875,7 @@ END_TIME_PROFILE("Sim time")
 
 	water->Update();
 
-	feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+	//feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 }
 
 bool CGame::ClientReadNet()
