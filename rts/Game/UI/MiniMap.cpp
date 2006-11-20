@@ -437,7 +437,7 @@ void CMiniMap::UpdateGeometry()
 		maximizeBox.xmin = minimizeBox.xmin + buttonSize;
 		maximizeBox.xmax = minimizeBox.xmax + buttonSize;
 		// dead buttons
-		resizeBox.xmin = resizeBox.ymin = moveBox.ymin = moveBox.ymin = 0;
+		resizeBox.xmin = resizeBox.ymin = moveBox.xmin = moveBox.ymin = 0;
 		resizeBox.xmax = resizeBox.ymax = moveBox.xmax = moveBox.ymax = -1;
 		const int ymin = mapBox.ymin;
 		const int ymax = ymin + (buttonSize - 1);
