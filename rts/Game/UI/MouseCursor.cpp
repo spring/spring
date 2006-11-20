@@ -296,7 +296,7 @@ void CMouseCursor::DrawQuad(int x, int y)
 	const int xp = int(float(x) - (float(xofs) * scale));
 	const int yp = int(float(y) - (float(ys) - (float(yofs) * scale)));
 
-	glViewport(xp, yp, xs, ys);
+	glViewport(gu->viewPosX + xp, yp, xs, ys);
 
 	glBegin(GL_QUADS);
 	 	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
