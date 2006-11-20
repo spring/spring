@@ -370,12 +370,18 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 void CMiniMap::UpdateGeometry()
 {
-	// try to keep the same distance to the top
+	// keep the same distance to the top
 	ypos -= (lastWindowSizeY - gu->viewSizeY);
 	if (gu->dualScreenMode) {
 		width = gu->viewSizeX;
 		height = gu->viewSizeY;
 		xpos = (gu->viewSizeX - gu->viewPosX);
+		ypos = 0;
+	}
+	else if (maximized) {
+		height = gu->viewSizeY;
+		width = height;
+		xpos = (gu->viewSizeX - gu->viewSizeY) / 2;
 		ypos = 0;
 	}
 	else {
@@ -406,27 +412,42 @@ void CMiniMap::UpdateGeometry()
 	mapBox.ymin = gu->viewSizeY - (ypos + height);
 	mapBox.ymax = mapBox.ymin + height - 1;
 
-	// right to left
-	resizeBox.xmax   = mapBox.xmax;
-	resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
-	moveBox.xmax     = resizeBox.xmax   - buttonSize;
-	moveBox.xmin     = resizeBox.xmin   - buttonSize;
-	maximizeBox.xmax = moveBox.xmax     - buttonSize;
-	maximizeBox.xmin = moveBox.xmin     - buttonSize;
-	minimizeBox.xmax = maximizeBox.xmax - buttonSize;
-	minimizeBox.xmin = maximizeBox.xmin - buttonSize;
-	
-	const int dy = maximized ? (buttonSize + 3) : 0;
-
-	const int ymin = (mapBox.ymax + 1) + 3 - dy; // 3 for the white|black|white
-	const int ymax = ymin + (buttonSize - 1);
-	resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
-	resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
-
-	buttonBox.xmin = minimizeBox.xmin;
-	buttonBox.xmax = resizeBox.xmax;
-	buttonBox.ymin = ymin - 3;
-	buttonBox.ymax = ymax;
+	if (!maximized) {
+		// right to left
+		resizeBox.xmax   = mapBox.xmax;
+		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
+		moveBox.xmax     = resizeBox.xmax   - buttonSize;
+		moveBox.xmin     = resizeBox.xmin   - buttonSize;
+		maximizeBox.xmax = moveBox.xmax     - buttonSize;
+		maximizeBox.xmin = moveBox.xmin     - buttonSize;
+		minimizeBox.xmax = maximizeBox.xmax - buttonSize;
+		minimizeBox.xmin = maximizeBox.xmin - buttonSize;
+		const int ymin = (mapBox.ymax + 1) + 3; // 3 for the white|black|white
+		const int ymax = ymin + (buttonSize - 1);
+		resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
+		resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
+		buttonBox.xmin = minimizeBox.xmin;
+		buttonBox.xmax = mapBox.xmax;
+		buttonBox.ymin = ymin - 3;
+		buttonBox.ymax = ymax;
+	} else {
+		// left to right
+		minimizeBox.xmin = mapBox.xmin;
+		minimizeBox.xmax = minimizeBox.xmin + (buttonSize - 1);
+		maximizeBox.xmin = minimizeBox.xmin + buttonSize;
+		maximizeBox.xmax = minimizeBox.xmax + buttonSize;
+		// dead buttons
+		resizeBox.xmin = resizeBox.ymin = moveBox.ymin = moveBox.ymin = 0;
+		resizeBox.xmax = resizeBox.ymax = moveBox.xmax = moveBox.ymax = -1;
+		const int ymin = mapBox.ymin;
+		const int ymax = ymin + (buttonSize - 1);
+		maximizeBox.ymin = minimizeBox.ymin = ymin;
+		maximizeBox.ymax = minimizeBox.ymax = ymax;
+		buttonBox.xmin = minimizeBox.xmin;
+		buttonBox.xmax = maximizeBox.xmax;
+		buttonBox.ymin = ymin - 3;
+		buttonBox.ymax = ymax;
+	}
 }
 
 
