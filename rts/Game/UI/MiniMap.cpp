@@ -378,7 +378,7 @@ void CMiniMap::UpdateGeometry()
 		xpos = (gu->viewSizeX - gu->viewPosX);
 		ypos = 0;
 	}
-	else if (!maximized && (gu->viewSizeX >= gu->viewSizeY)) {
+	else {
 		width = max(1, min(width, gu->viewSizeX));
 		height = max(1, min(height, gu->viewSizeY));
 		ypos = max(buttonSize, ypos);
@@ -406,72 +406,27 @@ void CMiniMap::UpdateGeometry()
 	mapBox.ymin = gu->viewSizeY - (ypos + height);
 	mapBox.ymax = mapBox.ymin + height - 1;
 
-	if (gu->dualScreenMode) {
-		moveBox.xmin = mapBox.xmin;
-		moveBox.xmax = mapBox.xmin + (buttonSize - 1);
-		minimizeBox.xmin = moveBox.xmin;
-		minimizeBox.xmax = moveBox.xmax;
-		maximizeBox.xmin = mapBox.xmax - (buttonSize - 1);
-		maximizeBox.xmax = mapBox.xmax;
-		resizeBox.xmin   = maximizeBox.xmin;
-		resizeBox.xmax   = maximizeBox.xmax;
+	// right to left
+	resizeBox.xmax   = mapBox.xmax;
+	resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
+	moveBox.xmax     = resizeBox.xmax   - buttonSize;
+	moveBox.xmin     = resizeBox.xmin   - buttonSize;
+	maximizeBox.xmax = moveBox.xmax     - buttonSize;
+	maximizeBox.xmin = moveBox.xmin     - buttonSize;
+	minimizeBox.xmax = maximizeBox.xmax - buttonSize;
+	minimizeBox.xmin = maximizeBox.xmin - buttonSize;
+	
+	const int dy = maximized ? (buttonSize + 3) : 0;
 
-		moveBox.ymin     = mapBox.ymin;
-		moveBox.ymax     = mapBox.ymin + (buttonSize - 1);
-		maximizeBox.ymin = moveBox.ymin;
-		maximizeBox.ymax = moveBox.ymax;
-		minimizeBox.ymin = mapBox.ymax - (buttonSize - 1);
-		minimizeBox.ymax = mapBox.ymax;
-		resizeBox.ymin   = minimizeBox.ymin;
-		resizeBox.ymax   = minimizeBox.ymax;
+	const int ymin = (mapBox.ymax + 1) + 3 - dy; // 3 for the white|black|white
+	const int ymax = ymin + (buttonSize - 1);
+	resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
+	resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
 
-		buttonBox = mapBox;
-
-		return;
-	}
-		
-	if (!maximized || (gu->viewSizeY > gu->viewSizeX)) {
-		// right to left
-		resizeBox.xmax   = mapBox.xmax;
-		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
-		moveBox.xmax     = resizeBox.xmax   - buttonSize;
-		moveBox.xmin     = resizeBox.xmin   - buttonSize;
-		maximizeBox.xmax = moveBox.xmax     - buttonSize;
-		maximizeBox.xmin = moveBox.xmin     - buttonSize;
-		minimizeBox.xmax = maximizeBox.xmax - buttonSize;
-		minimizeBox.xmin = maximizeBox.xmin - buttonSize;
-
-		const int ymin = (mapBox.ymax + 1) + 3; // 3 for the white|black|white
-		const int ymax = ymin + (buttonSize - 1);
-		resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
-		resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
-
-		buttonBox.xmin = minimizeBox.xmin;
-		buttonBox.xmax = resizeBox.xmax;
-		buttonBox.ymin = ymin - 3;
-		buttonBox.ymax = ymax;
-	}
-	else {
-		// top to bottom
-		resizeBox.ymin   = mapBox.ymin;
-		resizeBox.ymax   = mapBox.ymin + (buttonSize - 1);
-		moveBox.ymin     = resizeBox.ymin   + buttonSize;
-		moveBox.ymax     = resizeBox.ymax   + buttonSize;
-		maximizeBox.ymin = moveBox.ymin     + buttonSize;
-		maximizeBox.ymax = moveBox.ymax     + buttonSize;
-		minimizeBox.ymin = maximizeBox.ymin + buttonSize;
-		minimizeBox.ymax = maximizeBox.ymax + buttonSize;
-
-		const int xmax = (mapBox.xmin - 1) - 3; // // 3 for the white|black|white
-		const int xmin = xmax - (buttonSize - 1);
-		resizeBox.xmin = moveBox.xmin = maximizeBox.xmin = minimizeBox.xmin = xmin;
-		resizeBox.xmax = moveBox.xmax = maximizeBox.xmax = minimizeBox.xmax = xmax;
-
-		buttonBox.xmin = xmin;
-		buttonBox.xmax = xmax + 3;
-		buttonBox.ymin = resizeBox.ymin;
-		buttonBox.ymax = minimizeBox.ymax;
-	}
+	buttonBox.xmin = minimizeBox.xmin;
+	buttonBox.xmax = resizeBox.xmax;
+	buttonBox.ymin = ymin - 3;
+	buttonBox.ymax = ymax;
 }
 
 
@@ -1090,35 +1045,20 @@ void CMiniMap::DrawButtons()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// outline the button box
-	if (!gu->dualScreenMode) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glLineWidth(1.51f);
-		if (!maximized || (gu->viewSizeY > gu->viewSizeX)) {
-			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-			glViewport(buttonBox.xmin - 2, (gu->viewSizeY - buttonBox.ymax - 1) - 2,
-			           (buttonBox.xmax - buttonBox.xmin + 1) + 4,
-			           (buttonBox.ymax - buttonBox.ymin + 1) + 4 - 3);
-			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			glViewport(buttonBox.xmin - 1, (gu->viewSizeY - buttonBox.ymax - 1) - 1,
-			           (buttonBox.xmax - buttonBox.xmin + 1) + 2,
-			           (buttonBox.ymax - buttonBox.ymin + 1) + 2 - 3);
-			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-		} else {
-			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-			glViewport(buttonBox.xmin - 2, (gu->viewSizeY - buttonBox.ymax - 1) - 2,
-			           (buttonBox.xmax - buttonBox.xmin + 1) + 4 - 3,
-			           (buttonBox.ymax - buttonBox.ymin + 1) + 4);
-			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			glViewport(buttonBox.xmin - 1, (gu->viewSizeY - buttonBox.ymax - 1) - 1,
-			           (buttonBox.xmax - buttonBox.xmin + 1) + 2 - 3,
-			           (buttonBox.ymax - buttonBox.ymin + 1) + 2);
-			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-		}
-		glLineWidth(1.0f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glLineWidth(1.51f);
+	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	glViewport(buttonBox.xmin - 2, (gu->viewSizeY - buttonBox.ymax - 1) - 2,
+						 (buttonBox.xmax - buttonBox.xmin + 1) + 4,
+						 (buttonBox.ymax - buttonBox.ymin + 1) + 4 - 3);
+	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glViewport(buttonBox.xmin - 1, (gu->viewSizeY - buttonBox.ymax - 1) - 1,
+						 (buttonBox.xmax - buttonBox.xmin + 1) + 2,
+						 (buttonBox.ymax - buttonBox.ymin + 1) + 2 - 3);
+	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+	glLineWidth(1.0f);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 
