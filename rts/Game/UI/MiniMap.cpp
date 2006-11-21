@@ -61,6 +61,7 @@ CMiniMap::CMiniMap()
   mouseMove(false),
   mouseResize(false),
   mouseLook(false),
+  maxspect(false),
   maximized(false),
   minimized(false),
   showButtons(false),
@@ -218,26 +219,52 @@ void CMiniMap::ParseGeometry(const string& geostr)
 }
 
 
-void CMiniMap::ToggleMaximized()
+void CMiniMap::ToggleMaximized(bool _maxspect)
 {
 	if (maximized) {
 		xpos = oldxpos;
 		ypos = oldypos;
 		width = oldwidth;
 		height = oldheight;
-	} else {
+	}
+	else {
 		oldxpos = xpos;
 		oldypos = ypos;
 		oldwidth = width;
 		oldheight = height;
+		maxspect = _maxspect;
+		SetMaximizedGeometry();
+	}
+	maximized = !maximized;
+	UpdateGeometry();
+}
+
+
+void CMiniMap::SetMaximizedGeometry()
+{
+	if (!maxspect) {
 		height = gu->viewSizeY;
 		width = height;
 		xpos = (gu->viewSizeX - gu->viewSizeY) / 2;
 		ypos = 0;
 	}
-	maximized = !maximized;
-	UpdateGeometry();
+	else {
+		const float mapRatio = (float)gs->mapx / (float)gs->mapy;
+		const float viewRatio = (float)gu->viewSizeX / (float)gu->viewSizeY;
+		if (mapRatio > viewRatio) {
+			xpos = 0;
+			width = gu->viewSizeX;
+			height = int((float)gu->viewSizeX / mapRatio);
+			ypos = (gu->viewSizeY - height) / 2;
+		} else {
+			ypos = 0;
+			height = gu->viewSizeY;
+			width = int((float)gu->viewSizeY * mapRatio);
+			xpos = (gu->viewSizeX - width) / 2;
+		}
+	}
 }
+
 
 /******************************************************************************/
 
@@ -303,7 +330,8 @@ void CMiniMap::ConfigCommand(const std::string& line)
 			minimized = !minimized;
 		}
 	}
-	else if ((command == "max") || (command == "maximize")) {
+	else if ((command == "max") ||
+	         (command == "maximize") || (command == "maxspect")) {
 		bool newMax = maximized;
 		if (words.size() >= 2) {
 			newMax = !!atoi(words[1].c_str());
@@ -311,7 +339,7 @@ void CMiniMap::ConfigCommand(const std::string& line)
 			newMax = !newMax;
 		}
 		if (newMax != maximized) {
-			ToggleMaximized();
+			ToggleMaximized(command == "maxspect");
 		}
 	}
 }
@@ -446,7 +474,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 	if (button == SDL_BUTTON_LEFT) {
 		if (showButtons && maximizeBox.Inside(x, y)) {
-			ToggleMaximized();
+			ToggleMaximized(keys[SDLK_LSHIFT]);
 			return;
 		}
 
@@ -469,10 +497,7 @@ void CMiniMap::UpdateGeometry()
 		ypos = 0;
 	}
 	else if (maximized) {
-		height = gu->viewSizeY;
-		width = height;
-		xpos = (gu->viewSizeX - gu->viewSizeY) / 2;
-		ypos = 0;
+		SetMaximizedGeometry();
 	}
 	else {
 		width = max(1, min(width, gu->viewSizeX));
@@ -753,7 +778,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		}
 		if (maximizeBox.Inside(x, y)) {
 			if (!maximized) {
-				return "Maximize map";
+				return "Maximize map\n(SHIFT to maintain aspect ratio)";
 			} else {
 				return "Unmaximize map";
 			}
