@@ -1246,6 +1246,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			guihandler->RunLayoutCommand(action.extra);
 		}
 	}
+	else if (cmd == "minimap") {
+		if (minimap != NULL) {
+			minimap->ConfigCommand(action.extra);
+		}
+	}
 	else if (cmd == "gathermode") {
 		if (guihandler != NULL) {
 			if (action.extra.empty()) {

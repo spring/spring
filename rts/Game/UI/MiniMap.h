@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <vector>
+#include <string>
 #include "InputReceiver.h"
 
 class CUnit;
@@ -23,6 +24,8 @@ class CMiniMap : public CInputReceiver {
 		bool IsAbove(int x, int y);
 		void Draw();
 		std::string GetTooltip(int x, int y);
+		
+		void ConfigCommand(const std::string& command);
 
 		float3 GetMapPosition(int x, int y) const;
 		CUnit* GetSelectUnit(const float3& pos) const;
@@ -39,6 +42,9 @@ class CMiniMap : public CInputReceiver {
 		bool GetMinimized() const { return minimized; }
 		
 	protected:
+		void ParseGeometry(const std::string& geostr);
+		void ToggleMaximized();
+		
 		void SelectUnits(int x, int y) const;
 		void ProxyMousePress(int x, int y, int button);
 		void ProxyMouseRelease(int x, int y, int button);

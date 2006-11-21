@@ -15,6 +15,7 @@
 #include "GuiHandler.h"
 #include "InfoConsole.h"
 #include "MouseHandler.h"
+#include "SimpleParser.h"
 #include "ExternalAI/Group.h"
 #include "Game/CameraController.h"
 #include "Game/Camera.h"
@@ -77,38 +78,7 @@ CMiniMap::CMiniMap()
 	else {
 		const std::string geodef = "2 2 200 200";
 		const std::string geo = configHandler.GetString("MiniMapGeometry", geodef);
-		const int scanned = sscanf(geo.c_str(), "%i %i %i %i",
-															 &xpos, &ypos, &width, &height);
-		const bool userGeo = ((scanned != 4) || (geo != geodef));
-
-		if (!userGeo) {
-			xpos = 2;
-			ypos = 2;
-			width = -200;
-			height = -200;
-		} else {
-			if (width <= 0) {
-				width = -200;
-			}
-			if (height <= 0) {
-				height = -200;
-			}
-		}
-		
-		if ((width <= 0) && (height <= 0)) {
-			const float hw = sqrt(float(gs->mapx) / float(gs->mapy));
-			width = (int)(-width * hw);
-			height = (int)(-height / hw);
-		}
-		else if (width <= 0) {
-			width = (int)(float(height) * float(gs->mapx) / float(gs->mapy));
-		}
-		else if (height <= 0) {
-			height = (int)(float(width) * float(gs->mapy) / float(gs->mapx));
-		}
-	
-		// convert to GL coords with a top-left corner affinity
-		ypos = gu->viewSizeY - height - ypos;
+		ParseGeometry(geo);
 	}
 
 	fullProxy = !!configHandler.GetInt("MiniMapFullProxy", 1);
@@ -210,8 +180,145 @@ CMiniMap::~CMiniMap()
 }
 
 
+void CMiniMap::ParseGeometry(const string& geostr)
+{
+	const std::string geodef = "2 2 200 200";
+	const int scanned = sscanf(geostr.c_str(), "%i %i %i %i",
+	                           &xpos, &ypos, &width, &height);
+	const bool userGeo = ((scanned != 4) || (geostr != geodef));
+
+	if (!userGeo) {
+		xpos = 2;
+		ypos = 2;
+		width = -200;
+		height = -200;
+	} else {
+		if (width <= 0) {
+			width = -200;
+		}
+		if (height <= 0) {
+			height = -200;
+		}
+	}
+
+	if ((width <= 0) && (height <= 0)) {
+		const float hw = sqrt(float(gs->mapx) / float(gs->mapy));
+		width = (int)(-width * hw);
+		height = (int)(-height / hw);
+	}
+	else if (width <= 0) {
+		width = (int)(float(height) * float(gs->mapx) / float(gs->mapy));
+	}
+	else if (height <= 0) {
+		height = (int)(float(width) * float(gs->mapy) / float(gs->mapx));
+	}
+
+	// convert to GL coords with a top-left corner affinity
+	ypos = gu->viewSizeY - height - ypos;
+}
+
+
+void CMiniMap::ToggleMaximized()
+{
+	if (maximized) {
+		xpos = oldxpos;
+		ypos = oldypos;
+		width = oldwidth;
+		height = oldheight;
+	} else {
+		oldxpos = xpos;
+		oldypos = ypos;
+		oldwidth = width;
+		oldheight = height;
+		height = gu->viewSizeY;
+		width = height;
+		xpos = (gu->viewSizeX - gu->viewSizeY) / 2;
+		ypos = 0;
+	}
+	maximized = !maximized;
+	UpdateGeometry();
+}
+
 /******************************************************************************/
 
+void CMiniMap::ConfigCommand(const std::string& line)
+{
+  const vector<string> words = SimpleParser::Tokenize(line, 1);
+  if (words.empty()) {
+  	return;
+	}
+	const string command = StringToLower(words[0]);
+
+	if (command == "fullproxy") {
+		if (words.size() >= 2) {
+			fullProxy = !!atoi(words[1].c_str());
+		} else {
+			fullProxy = !fullProxy;
+		}
+	}
+	else if (command == "icons") {
+		if (words.size() >= 2) {
+			useIcons = !!atoi(words[1].c_str());
+		} else {
+			useIcons = !useIcons;
+		}
+	}
+	else if (command == "drawcommands") {
+		if (words.size() >= 2) {
+			drawCommands = !!atoi(words[1].c_str());
+		} else {
+			drawCommands = !drawCommands;
+		}
+	}
+	else if (command == "unitexp") {
+		if (words.size() >= 2) {
+			unitExponent = atof(words[1].c_str());
+		}
+		UpdateGeometry();
+	}
+	else if (command == "unitsize") {
+		if (words.size() >= 2) {
+			unitBaseSize = atof(words[1].c_str());
+		}
+		unitBaseSize = max(0.0f, unitBaseSize);
+		UpdateGeometry();
+	}
+
+	// the following commands can not be used in dualscreen mode
+	if (gu->dualScreenMode) {
+		return;
+	}
+
+	if ((command == "geo") || (command == "geometry")) {
+		if (words.size() < 2) {
+			return;
+		}
+		ParseGeometry(words[1]);
+		UpdateGeometry();
+	}
+	else if ((command == "min") || (command == "minimize")) {
+		if (words.size() >= 2) {
+			minimized = !!atoi(words[1].c_str());
+		} else {
+			minimized = !minimized;
+		}
+	}
+	else if ((command == "max") || (command == "maximize")) {
+		bool newMax = maximized;
+		if (words.size() >= 2) {
+			newMax = !!atoi(words[1].c_str());
+		} else {
+			newMax = !newMax;
+		}
+		if (newMax != maximized) {
+			ToggleMaximized();
+		}
+	}
+}
+
+
+/******************************************************************************/
+    
 bool CMiniMap::MousePress(int x, int y, int button)
 {
 	if (minimized) {
@@ -339,24 +446,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 	if (button == SDL_BUTTON_LEFT) {
 		if (showButtons && maximizeBox.Inside(x, y)) {
-			if (maximized) {
-				maximized = false;
-				xpos = oldxpos;
-				ypos = oldypos;
-				width = oldwidth;
-				height = oldheight;
-			} else {
-				maximized = true;
-				oldxpos = xpos;
-				oldypos = ypos;
-				oldwidth = width;
-				oldheight = height;
-				height = gu->viewSizeY;
-				width = height;
-				xpos = (gu->viewSizeX - gu->viewSizeY) / 2;
-				ypos = 0;
-			}
-			UpdateGeometry();
+			ToggleMaximized();
 			return;
 		}
 
@@ -720,12 +810,17 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return s;
 	}
 	
+	const string selTip = selectedUnits.GetTooltip();
+	if (selTip != "") {
+		return selTip;
+	}
+				
 	float3 pos(float(x-xpos)/width*gs->mapx*SQUARE_SIZE,500,float(y-(gu->viewSizeY-ypos-height))/height*gs->mapx*SQUARE_SIZE);
 
-	char tmp[512];
 
-	CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
-	string ttype=tt->name;
+	CReadMap::TerrainType* tt = &readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
+	string ttype = tt->name;
+	char tmp[512];
 	sprintf(tmp, "Pos %.0f %.0f Elevation %.0f\n"
 	             "Terrain type: %s\n"
 	             "Speeds T/K/H/S %.2f %.2f %.2f %.2f\n"
@@ -734,7 +829,6 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	             tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
 	             tt->hardness * mapDamage->mapHardness,
 	             readmap->metalMap->getMetalAmount((int)(pos.x/16), (int)(pos.z/16)));
-
 	return tmp;
 }
 
