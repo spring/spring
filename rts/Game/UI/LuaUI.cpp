@@ -105,6 +105,7 @@ static int GetUnitAllyTeam(lua_State* L);
 static int GetUnitHealth(lua_State* L);
 static int GetUnitStates(lua_State* L);
 static int GetUnitStockpile(lua_State* L);
+static int GetUnitRadius(lua_State* L);
 static int GetUnitPosition(lua_State* L);
 static int GetUnitHeading(lua_State* L);
 static int GetUnitBuildFacing(lua_State* L);
@@ -312,6 +313,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitHealth);
 	REGISTER_LUA_CFUNC(GetUnitStates);
 	REGISTER_LUA_CFUNC(GetUnitStockpile);
+	REGISTER_LUA_CFUNC(GetUnitRadius);
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitHeading);
 	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
@@ -2455,6 +2457,17 @@ static int GetUnitHealth(lua_State* L)
 	lua_pushnumber(L, unit->captureProgress);
 	lua_pushnumber(L, unit->buildProgress);
 	return 5;
+}
+
+
+static int GetUnitRadius(lua_State* L)
+{
+	CUnit* unit = AlliedUnit(L, __FUNCTION__);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->radius);
+	return 1;
 }
 
 

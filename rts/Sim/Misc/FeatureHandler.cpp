@@ -482,7 +482,15 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		fd->radius=0;
 		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
 		fd->ysize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
-		fd->mass=fd->metal*0.4f+fd->maxHealth*0.1f;
+		const string massStr = wreckParser.SGetValueDef("", name + "\\mass");
+		if (massStr.empty()) {
+			// generate the mass from the metal and health values
+			fd->mass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
+		} else {
+			fd->mass = (float)atof(massStr.c_str());
+		}
+		fd->mass = max(0.001f, fd->mass);
+		 
 		fd->description=wreckParser.SGetValueDef("",name+"\\description");
 
 		fd->myName=name;

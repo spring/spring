@@ -43,7 +43,8 @@ class CMiniMap : public CInputReceiver {
 		
 	protected:
 		void ParseGeometry(const std::string& geostr);
-		void ToggleMaximized();
+		void ToggleMaximized(bool maxspect);
+		void SetMaximizedGeometry();
 		
 		void SelectUnits(int x, int y) const;
 		void ProxyMousePress(int x, int y, int button);
@@ -74,6 +75,7 @@ class CMiniMap : public CInputReceiver {
 
 		bool proxyMode;
 		bool selecting;
+		bool maxspect;
 		bool maximized;
 		bool minimized;
 		bool mouseLook;
