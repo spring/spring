@@ -174,8 +174,10 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			builder->UseEnergy(energyUse);
 			reclaimLeft+=part;
 			if(reclaimLeft>=1)
+			{
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
 				reclaimLeft = 1;
+			}
 			return true;
 		} else {
 			// update the energy and metal required counts
