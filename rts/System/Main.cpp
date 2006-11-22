@@ -55,6 +55,7 @@
 #include <GL/glxew.h> // for glXWaitVideoSyncSGI()
 #endif
 
+
 #ifdef WIN32
 /**
  * Win32 only: command line passed to WinMain() (not including exe filename)
@@ -830,11 +831,11 @@ void SpringApp::UpdateSDLKeys ()
 	state = SDL_GetKeyState(&numkeys);
 	memcpy(keys, state, sizeof(Uint8) * numkeys);
 
-	SDLMod mods = SDL_GetModState();
-	keys[SDLK_LSHIFT] = mods&KMOD_SHIFT?1:0;
-	keys[SDLK_LCTRL] = mods&KMOD_CTRL?1:0;
-	keys[SDLK_LALT] = mods&KMOD_ALT?1:0;
-	keys[SDLK_LMETA] = mods&KMOD_META?1:0;
+	const SDLMod mods = SDL_GetModState();
+	keys[SDLK_LALT]   = (mods & KMOD_ALT)   ? 1 : 0;
+	keys[SDLK_LCTRL]  = (mods & KMOD_CTRL)  ? 1 : 0;
+	keys[SDLK_LMETA]  = (mods & KMOD_META)  ? 1 : 0;
+	keys[SDLK_LSHIFT] = (mods & KMOD_SHIFT) ? 1 : 0;
 }
 
 /**
@@ -858,8 +859,7 @@ int SpringApp::Run (int argc, char *argv[])
 #endif
 
 	SDL_Event event;
-	bool done=false;
-	std::map<int, int> toUnicode; // maps keysym.sym to keysym.unicode
+	bool done = false;
 
 	while (!done) {
 		ENTER_UNSYNCED;
@@ -917,11 +917,6 @@ int SpringApp::Run (int argc, char *argv[])
 						else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
 						else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
 						else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
-						else if (event.key.keysym.unicode > 0) {
-							const int j = tolower(event.key.keysym.unicode);
-							toUnicode[i] = j;
-							i = j;
-						}
 						
 						if (keyBindings) {
 							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
@@ -933,9 +928,10 @@ int SpringApp::Run (int argc, char *argv[])
 						activeController->KeyPressed(i,isRepeat);
 
 #ifndef NEW_GUI
-						if(activeController->userWriting){ 
+						if (activeController->userWriting){ 
+							// use unicode for printed characters
 							i = event.key.keysym.unicode;
-							if (i >= SDLK_SPACE && i <= SDLK_DELETE)
+							if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE))
 								if (activeController->ignoreNextChar ||
 								    activeController->ignoreChar == char(i)) {
 									activeController->ignoreNextChar = false;
@@ -960,12 +956,6 @@ int SpringApp::Run (int argc, char *argv[])
 						else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
 						else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
 						else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
-						else {
-							std::map<int, int>::const_iterator j = toUnicode.find(i);
-							if (j != toUnicode.end()) {
-								i = j->second;
-							}
-						}
 
 						if (keyBindings) {
 							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
