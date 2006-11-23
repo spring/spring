@@ -31,6 +31,7 @@ public:
 	CIcon * GetIcon(const std::string& iconName);
 	float GetDistance(const std::string& iconName);
 private:
+	bool LoadTDFicons(const std::string& filename);
 	unsigned int *GetStandardTexture();
 	unsigned int standardTexture;
 	bool standardTextureGenerated;
