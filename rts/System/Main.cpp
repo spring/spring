@@ -560,6 +560,9 @@ bool SpringApp::GetDisplayGeometry()
 		return false;
 	}
 
+	if((rect.right - rect.left)==0 || (rect.bottom - rect.top)==0)
+		return false;
+
 	gu->winSizeX = rect.right - rect.left;
 	gu->winSizeY = rect.bottom - rect.top;
 
