@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "LuaUI.h"
+#include <set>
 #include <cctype>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -200,6 +201,7 @@ static const int maxMatrixDepth = 16;
 
 static vector<unsigned int> displayLists;
 
+static set<UnitDef*> commanderDefs;
 
 /******************************************************************************/
 
@@ -237,6 +239,16 @@ CLuaUI* CLuaUI::GetHandler(const string& filename)
 
 CLuaUI::CLuaUI()
 {
+	for (int i = 0; i < unitDefHandler->numUnits; i++) {
+		UnitDef* ud = unitDefHandler->GetUnitByID(i);
+		if (ud == NULL) {
+			continue;
+		}
+		if (ud->isCommander ||
+		    (StringToLower(ud->TEDClassString) == "commander")) {
+			commanderDefs.insert(ud);
+		}
+	}
 }
 
 
@@ -1907,8 +1919,16 @@ static int SetUnitDefIcon(lua_State* L)
 		return 0;
 	}
 
-	// set the icon type
 	ud->iconType = lua_tostring(L, 2);
+
+	if (commanderDefs.find(ud) != commanderDefs.end()) {
+		// set all commander-like unitdefs to the same icon
+		// so that decoy commanders can not be distinguished
+		set<UnitDef*>::iterator cit;
+		for (cit = commanderDefs.begin(); cit != commanderDefs.end(); ++cit) {
+			(*cit)->iconType = ud->iconType;
+		}
+	}
 	
 	return 0;
 }
