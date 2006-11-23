@@ -304,13 +304,14 @@
   * SAIDPRIVATE username {message}
   Sent by server when some client sent this client a private message.
 
-  * OPENBATTLE type natType password port maxplayers startingmetal startingenergy maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings hashcode rank {map} {title} {modname}
+  * OPENBATTLE type natType password port maxplayers startingmetal startingenergy maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings hashcode rank maphash {map} {title} {modname}
   Sent by client. The client becomes a founder of this battle, if successful. Client
   is notified about its success via OPENBATTLE/OPENBATTLEFAILED commands sent by server.
   "startpos" can be only 0, 1 or 2 (0=fixed, 1=random, 2=choose).
   "gameendcondition" can only be 0 or 1 (0=game continues, 1=game ends /if commander dies/)
   Password must be "*" if founder does not wish to have password-protected game.
   Hashcode is a signed 32-bit integer.
+  "maphash" is a signed 32-bit integer as returned from unitsync.dll
   "type" can be 0 or 1 (0 = normal battle, 1 = battle replay)
   "natType" (nat traversal method used by the host) must be a number (0 means no NAT traversal
   technique should be applied).
@@ -322,7 +323,7 @@
   OPENBATTLE command (this is important - client must have the battle in his battle list
   before he receives OPENBATTLE command!).
 
-  * BATTLEOPENED BATTLE_ID type natType founder IP port maxplayers passworded rank {mapname} {title} {modname}
+  * BATTLEOPENED BATTLE_ID type natType founder IP port maxplayers passworded rank maphash {mapname} {title} {modname}
   Sent by server to all registered users, when a new battle has been opened.
   Series of BATTLEOPENED commands are sent to user when he logs in (for each battle
   one command).
@@ -333,6 +334,7 @@
   "type" can be 0 or 1 (0 = normal battle, 1 = battle replay)
   "natType" (nat traversal method used by the host) must be a number (0 means no NAT traversal
   technique should be applied).
+  "maphash" is a signed 32-bit integer. See OPENBATTLE command for more info.
 
   * BATTLECLOSED BATTLE_ID
   Sent by server when founder has closed a battle (or if he was disconnected).
@@ -366,7 +368,7 @@
   Sent by server to user who just tried to open(=host) a new battle and was rejected by
   the server.
 
-  * UPDATEBATTLEINFO BATTLE_ID SpectatorCount locked {mapname}
+  * UPDATEBATTLEINFO BATTLE_ID SpectatorCount locked maphash {mapname}
   Sent by server to all registered clients telling them 
   some of the parameters of the battle changed. Battle's inside 
   changes, like starting metal, energy, starting position etc., are sent only to clients 
@@ -376,12 +378,14 @@
   Note: assume that spectator count is 0 if battle type is 0 (normal battle) and
   1 if battle type is 1 (battle replay), as founder of the battle is automatically set
   as spectator in that case.
+  "maphash" is a signed 32-bit integer. See OPENBATTLE command for more info.
 
-  * UPDATEBATTLEINFO SpectatorCount locked {mapname}
+  * UPDATEBATTLEINFO SpectatorCount locked maphash {mapname}
   Sent by the founder of the battle telling the server some of the "outside" parameters
   of the battle changed. "mapname" should NOT contain file extension.
   "locked" is a boolean (0 or 1). Note that when client creates a battle, server assumes
   it is unlocked. Client must make sure it actually is.
+  "maphash" is a signed 32-bit integer. See OPENBATTLE command for more info.
 
   * UPDATEBATTLEDETAILS startingmetal startingenergy maxunits startpos gameendcondition limitdgun diminishingMMs ghostedBuildings
   Sent by server to all clients participating in a battle when some of the battle's "inside"
@@ -607,7 +611,7 @@
   
   * MAPGRADESFAILED {reason}
   Sent by server if it could not respond to MAPGRADES command for some reason.
-  
+
   * SCRIPTSTART
   Sent by client who is hosting a battle replay game indicating he is now sending us the game script
   used in original replay. Server will then forward this script to all other participants in his battle.
