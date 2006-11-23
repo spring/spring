@@ -242,6 +242,7 @@
   ; Shaders
   Delete "$INSTDIR\shaders\*.fp"
   Delete "$INSTDIR\shaders\*.vp"
+  Delete "$INSTDIR\shaders\*.glsl"
   RMDir "$INSTDIR\shaders"
   
   ; AI-dll's
@@ -273,6 +274,7 @@
   RmDir "$INSTDIR\gamedata"
 
   ; Startscript
+  Delete "$INSTDIR\startscripts\aistartscripttest.lua"
   Delete "$INSTDIR\startscripts\testscript.lua"
   Delete "$INSTDIR\startscripts\cmdrscript.lua"
   Delete "$INSTDIR\startscripts\missionhelper.lua"

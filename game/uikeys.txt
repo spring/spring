@@ -176,6 +176,8 @@
 //  bind              Any+-  slowdown
 //  bind         Any+insert  speedup
 //  bind         Any+delete  slowdown
+//  bind        Any+numpad+  speedup
+//  bind        Any+numpad-  slowdown
 //
 //  bind              Any+b  debug
 //  bind              Any+o  singlestep

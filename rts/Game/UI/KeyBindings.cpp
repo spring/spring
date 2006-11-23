@@ -60,6 +60,8 @@ defaultBindings[] = {
 	{ "Any+=",      "speedup"  },
 	{ "Any++",      "speedup"  },
 	{ "Any+-",      "slowdown" },
+	{ "Any+numpad+", "speedup"  },
+	{ "Any+numpad-", "slowdown" },
 
 	{       ",", "prevmenu" },
 	{       ".", "nextmenu" },
