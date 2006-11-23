@@ -80,6 +80,8 @@
   GetConfigString()
   SetConfigString()
 
+  SetUnitDefIcon()
+
   GetSelectedGroup()
   GetGroupList()
   GetGroupAIName()
@@ -420,6 +422,9 @@ SetConfigInt(string varname, number)              -> nil
 GetConfigString(string varname [,string default]) -> string value
 
 SetConfigString(string varname, string value)     -> nil
+
+
+SetUnitDefIcon(number unitDefID, string "iconName") -> nil
 
 
 GetSelectedGroup() -> number groupID
