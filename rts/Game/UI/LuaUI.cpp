@@ -67,6 +67,8 @@ static int SetConfigInt(lua_State* L);
 static int GetConfigString(lua_State* L);
 static int SetConfigString(lua_State* L);
 
+static int SetUnitDefIcon(lua_State* L);
+
 static int GetFPS(lua_State* L);
 static int GetGameSeconds(lua_State* L);
 static int GetLastFrameSeconds(lua_State* L);
@@ -292,6 +294,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(SetConfigInt);
 	REGISTER_LUA_CFUNC(GetConfigString);
 	REGISTER_LUA_CFUNC(SetConfigString);
+	REGISTER_LUA_CFUNC(SetUnitDefIcon);
 	REGISTER_LUA_CFUNC(GetGroupList);
 	REGISTER_LUA_CFUNC(GetSelectedGroup);
 	REGISTER_LUA_CFUNC(GetGroupAIName);
@@ -1881,6 +1884,32 @@ static int SetConfigString(lua_State* L)
 	const string name = lua_tostring(L, 1);
 	const string value = lua_tostring(L, 2);
 	configHandler.SetString(name, value);
+	return 0;
+}
+
+
+/******************************************************************************/
+
+static int SetUnitDefIcon(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
+		lua_pushstring(L,
+			"Incorrect arguments to SetUnitDefIcon(unitDefID, \"icon\")");
+		lua_error(L);
+	}
+	const int unitDefID = (int)lua_tonumber(L, 1);
+	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
+		return 0;
+	}
+	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	if (ud == NULL) {
+		return 0;
+	}
+
+	// set the icon type
+	ud->iconType = lua_tostring(L, 2);
+	
 	return 0;
 }
 
