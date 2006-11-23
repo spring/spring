@@ -239,7 +239,7 @@ CLuaUI* CLuaUI::GetHandler(const string& filename)
 
 CLuaUI::CLuaUI()
 {
-	for (int i = 0; i < unitDefHandler->numUnits; i++) {
+	for (int i = 0; i <= unitDefHandler->numUnits; i++) {
 		UnitDef* ud = unitDefHandler->GetUnitByID(i);
 		if (ud == NULL) {
 			continue;
