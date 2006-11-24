@@ -25,7 +25,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CInfoConsole::CInfoConsole()
-: lastMsgPos(0,0,0)
+: lastMsgPos(0,0,0), disabled(false)
 {
 	data.clear();
 	
@@ -59,6 +59,10 @@ CInfoConsole::~CInfoConsole()
 
 void CInfoConsole::Draw()
 {
+	if (disabled) {
+		return;
+	}
+	
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
 	glPushMatrix();

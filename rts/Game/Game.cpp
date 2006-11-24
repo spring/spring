@@ -1241,6 +1241,15 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 		}
 	}
+	else if (cmd == "console") {
+		if (infoConsole) {
+			if (action.extra.empty()) {
+				infoConsole->disabled = !infoConsole->disabled;
+			} else {
+				infoConsole->disabled = !atoi(action.extra.c_str());
+			}
+		}
+	}
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 			guihandler->RunLayoutCommand(action.extra);
