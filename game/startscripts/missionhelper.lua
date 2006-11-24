@@ -63,7 +63,7 @@ function MissionHelper:Help(param)
               "the created units will belong to that team.")
     else
         print("These commands are available:")
-        print(".help .savesel [team] .savelist [team] .savefeatures .dumpavailableunitnames")
+        print(".help .savesel [team] .savelist [team] .savefeatures")
         print("Type .help <command> for more info")
         print("Hint: use .cheat and .give to quickly create items");
     end
