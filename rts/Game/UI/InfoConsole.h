@@ -29,6 +29,7 @@ public:
 	float width;
 	float height;
 	int numLines;
+	bool disabled;
 
 	float3 lastMsgPos;
 	
