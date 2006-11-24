@@ -455,6 +455,9 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 		attackCmd.options |= SHIFT_KEY;
 		for (int s = 0; s < selectedCount; s++) {
 			CUnit* unit = uh->units[selected[s]];
+			if (unit == NULL) {
+				continue;
+			}
 			CCommandAI* commandAI = uh->units[selected[s]]->commandAI;
 			for (int t = 0; t < targetsCount; t++) {
 				attackCmd.params[0] = targets[t];
@@ -469,16 +472,24 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 	const bool queueing = (cmd.options & SHIFT_KEY);
 
 	// get the group center
-	float3 midPos(0.0f, 0.0f, 0.0f);	
+	float3 midPos(0.0f, 0.0f, 0.0f);
+	int realCount = 0;
 	for (int s = 0; s < selectedCount; s++) {
 		CUnit* unit = uh->units[selected[s]];
+		if (unit == NULL) {
+			continue;
+		}
 		if (queueing) {
 			midPos += LastQueuePosition(unit);
 		} else {
 			midPos += unit->midPos;
 		}
+		realCount++;
 	}
-	midPos /= (float)selectedCount;
+	if (realCount <= 0) {
+		return;
+	}
+	midPos /= (float)realCount;
 
 	// sort the targets
 	vector<DistInfo> distVec;
@@ -500,6 +511,9 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 			attackCmd.options &= ~SHIFT_KEY;
 		}
 		CUnit* unit = uh->units[selected[s]];
+		if (unit == NULL) {
+			continue;
+		}
 		CCommandAI* commandAI = unit->commandAI;
 		for (t = 0; t < targetsCount; t++) {
 			attackCmd.params[0] = distVec[t].unitID;
@@ -534,7 +548,7 @@ void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
 	const int count = (int)tmpUnits.size();
 	for (int i = 0; i < count; i++) {
 		CUnit* unit = tmpUnits[i];
-		if ((unit->allyteam == allyTeam) ||
+		if ((unit == NULL) || (unit->allyteam == allyTeam) ||
 				!(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR))) {
 			continue;
 		}
@@ -570,7 +584,7 @@ void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
 	const int count = (int)tmpUnits.size();
 	for (int i = 0; i < count; i++) {
 		CUnit* unit = tmpUnits[i];
-		if ((unit->allyteam == allyTeam) ||
+		if ((unit == NULL) || (unit->allyteam == allyTeam) ||
 				!(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR))) {
 			continue;
 		}
