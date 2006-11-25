@@ -203,6 +203,9 @@ static vector<unsigned int> displayLists;
 
 static set<UnitDef*> commanderDefs;
 
+static float textHeight = 0.001f;
+
+
 /******************************************************************************/
 
 CLuaUI* CLuaUI::GetHandler(const string& filename)
@@ -249,6 +252,14 @@ CLuaUI::CLuaUI()
 			commanderDefs.insert(ud);
 		}
 	}
+
+	// calculate the text height that we'll use to
+	// provide a consistent display when rendering text
+ 	// (note the missing characters)
+	textHeight = font->CalcTextHeight("abcdef hi klmno  rstuvwx z"
+	                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+																    "0123456789");
+	textHeight = max(1.0e-6f, textHeight);  // safety for dividing
 }
 
 
@@ -3571,8 +3582,7 @@ static int DrawText(lua_State* L)
 		if (strstr(opts.c_str(), "o") != NULL) { outline = true; }
 	}
 
-	const float tHeight = font->CalcTextHeight(text.c_str());
-	const float yScale = size / tHeight;
+	const float yScale = size / textHeight;
 	const float xScale = yScale;
 	float xj = x; // justified x position
 	if (right) {
@@ -3607,8 +3617,7 @@ static int DrawGetTextWidth(lua_State* L)
 		lua_error(L);
 	}
 	const string text = lua_tostring(L, 1);
-	const float height = max(1.0e-6f, font->CalcTextHeight(text.c_str()));
-	const float width = font->CalcTextWidth(text.c_str()) / height;
+	const float width = font->CalcTextWidth(text.c_str()) / textHeight;
 	lua_pushnumber(L, width);
 	return 1;
 }
