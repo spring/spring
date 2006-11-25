@@ -3607,8 +3607,8 @@ static int DrawGetTextWidth(lua_State* L)
 		lua_error(L);
 	}
 	const string text = lua_tostring(L, 1);
-	const float scale = font->CalcTextHeight(text.c_str());
-	const float width = scale * font->CalcTextWidth(text.c_str());
+	const float height = max(1.0e-6f, font->CalcTextHeight(text.c_str()));
+	const float width = font->CalcTextWidth(text.c_str()) / height;
 	lua_pushnumber(L, width);
 	return 1;
 }
