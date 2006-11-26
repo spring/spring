@@ -2827,6 +2827,9 @@ void CGame::SendNetChat(const std::string& message)
 		SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
 		msg += buf;
 	}
+	if (msg.size() > 128) {
+		msg.resize(128); // safety
+	}
 	net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, msg);
 	if (net->playbackDemo) {
 		HandleChatMsg(msg, gu->myPlayerNum);
