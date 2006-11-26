@@ -20,9 +20,9 @@ AICALLBACK_API const char * UnitDef_get_filename( const UnitDef *self )
 }
 
 
-AICALLBACK_API bool UnitDef_get_loaded( const UnitDef *self )
+AICALLBACK_API bool UnitDef_get_valid( const UnitDef *self )
 {
-   return ( ( UnitDef *) self)->loaded;
+   return ( ( UnitDef *) self)->valid;
 }
 
 

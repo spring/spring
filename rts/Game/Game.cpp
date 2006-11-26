@@ -251,6 +251,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	ph=new CProjectileHandler();
 
 	ENTER_SYNCED;
+	sensorHandler=new CSensorHandler();
 	damageArrayHandler=new CDamageArrayHandler();
 	unitDefHandler=new CUnitDefHandler();
 
@@ -274,7 +275,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	ENTER_SYNCED;
 	mapDamage=IMapDamage::GetMapDamage();
-	sensorHandler=new CSensorHandler();
 	loshandler=new CLosHandler();
 	radarhandler=new CRadarHandler(false);
 	if(!server) net->Update();	//prevent timing out during load
