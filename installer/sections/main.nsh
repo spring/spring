@@ -197,7 +197,7 @@
 
   !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
  ;FIXME
- !ifndef MINGW
+ !ifndef NIGHTLY_BUILD
   !insertmacro UPDATEFILEASSOC
  !endif
 
