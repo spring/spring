@@ -678,7 +678,8 @@ int CCommandAI::CancelCommands(const Command &c, std::deque<Command>& q,
 			cancelCount++;
 			ci++;
 		}
-		
+
+		lastErase++; // STL: erase the range [first, last)
 		q.erase(firstErase, lastErase);
 		
 		if (c.id >= 0) {
