@@ -521,7 +521,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			else if (action.command == "pastetext") {
 				if (!action.extra.empty()) {
 					userInput += action.extra;
-					ignoreNextChar = true;
 				} else {
 #ifndef NO_CLIPBOARD
 					OpenClipboard(NULL);
@@ -530,8 +529,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 						userInput += (char*)p;
 					}
 					CloseClipboard();
-					ignoreNextChar = true;
-#endif
+#endif // NO_CLIPBOARD
 				}
 				return 0;
 			}
