@@ -2,7 +2,7 @@
 --  General Notes
 --
 --
---  * Spring 0.73b2 uses Lua 5.0
+--  * Spring 0.74b1 uses Lua 5.0
 --
 --  * All of the standard lua libraries are available
 --    (base, io, math, string, table, debug)
@@ -350,21 +350,6 @@ UnitDestroyed(number unitID, number unitDefID) -> nil
 --  Call-outs are the functions which may be used from within the LUA
 --  code. They are bound to the lua workspace before the 
 --
---  The calls in the Spring.Draw table are based on OpenGL functions.
---  You may wish to read the documentation on the following OpenGL
---  functions to better understand them:
---    * glBegin()        
---    * glEnable()       
---    * glAlphaFunc()
---    * glBlendFunc()
---    * glDepthFunc()
---    * glLogicOp()
---    * glCullFace()
---    * glShadeModel()
---    * glGenLists()
---    * glNewList()
---    * glDeleteLists()
---
 
 LoadTextVFS(string "filename") -> nil | string "filecontents"
 
@@ -663,6 +648,25 @@ AddWorldUnit(number unitDefID,
 ----------------------
 --  Draw sub-table  --
 ----------------------
+--
+--  The calls in the Spring.Draw table are based on OpenGL functions.
+--  You may wish to read the documentation for the following OpenGL
+--  functions to better understand them:
+--    * glBegin()        
+--    * glEnable()       
+--    * glVertex()
+--    * glNormal()
+--    * glTexCoord()
+--    * glAlphaFunc()
+--    * glBlendFunc()
+--    * glDepthFunc()
+--    * glLogicOp()
+--    * glCullFace()
+--    * glShadeModel()
+--    * glGenLists()
+--    * glNewList()
+--    * glDeleteLists()
+--
 
 Draw.ScreenGeometry(number width, number dist) -> nil
 

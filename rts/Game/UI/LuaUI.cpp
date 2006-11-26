@@ -76,6 +76,8 @@ static int GetLastFrameSeconds(lua_State* L);
 static int GetInCommand(lua_State* L);
 static int GetMouseState(lua_State* L);
 
+static int GetCurrentTooltip(lua_State* L);
+
 static int GetKeyCode(lua_State* L);
 static int GetKeySymbol(lua_State* L);
 static int GetKeyBindings(lua_State* L);
@@ -309,6 +311,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLastFrameSeconds);
 	REGISTER_LUA_CFUNC(GetInCommand);
 	REGISTER_LUA_CFUNC(GetMouseState);
+	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
 	REGISTER_LUA_CFUNC(GetKeyBindings);
@@ -1762,6 +1765,19 @@ static int GetMouseState(lua_State* L)
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
 	return 5;
+}
+
+
+static int GetCurrentTooltip(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetMouseState() takes no arguments");
+		lua_error(L);
+	}
+	const string tooltip = mouse->GetCurrentTooltip();
+	lua_pushstring(L, tooltip.c_str());
+	return 1;
 }
 
 
