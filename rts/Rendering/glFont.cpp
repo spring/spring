@@ -292,6 +292,15 @@ void CglFont::glPrintOutlined(const char* text,
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	for (int i = 0; i < strlen(text); i++) {
+		// skip color codes
+		if (text[i] == '\xff') {
+			i++;
+			for (int b = 0; b < 3; b++)  {
+				if (!text[i]) { break; }
+				i++;
+			}
+			if (!text[i]) { break; }
+		}
 		const unsigned int ch = (unsigned char)text[i];
 		if ((ch >= charstart) && (ch <= charend)) {
 			glBindTexture(GL_TEXTURE_2D, textures[ch - charstart]);
