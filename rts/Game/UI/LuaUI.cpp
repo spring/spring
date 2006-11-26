@@ -1772,7 +1772,7 @@ static int GetCurrentTooltip(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 0) {
-		lua_pushstring(L, "GetMouseState() takes no arguments");
+		lua_pushstring(L, "GetCurrentTooltip() takes no arguments");
 		lua_error(L);
 	}
 	const string tooltip = mouse->GetCurrentTooltip();
