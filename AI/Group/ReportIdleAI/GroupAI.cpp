@@ -56,8 +56,9 @@ void CGroupAI::CommandFinished(int unit,int type)
 	if(type != CMD_STOP && type != CMD_MOVE)
 	{
 		const deque<Command>* commandQue = aicb->GetCurrentUnitCommands(unit);
-		if (commandQue->empty())
-		{
+		if (commandQue->empty() ||
+		    ((commandQue->size() == 1) &&
+		     (commandQue->front().id == CMD_SET_WANTED_MAX_SPEED))) {
 			aicb->SendTextMsg("Builder idle",0);
 			aicb->SetLastMsgPos(aicb->GetUnitPos(unit));
 		}
