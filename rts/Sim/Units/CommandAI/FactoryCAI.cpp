@@ -372,11 +372,19 @@ void CFactoryCAI::DrawCommands(void)
 			if (ci->params.size() == 4) {
 				bi.buildFacing = int(ci->params[3]);
 			}
-			bi.pos = float3(ci->params[0], ci->params[2], ci->params[2]);
+			bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
 			bi.pos = helper->Pos2BuildPos(bi);
+
 			cursorIcons.AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
-			
 			lineDrawer.DrawLine(bi.pos, cmdColors.build);
+
+			// draw metal extraction range
+			if (bi.def->extractRange > 0) {
+				lineDrawer.Break(bi.pos, cmdColors.build);
+				glColor4fv(cmdColors.rangeExtract);
+				glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
+				lineDrawer.Restart();
+			}				
 		}
 	}
 	lineDrawer.FinishPath();
