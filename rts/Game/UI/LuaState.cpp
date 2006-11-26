@@ -213,13 +213,19 @@ bool CLuaState::LoadUnitDefInfo()
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
-		const UnitDef& ud = *(unitDefHandler->GetUnitByID(uit->second));
-		const string def = "UnitDefs[" + IntToString(uit->second) + "]";
-		code += def + " = {}" + endlStr;
+		const UnitDef* udPtr = unitDefHandler->GetUnitByID(uit->second);
+		if (udPtr != NULL) {
+			const string def = "UnitDefs[" + IntToString(udPtr->id) + "]";
+			code += def + " = {}" + endlStr;
+		}
 	}
 
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
-		const UnitDef& ud = *(unitDefHandler->GetUnitByID(uit->second));
+		const UnitDef* udPtr = unitDefHandler->GetUnitByID(uit->second);
+		if (udPtr == NULL) {
+			continue;
+		}
+		const UnitDef& ud = *udPtr;
 
 		const string def = "UnitDefs[" + IntToString(uit->second) + "]";
 

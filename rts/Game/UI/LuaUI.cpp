@@ -1922,9 +1922,6 @@ static int SetUnitDefIcon(lua_State* L)
 		lua_error(L);
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
-		return 0;
-	}
 	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
@@ -3413,9 +3410,6 @@ static int Pos2BuildPos(lua_State* L)
 		lua_error(L);
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
-		return 0;
-	}
 	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
@@ -3636,9 +3630,6 @@ static int DrawUnitDef(lua_State* L)
 		lua_error(L);
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
-		return 0;
-	}
 	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
@@ -4253,8 +4244,7 @@ static int DrawTexture(lua_State* L)
 		const char* startPtr = texture.c_str() + 1; // skip the '#'
 		int unitDefID = (int)strtol(startPtr, &endPtr, 10);
 		// UnitDefHandler's array size is (numUnits + 1)
-		if ((endPtr != startPtr) &&
-				(unitDefID > 0) && (unitDefID <= unitDefHandler->numUnits)) {
+		if (endPtr != startPtr) {
 			UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 			if (ud != NULL) {
 				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
