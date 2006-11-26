@@ -286,7 +286,7 @@ void CglList::Select()
 		callback((*filteredItems)[place]);
 }
 
-bool CglList::KeyPressed(unsigned short k)
+bool CglList::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
 		if (cancelPlace >= 0) {
