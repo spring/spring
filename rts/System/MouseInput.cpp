@@ -14,6 +14,7 @@ IMouseInput *mouseInput = 0;
 IMouseInput::IMouseInput()
 {
 	scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
+	scrollWheelSpeed = max(-255, min(255, scrollWheelSpeed));
 }
 
 IMouseInput::~IMouseInput() {

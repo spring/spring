@@ -19,7 +19,7 @@ public:
 	virtual void HandleSDLMouseEvent (SDL_Event& event) = 0;
 
 protected:
-	Uint8 scrollWheelSpeed;
+	int scrollWheelSpeed;
 };
 
 
