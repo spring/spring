@@ -152,7 +152,7 @@
 //
 //  bind          Any+enter  chat
 //
-//  bind            Ctrl+v   pastetext    // currently only works in Windows
+//  bind             Ctrl+v  pastetext    // currently only works in Windows
 //
 //  bind          Any+pause  pause
 //
