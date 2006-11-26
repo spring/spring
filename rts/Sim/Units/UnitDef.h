@@ -30,12 +30,13 @@ struct UnitModelDef
 struct UnitDef
 {
 	CR_DECLARE(UnitDef);
-        virtual ~UnitDef();
+	UnitDef() : valid(false) {}
+	virtual ~UnitDef();
 
+	bool valid;
 	std::string name;
 	std::string humanName;
 	std::string filename;
-	bool loaded;
 	int id;											//unique id for this type of unit
 	unsigned int unitimage; // don't read this directly use CUnitDefHandler::GetUnitImage instead
 	std::string buildpicname;

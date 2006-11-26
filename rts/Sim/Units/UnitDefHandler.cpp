@@ -34,17 +34,17 @@ CUnitDefHandler* unitDefHandler;
 CUnitDefHandler::CUnitDefHandler(void)
 {
 	noCost=false;
-      	std::string dir = "units/";
+	std::string dir = "units/";
 
 	PrintLoadMsg("Loading units and weapons");
 
-	weaponDefHandler=new CWeaponDefHandler();
+	weaponDefHandler = new CWeaponDefHandler();
 
 	numUnits = 0;
 
 	std::vector<std::string> tafiles = CFileHandler::FindFiles("units/", "*.fbi");
 	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units/", "*.swu");
-	while(!tafiles2.empty()){
+	while (!tafiles2.empty()) {
 		tafiles.push_back(tafiles2.back());
 		tafiles2.pop_back();
 	}
@@ -52,41 +52,52 @@ CUnitDefHandler::CUnitDefHandler(void)
 	soundcategory.LoadFile("gamedata/SOUND.TDF");
 
 	numUnits = tafiles.size();
-	if (gameSetup)
+	if (gameSetup) {
 		numUnits -= gameSetup->restrictedUnits.size();
+	}
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
-	unitDefs = new UnitDef[numUnits+1];
+	unitDefs = new UnitDef[numUnits + 1];
 
-	unsigned int i = 1;		// Start at unit id 1
+	unsigned int id = 1;  // Start at unit id 1
+	
 	for(unsigned int a = 0; a < tafiles.size(); ++a)
 	{
 		// Determine the name (in lowercase) first
-		int len = tafiles[a].find_last_of("/")+1;
-		std::string unitname = StringToLower(tafiles[a].substr(len, tafiles[a].size()-4-len));
+		const int len = tafiles[a].find_last_of("/") + 1;
+		std::string unitname = StringToLower(tafiles[a].substr(len, tafiles[a].size() - 4 - len));
 
 		// Restrictions may tell us not to use this unit at all
-		if (gameSetup)
-			if (gameSetup->restrictedUnits.find(unitname) != gameSetup->restrictedUnits.end()) {
-				//logOutput.Print("Not using unit %s", unitname.c_str());
-				if(gameSetup->restrictedUnits.find(unitname)->second == 0) //unit disabled
-					continue;
+		if (gameSetup) {
+			const std::map<std::string, int>& resUnits = gameSetup->restrictedUnits;
+		  if ((resUnits.find(unitname) != resUnits.end()) &&
+			    (resUnits.find(unitname)->second == 0)) {
+				continue;
 			}
+		}
 
 		// Seems ok, load it
-		unitDefs[i].loaded = false;
-		unitDefs[i].filename = tafiles[a];
-		unitDefs[i].id = i;
-		for (int u=0;u<4;u++) unitDefs[i].yardmaps[u] = 0;
-		unitDefs[i].buildangle=0;
-		unitDefs[i].name = unitname;
-		unitDefs[i].unitimage = 0;
-		unitDefs[i].techLevel = -1;
-		unitID[unitname] = i;
+		unitDefs[id].valid = false;
+		unitDefs[id].filename = tafiles[a];
+		unitDefs[id].name = unitname;
+		unitDefs[id].id = id;
+		unitDefs[id].buildangle = 0;
+		unitDefs[id].unitimage = 0;
+		unitDefs[id].techLevel = -1;
+		unitID[unitname] = id;
+		for (int ym = 0; ym < 4; ym++) {
+			unitDefs[id].yardmaps[ym] = 0;
+		}
+
+		// parse the TDF data (but don't load buildpics, etc...)		
+		ParseUnit(unitDefs[id].filename, id);
 
 		// Increase index for next unit
-		i++;
+		id++;
 	}
+
+	// set the real number of unitdefs	
+	numUnits = (id - 1);
 	
 	FindTABuildOpt();
 
@@ -634,21 +645,16 @@ void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound &gsound, std::str
 
 void CUnitDefHandler::ParseUnit(std::string file, int id)
 {
-/*	switch(unitDefs[id].unitsourcetype)
-	{
-	case TA_UNIT:*/
   try {
     ParseTAUnit(file, id);
-  } catch (content_error const& e ) {
+  } catch (content_error const& e) {
     std::cout << e.what() << std::endl;
     return;
   }
-/*		break;
-	}
-*/
-	unitDefs[id].loaded = true;
 
-	if(noCost){
+	unitDefs[id].valid = true;
+
+	if (noCost) {
 		unitDefs[id].metalCost = 1;
 		unitDefs[id].energyCost = 1;
 		unitDefs[id].buildTime = 10;
@@ -663,12 +669,14 @@ UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 	StringToLowerInPlace(name);
 
 	std::map<std::string, int>::iterator it = unitID.find(name);
-	if(it == unitID.end())
+	if (it == unitID.end()) {
 		return NULL;
+	}
 
-	int id = it->second;
-	if(!unitDefs[id].loaded)
-		ParseUnit(unitDefs[id].filename, id);
+	const int id = it->second;
+	if (!unitDefs[id].valid) {
+		return NULL; // should not happen
+	}
 
 	return &unitDefs[id];
 }
@@ -676,10 +684,14 @@ UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 
 UnitDef *CUnitDefHandler::GetUnitByID(int id)
 {
-	if(!unitDefs[id].loaded)
-		ParseUnit(unitDefs[id].filename, id);
-
-	return &unitDefs[id];
+	if ((id <= 0) || (id > numUnits)) {
+		return NULL;
+	}
+	UnitDef* ud = &unitDefs[id];
+	if (!ud->valid) {
+		return NULL;
+	}
+	return ud;
 }
 
 /*
