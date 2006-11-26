@@ -294,12 +294,10 @@ void CglFont::glPrintOutlined(const char* text,
 	for (int i = 0; i < strlen(text); i++) {
 		// skip color codes
 		if (text[i] == '\xff') {
-			i++;
-			for (int b = 0; b < 3; b++)  {
-				if (!text[i]) { break; }
-				i++;
-			}
-			if (!text[i]) { break; }
+			i++; if (text[i] == 0) { break; }
+			i++; if (text[i] == 0) { break; }
+			i++; if (text[i] == 0) { break; }
+			i++; if (text[i] == 0) { break; }
 		}
 		const unsigned int ch = (unsigned char)text[i];
 		if ((ch >= charstart) && (ch <= charend)) {
@@ -378,15 +376,13 @@ float CglFont::CalcCharWidth (char c)
 float CglFont::CalcTextWidth(const char *text)
 {
 	float w=0.0f;
-	for (int a=0; text[a]; a++)  {
+	for (int a = 0; text[a]; a++)  {
 		// skip color codes
 		if (text[a] == '\xff') {
-			a++;
-			for (int b = 0; b < 3; b++)  {
-				if (!text[a]) { break; }
-				a++;
-			}
-			if (!text[a]) { break; }
+			a++; if (text[a] == 0) { break; }
+			a++; if (text[a] == 0) { break; }
+			a++; if (text[a] == 0) { break; }
+			a++; if (text[a] == 0) { break; }
 		}
 		const unsigned int c = (unsigned int)text[a];
 		if ((c >= charstart) && (c <= charend)) {
@@ -400,14 +396,13 @@ float CglFont::CalcTextWidth(const char *text)
 float CglFont::CalcTextHeight(const char *text)
 {
 	float h=0.0f;
-	for (int a=0;text[a];a++)  {
+	for (int a = 0; text[a]; a++)  {
+		// skip color codes
 		if (text[a] == '\xff') {
-			a++;
-			for (int b = 0; b < 3; b++)  {
-				if (!text[a]) { break; }
-				a++;
-			}
-			if (!text[a]) { break; }
+			a++; if (text[a] == 0) { break; }
+			a++; if (text[a] == 0) { break; }
+			a++; if (text[a] == 0) { break; }
+			a++; if (text[a] == 0) { break; }
 		}
 		const unsigned int c = (unsigned int)text[a];
 		if ((c >= charstart) && (c <= charend)) {
