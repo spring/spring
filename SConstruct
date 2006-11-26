@@ -27,9 +27,13 @@ sys.path.append('rts/build/scons')
 import filelist
 
 if sys.platform == 'win32':
-    env = Environment(tools = ['mingw', 'rts'], toolpath = ['.', 'rts/build/scons']) # force to mingw, otherwise picks up msvc
+	# force to mingw, otherwise picks up msvc
+	env = Environment(tools = ['mingw', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	# resource builder (the default one of mingw gcc 4.1.1 crashes because of a popen bug in msvcrt.dll)
+	rcbld = Builder(action = 'windres --use-temp-file -i $SOURCE -o $TARGET', suffix = '.o', src_suffix = '.rc')
+	env.Append(BUILDERS = {'RES': rcbld})
 else:
-    env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
 spring_files = filelist.get_spring_source(env)
 
@@ -41,7 +45,8 @@ if env['platform'] != 'windows':
 	spring_files += [ufshcpp]
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows
-    spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'], LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--output-def,game/spring.def', '-Wl,--kill-at', '--add-stdcall-alias','-Wl,--out-implib,game/spring.a'] )    
+	spring_files += env.RES('rts/build/scons/icon.rc', CPPPATH=[])
+	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'], LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--output-def,game/spring.def', '-Wl,--kill-at', '--add-stdcall-alias','-Wl,--out-implib,game/spring.a'] )
 
 Alias('spring', spring)
 Default(spring)
