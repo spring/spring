@@ -2,8 +2,6 @@
 
 # see rts/build/scons/*.py for the core of the build system
 
-import os
-
 """ Available targets.
 Each target has an equivalent install target. E.g. `CentralBuildAI' has
 `install-CentralBuildAI' and the default target has `install'.

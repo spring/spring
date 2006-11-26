@@ -17,8 +17,7 @@ class CglList : public CInputReceiver
 public:
 
 	// CInputReceiver implementation
-	bool KeyPressed(unsigned short k);
-// 	bool KeyReleased(unsigned short key);
+	bool KeyPressed(unsigned short k, bool isRepeat);
 	bool MousePress(int x, int y, int button);
 	void MouseMove(int x, int y, int dx,int dy, int button);
 	void MouseRelease(int x, int y, int button);

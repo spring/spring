@@ -143,7 +143,7 @@ CUnitHandler::~CUnitHandler()
 
 	for(int i=0; i<MAX_TEAMS; i++)
 	{
-		delete unitsType[i];
+		delete[] unitsType[i];
 	}
 }
 

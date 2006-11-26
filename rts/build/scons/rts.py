@@ -240,8 +240,6 @@ def generate(env):
 			else: level = '2'
 		if level == 's' or level == 'size' or (int(level) >= 1 and int(level) <= 3):
 			print "level", level, "optimizing enabled"
-			if level != '2':
-				print "WARNING: for sync it is recommended to compile with level 2 optimization"
 			env['optimize'] = level
 			#archflags = detect.processor(gcc_version >= ['3','4','0'])
 			# -fstrict-aliasing causes constructs like:
