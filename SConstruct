@@ -37,6 +37,10 @@ else:
 
 spring_files = filelist.get_spring_source(env)
 
+# spring.exe icon
+if sys.platform == 'win32':
+	spring_files += env.RES('rts/build/scons/icon.rc', CPPPATH=[])
+
 # Build UnixDataDirHandler.cpp separately from the other sources.  This is to prevent recompilation of
 # the entire source if one wants to change just the install prefix (and hence the datadir).
 
@@ -45,7 +49,6 @@ if env['platform'] != 'windows':
 	spring_files += [ufshcpp]
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows
-	spring_files += env.RES('rts/build/scons/icon.rc', CPPPATH=[])
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'], LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--output-def,game/spring.def', '-Wl,--kill-at', '--add-stdcall-alias','-Wl,--out-implib,game/spring.a'] )
 
 Alias('spring', spring)
