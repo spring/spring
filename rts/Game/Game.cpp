@@ -544,12 +544,12 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 						sdlinfo.info.x11.lock_func();
 						Display* display = sdlinfo.info.x11.display;
 						int count = 0;
-					  char* msg = XFetchBytes(display, &count);
-					  if ((msg != NULL) && (count > 0)) {
-						  msg[count - 1] = 0; // terminate
+						char* msg = XFetchBytes(display, &count);
+						if ((msg != NULL) && (count > 0)) {
+							msg[count - 1] = 0; // terminate
 							userInput += (char*)msg;
 						}
-					  XFree(msg);
+						XFree(msg);
 						sdlinfo.info.x11.unlock_func();
 					}
 #endif
