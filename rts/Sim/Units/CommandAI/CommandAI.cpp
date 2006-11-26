@@ -655,31 +655,31 @@ int CCommandAI::CancelCommands(const Command &c, std::deque<Command>& q,
 	int cancelCount = 0;
 
 	while (true) {
-		std::deque<Command>::iterator next, ci = GetCancelQueued(c, q);
+		std::deque<Command>::iterator ci = GetCancelQueued(c, q);
 		if (ci == q.end()) {
 			return cancelCount;
 		}
-		
-		first = (ci == q.begin());
-
-		next = ci;
-		next++;
-		q.erase(ci);
+		first = first || (ci == q.begin());
 		cancelCount++;
 		
-		if ((next != q.end()) && (next->id == CMD_SET_WANTED_MAX_SPEED)) {
-			ci = next;
-			ci++;
-			q.erase(next);
+		std::deque<Command>::iterator firstErase = ci;
+		std::deque<Command>::iterator lastErase = ci;
+		
+		ci++;
+		if ((ci != q.end()) && (ci->id == CMD_SET_WANTED_MAX_SPEED)) {
+			lastErase = ci;
 			cancelCount++;
-			next = ci;
+			ci++;
 		}
 
-		if ((next != q.end()) && (next->id == CMD_WAIT)) {
-  		waitCommandsAI.RemoveWaitCommand(owner, *next);
-			q.erase(next);
+		if ((ci != q.end()) && (ci->id == CMD_WAIT)) {
+  		waitCommandsAI.RemoveWaitCommand(owner, *ci);
+			lastErase = ci;
 			cancelCount++;
+			ci++;
 		}
+		
+		q.erase(firstErase, lastErase);
 		
 		if (c.id >= 0) {
 			return cancelCount; // only delete one non-build order
