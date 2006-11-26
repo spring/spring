@@ -49,6 +49,8 @@ defaultBindings[] = {
 
 	{ "Any+enter", "chat" },
 
+	{ "Ctrl+v", "pastetext" },
+
 	{ "Any+home", "increaseViewRadius" },
 	{ "Any+end",  "decreaseViewRadius" },
 

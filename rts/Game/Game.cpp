@@ -489,17 +489,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
 	
 	if (userWriting){
-#ifndef NO_CLIPBOARD
-		if ((k=='V') && keys[SDLK_LCTRL]){
-			OpenClipboard(0);
-			void* p;
-			if((p=GetClipboardData(CF_TEXT))!=0){
-				userInput+=(char*)p;
-			}
-			CloseClipboard();
-			return 0;
-		}
-#endif
 
 		// convert to the appropriate prefix if we receive a chat switch action
 		for (int i = 0; i < (int)actionList.size(); i++) {
@@ -527,6 +516,23 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					userInput = "s:" + userInput;
 				}
 				userInputPrefix = "s:";
+				return 0;
+			}
+			else if (action.command == "pastetext") {
+				if (!action.extra.empty()) {
+					userInput += action.extra;
+					ignoreNextChar = true;
+				} else {
+#ifndef NO_CLIPBOARD
+					OpenClipboard(NULL);
+					const void* p = GetClipboardData(CF_TEXT);
+					if (p != NULL) {
+						userInput += (char*)p;
+					}
+					CloseClipboard();
+					ignoreNextChar = true;
+#endif
+				}
 				return 0;
 			}
 		}
