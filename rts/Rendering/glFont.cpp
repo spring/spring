@@ -278,6 +278,18 @@ void CglFont::printstring(const unsigned char *text)
 }
 
 
+static inline int SkipColorCodes(const char* text, int c)
+{
+	while (text[c] == '\xff') {
+		c++; if (text[c] == 0) { return -1; }
+		c++; if (text[c] == 0) { return -1; }
+		c++; if (text[c] == 0) { return -1; }
+		c++; if (text[c] == 0) { return -1; }
+	}
+	return c;
+}
+
+
 void CglFont::glPrintOutlined(const char* text,
                               float shiftX, float shiftY,
                               const float* normalColor,
@@ -292,12 +304,9 @@ void CglFont::glPrintOutlined(const char* text,
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	for (int i = 0; i < strlen(text); i++) {
-		// skip color codes
-		if (text[i] == '\xff') {
-			i++; if (text[i] == 0) { break; }
-			i++; if (text[i] == 0) { break; }
-			i++; if (text[i] == 0) { break; }
-			i++; if (text[i] == 0) { break; }
+		i = SkipColorCodes(text, i);
+		if (i < 0) {
+			break;
 		}
 		const unsigned int ch = (unsigned char)text[i];
 		if ((ch >= charstart) && (ch <= charend)) {
@@ -377,12 +386,9 @@ float CglFont::CalcTextWidth(const char *text)
 {
 	float w=0.0f;
 	for (int a = 0; text[a]; a++)  {
-		// skip color codes
-		if (text[a] == '\xff') {
-			a++; if (text[a] == 0) { break; }
-			a++; if (text[a] == 0) { break; }
-			a++; if (text[a] == 0) { break; }
-			a++; if (text[a] == 0) { break; }
+		a = SkipColorCodes(text, a);
+		if (a < 0) {
+			break;
 		}
 		const unsigned int c = (unsigned int)text[a];
 		if ((c >= charstart) && (c <= charend)) {
@@ -397,12 +403,9 @@ float CglFont::CalcTextHeight(const char *text)
 {
 	float h=0.0f;
 	for (int a = 0; text[a]; a++)  {
-		// skip color codes
-		if (text[a] == '\xff') {
-			a++; if (text[a] == 0) { break; }
-			a++; if (text[a] == 0) { break; }
-			a++; if (text[a] == 0) { break; }
-			a++; if (text[a] == 0) { break; }
+		a = SkipColorCodes(text, a);
+		if (a < 0) {
+			break;
 		}
 		const unsigned int c = (unsigned int)text[a];
 		if ((c >= charstart) && (c <= charend)) {
