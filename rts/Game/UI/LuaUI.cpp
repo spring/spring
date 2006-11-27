@@ -164,6 +164,8 @@ static int DrawTexture(lua_State* L);
 static int DrawMaterial(lua_State* L);
 static int DrawColor(lua_State* L);
 
+static int DrawFreeTexture(lua_State* L);
+
 static int DrawShape(lua_State* L);
 static int DrawUnitDef(lua_State* L);
 static int DrawText(lua_State* L);
@@ -393,6 +395,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(Texture);
 	REGISTER_LUA_DRAW_CFUNC(Material);
 	REGISTER_LUA_DRAW_CFUNC(Color);
+
+	REGISTER_LUA_DRAW_CFUNC(FreeTexture);
 
 	REGISTER_LUA_DRAW_CFUNC(Shape);
 	REGISTER_LUA_DRAW_CFUNC(UnitDef);
@@ -4275,6 +4279,23 @@ static int DrawTexture(lua_State* L)
 		}
 	}
 	lua_pushboolean(L, 1);
+	return 1;
+}
+
+
+static int DrawFreeTexture(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawFreeTexture()");
+		lua_error(L);
+	}
+	const string texture = lua_tostring(L, 1);
+	if ((guihandler == NULL) || !guihandler->FreeNamedTexture(texture)) {
+		lua_pushboolean(L, 0);
+	} else {
+		lua_pushboolean(L, 1);
+	}
 	return 1;
 }
 
