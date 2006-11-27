@@ -578,6 +578,9 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				    (command[0] == '/')) {
 					consoleHistory->AddLine(command);
 					const string actionLine = command.substr(1); // strip the '/' or '.'
+					chatting = false;
+					userInput = "";
+					logOutput.Print(command);
 					CKeySet ks(k, false);
 					CKeyBindings::Action fakeAction(actionLine);
 					ActionPressed(fakeAction, ks, isRepeat);
