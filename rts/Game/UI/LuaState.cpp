@@ -800,12 +800,12 @@ static string GetCategoryTable(const vector<string> cats)
 	string table = "{";
 	const int catCount = (int)cats.size();
 	for (int i = 0; i < catCount; i++) {
-		table += " ";
+		table += " [";
 		table += SafeString(StringToLower(cats[i]));
 		if (i != (catCount - 1)) {
-			table += ",";
+			table += "] = true,";
 		} else {
-			table += " ";
+			table += "] = true ";
 		}
 	}
 	table += "}";
