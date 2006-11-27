@@ -33,6 +33,7 @@ class TdfParser;
 
 namespace terrain {
 
+	struct ShadowMapParams;
 	class TQuad;
 	struct Heightmap;
 	class Lightmap;
@@ -74,7 +75,7 @@ namespace terrain {
 	class ShaderDef
 	{
 	public:
-		ShaderDef() { hasLighting=false; specularExponent = 16.0f; }
+		ShaderDef() { hasLighting=useShadowMapping=false; specularExponent = 16.0f; }
 		void Parse(TdfParser& tdf, bool needNormalMap);
 		void Optimize(ShaderDef* dst);
 		void Output();
@@ -98,7 +99,7 @@ namespace terrain {
 
 		std::vector<Stage> normalMapStages;
 		std::vector<Stage> stages;
-		bool hasLighting;
+		bool hasLighting, useShadowMapping;
 		float specularExponent;
 
 		static void OptimizeStages(std::vector<Stage>& src, std::vector<Stage>& dst);
@@ -111,6 +112,8 @@ namespace terrain {
 		const std::vector<TiledTexture*>* textures;
 		const Vector3* wsLightDir, *wsEyePos;
 		int pass;
+
+		ShadowMapParams *shadowMapParams;
 	};
 
 	enum PassBlendop
@@ -204,7 +207,8 @@ namespace terrain {
 		void DebugEvent (const std::string& event);
 
 		void SetShaderParams (const Vector3& lv, const Vector3& eyePos); // world space light vector
-
+		void SetShadowMapParams (const ShadowMapParams *smp);
+		
 		int debugShader;
 	protected:
 		// Calculate blending factors for textures with blending defined by terrain properties
@@ -258,6 +262,7 @@ namespace terrain {
 		ShaderDef shaderDef;
 
 		TiledTexture *flatBumpmap;
+		ShadowMapParams *shadowMapParams;
 	};
 	void SetTexGen (float scale);
 };

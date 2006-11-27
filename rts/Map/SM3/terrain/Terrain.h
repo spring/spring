@@ -44,10 +44,12 @@ namespace terrain {
 	class TerrainTexture;
 	class RenderDataManager;
 
-	struct TerrainVisibilityNode
+	struct ShadowMapParams
 	{
-		TerrainVisibilityNode() { quad=0; }
-		TQuad *quad;
+		float mid[2];
+		float f_a, f_b;
+		float shadowMatrix[16];
+		unsigned shadowMap;
 	};
 
 	class Camera
@@ -153,6 +155,7 @@ namespace terrain {
 		void SetShaderParams(Vector3 dir, Vector3 eyePos);
 
 		void SetShadowMap (uint shadowTex);
+		void SetShadowParams (ShadowMapParams *smp);
 
 		// Heightmap interface, for dynamically changing heightmaps
 		void GetHeightmap (int x,int y,int w,int h, float *dest);

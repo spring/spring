@@ -56,6 +56,10 @@ namespace terrain
 		uint vertBufReq;
 		std::string debugstr;
 
+		GLint shadowMapLocation;
+		GLint shadowMatrixLocation;
+		GLint shadowParamsLocation;
+
 		BufferTexture* renderBuffer; // 0 for normal display
 
 		void Setup(NodeSetupParams& params);
