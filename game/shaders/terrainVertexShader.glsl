@@ -33,7 +33,23 @@ vec4 Specular;
 
 #ifdef UseShadowMapping
 
-vec4 calcShadowTexCoord()
+/*
+
+#calculate shadow texture coords
+
+DP4 temp.x, pos, mat2[0];
+DP4 temp.y, pos, mat2[1];
+
+ABS temp2,temp;
+ADD temp2,temp2,program.env[17];
+RSQ temp2.x, temp2.x;
+RSQ temp2.y, temp2.y;
+ADD temp2,temp2,program.env[18];
+MAD result.texcoord[4], temp, temp2,program.env[16];
+
+*/
+
+void CalcShadowTexCoord()
 {
 	vec2 temp, at;
 
@@ -41,22 +57,23 @@ vec4 calcShadowTexCoord()
 	temp.y = dot(gl_Vertex, shadowMatrix[1]);
 	
 	at = abs(temp);
-	at += env[17];
-	at = inversesqrt(at);
-	at += env[18];
+	at += vec4(shadowParams.x,shadowParams.x,0.0,0.0);
+	at.x = inversesqrt(at.x);
+	at.y = inversesqrt(at.y);
+	at += vec4(shadowParams.y,shadowParams.y,0.0,0.0);
 
 	vec4 tc;
-	tc.xy = temp * at + env[16];
+	tc.xy = temp * at + vec2(shadowParams.z,shadowParams.w);
 	
 	tc.z = dot(gl_Vertex, shadowMatrix[2]);
 	tc.w = dot(gl_Vertex, shadowMatrix[3]);
 	
-	return tc;
+	shadowTexCoord=tc;
 }
 
 #endif
 
-#ifdef UseBumpmapping
+#ifdef UseBumpMapping
 	attribute mat3 TangentSpaceMatrix;
 #endif
 
@@ -68,7 +85,11 @@ void main (void)
     gl_Position = gl_ProjectionMatrix * ecPosition;
     
 	CalculateTexCoords();
-#ifdef UseBumpmapping
+#ifdef UseShadowMapping
+	CalcShadowTexCoord();	
+#endif
+
+#ifdef UseBumpMapping
 	tsLightDir = TangentSpaceMatrix * (-wsLightDir);
 	vec3 eyeDir = normalize(gl_Vertex.xyz - wsEyePos);
 	tsEyeDir = TangentSpaceMatrix * eyeDir;

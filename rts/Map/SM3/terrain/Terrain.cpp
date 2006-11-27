@@ -457,7 +457,7 @@ namespace terrain {
 
 			// Update the frustum based on the camera, to cull away TQuad nodes
 			Camera *camera = rc->cam;
-			frustum.CalcCameraPlanes (&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
+		//	frustum.CalcCameraPlanes (&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
 			//assert (camera->pos.x == 0.0f || frustum.IsPointVisible (camera->pos + camera->front * 20)==Frustum::Inside);
 
 			// determine the new set of quads to draw
@@ -653,6 +653,8 @@ namespace terrain {
 
 				if (fill)
 					texturing->BeginPass(pass);
+
+				glEnable(GL_DEPTH_TEST);
 
 				for (int a=0;a<activeRC->quads.size();a++) 
 				{
@@ -1145,6 +1147,11 @@ namespace terrain {
 		if (pz < 0) pz=0;
 		if (pz >= heightmap->h) pz=heightmap->h-1;
 		return heightmap->HeightAt (px,pz);
+	}
+
+
+	void Terrain::SetShadowParams(ShadowMapParams *smp)
+	{
 	}
 
 	RenderContext* Terrain::AddRenderContext (Camera* cam, bool needsTexturing)

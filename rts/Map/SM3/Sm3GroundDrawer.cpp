@@ -23,15 +23,15 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 
 	tr->config.detailMod = configHandler.GetInt("SM3TerrainDetail", 200) / 100.0f;
 
-	/*if (shadowHandler->drawShadows) {
+	if (shadowHandler->drawShadows) {
 		shadowrc = tr->AddRenderContext (&shadowCam,false);
 
 		groundShadowVP=LoadVertexProgram("groundshadow.vp");
 	}
-	else  {*/
+	else  {
 		shadowrc = 0;
 		groundShadowVP = 0;
-	//}
+	}
 	reflectrc = 0;
 }
 
@@ -64,16 +64,6 @@ void CSm3GroundDrawer::Update()
 
 	tr->Update();
 	tr->CacheTextures();
-
-	// Update visibility nodes
-	for (unsigned int i=0;i<rc->quads.size();i++) {
-		terrain::TQuad *q = rc->quads[i].quad;
-
-	//	if (q
-
-	//	for (unsigned int j=0;j<q->nodeLinks.size();j++)
-	//		q->nodeLinks[j]->callback->Draw(
-	}
 }
 
 void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
@@ -84,7 +74,8 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	terrain::RenderContext *currc;
 	if (drawWaterReflection)
 	{
-		if (!reflectrc) {
+		if (!reflectrc)
+		{
 			reflectrc = tr->AddRenderContext(&reflectCam, true);
 			tr->Update();
 		}
@@ -95,8 +86,9 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 		currc = rc;
 
 	tr->SetShaderParams(gs->sunVector, currc->cam->pos);
-/*
-	if (shadowHandler->drawShadows) {
+
+	if (shadowHandler->drawShadows)
+	{
 		terrain::ShadowMapParams params;
 
 		shadowHandler->GetShadowMapSizeFactors (params.f_a, params.f_b);
@@ -107,7 +99,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 			params.shadowMatrix[a] = shadowHandler->shadowMatrix[a];
 
 		tr->SetShadowParams (&params);
-	}*/
+	}
 
 	tr->SetActiveContext (currc);
 
@@ -175,7 +167,10 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 
 void CSm3GroundDrawer::DrawShadowPass()
 {
-	/*shadowCam.fov = PI * camera->fov / 180.0f;
+	if (!shadowrc)
+		return;
+
+	shadowCam.fov = PI * camera->fov / 180.0f;
 	shadowCam.front = camera->forward;
 	shadowCam.right = camera->right;
 	shadowCam.up = camera->up;
@@ -199,7 +194,7 @@ void CSm3GroundDrawer::DrawShadowPass()
 	glDisable(GL_CULL_FACE);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_VERTEX_PROGRAM_ARB);*/
+	glDisable(GL_VERTEX_PROGRAM_ARB);
 }
 
 void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflection)

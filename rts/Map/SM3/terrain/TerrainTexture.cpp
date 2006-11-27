@@ -108,10 +108,12 @@ namespace terrain {
 		currentRenderSetup = 0;
 		lightmap = 0;
 		flatBumpmap = 0;
+		shadowMapParams = 0;
 	}
 
 	TerrainTexture::~TerrainTexture ()
 	{
+		delete shadowMapParams;
 		delete lightmap;
 		for (int a=0;a<texNodeSetup.size();a++)
 			delete texNodeSetup[a];
@@ -189,6 +191,7 @@ namespace terrain {
 		tdfParser = tdf;
 
 		shaderDef.Parse(*tdf, cfg->useBumpMaps);
+		shaderDef.useShadowMapping = cfg->useShadowMaps;
 
 		// Load textures
 		map<string, BaseTexture*> nametbl;
@@ -211,7 +214,7 @@ namespace terrain {
 
 				string name = st->sourceName;
 				if (st->operation != ShaderDef::Alpha)
-					name += "_BM"; // make it unique
+					name += "_BM"; // make it unique, this whole naming thing is very hackish though..
 
 				// Already loaded?
 				if (nametbl.find (name) == nametbl.end()) {
@@ -472,6 +475,7 @@ namespace terrain {
 		parms.wsLightDir = &wsLightDir;
 		parms.wsEyePos = &wsEyePos;
 		parms.pass = passIndex;
+		parms.shadowMapParams = shadowMapParams;
 
 		glDepthMask(p->depthWrite ? GL_TRUE : GL_FALSE);
 
@@ -655,6 +659,7 @@ namespace terrain {
 		OptimizeStages(normalMapStages,dst->normalMapStages);
 		dst->hasLighting = hasLighting;
 		dst->specularExponent = specularExponent;
+		dst->useShadowMapping = useShadowMapping;
 	}
 
 	void ShaderDef::OptimizeStages(std::vector<Stage>& src, std::vector<Stage>& dst)

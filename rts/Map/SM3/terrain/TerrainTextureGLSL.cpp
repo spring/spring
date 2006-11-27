@@ -30,6 +30,7 @@
 
 #include "TerrainBase.h"
 #include "TerrainTexture.h"
+#include "Terrain.h"
 
 #include "TerrainTextureGLSL.h"
 #include "Rendering/GL/IFramebuffer.h"
@@ -173,6 +174,7 @@ struct ShaderBuilder
 	NodeGLSLShader *nodeShader;
 	TextureUsage texUsage;
 	vector<BufferTexture*> *buffers;
+	bool ShadowMapping () { return renderSetup->shaderDef.useShadowMapping; }
 
 	enum PassType { P_Diffuse, P_Bump, P_Combined };
 
@@ -191,7 +193,7 @@ struct ShaderBuilder
 		return "texture2D(" + texUsage.texUnits[tu]->name + ", gl_TexCoord[" + tcstr + "].st)";
 	}
 
-	NodeGLSLShader* EndPass(ShaderDef* sd, PassType type, const std::string &operations, bool depthWrite)
+	NodeGLSLShader* EndPass(ShaderDef* sd, PassType type, const std::string &operations)
 	{
 		if (type == P_Diffuse)
 			nodeShader->vertBufReq = VRT_Normal;
@@ -235,6 +237,12 @@ struct ShaderBuilder
 		nodeShader->wsLightDirLocation = glGetUniformLocationARB(nodeShader->program, "wsLightDir");
 		nodeShader->wsEyePosLocation = glGetUniformLocationARB(nodeShader->program, "wsEyePos");
 
+		if (ShadowMapping()) {
+			nodeShader->shadowMapLocation = glGetUniformLocationARB(nodeShader->program, "shadowMap");
+			nodeShader->shadowParamsLocation = glGetUniformLocationARB(nodeShader->program, "shadowParams");
+			nodeShader->shadowMatrixLocation = glGetUniformLocationARB(nodeShader->program, "shadowMatrix");
+		}
+
 		if (buffers && !buffers->empty()) {
 			BufferTexture *bt = buffers->front();
 			GLint invScreenDim = glGetUniformLocationARB(nodeShader->program, "invScreenDim");
@@ -247,7 +255,7 @@ struct ShaderBuilder
 		RenderPass& rp = renderSetup->passes.back();
 		rp.shaderSetup = nodeShader;
 		rp.operation = Pass_Replace;
-		rp.depthWrite = depthWrite;
+		rp.depthWrite = (renderSetup->passes.size () == 1); // depthwrite if first pass
 		nodeShader->debugstr = operations;
 		NodeGLSLShader *ns = nodeShader;
 		nodeShader = 0;
@@ -268,9 +276,10 @@ struct ShaderBuilder
 		}
 
 		Shader fragmentShader;
-		if (type != P_Diffuse) fragmentShader.texts.push_back("#define UseBumpmapping\n");
+		if (type != P_Diffuse) fragmentShader.texts.push_back("#define UseBumpMapping\n");
 		if (GLEW_ARB_texture_rectangle) fragmentShader.texts.push_back("#define UseTextureRECT\n");
 		if (type == P_Bump) fragmentShader.texts.push_back("#define DiffuseFromBuffer\n");
+		if (ShadowMapping()) fragmentShader.texts.push_back ("#define UseShadowMapping\n");
 		fragmentShader.AddFile("shaders/terrainCommon.glsl");
 		fragmentShader.texts.push_back(textureSamplers);
 		char specularExponentStr[20];
@@ -294,7 +303,8 @@ struct ShaderBuilder
 	void BuildVertexShader(PassType passType)
 	{
 		Shader vertexShader;
-		if (passType != P_Diffuse) vertexShader.texts.push_back("#define UseBumpmapping\n");
+		if (passType != P_Diffuse) vertexShader.texts.push_back("#define UseBumpMapping\n");
+		if (ShadowMapping()) vertexShader.texts.push_back ("#define UseShadowMapping\n");
 		vertexShader.AddFile("shaders/terrainCommon.glsl");
 
 		// generate texture coords
@@ -381,7 +391,7 @@ struct ShaderBuilder
 					texUsage.AddTextureRead(maxTexUnits, st.source),
 					texUsage.AddTextureCoordRead(maxTexCoords, st.source)) + ".a;\n";
 
-				diffusePasses->push_back(EndPass(shaderDef, P_Diffuse, opstr, false));
+				diffusePasses->push_back(EndPass(shaderDef, P_Diffuse, opstr));
 				renderSetup->passes.back().operation = Pass_Interpolate;
 				c++; // skip the blend stage because we used it here already
 			}
@@ -391,7 +401,7 @@ struct ShaderBuilder
 					texUsage.AddTextureRead(maxTexUnits, st.source),
 					texUsage.AddTextureCoordRead(maxTexCoords, st.source)) + ";\n";
 
-				diffusePasses->push_back(EndPass(shaderDef, P_Diffuse, opstr, false));
+				diffusePasses->push_back(EndPass(shaderDef, P_Diffuse, opstr));
 				renderSetup->passes.back().operation = 
 					(st.operation == ShaderDef::Add) ? Pass_Add : Pass_Mul;
 			}
@@ -407,12 +417,15 @@ struct ShaderBuilder
 		string opstr;
 		vector<NodeGLSLShader*> diffusePasses;
 
+		if (ShadowMapping())
+			maxTexUnits--;
+
 		uint stage = 0;
 		while (stage < shaderDef->stages.size())
 		{
 			if (!ProcessStage (shaderDef->stages, stage, opstr))
 			{
-				diffusePasses.push_back(EndPass(shaderDef, P_Diffuse, opstr, stage == 0));
+				diffusePasses.push_back(EndPass(shaderDef, P_Diffuse, opstr));
 				opstr.clear();
 				break;
 			}
@@ -442,10 +455,10 @@ struct ShaderBuilder
 				if (stage < shaderDef->normalMapStages.size()) {
 					// It failed, so restore the diffuse phase and end it
 					texUsage = old;
-					diffusePasses.push_back(EndPass(shaderDef, P_Diffuse, colorcalc, true));
+					diffusePasses.push_back(EndPass(shaderDef, P_Diffuse, colorcalc));
 				} else {
 					// success
-					EndPass(shaderDef, P_Combined, colorcalc + "vec4 diffuse = color;\n" + opstr, true);
+					EndPass(shaderDef, P_Combined, colorcalc + "vec4 diffuse = color;\n" + opstr);
 					return;
 				}
 			}
@@ -466,10 +479,10 @@ struct ShaderBuilder
 					throw content_error("Map has too many textures/bumpmaps/different tilesizes");
 			}
 
-			EndPass(shaderDef, P_Bump, opstr, true);
+			EndPass(shaderDef, P_Bump, opstr);
 
 		} else if (nodeShader) 
-			EndPass(shaderDef, P_Diffuse, opstr, true);
+			EndPass(shaderDef, P_Diffuse, opstr);
 	}
 };
 
@@ -550,6 +563,20 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 		glUniform3fARB(wsLightDirLocation, params.wsLightDir->x, params.wsLightDir->y, params.wsLightDir->z);
 	if (wsEyePosLocation >= 0 && params.wsEyePos)
 		glUniform3fARB(wsEyePosLocation, params.wsEyePos->x, params.wsEyePos->y, params.wsEyePos->z);
+
+	if (params.shadowMapParams)
+	{
+		glUniform1i(shadowMapLocation, texUnits.size());
+		glActiveTextureARB(GL_TEXTURE0_ARB+texUnits.size());
+		glBindTexture(GL_TEXTURE_2D, params.shadowMapParams->shadowMap);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+
+		ShadowMapParams& smp = *params.shadowMapParams;
+		glUniformMatrix4fvARB(shadowMatrixLocation, 1, GL_FALSE, smp.shadowMatrix);
+		glUniform4fARB(shadowParamsLocation, smp.f_a, smp.f_b, smp.mid[0], smp.mid[1]);
+	}
 }
 
 void NodeGLSLShader::Cleanup()
@@ -564,7 +591,7 @@ void NodeGLSLShader::Cleanup()
 
 	if (renderBuffer) {
 		renderBuffer->framebuffer->deselect();
-		glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+		glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
 	}
 }
 
@@ -611,7 +638,7 @@ void GLSLShaderHandler::BeginTexturing()
 		glViewport(0, 0, buffers.front()->width, buffers.front()->height);
 		glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 		buffers.front()->framebuffer->deselect();
-		glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+		glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
 	}
 }
 

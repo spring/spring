@@ -49,7 +49,7 @@ vec4 CalculateColor();
 
 #endif
 
-#ifdef UseBumpmapping
+#ifdef UseBumpMapping
 	vec3 reflect(vec3 N, vec3 L)
 	{
 		return 2.0*N*dot(N, L) - L;
@@ -74,5 +74,13 @@ vec4 CalculateColor();
 // Shader entry point
 void main()
 {
+//#ifdef UseShadowMapping
+
+//TEX shadow, fragment.texcoord[4], texture[4], SHADOW2D;
+
+//	vec4 r = shadow2D(shadowMap, shadowTexCoord.xyz);
+//	gl_FragColor = shadowTexCoord;
+//#else
 	gl_FragColor=CalculateColor();
+//#endif
 }

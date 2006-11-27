@@ -50,7 +50,7 @@ bool CIconHandler::LoadTDFicons(const std::string& filename)
 			// If we can't load the bitmap replace it with the default one.
 			std::string bitmapLocation=tdfparser.SGetValueDef("", "icontypes\\" + *it + "\\bitmap");
 			unsigned int texture;
-			if(bitmap.Load(bitmapLocation)){
+			if(!bitmapLocation.empty () && bitmap.Load(bitmapLocation)){
 				texture = bitmap.CreateTexture(true);
 				glBindTexture(GL_TEXTURE_2D, texture);
 				if (GLEW_EXT_texture_edge_clamp) {
