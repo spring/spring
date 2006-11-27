@@ -6,6 +6,7 @@
   * added "bot mode" indicator
   * /ring can now be used on battle hosts as well
   * fixed slowdown problem when re-sorting maps
+  * fixed "maximizing" bug when entering full-screen mode
 
   *** 0.30 (03x10x06) ***
   * added new map list with some new options (map grading, custom comments, online grades, ...)
