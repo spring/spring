@@ -9,7 +9,8 @@
 --
 --  * The Game[], UnitDefs[], and WeaponDefs[] tables are available.
 --    These tables can be printed into the infolog.txt be adding
---    "keydebug 2" in the uikeys.txt file.
+--    "keydebug 2" in the uikeys.txt file. There are example tables at
+--    the end of this file.
 --
 --  * Screen origin is left-bottom (0, 0)
 --    (this is used for both mouse and screen drawing coordinates)
@@ -181,7 +182,7 @@
 --  Called whenever the active commands changed, or if forced
 --
 LayoutButtons(number xButtons, number yButtons, number cmdCount,
-              commands = {  --  the list of commands that are currently available
+              commands = {  --  the list of commands currently available
                 [0] = { id = number,
                         type = number,
                         action = string,
@@ -306,7 +307,8 @@ MouseMove(int x, int y, int dx, int dy, int button) -> boolean takeEvent
 
 MousePress(int x, int y, int button) -> boolean takeEvent
 
-MouseRelease(int x, int y, int button) -> number commandIndex  (-1 for no command)
+MouseRelease(int x, int y, int button) ->
+  number commandIndex  (-1 for no command)
 
 
 --
@@ -744,3 +746,293 @@ Draw.ListCreate(function [,arg1 [,arg2...]]) -> number listID  -- 0 is an invali
 Draw.ListRun(number listID)    -> nil
 Draw.ListDelete(number listID) -> nil
 
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  Examples of Game, WeaponDefs, and UnitDefs tables
+--  (from Absolute Annihilation 2.23)
+--
+
+Game = {}
+Game.version = "0.74b1"
+Game.commEnds = false
+Game.gravity = 100.000000
+Game.tidal = 60.000000
+Game.windMin = 10.000000
+Game.windMax = 20.000000
+Game.mapX = 16
+Game.mapY = 16
+Game.mapName = "Castles.smf"
+Game.modName = "AASS223.sdz"
+Game.limitDGun = false
+Game.diminishingMetal = false
+Game.springCategories = { "special", "noweapon", "notair", "notsub", "all", "weapon", "notship", "notland", "mobile", "kbot", "plant", "ship", "antiemg", "antigator", "antilaser", "antiflame", "underwater", "tank", "hover", "phib", "constr", "strategic", "commander", "mine", "kamikaze", "jam", "minelayer", "notstructure", "tport", "fort", "notspace" }
+
+WeaponDefs = {}
+WeaponDefs[0] = {}
+WeaponDefs[0].name = "aakflak"
+WeaponDefs[0].id = 0
+WeaponDefs[0].onlyTargetCategory = {}
+WeaponDefs[0].type = "Cannon"
+WeaponDefs[0].isAircraftBomb = false
+WeaponDefs[0].isStarburstLauncher = false
+WeaponDefs[0].isBeamLaser = false
+WeaponDefs[0].isShield = false
+WeaponDefs[0].isTorpedoLauncher = false
+WeaponDefs[0].isDGun = false
+WeaponDefs[0].isLightingCannon = false
+WeaponDefs[0].isLaserCannon = false
+WeaponDefs[0].isMissileLauncher = false
+WeaponDefs[0].isEmgCannon = false
+WeaponDefs[0].isFlame = false
+WeaponDefs[0].isCannon = true
+WeaponDefs[0].range = 680.000000
+WeaponDefs[0].heightmod = 0.800000
+WeaponDefs[0].accuracy = 0.069671
+WeaponDefs[0].sprayangle = 0.000000
+WeaponDefs[0].movingAccuracy = 0.069671
+WeaponDefs[0].targetMoveError = 0.000000
+WeaponDefs[0].damages = { ["amphibious"] = 10.000000, ["anniddm"] = 10.000000, ["antibomber"] = 10.000000, ["antifighter"] = 10.000000, ["antiraider"] = 10.000000, ["atl"] = 10.000000, ["blackhydra"] = 10.000000, ["commanders"] = 10.000000, ["crawlingbombs"] = 10.000000, ["dl"] = 10.000000, ["else"] = 10.000000, ["flakboats"] = 10.000000, ["flaks"] = 10.000000, ["flamethrowers"] = 10.000000, ["gunships"] = 150.000000, ["hgunships"] = 75.000000, ["jammerboats"] = 10.000000, ["krogoth"] = 10.000000, ["l1bombers"] = 150.000000, ["l1fighters"] = 100.000000, ["l1subs"] = 5.000000, ["l2bombers"] = 150.000000, ["l2fighters"] = 100.000000, ["l2subs"] = 5.000000, ["l3subs"] = 5.000000, ["mechs"] = 10.000000, ["minelayers"] = 1000.000000, ["mines"] = 10.000000, ["nanos"] = 10.000000, ["orcone"] = 10.000000, ["otherboats"] = 10.000000, ["plasmaguns"] = 10.000000, ["radar"] = 10.000000, ["seadragon"] = 10.000000, ["spies"] = 10.000000, ["tl"] = 10.000000, ["vradar"] = 150.000000, ["vtol"] = 150.000000, ["vtrans"] = 150.000000, ["vulcbuzz"] = 10.000000 }
+WeaponDefs[0].paralyzeDamageTime = 0
+WeaponDefs[0].impulseFactor = 0.000000
+WeaponDefs[0].impulseBoost = 0.000000
+WeaponDefs[0].craterMult = 0.000000
+WeaponDefs[0].craterBoost = 0.000000
+WeaponDefs[0].noSelfDamage = true
+WeaponDefs[0].areaOfEffect = 64.000000
+WeaponDefs[0].fireStarter = 0.000000
+WeaponDefs[0].edgeEffectiveness = 0.850000
+WeaponDefs[0].size = 1.400000
+WeaponDefs[0].sizeGrowth = 0.200000
+WeaponDefs[0].collisionSize = 0.050000
+WeaponDefs[0].salvoSize = 1
+WeaponDefs[0].salvoDelay = 0.100000
+WeaponDefs[0].reload = 5.500000
+WeaponDefs[0].beamTime = 1.000000
+WeaponDefs[0].maxAngle = 16.479996
+WeaponDefs[0].restTime = 0.000000
+WeaponDefs[0].uptime = 1.000000
+WeaponDefs[0].metalCost = 0.000000
+WeaponDefs[0].energyCost = 0.000000
+WeaponDefs[0].supplyCost = 0.000000
+WeaponDefs[0].turret = true
+WeaponDefs[0].onlyForward = false
+WeaponDefs[0].waterweapon = false
+WeaponDefs[0].tracks = false
+WeaponDefs[0].dropped = false
+WeaponDefs[0].paralyzer = false
+WeaponDefs[0].noAutoTarget = false
+WeaponDefs[0].manualFire = false
+WeaponDefs[0].interceptor = 0
+WeaponDefs[0].targetable = 0
+WeaponDefs[0].stockpile = false
+WeaponDefs[0].coverageRange = 0.000000
+WeaponDefs[0].intensity = 0.200000
+WeaponDefs[0].thickness = 2.000000
+WeaponDefs[0].laserFlareSize = 15.000000
+WeaponDefs[0].coreThickness = 0.250000
+WeaponDefs[0].duration = 0.050000
+WeaponDefs[0].graphicsType = 0
+WeaponDefs[0].soundTrigger = false
+WeaponDefs[0].selfExplode = true
+WeaponDefs[0].gravityAffected = false
+WeaponDefs[0].twoPhase = false
+WeaponDefs[0].guided = false
+WeaponDefs[0].vlaunch = false
+WeaponDefs[0].selfProp = false
+WeaponDefs[0].noExplode = false
+WeaponDefs[0].startVelocity = 0.010000
+WeaponDefs[0].weaponAcceleration = 0.000000
+WeaponDefs[0].turnRate = 0.000000
+WeaponDefs[0].maxVelocity = 1500.000000
+WeaponDefs[0].projectileSpeed = 50.000000
+WeaponDefs[0].explosionSpeed = 4.767111
+WeaponDefs[0].wobble = 0.000000
+WeaponDefs[0].trajectoryHeight = 0.000000
+WeaponDefs[0].largeBeamLaser = false
+WeaponDefs[0].isShield = false
+WeaponDefs[0].shieldRepulser = false
+WeaponDefs[0].smartShield = false
+WeaponDefs[0].exteriorShield = false
+WeaponDefs[0].visibleShield = false
+WeaponDefs[0].visibleShieldRepulse = false
+WeaponDefs[0].shieldEnergyUse = 0.000000
+WeaponDefs[0].shieldRadius = 0.000000
+WeaponDefs[0].shieldForce = 0.000000
+WeaponDefs[0].shieldMaxSpeed = 0.000000
+WeaponDefs[0].shieldPower = 0.000000
+WeaponDefs[0].shieldPowerRegen = 0.000000
+WeaponDefs[0].shieldPowerRegenEnergy = 0.000000
+WeaponDefs[0].shieldAlpha = 0.200000
+WeaponDefs[0].shieldInterceptType = 0
+WeaponDefs[0].interceptedByShieldType = 1
+WeaponDefs[0].collisionNoFeature = true
+WeaponDefs[0].collisionNoFriendly = true
+WeaponDefs[0].avoidFriendly = true
+
+UnitDefs = {}
+UnitDefs[1] = {}
+UnitDefs[1].name = "AAFUS"
+UnitDefs[1].humanName = "Advanced Fusion Reactor"
+UnitDefs[1].filename = "units/aafus.fbi"
+UnitDefs[1].techLevel = 5
+UnitDefs[1].TEDClass = "ENERGY"
+UnitDefs[1].iconType = "default"
+UnitDefs[1].modCategories = { "arm", "energy", "level3", "special", "noweapon", "notair", "notsub", "all" }
+UnitDefs[1].springCategories = { "special", "noweapon", "notair", "notsub", "all" }
+UnitDefs[1].armorType = "else"
+UnitDefs[1].type = "Building"
+UnitDefs[1].isBomber = false
+UnitDefs[1].isFighter = false
+UnitDefs[1].isBuilder = false
+UnitDefs[1].isFactory = false
+UnitDefs[1].isBuilding = true
+UnitDefs[1].isTransport = false
+UnitDefs[1].isGroundUnit = false
+UnitDefs[1].isMetalExtractor = false
+UnitDefs[1].isFeature = false
+UnitDefs[1].weaponCount = 0
+UnitDefs[1].weapons = {}
+UnitDefs[1].maxRange = 0.000000
+UnitDefs[1].hasShield = false
+UnitDefs[1].canParalyze = false
+UnitDefs[1].canStockpile = false
+UnitDefs[1].canAttackWater = false
+UnitDefs[1].deathExplosion = WeaponDefs[211]
+UnitDefs[1].selfDExplosion = WeaponDefs[164]
+UnitDefs[1].builder = false
+UnitDefs[1].buildSpeed = 0.000000
+UnitDefs[1].buildDistance = 128.000000
+UnitDefs[1].buildOptionsCount = 0
+UnitDefs[1].buildOptions = {}
+UnitDefs[1].selfDCountdown = 5
+UnitDefs[1].buildTime = 157529.000000
+UnitDefs[1].energyCost = 72115.000000
+UnitDefs[1].metalCost = 9909.000000
+UnitDefs[1].energyMake = 2750.000000
+UnitDefs[1].windGenerator = 0.000000
+UnitDefs[1].tidalGenerator = 0.000000
+UnitDefs[1].extractRange = 0.000000
+UnitDefs[1].extractsMetal = 0.000000
+UnitDefs[1].metalMake = 0.000000
+UnitDefs[1].makesMetal = 0.000000
+UnitDefs[1].energyStorage = 25000.000000
+UnitDefs[1].metalStorage = 0.000000
+UnitDefs[1].energyUpkeep = 0.000000
+UnitDefs[1].metalUpkeep = 0.000000
+UnitDefs[1].needGeo = false
+UnitDefs[1].isMetalMaker = false
+UnitDefs[1].totalEnergyOut = 2750.000000
+UnitDefs[1].autoHeal = 0.000000
+UnitDefs[1].idleAutoHeal = 2.666667
+UnitDefs[1].idleTime = 1800
+UnitDefs[1].power = 11110.916992
+UnitDefs[1].health = 27150.000000
+UnitDefs[1].speed = 0.000000
+UnitDefs[1].turnRate = 0.000000
+UnitDefs[1].moveType = 0
+UnitDefs[1].upright = false
+UnitDefs[1].canAssist = false
+UnitDefs[1].canAttack = true
+UnitDefs[1].canBuild = false
+UnitDefs[1].canCapture = false
+UnitDefs[1].canCloak = false
+UnitDefs[1].canDGun = false
+UnitDefs[1].canFly = false
+UnitDefs[1].canGuard = true
+UnitDefs[1].canHover = false
+UnitDefs[1].canKamikaze = false
+UnitDefs[1].canMove = false
+UnitDefs[1].canPatrol = true
+UnitDefs[1].canReclaim = false
+UnitDefs[1].canRepair = false
+UnitDefs[1].canRestore = false
+UnitDefs[1].canResurrect = false
+UnitDefs[1].noAutoFire = false
+UnitDefs[1].reclaimable = true
+UnitDefs[1].onOffable = false
+UnitDefs[1].floater = false
+UnitDefs[1].activateWhenBuilt = false
+UnitDefs[1].mass = 9909.000000
+UnitDefs[1].xSize = 14
+UnitDefs[1].ySize = 10
+UnitDefs[1].buildAngle = 4096
+UnitDefs[1].radarRadius = 0
+UnitDefs[1].sonarRadius = 0
+UnitDefs[1].jammerRadius = 0
+UnitDefs[1].sonarJamRadius = 0
+UnitDefs[1].seismicRadius = 0
+UnitDefs[1].seismicSignature = 1.000000
+UnitDefs[1].stealth = false
+UnitDefs[1].controlRadius = 32.000000
+UnitDefs[1].losRadius = 17.062500
+UnitDefs[1].airLosRadius = 12.796875
+UnitDefs[1].losHeight = 20.000000
+UnitDefs[1].maxSlope = 0.974370
+UnitDefs[1].maxHeightDif = 9.234728
+UnitDefs[1].minWaterDepth = -10000000.000000
+UnitDefs[1].waterline = 0.000000
+UnitDefs[1].maxWaterDepth = 0.000000
+UnitDefs[1].armoredMultiple = 0.950000
+UnitDefs[1].wingDrag = 0.070000
+UnitDefs[1].wingAngle = 0.080000
+UnitDefs[1].drag = 0.005000
+UnitDefs[1].frontToSpeed = 0.100000
+UnitDefs[1].speedToFront = 0.070000
+UnitDefs[1].myGravity = 0.400000
+UnitDefs[1].maxBank = 0.800000
+UnitDefs[1].maxPitch = 0.450000
+UnitDefs[1].turnRadius = 500.000000
+UnitDefs[1].wantedHeight = 0.000000
+UnitDefs[1].hoverAttack = false
+UnitDefs[1].dlHoverFactor = -1.000000
+UnitDefs[1].dontLand = false
+UnitDefs[1].maxAcc = 0.000000
+UnitDefs[1].maxDec = 0.000000
+UnitDefs[1].maxAileron = 0.015000
+UnitDefs[1].maxElevator = 0.010000
+UnitDefs[1].maxRudder = 0.004000
+UnitDefs[1].maxFuel = 0.000000
+UnitDefs[1].refuelTime = 5.000000
+UnitDefs[1].minAirBasePower = 0.000000
+UnitDefs[1].loadingRadius = 220.000000
+UnitDefs[1].transportCapacity = 0
+UnitDefs[1].transportSize = 0
+UnitDefs[1].isAirBase = false
+UnitDefs[1].transportMass = 100000.000000
+UnitDefs[1].startCloaked = false
+UnitDefs[1].cloakCost = -1.000000
+UnitDefs[1].cloakCostMoving = -1.000000
+UnitDefs[1].decloakDistance = -1.000000
+UnitDefs[1].kamikazeDist = 0.000000
+UnitDefs[1].targfac = false
+UnitDefs[1].hideDamage = false
+UnitDefs[1].isCommander = false
+UnitDefs[1].showPlayerName = false
+UnitDefs[1].highTrajectoryType = 0
+UnitDefs[1].noChaseCategory = {}
+UnitDefs[1].canDropFlare = false
+UnitDefs[1].flareReloadTime = 5.000000
+UnitDefs[1].flareEfficieny = 0.500000
+UnitDefs[1].flareDelay = 0.300000
+UnitDefs[1].flareDropVectorX = 0.000000
+UnitDefs[1].flareDropVectorY = 0.000000
+UnitDefs[1].flareDropVectorZ = 0.000000
+UnitDefs[1].flareTime = 90
+UnitDefs[1].flareSalvoSize = 4
+UnitDefs[1].flareSalvoDelay = 0
+UnitDefs[1].smoothAnim = true
+UnitDefs[1].canLoopbackAttack = false
+UnitDefs[1].levelGround = true
+UnitDefs[1].useBuildingGroundDecal = false
+UnitDefs[1].buildingDecalType = 23273944
+UnitDefs[1].buildingDecalSizeX = 4
+UnitDefs[1].buildingDecalSizeY = 4
+UnitDefs[1].buildingDecalDecaySpeed = 0.100000
+UnitDefs[1].isFirePlatform = false
+UnitDefs[1].showNanoFrame = true
+UnitDefs[1].showNanoSpray = true
+UnitDefs[1].nanoColorR = 0.200000
+UnitDefs[1].nanoColorG = 0.700000
+UnitDefs[1].nanoColorB = 0.200000
