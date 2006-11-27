@@ -70,6 +70,7 @@
   GetGameSeconds()
   GetInCommand()
   GetMouseState()
+  GetCurrentTooltip()
 
   GetKeyCode()
   GetKeySymbol()
@@ -154,6 +155,8 @@
   Draw.Texture() 
   Draw.Material()
   Draw.Color()
+
+  Draw.FreeTexture() 
 
   Draw.Shape()
   Draw.UnitDef()
@@ -383,6 +386,8 @@ GetMouseState()  ->
   boolean leftButton,
   boolean middleButton,
   boolean rightButton
+
+GetCurrentTooltip() -> string "tooltip"
 
 
 GetKeyCode(string "keysym") -> number keycode
@@ -711,6 +716,8 @@ Draw.Material({
 
 Draw.Color({ number r, number g, number b[, number a] } |
              number r, number g, number b[, number a]) -> nil
+
+Draw.FreeTexture(string "texname") -> boolean success
 
 Draw.Shape(
   number GLtype,

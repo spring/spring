@@ -104,7 +104,8 @@ CGuiHandler::~CGuiHandler()
 
 	std::map<std::string, unsigned int>::iterator it;
 	for (it = textureMap.begin(); it != textureMap.end(); ++it) {
-		glDeleteTextures (1, &(it->second));
+		const GLuint texID = it->second;
+		glDeleteTextures (1, &texID);
 	}
 }
 
@@ -2596,6 +2597,21 @@ bool CGuiHandler::BindNamedTexture(const std::string& texName)
 	textureMap[texName] = texID;
 
 	return true;
+}
+
+
+bool CGuiHandler::FreeNamedTexture(const std::string& texName)
+{
+	if (texName.empty()) {
+		return false;
+	}
+
+	std::map<std::string, unsigned int>::iterator it = textureMap.find(texName);
+	if (it != textureMap.end()) {
+		const GLuint texID = it->second;
+		glDeleteTextures(1, &texID);
+		textureMap.erase(it);
+	}
 }
 
 
