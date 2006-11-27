@@ -750,8 +750,7 @@ Draw.ListDelete(number listID) -> nil
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  Examples of Game, WeaponDefs, and UnitDefs tables
---  (from Absolute Annihilation 2.23)
+--  Examples of Game[], WeaponDefs[], and UnitDefs[] tables
 --
 
 Game = {}
@@ -773,7 +772,7 @@ WeaponDefs = {}
 WeaponDefs[1] = {}
 WeaponDefs[1].name = "adv_decklaser"
 WeaponDefs[1].id = 1
-WeaponDefs[1].onlyTargetCategory = { "special", "noweapon", "notair", "notsub", "all", "weapon", "notship", "notland", "mobile", "kbot", "plant", "ship", "antiemg", "antigator", "antilaser", "antiflame", "underwater", "tank", "hover", "phib", "constr", "strategic", "commander", "mine", "kamikaze", "jam", "minelayer", "notstructure", "tport", "fort", "notspace" }
+WeaponDefs[1].onlyTargetCategory = { ["special"] = true, ["noweapon"] = true, ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["notland"] = true, ["mobile"] = true, ["kbot"] = true, ["plant"] = true, ["ship"] = true, ["antiemg"] = true, ["antigator"] = true, ["antilaser"] = true, ["antiflame"] = true, ["underwater"] = true, ["tank"] = true, ["hover"] = true, ["phib"] = true, ["constr"] = true, ["strategic"] = true, ["commander"] = true, ["mine"] = true, ["kamikaze"] = true, ["jam"] = true, ["minelayer"] = true, ["notstructure"] = true, ["tport"] = true, ["fort"] = true, ["notspace"] = true }
 WeaponDefs[1].type = "BeamLaser"
 WeaponDefs[1].isAircraftBomb = false
 WeaponDefs[1].isStarburstLauncher = false
@@ -879,8 +878,8 @@ UnitDefs[43].filename = "units/armcom.fbi"
 UnitDefs[43].techLevel = 0
 UnitDefs[43].TEDClass = "COMMANDER"
 UnitDefs[43].iconType = "default"
-UnitDefs[43].modCategories = { "arm", "commander", "weapon", "notair", "notsub", "ctrl_c", "notship", "level10", "all" }
-UnitDefs[43].springCategories = { "notair", "notsub", "all", "weapon", "notship", "commander" }
+UnitDefs[43].modCategories = { ["arm"] = true, ["commander"] = true, ["weapon"] = true, ["notair"] = true, ["notsub"] = true, ["ctrl_c"] = true, ["notship"] = true, ["level10"] = true, ["all"] = true }
+UnitDefs[43].springCategories = { ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["commander"] = true }
 UnitDefs[43].armorType = "commanders"
 UnitDefs[43].type = "Builder"
 UnitDefs[43].isBomber = false
@@ -897,8 +896,8 @@ UnitDefs[43].weapons = {}
 UnitDefs[43].weapons[0] = {}
 UnitDefs[43].weapons[0].weaponDef = WeaponDefs[41]
 UnitDefs[43].weapons[0].fuelUsage = 0.000000
-UnitDefs[43].weapons[0].badTargets = { "antilaser" }
-UnitDefs[43].weapons[0].onlyTargets = { "special", "noweapon", "notair", "notsub", "all", "weapon", "notship", "notland", "mobile", "kbot", "plant", "ship", "antiemg", "antigator", "antilaser", "antiflame", "underwater", "tank", "hover", "phib", "constr", "strategic", "commander", "mine", "kamikaze", "jam", "minelayer", "notstructure", "tport", "fort", "notspace" }
+UnitDefs[43].weapons[0].badTargets = { ["antilaser"] = true }
+UnitDefs[43].weapons[0].onlyTargets = { ["special"] = true, ["noweapon"] = true, ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["notland"] = true, ["mobile"] = true, ["kbot"] = true, ["plant"] = true, ["ship"] = true, ["antiemg"] = true, ["antigator"] = true, ["antilaser"] = true, ["antiflame"] = true, ["underwater"] = true, ["tank"] = true, ["hover"] = true, ["phib"] = true, ["constr"] = true, ["strategic"] = true, ["commander"] = true, ["mine"] = true, ["kamikaze"] = true, ["jam"] = true, ["minelayer"] = true, ["notstructure"] = true, ["tport"] = true, ["fort"] = true, ["notspace"] = true }
 UnitDefs[43].weapons[1] = {}
 UnitDefs[43].weapons[1].weaponDef = WeaponDefs[210]
 UnitDefs[43].weapons[1].fuelUsage = 0.000000
@@ -908,7 +907,7 @@ UnitDefs[43].weapons[2] = {}
 UnitDefs[43].weapons[2].weaponDef = WeaponDefs[13]
 UnitDefs[43].weapons[2].fuelUsage = 0.000000
 UnitDefs[43].weapons[2].badTargets = {}
-UnitDefs[43].weapons[2].onlyTargets = { "special", "noweapon", "notair", "notsub", "all", "weapon", "notship", "notland", "mobile", "kbot", "plant", "ship", "antiemg", "antigator", "antilaser", "antiflame", "underwater", "tank", "hover", "phib", "constr", "strategic", "commander", "mine", "kamikaze", "jam", "minelayer", "notstructure", "tport", "fort", "notspace" }
+UnitDefs[43].weapons[2].onlyTargets = { ["special"] = true, ["noweapon"] = true, ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["notland"] = true, ["mobile"] = true, ["kbot"] = true, ["plant"] = true, ["ship"] = true, ["antiemg"] = true, ["antigator"] = true, ["antilaser"] = true, ["antiflame"] = true, ["underwater"] = true, ["tank"] = true, ["hover"] = true, ["phib"] = true, ["constr"] = true, ["strategic"] = true, ["commander"] = true, ["mine"] = true, ["kamikaze"] = true, ["jam"] = true, ["minelayer"] = true, ["notstructure"] = true, ["tport"] = true, ["fort"] = true, ["notspace"] = true }
 UnitDefs[43].maxRange = 300.000000
 UnitDefs[43].hasShield = false
 UnitDefs[43].canParalyze = false
@@ -1051,7 +1050,7 @@ UnitDefs[43].hideDamage = true
 UnitDefs[43].isCommander = true
 UnitDefs[43].showPlayerName = true
 UnitDefs[43].highTrajectoryType = 0
-UnitDefs[43].noChaseCategory = { "all" }
+UnitDefs[43].noChaseCategory = { ["all"] = true }
 UnitDefs[43].canDropFlare = false
 UnitDefs[43].flareReloadTime = 5.000000
 UnitDefs[43].flareEfficieny = 0.500000
