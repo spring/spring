@@ -31,8 +31,8 @@
   LayoutButtons()
 
   UpdateLayout()
+  ConfigureLayout()
 
-  ConfigCommand()
   CommandNotify()
 
   DrawWorldItems()
@@ -276,7 +276,7 @@ UpdateLayout(
 --
 --  Called from the "/luaui <command>" in-game command
 --
-ConfigCommand(string "command") -> nil
+ConfigureLayout(string "command") -> nil
 
 
 --
