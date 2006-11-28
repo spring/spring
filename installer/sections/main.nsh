@@ -33,10 +33,12 @@
   File "..\game\freetype6.dll"
   File "..\game\glew32.dll"
   File "..\game\zlib1.dll"
-  Delete "$INSTDIR\zlibwapi.dll"
+  File "..\game\zlibwapi.dll"        ; Needed for vc-compiled unitsync..
+  File "..\game\msvcp71.dll"         ;  - "" -
+;  Delete "$INSTDIR\zlibwapi.dll"
   Delete "$INSTDIR\crashrpt.dll"
   Delete "$INSTDIR\dbghelp.dll"
-  Delete "$INSTDIR\msvcp71.dll"
+;  Delete "$INSTDIR\msvcp71.dll"
 !else
   File "..\game\zlibwapi.dll"
   File "..\game\crashrpt.dll"
@@ -169,7 +171,7 @@
 
   SetOutPath "$INSTDIR\mods"
 !ifdef NO_TOTALA
-  File "..\game\mods\nanoblobs.sdz"
+  File "..\game\mods\NanoBlobs064.sdz"
 !else
   File "..\game\mods\xtape.sd7"
 !endif
@@ -298,6 +300,7 @@
   Delete "$INSTDIR\base\springcontent.sdz"
   Delete "$INSTDIR\mods\xta_se_v066.sdz"
   Delete "$INSTDIR\mods\xtape.sd7"
+  Delete "$INSTDIR\mods\NanoBlobs064.sdz"
   Delete "$INSTDIR\base\spring\springbitmaps_v061.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v061.sdz"
   Delete "$INSTDIR\base\spring\springdecals_v062.sdz"
