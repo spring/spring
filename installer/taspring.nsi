@@ -78,8 +78,14 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 !endif
 !endif
 
-OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
-InstallDir "$PROGRAMFILES\TASpring"
+!ifdef NO_TOTALA
+!define SP_OUTSUFFIX2 "_gpl"
+!else
+!define SP_OUTSUFFIX2 ""
+!endif
+
+OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}${SP_OUTSUFFIX2}.exe"
+InstallDir "$PROGRAMFILES\Spring"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ShowInstDetails show
 ShowUnInstDetails show

@@ -7,7 +7,7 @@
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAPS} "Includes two maps to play TA Spring with.$\n$\nThese maps are called Small Divide and Mars."
 !endif
 
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_AAI} "Includes AAI 7.0, an AI opponent made by submarine"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_AAI} "Includes AAI 0.76, an AI opponent made by submarine"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_NTAI} "Includes NTAI 9.23, an AI opponent made by AF"
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_START} "This creates shortcuts on the start menu to all the applications provided."

@@ -9,7 +9,7 @@
   !define SP_BASENAME "spring_${PRODUCT_VERSION}_dev"
  !else
   !define PRODUCT_NAME "Spring"
-  !define PRODUCT_VERSION "0.73b1"
+  !define PRODUCT_VERSION "0.74b1"
   !define SP_BASENAME "spring_${PRODUCT_VERSION}"
  !endif
 !endif
