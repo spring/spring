@@ -63,6 +63,12 @@ vec4 CalculateColor();
 		vec3 R = reflect(normal, tsLightDir);
 		float specularFactor = clamp(pow(dot(R, tsEyeDir), specularExponent), 0.0, 1.0);
 		
+#ifdef UseShadowMapping
+		vec4 shadow = shadow2D(shadowMap, shadowTexCoord.xyz);
+		diffuseFactor *= shadow;
+		specularFactor *= shadow;
+#endif
+		
 		vec4 r = diffuse * (gl_LightSource[0].diffuse * diffuseFactor + gl_LightSource[0].ambient);
 		r += gl_LightSource[0].specular * specularFactor * texValue.a;
 
@@ -74,13 +80,5 @@ vec4 CalculateColor();
 // Shader entry point
 void main()
 {
-//#ifdef UseShadowMapping
-
-//TEX shadow, fragment.texcoord[4], texture[4], SHADOW2D;
-
-//	vec4 r = shadow2D(shadowMap, shadowTexCoord.xyz);
-//	gl_FragColor = shadowTexCoord;
-//#else
 	gl_FragColor=CalculateColor();
-//#endif
 }

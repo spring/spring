@@ -85,8 +85,8 @@ struct Shader
 			strings[index] = i->c_str();
 		}
 
-		//if (shaderType == GL_FRAGMENT_SHADER_ARB)
-		//	DebugOutput(shaderType);
+//		if (shaderType == GL_FRAGMENT_SHADER_ARB)
+//			DebugOutput(shaderType);
 
 		glShaderSourceARB(handle, strings.size(), &strings.front(), &lengths.front());
 		glCompileShaderARB(handle);
@@ -234,8 +234,11 @@ struct ShaderBuilder
 		if (nodeShader->vertBufReq & VRT_TangentSpaceMatrix)
 			nodeShader->tsmAttrib = glGetAttribLocationARB(nodeShader->program,"TangentSpaceMatrix");
 
-		nodeShader->wsLightDirLocation = glGetUniformLocationARB(nodeShader->program, "wsLightDir");
-		nodeShader->wsEyePosLocation = glGetUniformLocationARB(nodeShader->program, "wsEyePos");
+		if (type != P_Diffuse)
+		{
+			nodeShader->wsLightDirLocation = glGetUniformLocationARB(nodeShader->program, "wsLightDir");
+			nodeShader->wsEyePosLocation = glGetUniformLocationARB(nodeShader->program, "wsEyePos");
+		}
 
 		if (ShadowMapping()) {
 			nodeShader->shadowMapLocation = glGetUniformLocationARB(nodeShader->program, "shadowMap");
@@ -494,6 +497,10 @@ NodeGLSLShader::NodeGLSLShader()
 	tsmAttrib = -1;
 	wsLightDirLocation = wsEyePosLocation = -1;
 
+	shadowMapLocation = -1;
+	shadowMatrixLocation = -1;
+	shadowParamsLocation = -1;
+
 	renderBuffer = 0;
 }
 
@@ -566,16 +573,18 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 
 	if (params.shadowMapParams)
 	{
-		glUniform1i(shadowMapLocation, texUnits.size());
-		glActiveTextureARB(GL_TEXTURE0_ARB+texUnits.size());
-		glBindTexture(GL_TEXTURE_2D, params.shadowMapParams->shadowMap);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		if (shadowMapLocation>=0) {
+			glUniform1i(shadowMapLocation, texUnits.size());
+			glActiveTextureARB(GL_TEXTURE0_ARB+texUnits.size());
+			glBindTexture(GL_TEXTURE_2D, params.shadowMapParams->shadowMap);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		}
 
 		ShadowMapParams& smp = *params.shadowMapParams;
-		glUniformMatrix4fvARB(shadowMatrixLocation, 1, GL_FALSE, smp.shadowMatrix);
-		glUniform4fARB(shadowParamsLocation, smp.f_a, smp.f_b, smp.mid[0], smp.mid[1]);
+		if (shadowMatrixLocation>=0) glUniformMatrix4fvARB(shadowMatrixLocation, 1, GL_TRUE, smp.shadowMatrix);
+		if (shadowParamsLocation>=0) glUniform4fARB(shadowParamsLocation, smp.f_a, smp.f_b, smp.mid[0], smp.mid[1]);
 	}
 }
 

@@ -1152,6 +1152,7 @@ namespace terrain {
 
 	void Terrain::SetShadowParams(ShadowMapParams *smp)
 	{
+		texturing->SetShadowMapParams(smp);
 	}
 
 	RenderContext* Terrain::AddRenderContext (Camera* cam, bool needsTexturing)
