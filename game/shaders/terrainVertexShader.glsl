@@ -33,22 +33,6 @@ vec4 Specular;
 
 #ifdef UseShadowMapping
 
-/*
-
-#calculate shadow texture coords
-
-DP4 temp.x, pos, mat2[0];
-DP4 temp.y, pos, mat2[1];
-
-ABS temp2,temp;
-ADD temp2,temp2,program.env[17];
-RSQ temp2.x, temp2.x;
-RSQ temp2.y, temp2.y;
-ADD temp2,temp2,program.env[18];
-MAD result.texcoord[4], temp, temp2,program.env[16];
-
-*/
-
 void CalcShadowTexCoord()
 {
 	vec2 temp, at;
@@ -62,13 +46,8 @@ void CalcShadowTexCoord()
 	at.y = inversesqrt(at.y);
 	at += vec4(shadowParams.y,shadowParams.y,0.0,0.0);
 
-	vec4 tc;
-	tc.xy = temp * at + vec2(shadowParams.z,shadowParams.w);
-	
-	tc.z = dot(gl_Vertex, shadowMatrix[2]);
-	tc.w = dot(gl_Vertex, shadowMatrix[3]);
-	
-	shadowTexCoord=tc;
+	shadowTexCoord.xy = temp * at + vec2(shadowParams.z,shadowParams.w);
+	shadowTexCoord.z = dot(gl_Vertex, shadowMatrix[2]);
 }
 
 #endif

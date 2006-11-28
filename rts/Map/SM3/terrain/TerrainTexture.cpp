@@ -338,6 +338,9 @@ namespace terrain {
 		}
 	    
 		delete[] bmMipmaps;
+
+		if (cfg->useShadowMaps)
+			shadowMapParams = new ShadowMapParams;
 	}
 
 	void TerrainTexture::CreateTexProg (TQuad *node, TerrainTexture::GenerateInfo *gi)
@@ -392,6 +395,7 @@ namespace terrain {
 			for (int a=0;a<4;a++) 
 				CreateTexProg (node->childs[a], gi);
 		}
+
 	}
 
 	uint TerrainTexture::CalcBlendmapSortKey ()
@@ -466,6 +470,7 @@ namespace terrain {
 		} 
 		return r;
 	}
+
 
 	bool TerrainTexture::SetupShading (RenderPass *p, int passIndex)
 	{
@@ -550,6 +555,12 @@ namespace terrain {
 		wsLightDir = lightDir;
 		wsLightDir.Normalize ();
 		wsEyePos = eyePos;
+	}
+
+	void TerrainTexture::SetShadowMapParams(const ShadowMapParams *smp)
+	{
+		if (shadowMapParams)
+			*shadowMapParams = *smp;
 	}
 
 	void TerrainTexture::DebugEvent (const std::string& event)
